@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 var (
@@ -109,6 +110,19 @@ type CombinedScanResult struct {
 
 func runScan(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
+
+	// Check ConfigHub connection for full scan capabilities
+	// Note: --list and --file modes work with embedded patterns
+	// Full cluster scanning requires ConfigHub pattern database
+	client := hub.NewClient()
+	if !scanList && scanFile == "" {
+		if err := client.RequireConnected(); err != nil {
+			// TODO: When pattern database is fully migrated to ConfigHub API,
+			// uncomment this to enforce auth. For now, use embedded patterns.
+			// return err
+			_ = err // Placeholder: will enforce auth when pattern DB is API-based
+		}
+	}
 
 	// Find policy database directory
 	policyDBDir := findPolicyDBDir()
