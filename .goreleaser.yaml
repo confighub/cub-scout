@@ -29,7 +29,8 @@ builds:
 
 archives:
   - id: default
-    format: tar.gz
+    formats:
+      - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
@@ -49,6 +50,9 @@ changelog:
       - '^docs:'
       - '^test:'
       - '^ci:'
+
+# Note: brews and dockers use deprecated syntax but still work
+# Will be updated when GoReleaser v2 stabilizes new API
 
 brews:
   - name: cub-scout

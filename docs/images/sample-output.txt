@@ -1,0 +1,66 @@
+NAMESPACE           KIND           NAME                                                  OWNER
+argocd              Application    api-gateway                                           Native
+argocd              StatefulSet    argocd-application-controller                         Native
+argocd              Deployment     argocd-applicationset-controller                      Native
+argocd              Service        argocd-applicationset-controller                      Native
+argocd              ConfigMap      argocd-cm                                             Native
+argocd              ConfigMap      argocd-cmd-params-cm                                  Native
+argocd              Deployment     argocd-dex-server                                     Native
+argocd              Service        argocd-dex-server                                     Native
+argocd              ConfigMap      argocd-gpg-keys-cm                                    Native
+argocd              Secret         argocd-initial-admin-secret                           Native
+argocd              Service        argocd-metrics                                        Native
+argocd              ConfigMap      argocd-notifications-cm                               Native
+argocd              Deployment     argocd-notifications-controller                       Native
+argocd              Service        argocd-notifications-controller-metrics               Native
+argocd              Secret         argocd-notifications-secret                           Native
+argocd              ConfigMap      argocd-rbac-cm                                        Native
+argocd              Deployment     argocd-redis                                          Native
+argocd              Secret         argocd-redis                                          Native
+argocd              Service        argocd-redis                                          Native
+argocd              Deployment     argocd-repo-server                                    Native
+argocd              Service        argocd-repo-server                                    Native
+argocd              Secret         argocd-secret                                         Native
+argocd              Deployment     argocd-server                                         Native
+argocd              Service        argocd-server                                         Native
+argocd              Service        argocd-server-metrics                                 Native
+argocd              ConfigMap      argocd-ssh-known-hosts-cm                             Native
+argocd              ConfigMap      argocd-tls-certs-cm                                   Native
+argocd              Application    guestbook                                             Native
+argocd              ConfigMap      kube-root-ca.crt                                      Native
+
+[1m[36mTRACE:[0m [1mDeployment/cart in boutique[0m
+
+  [31m✗[0m [35mGitRepository[0m/[1mboutique[0m
+    [2m│[0m [2mURL:[0m [34mhttps://github.com/stefanprodan/podinfo[0m
+    [2m│[0m [2mRevision:[0m [35mmaster@sha1:b6b680fe507b8d290de02e6269dec63f5ceac4f5[0m
+    [2m│[0m [2mStatus:[0m [33mLast reconciled at 2026-01-17 17:07:34 +0000 GMT[0m
+    [2m│[0m [31mError:[0m [31mstored artifact for revision 'master@sha1:b6b680fe507b8d290de02e6269dec63f5ceac4f5'[0m
+    [2m│[0m
+    [2m└─▶[0m [31m✗[0m [36mKustomization[0m/[1mcart[0m
+        [2m│[0m [2mPath:[0m ./kustomize
+        [2m│[0m [2mRevision:[0m [35mmaster@sha1:b6b680fe507b8d290de02e6269dec63f5ceac4f5[0m
+        [2m│[0m [2mStatus:[0m [33mLast reconciled at 2026-01-17 20:27:57 +0000 GMT[0m
+        [2m│[0m [31mError:[0m [31mApplied revision: master@sha1:b6b680fe507b8d290de02e6269dec63f5ceac4f5[0m
+        [2m│[0m
+        [2m└─▶[0m [31m✗[0m [32mDeployment[0m/[1mcart[0m
+              [2mStatus:[0m [33mManaged by Flux[0m
+
+[1m[33m⚠ Chain broken at GitRepository/boutique[0m
+  [31mstored artifact for revision 'master@sha1:b6b680fe507b8d290de02e6269dec63f5ceac4f5'[0m
+
+NAMESPACE           KIND           NAME                                                  OWNER
+argocd              Application    api-gateway                                           Native
+argocd              StatefulSet    argocd-application-controller                         Native
+argocd              Service        argocd-applicationset-controller                      Native
+argocd              Deployment     argocd-applicationset-controller                      Native
+argocd              ConfigMap      argocd-cm                                             Native
+argocd              ConfigMap      argocd-cmd-params-cm                                  Native
+argocd              Service        argocd-dex-server                                     Native
+argocd              Deployment     argocd-dex-server                                     Native
+argocd              ConfigMap      argocd-gpg-keys-cm                                    Native
+argocd              Secret         argocd-initial-admin-secret                           Native
+argocd              Service        argocd-metrics                                        Native
+argocd              ConfigMap      argocd-notifications-cm                               Native
+argocd              Deployment     argocd-notifications-controller                       Native
+argocd              Service        argocd-notifications-controller-metrics               Native

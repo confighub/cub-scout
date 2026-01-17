@@ -25,7 +25,7 @@ brew install confighub/tap/cub-scout
 ### Docker
 
 ```bash
-docker run --rm -v ~/.kube:/root/.kube ghcr.io/confighub/cub-scout map list
+docker run --rm --network=host -v ~/.kube:/home/nonroot/.kube ghcr.io/confighub/cub-scout map list
 ```
 
 ### From Source

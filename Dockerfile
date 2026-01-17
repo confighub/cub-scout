@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
@@ -22,6 +22,9 @@ FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /cub-scout /cub-scout
 
 USER nonroot:nonroot
+
+# Set HOME for kubeconfig
+ENV HOME=/home/nonroot
 
 ENTRYPOINT ["/cub-scout"]
 CMD ["version"]
