@@ -451,7 +451,7 @@ confighub ▾
 
 ## See Also
 
-- [Hub/AppSpace Model](../../../internal/planning/map/02-HUB-APPSPACE-MODEL.md) - Conceptual model
-- [Adoption Patterns](../../../internal/planning/map/USE-CASE-ADOPTION-PATTERNS.md) - Banko/Arnie source details
+- [Hub/AppSpace Model](#hub-appspace-model) - Conceptual model
+- [Adoption Patterns](#adoption-patterns) - Banko/Arnie source details
 - [Keybindings Reference](keybindings.md) - All keyboard shortcuts
 - [Views Reference](views.md) - What each view shows

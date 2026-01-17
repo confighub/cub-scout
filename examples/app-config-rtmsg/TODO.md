@@ -14,7 +14,7 @@
 
 ## To Figure Out (ConfigHub Core)
 
-- [ ] **Field-level edit permissions** — How does ConfigHub control which fields a customer can edit? (Alexis: "can be controlled from within ConfigHub")
+- [ ] **Field-level edit permissions** — How does ConfigHub control which fields a customer can edit? 
 
 - [ ] **Customer Space type** — Is there a way to mark a Space as "customer-facing" with different permissions than internal App Spaces?
 

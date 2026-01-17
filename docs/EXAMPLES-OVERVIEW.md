@@ -74,7 +74,7 @@ Key concepts in app-config-rtmsg:
 |------|--------|------|-------------|
 | [demos/](../examples/demos/) | Test Fixtures | 30s-2m | YAML with ownership labels + nginx:alpine |
 | [demos/walkthrough.md](../examples/demos/walkthrough.md) | Working | 5-10m | Step-by-step demo walkthrough |
-| [impressive-demo/](../examples/impressive-demo/) | Test Fixtures | 5m | Conference demo with CCVE scenarios |
+| [impressive-demo/](../examples/impressive-demo/) | Test Fixtures | 5m | Conference demo with scan scenarios |
 
 **Quick start:**
 ```bash
@@ -112,15 +112,15 @@ Copy-paste scripts for common use cases. See [examples/scripts/](../examples/scr
 | Script | Use Case |
 |--------|----------|
 | k9s-plugin.yaml | Add map/scan to k9s |
-| slack-alerting.sh | Alert on drift/CCVEs |
-| github-workflow.yaml | CI/CD gate for CCVEs |
+| slack-alerting.sh | Alert on drift/configuration issues |
+| github-workflow.yaml | CI/CD gate for configuration issues |
 | prometheus-metrics.sh | Export metrics |
 
 ### Third-Party Integrations
 
 | Integration | Status | Description |
 |-------------|--------|-------------|
-| [argocd-extension/](../examples/integrations/argocd-extension/) | Working | CCVE tab in Argo CD UI |
+| [argocd-extension/](../examples/integrations/argocd-extension/) | Working | Scan tab in Argo CD UI |
 | [flux-operator/](../examples/integrations/flux-operator/) | Working | Metrics exporter |
 | [flux9s/](../examples/integrations/flux9s/) | Proposal | K9s-style TUI for Flux |
 

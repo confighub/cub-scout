@@ -151,6 +151,13 @@ go build ./cmd/cub-scout
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+## Maintainers
+
+To make this repo public:
+```bash
+gh repo edit confighub/cub-scout --visibility public
+```
+
 ---
 
 Built with care by [ConfigHub](https://confighub.com)

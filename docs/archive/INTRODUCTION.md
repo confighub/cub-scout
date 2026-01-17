@@ -198,5 +198,5 @@ These are problems we would like to solve if we are correct — not problems we 
 
 For detailed research on Kubernetes configuration issues and CCVE mining:
 - [K8s CCVE Issues Research](planning/ccve/K8S-CCVE-ISSUES-RESEARCH.md) — GitHub issues analysis (controller bugs, API validation gaps)
-- [CCVE Mining Log](../cve/ccve/MINING-LOG.md) — Session-by-session CCVE discovery
+- [CCVE Mining Log](#) — Session-by-session CCVE discovery
 - [K8s Exhaustive Mining Plan](planning/ccve/K8S-EXHAUSTIVE-MINING-PLAN.md) — Research strategy

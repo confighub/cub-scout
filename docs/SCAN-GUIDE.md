@@ -1,4 +1,4 @@
-# Understanding CCVEs: Config CVEs for GitOps
+# Understanding configuration patterns: Config CVEs for GitOps
 
 ## Scan Your Cluster Now
 
@@ -22,15 +22,15 @@ Then run:
 
 ---
 
-## What is a CCVE?
+## What is a configuration pattern?
 
-**CCVE** = Config CVE (Config Common Vulnerability/Error)
+**configuration pattern** = Config CVE (Config Common Vulnerability/Error)
 
-Like [CVEs](https://cve.mitre.org/) for code vulnerabilities, CCVEs are **catalogued configuration patterns that cause outages**.
+Like [CVEs](https://cve.mitre.org/) for code vulnerabilities, configuration patterns are **catalogued configuration patterns that cause outages**.
 
 ```
 CVE  → Security vulnerability in code  → "Patch this library"
-CCVE → Configuration anti-pattern      → "Fix this setting"
+configuration pattern → Configuration anti-pattern      → "Fix this setting"
 ```
 
 ## The Problem
@@ -40,7 +40,7 @@ Configuration errors cause the majority of outages:
 > "64% of respondents said Configuration and Change Management was the most common cause of major outages"
 > — Gartner
 
-Real example: **CCVE-2025-0027** — A single whitespace character in a Grafana sidecar config (`NAMESPACE="monitoring, grafana"` instead of `NAMESPACE="monitoring,grafana"`) caused a [4-hour production outage](https://www.youtube.com/watch?v=VJiuu-GqfXk).
+Real example: **configuration pattern-2025-0027** — A single whitespace character in a Grafana sidecar config (`NAMESPACE="monitoring, grafana"` instead of `NAMESPACE="monitoring,grafana"`) caused a [4-hour production outage](https://www.youtube.com/watch?v=VJiuu-GqfXk).
 
 These patterns repeat across organizations. We catalog them so you don't have to rediscover them the hard way.
 
@@ -48,15 +48,15 @@ These patterns repeat across organizations. We catalog them so you don't have to
 
 ### 1. We maintain a pattern database
 
-The CCVE database contains **1,700+ patterns** (CCVEs + Kyverno policies) across:
+The configuration pattern database contains **1,700+ patterns** (configuration patterns + Kyverno policies) across:
 - **Flux** — GitRepository, Kustomization, HelmRelease issues
 - **Argo CD** — Application sync, health, drift problems
 - **Helm** — Release failures, pending upgrades
 - **ConfigHub** — Unit drift, worker connectivity, orphaned resources
 - **Infrastructure** — Grafana, Traefik, cert-manager, Prometheus, Thanos
 
-Each CCVE has:
-- Unique ID (`CCVE-2025-0027`)
+Each configuration pattern has:
+- Unique ID (`configuration pattern-2025-0027`)
 - Detection logic (K8s API patterns)
 - Severity (Critical/Warning/Info)
 - Remediation steps
@@ -75,14 +75,14 @@ CONFIG CVE SCAN: prod-east
 
 CRITICAL (1)
 ────────────────────────────────────────────────────────────────────
-[CCVE-2025-0027] Grafana sidecar namespace whitespace error
+[configuration pattern-2025-0027] Grafana sidecar namespace whitespace error
   Resource: monitoring/ConfigMap/grafana-sidecar
   Message:  NAMESPACE env var has whitespace after commas
   Fix:      Remove spaces: NAMESPACE="monitoring,grafana"
 
 WARNING (2)
 ────────────────────────────────────────────────────────────────────
-[CCVE-2025-0014] ConfigHub unit pending changes
+[configuration pattern-2025-0014] ConfigHub unit pending changes
   Resource: payments/Deployment/payment-api
   Message:  HeadRevisionNum (42) > LiveRevisionNum (40)
   Fix:      Apply pending changes or rollback
@@ -93,7 +93,7 @@ Summary: 1 critical, 2 warning, 0 info
 
 ### 3. You fix with clear guidance
 
-Each CCVE provides:
+Each configuration pattern provides:
 - **What's wrong** — Specific resource and field
 - **Why it matters** — Impact and severity
 - **How to fix** — Step-by-step remediation
@@ -111,14 +111,14 @@ cub-scout scan                    # Scan current cluster
 cub-scout scan --severity critical      # Only critical issues
 cub-scout scan --namespace production   # Specific namespace
 cub-scout scan --json                   # JSON output for tooling
-cub-scout scan --list                   # List all CCVEs
+cub-scout scan --list                   # List all configuration patterns
 ```
 
 ### Example JSON output
 ```json
 {
   "findings": [{
-    "id": "CCVE-2025-0027",
+    "id": "configuration pattern-2025-0027",
     "name": "Grafana sidecar namespace whitespace error",
     "severity": "critical",
     "category": "CONFIG",
@@ -129,7 +129,7 @@ cub-scout scan --list                   # List all CCVEs
 }
 ```
 
-## CCVE Categories
+## configuration pattern Categories
 
 | Category | Count | What it detects | Example |
 |----------|-------|-----------------|---------|
@@ -147,13 +147,13 @@ cub-scout scan --list                   # List all CCVEs
 
 ## Growing the Database
 
-The CCVE database is community-driven:
+The configuration pattern database is community-driven:
 
-### Contribute a CCVE
+### Contribute a configuration pattern
 
 1. Found a pattern that bit you? [Open an issue](https://github.com/confighub/confighub-agent/issues/new)
 2. Include: What happened, how you detected it, how you fixed it
-3. We'll catalog it with a CCVE ID
+3. We'll catalog it with a configuration pattern ID
 
 ### Data sources
 
@@ -168,32 +168,32 @@ The CCVE database is community-driven:
 
 | Capability | Standalone Agent | + ConfigHub |
 |------------|-----------------|-------------|
-| CCVE database | 1,700+ patterns | 1,700+ patterns + custom |
+| configuration pattern database | 1,700+ patterns | 1,700+ patterns + custom |
 | Timing bombs | `--timing-bombs` | Fleet-wide alerts |
 | Unresolved findings | `--include-unresolved` | Security debt dashboard |
 | Cluster scan | Single cluster | Fleet-wide |
 | Detection | Known patterns | + ML discovery |
 | Remediation | Manual steps | One-click Actions |
 | History | Current state | Trend analysis |
-| Custom CCVEs | Community only | Private patterns |
+| Custom configuration patterns | Community only | Private patterns |
 
 ## Example: Finding and Fixing
 
 ### The scenario
 Your Grafana dashboards aren't loading. Pods look healthy. No obvious errors in logs.
 
-### Without CCVE scanning
+### Without configuration pattern scanning
 - Check Grafana logs: nothing obvious
 - Check datasources: seem fine
 - Check sidecar: "working"
 - 4 hours later: find a space in the NAMESPACE env var
 
-### With CCVE scanning
+### With configuration pattern scanning
 ```bash
 $ cub-scout scan --namespace monitoring
 
 CRITICAL (1)
-[CCVE-2025-0027] Grafana sidecar namespace whitespace error
+[configuration pattern-2025-0027] Grafana sidecar namespace whitespace error
   Resource: monitoring/ConfigMap/grafana-sidecar
   Message:  NAMESPACE="monitoring, grafana" has whitespace after comma
   Fix:      Change to NAMESPACE="monitoring,grafana"
@@ -213,30 +213,30 @@ Time to diagnosis: **seconds, not hours**.
 
 # Legacy/ATK commands
 cub-scout scan                  # Full scan
-cub-scout scan --list           # List all CCVEs
+cub-scout scan --list           # List all configuration patterns
 cub-scout scan --json           # JSON output
 cub-scout scan --severity critical,warning
 ```
 
-### Common CCVEs by tool
+### Common configuration patterns by tool
 
 **Flux:**
-- CCVE-2025-0001 — GitRepository not ready
-- CCVE-2025-0002 — Kustomization build failed
-- CCVE-2025-0009 — Reconciliation suspended
-- CCVE-2025-0056 — Kustomize patch target not found (silent clobbering)
+- configuration pattern-2025-0001 — GitRepository not ready
+- configuration pattern-2025-0002 — Kustomization build failed
+- configuration pattern-2025-0009 — Reconciliation suspended
+- configuration pattern-2025-0056 — Kustomize patch target not found (silent clobbering)
 
 **Argo CD:**
-- CCVE-2025-0004 — Application sync failed
-- CCVE-2025-0005 — Application out of sync
+- configuration pattern-2025-0004 — Application sync failed
+- configuration pattern-2025-0005 — Application out of sync
 
 **ConfigHub:**
-- CCVE-2025-0014 — Unit pending changes
-- CCVE-2025-0015 — Worker disconnected
+- configuration pattern-2025-0014 — Unit pending changes
+- configuration pattern-2025-0015 — Worker disconnected
 
 **Common issues:**
-- CCVE-2025-0011 — Manual kubectl edit detected
-- CCVE-2025-0027 — Grafana sidecar whitespace (famous BIGBANK outage)
+- configuration pattern-2025-0011 — Manual kubectl edit detected
+- configuration pattern-2025-0027 — Grafana sidecar whitespace (famous BIGBANK outage)
 
 ## Next Steps
 
@@ -249,17 +249,17 @@ cub-scout scan --severity critical,warning
 
 ## Related Documentation
 
-### CCVE Database
-- [Full CCVE Catalog](../cve/ccve/README.md) — Complete database (1,700+ patterns)
-- [CCVE Index](../cve/ccve/index.json) — Machine-readable index
-- [Mining Log](../cve/ccve/MINING-LOG.md) — How CCVEs are discovered
+### configuration pattern Database
+- [Full configuration pattern Catalog](../cve/pattern/README.md) — Complete database (1,700+ patterns)
+- [configuration pattern Index](../cve/pattern/index.json) — Machine-readable index
+- [Mining Log](#) — How configuration patterns are discovered
 
-### CCVE Development
-- [CCVE Plan](../docs/planning/ccve/CCVE-plan.md) — Product roadmap
-- [Mining Strategy](../docs/planning/ccve/K8S-EXHAUSTIVE-MINING-PLAN.md) — GitHub issue mining
-- [Ingress Research](../docs/planning/ccve/INGRESS-NGINX-RESEARCH.md) — Ingress-nginx patterns
+### configuration pattern Development
+- [configuration pattern Plan](../docs/planning/pattern/configuration pattern-plan.md) — Product roadmap
+- [Mining Strategy](../docs/planning/pattern/K8S-EXHAUSTIVE-MINING-PLAN.md) — GitHub issue mining
+- [Ingress Research](../docs/planning/pattern/INGRESS-NGINX-RESEARCH.md) — Ingress-nginx patterns
 
-### Using CCVEs
+### Using configuration patterns
 - [Testing Guide](TESTING-GUIDE.md) — Step-by-step testing
 - [Expected Output](CLI-EXPECTED-OUTPUT.md) — What to expect from scans
 - [Examples](../examples/README.md) — Demos and integrations

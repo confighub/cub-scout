@@ -159,9 +159,9 @@ apps/payment-api/overlays/prod/  →  Unit (references base)
 
 ---
 
-## CCVE Concepts
+## Scan Concepts
 
-### CCVE
+### Configuration Pattern
 
 Cloud Configuration Vulnerability and Exposure. Configuration anti-pattern that causes problems.
 
@@ -193,4 +193,4 @@ Format: `CCVE-2025-XXXX`
 
 - [02-HUB-APPSPACE-MODEL.md](planning/map/02-HUB-APPSPACE-MODEL.md) — Full model specification
 - [IMPORT-JESPER-OVERVIEW.md](planning/historical/IMPORT-JESPER-OVERVIEW.md) — Import architecture
-- [CCVE-GUIDE.md](CCVE-GUIDE.md) — CCVE user guide
+- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE user guide

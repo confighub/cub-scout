@@ -37,7 +37,7 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 
 ### Apply Fixtures
 ```bash
-cd /Users/alexis/Public/github-repos/confighub-agent
+cd /path/to/cub-scout
 
 # 1. Mixed ownership (Flux + Argo + Native)
 kubectl apply -f test/atk/fixtures/mixed.yaml

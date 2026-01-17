@@ -71,7 +71,7 @@ If user exits at step 4, they lose everything and must restart from step 1.
   "confighub": {
     "authenticated": true,
     "org": "acme-corp",
-    "user": "alexis@confighub.com",
+    "user": "user@example.com",
     "units_created": ["payment-api", "payment-worker"],
     "worker_slug": "dev",
     "worker_status": "connecting"
@@ -255,7 +255,7 @@ ConfigHub GUI could show:
 ```
 ┌─ ACTIVE IMPORT SESSIONS ───────────────────────────────────────┐
 │                                                                │
-│  alexis@confighub.com                                          │
+│  user@example.com                                          │
 │  └─ kind-atk cluster                                           │
 │     ├─ Step: Worker connecting (5/7)                           │
 │     ├─ Started: 2 hours ago                                    │

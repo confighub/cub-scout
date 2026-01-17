@@ -185,36 +185,6 @@ unknown_concepts:
 ./test/ux-bow/lib/ux-bow.sh --report
 ```
 
-## Ralph Mode Integration
-
-UX-BOW is designed for Ralph mode iteration:
-
-1. **Baseline**: Run all scenarios, record scores
-2. **Identify**: Find lowest-scoring scenarios
-3. **Improve**: Fix discoverability/speed issues
-4. **Retest**: Re-run affected scenarios
-5. **Repeat**: Until all scores >= 4.0
-
-### Completion Promise
-
-```
-Ralph completes when: All UX-BOW scenarios score >= 4.0 composite
-```
-
-## Current Status
-
-| Metric | Score |
-|--------|-------|
-| Scenarios Defined | 10/10 |
-| Personas Defined | 4/4 |
-| Baseline Run | 2026-01-13 |
-| Ralph Iteration | Completed |
-| Hallucination Check | Completed |
-| Average TUI Score | 4.82 |
-| Average CLI Score | 4.49 |
-| Average Hub Score | 4.53 |
-
-### Ralph Iteration Results
 
 **Improvements Made:**
 - Added `cub-scout map crashes` shortcut command

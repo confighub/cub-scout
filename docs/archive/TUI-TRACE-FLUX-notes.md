@@ -2,7 +2,7 @@
 
 **Status:** Proposed
 **Created:** 2026-01-08
-**Author:** Claude + Alexis
+**Author:** ConfigHub Team
 
 ---
 

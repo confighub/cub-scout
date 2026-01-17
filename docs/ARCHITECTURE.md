@@ -398,4 +398,4 @@ For a more restrictive policy, see [manifests/agent-minimal-rbac.yaml](../manife
 
 - [EXTENDING.md](EXTENDING.md) — Extension points and customization
 - [CLI-REFERENCE.md](CLI-REFERENCE.md) — CLI reference and configuration
-- [CCVE-GUIDE.md](CCVE-GUIDE.md) — CCVE detection and remediation
+- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE detection and remediation
