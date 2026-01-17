@@ -1,0 +1,13 @@
+# Edge case 06: PDB with maxUnavailable: 0 (alternative to minAvailable: 100%)
+# Tests: Does detection catch maxUnavailable: 0 as blocking?
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: edge-pdb-maxunavail-zero
+  namespace: default
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: some-critical-app

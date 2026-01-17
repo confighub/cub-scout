@@ -1,0 +1,22 @@
+# Edge case 02: NetworkPolicy with namespaceSelector in ingress rules
+# Tests: Does detection handle complex ingress/egress rules?
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: edge-netpol-ns-selector
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: edge-app-target
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          environment: production
+    - podSelector:
+        matchLabels:
+          role: frontend

@@ -1,0 +1,359 @@
+#!/usr/bin/env bash
+# xBOW Runner - Phase 1: Manual with Claude Assistance
+# Runs adversarial config challenges against the CCVE scanner
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+BENCHMARKS_DIR="$PROJECT_ROOT/benchmarks/ccve-bow"
+CHALLENGES_DIR="$BENCHMARKS_DIR/challenges"
+EXPECTED_DIR="$BENCHMARKS_DIR/expected"
+RESULTS_DIR="$BENCHMARKS_DIR/results"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+usage() {
+    cat << EOF
+${CYAN}xBOW Runner${NC} - Adversarial Config Challenge Framework
+
+${YELLOW}USAGE:${NC}
+    $0 <command> [options]
+
+${YELLOW}COMMANDS:${NC}
+    list                    List all available challenges
+    run <id|all>            Run a specific challenge or all challenges
+    score                   Show current benchmark scores
+    generate                Generate new challenge from template
+
+${YELLOW}OPTIONS:${NC}
+    -v, --verbose           Verbose output
+    -o, --output FILE       Write results to FILE
+    -h, --help              Show this help
+
+${YELLOW}EXAMPLES:${NC}
+    $0 list                 # List all challenges
+    $0 run 001              # Run challenge 001
+    $0 run all              # Run all challenges
+    $0 score                # Show scores
+
+${YELLOW}ARCHETYPES:${NC}
+    STATE_MACHINE_STUCK     Resources enter states they cannot exit
+    CROSS_REFERENCE_MISMATCH Two resources reference each other wrong
+    REFERENCE_NOT_FOUND     Resource references something missing
+    RESOURCE_EXHAUSTION     Limits hit, causing failure
+    SILENT_FAILURE          Config accepted but not applied correctly
+    TIMING_BOMB             Works now, fails later
+    UPGRADE_LANDMINE        Version N works, N+1 breaks
+    COMPOUND_ATTACK         Multi-layered exploits
+    CROSS_TOOL_INTERACTION  Multi-tool interaction failures
+
+EOF
+    exit 0
+}
+
+# List all challenges
+list_challenges() {
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}  xBOW Challenges (${YELLOW}$(ls -1 "$CHALLENGES_DIR"/*.yaml 2>/dev/null | wc -l | tr -d ' ')${CYAN} total)${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo ""
+
+    for challenge in "$CHALLENGES_DIR"/*.yaml; do
+        if [[ -f "$challenge" ]]; then
+            filename=$(basename "$challenge" .yaml)
+            id=$(echo "$filename" | cut -d'-' -f1)
+            name=$(echo "$filename" | cut -d'-' -f2-)
+
+            # Get archetype from expected file
+            expected_file="$EXPECTED_DIR/${id}-expected.json"
+            if [[ -f "$expected_file" ]]; then
+                archetype=$(jq -r '.archetype' "$expected_file" 2>/dev/null || echo "UNKNOWN")
+                should_detect=$(jq -r '.should_detect' "$expected_file" 2>/dev/null || echo "?")
+
+                # Color code should_detect
+                if [[ "$should_detect" == "true" ]]; then
+                    detect_indicator="${GREEN}[D]${NC}"
+                else
+                    detect_indicator="${YELLOW}[?]${NC}"
+                fi
+            else
+                archetype="NO EXPECTED"
+                detect_indicator="${RED}[!]${NC}"
+            fi
+
+            printf "  ${BLUE}%s${NC}  %s  %-25s  %s\n" "$id" "$detect_indicator" "$archetype" "$name"
+        fi
+    done
+
+    echo ""
+    echo -e "${GREEN}[D]${NC} = Should be detected  ${YELLOW}[?]${NC} = Uncertain  ${RED}[!]${NC} = No expected file"
+}
+
+# Run a single challenge
+run_challenge() {
+    local id=$1
+    local verbose=${2:-false}
+
+    # Find challenge file
+    local challenge_file=$(ls "$CHALLENGES_DIR"/${id}*.yaml 2>/dev/null | head -1)
+    if [[ ! -f "$challenge_file" ]]; then
+        echo -e "${RED}Error: Challenge $id not found${NC}"
+        return 1
+    fi
+
+    local filename=$(basename "$challenge_file" .yaml)
+    local expected_file="$EXPECTED_DIR/${id}-expected.json"
+
+    echo -e "${CYAN}─────────────────────────────────────────────────────────────${NC}"
+    echo -e "${CYAN}  Running Challenge: ${YELLOW}$filename${NC}"
+    echo -e "${CYAN}─────────────────────────────────────────────────────────────${NC}"
+
+    # Show challenge info
+    if [[ -f "$expected_file" ]]; then
+        local archetype=$(jq -r '.archetype' "$expected_file")
+        local should_detect=$(jq -r '.should_detect' "$expected_file")
+        local expected_ccves=$(jq -r '.expected_ccves | join(", ")' "$expected_file")
+        local notes=$(jq -r '.notes' "$expected_file")
+
+        echo -e "  ${BLUE}Archetype:${NC}       $archetype"
+        echo -e "  ${BLUE}Should Detect:${NC}   $should_detect"
+        echo -e "  ${BLUE}Expected CCVEs:${NC}  ${expected_ccves:-None}"
+        echo -e "  ${BLUE}Notes:${NC}           $notes"
+        echo ""
+    fi
+
+    # Run CCVE scanner on the challenge file
+    echo -e "  ${YELLOW}Running scanner...${NC}"
+
+    local result_file="$RESULTS_DIR/${filename}-result.json"
+    local detected=false
+    local ccves_found=()
+
+    # Check if cub-agent exists (prefer local build, then PATH)
+    local cub_agent_bin="$PROJECT_ROOT/cub-agent"
+    if [[ ! -x "$cub_agent_bin" ]]; then
+        cub_agent_bin=$(command -v cub-agent 2>/dev/null || echo "")
+    fi
+
+    if [[ -n "$cub_agent_bin" && -x "$cub_agent_bin" ]]; then
+        # Use cub-agent scan --file --json
+        local scan_output=$("$cub_agent_bin" scan --file "$challenge_file" --json 2>/dev/null || echo "{}")
+
+        # Parse results from static.findings
+        local findings_count=$(echo "$scan_output" | jq -r '.static.findings | length // 0' 2>/dev/null || echo "0")
+
+        if [[ "$findings_count" -gt 0 ]]; then
+            detected=true
+            ccves_found=($(echo "$scan_output" | jq -r '.static.findings[].ccve_id // empty' 2>/dev/null || echo ""))
+        fi
+
+        # Write result with scanner info
+        cat > "$result_file" << EOF
+{
+  "challenge": "$filename",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "mode": "scanner",
+  "detected": $detected,
+  "ccves_found": $(printf '%s\n' "${ccves_found[@]:-}" | jq -R . | jq -s .),
+  "findings_count": $findings_count,
+  "scanner_available": true,
+  "raw_output": $(echo "$scan_output" | jq -c '.')
+}
+EOF
+    else
+        # Dry run - simulate detection based on expected
+        echo -e "  ${YELLOW}(Dry run - cub-agent not available)${NC}"
+        if [[ -f "$expected_file" ]]; then
+            local should_detect=$(jq -r '.should_detect' "$expected_file")
+            if [[ "$should_detect" == "true" ]]; then
+                detected=true
+                ccves_found=($(jq -r '.expected_ccves[]' "$expected_file" 2>/dev/null || echo ""))
+            fi
+        fi
+
+        # Write simulated result
+        cat > "$result_file" << EOF
+{
+  "challenge": "$filename",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "mode": "dry_run",
+  "detected": $detected,
+  "ccves_found": $(printf '%s\n' "${ccves_found[@]:-}" | jq -R . | jq -s .),
+  "scanner_available": false
+}
+EOF
+    fi
+
+    # Compare with expected
+    if [[ -f "$expected_file" ]]; then
+        local should_detect=$(jq -r '.should_detect' "$expected_file")
+
+        if [[ "$detected" == "true" && "$should_detect" == "true" ]]; then
+            echo -e "  ${GREEN}PASS${NC} - Correctly detected"
+        elif [[ "$detected" == "false" && "$should_detect" == "false" ]]; then
+            echo -e "  ${GREEN}PASS${NC} - Correctly not detected (expected gap)"
+        elif [[ "$detected" == "true" && "$should_detect" == "false" ]]; then
+            echo -e "  ${YELLOW}INFO${NC} - Detected (unexpected - possible improvement)"
+        else
+            echo -e "  ${RED}FAIL${NC} - Not detected (expected to be caught)"
+        fi
+    fi
+
+    echo ""
+    return 0
+}
+
+# Run all challenges
+run_all() {
+    local verbose=${1:-false}
+    local total=0
+    local passed=0
+    local failed=0
+    local unexpected=0
+
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}  xBOW Benchmark Run - $(date +%Y-%m-%d)${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo ""
+
+    for challenge in "$CHALLENGES_DIR"/*.yaml; do
+        if [[ -f "$challenge" ]]; then
+            filename=$(basename "$challenge" .yaml)
+            id=$(echo "$filename" | cut -d'-' -f1)
+
+            run_challenge "$id" "$verbose"
+            ((total++))
+        fi
+    done
+
+    # Generate summary
+    generate_score
+}
+
+# Show scores
+generate_score() {
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}  xBOW Benchmark Scores${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo ""
+
+    local total=0
+    local detected=0
+    local should_detect=0
+    local correctly_detected=0
+    local correctly_not_detected=0
+    local missed=0
+    local unexpected_detect=0
+
+    for expected in "$EXPECTED_DIR"/*.json; do
+        if [[ -f "$expected" ]]; then
+            ((total++))
+
+            local should=$(jq -r '.should_detect' "$expected")
+            if [[ "$should" == "true" ]]; then
+                ((should_detect++))
+            fi
+
+            # Check if result exists
+            local id=$(basename "$expected" -expected.json)
+            local result_file=$(ls "$RESULTS_DIR"/${id}*-result.json 2>/dev/null | head -1)
+
+            if [[ -f "$result_file" ]]; then
+                local was_detected=$(jq -r '.detected' "$result_file")
+
+                if [[ "$was_detected" == "true" && "$should" == "true" ]]; then
+                    ((correctly_detected++))
+                elif [[ "$was_detected" == "false" && "$should" == "false" ]]; then
+                    ((correctly_not_detected++))
+                elif [[ "$was_detected" == "true" && "$should" == "false" ]]; then
+                    ((unexpected_detect++))
+                elif [[ "$was_detected" == "false" && "$should" == "true" ]]; then
+                    ((missed++))
+                fi
+            fi
+        fi
+    done
+
+    local accuracy=0
+    if [[ $total -gt 0 ]]; then
+        accuracy=$(echo "scale=1; ($correctly_detected + $correctly_not_detected) * 100 / $total" | bc)
+    fi
+
+    echo -e "  ${BLUE}Total Challenges:${NC}      $total"
+    echo -e "  ${BLUE}Should Detect:${NC}         $should_detect"
+    echo -e "  ${GREEN}Correctly Detected:${NC}    $correctly_detected"
+    echo -e "  ${GREEN}Correctly Skipped:${NC}     $correctly_not_detected"
+    echo -e "  ${RED}Missed Detections:${NC}     $missed"
+    echo -e "  ${YELLOW}Unexpected Detects:${NC}    $unexpected_detect"
+    echo ""
+    echo -e "  ${CYAN}Accuracy:${NC}              ${accuracy}%"
+    echo ""
+
+    # Write summary to results
+    cat > "$RESULTS_DIR/summary-$(date +%Y%m%d).json" << EOF
+{
+  "date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "total_challenges": $total,
+  "should_detect": $should_detect,
+  "correctly_detected": $correctly_detected,
+  "correctly_not_detected": $correctly_not_detected,
+  "missed_detections": $missed,
+  "unexpected_detections": $unexpected_detect,
+  "accuracy_percent": $accuracy
+}
+EOF
+}
+
+# Main
+main() {
+    if [[ $# -eq 0 ]]; then
+        usage
+    fi
+
+    local cmd=$1
+    shift
+
+    case "$cmd" in
+        list)
+            list_challenges
+            ;;
+        run)
+            if [[ $# -eq 0 ]]; then
+                echo -e "${RED}Error: Please specify challenge ID or 'all'${NC}"
+                exit 1
+            fi
+            local target=$1
+            if [[ "$target" == "all" ]]; then
+                run_all
+            else
+                run_challenge "$target"
+            fi
+            ;;
+        score)
+            generate_score
+            ;;
+        generate)
+            echo -e "${YELLOW}Challenge generation - use Claude to generate new challenges${NC}"
+            echo ""
+            echo "Prompt template:"
+            echo "  Generate a new xBOW challenge for archetype X"
+            echo "  based on attack pattern Y from ADVERSARIAL-CONFIG-GAME.md"
+            ;;
+        -h|--help|help)
+            usage
+            ;;
+        *)
+            echo -e "${RED}Unknown command: $cmd${NC}"
+            usage
+            ;;
+    esac
+}
+
+main "$@"

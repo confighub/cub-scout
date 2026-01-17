@@ -1,0 +1,114 @@
+# Expected Output: demo ccve
+# Mode: Standalone
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "demo ccve"
+description: "CCVE-2025-0027 detection demo (BIGBANK incident)"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  - id: demo_ccve
+    command: "./test/atk/demo ccve"
+    description: "Demo detecting CCVE-2025-0027 (Grafana sidecar bug)"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "CCVE-2025-0027"
+        - pattern: "(BIGBANK|outage|4.hour|Grafana)"
+          description: "References the BIGBANK incident"
+        - pattern: "(detected|found|scan)"
+          description: "Shows detection"
+
+      not_contains:
+        - "error"
+        - "panic"
+        - "null"
+
+      assertions:
+        - name: "ccve_detected"
+          condition: "output.contains('CCVE-2025-0027')"
+          description: "CCVE-2025-0027 is detected"
+
+        - name: "fix_shown"
+          condition: "output.contains('fix') || output.contains('kubectl set env')"
+          description: "Fix command shown"
+
+        - name: "context_provided"
+          condition: "output.match(/(BIGBANK|outage|4.hour)/i)"
+          description: "Real-world context provided"
+
+    instructions: |
+      This demo shows how ConfigHub Agent detects CCVE-2025-0027,
+      the Grafana sidecar whitespace bug that caused a 4-hour outage
+      at BIGBANK Capital Markets (shared at FluxCon 2025).
+
+      Run:
+      ```bash
+      ./test/atk/demo ccve
+      ```
+
+      You'll see:
+      - The buggy Grafana config deployed
+      - CCVE scanner detecting the issue
+      - Fix command provided
+
+      The bug: whitespace in NAMESPACE env var ("monitoring, grafana")
+      should be ("monitoring,grafana") - no spaces.
+
+    hints:
+      - when: "!output.contains('CCVE-2025-0027')"
+        show: "CCVE not detected. Check if Grafana deployment was created."
+      - when: "output.contains('already exists')"
+        show: "Run cleanup first: ./test/atk/demo ccve --cleanup"
+
+  - id: demo_ccve_cleanup
+    command: "./test/atk/demo ccve --cleanup"
+    description: "Clean up CCVE demo resources"
+
+    expected:
+      exit_code: 0
+
+      assertions:
+        - name: "cleanup_succeeds"
+          condition: "exit_code == 0"
+          description: "Cleanup completes"
+
+# Sample output (for reference)
+sample_output: |
+  CCVE-2025-0027 Demo: The BIGBANK 4-Hour Outage
+
+  This exact bug caused a 4-hour outage at BIGBANK Capital Markets (FluxCon 2025)
+
+  Step 1: Deploying Grafana with the bug...
+  deployment.apps/grafana created
+
+  Step 2: Running CCVE scan...
+
+  ═══════════════════════════════════════════════════════════════
+    CCVE SCAN RESULTS
+  ═══════════════════════════════════════════════════════════════
+
+  CCVE-2025-0027  HIGH  Grafana sidecar whitespace in NAMESPACE
+    Resource: deploy/grafana (monitoring)
+    Issue: NAMESPACE env var contains spaces: "monitoring, grafana"
+    Impact: Sidecar fails to discover dashboards
+    Fix: kubectl set env deployment/grafana -n monitoring \
+         NAMESPACE="monitoring,grafana,observability"
+
+  ✓ CCVE-2025-0027 detected in seconds
+  Without ConfigHub: 4 hours of debugging sidecar logs
+  With ConfigHub: Instant detection + fix command
+
+  To fix:
+    kubectl set env deployment/grafana -n monitoring \
+      NAMESPACE="monitoring,grafana,observability"
+
+  Cleanup: ./demo ccve --cleanup

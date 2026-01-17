@@ -1,0 +1,14 @@
+# Evasion attempt 03: PDB with string percentage format
+# Current detection: Checks for minAvailable: 100% or maxUnavailable: 0
+# Evasion: Try "100%" (string) vs integer format
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: evasion-pdb-string-percent
+  namespace: default
+spec:
+  minAvailable: "100%"
+  selector:
+    matchLabels:
+      app: some-app-that-exists

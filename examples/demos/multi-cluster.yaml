@@ -1,0 +1,275 @@
+# Multi-cluster demo fixtures
+# Simulates resources from multiple clusters with different owners
+---
+# Production East - Flux managed
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod-east
+  labels:
+    cluster: prod-east
+    environment: production
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: prod-east
+  labels:
+    app: payment
+    kustomize.toolkit.fluxcd.io/name: payment-stack
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+      - name: api
+        image: fake-image/no-pods:v0.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-worker
+  namespace: prod-east
+  labels:
+    app: payment
+    kustomize.toolkit.fluxcd.io/name: payment-stack
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-worker
+  template:
+    metadata:
+      labels:
+        app: payment-worker
+    spec:
+      containers:
+      - name: worker
+        image: fake-image/no-pods:v0.0.0
+---
+# Production West - Argo managed
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod-west
+  labels:
+    cluster: prod-west
+    environment: production
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api
+  namespace: prod-west
+  labels:
+    app: order
+    argocd.argoproj.io/instance: order-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+      - name: api
+        image: fake-image/no-pods:v0.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-processor
+  namespace: prod-west
+  labels:
+    app: order
+    argocd.argoproj.io/instance: order-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-processor
+  template:
+    metadata:
+      labels:
+        app: order-processor
+    spec:
+      containers:
+      - name: processor
+        image: fake-image/no-pods:v0.0.0
+---
+# Staging - Mixed ownership
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    environment: staging
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: staging
+  labels:
+    app: frontend
+    helm.toolkit.fluxcd.io/name: frontend
+    helm.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: web
+        image: fake-image/no-pods:v0.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: staging
+  labels:
+    app: backend
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: backend-chart
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: api
+        image: fake-image/no-pods:v0.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-pod
+  namespace: staging
+  labels:
+    app: debug
+  annotations:
+    note: "kubectl applied at 2am during incident"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug
+  template:
+    metadata:
+      labels:
+        app: debug
+    spec:
+      containers:
+      - name: debug
+        image: fake-image/no-pods:v0.0.0
+---
+# Monitoring namespace - ConfigHub managed
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+    confighub.com/UnitSlug: monitoring-stack
+  annotations:
+    confighub.com/SpaceName: platform
+    confighub.com/RevisionNum: "42"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: fake-image/no-pods:v0.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    confighub.com/UnitSlug: monitoring-stack
+  annotations:
+    confighub.com/SpaceName: platform
+    confighub.com/RevisionNum: "42"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: fake-image/no-pods:v0.0.0
+---
+# Ingress resources
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api
+  namespace: prod-east
+  labels:
+    app: payment
+    kustomize.toolkit.fluxcd.io/name: payment-stack
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: payment
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-api
+  namespace: prod-west
+  labels:
+    app: order
+    argocd.argoproj.io/instance: order-app
+spec:
+  selector:
+    app: order
+  ports:
+  - port: 80
+    targetPort: 8080

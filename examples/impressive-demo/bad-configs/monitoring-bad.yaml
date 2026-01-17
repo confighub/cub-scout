@@ -1,0 +1,94 @@
+# Grafana deployment with CCVE-2025-0027: Namespace whitespace error
+# This is the EXACT error that caused 4-hour outage at BIGBANK (FluxCon 2025)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.2.0
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GF_SERVER_ROOT_URL
+          value: "https://grafana.example.com"
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+
+      # Sidecar for dashboard provisioning
+      - name: grafana-sc-dashboard
+        image: kiwigrid/k8s-sidecar:1.25.2
+        env:
+        # 🔥 BUG: Spaces after commas cause sidecar to fail watching namespaces
+        # This is CCVE-2025-0027 - the BIGBANK incident
+        - name: NAMESPACE
+          value: "monitoring, grafana, observability"  # ❌ WRONG - has spaces
+        # CORRECT would be: "monitoring,grafana,observability"  # ✅ No spaces
+
+        - name: LABEL
+          value: "grafana_dashboard"
+        - name: FOLDER
+          value: "/tmp/dashboards"
+        - name: RESOURCE
+          value: "both"
+        volumeMounts:
+        - name: sc-dashboard-volume
+          mountPath: /tmp/dashboards
+
+      volumes:
+      - name: grafana-storage
+        emptyDir: {}
+      - name: sc-dashboard-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  selector:
+    app: grafana
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: ClusterIP
+---
+# Example ConfigMap that sidecar should watch but won't due to namespace whitespace
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sample-dashboard
+  namespace: grafana
+  labels:
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Sample Dashboard",
+        "panels": []
+      }
+    }

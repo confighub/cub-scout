@@ -1,0 +1,108 @@
+# Expected Output: Security Patch Demo
+# ⚠️ SIMULATION - This demo prints hardcoded output to show what ConfigHub WILL do.
+#    It does NOT connect to real clusters or ConfigHub.
+name: "security-patch demo (SIMULATION)"
+description: "Demo 3: Patch 847 services in 4 hours instead of 4 weeks (simulated output)"
+mode: standalone
+
+requires:
+  cluster: false
+  cub_auth: false
+
+commands:
+  - id: demo_run
+    command: "./examples/rm-demos-argocd/scenarios/security-patch/demo.sh"
+    description: "Run Security Patch demo"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "Security Patch"
+        - "CVE-2026-1234"
+        - pattern: "(847 microservices|847 services)"
+          description: "Shows scale of problem"
+        - "847 PRs"
+        - "212 hours"
+        - "cub unit list"
+        - "alpine:3.18"
+        - "cub unit update"
+        - "DRY RUN"
+        - "ChangeSet"
+        - pattern: "(CS-901|CS-902)"
+          description: "Shows ChangeSets created"
+        - pattern: "(phased|rollout)"
+          description: "Shows phased rollout"
+        - pattern: "(development|staging|production)"
+          description: "Shows environment phases"
+        - "Phase 1"
+        - "Phase 2"
+        - "Phase 3"
+        - pattern: "(1 command|ONE command)"
+          description: "Shows value proposition"
+
+      not_contains:
+        - "error"
+        - "panic:"
+        - "command not found"
+
+      assertions:
+        - name: "demo_completes"
+          condition: "exit_code == 0"
+          description: "Demo runs to completion"
+        - name: "shows_scale"
+          condition: "output.contains('847')"
+          description: "Demonstrates fleet scale"
+        - name: "shows_phased_rollout"
+          condition: "output.contains('Phase 1') && output.contains('Phase 2')"
+          description: "Shows phased rollout"
+
+    instructions: |
+      Run the Security Patch demo:
+      ```bash
+      ./examples/rm-demos-argocd/scenarios/security-patch/demo.sh
+      ```
+
+      This simulation demonstrates:
+      - Impact analysis across 847 services
+      - Fleet-wide update with dry-run preview
+      - Team-aware ChangeSets
+      - Phased rollout (dev -> staging -> prod)
+      - Audit trail tied to CVE
+
+      Key contrast:
+      - Traditional: 847 PRs x 15 min = 212 hours (4+ weeks)
+      - ConfigHub: 1 command, 4 hours total
+
+# Sample output
+sample_output: |
+  ═══════════════════════════════════════════════════════════════
+    Demo 3: The Critical Security Patch
+  ═══════════════════════════════════════════════════════════════
+
+  SCENARIO:
+    Friday 4pm. Slack explodes.
+    "CVE-2026-1234 - critical vulnerability in base image."
+    You have 847 microservices across 47 clusters.
+
+  THE OLD WAY:
+    # For each of 847 services:
+    # 1. Find the repo
+    # 2. Update the base image
+    # 3. Create PR...
+    Estimated time: 847 PRs x 15 min each = 212 hours
+
+  THE CONFIGHUB WAY:
+    $ cub unit list --where "image.base=alpine:3.18*"
+    AFFECTED UNITS: 847
+
+    $ cub unit update --where "image.base=alpine:3.18*" --set image.base=alpine:3.19.1
+
+  CVE-2026-1234 PATCH ROLLOUT
+  Phase 1: Development ████████████████████ 250/250 Complete
+  Phase 2: Staging     ████████████░░░░░░░░ 187/285 Progressing
+  Phase 3: Production  ░░░░░░░░░░░░░░░░░░░░   0/312 Waiting
+
+  THE "AHA" MOMENT:
+    847 services patched with ONE command (not 847 PRs)
+    Security patch in 4 hours, not 4 weeks.

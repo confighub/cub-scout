@@ -1,0 +1,109 @@
+# Expected Output: demo quick
+# Mode: Standalone
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "demo quick"
+description: "30-second demo showing cluster mapping"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  - id: demo_quick
+    command: "./test/atk/demo quick"
+    description: "Quick 30-second demo of cluster mapping"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "Quick Demo"
+        - pattern: "(map|Map)"
+          description: "Shows map command"
+        - pattern: "(Flux|Argo|Helm|Native)"
+          description: "Shows ownership detection"
+
+      not_contains:
+        - "error"
+        - "panic"
+        - "failed"
+        - "null"
+
+      assertions:
+        - name: "demo_runs"
+          condition: "exit_code == 0"
+          description: "Demo completes successfully"
+
+        - name: "shows_ownership"
+          condition: "output.match(/(Flux|Argo|Helm|Native)/)"
+          description: "Ownership detection demonstrated"
+
+        - name: "provides_next_steps"
+          condition: "output.contains('Next:') || output.contains('next')"
+          description: "Shows what to do next"
+
+    instructions: |
+      The quick demo is the fastest way to see ConfigHub Agent in action:
+      ```bash
+      ./test/atk/demo quick
+      ```
+
+      In 30 seconds you'll see:
+      - Cluster resources mapped
+      - Ownership detected (Flux, Argo, Helm, Native)
+      - Next steps suggested
+
+    hints:
+      - when: "output.contains('no resources')"
+        show: "Apply some workloads first, or try: kubectl apply -f test/atk/fixtures/"
+      - when: "exit_code != 0"
+        show: "Demo failed. Check cluster access: kubectl cluster-info"
+
+  - id: demo_quick_cleanup
+    command: "./test/atk/demo quick --cleanup"
+    description: "Clean up quick demo resources"
+
+    expected:
+      exit_code: 0
+      contains:
+        - pattern: "(cleanup|Cleaning|removed)"
+          description: "Cleanup confirmation"
+
+      assertions:
+        - name: "cleanup_succeeds"
+          condition: "exit_code == 0"
+          description: "Cleanup completes"
+
+    instructions: |
+      Clean up demo resources:
+      ```bash
+      ./test/atk/demo quick --cleanup
+      ```
+
+# Sample output (for reference)
+sample_output: |
+  Quick Demo: See your cluster in 30 seconds
+
+  Applying minimal demo fixtures...
+  namespace/demo-flux created
+  kustomization.kustomize.toolkit.fluxcd.io/demo created
+
+  Running: ./test/atk/map
+
+  ═══════════════════════════════════════════════════════════════
+    CLUSTER RESOURCES
+  ═══════════════════════════════════════════════════════════════
+
+  OWNERSHIP
+  ────────────────────────────────────────────────────────────────
+  Flux(2)  Native(5)
+  ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+  ✓ That's the Map - your cluster at a glance.
+
+  Next: ./test/atk/scan to find config issues
+        ./demo ccve to see CCVE-2025-0027 (the BIGBANK incident)

@@ -1,0 +1,16 @@
+# Test fixture: Service with selector matching no pods
+# Should trigger: CCVE-2025-0688 (Dangling Service)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dangling-service-test
+  namespace: default
+spec:
+  selector:
+    app: non-existent-app
+    tier: ghost
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080

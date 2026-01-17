@@ -1,0 +1,705 @@
+#!/bin/bash
+# ConfigHub Import TUI - Unified view of import + connection status
+#
+# Usage:
+#   ./map-import                     # Show current import state
+#   ./map-import --namespace <ns>    # Import from namespace
+#   ./map-import --space <space>     # Show specific space
+#
+# Features:
+#   - Shows full hierarchy: Org → Platform Hub → AppSpace → Unit
+#   - Displays connection status (not connected → connecting → connected)
+#   - Shows worker/target status
+#   - Logs all activity to .confighub/logs/
+
+set -uo pipefail
+
+#=============================================================================
+# INITIALIZATION
+#=============================================================================
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Source the UI library
+source "${SCRIPT_DIR}/lib/ui.sh"
+
+# Initialize UI (auto-downloads gum if needed)
+ui_init "$SCRIPT_DIR"
+
+#=============================================================================
+# CONFIGURATION
+#=============================================================================
+
+UI_WIDTH="${UI_WIDTH:-72}"
+LOG_DIR="${HOME}/.confighub/logs"
+LOG_FILE=""
+
+# Command line args
+NAMESPACE=""
+SPACE=""
+DO_IMPORT=false
+MODEL_VIEW="new"  # "new" (Org/Hub/AppSpace/Unit) or "old" (Org/Space/Unit)
+
+#=============================================================================
+# LOGGING
+#=============================================================================
+
+init_logging() {
+    mkdir -p "$LOG_DIR"
+    LOG_FILE="${LOG_DIR}/tui-import-$(date +%Y-%m-%d-%H%M%S).log"
+
+    {
+        echo "================================================================================"
+        echo "ConfigHub Import TUI"
+        echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "================================================================================"
+        echo ""
+    } >> "$LOG_FILE"
+}
+
+log() {
+    local msg="$1"
+    local timestamp
+    timestamp=$(date +%H:%M:%S)
+    echo "[$timestamp] $msg" >> "$LOG_FILE"
+}
+
+log_section() {
+    local section="$1"
+    echo "" >> "$LOG_FILE"
+    echo "--- $section ---" >> "$LOG_FILE"
+}
+
+#=============================================================================
+# DATA COLLECTION
+#=============================================================================
+
+# Global state
+HAS_CUB=false
+HAS_AUTH=false
+CONTEXT_JSON=""
+ORG_NAME=""
+ORG_ID=""
+USER_EMAIL=""
+SERVER_URL=""
+DEFAULT_SPACE=""
+HUB_NAME=""
+
+SPACE_JSON=""
+UNITS_JSON=""
+WORKERS_JSON=""
+TARGETS_JSON=""
+
+UNIT_COUNT=0
+WORKER_COUNT=0
+TARGET_COUNT=0
+
+# Drift counts
+DRIFT_COUNT=0
+SYNCED_COUNT=0
+PROBLEM_COUNT=0
+
+# Standalone drift detection (before ConfigHub connection)
+declare -A LOCAL_DRIFT_STATUS  # key=namespace, value=synced|drifted|unknown
+LOCAL_GITOPS_TOOL=""           # argocd|flux|unknown
+
+#=============================================================================
+# STANDALONE DRIFT DETECTION (before ConfigHub connection)
+#=============================================================================
+
+# Detect GitOps tool from namespace labels/resources
+detect_gitops_tool() {
+    local namespace="$1"
+
+    # Check for ArgoCD Application labels
+    if kubectl get deployments -n "$namespace" -o jsonpath='{.items[*].metadata.labels.argocd\.argoproj\.io/instance}' 2>/dev/null | grep -q .; then
+        echo "argocd"
+        return
+    fi
+
+    # Check for Flux Kustomization labels
+    if kubectl get deployments -n "$namespace" -o jsonpath='{.items[*].metadata.labels.kustomize\.toolkit\.fluxcd\.io/name}' 2>/dev/null | grep -q .; then
+        echo "flux"
+        return
+    fi
+
+    # Check for Flux HelmRelease labels
+    if kubectl get deployments -n "$namespace" -o jsonpath='{.items[*].metadata.labels.helm\.toolkit\.fluxcd\.io/name}' 2>/dev/null | grep -q .; then
+        echo "flux"
+        return
+    fi
+
+    echo "unknown"
+}
+
+# Get ArgoCD app name for a namespace
+get_argocd_app() {
+    local namespace="$1"
+    kubectl get deployments -n "$namespace" -o jsonpath='{.items[0].metadata.labels.argocd\.argoproj\.io/instance}' 2>/dev/null || echo ""
+}
+
+# Get Flux Kustomization name for a namespace
+get_flux_kustomization() {
+    local namespace="$1"
+    kubectl get deployments -n "$namespace" -o jsonpath='{.items[0].metadata.labels.kustomize\.toolkit\.fluxcd\.io/name}' 2>/dev/null || echo ""
+}
+
+# Check drift status for ArgoCD (standalone, no ConfigHub)
+check_argocd_drift_standalone() {
+    local app_name="$1"
+
+    if ! command -v argocd &>/dev/null; then
+        echo "unknown"
+        return
+    fi
+
+    # Try argocd app get - this works without being logged in if we query locally
+    local sync_status
+    sync_status=$(argocd app get "$app_name" -o json 2>/dev/null | jq -r '.status.sync.status // "Unknown"')
+
+    case "$sync_status" in
+        Synced) echo "synced" ;;
+        OutOfSync) echo "drifted" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+# Check drift status for Flux (standalone, no ConfigHub)
+check_flux_drift_standalone() {
+    local kustomization="$1"
+    local ns="${2:-flux-system}"
+
+    if ! command -v flux &>/dev/null; then
+        echo "unknown"
+        return
+    fi
+
+    # Check kustomization status
+    local ready_status
+    ready_status=$(flux get kustomization "$kustomization" -n "$ns" 2>/dev/null | tail -1 | awk '{print $2}')
+
+    case "$ready_status" in
+        True) echo "synced" ;;
+        False) echo "drifted" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+# Collect drift status for a namespace (standalone mode)
+collect_standalone_drift() {
+    local namespace="$1"
+
+    log_section "STANDALONE DRIFT DETECTION"
+    log "Namespace: $namespace"
+
+    LOCAL_GITOPS_TOOL=$(detect_gitops_tool "$namespace")
+    log "Detected tool: $LOCAL_GITOPS_TOOL"
+
+    local drift_status="unknown"
+    case "$LOCAL_GITOPS_TOOL" in
+        argocd)
+            local app_name
+            app_name=$(get_argocd_app "$namespace")
+            if [[ -n "$app_name" ]]; then
+                drift_status=$(check_argocd_drift_standalone "$app_name")
+                log "ArgoCD app=$app_name, drift=$drift_status"
+            fi
+            ;;
+        flux)
+            local kustomization
+            kustomization=$(get_flux_kustomization "$namespace")
+            if [[ -n "$kustomization" ]]; then
+                drift_status=$(check_flux_drift_standalone "$kustomization")
+                log "Flux kustomization=$kustomization, drift=$drift_status"
+            fi
+            ;;
+    esac
+
+    LOCAL_DRIFT_STATUS["$namespace"]="$drift_status"
+}
+
+# Check cub CLI and authentication
+check_auth() {
+    log "Checking authentication..."
+
+    if ! command -v cub &>/dev/null; then
+        log "cub CLI not found"
+        HAS_CUB=false
+        return 1
+    fi
+    HAS_CUB=true
+    log "cub CLI installed"
+
+    CONTEXT_JSON=$(cub context get --json 2>/dev/null || echo '{}')
+
+    if echo "$CONTEXT_JSON" | jq -e '.coordinate.user' &>/dev/null && \
+       [[ $(echo "$CONTEXT_JSON" | jq -r '.coordinate.user') != "null" ]]; then
+        HAS_AUTH=true
+        USER_EMAIL=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.user // ""')
+        ORG_NAME=$(echo "$CONTEXT_JSON" | jq -r '.metadata.organizationName // ""')
+        ORG_ID=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.organizationID // ""')
+        SERVER_URL=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.serverURL // ""')
+        DEFAULT_SPACE=$(echo "$CONTEXT_JSON" | jq -r '.settings.defaultSpace // ""')
+
+        # Hub name defaults to user email for personal hub
+        HUB_NAME="$USER_EMAIL"
+
+        log "Authenticated as $USER_EMAIL"
+        log "Org: $ORG_NAME"
+        log "Default space: $DEFAULT_SPACE"
+        return 0
+    else
+        HAS_AUTH=false
+        log "Not authenticated"
+        return 1
+    fi
+}
+
+# Collect data for a specific space
+collect_space_data() {
+    local space="${1:-$DEFAULT_SPACE}"
+
+    if [[ -z "$space" ]]; then
+        log "No space specified"
+        return 1
+    fi
+
+    log_section "COLLECTING DATA"
+    log "Space: $space"
+
+    UNITS_JSON=$(cub unit list --space "$space" --json 2>/dev/null || echo '[]')
+    WORKERS_JSON=$(cub worker list --space "$space" --json 2>/dev/null || echo '[]')
+    TARGETS_JSON=$(cub target list --space "$space" --json 2>/dev/null || echo '[]')
+
+    UNIT_COUNT=$(echo "$UNITS_JSON" | jq 'length' 2>/dev/null || echo 0)
+    WORKER_COUNT=$(echo "$WORKERS_JSON" | jq 'length' 2>/dev/null || echo 0)
+    TARGET_COUNT=$(echo "$TARGETS_JSON" | jq 'length' 2>/dev/null || echo 0)
+
+    # Extract drift counts from ConfigHub unit status
+    # Uses same fields as map-confighub: UnitStatus.SyncStatus, UnitStatus.Drift
+    DRIFT_COUNT=$(echo "$UNITS_JSON" | jq '[.[] | select(.UnitStatus.SyncStatus == "OutOfSync" or .UnitStatus.Drift == "Drifted")] | length' 2>/dev/null || echo 0)
+    PROBLEM_COUNT=$(echo "$UNITS_JSON" | jq '[.[] | select(.UnitStatus.Status == "Error")] | length' 2>/dev/null || echo 0)
+    SYNCED_COUNT=$((UNIT_COUNT - DRIFT_COUNT - PROBLEM_COUNT))
+    [[ $SYNCED_COUNT -lt 0 ]] && SYNCED_COUNT=0
+
+    log "Units: $UNIT_COUNT"
+    log "Workers: $WORKER_COUNT"
+    log "Targets: $TARGET_COUNT"
+    log "Synced: $SYNCED_COUNT, Drifted: $DRIFT_COUNT, Errors: $PROBLEM_COUNT"
+}
+
+#=============================================================================
+# RENDERING
+#=============================================================================
+
+# Render the header
+render_header() {
+    clear
+    ui_header "CONFIGHUB IMPORT"
+    echo ""
+}
+
+# Render connection status
+render_connection_status() {
+    local content=""
+    local next_step=""
+
+    if ! $HAS_CUB; then
+        content=$(printf "%b✗%b cub CLI not installed" "$UI_ERR" "$UI_NC")
+        next_step="brew install confighubai/tap/cub"
+    elif ! $HAS_AUTH; then
+        content=$(printf "%b✓%b cub CLI installed\n%b✗%b Not authenticated" \
+            "$UI_OK" "$UI_NC" "$UI_ERR" "$UI_NC")
+        next_step="cub auth login"
+    else
+        content=$(printf "%b✓%b Authenticated (%s)\n" "$UI_OK" "$UI_NC" "$USER_EMAIL")
+        content+=$(printf "%b✓%b Org: %s\n" "$UI_OK" "$UI_NC" "$ORG_NAME")
+
+        if [[ $UNIT_COUNT -gt 0 ]]; then
+            content+=$(printf "%b✓%b Units: %d\n" "$UI_OK" "$UI_NC" "$UNIT_COUNT")
+        else
+            content+=$(printf "%b○%b No units imported\n" "$UI_FG_DIM" "$UI_NC")
+        fi
+
+        # Worker status
+        if [[ $WORKER_COUNT -gt 0 ]]; then
+            local worker_name worker_status
+            worker_name=$(echo "$WORKERS_JSON" | jq -r '.[0].BridgeWorker.Slug // "unknown"')
+            worker_status=$(echo "$WORKERS_JSON" | jq -r '.[0].BridgeWorker.Condition // "unknown"')
+
+            if [[ "$worker_status" == "Ready" ]]; then
+                content+=$(printf "%b✓%b Worker '%s' connected\n" "$UI_OK" "$UI_NC" "$worker_name")
+            elif [[ "$worker_status" == "NotReady" ]]; then
+                content+=$(printf "%b⏳%b Worker '%s' connecting...\n" "$UI_WARN" "$UI_NC" "$worker_name")
+            else
+                content+=$(printf "%b○%b Worker '%s' (%s)\n" "$UI_FG_DIM" "$UI_NC" "$worker_name" "$worker_status")
+            fi
+        else
+            content+=$(printf "%b○%b No workers\n" "$UI_FG_DIM" "$UI_NC")
+        fi
+
+        # Target status
+        if [[ $TARGET_COUNT -gt 0 ]]; then
+            content+=$(printf "%b✓%b Targets: %d\n" "$UI_OK" "$UI_NC" "$TARGET_COUNT")
+        else
+            content+=$(printf "%b○%b No targets\n" "$UI_FG_DIM" "$UI_NC")
+        fi
+    fi
+
+    ui_section "CONNECTION STATUS" "$content"
+
+    if [[ -n "$next_step" ]]; then
+        echo ""
+        printf "  %bNEXT STEP:%b %s\n" "$UI_BOLD" "$UI_NC" "$next_step"
+    fi
+    echo ""
+}
+
+# Render hierarchy view (new model: Org/Hub/AppSpace/Unit)
+render_hierarchy_new() {
+    local space="${1:-$DEFAULT_SPACE}"
+
+    if ! $HAS_AUTH; then
+        return
+    fi
+
+    local content=""
+
+    # Org level
+    content+=$(printf "%bOrg:%b %s\n" "$UI_BOLD" "$UI_NC" "$ORG_NAME")
+
+    # Hub level (Platform Hub)
+    content+=$(printf "└─ %bPlatform Hub:%b %s\n" "$UI_BOLD" "$UI_NC" "$HUB_NAME")
+
+    # AppSpace level
+    if [[ -n "$space" ]]; then
+        content+=$(printf "   └─ %bAppSpace:%b %s\n" "$UI_BOLD" "$UI_NC" "$space")
+
+        # Units
+        if [[ $UNIT_COUNT -eq 0 ]]; then
+            content+=$(printf "      %b(no units)%b\n" "$UI_FG_DIM" "$UI_NC")
+        fi
+    else
+        content+=$(printf "   %b(no space selected)%b\n" "$UI_FG_DIM" "$UI_NC")
+    fi
+
+    ui_section "HIERARCHY (New Model)" "$content"
+
+    # Print units separately since subshell doesn't work well with content var
+    if [[ $UNIT_COUNT -gt 0 ]] && [[ -n "$space" ]]; then
+        # Use same fields as map-confighub: UnitStatus.SyncStatus, UnitStatus.Drift
+        echo "$UNITS_JSON" | jq -r '.[] | "\(.Unit.Slug)|\(.UnitStatus.Status // "-")|\(.Target.Slug // "-")|\(.UnitStatus.SyncStatus // "InSync")|\(.UnitStatus.Drift // "NotDrifted")"' | while IFS='|' read -r slug status target sync_status drift; do
+            local status_icon drift_icon=""
+
+            # Unit status icon (from ConfigHub status)
+            if [[ "$status" == "Error" ]]; then
+                status_icon=$(printf "%b✗%b" "$UI_ERR" "$UI_NC")
+            elif [[ "$sync_status" == "OutOfSync" || "$drift" == "Drifted" ]]; then
+                status_icon=$(printf "%b⚠%b" "$UI_WARN" "$UI_NC")
+                drift_icon=$(printf " %b[DRIFTED]%b" "$UI_WARN" "$UI_NC")
+            elif [[ "$status" == "Ready" || "$status" == "Applied" ]]; then
+                status_icon=$(printf "%b✓%b" "$UI_OK" "$UI_NC")
+            else
+                status_icon=$(printf "%b○%b" "$UI_FG_DIM" "$UI_NC")
+            fi
+
+            printf "      └─ %bUnit:%b %s %s%s\n" "$UI_BOLD" "$UI_NC" "$slug" "$status_icon" "$drift_icon"
+            printf "            ├─ Status: %s\n" "$status"
+            printf "            └─ Target: %s\n" "$target"
+        done
+    fi
+    echo ""
+}
+
+# Render drift section with handoff commands
+render_drift_section() {
+    local content=""
+    local has_drift=false
+
+    # Connected mode: use ConfigHub unit status
+    if $HAS_AUTH && [[ $UNIT_COUNT -gt 0 ]]; then
+        if [[ $DRIFT_COUNT -eq 0 ]] && [[ $PROBLEM_COUNT -eq 0 ]]; then
+            return
+        fi
+
+        # Show drifted units from ConfigHub data
+        while IFS='|' read -r slug sync_status drift; do
+            [[ -z "$slug" ]] && continue
+            [[ "$sync_status" != "OutOfSync" && "$drift" != "Drifted" ]] && continue
+
+            content+=$(printf "%b⚠%b %s — " "$UI_WARN" "$UI_NC" "$slug")
+            content+=$(printf "%bdrifted%b\n" "$UI_WARN" "$UI_NC")
+            has_drift=true
+        done < <(echo "$UNITS_JSON" | jq -r '.[] | "\(.Unit.Slug)|\(.UnitStatus.SyncStatus // "InSync")|\(.UnitStatus.Drift // "NotDrifted")"')
+
+    # Standalone mode: use local GitOps CLI
+    elif [[ -n "$NAMESPACE" ]] && [[ ${#LOCAL_DRIFT_STATUS[@]} -gt 0 ]]; then
+        for ns in "${!LOCAL_DRIFT_STATUS[@]}"; do
+            local status="${LOCAL_DRIFT_STATUS[$ns]}"
+            if [[ "$status" == "drifted" ]]; then
+                content+=$(printf "%b⚠%b %s — " "$UI_WARN" "$UI_NC" "$ns")
+                content+=$(printf "%bdrifted%b\n" "$UI_WARN" "$UI_NC")
+                has_drift=true
+            fi
+        done
+    fi
+
+    if $has_drift && [[ -n "$content" ]]; then
+        echo ""
+        ui_section "DRIFT DETECTED" "$content"
+
+        # Handoff commands based on detected tool
+        printf "  %bHandoff:%b Use your GitOps tool to investigate/resolve:\n" "$UI_BOLD" "$UI_NC"
+        if [[ "$LOCAL_GITOPS_TOOL" == "argocd" ]]; then
+            printf "    argocd app diff <app-name>\n"
+            printf "    argocd app sync <app-name>  # to resolve\n"
+        elif [[ "$LOCAL_GITOPS_TOOL" == "flux" ]]; then
+            printf "    flux diff kustomization <name> -n flux-system\n"
+            printf "    flux reconcile kustomization <name>  # to resolve\n"
+        else
+            printf "    ArgoCD:  argocd app diff <app-name>\n"
+            printf "    Flux:    flux diff kustomization <name> -n flux-system\n"
+        fi
+        if $HAS_AUTH; then
+            printf "    GUI:     https://confighub.com (merge tools)\n"
+        fi
+    fi
+}
+
+# Render hierarchy view (old model: Org/Space/Unit)
+render_hierarchy_old() {
+    local space="${1:-$DEFAULT_SPACE}"
+
+    if ! $HAS_AUTH; then
+        return
+    fi
+
+    local content=""
+
+    # Org level
+    content+=$(printf "%bOrg:%b %s\n" "$UI_BOLD" "$UI_NC" "$ORG_NAME")
+
+    # Space level
+    if [[ -n "$space" ]]; then
+        content+=$(printf "└─ %bSpace:%b %s\n" "$UI_BOLD" "$UI_NC" "$space")
+
+        # Units
+        if [[ $UNIT_COUNT -gt 0 ]]; then
+            content+=$(printf "   └─ Units: %d\n" "$UNIT_COUNT")
+        else
+            content+=$(printf "   %b(no units)%b\n" "$UI_FG_DIM" "$UI_NC")
+        fi
+    else
+        content+=$(printf "%b(no space selected)%b\n" "$UI_FG_DIM" "$UI_NC")
+    fi
+
+    ui_section "HIERARCHY (Old Model)" "$content"
+    echo ""
+}
+
+# Render worker pipeline
+render_worker_pipeline() {
+    if ! $HAS_AUTH || [[ $WORKER_COUNT -eq 0 ]]; then
+        return
+    fi
+
+    local worker_name worker_status kube_context
+    worker_name=$(echo "$WORKERS_JSON" | jq -r '.[0].BridgeWorker.Slug // "unknown"')
+    worker_status=$(echo "$WORKERS_JSON" | jq -r '.[0].BridgeWorker.Condition // "unknown"')
+    kube_context=$(kubectl config current-context 2>/dev/null || echo "unknown")
+
+    local pipeline_status="ok"
+    [[ "$worker_status" != "Ready" ]] && pipeline_status="warn"
+
+    echo "  Worker Pipeline:"
+    ui_pipeline "$pipeline_status" "Hub" "$worker_name" "$kube_context"
+    echo ""
+}
+
+# Render all-set message
+render_all_set() {
+    if $HAS_AUTH && [[ $UNIT_COUNT -gt 0 ]] && [[ $WORKER_COUNT -gt 0 ]] && [[ $TARGET_COUNT -gt 0 ]]; then
+        local worker_status
+        worker_status=$(echo "$WORKERS_JSON" | jq -r '.[0].BridgeWorker.Condition // "unknown"')
+
+        if [[ "$worker_status" == "Ready" ]]; then
+            echo ""
+            printf "  %b🎉 ALL SET!%b\n" "$UI_OK" "$UI_NC"
+            printf "  Open: %bhttps://confighub.com%b\n" "$UI_BOLD" "$UI_NC"
+            echo ""
+        fi
+    fi
+}
+
+# Render next steps
+render_next_steps() {
+    if ! $HAS_CUB; then
+        return
+    fi
+
+    if ! $HAS_AUTH; then
+        return
+    fi
+
+    echo "  ${UI_FG_DIM}Next steps:${UI_NC}"
+
+    if [[ $UNIT_COUNT -eq 0 ]]; then
+        echo "    cub-agent import --namespace <ns>    # Import workloads"
+    fi
+
+    if [[ $WORKER_COUNT -eq 0 ]] && [[ $UNIT_COUNT -gt 0 ]]; then
+        echo "    cub worker run dev                   # Start worker"
+    fi
+
+    local worker_status
+    worker_status=$(echo "$WORKERS_JSON" | jq -r '.[0].BridgeWorker.Condition // ""')
+    if [[ "$worker_status" == "Ready" ]] && [[ $UNIT_COUNT -gt 0 ]]; then
+        echo "    Sync via your deployer:"
+        echo "      ArgoCD:  argocd app sync <app-name>"
+        echo "      Flux:    flux reconcile kustomization <name>"
+    fi
+
+    echo ""
+}
+
+# Main render function
+render_all() {
+    render_header
+    render_connection_status
+
+    if $HAS_AUTH; then
+        local space="${SPACE:-$DEFAULT_SPACE}"
+
+        if [[ "$MODEL_VIEW" == "new" ]]; then
+            render_hierarchy_new "$space"
+        else
+            render_hierarchy_old "$space"
+        fi
+
+        render_worker_pipeline
+        render_drift_section
+        render_all_set
+        render_next_steps
+    elif [[ -n "$NAMESPACE" ]]; then
+        # Standalone mode: show namespace info and drift status
+        echo ""
+        printf "  %bNamespace:%b %s\n" "$UI_BOLD" "$UI_NC" "$NAMESPACE"
+        printf "  %bGitOps tool:%b %s\n" "$UI_BOLD" "$UI_NC" "${LOCAL_GITOPS_TOOL:-unknown}"
+
+        local ns_drift="${LOCAL_DRIFT_STATUS[$NAMESPACE]:-unknown}"
+        local drift_icon
+        case "$ns_drift" in
+            synced) drift_icon=$(printf "%b✓%b synced" "$UI_OK" "$UI_NC") ;;
+            drifted) drift_icon=$(printf "%b⚠%b DRIFTED" "$UI_WARN" "$UI_NC") ;;
+            *) drift_icon=$(printf "%b○%b unknown" "$UI_FG_DIM" "$UI_NC") ;;
+        esac
+        printf "  %bDrift status:%b %s\n" "$UI_BOLD" "$UI_NC" "$drift_icon"
+        echo ""
+
+        render_drift_section
+    fi
+
+    printf "  %bLog:%b %s\n" "$UI_FG_DIM" "$UI_NC" "$LOG_FILE"
+    echo ""
+    printf "  %bKeys: [n]ew model [o]ld model [r]efresh [q]uit%b\n" "$UI_FG_DIM" "$UI_NC"
+}
+
+#=============================================================================
+# MAIN
+#=============================================================================
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --namespace|-n)
+                NAMESPACE="$2"
+                DO_IMPORT=true
+                shift 2
+                ;;
+            --namespace=*|-n=*)
+                NAMESPACE="${1#*=}"
+                DO_IMPORT=true
+                shift
+                ;;
+            --space|-s)
+                SPACE="$2"
+                shift 2
+                ;;
+            --space=*|-s=*)
+                SPACE="${1#*=}"
+                shift
+                ;;
+            --model)
+                MODEL_VIEW="$2"
+                shift 2
+                ;;
+            --help|-h)
+                echo "Usage: map-import [options]"
+                echo ""
+                echo "Options:"
+                echo "  --namespace, -n <ns>    Import from namespace"
+                echo "  --space, -s <space>     Show specific space"
+                echo "  --model <new|old>       Hierarchy model view"
+                echo "  --help, -h              Show this help"
+                exit 0
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+}
+
+main() {
+    parse_args "$@"
+
+    init_logging
+    log "Starting TUI"
+
+    check_auth
+
+    # Determine which space to show
+    local target_space="${SPACE:-$DEFAULT_SPACE}"
+
+    if $HAS_AUTH && [[ -n "$target_space" ]]; then
+        collect_space_data "$target_space"
+    elif [[ -n "$NAMESPACE" ]]; then
+        # Standalone mode: check drift directly via GitOps CLI
+        collect_standalone_drift "$NAMESPACE"
+    fi
+
+    # Interactive loop
+    while true; do
+        render_all
+
+        # Read single keypress
+        read -rsn1 key
+
+        case "$key" in
+            n|N)
+                MODEL_VIEW="new"
+                log "Switched to new model view"
+                ;;
+            o|O)
+                MODEL_VIEW="old"
+                log "Switched to old model view"
+                ;;
+            r|R)
+                log "Refreshing data..."
+                check_auth
+                if $HAS_AUTH && [[ -n "$target_space" ]]; then
+                    collect_space_data "$target_space"
+                fi
+                ;;
+            q|Q)
+                log "Exiting"
+                clear
+                echo "Goodbye!"
+                exit 0
+                ;;
+        esac
+    done
+}
+
+main "$@"

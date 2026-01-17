@@ -1,0 +1,16 @@
+# Evasion attempt 02: Service with empty selector (matches nothing)
+# Current behavior: Empty selector is skipped (headless services, ExternalName)
+# Evasion: Empty selector with ClusterIP should be flagged as it matches no pods
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: evasion-empty-selector
+  namespace: default
+spec:
+  type: ClusterIP
+  selector: {}
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080

@@ -1,0 +1,46 @@
+# Edge case 05: Ingress with multiple paths, some valid some not
+# Tests: Does detection find ALL invalid paths, not just first?
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valid-service
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: dummy
+  ports:
+  - port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: edge-ingress-multi-path
+  namespace: default
+spec:
+  rules:
+  - host: multi.example.com
+    http:
+      paths:
+      - path: /valid
+        pathType: Prefix
+        backend:
+          service:
+            name: valid-service
+            port:
+              number: 80
+      - path: /invalid1
+        pathType: Prefix
+        backend:
+          service:
+            name: nonexistent-service-1
+            port:
+              number: 80
+      - path: /invalid2
+        pathType: Prefix
+        backend:
+          service:
+            name: nonexistent-service-2
+            port:
+              number: 80

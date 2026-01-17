@@ -1,0 +1,49 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kyverno
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: prometheus
+  targetNamespace: kyverno
+  interval: 1h
+  chart:
+    spec:
+      chart: kyverno
+      version: "3.1.4"
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno
+        namespace: flux-system
+  install:
+    crds: CreateReplace
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    admissionController:
+      replicas: 1
+    backgroundController:
+      replicas: 1
+    cleanupController:
+      replicas: 1
+    reportsController:
+      replicas: 1
+    cleanupJobs:
+      admissionReports:
+        image:
+          registry: docker.io
+          repository: bitnami/kubectl
+          tag: "1.31"
+      clusterAdmissionReports:
+        image:
+          registry: docker.io
+          repository: bitnami/kubectl
+          tag: "1.31"
+    serviceMonitor:
+      enabled: false

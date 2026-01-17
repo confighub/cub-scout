@@ -1,0 +1,52 @@
+# Expected Output: scenario orphan-hunt
+# Mode: Standalone
+
+name: "scenario orphan-hunt"
+description: "Find and fix orphan resources"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  - id: scenario_orphan
+    command: "./test/atk/demo scenario orphan-hunt"
+    description: "Demo finding orphan resources"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(orphan|Native|mystery)"
+          description: "Orphan hunt theme"
+
+      not_contains:
+        - "panic"
+
+      assertions:
+        - name: "scenario_runs"
+          condition: "exit_code == 0"
+          description: "Scenario completes"
+
+    instructions: |
+      Find orphan resources (no GitOps owner):
+      ```bash
+      ./test/atk/demo scenario orphan-hunt
+      ```
+
+      Orphans are resources with "Native" ownership -
+      applied via kubectl, not managed by GitOps.
+
+# Sample output
+sample_output: |
+  Scenario: What's this mystery-app?
+
+  Monday morning. FinOps asks: 'What's running that shouldn't be?'
+
+  Running: ./test/atk/map
+
+  Notice the 'Native' resources?
+  These are orphans - no GitOps owner, probably kubectl'd at 2am

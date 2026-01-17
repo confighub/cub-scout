@@ -1,0 +1,19 @@
+# Operations stack - dev environment overrides
+
+# keda dev overrides
+keda:
+  replicaCount: 1
+
+  resources:
+    operator:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+    metricServer:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        memory: 128Mi

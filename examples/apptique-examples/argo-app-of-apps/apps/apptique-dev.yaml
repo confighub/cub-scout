@@ -1,0 +1,28 @@
+# Child Application - Apptique Dev
+# Managed by the root apptique-apps Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apptique-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: apptique
+    app.kubernetes.io/instance: apptique-dev
+    environment: dev
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/confighubai/confighub-agent.git
+    targetRevision: HEAD
+    path: examples/apptique-examples/argo-app-of-apps/manifests/apptique/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apptique-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

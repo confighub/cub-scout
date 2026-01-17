@@ -1,0 +1,582 @@
+
+   🔥 8 FAILURE(S)   atk
+
+  Deployers  0/6
+  Workloads  16/20
+
+  PROBLEMS
+  ────────────────────────────────────────────────
+✗ Kustomization/example-app  ArtifactFailed
+✗ HelmRelease/redis-cache  SourceNotReady
+✗ HelmRelease/redis-sessions  SourceNotReady
+✗ Application/frontend-app  null
+⏸ Kustomization/monitoring-stack  suspended
+⏸ Kustomization/security-policies  suspended
+✗ confighub/flux-bridge  0/1 pods
+✗ demo-orders/order-processor  0/2 pods
+✗ demo-payments/frontend  0/2 pods
+✗ demo-payments/payment-api  0/3 pods
+
+  PIPELINES
+  ────────────────────────────────────────────────
+✗ ?@?  →  example-app  →  0 resources
+✗ ?@?  →  example-app  →  0 resources
+⏸ company/infrastructure@main  →  monitoring-stack  →  0 resources
+⏸ ?@?  →  monitoring-stack  →  0 resources
+⏸ ?@?  →  security-policies  →  0 resources
+⏸ acme-corp/platform-apps@main  →  security-policies  →  0 resources
+✗ company/frontend/k8s@HEAD  →  frontend-app  →  demo-payments
+
+  OWNERSHIP
+  ────────────────────────────────────────────────
+  Argo(2) ConfigHub(2) Helm(1) Native(15)
+  █████░░░░░░░░░░░░░░░
+
+  ConfigHub Hierarchy:
+  Org → Space → Unit (with Resources, Targets, Workers)
+
+  ConfigHub (org: org_01jm0z3vhwetcv0hbjnrh6t0bc)
+    └── space17249 (1 units, 0 targets, 0 workers)
+      ├── myns @ rev 6
+    └── platform-dev (0 units, 21 targets, 1 workers)
+    └── appchat-prod (4 units, 0 targets, 0 workers)
+      ├── appchat-ns @ rev 2
+      ├── backend @ rev 6
+      ├── database @ rev 3
+      ├── frontend @ rev 4
+    └── apptique-dev (11 units, 0 targets, 0 workers)
+      ├── cartservice @ rev 5
+      ├── recommendationservice @ rev 5
+      ├── adservice @ rev 5
+      ├── apptique-ns @ rev 2
+      ├── frontend @ rev 6
+      └── ... and 6 more units
+    └── space2539 (1 units, 0 targets, 1 workers)
+      ├── myns @ rev 6
+    └── space26998 (1 units, 0 targets, 1 workers)
+      ├── myns @ rev 6
+    └── trigclone-space2539 (0 units, 0 targets, 0 workers)
+    └── space24375 (1 units, 0 targets, 1 workers)
+      ├── myns @ rev 6
+    └── app24820 (2 units, 0 targets, 0 workers)
+      ├── intense @ rev 5
+      ├── intense-ns @ rev 4
+    └── app8248 (2 units, 0 targets, 0 workers)
+      ├── unpaining @ rev 5
+      ├── unpaining-ns @ rev 4
+    └── app3407 (1 units, 0 targets, 0 workers)
+      ├── indistinguishability @ rev 3
+    └── app29226 (2 units, 0 targets, 0 workers)
+      ├── nonacceding @ rev 4
+      ├── nonacceding-ns @ rev 4
+    └── app30905 (2 units, 0 targets, 0 workers)
+      ├── curdiness @ rev 5
+      ├── curdiness-ns @ rev 4
+    └── app2532 (2 units, 0 targets, 0 workers)
+      ├── martensitic @ rev 5
+      ├── martensitic-ns @ rev 4
+    └── app25772 (2 units, 0 targets, 0 workers)
+      ├── hoodlumize @ rev 5
+      ├── hoodlumize-ns @ rev 4
+    └── app13988 (2 units, 0 targets, 0 workers)
+      ├── hypnoidize @ rev 5
+      ├── hypnoidize-ns @ rev 4
+    └── app3269 (2 units, 0 targets, 0 workers)
+      ├── page @ rev 5
+      ├── page-ns @ rev 4
+    └── app14525 (2 units, 0 targets, 0 workers)
+      ├── displayed @ rev 4
+      ├── displayed-ns @ rev 4
+    └── app10086 (2 units, 0 targets, 0 workers)
+      ├── scatoscopy @ rev 6
+      ├── scatoscopy-ns @ rev 4
+    └── app32727 (2 units, 0 targets, 0 workers)
+      ├── metropathic @ rev 5
+      ├── metropathic-ns @ rev 4
+    └── app7012 (2 units, 0 targets, 0 workers)
+      ├── collation @ rev 5
+      ├── collation-ns @ rev 4
+    └── app11608 (2 units, 0 targets, 0 workers)
+      ├── judgelike @ rev 5
+      ├── judgelike-ns @ rev 4
+    └── app30288 (2 units, 0 targets, 0 workers)
+      ├── churchlet @ rev 5
+      ├── churchlet-ns @ rev 4
+    └── app20878 (2 units, 0 targets, 0 workers)
+      ├── anta @ rev 4
+      ├── anta-ns @ rev 4
+    └── app31621 (3 units, 0 targets, 0 workers)
+      ├── fistulator @ rev 2
+      ├── fistulatous @ rev 5
+      ├── fistulatous-ns @ rev 4
+    └── app20385 (2 units, 0 targets, 0 workers)
+      ├── circumscript @ rev 4
+      ├── circumscript-ns @ rev 2
+    └── playful-cub (0 units, 0 targets, 0 workers)
+    └── playful-cub-infra (10 units, 1 targets, 1 workers)
+      ├── ns-asia-staging @ rev 2 → cluster-target
+      ├── ns-us-staging @ rev 2 → cluster-target
+      ├── ns-qa @ rev 2 → cluster-target
+      ├── ns-eu-prod @ rev 2 → cluster-target
+      ├── ns-us-prod @ rev 2 → cluster-target
+      └── ... and 5 more units
+    └── playful-cub-qa (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 5 → cluster-target
+      ├── frontend @ rev 5 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── postgres @ rev 2 → cluster-target
+    └── playful-cub-us-prod (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 5 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+    └── playful-cub-eu-prod (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 5 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+    └── playful-cub-asia-prod (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 5 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+    └── ai-interview (0 units, 0 targets, 0 workers)
+    └── cloud-bear (0 units, 0 targets, 0 workers)
+    └── acorn-bear-infra (8 units, 1 targets, 1 workers)
+      ├── nginx @ rev 1 → cluster-target
+      ├── ns-us-staging @ rev 2 → cluster-target
+      ├── ns-asia-staging @ rev 2 → cluster-target
+      ├── ns-eu-prod @ rev 2 → cluster-target
+      ├── ns-us-prod @ rev 2 → cluster-target
+      └── ... and 3 more units
+    └── acorn-bear-eu-staging (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 4 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+    └── acorn-bear-asia-prod (4 units, 0 targets, 0 workers)
+      ├── postgres @ rev 3 → cluster-target
+      ├── backend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+    └── alexis-actions-bridge (1 units, 0 targets, 0 workers)
+      ├── cub-helm-cert-manager-wf @ rev 6
+    └── actions-cert-manager (0 units, 5 targets, 1 workers)
+    └── cloud-bear-base (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 1
+      ├── frontend @ rev 1
+      ├── ollama @ rev 1
+      ├── postgres @ rev 1
+    └── cloud-bear-infra (10 units, 1 targets, 1 workers)
+      ├── ns-us-staging @ rev 2 → cluster-target
+      ├── ns-eu-staging @ rev 2 → cluster-target
+      ├── ns-eu-prod @ rev 2 → cluster-target
+      ├── ns-qa @ rev 2 → cluster-target
+      ├── nginx-base @ rev 1
+      └── ... and 5 more units
+    └── acorn-bear-us-staging (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 4 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+    └── acorn-bear-eu-prod (4 units, 0 targets, 0 workers)
+      ├── postgres @ rev 3 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── backend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+    └── fuzzy-face-traderx-prod-asia (2 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 4
+      ├── trade-service @ rev 4
+    └── fuzzy-face-traderx-dev (2 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 2
+      ├── trade-service @ rev 2
+    └── fuzzy-face-traderx-staging (2 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 2
+      ├── trade-service @ rev 2
+    └── cloud-bear-eu-staging (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 6 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+    └── sunrise-cub-cost-optimizer-base (3 units, 0 targets, 0 workers)
+      ├── nginx-web @ rev 1
+      ├── postgres-db @ rev 1
+      ├── redis-cache @ rev 1
+    └── sunrise-cub-cost-optimizer-filters (0 units, 0 targets, 0 workers)
+    └── happy-paws-cost-optimizer (0 units, 0 targets, 0 workers)
+    └── space16633 (1 units, 0 targets, 0 workers)
+      ├── myns @ rev 6
+    └── drift-detector-1758540677 (3 units, 0 targets, 0 workers)
+      ├── backend-api-fix @ rev 1
+      ├── frontend-web-fix @ rev 1
+      ├── k8s-target @ rev 1
+    └── drift-detector-1758540677-filters (0 units, 0 targets, 0 workers)
+    └── fluffy-puffy-drift-detector-filters (0 units, 0 targets, 0 workers)
+    └── fluffy-puffy-drift-detector-base (4 units, 0 targets, 0 workers)
+      ├── drift-detector-deployment @ rev 1
+      ├── drift-detector-rbac @ rev 1
+      ├── drift-detector-service @ rev 1
+      ├── namespace @ rev 1
+    └── fluffy-puffy-drift-detector-staging (4 units, 0 targets, 0 workers)
+      ├── drift-detector-rbac @ rev 1
+      ├── drift-detector-service @ rev 1
+      ├── namespace @ rev 1
+      ├── drift-detector-deployment @ rev 1
+    └── fluffy-puffy-drift-detector-us-prod (4 units, 0 targets, 0 workers)
+      ├── drift-detector-deployment @ rev 1
+      ├── drift-detector-rbac @ rev 1
+      ├── drift-detector-service @ rev 1
+      ├── namespace @ rev 1
+    └── pine-cub-cost-optimizer (0 units, 0 targets, 0 workers)
+    └── happy-claws-us-staging (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 7
+      ├── frontend @ rev 5
+      ├── ollama @ rev 4
+      ├── postgres @ rev 4
+    └── happy-claws-asia-staging (4 units, 0 targets, 0 workers)
+      ├── postgres @ rev 4
+      ├── frontend @ rev 5
+      ├── backend @ rev 7
+      ├── ollama @ rev 4
+    └── space28044 (0 units, 0 targets, 0 workers)
+    └── space13004 (1 units, 0 targets, 1 workers)
+      ├── myns @ rev 6
+    └── sweet-growl-traderx-base (17 units, 0 targets, 0 workers)
+      ├── namespace @ rev 1
+      ├── reference-data-service @ rev 1
+      ├── reference-data-deployment @ rev 1
+      ├── people-service-deployment @ rev 1
+      ├── people-service-service @ rev 1
+      └── ... and 12 more units
+    └── sweet-growl-traderx-dev (20 units, 1 targets, 1 workers)
+      ├── trade-service-service @ rev 2 → k8s-sweet-growl-traderx-worker-dev
+      ├── service-account @ rev 1 → k8s-sweet-growl-traderx-worker-dev
+      ├── reference-data-service @ rev 2 → k8s-sweet-growl-traderx-worker-dev
+      ├── people-service-service @ rev 2 → k8s-sweet-growl-traderx-worker-dev
+      ├── position-service-service @ rev 2 → k8s-sweet-growl-traderx-worker-dev
+      └── ... and 15 more units
+    └── sweet-growl-traderx-prod (17 units, 0 targets, 0 workers)
+      ├── reference-data-deployment @ rev 1
+      ├── account-service-deployment @ rev 1
+      ├── web-gui-service @ rev 1
+      ├── namespace @ rev 1
+      ├── ingress @ rev 1
+      └── ... and 12 more units
+    └── confighub-tck (19 units, 8 targets, 1 workers)
+      ├── test-pod-1760037463 @ rev 1
+      ├── test-pod-1765728031 @ rev 1
+      ├── test-pod @ rev 1
+      ├── test-pod-1759769572 @ rev 1
+      ├── test-pod-1765728243 @ rev 1
+      └── ... and 14 more units
+    └── curious-cub (0 units, 0 targets, 0 workers)
+    └── curious-cub-base (4 units, 0 targets, 0 workers)
+      ├── backend-api @ rev 1
+      ├── cache-service @ rev 1
+      ├── database-service @ rev 1
+      ├── frontend-app @ rev 1
+    └── curious-cub-infra (4 units, 0 targets, 0 workers)
+      ├── ns-staging @ rev 2
+      ├── ns-prod @ rev 2
+      ├── ns-dev @ rev 2
+      ├── ns-base @ rev 1
+    └── curious-cub-dev (4 units, 0 targets, 0 workers)
+      ├── database-service @ rev 2
+      ├── backend-api @ rev 2
+      ├── cache-service @ rev 2
+      ├── frontend-app @ rev 2
+    └── curious-cub-staging (4 units, 0 targets, 0 workers)
+      ├── backend-api @ rev 1
+      ├── cache-service @ rev 1
+      ├── database-service @ rev 1
+      ├── frontend-app @ rev 1
+    └── curious-cub-prod (4 units, 0 targets, 0 workers)
+      ├── backend-api @ rev 1
+      ├── cache-service @ rev 1
+      ├── database-service @ rev 1
+      ├── frontend-app @ rev 1
+    └── drift-detector (0 units, 0 targets, 0 workers)
+    └── fur-fur-traderx-base (19 units, 0 targets, 0 workers)
+      ├── namespace @ rev 1
+      ├── database-deployment @ rev 1
+      ├── database-service @ rev 1
+      ├── reference-data-deployment @ rev 1
+      ├── reference-data-service @ rev 1
+      └── ... and 14 more units
+    └── cloud-bear-qa (4 units, 0 targets, 0 workers)
+      ├── frontend @ rev 3 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── backend @ rev 4 → cluster-target
+      ├── postgres @ rev 2 → cluster-target
+    └── cloud-bear-eu-prod (4 units, 0 targets, 0 workers)
+      ├── postgres @ rev 3 → cluster-target
+      ├── backend @ rev 5 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+    └── sweet-cub-traderx (1 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 2
+    └── trigclone-space16633 (0 units, 0 targets, 0 workers)
+    └── happy-claws-us-prod (4 units, 0 targets, 0 workers)
+      ├── postgres @ rev 4
+      ├── ollama @ rev 4
+      ├── backend @ rev 6
+      ├── frontend @ rev 5
+    └── happy-claws-asia-prod (4 units, 0 targets, 0 workers)
+      ├── ollama @ rev 4
+      ├── frontend @ rev 5
+      ├── postgres @ rev 4
+      ├── backend @ rev 6
+    └── platform-prod (0 units, 7 targets, 1 workers)
+    └── appvote-dev (6 units, 0 targets, 0 workers)
+      ├── redis @ rev 4
+      ├── worker @ rev 4
+      ├── vote @ rev 5
+      ├── result @ rev 5
+      ├── db @ rev 4
+      └── ... and 1 more units
+    └── default (0 units, 0 targets, 0 workers)
+    └── playful-cub-base (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 1
+      ├── frontend @ rev 1
+      ├── ollama @ rev 1
+      ├── postgres @ rev 1
+    └── trigclone-space24375 (0 units, 0 targets, 0 workers)
+    └── playful-cub-us-staging (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 6 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+    └── playful-cub-eu-staging (4 units, 0 targets, 0 workers)
+      ├── frontend @ rev 4 → cluster-target
+      ├── backend @ rev 6 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+    └── playful-cub-asia-staging (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 6 → cluster-target
+      ├── frontend @ rev 4 → cluster-target
+      ├── ollama @ rev 3 → cluster-target
+      ├── postgres @ rev 3 → cluster-target
+    └── cuddly-tail-traderx-filters (0 units, 0 targets, 0 workers)
+    └── honey-cub-traderx-filters (0 units, 0 targets, 0 workers)
+    └── sweet-growl-traderx-filters (0 units, 0 targets, 0 workers)
+    └── sweet-growl-traderx-staging (17 units, 0 targets, 0 workers)
+      ├── ingress @ rev 1
+      ├── people-service-deployment @ rev 1
+      ├── trade-feed-deployment @ rev 1
+      ├── trade-service-deployment @ rev 1
+      ├── web-gui-deployment @ rev 1
+      └── ... and 12 more units
+    └── traderx (1 units, 1 targets, 1 workers)
+      ├── reference-data @ rev 1 → worker
+    └── other-space2539 (0 units, 0 targets, 0 workers)
+    └── tutorial (2 units, 22 targets, 2 workers)
+      ├── chatapp-dev @ rev 5 → k8s-dev
+      ├── prodchatapp-dev @ rev 2 → k8s-dev
+    └── home (0 units, 0 targets, 0 workers)
+    └── appchat-dev (4 units, 0 targets, 0 workers)
+      ├── database @ rev 3
+      ├── appchat-ns @ rev 2
+      ├── backend @ rev 5
+      ├── frontend @ rev 4
+    └── appvote-prod (6 units, 0 targets, 0 workers)
+      ├── appvote-ns @ rev 2
+      ├── db @ rev 3
+      ├── vote @ rev 4
+      ├── result @ rev 4
+      ├── redis @ rev 3
+      └── ... and 1 more units
+    └── apptique-prod (11 units, 0 targets, 0 workers)
+      ├── cartservice @ rev 3
+      ├── apptique-ns @ rev 2
+      ├── checkoutservice @ rev 3
+      ├── frontend @ rev 4
+      ├── currencyservice @ rev 3
+      └── ... and 6 more units
+    └── triggerspace (1 units, 0 targets, 0 workers)
+      ├── triggerspace-ns @ rev 1
+    └── salmon-cub-traderx-base (20 units, 0 targets, 0 workers)
+      ├── service-account @ rev 1
+      ├── account-service-service @ rev 1
+      ├── people-service-deployment @ rev 1
+      ├── people-service-service @ rev 1
+      ├── position-service-deployment @ rev 1
+      └── ... and 15 more units
+    └── salmon-cub-traderx-filters (0 units, 0 targets, 0 workers)
+    └── salmon-cub-traderx-dev (20 units, 8 targets, 1 workers)
+      ├── service-account @ rev 2 → k8s-salmon-cub-traderx-worker-dev
+      ├── people-service-service @ rev 2 → k8s-salmon-cub-traderx-worker-dev
+      ├── web-gui-service @ rev 2 → k8s-salmon-cub-traderx-worker-dev
+      ├── database-service @ rev 1 → k8s-salmon-cub-traderx-worker-dev
+      ├── trade-feed-service @ rev 2 → k8s-salmon-cub-traderx-worker-dev
+      └── ... and 15 more units
+    └── salmon-cub-traderx-staging (19 units, 0 targets, 0 workers)
+      ├── namespace @ rev 1
+      ├── account-service-service @ rev 1
+      ├── reference-data-service @ rev 1
+      ├── trade-service-service @ rev 1
+      ├── trade-feed-service @ rev 1
+      └── ... and 14 more units
+    └── salmon-cub-traderx-prod (19 units, 0 targets, 0 workers)
+      ├── trade-feed-service @ rev 1
+      ├── trade-service-service @ rev 1
+      ├── position-service-service @ rev 1
+      ├── database-service @ rev 1
+      ├── web-gui-service @ rev 1
+      └── ... and 14 more units
+    └── sleepy-snout-traderx-base (19 units, 0 targets, 0 workers)
+      ├── trade-processor-deployment @ rev 1
+      ├── trade-service-deployment @ rev 1
+      ├── namespace @ rev 1
+      ├── trade-service-service @ rev 1
+      ├── database-deployment @ rev 1
+      └── ... and 14 more units
+    └── sleepy-snout-traderx-filters (0 units, 0 targets, 0 workers)
+    └── sleepy-snout-traderx-dev (20 units, 8 targets, 1 workers)
+      ├── people-service-service @ rev 2 → k8s-sleepy-snout-traderx-worker-dev
+      ├── trade-feed-service @ rev 2 → k8s-sleepy-snout-traderx-worker-dev
+      ├── trade-service-deployment @ rev 2 → k8s-sleepy-snout-traderx-worker-dev
+      ├── reference-data-deployment @ rev 2 → k8s-sleepy-snout-traderx-worker-dev
+      ├── database-deployment @ rev 1 → k8s-sleepy-snout-traderx-worker-dev
+      └── ... and 15 more units
+    └── sleepy-snout-traderx-staging (19 units, 0 targets, 0 workers)
+      ├── reference-data-service @ rev 1
+      ├── namespace @ rev 1
+      ├── web-gui-service @ rev 1
+      ├── position-service-service @ rev 1
+      ├── trade-service-service @ rev 1
+      └── ... and 14 more units
+    └── sleepy-snout-traderx-prod (19 units, 0 targets, 0 workers)
+      ├── trade-service-deployment @ rev 1
+      ├── namespace @ rev 1
+      ├── reference-data-deployment @ rev 1
+      ├── ingress @ rev 1
+      ├── account-service-service @ rev 1
+      └── ... and 14 more units
+    └── purr-purr-drift-detector (0 units, 0 targets, 0 workers)
+    └── purr-purr-drift-detector-filters (0 units, 0 targets, 0 workers)
+    └── purr-purr-drift-detector-base (4 units, 8 targets, 1 workers)
+      ├── drift-detector-deployment @ rev 1 → k8s-devops-test-worker
+      ├── drift-detector-rbac @ rev 1 → k8s-devops-test-worker
+      ├── drift-detector-service @ rev 1 → k8s-devops-test-worker
+      ├── namespace @ rev 1 → k8s-devops-test-worker
+    └── tutorial-1765708442 (2 units, 8 targets, 1 workers)
+      ├── chatapp-dev @ rev 5
+      ├── chatapp-prod @ rev 3
+    └── mellow-muzzle-traderx (1 units, 8 targets, 1 workers)
+      ├── reference-data @ rev 1 → k8s-mellow-muzzle-traderx-worker
+    └── mellow-muzzle-traderx-dev (1 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 2 → k8s-mellow-muzzle-traderx-worker
+    └── mellow-muzzle-traderx-staging (1 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 2 → k8s-mellow-muzzle-traderx-worker
+    └── mellow-muzzle-traderx-prod (1 units, 0 targets, 1 workers)
+      ├── reference-data @ rev 2 → k8s-mellow-muzzle-traderx-worker
+    └── mellow-muzzle-traderx-base (2 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 1
+      ├── trade-service @ rev 1
+    └── mellow-muzzle-traderx-infra (4 units, 8 targets, 1 workers)
+      ├── ns-base @ rev 1
+      ├── ns-us @ rev 2 → k8s-worker-infra
+      ├── ns-eu @ rev 2 → k8s-worker-infra
+      ├── ns-asia @ rev 2 → k8s-worker-infra
+    └── mellow-muzzle-traderx-prod-us (2 units, 8 targets, 1 workers)
+      ├── reference-data @ rev 3 → k8s-worker-us
+      ├── trade-service @ rev 3 → k8s-worker-us
+    └── mellow-muzzle-traderx-prod-eu (2 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 3
+      ├── trade-service @ rev 3
+    └── mellow-muzzle-traderx-prod-asia (2 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 3
+      ├── trade-service @ rev 3
+    └── fluffy-cub-traderx-base (2 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 1
+      ├── trade-service @ rev 1
+    └── fluffy-cub-traderx-infra (4 units, 0 targets, 1 workers)
+      ├── ns-base @ rev 1
+      ├── ns-us @ rev 2
+      ├── ns-eu @ rev 2
+      ├── ns-asia @ rev 2
+    └── fluffy-cub-traderx-prod-us (2 units, 0 targets, 1 workers)
+      ├── reference-data @ rev 3
+      ├── trade-service @ rev 3
+    └── fluffy-cub-traderx-prod-eu (2 units, 0 targets, 1 workers)
+      ├── reference-data @ rev 3
+      ├── trade-service @ rev 4
+    └── fluffy-cub-traderx-prod-asia (2 units, 0 targets, 1 workers)
+      ├── reference-data @ rev 3
+      ├── trade-service @ rev 4
+    └── forest-cub-traderx (4 units, 8 targets, 1 workers)
+      ├── database @ rev 1 → k8s-forest-cub-traderx-worker
+      ├── reference-data @ rev 1 → k8s-forest-cub-traderx-worker
+      ├── trade-service @ rev 1 → k8s-forest-cub-traderx-worker
+      ├── web-front-end @ rev 1 → k8s-forest-cub-traderx-worker
+    └── forest-cub-traderx-base (2 units, 0 targets, 0 workers)
+      ├── reference-data @ rev 1
+      ├── trade-service @ rev 1
+    └── forest-cub-traderx-infra (4 units, 8 targets, 1 workers)
+      ├── ns-asia @ rev 2 → k8s-worker-infra
+      ├── ns-base @ rev 1
+      ├── ns-eu @ rev 2 → k8s-worker-infra
+      ├── ns-us @ rev 2 → k8s-worker-infra
+    └── forest-cub-traderx-prod-us (2 units, 8 targets, 1 workers)
+      ├── reference-data @ rev 2 → k8s-worker-us
+      ├── trade-service @ rev 3 → k8s-worker-us
+    └── forest-cub-traderx-prod-eu (2 units, 8 targets, 1 workers)
+      ├── reference-data @ rev 2 → k8s-worker-eu
+      ├── trade-service @ rev 4 → k8s-worker-eu
+    └── forest-cub-traderx-prod-asia (2 units, 8 targets, 1 workers)
+      ├── reference-data @ rev 2 → k8s-worker-asia
+      ├── trade-service @ rev 4 → k8s-worker-asia
+    └── tiny-tail-qa (0 units, 1 targets, 1 workers)
+    └── tiny-tail-qa-cubbychat (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 7 → qa
+      ├── frontend @ rev 3 → qa
+      ├── namespace @ rev 1 → qa
+      ├── postgres @ rev 3 → qa
+    └── tiny-tail-us (0 units, 1 targets, 1 workers)
+    └── tiny-tail-us-cubbychat-preprod (4 units, 0 targets, 0 workers)
+      ├── frontend @ rev 3 → us
+      ├── backend @ rev 4 → us
+      ├── postgres @ rev 2 → us
+      ├── namespace @ rev 2 → us
+    └── tiny-tail-us-cubbychat-prod (4 units, 0 targets, 0 workers)
+      ├── namespace @ rev 2 → us
+      ├── backend @ rev 4 → us
+      ├── frontend @ rev 3 → us
+      ├── postgres @ rev 2 → us
+    └── tiny-tail-eu (0 units, 1 targets, 1 workers)
+    └── tiny-tail-eu-cubbychat-preprod (4 units, 0 targets, 0 workers)
+      ├── namespace @ rev 2 → eu
+      ├── postgres @ rev 2 → eu
+      ├── backend @ rev 5 → eu
+      ├── frontend @ rev 3 → eu
+    └── tiny-tail-eu-cubbychat-prod (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 4 → eu
+      ├── frontend @ rev 3 → eu
+      ├── namespace @ rev 2 → eu
+      ├── postgres @ rev 2 → eu
+    └── tiny-tail-asia (0 units, 1 targets, 1 workers)
+    └── tiny-tail-asia-cubbychat-preprod (4 units, 0 targets, 0 workers)
+      ├── backend @ rev 5 → asia
+      ├── frontend @ rev 3 → asia
+      ├── namespace @ rev 2 → asia
+      ├── postgres @ rev 2 → asia
+    └── tiny-tail-asia-cubbychat-prod (4 units, 0 targets, 0 workers)
+      ├── frontend @ rev 3 → asia
+      ├── backend @ rev 4 → asia
+      ├── postgres @ rev 2 → asia
+      ├── namespace @ rev 2 → asia
+
+  ConfigHubOps (org: org_01jr97vt2sffa6pbcz8zac59c6)
+
+  Cubby AI Inc (org: org_01jqjs697mksf4r29a7bxm79hr)
+
+  DP1-Sandbox (org: org_01k0ahwj1ht6dgfsvjs28a4qgw)
+
+  Kubecon NA 2025 CH (org: org_01K7J69W7TZ49CYY7GT9CXNY9R)
+
+  alexis@confighub.com Organization (org: org_01KA4E47YT6AYN1X824ZATS34D)
+
+  Cluster Resources with ConfigHub Labels:
+  orders-prod / order-processor-prod @ rev 89  [demo-orders/order-processor]
+  payments-prod / payment-api-prod @ rev 127  [demo-payments/payment-api]
+

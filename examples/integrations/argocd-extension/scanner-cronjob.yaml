@@ -1,0 +1,144 @@
+# CCVE Scanner CronJob for Argo CD
+# Runs periodically to scan for Config CVEs and stores findings in ConfigMaps
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: confighub-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ccve-scanner
+  namespace: confighub-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ccve-scanner
+rules:
+  # Read Flux resources
+  - apiGroups: ["source.toolkit.fluxcd.io"]
+    resources: ["gitrepositories", "ocirepositories", "helmrepositories", "helmcharts"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["kustomize.toolkit.fluxcd.io"]
+    resources: ["kustomizations"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["helm.toolkit.fluxcd.io"]
+    resources: ["helmreleases"]
+    verbs: ["get", "list", "watch"]
+  # Read Argo CD resources
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications", "applicationsets"]
+    verbs: ["get", "list", "watch"]
+  # Read workloads for drift detection
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["services", "configmaps", "secrets", "pods"]
+    verbs: ["get", "list", "watch"]
+  # Write findings to ConfigMaps
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ccve-scanner
+subjects:
+  - kind: ServiceAccount
+    name: ccve-scanner
+    namespace: confighub-system
+roleRef:
+  kind: ClusterRole
+  name: ccve-scanner
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ccve-scanner
+  namespace: confighub-system
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: ccve-scanner
+          restartPolicy: OnFailure
+          containers:
+            - name: scanner
+              image: ghcr.io/confighub/ccve-scanner:latest
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  # Scan cluster and output JSON
+                  /ccve-scanner --json > /tmp/findings.json
+
+                  # For each Argo CD application, create/update a ConfigMap with findings
+                  kubectl get applications -n argocd -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | while read app; do
+                    # Filter findings for this app's resources
+                    jq --arg app "$app" '[.findings[] | select(.app == $app or .app == null)]' /tmp/findings.json > /tmp/app-findings.json
+
+                    # Create ConfigMap with findings
+                    kubectl create configmap "ccve-findings-$app" \
+                      --namespace argocd \
+                      --from-file=findings=/tmp/app-findings.json \
+                      --dry-run=client -o yaml | kubectl apply -f -
+                  done
+              resources:
+                requests:
+                  memory: "64Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "500m"
+---
+# Optional: API service for real-time queries
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ccve-api
+  namespace: confighub-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ccve-api
+  template:
+    metadata:
+      labels:
+        app: ccve-api
+    spec:
+      serviceAccountName: ccve-scanner
+      containers:
+        - name: api
+          image: ghcr.io/confighub/ccve-scanner:latest
+          command: ["/ccve-scanner", "serve", "--port=8080"]
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ccve-api
+  namespace: confighub-system
+spec:
+  selector:
+    app: ccve-api
+  ports:
+    - port: 8080
+      targetPort: 8080

@@ -1,0 +1,98 @@
+# Scenario: Quick fleet/cluster status check
+# Operational journey - fast health overview
+
+id: quick-status
+name: Quick status check
+category: monitor
+priority: P0
+difficulty_target: trivial
+
+description: |
+  User wants a quick answer to: "Is everything OK?"
+  No deep investigation, just a health dashboard.
+
+  Key question: "Do I have problems I need to deal with right now?"
+
+personas:
+  - sre                # Primary - "morning check"
+  - platform-engineer  # Primary - "cross-cluster status"
+  - developer          # Secondary - "my apps healthy?"
+
+preconditions:
+  cluster: any
+
+goals:
+  - See overall health status in < 5 seconds
+  - Identify any critical issues immediately
+  - Know if action is needed or not
+
+entry_points:
+  tui:
+    description: "Using cub-agent map TUI with panel layout"
+    expected_keystrokes: 0
+    expected_commands: 0
+    difficulty: trivial
+    journey:
+      - step: 1
+        action: "Launch TUI"
+        command: "./test/atk/map"
+        expect: "Panel layout shows: left panel with CLUSTER/STATE/RESOURCES summary, right panel with status details and health bar"
+        keystrokes: 0
+    notes: |
+      Panel TUI shows cluster, state, and resource counts at a glance.
+      Left panel always visible for quick navigation to other views.
+
+  cli:
+    description: "Using cub-agent map status"
+    expected_keystrokes: 20
+    expected_commands: 1
+    difficulty: easy
+    journey:
+      - step: 1
+        command: "cub-agent map"
+        expect: "Summary showing healthy/issues/total counts"
+        keystrokes: 12
+
+  hub:
+    description: "Using ConfigHub hierarchy TUI"
+    expected_keystrokes: 0
+    expected_commands: 0
+    difficulty: trivial
+    journey:
+      - step: 1
+        action: "Launch TUI"
+        command: "cub-agent map --hub"
+        expect: "Fleet overview with all orgs/spaces/units status"
+        keystrokes: 0
+
+scoring:
+  discoverability:
+    tui: 5  # Default view is status
+    cli: 5  # Default output is summary
+    hub: 5  # Default view is fleet overview
+  speed:
+    tui: 5  # Instant - it's the default
+    cli: 4  # Need to type command
+    hub: 5  # Instant - it's the default
+  consistency:
+    tui: 5  # Status is always first
+    cli: 5  # Map always shows status
+    hub: 5  # Hierarchy always shows overview
+  recovery:
+    tui: 5  # N/A - it's the start
+    cli: 5  # N/A - it's the start
+    hub: 5  # N/A - it's the start
+  delight:
+    tui: 5  # Health bars, color coding, clean layout
+    cli: 4  # Clean but less visual
+    hub: 5  # Fleet context, hierarchy navigation
+
+composite_scores:
+  tui: 5.0    # Perfect
+  cli: 4.6    # Excellent
+  hub: 5.0    # Perfect
+
+notes: |
+  All entry points excel because this IS the primary use case.
+  Default views are designed for "what's my status" question.
+  CLI loses slightly on delight because less visual.

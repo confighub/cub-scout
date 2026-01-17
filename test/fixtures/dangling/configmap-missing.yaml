@@ -1,0 +1,28 @@
+# Test fixture: Pod referencing non-existent ConfigMaps
+# Should trigger: CCVE-2025-0691 (Dangling ConfigMap)
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-missing-configmap
+  namespace: test-dangling
+spec:
+  containers:
+  - name: app
+    image: nginx
+    envFrom:
+    - configMapRef:
+        name: missing-config
+    env:
+    - name: CONFIG_VALUE
+      valueFrom:
+        configMapKeyRef:
+          name: another-missing-config
+          key: some-key
+    volumeMounts:
+    - name: config-vol
+      mountPath: /etc/config
+  volumes:
+  - name: config-vol
+    configMap:
+      name: also-missing-config

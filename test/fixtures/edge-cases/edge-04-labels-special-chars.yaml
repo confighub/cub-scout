@@ -1,0 +1,16 @@
+# Edge case 04: Service with labels containing special characters
+# Tests: Do selectors with dots, slashes handle correctly?
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge-service-special-labels
+  namespace: default
+spec:
+  selector:
+    app.kubernetes.io/name: nonexistent-app
+    app.kubernetes.io/component: frontend
+    kubernetes.io/metadata.name: test
+  ports:
+  - port: 80
+    targetPort: 80

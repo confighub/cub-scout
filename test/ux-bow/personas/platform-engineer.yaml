@@ -1,0 +1,55 @@
+# Platform Engineer Persona
+# Manages GitOps infrastructure and cluster configuration for dev teams
+
+id: platform-engineer
+name: Platform Engineer
+expertise_level: advanced
+
+characteristics:
+  - Deep Kubernetes knowledge (CRDs, operators, RBAC)
+  - Manages GitOps tooling (Flux, ArgoCD, or both)
+  - Responsible for cluster health and security
+  - Supports multiple dev teams
+  - Reviews and approves infrastructure changes
+  - Works across many namespaces and clusters
+
+typical_goals:
+  - Audit all resources across clusters
+  - Find orphaned resources (kubectl'd without GitOps)
+  - Check GitOps sync status across fleet
+  - Debug why a team's deployment isn't syncing
+  - Identify configuration anti-patterns (CCVEs)
+  - Onboard new applications to GitOps
+
+expected_knowledge:
+  kubectl:
+    - All standard commands plus CRD operations
+    - RBAC troubleshooting
+    - Resource quotas and limits
+  gitops:
+    - Flux Kustomization/HelmRelease/GitRepository
+    - ArgoCD Application/ApplicationSet/AppProject
+    - Reconciliation loops and drift detection
+    - Source-to-deploy pipeline
+  concepts:
+    - Multi-cluster management
+    - Tenant isolation patterns
+    - GitOps directory structures (mono vs multi-repo)
+    - Infrastructure as Code
+
+unknown_concepts:
+  - ConfigHub-specific terminology
+  - CCVE numbering system (knows patterns, not IDs)
+  - Fleet query syntax (new tool feature)
+
+frustration_triggers:
+  - "Someone kubectl applied in prod again"
+  - "Why is this cluster different from the others?"
+  - "Which team owns this orphaned namespace?"
+  - "I need to find all uses of this deprecated API"
+
+success_indicators:
+  - Finds all orphaned resources in < 60 seconds
+  - Identifies GitOps tool for any resource immediately
+  - Traces ownership chain without manual CRD inspection
+  - Catches CCVE anti-patterns during review

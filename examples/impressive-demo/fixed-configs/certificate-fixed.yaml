@@ -1,0 +1,20 @@
+# cert-manager Certificate with CCVE-0034 FIXED
+# ClusterIssuer now exists
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-tls
+  namespace: monitoring
+spec:
+  secretName: grafana-tls
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  commonName: grafana.example.com
+  dnsNames:
+  - grafana.example.com
+  # ✅ FIXED: ClusterIssuer exists now
+  issuerRef:
+    name: letsencrypt-prod  # ✅ CORRECT - ClusterIssuer created
+    kind: ClusterIssuer
+    group: cert-manager.io

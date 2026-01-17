@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: latest-tag
+  namespace: apptique-vulnerable
+  labels:
+    app.kubernetes.io/name: latest-tag
+    app.kubernetes.io/part-of: apptique
+    # ArgoCD ownership labels
+    app.kubernetes.io/instance: apptique-vulnerable
+    argocd.argoproj.io/instance: apptique-vulnerable
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: latest-tag
+  template:
+    metadata:
+      labels:
+        app: latest-tag
+    spec:
+      containers:
+        - name: app
+          # CCVE-2025-0003: Using :latest tag
+          # Non-deterministic deployments - can break without warning
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"

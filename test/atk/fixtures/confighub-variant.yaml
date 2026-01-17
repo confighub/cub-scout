@@ -1,0 +1,71 @@
+# ConfigHub-managed resources (simulates ConfigHub worker deployment)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: atk-confighub-variant
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service-dev
+  namespace: atk-confighub-variant
+  labels:
+    app: payment-service-dev
+    confighub.com/UnitSlug: payment-service-dev
+  annotations:
+    confighub.com/UnitSlug: payment-service-dev
+    confighub.com/SpaceName: payments-team
+    confighub.com/SpaceID: "550e8400-e29b-41d4-a716-446655440000"
+    confighub.com/RevisionNum: "42"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service-dev
+  template:
+    metadata:
+      labels:
+        app: payment-service-dev
+    spec:
+      containers:
+      - name: payment-service-dev
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service-dev
+  namespace: atk-confighub-variant
+  labels:
+    app: payment-service-dev
+    confighub.com/UnitSlug: payment-service-dev
+  annotations:
+    confighub.com/UnitSlug: payment-service-dev
+    confighub.com/SpaceName: payments-team
+    confighub.com/SpaceID: "550e8400-e29b-41d4-a716-446655440000"
+    confighub.com/RevisionNum: "42"
+spec:
+  selector:
+    app: payment-service-dev
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-service-dev-config
+  namespace: atk-confighub-variant
+  labels:
+    confighub.com/UnitSlug: payment-service-dev
+  annotations:
+    confighub.com/UnitSlug: payment-service-dev
+    confighub.com/SpaceName: payments-team
+    confighub.com/SpaceID: "550e8400-e29b-41d4-a716-446655440000"
+    confighub.com/RevisionNum: "42"
+data:
+  ENVIRONMENT: "dev"
+  LOG_LEVEL: "info"

@@ -1,0 +1,28 @@
+# Helm basic - Direct Helm release (no GitOps controller)
+# This fixture uses a pre-installed Helm release
+# Run: helm install podinfo oci://ghcr.io/stefanprodan/charts/podinfo -n atk-helm-basic --create-namespace
+#
+# This YAML just creates the namespace - the actual Helm install is done separately
+# The agent should detect resources with `app.kubernetes.io/managed-by: Helm` labels
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: atk-helm-basic
+  labels:
+    atk-fixture: helm-basic
+---
+# Marker ConfigMap to indicate this fixture is active
+# The actual Helm resources are created by running helm install
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: atk-helm-marker
+  namespace: atk-helm-basic
+data:
+  install-command: |
+    helm install podinfo oci://ghcr.io/stefanprodan/charts/podinfo \
+      -n atk-helm-basic \
+      --set replicaCount=1
+  cleanup-command: |
+    helm uninstall podinfo -n atk-helm-basic

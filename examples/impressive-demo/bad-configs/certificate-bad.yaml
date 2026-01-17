@@ -1,0 +1,24 @@
+# cert-manager Certificate with CCVE-0034: Issuer not found
+# Certificate references non-existent ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-tls
+  namespace: monitoring
+spec:
+  secretName: grafana-tls
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  commonName: grafana.example.com
+  dnsNames:
+  - grafana.example.com
+  # 🔥 BUG: References ClusterIssuer that doesn't exist
+  # This is CCVE-0034 - Certificate will stay Pending forever
+  issuerRef:
+    name: letsencrypt-prod  # ❌ WRONG - this ClusterIssuer doesn't exist
+    kind: ClusterIssuer
+    group: cert-manager.io
+  # CORRECT would be to either:
+  # 1. Create the ClusterIssuer first, OR
+  # 2. Reference an existing ClusterIssuer

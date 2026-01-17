@@ -1,0 +1,83 @@
+# Expected Output: demo query
+# Mode: Standalone
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "demo query"
+description: "Query language demo - filter by owner, namespace, etc."
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  - id: demo_query
+    command: "./test/atk/demo query"
+    description: "Demo the query language for filtering resources"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(Query|query|filter)"
+          description: "Query language shown"
+        - pattern: "(owner|namespace|kind)"
+          description: "Query fields demonstrated"
+
+      not_contains:
+        - "panic"
+        - "error:"
+
+      assertions:
+        - name: "demo_runs"
+          condition: "exit_code == 0"
+          description: "Demo completes"
+
+        - name: "shows_queries"
+          condition: "output.match(/(owner|namespace|kind)/)"
+          description: "Query fields shown"
+
+    instructions: |
+      The query demo shows how to filter resources:
+      ```bash
+      ./test/atk/demo query
+      ```
+
+      Query syntax:
+      - `owner=Flux` - resources managed by Flux
+      - `owner!=Native` - GitOps-managed only
+      - `namespace=prod*` - production namespaces
+      - `kind=Deployment` - only deployments
+
+    hints:
+      - when: "output.contains('no resources')"
+        show: "Deploy some workloads first to see query results."
+
+  - id: demo_query_cleanup
+    command: "./test/atk/demo query --cleanup"
+    description: "Clean up query demo resources"
+
+    expected:
+      exit_code: 0
+
+# Sample output
+sample_output: |
+  Query Language Demo: Filter your fleet
+
+  Query 1: GitOps-managed deployments only (owner!=Native)
+    $ ./cub-agent map list -q "kind=Deployment AND owner!=Native"
+
+  NAMESPACE    KIND         NAME                   OWNER
+  flux-system  Deployment   source-controller      Flux
+  flux-system  Deployment   kustomize-controller   Flux
+
+  Query 2: Production namespaces (namespace=prod*)
+    $ ./cub-agent map list -q "namespace=prod*"
+
+  Query Syntax:
+    field=value           Exact match
+    field!=value          Not equal
+    field=prefix*         Wildcard
+    AND / OR              Logical operators

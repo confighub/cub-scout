@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+# ConfigHub Agent - Map Output Validation
+# Validates map command output in connected mode for both hierarchy modes
+#
+# Usage:
+#   ./verify-map-output              # Test both modes
+#   ./verify-map-output --admin      # Test admin mode only
+#   ./verify-map-output --fleet      # Test fleet mode only
+#   ./verify-map-output --space=X    # Test specific space
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+R='\033[0;31m'
+G='\033[0;32m'
+Y='\033[0;33m'
+B='\033[0;34m'
+NC='\033[0m'
+
+PASSED=0
+FAILED=0
+SKIPPED=0
+
+pass() { echo -e "${G}✓${NC} $1"; PASSED=$((PASSED+1)); }
+fail() { echo -e "${R}✗${NC} $1"; FAILED=$((FAILED+1)); }
+skip() { echo -e "${Y}○${NC} $1 (skipped)"; SKIPPED=$((SKIPPED+1)); }
+section() { echo ""; echo -e "${B}─── $1 ───${NC}"; }
+
+# Defaults
+TEST_ADMIN=true
+TEST_FLEET=true
+SPACE=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --admin)
+            TEST_ADMIN=true
+            TEST_FLEET=false
+            shift
+            ;;
+        --fleet)
+            TEST_ADMIN=false
+            TEST_FLEET=true
+            shift
+            ;;
+        --space=*)
+            SPACE="${1#*=}"
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: verify-map-output [--admin|--fleet] [--space=SLUG]"
+            echo ""
+            echo "Validates map command output in connected mode."
+            echo ""
+            echo "Options:"
+            echo "  --admin     Test admin mode only"
+            echo "  --fleet     Test fleet mode only"
+            echo "  --space=X   Test specific space"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
+echo "ConfigHub Map Output Validation"
+echo "================================"
+
+# Check prerequisites
+if ! command -v cub &>/dev/null; then
+    echo -e "${R}✗${NC} cub CLI not found"
+    exit 1
+fi
+
+if ! cub auth status &>/dev/null 2>&1; then
+    echo -e "${R}✗${NC} Not authenticated (run: cub auth login)"
+    exit 1
+fi
+
+# Get current space if not specified
+if [[ -z "$SPACE" ]]; then
+    SPACE=$(cub context get 2>/dev/null | grep "Default Space" | awk '{print $NF}' || echo "")
+fi
+
+if [[ -z "$SPACE" || "$SPACE" == "null" ]]; then
+    echo -e "${R}✗${NC} No space configured (run: cub context set --space SLUG)"
+    exit 1
+fi
+
+echo "Space: $SPACE"
+
+# Check for worker in space
+WORKER_COUNT=$(cub worker list --space "$SPACE" --json 2>/dev/null | jq 'length' 2>/dev/null || echo "0")
+if [[ "$WORKER_COUNT" -eq 0 ]]; then
+    echo -e "${Y}⚠${NC} No workers in space - skipping connected mode tests"
+    exit 0
+fi
+
+WORKER_SLUG=$(cub worker list --space "$SPACE" --json 2>/dev/null | jq -r '.[0].BridgeWorker.Slug // "null"' 2>/dev/null)
+WORKER_STATUS=$(cub worker list --space "$SPACE" --json 2>/dev/null | jq -r '.[0].BridgeWorker.Condition // "unknown"' 2>/dev/null)
+echo "Worker: $WORKER_SLUG ($WORKER_STATUS)"
+
+# =============================================================================
+# Admin Mode Validation
+# =============================================================================
+
+if $TEST_ADMIN; then
+    section "Admin Mode (--mode=admin)"
+
+    OUTPUT=$("$SCRIPT_DIR/map" --mode=admin 2>&1) || true
+
+    # Check 1: Has ConfigHub Hierarchy section
+    if echo "$OUTPUT" | grep -q "ConfigHub Hierarchy:"; then
+        pass "Has ConfigHub Hierarchy section"
+    else
+        fail "Missing ConfigHub Hierarchy section"
+    fi
+
+    # Check 2: Shows organization
+    if echo "$OUTPUT" | grep -q "ConfigHub.*org:"; then
+        pass "Shows organization"
+    else
+        fail "Missing organization in hierarchy"
+    fi
+
+    # Check 3: Shows current space
+    if echo "$OUTPUT" | grep -q "$SPACE"; then
+        pass "Shows current space ($SPACE)"
+    else
+        fail "Current space not visible"
+    fi
+
+    # Check 4: No null patterns (Issue #1)
+    if echo "$OUTPUT" | grep -qE "null - unknown|→ null|: null"; then
+        fail "Contains null patterns (Issue #1)"
+    else
+        pass "No null patterns (Issue #1 regression check)"
+    fi
+
+    # Check 5: Shows units/targets/workers counts
+    if echo "$OUTPUT" | grep -qE "\([0-9]+ units, [0-9]+ targets, [0-9]+ workers\)"; then
+        pass "Shows unit/target/worker counts"
+    else
+        fail "Missing unit/target/worker counts"
+    fi
+
+    # Check 6: Has ownership section
+    if echo "$OUTPUT" | grep -q "OWNERSHIP"; then
+        pass "Has OWNERSHIP section"
+    else
+        skip "OWNERSHIP section (may be empty cluster)"
+    fi
+fi
+
+# =============================================================================
+# Fleet Mode Validation
+# =============================================================================
+
+if $TEST_FLEET; then
+    section "Fleet Mode (--mode=fleet)"
+
+    OUTPUT=$("$SCRIPT_DIR/map" --mode=fleet 2>&1) || true
+
+    # Check 1: Has Fleet View section
+    if echo "$OUTPUT" | grep -qE "Fleet View|Fleet Hierarchy"; then
+        pass "Has Fleet View section"
+    else
+        fail "Missing Fleet View section"
+    fi
+
+    # Check 2: Shows cluster structure
+    if echo "$OUTPUT" | grep -qE "Cluster:|cluster"; then
+        pass "Shows cluster structure"
+    else
+        skip "Cluster structure (may be local-only mode)"
+    fi
+
+    # Check 3: No null patterns (Issue #1)
+    if echo "$OUTPUT" | grep -qE "null - unknown|→ null|: null"; then
+        fail "Contains null patterns (Issue #1)"
+    else
+        pass "No null patterns (Issue #1 regression check)"
+    fi
+
+    # Check 4: Shows namespace hierarchy
+    if echo "$OUTPUT" | grep -qE "└──.*ns|├──.*ns|namespace"; then
+        pass "Shows namespace hierarchy"
+    else
+        skip "Namespace hierarchy (may be empty cluster)"
+    fi
+
+    # Check 5: Has ownership visualization
+    if echo "$OUTPUT" | grep -qE "█|░"; then
+        pass "Has ownership visualization bar"
+    else
+        skip "Ownership visualization (may be empty)"
+    fi
+fi
+
+# =============================================================================
+# Summary
+# =============================================================================
+
+section "Summary"
+
+echo ""
+echo "Passed: $PASSED"
+echo "Failed: $FAILED"
+echo "Skipped: $SKIPPED"
+echo ""
+
+if [[ $FAILED -gt 0 ]]; then
+    echo -e "${R}VALIDATION FAILED${NC}"
+    exit 1
+else
+    echo -e "${G}VALIDATION PASSED${NC}"
+    exit 0
+fi

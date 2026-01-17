@@ -1,0 +1,31 @@
+# Expected Output: ArgoCD Extension
+name: "argocd-extension"
+description: "Argo CD UI extension for CCVE scanning"
+mode: standalone
+
+requires:
+  cluster: false  # Just validates files exist
+  tools: []
+
+files:
+  - path: "examples/integrations/argocd-extension/extension.js"
+    description: "Extension JavaScript code"
+    validates:
+      - file_exists: true
+
+  - path: "examples/integrations/argocd-extension/scanner-cronjob.yaml"
+    description: "CronJob for periodic CCVE scanning"
+    validates:
+      - file_exists: true
+      - contains:
+          - "apiVersion: batch/v1"
+          - "kind: CronJob"
+
+instructions: |
+  ArgoCD Extension adds CCVE scanning to the Argo CD UI.
+
+  Installation:
+  1. Add extension.js to ArgoCD
+  2. Deploy scanner-cronjob.yaml for periodic scans
+
+  See: examples/integrations/argocd-extension/README.md

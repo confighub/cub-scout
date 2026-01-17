@@ -1,0 +1,132 @@
+# Core infrastructure group - staging environment overrides
+
+# cert-manager staging overrides
+cert-manager:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+  webhook:
+    replicaCount: 2
+
+  cainjector:
+    replicaCount: 2
+
+# external-secrets staging overrides
+external-secrets:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+  certController:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+# external-dns staging overrides
+external-dns:
+  provider: aws
+  domainFilters:
+    - staging.example.com
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+  policy: upsert-only
+
+# traefik staging overrides
+traefik:
+  deployment:
+    replicas: 2
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+  logs:
+    general:
+      level: INFO
+
+  ports:
+    websecure:
+      tls:
+        enabled: true
+
+# metrics-server staging overrides
+metrics-server:
+  replicas: 2
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+# reloader staging overrides
+reloader:
+  reloader:
+    deployment:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+
+# kube-prometheus-stack staging overrides
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      replicas: 2
+      retention: 7d
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 2Gi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 25Gi
+
+  alertmanager:
+    enabled: true
+    alertmanagerSpec:
+      replicas: 2
+      retention: 72h
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+
+  prometheusOperator:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 128Mi
+      limits:
+        memory: 512Mi

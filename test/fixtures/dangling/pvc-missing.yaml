@@ -1,0 +1,24 @@
+# Test fixture: Pod referencing non-existent PersistentVolumeClaims
+# Should trigger: CCVE-2025-0693 (Dangling PVC reference)
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-missing-pvc
+  namespace: test-dangling
+spec:
+  containers:
+  - name: app
+    image: nginx
+    volumeMounts:
+    - name: data-vol
+      mountPath: /data
+    - name: cache-vol
+      mountPath: /cache
+  volumes:
+  - name: data-vol
+    persistentVolumeClaim:
+      claimName: missing-data-pvc
+  - name: cache-vol
+    persistentVolumeClaim:
+      claimName: also-missing-cache-pvc

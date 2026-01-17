@@ -1,0 +1,60 @@
+# Expected Output: ATK setup-cluster script
+name: "atk setup-cluster"
+description: "Set up Kind cluster with Flux and Argo CD"
+mode: standalone
+
+requires:
+  tools: [kind, kubectl, flux]
+
+commands:
+  - id: setup_cluster
+    command: "./test/atk/setup-cluster"
+    description: "Create Kind cluster with GitOps tools"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(Creating|Cluster|ready)"
+          description: "Shows cluster creation"
+        - pattern: "(Flux|flux)"
+          description: "Flux mentioned"
+        - pattern: "(Argo|argocd)"
+          description: "Argo CD mentioned"
+
+      not_contains:
+        - "error"
+        - "failed"
+
+      assertions:
+        - name: "cluster_ready"
+          condition: "output.contains('ready') || output.contains('Ready')"
+          description: "Cluster is ready"
+
+    instructions: |
+      Set up test cluster:
+      ```bash
+      ./test/atk/setup-cluster
+      ```
+
+      Creates:
+      - Kind cluster named 'atk'
+      - Flux CD controllers
+      - Argo CD controllers
+
+# Sample output
+sample_output: |
+  Creating Kind cluster 'atk'...
+  Switched to context "kind-atk".
+
+  Installing Flux...
+  Flux installed
+
+  Installing Argo CD...
+  Argo CD installed
+
+  Cluster Status:
+  - flux-system: source-controller, kustomize-controller
+  - argocd: argocd-server, argocd-repo-server
+
+  ✓ Cluster ready for ATK tests

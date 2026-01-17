@@ -1,0 +1,44 @@
+# App Space: Orders Team
+#
+# Owns: order-api, order-processor, inventory-sync
+# Clusters: All 47 (deployed everywhere)
+
+kind: AppSpace
+apiVersion: confighub.com/v1
+metadata:
+  name: orders-team
+  description: Order management services
+
+spec:
+  owner: orders-leads@acme.com
+
+  members:
+    - email: orders-leads@acme.com
+      role: admin
+    - email: orders-dev@acme.com
+      role: editor
+
+  units:
+    - order-api
+    - order-processor
+    - inventory-sync
+    - order-notification
+
+  policies:
+    - match: { labels: { environment: development } }
+      allow: [direct-edit, self-approve]
+
+    - match: { labels: { environment: staging } }
+      allow: [direct-edit]
+
+    - match: { labels: { environment: production } }
+      require:
+        - changeset-approval
+
+  reconciliation:
+    - match: { path: spec.replicas }
+      on_drift: accept
+
+    - match: { path: "*" }
+      on_drift: revert
+      alert: true

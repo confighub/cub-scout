@@ -1,0 +1,48 @@
+[
+  {
+    "clusterName": "default",
+    "namespace": "atk-flux-helm",
+    "kind": "HelmRepository",
+    "name": "podinfo",
+    "apiVersion": "source.toolkit.fluxcd.io/v1",
+    "owner": "Flux",
+    "ownerDetails": {
+      "type": "source"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-flux-helm",
+    "kind": "HelmRelease",
+    "name": "podinfo",
+    "apiVersion": "helm.toolkit.fluxcd.io/v2",
+    "owner": "Flux",
+    "ownerDetails": {
+      "type": "helmrelease",
+      "chart": "podinfo",
+      "version": "6.5.0"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-flux-helm",
+    "kind": "Deployment",
+    "name": "podinfo",
+    "apiVersion": "apps/v1",
+    "owner": "Flux",
+    "ownerDetails": {
+      "helmrelease": "podinfo"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-flux-helm",
+    "kind": "Service",
+    "name": "podinfo",
+    "apiVersion": "v1",
+    "owner": "Flux",
+    "ownerDetails": {
+      "helmrelease": "podinfo"
+    }
+  }
+]

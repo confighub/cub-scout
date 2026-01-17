@@ -1,0 +1,169 @@
+# Flux Boutique Demo
+# 5 microservices managed by Flux, all from the same GitRepository
+# Requires: Flux installed on cluster
+#
+# Usage:
+#   kubectl apply -f boutique.yaml
+#   kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s
+#   cub-agent map
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: boutique
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: boutique
+  namespace: boutique
+spec:
+  interval: 5m
+  ref:
+    branch: master
+  url: https://github.com/stefanprodan/podinfo
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: frontend
+  namespace: boutique
+spec:
+  interval: 10m
+  targetNamespace: boutique
+  sourceRef:
+    kind: GitRepository
+    name: boutique
+  path: ./kustomize
+  prune: true
+  patches:
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: frontend
+      target:
+        kind: Deployment
+        name: podinfo
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: frontend
+      target:
+        kind: Service
+        name: podinfo
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cart
+  namespace: boutique
+spec:
+  interval: 10m
+  targetNamespace: boutique
+  sourceRef:
+    kind: GitRepository
+    name: boutique
+  path: ./kustomize
+  prune: true
+  patches:
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: cart
+      target:
+        kind: Deployment
+        name: podinfo
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: cart
+      target:
+        kind: Service
+        name: podinfo
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: checkout
+  namespace: boutique
+spec:
+  interval: 10m
+  targetNamespace: boutique
+  sourceRef:
+    kind: GitRepository
+    name: boutique
+  path: ./kustomize
+  prune: true
+  patches:
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: checkout
+      target:
+        kind: Deployment
+        name: podinfo
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: checkout
+      target:
+        kind: Service
+        name: podinfo
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: payment
+  namespace: boutique
+spec:
+  interval: 10m
+  targetNamespace: boutique
+  sourceRef:
+    kind: GitRepository
+    name: boutique
+  path: ./kustomize
+  prune: true
+  patches:
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: payment
+      target:
+        kind: Deployment
+        name: podinfo
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: payment
+      target:
+        kind: Service
+        name: podinfo
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: shipping
+  namespace: boutique
+spec:
+  interval: 10m
+  targetNamespace: boutique
+  sourceRef:
+    kind: GitRepository
+    name: boutique
+  path: ./kustomize
+  prune: true
+  patches:
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: shipping
+      target:
+        kind: Deployment
+        name: podinfo
+    - patch: |
+        - op: replace
+          path: /metadata/name
+          value: shipping
+      target:
+        kind: Service
+        name: podinfo

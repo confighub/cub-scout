@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: apptique
+  namespace: apptique
+spec:
+  interval: 1m
+  url: https://github.com/confighub-kubecon-2025/apptique
+  ref:
+    branch: main

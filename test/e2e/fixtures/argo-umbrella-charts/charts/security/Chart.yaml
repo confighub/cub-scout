@@ -1,0 +1,11 @@
+apiVersion: v2
+name: security
+version: 1.0.0
+description: Security and policy enforcement
+dependencies:
+  - name: kyverno
+    version: "3.6.2"
+    repository: https://kyverno.github.io/kyverno
+  - name: trivy-operator
+    version: "0.21.1"
+    repository: https://aquasecurity.github.io/helm-charts

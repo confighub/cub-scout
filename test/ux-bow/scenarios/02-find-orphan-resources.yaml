@@ -1,0 +1,107 @@
+# Scenario: Find orphaned resources
+# Security/audit journey - find resources not managed by GitOps
+
+id: find-orphan-resources
+name: Find orphaned (Native) resources
+category: audit
+priority: P0
+difficulty_target: easy
+
+description: |
+  User needs to find resources that were kubectl apply'd directly,
+  bypassing GitOps. These "orphans" represent shadow IT and compliance risk.
+
+  Key question: "What's running that nobody owns in git?"
+
+personas:
+  - platform-engineer  # Primary - "cleaning up the cluster"
+  - security           # Primary - "compliance audit"
+  - sre                # Secondary - "incident investigation"
+
+preconditions:
+  cluster: any
+  has_native_resources: true
+  gitops_tool: any
+
+goals:
+  - Find all resources not managed by GitOps
+  - Understand namespace/type distribution
+  - Identify who might have created them (if possible)
+
+entry_points:
+  tui:
+    description: "Using cub-agent map TUI"
+    expected_keystrokes: 2
+    expected_commands: 1
+    difficulty: easy
+    journey:
+      - step: 1
+        action: "Press 'r' for Sprawl view"
+        expect: "Ownership breakdown by namespace showing Native count"
+        keystrokes: 1
+      - step: 2
+        action: "Review 'BY NAMESPACE' section for Native counts"
+        expect: "Each namespace shows (N artisanal) for Native resources"
+        keystrokes: 0
+    notes: |
+      Sprawl view shows Native resources per namespace.
+      For full list, use CLI: cub-agent map orphans
+
+  cli:
+    description: "Using cub-agent CLI commands"
+    expected_keystrokes: 25
+    expected_commands: 1
+    difficulty: easy
+    journey:
+      - step: 1
+        command: "cub-agent map list -q 'owner=Native'"
+        expect: "Table of all Native-owned resources"
+        keystrokes: 32
+
+  hub:
+    description: "Using ConfigHub hierarchy TUI with query"
+    expected_keystrokes: 30
+    expected_commands: 2
+    difficulty: medium
+    journey:
+      - step: 1
+        action: "Navigate to cluster/target in hierarchy"
+        expect: "Selected cluster shows in hierarchy"
+        keystrokes: 5
+      - step: 2
+        action: "Press ':' and type query 'owner=Native'"
+        expect: "Filtered view of Native resources in that cluster"
+        keystrokes: 20
+
+scoring:
+  discoverability:
+    tui: 4  # CORRECTED: Sprawl view shows Native but not dedicated filter
+    cli: 5  # IMPROVED: 'cub-agent map orphans' shortcut command
+    hub: 4  # IMPROVED: Query examples in help overlay
+  speed:
+    tui: 4  # CORRECTED: 1 keystroke but shows summary not list
+    cli: 5  # IMPROVED: shortcut command is fast
+    hub: 3  # Navigation + query
+  consistency:
+    tui: 4  # Sprawl view is consistent with other views
+    cli: 5  # Query syntax same for all owners
+    hub: 4  # Command mode works everywhere
+  recovery:
+    tui: 5  # Press any key to return
+    cli: 5  # Just run again
+    hub: 4  # Clear filter to reset
+  delight:
+    tui: 4  # CORRECTED: Shows counts not full list
+    cli: 5  # Clean table output with owner labels
+    hub: 4  # Hierarchy context helps
+
+composite_scores:
+  tui: 4.15   # CORRECTED: Sprawl view shows summary, not filtered list
+  cli: 5.0    # IMPROVED from 4.35: 'map orphans' shortcut is excellent
+  hub: 4.0    # IMPROVED from 3.55: Query examples in help
+
+notes: |
+  This is a PRIMARY use case for the tool - finding shadow IT.
+  TUI Sprawl view ('r') shows Native count per namespace but not filtered list.
+  CLI 'cub-agent map orphans' is the fastest way to see full orphan list.
+  Hub improved with query examples in help overlay.

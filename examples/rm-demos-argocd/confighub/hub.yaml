@@ -1,0 +1,103 @@
+# Hub: Platform Governance Layer
+#
+# This Hub represents a typical enterprise setup:
+# - 847 microservices across 47 clusters
+# - 4 teams with their own App Spaces
+# - Phased rollout policies (dev → staging → prod)
+
+kind: Hub
+apiVersion: confighub.com/v1
+metadata:
+  name: acme-platform
+  description: ACME Corp platform configuration
+
+spec:
+  # Platform-wide constraints (non-negotiable)
+  constraints:
+    - name: no-latest-tags
+      description: No :latest image tags in production
+      match:
+        labels:
+          environment: production
+      deny:
+        - image.tag: "latest"
+
+    - name: resource-limits-required
+      description: All production workloads must have resource limits
+      match:
+        labels:
+          environment: production
+      require:
+        - spec.containers[*].resources.limits
+
+    - name: production-approval
+      description: All production changes require approval
+      match:
+        labels:
+          environment: production
+      require:
+        - changeset-approval
+        - minimum-approvers: 1
+
+  # Phased rollout policy
+  rollout_strategy:
+    phases:
+      - name: development
+        match: { labels: { environment: development } }
+        approval: auto
+        health_check_wait: 0
+
+      - name: staging
+        match: { labels: { environment: staging } }
+        approval: auto
+        health_check_wait: 300  # 5 min after dev healthy
+        depends_on: development
+
+      - name: production
+        match: { labels: { environment: production } }
+        approval: required
+        health_check_wait: 600  # 10 min after staging healthy
+        depends_on: staging
+
+  # Registered clusters (47 total)
+  targets:
+    # Development (3 clusters)
+    - name: dev-shared
+      labels: { environment: development, region: us-east }
+
+    # Staging (12 clusters)
+    - name: staging-us-east
+      labels: { environment: staging, region: us-east }
+    - name: staging-us-west
+      labels: { environment: staging, region: us-west }
+    - name: staging-eu-west
+      labels: { environment: staging, region: eu-west }
+    # ... (9 more staging)
+
+    # Production (32 clusters)
+    - name: prod-us-east-1
+      labels: { environment: production, region: us-east }
+    - name: prod-us-east-2
+      labels: { environment: production, region: us-east }
+    - name: prod-us-west-1
+      labels: { environment: production, region: us-west }
+    - name: prod-us-west-2
+      labels: { environment: production, region: us-west }
+    - name: prod-eu-west-1
+      labels: { environment: production, region: eu-west }
+    - name: prod-eu-west-2
+      labels: { environment: production, region: eu-west }
+    - name: prod-ap-south-1
+      labels: { environment: production, region: ap-south }
+    # ... (25 more production)
+
+  # OCI registry for rendered manifests
+  oci_registry:
+    url: ghcr.io/acme/configs
+    auth_secret: ghcr-credentials
+
+  # Git sync-back configuration
+  sync_back:
+    default_policy: pr-required
+    repository: https://github.com/acme/platform-configs
+    branch: main

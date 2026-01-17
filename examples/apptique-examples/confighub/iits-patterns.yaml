@@ -1,0 +1,187 @@
+# IITS Enterprise Patterns — Hub-and-Spoke Model
+#
+# Based on IITS consulting patterns from:
+# - usecase-argocd-fleet-iits.pdf
+# - usecase-fluxcd-fleet-iits.pdf
+#
+# This shows how the apptique example maps to real enterprise patterns.
+
+---
+# The problems IITS identifies (and ConfigHub solves):
+#
+# 1. "What you see isn't what deploys" → WET manifests in Units
+# 2. Umbrella chart divergence → Clone from Hub with constraints
+# 3. Per-cluster values sprawl → Labels replace folders
+# 4. Silent patch breakage → Structural validation at import
+# 5. Multi-tool chaos → Single map view of all owners
+# 6. Can't query fleet → Label-based queries
+---
+
+kind: Hub
+apiVersion: confighub.com/v1
+metadata:
+  name: managed-service-catalog
+  description: |
+    Platform team's golden configs (IITS "Managed Service Catalog")
+    Teams clone from this Hub, can't bypass constraints.
+
+spec:
+  # Platform-wide constraints (non-negotiable)
+  constraints:
+    - name: resource-limits-required
+      description: All containers must have resource limits
+      match:
+        labels:
+          variant: prod
+      require:
+        - spec.containers[*].resources.limits
+
+    - name: no-latest-tags
+      description: No :latest tags in production
+      match:
+        labels:
+          variant: prod
+      deny:
+        - image.tag: "latest"
+
+    - name: approved-base-images
+      description: Only approved registries
+      match:
+        labels:
+          variant: prod
+      require:
+        - image.registry IN [gcr.io, ghcr.io, registry.k8s.io]
+
+  # Base units (teams clone from these)
+  base_units:
+    - name: cert-manager
+      description: "TLS certificate management"
+      source: oci://ghcr.io/platform/cert-manager:v1.14
+
+    - name: ingress-nginx
+      description: "Ingress controller"
+      source: oci://ghcr.io/platform/ingress-nginx:v1.10
+
+    - name: external-secrets
+      description: "External Secrets Operator"
+      source: oci://ghcr.io/platform/external-secrets:v0.9
+
+---
+# How apptique maps to IITS Hub-and-Spoke:
+#
+# apptique-examples/            IITS Pattern
+# ─────────────────             ────────────
+# flux-monorepo/                Per-team monorepo
+# └── apps/apptique/            = App Space: frontend-team
+#     ├── base/                 = Base unit (to be cloned)
+#     └── overlays/             = Variants (dev, prod)
+#         ├── dev/              = Unit variant: dev
+#         └── prod/             = Unit variant: prod
+#
+# Hub Constraints apply to ALL variants
+# App Space Choices apply within team's units
+---
+
+kind: AppSpace
+apiVersion: confighub.com/v1
+metadata:
+  name: frontend-team
+  description: |
+    Apptique frontend services (maps to IITS "Customer Service Catalog")
+    Team clones platform tools + adds own units.
+
+spec:
+  owner: frontend-leads@example.com
+
+  # Cloned from Hub (platform-managed)
+  cloned_units:
+    - source: managed-service-catalog/cert-manager
+      customizations:
+        replicas: 2
+        # Can't override: resource limits (Hub constraint)
+
+    - source: managed-service-catalog/ingress-nginx
+      customizations:
+        annotations:
+          nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+
+  # Team's own units
+  units:
+    - name: frontend
+      description: "Apptique web UI"
+      variants:
+        - name: dev
+          target: apptique-dev
+          labels:
+            variant: dev
+            region: us-east
+
+        - name: prod
+          target: apptique-prod
+          labels:
+            variant: prod
+            region: us-east
+
+        # Multi-region production (IITS Global App pattern)
+        - name: prod-eu
+          target: apptique-eu
+          labels:
+            variant: prod
+            region: eu-west
+
+        - name: prod-west
+          target: apptique-west
+          labels:
+            variant: prod
+            region: us-west
+
+---
+# IITS Query Patterns (now available with apptique):
+#
+# # All prod instances
+# cub query "variant=prod"
+#
+# # All EU instances
+# cub query "region=eu-west"
+#
+# # Frontend across all regions
+# cub query "app=frontend AND variant=prod"
+#
+# # Find orphans (kubectl'd resources)
+# cub query "owner=Native AND namespace LIKE 'apptique-*'"
+---
+
+# Visual mapping of apptique → IITS Hub-and-Spoke:
+#
+# ┌─────────────────────────────────────────────────────────────────────┐
+# │ Hub: managed-service-catalog                                         │
+# │                                                                      │
+# │   Base Units (platform team):                                        │
+# │   ├── cert-manager                                                   │
+# │   ├── ingress-nginx                                                  │
+# │   └── external-secrets                                               │
+# │                                                                      │
+# │   Constraints:                                                       │
+# │   ├── resource-limits-required                                       │
+# │   ├── no-latest-tags                                                 │
+# │   └── approved-base-images                                           │
+# └───────────────────────────────┬─────────────────────────────────────┘
+#                                 │
+#                                 │ (teams clone + customize)
+#                                 │
+#     ┌───────────────────────────┼───────────────────────────┐
+#     ▼                           ▼                           ▼
+# ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+# │ frontend-team   │     │ orders-team     │     │ data-team       │
+# │                 │     │                 │     │                 │
+# │ cert-manager ✓  │     │ cert-manager ✓  │     │ cert-manager ✓  │
+# │ ingress-nginx ✓ │     │ ingress-nginx ✓ │     │ external-sec ✓  │
+# │                 │     │                 │     │                 │
+# │ frontend (own)  │     │ order-api (own) │     │ pipeline (own)  │
+# │ ├─ dev          │     │ ├─ dev          │     │ ├─ dev          │
+# │ ├─ prod         │     │ └─ prod         │     │ └─ prod         │
+# │ ├─ prod-eu      │     │                 │     │                 │
+# │ └─ prod-west    │     │                 │     │                 │
+# └─────────────────┘     └─────────────────┘     └─────────────────┘
+#
+# This is what the apptique examples demonstrate at small scale.

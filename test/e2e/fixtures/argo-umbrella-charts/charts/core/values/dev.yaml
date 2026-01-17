@@ -1,0 +1,122 @@
+# Core infrastructure group - dev environment overrides
+
+# cert-manager dev overrides
+cert-manager:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+  webhook:
+    replicaCount: 1
+
+  cainjector:
+    replicaCount: 1
+
+# external-secrets dev overrides
+external-secrets:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+  certController:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+
+# external-dns dev overrides
+external-dns:
+  provider: aws
+  # domainFilters configured per environment
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+  policy: upsert-only
+
+# traefik dev overrides
+traefik:
+  deployment:
+    replicas: 1
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+  logs:
+    general:
+      level: DEBUG
+
+  ports:
+    websecure:
+      tls:
+        enabled: false
+
+# metrics-server dev overrides
+metrics-server:
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+# reloader dev overrides
+reloader:
+  reloader:
+    deployment:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+
+# kube-prometheus-stack dev overrides
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      replicas: 1
+      retention: 3d
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 10Gi
+
+  alertmanager:
+    enabled: false
+
+  prometheusOperator:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi

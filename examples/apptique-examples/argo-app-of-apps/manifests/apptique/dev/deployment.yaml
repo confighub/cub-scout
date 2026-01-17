@@ -1,0 +1,105 @@
+# Apptique Frontend - Dev Environment (App of Apps pattern)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: apptique
+    component: frontend
+    environment: dev
+    app.kubernetes.io/instance: apptique-dev
+    argocd.argoproj.io/instance: apptique-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apptique
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: apptique
+        component: frontend
+        environment: dev
+    spec:
+      serviceAccountName: frontend
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: server
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.3
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: ENV_PLATFORM
+              value: "dev"
+            - name: PRODUCT_CATALOG_SERVICE_ADDR
+              value: "productcatalogservice:3550"
+            - name: CURRENCY_SERVICE_ADDR
+              value: "currencyservice:7000"
+            - name: CART_SERVICE_ADDR
+              value: "cartservice:7070"
+            - name: RECOMMENDATION_SERVICE_ADDR
+              value: "recommendationservice:8080"
+            - name: SHIPPING_SERVICE_ADDR
+              value: "shippingservice:50051"
+            - name: CHECKOUT_SERVICE_ADDR
+              value: "checkoutservice:5050"
+            - name: AD_SERVICE_ADDR
+              value: "adservice:9555"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              path: "/_healthz"
+              port: 8080
+          livenessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              path: "/_healthz"
+              port: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: apptique
+    component: frontend
+    environment: dev
+spec:
+  type: ClusterIP
+  selector:
+    app: apptique
+    component: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: frontend
+  labels:
+    app: apptique
+    component: frontend
+    environment: dev

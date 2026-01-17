@@ -1,0 +1,80 @@
+# Instance: Production Blows Region
+#
+# This is a LIVE instance cloned from the realtime-service template.
+# It represents the actual config for production in the "blows" region.
+
+kind: Unit
+apiVersion: confighub.com/v1
+metadata:
+  name: production-blows
+  description: Realtime service - Production (Blows region)
+  labels:
+    service: realtime
+    environment: production
+    region: blows
+    tier: critical
+    customer-facing: "true"
+
+spec:
+  # Cloned from template
+  upstream:
+    hub: rtmsg-platform
+    template: realtime-service
+
+  # Space ownership
+  space: realtime-team
+
+  # Revision tracking (auto-managed by ConfigHub)
+  revision: "20251223.3"
+  previous_revision: "20251223.2"
+
+  # Production-specific overrides
+  config:
+    # Override: Production image tags (pinned versions)
+    image_tags:
+      core: "prod-20251220.1-a1b2c3d"
+      frontdoor: "prod-20251218.2-e4f5g6h"
+      redis_worker: "prod-20251215.1-i7j8k9l"
+
+    # Override: Production endpoints
+    service_endpoints:
+      api: "https://api.rtmsg.io"
+      realtime: "wss://realtime-blows.rtmsg.io"
+      rest: "https://rest-blows.rtmsg.io"
+
+    # Override: Region-specific
+    regions:
+      primary: eu-west-1
+      fallback:
+        - us-east-1
+        - ap-southeast-1
+
+    # Override: Production scale
+    rate_limit:
+      messages_per_second: 50000
+      connections_per_channel: 100000
+      channels_per_app: 50000
+
+    # Override: All features enabled in production
+    feature_flags:
+      enable_push_notifications: true
+      enable_presence: true
+      enable_history: true
+      enable_reactor: true
+      enable_firehose: true
+
+    # Override: Production retention
+    message_retention_days: 7
+
+    # Override: Production cluster size
+    internal_settings:
+      cluster_size: 12
+      replication_factor: 3
+      consistency_level: quorum
+
+  # Audit trail (auto-managed by ConfigHub)
+  audit:
+    last_modified_by: alice@rtmsg.io
+    last_modified_at: "2025-12-23T14:30:00Z"
+    reason: "Increased cluster size for holiday traffic"
+    changeset_id: "CS-2025-1223-001"

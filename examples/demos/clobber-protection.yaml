@@ -1,0 +1,280 @@
+# Clobber Protection Demo
+#
+# Shows how ConfigHub's Hub + App Space structural boundaries prevent
+# platform updates from clobbering app-level settings.
+#
+# THE PROBLEM (traditional overlay approach):
+#   1. Platform base has: spec.replicas: 2, spec.resources.limits.cpu: 500m
+#   2. App team patches: spec.replicas: 5 (high-traffic prod)
+#   3. Platform refactors base structure → app's patch silently ignored
+#   4. Production runs with 2 replicas → capacity issues
+#
+# THE SOLUTION (ConfigHub Hub + App Space):
+#   - Hub controls: security policies, network policies, compliance settings
+#   - App Space controls: replicas, resources, app-specific env vars
+#   - Structural separation → platform updates CANNOT touch app settings
+#
+# This demo shows both approaches side-by-side.
+
+---
+# ============================================================
+# SCENARIO A: Traditional Kustomize Overlays (VULNERABLE)
+# ============================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-traditional
+  labels:
+    demo: clobber-protection
+    approach: kustomize-overlays
+---
+# Platform team's Kustomization (the "base")
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: platform-base
+  namespace: flux-system
+  labels:
+    demo: clobber-protection
+    owner: platform-team
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-configs
+  path: ./base/order-service
+  prune: true
+status:
+  conditions:
+  - type: Ready
+    status: "True"
+    reason: ReconciliationSucceeded
+    message: "Applied revision: main@sha1:abc123"
+---
+# App team's Kustomization (the "overlay")
+# NOTE: This patch is vulnerable to platform refactors
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: order-service-prod-overlay
+  namespace: flux-system
+  labels:
+    demo: clobber-protection
+    owner: app-team
+  annotations:
+    # Documenting intent helps, but doesn't prevent clobbering
+    app.kubernetes.io/expected-replicas: "5"
+    confighub.com/vulnerability: "CCVE-2025-0056"
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: app-configs
+  path: ./overlays/order-service-prod
+  prune: true
+  # This patch targets field names that may change
+  patches:
+    - patch: |
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: order-service
+        spec:
+          replicas: 5
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+      target:
+        kind: Deployment
+        name: order-service
+status:
+  conditions:
+  - type: Ready
+    status: "True"
+    reason: ReconciliationSucceeded
+    message: "Applied revision: main@sha1:def456"
+  # PROBLEM: Ready is True, but patch may have been silently ignored
+---
+# The actual deployment - vulnerable to clobbering
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service-traditional
+  namespace: demo-traditional
+  labels:
+    demo: clobber-protection
+    approach: kustomize-overlays
+    kustomize.toolkit.fluxcd.io/name: order-service-prod-overlay
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    # This shows the PROBLEM: platform value, not app value
+    confighub.com/actual-replicas: "2"
+    confighub.com/expected-replicas: "5"
+    confighub.com/status: "CLOBBERED"
+spec:
+  # PROBLEM: Running with platform defaults, app patch was ignored
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+      - name: app
+        image: order-service:v1.2.3
+        resources:
+          limits:
+            # Platform defaults, not app team's request
+            cpu: 500m
+            memory: 512Mi
+
+---
+# ============================================================
+# SCENARIO B: ConfigHub Hub + App Space (PROTECTED)
+# ============================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-confighub
+  labels:
+    demo: clobber-protection
+    approach: confighub
+---
+# ConfigHub-managed deployment - structural protection
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service-confighub
+  namespace: demo-confighub
+  labels:
+    demo: clobber-protection
+    approach: confighub
+    # ConfigHub labels show structural ownership
+    confighub.com/UnitSlug: order-service-prod
+    confighub.com/SpaceID: demo-prod-space
+    confighub.com/Revision: "42"
+  annotations:
+    confighub.com/status: "PROTECTED"
+    # Shows that Hub and App Space have separate control planes
+    confighub.com/hub-controls: "networkPolicy,podSecurityPolicy,serviceAccount"
+    confighub.com/appspace-controls: "replicas,resources,env,labels"
+spec:
+  # App Space controls replicas - Hub CANNOT override this
+  replicas: 5
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+        # Hub-controlled labels (security)
+        confighub.com/security-scanned: "true"
+        confighub.com/compliance: "pci-dss"
+    spec:
+      # Hub-controlled: service account (security)
+      serviceAccountName: restricted-app
+      # Hub-controlled: security context (compliance)
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: app
+        image: order-service:v1.2.3
+        # App Space controls resources - protected from Hub updates
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+          requests:
+            cpu: "1"
+            memory: 1Gi
+        # App Space controls env vars
+        env:
+        - name: APP_ENV
+          value: "production"
+        - name: LOG_LEVEL
+          value: "info"
+---
+# ConfigHub Unit resource showing the separation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: confighub-unit-order-service-prod
+  namespace: demo-confighub
+  labels:
+    demo: clobber-protection
+    confighub.com/UnitSlug: order-service-prod
+data:
+  unit.yaml: |
+    # This is what the ConfigHub Unit looks like
+    # Shows clear separation between Hub and App Space control
+
+    hub:
+      # Platform team controls (CANNOT be overridden by App Space)
+      networkPolicy:
+        ingress:
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    tier: frontend
+      podSecurityPolicy: restricted
+      serviceAccount: restricted-app
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+
+    appSpace:
+      # App team controls (CANNOT be clobbered by Hub updates)
+      replicas: 5
+      resources:
+        limits:
+          cpu: "2"
+          memory: 2Gi
+        requests:
+          cpu: "1"
+          memory: 1Gi
+      env:
+        - name: APP_ENV
+          value: "production"
+        - name: LOG_LEVEL
+          value: "info"
+
+    # When platform team updates Hub:
+    # - Their security settings apply
+    # - App Space settings are PRESERVED
+    # - No silent clobbering
+---
+# Summary ConfigMap for the demo
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-summary
+  namespace: demo-confighub
+  labels:
+    demo: clobber-protection
+data:
+  summary.md: |
+    # Clobber Protection Demo Summary
+
+    ## Traditional Overlay (demo-traditional namespace)
+    - Platform patch: replicas=2, cpu=500m
+    - App overlay: replicas=5, cpu=2
+    - After platform refactor: **App overlay IGNORED**
+    - Result: Running with 2 replicas (WRONG)
+
+    ## ConfigHub Protected (demo-confighub namespace)
+    - Hub controls: security, compliance, network policies
+    - App Space controls: replicas, resources, env
+    - After platform update: **App settings PRESERVED**
+    - Result: Running with 5 replicas (CORRECT)
+
+    ## Key Difference
+    - Traditional: Overlay patches can fail silently
+    - ConfigHub: Structural boundaries prevent clobbering

@@ -1,0 +1,153 @@
+# Customer Unit: ACME's Self-Serve Config
+#
+# THIS IS THE KEY INNOVATION.
+#
+# ACME is an enterprise customer who:
+# - Inherits base config from a platform's production
+# - Can EDIT specific fields they "own"
+# - Cannot touch platform-managed fields
+# - Gets audit trail of their changes
+#
+# This enables customer self-serve without compromising platform integrity.
+
+kind: Unit
+apiVersion: confighub.com/v1
+metadata:
+  name: acme-realtime-config
+  description: ACME Corp's realtime service configuration
+  labels:
+    service: realtime
+    environment: production
+    customer: acme
+    tier: enterprise
+    customer-facing: "true"
+
+spec:
+  # Inherits from internal production config
+  upstream:
+    space: realtime-team
+    unit: production-blows
+    # ACME's edits overlay on top of production-blows
+    # Non-edited fields come from upstream
+
+  # Customer's space
+  space: customer-acme
+
+  # Revision tracking
+  revision: "20251220.2"
+  previous_revision: "20251215.1"
+
+  # CUSTOMER-EDITABLE CONFIG
+  # These are the fields ACME controls
+  config:
+    # Rate limits - ACME pays for higher limits
+    rate_limit:
+      messages_per_second: 100000      # 2x default (enterprise tier)
+      connections_per_channel: 200000  # 2x default
+      channels_per_app: 100000         # 2x default
+
+    # Feature flags - ACME enables what they need
+    feature_flags:
+      enable_push_notifications: true
+      enable_presence: true
+      enable_history: true
+      enable_reactor: true             # ACME uses reactor
+      enable_firehose: true            # ACME uses firehose
+
+    # Message retention - ACME wants longer retention
+    message_retention_days: 14         # Paid for 14 days
+
+    # Custom domain - ACME's vanity domain
+    custom_domain: "realtime.acme.com"
+
+    # Webhooks - ACME's integration endpoints
+    webhooks:
+      on_message: "https://hooks.acme.com/rtmsg/message"
+      on_presence: "https://hooks.acme.com/rtmsg/presence"
+      on_error: "https://hooks.acme.com/rtmsg/error"
+
+  # INHERITED FROM UPSTREAM (read-only for customer)
+  # These fields come from production-blows and ACME cannot change them:
+  #
+  # - image_tags (platform manages versions)
+  # - service_endpoints (platform manages routing)
+  # - regions (platform manages geography)
+  # - internal_settings (platform manages infrastructure)
+
+  # What the effective config looks like (merged view)
+  # ConfigHub computes this automatically:
+  effective_config:
+    # From upstream (production-blows)
+    image_tags:
+      core: "prod-20251220.1-a1b2c3d"      # inherited
+      frontdoor: "prod-20251218.2-e4f5g6h"  # inherited
+      redis_worker: "prod-20251215.1-i7j8k9l"  # inherited
+
+    service_endpoints:
+      api: "https://api.rtmsg.io"            # inherited
+      realtime: "wss://realtime-blows.rtmsg.io"  # inherited
+      rest: "https://rest-blows.rtmsg.io"    # inherited
+
+    regions:
+      primary: eu-west-1                    # inherited
+      fallback: [us-east-1, ap-southeast-1] # inherited
+
+    internal_settings:
+      cluster_size: 12                      # inherited
+      replication_factor: 3                 # inherited
+      consistency_level: quorum             # inherited
+
+    # Customer overrides (from this unit)
+    rate_limit:
+      messages_per_second: 100000           # ACME override
+      connections_per_channel: 200000       # ACME override
+      channels_per_app: 100000              # ACME override
+
+    feature_flags:
+      enable_push_notifications: true       # ACME override
+      enable_presence: true                 # ACME override
+      enable_history: true                  # ACME override
+      enable_reactor: true                  # ACME override
+      enable_firehose: true                 # ACME override
+
+    message_retention_days: 14              # ACME override
+    custom_domain: "realtime.acme.com"      # ACME override
+    webhooks:
+      on_message: "https://hooks.acme.com/rtmsg/message"    # ACME override
+      on_presence: "https://hooks.acme.com/rtmsg/presence"  # ACME override
+      on_error: "https://hooks.acme.com/rtmsg/error"        # ACME override
+
+  # Audit trail - WHO at ACME changed WHAT
+  audit:
+    last_modified_by: devops@acme.com
+    last_modified_at: "2025-12-20T16:45:00Z"
+    reason: "Increased rate limits for holiday campaign"
+
+    # Full change history visible to both ACME and RT-Message-App
+    history:
+      - revision: "20251220.2"
+        modified_by: devops@acme.com
+        modified_at: "2025-12-20T16:45:00Z"
+        reason: "Increased rate limits for holiday campaign"
+        changes:
+          - field: rate_limit.messages_per_second
+            old: 50000
+            new: 100000
+
+      - revision: "20251215.1"
+        modified_by: platform-admin@acme.com
+        modified_at: "2025-12-15T10:30:00Z"
+        reason: "Added error webhook for monitoring"
+        changes:
+          - field: webhooks.on_error
+            old: null
+            new: "https://hooks.acme.com/rtmsg/error"
+
+      - revision: "20251201.1"
+        modified_by: platform-admin@acme.com
+        modified_at: "2025-12-01T09:00:00Z"
+        reason: "Initial ACME configuration"
+        changes:
+          - field: custom_domain
+            old: null
+            new: "realtime.acme.com"

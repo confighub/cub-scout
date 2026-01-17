@@ -1,0 +1,30 @@
+# Evasion attempt 04: Ingress pointing to ExternalName service
+# Current detection: Checks if backend service exists
+# Evasion: Create ExternalName service (no endpoints needed)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-api-service
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: api.example.com
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: evasion-ingress-external
+  namespace: default
+spec:
+  rules:
+  - host: test.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: external-api-service
+            port:
+              number: 80

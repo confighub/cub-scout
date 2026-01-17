@@ -1,0 +1,14 @@
+# Operations stack - base values
+# Aggregates values from all operations sub-charts
+
+# keda values
+keda:
+  prometheus:
+    metricServer:
+      enabled: false
+      serviceMonitor:
+        enabled: false
+    operator:
+      enabled: false
+      serviceMonitor:
+        enabled: false

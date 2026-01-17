@@ -1,0 +1,30 @@
+# Expected Output: ConfigHub ownership detection
+name: "confighub-basic ownership"
+description: "Verify ConfigHub ownership is detected correctly"
+mode: standalone
+
+requires:
+  cluster: true
+
+fixture: "test/atk/fixtures/confighub-basic.yaml"
+
+commands:
+  - id: confighub_ownership
+    command: "kubectl apply -f test/atk/fixtures/confighub-basic.yaml && sleep 2 && ./cub-agent map list --namespace demo-confighub"
+    description: "Apply ConfigHub fixture and verify ownership"
+
+    expected:
+      exit_code: 0
+      contains:
+        - "ConfigHub"
+
+      assertions:
+        - name: "confighub_detected"
+          condition: "output.contains('ConfigHub')"
+          description: "ConfigHub ownership detected"
+
+    instructions: |
+      ConfigHub resources detected by:
+      - `confighub.com/UnitSlug` label
+
+cleanup: "kubectl delete -f test/atk/fixtures/confighub-basic.yaml --ignore-not-found"

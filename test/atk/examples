@@ -1,0 +1,654 @@
+#!/usr/bin/env bash
+# ConfigHub Agent - Examples Test
+# Validates that standard example repos are accessible and valid
+#
+# Usage:
+#   ./examples              # Test all examples (repo existence only)
+#   ./examples jesper       # Test Jesper's examples only
+#   ./examples public       # Test public examples only
+#   ./examples --capture    # Deploy examples, run map, capture output
+#   ./examples --capture global_app  # Capture specific example
+#   ./examples --verify-all # Full verification: clone, deploy, map, scan, compare output
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FIXTURES_DIR="${SCRIPT_DIR}/../../test/fixtures/expected-output/examples"
+
+R='\033[0;31m'
+G='\033[0;32m'
+Y='\033[0;33m'
+NC='\033[0m'
+
+# Counters stored in temp file for subshell
+RESULTS_FILE=$(mktemp)
+echo "0 0 0" > "$RESULTS_FILE"
+
+pass() {
+    echo -e "${G}✓${NC} $1"
+    read p f s < "$RESULTS_FILE"
+    echo "$((p+1)) $f $s" > "$RESULTS_FILE"
+}
+
+fail() {
+    echo -e "${R}✗${NC} $1"
+    read p f s < "$RESULTS_FILE"
+    echo "$p $((f+1)) $s" > "$RESULTS_FILE"
+}
+
+skip() {
+    echo -e "${Y}○${NC} $1 (skipped)"
+    read p f s < "$RESULTS_FILE"
+    echo "$p $f $((s+1))" > "$RESULTS_FILE"
+}
+
+# Capture mode: clone, deploy, map, capture output
+capture_example() {
+    local name="$1"
+    local path="$2"
+
+    # Parse org/repo/subpath
+    local org repo subpath
+    org="${path%%/*}"
+    local rest="${path#*/}"
+    repo="${rest%%/*}"
+    subpath="${rest#*/}"
+    [[ "$repo" == "$subpath" ]] && subpath=""
+
+    local clone_url="https://github.com/${org}/${repo}.git"
+    local temp_dir=$(mktemp -d)
+    local example_dir="${temp_dir}/${repo}"
+    [[ -n "$subpath" ]] && example_dir="${example_dir}/${subpath}"
+
+    echo ""
+    echo "Capturing: ${name}"
+    echo "═══════════════════════════════════════════"
+    echo "Repo: ${clone_url}"
+    echo "Subpath: ${subpath:-<root>}"
+    echo ""
+
+    # Step 1: Clone
+    echo "1. Cloning repository..."
+    if ! git clone --depth 1 "${clone_url}" "${temp_dir}/${repo}" 2>/dev/null; then
+        fail "${name}: failed to clone"
+        rm -rf "$temp_dir"
+        return 1
+    fi
+    pass "Cloned ${org}/${repo}"
+
+    # Step 2: Find deploy method and deploy
+    echo ""
+    echo "2. Deploying to cluster..."
+    local deployed=false
+    local namespace="example-${name//_/-}"
+    local deploy_namespace="$namespace"  # Namespace to filter for capture
+
+    # Create namespace for example
+    kubectl create namespace "$namespace" 2>/dev/null || true
+
+    # Deploy cluster/ directory first (base resources)
+    if [[ -d "${example_dir}/cluster" ]]; then
+        echo "   Found cluster/ directory"
+        find "${example_dir}/cluster" -name "*.yaml" -o -name "*.yml" 2>/dev/null | while read -r f; do
+            kubectl apply -f "$f" -n "$namespace" 2>/dev/null || kubectl apply -f "$f" 2>/dev/null || true
+        done
+        deployed=true
+        pass "Deployed cluster/ resources"
+    fi
+
+    # Deploy manifests/ directory (GitOps resources - Flux/Argo)
+    if [[ -d "${example_dir}/manifests" ]]; then
+        echo "   Found manifests/ directory"
+        local manifest_count=$(find "${example_dir}/manifests" -name "*.yaml" -o -name "*.yml" 2>/dev/null | wc -l | tr -d ' ')
+        echo "   Deploying ${manifest_count} GitOps manifests..."
+
+        find "${example_dir}/manifests" -name "*.yaml" -o -name "*.yml" 2>/dev/null | while read -r f; do
+            # GitOps resources (Kustomization, Application) go to their own namespaces
+            kubectl apply -f "$f" 2>/dev/null || true
+        done
+        deployed=true
+
+        # For Flux resources, the namespace to watch is flux-system
+        if grep -q "kustomize.toolkit.fluxcd.io" "${example_dir}/manifests"/*.yaml 2>/dev/null; then
+            deploy_namespace="flux-system"
+            pass "Deployed Flux GitOps manifests"
+        fi
+        # For Argo resources, the namespace to watch is argocd
+        if grep -q "argoproj.io" "${example_dir}/manifests"/*.yaml 2>/dev/null; then
+            deploy_namespace="argocd"
+            pass "Deployed Argo CD GitOps manifests"
+        fi
+    fi
+
+    # Handle bin/ script-based examples (like argocd)
+    # For argocd examples with bin/ but no manifests/, create a sample Application
+    if [[ -d "${example_dir}/bin" && ! -d "${example_dir}/manifests" && "$name" == *argocd* ]]; then
+        echo "   Found bin/ scripts (ArgoCD example)"
+        echo "   Creating sample ArgoCD Application for testing..."
+
+        # Create a sample ArgoCD Application pointing to a public repo
+        cat <<EOF | kubectl apply -f - 2>/dev/null || true
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: example-${name//_/-}
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: HEAD
+    path: guestbook
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${namespace}
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+EOF
+        deployed=true
+        deploy_namespace="argocd"
+        pass "Created sample ArgoCD Application"
+    fi
+
+    # Handle Helm examples with bin/ but no manifests/
+    # Install a sample Helm chart to demonstrate Helm ownership detection
+    if [[ -d "${example_dir}/bin" && ! -d "${example_dir}/manifests" && "$name" == *helm* ]]; then
+        echo "   Found bin/ scripts (Helm example)"
+        echo "   Installing sample Helm chart for testing..."
+
+        # Install nginx via Helm to demonstrate Helm ownership
+        helm repo add bitnami https://charts.bitnami.com/bitnami 2>/dev/null || true
+        helm repo update 2>/dev/null || true
+        helm install "example-${name//_/-}" bitnami/nginx \
+            --namespace "$namespace" \
+            --set replicaCount=1 \
+            --set service.type=ClusterIP \
+            --wait --timeout=60s 2>/dev/null || true
+        deployed=true
+        pass "Installed sample Helm chart (nginx)"
+    fi
+
+    # Try kustomization.yaml at root
+    if [[ "$deployed" == "false" && -f "${example_dir}/kustomization.yaml" ]]; then
+        echo "   Found kustomization.yaml"
+        kubectl apply -k "${example_dir}" -n "$namespace" 2>/dev/null || kubectl apply -k "${example_dir}" 2>/dev/null || true
+        deployed=true
+        pass "Deployed with kustomize"
+    fi
+
+    # Try raw YAML files at root
+    if [[ "$deployed" == "false" ]]; then
+        local yaml_count=$(find "${example_dir}" -maxdepth 1 -name "*.yaml" -o -name "*.yml" 2>/dev/null | wc -l | tr -d ' ')
+        if [[ $yaml_count -gt 0 ]]; then
+            echo "   Found ${yaml_count} YAML files"
+            find "${example_dir}" -maxdepth 1 \( -name "*.yaml" -o -name "*.yml" \) -exec kubectl apply -f {} -n "$namespace" \; 2>/dev/null || true
+            deployed=true
+            pass "Deployed raw YAML files"
+        fi
+    fi
+
+    if [[ "$deployed" == "false" ]]; then
+        skip "${name}: no deployable manifests found"
+        rm -rf "$temp_dir"
+        return 0
+    fi
+
+    # Step 3: Wait for resources
+    echo ""
+    echo "3. Waiting for resources (10s)..."
+    sleep 10
+
+    # Step 4: Run map and capture
+    echo ""
+    echo "4. Running map and capturing output..."
+    mkdir -p "$FIXTURES_DIR"
+    local fixture_file="${FIXTURES_DIR}/${name}.txt"
+
+    # For GitOps examples (Flux/Argo), don't filter by namespace - show all deployers
+    # For regular examples, filter to the example namespace
+    if [[ "$deploy_namespace" == "flux-system" || "$deploy_namespace" == "argocd" ]]; then
+        # GitOps example - capture full map with deployers visible
+        CONFIGHUB_OFFLINE=1 "${SCRIPT_DIR}/map" 2>&1 | sed 's/\x1b\[[0-9;]*m//g' > "$fixture_file"
+        pass "Captured output (GitOps mode - showing all deployers)"
+    else
+        # Regular example - filter to namespace
+        CONFIGHUB_OFFLINE=1 "${SCRIPT_DIR}/map" --namespace="$namespace" 2>&1 | sed 's/\x1b\[[0-9;]*m//g' > "$fixture_file"
+        pass "Captured output to ${fixture_file##*/} (filtered to namespace: $namespace)"
+    fi
+
+    # Show preview
+    echo ""
+    echo "   Preview (first 20 lines):"
+    echo "   ─────────────────────────────────────────"
+    head -20 "$fixture_file" | sed 's/^/   /'
+    echo "   ─────────────────────────────────────────"
+    echo "   ($(wc -l < "$fixture_file" | tr -d ' ') lines total)"
+
+    # Step 5: Cleanup
+    echo ""
+    echo "5. Cleaning up..."
+    kubectl delete namespace "$namespace" --wait=false 2>/dev/null || true
+    rm -rf "$temp_dir"
+    pass "Cleanup complete"
+
+    return 0
+}
+
+# Verify mode: full deployment and verification
+verify_example() {
+    local name="$1"
+    local path="$2"
+
+    # Parse org/repo/subpath
+    local org repo subpath
+    org="${path%%/*}"
+    local rest="${path#*/}"
+    repo="${rest%%/*}"
+    subpath="${rest#*/}"
+    [[ "$repo" == "$subpath" ]] && subpath=""
+
+    local clone_url="https://github.com/${org}/${repo}.git"
+    local temp_dir=$(mktemp -d)
+    local example_dir="${temp_dir}/${repo}"
+    [[ -n "$subpath" ]] && example_dir="${example_dir}/${subpath}"
+
+    echo ""
+    echo "Verifying: ${name}"
+    echo "═══════════════════════════════════════════"
+    echo "Repo: ${clone_url}"
+    echo "Subpath: ${subpath:-<root>}"
+    echo ""
+
+    # Step 1: Clone
+    echo "1. Cloning repository..."
+    if ! git clone --depth 1 "${clone_url}" "${temp_dir}/${repo}" 2>/dev/null; then
+        fail "${name}: failed to clone"
+        rm -rf "$temp_dir"
+        return 1
+    fi
+    pass "Cloned ${org}/${repo}"
+
+    # Step 2: Find deploy method and deploy
+    echo ""
+    echo "2. Deploying to cluster..."
+    local deployed=false
+    local namespace="verify-${name//_/-}"
+    local deploy_namespace="$namespace"
+
+    # Create namespace for example
+    kubectl create namespace "$namespace" 2>/dev/null || true
+
+    # Deploy cluster/ directory first (base resources)
+    if [[ -d "${example_dir}/cluster" ]]; then
+        echo "   Found cluster/ directory"
+        find "${example_dir}/cluster" -name "*.yaml" -o -name "*.yml" 2>/dev/null | while read -r f; do
+            kubectl apply -f "$f" -n "$namespace" 2>/dev/null || kubectl apply -f "$f" 2>/dev/null || true
+        done
+        deployed=true
+        pass "Deployed cluster/ resources"
+    fi
+
+    # Deploy manifests/ directory (GitOps resources)
+    if [[ -d "${example_dir}/manifests" ]]; then
+        echo "   Found manifests/ directory"
+        find "${example_dir}/manifests" -name "*.yaml" -o -name "*.yml" 2>/dev/null | while read -r f; do
+            kubectl apply -f "$f" 2>/dev/null || true
+        done
+        deployed=true
+
+        if grep -q "kustomize.toolkit.fluxcd.io" "${example_dir}/manifests"/*.yaml 2>/dev/null; then
+            deploy_namespace="flux-system"
+            pass "Deployed Flux GitOps manifests"
+        fi
+        if grep -q "argoproj.io" "${example_dir}/manifests"/*.yaml 2>/dev/null; then
+            deploy_namespace="argocd"
+            pass "Deployed Argo CD GitOps manifests"
+        fi
+    fi
+
+    # Handle bin/ script-based examples (ArgoCD)
+    if [[ -d "${example_dir}/bin" && ! -d "${example_dir}/manifests" && "$name" == *argocd* ]]; then
+        echo "   Found bin/ scripts (ArgoCD example)"
+        cat <<EOF | kubectl apply -f - 2>/dev/null || true
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: verify-${name//_/-}
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: HEAD
+    path: guestbook
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${namespace}
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+EOF
+        deployed=true
+        deploy_namespace="argocd"
+        pass "Created ArgoCD Application"
+    fi
+
+    # Try kustomization.yaml at root
+    if [[ "$deployed" == "false" && -f "${example_dir}/kustomization.yaml" ]]; then
+        kubectl apply -k "${example_dir}" -n "$namespace" 2>/dev/null || true
+        deployed=true
+        pass "Deployed with kustomize"
+    fi
+
+    # Try raw YAML files
+    if [[ "$deployed" == "false" ]]; then
+        local yaml_count=$(find "${example_dir}" -maxdepth 1 -name "*.yaml" -o -name "*.yml" 2>/dev/null | wc -l | tr -d ' ')
+        if [[ $yaml_count -gt 0 ]]; then
+            find "${example_dir}" -maxdepth 1 \( -name "*.yaml" -o -name "*.yml" \) -exec kubectl apply -f {} -n "$namespace" \; 2>/dev/null || true
+            deployed=true
+            pass "Deployed raw YAML files"
+        fi
+    fi
+
+    if [[ "$deployed" == "false" ]]; then
+        skip "${name}: no deployable manifests found"
+        rm -rf "$temp_dir"
+        return 0
+    fi
+
+    # Step 3: Wait for resources
+    echo ""
+    echo "3. Waiting for resources (15s)..."
+    sleep 15
+
+    # Step 4: Verify map works
+    echo ""
+    echo "4. Verifying map output..."
+    local map_output
+    if [[ "$deploy_namespace" == "flux-system" || "$deploy_namespace" == "argocd" ]]; then
+        map_output=$(CONFIGHUB_OFFLINE=1 "${SCRIPT_DIR}/map" 2>&1) || true
+    else
+        map_output=$(CONFIGHUB_OFFLINE=1 "${SCRIPT_DIR}/map" --namespace="$namespace" 2>&1) || true
+    fi
+
+    # Check map output is not empty
+    if [[ -z "$map_output" ]]; then
+        fail "${name}: map produced no output"
+    else
+        local line_count=$(echo "$map_output" | wc -l | tr -d ' ')
+        pass "Map produced ${line_count} lines of output"
+    fi
+
+    # Step 5: Verify scan works (if CCVE scanner available)
+    echo ""
+    echo "5. Verifying scan..."
+    local scan_output
+    scan_output=$(CONFIGHUB_OFFLINE=1 "${SCRIPT_DIR}/scan" --namespace="$namespace" 2>&1) || true
+    if [[ -n "$scan_output" ]]; then
+        local scan_lines=$(echo "$scan_output" | wc -l | tr -d ' ')
+        pass "Scan completed (${scan_lines} lines)"
+    else
+        skip "Scan produced no output"
+    fi
+
+    # Step 6: Compare with expected output if available
+    echo ""
+    echo "6. Checking expected output..."
+    local fixture_file="${FIXTURES_DIR}/${name}.txt"
+    if [[ -f "$fixture_file" ]]; then
+        # Simple line count comparison (structure verification)
+        local expected_lines=$(wc -l < "$fixture_file" | tr -d ' ')
+        local actual_lines=$(echo "$map_output" | sed 's/\x1b\[[0-9;]*m//g' | wc -l | tr -d ' ')
+
+        if [[ $actual_lines -ge $((expected_lines / 2)) ]]; then
+            pass "Output structure matches expected (${actual_lines} vs ${expected_lines} lines)"
+        else
+            fail "Output significantly smaller than expected (${actual_lines} vs ${expected_lines} lines)"
+        fi
+    else
+        skip "No expected output fixture (run --capture to create)"
+    fi
+
+    # Step 7: Cleanup
+    echo ""
+    echo "7. Cleaning up..."
+    kubectl delete namespace "$namespace" --wait=false 2>/dev/null || true
+    # Clean up ArgoCD Application if created
+    kubectl delete application "verify-${name//_/-}" -n argocd 2>/dev/null || true
+    rm -rf "$temp_dir"
+    pass "Cleanup complete"
+
+    return 0
+}
+
+test_example() {
+    local name="$1"
+    local path="$2"
+
+    # Split into org/repo and subpath
+    # e.g., "confighubai/examples-internal/argocd" -> org=confighubai, repo=examples-internal, subpath=argocd
+    local org repo subpath
+    org="${path%%/*}"
+    local rest="${path#*/}"
+    repo="${rest%%/*}"
+    subpath="${rest#*/}"
+
+    # If no subpath, rest equals subpath
+    if [[ "$repo" == "$subpath" ]]; then
+        subpath=""
+    fi
+
+    echo ""
+    echo "Testing: ${name}"
+    echo "─────────────────────────────────────────"
+
+    # Test 1: Repo exists
+    if gh api "repos/${org}/${repo}" &>/dev/null; then
+        if [[ -n "$subpath" ]]; then
+            if gh api "repos/${org}/${repo}/contents/${subpath}" &>/dev/null; then
+                pass "${name}: ${path} exists"
+            else
+                fail "${name}: ${path} (subpath not found)"
+                return 1
+            fi
+        else
+            pass "${name}: ${path} exists"
+        fi
+    else
+        fail "${name}: ${path} (repo not found)"
+        return 1
+    fi
+
+    # Test 2: Has README
+    local readme_path="${subpath:+${subpath}/}README.md"
+    if gh api "repos/${org}/${repo}/contents/${readme_path}" &>/dev/null; then
+        pass "${name}: has README.md"
+    else
+        skip "${name}: no README.md"
+    fi
+
+    # Test 3: Has cluster directory
+    local cluster_path="${subpath:+${subpath}/}cluster"
+    if gh api "repos/${org}/${repo}/contents/${cluster_path}" &>/dev/null; then
+        pass "${name}: has cluster/ directory"
+    else
+        skip "${name}: no cluster/ directory"
+    fi
+}
+
+main() {
+    local mode="test"
+    local filter="all"
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --capture)
+                mode="capture"
+                shift
+                ;;
+            --verify-all|--verify)
+                mode="verify"
+                shift
+                ;;
+            *)
+                filter="$1"
+                shift
+                ;;
+        esac
+    done
+
+    # Examples to test/capture
+    # Public examples: https://docs.confighub.com/get-started/examples/
+    local -a names=(jesper_argocd jesper_fluxcd global_app helm_platform vm_fleet flux_bridge)
+    local -a paths=(
+        "confighubai/examples-internal/argocd"
+        "confighubai/examples-internal/fluxcd"
+        "confighub/examples/global-app"
+        "confighub/examples/helm-platform-components"
+        "confighub/examples/vm-fleet"
+        "confighubai/flux-bridge"
+    )
+
+    if [[ "$mode" == "capture" ]]; then
+        echo "ConfigHub Examples - Capture Mode"
+        echo "══════════════════════════════════"
+        echo ""
+        echo "This will:"
+        echo "  1. Clone each example repo"
+        echo "  2. Deploy to current cluster"
+        echo "  3. Run map and capture output"
+        echo "  4. Save to test/fixtures/expected-output/examples/"
+        echo "  5. Clean up deployed resources"
+        echo ""
+
+        # Check kubectl
+        if ! kubectl cluster-info &>/dev/null; then
+            echo -e "${R}✗${NC} kubectl not connected to cluster"
+            exit 1
+        fi
+        echo -e "${G}✓${NC} Connected to cluster: $(kubectl config current-context)"
+
+        for i in "${!names[@]}"; do
+            local name="${names[$i]}"
+            local path="${paths[$i]}"
+
+            # Filter
+            if [[ "$filter" != "all" && "$name" != "$filter" ]]; then
+                continue
+            fi
+
+            capture_example "$name" "$path"
+        done
+
+        echo ""
+        echo "═══════════════════════════════════════════"
+        echo "Capture complete!"
+        echo ""
+        echo "Fixtures saved to:"
+        ls -la "$FIXTURES_DIR"/*.txt 2>/dev/null || echo "  (no fixtures created)"
+        exit 0
+    fi
+
+    # Verify mode: full deployment and verification
+    if [[ "$mode" == "verify" ]]; then
+        echo "ConfigHub Examples - Verify Mode"
+        echo "════════════════════════════════"
+        echo ""
+        echo "This will for each example:"
+        echo "  1. Clone repository"
+        echo "  2. Deploy to current cluster"
+        echo "  3. Run map and verify output"
+        echo "  4. Run scan and verify output"
+        echo "  5. Compare with expected output (if available)"
+        echo "  6. Clean up resources"
+        echo ""
+
+        # Check kubectl
+        if ! kubectl cluster-info &>/dev/null; then
+            echo -e "${R}✗${NC} kubectl not connected to cluster"
+            exit 1
+        fi
+        echo -e "${G}✓${NC} Connected to cluster: $(kubectl config current-context)"
+
+        for i in "${!names[@]}"; do
+            local name="${names[$i]}"
+            local path="${paths[$i]}"
+
+            # Filter
+            if [[ "$filter" != "all" && "$name" != "$filter" ]]; then
+                continue
+            fi
+
+            verify_example "$name" "$path"
+        done
+
+        # Read final results
+        read PASSED FAILED SKIPPED < "$RESULTS_FILE"
+        rm -f "$RESULTS_FILE"
+
+        echo ""
+        echo "═══════════════════════════════════════════"
+        echo "Verification complete!"
+        echo "Results: ${PASSED} passed, ${FAILED} failed, ${SKIPPED} skipped"
+
+        if [[ $FAILED -gt 0 ]]; then
+            exit 1
+        fi
+        exit 0
+    fi
+
+    # Normal test mode
+    echo "ConfigHub Examples Test"
+    echo "========================"
+
+    # Check gh CLI
+    if ! command -v gh &>/dev/null; then
+        echo -e "${R}✗${NC} gh CLI not found"
+        exit 1
+    fi
+
+    if ! gh auth status &>/dev/null 2>&1; then
+        echo -e "${R}✗${NC} gh not authenticated (run: gh auth login)"
+        exit 1
+    fi
+
+    for i in "${!names[@]}"; do
+        local name="${names[$i]}"
+        local path="${paths[$i]}"
+
+        # Filter by type
+        case "$filter" in
+            jesper)
+                [[ "$name" != jesper_* ]] && continue
+                ;;
+            public)
+                [[ "$path" == confighubai/* ]] && continue
+                ;;
+            all)
+                ;;
+            *)
+                [[ "$name" != "$filter" ]] && continue
+                ;;
+        esac
+
+        test_example "$name" "$path"
+    done
+
+    # Read final results
+    read PASSED FAILED SKIPPED < "$RESULTS_FILE"
+    rm -f "$RESULTS_FILE"
+
+    echo ""
+    echo "═══════════════════════════════════════════"
+    echo "Results: ${PASSED} passed, ${FAILED} failed, ${SKIPPED} skipped"
+
+    if [[ $FAILED -gt 0 ]]; then
+        exit 1
+    fi
+}
+
+main "$@"

@@ -1,0 +1,160 @@
+#!/bin/bash
+# ConfigHub API helper for map tool
+# Uses cub CLI to query ConfigHub for hierarchy information
+#
+# Usage:
+#   ./confighub-api check              # Check if cub is authenticated
+#   ./confighub-api orgs               # List organizations
+#   ./confighub-api spaces             # List all spaces
+#   ./confighub-api space SPACE_SLUG   # Get space details
+#   ./confighub-api units SPACE_SLUG   # List units in a space
+#   ./confighub-api targets SPACE_SLUG # List targets in a space
+#   ./confighub-api workers SPACE_SLUG # List workers in a space
+#   ./confighub-api full               # Full hierarchy dump (orgs, spaces, units, targets, workers)
+
+set -euo pipefail
+
+# Check if cub is available
+if ! command -v cub &> /dev/null; then
+    echo '{"error": "cub CLI not found. Install from https://confighub.com/docs/cli"}' >&2
+    exit 1
+fi
+
+# Check authentication
+check_auth() {
+    if cub context get &>/dev/null; then
+        echo '{"authenticated": true}'
+    else
+        echo '{"authenticated": false, "error": "Not authenticated. Run: cub auth login"}'
+        exit 1
+    fi
+}
+
+# List organizations
+list_orgs() {
+    cub organization list --json 2>/dev/null || echo '[]'
+}
+
+# List all spaces
+list_spaces() {
+    cub space list --json 2>/dev/null || echo '[]'
+}
+
+# Get space details
+get_space() {
+    local space_slug="$1"
+    cub space get "$space_slug" --json 2>/dev/null || echo '{"error": "Space not found"}'
+}
+
+# List units in a space
+list_units() {
+    local space_slug="$1"
+    cub unit list --space "$space_slug" --json 2>/dev/null || echo '[]'
+}
+
+# List targets in a space
+list_targets() {
+    local space_slug="$1"
+    cub target list --space "$space_slug" --json 2>/dev/null || echo '[]'
+}
+
+# List workers in a space
+list_workers() {
+    local space_slug="$1"
+    cub worker list --space "$space_slug" --json 2>/dev/null || echo '[]'
+}
+
+# Full hierarchy dump
+full_hierarchy() {
+    local result='{"organizations":[],"spaces":[]}'
+
+    # Get organizations
+    local orgs
+    orgs=$(list_orgs)
+    result=$(echo "$result" | jq --argjson orgs "$orgs" '.organizations = $orgs')
+
+    # Get spaces with their units, targets, workers
+    local spaces
+    spaces=$(list_spaces)
+
+    # Enrich each space with units, targets, workers
+    local enriched_spaces='[]'
+    for space_slug in $(echo "$spaces" | jq -r '.[].Space.Slug // empty'); do
+        local space_data
+        space_data=$(get_space "$space_slug")
+
+        local units targets workers
+        units=$(list_units "$space_slug")
+        targets=$(list_targets "$space_slug")
+        workers=$(list_workers "$space_slug")
+
+        local enriched_space
+        enriched_space=$(echo "$space_data" | jq \
+            --argjson units "$units" \
+            --argjson targets "$targets" \
+            --argjson workers "$workers" \
+            '. + {units: $units, targets: $targets, workers: $workers}')
+
+        enriched_spaces=$(echo "$enriched_spaces" | jq --argjson s "$enriched_space" '. += [$s]')
+    done
+
+    result=$(echo "$result" | jq --argjson spaces "$enriched_spaces" '.spaces = $spaces')
+    echo "$result"
+}
+
+# Main command dispatcher
+case "${1:-help}" in
+    check)
+        check_auth
+        ;;
+    orgs|organizations)
+        list_orgs
+        ;;
+    spaces)
+        list_spaces
+        ;;
+    space)
+        [[ -z "${2:-}" ]] && { echo "Usage: $0 space SPACE_SLUG" >&2; exit 1; }
+        get_space "$2"
+        ;;
+    units)
+        [[ -z "${2:-}" ]] && { echo "Usage: $0 units SPACE_SLUG" >&2; exit 1; }
+        list_units "$2"
+        ;;
+    targets)
+        [[ -z "${2:-}" ]] && { echo "Usage: $0 targets SPACE_SLUG" >&2; exit 1; }
+        list_targets "$2"
+        ;;
+    workers)
+        [[ -z "${2:-}" ]] && { echo "Usage: $0 workers SPACE_SLUG" >&2; exit 1; }
+        list_workers "$2"
+        ;;
+    full)
+        full_hierarchy
+        ;;
+    help|--help|-h)
+        echo "ConfigHub API helper - queries ConfigHub via cub CLI"
+        echo ""
+        echo "Usage: $0 <command> [args]"
+        echo ""
+        echo "Commands:"
+        echo "  check              Check if cub is authenticated"
+        echo "  orgs               List organizations"
+        echo "  spaces             List all spaces"
+        echo "  space SPACE_SLUG   Get space details"
+        echo "  units SPACE_SLUG   List units in a space"
+        echo "  targets SPACE_SLUG List targets in a space"
+        echo "  workers SPACE_SLUG List workers in a space"
+        echo "  full               Full hierarchy dump"
+        echo ""
+        echo "Authentication:"
+        echo "  Run 'cub auth login' to authenticate"
+        echo ""
+        echo "Output: JSON to stdout"
+        ;;
+    *)
+        echo "Unknown command: $1" >&2
+        echo "Run '$0 help' for usage" >&2
+        exit 1
+        ;;
+esac

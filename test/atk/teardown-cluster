@@ -1,0 +1,64 @@
+#!/bin/bash
+# ATK Cluster Teardown - Removes the ATK Kind cluster and all resources
+#
+# Usage:
+#   ./teardown-cluster           # Delete cluster
+#   ./teardown-cluster --keep    # Keep cluster, delete ATK namespaces only
+
+set -euo pipefail
+
+CLUSTER_NAME="atk"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+info()  { echo -e "${YELLOW}$*${NC}"; }
+pass()  { echo -e "${GREEN}✓ $*${NC}"; }
+
+cleanup_namespaces() {
+    info "Cleaning up ATK namespaces..."
+
+    # Delete all atk-* namespaces
+    for ns in $(kubectl get ns -o name 2>/dev/null | grep "^namespace/atk-" | cut -d/ -f2); do
+        info "Deleting namespace: $ns"
+        kubectl delete ns "$ns" --wait=false 2>/dev/null || true
+    done
+
+    # Delete Argo applications created by ATK
+    if kubectl get namespace argocd &>/dev/null; then
+        for app in $(kubectl -n argocd get applications -o name 2>/dev/null | grep -E "(guestbook|mixed-argo)" | cut -d/ -f2); do
+            info "Deleting Argo Application: $app"
+            kubectl -n argocd delete application "$app" --wait=false 2>/dev/null || true
+        done
+    fi
+
+    pass "ATK resources cleaned up"
+}
+
+delete_cluster() {
+    info "Deleting Kind cluster '$CLUSTER_NAME'..."
+
+    if kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
+        kind delete cluster --name "$CLUSTER_NAME"
+        pass "Cluster deleted"
+    else
+        info "Cluster '$CLUSTER_NAME' not found"
+    fi
+}
+
+# Main
+case "${1:-}" in
+    --keep|-k)
+        cleanup_namespaces
+        ;;
+    --help|-h)
+        head -8 "$0" | tail -6
+        ;;
+    *)
+        cleanup_namespaces
+        delete_cluster
+        ;;
+esac

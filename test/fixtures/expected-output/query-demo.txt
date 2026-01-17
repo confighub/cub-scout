@@ -1,0 +1,163 @@
+Query Language Demo: Filter your fleet
+
+New in v0.2.0: Query language for precise resource filtering
+
+Step 1: Applying multi-cluster demo fixtures...
+namespace/prod-east unchanged
+deployment.apps/payment-api unchanged
+deployment.apps/payment-worker unchanged
+namespace/prod-west unchanged
+deployment.apps/order-api unchanged
+deployment.apps/order-processor unchanged
+namespace/staging unchanged
+deployment.apps/frontend unchanged
+deployment.apps/backend unchanged
+deployment.apps/debug-pod unchanged
+namespace/monitoring unchanged
+deployment.apps/prometheus unchanged
+deployment.apps/grafana unchanged
+service/payment-api unchanged
+service/order-api unchanged
+
+Query 1: GitOps-managed deployments only (owner!=Native)
+  $ ./cub-agent map list --standalone -q "kind=Deployment AND owner!=Native"
+
+NAMESPACE      KIND        NAME             OWNER
+demo-orders    Deployment  order-processor  confighub
+demo-orders    Deployment  postgresql       helm
+demo-payments  Deployment  frontend         argo
+demo-payments  Deployment  payment-api      confighub
+monitoring     Deployment  grafana          confighub
+monitoring     Deployment  prometheus       confighub
+prod-east      Deployment  payment-api      flux
+prod-east      Deployment  payment-worker   flux
+prod-west      Deployment  order-api        argo
+prod-west      Deployment  order-processor  argo
+staging        Deployment  backend          helm
+staging        Deployment  frontend         flux
+
+Total: 12 resources
+By Owner: Native(73) argo(4) confighub(7) flux(4) helm(2)
+
+Query 2: Production namespaces (namespace=prod*)
+  $ ./cub-agent map list --standalone -q "namespace=prod*"
+
+NAMESPACE  KIND        NAME              OWNER
+prod-east  ConfigMap   kube-root-ca.crt  Native
+prod-east  Deployment  payment-api       flux
+prod-east  Service     payment-api       flux
+prod-east  Deployment  payment-worker    flux
+prod-west  ConfigMap   kube-root-ca.crt  Native
+prod-west  Deployment  order-api         argo
+prod-west  Service     order-api         argo
+prod-west  Deployment  order-processor   argo
+
+Total: 8 resources
+By Owner: Native(73) argo(4) confighub(7) flux(4) helm(2)
+
+Query 3: Flux OR Argo managed
+  $ ./cub-agent map list --standalone -q "owner=Flux OR owner=ArgoCD"
+
+NAMESPACE  KIND        NAME            OWNER
+prod-east  Deployment  payment-api     flux
+prod-east  Service     payment-api     flux
+prod-east  Deployment  payment-worker  flux
+staging    Deployment  frontend        flux
+
+Total: 4 resources
+By Owner: Native(73) argo(4) confighub(7) flux(4) helm(2)
+
+Query 4: Find orphans (Native ownership)
+  $ ./cub-agent map list --standalone -q "owner=Native"
+
+NAMESPACE             KIND           NAME                                                  OWNER
+argocd                StatefulSet    argocd-application-controller                         Native
+argocd                Service        argocd-applicationset-controller                      Native
+argocd                Deployment     argocd-applicationset-controller                      Native
+argocd                ConfigMap      argocd-cm                                             Native
+argocd                ConfigMap      argocd-cmd-params-cm                                  Native
+argocd                Deployment     argocd-dex-server                                     Native
+argocd                Service        argocd-dex-server                                     Native
+argocd                ConfigMap      argocd-gpg-keys-cm                                    Native
+argocd                Secret         argocd-initial-admin-secret                           Native
+argocd                Service        argocd-metrics                                        Native
+argocd                ConfigMap      argocd-notifications-cm                               Native
+argocd                Deployment     argocd-notifications-controller                       Native
+argocd                Service        argocd-notifications-controller-metrics               Native
+argocd                Secret         argocd-notifications-secret                           Native
+argocd                ConfigMap      argocd-rbac-cm                                        Native
+argocd                Service        argocd-redis                                          Native
+argocd                Deployment     argocd-redis                                          Native
+argocd                Secret         argocd-redis                                          Native
+argocd                Service        argocd-repo-server                                    Native
+argocd                Deployment     argocd-repo-server                                    Native
+argocd                Secret         argocd-secret                                         Native
+argocd                Deployment     argocd-server                                         Native
+argocd                Service        argocd-server                                         Native
+argocd                Service        argocd-server-metrics                                 Native
+argocd                ConfigMap      argocd-ssh-known-hosts-cm                             Native
+argocd                ConfigMap      argocd-tls-certs-cm                                   Native
+argocd                Application    frontend-app                                          Native
+argocd                ConfigMap      kube-root-ca.crt                                      Native
+confighubplaceholder  ConfigMap      kube-root-ca.crt                                      Native
+default               ConfigMap      kube-root-ca.crt                                      Native
+default               Service        kubernetes                                            Native
+demo-monitoring       Deployment     grafana                                               Native
+demo-monitoring       Service        grafana                                               Native
+demo-monitoring       ConfigMap      kube-root-ca.crt                                      Native
+demo-orders           ConfigMap      kube-root-ca.crt                                      Native
+demo-payments         Deployment     debug-tools                                           Native
+demo-payments         ConfigMap      kube-root-ca.crt                                      Native
+demo-payments         ConfigMap      legacy-config                                         Native
+flux-system           Kustomization  example-app                                           Native
+flux-system           Deployment     helm-controller                                       Native
+flux-system           GitRepository  infra-repo                                            Native
+flux-system           ConfigMap      kube-root-ca.crt                                      Native
+flux-system           Deployment     kustomize-controller                                  Native
+flux-system           Kustomization  monitoring-stack                                      Native
+flux-system           Service        notification-controller                               Native
+flux-system           Deployment     notification-controller                               Native
+flux-system           HelmRelease    redis-cache                                           Native
+flux-system           Service        source-controller                                     Native
+flux-system           Deployment     source-controller                                     Native
+flux-system           Service        webhook-receiver                                      Native
+ingress-nginx         ConfigMap      kube-root-ca.crt                                      Native
+kube-node-lease       ConfigMap      kube-root-ca.crt                                      Native
+kube-public           ConfigMap      cluster-info                                          Native
+kube-public           ConfigMap      kube-root-ca.crt                                      Native
+kube-system           ConfigMap      coredns                                               Native
+kube-system           Deployment     coredns                                               Native
+kube-system           ConfigMap      extension-apiserver-authentication                    Native
+kube-system           DaemonSet      kindnet                                               Native
+kube-system           ConfigMap      kube-apiserver-legacy-service-account-token-tracking  Native
+kube-system           Service        kube-dns                                              Native
+kube-system           ConfigMap      kube-proxy                                            Native
+kube-system           DaemonSet      kube-proxy                                            Native
+kube-system           ConfigMap      kube-root-ca.crt                                      Native
+kube-system           ConfigMap      kubeadm-config                                        Native
+kube-system           ConfigMap      kubelet-config                                        Native
+local-path-storage    ConfigMap      kube-root-ca.crt                                      Native
+local-path-storage    ConfigMap      local-path-config                                     Native
+local-path-storage    Deployment     local-path-provisioner                                Native
+monitoring            ConfigMap      kube-root-ca.crt                                      Native
+prod-east             ConfigMap      kube-root-ca.crt                                      Native
+prod-west             ConfigMap      kube-root-ca.crt                                      Native
+staging               Deployment     debug-pod                                             Native
+staging               ConfigMap      kube-root-ca.crt                                      Native
+
+Total: 73 resources
+By Owner: Native(73) argo(4) confighub(7) flux(4) helm(2)
+
+Query language enables precise fleet filtering
+
+Query Syntax:
+  field=value           Exact match (case-insensitive)
+  field!=value          Not equal
+  field~=pattern        Regex match
+  field=val1,val2       IN list
+  field=prefix*         Wildcard
+  AND / OR              Logical operators
+
+Available fields: kind, namespace, name, owner, cluster, labels[key]
+
+Cleanup: ./demo query --cleanup

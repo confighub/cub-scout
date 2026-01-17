@@ -1,0 +1,77 @@
+# Hub: Apptique Platform
+#
+# This Hub represents the apptique demo application:
+# - Based on Google's Online Boutique microservices demo
+# - 3 GitOps patterns (Flux monorepo, Argo ApplicationSet, Argo App-of-Apps)
+# - 2 environments (dev, prod)
+#
+# For enterprise scale example, see: examples/rm-demos-argocd/confighub/hub.yaml
+
+kind: Hub
+apiVersion: confighub.com/v1
+metadata:
+  name: apptique-platform
+  description: Apptique e-commerce platform (Online Boutique demo)
+
+spec:
+  # Platform constraints
+  constraints:
+    - name: no-latest-tags
+      description: No :latest image tags in production
+      match:
+        labels:
+          environment: prod
+      deny:
+        - image.tag: "latest"
+
+    - name: resource-limits-required
+      description: Production workloads must have resource limits
+      match:
+        labels:
+          environment: prod
+      require:
+        - spec.containers[*].resources.limits
+
+  # Environments (simulated with namespaces)
+  targets:
+    # Development
+    - name: apptique-dev
+      labels:
+        environment: dev
+        pattern: flux-monorepo  # or argo-applicationset, argo-app-of-apps
+
+    # Production
+    - name: apptique-prod
+      labels:
+        environment: prod
+        pattern: flux-monorepo
+
+    # Multi-cluster simulation (from scenarios/monday-panic)
+    - name: apptique-east
+      labels:
+        environment: prod
+        region: us-east
+        pattern: monday-panic
+
+    - name: apptique-west
+      labels:
+        environment: prod
+        region: us-west
+        pattern: monday-panic
+
+    - name: apptique-eu
+      labels:
+        environment: prod
+        region: eu-west
+        pattern: monday-panic
+
+  # OCI registry (for Rendered Manifest pattern)
+  oci_registry:
+    url: ghcr.io/confighubai/apptique
+    auth_secret: ghcr-credentials
+
+  # Git source
+  source:
+    repository: https://github.com/confighubai/confighub-agent
+    path: examples/apptique-examples
+    branch: main

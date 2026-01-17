@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apptique-prod
+  labels:
+    environment: prod
+    app.kubernetes.io/part-of: apptique-examples

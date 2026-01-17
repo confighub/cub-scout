@@ -1,0 +1,77 @@
+# Security stack - production environment overrides
+
+# kyverno production overrides - enforce mode
+kyverno:
+  replicaCount: 3
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+
+  admissionController:
+    replicas: 3
+    container:
+      args:
+        # Enforce mode - block policy violations
+        - --validatingFailurePolicy=Fail
+        - --mutatingFailurePolicy=Fail
+
+  backgroundController:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+  cleanupController:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+
+  reportsController:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+  podDisruptionBudget:
+    minAvailable: 1
+
+  serviceMonitor:
+    enabled: true
+
+# trivy-operator production overrides
+trivy-operator:
+  operator:
+    replicas: 3
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+
+  trivy:
+    mode: ClientServer
+    serverUrl: http://trivy-server:4954
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
+
+  scanJobs:
+    concurrentScanJobsLimit: 20
+
+  serviceMonitor:
+    enabled: true

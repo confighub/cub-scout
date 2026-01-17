@@ -1,0 +1,54 @@
+# Developer Persona
+# Application developer who deploys to Kubernetes but doesn't manage cluster infrastructure
+
+id: developer
+name: Application Developer
+expertise_level: intermediate
+
+characteristics:
+  - Familiar with kubectl basics (get, describe, logs)
+  - Understands Pod/Deployment/Service concepts
+  - Doesn't know GitOps internals (Flux CRDs, ArgoCD sync)
+  - Wants quick answers, not deep configuration dives
+  - May not have cluster admin access
+  - Works primarily in one or two namespaces
+
+typical_goals:
+  - Debug my failing deployment
+  - Find why my config change didn't apply after merge
+  - Check if my app is running in prod
+  - Find what resources belong to my team
+  - Understand why my pod keeps restarting
+
+expected_knowledge:
+  kubectl:
+    - get pods/deployments/services
+    - describe resources
+    - logs
+    - port-forward
+  concepts:
+    - Pod, Deployment, Service, ConfigMap, Secret
+    - Namespace isolation
+    - Container images and registries
+    - Basic YAML structure
+  git:
+    - Branching and PRs
+    - Merge workflows
+
+unknown_concepts:
+  - Kustomization/HelmRelease CRDs
+  - Flux/ArgoCD sync mechanics and reconciliation
+  - CCVE categories and patterns
+  - GitOps ownership chain
+  - Cluster-level resources (CRDs, webhooks)
+
+frustration_triggers:
+  - "I merged my PR, why isn't it deployed?"
+  - "Which config file actually controls this?"
+  - "Who changed this and when?"
+  - "Why does staging work but prod doesn't?"
+
+success_indicators:
+  - Finds crashing pod in < 30 seconds
+  - Identifies owner of resource without asking
+  - Traces config change to source without docs

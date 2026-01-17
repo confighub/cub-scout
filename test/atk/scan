@@ -1,0 +1,728 @@
+#!/bin/bash
+# ATK Config CVE Scanner
+#
+# Usage:
+#   ./scan                    # Scan cluster for known CCVEs
+#   ./scan --json             # JSON output for tools
+#   ./scan --list             # List all known CCVEs
+#   ./scan CCVE-FLUX-001      # Show specific CCVE details
+#
+# Environment:
+#   ATK_VERBOSE=1             # Show detection commands
+
+set -eo pipefail
+
+ATK_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$ATK_DIR/../.." && pwd)"
+CVE_DIR="$REPO_ROOT/cve"
+VERBOSE="${ATK_VERBOSE:-0}"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+info()  { echo -e "${YELLOW}$*${NC}"; }
+pass()  { echo -e "${GREEN}✓ $*${NC}"; }
+fail()  { echo -e "${RED}✗ $*${NC}"; }
+warn()  { echo -e "${CYAN}⚠ $*${NC}"; }
+
+# List all CCVEs (reads from index.json for speed, falls back to YAML parsing)
+list_patterns() {
+    echo "Config CVE Catalog:"
+    echo ""
+    printf "%-18s %-8s %-42s %s\n" "ID" "CAT" "Name" "Severity"
+    printf "%-18s %-8s %-42s %s\n" "--" "---" "----" "--------"
+
+    if [[ -f "$CVE_DIR/ccve/index.json" ]]; then
+        # Fast path: use pre-generated index
+        jq -r '.ccves[] | "\(.id)\t\(.category)\t\(.name)\t\(.severity)"' "$CVE_DIR/ccve/index.json" | \
+        while IFS=$'\t' read -r id cat name sev; do
+            printf "%-18s %-8s %-42s %s\n" "$id" "$cat" "${name:0:40}" "$sev"
+        done
+    else
+        # Slow path: parse YAML files directly
+        for f in "$CVE_DIR"/ccve/CCVE-*.yaml; do
+            [[ -f "$f" ]] || continue
+            local id name category severity
+            id=$(grep -m1 "^id:" "$f" | awk '{print $2}')
+            name=$(grep -m1 "^name:" "$f" | sed 's/^name: //')
+            category=$(grep -m1 "^category:" "$f" | awk '{print $2}')
+            severity=$(grep -m1 "^severity:" "$f" | awk '{print $2}')
+            printf "%-18s %-8s %-42s %s\n" "$id" "$category" "${name:0:40}" "$severity"
+        done
+    fi
+}
+
+# Scan for Flux CCVEs
+scan_flux() {
+    local findings=("")
+
+    # CCVE-FLUX-001: Source not found
+    local orphaned
+    orphaned=$(kubectl get kustomizations -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(.status.conditions[]? |
+            select(.type=="Ready" and .status=="False" and
+                (.message | test("not found|does not exist"; "i")))
+        ) |
+        "\(.metadata.namespace)/\(.metadata.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$orphaned" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-FLUX-001\",\"resource\":\"$item\",\"severity\":\"Critical\"}")
+        done <<< "$orphaned"
+    fi
+
+    # CCVE-FLUX-002: Build failed (invalid path, kustomize errors)
+    local build_failed
+    build_failed=$(kubectl get kustomizations -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(.status.conditions[]? |
+            select(.type=="Ready" and .reason=="BuildFailed")
+        ) |
+        "\(.metadata.namespace)/\(.metadata.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$build_failed" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-FLUX-002\",\"resource\":\"$item\",\"severity\":\"Critical\"}")
+        done <<< "$build_failed"
+    fi
+
+    # CCVE-FLUX-005: Suspended
+    local suspended
+    suspended=$(kubectl get kustomizations,helmreleases -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(.spec.suspend == true) |
+        "\(.metadata.namespace)/\(.metadata.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$suspended" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-FLUX-005\",\"resource\":\"$item\",\"severity\":\"Info\"}")
+        done <<< "$suspended"
+    fi
+
+    printf '%s\n' "${findings[@]}"
+}
+
+# Scan for Argo CD CCVEs
+scan_argo() {
+    local findings=("")
+
+    # Check if Argo CD is installed
+    kubectl get crd applications.argoproj.io &>/dev/null || return 0
+
+    # CCVE-ARGO-001: Sync failed
+    local sync_failed
+    sync_failed=$(kubectl get applications -n argocd -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(
+            .status.operationState.phase == "Failed" or
+            .status.operationState.phase == "Error"
+        ) |
+        "\(.metadata.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$sync_failed" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-ARGO-001\",\"resource\":\"argocd/$item\",\"severity\":\"Critical\"}")
+        done <<< "$sync_failed"
+    fi
+
+    # CCVE-ARGO-003: Out of sync
+    local out_of_sync
+    out_of_sync=$(kubectl get applications -n argocd -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(.status.sync.status == "OutOfSync") |
+        "\(.metadata.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$out_of_sync" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-ARGO-003\",\"resource\":\"argocd/$item\",\"severity\":\"Warning\"}")
+        done <<< "$out_of_sync"
+    fi
+
+    # CCVE-ARGO-004: Health degraded
+    local degraded
+    degraded=$(kubectl get applications -n argocd -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(.status.health.status == "Degraded") |
+        "\(.metadata.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$degraded" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-ARGO-004\",\"resource\":\"argocd/$item\",\"severity\":\"Warning\"}")
+        done <<< "$degraded"
+    fi
+
+    printf '%s\n' "${findings[@]}"
+}
+
+# Scan for Helm CCVEs
+scan_helm() {
+    local findings=("")
+
+    # Check if helm is available
+    command -v helm &>/dev/null || return 0
+
+    # CCVE-HELM-001: Failed releases
+    local failed
+    failed=$(helm list -A -o json 2>/dev/null | jq -r '
+        .[] | select(.status == "failed") |
+        "\(.namespace)/\(.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$failed" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-HELM-001\",\"resource\":\"$item\",\"severity\":\"Critical\"}")
+        done <<< "$failed"
+    fi
+
+    # CCVE-HELM-003: Pending states
+    local pending
+    pending=$(helm list -A -o json 2>/dev/null | jq -r '
+        .[] | select(.status | test("pending")) |
+        "\(.namespace)/\(.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$pending" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-HELM-003\",\"resource\":\"$item\",\"severity\":\"Warning\"}")
+        done <<< "$pending"
+    fi
+
+    printf '%s\n' "${findings[@]}"
+}
+
+# Scan for Application-level CCVEs (patterns that cause silent failures)
+scan_applications() {
+    local findings=("")
+
+    # CCVE-2025-0027: Grafana sidecar namespace whitespace bug
+    # The exact error that caused 4-hour outage at BIGBANK Capital Markets (FluxCon 2025)
+    # Detects spaces in comma-separated NAMESPACE env var in Grafana sidecars
+    local grafana_ns_bug
+    grafana_ns_bug=$(kubectl get deployments -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(.spec.template.spec.containers[]? |
+            select(.name | test("sidecar|dashboard"; "i")) |
+            select(.env[]? | select(.name == "NAMESPACE" and (.value | test(", "))))
+        ) |
+        "\(.metadata.namespace)/\(.metadata.name)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$grafana_ns_bug" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && findings+=("{\"id\":\"CCVE-2025-0027\",\"resource\":\"$item\",\"severity\":\"Critical\",\"message\":\"Grafana sidecar namespace whitespace - spaces after commas cause silent failures (BIGBANK 4-hour outage)\"}")
+        done <<< "$grafana_ns_bug"
+    fi
+
+    # CCVE-2025-0028: Traefik IngressRoute service reference not found
+    # Check if IngressRoute references non-existent services
+    if kubectl get crd ingressroutes.traefik.io &>/dev/null 2>&1; then
+        local traefik_bad_refs
+        traefik_bad_refs=$(kubectl get ingressroutes -A -o json 2>/dev/null | jq -r '
+            .items[] |
+            .metadata as $meta |
+            .spec.routes[]?.services[]? |
+            select(.name != null) |
+            "\($meta.namespace)/IngressRoute/\($meta.name)|\(.name)|\($meta.namespace)"
+        ' 2>/dev/null || true)
+
+        if [[ -n "$traefik_bad_refs" ]]; then
+            while IFS= read -r ref; do
+                [[ -n "$ref" ]] || continue
+                local ir_ref svc_name svc_ns
+                ir_ref=$(echo "$ref" | cut -d'|' -f1)
+                svc_name=$(echo "$ref" | cut -d'|' -f2)
+                svc_ns=$(echo "$ref" | cut -d'|' -f3)
+                # Check if service exists
+                if ! kubectl get service "$svc_name" -n "$svc_ns" &>/dev/null 2>&1; then
+                    findings+=("{\"id\":\"CCVE-2025-0028\",\"resource\":\"$ir_ref\",\"severity\":\"Critical\",\"message\":\"IngressRoute references non-existent service: $svc_name\"}")
+                fi
+            done <<< "$traefik_bad_refs"
+        fi
+    fi
+
+    # CCVE-2025-0034: cert-manager Certificate issuer reference not found
+    if kubectl get crd certificates.cert-manager.io &>/dev/null 2>&1; then
+        local cert_bad_issuer
+        cert_bad_issuer=$(kubectl get certificates -A -o json 2>/dev/null | jq -r '
+            .items[] |
+            select(.spec.issuerRef.name != null) |
+            "\(.metadata.namespace)/Certificate/\(.metadata.name)|\(.spec.issuerRef.name)|\(.spec.issuerRef.kind // "Issuer")"
+        ' 2>/dev/null || true)
+
+        if [[ -n "$cert_bad_issuer" ]]; then
+            while IFS= read -r ref; do
+                [[ -n "$ref" ]] || continue
+                local cert_ref issuer_name issuer_kind
+                cert_ref=$(echo "$ref" | cut -d'|' -f1)
+                issuer_name=$(echo "$ref" | cut -d'|' -f2)
+                issuer_kind=$(echo "$ref" | cut -d'|' -f3)
+                # Check if issuer exists
+                local issuer_exists=false
+                if [[ "$issuer_kind" == "ClusterIssuer" ]]; then
+                    kubectl get clusterissuer "$issuer_name" &>/dev/null 2>&1 && issuer_exists=true
+                else
+                    local cert_ns
+                    cert_ns=$(echo "$cert_ref" | cut -d'/' -f1)
+                    kubectl get issuer "$issuer_name" -n "$cert_ns" &>/dev/null 2>&1 && issuer_exists=true
+                fi
+                if [[ "$issuer_exists" == "false" ]]; then
+                    findings+=("{\"id\":\"CCVE-2025-0034\",\"resource\":\"$cert_ref\",\"severity\":\"Critical\",\"message\":\"Certificate references non-existent $issuer_kind: $issuer_name\"}")
+                fi
+            done <<< "$cert_bad_issuer"
+        fi
+    fi
+
+    # CCVE-2025-0030: Traefik Middleware not found
+    local middlewares
+    middlewares=$(kubectl get ingressroutes.traefik.io -A -o json 2>/dev/null | jq -r '
+        .items[]? |
+        .metadata as $meta |
+        .spec.routes[]?.middlewares[]? |
+        "\($meta.namespace)/\($meta.name)|\(.namespace // $meta.namespace)/\(.name)"
+    ' 2>/dev/null | sort -u || true)
+
+    if [[ -n "$middlewares" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] || continue
+            local ir_ref mw_ref mw_ns mw_name
+            ir_ref=$(echo "$item" | cut -d'|' -f1)
+            mw_ref=$(echo "$item" | cut -d'|' -f2)
+            mw_ns=$(echo "$mw_ref" | cut -d'/' -f1)
+            mw_name=$(echo "$mw_ref" | cut -d'/' -f2)
+            if ! kubectl get middleware.traefik.io "$mw_name" -n "$mw_ns" &>/dev/null; then
+                findings+=("{\"id\":\"CCVE-2025-0030\",\"resource\":\"$ir_ref\",\"severity\":\"Warning\",\"message\":\"IngressRoute references non-existent Middleware: $mw_ref\"}")
+            fi
+        done <<< "$middlewares"
+    fi
+
+    printf '%s\n' "${findings[@]}"
+}
+
+# Scan for Drift CCVEs
+scan_drift() {
+    local findings=("")
+
+    # CCVE-2025-0020: Replica count drift
+    # Detect deployments where spec.replicas differs from status.replicas (excluding scaling events)
+    local replica_drift
+    replica_drift=$(kubectl get deployments -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(
+            .spec.replicas != null and
+            .status.replicas != null and
+            .spec.replicas != .status.replicas and
+            (.status.conditions[]? | select(.type == "Available" and .status == "True"))
+        ) |
+        "\(.metadata.namespace)/\(.metadata.name)|\(.spec.replicas)|\(.status.replicas)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$replica_drift" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] || continue
+            local res spec_rep status_rep
+            res=$(echo "$item" | cut -d'|' -f1)
+            spec_rep=$(echo "$item" | cut -d'|' -f2)
+            status_rep=$(echo "$item" | cut -d'|' -f3)
+            findings+=("{\"id\":\"CCVE-2025-0020\",\"resource\":\"$res\",\"severity\":\"Warning\",\"message\":\"Replica count drift: spec=$spec_rep, status=$status_rep\"}")
+        done <<< "$replica_drift"
+    fi
+
+    # CCVE-2025-0019: Unmanaged resource in managed namespace
+    # Find deployments without GitOps labels in namespaces that have GitOps-managed resources
+    local managed_namespaces
+    managed_namespaces=$(kubectl get deployments -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(
+            .metadata.labels["kustomize.toolkit.fluxcd.io/name"] != null or
+            .metadata.labels["helm.toolkit.fluxcd.io/name"] != null or
+            .metadata.labels["argocd.argoproj.io/instance"] != null
+        ) |
+        .metadata.namespace
+    ' 2>/dev/null | sort -u || true)
+
+    if [[ -n "$managed_namespaces" ]]; then
+        for ns in $managed_namespaces; do
+            local orphans
+            orphans=$(kubectl get deployments -n "$ns" -o json 2>/dev/null | jq -r '
+                .items[] |
+                select(
+                    .metadata.labels["kustomize.toolkit.fluxcd.io/name"] == null and
+                    .metadata.labels["helm.toolkit.fluxcd.io/name"] == null and
+                    .metadata.labels["argocd.argoproj.io/instance"] == null and
+                    .metadata.labels["app.kubernetes.io/managed-by"] != "Helm"
+                ) |
+                .metadata.name
+            ' 2>/dev/null || true)
+
+            if [[ -n "$orphans" ]]; then
+                while IFS= read -r name; do
+                    [[ -n "$name" ]] || continue
+                    # Skip system resources
+                    [[ "$name" =~ ^(coredns|local-path-provisioner|kindnet|kube-) ]] && continue
+                    findings+=("{\"id\":\"CCVE-2025-0019\",\"resource\":\"$ns/$name\",\"severity\":\"Info\",\"message\":\"Unmanaged deployment in GitOps-managed namespace\"}")
+                done <<< "$orphans"
+            fi
+        done
+    fi
+
+    printf '%s\n' "${findings[@]}"
+}
+
+# Scan for ConfigHub CCVEs
+# Note: Full detection requires ConfigHub API access (connected mode).
+# In standalone mode, we detect via resource annotations where possible.
+scan_confighub() {
+    local findings=("")
+
+    # Find ConfigHub-managed resources (have confighub.com/UnitSlug label or annotation)
+    local ch_resources
+    ch_resources=$(kubectl get deployments,statefulsets,services -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(
+            .metadata.labels["confighub.com/UnitSlug"] != null or
+            .metadata.annotations["confighub.com/UnitSlug"] != null
+        ) |
+        {
+            namespace: .metadata.namespace,
+            name: .metadata.name,
+            kind: .kind,
+            unit: (.metadata.annotations["confighub.com/UnitSlug"] // .metadata.labels["confighub.com/UnitSlug"]),
+            spaceId: .metadata.annotations["confighub.com/SpaceID"],
+            revision: .metadata.annotations["confighub.com/RevisionNum"],
+            liveRevision: .metadata.annotations["confighub.com/LiveRevisionNum"]
+        }
+    ' 2>/dev/null || true)
+
+    # Skip if no ConfigHub resources found
+    [[ -z "$ch_resources" ]] && { printf '%s\n' "${findings[@]}"; return; }
+
+    # CCVE-CH-001: Pending changes not applied
+    # Detect via RevisionNum != LiveRevisionNum annotation (if present)
+    local pending_changes
+    pending_changes=$(echo "$ch_resources" | jq -r '
+        select(.revision != null and .liveRevision != null and .revision != .liveRevision) |
+        "\(.namespace)/\(.kind)/\(.name)|\(.unit)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$pending_changes" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] || continue
+            local res unit
+            res=$(echo "$item" | cut -d'|' -f1)
+            unit=$(echo "$item" | cut -d'|' -f2)
+            findings+=("{\"id\":\"CCVE-CH-001\",\"resource\":\"$res\",\"unit\":\"$unit\",\"severity\":\"Warning\"}")
+        done <<< "$pending_changes"
+    fi
+
+    # CCVE-CH-005: Drift detected (standalone mode)
+    # Check last-applied-configuration vs current spec for ConfigHub resources
+    local drifted
+    drifted=$(kubectl get deployments -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(.metadata.annotations["confighub.com/UnitSlug"] != null) |
+        select(
+            .metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"] != null and
+            (.metadata.annotations["confighub.com/DriftDetected"] == "true")
+        ) |
+        "\(.metadata.namespace)/Deployment/\(.metadata.name)|\(.metadata.annotations[\"confighub.com/UnitSlug\"])"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$drifted" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] || continue
+            local res unit
+            res=$(echo "$item" | cut -d'|' -f1)
+            unit=$(echo "$item" | cut -d'|' -f2)
+            findings+=("{\"id\":\"CCVE-CH-005\",\"resource\":\"$res\",\"unit\":\"$unit\",\"severity\":\"Warning\"}")
+        done <<< "$drifted"
+    fi
+
+    # Note: CCVE-CH-002 (apply gates), CCVE-CH-003 (worker disconnected), CCVE-CH-004 (upstream upgrade)
+    # require ConfigHub API access and are detected in connected mode only.
+    # When running in connected mode, these would be queried via:
+    #   cub unit list --where "ApplyGates.Blocked = true"     (CH-002)
+    #   cub worker list --where "Status = Disconnected"       (CH-003)
+    #   cub unit list --where "UpgradeNeeded = true"          (CH-004)
+
+    printf '%s\n' "${findings[@]}"
+}
+
+# Scan for Trace-based CCVEs (uses cub-agent trace)
+# These detect issues in the GitOps delivery chain that aren't visible from individual resources
+scan_trace() {
+    local findings=("")
+
+    # Check if cub-agent is available
+    local agent_cmd="$REPO_ROOT/cub-agent"
+    if [[ ! -x "$agent_cmd" ]]; then
+        # Try to find it elsewhere
+        agent_cmd=$(command -v cub-agent 2>/dev/null || true)
+        [[ -z "$agent_cmd" ]] && return 0
+    fi
+
+    # Get workloads that claim to be GitOps managed
+    local workloads
+    workloads=$(kubectl get deployments,statefulsets -A -o json 2>/dev/null | jq -r '
+        .items[] |
+        select(
+            .metadata.labels["kustomize.toolkit.fluxcd.io/name"] != null or
+            .metadata.labels["helm.toolkit.fluxcd.io/name"] != null or
+            .metadata.labels["argocd.argoproj.io/instance"] != null
+        ) |
+        "\(.kind)/\(.metadata.name)|\(.metadata.namespace)"
+    ' 2>/dev/null | head -20 || true)  # Limit to 20 for performance
+
+    # Trace each workload and check for issues
+    if [[ -n "$workloads" ]]; then
+        while IFS= read -r item; do
+            [[ -n "$item" ]] || continue
+            local res ns trace_output
+            res=$(echo "$item" | cut -d'|' -f1)
+            ns=$(echo "$item" | cut -d'|' -f2)
+
+            # Run trace with timeout (slow operation)
+            trace_output=$("$agent_cmd" trace "$res" -n "$ns" --json 2>/dev/null || true)
+            [[ -z "$trace_output" ]] && continue
+
+            local fully_managed error_msg tool
+            fully_managed=$(echo "$trace_output" | jq -r '.fullyManaged // false' 2>/dev/null)
+            error_msg=$(echo "$trace_output" | jq -r '.error // ""' 2>/dev/null)
+            tool=$(echo "$trace_output" | jq -r '.tool // ""' 2>/dev/null)
+
+            # CCVE-2025-0638: Orphan - not managed by GitOps
+            if [[ "$error_msg" == *"not managed"* ]]; then
+                findings+=("{\"id\":\"CCVE-2025-0638\",\"resource\":\"$ns/$res\",\"severity\":\"Warning\",\"message\":\"Resource claims GitOps ownership but trace shows not managed\"}")
+                continue
+            fi
+
+            # CCVE-2025-0640: Chain broken at intermediate level
+            if [[ "$error_msg" == *"not found"* ]] || [[ "$error_msg" == *"failed to find"* ]]; then
+                findings+=("{\"id\":\"CCVE-2025-0640\",\"resource\":\"$ns/$res\",\"severity\":\"Critical\",\"message\":\"Trace chain broken: $error_msg\"}")
+                continue
+            fi
+
+            # CCVE-2025-0642: Source not fetching
+            if [[ "$error_msg" == *"authentication"* ]] || [[ "$error_msg" == *"clone"* ]] || [[ "$error_msg" == *"fetch"* ]]; then
+                findings+=("{\"id\":\"CCVE-2025-0642\",\"resource\":\"$ns/$res\",\"severity\":\"Critical\",\"message\":\"Source not accessible: $error_msg\"}")
+                continue
+            fi
+
+            # Check chain links for stuck reconciliation (CCVE-2025-0641)
+            if [[ "$fully_managed" == "false" ]] && [[ -n "$trace_output" ]]; then
+                local stuck_links
+                stuck_links=$(echo "$trace_output" | jq -r '
+                    .chain[]? |
+                    select(.ready == false and (.status | test("reconciling|pending|progressing"; "i"))) |
+                    .kind + "/" + .name
+                ' 2>/dev/null || true)
+                if [[ -n "$stuck_links" ]]; then
+                    findings+=("{\"id\":\"CCVE-2025-0641\",\"resource\":\"$ns/$res\",\"severity\":\"Warning\",\"message\":\"Reconciliation stuck at: $stuck_links\"}")
+                fi
+            fi
+        done <<< "$workloads"
+    fi
+
+    printf '%s\n' "${findings[@]}"
+}
+
+# Full scan
+scan_all() {
+    local json_mode="${1:-false}"
+    local all_findings=()
+    local cluster_name
+    cluster_name=$(kubectl config current-context 2>/dev/null || echo "unknown")
+
+    # Only show header in human mode
+    if [[ "$json_mode" != "true" ]]; then
+        info "CONFIG CVE SCAN: $cluster_name"
+        echo "════════════════════════════════════════════════════════════════════"
+        echo ""
+    fi
+
+    # Collect all findings
+    while IFS= read -r finding; do
+        [[ -n "$finding" ]] && all_findings+=("$finding")
+    done < <(scan_flux)
+
+    while IFS= read -r finding; do
+        [[ -n "$finding" ]] && all_findings+=("$finding")
+    done < <(scan_argo)
+
+    while IFS= read -r finding; do
+        [[ -n "$finding" ]] && all_findings+=("$finding")
+    done < <(scan_helm)
+
+    while IFS= read -r finding; do
+        [[ -n "$finding" ]] && all_findings+=("$finding")
+    done < <(scan_confighub)
+
+    while IFS= read -r finding; do
+        [[ -n "$finding" ]] && all_findings+=("$finding")
+    done < <(scan_applications)
+
+    while IFS= read -r finding; do
+        [[ -n "$finding" ]] && all_findings+=("$finding")
+    done < <(scan_drift)
+
+    # Trace-based detection (slower, runs last)
+    while IFS= read -r finding; do
+        [[ -n "$finding" ]] && all_findings+=("$finding")
+    done < <(scan_trace)
+
+    if [[ "$json_mode" == "true" ]]; then
+        # JSON output
+        local critical=0 warning=0 info_count=0
+        for f in "${all_findings[@]}"; do
+            case $(echo "$f" | jq -r '.severity' 2>/dev/null) in
+                Critical) ((critical++)) ;;
+                Warning) ((warning++)) ;;
+                Info) ((info_count++)) ;;
+            esac
+        done
+
+        cat <<EOF
+{
+  "cluster": "$cluster_name",
+  "scannedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "summary": {
+    "critical": $critical,
+    "warning": $warning,
+    "info": $info_count
+  },
+  "findings": [
+EOF
+        local first=true
+        for finding in "${all_findings[@]}"; do
+            [[ "$first" == "true" ]] || printf ',\n'
+            printf '    %s' "$finding"
+            first=false
+        done
+        cat <<EOF
+
+  ]
+}
+EOF
+    else
+        # Human output
+        if [[ ${#all_findings[@]} -eq 0 ]]; then
+            pass "No Config CVEs detected"
+        else
+            # Group by severity
+            local critical=() warning=() info_findings=()
+            for finding in "${all_findings[@]}"; do
+                local sev
+                sev=$(echo "$finding" | jq -r '.severity' 2>/dev/null)
+                case "$sev" in
+                    Critical) critical+=("$finding") ;;
+                    Warning) warning+=("$finding") ;;
+                    Info) info_findings+=("$finding") ;;
+                esac
+            done
+
+            if [[ ${#critical[@]} -gt 0 ]]; then
+                echo -e "${RED}CRITICAL (${#critical[@]})${NC}"
+                echo "────────────────────────────────────────────────────────────────────"
+                for f in "${critical[@]}"; do
+                    local id res
+                    id=$(echo "$f" | jq -r '.id')
+                    res=$(echo "$f" | jq -r '.resource')
+                    echo -e "${RED}[$id]${NC} $res"
+                done
+                echo ""
+            fi
+
+            if [[ ${#warning[@]} -gt 0 ]]; then
+                echo -e "${YELLOW}WARNING (${#warning[@]})${NC}"
+                echo "────────────────────────────────────────────────────────────────────"
+                for f in "${warning[@]}"; do
+                    local id res
+                    id=$(echo "$f" | jq -r '.id')
+                    res=$(echo "$f" | jq -r '.resource')
+                    echo -e "${YELLOW}[$id]${NC} $res"
+                done
+                echo ""
+            fi
+
+            if [[ ${#info_findings[@]} -gt 0 ]]; then
+                echo "INFO (${#info_findings[@]})"
+                echo "────────────────────────────────────────────────────────────────────"
+                for f in "${info_findings[@]}"; do
+                    local id res
+                    id=$(echo "$f" | jq -r '.id')
+                    res=$(echo "$f" | jq -r '.resource')
+                    echo "[$id] $res"
+                done
+                echo ""
+            fi
+
+            echo "════════════════════════════════════════════════════════════════════"
+            echo "Summary: ${#critical[@]} critical, ${#warning[@]} warning, ${#info_findings[@]} info"
+            echo ""
+            warn "Run './scan <CCVE-ID>' for remediation steps"
+        fi
+    fi
+}
+
+# Show details for a specific CCVE
+show_pattern() {
+    local pattern_id="$1"
+    local pattern_upper
+    pattern_upper=$(echo "$pattern_id" | tr '[:lower:]' '[:upper:]')
+
+    # Find matching files
+    local yaml_file
+    yaml_file=$(ls "$CVE_DIR"/"$pattern_upper".yaml 2>/dev/null || ls "$CVE_DIR"/*"$pattern_upper"*.yaml 2>/dev/null | head -1 || true)
+
+    if [[ -z "$yaml_file" || ! -f "$yaml_file" ]]; then
+        fail "CCVE not found: $pattern_id"
+        echo "Run './scan --list' to see available CCVEs"
+        return 1
+    fi
+
+    local md_file="${yaml_file%.yaml}.md"
+
+    if [[ -f "$md_file" ]]; then
+        cat "$md_file"
+    else
+        echo "CCVE: $pattern_id"
+        echo ""
+        grep "^#" "$yaml_file"
+    fi
+}
+
+# Main
+case "${1:-}" in
+    --help|-h)
+        head -12 "$0" | grep '^#' | sed 's/^# //'
+        ;;
+    --list|-l)
+        list_patterns
+        ;;
+    --json|-j)
+        scan_all true
+        ;;
+    --scan|-s)
+        if [[ "${2:-}" == "--json" || "${2:-}" == "-j" ]]; then
+            scan_all true
+        else
+            scan_all false
+        fi
+        ;;
+    "")
+        scan_all false
+        ;;
+    *)
+        show_pattern "$1"
+        ;;
+esac

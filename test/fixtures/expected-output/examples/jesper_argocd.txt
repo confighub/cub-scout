@@ -1,0 +1,50 @@
+
+╭────────────────────────────────────────────────────────────────────────╮
+│  ⚡ CONFIGHUB MAP                                                      │
+╰────────────────────────────────────────────────────────────────────────╯
+   CONTEXT  ● atk  ○ traderx-test                                       
+
+[s]tatus
+┌────────────────────────────────────────────────────────────────────────┐
+│  ██████████████████████░░░░░░░░  76%   13/17 workloads healthy         │
+│                                                                        │
+│  ✗ Deployers  0/5      ✗ Sources  0/1      ⚠ Workloads  13/17          │
+└────────────────────────────────────────────────────────────────────────┘
+
+[p]roblems
+┌────────────────────────────────────────────────────────────────────────┐
+│  ✗  confighub/flux-bridge  0/1 pods                                    │
+│  ✗  demo-orders/order-processor  0/2 pods                              │
+│  ✗  demo-payments/frontend  0/2 pods                                   │
+│  ✗  demo-payments/payment-api  0/3 pods                                │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+
+p[i]pelines
+┌────────────────────────────────────────────────────────────────────────┐
+│  ✗  ?@? ──▶ example-app ──▶ 0 resources                                │
+│  ⏸  company/infrastructure@main ──▶ monitoring-stack ──▶ 0 resources   │
+│  ✗  redis@999.999.999 ──▶ redis-cache ──▶ helm                         │
+│  ✗  argoproj/argocd-example-apps.git/guestbook@HEAD ──▶ example-       │
+│  jesper-argocd ──▶ example-jesper-argocd                               │
+│  ✗  company/frontend/k8s@HEAD ──▶ frontend-app ──▶ demo-payments       │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+
+[w]orkloads
+┌────────────────────────────────────────────────────────────────────────┐
+│  Native ░░░░░░ 12                                                      │
+│                                                                        │
+│  GitOps Coverage   ███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  29%       │
+│  (5/17 managed)                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+
+[d]rift                              sp[r]awl                             
+┌─────────────────────────────────┐  ┌───────────────────────────────────┐
+│ ✓ 0 synced                      │  │ Sources   3 repos  1 charts       │
+│ ⚠ 4 drifted                     │  │ Tools                             │
+└─────────────────────────────────┘  │ Orphans   12 native               │
+                                     └───────────────────────────────────┘
+
+Press a key to explore · q to quit · or run ./map <command>
+

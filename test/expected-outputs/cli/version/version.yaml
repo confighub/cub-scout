@@ -1,0 +1,44 @@
+# Expected Output: version
+# Mode: Standalone
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "version"
+description: "Print version information"
+mode: standalone
+
+requires:
+  cluster: false
+  cub_auth: false
+  workers: false
+  tools: []
+
+commands:
+  - id: version
+    command: "./cub-agent version"
+    description: "Show version information"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "cub-agent"
+        - "version"
+
+      not_contains:
+        - "panic"
+        - "error"
+
+      assertions:
+        - name: "shows_version"
+          condition: "output.contains('version')"
+          description: "Version info shown"
+
+    instructions: |
+      Check the installed version:
+      ```bash
+      ./cub-agent version
+      ```
+
+# Sample output
+sample_output: |
+  cub-agent version v0.2.0 (built 2026-01-13)

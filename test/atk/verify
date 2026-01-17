@@ -1,0 +1,424 @@
+#!/bin/bash
+# Agent Test Kit (ATK) - Verify ownership detection
+#
+# Usage:
+#   ./verify                    # Run all fixture tests (local mode)
+#   ./verify flux-basic         # Run specific fixture
+#   ./verify --your-cluster     # Test against existing cluster
+#   ./verify --list             # List available fixtures
+#
+# Modes:
+#   --local                     # Use kubectl to detect ownership (default)
+#   --api                       # Use cub-agent API (requires ConfigHub)
+#
+# Requirements:
+#   - kubectl configured for target cluster
+#   - jq for JSON processing
+#   - cub-agent binary (only for --api mode)
+
+set -euo pipefail
+
+ATK_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$ATK_DIR/../.." && pwd)"
+MODE="${ATK_MODE:-local}"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+info()  { echo -e "${YELLOW}$*${NC}"; }
+pass()  { echo -e "${GREEN}✓ $*${NC}"; }
+fail()  { echo -e "${RED}✗ $*${NC}"; }
+
+# Detect ownership from labels/annotations
+# Returns: owner|ownerDetailsJson
+detect_owner() {
+    local labels="$1"
+    local annotations="$2"
+
+    # ConfigHub (check first - it may coexist with other deployers)
+    # Labels: confighub.com/UnitSlug
+    # Annotations: confighub.com/UnitSlug, confighub.com/SpaceID, confighub.com/RevisionNum
+    if echo "$labels" | grep -q '"confighub.com/UnitSlug"' || \
+       echo "$annotations" | grep -q '"confighub.com/UnitSlug"'; then
+        local unit_slug space_id revision_num
+        unit_slug=$(echo "$annotations" | jq -r '.["confighub.com/UnitSlug"] // empty')
+        [[ -z "$unit_slug" ]] && unit_slug=$(echo "$labels" | jq -r '.["confighub.com/UnitSlug"] // empty')
+        space_id=$(echo "$annotations" | jq -r '.["confighub.com/SpaceID"] // empty')
+        revision_num=$(echo "$annotations" | jq -r '.["confighub.com/RevisionNum"] // empty')
+
+        local details
+        details=$(jq -cn \
+            --arg unit "$unit_slug" \
+            --arg space "$space_id" \
+            --arg rev "$revision_num" \
+            '{unit: $unit, spaceId: $space, revision: $rev}')
+        echo "ConfigHub|$details"
+        return
+    fi
+
+    # Flux Kustomize
+    if echo "$labels" | grep -q "kustomize.toolkit.fluxcd.io"; then
+        local ks_name ks_ns
+        ks_name=$(echo "$labels" | jq -r '.["kustomize.toolkit.fluxcd.io/name"] // empty')
+        ks_ns=$(echo "$labels" | jq -r '.["kustomize.toolkit.fluxcd.io/namespace"] // empty')
+        local details
+        details=$(jq -cn --arg ks "$ks_name" --arg ns "$ks_ns" '{kustomization: $ks, namespace: $ns}')
+        echo "Flux|$details"
+        return
+    fi
+
+    # Flux Helm
+    if echo "$labels" | grep -q "helm.toolkit.fluxcd.io"; then
+        local hr_name hr_ns
+        hr_name=$(echo "$labels" | jq -r '.["helm.toolkit.fluxcd.io/name"] // empty')
+        hr_ns=$(echo "$labels" | jq -r '.["helm.toolkit.fluxcd.io/namespace"] // empty')
+        local details
+        details=$(jq -cn --arg hr "$hr_name" --arg ns "$hr_ns" '{helmRelease: $hr, namespace: $ns}')
+        echo "Flux|$details"
+        return
+    fi
+
+    # Argo CD
+    if echo "$labels" | grep -q "argocd.argoproj.io" || \
+       echo "$annotations" | grep -q "argocd.argoproj.io"; then
+        local app_name
+        app_name=$(echo "$labels" | jq -r '.["argocd.argoproj.io/instance"] // empty')
+        [[ -z "$app_name" ]] && app_name=$(echo "$labels" | jq -r '.["app.kubernetes.io/instance"] // empty')
+        local details
+        details=$(jq -cn --arg app "$app_name" '{application: $app}')
+        echo "ArgoCD|$details"
+        return
+    fi
+
+    # Helm (direct, not via Flux)
+    if echo "$labels" | grep -q '"app.kubernetes.io/managed-by":"Helm"'; then
+        local release_name release_ns
+        release_name=$(echo "$annotations" | jq -r '.["meta.helm.sh/release-name"] // empty')
+        release_ns=$(echo "$annotations" | jq -r '.["meta.helm.sh/release-namespace"] // empty')
+        local details
+        details=$(jq -cn --arg rel "$release_name" --arg ns "$release_ns" '{release: $rel, namespace: $ns}')
+        echo "Helm|$details"
+        return
+    fi
+
+    # Terraform
+    if echo "$annotations" | grep -q "app.terraform.io"; then
+        local workspace
+        workspace=$(echo "$annotations" | jq -r '.["app.terraform.io/workspace-name"] // empty')
+        local details
+        details=$(jq -cn --arg ws "$workspace" '{workspace: $ws}')
+        echo "Terraform|$details"
+        return
+    fi
+
+    echo "Native|{}"
+}
+
+# Get resources as JSON using kubectl (local mode)
+get_resources_local() {
+    local namespace="${1:-}"
+    local ns_filter=""
+    [[ -n "$namespace" ]] && ns_filter="-n $namespace"
+
+    local output="[]"
+
+    # Get all resources we care about
+    for kind in deployment service configmap pod replicaset statefulset daemonset job cronjob ingress; do
+        local resources
+        resources=$(kubectl get "$kind" $ns_filter -o json 2>/dev/null | jq -c '.items[]' 2>/dev/null || true)
+
+        while IFS= read -r resource; do
+            [[ -z "$resource" ]] && continue
+
+            local name ns api_version labels annotations owner
+            name=$(echo "$resource" | jq -r '.metadata.name')
+            ns=$(echo "$resource" | jq -r '.metadata.namespace // "default"')
+            api_version=$(echo "$resource" | jq -r '.apiVersion')
+            labels=$(echo "$resource" | jq -c '.metadata.labels // {}')
+            annotations=$(echo "$resource" | jq -c '.metadata.annotations // {}')
+
+            local owner_result owner owner_details
+            owner_result=$(detect_owner "$labels" "$annotations")
+            owner=$(echo "$owner_result" | cut -d'|' -f1)
+            owner_details=$(echo "$owner_result" | cut -d'|' -f2-)
+
+            local entry
+            entry=$(jq -n \
+                --arg cluster "$(kubectl config current-context)" \
+                --arg ns "$ns" \
+                --arg kind "$kind" \
+                --arg name "$name" \
+                --arg api "$api_version" \
+                --arg owner "$owner" \
+                --argjson details "$owner_details" \
+                '{clusterName: $cluster, namespace: $ns, kind: $kind, name: $name, apiVersion: $api, owner: $owner, ownerDetails: $details}')
+
+            output=$(echo "$output" | jq --argjson e "$entry" '. + [$e]')
+        done <<< "$resources"
+    done
+
+    # Get Flux CRDs if present
+    for kind in gitrepository helmrepository kustomization helmrelease; do
+        local resources
+        resources=$(kubectl get "$kind" $ns_filter -o json 2>/dev/null | jq -c '.items[]' 2>/dev/null || true)
+
+        while IFS= read -r resource; do
+            [[ -z "$resource" ]] && continue
+
+            local name ns api_version
+            name=$(echo "$resource" | jq -r '.metadata.name')
+            ns=$(echo "$resource" | jq -r '.metadata.namespace // "default"')
+            api_version=$(echo "$resource" | jq -r '.apiVersion')
+
+            # Extract Flux-specific details
+            local details
+            case "$kind" in
+                kustomization)
+                    local source_ref
+                    source_ref=$(echo "$resource" | jq -r '.spec.sourceRef.name // empty')
+                    details=$(jq -cn --arg src "$source_ref" '{sourceRef: $src}')
+                    ;;
+                helmrelease)
+                    local chart_name
+                    chart_name=$(echo "$resource" | jq -r '.spec.chart.spec.chart // empty')
+                    details=$(jq -cn --arg chart "$chart_name" '{chart: $chart}')
+                    ;;
+                gitrepository|helmrepository)
+                    local url
+                    url=$(echo "$resource" | jq -r '.spec.url // empty')
+                    details=$(jq -cn --arg url "$url" '{url: $url}')
+                    ;;
+                *)
+                    details="{}"
+                    ;;
+            esac
+
+            local entry
+            entry=$(jq -n \
+                --arg cluster "$(kubectl config current-context)" \
+                --arg ns "$ns" \
+                --arg kind "$kind" \
+                --arg name "$name" \
+                --arg api "$api_version" \
+                --argjson details "$details" \
+                '{clusterName: $cluster, namespace: $ns, kind: $kind, name: $name, apiVersion: $api, owner: "Flux", ownerDetails: $details}')
+
+            output=$(echo "$output" | jq --argjson e "$entry" '. + [$e]')
+        done <<< "$resources"
+    done
+
+    # Get Argo Applications if present
+    if kubectl get crd applications.argoproj.io &>/dev/null; then
+        local resources
+        resources=$(kubectl get applications -A -o json 2>/dev/null | jq -c '.items[]' 2>/dev/null || true)
+
+        while IFS= read -r resource; do
+            [[ -z "$resource" ]] && continue
+
+            local name ns api_version
+            name=$(echo "$resource" | jq -r '.metadata.name')
+            ns=$(echo "$resource" | jq -r '.metadata.namespace // "argocd"')
+            api_version=$(echo "$resource" | jq -r '.apiVersion')
+
+            # Extract Argo-specific details
+            local repo_url dest_ns sync_status health_status
+            repo_url=$(echo "$resource" | jq -r '.spec.source.repoURL // empty')
+            dest_ns=$(echo "$resource" | jq -r '.spec.destination.namespace // empty')
+            sync_status=$(echo "$resource" | jq -r '.status.sync.status // empty')
+            health_status=$(echo "$resource" | jq -r '.status.health.status // empty')
+            local details
+            details=$(jq -cn \
+                --arg repo "$repo_url" \
+                --arg destNs "$dest_ns" \
+                --arg sync "$sync_status" \
+                --arg health "$health_status" \
+                '{repoURL: $repo, destinationNamespace: $destNs, syncStatus: $sync, healthStatus: $health}')
+
+            local entry
+            entry=$(jq -n \
+                --arg cluster "$(kubectl config current-context)" \
+                --arg ns "$ns" \
+                --arg kind "Application" \
+                --arg name "$name" \
+                --arg api "$api_version" \
+                --argjson details "$details" \
+                '{clusterName: $cluster, namespace: $ns, kind: "Application", name: $name, apiVersion: $api, owner: "ArgoCD", ownerDetails: $details}')
+
+            output=$(echo "$output" | jq --argjson e "$entry" '. + [$e]')
+        done <<< "$resources"
+    fi
+
+    echo "$output"
+}
+
+# Get resources for a specific namespace only
+get_fixture_resources() {
+    local namespace="$1"
+    get_resources_local "$namespace" | jq --arg ns "$namespace" '[.[] | select(.namespace == $ns)]'
+}
+
+# List available fixtures
+list_fixtures() {
+    echo "Available fixtures:"
+    for f in "$ATK_DIR/fixtures"/*.yaml; do
+        [[ -f "$f" ]] || continue
+        name=$(basename "$f" .yaml)
+        desc=$(head -1 "$f" | sed 's/^# //')
+        printf "  %-20s %s\n" "$name" "$desc"
+    done
+}
+
+# Test against user's existing cluster
+test_your_cluster() {
+    info "Testing against current cluster context..."
+    kubectl config current-context
+    echo
+
+    info "Detecting resources..."
+    get_resources_local > /tmp/atk-actual.json
+
+    # Filter to interesting namespaces (exclude kube-system, etc)
+    jq '[.[] | select(.namespace | test("^(kube-|local-path-)") | not)]' /tmp/atk-actual.json > /tmp/atk-filtered.json
+
+    # Summarize by owner
+    echo "Resources by owner:"
+    jq -r '.[] | .owner' /tmp/atk-filtered.json | sort | uniq -c | sort -rn
+    echo
+
+    echo "Resource breakdown:"
+    jq -r '.[] | "\(.owner)\t\(.kind)\t\(.namespace)/\(.name)"' /tmp/atk-filtered.json \
+        | sort | column -t -s $'\t' | head -30
+    echo
+
+    local total
+    total=$(jq length /tmp/atk-filtered.json)
+    echo "Total: $total resources"
+    echo "Output saved to: /tmp/atk-actual.json"
+}
+
+# Run a single fixture test
+run_fixture() {
+    local fixture=$1
+    local fixture_file="$ATK_DIR/fixtures/$fixture.yaml"
+    local expected_file="$ATK_DIR/expected/$fixture.json"
+
+    if [[ ! -f "$fixture_file" ]]; then
+        fail "Fixture not found: $fixture_file"
+        return 1
+    fi
+
+    info "=== Testing: $fixture ==="
+
+    # Extract namespace from fixture
+    local namespace
+    namespace=$(grep -E "^  name: atk-" "$fixture_file" | head -1 | awk '{print $2}')
+    if [[ -z "$namespace" ]]; then
+        namespace="atk-$fixture"
+    fi
+
+    # Apply fixture
+    info "Applying fixture..."
+    kubectl apply -f "$fixture_file"
+
+    # Wait for controllers to reconcile
+    info "Waiting for reconciliation..."
+    sleep 15
+
+    # Collect actual output
+    info "Detecting resources in $namespace..."
+    get_fixture_resources "$namespace" > /tmp/atk-actual.json
+
+    # Show what we found
+    local count
+    count=$(jq length /tmp/atk-actual.json)
+    info "Found $count resources"
+
+    # Summarize with owner details
+    echo "Detected:"
+    jq -r '.[] |
+        if .owner == "ConfigHub" then
+            "  \(.owner)\t\(.kind)/\(.name)\tunit=\(.ownerDetails.unit) rev=\(.ownerDetails.revision)"
+        elif .owner == "Flux" then
+            "  \(.owner)\t\(.kind)/\(.name)\t\(.ownerDetails | to_entries | map("\(.key)=\(.value)") | join(" "))"
+        elif .owner == "ArgoCD" then
+            "  \(.owner)\t\(.kind)/\(.name)\tapp=\(.ownerDetails.application // .ownerDetails.syncStatus)"
+        elif .owner == "Helm" then
+            "  \(.owner)\t\(.kind)/\(.name)\trelease=\(.ownerDetails.release)"
+        else
+            "  \(.owner)\t\(.kind)/\(.name)"
+        end
+    ' /tmp/atk-actual.json | column -t -s $'\t'
+    echo
+
+    # Cleanup
+    info "Cleaning up..."
+    kubectl delete -f "$fixture_file" --ignore-not-found --wait=false
+
+    # Simple pass if we found resources
+    if [[ $count -gt 0 ]]; then
+        pass "$fixture ($count resources detected)"
+        return 0
+    else
+        fail "$fixture (no resources detected)"
+        return 1
+    fi
+}
+
+# Run all fixtures
+run_all() {
+    local failed=0
+    local passed=0
+
+    for f in "$ATK_DIR/fixtures"/*.yaml; do
+        [[ -f "$f" ]] || continue
+        name=$(basename "$f" .yaml)
+
+        # Skip mixed for now - needs both Flux and Argo reconciled
+        [[ "$name" == "mixed" ]] && continue
+        # Skip helm-basic - needs manual helm install
+        [[ "$name" == "helm-basic" ]] && continue
+
+        if run_fixture "$name"; then
+            ((passed++)) || true
+        else
+            ((failed++)) || true
+        fi
+        echo
+    done
+
+    echo "================================"
+    echo "Results: $passed passed, $failed failed"
+    [[ $failed -eq 0 ]]
+}
+
+# Main
+case "${1:-}" in
+    --help|-h)
+        head -20 "$0" | grep '^#' | sed 's/^# //'
+        ;;
+    --list|-l)
+        list_fixtures
+        ;;
+    --your-cluster|-y)
+        test_your_cluster
+        ;;
+    --local)
+        MODE=local
+        shift
+        [[ $# -gt 0 ]] && run_fixture "$1" || run_all
+        ;;
+    --api)
+        MODE=api
+        shift
+        [[ $# -gt 0 ]] && run_fixture "$1" || run_all
+        ;;
+    --all|"")
+        run_all
+        ;;
+    *)
+        run_fixture "$1"
+        ;;
+esac

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: no-limits
+  namespace: apptique-vulnerable
+  labels:
+    app.kubernetes.io/name: no-limits
+    app.kubernetes.io/part-of: apptique
+    # ArgoCD ownership labels
+    app.kubernetes.io/instance: apptique-vulnerable
+    argocd.argoproj.io/instance: apptique-vulnerable
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: no-limits
+  template:
+    metadata:
+      labels:
+        app: no-limits
+    spec:
+      containers:
+        - name: app
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          # CCVE-2025-0001: Missing resource limits
+          # This can cause node resource exhaustion
+          # NO resources block = vulnerability

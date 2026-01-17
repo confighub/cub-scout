@@ -1,0 +1,89 @@
+# Expected Output: trace standalone
+# Mode: Standalone (no ConfigHub connection)
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "trace standalone"
+description: "Trace ownership chain from Git source to deployed resource"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  # Trace a Flux-managed resource
+  - id: trace_flux
+    command: "./cub-agent trace deployment/source-controller --namespace flux-system"
+    description: "Trace a Flux-managed deployment"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(flux|Flux|GitRepository|Kustomization|chain|→)"
+          description: "Shows Flux ownership chain"
+
+      not_contains:
+        - "panic"
+        - "error:"
+
+      assertions:
+        - name: "trace_shows_chain"
+          condition: "output.match(/(→|chain|GitRepository|Kustomization)/i)"
+          description: "Shows ownership chain"
+
+        - name: "clean_exit"
+          condition: "exit_code == 0"
+          description: "Exits cleanly"
+
+    instructions: |
+      Trace the ownership chain for a Flux-managed resource:
+      ```bash
+      ./cub-agent trace deployment/source-controller --namespace flux-system
+      ```
+
+      You'll see the full chain:
+      - GitRepository (source)
+      - Kustomization (reconciler)
+      - Resource (deployed)
+
+    hints:
+      - when: "output.contains('not found')"
+        show: "Resource not found. Check namespace and name."
+      - when: "output.contains('Native')"
+        show: "Resource is not GitOps-managed. No chain to trace."
+
+  # Trace with JSON output
+  - id: trace_json
+    command: "./cub-agent trace deployment/source-controller --namespace flux-system --json"
+    description: "Trace with JSON output"
+
+    expected:
+      exit_code: 0
+      contains:
+        - "{"
+
+      assertions:
+        - name: "valid_json"
+          condition: "output.startsWith('{')"
+          description: "Output is JSON"
+
+    instructions: |
+      Get trace output as JSON:
+      ```bash
+      ./cub-agent trace deployment/nginx -n demo --json
+      ```
+
+# Sample output
+sample_output: |
+  Ownership Chain for deployment/source-controller (flux-system)
+
+  GitRepository/flux-system
+    └── Kustomization/flux-system
+        └── Deployment/source-controller ✓
+
+  Chain: GitRepository → Kustomization → Deployment
+  Owner: Flux
+  Status: Synced

@@ -1,0 +1,61 @@
+# Operations stack - production environment overrides
+
+# keda production overrides
+keda:
+  replicaCount: 2
+
+  resources:
+    operator:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    metricServer:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+  podDisruptionBudget:
+    operator:
+      minAvailable: 1
+    metricServer:
+      minAvailable: 1
+
+# opencost production overrides
+opencost:
+  opencost:
+    exporter:
+      defaultClusterId: production-cluster
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+
+      # Cloud provider integration for accurate pricing
+      cloudProviderApiKey: ""  # Set via external secret
+      customPricing:
+        enabled: false
+
+    ui:
+      enabled: true
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+
+    prometheus:
+      internal:
+        enabled: true
+        serviceName: prometheus-prometheus
+        namespaceName: monitoring
+
+    metrics:
+      serviceMonitor:
+        enabled: true

@@ -1,0 +1,72 @@
+# Expected Output: scenario bigbank-incident
+# Mode: Standalone
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "scenario bigbank-incident"
+description: "Walk through the BIGBANK 4-hour outage story"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  - id: scenario_bigbank
+    command: "./test/atk/demo scenario bigbank-incident"
+    description: "Interactive walkthrough of the BIGBANK incident"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(BIGBANK|4.hour|outage)"
+          description: "References BIGBANK incident"
+        - "CCVE-2025-0027"
+
+      not_contains:
+        - "panic"
+
+      assertions:
+        - name: "scenario_runs"
+          condition: "exit_code == 0"
+          description: "Scenario completes"
+
+        - name: "ccve_shown"
+          condition: "output.contains('CCVE-2025-0027')"
+          description: "CCVE detected"
+
+    instructions: |
+      Walk through the BIGBANK 4-hour outage:
+      ```bash
+      ./test/atk/demo scenario bigbank-incident
+      ```
+
+      This scenario recreates:
+      - The buggy Grafana config
+      - How the team debugged for hours
+      - How ConfigHub detects it in seconds
+
+# Sample output
+sample_output: |
+  Scenario: The BIGBANK 4-Hour Outage
+
+  Based on the real incident shared at FluxCon 2025
+
+  Day 1, 2:00 AM: On-call gets paged
+    'Grafana dashboards aren't loading'
+
+  Day 1, 4:00 AM: Deeper debugging
+    - Sidecar container has cryptic warnings
+    - 'Namespace not found' but namespaces exist
+
+  Let's apply the same buggy config...
+  deployment.apps/grafana created
+
+  With ConfigHub Agent:
+
+  CCVE-2025-0027 detected!
+  Fix: kubectl set env deployment/grafana -n monitoring NAMESPACE="monitoring,grafana"
+
+  ✓ 30 seconds vs 4 hours

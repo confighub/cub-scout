@@ -1,0 +1,252 @@
+#!/bin/bash
+# Worker Health Check
+#
+# MANDATORY check that workers are healthy before any session.
+# This script should be run:
+#   1. At the start of every Claude session
+#   2. Before running any demos or examples
+#   3. Before showing anything to customers
+#
+# Returns exit code 0 if all workers healthy, 1 if any issues.
+#
+# Usage:
+#   ./test/preflight/worker-health              # Check all configured spaces
+#   ./test/preflight/worker-health --space X    # Check specific space
+#   ./test/preflight/worker-health --all        # Check ALL spaces (slow)
+#   ./test/preflight/worker-health --json       # Output JSON for CI
+#
+# Why this exists (2026-01-13):
+#   We ran for 8 DAYS with a broken worker and no tests caught it.
+#   All demos and examples would have FAILED. This is the fix.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Options
+SPECIFIC_SPACE=""
+CHECK_ALL=false
+JSON_OUTPUT=false
+VERBOSE=false
+HEALTHY=0
+UNHEALTHY=0
+DISCONNECTED=0
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --space) SPECIFIC_SPACE="$2"; shift 2 ;;
+        --all) CHECK_ALL=true; shift ;;
+        --json) JSON_OUTPUT=true; shift ;;
+        --verbose|-v) VERBOSE=true; shift ;;
+        --help|-h)
+            echo "Usage: worker-health [--space SPACE] [--all] [--json]"
+            echo ""
+            echo "Checks that ConfigHub workers are healthy and connected."
+            echo ""
+            echo "Options:"
+            echo "  --space SPACE  Check specific space only"
+            echo "  --all          Check ALL spaces (can be slow)"
+            echo "  --json         Output JSON (for CI/automation)"
+            echo "  --verbose      Show detailed worker info"
+            echo ""
+            echo "Default: checks current space and known test spaces"
+            exit 0
+            ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+# Known test spaces that MUST have healthy workers
+TEST_SPACES=(
+    "tutorial"
+    "platform-dev"
+    "platform-prod"
+)
+
+# Demo spaces (optional but good to check)
+DEMO_SPACES=(
+    "apptique-dev"
+    "apptique-prod"
+    "appchat-dev"
+    "appchat-prod"
+    "appvote-dev"
+    "appvote-prod"
+    "traderx"
+)
+
+check_space_workers() {
+    local space="$1"
+    local is_required="$2"
+
+    # Get worker list
+    local worker_json
+    worker_json=$(cub worker list --space "$space" -o json 2>/dev/null || echo "[]")
+
+    local count
+    count=$(echo "$worker_json" | jq 'length' 2>/dev/null || echo "0")
+
+    if [[ "$count" -eq 0 ]]; then
+        if [[ "$is_required" == "true" ]]; then
+            if ! $JSON_OUTPUT; then
+                echo -e "${RED}✗${NC} ${BOLD}$space${NC}: No workers configured"
+            fi
+            UNHEALTHY=$((UNHEALTHY + 1))
+        else
+            if $VERBOSE && ! $JSON_OUTPUT; then
+                echo -e "${YELLOW}○${NC} $space: No workers (optional space)"
+            fi
+        fi
+        return
+    fi
+
+    # Check each worker's status
+    local all_healthy=true
+    local worker_details=""
+
+    for i in $(seq 0 $((count - 1))); do
+        local slug status condition
+        slug=$(echo "$worker_json" | jq -r ".[$i].Slug // .[$i].BridgeWorker.Slug // \"null\"")
+        status=$(echo "$worker_json" | jq -r ".[$i].Status // .[$i].BridgeWorker.Status // \"unknown\"")
+        condition=$(echo "$worker_json" | jq -r ".[$i].Condition // .[$i].BridgeWorker.Condition // \"unknown\"")
+
+        # Determine if healthy (Ready, connected, online are all good)
+        local is_healthy=false
+        if [[ "$condition" == "Ready" || "$status" == "connected" || "$status" == "online" ]]; then
+            is_healthy=true
+        fi
+
+        if [[ "$slug" == "null" ]]; then
+            all_healthy=false
+            worker_details+="    ${RED}Worker $i: slug is null (issue #1 pattern)${NC}\n"
+            UNHEALTHY=$((UNHEALTHY + 1))
+        elif $is_healthy; then
+            worker_details+="    ${GREEN}✓ $slug${NC} ($condition)\n"
+            HEALTHY=$((HEALTHY + 1))
+        else
+            all_healthy=false
+            worker_details+="    ${RED}✗ $slug${NC} (status=$status, condition=$condition)\n"
+            DISCONNECTED=$((DISCONNECTED + 1))
+        fi
+    done
+
+    if ! $JSON_OUTPUT; then
+        if $all_healthy; then
+            echo -e "${GREEN}✓${NC} ${BOLD}$space${NC}: $count worker(s) healthy"
+        else
+            echo -e "${RED}✗${NC} ${BOLD}$space${NC}: Worker(s) unhealthy!"
+            echo -e "$worker_details"
+        fi
+    fi
+}
+
+# Check if cub is available and authenticated
+if ! command -v cub &>/dev/null; then
+    if $JSON_OUTPUT; then
+        echo '{"error": "cub CLI not installed", "healthy": false}'
+    else
+        echo -e "${RED}ERROR:${NC} cub CLI not installed"
+        echo "Install from: https://docs.confighub.com/cli"
+    fi
+    exit 1
+fi
+
+if ! cub context get &>/dev/null 2>&1; then
+    if $JSON_OUTPUT; then
+        echo '{"error": "Not authenticated to ConfigHub", "healthy": false}'
+    else
+        echo -e "${RED}ERROR:${NC} Not authenticated to ConfigHub"
+        echo "Run: cub auth login"
+    fi
+    exit 1
+fi
+
+if ! $JSON_OUTPUT; then
+    echo ""
+    echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║           ConfigHub Worker Health Check                        ║${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+fi
+
+# Determine which spaces to check
+spaces_to_check=()
+
+if [[ -n "$SPECIFIC_SPACE" ]]; then
+    spaces_to_check+=("$SPECIFIC_SPACE")
+elif $CHECK_ALL; then
+    # Get all spaces
+    all_spaces=$(cub space list -o json 2>/dev/null | jq -r '.[].Slug // .[].Space.Slug' 2>/dev/null || echo "")
+    while IFS= read -r space; do
+        [[ -n "$space" ]] && spaces_to_check+=("$space")
+    done <<< "$all_spaces"
+else
+    # Default: check current space + test spaces
+    current_space=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
+    [[ -n "$current_space" && "$current_space" != "null" ]] && spaces_to_check+=("$current_space")
+
+    for space in "${TEST_SPACES[@]}"; do
+        # Avoid duplicates
+        if [[ ! " ${spaces_to_check[*]} " =~ " ${space} " ]]; then
+            spaces_to_check+=("$space")
+        fi
+    done
+fi
+
+if ! $JSON_OUTPUT; then
+    echo -e "Checking ${#spaces_to_check[@]} space(s)..."
+    echo ""
+fi
+
+# Check each space
+for space in "${spaces_to_check[@]}"; do
+    is_required="false"
+    for test_space in "${TEST_SPACES[@]}"; do
+        [[ "$space" == "$test_space" ]] && is_required="true"
+    done
+    check_space_workers "$space" "$is_required"
+done
+
+# Summary
+if $JSON_OUTPUT; then
+    cat <<EOF
+{
+  "healthy": $([[ $UNHEALTHY -eq 0 && $DISCONNECTED -eq 0 ]] && echo "true" || echo "false"),
+  "workers": {
+    "healthy": $HEALTHY,
+    "unhealthy": $UNHEALTHY,
+    "disconnected": $DISCONNECTED
+  },
+  "spaces_checked": ${#spaces_to_check[@]}
+}
+EOF
+else
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "Healthy:      ${GREEN}$HEALTHY${NC}"
+    echo -e "Unhealthy:    ${RED}$UNHEALTHY${NC}"
+    echo -e "Disconnected: ${RED}$DISCONNECTED${NC}"
+    echo ""
+
+    if [[ $UNHEALTHY -gt 0 || $DISCONNECTED -gt 0 ]]; then
+        echo -e "${RED}${BOLD}WORKER HEALTH CHECK FAILED${NC}"
+        echo ""
+        echo "To fix:"
+        echo "  1. Start workers: cub worker run <slug> --space <space>"
+        echo "  2. Check worker logs: cub worker logs <slug>"
+        echo "  3. Verify network: can worker reach ConfigHub?"
+        echo ""
+        echo "DO NOT proceed with demos or examples until fixed!"
+        exit 1
+    else
+        echo -e "${GREEN}${BOLD}ALL WORKERS HEALTHY${NC}"
+        exit 0
+    fi
+fi

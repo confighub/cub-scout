@@ -1,0 +1,35 @@
+[
+  {
+    "clusterName": "default",
+    "namespace": "argocd",
+    "kind": "Application",
+    "name": "guestbook",
+    "apiVersion": "argoproj.io/v1alpha1",
+    "owner": "ArgoCD",
+    "ownerDetails": {
+      "project": "default"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-argo-basic",
+    "kind": "Deployment",
+    "name": "guestbook-ui",
+    "apiVersion": "apps/v1",
+    "owner": "ArgoCD",
+    "ownerDetails": {
+      "application": "guestbook"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-argo-basic",
+    "kind": "Service",
+    "name": "guestbook-ui",
+    "apiVersion": "v1",
+    "owner": "ArgoCD",
+    "ownerDetails": {
+      "application": "guestbook"
+    }
+  }
+]

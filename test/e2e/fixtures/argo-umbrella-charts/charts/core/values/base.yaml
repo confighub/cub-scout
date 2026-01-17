@@ -1,0 +1,138 @@
+# Core infrastructure group - base values
+# Aggregates values from all core sub-charts
+
+# cert-manager values
+cert-manager:
+  installCRDs: true
+
+  prometheus:
+    enabled: true
+    servicemonitor:
+      enabled: true
+
+  webhook:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
+
+  cainjector:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+
+# external-secrets values
+external-secrets:
+  serviceMonitor:
+    enabled: true
+
+  webhook:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
+
+  certController:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+
+# external-dns values
+external-dns:
+  sources:
+    - service
+    - ingress
+
+  policy: sync
+  registry: txt
+
+  serviceMonitor:
+    enabled: true
+
+# traefik values
+traefik:
+  service:
+    type: ClusterIP
+
+  ingressClass:
+    enabled: true
+    isDefaultClass: true
+
+  providers:
+    kubernetesCRD:
+      enabled: true
+    kubernetesIngress:
+      enabled: true
+
+  ports:
+    web:
+      port: 8000
+      exposedPort: 80
+      protocol: TCP
+    websecure:
+      port: 8443
+      exposedPort: 443
+      protocol: TCP
+
+  metrics:
+    prometheus:
+      enabled: true
+      disableAPICheck: true
+      serviceMonitor:
+        enabled: true
+
+  logs:
+    access:
+      enabled: true
+
+# metrics-server values
+metrics-server:
+  args:
+    - --kubelet-preferred-address-types=InternalIP
+    - --kubelet-insecure-tls
+
+  metrics:
+    enabled: true
+
+  serviceMonitor:
+    enabled: true
+
+# reloader values
+reloader:
+  reloader:
+    watchGlobally: true
+
+    serviceMonitor:
+      enabled: true
+
+# kube-prometheus-stack values
+kube-prometheus-stack:
+  fullnameOverride: prometheus
+
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+
+  grafana:
+    enabled: false  # Using standalone Grafana in observability group
+
+  kubeStateMetrics:
+    enabled: true
+
+  nodeExporter:
+    enabled: false  # Disabled due to hostPort conflicts in Kind

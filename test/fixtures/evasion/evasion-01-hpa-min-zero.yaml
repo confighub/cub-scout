@@ -1,0 +1,23 @@
+# Evasion attempt 01: HPA with minReplicas=0
+# Question: Does minReplicas=0 get flagged as problematic?
+# Expected: Should work if target exists, but may cause issues if target scales to 0
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: evasion-hpa-min-zero
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: non-existent-target
+  minReplicas: 0
+  maxReplicas: 1
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50

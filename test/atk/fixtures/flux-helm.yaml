@@ -1,0 +1,33 @@
+# Flux Helm - HelmRepository + HelmRelease
+# Requires: Flux installed (flux install)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: atk-flux-helm
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: podinfo
+  namespace: atk-flux-helm
+spec:
+  interval: 5m
+  url: https://stefanprodan.github.io/podinfo
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: podinfo
+  namespace: atk-flux-helm
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: podinfo
+      version: "6.5.0"
+      sourceRef:
+        kind: HelmRepository
+        name: podinfo
+  values:
+    replicaCount: 1

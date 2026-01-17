@@ -1,0 +1,96 @@
+# Template: Realtime Service Base Config
+#
+# This is the "golden template" in the Hub.
+# Teams clone this and customize for their environment.
+# Changes here can propagate to all instances (optional).
+
+kind: Unit
+apiVersion: confighub.com/v1
+metadata:
+  name: realtime-service
+  description: Base configuration for realtime messaging service
+  labels:
+    service: realtime
+    type: template
+    managed-by: platform-team
+
+spec:
+  # This is a template, not a live instance
+  template: true
+
+  # Default config structure
+  # Teams clone this and override specific values
+  config:
+    # Service identification
+    service_name: realtime
+    service_version: "2.1.0"
+
+    # Image configuration (platform-managed)
+    image_tags:
+      core: "prod-latest"
+      frontdoor: "prod-latest"
+      redis_worker: "prod-latest"
+
+    # Service endpoints (platform-managed)
+    service_endpoints:
+      api: "https://api.rtmsg.io"
+      realtime: "wss://realtime.rtmsg.io"
+      rest: "https://rest.rtmsg.io"
+
+    # Regional configuration (override per-instance)
+    regions:
+      primary: us-east-1
+      fallback:
+        - eu-west-1
+        - ap-southeast-1
+
+    # Rate limiting defaults (customer can override)
+    rate_limit:
+      messages_per_second: 1000
+      connections_per_channel: 10000
+      channels_per_app: 1000
+
+    # Feature flags (customer can override some)
+    feature_flags:
+      enable_push_notifications: true
+      enable_presence: true
+      enable_history: true
+      enable_reactor: false        # Premium feature
+      enable_firehose: false       # Enterprise feature
+
+    # Message retention (customer can override within limits)
+    message_retention_days: 3
+
+    # Internal settings (platform only)
+    internal_settings:
+      cluster_size: 3
+      replication_factor: 2
+      consistency_level: quorum
+
+    # Webhook defaults (customer provides their own)
+    webhooks:
+      on_message: null
+      on_presence: null
+      on_error: null
+
+    # Custom domain (customer provides)
+    custom_domain: null
+
+  # Schema validation for this config
+  schema:
+    rate_limit.messages_per_second:
+      type: integer
+      min: 100
+      max: 1000000
+    rate_limit.connections_per_channel:
+      type: integer
+      min: 100
+      max: 100000
+    message_retention_days:
+      type: integer
+      min: 1
+      max: 30
+    custom_domain:
+      type: string
+      format: hostname
+      nullable: true

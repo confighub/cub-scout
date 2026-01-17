@@ -1,0 +1,73 @@
+# Expected Output: ATK verify script
+name: "atk verify"
+description: "End-to-end ownership detection verification"
+mode: standalone
+
+requires:
+  cluster: true
+  tools: [kubectl]
+
+commands:
+  - id: verify_all
+    command: "./test/atk/verify"
+    description: "Run all ownership verification scenarios"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(PASS|passed|✓)"
+          description: "Shows passing tests"
+
+      not_contains:
+        - "FAIL"
+        - "panic"
+
+      assertions:
+        - name: "all_pass"
+          condition: "exit_code == 0 && !output.contains('FAIL')"
+          description: "All scenarios pass"
+
+    instructions: |
+      Run E2E ownership verification:
+      ```bash
+      ./test/atk/verify
+      ```
+
+      This tests all 6 ownership types:
+      - Flux (Kustomization, HelmRelease)
+      - Argo CD (Application)
+      - Helm (standalone)
+      - ConfigHub (labeled)
+      - Native (kubectl-applied)
+
+  - id: verify_list
+    command: "./test/atk/verify --list"
+    description: "List available verification scenarios"
+
+    expected:
+      exit_code: 0
+      contains:
+        - pattern: "(flux|argo|helm|confighub|native)"
+
+# Sample output
+sample_output: |
+  ATK Ownership Verification
+
+  Testing flux-basic...
+  ✓ Flux ownership detected
+
+  Testing argo-basic...
+  ✓ ArgoCD ownership detected
+
+  Testing helm-basic...
+  ✓ Helm ownership detected
+
+  Testing confighub-basic...
+  ✓ ConfigHub ownership detected
+
+  Testing native-basic...
+  ✓ Native ownership detected
+
+  ════════════════════════════════════════
+  All 5 scenarios passed

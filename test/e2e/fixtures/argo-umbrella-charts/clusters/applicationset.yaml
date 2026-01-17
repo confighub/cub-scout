@@ -1,0 +1,75 @@
+# Multi-environment ApplicationSet for infrastructure umbrella charts
+# Uses matrix generator to create apps for all environment × group combinations
+#
+# This creates 12 Applications:
+#   dev-core, dev-observability, dev-security, dev-operations
+#   staging-core, staging-observability, staging-security, staging-operations
+#   production-core, production-observability, production-security, production-operations
+#
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infrastructure
+  namespace: argocd
+spec:
+  generators:
+    - matrix:
+        generators:
+          # Environment generator - define clusters and their properties
+          # Add staging/production when those clusters are registered in ArgoCD:
+          #   - env: staging
+          #     cluster: https://staging.k8s.example.com
+          #   - env: production
+          #     cluster: https://production.k8s.example.com
+          - list:
+              elements:
+                - env: dev
+                  cluster: https://kubernetes.default.svc  # In-cluster for dev
+          # Chart group generator
+          - list:
+              elements:
+                - group: core
+                  syncWave: "0"
+                - group: security
+                  syncWave: "1"
+                - group: observability
+                  syncWave: "2"
+                - group: operations
+                  syncWave: "3"
+  template:
+    metadata:
+      name: '{{env}}-{{group}}'
+      annotations:
+        # Sync wave ensures proper ordering: core -> security -> observability -> operations
+        argocd.argoproj.io/sync-wave: '{{syncWave}}'
+      labels:
+        app.kubernetes.io/part-of: infrastructure
+        app.kubernetes.io/component: '{{group}}'
+        environment: '{{env}}'
+    spec:
+      project: default
+      source:
+        repoURL: http://gitea-http.gitea.svc:3000/gitea_admin/argo-umbrella-charts.git
+        targetRevision: main
+        path: 'charts/{{group}}'
+        helm:
+          # Layer values: base (shared) + environment-specific
+          valueFiles:
+            - values/base.yaml
+            - values/{{env}}.yaml
+      destination:
+        server: '{{cluster}}'
+        namespace: '{{group}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m

@@ -1,0 +1,20 @@
+# Edge case 09: NetworkPolicy with BOTH matchLabels AND matchExpressions
+# Tests: Does detection correctly handle combined selectors?
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: edge-netpol-combined-selector
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: combined-test
+    matchExpressions:
+    - key: environment
+      operator: In
+      values:
+      - staging
+      - production
+  policyTypes:
+  - Ingress

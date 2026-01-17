@@ -1,0 +1,63 @@
+# App Space: Platform Team
+#
+# Owns: Infrastructure services deployed to all clusters
+# This is the largest team (397 units)
+
+kind: AppSpace
+apiVersion: confighub.com/v1
+metadata:
+  name: platform-team
+  description: Platform infrastructure services
+
+spec:
+  owner: platform-leads@acme.com
+
+  members:
+    - email: platform-leads@acme.com
+      role: admin
+    - email: platform-sre@acme.com
+      role: operator
+    - email: platform-dev@acme.com
+      role: editor
+
+  # Platform owns LOTS of services
+  units:
+    # Observability
+    - prometheus
+    - grafana
+    - loki
+    - tempo
+    - alertmanager
+
+    # Networking
+    - nginx-ingress
+    - cert-manager
+    - external-dns
+    - coredns-custom
+
+    # Security
+    - vault
+    - external-secrets
+    - oauth2-proxy
+    - dex
+
+    # Data
+    - redis
+    - postgres-operator
+    - kafka
+
+    # ... (380+ more)
+
+  policies:
+    # Platform has stricter controls
+    - match: { labels: { environment: production } }
+      require:
+        - changeset-approval
+        - approver-from: [platform-leads@acme.com, platform-sre@acme.com]
+        - minimum-approvers: 2  # Two approvers for platform changes
+
+  reconciliation:
+    # Platform services: always revert drift
+    - match: { path: "*" }
+      on_drift: revert
+      alert: true

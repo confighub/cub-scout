@@ -1,0 +1,122 @@
+# Expected Output: scan standalone
+# Mode: Standalone (no ConfigHub connection)
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "scan standalone"
+description: "CCVE scanner detecting stuck reconciliation and config issues"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  # Basic scan
+  - id: scan_default
+    command: "./cub-agent scan"
+    description: "Scan cluster for stuck reconciliation and CCVEs"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "SCAN"
+        - pattern: "(Scanned|Summary|CRITICAL|WARNING|No issues)"
+          description: "Shows scan results"
+
+      not_contains:
+        - "panic"
+        - "error:"
+        - "failed to connect"
+
+      assertions:
+        - name: "scan_completes"
+          condition: "exit_code == 0"
+          description: "Scan completes without error"
+
+        - name: "shows_results"
+          condition: "output.match(/(CRITICAL|WARNING|No issues|Summary)/)"
+          description: "Shows findings or no-issues message"
+
+    instructions: |
+      Scan your cluster for stuck reconciliation states and configuration issues:
+      ```bash
+      ./cub-agent scan
+      ```
+
+      The scanner detects:
+      - Stuck HelmReleases (Ready=False)
+      - Stuck Kustomizations (reconciliation failed)
+      - Stuck Argo Applications
+      - CCVE patterns (configuration anti-patterns)
+
+      Output shows:
+      - CRITICAL - resources stuck for >30 minutes
+      - WARNING - resources with issues
+      - FIX commands for each issue
+
+    hints:
+      - when: "output.contains('No issues')"
+        show: "No problems detected. Your cluster looks healthy!"
+      - when: "output.contains('CRITICAL')"
+        show: "Critical issues found. Run the FIX commands shown."
+
+  # Scan with state focus
+  - id: scan_state
+    command: "./cub-agent scan --state"
+    description: "Focus on stuck reconciliation states"
+
+    expected:
+      exit_code: 0
+      contains:
+        - pattern: "(SCAN|Scanned|State)"
+          description: "State scan header"
+
+      assertions:
+        - name: "state_scan"
+          condition: "exit_code == 0"
+          description: "State scan completes"
+
+    instructions: |
+      Focus on stuck reconciliation states:
+      ```bash
+      ./cub-agent scan --state
+      ```
+
+  # Scan specific namespace
+  - id: scan_namespace
+    command: "./cub-agent scan --namespace flux-system"
+    description: "Scan specific namespace"
+
+    expected:
+      exit_code: 0
+
+      assertions:
+        - name: "namespace_filtered"
+          condition: "exit_code == 0"
+          description: "Namespace scan completes"
+
+    instructions: |
+      Scan a specific namespace:
+      ```bash
+      ./cub-agent scan --namespace flux-system
+      ```
+
+# Sample output
+sample_output: |
+  STUCK RECONCILIATION SCAN
+  Scanned at: 2026-01-13 09:00:00
+
+  CRITICAL (1)
+  ────────────────────────────────────────────────────────────────────
+  [C] HelmRelease/nginx [CCVE-2025-0166]
+    Namespace: default
+    Condition: Ready=False (2h30m)
+    Reason: SourceNotReady
+    → Remediation: Check flux logs; force reconcile with flux reconcile
+    FIX: flux reconcile hr nginx -n default --with-source
+
+  ════════════════════════════════════════════════════════════════════
+  State Summary: 1 HelmRelease, 0 Kustomization, 0 Application stuck

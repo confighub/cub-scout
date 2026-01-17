@@ -1,0 +1,105 @@
+# Scenario: Find resources by label
+# Discovery journey - query by metadata
+
+id: filter-by-label
+name: Filter resources by label
+category: discover
+priority: P1
+difficulty_target: easy
+
+description: |
+  User wants to find all resources matching a specific label.
+  Common use cases:
+  - Find all resources for app=payment
+  - Find resources by team label
+  - Find resources by environment label
+
+  Key question: "What resources belong to X?"
+
+personas:
+  - developer          # Primary - "my team's resources"
+  - platform-engineer  # Primary - "cross-cutting queries"
+  - security           # Secondary - "audit by label"
+
+preconditions:
+  cluster: any
+  resources_have_labels: true
+
+goals:
+  - Query by any label key/value
+  - See matching resources across namespaces
+  - Understand query syntax for future use
+
+entry_points:
+  tui:
+    description: "Using cub-agent map TUI with search"
+    expected_keystrokes: 20
+    expected_commands: 1
+    difficulty: easy
+    journey:
+      - step: 1
+        action: "Press '/' for search"
+        expect: "Search prompt with query examples"
+        keystrokes: 1
+      - step: 2
+        action: "Type 'labels[app]=payment'"
+        expect: "Filtered resources shown"
+        keystrokes: 18
+
+  cli:
+    description: "Using cub-agent map list with query"
+    expected_keystrokes: 40
+    expected_commands: 1
+    difficulty: easy
+    journey:
+      - step: 1
+        command: "cub-agent map list -q 'labels[app]=payment'"
+        expect: "Table of resources with app=payment label"
+        keystrokes: 42
+
+  hub:
+    description: "Using ConfigHub hierarchy with query"
+    expected_keystrokes: 25
+    expected_commands: 2
+    difficulty: medium
+    journey:
+      - step: 1
+        action: "Navigate to cluster or unit"
+        expect: "In correct context"
+        keystrokes: 5
+      - step: 2
+        action: "Press ':' and enter query"
+        expect: "Filtered view within hierarchy context"
+        keystrokes: 20
+
+scoring:
+  discoverability:
+    tui: 5  # IMPROVED: '/' search with query examples shown
+    cli: 5  # Query examples in help text
+    hub: 4  # Query examples in help overlay
+  speed:
+    tui: 4  # Type query directly after '/'
+    cli: 3  # Typing query takes time
+    hub: 4  # '/' search is faster than CLI
+  consistency:
+    tui: 5  # IMPROVED: Same '/' pattern as Hub TUI
+    cli: 5  # Query syntax consistent
+    hub: 5  # Same query syntax as CLI
+  recovery:
+    tui: 5  # Press any key to return
+    cli: 5  # Re-run with different query
+    hub: 5  # Clear command to reset
+  delight:
+    tui: 4  # Shows query examples inline
+    cli: 4  # Clean output
+    hub: 4  # Context-aware results
+
+composite_scores:
+  tui: 4.6    # IMPROVED from 3.15: Added '/' search
+  cli: 4.35   # Query examples in help
+  hub: 4.35   # Query examples in help overlay
+
+notes: |
+  All entry points now have good label filtering support.
+  TUI '/' search shows query examples before input.
+  Query syntax consistent across all entry points.

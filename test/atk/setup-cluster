@@ -1,0 +1,163 @@
+#!/bin/bash
+# ATK Cluster Setup - Creates a Kind cluster with Flux and Argo CD
+#
+# Usage:
+#   ./setup-cluster           # Full setup (Kind + Flux + Argo CD)
+#   ./setup-cluster --kind    # Kind cluster only
+#   ./setup-cluster --flux    # Add Flux to existing cluster
+#   ./setup-cluster --argo    # Add Argo CD to existing cluster
+#
+# The cluster is named 'atk' and uses context 'kind-atk'
+
+set -euo pipefail
+
+ATK_DIR="$(cd "$(dirname "$0")" && pwd)"
+CLUSTER_NAME="atk"
+CONTEXT="kind-$CLUSTER_NAME"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+info()  { echo -e "${YELLOW}$*${NC}"; }
+pass()  { echo -e "${GREEN}✓ $*${NC}"; }
+fail()  { echo -e "${RED}✗ $*${NC}"; exit 1; }
+
+# Check prerequisites
+check_prereqs() {
+    local missing=()
+
+    command -v kind &>/dev/null || missing+=("kind")
+    command -v kubectl &>/dev/null || missing+=("kubectl")
+    command -v flux &>/dev/null || missing+=("flux (optional)")
+
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        echo "Missing tools: ${missing[*]}"
+        echo "Install with: brew install kind kubectl fluxcd/tap/flux"
+        [[ "${missing[*]}" == *"kind"* || "${missing[*]}" == *"kubectl"* ]] && exit 1
+    fi
+}
+
+# Create Kind cluster
+setup_kind() {
+    info "Creating Kind cluster '$CLUSTER_NAME'..."
+
+    if kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
+        info "Cluster '$CLUSTER_NAME' already exists"
+        kubectl config use-context "$CONTEXT"
+        return 0
+    fi
+
+    kind create cluster --name "$CLUSTER_NAME" --wait 60s
+    kubectl config use-context "$CONTEXT"
+
+    # Wait for nodes
+    kubectl wait --for=condition=Ready nodes --all --timeout=120s
+    pass "Kind cluster ready"
+}
+
+# Install Flux
+setup_flux() {
+    info "Installing Flux..."
+
+    if kubectl get namespace flux-system &>/dev/null; then
+        info "Flux already installed"
+        return 0
+    fi
+
+    if ! command -v flux &>/dev/null; then
+        info "Flux CLI not found, installing via kubectl..."
+        kubectl apply -f https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
+    else
+        flux install --timeout=5m
+    fi
+
+    # Wait for Flux controllers
+    kubectl -n flux-system wait --for=condition=Available deployment --all --timeout=120s
+    pass "Flux installed"
+}
+
+# Install Argo CD
+setup_argo() {
+    info "Installing Argo CD..."
+
+    if kubectl get namespace argocd &>/dev/null; then
+        info "Argo CD already installed"
+        return 0
+    fi
+
+    kubectl create namespace argocd
+    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+    # Wait for Argo CD
+    kubectl -n argocd wait --for=condition=Available deployment --all --timeout=180s
+    pass "Argo CD installed"
+
+    # Get admin password
+    info "Argo CD admin password:"
+    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+    echo ""
+}
+
+# Show status
+show_status() {
+    echo ""
+    info "=== Cluster Status ==="
+    echo "Context: $(kubectl config current-context)"
+    echo ""
+
+    echo "Namespaces:"
+    kubectl get ns | grep -E "^(flux-system|argocd|atk-)" || echo "  (none)"
+    echo ""
+
+    if kubectl get namespace flux-system &>/dev/null; then
+        echo "Flux controllers:"
+        kubectl -n flux-system get deploy -o custom-columns=NAME:.metadata.name,READY:.status.readyReplicas 2>/dev/null || echo "  (not ready)"
+    fi
+
+    if kubectl get namespace argocd &>/dev/null; then
+        echo "Argo CD controllers:"
+        kubectl -n argocd get deploy -o custom-columns=NAME:.metadata.name,READY:.status.readyReplicas 2>/dev/null || echo "  (not ready)"
+    fi
+
+    echo ""
+    pass "Cluster ready for ATK tests"
+    echo "Run: ./test/atk/verify --your-cluster"
+}
+
+# Main
+main() {
+    check_prereqs
+
+    case "${1:-all}" in
+        --kind|-k)
+            setup_kind
+            ;;
+        --flux|-f)
+            setup_flux
+            ;;
+        --argo|-a)
+            setup_argo
+            ;;
+        --status|-s)
+            show_status
+            ;;
+        all|--all)
+            setup_kind
+            setup_flux
+            setup_argo
+            show_status
+            ;;
+        --help|-h)
+            head -12 "$0" | tail -10
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

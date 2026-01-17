@@ -1,0 +1,23 @@
+# Evasion attempt 05: NetworkPolicy with matchExpressions instead of matchLabels
+# Current detection: Only checks matchLabels
+# Evasion: Use matchExpressions with non-existent label
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: evasion-netpol-expressions
+  namespace: default
+spec:
+  podSelector:
+    matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - nonexistent-app-expression
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          role: frontend

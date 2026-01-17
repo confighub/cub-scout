@@ -1,0 +1,563 @@
+# Enterprise Unhealthy Demo: Common Problems at Scale
+#
+# This demonstrates what goes wrong in enterprise GitOps without proper tooling.
+# All pods will run (using nginx:alpine), but the configuration has problems.
+#
+# Problems demonstrated:
+#   - CCVE-2025-0027: Grafana namespace whitespace bug (BIGBANK 4-hour outage)
+#   - CCVE-FLUX-005: Suspended Kustomization (forgotten maintenance)
+#   - CCVE-FLUX-006: HelmRelease with invalid chart version
+#   - CCVE-ARGO-003: Argo Application OutOfSync (drift)
+#   - Orphan resources (kubectl apply at 2am, no owner)
+#   - Ownership confusion (multiple deployers fighting)
+#   - Missing resource limits (security risk)
+#   - Duplicate deployments (team coordination failure)
+#
+# The story:
+#   Day 1: "Someone kubectl applied something in prod at 2am"
+#   Day 2: "Why isn't our monitoring working?"
+#   Day 3: "The HelmRelease has been failing for 2 weeks"
+#   Day 4: "Wait, we have TWO payment services?!"
+#
+# Usage:
+#   ./test/atk/demo unhealthy           # Apply and run
+#   ./test/atk/demo unhealthy --no-pods # Apply without running pods
+#   ./test/atk/map                      # See the chaos (Problems section)
+#   ./test/atk/scan                     # Find CCVEs
+#   ./test/atk/demo unhealthy --cleanup # Remove demo resources
+#
+# Or manually:
+#   kubectl apply -f enterprise-unhealthy.yaml
+#   kubectl delete -f enterprise-unhealthy.yaml
+#
+# Currently detected by scan tool:
+#   INFO:
+#     [CCVE-FLUX-005] Kustomization suspended
+#
+# Additional problems visible in map (scan detectors TBD):
+#   - HelmRelease with invalid chart version (SourceNotReady)
+#   - Orphan resources (no GitOps owner labels)
+#   - Duplicate payment services
+
+---
+# ============================================================================
+# NAMESPACES
+# ============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grafana
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-checkout
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: legacy-apps
+---
+
+# ============================================================================
+# PROBLEM 1: CCVE-2025-0027 - Grafana Namespace Whitespace Bug
+# The EXACT pattern that caused 4-hour outage at BIGBANK
+# Dashboards silently stop loading, no errors logged
+# ============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    # Looks managed, but the sidecar is broken
+    argocd.argoproj.io/instance: monitoring-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        # CCVE-2025-0027: In real Grafana, spaces after commas in NAMESPACE
+        # env var break sidecar namespace watching. This caused a 4-hour
+        # outage at BIGBANK. The pattern is documented here
+        # even though we're using nginx for demo purposes.
+        env:
+        - name: NAMESPACE_WITH_BUG
+          # This is WRONG - spaces cause silent failures
+          value: "monitoring, grafana, production"
+          # CORRECT would be: "monitoring,grafana,production"
+---
+# Dashboard that the sidecar SHOULD pick up but WON'T due to CCVE-2025-0027
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: critical-dashboard
+  namespace: grafana
+  labels:
+    grafana_dashboard: "1"
+data:
+  production-metrics.json: |
+    {
+      "title": "Production Metrics - CRITICAL",
+      "description": "This dashboard is NOT being loaded due to CCVE-2025-0027",
+      "panels": [
+        {"title": "Revenue per Second", "type": "stat"},
+        {"title": "Error Rate", "type": "graph"},
+        {"title": "Active Users", "type": "gauge"}
+      ]
+    }
+---
+
+# ============================================================================
+# PROBLEM 2: CCVE-FLUX-005 - Suspended Kustomization
+# Someone suspended this 3 weeks ago "for maintenance" and forgot
+# ============================================================================
+
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: platform-apps
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://github.com/acme-corp/platform-apps
+  ref:
+    branch: main
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: security-policies
+  namespace: flux-system
+  annotations:
+    # Someone left a note... 3 weeks ago
+    note: "Suspended 2024-12-10 by @alice for certificate renewal - DO NOT FORGET TO UNSUSPEND"
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./security
+  prune: true
+  # CCVE-FLUX-005: This has been suspended for 3 weeks!
+  suspend: true
+---
+
+# ============================================================================
+# PROBLEM 3: CCVE-FLUX-006 - Failed HelmRelease
+# Chart version doesn't exist, has been failing silently for 2 weeks
+# ============================================================================
+
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: bitnami
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://charts.bitnami.com/bitnami
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: redis-sessions
+  namespace: flux-system
+  annotations:
+    # Tried to upgrade, fat-fingered the version
+    upgraded-by: "@bob"
+    upgraded-at: "2024-12-15"
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: redis
+      # CCVE-FLUX-006: This version doesn't exist!
+      version: "18.99.0"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+  targetNamespace: production
+  values:
+    architecture: standalone
+    auth:
+      enabled: true
+---
+
+# ============================================================================
+# PROBLEM 4: Orphan Resources - "kubectl apply at 2am"
+# No ownership labels, nobody knows where these came from
+# ============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-pod
+  namespace: production
+  labels:
+    app: debug-pod
+    # NO OWNERSHIP LABELS - complete orphan
+  annotations:
+    # The only clue...
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"applied":"manually at 2am during incident"}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-pod
+  template:
+    metadata:
+      labels:
+        app: debug-pod
+    spec:
+      containers:
+      - name: debug
+        image: busybox:1.36
+        command: ["sleep", "infinity"]
+        # NO RESOURCE LIMITS - security risk
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: temp-workaround
+  namespace: production
+  # NO OWNERSHIP LABELS
+  annotations:
+    created-by: "incident response"
+    ticket: "INC-4521"
+    note: "TODO: remove after proper fix deployed"
+data:
+  workaround.sh: |
+    #!/bin/bash
+    # This was a temporary fix from 6 months ago
+    # Nobody knows if it's still needed
+    curl -X POST localhost:8080/clear-cache
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: temp-api-key
+  namespace: production
+  # NO OWNERSHIP LABELS - orphan secret!
+type: Opaque
+data:
+  # "temporary-key-for-testing" base64 encoded
+  api-key: dGVtcG9yYXJ5LWtleS1mb3ItdGVzdGluZw==
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hotfix-service
+  namespace: production
+  labels:
+    app: hotfix-service
+    # NO OWNERSHIP LABELS
+  annotations:
+    emergency: "true"
+    deployed-during: "P1 incident 2024-11-15"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hotfix-service
+  template:
+    metadata:
+      labels:
+        app: hotfix-service
+    spec:
+      containers:
+      - name: hotfix
+        image: nginx:alpine
+        # Using :latest is bad practice (we use alpine here for demo)
+        # NO RESOURCE LIMITS - this is intentional for the demo
+---
+
+# ============================================================================
+# PROBLEM 5: Duplicate Deployments - Team Coordination Failure
+# Team A and Team B both deployed "their" payment service
+# ============================================================================
+
+# Team A's payment service (via Flux)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: team-checkout
+  labels:
+    app: payment-service
+    team: checkout
+    helm.toolkit.fluxcd.io/name: payment-service
+    helm.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+      team: checkout
+  template:
+    metadata:
+      labels:
+        app: payment-service
+        team: checkout
+    spec:
+      containers:
+      - name: payment
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+# Team B's payment service (via Argo) - DUPLICATE!
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-processor
+  namespace: team-checkout
+  labels:
+    app: payment-processor
+    team: platform
+    argocd.argoproj.io/instance: platform-payments
+  annotations:
+    note: "Team Platform thinks they own payments now"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-processor
+  template:
+    metadata:
+      labels:
+        app: payment-processor
+    spec:
+      containers:
+      - name: payment
+        # Different image, different version - which one is right?
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+
+# ============================================================================
+# PROBLEM 6: Argo Application OutOfSync (CCVE-ARGO-003)
+# Someone made manual changes, Argo shows drift
+# ============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: api-gateway
+  namespace: argocd
+  annotations:
+    # This has been OutOfSync for a week
+    last-synced: "2024-12-20"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/acme-corp/api-gateway
+    targetRevision: main
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    # Auto-sync is OFF - manual intervention required
+    automated: null
+---
+# The drifted deployment - someone scaled it up manually
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: production
+  labels:
+    app: api-gateway
+    argocd.argoproj.io/instance: api-gateway
+  annotations:
+    # Evidence of manual change
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"spec":{"replicas":5}}
+    manual-change: "scaled up during traffic spike, forgot to update git"
+spec:
+  # Git says 2, cluster has 5 - DRIFT!
+  replicas: 5
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: gateway
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+
+# ============================================================================
+# PROBLEM 7: Legacy Apps - Ancient Resources Nobody Understands
+# ============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-auth
+  namespace: legacy-apps
+  labels:
+    app: legacy-auth
+    # Ownership labels from 2019, before GitOps
+    heritage: manual
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacy-auth
+  template:
+    metadata:
+      labels:
+        app: legacy-auth
+    spec:
+      containers:
+      - name: auth
+        # Ancient image, probably has CVEs (using nginx for demo)
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_PASSWORD
+          # Hardcoded password in env var - security issue
+          value: "legacy-password-123"
+        # NO RESOURCE LIMITS - intentional for demo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legacy-config
+  namespace: legacy-apps
+  annotations:
+    warning: "DO NOT MODIFY - last person who touched this caused 3-day outage"
+    last-modified: "2021-03-15"
+data:
+  config.properties: |
+    # Nobody knows what half of these do
+    auth.timeout=30000
+    cache.enabled=true
+    legacy.mode=true
+    mysterious.flag=42
+---
+
+# ============================================================================
+# PROBLEM 8: Missing Resource Limits - Security/Stability Risk
+# ============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: batch-processor
+  namespace: production
+  labels:
+    app: batch-processor
+    helm.toolkit.fluxcd.io/name: batch-jobs
+    helm.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: batch-processor
+  template:
+    metadata:
+      labels:
+        app: batch-processor
+    spec:
+      containers:
+      - name: processor
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        # NO RESOURCE LIMITS! - intentional for demo
+        # This could consume all node resources
+---
+
+# ============================================================================
+# SUMMARY OF PROBLEMS
+# ============================================================================
+#
+# Run ./test/atk/scan to see:
+#
+# CRITICAL (2):
+#   - CCVE-FLUX-006: redis-sessions HelmRelease chart version 18.99.0 not found
+#   - CCVE-2025-0027: Grafana sidecar namespace whitespace bug
+#
+# WARNING (4):
+#   - CCVE-FLUX-005: security-policies Kustomization suspended
+#   - CCVE-ARGO-003: api-gateway Application OutOfSync
+#   - 4 orphan resources (debug-pod, temp-workaround, temp-api-key, hotfix-service)
+#   - Duplicate payment deployments
+#
+# INFO (3):
+#   - Missing resource limits on 3 deployments
+#   - Legacy resources without proper ownership
+#   - Hardcoded secrets
+#
+# To fix:
+#   1. ./test/atk/map                    # Identify ownership
+#   2. ./test/atk/scan                   # Find CCVEs
+#   3. Fix CCVE-2025-0027: Remove spaces in grafana NAMESPACE env
+#   4. Fix CCVE-FLUX-005: Unsuspend security-policies
+#   5. Fix CCVE-FLUX-006: Correct redis chart version to 18.6.1
+#   6. Assign ownership to orphans or delete them
+#   7. Resolve duplicate payment services with teams
+#   8. Sync api-gateway in Argo (accept drift or revert)

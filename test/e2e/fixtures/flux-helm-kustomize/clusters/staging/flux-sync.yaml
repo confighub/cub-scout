@@ -1,0 +1,103 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: flux-helm-kustomize
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: http://gitea-http.gitea.svc:3000/gitea_admin/flux-helm-kustomize.git
+  ref:
+    branch: main
+---
+# Apply HelmRepository sources first
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: sources
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-helm-kustomize
+  path: ./base/sources
+  prune: false
+  wait: true
+  timeout: 2m
+---
+# Core infrastructure (cert-manager, external-dns, traefik, etc.)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: staging-core
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: sources
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-helm-kustomize
+  path: ./overlays/staging/core
+  prune: true
+  wait: true
+  timeout: 10m
+---
+# Security (kyverno, trivy-operator)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: staging-security
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: sources
+    - name: staging-core
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-helm-kustomize
+  path: ./overlays/staging/security
+  prune: true
+  wait: true
+  timeout: 10m
+---
+# Observability (prometheus, grafana, loki, tempo, alloy)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: staging-observability
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: sources
+    - name: staging-core
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-helm-kustomize
+  path: ./overlays/staging/observability
+  prune: true
+  wait: true
+  timeout: 10m
+---
+# Operations (keda)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: staging-operations
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: sources
+    - name: staging-core
+    - name: staging-observability  # For ServiceMonitor CRDs
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-helm-kustomize
+  path: ./overlays/staging/operations
+  prune: true
+  wait: true
+  timeout: 10m

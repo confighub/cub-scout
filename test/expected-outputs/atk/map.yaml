@@ -1,0 +1,117 @@
+# Expected Output: ATK map script
+name: "atk map"
+description: "Show what's running in cluster and who owns it"
+mode: standalone
+
+requires:
+  cluster: true
+  tools: [kubectl]
+
+commands:
+  - id: map_default
+    command: "./test/atk/map"
+    description: "Map cluster resources (default view)"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(NAMESPACE|KIND|NAME|OWNER)"
+          description: "Shows resource table headers"
+        - pattern: "(Flux|ArgoCD|Helm|ConfigHub|Native)"
+          description: "Shows ownership types"
+
+      not_contains:
+        - "panic:"
+        - "error:"
+
+      assertions:
+        - name: "map_completes"
+          condition: "exit_code == 0"
+          description: "Map completes successfully"
+
+    instructions: |
+      Map cluster resources:
+      ```bash
+      ./test/atk/map
+      ```
+
+      Shows what's running and who owns it.
+
+  - id: map_list
+    command: "./test/atk/map list"
+    description: "List all resources"
+
+    expected:
+      exit_code: 0
+      contains:
+        - pattern: "(NAMESPACE|KIND|NAME|OWNER)"
+
+  - id: map_query
+    command: "./test/atk/map -q \"owner=Flux\""
+    description: "Query Flux-managed resources"
+
+    expected:
+      exit_code: 0
+      contains:
+        - "Flux"
+
+    instructions: |
+      Filter by owner:
+      ```bash
+      ./test/atk/map -q "owner=Flux"
+      ./test/atk/map -q "owner!=Native"
+      ./test/atk/map -q "namespace=production"
+      ```
+
+  - id: map_json
+    command: "./test/atk/map --json"
+    description: "JSON output for tooling"
+
+    expected:
+      exit_code: 0
+
+      assertions:
+        - name: "valid_json"
+          condition: "JSON.parse(output) !== null"
+          description: "Output is valid JSON"
+
+  - id: map_confighub
+    command: "./test/atk/map confighub"
+    description: "Show ConfigHub hierarchy (connected mode)"
+    mode: connected
+
+    expected:
+      exit_code: 0
+      contains:
+        - "Context:"
+        - pattern: "(Organizations|Spaces|Workers|Targets)"
+          description: "Shows ConfigHub hierarchy"
+
+    instructions: |
+      Show ConfigHub hierarchy:
+      ```bash
+      ./test/atk/map confighub
+      ```
+
+      Requires: cub CLI authenticated
+
+# Sample output
+sample_output: |
+  Cluster Resources
+  ═══════════════════════════════════════════════════════════════
+
+  NAMESPACE     KIND         NAME              OWNER
+  ─────────────────────────────────────────────────────────────
+  flux-system   Kustomize    flux-system       Flux
+  argocd        Application  guestbook         ArgoCD
+  production    Deployment   payment-api       Helm
+  demo-ch       Deployment   managed-app       ConfigHub
+  default       Deployment   manual-deploy     Native
+
+  Summary: 5 resources
+    Flux: 1
+    ArgoCD: 1
+    Helm: 1
+    ConfigHub: 1
+    Native: 1

@@ -1,0 +1,93 @@
+# Expected Output: 2AM kubectl Demo
+# ⚠️ SIMULATION - This demo prints hardcoded output to show what ConfigHub WILL do.
+#    It does NOT connect to real clusters or ConfigHub.
+name: "2am-kubectl demo (SIMULATION)"
+description: "Demo 2: Detect and resolve drift from manual kubectl changes (simulated output)"
+mode: standalone
+
+requires:
+  cluster: false
+  cub_auth: false
+
+commands:
+  - id: demo_run
+    command: "./examples/rm-demos-argocd/scenarios/2am-kubectl/demo.sh"
+    description: "Run 2AM kubectl demo"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "2AM kubectl"
+        - "standup"
+        - pattern: "(8 replicas|drift)"
+          description: "Shows drift scenario"
+        - "kubectl still works"
+        - "cub unit diff"
+        - "DRIFT DETECTED"
+        - pattern: "(5→8|replicas)"
+          description: "Shows specific drift"
+        - pattern: "(oncall|INC-4521)"
+          description: "Shows who/why attribution"
+        - "cub unit accept"
+        - pattern: "(PR #|pull)"
+          description: "Shows Git sync-back"
+
+      not_contains:
+        - "error"
+        - "panic:"
+        - "command not found"
+
+      assertions:
+        - name: "demo_completes"
+          condition: "exit_code == 0"
+          description: "Demo runs to completion"
+        - name: "shows_drift_detection"
+          condition: "output.contains('DRIFT DETECTED')"
+          description: "Demonstrates drift detection"
+        - name: "shows_remediation"
+          condition: "output.contains('cub unit accept') || output.contains('cub unit revert')"
+          description: "Shows remediation options"
+
+    instructions: |
+      Run the 2AM kubectl demo:
+      ```bash
+      ./examples/rm-demos-argocd/scenarios/2am-kubectl/demo.sh
+      ```
+
+      This simulation demonstrates:
+      - Detecting drift that ArgoCD missed (Synced but drifted)
+      - Attribution: WHO made the change, WHEN, and WHY
+      - Fleet-wide drift query
+      - Bulk remediation (revert or accept)
+      - Git sync-back after accepting drift
+
+# Sample output
+sample_output: |
+  ═══════════════════════════════════════════════════════════════
+    Demo 2: The 2AM kubectl
+  ═══════════════════════════════════════════════════════════════
+
+  SCENARIO:
+    Tuesday morning standup.
+    "Why did prod-us-east have 8 replicas overnight?"
+
+  THE DIRTY SECRET OF GITOPS:
+    kubectl still works. People use it.
+    At 2am. During incidents. Without PRs.
+
+  $ cub unit diff payment-api --cluster prod-us-east
+
+  DRIFT DETECTED: payment-api @ prod-us-east
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  ConfigHub (Desired)              Cluster (Live)                 │
+  │  spec.replicas: 5                 spec.replicas: 8               │
+  │                                                                  │
+  │  Changed: 2026-01-12 02:47:23 UTC                               │
+  │  By: kubectl (user: oncall-sarah@acme.com)                      │
+  └──────────────────────────────────────────────────────────────────┘
+
+  DRIFTED UNITS (3)
+  payment-api     prod-us-east   replicas: 5→8    02:47 UTC  INC-4521
+  redis-cache     prod-us-east   replicas: 3→6    02:52 UTC  INC-4521
+  order-api       prod-us-east   replicas: 3→5    02:55 UTC  INC-4521

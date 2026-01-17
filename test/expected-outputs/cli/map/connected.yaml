@@ -1,0 +1,166 @@
+# Expected Output: map connected
+# Mode: Connected (ConfigHub + workers)
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "map connected"
+description: "Map command with ConfigHub hierarchy and fleet views"
+mode: connected
+
+requires:
+  cluster: true
+  cub_auth: true
+  workers: true
+  tools: [kubectl, cub]
+
+preconditions:
+  - name: "cub_authenticated"
+    check: "cub context get"
+    message: "Must be authenticated to ConfigHub: cub auth login"
+
+  - name: "space_set"
+    check: "cub context get --json | jq -e '.settings.defaultSpace'"
+    message: "Must have active space: cub context set space <slug>"
+
+  - name: "worker_connected"
+    check: "cub worker list --json | jq -e '.[0].BridgeWorker.Condition == \"Ready\"'"
+    message: "Must have connected worker: cub worker run <slug>"
+
+commands:
+  # ConfigHub hierarchy view
+  - id: map_confighub
+    command: "./test/atk/map confighub"
+    description: "Show ConfigHub hierarchy (Org → Space → Unit)"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "ConfigHub"
+        - "Context:"
+        - pattern: "(Organizations|Spaces|Workers)"
+          description: "Hierarchy sections shown"
+
+      not_contains:
+        - "null"
+        - "unknown"
+        - "error"
+        - "no workers"
+
+      assertions:
+        - name: "hierarchy_shown"
+          condition: "output.contains('ConfigHub')"
+          description: "ConfigHub hierarchy displayed"
+
+        - name: "context_shown"
+          condition: "output.contains('Context:')"
+          description: "Current context displayed"
+
+        - name: "workers_listed"
+          condition: "output.contains('Workers') || output.contains('worker')"
+          description: "Workers section present"
+
+    instructions: |
+      View ConfigHub hierarchy showing your organization, spaces, and units:
+      ```bash
+      ./test/atk/map confighub
+      ```
+
+      You should see:
+      - Current context (org, space)
+      - Organizations you belong to
+      - Spaces with unit/worker/target counts
+      - Workers and their connection status
+
+    hints:
+      - when: "output.contains('No workers')"
+        show: "Start a worker: cub worker run <slug>"
+      - when: "output.contains('not authenticated')"
+        show: "Login first: cub auth login"
+
+  # Admin mode (Org → Space → Unit)
+  - id: map_admin
+    command: "./test/atk/map --mode=admin"
+    description: "Admin view of ConfigHub hierarchy"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(Org|Space|Unit|ConfigHub)"
+          description: "Admin hierarchy elements"
+
+      not_contains:
+        - "null - unknown"
+        - "→ no target"
+        - "error"
+
+      assertions:
+        - name: "no_null_values"
+          condition: "!output.contains('null')"
+          description: "No null values (Issue #1 prevention)"
+
+        - name: "no_unknown"
+          condition: "!output.contains('unknown')"
+          description: "No unknown values"
+
+    instructions: |
+      Admin mode shows the organizational hierarchy:
+      ```bash
+      ./test/atk/map --mode=admin
+      ```
+
+      Hierarchy: Organization → Space → Unit (with targets, workers)
+
+  # Fleet mode (Application → Variant → Cluster)
+  - id: map_fleet
+    command: "./test/atk/map --mode=fleet"
+    description: "Fleet view aggregating across clusters"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(Fleet|Application|Variant|Cluster)"
+          description: "Fleet hierarchy elements"
+
+      not_contains:
+        - "null"
+        - "error"
+
+      assertions:
+        - name: "fleet_view"
+          condition: "output.contains('Fleet') || output.contains('Application')"
+          description: "Fleet aggregation shown"
+
+    instructions: |
+      Fleet mode shows applications across multiple clusters:
+      ```bash
+      ./test/atk/map --mode=fleet
+      ```
+
+      Hierarchy: Application → Variant → Cluster
+
+# Sample output (for reference)
+sample_output: |
+  ═══════════════════════════════════════════════════════════════
+    ConfigHub Hierarchy
+  ═══════════════════════════════════════════════════════════════
+
+  Context:
+    Organization: confighub
+    Space: tutorial
+    User: alexis@example.com
+
+  Organizations:
+    confighub (3 spaces)
+
+  Spaces in 'confighub':
+    tutorial       2 units, 8 targets, 2 workers
+    platform-dev   7 units, 7 targets, 1 worker
+    platform-prod  7 units, 7 targets, 1 worker
+
+  Workers in 'tutorial':
+    dev            connected   docker-desktop
+
+  Targets in 'tutorial':
+    k8s-dev        docker-desktop   connected

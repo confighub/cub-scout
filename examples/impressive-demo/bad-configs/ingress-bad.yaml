@@ -1,0 +1,22 @@
+# Traefik IngressRoute with CCVE-0028: Service name typo
+# Kubernetes accepts this but traffic fails - cross-reference validation catches it
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-web
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`grafana.example.com`)
+    kind: Rule
+    services:
+    # 🔥 BUG: Service name has typo - "servic" instead of "service"
+    # This is CCVE-0028 - Kubernetes doesn't validate this reference
+    - name: grafana-servic  # ❌ WRONG - should be "grafana-service"
+      port: 80
+    # CORRECT would be:
+    # - name: grafana-service  # ✅ Matches actual service name
+    #   port: 80

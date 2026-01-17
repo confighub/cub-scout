@@ -1,0 +1,13 @@
+# Edge case 10: PDB with percentage as integer (not string)
+# Tests: Does detection handle minAvailable: 1 (integer) vs "1" (string)?
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: edge-pdb-integer-one
+  namespace: default
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: some-app-integer

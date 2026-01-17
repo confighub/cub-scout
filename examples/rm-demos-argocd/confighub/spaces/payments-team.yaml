@@ -1,0 +1,69 @@
+# App Space: Payments Team
+#
+# Owns: payment-api, payment-processor, payment-gateway
+# Clusters: All 47 (deployed everywhere)
+# Team size: 12 engineers
+
+kind: AppSpace
+apiVersion: confighub.com/v1
+metadata:
+  name: payments-team
+  description: Payment processing services
+
+spec:
+  owner: payments-leads@acme.com
+
+  members:
+    - email: payments-leads@acme.com
+      role: admin
+    - email: payments-dev@acme.com
+      role: editor
+    - email: payments-oncall@acme.com
+      role: operator
+
+  # Units owned by this team
+  units:
+    - payment-api
+    - payment-processor
+    - payment-gateway
+    - payment-webhook-handler
+
+  # Team-specific policies
+  policies:
+    # Dev: auto-approve everything
+    - match: { labels: { environment: development } }
+      allow: [direct-edit, self-approve]
+
+    # Staging: auto-approve but log
+    - match: { labels: { environment: staging } }
+      allow: [direct-edit]
+      audit: true
+
+    # Production: require approval from team leads
+    - match: { labels: { environment: production } }
+      require:
+        - changeset-approval
+        - approver-from: [payments-leads@acme.com]
+
+  # Drift handling
+  reconciliation:
+    # HPA changes are OK
+    - match: { path: spec.replicas }
+      on_drift: accept
+      alert: false
+
+    # Everything else: revert
+    - match: { path: "*" }
+      on_drift: revert
+      alert: true
+
+  # Saved queries for this team
+  saved_queries:
+    - name: my-production
+      query: "space=payments-team AND environment=production"
+
+    - name: behind-versions
+      query: "space=payments-team AND version!=latest"
+
+    - name: drifted
+      query: "space=payments-team AND drift=true"

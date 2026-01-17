@@ -1,0 +1,87 @@
+# Expected Output: ATK demo script
+name: "atk demo"
+description: "Interactive demos for ConfigHub Agent features"
+mode: standalone
+
+requires:
+  cluster: true
+  tools: [kubectl]
+
+commands:
+  - id: demo_quick
+    command: "./test/atk/demo quick"
+    description: "Quick 30-second demo"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(Map|Ownership|Cluster)"
+          description: "Shows core map functionality"
+
+      not_contains:
+        - "panic:"
+        - "error:"
+
+    instructions: |
+      Quick demo:
+      ```bash
+      ./test/atk/demo quick
+      ```
+
+  - id: demo_ccve
+    command: "./test/atk/demo ccve"
+    description: "CCVE detection demo (BIGBANK story)"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(CCVE|scan|detection)"
+          description: "Shows CCVE scanning"
+
+    instructions: |
+      CCVE demo:
+      ```bash
+      ./test/atk/demo ccve
+      ```
+
+  - id: demo_list
+    command: "./test/atk/demo --list"
+    description: "List available demos"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(quick|ccve|query|connected)"
+          description: "Lists demo names"
+
+    instructions: |
+      List demos:
+      ```bash
+      ./test/atk/demo --list
+      ```
+
+  - id: demo_help
+    command: "./test/atk/demo --help"
+    description: "Show demo help"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(Usage|demo|options)"
+
+# Sample output (demo --list)
+sample_output: |
+  Available Demos:
+  ─────────────────────────────────────────────
+  quick       30-second map overview
+  ccve        CCVE detection (BIGBANK story)
+  query       Query language examples
+  healthy     Enterprise healthy cluster
+  unhealthy   Enterprise unhealthy cluster
+  connected   ConfigHub connected mode
+
+  Run: ./test/atk/demo <name>

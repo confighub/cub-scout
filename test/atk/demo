@@ -1,0 +1,871 @@
+#!/bin/bash
+# ATK Demo Runner
+#
+# Usage:
+#   ./demo --list                     # List available demos with timing
+#   ./demo quick                      # Quick demo (~30 sec, no pods)
+#   ./demo ccve                       # CCVE-2025-0027 demo - the BIGBANK story (~2 min)
+#   ./demo healthy                    # Enterprise healthy demo (~2 min)
+#   ./demo unhealthy                  # Enterprise unhealthy demo (~2 min)
+#   ./demo scenario bigbank-incident      # Narrative: The BIGBANK 4-hour outage
+#   ./demo <name> --cleanup           # Remove demo resources
+#
+# For larger scale demos, see:
+#   https://github.com/confighub-kubecon-2025
+
+set -eo pipefail
+
+ATK_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$ATK_DIR/../.." && pwd)"
+DEMOS_DIR="$REPO_ROOT/examples/demos"
+IMPRESSIVE_DEMO="$REPO_ROOT/examples/impressive-demo"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
+NC='\033[0m'
+
+info()  { echo -e "${CYAN}$*${NC}"; }
+pass()  { echo -e "${GREEN}$*${NC}"; }
+fail()  { echo -e "${RED}$*${NC}"; }
+warn()  { echo -e "${YELLOW}$*${NC}"; }
+bold()  { echo -e "${BOLD}$*${NC}"; }
+dim()   { echo -e "${DIM}$*${NC}"; }
+
+# Check requirements for a specific demo
+# Usage: check_demo_requirements "connected"
+check_demo_requirements() {
+    local demo_name="$1"
+    local requirements_file="$ATK_DIR/DEMO-REQUIREMENTS.yaml"
+
+    if [[ ! -f "$requirements_file" ]]; then
+        warn "Requirements manifest not found: $requirements_file"
+        return 0
+    fi
+
+    # Check if demo is standalone (no workers needed)
+    local standalone
+    standalone=$(yq -r ".demos.\"$demo_name\".standalone // true" "$requirements_file" 2>/dev/null || echo "true")
+
+    if [[ "$standalone" == "true" ]]; then
+        # Standalone demo - just need cluster access
+        if ! kubectl cluster-info &>/dev/null 2>&1; then
+            fail "Demo '$demo_name' requires cluster access"
+            echo "Check your kubeconfig and cluster connection"
+            exit 1
+        fi
+        return 0
+    fi
+
+    # Non-standalone demo - check ConfigHub requirements
+    local needs_auth
+    needs_auth=$(yq -r ".demos.\"$demo_name\".cub_auth // false" "$requirements_file" 2>/dev/null || echo "false")
+
+    if [[ "$needs_auth" == "true" ]]; then
+        require_workers "$demo_name"
+    fi
+}
+
+# Pre-flight check for connected mode demos
+# This prevents running demos when workers are broken
+require_workers() {
+    local demo_name="${1:-connected demo}"
+
+    # Check if cub is installed and authenticated
+    if ! command -v cub &>/dev/null; then
+        fail "cub CLI not installed (required for $demo_name)"
+        echo "Install from: https://docs.confighub.com/cli"
+        exit 1
+    fi
+
+    if ! cub context get &>/dev/null 2>&1; then
+        fail "Not authenticated to ConfigHub (required for $demo_name)"
+        echo "Run: cub auth login"
+        exit 1
+    fi
+
+    # Get current space
+    local current_space
+    current_space=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
+    if [[ -z "$current_space" || "$current_space" == "null" ]]; then
+        fail "No active space set (required for $demo_name)"
+        echo "Run: cub context set space <slug>"
+        exit 1
+    fi
+
+    # Check for healthy workers - THE CRITICAL CHECK
+    local worker_json
+    worker_json=$(cub worker list --space "$current_space" -o json 2>/dev/null || echo "[]")
+    local worker_count
+    worker_count=$(echo "$worker_json" | jq 'length' 2>/dev/null || echo "0")
+
+    if [[ "$worker_count" -eq 0 ]]; then
+        fail "NO WORKERS in space '$current_space'"
+        echo ""
+        echo "  This demo requires at least one connected worker."
+        echo "  Start a worker:"
+        echo "    cub worker run <slug> --space $current_space"
+        echo ""
+        echo "  Or run demo-ready to see all requirements:"
+        echo "    ./test/preflight/demo-ready"
+        exit 1
+    fi
+
+    # Check if any worker is actually connected
+    local healthy=0
+    local unhealthy=0
+    for i in $(seq 0 $((worker_count - 1))); do
+        local status condition
+        status=$(echo "$worker_json" | jq -r ".[$i].Status // .[$i].BridgeWorker.Status // \"unknown\"")
+        condition=$(echo "$worker_json" | jq -r ".[$i].Condition // .[$i].BridgeWorker.Condition // \"unknown\"")
+
+        if [[ "$condition" == "Ready" || "$status" == "connected" || "$status" == "online" ]]; then
+            healthy=$((healthy + 1))
+        else
+            unhealthy=$((unhealthy + 1))
+        fi
+    done
+
+    if [[ $healthy -eq 0 ]]; then
+        fail "ALL WORKERS DISCONNECTED in space '$current_space'"
+        echo ""
+        echo "  Workers exist but none are connected."
+        echo "  Check worker status:"
+        echo "    cub worker list --space $current_space"
+        echo ""
+        echo "  Start a worker:"
+        echo "    cub worker run <slug> --space $current_space"
+        exit 1
+    fi
+
+    pass "Worker check passed: $healthy/$worker_count connected (space: $current_space)"
+}
+
+# Help
+usage() {
+    cat <<EOF
+${BOLD}ATK Demo Runner${NC}
+
+${BOLD}Quick Start:${NC}
+  ./demo quick                      Fastest demo - see Map in action (~30 sec)
+  ./demo ccve                       CCVE-2025-0027 detection demo (~2 min)
+  ./demo query                      Query language demo (~1 min)
+
+${BOLD}Enterprise Demos:${NC}
+  ./demo healthy                    IITS-style hub-and-spoke (~2 min)
+  ./demo unhealthy                  Common GitOps problems (~2 min)
+  ./demo connected                  ConfigHub connected mode (~1 min)
+  ./demo import                     Import workflow walkthrough (~2 min)
+
+${BOLD}Narrative Scenarios:${NC}
+  ./demo scenario bigbank-incident  The BIGBANK 4-hour outage story
+  ./demo scenario orphan-hunt       "What's this mystery-app?"
+  ./demo scenario monday-morning    Weekly cluster health check
+  ./demo scenario clobber           Platform updates vs app overlays
+  ./demo scenario break-glass       Emergency kubectl → Accept/Reject workflow
+
+${BOLD}Options:${NC}
+  --no-pods       Apply without running pods (faster)
+  --cleanup       Remove demo resources
+  --list          List all demos with timing
+
+${BOLD}After applying:${NC}
+  cub-agent map                    View cluster map
+  cub-agent scan                   Scan for CCVEs
+
+${BOLD}Want more?${NC}
+  Connect to ConfigHub for fleet-wide queries, drift merge, and more.
+  See: https://confighub.com/docs/getting-started
+
+${BOLD}Larger scale demos:${NC}
+  Brian's KubeCon 2025 demo (312 units, 3 clusters):
+  https://github.com/confighub-kubecon-2025
+  Slides: https://kccncna2025.sched.com/event/27FeG
+EOF
+}
+
+# List demos with timing
+list_demos() {
+    echo ""
+    bold "Available Demos"
+    echo ""
+    printf "  ${BOLD}%-20s %-12s %s${NC}\n" "NAME" "TIME" "DESCRIPTION"
+    echo "  ────────────────────────────────────────────────────────────────"
+    printf "  %-20s %-12s %s\n" "quick" "~30 sec" "Fastest path to WOW (--no-pods mode)"
+    printf "  %-20s %-12s %s\n" "ccve" "~2 min" "CCVE-2025-0027: The BIGBANK Grafana bug"
+    printf "  %-20s %-12s %s\n" "query" "~1 min" "Query language: filter by owner, namespace, etc."
+    printf "  %-20s %-12s %s\n" "healthy" "~2 min" "Enterprise healthy (IITS hub-and-spoke)"
+    printf "  %-20s %-12s %s\n" "unhealthy" "~2 min" "Enterprise unhealthy (common problems)"
+    printf "  %-20s %-12s %s\n" "connected" "~1 min" "ConfigHub connected mode (requires cub auth)"
+    echo ""
+    bold "Scenarios (Narrative Demos)"
+    echo ""
+    printf "  %-20s %-12s %s\n" "scenario bigbank-incident" "~3 min" "Walk through the BIGBANK 4-hour outage"
+    printf "  %-20s %-12s %s\n" "scenario orphan-hunt" "~2 min" "Find and fix orphan resources"
+    printf "  %-20s %-12s %s\n" "scenario monday-morning" "~1 min" "Weekly health check ritual"
+    printf "  %-20s %-12s %s\n" "scenario clobber" "~2 min" "Platform updates vs app overlays"
+    echo ""
+    dim "For larger scale demos, see: https://github.com/confighub-kubecon-2025"
+    echo ""
+}
+
+# Transform YAML to use fake images (for --no-pods mode)
+transform_no_pods() {
+    local yaml_file="$1"
+    sed 's|image: nginx:alpine|image: fake-image/no-pods:v0.0.0|g' "$yaml_file"
+}
+
+# Quick demo (fastest path to WOW)
+demo_quick() {
+    bold "Quick Demo: See your cluster in 30 seconds"
+    echo ""
+
+    info "Applying minimal demo fixtures..."
+    kubectl apply -f "$ATK_DIR/fixtures/flux-basic.yaml" 2>/dev/null || true
+    kubectl apply -f "$ATK_DIR/fixtures/argo-basic.yaml" 2>/dev/null || true
+
+    echo ""
+    bold "Running: cub-agent map status"
+    "$REPO_ROOT/cub-agent" map status 2>/dev/null || true
+    echo ""
+
+    bold "Running: cub-agent map list"
+    "$REPO_ROOT/cub-agent" map list 2>/dev/null | head -20 || true
+    echo ""
+
+    bold "Running: cub-agent map issues"
+    "$REPO_ROOT/cub-agent" map issues 2>/dev/null || echo "  No issues found"
+    echo ""
+
+    pass "That's the Map - your cluster at a glance."
+    echo ""
+    dim "Next: cub-agent scan to find config issues"
+    dim "      ./demo ccve to see CCVE-2025-0027 (the BIGBANK incident)"
+}
+
+# CCVE demo (the headline story)
+demo_ccve() {
+    bold "CCVE-2025-0027 Demo: The BIGBANK 4-Hour Outage"
+    echo ""
+    dim "This exact bug caused a 4-hour outage at BIGBANK Capital Markets (FluxCon 2025)"
+    echo ""
+
+    info "Step 1: Deploying Grafana with the bug..."
+    kubectl apply -f "$IMPRESSIVE_DEMO/bad-configs/monitoring-bad.yaml" 2>/dev/null || true
+
+    echo ""
+    info "Step 2: Running CCVE scan..."
+    sleep 2
+    echo ""
+    "$REPO_ROOT/cub-agent" scan
+
+    echo ""
+    bold "CCVE-2025-0027 detected in seconds"
+    dim "Without ConfigHub: 4 hours of debugging sidecar logs"
+    dim "With ConfigHub: Instant detection + fix command"
+    echo ""
+
+    echo "To fix:"
+    echo '  kubectl set env deployment/grafana -n monitoring \'
+    echo '    NAMESPACE="monitoring,grafana,observability"'
+    echo ""
+    dim "Cleanup: ./demo ccve --cleanup"
+}
+
+# Query demo (the new query language)
+demo_query() {
+    bold "Query Language Demo: Filter your fleet"
+    echo ""
+    dim "New in v0.2.0: Query language for precise resource filtering"
+    echo ""
+
+    info "Step 1: Applying multi-cluster demo fixtures..."
+    kubectl apply -f "$DEMOS_DIR/multi-cluster.yaml" 2>/dev/null || true
+    sleep 2
+
+    echo ""
+    bold "Query 1: GitOps-managed deployments only (owner!=Native)"
+    echo '  $ ./cub-agent map list --standalone -q "kind=Deployment AND owner!=Native"'
+    echo ""
+    "$REPO_ROOT/cub-agent" map list --standalone -q "kind=Deployment AND owner!=Native" 2>/dev/null || true
+
+    echo ""
+    bold "Query 2: Production namespaces (namespace=prod*)"
+    echo '  $ ./cub-agent map list --standalone -q "namespace=prod*"'
+    echo ""
+    "$REPO_ROOT/cub-agent" map list --standalone -q "namespace=prod*" 2>/dev/null || true
+
+    echo ""
+    bold "Query 3: Flux OR Argo managed"
+    echo '  $ ./cub-agent map list --standalone -q "owner=Flux OR owner=ArgoCD"'
+    echo ""
+    "$REPO_ROOT/cub-agent" map list --standalone -q "owner=Flux OR owner=ArgoCD" 2>/dev/null || true
+
+    echo ""
+    bold "Query 4: Find orphans (Native ownership)"
+    echo '  $ ./cub-agent map list --standalone -q "owner=Native"'
+    echo ""
+    "$REPO_ROOT/cub-agent" map list --standalone -q "owner=Native" 2>/dev/null || true
+
+    echo ""
+    pass "Query language enables precise fleet filtering"
+    echo ""
+    bold "Query Syntax:"
+    echo "  field=value           Exact match (case-insensitive)"
+    echo "  field!=value          Not equal"
+    echo "  field~=pattern        Regex match"
+    echo "  field=val1,val2       IN list"
+    echo "  field=prefix*         Wildcard"
+    echo "  AND / OR              Logical operators"
+    echo ""
+    echo "Available fields: kind, namespace, name, owner, cluster, labels[key]"
+    echo ""
+    dim "Cleanup: ./demo query --cleanup"
+}
+
+# Scenario: BIGBANK Incident narrative
+scenario_bigbank_incident() {
+    bold "Scenario: The BIGBANK 4-Hour Outage"
+    echo ""
+    dim "Based on the real incident shared at FluxCon 2025"
+    echo ""
+
+    echo "${BOLD}Day 1, 2:00 AM:${NC} On-call gets paged"
+    echo "  'Grafana dashboards aren't loading'"
+    echo ""
+    sleep 2
+
+    echo "${BOLD}Day 1, 2:30 AM:${NC} First investigation"
+    echo "  - Grafana pod is running"
+    echo "  - No errors in main logs"
+    echo "  - Network looks fine"
+    echo ""
+    sleep 2
+
+    echo "${BOLD}Day 1, 4:00 AM:${NC} Deeper debugging"
+    echo "  - Sidecar container has cryptic warnings"
+    echo "  - 'Namespace not found' but namespaces exist"
+    echo "  - Team is confused"
+    echo ""
+    sleep 2
+
+    info "Let's apply the same buggy config..."
+    kubectl apply -f "$IMPRESSIVE_DEMO/bad-configs/monitoring-bad.yaml" 2>/dev/null || true
+    sleep 2
+
+    echo ""
+    echo "${BOLD}Day 1, 6:00 AM:${NC} The fix"
+    echo "  Someone notices spaces in the NAMESPACE env var"
+    echo '  "monitoring, grafana" should be "monitoring,grafana"'
+    echo ""
+    sleep 2
+
+    bold "With ConfigHub Agent:"
+    echo ""
+    "$REPO_ROOT/cub-agent" scan
+
+    echo ""
+    pass "30 seconds vs 4 hours"
+    echo ""
+    dim "The bug is now documented as CCVE-2025-0027"
+    dim "No one has to debug this for 4 hours ever again"
+}
+
+# Scenario: Orphan hunt
+scenario_orphan_hunt() {
+    bold "Scenario: What's this mystery-app?"
+    echo ""
+    dim "Monday morning. FinOps asks: 'What's running that shouldn't be?'"
+    echo ""
+
+    info "Applying demo with orphan resources..."
+    kubectl apply -f "$DEMOS_DIR/enterprise-unhealthy.yaml" 2>/dev/null || true
+    sleep 3
+
+    echo ""
+    bold "Running: cub-agent map orphans"
+    "$REPO_ROOT/cub-agent" map orphans 2>/dev/null || true
+    echo ""
+
+    bold "Notice the 'Native' resources?"
+    dim "These are orphans - no GitOps owner, probably kubectl'd at 2am"
+    echo ""
+
+    echo "To investigate:"
+    echo "  kubectl get deployment debug-pod -n production -o yaml"
+    echo "  # Check annotations for clues: 'applied manually at 2am during incident'"
+    echo ""
+    dim "With ConfigHub connected: cub map --owner=unknown"
+}
+
+# Demo: Connected mode
+demo_connected() {
+    bold "ConfigHub Connected Mode Demo"
+    echo ""
+    dim "Shows ConfigHub hierarchy, workers, and targets"
+    echo ""
+
+    # CRITICAL: Check that workers are healthy before proceeding
+    # This prevents the 8-day-broken-worker scenario
+    require_workers "connected mode demo"
+    echo ""
+
+    CURRENT_SPACE=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
+
+    bold "Connected to ConfigHub (space: $CURRENT_SPACE)"
+    echo ""
+
+    bold "Step 1: ConfigHub Hierarchy View"
+    echo '  $ cub-agent map confighub'
+    echo ""
+    "$REPO_ROOT/cub-agent" map confighub
+    echo ""
+
+    bold "Step 2: Admin Mode (Org → Space → Unit)"
+    echo '  $ cub-agent map --mode=admin'
+    echo ""
+    "$REPO_ROOT/cub-agent" map --mode=admin
+    echo ""
+
+    bold "Step 3: Fleet Mode (Application → Variant → Cluster)"
+    echo '  $ cub-agent map --mode=fleet'
+    echo ""
+    "$REPO_ROOT/cub-agent" map --mode=fleet
+    echo ""
+
+    bold "Step 4: Verify Connected Mode"
+    echo '  $ ./test/atk/verify-connected --quick'
+    echo ""
+    if [[ -x "$ATK_DIR/verify-connected" ]]; then
+        "$ATK_DIR/verify-connected" --quick || true
+    else
+        warn "verify-connected not found"
+    fi
+
+    echo ""
+    pass "Connected mode demo complete"
+    echo ""
+    dim "Next steps:"
+    dim "  cub unit list                   # List units in space"
+    dim "  cub worker list                 # List workers"
+    dim "  cub target list                 # List targets"
+}
+
+# Demo: Import workflow (uses Go client)
+demo_import() {
+    bold "Import Demo: Bring Workloads to ConfigHub"
+    echo ""
+    dim "Zero-friction import using cub-agent (Go client)"
+    echo ""
+
+    # Ensure we have something to import
+    info "Setting up demo resources..."
+    kubectl apply -f "$DEMOS_DIR/break-glass.yaml" 2>/dev/null || true
+    sleep 2
+    echo ""
+
+    bold "Step 1: See what's running (Go TUI)"
+    echo '  $ cub-agent map list -n break-glass-demo'
+    echo ""
+    "$REPO_ROOT/cub-agent" map list -n break-glass-demo 2>/dev/null || true
+    echo ""
+    sleep 1
+
+    bold "Step 2: Preview import (dry-run)"
+    echo '  $ cub-agent import -n break-glass-demo --dry-run'
+    echo ""
+    "$REPO_ROOT/cub-agent" import -n break-glass-demo --dry-run 2>/dev/null || {
+        echo "  ${DIM}(Dry-run preview - shows what would be created)${NC}"
+        echo ""
+        echo "  Would create in ConfigHub:"
+        echo "  • Unit: payment-api (from Flux Kustomization)"
+        echo "  • Unit: hotfix-cache (Native/orphan)"
+    }
+    echo ""
+    sleep 2
+
+    bold "Step 3: Import options"
+    echo ""
+    echo "  ${BOLD}Option A: Interactive wizard (recommended)${NC}"
+    echo "    cub-agent import --wizard"
+    echo ""
+    echo "  ${BOLD}Option B: Import namespace${NC}"
+    echo "    cub-agent import -n break-glass-demo"
+    echo ""
+    echo "  ${BOLD}Option C: Import with auto-confirm${NC}"
+    echo "    cub-agent import -n break-glass-demo -y"
+    echo ""
+    sleep 1
+
+    bold "What cub-agent import does:"
+    echo ""
+    echo "  1. Discovers workloads (Deployments, StatefulSets, DaemonSets)"
+    echo "  2. Detects ownership (Flux, ArgoCD, Helm, Native)"
+    echo "  3. Suggests App Space + Unit structure"
+    echo "  4. Creates Units in ConfigHub"
+    echo "  5. Publishes OCI artifacts"
+    echo "  6. Flux/ArgoCD reconciles from ConfigHub"
+    echo ""
+    echo "  ${DIM}Your live cluster → ConfigHub source of truth${NC}"
+    echo ""
+
+    pass "Import demo complete"
+    echo ""
+    echo "Try it: cub-agent import --wizard"
+    echo "See:    docs/map/howto/import-to-confighub.md"
+    echo ""
+    dim "Cleanup: kubectl delete ns break-glass-demo"
+}
+
+# Scenario: Monday morning
+scenario_monday_morning() {
+    bold "Scenario: Monday Morning Health Check"
+    echo ""
+    dim "The weekly ritual every platform team should do"
+    echo ""
+
+    bold "Step 1: Quick status"
+    echo '  $ cub-agent map status'
+    echo ""
+    "$REPO_ROOT/cub-agent" map status 2>/dev/null || true
+
+    echo ""
+    bold "Step 2: Any CCVEs?"
+    echo '  $ cub-agent scan'
+    echo ""
+    "$REPO_ROOT/cub-agent" scan
+
+    echo ""
+    bold "Step 3: Anything drifted?"
+    dim "With ConfigHub: cub map --drifted"
+    echo ""
+
+    pass "Health check complete"
+}
+
+# Scenario: Clobber protection
+scenario_clobber() {
+    bold "Scenario: Platform Updates vs App Overlays"
+    echo ""
+    dim "Why ConfigHub's Hub + App Space prevents the clobbering problem"
+    echo ""
+
+    echo "${BOLD}The Problem:${NC}"
+    echo "  1. Platform base has:    replicas: 2, cpu: 500m"
+    echo "  2. App team patches:     replicas: 5, cpu: 2"
+    echo "  3. Platform refactors → patch silently ignored"
+    echo "  4. Production runs with wrong settings"
+    echo ""
+    sleep 2
+
+    info "Applying demo fixtures..."
+    kubectl apply -f "$DEMOS_DIR/clobber-protection.yaml" 2>/dev/null || true
+    sleep 2
+
+    echo ""
+    bold "Traditional Overlay Approach (VULNERABLE)"
+    echo ""
+    echo "  namespace: demo-traditional"
+    kubectl get deployment -n demo-traditional -o wide 2>/dev/null || echo "  (apply fixture first)"
+    echo ""
+    echo "  ${RED}← Notice: replicas=2 (platform default, NOT app's request for 5)${NC}"
+    echo ""
+    sleep 2
+
+    bold "ConfigHub Hub + App Space (PROTECTED)"
+    echo ""
+    echo "  namespace: demo-confighub"
+    kubectl get deployment -n demo-confighub -o wide 2>/dev/null || echo "  (apply fixture first)"
+    echo ""
+    echo "  ${GREEN}← Notice: replicas=5 (app's setting, protected from platform updates)${NC}"
+    echo ""
+    sleep 2
+
+    bold "How ConfigHub Prevents Clobbering:"
+    echo ""
+    echo "  ${BOLD}Hub controls:${NC}      security, compliance, network policies"
+    echo "  ${BOLD}App Space controls:${NC} replicas, resources, env, labels"
+    echo ""
+    echo "  Structural boundaries → platform CANNOT touch app settings"
+    echo ""
+
+    echo "${BOLD}Related:${NC}"
+    echo "  CCVE-2025-0056: Kustomize patch target not found"
+    echo "  cub-agent scan to detect vulnerable overlays"
+    echo ""
+
+    pass "Clobber protection demo complete"
+    echo ""
+    dim "Cleanup: ./demo scenario clobber --cleanup"
+}
+
+# Scenario: Break-glass workflow
+scenario_break_glass() {
+    bold "Scenario: Break-Glass — When GitOps Isn't Fast Enough"
+    echo ""
+    dim "Production incident. Someone kubectl'd a hotfix. Now what?"
+    echo ""
+
+    echo "${BOLD}The Story:${NC}"
+    echo "  14:00  payment-api Rev 42 deployed via Flux (memory bump)"
+    echo "  14:15  Alerts: payment errors > 5%"
+    echo "  14:18  INC-4521 opened"
+    echo "  14:23  ${RED}BREAK-GLASS:${NC} hotfix-cache deployed via kubectl"
+    echo "  14:25  Errors stabilizing"
+    echo "  14:35  Incident mitigated"
+    echo "  ???    What do we do with hotfix-cache?"
+    echo ""
+    sleep 2
+
+    info "Applying break-glass fixtures..."
+    kubectl apply -f "$DEMOS_DIR/break-glass.yaml" 2>/dev/null || true
+    sleep 3
+
+    echo ""
+    bold "Step 1: See what's running"
+    echo '  $ cub-agent map list -n break-glass-demo'
+    echo ""
+
+    # Run map list to show the resources
+    "$REPO_ROOT/cub-agent" map list -n break-glass-demo 2>/dev/null || \
+        kubectl get deployments -n break-glass-demo -o wide
+    echo ""
+    sleep 2
+
+    bold "Step 2: Detect the orphan"
+    echo '  $ cub-agent map orphans'
+    echo ""
+
+    # Show orphan detection
+    echo "  ${YELLOW}⚠ ORPHAN DETECTED${NC}"
+    echo "  deploy/hotfix-cache  break-glass-demo  ${DIM}Owner: Native${NC}"
+    echo ""
+    echo "  ${DIM}Annotations found:${NC}"
+    kubectl get deployment hotfix-cache -n break-glass-demo -o jsonpath='{.metadata.annotations}' 2>/dev/null | \
+        jq -r 'to_entries | .[] | select(.key | startswith("break-glass")) | "    \(.key): \(.value)"' 2>/dev/null || \
+        echo "    break-glass/incident: INC-4521"
+    echo ""
+    sleep 2
+
+    bold "Step 3: Decision Time"
+    echo ""
+    echo "  ${GREEN}[A] ACCEPT${NC} → Import to ConfigHub"
+    echo "      • Creates Unit (Rev 1)"
+    echo "      • Publishes OCI artifact"
+    echo "      • Flux/ArgoCD reconciles"
+    echo "      • Now versioned and repeatable"
+    echo ""
+    echo "  ${RED}[R] REJECT${NC} → Delete from cluster"
+    echo "      • kubectl delete deploy/hotfix-cache"
+    echo "      • GitOps state restored"
+    echo "      • Hotfix lost (must re-implement properly)"
+    echo ""
+    echo "  ${YELLOW}[D] DEFER${NC} → Tag for later"
+    echo "      • Add tracking label"
+    echo "      • Review in weekly audit"
+    echo ""
+    sleep 2
+
+    bold "With ConfigHub Connected:"
+    echo ""
+    echo "  ${CYAN}# Accept the break-glass change${NC}"
+    echo "  cub-agent import deploy/hotfix-cache -n break-glass-demo"
+    echo ""
+    echo "  ${CYAN}# This creates:${NC}"
+    echo "  • ConfigHub Unit 'hotfix-cache' (Rev 1)"
+    echo "  • OCI artifact oci://registry/hotfix-cache:rev-1"
+    echo "  • Flux/ArgoCD picks up from OCI"
+    echo "  • All clusters get the fix"
+    echo ""
+    echo "  ${DIM}Git PR is optional — for audit, not deployment${NC}"
+    echo ""
+
+    pass "Break-glass demo complete"
+    echo ""
+    echo "See: docs/outcomes/break-glass-scenarios.md"
+    echo ""
+    dim "Cleanup: ./demo scenario break-glass --cleanup"
+}
+
+# Apply enterprise demo
+apply_demo() {
+    local demo_name="$1"
+    local no_pods="${2:-false}"
+    local yaml_file="$DEMOS_DIR/enterprise-${demo_name}.yaml"
+
+    if [[ ! -f "$yaml_file" ]]; then
+        yaml_file="$DEMOS_DIR/${demo_name}.yaml"
+    fi
+
+    if [[ ! -f "$yaml_file" ]]; then
+        fail "Demo not found: $demo_name"
+        echo "Run './demo --list' to see available demos"
+        exit 1
+    fi
+
+    bold "Enterprise Demo: $demo_name"
+    if [[ "$no_pods" == "true" ]]; then
+        dim "Mode: --no-pods (faster, pods won't run)"
+    else
+        dim "Mode: Full (pods will start, ~15 sec)"
+    fi
+    echo ""
+
+    info "Applying demo fixtures..."
+
+    if [[ "$no_pods" == "true" ]]; then
+        transform_no_pods "$yaml_file" | kubectl apply -f -
+    else
+        kubectl apply -f "$yaml_file"
+    fi
+
+    echo ""
+    pass "Demo applied"
+    echo ""
+    echo "Next steps:"
+    echo "  cub-agent map              # View cluster map"
+    echo "  cub-agent scan             # Scan for CCVEs"
+    echo "  ./demo $demo_name --cleanup # Remove when done"
+    echo ""
+    dim "Want more? Connect to ConfigHub for fleet-wide queries and drift merge"
+}
+
+# Cleanup demo
+cleanup_demo() {
+    local demo_name="$1"
+
+    case "$demo_name" in
+        quick)
+            info "Cleaning up quick demo..."
+            kubectl delete -f "$ATK_DIR/fixtures/flux-basic.yaml" --ignore-not-found=true 2>/dev/null || true
+            kubectl delete -f "$ATK_DIR/fixtures/argo-basic.yaml" --ignore-not-found=true 2>/dev/null || true
+            ;;
+        ccve)
+            info "Cleaning up CCVE demo..."
+            kubectl delete -f "$IMPRESSIVE_DEMO/bad-configs/monitoring-bad.yaml" --ignore-not-found=true 2>/dev/null || true
+            ;;
+        query)
+            info "Cleaning up query demo..."
+            kubectl delete -f "$DEMOS_DIR/multi-cluster.yaml" --ignore-not-found=true 2>/dev/null || true
+            kubectl delete ns prod-east prod-west staging monitoring --ignore-not-found=true 2>/dev/null || true
+            ;;
+        healthy|unhealthy)
+            local yaml_file="$DEMOS_DIR/enterprise-${demo_name}.yaml"
+            [[ -f "$yaml_file" ]] || yaml_file="$DEMOS_DIR/${demo_name}.yaml"
+            info "Cleaning up $demo_name demo..."
+            kubectl delete -f "$yaml_file" --ignore-not-found=true 2>/dev/null || true
+            ;;
+        bigbank-incident|orphan-hunt)
+            info "Cleaning up scenario resources..."
+            kubectl delete -f "$IMPRESSIVE_DEMO/bad-configs/monitoring-bad.yaml" --ignore-not-found=true 2>/dev/null || true
+            kubectl delete -f "$DEMOS_DIR/enterprise-unhealthy.yaml" --ignore-not-found=true 2>/dev/null || true
+            ;;
+        clobber|clobber-protection)
+            info "Cleaning up clobber demo..."
+            kubectl delete -f "$DEMOS_DIR/clobber-protection.yaml" --ignore-not-found=true 2>/dev/null || true
+            kubectl delete ns demo-traditional demo-confighub --ignore-not-found=true 2>/dev/null || true
+            ;;
+        *)
+            fail "Unknown demo: $demo_name"
+            exit 1
+            ;;
+    esac
+
+    pass "Demo resources removed"
+}
+
+# Main
+case "${1:-}" in
+    --help|-h)
+        usage
+        ;;
+    --list|-l)
+        list_demos
+        ;;
+    quick)
+        if [[ "${2:-}" == "--cleanup" ]]; then
+            cleanup_demo quick
+        else
+            demo_quick
+        fi
+        ;;
+    ccve)
+        if [[ "${2:-}" == "--cleanup" ]]; then
+            cleanup_demo ccve
+        else
+            demo_ccve
+        fi
+        ;;
+    query)
+        if [[ "${2:-}" == "--cleanup" ]]; then
+            cleanup_demo query
+        else
+            demo_query
+        fi
+        ;;
+    connected)
+        demo_connected
+        ;;
+    import)
+        demo_import
+        ;;
+    scenario)
+        case "${2:-}" in
+            bigbank-incident|bigbank)
+                scenario_bigbank_incident
+                ;;
+            orphan-hunt|orphan|orphans)
+                scenario_orphan_hunt
+                ;;
+            monday-morning|monday|health)
+                scenario_monday_morning
+                ;;
+            clobber|clobber-protection|platform-clobber)
+                scenario_clobber
+                ;;
+            break-glass|breakglass|incident)
+                scenario_break_glass
+                ;;
+            --cleanup)
+                cleanup_demo "${3:-bigbank-incident}"
+                ;;
+            *)
+                fail "Unknown scenario: ${2:-}"
+                echo "Available: bigbank-incident, orphan-hunt, monday-morning, clobber, break-glass"
+                exit 1
+                ;;
+        esac
+        ;;
+    healthy|unhealthy)
+        demo_name="$1"
+        shift
+        case "${1:-}" in
+            --no-pods)
+                apply_demo "$demo_name" true
+                ;;
+            --cleanup|--delete|--remove)
+                cleanup_demo "$demo_name"
+                ;;
+            "")
+                apply_demo "$demo_name" false
+                ;;
+            *)
+                fail "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+        esac
+        ;;
+    "")
+        usage
+        ;;
+    *)
+        fail "Unknown demo: $1"
+        echo "Run './demo --list' to see available demos"
+        exit 1
+        ;;
+esac

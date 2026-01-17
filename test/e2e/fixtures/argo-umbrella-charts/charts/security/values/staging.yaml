@@ -1,0 +1,66 @@
+# Security stack - staging environment overrides
+
+# kyverno staging overrides - audit mode with warnings
+kyverno:
+  replicaCount: 2
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+  admissionController:
+    replicas: 2
+    container:
+      args:
+        # Audit mode - log violations but don't block
+        - --validatingFailurePolicy=Ignore
+        - --mutatingFailurePolicy=Ignore
+
+  backgroundController:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+
+  cleanupController:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+
+  reportsController:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+
+# trivy-operator staging overrides
+trivy-operator:
+  operator:
+    replicas: 2
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+  trivy:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+
+  scanJobs:
+    concurrentScanJobsLimit: 10

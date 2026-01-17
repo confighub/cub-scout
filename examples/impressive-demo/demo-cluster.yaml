@@ -1,0 +1,356 @@
+# Demo Cluster Fixtures
+# Creates a realistic multi-owner cluster for the "Map. Accept. Scan." demo
+#
+# Usage:
+#   kubectl apply -f demo-cluster.yaml
+#
+# Creates:
+#   - Mixed ownership (Flux, Argo, Helm, Native)
+#   - Orphan resources (Native with no owner)
+#   - CCVE-2025-0027 (Grafana namespace whitespace bug)
+#   - Resources ready for drift simulation
+
+---
+# ============================================================================
+# NAMESPACE SETUP
+# ============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-prod
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+
+# ============================================================================
+# SCENE 1: MAP - Mixed Ownership
+# Shows Flux, Argo, Helm, and Native ownership in one view
+# ============================================================================
+
+# --- Flux-managed resources ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: demo-prod
+  labels:
+    app: api-gateway
+    kustomize.toolkit.fluxcd.io/name: production
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-cache
+  namespace: demo-prod
+  labels:
+    app: redis
+    kustomize.toolkit.fluxcd.io/name: production
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:6.2.14
+        ports:
+        - containerPort: 6379
+
+---
+# --- Argo-managed resources ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: demo-prod
+  labels:
+    app: frontend
+    argocd.argoproj.io/instance: frontend-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+
+---
+# --- Helm-managed resources ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  namespace: demo-prod
+  labels:
+    app: postgresql
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: db
+    meta.helm.sh/release-namespace: demo-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+
+---
+# ============================================================================
+# SCENE 1 CONTINUED: ORPHAN RESOURCES (Native, unknown owner)
+# These are the "mystery" resources that no tool claims
+# ============================================================================
+
+# --- Orphan 1: Someone's debug pod from 6 months ago ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-tools
+  namespace: demo-prod
+  labels:
+    app: debug-tools
+    # NO ownership labels - this is an orphan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-tools
+  template:
+    metadata:
+      labels:
+        app: debug-tools
+    spec:
+      containers:
+      - name: debug
+        image: busybox:1.36
+        command: ["sleep", "infinity"]
+
+---
+# --- Orphan 2: A ConfigMap from a tutorial ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legacy-config
+  namespace: demo-prod
+  # NO ownership labels
+data:
+  config.yaml: |
+    # This was created during onboarding
+    # Nobody remembers what it's for
+    setting: value
+
+---
+# --- Orphan 3: The scary one - a Job that's been running forever ---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mystery-migration
+  namespace: demo-prod
+  # NO ownership labels
+spec:
+  template:
+    spec:
+      containers:
+      - name: migration
+        image: alpine:3.19
+        command: ["sleep", "infinity"]
+      restartPolicy: Never
+  backoffLimit: 0
+
+---
+# ============================================================================
+# SCENE 2: ACCEPT - Resource with drift
+# After applying, run: kubectl set replicas deployment/backend -n demo-prod --replicas=5
+# This simulates a 2am hotfix that needs to be accepted
+# ============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: demo-prod
+  labels:
+    app: backend
+    kustomize.toolkit.fluxcd.io/name: production
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    confighub.com/intent-replicas: "3"  # What Git says
+spec:
+  replicas: 3  # Will be changed to 5 to simulate drift
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: nginx:1.25
+        ports:
+        - containerPort: 8080
+
+---
+# ============================================================================
+# SCENE 3: SCAN - CCVE-2025-0027 Grafana namespace whitespace bug
+# This is the EXACT pattern that caused a 3-day outage at BIGBANK
+# ============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.2.0
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: dashboards
+          mountPath: /tmp/dashboards
+
+      # THE BUG: Spaces after commas in NAMESPACE
+      - name: grafana-sc-dashboard
+        image: kiwigrid/k8s-sidecar:1.25.2
+        env:
+        - name: LABEL
+          value: "grafana_dashboard"
+        - name: FOLDER
+          value: "/tmp/dashboards"
+        # ⚠️ CCVE-2025-0027: Spaces after commas break namespace watching
+        # The sidecar will try to watch " grafana" (with leading space) and fail silently
+        - name: NAMESPACE
+          value: "monitoring, grafana, observability"
+          # CORRECT would be: "monitoring,grafana,observability"
+        - name: METHOD
+          value: "WATCH"
+        volumeMounts:
+        - name: dashboards
+          mountPath: /tmp/dashboards
+
+      volumes:
+      - name: dashboards
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  selector:
+    app: grafana
+  ports:
+  - port: 80
+    targetPort: 3000
+
+---
+# Dashboard that the sidecar SHOULD pick up but WON'T due to CCVE-2025-0027
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: important-dashboard
+  namespace: grafana
+  labels:
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |
+    {
+      "title": "Production Metrics",
+      "panels": [
+        {"title": "Request Rate", "type": "graph"}
+      ]
+    }
+
+---
+# ============================================================================
+# SUPPORTING RESOURCES
+# ============================================================================
+
+# Staging environment (for diff demos)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: demo-staging
+  labels:
+    app: backend
+    kustomize.toolkit.fluxcd.io/name: staging
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: nginx:1.24  # Older version than prod
+        ports:
+        - containerPort: 8080

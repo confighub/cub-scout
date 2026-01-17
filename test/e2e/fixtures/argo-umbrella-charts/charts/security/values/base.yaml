@@ -1,0 +1,40 @@
+# Security stack - base values
+# Aggregates values from all security sub-charts
+
+# kyverno values
+kyverno:
+  cleanupJobs:
+    admissionReports:
+      image:
+        registry: docker.io
+        repository: bitnami/kubectl
+        tag: "1.31"
+    clusterAdmissionReports:
+      image:
+        registry: docker.io
+        repository: bitnami/kubectl
+        tag: "1.31"
+  serviceMonitor:
+    enabled: false
+
+# trivy-operator values
+trivy-operator:
+  serviceMonitor:
+    enabled: false
+
+  trivy:
+    mode: Standalone
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+  operator:
+    scanJobsConcurrentLimit: 1
+
+  vulnerabilityReportsPlugin: Trivy
+  configAuditReportsPlugin: Trivy
+  scannerReportTTL: "24h"

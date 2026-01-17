@@ -1,0 +1,84 @@
+# Expected Output: Monday Morning Panic Demo
+# ⚠️ SIMULATION - This demo prints hardcoded output to show what ConfigHub WILL do.
+#    It does NOT connect to real clusters or ConfigHub.
+name: "monday-panic demo (SIMULATION)"
+description: "Demo 1: Find the problem across 47 clusters in 30 seconds (simulated output)"
+mode: standalone
+
+requires:
+  cluster: false
+  cub_auth: false
+
+commands:
+  - id: demo_run
+    command: "./examples/rm-demos-argocd/scenarios/monday-panic/demo.sh"
+    description: "Run Monday Panic demo"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "Monday Morning Panic"
+        - "PagerDuty"
+        - pattern: "(47 clusters|ArgoCD)"
+          description: "Shows multi-cluster scenario"
+        - "cub unit list"
+        - pattern: "(BEHIND|FOUND IT)"
+          description: "Shows problem detection"
+        - pattern: "(v2.3.0|v2.3.1)"
+          description: "Shows version comparison"
+        - "OCI pull timeout"
+        - pattern: "(AHA|30 seconds)"
+          description: "Shows value proposition"
+
+      not_contains:
+        - "panic:"
+        - "command not found"
+        # Note: "error" is intentionally allowed - it appears in scenario text
+
+      assertions:
+        - name: "demo_completes"
+          condition: "exit_code == 0"
+          description: "Demo runs to completion"
+        - name: "shows_fleet_query"
+          condition: "output.contains('cub unit list')"
+          description: "Shows the ConfigHub query"
+
+    instructions: |
+      Run the Monday Panic demo:
+      ```bash
+      ./examples/rm-demos-argocd/scenarios/monday-panic/demo.sh
+      ```
+
+      This simulation demonstrates:
+      - Finding a lagging deployment across 47 clusters
+      - Using fleet-wide queries vs checking each ArgoCD UI
+      - Value: 30 seconds vs 45 minutes
+
+# Sample output
+sample_output: |
+  ═══════════════════════════════════════════════════════════════
+    Demo 1: The Monday Morning Panic
+  ═══════════════════════════════════════════════════════════════
+
+  SCENARIO:
+    8:47 AM Monday. PagerDuty fires.
+    "Payment API errors spiking in production."
+
+    You have 47 clusters. ArgoCD shows green everywhere.
+    Where do you even start?
+
+  THE OLD WAY:
+    # Check ArgoCD UI... cluster 1... looks fine
+    # ...
+    # (47 clusters later, 45 minutes wasted)
+
+  THE CONFIGHUB WAY:
+    $ cub unit list --where "app=payment-api"
+
+  UNIT         CLUSTER          VERSION   PODS   STATUS
+  payment-api  prod-eu-west-2   v2.3.0    3/5    BEHIND    <- FOUND IT
+
+  THE "AHA" MOMENT:
+    ArgoCD said "Synced" because it synced something.
+    It didn't know it was behind. ConfigHub knows.

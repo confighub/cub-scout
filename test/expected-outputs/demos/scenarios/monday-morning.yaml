@@ -1,0 +1,37 @@
+# Expected Output: scenario monday-morning
+name: "scenario monday-morning"
+description: "Weekly health check ritual"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  - id: scenario_monday
+    command: "./test/atk/demo scenario monday-morning"
+    description: "Weekly health check"
+
+    expected:
+      exit_code: 0
+      contains:
+        - pattern: "(Monday|health|check)"
+
+    instructions: |
+      Weekly health check ritual:
+      ```bash
+      ./test/atk/demo scenario monday-morning
+      ```
+
+sample_output: |
+  Scenario: Monday Morning Health Check
+
+  Step 1: Quick status
+    $ ./test/atk/map
+
+  Step 2: Any CCVEs?
+    $ ./test/atk/scan
+
+  ✓ Health check complete

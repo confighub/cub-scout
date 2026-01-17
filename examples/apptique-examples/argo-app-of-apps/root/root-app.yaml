@@ -1,0 +1,26 @@
+# Argo CD App of Apps - Root Application
+# This parent Application manages all child Applications
+# Pattern: One Application CR per environment/app combination
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apptique-apps
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: apptique-apps
+    app.kubernetes.io/part-of: apptique-examples
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/confighubai/confighub-agent.git
+    targetRevision: HEAD
+    path: examples/apptique-examples/argo-app-of-apps/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

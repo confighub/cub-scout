@@ -1,0 +1,182 @@
+# Break Glass Demo: Emergency kubectl apply during incident
+#
+# This demonstrates the break-glass workflow:
+#   1. Production has GitOps-managed resources (Flux)
+#   2. During incident, someone kubectl applies a hotfix
+#   3. Map detects the orphan resource (Native owner)
+#   4. Team must decide: Accept (import to ConfigHub) or Reject (delete)
+#
+# The story:
+#   14:00 - payment-api deployed via Flux (Rev 42)
+#   14:15 - Alerts: payment errors > 5%
+#   14:18 - INC-4521 opened
+#   14:23 - BREAK-GLASS: hotfix-cache deployed via kubectl
+#   14:25 - Errors stabilizing
+#   14:35 - Incident mitigated
+#   ???   - What do we do with hotfix-cache?
+#
+# Usage:
+#   ./test/atk/demo scenario break-glass    # Run the narrative demo
+#   ./test/atk/demo scenario break-glass --cleanup
+#
+# What map shows:
+#   - payment-api: Owner=Flux, Status=Synced
+#   - hotfix-cache: Owner=Native (ORPHAN) ← Break-glass resource
+#
+# See: docs/outcomes/break-glass-scenarios.md
+
+---
+# ============================================================================
+# NAMESPACE
+# ============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: break-glass-demo
+  labels:
+    demo: break-glass
+
+---
+# ============================================================================
+# GITOPS SOURCE (Flux GitRepository)
+# ============================================================================
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: payment-platform
+  namespace: break-glass-demo
+spec:
+  interval: 5m
+  url: https://github.com/example/payment-platform
+  ref:
+    branch: main
+
+---
+# ============================================================================
+# GITOPS DEPLOYER (Flux Kustomization)
+# ============================================================================
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: payment-api
+  namespace: break-glass-demo
+spec:
+  interval: 5m
+  path: ./payment-api
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: payment-platform
+  targetNamespace: break-glass-demo
+
+---
+# ============================================================================
+# GITOPS-MANAGED DEPLOYMENT (Flux owns this)
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: break-glass-demo
+  labels:
+    app: payment-api
+    # Flux ownership labels
+    kustomize.toolkit.fluxcd.io/name: payment-api
+    kustomize.toolkit.fluxcd.io/namespace: break-glass-demo
+  annotations:
+    confighub.com/revision: "42"
+    confighub.com/deployed-by: "flux"
+    confighub.com/deployed-at: "2026-01-14T12:15:00Z"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-api
+  template:
+    metadata:
+      labels:
+        app: payment-api
+    spec:
+      containers:
+      - name: payment-api
+        image: nginx:alpine
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+
+---
+# ============================================================================
+# BREAK-GLASS DEPLOYMENT (kubectl apply during incident - NO OWNER)
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hotfix-cache
+  namespace: break-glass-demo
+  labels:
+    app: hotfix-cache
+    # NO FLUX/ARGO/HELM LABELS - This is Native/Orphan
+  annotations:
+    # Annotations from the 2am incident
+    break-glass/incident: "INC-4521"
+    break-glass/applied-by: "admin"
+    break-glass/applied-at: "2026-01-14T14:23:00Z"
+    break-glass/reason: "Emergency cache fix for payment processing failures"
+    # This is what map will detect as orphan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hotfix-cache
+  template:
+    metadata:
+      labels:
+        app: hotfix-cache
+    spec:
+      containers:
+      - name: hotfix-cache
+        image: redis:alpine
+        ports:
+        - containerPort: 6379
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+
+---
+# ============================================================================
+# CONFIGMAP WITH HOTFIX DETAILS (for traceability)
+# ============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hotfix-cache-config
+  namespace: break-glass-demo
+  labels:
+    app: hotfix-cache
+  annotations:
+    break-glass/incident: "INC-4521"
+    break-glass/applied-by: "admin"
+data:
+  CACHE_TTL: "300"
+  CACHE_MAX_CONNECTIONS: "100"
+  README: |
+    This hotfix was applied during INC-4521.
+
+    Timeline:
+    - 14:00: payment-api Rev 42 deployed (memory bump 512Mi → 1Gi)
+    - 14:15: Alerts firing - payment errors > 5%
+    - 14:18: INC-4521 opened
+    - 14:23: This hotfix-cache deployed via kubectl
+    - 14:25: Errors stabilizing
+    - 14:35: Errors < 0.1%, incident mitigated
+
+    Decision needed:
+    - ACCEPT: Import hotfix-cache to ConfigHub → versioned, repeatable
+    - REJECT: Delete hotfix-cache → restore pure GitOps state

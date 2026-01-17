@@ -1,0 +1,34 @@
+# Expected Output: Native (no GitOps) ownership detection
+name: "native-basic ownership"
+description: "Verify Native ownership is detected for kubectl-applied resources"
+mode: standalone
+
+requires:
+  cluster: true
+
+fixture: "test/atk/fixtures/native-basic.yaml"
+
+commands:
+  - id: native_ownership
+    command: "kubectl apply -f test/atk/fixtures/native-basic.yaml && sleep 2 && ./cub-agent map list --namespace demo-native"
+    description: "Apply Native fixture and verify ownership"
+
+    expected:
+      exit_code: 0
+      contains:
+        - "Native"
+
+      assertions:
+        - name: "native_detected"
+          condition: "output.contains('Native')"
+          description: "Native ownership detected (no GitOps labels)"
+
+    instructions: |
+      Native ownership means:
+      - No Flux labels
+      - No Argo CD labels
+      - No Helm labels
+      - No ConfigHub labels
+      - Likely applied via kubectl directly
+
+cleanup: "kubectl delete -f test/atk/fixtures/native-basic.yaml --ignore-not-found"

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Monday Panic Scenario
+# Simulates a fleet with one broken cluster
+# - apptique-east: healthy
+# - apptique-west: healthy
+# - apptique-eu: BROKEN (crashlooping)
+
+resources:
+  - namespace-east.yaml
+  - namespace-west.yaml
+  - namespace-eu.yaml
+  - deployment-east.yaml
+  - deployment-west.yaml
+  - deployment-eu-broken.yaml

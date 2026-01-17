@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apptique-east
+  labels:
+    app.kubernetes.io/part-of: apptique-examples
+    scenario: monday-panic
+    region: us-east

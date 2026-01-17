@@ -1,0 +1,17 @@
+apiVersion: v2
+name: observability
+version: 1.0.0
+description: Observability stack (metrics, logs, traces)
+dependencies:
+  - name: grafana
+    version: "7.3.7"
+    repository: https://grafana.github.io/helm-charts
+  - name: loki
+    version: "6.49.0"
+    repository: https://grafana.github.io/helm-charts
+  - name: alloy
+    version: "0.3.0"
+    repository: https://grafana.github.io/helm-charts
+  - name: tempo
+    version: "1.7.2"
+    repository: https://grafana.github.io/helm-charts

@@ -1,0 +1,434 @@
+# Full Demo Fixture: ConfigHub + Argo + Flux with CCVEs and Problems
+#
+# This creates a realistic multi-owner cluster demonstrating:
+# - ConfigHub-managed resources (multiple spaces/units)
+# - Flux-managed resources (with intentional failures)
+# - Argo CD-managed resources
+# - Helm-managed resources
+# - Native/orphan resources
+# - CCVE-2025-0027 (Grafana namespace whitespace bug)
+# - Suspended Kustomization
+# - Failed HelmRelease
+#
+# Usage:
+#   kubectl apply -f demo-full.yaml
+#   ./test/atk/map
+#   ./test/atk/scan
+
+---
+# ============================================================================
+# NAMESPACES
+# ============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-payments
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-orders
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grafana
+---
+
+# ============================================================================
+# CONFIGUB SPACE: payments-prod
+# Application: payment-service with prod variant
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: demo-payments
+  labels:
+    app: payment-api
+    confighub.com/UnitSlug: payment-api-prod
+  annotations:
+    confighub.com/SpaceName: payments-prod
+    confighub.com/SpaceID: "sp-payments-001"
+    confighub.com/RevisionNum: "127"
+    confighub.com/ApplicationName: payment-service
+    confighub.com/VariantName: prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-api
+  template:
+    metadata:
+      labels:
+        app: payment-api
+    spec:
+      containers:
+      - name: api
+        image: payments/api:2.4.1
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api
+  namespace: demo-payments
+  labels:
+    app: payment-api
+    confighub.com/UnitSlug: payment-api-prod
+  annotations:
+    confighub.com/SpaceName: payments-prod
+    confighub.com/SpaceID: "sp-payments-001"
+    confighub.com/RevisionNum: "127"
+spec:
+  selector:
+    app: payment-api
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-api-config
+  namespace: demo-payments
+  labels:
+    confighub.com/UnitSlug: payment-api-prod
+  annotations:
+    confighub.com/SpaceName: payments-prod
+    confighub.com/SpaceID: "sp-payments-001"
+    confighub.com/RevisionNum: "127"
+data:
+  config.yaml: |
+    environment: production
+    log_level: info
+    stripe_api_version: "2024-01-01"
+---
+
+# ============================================================================
+# CONFIGUB SPACE: orders-prod
+# Application: order-service with prod variant
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-processor
+  namespace: demo-orders
+  labels:
+    app: order-processor
+    confighub.com/UnitSlug: order-processor-prod
+  annotations:
+    confighub.com/SpaceName: orders-prod
+    confighub.com/SpaceID: "sp-orders-002"
+    confighub.com/RevisionNum: "89"
+    confighub.com/ApplicationName: order-service
+    confighub.com/VariantName: prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-processor
+  template:
+    metadata:
+      labels:
+        app: order-processor
+    spec:
+      containers:
+      - name: processor
+        image: orders/processor:1.8.0
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-processor
+  namespace: demo-orders
+  labels:
+    app: order-processor
+    confighub.com/UnitSlug: order-processor-prod
+  annotations:
+    confighub.com/SpaceName: orders-prod
+    confighub.com/SpaceID: "sp-orders-002"
+    confighub.com/RevisionNum: "89"
+spec:
+  selector:
+    app: order-processor
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+
+# ============================================================================
+# FLUX-MANAGED RESOURCES (with problems)
+# ============================================================================
+
+# GitRepository for the infrastructure
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: infra-repo
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/company/infrastructure
+  ref:
+    branch: main
+---
+
+# Kustomization that is SUSPENDED (CCVE-FLUX-005)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: monitoring-stack
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: infra-repo
+  path: ./monitoring
+  prune: true
+  suspend: true  # <-- SUSPENDED! This is CCVE-FLUX-005
+---
+
+# HelmRepository
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: bitnami
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://charts.bitnami.com/bitnami
+---
+
+# HelmRelease that references non-existent chart version (will fail)
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: redis-cache
+  namespace: flux-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: redis
+      version: "999.999.999"  # <-- Non-existent version (CCVE-FLUX-006)
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+  targetNamespace: demo-payments
+---
+
+# ============================================================================
+# ARGO CD APPLICATION
+# ============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/company/frontend
+    targetRevision: HEAD
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-payments
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+
+# Argo-managed deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: demo-payments
+  labels:
+    app: frontend
+    argocd.argoproj.io/instance: frontend-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: company/frontend:3.1.0
+        ports:
+        - containerPort: 3000
+---
+
+# ============================================================================
+# HELM-MANAGED RESOURCES
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  namespace: demo-orders
+  labels:
+    app: postgresql
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: orders-db
+    meta.helm.sh/release-namespace: demo-orders
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "changeme"  # Bad practice but for demo
+---
+
+# ============================================================================
+# NATIVE/ORPHAN RESOURCES (unknown owner)
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-tools
+  namespace: demo-payments
+  labels:
+    app: debug-tools
+    # NO ownership labels - this is an orphan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-tools
+  template:
+    metadata:
+      labels:
+        app: debug-tools
+    spec:
+      containers:
+      - name: debug
+        image: busybox:1.36
+        command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legacy-config
+  namespace: demo-payments
+  # NO ownership labels - orphan
+data:
+  readme: "Created during onboarding, nobody knows what this is for"
+---
+
+# ============================================================================
+# CCVE-2025-0027: Grafana Namespace Whitespace Bug
+# This is the EXACT pattern that caused 4-hour outage at BIGBANK
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: demo-monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.2.0
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: dashboards
+          mountPath: /tmp/dashboards
+
+      # THE BUG: Spaces after commas in NAMESPACE
+      - name: grafana-sc-dashboard
+        image: kiwigrid/k8s-sidecar:1.25.2
+        env:
+        - name: LABEL
+          value: "grafana_dashboard"
+        - name: FOLDER
+          value: "/tmp/dashboards"
+        # CCVE-2025-0027: Spaces after commas break namespace watching
+        # The sidecar will try to watch " grafana" (with leading space) and fail silently
+        - name: NAMESPACE
+          value: "demo-monitoring, grafana, observability"
+          # CORRECT would be: "demo-monitoring,grafana,observability"
+        - name: METHOD
+          value: "WATCH"
+        volumeMounts:
+        - name: dashboards
+          mountPath: /tmp/dashboards
+
+      volumes:
+      - name: dashboards
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: demo-monitoring
+spec:
+  selector:
+    app: grafana
+  ports:
+  - port: 80
+    targetPort: 3000
+---
+# Dashboard that the sidecar SHOULD pick up but WON'T due to CCVE-2025-0027
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: important-dashboard
+  namespace: grafana
+  labels:
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |
+    {
+      "title": "Production Metrics",
+      "panels": [
+        {"title": "Request Rate", "type": "graph"},
+        {"title": "Error Rate", "type": "stat"}
+      ]
+    }

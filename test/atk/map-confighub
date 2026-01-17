@@ -1,0 +1,1079 @@
+#!/bin/bash
+# ConfigHub Map - Rich visualization of ConfigHub hierarchy
+#
+# Usage:
+#   ./map-confighub              # Interactive map
+#   ./map-confighub --help       # Show help
+#
+# Keyboard shortcuts:
+#   o - Organizations
+#   s - Spaces
+#   u - Units
+#   t - Targets
+#   w - Workers
+#   p - Problems
+#   c - Connection status
+#   r - Refresh data
+#   q - Quit
+
+set -uo pipefail
+# Note: -e (errexit) is intentionally disabled as some jq/gum commands
+# return non-zero exit codes in certain edge cases that aren't errors
+
+#=============================================================================
+# INITIALIZATION
+#=============================================================================
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source the UI library
+source "${SCRIPT_DIR}/lib/ui.sh"
+
+# Initialize UI (auto-downloads gum if needed)
+ui_init "$SCRIPT_DIR"
+
+#=============================================================================
+# CONFIGURATION
+#=============================================================================
+
+UI_WIDTH="${UI_WIDTH:-72}"
+PANEL_WIDTH=33
+
+#=============================================================================
+# GLOBAL DATA (collected once, used by all views)
+#=============================================================================
+
+CONTEXT_JSON=""
+ORGS_JSON=""
+SPACES_JSON=""
+UNITS_JSON=""
+TARGETS_JSON=""
+WORKERS_JSON=""
+CURRENT_SPACE=""
+ACTIVE_ORG_INTERNAL_ID=""
+
+#=============================================================================
+# HELPER FUNCTIONS
+#=============================================================================
+
+# Status icon helper
+status_icon() {
+    local status="$1"
+    case "$status" in
+        ok|healthy|ready|applied|Ready|Applied|True|true|InSync)
+            printf "%b✓%b" "$UI_OK" "$UI_NC"
+            ;;
+        warn|warning|paused|drifted|Drifted|OutOfSync)
+            printf "%b⚠%b" "$UI_WARN" "$UI_NC"
+            ;;
+        error|failed|unhealthy|Failed|Error|NotReady|false|False)
+            printf "%b✗%b" "$UI_ERR" "$UI_NC"
+            ;;
+        suspended|Suspended)
+            printf "%b⏸%b" "$UI_WARN" "$UI_NC"
+            ;;
+        *)
+            printf "%b○%b" "$UI_FG_DIM" "$UI_NC"
+            ;;
+    esac
+}
+
+# Progress bar with color based on percentage
+progress_bar() {
+    local width=$1
+    local pct=$2
+
+    local color
+    if [[ $pct -ge 80 ]]; then
+        color="$UI_OK"
+    elif [[ $pct -ge 50 ]]; then
+        color="$UI_WARN"
+    else
+        color="$UI_ERR"
+    fi
+
+    local filled=$((width * pct / 100))
+    local empty=$((width - filled))
+
+    printf "%b" "$color"
+    for ((i=0; i<filled; i++)); do printf "█"; done
+    printf "%b" "$UI_NC"
+    printf "%b" "$UI_FG_DIM"
+    for ((i=0; i<empty; i++)); do printf "░"; done
+    printf "%b" "$UI_NC"
+}
+
+# Mini bar for inline display
+mini_bar() {
+    local count=$1
+    local max=${2:-10}
+    local color="${3:-$UI_FG_GREEN}"
+
+    local show=$((count < max ? count : max))
+    printf "%b" "$color"
+    for ((i=0; i<show; i++)); do printf "█"; done
+    printf "%b" "$UI_NC"
+}
+
+#=============================================================================
+# DATA COLLECTION
+#=============================================================================
+
+# Connection status tracking
+HAS_CUB=false
+HAS_AUTH=false
+HAS_UNITS=false
+HAS_WORKERS=false
+HAS_TARGETS=false
+AUTH_ORG=""
+
+check_cub_auth() {
+    # Check cub CLI
+    if command -v cub &>/dev/null; then
+        HAS_CUB=true
+    else
+        return 1
+    fi
+
+    # Check authentication via context (whoami doesn't exist in current cub)
+    local context_out
+    context_out=$(cub context get --json 2>/dev/null || echo '{}')
+    if echo "$context_out" | jq -e '.coordinate.user' &>/dev/null && [[ $(echo "$context_out" | jq -r '.coordinate.user') != "null" ]]; then
+        HAS_AUTH=true
+        AUTH_ORG=$(echo "$context_out" | jq -r '.metadata.organizationName // ""')
+    else
+        return 1
+    fi
+
+    return 0
+}
+
+check_connection_details() {
+    # Check units, workers, targets (only if authenticated)
+    if $HAS_AUTH; then
+        local unit_count worker_count target_count
+        unit_count=$(echo "$UNITS_JSON" | jq 'length' 2>/dev/null || echo 0)
+        worker_count=$(echo "$WORKERS_JSON" | jq 'length' 2>/dev/null || echo 0)
+        target_count=$(echo "$TARGETS_JSON" | jq 'length' 2>/dev/null || echo 0)
+
+        [[ $unit_count -gt 0 ]] && HAS_UNITS=true
+        [[ $worker_count -gt 0 ]] && HAS_WORKERS=true
+        [[ $target_count -gt 0 ]] && HAS_TARGETS=true
+    fi
+}
+
+render_connection_status() {
+    local unit_count worker_count target_count
+    unit_count=$(echo "$UNITS_JSON" | jq 'length' 2>/dev/null || echo 0)
+    worker_count=$(echo "$WORKERS_JSON" | jq 'length' 2>/dev/null || echo 0)
+    target_count=$(echo "$TARGETS_JSON" | jq 'length' 2>/dev/null || echo 0)
+
+    local content=""
+    local next_step=""
+    local all_set=false
+
+    if ! $HAS_CUB; then
+        content="$(printf "%b✗%b cub CLI not installed" "$UI_ERR" "$UI_NC")"
+        next_step="brew install confighubai/tap/cub"
+    elif ! $HAS_AUTH; then
+        content="$(printf "%b✓%b cub CLI installed\n%b✗%b Not authenticated" "$UI_OK" "$UI_NC" "$UI_ERR" "$UI_NC")"
+        next_step="cub auth login"
+    elif ! $HAS_UNITS; then
+        content="$(printf "%b✓%b Authenticated%s\n%b✗%b No units imported" "$UI_OK" "$UI_NC" "${AUTH_ORG:+ (org: $AUTH_ORG)}" "$UI_ERR" "$UI_NC")"
+        next_step="cub-agent import --namespace <ns>"
+    elif ! $HAS_WORKERS; then
+        content="$(printf "%b✓%b Authenticated%s\n%b✓%b Units imported (%d)\n%b✗%b No workers" "$UI_OK" "$UI_NC" "${AUTH_ORG:+ (org: $AUTH_ORG)}" "$UI_OK" "$UI_NC" "$unit_count" "$UI_ERR" "$UI_NC")"
+        next_step="cub worker run <cluster-name>"
+    elif ! $HAS_TARGETS; then
+        content="$(printf "%b✓%b Authenticated%s\n%b✓%b Units imported (%d)\n%b✓%b Workers running (%d)\n%b✗%b No targets" "$UI_OK" "$UI_NC" "${AUTH_ORG:+ (org: $AUTH_ORG)}" "$UI_OK" "$UI_NC" "$unit_count" "$UI_OK" "$UI_NC" "$worker_count" "$UI_ERR" "$UI_NC")"
+        next_step="cub target create <target-name>"
+    else
+        content="$(printf "%b✓%b Authenticated%s\n%b✓%b Units imported (%d)\n%b✓%b Workers running (%d)\n%b✓%b Targets configured (%d)" "$UI_OK" "$UI_NC" "${AUTH_ORG:+ (org: $AUTH_ORG)}" "$UI_OK" "$UI_NC" "$unit_count" "$UI_OK" "$UI_NC" "$worker_count" "$UI_OK" "$UI_NC" "$target_count")"
+        all_set=true
+    fi
+
+    # Add next step or all-set message
+    if $all_set; then
+        content+=$'\n\n'
+        content+="$(printf "%b🎉 ALL SET!%b Open: https://confighub.com" "$UI_OK" "$UI_NC")"
+    elif [[ -n "$next_step" ]]; then
+        content+=$'\n\n'
+        content+="$(printf "%bNEXT STEP:%b %s" "$UI_BOLD" "$UI_NC" "$next_step")"
+    fi
+
+    echo ""
+    printf "[c]onnection status" | $UI_GUM style --foreground 255 --bold
+    echo "$content" | $UI_GUM style \
+        --border normal \
+        --border-foreground "$UI_BORDER_DEFAULT" \
+        --padding "0 2" \
+        --width "$UI_WIDTH"
+}
+
+# Check for disconnected workers and render warning banner
+render_worker_warning() {
+    local disconnected_workers=""
+    local disconnected_count=0
+
+    # Parse workers JSON for disconnected workers
+    while IFS='|' read -r slug condition last_seen; do
+        [[ -z "$slug" ]] && continue
+        if [[ "$condition" == "Disconnected" || "$condition" == "NotReady" || "$condition" == "unknown" ]]; then
+            disconnected_workers+="$slug ($condition"
+            [[ -n "$last_seen" && "$last_seen" != "null" ]] && disconnected_workers+=", last seen: $last_seen"
+            disconnected_workers+=")\n"
+            ((disconnected_count++))
+        fi
+    done < <(echo "$WORKERS_JSON" | jq -r '.[] | "\(.BridgeWorker.Slug)|\(.BridgeWorker.Condition // "unknown")|\(.BridgeWorker.LastSeen // "")"')
+
+    # Only show warning if there are disconnected workers
+    if [[ $disconnected_count -gt 0 ]]; then
+        echo ""
+        local warning_content=""
+        if [[ $disconnected_count -eq 1 ]]; then
+            warning_content="$(printf "%b⚠ WARNING:%b Worker disconnected!\n\n%s\nRun: cub worker run <worker-name>" "$UI_WARN" "$UI_NC" "$(echo -e "$disconnected_workers" | head -1)")"
+        else
+            warning_content="$(printf "%b⚠ WARNING:%b %d workers disconnected!\n\n%s\nRun: cub worker run <worker-name>" "$UI_WARN" "$UI_NC" "$disconnected_count" "$(echo -e "$disconnected_workers")")"
+        fi
+
+        echo "$warning_content" | $UI_GUM style \
+            --border double \
+            --border-foreground "$UI_ERR" \
+            --foreground "$UI_ERR" \
+            --padding "0 2" \
+            --width "$UI_WIDTH"
+    fi
+}
+
+collect_all_data() {
+    local total=6
+    local current=0
+
+    ((current++)); printf "\r%bLoading...%b [%d/%d] Fetching context" "$UI_FG_DIM" "$UI_NC" "$current" "$total"
+    CONTEXT_JSON=$(cub context get --json 2>/dev/null || echo '{}')
+
+    ((current++)); printf "\r%bLoading...%b [%d/%d] Fetching organizations" "$UI_FG_DIM" "$UI_NC" "$current" "$total"
+    ORGS_JSON=$(cub organization list --json 2>/dev/null || echo '[]')
+
+    ((current++)); printf "\r%bLoading...%b [%d/%d] Fetching spaces        " "$UI_FG_DIM" "$UI_NC" "$current" "$total"
+    SPACES_JSON=$(cub space list --json 2>/dev/null || echo '[]')
+
+    CURRENT_SPACE=$(echo "$CONTEXT_JSON" | jq -r '.settings.defaultSpace // ""')
+    local active_org_external_id
+    active_org_external_id=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.organizationID // ""')
+
+    # Look up internal OrganizationID from external ID
+    if [[ -n "$active_org_external_id" && "$active_org_external_id" != "null" ]]; then
+        ACTIVE_ORG_INTERNAL_ID=$(echo "$ORGS_JSON" | jq -r --arg eid "$active_org_external_id" \
+            '.[] | select(.ExternalID == $eid or .Slug == $eid) | .OrganizationID' | head -1)
+    fi
+    [[ -z "$ACTIVE_ORG_INTERNAL_ID" ]] && ACTIVE_ORG_INTERNAL_ID="$active_org_external_id"
+
+    # Get data for current space
+    if [[ -n "$CURRENT_SPACE" && "$CURRENT_SPACE" != "null" && "$CURRENT_SPACE" != "-" ]]; then
+        ((current++)); printf "\r%bLoading...%b [%d/%d] Fetching units (%s)    " "$UI_FG_DIM" "$UI_NC" "$current" "$total" "$CURRENT_SPACE"
+        UNITS_JSON=$(cub unit list --space "$CURRENT_SPACE" --json 2>/dev/null || echo '[]')
+
+        ((current++)); printf "\r%bLoading...%b [%d/%d] Fetching targets (%s)  " "$UI_FG_DIM" "$UI_NC" "$current" "$total" "$CURRENT_SPACE"
+        TARGETS_JSON=$(cub target list --space "$CURRENT_SPACE" --json 2>/dev/null || echo '[]')
+
+        ((current++)); printf "\r%bLoading...%b [%d/%d] Fetching workers (%s)  " "$UI_FG_DIM" "$UI_NC" "$current" "$total" "$CURRENT_SPACE"
+        WORKERS_JSON=$(cub worker list --space "$CURRENT_SPACE" --json 2>/dev/null || echo '[]')
+    else
+        UNITS_JSON='[]'
+        TARGETS_JSON='[]'
+        WORKERS_JSON='[]'
+    fi
+
+    # Clear the loading line
+    printf "\r%*s\r" 60 ""
+
+    # Update connection status based on collected data
+    check_connection_details
+}
+
+#=============================================================================
+# METRIC CALCULATIONS
+#=============================================================================
+
+calc_unit_stats() {
+    local total synced drifted not_live failed
+    total=$(echo "$UNITS_JSON" | jq 'length')
+    drifted=$(echo "$UNITS_JSON" | jq '[.[] | select(.UnitStatus.SyncStatus == "OutOfSync" or .UnitStatus.Drift == "Drifted")] | length')
+    not_live=$(echo "$UNITS_JSON" | jq '[.[] | select(.UnitStatus.SyncStatus == "NotLive")] | length')
+    failed=$(echo "$UNITS_JSON" | jq '[.[] | select(.UnitStatus.Status == "Error")] | length')
+    synced=$((total - drifted - not_live - failed))
+    [[ $synced -lt 0 ]] && synced=0
+
+    echo "$total|$synced|$drifted|$not_live|$failed"
+}
+
+calc_worker_stats() {
+    local total ready
+    total=$(echo "$WORKERS_JSON" | jq 'length')
+    ready=$(echo "$WORKERS_JSON" | jq '[.[] | select(.BridgeWorker.Condition == "Ready")] | length')
+    echo "$total|$ready"
+}
+
+#=============================================================================
+# RENDER FUNCTIONS
+#=============================================================================
+
+render_header() {
+    local ctx_name
+    ctx_name=$(echo "$CONTEXT_JSON" | jq -r '.name // "unknown"')
+
+    echo ""
+    printf "%b CONFIGHUB MAP%b" "$UI_LIGHTNING" "" | $UI_GUM style \
+        --border rounded \
+        --border-foreground "$UI_BORDER_ACCENT" \
+        --foreground "$UI_BORDER_ACCENT" \
+        --bold \
+        --padding "0 2" \
+        --width "$UI_WIDTH"
+}
+
+render_context_bar() {
+    local ctx_server ctx_org_id ctx_org_name
+
+    ctx_server=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.serverURL // "-"' | sed 's|https://||')
+    ctx_org_id=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.organizationID // ""')
+
+    # Look up org display name
+    if [[ -n "$ctx_org_id" && "$ctx_org_id" != "null" ]]; then
+        ctx_org_name=$(echo "$ORGS_JSON" | jq -r --arg oid "$ctx_org_id" \
+            '.[] | select(.ExternalID == $oid or .Slug == $oid or .OrganizationID == $oid) | .DisplayName // .Slug' | head -1)
+        [[ -z "$ctx_org_name" ]] && ctx_org_name="$ctx_org_id"
+    else
+        ctx_org_name="-"
+    fi
+
+    # Truncate org name if too long
+    [[ ${#ctx_org_name} -gt 20 ]] && ctx_org_name="${ctx_org_name:0:17}..."
+
+    local context_line
+    context_line=$(printf "%b●%b %b%s%b  %b•%b  %s  %b•%b  %b%s%b" \
+        "$UI_FG_GREEN" "$UI_NC" \
+        "$UI_BOLD" "$ctx_server" "$UI_NC" \
+        "$UI_FG_DIM" "$UI_NC" \
+        "$ctx_org_name" \
+        "$UI_FG_DIM" "$UI_NC" \
+        "$UI_FG_GREEN" "$CURRENT_SPACE" "$UI_NC")
+
+    printf "  %bCONTEXT%b  %s" "$UI_FG_DIM" "$UI_NC" "$context_line" | $UI_GUM style \
+        --padding "0 1" \
+        --width "$UI_WIDTH"
+}
+
+render_organizations() {
+    local content=""
+
+    if [[ "$ORGS_JSON" == "[]" || -z "$ORGS_JSON" ]]; then
+        content=$(printf "%b(no organizations)%b" "$UI_FG_DIM" "$UI_NC")
+    else
+        local active_org_external_id
+        active_org_external_id=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.organizationID // ""')
+
+        while IFS='|' read -r org_id ext_id display slug; do
+            [[ -z "$org_id" ]] && continue
+
+            local space_count unit_count
+            space_count=$(echo "$SPACES_JSON" | jq --arg oid "$org_id" '[.[] | select(.Space.OrganizationID == $oid)] | length')
+            unit_count=$(echo "$SPACES_JSON" | jq --arg oid "$org_id" '[.[] | select(.Space.OrganizationID == $oid) | .TotalUnitCount // 0] | add // 0')
+
+            # Truncate display name
+            local short_display="$display"
+            [[ ${#short_display} -gt 30 ]] && short_display="${short_display:0:27}..."
+
+            # Check if active
+            local bullet name_fmt
+            if [[ "$ext_id" == "$active_org_external_id" || "$slug" == "$active_org_external_id" ]]; then
+                bullet=$(printf "%b●%b" "$UI_FG_GREEN" "$UI_NC")
+                name_fmt=$(printf "%b%s%b" "$UI_FG_GREEN" "$short_display" "$UI_NC")
+            else
+                bullet="○"
+                name_fmt="$short_display"
+            fi
+
+            content+=$(printf "%s %-32s %b%d spaces, %d units%b" "$bullet" "$name_fmt" "$UI_FG_DIM" "$space_count" "$unit_count" "$UI_NC")
+            content+=$'\n'
+        done < <(echo "$ORGS_JSON" | jq -r '.[] | "\(.OrganizationID)|\(.ExternalID)|\(.DisplayName // .Slug)|\(.Slug)"')
+    fi
+
+    echo ""
+    printf "[o]rgs" | $UI_GUM style --foreground 255 --bold
+    printf "%s" "$content" | $UI_GUM style \
+        --border normal \
+        --border-foreground "$UI_BORDER_DEFAULT" \
+        --padding "0 2" \
+        --width "$UI_WIDTH"
+}
+
+render_spaces() {
+    local content=""
+
+    # Header row
+    content+=$(printf "%b%-20s %5s  %7s  %7s  %s%b" "$UI_BOLD" "SPACE" "UNITS" "TARGETS" "WORKERS" "HEALTH" "$UI_NC")
+    content+=$'\n'
+
+    # Get spaces for active org
+    while IFS='|' read -r space_slug units targets workers; do
+        [[ -z "$space_slug" ]] && continue
+
+        # Calculate health
+        local health=0
+        if [[ $units -gt 0 ]]; then
+            [[ $workers -gt 0 ]] && health=100 || health=50
+        fi
+
+        # Active indicator
+        local indicator=" " name_fmt
+        if [[ "$space_slug" == "$CURRENT_SPACE" ]]; then
+            indicator=$(printf "%b●%b" "$UI_FG_GREEN" "$UI_NC")
+            name_fmt=$(printf "%b%-18s%b" "$UI_FG_GREEN" "$space_slug" "$UI_NC")
+        else
+            indicator=" "
+            name_fmt=$(printf "%-18s" "$space_slug")
+        fi
+
+        # Health bar
+        local bar
+        bar=$(progress_bar 8 "$health")
+
+        content+=$(printf "%s %s %5d  %7d  %7d  %s %3d%%" "$indicator" "$name_fmt" "$units" "$targets" "$workers" "$bar" "$health")
+        content+=$'\n'
+    done < <(echo "$SPACES_JSON" | jq -r --arg oid "$ACTIVE_ORG_INTERNAL_ID" \
+        '.[] | select(.Space.OrganizationID == $oid) | "\(.Space.Slug)|\(.TotalUnitCount // 0)|\((.TargetCountByToolchainType // {}) | to_entries | map(.value) | add // 0)|\(.TotalBridgeWorkerCount // 0)"')
+
+    echo ""
+    printf "[s]paces" | $UI_GUM style --foreground 255 --bold
+    printf "%s" "$content" | $UI_GUM style \
+        --border normal \
+        --border-foreground "$UI_BORDER_DEFAULT" \
+        --padding "0 2" \
+        --width "$UI_WIDTH"
+}
+
+render_health_panel() {
+    local stats
+    stats=$(calc_unit_stats)
+    IFS='|' read -r total synced drifted not_live failed <<< "$stats"
+
+    local health_pct=0
+    [[ $total -gt 0 ]] && health_pct=$(( (synced + not_live) * 100 / total ))
+
+    local bar
+    bar=$(progress_bar 14 "$health_pct")
+
+    printf "%s %3d%%\n" "$bar" "$health_pct"
+    printf "Synced %d  Drift %d  NL %d" "$synced" "$drifted" "$not_live"
+}
+
+render_worker_panel() {
+    local stats
+    stats=$(calc_worker_stats)
+    IFS='|' read -r total ready <<< "$stats"
+    local not_ready=$((total - ready))
+
+    printf "Ready:    %d\n" "$ready"
+    printf "NotReady: %d" "$not_ready"
+}
+
+render_metrics_section() {
+    echo ""
+
+    local health_content worker_content
+    health_content=$(render_health_panel)
+    worker_content=$(render_worker_panel)
+
+    local health_box worker_box
+    health_box=$(printf "%s" "$health_content" | $UI_GUM style \
+        --border normal \
+        --border-foreground "$UI_BORDER_DEFAULT" \
+        --padding "0 1" \
+        --width "$PANEL_WIDTH")
+    worker_box=$(printf "%s" "$worker_content" | $UI_GUM style \
+        --border normal \
+        --border-foreground "$UI_BORDER_DEFAULT" \
+        --padding "0 1" \
+        --width "$PANEL_WIDTH")
+
+    local health_panel worker_panel
+    health_panel=$(printf "[u]nit health" | $UI_GUM style --foreground 255 --bold)$'\n'"$health_box"
+    worker_panel=$(printf "[w]orkers" | $UI_GUM style --foreground 255 --bold)$'\n'"$worker_box"
+
+    $UI_GUM join --horizontal --align top "$health_panel" "  " "$worker_panel"
+}
+
+render_problems_section() {
+    # Find units with errors or drift
+    local problem_count
+    problem_count=$(echo "$UNITS_JSON" | jq '[.[] | select(.UnitStatus.Status == "Error" or .UnitStatus.SyncStatus == "OutOfSync" or .UnitStatus.Drift == "Drifted")] | length')
+
+    [[ $problem_count -eq 0 ]] && return
+
+    local content=""
+
+    while IFS='|' read -r slug rev target unit_status drift sync_status; do
+        [[ -z "$slug" ]] && continue
+
+        local icon reason
+        if [[ "$unit_status" == "Error" ]]; then
+            icon=$(printf "%b✗%b" "$UI_ERR" "$UI_NC")
+            reason=$(printf "%bfailed%b" "$UI_ERR" "$UI_NC")
+        elif [[ "$drift" == "Drifted" || "$sync_status" == "OutOfSync" ]]; then
+            icon=$(printf "%b⚠%b" "$UI_WARN" "$UI_NC")
+            reason=$(printf "%bdrifted%b" "$UI_WARN" "$UI_NC")
+        else
+            continue
+        fi
+
+        local pipeline="$slug @ rev $rev"
+        [[ "$target" != "-" && "$target" != "null" ]] && pipeline+=" → $target"
+
+        content+=$(printf "%s  %-45s  %s" "$icon" "$pipeline" "$reason")
+        content+=$'\n'
+    done < <(echo "$UNITS_JSON" | jq -r '
+        .[] | select(.UnitStatus.Status == "Error" or .UnitStatus.SyncStatus == "OutOfSync" or .UnitStatus.Drift == "Drifted") |
+        "\(.Unit.Slug)|\(.Unit.HeadRevisionNum // 0)|\(.Target.Slug // "-")|\(.UnitStatus.Status // "Ready")|\(.UnitStatus.Drift // "NotDrifted")|\(.UnitStatus.SyncStatus // "InSync")"
+    ')
+
+    echo ""
+    printf "[p]roblems" | $UI_GUM style --foreground 196 --bold
+    printf "%s" "$content" | $UI_GUM style \
+        --border normal \
+        --border-foreground 196 \
+        --padding "0 2" \
+        --width "$UI_WIDTH"
+}
+
+render_units_section() {
+    local content=""
+    local count=0
+    local max_show=8
+
+    while IFS='|' read -r slug rev target sync_status drift unit_status; do
+        [[ -z "$slug" ]] && continue
+        ((count++))
+        [[ $count -gt $max_show ]] && continue
+
+        # Determine status
+        local icon hint=""
+        if [[ "$unit_status" == "Error" ]]; then
+            icon=$(printf "%b✗%b" "$UI_ERR" "$UI_NC")
+            hint=$(printf " %b(error)%b" "$UI_FG_DIM" "$UI_NC")
+        elif [[ "$sync_status" == "OutOfSync" || "$drift" == "Drifted" ]]; then
+            icon=$(printf "%b⚠%b" "$UI_WARN" "$UI_NC")
+            hint=$(printf " %b(drifted)%b" "$UI_FG_DIM" "$UI_NC")
+        elif [[ "$sync_status" == "NotLive" ]]; then
+            icon=$(printf "%b✓%b" "$UI_OK" "$UI_NC")
+            hint=$(printf " %b(not live)%b" "$UI_FG_DIM" "$UI_NC")
+        else
+            icon=$(printf "%b✓%b" "$UI_OK" "$UI_NC")
+        fi
+
+        # Format pipeline
+        local pipeline
+        if [[ "$target" != "-" && "$target" != "null" ]]; then
+            pipeline=$(printf "%s @ rev %s %b→%b %s" "$slug" "$rev" "$UI_FG_DIM" "$UI_NC" "$target")
+        else
+            pipeline=$(printf "%s @ rev %s" "$slug" "$rev")
+        fi
+
+        content+=$(printf "%s  %s%s" "$icon" "$pipeline" "$hint")
+        content+=$'\n'
+    done < <(echo "$UNITS_JSON" | jq -r '
+        .[] |
+        "\(.Unit.Slug)|\(.Unit.HeadRevisionNum // 0)|\(.Target.Slug // "-")|\(.UnitStatus.SyncStatus // "InSync")|\(.UnitStatus.Drift // "NotDrifted")|\(.UnitStatus.Status // "Ready")"
+    ')
+
+    local total
+    total=$(echo "$UNITS_JSON" | jq 'length')
+    if [[ $total -gt $max_show ]]; then
+        content+=$(printf "%b... and %d more%b" "$UI_FG_DIM" "$((total - max_show))" "$UI_NC")
+    fi
+
+    echo ""
+    printf "[u]nits in %s" "$CURRENT_SPACE" | $UI_GUM style --foreground 255 --bold
+    printf "%s" "$content" | $UI_GUM style \
+        --border normal \
+        --border-foreground "$UI_BORDER_DEFAULT" \
+        --padding "0 2" \
+        --width "$UI_WIDTH"
+}
+
+render_targets_list() {
+    local content=""
+
+    while IFS='|' read -r slug ptype; do
+        [[ -z "$slug" ]] && continue
+
+        # Truncate slug
+        local short_slug="$slug"
+        [[ ${#short_slug} -gt 20 ]] && short_slug="${short_slug:0:17}..."
+
+        # Truncate type
+        local short_type="$ptype"
+        [[ ${#short_type} -gt 12 ]] && short_type="${short_type:0:9}..."
+
+        content+=$(printf "%-20s %b%s%b" "$short_slug" "$UI_FG_DIM" "$short_type" "$UI_NC")
+        content+=$'\n'
+    done < <(echo "$TARGETS_JSON" | jq -r '.[0:6] | .[] | "\(.Target.Slug)|\(.Target.ProviderType // "unknown")"')
+
+    [[ -z "$content" ]] && content=$(printf "%b(no targets)%b" "$UI_FG_DIM" "$UI_NC")
+    printf "%s" "$content"
+}
+
+render_workers_list() {
+    local content=""
+
+    while IFS='|' read -r slug condition; do
+        [[ -z "$slug" ]] && continue
+        local icon
+        icon=$(status_icon "$condition")
+        content+=$(printf "%s %-12s %b%s%b" "$icon" "$slug" "$UI_FG_DIM" "$condition" "$UI_NC")
+        content+=$'\n'
+    done < <(echo "$WORKERS_JSON" | jq -r '.[] | "\(.BridgeWorker.Slug)|\(.BridgeWorker.Condition // "unknown")"')
+
+    [[ -z "$content" ]] && content=$(printf "%b(no workers)%b" "$UI_FG_DIM" "$UI_NC")
+    printf "%s" "$content"
+}
+
+render_targets_workers_section() {
+    echo ""
+
+    local targets_content workers_content
+    targets_content=$(render_targets_list)
+    workers_content=$(render_workers_list)
+
+    local targets_box workers_box
+    targets_box=$(printf "%s" "$targets_content" | $UI_GUM style \
+        --border normal \
+        --border-foreground "$UI_BORDER_DEFAULT" \
+        --padding "0 1" \
+        --width "$PANEL_WIDTH")
+    workers_box=$(printf "%s" "$workers_content" | $UI_GUM style \
+        --border normal \
+        --border-foreground "$UI_BORDER_DEFAULT" \
+        --padding "0 1" \
+        --width "$PANEL_WIDTH")
+
+    local targets_panel workers_panel
+    targets_panel=$(printf "[t]argets" | $UI_GUM style --foreground 255 --bold)$'\n'"$targets_box"
+    workers_panel=$(printf "[w]orkers" | $UI_GUM style --foreground 255 --bold)$'\n'"$workers_box"
+
+    $UI_GUM join --horizontal --align top "$targets_panel" "  " "$workers_panel"
+}
+
+render_navigation_hint() {
+    echo ""
+    printf "%bPress a key to explore · c connection · r refresh · q quit%b" "$UI_FG_DIM" "$UI_NC"
+    echo ""
+}
+
+#=============================================================================
+# DRILL-DOWN VIEWS
+#=============================================================================
+
+view_organizations_detail() {
+    clear
+    render_header
+
+    echo ""
+    printf "ORGANIZATIONS DETAIL" | $UI_GUM style --foreground 255 --bold
+    echo ""
+
+    while IFS='|' read -r org_id ext_id display slug; do
+        [[ -z "$org_id" ]] && continue
+
+        local space_count unit_count
+        space_count=$(echo "$SPACES_JSON" | jq --arg oid "$org_id" '[.[] | select(.Space.OrganizationID == $oid)] | length')
+        unit_count=$(echo "$SPACES_JSON" | jq --arg oid "$org_id" '[.[] | select(.Space.OrganizationID == $oid) | .TotalUnitCount // 0] | add // 0')
+
+        local active_org_external_id
+        active_org_external_id=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.organizationID // ""')
+
+        local bullet
+        if [[ "$ext_id" == "$active_org_external_id" ]]; then
+            bullet=$(printf "%b●%b" "$UI_FG_GREEN" "$UI_NC")
+        else
+            bullet="○"
+        fi
+
+        printf "%s %b%s%b\n" "$bullet" "$UI_BOLD" "$display" "$UI_NC" | $UI_GUM style --padding "0 2"
+        printf "  ID: %s\n  Slug: %s\n  Spaces: %d\n  Units: %d\n" "$ext_id" "$slug" "$space_count" "$unit_count" | $UI_GUM style --padding "0 4" --foreground 245
+        echo ""
+    done < <(echo "$ORGS_JSON" | jq -r '.[] | "\(.OrganizationID)|\(.ExternalID)|\(.DisplayName // .Slug)|\(.Slug)"')
+
+    echo ""
+    printf "%bPress any key to return%b" "$UI_FG_DIM" "$UI_NC"
+    read -rsn1
+}
+
+view_spaces_detail() {
+    clear
+    render_header
+
+    echo ""
+    printf "SPACES IN CURRENT ORG" | $UI_GUM style --foreground 255 --bold
+    echo ""
+
+    while IFS='|' read -r space_slug units targets workers; do
+        [[ -z "$space_slug" ]] && continue
+
+        local bullet
+        if [[ "$space_slug" == "$CURRENT_SPACE" ]]; then
+            bullet=$(printf "%b●%b" "$UI_FG_GREEN" "$UI_NC")
+        else
+            bullet="○"
+        fi
+
+        printf "%s %b%s%b\n" "$bullet" "$UI_BOLD" "$space_slug" "$UI_NC" | $UI_GUM style --padding "0 2"
+        printf "  Units: %d\n  Targets: %d\n  Workers: %d\n" "$units" "$targets" "$workers" | $UI_GUM style --padding "0 4" --foreground 245
+        echo ""
+    done < <(echo "$SPACES_JSON" | jq -r --arg oid "$ACTIVE_ORG_INTERNAL_ID" \
+        '.[] | select(.Space.OrganizationID == $oid) | "\(.Space.Slug)|\(.TotalUnitCount // 0)|\((.TargetCountByToolchainType // {}) | to_entries | map(.value) | add // 0)|\(.TotalBridgeWorkerCount // 0)"')
+
+    echo ""
+    printf "%bPress any key to return%b" "$UI_FG_DIM" "$UI_NC"
+    read -rsn1
+}
+
+view_units_detail() {
+    clear
+    render_header
+
+    echo ""
+    printf "ALL UNITS IN %s" "$CURRENT_SPACE" | $UI_GUM style --foreground 255 --bold
+    echo ""
+
+    local content=""
+    while IFS='|' read -r slug rev target sync_status drift unit_status; do
+        [[ -z "$slug" ]] && continue
+
+        local icon
+        if [[ "$unit_status" == "Error" ]]; then
+            icon=$(printf "%b✗%b" "$UI_ERR" "$UI_NC")
+        elif [[ "$sync_status" == "OutOfSync" || "$drift" == "Drifted" ]]; then
+            icon=$(printf "%b⚠%b" "$UI_WARN" "$UI_NC")
+        else
+            icon=$(printf "%b✓%b" "$UI_OK" "$UI_NC")
+        fi
+
+        local target_info=""
+        [[ "$target" != "-" && "$target" != "null" ]] && target_info=" → $target"
+
+        content+=$(printf "%s  %s @ rev %s%s\n" "$icon" "$slug" "$rev" "$target_info")
+        content+=$(printf "     Status: %s  Sync: %s  Drift: %s\n" "$unit_status" "$sync_status" "$drift")
+        content+=$'\n'
+    done < <(echo "$UNITS_JSON" | jq -r '
+        .[] |
+        "\(.Unit.Slug)|\(.Unit.HeadRevisionNum // 0)|\(.Target.Slug // "-")|\(.UnitStatus.SyncStatus // "InSync")|\(.UnitStatus.Drift // "NotDrifted")|\(.UnitStatus.Status // "Ready")"
+    ')
+
+    printf "%s" "$content" | $UI_GUM style --padding "0 2"
+
+    echo ""
+    printf "%bPress any key to return%b" "$UI_FG_DIM" "$UI_NC"
+    read -rsn1
+}
+
+view_targets_detail() {
+    clear
+    render_header
+
+    echo ""
+    printf "ALL TARGETS IN %s" "$CURRENT_SPACE" | $UI_GUM style --foreground 255 --bold
+    echo ""
+
+    local content=""
+    while IFS='|' read -r slug ptype; do
+        [[ -z "$slug" ]] && continue
+        content+=$(printf "%-30s  %s\n" "$slug" "$ptype")
+    done < <(echo "$TARGETS_JSON" | jq -r '.[] | "\(.Target.Slug)|\(.Target.ProviderType // "unknown")"')
+
+    printf "%s" "$content" | $UI_GUM style --padding "0 2"
+
+    echo ""
+    printf "%bPress any key to return%b" "$UI_FG_DIM" "$UI_NC"
+    read -rsn1
+}
+
+view_workers_detail() {
+    clear
+    render_header
+
+    echo ""
+    printf "ALL WORKERS IN %s" "$CURRENT_SPACE" | $UI_GUM style --foreground 255 --bold
+    echo ""
+
+    local content=""
+    while IFS='|' read -r slug condition last_seen; do
+        [[ -z "$slug" ]] && continue
+        local icon
+        icon=$(status_icon "$condition")
+        content+=$(printf "%s  %-20s  %s\n" "$icon" "$slug" "$condition")
+    done < <(echo "$WORKERS_JSON" | jq -r '.[] | "\(.BridgeWorker.Slug)|\(.BridgeWorker.Condition // "unknown")|\(.BridgeWorker.LastSeenAt // "")"')
+
+    [[ -z "$content" ]] && content=$(printf "%b(no workers)%b" "$UI_FG_DIM" "$UI_NC")
+
+    printf "%s" "$content" | $UI_GUM style --padding "0 2"
+
+    echo ""
+    printf "%bPress any key to return%b" "$UI_FG_DIM" "$UI_NC"
+    read -rsn1
+}
+
+view_connection_detail() {
+    clear
+    render_header
+
+    echo ""
+    printf "CONNECTION JOURNEY" | $UI_GUM style --foreground 255 --bold
+    echo ""
+
+    local unit_count worker_count target_count
+    unit_count=$(echo "$UNITS_JSON" | jq 'length' 2>/dev/null || echo 0)
+    worker_count=$(echo "$WORKERS_JSON" | jq 'length' 2>/dev/null || echo 0)
+    target_count=$(echo "$TARGETS_JSON" | jq 'length' 2>/dev/null || echo 0)
+
+    local content=""
+
+    # Stage 1: cub CLI
+    if $HAS_CUB; then
+        content+=$(printf "%b✓%b cub CLI installed\n" "$UI_OK" "$UI_NC")
+    else
+        content+=$(printf "%b✗%b cub CLI not installed\n" "$UI_ERR" "$UI_NC")
+        content+=$(printf "   %bInstall:%b brew install confighubai/tap/cub\n" "$UI_FG_DIM" "$UI_NC")
+        content+=$(printf "   %bOr:%b curl -fsSL https://get.confighub.com | sh\n" "$UI_FG_DIM" "$UI_NC")
+    fi
+    content+=$'\n'
+
+    # Stage 2: Authentication
+    if $HAS_AUTH; then
+        content+=$(printf "%b✓%b Authenticated%s\n" "$UI_OK" "$UI_NC" "${AUTH_ORG:+ (org: $AUTH_ORG)}")
+    else
+        content+=$(printf "%b✗%b Not authenticated\n" "$UI_ERR" "$UI_NC")
+        content+=$(printf "   %bRun:%b cub auth login\n" "$UI_FG_DIM" "$UI_NC")
+    fi
+    content+=$'\n'
+
+    # Stage 3: Units
+    if $HAS_UNITS; then
+        content+=$(printf "%b✓%b Units imported (%d)\n" "$UI_OK" "$UI_NC" "$unit_count")
+    else
+        content+=$(printf "%b✗%b No units imported\n" "$UI_ERR" "$UI_NC")
+        content+=$(printf "   %bRun:%b cub-agent import --namespace <ns>\n" "$UI_FG_DIM" "$UI_NC")
+        content+=$(printf "   %bDocs:%b docs/IMPORTING-WORKLOADS.md\n" "$UI_FG_DIM" "$UI_NC")
+    fi
+    content+=$'\n'
+
+    # Stage 4: Workers
+    if $HAS_WORKERS; then
+        content+=$(printf "%b✓%b Workers running (%d)\n" "$UI_OK" "$UI_NC" "$worker_count")
+    else
+        content+=$(printf "%b✗%b No workers\n" "$UI_ERR" "$UI_NC")
+        content+=$(printf "   %bRun:%b cub worker run <cluster-name>\n" "$UI_FG_DIM" "$UI_NC")
+    fi
+    content+=$'\n'
+
+    # Stage 5: Targets
+    if $HAS_TARGETS; then
+        content+=$(printf "%b✓%b Targets configured (%d)\n" "$UI_OK" "$UI_NC" "$target_count")
+    else
+        content+=$(printf "%b✗%b No targets\n" "$UI_ERR" "$UI_NC")
+        content+=$(printf "   %bRun:%b cub target create <target-name>\n" "$UI_FG_DIM" "$UI_NC")
+    fi
+    content+=$'\n'
+
+    # Summary
+    if $HAS_CUB && $HAS_AUTH && $HAS_UNITS && $HAS_WORKERS && $HAS_TARGETS; then
+        content+=$(printf "%b🎉 ALL SET!%b\n" "$UI_OK" "$UI_NC")
+        content+=$(printf "   Open: https://confighub.com\n")
+    else
+        content+=$(printf "%bComplete the steps above to connect fully.%b\n" "$UI_FG_DIM" "$UI_NC")
+    fi
+
+    printf "%s" "$content" | $UI_GUM style --padding "0 2"
+
+    echo ""
+    printf "%bPress any key to return%b" "$UI_FG_DIM" "$UI_NC"
+    read -rsn1
+}
+
+view_problems_detail() {
+    clear
+    render_header
+
+    echo ""
+    printf "PROBLEMS" | $UI_GUM style --foreground 196 --bold
+    echo ""
+
+    local content=""
+    local found=0
+
+    while IFS='|' read -r slug rev target unit_status drift sync_status; do
+        [[ -z "$slug" ]] && continue
+        found=1
+
+        local icon reason
+        if [[ "$unit_status" == "Error" ]]; then
+            icon=$(printf "%b✗%b" "$UI_ERR" "$UI_NC")
+            reason="Error"
+        elif [[ "$drift" == "Drifted" || "$sync_status" == "OutOfSync" ]]; then
+            icon=$(printf "%b⚠%b" "$UI_WARN" "$UI_NC")
+            reason="Drifted"
+        else
+            continue
+        fi
+
+        content+=$(printf "%s  %s @ rev %s\n" "$icon" "$slug" "$rev")
+        content+=$(printf "     Target: %s\n" "${target:-none}")
+        content+=$(printf "     Status: %s  Sync: %s  Drift: %s\n" "$unit_status" "$sync_status" "$drift")
+        content+=$'\n'
+    done < <(echo "$UNITS_JSON" | jq -r '
+        .[] | select(.UnitStatus.Status == "Error" or .UnitStatus.SyncStatus == "OutOfSync" or .UnitStatus.Drift == "Drifted") |
+        "\(.Unit.Slug)|\(.Unit.HeadRevisionNum // 0)|\(.Target.Slug // "-")|\(.UnitStatus.Status // "Ready")|\(.UnitStatus.Drift // "NotDrifted")|\(.UnitStatus.SyncStatus // "InSync")"
+    ')
+
+    if [[ $found -eq 0 ]]; then
+        content=$(printf "%b✓ No problems found%b" "$UI_OK" "$UI_NC")
+    fi
+
+    printf "%s" "$content" | $UI_GUM style --padding "0 2"
+
+    echo ""
+    printf "%bPress any key to return%b" "$UI_FG_DIM" "$UI_NC"
+    read -rsn1
+}
+
+#=============================================================================
+# MAIN DASHBOARD VIEW
+#=============================================================================
+
+render_dashboard() {
+    render_header
+    render_context_bar
+    render_connection_status
+    render_worker_warning
+    render_organizations
+    render_spaces
+
+    # Only show detail sections if we have a current space
+    if [[ -n "$CURRENT_SPACE" && "$CURRENT_SPACE" != "null" && "$CURRENT_SPACE" != "-" ]]; then
+        render_metrics_section
+        render_problems_section
+        render_units_section
+        render_targets_workers_section
+    fi
+
+    render_navigation_hint
+}
+
+#=============================================================================
+# MAIN LOOP
+#=============================================================================
+
+main() {
+    local once_mode=false
+    local subcmd=""
+
+    # Parse arguments
+    for arg in "$@"; do
+        case "$arg" in
+            hierarchy|tree|h)
+                # Dispatch to Go TUI hierarchy explorer
+                if command -v cub-agent &>/dev/null; then
+                    exec cub-agent hierarchy "${@:2}"
+                elif [[ -x "${SCRIPT_DIR}/../../cub-agent" ]]; then
+                    exec "${SCRIPT_DIR}/../../cub-agent" hierarchy "${@:2}"
+                else
+                    echo "cub-agent not found. Build with: go build -o cub-agent ./cmd/cub-agent/"
+                    exit 1
+                fi
+                ;;
+            --help|-h)
+                echo "Usage: map-confighub [command] [options]"
+                echo ""
+                echo "ConfigHub Map - Interactive visualization of ConfigHub hierarchy"
+                echo ""
+                echo "Commands:"
+                echo "  (none)       Dashboard view (default)"
+                echo "  hierarchy    Tree-based hierarchy explorer with expand/collapse"
+                echo ""
+                echo "Dashboard keyboard shortcuts:"
+                echo "  o - Organizations"
+                echo "  s - Spaces"
+                echo "  u - Units"
+                echo "  t - Targets"
+                echo "  w - Workers"
+                echo "  p - Problems"
+                echo "  c - Connection status"
+                echo "  r - Refresh data"
+                echo "  q - Quit"
+                echo ""
+                echo "Options:"
+                echo "  --help, -h    Show this help"
+                echo "  --once        Render once without interactive mode"
+                echo ""
+                echo "Examples:"
+                echo "  ./map confighub              # Dashboard view"
+                echo "  ./map confighub hierarchy    # Tree explorer"
+                echo ""
+                exit 0
+                ;;
+            --once)
+                once_mode=true
+                ;;
+        esac
+    done
+
+    # Check authentication (doesn't exit, just sets status flags)
+    check_cub_auth
+
+    # Only collect data if authenticated
+    if $HAS_AUTH; then
+        collect_all_data
+    fi
+
+    # Non-interactive mode
+    if $once_mode; then
+        render_dashboard
+        echo ""
+        return
+    fi
+
+    # Main interactive loop
+    while true; do
+        clear
+        render_dashboard
+
+        # Read single keypress
+        local key
+        read -rsn1 key 2>/dev/null || break
+
+        case "$key" in
+            o|O) view_organizations_detail ;;
+            s|S) view_spaces_detail ;;
+            u|U) view_units_detail ;;
+            t|T) view_targets_detail ;;
+            w|W) view_workers_detail ;;
+            p|P) view_problems_detail ;;
+            c|C) view_connection_detail ;;
+            r|R)
+                clear
+                check_cub_auth
+                if $HAS_AUTH; then
+                    collect_all_data
+                fi
+                ;;
+            q|Q) break ;;
+            *) ;; # Ignore other keys, refresh dashboard
+        esac
+    done
+
+    clear
+    echo "Goodbye!"
+}
+
+main "$@"

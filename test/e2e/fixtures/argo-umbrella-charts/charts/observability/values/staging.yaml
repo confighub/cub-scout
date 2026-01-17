@@ -1,0 +1,75 @@
+# Observability stack - staging environment overrides
+
+# grafana staging overrides
+grafana:
+  replicas: 2
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+  persistence:
+    enabled: true
+    size: 5Gi
+
+  adminUser: admin
+  adminPassword: staging-grafana-password
+
+# loki staging overrides
+# SingleBinary mode with filesystem storage only supports 1 replica
+# For HA in staging, you'd need object storage (S3, GCS, etc.)
+loki:
+  deploymentMode: SingleBinary
+
+  loki:
+    commonConfig:
+      replication_factor: 1
+
+  singleBinary:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+
+  gateway:
+    replicas: 1
+
+# alloy staging overrides
+alloy:
+  controller:
+    type: daemonset
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+# tempo staging overrides
+tempo:
+  tempo:
+    retention: 72h
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+  persistence:
+    enabled: true
+    size: 10Gi

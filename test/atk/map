@@ -1,0 +1,4657 @@
+#!/bin/bash
+# ============================================================================
+# DEPRECATED: This bash TUI is deprecated in favor of the unified Go client.
+#
+# Use instead:
+#   cub-agent map           # Local cluster TUI (Go)
+#   cub-agent map --hub     # ConfigHub hierarchy TUI (Go)
+#   cub-agent map list      # Plain text output
+#   cub-agent map fleet     # Fleet view (Hub/AppSpace model)
+#
+# This script remains for backwards compatibility but will be removed.
+# All new features should be added to the Go client (cmd/cub-agent/).
+# ============================================================================
+#
+# ConfigHub Agent Map - GitOps Fleet Visibility (LEGACY)
+#
+# Usage:
+#   ./map                    # Full dashboard (fleet view when authenticated)
+#   ./map status             # One-line health check
+#   ./map pipelines          # List all delivery pipelines
+#   ./map trace              # Interactive resource trace selector
+#   ./map trace deployment/nginx -n demo  # Trace specific resource
+#   ./map problems           # List only problems
+#   ./map deployers          # List GitOps deployers (Kustomizations, Apps, HelmReleases)
+#   ./map workloads          # List workloads by owner
+#   ./map sources            # List git sources
+#   ./map suspended          # List suspended/paused resources
+#   ./map confighub          # ConfigHub hierarchy (Org/Space/Unit/Target/Worker)
+#   ./map --json             # Full data as JSON
+#
+# IaC Philosophy views (Brian Grant):
+#   ./map drift              # Drift detection - resources diverged from desired state
+#   ./map sprawl             # Configuration sprawl - quantify config sources
+#   ./map bypass             # Factory bypass - changes outside GitOps
+#   ./map variants           # Variant families - group units across environments
+#
+# Filtering options:
+#   --namespace=NS           # Filter to K8s namespace
+#   --space=SPACE            # Filter to ConfigHub space
+#
+# ConfigHub view modes:
+#   (default)                # Fleet view when authenticated (Application → Variant → Cluster)
+#   --mode=admin             # Admin view: Org → Space → Unit with Resources/Targets/Workers
+
+set -euo pipefail
+
+#=============================================================================
+# INITIALIZATION
+#=============================================================================
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source the UI library
+source "${SCRIPT_DIR}/lib/ui.sh"
+
+# Initialize UI (auto-downloads gum if needed)
+ui_init "$SCRIPT_DIR"
+
+# Alias UI colors to legacy variable names used in this script
+STATUS_OK="$UI_OK"
+STATUS_WARN="$UI_WARN"
+STATUS_ERR="$UI_ERR"
+NC="$UI_NC"
+
+#=============================================================================
+# CONFIGURATION
+#=============================================================================
+
+# Auto-detect mode: fleet (default when authenticated) or admin
+MAP_MODE="${MAP_MODE:-auto}"
+
+# Filtering options
+FILTER_NAMESPACE=""
+FILTER_SPACE=""
+
+# Offline mode: suppress ConfigHub fleet view
+CONFIGHUB_OFFLINE="${CONFIGHUB_OFFLINE:-}"
+
+# Variant grouping (for ./map variants --group-by=LABEL)
+VARIANT_GROUP_BY="app"
+
+#=============================================================================
+# TREE DRAWING CHARACTERS (not in UI library)
+#=============================================================================
+
+TREE_L='├'
+TREE_END='└'
+TREE_V='│'
+
+# Draw a header box with title and optional subtitle (rounded corners)
+draw_header() {
+    local title="$1"
+    local subtitle="${2:-}"
+    local width="${3:-$UI_WIDTH}"
+
+    local inner=$((width - 2))
+    local title_len=${#title}
+    local sub_len=${#subtitle}
+
+    # Top border
+    printf '%s' "$UI_BOX_TL"
+    ui_repeat "$UI_BOX_H" "$inner"
+    printf '%s\n' "$UI_BOX_TR"
+
+    # Title line
+    printf '%s  ' "$UI_BOX_V"
+    printf "${UI_BOLD}%s${UI_NC}" "$title"
+    if [[ -n "$subtitle" ]]; then
+        local padding=$((inner - title_len - sub_len - 4))
+        printf '%*s' "$padding" ''
+        printf "${UI_FG_DIM}%s${UI_NC}" "$subtitle"
+    else
+        local padding=$((inner - title_len - 2))
+        printf '%*s' "$padding" ''
+    fi
+    printf '  %s\n' "$UI_BOX_V"
+
+    # Bottom border
+    printf '%s' "$UI_BOX_BL"
+    ui_repeat "$UI_BOX_H" "$inner"
+    printf '%s\n' "$UI_BOX_BR"
+}
+
+# Draw a section box with title (square corners for nesting)
+draw_box_start() {
+    local title="$1"
+    local width="${2:-$UI_WIDTH}"
+
+    local title_len=${#title}
+    local padding=$((width - title_len - 5))
+
+    printf '┌─ '
+    printf "${UI_BOLD}%s${UI_NC} " "$title"
+    ui_repeat '─' "$padding"
+    printf '┐\n'
+}
+
+draw_box_line() {
+    local content="$1"
+    local width="${2:-$UI_WIDTH}"
+
+    local content_len=${#content}
+    # Strip ANSI codes for length calculation
+    local stripped
+    stripped=$(echo -e "$content" | sed 's/\x1b\[[0-9;]*m//g')
+    local stripped_len=${#stripped}
+    local padding=$((width - stripped_len - 4))
+
+    printf '%s  ' "$UI_BOX_V"
+    printf '%b' "$content"
+    printf '%*s' "$padding" ''
+    printf '  %s\n' "$UI_BOX_V"
+}
+
+draw_box_empty() {
+    local width="${1:-$UI_WIDTH}"
+    local inner=$((width - 2))
+    printf '%s' "$UI_BOX_V"
+    printf '%*s' "$inner" ''
+    printf '%s\n' "$UI_BOX_V"
+}
+
+draw_box_end() {
+    local width="${1:-$UI_WIDTH}"
+    local inner=$((width - 2))
+    printf '└'
+    ui_repeat '─' "$inner"
+    printf '┘\n'
+}
+
+# Draw a separator line inside a box (for tables)
+draw_box_separator() {
+    local sep_width="${1:-60}"
+    local width="${2:-$UI_WIDTH}"
+    local inner=$((width - 2))
+    local padding=$((inner - sep_width - 2))
+    printf '%s  ' "$UI_BOX_V"
+    ui_repeat '─' "$sep_width"
+    printf '%*s%s\n' "$padding" '' "$UI_BOX_V"
+}
+
+# Draw a progress bar
+# Usage: progress_bar WIDTH PERCENTAGE [FILLED_CHAR] [EMPTY_CHAR]
+progress_bar() {
+    local width=$1
+    local pct=$2
+    local filled="${3:-$UI_BAR_FULL}"
+    local empty="${4:-$UI_BAR_EMPTY}"
+
+    # Handle edge cases
+    [[ $pct -lt 0 ]] && pct=0
+    [[ $pct -gt 100 ]] && pct=100
+
+    local filled_width=$((width * pct / 100))
+    local empty_width=$((width - filled_width))
+
+    # Print filled portion
+    for ((i=0; i<filled_width; i++)); do printf '%s' "$filled"; done
+    # Print empty portion
+    for ((i=0; i<empty_width; i++)); do printf '%s' "$empty"; done
+}
+
+# Draw a colored progress bar based on percentage
+progress_bar_colored() {
+    local width=$1
+    local pct=$2
+    local filled="${3:-$UI_BAR_FULL}"
+    local empty="${4:-$UI_BAR_EMPTY}"
+
+    local color
+    if [[ $pct -ge 80 ]]; then
+        color="$STATUS_OK"
+    elif [[ $pct -ge 50 ]]; then
+        color="$STATUS_WARN"
+    else
+        color="$STATUS_ERR"
+    fi
+
+    printf '%b' "$color"
+    progress_bar "$width" "$pct" "$filled" "$empty"
+    printf '%b' "$NC"
+}
+
+# Draw ConfigHub promotion banner
+# Usage: draw_confighub_promo "title" "feature1" "feature2" "feature3"
+draw_confighub_promo() {
+    local title="$1"
+    shift
+    local features=("$@")
+
+    echo ""
+    echo -e "${UI_CYAN}╭────────────────────────────────────────────────────────────────╮${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  ${UI_BOLD}$title${UI_NC}"
+    printf '%*s%s\n' $((66 - ${#title})) '' "${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}                                                                ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  Connect to ConfigHub to:                                      ${UI_CYAN}│${UI_NC}"
+    for feat in "${features[@]}"; do
+        printf "${UI_CYAN}│${UI_NC}    • %-56s ${UI_CYAN}│${UI_NC}\n" "$feat"
+    done
+    echo -e "${UI_CYAN}│${UI_NC}                                                                ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  ${UI_FG_DIM}cub auth login${UI_NC}  →  ${UI_FG_DIM}cub-agent import${UI_NC}                         ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}╰────────────────────────────────────────────────────────────────╯${UI_NC}"
+}
+
+# Format time ago (e.g., "3m ago", "2h ago", "5d ago")
+time_ago() {
+    local timestamp="$1"
+    [[ -z "$timestamp" ]] && echo "?" && return
+
+    local now
+    now=$(date +%s)
+    local then
+    then=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$timestamp" +%s 2>/dev/null || echo "$now")
+
+    local diff=$((now - then))
+
+    if [[ $diff -lt 60 ]]; then
+        echo "${diff}s ago"
+    elif [[ $diff -lt 3600 ]]; then
+        echo "$((diff / 60))m ago"
+    elif [[ $diff -lt 86400 ]]; then
+        echo "$((diff / 3600))h ago"
+    else
+        echo "$((diff / 86400))d ago"
+    fi
+}
+
+# Get colored status icon
+status_icon() {
+    local status="$1"
+    case "$status" in
+        ok|healthy|ready|synced|true|True)
+            printf "${UI_OK}✓${UI_NC}"
+            ;;
+        warn|warning|paused|suspended|behind)
+            printf "${UI_WARN}⚠${UI_NC}"
+            ;;
+        error|failed|unhealthy|false|False)
+            printf "${UI_ERR}✗${UI_NC}"
+            ;;
+        *)
+            printf "${UI_FG_DIM}?${UI_NC}"
+            ;;
+    esac
+}
+
+# Get colored owner label
+owner_label() {
+    local owner="$1"
+    case "$owner" in
+        Flux)
+            printf "${UI_FG_CYAN}%s${UI_NC}" "$owner"
+            ;;
+        ArgoCD|Argo)
+            printf "${UI_FG_PURPLE}%s${UI_NC}" "$owner"
+            ;;
+        Helm)
+            printf "${UI_FG_ORANGE}%s${UI_NC}" "$owner"
+            ;;
+        ConfigHub)
+            printf "${UI_FG_GREEN}%s${UI_NC}" "$owner"
+            ;;
+        Native)
+            printf "${UI_FG_DIM}%s${UI_NC}" "$owner"
+            ;;
+        *)
+            printf "%s" "$owner"
+            ;;
+    esac
+}
+
+#=============================================================================
+# DATA COLLECTION
+#=============================================================================
+
+# Apply namespace filter to collected data
+filter_data() {
+    local data="$1"
+
+    if [[ -n "$FILTER_NAMESPACE" ]]; then
+        # Filter gitops and workloads by namespace
+        echo "$data" | jq --arg ns "$FILTER_NAMESPACE" '
+            .gitops = [.gitops[] | select(.namespace == $ns)] |
+            .workloads = [.workloads[] | select(.namespace == $ns)]
+        '
+    else
+        echo "$data"
+    fi
+}
+
+collect_data() {
+    local result='{"gitops":[],"workloads":[]}'
+
+    # Flux Kustomizations
+    local ks_data
+    ks_data=$(kubectl get kustomizations.kustomize.toolkit.fluxcd.io -A -o json 2>/dev/null | jq '[.items[] | {
+        kind: "Kustomization",
+        name: .metadata.name,
+        namespace: .metadata.namespace,
+        owner: "Flux",
+        source: {name: .spec.sourceRef.name, ns: (.spec.sourceRef.namespace // .metadata.namespace), path: (.spec.path // "./")},
+        ready: ([.status.conditions // [] | .[] | select(.type=="Ready")] | first | .status == "True"),
+        suspended: (.spec.suspend // false),
+        revision: (.status.lastAppliedRevision // ""),
+        shortRevision: (.status.lastAppliedRevision // "" | split("@") | last | .[0:7]),
+        inventoryCount: (.status.inventory.entries // [] | length),
+        reason: ([.status.conditions // [] | .[] | select(.type=="Ready")] | first | .reason // ""),
+        message: ([.status.conditions // [] | .[] | select(.type=="Ready")] | first | .message // ""),
+        interval: (.spec.interval // "?"),
+        lastReconcile: (.status.lastHandledReconcileAt // "")
+    }]' 2>/dev/null || echo '[]')
+    [[ "$ks_data" != "[]" ]] && result=$(echo "$result" | jq --argjson d "$ks_data" '.gitops += $d')
+
+    # Flux GitRepositories
+    local gr_data
+    gr_data=$(kubectl get gitrepositories.source.toolkit.fluxcd.io -A -o json 2>/dev/null | jq '[.items[] | {
+        kind: "GitRepository",
+        name: .metadata.name,
+        namespace: .metadata.namespace,
+        owner: "Flux",
+        url: .spec.url,
+        shortUrl: (.spec.url | gsub("https://github.com/"; "") | gsub("https://"; "") | .[0:40]),
+        ref: (.spec.ref.tag // .spec.ref.branch // .spec.ref.commit // "HEAD"),
+        ready: ([.status.conditions // [] | .[] | select(.type=="Ready")] | first | .status == "True"),
+        revision: (.status.artifact.revision // ""),
+        shortRevision: (.status.artifact.revision // "" | split("@") | last | .[0:7]),
+        lastUpdate: (.status.artifact.lastUpdateTime // "")
+    }]' 2>/dev/null || echo '[]')
+    [[ "$gr_data" != "[]" ]] && result=$(echo "$result" | jq --argjson d "$gr_data" '.gitops += $d')
+
+    # Flux HelmReleases
+    local hr_data
+    hr_data=$(kubectl get helmreleases.helm.toolkit.fluxcd.io -A -o json 2>/dev/null | jq '[.items[] | {
+        kind: "HelmRelease",
+        name: .metadata.name,
+        namespace: .metadata.namespace,
+        owner: "Flux",
+        chart: (.spec.chart.spec.chart // ""),
+        chartVersion: (.spec.chart.spec.version // "*"),
+        ready: ([.status.conditions // [] | .[] | select(.type=="Ready")] | first | .status == "True"),
+        suspended: (.spec.suspend // false),
+        revision: (.status.lastAppliedRevision // ""),
+        reason: ([.status.conditions // [] | .[] | select(.type=="Ready")] | first | .reason // "")
+    }]' 2>/dev/null || echo '[]')
+    [[ "$hr_data" != "[]" ]] && result=$(echo "$result" | jq --argjson d "$hr_data" '.gitops += $d')
+
+    # Argo Applications
+    local app_data
+    app_data=$(kubectl get applications.argoproj.io -A -o json 2>/dev/null | jq '[.items[] | {
+        kind: "Application",
+        name: .metadata.name,
+        namespace: .metadata.namespace,
+        owner: "ArgoCD",
+        url: .spec.source.repoURL,
+        shortUrl: (.spec.source.repoURL | gsub("https://github.com/"; "") | gsub("https://"; "") | .[0:40]),
+        path: (.spec.source.path // "."),
+        targetRevision: (.spec.source.targetRevision // "HEAD"),
+        destNamespace: .spec.destination.namespace,
+        syncStatus: (.status.sync.status // "Unknown"),
+        healthStatus: (.status.health.status // "Unknown"),
+        ready: ((.status.sync.status // "") == "Synced" and (.status.health.status // "") == "Healthy"),
+        revision: (.status.sync.revision // ""),
+        shortRevision: ((.status.sync.revision // "")[0:7]),
+        resourceCount: (.status.resources // [] | length),
+        automated: (.spec.syncPolicy.automated != null)
+    }]' 2>/dev/null || echo '[]')
+    [[ "$app_data" != "[]" ]] && result=$(echo "$result" | jq --argjson d "$app_data" '.gitops += $d')
+
+    # Deployments
+    local deploy_data
+    deploy_data=$(kubectl get deployments -A -o json 2>/dev/null | jq '
+        [.items[] |
+            select(.metadata.namespace | test("^(kube-|local-path-)") | not) |
+            {
+                kind: "Deployment",
+                name: .metadata.name,
+                namespace: .metadata.namespace,
+                owner: (
+                    if .metadata.labels["confighub.com/UnitSlug"] then "ConfigHub"
+                    elif .metadata.labels["kustomize.toolkit.fluxcd.io/name"] then "Flux"
+                    elif .metadata.labels["helm.toolkit.fluxcd.io/name"] then "Flux"
+                    elif .metadata.labels["argocd.argoproj.io/instance"] then "ArgoCD"
+                    elif .metadata.labels["app.kubernetes.io/managed-by"] == "Helm" then "Helm"
+                    else "Native" end
+                ),
+                ownerRef: (
+                    .metadata.labels["confighub.com/UnitSlug"] //
+                    .metadata.labels["kustomize.toolkit.fluxcd.io/name"] //
+                    .metadata.labels["helm.toolkit.fluxcd.io/name"] //
+                    .metadata.labels["argocd.argoproj.io/instance"] //
+                    .metadata.annotations["meta.helm.sh/release-name"] // "-"
+                ),
+                confighub: (
+                    if .metadata.labels["confighub.com/UnitSlug"] then {
+                        unit: .metadata.labels["confighub.com/UnitSlug"],
+                        space: (.metadata.annotations["confighub.com/SpaceName"] // ""),
+                        spaceId: (.metadata.annotations["confighub.com/SpaceID"] // ""),
+                        revision: (.metadata.annotations["confighub.com/RevisionNum"] // "")
+                    } else null end
+                ),
+                ready: ((.status.readyReplicas // 0) == (.spec.replicas // 1) and (.spec.replicas // 1) > 0),
+                desired: (.spec.replicas // 1),
+                available: (.status.readyReplicas // 0),
+                image: (.spec.template.spec.containers[0].image | split("/") | last | .[0:30]),
+                created: .metadata.creationTimestamp
+            }
+        ]' 2>/dev/null || echo '[]')
+    result=$(echo "$result" | jq --argjson d "$deploy_data" '.workloads += $d')
+
+    echo "$result"
+}
+
+# Collect bypass data (manual kubectl edits detection)
+collect_bypass_data() {
+    kubectl get deployments -A -o json 2>/dev/null | jq '[
+        .items[] |
+        select(.metadata.namespace | test("^(kube-|local-path-)") | not) |
+        {
+            name: .metadata.name,
+            namespace: .metadata.namespace,
+            owner: (
+                if .metadata.labels["kustomize.toolkit.fluxcd.io/name"] then "Flux"
+                elif .metadata.labels["helm.toolkit.fluxcd.io/name"] then "Flux"
+                elif .metadata.labels["argocd.argoproj.io/instance"] then "ArgoCD"
+                elif .metadata.labels["app.kubernetes.io/managed-by"] == "Helm" then "Helm"
+                elif .metadata.labels["confighub.com/UnitSlug"] then "ConfigHub"
+                else "Native" end
+            ),
+            currentReplicas: .spec.replicas,
+            lastAppliedReplicas: (
+                .metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"]
+                | if . then (fromjson | .spec.replicas // null) else null end
+            ),
+            currentImage: .spec.template.spec.containers[0].image,
+            lastAppliedImage: (
+                .metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"]
+                | if . then (fromjson | .spec.template.spec.containers[0].image // null) else null end
+            ),
+            age: .metadata.creationTimestamp
+        }
+    ]' 2>/dev/null || echo '[]'
+}
+
+# Collect ConfigHub drift data (compare cluster revisions to head)
+collect_confighub_drift() {
+    # Only run if cub available and authenticated
+    if ! command -v cub &>/dev/null || ! cub context get &>/dev/null 2>&1; then
+        echo '{}'
+        return
+    fi
+
+    # Get current space from context (fast - avoids querying all 149+ spaces)
+    local current_space
+    current_space=$(cub context get --json 2>/dev/null | jq -r '.DefaultSpace // empty' 2>/dev/null)
+    if [[ -z "$current_space" ]]; then
+        echo '{}'
+        return
+    fi
+
+    # Collect units from current space only
+    cub unit list --space "$current_space" --json 2>/dev/null | jq -c --arg space "$current_space" '
+        .[] | {
+            key: "\($space)/\(.Slug)",
+            headRevision: (.HeadRevisionNum // 0),
+            slug: .Slug,
+            space: $space
+        }
+    ' 2>/dev/null | jq -s 'if . == [] then {} else INDEX(.key) end' 2>/dev/null || echo '{}'
+}
+
+# Collect pod restart data for crash detection
+collect_pod_restarts() {
+    kubectl get pods -A -o json 2>/dev/null | jq '[
+        .items[] |
+        select(.metadata.namespace | test("^(kube-|local-path-)") | not) |
+        {
+            name: .metadata.name,
+            namespace: .metadata.namespace,
+            restarts: ([.status.containerStatuses[]?.restartCount] | add // 0),
+            phase: .status.phase
+        } |
+        select(.restarts > 0)
+    ]' 2>/dev/null || echo '[]'
+}
+
+# Collect recent warning events
+collect_warning_events() {
+    kubectl get events -A --field-selector type=Warning -o json 2>/dev/null | jq '[
+        .items[] |
+        select(.metadata.namespace | test("^(kube-|local-path-)") | not) |
+        {
+            reason: .reason,
+            message: (.message | .[0:80]),
+            object: "\(.involvedObject.kind)/\(.involvedObject.name)",
+            namespace: .involvedObject.namespace,
+            count: (.count // 1),
+            last: .lastTimestamp
+        }
+    ] | sort_by(.last) | reverse | .[0:10]' 2>/dev/null || echo '[]'
+}
+
+#=============================================================================
+# VIEWS
+#=============================================================================
+
+# One-line status check
+view_status() {
+    local data="$1"
+    local cluster
+    cluster=$(kubectl config current-context 2>/dev/null | sed 's/kind-//')
+
+    local deployers_ok deployers_total suspended sources_ok sources_total workloads_ok workloads_total
+    deployers_total=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository")] | length')
+    deployers_ok=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == true and .suspended != true)] | length')
+    suspended=$(echo "$data" | jq '[.gitops[] | select(.suspended == true)] | length')
+    sources_total=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository")] | length')
+    sources_ok=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository" and .ready == true)] | length')
+    workloads_total=$(echo "$data" | jq '.workloads | length')
+    workloads_ok=$(echo "$data" | jq '[.workloads[] | select(.ready == true)] | length')
+
+    local problems=$((deployers_total - deployers_ok - suspended + workloads_total - workloads_ok))
+
+    # Calculate health percentage
+    local health_pct=100
+    [[ $workloads_total -gt 0 ]] && health_pct=$((workloads_ok * 100 / workloads_total))
+
+    echo ""
+    draw_header "📊 CLUSTER STATUS" "$cluster"
+    echo ""
+
+    draw_box_start "HEALTH"
+
+    # Health bar
+    local bar_width=40
+    local bar_filled=$((health_pct * bar_width / 100))
+    local bar_empty=$((bar_width - bar_filled))
+    local bar_color="${UI_GREEN}"
+    [[ $health_pct -lt 90 ]] && bar_color="${UI_YELLOW}"
+    [[ $health_pct -lt 70 ]] && bar_color="${UI_RED}"
+
+    local health_bar=""
+    for ((i=0; i<bar_filled; i++)); do health_bar+="█"; done
+    for ((i=0; i<bar_empty; i++)); do health_bar+="░"; done
+
+    draw_box_line "${bar_color}${health_bar}${UI_NC}  ${health_pct}%"
+    draw_box_empty
+
+    # Summary row with icons
+    local deployer_icon source_icon workload_icon
+    if [[ $((deployers_total - deployers_ok - suspended)) -eq 0 ]]; then
+        deployer_icon="${UI_GREEN}✓${UI_NC}"
+    else
+        deployer_icon="${UI_RED}✗${UI_NC}"
+    fi
+    if [[ $sources_ok -eq $sources_total ]]; then
+        source_icon="${UI_GREEN}✓${UI_NC}"
+    else
+        source_icon="${UI_RED}✗${UI_NC}"
+    fi
+    if [[ $workloads_ok -eq $workloads_total ]]; then
+        workload_icon="${UI_GREEN}✓${UI_NC}"
+    else
+        workload_icon="${UI_YELLOW}⚠${UI_NC}"
+    fi
+
+    draw_box_line "${deployer_icon} Deployers ${deployers_ok}/${deployers_total}    ${source_icon} Sources ${sources_ok}/${sources_total}    ${workload_icon} Workloads ${workloads_ok}/${workloads_total}"
+
+    if [[ $suspended -gt 0 ]]; then
+        draw_box_line "${UI_YELLOW}⏸${UI_NC} ${suspended} suspended"
+    fi
+
+    draw_box_empty
+    draw_box_end
+
+    # Overall status message
+    echo ""
+    if [[ $problems -eq 0 && $suspended -eq 0 ]]; then
+        echo -e "  ${UI_GREEN}✓${UI_NC} All systems healthy"
+    elif [[ $problems -eq 0 ]]; then
+        echo -e "  ${UI_YELLOW}⏸${UI_NC} All healthy, ${suspended} paused"
+    else
+        echo -e "  ${UI_RED}✗${UI_NC} ${problems} problem(s) detected"
+    fi
+    echo ""
+}
+
+# List problems only
+view_problems() {
+    local data="$1"
+
+    echo ""
+    draw_header "⚠️  ISSUES"
+    echo ""
+
+    local deployer_problems=0
+    local suspended_count=0
+    local workload_problems=0
+
+    # Count problems first
+    deployer_problems=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == false and .suspended != true)] | length')
+    suspended_count=$(echo "$data" | jq '[.gitops[] | select(.suspended == true)] | length')
+    workload_problems=$(echo "$data" | jq '[.workloads[] | select(.ready == false)] | length')
+    local total_problems=$((deployer_problems + suspended_count + workload_problems))
+
+    if [[ $total_problems -eq 0 ]]; then
+        draw_box_start "STATUS"
+        draw_box_empty
+        draw_box_line "${UI_GREEN}✓${UI_NC} No problems detected"
+        draw_box_empty
+        draw_box_end
+        echo ""
+        return
+    fi
+
+    # Failed deployers
+    if [[ $deployer_problems -gt 0 ]]; then
+        draw_box_start "FAILED DEPLOYERS (${deployer_problems})"
+        draw_box_empty
+        while IFS='|' read -r kind name ns reason; do
+            [[ -z "$kind" ]] && continue
+            draw_box_line "${UI_RED}✗${UI_NC} ${kind}/${name}"
+            draw_box_line "  ${UI_FG_DIM}namespace: ${ns}${UI_NC}"
+            draw_box_line "  ${UI_FG_DIM}reason: ${reason}${UI_NC}"
+            draw_box_empty
+        done < <(echo "$data" | jq -r '.gitops[] | select(.kind != "GitRepository" and .ready == false and .suspended != true) | "\(.kind)|\(.name)|\(.namespace)|\(.reason)"')
+        draw_box_end
+        echo ""
+    fi
+
+    # Suspended
+    if [[ $suspended_count -gt 0 ]]; then
+        draw_box_start "SUSPENDED (${suspended_count})"
+        draw_box_empty
+        while IFS='|' read -r kind name ns; do
+            [[ -z "$kind" ]] && continue
+            draw_box_line "${UI_YELLOW}⏸${UI_NC} ${kind}/${name} ${UI_FG_DIM}in ${ns}${UI_NC}"
+        done < <(echo "$data" | jq -r '.gitops[] | select(.suspended == true) | "\(.kind)|\(.name)|\(.namespace)"')
+        draw_box_empty
+        draw_box_end
+        echo ""
+    fi
+
+    # Failed workloads
+    if [[ $workload_problems -gt 0 ]]; then
+        draw_box_start "UNHEALTHY WORKLOADS (${workload_problems})"
+        draw_box_empty
+        while IFS='|' read -r name ns avail desired; do
+            [[ -z "$name" ]] && continue
+            draw_box_line "${UI_RED}✗${UI_NC} Deployment/${name}"
+            draw_box_line "  ${UI_FG_DIM}namespace: ${ns}  pods: ${avail}/${desired} ready${UI_NC}"
+            draw_box_empty
+        done < <(echo "$data" | jq -r '.workloads[] | select(.ready == false) | "\(.name)|\(.namespace)|\(.available)|\(.desired)"')
+        draw_box_end
+        echo ""
+    fi
+
+    # Summary
+    echo -e "  ${UI_RED}${total_problems}${UI_NC} issue(s) found"
+    echo ""
+
+    # ConfigHub promotion
+    draw_confighub_promo "🔧 Want to track problems fleet-wide?" \
+        "Track problems across all clusters" \
+        "Get Slack/email alerts" \
+        "View problem history over time"
+}
+
+# List pipelines
+view_pipelines() {
+    local data="$1"
+
+    echo -e "${UI_BOLD}SOURCE                                      DEPLOYER                 TARGET${UI_NC}"
+    echo "────────────────────────────────────────────────────────────────────────────────"
+
+    # Flux: GitRepo → Kustomization
+    echo "$data" | jq -r '
+        [.gitops[] | select(.kind == "Kustomization")] as $ks |
+        [.gitops[] | select(.kind == "GitRepository")] as $gr |
+        $ks[] | . as $k |
+        ($gr[] | select(.name == $k.source.name and .namespace == $k.source.ns) // {shortUrl: "?", ref: "?"}) as $g |
+        "\(if $k.suspended then "⏸" elif $k.ready then "✓" else "✗" end)|\($g.shortUrl)@\($g.ref)|\($k.name)|\($k.inventoryCount) resources"
+    ' 2>/dev/null | while IFS='|' read -r status source deployer target; do
+        if [[ "$status" == "✗" ]]; then
+            printf "${UI_RED}%-1s${UI_NC} %-42s → %-20s → %s\n" "$status" "$source" "$deployer" "$target"
+        elif [[ "$status" == "⏸" ]]; then
+            printf "${UI_YELLOW}%-1s${UI_NC} %-42s → %-20s → %s\n" "$status" "$source" "$deployer" "$target"
+        else
+            printf "${UI_GREEN}%-1s${UI_NC} %-42s → %-20s → %s\n" "$status" "$source" "$deployer" "$target"
+        fi
+    done
+
+    # Flux: HelmRepo → HelmRelease
+    echo "$data" | jq -r '
+        [.gitops[] | select(.kind == "HelmRelease")] | .[] |
+        "\(if .suspended then "⏸" elif .ready then "✓" else "✗" end)|\(.chart)@\(.chartVersion)|\(.name)|helm release"
+    ' 2>/dev/null | while IFS='|' read -r status source deployer target; do
+        [[ -z "$status" ]] && continue
+        if [[ "$status" == "✗" ]]; then
+            printf "${UI_RED}%-1s${UI_NC} %-42s → %-20s → %s\n" "$status" "$source" "$deployer" "$target"
+        elif [[ "$status" == "⏸" ]]; then
+            printf "${UI_YELLOW}%-1s${UI_NC} %-42s → %-20s → %s\n" "$status" "$source" "$deployer" "$target"
+        else
+            printf "${UI_GREEN}%-1s${UI_NC} %-42s → %-20s → %s\n" "$status" "$source" "$deployer" "$target"
+        fi
+    done
+
+    # Argo: Git → Application
+    echo "$data" | jq -r '
+        [.gitops[] | select(.kind == "Application")] | .[] |
+        "\(if .ready then "✓" else "✗" end)|\(.shortUrl)/\(.path)@\(.targetRevision)|\(.name)|\(.destNamespace)"
+    ' 2>/dev/null | while IFS='|' read -r status source deployer target; do
+        [[ -z "$status" ]] && continue
+        if [[ "$status" == "✗" ]]; then
+            printf "${UI_RED}%-1s${UI_NC} %-42s → %-20s → %s\n" "$status" "$source" "$deployer" "$target"
+        else
+            printf "${UI_GREEN}%-1s${UI_NC} %-42s → %-20s → %s\n" "$status" "$source" "$deployer" "$target"
+        fi
+    done
+}
+
+# List pipelines with full trace chains (slower, more detail)
+view_pipelines_traced() {
+    local data="$1"
+
+    echo -e "${UI_BOLD}PIPELINES WITH TRACE CHAINS${UI_NC}"
+    echo -e "${UI_YELLOW}⚠ This operation may be slow and resource-intensive (~500ms per deployer)${UI_NC}"
+    echo -e "${UI_FG_DIM}   Calls flux/argocd CLI for each deployer to fetch full ownership chains${UI_NC}"
+    echo ""
+
+    # Collect deployers to trace
+    local deployers=()
+
+    # Flux Kustomizations
+    while IFS='|' read -r name ns; do
+        [[ -z "$name" ]] && continue
+        deployers+=("Kustomization|${name}|${ns}")
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "Kustomization") | "\(.name)|\(.namespace)"' 2>/dev/null)
+
+    # Flux HelmReleases
+    while IFS='|' read -r name ns; do
+        [[ -z "$name" ]] && continue
+        deployers+=("HelmRelease|${name}|${ns}")
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "HelmRelease") | "\(.name)|\(.namespace)"' 2>/dev/null)
+
+    # Argo Applications
+    while IFS='|' read -r name ns; do
+        [[ -z "$name" ]] && continue
+        deployers+=("Application|${name}|${ns}")
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "Application") | "\(.name)|\(.namespace)"' 2>/dev/null)
+
+    if [[ ${#deployers[@]} -eq 0 ]]; then
+        echo -e "${UI_YELLOW}No deployers found to trace${UI_NC}"
+        return
+    fi
+
+    # Find cub-agent binary (check repo root, then PATH)
+    local cub_agent_bin=""
+    local repo_root
+    repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+    if [[ -x "${repo_root}/cub-agent" ]]; then
+        cub_agent_bin="${repo_root}/cub-agent"
+    elif command -v cub-agent &>/dev/null; then
+        cub_agent_bin="cub-agent"
+    fi
+
+    # Trace each deployer
+    local traced=0
+    for dep in "${deployers[@]}"; do
+        IFS='|' read -r kind name ns <<< "$dep"
+
+        echo -e "${UI_BOLD}${kind}/${name}${UI_NC} ${UI_FG_DIM}(${ns})${UI_NC}"
+
+        # Run trace
+        if [[ -n "$cub_agent_bin" ]]; then
+            local trace_output
+            trace_output=$("$cub_agent_bin" trace "${kind}/${name}" -n "${ns}" 2>&1)
+
+            # Parse and display trace chain (indent it)
+            echo "$trace_output" | grep -v "^TRACE:" | grep -v "^$" | sed 's/^/  /'
+        else
+            echo "  ${UI_FG_DIM}(cub-agent not built - run: cd ${repo_root} && go build ./cmd/cub-agent)${UI_NC}"
+        fi
+
+        echo ""
+        ((traced++))
+    done
+
+    echo -e "${UI_FG_DIM}Traced ${traced} deployer(s)${UI_NC}"
+}
+
+# Trace a resource's ownership chain
+view_trace() {
+    local kind="$1"
+    local name="$2"
+    local namespace="${3:-}"
+
+    # Find cub-agent binary (check repo root, then PATH)
+    local cub_agent_bin=""
+    local repo_root
+    repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+    if [[ -x "${repo_root}/cub-agent" ]]; then
+        cub_agent_bin="${repo_root}/cub-agent"
+    elif command -v cub-agent &>/dev/null; then
+        cub_agent_bin="cub-agent"
+    fi
+
+    # Build the trace command
+    local trace_args="${kind}/${name}"
+    if [[ -n "$namespace" ]]; then
+        trace_args="${trace_args} -n ${namespace}"
+    fi
+
+    echo ""
+    echo -e "${UI_BOLD}TRACE: ${kind}/${name}${UI_NC}"
+    if [[ -n "$namespace" ]]; then
+        echo -e "${UI_FG_DIM}Namespace: ${namespace}${UI_NC}"
+    fi
+    echo ""
+
+    # Run the trace command
+    if [[ -n "$cub_agent_bin" ]]; then
+        "$cub_agent_bin" trace $trace_args 2>&1
+    else
+        echo -e "${UI_YELLOW}⚠ cub-agent binary not found${UI_NC}"
+        echo -e "${UI_FG_DIM}Build with: cd ${repo_root} && go build ./cmd/cub-agent${UI_NC}"
+        echo ""
+        echo "Would run: cub-agent trace $trace_args"
+    fi
+}
+
+# Interactive trace selector - pick a resource to trace
+view_trace_interactive() {
+    local data="$1"
+
+    echo -e "${UI_BOLD}SELECT RESOURCE TO TRACE${UI_NC}"
+    echo ""
+    echo -e "${UI_FG_DIM}Trace ownership chain for any resource${UI_NC}"
+    echo ""
+
+    # Build list of traceable resources (deployers + all workloads)
+    local resources=()
+    local owners=()
+
+    # Add deployers (Kustomizations, HelmReleases, Applications)
+    while IFS='|' read -r kind name ns; do
+        [[ -z "$name" ]] && continue
+        resources+=("${kind}|${name}|${ns}")
+        owners+=("GitOps")
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind != "GitRepository") | "\(.kind)|\(.name)|\(.namespace)"' 2>/dev/null)
+
+    # Add ALL workloads (including Native)
+    while IFS='|' read -r kind name ns owner ownerRef; do
+        [[ -z "$name" ]] && continue
+        resources+=("${kind}|${name}|${ns}")
+        owners+=("$owner|$ownerRef")
+    done < <(echo "$data" | jq -r '.workloads[] | "\(.kind // "Deployment")|\(.name)|\(.namespace)|\(.owner)|\(.ownerRef // "-")"' 2>/dev/null)
+
+    if [[ ${#resources[@]} -eq 0 ]]; then
+        echo -e "${UI_YELLOW}No resources found${UI_NC}"
+        return
+    fi
+
+    # If gum is available, use it for selection
+    if [[ -n "$UI_GUM" ]]; then
+        local options=()
+        local i=0
+        for res in "${resources[@]}"; do
+            IFS='|' read -r kind name ns <<< "$res"
+            local owner_info="${owners[$i]}"
+            IFS='|' read -r owner ownerRef <<< "$owner_info"
+            local suffix=""
+            if [[ "$owner" == "Native" ]]; then
+                suffix=" ${UI_FG_DIM}[Native]${UI_NC}"
+            elif [[ "$owner" == "ConfigHub" ]]; then
+                suffix=" ${UI_FG_DIM}[ConfigHub]${UI_NC}"
+            fi
+            options+=("${kind}/${name} (${ns})${suffix}")
+            ((i++))
+        done
+
+        local selected
+        selected=$($UI_GUM choose --header "Select resource to trace:" "${options[@]}")
+
+        if [[ -n "$selected" ]]; then
+            # Find which resource was selected
+            local idx=0
+            for opt in "${options[@]}"; do
+                if [[ "$opt" == "$selected" ]]; then
+                    break
+                fi
+                ((idx++))
+            done
+
+            IFS='|' read -r sel_kind sel_name sel_ns <<< "${resources[$idx]}"
+            IFS='|' read -r sel_owner sel_ownerRef <<< "${owners[$idx]}"
+
+            # Handle based on owner type
+            if [[ "$sel_owner" == "Native" ]]; then
+                view_trace_native "$sel_kind" "$sel_name" "$sel_ns"
+            elif [[ "$sel_owner" == "ConfigHub" ]]; then
+                view_trace_confighub "$sel_kind" "$sel_name" "$sel_ns" "$sel_ownerRef"
+            else
+                view_trace "$sel_kind" "$sel_name" "$sel_ns"
+            fi
+        fi
+    else
+        # Fallback: list resources with numbers
+        echo "Available resources:"
+        local i=1
+        local idx=0
+        for res in "${resources[@]}"; do
+            IFS='|' read -r kind name ns <<< "$res"
+            local owner_info="${owners[$idx]}"
+            IFS='|' read -r owner ownerRef <<< "$owner_info"
+            local suffix=""
+            [[ "$owner" == "Native" ]] && suffix=" ${UI_GRAY}[Native]${UI_NC}"
+            [[ "$owner" == "ConfigHub" ]] && suffix=" ${UI_PURPLE}[ConfigHub]${UI_NC}"
+            printf "  %2d) %s/%s (%s)%b\n" "$i" "$kind" "$name" "$ns" "$suffix"
+            ((i++))
+            ((idx++))
+        done
+        echo ""
+        echo -e "${UI_FG_DIM}Run: ./map trace <kind>/<name> -n <namespace>${UI_NC}"
+    fi
+}
+
+# Trace a Native (unmanaged) workload - show ownership info
+view_trace_native() {
+    local kind="$1"
+    local name="$2"
+    local namespace="${3:-default}"
+
+    echo ""
+    echo -e "${UI_BOLD}TRACE: ${kind}/${name}${UI_NC}"
+    echo -e "${UI_FG_DIM}Namespace: ${namespace}${UI_NC}"
+    echo ""
+
+    echo -e "${UI_GRAY}┌─────────────────────────────────────────────────────────────────────┐${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}  ${UI_BOLD}Owner: Native (kubectl applied)${UI_NC}                                  ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}                                                                     ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}  This resource is not managed by GitOps.                            ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}  It was likely created directly with kubectl or a script.           ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}                                                                     ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}  ${UI_FG_DIM}To add GitOps management:${UI_NC}                                        ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}  ${UI_FG_DIM}  1. Export: kubectl get ${kind,,} ${name} -n ${namespace} -o yaml${UI_NC}  ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}  ${UI_FG_DIM}  2. Add to your GitOps repo${UI_NC}                                    ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}│${UI_NC}  ${UI_FG_DIM}  3. Delete and let GitOps recreate${UI_NC}                             ${UI_GRAY}│${UI_NC}"
+    echo -e "${UI_GRAY}└─────────────────────────────────────────────────────────────────────┘${UI_NC}"
+}
+
+# Trace a ConfigHub-managed workload
+view_trace_confighub() {
+    local kind="$1"
+    local name="$2"
+    local namespace="${3:-default}"
+    local unit="${4:-unknown}"
+
+    echo ""
+    echo -e "${UI_BOLD}TRACE: ${kind}/${name}${UI_NC}"
+    echo -e "${UI_FG_DIM}Namespace: ${namespace}${UI_NC}"
+    echo ""
+
+    echo -e "${UI_PURPLE}┌─────────────────────────────────────────────────────────────────────┐${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}  ${UI_BOLD}Owner: ConfigHub${UI_NC}                                                  ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}  ${UI_FG_DIM}Unit: ${unit}${UI_NC}                                                    ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}                                                                     ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}  This resource is managed by ConfigHub.                             ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}  Changes should be made via ConfigHub or the source repository.    ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}                                                                     ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}  ${UI_FG_DIM}View in ConfigHub:${UI_NC}                                               ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}  ${UI_FG_DIM}  cub-agent map --hub${UI_NC}  →  Navigate to unit: ${unit}             ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}└─────────────────────────────────────────────────────────────────────┘${UI_NC}"
+}
+
+# Cluster scan view (state + Kyverno)
+view_scan() {
+    local data="$1"
+    local namespace="${2:-}"
+
+    echo -e "${UI_BOLD}CLUSTER SCAN${UI_NC}"
+    echo -e "${UI_FG_DIM}Stuck reconciliations + Kyverno policy violations${UI_NC}"
+    echo ""
+
+    # Check if cub-agent is available
+    local agent_cmd="${SCRIPT_DIR}/../../cub-agent"
+    if [[ ! -x "$agent_cmd" ]]; then
+        agent_cmd=$(command -v cub-agent 2>/dev/null || true)
+        if [[ -z "$agent_cmd" ]]; then
+            echo -e "${UI_YELLOW}⚠ cub-agent not found${UI_NC}"
+            echo "  Build with: go build ./cmd/cub-agent"
+            return
+        fi
+    fi
+
+    # Run scan
+    local scan_args=""
+    [[ -n "$namespace" ]] && scan_args="-n $namespace"
+
+    local scan_output
+    scan_output=$("$agent_cmd" scan $scan_args 2>&1)
+    local exit_code=$?
+
+    if [[ $exit_code -ne 0 ]]; then
+        echo -e "${UI_RED}✗ Scan failed${UI_NC}"
+        echo "$scan_output"
+        return
+    fi
+
+    echo "$scan_output"
+
+    # ConfigHub upgrade CTA
+    echo ""
+    echo -e "${UI_CYAN}╭────────────────────────────────────────────────────────────────╮${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  ${UI_BOLD}📊 Want fleet-wide scanning?${UI_NC}                                 ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}                                                                ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  Connect to ConfigHub to scan across all clusters,            ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  track violations over time, and get alerts.                  ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}                                                                ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  ${UI_FG_DIM}cub auth login${UI_NC}  →  ${UI_FG_DIM}cub-agent import${UI_NC}  →  ${UI_FG_DIM}cub-agent scan --confighub${UI_NC}  ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}╰────────────────────────────────────────────────────────────────╯${UI_NC}"
+}
+
+# Context selector - switch kubernetes context
+view_context_selector() {
+    echo -e "${UI_BOLD}SWITCH KUBERNETES CONTEXT${UI_NC}"
+    echo -e "${UI_FG_DIM}Select a context to switch to${UI_NC}"
+    echo ""
+
+    # Get all contexts
+    local contexts
+    contexts=$(kubectl config get-contexts -o name 2>/dev/null)
+
+    if [[ -z "$contexts" ]]; then
+        echo -e "${UI_FG_DIM}No contexts available${UI_NC}"
+        echo ""
+        echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+        read -rsn1
+        return
+    fi
+
+    local current_context
+    current_context=$(kubectl config current-context 2>/dev/null || echo "")
+
+    # Use gum choose if available
+    if [[ -n "$UI_GUM" ]]; then
+        local selected
+        selected=$($UI_GUM choose --header "Select context:" $contexts)
+
+        if [[ -n "$selected" && "$selected" != "$current_context" ]]; then
+            echo ""
+            echo -e "${UI_FG_DIM}Switching to ${selected}...${UI_NC}"
+            if kubectl config use-context "$selected" &>/dev/null; then
+                echo -e "${UI_FG_GREEN}✓${UI_NC} Switched to ${selected}"
+            else
+                echo -e "${UI_FG_RED}✗${UI_NC} Failed to switch context"
+            fi
+            sleep 1
+        fi
+    else
+        # Fallback: just show contexts
+        echo "Available contexts:"
+        echo "$contexts" | while read -r ctx; do
+            if [[ "$ctx" == "$current_context" ]]; then
+                echo -e "  ${UI_FG_GREEN}● ${ctx}${UI_NC} (current)"
+            else
+                echo -e "  ${UI_FG_DIM}○ ${ctx}${UI_NC}"
+            fi
+        done
+        echo ""
+        echo -e "${UI_FG_DIM}Use: kubectl config use-context <name>${UI_NC}"
+        echo ""
+        echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+        read -rsn1
+    fi
+}
+
+# Command input - run shell commands
+view_command_input() {
+    echo -e "${UI_BOLD}COMMAND${UI_NC}"
+    echo -e "${UI_FG_DIM}Enter a command to run${UI_NC}"
+    echo ""
+
+    local cmd
+    if [[ -n "$UI_GUM" ]]; then
+        cmd=$($UI_GUM input --placeholder "kubectl get pods..." --width 60)
+    else
+        echo -n ": "
+        read -r cmd
+    fi
+
+    if [[ -n "$cmd" ]]; then
+        echo ""
+        echo -e "${UI_FG_DIM}Running: ${cmd}${UI_NC}"
+        echo ""
+        eval "$cmd" 2>&1
+        echo ""
+        echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+        read -rsn1
+    fi
+}
+
+# Search/filter input - query resources
+view_search_input() {
+    echo ""
+    draw_header "🔍 SEARCH RESOURCES"
+    echo ""
+
+    echo -e "${UI_BOLD}Enter a query to filter resources${UI_NC}"
+    echo ""
+    echo -e "${UI_FG_DIM}Query syntax:${UI_NC}"
+    echo -e "  ${UI_FG_CYAN}owner=Native${UI_NC}              Orphaned resources"
+    echo -e "  ${UI_FG_CYAN}owner=Flux${UI_NC}                Flux-managed resources"
+    echo -e "  ${UI_FG_CYAN}status!=Ready${UI_NC}             Unhealthy resources"
+    echo -e "  ${UI_FG_CYAN}namespace=prod*${UI_NC}           Prod namespaces"
+    echo -e "  ${UI_FG_CYAN}labels[app]=nginx${UI_NC}         By label"
+    echo -e "  ${UI_FG_CYAN}kind=Deployment${UI_NC}           By kind"
+    echo ""
+
+    local query
+    if [[ -n "$UI_GUM" ]]; then
+        query=$($UI_GUM input --placeholder "owner=Native" --width 60)
+    else
+        echo -n "/ "
+        read -r query
+    fi
+
+    if [[ -n "$query" ]]; then
+        echo ""
+        echo -e "${UI_FG_DIM}Searching: ${query}${UI_NC}"
+        echo ""
+
+        # Find cub-agent binary
+        local cub_agent_bin=""
+        local repo_root
+        repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
+        if [[ -x "${repo_root}/cub-agent" ]]; then
+            cub_agent_bin="${repo_root}/cub-agent"
+        elif command -v cub-agent &>/dev/null; then
+            cub_agent_bin="cub-agent"
+        fi
+
+        if [[ -n "$cub_agent_bin" ]]; then
+            "$cub_agent_bin" map list -q "$query" 2>&1
+        else
+            echo -e "${UI_FG_RED}cub-agent not found${UI_NC}"
+            echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-agent${UI_NC}"
+        fi
+
+        echo ""
+        echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+        read -rsn1
+    fi
+}
+
+# Help overlay - show all keybindings and available commands
+view_help_overlay() {
+    clear
+
+    echo -e "${UI_BOLD}${UI_CYAN}╭────────────────────────────────────────────────────────────────────────╮${UI_NC}"
+    echo -e "${UI_BOLD}${UI_CYAN}│${UI_NC}  ${UI_BOLD}CONFIGHUB MAP HELP${UI_NC}                                                   ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_BOLD}${UI_CYAN}╰────────────────────────────────────────────────────────────────────────╯${UI_NC}"
+    echo ""
+
+    echo -e "${UI_BOLD}DASHBOARD VIEWS${UI_NC}"
+    echo -e "  ${UI_FG_GREEN}s${UI_NC}  Status        Quick health overview of cluster"
+    echo -e "  ${UI_FG_GREEN}i${UI_NC}  Issues        Resources with issues (unhealthy pods, errors)"
+    echo -e "  ${UI_FG_GREEN}p${UI_NC}  Pipelines     GitOps pipelines (source → deployer → resources)"
+    echo -e "  ${UI_FG_GREEN}w${UI_NC}  Workloads     All workloads grouped by owner"
+    echo -e "  ${UI_FG_GREEN}d${UI_NC}  Drift         Resources that diverged from desired state"
+    echo -e "  ${UI_FG_GREEN}r${UI_NC}  Sprawl        Configuration sprawl analysis"
+    echo -e "  ${UI_FG_GREEN}R${UI_NC}  Recent        Recently deployed/changed resources"
+    echo ""
+
+    echo -e "${UI_BOLD}TOOLS${UI_NC}"
+    echo -e "  ${UI_FG_GREEN}/${UI_NC}  Search        Query/filter resources (owner, status, labels)"
+    echo -e "  ${UI_FG_GREEN}t${UI_NC}  Trace         Trace ownership chain for a resource"
+    echo -e "  ${UI_FG_GREEN}c${UI_NC}  CCVE Scan     Scan for configuration anti-patterns"
+    echo -e "      ${UI_FG_DIM}→ press 'f' in scan view to fix issues${UI_NC}"
+    echo -e "  ${UI_FG_GREEN}O${UI_NC}  Context       Switch Kubernetes context"
+    echo -e "  ${UI_FG_GREEN}:${UI_NC}  Command       Run any shell command"
+    echo ""
+
+    echo -e "${UI_BOLD}CUB-AGENT COMMANDS${UI_NC} ${UI_FG_DIM}(run with : or from terminal)${UI_NC}"
+    echo -e "  ${UI_FG_CYAN}cub-agent map list${UI_NC}        List resources and ownership"
+    echo -e "  ${UI_FG_CYAN}cub-agent map orphans${UI_NC}     List orphaned (Native) resources"
+    echo -e "  ${UI_FG_CYAN}cub-agent map crashes${UI_NC}     List crashing resources"
+    echo -e "  ${UI_FG_CYAN}cub-agent scan${UI_NC}            Scan for CCVEs"
+    echo -e "  ${UI_FG_CYAN}cub-agent trace${UI_NC}           Trace ownership chain"
+    echo -e "  ${UI_FG_CYAN}cub-agent remedy${UI_NC}          Auto-fix CCVE findings"
+    echo ""
+
+    echo -e "${UI_BOLD}QUERY EXAMPLES${UI_NC} ${UI_FG_DIM}(use with: cub-agent map list -q)${UI_NC}"
+    echo -e "  ${UI_FG_CYAN}owner=Native${UI_NC}              Orphaned resources"
+    echo -e "  ${UI_FG_CYAN}owner=Flux OR owner=ArgoCD${UI_NC} GitOps managed"
+    echo -e "  ${UI_FG_CYAN}namespace=prod*${UI_NC}           Prod namespaces"
+    echo -e "  ${UI_FG_CYAN}labels[app]=nginx${UI_NC}         By label"
+    echo -e "  ${UI_FG_CYAN}--since=1h${UI_NC}                Changed last hour"
+    echo ""
+
+    echo -e "${UI_BOLD}CONFIGHUB HIERARCHY${UI_NC} ${UI_FG_DIM}(manage orgs, spaces, units)${UI_NC}"
+    echo -e "  ${UI_FG_PURPLE}h${UI_NC}  Hub TUI       ${UI_FG_DIM}or${UI_NC} cub-agent map --hub"
+    echo -e "                    Explore ConfigHub: orgs → spaces → units → targets"
+    echo -e "                    ${UI_FG_DIM}Requires: cub auth login${UI_NC}"
+    echo ""
+
+    echo -e "${UI_BOLD}NAVIGATION${UI_NC}"
+    echo -e "  ${UI_FG_GREEN}?${UI_NC}  Help          Show this help"
+    echo -e "  ${UI_FG_GREEN}q${UI_NC}  Quit          Exit the TUI"
+    echo ""
+
+    echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+    read -rsn1
+}
+
+# Interactive scan - show results with fix capability
+view_scan_interactive() {
+    local data="$1"
+
+    # Check if cub-agent is available
+    local agent_cmd="${SCRIPT_DIR}/../../cub-agent"
+    if [[ ! -x "$agent_cmd" ]]; then
+        agent_cmd=$(command -v cub-agent 2>/dev/null || true)
+        if [[ -z "$agent_cmd" ]]; then
+            echo -e "${UI_YELLOW}⚠ cub-agent not found${UI_NC}"
+            echo "  Build with: go build ./cmd/cub-agent"
+            return
+        fi
+    fi
+
+    # Get JSON scan results (new combined format)
+    local scan_json
+    scan_json=$("$agent_cmd" scan --json 2>&1)
+
+    # Interactive loop
+    while true; do
+        clear
+        echo -e "${UI_BOLD}CLUSTER SCAN${UI_NC}"
+        echo -e "${UI_FG_DIM}Stuck reconciliations + Kyverno policy violations${UI_NC}"
+        echo ""
+
+        # Parse state scan results
+        local state_total=0 state_hr=0 state_ks=0 state_app=0
+        state_hr=$(echo "$scan_json" | jq -r '.state.summary.helmReleaseStuck // 0' 2>/dev/null)
+        state_ks=$(echo "$scan_json" | jq -r '.state.summary.kustomizationStuck // 0' 2>/dev/null)
+        state_app=$(echo "$scan_json" | jq -r '.state.summary.applicationStuck // 0' 2>/dev/null)
+        state_total=$((state_hr + state_ks + state_app))
+
+        # Parse Kyverno results
+        local kyverno_critical=0 kyverno_warning=0 kyverno_info=0 kyverno_total=0
+        kyverno_critical=$(echo "$scan_json" | jq -r '.kyverno.summary.critical // 0' 2>/dev/null)
+        kyverno_warning=$(echo "$scan_json" | jq -r '.kyverno.summary.warning // 0' 2>/dev/null)
+        kyverno_info=$(echo "$scan_json" | jq -r '.kyverno.summary.info // 0' 2>/dev/null)
+        kyverno_total=$((kyverno_critical + kyverno_warning + kyverno_info))
+
+        local total=$((state_total + kyverno_total))
+
+        if [[ $total -eq 0 ]]; then
+            echo -e "${UI_GREEN}✓ No issues found${UI_NC}"
+            echo ""
+            echo -e "${UI_FG_DIM}All HelmReleases, Kustomizations, and Applications healthy.${UI_NC}"
+            echo ""
+            echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+            read -rsn1
+            return
+        fi
+
+        # Summary header
+        if [[ $state_total -gt 0 ]]; then
+            echo -e "${UI_RED}● $state_total stuck${UI_NC} (${state_hr} HR, ${state_ks} KS, ${state_app} App)"
+        fi
+        if [[ $kyverno_total -gt 0 ]]; then
+            echo -e "${UI_YELLOW}● $kyverno_total violations${UI_NC} (${kyverno_critical} critical, ${kyverno_warning} warning)"
+        fi
+        echo ""
+        echo "────────────────────────────────────────────────────────────────────"
+
+        # Build findings array with numbers for selection
+        local finding_num=0
+        declare -a findings_ccve=()
+        declare -a findings_ns=()
+        declare -a findings_kind=()
+        declare -a findings_name=()
+
+        # Show state findings with numbers (auto-fixable)
+        if [[ $state_total -gt 0 ]]; then
+            echo -e "${UI_BOLD}FIXABLE ISSUES${UI_NC}"
+            echo ""
+            while IFS='|' read -r ccve ns kind name duration remediation; do
+                [[ -z "$ccve" ]] && continue
+                ((finding_num++))
+                findings_ccve+=("$ccve")
+                findings_ns+=("$ns")
+                findings_kind+=("$kind")
+                findings_name+=("$name")
+                echo -e "${UI_CYAN}[$finding_num]${UI_NC} ${kind}/${name} ${UI_FG_DIM}[$ccve]${UI_NC}"
+                echo -e "    ${UI_FG_DIM}ns:${UI_NC} $ns ${UI_FG_DIM}| stuck:${UI_NC} $duration"
+                echo -e "    ${UI_FG_DIM}$remediation${UI_NC}"
+                echo ""
+            done < <(echo "$scan_json" | jq -r '
+                .state.findings[]? |
+                "\(.ccveId)|\(.namespace)|\(.kind)|\(.name)|\(.duration)|\(.remediation[0:50])"
+            ' 2>/dev/null | head -9)
+        fi
+
+        # Show Kyverno findings (informational, not auto-fixable via this flow)
+        if [[ $kyverno_total -gt 0 ]]; then
+            echo -e "${UI_BOLD}POLICY VIOLATIONS${UI_NC} ${UI_FG_DIM}(manual fix required)${UI_NC}"
+            echo "$scan_json" | jq -r '
+                .kyverno.findings[]? |
+                select(.severity == "critical" or .severity == "warning") |
+                "[\(.severity | ascii_upcase[0:1])] \(.policyName) - \(.namespace)/\(.resource)"
+            ' 2>/dev/null | head -5
+            echo ""
+        fi
+
+        echo "────────────────────────────────────────────────────────────────────"
+
+        # Show key hints based on available actions
+        if [[ $finding_num -gt 0 ]]; then
+            echo -e "${UI_CYAN}f${UI_NC}: Fix issue  ${UI_CYAN}r${UI_NC}: Refresh  ${UI_CYAN}q${UI_NC}: Return"
+        else
+            echo -e "${UI_CYAN}r${UI_NC}: Refresh  ${UI_CYAN}q${UI_NC}: Return"
+        fi
+
+        # Read key
+        read -rsn1 key
+        case "$key" in
+            f|F)
+                if [[ $finding_num -eq 0 ]]; then
+                    continue
+                fi
+
+                # Prompt for finding number
+                echo ""
+                if [[ $finding_num -eq 1 ]]; then
+                    echo -e "${UI_BOLD}Fix issue #1?${UI_NC}"
+                    local selected=1
+                else
+                    echo -ne "${UI_BOLD}Fix which issue? [1-$finding_num]: ${UI_NC}"
+                    read -r selected
+                    [[ -z "$selected" ]] && selected=1
+                fi
+
+                # Validate selection
+                if [[ ! "$selected" =~ ^[0-9]+$ ]] || [[ $selected -lt 1 ]] || [[ $selected -gt $finding_num ]]; then
+                    echo -e "${UI_RED}Invalid selection${UI_NC}"
+                    sleep 1
+                    continue
+                fi
+
+                # Get finding details
+                local idx=$((selected - 1))
+                local fix_ccve="${findings_ccve[$idx]}"
+                local fix_ns="${findings_ns[$idx]}"
+                local fix_kind="${findings_kind[$idx]}"
+                local fix_name="${findings_name[$idx]}"
+
+                echo ""
+                echo -e "${UI_BOLD}=== DRY-RUN PREVIEW ===${UI_NC}"
+                echo -e "CCVE:      ${UI_CYAN}$fix_ccve${UI_NC}"
+                echo -e "Resource:  $fix_kind/$fix_name"
+                echo -e "Namespace: $fix_ns"
+                echo ""
+
+                # Run dry-run
+                echo -e "${UI_FG_DIM}Running: cub-agent remedy $fix_ccve --dry-run -n $fix_ns${UI_NC}"
+                echo ""
+                local dry_run_output
+                dry_run_output=$("$agent_cmd" remedy "$fix_ccve" --dry-run -n "$fix_ns" 2>&1)
+                echo "$dry_run_output"
+                echo ""
+
+                # Ask for confirmation
+                echo -ne "${UI_BOLD}Apply this fix? [y/N]: ${UI_NC}"
+                read -r confirm
+                if [[ "$confirm" =~ ^[Yy]$ ]]; then
+                    echo ""
+                    echo -e "${UI_BOLD}=== APPLYING FIX ===${UI_NC}"
+                    echo -e "${UI_FG_DIM}Running: cub-agent remedy $fix_ccve --dry-run=false -n $fix_ns${UI_NC}"
+                    echo ""
+                    "$agent_cmd" remedy "$fix_ccve" --dry-run=false -n "$fix_ns" 2>&1
+                    echo ""
+                    echo -e "${UI_GREEN}✓ Fix applied${UI_NC}"
+
+                    # Refresh scan results
+                    echo ""
+                    echo -e "${UI_FG_DIM}Refreshing scan results...${UI_NC}"
+                    scan_json=$("$agent_cmd" scan --json 2>&1)
+                fi
+
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to continue${UI_NC}"
+                read -rsn1
+                ;;
+            r|R)
+                # Refresh scan
+                echo ""
+                echo -e "${UI_FG_DIM}Refreshing scan results...${UI_NC}"
+                scan_json=$("$agent_cmd" scan --json 2>&1)
+                ;;
+            q|Q|$'\x1b')
+                return
+                ;;
+        esac
+    done
+}
+
+# List deployers
+view_deployers() {
+    local data="$1"
+
+    echo -e "${UI_BOLD}STATUS  KIND            NAME                      NAMESPACE            REVISION   RESOURCES${UI_NC}"
+    echo "─────────────────────────────────────────────────────────────────────────────────────────────"
+
+    echo "$data" | jq -r '.gitops[] | select(.kind != "GitRepository") |
+        "\(if .suspended then "⏸" elif .ready then "✓" else "✗" end)|\(.kind)|\(.name)|\(.namespace)|\(.shortRevision // .revision[0:7] // "-")|\(.inventoryCount // .resourceCount // "-")"
+    ' | while IFS='|' read -r status kind name ns rev resources; do
+        if [[ "$status" == "✗" ]]; then
+            printf "${UI_RED}%-6s${UI_NC}  %-14s  %-24s  %-18s  %-9s  %s\n" "$status" "$kind" "$name" "$ns" "$rev" "$resources"
+        elif [[ "$status" == "⏸" ]]; then
+            printf "${UI_YELLOW}%-6s${UI_NC}  %-14s  %-24s  %-18s  %-9s  %s\n" "$status" "$kind" "$name" "$ns" "$rev" "$resources"
+        else
+            printf "${UI_GREEN}%-6s${UI_NC}  %-14s  %-24s  %-18s  %-9s  %s\n" "$status" "$kind" "$name" "$ns" "$rev" "$resources"
+        fi
+    done
+}
+
+# List sources
+view_sources() {
+    local data="$1"
+
+    echo -e "${UI_BOLD}STATUS  TYPE           URL                                       REF          REVISION${UI_NC}"
+    echo "────────────────────────────────────────────────────────────────────────────────────────────"
+
+    echo "$data" | jq -r '.gitops[] | select(.kind == "GitRepository") |
+        "\(if .ready then "✓" else "✗" end)|Git|\(.shortUrl)|\(.ref)|\(.shortRevision)"
+    ' | while IFS='|' read -r status type url ref rev; do
+        if [[ "$status" == "✗" ]]; then
+            printf "${UI_RED}%-6s${UI_NC}  %-12s  %-40s  %-10s  %s\n" "$status" "$type" "$url" "$ref" "$rev"
+        else
+            printf "${UI_GREEN}%-6s${UI_NC}  %-12s  %-40s  %-10s  %s\n" "$status" "$type" "$url" "$ref" "$rev"
+        fi
+    done
+}
+
+# List workloads
+view_workloads() {
+    local data="$1"
+
+    echo -e "${UI_BOLD}STATUS  NAMESPACE                NAME                      OWNER       MANAGED-BY           IMAGE${UI_NC}"
+    echo "────────────────────────────────────────────────────────────────────────────────────────────────────"
+
+    echo "$data" | jq -r '.workloads[] |
+        "\(if .ready then "✓" else "✗" end)|\(.namespace)|\(.name)|\(.owner)|\(.ownerRef)|\(.image)"
+    ' | sort -t'|' -k4 | while IFS='|' read -r status ns name owner ref image; do
+        local color="${UI_GREEN}"
+        [[ "$status" == "✗" ]] && color="${UI_RED}"
+        [[ "$owner" == "Native" ]] && color="${UI_GRAY}"
+
+        printf "${color}%-6s${UI_NC}  %-22s  %-24s  %-10s  %-18s  %s\n" "$status" "$ns" "$name" "$owner" "$ref" "$image"
+    done
+}
+
+# List suspended only
+view_suspended() {
+    local data="$1"
+
+    local count=0
+    echo "$data" | jq -r '.gitops[] | select(.suspended == true) | "\(.kind)|\(.name)|\(.namespace)"' | while IFS='|' read -r kind name ns; do
+        echo -e "${UI_YELLOW}⏸${UI_NC} $kind/$name in $ns"
+        ((count++))
+    done
+
+    [[ $count -eq 0 ]] && echo -e "${UI_GREEN}No suspended resources${UI_NC}"
+}
+
+#=============================================================================
+# NEW VIEWS - Modern UI
+#=============================================================================
+
+# Configuration sprawl view
+view_sprawl() {
+    local data="$1"
+
+    echo ""
+    draw_header "📊 CONFIGURATION SPRAWL"
+    echo ""
+
+    # Count unique sources
+    local git_repos helm_charts
+    git_repos=$(echo "$data" | jq '[
+        (.gitops[] | select(.kind == "GitRepository") | .url),
+        (.gitops[] | select(.kind == "Application") | .url)
+    ] | unique | length')
+    helm_charts=$(echo "$data" | jq '[.gitops[] | select(.kind == "HelmRelease") | .chart] | unique | length')
+
+    # Count by owner
+    local flux_count argo_count helm_count ch_count native_count total_workloads
+    flux_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Flux")] | length')
+    argo_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ArgoCD")] | length')
+    helm_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Helm")] | length')
+    ch_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ConfigHub")] | length')
+    native_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Native")] | length')
+    total_workloads=$(echo "$data" | jq '.workloads | length')
+
+    local managed_count=$((flux_count + argo_count + helm_count + ch_count))
+    local coverage=0
+    [[ $total_workloads -gt 0 ]] && coverage=$((managed_count * 100 / total_workloads))
+
+    # Count tools in use
+    local tool_count=0
+    [[ $flux_count -gt 0 ]] && ((tool_count++))
+    [[ $argo_count -gt 0 ]] && ((tool_count++))
+    [[ $helm_count -gt 0 ]] && ((tool_count++))
+    [[ $ch_count -gt 0 ]] && ((tool_count++))
+
+    # SOURCES section
+    draw_box_start "SOURCES"
+    draw_box_empty
+    draw_box_line "GIT REPOSITORIES"
+
+    echo "$data" | jq -r '.gitops[] | select(.kind == "GitRepository") |
+        "\(if .ready then "ok" else "error" end)|\(.shortUrl)|\(.ref)"
+    ' | while IFS='|' read -r status url ref; do
+        [[ -z "$url" ]] && continue
+        local icon
+        icon=$(status_icon "$status")
+        draw_box_line "${TREE_L}─ ${url}  ${UI_FG_DIM}${ref}${UI_NC}  ${icon}"
+    done
+
+    echo "$data" | jq -r '.gitops[] | select(.kind == "Application") |
+        "\(if .ready then "ok" else "error" end)|\(.shortUrl)/\(.path)|\(.targetRevision)"
+    ' | while IFS='|' read -r status url ref; do
+        [[ -z "$url" ]] && continue
+        local icon
+        icon=$(status_icon "$status")
+        draw_box_line "${TREE_L}─ ${url}  ${UI_FG_DIM}${ref}${UI_NC}  ${icon}"
+    done
+
+    if [[ $helm_charts -gt 0 ]]; then
+        draw_box_empty
+        draw_box_line "HELM CHARTS"
+        echo "$data" | jq -r '.gitops[] | select(.kind == "HelmRelease") |
+            "\(if .ready then "ok" else "error" end)|\(.chart)|\(.chartVersion)"
+        ' | sort -u | while IFS='|' read -r status chart version; do
+            [[ -z "$chart" ]] && continue
+            local icon
+            icon=$(status_icon "$status")
+            draw_box_line "${TREE_END}─ ${chart}@${version}  ${icon}"
+        done
+    fi
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # BY NAMESPACE section
+    draw_box_start "BY NAMESPACE"
+    draw_box_empty
+
+    echo "$data" | jq -r '
+        .workloads | group_by(.namespace) | .[] |
+        {
+            ns: .[0].namespace,
+            total: length,
+            managed: [.[] | select(.owner != "Native")] | length,
+            native: [.[] | select(.owner == "Native")] | length,
+            owners: ([.[] | .owner] | unique | join(","))
+        } |
+        "\(.ns)|\(.managed)|\(.total)|\(.native)|\(.owners)"
+    ' | sort | while IFS='|' read -r ns managed total native owners; do
+        [[ -z "$ns" ]] && continue
+
+        local ns_coverage=0
+        [[ $total -gt 0 ]] && ns_coverage=$((managed * 100 / total))
+
+        local bar
+        bar=$(progress_bar_colored 20 "$ns_coverage")
+
+        local native_warn=""
+        [[ $native -gt 0 ]] && native_warn="${UI_WARN}(${native} artisanal)${UI_NC}"
+
+        printf '%s  %-18s %s  %d/%d   ' "$UI_BOX_V" "$ns" "$bar" "$managed" "$total"
+        printf '%b\n' "$native_warn"
+
+        # Show owner breakdown
+        if [[ -n "$owners" ]]; then
+            local owner_line=""
+            [[ "$owners" == *"Flux"* ]] && owner_line+="$(owner_label Flux) "
+            [[ "$owners" == *"ArgoCD"* ]] && owner_line+="$(owner_label ArgoCD) "
+            [[ "$owners" == *"Helm"* ]] && owner_line+="$(owner_label Helm) "
+            [[ "$owners" == *"ConfigHub"* ]] && owner_line+="$(owner_label ConfigHub) "
+            [[ "$owners" == *"Native"* ]] && owner_line+="$(owner_label Native) "
+            draw_box_line "                    ${UI_FG_DIM}${owner_line}${UI_NC}"
+        fi
+    done
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # COVERAGE SCORE section
+    draw_box_start "COVERAGE SCORE"
+    draw_box_empty
+
+    local coverage_bar
+    coverage_bar=$(progress_bar_colored 40 "$coverage")
+    draw_box_line "GitOps Managed    ${coverage_bar}  ${coverage}%"
+
+    draw_box_empty
+
+    # Owner breakdown with mini bars
+    local max_count=$total_workloads
+    [[ $max_count -eq 0 ]] && max_count=1
+
+    if [[ $flux_count -gt 0 ]]; then
+        local pct=$((flux_count * 100 / max_count))
+        local bar
+        bar=$(progress_bar 20 "$pct")
+        printf '%s  ' "$UI_BOX_V"
+        printf "$(owner_label Flux)"
+        printf '    %3d   ' "$flux_count"
+        printf "${UI_FG_CYAN}%s${UI_NC}" "$bar"
+        printf '%*s%s\n' 24 '' "$UI_BOX_V"
+    fi
+
+    if [[ $argo_count -gt 0 ]]; then
+        local pct=$((argo_count * 100 / max_count))
+        local bar
+        bar=$(progress_bar 20 "$pct")
+        printf '%s  ' "$UI_BOX_V"
+        printf "$(owner_label ArgoCD)"
+        printf '  %3d   ' "$argo_count"
+        printf "${UI_FG_PURPLE}%s${UI_NC}" "$bar"
+        printf '%*s%s\n' 24 '' "$UI_BOX_V"
+    fi
+
+    if [[ $helm_count -gt 0 ]]; then
+        local pct=$((helm_count * 100 / max_count))
+        local bar
+        bar=$(progress_bar 20 "$pct")
+        printf '%s  ' "$UI_BOX_V"
+        printf "$(owner_label Helm)"
+        printf '    %3d   ' "$helm_count"
+        printf "${UI_FG_ORANGE}%s${UI_NC}" "$bar"
+        printf '%*s%s\n' 24 '' "$UI_BOX_V"
+    fi
+
+    if [[ $ch_count -gt 0 ]]; then
+        local pct=$((ch_count * 100 / max_count))
+        local bar
+        bar=$(progress_bar 20 "$pct")
+        printf '%s  ' "$UI_BOX_V"
+        printf "$(owner_label ConfigHub)"
+        printf ' %3d   ' "$ch_count"
+        printf "${UI_FG_GREEN}%s${UI_NC}" "$bar"
+        printf '%*s%s\n' 22 '' "$UI_BOX_V"
+    fi
+
+    if [[ $native_count -gt 0 ]]; then
+        local pct=$((native_count * 100 / max_count))
+        local bar
+        bar=$(progress_bar 20 "$pct" "$UI_BAR_EMPTY" "$UI_BAR_EMPTY")
+        printf '%s  ' "$UI_BOX_V"
+        printf "$(owner_label Native)"
+        printf '  %3d   ' "$native_count"
+        printf "${UI_FG_DIM}%s${UI_NC}" "$bar"
+        printf "  ${UI_FG_DIM}← add to git${UI_NC}"
+        printf '%*s%s\n' 7 '' "$UI_BOX_V"
+    fi
+
+    draw_box_empty
+    draw_box_end
+
+    # ConfigHub promotion
+    draw_confighub_promo "📊 Want fleet-wide sprawl analysis?" \
+        "See config sprawl across all clusters" \
+        "Compare coverage between environments" \
+        "Track improvement over time"
+
+    echo ""
+}
+
+# Recent changes view - sorted by creation time
+view_recent() {
+    local data="$1"
+
+    echo ""
+    draw_header "🕐 RECENT CHANGES"
+    echo ""
+
+    # Get current time for age calculation
+    local now
+    now=$(date +%s)
+
+    # RECENTLY DEPLOYED section
+    draw_box_start "RECENTLY DEPLOYED WORKLOADS"
+    draw_box_empty
+
+    echo -e "${UI_BOLD}AGE       STATUS  NAMESPACE                NAME                      OWNER${UI_NC}"
+    echo "────────────────────────────────────────────────────────────────────────────────"
+
+    # Sort workloads by creation time (newest first)
+    echo "$data" | jq -r '.workloads[] |
+        "\(.created)|\(if .ready then "✓" else "✗" end)|\(.namespace)|\(.name)|\(.owner)"
+    ' | sort -r | while IFS='|' read -r created status ns name owner; do
+        [[ -z "$created" ]] && continue
+
+        # Calculate age
+        local age_str=""
+        if [[ -n "$created" && "$created" != "null" ]]; then
+            local created_epoch
+            created_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$created" +%s 2>/dev/null || echo "0")
+            if [[ "$created_epoch" -gt 0 ]]; then
+                local age_secs=$((now - created_epoch))
+                if [[ $age_secs -lt 60 ]]; then
+                    age_str="${age_secs}s"
+                elif [[ $age_secs -lt 3600 ]]; then
+                    age_str="$((age_secs / 60))m"
+                elif [[ $age_secs -lt 86400 ]]; then
+                    age_str="$((age_secs / 3600))h"
+                else
+                    age_str="$((age_secs / 86400))d"
+                fi
+            else
+                age_str="?"
+            fi
+        else
+            age_str="?"
+        fi
+
+        local color="${UI_GREEN}"
+        [[ "$status" == "✗" ]] && color="${UI_RED}"
+
+        local owner_display
+        owner_display=$(owner_label "$owner")
+
+        printf "%-9s ${color}%s${UI_NC}       %-24s %-25s %s\n" "$age_str" "$status" "$ns" "$name" "$owner_display"
+    done | head -20
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # RECENT GITOPS ACTIVITY section
+    draw_box_start "RECENT GITOPS ACTIVITY"
+    draw_box_empty
+
+    # GitRepositories with last update time
+    echo -e "${UI_BOLD}SOURCES${UI_NC}"
+    echo "$data" | jq -r '.gitops[] | select(.kind == "GitRepository") |
+        "\(.lastUpdate // "")|\(if .ready then "ok" else "error" end)|\(.shortUrl)|\(.ref)"
+    ' | sort -r | head -5 | while IFS='|' read -r updated status url ref; do
+        [[ -z "$url" ]] && continue
+        local icon
+        icon=$(status_icon "$status")
+        local age_str=""
+        if [[ -n "$updated" && "$updated" != "null" ]]; then
+            local updated_epoch
+            updated_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$updated" +%s 2>/dev/null || echo "0")
+            if [[ "$updated_epoch" -gt 0 ]]; then
+                local age_secs=$((now - updated_epoch))
+                if [[ $age_secs -lt 60 ]]; then
+                    age_str="${age_secs}s ago"
+                elif [[ $age_secs -lt 3600 ]]; then
+                    age_str="$((age_secs / 60))m ago"
+                elif [[ $age_secs -lt 86400 ]]; then
+                    age_str="$((age_secs / 3600))h ago"
+                else
+                    age_str="$((age_secs / 86400))d ago"
+                fi
+            fi
+        fi
+        echo -e "  ${icon}  ${url}  ${UI_FG_DIM}${ref}${UI_NC}  ${UI_FG_CYAN}${age_str}${UI_NC}"
+    done
+
+    echo ""
+    echo -e "${UI_BOLD}KUSTOMIZATIONS${UI_NC}"
+    echo "$data" | jq -r '.gitops[] | select(.kind == "Kustomization") |
+        "\(.lastReconcile // "")|\(if .ready then "ok" else "error" end)|\(.name)|\(.namespace)|\(.shortRevision)"
+    ' | sort -r | head -5 | while IFS='|' read -r reconciled status name ns rev; do
+        [[ -z "$name" ]] && continue
+        local icon
+        icon=$(status_icon "$status")
+        local age_str=""
+        if [[ -n "$reconciled" && "$reconciled" != "null" ]]; then
+            local reconciled_epoch
+            reconciled_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$reconciled" +%s 2>/dev/null || echo "0")
+            if [[ "$reconciled_epoch" -gt 0 ]]; then
+                local age_secs=$((now - reconciled_epoch))
+                if [[ $age_secs -lt 60 ]]; then
+                    age_str="${age_secs}s ago"
+                elif [[ $age_secs -lt 3600 ]]; then
+                    age_str="$((age_secs / 60))m ago"
+                elif [[ $age_secs -lt 86400 ]]; then
+                    age_str="$((age_secs / 3600))h ago"
+                else
+                    age_str="$((age_secs / 86400))d ago"
+                fi
+            fi
+        fi
+        echo -e "  ${icon}  ${name} (${ns})  ${UI_FG_DIM}${rev}${UI_NC}  ${UI_FG_CYAN}${age_str}${UI_NC}"
+    done
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # Tip for CLI users
+    draw_promo \
+        "For time-filtered queries:" \
+        "cub-agent map list --since=1h" \
+        "cub-agent map list --since=24h" \
+        "cub-agent map list --since=7d"
+
+    echo ""
+}
+
+# Factory bypass detection view
+view_bypass() {
+    local data="$1"
+
+    echo ""
+    draw_header "🚧 FACTORY BYPASS DETECTION"
+    echo ""
+
+    # Get native workloads
+    local native_list
+    native_list=$(echo "$data" | jq -r '.workloads[] | select(.owner == "Native") | "\(.namespace)|\(.name)|\(.image)"')
+    local native_count
+    native_count=$(echo "$native_list" | grep -c . 2>/dev/null || echo 0)
+    [[ -z "$native_list" ]] && native_count=0
+
+    # NATIVE WORKLOADS section
+    draw_box_start "NATIVE WORKLOADS (not in git)"
+    draw_box_empty
+
+    if [[ $native_count -gt 0 ]]; then
+        draw_box_line "${UI_BOLD}NAMESPACE          NAME                 IMAGE${UI_NC}"
+        draw_box_separator 58
+
+        echo "$native_list" | head -10 | while IFS='|' read -r ns name image; do
+            [[ -z "$ns" ]] && continue
+            local short_image
+            short_image=$(echo "$image" | rev | cut -d'/' -f1 | rev | cut -c1-25)
+            printf '%s  %-17s  %-19s  %s' "$UI_BOX_V" "$ns" "$name" "$short_image"
+            printf '%*s%s\n' 5 '' "$UI_BOX_V"
+        done
+
+        if [[ $native_count -gt 10 ]]; then
+            draw_box_line "${UI_FG_DIM}... and $((native_count - 10)) more${UI_NC}"
+        fi
+
+        draw_box_empty
+        draw_box_line "${UI_WARN}⚠ These workloads have no GitOps owner - changes will be lost${UI_NC}"
+    else
+        draw_box_line "${UI_OK}✓ No native workloads - all resources are GitOps managed${UI_NC}"
+    fi
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # MANUAL EDITS section
+    local bypass_data
+    bypass_data=$(collect_bypass_data)
+
+    draw_box_start "MANUAL EDITS (kubectl changes)"
+    draw_box_empty
+
+    local manual_edit_count=0
+
+    echo "$bypass_data" | jq -r '
+        .[] |
+        select(.owner != "Native") |
+        select(
+            (.lastAppliedReplicas != null and .currentReplicas != .lastAppliedReplicas) or
+            (.lastAppliedImage != null and .currentImage != .lastAppliedImage)
+        ) |
+        "\(.namespace)/\(.name)|\(.currentReplicas)|\(.lastAppliedReplicas)|\(.currentImage)|\(.lastAppliedImage)"
+    ' | while IFS='|' read -r resource curr_rep last_rep curr_img last_img; do
+        [[ -z "$resource" ]] && continue
+        ((manual_edit_count++))
+
+        draw_box_line "${UI_WARN}⚠  ${resource}${UI_NC}"
+
+        if [[ "$curr_rep" != "$last_rep" && -n "$last_rep" && "$last_rep" != "null" ]]; then
+            draw_box_line "   ${TREE_END}─ spec.replicas: ${last_rep} → ${curr_rep}  ${UI_FG_DIM}(scaled manually)${UI_NC}"
+        fi
+        if [[ "$curr_img" != "$last_img" && -n "$last_img" && "$last_img" != "null" ]]; then
+            local short_curr
+            short_curr=$(echo "$curr_img" | rev | cut -d'/' -f1 | rev)
+            local short_last
+            short_last=$(echo "$last_img" | rev | cut -d'/' -f1 | rev)
+            draw_box_line "   ${TREE_END}─ image: ${short_last} → ${short_curr}"
+        fi
+    done
+
+    if [[ $manual_edit_count -eq 0 ]]; then
+        draw_box_line "${UI_OK}✓ No manual edits detected${UI_NC}"
+    fi
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # RECOMMENDATIONS section
+    if [[ $native_count -gt 0 || $manual_edit_count -gt 0 ]]; then
+        draw_box_start "RECOMMENDATIONS"
+        draw_box_empty
+
+        local rec_num=1
+        if [[ $native_count -gt 0 ]]; then
+            draw_box_line "${rec_num}. Add GitOps labels to native workloads or remove from cluster"
+            ((rec_num++))
+        fi
+
+        if [[ $manual_edit_count -gt 0 ]]; then
+            draw_box_line "${rec_num}. Commit manual changes to git to prevent drift"
+            ((rec_num++))
+        fi
+
+        draw_box_line "${rec_num}. Run ${UI_BOLD}./map scan${UI_NC} to check for related CCVEs"
+
+        draw_box_empty
+        draw_box_end
+    fi
+
+    # ConfigHub promotion
+    draw_confighub_promo "🚧 Want fleet-wide bypass detection?" \
+        "Detect factory bypass across all clusters" \
+        "Get alerts when resources bypass GitOps" \
+        "Track compliance over time"
+
+    echo ""
+}
+
+# Drift detection view
+view_drift() {
+    local data="$1"
+
+    echo ""
+    draw_header "🔄 DRIFT DETECTION"
+    echo ""
+
+    # Collect drift data
+    local ch_drift
+    ch_drift=$(collect_confighub_drift)
+
+    # Count synced vs drifted
+    local synced_count=0 gitops_drifted=0 ch_behind=0
+
+    # GitOps sync status
+    local deployers_total deployers_synced deployers_failed
+    deployers_total=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository")] | length')
+    deployers_synced=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == true and .suspended != true)] | length')
+    deployers_failed=$((deployers_total - deployers_synced))
+
+    synced_count=$deployers_synced
+    gitops_drifted=$deployers_failed
+
+    # ConfigHub revision check
+    local ch_workloads
+    ch_workloads=$(echo "$data" | jq -r '.workloads[] | select(.owner == "ConfigHub") | "\(.confighub.space)/\(.confighub.unit)|\(.confighub.revision)|\(.namespace)/\(.name)"')
+
+    if [[ -n "$ch_workloads" && "$ch_drift" != "{}" ]]; then
+        while IFS='|' read -r key cluster_rev resource; do
+            [[ -z "$key" ]] && continue
+            local head_rev
+            head_rev=$(echo "$ch_drift" | jq -r --arg k "$key" '.[$k].headRevision // empty')
+            if [[ -n "$head_rev" && "$cluster_rev" != "$head_rev" && "$cluster_rev" -lt "$head_rev" ]]; then
+                ((ch_behind++))
+            fi
+        done <<< "$ch_workloads"
+    fi
+
+    local total_issues=$((gitops_drifted + ch_behind))
+
+    # SUMMARY section
+    draw_box_start "SUMMARY"
+    draw_box_empty
+
+    local total=$((synced_count + gitops_drifted + ch_behind))
+    [[ $total -eq 0 ]] && total=1
+
+    local synced_pct=$((synced_count * 100 / total))
+    local drifted_pct=$((gitops_drifted * 100 / total))
+    local behind_pct=$((ch_behind * 100 / total))
+
+    # Synced bar
+    local synced_bar
+    synced_bar=$(progress_bar 40 "$synced_pct")
+    printf '%s  ' "$UI_BOX_V"
+    printf "${UI_OK}✓${UI_NC} Synced        "
+    printf "${UI_OK}%s${UI_NC}" "$synced_bar"
+    printf '  %d' "$synced_count"
+    printf '%*s%s\n' 8 '' "$UI_BOX_V"
+
+    # GitOps Drift bar
+    if [[ $gitops_drifted -gt 0 ]]; then
+        local drift_bar
+        drift_bar=$(progress_bar 40 "$drifted_pct")
+        printf '%s  ' "$UI_BOX_V"
+        printf "${UI_WARN}⚠${UI_NC} GitOps Drift  "
+        printf "${UI_WARN}%s${UI_NC}" "$drift_bar"
+        printf '  %d' "$gitops_drifted"
+        printf '%*s%s\n' 8 '' "$UI_BOX_V"
+    fi
+
+    # ConfigHub Behind bar
+    if [[ $ch_behind -gt 0 ]]; then
+        local behind_bar
+        behind_bar=$(progress_bar 40 "$behind_pct")
+        printf '%s  ' "$UI_BOX_V"
+        printf "${UI_ERR}✗${UI_NC} Behind Rev    "
+        printf "${UI_ERR}%s${UI_NC}" "$behind_bar"
+        printf '  %d' "$ch_behind"
+        printf '%*s%s\n' 8 '' "$UI_BOX_V"
+    fi
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # SYNCED section (if any)
+    if [[ $synced_count -gt 0 ]]; then
+        draw_box_start "SYNCED"
+        draw_box_empty
+
+        echo "$data" | jq -r '.gitops[] | select(.kind != "GitRepository" and .ready == true and .suspended != true) |
+            "\(.name)|\(.owner)|\(.ownerRef // .name)|\(.shortRevision // "-")|\(.lastReconcile // "")"
+        ' | head -8 | while IFS='|' read -r name owner ref rev reconcile; do
+            [[ -z "$name" ]] && continue
+            local ago=""
+            [[ -n "$reconcile" ]] && ago=$(time_ago "$reconcile")
+            printf '%s  ' "$UI_BOX_V"
+            printf "${UI_OK}✓${UI_NC}  %-20s " "$name"
+            printf "$(owner_label "$owner")"
+            printf "/%-15s " "$ref"
+            printf "${UI_FG_DIM}%-9s  %s${UI_NC}" "$rev" "$ago"
+            printf '%*s%s\n' 2 '' "$UI_BOX_V"
+        done
+
+        if [[ $synced_count -gt 8 ]]; then
+            draw_box_line "${UI_FG_DIM}... and $((synced_count - 8)) more${UI_NC}"
+        fi
+
+        draw_box_empty
+        draw_box_end
+        echo ""
+    fi
+
+    # DRIFTED section (if any)
+    if [[ $total_issues -gt 0 ]]; then
+        draw_box_start "DRIFTED"
+        draw_box_empty
+
+        # GitOps drift (failed reconciliation)
+        echo "$data" | jq -r '.gitops[] | select(.kind != "GitRepository" and .ready == false and .suspended != true) |
+            "\(.name)|\(.owner)|\(.ownerRef // .name)|\(.reason)|\(.message)"
+        ' | while IFS='|' read -r name owner ref reason message; do
+            [[ -z "$name" ]] && continue
+            printf '%s  ' "$UI_BOX_V"
+            printf "${UI_WARN}⚠${UI_NC}  %-20s " "$name"
+            printf "$(owner_label "$owner")"
+            printf "/%-15s " "$ref"
+            printf "${UI_WARN}%s${UI_NC}" "$reason"
+            printf '%*s%s\n' 5 '' "$UI_BOX_V"
+
+            if [[ -n "$message" ]]; then
+                local short_msg
+                short_msg=$(echo "$message" | cut -c1-50)
+                draw_box_line "   ${TREE_END}─ ${UI_FG_DIM}${short_msg}...${UI_NC}"
+            fi
+        done
+
+        # ConfigHub behind
+        if [[ -n "$ch_workloads" && "$ch_drift" != "{}" ]]; then
+            while IFS='|' read -r key cluster_rev resource; do
+                [[ -z "$key" ]] && continue
+                local head_rev
+                head_rev=$(echo "$ch_drift" | jq -r --arg k "$key" '.[$k].headRevision // empty')
+                if [[ -n "$head_rev" && "$cluster_rev" != "$head_rev" && "$cluster_rev" -lt "$head_rev" ]]; then
+                    local behind=$((head_rev - cluster_rev))
+                    printf '%s  ' "$UI_BOX_V"
+                    printf "${UI_ERR}✗${UI_NC}  %-20s " "$resource"
+                    printf "$(owner_label ConfigHub)"
+                    printf '            '
+                    printf "${UI_ERR}%d revisions behind${UI_NC}" "$behind"
+                    printf '%*s%s\n' 5 '' "$UI_BOX_V"
+
+                    draw_box_line "   ${TREE_L}─ Cluster:   rev ${cluster_rev}"
+                    draw_box_line "   ${TREE_END}─ ConfigHub: rev ${head_rev}  ${UI_FG_DIM}(latest)${UI_NC}"
+                fi
+            done <<< "$ch_workloads"
+        fi
+
+        draw_box_empty
+        draw_box_end
+    fi
+
+    # ConfigHub promotion
+    draw_confighub_promo "🔄 Want fleet-wide drift detection?" \
+        "Track drift across all clusters" \
+        "Get alerts when resources diverge" \
+        "View drift history over time"
+
+    echo ""
+}
+
+# Variant families view
+view_variants() {
+    local data="$1"
+    local group_by="${VARIANT_GROUP_BY:-app}"
+
+    echo ""
+    draw_header "🌿 VARIANT FAMILIES" "grouped by: ${group_by}"
+    echo ""
+
+    # Check ConfigHub connectivity
+    if ! command -v cub &>/dev/null; then
+        draw_box_start "ERROR"
+        draw_box_empty
+        draw_box_line "${UI_WARN}⚠ Requires ConfigHub connected mode${UI_NC}"
+        draw_box_line ""
+        draw_box_line "Install cub CLI: ${UI_BOLD}https://docs.confighub.com/cli${UI_NC}"
+        draw_box_empty
+        draw_box_end
+        echo ""
+        return
+    fi
+
+    if ! cub context get &>/dev/null 2>&1; then
+        draw_box_start "ERROR"
+        draw_box_empty
+        draw_box_line "${UI_WARN}⚠ Not authenticated to ConfigHub${UI_NC}"
+        draw_box_line ""
+        draw_box_line "Run: ${UI_BOLD}cub auth login${UI_NC}"
+        draw_box_empty
+        draw_box_end
+        echo ""
+        return
+    fi
+
+    # Collect all units from all spaces
+    local spaces
+    spaces=$(cub space list --json 2>/dev/null) || {
+        draw_box_line "${UI_ERR}✗ Failed to fetch spaces${UI_NC}"
+        return
+    }
+
+    # Build variant data
+    local variant_data
+    variant_data=$(echo "$spaces" | jq -r '.[].Space.Slug' 2>/dev/null | while read -r space_slug; do
+        [[ -z "$space_slug" ]] && continue
+        cub unit list --space "$space_slug" --json 2>/dev/null | jq -c --arg space "$space_slug" --arg groupBy "$group_by" '
+            .[] | {
+                space: $space,
+                slug: .Slug,
+                revision: (.HeadRevisionNum // 0),
+                target: (.TargetSlug // "-"),
+                app: (.Labels[$groupBy] // .Labels.app // .Labels.application // "unknown"),
+                variant: (.Labels.variant // .Labels.environment // .Labels.env // $space)
+            }
+        ' 2>/dev/null
+    done | jq -s '.' 2>/dev/null)
+
+    if [[ -z "$variant_data" || "$variant_data" == "[]" ]]; then
+        draw_box_start "NO VARIANTS FOUND"
+        draw_box_empty
+        draw_box_line "No units found with label '${group_by}'"
+        draw_box_line ""
+        draw_box_line "Try: ${UI_BOLD}./map variants --group-by=environment${UI_NC}"
+        draw_box_empty
+        draw_box_end
+        echo ""
+        return
+    fi
+
+    # Group by app
+    echo "$variant_data" | jq -r '
+        group_by(.app) | .[] |
+        "\(.[0].app)|\(length)|\([.[] | {variant: .variant, target: .target, revision: .revision, space: .space, slug: .slug}] | @json)"
+    ' | while IFS='|' read -r app_name var_count variants_json; do
+        [[ -z "$app_name" ]] && continue
+
+        draw_box_start "${app_name}"
+        draw_box_empty
+        draw_box_line "${UI_BOLD}VARIANT       TARGET              REVISION    STATUS${UI_NC}"
+        draw_box_separator 61
+
+        echo "$variants_json" | jq -r '.[] | "\(.variant)|\(.target)|\(.revision)|\(.space)/\(.slug)"' | while IFS='|' read -r variant target rev space_slug; do
+            [[ -z "$variant" ]] && continue
+
+            # Determine sync status (would need to compare to head, simplified for now)
+            local status_icon="${UI_OK}✓ synced${UI_NC}"
+
+            printf '%s  %-12s  %-18s  %-10s  %b' "$UI_BOX_V" "$variant" "$target" "rev $rev" "$status_icon"
+            printf '%*s%s\n' 3 '' "$UI_BOX_V"
+        done
+
+        draw_box_empty
+        draw_box_end
+        echo ""
+    done
+}
+
+# Saved Queries view
+view_queries() {
+    local data="$1"
+
+    echo ""
+    draw_header "🔍 SAVED QUERIES" "run with: map list -q <name>"
+    echo ""
+
+    # Get cluster resource counts for each query
+    local total_resources
+    total_resources=$(echo "$data" | jq '[.workloads[]] | length' 2>/dev/null || echo "0")
+
+    # Built-in queries
+    draw_box_start "BUILT-IN QUERIES"
+    draw_box_empty
+    draw_box_line "${UI_BOLD}NAME          DESCRIPTION                                   MATCHES${UI_NC}"
+    draw_box_separator 68
+
+    # Count matches for each built-in query
+    local unmanaged_count flux_count argo_count helm_count gitops_count deployments_count
+    unmanaged_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Native")] | length' 2>/dev/null || echo "?")
+    flux_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Flux")] | length' 2>/dev/null || echo "?")
+    argo_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Argo")] | length' 2>/dev/null || echo "?")
+    helm_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Helm")] | length' 2>/dev/null || echo "?")
+    gitops_count=$((flux_count + argo_count))
+    deployments_count=$(echo "$data" | jq '[.workloads[] | select(.kind == "Deployment")] | length' 2>/dev/null || echo "?")
+    confighub_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ConfigHub")] | length' 2>/dev/null || echo "?")
+
+    # Show built-in queries with counts
+    printf '%s  %-12s  %-42s  %s%s\n' "$UI_BOX_V" "unmanaged" "Resources with no GitOps owner" "${UI_WARN}${unmanaged_count}${UI_NC}" "  $UI_BOX_V"
+    printf '%s  %-12s  %-42s  %s%s\n' "$UI_BOX_V" "gitops" "Resources managed by GitOps (Flux or Argo)" "${UI_OK}${gitops_count}${UI_NC}" "  $UI_BOX_V"
+    printf '%s  %-12s  %-42s  %s%s\n' "$UI_BOX_V" "flux" "All Flux-managed resources" "${UI_FG_CYAN}${flux_count}${UI_NC}" "  $UI_BOX_V"
+    printf '%s  %-12s  %-42s  %s%s\n' "$UI_BOX_V" "argo" "All Argo CD-managed resources" "${UI_FG_PURPLE}${argo_count}${UI_NC}" "  $UI_BOX_V"
+    printf '%s  %-12s  %-42s  %s%s\n' "$UI_BOX_V" "helm-only" "Helm-managed resources (no GitOps)" "${UI_FG_ORANGE}${helm_count}${UI_NC}" "  $UI_BOX_V"
+    printf '%s  %-12s  %-42s  %s%s\n' "$UI_BOX_V" "confighub" "Resources managed by ConfigHub" "${UI_FG_GREEN}${confighub_count}${UI_NC}" "  $UI_BOX_V"
+    printf '%s  %-12s  %-42s  %s%s\n' "$UI_BOX_V" "deployments" "All Deployments across namespaces" "${UI_FG_DIM}${deployments_count}${UI_NC}" "  $UI_BOX_V"
+
+    draw_box_empty
+    draw_box_end
+    echo ""
+
+    # Check for user queries
+    local user_queries_file="${HOME}/.confighub/queries.yaml"
+    if [[ -f "$user_queries_file" ]]; then
+        draw_box_start "YOUR QUERIES"
+        draw_box_empty
+        draw_box_line "${UI_BOLD}NAME          DESCRIPTION                                   QUERY${UI_NC}"
+        draw_box_separator 68
+
+        # Parse user queries (simple YAML parsing)
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^[[:space:]]*-[[:space:]]*name:[[:space:]]*(.+)$ ]]; then
+                current_name="${BASH_REMATCH[1]}"
+            elif [[ "$line" =~ ^[[:space:]]*description:[[:space:]]*(.+)$ ]]; then
+                current_desc="${BASH_REMATCH[1]}"
+            elif [[ "$line" =~ ^[[:space:]]*query:[[:space:]]*(.+)$ ]]; then
+                current_query="${BASH_REMATCH[1]}"
+                # Output the entry
+                if [[ -n "$current_name" ]]; then
+                    printf '%s  %-12s  %-42s  %s%s\n' "$UI_BOX_V" "$current_name" "${current_desc:0:40}" "${UI_FG_DIM}${current_query:0:20}${UI_NC}" "  $UI_BOX_V"
+                fi
+                current_name=""
+                current_desc=""
+                current_query=""
+            fi
+        done < "$user_queries_file"
+
+        draw_box_empty
+        draw_box_end
+        echo ""
+    fi
+
+    # Usage hints
+    draw_box_start "USAGE"
+    draw_box_empty
+    draw_box_line "Run a saved query:"
+    draw_box_line "  ${UI_BOLD}cub-agent map list -q unmanaged${UI_NC}"
+    draw_box_line "  ${UI_BOLD}cub-agent map list -q \"unmanaged AND namespace=prod*\"${UI_NC}"
+    draw_box_line ""
+    draw_box_line "Save a new query:"
+    draw_box_line "  ${UI_BOLD}cub-agent map queries save my-team \"labels[team]=payments\"${UI_NC}"
+    draw_box_empty
+    draw_box_end
+    echo ""
+
+    # Light hook to ConfigHub
+    echo "────────────────────────────────────────────────────────────────"
+    echo "🔗 Want team-shared queries, alerts, and history?"
+    echo "   See: ${UI_BOLD}cub-agent map queries connect${UI_NC}"
+    echo "────────────────────────────────────────────────────────────────"
+}
+
+#=============================================================================
+# THREE MAPS VIEW - GitOps Trees + ConfigHub Hierarchy + Repo Structure
+#=============================================================================
+
+view_maps() {
+    local data="$1"
+
+    echo ""
+    draw_header "🗺️ THREE MAPS" "GitOps · ConfigHub · Repos"
+    echo ""
+
+    #-------------------------------------------------------------------------
+    # MAP 1: GITOPS RESOURCE TREES
+    #-------------------------------------------------------------------------
+    echo -e "${UI_BOLD}MAP 1: GITOPS RESOURCE TREES${UI_NC}"
+    echo "════════════════════════════════════════════════════════════════════════"
+
+    # Flux Kustomizations - show tree for each
+    local has_flux=false
+    while IFS='|' read -r name ns; do
+        [[ -z "$name" ]] && continue
+        has_flux=true
+        echo -e "\n${UI_FG_CYAN}FLUX${UI_NC} Kustomization/${name} (${ns})"
+        flux tree kustomization "$name" -n "$ns" 2>/dev/null | head -20 | while read -r line; do
+            echo "  $line"
+        done
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "Kustomization") | "\(.name)|\(.namespace)"' 2>/dev/null)
+
+    # ArgoCD Applications
+    local has_argo=false
+    while IFS='|' read -r name ns; do
+        [[ -z "$name" ]] && continue
+        has_argo=true
+        echo -e "\n${UI_FG_PURPLE}ARGO${UI_NC} Application/${name} (${ns})"
+        # Show Argo app resources
+        kubectl get application "$name" -n "$ns" -o jsonpath='{.status.resources[*].kind}' 2>/dev/null | tr ' ' '\n' | sort | uniq -c | while read -r count kind; do
+            [[ -n "$kind" ]] && echo "  ├── ${count} ${kind}(s)"
+        done
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "Application") | "\(.name)|\(.namespace)"' 2>/dev/null)
+
+    # Helm Releases
+    local has_helm=false
+    while IFS='|' read -r name ns chart; do
+        [[ -z "$name" ]] && continue
+        has_helm=true
+        echo -e "\n${UI_FG_ORANGE}HELM${UI_NC} HelmRelease/${name} (${ns})"
+        echo "  └── Chart: ${chart}"
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "HelmRelease") | "\(.name)|\(.namespace)|\(.chart)"' 2>/dev/null)
+
+    # Native resources summary
+    local native_count
+    native_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Native")] | length' 2>/dev/null || echo 0)
+    if [[ $native_count -gt 0 ]]; then
+        echo -e "\n${UI_FG_DIM}NATIVE${UI_NC} (kubectl-applied): ${native_count} workloads"
+        echo "$data" | jq -r '.workloads[] | select(.owner == "Native") | "  └── \(.namespace)/\(.name)"' 2>/dev/null | head -10
+        [[ $native_count -gt 10 ]] && echo "  └── ... and $((native_count - 10)) more"
+    fi
+
+    [[ "$has_flux" == "false" && "$has_argo" == "false" && "$has_helm" == "false" ]] && echo -e "  ${UI_FG_DIM}No GitOps deployers found${UI_NC}"
+
+    echo ""
+
+    #-------------------------------------------------------------------------
+    # MAP 2a: CONFIGHUB BASIC HIERARCHY (Org → Space → Units/Workers/Targets)
+    #-------------------------------------------------------------------------
+    echo -e "${UI_BOLD}MAP 2a: CONFIGHUB BASIC HIERARCHY${UI_NC}"
+    echo "════════════════════════════════════════════════════════════════════════"
+
+    local ch_connected=false
+    local ch_context ch_org ch_space
+    if command -v cub &>/dev/null && cub context get &>/dev/null 2>&1; then
+        ch_connected=true
+        ch_context=$(cub context get --json 2>/dev/null || echo '{}')
+        ch_org=$(echo "$ch_context" | jq -r '.metadata.organizationName // "unknown"')
+        ch_space=$(echo "$ch_context" | jq -r '.settings.defaultSpace // "none"')
+
+        echo -e "\n  ${UI_BOLD}Org:${UI_NC} ${ch_org}"
+
+        if [[ "$ch_space" != "none" && "$ch_space" != "null" && -n "$ch_space" ]]; then
+            local ch_units ch_workers ch_targets
+            echo -e "  └── ${UI_BOLD}Space:${UI_NC} ${ch_space}"
+
+            # Get counts
+            ch_units=$(cub unit list --space "$ch_space" --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+            ch_workers=$(cub worker list --space "$ch_space" --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+            ch_targets=$(cub target list --space "$ch_space" --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+
+            echo "      ├── Units: ${ch_units}"
+            echo "      ├── Workers: ${ch_workers}"
+            echo "      └── Targets: ${ch_targets}"
+        else
+            echo -e "  └── ${UI_FG_DIM}No space selected (cub context set --space <name>)${UI_NC}"
+        fi
+    else
+        echo -e "\n  ${UI_FG_DIM}Not connected to ConfigHub${UI_NC}"
+        echo -e "  ${UI_FG_DIM}Run: cub auth login${UI_NC}"
+    fi
+
+    echo ""
+
+    #-------------------------------------------------------------------------
+    # MAP 2b: HUB/APPSPACE MODEL (Org → Hub → App Spaces → Units+Labels+Queries)
+    #-------------------------------------------------------------------------
+    echo -e "${UI_BOLD}MAP 2b: HUB/APPSPACE MODEL${UI_NC} ${UI_FG_DIM}(Platform + App Teams)${UI_NC}"
+    echo "════════════════════════════════════════════════════════════════════════"
+
+    if [[ "$ch_connected" == "true" ]]; then
+        echo -e "\n  ${UI_BOLD}Org:${UI_NC} ${ch_org}"
+        echo -e "  │"
+
+        # Get all spaces and categorize them
+        local all_spaces
+        all_spaces=$(cub space list --json 2>/dev/null || echo '[]')
+        local space_count
+        space_count=$(echo "$all_spaces" | jq 'length' 2>/dev/null || echo 0)
+
+        if [[ $space_count -gt 0 ]]; then
+            # Look for platform/hub spaces (usually named platform-*, infra-*, hub-*)
+            echo -e "  ├── ${UI_FG_PURPLE}Hub (Platform)${UI_NC}"
+            local platform_spaces
+            platform_spaces=$(echo "$all_spaces" | jq -r '.[] | select(.Space.Slug | test("^(platform|infra|hub|shared)-")) | .Space.Slug' 2>/dev/null)
+            if [[ -n "$platform_spaces" ]]; then
+                echo "$platform_spaces" | while read -r space; do
+                    local units_count
+                    units_count=$(cub unit list --space "$space" --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+                    echo "  │   └── ${space} (${units_count} units)"
+                done
+            else
+                echo -e "  │   └── ${UI_FG_DIM}(no platform spaces found)${UI_NC}"
+            fi
+
+            # Look for app team spaces (everything else)
+            echo -e "  │"
+            echo -e "  └── ${UI_FG_CYAN}App Spaces (Teams)${UI_NC}"
+            local app_spaces
+            app_spaces=$(echo "$all_spaces" | jq -r '.[] | select(.Space.Slug | test("^(platform|infra|hub|shared)-") | not) | .Space.Slug' 2>/dev/null)
+            if [[ -n "$app_spaces" ]]; then
+                echo "$app_spaces" | head -5 | while read -r space; do
+                    local units_count labels_summary
+                    units_count=$(cub unit list --space "$space" --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+                    # Get unique label keys from units in this space
+                    labels_summary=$(cub unit list --space "$space" --json 2>/dev/null | jq -r '[.[].Labels | keys] | flatten | unique | join(", ")' 2>/dev/null || echo "")
+                    echo -e "      ├── ${UI_BOLD}${space}${UI_NC} (${units_count} units)"
+                    if [[ -n "$labels_summary" && "$labels_summary" != "null" ]]; then
+                        echo -e "      │   └── ${UI_FG_DIM}labels: ${labels_summary}${UI_NC}"
+                    fi
+                done
+                local app_count
+                app_count=$(echo "$app_spaces" | wc -l | tr -d ' ')
+                [[ $app_count -gt 5 ]] && echo -e "      └── ${UI_FG_DIM}... and $((app_count - 5)) more app spaces${UI_NC}"
+            else
+                echo -e "      └── ${UI_FG_DIM}(no app spaces found)${UI_NC}"
+            fi
+
+            # Show queryable dimensions
+            echo ""
+            echo -e "  ${UI_FG_DIM}Queryable Dimensions:${UI_NC}"
+            echo -e "    • ${UI_BOLD}space${UI_NC} - filter by app team space"
+            echo -e "    • ${UI_BOLD}labels${UI_NC} - filter by unit labels (app, env, team, variant)"
+            echo -e "    • ${UI_BOLD}owner${UI_NC} - filter by GitOps tool (Flux, ArgoCD, Helm)"
+        else
+            echo -e "  └── ${UI_FG_DIM}No spaces found${UI_NC}"
+        fi
+    else
+        echo -e "\n  ${UI_FG_DIM}Not connected to ConfigHub${UI_NC}"
+        echo -e "  ${UI_FG_DIM}Run: cub auth login${UI_NC}"
+    fi
+
+    echo ""
+
+    #-------------------------------------------------------------------------
+    # MAP 3: REPO STRUCTURE → DEPLOYMENTS
+    #-------------------------------------------------------------------------
+    echo -e "${UI_BOLD}MAP 3: REPO STRUCTURE → DEPLOYMENTS${UI_NC}"
+    echo "════════════════════════════════════════════════════════════════════════"
+
+    # GitRepositories
+    echo -e "\n  ${UI_BOLD}Git Sources:${UI_NC}"
+    while IFS='|' read -r name url ref; do
+        [[ -z "$name" ]] && continue
+        echo -e "  └── ${UI_FG_CYAN}${url}${UI_NC}@${ref}"
+        # Find kustomizations using this source
+        echo "$data" | jq -r --arg src "$name" '.gitops[] | select(.kind == "Kustomization" and .source.name == $src) | "      └── path: \(.source.path // "?") → \(.name) (\(.inventoryCount) resources)"' 2>/dev/null
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "GitRepository") | "\(.name)|\(.shortUrl)|\(.ref)"' 2>/dev/null)
+
+    # Argo sources
+    while IFS='|' read -r name url path rev; do
+        [[ -z "$name" ]] && continue
+        echo -e "\n  └── ${UI_FG_PURPLE}${url}${UI_NC}@${rev}"
+        echo "      └── path: ${path} → ${name}"
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "Application") | "\(.name)|\(.shortUrl)|\(.path)|\(.targetRevision)"' 2>/dev/null)
+
+    echo ""
+    echo "────────────────────────────────────────────────────────────────────────"
+    echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+}
+
+#=============================================================================
+# PANEL-BASED TUI
+#=============================================================================
+
+# Left navigation panel - compact summary with navigation hints
+render_nav_panel() {
+    local data="$1"
+    local active_mode="${2:-status}"
+
+    local cluster
+    cluster=$(kubectl config current-context 2>/dev/null | sed 's/kind-//')
+
+    # Compute metrics
+    local deployers_ok deployers_total sources_ok sources_total
+    local workloads_ok workloads_total issues_count
+
+    deployers_total=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository")] | length')
+    deployers_ok=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == true and .suspended != true)] | length')
+    sources_total=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository")] | length')
+    sources_ok=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository" and .ready == true)] | length')
+    workloads_total=$(echo "$data" | jq '.workloads | length')
+    workloads_ok=$(echo "$data" | jq '[.workloads[] | select(.ready == true)] | length')
+
+    local deployer_issues=$((deployers_total - deployers_ok))
+    local workload_issues=$((workloads_total - workloads_ok))
+    issues_count=$((deployer_issues + workload_issues))
+
+    # Health percentage
+    local health_pct=100
+    [[ $workloads_total -gt 0 ]] && health_pct=$((workloads_ok * 100 / workloads_total))
+
+    local health_icon="${UI_GREEN}●${UI_NC}"
+    [[ $health_pct -lt 90 ]] && health_icon="${UI_YELLOW}●${UI_NC}"
+    [[ $health_pct -lt 70 ]] && health_icon="${UI_RED}●${UI_NC}"
+
+    # Build content
+    local content=""
+
+    # Cluster context - prominent
+    content+="${UI_FG_DIM}CLUSTER${UI_NC}\n"
+    content+="${UI_BOLD}${cluster}${UI_NC}\n"
+    content+="\n"
+
+    # State summary
+    content+="${UI_FG_DIM}STATE${UI_NC}\n"
+    if [[ $issues_count -eq 0 ]]; then
+        content+="${UI_GREEN}● Healthy${UI_NC}\n"
+    else
+        content+="${UI_YELLOW}⚠ ${issues_count} issue(s)${UI_NC}\n"
+    fi
+    content+="\n"
+
+    # Quick stats
+    content+="${UI_FG_DIM}RESOURCES${UI_NC}\n"
+    content+="${deployers_ok}/${deployers_total} deployers\n"
+    content+="${sources_ok}/${sources_total} sources\n"
+    content+="${workloads_ok}/${workloads_total} workloads\n"
+    content+="\n"
+
+    content+="${UI_FG_DIM}─────────────────────${UI_NC}\n"
+
+    # Navigation items with active indicator
+    local nav_items=(
+        "s:status:Status"
+        "i:issues:Issues (${issues_count})"
+        "p:pipelines:Pipelines"
+        "w:workloads:Workloads (${workloads_total})"
+        "d:drift:Drift"
+        "r:sprawl:Sprawl"
+        "R:recent:Recent"
+    )
+
+    for item in "${nav_items[@]}"; do
+        local key="${item%%:*}"
+        local rest="${item#*:}"
+        local mode="${rest%%:*}"
+        local label="${rest#*:}"
+
+        if [[ "$mode" == "$active_mode" ]]; then
+            content+="${UI_BOLD}${UI_FG_CYAN}▸ [${key}] ${label}${UI_NC}\n"
+        else
+            content+="  [${key}] ${label}\n"
+        fi
+    done
+
+    content+="\n"
+    content+="${UI_FG_DIM}─────────────────────${UI_NC}\n"
+    content+="${UI_FG_DIM}[t]race [c]cve [?]help${UI_NC}\n"
+    content+="${UI_FG_DIM}[h]ub [q]uit${UI_NC}\n"
+
+    echo -e "$content"
+}
+
+# Right panel - status details
+panel_status_content() {
+    local data="$1"
+
+    local deployers_ok deployers_total sources_ok sources_total
+    local workloads_ok workloads_total suspended
+
+    deployers_total=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository")] | length')
+    deployers_ok=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == true and .suspended != true)] | length')
+    suspended=$(echo "$data" | jq '[.gitops[] | select(.suspended == true)] | length')
+    sources_total=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository")] | length')
+    sources_ok=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository" and .ready == true)] | length')
+    workloads_total=$(echo "$data" | jq '.workloads | length')
+    workloads_ok=$(echo "$data" | jq '[.workloads[] | select(.ready == true)] | length')
+
+    local health_pct=100
+    [[ $workloads_total -gt 0 ]] && health_pct=$((workloads_ok * 100 / workloads_total))
+
+    # Health bar
+    local bar_width=30
+    local bar_filled=$((health_pct * bar_width / 100))
+    local bar_empty=$((bar_width - bar_filled))
+    local bar_color="${UI_GREEN}"
+    [[ $health_pct -lt 90 ]] && bar_color="${UI_YELLOW}"
+    [[ $health_pct -lt 70 ]] && bar_color="${UI_RED}"
+
+    local health_bar=""
+    for ((i=0; i<bar_filled; i++)); do health_bar+="█"; done
+    for ((i=0; i<bar_empty; i++)); do health_bar+="░"; done
+
+    local content=""
+    content+="${UI_BOLD}CLUSTER HEALTH${UI_NC}\n"
+    content+="\n"
+    content+="${bar_color}${health_bar}${UI_NC} ${health_pct}%\n"
+    content+="\n"
+
+    # Status icons
+    local d_icon="${UI_GREEN}✓${UI_NC}"
+    [[ $deployers_ok -lt $deployers_total ]] && d_icon="${UI_RED}✗${UI_NC}"
+    local s_icon="${UI_GREEN}✓${UI_NC}"
+    [[ $sources_ok -lt $sources_total ]] && s_icon="${UI_RED}✗${UI_NC}"
+    local w_icon="${UI_GREEN}✓${UI_NC}"
+    [[ $workloads_ok -lt $workloads_total ]] && w_icon="${UI_YELLOW}⚠${UI_NC}"
+
+    content+="${d_icon} Deployers    ${deployers_ok}/${deployers_total}\n"
+    content+="${s_icon} Sources      ${sources_ok}/${sources_total}\n"
+    content+="${w_icon} Workloads    ${workloads_ok}/${workloads_total}\n"
+
+    if [[ $suspended -gt 0 ]]; then
+        content+="\n"
+        content+="${UI_YELLOW}⏸${UI_NC} ${suspended} suspended\n"
+    fi
+
+    # Ownership breakdown
+    local flux_count argo_count helm_count native_count
+    flux_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Flux")] | length')
+    argo_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ArgoCD")] | length')
+    helm_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Helm")] | length')
+    native_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Native")] | length')
+
+    content+="\n"
+    content+="${UI_BOLD}OWNERSHIP${UI_NC}\n"
+    [[ $flux_count -gt 0 ]] && content+="${UI_FG_CYAN}Flux${UI_NC}     ${flux_count}\n"
+    [[ $argo_count -gt 0 ]] && content+="${UI_FG_PURPLE}ArgoCD${UI_NC}   ${argo_count}\n"
+    [[ $helm_count -gt 0 ]] && content+="${UI_FG_ORANGE}Helm${UI_NC}     ${helm_count}\n"
+    [[ $native_count -gt 0 ]] && content+="${UI_FG_DIM}Native${UI_NC}   ${native_count}\n"
+
+    echo -e "$content"
+}
+
+# Right panel - issues
+panel_issues_content() {
+    local data="$1"
+
+    local content=""
+    content+="${UI_BOLD}ISSUES${UI_NC}\n"
+    content+="\n"
+
+    local has_issues=false
+
+    # Failed deployers
+    while IFS='|' read -r kind name ns reason; do
+        [[ -z "$kind" ]] && continue
+        has_issues=true
+        content+="${UI_RED}✗${UI_NC} ${kind}/${name}\n"
+        content+="  ${UI_FG_DIM}${ns}: ${reason}${UI_NC}\n"
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind != "GitRepository" and .ready == false and .suspended != true) | "\(.kind)|\(.name)|\(.namespace)|\(.reason)"')
+
+    # Suspended
+    while IFS='|' read -r kind name ns; do
+        [[ -z "$kind" ]] && continue
+        has_issues=true
+        content+="${UI_YELLOW}⏸${UI_NC} ${kind}/${name}\n"
+        content+="  ${UI_FG_DIM}${ns}: suspended${UI_NC}\n"
+    done < <(echo "$data" | jq -r '.gitops[] | select(.suspended == true) | "\(.kind)|\(.name)|\(.namespace)"')
+
+    # Failed workloads
+    while IFS='|' read -r name ns avail desired; do
+        [[ -z "$name" ]] && continue
+        has_issues=true
+        content+="${UI_RED}✗${UI_NC} deploy/${name}\n"
+        content+="  ${UI_FG_DIM}${ns}: ${avail}/${desired} ready${UI_NC}\n"
+    done < <(echo "$data" | jq -r '.workloads[] | select(.ready == false) | "\(.name)|\(.namespace)|\(.available)|\(.desired)"')
+
+    if [[ "$has_issues" == "false" ]]; then
+        content+="${UI_GREEN}✓${UI_NC} No issues detected\n"
+    fi
+
+    echo -e "$content"
+}
+
+# Right panel - pipelines
+panel_pipelines_content() {
+    local data="$1"
+
+    local content=""
+    content+="${UI_BOLD}PIPELINES${UI_NC}\n"
+    content+="\n"
+    content+="${UI_FG_DIM}SOURCE → DEPLOYER → TARGET${UI_NC}\n"
+    content+="\n"
+
+    # Flux Kustomizations
+    echo "$data" | jq -r '
+        [.gitops[] | select(.kind == "Kustomization")] as $ks |
+        [.gitops[] | select(.kind == "GitRepository")] as $gr |
+        $ks[] | . as $k |
+        ($gr[] | select(.name == $k.source.name and .namespace == $k.source.ns) // {shortUrl: "?", ref: "?"}) as $g |
+        "\(if $k.suspended then "suspended" elif $k.ready then "ok" else "error" end)|\($g.shortUrl)|\($k.name)|\($k.inventoryCount)"
+    ' 2>/dev/null | while IFS='|' read -r status source deployer count; do
+        [[ -z "$status" ]] && continue
+        local icon="${UI_GREEN}✓${UI_NC}"
+        [[ "$status" == "error" ]] && icon="${UI_RED}✗${UI_NC}"
+        [[ "$status" == "suspended" ]] && icon="${UI_YELLOW}⏸${UI_NC}"
+        content+="${icon} ${source}\n"
+        content+="  → ${deployer} → ${count} resources\n"
+    done
+
+    # Helm releases
+    echo "$data" | jq -r '
+        [.gitops[] | select(.kind == "HelmRelease")] | .[] |
+        "\(if .suspended then "suspended" elif .ready then "ok" else "error" end)|\(.chart)|\(.name)"
+    ' 2>/dev/null | while IFS='|' read -r status chart name; do
+        [[ -z "$status" ]] && continue
+        local icon="${UI_GREEN}✓${UI_NC}"
+        [[ "$status" == "error" ]] && icon="${UI_RED}✗${UI_NC}"
+        [[ "$status" == "suspended" ]] && icon="${UI_YELLOW}⏸${UI_NC}"
+        content+="${icon} ${chart}\n"
+        content+="  → ${name} (helm)\n"
+    done
+
+    # Argo Applications
+    echo "$data" | jq -r '
+        [.gitops[] | select(.kind == "Application")] | .[] |
+        "\(if .ready then "ok" else "error" end)|\(.shortUrl)|\(.name)|\(.destNamespace)"
+    ' 2>/dev/null | while IFS='|' read -r status source name ns; do
+        [[ -z "$status" ]] && continue
+        local icon="${UI_GREEN}✓${UI_NC}"
+        [[ "$status" == "error" ]] && icon="${UI_RED}✗${UI_NC}"
+        content+="${icon} ${source}\n"
+        content+="  → ${name} → ${ns}\n"
+    done
+
+    echo -e "$content"
+}
+
+# Right panel - workloads
+panel_workloads_content() {
+    local data="$1"
+
+    local content=""
+    content+="${UI_BOLD}WORKLOADS${UI_NC}\n"
+    content+="\n"
+
+    # Group by owner for cleaner display
+    local flux_count argo_count helm_count native_count
+    flux_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Flux")] | length')
+    argo_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ArgoCD")] | length')
+    helm_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Helm")] | length')
+    native_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Native")] | length')
+
+    # Show workloads by owner
+    if [[ $flux_count -gt 0 ]]; then
+        content+="${UI_FG_CYAN}FLUX (${flux_count})${UI_NC}\n"
+        echo "$data" | jq -r '.workloads[] | select(.owner == "Flux") | "\(if .ready then "ok" else "error" end)|\(.name)|\(.namespace)"' | head -5 | while IFS='|' read -r status name ns; do
+            [[ -z "$status" ]] && continue
+            local icon="${UI_GREEN}✓${UI_NC}"
+            [[ "$status" == "error" ]] && icon="${UI_RED}✗${UI_NC}"
+            content+="  ${icon} ${name} ${UI_FG_DIM}${ns}${UI_NC}\n"
+        done
+        [[ $flux_count -gt 5 ]] && content+="  ${UI_FG_DIM}... and $((flux_count - 5)) more${UI_NC}\n"
+        content+="\n"
+    fi
+
+    if [[ $argo_count -gt 0 ]]; then
+        content+="${UI_FG_PURPLE}ARGOCD (${argo_count})${UI_NC}\n"
+        echo "$data" | jq -r '.workloads[] | select(.owner == "ArgoCD") | "\(if .ready then "ok" else "error" end)|\(.name)|\(.namespace)"' | head -5 | while IFS='|' read -r status name ns; do
+            [[ -z "$status" ]] && continue
+            local icon="${UI_GREEN}✓${UI_NC}"
+            [[ "$status" == "error" ]] && icon="${UI_RED}✗${UI_NC}"
+            content+="  ${icon} ${name} ${UI_FG_DIM}${ns}${UI_NC}\n"
+        done
+        [[ $argo_count -gt 5 ]] && content+="  ${UI_FG_DIM}... and $((argo_count - 5)) more${UI_NC}\n"
+        content+="\n"
+    fi
+
+    if [[ $helm_count -gt 0 ]]; then
+        content+="${UI_FG_ORANGE}HELM (${helm_count})${UI_NC}\n"
+        echo "$data" | jq -r '.workloads[] | select(.owner == "Helm") | "\(if .ready then "ok" else "error" end)|\(.name)|\(.namespace)"' | head -5 | while IFS='|' read -r status name ns; do
+            [[ -z "$status" ]] && continue
+            local icon="${UI_GREEN}✓${UI_NC}"
+            [[ "$status" == "error" ]] && icon="${UI_RED}✗${UI_NC}"
+            content+="  ${icon} ${name} ${UI_FG_DIM}${ns}${UI_NC}\n"
+        done
+        [[ $helm_count -gt 5 ]] && content+="  ${UI_FG_DIM}... and $((helm_count - 5)) more${UI_NC}\n"
+        content+="\n"
+    fi
+
+    if [[ $native_count -gt 0 ]]; then
+        content+="${UI_FG_DIM}NATIVE (${native_count})${UI_NC}\n"
+        echo "$data" | jq -r '.workloads[] | select(.owner == "Native") | "\(if .ready then "ok" else "error" end)|\(.name)|\(.namespace)"' | head -5 | while IFS='|' read -r status name ns; do
+            [[ -z "$status" ]] && continue
+            local icon="${UI_GREEN}✓${UI_NC}"
+            [[ "$status" == "error" ]] && icon="${UI_RED}✗${UI_NC}"
+            content+="  ${icon} ${name} ${UI_FG_DIM}${ns}${UI_NC}\n"
+        done
+        [[ $native_count -gt 5 ]] && content+="  ${UI_FG_DIM}... and $((native_count - 5)) more${UI_NC}\n"
+    fi
+
+    echo -e "$content"
+}
+
+# Right panel - drift detection
+panel_drift_content() {
+    local data="$1"
+
+    local content=""
+    content+="${UI_BOLD}DRIFT DETECTION${UI_NC}\n"
+    content+="\n"
+
+    # Count synced vs drifted
+    local deployers_total deployers_synced deployers_failed
+    deployers_total=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository")] | length')
+    deployers_synced=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == true and .suspended != true)] | length')
+    deployers_failed=$((deployers_total - deployers_synced))
+
+    local synced_pct=100
+    [[ $deployers_total -gt 0 ]] && synced_pct=$((deployers_synced * 100 / deployers_total))
+
+    # Sync bar
+    local bar_width=25
+    local bar_filled=$((synced_pct * bar_width / 100))
+    local bar_empty=$((bar_width - bar_filled))
+    local bar_color="${UI_GREEN}"
+    [[ $synced_pct -lt 90 ]] && bar_color="${UI_YELLOW}"
+    [[ $synced_pct -lt 70 ]] && bar_color="${UI_RED}"
+
+    local sync_bar=""
+    for ((i=0; i<bar_filled; i++)); do sync_bar+="█"; done
+    for ((i=0; i<bar_empty; i++)); do sync_bar+="░"; done
+
+    content+="${bar_color}${sync_bar}${UI_NC} ${synced_pct}% synced\n"
+    content+="\n"
+
+    content+="${UI_GREEN}✓${UI_NC} Synced    ${deployers_synced}\n"
+    if [[ $deployers_failed -gt 0 ]]; then
+        content+="${UI_YELLOW}⚠${UI_NC} Drifted   ${deployers_failed}\n"
+    fi
+    content+="\n"
+
+    # List drifted resources
+    if [[ $deployers_failed -gt 0 ]]; then
+        content+="${UI_BOLD}DRIFTED${UI_NC}\n"
+        echo "$data" | jq -r '.gitops[] | select(.kind != "GitRepository" and .ready == false and .suspended != true) | "\(.kind)|\(.name)|\(.namespace)"' | head -5 | while IFS='|' read -r kind name ns; do
+            [[ -z "$kind" ]] && continue
+            content+="${UI_YELLOW}⚠${UI_NC} ${kind}/${name}\n"
+            content+="  ${UI_FG_DIM}${ns}${UI_NC}\n"
+        done
+    fi
+
+    echo -e "$content"
+}
+
+# Right panel - sprawl analysis
+panel_sprawl_content() {
+    local data="$1"
+
+    local content=""
+    content+="${UI_BOLD}CONFIG SPRAWL${UI_NC}\n"
+    content+="\n"
+
+    # Count unique sources
+    local git_repos helm_charts
+    git_repos=$(echo "$data" | jq '[
+        (.gitops[] | select(.kind == "GitRepository") | .url),
+        (.gitops[] | select(.kind == "Application") | .url)
+    ] | unique | length')
+    helm_charts=$(echo "$data" | jq '[.gitops[] | select(.kind == "HelmRelease") | .chart] | unique | length')
+
+    # Count by owner
+    local flux_count argo_count helm_count native_count total_workloads
+    flux_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Flux")] | length')
+    argo_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ArgoCD")] | length')
+    helm_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Helm")] | length')
+    native_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Native")] | length')
+    total_workloads=$(echo "$data" | jq '.workloads | length')
+
+    local managed_count=$((flux_count + argo_count + helm_count))
+    local coverage=0
+    [[ $total_workloads -gt 0 ]] && coverage=$((managed_count * 100 / total_workloads))
+
+    # Coverage bar
+    local bar_width=25
+    local bar_filled=$((coverage * bar_width / 100))
+    local bar_empty=$((bar_width - bar_filled))
+    local bar_color="${UI_GREEN}"
+    [[ $coverage -lt 80 ]] && bar_color="${UI_YELLOW}"
+    [[ $coverage -lt 50 ]] && bar_color="${UI_RED}"
+
+    local cov_bar=""
+    for ((i=0; i<bar_filled; i++)); do cov_bar+="█"; done
+    for ((i=0; i<bar_empty; i++)); do cov_bar+="░"; done
+
+    content+="${bar_color}${cov_bar}${UI_NC} ${coverage}% managed\n"
+    content+="\n"
+
+    content+="${UI_BOLD}SOURCES${UI_NC}\n"
+    content+="  Git repos     ${git_repos}\n"
+    content+="  Helm charts   ${helm_charts}\n"
+    content+="\n"
+
+    content+="${UI_BOLD}TOOLS${UI_NC}\n"
+    [[ $flux_count -gt 0 ]] && content+="  ${UI_FG_CYAN}Flux${UI_NC}      ${flux_count} workloads\n"
+    [[ $argo_count -gt 0 ]] && content+="  ${UI_FG_PURPLE}ArgoCD${UI_NC}    ${argo_count} workloads\n"
+    [[ $helm_count -gt 0 ]] && content+="  ${UI_FG_ORANGE}Helm${UI_NC}      ${helm_count} workloads\n"
+    [[ $native_count -gt 0 ]] && content+="  ${UI_FG_DIM}Native${UI_NC}    ${native_count} workloads\n"
+
+    echo -e "$content"
+}
+
+# Right panel - recent changes
+panel_recent_content() {
+    local data="$1"
+
+    local content=""
+    content+="${UI_BOLD}RECENT CHANGES${UI_NC}\n"
+    content+="\n"
+
+    local now
+    now=$(date +%s)
+
+    # Sort workloads by creation time (newest first)
+    echo "$data" | jq -r '.workloads[] | "\(.created)|\(if .ready then "ok" else "error" end)|\(.namespace)|\(.name)|\(.owner)"' | sort -r | head -8 | while IFS='|' read -r created status ns name owner; do
+        [[ -z "$created" ]] && continue
+
+        # Calculate age
+        local age_str="?"
+        if [[ -n "$created" && "$created" != "null" ]]; then
+            local created_epoch
+            created_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$created" +%s 2>/dev/null || echo "0")
+            if [[ "$created_epoch" -gt 0 ]]; then
+                local age_secs=$((now - created_epoch))
+                if [[ $age_secs -lt 60 ]]; then
+                    age_str="${age_secs}s"
+                elif [[ $age_secs -lt 3600 ]]; then
+                    age_str="$((age_secs / 60))m"
+                elif [[ $age_secs -lt 86400 ]]; then
+                    age_str="$((age_secs / 3600))h"
+                else
+                    age_str="$((age_secs / 86400))d"
+                fi
+            fi
+        fi
+
+        local icon="${UI_GREEN}✓${UI_NC}"
+        [[ "$status" == "error" ]] && icon="${UI_RED}✗${UI_NC}"
+
+        content+="${icon} ${age_str} ${name}\n"
+        content+="  ${UI_FG_DIM}${ns} • ${owner}${UI_NC}\n"
+    done
+
+    echo -e "$content"
+}
+
+# Panel-based dashboard with side-by-side layout
+view_dashboard_panels() {
+    local data="$1"
+    local mode="status"  # Default mode
+
+    while true; do
+        clear
+
+        # Header
+        echo -e "⚡ ${UI_BOLD}CONFIGHUB MAP${UI_NC}" | $UI_GUM style \
+            --border rounded \
+            --border-foreground 212 \
+            --padding "0 2"
+        echo ""
+
+        # Get panel contents
+        local left_content right_content
+        left_content=$(render_nav_panel "$data" "$mode")
+
+        case "$mode" in
+            status)    right_content=$(panel_status_content "$data") ;;
+            issues)    right_content=$(panel_issues_content "$data") ;;
+            pipelines) right_content=$(panel_pipelines_content "$data") ;;
+            workloads) right_content=$(panel_workloads_content "$data") ;;
+            drift)     right_content=$(panel_drift_content "$data") ;;
+            sprawl)    right_content=$(panel_sprawl_content "$data") ;;
+            recent)    right_content=$(panel_recent_content "$data") ;;
+            *)         right_content=$(panel_status_content "$data") ;;
+        esac
+
+        # Render panels side by side
+        local left_width=28
+        local right_width=50
+
+        local left_box right_box
+        left_box=$(echo -e "$left_content" | $UI_GUM style \
+            --border normal \
+            --border-foreground 240 \
+            --padding "0 1" \
+            --width "$left_width")
+        right_box=$(echo -e "$right_content" | $UI_GUM style \
+            --border normal \
+            --border-foreground 240 \
+            --padding "0 1" \
+            --width "$right_width")
+
+        $UI_GUM join --horizontal "$left_box" "  " "$right_box"
+
+        echo ""
+
+        # Read key
+        read -rsn1 key
+
+        case "$key" in
+            s) mode="status" ;;
+            i) mode="issues" ;;
+            p) mode="pipelines" ;;
+            w) mode="workloads" ;;
+            d) mode="drift" ;;
+            r) mode="sprawl" ;;
+            R) mode="recent" ;;
+            t)
+                clear
+                view_trace_interactive "$data"
+                read -rsn1
+                ;;
+            c)
+                clear
+                view_scan_interactive "$data"
+                read -rsn1
+                ;;
+            O)
+                clear
+                view_context_selector
+                data=$(collect_data)
+                ;;
+            :)
+                clear
+                view_command_input
+                data=$(collect_data)
+                ;;
+            /)
+                clear
+                view_search_input
+                ;;
+            \?)
+                view_help_overlay
+                ;;
+            h|H)
+                clear
+                echo -e "${UI_FG_DIM}Launching ConfigHub hierarchy TUI...${UI_NC}"
+                local cub_agent_bin=""
+                local repo_root
+                repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
+                if [[ -x "${repo_root}/cub-agent" ]]; then
+                    cub_agent_bin="${repo_root}/cub-agent"
+                elif command -v cub-agent &>/dev/null; then
+                    cub_agent_bin="cub-agent"
+                fi
+                if [[ -n "$cub_agent_bin" ]]; then
+                    "$cub_agent_bin" map --hub
+                else
+                    echo -e "${UI_FG_RED}cub-agent not found${UI_NC}"
+                    read -rsn1
+                fi
+                data=$(collect_data)
+                ;;
+            q|Q)
+                clear
+                echo "Goodbye!"
+                return
+                ;;
+            *) ;; # ignore, stay in current mode
+        esac
+    done
+}
+
+# Full dashboard - Modern UI
+# Clean gum-based dashboard (used when gum is available)
+view_dashboard_gum() {
+    local data="$1"
+    local cluster
+    cluster=$(kubectl config current-context 2>/dev/null | sed 's/kind-//')
+
+    # Compute all metrics
+    local deployers_total deployers_ready suspended_count sources_total sources_ready
+    local workloads_total workloads_ready
+
+    deployers_total=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository")] | length')
+    deployers_ready=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == true and .suspended != true)] | length')
+    suspended_count=$(echo "$data" | jq '[.gitops[] | select(.suspended == true)] | length')
+    sources_total=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository")] | length')
+    sources_ready=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository" and .ready == true)] | length')
+
+    workloads_total=$(echo "$data" | jq '.workloads | length')
+    workloads_ready=$(echo "$data" | jq '[.workloads[] | select(.ready == true)] | length')
+
+    local workload_problems=$((workloads_total - workloads_ready))
+
+    # Ownership counts
+    local flux_count argo_count ch_count helm_count native_count
+    flux_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Flux")] | length')
+    argo_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ArgoCD")] | length')
+    ch_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ConfigHub")] | length')
+    helm_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Helm")] | length')
+    native_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Native")] | length')
+
+    local managed_count=$((flux_count + argo_count + helm_count + ch_count))
+    local coverage=0
+    [[ $workloads_total -gt 0 ]] && coverage=$((managed_count * 100 / workloads_total))
+
+    local health_pct=100
+    [[ $workloads_total -gt 0 ]] && health_pct=$((workloads_ready * 100 / workloads_total))
+
+    # Header with context selector
+    echo ""
+
+    # Get all available contexts and build context selector line
+    local current_context
+    current_context=$(kubectl config current-context 2>/dev/null || echo "none")
+    local all_contexts
+    all_contexts=$(kubectl config get-contexts -o name 2>/dev/null | head -5)  # Limit to 5 for display
+
+    # Build context selector string with active highlighted
+    local context_line=""
+    local context_count=0
+    while IFS= read -r ctx; do
+        [[ -z "$ctx" ]] && continue
+        ((context_count++))
+        # Clean up context name for display (remove kind- prefix if present)
+        local display_name="${ctx#kind-}"
+        if [[ "$ctx" == "$current_context" ]]; then
+            # Active context - highlighted with background
+            context_line+="${UI_FG_GREEN}● ${display_name}${UI_NC}  "
+        else
+            # Inactive context - dimmed
+            context_line+="${UI_FG_DIM}○ ${display_name}${UI_NC}  "
+        fi
+    done <<< "$all_contexts"
+
+    # Header title
+    local header_title="⚡ CONFIGHUB MAP"
+
+    echo -e "${header_title}" | $UI_GUM style \
+        --border rounded \
+        --border-foreground 212 \
+        --foreground 212 \
+        --bold \
+        --padding "0 2" \
+        --width 72
+
+    # Context selector row (if multiple contexts exist)
+    if [[ $context_count -gt 0 ]]; then
+        echo -e "  ${UI_FG_DIM}CONTEXT${UI_NC}  ${context_line}" | $UI_GUM style \
+            --padding "0 1" \
+            --width 72
+    fi
+
+    echo ""
+
+    # HEALTH section content - with colors
+    local health_bar=""
+    local bar_filled=$((health_pct * 30 / 100))
+    local bar_empty=$((30 - bar_filled))
+
+    # Color the health bar based on percentage
+    local bar_color
+    if [[ $health_pct -ge 90 ]]; then
+        bar_color="${UI_OK}"
+    elif [[ $health_pct -ge 70 ]]; then
+        bar_color="${UI_WARN}"
+    else
+        bar_color="${UI_ERR}"
+    fi
+
+    for ((i=0; i<bar_filled; i++)); do health_bar+="█"; done
+    for ((i=0; i<bar_empty; i++)); do health_bar+="░"; done
+    health_bar="${bar_color}${health_bar}${UI_NC}"
+
+    # Colored status icons
+    local deployer_icon source_icon workload_icon
+    if [[ $((deployers_total - deployers_ready - suspended_count)) -eq 0 ]]; then
+        deployer_icon="${UI_OK}✓${UI_NC}"
+    else
+        deployer_icon="${UI_ERR}✗${UI_NC}"
+    fi
+    if [[ $sources_ready -eq $sources_total ]]; then
+        source_icon="${UI_OK}✓${UI_NC}"
+    else
+        source_icon="${UI_ERR}✗${UI_NC}"
+    fi
+    if [[ $workload_problems -eq 0 ]]; then
+        workload_icon="${UI_OK}✓${UI_NC}"
+    else
+        workload_icon="${UI_WARN}⚠${UI_NC}"
+    fi
+
+    local health_content
+    health_content=$(printf "%b  %d%%   %d/%d workloads healthy\n\n%b Deployers  %d/%d      %b Sources  %d/%d      %b Workloads  %d/%d" \
+        "$health_bar" "$health_pct" "$workloads_ready" "$workloads_total" \
+        "$deployer_icon" "$deployers_ready" "$deployers_total" \
+        "$source_icon" "$sources_ready" "$sources_total" \
+        "$workload_icon" "$workloads_ready" "$workloads_total")
+
+    echo -e "[s]tatus" | $UI_GUM style --foreground 255 --bold
+    echo -e "$health_content" | $UI_GUM style \
+        --border normal \
+        --border-foreground 240 \
+        --padding "0 2" \
+        --width 72
+
+    # ISSUES section - with colored icons
+    local issues_content=""
+    local pod_restarts
+    pod_restarts=$(collect_pod_restarts 2>/dev/null || echo "[]")
+
+    # Failed workloads
+    while IFS='|' read -r resource avail desired; do
+        [[ -z "$resource" ]] && continue
+        local ns name restarts
+        ns=$(echo "$resource" | cut -d'/' -f1)
+        name=$(echo "$resource" | cut -d'/' -f2)
+        restarts=$(echo "$pod_restarts" | jq -r --arg ns "$ns" --arg name "$name" \
+            '[.[] | select(.namespace == $ns and (.name | startswith($name)))] | map(.restarts) | add // 0' 2>/dev/null || echo "0")
+
+        local restart_info=""
+        [[ $restarts -gt 0 ]] && restart_info="  ${UI_ERR}${restarts} restarts${UI_NC}"
+        issues_content+="${UI_ERR}✗${UI_NC}  ${resource}  ${avail}/${desired} pods${restart_info}\n"
+    done < <(echo "$data" | jq -r '.workloads[] | select(.ready == false) | "\(.namespace)/\(.name)|\(.available)|\(.desired)"')
+
+    if [[ -n "$issues_content" ]]; then
+        echo ""
+        echo -e "[i]ssues" | $UI_GUM style --foreground 196 --bold
+        echo -e "$issues_content" | $UI_GUM style \
+            --border normal \
+            --border-foreground 196 \
+            --padding "0 2" \
+            --width 72
+    fi
+
+    # PIPELINES section - with colored icons
+    echo ""
+    local pipelines_content=""
+
+    # Flux pipelines
+    while IFS='|' read -r status source deployer count; do
+        [[ -z "$source" ]] && continue
+        local icon="${UI_OK}✓${UI_NC}"
+        [[ "$status" == "error" ]] && icon="${UI_ERR}✗${UI_NC}"
+        [[ "$status" == "warn" ]] && icon="${UI_WARN}⏸${UI_NC}"
+        pipelines_content+="${icon}  ${source} ──▶ ${deployer} ──▶ ${count} resources\n"
+    done < <(echo "$data" | jq -r '
+        [.gitops[] | select(.kind == "Kustomization")] as $ks |
+        [.gitops[] | select(.kind == "GitRepository")] as $gr |
+        $ks[] | . as $k |
+        ($gr[] | select(.name == $k.source.name and .namespace == $k.source.ns) // {shortUrl: "?"}) as $g |
+        "\(if $k.suspended then "warn" elif $k.ready then "ok" else "error" end)|\($g.shortUrl)@\($g.ref // "?")|\($k.name)|\($k.inventoryCount)"
+    ' 2>/dev/null)
+
+    # Helm releases
+    while IFS='|' read -r status source deployer; do
+        [[ -z "$source" ]] && continue
+        local icon="${UI_OK}✓${UI_NC}"
+        [[ "$status" == "error" ]] && icon="${UI_ERR}✗${UI_NC}"
+        [[ "$status" == "warn" ]] && icon="${UI_WARN}⏸${UI_NC}"
+        pipelines_content+="${icon}  ${source} ──▶ ${deployer} ──▶ helm\n"
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "HelmRelease") |
+        "\(if .suspended then "warn" elif .ready then "ok" else "error" end)|\(.chart)@\(.chartVersion)|\(.name)"' 2>/dev/null)
+
+    # Argo applications
+    while IFS='|' read -r status source deployer dest; do
+        [[ -z "$source" ]] && continue
+        local icon="${UI_OK}✓${UI_NC}"
+        [[ "$status" == "error" ]] && icon="${UI_ERR}✗${UI_NC}"
+        pipelines_content+="${icon}  ${source} ──▶ ${deployer} ──▶ ${dest}\n"
+    done < <(echo "$data" | jq -r '.gitops[] | select(.kind == "Application") |
+        "\(if .ready then "ok" else "error" end)|\(.shortUrl)/\(.path)@\(.targetRevision)|\(.name)|\(.destNamespace)"' 2>/dev/null)
+
+    if [[ -n "$pipelines_content" ]]; then
+        echo -e "p[i]pelines" | $UI_GUM style --foreground 255 --bold
+        echo -e "$pipelines_content" | $UI_GUM style \
+            --border normal \
+            --border-foreground 240 \
+            --padding "0 2" \
+            --width 72
+    fi
+
+    # OWNERSHIP section - with colored labels and bars
+    echo ""
+    local ownership_line=""
+
+    # Build colored ownership line
+    if [[ $flux_count -gt 0 ]]; then
+        ownership_line+="${UI_FG_CYAN}Flux${UI_NC} "
+        for ((i=0; i<flux_count && i<8; i++)); do ownership_line+="${UI_FG_CYAN}█${UI_NC}"; done
+        ownership_line+=" ${flux_count}    "
+    fi
+    if [[ $argo_count -gt 0 ]]; then
+        ownership_line+="${UI_FG_PURPLE}ArgoCD${UI_NC} "
+        for ((i=0; i<argo_count && i<6; i++)); do ownership_line+="${UI_FG_PURPLE}█${UI_NC}"; done
+        ownership_line+=" ${argo_count}    "
+    fi
+    if [[ $helm_count -gt 0 ]]; then
+        ownership_line+="${UI_FG_ORANGE}Helm${UI_NC} "
+        for ((i=0; i<helm_count && i<6; i++)); do ownership_line+="${UI_FG_ORANGE}█${UI_NC}"; done
+        ownership_line+=" ${helm_count}    "
+    fi
+    if [[ $native_count -gt 0 ]]; then
+        ownership_line+="${UI_FG_DIM}Native${UI_NC} "
+        for ((i=0; i<native_count && i<6; i++)); do ownership_line+="${UI_FG_DIM}░${UI_NC}"; done
+        ownership_line+=" ${native_count}"
+    fi
+
+    # Colored coverage bar
+    local coverage_bar=""
+    local cov_filled=$((coverage * 40 / 100))
+    local cov_empty=$((40 - cov_filled))
+    local cov_color
+    if [[ $coverage -ge 90 ]]; then
+        cov_color="${UI_OK}"
+    elif [[ $coverage -ge 70 ]]; then
+        cov_color="${UI_WARN}"
+    else
+        cov_color="${UI_ERR}"
+    fi
+    for ((i=0; i<cov_filled; i++)); do coverage_bar+="█"; done
+    for ((i=0; i<cov_empty; i++)); do coverage_bar+="░"; done
+    coverage_bar="${cov_color}${coverage_bar}${UI_NC}"
+
+    local ownership_content="${ownership_line}\n\nGitOps Coverage   ${coverage_bar}  ${coverage}%  ${UI_FG_DIM}(${managed_count}/${workloads_total} managed)${UI_NC}"
+
+    echo -e "[w]orkloads" | $UI_GUM style --foreground 255 --bold
+    echo -e "$ownership_content" | $UI_GUM style \
+        --border normal \
+        --border-foreground 240 \
+        --padding "0 2" \
+        --width 72
+
+    # Side-by-side DRIFT and SPRAWL - with colors
+    echo ""
+    local gitops_drifted=0
+    gitops_drifted=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == false and .suspended != true)] | length')
+    local synced_count=$deployers_ready
+
+    local drift_content
+    if [[ $gitops_drifted -eq 0 ]]; then
+        drift_content="${UI_OK}✓${UI_NC} ${synced_count} synced\n${UI_FG_DIM}  no drift${UI_NC}"
+    else
+        drift_content="${UI_OK}✓${UI_NC} ${synced_count} synced\n${UI_WARN}⚠${UI_NC} ${gitops_drifted} drifted"
+    fi
+
+    local git_repos helm_charts
+    git_repos=$(echo "$data" | jq '[(.gitops[] | select(.kind == "GitRepository") | .url), (.gitops[] | select(.kind == "Application") | .url)] | unique | length')
+    helm_charts=$(echo "$data" | jq '[.gitops[] | select(.kind == "HelmRelease") | .chart] | unique | length')
+
+    # Colored tools
+    local tools=""
+    [[ $flux_count -gt 0 ]] && tools+="${UI_FG_CYAN}Flux${UI_NC} "
+    [[ $argo_count -gt 0 ]] && tools+="${UI_FG_PURPLE}Argo${UI_NC} "
+    [[ $helm_count -gt 0 ]] && tools+="${UI_FG_ORANGE}Helm${UI_NC}"
+
+    local sprawl_content="Sources   ${git_repos} repos  ${helm_charts} charts\nTools     ${tools}"
+    if [[ $native_count -gt 0 ]]; then
+        sprawl_content+="\n${UI_WARN}Orphans   ${native_count} native${UI_NC}"
+    else
+        sprawl_content+="\n${UI_OK}No orphans${UI_NC}"
+    fi
+
+    local drift_box sprawl_box
+    drift_box=$(echo -e "$drift_content" | $UI_GUM style --border normal --border-foreground 240 --padding "0 1" --width 33)
+    sprawl_box=$(echo -e "$sprawl_content" | $UI_GUM style --border normal --border-foreground 240 --padding "0 1" --width 35)
+
+    # Build the panels with titles (hints in title)
+    local drift_panel sprawl_panel
+    drift_panel=$(echo -e "[d]rift" | $UI_GUM style --foreground 255 --bold)$'\n'"$drift_box"
+    sprawl_panel=$(echo -e "sp[r]awl" | $UI_GUM style --foreground 255 --bold)$'\n'"$sprawl_box"
+
+    # Join horizontally (gum join takes text arguments)
+    $UI_GUM join --horizontal "$drift_panel" "  " "$sprawl_panel"
+
+    # CONFIGHUB section - show when connected (second model: org → space → unit → target)
+    if command -v cub &>/dev/null && cub context get &>/dev/null 2>&1; then
+        echo ""
+        local ch_context ch_space ch_units ch_workers ch_targets
+        ch_context=$(cub context get --json 2>/dev/null || echo '{}')
+        ch_space=$(echo "$ch_context" | jq -r '.DefaultSpace // "none"')
+
+        if [[ "$ch_space" != "none" && "$ch_space" != "null" && -n "$ch_space" ]]; then
+            # Get space stats
+            ch_units=$(cub unit list --space "$ch_space" --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+            ch_workers=$(cub worker list --space "$ch_space" --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+            ch_targets=$(cub target list --space "$ch_space" --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+
+            # Worker status
+            local ch_worker_ready ch_worker_icon
+            ch_worker_ready=$(cub worker list --space "$ch_space" --json 2>/dev/null | jq '[.[] | select(.BridgeWorker.Condition == "Ready")] | length' 2>/dev/null || echo 0)
+            if [[ $ch_worker_ready -eq $ch_workers && $ch_workers -gt 0 ]]; then
+                ch_worker_icon="${UI_OK}✓${UI_NC}"
+            elif [[ $ch_workers -eq 0 ]]; then
+                ch_worker_icon="${UI_FG_DIM}○${UI_NC}"
+            else
+                ch_worker_icon="${UI_WARN}⚠${UI_NC}"
+            fi
+
+            local ch_content
+            ch_content="${UI_BOLD}Space:${UI_NC} ${ch_space}\n"
+            ch_content+="${ch_worker_icon} Workers  ${ch_worker_ready}/${ch_workers}      Units  ${ch_units}      Targets  ${ch_targets}\n"
+            ch_content+="${UI_FG_DIM}Press [h] for full ConfigHub hierarchy${UI_NC}"
+
+            echo -e "[h]ub: ConfigHub" | $UI_GUM style --foreground 147 --bold
+            echo -e "$ch_content" | $UI_GUM style \
+                --border normal \
+                --border-foreground 147 \
+                --padding "0 2" \
+                --width 72
+        fi
+    fi
+
+    # Interactive navigation hint
+    echo ""
+    echo -e "${UI_FG_DIM}Keys: [s]tatus [i]ssues [p]ipelines [w]orkloads [d]rift [r]sprawl [t]race [c]cve | [M]aps [Q]ueries [A]ppSpace [h]ub [?] help [q]uit${UI_NC}"
+    echo ""
+}
+
+# Interactive dashboard loop - stays in dashboard mode after drilling down
+view_dashboard_interactive() {
+    local data="$1"
+
+    while true; do
+        clear
+        view_dashboard_gum "$data"
+
+        # Read single keypress
+        local key
+        read -rsn1 key 2>/dev/null || break
+
+        case "$key" in
+            s)
+                clear
+                view_status "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            i)
+                clear
+                view_problems "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            p)
+                clear
+                view_pipelines "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            w)
+                clear
+                view_workloads "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            d)
+                clear
+                view_drift "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            r)
+                clear
+                view_sprawl "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            R)
+                clear
+                view_recent "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            t)
+                clear
+                view_trace_interactive "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            c)
+                clear
+                view_scan_interactive "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            M|m)
+                clear
+                view_maps "$data"
+                read -rsn1
+                ;;
+            O)
+                clear
+                view_context_selector
+                # Reload data after context switch
+                data=$(collect_data)
+                ;;
+            :)
+                clear
+                view_command_input
+                # Reload data after command
+                data=$(collect_data)
+                ;;
+            /)
+                clear
+                view_search_input
+                ;;
+            \?)
+                view_help_overlay
+                ;;
+            h|H)
+                # Launch ConfigHub hierarchy TUI
+                clear
+                echo -e "${UI_FG_DIM}Launching ConfigHub hierarchy TUI...${UI_NC}"
+                local cub_agent_bin=""
+                local repo_root
+                repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
+                if [[ -x "${repo_root}/cub-agent" ]]; then
+                    cub_agent_bin="${repo_root}/cub-agent"
+                elif command -v cub-agent &>/dev/null; then
+                    cub_agent_bin="cub-agent"
+                fi
+                if [[ -n "$cub_agent_bin" ]]; then
+                    "$cub_agent_bin" map --hub
+                else
+                    echo -e "${UI_FG_RED}cub-agent not found${UI_NC}"
+                    echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-agent${UI_NC}"
+                    echo ""
+                    echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                    read -rsn1
+                fi
+                # Reload data after returning
+                data=$(collect_data)
+                ;;
+            Q)
+                clear
+                view_queries "$data"
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            A)
+                # Launch App Space management
+                clear
+                echo -e "${UI_FG_DIM}Launching App Space management...${UI_NC}"
+                local cub_agent_bin=""
+                local repo_root
+                repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
+                if [[ -x "${repo_root}/cub-agent" ]]; then
+                    cub_agent_bin="${repo_root}/cub-agent"
+                elif command -v cub-agent &>/dev/null; then
+                    cub_agent_bin="cub-agent"
+                fi
+                if [[ -n "$cub_agent_bin" ]]; then
+                    # Show App Space list with quick actions
+                    echo -e "\n${UI_BOLD}⚡ APP SPACES${UI_NC}\n"
+                    "$cub_agent_bin" app-space list 2>/dev/null || echo -e "${UI_FG_DIM}No App Spaces found (try: cub-agent import --wizard)${UI_NC}"
+                    echo ""
+                    echo -e "${UI_FG_DIM}Commands:${UI_NC}"
+                    echo -e "  cub-agent app-space create <name>    Create App Space"
+                    echo -e "  cub-agent import --wizard            Import from cluster"
+                    echo -e "  cub-agent map --mode fleet           View fleet by App Space"
+                    echo ""
+                else
+                    echo -e "${UI_FG_RED}cub-agent not found${UI_NC}"
+                    echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-agent${UI_NC}"
+                fi
+                echo ""
+                echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
+                read -rsn1
+                ;;
+            q)
+                clear
+                echo "Goodbye!"
+                return
+                ;;
+            *) ;; # ignore other keys, refresh dashboard
+        esac
+    done
+}
+
+view_dashboard() {
+    local data="$1"
+
+    # Use rich gum dashboard (shows Health, Issues, Pipelines, Ownership all at once)
+    # Panel mode is available via specific view keys but default shows full dashboard
+    if [[ -n "$UI_GUM" ]]; then
+        view_dashboard_interactive "$data"
+        return
+    fi
+
+    # Fallback to legacy dashboard
+    local cluster
+    cluster=$(kubectl config current-context 2>/dev/null | sed 's/kind-//')
+
+    local deployers_total deployers_ready suspended_count sources_total sources_ready
+    local workloads_total workloads_ready
+
+    deployers_total=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository")] | length')
+    deployers_ready=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == true and .suspended != true)] | length')
+    suspended_count=$(echo "$data" | jq '[.gitops[] | select(.suspended == true)] | length')
+    sources_total=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository")] | length')
+    sources_ready=$(echo "$data" | jq '[.gitops[] | select(.kind == "GitRepository" and .ready == true)] | length')
+
+    workloads_total=$(echo "$data" | jq '.workloads | length')
+    workloads_ready=$(echo "$data" | jq '[.workloads[] | select(.ready == true)] | length')
+
+    local deployer_problems=$((deployers_total - deployers_ready - suspended_count))
+    local workload_problems=$((workloads_total - workloads_ready))
+    local total_problems=$((deployer_problems + workload_problems))
+
+    # Ownership counts
+    local flux_count argo_count ch_count helm_count native_count
+    flux_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Flux")] | length')
+    argo_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ArgoCD")] | length')
+    ch_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "ConfigHub")] | length')
+    helm_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Helm")] | length')
+    native_count=$(echo "$data" | jq '[.workloads[] | select(.owner == "Native")] | length')
+
+    local managed_count=$((flux_count + argo_count + helm_count + ch_count))
+    local coverage=0
+    [[ $workloads_total -gt 0 ]] && coverage=$((managed_count * 100 / workloads_total))
+
+    echo ""
+
+    # Hero header
+    draw_header "⚡ CONFIGHUB MAP" "$cluster"
+
+    echo ""
+
+    # HEALTH section
+    draw_box_start "HEALTH"
+    draw_box_empty
+
+    # Main health bar
+    local health_pct=100
+    [[ $workloads_total -gt 0 ]] && health_pct=$((workloads_ready * 100 / workloads_total))
+    local health_bar
+    health_bar=$(progress_bar_colored 30 "$health_pct")
+    draw_box_line "${health_bar}  ${health_pct}%   ${workloads_ready}/${workloads_total} workloads healthy"
+
+    draw_box_empty
+
+    # Quick stats row
+    local deployer_icon source_icon workload_icon
+    if [[ $deployer_problems -eq 0 ]]; then
+        deployer_icon="${UI_OK}✓${UI_NC}"
+    else
+        deployer_icon="${UI_ERR}✗${UI_NC}"
+    fi
+    if [[ $sources_ready -eq $sources_total ]]; then
+        source_icon="${UI_OK}✓${UI_NC}"
+    else
+        source_icon="${UI_ERR}✗${UI_NC}"
+    fi
+    if [[ $workload_problems -eq 0 ]]; then
+        workload_icon="${UI_OK}✓${UI_NC}"
+    else
+        workload_icon="${UI_WARN}⚠${UI_NC}"
+    fi
+
+    printf '%s  ' "$UI_BOX_V"
+    printf "${deployer_icon} Deployers  %d/%d" "$deployers_ready" "$deployers_total"
+    printf '      '
+    printf "${source_icon} Sources  %d/%d" "$sources_ready" "$sources_total"
+    printf '      '
+    printf "${workload_icon} Workloads  %d/%d" "$workloads_ready" "$workloads_total"
+    printf '%*s%s\n' 3 '' "$UI_BOX_V"
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # ISSUES section (only if problems exist)
+    if [[ $total_problems -gt 0 || $suspended_count -gt 0 ]]; then
+        draw_box_start "ISSUES"
+        draw_box_empty
+
+        # Collect pod restart data for enhanced issue display
+        local pod_restarts
+        pod_restarts=$(collect_pod_restarts)
+
+        # Failed deployers
+        echo "$data" | jq -r '.gitops[] | select(.kind != "GitRepository" and .ready == false and .suspended != true) |
+            "\(.kind)/\(.name)|\(.namespace)|\(.reason)"
+        ' | while IFS='|' read -r resource ns reason; do
+            [[ -z "$resource" ]] && continue
+            draw_box_line "${UI_ERR}✗${UI_NC}  ${resource}  ${UI_FG_DIM}${ns}${UI_NC}  ${UI_ERR}${reason}${UI_NC}"
+        done
+
+        # Suspended
+        echo "$data" | jq -r '.gitops[] | select(.suspended == true) |
+            "\(.kind)/\(.name)|\(.namespace)"
+        ' | while IFS='|' read -r resource ns; do
+            [[ -z "$resource" ]] && continue
+            draw_box_line "${UI_WARN}⏸${UI_NC}  ${resource}  ${UI_FG_DIM}${ns}${UI_NC}  ${UI_WARN}suspended${UI_NC}"
+        done
+
+        # Failed workloads with restart counts
+        echo "$data" | jq -r '.workloads[] | select(.ready == false) |
+            "\(.namespace)/\(.name)|\(.available)|\(.desired)"
+        ' | while IFS='|' read -r resource avail desired; do
+            [[ -z "$resource" ]] && continue
+            # Check for restarts
+            local ns name restarts
+            ns=$(echo "$resource" | cut -d'/' -f1)
+            name=$(echo "$resource" | cut -d'/' -f2)
+            restarts=$(echo "$pod_restarts" | jq -r --arg ns "$ns" --arg name "$name" \
+                '[.[] | select(.namespace == $ns and (.name | startswith($name)))] | map(.restarts) | add // 0')
+
+            local restart_info=""
+            [[ $restarts -gt 0 ]] && restart_info="  ${UI_ERR}${restarts} restarts${UI_NC}"
+
+            draw_box_line "${UI_ERR}✗${UI_NC}  ${resource}  ${avail}/${desired} pods${restart_info}"
+        done
+
+        draw_box_empty
+        draw_box_end
+        echo ""
+    fi
+
+    # PIPELINES section
+    draw_box_start "PIPELINES"
+    draw_box_empty
+
+    # Flux pipelines
+    echo "$data" | jq -r '
+        [.gitops[] | select(.kind == "Kustomization")] as $ks |
+        [.gitops[] | select(.kind == "GitRepository")] as $gr |
+        $ks[] | . as $k |
+        ($gr[] | select(.name == $k.source.name and .namespace == $k.source.ns) // {shortUrl: "?"}) as $g |
+        "\(if $k.suspended then "warn" elif $k.ready then "ok" else "error" end)|\($g.shortUrl)@\($g.ref // "?")|\($k.name)|\($k.inventoryCount)"
+    ' 2>/dev/null | while IFS='|' read -r status source deployer count; do
+        [[ -z "$source" ]] && continue
+        local icon
+        icon=$(status_icon "$status")
+        printf '%s  %b  %-38s ──▶ %-18s ──▶ %s resources' "$UI_BOX_V" "$icon" "$source" "$deployer" "$count"
+        printf '%*s%s\n' 1 '' "$UI_BOX_V"
+    done
+
+    # Helm releases
+    echo "$data" | jq -r '.gitops[] | select(.kind == "HelmRelease") |
+        "\(if .suspended then "warn" elif .ready then "ok" else "error" end)|\(.chart)@\(.chartVersion)|\(.name)"
+    ' 2>/dev/null | while IFS='|' read -r status source deployer; do
+        [[ -z "$source" ]] && continue
+        local icon
+        icon=$(status_icon "$status")
+        printf '%s  %b  %-38s ──▶ %-18s ──▶ helm release' "$UI_BOX_V" "$icon" "$source" "$deployer"
+        printf '%*s%s\n' 3 '' "$UI_BOX_V"
+    done
+
+    # Argo applications
+    echo "$data" | jq -r '.gitops[] | select(.kind == "Application") |
+        "\(if .ready then "ok" else "error" end)|\(.shortUrl)/\(.path)@\(.targetRevision)|\(.name)|\(.destNamespace)"
+    ' 2>/dev/null | while IFS='|' read -r status source deployer dest; do
+        [[ -z "$source" ]] && continue
+        local icon
+        icon=$(status_icon "$status")
+        printf '%s  %b  %-38s ──▶ %-18s ──▶ %s' "$UI_BOX_V" "$icon" "$source" "$deployer" "$dest"
+        printf '%*s%s\n' 3 '' "$UI_BOX_V"
+    done
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # OWNERSHIP section
+    draw_box_start "OWNERSHIP"
+    draw_box_empty
+
+    # Colorful bar chart
+    printf '%s  ' "$UI_BOX_V"
+    [[ $flux_count -gt 0 ]] && printf "$(owner_label Flux) "
+    for ((i=0; i<flux_count && i<12; i++)); do printf "${UI_FG_CYAN}█${UI_NC}"; done
+    [[ $flux_count -gt 0 ]] && printf "  %d    " "$flux_count"
+
+    [[ $argo_count -gt 0 ]] && printf "$(owner_label ArgoCD) "
+    for ((i=0; i<argo_count && i<8; i++)); do printf "${UI_FG_PURPLE}█${UI_NC}"; done
+    [[ $argo_count -gt 0 ]] && printf "  %d    " "$argo_count"
+
+    [[ $helm_count -gt 0 ]] && printf "$(owner_label Helm) "
+    for ((i=0; i<helm_count && i<8; i++)); do printf "${UI_FG_ORANGE}█${UI_NC}"; done
+    [[ $helm_count -gt 0 ]] && printf "  %d    " "$helm_count"
+
+    [[ $native_count -gt 0 ]] && printf "$(owner_label Native) "
+    for ((i=0; i<native_count && i<8; i++)); do printf "${UI_FG_DIM}░${UI_NC}"; done
+    [[ $native_count -gt 0 ]] && printf "  %d" "$native_count"
+
+    printf '%*s%s\n' 2 '' "$UI_BOX_V"
+
+    draw_box_empty
+
+    # Coverage bar
+    local cov_bar
+    cov_bar=$(progress_bar_colored 40 "$coverage")
+    draw_box_line "GitOps Coverage   ${cov_bar}  ${coverage}%  ${UI_FG_DIM}(${managed_count}/${workloads_total} managed)${UI_NC}"
+
+    draw_box_empty
+    draw_box_end
+
+    echo ""
+
+    # Side-by-side summary panels
+    # DRIFT summary
+    local gitops_drifted=0
+    gitops_drifted=$(echo "$data" | jq '[.gitops[] | select(.kind != "GitRepository" and .ready == false and .suspended != true)] | length')
+    local synced_count=$deployers_ready
+
+    printf '┌─ '
+    printf "${UI_BOLD}DRIFT${UI_NC} "
+    ui_repeat '─' 24
+    printf '┐  '
+
+    printf '┌─ '
+    printf "${UI_BOLD}SPRAWL${UI_NC} "
+    ui_repeat '─' 24
+    printf '┐\n'
+
+    # Row 1
+    printf '%s  ' "$UI_BOX_V"
+    if [[ $gitops_drifted -eq 0 ]]; then
+        printf "${UI_OK}✓${UI_NC} %d synced" "$synced_count"
+    else
+        printf "${UI_OK}✓${UI_NC} %d synced" "$synced_count"
+    fi
+    printf '%*s%s  ' 14 '' "$UI_BOX_V"
+
+    printf '%s  ' "$UI_BOX_V"
+    local git_repos
+    git_repos=$(echo "$data" | jq '[(.gitops[] | select(.kind == "GitRepository") | .url), (.gitops[] | select(.kind == "Application") | .url)] | unique | length')
+    local helm_charts
+    helm_charts=$(echo "$data" | jq '[.gitops[] | select(.kind == "HelmRelease") | .chart] | unique | length')
+    printf "Sources   %d repos  %d charts" "$git_repos" "$helm_charts"
+    printf '%*s%s\n' 5 '' "$UI_BOX_V"
+
+    # Row 2
+    printf '%s  ' "$UI_BOX_V"
+    if [[ $gitops_drifted -gt 0 ]]; then
+        printf "${UI_WARN}⚠${UI_NC} %d drifted" "$gitops_drifted"
+    else
+        printf "${UI_FG_DIM}  no drift${UI_NC}"
+    fi
+    printf '%*s%s  ' 14 '' "$UI_BOX_V"
+
+    printf '%s  ' "$UI_BOX_V"
+    # Count tools
+    local tools=""
+    [[ $flux_count -gt 0 ]] && tools+="Flux "
+    [[ $argo_count -gt 0 ]] && tools+="Argo "
+    [[ $helm_count -gt 0 ]] && tools+="Helm"
+    printf "Tools     %s" "$tools"
+    printf '%*s%s\n' $((20 - ${#tools})) '' "$UI_BOX_V"
+
+    # Row 3
+    printf '%s  ' "$UI_BOX_V"
+    printf "${UI_FG_DIM}→ ./map drift${UI_NC}"
+    printf '%*s%s  ' 11 '' "$UI_BOX_V"
+
+    printf '%s  ' "$UI_BOX_V"
+    if [[ $native_count -gt 0 ]]; then
+        printf "${UI_WARN}Orphans   %d native${UI_NC}" "$native_count"
+    else
+        printf "${UI_OK}No orphans${UI_NC}"
+    fi
+    printf '%*s%s\n' 13 '' "$UI_BOX_V"
+
+    # Row 4 (empty + hint)
+    printf '%s  ' "$UI_BOX_V"
+    printf '%*s' 23 ''
+    printf '%s  ' "$UI_BOX_V"
+
+    printf '%s  ' "$UI_BOX_V"
+    printf "${UI_FG_DIM}→ ./map sprawl${UI_NC}"
+    printf '%*s%s\n' 17 '' "$UI_BOX_V"
+
+    # Bottom borders
+    printf '└'
+    ui_repeat '─' 30
+    printf '┘  '
+    printf '└'
+    ui_repeat '─' 32
+    printf '┘\n'
+
+    # ConfigHub details (if any, and not in offline mode)
+    if [[ $ch_count -gt 0 && -z "$CONFIGHUB_OFFLINE" ]]; then
+        echo ""
+
+        # Determine effective mode
+        local effective_mode="$MAP_MODE"
+        if [[ "$MAP_MODE" == "auto" ]]; then
+            if command -v cub &>/dev/null && cub context get &>/dev/null 2>&1; then
+                effective_mode="fleet"
+            else
+                effective_mode="cluster"
+            fi
+        fi
+
+        case "$effective_mode" in
+            admin|standard)
+                view_confighub_standard "$data"
+                ;;
+            fleet|hub|*)
+                view_confighub_hub "$data"
+                ;;
+        esac
+    fi
+    echo ""
+}
+
+# ConfigHub connection status wizard - shows journey progress with ✓/✗
+view_confighub_connection_status() {
+    local has_cub=false
+    local has_auth=false
+    local has_units=false
+    local has_workers=false
+    local has_targets=false
+    local org_name=""
+    local unit_count=0
+    local worker_count=0
+    local target_count=0
+
+    # Check cub CLI
+    if command -v cub &>/dev/null; then
+        has_cub=true
+    fi
+
+    # Check authentication via context (whoami doesn't exist in current cub)
+    if $has_cub; then
+        local context_out
+        context_out=$(cub context get --json 2>/dev/null || echo '{}')
+        if echo "$context_out" | jq -e '.coordinate.user' &>/dev/null && [[ $(echo "$context_out" | jq -r '.coordinate.user') != "null" ]]; then
+            has_auth=true
+            org_name=$(echo "$context_out" | jq -r '.metadata.organizationName // ""')
+        fi
+    fi
+
+    # Check units, workers, targets (only if authenticated)
+    if $has_auth; then
+        local units_out workers_out targets_out
+        units_out=$(cub unit list --json 2>/dev/null || echo '[]')
+        workers_out=$(cub worker list --json 2>/dev/null || echo '[]')
+        targets_out=$(cub target list --json 2>/dev/null || echo '[]')
+
+        unit_count=$(echo "$units_out" | jq 'length' 2>/dev/null || echo 0)
+        worker_count=$(echo "$workers_out" | jq 'length' 2>/dev/null || echo 0)
+        target_count=$(echo "$targets_out" | jq 'length' 2>/dev/null || echo 0)
+
+        [[ $unit_count -gt 0 ]] && has_units=true
+        [[ $worker_count -gt 0 ]] && has_workers=true
+        [[ $target_count -gt 0 ]] && has_targets=true
+    fi
+
+    # Display status
+    draw_box_start "🔗 CONNECTION STATUS"
+    draw_box_empty
+
+    # Stage display with colors
+    if ! $has_cub; then
+        draw_box_line "  ${UI_ERR}✗${UI_NC} cub CLI not installed"
+        draw_box_empty
+        draw_box_line "  ${UI_BOLD}NEXT STEP${UI_NC}"
+        draw_box_line "    brew install confighubai/tap/cub"
+        draw_box_line "    ${UI_FG_DIM}# or: curl -fsSL https://get.confighub.com | sh${UI_NC}"
+    elif ! $has_auth; then
+        draw_box_line "  ${UI_OK}✓${UI_NC} cub CLI installed"
+        draw_box_line "  ${UI_ERR}✗${UI_NC} Not authenticated"
+        draw_box_empty
+        draw_box_line "  ${UI_BOLD}NEXT STEP${UI_NC}"
+        draw_box_line "    cub auth login"
+    elif ! $has_units; then
+        draw_box_line "  ${UI_OK}✓${UI_NC} Authenticated${org_name:+ (org: $org_name)}"
+        draw_box_line "  ${UI_ERR}✗${UI_NC} No units imported"
+        draw_box_empty
+        draw_box_line "  ${UI_BOLD}NEXT STEP${UI_NC}"
+        draw_box_line "    cub-agent import --namespace <ns>"
+    elif ! $has_workers; then
+        draw_box_line "  ${UI_OK}✓${UI_NC} Authenticated${org_name:+ (org: $org_name)}"
+        draw_box_line "  ${UI_OK}✓${UI_NC} Units imported (${unit_count})"
+        draw_box_line "  ${UI_ERR}✗${UI_NC} No workers"
+        draw_box_empty
+        draw_box_line "  ${UI_BOLD}NEXT STEP${UI_NC}"
+        draw_box_line "    cub worker run <cluster-name>"
+    elif ! $has_targets; then
+        draw_box_line "  ${UI_OK}✓${UI_NC} Authenticated${org_name:+ (org: $org_name)}"
+        draw_box_line "  ${UI_OK}✓${UI_NC} Units imported (${unit_count})"
+        draw_box_line "  ${UI_OK}✓${UI_NC} Workers running (${worker_count})"
+        draw_box_line "  ${UI_ERR}✗${UI_NC} No targets"
+        draw_box_empty
+        draw_box_line "  ${UI_BOLD}NEXT STEP${UI_NC}"
+        draw_box_line "    cub target create <target-name>"
+    else
+        draw_box_line "  ${UI_OK}✓${UI_NC} Authenticated${org_name:+ (org: $org_name)}"
+        draw_box_line "  ${UI_OK}✓${UI_NC} Units imported (${unit_count})"
+        draw_box_line "  ${UI_OK}✓${UI_NC} Workers running (${worker_count})"
+        draw_box_line "  ${UI_OK}✓${UI_NC} Targets configured (${target_count})"
+        draw_box_empty
+        draw_box_line "  ${UI_OK}🎉 ALL SET!${UI_NC}"
+        draw_box_line "    Open: ${UI_BOLD}https://confighub.com${UI_NC}"
+    fi
+
+    draw_box_empty
+    draw_box_end
+    echo ""
+}
+
+# ConfigHub view - Standard mode (Org → Space → Unit with Resources/Targets/Workers)
+view_confighub_standard() {
+    local data="$1"
+    local api_helper="$(dirname "$0")/confighub-api"
+
+    # Show connection status first
+    view_confighub_connection_status
+
+    echo -e "  ${UI_BOLD}${UI_GREEN}ConfigHub Hierarchy:${UI_NC}"
+    echo -e "  ${UI_GRAY}Org → Space → Unit (with Resources, Targets, Workers)${UI_NC}"
+    echo ""
+
+    # Check if cub is available and authenticated
+    if ! command -v cub &>/dev/null; then
+        # Fall back to cluster-only view
+        view_confighub_cluster_only "$data"
+        return
+    fi
+
+    if ! cub context get &>/dev/null 2>&1; then
+        # Fall back to cluster-only view
+        view_confighub_cluster_only "$data"
+        return
+    fi
+
+    # Query ConfigHub for full hierarchy
+    local orgs spaces
+    orgs=$(cub organization list --json 2>/dev/null || echo '[]')
+    spaces=$(cub space list --json 2>/dev/null || echo '[]')
+
+    # Display organizations
+    echo "$orgs" | jq -r '.[] | "ORG:\(.Slug):\(.DisplayName // .Slug)"' 2>/dev/null | while IFS= read -r org_line; do
+        [[ -z "$org_line" ]] && continue
+        org_slug=$(echo "$org_line" | cut -d':' -f2)
+        org_name=$(echo "$org_line" | cut -d':' -f3)
+
+        echo -e "  ${UI_BOLD}${UI_BLUE}${org_name}${UI_NC} ${UI_GRAY}(org: ${org_slug})${UI_NC}"
+
+        # Get org ID for matching spaces
+        local org_id
+        org_id=$(echo "$orgs" | jq -r --arg slug "$org_slug" '.[] | select(.Slug == $slug) | .OrganizationID' 2>/dev/null)
+
+        # Show spaces in this org
+        echo "$spaces" | jq -r --arg oid "$org_id" \
+            '.[] | select(.Space.OrganizationID == $oid) | "SPACE:\(.Space.Slug):\(.Space.DisplayName // .Space.Slug):\(.TotalUnitCount // 0):\((.TargetCountByToolchainType // {}) | to_entries | map(.value) | add // 0):\(.TotalBridgeWorkerCount // 0)"' 2>/dev/null | while IFS= read -r space_line; do
+            [[ -z "$space_line" ]] && continue
+            space_slug=$(echo "$space_line" | cut -d':' -f2)
+            space_name=$(echo "$space_line" | cut -d':' -f3)
+            unit_count=$(echo "$space_line" | cut -d':' -f4)
+            target_count=$(echo "$space_line" | cut -d':' -f5)
+            worker_count=$(echo "$space_line" | cut -d':' -f6)
+
+            echo -e "    ${UI_GREEN}└── ${space_name}${UI_NC} ${UI_GRAY}(${unit_count} units, ${target_count} targets, ${worker_count} workers)${UI_NC}"
+
+            # Show units in this space (limit to 5)
+            local units
+            # Note: cub CLI returns nested objects (.Unit.Slug, .Target.Slug, etc.)
+            units=$(cub unit list --space "$space_slug" --json 2>/dev/null | jq -r '.[0:5] | .[] | "UNIT:\(.Unit.Slug):\(.Unit.HeadRevisionNum // 0):\(.Target.Slug // "-")"' 2>/dev/null || echo "")
+
+            echo "$units" | while IFS= read -r unit_line; do
+                [[ -z "$unit_line" ]] && continue
+                unit_slug=$(echo "$unit_line" | cut -d':' -f2)
+                rev=$(echo "$unit_line" | cut -d':' -f3)
+                target=$(echo "$unit_line" | cut -d':' -f4)
+
+                if [[ "$target" != "-" ]]; then
+                    echo -e "      ${UI_GRAY}├── ${unit_slug} @ rev ${rev} → ${target}${UI_NC}"
+                else
+                    echo -e "      ${UI_GRAY}├── ${unit_slug} @ rev ${rev}${UI_NC}"
+                fi
+            done
+
+            if [[ $unit_count -gt 5 ]]; then
+                echo -e "      ${UI_GRAY}└── ... and $((unit_count - 5)) more units${UI_NC}"
+            fi
+        done
+        echo ""
+    done
+
+    # Show cluster resources that match ConfigHub labels
+    echo -e "  ${UI_BOLD}Cluster Resources with ConfigHub Labels:${UI_NC}"
+    view_confighub_cluster_only "$data"
+}
+
+# ConfigHub view - Hub mode (experimental: Hub → App Space → Application → Variant)
+view_confighub_hub() {
+    local data="$1"
+
+    # Show connection status first
+    view_confighub_connection_status
+
+    echo -e "  ${UI_BOLD}${UI_GREEN}ConfigHub Fleet View${UI_NC}"
+    echo -e "  ${UI_GRAY}Hierarchy: Application → Variant → Cluster${UI_NC}"
+    echo ""
+
+    # Check if we can query ConfigHub API for fleet-wide data
+    if ! command -v cub &>/dev/null; then
+        view_confighub_hub_cluster_only "$data"
+        return
+    fi
+
+    if ! cub context get &>/dev/null 2>&1; then
+        view_confighub_hub_cluster_only "$data"
+        return
+    fi
+
+    # Query all spaces and units fleet-wide
+    local all_units=""
+    local spaces
+    spaces=$(cub space list --json 2>/dev/null) || {
+        echo -e "  ${UI_YELLOW}⚠${UI_NC} Could not fetch spaces"
+        view_confighub_hub_cluster_only "$data"
+        return
+    }
+
+    # Collect units from all spaces with their labels
+    # Note: cub CLI returns nested objects (.Space.Slug, .Unit.Slug, etc.)
+    echo "$spaces" | jq -r '.[].Space.Slug' | while IFS= read -r space_slug; do
+        cub unit list --space "$space_slug" --json 2>/dev/null | jq -c --arg space "$space_slug" '
+            .[] | {
+                space: $space,
+                slug: .Unit.Slug,
+                revision: (.Unit.HeadRevisionNum // 0),
+                target: (.Target.Slug // "-"),
+                app: (.Unit.Labels.app // .Unit.Labels.application // "unknown"),
+                variant: (.Unit.Labels.variant // .Unit.Labels.environment // .Unit.Labels.env // "default"),
+                status: (.UnitStatus.Status // "unknown")
+            }
+        ' 2>/dev/null
+    done | jq -s '
+        # Group by application
+        group_by(.app)
+        | map({
+            app: .[0].app,
+            variants: (group_by(.variant) | map({
+                variant: .[0].variant,
+                clusters: map({
+                    target: .target,
+                    space: .space,
+                    slug: .slug,
+                    revision: .revision,
+                    status: .status
+                })
+            }))
+        })
+    ' | jq -r '
+        .[] | "APP:\(.app)",
+        (.variants[] | "  VAR:\(.variant)",
+            (.clusters[] | "    CLUSTER:\(.target):\(.space)/\(.slug)@\(.revision):\(.status)")
+        )
+    ' | while IFS= read -r line; do
+        if [[ "$line" == APP:* ]]; then
+            app_name="${line#APP:}"
+            echo -e "  ${UI_BOLD}${UI_GREEN}${app_name}${UI_NC}"
+        elif [[ "$line" == "  VAR:"* ]]; then
+            variant="${line#  VAR:}"
+            echo -e "  ${UI_GRAY}├── variant: ${variant}${UI_NC}"
+        elif [[ "$line" == "    CLUSTER:"* ]]; then
+            cluster_info="${line#    CLUSTER:}"
+            target=$(echo "$cluster_info" | cut -d':' -f1)
+            space_unit=$(echo "$cluster_info" | cut -d':' -f2)
+            revision=$(echo "$cluster_info" | cut -d':' -f3 | cut -d'@' -f1)
+            status=$(echo "$cluster_info" | cut -d':' -f3 | cut -d'@' -f2-)
+
+            # Status indicator
+            if [[ "$status" == "Applied" || "$status" == "Healthy" ]]; then
+                indicator="${UI_GREEN}✓${UI_NC}"
+            elif [[ "$status" == "Drifted" || "$status" == "OutOfSync" ]]; then
+                indicator="${UI_YELLOW}⚠${UI_NC}"
+            elif [[ "$status" == "Failed" || "$status" == "Error" ]]; then
+                indicator="${UI_RED}✗${UI_NC}"
+            else
+                indicator="${UI_GRAY}?${UI_NC}"
+            fi
+
+            echo -e "  ${UI_GRAY}│   └── ${indicator} ${target} @ rev ${revision}${UI_NC}"
+        fi
+    done
+
+    echo ""
+}
+
+# Hub mode fallback: cluster-only view when API unavailable
+view_confighub_hub_cluster_only() {
+    local data="$1"
+
+    echo -e "  ${UI_GRAY}(showing cluster-local data only)${UI_NC}"
+    echo ""
+
+    # Group by inferred app/variant from cluster labels
+    echo "$data" | jq -r '
+        .workloads[]
+        | select(.owner == "ConfigHub")
+        | {
+            space: (.confighub.space // "unknown"),
+            unit: .confighub.unit,
+            revision: .confighub.revision,
+            namespace: .namespace,
+            name: .name
+          }
+    ' | jq -s '.' | jq -r '.[] | "\(.space)/\(.unit)@\(.revision) [\(.namespace)/\(.name)]"' | while IFS= read -r line; do
+        echo -e "  ${UI_GRAY}${line}${UI_NC}"
+    done
+}
+
+# Cluster-only view (no API connection)
+view_confighub_cluster_only() {
+    local data="$1"
+
+    echo "$data" | jq -r '
+        .workloads[]
+        | select(.owner == "ConfigHub")
+        | "  \(.confighub.space // "?") / \(.confighub.unit) @ rev \(.confighub.revision // "?")  [\(.namespace)/\(.name)]"
+    ' 2>/dev/null | head -20
+
+    local total
+    total=$(echo "$data" | jq '[.workloads[] | select(.owner == "ConfigHub")] | length')
+    if [[ $total -gt 20 ]]; then
+        echo -e "  ${UI_GRAY}... and $((total - 20)) more${UI_NC}"
+    fi
+}
+
+# Standalone ConfigHub hierarchy view
+view_confighub() {
+    local api_helper="$(dirname "$0")/confighub-api"
+
+    echo -e "${UI_BOLD}ConfigHub Hierarchy${UI_NC}"
+    echo "════════════════════════════════════════════════════════════════════"
+    echo ""
+
+    # Check if cub is available and authenticated
+    if ! command -v cub &>/dev/null; then
+        echo -e "${UI_RED}✗${UI_NC} cub CLI not found"
+        echo ""
+        echo "Install from: https://docs.confighub.com/cli"
+        exit 1
+    fi
+
+    if ! cub context get &>/dev/null 2>&1; then
+        echo -e "${UI_YELLOW}⚠${UI_NC} Not authenticated to ConfigHub"
+        echo ""
+        echo "Run: cub auth login"
+        exit 1
+    fi
+
+    # Get current context and org/space data
+    local context orgs_json spaces_json
+    context=$(cub context get --json 2>/dev/null || echo '{}')
+    orgs_json=$(cub organization list --json 2>/dev/null || echo '[]')
+    spaces_json=$(cub space list --json 2>/dev/null || echo '[]')
+
+    local current_space ctx_name ctx_server ctx_org_id ctx_org ctx_user
+    current_space=$(echo "$context" | jq -r '.settings.defaultSpace // "-"')
+    ctx_name=$(echo "$context" | jq -r '.name // "-"')
+    ctx_server=$(echo "$context" | jq -r '.coordinate.serverURL // "-"')
+    ctx_org_id=$(echo "$context" | jq -r '.coordinate.organizationID // ""')
+    ctx_user=$(echo "$context" | jq -r '.coordinate.user // "-"')
+
+    # Look up org display name from ID (context uses ExternalID/Slug, not internal OrganizationID)
+    if [[ -n "$ctx_org_id" && "$ctx_org_id" != "null" ]]; then
+        ctx_org=$(echo "$orgs_json" | jq -r --arg oid "$ctx_org_id" '.[] | select(.ExternalID == $oid or .Slug == $oid or .OrganizationID == $oid) | .DisplayName // .Slug' | head -1)
+        [[ -z "$ctx_org" ]] && ctx_org="-"
+    else
+        ctx_org="-"
+    fi
+
+    echo -e "${UI_BOLD}Context:${UI_NC}  ${UI_GREEN}●${UI_NC} ${UI_BOLD}${ctx_name}${UI_NC}"
+    echo -e "  Server:  ${UI_CYAN}${ctx_server}${UI_NC}"
+    echo -e "  Org:     ${ctx_org}"
+    echo -e "  User:    ${ctx_user}"
+    echo -e "  Space:   ${UI_GREEN}${current_space}${UI_NC}"
+    echo ""
+
+    # List organizations
+    echo -e "${UI_BOLD}Organizations:${UI_NC}"
+
+    if [[ "$orgs_json" == "[]" ]]; then
+        echo "  (none)"
+    else
+        echo "$orgs_json" | jq -r '.[] | "\(.ExternalID)|\(.DisplayName // .Slug)|\(.Slug)"' | while IFS='|' read -r ext_id display slug; do
+            if [[ "$ext_id" == "$ctx_org_id" || "$slug" == "$ctx_org_id" ]]; then
+                echo -e "  ${UI_GREEN}${display} (${slug})${UI_NC}"
+            else
+                echo "  ${display} (${slug})"
+            fi
+        done
+    fi
+    echo ""
+
+    # List spaces grouped by org
+    echo -e "${UI_BOLD}Spaces:${UI_NC}"
+    if [[ "$spaces_json" == "[]" ]]; then
+        echo "  (none)"
+    else
+        echo "$orgs_json" | jq -r '.[] | "\(.OrganizationID)|\(.DisplayName // .Slug)"' | while IFS='|' read -r org_id org_display; do
+            org_spaces=$(echo "$spaces_json" | jq -r --arg oid "$org_id" '.[] | select(.Space.OrganizationID == $oid) | "\(.Space.Slug)|\(.TotalUnitCount // 0)|\((.TargetCountByToolchainType // {}) | to_entries | map(.value) | add // 0)|\(.TotalBridgeWorkerCount // 0)"')
+            if [[ -n "$org_spaces" ]]; then
+                echo -e "  ${UI_BOLD}${org_display}:${UI_NC}"
+                echo "$org_spaces" | while IFS='|' read -r space_slug units targets workers; do
+                    if [[ "$space_slug" == "$current_space" ]]; then
+                        echo -e "    ${UI_GREEN}${space_slug}${UI_NC} - ${units} units, ${targets} targets, ${workers} workers ${UI_GREEN}(active)${UI_NC}"
+                    else
+                        echo "    ${space_slug} - ${units} units, ${targets} targets, ${workers} workers"
+                    fi
+                done
+            fi
+        done
+    fi
+    echo ""
+
+    # If we have a current space, show details
+    if [[ "$current_space" != "none" && "$current_space" != "null" && "$current_space" != "-" ]]; then
+        echo -e "${UI_BOLD}Units in ${current_space}:${UI_NC}"
+        # Note: cub CLI returns nested objects (.Unit.Slug, .Target.Slug, etc.)
+        cub unit list --space "$current_space" --json 2>/dev/null | jq -r '.[0:10] | .[] | "  \(.Unit.Slug) @ rev \(.Unit.HeadRevisionNum // 0) → \(.Target.Slug // "no target")"' || echo "  (none)"
+
+        local unit_count
+        unit_count=$(cub unit list --space "$current_space" --json 2>/dev/null | jq 'length' || echo 0)
+        if [[ $unit_count -gt 10 ]]; then
+            echo -e "  ${UI_GRAY}... and $((unit_count - 10)) more${UI_NC}"
+        fi
+        echo ""
+
+        echo -e "${UI_BOLD}Targets in ${current_space}:${UI_NC}"
+        # Note: cub CLI returns nested objects (.Target.Slug, etc.)
+        cub target list --space "$current_space" --json 2>/dev/null | jq -r '.[] | "  \(.Target.Slug) - \(.Target.ProviderType // "unknown")"' || echo "  (none)"
+        echo ""
+
+        echo -e "${UI_BOLD}Workers in ${current_space}:${UI_NC}"
+        # Note: cub CLI returns nested objects (.BridgeWorker.Slug, .BridgeWorker.Condition, etc.)
+        cub worker list --space "$current_space" --json 2>/dev/null | jq -r '.[] | "  \(.BridgeWorker.Slug) - \(.BridgeWorker.Condition // "unknown")"' || echo "  (none)"
+    fi
+}
+
+#=============================================================================
+# MAIN
+#=============================================================================
+
+main() {
+    # Show deprecation warning (unless SUPPRESS_DEPRECATION is set)
+    if [[ -z "${SUPPRESS_DEPRECATION:-}" ]]; then
+        echo -e "\033[33m⚠ DEPRECATED: This bash TUI is deprecated.\033[0m"
+        echo -e "\033[33m  Use: cub-agent map (Go client)\033[0m"
+        echo -e "\033[33m  See: cub-agent map --help\033[0m"
+        echo ""
+        sleep 1
+    fi
+
+    local cmd=""
+    local json_mode=false
+
+    # Parse arguments
+    for arg in "$@"; do
+        case "$arg" in
+            --mode=admin|--mode=standard)
+                MAP_MODE="admin"
+                ;;
+            --mode=fleet|--mode=hub)
+                MAP_MODE="fleet"
+                ;;
+            --mode=*)
+                echo "Unknown mode: ${arg#--mode=}"
+                echo "Valid modes: fleet (default when authenticated), admin"
+                exit 1
+                ;;
+            --namespace=*|-n=*)
+                FILTER_NAMESPACE="${arg#*=}"
+                ;;
+            --space=*|-s=*)
+                FILTER_SPACE="${arg#*=}"
+                ;;
+            --group-by=*)
+                VARIANT_GROUP_BY="${arg#*=}"
+                ;;
+            --json)
+                json_mode=true
+                ;;
+            *)
+                if [[ -z "$cmd" ]]; then
+                    cmd="$arg"
+                fi
+                ;;
+        esac
+    done
+
+    local data
+
+    # Set ConfigHub space context if specified
+    if [[ -n "$FILTER_SPACE" ]]; then
+        cub context set --space "$FILTER_SPACE" &>/dev/null || true
+    fi
+
+    # Handle --json anywhere
+    if [[ "$json_mode" == "true" ]]; then
+        data=$(collect_data)
+        data=$(filter_data "$data")
+        echo "$data" | jq --arg cluster "$(kubectl config current-context 2>/dev/null)" \
+            --arg time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg mode "$MAP_MODE" \
+            --arg ns "${FILTER_NAMESPACE:-all}" \
+            --arg space "${FILTER_SPACE:-all}" \
+            '. + {cluster: $cluster, scannedAt: $time, mode: $mode, filterNamespace: $ns, filterSpace: $space}'
+        return
+    fi
+
+    # Handle confighub command (no cluster data needed)
+    if [[ "$cmd" == "confighub" || "$cmd" == "ch" ]]; then
+        exec "${SCRIPT_DIR}/map-confighub" "$@"
+    fi
+
+    data=$(collect_data)
+    data=$(filter_data "$data")
+
+    case "$cmd" in
+        status|s)
+            view_status "$data"
+            ;;
+        problems|p)
+            view_problems "$data"
+            ;;
+        pipelines|pipe)
+            # Check for --trace flag
+            if [[ "${2:-}" == "--trace" ]] || [[ "${2:-}" == "-t" ]]; then
+                view_pipelines_traced "$data"
+            else
+                view_pipelines "$data"
+            fi
+            ;;
+        trace|t)
+            # Handle ./map trace <kind/name> -n <namespace>
+            shift
+            if [[ $# -eq 0 ]]; then
+                # Interactive mode - show resource picker
+                view_trace_interactive "$data"
+            else
+                # Parse arguments
+                local trace_resource="$1"
+                shift
+                local trace_ns=""
+                while [[ $# -gt 0 ]]; do
+                    case "$1" in
+                        -n|--namespace)
+                            trace_ns="$2"
+                            shift 2
+                            ;;
+                        *)
+                            shift
+                            ;;
+                    esac
+                done
+                # Parse kind/name
+                local trace_kind trace_name
+                trace_kind=$(echo "$trace_resource" | cut -d'/' -f1)
+                trace_name=$(echo "$trace_resource" | cut -d'/' -f2)
+                view_trace "$trace_kind" "$trace_name" "$trace_ns"
+            fi
+            ;;
+        scan|ccve)
+            # Handle ./map scan [-n <namespace>]
+            shift
+            local scan_ns=""
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    -n|--namespace)
+                        scan_ns="$2"
+                        shift 2
+                        ;;
+                    *)
+                        shift
+                        ;;
+                esac
+            done
+            view_scan "$data" "$scan_ns"
+            ;;
+        deployers|d)
+            view_deployers "$data"
+            ;;
+        sources|src)
+            view_sources "$data"
+            ;;
+        workloads|w)
+            view_workloads "$data"
+            ;;
+        suspended|pause)
+            view_suspended "$data"
+            ;;
+        drift|dr)
+            view_drift "$data"
+            ;;
+        sprawl|sp)
+            view_sprawl "$data"
+            ;;
+        bypass|bp)
+            view_bypass "$data"
+            ;;
+        variants|var|v)
+            view_variants "$data"
+            ;;
+        queries|q)
+            view_queries "$data"
+            ;;
+        maps|M)
+            view_maps "$data"
+            ;;
+        help|--help|-h)
+            echo "Usage: map [command] [options]"
+            echo ""
+            echo -e "${UI_BOLD}Commands:${UI_NC}"
+            echo "  (none)      Full map"
+            echo "  status      One-line health check"
+            echo "  problems    List only problems"
+            echo "  pipelines   List delivery pipelines"
+            echo "  pipelines --trace   Pipelines with full trace chains (slower)"
+            echo "  trace       Trace resource ownership chain (interactive)"
+            echo "  trace <kind/name> -n <ns>  Trace specific resource"
+            echo "  scan        Cluster scan (stuck resources + Kyverno violations)"
+            echo "  scan -n <ns>   Scan specific namespace"
+            echo "  scan --state   State scan only (stuck reconciliations)"
+            echo "  scan --kyverno Kyverno scan only (policy violations)"
+            echo "  deployers   List GitOps deployers"
+            echo "  sources     List git sources"
+            echo "  workloads   List workloads by owner"
+            echo "  suspended   List paused resources"
+            echo "  confighub   ConfigHub map"
+            echo "  confighub hierarchy   Interactive tree explorer (TUI)"
+            echo ""
+            echo -e "${UI_BOLD}IaC Philosophy Views:${UI_NC}"
+            echo "  drift       Drift detection (GitOps sync + ConfigHub revision)"
+            echo "  sprawl      Configuration sprawl analysis"
+            echo "  bypass      Factory bypass detection (native workloads, manual edits)"
+            echo "  variants    Variant families across environments (ConfigHub)"
+            echo ""
+            echo -e "${UI_BOLD}Saved Queries:${UI_NC}"
+            echo "  queries     List saved queries with match counts"
+            echo ""
+            echo -e "${UI_BOLD}Integrated Views:${UI_NC}"
+            echo "  maps        THREE MAPS: GitOps trees + ConfigHub hierarchy + Repo structure"
+            echo ""
+            echo -e "${UI_BOLD}Options:${UI_NC}"
+            echo "  --json               Output as JSON"
+            echo "  --mode=admin         Admin view: Org → Space → Unit hierarchy"
+            echo "  --namespace=NS       Filter by Kubernetes namespace"
+            echo "  --space=SPACE        Filter by ConfigHub space"
+            echo "  --group-by=LABEL     Group variants by label (default: app)"
+            echo ""
+            echo -e "${UI_BOLD}ConfigHub View:${UI_NC}"
+            echo "  Default shows fleet view: Application → Variant → Cluster"
+            echo "  Use --mode=admin for implementation details"
+            echo ""
+            echo -e "${UI_BOLD}Examples:${UI_NC}"
+            echo "  ./map                            # Full dashboard"
+            echo "  ./map status                     # Quick health check"
+            echo "  ./map confighub hierarchy        # Interactive tree TUI"
+            echo "  ./map drift                      # Show drift status"
+            echo "  ./map sprawl                     # Show config sprawl"
+            echo "  ./map bypass                     # Find factory bypasses"
+            echo "  ./map variants --group-by=env    # Group by environment"
+            echo "  ./map trace                      # Interactive resource trace"
+            echo "  ./map trace deployment/nginx -n demo  # Trace specific resource"
+            echo "  ./map scan                       # Cluster scan (state + Kyverno)"
+            echo "  ./map pipelines --trace          # Pipelines with full chains"
+            echo "  ./map --namespace=demo-app       # Filter to one namespace"
+            ;;
+        "")
+            view_dashboard "$data"
+            ;;
+        *)
+            echo "Unknown command: $cmd"
+            echo "Run 'map help' for usage"
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

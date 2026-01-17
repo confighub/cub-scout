@@ -1,0 +1,46 @@
+# Operations stack - staging environment overrides
+
+# keda staging overrides
+keda:
+  replicaCount: 2
+
+  resources:
+    operator:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    metricServer:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+
+# opencost staging overrides
+opencost:
+  opencost:
+    exporter:
+      defaultClusterId: staging-cluster
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+
+    ui:
+      enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+
+    prometheus:
+      internal:
+        enabled: true
+        serviceName: prometheus-prometheus
+        namespaceName: monitoring

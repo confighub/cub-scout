@@ -1,0 +1,673 @@
+# Enterprise Healthy Demo: IITS-style Hub-and-Spoke Architecture
+#
+# This demonstrates a well-architected enterprise GitOps setup following
+# patterns from the IITS training (Artem/Nick):
+#
+# Architecture:
+#   - Central Argo CD hub managing multiple workload clusters
+#   - Helm umbrella charts in managed-service-catalog (platform team)
+#   - Per-cluster values in customer-service-catalog (app teams)
+#   - ApplicationSets with cluster generators
+#   - ConfigHub tracking rendered state across all clusters
+#
+# What you'll see:
+#   - Clean ownership: every resource has a known owner
+#   - Proper layering: base → umbrella → cluster-specific values
+#   - Multiple deployers working together (Argo + Flux + Helm + ConfigHub)
+#   - ConfigHub hierarchy display (Space → Unit → Revision)
+#   - All pods running healthy (uses nginx:alpine as placeholder)
+#
+# Usage:
+#   ./test/atk/demo healthy           # Apply and run
+#   ./test/atk/demo healthy --no-pods # Apply without running pods
+#   ./test/atk/map                    # See ownership attribution
+#   ./test/atk/map confighub          # See ConfigHub hierarchy
+#   ./test/atk/demo healthy --cleanup # Remove demo resources
+#
+# Or manually:
+#   kubectl apply -f enterprise-healthy.yaml
+#   kubectl delete -f enterprise-healthy.yaml
+#
+# Story: "This is what a large-scale GitOps deployment looks like when done right"
+
+---
+# ============================================================================
+# NAMESPACES - representing different concerns
+# ============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-core
+  labels:
+    team: platform
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+  labels:
+    team: platform
+    component: certificates
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    team: platform
+    component: observability
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-payments
+  labels:
+    team: payments
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-orders
+  labels:
+    team: orders
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-inventory
+  labels:
+    team: inventory
+    environment: production
+---
+
+# ============================================================================
+# PLATFORM LAYER: Infrastructure managed by Platform Team
+# These are the "umbrella chart" deployments from managed-service-catalog
+# Deployed via Argo CD ApplicationSets
+# ============================================================================
+
+# --- cert-manager (from umbrella chart) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+  labels:
+    app: cert-manager
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/instance: cert-manager
+    argocd.argoproj.io/instance: platform-cert-manager
+  annotations:
+    # Argo CD tracking
+    argocd.argoproj.io/tracking-id: "platform-cert-manager:apps/Deployment:cert-manager/cert-manager"
+    # ConfigHub knows about this from connected mode
+    confighub.com/SpaceName: platform-infrastructure
+    confighub.com/UnitSlug: cert-manager-prod
+    confighub.com/RevisionNum: "234"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cert-manager
+  template:
+    metadata:
+      labels:
+        app: cert-manager
+    spec:
+      containers:
+      - name: cert-manager
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+  labels:
+    app: cert-manager
+    argocd.argoproj.io/instance: platform-cert-manager
+spec:
+  selector:
+    app: cert-manager
+  ports:
+  - port: 9402
+    targetPort: 9402
+---
+
+# --- kube-prometheus-stack (from umbrella chart) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+    app.kubernetes.io/name: prometheus
+    argocd.argoproj.io/instance: platform-monitoring
+  annotations:
+    confighub.com/SpaceName: platform-infrastructure
+    confighub.com/UnitSlug: prometheus-prod
+    confighub.com/RevisionNum: "189"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    argocd.argoproj.io/instance: platform-monitoring
+  annotations:
+    confighub.com/SpaceName: platform-infrastructure
+    confighub.com/UnitSlug: grafana-prod
+    confighub.com/RevisionNum: "156"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    argocd.argoproj.io/instance: platform-monitoring
+  annotations:
+    confighub.com/SpaceName: platform-infrastructure
+    confighub.com/UnitSlug: alertmanager-prod
+    confighub.com/RevisionNum: "112"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+      - name: alertmanager
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+
+# ============================================================================
+# FLUX LAYER: GitOps delivery for platform components
+# Source definitions and Kustomizations (all healthy)
+# ============================================================================
+
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: platform-infrastructure
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://github.com/acme-corp/platform-infrastructure
+  ref:
+    branch: main
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: jetstack
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://charts.jetstack.io
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: prometheus-community
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://prometheus-community.github.io/helm-charts
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: platform-base
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-infrastructure
+  path: ./base
+  prune: true
+  # NOT suspended - healthy
+  suspend: false
+---
+
+# ============================================================================
+# TEAM PAYMENTS: Application layer
+# Managed by app team, deployed via Flux HelmRelease
+# ============================================================================
+
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: payments-app
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://github.com/acme-corp/payments-service
+  ref:
+    branch: main
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: payment-api
+  namespace: flux-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: ./helm/payment-api
+      sourceRef:
+        kind: GitRepository
+        name: payments-app
+  targetNamespace: team-payments
+  values:
+    replicas: 3
+    image:
+      tag: "v2.4.1"
+---
+# Workload deployed by Flux HelmRelease
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: team-payments
+  labels:
+    app: payment-api
+    helm.toolkit.fluxcd.io/name: payment-api
+    helm.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    confighub.com/SpaceName: payments-prod
+    confighub.com/UnitSlug: payment-api-prod
+    confighub.com/RevisionNum: "341"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-api
+  template:
+    metadata:
+      labels:
+        app: payment-api
+    spec:
+      containers:
+      - name: api
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api
+  namespace: team-payments
+  labels:
+    app: payment-api
+    helm.toolkit.fluxcd.io/name: payment-api
+    helm.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: payment-api
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-api-config
+  namespace: team-payments
+  labels:
+    helm.toolkit.fluxcd.io/name: payment-api
+    helm.toolkit.fluxcd.io/namespace: flux-system
+data:
+  config.yaml: |
+    environment: production
+    stripe_api_version: "2024-01-01"
+    feature_flags:
+      new_checkout: true
+      fraud_detection: true
+---
+
+# ============================================================================
+# TEAM ORDERS: Application layer
+# Managed by Argo CD Application
+# ============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: orders-service
+  namespace: argocd
+  labels:
+    team: orders
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/acme-corp/orders-service
+    targetRevision: main
+    path: k8s/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-orders
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-processor
+  namespace: team-orders
+  labels:
+    app: order-processor
+    argocd.argoproj.io/instance: orders-service
+  annotations:
+    confighub.com/SpaceName: orders-prod
+    confighub.com/UnitSlug: order-processor-prod
+    confighub.com/RevisionNum: "267"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-processor
+  template:
+    metadata:
+      labels:
+        app: order-processor
+    spec:
+      containers:
+      - name: processor
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api
+  namespace: team-orders
+  labels:
+    app: order-api
+    argocd.argoproj.io/instance: orders-service
+  annotations:
+    confighub.com/SpaceName: orders-prod
+    confighub.com/UnitSlug: order-api-prod
+    confighub.com/RevisionNum: "289"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: order-api
+  template:
+    metadata:
+      labels:
+        app: order-api
+    spec:
+      containers:
+      - name: api
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-api
+  namespace: team-orders
+  labels:
+    app: order-api
+    argocd.argoproj.io/instance: orders-service
+spec:
+  selector:
+    app: order-api
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+
+# ============================================================================
+# TEAM INVENTORY: Application layer
+# Direct Helm release (no GitOps controller, just helm install)
+# ============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service
+  namespace: team-inventory
+  labels:
+    app: inventory-service
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: inventory-service
+    meta.helm.sh/release-namespace: team-inventory
+    confighub.com/SpaceName: inventory-prod
+    confighub.com/UnitSlug: inventory-service-prod
+    confighub.com/RevisionNum: "78"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: inventory-service
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      containers:
+      - name: service
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+  namespace: team-inventory
+  labels:
+    app: inventory-service
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: inventory-service
+    meta.helm.sh/release-namespace: team-inventory
+spec:
+  selector:
+    app: inventory-service
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+
+# ============================================================================
+# CONFIGHUB PURE: Resources managed directly by ConfigHub (no other deployer)
+# These show what a "ConfigHub as deployer" world looks like
+# ============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feature-flags
+  namespace: platform-core
+  labels:
+    app: feature-flags
+    confighub.com/UnitSlug: feature-flags-prod
+  annotations:
+    confighub.com/SpaceName: platform-core
+    confighub.com/SpaceID: "sp-platform-001"
+    confighub.com/RevisionNum: "45"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: feature-flags
+  template:
+    metadata:
+      labels:
+        app: feature-flags
+    spec:
+      containers:
+      - name: flagd
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: feature-flags-config
+  namespace: platform-core
+  labels:
+    confighub.com/UnitSlug: feature-flags-prod
+  annotations:
+    confighub.com/SpaceName: platform-core
+    confighub.com/SpaceID: "sp-platform-001"
+    confighub.com/RevisionNum: "45"
+data:
+  flags.json: |
+    {
+      "flags": {
+        "new-checkout-flow": { "state": "ENABLED", "defaultVariant": "on" },
+        "dark-mode": { "state": "ENABLED", "defaultVariant": "on" },
+        "ai-recommendations": { "state": "DISABLED", "defaultVariant": "off" }
+      }
+    }
+---
+
+# ============================================================================
+# SUMMARY
+# ============================================================================
+# Total resources: ~30+
+#
+# Ownership breakdown:
+#   - Argo CD: cert-manager, monitoring stack, orders team apps
+#   - Flux: platform-base kustomization, payments team apps
+#   - Helm: inventory-service
+#   - ConfigHub: feature-flags (pure), plus tracking annotations everywhere
+#
+# What this demonstrates:
+#   1. Hub (managed-service-catalog) provides umbrella charts
+#   2. Teams (customer-service-catalog) provide values overrides
+#   3. Multiple deployers coexist cleanly
+#   4. ConfigHub tracks everything with Org → Space → Unit
+#   5. No orphans, no CCVEs, healthy state
+#
+# Connect to ConfigHub to see:
+#   cub auth login
+#   ./test/atk/map confighub
+#
+# Expected output:
+#   platform-core (org: acme-corp)
+#     └── platform-infrastructure (5 units)
+#         ├── cert-manager-prod @ rev 234
+#         ├── prometheus-prod @ rev 189
+#         └── ...
+#
+#   payments-prod (org: acme-corp)
+#     └── payment-api-prod @ rev 341
+#
+#   orders-prod (org: acme-corp)
+#     └── order-processor-prod @ rev 267

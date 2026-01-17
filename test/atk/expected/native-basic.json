@@ -1,0 +1,51 @@
+[
+  {
+    "clusterName": "default",
+    "namespace": "atk-native-basic",
+    "kind": "Deployment",
+    "name": "nginx",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "ownerDetails": {}
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-native-basic",
+    "kind": "ReplicaSet",
+    "name": "nginx",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "ownerDetails": {
+      "ownerRef": "Deployment/nginx"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-native-basic",
+    "kind": "Pod",
+    "name": "nginx",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "ownerDetails": {
+      "ownerRef": "ReplicaSet/nginx"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-native-basic",
+    "kind": "Service",
+    "name": "nginx",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "ownerDetails": {}
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-native-basic",
+    "kind": "ConfigMap",
+    "name": "nginx-config",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "ownerDetails": {}
+  }
+]

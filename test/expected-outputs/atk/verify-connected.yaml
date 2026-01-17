@@ -1,0 +1,117 @@
+# Expected Output: ATK verify-connected script
+name: "atk verify-connected"
+description: "Verify ConfigHub connected mode works correctly"
+mode: connected
+
+requires:
+  cluster: true
+  cub_auth: true
+  workers:
+    - space: current
+      count: 1
+  targets:
+    - space: current
+      count: 1
+
+commands:
+  - id: verify_connected
+    command: "./test/atk/verify-connected"
+    description: "Run all connected mode verification tests"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "Preflight Checks"
+        - pattern: "(cub CLI installed|Authenticated)"
+          description: "Shows preflight status"
+        - pattern: "(Active space|Worker connected|Target exists)"
+          description: "Shows prerequisite status"
+        - "Map Command Tests"
+        - pattern: "(map confighub|Context|Organizations|Spaces)"
+          description: "Shows ConfigHub hierarchy"
+        - pattern: "(Workers|Targets)"
+          description: "Shows worker/target info"
+        - "Summary"
+        - pattern: "(PASSED|Passed)"
+          description: "Shows pass summary"
+
+      not_contains:
+        - "null - unknown"
+        - "VERIFICATION FAILED"
+
+      assertions:
+        - name: "preflight_passes"
+          condition: "output.contains('cub CLI installed')"
+          description: "Preflight checks pass"
+        - name: "no_null_values"
+          condition: "!output.contains('null - unknown')"
+          description: "No null/unknown values (issue #1 prevention)"
+        - name: "verification_passes"
+          condition: "exit_code == 0 && output.contains('PASSED')"
+          description: "All verification tests pass"
+
+    instructions: |
+      Run connected mode verification:
+      ```bash
+      ./test/atk/verify-connected
+      ```
+
+      Prerequisites:
+      - cub CLI installed and authenticated
+      - Active space with connected worker and target
+      - Run worker with: `cub worker run <name>`
+
+      Options:
+      - `--quick` - Skip slow hierarchy tests
+      - `--verbose` - Show detailed output
+
+  - id: verify_connected_quick
+    command: "./test/atk/verify-connected --quick"
+    description: "Quick verification (skip hierarchy tests)"
+
+    expected:
+      exit_code: 0
+      contains:
+        - "Preflight Checks"
+        - "skipped"
+
+# Sample output
+sample_output: |
+  ═══════════════════════════════════════════════════════════════
+    1. Preflight Checks
+  ═══════════════════════════════════════════════════════════════
+
+  ✓ cub CLI installed
+  ✓ Authenticated to ConfigHub
+  ✓ Active space: tutorial
+  ✓ Worker connected: dev (connected)
+  ✓ Target exists: kind-tutorial
+  ✓ Units in space: 8
+
+  ═══════════════════════════════════════════════════════════════
+    2. Map Command Tests
+  ═══════════════════════════════════════════════════════════════
+
+  Testing: ./test/atk/map confighub
+  ✓ map confighub shows Context
+  ✓ map confighub shows Organizations
+  ✓ map confighub shows Spaces
+  ✓ map confighub shows Workers section
+  ✓ map confighub lists worker: dev
+  ✓ map confighub shows Targets section
+  ✓ map confighub lists target: kind-tutorial
+
+  ═══════════════════════════════════════════════════════════════
+    Summary
+  ═══════════════════════════════════════════════════════════════
+
+  Space:   tutorial
+  Worker:  dev (connected)
+  Target:  kind-tutorial
+  Units:   8
+
+  Passed: 15
+  Failed: 0
+
+  CONNECTED MODE VERIFICATION PASSED

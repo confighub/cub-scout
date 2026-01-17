@@ -1,0 +1,167 @@
+# Core infrastructure group - production environment overrides
+
+# cert-manager production overrides
+cert-manager:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+  webhook:
+    replicaCount: 3
+
+  cainjector:
+    replicaCount: 2
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+# external-secrets production overrides
+external-secrets:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+  certController:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+# external-dns production overrides
+external-dns:
+  provider: aws
+  domainFilters:
+    - prod.example.com
+    - example.com
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+  policy: sync
+  txtOwnerId: prod-cluster
+
+# traefik production overrides
+traefik:
+  deployment:
+    replicas: 3
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+  logs:
+    general:
+      level: WARN
+
+  ports:
+    websecure:
+      tls:
+        enabled: true
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+
+# metrics-server production overrides
+metrics-server:
+  replicas: 2
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+# reloader production overrides
+reloader:
+  reloader:
+    deployment:
+      replicas: 2
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+
+# kube-prometheus-stack production overrides
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      replicas: 3
+      retention: 30d
+      retentionSize: 90GB
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          memory: 8Gi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 100Gi
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+
+  alertmanager:
+    enabled: true
+    alertmanagerSpec:
+      replicas: 3
+      retention: 168h
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+
+  prometheusOperator:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-ccve
+  namespace: apptique-vulnerable
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: apptique
+    # ArgoCD ownership labels
+    app.kubernetes.io/instance: apptique-vulnerable
+    argocd.argoproj.io/instance: apptique-vulnerable
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.0.0
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
+        # CCVE-2025-0027: Grafana sidecar with label selector whitespace bug
+        # The BIGBANK bug - trailing whitespace in label causes silent failure
+        - name: dashboard-sidecar
+          image: kiwigrid/k8s-sidecar:1.24.0
+          env:
+            - name: LABEL
+              # NOTE: This has a trailing space which causes the bug
+              value: "grafana_dashboard "
+            - name: FOLDER
+              value: /var/lib/grafana/dashboards
+          volumeMounts:
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+      volumes:
+        - name: dashboards
+          emptyDir: {}

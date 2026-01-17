@@ -1,0 +1,210 @@
+#!/bin/bash
+# Mini Technology Compatibility Kit
+# Run this BEFORE any other tests to validate your environment
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+PASSED=0
+FAILED=0
+WARNED=0
+
+pass() {
+    echo -e "${GREEN}✓${NC} $1"
+    PASSED=$((PASSED + 1))
+}
+
+fail() {
+    echo -e "${RED}✗${NC} $1"
+    FAILED=$((FAILED + 1))
+}
+
+warn() {
+    echo -e "${YELLOW}⚠${NC} $1"
+    WARNED=$((WARNED + 1))
+}
+
+section() {
+    echo ""
+    echo "━━━ $1 ━━━"
+}
+
+# Parse args
+CONNECTED_MODE=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --connected)
+            CONNECTED_MODE=true
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: mini-tck [--connected]"
+            echo ""
+            echo "Pre-flight validation for ConfigHub Agent tests."
+            echo ""
+            echo "Options:"
+            echo "  --connected  Also validate ConfigHub API, workers, targets"
+            echo ""
+            echo "Run this before any other tests to ensure your environment is ready."
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║              ConfigHub Agent - Mini TCK                        ║"
+echo "║              Pre-flight Environment Check                      ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+
+section "Go Environment"
+
+if command -v go &> /dev/null; then
+    GO_VERSION=$(go version | awk '{print $3}')
+    pass "Go installed: $GO_VERSION"
+else
+    fail "Go not installed"
+fi
+
+if [[ -f "go.mod" ]]; then
+    pass "go.mod found"
+else
+    fail "go.mod not found (run from project root)"
+fi
+
+section "Kubernetes Access"
+
+if command -v kubectl &> /dev/null; then
+    pass "kubectl installed"
+else
+    fail "kubectl not installed"
+fi
+
+if kubectl cluster-info &> /dev/null; then
+    CONTEXT=$(kubectl config current-context 2>/dev/null || echo "unknown")
+    pass "Cluster accessible: $CONTEXT"
+else
+    fail "Cannot connect to Kubernetes cluster"
+fi
+
+# Check for Flux
+if kubectl get crd kustomizations.kustomize.toolkit.fluxcd.io &> /dev/null; then
+    pass "Flux CRDs installed"
+else
+    warn "Flux CRDs not found (some tests will skip)"
+fi
+
+# Check for Argo CD
+if kubectl get crd applications.argoproj.io &> /dev/null; then
+    pass "Argo CD CRDs installed"
+else
+    warn "Argo CD CRDs not found (some tests will skip)"
+fi
+
+section "cub-agent Binary"
+
+CUB_AGENT="${CUB_AGENT:-./cub-agent}"
+if [[ -x "$CUB_AGENT" ]]; then
+    VERSION=$($CUB_AGENT version 2>/dev/null | head -1 || echo "unknown")
+    pass "cub-agent found: $VERSION"
+else
+    if go build ./cmd/cub-agent 2>/dev/null; then
+        pass "cub-agent built successfully"
+    else
+        fail "cub-agent not found and build failed"
+    fi
+fi
+
+if $CONNECTED_MODE; then
+    section "ConfigHub Connection (--connected mode)"
+
+    if command -v cub &> /dev/null; then
+        CUB_VERSION=$(cub version 2>/dev/null | head -1 || echo "unknown")
+        pass "cub CLI installed: $CUB_VERSION"
+    else
+        fail "cub CLI not installed"
+    fi
+
+    # Check authentication
+    if cub auth status &> /dev/null; then
+        USER=$(cub auth status 2>/dev/null | grep -i user | head -1 || echo "authenticated")
+        pass "cub authenticated: $USER"
+    else
+        fail "cub not authenticated (run: cub auth login)"
+    fi
+
+    # Check for active space (parse from 'cub context get' output)
+    SPACE=$(cub context get 2>/dev/null | grep "Default Space" | awk '{print $NF}' || echo "")
+    if [[ -n "$SPACE" && "$SPACE" != "null" ]]; then
+        pass "Active space: $SPACE"
+
+        # Check for workers in space
+        WORKER_COUNT=$(cub worker list --json 2>/dev/null | jq 'length' 2>/dev/null || echo "0")
+        if [[ "$WORKER_COUNT" -gt 0 ]]; then
+            # Check worker status (JSON has nested BridgeWorker object)
+            WORKER_STATUS=$(cub worker list --json 2>/dev/null | jq -r '.[0].BridgeWorker.Condition // "unknown"' 2>/dev/null || echo "unknown")
+            WORKER_SLUG=$(cub worker list --json 2>/dev/null | jq -r '.[0].BridgeWorker.Slug // "null"' 2>/dev/null || echo "null")
+            if [[ "$WORKER_STATUS" == "Ready" || "$WORKER_STATUS" == "connected" || "$WORKER_STATUS" == "online" ]]; then
+                pass "Worker connected: $WORKER_SLUG ($WORKER_STATUS)"
+            elif [[ "$WORKER_SLUG" == "null" ]]; then
+                fail "Worker slug is null (issue #1 pattern)"
+            else
+                warn "Worker status: $WORKER_SLUG ($WORKER_STATUS)"
+            fi
+        else
+            fail "No workers in space (unit has no worker)"
+        fi
+
+        # Check for targets in space (JSON has nested Target object)
+        TARGET_COUNT=$(cub target list --json 2>/dev/null | jq 'length' 2>/dev/null || echo "0")
+        if [[ "$TARGET_COUNT" -gt 0 ]]; then
+            TARGET_SLUG=$(cub target list --json 2>/dev/null | jq -r '.[0].Target.Slug // "null"' 2>/dev/null || echo "null")
+            if [[ "$TARGET_SLUG" != "null" ]]; then
+                pass "Target exists: $TARGET_SLUG"
+            else
+                fail "Target slug is null (issue #1 pattern)"
+            fi
+        else
+            fail "No targets in space (unit has no target)"
+        fi
+
+        # Check for units (JSON has nested Unit object)
+        UNIT_COUNT=$(cub unit list --json 2>/dev/null | jq 'length' 2>/dev/null || echo "0")
+        if [[ "$UNIT_COUNT" -gt 0 ]]; then
+            pass "Units in space: $UNIT_COUNT"
+        else
+            warn "No units in space"
+        fi
+    else
+        fail "No active space (run: cub context set space <slug>)"
+    fi
+fi
+
+section "Summary"
+
+echo ""
+echo "Passed: $PASSED"
+echo "Failed: $FAILED"
+echo "Warned: $WARNED"
+echo ""
+
+if [[ $FAILED -gt 0 ]]; then
+    echo -e "${RED}PRE-FLIGHT FAILED${NC}"
+    echo "Fix the failures above before running tests."
+    exit 1
+elif [[ $WARNED -gt 0 ]]; then
+    echo -e "${YELLOW}PRE-FLIGHT PASSED WITH WARNINGS${NC}"
+    echo "Some tests may be skipped due to missing components."
+    exit 0
+else
+    echo -e "${GREEN}PRE-FLIGHT PASSED${NC}"
+    echo "Environment ready for testing."
+    exit 0
+fi

@@ -1,0 +1,56 @@
+# Native Kubernetes - Plain resources with OwnerReferences
+# No GitOps controller - tests native K8s ownership chain detection
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: atk-native-basic
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: atk-native-basic
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: atk-native-basic
+spec:
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: atk-native-basic
+data:
+  nginx.conf: |
+    server {
+      listen 80;
+      location / {
+        return 200 'ok';
+      }
+    }

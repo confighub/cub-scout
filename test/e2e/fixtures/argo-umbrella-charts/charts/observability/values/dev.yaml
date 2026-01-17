@@ -1,0 +1,71 @@
+# Observability stack - dev environment overrides
+
+# grafana dev overrides
+grafana:
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+  persistence:
+    enabled: false
+
+  adminUser: admin
+  adminPassword: admin
+
+# loki dev overrides
+loki:
+  deploymentMode: SingleBinary
+
+  loki:
+    commonConfig:
+      replication_factor: 1
+
+  singleBinary:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+
+  gateway:
+    replicas: 1
+
+# alloy dev overrides
+alloy:
+  controller:
+    type: daemonset
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+
+# tempo dev overrides
+tempo:
+  tempo:
+    retention: 24h
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+  persistence:
+    enabled: false

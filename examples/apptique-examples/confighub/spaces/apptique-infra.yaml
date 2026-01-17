@@ -1,0 +1,58 @@
+# App Space: Apptique Infrastructure
+#
+# Owns shared infrastructure:
+# - redis (session cache)
+# - postgres (product catalog)
+# - monitoring (Grafana, Prometheus)
+
+kind: AppSpace
+apiVersion: confighub.com/v1
+metadata:
+  name: apptique-infra
+  description: Apptique shared infrastructure services
+
+spec:
+  owner: platform-team@example.com
+
+  members:
+    - email: platform-team@example.com
+      role: admin
+    - email: platform-oncall@example.com
+      role: operator
+    - email: frontend-team@example.com
+      role: viewer  # Can view but not modify
+
+  # Units in this space
+  units:
+    - name: redis
+      description: Session cache for frontend
+      source_path: infrastructure/redis/
+      variants:
+        - name: prod
+          target: apptique-prod
+          config:
+            persistence: enabled
+            replicas: 3
+
+    - name: monitoring
+      description: Grafana + Prometheus stack
+      source_path: infrastructure/monitoring/
+      variants:
+        - name: prod
+          target: apptique-prod
+
+  # Platform policies
+  policies:
+    # Infrastructure changes always need approval
+    - match: { labels: { environment: prod } }
+      require:
+        - changeset-approval
+        - approver-from: [platform-team@example.com]
+
+  # Saved queries
+  saved_queries:
+    - name: all-infra
+      query: "space=apptique-infra"
+
+    - name: storage-issues
+      query: "space=apptique-infra AND type=statefulset AND healthy=false"

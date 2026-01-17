@@ -1,0 +1,82 @@
+# Mixed - Multiple ownership types in one cluster
+# Tests that agent correctly attributes each resource to its owner
+# Requires: Flux and Argo CD installed
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: atk-mixed
+---
+# Native K8s resource (no controller)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: native-config
+  namespace: atk-mixed
+data:
+  key: value
+---
+# Native Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: native-nginx
+  namespace: atk-mixed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: native-nginx
+  template:
+    metadata:
+      labels:
+        app: native-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+---
+# Flux-managed via Kustomization
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: mixed-flux
+  namespace: atk-mixed
+spec:
+  interval: 5m
+  url: https://github.com/stefanprodan/podinfo
+  ref:
+    tag: 6.5.0
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: mixed-flux
+  namespace: atk-mixed
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: mixed-flux
+  path: ./kustomize
+  targetNamespace: atk-mixed
+  prune: true
+---
+# Argo-managed Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mixed-argo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps
+    targetRevision: HEAD
+    path: guestbook
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: atk-mixed
+  syncPolicy:
+    automated:
+      prune: true

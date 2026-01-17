@@ -1,0 +1,33 @@
+# Edge case 01: Service with selector that matches pods in SAME namespace only
+# Tests: Does dangling detection correctly check only same-namespace pods?
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: edge-test-ns
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: edge-pod
+  namespace: edge-test-ns
+  labels:
+    app: edge-app
+spec:
+  containers:
+  - name: nginx
+    image: nginx:alpine
+---
+# This service in default namespace should be DANGLING
+# because it looks for app=edge-app but those pods are in edge-test-ns
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge-service-wrong-ns
+  namespace: default
+spec:
+  selector:
+    app: edge-app
+  ports:
+  - port: 80
+    targetPort: 80

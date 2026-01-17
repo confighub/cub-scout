@@ -1,0 +1,331 @@
+#!/bin/bash
+# Demo Readiness Check
+#
+# MANDATORY check before running ANY demo, example, or use case.
+# These are END-TO-END experiences that REQUIRE:
+#   1. Workers running and connected
+#   2. Targets configured and reachable
+#   3. Units deployed (for connected demos)
+#   4. Network connectivity to ConfigHub
+#
+# Why this exists (2026-01-13):
+#   We ran for 8 DAYS with a broken worker. ALL demos and examples
+#   would have failed, but nobody noticed because we weren't checking.
+#   This script ensures E2E readiness BEFORE you embarrass yourself.
+#
+# Usage:
+#   ./test/preflight/demo-ready              # Check readiness for demos
+#   ./test/preflight/demo-ready --space X    # Check specific space
+#   ./test/preflight/demo-ready --strict     # Fail on any warning
+#   ./test/preflight/demo-ready --json       # Output JSON for CI
+#
+# Exit codes:
+#   0 = Ready for demos
+#   1 = NOT ready (critical issues)
+#   2 = Ready with warnings (non-critical issues)
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Options
+SPECIFIC_SPACE=""
+STRICT=false
+JSON_OUTPUT=false
+VERBOSE=false
+
+# Counters
+PASS=0
+FAIL=0
+WARN=0
+
+# Results for JSON
+declare -A RESULTS
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --space) SPECIFIC_SPACE="$2"; shift 2 ;;
+        --strict) STRICT=true; shift ;;
+        --json) JSON_OUTPUT=true; shift ;;
+        --verbose|-v) VERBOSE=true; shift ;;
+        --help|-h)
+            echo "Usage: demo-ready [--space SPACE] [--strict] [--json]"
+            echo ""
+            echo "Verifies all dependencies for demos, examples, and use cases."
+            echo ""
+            echo "Options:"
+            echo "  --space SPACE  Check specific space"
+            echo "  --strict       Treat warnings as failures"
+            echo "  --json         Output JSON (for CI/automation)"
+            echo "  --verbose      Show detailed info"
+            echo ""
+            echo "This checks:"
+            echo "  - cub CLI installed and authenticated"
+            echo "  - Workers running and connected"
+            echo "  - Targets configured"
+            echo "  - Units deployed (for connected demos)"
+            echo "  - Cluster access (for local demos)"
+            exit 0
+            ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+pass() {
+    local msg="$1"
+    local key="${2:-}"
+    if ! $JSON_OUTPUT; then
+        echo -e "${GREEN}✓${NC} $msg"
+    fi
+    PASS=$((PASS + 1))
+    [[ -n "$key" ]] && RESULTS["$key"]="pass"
+}
+
+fail() {
+    local msg="$1"
+    local key="${2:-}"
+    if ! $JSON_OUTPUT; then
+        echo -e "${RED}✗${NC} $msg"
+    fi
+    FAIL=$((FAIL + 1))
+    [[ -n "$key" ]] && RESULTS["$key"]="fail"
+}
+
+warn() {
+    local msg="$1"
+    local key="${2:-}"
+    if ! $JSON_OUTPUT; then
+        echo -e "${YELLOW}⚠${NC} $msg"
+    fi
+    WARN=$((WARN + 1))
+    [[ -n "$key" ]] && RESULTS["$key"]="warn"
+}
+
+section() {
+    if ! $JSON_OUTPUT; then
+        echo ""
+        echo -e "${BLUE}━━━ $1 ━━━${NC}"
+    fi
+}
+
+if ! $JSON_OUTPUT; then
+    echo ""
+    echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║           Demo Readiness Check                                 ║${NC}"
+    echo -e "${BLUE}║  Verifies E2E dependencies for demos, examples, use cases     ║${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
+fi
+
+# =============================================================================
+# SECTION 1: Local Tools
+# =============================================================================
+
+section "Local Tools"
+
+# cub-agent binary
+if [[ -x "$PROJECT_ROOT/cub-agent" ]]; then
+    pass "cub-agent binary exists" "cub_agent"
+elif go build -o "$PROJECT_ROOT/cub-agent" "$PROJECT_ROOT/cmd/cub-agent" 2>/dev/null; then
+    pass "cub-agent built successfully" "cub_agent"
+else
+    fail "cub-agent not found and build failed" "cub_agent"
+fi
+
+# kubectl
+if command -v kubectl &>/dev/null; then
+    pass "kubectl installed" "kubectl"
+else
+    fail "kubectl not installed" "kubectl"
+fi
+
+# Cluster access
+if kubectl cluster-info &>/dev/null 2>&1; then
+    CLUSTER_CONTEXT=$(kubectl config current-context 2>/dev/null || echo "unknown")
+    pass "Cluster accessible: $CLUSTER_CONTEXT" "cluster"
+else
+    fail "Cannot connect to Kubernetes cluster" "cluster"
+fi
+
+# =============================================================================
+# SECTION 2: ConfigHub Authentication
+# =============================================================================
+
+section "ConfigHub Authentication"
+
+# cub CLI
+if ! command -v cub &>/dev/null; then
+    fail "cub CLI not installed" "cub_cli"
+else
+    pass "cub CLI installed" "cub_cli"
+
+    # Authentication
+    if cub context get &>/dev/null 2>&1; then
+        pass "Authenticated to ConfigHub" "auth"
+    else
+        fail "Not authenticated (run: cub auth login)" "auth"
+    fi
+fi
+
+# =============================================================================
+# SECTION 3: Space & Workers (Critical for E2E)
+# =============================================================================
+
+section "Space & Workers"
+
+# Get current space or use specified
+if [[ -n "$SPECIFIC_SPACE" ]]; then
+    SPACE="$SPECIFIC_SPACE"
+else
+    SPACE=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
+fi
+
+if [[ -z "$SPACE" || "$SPACE" == "null" ]]; then
+    fail "No active space (run: cub context set space <slug>)" "space"
+else
+    pass "Active space: $SPACE" "space"
+
+    # Workers - THE CRITICAL CHECK
+    WORKER_JSON=$(cub worker list --space "$SPACE" -o json 2>/dev/null || echo "[]")
+    WORKER_COUNT=$(echo "$WORKER_JSON" | jq 'length' 2>/dev/null || echo "0")
+
+    if [[ "$WORKER_COUNT" -eq 0 ]]; then
+        fail "NO WORKERS in space '$SPACE' - demos will fail!" "workers"
+    else
+        # Check each worker's status
+        HEALTHY_WORKERS=0
+        UNHEALTHY_WORKERS=0
+
+        for i in $(seq 0 $((WORKER_COUNT - 1))); do
+            slug=$(echo "$WORKER_JSON" | jq -r ".[$i].Slug // .[$i].BridgeWorker.Slug // \"null\"")
+            status=$(echo "$WORKER_JSON" | jq -r ".[$i].Status // .[$i].BridgeWorker.Status // \"unknown\"")
+            condition=$(echo "$WORKER_JSON" | jq -r ".[$i].Condition // .[$i].BridgeWorker.Condition // \"unknown\"")
+
+            if [[ "$condition" == "Ready" || "$status" == "connected" || "$status" == "online" ]]; then
+                HEALTHY_WORKERS=$((HEALTHY_WORKERS + 1))
+                if $VERBOSE && ! $JSON_OUTPUT; then
+                    echo -e "    ${GREEN}✓${NC} $slug (connected)"
+                fi
+            else
+                UNHEALTHY_WORKERS=$((UNHEALTHY_WORKERS + 1))
+                if ! $JSON_OUTPUT; then
+                    echo -e "    ${RED}✗${NC} $slug (status=$status, condition=$condition)"
+                fi
+            fi
+        done
+
+        if [[ $UNHEALTHY_WORKERS -gt 0 ]]; then
+            fail "$UNHEALTHY_WORKERS/$WORKER_COUNT workers NOT CONNECTED - demos will fail!" "workers"
+        else
+            pass "$HEALTHY_WORKERS worker(s) connected" "workers"
+        fi
+    fi
+
+    # Targets
+    TARGET_JSON=$(cub target list --space "$SPACE" -o json 2>/dev/null || echo "[]")
+    TARGET_COUNT=$(echo "$TARGET_JSON" | jq 'length' 2>/dev/null || echo "0")
+
+    if [[ "$TARGET_COUNT" -eq 0 ]]; then
+        warn "No targets in space (some demos may be limited)" "targets"
+    else
+        TARGET_SLUG=$(echo "$TARGET_JSON" | jq -r '.[0].Slug // .[0].Target.Slug // "null"')
+        if [[ "$TARGET_SLUG" == "null" ]]; then
+            fail "Target slug is null (issue #1 pattern)" "targets"
+        else
+            pass "$TARGET_COUNT target(s) configured" "targets"
+        fi
+    fi
+
+    # Units
+    UNIT_JSON=$(cub unit list --space "$SPACE" -o json 2>/dev/null || echo "[]")
+    UNIT_COUNT=$(echo "$UNIT_JSON" | jq 'length' 2>/dev/null || echo "0")
+
+    if [[ "$UNIT_COUNT" -eq 0 ]]; then
+        warn "No units in space (some demos may be limited)" "units"
+    else
+        pass "$UNIT_COUNT unit(s) in space" "units"
+    fi
+fi
+
+# =============================================================================
+# SECTION 4: Demo-Specific Dependencies
+# =============================================================================
+
+section "Demo Dependencies"
+
+# Flux CRDs (for Flux demos)
+if kubectl get crd kustomizations.kustomize.toolkit.fluxcd.io &>/dev/null 2>&1; then
+    pass "Flux CRDs installed" "flux"
+else
+    warn "Flux CRDs not found (Flux demos will skip)" "flux"
+fi
+
+# Argo CD CRDs (for Argo demos)
+if kubectl get crd applications.argoproj.io &>/dev/null 2>&1; then
+    pass "Argo CD CRDs installed" "argocd"
+else
+    warn "Argo CD CRDs not found (Argo demos will skip)" "argocd"
+fi
+
+# =============================================================================
+# Summary
+# =============================================================================
+
+section "Summary"
+
+if $JSON_OUTPUT; then
+    READY=$([[ $FAIL -eq 0 ]] && echo "true" || echo "false")
+    cat <<EOF
+{
+  "ready": $READY,
+  "space": "${SPACE:-null}",
+  "checks": {
+    "passed": $PASS,
+    "failed": $FAIL,
+    "warnings": $WARN
+  },
+  "workers": {
+    "healthy": ${HEALTHY_WORKERS:-0},
+    "unhealthy": ${UNHEALTHY_WORKERS:-0}
+  }
+}
+EOF
+else
+    echo ""
+    echo -e "Space:    ${BLUE}${SPACE:-none}${NC}"
+    echo -e "Passed:   ${GREEN}$PASS${NC}"
+    echo -e "Failed:   ${RED}$FAIL${NC}"
+    echo -e "Warnings: ${YELLOW}$WARN${NC}"
+    echo ""
+
+    if [[ $FAIL -gt 0 ]]; then
+        echo -e "${RED}${BOLD}NOT READY FOR DEMOS${NC}"
+        echo ""
+        echo "Fix the failures above before running demos."
+        echo ""
+        echo "Most common fix:"
+        echo "  cub worker run <slug> --space $SPACE"
+        echo ""
+        exit 1
+    elif [[ $WARN -gt 0 ]]; then
+        if $STRICT; then
+            echo -e "${YELLOW}${BOLD}NOT READY (strict mode)${NC}"
+            exit 2
+        else
+            echo -e "${YELLOW}${BOLD}READY WITH WARNINGS${NC}"
+            echo "Some demos may have limited functionality."
+            exit 0
+        fi
+    else
+        echo -e "${GREEN}${BOLD}READY FOR DEMOS${NC}"
+        exit 0
+    fi
+fi

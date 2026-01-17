@@ -1,0 +1,107 @@
+# Observability stack - base values
+# Direct dependencies on upstream charts (2-level nesting)
+
+# grafana values
+grafana:
+  sidecar:
+    dashboards:
+      enabled: true
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+      searchNamespace: ALL
+
+  serviceMonitor:
+    enabled: true
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-prometheus.core:9090
+          access: proxy
+          isDefault: true
+        - name: Loki
+          type: loki
+          url: http://loki-gateway:80
+          access: proxy
+        - name: Tempo
+          type: tempo
+          url: http://tempo:3100
+          access: proxy
+
+# loki values
+loki:
+  deploymentMode: SingleBinary
+  chunksCache:
+    enabled: false
+  resultsCache:
+    enabled: false
+  loki:
+    auth_enabled: false
+    commonConfig:
+      replication_factor: 1
+    schemaConfig:
+      configs:
+        - from: "2024-01-01"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+    storage:
+      type: filesystem
+      bucketNames:
+        chunks: chunks
+        ruler: ruler
+        admin: admin
+  singleBinary:
+    replicas: 1
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  backend:
+    replicas: 0
+  monitoring:
+    selfMonitoring:
+      enabled: false
+    serviceMonitor:
+      enabled: true
+
+# alloy values
+alloy:
+  alloy:
+    configMap:
+      content: |
+        discovery.kubernetes "pods" {
+          role = "pod"
+        }
+
+        loki.source.kubernetes "pods" {
+          targets    = discovery.kubernetes.pods.targets
+          forward_to = [loki.write.default.receiver]
+        }
+
+        loki.write "default" {
+          endpoint {
+            url = "http://loki-gateway.monitoring.svc:80/loki/api/v1/push"
+          }
+        }
+
+  serviceMonitor:
+    enabled: true
+
+# tempo values
+tempo:
+  tempo:
+    reportingEnabled: false
+    metricsGenerator:
+      enabled: true
+      remoteWriteUrl: "http://prometheus-prometheus.core:9090/api/v1/write"
+
+  serviceMonitor:
+    enabled: true

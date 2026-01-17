@@ -1,0 +1,32 @@
+# Flux basic - GitRepository + Kustomization deploying podinfo
+# Requires: Flux installed (flux install)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: atk-flux-basic
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: podinfo
+  namespace: atk-flux-basic
+spec:
+  interval: 5m
+  url: https://github.com/stefanprodan/podinfo
+  ref:
+    tag: 6.5.0
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: podinfo
+  namespace: atk-flux-basic
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: podinfo
+  path: ./kustomize
+  targetNamespace: atk-flux-basic
+  prune: true

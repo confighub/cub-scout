@@ -1,0 +1,395 @@
+#!/bin/bash
+# Verify connected mode works correctly with ConfigHub API
+#
+# This test validates:
+# 1. Preflight requirements (worker connected, target exists)
+# 2. ./test/atk/map --mode=admin shows worker/target output
+# 3. ./test/atk/map --mode=fleet shows hierarchy output
+# 4. ./test/atk/map confighub shows full hierarchy
+# 5. No null/unknown values (prevents issue #1 regression)
+#
+# Usage:
+#   ./test/atk/verify-connected              # Run all connected mode tests
+#   ./test/atk/verify-connected --quick      # Skip slow hierarchy tests
+#   ./test/atk/verify-connected --verbose    # Show detailed output
+#
+# Prerequisites:
+#   - cub CLI installed
+#   - cub auth login completed
+#   - Active space with worker and target
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Colors
+R='\033[0;31m'
+G='\033[0;32m'
+Y='\033[0;33m'
+B='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Options
+QUICK=false
+VERBOSE=false
+PASSED=0
+FAILED=0
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --quick) QUICK=true; shift ;;
+        --verbose|-v) VERBOSE=true; shift ;;
+        --help|-h)
+            echo "Usage: verify-connected [--quick] [--verbose]"
+            echo ""
+            echo "Verifies ConfigHub connected mode works correctly."
+            echo ""
+            echo "Options:"
+            echo "  --quick    Skip slow hierarchy tests"
+            echo "  --verbose  Show detailed output"
+            echo ""
+            echo "Prerequisites:"
+            echo "  - cub CLI installed and authenticated"
+            echo "  - Active space with connected worker and target"
+            exit 0
+            ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+section() {
+    echo ""
+    echo -e "${B}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${B}  $1${NC}"
+    echo -e "${B}═══════════════════════════════════════════════════════════════${NC}"
+}
+
+pass() {
+    echo -e "${G}✓${NC} $1"
+    PASSED=$((PASSED + 1))
+}
+
+fail() {
+    echo -e "${R}✗${NC} $1"
+    FAILED=$((FAILED + 1))
+}
+
+warn() {
+    echo -e "${Y}⚠${NC} $1"
+}
+
+skip() {
+    echo -e "${Y}○${NC} $1 (skipped)"
+}
+
+verbose() {
+    if $VERBOSE; then
+        echo -e "  ${Y}→${NC} $1"
+    fi
+}
+
+# Check for null/unknown values in output (issue #1 prevention)
+check_no_nulls() {
+    local output="$1"
+    local context="$2"
+
+    if echo "$output" | grep -qE 'null|unknown|undefined|\bnone\b' 2>/dev/null; then
+        fail "$context contains null/unknown values"
+        if $VERBOSE; then
+            echo "$output" | grep -E 'null|unknown|undefined|\bnone\b' | head -5
+        fi
+        return 1
+    fi
+    return 0
+}
+
+#=============================================================================
+# SECTION 1: Preflight Checks
+#=============================================================================
+
+section "1. Preflight Checks"
+
+# Check cub CLI
+if ! command -v cub &>/dev/null; then
+    fail "cub CLI not installed"
+    echo "Install from: https://docs.confighub.com/cli"
+    exit 1
+fi
+pass "cub CLI installed"
+
+# Check authentication
+if ! cub context get &>/dev/null 2>&1; then
+    fail "Not authenticated to ConfigHub"
+    echo "Run: cub auth login"
+    exit 1
+fi
+pass "Authenticated to ConfigHub"
+
+# Get current space
+CURRENT_SPACE=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
+if [[ -z "$CURRENT_SPACE" || "$CURRENT_SPACE" == "null" ]]; then
+    fail "No active space set"
+    echo "Run: cub context set space <slug>"
+    exit 1
+fi
+pass "Active space: $CURRENT_SPACE"
+
+# Check for workers
+WORKER_JSON=$(cub worker list --space "$CURRENT_SPACE" -o json 2>/dev/null || echo "[]")
+WORKER_COUNT=$(echo "$WORKER_JSON" | jq 'length' 2>/dev/null || echo "0")
+
+if [[ "$WORKER_COUNT" -eq 0 ]]; then
+    fail "No workers in space"
+    exit 1
+fi
+
+WORKER_SLUG=$(echo "$WORKER_JSON" | jq -r '.[0].BridgeWorker.Slug // "null"')
+WORKER_CONDITION=$(echo "$WORKER_JSON" | jq -r '.[0].BridgeWorker.Condition // "unknown"')
+
+if [[ "$WORKER_SLUG" == "null" ]]; then
+    fail "Worker slug is null (issue #1 pattern)"
+    exit 1
+fi
+
+if [[ "$WORKER_CONDITION" == "Ready" ]]; then
+    pass "Worker connected: $WORKER_SLUG ($WORKER_CONDITION)"
+else
+    warn "Worker not connected: $WORKER_SLUG ($WORKER_CONDITION)"
+fi
+
+# Check for targets
+TARGET_JSON=$(cub target list --space "$CURRENT_SPACE" -o json 2>/dev/null || echo "[]")
+TARGET_COUNT=$(echo "$TARGET_JSON" | jq 'length' 2>/dev/null || echo "0")
+
+if [[ "$TARGET_COUNT" -eq 0 ]]; then
+    fail "No targets in space"
+    exit 1
+fi
+
+TARGET_SLUG=$(echo "$TARGET_JSON" | jq -r '.[0].Target.Slug // .[0].BridgeWorker.Slug // "null"')
+if [[ "$TARGET_SLUG" == "null" ]]; then
+    fail "Target slug is null (issue #1 pattern)"
+    exit 1
+fi
+pass "Target exists: $TARGET_SLUG"
+
+# Check for units
+UNIT_JSON=$(cub unit list --space "$CURRENT_SPACE" -o json 2>/dev/null || echo "[]")
+UNIT_COUNT=$(echo "$UNIT_JSON" | jq 'length' 2>/dev/null || echo "0")
+
+if [[ "$UNIT_COUNT" -eq 0 ]]; then
+    warn "No units in space (some tests may be limited)"
+else
+    pass "Units in space: $UNIT_COUNT"
+fi
+
+#=============================================================================
+# SECTION 2: Map Command Tests
+#=============================================================================
+
+section "2. Map Command Tests"
+
+# Test map confighub view
+echo "Testing: ./test/atk/map confighub"
+MAP_CONFIGHUB_OUTPUT=$("$SCRIPT_DIR/map" confighub 2>&1) || true
+
+if [[ -n "$MAP_CONFIGHUB_OUTPUT" ]]; then
+    # Check for key sections
+    if echo "$MAP_CONFIGHUB_OUTPUT" | grep -q "Context:"; then
+        pass "map confighub shows Context"
+        verbose "Context section found"
+    else
+        fail "map confighub missing Context section"
+    fi
+
+    if echo "$MAP_CONFIGHUB_OUTPUT" | grep -q "Organizations:"; then
+        pass "map confighub shows Organizations"
+    else
+        fail "map confighub missing Organizations section"
+    fi
+
+    if echo "$MAP_CONFIGHUB_OUTPUT" | grep -q "Spaces:"; then
+        pass "map confighub shows Spaces"
+    else
+        fail "map confighub missing Spaces section"
+    fi
+
+    if echo "$MAP_CONFIGHUB_OUTPUT" | grep -q "Workers in"; then
+        pass "map confighub shows Workers section"
+        # Check worker is listed
+        if echo "$MAP_CONFIGHUB_OUTPUT" | grep -q "$WORKER_SLUG"; then
+            pass "map confighub lists worker: $WORKER_SLUG"
+        else
+            warn "map confighub doesn't show expected worker: $WORKER_SLUG"
+        fi
+    else
+        fail "map confighub missing Workers section"
+    fi
+
+    if echo "$MAP_CONFIGHUB_OUTPUT" | grep -q "Targets in"; then
+        pass "map confighub shows Targets section"
+        # Check target is listed
+        if echo "$MAP_CONFIGHUB_OUTPUT" | grep -q "$TARGET_SLUG"; then
+            pass "map confighub lists target: $TARGET_SLUG"
+        else
+            warn "map confighub doesn't show expected target: $TARGET_SLUG"
+        fi
+    else
+        fail "map confighub missing Targets section"
+    fi
+else
+    fail "map confighub produced no output"
+fi
+
+if $VERBOSE; then
+    echo ""
+    echo "--- map confighub output ---"
+    echo "$MAP_CONFIGHUB_OUTPUT" | head -30
+    echo "..."
+fi
+
+#=============================================================================
+# SECTION 3: Hierarchy Mode Tests
+#=============================================================================
+
+if ! $QUICK; then
+    section "3. Hierarchy Mode Tests"
+
+    # Test --mode=admin
+    echo "Testing: ./test/atk/map --mode=admin"
+    MAP_ADMIN_OUTPUT=$("$SCRIPT_DIR/map" --mode=admin 2>&1) || true
+
+    if [[ -n "$MAP_ADMIN_OUTPUT" ]]; then
+        pass "map --mode=admin produces output"
+
+        # Check for ConfigHub section in admin mode
+        if echo "$MAP_ADMIN_OUTPUT" | grep -qE "ConfigHub|Cluster Resources"; then
+            pass "map --mode=admin shows ConfigHub data"
+        else
+            warn "map --mode=admin may not show ConfigHub data"
+        fi
+    else
+        fail "map --mode=admin produced no output"
+    fi
+
+    # Test --mode=fleet
+    echo "Testing: ./test/atk/map --mode=fleet"
+    MAP_FLEET_OUTPUT=$("$SCRIPT_DIR/map" --mode=fleet 2>&1) || true
+
+    if [[ -n "$MAP_FLEET_OUTPUT" ]]; then
+        pass "map --mode=fleet produces output"
+    else
+        fail "map --mode=fleet produced no output"
+    fi
+
+    if $VERBOSE; then
+        echo ""
+        echo "--- map --mode=admin output (first 20 lines) ---"
+        echo "$MAP_ADMIN_OUTPUT" | head -20
+    fi
+else
+    skip "Hierarchy mode tests (--quick)"
+fi
+
+#=============================================================================
+# SECTION 4: JSON Output Tests
+#=============================================================================
+
+section "4. JSON Output Tests"
+
+# Test map --json
+echo "Testing: ./test/atk/map --json"
+MAP_JSON_OUTPUT=$("$SCRIPT_DIR/map" --json 2>&1) || true
+
+if echo "$MAP_JSON_OUTPUT" | jq . &>/dev/null; then
+    pass "map --json produces valid JSON"
+
+    # Check for mode field
+    MODE_VALUE=$(echo "$MAP_JSON_OUTPUT" | jq -r '.mode // "not-set"')
+    if [[ "$MODE_VALUE" != "not-set" && "$MODE_VALUE" != "null" ]]; then
+        pass "JSON includes mode field: $MODE_VALUE"
+    else
+        warn "JSON missing mode field"
+    fi
+
+    # Check for cluster field
+    CLUSTER_VALUE=$(echo "$MAP_JSON_OUTPUT" | jq -r '.cluster // "not-set"')
+    if [[ "$CLUSTER_VALUE" != "not-set" && "$CLUSTER_VALUE" != "null" ]]; then
+        pass "JSON includes cluster field: $CLUSTER_VALUE"
+    else
+        warn "JSON missing cluster field"
+    fi
+else
+    fail "map --json does not produce valid JSON"
+fi
+
+#=============================================================================
+# SECTION 5: ConfigHub API Helper Tests
+#=============================================================================
+
+section "5. ConfigHub API Helper Tests"
+
+API_HELPER="$SCRIPT_DIR/confighub-api"
+
+if [[ -x "$API_HELPER" ]]; then
+    # Test check command
+    API_CHECK=$("$API_HELPER" check 2>&1) || true
+    if echo "$API_CHECK" | jq -e '.authenticated == true' &>/dev/null; then
+        pass "confighub-api check works"
+    else
+        fail "confighub-api check failed"
+    fi
+
+    # Test spaces command
+    API_SPACES=$("$API_HELPER" spaces 2>&1) || true
+    if echo "$API_SPACES" | jq -e 'type == "array"' &>/dev/null; then
+        SPACE_COUNT=$(echo "$API_SPACES" | jq 'length')
+        pass "confighub-api spaces works ($SPACE_COUNT spaces)"
+    else
+        fail "confighub-api spaces failed"
+    fi
+
+    # Test workers command
+    API_WORKERS=$("$API_HELPER" workers "$CURRENT_SPACE" 2>&1) || true
+    if echo "$API_WORKERS" | jq -e 'type == "array"' &>/dev/null; then
+        pass "confighub-api workers works"
+    else
+        fail "confighub-api workers failed"
+    fi
+
+    # Test targets command
+    API_TARGETS=$("$API_HELPER" targets "$CURRENT_SPACE" 2>&1) || true
+    if echo "$API_TARGETS" | jq -e 'type == "array"' &>/dev/null; then
+        pass "confighub-api targets works"
+    else
+        fail "confighub-api targets failed"
+    fi
+else
+    skip "confighub-api helper (not executable)"
+fi
+
+#=============================================================================
+# Summary
+#=============================================================================
+
+section "Summary"
+
+echo ""
+echo -e "Space:   ${G}$CURRENT_SPACE${NC}"
+echo -e "Worker:  ${G}$WORKER_SLUG${NC} ($WORKER_STATUS)"
+echo -e "Target:  ${G}$TARGET_SLUG${NC}"
+echo -e "Units:   $UNIT_COUNT"
+echo ""
+echo -e "${G}Passed:${NC} $PASSED"
+echo -e "${R}Failed:${NC} $FAILED"
+echo ""
+
+if [[ $FAILED -gt 0 ]]; then
+    echo -e "${R}CONNECTED MODE VERIFICATION FAILED${NC}"
+    exit 1
+else
+    echo -e "${G}CONNECTED MODE VERIFICATION PASSED${NC}"
+    exit 0
+fi

@@ -1,0 +1,36 @@
+# Binaries
+/cub-agent
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+*.out
+
+# Go workspace file
+go.work
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kubernetes
+*.kubeconfig
+dev.kubeconfig
+prod.kubeconfig
+
+# Local development
+tmp/
+.env
+.env.local
+.cache/
+.confighub/

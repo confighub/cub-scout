@@ -1,0 +1,18 @@
+# Traefik IngressRoute with CCVE-0028 FIXED
+# Corrected service name to match actual service
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-web
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`grafana.example.com`)
+    kind: Rule
+    services:
+    # ✅ FIXED: Correct service name
+    - name: grafana-service  # ✅ CORRECT - matches Service/grafana-service
+      port: 80

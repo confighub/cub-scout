@@ -1,0 +1,89 @@
+# Space: Customer Self-Serve
+#
+# Enterprise customer ACME gets their own space where they can:
+# - VIEW their full config (inherited from internal team)
+# - EDIT specific fields they "own"
+# - CANNOT edit core platform config
+#
+# This is the key differentiator: not just visibility, but SELF-SERVE.
+
+kind: AppSpace
+apiVersion: confighub.com/v1
+metadata:
+  name: customer-acme
+  description: Self-serve configuration for ACME Corp
+
+spec:
+  # Customer ownership
+  owner: platform-admin@acme.com
+  type: customer  # Marks this as a customer-facing space
+
+  # Customer team members
+  members:
+    - email: platform-admin@acme.com
+      role: admin
+    - email: devops@acme.com
+      role: editor
+    - email: support@acme.com
+      role: viewer
+
+  # Units this customer can see/edit
+  units:
+    - acme-realtime-config
+
+  # THE KEY: What fields can the customer edit?
+  editable_fields:
+    # Rate limiting - customer controls their own limits
+    - path: config.rate_limit
+      description: Message rate limits
+      constraints:
+        min: 100
+        max: 100000
+
+    # Feature flags - customer enables/disables features
+    - path: config.feature_flags.*
+      description: Feature toggles
+      type: boolean
+
+    # Custom domain - customer's vanity domain
+    - path: config.custom_domain
+      description: Custom domain for API endpoints
+      validation: hostname
+
+    # Webhook URLs - customer's integration endpoints
+    - path: config.webhooks.*
+      description: Webhook callback URLs
+      validation: url
+
+    # Retention settings - within allowed range
+    - path: config.message_retention_days
+      description: How long to retain messages
+      constraints:
+        min: 1
+        max: 30  # Platform limit
+
+  # Fields customer can VIEW but NOT edit
+  readonly_fields:
+    - config.service_endpoints    # Platform manages this
+    - config.image_tags           # Platform manages this
+    - config.internal_settings    # Platform manages this
+
+  # Inheritance: customer config inherits from internal
+  upstream:
+    space: realtime-team
+    unit: production-blows
+    # Customer edits override upstream values
+    # Non-edited fields inherit from upstream
+
+  # Audit requirements for customer changes
+  audit:
+    require_reason: true
+    notify:
+      - customer-success@rtmsg.io
+      - realtime-team@rtmsg.io
+
+  # What the customer sees in their dashboard
+  dashboard:
+    show_revision_history: true
+    show_upstream_diff: true      # "Your config vs platform default"
+    show_effective_config: true   # Merged view

@@ -1,0 +1,32 @@
+# Expected Output: Argo CD ownership detection
+name: "argo-basic ownership"
+description: "Verify Argo CD ownership is detected correctly"
+mode: standalone
+
+requires:
+  cluster: true
+  argocd_installed: true
+
+fixture: "test/atk/fixtures/argo-basic.yaml"
+
+commands:
+  - id: argo_ownership
+    command: "kubectl apply -f test/atk/fixtures/argo-basic.yaml && sleep 2 && ./cub-agent map list --namespace demo-argo"
+    description: "Apply Argo fixture and verify ownership"
+
+    expected:
+      exit_code: 0
+      contains:
+        - pattern: "(Argo|ArgoCD)"
+
+      assertions:
+        - name: "argo_detected"
+          condition: "output.match(/(Argo|ArgoCD)/)"
+          description: "Argo CD ownership detected"
+
+    instructions: |
+      Argo CD resources detected by BOTH:
+      - `app.kubernetes.io/instance` label
+      - `argocd.argoproj.io/instance` label
+
+cleanup: "kubectl delete -f test/atk/fixtures/argo-basic.yaml --ignore-not-found"

@@ -1,0 +1,47 @@
+[
+  {
+    "clusterName": "default",
+    "namespace": "atk-flux-basic",
+    "kind": "GitRepository",
+    "name": "podinfo",
+    "apiVersion": "source.toolkit.fluxcd.io/v1",
+    "owner": "Flux",
+    "ownerDetails": {
+      "type": "source"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-flux-basic",
+    "kind": "Kustomization",
+    "name": "podinfo",
+    "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+    "owner": "Flux",
+    "ownerDetails": {
+      "type": "kustomization",
+      "source": "GitRepository/podinfo"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-flux-basic",
+    "kind": "Deployment",
+    "name": "podinfo",
+    "apiVersion": "apps/v1",
+    "owner": "Flux",
+    "ownerDetails": {
+      "kustomization": "podinfo"
+    }
+  },
+  {
+    "clusterName": "default",
+    "namespace": "atk-flux-basic",
+    "kind": "Service",
+    "name": "podinfo",
+    "apiVersion": "v1",
+    "owner": "Flux",
+    "ownerDetails": {
+      "kustomization": "podinfo"
+    }
+  }
+]

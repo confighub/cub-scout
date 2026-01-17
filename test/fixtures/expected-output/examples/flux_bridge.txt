@@ -1,0 +1,28 @@
+
+   🔥 7 FAILURE(S)   atk
+
+  Deployers  0/4
+  Workloads  13/17
+
+  PROBLEMS
+  ────────────────────────────────────────────────
+✗ Kustomization/example-app  ArtifactFailed
+✗ HelmRelease/redis-cache  SourceNotReady
+✗ Application/frontend-app  null
+⏸ Kustomization/monitoring-stack  suspended
+✗ confighub/flux-bridge  0/1 pods
+✗ demo-orders/order-processor  0/2 pods
+✗ demo-payments/frontend  0/2 pods
+✗ demo-payments/payment-api  0/3 pods
+
+  PIPELINES
+  ────────────────────────────────────────────────
+✗ ?@?  →  example-app  →  0 resources
+⏸ company/infrastructure@main  →  monitoring-stack  →  0 resources
+✗ company/frontend/k8s@HEAD  →  frontend-app  →  demo-payments
+
+  OWNERSHIP
+  ────────────────────────────────────────────────
+  Argo(1) ConfigHub(2) Helm(1) Native(13)
+  ████░░░░░░░░░░░░░
+

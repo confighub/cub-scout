@@ -1,0 +1,71 @@
+# ConfigHub-managed resources (simulates ConfigHub worker deployment)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: atk-confighub-basic
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: atk-confighub-basic
+  labels:
+    app: backend
+    confighub.com/UnitSlug: backend
+  annotations:
+    confighub.com/UnitSlug: backend
+    confighub.com/SpaceName: demo-prod
+    confighub.com/SpaceID: "550e8400-e29b-41d4-a716-446655440000"
+    confighub.com/RevisionNum: "42"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: atk-confighub-basic
+  labels:
+    app: backend
+    confighub.com/UnitSlug: backend
+  annotations:
+    confighub.com/UnitSlug: backend
+    confighub.com/SpaceName: demo-prod
+    confighub.com/SpaceID: "550e8400-e29b-41d4-a716-446655440000"
+    confighub.com/RevisionNum: "42"
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: atk-confighub-basic
+  labels:
+    confighub.com/UnitSlug: backend
+  annotations:
+    confighub.com/UnitSlug: backend
+    confighub.com/SpaceName: demo-prod
+    confighub.com/SpaceID: "550e8400-e29b-41d4-a716-446655440000"
+    confighub.com/RevisionNum: "42"
+data:
+  ENVIRONMENT: "dev"
+  LOG_LEVEL: "info"

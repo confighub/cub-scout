@@ -1,0 +1,14 @@
+#!/bin/bash
+# Convenience wrapper - dispatches to Go TUI hierarchy explorer
+# Same as: ./map confighub hierarchy
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if command -v cub-agent &>/dev/null; then
+    exec cub-agent hierarchy "$@"
+elif [[ -x "${SCRIPT_DIR}/../../cub-agent" ]]; then
+    exec "${SCRIPT_DIR}/../../cub-agent" hierarchy "$@"
+else
+    echo "cub-agent not found. Build with: go build -o cub-agent ./cmd/cub-agent/"
+    exit 1
+fi

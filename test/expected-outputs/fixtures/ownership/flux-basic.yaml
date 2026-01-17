@@ -1,0 +1,40 @@
+# Expected Output: Flux ownership detection
+name: "flux-basic ownership"
+description: "Verify Flux ownership is detected correctly"
+mode: standalone
+
+requires:
+  cluster: true
+  flux_installed: true
+
+fixture: "test/atk/fixtures/flux-basic.yaml"
+
+commands:
+  - id: flux_ownership
+    command: "kubectl apply -f test/atk/fixtures/flux-basic.yaml && sleep 2 && ./cub-agent map list --namespace demo-flux"
+    description: "Apply Flux fixture and verify ownership"
+
+    expected:
+      exit_code: 0
+      contains:
+        - "Flux"
+        - "demo-flux"
+
+      not_contains:
+        - "Native"
+
+      assertions:
+        - name: "flux_detected"
+          condition: "output.contains('Flux')"
+          description: "Flux ownership detected"
+
+        - name: "not_native"
+          condition: "!output.match(/demo-flux.*Native/)"
+          description: "Not detected as Native"
+
+    instructions: |
+      Flux resources should be detected by:
+      - `kustomize.toolkit.fluxcd.io/*` labels
+      - `helm.toolkit.fluxcd.io/*` labels
+
+cleanup: "kubectl delete -f test/atk/fixtures/flux-basic.yaml --ignore-not-found"

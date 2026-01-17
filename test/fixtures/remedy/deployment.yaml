@@ -1,0 +1,28 @@
+# Test deployment for trigger_action/restart remedy testing
+# Can be restarted with: kubectl rollout restart deployment/nginx-test -n test-remedy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-test
+  namespace: test-remedy
+  labels:
+    app: nginx-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-test
+  template:
+    metadata:
+      labels:
+        app: nginx-test
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25-alpine
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "64Mi"
+            cpu: "100m"

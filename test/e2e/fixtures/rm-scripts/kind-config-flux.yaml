@@ -1,0 +1,9 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # Gitea (NodePort 30300 -> localhost:3030)
+      - containerPort: 30300
+        hostPort: 3030
+        protocol: TCP

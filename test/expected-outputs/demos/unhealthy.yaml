@@ -1,0 +1,73 @@
+# Expected Output: demo unhealthy
+# Mode: Standalone
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "demo unhealthy"
+description: "Enterprise unhealthy demo - common GitOps problems"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  - id: demo_unhealthy
+    command: "./test/atk/demo unhealthy"
+    description: "Demo common GitOps problems and how to detect them"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(unhealthy|Unhealthy|problems)"
+          description: "Unhealthy demo header"
+
+      not_contains:
+        - "panic"
+
+      assertions:
+        - name: "demo_runs"
+          condition: "exit_code == 0"
+          description: "Demo completes"
+
+    instructions: |
+      The unhealthy demo shows common GitOps problems:
+      ```bash
+      ./test/atk/demo unhealthy
+      ```
+
+      This demonstrates:
+      - Orphan resources (no GitOps owner)
+      - Stuck reconciliation
+      - Configuration drift
+      - Missing dependencies
+
+  - id: demo_unhealthy_cleanup
+    command: "./test/atk/demo unhealthy --cleanup"
+    description: "Clean up unhealthy demo"
+
+    expected:
+      exit_code: 0
+
+# Sample output
+sample_output: |
+  Enterprise Demo: unhealthy
+
+  Applying demo fixtures...
+  namespace/broken created
+  deployment/orphan-app created
+
+  Running: ./test/atk/map
+
+  OWNERSHIP
+  Flux(2)  Native(8)  ← Notice high Native count (orphans)
+
+  Running: ./test/atk/scan
+
+  CRITICAL (2)
+  [C] Kustomization/broken-app - stuck reconciling
+  [C] HelmRelease/missing-dep - source not ready
+
+  ✓ Problems detected - this is expected for the unhealthy demo

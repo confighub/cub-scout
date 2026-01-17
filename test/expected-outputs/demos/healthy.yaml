@@ -1,0 +1,74 @@
+# Expected Output: demo healthy
+# Mode: Standalone
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "demo healthy"
+description: "Enterprise healthy demo - IITS hub-and-spoke pattern"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  - id: demo_healthy
+    command: "./test/atk/demo healthy"
+    description: "Demo a healthy enterprise GitOps setup"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - pattern: "(healthy|Healthy|Enterprise)"
+          description: "Healthy demo header"
+        - pattern: "(Flux|Argo|Helm)"
+          description: "Shows GitOps tools"
+
+      not_contains:
+        - "panic"
+        - "error:"
+
+      assertions:
+        - name: "demo_runs"
+          condition: "exit_code == 0"
+          description: "Demo completes"
+
+    instructions: |
+      The healthy demo shows an enterprise GitOps setup:
+      ```bash
+      ./test/atk/demo healthy
+      ```
+
+      This demonstrates:
+      - Hub-and-spoke architecture
+      - Multiple GitOps tools working together
+      - Clean ownership boundaries
+
+  - id: demo_healthy_cleanup
+    command: "./test/atk/demo healthy --cleanup"
+    description: "Clean up healthy demo"
+
+    expected:
+      exit_code: 0
+
+# Sample output
+sample_output: |
+  Enterprise Demo: healthy
+
+  Applying demo fixtures...
+  namespace/platform created
+  namespace/apps created
+
+  Running: ./test/atk/map
+
+  OWNERSHIP
+  Flux(8)  ArgoCD(4)  Helm(2)  Native(3)
+
+  ✓ Demo applied
+
+  Next steps:
+    ./test/atk/map              # View cluster map
+    ./test/atk/scan             # Scan for CCVEs
+    ./demo healthy --cleanup    # Remove when done

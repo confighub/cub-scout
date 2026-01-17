@@ -1,0 +1,30 @@
+# Expected Output: Helm ownership detection
+name: "helm-basic ownership"
+description: "Verify Helm ownership is detected correctly"
+mode: standalone
+
+requires:
+  cluster: true
+
+fixture: "test/atk/fixtures/helm-basic.yaml"
+
+commands:
+  - id: helm_ownership
+    command: "kubectl apply -f test/atk/fixtures/helm-basic.yaml && sleep 2 && ./cub-agent map list --namespace demo-helm"
+    description: "Apply Helm fixture and verify ownership"
+
+    expected:
+      exit_code: 0
+      contains:
+        - "Helm"
+
+      assertions:
+        - name: "helm_detected"
+          condition: "output.contains('Helm')"
+          description: "Helm ownership detected"
+
+    instructions: |
+      Helm resources detected by:
+      - `app.kubernetes.io/managed-by: Helm` label
+
+cleanup: "kubectl delete -f test/atk/fixtures/helm-basic.yaml --ignore-not-found"

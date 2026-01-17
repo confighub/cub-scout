@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../base/releases/security
+patches:
+  # Dev: single replicas
+  - target:
+      kind: HelmRelease
+      name: kyverno
+    patch: |
+      - op: replace
+        path: /spec/values/admissionController/replicas
+        value: 1
+      - op: replace
+        path: /spec/values/backgroundController/replicas
+        value: 1
+      - op: replace
+        path: /spec/values/cleanupController/replicas
+        value: 1
+      - op: replace
+        path: /spec/values/reportsController/replicas
+        value: 1

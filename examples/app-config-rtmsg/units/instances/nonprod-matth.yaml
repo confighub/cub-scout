@@ -1,0 +1,61 @@
+# Instance: Nonprod Developer Environment
+#
+# A developer's personal environment for testing.
+# Cloned from template, minimal overrides.
+
+kind: Unit
+apiVersion: confighub.com/v1
+metadata:
+  name: nonprod-realtime-matth
+  description: Realtime service - Matt's dev environment
+  labels:
+    service: realtime
+    environment: nonprod
+    region: dev
+    tier: dev
+    owner: matt@rtmsg.io
+
+spec:
+  # Cloned from template
+  upstream:
+    hub: rtmsg-platform
+    template: realtime-service
+
+  # Space ownership
+  space: realtime-team
+
+  # Revision tracking
+  revision: "20251223.1"
+
+  # Minimal overrides for dev
+  config:
+    # Dev image tags (latest dev builds)
+    image_tags:
+      core: "dev-20251223.44-7c86867"
+      frontdoor: "dev-20251223.12-abc1234"
+      redis_worker: "dev-20251222.8-def5678"
+
+    # Dev endpoints
+    service_endpoints:
+      api: "https://api-matth.dev.rtmsg.io"
+      realtime: "wss://realtime-matth.dev.rtmsg.io"
+      rest: "https://rest-matth.dev.rtmsg.io"
+
+    # Dev scale (minimal)
+    rate_limit:
+      messages_per_second: 100
+      connections_per_channel: 100
+      channels_per_app: 100
+
+    # Dev cluster (single node)
+    internal_settings:
+      cluster_size: 1
+      replication_factor: 1
+      consistency_level: one
+
+  # Audit trail
+  audit:
+    last_modified_by: matt@rtmsg.io
+    last_modified_at: "2025-12-23T09:15:00Z"
+    reason: "Testing new frontdoor build"
+    # No changeset required for dev environments

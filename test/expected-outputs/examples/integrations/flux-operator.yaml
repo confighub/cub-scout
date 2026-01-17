@@ -1,0 +1,31 @@
+# Expected Output: Flux Operator Integration
+name: "flux-operator"
+description: "Flux Operator integration for CCVE metrics export"
+mode: standalone
+
+requires:
+  cluster: false  # Just validates files exist
+  tools: []
+
+files:
+  - path: "examples/integrations/flux-operator/ccve-exporter.yaml"
+    description: "CCVE metrics exporter for Prometheus"
+    validates:
+      - file_exists: true
+      - contains:
+          - "apiVersion"
+
+  - path: "examples/integrations/flux-operator/README.md"
+    description: "Integration documentation"
+    validates:
+      - file_exists: true
+
+instructions: |
+  Flux Operator integration exports CCVE metrics to Prometheus.
+
+  Features:
+  - CCVE count metrics by severity
+  - Integration with Flux health checks
+  - Grafana dashboard support
+
+  See: examples/integrations/flux-operator/README.md

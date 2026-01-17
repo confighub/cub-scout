@@ -1,0 +1,65 @@
+# Hub: The Catalog + Governance Layer
+#
+# This is the "golden source" that teams clone from.
+# It contains base templates and platform-wide constraints.
+
+kind: Hub
+apiVersion: confighub.com/v1
+metadata:
+  name: rtmsg-platform
+  description: Platform configuration catalog for RT-Message-App-style infrastructure
+
+spec:
+  # Base templates that teams clone
+  templates:
+    - name: realtime-service
+      description: Real-time messaging service config
+      path: units/templates/realtime-service.yaml
+
+    - name: health-server
+      description: Health check service config
+      path: units/templates/health-server.yaml
+
+    - name: frontdoor
+      description: Edge/ingress service config
+      path: units/templates/frontdoor.yaml
+
+  # Platform-wide constraints
+  constraints:
+    - name: production-requires-approval
+      description: All production changes need approval
+      match:
+        labels:
+          environment: production
+      require:
+        - changeset-approval
+        - audit-reason
+
+    - name: critical-tier-restricted
+      description: Critical tier changes need platform team approval
+      match:
+        labels:
+          tier: critical
+      require:
+        - changeset-approval
+        - approver-from: [platform-team]
+
+    - name: customer-config-audit
+      description: All customer-facing config changes are audited
+      match:
+        labels:
+          customer-facing: "true"
+      require:
+        - audit-reason
+        - notify: [customer-success-team]
+
+  # Allowed owners (who/what can make changes)
+  allowed_owners:
+    - cub-cli          # ConfigHub CLI
+    - terraform        # Infrastructure as Code
+    - github-actions   # CI/CD automation
+
+  # Default labels for all Units in this Hub
+  default_labels:
+    platform: ably
+    managed-by: confighub

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: operations
+version: 1.0.0
+description: Operations and automation tools
+dependencies:
+  - name: keda
+    version: "2.13.1"
+    repository: https://kedacore.github.io/charts

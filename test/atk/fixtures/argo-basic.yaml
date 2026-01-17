@@ -1,0 +1,26 @@
+# Argo CD basic - Application deploying guestbook
+# Requires: Argo CD installed (kubectl create namespace argocd && kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: atk-argo-basic
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps
+    targetRevision: HEAD
+    path: guestbook
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: atk-argo-basic
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

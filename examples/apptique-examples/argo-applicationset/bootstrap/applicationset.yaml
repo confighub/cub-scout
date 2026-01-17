@@ -1,0 +1,37 @@
+# Argo CD ApplicationSet - generates Applications from directory structure
+# This pattern auto-discovers environments from the apps/ directory
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apptique
+  namespace: argocd
+spec:
+  generators:
+    # Directory generator - creates one Application per subdirectory
+    - git:
+        repoURL: https://github.com/confighubai/confighub-agent.git
+        revision: HEAD
+        directories:
+          - path: examples/apptique-examples/argo-applicationset/apps/apptique/*
+  template:
+    metadata:
+      name: 'apptique-{{path.basename}}'
+      labels:
+        app.kubernetes.io/name: apptique
+        app.kubernetes.io/instance: 'apptique-{{path.basename}}'
+        environment: '{{path.basename}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/confighubai/confighub-agent.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'apptique-{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

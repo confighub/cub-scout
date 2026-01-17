@@ -1,0 +1,146 @@
+# Expected Output: demo connected
+# Mode: Connected (requires ConfigHub + workers)
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "demo connected"
+description: "ConfigHub connected mode demo"
+mode: connected
+
+requires:
+  cluster: true
+  cub_auth: true
+  workers: true
+  tools: [kubectl, cub]
+
+preconditions:
+  - name: "cub_authenticated"
+    check: "cub context get"
+    message: "Must be authenticated: cub auth login"
+
+  - name: "space_set"
+    check: "cub context get --json | jq -e '.settings.defaultSpace != null'"
+    message: "Must have active space: cub context set space <slug>"
+
+  - name: "worker_connected"
+    check: "cub worker list --json | jq -e 'length > 0 and .[0].BridgeWorker.Condition == \"Ready\"'"
+    message: "Must have connected worker: cub worker run <slug>"
+
+commands:
+  - id: demo_connected
+    command: "./test/atk/demo connected"
+    description: "Demo ConfigHub connected mode features"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "ConfigHub"
+        - "Connected"
+        - pattern: "(Worker|worker)"
+          description: "Shows worker status"
+        - pattern: "(hierarchy|Hierarchy)"
+          description: "Shows hierarchy view"
+
+      not_contains:
+        - "NO WORKERS"
+        - "not authenticated"
+        - "null - unknown"
+        - "→ no target"
+        - "error"
+        - "panic"
+
+      assertions:
+        - name: "worker_check_passes"
+          condition: "output.contains('Worker check passed') || output.contains('connected')"
+          description: "Worker health verified"
+
+        - name: "hierarchy_shown"
+          condition: "output.contains('Hierarchy') || output.contains('ConfigHub')"
+          description: "ConfigHub hierarchy displayed"
+
+        - name: "no_null_values"
+          condition: "!output.contains('null')"
+          description: "No null values (Issue #1 prevention)"
+
+        - name: "admin_mode_works"
+          condition: "output.contains('Admin') || output.contains('admin')"
+          description: "Admin mode demonstrated"
+
+        - name: "fleet_mode_works"
+          condition: "output.contains('Fleet') || output.contains('fleet')"
+          description: "Fleet mode demonstrated"
+
+    instructions: |
+      The connected demo shows ConfigHub integration features:
+      ```bash
+      ./test/atk/demo connected
+      ```
+
+      Prerequisites:
+      1. Authenticate: cub auth login
+      2. Set space: cub context set space <slug>
+      3. Start worker: cub worker run <slug>
+
+      You'll see:
+      - ConfigHub hierarchy (Org → Space → Unit)
+      - Admin mode view
+      - Fleet mode view
+      - Worker and target status
+
+    hints:
+      - when: "output.contains('NO WORKERS')"
+        show: "Start a worker: cub worker run <slug> --space <space>"
+      - when: "output.contains('not authenticated')"
+        show: "Login first: cub auth login"
+      - when: "output.contains('No active space')"
+        show: "Set space: cub context set space <slug>"
+      - when: "output.contains('null')"
+        show: "Bug detected! Worker may be misconfigured. Check: cub worker list"
+
+# Sample output (for reference)
+sample_output: |
+  ConfigHub Connected Mode Demo
+
+  Shows ConfigHub hierarchy, workers, and targets
+
+  ✓ Worker check passed: 1/1 connected (space: tutorial)
+
+  Connected to ConfigHub (space: tutorial)
+
+  Step 1: ConfigHub Hierarchy View
+    $ ./test/atk/map confighub
+
+  ═══════════════════════════════════════════════════════════════
+    ConfigHub Hierarchy
+  ═══════════════════════════════════════════════════════════════
+
+  Context:
+    Organization: confighub
+    Space: tutorial
+
+  Workers in 'tutorial':
+    dev            connected   docker-desktop
+
+  Step 2: Admin Mode (Org → Space → Unit)
+    $ ./test/atk/map --mode=admin
+
+  ConfigHub Hierarchy:
+  Org → Space → Unit (with Resources, Targets, Workers)
+
+  ConfigHub (org: confighub)
+    └── tutorial (2 units, 8 targets, 2 workers)
+      ├── chatapp-dev @ rev 5 → k8s-dev
+      └── prodchatapp-dev @ rev 2 → k8s-dev
+
+  Step 3: Fleet Mode (Application → Variant → Cluster)
+    $ ./test/atk/map --mode=fleet
+
+  ConfigHub Fleet View
+  Hierarchy: Application → Variant → Cluster
+
+  ✓ Connected mode demo complete
+
+  Next steps:
+    cub unit list                   # List units in space
+    cub worker list                 # List workers
+    cub target list                 # List targets

@@ -1,0 +1,15 @@
+# Flux GitRepository - points to this repo
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: apptique-examples
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/confighubai/confighub-agent
+  ref:
+    branch: main
+  ignore: |
+    # Ignore everything except examples/apptique-examples
+    /*
+    !/examples/apptique-examples/flux-monorepo/

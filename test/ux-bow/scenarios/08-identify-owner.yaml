@@ -1,0 +1,105 @@
+# Scenario: Identify who owns a resource
+# Core visibility journey - quick ownership check
+
+id: identify-owner
+name: Quickly identify resource owner
+category: discover
+priority: P0
+difficulty_target: trivial
+
+description: |
+  User sees a resource and needs to know immediately:
+  - Is it GitOps managed or "wild" (kubectl applied)?
+  - Which GitOps tool (Flux, ArgoCD, Helm)?
+
+  This is the MOST FREQUENT question users have.
+
+personas:
+  - developer          # Primary - "can I change this in git?"
+  - sre                # Primary - "incident - is this managed?"
+  - platform-engineer  # Primary - "audit check"
+  - security           # Secondary - "compliance check"
+
+preconditions:
+  cluster: any
+  resource_exists: true
+
+goals:
+  - Know owner type in < 2 seconds
+  - No need to inspect labels manually
+  - Clear visual indication
+
+entry_points:
+  tui:
+    description: "Using cub-agent map TUI with panel layout"
+    expected_keystrokes: 1
+    expected_commands: 1
+    difficulty: trivial
+    journey:
+      - step: 1
+        action: "Press 'w' for Workloads panel (or 's' for Status)"
+        expect: "Workloads grouped by owner (Flux/ArgoCD/Helm/Native) with color coding; Status shows ownership counts"
+        keystrokes: 1
+    notes: |
+      Panel layout shows ownership in multiple views:
+      - Status panel: ownership counts
+      - Workloads panel: grouped by owner with colors
+      - Sprawl panel: ownership breakdown by namespace
+
+  cli:
+    description: "Using cub-agent map list"
+    expected_keystrokes: 15
+    expected_commands: 1
+    difficulty: easy
+    journey:
+      - step: 1
+        command: "cub-agent map list"
+        expect: "Owner column in output"
+        keystrokes: 15
+      - step: 2
+        command: "cub-agent map list -o wide"
+        expect: "Extended owner info with git source"
+        keystrokes: 22
+
+  hub:
+    description: "Using ConfigHub hierarchy"
+    expected_keystrokes: 0
+    expected_commands: 0
+    difficulty: trivial
+    journey:
+      - step: 1
+        action: "View hierarchy"
+        expect: "Units show owner type; unmanaged resources flagged"
+        keystrokes: 0
+
+scoring:
+  discoverability:
+    tui: 5  # Owner is visible in default view
+    cli: 5  # Owner is default column
+    hub: 5  # Hierarchy IS ownership visualization
+  speed:
+    tui: 5  # Zero keystrokes - it's visible
+    cli: 4  # Need to run command
+    hub: 5  # Zero keystrokes - it's visible
+  consistency:
+    tui: 5  # Same owner display everywhere
+    cli: 5  # Owner column always present
+    hub: 5  # Same owner colors/icons
+  recovery:
+    tui: 5  # N/A - no action needed
+    cli: 5  # N/A - no action needed
+    hub: 5  # N/A - no action needed
+  delight:
+    tui: 5  # Color-coded owners are beautiful
+    cli: 4  # Text-based but clear
+    hub: 5  # Hierarchy visualization is powerful
+
+composite_scores:
+  tui: 5.0    # Perfect
+  cli: 4.6    # Excellent
+  hub: 5.0    # Perfect
+
+notes: |
+  This is THE CORE FEATURE - all entry points optimize for this.
+  Ownership is visible by default everywhere.
+  CLI slightly lower because requires running command first.

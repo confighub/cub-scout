@@ -1,0 +1,97 @@
+# Expected Output: map standalone
+# Mode: Standalone (no ConfigHub connection)
+# Purpose: User documentation, test assertions, Actions foundation
+
+name: "map standalone"
+description: "Map command showing cluster resources and ownership"
+mode: standalone
+
+requires:
+  cluster: true
+  cub_auth: false
+  workers: false
+  tools: [kubectl]
+
+commands:
+  # Basic map
+  - id: map_list
+    command: "./cub-agent map list"
+    description: "List all resources with ownership"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "NAMESPACE"
+        - "KIND"
+        - "NAME"
+        - "OWNER"
+        - pattern: "(Flux|Argo|Helm|ConfigHub|Native)"
+          description: "At least one owner type detected"
+
+      not_contains:
+        - "panic"
+        - "error:"
+        - "failed to"
+
+      assertions:
+        - name: "table_header"
+          condition: "output.contains('NAMESPACE') && output.contains('OWNER')"
+          description: "Table header shown"
+
+        - name: "clean_exit"
+          condition: "exit_code == 0"
+          description: "Exits cleanly"
+
+    instructions: |
+      The map command shows what's running in your cluster and who owns each resource.
+
+      Run:
+      ```bash
+      ./cub-agent map list
+      ```
+
+      You should see a table with columns:
+      - NAMESPACE - where the resource lives
+      - KIND - Deployment, Service, etc.
+      - NAME - resource name
+      - OWNER - Flux, Argo CD, Helm, ConfigHub, or Native
+
+    hints:
+      - when: "output.lines.count < 2"
+        show: "Your cluster appears empty. Deploy workloads to see them mapped."
+      - when: "output.contains('connection refused')"
+        show: "Cannot reach cluster. Check: kubectl cluster-info"
+
+  # Map with namespace filter
+  - id: map_namespace
+    command: "./cub-agent map list --namespace kube-system"
+    description: "List resources in specific namespace"
+
+    expected:
+      exit_code: 0
+      contains:
+        - "kube-system"
+      not_contains:
+        - "error"
+
+      assertions:
+        - name: "namespace_filtered"
+          condition: "output.contains('kube-system')"
+          description: "Shows kube-system resources"
+
+    instructions: |
+      Filter map output to a specific namespace:
+      ```bash
+      ./cub-agent map list --namespace kube-system
+      ```
+
+# Sample output (for reference)
+sample_output: |
+  NAMESPACE           KIND           NAME                              OWNER
+  default             Deployment     nginx                             Native
+  default             Service        nginx                             Native
+  flux-system         Deployment     source-controller                 Flux
+  flux-system         Deployment     kustomize-controller              Flux
+  argocd              Deployment     argocd-server                     Native
+  argocd              Application    my-app                            Argo

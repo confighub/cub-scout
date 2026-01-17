@@ -1,0 +1,14 @@
+# Edge case 08: Ingress with only defaultBackend (no rules)
+# Tests: Does detection check defaultBackend for non-existent service?
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: edge-ingress-default-only
+  namespace: default
+spec:
+  defaultBackend:
+    service:
+      name: nonexistent-default-backend
+      port:
+        number: 80

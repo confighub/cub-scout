@@ -1,0 +1,131 @@
+# Expected Output: ATK scan script
+name: "atk scan"
+description: "Scan cluster for known CCVEs (Config CVEs)"
+mode: standalone
+
+requires:
+  cluster: true
+  tools: [kubectl, jq]
+
+commands:
+  - id: scan_all
+    command: "./test/atk/scan"
+    description: "Scan cluster for all CCVEs"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "CONFIG CVE SCAN"
+        - pattern: "(Summary|critical|warning|info)"
+          description: "Shows summary"
+
+      not_contains:
+        - "panic:"
+        - "command not found"
+        - "error:"
+
+      assertions:
+        - name: "scan_completes"
+          condition: "exit_code == 0"
+          description: "Scan completes successfully"
+
+    instructions: |
+      Scan cluster for CCVEs:
+      ```bash
+      ./test/atk/scan
+      ```
+
+      What it scans:
+      - Flux CCVEs (source errors, build failures, suspended)
+      - Argo CD CCVEs (sync failed, out of sync, degraded)
+      - Helm CCVEs (failed releases, pending states)
+      - Application CCVEs (Grafana sidecar bug, broken refs)
+      - Drift CCVEs (replica drift, unmanaged resources)
+      - ConfigHub CCVEs (pending changes, drift)
+
+  - id: scan_json
+    command: "./test/atk/scan --json"
+    description: "Scan with JSON output"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - '"cluster"'
+        - '"scannedAt"'
+        - '"summary"'
+        - '"findings"'
+
+      assertions:
+        - name: "valid_json"
+          condition: "JSON.parse(output) !== null"
+          description: "Output is valid JSON"
+
+    instructions: |
+      JSON output for tooling:
+      ```bash
+      ./test/atk/scan --json | jq '.summary'
+      ```
+
+  - id: scan_list
+    command: "./test/atk/scan --list"
+    description: "List all known CCVEs"
+
+    expected:
+      exit_code: 0
+
+      contains:
+        - "Config CVE Catalog"
+        - "ID"
+        - "CAT"
+        - "Name"
+        - "Severity"
+        - pattern: "(CCVE-|FLUX|ARGO|HELM)"
+          description: "Shows CCVE IDs"
+
+    instructions: |
+      List all patterns:
+      ```bash
+      ./test/atk/scan --list
+      ```
+
+  - id: scan_specific
+    command: "./test/atk/scan CCVE-FLUX-001"
+    description: "Show details for specific CCVE"
+
+    expected:
+      contains:
+        - pattern: "(CCVE|Flux|remediation|detection)"
+          description: "Shows CCVE details"
+
+    instructions: |
+      Get remediation details:
+      ```bash
+      ./test/atk/scan CCVE-FLUX-001
+      ```
+
+# Sample output
+sample_output: |
+  CONFIG CVE SCAN: kind-atk
+  ════════════════════════════════════════════════════════════════════
+
+  CRITICAL (2)
+  ────────────────────────────────────────────────────────────────────
+  [CCVE-FLUX-001] flux-system/broken-source
+  [CCVE-2025-0027] monitoring/grafana
+
+  WARNING (3)
+  ────────────────────────────────────────────────────────────────────
+  [CCVE-ARGO-003] argocd/app-behind
+  [CCVE-HELM-003] kube-system/pending-chart
+  [CCVE-2025-0020] default/drifted-deploy
+
+  INFO (1)
+  ────────────────────────────────────────────────────────────────────
+  [CCVE-2025-0019] production/manual-deploy
+
+  ════════════════════════════════════════════════════════════════════
+  Summary: 2 critical, 3 warning, 1 info
+
+  ⚠ Run './scan <CCVE-ID>' for remediation steps

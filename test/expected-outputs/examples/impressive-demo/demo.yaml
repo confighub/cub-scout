@@ -1,0 +1,48 @@
+# Expected Output: Impressive Demo
+name: "impressive-demo"
+description: "Full demo script showing CCVE detection with bad/fixed configs"
+mode: standalone
+
+requires:
+  cluster: true
+  tools: [kubectl]
+
+commands:
+  - id: demo_help
+    command: "./examples/impressive-demo/demo-script.sh"
+    description: "Show demo usage (requires subcommand)"
+
+    expected:
+      exit_code: 1  # Exits with usage when no subcommand
+
+      contains:
+        - "Usage"
+        - pattern: "(setup|run|cleanup)"
+          description: "Shows available commands"
+
+      not_contains:
+        - "panic:"
+
+    instructions: |
+      Run the impressive demo:
+      ```bash
+      ./examples/impressive-demo/demo-script.sh
+      ```
+
+      This demo:
+      1. Applies bad configs (ingress, certificate, monitoring)
+      2. Scans for CCVEs
+      3. Shows remediation
+      4. Applies fixed configs
+
+fixtures:
+  bad_configs:
+    - examples/impressive-demo/bad-configs/ingress-bad.yaml
+    - examples/impressive-demo/bad-configs/certificate-bad.yaml
+    - examples/impressive-demo/bad-configs/monitoring-bad.yaml
+
+  fixed_configs:
+    - examples/impressive-demo/fixed-configs/ingress-fixed.yaml
+    - examples/impressive-demo/fixed-configs/certificate-fixed.yaml
+    - examples/impressive-demo/fixed-configs/monitoring-fixed.yaml
+    - examples/impressive-demo/fixed-configs/letsencrypt-issuer.yaml

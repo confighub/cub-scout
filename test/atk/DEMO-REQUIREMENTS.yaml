@@ -1,0 +1,256 @@
+# Demo Requirements Manifest
+#
+# Each demo/example declares its specific requirements.
+# E2E tests verify requirements are met before running.
+#
+# Requirement types:
+#   standalone: true     # Works without any ConfigHub connection
+#   cluster: true        # Needs kubectl access to a cluster
+#   cub_auth: true       # Needs cub CLI authenticated
+#   workers:             # Worker requirements
+#     - space: tutorial
+#       count: 1         # Minimum workers needed
+#       names: [dev]     # Specific worker names (optional)
+#   targets:             # Target requirements
+#     - space: tutorial
+#       count: 1
+
+demos:
+  # ============================================
+  # STANDALONE DEMOS - No ConfigHub connection
+  # ============================================
+
+  quick:
+    description: "Fastest path to WOW - see Map in action"
+    time: "30 sec"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  ccve:
+    description: "CCVE-2025-0027 detection - the BIGBANK story"
+    time: "2 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  query:
+    description: "Query language demo - filter by owner, namespace"
+    time: "1 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  healthy:
+    description: "Enterprise healthy - IITS hub-and-spoke"
+    time: "2 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  unhealthy:
+    description: "Enterprise unhealthy - common problems"
+    time: "2 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  # ============================================
+  # SCENARIOS - Narrative walkthroughs
+  # ============================================
+
+  scenario-bigbank-incident:
+    description: "Walk through the BIGBANK 4-hour outage"
+    time: "3 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  scenario-orphan-hunt:
+    description: "Find and fix orphan resources"
+    time: "2 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  scenario-monday-morning:
+    description: "Weekly health check ritual"
+    time: "1 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  scenario-clobber:
+    description: "Platform updates vs app overlays"
+    time: "2 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+  scenario-break-glass:
+    description: "Emergency kubectl → Accept/Reject workflow"
+    time: "2 min"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+    notes: "Shows OSS orphan detection; ConfigHub import shown but not executed"
+
+  # ============================================
+  # CONNECTED DEMOS - Need ConfigHub + Workers
+  # ============================================
+
+  connected:
+    description: "ConfigHub connected mode - hierarchy, workers, targets"
+    time: "1 min"
+    standalone: false
+    cluster: true
+    cub_auth: true
+    workers:
+      - space: current  # Uses current space from cub context
+        count: 1
+    targets:
+      - space: current
+        count: 1
+
+  import:
+    description: "Import workflow - bring workloads to ConfigHub"
+    time: "2 min"
+    standalone: true  # Works standalone (shows dry-run), full import needs ConfigHub
+    cluster: true
+    cub_auth: false
+    workers: []
+    notes: "Shows import flow; actual import to ConfigHub needs authentication"
+
+# ============================================
+# RM DEMOS (ARGOCD) - Rendered Manifest pattern demos
+# ============================================
+# ⚠️ SIMULATION DEMOS - These print hardcoded output showing what ConfigHub
+# WILL do when RM features are implemented. They do NOT connect to real
+# clusters or ConfigHub. Use for storytelling and presentations.
+
+rm-demos-argocd:
+  monday-panic:
+    description: "[SIMULATION] Demo 1: Find the problem across 47 clusters"
+    time: "3 min"
+    standalone: true
+    cluster: false  # Simulation only
+    cub_auth: false
+    workers: []
+    script: "examples/rm-demos-argocd/scenarios/monday-panic/demo.sh"
+
+  2am-kubectl:
+    description: "[SIMULATION] Demo 2: Detect and resolve drift"
+    time: "4 min"
+    standalone: true
+    cluster: false  # Simulation only
+    cub_auth: false
+    workers: []
+    script: "examples/rm-demos-argocd/scenarios/2am-kubectl/demo.sh"
+
+  security-patch:
+    description: "[SIMULATION] Demo 3: Patch 847 services fleet-wide"
+    time: "4 min"
+    standalone: true
+    cluster: false  # Simulation only
+    cub_auth: false
+    workers: []
+    script: "examples/rm-demos-argocd/scenarios/security-patch/demo.sh"
+
+# ============================================
+# EXAMPLES - Third-party integrations
+# ============================================
+
+examples:
+  argocd-extension:
+    description: "Argo CD UI extension"
+    standalone: true
+    cluster: false  # Just validates JS/YAML
+    cub_auth: false
+    workers: []
+
+  flux-operator:
+    description: "Flux Operator integration"
+    standalone: true
+    cluster: false  # Just validates YAML
+    cub_auth: false
+    workers: []
+
+  impressive-demo:
+    description: "Full demo script with bad/fixed configs"
+    standalone: true
+    cluster: true
+    cub_auth: false
+    workers: []
+
+# ============================================
+# KUBECON DEMO SPACES - Brian's larger demos
+# ============================================
+# These require specific spaces with workers running
+
+kubecon-demos:
+  apptique:
+    description: "E-commerce demo"
+    spaces:
+      - name: apptique-dev
+        workers: 1
+        units: 11
+      - name: apptique-prod
+        workers: 1
+        units: 11
+
+  appchat:
+    description: "Chat app demo"
+    spaces:
+      - name: appchat-dev
+        workers: 1
+        units: 4
+      - name: appchat-prod
+        workers: 1
+        units: 4
+
+  appvote:
+    description: "Voting app demo"
+    spaces:
+      - name: appvote-dev
+        workers: 1
+        units: 6
+      - name: appvote-prod
+        workers: 1
+        units: 6
+
+  traderx:
+    description: "TraderX demo"
+    spaces:
+      - name: traderx
+        workers: 1
+        units: 1
+
+# ============================================
+# TUTORIAL SPACES - For getting started flows
+# ============================================
+
+tutorial-spaces:
+  tutorial:
+    description: "Main tutorial flow"
+    workers: 2
+    targets: 8
+
+  platform-dev:
+    description: "Platform team dev environment"
+    workers: 1
+    targets: 7
+
+  platform-prod:
+    description: "Platform team prod environment"
+    workers: 1
+    targets: 7

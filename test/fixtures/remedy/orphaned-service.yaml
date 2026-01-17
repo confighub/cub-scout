@@ -1,0 +1,17 @@
+# Orphaned service for delete_resource remedy testing
+# Selector matches no pods - can be detected as dangling
+# Fix: kubectl delete service/orphaned-service -n test-remedy
+apiVersion: v1
+kind: Service
+metadata:
+  name: orphaned-service
+  namespace: test-remedy
+  labels:
+    purpose: remedy-testing
+    ccve-test: delete-resource
+spec:
+  selector:
+    app: nonexistent-app  # No pods match this
+  ports:
+  - port: 80
+    targetPort: 8080

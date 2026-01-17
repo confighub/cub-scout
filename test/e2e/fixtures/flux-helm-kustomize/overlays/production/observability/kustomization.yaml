@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../base/releases/observability
+patches:
+  # Production: HA replicas, more resources
+  - target:
+      kind: HelmRelease
+      name: grafana
+    patch: |
+      - op: replace
+        path: /spec/values/replicas
+        value: 3
+      - op: add
+        path: /spec/values/resources
+        value:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
+  - target:
+      kind: HelmRelease
+      name: loki
+    patch: |
+      - op: replace
+        path: /spec/values/singleBinary/replicas
+        value: 1
+  - target:
+      kind: HelmRelease
+      name: prometheus
+    patch: |
+      - op: add
+        path: /spec/values/prometheus/prometheusSpec/replicas
+        value: 2

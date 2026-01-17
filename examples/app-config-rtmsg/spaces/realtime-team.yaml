@@ -1,0 +1,71 @@
+# Space: Internal Team Boundary
+#
+# The realtime team owns all realtime service configuration.
+# They can create, edit, and delete Units in this space.
+
+kind: AppSpace
+apiVersion: confighub.com/v1
+metadata:
+  name: realtime-team
+  description: Realtime messaging service team
+
+spec:
+  # Team ownership
+  owner: realtime@rtmsg.io
+
+  # Team members and roles
+  members:
+    - email: alice@rtmsg.io
+      role: admin
+    - email: bob@rtmsg.io
+      role: editor
+    - email: charlie@rtmsg.io
+      role: viewer
+
+  # Units in this space
+  units:
+    # Production environments
+    - production-blows
+    - production-cn
+    - production-drill
+    - production-useast
+
+    # Non-production environments
+    - nonprod-realtime-matth
+    - nonprod-realtime-regn1
+    - nonprod-staging
+
+    # Development environments
+    - dev-alice
+    - dev-bob
+
+  # Space-level policies
+  policies:
+    # Production changes require approval
+    - match: { labels: { environment: production } }
+      require:
+        - changeset-approval
+        - minimum-approvers: 1
+
+    # Nonprod can be edited freely
+    - match: { labels: { environment: nonprod } }
+      allow:
+        - direct-edit
+
+    # Dev is fully open
+    - match: { labels: { environment: dev } }
+      allow:
+        - direct-edit
+        - self-approve
+
+  # Reconciliation behavior
+  reconciliation:
+    # Production: revert unauthorized changes
+    - match: { labels: { environment: production } }
+      on_drift: revert
+      alert: true
+
+    # Nonprod: accept drift but log it
+    - match: { labels: { environment: nonprod } }
+      on_drift: accept
+      alert: false

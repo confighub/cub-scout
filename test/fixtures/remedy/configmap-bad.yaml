@@ -1,0 +1,15 @@
+# ConfigMap with misconfiguration for config_fix remedy testing
+# Issue: debug mode enabled in production
+# Fix: kubectl patch configmap/app-config -n test-remedy --type=merge -p '{"data":{"DEBUG":"false"}}'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: test-remedy
+  labels:
+    purpose: remedy-testing
+    ccve-test: config-fix
+data:
+  DEBUG: "true"  # Should be false in production
+  LOG_LEVEL: "info"
+  API_TIMEOUT: "30"

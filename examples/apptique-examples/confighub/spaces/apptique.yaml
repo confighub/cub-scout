@@ -1,0 +1,62 @@
+# App Space: Apptique Frontend Services
+#
+# Owns the customer-facing services:
+# - frontend (web UI)
+# - cart-service
+# - checkout-service
+# - product-catalog
+
+kind: AppSpace
+apiVersion: confighub.com/v1
+metadata:
+  name: apptique
+  description: Apptique e-commerce frontend services
+
+spec:
+  owner: frontend-team@example.com
+
+  members:
+    - email: frontend-team@example.com
+      role: admin
+    - email: platform-oncall@example.com
+      role: operator
+
+  # Units in this space
+  units:
+    - name: frontend
+      description: Web UI for the e-commerce store
+      source_path: apps/apptique/base/deployment.yaml
+      variants:
+        - name: dev
+          target: apptique-dev
+          values_overlay: apps/apptique/overlays/dev/
+        - name: prod
+          target: apptique-prod
+          values_overlay: apps/apptique/overlays/prod/
+
+    # Additional units for full Online Boutique demo
+    # (currently only frontend is implemented)
+    # - name: cart-service
+    # - name: checkout-service
+    # - name: product-catalog
+
+  # Saved queries
+  saved_queries:
+    - name: all-production
+      query: "space=apptique AND environment=prod"
+
+    - name: drifted
+      query: "space=apptique AND drift=true"
+
+    - name: unhealthy
+      query: "space=apptique AND healthy=false"
+
+  # Drift handling
+  reconciliation:
+    - match: { path: spec.replicas }
+      on_drift: accept  # HPA can change replicas
+      alert: false
+
+    - match: { path: "*" }
+      on_drift: revert
+      alert: true
