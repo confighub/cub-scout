@@ -1,0 +1,75 @@
+# GoReleaser configuration for cub-scout
+# https://goreleaser.com
+
+version: 2
+
+project_name: cub-scout
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: cub-scout
+    main: ./cmd/cub-scout
+    binary: cub-scout
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+      - GUIDE.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+
+brews:
+  - name: cub-scout
+    repository:
+      owner: confighub
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://confighub.com"
+    description: "Explore and map GitOps in your clusters"
+    license: "MIT"
+    install: |
+      bin.install "cub-scout"
+    test: |
+      system "#{bin}/cub-scout", "version"
+
+dockers:
+  - image_templates:
+      - "ghcr.io/confighub/cub-scout:{{ .Tag }}"
+      - "ghcr.io/confighub/cub-scout:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source={{ .GitURL }}"
