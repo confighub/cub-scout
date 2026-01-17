@@ -15,7 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/monadic/confighub-agent/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 var (

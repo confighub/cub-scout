@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/monadic/confighub-agent/pkg/gitops"
+	"github.com/confighub/cub-scout/pkg/gitops"
 )
 
 // ImportSuggestion represents a suggested import structure (org-space model)

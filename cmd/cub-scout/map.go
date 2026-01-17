@@ -26,9 +26,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/monadic/confighub-agent/pkg/agent"
-	"github.com/monadic/confighub-agent/pkg/queries"
-	"github.com/monadic/confighub-agent/pkg/query"
+	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/queries"
+	"github.com/confighub/cub-scout/pkg/query"
 )
 
 var (

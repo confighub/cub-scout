@@ -16,8 +16,8 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/monadic/confighub-agent/pkg/agent"
-	"github.com/monadic/confighub-agent/pkg/remedy"
+	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/remedy"
 )
 
 var (

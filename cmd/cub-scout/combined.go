@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/monadic/confighub-agent/pkg/gitops"
+	"github.com/confighub/cub-scout/pkg/gitops"
 	"github.com/spf13/cobra"
 )
 
