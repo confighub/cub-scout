@@ -4,13 +4,13 @@ All tests live in this directory, organized by type.
 
 ---
 
-## Vibe Coding = 100% Test Coverage
+## AI-Assisted Development = 100% Test Coverage
 
-**CRITICAL:** When using AI-assisted "vibe coding", 100% test coverage is non-negotiable.
+**CRITICAL:** When using AI to write code, 100% test coverage is non-negotiable.
 
 > "If you can't prove it works, it doesn't work."
 
-AI can hallucinate code that looks correct but doesn't work. Tests are the only proof that code actually functions. Every feature, command, and code path MUST be verified.
+AI can generate code that looks correct but doesn't function. Tests are the only proof. Every feature must be verified.
 
 ### The Four Test Groups (25% each)
 
@@ -26,7 +26,7 @@ AI can hallucinate code that looks correct but doesn't work. Tests are the only 
 **IMPORTANT:**
 - Always use `./cub-scout`, not `cub-scout` (binary is local, not in PATH)
 - Always use `prove-it-works.sh`, not `run-all.sh` (legacy)
-- See `test/TESTING-QUICKSTART.md` for the one-page quick reference
+- See [GUIDE.md](../GUIDE.md) for the complete reference
 
 ---
 
