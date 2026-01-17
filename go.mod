@@ -1,4 +1,4 @@
-module github.com/monadic/confighub-agent
+module github.com/confighub/cub-scout
 
 go 1.24.0
 
