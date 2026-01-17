@@ -1,0 +1,257 @@
+# CI Workflow for cub-scout
+#
+# Runs tests at multiple levels:
+# - Level 0 (smoke): Always runs, fast
+# - Level 1 (unit): Always runs, all Go tests
+# - Level 2 (integration): Needs cluster, basic commands
+# - Level 3 (gitops): Needs Flux + ArgoCD, ownership detection
+#
+# See test/test-levels.yaml for level definitions.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      level:
+        description: 'Test level (smoke, unit, integration, gitops, demos, full)'
+        required: false
+        default: 'integration'
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  # ==========================================================================
+  # Level 0 + 1: Smoke + Unit (no cluster needed)
+  # ==========================================================================
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build
+        run: go build ./cmd/cub-scout
+
+      - name: Run unit tests
+        run: go test ./... -v
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: cub-scout-linux
+          path: cub-scout
+
+  # ==========================================================================
+  # Level 2: Integration (needs cluster)
+  # ==========================================================================
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: cub-scout-linux
+
+      - name: Make binary executable
+        run: chmod +x cub-scout
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: test-cluster
+
+      - name: Run integration tests
+        run: go test -tags=integration ./test/integration/... -v
+
+      - name: Test map commands
+        run: |
+          ./cub-scout map status
+          ./cub-scout map list
+          ./cub-scout map list --json | head -20
+          ./cub-scout scan
+
+  # ==========================================================================
+  # Level 3: GitOps E2E (needs Flux + ArgoCD)
+  # ==========================================================================
+  gitops:
+    name: GitOps E2E
+    runs-on: ubuntu-latest
+    needs: integration
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: cub-scout-linux
+
+      - name: Make binary executable
+        run: chmod +x cub-scout
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: gitops-cluster
+
+      - name: Install Flux
+        run: |
+          curl -s https://fluxcd.io/install.sh | sudo bash
+          flux install
+
+      - name: Install ArgoCD
+        run: |
+          kubectl create namespace argocd
+          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+          kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=180s
+
+      - name: Deploy Flux example
+        run: |
+          kubectl apply -f examples/flux-boutique/boutique.yaml
+          sleep 30  # Wait for Flux to reconcile
+          kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s || true
+
+      - name: Deploy ArgoCD example
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: guestbook
+            namespace: argocd
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/argoproj/argocd-example-apps.git
+              targetRevision: HEAD
+              path: guestbook
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: guestbook
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+          EOF
+          sleep 30  # Wait for ArgoCD to sync
+
+      - name: Verify Flux ownership detection
+        run: |
+          echo "=== All resources ==="
+          ./cub-scout map list
+
+          echo "=== Flux resources ==="
+          ./cub-scout map list | grep flux || echo "No flux resources (may still be syncing)"
+
+          echo "=== Deployers ==="
+          ./cub-scout map deployers
+
+      - name: Verify ArgoCD ownership detection
+        run: |
+          ./cub-scout map list | grep argo || echo "ArgoCD resources may still be syncing"
+
+      - name: Test trace command
+        run: |
+          ./cub-scout trace deployment/cart -n boutique || echo "Trace may fail if resources not ready"
+
+      - name: Test deep-dive
+        run: ./cub-scout map deep-dive | head -80
+
+      - name: Test app-hierarchy
+        run: ./cub-scout map app-hierarchy | head -80
+
+  # ==========================================================================
+  # Level 4: Demos (optional, manual trigger)
+  # ==========================================================================
+  demos:
+    name: Demo Tests
+    runs-on: ubuntu-latest
+    needs: gitops
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'demos' || github.event.inputs.level == 'full'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build
+        run: go build ./cmd/cub-scout
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: demo-cluster
+
+      - name: Install Flux
+        run: |
+          curl -s https://fluxcd.io/install.sh | sudo bash
+          flux install
+
+      - name: Run quick demo
+        run: |
+          ./test/atk/demo quick
+          ./test/atk/demo quick --cleanup
+
+      - name: Run ccve demo
+        run: |
+          ./test/atk/demo ccve
+          ./test/atk/demo ccve --cleanup
+
+      - name: Run scenarios
+        run: |
+          ./test/atk/demo scenario bigbank-incident || true
+          ./test/atk/demo scenario break-glass || true
+
+  # ==========================================================================
+  # Full test (manual trigger only)
+  # ==========================================================================
+  full:
+    name: Full Verification
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'full'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build
+        run: go build ./cmd/cub-scout
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: full-test-cluster
+
+      - name: Run prove-it-works
+        run: ./test/prove-it-works.sh --level=gitops

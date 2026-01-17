@@ -1,0 +1,168 @@
+# Test Levels Configuration for cub-scout
+#
+# This file defines what tests run at each level.
+# Use: ./test/prove-it-works.sh --level=<level>
+#
+# Levels are cumulative: each level includes all tests from lower levels.
+
+levels:
+  # Level 0: Smoke test (< 10 seconds, no cluster)
+  smoke:
+    description: "Quick sanity check - build passes, basic tests run"
+    requirements:
+      cluster: false
+      flux: false
+      argocd: false
+      confighub: false
+    tests:
+      - go build ./cmd/cub-scout
+      - go test ./pkg/agent/ownership_test.go -v
+      - go test ./pkg/query/... -v
+      - ./cub-scout version
+
+  # Level 1: Unit tests (< 30 seconds, no cluster)
+  unit:
+    description: "All unit tests - ownership, query parsing, TUI mocks"
+    requirements:
+      cluster: false
+      flux: false
+      argocd: false
+      confighub: false
+    tests:
+      - go test ./... -v
+    expected_tests: 170
+    coverage_target: 60%
+
+  # Level 2: Integration (< 2 minutes, needs cluster)
+  integration:
+    description: "Integration tests against real cluster"
+    requirements:
+      cluster: true
+      flux: false
+      argocd: false
+      confighub: false
+    tests:
+      - go test -tags=integration ./test/integration/... -v
+      - ./cub-scout map status
+      - ./cub-scout map list --json | jq length
+      - ./cub-scout scan
+    expected_tests: 12
+
+  # Level 3: GitOps E2E (< 5 minutes, needs Flux + ArgoCD)
+  gitops:
+    description: "Full E2E with GitOps tools installed and apps deployed"
+    requirements:
+      cluster: true
+      flux: true
+      argocd: true
+      confighub: false
+    setup:
+      - flux install
+      - kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+      - kubectl apply -f examples/flux-boutique/boutique.yaml
+      - kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s
+    tests:
+      - ./cub-scout map list | grep -c "flux"
+      - ./cub-scout map list | grep -c "argo"
+      - ./cub-scout map deployers | grep -c "Kustomization"
+      - ./cub-scout trace deployment/cart -n boutique
+    assertions:
+      - "Flux ownership detected for boutique apps"
+      - "ArgoCD ownership detected for guestbook"
+      - "trace shows GitRepository -> Kustomization -> Deployment chain"
+
+  # Level 4: Demos (< 10 minutes, needs cluster)
+  demos:
+    description: "All demo scripts run without errors"
+    requirements:
+      cluster: true
+      flux: true
+      argocd: true
+      confighub: false
+    tests:
+      - ./test/atk/demo quick
+      - ./test/atk/demo ccve
+      - ./test/atk/demo healthy
+      - ./test/atk/demo unhealthy
+      - ./test/atk/demo scenario bigbank-incident
+      - ./test/atk/demo scenario break-glass
+    cleanup:
+      - ./test/atk/demo quick --cleanup
+      - ./test/atk/demo ccve --cleanup
+
+  # Level 5: Examples E2E (< 15 minutes, needs cluster + GitOps)
+  examples:
+    description: "All example apps deploy and ownership detected correctly"
+    requirements:
+      cluster: true
+      flux: true
+      argocd: true
+      confighub: false
+    tests:
+      - kubectl apply -f examples/flux-boutique/boutique.yaml
+      - kubectl apply -f examples/apptique-examples/flux-monorepo/
+      - ./cub-scout map list -n boutique --json > /tmp/boutique.json
+      - ./test/validate-expected-outputs.sh --category=examples
+    expected_outputs:
+      - test/expected-outputs/examples/flux-boutique.txt
+      - test/expected-outputs/examples/apptique-flux.txt
+
+  # Level 6: Connected (< 20 minutes, needs ConfigHub)
+  connected:
+    description: "ConfigHub connected mode - workers, targets, app-space"
+    requirements:
+      cluster: true
+      flux: true
+      argocd: true
+      confighub: true
+    preconditions:
+      - cub auth test-login || cub auth login
+      - ./test/preflight/worker-health
+    tests:
+      - ./cub-scout app-space list
+      - ./cub-scout map --hub (TTY check)
+      - ./cub-scout import -n boutique --dry-run
+    assertions:
+      - "app-space list shows spaces"
+      - "No null values in output"
+
+  # Level 7: Full proof (complete verification)
+  full:
+    description: "PROVE IT ALL WORKS - complete verification"
+    requirements:
+      cluster: true
+      flux: true
+      argocd: true
+      confighub: true
+    tests:
+      - ./test/prove-it-works.sh --all
+    expected_outputs:
+      - test/expected-outputs/cli/map-list.txt
+      - test/expected-outputs/cli/map-status.txt
+      - test/expected-outputs/cli/scan.txt
+      - test/expected-outputs/demos/quick.txt
+      - test/expected-outputs/demos/ccve.txt
+      - test/expected-outputs/examples/flux-boutique.txt
+
+# Command shortcuts
+shortcuts:
+  quick: smoke
+  ci: unit
+  local: integration
+  e2e: gitops
+  all: full
+
+# MoSCoW prioritization
+moscow:
+  must:
+    - smoke
+    - unit
+    - integration
+  should:
+    - gitops
+    - demos
+  could:
+    - examples
+    - connected
+  wont:
+    - (none in OSS)
