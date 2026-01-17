@@ -33,7 +33,7 @@ goals:
 
 entry_points:
   tui:
-    description: "Using cub-agent map TUI with integrated fix"
+    description: "Using cub-scout map TUI with integrated fix"
     expected_keystrokes: 5
     expected_commands: 1
     difficulty: easy
@@ -57,17 +57,17 @@ entry_points:
       - Confirm to apply, auto-refreshes scan results
 
   cli:
-    description: "Using cub-agent remedy command"
+    description: "Using cub-scout remedy command"
     expected_keystrokes: 50
     expected_commands: 2
     difficulty: medium
     journey:
       - step: 1
-        command: "cub-agent remedy CCVE-2025-0147 --dry-run -n prod"
+        command: "cub-scout remedy CCVE-2025-0147 --dry-run -n prod"
         expect: "Shows planned changes without applying"
         keystrokes: 45
       - step: 2
-        command: "cub-agent remedy CCVE-2025-0147 -n prod"
+        command: "cub-scout remedy CCVE-2025-0147 -n prod"
         expect: "Applies fix, shows result, logs to audit file"
         keystrokes: 38
 

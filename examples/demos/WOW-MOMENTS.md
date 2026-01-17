@@ -722,7 +722,7 @@ $ kyverno apply policies/ --resource helmrelease.yaml
 Pass: 3/3
 
 # But the HelmRelease is actually stuck
-$ cub-agent scan
+$ cub-scout scan
 
 META-PATTERN FINDINGS
 ══════════════════════════════════════════════════════════════════

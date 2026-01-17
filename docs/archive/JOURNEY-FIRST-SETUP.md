@@ -41,11 +41,11 @@ git clone https://github.com/confighubai/confighub-agent.git
 cd confighub-agent
 
 # Build
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 
 # Verify
-./cub-agent version
-# cub-agent version 0.x.x
+./cub-scout version
+# cub-scout version 0.x.x
 ```
 
 ---
@@ -55,7 +55,7 @@ go build ./cmd/cub-agent
 See what's running in your cluster:
 
 ```bash
-./cub-agent map
+./cub-scout map
 ```
 
 **Expected output:**
@@ -154,7 +154,7 @@ Press [q] to quit
 Import a namespace to create your first Unit:
 
 ```bash
-./cub-agent import -n default --dry-run
+./cub-scout import -n default --dry-run
 ```
 
 **Expected output:**
@@ -188,11 +188,11 @@ Remove --dry-run to create these Units in ConfigHub
 
 | What You Can Do | Command |
 |-----------------|---------|
-| See what's running | `./cub-agent map` |
+| See what's running | `./cub-scout map` |
 | Scan for issues | `./test/atk/scan` |
-| Import workloads | `./cub-agent import` |
+| Import workloads | `./cub-scout import` |
 | Trace ownership | Press `t` in map TUI |
-| Query fleet | `./cub-agent map list -q "owner=Flux"` |
+| Query fleet | `./cub-scout map list -q "owner=Flux"` |
 
 ---
 
@@ -237,7 +237,7 @@ kubectl get nodes
 
 ### "Permission denied"
 
-cub-agent needs read access. Check your kubeconfig:
+cub-scout needs read access. Check your kubeconfig:
 ```bash
 kubectl auth can-i get deployments --all-namespaces
 # yes

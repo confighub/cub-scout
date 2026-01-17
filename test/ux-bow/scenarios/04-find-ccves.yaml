@@ -31,7 +31,7 @@ goals:
 
 entry_points:
   tui:
-    description: "Using cub-agent map TUI"
+    description: "Using cub-scout map TUI"
     expected_keystrokes: 1
     expected_commands: 1
     difficulty: trivial
@@ -45,17 +45,17 @@ entry_points:
       Shows both state issues (stuck resources) and policy violations.
 
   cli:
-    description: "Using cub-agent scan command"
+    description: "Using cub-scout scan command"
     expected_keystrokes: 15
     expected_commands: 1
     difficulty: easy
     journey:
       - step: 1
-        command: "cub-agent scan"
+        command: "cub-scout scan"
         expect: "Table of CCVEs with severity, count, category"
         keystrokes: 13
       - step: 2
-        command: "cub-agent scan --ccve=CCVE-2025-0027"
+        command: "cub-scout scan --ccve=CCVE-2025-0027"
         expect: "Details for specific CCVE with affected resources"
         keystrokes: 35
 
@@ -78,7 +78,7 @@ scoring:
   discoverability:
     tui: 4  # CCVE view exists but 'c' key not obvious
     cli: 5  # 'scan' command is clearly named
-    hub: 4  # IMPROVED: 'cub-agent scan' in help overlay
+    hub: 4  # IMPROVED: 'cub-scout scan' in help overlay
   speed:
     tui: 5  # Single keystroke to see all CCVEs
     cli: 5  # Short command
@@ -103,5 +103,5 @@ composite_scores:
 
 notes: |
   CLI slightly edges TUI because 'scan' is an obvious command.
-  Hub improved with 'cub-agent scan' prominently in help overlay.
+  Hub improved with 'cub-scout scan' prominently in help overlay.
   All entry points now score well for this core use case.

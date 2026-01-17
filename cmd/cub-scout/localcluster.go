@@ -2024,7 +2024,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString(lcSectionStyle.Render("COMMAND PALETTE"))
 	b.WriteString("\n")
 	b.WriteString("  " + lcNameStyle.Render(":") + "  Run shell command (↑↓ for history)\n")
-	b.WriteString("     " + lcDimStyle.Render("e.g., kubectl get pods, cub-agent scan") + "\n")
+	b.WriteString("     " + lcDimStyle.Render("e.g., kubectl get pods, cub-scout scan") + "\n")
 	b.WriteString("\n")
 
 	b.WriteString(lcSectionStyle.Render("MODE SWITCHING"))
@@ -3974,7 +3974,7 @@ func (m LocalClusterModel) getPanelAppHierarchy() string {
 	b.WriteString(lcDimStyle.Render("│") + "   • Change history and audit trail                    " + lcDimStyle.Render("│") + "\n")
 	b.WriteString(lcDimStyle.Render("│") + "   • Impact analysis before changes                    " + lcDimStyle.Render("│") + "\n")
 	b.WriteString(lcDimStyle.Render("│") + "                                                       " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + " Run: " + lcNameStyle.Render("cub-agent map --hub") + " to connect              " + lcDimStyle.Render("│") + "\n")
+	b.WriteString(lcDimStyle.Render("│") + " Run: " + lcNameStyle.Render("cub-scout map --hub") + " to connect              " + lcDimStyle.Render("│") + "\n")
 	b.WriteString(lcDimStyle.Render("╰─────────────────────────────────────────────────────────╯") + "\n")
 
 	return b.String()
@@ -4433,12 +4433,12 @@ func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 // runScan runs the scan command
 func (m LocalClusterModel) runScan() tea.Cmd {
 	return func() tea.Msg {
-		// Run cub-agent scan command
-		cmd := exec.Command("./cub-agent", "scan")
+		// Run cub-scout scan command
+		cmd := exec.Command("./cub-scout", "scan")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			// Try without ./
-			cmd = exec.Command("cub-agent", "scan")
+			cmd = exec.Command("cub-scout", "scan")
 			out, err = cmd.CombinedOutput()
 		}
 
@@ -4476,10 +4476,10 @@ func (m LocalClusterModel) runRemedyDryRun() tea.Cmd {
 		}
 
 		// Run remedy --all --dry-run to show what would be fixed
-		cmd := exec.Command("./cub-agent", "remedy", "--all", "--dry-run")
+		cmd := exec.Command("./cub-scout", "remedy", "--all", "--dry-run")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			cmd = exec.Command("cub-agent", "remedy", "--all", "--dry-run")
+			cmd = exec.Command("cub-scout", "remedy", "--all", "--dry-run")
 			out, err = cmd.CombinedOutput()
 		}
 
@@ -4502,10 +4502,10 @@ func (m LocalClusterModel) runRemedyDryRun() tea.Cmd {
 func (m LocalClusterModel) runRemedyApply() tea.Cmd {
 	return func() tea.Msg {
 		// Run remedy --all (without dry-run) to apply fixes
-		cmd := exec.Command("./cub-agent", "remedy", "--all", "--dry-run=false", "--force")
+		cmd := exec.Command("./cub-scout", "remedy", "--all", "--dry-run=false", "--force")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			cmd = exec.Command("cub-agent", "remedy", "--all", "--dry-run=false", "--force")
+			cmd = exec.Command("cub-scout", "remedy", "--all", "--dry-run=false", "--force")
 			out, err = cmd.CombinedOutput()
 		}
 
@@ -4712,7 +4712,7 @@ func (m LocalClusterModel) renderScan() string {
 	// Show error if any
 	if m.scanError != nil {
 		b.WriteString(lcErrStyle.Render("Error running scan: " + m.scanError.Error()) + "\n\n")
-		b.WriteString(lcDimStyle.Render("Make sure cub-agent is in your PATH or run from project root.") + "\n")
+		b.WriteString(lcDimStyle.Render("Make sure cub-scout is in your PATH or run from project root.") + "\n")
 		b.WriteString("\n" + lcDimStyle.Render("Press any key to return") + "\n")
 		return b.String()
 	}

@@ -16,7 +16,7 @@ You have hundreds of resources. You need to find:
 ### CLI: Use -q flag
 
 ```bash
-cub-agent map list -q "owner=Flux AND namespace=prod*"
+cub-scout map list -q "owner=Flux AND namespace=prod*"
 ```
 
 ### TUI: Press ':'
@@ -42,23 +42,23 @@ Press `Q` to open saved queries, then select from common filters.
 
 ```bash
 # IN list (any of these)
-cub-agent map list -q "owner=Flux,ArgoCD,Helm"
+cub-scout map list -q "owner=Flux,ArgoCD,Helm"
 
 # Equivalent to OR
-cub-agent map list -q "owner=Flux OR owner=ArgoCD OR owner=Helm"
+cub-scout map list -q "owner=Flux OR owner=ArgoCD OR owner=Helm"
 ```
 
 ### Logical operators
 
 ```bash
 # AND (both must match)
-cub-agent map list -q "owner=Flux AND namespace=production"
+cub-scout map list -q "owner=Flux AND namespace=production"
 
 # OR (either matches)
-cub-agent map list -q "owner=Flux OR owner=ArgoCD"
+cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 
 # Combined
-cub-agent map list -q "(owner=Flux OR owner=ArgoCD) AND namespace=prod*"
+cub-scout map list -q "(owner=Flux OR owner=ArgoCD) AND namespace=prod*"
 ```
 
 ### Available fields
@@ -93,37 +93,37 @@ Press `Q` in the TUI to access built-in queries:
 ### Find all orphans in production
 
 ```bash
-cub-agent map list -q "owner=Native AND namespace=prod*"
+cub-scout map list -q "owner=Native AND namespace=prod*"
 ```
 
 ### Find all GitOps-managed resources
 
 ```bash
-cub-agent map list -q "owner!=Native"
+cub-scout map list -q "owner!=Native"
 ```
 
 ### Find resources by label
 
 ```bash
-cub-agent map list -q "labels[app]=payment-api"
+cub-scout map list -q "labels[app]=payment-api"
 ```
 
 ### Find deployments with issues
 
 ```bash
-cub-agent map list -q "kind=Deployment AND status!=Ready"
+cub-scout map list -q "kind=Deployment AND status!=Ready"
 ```
 
 ### Find resources in multiple namespaces
 
 ```bash
-cub-agent map list -q "namespace=team-a*,team-b*"
+cub-scout map list -q "namespace=team-a*,team-b*"
 ```
 
 ### Find Flux Kustomizations that are suspended
 
 ```bash
-cub-agent map list -q "kind=Kustomization AND status=Suspended"
+cub-scout map list -q "kind=Kustomization AND status=Suspended"
 ```
 
 ## Query in TUI
@@ -149,7 +149,7 @@ Press `Escape` or select "all" from saved queries.
 For scripting, combine queries with JSON output:
 
 ```bash
-cub-agent map list -q "owner=Native" --json | jq '.[] | .name'
+cub-scout map list -q "owner=Native" --json | jq '.[] | .name'
 ```
 
 ## Query Examples by Use Case
@@ -157,25 +157,25 @@ cub-agent map list -q "owner=Native" --json | jq '.[] | .name'
 ### Security audit
 ```bash
 # Find all non-GitOps resources in production
-cub-agent map list -q "owner=Native AND namespace=prod*"
+cub-scout map list -q "owner=Native AND namespace=prod*"
 ```
 
 ### Flux audit
 ```bash
 # Find suspended Flux resources
-cub-agent map list -q "owner=Flux AND status=Suspended"
+cub-scout map list -q "owner=Flux AND status=Suspended"
 ```
 
 ### ArgoCD audit
 ```bash
 # Find out-of-sync ArgoCD apps
-cub-agent map list -q "owner=ArgoCD AND status=OutOfSync"
+cub-scout map list -q "owner=ArgoCD AND status=OutOfSync"
 ```
 
 ### Resource inventory
 ```bash
 # Count resources by owner
-cub-agent map list --json | jq 'group_by(.owner) | map({owner: .[0].owner, count: length})'
+cub-scout map list --json | jq 'group_by(.owner) | map({owner: .[0].owner, count: length})'
 ```
 
 ## Next Steps

@@ -33,7 +33,7 @@ goals:
 
 entry_points:
   tui:
-    description: "Using cub-agent map TUI with panel layout"
+    description: "Using cub-scout map TUI with panel layout"
     expected_keystrokes: 2
     expected_commands: 1
     difficulty: easy
@@ -51,17 +51,17 @@ entry_points:
       For detailed trace, 't' opens full-screen interactive trace.
 
   cli:
-    description: "Using cub-agent CLI commands"
+    description: "Using cub-scout CLI commands"
     expected_keystrokes: 45
     expected_commands: 2
     difficulty: medium
     journey:
       - step: 1
-        command: "cub-agent map list -q 'status=CrashLoopBackOff'"
+        command: "cub-scout map list -q 'status=CrashLoopBackOff'"
         expect: "Table of crashing pods with namespace, name, owner"
         keystrokes: 40
       - step: 2
-        command: "cub-agent trace deploy/NAME -n NAMESPACE"
+        command: "cub-scout trace deploy/NAME -n NAMESPACE"
         expect: "Ownership chain and related error events"
         keystrokes: 35
 
@@ -87,7 +87,7 @@ entry_points:
 scoring:
   discoverability:
     tui: 5  # Crash icons obvious in status view
-    cli: 5  # IMPROVED: 'cub-agent map crashes' shortcut command
+    cli: 5  # IMPROVED: 'cub-scout map crashes' shortcut command
     hub: 4  # Issues view is labeled
   speed:
     tui: 5  # 2-3 keystrokes to find
@@ -113,5 +113,5 @@ composite_scores:
 
 notes: |
   TUI excels here because visual indicators make crashes immediately obvious.
-  CLI improved with dedicated 'cub-agent map crashes' command.
+  CLI improved with dedicated 'cub-scout map crashes' command.
   Hub provides fleet-wide view of issues.

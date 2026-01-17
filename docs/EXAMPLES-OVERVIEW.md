@@ -99,11 +99,11 @@ Real examples answering real questions. See [JOURNEY-QUERY.md](JOURNEY-QUERY.md)
 
 | Question | Command |
 |----------|---------|
-| What's running? | `cub-agent map` |
-| Who owns each workload? | `cub-agent map workloads` |
-| What's broken? | `cub-agent map problems` |
-| Which clusters are behind? | `cub-agent map` (with ConfigHub auth) |
-| What config bugs exist? | `cub-agent scan` |
+| What's running? | `cub-scout map` |
+| Who owns each workload? | `cub-scout map workloads` |
+| What's broken? | `cub-scout map problems` |
+| Which clusters are behind? | `cub-scout map` (with ConfigHub auth) |
+| What config bugs exist? | `cub-scout scan` |
 
 ### Integration Scripts
 
@@ -138,7 +138,7 @@ Multi-service demos designed to showcase all TUI views (`s`, `w`, `p`, `T`, `G`,
 ```bash
 kubectl apply -f examples/flux-boutique/boutique.yaml
 kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s
-cub-agent map   # Press 's' for status, 'w' for workloads, 'p' for pipelines, 'T' to trace
+cub-scout map   # Press 's' for status, 'w' for workloads, 'p' for pipelines, 'T' to trace
 ```
 
 #### External Multi-Service Demos
@@ -196,16 +196,16 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 The map command supports multiple output modes:
 
 ```bash
-cub-agent map              # Full dashboard (interactive TUI)
-cub-agent map status       # One-line health check
-cub-agent map workloads    # List workloads by owner
-cub-agent map problems     # Show only problems
-cub-agent map deployers    # List GitOps deployers
-cub-agent map suspended    # List suspended resources
-cub-agent map confighub    # ConfigHub hierarchy (requires auth)
-cub-agent map deep-dive    # ALL cluster data with LiveTree
-cub-agent map app-hierarchy # Inferred ConfigHub Units
-cub-agent map --json       # JSON output for tooling
+cub-scout map              # Full dashboard (interactive TUI)
+cub-scout map status       # One-line health check
+cub-scout map workloads    # List workloads by owner
+cub-scout map problems     # Show only problems
+cub-scout map deployers    # List GitOps deployers
+cub-scout map suspended    # List suspended resources
+cub-scout map confighub    # ConfigHub hierarchy (requires auth)
+cub-scout map deep-dive    # ALL cluster data with LiveTree
+cub-scout map app-hierarchy # Inferred ConfigHub Units
+cub-scout map --json       # JSON output for tooling
 ```
 
 ### TUI Tab Views (Interactive Mode)
@@ -226,8 +226,8 @@ cub-agent map --json       # JSON output for tooling
 All commands support `--json` for tooling:
 
 ```bash
-cub-agent map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
-cub-agent scan --json | jq '.findings[] | select(.severity == "critical")'
+cub-scout map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
+cub-scout scan --json | jq '.findings[] | select(.severity == "critical")'
 ```
 
 ---

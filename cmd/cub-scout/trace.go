@@ -49,19 +49,19 @@ owner) to show the complete delivery pipeline.
 
 Examples:
   # Trace a deployment
-  cub-agent trace deployment/nginx -n demo
+  cub-scout trace deployment/nginx -n demo
 
   # Trace with kind and name separately
-  cub-agent trace Deployment nginx -n demo
+  cub-scout trace Deployment nginx -n demo
 
   # Trace an Argo CD application directly
-  cub-agent trace --app frontend-app
+  cub-scout trace --app frontend-app
 
   # Reverse trace - start from any resource (e.g., a Pod) and walk up
-  cub-agent trace pod/nginx-7d9b8c-x4k2p -n prod --reverse
+  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse
 
   # Output as JSON
-  cub-agent trace deployment/nginx -n demo --json
+  cub-scout trace deployment/nginx -n demo --json
 
 The output shows:
   - The full chain from GitRepository → Kustomization/HelmRelease → Resource
@@ -99,7 +99,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 			traceNamespace = "argocd"
 		}
 	} else if len(args) == 0 {
-		return fmt.Errorf("usage: cub-agent trace <kind/name> or cub-agent trace <kind> <name>")
+		return fmt.Errorf("usage: cub-scout trace <kind/name> or cub-scout trace <kind> <name>")
 	} else if len(args) == 1 {
 		// Parse kind/name format
 		parts := strings.SplitN(args[0], "/", 2)
@@ -526,7 +526,7 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 		fmt.Printf("%s⚠ This resource is NOT managed by GitOps%s\n", colorYellow, colorReset)
 		fmt.Printf("%s  • It will be lost if the cluster is rebuilt%s\n", colorDim, colorReset)
 		fmt.Printf("%s  • No audit trail in Git%s\n", colorDim, colorReset)
-		fmt.Printf("%s  • Consider importing to GitOps: cub-agent import%s\n", colorDim, colorReset)
+		fmt.Printf("%s  • Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
 	}
 
 	// If GitOps managed, suggest full trace
@@ -534,7 +534,7 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 		fmt.Printf("\n")
 		fmt.Printf("%s💡 For full GitOps chain, run:%s\n", colorDim, colorReset)
 		if result.TopResource != nil {
-			fmt.Printf("   cub-agent trace %s/%s -n %s\n",
+			fmt.Printf("   cub-scout trace %s/%s -n %s\n",
 				strings.ToLower(result.TopResource.Kind),
 				result.TopResource.Name,
 				result.TopResource.Namespace)

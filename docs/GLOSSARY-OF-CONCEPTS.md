@@ -140,7 +140,7 @@ Hub ──▶ Worker ──▶ Target (cluster)
 Discover workloads from running cluster. TUI capability.
 
 ```bash
-./cub-agent import -n payment-prod
+./cub-scout import -n payment-prod
 # Scans cluster, detects ownership, suggests App Space structure
 ```
 

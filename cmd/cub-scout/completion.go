@@ -68,7 +68,7 @@ func completeNamespaces(cmd *cobra.Command, args []string, toComplete string) ([
 
 // completeKinds returns common Kubernetes resource kinds
 func completeKinds(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	// Common workload and config kinds that cub-agent typically queries
+	// Common workload and config kinds that cub-scout typically queries
 	kinds := []string{
 		// Workloads
 		"Deployment",

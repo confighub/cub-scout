@@ -16,7 +16,7 @@ You see a deployment with issues. You need to know:
 ### CLI: Use trace command
 
 ```bash
-cub-agent map trace deploy/payment-api -n prod
+cub-scout map trace deploy/payment-api -n prod
 ```
 
 Output:
@@ -73,7 +73,7 @@ Deployment
 ### Flux Kustomization
 
 ```bash
-cub-agent map trace deploy/nginx -n web
+cub-scout map trace deploy/nginx -n web
 ```
 
 ```
@@ -89,7 +89,7 @@ Deployment: nginx (web)
 ### ArgoCD Application
 
 ```bash
-cub-agent map trace deploy/frontend -n app
+cub-scout map trace deploy/frontend -n app
 ```
 
 ```
@@ -106,7 +106,7 @@ Deployment: frontend (app)
 ### Native (No Owner)
 
 ```bash
-cub-agent map trace deploy/debug-pod -n prod
+cub-scout map trace deploy/debug-pod -n prod
 ```
 
 ```
@@ -122,7 +122,7 @@ Deployment: debug-pod (prod)
 ### Find why a resource isn't syncing
 
 ```bash
-cub-agent map trace deploy/broken-app -n prod
+cub-scout map trace deploy/broken-app -n prod
 ```
 
 Look for:
@@ -146,7 +146,7 @@ Go to that repo, find the manifest, fix it, push.
 For scripting:
 
 ```bash
-cub-agent map trace deploy/payment-api -n prod --json
+cub-scout map trace deploy/payment-api -n prod --json
 ```
 
 ```json
@@ -178,10 +178,10 @@ cub-agent map trace deploy/payment-api -n prod --json
 
 ```bash
 # Trace any deployment
-cub-agent map trace deploy/nginx -n default
+cub-scout map trace deploy/nginx -n default
 
 # Or use the TUI
-cub-agent map
+cub-scout map
 # Navigate to a resource and press T
 ```
 

@@ -180,7 +180,7 @@ render_connection_status() {
         next_step="cub auth login"
     elif ! $HAS_UNITS; then
         content="$(printf "%b✓%b Authenticated%s\n%b✗%b No units imported" "$UI_OK" "$UI_NC" "${AUTH_ORG:+ (org: $AUTH_ORG)}" "$UI_ERR" "$UI_NC")"
-        next_step="cub-agent import --namespace <ns>"
+        next_step="cub-scout import --namespace <ns>"
     elif ! $HAS_WORKERS; then
         content="$(printf "%b✓%b Authenticated%s\n%b✓%b Units imported (%d)\n%b✗%b No workers" "$UI_OK" "$UI_NC" "${AUTH_ORG:+ (org: $AUTH_ORG)}" "$UI_OK" "$UI_NC" "$unit_count" "$UI_ERR" "$UI_NC")"
         next_step="cub worker run <cluster-name>"
@@ -863,7 +863,7 @@ view_connection_detail() {
         content+=$(printf "%b✓%b Units imported (%d)\n" "$UI_OK" "$UI_NC" "$unit_count")
     else
         content+=$(printf "%b✗%b No units imported\n" "$UI_ERR" "$UI_NC")
-        content+=$(printf "   %bRun:%b cub-agent import --namespace <ns>\n" "$UI_FG_DIM" "$UI_NC")
+        content+=$(printf "   %bRun:%b cub-scout import --namespace <ns>\n" "$UI_FG_DIM" "$UI_NC")
         content+=$(printf "   %bDocs:%b docs/IMPORTING-WORKLOADS.md\n" "$UI_FG_DIM" "$UI_NC")
     fi
     content+=$'\n'
@@ -983,12 +983,12 @@ main() {
         case "$arg" in
             hierarchy|tree|h)
                 # Dispatch to Go TUI hierarchy explorer
-                if command -v cub-agent &>/dev/null; then
-                    exec cub-agent hierarchy "${@:2}"
-                elif [[ -x "${SCRIPT_DIR}/../../cub-agent" ]]; then
-                    exec "${SCRIPT_DIR}/../../cub-agent" hierarchy "${@:2}"
+                if command -v cub-scout &>/dev/null; then
+                    exec cub-scout hierarchy "${@:2}"
+                elif [[ -x "${SCRIPT_DIR}/../../cub-scout" ]]; then
+                    exec "${SCRIPT_DIR}/../../cub-scout" hierarchy "${@:2}"
                 else
-                    echo "cub-agent not found. Build with: go build -o cub-agent ./cmd/cub-agent/"
+                    echo "cub-scout not found. Build with: go build -o cub-scout ./cmd/cub-scout/"
                     exit 1
                 fi
                 ;;

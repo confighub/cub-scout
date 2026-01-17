@@ -8,14 +8,14 @@
 
 ```bash
 # 1. See what you have (no account needed)
-./cub-agent map
+./cub-scout map
 
 # 2. Preview what will be imported
-./cub-agent import --dry-run
+./cub-scout import --dry-run
 
 # 3. Import (requires ConfigHub account)
 cub auth login
-./cub-agent import
+./cub-scout import
 ```
 
 That's it. One command discovers, suggests, and creates everything.
@@ -43,19 +43,19 @@ Import scans your cluster and creates ConfigHub **Units** for each workload.
 
 | Command | What it does |
 |---------|--------------|
-| `./cub-agent import` | Import all namespaces |
-| `./cub-agent import -n argocd` | Import one namespace |
-| `./cub-agent import --dry-run` | Preview without changes |
-| `./cub-agent import -y` | Skip confirmation |
-| `./cub-agent import --json` | JSON output for GUI |
-| `./cub-agent import --no-log` | Disable logging |
+| `./cub-scout import` | Import all namespaces |
+| `./cub-scout import -n argocd` | Import one namespace |
+| `./cub-scout import --dry-run` | Preview without changes |
+| `./cub-scout import -y` | Skip confirmation |
+| `./cub-scout import --json` | JSON output for GUI |
+| `./cub-scout import --no-log` | Disable logging |
 
 ---
 
 ## Example Output
 
 ```bash
-$ ./cub-agent import --dry-run
+$ ./cub-scout import --dry-run
 ```
 
 ```
@@ -114,8 +114,8 @@ Run without --dry-run to import.
 # List units in ConfigHub
 cub unit list --space my-team
 
-# View with cub-agent map
-./cub-agent map
+# View with cub-scout map
+./cub-scout map
 ```
 
 ### Query Across Units
@@ -136,12 +136,12 @@ For GUI or scripted workflows, use JSON output:
 
 ```bash
 # Generate proposal
-./cub-agent import --json > proposal.json
+./cub-scout import --json > proposal.json
 
 # (GUI displays, user edits)
 
 # Apply edited proposal
-cat proposal.json | ./cub-agent apply -
+cat proposal.json | ./cub-scout apply -
 ```
 
 ---
@@ -164,7 +164,7 @@ Log: ~/.confighub/logs/import-2026-01-08-210327.log
 
 **Disable logging:**
 ```bash
-./cub-agent import --no-log
+./cub-scout import --no-log
 ```
 
 ### Session Persistence (Coming Soon)
@@ -177,8 +177,8 @@ Session: ~/.confighub/sessions/import-latest.json
 
 Use interactive wizard for guided import:
 ```bash
-./cub-agent import --wizard      # Interactive TUI wizard (recommended)
-./cub-agent import --dry-run     # Preview without making changes
+./cub-scout import --wizard      # Interactive TUI wizard (recommended)
+./cub-scout import --dry-run     # Preview without making changes
 ```
 
 ### Cloud Audit Trail (Connected Mode)
@@ -217,7 +217,7 @@ kubectl get deploy,sts,ds -n my-namespace
 ### Want to import a specific namespace?
 
 ```bash
-./cub-agent import -n my-namespace
+./cub-scout import -n my-namespace
 ```
 
 ### App Space name not right?

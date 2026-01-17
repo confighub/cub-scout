@@ -6,24 +6,24 @@
 
 ```bash
 # Build first
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 
 # Ownership detection
-cub-agent map                     # Interactive TUI
-cub-agent map list                # List all resources with owners
+cub-scout map                     # Interactive TUI
+cub-scout map list                # List all resources with owners
 
 # Find orphans (shadow IT)
-cub-agent map list -q "owner=Native"
+cub-scout map list -q "owner=Native"
 
 # CCVE scanning
-cub-agent scan
+cub-scout scan
 
 # Trace ownership
-cub-agent trace deploy/nginx -n default
+cub-scout trace deploy/nginx -n default
 
 # Query resources
-cub-agent map list -q "owner=Flux"
-cub-agent map list -q "namespace=prod*"
+cub-scout map list -q "owner=Flux"
+cub-scout map list -q "namespace=prod*"
 ```
 
 ---
@@ -34,10 +34,10 @@ The following demos used bash scripts and are preserved for reference. Use the G
 
 ```bash
 # These commands are DEPRECATED:
-# DEPRECATED: ./test/atk/demo quick           # Use: cub-agent map list
-# DEPRECATED: ./test/atk/demo ccve            # Use: cub-agent scan
-# DEPRECATED: ./test/atk/demo healthy         # Use: cub-agent map
-# DEPRECATED: ./test/atk/demo unhealthy       # Use: cub-agent map list -q "status=..."
+# DEPRECATED: ./test/atk/demo quick           # Use: cub-scout map list
+# DEPRECATED: ./test/atk/demo ccve            # Use: cub-scout scan
+# DEPRECATED: ./test/atk/demo healthy         # Use: cub-scout map
+# DEPRECATED: ./test/atk/demo unhealthy       # Use: cub-scout map list -q "status=..."
 ```
 
 ---
@@ -89,7 +89,7 @@ Requires ConfigHub authentication.
 
 **What happens:**
 1. Applies Flux, ArgoCD, and Native fixtures
-2. Runs `cub-agent map`
+2. Runs `cub-scout map`
 3. Shows ownership detection in action
 4. Cleans up
 
@@ -233,8 +233,8 @@ cub context get
 ### Prerequisites
 
 ```bash
-# Build cub-agent
-go build ./cmd/cub-agent
+# Build cub-scout
+go build ./cmd/cub-scout
 
 # Ensure kubectl access
 kubectl cluster-info
@@ -310,8 +310,8 @@ Validate all expected outputs:
 # Check kubectl access
 kubectl cluster-info
 
-# Check cub-agent built
-./cub-agent version
+# Check cub-scout built
+./cub-scout version
 ```
 
 ### Cleanup didn't run
@@ -359,8 +359,8 @@ Reference app demonstrating all major GitOps patterns.
 
 ```bash
 # Test apptique ownership detection (already deployed)
-./cub-agent map list -n apptique-prod
-./cub-agent trace deploy/frontend -n apptique-prod
+./cub-scout map list -n apptique-prod
+./cub-scout trace deploy/frontend -n apptique-prod
 ```
 
 ### IITS / Jesper Examples
@@ -391,7 +391,7 @@ Production-ready demo spaces in ConfigHub.
 ```bash
 # Requires ConfigHub connection
 cub context set space apptique-prod
-./cub-agent map --hub
+./cub-scout map --hub
 ```
 
 ### RM Pattern Demos (ArgoCD)

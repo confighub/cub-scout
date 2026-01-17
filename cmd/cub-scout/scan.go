@@ -43,34 +43,34 @@ This command performs two types of scanning:
 
 Examples:
   # Full scan (Kyverno + state)
-  cub-agent scan
+  cub-scout scan
 
   # Scan specific namespace
-  cub-agent scan -n production
+  cub-scout scan -n production
 
   # State scan only (stuck reconciliations)
-  cub-agent scan --state
+  cub-scout scan --state
 
   # Kyverno scan only
-  cub-agent scan --kyverno
+  cub-scout scan --kyverno
 
   # Scan for timing bombs (expiring certs, quota limits)
-  cub-agent scan --timing-bombs
+  cub-scout scan --timing-bombs
 
   # Include unresolved findings from Trivy/Kyverno
-  cub-agent scan --include-unresolved
+  cub-scout scan --include-unresolved
 
   # Scan for dangling/orphan resources (HPA, Service, Ingress, NetworkPolicy)
-  cub-agent scan --dangling
+  cub-scout scan --dangling
 
   # Output as JSON
-  cub-agent scan --json
+  cub-scout scan --json
 
   # Scan a YAML file (static analysis, no cluster required)
-  cub-agent scan --file manifest.yaml
+  cub-scout scan --file manifest.yaml
 
   # List all KPOL policies in database
-  cub-agent scan --list
+  cub-scout scan --list
 
 The output shows:
   - Stuck HelmReleases/Kustomizations/Applications with remediation commands
@@ -323,7 +323,7 @@ func listKPOLPolicies(policyDBDir string) error {
 			p.ID, sevColor, p.Severity, colorReset, name, p.Category)
 	}
 
-	fmt.Printf("\n%sRun 'cub-agent scan' to check for violations%s\n\n", colorDim, colorReset)
+	fmt.Printf("\n%sRun 'cub-scout scan' to check for violations%s\n\n", colorDim, colorReset)
 	return nil
 }
 
@@ -709,7 +709,7 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 	}
 
 	// ConfigHub hook hint
-	fmt.Printf("%s🔗 Track violations in ConfigHub: cub-agent scan --confighub%s\n\n", colorDim, colorReset)
+	fmt.Printf("%s🔗 Track violations in ConfigHub: cub-scout scan --confighub%s\n\n", colorDim, colorReset)
 
 	return nil
 }

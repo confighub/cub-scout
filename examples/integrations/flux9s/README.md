@@ -168,12 +168,12 @@ Run flux9s alongside a dedicated agent TUI:
 flux9s
 
 # Terminal 2
-cub-agent tui --watch
+cub-scout tui --watch
 ```
 
 ## Agent API Requirements (Proposed)
 
-> **Not Yet Implemented:** These API endpoints are proposed for a future HTTP API mode. Currently, integrations should use CLI commands like `cub-agent snapshot` and `cub-agent scan --json`.
+> **Not Yet Implemented:** These API endpoints are proposed for a future HTTP API mode. Currently, integrations should use CLI commands like `cub-scout snapshot` and `cub-scout scan --json`.
 
 The integration would require these Agent API endpoints:
 

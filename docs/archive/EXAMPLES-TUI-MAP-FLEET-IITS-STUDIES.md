@@ -43,9 +43,9 @@ From [IITS fleet architecture papers](https://www.iits-consulting.de) and Artem 
 | Which clusters are behind? | `./test/atk/map` (with auth) | 2 sec |
 | What's broken? | `./test/atk/map problems` | 2 sec |
 | What config bugs exist? | `./test/atk/scan` | 5 sec |
-| GitOps-managed only? | `cub-agent map list -q "owner!=Native"` | 2 sec |
-| Production namespaces? | `cub-agent map list -q "namespace=prod*"` | 2 sec |
-| Orphan hunt? | `cub-agent map list -q "owner=Native"` | 2 sec |
+| GitOps-managed only? | `cub-scout map list -q "owner!=Native"` | 2 sec |
+| Production namespaces? | `cub-scout map list -q "namespace=prod*"` | 2 sec |
+| Orphan hunt? | `cub-scout map list -q "owner=Native"` | 2 sec |
 
 **Without ConfigHub:** SSH into each cluster, check each Argo/Flux dashboard, grep through repos. Hours.
 
@@ -217,10 +217,10 @@ The query language solves "needle in haystack" fleet problems identified in the 
 
 | Before | After |
 |--------|-------|
-| `kubectl get deploy -A` + grep + manual filtering | `./cub-agent map list -q "owner!=Native"` |
-| Check each namespace for orphans | `./cub-agent map list -q "owner=Native"` |
-| "What's in prod?" -> SSH to clusters | `./cub-agent map list -q "namespace=prod*"` |
-| "Who manages this?" -> check labels manually | `./cub-agent map list -q "labels[app]=nginx"` |
+| `kubectl get deploy -A` + grep + manual filtering | `./cub-scout map list -q "owner!=Native"` |
+| Check each namespace for orphans | `./cub-scout map list -q "owner=Native"` |
+| "What's in prod?" -> SSH to clusters | `./cub-scout map list -q "namespace=prod*"` |
+| "Who manages this?" -> check labels manually | `./cub-scout map list -q "labels[app]=nginx"` |
 
 ### Query Syntax
 
@@ -252,7 +252,7 @@ The query language solves "needle in haystack" fleet problems identified in the 
 ### "Show me GitOps-managed deployments only"
 
 ```bash
-$ ./cub-agent map list -q "kind=Deployment AND owner!=Native"
+$ ./cub-scout map list -q "kind=Deployment AND owner!=Native"
 ```
 
 ```
@@ -272,7 +272,7 @@ By Owner: ArgoCD(2) ConfigHub(2) Flux(3)
 ### "Find all resources in production namespaces"
 
 ```bash
-$ ./cub-agent map list -q "namespace=prod*"
+$ ./cub-scout map list -q "namespace=prod*"
 ```
 
 ```
@@ -291,7 +291,7 @@ By Owner: ArgoCD(3) Flux(3)
 ### "What's managed by Flux OR Argo?"
 
 ```bash
-$ ./cub-agent map list -q "owner=Flux OR owner=ArgoCD"
+$ ./cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 ```
 
 ```
@@ -310,7 +310,7 @@ By Owner: ArgoCD(1) Flux(3)
 > **IITS Pain Point:** "Can't query fleet — What version of redis across 50 clusters?" — [Case Studies](planning/map/08-CASE-STUDIES-IITS.md)
 
 ```bash
-$ ./cub-agent map list -q "name~=debug.* AND owner=Native"
+$ ./cub-scout map list -q "name~=debug.* AND owner=Native"
 ```
 
 ```
@@ -334,7 +334,7 @@ Import workloads with `app` and `variant` labels, then view them hierarchically.
 ### Step 1: Import
 
 ```bash
-$ ./cub-agent import -n payments-prod --dry-run
+$ ./cub-scout import -n payments-prod --dry-run
 ```
 
 ```
@@ -359,7 +359,7 @@ $ ./cub-agent import -n payments-prod --dry-run
 ### Step 2: View with Fleet command
 
 ```bash
-$ ./cub-agent map fleet --space payments-team
+$ ./cub-scout map fleet --space payments-team
 ```
 
 ```
@@ -384,10 +384,10 @@ Hierarchy: Application -> Variant -> Target
 
 | Command | What it shows |
 |---------|---------------|
-| `cub-agent map fleet` | All apps with app/variant labels |
-| `cub-agent map fleet --app payment-api` | Just payment-api variants |
-| `cub-agent map fleet --space payments-team` | Just that App Space |
-| `cub-agent map fleet --json` | JSON output for tooling |
+| `cub-scout map fleet` | All apps with app/variant labels |
+| `cub-scout map fleet --app payment-api` | Just payment-api variants |
+| `cub-scout map fleet --space payments-team` | Just that App Space |
+| `cub-scout map fleet --json` | JSON output for tooling |
 
 ### The model
 

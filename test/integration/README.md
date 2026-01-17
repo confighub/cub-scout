@@ -71,7 +71,7 @@ func TestStandaloneOwnership(t *testing.T) {
     unit.RequireFlux(t)
 
     // Deploy fixture
-    // Run cub-agent
+    // Run cub-scout
     // Verify output
 }
 ```
@@ -107,4 +107,4 @@ func TestConnectedModeMap(t *testing.T) {
 |----------|-------------|---------|
 | `SKIP_INTEGRATION` | Skip all integration tests | false |
 | `KUBECONFIG` | Kubernetes config | `~/.kube/config` |
-| `CUB_AGENT` | Path to cub-agent binary | `./cub-agent` |
+| `CUB_AGENT` | Path to cub-scout binary | `./cub-scout` |

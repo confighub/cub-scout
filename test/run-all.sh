@@ -178,8 +178,8 @@ if $RUN_PHASE1; then
     PHASE1_PASSED=$((PHASE1_PASSED + 1))
 
     subsection "1.2 Build"
-    go build ./cmd/cub-agent || fail "Build failed"
-    pass "cub-agent built"
+    go build ./cmd/cub-scout || fail "Build failed"
+    pass "cub-scout built"
     PHASE1_PASSED=$((PHASE1_PASSED + 1))
 
     subsection "1.3 Unit Tests"

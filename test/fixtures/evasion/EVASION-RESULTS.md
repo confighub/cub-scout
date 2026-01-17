@@ -107,7 +107,7 @@ FIX: kubectl get pods -n default --selector='app in (nonexistent-app-expression)
   - Added `checkPodsMatchExpressions()` helper
   - Added `buildLabelSelectorString()` helper
 
-- `cmd/cub-agent/scan.go`:
+- `cmd/cub-scout/scan.go`:
   - Added `--dangling` flag
   - Added dangling result output formatting
   - Added `outputDanglingFinding()` function

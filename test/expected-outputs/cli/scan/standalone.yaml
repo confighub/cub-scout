@@ -15,7 +15,7 @@ requires:
 commands:
   # Basic scan
   - id: scan_default
-    command: "./cub-agent scan"
+    command: "./cub-scout scan"
     description: "Scan cluster for stuck reconciliation and CCVEs"
 
     expected:
@@ -43,7 +43,7 @@ commands:
     instructions: |
       Scan your cluster for stuck reconciliation states and configuration issues:
       ```bash
-      ./cub-agent scan
+      ./cub-scout scan
       ```
 
       The scanner detects:
@@ -65,7 +65,7 @@ commands:
 
   # Scan with state focus
   - id: scan_state
-    command: "./cub-agent scan --state"
+    command: "./cub-scout scan --state"
     description: "Focus on stuck reconciliation states"
 
     expected:
@@ -82,12 +82,12 @@ commands:
     instructions: |
       Focus on stuck reconciliation states:
       ```bash
-      ./cub-agent scan --state
+      ./cub-scout scan --state
       ```
 
   # Scan specific namespace
   - id: scan_namespace
-    command: "./cub-agent scan --namespace flux-system"
+    command: "./cub-scout scan --namespace flux-system"
     description: "Scan specific namespace"
 
     expected:
@@ -101,7 +101,7 @@ commands:
     instructions: |
       Scan a specific namespace:
       ```bash
-      ./cub-agent scan --namespace flux-system
+      ./cub-scout scan --namespace flux-system
       ```
 
 # Sample output

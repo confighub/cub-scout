@@ -94,13 +94,13 @@ tags:
 
 ```bash
 # Validate CCVE definition
-cub-agent scan --validate cve/ccve/CCVE-2025-9001.yaml
+cub-scout scan --validate cve/ccve/CCVE-2025-9001.yaml
 
 # Test against a specific resource
-cub-agent scan --test-ccve CCVE-2025-9001 --resource my-namespace/Deployment/redis
+cub-scout scan --test-ccve CCVE-2025-9001 --resource my-namespace/Deployment/redis
 
 # Run with custom CCVE directory
-cub-agent scan --ccve-dir ./my-ccves
+cub-scout scan --ccve-dir ./my-ccves
 ```
 
 ### Sharing CCVEs

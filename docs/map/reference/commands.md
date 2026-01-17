@@ -1,11 +1,11 @@
 # CLI Commands Reference
 
-Complete reference for all `cub-agent map` subcommands.
+Complete reference for all `cub-scout map` subcommands.
 
 ## Synopsis
 
 ```bash
-cub-agent map [subcommand] [flags]
+cub-scout map [subcommand] [flags]
 ```
 
 ## Subcommands
@@ -15,8 +15,8 @@ cub-agent map [subcommand] [flags]
 Launch the interactive TUI.
 
 ```bash
-cub-agent map
-cub-agent map --hub    # ConfigHub hierarchy mode
+cub-scout map
+cub-scout map --hub    # ConfigHub hierarchy mode
 ```
 
 **Flags:**
@@ -31,7 +31,7 @@ cub-agent map --hub    # ConfigHub hierarchy mode
 Scriptable resource listing with query support.
 
 ```bash
-cub-agent map list [flags]
+cub-scout map list [flags]
 ```
 
 **Flags:**
@@ -48,19 +48,19 @@ cub-agent map list [flags]
 **Examples:**
 ```bash
 # All resources
-cub-agent map list
+cub-scout map list
 
 # Filter by namespace
-cub-agent map list -n production
+cub-scout map list -n production
 
 # Filter by owner
-cub-agent map list -o Flux
+cub-scout map list -o Flux
 
 # Query expression
-cub-agent map list -q "owner=Flux AND namespace=prod*"
+cub-scout map list -q "owner=Flux AND namespace=prod*"
 
 # JSON output
-cub-agent map list --json
+cub-scout map list --json
 ```
 
 ---
@@ -70,7 +70,7 @@ cub-agent map list --json
 One-line cluster health summary.
 
 ```bash
-cub-agent map status
+cub-scout map status
 ```
 
 **Output:**
@@ -85,7 +85,7 @@ Cluster: prod-east | Resources: 142 | Healthy: 138 | Issues: 4
 Show resources with problems.
 
 ```bash
-cub-agent map issues [flags]
+cub-scout map issues [flags]
 ```
 
 Alias: `map problems`
@@ -103,7 +103,7 @@ Alias: `map problems`
 Show GitOps deployers (Flux + ArgoCD controllers).
 
 ```bash
-cub-agent map deployers [flags]
+cub-scout map deployers [flags]
 ```
 
 **Output:**
@@ -121,7 +121,7 @@ argocd/frontend             Application     Synced    5
 Show workloads grouped by owner.
 
 ```bash
-cub-agent map workloads [flags]
+cub-scout map workloads [flags]
 ```
 
 **Output:**
@@ -146,7 +146,7 @@ Native (3 resources)
 Show resources diverged from desired state.
 
 ```bash
-cub-agent map drift [flags]
+cub-scout map drift [flags]
 ```
 
 **Output:**
@@ -163,7 +163,7 @@ cm/app-config           prod         ArgoCD   Missing key 'timeout'
 Configuration sprawl analysis.
 
 ```bash
-cub-agent map sprawl [flags]
+cub-scout map sprawl [flags]
 ```
 
 Shows how configuration is distributed across namespaces and owners.
@@ -175,7 +175,7 @@ Shows how configuration is distributed across namespaces and owners.
 Factory bypass detection.
 
 ```bash
-cub-agent map bypass [flags]
+cub-scout map bypass [flags]
 ```
 
 Identifies resources deployed outside the standard GitOps pipeline.
@@ -187,7 +187,7 @@ Identifies resources deployed outside the standard GitOps pipeline.
 Show crashing or failing pods/deployments.
 
 ```bash
-cub-agent map crashes [flags]
+cub-scout map crashes [flags]
 ```
 
 **Output:**
@@ -204,7 +204,7 @@ deploy/payment-api      prod         0           ImagePullBackOff
 Show unmanaged (Native) resources.
 
 ```bash
-cub-agent map orphans [flags]
+cub-scout map orphans [flags]
 ```
 
 Aliases: `map native`, `map unmanaged`
@@ -228,8 +228,8 @@ cm/temp-config      staging      2026-01-08 09:15     kubectl applied
 ConfigHub hierarchy explorer.
 
 ```bash
-cub-agent map hub
-# Same as: cub-agent map --hub
+cub-scout map hub
+# Same as: cub-scout map --hub
 ```
 
 **Requires:** `cub` CLI authenticated
@@ -248,7 +248,7 @@ Shows the ConfigHub hierarchy:
 Hub/AppSpace model view.
 
 ```bash
-cub-agent map fleet [flags]
+cub-scout map fleet [flags]
 ```
 
 **Flags:**

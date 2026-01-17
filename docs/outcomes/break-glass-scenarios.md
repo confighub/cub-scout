@@ -27,7 +27,7 @@ kubectl apply -f hotfix.yaml -n prod
 │     │                                                                       │
 │     ▼                                                                       │
 │  2. DETECTION                                                               │
-│     │   cub-agent map orphans                                               │
+│     │   cub-scout map orphans                                               │
 │     │   Shows resource as "Native" (orphan)                                 │
 │     │   "Who deployed this? When? Why?"                                     │
 │     │                                                                       │
@@ -56,11 +56,11 @@ The break-glass change was correct. Make it permanent.
 
 ```bash
 # 1. Detect the orphan
-cub-agent map orphans
+cub-scout map orphans
 # Shows: deploy/hotfix-api (Native)
 
 # 2. Import to ConfigHub
-cub-agent import deploy/hotfix-api -n prod
+cub-scout import deploy/hotfix-api -n prod
 # Creates Unit in ConfigHub
 
 # 3. ConfigHub updates stores
@@ -77,7 +77,7 @@ The break-glass change was temporary or wrong. Remove it.
 
 ```bash
 # 1. Detect the orphan
-cub-agent map orphans
+cub-scout map orphans
 
 # 2. Delete from cluster
 kubectl delete deploy/hotfix-api -n prod
@@ -94,10 +94,10 @@ You need more time to decide.
 
 ```bash
 # 1. Tag the orphan for tracking
-cub-agent tag deploy/hotfix-api -n prod --label="break-glass=2026-01-14"
+cub-scout tag deploy/hotfix-api -n prod --label="break-glass=2026-01-14"
 
 # 2. Review later
-cub-agent map orphans --label="break-glass"
+cub-scout map orphans --label="break-glass"
 ```
 
 **Result:** Orphan is tracked, decision deferred.
@@ -108,33 +108,33 @@ cub-agent map orphans --label="break-glass"
 
 ```bash
 # See what's actually running (not what Git says)
-cub-agent map list -n prod
+cub-scout map list -n prod
 
 # Quick health check
-cub-agent map issues
+cub-scout map issues
 ```
 
 ### After the Incident
 
 ```bash
 # Find all break-glass resources
-cub-agent map orphans
+cub-scout map orphans
 
 # See what was kubectl-applied
-cub-agent map list -q "owner=Native AND namespace=prod"
+cub-scout map list -q "owner=Native AND namespace=prod"
 
 # Trace what changed
-cub-agent trace deploy/hotfix-api -n prod
+cub-scout trace deploy/hotfix-api -n prod
 ```
 
 ### Weekly Audit
 
 ```bash
 # Monday morning check
-cub-agent map orphans -n prod
+cub-scout map orphans -n prod
 
 # Alert if orphans exist
-if [[ $(cub-agent map orphans --count) -gt 0 ]]; then
+if [[ $(cub-scout map orphans --count) -gt 0 ]]; then
   echo "WARNING: Orphan resources in production"
 fi
 ```

@@ -17,17 +17,17 @@ import (
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Set up shell completions and configuration",
-	Long: `Set up cub-agent for your environment.
+	Long: `Set up cub-scout for your environment.
 
 This command installs shell completions so you can use tab completion
-for all cub-agent commands, flags, and arguments.
+for all cub-scout commands, flags, and arguments.
 
 Supported shells: bash, zsh, fish
 
 Examples:
-  cub-agent setup              # Auto-detect shell and install
-  cub-agent setup --shell zsh  # Install for specific shell
-  cub-agent setup --dry-run    # Show what would be installed`,
+  cub-scout setup              # Auto-detect shell and install
+  cub-scout setup --shell zsh  # Install for specific shell
+  cub-scout setup --dry-run    # Show what would be installed`,
 	RunE: runSetup,
 }
 
@@ -49,7 +49,7 @@ func runSetup(cmd *cobra.Command, args []string) error {
 		shell = detectShell()
 	}
 
-	fmt.Printf("Setting up cub-agent for %s...\n\n", shell)
+	fmt.Printf("Setting up cub-scout for %s...\n\n", shell)
 
 	switch shell {
 	case "bash":
@@ -85,14 +85,14 @@ func setupBash() error {
 	rcFile := filepath.Join(os.Getenv("HOME"), ".bashrc")
 
 	// Check if already configured
-	if isAlreadyConfigured(rcFile, "cub-agent completion bash") {
+	if isAlreadyConfigured(rcFile, "cub-scout completion bash") {
 		fmt.Println("✓ Shell completions already configured in ~/.bashrc")
 		return nil
 	}
 
 	completionLine := `
-# cub-agent completion (added by cub-agent setup)
-source <(cub-agent completion bash)
+# cub-scout completion (added by cub-scout setup)
+source <(cub-scout completion bash)
 `
 
 	if setupDryRun {
@@ -115,7 +115,7 @@ source <(cub-agent completion bash)
 func setupZsh() error {
 	// Create completions directory
 	compDir := filepath.Join(os.Getenv("HOME"), ".zsh", "completions")
-	compFile := filepath.Join(compDir, "_cub-agent")
+	compFile := filepath.Join(compDir, "_cub-scout")
 	rcFile := filepath.Join(os.Getenv("HOME"), ".zshrc")
 
 	if setupDryRun {
@@ -146,7 +146,7 @@ func setupZsh() error {
 	// Add fpath to .zshrc if needed
 	if !isAlreadyConfigured(rcFile, ".zsh/completions") {
 		fpathConfig := `
-# cub-agent completion (added by cub-agent setup)
+# cub-scout completion (added by cub-scout setup)
 fpath=(~/.zsh/completions $fpath)
 autoload -Uz compinit && compinit
 `
@@ -166,7 +166,7 @@ autoload -Uz compinit && compinit
 
 func setupFish() error {
 	compDir := filepath.Join(os.Getenv("HOME"), ".config", "fish", "completions")
-	compFile := filepath.Join(compDir, "cub-agent.fish")
+	compFile := filepath.Join(compDir, "cub-scout.fish")
 
 	if setupDryRun {
 		fmt.Printf("Would create: %s\n", compDir)

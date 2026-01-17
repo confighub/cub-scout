@@ -1,8 +1,8 @@
-# How to Test cub-agent Works
+# How to Test cub-scout Works
 
 **Last Updated:** 2026-01-12
 
-A practical guide to verifying cub-agent works correctly in your environment.
+A practical guide to verifying cub-scout works correctly in your environment.
 
 > **Looking for the full test strategy?** See [TESTING-GUIDE.md](TESTING-GUIDE.md) for comprehensive testing documentation.
 
@@ -27,7 +27,7 @@ Run these commands to verify your setup works:
 
 ```bash
 # 1. Build the binary
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 
 # 2. Check environment
 ./test/preflight/mini-tck
@@ -39,7 +39,7 @@ go build ./cmd/cub-agent
 ./test/atk/demo quick
 ```
 
-If all four commands succeed, cub-agent is working correctly in standalone mode.
+If all four commands succeed, cub-scout is working correctly in standalone mode.
 
 ---
 
@@ -244,10 +244,10 @@ Each ownership type is tested end-to-end:
 go test ./pkg/ccve/... -v
 
 # List auto-fixable CCVEs (no cluster)
-./cub-agent remedy --list
+./cub-scout remedy --list
 
 # Static file scan (no cluster)
-./cub-agent scan --file test/fixtures/bad-config.yaml
+./cub-scout scan --file test/fixtures/bad-config.yaml
 ```
 
 ### Remedy-Only Testing (Cluster Required, NOT ConfigHub)
@@ -260,7 +260,7 @@ go test ./pkg/remedy/... -v
 ./test/remedy-e2e.sh
 
 # Manual dry-run test
-./cub-agent remedy CCVE-2025-0147 --dry-run -n default
+./cub-scout remedy CCVE-2025-0147 --dry-run -n default
 ```
 
 ### Why This Separation Matters

@@ -39,29 +39,29 @@ var fleetCmd = &cobra.Command{
 	Short: "Aggregate imports from multiple clusters (GUI)",
 	Long: `Aggregate import data from multiple clusters into a fleet view.
 
-This is the GUI/multi-cluster companion to "cub-agent import".
+This is the GUI/multi-cluster companion to "cub-scout import".
 
 Workflow:
-  TUI (1 cluster):  cub-agent import
-  GUI (N clusters): cub-agent import --json → import-cluster-aggregator → apply
+  TUI (1 cluster):  cub-scout import
+  GUI (N clusters): cub-scout import --json → import-cluster-aggregator → apply
 
 Input can be:
-- Multiple JSON files from "cub-agent import --json"
+- Multiple JSON files from "cub-scout import --json"
 - Stdin (piped from multiple imports)
 
 Examples:
   # Full workflow: scan clusters, generate unified proposal, apply
   for ctx in cluster-a cluster-b; do
     kubectl config use-context $ctx
-    cub-agent import --json > ${ctx}.json
+    cub-scout import --json > ${ctx}.json
   done
-  cub-agent import-cluster-aggregator cluster-*.json --suggest --json | cub-agent apply -
+  cub-scout import-cluster-aggregator cluster-*.json --suggest --json | cub-scout apply -
 
   # Generate unified proposal
-  cub-agent import-cluster-aggregator cluster1.json cluster2.json --suggest
+  cub-scout import-cluster-aggregator cluster1.json cluster2.json --suggest
 
   # Just aggregate (no proposal)
-  cub-agent import-cluster-aggregator cluster1.json cluster2.json cluster3.json
+  cub-scout import-cluster-aggregator cluster1.json cluster2.json cluster3.json
 `,
 	RunE: runFleet,
 }

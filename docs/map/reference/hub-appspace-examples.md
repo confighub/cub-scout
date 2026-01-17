@@ -6,7 +6,7 @@ Visual examples of the `B` key Hub/AppSpace grouping for common reference archit
 
 ## How It Works
 
-Press `B` in Hub mode (`cub-agent map --hub`) to toggle between:
+Press `B` in Hub mode (`cub-scout map --hub`) to toggle between:
 - **Flat view**: Org → Spaces (alphabetical)
 - **Hub/AppSpace view**: Org → Hub (platform) → AppSpaces (teams)
 

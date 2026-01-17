@@ -26,24 +26,24 @@ Saved queries are named, reusable query expressions. They come in two types:
 - User: Your custom queries saved in ~/.confighub/queries.yaml
 
 Use saved queries with the -q flag:
-  cub-agent map list -q unmanaged
-  cub-agent map list -q "unmanaged AND namespace=prod*"
+  cub-scout map list -q unmanaged
+  cub-scout map list -q "unmanaged AND namespace=prod*"
 
 Examples:
   # List all saved queries
-  cub-agent map queries
+  cub-scout map queries
 
   # Run a saved query by name
-  cub-agent map list -q unmanaged
+  cub-scout map list -q unmanaged
 
   # Save a new query
-  cub-agent map queries save my-apps "labels[team]=payments"
+  cub-scout map queries save my-apps "labels[team]=payments"
 
   # Delete a user query
-  cub-agent map queries delete my-apps
+  cub-scout map queries delete my-apps
 
   # Show ConfigHub connection status
-  cub-agent map queries connect
+  cub-scout map queries connect
 `,
 	RunE: runQueriesList,
 }
@@ -54,8 +54,8 @@ var mapQueriesSaveCmd = &cobra.Command{
 	Long: `Save a new user query to ~/.confighub/queries.yaml.
 
 Examples:
-  cub-agent map queries save my-team "labels[team]=payments"
-  cub-agent map queries save my-team "labels[team]=payments" "Payment team resources"
+  cub-scout map queries save my-team "labels[team]=payments"
+  cub-scout map queries save my-team "labels[team]=payments" "Payment team resources"
 `,
 	Args: cobra.RangeArgs(2, 3),
 	RunE: runQueriesSave,
@@ -136,15 +136,15 @@ func runQueriesList(cmd *cobra.Command, args []string) error {
 	// Usage hint
 	fmt.Println("USAGE")
 	fmt.Println("─────")
-	fmt.Println("  cub-agent map list -q <name>          Run a saved query")
-	fmt.Println("  cub-agent map list -q \"<name> AND namespace=prod*\"")
-	fmt.Println("  cub-agent map queries save <name> <query>")
+	fmt.Println("  cub-scout map list -q <name>          Run a saved query")
+	fmt.Println("  cub-scout map list -q \"<name> AND namespace=prod*\"")
+	fmt.Println("  cub-scout map queries save <name> <query>")
 	fmt.Println()
 
 	// Light hook to ConfigHub
 	fmt.Println("────────────────────────────────────────────────────────────────")
 	fmt.Println("🔗 Want team-shared queries, alerts, and history?")
-	fmt.Println("   See: cub-agent map queries connect")
+	fmt.Println("   See: cub-scout map queries connect")
 	fmt.Println("────────────────────────────────────────────────────────────────")
 
 	return nil
@@ -178,7 +178,7 @@ func runQueriesSave(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  Query: %s\n", queryExpr)
 	fmt.Printf("  File:  %s\n", queries.UserQueriesFile())
 	fmt.Println()
-	fmt.Printf("Run it: cub-agent map list -q %s\n", name)
+	fmt.Printf("Run it: cub-scout map list -q %s\n", name)
 
 	return nil
 }
@@ -213,7 +213,7 @@ func runQueriesConnect(cmd *cobra.Command, args []string) error {
 	fmt.Println("GET STARTED")
 	fmt.Println("───────────")
 	fmt.Println("  1. Sign up or log in:  https://confighub.com")
-	fmt.Println("  2. Import workloads:   cub-agent import --namespace <ns>")
+	fmt.Println("  2. Import workloads:   cub-scout import --namespace <ns>")
 	fmt.Println()
 	fmt.Println("  Full guide: docs/IMPORTING-WORKLOADS.md")
 	fmt.Println()

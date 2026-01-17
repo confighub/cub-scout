@@ -136,23 +136,23 @@ func requireTarget(t *testing.T, space string) string {
 	return slug
 }
 
-// getCubAgentPath finds the cub-agent binary
+// getCubAgentPath finds the cub-scout binary
 func getCubAgentPath() string {
 	// Check multiple locations
 	paths := []string{
-		"./cub-agent",
-		"../../cub-agent",
-		"../../../cub-agent",
+		"./cub-scout",
+		"../../cub-scout",
+		"../../../cub-scout",
 	}
 	for _, p := range paths {
 		if _, err := os.Stat(p); err == nil {
 			return p
 		}
 	}
-	return "cub-agent" // Fall back to PATH
+	return "cub-scout" // Fall back to PATH
 }
 
-// runCubAgent runs cub-agent with given arguments and returns output
+// runCubAgent runs cub-scout with given arguments and returns output
 func runCubAgent(t *testing.T, args ...string) string {
 	t.Helper()
 
@@ -160,14 +160,14 @@ func runCubAgent(t *testing.T, args ...string) string {
 	cmd := exec.Command(cubAgentPath, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		t.Logf("cub-agent output: %s", output)
-		t.Fatalf("Failed to run cub-agent %v: %v", args, err)
+		t.Logf("cub-scout output: %s", output)
+		t.Fatalf("Failed to run cub-scout %v: %v", args, err)
 	}
 
 	return string(output)
 }
 
-// runCubAgentAllowFailures runs cub-agent and returns output even on non-zero exit
+// runCubAgentAllowFailures runs cub-scout and returns output even on non-zero exit
 func runCubAgentAllowFailures(t *testing.T, args ...string) string {
 	t.Helper()
 

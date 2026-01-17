@@ -26,7 +26,7 @@ The GitOps deployers (Flux, Argo CD) store everything we need in the cluster its
 ### 1. Detect Ownership
 
 ```bash
-cub-agent import --dry-run
+cub-scout import --dry-run
 ```
 
 Output:
@@ -59,7 +59,7 @@ The deployer stores its source path. We extract variant from it:
 ### 3. Suggest ConfigHub Structure
 
 ```bash
-cub-agent import -n myapp-prod --dry-run
+cub-scout import -n myapp-prod --dry-run
 ```
 
 Output:
@@ -126,13 +126,13 @@ GitOps paths win because the deployer explicitly stores them.
 
 ```bash
 # Preview import
-cub-agent import --dry-run
+cub-scout import --dry-run
 
 # Import a specific namespace
-cub-agent import -n <your-ns> --dry-run
+cub-scout import -n <your-ns> --dry-run
 
 # Actually import
-cub-agent import
+cub-scout import
 ```
 
 ---

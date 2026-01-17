@@ -48,9 +48,9 @@ REPOS (DRY)       CONFIGHUB (WET)       OCI           DEPLOYERS        LIVE
 You start with just the TUI:
 
 ```bash
-cub-agent map                    # See ownership
-cub-agent map orphans            # Find shadow IT
-cub-agent map trace deploy/x     # Trace to source
+cub-scout map                    # See ownership
+cub-scout map orphans            # Find shadow IT
+cub-scout map trace deploy/x     # Trace to source
 ```
 
 **What you see:** Live resources + ownership + GitOps deployers
@@ -61,7 +61,7 @@ Sign up and connect:
 
 ```bash
 cub auth login                   # Authenticate
-cub-agent map --hub              # ConfigHub hierarchy TUI
+cub-scout map --hub              # ConfigHub hierarchy TUI
 ```
 
 **What you see:**
@@ -74,7 +74,7 @@ cub-agent map --hub              # ConfigHub hierarchy TUI
 Bring your Flux/ArgoCD workloads into ConfigHub:
 
 ```bash
-cub-agent import                 # Launch import wizard
+cub-scout import                 # Launch import wizard
 ```
 
 **What happens:**
@@ -139,7 +139,7 @@ ConfigHub enables platform + app team collaboration:
 ### With map list (Live)
 
 ```bash
-cub-agent map list
+cub-scout map list
 ```
 ```
 NAME            NAMESPACE    OWNER        STATUS
@@ -151,7 +151,7 @@ monitoring      system       ConfigHub    ✓ Synced
 ### With map --hub (WET → Live)
 
 ```bash
-cub-agent map --hub
+cub-scout map --hub
 ```
 ```
 Organization: mycompany
@@ -220,7 +220,7 @@ ConfigHub enables the Rendered Manifest pattern:
 ### What Map Shows with RM Pattern
 
 ```bash
-cub-agent map trace deploy/payment-api -n prod
+cub-scout map trace deploy/payment-api -n prod
 ```
 ```
 Deployment: payment-api (prod)
@@ -255,10 +255,10 @@ curl -sL https://get.confighub.com | bash
 cub auth login
 
 # 4. Connect map
-cub-agent map --hub
+cub-scout map --hub
 
 # 5. Import existing workloads
-cub-agent import
+cub-scout import
 ```
 
 ## Summary

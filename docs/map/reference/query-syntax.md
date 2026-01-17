@@ -6,15 +6,15 @@ Complete reference for the map query language.
 
 ```bash
 # Basic
-cub-agent map list -q "owner=Flux"
-cub-agent map list -q "namespace=prod*"
+cub-scout map list -q "owner=Flux"
+cub-scout map list -q "namespace=prod*"
 
 # Logical
-cub-agent map list -q "owner=Flux AND namespace=production"
-cub-agent map list -q "owner=Flux OR owner=ArgoCD"
+cub-scout map list -q "owner=Flux AND namespace=production"
+cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 
 # Labels
-cub-agent map list -q "labels[app]=nginx"
+cub-scout map list -q "labels[app]=nginx"
 ```
 
 ---
@@ -54,7 +54,7 @@ owner=Flux OR owner=ArgoCD OR owner=Helm
 Both conditions must match:
 
 ```bash
-cub-agent map list -q "owner=Flux AND namespace=production"
+cub-scout map list -q "owner=Flux AND namespace=production"
 ```
 
 ### OR
@@ -62,7 +62,7 @@ cub-agent map list -q "owner=Flux AND namespace=production"
 Either condition matches:
 
 ```bash
-cub-agent map list -q "owner=Flux OR owner=ArgoCD"
+cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 ```
 
 ### Grouping
@@ -70,7 +70,7 @@ cub-agent map list -q "owner=Flux OR owner=ArgoCD"
 Use parentheses for complex expressions:
 
 ```bash
-cub-agent map list -q "(owner=Flux OR owner=ArgoCD) AND namespace=prod*"
+cub-scout map list -q "(owner=Flux OR owner=ArgoCD) AND namespace=prod*"
 ```
 
 ---
@@ -173,7 +173,7 @@ Note: Label keys with special characters need quoting in some shells:
 
 ```bash
 # Shell-safe
-cub-agent map list -q 'labels[app.kubernetes.io/name]=frontend'
+cub-scout map list -q 'labels[app.kubernetes.io/name]=frontend'
 ```
 
 ---
@@ -189,8 +189,8 @@ The `*` character matches any string:
 | `*prod*` | `production`, `preprod`, `prod-test` |
 
 ```bash
-cub-agent map list -q "namespace=prod*"
-cub-agent map list -q "name=api-*"
+cub-scout map list -q "namespace=prod*"
+cub-scout map list -q "name=api-*"
 ```
 
 ---
@@ -201,13 +201,13 @@ Use `~=` for regex matching:
 
 ```bash
 # Names starting with "api-"
-cub-agent map list -q "name~=^api-.*"
+cub-scout map list -q "name~=^api-.*"
 
 # Names containing "payment"
-cub-agent map list -q "name~=.*payment.*"
+cub-scout map list -q "name~=.*payment.*"
 
 # Namespaces matching pattern
-cub-agent map list -q "namespace~=^(prod|staging)-.*"
+cub-scout map list -q "namespace~=^(prod|staging)-.*"
 ```
 
 Regex syntax follows Go's `regexp` package (RE2).
@@ -322,13 +322,13 @@ Combine queries with JSON for scripting:
 
 ```bash
 # Get all orphan names
-cub-agent map list -q "owner=Native" --json | jq '.[].name'
+cub-scout map list -q "owner=Native" --json | jq '.[].name'
 
 # Count by owner
-cub-agent map list --json | jq 'group_by(.owner) | map({owner: .[0].owner, count: length})'
+cub-scout map list --json | jq 'group_by(.owner) | map({owner: .[0].owner, count: length})'
 
 # Filter in jq
-cub-agent map list --json | jq '[.[] | select(.namespace | startswith("prod"))]'
+cub-scout map list --json | jq '[.[] | select(.namespace | startswith("prod"))]'
 ```
 
 ---
@@ -351,10 +351,10 @@ cub-agent map list --json | jq '[.[] | select(.namespace | startswith("prod"))]'
 
 ```bash
 # Use single quotes for complex queries
-cub-agent map list -q 'labels[app.kubernetes.io/name]=frontend'
+cub-scout map list -q 'labels[app.kubernetes.io/name]=frontend'
 
 # Or escape special characters
-cub-agent map list -q "labels[app.kubernetes.io\/name]=frontend"
+cub-scout map list -q "labels[app.kubernetes.io\/name]=frontend"
 ```
 
 ## See Also

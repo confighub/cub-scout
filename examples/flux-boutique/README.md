@@ -1,6 +1,6 @@
 # Flux Boutique Demo
 
-A multi-service Flux demo showcasing cub-agent TUI views with 5 microservices.
+A multi-service Flux demo showcasing cub-scout TUI views with 5 microservices.
 
 ## What It Shows
 
@@ -22,7 +22,7 @@ kubectl apply -f boutique.yaml
 kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s
 
 # Explore with TUI
-cub-agent map
+cub-scout map
 ```
 
 ## Architecture

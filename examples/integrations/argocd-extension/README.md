@@ -162,7 +162,7 @@ Or use init container (see `extension-patch.yaml`).
 
 ## Extension API (Proposed)
 
-> **Not Yet Implemented:** These API endpoints are proposed for a future HTTP API mode. Currently, integrations should use CLI commands like `cub-agent snapshot` and `cub-agent scan --json`.
+> **Not Yet Implemented:** These API endpoints are proposed for a future HTTP API mode. Currently, integrations should use CLI commands like `cub-scout snapshot` and `cub-scout scan --json`.
 
 ### GET /api/map
 

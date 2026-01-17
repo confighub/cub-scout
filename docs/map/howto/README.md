@@ -1,6 +1,6 @@
 # How-To Guides
 
-Task-based guides for using cub-agent map.
+Task-based guides for using cub-scout map.
 
 ## App Hierarchy: The Big Picture
 
@@ -63,13 +63,13 @@ For maximum cluster insight, use these commands:
 
 ```bash
 # All cluster data sources with LiveTree (Deployment → ReplicaSet → Pod)
-cub-agent map deep-dive
+cub-scout map deep-dive
 
 # Inferred ConfigHub model with Units, namespaces, ownership
-cub-agent map app-hierarchy
+cub-scout map app-hierarchy
 
 # With ConfigHub context (shows Unit/Space/dependency info)
-cub-agent map deep-dive --connected
+cub-scout map deep-dive --connected
 ```
 
 ## The Three Maps View
@@ -116,7 +116,7 @@ REPO: git@github.com:org/platform-config
 
 **Map trace shows:**
 ```bash
-cub-agent map trace deploy/nginx -n prod
+cub-scout map trace deploy/nginx -n prod
 # Deployment → Kustomization → GitRepository → git URL
 ```
 
@@ -133,7 +133,7 @@ REPO: git@github.com:org/argocd-apps
 
 **Map shows parent and children separately:**
 ```bash
-cub-agent map list -q "owner=ArgoCD"
+cub-scout map list -q "owner=ArgoCD"
 # Shows both parent Application and child Applications
 ```
 
@@ -150,7 +150,7 @@ REPO: git@github.com:org/app-source
 
 **Map --hub shows the ConfigHub hierarchy:**
 ```bash
-cub-agent map --hub
+cub-scout map --hub
 # Shows: Org → Space → Unit → Revision → Live resources
 ```
 
@@ -158,17 +158,17 @@ cub-agent map --hub
 
 ### From Live to Source (Trace Up)
 ```bash
-cub-agent map trace deploy/myapp -n prod
+cub-scout map trace deploy/myapp -n prod
 ```
 
 ### From Source to Live (Trace Down)
 ```bash
-cub-agent map deployers   # See all GitOps controllers
-cub-agent map list        # See what they deployed
+cub-scout map deployers   # See all GitOps controllers
+cub-scout map list        # See what they deployed
 ```
 
 ### Across All Levels
 ```bash
-cub-agent map            # Interactive TUI
+cub-scout map            # Interactive TUI
 # Press M for Three Maps view
 ```

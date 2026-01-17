@@ -83,15 +83,15 @@ Map shows the complete picture of how apps flow from source to production:
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │  1. ADOPTION (OSS - Free)                                              │
-│     Flux/Argo/Helm user discovers cub-agent                            │
-│     → Runs `cub-agent map` on their cluster                            │
+│     Flux/Argo/Helm user discovers cub-scout                            │
+│     → Runs `cub-scout map` on their cluster                            │
 │     → Falls in love with TUI (ownership visibility, trace, scan)       │
 │     → This works standalone, no account needed                         │
 │     → VALUE: "I finally know who owns what"                            │
 ├────────────────────────────────────────────────────────────────────────┤
 │  2. CONNECT (ConfigHub Free Tier)                                      │
 │     → Signs up for ConfigHub                                           │
-│     → `cub-agent map --hub` shows multi-cluster view                   │
+│     → `cub-scout map --hub` shows multi-cluster view                   │
 │     → Sees DRY→WET→Live visibility across fleet                        │
 │     → VALUE: "I can see my whole fleet in one place"                   │
 ├────────────────────────────────────────────────────────────────────────┤
@@ -115,10 +115,10 @@ Map works with ANY existing Flux, ArgoCD, or Helm deployment:
 kubectl get kustomizations,applications -A   # Shows your deployers
 
 # Step 2: Zero-friction map (just run it)
-cub-agent map                                 # Instant ownership visibility
+cub-scout map                                 # Instant ownership visibility
 
 # Step 3: Zero-friction import to ConfigHub
-cub-agent import                              # Wizard guides through import
+cub-scout import                              # Wizard guides through import
 ```
 
 ### Reference App: apptique (Google Online Boutique)
@@ -135,7 +135,7 @@ The `apptique` example demonstrates all major patterns:
 # Try apptique with map
 cd examples/apptique-examples/flux-monorepo
 kubectl apply -k overlays/dev
-cub-agent map list -n boutique-dev
+cub-scout map list -n boutique-dev
 ```
 
 ### Tested Reference Architectures
@@ -162,22 +162,22 @@ cub-agent map list -n boutique-dev
 
 ```bash
 # Build first
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 
 # 30-second ownership detection
-cub-agent map list
+cub-scout map list
 
 # Find orphan resources (Native)
-cub-agent map list -q "owner=Native"
+cub-scout map list -q "owner=Native"
 
 # CCVE scanning
-cub-agent scan
+cub-scout scan
 
 # Trace ownership chain
-cub-agent trace deployment/nginx -n default
+cub-scout trace deployment/nginx -n default
 
 # Query across fleet
-cub-agent map list -q "owner=Flux OR owner=ArgoCD"
+cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 ```
 
 ---

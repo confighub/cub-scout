@@ -116,9 +116,9 @@ entry_points:
     expected_keystrokes: 25
     expected_commands: 2
     journey:
-      - command: "cub-agent map list -q 'status=CrashLoopBackOff'"
+      - command: "cub-scout map list -q 'status=CrashLoopBackOff'"
         expect: "List of crashing pods"
-      - command: "cub-agent trace deploy/NAME -n NS"
+      - command: "cub-scout trace deploy/NAME -n NS"
         expect: "Ownership chain and error details"
 
 scoring:
@@ -217,12 +217,12 @@ Ralph completes when: All UX-BOW scenarios score >= 4.0 composite
 ### Ralph Iteration Results
 
 **Improvements Made:**
-- Added `cub-agent map crashes` shortcut command
-- Added `cub-agent map orphans` shortcut command
+- Added `cub-scout map crashes` shortcut command
+- Added `cub-scout map orphans` shortcut command
 - Added `--since` flag with tab completion for time filtering
 - Added query examples to CLI help text
 - Added query examples to Hub TUI help overlay
-- Improved discoverability of cub-agent commands in both TUIs
+- Improved discoverability of cub-scout commands in both TUIs
 - Added 'R' key for Recent changes view in bash TUI (shows workloads sorted by age)
 - Added '/' search with query examples to bash TUI
 - Added 'a' activity view to Hub TUI (shows recent unit updates, worker/target status)

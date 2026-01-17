@@ -1,8 +1,7 @@
 // Copyright (C) ConfigHub, Inc.
 // SPDX-License-Identifier: MIT
 
-// Command cub-agent provides CLI commands for the ConfigHub Agent.
-// It observes Kubernetes clusters and detects resource ownership.
+// Command cub-scout provides CLI commands for exploring and mapping GitOps in Kubernetes clusters.
 package main
 
 import (
@@ -23,19 +22,19 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "cub-agent",
-	Short: "ConfigHub Agent CLI",
-	Long: `ConfigHub Agent - Kubernetes resource visibility and ownership detection
+	Use:   "cub-scout",
+	Short: "Explore and map GitOps in your clusters",
+	Long: `cub-scout - explore and map GitOps in your clusters
 
-The cub-agent observes Kubernetes clusters and detects resource ownership.
+cub-scout observes Kubernetes clusters and detects resource ownership.
 It provides commands for:
 
-  - Mapping resources and their ownership (Flux, Argo CD, Helm, ConfigHub, Native)
-  - Scanning for CCVEs (configuration anti-patterns)
-  - Tracing ownership chains
-  - Importing resources into ConfigHub
+  - Discovering resources and their ownership (Flux, Argo CD, Helm, ConfigHub, Native)
+  - Mapping cluster state with interactive TUI
+  - Tracing ownership chains from Git to deployed resources
+  - Finding orphaned resources not managed by GitOps
 
-Interacts with ConfigHub via the cub CLI (like kubectl, flux, argocd).
+Works standalone or connected to ConfigHub for additional features.
 
 Environment Variables:
   CLUSTER_NAME            Name for this cluster (default: default)
@@ -56,7 +55,7 @@ func init() {
 		Use:   "version",
 		Short: "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("cub-agent version %s (built %s)\n", BuildTag, BuildDate)
+			fmt.Printf("cub-scout version %s (built %s)\n", BuildTag, BuildDate)
 		},
 	})
 
@@ -64,25 +63,25 @@ func init() {
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "completion [bash|zsh|fish|powershell]",
 		Short: "Generate shell completion script",
-		Long: `Generate shell completion script for cub-agent.
+		Long: `Generate shell completion script for cub-scout.
 
 Bash:
-  $ source <(cub-agent completion bash)
+  $ source <(cub-scout completion bash)
   # Or add to ~/.bashrc:
-  $ cub-agent completion bash >> ~/.bashrc
+  $ cub-scout completion bash >> ~/.bashrc
 
 Zsh:
-  $ source <(cub-agent completion zsh)
+  $ source <(cub-scout completion zsh)
   # Or install to fpath:
-  $ cub-agent completion zsh > "${fpath[1]}/_cub-agent"
+  $ cub-scout completion zsh > "${fpath[1]}/_cub-scout"
 
 Fish:
-  $ cub-agent completion fish | source
+  $ cub-scout completion fish | source
   # Or install:
-  $ cub-agent completion fish > ~/.config/fish/completions/cub-agent.fish
+  $ cub-scout completion fish > ~/.config/fish/completions/cub-scout.fish
 
 PowerShell:
-  PS> cub-agent completion powershell | Out-String | Invoke-Expression
+  PS> cub-scout completion powershell | Out-String | Invoke-Expression
 `,
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 		Args:                  cobra.ExactArgs(1),

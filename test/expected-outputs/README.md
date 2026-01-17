@@ -16,11 +16,11 @@ These expected outputs serve three functions:
 
 | File | Command | Mode |
 |------|---------|------|
-| `cli/map/standalone.yaml` | `./cub-agent map list` | standalone |
-| `cli/map/connected.yaml` | `./cub-agent map --mode=admin` | connected |
-| `cli/scan/standalone.yaml` | `./cub-agent scan` | standalone |
-| `cli/trace/standalone.yaml` | `./cub-agent trace` | standalone |
-| `cli/version/version.yaml` | `./cub-agent version` | standalone |
+| `cli/map/standalone.yaml` | `./cub-scout map list` | standalone |
+| `cli/map/connected.yaml` | `./cub-scout map --mode=admin` | connected |
+| `cli/scan/standalone.yaml` | `./cub-scout scan` | standalone |
+| `cli/trace/standalone.yaml` | `./cub-scout trace` | standalone |
+| `cli/version/version.yaml` | `./cub-scout version` | standalone |
 
 ### ATK Scripts (6 files)
 
@@ -213,7 +213,7 @@ Expected outputs become `assert:` statements:
 ```yaml
 steps:
   - name: "Map cluster"
-    uses: cub-agent/map@v1
+    uses: cub-scout/map@v1
     assert: "map.standalone.assertions.resources_detected"
 ```
 

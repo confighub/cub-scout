@@ -15,7 +15,7 @@ requires:
 commands:
   # Basic map
   - id: map_list
-    command: "./cub-agent map list"
+    command: "./cub-scout map list"
     description: "List all resources with ownership"
 
     expected:
@@ -48,7 +48,7 @@ commands:
 
       Run:
       ```bash
-      ./cub-agent map list
+      ./cub-scout map list
       ```
 
       You should see a table with columns:
@@ -65,7 +65,7 @@ commands:
 
   # Map with namespace filter
   - id: map_namespace
-    command: "./cub-agent map list --namespace kube-system"
+    command: "./cub-scout map list --namespace kube-system"
     description: "List resources in specific namespace"
 
     expected:
@@ -83,7 +83,7 @@ commands:
     instructions: |
       Filter map output to a specific namespace:
       ```bash
-      ./cub-agent map list --namespace kube-system
+      ./cub-scout map list --namespace kube-system
       ```
 
 # Sample output (for reference)

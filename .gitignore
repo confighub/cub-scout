@@ -1,5 +1,5 @@
 # Binaries
-/cub-agent
+/cub-scout
 *.exe
 *.dll
 *.so
@@ -34,4 +34,5 @@ tmp/
 .env.local
 .cache/
 .confighub/
+cub-scout
 cub-scout

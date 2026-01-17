@@ -89,19 +89,19 @@ ownership, relationships, and status for all detected resources.
 
 Examples:
   # Output to stdout
-  cub-agent snapshot
+  cub-scout snapshot
 
   # Output to file
-  cub-agent snapshot -o state.json
+  cub-scout snapshot -o state.json
 
   # Pipe to jq
-  cub-agent snapshot | jq '.entries[] | select(.owner.type == "flux")'
+  cub-scout snapshot | jq '.entries[] | select(.owner.type == "flux")'
 
   # Filter by namespace
-  cub-agent snapshot --namespace prod
+  cub-scout snapshot --namespace prod
 
   # Filter by kind
-  cub-agent snapshot --kind Deployment
+  cub-scout snapshot --kind Deployment
 `,
 	RunE: runSnapshot,
 }

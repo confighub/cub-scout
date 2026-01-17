@@ -9,12 +9,12 @@
 #
 # Modes:
 #   --local                     # Use kubectl to detect ownership (default)
-#   --api                       # Use cub-agent API (requires ConfigHub)
+#   --api                       # Use cub-scout API (requires ConfigHub)
 #
 # Requirements:
 #   - kubectl configured for target cluster
 #   - jq for JSON processing
-#   - cub-agent binary (only for --api mode)
+#   - cub-scout binary (only for --api mode)
 
 set -euo pipefail
 

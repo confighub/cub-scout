@@ -56,7 +56,7 @@ argocd app get apptique-drift
 
 ```bash
 # Trace shows the drift
-./cub-agent trace deployment/frontend -n apptique-drift
+./cub-scout trace deployment/frontend -n apptique-drift
 
 # Expected output:
 # DRIFT DETECTED

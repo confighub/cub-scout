@@ -98,7 +98,7 @@ AssertOwnerDetected(t, output, kind, name, owner)
 ### Command Helpers
 
 ```go
-RunCubAgent(t, "map", "--json")   // Run cub-agent
+RunCubAgent(t, "map", "--json")   // Run cub-scout
 RunCub(t, "unit", "list")         // Run cub CLI
 RunCubJSON(t, &result, "unit", "list")  // Run cub and parse JSON
 ```

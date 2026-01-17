@@ -234,17 +234,17 @@ func LoadJSONFixture(t *testing.T, relativePath string, v interface{}) {
 // Command Helpers
 // -----------------------------------------------------------------------------
 
-// RunCubAgent runs the cub-agent binary with the given args and returns output.
+// RunCubAgent runs the cub-scout binary with the given args and returns output.
 func RunCubAgent(t *testing.T, args ...string) string {
 	t.Helper()
 	cubAgent := os.Getenv("CUB_AGENT")
 	if cubAgent == "" {
-		cubAgent = "./cub-agent"
+		cubAgent = "./cub-scout"
 	}
 
 	cmd := exec.Command(cubAgent, args...)
 	output, err := cmd.CombinedOutput()
-	require.NoError(t, err, "cub-agent %v failed: %s", args, string(output))
+	require.NoError(t, err, "cub-scout %v failed: %s", args, string(output))
 	return string(output)
 }
 

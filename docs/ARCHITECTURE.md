@@ -253,11 +253,11 @@ The Agent supports multiple output modes:
 
 | Mode | Command | Description |
 |------|---------|-------------|
-| **Snapshot** | `cub-agent snapshot -o -` | One-time GSF dump to stdout |
-| **Map** | `cub-agent map list --json` | Resource ownership list |
-| **Fleet** | `cub-agent map fleet` | Fleet view via cub CLI |
-| **Deep Dive** | `cub-agent map deep-dive` | All cluster data sources with LiveTree |
-| **App Hierarchy** | `cub-agent map app-hierarchy` | Inferred ConfigHub Units with workloads |
+| **Snapshot** | `cub-scout snapshot -o -` | One-time GSF dump to stdout |
+| **Map** | `cub-scout map list --json` | Resource ownership list |
+| **Fleet** | `cub-scout map fleet` | Fleet view via cub CLI |
+| **Deep Dive** | `cub-scout map deep-dive` | All cluster data sources with LiveTree |
+| **App Hierarchy** | `cub-scout map app-hierarchy` | Inferred ConfigHub Units with workloads |
 
 ### Deep Dive and App Hierarchy
 
@@ -275,17 +275,17 @@ Both use **deterministic rule-based logic** (no AI) for inference:
 
 ## Workload Import
 
-The `cub-agent import` command bridges standalone and connected modes by adopting existing workloads into ConfigHub:
+The `cub-scout import` command bridges standalone and connected modes by adopting existing workloads into ConfigHub:
 
 ```bash
 # Preview what would be imported
-cub-agent import --namespace my-app --dry-run
+cub-scout import --namespace my-app --dry-run
 
 # Import workloads into current ConfigHub space
-cub-agent import --namespace my-app --yes
+cub-scout import --namespace my-app --yes
 
 # Import into a specific space
-cub-agent import --namespace my-app --space production
+cub-scout import --namespace my-app --space production
 ```
 
 ### Import Flow

@@ -20,7 +20,7 @@ service/payment-api unchanged
 service/order-api unchanged
 
 Query 1: GitOps-managed deployments only (owner!=Native)
-  $ ./cub-agent map list --standalone -q "kind=Deployment AND owner!=Native"
+  $ ./cub-scout map list --standalone -q "kind=Deployment AND owner!=Native"
 
 NAMESPACE      KIND        NAME             OWNER
 demo-orders    Deployment  order-processor  confighub
@@ -40,7 +40,7 @@ Total: 12 resources
 By Owner: Native(73) argo(4) confighub(7) flux(4) helm(2)
 
 Query 2: Production namespaces (namespace=prod*)
-  $ ./cub-agent map list --standalone -q "namespace=prod*"
+  $ ./cub-scout map list --standalone -q "namespace=prod*"
 
 NAMESPACE  KIND        NAME              OWNER
 prod-east  ConfigMap   kube-root-ca.crt  Native
@@ -56,7 +56,7 @@ Total: 8 resources
 By Owner: Native(73) argo(4) confighub(7) flux(4) helm(2)
 
 Query 3: Flux OR Argo managed
-  $ ./cub-agent map list --standalone -q "owner=Flux OR owner=ArgoCD"
+  $ ./cub-scout map list --standalone -q "owner=Flux OR owner=ArgoCD"
 
 NAMESPACE  KIND        NAME            OWNER
 prod-east  Deployment  payment-api     flux
@@ -68,7 +68,7 @@ Total: 4 resources
 By Owner: Native(73) argo(4) confighub(7) flux(4) helm(2)
 
 Query 4: Find orphans (Native ownership)
-  $ ./cub-agent map list --standalone -q "owner=Native"
+  $ ./cub-scout map list --standalone -q "owner=Native"
 
 NAMESPACE             KIND           NAME                                                  OWNER
 argocd                StatefulSet    argocd-application-controller                         Native

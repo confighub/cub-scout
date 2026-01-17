@@ -174,8 +174,8 @@ ${BOLD}Options:${NC}
   --list          List all demos with timing
 
 ${BOLD}After applying:${NC}
-  cub-agent map                    View cluster map
-  cub-agent scan                   Scan for CCVEs
+  cub-scout map                    View cluster map
+  cub-scout scan                   Scan for CCVEs
 
 ${BOLD}Want more?${NC}
   Connect to ConfigHub for fleet-wide queries, drift merge, and more.
@@ -229,21 +229,21 @@ demo_quick() {
     kubectl apply -f "$ATK_DIR/fixtures/argo-basic.yaml" 2>/dev/null || true
 
     echo ""
-    bold "Running: cub-agent map status"
-    "$REPO_ROOT/cub-agent" map status 2>/dev/null || true
+    bold "Running: cub-scout map status"
+    "$REPO_ROOT/cub-scout" map status 2>/dev/null || true
     echo ""
 
-    bold "Running: cub-agent map list"
-    "$REPO_ROOT/cub-agent" map list 2>/dev/null | head -20 || true
+    bold "Running: cub-scout map list"
+    "$REPO_ROOT/cub-scout" map list 2>/dev/null | head -20 || true
     echo ""
 
-    bold "Running: cub-agent map issues"
-    "$REPO_ROOT/cub-agent" map issues 2>/dev/null || echo "  No issues found"
+    bold "Running: cub-scout map issues"
+    "$REPO_ROOT/cub-scout" map issues 2>/dev/null || echo "  No issues found"
     echo ""
 
     pass "That's the Map - your cluster at a glance."
     echo ""
-    dim "Next: cub-agent scan to find config issues"
+    dim "Next: cub-scout scan to find config issues"
     dim "      ./demo ccve to see CCVE-2025-0027 (the BIGBANK incident)"
 }
 
@@ -261,7 +261,7 @@ demo_ccve() {
     info "Step 2: Running CCVE scan..."
     sleep 2
     echo ""
-    "$REPO_ROOT/cub-agent" scan
+    "$REPO_ROOT/cub-scout" scan
 
     echo ""
     bold "CCVE-2025-0027 detected in seconds"
@@ -289,27 +289,27 @@ demo_query() {
 
     echo ""
     bold "Query 1: GitOps-managed deployments only (owner!=Native)"
-    echo '  $ ./cub-agent map list --standalone -q "kind=Deployment AND owner!=Native"'
+    echo '  $ ./cub-scout map list --standalone -q "kind=Deployment AND owner!=Native"'
     echo ""
-    "$REPO_ROOT/cub-agent" map list --standalone -q "kind=Deployment AND owner!=Native" 2>/dev/null || true
+    "$REPO_ROOT/cub-scout" map list --standalone -q "kind=Deployment AND owner!=Native" 2>/dev/null || true
 
     echo ""
     bold "Query 2: Production namespaces (namespace=prod*)"
-    echo '  $ ./cub-agent map list --standalone -q "namespace=prod*"'
+    echo '  $ ./cub-scout map list --standalone -q "namespace=prod*"'
     echo ""
-    "$REPO_ROOT/cub-agent" map list --standalone -q "namespace=prod*" 2>/dev/null || true
+    "$REPO_ROOT/cub-scout" map list --standalone -q "namespace=prod*" 2>/dev/null || true
 
     echo ""
     bold "Query 3: Flux OR Argo managed"
-    echo '  $ ./cub-agent map list --standalone -q "owner=Flux OR owner=ArgoCD"'
+    echo '  $ ./cub-scout map list --standalone -q "owner=Flux OR owner=ArgoCD"'
     echo ""
-    "$REPO_ROOT/cub-agent" map list --standalone -q "owner=Flux OR owner=ArgoCD" 2>/dev/null || true
+    "$REPO_ROOT/cub-scout" map list --standalone -q "owner=Flux OR owner=ArgoCD" 2>/dev/null || true
 
     echo ""
     bold "Query 4: Find orphans (Native ownership)"
-    echo '  $ ./cub-agent map list --standalone -q "owner=Native"'
+    echo '  $ ./cub-scout map list --standalone -q "owner=Native"'
     echo ""
-    "$REPO_ROOT/cub-agent" map list --standalone -q "owner=Native" 2>/dev/null || true
+    "$REPO_ROOT/cub-scout" map list --standalone -q "owner=Native" 2>/dev/null || true
 
     echo ""
     pass "Query language enables precise fleet filtering"
@@ -366,7 +366,7 @@ scenario_bigbank_incident() {
 
     bold "With ConfigHub Agent:"
     echo ""
-    "$REPO_ROOT/cub-agent" scan
+    "$REPO_ROOT/cub-scout" scan
 
     echo ""
     pass "30 seconds vs 4 hours"
@@ -387,8 +387,8 @@ scenario_orphan_hunt() {
     sleep 3
 
     echo ""
-    bold "Running: cub-agent map orphans"
-    "$REPO_ROOT/cub-agent" map orphans 2>/dev/null || true
+    bold "Running: cub-scout map orphans"
+    "$REPO_ROOT/cub-scout" map orphans 2>/dev/null || true
     echo ""
 
     bold "Notice the 'Native' resources?"
@@ -420,21 +420,21 @@ demo_connected() {
     echo ""
 
     bold "Step 1: ConfigHub Hierarchy View"
-    echo '  $ cub-agent map confighub'
+    echo '  $ cub-scout map confighub'
     echo ""
-    "$REPO_ROOT/cub-agent" map confighub
+    "$REPO_ROOT/cub-scout" map confighub
     echo ""
 
     bold "Step 2: Admin Mode (Org → Space → Unit)"
-    echo '  $ cub-agent map --mode=admin'
+    echo '  $ cub-scout map --mode=admin'
     echo ""
-    "$REPO_ROOT/cub-agent" map --mode=admin
+    "$REPO_ROOT/cub-scout" map --mode=admin
     echo ""
 
     bold "Step 3: Fleet Mode (Application → Variant → Cluster)"
-    echo '  $ cub-agent map --mode=fleet'
+    echo '  $ cub-scout map --mode=fleet'
     echo ""
-    "$REPO_ROOT/cub-agent" map --mode=fleet
+    "$REPO_ROOT/cub-scout" map --mode=fleet
     echo ""
 
     bold "Step 4: Verify Connected Mode"
@@ -459,7 +459,7 @@ demo_connected() {
 demo_import() {
     bold "Import Demo: Bring Workloads to ConfigHub"
     echo ""
-    dim "Zero-friction import using cub-agent (Go client)"
+    dim "Zero-friction import using cub-scout (Go client)"
     echo ""
 
     # Ensure we have something to import
@@ -469,16 +469,16 @@ demo_import() {
     echo ""
 
     bold "Step 1: See what's running (Go TUI)"
-    echo '  $ cub-agent map list -n break-glass-demo'
+    echo '  $ cub-scout map list -n break-glass-demo'
     echo ""
-    "$REPO_ROOT/cub-agent" map list -n break-glass-demo 2>/dev/null || true
+    "$REPO_ROOT/cub-scout" map list -n break-glass-demo 2>/dev/null || true
     echo ""
     sleep 1
 
     bold "Step 2: Preview import (dry-run)"
-    echo '  $ cub-agent import -n break-glass-demo --dry-run'
+    echo '  $ cub-scout import -n break-glass-demo --dry-run'
     echo ""
-    "$REPO_ROOT/cub-agent" import -n break-glass-demo --dry-run 2>/dev/null || {
+    "$REPO_ROOT/cub-scout" import -n break-glass-demo --dry-run 2>/dev/null || {
         echo "  ${DIM}(Dry-run preview - shows what would be created)${NC}"
         echo ""
         echo "  Would create in ConfigHub:"
@@ -491,17 +491,17 @@ demo_import() {
     bold "Step 3: Import options"
     echo ""
     echo "  ${BOLD}Option A: Interactive wizard (recommended)${NC}"
-    echo "    cub-agent import --wizard"
+    echo "    cub-scout import --wizard"
     echo ""
     echo "  ${BOLD}Option B: Import namespace${NC}"
-    echo "    cub-agent import -n break-glass-demo"
+    echo "    cub-scout import -n break-glass-demo"
     echo ""
     echo "  ${BOLD}Option C: Import with auto-confirm${NC}"
-    echo "    cub-agent import -n break-glass-demo -y"
+    echo "    cub-scout import -n break-glass-demo -y"
     echo ""
     sleep 1
 
-    bold "What cub-agent import does:"
+    bold "What cub-scout import does:"
     echo ""
     echo "  1. Discovers workloads (Deployments, StatefulSets, DaemonSets)"
     echo "  2. Detects ownership (Flux, ArgoCD, Helm, Native)"
@@ -515,7 +515,7 @@ demo_import() {
 
     pass "Import demo complete"
     echo ""
-    echo "Try it: cub-agent import --wizard"
+    echo "Try it: cub-scout import --wizard"
     echo "See:    docs/map/howto/import-to-confighub.md"
     echo ""
     dim "Cleanup: kubectl delete ns break-glass-demo"
@@ -529,15 +529,15 @@ scenario_monday_morning() {
     echo ""
 
     bold "Step 1: Quick status"
-    echo '  $ cub-agent map status'
+    echo '  $ cub-scout map status'
     echo ""
-    "$REPO_ROOT/cub-agent" map status 2>/dev/null || true
+    "$REPO_ROOT/cub-scout" map status 2>/dev/null || true
 
     echo ""
     bold "Step 2: Any CCVEs?"
-    echo '  $ cub-agent scan'
+    echo '  $ cub-scout scan'
     echo ""
-    "$REPO_ROOT/cub-agent" scan
+    "$REPO_ROOT/cub-scout" scan
 
     echo ""
     bold "Step 3: Anything drifted?"
@@ -595,7 +595,7 @@ scenario_clobber() {
 
     echo "${BOLD}Related:${NC}"
     echo "  CCVE-2025-0056: Kustomize patch target not found"
-    echo "  cub-agent scan to detect vulnerable overlays"
+    echo "  cub-scout scan to detect vulnerable overlays"
     echo ""
 
     pass "Clobber protection demo complete"
@@ -627,17 +627,17 @@ scenario_break_glass() {
 
     echo ""
     bold "Step 1: See what's running"
-    echo '  $ cub-agent map list -n break-glass-demo'
+    echo '  $ cub-scout map list -n break-glass-demo'
     echo ""
 
     # Run map list to show the resources
-    "$REPO_ROOT/cub-agent" map list -n break-glass-demo 2>/dev/null || \
+    "$REPO_ROOT/cub-scout" map list -n break-glass-demo 2>/dev/null || \
         kubectl get deployments -n break-glass-demo -o wide
     echo ""
     sleep 2
 
     bold "Step 2: Detect the orphan"
-    echo '  $ cub-agent map orphans'
+    echo '  $ cub-scout map orphans'
     echo ""
 
     # Show orphan detection
@@ -673,7 +673,7 @@ scenario_break_glass() {
     bold "With ConfigHub Connected:"
     echo ""
     echo "  ${CYAN}# Accept the break-glass change${NC}"
-    echo "  cub-agent import deploy/hotfix-cache -n break-glass-demo"
+    echo "  cub-scout import deploy/hotfix-cache -n break-glass-demo"
     echo ""
     echo "  ${CYAN}# This creates:${NC}"
     echo "  • ConfigHub Unit 'hotfix-cache' (Rev 1)"
@@ -727,8 +727,8 @@ apply_demo() {
     pass "Demo applied"
     echo ""
     echo "Next steps:"
-    echo "  cub-agent map              # View cluster map"
-    echo "  cub-agent scan             # Scan for CCVEs"
+    echo "  cub-scout map              # View cluster map"
+    echo "  cub-scout scan             # Scan for CCVEs"
     echo "  ./demo $demo_name --cleanup # Remove when done"
     echo ""
     dim "Want more? Connect to ConfigHub for fleet-wide queries and drift merge"

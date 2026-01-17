@@ -17,7 +17,7 @@ Configuration mistakes hide in your cluster:
 ### CLI: Run scan
 
 ```bash
-cub-agent scan
+cub-scout scan
 ```
 
 Output:
@@ -115,25 +115,25 @@ spec:
 ### Scan entire cluster
 
 ```bash
-cub-agent scan
+cub-scout scan
 ```
 
 ### Scan specific namespace
 
 ```bash
-cub-agent scan -n production
+cub-scout scan -n production
 ```
 
 ### Scan specific file (static analysis)
 
 ```bash
-cub-agent scan --file ./manifests/deployment.yaml
+cub-scout scan --file ./manifests/deployment.yaml
 ```
 
 ### JSON output for CI/CD
 
 ```bash
-cub-agent scan --json
+cub-scout scan --json
 ```
 
 ```json
@@ -168,7 +168,7 @@ The scanner includes:
 ### Fail on HIGH issues
 
 ```bash
-cub-agent scan --exit-code
+cub-scout scan --exit-code
 # Returns non-zero if HIGH severity issues found
 ```
 
@@ -177,7 +177,7 @@ cub-agent scan --exit-code
 ```yaml
 - name: Scan for CCVEs
   run: |
-    ./cub-agent scan --json > ccve-results.json
+    ./cub-scout scan --json > ccve-results.json
     if jq -e '.summary.high > 0' ccve-results.json; then
       echo "HIGH severity CCVEs found!"
       exit 1
@@ -188,13 +188,13 @@ cub-agent scan --exit-code
 
 ```bash
 # Scan your cluster
-cub-agent scan
+cub-scout scan
 
 # Scan a specific namespace
-cub-agent scan -n production
+cub-scout scan -n production
 
 # JSON output for CI/CD integration
-cub-agent scan --json
+cub-scout scan --json
 ```
 
 ## Next Steps

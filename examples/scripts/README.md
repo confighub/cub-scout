@@ -38,9 +38,9 @@ Alert on drift or CCVEs:
 #!/bin/bash
 # slack-alerting.sh
 
-./cub-agent snapshot -o - | jq -e '.entries[] | select(.drift)' > /dev/null
+./cub-scout snapshot -o - | jq -e '.entries[] | select(.drift)' > /dev/null
 if [ $? -eq 0 ]; then
-  DRIFTED=$(./cub-agent snapshot -o - | jq '[.entries[] | select(.drift)] | length')
+  DRIFTED=$(./cub-scout snapshot -o - | jq '[.entries[] | select(.drift)] | length')
   curl -X POST "$SLACK_WEBHOOK" \
     -H 'Content-type: application/json' \
     -d "{\"text\": \"Warning: $DRIFTED resources drifted in cluster\"}"
@@ -84,7 +84,7 @@ Export metrics from agent:
 # prometheus-metrics.sh
 
 # Start agent with metrics endpoint
-./cub-agent serve --port 9876 --metrics-port 9877
+./cub-scout serve --port 9876 --metrics-port 9877
 
 # Metrics exposed at localhost:9877/metrics:
 # gsf_entries_total{cluster="prod",kind="Deployment",owner="flux"} 45
@@ -100,7 +100,7 @@ Find all image versions across cluster:
 #!/bin/bash
 # audit-images.sh
 
-./cub-agent snapshot -o - | jq -r '
+./cub-scout snapshot -o - | jq -r '
   .entries[]
   | select(.kind == "Deployment")
   | "\(.namespace)/\(.name): \(.state.image // "unknown")"
@@ -123,7 +123,7 @@ Resources with no GitOps owner:
 #!/bin/bash
 # find-orphans.sh
 
-./cub-agent snapshot -o - | jq -r '
+./cub-scout snapshot -o - | jq -r '
   .entries[]
   | select(.owner == null or .owner.type == "unknown")
   | "\(.namespace)/\(.kind)/\(.name)"
@@ -138,7 +138,7 @@ Generate drift report:
 #!/bin/bash
 # drift-report.sh
 
-./cub-agent snapshot -o - | jq -r '
+./cub-scout snapshot -o - | jq -r '
   .entries[]
   | select(.drift)
   | "DRIFT: \(.namespace)/\(.kind)/\(.name) - \(.drift.summary)"

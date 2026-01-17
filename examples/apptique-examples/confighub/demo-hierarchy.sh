@@ -121,8 +121,8 @@ if command -v cub &> /dev/null && cub auth status &> /dev/null; then
     # Show actual hierarchy
     "$ROOT_DIR/test/atk/map" confighub 2>/dev/null || {
         echo -e "${YELLOW}⚠${NC} No units imported yet. Try:"
-        echo "   ./cub-agent import -n apptique-dev"
-        echo "   ./cub-agent import -n apptique-prod"
+        echo "   ./cub-scout import -n apptique-dev"
+        echo "   ./cub-scout import -n apptique-prod"
     }
 else
     echo -e "${YELLOW}⚠${NC} ConfigHub not connected - showing simulated hierarchy"
@@ -163,10 +163,10 @@ ${DIM}# Find unhealthy units${NC}
 cub unit list --where "healthy=false"
 
 ${DIM}# Find units by owner (Flux, ArgoCD, Helm)${NC}
-./cub-agent map list -q "owner=Flux"
+./cub-scout map list -q "owner=Flux"
 
 ${DIM}# Find units in specific namespace pattern${NC}
-./cub-agent map list -q "namespace=apptique-*"
+./cub-scout map list -q "namespace=apptique-*"
 EOF
 
 echo ""
@@ -183,7 +183,7 @@ cat << EOF
    ./test/atk/map workloads
 
 3. Import to ConfigHub:
-   ./cub-agent import -n apptique-dev
+   ./cub-scout import -n apptique-dev
 
 4. View hierarchy:
    ./test/atk/map confighub

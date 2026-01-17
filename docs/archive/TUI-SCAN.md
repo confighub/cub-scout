@@ -10,22 +10,22 @@ Scan your cluster for stuck reconciliation states and Kyverno policy violations.
 
 ```bash
 # Full scan (state + Kyverno)
-cub-agent scan
+cub-scout scan
 
 # State scan only (stuck reconciliations)
-cub-agent scan --state
+cub-scout scan --state
 
 # Kyverno scan only (policy violations)
-cub-agent scan --kyverno
+cub-scout scan --kyverno
 
 # Scan specific namespace
-cub-agent scan -n production
+cub-scout scan -n production
 
 # JSON output for scripting
-cub-agent scan --json
+cub-scout scan --json
 
 # List all KPOL policies in database
-cub-agent scan --list
+cub-scout scan --list
 ```
 
 ## What Scan Shows
@@ -129,7 +129,7 @@ WARNING (3)
 ════════════════════════════════════════════════════════════════════
 Summary: 2 critical, 3 warning, 0 info
 
-🔗 Track violations in ConfigHub: cub-agent scan --confighub
+🔗 Track violations in ConfigHub: cub-scout scan --confighub
 ```
 
 ### No Violations (Healthy)
@@ -152,7 +152,7 @@ Scanned at: 2026-01-08 14:23:45
 ## CLI Options
 
 ```
-cub-agent scan [flags]
+cub-scout scan [flags]
 
 Flags:
   -n, --namespace string   Namespace to scan (default: all namespaces)
@@ -201,7 +201,7 @@ We maintain a database of 460+ Kyverno policy patterns (KPOL-*) in `cve/ccve/kyv
 ### List All Policies
 
 ```bash
-cub-agent scan --list
+cub-scout scan --list
 ```
 
 ```
@@ -232,7 +232,7 @@ KPOL-0043    critical Disallow Host Namespaces                      Pod Security
 ## JSON Output
 
 ```bash
-cub-agent scan --json
+cub-scout scan --json
 ```
 
 ```json
@@ -266,7 +266,7 @@ cub-agent scan --json
 ### 1. "Are we following security best practices?"
 
 ```bash
-cub-agent scan | grep -i critical
+cub-scout scan | grep -i critical
 ```
 
 Quickly see if any pods are running privileged or violating security policies.
@@ -274,7 +274,7 @@ Quickly see if any pods are running privileged or violating security policies.
 ### 2. "What's missing from our deployments?"
 
 ```bash
-cub-agent scan --verbose
+cub-scout scan --verbose
 ```
 
 Find deployments missing resource limits, probes, or required labels.
@@ -283,13 +283,13 @@ Find deployments missing resource limits, probes, or required labels.
 
 ```bash
 # Fail pipeline if critical violations exist
-cub-agent scan --json | jq -e '.summary.critical == 0'
+cub-scout scan --json | jq -e '.summary.critical == 0'
 ```
 
 ### 4. "Namespace Audit"
 
 ```bash
-cub-agent scan -n production --json > prod-audit.json
+cub-scout scan -n production --json > prod-audit.json
 ```
 
 Generate audit reports for specific namespaces.

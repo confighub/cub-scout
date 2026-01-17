@@ -15,7 +15,7 @@ requires:
 commands:
   # Trace a Flux-managed resource
   - id: trace_flux
-    command: "./cub-agent trace deployment/source-controller --namespace flux-system"
+    command: "./cub-scout trace deployment/source-controller --namespace flux-system"
     description: "Trace a Flux-managed deployment"
 
     expected:
@@ -41,7 +41,7 @@ commands:
     instructions: |
       Trace the ownership chain for a Flux-managed resource:
       ```bash
-      ./cub-agent trace deployment/source-controller --namespace flux-system
+      ./cub-scout trace deployment/source-controller --namespace flux-system
       ```
 
       You'll see the full chain:
@@ -57,7 +57,7 @@ commands:
 
   # Trace with JSON output
   - id: trace_json
-    command: "./cub-agent trace deployment/source-controller --namespace flux-system --json"
+    command: "./cub-scout trace deployment/source-controller --namespace flux-system --json"
     description: "Trace with JSON output"
 
     expected:
@@ -73,7 +73,7 @@ commands:
     instructions: |
       Get trace output as JSON:
       ```bash
-      ./cub-agent trace deployment/nginx -n demo --json
+      ./cub-scout trace deployment/nginx -n demo --json
       ```
 
 # Sample output

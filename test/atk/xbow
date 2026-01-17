@@ -136,14 +136,14 @@ run_challenge() {
     local detected=false
     local ccves_found=()
 
-    # Check if cub-agent exists (prefer local build, then PATH)
-    local cub_agent_bin="$PROJECT_ROOT/cub-agent"
+    # Check if cub-scout exists (prefer local build, then PATH)
+    local cub_agent_bin="$PROJECT_ROOT/cub-scout"
     if [[ ! -x "$cub_agent_bin" ]]; then
-        cub_agent_bin=$(command -v cub-agent 2>/dev/null || echo "")
+        cub_agent_bin=$(command -v cub-scout 2>/dev/null || echo "")
     fi
 
     if [[ -n "$cub_agent_bin" && -x "$cub_agent_bin" ]]; then
-        # Use cub-agent scan --file --json
+        # Use cub-scout scan --file --json
         local scan_output=$("$cub_agent_bin" scan --file "$challenge_file" --json 2>/dev/null || echo "{}")
 
         # Parse results from static.findings
@@ -169,7 +169,7 @@ run_challenge() {
 EOF
     else
         # Dry run - simulate detection based on expected
-        echo -e "  ${YELLOW}(Dry run - cub-agent not available)${NC}"
+        echo -e "  ${YELLOW}(Dry run - cub-scout not available)${NC}"
         if [[ -f "$expected_file" ]]; then
             local should_detect=$(jq -r '.should_detect' "$expected_file")
             if [[ "$should_detect" == "true" ]]; then

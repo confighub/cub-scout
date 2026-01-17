@@ -182,7 +182,7 @@ kubectl get pods -n apptique-prod
 
 ```bash
 # Trace ownership chain for Flux-managed deployment
-cub-agent trace deployment/frontend -n apptique-dev
+cub-scout trace deployment/frontend -n apptique-dev
 
 # Expected output (Flux):
 # TRACE: deployment/frontend
@@ -207,7 +207,7 @@ cub-agent trace deployment/frontend -n apptique-dev
 
 ```bash
 # Trace ownership chain for Argo-managed deployment
-cub-agent trace deployment/frontend -n apptique-prod
+cub-scout trace deployment/frontend -n apptique-prod
 
 # Expected output (Argo):
 # TRACE: deployment/frontend
@@ -228,16 +228,16 @@ cub-agent trace deployment/frontend -n apptique-prod
 
 ```bash
 # Find all Flux-managed workloads
-cub-agent map list -q "owner=Flux"
+cub-scout map list -q "owner=Flux"
 
 # Find all Argo-managed workloads
-cub-agent map list -q "owner=ArgoCD"
+cub-scout map list -q "owner=ArgoCD"
 
 # Find workloads in dev namespaces
-cub-agent map list -q "namespace=*-dev"
+cub-scout map list -q "namespace=*-dev"
 
 # Find apptique workloads specifically
-cub-agent map list -q "labels[app]=apptique"
+cub-scout map list -q "labels[app]=apptique"
 ```
 
 ---
@@ -360,7 +360,7 @@ kubectl apply -f examples/apptique-examples/scenarios/drift-detection/base-deplo
 ./examples/apptique-examples/scenarios/drift-detection/create-drift.sh
 
 # 3. Detect the drift
-./cub-agent trace deployment/frontend -n apptique-drift
+./cub-scout trace deployment/frontend -n apptique-drift
 
 # 4. Cleanup
 kubectl delete -f examples/apptique-examples/scenarios/drift-detection/base-deployment.yaml
@@ -442,7 +442,7 @@ See how your repo skeleton maps to ConfigHub's **Hub → App Space → Unit** mo
 kubectl apply -k flux-monorepo/apps/apptique/overlays/dev/
 
 # 2. Import to ConfigHub
-./cub-agent import -n apptique-dev
+./cub-scout import -n apptique-dev
 
 # 3. View the hierarchy
 ./test/atk/map confighub

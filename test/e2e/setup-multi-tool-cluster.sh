@@ -357,7 +357,7 @@ print_status() {
 
     success "Cluster ready for TUI E2E tests"
     echo ""
-    echo "Run: cub-agent map"
+    echo "Run: cub-scout map"
 }
 
 # Main

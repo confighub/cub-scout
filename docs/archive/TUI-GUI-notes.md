@@ -1,6 +1,6 @@
 # TUI vs GUI: What Each Can Show
 
-Notes on capabilities of the TUI (cub-agent CLI) vs GUI (confighub.com) for LIVE cluster data and GIT source data.
+Notes on capabilities of the TUI (cub-scout CLI) vs GUI (confighub.com) for LIVE cluster data and GIT source data.
 
 ---
 
@@ -15,7 +15,7 @@ Notes on capabilities of the TUI (cub-agent CLI) vs GUI (confighub.com) for LIVE
 | Kustomization `spec.path` | What SHOULD exist (drift) |
 | Applied revision/SHA | History, PRs, pending commits |
 
-The `cub-agent import` command reads `Kustomization.spec.path` directly from the cluster to infer variant (e.g., `./staging` → `variant=staging`).
+The `cub-scout import` command reads `Kustomization.spec.path` directly from the cluster to infer variant (e.g., `./staging` → `variant=staging`).
 
 ---
 
@@ -38,7 +38,7 @@ The `cub-agent import` command reads `Kustomization.spec.path` directly from the
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  TUI (cub-agent)         │  GUI (confighub.com)                 │
+│  TUI (cub-scout)         │  GUI (confighub.com)                 │
 ├──────────────────────────┼──────────────────────────────────────┤
 │  LIVE only               │  LIVE + GIT + Other sources          │
 │  1 Cluster               │  N Clusters (Fleet)                  │
@@ -68,7 +68,7 @@ HUB (owns Worker lifecycle)
 - **App Spaces** select which Worker to use for deploying Units
 - **Workers** connect Hub to Targets and enable `refresh` / `import` operations
 
-See: [CLI-REFERENCE.md — Connected Mode](CLI-REFERENCE.md#connected-mode-cub-agent-vs-cub-cli)
+See: [CLI-REFERENCE.md — Connected Mode](CLI-REFERENCE.md#connected-mode-cub-scout-vs-cub-cli)
 
 ---
 
@@ -85,11 +85,11 @@ See: [CLI-REFERENCE.md — Connected Mode](CLI-REFERENCE.md#connected-mode-cub-a
 
 **Key insight:** We don't need to parse Git — the deployer objects already tell us the path.
 
-The `cub-agent import` command reads these paths directly from the cluster and uses them to infer variant (e.g., `./staging` → `variant=staging`).
+The `cub-scout import` command reads these paths directly from the cluster and uses them to infer variant (e.g., `./staging` → `variant=staging`).
 
 ### TUI vs GUI Capabilities
 
-| Capability | TUI (cub-agent) | GUI (confighub.com) |
+| Capability | TUI (cub-scout) | GUI (confighub.com) |
 |------------|-----------------|---------------------|
 | **Single cluster** | ✅ Direct kubectl access | ✅ Via Worker |
 | **Multiple clusters** | ⚠️ Switch contexts manually | ✅ All Targets aggregated |
@@ -129,7 +129,7 @@ apps/
 
 ### Key Insight: Path Is Available From LIVE
 
-**You don't need to parse Git to infer variant** — the Kustomization object stores `spec.path` in the cluster. The `cub-agent import` command reads this directly:
+**You don't need to parse Git to infer variant** — the Kustomization object stores `spec.path` in the cluster. The `cub-scout import` command reads this directly:
 
 1. Workload has label `kustomize.toolkit.fluxcd.io/name: my-ks`
 2. Fetch `Kustomization/my-ks` from cluster
@@ -157,7 +157,7 @@ GitOps deployer paths take priority because they're the most reliable signal —
 
 ## GIT Data Capabilities
 
-| Capability | TUI (cub-agent) | GUI (confighub.com) |
+| Capability | TUI (cub-scout) | GUI (confighub.com) |
 |------------|-----------------|---------------------|
 | **Read repo structure** | ⚠️ Needs --from-git impl | ✅ GitHub/GitLab integration |
 | **See all overlays** | ⚠️ Clone + parse | ✅ API access to repo |
@@ -197,7 +197,7 @@ GitOps deployer paths take priority because they're the most reliable signal —
 ### 1. From LIVE (Single Cluster)
 
 ```bash
-cub-agent import --from-live --namespace my-app
+cub-scout import --from-live --namespace my-app
 ```
 
 - ✅ Works standalone
@@ -208,7 +208,7 @@ cub-agent import --from-live --namespace my-app
 ### 2. From LIVE (Multiple Clusters)
 
 ```bash
-cub-agent import --from-live \
+cub-scout import --from-live \
   --context k8s-staging \
   --context k8s-prod
 ```
@@ -221,7 +221,7 @@ cub-agent import --from-live \
 ### 3. From Fleet (ConfigHub Connected)
 
 ```bash
-cub-agent import --from-fleet
+cub-scout import --from-fleet
 ```
 
 - ✅ Queries all Targets via ConfigHub API
@@ -232,7 +232,7 @@ cub-agent import --from-fleet
 ### 4. From Git
 
 ```bash
-cub-agent import --from-git https://github.com/org/flux-repo
+cub-scout import --from-git https://github.com/org/flux-repo
 ```
 
 - ✅ Sees complete structure including bases
@@ -263,7 +263,7 @@ Git also contains:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                           TUI (cub-agent)                            │
+│                           TUI (cub-scout)                            │
 ├─────────────────────────────────────────────────────────────────────┤
 │  LIVE: ✅ Full access, one cluster at a time                        │
 │  GIT:  ⚠️ Could implement, but complex parsing                      │

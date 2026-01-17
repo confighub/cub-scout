@@ -22,7 +22,7 @@ Technology Compatibility Kit - validates environment is ready for testing.
 - Cluster accessible
 - Flux CRDs installed (optional)
 - Argo CD CRDs installed (optional)
-- cub-agent binary exists or can build
+- cub-scout binary exists or can build
 
 **Connected mode (--connected):**
 - cub CLI installed

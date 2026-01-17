@@ -545,7 +545,7 @@ render_next_steps() {
     echo "  ${UI_FG_DIM}Next steps:${UI_NC}"
 
     if [[ $UNIT_COUNT -eq 0 ]]; then
-        echo "    cub-agent import --namespace <ns>    # Import workloads"
+        echo "    cub-scout import --namespace <ns>    # Import workloads"
     fi
 
     if [[ $WORKER_COUNT -eq 0 ]] && [[ $UNIT_COUNT -gt 0 ]]; then

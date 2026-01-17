@@ -29,11 +29,11 @@
 
 | File | Tests | What It Proves |
 |------|-------|----------------|
-| `cmd/cub-agent/localcluster_test.go` | 36 | Local cluster TUI keybindings, views, snapshot |
-| `cmd/cub-agent/hierarchy_test.go` | 27 | Hub TUI navigation, search, snapshot |
-| `cmd/cub-agent/import_wizard_test.go` | 8 | Import wizard flow |
-| `cmd/cub-agent/suggest_test.go` | 4 | Suggestion logic |
-| `cmd/cub-agent/logger_test.go` | 2 | Logger functionality |
+| `cmd/cub-scout/localcluster_test.go` | 36 | Local cluster TUI keybindings, views, snapshot |
+| `cmd/cub-scout/hierarchy_test.go` | 27 | Hub TUI navigation, search, snapshot |
+| `cmd/cub-scout/import_wizard_test.go` | 8 | Import wizard flow |
+| `cmd/cub-scout/suggest_test.go` | 4 | Suggestion logic |
+| `cmd/cub-scout/logger_test.go` | 2 | Logger functionality |
 
 **Total: ~77 TUI tests**
 
@@ -44,15 +44,15 @@
 | `test/integration/connected_test.go` | 12 | Full CLI commands work against real cluster |
 
 **Tests cover:**
-- `cub-agent map status` - Status output format
-- `cub-agent map list` - Resource listing
-- `cub-agent map list --json` - JSON output valid
-- `cub-agent map deployers` - GitOps deployer listing
-- `cub-agent map orphans` - Orphan detection
-- `cub-agent map issues` - Issue listing
-- `cub-agent scan` - CCVE scanning
-- `cub-agent scan --json` - Scan JSON output
-- `cub-agent trace` - Ownership tracing
+- `cub-scout map status` - Status output format
+- `cub-scout map list` - Resource listing
+- `cub-scout map list --json` - JSON output valid
+- `cub-scout map deployers` - GitOps deployer listing
+- `cub-scout map orphans` - Orphan detection
+- `cub-scout map issues` - Issue listing
+- `cub-scout scan` - CCVE scanning
+- `cub-scout scan --json` - Scan JSON output
+- `cub-scout trace` - Ownership tracing
 - Query language filters
 - Fleet view
 - ConfigHub prerequisites (worker/target)
@@ -157,7 +157,7 @@
 # COMPREHENSIVE TEST (proves all scenarios)
 
 # 1. Build
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 
 # 2. Unit + TUI tests (no cluster)
 go test ./...

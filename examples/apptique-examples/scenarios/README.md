@@ -92,7 +92,7 @@ kubectl patch deployment frontend -n apptique-prod \
 **Detect the drift:**
 ```bash
 # ConfigHub Agent detects drift by comparing to Git source
-./cub-agent trace deployment/frontend -n apptique-prod
+./cub-scout trace deployment/frontend -n apptique-prod
 
 # Shows:
 # DRIFT DETECTED:
@@ -146,7 +146,7 @@ kubectl apply -f security-patch/
 **Bulk remediation:**
 ```bash
 # Show what needs fixing
-./cub-agent scan --json | jq '.findings[] | select(.severity == "critical")'
+./cub-scout scan --json | jq '.findings[] | select(.severity == "critical")'
 
 # The fix: update manifests in Git, then sync
 # (This is where the RM pattern shines - one PR fixes all affected clusters)

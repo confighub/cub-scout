@@ -8,13 +8,13 @@ The ConfigHub Agent TUI includes **saved queries** — shortcuts for common filt
 
 ```bash
 # List all saved queries
-cub-agent map queries
+cub-scout map queries
 
 # Run a saved query by name
-cub-agent map list -q unmanaged
+cub-scout map list -q unmanaged
 
 # Combine queries with filters
-cub-agent map list -q "unmanaged AND namespace=prod*"
+cub-scout map list -q "unmanaged AND namespace=prod*"
 ```
 
 ## TUI Output
@@ -61,23 +61,23 @@ Run `./test/atk/map queries` or `./examples/demos/tui-queries-demo.sh` to see th
 ┌─ USAGE ──────────────────────────────────────────────────────────────┐
 │                                                                      │
 │  Run a saved query:                                                  │
-│    cub-agent map list -q unmanaged                                   │
-│    cub-agent map list -q "unmanaged AND namespace=prod*"             │
+│    cub-scout map list -q unmanaged                                   │
+│    cub-scout map list -q "unmanaged AND namespace=prod*"             │
 │                                                                      │
 │  Save a new query:                                                   │
-│    cub-agent map queries save my-team "labels[team]=payments"        │
+│    cub-scout map queries save my-team "labels[team]=payments"        │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
 
 ────────────────────────────────────────────────────────────────────────
 🔗 Want team-shared queries, alerts, and history?
-   See: cub-agent map queries connect
+   See: cub-scout map queries connect
 ────────────────────────────────────────────────────────────────────────
 ```
 
 ## Sample Query Output
 
-Running `cub-agent map list -q unmanaged` shows resources with no GitOps owner:
+Running `cub-scout map list -q unmanaged` shows resources with no GitOps owner:
 
 ```
   NAMESPACE              KIND           NAME                                     OWNER
@@ -112,13 +112,13 @@ Save your own queries to `~/.confighub/queries.yaml`:
 
 ```bash
 # Save a new query
-cub-agent map queries save my-team "labels[team]=payments" "Payment team resources"
+cub-scout map queries save my-team "labels[team]=payments" "Payment team resources"
 
 # Use it
-cub-agent map list -q my-team
+cub-scout map list -q my-team
 
 # Delete it
-cub-agent map queries delete my-team
+cub-scout map queries delete my-team
 ```
 
 The queries file format:
@@ -140,24 +140,24 @@ Saved query names are resolved before the query runs, so you can combine them:
 
 ```bash
 # Find unmanaged resources in production
-cub-agent map list -q "unmanaged AND namespace=prod*"
+cub-scout map list -q "unmanaged AND namespace=prod*"
 
 # Find GitOps resources that aren't Flux
-cub-agent map list -q "gitops AND owner!=Flux"
+cub-scout map list -q "gitops AND owner!=Flux"
 
 # Find deployments managed by Argo
-cub-agent map list -q "deployments AND argo"
+cub-scout map list -q "deployments AND argo"
 ```
 
 ## Commands Reference
 
 | Command | Description |
 |---------|-------------|
-| `cub-agent map queries` | List all saved queries |
-| `cub-agent map queries --json` | List queries as JSON |
-| `cub-agent map queries save <name> <query> [desc]` | Save a user query |
-| `cub-agent map queries delete <name>` | Delete a user query |
-| `cub-agent map queries connect` | Get started with ConfigHub |
+| `cub-scout map queries` | List all saved queries |
+| `cub-scout map queries --json` | List queries as JSON |
+| `cub-scout map queries save <name> <query> [desc]` | Save a user query |
+| `cub-scout map queries delete <name>` | Delete a user query |
+| `cub-scout map queries connect` | Get started with ConfigHub |
 | `./test/atk/map queries` | TUI view with live match counts |
 
 ## ConfigHub Integration
@@ -165,7 +165,7 @@ cub-agent map list -q "deployments AND argo"
 Want team-shared queries, alerts when results change, and history over time?
 
 ```bash
-cub-agent map queries connect
+cub-scout map queries connect
 ```
 
 This shows how to connect to ConfigHub:
@@ -183,7 +183,7 @@ ConfigHub gives you:
 GET STARTED
 ───────────
   1. Sign up or log in:  https://confighub.com
-  2. Import workloads:   cub-agent import --namespace <ns>
+  2. Import workloads:   cub-scout import --namespace <ns>
 
   Full guide: docs/IMPORTING-WORKLOADS.md
 ```
@@ -194,9 +194,9 @@ The ConfigHub adoption journey (see [04-MAP-USER-JOURNEY-TO-FULL-CONFIGHUB.md](p
 
 | Stage | Command | What You Get |
 |-------|---------|--------------|
-| **1. Standalone** | `cub-agent map` | See what's running, who owns it |
-| **2. Discovery** | `cub-agent import --dry-run` | Proposed structure |
-| **3. Connected** | `cub auth login` + `cub-agent import` | Units in ConfigHub |
+| **1. Standalone** | `cub-scout map` | See what's running, who owns it |
+| **2. Discovery** | `cub-scout import --dry-run` | Proposed structure |
+| **3. Connected** | `cub auth login` + `cub-scout import` | Units in ConfigHub |
 | **4. Worker** | `cub worker run` | Sync to targets |
 | **5. Full** | ConfigHub UI | Actions, queries, changesets |
 
@@ -234,7 +234,7 @@ YOUR STATUS
 
 NEXT STEP
 ─────────
-  Run: cub-agent import --namespace myapp
+  Run: cub-scout import --namespace myapp
 
   Import your workloads as ConfigHub Units to track them.
 ```
@@ -285,7 +285,7 @@ YOUR STATUS
 
   Open ConfigHub: https://confighub.com
 
-  Or view fleet status: cub-agent map fleet
+  Or view fleet status: cub-scout map fleet
 ```
 
 See [IMPORTING-WORKLOADS.md](IMPORTING-WORKLOADS.md) for the full import guide.

@@ -31,7 +31,7 @@ cub worker list
 ### CLI: Run import
 
 ```bash
-cub-agent import
+cub-scout import
 ```
 
 This launches an interactive wizard.
@@ -134,7 +134,7 @@ Testing ConfigHub pipeline...
 Best for: Starting fresh, importing kubectl-applied resources
 
 ```bash
-cub-agent import
+cub-scout import
 # Select: Kubernetes namespace
 # Select: your-namespace
 ```
@@ -144,7 +144,7 @@ cub-agent import
 Best for: Migrating from ArgoCD to ConfigHub
 
 ```bash
-cub-agent import
+cub-scout import
 # Select: ArgoCD Application
 # Select: your-app
 # Choose: Delete ArgoCD Application (ConfigHub will manage)
@@ -155,7 +155,7 @@ cub-agent import
 Best for: Migrating from Flux to ConfigHub
 
 ```bash
-cub-agent import
+cub-scout import
 # Select: Flux Kustomization
 # Select: your-kustomization
 ```
@@ -175,14 +175,14 @@ cub unit get YOUR-UNIT
 ### Verify in TUI
 
 ```bash
-cub-agent map --hub
+cub-scout map --hub
 # Navigate to your space/unit
 ```
 
 ### Check Ownership Changed
 
 ```bash
-cub-agent map list -q "namespace=YOUR-NS"
+cub-scout map list -q "namespace=YOUR-NS"
 # Should show owner=ConfigHub now
 ```
 
@@ -235,7 +235,7 @@ Try the import demo:
 # DEPRECATED: ./test/atk/demo quick
 
 # Then run import
-cub-agent import
+cub-scout import
 ```
 
 ## Next Steps

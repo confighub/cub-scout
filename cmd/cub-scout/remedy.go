@@ -45,22 +45,22 @@ The remedy command can:
 
 Examples:
   # Show what would be fixed (always run first!)
-  cub-agent remedy CCVE-2025-0687 --dry-run -n production
+  cub-scout remedy CCVE-2025-0687 --dry-run -n production
 
   # Fix a specific CCVE issue
-  cub-agent remedy CCVE-2025-0687 -n production
+  cub-scout remedy CCVE-2025-0687 -n production
 
   # Fix all auto-fixable issues in namespace (dry-run)
-  cub-agent remedy --all --dry-run -n production
+  cub-scout remedy --all --dry-run -n production
 
   # Force fix without confirmation
-  cub-agent remedy CCVE-2025-0687 -n production --force
+  cub-scout remedy CCVE-2025-0687 -n production --force
 
   # Scan file and fix issues
-  cub-agent remedy --file manifest.yaml --dry-run
+  cub-scout remedy --file manifest.yaml --dry-run
 
   # List auto-fixable CCVEs
-  cub-agent remedy --list
+  cub-scout remedy --list
 
 Supported remedy types (auto-fixable):
   - config_fix:      786 CCVEs - kubectl apply/patch
@@ -412,7 +412,7 @@ func runRemedyFile(ctx context.Context, reg *remedy.Registry, file string, timeo
 
 	fmt.Printf("  Total findings:  %d\n", len(result.Findings))
 	fmt.Printf("  Auto-fixable:    %d\n", autoFixable)
-	fmt.Printf("\n%sRun 'cub-agent remedy CCVE-ID --file %s' to fix specific issues%s\n\n",
+	fmt.Printf("\n%sRun 'cub-scout remedy CCVE-ID --file %s' to fix specific issues%s\n\n",
 		colorDim, file, colorReset)
 
 	return nil
@@ -468,7 +468,7 @@ func listAutoFixableCCVEs() error {
 
 	total := counts["config_fix"] + counts["trigger_action"] + counts["delete_resource"] + counts["restart"]
 	fmt.Printf("%-18s %6d\n", "TOTAL", total)
-	fmt.Printf("\n%sRun 'cub-agent remedy --all --dry-run -n <namespace>' to find fixable issues%s\n\n",
+	fmt.Printf("\n%sRun 'cub-scout remedy --all --dry-run -n <namespace>' to find fixable issues%s\n\n",
 		colorDim, colorReset)
 
 	return nil

@@ -111,12 +111,12 @@ Org: acme-corp
 
 ```bash
 # TUI: Detect from running cluster
-./cub-agent import -n payment-prod
+./cub-scout import -n payment-prod
 # Detects: Application/payment-api, Deployment/payment-api
 # Infers: variant=prod (from overlays/prod path)
 
 # TUI: Trace ownership
-cub-agent trace --app payment-api
+cub-scout trace --app payment-api
 # Shows: Source → Application → Deployment chain
 ```
 
@@ -483,9 +483,9 @@ Step 3: Refine (everything editable)
 Before claiming support for a pattern, verify with single cluster:
 
 ```bash
-./cub-agent map                           # See what's running
-./cub-agent map -q "owner!=Native"        # Verify ownership detection
-./cub-agent import -n <namespace>         # Import to ConfigHub
+./cub-scout map                           # See what's running
+./cub-scout map -q "owner!=Native"        # Verify ownership detection
+./cub-scout import -n <namespace>         # Import to ConfigHub
 cub unit list --space <space>             # Verify hierarchy
 cub unit update <unit> --set image.tag=X  # Make a change
 ```

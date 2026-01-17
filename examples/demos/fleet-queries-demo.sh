@@ -80,11 +80,11 @@ echo ""
 ui_section "QUERY 1" "GitOps-managed resources only"
 
 echo ""
-echo -e "  ${CYAN}cub-agent map list -q \"owner!=Native\"${NC}"
+echo -e "  ${CYAN}cub-scout map list -q \"owner!=Native\"${NC}"
 echo ""
 
 if $LIVE_MODE; then
-    "$REPO_ROOT/cub-agent" map list --standalone -q "owner!=Native" 2>/dev/null | head -20 || echo -e "  ${DIM}(no results or error)${NC}"
+    "$REPO_ROOT/cub-scout" map list --standalone -q "owner!=Native" 2>/dev/null | head -20 || echo -e "  ${DIM}(no results or error)${NC}"
 else
     # Example output
     echo -e "  ${BOLD}NAMESPACE   KIND        NAME            OWNER${NC}"
@@ -108,11 +108,11 @@ echo ""
 ui_section "QUERY 2" "Production namespaces (wildcard)"
 
 echo ""
-echo -e "  ${CYAN}cub-agent map list -q \"namespace=prod*\"${NC}"
+echo -e "  ${CYAN}cub-scout map list -q \"namespace=prod*\"${NC}"
 echo ""
 
 if $LIVE_MODE; then
-    "$REPO_ROOT/cub-agent" map list --standalone -q "namespace=prod*" 2>/dev/null | head -15 || echo -e "  ${DIM}(no results or error)${NC}"
+    "$REPO_ROOT/cub-scout" map list --standalone -q "namespace=prod*" 2>/dev/null | head -15 || echo -e "  ${DIM}(no results or error)${NC}"
 else
     echo -e "  ${BOLD}NAMESPACE   KIND        NAME            OWNER${NC}"
     echo -e "  ${DIM}────────────────────────────────────────────────────${NC}"
@@ -134,11 +134,11 @@ echo ""
 ui_section "QUERY 3" "Orphan hunt (unmanaged resources)"
 
 echo ""
-echo -e "  ${CYAN}cub-agent map list -q \"owner=Native\"${NC}"
+echo -e "  ${CYAN}cub-scout map list -q \"owner=Native\"${NC}"
 echo ""
 
 if $LIVE_MODE; then
-    "$REPO_ROOT/cub-agent" map list --standalone -q "owner=Native" 2>/dev/null | head -15 || echo -e "  ${DIM}(no results or error)${NC}"
+    "$REPO_ROOT/cub-scout" map list --standalone -q "owner=Native" 2>/dev/null | head -15 || echo -e "  ${DIM}(no results or error)${NC}"
 else
     echo -e "  ${BOLD}NAMESPACE   KIND        NAME            OWNER${NC}"
     echo -e "  ${DIM}────────────────────────────────────────────────────${NC}"
@@ -158,11 +158,11 @@ echo ""
 ui_section "QUERY 4" "Flux OR Argo managed"
 
 echo ""
-echo -e "  ${CYAN}cub-agent map list -q \"owner=Flux OR owner=ArgoCD\"${NC}"
+echo -e "  ${CYAN}cub-scout map list -q \"owner=Flux OR owner=ArgoCD\"${NC}"
 echo ""
 
 if $LIVE_MODE; then
-    "$REPO_ROOT/cub-agent" map list --standalone -q "owner=Flux OR owner=ArgoCD" 2>/dev/null | head -15 || echo -e "  ${DIM}(no results or error)${NC}"
+    "$REPO_ROOT/cub-scout" map list --standalone -q "owner=Flux OR owner=ArgoCD" 2>/dev/null | head -15 || echo -e "  ${DIM}(no results or error)${NC}"
 else
     echo -e "  ${BOLD}NAMESPACE   KIND        NAME            OWNER${NC}"
     echo -e "  ${DIM}────────────────────────────────────────────────────${NC}"
@@ -183,11 +183,11 @@ echo ""
 ui_section "QUERY 5" "Regex pattern matching"
 
 echo ""
-echo -e "  ${CYAN}cub-agent map list -q \"name~=payment.*\"${NC}"
+echo -e "  ${CYAN}cub-scout map list -q \"name~=payment.*\"${NC}"
 echo ""
 
 if $LIVE_MODE; then
-    "$REPO_ROOT/cub-agent" map list --standalone -q "name~=payment.*" 2>/dev/null | head -15 || echo -e "  ${DIM}(no results or error)${NC}"
+    "$REPO_ROOT/cub-scout" map list --standalone -q "name~=payment.*" 2>/dev/null | head -15 || echo -e "  ${DIM}(no results or error)${NC}"
 else
     echo -e "  ${BOLD}NAMESPACE   KIND        NAME            OWNER${NC}"
     echo -e "  ${DIM}────────────────────────────────────────────────────${NC}"
@@ -217,8 +217,8 @@ echo -e "  ${PURPLE}argo${NC}          owner=Argo"
 echo -e "  ${DIM}prod${NC}          namespace=prod* OR namespace=production*"
 echo ""
 echo -e "  ${BOLD}Usage:${NC}"
-echo -e "  ${CYAN}cub-agent map list -q unmanaged${NC}"
-echo -e "  ${CYAN}cub-agent map list -q \"unmanaged AND namespace=prod*\"${NC}"
+echo -e "  ${CYAN}cub-scout map list -q unmanaged${NC}"
+echo -e "  ${CYAN}cub-scout map list -q \"unmanaged AND namespace=prod*\"${NC}"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -246,8 +246,8 @@ echo "────────────────────────�
 echo -e "${BOLD}Try it:${NC}"
 echo ""
 echo -e "  ${CYAN}./test/atk/demo query${NC}              Run live against cluster (applies fixtures)"
-echo -e "  ${CYAN}cub-agent map list -q \"...\"${NC}       Run any query"
-echo -e "  ${CYAN}cub-agent map queries${NC}             List saved queries"
+echo -e "  ${CYAN}cub-scout map list -q \"...\"${NC}       Run any query"
+echo -e "  ${CYAN}cub-scout map queries${NC}             List saved queries"
 echo ""
 echo -e "${DIM}Full reference: docs/FLEET-QUERIES-REFERENCE.md${NC}"
 echo "────────────────────────────────────────────────────────────────────────────"

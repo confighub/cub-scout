@@ -13,7 +13,7 @@ Someone ran `kubectl apply` in production. A debug pod was left behind. A config
 ### Quick: Use the orphans command
 
 ```bash
-cub-agent map orphans
+cub-scout map orphans
 ```
 
 Shows all resources with `owner=Native` (no GitOps ownership detected).
@@ -25,7 +25,7 @@ In the interactive TUI, press `o` to switch to the Orphans view.
 ### Query: Filter explicitly
 
 ```bash
-cub-agent map list -q "owner=Native"
+cub-scout map list -q "owner=Native"
 ```
 
 ## Understanding Orphans
@@ -73,7 +73,7 @@ kubectl get deploy ORPHAN-NAME -n NS -o jsonpath='{.metadata.creationTimestamp}'
 ### Trace its history
 
 ```bash
-cub-agent map trace deploy/ORPHAN-NAME -n NS
+cub-scout map trace deploy/ORPHAN-NAME -n NS
 ```
 
 For Native resources, this shows there's no GitOps owner.
@@ -82,17 +82,17 @@ For Native resources, this shows there's no GitOps owner.
 
 ### By namespace
 ```bash
-cub-agent map list -q "owner=Native AND namespace=production"
+cub-scout map list -q "owner=Native AND namespace=production"
 ```
 
 ### By kind
 ```bash
-cub-agent map list -q "owner=Native AND kind=Deployment"
+cub-scout map list -q "owner=Native AND kind=Deployment"
 ```
 
 ### Exclude system namespaces
 ```bash
-cub-agent map list -q "owner=Native AND namespace!=kube-system AND namespace!=kube-public"
+cub-scout map list -q "owner=Native AND namespace!=kube-system AND namespace!=kube-public"
 ```
 
 ## What To Do With Orphans
@@ -109,7 +109,7 @@ kubectl delete deploy ORPHAN-NAME -n NS
 ### Option 3: Import to ConfigHub
 Use the import wizard to bring it under ConfigHub management:
 ```bash
-cub-agent import
+cub-scout import
 ```
 
 ### Option 4: Document and Accept
@@ -119,13 +119,13 @@ Some orphans are intentional (controller-created resources). Document them as ex
 
 ```bash
 # List all orphan resources
-cub-agent map list -q "owner=Native"
+cub-scout map list -q "owner=Native"
 
 # Filter to production only
-cub-agent map list -q "owner=Native AND namespace=prod*"
+cub-scout map list -q "owner=Native AND namespace=prod*"
 
 # Use the TUI and press 'o' for orphans view
-cub-agent map
+cub-scout map
 ```
 
 ## Best Practices

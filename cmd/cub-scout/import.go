@@ -114,22 +114,22 @@ That's it. One command.
 
 Examples:
   # Import everything (discovers all namespaces)
-  cub-agent import
+  cub-scout import
 
   # Import one namespace
-  cub-agent import -n argocd
+  cub-scout import -n argocd
 
   # Preview what would be created
-  cub-agent import --dry-run
+  cub-scout import --dry-run
 
   # Skip confirmation
-  cub-agent import -y
+  cub-scout import -y
 
   # JSON output (for GUI integration)
-  cub-agent import --json
+  cub-scout import --json
 
   # Interactive TUI wizard (recommended)
-  cub-agent import --wizard
+  cub-scout import --wizard
 `,
 	RunE: runImport,
 }

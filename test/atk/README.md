@@ -3,10 +3,10 @@
 > **DEPRECATED (2026-01-14):** The bash-based ATK scripts are deprecated in favor of the Go TUI and Go tests.
 >
 > **Use instead:**
-> - `cub-agent map` — Local cluster TUI (replaces `./map`)
-> - `cub-agent map --hub` — ConfigHub hierarchy TUI (replaces `./map-confighub`)
-> - `cub-agent scan` — CCVE scanner (replaces `./scan`)
-> - `cub-agent trace` — Ownership tracing
+> - `cub-scout map` — Local cluster TUI (replaces `./map`)
+> - `cub-scout map --hub` — ConfigHub hierarchy TUI (replaces `./map-confighub`)
+> - `cub-scout scan` — CCVE scanner (replaces `./scan`)
+> - `cub-scout trace` — Ownership tracing
 > - `go test ./...` — All tests (replaces `./verify`)
 >
 > The Go TUI has feature parity plus: snapshot persistence, cross-reference navigation, dependencies view, and more.

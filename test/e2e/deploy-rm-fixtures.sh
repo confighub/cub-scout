@@ -95,4 +95,4 @@ case "$PATTERN" in
         ;;
 esac
 
-log "RM fixtures deployed. Run 'cub-agent map' to see them."
+log "RM fixtures deployed. Run 'cub-scout map' to see them."

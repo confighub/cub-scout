@@ -10,7 +10,7 @@ fixture: "test/atk/fixtures/helm-basic.yaml"
 
 commands:
   - id: helm_ownership
-    command: "kubectl apply -f test/atk/fixtures/helm-basic.yaml && sleep 2 && ./cub-agent map list --namespace demo-helm"
+    command: "kubectl apply -f test/atk/fixtures/helm-basic.yaml && sleep 2 && ./cub-scout map list --namespace demo-helm"
     description: "Apply Helm fixture and verify ownership"
 
     expected:

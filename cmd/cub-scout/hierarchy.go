@@ -3937,15 +3937,15 @@ func (m Model) renderHelpOverlay() string {
 
 	b.WriteString(sectionStyle.Render("CUB-AGENT COMMANDS") + " " + descStyle.Render("(use : to run)"))
 	b.WriteString("\n")
-	b.WriteString("  " + cmdStyle.Render("cub-agent map") + "           " + descStyle.Render("Local cluster TUI"))
+	b.WriteString("  " + cmdStyle.Render("cub-scout map") + "           " + descStyle.Render("Local cluster TUI"))
 	b.WriteString("\n")
-	b.WriteString("  " + cmdStyle.Render("cub-agent map orphans") + "   " + descStyle.Render("List orphaned resources"))
+	b.WriteString("  " + cmdStyle.Render("cub-scout map orphans") + "   " + descStyle.Render("List orphaned resources"))
 	b.WriteString("\n")
-	b.WriteString("  " + cmdStyle.Render("cub-agent map crashes") + "   " + descStyle.Render("List crashing resources"))
+	b.WriteString("  " + cmdStyle.Render("cub-scout map crashes") + "   " + descStyle.Render("List crashing resources"))
 	b.WriteString("\n")
-	b.WriteString("  " + cmdStyle.Render("cub-agent scan") + "          " + descStyle.Render("Scan for CCVEs"))
+	b.WriteString("  " + cmdStyle.Render("cub-scout scan") + "          " + descStyle.Render("Scan for CCVEs"))
 	b.WriteString("\n")
-	b.WriteString("  " + cmdStyle.Render("cub-agent trace") + "         " + descStyle.Render("Trace ownership"))
+	b.WriteString("  " + cmdStyle.Render("cub-scout trace") + "         " + descStyle.Render("Trace ownership"))
 	b.WriteString("\n\n")
 
 	b.WriteString(sectionStyle.Render("QUIT"))
@@ -4135,7 +4135,7 @@ func (m Model) renderMapsView() string {
 	b.WriteString("\n")
 	b.WriteString(dimStyle.Render("  Use 'L' to switch to local cluster TUI for full GitOps tree view"))
 	b.WriteString("\n")
-	b.WriteString(dimStyle.Render("  Or run: cub-agent map workloads, cub-agent map deployers"))
+	b.WriteString(dimStyle.Render("  Or run: cub-scout map workloads, cub-scout map deployers"))
 	b.WriteString("\n\n")
 
 	// MAP 2a: ConfigHub Basic Hierarchy
@@ -4252,7 +4252,7 @@ func (m Model) renderMapsView() string {
 	b.WriteString("\n")
 	b.WriteString(dimStyle.Render("  Use 'L' to switch to local cluster TUI for git sources"))
 	b.WriteString("\n")
-	b.WriteString(dimStyle.Render("  Or run: cub-agent map deployers"))
+	b.WriteString(dimStyle.Render("  Or run: cub-scout map deployers"))
 	b.WriteString("\n\n")
 
 	// Summary
@@ -7072,10 +7072,10 @@ func (m Model) renderTree() string {
 var hierarchyCmd = &cobra.Command{
 	Use:        "hierarchy",
 	Short:      "Interactive ConfigHub hierarchy explorer (deprecated: use 'map --hub')",
-	Deprecated: "use 'cub-agent map --hub' or 'cub-agent map hub' instead",
+	Deprecated: "use 'cub-scout map --hub' or 'cub-scout map hub' instead",
 	Long: `Launch an interactive TUI to explore your ConfigHub hierarchy.
 
-DEPRECATED: This command is deprecated. Use 'cub-agent map --hub' or 'cub-agent map hub' instead.
+DEPRECATED: This command is deprecated. Use 'cub-scout map --hub' or 'cub-scout map hub' instead.
 
 Navigate through Organizations, Spaces, Units, Targets, and Workers in a tree view.
 

@@ -3,13 +3,13 @@
 # DEPRECATED: This bash TUI is deprecated in favor of the unified Go client.
 #
 # Use instead:
-#   cub-agent map           # Local cluster TUI (Go)
-#   cub-agent map --hub     # ConfigHub hierarchy TUI (Go)
-#   cub-agent map list      # Plain text output
-#   cub-agent map fleet     # Fleet view (Hub/AppSpace model)
+#   cub-scout map           # Local cluster TUI (Go)
+#   cub-scout map --hub     # ConfigHub hierarchy TUI (Go)
+#   cub-scout map list      # Plain text output
+#   cub-scout map fleet     # Fleet view (Hub/AppSpace model)
 #
 # This script remains for backwards compatibility but will be removed.
-# All new features should be added to the Go client (cmd/cub-agent/).
+# All new features should be added to the Go client (cmd/cub-scout/).
 # ============================================================================
 #
 # ConfigHub Agent Map - GitOps Fleet Visibility (LEGACY)
@@ -238,7 +238,7 @@ draw_confighub_promo() {
         printf "${UI_CYAN}│${UI_NC}    • %-56s ${UI_CYAN}│${UI_NC}\n" "$feat"
     done
     echo -e "${UI_CYAN}│${UI_NC}                                                                ${UI_CYAN}│${UI_NC}"
-    echo -e "${UI_CYAN}│${UI_NC}  ${UI_FG_DIM}cub auth login${UI_NC}  →  ${UI_FG_DIM}cub-agent import${UI_NC}                         ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  ${UI_FG_DIM}cub auth login${UI_NC}  →  ${UI_FG_DIM}cub-scout import${UI_NC}                         ${UI_CYAN}│${UI_NC}"
     echo -e "${UI_CYAN}╰────────────────────────────────────────────────────────────────╯${UI_NC}"
 }
 
@@ -793,15 +793,15 @@ view_pipelines_traced() {
         return
     fi
 
-    # Find cub-agent binary (check repo root, then PATH)
+    # Find cub-scout binary (check repo root, then PATH)
     local cub_agent_bin=""
     local repo_root
     repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-    if [[ -x "${repo_root}/cub-agent" ]]; then
-        cub_agent_bin="${repo_root}/cub-agent"
-    elif command -v cub-agent &>/dev/null; then
-        cub_agent_bin="cub-agent"
+    if [[ -x "${repo_root}/cub-scout" ]]; then
+        cub_agent_bin="${repo_root}/cub-scout"
+    elif command -v cub-scout &>/dev/null; then
+        cub_agent_bin="cub-scout"
     fi
 
     # Trace each deployer
@@ -819,7 +819,7 @@ view_pipelines_traced() {
             # Parse and display trace chain (indent it)
             echo "$trace_output" | grep -v "^TRACE:" | grep -v "^$" | sed 's/^/  /'
         else
-            echo "  ${UI_FG_DIM}(cub-agent not built - run: cd ${repo_root} && go build ./cmd/cub-agent)${UI_NC}"
+            echo "  ${UI_FG_DIM}(cub-scout not built - run: cd ${repo_root} && go build ./cmd/cub-scout)${UI_NC}"
         fi
 
         echo ""
@@ -835,15 +835,15 @@ view_trace() {
     local name="$2"
     local namespace="${3:-}"
 
-    # Find cub-agent binary (check repo root, then PATH)
+    # Find cub-scout binary (check repo root, then PATH)
     local cub_agent_bin=""
     local repo_root
     repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-    if [[ -x "${repo_root}/cub-agent" ]]; then
-        cub_agent_bin="${repo_root}/cub-agent"
-    elif command -v cub-agent &>/dev/null; then
-        cub_agent_bin="cub-agent"
+    if [[ -x "${repo_root}/cub-scout" ]]; then
+        cub_agent_bin="${repo_root}/cub-scout"
+    elif command -v cub-scout &>/dev/null; then
+        cub_agent_bin="cub-scout"
     fi
 
     # Build the trace command
@@ -863,10 +863,10 @@ view_trace() {
     if [[ -n "$cub_agent_bin" ]]; then
         "$cub_agent_bin" trace $trace_args 2>&1
     else
-        echo -e "${UI_YELLOW}⚠ cub-agent binary not found${UI_NC}"
-        echo -e "${UI_FG_DIM}Build with: cd ${repo_root} && go build ./cmd/cub-agent${UI_NC}"
+        echo -e "${UI_YELLOW}⚠ cub-scout binary not found${UI_NC}"
+        echo -e "${UI_FG_DIM}Build with: cd ${repo_root} && go build ./cmd/cub-scout${UI_NC}"
         echo ""
-        echo "Would run: cub-agent trace $trace_args"
+        echo "Would run: cub-scout trace $trace_args"
     fi
 }
 
@@ -1010,7 +1010,7 @@ view_trace_confighub() {
     echo -e "${UI_PURPLE}│${UI_NC}  Changes should be made via ConfigHub or the source repository.    ${UI_PURPLE}│${UI_NC}"
     echo -e "${UI_PURPLE}│${UI_NC}                                                                     ${UI_PURPLE}│${UI_NC}"
     echo -e "${UI_PURPLE}│${UI_NC}  ${UI_FG_DIM}View in ConfigHub:${UI_NC}                                               ${UI_PURPLE}│${UI_NC}"
-    echo -e "${UI_PURPLE}│${UI_NC}  ${UI_FG_DIM}  cub-agent map --hub${UI_NC}  →  Navigate to unit: ${unit}             ${UI_PURPLE}│${UI_NC}"
+    echo -e "${UI_PURPLE}│${UI_NC}  ${UI_FG_DIM}  cub-scout map --hub${UI_NC}  →  Navigate to unit: ${unit}             ${UI_PURPLE}│${UI_NC}"
     echo -e "${UI_PURPLE}└─────────────────────────────────────────────────────────────────────┘${UI_NC}"
 }
 
@@ -1023,13 +1023,13 @@ view_scan() {
     echo -e "${UI_FG_DIM}Stuck reconciliations + Kyverno policy violations${UI_NC}"
     echo ""
 
-    # Check if cub-agent is available
-    local agent_cmd="${SCRIPT_DIR}/../../cub-agent"
+    # Check if cub-scout is available
+    local agent_cmd="${SCRIPT_DIR}/../../cub-scout"
     if [[ ! -x "$agent_cmd" ]]; then
-        agent_cmd=$(command -v cub-agent 2>/dev/null || true)
+        agent_cmd=$(command -v cub-scout 2>/dev/null || true)
         if [[ -z "$agent_cmd" ]]; then
-            echo -e "${UI_YELLOW}⚠ cub-agent not found${UI_NC}"
-            echo "  Build with: go build ./cmd/cub-agent"
+            echo -e "${UI_YELLOW}⚠ cub-scout not found${UI_NC}"
+            echo "  Build with: go build ./cmd/cub-scout"
             return
         fi
     fi
@@ -1058,7 +1058,7 @@ view_scan() {
     echo -e "${UI_CYAN}│${UI_NC}  Connect to ConfigHub to scan across all clusters,            ${UI_CYAN}│${UI_NC}"
     echo -e "${UI_CYAN}│${UI_NC}  track violations over time, and get alerts.                  ${UI_CYAN}│${UI_NC}"
     echo -e "${UI_CYAN}│${UI_NC}                                                                ${UI_CYAN}│${UI_NC}"
-    echo -e "${UI_CYAN}│${UI_NC}  ${UI_FG_DIM}cub auth login${UI_NC}  →  ${UI_FG_DIM}cub-agent import${UI_NC}  →  ${UI_FG_DIM}cub-agent scan --confighub${UI_NC}  ${UI_CYAN}│${UI_NC}"
+    echo -e "${UI_CYAN}│${UI_NC}  ${UI_FG_DIM}cub auth login${UI_NC}  →  ${UI_FG_DIM}cub-scout import${UI_NC}  →  ${UI_FG_DIM}cub-scout scan --confighub${UI_NC}  ${UI_CYAN}│${UI_NC}"
     echo -e "${UI_CYAN}╰────────────────────────────────────────────────────────────────╯${UI_NC}"
 }
 
@@ -1171,21 +1171,21 @@ view_search_input() {
         echo -e "${UI_FG_DIM}Searching: ${query}${UI_NC}"
         echo ""
 
-        # Find cub-agent binary
+        # Find cub-scout binary
         local cub_agent_bin=""
         local repo_root
         repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
-        if [[ -x "${repo_root}/cub-agent" ]]; then
-            cub_agent_bin="${repo_root}/cub-agent"
-        elif command -v cub-agent &>/dev/null; then
-            cub_agent_bin="cub-agent"
+        if [[ -x "${repo_root}/cub-scout" ]]; then
+            cub_agent_bin="${repo_root}/cub-scout"
+        elif command -v cub-scout &>/dev/null; then
+            cub_agent_bin="cub-scout"
         fi
 
         if [[ -n "$cub_agent_bin" ]]; then
             "$cub_agent_bin" map list -q "$query" 2>&1
         else
-            echo -e "${UI_FG_RED}cub-agent not found${UI_NC}"
-            echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-agent${UI_NC}"
+            echo -e "${UI_FG_RED}cub-scout not found${UI_NC}"
+            echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-scout${UI_NC}"
         fi
 
         echo ""
@@ -1223,15 +1223,15 @@ view_help_overlay() {
     echo ""
 
     echo -e "${UI_BOLD}CUB-AGENT COMMANDS${UI_NC} ${UI_FG_DIM}(run with : or from terminal)${UI_NC}"
-    echo -e "  ${UI_FG_CYAN}cub-agent map list${UI_NC}        List resources and ownership"
-    echo -e "  ${UI_FG_CYAN}cub-agent map orphans${UI_NC}     List orphaned (Native) resources"
-    echo -e "  ${UI_FG_CYAN}cub-agent map crashes${UI_NC}     List crashing resources"
-    echo -e "  ${UI_FG_CYAN}cub-agent scan${UI_NC}            Scan for CCVEs"
-    echo -e "  ${UI_FG_CYAN}cub-agent trace${UI_NC}           Trace ownership chain"
-    echo -e "  ${UI_FG_CYAN}cub-agent remedy${UI_NC}          Auto-fix CCVE findings"
+    echo -e "  ${UI_FG_CYAN}cub-scout map list${UI_NC}        List resources and ownership"
+    echo -e "  ${UI_FG_CYAN}cub-scout map orphans${UI_NC}     List orphaned (Native) resources"
+    echo -e "  ${UI_FG_CYAN}cub-scout map crashes${UI_NC}     List crashing resources"
+    echo -e "  ${UI_FG_CYAN}cub-scout scan${UI_NC}            Scan for CCVEs"
+    echo -e "  ${UI_FG_CYAN}cub-scout trace${UI_NC}           Trace ownership chain"
+    echo -e "  ${UI_FG_CYAN}cub-scout remedy${UI_NC}          Auto-fix CCVE findings"
     echo ""
 
-    echo -e "${UI_BOLD}QUERY EXAMPLES${UI_NC} ${UI_FG_DIM}(use with: cub-agent map list -q)${UI_NC}"
+    echo -e "${UI_BOLD}QUERY EXAMPLES${UI_NC} ${UI_FG_DIM}(use with: cub-scout map list -q)${UI_NC}"
     echo -e "  ${UI_FG_CYAN}owner=Native${UI_NC}              Orphaned resources"
     echo -e "  ${UI_FG_CYAN}owner=Flux OR owner=ArgoCD${UI_NC} GitOps managed"
     echo -e "  ${UI_FG_CYAN}namespace=prod*${UI_NC}           Prod namespaces"
@@ -1240,7 +1240,7 @@ view_help_overlay() {
     echo ""
 
     echo -e "${UI_BOLD}CONFIGHUB HIERARCHY${UI_NC} ${UI_FG_DIM}(manage orgs, spaces, units)${UI_NC}"
-    echo -e "  ${UI_FG_PURPLE}h${UI_NC}  Hub TUI       ${UI_FG_DIM}or${UI_NC} cub-agent map --hub"
+    echo -e "  ${UI_FG_PURPLE}h${UI_NC}  Hub TUI       ${UI_FG_DIM}or${UI_NC} cub-scout map --hub"
     echo -e "                    Explore ConfigHub: orgs → spaces → units → targets"
     echo -e "                    ${UI_FG_DIM}Requires: cub auth login${UI_NC}"
     echo ""
@@ -1258,13 +1258,13 @@ view_help_overlay() {
 view_scan_interactive() {
     local data="$1"
 
-    # Check if cub-agent is available
-    local agent_cmd="${SCRIPT_DIR}/../../cub-agent"
+    # Check if cub-scout is available
+    local agent_cmd="${SCRIPT_DIR}/../../cub-scout"
     if [[ ! -x "$agent_cmd" ]]; then
-        agent_cmd=$(command -v cub-agent 2>/dev/null || true)
+        agent_cmd=$(command -v cub-scout 2>/dev/null || true)
         if [[ -z "$agent_cmd" ]]; then
-            echo -e "${UI_YELLOW}⚠ cub-agent not found${UI_NC}"
-            echo "  Build with: go build ./cmd/cub-agent"
+            echo -e "${UI_YELLOW}⚠ cub-scout not found${UI_NC}"
+            echo "  Build with: go build ./cmd/cub-scout"
             return
         fi
     fi
@@ -1405,7 +1405,7 @@ view_scan_interactive() {
                 echo ""
 
                 # Run dry-run
-                echo -e "${UI_FG_DIM}Running: cub-agent remedy $fix_ccve --dry-run -n $fix_ns${UI_NC}"
+                echo -e "${UI_FG_DIM}Running: cub-scout remedy $fix_ccve --dry-run -n $fix_ns${UI_NC}"
                 echo ""
                 local dry_run_output
                 dry_run_output=$("$agent_cmd" remedy "$fix_ccve" --dry-run -n "$fix_ns" 2>&1)
@@ -1418,7 +1418,7 @@ view_scan_interactive() {
                 if [[ "$confirm" =~ ^[Yy]$ ]]; then
                     echo ""
                     echo -e "${UI_BOLD}=== APPLYING FIX ===${UI_NC}"
-                    echo -e "${UI_FG_DIM}Running: cub-agent remedy $fix_ccve --dry-run=false -n $fix_ns${UI_NC}"
+                    echo -e "${UI_FG_DIM}Running: cub-scout remedy $fix_ccve --dry-run=false -n $fix_ns${UI_NC}"
                     echo ""
                     "$agent_cmd" remedy "$fix_ccve" --dry-run=false -n "$fix_ns" 2>&1
                     echo ""
@@ -1855,9 +1855,9 @@ view_recent() {
     # Tip for CLI users
     draw_promo \
         "For time-filtered queries:" \
-        "cub-agent map list --since=1h" \
-        "cub-agent map list --since=24h" \
-        "cub-agent map list --since=7d"
+        "cub-scout map list --since=1h" \
+        "cub-scout map list --since=24h" \
+        "cub-scout map list --since=7d"
 
     echo ""
 }
@@ -2330,11 +2330,11 @@ view_queries() {
     draw_box_start "USAGE"
     draw_box_empty
     draw_box_line "Run a saved query:"
-    draw_box_line "  ${UI_BOLD}cub-agent map list -q unmanaged${UI_NC}"
-    draw_box_line "  ${UI_BOLD}cub-agent map list -q \"unmanaged AND namespace=prod*\"${UI_NC}"
+    draw_box_line "  ${UI_BOLD}cub-scout map list -q unmanaged${UI_NC}"
+    draw_box_line "  ${UI_BOLD}cub-scout map list -q \"unmanaged AND namespace=prod*\"${UI_NC}"
     draw_box_line ""
     draw_box_line "Save a new query:"
-    draw_box_line "  ${UI_BOLD}cub-agent map queries save my-team \"labels[team]=payments\"${UI_NC}"
+    draw_box_line "  ${UI_BOLD}cub-scout map queries save my-team \"labels[team]=payments\"${UI_NC}"
     draw_box_empty
     draw_box_end
     echo ""
@@ -2342,7 +2342,7 @@ view_queries() {
     # Light hook to ConfigHub
     echo "────────────────────────────────────────────────────────────────"
     echo "🔗 Want team-shared queries, alerts, and history?"
-    echo "   See: ${UI_BOLD}cub-agent map queries connect${UI_NC}"
+    echo "   See: ${UI_BOLD}cub-scout map queries connect${UI_NC}"
     echo "────────────────────────────────────────────────────────────────"
 }
 
@@ -3113,15 +3113,15 @@ view_dashboard_panels() {
                 local cub_agent_bin=""
                 local repo_root
                 repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
-                if [[ -x "${repo_root}/cub-agent" ]]; then
-                    cub_agent_bin="${repo_root}/cub-agent"
-                elif command -v cub-agent &>/dev/null; then
-                    cub_agent_bin="cub-agent"
+                if [[ -x "${repo_root}/cub-scout" ]]; then
+                    cub_agent_bin="${repo_root}/cub-scout"
+                elif command -v cub-scout &>/dev/null; then
+                    cub_agent_bin="cub-scout"
                 fi
                 if [[ -n "$cub_agent_bin" ]]; then
                     "$cub_agent_bin" map --hub
                 else
-                    echo -e "${UI_FG_RED}cub-agent not found${UI_NC}"
+                    echo -e "${UI_FG_RED}cub-scout not found${UI_NC}"
                     read -rsn1
                 fi
                 data=$(collect_data)
@@ -3590,16 +3590,16 @@ view_dashboard_interactive() {
                 local cub_agent_bin=""
                 local repo_root
                 repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
-                if [[ -x "${repo_root}/cub-agent" ]]; then
-                    cub_agent_bin="${repo_root}/cub-agent"
-                elif command -v cub-agent &>/dev/null; then
-                    cub_agent_bin="cub-agent"
+                if [[ -x "${repo_root}/cub-scout" ]]; then
+                    cub_agent_bin="${repo_root}/cub-scout"
+                elif command -v cub-scout &>/dev/null; then
+                    cub_agent_bin="cub-scout"
                 fi
                 if [[ -n "$cub_agent_bin" ]]; then
                     "$cub_agent_bin" map --hub
                 else
-                    echo -e "${UI_FG_RED}cub-agent not found${UI_NC}"
-                    echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-agent${UI_NC}"
+                    echo -e "${UI_FG_RED}cub-scout not found${UI_NC}"
+                    echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-scout${UI_NC}"
                     echo ""
                     echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
                     read -rsn1
@@ -3621,24 +3621,24 @@ view_dashboard_interactive() {
                 local cub_agent_bin=""
                 local repo_root
                 repo_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
-                if [[ -x "${repo_root}/cub-agent" ]]; then
-                    cub_agent_bin="${repo_root}/cub-agent"
-                elif command -v cub-agent &>/dev/null; then
-                    cub_agent_bin="cub-agent"
+                if [[ -x "${repo_root}/cub-scout" ]]; then
+                    cub_agent_bin="${repo_root}/cub-scout"
+                elif command -v cub-scout &>/dev/null; then
+                    cub_agent_bin="cub-scout"
                 fi
                 if [[ -n "$cub_agent_bin" ]]; then
                     # Show App Space list with quick actions
                     echo -e "\n${UI_BOLD}⚡ APP SPACES${UI_NC}\n"
-                    "$cub_agent_bin" app-space list 2>/dev/null || echo -e "${UI_FG_DIM}No App Spaces found (try: cub-agent import --wizard)${UI_NC}"
+                    "$cub_agent_bin" app-space list 2>/dev/null || echo -e "${UI_FG_DIM}No App Spaces found (try: cub-scout import --wizard)${UI_NC}"
                     echo ""
                     echo -e "${UI_FG_DIM}Commands:${UI_NC}"
-                    echo -e "  cub-agent app-space create <name>    Create App Space"
-                    echo -e "  cub-agent import --wizard            Import from cluster"
-                    echo -e "  cub-agent map --mode fleet           View fleet by App Space"
+                    echo -e "  cub-scout app-space create <name>    Create App Space"
+                    echo -e "  cub-scout import --wizard            Import from cluster"
+                    echo -e "  cub-scout map --mode fleet           View fleet by App Space"
                     echo ""
                 else
-                    echo -e "${UI_FG_RED}cub-agent not found${UI_NC}"
-                    echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-agent${UI_NC}"
+                    echo -e "${UI_FG_RED}cub-scout not found${UI_NC}"
+                    echo -e "${UI_FG_DIM}Run: go build ./cmd/cub-scout${UI_NC}"
                 fi
                 echo ""
                 echo -e "${UI_FG_DIM}Press any key to return${UI_NC}"
@@ -4049,7 +4049,7 @@ view_confighub_connection_status() {
         draw_box_line "  ${UI_ERR}✗${UI_NC} No units imported"
         draw_box_empty
         draw_box_line "  ${UI_BOLD}NEXT STEP${UI_NC}"
-        draw_box_line "    cub-agent import --namespace <ns>"
+        draw_box_line "    cub-scout import --namespace <ns>"
     elif ! $has_workers; then
         draw_box_line "  ${UI_OK}✓${UI_NC} Authenticated${org_name:+ (org: $org_name)}"
         draw_box_line "  ${UI_OK}✓${UI_NC} Units imported (${unit_count})"
@@ -4422,8 +4422,8 @@ main() {
     # Show deprecation warning (unless SUPPRESS_DEPRECATION is set)
     if [[ -z "${SUPPRESS_DEPRECATION:-}" ]]; then
         echo -e "\033[33m⚠ DEPRECATED: This bash TUI is deprecated.\033[0m"
-        echo -e "\033[33m  Use: cub-agent map (Go client)\033[0m"
-        echo -e "\033[33m  See: cub-agent map --help\033[0m"
+        echo -e "\033[33m  Use: cub-scout map (Go client)\033[0m"
+        echo -e "\033[33m  See: cub-scout map --help\033[0m"
         echo ""
         sleep 1
     fi

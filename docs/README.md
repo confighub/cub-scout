@@ -2,7 +2,7 @@
 
 User documentation for ConfigHub Agent. For planning docs, see [planning/](planning/).
 
-**Main entry point:** [map/README.md](map/README.md) — Start here for cub-agent map.
+**Main entry point:** [map/README.md](map/README.md) — Start here for cub-scout map.
 
 ---
 
@@ -125,7 +125,7 @@ Like CVEs, but for config anti-patterns. 46 active scanner patterns, 4,500+ refe
 
 ```bash
 # Full scan (stuck resources + Kyverno violations)
-./cub-agent scan
+./cub-scout scan
 ```
 
 Example findings:
@@ -139,31 +139,31 @@ Example findings:
 ### One-Time Snapshot
 
 ```bash
-./cub-agent snapshot -o state.json
+./cub-scout snapshot -o state.json
 ```
 
 ### Dashboard View
 
 ```bash
-cub-agent map               # Full dashboard TUI
-cub-agent map list          # Plain text output
-cub-agent map list -q "..."  # Filtered output
+cub-scout map               # Full dashboard TUI
+cub-scout map list          # Plain text output
+cub-scout map list -q "..."  # Filtered output
 ```
 
 ### CCVE Scanning
 
 ```bash
-./cub-agent scan                # Full scan (state + Kyverno)
-./cub-agent scan --state        # Stuck resources only
-./cub-agent scan --kyverno      # Kyverno violations only
-./cub-agent scan --json         # JSON for tooling
+./cub-scout scan                # Full scan (state + Kyverno)
+./cub-scout scan --state        # Stuck resources only
+./cub-scout scan --kyverno      # Kyverno violations only
+./cub-scout scan --json         # JSON for tooling
 ```
 
 ### Pipe to Other Tools
 
 ```bash
-./cub-agent snapshot -o - | jq '.entries[] | select(.drift)'
-./cub-agent snapshot -o - | your-custom-script
+./cub-scout snapshot -o - | jq '.entries[] | select(.drift)'
+./cub-scout snapshot -o - | your-custom-script
 ```
 
 ## Integration Examples
@@ -175,11 +175,11 @@ cub-agent map list -q "..."  # Filtered output
 plugin:
   confighub-map:
     shortCut: Shift-M
-    command: cub-agent
+    command: cub-scout
     args: ["map"]
   confighub-scan:
     shortCut: Shift-V
-    command: cub-agent
+    command: cub-scout
     args: ["scan"]
 ```
 
@@ -197,7 +197,7 @@ The agent can expose Prometheus metrics:
 
 ```bash
 #!/bin/bash
-./cub-agent snapshot -o - | jq -e '.entries[] | select(.drift)' && \
+./cub-scout snapshot -o - | jq -e '.entries[] | select(.drift)' && \
   slack-notify "#alerts" "Drift detected in cluster"
 ```
 

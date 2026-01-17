@@ -92,16 +92,16 @@ var scenarios = map[string]Demo{
 var demoCmd = &cobra.Command{
 	Use:   "demo [name]",
 	Short: "Run interactive demos",
-	Long: `Run interactive demos to showcase cub-agent features.
+	Long: `Run interactive demos to showcase cub-scout features.
 
 Examples:
-  cub-agent demo --list             # List available demos
-  cub-agent demo quick              # Quick demo (~30 sec)
-  cub-agent demo ccve               # CCVE-2025-0027 demo (~2 min)
-  cub-agent demo query              # Query language demo
-  cub-agent demo scenario bigbank   # Narrative scenario
+  cub-scout demo --list             # List available demos
+  cub-scout demo quick              # Quick demo (~30 sec)
+  cub-scout demo ccve               # CCVE-2025-0027 demo (~2 min)
+  cub-scout demo query              # Query language demo
+  cub-scout demo scenario bigbank   # Narrative scenario
 
-  cub-agent demo quick --cleanup    # Remove demo resources`,
+  cub-scout demo quick --cleanup    # Remove demo resources`,
 	Args: cobra.MaximumNArgs(2),
 	RunE: runDemo,
 }
@@ -128,7 +128,7 @@ Available scenarios:
 		name := args[0]
 		scenario, ok := scenarios[name]
 		if !ok {
-			return fmt.Errorf("unknown scenario: %s\nRun 'cub-agent demo --list' to see available scenarios", name)
+			return fmt.Errorf("unknown scenario: %s\nRun 'cub-scout demo --list' to see available scenarios", name)
 		}
 		if demoCleanup {
 			return scenario.Cleanup()
@@ -158,7 +158,7 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	// Handle "scenario" as first arg
 	if name == "scenario" {
 		if len(args) < 2 {
-			return fmt.Errorf("scenario name required\nRun 'cub-agent demo --list' to see available scenarios")
+			return fmt.Errorf("scenario name required\nRun 'cub-scout demo --list' to see available scenarios")
 		}
 		scenarioName := args[1]
 		scenario, ok := scenarios[scenarioName]
@@ -173,7 +173,7 @@ func runDemo(cmd *cobra.Command, args []string) error {
 
 	demo, ok := demos[name]
 	if !ok {
-		return fmt.Errorf("unknown demo: %s\nRun 'cub-agent demo --list' to see available demos", name)
+		return fmt.Errorf("unknown demo: %s\nRun 'cub-scout demo --list' to see available demos", name)
 	}
 
 	if demoCleanup {
@@ -205,8 +205,8 @@ func listDemos() {
 	}
 
 	fmt.Println()
-	fmt.Println(demoDimStyle.Render("Usage: cub-agent demo <name>"))
-	fmt.Println(demoDimStyle.Render("       cub-agent demo scenario <name>"))
+	fmt.Println(demoDimStyle.Render("Usage: cub-scout demo <name>"))
+	fmt.Println(demoDimStyle.Render("       cub-scout demo scenario <name>"))
 	fmt.Println()
 }
 
@@ -244,12 +244,12 @@ func kubectlDelete(yamlPath string) error {
 	return cmd.Run()
 }
 
-// Run a cub-agent subcommand
+// Run a cub-scout subcommand
 func runCubAgent(args ...string) error {
-	// Find the cub-agent binary
+	// Find the cub-scout binary
 	binary, err := os.Executable()
 	if err != nil {
-		binary = "cub-agent"
+		binary = "cub-scout"
 	}
 
 	cmd := exec.Command(binary, args...)
@@ -274,22 +274,22 @@ func runDemoQuick() error {
 	_ = kubectlApply(filepath.Join(fixturesDir, "argo-basic.yaml"))
 
 	fmt.Println()
-	fmt.Println(demoBoldStyle.Render("Running: cub-agent map status"))
+	fmt.Println(demoBoldStyle.Render("Running: cub-scout map status"))
 	_ = runCubAgent("map", "status")
 	fmt.Println()
 
-	fmt.Println(demoBoldStyle.Render("Running: cub-agent map list"))
+	fmt.Println(demoBoldStyle.Render("Running: cub-scout map list"))
 	_ = runCubAgent("map", "list")
 	fmt.Println()
 
-	fmt.Println(demoBoldStyle.Render("Running: cub-agent map issues"))
+	fmt.Println(demoBoldStyle.Render("Running: cub-scout map issues"))
 	_ = runCubAgent("map", "issues")
 	fmt.Println()
 
 	fmt.Println(demoPassStyle.Render("That's the Map - your cluster at a glance."))
 	fmt.Println()
-	fmt.Println(demoDimStyle.Render("Next: cub-agent scan to find config issues"))
-	fmt.Println(demoDimStyle.Render("      cub-agent demo ccve to see CCVE-2025-0027 (the BIGBANK incident)"))
+	fmt.Println(demoDimStyle.Render("Next: cub-scout scan to find config issues"))
+	fmt.Println(demoDimStyle.Render("      cub-scout demo ccve to see CCVE-2025-0027 (the BIGBANK incident)"))
 
 	return nil
 }
@@ -338,7 +338,7 @@ func runDemoCCVE() error {
 	fmt.Println("  kubectl set env deployment/grafana -n monitoring \\")
 	fmt.Println("    NAMESPACE=\"monitoring,grafana,observability\"")
 	fmt.Println()
-	fmt.Println(demoDimStyle.Render("Cleanup: cub-agent demo ccve --cleanup"))
+	fmt.Println(demoDimStyle.Render("Cleanup: cub-scout demo ccve --cleanup"))
 
 	return nil
 }
@@ -373,25 +373,25 @@ func runDemoQuery() error {
 
 	fmt.Println()
 	fmt.Println(demoBoldStyle.Render("Query 1: GitOps-managed deployments only (owner!=Native)"))
-	fmt.Println(demoDimStyle.Render("  $ cub-agent map list -q \"kind=Deployment AND owner!=Native\""))
+	fmt.Println(demoDimStyle.Render("  $ cub-scout map list -q \"kind=Deployment AND owner!=Native\""))
 	fmt.Println()
 	_ = runCubAgent("map", "list", "-q", "kind=Deployment AND owner!=Native")
 
 	fmt.Println()
 	fmt.Println(demoBoldStyle.Render("Query 2: Production namespaces (namespace=prod*)"))
-	fmt.Println(demoDimStyle.Render("  $ cub-agent map list -q \"namespace=prod*\""))
+	fmt.Println(demoDimStyle.Render("  $ cub-scout map list -q \"namespace=prod*\""))
 	fmt.Println()
 	_ = runCubAgent("map", "list", "-q", "namespace=prod*")
 
 	fmt.Println()
 	fmt.Println(demoBoldStyle.Render("Query 3: Flux OR ArgoCD managed"))
-	fmt.Println(demoDimStyle.Render("  $ cub-agent map list -q \"owner=Flux OR owner=ArgoCD\""))
+	fmt.Println(demoDimStyle.Render("  $ cub-scout map list -q \"owner=Flux OR owner=ArgoCD\""))
 	fmt.Println()
 	_ = runCubAgent("map", "list", "-q", "owner=Flux OR owner=ArgoCD")
 
 	fmt.Println()
 	fmt.Println(demoBoldStyle.Render("Query 4: Find orphans (Native ownership)"))
-	fmt.Println(demoDimStyle.Render("  $ cub-agent map list -q \"owner=Native\""))
+	fmt.Println(demoDimStyle.Render("  $ cub-scout map list -q \"owner=Native\""))
 	fmt.Println()
 	_ = runCubAgent("map", "list", "-q", "owner=Native")
 
@@ -408,7 +408,7 @@ func runDemoQuery() error {
 	fmt.Println()
 	fmt.Println("Available fields: kind, namespace, name, owner, cluster, labels[key]")
 	fmt.Println()
-	fmt.Println(demoDimStyle.Render("Cleanup: cub-agent demo query --cleanup"))
+	fmt.Println(demoDimStyle.Render("Cleanup: cub-scout demo query --cleanup"))
 
 	return nil
 }
@@ -470,7 +470,7 @@ func runScenarioBigbank() error {
 	_ = kubectlApply(badConfigPath)
 	time.Sleep(1 * time.Second)
 
-	fmt.Println(demoBoldStyle.Render("Running: cub-agent scan"))
+	fmt.Println(demoBoldStyle.Render("Running: cub-scout scan"))
 	fmt.Println()
 	_ = runCubAgent("scan")
 
@@ -478,7 +478,7 @@ func runScenarioBigbank() error {
 	fmt.Println(demoPassStyle.Render("CCVE-2025-0027 detected in seconds"))
 	fmt.Println(demoDimStyle.Render("30 seconds vs 4 hours"))
 	fmt.Println()
-	fmt.Println(demoDimStyle.Render("Cleanup: cub-agent demo scenario bigbank-incident --cleanup"))
+	fmt.Println(demoDimStyle.Render("Cleanup: cub-scout demo scenario bigbank-incident --cleanup"))
 
 	return nil
 }
@@ -525,9 +525,9 @@ func runScenarioBreakGlass() error {
 	fmt.Println("  " + demoPassStyle.Render("ACCEPT") + " - Import hotfix-cache to ConfigHub (versioned, repeatable)")
 	fmt.Println("  " + demoErrStyle.Render("REJECT") + " - Delete hotfix-cache (restore pure GitOps state)")
 	fmt.Println()
-	fmt.Println(demoDimStyle.Render("With ConfigHub: cub-agent import to bring break-glass resources under management"))
+	fmt.Println(demoDimStyle.Render("With ConfigHub: cub-scout import to bring break-glass resources under management"))
 	fmt.Println()
-	fmt.Println(demoDimStyle.Render("Cleanup: cub-agent demo scenario break-glass --cleanup"))
+	fmt.Println(demoDimStyle.Render("Cleanup: cub-scout demo scenario break-glass --cleanup"))
 
 	return nil
 }

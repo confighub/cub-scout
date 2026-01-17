@@ -131,13 +131,13 @@ fi
 
 section "Local Tools"
 
-# cub-agent binary
-if [[ -x "$PROJECT_ROOT/cub-agent" ]]; then
-    pass "cub-agent binary exists" "cub_agent"
-elif go build -o "$PROJECT_ROOT/cub-agent" "$PROJECT_ROOT/cmd/cub-agent" 2>/dev/null; then
-    pass "cub-agent built successfully" "cub_agent"
+# cub-scout binary
+if [[ -x "$PROJECT_ROOT/cub-scout" ]]; then
+    pass "cub-scout binary exists" "cub_agent"
+elif go build -o "$PROJECT_ROOT/cub-scout" "$PROJECT_ROOT/cmd/cub-scout" 2>/dev/null; then
+    pass "cub-scout built successfully" "cub_agent"
 else
-    fail "cub-agent not found and build failed" "cub_agent"
+    fail "cub-scout not found and build failed" "cub_agent"
 fi
 
 # kubectl

@@ -1,6 +1,6 @@
 # Map: See What's Running, Who Owns It, Is It Configured Correctly
 
-**cub-agent map** is a read-only Kubernetes observer that answers three questions in 30 seconds:
+**cub-scout map** is a read-only Kubernetes observer that answers three questions in 30 seconds:
 1. What's running in my cluster?
 2. Who owns each resource? (Flux, ArgoCD, Helm, ConfigHub, or Native)
 3. Is it configured correctly?
@@ -18,7 +18,7 @@ You have a Kubernetes cluster. Multiple tools deploy to it:
 **With map:** One command shows everything. Ownership detected automatically. Problems highlighted. 30 seconds.
 
 ```
-$ cub-agent map list
+$ cub-scout map list
 NAME            NAMESPACE    OWNER      STATUS
 payment-api     prod         Flux       ✓ Synced
 frontend        prod         ArgoCD     ✓ Synced
@@ -33,10 +33,10 @@ debug-pod       prod         Native     ⚠ Orphan   <- Who did this?
 Works immediately, no setup required:
 
 ```bash
-cub-agent map                 # Interactive TUI
-cub-agent map list            # Plain text output
-cub-agent map orphans         # Show unmanaged resources
-cub-agent map trace deploy/x  # Trace ownership chain
+cub-scout map                 # Interactive TUI
+cub-scout map list            # Plain text output
+cub-scout map orphans         # Show unmanaged resources
+cub-scout map trace deploy/x  # Trace ownership chain
 ```
 
 **What you get:**
@@ -51,8 +51,8 @@ cub-agent map trace deploy/x  # Trace ownership chain
 Connect to ConfigHub for fleet-wide visibility:
 
 ```bash
-cub-agent map --hub           # ConfigHub hierarchy TUI
-cub-agent map fleet           # Fleet view (Hub/AppSpace model)
+cub-scout map --hub           # ConfigHub hierarchy TUI
+cub-scout map fleet           # Fleet view (Hub/AppSpace model)
 ```
 
 **What you get:**
@@ -73,10 +73,10 @@ cub-agent map fleet           # Fleet view (Hub/AppSpace model)
 
 ```bash
 # Build
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 
 # Run the TUI
-./cub-agent map
+./cub-scout map
 
 # Press ? for help, q to quit
 ```
@@ -132,25 +132,25 @@ Map automatically detects who manages each resource:
 
 ### Find orphan resources
 ```bash
-cub-agent map orphans
+cub-scout map orphans
 # Shows all Native (unmanaged) resources - who kubectl'd something?
 ```
 
 ### Trace a deployment's ownership
 ```bash
-cub-agent map trace deploy/payment-api -n prod
+cub-scout map trace deploy/payment-api -n prod
 # Shows: Deployment → HelmRelease → GitRepository → git@github.com:...
 ```
 
 ### Query across the fleet
 ```bash
-cub-agent map list -q "owner=Flux AND namespace=prod*"
+cub-scout map list -q "owner=Flux AND namespace=prod*"
 # Shows all Flux-managed resources in production namespaces
 ```
 
 ### Scan for configuration issues
 ```bash
-cub-agent map scan
+cub-scout map scan
 # Checks 46 CCVE patterns, highlights misconfigurations
 ```
 
@@ -163,10 +163,10 @@ Map works with any existing Flux, ArgoCD, or Helm deployment:
 kubectl get kustomizations,applications -A
 
 # Step 2: Just run map
-cub-agent map    # Instant ownership visibility, no setup
+cub-scout map    # Instant ownership visibility, no setup
 
 # Step 3: Optionally import to ConfigHub
-cub-agent import # Wizard guides through import
+cub-scout import # Wizard guides through import
 ```
 
 **Reference architectures tested:**

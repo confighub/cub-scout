@@ -31,9 +31,9 @@ check_prerequisites() {
         fail "No Kubernetes cluster available"
     fi
 
-    if [ ! -f "$PROJECT_ROOT/cub-agent" ]; then
-        info "Building cub-agent..."
-        (cd "$PROJECT_ROOT" && go build ./cmd/cub-agent) || fail "Build failed"
+    if [ ! -f "$PROJECT_ROOT/cub-scout" ]; then
+        info "Building cub-scout..."
+        (cd "$PROJECT_ROOT" && go build ./cmd/cub-scout) || fail "Build failed"
     fi
 
     pass "Prerequisites OK"
@@ -58,7 +58,7 @@ setup() {
 test_list() {
     info "Test 1: remedy --list"
 
-    output=$("$PROJECT_ROOT/cub-agent" remedy --list 2>&1)
+    output=$("$PROJECT_ROOT/cub-scout" remedy --list 2>&1)
 
     if echo "$output" | grep -q "config_fix"; then
         pass "Lists config_fix CCVEs"
@@ -77,13 +77,13 @@ test_list() {
 test_namespace_validation() {
     info "Test 2: Namespace validation"
 
-    if "$PROJECT_ROOT/cub-agent" remedy CCVE-2025-0147 --dry-run -n nonexistent-ns-12345 2>&1 | grep -q "not found"; then
+    if "$PROJECT_ROOT/cub-scout" remedy CCVE-2025-0147 --dry-run -n nonexistent-ns-12345 2>&1 | grep -q "not found"; then
         pass "Rejects invalid namespace"
     else
         fail "Should reject invalid namespace"
     fi
 
-    if "$PROJECT_ROOT/cub-agent" remedy CCVE-2025-0147 --dry-run -n $NAMESPACE 2>&1 | grep -q "REMEDY PLAN"; then
+    if "$PROJECT_ROOT/cub-scout" remedy CCVE-2025-0147 --dry-run -n $NAMESPACE 2>&1 | grep -q "REMEDY PLAN"; then
         pass "Accepts valid namespace"
     else
         fail "Should accept valid namespace"
@@ -94,7 +94,7 @@ test_namespace_validation() {
 test_dry_run() {
     info "Test 3: Dry-run mode"
 
-    output=$("$PROJECT_ROOT/cub-agent" remedy CCVE-2025-0147 --dry-run -n $NAMESPACE 2>&1)
+    output=$("$PROJECT_ROOT/cub-scout" remedy CCVE-2025-0147 --dry-run -n $NAMESPACE 2>&1)
 
     if echo "$output" | grep -q "REMEDY PLAN"; then
         pass "Shows remedy plan"
@@ -122,7 +122,7 @@ test_audit_logging() {
     AUDIT_FILE="/tmp/remedy-test-audit.log"
     rm -f "$AUDIT_FILE"
 
-    "$PROJECT_ROOT/cub-agent" remedy CCVE-2025-0147 --dry-run -n $NAMESPACE --audit-file="$AUDIT_FILE" 2>&1 >/dev/null
+    "$PROJECT_ROOT/cub-scout" remedy CCVE-2025-0147 --dry-run -n $NAMESPACE --audit-file="$AUDIT_FILE" 2>&1 >/dev/null
 
     if [ -f "$AUDIT_FILE" ]; then
         pass "Audit file created"
@@ -149,7 +149,7 @@ test_audit_logging() {
 test_json_output() {
     info "Test 5: JSON output"
 
-    output=$("$PROJECT_ROOT/cub-agent" remedy CCVE-2025-0147 --dry-run -n $NAMESPACE --json 2>&1)
+    output=$("$PROJECT_ROOT/cub-scout" remedy CCVE-2025-0147 --dry-run -n $NAMESPACE --json 2>&1)
 
     if echo "$output" | jq . >/dev/null 2>&1; then
         pass "Valid JSON output"

@@ -4,11 +4,11 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if command -v cub-agent &>/dev/null; then
-    exec cub-agent hierarchy "$@"
-elif [[ -x "${SCRIPT_DIR}/../../cub-agent" ]]; then
-    exec "${SCRIPT_DIR}/../../cub-agent" hierarchy "$@"
+if command -v cub-scout &>/dev/null; then
+    exec cub-scout hierarchy "$@"
+elif [[ -x "${SCRIPT_DIR}/../../cub-scout" ]]; then
+    exec "${SCRIPT_DIR}/../../cub-scout" hierarchy "$@"
 else
-    echo "cub-agent not found. Build with: go build -o cub-agent ./cmd/cub-agent/"
+    echo "cub-scout not found. Build with: go build -o cub-scout ./cmd/cub-scout/"
     exit 1
 fi

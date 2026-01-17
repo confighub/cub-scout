@@ -26,7 +26,7 @@ But there are deployments in production nobody knows about.
 ## The Solution
 
 ```bash
-cub-agent map orphans
+cub-scout map orphans
 ```
 
 Output:
@@ -126,7 +126,7 @@ kubectl delete deploy/debug-pod -n prod
 ### Option 3: Import to ConfigHub
 
 ```bash
-cub-agent import
+cub-scout import
 # Select the orphan resources
 # Wizard creates ConfigHub Units
 ```
@@ -146,14 +146,14 @@ Document these as known exceptions.
 
 ```bash
 # Run weekly to catch drift
-cub-agent map orphans -n prod
+cub-scout map orphans -n prod
 ```
 
 ### Alert on New Orphans
 
 ```bash
 # In CI/CD or cron
-ORPHAN_COUNT=$(cub-agent map list -q "owner=Native AND namespace=prod*" --json | jq length)
+ORPHAN_COUNT=$(cub-scout map list -q "owner=Native AND namespace=prod*" --json | jq length)
 if [ "$ORPHAN_COUNT" -gt 0 ]; then
   echo "WARNING: $ORPHAN_COUNT orphan resources in production"
   # Send alert

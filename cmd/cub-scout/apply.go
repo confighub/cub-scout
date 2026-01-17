@@ -18,27 +18,27 @@ var applyCmd = &cobra.Command{
 	Short: "Apply a proposal from JSON (GUI)",
 	Long: `Apply a Hub/App Space proposal to create resources in ConfigHub.
 
-This is the GUI companion to "cub-agent import".
+This is the GUI companion to "cub-scout import".
 
 Workflow:
-  TUI (interactive): cub-agent import
-  GUI (from JSON):   cub-agent import --json | cub-agent apply -
+  TUI (interactive): cub-scout import
+  GUI (from JSON):   cub-scout import --json | cub-scout apply -
 
 The proposal can come from:
-- A JSON file (from "cub-agent import --json")
+- A JSON file (from "cub-scout import --json")
 - Stdin (for GUI integration)
 
 Examples:
   # Single cluster: generate, edit, apply
-  cub-agent import --json > proposal.json
+  cub-scout import --json > proposal.json
   # (GUI displays, user edits)
-  cub-agent apply proposal.json
+  cub-scout apply proposal.json
 
   # Fleet: multiple clusters → unified proposal → apply
-  cub-agent fleet cluster*.json --suggest --json | cub-agent apply -
+  cub-scout fleet cluster*.json --suggest --json | cub-scout apply -
 
   # Dry-run to preview
-  cub-agent apply proposal.json --dry-run
+  cub-scout apply proposal.json --dry-run
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runApply,

@@ -12,7 +12,7 @@ The "Uber Test" is a comprehensive proof test that verifies everything works:
 
 ```bash
 # UBER TEST - Run this to prove confighub-agent works
-go build ./cmd/cub-agent                           # Build
+go build ./cmd/cub-scout                           # Build
 go test ./...                                      # Unit + TUI tests
 go test -tags=integration ./test/integration/...  # Integration tests
 ./test/run-all.sh                                 # E2E demos + examples
@@ -79,8 +79,8 @@ go test -tags=integration ./test/integration/...
 
 | Test | What It Proves |
 |------|----------------|
-| TestMapStatus | `cub-agent map status` output format |
-| TestMapList | `cub-agent map list` produces output |
+| TestMapStatus | `cub-scout map status` output format |
+| TestMapList | `cub-scout map list` produces output |
 | TestMapListJSON | JSON output is valid with required fields |
 | TestMapDeployers | GitOps deployer listing works |
 | TestMapOrphans | Orphan detection works |
@@ -172,9 +172,9 @@ examples/                          # Phase 3: Integration examples
 | `pkg/agent/state_scanner_test.go` | 8 | CCVE state scanning |
 | `pkg/query/query_test.go` | 12 | Query language parsing |
 | `pkg/remedy/executor_test.go` | 6 | Remedy execution |
-| `cmd/cub-agent/localcluster_test.go` | 36 | Local cluster TUI keybindings |
-| `cmd/cub-agent/hierarchy_test.go` | 27 | Hub TUI navigation |
-| `cmd/cub-agent/import_wizard_test.go` | 8 | Import wizard flow |
+| `cmd/cub-scout/localcluster_test.go` | 36 | Local cluster TUI keybindings |
+| `cmd/cub-scout/hierarchy_test.go` | 27 | Hub TUI navigation |
+| `cmd/cub-scout/import_wizard_test.go` | 8 | Import wizard flow |
 
 ### E2E Demos (`./test/atk/demo`)
 
@@ -260,7 +260,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
       - uses: helm/kind-action@v1
-      - run: go build ./cmd/cub-agent
+      - run: go build ./cmd/cub-scout
       - run: go test -tags=integration ./test/integration/...
 
   tier3-e2e:
@@ -321,7 +321,7 @@ go install golang.org/x/tools/cmd/deadcode@latest
 go vet ./...
 
 # Build to verify
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 ```
 
 **What to look for:**

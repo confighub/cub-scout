@@ -19,12 +19,12 @@ Queries let you filter and search across all your resources:
 ## Step 1: Basic Query Syntax
 
 ```bash
-./cub-agent map list -q "FIELD=VALUE"
+./cub-scout map list -q "FIELD=VALUE"
 ```
 
 **Example:**
 ```bash
-./cub-agent map list -q "owner=Flux"
+./cub-scout map list -q "owner=Flux"
 ```
 
 **Expected output:**
@@ -52,12 +52,12 @@ orders-prod      order-service           Deployment     Flux     Ready
 
 **Find orphans (security/rebuild risk):**
 ```bash
-./cub-agent map list -q "owner=Native"
+./cub-scout map list -q "owner=Native"
 ```
 
 **Find all GitOps-managed:**
 ```bash
-./cub-agent map list -q "owner!=Native"
+./cub-scout map list -q "owner!=Native"
 ```
 
 ---
@@ -66,13 +66,13 @@ orders-prod      order-service           Deployment     Flux     Ready
 
 ```bash
 # Exact match
-./cub-agent map list -q "namespace=payments-prod"
+./cub-scout map list -q "namespace=payments-prod"
 
 # Pattern match (glob)
-./cub-agent map list -q "namespace=payments-*"
+./cub-scout map list -q "namespace=payments-*"
 
 # Multiple namespaces
-./cub-agent map list -q "namespace=payments-prod OR namespace=orders-prod"
+./cub-scout map list -q "namespace=payments-prod OR namespace=orders-prod"
 ```
 
 ---
@@ -81,16 +81,16 @@ orders-prod      order-service           Deployment     Flux     Ready
 
 ```bash
 # By app label
-./cub-agent map list -q "labels[app]=payment-api"
+./cub-scout map list -q "labels[app]=payment-api"
 
 # By team label
-./cub-agent map list -q "labels[team]=platform"
+./cub-scout map list -q "labels[team]=platform"
 
 # By environment
-./cub-agent map list -q "labels[env]=production"
+./cub-scout map list -q "labels[env]=production"
 
 # Combined
-./cub-agent map list -q "labels[app]=payment-api AND labels[env]=production"
+./cub-scout map list -q "labels[app]=payment-api AND labels[env]=production"
 ```
 
 ---
@@ -99,14 +99,14 @@ orders-prod      order-service           Deployment     Flux     Ready
 
 ```bash
 # Only healthy resources
-./cub-agent map list -q "status=Ready"
+./cub-scout map list -q "status=Ready"
 
 # Find problems
-./cub-agent map list -q "status!=Ready"
+./cub-scout map list -q "status!=Ready"
 
 # Find specific issues
-./cub-agent map list -q "status=Pending"
-./cub-agent map list -q "status=Failed"
+./cub-scout map list -q "status=Pending"
+./cub-scout map list -q "status=Failed"
 ```
 
 ---
@@ -117,13 +117,13 @@ Use `AND`, `OR`, and parentheses:
 
 ```bash
 # Flux resources that aren't ready
-./cub-agent map list -q "owner=Flux AND status!=Ready"
+./cub-scout map list -q "owner=Flux AND status!=Ready"
 
 # Payment services across all environments
-./cub-agent map list -q "labels[app]=payment-api"
+./cub-scout map list -q "labels[app]=payment-api"
 
 # Production resources from either team
-./cub-agent map list -q "labels[env]=production AND (labels[team]=payments OR labels[team]=orders)"
+./cub-scout map list -q "labels[env]=production AND (labels[team]=payments OR labels[team]=orders)"
 ```
 
 ---
@@ -161,13 +161,13 @@ Save frequently used queries:
 
 ```bash
 # Save a query
-./cub-agent map list -q "owner=Native" --save orphans
+./cub-scout map list -q "owner=Native" --save orphans
 
 # Run saved query
-./cub-agent map list --query orphans
+./cub-scout map list --query orphans
 
 # List saved queries
-./cub-agent map list --list-queries
+./cub-scout map list --list-queries
 ```
 
 See [TUI-SAVED-QUERIES.md](TUI-SAVED-QUERIES.md) for the full guide.
@@ -193,16 +193,16 @@ See [TUI-SAVED-QUERIES.md](TUI-SAVED-QUERIES.md) for the full guide.
 
 ```bash
 # Table (default)
-./cub-agent map list -q "owner=Flux"
+./cub-scout map list -q "owner=Flux"
 
 # JSON (for scripting)
-./cub-agent map list -q "owner=Flux" --json
+./cub-scout map list -q "owner=Flux" --json
 
 # Count only
-./cub-agent map list -q "owner=Flux" --count
+./cub-scout map list -q "owner=Flux" --count
 
 # Names only
-./cub-agent map list -q "owner=Flux" --names-only
+./cub-scout map list -q "owner=Flux" --names-only
 ```
 
 ---
@@ -212,7 +212,7 @@ See [TUI-SAVED-QUERIES.md](TUI-SAVED-QUERIES.md) for the full guide.
 ### "What's not managed by GitOps?"
 
 ```bash
-./cub-agent map list -q "owner=Native"
+./cub-scout map list -q "owner=Native"
 ```
 
 Security audit: These resources aren't tracked in Git.
@@ -220,7 +220,7 @@ Security audit: These resources aren't tracked in Git.
 ### "What's broken right now?"
 
 ```bash
-./cub-agent map list -q "status!=Ready"
+./cub-scout map list -q "status!=Ready"
 ```
 
 Incident response: Focus on unhealthy resources.
@@ -228,7 +228,7 @@ Incident response: Focus on unhealthy resources.
 ### "Where is payment-api deployed?"
 
 ```bash
-./cub-agent map list -q "labels[app]=payment-api"
+./cub-scout map list -q "labels[app]=payment-api"
 ```
 
 Or with ConfigHub connected:

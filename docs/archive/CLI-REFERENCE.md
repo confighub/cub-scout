@@ -1,6 +1,6 @@
 # ConfigHub Agent CLI Reference
 
-Complete command-line reference for `cub-agent`.
+Complete command-line reference for `cub-scout`.
 
 ---
 
@@ -55,7 +55,7 @@ cd confighub-agent
 Create, list, and manage App Spaces in ConfigHub.
 
 ```bash
-cub-agent app-space [command]
+cub-scout app-space [command]
 ```
 
 ### Subcommands
@@ -63,7 +63,7 @@ cub-agent app-space [command]
 #### app-space create
 
 ```bash
-cub-agent app-space create <name> [flags]
+cub-scout app-space create <name> [flags]
 ```
 
 | Flag | Description |
@@ -75,7 +75,7 @@ cub-agent app-space create <name> [flags]
 #### app-space list
 
 ```bash
-cub-agent app-space list [flags]
+cub-scout app-space list [flags]
 ```
 
 | Flag | Description |
@@ -87,17 +87,17 @@ cub-agent app-space list [flags]
 
 ```bash
 # Create an App Space
-cub-agent app-space create payments-team
+cub-scout app-space create payments-team
 
 # Create and set as current context
-cub-agent app-space create payments-team --set-context
+cub-scout app-space create payments-team --set-context
 
 # Create with labels
-cub-agent app-space create payments-team --label team=payments --label owner=platform
+cub-scout app-space create payments-team --label team=payments --label owner=platform
 
 # List all App Spaces
-cub-agent app-space list
-cub-agent app-space list --json
+cub-scout app-space list
+cub-scout app-space list --json
 ```
 
 ---
@@ -107,7 +107,7 @@ cub-agent app-space list --json
 Apply a Hub/App Space proposal to create resources in ConfigHub. GUI companion to `import`.
 
 ```bash
-cub-agent apply [proposal.json] [flags]
+cub-scout apply [proposal.json] [flags]
 ```
 
 ### Flags
@@ -122,15 +122,15 @@ cub-agent apply [proposal.json] [flags]
 
 ```bash
 # Single cluster: generate, edit, apply
-cub-agent import --json > proposal.json
+cub-scout import --json > proposal.json
 # (GUI displays, user edits)
-cub-agent apply proposal.json
+cub-scout apply proposal.json
 
 # Fleet: multiple clusters -> unified proposal -> apply
-cub-agent import-cluster-aggregator cluster*.json --suggest --json | cub-agent apply -
+cub-scout import-cluster-aggregator cluster*.json --suggest --json | cub-scout apply -
 
 # Dry-run to preview
-cub-agent apply proposal.json --dry-run
+cub-scout apply proposal.json --dry-run
 ```
 
 ---
@@ -140,7 +140,7 @@ cub-agent apply proposal.json --dry-run
 Parse a Git repo and scan a cluster, showing alignment between them.
 
 ```bash
-cub-agent combined [flags]
+cub-scout combined [flags]
 ```
 
 ### Flags
@@ -160,19 +160,19 @@ cub-agent combined [flags]
 
 ```bash
 # Combine Git repo with current cluster
-cub-agent combined --git-url https://github.com/org/gitops-repo --namespace demo
+cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo
 
 # Generate Hub/App Space proposal
-cub-agent combined --git-url https://github.com/org/gitops-repo --namespace demo --suggest
+cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo --suggest
 
 # Preview what would be created (dry-run)
-cub-agent combined --namespace demo --suggest --apply --dry-run
+cub-scout combined --namespace demo --suggest --apply --dry-run
 
 # Apply: create App Space and Units in ConfigHub
-cub-agent combined --namespace demo --suggest --apply
+cub-scout combined --namespace demo --suggest --apply
 
 # Use local Git repo with JSON output
-cub-agent combined --git-path ./my-repo --namespace demo --suggest --json
+cub-scout combined --git-path ./my-repo --namespace demo --suggest --json
 ```
 
 ---
@@ -182,35 +182,35 @@ cub-agent combined --git-path ./my-repo --namespace demo --suggest --json
 Generate shell completion script.
 
 ```bash
-cub-agent completion [bash|zsh|fish|powershell]
+cub-scout completion [bash|zsh|fish|powershell]
 ```
 
 ### Setup
 
 **Bash:**
 ```bash
-source <(cub-agent completion bash)
+source <(cub-scout completion bash)
 # Or add to ~/.bashrc:
-cub-agent completion bash >> ~/.bashrc
+cub-scout completion bash >> ~/.bashrc
 ```
 
 **Zsh:**
 ```bash
-source <(cub-agent completion zsh)
+source <(cub-scout completion zsh)
 # Or install to fpath:
-cub-agent completion zsh > "${fpath[1]}/_cub-agent"
+cub-scout completion zsh > "${fpath[1]}/_cub-scout"
 ```
 
 **Fish:**
 ```bash
-cub-agent completion fish | source
+cub-scout completion fish | source
 # Or install:
-cub-agent completion fish > ~/.config/fish/completions/cub-agent.fish
+cub-scout completion fish > ~/.config/fish/completions/cub-scout.fish
 ```
 
 **PowerShell:**
 ```powershell
-cub-agent completion powershell | Out-String | Invoke-Expression
+cub-scout completion powershell | Out-String | Invoke-Expression
 ```
 
 ---
@@ -220,7 +220,7 @@ cub-agent completion powershell | Out-String | Invoke-Expression
 Aggregate import data from multiple clusters into a fleet view. GUI/multi-cluster companion to `import`.
 
 ```bash
-cub-agent import-cluster-aggregator [flags]
+cub-scout import-cluster-aggregator [flags]
 ```
 
 ### Flags
@@ -237,15 +237,15 @@ cub-agent import-cluster-aggregator [flags]
 # Full workflow: scan clusters, generate unified proposal, apply
 for ctx in cluster-a cluster-b; do
   kubectl config use-context $ctx
-  cub-agent import --json > ${ctx}.json
+  cub-scout import --json > ${ctx}.json
 done
-cub-agent import-cluster-aggregator cluster-*.json --suggest --json | cub-agent apply -
+cub-scout import-cluster-aggregator cluster-*.json --suggest --json | cub-scout apply -
 
 # Generate unified proposal
-cub-agent import-cluster-aggregator cluster1.json cluster2.json --suggest
+cub-scout import-cluster-aggregator cluster1.json cluster2.json --suggest
 
 # Just aggregate (no proposal)
-cub-agent import-cluster-aggregator cluster1.json cluster2.json cluster3.json
+cub-scout import-cluster-aggregator cluster1.json cluster2.json cluster3.json
 ```
 
 ---
@@ -255,7 +255,7 @@ cub-agent import-cluster-aggregator cluster1.json cluster2.json cluster3.json
 Launch an interactive TUI to explore your ConfigHub hierarchy.
 
 ```bash
-cub-agent hierarchy [flags]
+cub-scout hierarchy [flags]
 ```
 
 ### Flags
@@ -286,7 +286,7 @@ cub-agent hierarchy [flags]
 Import your cluster workloads into ConfigHub. One command does everything.
 
 ```bash
-cub-agent import [flags]
+cub-scout import [flags]
 ```
 
 ### Flags
@@ -304,19 +304,19 @@ cub-agent import [flags]
 
 ```bash
 # Import everything (discovers all namespaces)
-cub-agent import
+cub-scout import
 
 # Import one namespace
-cub-agent import -n argocd
+cub-scout import -n argocd
 
 # Preview what would be created
-cub-agent import --dry-run
+cub-scout import --dry-run
 
 # Skip confirmation
-cub-agent import -y
+cub-scout import -y
 
 # JSON output (for GUI integration)
-cub-agent import --json
+cub-scout import --json
 ```
 
 ---
@@ -326,7 +326,7 @@ cub-agent import --json
 Import an ArgoCD Application's managed resources into ConfigHub as a Unit.
 
 ```bash
-cub-agent import-argocd [application-name] [flags]
+cub-scout import-argocd [application-name] [flags]
 ```
 
 ### Flags
@@ -350,22 +350,22 @@ cub-agent import-argocd [application-name] [flags]
 
 ```bash
 # List available ArgoCD Applications
-cub-agent import-argocd --list
+cub-scout import-argocd --list
 
 # Import a specific ArgoCD Application
-cub-agent import-argocd guestbook
+cub-scout import-argocd guestbook
 
 # Preview what would be imported (dry-run)
-cub-agent import-argocd guestbook --dry-run
+cub-scout import-argocd guestbook --dry-run
 
 # Show YAML content that would be imported
-cub-agent import-argocd guestbook --show-yaml
+cub-scout import-argocd guestbook --show-yaml
 
 # Import and disable ArgoCD auto-sync
-cub-agent import-argocd guestbook --disable-sync
+cub-scout import-argocd guestbook --disable-sync
 
 # Import and delete the ArgoCD Application
-cub-agent import-argocd guestbook --delete-app
+cub-scout import-argocd guestbook --delete-app
 ```
 
 ---
@@ -375,7 +375,7 @@ cub-agent import-argocd guestbook --delete-app
 Query and explore Kubernetes resources, their ownership, and relationships.
 
 ```bash
-cub-agent map [command] [flags]
+cub-scout map [command] [flags]
 ```
 
 ### Global Flags
@@ -401,7 +401,7 @@ cub-agent map [command] [flags]
 List resources and their ownership.
 
 ```bash
-cub-agent map list [flags]
+cub-scout map list [flags]
 ```
 
 | Flag | Description |
@@ -430,19 +430,19 @@ cub-agent map list [flags]
 
 ```bash
 # List all resources from current cluster
-cub-agent map list
+cub-scout map list
 
 # Filter by namespace and kind
-cub-agent map list --namespace default --kind Deployment
+cub-scout map list --namespace default --kind Deployment
 
 # Query: GitOps-managed deployments
-cub-agent map list -q "kind=Deployment AND owner!=Native"
+cub-scout map list -q "kind=Deployment AND owner!=Native"
 
 # Query: Resources in production namespaces
-cub-agent map list -q "namespace=prod*"
+cub-scout map list -q "namespace=prod*"
 
 # Query: By label
-cub-agent map list -q "labels[app]=nginx"
+cub-scout map list -q "labels[app]=nginx"
 ```
 
 #### map fleet
@@ -450,7 +450,7 @@ cub-agent map list -q "labels[app]=nginx"
 Display units across spaces grouped by app and variant labels.
 
 ```bash
-cub-agent map fleet [flags]
+cub-scout map fleet [flags]
 ```
 
 | Flag | Description |
@@ -462,13 +462,13 @@ cub-agent map fleet [flags]
 
 ```bash
 # View all apps across spaces
-cub-agent map fleet
+cub-scout map fleet
 
 # Filter to specific app
-cub-agent map fleet --app payment-api
+cub-scout map fleet --app payment-api
 
 # Filter to specific space
-cub-agent map fleet --space payments-team
+cub-scout map fleet --space payments-team
 ```
 
 #### map queries
@@ -476,7 +476,7 @@ cub-agent map fleet --space payments-team
 List and manage saved queries for filtering resources.
 
 ```bash
-cub-agent map queries [command] [flags]
+cub-scout map queries [command] [flags]
 ```
 
 | Flag | Description |
@@ -495,13 +495,13 @@ cub-agent map queries [command] [flags]
 
 ```bash
 # List all saved queries
-cub-agent map queries
+cub-scout map queries
 
 # Save a new query
-cub-agent map queries save my-apps "labels[team]=payments"
+cub-scout map queries save my-apps "labels[team]=payments"
 
 # Run a saved query
-cub-agent map list -q unmanaged
+cub-scout map list -q unmanaged
 ```
 
 ---
@@ -511,7 +511,7 @@ cub-agent map list -q unmanaged
 Parse a GitOps repository and show its structure.
 
 ```bash
-cub-agent parse-repo [flags]
+cub-scout parse-repo [flags]
 ```
 
 ### Flags
@@ -534,13 +534,13 @@ cub-agent parse-repo [flags]
 
 ```bash
 # Parse a remote repo
-cub-agent parse-repo --url https://github.com/fluxcd/flux2-kustomize-helm-example
+cub-scout parse-repo --url https://github.com/fluxcd/flux2-kustomize-helm-example
 
 # Parse a local directory
-cub-agent parse-repo --path ./my-gitops-repo
+cub-scout parse-repo --path ./my-gitops-repo
 
 # JSON output
-cub-agent parse-repo --url https://github.com/org/repo --json
+cub-scout parse-repo --url https://github.com/org/repo --json
 ```
 
 ---
@@ -550,7 +550,7 @@ cub-agent parse-repo --url https://github.com/org/repo --json
 Scan the cluster for CCVEs including stuck states and Kyverno violations.
 
 ```bash
-cub-agent scan [flags]
+cub-scout scan [flags]
 ```
 
 ### Flags
@@ -589,25 +589,25 @@ For Kyverno violations:
 
 ```bash
 # Full scan (Kyverno + state)
-cub-agent scan
+cub-scout scan
 
 # Scan specific namespace
-cub-agent scan -n production
+cub-scout scan -n production
 
 # State scan only (stuck reconciliations)
-cub-agent scan --state
+cub-scout scan --state
 
 # Kyverno scan only
-cub-agent scan --kyverno
+cub-scout scan --kyverno
 
 # Dangling/orphan resource scan
-cub-agent scan --dangling
+cub-scout scan --dangling
 
 # Output as JSON
-cub-agent scan --json
+cub-scout scan --json
 
 # List all KPOL policies in database
-cub-agent scan --list
+cub-scout scan --list
 ```
 
 ---
@@ -617,7 +617,7 @@ cub-agent scan --list
 Take a snapshot of the current cluster state and output as GitOps State Format (GSF) JSON.
 
 ```bash
-cub-agent snapshot [flags]
+cub-scout snapshot [flags]
 ```
 
 ### Flags
@@ -633,19 +633,19 @@ cub-agent snapshot [flags]
 
 ```bash
 # Output to stdout
-cub-agent snapshot
+cub-scout snapshot
 
 # Output to file
-cub-agent snapshot -o state.json
+cub-scout snapshot -o state.json
 
 # Pipe to jq
-cub-agent snapshot | jq '.entries[] | select(.owner.type == "flux")'
+cub-scout snapshot | jq '.entries[] | select(.owner.type == "flux")'
 
 # Filter by namespace
-cub-agent snapshot --namespace prod
+cub-scout snapshot --namespace prod
 
 # Filter by kind
-cub-agent snapshot --kind Deployment
+cub-scout snapshot --kind Deployment
 ```
 
 ---
@@ -655,7 +655,7 @@ cub-agent snapshot --kind Deployment
 Trace the full ownership chain from Git source to deployed resource.
 
 ```bash
-cub-agent trace <kind/name> or <kind> <name> [flags]
+cub-scout trace <kind/name> or <kind> <name> [flags]
 ```
 
 ### Flags
@@ -677,16 +677,16 @@ cub-agent trace <kind/name> or <kind> <name> [flags]
 
 ```bash
 # Trace a deployment
-cub-agent trace deployment/nginx -n demo
+cub-scout trace deployment/nginx -n demo
 
 # Trace with kind and name separately
-cub-agent trace Deployment nginx -n demo
+cub-scout trace Deployment nginx -n demo
 
 # Trace an Argo CD application directly
-cub-agent trace --app frontend-app
+cub-scout trace --app frontend-app
 
 # Output as JSON
-cub-agent trace deployment/nginx -n demo --json
+cub-scout trace deployment/nginx -n demo --json
 ```
 
 ---
@@ -696,7 +696,7 @@ cub-agent trace deployment/nginx -n demo --json
 Print version information.
 
 ```bash
-cub-agent version
+cub-scout version
 ```
 
 ---
@@ -821,9 +821,9 @@ webhooks:
 
 ---
 
-## Connected Mode: cub-agent vs cub CLI
+## Connected Mode: cub-scout vs cub CLI
 
-When you connect to ConfigHub (`cub auth login`), you gain access to richer capabilities via the `cub` CLI that complement what `cub-agent` provides.
+When you connect to ConfigHub (`cub auth login`), you gain access to richer capabilities via the `cub` CLI that complement what `cub-scout` provides.
 
 ### Architecture
 
@@ -852,7 +852,7 @@ OUTSIDE (Sources)              INSIDE (Hub + App Spaces)              TARGETS
 
 | Command | Mode | What It Does |
 |---------|------|--------------|
-| `cub-agent import` | Standalone/TUI | Discover workloads, suggest structure, create Units |
+| `cub-scout import` | Standalone/TUI | Discover workloads, suggest structure, create Units |
 | `cub unit import` | Connected (Worker) | Import with filters + suggestions; adjust names/labels after |
 | `cub unit refresh` | Connected (Worker) | Pull live cluster state back into existing Unit |
 
@@ -860,13 +860,13 @@ OUTSIDE (Sources)              INSIDE (Hub + App Spaces)              TARGETS
 
 ### When to Use Each
 
-**`cub-agent import`** — First-time discovery and onboarding:
+**`cub-scout import`** — First-time discovery and onboarding:
 ```bash
 # Discover what's running, propose App Space structure
-cub-agent import -n my-namespace --dry-run
+cub-scout import -n my-namespace --dry-run
 
 # Create Units in ConfigHub
-cub-agent import -n my-namespace
+cub-scout import -n my-namespace
 ```
 
 **`cub unit import`** — After Units exist, import specific resources:
@@ -908,8 +908,8 @@ cub unit livedata myunit -o livedata.yaml
 ### The Flow
 
 ```
-1. STANDALONE (cub-agent)
-   └─ cub-agent import → discovers workloads → creates Units
+1. STANDALONE (cub-scout)
+   └─ cub-scout import → discovers workloads → creates Units
 
 2. CONNECTED (cub + worker)
    └─ Worker runs on target cluster

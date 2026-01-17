@@ -67,14 +67,14 @@ sample_output: |
   Query Language Demo: Filter your fleet
 
   Query 1: GitOps-managed deployments only (owner!=Native)
-    $ ./cub-agent map list -q "kind=Deployment AND owner!=Native"
+    $ ./cub-scout map list -q "kind=Deployment AND owner!=Native"
 
   NAMESPACE    KIND         NAME                   OWNER
   flux-system  Deployment   source-controller      Flux
   flux-system  Deployment   kustomize-controller   Flux
 
   Query 2: Production namespaces (namespace=prod*)
-    $ ./cub-agent map list -q "namespace=prod*"
+    $ ./cub-scout map list -q "namespace=prod*"
 
   Query Syntax:
     field=value           Exact match

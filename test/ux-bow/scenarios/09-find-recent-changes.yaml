@@ -32,7 +32,7 @@ goals:
 
 entry_points:
   tui:
-    description: "Using cub-agent map TUI"
+    description: "Using cub-scout map TUI"
     expected_keystrokes: 2
     expected_commands: 1
     difficulty: trivial
@@ -47,17 +47,17 @@ entry_points:
         keystrokes: 0
 
   cli:
-    description: "Using cub-agent map list with time filter"
+    description: "Using cub-scout map list with time filter"
     expected_keystrokes: 35
     expected_commands: 1
     difficulty: medium
     journey:
       - step: 1
-        command: "cub-agent map list --since=1h"
+        command: "cub-scout map list --since=1h"
         expect: "Resources changed in last hour"
         keystrokes: 28
       - step: 2
-        command: "cub-agent map list --since=1h --sort=time"
+        command: "cub-scout map list --since=1h --sort=time"
         expect: "Sorted by modification time"
         keystrokes: 40
 

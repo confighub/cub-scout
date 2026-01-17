@@ -6,10 +6,10 @@ Trace any Kubernetes resource back to its Git source. See the full ownership cha
 
 ```bash
 # Trace a specific resource
-cub-agent trace deployment/nginx -n demo
+cub-scout trace deployment/nginx -n demo
 
 # Trace an Argo CD application by name
-cub-agent trace --app frontend-app
+cub-scout trace --app frontend-app
 
 # Interactive mode: pick from a list
 ./test/atk/map trace
@@ -167,7 +167,7 @@ The trace output uses colors to help identify issues at a glance:
 ## CLI Options
 
 ```
-cub-agent trace <kind/name> [flags]
+cub-scout trace <kind/name> [flags]
 
 Flags:
   -n, --namespace string   Namespace of the resource
@@ -202,7 +202,7 @@ Traces all deployers (Kustomizations, HelmReleases, Applications) and shows thei
 ### 1. "Why isn't my change deployed?"
 
 ```bash
-cub-agent trace deployment/my-app -n production
+cub-scout trace deployment/my-app -n production
 ```
 
 The trace shows:
@@ -213,7 +213,7 @@ The trace shows:
 ### 2. "What manages this resource?"
 
 ```bash
-cub-agent trace configmap/my-config -n default
+cub-scout trace configmap/my-config -n default
 ```
 
 Shows the full chain from source to resource, identifying the owning Flux/Argo deployer.
@@ -230,7 +230,7 @@ When something is wrong, trace immediately shows which level in the chain has th
 
 ```bash
 # Get structured output for automation
-cub-agent trace deployment/api -n prod --json | jq '.chain[] | select(.ready == false)'
+cub-scout trace deployment/api -n prod --json | jq '.chain[] | select(.ready == false)'
 ```
 
 ## Related CCVEs

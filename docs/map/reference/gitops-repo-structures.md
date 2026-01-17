@@ -302,7 +302,7 @@ This decouples Git structure from deployment.
 
 ## Detecting Patterns with Map
 
-`cub-agent map` auto-detects these patterns via:
+`cub-scout map` auto-detects these patterns via:
 
 | Pattern | Detection |
 |---------|-----------|
@@ -311,20 +311,20 @@ This decouples Git structure from deployment.
 | Argo CD Application | `argocd.argoproj.io/instance` label |
 | Helm | `app.kubernetes.io/managed-by: Helm` |
 
-Run `cub-agent trace` to see the full chain from Git → Deployer → Resource.
+Run `cub-scout trace` to see the full chain from Git → Deployer → Resource.
 
 ---
 
 ## Importing to ConfigHub
 
-The `cub-agent import` wizard respects existing structures:
+The `cub-scout import` wizard respects existing structures:
 
 ```bash
 # Preview what would be created
-cub-agent import --dry-run
+cub-scout import --dry-run
 
 # Interactive wizard
-cub-agent import --wizard
+cub-scout import --wizard
 ```
 
 The wizard will:

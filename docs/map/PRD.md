@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Product:** cub-agent map
+**Product:** cub-scout map
 **Version:** 1.0
 **Updated:** 2026-01-14
 

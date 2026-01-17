@@ -11,7 +11,7 @@ fixture: "test/atk/fixtures/flux-basic.yaml"
 
 commands:
   - id: flux_ownership
-    command: "kubectl apply -f test/atk/fixtures/flux-basic.yaml && sleep 2 && ./cub-agent map list --namespace demo-flux"
+    command: "kubectl apply -f test/atk/fixtures/flux-basic.yaml && sleep 2 && ./cub-scout map list --namespace demo-flux"
     description: "Apply Flux fixture and verify ownership"
 
     expected:

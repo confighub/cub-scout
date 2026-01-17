@@ -155,7 +155,7 @@ func FluxTrace(ctx context.Context, kind, name, namespace string) (*FluxTraceRes
 }
 ```
 
-**Deliverable:** `./cub-agent trace <resource>` command that calls flux trace
+**Deliverable:** `./cub-scout trace <resource>` command that calls flux trace
 
 ### Phase 2: Integrate into Map
 
@@ -163,7 +163,7 @@ func FluxTrace(ctx context.Context, kind, name, namespace string) (*FluxTraceRes
 
 **Files to modify:**
 - `test/atk/map` (enhance pipelines view)
-- `cmd/cub-agent/map.go` (add trace subcommand)
+- `cmd/cub-scout/map.go` (add trace subcommand)
 
 **Implementation:**
 - Add `map trace` subcommand
@@ -348,8 +348,8 @@ Application/frontend-app     ✓ Synced (sha1:abc123)
 
 | Phase | Deliverable | Effort |
 |-------|-------------|--------|
-| **1a** | `cub-agent trace` for Flux resources | 2-3 hours |
-| **1b** | `cub-agent trace` for Argo resources | 2-3 hours |
+| **1a** | `cub-scout trace` for Flux resources | 2-3 hours |
+| **1b** | `cub-scout trace` for Argo resources | 2-3 hours |
 | **2** | `map trace` and enhanced pipelines | 3-4 hours |
 | **3** | Efficient batch tracing for overview | 4-6 hours |
 | **4** | CCVE patterns using trace | 2-3 hours |
@@ -405,14 +405,14 @@ func ArgoTrace(ctx context.Context, appName string) (*TraceResult, error) {
 
 ```bash
 # CLI: Trace a Flux-managed resource (uses flux trace)
-./cub-agent trace deployment/nginx -n demo
+./cub-scout trace deployment/nginx -n demo
 
 # CLI: Trace an Argo-managed resource (uses argocd app get)
-./cub-agent trace deployment/frontend -n demo
+./cub-scout trace deployment/frontend -n demo
 # Auto-detects owner and uses appropriate tool
 
 # CLI: Trace by Argo application name directly
-./cub-agent trace --app frontend-app
+./cub-scout trace --app frontend-app
 
 # CLI: Map with trace chains
 ./test/atk/map pipelines --trace

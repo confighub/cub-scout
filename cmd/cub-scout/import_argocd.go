@@ -112,22 +112,22 @@ the actual workload resources.
 
 Examples:
   # List available ArgoCD Applications
-  cub-agent import-argocd --list
+  cub-scout import-argocd --list
 
   # Import a specific ArgoCD Application
-  cub-agent import-argocd guestbook
+  cub-scout import-argocd guestbook
 
   # Preview what would be imported (dry-run)
-  cub-agent import-argocd guestbook --dry-run
+  cub-scout import-argocd guestbook --dry-run
 
   # Show YAML content that would be imported
-  cub-agent import-argocd guestbook --show-yaml
+  cub-scout import-argocd guestbook --show-yaml
 
   # Import and disable ArgoCD auto-sync (keep App for reference)
-  cub-agent import-argocd guestbook --disable-sync
+  cub-scout import-argocd guestbook --disable-sync
 
   # Import and delete the ArgoCD Application (hand off to ConfigHub)
-  cub-agent import-argocd guestbook --delete-app
+  cub-scout import-argocd guestbook --delete-app
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runImportArgoCD,
@@ -307,7 +307,7 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 		fmt.Printf("⚠ App of Apps detected - this Application manages other Applications,\n")
 		fmt.Printf("  not workload resources. Import the child Applications instead:\n")
 		for _, child := range childApps {
-			fmt.Printf("  → cub-agent import-argocd %s\n", child)
+			fmt.Printf("  → cub-scout import-argocd %s\n", child)
 		}
 		fmt.Println()
 		fmt.Println("No unit will be created for the App of Apps parent.")
@@ -1046,7 +1046,7 @@ func listArgoApplicationsCmd(ctx context.Context, client dynamic.Interface, name
 
 	fmt.Println()
 	fmt.Println("To import an application:")
-	fmt.Println("  cub-agent import-argocd <application-name> --dry-run")
+	fmt.Println("  cub-scout import-argocd <application-name> --dry-run")
 
 	return nil
 }

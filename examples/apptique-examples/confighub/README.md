@@ -155,16 +155,16 @@ The apptique examples map directly to the **IITS Hub-and-Spoke** enterprise patt
 
 ```bash
 # All prod instances
-./cub-agent map list -q "namespace=apptique-*"
+./cub-scout map list -q "namespace=apptique-*"
 
 # Find orphans (kubectl'd resources)
-./cub-agent map list -q "owner=Native"
+./cub-scout map list -q "owner=Native"
 
 # GitOps-managed only
-./cub-agent map list -q "owner!=Native"
+./cub-scout map list -q "owner!=Native"
 
 # Flux OR Argo
-./cub-agent map list -q "owner=Flux OR owner=ArgoCD"
+./cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 ```
 
 ### IITS Deep Dive

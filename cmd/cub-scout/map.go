@@ -102,13 +102,13 @@ When run without a subcommand, launches the interactive TUI dashboard.
 Use 'map list' for plain text output suitable for scripting.
 
 INTERACTIVE MODE (default):
-  cub-agent map              # Local cluster TUI (no auth needed)
-  cub-agent map --hub        # ConfigHub hierarchy TUI (requires cub auth)
-  cub-agent map hub          # Same as --hub
+  cub-scout map              # Local cluster TUI (no auth needed)
+  cub-scout map --hub        # ConfigHub hierarchy TUI (requires cub auth)
+  cub-scout map hub          # Same as --hub
 
 PLAIN TEXT MODE:
-  cub-agent map list         # Scriptable output
-  cub-agent map list -q "owner=Native"   # Query filter
+  cub-scout map list         # Scriptable output
+  cub-scout map list -q "owner=Native"   # Query filter
 
 Local cluster mode reads from your current kubectl context.
 Hub mode requires ConfigHub authentication (cub auth login).
@@ -238,9 +238,9 @@ var mapListCmd = &cobra.Command{
 	Long: `List resources and their ownership from the current Kubernetes cluster.
 
 QUICK SHORTCUTS (for common queries):
-  cub-agent map crashes     # Find crashing/failing resources
-  cub-agent map orphans     # Find unmanaged (Native) resources
-  cub-agent map issues      # All resources with issues
+  cub-scout map crashes     # Find crashing/failing resources
+  cub-scout map orphans     # Find unmanaged (Native) resources
+  cub-scout map issues      # All resources with issues
 
 Query Syntax:
   field=value           Exact match (case-insensitive)
@@ -269,40 +269,40 @@ Time Filtering:
 
 Examples:
   # List all resources from current cluster
-  cub-agent map list
+  cub-scout map list
 
   # Filter by namespace and kind
-  cub-agent map list --namespace default --kind Deployment
+  cub-scout map list --namespace default --kind Deployment
 
   # Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)
-  cub-agent map list --owner ConfigHub
+  cub-scout map list --owner ConfigHub
 
   # Find unhealthy/failing resources
-  cub-agent map list -q "status!=Ready"
-  cub-agent map crashes              # shortcut for crashes
+  cub-scout map list -q "status!=Ready"
+  cub-scout map crashes              # shortcut for crashes
 
   # Find orphaned/unmanaged resources (shadow IT)
-  cub-agent map list -q "owner=Native"
-  cub-agent map orphans              # shortcut for above
+  cub-scout map list -q "owner=Native"
+  cub-scout map orphans              # shortcut for above
 
   # Query: GitOps-managed deployments
-  cub-agent map list -q "kind=Deployment AND owner!=Native"
+  cub-scout map list -q "kind=Deployment AND owner!=Native"
 
   # Query: Resources in production namespaces
-  cub-agent map list -q "namespace=prod*"
+  cub-scout map list -q "namespace=prod*"
 
   # Query: Flux or Argo managed
-  cub-agent map list -q "owner=Flux OR owner=ArgoCD"
+  cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 
   # Query: By label
-  cub-agent map list -q "labels[app]=nginx"
+  cub-scout map list -q "labels[app]=nginx"
 
   # Recent changes (incident investigation)
-  cub-agent map list --since=1h      # last hour
-  cub-agent map list --since=24h     # last day
+  cub-scout map list --since=1h      # last hour
+  cub-scout map list --since=24h     # last day
 
   # JSON output
-  cub-agent map list --json
+  cub-scout map list --json
 `,
 	RunE: runMapList,
 }
@@ -388,7 +388,7 @@ Shows:
 - Shadow IT warnings for native workloads
 
 Example:
-  cub-agent map dashboard`,
+  cub-scout map dashboard`,
 	RunE: runMapDashboard,
 }
 
@@ -414,11 +414,11 @@ Shows:
 - Failed Flux Kustomizations/HelmReleases
 - OutOfSync ArgoCD Applications
 
-This is equivalent to 'cub-agent map issues' but focused on crashes.
+This is equivalent to 'cub-scout map issues' but focused on crashes.
 
 Examples:
-  cub-agent map crashes             # Show all crashes
-  cub-agent map crashes --json      # JSON output for scripting`,
+  cub-scout map crashes             # Show all crashes
+  cub-scout map crashes --json      # JSON output for scripting`,
 	RunE: runMapCrashes,
 }
 
@@ -433,12 +433,12 @@ Orphaned resources are those without GitOps ownership:
 - Created by operators/controllers not tracked by GitOps
 - Legacy resources from before GitOps adoption
 
-This is equivalent to: cub-agent map list -q "owner=Native"
+This is equivalent to: cub-scout map list -q "owner=Native"
 
 Examples:
-  cub-agent map orphans             # List all orphaned resources
-  cub-agent map orphans --json      # JSON output
-  cub-agent map orphans --namespace prod  # Filter by namespace`,
+  cub-scout map orphans             # List all orphaned resources
+  cub-scout map orphans --json      # JSON output
+  cub-scout map orphans --namespace prod  # Filter by namespace`,
 	RunE: runMapOrphans,
 }
 
@@ -448,7 +448,7 @@ var mapHubCmd = &cobra.Command{
 	Short: "ConfigHub hierarchy explorer (requires cub auth)",
 	Long: `Launch the ConfigHub hierarchy TUI to explore Organizations, Spaces, Units, Targets, and Workers.
 
-This is equivalent to 'cub-agent map --hub' or the deprecated 'cub-agent hierarchy' command.
+This is equivalent to 'cub-scout map --hub' or the deprecated 'cub-scout hierarchy' command.
 
 Requires ConfigHub authentication. Run 'cub auth login' first.
 `,
@@ -798,13 +798,13 @@ The fleet view shows:
 
 Example:
   # View all apps across spaces
-  cub-agent map fleet
+  cub-scout map fleet
 
   # Filter to specific app
-  cub-agent map fleet --app payment-api
+  cub-scout map fleet --app payment-api
 
   # Filter to specific space (App Space)
-  cub-agent map fleet --space payments-team
+  cub-scout map fleet --space payments-team
 `,
 	RunE: runMapFleet,
 }
@@ -836,7 +836,7 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 	if len(units) == 0 {
 		fmt.Println("No units found with app/variant labels.")
 		fmt.Println("\nTo use fleet view, import with Hub/App Space model:")
-		fmt.Println("  cub-agent import --namespace myapp-prod --model hub-appspace")
+		fmt.Println("  cub-scout import --namespace myapp-prod --model hub-appspace")
 		return nil
 	}
 
@@ -1533,7 +1533,7 @@ func runMapSprawl(cmd *cobra.Command, args []string) error {
 
 	if nativeCount > 0 {
 		fmt.Printf("\n⚠ %d native workload(s) should be added to GitOps\n", nativeCount)
-		fmt.Println("  Run: cub-agent map bypass  # to see details")
+		fmt.Println("  Run: cub-scout map bypass  # to see details")
 	}
 
 	return nil
@@ -1669,7 +1669,7 @@ func runMapDashboard(cmd *cobra.Command, args []string) error {
 	}
 
 	if nativeCount > 0 {
-		fmt.Printf("\n⚠ %d native workload(s) - run: cub-agent map bypass\n", nativeCount)
+		fmt.Printf("\n⚠ %d native workload(s) - run: cub-scout map bypass\n", nativeCount)
 	}
 
 	return nil
@@ -1726,7 +1726,7 @@ func runMapBypass(cmd *cobra.Command, args []string) error {
 		fmt.Printf("\n⚠ %d native workload(s) deployed outside GitOps\n", nativeCount)
 		fmt.Println("\nRecommendations:")
 		fmt.Println("  1. Add GitOps manifests for these workloads")
-		fmt.Println("  2. Or import them: cub-agent map (press 'i' to import)")
+		fmt.Println("  2. Or import them: cub-scout map (press 'i' to import)")
 	}
 
 	return nil
@@ -4344,8 +4344,8 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 
 		fmt.Println()
 		fmt.Println("  For more ConfigHub features:")
-		fmt.Println("    • cub-agent map --hub     - Full ConfigHub hierarchy TUI")
-		fmt.Println("    • cub-agent map fleet     - Fleet view across spaces")
+		fmt.Println("    • cub-scout map --hub     - Full ConfigHub hierarchy TUI")
+		fmt.Println("    • cub-scout map fleet     - Fleet view across spaces")
 		fmt.Println("    • cub unit list           - List all units in space")
 		fmt.Println("    • cub link list           - Show all dependencies")
 		fmt.Println()
@@ -4361,7 +4361,7 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 		fmt.Println("  • CCVE scanning results and remediation")
 		fmt.Println("  • Team ownership and RBAC")
 		fmt.Println()
-		fmt.Println("  Try: cub-agent map deep-dive --connected")
+		fmt.Println("  Try: cub-scout map deep-dive --connected")
 		fmt.Println()
 	}
 
@@ -5513,8 +5513,8 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 
 	fmt.Println("COMMANDS TO IMPORT:")
-	fmt.Println("  cub-agent map              # Launch TUI, press 'i' for import wizard")
-	fmt.Println("  cub-agent import --help    # See import options")
+	fmt.Println("  cub-scout map              # Launch TUI, press 'i' for import wizard")
+	fmt.Println("  cub-scout import --help    # See import options")
 	fmt.Println()
 
 	fmt.Println("═══════════════════════════════════════════════════════════════════════════════")

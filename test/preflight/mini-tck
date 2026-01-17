@@ -108,17 +108,17 @@ else
     warn "Argo CD CRDs not found (some tests will skip)"
 fi
 
-section "cub-agent Binary"
+section "cub-scout Binary"
 
-CUB_AGENT="${CUB_AGENT:-./cub-agent}"
+CUB_AGENT="${CUB_AGENT:-./cub-scout}"
 if [[ -x "$CUB_AGENT" ]]; then
     VERSION=$($CUB_AGENT version 2>/dev/null | head -1 || echo "unknown")
-    pass "cub-agent found: $VERSION"
+    pass "cub-scout found: $VERSION"
 else
-    if go build ./cmd/cub-agent 2>/dev/null; then
-        pass "cub-agent built successfully"
+    if go build ./cmd/cub-scout 2>/dev/null; then
+        pass "cub-scout built successfully"
     else
-        fail "cub-agent not found and build failed"
+        fail "cub-scout not found and build failed"
     fi
 fi
 

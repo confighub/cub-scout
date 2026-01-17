@@ -5,7 +5,7 @@
 # Usage:
 #   kubectl apply -f boutique.yaml
 #   kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s
-#   cub-agent map
+#   cub-scout map
 ---
 apiVersion: v1
 kind: Namespace

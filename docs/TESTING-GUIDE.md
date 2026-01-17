@@ -62,7 +62,7 @@ Run: ./test/atk/verify --your-cluster
 ## Step 2: Build the Agent
 
 ```bash
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 ```
 
 **Expected output:** (none on success)
@@ -70,7 +70,7 @@ go build ./cmd/cub-agent
 Verify with:
 
 ```bash
-./cub-agent --help
+./cub-scout --help
 ```
 
 **Expected output:**
@@ -78,7 +78,7 @@ Verify with:
 ```
 ConfigHub Agent - Kubernetes resource visibility and ownership detection
 
-The cub-agent observes Kubernetes clusters and detects resource ownership.
+The cub-scout observes Kubernetes clusters and detects resource ownership.
 It provides commands for:
 
   - Mapping resources and their ownership (Flux, Argo CD, Helm, ConfigHub, Native)
@@ -93,7 +93,7 @@ Environment Variables:
   KUBECONFIG              Path to kubeconfig file (default: ~/.kube/config)
 
 Usage:
-  cub-agent [command]
+  cub-scout [command]
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
@@ -105,9 +105,9 @@ Available Commands:
   version     Print version information
 
 Flags:
-  -h, --help   help for cub-agent
+  -h, --help   help for cub-scout
 
-Use "cub-agent [command] --help" for more information about a command.
+Use "cub-scout [command] --help" for more information about a command.
 ```
 
 ## Step 3: Run Ownership Detection Tests
@@ -263,7 +263,7 @@ kubectl wait --for=condition=Ready pods -l app=podinfo -n atk-flux-basic --timeo
 Then run the map:
 
 ```bash
-cub-agent map
+cub-scout map
 ```
 
 **Expected output:**
@@ -290,14 +290,14 @@ cub-agent map
   demo-prod / backend @ rev 42  [atk-confighub-basic/backend]
 ```
 
-> **Note:** Use `cub-agent map --mode=hub` for experimental Hub → App Space → Application → Variant hierarchy.
+> **Note:** Use `cub-scout map --mode=hub` for experimental Hub → App Space → Application → Variant hierarchy.
 
 ### Map Subcommands
 
 #### Status (one-liner)
 
 ```bash
-cub-agent map status
+cub-scout map status
 ```
 
 **Expected output:**
@@ -309,7 +309,7 @@ cub-agent map status
 #### Workloads by Owner
 
 ```bash
-cub-agent map workloads
+cub-scout map workloads
 ```
 
 **Expected output:**
@@ -334,7 +334,7 @@ STATUS  NAMESPACE                NAME                      OWNER       MANAGED-B
 #### Pipelines
 
 ```bash
-cub-agent map pipelines
+cub-scout map pipelines
 ```
 
 **Expected output:**
@@ -348,7 +348,7 @@ SOURCE                                      DEPLOYER                 TARGET
 #### Deployers
 
 ```bash
-cub-agent map deployers
+cub-scout map deployers
 ```
 
 **Expected output:**
@@ -362,7 +362,7 @@ STATUS  KIND            NAME                      NAMESPACE            REVISION 
 #### Sources
 
 ```bash
-cub-agent map sources
+cub-scout map sources
 ```
 
 **Expected output:**
@@ -376,7 +376,7 @@ STATUS  TYPE           URL                                       REF          RE
 #### JSON Output
 
 ```bash
-cub-agent map --json
+cub-scout map --json
 ```
 
 **Expected output:**
@@ -442,7 +442,7 @@ cub-agent map --json
 ## Step 5: Scan for Config CVEs
 
 ```bash
-cub-agent scan
+cub-scout scan
 ```
 
 **Expected output (healthy cluster):**
@@ -457,7 +457,7 @@ CONFIG CVE SCAN: kind-atk
 ### List Available CCVEs
 
 ```bash
-cub-agent scan --list
+cub-scout scan --list
 ```
 
 **Expected output:**
@@ -491,7 +491,7 @@ CCVE-2025-0028     DEPEND   IngressRoute service not found             critical
 ### JSON Output
 
 ```bash
-cub-agent scan --json
+cub-scout scan --json
 ```
 
 **Expected output:**
@@ -709,19 +709,19 @@ The only integration with ConfigHub is via the `cub` CLI. Tests that need Config
 | `./test/atk/verify` | Run all ownership tests |
 | `./test/atk/verify flux-basic` | Run single test |
 | `./test/atk/verify --list` | List available fixtures |
-| `cub-agent map` | Full dashboard |
-| `cub-agent map status` | One-line health check |
-| `cub-agent map workloads` | List workloads by owner |
-| `cub-agent map pipelines` | List delivery pipelines |
-| `cub-agent map confighub` | ConfigHub hierarchy (requires cub auth) |
-| `cub-agent map --json` | JSON output |
-| `cub-agent map --mode=hub` | Experimental hub hierarchy mode |
-| `cub-agent scan` | Scan for CCVEs |
-| `cub-agent scan --list` | List all CCVEs |
-| `cub-agent scan --json` | JSON output |
-| `cub-agent scan` | Kyverno policy scan |
-| `cub-agent scan --list` | List KPOL policies |
-| `cub-agent scan -n <ns>` | Scan specific namespace |
+| `cub-scout map` | Full dashboard |
+| `cub-scout map status` | One-line health check |
+| `cub-scout map workloads` | List workloads by owner |
+| `cub-scout map pipelines` | List delivery pipelines |
+| `cub-scout map confighub` | ConfigHub hierarchy (requires cub auth) |
+| `cub-scout map --json` | JSON output |
+| `cub-scout map --mode=hub` | Experimental hub hierarchy mode |
+| `cub-scout scan` | Scan for CCVEs |
+| `cub-scout scan --list` | List all CCVEs |
+| `cub-scout scan --json` | JSON output |
+| `cub-scout scan` | Kyverno policy scan |
+| `cub-scout scan --list` | List KPOL policies |
+| `cub-scout scan -n <ns>` | Scan specific namespace |
 | `./test/atk/teardown-cluster` | Delete cluster |
 
 ### Hierarchy Display Modes

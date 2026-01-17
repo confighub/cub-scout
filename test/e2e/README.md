@@ -1,6 +1,6 @@
 # TUI E2E Testing
 
-End-to-end tests for the cub-agent TUI using real Kubernetes clusters with multiple GitOps tools.
+End-to-end tests for the cub-scout TUI using real Kubernetes clusters with multiple GitOps tools.
 
 ## Quick Start
 
@@ -9,7 +9,7 @@ End-to-end tests for the cub-agent TUI using real Kubernetes clusters with multi
 ./setup-multi-tool-cluster.sh
 
 # Run the TUI
-cub-agent map
+cub-scout map
 
 # Tear down when done
 ./teardown-cluster.sh
@@ -31,7 +31,7 @@ The setup script creates a kind cluster with:
 
 ## Ownership Detection
 
-After setup, `cub-agent map workloads` should show:
+After setup, `cub-scout map workloads` should show:
 
 ```
 OWNER       COUNT   NAMESPACES
@@ -83,7 +83,7 @@ kubectl create deployment orphan-app --image=nginx -n native-demo
   run: ./test/e2e/setup-multi-tool-cluster.sh
 
 - name: Run E2E tests
-  run: go test ./cmd/cub-agent/... -tags=e2e -v
+  run: go test ./cmd/cub-scout/... -tags=e2e -v
 
 - name: Teardown
   if: always()

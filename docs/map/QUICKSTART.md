@@ -13,13 +13,13 @@ Get from zero to ownership visibility in 5 minutes.
 ```bash
 git clone https://github.com/confighubai/confighub-agent
 cd confighub-agent
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 ```
 
 ## Step 2: Run Map (10 seconds)
 
 ```bash
-./cub-agent map
+./cub-scout map
 ```
 
 You'll see the interactive TUI showing all resources grouped by owner.
@@ -52,22 +52,22 @@ Press `q` to exit.
 
 ### List all resources
 ```bash
-./cub-agent map list
+./cub-scout map list
 ```
 
 ### Show only orphans
 ```bash
-./cub-agent map orphans
+./cub-scout map orphans
 ```
 
 ### Trace a deployment's ownership
 ```bash
-./cub-agent map trace deploy/YOUR-DEPLOYMENT -n YOUR-NAMESPACE
+./cub-scout map trace deploy/YOUR-DEPLOYMENT -n YOUR-NAMESPACE
 ```
 
 ### Scan for configuration issues
 ```bash
-./cub-agent scan
+./cub-scout scan
 ```
 
 ## Step 5: Query (Optional)
@@ -76,13 +76,13 @@ Filter resources with queries:
 
 ```bash
 # All Flux-managed resources
-./cub-agent map list -q "owner=Flux"
+./cub-scout map list -q "owner=Flux"
 
 # All production namespaces
-./cub-agent map list -q "namespace=prod*"
+./cub-scout map list -q "namespace=prod*"
 
 # All non-GitOps resources (shadow IT)
-./cub-agent map list -q "owner=Native"
+./cub-scout map list -q "owner=Native"
 ```
 
 ## What's Next?
@@ -90,19 +90,19 @@ Filter resources with queries:
 ### Try more features
 ```bash
 # Find orphan resources (shadow IT)
-./cub-agent map list -q "owner=Native"
+./cub-scout map list -q "owner=Native"
 
 # Scan for configuration issues
-./cub-agent scan
+./cub-scout scan
 
 # Trace a specific deployment
-./cub-agent map trace deploy/YOUR-DEPLOYMENT -n YOUR-NAMESPACE
+./cub-scout map trace deploy/YOUR-DEPLOYMENT -n YOUR-NAMESPACE
 ```
 
 ### Connect to ConfigHub
 For multi-cluster visibility:
 ```bash
-./cub-agent map --hub    # Requires cub CLI + authentication
+./cub-scout map --hub    # Requires cub CLI + authentication
 ```
 
 ### Learn more

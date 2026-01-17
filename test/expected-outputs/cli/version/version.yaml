@@ -14,14 +14,14 @@ requires:
 
 commands:
   - id: version
-    command: "./cub-agent version"
+    command: "./cub-scout version"
     description: "Show version information"
 
     expected:
       exit_code: 0
 
       contains:
-        - "cub-agent"
+        - "cub-scout"
         - "version"
 
       not_contains:
@@ -36,9 +36,9 @@ commands:
     instructions: |
       Check the installed version:
       ```bash
-      ./cub-agent version
+      ./cub-scout version
       ```
 
 # Sample output
 sample_output: |
-  cub-agent version v0.2.0 (built 2026-01-13)
+  cub-scout version v0.2.0 (built 2026-01-13)

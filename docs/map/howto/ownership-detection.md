@@ -17,7 +17,7 @@ Your cluster has resources from multiple sources:
 Run map to see ownership automatically:
 
 ```bash
-cub-agent map list
+cub-scout map list
 ```
 
 Output:
@@ -97,16 +97,16 @@ Show only specific owners:
 
 ```bash
 # Only Flux resources
-cub-agent map list -q "owner=Flux"
+cub-scout map list -q "owner=Flux"
 
 # Only ArgoCD resources
-cub-agent map list -q "owner=ArgoCD"
+cub-scout map list -q "owner=ArgoCD"
 
 # Only Native (unmanaged) resources
-cub-agent map list -q "owner=Native"
+cub-scout map list -q "owner=Native"
 
 # All GitOps-managed resources
-cub-agent map list -q "owner!=Native"
+cub-scout map list -q "owner!=Native"
 ```
 
 ## TUI View

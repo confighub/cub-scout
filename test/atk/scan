@@ -458,16 +458,16 @@ scan_confighub() {
     printf '%s\n' "${findings[@]}"
 }
 
-# Scan for Trace-based CCVEs (uses cub-agent trace)
+# Scan for Trace-based CCVEs (uses cub-scout trace)
 # These detect issues in the GitOps delivery chain that aren't visible from individual resources
 scan_trace() {
     local findings=("")
 
-    # Check if cub-agent is available
-    local agent_cmd="$REPO_ROOT/cub-agent"
+    # Check if cub-scout is available
+    local agent_cmd="$REPO_ROOT/cub-scout"
     if [[ ! -x "$agent_cmd" ]]; then
         # Try to find it elsewhere
-        agent_cmd=$(command -v cub-agent 2>/dev/null || true)
+        agent_cmd=$(command -v cub-scout 2>/dev/null || true)
         [[ -z "$agent_cmd" ]] && return 0
     fi
 

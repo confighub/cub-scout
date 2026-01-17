@@ -79,7 +79,7 @@ All integrations use the Agent's JSON API:
 
 ```bash
 # Get cluster map
-./cub-agent snapshot -o - | jq '.entries[]'
+./cub-scout snapshot -o - | jq '.entries[]'
 
 # Get CCVE findings
 ./test/atk/scan --json | jq '.findings[]'

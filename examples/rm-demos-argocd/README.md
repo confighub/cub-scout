@@ -95,9 +95,9 @@ ConfigHub doesn't replace ArgoCD — it **completes** it.
 Before running fleet demos, verify with single cluster:
 
 ```bash
-./cub-agent map                           # See what's running
-./cub-agent map -q "owner=ArgoCD"         # Verify ownership detection
-./cub-agent import -n <namespace>         # Import to ConfigHub
+./cub-scout map                           # See what's running
+./cub-scout map -q "owner=ArgoCD"         # Verify ownership detection
+./cub-scout import -n <namespace>         # Import to ConfigHub
 cub unit list --space <space>             # Verify hierarchy
 ```
 

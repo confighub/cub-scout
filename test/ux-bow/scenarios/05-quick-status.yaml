@@ -28,7 +28,7 @@ goals:
 
 entry_points:
   tui:
-    description: "Using cub-agent map TUI with panel layout"
+    description: "Using cub-scout map TUI with panel layout"
     expected_keystrokes: 0
     expected_commands: 0
     difficulty: trivial
@@ -43,13 +43,13 @@ entry_points:
       Left panel always visible for quick navigation to other views.
 
   cli:
-    description: "Using cub-agent map status"
+    description: "Using cub-scout map status"
     expected_keystrokes: 20
     expected_commands: 1
     difficulty: easy
     journey:
       - step: 1
-        command: "cub-agent map"
+        command: "cub-scout map"
         expect: "Summary showing healthy/issues/total counts"
         keystrokes: 12
 
@@ -61,7 +61,7 @@ entry_points:
     journey:
       - step: 1
         action: "Launch TUI"
-        command: "cub-agent map --hub"
+        command: "cub-scout map --hub"
         expect: "Fleet overview with all orgs/spaces/units status"
         keystrokes: 0
 

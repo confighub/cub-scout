@@ -30,7 +30,7 @@ goals:
 
 entry_points:
   tui:
-    description: "Using cub-agent map TUI"
+    description: "Using cub-scout map TUI"
     expected_keystrokes: 2
     expected_commands: 1
     difficulty: easy
@@ -45,16 +45,16 @@ entry_points:
         keystrokes: 0
     notes: |
       Sprawl view shows Native resources per namespace.
-      For full list, use CLI: cub-agent map orphans
+      For full list, use CLI: cub-scout map orphans
 
   cli:
-    description: "Using cub-agent CLI commands"
+    description: "Using cub-scout CLI commands"
     expected_keystrokes: 25
     expected_commands: 1
     difficulty: easy
     journey:
       - step: 1
-        command: "cub-agent map list -q 'owner=Native'"
+        command: "cub-scout map list -q 'owner=Native'"
         expect: "Table of all Native-owned resources"
         keystrokes: 32
 
@@ -76,7 +76,7 @@ entry_points:
 scoring:
   discoverability:
     tui: 4  # CORRECTED: Sprawl view shows Native but not dedicated filter
-    cli: 5  # IMPROVED: 'cub-agent map orphans' shortcut command
+    cli: 5  # IMPROVED: 'cub-scout map orphans' shortcut command
     hub: 4  # IMPROVED: Query examples in help overlay
   speed:
     tui: 4  # CORRECTED: 1 keystroke but shows summary not list
@@ -103,5 +103,5 @@ composite_scores:
 notes: |
   This is a PRIMARY use case for the tool - finding shadow IT.
   TUI Sprawl view ('r') shows Native count per namespace but not filtered list.
-  CLI 'cub-agent map orphans' is the fastest way to see full orphan list.
+  CLI 'cub-scout map orphans' is the fastest way to see full orphan list.
   Hub improved with query examples in help overlay.

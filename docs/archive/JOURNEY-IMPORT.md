@@ -24,7 +24,7 @@
 First, see what's in your cluster:
 
 ```bash
-./cub-agent map
+./cub-scout map
 ```
 
 Note the namespaces with workloads. Pick one to import.
@@ -36,7 +36,7 @@ Note the namespaces with workloads. Pick one to import.
 Preview what import will create:
 
 ```bash
-./cub-agent import -n my-namespace --dry-run
+./cub-scout import -n my-namespace --dry-run
 ```
 
 **Expected output:**
@@ -90,7 +90,7 @@ Dry run: no changes made
 When you're happy with the preview:
 
 ```bash
-./cub-agent import -n my-namespace
+./cub-scout import -n my-namespace
 ```
 
 **Expected output:**
@@ -208,13 +208,13 @@ In another terminal, check the connection:
 Import several namespaces at once:
 
 ```bash
-./cub-agent import -n payments-prod,payments-staging,orders-prod
+./cub-scout import -n payments-prod,payments-staging,orders-prod
 ```
 
 Or import all namespaces:
 
 ```bash
-./cub-agent import
+./cub-scout import
 ```
 
 ---
@@ -224,19 +224,19 @@ Or import all namespaces:
 ### Change App Space Name
 
 ```bash
-./cub-agent import -n my-namespace --app-space custom-team-name
+./cub-scout import -n my-namespace --app-space custom-team-name
 ```
 
 ### Override Labels
 
 ```bash
-./cub-agent import -n my-namespace --labels "team=platform,env=prod"
+./cub-scout import -n my-namespace --labels "team=platform,env=prod"
 ```
 
 ### Skip Certain Workloads
 
 ```bash
-./cub-agent import -n my-namespace --exclude "cronjob-*"
+./cub-scout import -n my-namespace --exclude "cronjob-*"
 ```
 
 ---
@@ -246,8 +246,8 @@ Or import all namespaces:
 Use the interactive wizard for a guided experience:
 
 ```bash
-./cub-agent import --wizard    # Interactive TUI wizard (recommended)
-./cub-agent import --dry-run   # Preview without making changes
+./cub-scout import --wizard    # Interactive TUI wizard (recommended)
+./cub-scout import --dry-run   # Preview without making changes
 ```
 
 When connected to ConfigHub, import activity is logged for audit trail.
@@ -288,7 +288,7 @@ kubectl get deploy,sts,ds -n my-namespace
 
 Unit was previously imported. To re-import:
 ```bash
-./cub-agent import -n my-namespace --force
+./cub-scout import -n my-namespace --force
 ```
 
 ### "Worker not connected"
@@ -312,7 +312,7 @@ cat ~/.confighub/logs/import-*.log | tail -50
 
 Interactive wizard (recommended):
 ```bash
-./cub-agent import --wizard
+./cub-scout import --wizard
 ```
 
 ---

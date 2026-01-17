@@ -18,7 +18,7 @@ native-demo      Active   Native (kubectl) workloads
 confighub-demo   Active   ConfigHub-labeled workloads
 ```
 
-### Owner Breakdown (`cub-agent map` dashboard)
+### Owner Breakdown (`cub-scout map` dashboard)
 ```
 OWNER       COUNT   EXAMPLES
 Flux        2+      podinfo (flux-demo)
@@ -183,22 +183,22 @@ Application      dev-security   argocd      Synced   umbrella-chart
 
 ### By Owner
 ```bash
-cub-agent map list -q "owner=Flux"
+cub-scout map list -q "owner=Flux"
 # Returns: podinfo, flux-demo workloads
 
-cub-agent map list -q "owner!=Native"
+cub-scout map list -q "owner!=Native"
 # Returns: All GitOps-managed workloads
 ```
 
 ### By Namespace
 ```bash
-cub-agent map list -q "namespace=flux-*"
+cub-scout map list -q "namespace=flux-*"
 # Returns: flux-system, flux-demo workloads
 ```
 
 ### Combined
 ```bash
-cub-agent map list -q "owner=Flux AND status=Ready"
+cub-scout map list -q "owner=Flux AND status=Ready"
 # Returns: Healthy Flux workloads only
 ```
 

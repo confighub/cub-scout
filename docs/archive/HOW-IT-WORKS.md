@@ -1,8 +1,8 @@
-# How cub-agent Works
+# How cub-scout Works
 
 **Last Updated:** 2026-01-12
 
-A practical guide to cub-agent: what it does, how it connects, and how to use it.
+A practical guide to cub-scout: what it does, how it connects, and how to use it.
 
 > **Looking for the protocol spec?** See [ARCHITECTURE.md](ARCHITECTURE.md) for GSF schema and API contracts.
 
@@ -10,7 +10,7 @@ A practical guide to cub-agent: what it does, how it connects, and how to use it
 
 ## Table of Contents
 
-- [What is cub-agent?](#what-is-cub-agent)
+- [What is cub-scout?](#what-is-cub-scout)
 - [Two Operating Modes](#two-operating-modes)
 - [System Diagram](#system-diagram)
 - [Command Reference](#command-reference)
@@ -22,9 +22,9 @@ A practical guide to cub-agent: what it does, how it connects, and how to use it
 
 ---
 
-## What is cub-agent?
+## What is cub-scout?
 
-**cub-agent** is a read-only Kubernetes observer that answers three questions:
+**cub-scout** is a read-only Kubernetes observer that answers three questions:
 
 1. **What's running?** — Discover all resources in your cluster
 2. **Who owns it?** — Detect if Flux, ArgoCD, Helm, or native kubectl manages each resource
@@ -34,16 +34,16 @@ It's a single Go binary that runs on your laptop, in CI, or as a Pod in your clu
 
 ```bash
 # Quick examples
-cub-agent map list          # What's running + who owns it
-cub-agent scan                           # Find misconfigurations (CCVEs)
-cub-agent trace deploy/nginx -n default  # Follow ownership chain
+cub-scout map list          # What's running + who owns it
+cub-scout scan                           # Find misconfigurations (CCVEs)
+cub-scout trace deploy/nginx -n default  # Follow ownership chain
 ```
 
 ---
 
 ## Two Operating Modes
 
-cub-agent has two distinct operating modes:
+cub-scout has two distinct operating modes:
 
 | Mode | Flag | Data Source | Auth Required |
 |------|------|-------------|---------------|
@@ -56,16 +56,16 @@ Works without any ConfigHub account. Reads directly from your Kubernetes cluster
 
 ```bash
 # List all resources and their owners
-cub-agent map list
+cub-scout map list
 
 # Scan for CCVEs
-cub-agent scan
+cub-scout scan
 
 # Trace ownership chain
-cub-agent trace deploy/my-app -n production
+cub-scout trace deploy/my-app -n production
 
 # Export cluster state as JSON
-cub-agent snapshot -n default
+cub-scout snapshot -n default
 ```
 
 **Use cases:**
@@ -83,13 +83,13 @@ Uses the `cub` CLI for fleet-wide visibility across multiple clusters.
 cub auth login
 
 # Import workloads into ConfigHub Units
-cub-agent import -n my-namespace
+cub-scout import -n my-namespace
 
 # View fleet across spaces
-cub-agent map fleet
+cub-scout map fleet
 
 # Interactive TUI for ConfigHub hierarchy
-cub-agent map confighub
+cub-scout map confighub
 ```
 
 **Use cases:**
@@ -103,7 +103,7 @@ cub-agent map confighub
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                           cub-agent                                  │
+│                           cub-scout                                  │
 │                        (single binary)                               │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
@@ -148,7 +148,7 @@ cub-agent map confighub
 Your Terminal
      │
      ▼
-cub-agent map list
+cub-scout map list
      │
      ▼
 ~/.kube/config (your kubectl context)
@@ -163,7 +163,7 @@ Returns: Deployments, Services, Flux/Argo CRDs, etc.
 ### Data Flow: ConfigHub Mode (via cub CLI)
 
 ```
-cub-agent import -n my-namespace
+cub-scout import -n my-namespace
      │
      ├──► Kubernetes API (discover workloads)
      │         │
@@ -188,11 +188,11 @@ cub-agent import -n my-namespace
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `map list --standalone` | List resources + owners from cluster | `cub-agent map list -n prod` |
-| `scan` | Detect CCVEs and stuck states | `cub-agent scan --namespace default` |
-| `trace` | Follow GitOps ownership chain | `cub-agent trace deploy/nginx -n default` |
-| `snapshot` | Export cluster state as GSF JSON | `cub-agent snapshot -n default -o state.json` |
-| `parse-repo` | Analyze GitOps repo structure | `cub-agent parse-repo ./my-repo` |
+| `map list --standalone` | List resources + owners from cluster | `cub-scout map list -n prod` |
+| `scan` | Detect CCVEs and stuck states | `cub-scout scan --namespace default` |
+| `trace` | Follow GitOps ownership chain | `cub-scout trace deploy/nginx -n default` |
+| `snapshot` | Export cluster state as GSF JSON | `cub-scout snapshot -n default -o state.json` |
+| `parse-repo` | Analyze GitOps repo structure | `cub-scout parse-repo ./my-repo` |
 
 ### ConfigHub Commands (Require cub CLI)
 
@@ -206,38 +206,38 @@ cub-agent import -n my-namespace
 
 ```bash
 # Filter by field
-cub-agent map list -q "kind=Deployment"
-cub-agent map list -q "namespace=prod*"
-cub-agent map list -q "owner=Flux"
+cub-scout map list -q "kind=Deployment"
+cub-scout map list -q "namespace=prod*"
+cub-scout map list -q "owner=Flux"
 
 # Combine with AND/OR
-cub-agent map list -q "kind=Deployment AND owner!=Native"
-cub-agent map list -q "owner=Flux OR owner=ArgoCD"
+cub-scout map list -q "kind=Deployment AND owner!=Native"
+cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 
 # Filter by label
-cub-agent map list -q "labels[app]=nginx"
+cub-scout map list -q "labels[app]=nginx"
 ```
 
 ### Scan Modes
 
 ```bash
 # Full scan (Kyverno + state + timing bombs)
-cub-agent scan
+cub-scout scan
 
 # Kyverno PolicyReports only
-cub-agent scan --kyverno
+cub-scout scan --kyverno
 
 # Stuck reconciliation states only
-cub-agent scan --state
+cub-scout scan --state
 
 # Timing bombs (expiring certs, quota limits)
-cub-agent scan --timing-bombs
+cub-scout scan --timing-bombs
 
 # Dangling/orphan resources
-cub-agent scan --dangling
+cub-scout scan --dangling
 
 # JSON output
-cub-agent scan --json
+cub-scout scan --json
 ```
 
 ---
@@ -246,7 +246,7 @@ cub-agent scan --json
 
 ### Standalone Mode: Uses Your Existing Credentials
 
-cub-agent piggybacks on credentials you already have configured:
+cub-scout piggybacks on credentials you already have configured:
 
 | What | How | Where Credentials Live |
 |------|-----|------------------------|
@@ -254,7 +254,7 @@ cub-agent piggybacks on credentials you already have configured:
 | **Flux tracing** | Shells to `flux` CLI | Uses kubeconfig (Flux reads K8s CRDs) |
 | **ArgoCD tracing** | Shells to `argocd` CLI | `~/.argocd/config` |
 
-**No special setup needed.** If you can run these commands, cub-agent works:
+**No special setup needed.** If you can run these commands, cub-scout works:
 
 ```bash
 kubectl get deployments -A    # K8s access
@@ -262,7 +262,7 @@ flux get kustomizations -A    # Flux access (optional)
 argocd app list               # ArgoCD access (optional)
 ```
 
-### How cub-agent Reads from Each Tool
+### How cub-scout Reads from Each Tool
 
 ```go
 // Kubernetes - uses client-go with your kubeconfig
@@ -282,7 +282,7 @@ cmd := exec.Command("argocd", "app", "get", appName, "-o", "json")
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cub-agent-readonly
+  name: cub-scout-readonly
 rules:
   - apiGroups: ["*"]
     resources: ["*"]
@@ -299,9 +299,9 @@ When using ConfigHub features (import, fleet view), authenticate via the cub CLI
 # Authenticate to ConfigHub
 cub auth login
 
-# Then use ConfigHub features in cub-agent
-cub-agent import -n my-namespace    # Import to ConfigHub
-cub-agent map fleet                 # View fleet across spaces
+# Then use ConfigHub features in cub-scout
+cub-scout import -n my-namespace    # Import to ConfigHub
+cub-scout map fleet                 # View fleet across spaces
 ```
 
 ---
@@ -313,14 +313,14 @@ cub-agent map fleet                 # View fleet across spaces
 | Tool | Repository | Purpose |
 |------|------------|---------|
 | **cub** | confighub.com (closed source) | Official ConfigHub CLI - manages orgs, spaces, units, workers |
-| **cub-agent** | this repo | K8s observer + TUI wrapper |
+| **cub-scout** | this repo | K8s observer + TUI wrapper |
 | **ConfigHub** | confighub.com | SaaS platform for fleet management |
 
 ### How They Interact
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   cub-agent     │     │    cub CLI      │     │   ConfigHub     │
+│   cub-scout     │     │    cub CLI      │     │   ConfigHub     │
 │   (this repo)   │────►│  (separate)     │────►│   (SaaS)        │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │                       │
@@ -334,7 +334,7 @@ cub-agent map fleet                 # View fleet across spaces
 
 ### The TUI Shells to cub CLI
 
-The `hierarchy` TUI in cub-agent calls `cub` CLI commands:
+The `hierarchy` TUI in cub-scout calls `cub` CLI commands:
 
 ```go
 // From hierarchy.go
@@ -355,16 +355,16 @@ Run on your laptop against any cluster you have kubectl access to:
 
 ```bash
 # Install
-go install github.com/confighub/confighub-agent/cmd/cub-agent@latest
+go install github.com/confighub/confighub-agent/cmd/cub-scout@latest
 
 # Or build from source
 git clone https://github.com/confighubai/confighub-agent
 cd confighub-agent
-go build ./cmd/cub-agent
+go build ./cmd/cub-scout
 
 # Use
-./cub-agent scan
-./cub-agent map list
+./cub-scout scan
+./cub-scout map list
 ```
 
 ### Option 2: CI/CD Integration
@@ -375,7 +375,7 @@ Run in pipelines for pre-deploy checks:
 # GitHub Actions example
 - name: Scan for CCVEs
   run: |
-    cub-agent scan --json > ccve-report.json
+    cub-scout scan --json > ccve-report.json
     if jq -e '.findings | length > 0' ccve-report.json; then
       echo "CCVEs found!"
       exit 1
@@ -399,7 +399,7 @@ Run in pipelines for pre-deploy checks:
 | `map fleet` | ❌ No | Requires `cub` CLI authenticated |
 | `import` | ❌ No | Creates Units via `cub` CLI |
 
-### Where Does cub-agent Run?
+### Where Does cub-scout Run?
 
 | Location | Auth Method | Use Case |
 |----------|-------------|----------|
@@ -411,7 +411,7 @@ Run in pipelines for pre-deploy checks:
 
 | Question | Answer |
 |----------|--------|
-| What is cub-agent? | Read-only K8s observer + CCVE scanner |
+| What is cub-scout? | Read-only K8s observer + CCVE scanner |
 | Does it modify my cluster? | No, read-only (`get`, `list`, `watch` only) |
 | Do I need ConfigHub? | No, standalone mode works without it |
 | Where does it run? | Laptop, CI, or as a Pod in-cluster |

@@ -33,13 +33,13 @@ Supports multiple architecture patterns:
 
 Examples:
   # Parse a remote repo
-  cub-agent parse-repo --url https://github.com/fluxcd/flux2-kustomize-helm-example
+  cub-scout parse-repo --url https://github.com/fluxcd/flux2-kustomize-helm-example
 
   # Parse a local directory
-  cub-agent parse-repo --path ./my-gitops-repo
+  cub-scout parse-repo --path ./my-gitops-repo
 
   # JSON output
-  cub-agent parse-repo --url https://github.com/org/repo --json
+  cub-scout parse-repo --url https://github.com/org/repo --json
 `,
 	RunE: runParseRepo,
 }

@@ -28,13 +28,13 @@ for applications managed by a single deployer (Flux or Argo CD).
 
 Examples:
   # Create an App Space
-  cub-agent app-space create payments-team
+  cub-scout app-space create payments-team
 
   # Create and set as current context
-  cub-agent app-space create payments-team --set-context
+  cub-scout app-space create payments-team --set-context
 
   # Create with labels
-  cub-agent app-space create payments-team --label team=payments --label owner=platform
+  cub-scout app-space create payments-team --label team=payments --label owner=platform
 `,
 	Args: cobra.ExactArgs(1),
 	RunE: runAppSpaceCreate,

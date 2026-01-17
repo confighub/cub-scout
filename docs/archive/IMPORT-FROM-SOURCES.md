@@ -136,7 +136,7 @@ Worker receives: "run import on namespace X"
 Worker returns: suggested structure (App Spaces, Units, labels)
 ```
 
-This is the same logic as `cub-agent import --dry-run --json`.
+This is the same logic as `cub-scout import --dry-run --json`.
 
 ### 2. Fleet Aggregation API
 

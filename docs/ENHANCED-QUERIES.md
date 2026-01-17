@@ -1,6 +1,6 @@
 # Enhanced Query Features
 
-This document covers the advanced query capabilities in cub-agent for finding relationships, detecting drift, and identifying dangling references.
+This document covers the advanced query capabilities in cub-scout for finding relationships, detecting drift, and identifying dangling references.
 
 ## Reverse Trace
 
@@ -10,13 +10,13 @@ Trace any resource backwards to its Git source, automatically detecting the GitO
 
 ```bash
 # Trace a pod to its Git source
-cub-agent trace pod/nginx-7d9b8c-x4k2p -n prod
+cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod
 
 # Trace a deployment
-cub-agent trace deployment/api -n prod
+cub-scout trace deployment/api -n prod
 
 # JSON output for scripting
-cub-agent trace deployment/api -n prod --json
+cub-scout trace deployment/api -n prod --json
 ```
 
 ### Example Output
@@ -55,22 +55,22 @@ Find all resources that depend on or reference a given resource.
 
 ```bash
 # Find what uses a ConfigMap
-cub-agent query refs configmap/app-config -n prod
+cub-scout query refs configmap/app-config -n prod
 
 # Find what uses a Secret
-cub-agent query refs secret/db-creds -n prod
+cub-scout query refs secret/db-creds -n prod
 
 # Find what uses a Service
-cub-agent query refs service/api -n prod
+cub-scout query refs service/api -n prod
 
 # Find what references a PVC
-cub-agent query refs pvc/data-volume -n prod
+cub-scout query refs pvc/data-volume -n prod
 ```
 
 ### Example Output
 
 ```
-$ cub-agent query refs configmap/app-config -n prod
+$ cub-scout query refs configmap/app-config -n prod
 
 References to ConfigMap/app-config:
 
@@ -111,19 +111,19 @@ Find resources that reference targets that no longer exist.
 
 ```bash
 # Find all dangling references in a namespace
-cub-agent query dangling -n prod
+cub-scout query dangling -n prod
 
 # Find all dangling references cluster-wide
-cub-agent query dangling
+cub-scout query dangling
 
 # JSON output
-cub-agent query dangling -n prod --json
+cub-scout query dangling -n prod --json
 ```
 
 ### Example Output
 
 ```
-$ cub-agent query dangling -n prod
+$ cub-scout query dangling -n prod
 
 Dangling References Found: 4
 
@@ -168,19 +168,19 @@ Detect resources that have drifted from their declared state (comparing live sta
 
 ```bash
 # Find drifted resources in a namespace
-cub-agent query drifted -n prod
+cub-scout query drifted -n prod
 
 # Find drifted resources cluster-wide
-cub-agent query drifted
+cub-scout query drifted
 
 # JSON output
-cub-agent query drifted -n prod --json
+cub-scout query drifted -n prod --json
 ```
 
 ### Example Output
 
 ```
-$ cub-agent query drifted -n prod
+$ cub-scout query drifted -n prod
 
 Found 3 drifted resources:
 
@@ -223,13 +223,13 @@ Generate a cluster state snapshot optimized for AI/LLM consumption.
 
 ```bash
 # Generate snapshot for a namespace
-cub-agent context snapshot -n prod
+cub-scout context snapshot -n prod
 
 # Generate snapshot for entire cluster
-cub-agent context snapshot
+cub-scout context snapshot
 
 # JSON output (default for AI consumption)
-cub-agent context snapshot -n prod --format json
+cub-scout context snapshot -n prod --format json
 ```
 
 ### Example Output
@@ -294,13 +294,13 @@ Queries can be combined with the existing filter syntax:
 
 ```bash
 # Find unmanaged resources with issues
-cub-agent map list -q "owner=Native" | cub-agent query dangling
+cub-scout map list -q "owner=Native" | cub-scout query dangling
 
 # Find drifted Flux-managed resources
-cub-agent query drifted -n prod | grep -E "flux|Flux"
+cub-scout query drifted -n prod | grep -E "flux|Flux"
 
 # Trace all critical issues
-cub-agent context snapshot -n prod | jq -r '.critical_issues[].resource' | xargs -I {} cub-agent trace {} -n prod
+cub-scout context snapshot -n prod | jq -r '.critical_issues[].resource' | xargs -I {} cub-scout trace {} -n prod
 ```
 
 ---

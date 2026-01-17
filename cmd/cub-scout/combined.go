@@ -57,19 +57,19 @@ Use --apply to create the App Space and Units in ConfigHub.
 
 Examples:
   # Combine Git repo with current cluster
-  cub-agent combined --git-url https://github.com/org/gitops-repo --namespace demo
+  cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo
 
   # Generate Hub/App Space proposal
-  cub-agent combined --git-url https://github.com/org/gitops-repo --namespace demo --suggest
+  cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo --suggest
 
   # Preview what would be created (dry-run)
-  cub-agent combined --namespace demo --suggest --apply --dry-run
+  cub-scout combined --namespace demo --suggest --apply --dry-run
 
   # Apply: create App Space and Units in ConfigHub
-  cub-agent combined --namespace demo --suggest --apply
+  cub-scout combined --namespace demo --suggest --apply
 
   # Use local Git repo with JSON output
-  cub-agent combined --git-path ./my-repo --namespace demo --suggest --json
+  cub-scout combined --git-path ./my-repo --namespace demo --suggest --json
 `,
 	RunE: runCombined,
 }
@@ -441,7 +441,7 @@ func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool
 	return nil
 }
 
-// createAppSpaceForImport creates an App Space for import using cub-agent app-space create
+// createAppSpaceForImport creates an App Space for import using cub-scout app-space create
 func createAppSpaceForImport(name string) error {
 	result, err := CreateAppSpaceWithResult(name, true, nil)
 	if err != nil {
