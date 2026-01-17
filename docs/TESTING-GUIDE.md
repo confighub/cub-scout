@@ -2,6 +2,44 @@
 
 A step-by-step guide to testing the ConfigHub Agent locally.
 
+---
+
+## Vibe Coding = 100% Test Coverage
+
+**CRITICAL:** When using AI-assisted "vibe coding", 100% test coverage is non-negotiable.
+
+> "If you can't prove it works, it doesn't work."
+
+AI can hallucinate code that looks correct but doesn't work. Tests are the only proof that code actually functions. Every feature must be verified across all test groups.
+
+### The Four Test Groups (25% each)
+
+| Test Group | Weight | Verification | What It Proves |
+|------------|--------|--------------|----------------|
+| **Unit Tests** | 25% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
+| **Integration** | 25% | `./test/prove-it-works.sh --level=integration` | CLI commands work, JSON output valid |
+| **GitOps E2E** | 25% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
+| **Connected** | 25% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
+
+**Target: >90% score across all groups = 100% PROOF**
+
+### Quick Verification
+
+```bash
+# Full proof (before any release)
+./test/prove-it-works.sh --level=full
+
+# Quick proof (after changes)
+go test ./... && ./cub-scout map deep-dive | head -50
+```
+
+**IMPORTANT:**
+- Always use `./cub-scout`, not `cub-scout` (binary is local, not in PATH)
+- Always use `prove-it-works.sh`, not `run-all.sh` (legacy)
+- See `test/TESTING-QUICKSTART.md` for the one-page quick reference
+
+---
+
 ## Prerequisites
 
 ```bash
@@ -730,3 +768,237 @@ The only integration with ConfigHub is via the `cub` CLI. Tests that need Config
 |------|------|-----------|
 | **Standard** (default) | `--mode=standard` | Org → Space → Unit |
 | **Hub** (experimental) | `--mode=hub` | Hub → App Space → Application → Variant |
+
+---
+
+## GitOps E2E Testing
+
+GitOps E2E tests verify that BOTH Flux and ArgoCD work correctly with ownership detection, trace commands, and deep-dive views.
+
+### Flux Testing
+
+```bash
+# 1. Deploy Flux resources
+kubectl apply -f examples/flux-boutique/
+
+# 2. Wait for reconciliation
+kubectl wait --for=condition=Ready kustomization/boutique -n flux-system --timeout=60s
+
+# 3. Verify ownership detection
+./cub-scout map list -n boutique | grep Flux
+
+# 4. Test trace command
+./cub-scout trace deploy/cart -n boutique
+```
+
+**Expected trace output:**
+
+```
+TRACE: Deployment/cart in boutique
+
+  ✗ GitRepository/boutique
+    │ URL: https://github.com/stefanprodan/podinfo
+    │ Revision: master@sha1:b6b680fe507b...
+    │
+    └─▶ ✗ Kustomization/cart
+        │ Path: ./kustomize
+        │ Revision: master@sha1:b6b680fe507b...
+        │
+        └─▶ ✗ Deployment/cart
+              Status: Managed by Flux
+```
+
+### ArgoCD Testing
+
+```bash
+# 1. Port-forward to ArgoCD
+kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+
+# 2. Login to ArgoCD
+argocd login localhost:8080 --username admin \
+  --password $(kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d)
+
+# 3. Verify ownership detection
+./cub-scout map list -n guestbook | grep ArgoCD
+
+# 4. Test trace --app command
+./cub-scout trace --app guestbook
+```
+
+**Expected trace output:**
+
+```
+TRACE: Application/guestbook
+
+  ✓ Source/argoproj/argocd-example-apps
+    │ URL: https://github.com/argoproj/argocd-example-apps.git
+    │ Path: guestbook
+    │ Status: Available
+    │
+    └─▶ ✓ Application/guestbook
+        │ Namespace: argocd
+        │ Status: Synced / Healthy
+        │
+        └─▶ ✓ Service/guestbook-ui
+            │ Namespace: guestbook
+            │
+            └─▶ ✓ Deployment/guestbook-ui
+                  Status: Synced / Healthy
+
+✓ All levels in sync. Managed by argocd.
+```
+
+### Trace All Owner Types
+
+Test that trace works for ALL 5 owner types:
+
+```bash
+# Flux (forward trace)
+./cub-scout trace deploy/cart -n boutique
+
+# ArgoCD (forward trace)
+./cub-scout trace --app guestbook
+
+# ConfigHub (reverse trace)
+./cub-scout trace deploy/feature-flags -n platform-core
+
+# Helm (reverse trace)
+./cub-scout trace deploy/inventory-service -n team-inventory
+
+# Native (reverse trace - should warn about unmanaged resource)
+./cub-scout trace deploy/legacy-auth -n legacy-apps
+```
+
+---
+
+## Deep-Dive and App-Hierarchy
+
+### Deep-Dive
+
+The `map deep-dive` command shows ALL cluster data sources with LiveTree:
+
+```bash
+./cub-scout map deep-dive
+```
+
+**What it must include:**
+- Flux GitRepositories (with status, URL, revision)
+- Flux HelmRepositories (with status, URL)
+- Flux Kustomizations (with path, applied revision)
+- Flux HelmReleases (with chart, version)
+- ArgoCD Applications (with sync status, health)
+- Workloads by owner (grouped by Flux/ArgoCD/Helm/ConfigHub/Native)
+- LiveTree (Deployment → ReplicaSet → Pod hierarchy)
+
+**Verification:**
+
+```bash
+# Should produce 500+ lines with real data
+./cub-scout map deep-dive | wc -l
+
+# Check for all sections
+./cub-scout map deep-dive | grep -E "(GitRepository|Kustomization|Application|WORKLOADS)"
+```
+
+### App-Hierarchy
+
+The `map app-hierarchy` command shows the inferred ConfigHub model:
+
+```bash
+./cub-scout map app-hierarchy
+```
+
+**What it must include:**
+- Units tree with workload expansion
+- Namespace → AppSpace inference
+- Ownership graph (which owner type manages each unit)
+- Label analysis (app.kubernetes.io/* labels)
+- ConfigHub mapping suggestions
+
+**Verification:**
+
+```bash
+# Should produce 400+ lines
+./cub-scout map app-hierarchy | wc -l
+
+# Check for units and namespaces
+./cub-scout map app-hierarchy | grep -E "(Unit|Namespace|Ownership)"
+```
+
+---
+
+## Connected Mode Testing
+
+Connected mode requires a ConfigHub account and worker.
+
+### Prerequisites
+
+```bash
+# 1. Check authentication
+cub auth status
+
+# 2. Start a worker
+cub worker run dev --space tutorial
+
+# 3. Verify worker is Ready
+cub worker list
+```
+
+### Import Testing
+
+```bash
+# Dry-run import (no changes)
+./cub-scout import --dry-run --namespace boutique
+
+# Expected output:
+# DISCOVERED
+#   boutique (5 workloads)
+#
+# WILL CREATE
+#   App Space: boutique-team
+#   • boutique
+#     labels: team=boutique, variant=default, app=boutique
+#     workloads: 5
+#
+# (dry-run mode - no changes made)
+
+# Actual import
+./cub-scout import --namespace boutique
+
+# Verify units created
+cub unit list
+```
+
+### Fleet View Testing
+
+```bash
+# Fleet view (requires app/variant labels)
+./cub-scout map fleet
+
+# If no units with labels, shows:
+# No units found with app/variant labels.
+# To use fleet view, import with Hub/App Space model:
+#   cub-scout import --namespace myapp-prod --model hub-appspace
+```
+
+---
+
+## Test Scorecard
+
+After comprehensive testing, create a scorecard in `test/SCORECARD-YYYY-MM-DD.md`:
+
+```markdown
+## EXECUTIVE SUMMARY
+
+### Primary Test Groups (25% each)
+
+| Test Group | Weight | Score | Status |
+|------------|--------|-------|--------|
+| **Unit Tests** | 25% | 100% | PASS (193/193) |
+| **Integration Tests** | 25% | 100% | PASS (13/13) |
+| **GitOps E2E (Flux + ArgoCD)** | 25% | 100% | PASS (21/21) |
+| **Connected Mode** | 25% | 100% | PASS (9/9) |
+| **TOTAL** | 100% | **100%** | **FULLY PROVEN** |
+```
+
+**Latest scorecard:** See `test/SCORECARD-2026-01-17.md`

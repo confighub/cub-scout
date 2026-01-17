@@ -4,6 +4,32 @@ All tests live in this directory, organized by type.
 
 ---
 
+## Vibe Coding = 100% Test Coverage
+
+**CRITICAL:** When using AI-assisted "vibe coding", 100% test coverage is non-negotiable.
+
+> "If you can't prove it works, it doesn't work."
+
+AI can hallucinate code that looks correct but doesn't work. Tests are the only proof that code actually functions. Every feature, command, and code path MUST be verified.
+
+### The Four Test Groups (25% each)
+
+| Test Group | Weight | Verification | What It Proves |
+|------------|--------|--------------|----------------|
+| **Unit Tests** | 25% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
+| **Integration** | 25% | `./test/prove-it-works.sh --level=integration` | CLI commands work, JSON output valid |
+| **GitOps E2E** | 25% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
+| **Connected** | 25% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
+
+**Total: 500+ tests for 100% PROOF**
+
+**IMPORTANT:**
+- Always use `./cub-scout`, not `cub-scout` (binary is local, not in PATH)
+- Always use `prove-it-works.sh`, not `run-all.sh` (legacy)
+- See `test/TESTING-QUICKSTART.md` for the one-page quick reference
+
+---
+
 ## Uber Test: Prove It Works
 
 **Goal:** PROVE that confighub-agent (CLI and TUI) works in all main user scenarios.
@@ -342,8 +368,185 @@ go build ./cmd/cub-scout
 
 ---
 
+## Seven Test Levels
+
+The test suite is organized into 7 levels, from quick smoke tests to full connected mode verification:
+
+| Level | Time | Cluster | ConfigHub | What It Tests |
+|-------|------|---------|-----------|---------------|
+| **smoke** | 10s | No | No | Build + version |
+| **unit** | 30s | No | No | All `go test ./...` (500+ tests) |
+| **integration** | 2m | Yes | No | CLI commands work |
+| **gitops** | 5m | Yes | No | Flux + ArgoCD ownership, trace |
+| **demos** | 10m | Yes | No | Demo scripts run |
+| **examples** | 15m | Yes | No | Example apps deploy |
+| **connected** | 20m | Yes | Yes | Worker, import, app-space |
+| **full** | 30m | Yes | Yes | EVERYTHING |
+
+**Run with:** `./test/prove-it-works.sh --level=<level>`
+
+---
+
+## GitOps E2E Requirements
+
+GitOps E2E tests verify BOTH Flux and ArgoCD work correctly:
+
+### Flux Tests
+
+| Test | What It Verifies |
+|------|------------------|
+| GitRepository created | Source controller fetches from Git |
+| Kustomization created | Kustomize controller renders manifests |
+| Flux ownership detection | Labels correctly identify Flux-managed resources |
+| Flux trace command | `trace deploy/x -n y` shows ownership chain |
+
+### ArgoCD Tests
+
+| Test | What It Verifies |
+|------|------------------|
+| Application created | ArgoCD syncs application |
+| ArgoCD ownership detection | Labels correctly identify ArgoCD-managed resources |
+| ArgoCD trace --app | `trace --app appname` shows ArgoCD chain |
+
+### Trace All Owner Types
+
+```bash
+# Forward trace (Flux)
+./cub-scout trace deploy/cart -n boutique
+
+# Forward trace (ArgoCD)
+./cub-scout trace --app guestbook
+
+# Reverse trace (ConfigHub)
+./cub-scout trace deploy/feature-flags -n platform-core
+
+# Reverse trace (Helm)
+./cub-scout trace deploy/inventory-service -n team-inventory
+
+# Reverse trace (Native - should warn)
+./cub-scout trace deploy/legacy-auth -n legacy-apps
+```
+
+---
+
+## Deep-Dive and App-Hierarchy Verification
+
+### Deep-Dive
+
+`map deep-dive` must show ALL cluster data sources:
+
+```bash
+./cub-scout map deep-dive | wc -l  # Should be 500+ lines
+
+# Must include:
+# - Flux GitRepositories (with status)
+# - Flux HelmRepositories (with status)
+# - Flux Kustomizations (with applied revision)
+# - Flux HelmReleases (with chart version)
+# - ArgoCD Applications (with sync status)
+# - Workloads by owner (grouped by Flux/ArgoCD/Helm/ConfigHub/Native)
+# - LiveTree (Deployment → ReplicaSet → Pod hierarchy)
+```
+
+### App-Hierarchy
+
+`map app-hierarchy` must show inferred ConfigHub model:
+
+```bash
+./cub-scout map app-hierarchy | wc -l  # Should be 400+ lines
+
+# Must include:
+# - Units tree with workload expansion
+# - Namespace → AppSpace inference
+# - Ownership graph (which owner type manages each unit)
+# - Label analysis (app.kubernetes.io/* labels)
+# - ConfigHub mapping suggestions
+```
+
+---
+
+## Connected Mode Testing
+
+Connected mode requires a ConfigHub worker running:
+
+### Prerequisites
+
+```bash
+# 1. Start worker
+cub worker run dev --space tutorial
+
+# 2. Verify worker is Ready
+cub worker list
+```
+
+### Connected Tests
+
+| Test | What It Verifies |
+|------|------------------|
+| `cub auth` | User is logged in |
+| `cub worker run` | Worker starts and shows "Ready" |
+| `app-space list` | Can list spaces (should show 150+) |
+| `import --dry-run boutique` | Discovers workloads |
+| `import --dry-run online-boutique` | Discovers 12 microservices |
+| `import boutique` | Creates unit in ConfigHub |
+| `import online-boutique` | Creates 12 units |
+| `cub unit list` | Shows imported units |
+| `map fleet` | Fleet view works |
+
+---
+
+## Test Scorecard
+
+After comprehensive testing sessions, create a scorecard in `test/SCORECARD-YYYY-MM-DD.md`:
+
+```markdown
+## EXECUTIVE SUMMARY
+
+### Primary Test Groups (25% each)
+
+| Test Group | Weight | Score | Status |
+|------------|--------|-------|--------|
+| **Unit Tests** | 25% | 100% | PASS |
+| **Integration** | 25% | 100% | PASS |
+| **GitOps E2E** | 25% | 100% | PASS |
+| **Connected** | 25% | 100% | PASS |
+| **TOTAL** | 100% | **100%** | **FULLY PROVEN** |
+
+### Additional Verification
+
+| Category | Status | What to Check |
+|----------|--------|---------------|
+| Flux Tests | PASS/FAIL | GitRepository, Kustomization, trace |
+| ArgoCD Tests | PASS/FAIL | Application, trace --app |
+| Deep-Dive | PASS/FAIL | 500+ lines, all data sources |
+| App-Hierarchy | PASS/FAIL | 400+ lines, units/namespaces |
+| Trace (all owners) | PASS/FAIL | Flux, ArgoCD, ConfigHub, Helm, Native |
+```
+
+**Latest:** [SCORECARD-2026-01-17.md](SCORECARD-2026-01-17.md)
+
+---
+
+## MoSCoW Prioritization
+
+| Priority | Requirement | Status |
+|----------|-------------|--------|
+| **MUST** | Unit tests pass | Required for merge |
+| **MUST** | Integration tests pass | Required for merge |
+| **MUST** | Flux ownership detection works | Required |
+| **MUST** | ArgoCD ownership detection works | Required |
+| **SHOULD** | deep-dive shows all data | Expected |
+| **SHOULD** | app-hierarchy shows hierarchy | Expected |
+| **SHOULD** | trace works for all owner types | Expected |
+| **COULD** | Connected mode tests pass | Nice to have |
+| **COULD** | Examples all deploy cleanly | Nice to have |
+| **WON'T** | ConfigHub-to-cluster sync | Out of scope |
+
+---
+
 ## See Also
 
+- [SCORECARD-2026-01-17.md](SCORECARD-2026-01-17.md) - Latest test scorecard
 - [TEST-INVENTORY.md](TEST-INVENTORY.md) - Complete test inventory with all test files
 - [atk/README.md](atk/README.md) - Agent Test Kit documentation
 - [CLAUDE.md](../CLAUDE.md) - Testing strategy in project instructions
