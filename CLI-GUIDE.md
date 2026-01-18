@@ -516,6 +516,7 @@ Filter resources with `-q`:
 ## See Also
 
 - [README.md](README.md) — Project overview
-- [CONTRIBUTING.md](CONTRIBUTING.md) — How to contribute
+- [docs/COMMAND-MATRIX.md](docs/COMMAND-MATRIX.md) — Complete command/option/key reference
 - [docs/SCAN-GUIDE.md](docs/SCAN-GUIDE.md) — Deep dive on CCVE scanning
 - [docs/ALTERNATIVES.md](docs/ALTERNATIVES.md) — Comparison with other tools
+- [CONTRIBUTING.md](CONTRIBUTING.md) — How to contribute
