@@ -188,8 +188,3 @@ Interactive demos to show the agent in action:
 ./demo connected           # ConfigHub connected mode
 ```
 
-## See Also
-
-- [ConfigHub Concepts](../../docs/GLOSSARY-OF-CONCEPTS.md) - ConfigHub terms (Hub, App Space, Unit, etc.)
-- [GSF Schema](../../docs/GSF-SCHEMA.md) - GitOps State Format output schema
-- [TUI Trace](../../docs/TUI-TRACE.md) - Trace resource ownership chains
