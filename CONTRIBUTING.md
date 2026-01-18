@@ -86,8 +86,8 @@ Features should work in degraded environments:
 
 ## Questions?
 
-- Open an issue for bugs or feature requests
-- Join our Discord for discussion (link in README)
+- **Discord:** [discord.gg/confighub](https://discord.gg/confighub) — Ask questions, get help
+- **Issues:** [GitHub Issues](https://github.com/confighub/cub-scout/issues) — Bugs and feature requests
 
 ## License
 

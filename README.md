@@ -2,19 +2,58 @@
 
 **Find who owns every Kubernetes resource in 10 seconds.**
 
-<!-- TODO: Add screenshot
-![cub-scout TUI](docs/images/screenshot.png)
--->
+```bash
+./cub-scout map
+```
 
-- Detect Flux, ArgoCD, Helm, or orphaned resources
-- Trace any resource back to its Git source
-- Find misconfigurations before they cause outages
+---
 
-**No signup required. Works on any cluster.**
+## Why This Exists
+
+Every platform team faces the same problem: resources deployed by Flux, ArgoCD, Helm, and `kubectl apply` are mixed together with no visibility into who owns what.
+
+When something breaks at 2am, you need answers fast:
+- Who manages this deployment?
+- Is it Flux? ArgoCD? Someone's kubectl?
+- What's the Git source?
+
+**cub-scout gives you that visibility instantly.**
+
+It reads your cluster (read-only), detects ownership by examining labels and annotations, and shows you exactly what's going on. No agents to install, no databases, no signup.
+
+---
+
+## What It Does
+
+| Command | What You Get |
+|---------|--------------|
+| `./cub-scout map` | Interactive TUI showing all resources by owner |
+| `./cub-scout trace deploy/nginx -n prod` | Full ownership chain: Git → Flux/Argo → Deployment |
+| `./cub-scout map orphans` | Resources not managed by GitOps (shadow IT) |
+| `./cub-scout scan` | Configuration anti-patterns (CCVEs) |
+
+### Ownership Detection
+
+| Owner | How It's Detected |
+|-------|-------------------|
+| **Flux** | `kustomize.toolkit.fluxcd.io/*` labels |
+| **ArgoCD** | `argocd.argoproj.io/instance` label |
+| **Helm** | `app.kubernetes.io/managed-by: Helm` |
+| **ConfigHub** | `confighub.com/UnitSlug` label |
+| **Native** | None of the above (kubectl-applied) |
 
 ---
 
 ## Install
+
+### From Source (Recommended)
+
+```bash
+git clone https://github.com/confighub/cub-scout.git
+cd cub-scout
+go build ./cmd/cub-scout
+./cub-scout version
+```
 
 ### Homebrew (macOS/Linux)
 
@@ -25,16 +64,9 @@ brew install confighub/tap/cub-scout
 ### Docker
 
 ```bash
-docker run --rm --network=host -v ~/.kube:/home/nonroot/.kube ghcr.io/confighub/cub-scout map list
-```
-
-### From Source
-
-```bash
-git clone https://github.com/confighub/cub-scout.git
-cd cub-scout
-go build ./cmd/cub-scout
-./cub-scout version
+docker run --rm --network=host \
+  -v ~/.kube:/home/nonroot/.kube \
+  ghcr.io/confighub/cub-scout map list
 ```
 
 ---
@@ -42,61 +74,49 @@ go build ./cmd/cub-scout
 ## Quick Start
 
 ```bash
-# What's in my cluster? Who owns it?
-cub-scout map
+# Build
+go build ./cmd/cub-scout
 
-# Plain text output
-cub-scout map list
+# What's in my cluster? Who owns it?
+./cub-scout map
+
+# Plain text output (for scripting)
+./cub-scout map list
 
 # Who manages this deployment?
-cub-scout trace deploy/nginx -n production
+./cub-scout trace deploy/nginx -n production
 
 # Find unmanaged resources
-cub-scout map orphans
+./cub-scout map orphans
 
-# Scan for misconfigurations
-cub-scout scan
+# Scan for configuration issues
+./cub-scout scan
 ```
 
----
-
-## What It Detects
-
-| Owner | How It's Detected |
-|-------|-------------------|
-| **Flux** | `kustomize.toolkit.fluxcd.io/*` labels |
-| **ArgoCD** | `argocd.argoproj.io/instance` labels |
-| **Helm** | `app.kubernetes.io/managed-by: Helm` |
-| **ConfigHub** | `confighub.com/UnitSlug` labels |
-| **Orphan** | None of the above |
+**Press `?` in the TUI for keyboard shortcuts.**
 
 ---
 
-## Pricing
+## CLI Guide
 
-| Feature | Free | Pro |
-|---------|:----:|:---:|
-| Single cluster | ✓ | ✓ |
-| Ownership detection | ✓ | ✓ |
-| Orphan detection | ✓ | ✓ |
-| Misconfiguration scanning | ✓ | ✓ |
-| Multi-cluster fleet | — | ✓ |
-| Import to ConfigHub | — | ✓ |
-| Team collaboration | — | ✓ |
-
-**Free forever for single cluster.**
+See **[CLI-GUIDE.md](CLI-GUIDE.md)** for the complete command reference with:
+- Every command explained
+- What you'd do without cub-scout (kubectl, bash, etc.)
+- Expected output examples
 
 ---
 
-## Documentation
+## How It Works
 
-**[Read the complete guide →](GUIDE.md)**
+cub-scout uses **deterministic label detection** — no AI, no magic:
 
-| Topic | Link |
-|-------|------|
-| All commands | [GUIDE.md](GUIDE.md#commands) |
-| Testing | [GUIDE.md](GUIDE.md#testing) |
-| Troubleshooting | [GUIDE.md](GUIDE.md#common-errors) |
+1. Connect to your cluster via kubectl context
+2. List resources across all namespaces
+3. Examine labels and annotations on each resource
+4. Match against known ownership patterns (Flux, Argo, Helm, etc.)
+5. Display results
+
+**Read-only by default.** Never modifies your cluster unless you explicitly use import commands.
 
 ---
 
@@ -104,9 +124,29 @@ cub-scout scan
 
 cub-scout is the open-source cluster observer from [ConfigHub](https://confighub.com).
 
-- **Website:** [confighub.com](https://confighub.com)
-- **Discord:** [discord.gg/confighub](https://discord.gg/confighub)
+Use it standalone forever, or connect to ConfigHub for:
+- Multi-cluster fleet visibility
+- One-click import of discovered workloads
+- Team collaboration and change tracking
+
+---
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+This is an early-stage project. If it proves useful, we'll expand the community:
+- Found a bug? [Open an issue](https://github.com/confighub/cub-scout/issues)
+- Have an idea? Start a discussion
+- Want to contribute? PRs welcome
+
+---
+
+## Community
+
+- **Discord:** [discord.gg/confighub](https://discord.gg/confighub) — Ask questions, share feedback
 - **Issues:** [GitHub Issues](https://github.com/confighub/cub-scout/issues)
+- **Website:** [confighub.com](https://confighub.com)
 
 ---
 
