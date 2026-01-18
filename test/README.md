@@ -4,13 +4,13 @@ All tests live in this directory, organized by type.
 
 ---
 
-## AI-Assisted Development = 100% Test Coverage
+## Our goal when doing AI-Assisted Development is 100% Test Coverage
 
 **CRITICAL:** When using AI to write code, 100% test coverage is non-negotiable.
 
 > "If you can't prove it works, it doesn't work."
 
-AI can generate code that looks correct but doesn't function. Tests are the only proof. Every feature must be verified.
+AI can generate code that looks correct but doesn't function. Tests are the only proof. We attempt to verify every feature.  
 
 ### The Four Test Groups (25% each)
 
@@ -30,14 +30,14 @@ AI can generate code that looks correct but doesn't function. Tests are the only
 
 ---
 
-## Uber Test: Prove It Works
+## Full Test Suite: "Prove It Works"
 
-**Goal:** PROVE that cub-scout (CLI and TUI) works in all main user scenarios.
+**Goal:** PROVE that cub-scout works in main user scenarios.
 
-The "Uber Test" is a comprehensive proof test that verifies everything works:
+The "Full Test" is a comprehensive proof test that verifies everything works:
 
 ```bash
-# UBER TEST - Run this to prove cub-scout works
+# Full TEST - Run this to prove cub-scout works
 go build ./cmd/cub-scout                           # Build
 go test ./...                                      # Unit + TUI tests
 go test -tags=integration ./test/integration/...  # Integration tests
@@ -66,7 +66,7 @@ go test -tags=integration ./test/integration/...  # Integration tests
 
 ```
 ═══════════════════════════════════════════════════════════════
-                    UBER TEST RESULTS
+                    FULL TEST RESULTS
 ═══════════════════════════════════════════════════════════════
 
 Go Unit + TUI Tests:     ~180 passed
