@@ -25,7 +25,6 @@ AI can generate code that looks correct but doesn't function. Tests are the only
 
 **IMPORTANT:**
 - Always use `./cub-scout`, not `cub-scout` (binary is local, not in PATH)
-- Always use `prove-it-works.sh`, not `run-all.sh` (legacy)
 - See [CLI-GUIDE.md](../CLI-GUIDE.md) for the complete CLI reference (14 commands, 17 map subcommands, 17 TUI views)
 
 ---
@@ -41,7 +40,7 @@ The "Full Test" is a comprehensive proof test that verifies everything works:
 go build ./cmd/cub-scout                           # Build
 go test ./...                                      # Unit + TUI tests
 go test -tags=integration ./test/integration/...  # Integration tests
-./test/run-all.sh                                 # E2E demos + examples
+./test/prove-it-works.sh --level=full                                 # E2E demos + examples
 ```
 
 **What the Uber Test Proves:**
@@ -123,7 +122,7 @@ go test -tags=integration ./test/integration/...
 ### Tier 3: E2E Demos & Examples (Full System)
 
 ```bash
-./test/run-all.sh
+./test/prove-it-works.sh --level=full
 ```
 
 | Phase | Tests | What It Proves |
@@ -158,12 +157,12 @@ go test ./...
 # Full check (with cluster)
 go test ./... && \
 go test -tags=integration ./test/integration/... && \
-./test/run-all.sh
+./test/prove-it-works.sh --level=full
 
 # Individual phases
-./test/run-all.sh --phase=1    # Standard tests
-./test/run-all.sh --phase=2    # Demos only
-./test/run-all.sh --phase=3    # Examples only
+./test/prove-it-works.sh --level=integration    # Standard tests
+./test/prove-it-works.sh --level=demos    # Demos only
+./test/prove-it-works.sh --level=examples    # Examples only
 ```
 
 ---
@@ -174,7 +173,7 @@ go test -tags=integration ./test/integration/... && \
 test/
 ├── README.md                      # This file
 ├── TEST-INVENTORY.md              # Complete test inventory
-├── run-all.sh                     # Run all E2E phases
+├── prove-it-works.sh --level=full                     # Run all E2E phases
 ├── preflight/                     # Pre-flight validation
 │   └── mini-tck                   # Technology Compatibility Kit
 ├── unit/                          # Go unit tests (no cluster)
@@ -349,7 +348,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: helm/kind-action@v1
-      - run: ./test/run-all.sh
+      - run: ./test/prove-it-works.sh --level=full
 ```
 
 ---

@@ -35,8 +35,7 @@ go test ./... && ./cub-scout map deep-dive | head -50
 
 **IMPORTANT:**
 - Always use `./cub-scout`, not `cub-scout` (binary is local, not in PATH)
-- Always use `prove-it-works.sh`, not `run-all.sh` (legacy)
-- See [GUIDE.md](../GUIDE.md) for the complete reference
+- See [CLI-GUIDE.md](../CLI-GUIDE.md) for the complete CLI reference
 
 ---
 
@@ -680,7 +679,7 @@ https://github.com/confighub-kubecon-2025
 Run all tests (3 phases + connected mode):
 
 ```bash
-./test/run-all.sh --connected
+./test/prove-it-works.sh --level=connected
 ```
 
 **What it tests:**

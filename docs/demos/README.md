@@ -257,7 +257,7 @@ Each demo supports `--cleanup`:
 
 ```bash
 # Via test suite
-./test/run-all.sh --phase=2
+./test/prove-it-works.sh --level=demos
 
 # Manually
 for demo in quick ccve healthy unhealthy; do

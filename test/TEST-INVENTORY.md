@@ -166,7 +166,7 @@ go test ./...
 go test -tags=integration ./test/integration/...
 
 # 4. E2E demos (requires cluster)
-./test/run-all.sh
+./test/prove-it-works.sh --level=full
 
 # 5. Validate functions
 ./test/validate-functions.sh

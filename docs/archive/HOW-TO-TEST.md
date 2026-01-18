@@ -49,19 +49,19 @@ Tests run in three phases, in order:
 
 | Phase | What | Duration | Command |
 |-------|------|----------|---------|
-| **1. Standard** | Build, unit tests, integration, ownership detection | ~60s | `./test/run-all.sh --phase=1` |
-| **2. Demos** | Interactive demos work correctly | ~30s | `./test/run-all.sh --phase=2` |
-| **3. Examples** | Third-party integrations work | ~15s | `./test/run-all.sh --phase=3` |
+| **1. Standard** | Build, unit tests, integration, ownership detection | ~60s | `./test/prove-it-works.sh --level=integration` |
+| **2. Demos** | Interactive demos work correctly | ~30s | `./test/prove-it-works.sh --level=demos` |
+| **3. Examples** | Third-party integrations work | ~15s | `./test/prove-it-works.sh --level=examples` |
 
 ### Run All Phases
 
 ```bash
 # Full test suite (recommended)
-./test/run-all.sh
+./test/prove-it-works.sh --level=full
 
 # With options
-./test/run-all.sh --quick      # Skip slow tests
-./test/run-all.sh --connected  # Include ConfigHub mode
+./test/prove-it-works.sh --level=smoke      # Skip slow tests
+./test/prove-it-works.sh --level=connected  # Include ConfigHub mode
 ```
 
 ### Test Output
@@ -175,7 +175,7 @@ cub worker list
 ./test/preflight/mini-tck --connected
 
 # Full test suite with connected mode
-./test/run-all.sh --connected
+./test/prove-it-works.sh --level=connected
 
 # Verify ConfigHub TUI
 ./test/atk/map confighub
@@ -354,10 +354,10 @@ ls -la docs/planning/sessions/test-runs/
 ./test/preflight/mini-tck && ./test/atk/demo quick
 
 # Full verification (standalone)
-./test/run-all.sh
+./test/prove-it-works.sh --level=full
 
 # Full verification (with ConfigHub)
-./test/run-all.sh --connected
+./test/prove-it-works.sh --level=connected
 ```
 
 ### Test Counts (Full Suite)
@@ -379,8 +379,8 @@ ls -la docs/planning/sessions/test-runs/
 | Question | Answer |
 |----------|--------|
 | How do I quickly verify it works? | `./test/preflight/mini-tck && ./test/atk/demo quick` |
-| How do I run all tests? | `./test/run-all.sh` |
-| How do I test connected mode? | `./test/run-all.sh --connected` |
+| How do I run all tests? | `./test/prove-it-works.sh --level=full` |
+| How do I test connected mode? | `./test/prove-it-works.sh --level=connected` |
 | How do I validate expected outputs? | `./test/validate-expected-outputs.sh` |
 | Where are test logs? | `docs/planning/sessions/test-runs/` |
 | How do I test ownership detection? | `./test/atk/verify` |
