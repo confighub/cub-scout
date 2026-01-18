@@ -1,6 +1,6 @@
-# Argo CD ConfigHub Agent Extension
+# Argo CD cub-scout Extension
 
-An Argo CD UI extension that integrates with the ConfigHub Agent to show:
+An Argo CD UI extension that integrates with the cub-scout to show:
 
 - **Resource ownership** - ConfigHub, Flux, Helm, or native
 - **ConfigHub context** - Space, Unit, revision for ConfigHub-managed resources
@@ -88,7 +88,7 @@ An Argo CD UI extension that integrates with the ConfigHub Agent to show:
 │  ┌───────────────────────────────────────────────────────────────┐  │
 │  │                    UI (React)                                 │  │
 │  │  ┌─────────────────────────────────────────────────────────┐  │  │
-│  │  │              ConfigHub Agent Extension                  │  │  │
+│  │  │              cub-scout Extension                  │  │  │
 │  │  │  - Status Panel (ownership badge)                       │  │  │
 │  │  │  - Application Tab (full agent view)                    │  │  │
 │  │  │  - Resource Tab (per-resource details)                  │  │  │
@@ -98,13 +98,13 @@ An Argo CD UI extension that integrates with the ConfigHub Agent to show:
 │                              ▼                                       │
 │  ┌───────────────────────────────────────────────────────────────┐  │
 │  │            Extension Backend Proxy                            │  │
-│  │            /extensions/confighub-agent/*                      │  │
+│  │            /extensions/cub-scout/*                      │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────┬──────────────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    ConfigHub Agent Service                           │
+│                    cub-scout Service                           │
 │                    (in-cluster or sidecar)                           │
 │  ┌───────────────────────────────────────────────────────────────┐  │
 │  │  GET /api/map           - Resource ownership map              │  │
@@ -117,7 +117,7 @@ An Argo CD UI extension that integrates with the ConfigHub Agent to show:
 
 ## Installation
 
-### 1. Deploy the ConfigHub Agent
+### 1. Deploy the cub-scout
 
 ```bash
 kubectl apply -f agent-deployment.yaml
@@ -136,10 +136,10 @@ metadata:
 data:
   extension.config: |
     extensions:
-      - name: confighub-agent
+      - name: cub-scout
         backend:
           services:
-            - url: http://confighub-agent.confighub-system:8080
+            - url: http://cub-scout.confighub-system:8080
               headers:
                 - name: X-Argo-App
                   value: '$app.metadata.name'
@@ -149,7 +149,7 @@ data:
 
 ```bash
 # Copy extension to argocd-server
-kubectl -n argocd cp extension.js argocd-server-xxx:/tmp/extensions/extension-confighub-agent.js
+kubectl -n argocd cp extension.js argocd-server-xxx:/tmp/extensions/extension-cub-scout.js
 ```
 
 Or use init container (see `extension-patch.yaml`).
@@ -157,7 +157,7 @@ Or use init container (see `extension-patch.yaml`).
 ## Files
 
 - `extension.js` - UI extension code
-- `agent-deployment.yaml` - ConfigHub Agent deployment
+- `agent-deployment.yaml` - cub-scout deployment
 - `extension-patch.yaml` - Patch to add extension to argocd-server
 
 ## Extension API (Proposed)
@@ -228,4 +228,4 @@ Returns CCVE findings:
 ## References
 
 - [Argo CD UI Extensions](https://argo-cd.readthedocs.io/en/stable/developer-guide/extensions/ui-extensions/)
-- [ConfigHub Agent Map Schema](../../docs/MAP-SCHEMA.md)
+- [cub-scout Map Schema](../../docs/MAP-SCHEMA.md)

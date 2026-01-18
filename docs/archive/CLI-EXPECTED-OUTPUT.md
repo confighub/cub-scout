@@ -1,6 +1,6 @@
 # Expected Output Reference
 
-This guide shows what to expect from ConfigHub Agent commands - both healthy and unhealthy states.
+This guide shows what to expect from cub-scout commands - both healthy and unhealthy states.
 
 ## Quick Reference
 
@@ -339,7 +339,7 @@ $ ./test/atk/demo quick
 ```
 
 ```
-ConfigHub Agent - Quick Demo
+cub-scout - Quick Demo
 ════════════════════════════
 
 Creating demo resources...
@@ -373,7 +373,7 @@ $ ./test/atk/demo ccve
 ```
 
 ```
-ConfigHub Agent - CCVE Demo
+cub-scout - CCVE Demo
 ════════════════════════════
 
 Creating resources with known issues...
@@ -404,7 +404,7 @@ $ ./test/atk/demo healthy
 ```
 
 ```
-ConfigHub Agent - Healthy Enterprise Demo
+cub-scout - Healthy Enterprise Demo
 ══════════════════════════════════════════
 
 Creating healthy enterprise pattern...
@@ -449,7 +449,7 @@ $ ./test/atk/demo unhealthy
 ```
 
 ```
-ConfigHub Agent - Unhealthy Demo
+cub-scout - Unhealthy Demo
 ═════════════════════════════════
 
 Creating resources with common problems...

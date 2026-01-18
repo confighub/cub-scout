@@ -34,11 +34,11 @@ cub version
 
 ---
 
-## Step 2: Get confighub-agent
+## Step 2: Get cub-scout
 
 ```bash
-git clone https://github.com/confighubai/confighub-agent.git
-cd confighub-agent
+git clone https://github.com/confighub/cub-scout.git
+cd cub-scout
 
 # Build
 go build ./cmd/cub-scout

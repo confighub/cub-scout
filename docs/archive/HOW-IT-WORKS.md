@@ -355,11 +355,11 @@ Run on your laptop against any cluster you have kubectl access to:
 
 ```bash
 # Install
-go install github.com/confighub/confighub-agent/cmd/cub-scout@latest
+go install github.com/confighub/cub-scout/cmd/cub-scout@latest
 
 # Or build from source
-git clone https://github.com/confighubai/confighub-agent
-cd confighub-agent
+git clone https://github.com/confighub/cub-scout
+cd cub-scout
 go build ./cmd/cub-scout
 
 # Use
@@ -495,4 +495,4 @@ Run in pipelines for pre-deploy checks:
 
 ---
 
-*For questions or issues: https://github.com/confighubai/confighub-agent/issues*
+*For questions or issues: https://github.com/confighub/cub-scout/issues*

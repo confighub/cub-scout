@@ -1,6 +1,6 @@
-# flux9s ConfigHub Agent Integration
+# flux9s cub-scout Integration
 
-[flux9s](https://github.com/dgunzy/flux9s) is a K9s-inspired terminal UI for Flux. This example shows how to integrate ConfigHub Agent capabilities.
+[flux9s](https://github.com/dgunzy/flux9s) is a K9s-inspired terminal UI for Flux. This example shows how to integrate cub-scout capabilities.
 
 ## What the Integration Adds
 
@@ -192,4 +192,4 @@ The integration would require these Agent API endpoints:
 
 - [flux9s GitHub](https://github.com/dgunzy/flux9s)
 - [flux9s Documentation](https://flux9s.ca/)
-- [ConfigHub Agent Map Schema](../../docs/MAP-SCHEMA.md)
+- [cub-scout Map Schema](../../docs/MAP-SCHEMA.md)

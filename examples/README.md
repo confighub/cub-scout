@@ -1,4 +1,4 @@
-# ConfigHub Agent Examples
+# cub-scout Examples
 
 All examples, demos, and integration code in one place.
 
@@ -16,8 +16,8 @@ All examples, demos, and integration code in one place.
 
 ```bash
 # Clone (requires GitHub access)
-git clone https://github.com/confighubai/confighub-agent.git
-cd confighub-agent
+git clone https://github.com/confighub/cub-scout.git
+cd cub-scout
 
 # Try it on your cluster
 ./run.sh

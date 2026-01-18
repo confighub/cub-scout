@@ -227,7 +227,7 @@ Each ownership type is tested end-to-end:
 
 ## CCVE and Remedy Testing (Independent)
 
-**IMPORTANT:** CCVE scanning and remedy functionality can and should be tested **separately** from the rest of the confighub-agent project. These components:
+**IMPORTANT:** CCVE scanning and remedy functionality can and should be tested **separately** from the rest of the cub-scout project. These components:
 
 - Do NOT require ConfigHub connection or workers
 - Do NOT require the `cub` CLI
@@ -422,4 +422,4 @@ See: [test/expected-outputs/README.md](../test/expected-outputs/README.md) for f
 
 ---
 
-*For questions or issues: https://github.com/confighubai/confighub-agent/issues*
+*For questions or issues: https://github.com/confighub/cub-scout/issues*

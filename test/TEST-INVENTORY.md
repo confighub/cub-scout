@@ -1,4 +1,4 @@
-# ConfigHub Agent Test Inventory
+# cub-scout Test Inventory
 
 **Created:** 2026-01-14
 **Purpose:** Complete inventory of all tests, ensuring comprehensive coverage

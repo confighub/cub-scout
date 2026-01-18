@@ -2,7 +2,7 @@
 
 These scenarios demonstrate the **Rendered Manifest (RM) pattern goals** using real Kubernetes resources.
 
-> **Unlike the simulation demos in `rm-demos-argocd/`**, these are **working deployments** that you can apply to your cluster and test with the ConfigHub Agent.
+> **Unlike the simulation demos in `rm-demos-argocd/`**, these are **working deployments** that you can apply to your cluster and test with the cub-scout.
 
 ---
 
@@ -27,7 +27,7 @@ kubectl apply -f ../argo-applicationset/apps/apptique/dev/
 # 2. Deploy a scenario
 kubectl apply -f monday-panic/
 
-# 3. Find the problem with ConfigHub Agent
+# 3. Find the problem with cub-scout
 ./test/atk/map problems
 ./test/atk/scan
 ```
@@ -91,7 +91,7 @@ kubectl patch deployment frontend -n apptique-prod \
 
 **Detect the drift:**
 ```bash
-# ConfigHub Agent detects drift by comparing to Git source
+# cub-scout detects drift by comparing to Git source
 ./cub-scout trace deployment/frontend -n apptique-prod
 
 # Shows:
@@ -169,7 +169,7 @@ These scenarios use **namespaces to simulate clusters**. In a real fleet:
 | Drift Detection | apptique-prod | Any production cluster |
 | Security Patch | apptique-{monitoring,vulnerable} | All clusters |
 
-**The ConfigHub Agent works the same way** — it detects ownership, traces sources, and scans for CCVEs regardless of whether you're testing locally or running across 100 clusters.
+**The cub-scout works the same way** — it detects ownership, traces sources, and scans for CCVEs regardless of whether you're testing locally or running across 100 clusters.
 
 ---
 

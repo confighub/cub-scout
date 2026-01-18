@@ -1,6 +1,6 @@
-# ConfigHub Agent Testing Guide
+# cub-scout Testing Guide
 
-A step-by-step guide to testing the ConfigHub Agent locally.
+A step-by-step guide to testing the cub-scout locally.
 
 ---
 
@@ -114,7 +114,7 @@ Verify with:
 **Expected output:**
 
 ```
-ConfigHub Agent - Kubernetes resource visibility and ownership detection
+cub-scout - Kubernetes resource visibility and ownership detection
 
 The cub-scout observes Kubernetes clusters and detects resource ownership.
 It provides commands for:

@@ -1,10 +1,10 @@
-# Introduction to ConfigHub Agent
+# Introduction to cub-scout
 
-Welcome! This repo contains the **ConfigHub Agent** — please try it!
+Welcome! This repo contains the **cub-scout** — please try it!
 
 ## What's In This Repo
 
-- **ConfigHub Agent and TUI** — The main tool. See what's running, who owns it, find misconfigurations.
+- **cub-scout and TUI** — The main tool. See what's running, who owns it, find misconfigurations.
 - **Hub/App Space model** — Architecture for application spaces and platform governance
 - **Examples** — IITS use cases, app config patterns, integrations
 - **GSF (GitOps State Format)** — Standard JSON format for GitOps integrations

@@ -1,6 +1,6 @@
 # Examples Overview
 
-Central reference for all ConfigHub Agent examples, demos, and integrations.
+Central reference for all cub-scout examples, demos, and integrations.
 
 > **Looking for examples?** All examples live in [examples/](../examples/).
 > This document provides an overview and cross-references.

@@ -4,7 +4,7 @@
 
 > **Maintainer note:** When updating this file, also update [docs/EXAMPLES-OVERVIEW.md](../../docs/EXAMPLES-OVERVIEW.md).
 
-The ConfigHub Agent exposes a standardized API that can be consumed by GUI tools. These mockups show how integrations could look.
+The cub-scout exposes a standardized API that can be consumed by GUI tools. These mockups show how integrations could look.
 
 ---
 

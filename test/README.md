@@ -1,4 +1,4 @@
-# ConfigHub Agent Test Suite
+# cub-scout Test Suite
 
 All tests live in this directory, organized by type.
 
@@ -32,12 +32,12 @@ AI can generate code that looks correct but doesn't function. Tests are the only
 
 ## Uber Test: Prove It Works
 
-**Goal:** PROVE that confighub-agent (CLI and TUI) works in all main user scenarios.
+**Goal:** PROVE that cub-scout (CLI and TUI) works in all main user scenarios.
 
 The "Uber Test" is a comprehensive proof test that verifies everything works:
 
 ```bash
-# UBER TEST - Run this to prove confighub-agent works
+# UBER TEST - Run this to prove cub-scout works
 go build ./cmd/cub-scout                           # Build
 go test ./...                                      # Unit + TUI tests
 go test -tags=integration ./test/integration/...  # Integration tests

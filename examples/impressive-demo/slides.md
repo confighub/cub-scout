@@ -2,7 +2,7 @@
 
 ## Opening Hook (30 seconds)
 
-> "Last month at FluxCon 2025, BIGBANK shared a story about a 4-hour outage caused by a **single space character** in their Grafana configuration. Today, I'm going to show you how ConfigHub Agent would have caught that error in 30 seconds."
+> "Last month at FluxCon 2025, BIGBANK shared a story about a 4-hour outage caused by a **single space character** in their Grafana configuration. Today, I'm going to show you how cub-scout would have caught that error in 30 seconds."
 
 ## Slide 1: The Problem
 
@@ -66,7 +66,7 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 **What to Say:**
 - "I've set up a demo cluster with Flux CD"
 - "I'm going to intentionally introduce 3 CCVEs"
-- "Watch how fast ConfigHub Agent catches them"
+- "Watch how fast cub-scout catches them"
 
 **Set Expectations:**
 - Demo takes ~5 minutes
@@ -79,7 +79,7 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 
 **What to Say:**
 - "Deploying Grafana with the exact BIGBANK configuration..."
-- "ConfigHub Agent detects CCVE-2025-0027 immediately"
+- "cub-scout detects CCVE-2025-0027 immediately"
 - "Look at the output - it tells us:"
   - Exact location (Deployment/grafana, env NAMESPACE)
   - The problem (spaces in list)
@@ -96,7 +96,7 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 **What to Say:**
 - "Now deploying an IngressRoute with a service name typo"
 - "Kubernetes ACCEPTS this - no validation"
-- "But ConfigHub Agent does cross-reference checking"
+- "But cub-scout does cross-reference checking"
 - "It knows Service 'grafana-servic' doesn't exist"
 
 **Key Insight:**
@@ -109,7 +109,7 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 **What to Say:**
 - "Deploying a Certificate that references a missing Issuer"
 - "This should BLOCK deployment - it will never work"
-- "ConfigHub Agent catches this before it reaches production"
+- "cub-scout catches this before it reaches production"
 
 **Key Concept:**
 > "Shift-left validation. Catch critical errors before they cause outages."
@@ -135,7 +135,7 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 **Title:** How It Works
 
 **Components:**
-1. ConfigHub Agent (in-cluster observer)
+1. cub-scout (in-cluster observer)
 2. CCVE Database (50+ definitions, growing)
 3. Scanner Function (pre + post deployment)
 4. CLI/UI Integration (inline results)
@@ -185,10 +185,10 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 
 **Three Tiers:**
 1. **Free/OSS**: CCVE database + CLI scanner
-   - GitHub: monadic/confighub-agent
+   - GitHub: monadic/cub-scout
    - Scan your cluster today
 
-2. **Pro**: ConfigHub Agent integration
+2. **Pro**: cub-scout integration
    - Automatic scanning on every revision
    - Pre-deployment blocking
    - CCVE history tracking
@@ -245,7 +245,7 @@ A: "Each CCVE specifies affected versions. When tools change behavior, we deprec
 "Scan your clusters this week. Find your CCVEs. I bet you have at least one."
 
 **For Platform Teams:**
-"Install ConfigHub Agent in dev. See what it finds. Share results with your team."
+"Install cub-scout in dev. See what it finds. Share results with your team."
 
 **For Leaders:**
 "Ask your team: How many hours did we spend debugging config errors last quarter? Now imagine if all those were CCVEs."

@@ -1,4 +1,4 @@
-# ConfigHub Agent Architecture
+# cub-scout Architecture
 
 The Agent is a protocol, not just a tool. This document describes that protocol: a stable contract for representing GitOps state that other tools can build on.
 
@@ -66,7 +66,7 @@ GSF is valuable because it enables things that weren't possible when every tool 
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     Kubernetes Cluster                               │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │ ConfigHub Agent (read-only)                                   │  │
+│  │ cub-scout (read-only)                                   │  │
 │  │                                                               │  │
 │  │  ┌──────────┐   ┌───────────┐   ┌──────────┐   ┌──────────┐  │  │
 │  │  │ Watcher  │ → │ Ownership │ → │  CCVE    │ → │  Output  │  │  │
@@ -443,7 +443,7 @@ Minimal read-only permissions:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: confighub-agent
+  name: cub-scout
 rules:
   - apiGroups: ["*"]
     resources: ["*"]

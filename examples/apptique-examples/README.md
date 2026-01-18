@@ -1,6 +1,6 @@
 # Apptique Examples — Real-World GitOps Patterns
 
-Real-world examples demonstrating ConfigHub Agent's ownership detection across multiple GitOps patterns.
+Real-world examples demonstrating cub-scout's ownership detection across multiple GitOps patterns.
 
 > **Source:** Based on [Google's Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo) (microservices-demo), adapted from [Brian's KubeCon 2025 demos](https://github.com/confighub-kubecon-2025).
 
@@ -64,7 +64,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1m
-  url: https://github.com/confighubai/confighub-agent
+  url: https://github.com/confighub/cub-scout
   ref:
     branch: main
 EOF
@@ -323,7 +323,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 
 These scenarios demonstrate the **Rendered Manifest pattern goals** using real Kubernetes resources.
 
-> **Unlike the simulation demos in `rm-demos-argocd/`**, these are **working deployments** that you can apply to your cluster and test with the ConfigHub Agent.
+> **Unlike the simulation demos in `rm-demos-argocd/`**, these are **working deployments** that you can apply to your cluster and test with the cub-scout.
 
 | Scenario | Pain Point | Demo |
 |----------|------------|------|

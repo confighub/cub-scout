@@ -1,4 +1,4 @@
-# ConfigHub Agent CLI Reference
+# cub-scout CLI Reference
 
 Complete command-line reference for `cub-scout`.
 
@@ -8,8 +8,8 @@ Complete command-line reference for `cub-scout`.
 
 ```bash
 # Clone and build
-git clone https://github.com/confighubai/confighub-agent.git
-cd confighub-agent
+git clone https://github.com/confighub/cub-scout.git
+cd cub-scout
 ./run.sh
 
 # Or install permanently

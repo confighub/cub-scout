@@ -252,7 +252,7 @@ helm rollback <release> <revision> -n <namespace>
 
 ## CCVE Database
 
-ConfigHub Agent includes 660+ CCVE patterns covering:
+cub-scout includes 660+ CCVE patterns covering:
 
 | Tool | CCVEs |
 |------|-------|

@@ -11,8 +11,8 @@ Get from zero to ownership visibility in 5 minutes.
 ## Step 1: Build (30 seconds)
 
 ```bash
-git clone https://github.com/confighubai/confighub-agent
-cd confighub-agent
+git clone https://github.com/confighub/cub-scout
+cd cub-scout
 go build ./cmd/cub-scout
 ```
 

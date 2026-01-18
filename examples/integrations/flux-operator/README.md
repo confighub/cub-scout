@@ -1,6 +1,6 @@
-# Flux Operator ConfigHub Agent Integration
+# Flux Operator cub-scout Integration
 
-[Flux Operator](https://fluxcd.control-plane.io/operator/) by Stefan Prodan provides a web UI with GitOps graph visualization. This example shows how to integrate ConfigHub Agent capabilities.
+[Flux Operator](https://fluxcd.control-plane.io/operator/) by Stefan Prodan provides a web UI with GitOps graph visualization. This example shows how to integrate cub-scout capabilities.
 
 ## What the Integration Adds
 
@@ -106,7 +106,7 @@
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
 │  │                    UI Data Layer                                      │  │
 │  │  - Flux resources from K8s API                                        │  │
-│  │  - Agent data from ConfigHub Agent API                                │  │
+│  │  - Agent data from cub-scout API                                │  │
 │  │  - Merged view                                                        │  │
 │  └───────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────┬──────────────────────────────────────┘
@@ -114,7 +114,7 @@
               ┌────────────────────────┼────────────────────────┐
               ▼                        ▼                        ▼
 ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
-│   Kubernetes API     │  │  ConfigHub Agent     │  │    Prometheus        │
+│   Kubernetes API     │  │  cub-scout     │  │    Prometheus        │
 │                      │  │                      │  │                      │
 │  - FluxInstance      │  │  GET /api/map        │  │  agent_resource_*    │
 │  - Kustomization     │  │  GET /api/graph      │  │  agent_ccve_*        │
@@ -252,7 +252,7 @@ spec:
       containers:
         - name: flux-operator
           # ... existing container
-        - name: confighub-agent
+        - name: cub-scout
           image: ghcr.io/confighub/agent:latest
           args:
             - serve
@@ -283,4 +283,4 @@ kubectl apply -f agent-deployment.yaml
 - [Flux Operator](https://fluxcd.control-plane.io/operator/)
 - [Flux Operator Web UI](https://fluxoperator.dev/web-ui/)
 - [Stefan Prodan's Blog](https://stefanprodan.com/blog/2024/flux-operator/)
-- [ConfigHub Agent Map Schema](../../docs/MAP-SCHEMA.md)
+- [cub-scout Map Schema](../../docs/MAP-SCHEMA.md)

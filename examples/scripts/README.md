@@ -1,6 +1,6 @@
 # Integration Scripts
 
-**Status: Working** — Copy-paste scripts for integrating ConfigHub Agent into your workflow.
+**Status: Working** — Copy-paste scripts for integrating cub-scout into your workflow.
 
 > **Maintainer note:** When updating this file, also update [docs/EXAMPLES-OVERVIEW.md](../../docs/EXAMPLES-OVERVIEW.md).
 

@@ -4,7 +4,7 @@ Saved queries are named, reusable query expressions that help you quickly filter
 
 ## Overview
 
-The ConfigHub Agent TUI includes **saved queries** — shortcuts for common filters:
+The cub-scout TUI includes **saved queries** — shortcuts for common filters:
 
 ```bash
 # List all saved queries

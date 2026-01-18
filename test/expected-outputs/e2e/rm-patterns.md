@@ -33,7 +33,7 @@ ConfigHub   1       payment-api (confighub-demo)
 ### Dashboard View (`s` key)
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ ConfigHub Agent - Local Cluster                                             │
+│ cub-scout - Local Cluster                                             │
 │ Cluster: kind-tui-e2e                                                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ WORKLOADS: 6+                          PIPELINES: 4+                        │

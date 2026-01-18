@@ -3,8 +3,8 @@
 ## Scan Your Cluster Now
 
 ```bash
-git clone git@github.com:confighubai/confighub-agent.git
-cd confighub-agent
+git clone git@github.com:confighub/cub-scout.git
+cd cub-scout
 ./run.sh
 ```
 
@@ -151,7 +151,7 @@ The configuration pattern database is community-driven:
 
 ### Contribute a configuration pattern
 
-1. Found a pattern that bit you? [Open an issue](https://github.com/confighub/confighub-agent/issues/new)
+1. Found a pattern that bit you? [Open an issue](https://github.com/confighub/cub-scout/issues/new)
 2. Include: What happened, how you detected it, how you fixed it
 3. We'll catalog it with a configuration pattern ID
 

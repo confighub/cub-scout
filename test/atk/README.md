@@ -1,4 +1,4 @@
-# ConfigHub Agent Test Infrastructure
+# cub-scout Test Infrastructure
 
 > **DEPRECATED (2026-01-14):** The bash-based ATK scripts are deprecated in favor of the Go TUI and Go tests.
 >
@@ -14,7 +14,7 @@
 
 ---
 
-Test tools for validating ConfigHub Agent functionality.
+Test tools for validating cub-scout functionality.
 
 ## Tools
 

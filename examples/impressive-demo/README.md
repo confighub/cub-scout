@@ -2,9 +2,9 @@
 
 **Status: Working** — Full demo with scripts, YAML fixtures, and slides for conference presentations.
 
-**"How ConfigHub Agent + CCVE Scanner Would Have Saved BIGBANK 4 Hours"**
+**"How cub-scout + CCVE Scanner Would Have Saved BIGBANK 4 Hours"**
 
-This demo showcases ConfigHub Agent's CCVE scanner detecting real-world GitOps misconfigurations **before they cause outages**.
+This demo showcases cub-scout's CCVE scanner detecting real-world GitOps misconfigurations **before they cause outages**.
 
 ## Demo Duration: 5 minutes
 
@@ -23,7 +23,7 @@ This demo showcases ConfigHub Agent's CCVE scanner detecting real-world GitOps m
 │                    Demo Environment                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  Flux CD (GitOps)              ConfigHub Agent               │
+│  Flux CD (GitOps)              cub-scout               │
 │  ├── podinfo (demo app)        ├── Watches cluster          │
 │  └── monitoring stack          ├── Detects ownership        │
 │                                └── Scans for CCVEs          │
@@ -41,7 +41,7 @@ This demo showcases ConfigHub Agent's CCVE scanner detecting real-world GitOps m
 - Kind cluster or similar Kubernetes cluster
 - kubectl configured
 - Flux CD installed
-- ConfigHub Agent (optional - demo works with static fixtures too)
+- cub-scout (optional - demo works with static fixtures too)
 
 ## Quick Start
 
@@ -97,7 +97,7 @@ kubectl apply -f bad-configs/monitoring-bad.yaml
 - Dashboards don't appear
 - No clear error message in main logs
 
-**ConfigHub Agent detects:**
+**cub-scout detects:**
 ```
 🔥 CCVE-2025-0027 detected (Critical, confidence: high)
    Grafana sidecar namespace whitespace error
@@ -134,7 +134,7 @@ kubectl apply -f bad-configs/ingress-bad.yaml
 - Kubernetes accepts the IngressRoute (no validation)
 - Traffic fails silently - 404 errors for users
 
-**ConfigHub Agent detects:**
+**cub-scout detects:**
 ```
 ❌ CCVE-2025-0028 detected (Critical, confidence: high)
    Traefik IngressRoute service not found
@@ -168,7 +168,7 @@ kubectl apply -f bad-configs/certificate-bad.yaml
 - Certificate stays in Pending state forever
 - No TLS, insecure connections
 
-**ConfigHub Agent detects:**
+**cub-scout detects:**
 ```
 ❌ CCVE-2025-0034 detected (Critical, confidence: high)
    cert-manager Certificate Issuer not found
@@ -314,7 +314,7 @@ impressive-demo/
 After this demo, viewers should:
 1. ✅ Understand what CCVEs are (like CVEs for config)
 2. ✅ Remember the BIGBANK incident story
-3. ✅ Want to try ConfigHub Agent on their clusters
+3. ✅ Want to try cub-scout on their clusters
 4. ✅ Share the demo with their teams
 5. ✅ Consider contributing CCVEs from their incidents
 

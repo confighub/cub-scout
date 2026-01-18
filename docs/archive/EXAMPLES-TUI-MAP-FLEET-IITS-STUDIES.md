@@ -23,8 +23,8 @@ These examples are based on real enterprise GitOps patterns documented by [IITS 
 ## Try It Now
 
 ```bash
-git clone https://github.com/confighubai/confighub-agent.git
-cd confighub-agent
+git clone https://github.com/confighub/cub-scout.git
+cd cub-scout
 ./run.sh
 ```
 

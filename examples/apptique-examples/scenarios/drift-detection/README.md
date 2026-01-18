@@ -52,7 +52,7 @@ argocd app get apptique-drift
 # But... the config has drifted!
 ```
 
-### 4. Detect Drift with ConfigHub Agent
+### 4. Detect Drift with cub-scout
 
 ```bash
 # Trace shows the drift
@@ -114,7 +114,7 @@ kubectl delete namespace apptique-drift
 - Outages when next sync overwrites changes
 - No audit trail of who changed what
 
-**With ConfigHub Agent:**
+**With cub-scout:**
 - Immediate drift visibility
 - Compare live state vs Git source
 - Audit trail via trace command

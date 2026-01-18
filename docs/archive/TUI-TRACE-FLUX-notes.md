@@ -462,7 +462,7 @@ func ArgoTrace(ctx context.Context, appName string) (*TraceResult, error) {
 
 ### ConfigHub Source Tracing
 
-**GitHub Issue:** https://github.com/confighubai/confighub-agent/issues/3
+**GitHub Issue:** https://github.com/confighub/cub-scout/issues/3
 
 Currently trace only covers Flux and Argo CD. Future enhancement should trace resources through **all** sources:
 

@@ -1,4 +1,4 @@
-# Extending the ConfigHub Agent and TUI
+# Extending the cub-scout and TUI
 
 This document describes how to add custom CCVEs, ownership detectors, resource watchers, webhooks, and output plugins.
 
