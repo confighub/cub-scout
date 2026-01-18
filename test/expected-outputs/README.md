@@ -112,7 +112,13 @@ These expected outputs serve three functions:
 | `fixtures/ownership/confighub-basic.yaml` | ConfigHub labels | ConfigHub |
 | `fixtures/ownership/native-basic.yaml` | kubectl-applied | Native |
 
-**Total: 31 expected output files**
+### E2E Patterns (1 file)
+
+| File | Description |
+|------|-------------|
+| `e2e/rm-patterns.md` | Expected TUI outputs for Rendered Manifest journey tests |
+
+**Total: 32 expected output files**
 
 ## Directory Structure
 
