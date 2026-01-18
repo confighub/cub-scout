@@ -811,12 +811,12 @@ webhooks:
 
 1. Validate CCVE definition:
    ```bash
-   ./test/atk/scan --validate cve/ccve/CCVE-2025-9001.yaml
+   cub-scout scan --validate ./my-ccves/CCVE-2025-9001.yaml
    ```
 
 2. Test against specific resource:
    ```bash
-   ./test/atk/scan --test-ccve CCVE-2025-9001 --resource my-namespace/Deployment/my-app
+   cub-scout scan --test-ccve CCVE-2025-9001 --resource my-namespace/Deployment/my-app
    ```
 
 ---
@@ -929,7 +929,7 @@ After connecting, ConfigHub can:
 ## See Also
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — GSF protocol, API contracts
-- [CCVE-GUIDE.md](CCVE-GUIDE.md) — CCVE detection and remediation
+- [Scan Guide](../SCAN-GUIDE.md) — CCVE detection and remediation
 - [EXTENDING.md](EXTENDING.md) — Extension points and customization
 - [IMPORTING-WORKLOADS.md](IMPORTING-WORKLOADS.md) — Import cluster workloads
 - [TUI-SCAN.md](TUI-SCAN.md) — Cluster scanning documentation

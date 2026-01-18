@@ -255,5 +255,4 @@ The trace command auto-detects which tool manages the resource and uses the appr
 ## See Also
 
 - [README.md](../README.md) - Main documentation
-- [CCVE-GUIDE.md](CCVE-GUIDE.md) - Configuration vulnerability detection
-- [test/atk/lib/ui.sh](../test/atk/lib/ui.sh) - TUI library reference
+- [Scan Guide](../SCAN-GUIDE.md) - Configuration vulnerability detection

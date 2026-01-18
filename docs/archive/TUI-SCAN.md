@@ -196,7 +196,7 @@ Press `c` in the TUI dashboard to run a Kyverno policy scan:
 
 ## KPOL Policy Database
 
-We maintain a database of 460+ Kyverno policy patterns (KPOL-*) in `cve/ccve/kyverno/`.
+We maintain a database of 460+ Kyverno policy patterns (KPOL-*) in [confighubai/confighub-ccve](https://github.com/confighubai/confighub-ccve).
 
 ### List All Policies
 
@@ -324,7 +324,6 @@ This allows tracking violations back to ConfigHub units for fleet-wide remediati
 
 ## Related
 
-- [CCVE-GUIDE.md](CCVE-GUIDE.md) — Full CCVE scanning (1,700+ patterns)
+- [Scan Guide](../SCAN-GUIDE.md) — Full CCVE scanning (46 active + 4,500 ref patterns)
 - [TUI-TRACE.md](TUI-TRACE.md) — Trace resource ownership chains
 - [README.md](../README.md) — Main documentation
-- [cve/ccve/kyverno/](../cve/ccve/kyverno/) — KPOL policy database

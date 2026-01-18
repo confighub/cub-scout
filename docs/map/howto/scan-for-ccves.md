@@ -199,5 +199,5 @@ cub-scout scan --json
 
 ## Next Steps
 
-- [CCVE Guide](../../CCVE-GUIDE.md) - Full CCVE documentation
+- [Scan Guide](../../SCAN-GUIDE.md) - Full CCVE scanning documentation
 - [Query Resources](query-resources.md) - Filter before scanning

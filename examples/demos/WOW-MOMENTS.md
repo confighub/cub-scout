@@ -791,7 +791,7 @@ SILENT-CONFIG (14%)
 └── Duplicate YAML keys merged
 ```
 
-See: [META-PATTERN-DETECTION-RESEARCH.md](../../cve/ccve/META-PATTERN-DETECTION-RESEARCH.md)
+See: [CCVE Database](https://github.com/confighubai/confighub-ccve) for meta-pattern detection research
 
 ---
 

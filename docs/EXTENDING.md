@@ -94,7 +94,7 @@ tags:
 
 ```bash
 # Validate CCVE definition
-cub-scout scan --validate cve/ccve/CCVE-2025-9001.yaml
+cub-scout scan --validate ./my-ccves/CCVE-2025-9001.yaml
 
 # Test against a specific resource
 cub-scout scan --test-ccve CCVE-2025-9001 --resource my-namespace/Deployment/redis
@@ -423,5 +423,5 @@ Submit your plugin via PR to be listed.
 ## See Also
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — GSF protocol and API contracts
-- [CLI-REFERENCE.md](CLI-REFERENCE.md) — CLI reference and configuration
-- [CCVE-GUIDE.md](CCVE-GUIDE.md) — CCVE detection and remediation
+- [CLI Guide](../CLI-GUIDE.md) — CLI reference and configuration
+- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE detection and remediation

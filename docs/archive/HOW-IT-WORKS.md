@@ -436,10 +436,10 @@ Run in pipelines for pre-deploy checks:
 | Document | Description |
 |----------|-------------|
 | [README.md](../README.md) | Quick start and installation |
-| [CCVE-GUIDE.md](CCVE-GUIDE.md) | Understanding CCVEs and the scanner |
-| [CLI-REFERENCE.md](CLI-REFERENCE.md) | Full CLI documentation |
-| [TESTING-GUIDE.md](TESTING-GUIDE.md) | Running tests |
-| [EXAMPLES-OVERVIEW.md](EXAMPLES-OVERVIEW.md) | Central examples overview |
+| [Scan Guide](../SCAN-GUIDE.md) | Understanding CCVEs and the scanner |
+| [CLI Guide](../../CLI-GUIDE.md) | Full CLI documentation |
+| [Testing Guide](../TESTING-GUIDE.md) | Running tests |
+| [Examples Overview](../EXAMPLES-OVERVIEW.md) | Central examples overview |
 
 ### TUI Documentation
 
@@ -473,9 +473,9 @@ Run in pipelines for pre-deploy checks:
 
 | Document | Description |
 |----------|-------------|
-| [cve/ccve/README.md](../cve/ccve/README.md) | CCVE database (1,700+ patterns) |
-| [GSF-SCHEMA.md](GSF-SCHEMA.md) | GitOps State Format specification |
-| [EXTENDING.md](EXTENDING.md) | Adding custom detectors |
+| [confighub-ccve](https://github.com/confighubai/confighub-ccve) | CCVE database (46 active + 4,500 ref) |
+| [GSF-SCHEMA.md](../GSF-SCHEMA.md) | GitOps State Format specification |
+| [EXTENDING.md](../EXTENDING.md) | Adding custom detectors |
 
 ### Examples & Test Kit
 

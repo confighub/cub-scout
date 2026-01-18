@@ -527,6 +527,6 @@ Cleanup: ./test/atk/demo unhealthy --cleanup
 
 ## See Also
 
-- [TESTING-GUIDE.md](TESTING-GUIDE.md) - Step-by-step testing walkthrough
-- [CCVE-GUIDE.md](CCVE-GUIDE.md) - CCVE scanner details
+- [Testing Guide](../TESTING-GUIDE.md) - Step-by-step testing walkthrough
+- [Scan Guide](../SCAN-GUIDE.md) - CCVE scanner details
 - [JOURNEY-QUERY.md](JOURNEY-QUERY.md) - Fleet query scenarios

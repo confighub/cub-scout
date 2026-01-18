@@ -252,20 +252,18 @@ helm rollback <release> <revision> -n <namespace>
 
 ## CCVE Database
 
-cub-scout includes 660+ CCVE patterns covering:
+cub-scout includes **46 active scanner patterns** plus **4,500+ reference patterns** covering:
 
-| Tool | CCVEs |
-|------|-------|
-| Kubernetes core | 200+ |
-| Flux CD | 100+ |
-| Argo CD | 80+ |
-| Helm | 60+ |
-| Prometheus | 40+ |
-| cert-manager | 30+ |
-| Traefik | 50+ |
-| Others | 80+ |
+- Kubernetes core
+- Flux CD
+- Argo CD
+- Helm
+- Prometheus
+- cert-manager
+- Traefik
+- And more...
 
-See full catalog: [cve/ccve/README.md](../cve/ccve/README.md)
+The CCVE database is maintained in [confighubai/confighub-ccve](https://github.com/confighubai/confighub-ccve).
 
 ---
 
@@ -288,8 +286,8 @@ Use Map to **see** your cluster. Use Scan to **validate** it.
 | Journey | What You'll Learn |
 |---------|-------------------|
 | [**JOURNEY-QUERY.md**](JOURNEY-QUERY.md) | Query across fleet |
-| [**CCVE-GUIDE.md**](CCVE-GUIDE.md) | Full CCVE reference |
-| [**EXTENDING.md**](EXTENDING.md) | Add custom CCVEs |
+| [**SCAN-GUIDE.md**](../SCAN-GUIDE.md) | Full CCVE reference |
+| [**EXTENDING.md**](../EXTENDING.md) | Add custom CCVEs |
 
 ---
 
@@ -324,6 +322,6 @@ git pull  # Get latest CCVE definitions
 
 ## See Also
 
-- [CCVE-GUIDE.md](CCVE-GUIDE.md) — What CCVEs are, how they work
+- [Scan Guide](../SCAN-GUIDE.md) — Full CCVE scanning documentation
 - [TUI-SCAN.md](TUI-SCAN.md) — Kyverno policy scanning
-- [CLI-EXPECTED-OUTPUT.md](CLI-EXPECTED-OUTPUT.md) — What healthy vs unhealthy looks like
+- [CLI Guide](../../CLI-GUIDE.md) — Full command reference

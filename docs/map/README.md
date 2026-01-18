@@ -186,4 +186,4 @@ See [GitOps Repo Structures](reference/gitops-repo-structures.md) for Git layout
 
 - [Business Outcomes](../outcomes/README.md) - Why this matters
 - [Demo Suite](../demos/README.md) - Try it yourself
-- [CCVE Guide](../CCVE-GUIDE.md) - Configuration vulnerability scanning
+- [Scan Guide](../SCAN-GUIDE.md) - Configuration vulnerability scanning
