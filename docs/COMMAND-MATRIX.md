@@ -197,6 +197,8 @@ Complete reference of all commands, options, TUI keys, and availability.
 
 ## TUI Keyboard Shortcuts (Local Cluster Mode)
 
+Press `?` in the TUI to see this help.
+
 ### Navigation
 
 | Key | Action |
@@ -205,53 +207,72 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `↓`/`j` | Move down |
 | `←`/`h` | Collapse / go to parent |
 | `→`/`l` | Expand |
-| `Enter` | Select / expand details |
-| `Tab` | Next view / focus details |
+| `Enter` | Cross-references (in panel view) |
+| `Tab` | Cycle views |
 | `[` | Previous namespace |
 | `]` | Next namespace |
+| `/` | Search |
+| `r` | Refresh data |
 
 ### Views
 
-| Key | View |
-|-----|------|
-| `s` | Status dashboard |
-| `w` | Workloads |
-| `p` | Pipelines (deployers) |
-| `d` | Drift |
-| `o` | Orphans |
-| `c` | Crashes |
-| `i` | Issues |
-| `b` | Bypass detection |
-| `x` | Sprawl analysis |
-| `u` | Suspended resources |
-| `a` | Apps |
-| `4` | Cluster data (deep-dive) |
-| `5`/`A` | App hierarchy |
+| Key | View | Description |
+|-----|------|-------------|
+| `s` | Status | Dashboard overview |
+| `w` | Workloads | Workloads by owner |
+| `a` | Apps | Grouped by app label + variant |
+| `p` | Pipelines | GitOps deployers (Flux, ArgoCD) |
+| `d` | Drift | Resources diverged from desired state |
+| `o` | Orphans | Native resources (not GitOps-managed) |
+| `c` | Crashes | Failing pods |
+| `i` | Issues | Unhealthy resources |
+| `u` | sUspended | Paused/forgotten resources |
+| `b` | Bypass | Factory bypass detection |
+| `x` | Sprawl | Config sprawl analysis |
+| `D` | Dependencies | Upstream/downstream relationships |
+| `G` | Git sources | Forward trace from Git |
+| `4` | Cluster Data | All data sources TUI reads |
+| `5`/`A` | App Hierarchy | Inferred ConfigHub model |
+| `M` | Maps | Three Maps view |
 
 ### Actions
 
+| Key | Action | Description |
+|-----|--------|-------------|
+| `Q` | Saved Queries | Filter resources with saved queries |
+| `T` | Trace | Trace ownership chain for selected |
+| `S` | Scan | Scan for CCVEs |
+| `I` | Import | Import wizard (bring workloads to ConfigHub) |
+
+### Command Palette (`:`)
+
+Press `:` to open the command palette. Type any shell command and press Enter.
+
+```
+:kubectl get pods
+:cub-scout scan
+:flux get kustomizations
+```
+
+- `↑`/`↓` — Navigate command history (last 20 commands)
+- `Enter` — Execute command
+- `Esc` — Cancel
+
+Output appears inline (max 8 lines). Press `Esc` to dismiss.
+
+### Help and Mode Switching
+
 | Key | Action |
 |-----|--------|
-| `/` | Search |
-| `n` | Next search match |
-| `N` | Previous search match |
-| `f` | Toggle filter mode |
-| `r` | Refresh |
-| `?` | Help |
+| `?` | Show help overlay (press any key to dismiss) |
+| `H` | Switch to ConfigHub hierarchy (requires `cub auth login`) |
 | `q` | Quit |
-| `:` | Command palette |
-| `H` | Switch to ConfigHub TUI |
-| `T` | Trace selected |
-| `S` | Scan |
-| `Q` | Query |
-| `I` | Import |
-| `M` | Maps |
-| `G` | Git sources |
-| `D` | Dependencies |
 
 ---
 
 ## TUI Keyboard Shortcuts (ConfigHub Hub Mode)
+
+Press `?` in the TUI to see this help.
 
 ### Navigation
 
@@ -259,31 +280,60 @@ Complete reference of all commands, options, TUI keys, and availability.
 |-----|--------|
 | `↑`/`k` | Move up |
 | `↓`/`j` | Move down |
-| `←` | Collapse / go to parent |
-| `→` | Expand |
-| `Enter` | Load entity details |
-| `Tab` | Focus details pane |
+| `←`/`h` | Collapse node |
+| `→`/`l` | Expand node |
+| `Enter` | Load details in right pane |
+| `Tab` | Switch focus to details pane |
 
-### Actions
+### Search & Filter
 
 | Key | Action |
 |-----|--------|
-| `/` | Search |
-| `n` | Next match |
-| `N` | Previous match |
-| `f` | Toggle filter |
-| `r` | Refresh |
-| `?` | Help |
-| `q` | Quit |
-| `:` | Command palette |
-| `O` | Switch organization |
+| `/` | Start search |
+| `n`/`N` | Next/previous match |
+| `f` | Toggle filter mode |
+
+### Actions
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `a` | Activity | Recent changes view |
+| `B` | Toggle | Hub/AppSpace view |
+| `M` | Maps | Three Maps view (GitOps + ConfigHub + Repos) |
+| `P` | Panel | WET↔LIVE side-by-side view |
+| `c` | Create | Create new resource |
+| `d`/`x` | Delete | Delete selected resource |
+| `i` | Import | Import workloads from Kubernetes |
+| `o` | Open | Open in browser |
+| `O` | Switch | Switch organization |
+| `r` | Refresh | Refresh data |
+
+### Command Palette (`:`)
+
+Press `:` to open the command palette. Type queries or shell commands.
+
+**Query examples:**
+```
+:owner=Native              # Orphaned resources
+:owner=Flux OR owner=ArgoCD   # GitOps managed
+:namespace=prod*           # Prod namespaces
+:labels[app]=nginx         # By label
+```
+
+**Command examples:**
+```
+:cub-scout map orphans
+:cub-scout scan
+:cub-scout trace
+```
+
+### Help and Mode Switching
+
+| Key | Action |
+|-----|--------|
+| `?` | Show help overlay |
 | `L` | Switch to local cluster TUI |
-| `i` | Import wizard |
-| `C` | Create unit wizard |
-| `X` | Delete wizard |
-| `w` | Open in web browser |
-| `A` | Activity/all units toggle |
-| `P` | Panel view |
+| `q` | Quit |
 
 ---
 
