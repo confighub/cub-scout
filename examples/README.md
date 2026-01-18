@@ -88,6 +88,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | File/Folder | Type | What | Use When |
 |-------------|------|------|----------|
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
+| [flux-boutique/](flux-boutique/) | **Working** | 5-service Flux demo | TUI view showcase, trace demo |
 | [demos/](demos/) | **Test Fixtures** | YAML with GitOps labels + nginx:alpine | Learning ownership detection |
 | [impressive-demo/](impressive-demo/) | **Test Fixtures** | Conference demo with CCVE scenarios | Presentations, videos |
 | [scripts/](scripts/) | **Integration Code** | k9s, Slack, CI/CD scripts | Adding to your workflow |
@@ -341,9 +342,10 @@ $ ./test/atk/map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
 | Doc | What's in it |
 |-----|--------------|
 | [docs/EXAMPLES-OVERVIEW.md](../docs/EXAMPLES-OVERVIEW.md) | Central examples overview |
+| [CLI-GUIDE.md](../CLI-GUIDE.md) | Complete CLI reference (14 commands, 17 subcommands) |
+| [docs/COMMAND-MATRIX.md](../docs/COMMAND-MATRIX.md) | Full command/option matrix |
 | [docs/IMPORTING-WORKLOADS.md](../docs/IMPORTING-WORKLOADS.md) | Import workloads into ConfigHub |
 | [README.md](../README.md) | Project overview |
 | [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) | How it works, GSF protocol |
-| [docs/CCVE-GUIDE.md](../docs/CCVE-GUIDE.md) | Config CVE scanning |
-| [docs/CLI-REFERENCE.md](../docs/CLI-REFERENCE.md) | Full CLI reference |
+| [docs/SCAN-GUIDE.md](../docs/SCAN-GUIDE.md) | CCVE scanning (46 patterns) |
 | [test/README.md](../test/README.md) | Testing documentation |

@@ -130,7 +130,20 @@ go test -tags=integration ./test/integration/...
 |-------|-------|----------------|
 | Phase 1: Standard | 8 | Preflight, build, ATK verify/map/scan |
 | Phase 2: Demos | 4 | quick, ccve, healthy, unhealthy work |
-| Phase 3: Examples | 5 | ArgoCD extension, Flux operator, impressive-demo |
+| Phase 3: Examples | 8 | All example folders work |
+
+**Examples covered in Phase 3:**
+
+| Example | Type | What It Proves |
+|---------|------|----------------|
+| `apptique-examples/` | Working | Flux monorepo, Argo ApplicationSet, App of Apps |
+| `flux-boutique/` | Working | 5-service Flux demo, TUI views, trace |
+| `impressive-demo/` | Test Fixtures | CCVE scenarios, conference demo |
+| `integrations/argocd-extension/` | Working | ArgoCD UI extension |
+| `integrations/flux-operator/` | Working | Flux metrics exporter |
+| `rm-demos-argocd/` | Concept | Rendered Manifest simulations |
+| `app-config-rtmsg/` | Concept | Non-K8s config TUI mockup |
+| `demos/` | Test Fixtures | Ownership label fixtures |
 
 **Run time:** ~4 minutes (requires cluster)
 
@@ -176,10 +189,15 @@ test/
 │   └── fixtures/                  # K8s manifests
 └── fixtures/                      # Shared test data
 
-examples/                          # Phase 3: Integration examples
-├── argocd-extension/              # Argo CD UI extension
-├── flux-operator/                 # Flux Operator integration
-└── impressive-demo/               # Full demo with script
+examples/                          # Phase 3: All examples
+├── apptique-examples/             # Real GitOps patterns (Flux, Argo)
+├── flux-boutique/                 # 5-service Flux demo
+├── demos/                         # Test fixtures with ownership labels
+├── impressive-demo/               # Conference demo with CCVE scenarios
+├── integrations/                  # ArgoCD extension, Flux operator
+├── rm-demos-argocd/               # Rendered Manifest simulations
+├── app-config-rtmsg/              # Non-K8s config TUI mockup
+└── scripts/                       # k9s, Slack, CI/CD scripts
 ```
 
 ---
