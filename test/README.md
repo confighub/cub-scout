@@ -26,7 +26,7 @@ AI can generate code that looks correct but doesn't function. Tests are the only
 **IMPORTANT:**
 - Always use `./cub-scout`, not `cub-scout` (binary is local, not in PATH)
 - Always use `prove-it-works.sh`, not `run-all.sh` (legacy)
-- See [GUIDE.md](../GUIDE.md) for the complete reference
+- See [CLI-GUIDE.md](../CLI-GUIDE.md) for the complete CLI reference (14 commands, 17 map subcommands, 17 TUI views)
 
 ---
 
@@ -227,21 +227,57 @@ examples/                          # Phase 3: Integration examples
 
 ## Feature Coverage Matrix
 
-| Feature | Go Unit | Go TUI | Integration | E2E Demo |
+### Top-Level Commands (14)
+
+| Command | Go Unit | Go TUI | Integration | E2E Demo |
 |---------|---------|--------|-------------|----------|
-| `map status` | - | ✓ | ✓ | ✓ |
+| `map` | - | ✓ | ✓ | ✓ |
+| `trace` | ✓ | - | ✓ | - |
+| `scan` | ✓ | ✓ | ✓ | ✓ |
+| `snapshot` | - | - | - | - |
+| `import` | - | ✓ | - | ✓ |
+| `import-argocd` | - | - | - | - |
+| `app-space` | - | - | ✓ | - |
+| `remedy` | ✓ | - | - | - |
+| `combined` | - | - | - | - |
+| `parse-repo` | - | - | - | - |
+| `demo` | - | - | - | ✓ |
+| `version` | - | - | ✓ | - |
+| `completion` | - | - | - | - |
+| `setup` | - | - | - | - |
+
+### Map Subcommands (17)
+
+| Subcommand | Go Unit | Go TUI | Integration | E2E Demo |
+|------------|---------|--------|-------------|----------|
+| `map` (TUI) | - | ✓ | - | - |
+| `map --hub` | - | ✓ | - | - |
 | `map list` | - | ✓ | ✓ | ✓ |
+| `map status` | - | ✓ | ✓ | ✓ |
+| `map workloads` | - | ✓ | - | - |
 | `map deployers` | - | ✓ | ✓ | - |
 | `map orphans` | - | ✓ | ✓ | ✓ |
+| `map crashes` | - | ✓ | - | - |
 | `map issues` | - | ✓ | ✓ | ✓ |
 | `map drift` | - | ✓ | - | - |
-| `map crashes` | - | ✓ | - | - |
+| `map bypass` | - | ✓ | - | - |
+| `map sprawl` | - | ✓ | - | - |
+| `map deep-dive` | - | ✓ | - | - |
+| `map app-hierarchy` | - | ✓ | - | - |
+| `map dashboard` | - | ✓ | - | - |
+| `map queries` | - | ✓ | - | - |
 | `map fleet` | - | ✓ | ✓ | - |
-| `scan` | ✓ | ✓ | ✓ | ✓ |
-| `trace` | ✓ | - | ✓ | - |
-| `import` | - | ✓ | - | ✓ |
+| `map hub` | - | ✓ | - | - |
+
+### Other Features
+
+| Feature | Go Unit | Go TUI | Integration | E2E Demo |
+|---------|---------|--------|-------------|----------|
 | Query language | ✓ | ✓ | ✓ | ✓ |
 | Ownership (6 types) | ✓ | - | - | ✓ |
+| TUI views (17) | - | ✓ | - | - |
+| Command palette (`:`) | - | ✓ | - | - |
+| Help overlay (`?`) | - | ✓ | - | - |
 
 ## GitOps Tool Coverage
 

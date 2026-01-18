@@ -221,4 +221,30 @@ When connected to ConfigHub API, entries include additional fields:
 Extended fields:
 - `confighub` — Full ConfigHub hierarchy (Org → Space → Unit)
 - `deployer` — Separate from `owner` when ConfigHub manages via Flux/Argo
-- `ccves` — Active Config CVEs affecting this entry
+- `ccves` — Active Config CVEs affecting this entry (46 active scanner patterns)
+
+---
+
+## Generating GSF Output
+
+```bash
+# One-time GSF snapshot to stdout
+cub-scout snapshot -o -
+
+# GSF snapshot to file
+cub-scout snapshot -o cluster-state.json
+
+# Resource list as JSON
+cub-scout map list --json
+
+# Scan results as JSON
+cub-scout scan --json
+```
+
+---
+
+## See Also
+
+- [CLI-GUIDE.md](../CLI-GUIDE.md) — Complete CLI reference (14 commands, 17 subcommands)
+- [ARCHITECTURE.md](ARCHITECTURE.md) — How the Agent works
+- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE detection (46 active patterns)

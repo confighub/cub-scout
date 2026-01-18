@@ -249,15 +249,87 @@ See [gsf-schema.json](./gsf-schema.json) for the full JSON Schema.
 
 ## Output Modes
 
-The Agent supports multiple output modes:
+The Agent supports multiple output modes via 14 top-level commands and 17 map subcommands:
 
-| Mode | Command | Description |
-|------|---------|-------------|
-| **Snapshot** | `cub-scout snapshot -o -` | One-time GSF dump to stdout |
-| **Map** | `cub-scout map list --json` | Resource ownership list |
-| **Fleet** | `cub-scout map fleet` | Fleet view via cub CLI |
-| **Deep Dive** | `cub-scout map deep-dive` | All cluster data sources with LiveTree |
-| **App Hierarchy** | `cub-scout map app-hierarchy` | Inferred ConfigHub Units with workloads |
+### Top-Level Commands (14)
+
+| Command | Description | Mode |
+|---------|-------------|------|
+| `map` | Interactive TUI explorer | Standalone/Connected |
+| `trace` | Show GitOps ownership chain | Standalone |
+| `scan` | Scan for CCVEs (46 patterns) | Standalone |
+| `snapshot` | Dump cluster state as GSF JSON | Standalone |
+| `import` | Import workloads into ConfigHub | Connected |
+| `import-argocd` | Import ArgoCD Application | Connected |
+| `app-space` | Manage App Spaces | Connected |
+| `remedy` | Execute CCVE remediation | Standalone |
+| `combined` | Git repo + cluster alignment | Standalone/Connected |
+| `parse-repo` | Parse GitOps repo structure | Standalone |
+| `demo` | Run interactive demos | Standalone |
+| `version` | Print version | Standalone |
+| `completion` | Generate shell completions | Standalone |
+| `setup` | Set up shell config | Standalone |
+
+### Map Subcommands (17)
+
+| Command | Description | TUI Key |
+|---------|-------------|:-------:|
+| `map` | Interactive TUI | - |
+| `map --hub` | ConfigHub hierarchy TUI | `H` |
+| `map list` | Plain text resource list | - |
+| `map status` | One-line health check | `s` |
+| `map workloads` | Workloads by owner | `w` |
+| `map deployers` | GitOps deployers | `p` |
+| `map orphans` | Unmanaged resources | `o` |
+| `map crashes` | Failing pods/deployments | `c` |
+| `map issues` | Resources with problems | `i` |
+| `map drift` | Desired vs actual state | `d` |
+| `map bypass` | Factory bypass detection | `b` |
+| `map sprawl` | Configuration sprawl | `x` |
+| `map deep-dive` | All cluster data with LiveTree | `4` |
+| `map app-hierarchy` | Inferred ConfigHub model | `5`/`A` |
+| `map dashboard` | Unified health dashboard | - |
+| `map queries` | Saved queries | - |
+| `map fleet` | Multi-cluster fleet view | - |
+| `map hub` | ConfigHub hierarchy | `H` |
+
+### TUI Views (17)
+
+Press these keys in the interactive TUI to switch views:
+
+| Key | View | Description |
+|-----|------|-------------|
+| `s` | Status | Dashboard overview |
+| `w` | Workloads | Workloads by owner |
+| `a` | Apps | Grouped by app label + variant |
+| `p` | Pipelines | GitOps deployers (Flux, ArgoCD) |
+| `d` | Drift | Resources diverged from desired state |
+| `o` | Orphans | Native resources (not GitOps-managed) |
+| `c` | Crashes | Failing pods |
+| `i` | Issues | Unhealthy resources |
+| `u` | sUspended | Paused/forgotten resources |
+| `b` | Bypass | Factory bypass detection |
+| `x` | Sprawl | Config sprawl analysis |
+| `D` | Dependencies | Upstream/downstream relationships |
+| `G` | Git sources | Forward trace from Git |
+| `4` | Cluster Data | All data sources TUI reads |
+| `5`/`A` | App Hierarchy | Inferred ConfigHub model |
+| `M` | Maps | Three Maps view |
+| `H` | Hub | ConfigHub hierarchy (Connected mode) |
+
+### Command Palette (`:`)
+
+Press `:` in the TUI to run shell commands inline:
+
+```
+:kubectl get pods
+:cub-scout scan
+:flux get kustomizations
+```
+
+- `↑`/`↓` — Navigate command history (last 20 commands)
+- `Enter` — Execute command
+- `Esc` — Cancel
 
 ### Deep Dive and App Hierarchy
 
@@ -396,6 +468,8 @@ For a more restrictive policy, see [manifests/agent-minimal-rbac.yaml](../manife
 
 ## See Also
 
+- [CLI-GUIDE.md](../CLI-GUIDE.md) — Complete CLI reference (14 commands, 17 subcommands, 17 views)
+- [COMMAND-MATRIX.md](COMMAND-MATRIX.md) — Full command/option matrix
+- [GSF-SCHEMA.md](GSF-SCHEMA.md) — GitOps State Format JSON schema
+- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE detection and remediation (46 patterns)
 - [EXTENDING.md](EXTENDING.md) — Extension points and customization
-- [CLI-REFERENCE.md](CLI-REFERENCE.md) — CLI reference and configuration
-- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE detection and remediation

@@ -12,10 +12,11 @@ Central reference for all ConfigHub Agent examples, demos, and integrations.
 | What You Want | Where It Is |
 |---------------|-------------|
 | Try it on your cluster | [examples/README.md](../examples/README.md) |
-| **Import workloads** | [docs/IMPORTING-WORKLOADS.md](IMPORTING-WORKLOADS.md) |
+| **Full CLI reference** | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| **Command matrix** | [COMMAND-MATRIX.md](COMMAND-MATRIX.md) |
+| **Import workloads** | [IMPORTING-WORKLOADS.md](IMPORTING-WORKLOADS.md) |
 | Step-by-step walkthrough | [examples/demos/walkthrough.md](../examples/demos/walkthrough.md) |
 | Fleet query examples | [JOURNEY-QUERY.md](JOURNEY-QUERY.md) |
-| **Expected output reference** | [docs/CLI-EXPECTED-OUTPUT.md](CLI-EXPECTED-OUTPUT.md) |
 | UI mockups | [examples/integrations/MOCKUPS.md](../examples/integrations/MOCKUPS.md) |
 | Integration scripts | [examples/scripts/](../examples/scripts/) |
 | Conference demo | [examples/impressive-demo/](../examples/impressive-demo/) |
@@ -101,8 +102,11 @@ Real examples answering real questions. See [JOURNEY-QUERY.md](JOURNEY-QUERY.md)
 |----------|---------|
 | What's running? | `cub-scout map` |
 | Who owns each workload? | `cub-scout map workloads` |
-| What's broken? | `cub-scout map problems` |
-| Which clusters are behind? | `cub-scout map` (with ConfigHub auth) |
+| What's crashing? | `cub-scout map crashes` |
+| What has issues? | `cub-scout map issues` |
+| What's drifted? | `cub-scout map drift` |
+| What's orphaned? | `cub-scout map orphans` |
+| Which clusters are behind? | `cub-scout map fleet` (Connected mode) |
 | What config bugs exist? | `cub-scout scan` |
 
 ### Integration Scripts
@@ -128,7 +132,7 @@ UI mockups for these integrations: [examples/integrations/MOCKUPS.md](../example
 
 ### TUI Showcase Demos
 
-Multi-service demos designed to showcase all TUI views (`s`, `w`, `p`, `T`, `G`, etc.):
+Multi-service demos designed to showcase all 17 TUI views:
 
 | Demo | Services | Status | Best For |
 |------|----------|--------|----------|
@@ -138,7 +142,7 @@ Multi-service demos designed to showcase all TUI views (`s`, `w`, `p`, `T`, `G`,
 ```bash
 kubectl apply -f examples/flux-boutique/boutique.yaml
 kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s
-cub-scout map   # Press 's' for status, 'w' for workloads, 'p' for pipelines, 'T' to trace
+cub-scout map   # Press 's' status, 'w' workloads, 'p' pipelines, 'o' orphans, 'T' trace, '?' help
 ```
 
 #### External Multi-Service Demos
@@ -191,33 +195,76 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 
 ---
 
-## Dashboard Modes
+## Map Subcommands (17)
 
-The map command supports multiple output modes:
+The map command supports multiple subcommands:
 
 ```bash
+# Interactive TUI
 cub-scout map              # Full dashboard (interactive TUI)
+cub-scout map --hub        # ConfigHub hierarchy TUI (Connected mode)
+
+# CLI Output (Standalone mode)
+cub-scout map list         # Plain text resource list
 cub-scout map status       # One-line health check
 cub-scout map workloads    # List workloads by owner
-cub-scout map problems     # Show only problems
 cub-scout map deployers    # List GitOps deployers
-cub-scout map suspended    # List suspended resources
-cub-scout map confighub    # ConfigHub hierarchy (requires auth)
+cub-scout map orphans      # Unmanaged (Native) resources
+cub-scout map crashes      # Failing pods/deployments
+cub-scout map issues       # Resources with problems
+cub-scout map drift        # Desired vs actual state
+cub-scout map bypass       # Factory bypass detection
+cub-scout map sprawl       # Configuration sprawl
 cub-scout map deep-dive    # ALL cluster data with LiveTree
 cub-scout map app-hierarchy # Inferred ConfigHub Units
+cub-scout map dashboard    # Unified health dashboard
+cub-scout map queries      # Saved queries management
+
+# Connected mode
+cub-scout map fleet        # Multi-cluster fleet view
+cub-scout map hub          # ConfigHub hierarchy
+
+# Output formats
 cub-scout map --json       # JSON output for tooling
 ```
 
-### TUI Tab Views (Interactive Mode)
+### TUI Views (17)
 
-| Key | Tab | Description |
-|-----|-----|-------------|
-| `1` | Dashboard | Health overview, problems summary |
-| `2` | Workloads | Deployments by owner |
-| `3` | Deployers | GitOps controllers |
-| `4` | Cluster Data | All data sources (Flux, Argo, Helm) |
-| `5/A` | App Hierarchy | Inferred ConfigHub model |
-| `H` | Hub | ConfigHub hierarchy (connected mode) |
+Press these keys in the interactive TUI to switch views:
+
+| Key | View | Description |
+|-----|------|-------------|
+| `s` | Status | Dashboard overview |
+| `w` | Workloads | Workloads by owner |
+| `a` | Apps | Grouped by app label + variant |
+| `p` | Pipelines | GitOps deployers (Flux, ArgoCD) |
+| `d` | Drift | Resources diverged from desired state |
+| `o` | Orphans | Native resources (not GitOps-managed) |
+| `c` | Crashes | Failing pods |
+| `i` | Issues | Unhealthy resources |
+| `u` | sUspended | Paused/forgotten resources |
+| `b` | Bypass | Factory bypass detection |
+| `x` | Sprawl | Config sprawl analysis |
+| `D` | Dependencies | Upstream/downstream relationships |
+| `G` | Git sources | Forward trace from Git |
+| `4` | Cluster Data | All data sources TUI reads |
+| `5`/`A` | App Hierarchy | Inferred ConfigHub model |
+| `M` | Maps | Three Maps view |
+| `H` | Hub | ConfigHub hierarchy (Connected mode) |
+
+### Command Palette (`:`)
+
+Press `:` in the TUI to run shell commands:
+
+```
+:kubectl get pods
+:cub-scout scan
+:flux get kustomizations
+```
+
+- `↑`/`↓` — Navigate command history (last 20 commands)
+- `Enter` — Execute command
+- `Esc` — Cancel
 
 ---
 
@@ -252,6 +299,7 @@ Each examples file should include this maintainer note:
 | Doc | Content |
 |-----|---------|
 | [README.md](../README.md) | Project overview |
+| [CLI-GUIDE.md](../CLI-GUIDE.md) | Complete CLI reference |
+| [COMMAND-MATRIX.md](COMMAND-MATRIX.md) | Full command/option matrix |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How it works, GSF protocol |
-| [CCVE-GUIDE.md](CCVE-GUIDE.md) | Config CVE scanning |
-| [CLI-REFERENCE.md](CLI-REFERENCE.md) | Full CLI reference |
+| [SCAN-GUIDE.md](SCAN-GUIDE.md) | CCVE scanning deep dive |

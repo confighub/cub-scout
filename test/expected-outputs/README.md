@@ -10,6 +10,50 @@ These expected outputs serve three functions:
 2. **Test Assertions** - Verify commands produce correct output
 3. **Actions Foundation** - Become `assert:` statements in Actions framework
 
+## Command Coverage
+
+### Top-Level Commands (14)
+
+| Command | Has Expected Output | Mode |
+|---------|:------------------:|------|
+| `map` | Yes | standalone/connected |
+| `trace` | Yes | standalone |
+| `scan` | Yes | standalone |
+| `snapshot` | No | standalone |
+| `import` | No | connected |
+| `import-argocd` | No | connected |
+| `app-space` | No | connected |
+| `remedy` | No | standalone |
+| `combined` | No | standalone/connected |
+| `parse-repo` | No | standalone |
+| `demo` | Yes (via demos/) | standalone |
+| `version` | Yes | standalone |
+| `completion` | No | standalone |
+| `setup` | No | standalone |
+
+### Map Subcommands (17)
+
+| Subcommand | Has Expected Output | Mode |
+|------------|:------------------:|------|
+| `map` (TUI) | No (interactive) | standalone/connected |
+| `map --hub` | No (interactive) | connected |
+| `map list` | Yes | standalone |
+| `map status` | No | standalone |
+| `map workloads` | No | standalone |
+| `map deployers` | No | standalone |
+| `map orphans` | No | standalone |
+| `map crashes` | No | standalone |
+| `map issues` | No | standalone |
+| `map drift` | No | standalone |
+| `map bypass` | No | standalone |
+| `map sprawl` | No | standalone |
+| `map deep-dive` | No (interactive) | standalone |
+| `map app-hierarchy` | No (interactive) | standalone |
+| `map dashboard` | No | standalone |
+| `map queries` | No | standalone |
+| `map fleet` | No | connected |
+| `map hub` | No | connected |
+
 ## Complete Inventory
 
 ### CLI Commands (5 files)
@@ -17,7 +61,7 @@ These expected outputs serve three functions:
 | File | Command | Mode |
 |------|---------|------|
 | `cli/map/standalone.yaml` | `./cub-scout map list` | standalone |
-| `cli/map/connected.yaml` | `./cub-scout map --mode=admin` | connected |
+| `cli/map/connected.yaml` | `./cub-scout map --hub` | connected |
 | `cli/scan/standalone.yaml` | `./cub-scout scan` | standalone |
 | `cli/trace/standalone.yaml` | `./cub-scout trace` | standalone |
 | `cli/version/version.yaml` | `./cub-scout version` | standalone |

@@ -3,8 +3,8 @@
 ## Overview
 
 **Product:** cub-scout map
-**Version:** 1.0
-**Updated:** 2026-01-14
+**Version:** 2.0
+**Updated:** 2026-01-18
 
 Map is a read-only Kubernetes resource observer that provides ownership visibility, configuration scanning, and GitOps tracing for platform engineers and SREs.
 
@@ -59,38 +59,68 @@ Modern Kubernetes clusters have resources deployed by multiple tools:
 
 ## Feature Specification
 
-### CLI Subcommands (12)
+### Top-Level Commands (14)
+
+| Command | Purpose | Mode |
+|---------|---------|------|
+| `map` | Interactive TUI explorer | Standalone/Connected |
+| `trace` | Show GitOps ownership chain | Standalone |
+| `scan` | Scan for CCVEs | Standalone |
+| `snapshot` | Dump cluster state as JSON | Standalone |
+| `import` | Import workloads into ConfigHub | Connected |
+| `import-argocd` | Import ArgoCD Application | Connected |
+| `app-space` | Manage App Spaces | Connected |
+| `remedy` | Execute CCVE remediation | Standalone |
+| `combined` | Git repo + cluster alignment | Standalone/Connected |
+| `parse-repo` | Parse GitOps repo structure | Standalone |
+| `demo` | Run interactive demos | Standalone |
+| `version` | Print version | Standalone |
+| `completion` | Generate shell completions | Standalone |
+| `setup` | Set up shell config | Standalone |
+
+### Map Subcommands (17)
 
 | Command | Purpose | Mode |
 |---------|---------|------|
 | `map` | Launch interactive TUI | Standalone |
 | `map list` | Scriptable resource listing | Standalone |
 | `map status` | One-line cluster health | Standalone |
-| `map issues` | Resources with problems | Standalone |
-| `map deployers` | GitOps deployers (Flux + ArgoCD) | Standalone |
 | `map workloads` | Workloads grouped by owner | Standalone |
-| `map drift` | Resources diverged from desired | Standalone |
-| `map sprawl` | Configuration sprawl analysis | Standalone |
-| `map bypass` | Factory bypass detection | Standalone |
-| `map crashes` | Crashing pods/deployments | Standalone |
+| `map deployers` | GitOps deployers (Flux + ArgoCD) | Standalone |
 | `map orphans` | Unmanaged (Native) resources | Standalone |
-| `map hub` | ConfigHub hierarchy explorer | Connected |
+| `map crashes` | Crashing pods/deployments | Standalone |
+| `map issues` | Resources with problems | Standalone |
+| `map drift` | Resources diverged from desired | Standalone |
+| `map bypass` | Factory bypass detection | Standalone |
+| `map sprawl` | Configuration sprawl analysis | Standalone |
+| `map dashboard` | Unified health + ownership | Standalone |
+| `map deep-dive` | All cluster data with LiveTree | Standalone |
+| `map app-hierarchy` | Inferred ConfigHub model | Standalone |
+| `map queries` | Saved queries management | Standalone |
 | `map fleet` | Hub/AppSpace model view | Connected |
+| `map hub` | ConfigHub hierarchy explorer | Connected |
 
-### TUI Views (9+)
+### TUI Views (17)
 
 | Key | View | Content |
 |-----|------|---------|
 | `s` | Status/Dashboard | Health summary, deployer counts |
 | `w` | Workloads | All workloads grouped by owner |
+| `a` | Apps | Grouped by app label + variant |
 | `p` | Pipelines | GitOps deployers (Flux/ArgoCD) |
 | `d` | Drift | Out-of-sync resources |
 | `o` | Orphans | Native (unmanaged) resources |
 | `c` | Crashes | Failing pods/deployments |
 | `i` | Issues | All unhealthy resources |
+| `u` | sUspended | Paused/forgotten resources |
 | `b` | Bypass | Factory bypass detection |
 | `x` | Sprawl | Configuration sprawl |
-| `M` | Three Maps | GitOps trees + ConfigHub + repos |
+| `D` | Dependencies | Upstream/downstream relationships |
+| `G` | Git sources | Forward trace from Git |
+| `4` | Cluster Data | All data sources TUI reads |
+| `5`/`A` | App Hierarchy | Inferred ConfigHub model |
+| `M` | Maps | Three Maps view (GitOps + ConfigHub + repos) |
+| `H` | Hub | ConfigHub hierarchy (connected mode) |
 
 ### Ownership Detection
 
@@ -136,6 +166,18 @@ Fields: kind, namespace, name, owner, status, cluster, labels[key]
 | Create | `c` key | Create new space/unit/target |
 | Delete | `d`/`x` key | Delete resources with confirmation |
 
+### Command Palette
+
+| Key | Feature |
+|-----|---------|
+| `:` | Open command palette (run shell commands) |
+| `?` | Show help overlay |
+
+Command palette supports:
+- Shell commands (`kubectl`, `flux`, `argocd`, etc.)
+- Command history (↑/↓ to navigate, last 20 commands)
+- Inline output display (max 8 lines)
+
 ## Success Metrics
 
 ### Adoption
@@ -161,7 +203,7 @@ Core operations (`map`, `list`, `trace`, `scan`) are read-only:
 - Exception: `import` wizard can modify when requested
 
 ### Dependencies
-- Go 1.21+
+- Go 1.24+
 - kubectl access to cluster
 - cub CLI (for connected mode)
 - Optional: Flux, ArgoCD, Helm (for ownership detection)
@@ -171,28 +213,37 @@ Core operations (`map`, `list`, `trace`, `scan`) are read-only:
 - Startup time: < 2 seconds
 - Memory: < 100MB for typical clusters
 
-## Future Roadmap
+## Completed Features
 
-### Phase 1 (Current)
-- Ownership detection
-- TUI views
-- CCVE scanning
-- Query language
+### Phase 1 (Complete)
+- Ownership detection (Flux, ArgoCD, Helm, ConfigHub, Native)
+- TUI views (status, workloads, pipelines, orphans, crashes, issues)
+- CCVE scanning (46 active patterns)
+- Query language with saved queries
+- Trace command (forward and reverse)
 
-### Phase 2 (In Progress)
-- **Cluster Data tab** — Show all data sources TUI reads (Flux, Argo, Helm, Native)
-- **App Hierarchy tab** — Inferred ConfigHub model (Hub, AppSpace, Units)
+### Phase 2 (Complete)
+- **Cluster Data tab** (`4`) — All data sources with LiveTree (Deployment → ReplicaSet → Pod)
+- **App Hierarchy tab** (`5`/`A`) — Inferred ConfigHub model
 - **Mode indicator** — Header shows Standalone vs Connected
 - **Hub view filter** — Default to current cluster, toggle for all
-- **UXBOW testing** — Systematic UX validation
-- See: [docs/planning/TUI-PRD.md](../planning/TUI-PRD.md)
+- **Additional views** — Apps, sUspended, Bypass, Sprawl, Dependencies, Git sources, Maps
+- **Command palette** (`:`) — Run shell commands inline with history
+- **Help overlay** (`?`) — Full keybinding reference
 
-### Phase 3 (Planned)
+### Phase 3 (In Progress)
+- Remedy command — Execute auto-remediation for CCVEs
+- Combined command — Git + cluster alignment
+- Parse-repo command — Analyze GitOps repo structure
+
+## Future Roadmap
+
+### Phase 4 (Planned)
 - AI-powered trace ("why did this fail?")
 - OCI source detection (Rendered Manifest pattern)
 - Bridge pattern detection
 
-### Phase 4 (Future)
+### Phase 5 (Future)
 - Apps/Actions integration
 - Custom remediation
 - Enterprise RBAC
