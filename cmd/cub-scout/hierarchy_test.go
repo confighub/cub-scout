@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -17,6 +18,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/exp/teatest"
 )
+
+// skipIfNoCub skips the test if the 'cub' CLI is not available.
+// This is needed because teatest-based tests trigger Init() which calls the cub CLI.
+func skipIfNoCub(t *testing.T) {
+	t.Helper()
+	if _, err := exec.LookPath("cub"); err != nil {
+		t.Skip("Skipping test: 'cub' CLI not found in PATH")
+	}
+}
 
 // testModel creates a Model with mock data for testing.
 // This bypasses the cub CLI calls and provides a static tree structure.
@@ -222,6 +232,7 @@ func min(a, b int) int {
 
 // TestHierarchyNavigationDown tests j/down key navigation.
 func TestHierarchyNavigationDown(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModelMultipleOrgs()
 
 	// Verify initial state
@@ -257,6 +268,7 @@ func TestHierarchyNavigationDown(t *testing.T) {
 
 // TestHierarchyNavigationUp tests k/up key navigation.
 func TestHierarchyNavigationUp(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModelMultipleOrgs()
 	m.cursor = 2 // Start at 3rd item
 
@@ -279,6 +291,7 @@ func TestHierarchyNavigationUp(t *testing.T) {
 
 // TestHierarchyExpandCollapse tests 'l' key for expand and 'h' key for collapse.
 func TestHierarchyExpandCollapse(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModelCollapsed()
 
 	// Verify initial state - org is collapsed
@@ -311,6 +324,7 @@ func TestHierarchyExpandCollapse(t *testing.T) {
 
 // TestHierarchyCollapseExpanded tests collapsing an expanded node with 'h' key.
 func TestHierarchyCollapseExpanded(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel() // Starts with org expanded
 
 	// Verify initial state - org is expanded
@@ -344,6 +358,7 @@ func TestHierarchyCollapseExpanded(t *testing.T) {
 
 // TestHierarchyQuit tests that 'q' quits the program.
 func TestHierarchyQuit(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -402,6 +417,7 @@ func TestHierarchyNotReadyState(t *testing.T) {
 
 // TestHierarchySearchMode tests entering and exiting search mode.
 func TestHierarchySearchMode(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	if m.searchMode {
@@ -436,6 +452,7 @@ func TestHierarchySearchMode(t *testing.T) {
 // TestHierarchyGoldenOutput tests the view output against a golden file.
 // Run with -update flag to update golden files.
 func TestHierarchyGoldenOutput(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -456,6 +473,7 @@ func TestHierarchyGoldenOutput(t *testing.T) {
 
 // TestHierarchyTabSwitchFocus tests tab key switching focus between panes.
 func TestHierarchyTabSwitchFocus(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	if m.detailsFocused {
@@ -481,6 +499,7 @@ func TestHierarchyTabSwitchFocus(t *testing.T) {
 
 // TestHierarchyRefresh tests the 'r' key for refresh.
 func TestHierarchyRefresh(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -497,6 +516,7 @@ func TestHierarchyRefresh(t *testing.T) {
 
 // TestHierarchyCtrlC tests that Ctrl+C quits the program.
 func TestHierarchyCtrlC(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -511,6 +531,7 @@ func TestHierarchyCtrlC(t *testing.T) {
 
 // TestHierarchyOrgSwitch tests that 'O' key opens org selector when multiple orgs exist.
 func TestHierarchyOrgSwitch(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModelMultipleOrgs()
 
 	// Verify we have 2 orgs
@@ -542,6 +563,7 @@ func TestHierarchyOrgSwitch(t *testing.T) {
 
 // TestHierarchyCommandPalette tests that ':' key enters command mode.
 func TestHierarchyCommandPalette(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -567,6 +589,7 @@ func TestHierarchyCommandPalette(t *testing.T) {
 
 // TestHierarchyHelp tests that '?' key opens help overlay.
 func TestHierarchyHelp(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -592,6 +615,7 @@ func TestHierarchyHelp(t *testing.T) {
 
 // TestHierarchySearchNextPrev tests 'n' and 'N' keys for search navigation.
 func TestHierarchySearchNextPrev(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 	m.searchQuery = "test"
 	m.searchMatches = []int{0, 1} // Indices of matching nodes in flatList
@@ -615,6 +639,7 @@ func TestHierarchySearchNextPrev(t *testing.T) {
 
 // TestHierarchyToggleFilter tests 'f' key for filter toggle.
 func TestHierarchyToggleFilter(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 	m.searchQuery = "test"
 	m.filterActive = false
@@ -638,6 +663,7 @@ func TestHierarchyToggleFilter(t *testing.T) {
 
 // TestHierarchyActivity tests 'a' key for activity view.
 func TestHierarchyActivity(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -658,6 +684,7 @@ func TestHierarchyActivity(t *testing.T) {
 
 // TestHierarchyMaps tests 'M' key for maps view.
 func TestHierarchyMaps(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -678,6 +705,7 @@ func TestHierarchyMaps(t *testing.T) {
 
 // TestHierarchyCreate tests 'c' key for create mode.
 func TestHierarchyCreate(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -698,6 +726,7 @@ func TestHierarchyCreate(t *testing.T) {
 
 // TestHierarchyImport tests 'i' key for import mode.
 func TestHierarchyImport(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -718,6 +747,7 @@ func TestHierarchyImport(t *testing.T) {
 
 // TestHierarchyOpenWeb tests 'o' key for open in browser.
 func TestHierarchyOpenWeb(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -735,6 +765,7 @@ func TestHierarchyOpenWeb(t *testing.T) {
 
 // TestHierarchyLocalCluster tests 'L' key for local cluster switch.
 func TestHierarchyLocalCluster(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -750,6 +781,7 @@ func TestHierarchyLocalCluster(t *testing.T) {
 
 // TestHierarchyEnter tests Enter key for details view.
 func TestHierarchyEnter(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -770,6 +802,7 @@ func TestHierarchyEnter(t *testing.T) {
 
 // TestHierarchyDelete tests 'd' key for delete.
 func TestHierarchyDelete(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -999,6 +1032,7 @@ func TestMatchesCluster(t *testing.T) {
 
 // TestHubViewFilterToggle tests the 'a' key toggles showAllUnits
 func TestHubViewFilterToggle(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 
 	// Initial state: showAllUnits should be false
@@ -1032,6 +1066,7 @@ func TestHubViewFilterToggle(t *testing.T) {
 
 // TestHubViewFilterToggleBack tests toggling back to "this cluster only"
 func TestHubViewFilterToggleBack(t *testing.T) {
+	skipIfNoCub(t)
 	m := testModel()
 	m.showAllUnits = true // Start with all units shown
 	m.currentCluster = "test-cluster"
