@@ -89,4 +89,4 @@ cub unit update payment-api-appset --set image.tag=v2.1.0
 - [IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../../../docs/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Pattern 2: ApplicationSet
 - [REPO-SKELETON-TAXONOMY.md](../../../../docs/planning/REPO-SKELETON-TAXONOMY.md) — Full taxonomy
 - [Kostis: ApplicationSet Best Practices](https://codefresh.io/blog/how-to-structure-your-argo-cd-repositories-using-application-sets/) — Official guide
-- [CCVE-2025-3724](https://github.com/confighubai/confighub-ccve/blob/main/scanner/CCVE-2025-3724.yaml) — Complex ApplicationSet anti-pattern
+- [CCVE-2025-3724](https://github.com/confighubai/confighub-scan/blob/main/scanner/CCVE-2025-3724.yaml) — Complex ApplicationSet anti-pattern

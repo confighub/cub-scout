@@ -263,7 +263,7 @@ cub-scout includes **46 active scanner patterns** plus **4,500+ reference patter
 - Traefik
 - And more...
 
-The CCVE database is maintained in [confighubai/confighub-ccve](https://github.com/confighubai/confighub-ccve).
+The CCVE database is maintained in [confighubai/confighub-scan](https://github.com/confighubai/confighub-scan).
 
 ---
 

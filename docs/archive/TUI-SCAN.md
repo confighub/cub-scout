@@ -196,7 +196,7 @@ Press `c` in the TUI dashboard to run a Kyverno policy scan:
 
 ## KPOL Policy Database
 
-We maintain a database of 460+ Kyverno policy patterns (KPOL-*) in [confighubai/confighub-ccve](https://github.com/confighubai/confighub-ccve).
+We maintain a database of 460+ Kyverno policy patterns (KPOL-*) in [confighubai/confighub-scan](https://github.com/confighubai/confighub-scan).
 
 ### List All Policies
 

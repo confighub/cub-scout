@@ -32,7 +32,7 @@ It reads your cluster (read-only), detects ownership by examining labels and ann
 | `./cub-scout map` | Interactive TUI showing all resources by owner |
 | `./cub-scout trace deploy/nginx -n prod` | Full ownership chain: Git → Flux/Argo → Deployment |
 | `./cub-scout map orphans` | Resources not managed by GitOps (shadow IT) |
-| `./cub-scout scan` | Configuration anti-patterns (CCVEs) |
+| `./cub-scout scan` | Configuration risk patterns |
 
 ### Ownership Detection
 

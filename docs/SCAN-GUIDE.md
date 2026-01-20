@@ -1,4 +1,4 @@
-# CCVE Scanning: Find Configuration Vulnerabilities
+# Risk Scanning: Find Configuration Vulnerabilities
 
 ## Scan Your Cluster Now
 
@@ -23,15 +23,15 @@ cub-scout scan --kyverno
 
 ---
 
-## What is a CCVE?
+## What is a Risk Scorecard?
 
-**CCVE** = Configuration Common Vulnerabilities and Exposures
+A **Risk Scorecard** is a catalogued configuration anti-pattern that causes outages.
 
-Like [CVEs](https://cve.mitre.org/) for code vulnerabilities, CCVEs are **catalogued configuration anti-patterns that cause outages**.
+Like [CVEs](https://cve.mitre.org/) for code vulnerabilities, Risk Scorecards are patterns we detect before they cause problems.
 
 ```
 CVE  → Security vulnerability in code  → "Patch this library"
-CCVE → Configuration anti-pattern      → "Fix this setting"
+Risk → Configuration anti-pattern      → "Fix this setting"
 ```
 
 ## The Problem
@@ -49,14 +49,14 @@ These patterns repeat across organizations. We catalog them so you don't have to
 
 ### 1. We maintain a pattern database
 
-The CCVE database contains **46 active scanner patterns** plus **4,500+ reference patterns** across:
+The Risk Scorecard database contains **46 active scanner patterns** plus **4,500+ reference patterns** across:
 - **Flux** — GitRepository, Kustomization, HelmRelease issues
 - **Argo CD** — Application sync, health, drift problems
 - **Helm** — Release failures, pending upgrades
 - **ConfigHub** — Unit drift, worker connectivity, orphaned resources
 - **Infrastructure** — Grafana, Traefik, cert-manager, Prometheus, Thanos
 
-Each CCVE has:
+Each risk pattern has:
 - Unique ID (`CCVE-2025-0027`)
 - Detection logic (K8s API patterns)
 - Severity (Critical/Warning/Info)
@@ -250,7 +250,7 @@ cub-scout scan --severity critical,warning # Filter by severity
 ## Related Documentation
 
 ### CCVE Database
-The CCVE database is maintained in [confighubai/confighub-ccve](https://github.com/confighubai/confighub-ccve):
+The CCVE database is maintained in [confighubai/confighub-scan](https://github.com/confighubai/confighub-scan):
 - 46 active scanner patterns for runtime detection
 - 4,500+ reference patterns for research
 

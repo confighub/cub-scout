@@ -473,7 +473,7 @@ Run in pipelines for pre-deploy checks:
 
 | Document | Description |
 |----------|-------------|
-| [confighub-ccve](https://github.com/confighubai/confighub-ccve) | CCVE database (46 active + 4,500 ref) |
+| [confighub-scan](https://github.com/confighubai/confighub-scan) | CCVE database (46 active + 4,500 ref) |
 | [GSF-SCHEMA.md](../GSF-SCHEMA.md) | GitOps State Format specification |
 | [EXTENDING.md](../EXTENDING.md) | Adding custom detectors |
 
