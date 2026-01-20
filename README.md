@@ -1,4 +1,4 @@
-# cub-scout
+# cub-scout = the GitOps explorer
 
 **Find who owns every Kubernetes resource in 10 seconds.**
 
@@ -10,7 +10,9 @@
 
 ## Why This Exists
 
-Every platform team faces the same problem: resources deployed by Flux, ArgoCD, Helm, and `kubectl apply` are mixed together with no visibility into who owns what.
+Cub-scout is an explorer and mapping tool for Kubernetes clusters that run GitOps.  The tool can be used standalone (read-only) and has a 'ConfigHub connected' mode.
+
+Every GitOps user faces the same problem: verifying the ownership and status of workloads and resources.  Several tools and scripting incanctations exist, but it is not always easy to recall what is most appropriate or how to use it.    
 
 When something breaks at 2am, you need answers fast:
 - Who manages this deployment?
@@ -19,7 +21,7 @@ When something breaks at 2am, you need answers fast:
 
 **cub-scout gives you that visibility instantly.**
 
-It reads your cluster (read-only), detects ownership by examining labels and annotations, and shows you exactly what's going on. No agents to install, no databases, no signup.
+It reads your cluster (read-only), detects ownership by examining labels and annotations, and shows you exactly what's going on.  No agents to install, no databases, no signup.  As much as possible we are leveraging existing tools, bringing them into a single framework and making them easy to use.
 
 ---
 
