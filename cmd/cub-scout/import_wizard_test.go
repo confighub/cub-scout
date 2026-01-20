@@ -13,7 +13,21 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/exp/teatest"
+	"k8s.io/client-go/tools/clientcmd"
 )
+
+// skipIfNoKubeconfig skips the test if no valid kubeconfig is available.
+// This is needed because teatest-based tests trigger Init() which builds a k8s client.
+func skipIfNoKubeconfig(t *testing.T) {
+	t.Helper()
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{}
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+	_, err := kubeConfig.ClientConfig()
+	if err != nil {
+		t.Skip("Skipping test: no valid kubeconfig available")
+	}
+}
 
 // testImportWizardModel creates a base ImportWizardModel with mock data for testing.
 // This bypasses K8s client initialization and provides static test data.
@@ -476,6 +490,7 @@ func TestImportWizardStep1Golden(t *testing.T) {
 
 // TestImportWizardStep3Golden tests Step 3 view against golden file.
 func TestImportWizardStep3Golden(t *testing.T) {
+	skipIfNoKubeconfig(t)
 	m := testModelStep3()
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -493,6 +508,7 @@ func TestImportWizardStep3Golden(t *testing.T) {
 
 // TestImportWizardStep6SuccessGolden tests Step 6 success view against golden file.
 func TestImportWizardStep6SuccessGolden(t *testing.T) {
+	skipIfNoKubeconfig(t)
 	m := testModelStep6Complete(true)
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
@@ -510,6 +526,7 @@ func TestImportWizardStep6SuccessGolden(t *testing.T) {
 
 // TestImportWizardStep6FailureGolden tests Step 6 failure view against golden file.
 func TestImportWizardStep6FailureGolden(t *testing.T) {
+	skipIfNoKubeconfig(t)
 	m := testModelStep6Complete(false)
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
