@@ -10,7 +10,7 @@ Complete reference for all commands, options, TUI keys, and expected outputs.
 |---------|-------------|:----------:|:---------:|
 | `map` | Interactive TUI explorer | Yes | Yes |
 | `trace` | Show GitOps ownership chain | Yes | - |
-| `scan` | Scan for CCVEs | Yes | - |
+| `scan` | Scan and score issues | Yes | - |
 | `snapshot` | Dump cluster state as JSON | Yes | - |
 | `import` | Import workloads into ConfigHub | - | Yes |
 | `import-argocd` | Import ArgoCD Application | - | Yes |
