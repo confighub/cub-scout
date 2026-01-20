@@ -207,7 +207,7 @@ echo -e "    ${DIM}•${NC} cert-manager (20)"
 echo -e "    ${DIM}•${NC} ingress-nginx (28)"
 echo -e "    ${DIM}•${NC} + 40 more tools"
 echo ""
-echo -e "  ${DIM}See: cve/ccve/META-PATTERN-DETECTION-RESEARCH.md${NC}"
+echo -e "  ${DIM}See: https://github.com/confighubai/confighub-scan/blob/main/risks/META-PATTERN-DETECTION-RESEARCH.md${NC}"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -222,7 +222,7 @@ echo "  │  cub-scout scan --pattern <p>   Scan for specific pattern          �
 echo "  │  cub-scout scan --json          JSON output for CI/CD              │"
 echo "  │  ./test/atk/map then 'c'        Interactive TUI scan               │"
 echo "  │                                                                    │"
-echo -e "  │  ${DIM}Research: cve/ccve/META-PATTERN-DETECTION-RESEARCH.md${NC}          │"
+echo -e "  │  ${DIM}Research: confighub-scan/risks/META-PATTERN-DETECTION-RESEARCH.md${NC}│"
 echo -e "  │  ${DIM}WOW demo: examples/demos/WOW-MOMENTS.md #9${NC}                      │"
 echo "  └────────────────────────────────────────────────────────────────────┘"
 echo ""
