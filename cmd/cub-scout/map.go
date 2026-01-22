@@ -2035,9 +2035,31 @@ func runMapCrashes(cmd *cobra.Command, args []string) error {
 
 // runMapOrphans shows Native (unmanaged) resources
 func runMapOrphans(cmd *cobra.Command, args []string) error {
+	// Print header if in table mode (not --json/--count/--names-only)
+	showHeader := !mapJSON && !mapCount && !mapNamesOnly
+	if showHeader {
+		fmt.Println()
+		fmt.Println("ORPHAN RESOURCES")
+		fmt.Println("════════════════════════════════════════════════════════════════════")
+		fmt.Println("Resources not managed by GitOps (Flux, ArgoCD, Helm, ConfigHub).")
+		fmt.Println("These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.")
+		fmt.Println()
+	}
+
 	// Set the owner filter to Native and run list
 	mapOwner = "Native"
-	return runMapList(cmd, args)
+	err := runMapList(cmd, args)
+
+	// Print next steps if in table mode and no error
+	if showHeader && err == nil {
+		fmt.Println()
+		fmt.Println("NEXT STEPS:")
+		fmt.Println("→ To import into ConfigHub: cub-scout import --wizard")
+		fmt.Println("→ To trace ownership:       cub-scout trace <kind>/<name> -n <namespace>")
+		fmt.Println("→ Visual guide:             docs/diagrams/ownership-detection.svg")
+	}
+
+	return err
 }
 
 // completeSince provides tab completion for --since flag
