@@ -1,4 +1,5 @@
-# cub-scout explores, maps and communicates facts about GitOps clusters
+# cub-scout 
+# explores, maps and communicates facts about GitOps clusters
 
 **Demystify GitOps. See what's really happening in your cluster.**
 
