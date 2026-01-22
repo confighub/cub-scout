@@ -1325,6 +1325,9 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
 
+	// Count by type
+	var ksCount, hrCount, appCount int
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "STATUS\tKIND\tNAME\tNAMESPACE\tREVISION\tRESOURCES")
 	fmt.Fprintln(w, "──────\t────\t────\t─────────\t────────\t─────────")
@@ -1334,6 +1337,7 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations",
 	}).List(ctx, v1.ListOptions{}); err == nil {
 		for _, ks := range ksList.Items {
+			ksCount++
 			status := "✓"
 			if !isResourceReady(&ks) {
 				status = "✗"
@@ -1350,6 +1354,7 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases",
 	}).List(ctx, v1.ListOptions{}); err == nil {
 		for _, hr := range hrList.Items {
+			hrCount++
 			status := "✓"
 			if !isResourceReady(&hr) {
 				status = "✗"
@@ -1365,6 +1370,7 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		Group: "argoproj.io", Version: "v1alpha1", Resource: "applications",
 	}).List(ctx, v1.ListOptions{}); err == nil {
 		for _, app := range appList.Items {
+			appCount++
 			status := "✓"
 			if !isArgoAppHealthy(&app) {
 				status = "✗"
@@ -1377,6 +1383,12 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 	}
 
 	w.Flush()
+
+	// Summary
+	total := ksCount + hrCount + appCount
+	fmt.Printf("\n%d deployers: %d Kustomizations, %d HelmReleases, %d Applications\n",
+		total, ksCount, hrCount, appCount)
+
 	return nil
 }
 
@@ -1394,6 +1406,10 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
 
+	// Count by owner
+	ownerCounts := map[string]int{}
+	var total int
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "STATUS\tNAMESPACE\tNAME\tOWNER\tMANAGED-BY\tIMAGE")
 	fmt.Fprintln(w, "──────\t─────────\t────\t─────\t──────────\t─────")
@@ -1408,12 +1424,14 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 				continue
 			}
 
+			total++
 			status := "✓"
 			if !isDeploymentReady(&dep) {
 				status = "✗"
 			}
 
 			owner, managedBy := detectOwnership(&dep)
+			ownerCounts[owner]++
 			image := getContainerImage(&dep)
 
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
@@ -1422,6 +1440,20 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 	}
 
 	w.Flush()
+
+	// Summary
+	if total > 0 {
+		// Build owner breakdown in consistent order
+		owners := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
+		var parts []string
+		for _, owner := range owners {
+			if count, ok := ownerCounts[owner]; ok && count > 0 {
+				parts = append(parts, fmt.Sprintf("%d %s", count, owner))
+			}
+		}
+		fmt.Printf("\n%d workloads: %s\n", total, strings.Join(parts, ", "))
+	}
+
 	return nil
 }
 
