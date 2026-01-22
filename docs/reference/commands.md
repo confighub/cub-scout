@@ -18,6 +18,7 @@ Complete reference for all cub-scout commands.
 | `tree` | Hierarchical resource views |
 | `discover` | Scout-style workload discovery |
 | `health` | Scout-style health check |
+| `setup` | Set up shell completions |
 
 ---
 
@@ -298,6 +299,36 @@ Scout-style health check (alias for `map issues`).
 
 ```bash
 cub-scout health [flags]
+```
+
+---
+
+## setup
+
+Set up shell completions and configuration.
+
+```bash
+cub-scout setup [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--shell` | Shell to configure (bash, zsh, fish). Auto-detects if not specified |
+| `--dry-run` | Show what would be done without making changes |
+
+### Examples
+
+```bash
+# Auto-detect shell and install completions
+cub-scout setup
+
+# Install for specific shell
+cub-scout setup --shell zsh
+
+# Preview without installing
+cub-scout setup --dry-run
 ```
 
 ---

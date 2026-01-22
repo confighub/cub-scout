@@ -18,6 +18,7 @@ Complete reference for all interactive TUI views.
 | `D` | Dependencies | Upstream/downstream |
 | `b` | Bypass | Factory bypass |
 | `x` | Sprawl | Config distribution |
+| `G` | Git Sources | Forward trace: Git → deployers → resources |
 | `M` | Three Maps | All hierarchies |
 | `4` | Cluster Data | All data sources TUI reads |
 | `5` / `A` | App Hierarchy | Inferred ConfigHub model |
@@ -231,6 +232,42 @@ Complete reference for all interactive TUI views.
 - Config distribution by namespace
 - Duplication detection
 - Consolidation recommendations
+
+---
+
+## Git Sources View (`G`)
+
+**Purpose:** Forward trace from Git to live resources
+
+**Content:**
+- GitRepositories, OCIRepositories, HelmRepositories
+- Deployers that reference each source
+- Resources deployed by each deployer
+
+**Layout:**
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│ GIT SOURCES → DEPLOYERS → RESOURCES                                        │
+│ Forward trace: What does your Git define?                                  │
+├────────────────────────────────────────────────────────────────────────────┤
+│ Sources: 3 │ Deployers: 8 │ Workloads: 45                                  │
+│                                                                            │
+│ GIT REPOSITORIES                                                           │
+│ ✓ platform-config                                                          │
+│   github.com/myorg/platform-config @ main (abc1234)                       │
+│   ├─▶ Kustomization/infrastructure → 12 resources                         │
+│   └─▶ Kustomization/apps → 28 resources                                   │
+│                                                                            │
+│ ✓ app-manifests                                                            │
+│   github.com/myorg/app-manifests @ main (def5678)                         │
+│   └─▶ Kustomization/frontend → 5 resources                                │
+│                                                                            │
+│ HELM REPOSITORIES                                                          │
+│ ✓ bitnami                                                                  │
+│   https://charts.bitnami.com/bitnami                                      │
+│   └─▶ HelmRelease/postgresql → 4 resources                                │
+└────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 

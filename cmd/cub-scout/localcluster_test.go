@@ -303,6 +303,25 @@ func TestLocalClusterDependencies(t *testing.T) {
 	}
 }
 
+// TestLocalClusterGitSources tests 'G' key for git sources view.
+func TestLocalClusterGitSources(t *testing.T) {
+	m := testLocalModel()
+
+	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
+	time.Sleep(50 * time.Millisecond)
+
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'G'}})
+	time.Sleep(50 * time.Millisecond)
+
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	finalModel := tm.FinalModel(t, teatest.WithFinalTimeout(2*time.Second))
+
+	fm := finalModel.(LocalClusterModel)
+	if !fm.panelMode || fm.panelView != viewGitSources {
+		t.Errorf("expected git sources view, got panelMode=%v view=%v", fm.panelMode, fm.panelView)
+	}
+}
+
 // TestLocalClusterMaps tests 'M' key for maps view.
 func TestLocalClusterMaps(t *testing.T) {
 	m := testLocalModel()
