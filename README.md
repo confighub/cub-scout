@@ -433,15 +433,16 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 ## Part of ConfigHub
 
-cub-scout is the open-source cluster observer from [ConfigHub](https://confighub.com).
+cub-scout is the open-source cluster explorer from [ConfigHub](https://confighub.com).
 
 **Standalone mode:** Works forever, no signup required. See your cluster, trace ownership, scan for issues.
 
 **Connected mode:** Link to ConfigHub for:
 - Multi-cluster fleet visibility
 - One-click import of discovered workloads
-- Revision history and compare WET↔LIVE
+- Revision history and compare DRY↔WET↔LIVE
 - Team collaboration and change tracking
+- Git and other sources
 
 ---
 
