@@ -4118,7 +4118,7 @@ func (m LocalClusterModel) renderDashboard() string {
 		if nativeCount > 0 {
 			nativePct := (nativeCount * 100) / total
 			if nativePct > 30 {
-				b.WriteString("\n  " + lcWarnStyle.Render(fmt.Sprintf("⚠ %d%% unmanaged (Native) — security risk", nativePct)) + "\n")
+				b.WriteString("\n  " + lcWarnStyle.Render(fmt.Sprintf("⚠ %d%% unmanaged (Native) — check security", nativePct)) + "\n")
 			}
 		}
 	}
