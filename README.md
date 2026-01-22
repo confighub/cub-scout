@@ -364,7 +364,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 
 ## See It at Scale
 
-For a realistic demo with 50+ resources, see [docs/SCALE-DEMO.md](docs/SCALE-DEMO.md).
+For a realistic demo with 50+ resources, see [docs/getting-started/scale-demo.md](docs/getting-started/scale-demo.md).
 
 ```bash
 # Deploy the official Flux reference architecture
@@ -452,8 +452,8 @@ cub-scout is the open-source cluster explorer from [ConfigHub](https://confighub
 | Doc | Content |
 |-----|---------|
 | [CLI-GUIDE.md](CLI-GUIDE.md) | Complete command reference |
-| [docs/SCALE-DEMO.md](docs/SCALE-DEMO.md) | See cub-scout at scale |
-| [docs/SCAN-GUIDE.md](docs/SCAN-GUIDE.md) | Risk scanning (46 patterns) |
+| [docs/getting-started/scale-demo.md](docs/getting-started/scale-demo.md) | See cub-scout at scale |
+| [docs/howto/scan-for-risks.md](docs/howto/scan-for-risks.md) | Risk scanning (46 patterns) |
 | [examples/](examples/) | Demo scenarios |
 
 ---
@@ -465,6 +465,8 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Found a bug?** [Open an issue](https://github.com/confighub/cub-scout/issues)
 - **Have an idea?** Start a discussion
 - **Want to contribute?** PRs welcome
+
+> **ATTENTION:** Help us keep this project in good readable and usable order please! If you find anything that doesn't seem to fit in, maybe a dangling reference or an old version of the text, please [file an issue](https://github.com/confighub/cub-scout/issues) and we shall clean it up.
 
 ---
 
