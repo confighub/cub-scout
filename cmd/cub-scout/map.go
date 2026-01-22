@@ -1307,6 +1307,7 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 	fmt.Println("→ For remediation commands: cub-scout scan")
 	fmt.Println("→ To trace a failing resource: cub-scout trace <kind>/<name> -n <namespace>")
 	fmt.Println("→ To see full details: cub-scout map deep-dive")
+	fmt.Println("→ Visual guide: docs/diagrams/ownership-trace.svg")
 
 	return nil
 }
@@ -1388,6 +1389,7 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 	total := ksCount + hrCount + appCount
 	fmt.Printf("\n%d deployers: %d Kustomizations, %d HelmReleases, %d Applications\n",
 		total, ksCount, hrCount, appCount)
+	fmt.Println("→ Visual guide: docs/diagrams/flux-architecture.svg")
 
 	return nil
 }
