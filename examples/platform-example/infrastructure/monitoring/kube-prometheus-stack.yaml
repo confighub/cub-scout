@@ -1,0 +1,43 @@
+# Prometheus + Grafana monitoring stack via Helm
+# This is deployed by Flux from the prometheus-community HelmRepository
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: "55.x"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+  values:
+    grafana:
+      enabled: true
+      adminPassword: ${GRAFANA_ADMIN_PASSWORD}
+      dashboardProviders:
+        dashboardproviders.yaml:
+          apiVersion: 1
+          providers:
+            - name: 'default'
+              folder: 'GitOps'
+              type: file
+              disableDeletion: false
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards
+    prometheus:
+      prometheusSpec:
+        retention: 15d
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 250m
+          limits:
+            memory: 2Gi
+    alertmanager:
+      enabled: true

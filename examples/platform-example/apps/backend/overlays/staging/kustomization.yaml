@@ -1,0 +1,19 @@
+# Staging overlay for backend
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: staging
+resources:
+  - ../../base
+patches:
+  - patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 2
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: example/backend:v1.0.0-rc1
+    target:
+      kind: Deployment
+      name: backend-api
+commonLabels:
+  environment: staging

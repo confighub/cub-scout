@@ -1,0 +1,24 @@
+# Dev overlay - minimal resources, debug enabled
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: dev
+resources:
+  - ../../base
+patches:
+  - patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: example/frontend:dev
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: LOG_LEVEL
+          value: "debug"
+    target:
+      kind: Deployment
+      name: frontend
+commonLabels:
+  environment: dev

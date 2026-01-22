@@ -1,0 +1,24 @@
+# Dev Cluster Kustomization
+# This is what Flux reconciles for the dev environment
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: platform-dev
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./clusters/dev
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: platform
+  targetNamespace: dev
+---
+# Apps bundle for dev
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../apps/frontend/overlays/dev
+  - ../../apps/backend/overlays/dev
+  - ../../apps/database/overlays/dev
+namespace: dev

@@ -1,0 +1,41 @@
+# Production overlay for PostgreSQL - HA configuration
+# This example shows where clobbering can happen
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prod
+resources:
+  - ../../base
+patches:
+  - patch: |
+      - op: add
+        path: /spec/values/architecture
+        value: "replication"
+      - op: add
+        path: /spec/values/readReplicas
+        value:
+          replicaCount: 2
+      - op: replace
+        path: /spec/values/primary/persistence/size
+        value: "50Gi"
+      - op: replace
+        path: /spec/values/primary/resources/requests/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/values/primary/resources/requests/cpu
+        value: "500m"
+      - op: add
+        path: /spec/values/primary/resources/limits
+        value:
+          memory: "2Gi"
+          cpu: "1"
+      - op: add
+        path: /spec/values/metrics
+        value:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+    target:
+      kind: HelmRelease
+      name: postgresql
+commonLabels:
+  environment: prod

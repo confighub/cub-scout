@@ -1,0 +1,9 @@
+# Kustomize base for frontend application
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+commonLabels:
+  app.kubernetes.io/name: frontend
+  app.kubernetes.io/part-of: platform

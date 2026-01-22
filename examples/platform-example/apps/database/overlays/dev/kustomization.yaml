@@ -1,0 +1,22 @@
+# Dev overlay for PostgreSQL - minimal resources
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: dev
+resources:
+  - ../../base
+patches:
+  - patch: |
+      - op: replace
+        path: /spec/values/primary/persistence/size
+        value: "1Gi"
+      - op: replace
+        path: /spec/values/primary/resources/requests/memory
+        value: "128Mi"
+      - op: replace
+        path: /spec/values/primary/resources/requests/cpu
+        value: "100m"
+    target:
+      kind: HelmRelease
+      name: postgresql
+commonLabels:
+  environment: dev

@@ -1,0 +1,15 @@
+# Backend API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-api
+  labels:
+    app: backend-api
+spec:
+  selector:
+    app: backend-api
+  ports:
+    - port: 8080
+      targetPort: http
+      name: http
+  type: ClusterIP

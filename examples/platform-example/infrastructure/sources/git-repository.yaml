@@ -1,0 +1,34 @@
+# GitRepository - The source of truth for this platform
+# Flux watches this repository for changes
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: platform
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/example-org/platform
+  ref:
+    branch: main
+  secretRef:
+    name: github-token
+---
+# HelmRepository for Bitnami charts
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: bitnami
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://charts.bitnami.com/bitnami
+---
+# HelmRepository for Prometheus community charts
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: prometheus-community
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://prometheus-community.github.io/helm-charts

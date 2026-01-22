@@ -1,0 +1,15 @@
+# Frontend Service - Exposes the frontend deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: http
+      name: http
+  type: ClusterIP

@@ -1,0 +1,40 @@
+# Production Cluster Kustomization
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: platform-prod
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./clusters/prod
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: platform
+  targetNamespace: prod
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: frontend
+      namespace: prod
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: backend-api
+      namespace: prod
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: postgresql
+      namespace: prod
+  # Production requires manual approval
+  dependsOn:
+    - name: platform-staging
+---
+# Apps bundle for production
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../apps/frontend/overlays/prod
+  - ../../apps/backend/overlays/prod
+  - ../../apps/database/overlays/prod
+  - ../../infrastructure/monitoring
+namespace: prod
