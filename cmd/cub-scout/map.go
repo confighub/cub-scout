@@ -2063,10 +2063,176 @@ func getContainerImage(obj *unstructured.Unstructured) string {
 	return short
 }
 
-// runMapCrashes shows crashing/failing resources
+// runMapCrashes shows crashing pods (focused on pod-level health issues)
 func runMapCrashes(cmd *cobra.Command, args []string) error {
-	// Delegate to runMapProblems since it shows the same info
-	return runMapProblems(cmd, args)
+	ctx := context.Background()
+
+	cfg, err := buildConfig()
+	if err != nil {
+		return fmt.Errorf("build kubernetes config: %w", err)
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	type crashInfo struct {
+		namespace string
+		podName   string
+		status    string
+		restarts  int64
+		age       string
+	}
+
+	crashes := []crashInfo{}
+
+	// List all pods
+	podGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	podList, err := dynClient.Resource(podGVR).List(ctx, v1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("list pods: %w", err)
+	}
+
+	now := time.Now()
+
+	for _, pod := range podList.Items {
+		ns := pod.GetNamespace()
+		// Skip system namespaces
+		if strings.HasPrefix(ns, "kube-") || ns == "local-path-storage" {
+			continue
+		}
+
+		// Apply namespace filter if specified
+		if mapNamespace != "" && ns != mapNamespace {
+			continue
+		}
+
+		phase, _, _ := unstructured.NestedString(pod.Object, "status", "phase")
+		containerStatuses, found, _ := unstructured.NestedSlice(pod.Object, "status", "containerStatuses")
+
+		var crashStatus string
+		var totalRestarts int64
+
+		// Check for pod-level failures
+		if phase == "Failed" {
+			reason, _, _ := unstructured.NestedString(pod.Object, "status", "reason")
+			if reason != "" {
+				crashStatus = reason
+			} else {
+				crashStatus = "Failed"
+			}
+		}
+
+		// Check container statuses for crashes
+		if found {
+			for _, cs := range containerStatuses {
+				csMap, ok := cs.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				// Count restarts
+				restarts, _, _ := unstructured.NestedInt64(csMap, "restartCount")
+				totalRestarts += restarts
+
+				// Check waiting state for crash reasons
+				waiting, waitFound, _ := unstructured.NestedMap(csMap, "state", "waiting")
+				if waitFound {
+					reason, _ := waiting["reason"].(string)
+					if reason == "CrashLoopBackOff" || reason == "ImagePullBackOff" || reason == "ErrImagePull" {
+						crashStatus = reason
+					}
+				}
+
+				// Check terminated state for OOMKilled
+				terminated, termFound, _ := unstructured.NestedMap(csMap, "state", "terminated")
+				if termFound {
+					reason, _ := terminated["reason"].(string)
+					if reason == "OOMKilled" || reason == "Error" {
+						crashStatus = reason
+					}
+				}
+
+				// Check lastState for recent crashes
+				lastWaiting, lastWaitFound, _ := unstructured.NestedMap(csMap, "lastState", "waiting")
+				if lastWaitFound && crashStatus == "" {
+					reason, _ := lastWaiting["reason"].(string)
+					if reason == "CrashLoopBackOff" {
+						crashStatus = reason
+					}
+				}
+
+				lastTerminated, lastTermFound, _ := unstructured.NestedMap(csMap, "lastState", "terminated")
+				if lastTermFound && crashStatus == "" {
+					reason, _ := lastTerminated["reason"].(string)
+					if reason == "OOMKilled" || reason == "Error" {
+						crashStatus = fmt.Sprintf("recently %s", reason)
+					}
+				}
+			}
+		}
+
+		// Only include if there's a crash status or high restart count
+		if crashStatus != "" || totalRestarts >= 5 {
+			if crashStatus == "" {
+				crashStatus = fmt.Sprintf("%d restarts", totalRestarts)
+			}
+
+			// Calculate age
+			creationTime := pod.GetCreationTimestamp().Time
+			age := now.Sub(creationTime)
+			var ageStr string
+			if age.Hours() >= 24 {
+				ageStr = fmt.Sprintf("%dd", int(age.Hours()/24))
+			} else if age.Hours() >= 1 {
+				ageStr = fmt.Sprintf("%dh", int(age.Hours()))
+			} else {
+				ageStr = fmt.Sprintf("%dm", int(age.Minutes()))
+			}
+
+			crashes = append(crashes, crashInfo{
+				namespace: ns,
+				podName:   pod.GetName(),
+				status:    crashStatus,
+				restarts:  totalRestarts,
+				age:       ageStr,
+			})
+		}
+	}
+
+	if len(crashes) == 0 {
+		fmt.Println("✓ No crashing pods found")
+		return nil
+	}
+
+	// Print header
+	fmt.Println()
+	fmt.Println("CRASHING PODS")
+	fmt.Println("════════════════════════════════════════════════════════════════════")
+	fmt.Println("Pods in CrashLoopBackOff, ImagePullBackOff, OOMKilled, Error, or with high restart counts.")
+	fmt.Println()
+
+	// Print table
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "NAMESPACE\tPOD\tSTATUS\tRESTARTS\tAGE")
+	fmt.Fprintln(w, "─────────\t───\t──────\t────────\t───")
+	for _, c := range crashes {
+		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", c.namespace, c.podName, c.status, c.restarts, c.age)
+	}
+	w.Flush()
+
+	// Summary
+	fmt.Printf("\n%d crashing pods\n", len(crashes))
+
+	// Next steps
+	fmt.Println()
+	fmt.Println("NEXT STEPS:")
+	fmt.Println("→ View logs:     kubectl logs -n <namespace> <pod> --previous")
+	fmt.Println("→ Describe pod:  kubectl describe pod -n <namespace> <pod>")
+	fmt.Println("→ Trace owner:   cub-scout trace pod/<name> -n <namespace>")
+
+	return nil
 }
 
 // runMapOrphans shows Native (unmanaged) resources
