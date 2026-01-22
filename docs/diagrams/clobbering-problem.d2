@@ -20,7 +20,7 @@ subtitle: {
 }
 
 # The layers that can clobber each other
-layers: {
+stack: {
   label: The Hidden Layers
   style.fill: "#f5f5f5"
 
@@ -104,24 +104,24 @@ layers: {
 }
 
 # Flow
-layers.upstream -> layers.defaults: "inherits" {
+stack.upstream -> stack.defaults: "inherits" {
   style.stroke: "#999"
 }
-layers.defaults -> layers.override: "overrides" {
+stack.defaults -> stack.override: "overrides" {
   style.stroke: "#999"
 }
-layers.override -> layers.helmrelease: "consumes" {
+stack.override -> stack.helmrelease: "consumes" {
   style.stroke: "#999"
 }
-layers.helmrelease -> layers.kustomize: "post-render" {
+stack.helmrelease -> stack.kustomize: "post-render" {
   style.stroke: "#999"
 }
-layers.kustomize -> layers.live: "applies" {
+stack.kustomize -> stack.live: "applies" {
   style.stroke: "#999"
 }
 
 # The clobbering scenarios
-scenarios: {
+problems: {
   label: Four Ways to Get Clobbered
   style.fill: "#fff"
 

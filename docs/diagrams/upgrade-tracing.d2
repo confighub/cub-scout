@@ -35,8 +35,8 @@ scenario: {
   style.stroke: "#d32f2f"
 }
 
-# The layers to investigate
-layers: {
+# The stack to investigate
+stack: {
   label: The Layer Stack (each could be the culprit)
   style.fill: "#f5f5f5"
 
@@ -145,16 +145,16 @@ layers: {
 }
 
 # Flow
-layers.upstream -> layers.values: "defaults" {
+stack.upstream -> stack.values: "defaults" {
   style.stroke: "#999"
 }
-layers.values -> layers.helmrelease: "consumed by" {
+stack.values -> stack.helmrelease: "consumed by" {
   style.stroke: "#999"
 }
-layers.helmrelease -> layers.kustomize: "post-render" {
+stack.helmrelease -> stack.kustomize: "post-render" {
   style.stroke: "#999"
 }
-layers.kustomize -> layers.live: "applied" {
+stack.kustomize -> stack.live: "applied" {
   style.stroke: "#999"
 }
 
@@ -163,8 +163,7 @@ without: {
   label: Without cub-scout
   style.fill: "#ffebee"
 
-  steps: |md
-    ```bash
+  content: |`
     # Step 1: Check git log (which commit?)
     git log --oneline -20
 
@@ -172,17 +171,15 @@ without: {
     git show abc123
 
     # Step 3: Diff the chart versions
-    helm show values bitnami/postgresql --version 14.0.0 > old.yaml
-    helm show values bitnami/postgresql --version 15.0.0 > new.yaml
-    diff old.yaml new.yaml | grep -A5 -B5 maxConnections
+    helm show values bitnami/postgresql --version 14.0.0
+    helm show values bitnami/postgresql --version 15.0.0
+    diff old.yaml new.yaml
 
     # Step 4: Check live state
     kubectl get configmap postgresql-config -o yaml
 
-    # Step 5: Correlate everything manually
     # Time: 30-60 minutes
-    ```
-  |
+  `|
 }
 
 # With cub-scout
@@ -191,26 +188,18 @@ with: {
   style.fill: "#e8f5e9"
   style.stroke: "#4caf50"
 
-  steps: |md
-    ```bash
+  content: |`
     $ cub-scout trace deploy/postgresql -n prod --diff
 
     CHANGE DETECTED: HelmRelease/postgresql
-    ├── Chart: 14.0.0 → 15.0.0
-    ├── Upstream changes:
-    │   - maxConnections: 100 → 150
-    │   - resources.memory: 256Mi → 512Mi
-    │
-    └── Your values didn't override these.
-        Consider adding to values-prod.yaml:
-          maxConnections: 100
-          resources:
-            requests:
-              memory: 256Mi
+    +-- Chart: 14.0.0 -> 15.0.0
+    +-- Upstream changes:
+        - maxConnections: 100 -> 150
+        - resources.memory: 256Mi -> 512Mi
+    +-- Your values didn't override these.
 
     Time: 5 seconds
-    ```
-  |
+  `|
 }
 
 # The insight
@@ -238,12 +227,12 @@ diffs: {
   label: Diff Capabilities
   style.fill: "#e3f2fd"
 
-  types: |md
-    | Diff Type | Command | Shows | Status |
-    |-----------|---------|-------|--------|
-    | **Live vs Git** | `trace --diff` | What's drifted | ✓ Available |
-    | **Before vs After** | `trace --history` | What changed when | Proposed |
-    | **Chart versions** | `trace --chart-diff` | Upstream changes | Proposed |
-    | **Cross-env** | `diff prod staging` | Environment differences | Proposed |
-  |
+  types: |`
+    Diff Type         Command             Shows                Status
+    ---------------   -----------------   ------------------   ---------
+    Live vs Git       trace --diff        What's drifted       Available
+    Before vs After   trace --history     What changed when    Proposed
+    Chart versions    trace --chart-diff  Upstream changes     Proposed
+    Cross-env         diff prod staging   Env differences      Proposed
+  `|
 }

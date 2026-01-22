@@ -115,14 +115,14 @@ results: {
   label: What cub-scout Shows
   style.fill: "#f0fdf4"
 
-  table: |md
-    | NAMESPACE | NAME     | OWNER     | MANAGED-BY        |
-    |-----------|----------|-----------|-------------------|
-    | prod      | frontend | **Flux**  | frontend (flux)   |
-    | prod      | backend  | **ArgoCD**| backend-app       |
-    | prod      | postgres | **Helm**  | postgresql-15.2.0 |
-    | prod      | debug    | **Native**| - (orphan)        |
-  |
+  table: |`
+    NAMESPACE   NAME       OWNER      MANAGED-BY
+    ---------   --------   ---------  ------------------
+    prod        frontend   Flux       frontend (flux)
+    prod        backend    ArgoCD     backend-app
+    prod        postgres   Helm       postgresql-15.2.0
+    prod        debug      Native     - (orphan)
+  `|
 }
 
 # Connections
