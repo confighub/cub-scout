@@ -89,11 +89,12 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 |-------------|------|------|----------|
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [flux-boutique/](flux-boutique/) | **Working** | 5-service Flux demo | TUI view showcase, trace demo |
+| [orphans/](orphans/) | **Working** | Realistic orphan resources | Orphan detection demo |
 | [demos/](demos/) | **Test Fixtures** | YAML with GitOps labels + nginx:alpine | Learning ownership detection |
 | [impressive-demo/](impressive-demo/) | **Test Fixtures** | Conference demo with CCVE scenarios | Presentations, videos |
 | [scripts/](scripts/) | **Integration Code** | k9s, Slack, CI/CD scripts | Adding to your workflow |
 | [integrations/](integrations/) | **Plugins** | ArgoCD extension, Flux operator | Building on the agent |
-| [rm-demos-argocd/](rm-demos-argocd/) | **Concept Demo** | Rendered Manifest simulations | Sales presentations |
+| [rm-demos-argocd/](rm-demos-argocd/) | **Simulation** | Rendered Manifest simulations | Sales presentations |
 | [app-config-rtmsg/](app-config-rtmsg/) | **Concept Demo** | Non-K8s config management TUI | Understanding Hub/Space model |
 
 > **Note:** For **real GitOps applications** you can deploy, see [Real-World Examples](#real-world-examples) below.
