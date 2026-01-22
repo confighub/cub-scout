@@ -1,8 +1,8 @@
 # cub-scout
 
-**Understand your Kubernetes cluster in seconds.**
+**Demystify GitOps. See what's really happening in your cluster.**
 
-Navigate 500 resources as easily as 5. Trace any deployment back to its Git source. See why pods are failing without digging through kubectl.
+GitOps is powerful but opaque. Where did this Deployment come from? Why isn't my change applying? Is this managed by Git or was it kubectl'd? cub-scout makes the invisible visible.
 
 ```bash
 brew install confighub/tap/cub-scout
@@ -11,18 +11,26 @@ cub-scout map
 
 Press `w` for workloads. Press `T` to trace. Press `4` for deep-dive.
 
+> **🧪 Vibe Coded:** This whole project has been vibe coded. One motive: it is an experiment to learn how AI and ConfigHub interact with GitOps clusters. We want you to try this too, and tell us what you learn.
+
 ---
 
 ## The Problem
 
-You have 50+ Kustomizations. 200+ deployments. 10+ namespaces.
+GitOps tools are powerful but hide complexity behind layers of abstraction.
 
-When something breaks:
-- Which Kustomization manages this deployment?
-- What Git repo is it from?
-- What changed recently?
+**What's obscure:**
+- A Deployment exists, but where did it come from? (Kustomization? HelmRelease? kubectl?)
+- A change isn't applying, but why? (Source not ready? Reconciliation stuck? Wrong path?)
+- Resources exist with no owner — who created them and when?
+- Dependencies between apps are invisible until something breaks
 
-You piece it together with kubectl, Git, and tribal knowledge. It takes 15 minutes when you need answers in 15 seconds.
+**What you end up doing:**
+- `kubectl get kustomization -A` + `kubectl get helmrelease -A` + `kubectl get application -A`
+- Manually checking labels to figure out ownership
+- Tribal knowledge: "Oh, that's managed by the platform team's Flux setup"
+
+cub-scout shows you the whole picture in seconds.
 
 ---
 

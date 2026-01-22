@@ -1,0 +1,249 @@
+# Upgrade Tracing - Finding what changed and why
+# Render with: d2 upgrade-tracing.d2 upgrade-tracing.svg
+
+direction: down
+
+title: {
+  label: "Upgrade Tracing: What Changed?"
+  near: top-center
+  shape: text
+  style.font-size: 24
+  style.bold: true
+}
+
+subtitle: {
+  label: When something breaks after an upgrade, which layer caused it?
+  near: top-center
+  shape: text
+  style.font-size: 14
+  style.font-color: "#666"
+}
+
+# The scenario
+scenario: {
+  label: |md
+    ## The Scenario
+
+    **Monday:** Everything works
+    **Tuesday:** Helm chart upgraded (14.0 → 15.0)
+    **Wednesday:** Production OOMing
+
+    **Question:** What changed?
+  |
+  shape: rectangle
+  style.fill: "#ffebee"
+  style.stroke: "#d32f2f"
+}
+
+# The layers to investigate
+layers: {
+  label: The Layer Stack (each could be the culprit)
+  style.fill: "#f5f5f5"
+
+  upstream: {
+    label: |md
+      **1. Upstream Chart**
+      bitnami/postgresql
+      14.0 → 15.0
+    |
+    shape: rectangle
+    style.fill: "#e3f2fd"
+
+    change: {
+      label: |md
+        ```diff
+        - maxConnections: 100
+        + maxConnections: 150
+        - resources.memory: 256Mi
+        + resources.memory: 512Mi
+        ```
+      |
+      style.fill: "#bbdefb"
+    }
+  }
+
+  values: {
+    label: |md
+      **2. Your Values**
+      values-prod.yaml
+    |
+    shape: rectangle
+    style.fill: "#e8f5e9"
+
+    change: {
+      label: |md
+        ```yaml
+        # Didn't override maxConnections
+        # Relied on chart default
+        replicaCount: 3
+        ```
+      |
+      style.fill: "#c8e6c9"
+    }
+  }
+
+  helmrelease: {
+    label: |md
+      **3. HelmRelease**
+      flux-system/postgresql
+    |
+    shape: rectangle
+    style.fill: "#fff3e0"
+
+    change: {
+      label: |md
+        ```diff
+        spec:
+          chart:
+        -   version: "14.0.0"
+        +   version: "15.0.0"
+        ```
+      |
+      style.fill: "#ffe0b2"
+    }
+  }
+
+  kustomize: {
+    label: |md
+      **4. Kustomize Overlay**
+      overlays/prod/
+    |
+    shape: rectangle
+    style.fill: "#f3e5f5"
+
+    change: {
+      label: |md
+        ```yaml
+        # No change
+        # Can't easily patch Helm values
+        ```
+      |
+      style.fill: "#e1bee7"
+    }
+  }
+
+  live: {
+    label: |md
+      **5. Live State**
+      postgresql-0 pod
+    |
+    shape: rectangle
+    style.fill: "#ffcdd2"
+    style.stroke: "#d32f2f"
+
+    change: {
+      label: |md
+        ```
+        maxConnections: 150  ← new
+        memory: 512Mi        ← new
+        STATUS: OOMKilled    ← 💥
+        ```
+      |
+      style.fill: "#ef9a9a"
+    }
+  }
+}
+
+# Flow
+layers.upstream -> layers.values: "defaults" {
+  style.stroke: "#999"
+}
+layers.values -> layers.helmrelease: "consumed by" {
+  style.stroke: "#999"
+}
+layers.helmrelease -> layers.kustomize: "post-render" {
+  style.stroke: "#999"
+}
+layers.kustomize -> layers.live: "applied" {
+  style.stroke: "#999"
+}
+
+# Without cub-scout
+without: {
+  label: Without cub-scout
+  style.fill: "#ffebee"
+
+  steps: |md
+    ```bash
+    # Step 1: Check git log (which commit?)
+    git log --oneline -20
+
+    # Step 2: Find the HelmRelease change
+    git show abc123
+
+    # Step 3: Diff the chart versions
+    helm show values bitnami/postgresql --version 14.0.0 > old.yaml
+    helm show values bitnami/postgresql --version 15.0.0 > new.yaml
+    diff old.yaml new.yaml | grep -A5 -B5 maxConnections
+
+    # Step 4: Check live state
+    kubectl get configmap postgresql-config -o yaml
+
+    # Step 5: Correlate everything manually
+    # Time: 30-60 minutes
+    ```
+  |
+}
+
+# With cub-scout
+with: {
+  label: With cub-scout
+  style.fill: "#e8f5e9"
+  style.stroke: "#4caf50"
+
+  steps: |md
+    ```bash
+    $ cub-scout trace deploy/postgresql -n prod --diff
+
+    CHANGE DETECTED: HelmRelease/postgresql
+    ├── Chart: 14.0.0 → 15.0.0
+    ├── Upstream changes:
+    │   - maxConnections: 100 → 150
+    │   - resources.memory: 256Mi → 512Mi
+    │
+    └── Your values didn't override these.
+        Consider adding to values-prod.yaml:
+          maxConnections: 100
+          resources:
+            requests:
+              memory: 256Mi
+
+    Time: 5 seconds
+    ```
+  |
+}
+
+# The insight
+insight: {
+  label: |md
+    ## The Insight
+
+    **Root cause:** Upstream chart changed defaults you relied on.
+
+    **cub-scout shows:**
+    1. Which layer changed (HelmRelease version bump)
+    2. What cascaded (new chart defaults)
+    3. What you didn't override (maxConnections)
+    4. Suggested fix (add explicit override)
+
+    **Without this visibility:** You're doing git archaeology for an hour.
+  |
+  near: bottom-center
+  shape: text
+  style.font-size: 12
+}
+
+# Diff types
+diffs: {
+  label: Diff Capabilities
+  style.fill: "#e3f2fd"
+
+  types: |md
+    | Diff Type | Command | Shows |
+    |-----------|---------|-------|
+    | **Live vs Git** | `trace --diff` | What's drifted |
+    | **Before vs After** | `trace --history` | What changed when |
+    | **Chart versions** | `trace --chart-diff` | Upstream changes |
+    | **Cross-env** | `diff prod staging` | Environment differences |
+  |
+}

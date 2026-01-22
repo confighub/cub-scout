@@ -1,0 +1,197 @@
+# Orphan Resources for cub-scout Demo
+# These simulate "shadow IT" - resources not managed by GitOps
+#
+# Scenarios represented:
+# 1. Debug deployment left behind after troubleshooting
+# 2. Manual ConfigMap applied during incident
+# 3. Secret created via kubectl (hotfix)
+# 4. Legacy DaemonSet predating GitOps adoption
+# 5. Service for ad-hoc testing
+# 6. PVC manually provisioned
+# 7. NetworkPolicy added for "quick fix"
+
+---
+# Scenario 1: Debug deployment left from troubleshooting session
+# "I needed to debug the network, forgot to clean up"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-nginx
+  namespace: default
+  labels:
+    app: debug-nginx
+    cub-scout-demo: orphan
+    scenario: debug-leftover
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"note": "Created during network debugging 2026-01-15"}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-nginx
+  template:
+    metadata:
+      labels:
+        app: debug-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25-alpine
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "64Mi"
+            cpu: "100m"
+
+---
+# Scenario 2: Manual ConfigMap during incident response
+# "Production was down, needed to change config fast"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: manual-config
+  namespace: default
+  labels:
+    cub-scout-demo: orphan
+    scenario: incident-response
+  annotations:
+    incident: "INC-2026-0142"
+    applied-by: "oncall@example.com"
+data:
+  # These overrides were applied during incident
+  FEATURE_FLAG_NEW_AUTH: "false"
+  RATE_LIMIT_OVERRIDE: "1000"
+  DEBUG_MODE: "true"
+  INCIDENT_NOTE: |
+    Applied 2026-01-10 at 03:42 AM during auth outage.
+    TODO: Move to Git after incident review.
+
+---
+# Scenario 3: Hotfix secret created via kubectl
+# "Needed to rotate credentials immediately"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hotfix-credentials
+  namespace: default
+  labels:
+    cub-scout-demo: orphan
+    scenario: hotfix
+  annotations:
+    rotated-by: "security-team"
+    reason: "Credential leak detected"
+type: Opaque
+stringData:
+  # Demo values - not real credentials
+  API_KEY: "demo-rotated-key-2026"
+  DB_PASSWORD: "demo-new-password"
+
+---
+# Scenario 4: Legacy DaemonSet predating GitOps
+# "This was here before we adopted Flux"
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: legacy-node-monitor
+  namespace: kube-system
+  labels:
+    app: legacy-monitor
+    cub-scout-demo: orphan
+    scenario: pre-gitops
+  annotations:
+    installed: "2024-06-15"
+    note: "Predates GitOps adoption, never migrated"
+spec:
+  selector:
+    matchLabels:
+      app: legacy-monitor
+  template:
+    metadata:
+      labels:
+        app: legacy-monitor
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: monitor
+        image: busybox:1.36
+        command: ["sh", "-c", "while true; do echo 'legacy monitor running'; sleep 300; done"]
+        resources:
+          limits:
+            memory: "32Mi"
+            cpu: "50m"
+
+---
+# Scenario 5: Service for ad-hoc testing
+# "Just testing something real quick"
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-endpoint
+  namespace: default
+  labels:
+    cub-scout-demo: orphan
+    scenario: adhoc-testing
+  annotations:
+    created-by: "dev-team"
+    purpose: "Load testing target"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 80
+    name: http
+  selector:
+    app: debug-nginx
+
+---
+# Scenario 6: PVC manually provisioned
+# "Storage team provisioned this directly"
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: manual-data-pvc
+  namespace: default
+  labels:
+    cub-scout-demo: orphan
+    scenario: manual-storage
+  annotations:
+    provisioned-by: "storage-team"
+    ticket: "STOR-789"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# Scenario 7: NetworkPolicy as "quick fix"
+# "Security audit found issue, needed immediate fix"
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: emergency-deny-external
+  namespace: default
+  labels:
+    cub-scout-demo: orphan
+    scenario: security-hotfix
+  annotations:
+    audit-finding: "SEC-2026-003"
+    applied-by: "security-team"
+    note: "Blocks external traffic until proper fix in Git"
+spec:
+  podSelector:
+    matchLabels:
+      app: debug-nginx
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: default

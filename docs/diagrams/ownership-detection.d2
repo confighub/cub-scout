@@ -1,0 +1,158 @@
+# Ownership Detection - How cub-scout knows who owns what
+# Render with: d2 ownership-detection.d2 ownership-detection.svg
+
+direction: down
+
+title: {
+  label: How cub-scout Detects Ownership
+  near: top-center
+  shape: text
+  style.font-size: 24
+  style.bold: true
+}
+
+# A Kubernetes resource
+resource: {
+  label: Deployment/frontend
+  shape: rectangle
+  style.fill: "#e6e6e6"
+  style.stroke: "#666"
+
+  metadata: {
+    label: metadata
+    shape: rectangle
+    style.fill: "#f5f5f5"
+
+    labels: {
+      label: labels
+      shape: rectangle
+      style.fill: "#fff"
+
+      flux: {
+        label: |md
+          **Flux labels:**
+          ```yaml
+          kustomize.toolkit.fluxcd.io/name: frontend
+          kustomize.toolkit.fluxcd.io/namespace: flux-system
+          ```
+        |
+        style.fill: "#4a90d9"
+        style.font-color: white
+      }
+
+      argo: {
+        label: |md
+          **ArgoCD labels:**
+          ```yaml
+          app.kubernetes.io/instance: frontend
+          argocd.argoproj.io/instance: frontend
+          ```
+        |
+        style.fill: "#ef7b4d"
+        style.font-color: white
+      }
+
+      helm: {
+        label: |md
+          **Helm labels:**
+          ```yaml
+          app.kubernetes.io/managed-by: Helm
+          helm.sh/chart: frontend-1.2.0
+          ```
+        |
+        style.fill: "#0f1689"
+        style.font-color: white
+      }
+
+      confighub: {
+        label: |md
+          **ConfigHub labels:**
+          ```yaml
+          confighub.com/UnitSlug: frontend-prod
+          confighub.com/Space: production
+          ```
+        |
+        style.fill: "#6366f1"
+        style.font-color: white
+      }
+
+      native: {
+        label: |md
+          **Native (no labels):**
+          ```yaml
+          # No GitOps labels
+          # Applied via kubectl
+          ```
+        |
+        style.fill: "#9ca3af"
+        style.font-color: white
+      }
+    }
+  }
+}
+
+# Detection logic
+detection: {
+  label: cub-scout Detection Logic
+  shape: rectangle
+  style.fill: "#fef3c7"
+  style.stroke: "#d97706"
+
+  logic: |md
+    ```go
+    // Priority order:
+    1. Check for Flux labels      → Owner: Flux
+    2. Check for ArgoCD labels    → Owner: ArgoCD
+    3. Check for Helm labels      → Owner: Helm
+    4. Check for ConfigHub labels → Owner: ConfigHub
+    5. No GitOps labels found     → Owner: Native
+    ```
+  |
+}
+
+# Results
+results: {
+  label: What cub-scout Shows
+  style.fill: "#f0fdf4"
+
+  table: |md
+    | NAMESPACE | NAME     | OWNER     | MANAGED-BY        |
+    |-----------|----------|-----------|-------------------|
+    | prod      | frontend | **Flux**  | frontend (flux)   |
+    | prod      | backend  | **ArgoCD**| backend-app       |
+    | prod      | postgres | **Helm**  | postgresql-15.2.0 |
+    | prod      | debug    | **Native**| - (orphan)        |
+  |
+}
+
+# Connections
+resource.metadata.labels -> detection: "cub-scout reads" {
+  style.stroke: "#666"
+}
+detection -> results: "determines" {
+  style.stroke: "#22c55e"
+}
+
+# Why it matters
+why: {
+  label: |md
+    ## Why Ownership Matters
+
+    **Flux-managed:** Change in Git, Flux applies automatically
+    **ArgoCD-managed:** Change in Git, ArgoCD syncs
+    **Helm-managed:** Change via `helm upgrade`
+    **ConfigHub-managed:** Change via ConfigHub UI/CLI
+    **Native (orphan):** ⚠️ No Git source - manual change only
+
+    ---
+
+    **Native resources are risky:**
+    - No audit trail
+    - No rollback
+    - Can be lost on cluster rebuild
+    - May conflict with GitOps resources
+  |
+  near: bottom-center
+  shape: text
+  style.font-size: 12
+}

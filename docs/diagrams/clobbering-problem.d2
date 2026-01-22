@@ -1,0 +1,210 @@
+# The Clobbering Problem - What GitOps Hides From You
+# Render with: d2 clobbering-problem.d2 clobbering-problem.svg
+
+direction: down
+
+title: {
+  label: The Clobbering Problem
+  near: top-center
+  shape: text
+  style.font-size: 24
+  style.bold: true
+}
+
+subtitle: {
+  label: Why your "safe" change broke production
+  near: top-center
+  shape: text
+  style.font-size: 14
+  style.font-color: "#666"
+}
+
+# The layers that can clobber each other
+layers: {
+  label: The Hidden Layers
+  style.fill: "#f5f5f5"
+
+  upstream: {
+    label: |md
+      **Upstream Helm Chart**
+      ```yaml
+      # bitnami/postgresql
+      maxConnections: 100
+      ```
+    |
+    shape: document
+    style.fill: "#e0e0e0"
+  }
+
+  defaults: {
+    label: |md
+      **Chart Default Values**
+      ```yaml
+      # values.yaml
+      maxConnections: 100
+      resources: {}
+      ```
+    |
+    shape: document
+    style.fill: "#e8e8e8"
+  }
+
+  override: {
+    label: |md
+      **Your Values Override**
+      ```yaml
+      # values-prod.yaml
+      maxConnections: 200
+      ```
+    |
+    shape: document
+    style.fill: "#fff3cd"
+    style.stroke: "#ffc107"
+  }
+
+  helmrelease: {
+    label: |md
+      **HelmRelease/Application**
+      ```yaml
+      # Flux HelmRelease
+      values:
+        maxConnections: 200
+      ```
+    |
+    shape: document
+    style.fill: "#cce5ff"
+    style.stroke: "#0066cc"
+  }
+
+  kustomize: {
+    label: |md
+      **Kustomize Overlay**
+      ```yaml
+      # patch.yaml
+      # (can't easily patch Helm values)
+      ```
+    |
+    shape: document
+    style.fill: "#d4edda"
+    style.stroke: "#28a745"
+  }
+
+  live: {
+    label: |md
+      **Live State**
+      ```yaml
+      # What's actually running
+      maxConnections: 500  # Someone changed this!
+      ```
+    |
+    shape: document
+    style.fill: "#f8d7da"
+    style.stroke: "#dc3545"
+  }
+}
+
+# Flow
+layers.upstream -> layers.defaults: "inherits" {
+  style.stroke: "#999"
+}
+layers.defaults -> layers.override: "overrides" {
+  style.stroke: "#999"
+}
+layers.override -> layers.helmrelease: "consumes" {
+  style.stroke: "#999"
+}
+layers.helmrelease -> layers.kustomize: "post-render" {
+  style.stroke: "#999"
+}
+layers.kustomize -> layers.live: "applies" {
+  style.stroke: "#999"
+}
+
+# The clobbering scenarios
+scenarios: {
+  label: Four Ways to Get Clobbered
+  style.fill: "#fff"
+
+  s1: {
+    label: |md
+      **1. Default Clobbering**
+      K8s set a default you didn't know about.
+      Your template overwrites it.
+    |
+    shape: rectangle
+    style.fill: "#ffebee"
+  }
+
+  s2: {
+    label: |md
+      **2. Hardcoded Clobbering**
+      Value works for dev, breaks prod.
+      Change affects ALL environments.
+    |
+    shape: rectangle
+    style.fill: "#ffebee"
+  }
+
+  s3: {
+    label: |md
+      **3. Upstream Clobbering**
+      Chart maintainer changes a default.
+      Your production breaks on upgrade.
+    |
+    shape: rectangle
+    style.fill: "#ffebee"
+  }
+
+  s4: {
+    label: |md
+      **4. Break-Glass Clobbering**
+      Someone fixed prod manually.
+      GitOps reconciles it back. 💥
+    |
+    shape: rectangle
+    style.fill: "#ffcdd2"
+    style.stroke: "#d32f2f"
+  }
+}
+
+# What cub-scout shows
+cubscout: {
+  label: How cub-scout Helps
+  style.fill: "#e8f5e9"
+  style.stroke: "#4caf50"
+
+  help: |md
+    ```
+    $ cub-scout map orphans
+    ⚠️  ConfigMap/postgres-config (Native)
+        Live state differs from Git - may be clobbered on next sync
+
+    $ cub-scout trace deploy/postgres -n prod
+    ✓ HelmRelease/postgresql
+      │ Values: maxConnections=200
+      │
+      └─▶ ⚠️ Live: maxConnections=500
+            Someone changed this directly!
+            Next reconciliation will reset to 200.
+    ```
+  |
+}
+
+# Hyrum's Law callout
+hyrum: {
+  label: |md
+    ## Hyrum's Law
+
+    *"With a sufficient number of users of an API,
+    it does not matter what you promise in the contract:
+    all observable behaviors of your system will be
+    depended on by somebody."*
+
+    **Translation:** The upstream chart maintainer
+    can't see YOUR live state. Their "safe" change
+    can clobber YOUR critical values.
+  |
+  near: bottom-center
+  shape: text
+  style.font-size: 12
+}

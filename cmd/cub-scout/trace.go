@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -23,6 +24,7 @@ var (
 	traceJSON      bool
 	traceApp       string // For direct Argo app tracing
 	traceReverse   bool   // Reverse trace - walk ownerReferences up
+	traceDiff      bool   // Show diff between live and desired state
 )
 
 // ANSI color codes for colorful output
@@ -60,6 +62,9 @@ Examples:
   # Reverse trace - start from any resource (e.g., a Pod) and walk up
   cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse
 
+  # Show diff between live state and desired state from Git
+  cub-scout trace deployment/nginx -n demo --diff
+
   # Output as JSON
   cub-scout trace deployment/nginx -n demo --json
 
@@ -71,6 +76,11 @@ The output shows:
 Reverse trace (--reverse) walks ownerReferences to find:
   - The K8s ownership chain (Pod → ReplicaSet → Deployment)
   - The GitOps owner (Flux, ArgoCD, Helm, or Native)
+
+Diff mode (--diff) shows what would change if GitOps reconciled:
+  - For Flux: runs 'flux diff kustomization' or 'flux diff helmrelease'
+  - For ArgoCD: runs 'argocd app diff'
+  - Useful for debugging "why isn't my change applying?" and upgrade tracing
 `,
 	Args: cobra.RangeArgs(0, 2),
 	RunE: runTrace,
@@ -83,6 +93,7 @@ func init() {
 	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON")
 	traceCmd.Flags().StringVar(&traceApp, "app", "", "Trace Argo CD application by name")
 	traceCmd.Flags().BoolVarP(&traceReverse, "reverse", "r", false, "Reverse trace - walk ownerReferences up to find GitOps source")
+	traceCmd.Flags().BoolVarP(&traceDiff, "diff", "d", false, "Show diff between live state and desired state from Git")
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {
@@ -124,6 +135,11 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	// Handle reverse trace
 	if traceReverse {
 		return runReverseTrace(ctx, kind, name, traceNamespace)
+	}
+
+	// Handle diff mode
+	if traceDiff {
+		return runTraceDiff(ctx, kind, name, traceNamespace)
 	}
 
 	// Create appropriate tracer
@@ -542,5 +558,193 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 	}
 
 	fmt.Printf("\n")
+	return nil
+}
+
+// runTraceDiff shows the diff between live state and desired state from Git
+func runTraceDiff(ctx context.Context, kind, name, namespace string) error {
+	// Print header
+	fmt.Printf("\n")
+	fmt.Printf("%s%sDIFF:%s %s%s/%s in %s%s\n", colorBold, colorCyan, colorReset, colorBold, kind, name, namespace, colorReset)
+	fmt.Printf("%s%s%s\n", colorDim, strings.Repeat("─", 60), colorReset)
+	fmt.Printf("\n")
+
+	// Handle ArgoCD Application directly (used with --app flag)
+	if kind == "Application" {
+		return runArgoDiff(ctx, name, &agent.Ownership{Type: agent.OwnerArgo, Name: name})
+	}
+
+	// Handle Flux Kustomization directly
+	if kind == "Kustomization" {
+		return runFluxDiff(ctx, kind, name, namespace, &agent.Ownership{
+			Type:      agent.OwnerFlux,
+			SubType:   "kustomization",
+			Name:      name,
+			Namespace: namespace,
+		})
+	}
+
+	// Handle Flux HelmRelease directly
+	if kind == "HelmRelease" {
+		return runFluxDiff(ctx, kind, name, namespace, &agent.Ownership{
+			Type:      agent.OwnerFlux,
+			SubType:   "helmrelease",
+			Name:      name,
+			Namespace: namespace,
+		})
+	}
+
+	// For other resources, detect ownership to choose the right diff tool
+	ownership, err := detectResourceOwnership(ctx, kind, name, namespace)
+	if err != nil {
+		// Try to infer from kind
+		ownership = &agent.Ownership{Type: agent.OwnerUnknown}
+	}
+
+	switch ownership.Type {
+	case agent.OwnerFlux:
+		return runFluxDiff(ctx, kind, name, namespace, ownership)
+	case agent.OwnerArgo:
+		return runArgoDiff(ctx, name, ownership)
+	case agent.OwnerHelm:
+		return runHelmDiff(ctx, name, namespace)
+	default:
+		fmt.Printf("%s⚠ Resource is not managed by GitOps (owner: %s)%s\n", colorYellow, ownership.Type, colorReset)
+		fmt.Printf("%s  Cannot show diff for unmanaged resources.%s\n", colorDim, colorReset)
+		fmt.Printf("%s  Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
+		fmt.Printf("\n")
+		return nil
+	}
+}
+
+// runFluxDiff runs flux diff for Kustomizations or HelmReleases
+func runFluxDiff(ctx context.Context, kind, name, namespace string, ownership *agent.Ownership) error {
+	// Check if flux CLI is available
+	if _, err := exec.LookPath("flux"); err != nil {
+		return fmt.Errorf("flux CLI not found - install from https://fluxcd.io/docs/installation/")
+	}
+
+	// Determine the deployer type and name from ownership
+	deployerKind := "kustomization"
+	deployerName := ownership.Name
+	deployerNamespace := ownership.Namespace
+
+	// Check SubType to determine if it's a HelmRelease
+	if ownership.SubType == "helmrelease" {
+		deployerKind = "helmrelease"
+	}
+
+	// Fallback to flux-system if namespace not detected
+	if deployerNamespace == "" {
+		deployerNamespace = "flux-system"
+	}
+
+	// If we don't have a deployer name, try to find it
+	if deployerName == "" {
+		// Try to find the Kustomization or HelmRelease that manages this resource
+		fmt.Printf("%sSearching for GitOps deployer...%s\n\n", colorDim, colorReset)
+		deployerName = name // fallback to resource name
+	}
+
+	fmt.Printf("%sRunning: flux diff %s %s -n %s%s\n\n", colorDim, deployerKind, deployerName, deployerNamespace, colorReset)
+
+	// Run flux diff
+	cmd := exec.CommandContext(ctx, "flux", "diff", deployerKind, deployerName, "-n", deployerNamespace)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		// Exit code 1 means there are differences, which is expected
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exitErr.ExitCode() == 1 {
+				fmt.Printf("\n%s%s⚠ Differences detected!%s\n", colorBold, colorYellow, colorReset)
+				fmt.Printf("%s  The live state differs from what's in Git.%s\n", colorDim, colorReset)
+				fmt.Printf("%s  Next Flux reconciliation will apply these changes.%s\n", colorDim, colorReset)
+				fmt.Printf("\n")
+				return nil
+			}
+			// Exit code 2 often means path issue - flux diff requires local manifests
+			if exitErr.ExitCode() == 2 {
+				fmt.Printf("\n%s%s⚠ flux diff requires local manifests%s\n", colorBold, colorYellow, colorReset)
+				fmt.Printf("%s  To compare local changes against cluster:%s\n", colorDim, colorReset)
+				fmt.Printf("%s  flux diff %s %s -n %s --path ./path/to/manifests%s\n\n", colorCyan, deployerKind, deployerName, deployerNamespace, colorReset)
+				fmt.Printf("%s  Alternative: Use 'flux get %s %s -n %s' to see current status%s\n", colorDim, deployerKind, deployerName, deployerNamespace, colorReset)
+				fmt.Printf("\n")
+				return nil
+			}
+		}
+		return fmt.Errorf("flux diff failed: %w", err)
+	}
+
+	fmt.Printf("\n%s%s✓ No differences - live state matches Git%s\n\n", colorBold, colorGreen, colorReset)
+	return nil
+}
+
+// runArgoDiff runs argocd app diff for ArgoCD Applications
+func runArgoDiff(ctx context.Context, name string, ownership *agent.Ownership) error {
+	// Check if argocd CLI is available
+	if _, err := exec.LookPath("argocd"); err != nil {
+		return fmt.Errorf("argocd CLI not found - install from https://argo-cd.readthedocs.io/en/stable/cli_installation/")
+	}
+
+	appName := ownership.Name
+	if appName == "" {
+		appName = name
+	}
+
+	fmt.Printf("%sRunning: argocd app diff %s%s\n\n", colorDim, appName, colorReset)
+
+	// Run argocd app diff
+	cmd := exec.CommandContext(ctx, "argocd", "app", "diff", appName)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		// Exit code 1 means there are differences
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exitErr.ExitCode() == 1 {
+				fmt.Printf("\n%s%s⚠ Differences detected!%s\n", colorBold, colorYellow, colorReset)
+				fmt.Printf("%s  The live state differs from what's in Git.%s\n", colorDim, colorReset)
+				fmt.Printf("%s  Run 'argocd app sync %s' to apply changes.%s\n", colorDim, appName, colorReset)
+				fmt.Printf("\n")
+				return nil
+			}
+		}
+		return fmt.Errorf("argocd diff failed: %w", err)
+	}
+
+	fmt.Printf("\n%s%s✓ No differences - live state matches Git%s\n\n", colorBold, colorGreen, colorReset)
+	return nil
+}
+
+// runHelmDiff shows diff for Helm-managed resources
+func runHelmDiff(ctx context.Context, name, namespace string) error {
+	// Check if helm-diff plugin is available
+	cmd := exec.CommandContext(ctx, "helm", "plugin", "list")
+	output, err := cmd.Output()
+	if err != nil || !strings.Contains(string(output), "diff") {
+		fmt.Printf("%s⚠ helm-diff plugin not installed%s\n", colorYellow, colorReset)
+		fmt.Printf("%s  Install with: helm plugin install https://github.com/databus23/helm-diff%s\n", colorDim, colorReset)
+		fmt.Printf("\n")
+		fmt.Printf("%sAlternative: Compare live values with chart defaults:%s\n", colorDim, colorReset)
+		fmt.Printf("  helm get values %s -n %s\n", name, namespace)
+		fmt.Printf("  helm show values <chart>\n")
+		fmt.Printf("\n")
+		return nil
+	}
+
+	fmt.Printf("%sRunning: helm diff upgrade %s -n %s%s\n\n", colorDim, name, namespace, colorReset)
+
+	// For helm diff, we need the chart reference which we may not have
+	// This is a limitation - helm diff needs the chart to compare against
+	fmt.Printf("%s⚠ Helm diff requires the original chart reference.%s\n", colorYellow, colorReset)
+	fmt.Printf("%s  To see what values are currently set:%s\n", colorDim, colorReset)
+	fmt.Printf("    helm get values %s -n %s\n", name, namespace)
+	fmt.Printf("%s  To see the manifest:%s\n", colorDim, colorReset)
+	fmt.Printf("    helm get manifest %s -n %s\n", name, namespace)
+	fmt.Printf("\n")
+
 	return nil
 }

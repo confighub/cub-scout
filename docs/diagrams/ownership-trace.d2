@@ -1,0 +1,176 @@
+# Ownership Trace - What cub-scout reveals
+# Render with: d2 ownership-trace.d2 ownership-trace.svg
+
+direction: down
+
+title: {
+  label: "cub-scout trace: See the Full Ownership Chain"
+  near: top-center
+  shape: text
+  style.font-size: 24
+  style.bold: true
+}
+
+# The chain cub-scout reveals
+git: {
+  label: GitRepository/platform
+  icon: https://icons.terrastruct.com/essentials%2F112-file.svg
+  shape: rectangle
+  style.fill: "#f0f0f0"
+  style.stroke: "#666"
+
+  details: |md
+    **URL:** github.com/myorg/platform
+    **Branch:** main
+    **Revision:** abc123
+  |
+}
+
+ks: {
+  label: Kustomization/frontend
+  shape: rectangle
+  style.fill: "#ff9933"
+  style.stroke: "#cc6600"
+
+  details: |md
+    **Path:** ./apps/frontend/prod
+    **Interval:** 5m
+    **Status:** Ready ✓
+  |
+}
+
+deploy: {
+  label: Deployment/frontend
+  shape: rectangle
+  style.fill: "#4a90d9"
+  style.stroke: "#2563eb"
+  style.font-color: white
+
+  details: |md
+    **Replicas:** 3/3
+    **Image:** frontend:v2.1.0
+    **Status:** Ready ✓
+  |
+}
+
+rs: {
+  label: ReplicaSet/frontend-7d4b8c
+  shape: rectangle
+  style.fill: "#6ba3d9"
+  style.stroke: "#2563eb"
+  style.font-color: white
+
+  details: |md
+    **Replicas:** 3
+    **Owner:** Deployment/frontend
+  |
+}
+
+pods: {
+  label: Pods
+  style.fill: "#e6ffe6"
+
+  pod1: {
+    label: frontend-7d4b8c-abc12
+    shape: rectangle
+    style.fill: "#33cc33"
+    style.font-color: white
+
+    status: "✓ Running"
+  }
+
+  pod2: {
+    label: frontend-7d4b8c-def34
+    shape: rectangle
+    style.fill: "#33cc33"
+    style.font-color: white
+
+    status: "✓ Running"
+  }
+
+  pod3: {
+    label: frontend-7d4b8c-xyz99
+    shape: rectangle
+    style.fill: "#33cc33"
+    style.font-color: white
+
+    status: "✓ Running"
+  }
+}
+
+# Connections
+git -> ks: "sources" {
+  style.stroke: "#666"
+  style.stroke-width: 2
+}
+
+ks -> deploy: "manages" {
+  style.stroke: "#ff9933"
+  style.stroke-width: 2
+}
+
+deploy -> rs: "creates" {
+  style.stroke: "#4a90d9"
+  style.stroke-width: 2
+}
+
+rs -> pods.pod1: "creates" {
+  style.stroke: "#33cc33"
+}
+rs -> pods.pod2: "creates" {
+  style.stroke: "#33cc33"
+}
+rs -> pods.pod3: "creates" {
+  style.stroke: "#33cc33"
+}
+
+# What cub-scout shows
+output: {
+  label: |md
+    ## cub-scout trace output
+
+    ```
+    $ cub-scout trace deploy/frontend -n prod
+
+    ✓ GitRepository/platform
+      │ URL: github.com/myorg/platform
+      │ Revision: main@sha1:abc123
+      │
+      └─▶ ✓ Kustomization/frontend
+            │ Path: ./apps/frontend/prod
+            │
+            └─▶ ✓ Deployment/frontend
+                  │ 3/3 replicas ready
+                  │
+                  └─▶ 3 Pods running
+    ```
+  |
+  near: right-center
+  shape: rectangle
+  style.fill: "#1e1e1e"
+  style.font-color: "#d4d4d4"
+  style.stroke: "#333"
+}
+
+# Annotation
+why: {
+  label: |md
+    ## Why This Matters
+
+    **Without cub-scout:**
+    - kubectl get deploy → "It exists"
+    - kubectl describe → "Managed by... something"
+    - Check labels manually
+    - Cross-reference with Flux CRDs
+    - **Time: 10-15 minutes**
+
+    **With cub-scout:**
+    - Full chain in one command
+    - Git source identified
+    - Status at each level
+    - **Time: 5 seconds**
+  |
+  near: bottom-center
+  shape: text
+  style.font-size: 14
+}

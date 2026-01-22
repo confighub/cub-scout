@@ -1,0 +1,210 @@
+# Kustomize Overlays - Multi-Environment Pattern
+# Render with: d2 kustomize-overlays.d2 kustomize-overlays.svg
+
+direction: right
+
+title: {
+  label: Kustomize Base + Overlays Pattern
+  near: top-center
+  shape: text
+  style.font-size: 24
+  style.bold: true
+}
+
+# Base configuration
+base: {
+  label: base/
+  shape: rectangle
+  style.fill: "#e6e6e6"
+  style.stroke: "#999"
+
+  deployment: {
+    label: deployment.yaml
+    shape: document
+    style.fill: "#f5f5f5"
+
+    content: |md
+      ```yaml
+      replicas: 1
+      image: frontend:latest
+      resources:
+        requests:
+          memory: 64Mi
+      ```
+    |
+  }
+
+  service: {
+    label: service.yaml
+    shape: document
+    style.fill: "#f5f5f5"
+  }
+
+  kustomization: {
+    label: kustomization.yaml
+    shape: document
+    style.fill: "#ffcc00"
+  }
+}
+
+# Overlays
+overlays: {
+  label: overlays/
+  style.fill: "#f9f9f9"
+
+  dev: {
+    label: dev/
+    shape: rectangle
+    style.fill: "#cce5ff"
+    style.stroke: "#0066cc"
+
+    patch: |md
+      ```yaml
+      replicas: 1
+      image: frontend:dev
+      ENV: development
+      ```
+    |
+  }
+
+  staging: {
+    label: staging/
+    shape: rectangle
+    style.fill: "#fff3cd"
+    style.stroke: "#cc9900"
+
+    patch: |md
+      ```yaml
+      replicas: 2
+      image: frontend:v2.0.0
+      ENV: staging
+      ```
+    |
+  }
+
+  prod: {
+    label: prod/
+    shape: rectangle
+    style.fill: "#d4edda"
+    style.stroke: "#28a745"
+
+    patch: |md
+      ```yaml
+      replicas: 5
+      image: frontend:v2.0.0
+      resources:
+        requests:
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+      ENV: production
+      ```
+    |
+  }
+}
+
+# Resulting deployments
+result: {
+  label: What Gets Deployed
+  style.fill: "#f0f0f0"
+
+  dev-ns: {
+    label: Namespace: dev
+    shape: rectangle
+    style.fill: "#0066cc"
+    style.font-color: white
+
+    content: "1 replica, dev image"
+  }
+
+  staging-ns: {
+    label: Namespace: staging
+    shape: rectangle
+    style.fill: "#cc9900"
+    style.font-color: white
+
+    content: "2 replicas, v2.0.0"
+  }
+
+  prod-ns: {
+    label: Namespace: prod
+    shape: rectangle
+    style.fill: "#28a745"
+    style.font-color: white
+
+    content: "5 replicas, v2.0.0, more memory"
+  }
+}
+
+# Connections
+base -> overlays.dev: "inherits" {
+  style.stroke: "#0066cc"
+  style.stroke-dash: 3
+}
+base -> overlays.staging: "inherits" {
+  style.stroke: "#cc9900"
+  style.stroke-dash: 3
+}
+base -> overlays.prod: "inherits" {
+  style.stroke: "#28a745"
+  style.stroke-dash: 3
+}
+
+overlays.dev -> result.dev-ns: "applies" {
+  style.stroke: "#0066cc"
+}
+overlays.staging -> result.staging-ns: "applies" {
+  style.stroke: "#cc9900"
+}
+overlays.prod -> result.prod-ns: "applies" {
+  style.stroke: "#28a745"
+}
+
+# Explanation
+explain: {
+  label: |md
+    ## How It Works
+
+    **Base:** Common configuration shared by all environments
+    **Overlays:** Environment-specific patches
+
+    This is how you:
+    - Avoid duplicating YAML
+    - Customize per environment
+    - Promote changes (dev → staging → prod)
+
+    **cub-scout shows you:**
+    - Which overlay is deployed where
+    - What the final merged config looks like
+    - Dependencies between environments
+  |
+  near: bottom-center
+  shape: text
+  style.font-size: 12
+}
+
+# File structure
+structure: {
+  label: |md
+    ## Repo Structure
+    ```
+    apps/frontend/
+    ├── base/
+    │   ├── deployment.yaml
+    │   ├── service.yaml
+    │   └── kustomization.yaml
+    └── overlays/
+        ├── dev/
+        │   └── kustomization.yaml
+        ├── staging/
+        │   └── kustomization.yaml
+        └── prod/
+            ├── kustomization.yaml
+            └── resources-patch.yaml
+    ```
+  |
+  near: top-right
+  shape: rectangle
+  style.fill: "#1e1e1e"
+  style.font-color: "#d4d4d4"
+}

@@ -1,0 +1,193 @@
+# FluxCD Architecture - How GitOps Works
+# Render with: d2 flux-architecture.d2 flux-architecture.svg
+
+direction: down
+
+title: {
+  label: How Flux GitOps Works
+  near: top-center
+  shape: text
+  style.font-size: 24
+  style.bold: true
+}
+
+# Git Repository (Source of Truth)
+git: {
+  label: Git Repository
+  shape: cylinder
+  style.fill: "#f0f0f0"
+
+  repo: {
+    label: "github.com/myorg/platform"
+    shape: document
+
+    apps: {
+      label: apps/
+      frontend: frontend/
+      backend: backend/
+    }
+
+    clusters: {
+      label: clusters/
+      dev: dev/
+      prod: prod/
+    }
+  }
+}
+
+# Flux Controllers (Running in Cluster)
+flux: {
+  label: Flux Controllers
+  style.fill: "#e6f3ff"
+
+  source: {
+    label: Source Controller
+    shape: hexagon
+    style.fill: "#4a90d9"
+    style.font-color: white
+  }
+
+  kustomize: {
+    label: Kustomize Controller
+    shape: hexagon
+    style.fill: "#4a90d9"
+    style.font-color: white
+  }
+
+  helm: {
+    label: Helm Controller
+    shape: hexagon
+    style.fill: "#4a90d9"
+    style.font-color: white
+  }
+}
+
+# Flux CRDs (What You Define)
+crds: {
+  label: Flux Resources (CRDs)
+  style.fill: "#fff3e6"
+
+  gitrepo: {
+    label: GitRepository
+    shape: document
+    style.fill: "#ff9933"
+  }
+
+  ks: {
+    label: Kustomization
+    shape: document
+    style.fill: "#ff9933"
+  }
+
+  hr: {
+    label: HelmRelease
+    shape: document
+    style.fill: "#ff9933"
+  }
+}
+
+# Kubernetes Resources (What Gets Created)
+k8s: {
+  label: Kubernetes Resources
+  style.fill: "#e6ffe6"
+
+  deploy: {
+    label: Deployment
+    shape: rectangle
+    style.fill: "#33cc33"
+    style.font-color: white
+  }
+
+  svc: {
+    label: Service
+    shape: rectangle
+    style.fill: "#33cc33"
+    style.font-color: white
+  }
+
+  cm: {
+    label: ConfigMap
+    shape: rectangle
+    style.fill: "#33cc33"
+    style.font-color: white
+  }
+
+  pods: {
+    label: Pods
+    shape: rectangle
+    style.fill: "#228b22"
+    style.font-color: white
+  }
+}
+
+# Connections - The Flow
+git -> flux.source: "watches" {
+  style.stroke: "#666"
+  style.stroke-dash: 3
+}
+
+flux.source -> crds.gitrepo: "creates artifact" {
+  style.stroke: "#4a90d9"
+}
+
+crds.gitrepo -> flux.kustomize: "triggers" {
+  style.stroke: "#666"
+  style.stroke-dash: 3
+}
+
+crds.ks -> flux.kustomize: "reconciles" {
+  style.stroke: "#4a90d9"
+}
+
+crds.hr -> flux.helm: "reconciles" {
+  style.stroke: "#4a90d9"
+}
+
+flux.kustomize -> k8s.deploy: "applies" {
+  style.stroke: "#33cc33"
+}
+
+flux.kustomize -> k8s.svc: "applies" {
+  style.stroke: "#33cc33"
+}
+
+flux.kustomize -> k8s.cm: "applies" {
+  style.stroke: "#33cc33"
+}
+
+flux.helm -> k8s.deploy: "applies" {
+  style.stroke: "#33cc33"
+}
+
+k8s.deploy -> k8s.pods: "creates" {
+  style.stroke: "#228b22"
+}
+
+# Legend
+legend: {
+  label: Legend
+  near: bottom-right
+
+  watch: "--- watches/triggers"
+  reconcile: "─── reconciles/applies"
+}
+
+# Annotation
+note: {
+  label: |md
+    ## The GitOps Flow
+
+    1. **You push to Git** - Change code or config
+    2. **Source Controller watches** - Detects changes
+    3. **Kustomization reconciles** - Applies manifests
+    4. **Kubernetes creates** - Pods start running
+
+    **cub-scout shows you this entire chain!**
+    ```
+    cub-scout trace deploy/frontend -n prod
+    ```
+  |
+  near: bottom-left
+  shape: text
+  style.font-size: 12
+}
