@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestKindToGVR(t *testing.T) {
@@ -35,6 +36,10 @@ func TestKindToGVR(t *testing.T) {
 		{name: "helmrelease", kind: "HelmRelease", wantErr: false, wantRes: "helmreleases"},
 		{name: "hr alias", kind: "hr", wantErr: false, wantRes: "helmreleases"},
 		{name: "gitrepository", kind: "GitRepository", wantErr: false, wantRes: "gitrepositories"},
+		{name: "ocirepository", kind: "OCIRepository", wantErr: false, wantRes: "ocirepositories"},
+		{name: "ocirepository lowercase", kind: "ocirepository", wantErr: false, wantRes: "ocirepositories"},
+		{name: "helmrepository", kind: "HelmRepository", wantErr: false, wantRes: "helmrepositories"},
+		{name: "bucket", kind: "Bucket", wantErr: false, wantRes: "buckets"},
 		{name: "application", kind: "Application", wantErr: false, wantRes: "applications"},
 		{name: "app alias", kind: "app", wantErr: false, wantRes: "applications"},
 		{name: "unknown", kind: "UnknownKind", wantErr: true, wantRes: ""},
@@ -72,6 +77,9 @@ func TestKindToResource(t *testing.T) {
 		{kind: "Kustomization", wantRes: "kustomizations"},
 		{kind: "HelmRelease", wantRes: "helmreleases"},
 		{kind: "GitRepository", wantRes: "gitrepositories"},
+		{kind: "OCIRepository", wantRes: "ocirepositories"},
+		{kind: "HelmRepository", wantRes: "helmrepositories"},
+		{kind: "Bucket", wantRes: "buckets"},
 		{kind: "Application", wantRes: "applications"},
 		{kind: "Unknown", wantRes: ""},
 	}
@@ -113,4 +121,75 @@ func TestReverseTraceResult_Structure(t *testing.T) {
 	assert.Equal(t, 3, len(result.K8sChain))
 	assert.Equal(t, "flux", result.Owner)
 	assert.Equal(t, "Deployment", result.TopResource.Kind)
+}
+
+func TestExtractOrphanMetadata(t *testing.T) {
+	// Create an unstructured resource with last-applied-configuration
+	resource := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":              "orphan-app",
+				"namespace":         "default",
+				"creationTimestamp": "2026-01-15T10:30:00Z",
+				"labels": map[string]interface{}{
+					"app":     "orphan-app",
+					"version": "1.0.0",
+				},
+				"annotations": map[string]interface{}{
+					"kubectl.kubernetes.io/last-applied-configuration": `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"orphan-app"}}`,
+					"description": "Test deployment",
+				},
+			},
+		},
+	}
+
+	meta := extractOrphanMetadata(resource)
+
+	// Verify labels
+	assert.NotNil(t, meta.Labels)
+	assert.Equal(t, "orphan-app", meta.Labels["app"])
+	assert.Equal(t, "1.0.0", meta.Labels["version"])
+
+	// Verify annotations (excluding last-applied-config)
+	assert.NotNil(t, meta.Annotations)
+	assert.Equal(t, "Test deployment", meta.Annotations["description"])
+	assert.Empty(t, meta.Annotations["kubectl.kubernetes.io/last-applied-configuration"])
+
+	// Verify last-applied-config is captured separately
+	assert.Contains(t, meta.LastAppliedConfig, "apiVersion")
+	assert.Contains(t, meta.LastAppliedConfig, "orphan-app")
+
+	// Verify creation timestamp
+	assert.NotNil(t, meta.CreatedAt)
+}
+
+func TestExtractOrphanMetadata_NoLastApplied(t *testing.T) {
+	// Create a resource without last-applied-configuration (kubectl create)
+	resource := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "ConfigMap",
+			"metadata": map[string]interface{}{
+				"name":              "debug-config",
+				"namespace":         "default",
+				"creationTimestamp": "2026-01-20T14:00:00Z",
+				"labels": map[string]interface{}{
+					"app": "debug",
+				},
+			},
+		},
+	}
+
+	meta := extractOrphanMetadata(resource)
+
+	// Verify no last-applied-config
+	assert.Empty(t, meta.LastAppliedConfig)
+
+	// Verify labels still captured
+	assert.Equal(t, "debug", meta.Labels["app"])
+
+	// Verify creation timestamp
+	assert.NotNil(t, meta.CreatedAt)
 }

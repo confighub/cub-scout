@@ -15,6 +15,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/confighub/cub-scout/pkg/agent"
 )
@@ -203,6 +204,23 @@ func runTrace(cmd *cobra.Command, args []string) error {
 			}
 		}
 
+	case agent.OwnerHelm:
+		// Get k8s client for Helm tracing (reads release secrets)
+		cfg, cfgErr := buildConfig()
+		if cfgErr != nil {
+			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
+		}
+		clientset, clientErr := kubernetes.NewForConfig(cfg)
+		if clientErr != nil {
+			return fmt.Errorf("failed to create kubernetes client: %w", clientErr)
+		}
+		tracer := agent.NewHelmTracer(clientset)
+		if ownership.Name != "" {
+			result, err = tracer.TraceRelease(ctx, ownership.Name, traceNamespace)
+		} else {
+			result, err = tracer.Trace(ctx, kind, name, traceNamespace)
+		}
+
 	default:
 		// Try Flux first, then Argo, then report not managed
 		fluxTracer := agent.NewFluxTracer()
@@ -325,6 +343,12 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 		return schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}
 	case "GitRepository":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}
+	case "OCIRepository":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "ocirepositories"}
+	case "HelmRepository":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}
+	case "Bucket":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "buckets"}
 	case "Application":
 		return schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
 	default:
@@ -590,13 +614,64 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 	}
 	fmt.Printf("\n")
 
-	// If native, show warning
+	// If native, show warning and orphan metadata
 	if result.Owner == "native" {
 		fmt.Printf("\n")
 		fmt.Printf("%s⚠ This resource is NOT managed by GitOps%s\n", colorYellow, colorReset)
 		fmt.Printf("%s  • It will be lost if the cluster is rebuilt%s\n", colorDim, colorReset)
 		fmt.Printf("%s  • No audit trail in Git%s\n", colorDim, colorReset)
 		fmt.Printf("%s  • Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
+
+		// Show orphan metadata if available
+		if result.OrphanMeta != nil {
+			fmt.Printf("\n")
+			fmt.Printf("%s%sOrphan Metadata:%s\n", colorBold, colorWhite, colorReset)
+
+			if result.OrphanMeta.CreatedAt != nil {
+				fmt.Printf("  %sCreated:%s %s\n", colorDim, colorReset, result.OrphanMeta.CreatedAt.Format("2006-01-02 15:04:05 MST"))
+			}
+
+			// Show relevant labels
+			if len(result.OrphanMeta.Labels) > 0 {
+				fmt.Printf("  %sLabels:%s\n", colorDim, colorReset)
+				for k, v := range result.OrphanMeta.Labels {
+					// Skip internal labels
+					if strings.HasPrefix(k, "kubernetes.io/") ||
+						strings.HasPrefix(k, "k8s.io/") {
+						continue
+					}
+					fmt.Printf("    %s=%s\n", k, v)
+				}
+			}
+
+			// Show last-applied-configuration hint
+			if result.OrphanMeta.LastAppliedConfig != "" {
+				fmt.Printf("\n")
+				fmt.Printf("%s%slast-applied-configuration found%s\n", colorBold, colorGreen, colorReset)
+				fmt.Printf("%s  This resource was created via 'kubectl apply'.%s\n", colorDim, colorReset)
+				fmt.Printf("%s  The original manifest is available in the annotation.%s\n", colorDim, colorReset)
+
+				// Show a truncated preview
+				config := result.OrphanMeta.LastAppliedConfig
+				if len(config) > 200 {
+					fmt.Printf("\n  %sManifest preview (first 200 chars):%s\n", colorDim, colorReset)
+					fmt.Printf("  %s%s...%s\n", colorDim, config[:200], colorReset)
+				}
+
+				fmt.Printf("\n  %s💡 To see full manifest:%s\n", colorDim, colorReset)
+				if result.TopResource != nil {
+					fmt.Printf("  kubectl get %s %s -n %s -o jsonpath='{.metadata.annotations.kubectl\\.kubernetes\\.io/last-applied-configuration}' | jq .\n",
+						strings.ToLower(result.TopResource.Kind),
+						result.TopResource.Name,
+						result.TopResource.Namespace)
+				}
+			} else {
+				fmt.Printf("\n")
+				fmt.Printf("%s%sNo last-applied-configuration%s\n", colorBold, colorYellow, colorReset)
+				fmt.Printf("%s  This resource was likely created via 'kubectl create' (not 'kubectl apply').%s\n", colorDim, colorReset)
+				fmt.Printf("%s  The original manifest is not recoverable from the cluster.%s\n", colorDim, colorReset)
+			}
+		}
 	}
 
 	// If GitOps managed, suggest full trace

@@ -45,11 +45,29 @@ type ReverseTraceResult struct {
 	// TopResource is the top of the K8s ownership chain
 	TopResource *ResourceRef `json:"topResource,omitempty"`
 
+	// OrphanMeta contains metadata for orphan/native resources
+	OrphanMeta *OrphanMetadata `json:"orphanMeta,omitempty"`
+
 	// Error contains any error encountered
 	Error string `json:"error,omitempty"`
 
 	// TracedAt is when the trace was performed
 	TracedAt time.Time `json:"tracedAt"`
+}
+
+// OrphanMetadata contains information about orphan (native/unmanaged) resources
+type OrphanMetadata struct {
+	// LastAppliedConfig is the kubectl.kubernetes.io/last-applied-configuration annotation
+	LastAppliedConfig string `json:"lastAppliedConfig,omitempty"`
+
+	// CreatedAt is when the resource was created
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+
+	// Labels are the resource labels
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Annotations are the resource annotations (excluding last-applied-config)
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // Trace performs a reverse trace starting from any resource
@@ -145,9 +163,49 @@ func (r *ReverseTracer) Trace(ctx context.Context, kind, name, namespace string)
 		result.Owner = "terraform"
 	default:
 		result.Owner = "native"
+		// Populate orphan metadata for native resources
+		result.OrphanMeta = extractOrphanMetadata(topResource)
 	}
 
 	return result, nil
+}
+
+// extractOrphanMetadata extracts useful metadata for orphan/native resources
+func extractOrphanMetadata(resource *unstructured.Unstructured) *OrphanMetadata {
+	meta := &OrphanMetadata{}
+
+	// Get creation timestamp
+	creationTime := resource.GetCreationTimestamp()
+	if !creationTime.IsZero() {
+		t := creationTime.Time
+		meta.CreatedAt = &t
+	}
+
+	// Get labels (copy to avoid mutation)
+	if labels := resource.GetLabels(); len(labels) > 0 {
+		meta.Labels = make(map[string]string, len(labels))
+		for k, v := range labels {
+			meta.Labels[k] = v
+		}
+	}
+
+	// Get annotations and extract last-applied-configuration
+	annotations := resource.GetAnnotations()
+	if annotations != nil {
+		if lastApplied, ok := annotations["kubectl.kubernetes.io/last-applied-configuration"]; ok {
+			meta.LastAppliedConfig = lastApplied
+		}
+
+		// Copy other annotations (excluding last-applied-config which can be large)
+		meta.Annotations = make(map[string]string)
+		for k, v := range annotations {
+			if k != "kubectl.kubernetes.io/last-applied-configuration" {
+				meta.Annotations[k] = v
+			}
+		}
+	}
+
+	return meta
 }
 
 // resourceToChainLink converts an unstructured resource to a ChainLink
@@ -247,6 +305,12 @@ func KindToGVR(kind string) (schema.GroupVersionResource, error) {
 		return schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}, nil
 	case "GitRepository", "gitrepository", "gitrepositories":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}, nil
+	case "OCIRepository", "ocirepository", "ocirepositories":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "ocirepositories"}, nil
+	case "HelmRepository", "helmrepository", "helmrepositories":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}, nil
+	case "Bucket", "bucket", "buckets":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "buckets"}, nil
 	// Argo CD resources
 	case "Application", "application", "applications", "app":
 		return schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}, nil
@@ -315,6 +379,12 @@ func KindToResource(kind string) string {
 		return "helmreleases"
 	case "GitRepository":
 		return "gitrepositories"
+	case "OCIRepository":
+		return "ocirepositories"
+	case "HelmRepository":
+		return "helmrepositories"
+	case "Bucket":
+		return "buckets"
 	case "Application":
 		return "applications"
 	case "ApplicationSet":
