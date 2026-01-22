@@ -13,6 +13,7 @@ New to cub-scout? Start here:
 | **1. Install** | [getting-started/install.md](getting-started/install.md) |
 | **2. First Map** | [getting-started/first-map.md](getting-started/first-map.md) |
 | **3. Understand GitOps** | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
+| **4. Scale Demo** | [getting-started/scale-demo.md](getting-started/scale-demo.md) |
 
 ---
 
@@ -30,7 +31,9 @@ Task-based guides:
 | Scan for CCVEs | [howto/scan-for-ccves.md](howto/scan-for-ccves.md) |
 | Ownership detection | [howto/ownership-detection.md](howto/ownership-detection.md) |
 | Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
-| Scan for risks | [SCAN-GUIDE.md](SCAN-GUIDE.md) |
+| Scan for risks | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
+| Advanced queries | [howto/advanced-queries.md](howto/advanced-queries.md) |
+| Extending cub-scout | [howto/extending.md](howto/extending.md) |
 
 ---
 
@@ -48,9 +51,10 @@ Complete reference documentation:
 | GitOps repo patterns | [reference/gitops-repo-structures.md](reference/gitops-repo-structures.md) |
 | Hub/AppSpace examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
 | Map PRD | [reference/map-prd.md](reference/map-prd.md) |
-| Command matrix | [COMMAND-MATRIX.md](COMMAND-MATRIX.md) |
+| Command matrix | [reference/command-matrix.md](reference/command-matrix.md) |
+| Glossary | [reference/glossary.md](reference/glossary.md) |
+| Testing guide | [reference/testing.md](reference/testing.md) |
 | CLI guide | [../CLI-GUIDE.md](../CLI-GUIDE.md) |
-| Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 
 ---
 
@@ -62,8 +66,8 @@ Understand the "why":
 |---------|-------------|
 | GitOps Overview | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
 | The Clobbering Problem | [concepts/clobbering-problem.md](concepts/clobbering-problem.md) |
-| Ownership Detection | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| Glossary | [GLOSSARY-OF-CONCEPTS.md](GLOSSARY-OF-CONCEPTS.md) |
+| Architecture | [concepts/architecture.md](concepts/architecture.md) |
+| Alternatives | [concepts/alternatives.md](concepts/alternatives.md) |
 
 ---
 
