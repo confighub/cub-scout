@@ -107,6 +107,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `-n, --namespace` | Namespace of the resource |
 | `--app` | Trace ArgoCD app by name |
 | `-r, --reverse` | Reverse trace (walk ownerRefs up) |
+| `--diff` | Show what would change on next reconciliation |
 | `--json` | Output as JSON |
 
 ---
