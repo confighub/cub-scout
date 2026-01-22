@@ -75,13 +75,15 @@ When things go wrong:
 
 ---
 
-### Trace Any Resource
+### Trace Any Resource to Git
+
+**One command for Flux, ArgoCD, or Helm.** You don't need to know which tool manages a resource.
 
 ```bash
 cub-scout trace deploy/payment-api -n prod
 ```
 
-See the full chain: Git repo → Kustomization → Deployment → Pod
+Auto-detects the GitOps tool and shows the full chain: Git repo → Deployer → Workload → Pod
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐

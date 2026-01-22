@@ -44,11 +44,19 @@ const (
 
 var traceCmd = &cobra.Command{
 	Use:   "trace <kind/name> or <kind> <name>",
-	Short: "Show the full GitOps ownership chain for a resource",
-	Long: `Trace the full ownership chain from Git source to deployed resource.
+	Short: "Trace any resource to its Git source (Flux, ArgoCD, or Helm)",
+	Long: `Trace any resource back to its Git source - works with Flux, ArgoCD, or Helm.
 
-This command uses 'flux trace' or 'argocd app get' (depending on the resource's
-owner) to show the complete delivery pipeline.
+You don't need to know which tool manages a resource. Just run trace and
+cub-scout auto-detects the owner and shows the full delivery chain.
+
+Under the hood:
+  - Flux resources: uses 'flux trace'
+  - ArgoCD resources: uses 'argocd app get'
+  - Helm resources: reads release metadata
+
+The value: In mixed environments with multiple GitOps tools, one command
+traces any resource without switching between flux/argocd/helm CLIs.
 
 Examples:
   # Trace a deployment

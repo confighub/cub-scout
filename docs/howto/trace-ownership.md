@@ -1,6 +1,16 @@
 # Trace Ownership Chains
 
-See exactly where a resource came from — from Git to running pod.
+Trace any resource to its Git source — **one command for Flux, ArgoCD, or Helm**.
+
+You don't need to know which tool manages a resource. Just run trace and cub-scout auto-detects the owner.
+
+---
+
+## Why This Matters
+
+In mixed environments with multiple GitOps tools:
+- **Without cub-scout:** Check labels → figure out owner → run `flux trace` or `argocd app get` or `helm status`
+- **With cub-scout:** `cub-scout trace deploy/nginx -n prod` — done
 
 ---
 
