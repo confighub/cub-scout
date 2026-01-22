@@ -29,11 +29,7 @@ See also:
   cub-scout map workloads   # Same functionality
   cub-scout tree ownership  # Similar, different format
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// Forward to map workloads
-		mapCmd.SetArgs([]string{"workloads"})
-		return mapCmd.Execute()
-	},
+	RunE: runMapWorkloads, // Direct call to avoid cobra re-execution
 }
 
 var healthCmd = &cobra.Command{
@@ -56,11 +52,7 @@ See also:
   cub-scout map issues    # Same functionality
   cub-scout scan          # Deeper configuration risk analysis
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// Forward to map issues
-		mapCmd.SetArgs([]string{"issues"})
-		return mapCmd.Execute()
-	},
+	RunE: runMapProblems, // Direct call to avoid cobra re-execution
 }
 
 func init() {
