@@ -1,8 +1,8 @@
-# cub-scout
+# cub-scout explores, maps and communicates facts about GitOps clusters
 
 **Demystify GitOps. See what's really happening in your cluster.**
 
-GitOps is powerful but opaque. Where did this Deployment come from? Why isn't my change applying? Is this managed by Git or was it kubectl'd? cub-scout makes the invisible visible.
+GitOps is powerful but can be a opaque at times. Where did this Deployment come from? Why isn't my change applying? Is this managed by Git or was it kubectl'd? cub-scout makes the invisible visible.
 
 ```bash
 brew install confighub/tap/cub-scout
@@ -17,7 +17,7 @@ Press `w` for workloads. Press `T` to trace. Press `4` for deep-dive.
 
 ## The Problem
 
-GitOps tools are powerful but hide complexity behind layers of abstraction.
+GitOps tools are powerful but can hide complexity behind layers of abstraction.
 
 **What's obscure:**
 - A Deployment exists, but where did it come from? (Kustomization? HelmRelease? kubectl?)
