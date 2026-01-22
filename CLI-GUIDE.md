@@ -4,11 +4,14 @@ Complete reference for all commands, options, TUI keys, and expected outputs.
 
 ---
 
-## Top-Level Commands (14)
+## Top-Level Commands (17)
 
 | Command | Description | Standalone | Connected |
 |---------|-------------|:----------:|:---------:|
 | `map` | Interactive TUI explorer | Yes | Yes |
+| `tree` | Hierarchical views (runtime, git, config) | Yes | Yes |
+| `discover` | Find workloads (alias for map workloads) | Yes | - |
+| `health` | Check for issues (alias for map issues) | Yes | - |
 | `trace` | Show GitOps ownership chain | Yes | - |
 | `scan` | Scan and score issues | Yes | - |
 | `snapshot` | Dump cluster state as JSON | Yes | - |
@@ -63,6 +66,82 @@ Press ? for help, q to quit
 | `--hub` | Launch ConfigHub hierarchy TUI (requires `cub auth`) |
 | `--json` | Output in JSON format |
 | `--verbose` | Show additional details |
+
+---
+
+## `tree` — Hierarchical Views
+
+**What it does:** Shows different hierarchical perspectives on your cluster, Git sources, and ConfigHub units.
+
+```bash
+./cub-scout tree              # Runtime: Deployment → ReplicaSet → Pod
+./cub-scout tree ownership    # Resources grouped by GitOps owner
+./cub-scout tree git          # Git source structure
+./cub-scout tree patterns     # Detected GitOps patterns (D2, Arnie, Banko, Fluxy)
+./cub-scout tree config       # ConfigHub Unit relationships (wraps cub unit tree)
+./cub-scout tree suggest      # Suggested Hub/AppSpace organization
+```
+
+**Expected output (runtime):**
+```
+Runtime Hierarchy (51 Deployments)
+────────────────────────────────────────────────────────────
+├── boutique/cart [Flux] 2/2 ready
+│   └── ReplicaSet cart-86f68db776 [2/2]
+│       ├── Pod cart-86f68db776-hzqgf ✓ Running
+│       └── Pod cart-86f68db776-mp8kz ✓ Running
+├── cert-manager/cert-manager [ArgoCD] 2/2 ready
+│   └── ReplicaSet cert-manager-8bdb658c7 [2/2]
+│       ├── Pod cert-manager-8bdb658c7-cx7cn ✓ Running
+│       └── Pod cert-manager-8bdb658c7-qp55s ✓ Running
+```
+
+**Views:**
+| View | Command | Description |
+|------|---------|-------------|
+| runtime | `tree` or `tree runtime` | Deployment → ReplicaSet → Pod trees |
+| ownership | `tree ownership` | Resources grouped by GitOps owner |
+| git | `tree git` | Git repository structure |
+| patterns | `tree patterns` | Detected GitOps patterns |
+| config | `tree config --space X` | ConfigHub Unit relationships |
+| suggest | `tree suggest` | Recommended Hub/AppSpace structure |
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-n, --namespace` | Filter by namespace |
+| `-A, --all` | Include system namespaces |
+| `--space` | ConfigHub space for config view |
+| `--edge` | Edge type for config view: clone or link |
+| `--json` | JSON output |
+
+**Relationship with `cub unit tree`:**
+- `cub-scout tree`: What's deployed in THIS cluster (cluster perspective)
+- `cub unit tree`: How Units relate ACROSS your fleet (ConfigHub perspective)
+
+---
+
+## `discover` — Find Workloads (Scout Alias)
+
+**What it does:** Discovers all workloads in your cluster and who owns them. This is a scout-style alias for `map workloads`.
+
+```bash
+./cub-scout discover
+```
+
+**Expected output:** Same as `map workloads` — workloads grouped by owner (Flux, ArgoCD, Helm, ConfigHub, Native).
+
+---
+
+## `health` — Check Cluster Health (Scout Alias)
+
+**What it does:** Checks your cluster for stuck states, issues, and problems. This is a scout-style alias for `map issues`.
+
+```bash
+./cub-scout health
+```
+
+**Expected output:** Same as `map issues` — resources that are not reconciling, stuck, or failed.
 
 ---
 

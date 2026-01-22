@@ -100,11 +100,23 @@ Native (7)
 | Command | What You Get |
 |---------|--------------|
 | `cub-scout map` | Interactive TUI - press `?` for help |
-| `cub-scout map workloads` | All deployments grouped by owner |
-| `cub-scout map deep-dive` | Deployment → ReplicaSet → Pod trees |
+| `cub-scout discover` | Find workloads by owner (scout-style alias) |
+| `cub-scout tree` | Hierarchical views (runtime, git, config) |
+| `cub-scout tree suggest` | Suggested Hub/AppSpace organization |
 | `cub-scout trace deploy/x -n y` | Full ownership chain to Git source |
-| `cub-scout map orphans` | Resources not managed by GitOps |
+| `cub-scout health` | Check for issues (scout-style alias) |
 | `cub-scout scan` | Configuration risk patterns (46 patterns) |
+
+### Tree Views
+
+| View | Shows |
+|------|-------|
+| `cub-scout tree runtime` | Deployment → ReplicaSet → Pod hierarchies |
+| `cub-scout tree ownership` | Resources grouped by GitOps owner |
+| `cub-scout tree git` | Git source structure (repos, paths) |
+| `cub-scout tree patterns` | Detected GitOps patterns (D2, Arnie, etc.) |
+| `cub-scout tree config --space X` | ConfigHub Unit relationships (wraps `cub unit tree`) |
+| `cub-scout tree suggest` | Recommended Hub/AppSpace structure |
 
 ---
 
@@ -188,6 +200,21 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 5. Display results
 
 **Read-only by default.** Never modifies your cluster unless you explicitly use import commands.
+
+---
+
+## Design Principles
+
+**Wrap, don't reinvent.** cub-scout builds on existing tools rather than replacing them:
+
+| Principle | What It Means |
+|-----------|---------------|
+| **Use kubectl** | All cluster access goes through your existing kubeconfig |
+| **Use cub CLI** | Fleet queries use ConfigHub's `cub` CLI, not a parallel API |
+| **Parse, don't guess** | Ownership comes from actual labels, not heuristics |
+| **Complement GitOps** | Works alongside Flux, Argo, Helm — doesn't compete |
+
+**Why this matters:** Your existing tools, RBAC, and audit trails all still work. cub-scout is a lens, not a replacement.
 
 ---
 

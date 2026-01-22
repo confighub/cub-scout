@@ -1,14 +1,98 @@
 # CLI Commands Reference
 
-Complete reference for all `cub-scout map` subcommands.
+Complete reference for all `cub-scout` commands.
 
-## Synopsis
+## Top-Level Commands
+
+| Command | Description |
+|---------|-------------|
+| `map` | Interactive TUI explorer |
+| `tree` | Hierarchical views (runtime, git, config) |
+| `discover` | Find workloads (alias for map workloads) |
+| `health` | Check for issues (alias for map issues) |
+| `trace` | Show GitOps ownership chain |
+| `scan` | Scan for CCVEs |
+
+---
+
+## `tree` Command
+
+Show hierarchical views of cluster resources, Git repos, or ConfigHub units.
+
+```bash
+cub-scout tree [type] [flags]
+```
+
+**Views:**
+| Type | Description |
+|------|-------------|
+| `runtime` | Deployment → ReplicaSet → Pod trees (default) |
+| `ownership` | Resources grouped by GitOps owner |
+| `git` | Git repository structure |
+| `patterns` | Detected GitOps patterns (D2, Arnie, Banko, Fluxy) |
+| `config` | ConfigHub Unit relationships (wraps `cub unit tree`) |
+| `suggest` | Suggested Hub/AppSpace organization |
+
+**Flags:**
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--namespace` | `-n` | Filter by namespace |
+| `--all` | `-A` | Include system namespaces |
+| `--space` | | ConfigHub space for config view |
+| `--edge` | | Edge type: clone or link (default: clone) |
+| `--json` | | JSON output |
+
+**Examples:**
+```bash
+# Runtime hierarchy
+cub-scout tree
+cub-scout tree runtime
+
+# Resources by owner
+cub-scout tree ownership
+
+# Git sources
+cub-scout tree git
+
+# ConfigHub relationships
+cub-scout tree config --space my-space
+cub-scout tree config --space "*" --edge link
+
+# Suggested organization
+cub-scout tree suggest
+```
+
+---
+
+## `discover` Command (Scout Alias)
+
+Find workloads in your cluster. Alias for `map workloads`.
+
+```bash
+cub-scout discover
+```
+
+---
+
+## `health` Command (Scout Alias)
+
+Check cluster health and issues. Alias for `map issues`.
+
+```bash
+cub-scout health
+```
+
+---
+
+## `map` Subcommands
+
+### Synopsis
 
 ```bash
 cub-scout map [subcommand] [flags]
 ```
 
-## Subcommands
+### Subcommands
 
 ### map (no subcommand)
 

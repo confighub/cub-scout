@@ -102,6 +102,8 @@ Press `M` in the TUI to see all hierarchies at once:
 | [scan-for-ccves.md](scan-for-ccves.md) | Find configuration issues (Level 3-4) |
 | [query-resources.md](query-resources.md) | Filter across any level |
 | [import-to-confighub.md](import-to-confighub.md) | Bring Live into WET (ConfigHub) |
+| [tree-hierarchies.md](../../howto/tree-hierarchies.md) | View different hierarchy perspectives |
+| [fleet-queries.md](../../howto/fleet-queries.md) | Multi-cluster queries with ConfigHub |
 
 ## Hierarchy Examples
 

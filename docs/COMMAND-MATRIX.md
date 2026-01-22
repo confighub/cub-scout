@@ -14,6 +14,9 @@ Complete reference of all commands, options, TUI keys, and availability.
 | Command | Description | Standalone | Connected | Full Product |
 |---------|-------------|:----------:|:---------:|:------------:|
 | `map` | Interactive TUI explorer | Yes | Yes | Yes |
+| `tree` | Hierarchical views (runtime, git, config) | Yes | Yes | Yes |
+| `discover` | Find workloads (alias for map workloads) | Yes | - | - |
+| `health` | Check for issues (alias for map issues) | Yes | - | - |
 | `trace` | Show GitOps ownership chain | Yes | - | - |
 | `scan` | Scan for CCVEs | Yes | - | Yes |
 | `snapshot` | Dump cluster state as JSON | Yes | - | - |
@@ -69,6 +72,31 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--since` | Resources changed since | `map list` |
 | `--count` | Output count only | `map list` |
 | `--names-only` | Output names only | `map list` |
+
+---
+
+## `tree` Subcommands
+
+| Command | Description | Standalone | Connected |
+|---------|-------------|:----------:|:---------:|
+| `tree` or `tree runtime` | Deployment → ReplicaSet → Pod trees | Yes | - |
+| `tree ownership` | Resources grouped by GitOps owner | Yes | - |
+| `tree git` | Git repository structure | Yes | - |
+| `tree patterns` | Detected GitOps patterns (D2, Arnie, etc.) | Yes | - |
+| `tree config` | ConfigHub Unit relationships | - | Yes |
+| `tree suggest` | Suggested Hub/AppSpace organization | Yes | - |
+
+---
+
+## `tree` Options
+
+| Option | Description |
+|--------|-------------|
+| `-n, --namespace` | Filter by namespace |
+| `-A, --all` | Include system namespaces |
+| `--space` | ConfigHub space for config view |
+| `--edge` | Edge type: clone (inheritance) or link (dependencies) |
+| `--json` | Output as JSON |
 
 ---
 
