@@ -9,6 +9,8 @@ brew install confighub/tap/cub-scout
 cub-scout map
 ```
 
+![cub-scout map TUI](docs/images/map-dashboard.png)
+
 Press `w` for workloads. Press `T` to trace. Press `4` for deep-dive.
 
 > **🧪 Vibe Coded:** This whole project has been vibe coded. One motive: it is an experiment to learn how AI and ConfigHub interact with GitOps clusters. We want you to try this too, and tell us what you learn.
