@@ -25,6 +25,7 @@ var (
 	traceApp       string // For direct Argo app tracing
 	traceReverse   bool   // Reverse trace - walk ownerReferences up
 	traceDiff      bool   // Show diff between live and desired state
+	traceExplain   bool   // Show explanatory content for learning
 )
 
 // ANSI color codes for colorful output
@@ -94,6 +95,7 @@ func init() {
 	traceCmd.Flags().StringVar(&traceApp, "app", "", "Trace Argo CD application by name")
 	traceCmd.Flags().BoolVarP(&traceReverse, "reverse", "r", false, "Reverse trace - walk ownerReferences up to find GitOps source")
 	traceCmd.Flags().BoolVarP(&traceDiff, "diff", "d", false, "Show diff between live state and desired state from Git")
+	traceCmd.Flags().BoolVar(&traceExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {
@@ -336,6 +338,23 @@ func outputTraceHuman(result *agent.TraceResult) error {
 	fmt.Printf("%s%sTRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
 	fmt.Printf("\n")
 
+	// Explanatory content when --explain is used
+	if traceExplain {
+		fmt.Printf("%s%sOWNERSHIP CHAIN EXPLAINED%s\n", colorBold, colorWhite, colorReset)
+		fmt.Printf("%s════════════════════════════════════════════════════════════════════%s\n", colorDim, colorReset)
+		fmt.Printf("GitOps creates a chain from Git to running pods:\n\n")
+		fmt.Printf("  %sGit Repository%s (source of truth)\n", colorPurple, colorReset)
+		fmt.Printf("       %s↓%s GitOps controller watches for changes\n", colorDim, colorReset)
+		fmt.Printf("  %sKustomization/HelmRelease%s (applies manifests)\n", colorCyan, colorReset)
+		fmt.Printf("       %s↓%s Creates/updates\n", colorDim, colorReset)
+		fmt.Printf("  %sDeployment%s (desired state)\n", colorGreen, colorReset)
+		fmt.Printf("       %s↓%s K8s controller creates\n", colorDim, colorReset)
+		fmt.Printf("  %sReplicaSet → Pods%s (running containers)\n", colorYellow, colorReset)
+		fmt.Printf("\n")
+		fmt.Printf("%sThe trace below shows this chain for your resource:%s\n", colorDim, colorReset)
+		fmt.Printf("\n")
+	}
+
 	if result.Error != "" && len(result.Chain) == 0 {
 		fmt.Printf("  %s⚠ %s%s\n\n", colorYellow, result.Error, colorReset)
 		return nil
@@ -427,6 +446,16 @@ func outputTraceHuman(result *agent.TraceResult) error {
 			}
 		}
 	}
+
+	// Next steps and diagram link when --explain is used
+	if traceExplain {
+		fmt.Printf("\n")
+		fmt.Printf("%sNEXT STEPS:%s\n", colorBold, colorReset)
+		fmt.Printf("→ See orphan resources:    cub-scout map orphans\n")
+		fmt.Printf("→ Show diff from Git:      cub-scout trace %s -n %s --diff\n", result.Object.String(), result.Object.Namespace)
+		fmt.Printf("→ Visual guide:            docs/diagrams/ownership-detection.svg\n")
+	}
+
 	fmt.Printf("\n")
 
 	return nil
@@ -468,6 +497,23 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 	fmt.Printf("\n")
 	fmt.Printf("%s%sREVERSE TRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
 	fmt.Printf("\n")
+
+	// Explanatory content when --explain is used
+	if traceExplain {
+		fmt.Printf("%s%sREVERSE TRACE EXPLAINED%s\n", colorBold, colorWhite, colorReset)
+		fmt.Printf("%s════════════════════════════════════════════════════════════════════%s\n", colorDim, colorReset)
+		fmt.Printf("Reverse trace walks UP the ownership chain:\n\n")
+		fmt.Printf("  %sPod%s (running container)\n", colorYellow, colorReset)
+		fmt.Printf("       %s↑%s K8s ownerReference\n", colorDim, colorReset)
+		fmt.Printf("  %sReplicaSet%s (manages pod replicas)\n", colorBlue, colorReset)
+		fmt.Printf("       %s↑%s K8s ownerReference\n", colorDim, colorReset)
+		fmt.Printf("  %sDeployment%s (desired state)\n", colorGreen, colorReset)
+		fmt.Printf("       %s↑%s GitOps labels detected\n", colorDim, colorReset)
+		fmt.Printf("  %sGitOps Owner%s (Flux/ArgoCD/Helm)\n", colorCyan, colorReset)
+		fmt.Printf("\n")
+		fmt.Printf("%sThis shows how your resource is managed:%s\n", colorDim, colorReset)
+		fmt.Printf("\n")
+	}
 
 	if result.Error != "" {
 		fmt.Printf("  %s⚠ %s%s\n\n", colorYellow, result.Error, colorReset)
