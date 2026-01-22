@@ -35,14 +35,14 @@ cub-scout map
 │                            │                                                 │
 └────────────────────────────┴─────────────────────────────────────────────────┘
 
-Keys: [1-5] tabs  [↑↓] navigate  [Enter] details  [t] trace  [q] quit
+Keys: [s]tatus [w]orkloads [o]rphans [4]deep-dive  [↑↓] navigate  [T]race  [q]uit
 ```
 
 ---
 
 ## Navigate Resources
 
-Press **2** for Workloads tab:
+Press **w** for Workloads view:
 
 ```
 ┌─ WORKLOADS ──────────────────────────────────────────────────────────────────┐
@@ -108,7 +108,7 @@ Press **t** on any resource to trace where it came from:
 
 ## Find Orphans
 
-Press **3** for Orphans tab — resources NOT in Git:
+Press **o** for Orphans view — resources NOT in Git:
 
 ```
 ┌─ ORPHANS (Not in Git) ───────────────────────────────────────────────────────┐
@@ -147,14 +147,14 @@ Press **3** for Orphans tab — resources NOT in Git:
 
 | Key | Action |
 |-----|--------|
-| `1` | Status tab |
-| `2` | Workloads tab |
-| `3` | Orphans tab |
-| `4` | Deep-dive tab |
-| `5` | App hierarchy tab |
+| `s` | Status view |
+| `w` | Workloads view |
+| `o` | Orphans view |
+| `4` | Deep-dive (Cluster Data) |
+| `5`/`A` | App hierarchy |
 | `↑`/`↓` | Navigate |
 | `Enter` | View details |
-| `t` | Trace ownership |
+| `T` | Trace ownership |
 | `q` | Quit |
 | `?` | Help |
 
