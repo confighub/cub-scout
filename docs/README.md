@@ -27,6 +27,9 @@ Task-based guides:
 | Query resources | [howto/query-resources.md](howto/query-resources.md) |
 | Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
 | Tree hierarchies | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
+| Scan for CCVEs | [howto/scan-for-ccves.md](howto/scan-for-ccves.md) |
+| Ownership detection | [howto/ownership-detection.md](howto/ownership-detection.md) |
+| Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
 | Scan for risks | [SCAN-GUIDE.md](SCAN-GUIDE.md) |
 
 ---
@@ -40,6 +43,11 @@ Complete reference documentation:
 | **Commands** | [reference/commands.md](reference/commands.md) |
 | Query syntax | [reference/query-syntax.md](reference/query-syntax.md) |
 | GSF schema | [reference/gsf-schema.md](reference/gsf-schema.md) |
+| TUI views | [reference/views.md](reference/views.md) |
+| Keybindings | [reference/keybindings.md](reference/keybindings.md) |
+| GitOps repo patterns | [reference/gitops-repo-structures.md](reference/gitops-repo-structures.md) |
+| Hub/AppSpace examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
+| Map PRD | [reference/map-prd.md](reference/map-prd.md) |
 | Command matrix | [COMMAND-MATRIX.md](COMMAND-MATRIX.md) |
 | CLI guide | [../CLI-GUIDE.md](../CLI-GUIDE.md) |
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
@@ -101,7 +109,7 @@ Real-world use cases:
 
 ## Internal Docs
 
-| Folder | Purpose |
-|--------|---------|
-| `planning/` | Product planning, roadmap |
+| File/Folder | Purpose |
+|-------------|---------|
+| [roadmap.md](roadmap.md) | Future features (P2-P3) |
 | `archive/` | Historical documentation |
