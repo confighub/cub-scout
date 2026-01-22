@@ -8,8 +8,11 @@
 
 New to cub-scout? Start here:
 
-1. **[Install](../README.md#installation)** — Get cub-scout running
-2. **[First Map](getting-started/first-map.md)** — See your cluster in 5 minutes
+| Step | Guide |
+|------|-------|
+| **1. Install** | [getting-started/install.md](getting-started/install.md) |
+| **2. First Map** | [getting-started/first-map.md](getting-started/first-map.md) |
+| **3. Understand GitOps** | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
 
 ---
 
@@ -22,20 +25,24 @@ Task-based guides:
 | Find orphan resources | [howto/find-orphans.md](howto/find-orphans.md) |
 | Trace ownership chains | [howto/trace-ownership.md](howto/trace-ownership.md) |
 | Query resources | [howto/query-resources.md](howto/query-resources.md) |
+| Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
+| Tree hierarchies | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
 | Scan for risks | [SCAN-GUIDE.md](SCAN-GUIDE.md) |
 
 ---
 
 ## Reference
 
-Complete reference:
+Complete reference documentation:
 
 | Topic | Reference |
 |-------|-----------|
+| **Commands** | [reference/commands.md](reference/commands.md) |
 | Query syntax | [reference/query-syntax.md](reference/query-syntax.md) |
-| CLI commands | [CLI-GUIDE.md](../CLI-GUIDE.md) |
-| GSF schema | [GSF-SCHEMA.md](GSF-SCHEMA.md) |
-| Ownership labels | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| GSF schema | [reference/gsf-schema.md](reference/gsf-schema.md) |
+| Command matrix | [COMMAND-MATRIX.md](COMMAND-MATRIX.md) |
+| CLI guide | [../CLI-GUIDE.md](../CLI-GUIDE.md) |
+| Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 
 ---
 
@@ -45,25 +52,27 @@ Understand the "why":
 
 | Concept | Explanation |
 |---------|-------------|
+| GitOps Overview | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
 | The Clobbering Problem | [concepts/clobbering-problem.md](concepts/clobbering-problem.md) |
 | Ownership Detection | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| GitOps Overview | [GLOSSARY-OF-CONCEPTS.md](GLOSSARY-OF-CONCEPTS.md) |
+| Glossary | [GLOSSARY-OF-CONCEPTS.md](GLOSSARY-OF-CONCEPTS.md) |
 
 ---
 
 ## Visual Guides
 
-See the [diagrams/](diagrams/) for visual explanations. These use [D2](https://d2lang.com), a modern diagram scripting language:
+See [diagrams/](diagrams/) for visual explanations using [D2](https://d2lang.com):
 
 | Diagram | What it shows |
 |---------|---------------|
-| [Flux Architecture](diagrams/flux-architecture.d2) | How Flux GitOps works |
-| [Ownership Trace](diagrams/ownership-trace.d2) | What cub-scout reveals |
-| [Kustomize Overlays](diagrams/kustomize-overlays.d2) | Multi-environment pattern |
-| [Clobbering Problem](diagrams/clobbering-problem.d2) | Hidden layer dangers |
-| [Upgrade Tracing](diagrams/upgrade-tracing.d2) | Finding what changed |
+| [Flux Architecture](diagrams/flux-architecture.svg) | How Flux GitOps works |
+| [Ownership Detection](diagrams/ownership-detection.svg) | How ownership is detected |
+| [Ownership Trace](diagrams/ownership-trace.svg) | What cub-scout reveals |
+| [Kustomize Overlays](diagrams/kustomize-overlays.svg) | Multi-environment pattern |
+| [Clobbering Problem](diagrams/clobbering-problem.svg) | Hidden layer dangers |
+| [Upgrade Tracing](diagrams/upgrade-tracing.svg) | Finding what changed |
 
-> **Note:** The "D2" pattern mentioned in `tree patterns` and `tree suggest` refers to a GitOps repository pattern (Flux CD "Control Plane" style with clusters/infrastructure/apps structure), not the D2 diagram language.
+> **Note:** "D2 pattern" in `tree patterns` refers to a GitOps repository pattern (Flux CD "Control Plane" style), not the D2 diagram language.
 
 ---
 
@@ -71,15 +80,22 @@ See the [diagrams/](diagrams/) for visual explanations. These use [D2](https://d
 
 | Example | What you'll learn |
 |---------|-------------------|
-| [platform-example](../examples/platform-example/) | Full GitOps environment with orphans |
+| [platform-example](../examples/platform-example/) | Full GitOps environment with base/overlays pattern |
 | [flux-boutique](../examples/flux-boutique/) | Simple Flux demo |
+| [orphans](../examples/orphans/) | Detecting orphan resources |
 | [impressive-demo](../examples/impressive-demo/) | Comprehensive demo with CCVE scanning |
-| [orphans](../examples/orphans/) | Detecting and managing orphan resources |
-| [rm-demos-argocd](../examples/rm-demos-argocd/) | ArgoCD integration patterns |
-| [apptique-examples](../examples/apptique-examples/) | E-commerce microservices patterns |
-| [app-config-rtmsg](../examples/app-config-rtmsg/) | Real-time messaging configuration |
-| [demos](../examples/demos/) | Interactive demo scripts |
-| [integrations](../examples/integrations/) | Third-party tool integrations |
+
+See [EXAMPLES-OVERVIEW.md](EXAMPLES-OVERVIEW.md) for all examples.
+
+---
+
+## Outcomes
+
+Real-world use cases:
+
+| Outcome | Description |
+|---------|-------------|
+| [Enterprise Case Studies](outcomes/enterprise-case-studies.md) | IITS research findings |
 
 ---
 
@@ -87,5 +103,5 @@ See the [diagrams/](diagrams/) for visual explanations. These use [D2](https://d
 
 | Folder | Purpose |
 |--------|---------|
-| `planning/` | Product planning, specs |
-| `archive/` | Historical documentation (gold content preserved) |
+| `planning/` | Product planning, roadmap |
+| `archive/` | Historical documentation |
