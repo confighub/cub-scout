@@ -580,13 +580,23 @@ Interactive TUI for ConfigHub hierarchy. Requires `cub auth login`.
 
 ## `trace` — Ownership Chain
 
+Works with **Flux, ArgoCD, or standalone Helm** — auto-detects the owner.
+
 ```bash
+# Flux-managed resource
 ./cub-scout trace deploy/nginx -n production
+
+# ArgoCD application
 ./cub-scout trace --app guestbook
+
+# Standalone Helm release (not Flux-managed)
+./cub-scout trace deploy/prometheus -n monitoring
+
+# Reverse trace (walk up from Pod)
 ./cub-scout trace pod/nginx-abc123 -n prod --reverse
 ```
 
-**Expected output:**
+**Flux trace (GitRepository source):**
 ```
 TRACE: Deployment/nginx in production
 
@@ -601,13 +611,52 @@ TRACE: Deployment/nginx in production
                 Status: Managed by Flux
 ```
 
+**Helm standalone trace:**
+```
+TRACE: Deployment/prometheus in monitoring
+
+  ✓ HelmChart/prometheus
+    │ v15.3.2 (app: 2.45.0)
+    │
+    └─▶ ✓ Release/prometheus
+          │ Status: deployed
+          │ Revision: v3
+          │
+          └─▶ ✓ Deployment/prometheus
+                Status: Managed by Helm
+```
+
+**Reverse trace with orphan metadata:**
+```
+REVERSE TRACE: Deployment/debug-nginx in default
+
+K8s Ownership Chain:
+✓ Deployment/debug-nginx (1/1 ready)
+
+Detected Owner: NATIVE
+
+⚠ This resource is NOT managed by GitOps
+
+Orphan Metadata:
+  Created: 2026-01-15 10:30:00 UTC
+  Labels: app=debug
+
+✓ last-applied-configuration found
+  💡 To see full manifest:
+  kubectl get deployment debug-nginx -n default -o jsonpath='{...}' | jq .
+```
+
 **Options:**
 | Option | Description |
 |--------|-------------|
 | `-n, --namespace` | Namespace of the resource |
 | `--app` | Trace ArgoCD app by name |
-| `-r, --reverse` | Reverse trace (walk ownerRefs up) |
+| `-r, --reverse` | Reverse trace — walks ownerRefs up, shows orphan metadata |
+| `-d, --diff` | Show diff between live and desired state |
+| `--explain` | Show learning content explaining the trace |
 | `--json` | Output as JSON |
+
+**Supported sources:** GitRepository, OCIRepository, HelmRepository, Bucket (Flux), plus standalone Helm releases.
 
 ---
 

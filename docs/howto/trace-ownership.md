@@ -92,14 +92,23 @@ cub-scout trace deploy/podinfo -n podinfo --diff
 
 ## Tracing by Owner Type
 
-### Flux Resources
+### Flux Resources (Git or OCI)
 
 ```bash
-# Flux Kustomization trace
+# Flux Kustomization trace (Git source)
 cub-scout trace deploy/app -n namespace
 ```
 
 Shows: GitRepository → Kustomization → Deployment
+
+```bash
+# Flux with OCI source (container registry)
+cub-scout trace deploy/app -n namespace
+```
+
+Shows: OCIRepository → Kustomization → Deployment
+
+**Supported Flux sources:** GitRepository, OCIRepository, HelmRepository, Bucket
 
 ### ArgoCD Resources
 
@@ -110,11 +119,26 @@ cub-scout trace deploy/app -n namespace
 
 Shows: Repository → Application → Deployment
 
-### Helm Resources
+### Helm Resources (Standalone)
+
+For Helm releases **not managed by Flux HelmRelease** (standalone `helm install`):
 
 ```bash
-# Helm release trace
-cub-scout trace deploy/app -n namespace
+# Standalone Helm release trace
+cub-scout trace deploy/prometheus -n monitoring
+```
+
+Shows: HelmChart → Release → Deployment
+
+**How it works:** cub-scout reads Helm release metadata from Kubernetes secrets (`sh.helm.release.v1.*`) to trace the full chain without requiring Flux.
+
+### Flux HelmRelease
+
+For Helm charts managed by Flux:
+
+```bash
+# Flux-managed Helm trace
+cub-scout trace deploy/redis -n cache
 ```
 
 Shows: HelmRepository → HelmRelease → Deployment
@@ -127,6 +151,73 @@ cub-scout trace deploy/debug-nginx -n default
 ```
 
 Shows: "No GitOps owner found — created manually"
+
+**Tip:** Use `--reverse` to see additional metadata for orphans:
+
+```bash
+cub-scout trace deploy/debug-nginx -n default --reverse
+```
+
+Shows:
+- Creation timestamp
+- Resource labels
+- `kubectl.kubernetes.io/last-applied-configuration` (if created via `kubectl apply`)
+
+---
+
+## Reverse Trace
+
+Walk **up** the ownership chain from any resource:
+
+```bash
+cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse
+```
+
+**Output:**
+
+```
+REVERSE TRACE: Pod/nginx-7d9b8c-x4k2p
+
+K8s Ownership Chain:
+✓ Pod/nginx-7d9b8c-x4k2p (Running)
+  └─▶ ✓ ReplicaSet/nginx-7d9b8c (3/3 ready)
+      └─▶ ✓ Deployment/nginx (3/3 ready)
+
+Detected Owner: FLUX (managed by apps)
+
+💡 For full GitOps chain, run:
+   cub-scout trace deployment/nginx -n prod
+```
+
+### Orphan Metadata
+
+For unmanaged resources, `--reverse` extracts kubectl metadata:
+
+```bash
+cub-scout trace deploy/debug-nginx -n default --reverse
+```
+
+```
+Detected Owner: NATIVE
+
+⚠ This resource is NOT managed by GitOps
+  • It will be lost if the cluster is rebuilt
+  • No audit trail in Git
+  • Consider importing to GitOps: cub-scout import
+
+Orphan Metadata:
+  Created: 2026-01-15 10:30:00 UTC
+  Labels:
+    app=debug-nginx
+    team=platform
+
+✓ last-applied-configuration found
+  This resource was created via 'kubectl apply'.
+  The original manifest is available in the annotation.
+
+  💡 To see full manifest:
+  kubectl get deployment debug-nginx -n default -o jsonpath='{.metadata.annotations.kubectl\.kubernetes\.io/last-applied-configuration}' | jq .
+```
 
 ---
 

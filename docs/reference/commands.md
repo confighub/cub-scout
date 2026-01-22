@@ -178,7 +178,7 @@ Shows Kustomizations, HelmReleases, and Applications.
 
 ## trace
 
-Show the full GitOps ownership chain for a resource.
+Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, or standalone Helm**.
 
 ```bash
 cub-scout trace <kind/name> [flags]
@@ -190,7 +190,7 @@ cub-scout trace <kind/name> [flags]
 |------|-------------|
 | `-n, --namespace` | Namespace of the resource |
 | `--app` | Trace ArgoCD Application by name |
-| `-r, --reverse` | Reverse trace (walk up ownerReferences) |
+| `-r, --reverse` | Reverse trace (walk up ownerReferences, show orphan metadata) |
 | `-d, --diff` | Show diff between live and Git state |
 | `--json` | Output as JSON |
 | `--explain` | Show explanatory content |
@@ -198,18 +198,35 @@ cub-scout trace <kind/name> [flags]
 ### Examples
 
 ```bash
-# Trace a deployment
+# Trace a Flux-managed deployment
 cub-scout trace deployment/nginx -n demo
 
 # Trace ArgoCD app
 cub-scout trace --app frontend
 
+# Trace standalone Helm release (not Flux-managed)
+cub-scout trace deployment/prometheus -n monitoring
+
 # Reverse trace (from Pod up)
 cub-scout trace pod/nginx-abc123 -n prod --reverse
+
+# Reverse trace shows orphan metadata for native resources
+cub-scout trace deployment/debug-nginx -n default --reverse
 
 # Show what would change on reconciliation
 cub-scout trace deployment/nginx -n demo --diff
 ```
+
+### Supported Sources
+
+| Source Type | Owner |
+|-------------|-------|
+| GitRepository | Flux |
+| OCIRepository | Flux |
+| HelmRepository | Flux |
+| Bucket | Flux |
+| Repository (Git/Helm) | ArgoCD |
+| Helm secrets | Standalone Helm |
 
 ---
 

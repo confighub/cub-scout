@@ -356,11 +356,15 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 
 | Owner | How Detected |
 |-------|--------------|
-| **Flux** | `kustomize.toolkit.fluxcd.io/*` labels |
+| **Flux** | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
 | **ArgoCD** | `argocd.argoproj.io/instance` label |
-| **Helm** | `app.kubernetes.io/managed-by: Helm` |
+| **Helm** | `app.kubernetes.io/managed-by: Helm` (standalone, not Flux-managed) |
 | **ConfigHub** | `confighub.com/UnitSlug` label |
 | **Native** | None of the above (kubectl-applied) |
+
+**Flux sources supported:** GitRepository, OCIRepository, HelmRepository, Bucket
+
+**Helm tracing:** For standalone Helm releases (not managed by Flux HelmRelease), cub-scout reads release metadata directly from Kubernetes secrets.
 
 ---
 
