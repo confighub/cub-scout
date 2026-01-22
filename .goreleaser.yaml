@@ -34,7 +34,7 @@ archives:
     files:
       - README.md
       - LICENSE
-      - GUIDE.md
+      - CLI-GUIDE.md
 
 checksum:
   name_template: 'checksums.txt'
