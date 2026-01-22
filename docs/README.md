@@ -33,6 +33,7 @@ Task-based guides:
 | Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
 | Scan for risks | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Advanced queries | [howto/advanced-queries.md](howto/advanced-queries.md) |
+| Run demos | [howto/running-demos.md](howto/running-demos.md) |
 | Extending cub-scout | [howto/extending.md](howto/extending.md) |
 
 ---
@@ -45,10 +46,12 @@ Complete reference documentation:
 |-------|-----------|
 | **Commands** | [reference/commands.md](reference/commands.md) |
 | Query syntax | [reference/query-syntax.md](reference/query-syntax.md) |
+| Query library | [reference/query-library.md](reference/query-library.md) |
 | GSF schema | [reference/gsf-schema.md](reference/gsf-schema.md) |
 | TUI views | [reference/views.md](reference/views.md) |
 | Keybindings | [reference/keybindings.md](reference/keybindings.md) |
-| GitOps repo patterns | [reference/gitops-repo-structures.md](reference/gitops-repo-structures.md) |
+| GitOps patterns | [reference/gitops-patterns.md](reference/gitops-patterns.md) |
+| GitOps repo structures | [reference/gitops-repo-structures.md](reference/gitops-repo-structures.md) |
 | Hub/AppSpace examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
 | Map PRD | [reference/map-prd.md](reference/map-prd.md) |
 | Command matrix | [reference/command-matrix.md](reference/command-matrix.md) |
@@ -67,6 +70,8 @@ Understand the "why":
 | GitOps Overview | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
 | The Clobbering Problem | [concepts/clobbering-problem.md](concepts/clobbering-problem.md) |
 | Architecture | [concepts/architecture.md](concepts/architecture.md) |
+| Live Cluster Inference | [concepts/live-cluster-inference.md](concepts/live-cluster-inference.md) |
+| TUI vs GUI | [concepts/tui-vs-gui.md](concepts/tui-vs-gui.md) |
 | Alternatives | [concepts/alternatives.md](concepts/alternatives.md) |
 
 ---
