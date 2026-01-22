@@ -15,15 +15,19 @@ All examples, demos, and integration code in one place.
 ## Quick Start
 
 ```bash
-# Clone (requires GitHub access)
+# Install
+brew install confighub/tap/cub-scout
+
+# Or build from source
 git clone https://github.com/confighub/cub-scout.git
 cd cub-scout
+go build ./cmd/cub-scout
 
 # Try it on your cluster
-./run.sh
+cub-scout map
 
 # Or run a demo
-./test/atk/demo quick
+cub-scout demo quick
 ```
 
 ---
@@ -51,7 +55,7 @@ kubectl apply -f examples/apptique-examples/flux-monorepo/clusters/dev/kustomiza
 kubectl apply -f examples/apptique-examples/argo-applicationset/bootstrap/applicationset.yaml
 
 # Verify ownership detection
-./test/atk/map workloads | grep apptique
+cub-scout map workloads | grep apptique
 ```
 
 ### External Examples (GitHub)
@@ -68,15 +72,11 @@ kubectl apply -f examples/apptique-examples/argo-applicationset/bootstrap/applic
 ### Try an example
 
 ```bash
-# Deploy an example to your cluster and see the map output
-./test/atk/examples --capture jesper_argocd
-
-# Or test that all examples are accessible
-./test/atk/examples
-
-# Filter by type
-./test/atk/examples jesper    # Jesper's internal examples
-./test/atk/examples public    # Public confighub/examples
+# Deploy an example and explore with cub-scout
+kubectl apply -f examples/flux-boutique/boutique.yaml
+cub-scout map                    # Interactive TUI
+cub-scout map workloads          # List by owner
+cub-scout trace deploy/frontend -n boutique  # Trace ownership
 ```
 
 Expected output for each example is in `test/fixtures/expected-output/examples/`.
@@ -159,12 +159,12 @@ TUI mockup showing how ConfigHub can manage non-Kubernetes configuration (based 
 - Examples of how to structure real GitOps repos
 
 ```bash
-./test/atk/demo --list           # List all demos
-./test/atk/demo quick            # 30-second demo
-./test/atk/demo ccve             # CCVE-2025-0027 detection
-./test/atk/demo healthy          # Enterprise healthy pattern
-./test/atk/demo unhealthy        # Common GitOps problems
-./test/atk/demo <name> --cleanup # Remove demo resources
+cub-scout demo list              # List all demos
+cub-scout demo quick             # 30-second demo
+cub-scout demo ccve              # CCVE-2025-0027 detection
+cub-scout demo healthy           # Enterprise healthy pattern
+cub-scout demo unhealthy         # Common GitOps problems
+cub-scout demo <name> --cleanup  # Remove demo resources
 ```
 
 | Demo | Time | Shows |
@@ -257,20 +257,20 @@ See [integrations/README.md](integrations/README.md) for architecture.
 
 ## Fleet Queries
 
-Questions the agent answers in seconds. See [JOURNEY-QUERY.md](../docs/JOURNEY-QUERY.md) for complete examples.
+Questions the agent answers in seconds. See [docs/howto/fleet-queries.md](../docs/howto/fleet-queries.md) for complete examples.
 
 ```bash
 # Interactive demo
 ./examples/demos/fleet-queries-demo.sh
 
 # Live queries against cluster
-./test/atk/demo query
+cub-scout demo query
 ```
 
 ### "What's running and who owns it?"
 
 ```bash
-$ ./test/atk/map workloads
+$ cub-scout map workloads
 
 STATUS  NAMESPACE        NAME              OWNER      MANAGED-BY            IMAGE
 ────────────────────────────────────────────────────────────────────────────────────
@@ -283,7 +283,7 @@ STATUS  NAMESPACE        NAME              OWNER      MANAGED-BY            IMAG
 ### "Which clusters are behind?"
 
 ```bash
-$ ./test/atk/map   # With ConfigHub auth
+$ cub-scout map fleet   # With ConfigHub auth
 
 ConfigHub Fleet View
   order-processor
@@ -296,7 +296,7 @@ ConfigHub Fleet View
 ### "What config bugs exist?"
 
 ```bash
-$ ./test/atk/scan
+$ cub-scout scan
 
 CONFIG CVE SCAN
 ════════════════════════════════════════════════════════════════════
@@ -308,7 +308,7 @@ CRITICAL (1)
 ### "What's broken right now?"
 
 ```bash
-$ ./test/atk/map problems
+$ cub-scout map issues
 
 ✗ HelmRelease/redis-cache in flux-system: SourceNotReady
 ⏸ Kustomization/monitoring-stack in flux-system: suspended
@@ -322,7 +322,7 @@ $ ./test/atk/map problems
 All commands support `--json` for tooling:
 
 ```bash
-$ ./test/atk/map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
+$ cub-scout map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
 
 {
   "name": "payment-api",
@@ -345,7 +345,7 @@ $ ./test/atk/map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
 | [docs/EXAMPLES-OVERVIEW.md](../docs/EXAMPLES-OVERVIEW.md) | Central examples overview |
 | [CLI-GUIDE.md](../CLI-GUIDE.md) | Complete CLI reference (14 commands, 17 subcommands) |
 | [docs/COMMAND-MATRIX.md](../docs/COMMAND-MATRIX.md) | Full command/option matrix |
-| [docs/IMPORTING-WORKLOADS.md](../docs/IMPORTING-WORKLOADS.md) | Import workloads into ConfigHub |
+| [docs/map/howto/import-to-confighub.md](../docs/map/howto/import-to-confighub.md) | Import workloads into ConfigHub |
 | [README.md](../README.md) | Project overview |
 | [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) | How it works, GSF protocol |
 | [docs/SCAN-GUIDE.md](../docs/SCAN-GUIDE.md) | CCVE scanning (46 patterns) |

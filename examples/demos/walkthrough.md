@@ -44,7 +44,7 @@ configmap/important-dashboard created
 ## Step 2: View Map Dashboard (With Problems)
 
 ```bash
-./test/atk/map
+cub-scout map
 ```
 
 **Expected output:**
@@ -83,14 +83,14 @@ configmap/important-dashboard created
   payments-prod / payment-api-prod @ rev 127  [demo-payments/payment-api]
 ```
 
-> **Note:** Use `./test/atk/map --mode=hub` for experimental Hub → App Space → Application → Variant hierarchy.
+> **Note:** Use `cub-scout map --mode=hub` for experimental Hub → App Space → Application → Variant hierarchy.
 
 ---
 
 ## Step 3: View Workloads by Owner
 
 ```bash
-./test/atk/map workloads
+cub-scout map workloads
 ```
 
 **Expected output:**
@@ -120,7 +120,7 @@ STATUS  NAMESPACE                NAME                      OWNER       MANAGED-B
 ## Step 4: View Problems Only
 
 ```bash
-./test/atk/map problems
+cub-scout map problems
 ```
 
 **Expected output:**
@@ -138,7 +138,7 @@ STATUS  NAMESPACE                NAME                      OWNER       MANAGED-B
 ## Step 5: View Deployers Status
 
 ```bash
-./test/atk/map deployers
+cub-scout map deployers
 ```
 
 **Expected output:**
@@ -155,7 +155,7 @@ STATUS  KIND            NAME                      NAMESPACE            REVISION 
 ## Step 6: View Suspended Resources
 
 ```bash
-./test/atk/map suspended
+cub-scout map suspended
 ```
 
 **Expected output:**
@@ -168,7 +168,7 @@ STATUS  KIND            NAME                      NAMESPACE            REVISION 
 ## Step 7: Scan for CCVEs
 
 ```bash
-./test/atk/scan
+cub-scout scan
 ```
 
 **Expected output:**
@@ -191,7 +191,7 @@ Summary: 0 critical, 0 warning, 1 info
 ## Step 8: Scan with JSON Output
 
 ```bash
-./test/atk/scan --json
+cub-scout scan --json
 ```
 
 **Expected output:**
@@ -240,7 +240,7 @@ kubectl delete helmrepository bitnami -n flux-system
 ## Step 10: View Healthy Map
 
 ```bash
-./test/atk/map
+cub-scout map
 ```
 
 **Expected output:**
@@ -271,7 +271,7 @@ kubectl delete helmrepository bitnami -n flux-system
 ## Step 11: View Healthy Workloads
 
 ```bash
-./test/atk/map workloads
+cub-scout map workloads
 ```
 
 **Expected output:**
@@ -301,7 +301,7 @@ STATUS  NAMESPACE                NAME                      OWNER       MANAGED-B
 ## Step 12: Verify No CCVEs
 
 ```bash
-./test/atk/scan
+cub-scout scan
 ```
 
 **Expected output:**
@@ -326,18 +326,18 @@ kubectl delete -f test/atk/demos/demo-full.yaml
 
 | Command | Description |
 |---------|-------------|
-| `./test/atk/map` | Full dashboard |
-| `./test/atk/map status` | One-line health check |
-| `./test/atk/map workloads` | List workloads by owner |
-| `./test/atk/map problems` | Show only problems |
-| `./test/atk/map deployers` | List GitOps deployers |
-| `./test/atk/map suspended` | List suspended resources |
-| `./test/atk/map confighub` | ConfigHub hierarchy (requires cub auth) |
-| `./test/atk/map --json` | JSON output |
-| `./test/atk/map --mode=hub` | Experimental hub hierarchy mode |
-| `./test/atk/scan` | Scan for CCVEs |
-| `./test/atk/scan --list` | List all CCVEs |
-| `./test/atk/scan --json` | JSON output |
+| `cub-scout map` | Full dashboard |
+| `cub-scout map status` | One-line health check |
+| `cub-scout map workloads` | List workloads by owner |
+| `cub-scout map problems` | Show only problems |
+| `cub-scout map deployers` | List GitOps deployers |
+| `cub-scout map suspended` | List suspended resources |
+| `cub-scout map confighub` | ConfigHub hierarchy (requires cub auth) |
+| `cub-scout map --json` | JSON output |
+| `cub-scout map --mode=hub` | Experimental hub hierarchy mode |
+| `cub-scout scan` | Scan for CCVEs |
+| `cub-scout scan --list` | List all CCVEs |
+| `cub-scout scan --json` | JSON output |
 
 ### Hierarchy Display Modes
 
@@ -357,11 +357,11 @@ IITS-style enterprise GitOps patterns with running pods and realistic ownership 
 Use the `demo` script for easy management:
 
 ```bash
-./test/atk/demo --list              # List available demos
-./test/atk/demo healthy             # Apply healthy demo (pods run)
-./test/atk/demo unhealthy           # Apply unhealthy demo (pods run)
-./test/atk/demo healthy --no-pods   # Apply without running pods
-./test/atk/demo healthy --cleanup   # Remove demo resources
+cub-scout demo --list              # List available demos
+cub-scout demo healthy             # Apply healthy demo (pods run)
+cub-scout demo unhealthy           # Apply unhealthy demo (pods run)
+cub-scout demo healthy --no-pods   # Apply without running pods
+cub-scout demo healthy --cleanup   # Remove demo resources
 ```
 
 ### Enterprise Healthy Demo
@@ -369,10 +369,10 @@ Use the `demo` script for easy management:
 Shows a well-architected hub-and-spoke GitOps deployment:
 
 ```bash
-./test/atk/demo healthy             # Apply with running pods
-./test/atk/map                      # See ownership attribution
-./test/atk/map confighub            # See ConfigHub hierarchy display
-./test/atk/demo healthy --cleanup   # Cleanup
+cub-scout demo healthy             # Apply with running pods
+cub-scout map                      # See ownership attribution
+cub-scout map confighub            # See ConfigHub hierarchy display
+cub-scout demo healthy --cleanup   # Cleanup
 ```
 
 Features demonstrated:
@@ -389,10 +389,10 @@ Features demonstrated:
 Shows common GitOps problems and CCVEs:
 
 ```bash
-./test/atk/demo unhealthy           # Apply with running pods
-./test/atk/map                      # See the chaos (Problems section)
-./test/atk/scan                     # Find CCVEs
-./test/atk/demo unhealthy --cleanup # Cleanup
+cub-scout demo unhealthy           # Apply with running pods
+cub-scout map                      # See the chaos (Problems section)
+cub-scout scan                     # Find CCVEs
+cub-scout demo unhealthy --cleanup # Cleanup
 ```
 
 Problems demonstrated:
@@ -407,8 +407,8 @@ Problems demonstrated:
 Use `--no-pods` for structural demos where you only want to show ownership patterns without waiting for pods:
 
 ```bash
-./test/atk/demo healthy --no-pods   # Fast apply, pods won't run
-./test/atk/map                      # Still shows ownership correctly
+cub-scout demo healthy --no-pods   # Fast apply, pods won't run
+cub-scout map                      # Still shows ownership correctly
 ```
 
 This replaces `nginx:alpine` with a non-existent image, so pods stay in `ImagePullBackOff`.

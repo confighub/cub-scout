@@ -286,9 +286,11 @@ The Flux Operator provides a web UI with GitOps graph visualization. The integra
 
 ---
 
-## Agent API Endpoints
+## Agent API Endpoints (Proposed)
 
-All integrations use these standardized endpoints:
+> **Not Yet Implemented:** These API endpoints are proposed for a future HTTP API mode. Currently, use CLI commands like `cub-scout snapshot -o -` and `cub-scout scan --json`.
+
+All integrations would use these standardized endpoints:
 
 | Endpoint | Description |
 |----------|-------------|
@@ -306,7 +308,7 @@ All integrations use these standardized endpoints:
 ## JSON Output Example
 
 ```bash
-./test/atk/map --json
+cub-scout map --json
 ```
 
 ```json

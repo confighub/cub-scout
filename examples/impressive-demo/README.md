@@ -196,7 +196,7 @@ kubectl apply -f fixed-configs/letsencrypt-issuer.yaml
 ### Step 5: View Final State (All Fixed)
 
 ```bash
-./test/atk/map
+cub-scout map
 ```
 
 **Output:**

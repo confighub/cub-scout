@@ -7,16 +7,16 @@
 
 ## What Already Exists
 
-| Component | Status | Location |
-|-----------|--------|----------|
-| `./map` | ✅ Ready | `test/atk/map` |
-| `./scan` | ✅ Ready | `test/atk/scan` |
-| CCVE-2025-0027 detection | ✅ Ready | Built into `test/atk/scan` |
+| Component | Status | Command |
+|-----------|--------|---------|
+| `map` | ✅ Ready | `cub-scout map` |
+| `scan` | ✅ Ready | `cub-scout scan` |
+| CCVE-2025-0027 detection | ✅ Ready | Built into `cub-scout scan` |
 | `drift merge` | ❌ Not built | Needs implementation |
 | CCVE-2025-0027 fixture | ✅ Ready | `examples/impressive-demo/bad-configs/monitoring-bad.yaml` |
 | Mixed ownership fixture | ✅ Ready | `test/atk/fixtures/mixed.yaml` |
 | Native/orphan fixture | ✅ Ready | `test/atk/fixtures/native-basic.yaml` |
-| Demo runner | ✅ Ready | `test/atk/demo` |
+| Demo runner | ✅ Ready | `cub-scout demo` |
 
 ---
 
@@ -61,10 +61,10 @@ kubectl set replicas deployment/nginx -n atk-native-basic --replicas=5
 
 ```bash
 # Full fleet view
-./test/atk/map
+cub-scout map
 
 # Query (simulated - needs enhancement)
-./test/atk/map workloads | grep redis
+cub-scout map workloads | grep redis
 ```
 
 **Magic:** Instant answer. One command. All clusters, all owners.
@@ -78,7 +78,7 @@ kubectl set replicas deployment/nginx -n atk-native-basic --replicas=5
 
 ```bash
 # See the drift
-./test/atk/map workloads | grep -E "(Native|drift)"
+cub-scout map workloads | grep -E "(Native|drift)"
 
 # Merge it (THIS NEEDS TO BE BUILT)
 # cub drift merge nginx --namespace atk-native-basic
@@ -101,7 +101,7 @@ kubectl set replicas deployment/nginx -n atk-native-basic --replicas=5
 
 ```bash
 # Scan for CCVEs
-./test/atk/scan
+cub-scout scan
 ```
 
 **Expected output:**
@@ -149,16 +149,16 @@ The demo runner provides the fastest path to a demo:
 
 ```bash
 # Quick demo (~30 sec) - fastest path to WOW
-./test/atk/demo quick
+cub-scout demo quick
 
 # CCVE-2025-0027 demo (~2 min) - the BIGBANK 4-hour outage story
-./test/atk/demo ccve
+cub-scout demo ccve
 
 # Narrative scenario (~3 min) - walk through the incident
-./test/atk/demo scenario bigbank-incident
+cub-scout demo scenario bigbank-incident
 
 # List all available demos with timing
-./test/atk/demo --list
+cub-scout demo --list
 ```
 
 For Brian's larger scale demos (312 units, 3 clusters), see:

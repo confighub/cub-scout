@@ -71,7 +71,7 @@ argocd app get apptique-drift
 # └──────────────────────────────────────────────────────┘
 
 # Or check all drifted resources
-./test/atk/map problems
+cub-scout map issues
 ```
 
 ### 5. Remediate

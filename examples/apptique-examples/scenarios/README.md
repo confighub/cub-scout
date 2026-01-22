@@ -28,8 +28,8 @@ kubectl apply -f ../argo-applicationset/apps/apptique/dev/
 kubectl apply -f monday-panic/
 
 # 3. Find the problem with cub-scout
-./test/atk/map problems
-./test/atk/scan
+cub-scout map problems
+cub-scout scan
 ```
 
 ---
@@ -51,7 +51,7 @@ kubectl apply -f monday-panic/
 **Find the problem:**
 ```bash
 # See all deployments across namespaces
-./test/atk/map workloads
+cub-scout map workloads
 
 # Expected output shows the broken deployment:
 # STATUS  NAMESPACE      NAME      OWNER  IMAGE
@@ -60,7 +60,7 @@ kubectl apply -f monday-panic/
 # ✗       apptique-eu    frontend  Flux   frontend:v0.10.3-broken  ← PROBLEM!
 
 # Or find problems directly
-./test/atk/map problems
+cub-scout map problems
 
 # Expected:
 # ✗ Deployment/frontend in apptique-eu: 0/1 ready (CrashLoopBackOff)
@@ -127,7 +127,7 @@ kubectl apply -f security-patch/
 
 **Find all CCVEs:**
 ```bash
-./test/atk/scan
+cub-scout scan
 
 # Expected output:
 # CONFIG CVE SCAN

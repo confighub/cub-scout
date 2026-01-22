@@ -9,9 +9,9 @@ Demos that create resources, show problems, and let you explore.
 ## Running Demos
 
 ```bash
-./test/atk/demo --list           # List all demos
-./test/atk/demo quick            # Run quick demo
-./test/atk/demo <name> --cleanup # Remove demo resources
+cub-scout demo --list           # List all demos
+cub-scout demo quick            # Run quick demo
+cub-scout demo <name> --cleanup # Remove demo resources
 ```
 
 ## Available Demos
@@ -32,7 +32,7 @@ Demos that create resources, show problems, and let you explore.
 | `orphan-hunt` | ~2 min | Find and fix orphan resources |
 | `monday-morning` | ~1 min | Weekly health check ritual |
 
-Run with: `./test/atk/demo scenario <name>`
+Run with: `cub-scout demo scenario <name>`
 
 ---
 
@@ -41,7 +41,7 @@ Run with: `./test/atk/demo scenario <name>`
 Fastest path to see the Map in action.
 
 ```bash
-./test/atk/demo quick
+cub-scout demo quick
 ```
 
 Creates:
@@ -61,7 +61,7 @@ Shows:
 The BIGBANK Grafana bug that caused a 4-hour outage.
 
 ```bash
-./test/atk/demo ccve
+cub-scout demo ccve
 ```
 
 Creates:
@@ -82,7 +82,7 @@ Story: [BIGBANK - GitOps Lessons Learned](https://www.youtube.com/watch?v=VJiuu-
 IITS-style hub-and-spoke GitOps pattern, all working correctly.
 
 ```bash
-./test/atk/demo healthy
+cub-scout demo healthy
 ```
 
 Creates:
@@ -103,7 +103,7 @@ Shows:
 Common GitOps problems and CCVEs.
 
 ```bash
-./test/atk/demo unhealthy
+cub-scout demo unhealthy
 ```
 
 Creates:
@@ -128,8 +128,8 @@ Shows:
 
 Example:
 ```bash
-./test/atk/demo healthy --no-pods   # Fast structural demo
-./test/atk/demo healthy --cleanup   # Clean up after
+cub-scout demo healthy --no-pods   # Fast structural demo
+cub-scout demo healthy --cleanup   # Clean up after
 ```
 
 ---
@@ -173,5 +173,5 @@ Run any script:
 - [examples/README.md](../README.md) - All examples
 - [examples/impressive-demo/](../impressive-demo/) - Full conference demo
 - [docs/TESTING-GUIDE.md](../../docs/TESTING-GUIDE.md) - Testing guide
-- [docs/TUI-TRACE.md](../../docs/TUI-TRACE.md) - Trace documentation
-- [docs/TUI-SCAN.md](../../docs/TUI-SCAN.md) - Scan documentation
+- [docs/map/howto/trace-ownership.md](../../docs/map/howto/trace-ownership.md) - Trace documentation
+- [docs/map/howto/scan-for-ccves.md](../../docs/map/howto/scan-for-ccves.md) - Scan documentation

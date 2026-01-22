@@ -14,9 +14,9 @@ Central reference for all cub-scout examples, demos, and integrations.
 | Try it on your cluster | [examples/README.md](../examples/README.md) |
 | **Full CLI reference** | [CLI-GUIDE.md](../CLI-GUIDE.md) |
 | **Command matrix** | [COMMAND-MATRIX.md](COMMAND-MATRIX.md) |
-| **Import workloads** | [IMPORTING-WORKLOADS.md](IMPORTING-WORKLOADS.md) |
+| **Import workloads** | [map/howto/import-to-confighub.md](map/howto/import-to-confighub.md) |
 | Step-by-step walkthrough | [examples/demos/walkthrough.md](../examples/demos/walkthrough.md) |
-| Fleet query examples | [JOURNEY-QUERY.md](JOURNEY-QUERY.md) |
+| Fleet query examples | [howto/fleet-queries.md](howto/fleet-queries.md) |
 | UI mockups | [examples/integrations/MOCKUPS.md](../examples/integrations/MOCKUPS.md) |
 | Integration scripts | [examples/scripts/](../examples/scripts/) |
 | Conference demo | [examples/impressive-demo/](../examples/impressive-demo/) |
@@ -90,7 +90,7 @@ Key concepts in app-config-rtmsg:
 
 ### Fleet Queries
 
-Real examples answering real questions. See [JOURNEY-QUERY.md](JOURNEY-QUERY.md).
+Real examples answering real questions. See [howto/fleet-queries.md](howto/fleet-queries.md).
 
 **Interactive demo:**
 ```bash

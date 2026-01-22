@@ -228,4 +228,4 @@ Returns CCVE findings:
 ## References
 
 - [Argo CD UI Extensions](https://argo-cd.readthedocs.io/en/stable/developer-guide/extensions/ui-extensions/)
-- [cub-scout Map Schema](../../docs/MAP-SCHEMA.md)
+- [cub-scout GSF Schema](../../docs/GSF-SCHEMA.md)

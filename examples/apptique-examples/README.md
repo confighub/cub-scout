@@ -158,14 +158,14 @@ kubectl get pods -n apptique-prod
 
 ```bash
 # Run the map command to see ownership
-./test/atk/map
+cub-scout map
 
 # Expected: Health dashboard showing apptique workloads
 ```
 
 ```bash
 # List workloads with owners
-./test/atk/map workloads
+cub-scout map workloads
 
 # Expected output for Flux pattern:
 # STATUS  NAMESPACE      NAME      OWNER   MANAGED-BY    IMAGE
@@ -218,7 +218,7 @@ cub-scout trace deployment/frontend -n apptique-prod
 
 ```bash
 # Scan for configuration issues
-./test/atk/scan
+cub-scout scan
 
 # Expected: No critical CCVEs in clean deployment
 # (The apptique manifests follow best practices)
@@ -290,7 +290,7 @@ cub auth login
 
 ```bash
 # Run map with ConfigHub hierarchy
-./test/atk/map confighub
+cub-scout map confighub
 
 # Expected: Shows ConfigHub hierarchy with your units
 ```
@@ -338,7 +338,7 @@ These scenarios demonstrate the **Rendered Manifest pattern goals** using real K
 kubectl apply -k examples/apptique-examples/scenarios/monday-panic/
 
 # 2. Find the problem
-./test/atk/map workloads
+cub-scout map workloads
 
 # Expected output:
 # STATUS  NAMESPACE      NAME      OWNER  IMAGE
@@ -373,7 +373,7 @@ kubectl delete -f examples/apptique-examples/scenarios/drift-detection/base-depl
 kubectl apply -k examples/apptique-examples/scenarios/security-patch/
 
 # 2. Scan for CCVEs
-./test/atk/scan
+cub-scout scan
 
 # Expected output:
 # CRITICAL (1)
@@ -445,7 +445,7 @@ kubectl apply -k flux-monorepo/apps/apptique/overlays/dev/
 ./cub-scout import -n apptique-dev
 
 # 3. View the hierarchy
-./test/atk/map confighub
+cub-scout map confighub
 
 # Expected:
 # Hub: apptique-platform

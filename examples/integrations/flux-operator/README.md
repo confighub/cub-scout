@@ -156,7 +156,9 @@ agent_ccve_total{severity="warning"} 3
 agent_ccve_finding{id="CCVE-2025-0023",resource="default/Deployment/api"} 1
 ```
 
-### Option 2: API Integration
+### Option 2: API Integration (Proposed)
+
+> **Not Yet Implemented:** This API integration is proposed for a future HTTP API mode. Currently, use CLI commands like `cub-scout snapshot -o -` and `cub-scout scan --json`.
 
 Query Agent API directly from the Flux Operator UI.
 
@@ -283,4 +285,4 @@ kubectl apply -f agent-deployment.yaml
 - [Flux Operator](https://fluxcd.control-plane.io/operator/)
 - [Flux Operator Web UI](https://fluxoperator.dev/web-ui/)
 - [Stefan Prodan's Blog](https://stefanprodan.com/blog/2024/flux-operator/)
-- [cub-scout Map Schema](../../docs/MAP-SCHEMA.md)
+- [cub-scout GSF Schema](../../docs/GSF-SCHEMA.md)

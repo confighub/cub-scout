@@ -92,7 +92,7 @@ Run this to see the hierarchy in action:
 
 ```bash
 # See the current hierarchy (requires ConfigHub auth)
-./test/atk/map confighub
+cub-scout map --hub
 
 # Or use the demo script
 ./examples/apptique-examples/confighub/demo-hierarchy.sh
@@ -171,15 +171,13 @@ The apptique examples map directly to the **IITS Hub-and-Spoke** enterprise patt
 
 | Resource | Description |
 |----------|-------------|
-| [TUI-MAP-FLEET-IITS-STUDIES.md](../../../docs/EXAMPLES-TUI-MAP-FLEET-IITS-STUDIES.md) | How TUI solves IITS problems |
-| [08-CASE-STUDIES-IITS.md](../../../docs/planning/map/08-CASE-STUDIES-IITS.md) | 10 enterprise problems → solutions |
+| [enterprise-case-studies.md](../../../docs/outcomes/enterprise-case-studies.md) | How cub-scout solves IITS problems |
 | [iits-patterns.yaml](iits-patterns.yaml) | Apptique → IITS pattern mapping |
 
 ---
 
 ## See Also
 
-- [REPO-SKELETON-TAXONOMY.md](../../../docs/planning/REPO-SKELETON-TAXONOMY.md) — Full skeleton classification
-- [RENDERED-MANIFEST-PATTERN.md](../../../docs/planning/RENDERED-MANIFEST-PATTERN.md) — How ConfigHub uses this
-- [IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../../docs/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Pattern → ConfigHub mapping
-- [EXAMPLES-TUI-MAP-FLEET-IITS-STUDIES.md](../../../docs/EXAMPLES-TUI-MAP-FLEET-IITS-STUDIES.md) — IITS case studies with TUI
+- [docs/map/reference/gitops-repo-structures.md](../../../docs/map/reference/gitops-repo-structures.md) — GitOps repo patterns
+- [docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../../docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Pattern → ConfigHub mapping (archived)
+- [docs/outcomes/enterprise-case-studies.md](../../../docs/outcomes/enterprise-case-studies.md) — Enterprise case studies

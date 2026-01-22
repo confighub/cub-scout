@@ -95,18 +95,14 @@ ConfigHub doesn't replace ArgoCD — it **completes** it.
 Before running fleet demos, verify with single cluster:
 
 ```bash
-./cub-scout map                           # See what's running
-./cub-scout map -q "owner=ArgoCD"         # Verify ownership detection
-./cub-scout import -n <namespace>         # Import to ConfigHub
+cub-scout map                             # See what's running
+cub-scout map -q "owner=ArgoCD"           # Verify ownership detection
+cub-scout import -n <namespace>           # Import to ConfigHub
 cub unit list --space <space>             # Verify hierarchy
 ```
 
-See [REPO-SKELETON-TAXONOMY.md](../../docs/planning/REPO-SKELETON-TAXONOMY.md) for the full verification checklist.
-
 ## See Also
 
-- [RM-DEMOS-ARGOCD.md](../../docs/planning/RM-DEMOS-ARGOCD.md) — Full demo documentation
-- [REPO-SKELETON-TAXONOMY.md](../../docs/planning/REPO-SKELETON-TAXONOMY.md) — Skeleton classification & single-cluster-first principle
-- [IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../docs/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Pattern → ConfigHub mapping
-- [RENDERED-MANIFEST-PATTERN.md](../../docs/planning/RENDERED-MANIFEST-PATTERN.md) — Pattern overview
-- [kostis-argocd-best-practices.md](../../docs/planning/reference/kostis-argocd-best-practices.md) — ArgoCD best practices (Kostis Kapelonis/Codefresh)
+- [docs/map/howto/import-to-confighub.md](../../docs/map/howto/import-to-confighub.md) — Import workloads to ConfigHub
+- [docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Pattern → ConfigHub mapping (archived)
+- [docs/map/reference/gitops-repo-structures.md](../../docs/map/reference/gitops-repo-structures.md) — GitOps repository patterns
