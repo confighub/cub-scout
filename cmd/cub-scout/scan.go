@@ -31,6 +31,7 @@ var (
 	scanDangling          bool
 	scanThreshold         string
 	scanFile              string
+	scanExplain           bool
 )
 
 var scanCmd = &cobra.Command{
@@ -96,6 +97,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanDangling, "dangling", false, "Scan for dangling/orphan resources (HPA, Service, Ingress, NetworkPolicy)")
 	scanCmd.Flags().StringVar(&scanThreshold, "threshold", "5m", "Duration threshold for stuck detection (e.g., 30s, 2m, 5m)")
 	scanCmd.Flags().StringVar(&scanFile, "file", "", "YAML file to scan (static analysis, no cluster required)")
+	scanCmd.Flags().BoolVar(&scanExplain, "explain", false, "Show explanatory content to help learn GitOps risk concepts")
 }
 
 // CombinedScanResult holds results from all scanners
@@ -398,6 +400,28 @@ func severityColor(severity string) string {
 // outputCombinedHuman outputs Kyverno, state, timing bomb, unresolved, and dangling results in human-readable format
 func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.StateScanResult, timingBombResult *agent.TimingBombResult, unresolvedResult *agent.UnresolvedResult, danglingResult *agent.DanglingResult) error {
 	fmt.Printf("\n")
+
+	// Explanatory content when --explain is used
+	if scanExplain {
+		fmt.Printf("%s%sRISK SCANNING EXPLAINED%s\n", colorBold, colorWhite, colorReset)
+		fmt.Printf("%s════════════════════════════════════════════════════════════════════%s\n", colorDim, colorReset)
+		fmt.Printf("cub-scout scans for configuration risks that cause production incidents:\n\n")
+		fmt.Printf("  %sStuck Reconciliations%s — GitOps deployers failing to sync\n", colorRed, colorReset)
+		fmt.Printf("       HelmRelease, Kustomization, or Application not Ready\n")
+		fmt.Printf("       Risk: Changes not deploying, drift accumulating\n\n")
+		fmt.Printf("  %sKyverno Violations%s — Policy violations in cluster\n", colorYellow, colorReset)
+		fmt.Printf("       Security, best practices, or compliance policies\n")
+		fmt.Printf("       Risk: Insecure or non-compliant configurations\n\n")
+		fmt.Printf("  %sTiming Bombs%s — Things that will break in the future\n", colorCyan, colorReset)
+		fmt.Printf("       Expiring certs, quota limits approaching\n")
+		fmt.Printf("       Risk: Surprise outages when time runs out\n\n")
+		fmt.Printf("  %sDangling Resources%s — Resources pointing to nothing\n", colorPurple, colorReset)
+		fmt.Printf("       HPA, Service, Ingress targeting deleted workloads\n")
+		fmt.Printf("       Risk: Broken routing, wasted capacity\n\n")
+		fmt.Printf("%sEach finding has a CCVE ID (e.g., CCVE-2025-0027) from our Risk Scorecard database.%s\n", colorDim, colorReset)
+		fmt.Printf("%sSee: https://github.com/confighubai/confighub-scan%s\n", colorDim, colorReset)
+		fmt.Printf("\n")
+	}
 
 	hasOutput := false
 
@@ -720,6 +744,16 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 
 	if !hasOutput {
 		fmt.Printf("%s%s✓ No issues found%s\n\n", colorBold, colorGreen, colorReset)
+	}
+
+	// Next steps when --explain is used
+	if scanExplain {
+		fmt.Printf("%sNEXT STEPS:%s\n", colorBold, colorReset)
+		fmt.Printf("→ See all patterns:        cub-scout scan --list\n")
+		fmt.Printf("→ Scan a YAML file:        cub-scout scan --file manifest.yaml\n")
+		fmt.Printf("→ Trace failing resource:  cub-scout trace <kind>/<name> -n <namespace>\n")
+		fmt.Printf("→ Visual guide:            docs/diagrams/risk-categories.svg\n")
+		fmt.Printf("\n")
 	}
 
 	// ConfigHub hook hint
