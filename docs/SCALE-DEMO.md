@@ -1,15 +1,15 @@
 # See cub-scout at Scale
 
-This guide shows cub-scout exploring a realistic Flux deployment with 50+ resources across multiple environments.
+This guide shows cub-scout navigating a realistic Flux deployment with 50+ resources across multiple environments.
 
 ## Why Scale Matters
 
 cub-scout's value shows at scale:
-- **Orphan detection** finds the resources you forgot about
-- **deep-dive** shows complex Deployment→ReplicaSet→Pod relationships
-- **app-hierarchy** infers logical groupings from labels
+- **Trace** shows the full chain from pod to Git source
+- **Deep-dive** shows complex Deployment→ReplicaSet→Pod relationships
+- **Structure** shows how 500 resources are organized
 
-With 5 resources, you don't need a tool. With 500, you do.
+With 5 resources, you can navigate by memory. With 500, you need a tool.
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ With 5 resources, you don't need a tool. With 500, you do.
 
 ## Option 1: Quick Scale Test (10 minutes)
 
-Deploy the official Flux reference architecture to see cub-scout at realistic scale.
+Deploy the official Flux reference architecture to see cub-scout navigating real complexity.
 
 ### Step 1: Create Cluster
 
@@ -62,68 +62,38 @@ flux get all -A --watch
 kubectl wait --for=condition=available deployment --all --all-namespaces --timeout=300s
 ```
 
-### Step 5: Explore with cub-scout
+### Step 5: Navigate with cub-scout
 
 ```bash
 cub-scout map
 ```
 
 Press:
-- `s` - Status dashboard (see ownership breakdown)
-- `w` - Workloads by owner
+- `w` - Workloads by owner (see Flux/Helm breakdown)
 - `4` - Deep-dive (Deployment→Pod trees)
+- `T` - Trace selected resource to Git
 - `?` - Help
 
 ---
 
 ## Option 2: Add Orphan Resources
 
-To see orphan detection in action, add unmanaged resources that simulate real-world drift.
+To see the full ownership picture, add some unmanaged resources:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/confighub/cub-scout/main/examples/orphans/realistic-orphans.yaml
 ```
 
-This creates:
-- `legacy-apps` namespace with old monitoring
-- `temp-testing` namespace with debug resources
-- ConfigMaps and Secrets from manual operations
-- CronJobs added outside GitOps
-
-### Find the Orphans
+Now navigate to see both managed and unmanaged resources side by side:
 
 ```bash
-cub-scout map orphans
+cub-scout map
+# Press 'w' for workloads - you'll see Flux, Helm, AND Native ownership
 ```
-
-Or in the TUI, press `o`.
-
-You'll see ~15 resources with "Native" ownership - these are your orphans.
 
 ---
 
 ## What You'll See
-
-### Status Dashboard (Press `s`)
-
-```
-cub-scout map
-
-CLUSTER: flux-scale-demo
-────────────────────────────────────────
-Resources:  127 across 8 namespaces
-Workloads:   47 (Deployments, StatefulSets, DaemonSets)
-
-OWNERSHIP
-  Flux      ████████████████████  68 (54%)
-  Helm      ██████████░░░░░░░░░░  31 (24%)
-  Native    ████████░░░░░░░░░░░░  28 (22%)
-
-HEALTH
-  Ready     ███████████████████░  119 (94%)
-  Pending   ██░░░░░░░░░░░░░░░░░░    5 (4%)
-  Failed    █░░░░░░░░░░░░░░░░░░░    3 (2%)
-```
 
 ### Workloads by Owner (Press `w`)
 
@@ -147,7 +117,7 @@ Native (7)
   └── ...
 ```
 
-### Deep-Dive (Press `4`)
+### Deep-Dive Trees (Press `4`)
 
 ```
 RESOURCE TREE
@@ -164,27 +134,6 @@ Deployments (47)
 ├── legacy-prometheus [Native - ORPHAN]
 │   └── ReplicaSet legacy-prometheus-8e6f9a
 │       └── Pod legacy-prometheus-8e6f9a-xyz99  ✓ Running
-```
-
-### Orphans (Press `o`)
-
-```
-ORPHAN RESOURCES (28)
-────────────────────────────────────────
-These resources have no GitOps owner.
-
-NAMESPACE       KIND         NAME                  AGE
-legacy-apps     Deployment   legacy-prometheus     3d
-legacy-apps     Service      legacy-prometheus     3d
-temp-testing    Deployment   debug-nginx           1d
-default         ConfigMap    old-feature-flags     7d
-default         ConfigMap    manual-override       2d
-default         Secret       manual-api-key        5d
-default         Deployment   hotfix-worker         12h
-default         CronJob      manual-cleanup        4d
-...
-
-Total: 28 orphan resources across 4 namespaces
 ```
 
 ### Trace (Press `T` on a resource)
@@ -204,6 +153,51 @@ ReplicaSet/apps/podinfo-7d4b8c9f
     ↓ creates
 Pod/apps/podinfo-7d4b8c9f-abc12  ✓ Running
 ```
+
+### Status Dashboard (Press `s`)
+
+```
+cub-scout map
+
+CLUSTER: flux-scale-demo
+────────────────────────────────────────
+Resources:  127 across 8 namespaces
+Workloads:   47 (Deployments, StatefulSets, DaemonSets)
+
+OWNERSHIP
+  Flux      ████████████████████  68 (54%)
+  Helm      ██████████░░░░░░░░░░  31 (24%)
+  Native    ████████░░░░░░░░░░░░  28 (22%)
+
+HEALTH
+  Ready     ███████████████████░  119 (94%)
+  Pending   ██░░░░░░░░░░░░░░░░░░    5 (4%)
+  Failed    █░░░░░░░░░░░░░░░░░░░    3 (2%)
+```
+
+---
+
+## The Navigation Flow
+
+When something breaks, here's how cub-scout helps:
+
+**1. Start with structure** (`cub-scout map` → press `w`)
+- See all workloads organized by owner
+- Quickly identify which tool manages what
+
+**2. Find the failing resource** (use `/` to search)
+- Search by name, namespace, or status
+- Navigate with arrow keys
+
+**3. Trace back to Git** (press `T`)
+- See the full ownership chain
+- Find the Git source and last commit
+
+**4. Deep-dive into pods** (press `4`)
+- See pod status and IP addresses
+- Identify which pods are failing and why
+
+**Total time: 10-15 seconds** instead of 10-15 minutes with kubectl.
 
 ---
 

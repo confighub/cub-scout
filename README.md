@@ -1,43 +1,125 @@
-# cub-scout = the GitOps explorer
+# cub-scout
 
-**Find who owns every Kubernetes resource in 10 seconds.**
+**Understand your Kubernetes cluster in seconds.**
+
+Navigate 500 resources as easily as 5. Trace any deployment back to its Git source. See why pods are failing without digging through kubectl.
 
 ```bash
-./cub-scout map
+brew install confighub/tap/cub-scout
+cub-scout map
+```
+
+Press `w` for workloads. Press `T` to trace. Press `4` for deep-dive.
+
+---
+
+## The Problem
+
+You have 50+ Kustomizations. 200+ deployments. 10+ namespaces.
+
+When something breaks:
+- Which Kustomization manages this deployment?
+- What Git repo is it from?
+- What changed recently?
+
+You piece it together with kubectl, Git, and tribal knowledge. It takes 15 minutes when you need answers in 15 seconds.
+
+---
+
+## The Solution
+
+cub-scout shows you the whole picture in one view.
+
+### Trace Any Resource
+
+```bash
+cub-scout trace deploy/payment-api -n prod
+```
+
+See the full chain: Git repo → Kustomization → Deployment → Pod
+
+```
+Pod payment-api-7d4b8c-xyz [Running]
+  ↑ owned by
+ReplicaSet payment-api-7d4b8c
+  ↑ owned by
+Deployment payment-api [3/3 ready]
+  ↑ managed by
+Kustomization apps/payment [Ready]
+  ↑ sources from
+GitRepository flux-system/main [rev abc123]
+```
+
+### Deep-Dive Trees
+
+Press `4` in the TUI to see every Deployment with its ReplicaSets and Pods:
+
+```
+Deployments (47)
+├── nginx-ingress [Helm]
+│   └── ReplicaSet nginx-ingress-7d4b8c
+│       ├── Pod nginx-ingress-7d4b8c-abc12  ✓ Running
+│       └── Pod nginx-ingress-7d4b8c-def34  ✓ Running
+├── payment-api [Flux: payments/payment-api]
+│   └── ReplicaSet payment-api-6c5d7b
+│       └── Pod payment-api-6c5d7b-xyz99  ✓ Running
+```
+
+### Structural Understanding
+
+Press `w` to see workloads grouped by owner:
+
+```
+WORKLOADS BY OWNER
+────────────────────────────────────────
+Flux (28)
+  ├── podinfo           apps        Deployment  ✓
+  ├── nginx-ingress     ingress     Deployment  ✓
+  └── ...
+
+Helm (12)
+  ├── prometheus        monitoring  StatefulSet ✓
+  └── ...
+
+Native (7)
+  └── debug-nginx       temp-test   Deployment  ⚠ (orphan)
 ```
 
 ---
 
-## Why This Exists
-
-Cub-scout is an explorer and mapping tool for Kubernetes clusters that run GitOps.  The tool can be used standalone (read-only) and has a 'ConfigHub connected' mode.
-
-Every GitOps user faces the same problem: verifying the ownership and status of workloads and resources.  Several tools and scripting incanctations exist, but it is not always easy to recall what is most appropriate or how to use it.    
-
-When something breaks at 2am, you need answers fast:
-- Who manages this deployment?
-- Is it Flux? ArgoCD? Someone's kubectl?
-- What's the Git source?
-
-**cub-scout gives you that visibility instantly.**
-
-It reads your cluster (read-only), detects ownership by examining labels and annotations, and shows you exactly what's going on.  No agents to install, no databases, no signup.  As much as possible we are leveraging existing tools, bringing them into a single framework and making them easy to use.
-
----
-
-## What It Does
+## Quick Commands
 
 | Command | What You Get |
 |---------|--------------|
-| `./cub-scout map` | Interactive TUI showing all resources by owner |
-| `./cub-scout trace deploy/nginx -n prod` | Full ownership chain: Git → Flux/Argo → Deployment |
-| `./cub-scout map orphans` | Resources not managed by GitOps (shadow IT) |
-| `./cub-scout scan` | Configuration risk patterns |
+| `cub-scout map` | Interactive TUI - press `?` for help |
+| `cub-scout map workloads` | All deployments grouped by owner |
+| `cub-scout map deep-dive` | Deployment → ReplicaSet → Pod trees |
+| `cub-scout trace deploy/x -n y` | Full ownership chain to Git source |
+| `cub-scout map orphans` | Resources not managed by GitOps |
+| `cub-scout scan` | Configuration risk patterns (46 patterns) |
 
-### Ownership Detection
+---
 
-| Owner | How It's Detected |
-|-------|-------------------|
+## Keyboard Shortcuts
+
+| Key | View |
+|-----|------|
+| `s` | Status dashboard |
+| `w` | Workloads by owner |
+| `o` | Orphans (unmanaged resources) |
+| `4` | Deep-dive (resource trees) |
+| `5` | App hierarchy (inferred Units) |
+| `T` | Trace selected resource |
+| `/` | Search |
+| `?` | Help |
+| `q` | Quit |
+
+---
+
+## Ownership Detection
+
+| Owner | How Detected |
+|-------|--------------|
 | **Flux** | `kustomize.toolkit.fluxcd.io/*` labels |
 | **ArgoCD** | `argocd.argoproj.io/instance` label |
 | **Helm** | `app.kubernetes.io/managed-by: Helm` |
@@ -46,21 +128,35 @@ It reads your cluster (read-only), detects ownership by examining labels and ann
 
 ---
 
+## See It at Scale
+
+For a realistic demo with 50+ resources, see [docs/SCALE-DEMO.md](docs/SCALE-DEMO.md).
+
+```bash
+# Deploy the official Flux reference architecture
+flux bootstrap github --owner=you --repository=fleet-infra --path=clusters/staging
+
+# Explore with cub-scout
+cub-scout map
+```
+
+---
+
 ## Install
 
-### From Source (Recommended)
+### Homebrew (macOS/Linux)
+
+```bash
+brew install confighub/tap/cub-scout
+```
+
+### From Source
 
 ```bash
 git clone https://github.com/confighub/cub-scout.git
 cd cub-scout
 go build ./cmd/cub-scout
 ./cub-scout version
-```
-
-### Homebrew (macOS/Linux)
-
-```bash
-brew install confighub/tap/cub-scout
 ```
 
 ### Docker
@@ -70,41 +166,6 @@ docker run --rm --network=host \
   -v ~/.kube:/home/nonroot/.kube \
   ghcr.io/confighub/cub-scout map list
 ```
-
----
-
-## Quick Start
-
-```bash
-# Build
-go build ./cmd/cub-scout
-
-# What's in my cluster? Who owns it?
-./cub-scout map
-
-# Plain text output (for scripting)
-./cub-scout map list
-
-# Who manages this deployment?
-./cub-scout trace deploy/nginx -n production
-
-# Find unmanaged resources
-./cub-scout map orphans
-
-# Scan for configuration issues
-./cub-scout scan
-```
-
-**Press `?` in the TUI for keyboard shortcuts.**
-
----
-
-## CLI Guide
-
-See **[CLI-GUIDE.md](CLI-GUIDE.md)** for the complete command reference with:
-- Every command explained
-- What you'd do without cub-scout (kubectl, bash, etc.)
-- Expected output examples
 
 ---
 
@@ -126,10 +187,24 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 cub-scout is the open-source cluster observer from [ConfigHub](https://confighub.com).
 
-Use it standalone forever, or connect to ConfigHub for:
+**Standalone mode:** Works forever, no signup required. See your cluster, trace ownership, scan for issues.
+
+**Connected mode:** Link to ConfigHub for:
 - Multi-cluster fleet visibility
 - One-click import of discovered workloads
+- Revision history and compare WET↔LIVE
 - Team collaboration and change tracking
+
+---
+
+## Documentation
+
+| Doc | Content |
+|-----|---------|
+| [CLI-GUIDE.md](CLI-GUIDE.md) | Complete command reference |
+| [docs/SCALE-DEMO.md](docs/SCALE-DEMO.md) | See cub-scout at scale |
+| [docs/SCAN-GUIDE.md](docs/SCAN-GUIDE.md) | Risk scanning (46 patterns) |
+| [examples/](examples/) | Demo scenarios |
 
 ---
 
@@ -137,16 +212,15 @@ Use it standalone forever, or connect to ConfigHub for:
 
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-This is an early-stage project. If it proves useful, we'll expand the community:
-- Found a bug? [Open an issue](https://github.com/confighub/cub-scout/issues)
-- Have an idea? Start a discussion
-- Want to contribute? PRs welcome
+- **Found a bug?** [Open an issue](https://github.com/confighub/cub-scout/issues)
+- **Have an idea?** Start a discussion
+- **Want to contribute?** PRs welcome
 
 ---
 
 ## Community
 
-- **Discord:** [discord.gg/confighub](https://discord.gg/confighub) — Ask questions, share feedback
+- **Discord:** [discord.gg/confighub](https://discord.gg/confighub)
 - **Issues:** [GitHub Issues](https://github.com/confighub/cub-scout/issues)
 - **Website:** [confighub.com](https://confighub.com)
 
