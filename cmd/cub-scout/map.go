@@ -42,6 +42,7 @@ var (
 	mapSince          string // --since flag for time filtering
 	mapCount          bool   // --count flag for count-only output
 	mapNamesOnly      bool   // --names-only flag for names-only output
+	mapExplain        bool   // --explain flag for learning mode
 	deepDiveConnected bool   // --connected flag for ConfigHub integration in deep-dive
 )
 
@@ -526,6 +527,7 @@ func init() {
 	mapListCmd.Flags().StringVar(&mapSince, "since", "", "Show resources changed since duration (e.g., 1h, 24h, 7d)")
 	mapListCmd.Flags().BoolVar(&mapCount, "count", false, "Output count only (no list)")
 	mapListCmd.Flags().BoolVar(&mapNamesOnly, "names-only", false, "Output names only (for scripting)")
+	mapListCmd.Flags().BoolVar(&mapExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 
 	// Orphans-specific flags (same as list)
 	mapOrphansCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
@@ -664,6 +666,29 @@ func runMapList(cmd *cobra.Command, args []string) error {
 		return enc.Encode(entries)
 	}
 
+	// Explain mode: show header explaining ownership detection
+	if mapExplain {
+		fmt.Println()
+		fmt.Println("GITOPS OWNERSHIP EXPLAINED")
+		fmt.Println("════════════════════════════════════════════════════════════════════")
+		fmt.Println("cub-scout detects who manages each resource by reading labels.")
+		fmt.Println()
+		fmt.Println("FLUX resources have labels like:")
+		fmt.Println("  kustomize.toolkit.fluxcd.io/name: my-app")
+		fmt.Println("  kustomize.toolkit.fluxcd.io/namespace: flux-system")
+		fmt.Println()
+		fmt.Println("ARGOCD resources have labels like:")
+		fmt.Println("  app.kubernetes.io/instance: my-app")
+		fmt.Println("  argocd.argoproj.io/instance: my-app")
+		fmt.Println()
+		fmt.Println("HELM resources have:")
+		fmt.Println("  app.kubernetes.io/managed-by: Helm")
+		fmt.Println()
+		fmt.Println("NATIVE means no GitOps tool claims ownership (kubectl-applied).")
+		fmt.Println("════════════════════════════════════════════════════════════════════")
+		fmt.Println()
+	}
+
 	// Table output
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	if mapVerbose {
@@ -711,6 +736,33 @@ func runMapList(cmd *cobra.Command, args []string) error {
 		ownerParts = append(ownerParts, fmt.Sprintf("%s(%d)", owner, byOwner[owner]))
 	}
 	fmt.Println(strings.Join(ownerParts, " "))
+
+	// Explain mode: show what this means and next steps
+	if mapExplain {
+		fmt.Println()
+		fmt.Println("WHAT THIS MEANS:")
+		// Show owner-specific explanations based on what was found
+		if byOwner["Flux"] > 0 {
+			fmt.Printf("• %d resources are managed by Flux → Changes flow from Git automatically\n", byOwner["Flux"])
+		}
+		if byOwner["ArgoCD"] > 0 {
+			fmt.Printf("• %d resources are managed by ArgoCD → Synced from Git via ArgoCD\n", byOwner["ArgoCD"])
+		}
+		if byOwner["Helm"] > 0 {
+			fmt.Printf("• %d resources are managed by Helm → Installed via helm install/upgrade\n", byOwner["Helm"])
+		}
+		if byOwner["ConfigHub"] > 0 {
+			fmt.Printf("• %d resources are managed by ConfigHub → Deployed via ConfigHub\n", byOwner["ConfigHub"])
+		}
+		if byOwner["Native"] > 0 {
+			fmt.Printf("• %d resources are Native → Applied manually, no Git source\n", byOwner["Native"])
+		}
+		fmt.Println()
+		fmt.Println("NEXT STEPS:")
+		fmt.Println("→ See the Git→Deployment chain: cub-scout trace <kind>/<name> -n <namespace>")
+		fmt.Println("→ See the full GitOps pipeline:  cub-scout map deployers")
+		fmt.Println("→ Visual guide:                  docs/diagrams/ownership-detection.svg")
+	}
 
 	return nil
 }
