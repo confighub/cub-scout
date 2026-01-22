@@ -27,6 +27,7 @@ type RepoPattern struct {
 	Apps         []string `json:"apps"`         // Apps deployed from this repo
 	Tool         string   `json:"tool"`         // Flux, ArgoCD
 	PatternType  string   `json:"patternType"`  // monorepo, polyrepo, platform, external
+	NamedPattern string   `json:"namedPattern"` // Arnie, Banko, Fluxy, D2, etc.
 }
 
 type EnvChain struct {
@@ -314,9 +315,10 @@ func buildRepoPatterns(fluxRepos map[string]string, kustomizations []map[string]
 		pattern.Apps = appendUnique(pattern.Apps, app["name"])
 	}
 
-	// Classify patterns
+	// Classify patterns and detect named architectures
 	for _, p := range repoMap {
 		p.PatternType = classifyRepoPattern(p)
+		p.NamedPattern = detectNamedPattern(p.Paths)
 	}
 
 	// Convert to slice
@@ -379,6 +381,61 @@ func classifyRepoPattern(p *RepoPattern) string {
 	}
 
 	return "polyrepo"
+}
+
+// detectNamedPattern identifies well-known GitOps reference architectures
+// Named patterns from docs/map/reference/gitops-repo-structures.md:
+// - Arnie: Environment-per-Folder (Kustomize/Helm overlays)
+// - Banko: Cluster-per-Directory (Flux multi-cluster)
+// - Fluxy: Multi-Repo Fleet (OCI artifacts)
+// - D2: Control Plane reference architecture (components/base|env)
+func detectNamedPattern(paths []string) string {
+	hasEnvs := false
+	hasBase := false
+	hasClusters := false
+	hasComponents := false
+	hasOverlays := false
+
+	for _, path := range paths {
+		pathLower := strings.ToLower(path)
+		if strings.Contains(pathLower, "/envs/") || strings.Contains(pathLower, "/environments/") {
+			hasEnvs = true
+		}
+		if strings.Contains(pathLower, "/base") {
+			hasBase = true
+		}
+		if strings.Contains(pathLower, "/clusters/") {
+			hasClusters = true
+		}
+		if strings.Contains(pathLower, "/components/") {
+			hasComponents = true
+		}
+		if strings.Contains(pathLower, "/overlays/") {
+			hasOverlays = true
+		}
+	}
+
+	// D2 pattern: components/<name>/controllers/base|production
+	if hasComponents && hasBase {
+		return "D2 (Control Plane)"
+	}
+
+	// Banko pattern: clusters/<cluster>/<app>
+	if hasClusters {
+		return "Banko (Cluster-per-Dir)"
+	}
+
+	// Arnie pattern: base/ + overlays/ or envs/
+	if hasBase && (hasOverlays || hasEnvs) {
+		return "Arnie (Env-per-Folder)"
+	}
+
+	// Simple kustomize with env folders
+	if hasEnvs {
+		return "Arnie (Env-per-Folder)"
+	}
+
+	return ""
 }
 
 func buildEnvChains(deployments []map[string]string) []EnvChain {
@@ -607,6 +664,32 @@ func printPatterns(r *PatternsResult) {
 	fmt.Println("═══════════════════════════════════════════════════════════════════════════════")
 	fmt.Println()
 
+	// Quick summary
+	totalRepos := len(r.Repos)
+	totalApps := 0
+	namedPatterns := make(map[string]int)
+	for _, repo := range r.Repos {
+		totalApps += len(repo.Apps)
+		if repo.NamedPattern != "" {
+			namedPatterns[repo.NamedPattern]++
+		}
+	}
+	fmt.Printf("Summary: %d repos, %d apps, %d env chains, %d teams\n",
+		totalRepos, totalApps, len(r.EnvChains), len(r.Teams))
+	if len(namedPatterns) > 0 {
+		fmt.Print("Detected patterns: ")
+		first := true
+		for pattern, count := range namedPatterns {
+			if !first {
+				fmt.Print(", ")
+			}
+			fmt.Printf("%s (%d)", pattern, count)
+			first = false
+		}
+		fmt.Println()
+	}
+	fmt.Println()
+
 	// Repo patterns
 	fmt.Println("REPOSITORY PATTERNS")
 	fmt.Println("───────────────────────────────────────────────────────────────────────────────")
@@ -629,7 +712,11 @@ func printPatterns(r *PatternsResult) {
 			case "external":
 				typeIcon = "🌐"
 			}
-			fmt.Printf("├── %s %s [%s] → %d apps\n", typeIcon, repo.Name, repo.Tool, len(repo.Apps))
+			namedStr := ""
+			if repo.NamedPattern != "" {
+				namedStr = fmt.Sprintf(" (%s)", repo.NamedPattern)
+			}
+			fmt.Printf("├── %s %s [%s]%s → %d apps\n", typeIcon, repo.Name, repo.Tool, namedStr, len(repo.Apps))
 			if mapVerbose && len(repo.Paths) > 0 {
 				for _, path := range repo.Paths {
 					fmt.Printf("│   └── path: %s\n", path)
