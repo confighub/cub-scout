@@ -62,6 +62,25 @@ type MapEntry struct {
 	UpdatedAt    time.Time         `json:"updatedAt"`
 }
 
+// displayOwner returns the canonical display name for an owner type
+// Internal names are lowercase (flux, argo, helm, etc.) but display names are capitalized
+func displayOwner(owner string) string {
+	switch strings.ToLower(owner) {
+	case "flux":
+		return "Flux"
+	case "argo":
+		return "ArgoCD"
+	case "helm":
+		return "Helm"
+	case "confighub":
+		return "ConfigHub"
+	case "k8s", "native", "unknown", "":
+		return "Native"
+	default:
+		return owner
+	}
+}
+
 // GetField implements query.Matchable for MapEntry
 func (e MapEntry) GetField(field string) (string, bool) {
 	// Handle labels[key] syntax
@@ -213,7 +232,7 @@ func runHierarchyLoopWithContext(appContext string) (bool, error) {
 	}
 
 	if _, err := runCubCommand("context", "get"); err != nil {
-		return false, fmt.Errorf("not authenticated to ConfigHub. Run: cub auth login")
+		return false, fmt.Errorf("ConfigHub authentication required for --hub mode.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
 	}
 
 	// Create model with context
@@ -787,7 +806,7 @@ func processResource(item interface{}, gvr schema.GroupVersionResource, clusterN
 		Kind:        unstr.GetKind(),
 		Name:        unstr.GetName(),
 		APIVersion:  unstr.GetAPIVersion(),
-		Owner:       ownership.Type,
+		Owner:       displayOwner(ownership.Type),
 		Labels:      labels,
 		Status:      detectStatus(unstr),
 		CreatedAt:   unstr.GetCreationTimestamp().Time,
@@ -823,9 +842,7 @@ func processResource(item interface{}, gvr schema.GroupVersionResource, clusterN
 	// These are resources deployed directly via kubectl, or system components like the GitOps
 	// controllers themselves. This is expected and correct - the insight is knowing WHAT is
 	// unmanaged, not that unmanaged resources exist.
-	if ownership.Type == "" || ownership.Type == agent.OwnerUnknown {
-		entry.Owner = "Native"
-	}
+	// Note: displayOwner() already maps empty/unknown types to "Native"
 
 	byOwner[entry.Owner]++
 	return append(entries, entry)
@@ -996,12 +1013,19 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 	if err != nil {
 		// Check if it's an auth error
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			if strings.Contains(string(exitErr.Stderr), "authentication") ||
-				strings.Contains(string(exitErr.Stderr), "token") {
-				return nil, fmt.Errorf("not authenticated. Run 'cub auth login' first")
+			stderr := string(exitErr.Stderr)
+			if strings.Contains(stderr, "authentication") ||
+				strings.Contains(stderr, "token") ||
+				strings.Contains(stderr, "unauthorized") ||
+				strings.Contains(stderr, "401") {
+				return nil, fmt.Errorf("ConfigHub authentication required.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
+			}
+			// Include stderr in error for debugging
+			if stderr != "" {
+				return nil, fmt.Errorf("failed to fetch units from ConfigHub: %s", strings.TrimSpace(stderr))
 			}
 		}
-		return nil, fmt.Errorf("failed to fetch units: %w", err)
+		return nil, fmt.Errorf("failed to fetch units from ConfigHub: %w\n\n  Check that 'cub' CLI is installed and you're authenticated: cub auth login", err)
 	}
 
 	// The cub CLI returns nested structure: [{Space: {}, Unit: {}, UnitStatus: {}}, ...]
@@ -2392,7 +2416,7 @@ func fetchConfigHubUnits() (*cubUnitCache, error) {
 	ctxCmd := exec.Command("cub", "context", "get", "--json")
 	ctxOut, err := ctxCmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("not authenticated with ConfigHub (run 'cub auth login')")
+		return nil, fmt.Errorf("ConfigHub authentication required.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
 	}
 	var ctx struct {
 		Settings struct {

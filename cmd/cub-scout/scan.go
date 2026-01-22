@@ -39,6 +39,9 @@ var scanCmd = &cobra.Command{
 	Short: "Scan for CCVEs and stuck states",
 	Long: `Scan the cluster for CCVEs including Kyverno violations and stuck reconciliation states.
 
+Pattern database: 46 active scanner patterns + 4,500+ reference database
+See: https://github.com/confighubai/confighub-scan
+
 This command performs two types of scanning:
 1. Kyverno PolicyReports - reads violations and maps to KPOL database
 2. State scanning - detects stuck HelmReleases, Kustomizations, and Applications
