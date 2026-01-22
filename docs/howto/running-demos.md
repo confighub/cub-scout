@@ -258,6 +258,7 @@ cub worker list
 
 ## See Also
 
-- [Getting Started Tutorial](../tutorials/getting-started.md) — First-time setup
+- [Install Guide](../getting-started/install.md) — First-time setup
+- [First Map](../getting-started/first-map.md) — Your first map command
 - [Query Library](../reference/query-library.md) — Query syntax
 - [Commands Reference](../reference/commands.md) — All CLI commands
