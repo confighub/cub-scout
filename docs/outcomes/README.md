@@ -154,6 +154,7 @@ cub-scout map list -n boutique-dev
 
 - [Ownership Visibility](ownership-visibility.md) - The Native bucket insight
 - [ConfigHub Integration](confighub-integration.md) - DRY → WET → Live journey
+- [Enterprise Case Studies](enterprise-case-studies.md) - Real GitOps problems from IITS research
 - [Break Glass Scenarios](break-glass-scenarios.md) - When GitOps isn't fast enough (TODO)
 
 ---

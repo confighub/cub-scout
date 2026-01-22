@@ -20,7 +20,7 @@ These documents have been superseded by the new documentation structure.
 | HOW-IT-WORKS.md | [docs/map/PRD.md](../map/PRD.md) |
 | HOW-TO-TEST.md | [docs/TESTING-GUIDE.md](../TESTING-GUIDE.md) |
 | IMPORT-*.md | [docs/map/howto/import-to-confighub.md](../map/howto/import-to-confighub.md) |
-| EXAMPLES-TUI-MAP-FLEET-IITS-STUDIES.md | [docs/outcomes/](../outcomes/) |
+| EXAMPLES-TUI-MAP-FLEET-IITS-STUDIES.md | [docs/outcomes/enterprise-case-studies.md](../outcomes/enterprise-case-studies.md) |
 
 ## Why These Were Archived
 
