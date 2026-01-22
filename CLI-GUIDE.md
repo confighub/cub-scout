@@ -84,16 +84,92 @@ Press ? for help, q to quit
 
 **Expected output (runtime):**
 ```
-Runtime Hierarchy (51 Deployments)
-────────────────────────────────────────────────────────────
-├── boutique/cart [Flux] 2/2 ready
+RUNTIME HIERARCHY (51 Deployments)
+════════════════════════════════════════════════════════════════════
+
+NAMESPACE: boutique
+────────────────────────────────────────────────────────────────────
+├── cart [Flux: apps/boutique] 2/2 ready
 │   └── ReplicaSet cart-86f68db776 [2/2]
-│       ├── Pod cart-86f68db776-hzqgf ✓ Running
-│       └── Pod cart-86f68db776-mp8kz ✓ Running
-├── cert-manager/cert-manager [ArgoCD] 2/2 ready
-│   └── ReplicaSet cert-manager-8bdb658c7 [2/2]
-│       ├── Pod cert-manager-8bdb658c7-cx7cn ✓ Running
-│       └── Pod cert-manager-8bdb658c7-qp55s ✓ Running
+│       ├── Pod cart-86f68db776-hzqgf  ✓ Running  10.244.0.15  node-1
+│       └── Pod cart-86f68db776-mp8kz  ✓ Running  10.244.0.16  node-2
+│
+├── checkout [Flux: apps/boutique] 1/1 ready
+│   └── ReplicaSet checkout-5d8f9c7b4 [1/1]
+│       └── Pod checkout-5d8f9c7b4-abc12  ✓ Running  10.244.0.17  node-1
+│
+└── frontend [Flux: apps/boutique] 3/3 ready
+    └── ReplicaSet frontend-8e6f7a9c2 [3/3]
+        ├── Pod frontend-8e6f7a9c2-def34  ✓ Running  10.244.0.18  node-1
+        ├── Pod frontend-8e6f7a9c2-ghi56  ✓ Running  10.244.0.19  node-2
+        └── Pod frontend-8e6f7a9c2-jkl78  ✓ Running  10.244.0.20  node-3
+
+NAMESPACE: monitoring
+────────────────────────────────────────────────────────────────────
+└── prometheus [Helm: kube-prometheus] 1/1 ready
+    └── ReplicaSet prometheus-7d4b8c [1/1]
+        └── Pod prometheus-7d4b8c-xyz99  ✓ Running  10.244.0.25  node-1
+
+════════════════════════════════════════════════════════════════════
+Summary: 51 Deployments │ 189 Pods │ 186 Running │ 3 Pending
+         Flux(28) ArgoCD(12) Helm(5) ConfigHub(4) Native(2)
+```
+
+**Expected output (ownership):**
+```
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+
+Flux (28 resources)
+────────────────────────────────────────────────────────────────────
+  Managed by: kustomize.toolkit.fluxcd.io labels
+  ✓ boutique/cart          Deployment   2/2
+  ✓ boutique/checkout      Deployment   1/1
+  ✓ boutique/frontend      Deployment   3/3
+  └── ... (25 more)
+
+ArgoCD (12 resources)
+────────────────────────────────────────────────────────────────────
+  Managed by: argocd.argoproj.io/instance label
+  ✓ cert-manager/cert-manager   Deployment   1/1
+  └── ... (11 more)
+
+Native (2 resources)  ⚠ ORPHANS
+────────────────────────────────────────────────────────────────────
+  ⚠ temp-test/debug-nginx      Deployment   3d old
+  ⚠ default/test-pod           Pod          1d old
+
+════════════════════════════════════════════════════════════════════
+Ownership: Flux 56% │ ArgoCD 24% │ Helm 10% │ ConfigHub 6% │ Native 4%
+```
+
+**Expected output (suggest):**
+```
+HUB/APPSPACE SUGGESTION
+════════════════════════════════════════════════════════════════════
+
+Detected Pattern: "Control Plane" (D2-style)
+  Named after the Flux CD community reference architecture.
+  └── clusters/prod, clusters/staging structure found
+
+SUGGESTED STRUCTURE
+────────────────────────────────────────────────────────────────────
+
+Hub: acme-platform
+├── Space: boutique-prod
+│   ├── Unit: cart         (Deployment boutique/cart)
+│   ├── Unit: checkout     (Deployment boutique/checkout)
+│   ├── Unit: frontend     (Deployment boutique/frontend)
+│   └── Unit: payment-api  (Deployment boutique/payment-api)
+│
+└── Space: platform
+    ├── Unit: nginx-ingress  (Deployment ingress/nginx)
+    └── Unit: monitoring     (StatefulSet monitoring/prometheus)
+
+════════════════════════════════════════════════════════════════════
+Next steps:
+  1. Import workloads: cub-scout import -n boutique --space boutique-prod
+  2. View in ConfigHub: cub unit tree --space boutique-prod
 ```
 
 **Views:**
@@ -129,7 +205,33 @@ Runtime Hierarchy (51 Deployments)
 ./cub-scout discover
 ```
 
-**Expected output:** Same as `map workloads` — workloads grouped by owner (Flux, ArgoCD, Helm, ConfigHub, Native).
+**Expected output:**
+
+```
+WORKLOADS BY OWNER
+════════════════════════════════════════════════════════════════════
+
+STATUS  NAMESPACE       NAME              OWNER      MANAGED-BY
+✓       boutique        cart              Flux       Kustomization/apps
+✓       boutique        checkout          Flux       Kustomization/apps
+✓       boutique        frontend          Flux       Kustomization/apps
+✓       monitoring      prometheus        Helm       Release/kube-prometheus
+✓       monitoring      grafana           Helm       Release/kube-prometheus
+✓       cert-manager    cert-manager      ArgoCD     Application/cert-manager
+✓       payments        payment-gateway   ConfigHub  Unit/payment-gateway
+⚠       temp-test       debug-nginx       Native     — (orphan)
+
+────────────────────────────────────────────────────────────────────
+Summary: 47 workloads
+  Flux(28) ArgoCD(12) Helm(5) ConfigHub(2) Native(2)
+
+Ownership Distribution:
+  Flux       ████████████████████████░░░░░░░░░  56%
+  ArgoCD     ████████████░░░░░░░░░░░░░░░░░░░░░  24%
+  Helm       █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░  10%
+  ConfigHub  ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   6%
+  Native     █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   4%
+```
 
 ---
 
@@ -141,7 +243,51 @@ Runtime Hierarchy (51 Deployments)
 ./cub-scout health
 ```
 
-**Expected output:** Same as `map issues` — resources that are not reconciling, stuck, or failed.
+**Expected output (healthy):**
+
+```
+CLUSTER HEALTH CHECK: prod-east
+════════════════════════════════════════════════════════════════════
+
+✓ ALL HEALTHY
+
+  Deployers:  5/5 ready
+  Workloads:  47/47 ready
+
+No issues detected.
+```
+
+**Expected output (with issues):**
+
+```
+CLUSTER HEALTH CHECK: prod-east
+════════════════════════════════════════════════════════════════════
+
+🔥 3 ISSUES DETECTED
+
+DEPLOYER ISSUES
+────────────────────────────────────────────────────────────────────
+  ✗ HelmRelease/redis-cache      SourceNotReady
+    │ Message: failed to fetch Helm chart: connection refused
+    │ Last attempt: 5 minutes ago
+    └─▶ Fix: Check Helm repository connectivity
+
+  ⏸ Kustomization/monitoring     suspended
+    │ Suspended since: 2026-01-20T10:30:00Z
+    │ Reason: Manual pause for maintenance
+    └─▶ Resume: flux resume kustomization monitoring -n flux-system
+
+WORKLOAD ISSUES
+────────────────────────────────────────────────────────────────────
+  ✗ temp-test/debug-nginx        0/1 pods ready
+    │ Reason: ImagePullBackOff
+    │ Image: nginx:nonexistent
+    └─▶ Fix: Use valid image tag or check registry access
+
+════════════════════════════════════════════════════════════════════
+Summary: 2 deployer issues │ 1 workload issue │ 1 suspended
+         Deployers: 3/5 │ Workloads: 46/47
+```
 
 ---
 
@@ -201,6 +347,47 @@ kind-kind: 45 resources | Flux: 12 ok | ArgoCD: 8 ok | Helm: 3 ok | Native: 22 |
 
 Shows Deployments, StatefulSets, DaemonSets grouped by owner.
 
+**Expected output:**
+
+```
+WORKLOADS BY OWNER
+════════════════════════════════════════════════════════════════════
+
+Flux (28 workloads)
+────────────────────────────────────────────────────────────────────
+  STATUS  NAMESPACE       NAME              KIND         REPLICAS
+  ✓       boutique        cart              Deployment   2/2
+  ✓       boutique        checkout          Deployment   1/1
+  ✓       boutique        frontend          Deployment   3/3
+  ✓       boutique        payment-api       Deployment   2/2
+  ✓       ingress         nginx-ingress     Deployment   2/2
+  └── ... (23 more)
+
+ArgoCD (12 workloads)
+────────────────────────────────────────────────────────────────────
+  STATUS  NAMESPACE       NAME              KIND         REPLICAS
+  ✓       cert-manager    cert-manager      Deployment   1/1
+  ✓       cert-manager    cainjector        Deployment   1/1
+  ✓       argocd          argocd-server     Deployment   1/1
+  └── ... (9 more)
+
+Helm (5 workloads)
+────────────────────────────────────────────────────────────────────
+  STATUS  NAMESPACE       NAME              KIND         REPLICAS
+  ✓       monitoring      prometheus        StatefulSet  1/1
+  ✓       monitoring      grafana           Deployment   1/1
+  ✓       monitoring      alertmanager      StatefulSet  1/1
+
+Native (2 workloads)  ⚠ ORPHANS
+────────────────────────────────────────────────────────────────────
+  STATUS  NAMESPACE       NAME              KIND         AGE
+  ⚠       temp-test       debug-nginx       Deployment   3d
+  ⚠       default         test-pod          Deployment   1d
+
+════════════════════════════════════════════════════════════════════
+Total: 47 workloads │ 45 healthy │ 2 orphans
+```
+
 ---
 
 ### `map deployers` — GitOps Deployers
@@ -214,6 +401,44 @@ Shows Deployments, StatefulSets, DaemonSets grouped by owner.
 kubectl get kustomizations -A
 kubectl get helmreleases -A
 kubectl get applications -A
+```
+
+**Expected output:**
+
+```
+GITOPS DEPLOYERS
+════════════════════════════════════════════════════════════════════
+
+FLUX KUSTOMIZATIONS
+────────────────────────────────────────────────────────────────────
+  STATUS  NAMESPACE       NAME              REVISION               RESOURCES
+  ✓       flux-system     apps              main@sha1:abc123f      12
+  ✓       flux-system     infrastructure    main@sha1:abc123f       8
+  ✓       flux-system     monitoring        main@sha1:abc123f       5
+  ⏸       flux-system     staging           suspended               0
+
+FLUX HELM RELEASES
+────────────────────────────────────────────────────────────────────
+  STATUS  NAMESPACE       NAME              CHART                  VERSION
+  ✓       monitoring      kube-prometheus   prometheus-community   v45.3.0
+  ✗       cache           redis             bitnami/redis          v17.0.0
+    └─▶ Error: SourceNotReady - failed to fetch chart
+
+ARGOCD APPLICATIONS
+────────────────────────────────────────────────────────────────────
+  STATUS  NAMESPACE       NAME              REPO                   SYNC
+  ✓       argocd          cert-manager      charts.jetstack.io     Synced
+  ✓       argocd          external-secrets  charts.external-sec    Synced
+  ✗       argocd          payment-api       github.com/acme/apps   OutOfSync
+    └─▶ Diff: 3 resources differ from Git
+
+════════════════════════════════════════════════════════════════════
+Summary: 8 deployers │ 6 healthy │ 1 suspended │ 1 failed
+
+Pipeline Health:
+  ✓ platform-config@main  →  apps,infrastructure  →  20 resources
+  ⏸ platform-config@main  →  staging              →  suspended
+  ✗ app-manifests@main    →  redis                →  SourceNotReady
 ```
 
 ---

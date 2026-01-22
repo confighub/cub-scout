@@ -39,6 +39,41 @@ cub-scout shows you the whole picture in seconds.
 
 cub-scout shows you the whole picture in one view.
 
+### Status Dashboard
+
+```bash
+cub-scout map status
+```
+
+```
+  ✓ ALL HEALTHY   prod-east
+
+  Deployers  5/5
+  Workloads  47/47
+
+  OWNERSHIP
+  ────────────────────────────────────────────────
+  Flux(28) ArgoCD(12) Helm(5) Native(2)
+  ██████████████░░░░░░
+```
+
+When things go wrong:
+
+```
+  🔥 3 FAILURE(S)   prod-east
+
+  Deployers  3/5
+  Workloads  44/47
+
+  PROBLEMS
+  ────────────────────────────────────────────────
+  ✗ HelmRelease/redis-cache      SourceNotReady
+  ✗ Application/payment-api      OutOfSync
+  ⏸ Kustomization/monitoring     suspended
+```
+
+---
+
 ### Trace Any Resource
 
 ```bash
@@ -48,50 +83,227 @@ cub-scout trace deploy/payment-api -n prod
 See the full chain: Git repo → Kustomization → Deployment → Pod
 
 ```
-Pod payment-api-7d4b8c-xyz [Running]
-  ↑ owned by
-ReplicaSet payment-api-7d4b8c
-  ↑ owned by
-Deployment payment-api [3/3 ready]
-  ↑ managed by
-Kustomization apps/payment [Ready]
-  ↑ sources from
-GitRepository flux-system/main [rev abc123]
+┌─────────────────────────────────────────────────────────────────────┐
+│  TRACE: Deployment/payment-api                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  🟢 ✓ GitRepository/platform-config                                 │
+│      │ URL: git@github.com:acme/platform-config.git                 │
+│      │ Revision: main@sha1:abc123f                                  │
+│      │ Status: Artifact is up to date                               │
+│      │                                                              │
+│      └─▶ 🟢 ✓ Kustomization/apps-payment                            │
+│              │ Path: ./clusters/prod/apps/payment                   │
+│              │ Status: Applied revision main@sha1:abc123f           │
+│              │                                                      │
+│              └─▶ 🟢 ✓ Deployment/payment-api                        │
+│                      │ Namespace: prod                              │
+│                      │ Status: 3/3 ready                            │
+│                      │                                              │
+│                      └─▶ ReplicaSet/payment-api-7d4b8c              │
+│                          ├── Pod/payment-api-7d4b8c-abc12 ✓ Running │
+│                          ├── Pod/payment-api-7d4b8c-def34 ✓ Running │
+│                          └── Pod/payment-api-7d4b8c-xyz99 ✓ Running │
+│                                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│ 🟢 ✓ All levels in sync. Managed by Flux.                           │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Deep-Dive Trees
+---
 
-Press `4` in the TUI to see every Deployment with its ReplicaSets and Pods:
+### Tree Command — Multiple Hierarchy Views
 
-```
-Deployments (47)
-├── nginx-ingress [Helm]
-│   └── ReplicaSet nginx-ingress-7d4b8c
-│       ├── Pod nginx-ingress-7d4b8c-abc12  ✓ Running
-│       └── Pod nginx-ingress-7d4b8c-def34  ✓ Running
-├── payment-api [Flux: payments/payment-api]
-│   └── ReplicaSet payment-api-6c5d7b
-│       └── Pod payment-api-6c5d7b-xyz99  ✓ Running
+```bash
+cub-scout tree
 ```
 
-### Structural Understanding
+**Runtime Hierarchy** — Deployment → ReplicaSet → Pod:
 
-Press `w` to see workloads grouped by owner:
+```
+RUNTIME HIERARCHY (47 Deployments)
+════════════════════════════════════════════════════════════════════
+├── boutique/cart [Flux] 2/2 ready
+│   └── ReplicaSet cart-86f68db776 [2/2]
+│       ├── Pod cart-86f68db776-hzqgf  ✓ Running  10.244.0.15
+│       └── Pod cart-86f68db776-mp8kz  ✓ Running  10.244.0.16
+├── boutique/checkout [Flux] 1/1 ready
+│   └── ReplicaSet checkout-5d8f9c7b4 [1/1]
+│       └── Pod checkout-5d8f9c7b4-abc12  ✓ Running  10.244.0.17
+├── monitoring/prometheus [Helm] 1/1 ready
+│   └── ReplicaSet prometheus-7d4b8c [1/1]
+│       └── Pod prometheus-7d4b8c-xyz99  ✓ Running  10.244.0.18
+└── temp-test/debug-nginx [Native] 1/1 ready
+    └── ReplicaSet debug-nginx-6c5d7b [1/1]
+        └── Pod debug-nginx-6c5d7b-def34  ⚠ Pending  (no node)
+
+────────────────────────────────────────────────────────────────────
+Summary: 47 Deployments │ 189 Pods │ 186 Running │ 3 Pending
+```
+
+```bash
+cub-scout tree ownership
+```
+
+**Ownership Hierarchy** — Resources grouped by owner:
+
+```
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+Flux (28 resources)
+├── boutique/cart             Deployment  ✓ 2/2 ready
+├── boutique/checkout         Deployment  ✓ 1/1 ready
+├── boutique/frontend         Deployment  ✓ 3/3 ready
+├── ingress/nginx-ingress     Deployment  ✓ 2/2 ready
+└── ... (24 more)
+
+ArgoCD (12 resources)
+├── cert-manager/cert-manager   Deployment  ✓ 1/1 ready
+├── argocd/argocd-server        Deployment  ✓ 1/1 ready
+└── ... (10 more)
+
+Helm (5 resources)
+├── monitoring/prometheus       StatefulSet ✓ 1/1 ready
+├── monitoring/grafana          Deployment  ✓ 1/1 ready
+└── ... (3 more)
+
+Native (2 resources)  ⚠ ORPHANS
+├── temp-test/debug-nginx       Deployment  ✓ 1/1 ready
+└── kube-system/coredns         Deployment  ✓ 2/2 ready
+
+────────────────────────────────────────────────────────────────────
+Ownership: Flux 60% │ ArgoCD 26% │ Helm 10% │ Native 4%
+```
+
+```bash
+cub-scout tree suggest
+```
+
+**Suggested Organization** — Hub/AppSpace recommendation:
+
+```
+HUB/APPSPACE SUGGESTION
+════════════════════════════════════════════════════════════════════
+
+Detected pattern: D2 (Control Plane style)
+  └── clusters/prod, clusters/staging structure
+
+Suggested Hub/AppSpace organization:
+
+  Hub: acme-platform
+  ├── Space: boutique-prod
+  │   ├── Unit: cart          (Deployment boutique/cart)
+  │   ├── Unit: checkout      (Deployment boutique/checkout)
+  │   ├── Unit: frontend      (Deployment boutique/frontend)
+  │   └── Unit: payment-api   (Deployment boutique/payment-api)
+  │
+  ├── Space: boutique-staging
+  │   └── (clone from boutique-prod with staging values)
+  │
+  └── Space: platform
+      ├── Unit: nginx-ingress   (Deployment ingress/nginx)
+      ├── Unit: cert-manager    (Deployment cert-manager/cert-manager)
+      └── Unit: monitoring      (StatefulSet monitoring/prometheus)
+
+────────────────────────────────────────────────────────────────────
+Next steps:
+  1. Review the suggested structure above
+  2. Import workloads: cub-scout import -n boutique
+  3. View in ConfigHub: cub unit tree --space boutique-prod
+```
+
+---
+
+### Discover and Health (Scout-Style Commands)
+
+```bash
+cub-scout discover
+```
 
 ```
 WORKLOADS BY OWNER
-────────────────────────────────────────
-Flux (28)
-  ├── podinfo           apps        Deployment  ✓
-  ├── nginx-ingress     ingress     Deployment  ✓
-  └── ...
+════════════════════════════════════════════════════════════════════
 
-Helm (12)
-  ├── prometheus        monitoring  StatefulSet ✓
-  └── ...
+STATUS  NAMESPACE       NAME              OWNER      MANAGED-BY
+✓       boutique        cart              Flux       Kustomization/apps
+✓       boutique        checkout          Flux       Kustomization/apps
+✓       boutique        frontend          Flux       Kustomization/apps
+✓       monitoring      prometheus        Helm       Release/kube-prometheus
+✓       monitoring      grafana           Helm       Release/kube-prometheus
+✓       cert-manager    cert-manager      ArgoCD     Application/cert-manager
+⚠       temp-test       debug-nginx       Native     — (orphan)
 
-Native (7)
-  └── debug-nginx       temp-test   Deployment  ⚠ (orphan)
+────────────────────────────────────────────────────────────────────
+Found: 47 workloads │ Flux(28) ArgoCD(12) Helm(5) Native(2)
+```
+
+```bash
+cub-scout health
+```
+
+```
+CLUSTER HEALTH CHECK
+════════════════════════════════════════════════════════════════════
+
+DEPLOYER ISSUES
+────────────────────────────────────────────────────────────────────
+  ✗ HelmRelease/redis-cache      SourceNotReady
+    Message: failed to fetch Helm chart: connection refused
+    Last attempt: 5 minutes ago
+
+  ⏸ Kustomization/monitoring     suspended
+    Suspended since: 2026-01-20T10:30:00Z
+    Reason: Manual pause for maintenance
+
+WORKLOAD ISSUES
+────────────────────────────────────────────────────────────────────
+  ✗ temp-test/debug-nginx        0/1 pods ready
+    Reason: ImagePullBackOff
+    Image: nginx:nonexistent
+
+────────────────────────────────────────────────────────────────────
+Summary: 2 deployer issues │ 1 workload issue │ 1 suspended
+```
+
+---
+
+### Scan for Configuration Issues
+
+```bash
+cub-scout scan
+```
+
+```
+CONFIG RISK SCAN: prod-east
+════════════════════════════════════════════════════════════════════
+
+CRITICAL (1)
+────────────────────────────────────────────────────────────────────
+  [CCVE-2025-0027] Grafana sidecar namespace whitespace error
+    Resource: monitoring/ConfigMap/grafana-sidecar
+    Impact:   Dashboard injection fails silently
+    Fix:      Remove spaces: NAMESPACE="monitoring,grafana"
+    Ref:      FluxCon 2025 — BIGBANK 3-day outage
+
+WARNING (2)
+────────────────────────────────────────────────────────────────────
+  [CCVE-2025-0043] Thanos sidecar not uploading to object storage
+    Resource: monitoring/StatefulSet/prometheus
+    Fix:      Check objstore.yml bucket configuration
+
+  [CCVE-2025-0066] SSL redirect blocking ACME HTTP-01 challenge
+    Resource: ingress/Ingress/api-gateway
+    Fix:      Add: kubernetes.io/ingress.allow-http: "true"
+
+INFO (1)
+────────────────────────────────────────────────────────────────────
+  [CCVE-2025-0084] PodDisruptionBudget allows zero available
+    Resource: cache/PodDisruptionBudget/redis-pdb
+    Fix:      Set minAvailable to at least 1
+
+════════════════════════════════════════════════════════════════════
+Summary: 1 CRITICAL │ 2 WARNING │ 1 INFO
+Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 ```
 
 ---

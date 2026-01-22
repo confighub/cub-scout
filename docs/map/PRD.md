@@ -59,13 +59,16 @@ Modern Kubernetes clusters have resources deployed by multiple tools:
 
 ## Feature Specification
 
-### Top-Level Commands (14)
+### Top-Level Commands (17)
 
 | Command | Purpose | Mode |
 |---------|---------|------|
 | `map` | Interactive TUI explorer | Standalone/Connected |
+| `tree` | Hierarchical views (runtime, ownership, git, etc.) | Standalone/Connected |
 | `trace` | Show GitOps ownership chain | Standalone |
 | `scan` | Scan for CCVEs | Standalone |
+| `discover` | Find workloads by owner (alias for `map workloads`) | Standalone |
+| `health` | Check cluster health (alias for `map issues`) | Standalone |
 | `snapshot` | Dump cluster state as JSON | Standalone |
 | `import` | Import workloads into ConfigHub | Connected |
 | `import-argocd` | Import ArgoCD Application | Connected |
@@ -77,6 +80,18 @@ Modern Kubernetes clusters have resources deployed by multiple tools:
 | `version` | Print version | Standalone |
 | `completion` | Generate shell completions | Standalone |
 | `setup` | Set up shell config | Standalone |
+
+### Tree Subcommands (7)
+
+| Command | Purpose | Mode |
+|---------|---------|------|
+| `tree` / `tree runtime` | Deployment → ReplicaSet → Pod hierarchy | Standalone |
+| `tree ownership` | Resources grouped by GitOps owner | Standalone |
+| `tree git` | Git source structure from repositories | Standalone |
+| `tree patterns` | Detected GitOps patterns (D2, Arnie, etc.) | Standalone |
+| `tree config` | ConfigHub Unit relationships (wraps `cub unit tree`) | Connected |
+| `tree suggest` | Suggested Hub/AppSpace organization | Standalone |
+| `tree workloads` | Workloads by owner (alias for map workloads) | Standalone |
 
 ### Map Subcommands (17)
 

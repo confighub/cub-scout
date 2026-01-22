@@ -53,7 +53,7 @@ Understand the "why":
 
 ## Visual Guides
 
-See the [diagrams/](diagrams/) for visual explanations:
+See the [diagrams/](diagrams/) for visual explanations. These use [D2](https://d2lang.com), a modern diagram scripting language:
 
 | Diagram | What it shows |
 |---------|---------------|
@@ -63,6 +63,8 @@ See the [diagrams/](diagrams/) for visual explanations:
 | [Clobbering Problem](diagrams/clobbering-problem.d2) | Hidden layer dangers |
 | [Upgrade Tracing](diagrams/upgrade-tracing.d2) | Finding what changed |
 
+> **Note:** The "D2" pattern mentioned in `tree patterns` and `tree suggest` refers to a GitOps repository pattern (Flux CD "Control Plane" style with clusters/infrastructure/apps structure), not the D2 diagram language.
+
 ---
 
 ## Examples
@@ -71,6 +73,13 @@ See the [diagrams/](diagrams/) for visual explanations:
 |---------|-------------------|
 | [platform-example](../examples/platform-example/) | Full GitOps environment with orphans |
 | [flux-boutique](../examples/flux-boutique/) | Simple Flux demo |
+| [impressive-demo](../examples/impressive-demo/) | Comprehensive demo with CCVE scanning |
+| [orphans](../examples/orphans/) | Detecting and managing orphan resources |
+| [rm-demos-argocd](../examples/rm-demos-argocd/) | ArgoCD integration patterns |
+| [apptique-examples](../examples/apptique-examples/) | E-commerce microservices patterns |
+| [app-config-rtmsg](../examples/app-config-rtmsg/) | Real-time messaging configuration |
+| [demos](../examples/demos/) | Interactive demo scripts |
+| [integrations](../examples/integrations/) | Third-party tool integrations |
 
 ---
 
