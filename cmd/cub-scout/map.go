@@ -1206,7 +1206,9 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
 
-	problems := []string{}
+	// Track deployer vs workload issues separately
+	deployerIssues := []string{}
+	workloadIssues := []string{}
 
 	// Check Flux Kustomizations
 	if ksList, err := dynClient.Resource(schema.GroupVersionResource{
@@ -1215,7 +1217,7 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 		for _, ks := range ksList.Items {
 			if !isResourceReady(&ks) {
 				reason := getConditionReason(&ks)
-				problems = append(problems, fmt.Sprintf("✗ Kustomization/%s in %s: %s",
+				deployerIssues = append(deployerIssues, fmt.Sprintf("✗ Kustomization/%s in %s: %s",
 					ks.GetName(), ks.GetNamespace(), reason))
 			}
 		}
@@ -1228,7 +1230,7 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 		for _, hr := range hrList.Items {
 			if !isResourceReady(&hr) {
 				reason := getConditionReason(&hr)
-				problems = append(problems, fmt.Sprintf("✗ HelmRelease/%s in %s: %s",
+				deployerIssues = append(deployerIssues, fmt.Sprintf("✗ HelmRelease/%s in %s: %s",
 					hr.GetName(), hr.GetNamespace(), reason))
 			}
 		}
@@ -1241,7 +1243,7 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 		for _, app := range appList.Items {
 			if !isArgoAppHealthy(&app) {
 				status := getArgoStatus(&app)
-				problems = append(problems, fmt.Sprintf("✗ Application/%s in %s: %s",
+				deployerIssues = append(deployerIssues, fmt.Sprintf("✗ Application/%s in %s: %s",
 					app.GetName(), app.GetNamespace(), status))
 			}
 		}
@@ -1258,20 +1260,54 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 			}
 			if !isDeploymentReady(&dep) {
 				desired, available := getDeploymentReplicas(&dep)
-				problems = append(problems, fmt.Sprintf("✗ Deployment/%s in %s: %d/%d ready",
+				workloadIssues = append(workloadIssues, fmt.Sprintf("✗ Deployment/%s in %s: %d/%d ready",
 					dep.GetName(), ns, available, desired))
 			}
 		}
 	}
 
-	if len(problems) == 0 {
-		fmt.Println("✓ No problems found")
+	totalIssues := len(deployerIssues) + len(workloadIssues)
+
+	if totalIssues == 0 {
+		fmt.Println("✓ No issues found")
 		return nil
 	}
 
-	for _, p := range problems {
-		fmt.Println(p)
+	// Print header
+	fmt.Println()
+	fmt.Println("RESOURCES WITH ISSUES")
+	fmt.Println("════════════════════════════════════════════════════════════════════")
+	fmt.Println("Deployers and workloads with conditions != Ready.")
+	fmt.Println()
+
+	// Print deployer issues
+	if len(deployerIssues) > 0 {
+		fmt.Printf("DEPLOYERS (%d issues)\n", len(deployerIssues))
+		for _, p := range deployerIssues {
+			fmt.Println(p)
+		}
+		fmt.Println()
 	}
+
+	// Print workload issues
+	if len(workloadIssues) > 0 {
+		fmt.Printf("WORKLOADS (%d issues)\n", len(workloadIssues))
+		for _, p := range workloadIssues {
+			fmt.Println(p)
+		}
+		fmt.Println()
+	}
+
+	// Summary
+	fmt.Printf("%d total issues (%d deployers, %d workloads)\n", totalIssues, len(deployerIssues), len(workloadIssues))
+
+	// Next steps
+	fmt.Println()
+	fmt.Println("NEXT STEPS:")
+	fmt.Println("→ For remediation commands: cub-scout scan")
+	fmt.Println("→ To trace a failing resource: cub-scout trace <kind>/<name> -n <namespace>")
+	fmt.Println("→ To see full details: cub-scout map deep-dive")
+
 	return nil
 }
 
