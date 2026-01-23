@@ -53,20 +53,19 @@ changelog:
 # Note: brews and dockers use deprecated syntax but still work
 # Will be updated when GoReleaser v2 stabilizes new API
 
-# Homebrew tap disabled - requires HOMEBREW_TAP_TOKEN secret
-# brews:
-#   - name: cub-scout
-#     repository:
-#       owner: confighub
-#       name: homebrew-tap
-#       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-#     homepage: "https://confighub.com"
-#     description: "Explore and map GitOps in your clusters"
-#     license: "MIT"
-#     install: |
-#       bin.install "cub-scout"
-#     test: |
-#       system "#{bin}/cub-scout", "version"
+brews:
+  - name: cub-scout
+    repository:
+      owner: confighub
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://confighub.com"
+    description: "Explore and map GitOps in your clusters"
+    license: "MIT"
+    install: |
+      bin.install "cub-scout"
+    test: |
+      system "#{bin}/cub-scout", "version"
 
 dockers:
   - image_templates:
