@@ -40,6 +40,14 @@ jobs:
       - name: Build
         run: go build ./cmd/cub-scout
 
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+      - name: Check read-only policy
+        run: ./scripts/check-readonly.sh
+
       - name: Run unit tests
         run: go test ./... -v
 

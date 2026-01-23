@@ -63,10 +63,12 @@ func detectFluxOwnership(labels, annotations map[string]string) Ownership {
 	if name, ok := labels["kustomize.toolkit.fluxcd.io/name"]; ok {
 		ns := labels["kustomize.toolkit.fluxcd.io/namespace"]
 		return Ownership{
-			Type:      OwnerFlux,
-			SubType:   "kustomization",
-			Name:      name,
-			Namespace: ns,
+			Type:       OwnerFlux,
+			SubType:    "kustomization",
+			Name:       name,
+			Namespace:  ns,
+			Source:     "label:kustomize.toolkit.fluxcd.io/name",
+			Confidence: "high",
 		}
 	}
 
@@ -74,10 +76,12 @@ func detectFluxOwnership(labels, annotations map[string]string) Ownership {
 	if name, ok := labels["helm.toolkit.fluxcd.io/name"]; ok {
 		ns := labels["helm.toolkit.fluxcd.io/namespace"]
 		return Ownership{
-			Type:      OwnerFlux,
-			SubType:   "helmrelease",
-			Name:      name,
-			Namespace: ns,
+			Type:       OwnerFlux,
+			SubType:    "helmrelease",
+			Name:       name,
+			Namespace:  ns,
+			Source:     "label:helm.toolkit.fluxcd.io/name",
+			Confidence: "high",
 		}
 	}
 
@@ -89,15 +93,19 @@ func detectArgoOwnership(labels, annotations map[string]string) Ownership {
 	if argoInstance, isArgo := labels["argocd.argoproj.io/instance"]; isArgo {
 		// Prefer the Argo-specific label value
 		name := argoInstance
+		source := "label:argocd.argoproj.io/instance"
 		if name == "" {
 			// Fall back to app.kubernetes.io/instance if Argo label is empty
 			name = labels["app.kubernetes.io/instance"]
+			source = "label:app.kubernetes.io/instance"
 		}
 		if name != "" {
 			return Ownership{
-				Type:    OwnerArgo,
-				SubType: "application",
-				Name:    name,
+				Type:       OwnerArgo,
+				SubType:    "application",
+				Name:       name,
+				Source:     source,
+				Confidence: "medium",
 			}
 		}
 	}
@@ -109,9 +117,11 @@ func detectArgoOwnership(labels, annotations map[string]string) Ownership {
 		parts := strings.SplitN(tracking, ":", 2)
 		if len(parts) > 0 && parts[0] != "" {
 			return Ownership{
-				Type:    OwnerArgo,
-				SubType: "application",
-				Name:    parts[0],
+				Type:       OwnerArgo,
+				SubType:    "application",
+				Name:       parts[0],
+				Source:     "annotation:argocd.argoproj.io/tracking-id",
+				Confidence: "medium",
 			}
 		}
 	}
@@ -124,9 +134,11 @@ func detectHelmOwnership(labels, annotations map[string]string) Ownership {
 	if release, ok := labels["app.kubernetes.io/managed-by"]; ok && release == "Helm" {
 		name := labels["app.kubernetes.io/instance"]
 		return Ownership{
-			Type:    OwnerHelm,
-			SubType: "release",
-			Name:    name,
+			Type:       OwnerHelm,
+			SubType:    "release",
+			Name:       name,
+			Source:     "label:app.kubernetes.io/managed-by=Helm",
+			Confidence: "high",
 		}
 	}
 
@@ -137,9 +149,11 @@ func detectHelmOwnership(labels, annotations map[string]string) Ownership {
 			name = release
 		}
 		return Ownership{
-			Type:    OwnerHelm,
-			SubType: "release",
-			Name:    name,
+			Type:       OwnerHelm,
+			SubType:    "release",
+			Name:       name,
+			Source:     "label:helm.sh/chart",
+			Confidence: "high",
 		}
 	}
 
@@ -151,17 +165,21 @@ func detectTerraformOwnership(labels, annotations map[string]string) Ownership {
 	if _, ok := annotations["app.terraform.io/run-id"]; ok {
 		workspace := annotations["app.terraform.io/workspace-name"]
 		return Ownership{
-			Type:    OwnerTerraform,
-			SubType: "workspace",
-			Name:    workspace,
+			Type:       OwnerTerraform,
+			SubType:    "workspace",
+			Name:       workspace,
+			Source:     "annotation:app.terraform.io/run-id",
+			Confidence: "high",
 		}
 	}
 
 	// Alternative terraform markers
 	if _, ok := labels["app.terraform.io/managed"]; ok {
 		return Ownership{
-			Type:    OwnerTerraform,
-			SubType: "managed",
+			Type:       OwnerTerraform,
+			SubType:    "managed",
+			Source:     "label:app.terraform.io/managed",
+			Confidence: "medium",
 		}
 	}
 
@@ -178,10 +196,12 @@ func detectConfigHubOwnership(labels, annotations map[string]string) Ownership {
 			space = labels["confighub.com/SpaceName"]
 		}
 		return Ownership{
-			Type:      OwnerConfigHub,
-			SubType:   "unit",
-			Name:      unit,
-			Namespace: space,
+			Type:       OwnerConfigHub,
+			SubType:    "unit",
+			Name:       unit,
+			Namespace:  space,
+			Source:     "label:confighub.com/UnitSlug",
+			Confidence: "high",
 		}
 	}
 
@@ -189,10 +209,12 @@ func detectConfigHubOwnership(labels, annotations map[string]string) Ownership {
 	if unit, ok := annotations["confighub.com/UnitSlug"]; ok {
 		space := annotations["confighub.com/SpaceName"]
 		return Ownership{
-			Type:      OwnerConfigHub,
-			SubType:   "unit",
-			Name:      unit,
-			Namespace: space,
+			Type:       OwnerConfigHub,
+			SubType:    "unit",
+			Name:       unit,
+			Namespace:  space,
+			Source:     "annotation:confighub.com/UnitSlug",
+			Confidence: "high",
 		}
 	}
 
@@ -208,17 +230,26 @@ func detectK8sOwnership(resource *unstructured.Unstructured) Ownership {
 	// Prefer an OwnerReference where Controller=true
 	// Fall back to the first owner reference if none are marked controller
 	var owner = owners[0]
+	isController := false
 	for _, o := range owners {
 		if o.Controller != nil && *o.Controller {
 			owner = o
+			isController = true
 			break
 		}
 	}
 
+	source := "ownerRef"
+	if isController {
+		source = "ownerRef:controller"
+	}
+
 	return Ownership{
-		Type:      OwnerKubernetes,
-		SubType:   strings.ToLower(owner.Kind),
-		Name:      owner.Name,
-		Namespace: resource.GetNamespace(),
+		Type:       OwnerKubernetes,
+		SubType:    strings.ToLower(owner.Kind),
+		Name:       owner.Name,
+		Namespace:  resource.GetNamespace(),
+		Source:     source,
+		Confidence: "medium",
 	}
 }

@@ -454,7 +454,7 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 4. Match against known ownership patterns (Flux, Argo, Helm, etc.)
 5. Display results
 
-**Read-only by default.** Never modifies your cluster unless you explicitly use import commands.
+**Read-only by default.** We only use `Get`, `List`, `Watch` — never `Create`, `Update`, `Delete`. See [SECURITY.md](SECURITY.md) for details.
 
 ---
 
@@ -504,6 +504,7 @@ cub-scout is the open-source cluster explorer from [ConfigHub](https://confighub
 | Doc | Content |
 |-----|---------|
 | [CLI-GUIDE.md](CLI-GUIDE.md) | Complete command reference |
+| [SECURITY.md](SECURITY.md) | Read-only guarantee, RBAC, vulnerability reporting |
 | [docs/getting-started/scale-demo.md](docs/getting-started/scale-demo.md) | See cub-scout at scale |
 | [docs/howto/scan-for-risks.md](docs/howto/scan-for-risks.md) | Risk scanning (46 patterns) |
 | [examples/](examples/) | Demo scenarios |

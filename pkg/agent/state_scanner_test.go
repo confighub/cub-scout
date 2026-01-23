@@ -8,15 +8,19 @@ import (
 	"os"
 	"path/filepath"
 	goruntime "runtime"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	k8stesting "k8s.io/client-go/testing"
 	"sigs.k8s.io/yaml"
 )
 
@@ -801,6 +805,228 @@ func TestStateScannerWithFakeClient(t *testing.T) {
 			t.Fatal("Expected scanner.client to be set")
 		}
 	})
+}
+
+// newFakeDynamicClientForScan creates a fake client with GVRs needed for Scan()
+func newFakeDynamicClientForScan(objects ...runtime.Object) *dynamicfake.FakeDynamicClient {
+	scheme := runtime.NewScheme()
+	gvrToListKind := map[schema.GroupVersionResource]string{
+		// GitOps CRDs needed for Scan()
+		{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}:        "HelmReleaseList",
+		{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}: "KustomizationList",
+		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}:             "ApplicationList",
+		// Core resources
+		{Group: "", Version: "v1", Resource: "services"}:   "ServiceList",
+		{Group: "", Version: "v1", Resource: "pods"}:       "PodList",
+		{Group: "", Version: "v1", Resource: "configmaps"}: "ConfigMapList",
+		{Group: "", Version: "v1", Resource: "secrets"}:    "SecretList",
+	}
+	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, gvrToListKind, objects...)
+}
+
+// TestScanWarningsOnError tests that scan errors produce warnings instead of being swallowed
+func TestScanWarningsOnError(t *testing.T) {
+	t.Run("RBAC forbidden errors produce warnings", func(t *testing.T) {
+		// Create a client that has the needed GVRs registered
+		client := newFakeDynamicClientForScan()
+
+		// Add a reactor to return Forbidden error for HelmRelease listing
+		client.Fake.PrependReactor("list", "helmreleases", func(action k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, apierrors.NewForbidden(
+				schema.GroupResource{Group: "helm.toolkit.fluxcd.io", Resource: "helmreleases"},
+				"",
+				nil,
+			)
+		})
+
+		scanner := NewStateScannerWithClient(client)
+		result, err := scanner.Scan(context.Background())
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.Warnings, "Expected warnings for forbidden error")
+
+		// Check that the warning mentions access denied
+		found := false
+		for _, w := range result.Warnings {
+			if strings.Contains(w, "Access denied") || strings.Contains(w, "helmreleases") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "Expected warning about access denied for helmreleases, got: %v", result.Warnings)
+	})
+
+	t.Run("NotFound errors are silently ignored (CRD not installed)", func(t *testing.T) {
+		// Create a client with the needed GVRs
+		client := newFakeDynamicClientForScan()
+
+		// Add reactors to return NotFound for all GitOps CRDs
+		client.Fake.PrependReactor("list", "helmreleases", func(action k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, apierrors.NewNotFound(
+				schema.GroupResource{Group: "helm.toolkit.fluxcd.io", Resource: "helmreleases"},
+				"",
+			)
+		})
+		client.Fake.PrependReactor("list", "kustomizations", func(action k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, apierrors.NewNotFound(
+				schema.GroupResource{Group: "kustomize.toolkit.fluxcd.io", Resource: "kustomizations"},
+				"",
+			)
+		})
+		client.Fake.PrependReactor("list", "applications", func(action k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, apierrors.NewNotFound(
+				schema.GroupResource{Group: "argoproj.io", Resource: "applications"},
+				"",
+			)
+		})
+
+		scanner := NewStateScannerWithClient(client)
+		result, err := scanner.Scan(context.Background())
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		// NotFound errors should NOT produce warnings (CRD not installed is expected)
+		assert.Empty(t, result.Warnings, "NotFound errors should not produce warnings")
+	})
+
+	t.Run("Warnings field is present in StateScanResult", func(t *testing.T) {
+		client := newFakeDynamicClientForScan()
+		scanner := NewStateScannerWithClient(client)
+		result, err := scanner.Scan(context.Background())
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		// Findings should be initialized
+		assert.NotNil(t, result.Findings, "Findings should be initialized")
+	})
+}
+
+// TestScanContractSummaryConsistency verifies that Summary fields match actual finding counts.
+// This is a "contract" test that catches regressions where summary counters aren't updated.
+func TestScanContractSummaryConsistency(t *testing.T) {
+	// Create test resources with stuck conditions
+	// The lastTransitionTime needs to be far enough in the past to exceed the threshold
+	oldTime := time.Now().Add(-1 * time.Hour).Format(time.RFC3339)
+
+	// Create stuck HelmReleases
+	stuckHelmRelease1 := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "helm.toolkit.fluxcd.io/v2",
+			"kind":       "HelmRelease",
+			"metadata": map[string]interface{}{
+				"name":      "stuck-hr-1",
+				"namespace": "default",
+			},
+			"status": map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":               "Ready",
+						"status":             "False",
+						"reason":             "UpgradeFailed",
+						"message":            "upgrade failed",
+						"lastTransitionTime": oldTime,
+					},
+				},
+			},
+		},
+	}
+	stuckHelmRelease2 := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "helm.toolkit.fluxcd.io/v2",
+			"kind":       "HelmRelease",
+			"metadata": map[string]interface{}{
+				"name":      "stuck-hr-2",
+				"namespace": "default",
+			},
+			"status": map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":               "Stalled",
+						"status":             "True",
+						"reason":             "DependencyFailed",
+						"message":            "dependency not ready",
+						"lastTransitionTime": oldTime,
+					},
+				},
+			},
+		},
+	}
+
+	// Create stuck Kustomization
+	stuckKustomization := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+			"kind":       "Kustomization",
+			"metadata": map[string]interface{}{
+				"name":      "stuck-ks-1",
+				"namespace": "flux-system",
+			},
+			"status": map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":               "Ready",
+						"status":             "False",
+						"reason":             "BuildFailed",
+						"message":            "kustomize build failed",
+						"lastTransitionTime": oldTime,
+					},
+				},
+			},
+		},
+	}
+
+	// Create the client with test resources
+	client := newFakeDynamicClientForScan(stuckHelmRelease1, stuckHelmRelease2, stuckKustomization)
+	scanner := NewStateScannerWithClient(client)
+
+	result, err := scanner.Scan(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	// Contract: Summary.Total MUST equal len(Findings)
+	assert.Equal(t, len(result.Findings), result.Summary.Total,
+		"Summary.Total must equal len(Findings)")
+
+	// Contract: Category counts must match actual findings
+	helmCount := 0
+	kustomizeCount := 0
+	argoCount := 0
+	silentCount := 0
+
+	for _, f := range result.Findings {
+		switch f.Kind {
+		case "HelmRelease":
+			if f.Category == "STATE" {
+				helmCount++
+			} else if f.Category == "SILENT" {
+				silentCount++
+			}
+		case "Kustomization":
+			if f.Category == "STATE" {
+				kustomizeCount++
+			} else if f.Category == "SILENT" {
+				silentCount++
+			}
+		case "Application":
+			argoCount++
+		}
+	}
+
+	assert.Equal(t, helmCount, result.Summary.HelmReleaseStuck,
+		"HelmReleaseStuck count must match actual stuck HelmRelease findings")
+	assert.Equal(t, kustomizeCount, result.Summary.KustomizationStuck,
+		"KustomizationStuck count must match actual stuck Kustomization findings")
+	assert.Equal(t, argoCount, result.Summary.ApplicationStuck,
+		"ApplicationStuck count must match actual stuck Application findings")
+	assert.Equal(t, silentCount, result.Summary.SilentFailures,
+		"SilentFailures count must match actual silent failure findings")
+
+	// Verify we got the expected number of findings
+	// 2 stuck HelmReleases + 1 stuck Kustomization = 3 findings
+	assert.Equal(t, 3, result.Summary.Total, "Expected 3 stuck resources")
+	assert.Equal(t, 2, result.Summary.HelmReleaseStuck, "Expected 2 stuck HelmReleases")
+	assert.Equal(t, 1, result.Summary.KustomizationStuck, "Expected 1 stuck Kustomization")
 }
 
 // TestScanDanglingResourcesEmpty tests scanning with no resources

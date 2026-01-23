@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/queries"
 	"github.com/confighub/cub-scout/pkg/query"
@@ -46,70 +47,13 @@ var (
 	deepDiveConnected bool   // --connected flag for ConfigHub integration in deep-dive
 )
 
-// MapEntry represents a resource in the fleet map
-type MapEntry struct {
-	ID           string            `json:"id"`
-	ClusterName  string            `json:"clusterName"`
-	Namespace    string            `json:"namespace"`
-	Kind         string            `json:"kind"`
-	Name         string            `json:"name"`
-	APIVersion   string            `json:"apiVersion"`
-	Owner        string            `json:"owner"`
-	OwnerDetails map[string]string `json:"ownerDetails,omitempty"`
-	Labels       map[string]string `json:"labels,omitempty"`
-	Status       string            `json:"status"` // Ready, NotReady, Failed, Pending, Unknown
-	CreatedAt    time.Time         `json:"createdAt"`
-	UpdatedAt    time.Time         `json:"updatedAt"`
-}
+// MapEntry is an alias for mapsvc.Entry representing a resource in the fleet map.
+// This alias maintains backward compatibility with existing code.
+type MapEntry = mapsvc.Entry
 
-// displayOwner returns the canonical display name for an owner type
-// Internal names are lowercase (flux, argo, helm, etc.) but display names are capitalized
+// displayOwner delegates to mapsvc.DisplayOwner for canonical display names.
 func displayOwner(owner string) string {
-	switch strings.ToLower(owner) {
-	case "flux":
-		return "Flux"
-	case "argo":
-		return "ArgoCD"
-	case "helm":
-		return "Helm"
-	case "confighub":
-		return "ConfigHub"
-	case "k8s", "native", "unknown", "":
-		return "Native"
-	default:
-		return owner
-	}
-}
-
-// GetField implements query.Matchable for MapEntry
-func (e MapEntry) GetField(field string) (string, bool) {
-	// Handle labels[key] syntax
-	if len(field) > 7 && field[:7] == "labels[" && field[len(field)-1] == ']' {
-		key := field[7 : len(field)-1]
-		if e.Labels == nil {
-			return "", false
-		}
-		v, ok := e.Labels[key]
-		return v, ok
-	}
-	switch field {
-	case "kind":
-		return e.Kind, true
-	case "namespace":
-		return e.Namespace, true
-	case "name":
-		return e.Name, true
-	case "owner":
-		return e.Owner, true
-	case "cluster":
-		return e.ClusterName, true
-	case "apiVersion":
-		return e.APIVersion, true
-	case "status":
-		return e.Status, true
-	default:
-		return "", false
-	}
+	return mapsvc.DisplayOwner(owner)
 }
 
 var mapCmd = &cobra.Command{

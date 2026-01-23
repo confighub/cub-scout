@@ -20,6 +20,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/confighub/cub-scout/internal/hierarchysvc"
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,57 +32,14 @@ import (
 
 // Types, styles, and constants are in hierarchy_types.go
 
-// extractClusterName extracts a canonical cluster name from various context formats
+// extractClusterName delegates to hierarchysvc.ExtractClusterName
 func extractClusterName(contextName string) string {
-	// Handle empty/unknown
-	if contextName == "" || contextName == "unknown" {
-		return contextName
-	}
-
-	// AWS EKS: arn:aws:eks:region:account:cluster/name
-	if strings.HasPrefix(contextName, "arn:aws:eks:") {
-		if idx := strings.LastIndex(contextName, "/"); idx != -1 {
-			return contextName[idx+1:]
-		}
-	}
-
-	// GKE: gke_project_zone_cluster
-	if strings.HasPrefix(contextName, "gke_") {
-		parts := strings.Split(contextName, "_")
-		if len(parts) >= 4 {
-			return parts[len(parts)-1]
-		}
-	}
-
-	// kind: kind-name
-	if strings.HasPrefix(contextName, "kind-") {
-		return strings.TrimPrefix(contextName, "kind-")
-	}
-
-	// Default: use the context name as-is
-	return contextName
+	return hierarchysvc.ExtractClusterName(contextName)
 }
 
-// matchesCluster checks if a target cluster matches the current cluster
+// matchesCluster delegates to hierarchysvc.MatchesCluster
 func matchesCluster(targetCluster, currentCluster string) bool {
-	if targetCluster == "" || currentCluster == "" {
-		return false
-	}
-
-	// Exact match
-	if targetCluster == currentCluster {
-		return true
-	}
-
-	// Partial match (for different naming conventions)
-	if strings.Contains(strings.ToLower(targetCluster), strings.ToLower(currentCluster)) {
-		return true
-	}
-	if strings.Contains(strings.ToLower(currentCluster), strings.ToLower(targetCluster)) {
-		return true
-	}
-
-	return false
+	return hierarchysvc.MatchesCluster(targetCluster, currentCluster)
 }
 
 // Commands

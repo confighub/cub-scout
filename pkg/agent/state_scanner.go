@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -49,6 +50,7 @@ type StateScanResult struct {
 	ScannedAt time.Time        `json:"scannedAt"`
 	Findings  []StuckFinding   `json:"findings"`
 	Summary   StateScanSummary `json:"summary"`
+	Warnings  []string         `json:"warnings,omitempty"`
 }
 
 // StateScanSummary counts findings by type
@@ -58,6 +60,22 @@ type StateScanSummary struct {
 	ApplicationStuck   int `json:"applicationStuck"`
 	SilentFailures     int `json:"silentFailures"`
 	Total              int `json:"total"`
+}
+
+// formatScanWarning creates a descriptive warning for scan errors
+func formatScanWarning(gvr schema.GroupVersionResource, namespace string, err error) string {
+	resource := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
+	if namespace != "" {
+		resource = fmt.Sprintf("%s (namespace: %s)", resource, namespace)
+	}
+
+	if apierrors.IsNotFound(err) {
+		return fmt.Sprintf("CRD not installed: %s", resource)
+	}
+	if apierrors.IsForbidden(err) {
+		return fmt.Sprintf("Access denied: %s (check RBAC permissions)", resource)
+	}
+	return fmt.Sprintf("Error scanning %s: %v", resource, err)
 }
 
 // NewStateScanner creates a new state scanner
@@ -85,28 +103,30 @@ func (s *StateScanner) ScanWithThreshold(ctx context.Context, threshold time.Dur
 		ScannedAt: time.Now(),
 		Findings:  []StuckFinding{},
 	}
+	var warnings []string
 
 	// Scan Flux HelmReleases
-	helmFindings := s.scanHelmReleases(ctx, threshold)
+	helmFindings := s.scanHelmReleases(ctx, threshold, &warnings)
 	result.Findings = append(result.Findings, helmFindings...)
 	result.Summary.HelmReleaseStuck = len(helmFindings)
 
 	// Scan Flux Kustomizations
-	kustomizeFindings := s.scanKustomizations(ctx, threshold)
+	kustomizeFindings := s.scanKustomizations(ctx, threshold, &warnings)
 	result.Findings = append(result.Findings, kustomizeFindings...)
 	result.Summary.KustomizationStuck = len(kustomizeFindings)
 
 	// Scan Argo CD Applications
-	argoFindings := s.scanApplications(ctx, threshold)
+	argoFindings := s.scanApplications(ctx, threshold, &warnings)
 	result.Findings = append(result.Findings, argoFindings...)
 	result.Summary.ApplicationStuck = len(argoFindings)
 
 	// Scan for silent failures (Ready=True but misconfigured)
-	silentFindings := s.scanSilentFailures(ctx)
+	silentFindings := s.scanSilentFailures(ctx, &warnings)
 	result.Findings = append(result.Findings, silentFindings...)
 	result.Summary.SilentFailures = len(silentFindings)
 
 	result.Summary.Total = len(result.Findings)
+	result.Warnings = warnings
 	return result, nil
 }
 
@@ -121,46 +141,48 @@ func (s *StateScanner) ScanNamespaceWithThreshold(ctx context.Context, namespace
 		ScannedAt: time.Now(),
 		Findings:  []StuckFinding{},
 	}
+	var warnings []string
 
 	// Scan Flux HelmReleases in namespace
-	helmFindings := s.scanHelmReleasesNamespace(ctx, namespace, threshold)
+	helmFindings := s.scanHelmReleasesNamespace(ctx, namespace, threshold, &warnings)
 	result.Findings = append(result.Findings, helmFindings...)
 	result.Summary.HelmReleaseStuck = len(helmFindings)
 
 	// Scan Flux Kustomizations in namespace
-	kustomizeFindings := s.scanKustomizationsNamespace(ctx, namespace, threshold)
+	kustomizeFindings := s.scanKustomizationsNamespace(ctx, namespace, threshold, &warnings)
 	result.Findings = append(result.Findings, kustomizeFindings...)
 	result.Summary.KustomizationStuck = len(kustomizeFindings)
 
 	// Scan Argo CD Applications in namespace
-	argoFindings := s.scanApplicationsNamespace(ctx, namespace, threshold)
+	argoFindings := s.scanApplicationsNamespace(ctx, namespace, threshold, &warnings)
 	result.Findings = append(result.Findings, argoFindings...)
 	result.Summary.ApplicationStuck = len(argoFindings)
 
 	// Scan for silent failures in namespace
-	silentFindings := s.scanSilentFailuresNamespace(ctx, namespace)
+	silentFindings := s.scanSilentFailuresNamespace(ctx, namespace, &warnings)
 	result.Findings = append(result.Findings, silentFindings...)
 	result.Summary.SilentFailures = len(silentFindings)
 
 	result.Summary.Total = len(result.Findings)
+	result.Warnings = warnings
 	return result, nil
 }
 
 // scanSilentFailuresNamespace scans for silent failures in a specific namespace
-func (s *StateScanner) scanSilentFailuresNamespace(ctx context.Context, namespace string) []StuckFinding {
+func (s *StateScanner) scanSilentFailuresNamespace(ctx context.Context, namespace string, warnings *[]string) []StuckFinding {
 	var findings []StuckFinding
 
-	helmFindings := s.scanHelmReleaseSilentFailuresNamespace(ctx, namespace)
+	helmFindings := s.scanHelmReleaseSilentFailuresNamespace(ctx, namespace, warnings)
 	findings = append(findings, helmFindings...)
 
-	kustomizeFindings := s.scanKustomizationSilentFailuresNamespace(ctx, namespace)
+	kustomizeFindings := s.scanKustomizationSilentFailuresNamespace(ctx, namespace, warnings)
 	findings = append(findings, kustomizeFindings...)
 
 	return findings
 }
 
 // scanHelmReleaseSilentFailuresNamespace checks HelmReleases in a namespace for silent misconfigurations
-func (s *StateScanner) scanHelmReleaseSilentFailuresNamespace(ctx context.Context, namespace string) []StuckFinding {
+func (s *StateScanner) scanHelmReleaseSilentFailuresNamespace(ctx context.Context, namespace string, warnings *[]string) []StuckFinding {
 	var findings []StuckFinding
 
 	gvr := schema.GroupVersionResource{
@@ -171,6 +193,9 @@ func (s *StateScanner) scanHelmReleaseSilentFailuresNamespace(ctx context.Contex
 
 	list, err := s.client.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, namespace, err))
+		}
 		return nil
 	}
 
@@ -237,7 +262,7 @@ func (s *StateScanner) scanHelmReleaseSilentFailuresNamespace(ctx context.Contex
 }
 
 // scanKustomizationSilentFailuresNamespace checks Kustomizations in a namespace for silent misconfigurations
-func (s *StateScanner) scanKustomizationSilentFailuresNamespace(ctx context.Context, namespace string) []StuckFinding {
+func (s *StateScanner) scanKustomizationSilentFailuresNamespace(ctx context.Context, namespace string, warnings *[]string) []StuckFinding {
 	var findings []StuckFinding
 
 	gvr := schema.GroupVersionResource{
@@ -248,6 +273,9 @@ func (s *StateScanner) scanKustomizationSilentFailuresNamespace(ctx context.Cont
 
 	list, err := s.client.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, namespace, err))
+		}
 		return nil
 	}
 
@@ -305,7 +333,7 @@ func (s *StateScanner) scanKustomizationSilentFailuresNamespace(ctx context.Cont
 }
 
 // scanHelmReleases scans all HelmReleases for stuck states
-func (s *StateScanner) scanHelmReleases(ctx context.Context, threshold time.Duration) []StuckFinding {
+func (s *StateScanner) scanHelmReleases(ctx context.Context, threshold time.Duration, warnings *[]string) []StuckFinding {
 	gvr := schema.GroupVersionResource{
 		Group:    "helm.toolkit.fluxcd.io",
 		Version:  "v2",
@@ -314,7 +342,9 @@ func (s *StateScanner) scanHelmReleases(ctx context.Context, threshold time.Dura
 
 	list, err := s.client.Resource(gvr).List(ctx, v1.ListOptions{})
 	if err != nil {
-		// HelmRelease CRD not installed, skip
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, "", err))
+		}
 		return nil
 	}
 
@@ -322,7 +352,7 @@ func (s *StateScanner) scanHelmReleases(ctx context.Context, threshold time.Dura
 }
 
 // scanHelmReleasesNamespace scans HelmReleases in a specific namespace
-func (s *StateScanner) scanHelmReleasesNamespace(ctx context.Context, namespace string, threshold time.Duration) []StuckFinding {
+func (s *StateScanner) scanHelmReleasesNamespace(ctx context.Context, namespace string, threshold time.Duration, warnings *[]string) []StuckFinding {
 	gvr := schema.GroupVersionResource{
 		Group:    "helm.toolkit.fluxcd.io",
 		Version:  "v2",
@@ -331,6 +361,9 @@ func (s *StateScanner) scanHelmReleasesNamespace(ctx context.Context, namespace 
 
 	list, err := s.client.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, namespace, err))
+		}
 		return nil
 	}
 
@@ -402,7 +435,7 @@ func (s *StateScanner) checkHelmReleases(items []unstructured.Unstructured, thre
 }
 
 // scanKustomizations scans all Kustomizations for stuck states
-func (s *StateScanner) scanKustomizations(ctx context.Context, threshold time.Duration) []StuckFinding {
+func (s *StateScanner) scanKustomizations(ctx context.Context, threshold time.Duration, warnings *[]string) []StuckFinding {
 	gvr := schema.GroupVersionResource{
 		Group:    "kustomize.toolkit.fluxcd.io",
 		Version:  "v1",
@@ -411,6 +444,9 @@ func (s *StateScanner) scanKustomizations(ctx context.Context, threshold time.Du
 
 	list, err := s.client.Resource(gvr).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, "", err))
+		}
 		return nil
 	}
 
@@ -418,7 +454,7 @@ func (s *StateScanner) scanKustomizations(ctx context.Context, threshold time.Du
 }
 
 // scanKustomizationsNamespace scans Kustomizations in a specific namespace
-func (s *StateScanner) scanKustomizationsNamespace(ctx context.Context, namespace string, threshold time.Duration) []StuckFinding {
+func (s *StateScanner) scanKustomizationsNamespace(ctx context.Context, namespace string, threshold time.Duration, warnings *[]string) []StuckFinding {
 	gvr := schema.GroupVersionResource{
 		Group:    "kustomize.toolkit.fluxcd.io",
 		Version:  "v1",
@@ -427,6 +463,9 @@ func (s *StateScanner) scanKustomizationsNamespace(ctx context.Context, namespac
 
 	list, err := s.client.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, namespace, err))
+		}
 		return nil
 	}
 
@@ -496,7 +535,7 @@ func (s *StateScanner) checkKustomizations(items []unstructured.Unstructured, th
 }
 
 // scanApplications scans all Argo CD Applications for stuck states
-func (s *StateScanner) scanApplications(ctx context.Context, threshold time.Duration) []StuckFinding {
+func (s *StateScanner) scanApplications(ctx context.Context, threshold time.Duration, warnings *[]string) []StuckFinding {
 	gvr := schema.GroupVersionResource{
 		Group:    "argoproj.io",
 		Version:  "v1alpha1",
@@ -505,6 +544,9 @@ func (s *StateScanner) scanApplications(ctx context.Context, threshold time.Dura
 
 	list, err := s.client.Resource(gvr).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, "", err))
+		}
 		return nil
 	}
 
@@ -512,7 +554,7 @@ func (s *StateScanner) scanApplications(ctx context.Context, threshold time.Dura
 }
 
 // scanApplicationsNamespace scans Applications in a specific namespace
-func (s *StateScanner) scanApplicationsNamespace(ctx context.Context, namespace string, threshold time.Duration) []StuckFinding {
+func (s *StateScanner) scanApplicationsNamespace(ctx context.Context, namespace string, threshold time.Duration, warnings *[]string) []StuckFinding {
 	gvr := schema.GroupVersionResource{
 		Group:    "argoproj.io",
 		Version:  "v1alpha1",
@@ -521,6 +563,9 @@ func (s *StateScanner) scanApplicationsNamespace(ctx context.Context, namespace 
 
 	list, err := s.client.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, namespace, err))
+		}
 		return nil
 	}
 
@@ -732,22 +777,22 @@ func truncateMessage(msg string, maxLen int) string {
 }
 
 // scanSilentFailures scans for resources that are Ready=True but misconfigured
-func (s *StateScanner) scanSilentFailures(ctx context.Context) []StuckFinding {
+func (s *StateScanner) scanSilentFailures(ctx context.Context, warnings *[]string) []StuckFinding {
 	var findings []StuckFinding
 
 	// Scan HelmReleases for silent failures
-	helmFindings := s.scanHelmReleaseSilentFailures(ctx)
+	helmFindings := s.scanHelmReleaseSilentFailures(ctx, warnings)
 	findings = append(findings, helmFindings...)
 
 	// Scan Kustomizations for silent failures
-	kustomizeFindings := s.scanKustomizationSilentFailures(ctx)
+	kustomizeFindings := s.scanKustomizationSilentFailures(ctx, warnings)
 	findings = append(findings, kustomizeFindings...)
 
 	return findings
 }
 
 // scanHelmReleaseSilentFailures checks HelmReleases for silent misconfigurations
-func (s *StateScanner) scanHelmReleaseSilentFailures(ctx context.Context) []StuckFinding {
+func (s *StateScanner) scanHelmReleaseSilentFailures(ctx context.Context, warnings *[]string) []StuckFinding {
 	var findings []StuckFinding
 
 	gvr := schema.GroupVersionResource{
@@ -758,6 +803,9 @@ func (s *StateScanner) scanHelmReleaseSilentFailures(ctx context.Context) []Stuc
 
 	list, err := s.client.Resource(gvr).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, "", err))
+		}
 		return nil
 	}
 
@@ -995,7 +1043,7 @@ func (s *StateScanner) isShortTimeout(timeout string) bool {
 }
 
 // scanKustomizationSilentFailures checks Kustomizations for silent misconfigurations
-func (s *StateScanner) scanKustomizationSilentFailures(ctx context.Context) []StuckFinding {
+func (s *StateScanner) scanKustomizationSilentFailures(ctx context.Context, warnings *[]string) []StuckFinding {
 	var findings []StuckFinding
 
 	gvr := schema.GroupVersionResource{
@@ -1006,6 +1054,9 @@ func (s *StateScanner) scanKustomizationSilentFailures(ctx context.Context) []St
 
 	list, err := s.client.Resource(gvr).List(ctx, v1.ListOptions{})
 	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, "", err))
+		}
 		return nil
 	}
 
@@ -1755,7 +1806,7 @@ func (s *StateScanner) scanHPAMisconfiguration(ctx context.Context) []TimingBomb
 		}
 
 		list, err := s.client.Resource(gvr).List(ctx, v1.ListOptions{})
-		if err != nil {
+		if err != nil || list == nil {
 			continue // Try next version
 		}
 
@@ -1793,8 +1844,8 @@ func (s *StateScanner) scanHPAMisconfiguration(ctx context.Context) []TimingBomb
 			}
 		}
 
-		// If v2 worked, don't check v2beta2
-		if list != nil && len(list.Items) > 0 {
+		// If v2 worked and returned items, don't check v2beta2
+		if len(list.Items) > 0 {
 			break
 		}
 	}

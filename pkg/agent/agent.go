@@ -53,6 +53,13 @@ type Ownership struct {
 
 	// Namespace of the owner resource
 	Namespace string `json:"namespace,omitempty"`
+
+	// Source describes how ownership was detected
+	// Examples: "label:kustomize.toolkit.fluxcd.io/name", "annotation:argocd.argoproj.io/tracking-id", "ownerRef:controller"
+	Source string `json:"source,omitempty"`
+
+	// Confidence indicates detection reliability: "high", "medium", "low"
+	Confidence string `json:"confidence,omitempty"`
 }
 
 // Relation describes a relationship between two resources
