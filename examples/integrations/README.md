@@ -65,7 +65,10 @@ Trace resources deployed from ConfigHub acting as an OCI registry.
 **Works with:**
 - Flux OCIRepository sources
 - ArgoCD Applications with OCI repoURL
+- Flux HelmRelease with rendered Helm charts
 - Both automatically detected and traced
+
+**Special guide for Helm charts**: [rendered-helm-chart.md](confighub-oci/rendered-helm-chart.md) - Deploy pre-rendered manifests via Flux HelmRelease without re-rendering.
 
 See [confighub-oci/README.md](confighub-oci/README.md) for setup examples.
 

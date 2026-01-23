@@ -229,6 +229,16 @@ kubectl label secret repo-oci-prod-us-west \
   argocd.argoproj.io/secret-type=repository
 ```
 
+## Helm Charts with ConfigHub OCI
+
+ConfigHub can package rendered manifests as Helm charts for deployment via Flux HelmRelease or ArgoCD. This is useful when:
+
+- You need Helm release tracking and rollback capabilities
+- Your manifests contain template-like syntax that should not be re-rendered (e.g., Grafana dashboards with `{{instance}}`)
+- You want to deploy large charts with CRD/workload separation
+
+See the complete guide: [rendered-helm-chart.md](./rendered-helm-chart.md)
+
 ## Benefits of ConfigHub OCI
 
 1. **Clear Provenance** - See exactly which ConfigHub space/target deployed each resource
@@ -245,6 +255,7 @@ kubectl label secret repo-oci-prod-us-west \
 
 ## Learn More
 
+- [Rendered Helm Charts Guide](./rendered-helm-chart.md) - Deploy pre-rendered Helm charts from ConfigHub
 - [ConfigHub Documentation](https://docs.confighub.com)
 - [Rendered Manifest Pattern](../../../docs/outcomes/confighub-integration.md)
 - [OCI Artifacts Specification](https://github.com/opencontainers/artifacts)
