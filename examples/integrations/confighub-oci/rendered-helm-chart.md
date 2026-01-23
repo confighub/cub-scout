@@ -111,11 +111,21 @@ kube-prometheus-stack/
 
 ### Flux HelmRelease Configuration
 
-Deploy CRDs first, then workloads with dependency:
+Deploy CRDs first, then workloads with dependency. Note: HelmRelease requires `HelmRepository` (not `OCIRepository`) with `type: oci` for OCI registries:
 
 ```yaml
 ---
-apiVersion: v2
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: confighub-prod-monitoring
+  namespace: monitoring
+spec:
+  type: oci
+  url: oci://oci.api.confighub.com/target/prod/monitoring
+  interval: 10m
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: kube-prometheus-stack-crds
@@ -127,11 +137,11 @@ spec:
       chart: kube-prometheus-stack-crds
       version: "1.0.0"
       sourceRef:
-        kind: OCIRepository
+        kind: HelmRepository
         name: confighub-prod-monitoring
       interval: 10m
 ---
-apiVersion: v2
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: kube-prometheus-stack
@@ -145,7 +155,7 @@ spec:
       chart: kube-prometheus-stack
       version: "1.0.0"
       sourceRef:
-        kind: OCIRepository
+        kind: HelmRepository
         name: confighub-prod-monitoring
       interval: 10m
 ```
