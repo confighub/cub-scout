@@ -220,18 +220,30 @@ ConfigHub enables the Rendered Manifest pattern:
 ### What Map Shows with RM Pattern
 
 ```bash
-cub-scout map trace deploy/payment-api -n prod
+cub-scout trace deploy/payment-api -n prod
 ```
 ```
-Deployment: payment-api (prod)
-  Owner: ConfigHub
-  └── OCIRepository: payment-api (flux-system)
-      Tag: v42
-      └── ConfigHub Unit: payment-api (space: prod)
-          Revision: 42
-          └── Source: git@github.com:org/apps.git
-              Path: services/payment
+TRACE: Deployment/payment-api in prod
+
+  ✓ ConfigHub OCI/prod/us-west
+    │ Space: prod
+    │ Target: us-west
+    │ Registry: oci.api.confighub.com
+    │ Revision: v42@sha1:abc123
+    │
+    └─▶ ✓ Kustomization/payment-api
+          │ Path: .
+          │
+          └─▶ ✓ Deployment/payment-api
+                Status: Applied
+                Replicas: 3/3 ready
 ```
+
+**What this shows:**
+- ConfigHub OCI registry is the source (`oci.api.confighub.com`)
+- Space and target structure (`prod/us-west`)
+- Revision tracking (`v42`)
+- Full chain from OCI → Kustomization → Deployment
 
 ## Business Impact
 

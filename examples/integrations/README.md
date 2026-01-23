@@ -19,6 +19,7 @@ Plugins and extensions for popular Kubernetes tools.
 | Integration | Status | Description |
 |-------------|--------|-------------|
 | [argocd-extension/](argocd-extension/) | **Working** | Argo CD UI extension with CCVE tab |
+| [confighub-oci/](confighub-oci/) | **Working** | ConfigHub OCI registry integration for Flux and ArgoCD |
 | [flux-operator/](flux-operator/) | **Working** | Prometheus metrics exporter for Flux Operator |
 | [flux9s/](flux9s/) | **Proposal** | flux9s TUI enhancement with ownership columns |
 
@@ -41,6 +42,32 @@ kubectl apply -f argocd-extension/
 ```
 
 See [argocd-extension/README.md](argocd-extension/README.md) for setup.
+
+---
+
+## ConfigHub OCI Integration
+
+**Status: Working**
+
+Trace resources deployed from ConfigHub acting as an OCI registry.
+
+```bash
+# Trace a resource deployed from ConfigHub OCI
+./cub-scout trace deploy/frontend -n prod
+
+# Output shows ConfigHub space and target
+  ✓ ConfigHub OCI/prod/us-west
+    │ Space: prod
+    │ Target: us-west
+    │ Registry: oci.api.confighub.com
+```
+
+**Works with:**
+- Flux OCIRepository sources
+- ArgoCD Applications with OCI repoURL
+- Both automatically detected and traced
+
+See [confighub-oci/README.md](confighub-oci/README.md) for setup examples.
 
 ---
 

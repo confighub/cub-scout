@@ -415,6 +415,8 @@ func outputTraceHuman(result *agent.TraceResult) error {
 		switch link.Kind {
 		case "GitRepository", "OCIRepository", "HelmRepository", "Bucket", "Source":
 			kindColor = colorPurple
+		case "ConfigHub OCI":
+			kindColor = colorBlue // ConfigHub gets blue
 		case "Kustomization", "HelmRelease", "HelmChart":
 			kindColor = colorCyan
 		case "Application":
@@ -437,9 +439,23 @@ func outputTraceHuman(result *agent.TraceResult) error {
 		if link.Namespace != "" && link.Namespace != result.Object.Namespace {
 			fmt.Printf("%s%sNamespace:%s %s\n", detailPrefix, colorDim, colorReset, link.Namespace)
 		}
-		if link.URL != "" {
+
+		// Show OCI source details for ConfigHub OCI sources
+		if link.OCISource != nil && link.OCISource.IsConfigHub {
+			if link.OCISource.Space != "" {
+				fmt.Printf("%s%sSpace:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorCyan, link.OCISource.Space, colorReset)
+			}
+			if link.OCISource.Target != "" {
+				fmt.Printf("%s%sTarget:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorCyan, link.OCISource.Target, colorReset)
+			}
+			if link.OCISource.Instance != "" {
+				fmt.Printf("%s%sRegistry:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorBlue, link.OCISource.Registry, colorReset)
+			}
+		} else if link.URL != "" {
+			// Show URL for non-ConfigHub sources
 			fmt.Printf("%s%sURL:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorBlue, link.URL, colorReset)
 		}
+
 		if link.Path != "" {
 			fmt.Printf("%s%sPath:%s %s\n", detailPrefix, colorDim, colorReset, link.Path)
 		}

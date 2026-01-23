@@ -1,0 +1,148 @@
+# Example: ArgoCD Application pulling from ConfigHub OCI registry
+#
+# This creates an Application that ArgoCD uses to pull rendered manifests
+# from a ConfigHub target.
+#
+# ConfigHub OCI URL format: oci://oci.{instance}/target/{space}/{target}
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+
+---
+# Secret containing ConfigHub worker credentials for OCI repository
+# Note: This secret must have the label argocd.argoproj.io/secret-type=repository
+apiVersion: v1
+kind: Secret
+metadata:
+  name: repo-oci-prod-us-west
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+type: Opaque
+stringData:
+  type: oci
+  url: oci://oci.api.confighub.com/target/prod/us-west
+  username: "<worker-id>"      # ConfigHub worker ID
+  password: "<worker-secret>"  # ConfigHub worker secret
+
+---
+# ArgoCD Application pulling from ConfigHub OCI
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-app
+  namespace: argocd
+  # Finalizer ensures cascade delete of resources
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Project (default is fine for most cases)
+  project: default
+
+  # Source configuration
+  source:
+    # ConfigHub OCI URL
+    repoURL: oci://oci.api.confighub.com/target/prod/us-west
+
+    # Target revision (tag)
+    targetRevision: latest
+
+    # Path within the OCI artifact
+    path: .
+
+    # Directory configuration
+    directory:
+      recurse: true
+
+  # Destination cluster and namespace
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+
+  # Sync policy
+  syncPolicy:
+    # Auto-sync when source changes
+    automated:
+      # Prune resources that are no longer in source
+      prune: true
+      # Allow empty sync (no resources)
+      allowEmpty: true
+      # Self-heal if resources are manually modified
+      selfHeal: true
+
+    # Sync options
+    syncOptions:
+      - CreateNamespace=true     # Create namespace if it doesn't exist
+      - ApplyOutOfSyncOnly=true  # Only apply resources that are out of sync
+      - ServerSideApply=true     # Use server-side apply
+
+    # Retry configuration for failed syncs
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment timeout
+  revisionHistoryLimit: 10
+
+---
+# Alternative: Application using Git for source discovery but ConfigHub for deployment
+# This is useful if you want to use Git branches but deploy via ConfigHub OCI
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend-app
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    # ConfigHub OCI URL with specific revision
+    repoURL: oci://oci.api.confighub.com/target/prod/us-west
+    targetRevision: v1.2.3  # Specific ConfigHub revision
+    path: backend
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+# Example: Multi-source Application (ArgoCD 2.6+)
+# Combines ConfigHub OCI for manifests with Git for values/config
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: multi-source-app
+  namespace: argocd
+spec:
+  project: default
+
+  # Multiple sources
+  sources:
+    # Primary source: ConfigHub OCI with rendered manifests
+    - repoURL: oci://oci.api.confighub.com/target/prod/us-west
+      targetRevision: latest
+      path: .
+
+    # Secondary source: Git repo with environment-specific values
+    - repoURL: https://github.com/myorg/app-config.git
+      targetRevision: main
+      path: overlays/prod
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

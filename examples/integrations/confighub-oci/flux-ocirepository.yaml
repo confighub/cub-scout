@@ -1,0 +1,113 @@
+# Example: Flux OCIRepository pulling from ConfigHub OCI registry
+#
+# This creates an OCIRepository source that Flux uses to pull rendered manifests
+# from a ConfigHub target.
+#
+# ConfigHub OCI URL format: oci://oci.{instance}/target/{space}/{target}
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+
+---
+# Secret containing ConfigHub worker credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: confighub-worker-credentials
+  namespace: flux-system
+type: Opaque
+stringData:
+  username: "<worker-id>"      # ConfigHub worker ID
+  password: "<worker-secret>"  # ConfigHub worker secret
+
+---
+# OCIRepository pointing to ConfigHub target
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: confighub-prod-us-west
+  namespace: flux-system
+spec:
+  interval: 1m0s
+
+  # ConfigHub OCI URL
+  url: oci://oci.api.confighub.com/target/prod/us-west
+
+  # Pull latest tag (or specify a specific revision)
+  ref:
+    tag: latest
+    # Or use a specific revision:
+    # semver: ">=1.0.0 <2.0.0"
+
+  # Reference to the secret containing worker credentials
+  secretRef:
+    name: confighub-worker-credentials
+
+  # Verify the artifact signature (if using cosign)
+  # verify:
+  #   provider: cosign
+  #   secretRef:
+  #     name: cosign-public-key
+
+---
+# Kustomization that applies manifests from the OCI artifact
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-prod
+  namespace: flux-system
+spec:
+  interval: 5m0s
+
+  # Reference to the OCIRepository source
+  sourceRef:
+    kind: OCIRepository
+    name: confighub-prod-us-west
+
+  # Path within the OCI artifact (usually ".")
+  path: .
+
+  # Prune resources that are no longer in the source
+  prune: true
+
+  # Wait for resources to be ready
+  wait: true
+
+  # Target namespace for resources
+  targetNamespace: prod
+
+  # Health assessment
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: frontend
+      namespace: prod
+
+---
+# Example deployment that will be traced to ConfigHub OCI
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: prod
+  labels:
+    # These labels are added by Flux when applying from the Kustomization
+    kustomize.toolkit.fluxcd.io/name: apps-prod
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: nginx:latest
+        ports:
+        - containerPort: 80

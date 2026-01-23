@@ -190,6 +190,21 @@ func (a *ArgoTracer) parseAppOutput(data []byte, appName, namespace string) (*Tr
 		sourceLink.Kind = "HelmChart"
 		sourceLink.Name = app.Spec.Source.Chart
 	}
+
+	// Parse OCI source if applicable
+	if strings.HasPrefix(app.Spec.Source.RepoURL, "oci://") {
+		ociInfo := ParseOCISource(app.Spec.Source.RepoURL)
+		sourceLink.OCISource = &ociInfo
+
+		// For ConfigHub OCI sources, update the Kind and Name
+		if ociInfo.IsConfigHub {
+			sourceLink.Kind = "ConfigHub OCI"
+			sourceLink.Name = FormatConfigHubOCISource(ociInfo)
+		} else {
+			sourceLink.Kind = "OCIRepository"
+		}
+	}
+
 	result.Chain = append(result.Chain, sourceLink)
 
 	// Add Application as second link

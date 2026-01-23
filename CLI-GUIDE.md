@@ -592,6 +592,9 @@ Works with **Flux, ArgoCD, or standalone Helm** — auto-detects the owner.
 # Standalone Helm release (not Flux-managed)
 ./cub-scout trace deploy/prometheus -n monitoring
 
+# ConfigHub OCI source (Flux or ArgoCD)
+./cub-scout trace deploy/frontend -n prod
+
 # Reverse trace (walk up from Pod)
 ./cub-scout trace pod/nginx-abc123 -n prod --reverse
 ```
@@ -624,6 +627,40 @@ TRACE: Deployment/prometheus in monitoring
           │
           └─▶ ✓ Deployment/prometheus
                 Status: Managed by Helm
+```
+
+**ConfigHub OCI trace (Flux OCIRepository):**
+```
+TRACE: Deployment/frontend in prod
+
+  ✓ ConfigHub OCI/prod/us-west
+    │ Space: prod
+    │ Target: us-west
+    │ Registry: oci.api.confighub.com
+    │ Revision: latest@sha1:abc123
+    │
+    └─▶ ✓ Kustomization/apps
+          │ Path: .
+          │
+          └─▶ ✓ Deployment/frontend
+                Status: Applied
+```
+
+**ConfigHub OCI trace (ArgoCD Application):**
+```
+TRACE: Application/frontend-app
+
+  ✓ ConfigHub OCI/prod/us-west
+    │ Space: prod
+    │ Target: us-west
+    │ Registry: oci.api.confighub.com
+    │ Revision: latest@sha1:abc123
+    │
+    └─▶ ✓ Application/frontend-app
+          │ Status: Synced / Healthy
+          │
+          └─▶ ✓ Deployment/frontend
+                Status: Synced / Healthy
 ```
 
 **Reverse trace with orphan metadata:**

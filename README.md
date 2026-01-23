@@ -364,7 +364,29 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 
 **Flux sources supported:** GitRepository, OCIRepository, HelmRepository, Bucket
 
+**ArgoCD sources supported:** Git, OCI, Helm charts
+
 **Helm tracing:** For standalone Helm releases (not managed by Flux HelmRelease), cub-scout reads release metadata directly from Kubernetes secrets.
+
+### ConfigHub OCI Registry Support
+
+cub-scout automatically detects and traces resources deployed from ConfigHub acting as an OCI registry:
+
+**ConfigHub OCI URL format:** `oci://oci.{instance}/target/{space}/{target}`
+
+**Example trace output:**
+```
+  ✓ ConfigHub OCI/prod/us-west
+    │ Space: prod
+    │ Target: us-west
+    │ Registry: oci.api.confighub.com
+    │ Revision: latest@sha1:abc123
+    │
+    └─▶ ✓ Application/frontend-app
+        Status: Synced / Healthy
+```
+
+Works with both Flux OCIRepository and ArgoCD Applications pulling from ConfigHub OCI.
 
 ---
 

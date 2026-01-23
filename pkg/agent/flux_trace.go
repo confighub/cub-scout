@@ -219,6 +219,21 @@ func (f *FluxTracer) parseSection(section string) (*ChainLink, error) {
 		return nil, fmt.Errorf("no valid link data")
 	}
 
+	// Parse OCI source information if this is an OCIRepository
+	if link.Kind == "OCIRepository" && link.URL != "" && strings.HasPrefix(link.URL, "oci://") {
+		ociInfo := ParseOCISource(link.URL)
+		link.OCISource = &ociInfo
+
+		// For ConfigHub OCI sources, update the Kind
+		if ociInfo.IsConfigHub {
+			link.Kind = "ConfigHub OCI"
+			// Optionally update the name to show space/target
+			if ociInfo.Space != "" && ociInfo.Target != "" {
+				link.Name = FormatConfigHubOCISource(ociInfo)
+			}
+		}
+	}
+
 	return link, nil
 }
 

@@ -115,6 +115,9 @@ type ChainLink struct {
 
 	// Children lists resources managed by this link (for deployers)
 	Children []ResourceRef `json:"children,omitempty"`
+
+	// OCISource contains parsed OCI source information (for OCI-based sources)
+	OCISource *OCISourceInfo `json:"ociSource,omitempty"`
 }
 
 // IsHealthy returns true if this chain link is in a healthy state
