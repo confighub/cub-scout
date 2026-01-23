@@ -40,6 +40,16 @@ Environment Variables:
   CLUSTER_NAME            Name for this cluster (default: default)
   KUBECONFIG              Path to kubeconfig file (default: ~/.kube/config)
 `,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("cub-scout - explore and map GitOps in your clusters")
+		fmt.Println()
+		fmt.Println("Try:")
+		fmt.Println("  cub-scout map              Interactive TUI (press ? for help)")
+		fmt.Println("  cub-scout trace deploy/x   Trace a resource to its Git source")
+		fmt.Println("  cub-scout --help           Full command reference")
+		fmt.Println()
+		fmt.Println("Prerequisites: kubectl access to a cluster")
+	},
 }
 
 func main() {

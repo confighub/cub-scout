@@ -9,6 +9,15 @@ brew install confighub/tap/cub-scout
 cub-scout map
 ```
 
+### Quickstart (2 minutes)
+
+1. **Prerequisites:** kubectl access to a cluster (`kubectl get pods` works)
+2. **First command:** `cub-scout map` — launches interactive TUI
+3. **Press `?`** for keyboard shortcuts
+4. **Try:** `cub-scout trace deploy/<name> -n <namespace>` on any deployment
+
+---
+
 **Ownership at a glance:**
 
 ![cub-scout map dashboard](docs/images/map-dashboard.png)
@@ -18,8 +27,6 @@ cub-scout map
 ![cub-scout workloads view](docs/images/map-workloads.png)
 
 Press `T` to trace any resource. Press `4` for deep-dive. Press `?` for help.
-
-> **🧪 Vibe Coded:** This whole project has been vibe coded. One motive: it is an experiment to learn how AI and ConfigHub interact with GitOps clusters. We want you to try this too, and tell us what you learn.
 
 ---
 
@@ -464,20 +471,31 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 **Why this matters:** Your existing tools, RBAC, and audit trails all still work. cub-scout is a lens, not a replacement.
 
+> **🧪 Built with AI assistance:** This project was developed with AI pair programming. It's read-only by default, deterministic (no ML inference), and CI-tested. We'd love to hear what you learn using it — [open an issue](https://github.com/confighub/cub-scout/issues) or join [Discord](https://discord.gg/confighub).
+
 ---
 
 ## Part of ConfigHub
 
 cub-scout is the open-source cluster explorer from [ConfigHub](https://confighub.com).
 
-**Standalone mode:** Works forever, no signup required. See your cluster, trace ownership, scan for issues.
+| Feature | Standalone | Connected |
+|---------|:----------:|:---------:|
+| `map` — Interactive TUI | ✓ | ✓ |
+| `trace` — Ownership chains | ✓ | ✓ |
+| `tree` — Hierarchy views | ✓ | ✓ |
+| `scan` — Risk patterns | ✓ | ✓ |
+| `discover` / `health` | ✓ | ✓ |
+| `snapshot` — Export state | ✓ | ✓ |
+| `import` — Send to ConfigHub | — | ✓ |
+| `fleet` — Multi-cluster queries | — | ✓ |
+| DRY↔WET↔LIVE compare | — | ✓ |
+| Revision history | — | ✓ |
+| Team collaboration | — | ✓ |
 
-**Connected mode:** Link to ConfigHub for:
-- Multi-cluster fleet visibility
-- One-click import of discovered workloads
-- Revision history and compare DRY↔WET↔LIVE
-- Team collaboration and change tracking
-- Git and other sources
+**Standalone:** No signup, works forever. All cluster exploration features.
+
+**Connected:** Run `cub auth login` to link to ConfigHub for fleet visibility and import.
 
 ---
 
