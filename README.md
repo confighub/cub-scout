@@ -9,9 +9,15 @@ brew install confighub/tap/cub-scout
 cub-scout map
 ```
 
-![cub-scout map TUI](docs/images/map-dashboard.png)
+**Ownership at a glance:**
 
-Press `w` for workloads. Press `T` to trace. Press `4` for deep-dive.
+![cub-scout map dashboard](docs/images/map-dashboard.png)
+
+**Press `w` to see all workloads grouped by owner:**
+
+![cub-scout workloads view](docs/images/map-workloads.png)
+
+Press `T` to trace any resource. Press `4` for deep-dive. Press `?` for help.
 
 > **🧪 Vibe Coded:** This whole project has been vibe coded. One motive: it is an experiment to learn how AI and ConfigHub interact with GitOps clusters. We want you to try this too, and tell us what you learn.
 

@@ -1,0 +1,369 @@
+# Demo cluster with diverse ownership for cub-scout TUI screenshot
+# This manifest creates workloads managed by different GitOps tools
+# Run: kubectl apply -f diverse-ownership-demo.yaml
+# Then: ./cub-scout map
+# Press 'w' for workloads view
+
+---
+# Namespace setup
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: boutique
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: native-apps
+---
+
+# Flux-managed workloads (Kustomization)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: boutique
+  labels:
+    app: frontend
+    kustomize.toolkit.fluxcd.io/name: boutique-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: gcr.io/google-samples/microservices-demo/frontend:v0.8.0
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+  namespace: boutique
+  labels:
+    app: cart
+    kustomize.toolkit.fluxcd.io/name: boutique-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+      - name: cart
+        image: gcr.io/google-samples/microservices-demo/cartservice:v0.8.0
+        ports:
+        - containerPort: 7070
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: boutique
+  labels:
+    app: checkout
+    kustomize.toolkit.fluxcd.io/name: boutique-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      containers:
+      - name: checkout
+        image: gcr.io/google-samples/microservices-demo/checkoutservice:v0.8.0
+
+---
+# ArgoCD-managed workloads
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: payments
+  labels:
+    app: payment-api
+    app.kubernetes.io/instance: payment-app
+    argocd.argoproj.io/instance: payment-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-api
+  template:
+    metadata:
+      labels:
+        app: payment-api
+    spec:
+      containers:
+      - name: payment-api
+        image: nginx:1.25
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-processor
+  namespace: payments
+  labels:
+    app: payment-processor
+    app.kubernetes.io/instance: payment-app
+    argocd.argoproj.io/instance: payment-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-processor
+  template:
+    metadata:
+      labels:
+        app: payment-processor
+    spec:
+      containers:
+      - name: processor
+        image: nginx:1.25
+
+---
+# Helm-managed workload (standalone, not Flux)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress-controller
+  namespace: platform
+  labels:
+    app: nginx-ingress
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: nginx-ingress
+    app.kubernetes.io/name: ingress-nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+    metadata:
+      labels:
+        app: nginx-ingress
+    spec:
+      containers:
+      - name: controller
+        image: registry.k8s.io/ingress-nginx/controller:v1.9.4
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager
+  namespace: platform
+  labels:
+    app: cert-manager
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: cert-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cert-manager
+  template:
+    metadata:
+      labels:
+        app: cert-manager
+    spec:
+      containers:
+      - name: cert-manager
+        image: quay.io/jetstack/cert-manager-controller:v1.13.2
+
+---
+# ConfigHub-managed workload (via OCI)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics
+  namespace: platform
+  labels:
+    app: analytics
+    confighub.com/UnitSlug: analytics
+    kustomize.toolkit.fluxcd.io/name: confighub-platform
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    confighub.com/SpaceName: platform-prod
+    confighub.com/SpaceID: space-abc123
+    confighub.com/RevisionNum: "42"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: analytics
+  template:
+    metadata:
+      labels:
+        app: analytics
+    spec:
+      containers:
+      - name: analytics
+        image: nginx:1.25
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting
+  namespace: platform
+  labels:
+    app: reporting
+    confighub.com/UnitSlug: reporting
+    kustomize.toolkit.fluxcd.io/name: confighub-platform
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    confighub.com/SpaceName: platform-prod
+    confighub.com/RevisionNum: "18"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reporting
+  template:
+    metadata:
+      labels:
+        app: reporting
+    spec:
+      containers:
+      - name: reporting
+        image: nginx:1.25
+
+---
+# Flux HelmRelease-managed workload
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+    helm.toolkit.fluxcd.io/name: kube-prometheus-stack
+    helm.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  serviceName: prometheus
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: quay.io/prometheus/prometheus:v2.48.0
+        ports:
+        - containerPort: 9090
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    helm.toolkit.fluxcd.io/name: kube-prometheus-stack
+    helm.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.2.2
+
+---
+# Native workloads (no GitOps)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-tools
+  namespace: native-apps
+  labels:
+    app: debug-tools
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"debug-tools"}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-tools
+  template:
+    metadata:
+      labels:
+        app: debug-tools
+    spec:
+      containers:
+      - name: debug
+        image: nicolaka/netshoot:latest
+        command: ["sleep", "infinity"]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temp-nginx
+  namespace: native-apps
+  labels:
+    app: temp-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temp-nginx
+  template:
+    metadata:
+      labels:
+        app: temp-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest

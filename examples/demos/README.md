@@ -168,6 +168,34 @@ Run any script:
 
 ---
 
+## Screenshot Demo
+
+Create a cluster with diverse ownership for capturing impressive TUI screenshots.
+
+```bash
+./examples/demos/capture-workloads-screenshot.sh
+```
+
+This creates a kind cluster with workloads managed by:
+- **Flux Kustomization** - boutique microservices (frontend, cart, checkout)
+- **ArgoCD Application** - payment services
+- **Helm** - platform tools (nginx-ingress, cert-manager)
+- **Flux HelmRelease** - monitoring stack (prometheus, grafana)
+- **ConfigHub OCI** - analytics and reporting
+- **Native** - debug tools (no GitOps)
+
+Perfect for:
+- Creating marketing screenshots
+- Demonstrating ownership detection
+- Testing TUI with diverse data
+
+**Cleanup:**
+```bash
+kind delete cluster --name cub-scout-demo
+```
+
+---
+
 ## See Also
 
 - [examples/README.md](../README.md) - All examples
