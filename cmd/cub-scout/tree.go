@@ -81,6 +81,7 @@ func init() {
 }
 
 func runTree(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	viewType := "runtime"
 	if len(args) > 0 {
 		viewType = args[0]
@@ -88,19 +89,19 @@ func runTree(cmd *cobra.Command, args []string) error {
 
 	switch viewType {
 	case "runtime":
-		return runTreeRuntime()
+		return runTreeRuntime(ctx)
 	case "ownership":
-		return runTreeOwnership()
+		return runTreeOwnership(ctx)
 	case "workloads":
 		return runTreeWorkloads()
 	case "git":
-		return runTreeGit()
+		return runTreeGit(ctx)
 	case "patterns":
 		return runTreePatterns()
 	case "config":
 		return runTreeConfig()
 	case "suggest":
-		return runTreeSuggest()
+		return runTreeSuggest(ctx)
 	default:
 		return fmt.Errorf("unknown tree type: %s (valid: runtime, ownership, workloads, git, patterns, config, suggest)", viewType)
 	}
@@ -108,13 +109,13 @@ func runTree(cmd *cobra.Command, args []string) error {
 
 // RuntimeTree represents a deployment with its children
 type RuntimeTree struct {
-	Name        string            `json:"name"`
-	Namespace   string            `json:"namespace"`
-	Kind        string            `json:"kind"`
-	Owner       string            `json:"owner"`
-	Status      string            `json:"status"`
-	ReplicaSets []ReplicaSetNode  `json:"replicaSets,omitempty"`
-	Pods        []PodNode         `json:"pods,omitempty"` // For StatefulSets/DaemonSets
+	Name        string           `json:"name"`
+	Namespace   string           `json:"namespace"`
+	Kind        string           `json:"kind"`
+	Owner       string           `json:"owner"`
+	Status      string           `json:"status"`
+	ReplicaSets []ReplicaSetNode `json:"replicaSets,omitempty"`
+	Pods        []PodNode        `json:"pods,omitempty"` // For StatefulSets/DaemonSets
 }
 
 type ReplicaSetNode struct {
@@ -129,8 +130,7 @@ type PodNode struct {
 	Node   string `json:"node,omitempty"`
 }
 
-func runTreeRuntime() error {
-	ctx := context.Background()
+func runTreeRuntime(ctx context.Context) error {
 
 	cfg, err := buildConfig()
 	if err != nil {
@@ -315,8 +315,7 @@ func runTreeRuntime() error {
 	return nil
 }
 
-func runTreeOwnership() error {
-	ctx := context.Background()
+func runTreeOwnership(ctx context.Context) error {
 
 	cfg, err := buildConfig()
 	if err != nil {
@@ -404,8 +403,7 @@ func runTreeWorkloads() error {
 	return mapCmd.Execute()
 }
 
-func runTreeGit() error {
-	ctx := context.Background()
+func runTreeGit(ctx context.Context) error {
 
 	cfg, err := buildConfig()
 	if err != nil {
@@ -443,7 +441,7 @@ func runTreeGit() error {
 
 	if treeJSON {
 		result := map[string]interface{}{
-			"gitRepositories": []interface{}{},
+			"gitRepositories":  []interface{}{},
 			"argoApplications": []interface{}{},
 		}
 		if gitRepos != nil {
@@ -630,8 +628,7 @@ func getStatusIcon(status string) string {
 	}
 }
 
-func runTreeSuggest() error {
-	ctx := context.Background()
+func runTreeSuggest(ctx context.Context) error {
 
 	cfg, err := buildConfig()
 	if err != nil {

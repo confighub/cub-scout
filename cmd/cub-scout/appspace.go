@@ -140,4 +140,3 @@ func CreateAppSpaceWithResult(name string, setContext bool, labels []string) (*A
 	result.Created = true
 	return result, nil
 }
-

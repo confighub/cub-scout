@@ -108,7 +108,7 @@ func init() {
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	// Parse resource reference
 	var kind, name string

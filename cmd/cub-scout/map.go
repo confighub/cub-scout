@@ -112,7 +112,6 @@ func (e MapEntry) GetField(field string) (string, bool) {
 	}
 }
 
-
 var mapCmd = &cobra.Command{
 	Use:   "map",
 	Short: "Interactive map of resources and ownership",
@@ -2406,7 +2405,7 @@ type cubUnitInfo struct {
 type cubUnitCache struct {
 	units      map[string]*cubUnitInfo
 	space      string
-	allSpaces  []string          // All available spaces
+	allSpaces  []string            // All available spaces
 	crossSpace map[string][]string // unit slug -> list of spaces where it exists
 }
 
@@ -4801,25 +4800,25 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 		restarts int64
 	}
 	type workloadDetail struct {
-		namespace      string
-		name           string
-		kind           string
-		owner          string
-		managedBy      string
-		ready          bool
-		replicas       string
-		images         []string
-		envVars        map[string]string // env var name -> value (for dependency inference)
-		serviceRefs    []string          // services this workload might call
-		configMaps     []string          // configmaps used
-		secrets        []string          // secrets used
-		labels         map[string]string
-		replicaSets    []string          // RS names
-		pods           []podInfo         // pod details
+		namespace   string
+		name        string
+		kind        string
+		owner       string
+		managedBy   string
+		ready       bool
+		replicas    string
+		images      []string
+		envVars     map[string]string // env var name -> value (for dependency inference)
+		serviceRefs []string          // services this workload might call
+		configMaps  []string          // configmaps used
+		secrets     []string          // secrets used
+		labels      map[string]string
+		replicaSets []string  // RS names
+		pods        []podInfo // pod details
 	}
 
 	allWorkloads := map[string]*workloadDetail{} // namespace/name -> detail
-	allServices := map[string][]string{}          // namespace -> service names
+	allServices := map[string][]string{}         // namespace -> service names
 
 	// Collect services first (for dependency inference)
 	if svcList, err := dynClient.Resource(schema.GroupVersionResource{

@@ -96,14 +96,14 @@ type RemedyOutput struct {
 }
 
 type RemedyFindingOut struct {
-	CCVE       string             `json:"ccve"`
-	Resource   string             `json:"resource"`
-	Namespace  string             `json:"namespace,omitempty"`
-	RemedyType string             `json:"remedyType"`
-	RiskLevel  string             `json:"riskLevel"`
-	Reversible bool               `json:"reversible"`
-	Actions    []RemedyActionOut  `json:"actions"`
-	Result     *RemedyResultOut   `json:"result,omitempty"`
+	CCVE       string            `json:"ccve"`
+	Resource   string            `json:"resource"`
+	Namespace  string            `json:"namespace,omitempty"`
+	RemedyType string            `json:"remedyType"`
+	RiskLevel  string            `json:"riskLevel"`
+	Reversible bool              `json:"reversible"`
+	Actions    []RemedyActionOut `json:"actions"`
+	Result     *RemedyResultOut  `json:"result,omitempty"`
 }
 
 type RemedyActionOut struct {
@@ -118,14 +118,14 @@ type RemedyResultOut struct {
 }
 
 type RemedySummary struct {
-	Total     int `json:"total"`
-	Fixed     int `json:"fixed"`
-	Skipped   int `json:"skipped"`
-	Failed    int `json:"failed"`
+	Total   int `json:"total"`
+	Fixed   int `json:"fixed"`
+	Skipped int `json:"skipped"`
+	Failed  int `json:"failed"`
 }
 
 func runRemedy(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	// Parse timeout
 	timeout, err := time.ParseDuration(remedyTimeout)
@@ -476,14 +476,14 @@ func listAutoFixableCCVEs() error {
 
 // CCVEDefinition represents a CCVE YAML file
 type CCVEDefinition struct {
-	ID          string   `yaml:"id"`
-	Category    string   `yaml:"category"`
-	Name        string   `yaml:"name"`
-	Severity    string   `yaml:"severity"`
-	Kind        string   `yaml:"-"` // Extracted from detection.resources
-	RemedyType  string   `yaml:"-"` // From remedy.type
-	Commands    []string `yaml:"-"` // From remediation.commands
-	Steps       []string `yaml:"-"` // From remediation.steps
+	ID         string   `yaml:"id"`
+	Category   string   `yaml:"category"`
+	Name       string   `yaml:"name"`
+	Severity   string   `yaml:"severity"`
+	Kind       string   `yaml:"-"` // Extracted from detection.resources
+	RemedyType string   `yaml:"-"` // From remedy.type
+	Commands   []string `yaml:"-"` // From remediation.commands
+	Steps      []string `yaml:"-"` // From remediation.steps
 }
 
 func loadCCVE(id string) (*CCVEDefinition, error) {

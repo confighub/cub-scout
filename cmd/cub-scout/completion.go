@@ -43,7 +43,7 @@ func completeNamespaces(cmd *cobra.Command, args []string, toComplete string) ([
 	}
 
 	// Quick timeout for completion - don't block shell
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(cmd.Context(), 2*time.Second)
 	defer cancel()
 
 	list, err := dynClient.Resource(schema.GroupVersionResource{
@@ -111,7 +111,6 @@ func completeOwners(cmd *cobra.Command, args []string, toComplete string) ([]str
 	}
 	return filterPrefix(owners, toComplete), cobra.ShellCompDirectiveNoFileComp
 }
-
 
 // filterPrefix filters strings by prefix (case-insensitive)
 func filterPrefix(items []string, prefix string) []string {

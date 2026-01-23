@@ -21,8 +21,8 @@ type ImportSuggestion struct {
 // HubAppSpaceSuggestion represents a suggested import structure (hub-appspace model)
 // In this model, one Space acts as the "App Space" containing all variants via labels
 type HubAppSpaceSuggestion struct {
-	AppSpace string               // The team's App Space (one per team, not per env)
-	Units    []HubAppSpaceUnit    // Units with app/variant labels
+	AppSpace string            // The team's App Space (one per team, not per env)
+	Units    []HubAppSpaceUnit // Units with app/variant labels
 }
 
 // HubAppSpaceUnit represents a unit in the Hub/App Space model
@@ -226,10 +226,11 @@ func extractVariantFromInstance(instance, app string) string {
 
 // extractVariantFromPath extracts variant from Flux Kustomization spec.path
 // Examples:
-//   "./staging" -> "staging"
-//   "./production" -> "prod"
-//   "./clusters/prod/apps" -> "prod"
-//   "./apps/staging/podinfo" -> "staging"
+//
+//	"./staging" -> "staging"
+//	"./production" -> "prod"
+//	"./clusters/prod/apps" -> "prod"
+//	"./apps/staging/podinfo" -> "staging"
 func extractVariantFromPath(path string) string {
 	if path == "" {
 		return ""
@@ -564,10 +565,10 @@ type FullProposal struct {
 	HubBases []HubBaseProposal `json:"hubBases,omitempty"` // Templates from Git base/
 
 	// App Space level
-	AppSpace        string               `json:"appSpace"`
-	Deployer        string               `json:"deployer,omitempty"`        // Detected deployer (Flux, Argo, etc.)
-	Reconciliation  []ReconciliationRule `json:"reconciliation,omitempty"`  // Suggested rules by variant
-	Units           []UnitProposal       `json:"units"`
+	AppSpace       string               `json:"appSpace"`
+	Deployer       string               `json:"deployer,omitempty"`       // Detected deployer (Flux, Argo, etc.)
+	Reconciliation []ReconciliationRule `json:"reconciliation,omitempty"` // Suggested rules by variant
+	Units          []UnitProposal       `json:"units"`
 
 	// Alignment issues
 	GitOnly     []GitOnlyApp     `json:"gitOnly,omitempty"`     // In Git, not deployed

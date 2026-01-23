@@ -126,9 +126,9 @@ func TestTraceResultFullyManaged(t *testing.T) {
 
 // MockTracer is a test tracer for unit tests
 type MockTracer struct {
-	available  bool
-	toolName   string
-	traceFunc  func(ctx context.Context, kind, name, namespace string) (*TraceResult, error)
+	available bool
+	toolName  string
+	traceFunc func(ctx context.Context, kind, name, namespace string) (*TraceResult, error)
 }
 
 func (m *MockTracer) Available() bool {

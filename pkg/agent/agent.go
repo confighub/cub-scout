@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-
 // Resource represents a discovered Kubernetes resource with ownership info
 type Resource struct {
 	// Identity
@@ -67,4 +66,3 @@ type Relation struct {
 	// Type of relation: owned-by, selects, mounts, references
 	Type string `json:"type"`
 }
-

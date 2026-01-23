@@ -39,12 +39,12 @@ var (
 
 // ArgoApplication represents an ArgoCD Application CR
 type ArgoApplication struct {
-	Name      string
-	Namespace string
-	Project   string
-	Source    ArgoSource
-	Destination ArgoDestination
-	SyncStatus  string
+	Name         string
+	Namespace    string
+	Project      string
+	Source       ArgoSource
+	Destination  ArgoDestination
+	SyncStatus   string
 	HealthStatus string
 }
 
@@ -170,7 +170,7 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create dynamic client: %w", err)
 	}
 
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	// Handle --list flag
 	if argoImportList {
@@ -1140,7 +1140,7 @@ func cleanMetadata(obj map[string]interface{}) {
 			"app.kubernetes.io/managed-by",
 			"helm.sh/",
 			"argocd.argoproj.io/",
-			"confighub.com/", // ConfigHub unit labels
+			"confighub.com/",         // ConfigHub unit labels
 			"cli-utils.sigs.k8s.io/", // ConfigHub inventory labels
 		}
 		for key := range labels {

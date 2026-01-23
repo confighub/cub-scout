@@ -11,15 +11,15 @@ func TestFluxTracerParseTraceOutput(t *testing.T) {
 	tracer := NewFluxTracer()
 
 	tests := []struct {
-		name           string
-		output         string
-		kind           string
-		resourceName   string
-		namespace      string
-		wantChainLen   int
-		wantFullyMgd   bool
-		wantFirstKind  string
-		wantLastKind   string
+		name          string
+		output        string
+		kind          string
+		resourceName  string
+		namespace     string
+		wantChainLen  int
+		wantFullyMgd  bool
+		wantFirstKind string
+		wantLastKind  string
 	}{
 		{
 			name: "healthy deployment trace",
@@ -43,7 +43,7 @@ Status:        Artifact is up to date
 			resourceName:  "nginx",
 			namespace:     "demo",
 			wantChainLen:  3,
-			wantFullyMgd:  false, // "Managed by Flux" doesn't indicate ready status
+			wantFullyMgd:  false,           // "Managed by Flux" doesn't indicate ready status
 			wantFirstKind: "GitRepository", // Reversed: source first
 			wantLastKind:  "Deployment",    // Object parses as Deployment/nginx
 		},
@@ -173,13 +173,13 @@ func TestFluxTracerParseSection(t *testing.T) {
 	tracer := NewFluxTracer()
 
 	tests := []struct {
-		name        string
-		section     string
-		wantKind    string
-		wantName    string
-		wantReady   bool
-		wantURL     string
-		wantPath    string
+		name      string
+		section   string
+		wantKind  string
+		wantName  string
+		wantReady bool
+		wantURL   string
+		wantPath  string
 	}{
 		{
 			name: "git repository section",

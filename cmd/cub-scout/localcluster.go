@@ -129,52 +129,52 @@ type LocalClusterModel struct {
 	searchQuery string
 
 	// Query mode (saved queries)
-	queryMode     bool        // Show query selector
-	queryCursor   int         // Cursor in query list
-	activeQuery   *SavedQuery // Currently active query filter
-	customQuery   string      // User-typed custom query
+	queryMode   bool        // Show query selector
+	queryCursor int         // Cursor in query list
+	activeQuery *SavedQuery // Currently active query filter
+	customQuery string      // User-typed custom query
 
 	// Help overlay
 	helpMode bool
 
 	// Panel mode (split view like hierarchy)
-	panelMode    bool            // Show split pane view
-	panelView    localView       // Which view to show in panel
-	panelPane    viewport.Model  // Scrollable viewport for panel
-	panelFocused bool            // Is the panel focused (for scrolling)
+	panelMode    bool           // Show split pane view
+	panelView    localView      // Which view to show in panel
+	panelPane    viewport.Model // Scrollable viewport for panel
+	panelFocused bool           // Is the panel focused (for scrolling)
 
 	// Selected resource (for trace/actions)
-	selectedEntry *MapEntry // Currently selected workload
+	selectedEntry  *MapEntry       // Currently selected workload
 	selectedGitOps *GitOpsResource // Currently selected GitOps resource
 
 	// Trace mode
-	traceMode       bool          // In trace picker mode
-	traceCursor     int           // Cursor in trace picker
-	traceItems      []TraceItem   // Items available to trace
-	traceOutput     string        // Output from trace command
-	traceLoading    bool          // Is trace running
-	traceError      error         // Trace error if any
+	traceMode    bool        // In trace picker mode
+	traceCursor  int         // Cursor in trace picker
+	traceItems   []TraceItem // Items available to trace
+	traceOutput  string      // Output from trace command
+	traceLoading bool        // Is trace running
+	traceError   error       // Trace error if any
 
 	// Scan mode
-	scanMode       bool              // In scan result mode
-	scanOutput     string            // Output from scan command
-	scanLoading    bool              // Is scan running
-	scanError      error             // Scan error if any
-	scanFindings   []scanFinding     // Parsed findings
-	scanCategories map[string]int    // Category counts
+	scanMode       bool           // In scan result mode
+	scanOutput     string         // Output from scan command
+	scanLoading    bool           // Is scan running
+	scanError      error          // Scan error if any
+	scanFindings   []scanFinding  // Parsed findings
+	scanCategories map[string]int // Category counts
 
 	// Cross-reference navigation
-	xrefMode       bool        // In cross-reference view mode
-	xrefItems      []xrefItem  // Cross-reference items
-	xrefCursor     int         // Cursor in xref list
-	xrefSourceType string      // Type of source (workload, gitops, etc.)
-	xrefSourceName string      // Name of source item
+	xrefMode       bool       // In cross-reference view mode
+	xrefItems      []xrefItem // Cross-reference items
+	xrefCursor     int        // Cursor in xref list
+	xrefSourceType string     // Type of source (workload, gitops, etc.)
+	xrefSourceName string     // Name of source item
 
 	// Switch to ConfigHub mode
-	switchToHub    bool
-	authNeeded     bool
-	hubContext     string   // Context to pass to hub (e.g., app name to filter)
-	detectedApps   []string // Apps detected from cluster namespaces
+	switchToHub  bool
+	authNeeded   bool
+	hubContext   string   // Context to pass to hub (e.g., app name to filter)
+	detectedApps []string // Apps detected from cluster namespaces
 
 	// Switch to Import wizard
 	switchToImport bool
@@ -208,17 +208,17 @@ type GitOpsResource struct {
 
 // GitSourceInfo represents a Git source (GitRepository, OCIRepository, etc.)
 type GitSourceInfo struct {
-	Kind       string    // GitRepository, OCIRepository, HelmRepository
-	Name       string    // Resource name
-	Namespace  string    // Resource namespace
-	URL        string    // Git URL, OCI URL, or Helm repo URL
-	Branch     string    // Branch (for GitRepository)
-	Tag        string    // Tag (for GitRepository)
-	Revision   string    // Current resolved revision (commit SHA, etc.)
-	Status     string    // Ready, NotReady, etc.
-	LastFetch  time.Time // Last successful fetch time
-	Interval   string    // Reconciliation interval
-	Deployers  []string  // Kustomizations/HelmReleases that reference this source
+	Kind      string    // GitRepository, OCIRepository, HelmRepository
+	Name      string    // Resource name
+	Namespace string    // Resource namespace
+	URL       string    // Git URL, OCI URL, or Helm repo URL
+	Branch    string    // Branch (for GitRepository)
+	Tag       string    // Tag (for GitRepository)
+	Revision  string    // Current resolved revision (commit SHA, etc.)
+	Status    string    // Ready, NotReady, etc.
+	LastFetch time.Time // Last successful fetch time
+	Interval  string    // Reconciliation interval
+	Deployers []string  // Kustomizations/HelmReleases that reference this source
 }
 
 // TraceItem represents an item that can be traced
@@ -242,15 +242,15 @@ const (
 	viewBypass
 	viewSprawl
 	viewMaps
-	viewTracePicker   // Trace resource picker
-	viewTraceResult   // Trace result display
-	viewScanResult    // Scan result display
-	viewSuspended     // Suspended/paused resources
-	viewApps          // Apps view (grouped by app label)
-	viewDependencies  // Dependencies view (upstream/downstream)
-	viewGitSources    // GitOps Sources view (Git repos → deployers → resources)
-	viewClusterData   // Cluster Data view (all data sources TUI reads)
-	viewAppHierarchy  // App Hierarchy view (inferred ConfigHub model)
+	viewTracePicker  // Trace resource picker
+	viewTraceResult  // Trace result display
+	viewScanResult   // Scan result display
+	viewSuspended    // Suspended/paused resources
+	viewApps         // Apps view (grouped by app label)
+	viewDependencies // Dependencies view (upstream/downstream)
+	viewGitSources   // GitOps Sources view (Git repos → deployers → resources)
+	viewClusterData  // Cluster Data view (all data sources TUI reads)
+	viewAppHierarchy // App Hierarchy view (inferred ConfigHub model)
 )
 
 type localKeyMap struct {
@@ -302,29 +302,29 @@ type localKeyMap struct {
 
 func defaultLocalKeyMap() localKeyMap {
 	return localKeyMap{
-		Up:        key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
-		Down:      key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
-		Quit:      key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
-		Help:      key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
-		Refresh:   key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
-		Search:    key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
-		Hub:       key.NewBinding(key.WithKeys("H"), key.WithHelp("H", "ConfigHub")),
-		Tab:       key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next view")),
-		Enter:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
-		Dashboard: key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "status")),
-		Workloads: key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "workloads")),
-		Pipelines: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "pipelines")),
-		Drift:     key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "drift")),
-		Orphans:   key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "orphans")),
-		Crashes:   key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "crashes")),
-		Issues:    key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "issues")),
-		Bypass:    key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "bypass")),
-		Sprawl:    key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "sprawl")),
-		Maps:      key.NewBinding(key.WithKeys("M"), key.WithHelp("M", "maps")),
-		Trace:     key.NewBinding(key.WithKeys("T"), key.WithHelp("T", "trace")),
-		Scan:      key.NewBinding(key.WithKeys("S"), key.WithHelp("S", "scan")),
-		Query:     key.NewBinding(key.WithKeys("Q"), key.WithHelp("Q", "query")),
-		Import:    key.NewBinding(key.WithKeys("I"), key.WithHelp("I", "import")),
+		Up:            key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
+		Down:          key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
+		Quit:          key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
+		Help:          key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
+		Refresh:       key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
+		Search:        key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
+		Hub:           key.NewBinding(key.WithKeys("H"), key.WithHelp("H", "ConfigHub")),
+		Tab:           key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next view")),
+		Enter:         key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
+		Dashboard:     key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "status")),
+		Workloads:     key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "workloads")),
+		Pipelines:     key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "pipelines")),
+		Drift:         key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "drift")),
+		Orphans:       key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "orphans")),
+		Crashes:       key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "crashes")),
+		Issues:        key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "issues")),
+		Bypass:        key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "bypass")),
+		Sprawl:        key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "sprawl")),
+		Maps:          key.NewBinding(key.WithKeys("M"), key.WithHelp("M", "maps")),
+		Trace:         key.NewBinding(key.WithKeys("T"), key.WithHelp("T", "trace")),
+		Scan:          key.NewBinding(key.WithKeys("S"), key.WithHelp("S", "scan")),
+		Query:         key.NewBinding(key.WithKeys("Q"), key.WithHelp("Q", "query")),
+		Import:        key.NewBinding(key.WithKeys("I"), key.WithHelp("I", "import")),
 		Suspended:     key.NewBinding(key.WithKeys("u"), key.WithHelp("u", "suspended")),
 		Apps:          key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "apps")),
 		Dependencies:  key.NewBinding(key.WithKeys("D"), key.WithHelp("D", "dependencies")),
@@ -358,7 +358,7 @@ type traceResultMsg struct {
 type scanResultMsg struct {
 	output     string
 	err        error
-	findings   []scanFinding // Parsed findings for category display
+	findings   []scanFinding  // Parsed findings for category display
 	categories map[string]int // Category counts
 }
 
@@ -369,22 +369,22 @@ type localCmdCompleteMsg struct {
 
 // scanFinding represents a single CCVE finding for TUI display
 type scanFinding struct {
-	CCVE        string
-	Severity    string
-	Category    string
-	Resource    string
-	Namespace   string
-	Message     string
+	CCVE      string
+	Severity  string
+	Category  string
+	Resource  string
+	Namespace string
+	Message   string
 }
 
 // xrefItem represents a cross-reference item for navigation
 type xrefItem struct {
-	Type        string // "workload", "gitops", "namespace", etc.
-	Kind        string // Deployment, Kustomization, etc.
-	Name        string
-	Namespace   string
-	Relation    string // "manages", "managed by", "in namespace", etc.
-	TargetView  localView // View to switch to when selected
+	Type       string // "workload", "gitops", "namespace", etc.
+	Kind       string // Deployment, Kustomization, etc.
+	Name       string
+	Namespace  string
+	Relation   string    // "manages", "managed by", "in namespace", etc.
+	TargetView localView // View to switch to when selected
 }
 
 func initialLocalModel() LocalClusterModel {
@@ -2123,7 +2123,7 @@ func (m LocalClusterModel) renderDashboardCompact() string {
 	}
 
 	if m.err != nil {
-		b.WriteString(lcErrStyle.Render("Error: " + m.err.Error()) + "\n")
+		b.WriteString(lcErrStyle.Render("Error: "+m.err.Error()) + "\n")
 		return b.String()
 	}
 
@@ -2952,7 +2952,7 @@ func (m LocalClusterModel) getPanelDependencies() string {
 			kindStyle = lcWarnStyle // Helm
 		}
 		b.WriteString(kindStyle.Render(g.Kind) + " " + lcNameStyle.Render(g.Name))
-		b.WriteString(lcDimStyle.Render(" (" + g.Namespace + ")") + "\n")
+		b.WriteString(lcDimStyle.Render(" ("+g.Namespace+")") + "\n")
 
 		// Show upstream dependencies (what this depends on)
 		if hasUpstream {
@@ -3992,7 +3992,7 @@ func (m LocalClusterModel) renderDashboard() string {
 	}
 
 	if m.err != nil {
-		b.WriteString(lcErrStyle.Render("  Error: " + m.err.Error()) + "\n")
+		b.WriteString(lcErrStyle.Render("  Error: "+m.err.Error()) + "\n")
 		return b.String()
 	}
 
@@ -4639,7 +4639,7 @@ func (m LocalClusterModel) renderTrace() string {
 
 	// Show error if any
 	if m.traceError != nil {
-		b.WriteString(lcErrStyle.Render("Error: " + m.traceError.Error()) + "\n")
+		b.WriteString(lcErrStyle.Render("Error: "+m.traceError.Error()) + "\n")
 		b.WriteString("\n" + lcDimStyle.Render("Press any key to continue") + "\n")
 		return b.String()
 	}
@@ -4711,7 +4711,7 @@ func (m LocalClusterModel) renderScan() string {
 
 	// Show error if any
 	if m.scanError != nil {
-		b.WriteString(lcErrStyle.Render("Error running scan: " + m.scanError.Error()) + "\n\n")
+		b.WriteString(lcErrStyle.Render("Error running scan: "+m.scanError.Error()) + "\n\n")
 		b.WriteString(lcDimStyle.Render("Make sure cub-scout is in your PATH or run from project root.") + "\n")
 		b.WriteString("\n" + lcDimStyle.Render("Press any key to return") + "\n")
 		return b.String()

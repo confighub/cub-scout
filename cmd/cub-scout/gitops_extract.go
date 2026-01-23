@@ -96,7 +96,7 @@ func extractArgoConfig(ref *GitOpsReference) (string, error) {
 				TargetRevision string `json:"targetRevision"`
 				Chart          string `json:"chart"`
 				Helm           *struct {
-					Values     string `json:"values"`
+					Values     string   `json:"values"`
 					ValueFiles []string `json:"valueFiles"`
 					Parameters []struct {
 						Name  string `json:"name"`
@@ -551,4 +551,3 @@ func extractNativeHelmConfig(namespace, releaseName string) (string, error) {
 
 	return sb.String(), nil
 }
-

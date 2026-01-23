@@ -35,10 +35,10 @@ type KyvernoPolicy struct {
 	Severity    string `yaml:"severity" json:"severity"`
 	Confidence  string `yaml:"confidence" json:"confidence"`
 	DerivedFrom struct {
-		Source           string `yaml:"source" json:"source"`
-		PolicyName       string `yaml:"policy_name" json:"policy_name"`
-		URL              string `yaml:"url" json:"url"`
-		Category         string `yaml:"category" json:"category"`
+		Source            string `yaml:"source" json:"source"`
+		PolicyName        string `yaml:"policy_name" json:"policy_name"`
+		URL               string `yaml:"url" json:"url"`
+		Category          string `yaml:"category" json:"category"`
 		MinKyvernoVersion string `yaml:"min_kyverno_version" json:"min_kyverno_version"`
 	} `yaml:"derived_from" json:"derived_from"`
 	Detection struct {
@@ -71,24 +71,24 @@ type ScanSummary struct {
 
 // ScanFinding represents a single policy violation
 type ScanFinding struct {
-	ID          string `json:"id"`
-	PolicyID    string `json:"policyId,omitempty"`    // Our KPOL-* ID if matched
-	PolicyName  string `json:"policyName"`
-	Category    string `json:"category"`
-	Severity    string `json:"severity"`
-	Resource    string `json:"resource"`
-	Namespace   string `json:"namespace"`
-	Message     string `json:"message"`
-	Result      string `json:"result"` // fail, warn, pass, skip
-	Rule        string `json:"rule,omitempty"`
-	ConfigHub   *ConfigHubRef `json:"confighub,omitempty"`
+	ID         string        `json:"id"`
+	PolicyID   string        `json:"policyId,omitempty"` // Our KPOL-* ID if matched
+	PolicyName string        `json:"policyName"`
+	Category   string        `json:"category"`
+	Severity   string        `json:"severity"`
+	Resource   string        `json:"resource"`
+	Namespace  string        `json:"namespace"`
+	Message    string        `json:"message"`
+	Result     string        `json:"result"` // fail, warn, pass, skip
+	Rule       string        `json:"rule,omitempty"`
+	ConfigHub  *ConfigHubRef `json:"confighub,omitempty"`
 }
 
 // ConfigHubRef contains ConfigHub-specific references for the finding
 type ConfigHubRef struct {
-	UnitSlug  string `json:"unitSlug,omitempty"`
-	SpaceID   string `json:"spaceId,omitempty"`
-	TargetID  string `json:"targetId,omitempty"`
+	UnitSlug       string `json:"unitSlug,omitempty"`
+	SpaceID        string `json:"spaceId,omitempty"`
+	TargetID       string `json:"targetId,omitempty"`
 	RemediationURL string `json:"remediationUrl,omitempty"`
 }
 

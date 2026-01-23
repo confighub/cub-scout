@@ -5,16 +5,16 @@
 //
 // Supports three architecture patterns:
 //
-// 1. Single-repo (flux2-kustomize-helm-example)
-//    apps/, infrastructure/, clusters/ in one repo
+//  1. Single-repo (flux2-kustomize-helm-example)
+//     apps/, infrastructure/, clusters/ in one repo
 //
-// 2. D2 Split-repo (controlplaneio-fluxcd)
-//    d2-fleet: clusters/, tenants/
-//    d2-infra: components/ (controllers, configs)
-//    d2-apps:  components/ (namespace-scoped)
+//  2. D2 Split-repo (controlplaneio-fluxcd)
+//     d2-fleet: clusters/, tenants/
+//     d2-infra: components/ (controllers, configs)
+//     d2-apps:  components/ (namespace-scoped)
 //
-// 3. Monorepo variants
-//    Any combination of the above patterns
+//  3. Monorepo variants
+//     Any combination of the above patterns
 package gitops
 
 import (
@@ -29,14 +29,14 @@ import (
 type RepoType string
 
 const (
-	RepoTypeSingleRepo    RepoType = "single-repo"    // Traditional apps/infra/clusters
-	RepoTypeD2Fleet       RepoType = "d2-fleet"       // Fleet management (clusters, tenants)
-	RepoTypeD2Infra       RepoType = "d2-infra"       // Infrastructure components
-	RepoTypeD2Apps        RepoType = "d2-apps"        // Application components
-	RepoTypeAppOfApps     RepoType = "app-of-apps"    // Argo app-of-apps pattern
+	RepoTypeSingleRepo     RepoType = "single-repo"    // Traditional apps/infra/clusters
+	RepoTypeD2Fleet        RepoType = "d2-fleet"       // Fleet management (clusters, tenants)
+	RepoTypeD2Infra        RepoType = "d2-infra"       // Infrastructure components
+	RepoTypeD2Apps         RepoType = "d2-apps"        // Application components
+	RepoTypeAppOfApps      RepoType = "app-of-apps"    // Argo app-of-apps pattern
 	RepoTypeApplicationSet RepoType = "applicationset" // Argo ApplicationSet generators
-	RepoTypeHelmUmbrella  RepoType = "helm-umbrella"  // Helm umbrella chart with dependencies
-	RepoTypeUnknown       RepoType = "unknown"
+	RepoTypeHelmUmbrella   RepoType = "helm-umbrella"  // Helm umbrella chart with dependencies
+	RepoTypeUnknown        RepoType = "unknown"
 )
 
 // RepoStructure represents a parsed GitOps repository
@@ -94,14 +94,14 @@ type TenantDefinition struct {
 type ComponentDefinition struct {
 	Name     string   `json:"name"`
 	Path     string   `json:"path"`
-	Type     string   `json:"type"` // "controller", "config", "app"
+	Type     string   `json:"type"`               // "controller", "config", "app"
 	Variants []string `json:"variants,omitempty"` // staging, production
 }
 
 // AppDefinition represents an application found in the repo
 type AppDefinition struct {
-	Name     string            `json:"name"`
-	BasePath string            `json:"basePath,omitempty"` // e.g., "apps/base/podinfo"
+	Name     string              `json:"name"`
+	BasePath string              `json:"basePath,omitempty"` // e.g., "apps/base/podinfo"
 	Variants []VariantDefinition `json:"variants"`
 }
 

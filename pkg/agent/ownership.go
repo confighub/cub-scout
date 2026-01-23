@@ -85,22 +85,29 @@ func detectFluxOwnership(labels, annotations map[string]string) Ownership {
 }
 
 func detectArgoOwnership(labels, annotations map[string]string) Ownership {
-	// Argo CD Application
-	if instance, ok := labels["app.kubernetes.io/instance"]; ok {
-		if _, isArgo := labels["argocd.argoproj.io/instance"]; isArgo {
+	// Argo CD Application - check for argocd.argoproj.io/instance label
+	if argoInstance, isArgo := labels["argocd.argoproj.io/instance"]; isArgo {
+		// Prefer the Argo-specific label value
+		name := argoInstance
+		if name == "" {
+			// Fall back to app.kubernetes.io/instance if Argo label is empty
+			name = labels["app.kubernetes.io/instance"]
+		}
+		if name != "" {
 			return Ownership{
 				Type:    OwnerArgo,
 				SubType: "application",
-				Name:    instance,
+				Name:    name,
 			}
 		}
 	}
 
-	// Alternative: check annotation
-	if tracking, ok := annotations["argocd.argoproj.io/tracking-id"]; ok {
+	// Alternative: check tracking-id annotation
+	if tracking, ok := annotations["argocd.argoproj.io/tracking-id"]; ok && tracking != "" {
 		// Format: <app-name>:<group>/<kind>:<namespace>/<name>
+		// Handle malformed tracking IDs gracefully
 		parts := strings.SplitN(tracking, ":", 2)
-		if len(parts) > 0 {
+		if len(parts) > 0 && parts[0] != "" {
 			return Ownership{
 				Type:    OwnerArgo,
 				SubType: "application",
@@ -198,8 +205,16 @@ func detectK8sOwnership(resource *unstructured.Unstructured) Ownership {
 		return Ownership{}
 	}
 
-	// Use the first owner reference
-	owner := owners[0]
+	// Prefer an OwnerReference where Controller=true
+	// Fall back to the first owner reference if none are marked controller
+	var owner = owners[0]
+	for _, o := range owners {
+		if o.Controller != nil && *o.Controller {
+			owner = o
+			break
+		}
+	}
+
 	return Ownership{
 		Type:      OwnerKubernetes,
 		SubType:   strings.ToLower(owner.Kind),

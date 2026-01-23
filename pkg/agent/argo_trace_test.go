@@ -11,12 +11,12 @@ func TestArgoTracerParseAppOutput(t *testing.T) {
 	tracer := NewArgoTracer()
 
 	tests := []struct {
-		name          string
-		jsonData      string
-		appName       string
-		namespace     string
-		wantChainLen  int
-		wantFullyMgd  bool
+		name           string
+		jsonData       string
+		appName        string
+		namespace      string
+		wantChainLen   int
+		wantFullyMgd   bool
 		wantSyncStatus string
 	}{
 		{
@@ -71,10 +71,10 @@ func TestArgoTracerParseAppOutput(t *testing.T) {
 					]
 				}
 			}`,
-			appName:       "frontend-app",
-			namespace:     "argocd",
-			wantChainLen:  4, // Source + Application + 2 resources
-			wantFullyMgd:  true,
+			appName:        "frontend-app",
+			namespace:      "argocd",
+			wantChainLen:   4, // Source + Application + 2 resources
+			wantFullyMgd:   true,
 			wantSyncStatus: "Synced / Healthy",
 		},
 		{
@@ -116,10 +116,10 @@ func TestArgoTracerParseAppOutput(t *testing.T) {
 					]
 				}
 			}`,
-			appName:       "backend-app",
-			namespace:     "argocd",
-			wantChainLen:  3, // Source + Application + 1 resource
-			wantFullyMgd:  false,
+			appName:        "backend-app",
+			namespace:      "argocd",
+			wantChainLen:   3, // Source + Application + 1 resource
+			wantFullyMgd:   false,
 			wantSyncStatus: "OutOfSync / Healthy",
 		},
 		{
@@ -162,10 +162,10 @@ func TestArgoTracerParseAppOutput(t *testing.T) {
 					]
 				}
 			}`,
-			appName:       "failing-app",
-			namespace:     "argocd",
-			wantChainLen:  3,
-			wantFullyMgd:  false,
+			appName:        "failing-app",
+			namespace:      "argocd",
+			wantChainLen:   3,
+			wantFullyMgd:   false,
 			wantSyncStatus: "Synced / Degraded",
 		},
 		{
@@ -197,10 +197,10 @@ func TestArgoTracerParseAppOutput(t *testing.T) {
 					"resources": []
 				}
 			}`,
-			appName:       "redis",
-			namespace:     "argocd",
-			wantChainLen:  2, // HelmChart source + Application (no resources)
-			wantFullyMgd:  true,
+			appName:        "redis",
+			namespace:      "argocd",
+			wantChainLen:   2, // HelmChart source + Application (no resources)
+			wantFullyMgd:   true,
 			wantSyncStatus: "Synced / Healthy",
 		},
 	}

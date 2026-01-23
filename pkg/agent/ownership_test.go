@@ -112,6 +112,26 @@ func TestDetectOwnership_Argo(t *testing.T) {
 			wantName:    "payment-api",
 		},
 		{
+			name: "Argo CD - prefer argocd.argoproj.io/instance value",
+			labels: map[string]string{
+				"app.kubernetes.io/instance":  "generic-name",
+				"argocd.argoproj.io/instance": "argo-specific-name",
+			},
+			wantType:    OwnerArgo,
+			wantSubType: "application",
+			wantName:    "argo-specific-name",
+		},
+		{
+			name: "Argo CD - fall back to app.kubernetes.io/instance when argo label empty",
+			labels: map[string]string{
+				"app.kubernetes.io/instance":  "fallback-name",
+				"argocd.argoproj.io/instance": "",
+			},
+			wantType:    OwnerArgo,
+			wantSubType: "application",
+			wantName:    "fallback-name",
+		},
+		{
 			name: "Argo CD Application via tracking annotation",
 			annotations: map[string]string{
 				"argocd.argoproj.io/tracking-id": "guestbook:apps/Deployment:default/guestbook",
@@ -323,6 +343,9 @@ func TestDetectOwnership_ConfigHub(t *testing.T) {
 }
 
 func TestDetectOwnership_K8s(t *testing.T) {
+	trueVal := true
+	falseVal := false
+
 	tests := []struct {
 		name        string
 		owners      []metav1.OwnerReference
@@ -368,6 +391,69 @@ func TestDetectOwnership_K8s(t *testing.T) {
 			wantType:    OwnerKubernetes,
 			wantSubType: "daemonset",
 			wantName:    "kube-proxy",
+		},
+		{
+			name: "Multiple owners - prefer controller=true",
+			owners: []metav1.OwnerReference{
+				{
+					Kind:       "Service",
+					Name:       "not-controller",
+					UID:        "svc-123",
+					Controller: &falseVal,
+				},
+				{
+					Kind:       "ReplicaSet",
+					Name:       "the-controller",
+					UID:        "rs-456",
+					Controller: &trueVal,
+				},
+				{
+					Kind: "ConfigMap",
+					Name: "also-not-controller",
+					UID:  "cm-789",
+				},
+			},
+			wantType:    OwnerKubernetes,
+			wantSubType: "replicaset",
+			wantName:    "the-controller",
+		},
+		{
+			name: "Multiple owners - none marked controller, use first",
+			owners: []metav1.OwnerReference{
+				{
+					Kind: "Service",
+					Name: "first-owner",
+					UID:  "svc-123",
+				},
+				{
+					Kind: "ConfigMap",
+					Name: "second-owner",
+					UID:  "cm-456",
+				},
+			},
+			wantType:    OwnerKubernetes,
+			wantSubType: "service",
+			wantName:    "first-owner",
+		},
+		{
+			name: "Multiple owners - controller=false on all, use first",
+			owners: []metav1.OwnerReference{
+				{
+					Kind:       "Service",
+					Name:       "first-not-controller",
+					UID:        "svc-123",
+					Controller: &falseVal,
+				},
+				{
+					Kind:       "ConfigMap",
+					Name:       "second-not-controller",
+					UID:        "cm-456",
+					Controller: &falseVal,
+				},
+			},
+			wantType:    OwnerKubernetes,
+			wantSubType: "service",
+			wantName:    "first-not-controller",
 		},
 	}
 
@@ -416,6 +502,18 @@ func TestDetectOwnership_Unknown(t *testing.T) {
 			name: "Non-Helm managed-by",
 			labels: map[string]string{
 				"app.kubernetes.io/managed-by": "kustomize",
+			},
+		},
+		{
+			name: "Empty Argo tracking-id annotation",
+			annotations: map[string]string{
+				"argocd.argoproj.io/tracking-id": "",
+			},
+		},
+		{
+			name: "Malformed Argo tracking-id (starts with colon)",
+			annotations: map[string]string{
+				"argocd.argoproj.io/tracking-id": ":apps/Deployment:default/name",
 			},
 		},
 	}

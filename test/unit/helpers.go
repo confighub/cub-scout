@@ -46,12 +46,32 @@ func RequireArgo(t *testing.T) {
 	}
 }
 
-// RequireCubAuth fails the test if cub CLI is not authenticated.
+// RequireCubAuth fails the test if cub CLI is not authenticated or token is expired.
 func RequireCubAuth(t *testing.T) {
 	t.Helper()
+
+	// First check if cub is available
+	if _, err := exec.LookPath("cub"); err != nil {
+		t.Skip("PRECONDITION: cub CLI not installed")
+	}
+
+	// Check auth status
 	cmd := exec.Command("cub", "auth", "status")
 	if err := cmd.Run(); err != nil {
 		t.Skip("PRECONDITION: cub CLI not authenticated (run: cub auth login)")
+	}
+
+	// auth status can succeed with expired token, so also test an actual API call
+	// Use a lightweight command that requires valid auth
+	cmd = exec.Command("cub", "space", "list", "--json")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if strings.Contains(string(output), "token expired") ||
+			strings.Contains(string(output), "authentication problem") ||
+			strings.Contains(string(output), "not authenticated") {
+			t.Skip("PRECONDITION: cub CLI token expired (run: cub auth login)")
+		}
+		t.Skipf("PRECONDITION: cub CLI auth check failed: %v", err)
 	}
 }
 

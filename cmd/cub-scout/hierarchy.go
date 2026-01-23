@@ -428,7 +428,6 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 	return nodes, currentOrg, currentOrgInt, currentSpace, spacesToLoad, nil
 }
 
-
 func loadUnitsForSpace(spaceSlug string) ([]CubUnitData, error) {
 	unitsJSON, err := runCubCommand("unit", "list", "--space", spaceSlug, "--json")
 	if err != nil {
@@ -1121,7 +1120,6 @@ func runCommandCmd(command string) tea.Cmd {
 	}
 }
 
-
 // getCurrentKubeContext returns the current kubectl context name
 func getCurrentKubeContext() string {
 	cmd := exec.Command("kubectl", "config", "current-context")
@@ -1607,7 +1605,7 @@ func openSpaceInBrowserCmd(spaceID string) tea.Cmd {
 		}
 
 		var contexts []struct {
-			Current    bool   `json:"current"`
+			Current    bool `json:"current"`
 			Coordinate struct {
 				ServerURL string `json:"serverURL"`
 			} `json:"coordinate"`

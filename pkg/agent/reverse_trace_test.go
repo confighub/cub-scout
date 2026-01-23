@@ -12,10 +12,10 @@ import (
 
 func TestKindToGVR(t *testing.T) {
 	tests := []struct {
-		name     string
-		kind     string
-		wantErr  bool
-		wantRes  string
+		name    string
+		kind    string
+		wantErr bool
+		wantRes string
 	}{
 		{name: "pod", kind: "Pod", wantErr: false, wantRes: "pods"},
 		{name: "pod lowercase", kind: "pod", wantErr: false, wantRes: "pods"},
@@ -60,8 +60,8 @@ func TestKindToGVR(t *testing.T) {
 
 func TestKindToResource(t *testing.T) {
 	tests := []struct {
-		kind     string
-		wantRes  string
+		kind    string
+		wantRes string
 	}{
 		{kind: "Pod", wantRes: "pods"},
 		{kind: "ReplicaSet", wantRes: "replicasets"},

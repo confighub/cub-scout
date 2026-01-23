@@ -19,11 +19,11 @@ func TestKyvernoScannerProcessPolicyReport(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		report         map[string]interface{}
+		name            string
+		report          map[string]interface{}
 		wantFindingsLen int
-		wantFirstID    string
-		wantSeverity   string
+		wantFirstID     string
+		wantSeverity    string
 	}{
 		{
 			name: "single failure",
@@ -149,10 +149,10 @@ func TestKyvernoScannerMatchPolicy(t *testing.T) {
 			Category: "CONFIG",
 			Severity: "warning",
 			DerivedFrom: struct {
-				Source           string `yaml:"source" json:"source"`
-				PolicyName       string `yaml:"policy_name" json:"policy_name"`
-				URL              string `yaml:"url" json:"url"`
-				Category         string `yaml:"category" json:"category"`
+				Source            string `yaml:"source" json:"source"`
+				PolicyName        string `yaml:"policy_name" json:"policy_name"`
+				URL               string `yaml:"url" json:"url"`
+				Category          string `yaml:"category" json:"category"`
 				MinKyvernoVersion string `yaml:"min_kyverno_version" json:"min_kyverno_version"`
 			}{
 				PolicyName: "application-field-validation",
@@ -164,10 +164,10 @@ func TestKyvernoScannerMatchPolicy(t *testing.T) {
 			Category: "CONFIG",
 			Severity: "warning",
 			DerivedFrom: struct {
-				Source           string `yaml:"source" json:"source"`
-				PolicyName       string `yaml:"policy_name" json:"policy_name"`
-				URL              string `yaml:"url" json:"url"`
-				Category         string `yaml:"category" json:"category"`
+				Source            string `yaml:"source" json:"source"`
+				PolicyName        string `yaml:"policy_name" json:"policy_name"`
+				URL               string `yaml:"url" json:"url"`
+				Category          string `yaml:"category" json:"category"`
 				MinKyvernoVersion string `yaml:"min_kyverno_version" json:"min_kyverno_version"`
 			}{
 				PolicyName: "check-deprecated-apis",

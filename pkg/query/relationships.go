@@ -17,10 +17,10 @@ import (
 
 // Reference represents a reference from one resource to another
 type Reference struct {
-	From     ResourceID `json:"from"`
-	To       ResourceID `json:"to"`
-	Type     string     `json:"type"` // volume, envFrom, env, selector, backend, scaleTarget
-	Path     string     `json:"path"` // JSONPath to the reference
+	From ResourceID `json:"from"`
+	To   ResourceID `json:"to"`
+	Type string     `json:"type"` // volume, envFrom, env, selector, backend, scaleTarget
+	Path string     `json:"path"` // JSONPath to the reference
 }
 
 // ResourceID identifies a Kubernetes resource

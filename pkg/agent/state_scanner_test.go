@@ -115,12 +115,12 @@ func TestEvasionLabelManipulation(t *testing.T) {
 			description: "Attacker adds Flux labels to hide orphan resource - EVASION WORKS",
 		},
 		{
-			name: "Argo requires BOTH instance labels - single label insufficient",
+			name: "Argo argocd.argoproj.io/instance label IS authoritative",
 			labels: map[string]string{
 				"argocd.argoproj.io/instance": "fake-application",
 			},
-			wantType:    OwnerUnknown, // Requires BOTH app.kubernetes.io/instance AND argocd.argoproj.io/instance
-			description: "Single Argo label is not sufficient for detection",
+			wantType:    OwnerArgo, // argocd.argoproj.io/instance is the authoritative Argo label
+			description: "Single authoritative Argo label is sufficient for detection",
 		},
 		{
 			name: "Fake Argo with both required labels",

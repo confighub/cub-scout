@@ -11,10 +11,10 @@ func TestDriftDetector_compare(t *testing.T) {
 	dd := &DriftDetector{}
 
 	tests := []struct {
-		name       string
-		declared   interface{}
-		live       interface{}
-		wantDrift  bool
+		name      string
+		declared  interface{}
+		live      interface{}
+		wantDrift bool
 	}{
 		{
 			name:      "identical strings",

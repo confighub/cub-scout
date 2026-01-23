@@ -59,10 +59,10 @@ const (
 
 // Condition represents a single query condition
 type Condition struct {
-	Field      string     // Field name (kind, namespace, name, owner, cluster, labels[key])
-	Comparator Comparator // How to compare
-	Value      string     // Value to compare against
-	Values     []string   // For IN comparator
+	Field      string         // Field name (kind, namespace, name, owner, cluster, labels[key])
+	Comparator Comparator     // How to compare
+	Value      string         // Value to compare against
+	Values     []string       // For IN comparator
 	Regex      *regexp.Regexp // Compiled regex for ~= comparator
 }
 

@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -27,25 +26,25 @@ var (
 
 // GSFSnapshot represents the GitOps State Format output
 type GSFSnapshot struct {
-	Version     string       `json:"version"`
-	GeneratedAt time.Time    `json:"generatedAt"`
-	Cluster     string       `json:"cluster"`
-	Entries     []GSFEntry   `json:"entries"`
+	Version     string        `json:"version"`
+	GeneratedAt time.Time     `json:"generatedAt"`
+	Cluster     string        `json:"cluster"`
+	Entries     []GSFEntry    `json:"entries"`
 	Relations   []GSFRelation `json:"relations,omitempty"`
-	Summary     GSFSummary   `json:"summary"`
+	Summary     GSFSummary    `json:"summary"`
 }
 
 // GSFEntry represents a resource entry in GSF
 type GSFEntry struct {
-	ID         string                 `json:"id"`
-	Cluster    string                 `json:"cluster"`
-	Namespace  string                 `json:"namespace"`
-	Kind       string                 `json:"kind"`
-	Name       string                 `json:"name"`
-	APIVersion string                 `json:"apiVersion"`
-	Owner      *GSFOwner              `json:"owner,omitempty"`
-	Drift      *GSFDrift              `json:"drift,omitempty"`
-	Labels     map[string]string      `json:"labels,omitempty"`
+	ID         string            `json:"id"`
+	Cluster    string            `json:"cluster"`
+	Namespace  string            `json:"namespace"`
+	Kind       string            `json:"kind"`
+	Name       string            `json:"name"`
+	APIVersion string            `json:"apiVersion"`
+	Owner      *GSFOwner         `json:"owner,omitempty"`
+	Drift      *GSFDrift         `json:"drift,omitempty"`
+	Labels     map[string]string `json:"labels,omitempty"`
 }
 
 // GSFOwner represents ownership information
@@ -115,7 +114,7 @@ func init() {
 }
 
 func runSnapshot(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	// Build Kubernetes config
 	cfg, err := buildConfig()

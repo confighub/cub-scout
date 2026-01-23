@@ -28,10 +28,10 @@ type ClusterImport struct {
 
 // FleetSummary shows aggregate stats
 type FleetSummary struct {
-	TotalClusters  int              `json:"totalClusters"`
-	TotalWorkloads int              `json:"totalWorkloads"`
-	ByOwner        map[string]int   `json:"byOwner"`     // Owner -> count
-	ByApp          map[string][]string `json:"byApp"`       // App -> clusters where deployed
+	TotalClusters  int                 `json:"totalClusters"`
+	TotalWorkloads int                 `json:"totalWorkloads"`
+	ByOwner        map[string]int      `json:"byOwner"` // Owner -> count
+	ByApp          map[string][]string `json:"byApp"`   // App -> clusters where deployed
 }
 
 var fleetCmd = &cobra.Command{

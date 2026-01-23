@@ -22,13 +22,13 @@ var (
 
 // Styles for demo output
 var (
-	demoTitleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
-	demoInfoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
-	demoPassStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
-	demoWarnStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-	demoErrStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
-	demoDimStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
-	demoBoldStyle    = lipgloss.NewStyle().Bold(true)
+	demoTitleStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
+	demoInfoStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
+	demoPassStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
+	demoWarnStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	demoErrStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
+	demoDimStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
+	demoBoldStyle  = lipgloss.NewStyle().Bold(true)
 )
 
 // Demo represents a runnable demo

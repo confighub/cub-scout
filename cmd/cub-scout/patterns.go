@@ -42,27 +42,27 @@ type TeamPattern struct {
 }
 
 type PatternsResult struct {
-	Repos       []RepoPattern       `json:"repos"`
-	EnvChains   []EnvChain          `json:"envChains"`
-	Teams       []TeamPattern       `json:"teams"`
-	EnvGroups   map[string][]string `json:"envGroups"` // prod/staging/dev -> namespaces
-	Suggested   SuggestedOrg        `json:"suggested"`
+	Repos     []RepoPattern       `json:"repos"`
+	EnvChains []EnvChain          `json:"envChains"`
+	Teams     []TeamPattern       `json:"teams"`
+	EnvGroups map[string][]string `json:"envGroups"` // prod/staging/dev -> namespaces
+	Suggested SuggestedOrg        `json:"suggested"`
 }
 
 type SuggestedOrg struct {
-	Organization string           `json:"organization"`
-	Hubs         []SuggestedHub   `json:"hubs"`
+	Organization string         `json:"organization"`
+	Hubs         []SuggestedHub `json:"hubs"`
 }
 
 type SuggestedHub struct {
-	Name      string             `json:"name"`
-	AppSpaces []SuggestedSpace   `json:"appSpaces"`
+	Name      string           `json:"name"`
+	AppSpaces []SuggestedSpace `json:"appSpaces"`
 }
 
 type SuggestedSpace struct {
-	Name       string   `json:"name"`
-	Workloads  []string `json:"workloads"`
-	Env        string   `json:"env"`
+	Name      string   `json:"name"`
+	Workloads []string `json:"workloads"`
+	Env       string   `json:"env"`
 }
 
 var mapPatternsCmd = &cobra.Command{
@@ -92,7 +92,7 @@ func init() {
 }
 
 func runMapPatterns(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	cfg, err := buildConfig()
 	if err != nil {
@@ -366,11 +366,11 @@ func classifyRepoPattern(p *RepoPattern) string {
 
 	// External/upstream
 	if p.Owner != "" && !strings.Contains(strings.ToLower(p.Owner), "acme") &&
-	   !strings.Contains(strings.ToLower(p.Owner), "internal") {
+		!strings.Contains(strings.ToLower(p.Owner), "internal") {
 		// Check if it looks like an external repo
 		if strings.Contains(p.Owner, "stefanprodan") ||
-		   strings.Contains(p.Owner, "argoproj") ||
-		   strings.Contains(p.Owner, "fluxcd") {
+			strings.Contains(p.Owner, "argoproj") ||
+			strings.Contains(p.Owner, "fluxcd") {
 			return "external"
 		}
 	}

@@ -17,11 +17,11 @@ import (
 
 // DanglingReference represents a reference to a non-existent resource
 type DanglingReference struct {
-	From        ResourceID `json:"from"`
-	To          ResourceID `json:"to"`
-	Type        string     `json:"type"`   // selector, scaleTarget, backend, volume, etc.
-	Reason      string     `json:"reason"` // "not found", "no matching pods", etc.
-	Suggestion  string     `json:"suggestion,omitempty"`
+	From       ResourceID `json:"from"`
+	To         ResourceID `json:"to"`
+	Type       string     `json:"type"`   // selector, scaleTarget, backend, volume, etc.
+	Reason     string     `json:"reason"` // "not found", "no matching pods", etc.
+	Suggestion string     `json:"suggestion,omitempty"`
 }
 
 // DanglingFinder finds dangling references in the cluster

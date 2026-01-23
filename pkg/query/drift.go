@@ -18,7 +18,7 @@ import (
 
 // DriftedResource represents a resource that has drifted from its declared state
 type DriftedResource struct {
-	Resource ResourceID   `json:"resource"`
+	Resource ResourceID    `json:"resource"`
 	Changes  []DriftChange `json:"changes"`
 }
 
@@ -41,12 +41,12 @@ func NewDriftDetector(client dynamic.Interface) *DriftDetector {
 
 // FieldsToIgnore contains fields that should be ignored when comparing
 var FieldsToIgnore = map[string]bool{
-	"metadata.resourceVersion":           true,
-	"metadata.uid":                        true,
-	"metadata.generation":                 true,
-	"metadata.creationTimestamp":          true,
-	"metadata.managedFields":              true,
-	"metadata.selfLink":                   true,
+	"metadata.resourceVersion":   true,
+	"metadata.uid":               true,
+	"metadata.generation":        true,
+	"metadata.creationTimestamp": true,
+	"metadata.managedFields":     true,
+	"metadata.selfLink":          true,
 	"metadata.annotations.kubectl.kubernetes.io/last-applied-configuration": true,
 	"status": true,
 }

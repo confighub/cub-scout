@@ -34,17 +34,17 @@ const (
 
 // Test phases for StepTest
 const (
-	testPhaseIdle = iota
-	testPhaseAddAnnotation    // Adding test annotation to unit
-	testPhaseApply            // Applying unit to cluster
-	testPhaseWaitSync         // Waiting for worker to sync
-	testPhaseVerify           // Verifying annotation in cluster
-	testPhaseComplete         // Test finished
+	testPhaseIdle          = iota
+	testPhaseAddAnnotation // Adding test annotation to unit
+	testPhaseApply         // Applying unit to cluster
+	testPhaseWaitSync      // Waiting for worker to sync
+	testPhaseVerify        // Verifying annotation in cluster
+	testPhaseComplete      // Test finished
 )
 
 // Edit mode types for Step 3
 const (
-	editModeNone = iota
+	editModeNone        = iota
 	editModeMenu        // Showing edit menu
 	editModeRenameUnit  // Editing unit slug
 	editModeRenameSpace // Editing app space name
@@ -107,14 +107,14 @@ type ImportWizardModel struct {
 	focusRight bool
 
 	// Step 1: Namespace selection
-	namespaces     []NamespaceItem
+	namespaces      []NamespaceItem
 	namespaceCursor int
 
 	// Step 2: Workload review
-	workloads       []WorkloadItem
-	workloadGroups  map[string][]int // app name -> indices into workloads
-	expandedGroups  map[string]bool
-	workloadCursor  int
+	workloads      []WorkloadItem
+	workloadGroups map[string][]int // app name -> indices into workloads
+	expandedGroups map[string]bool
+	workloadCursor int
 
 	// Step 3: Configure structure
 	proposal       *FullProposal
@@ -122,20 +122,20 @@ type ImportWizardModel struct {
 	expandedUnits  map[int]bool // Track which units are expanded to show workloads
 
 	// Step 3: Edit mode
-	editMode       int      // Current edit mode (editModeNone, editModeMenu, etc.)
-	editMenuCursor int      // Cursor in edit menu
-	editInput      string   // Text input buffer for editing
-	editLabelKey   string   // Label key being edited
-	mergeTargetIdx int      // Index of unit to merge into
+	editMode       int    // Current edit mode (editModeNone, editModeMenu, etc.)
+	editMenuCursor int    // Cursor in edit menu
+	editInput      string // Text input buffer for editing
+	editLabelKey   string // Label key being edited
+	mergeTargetIdx int    // Index of unit to merge into
 
 	// Step 4: Apply progress
-	applyProgress   int
-	applyTotal      int
-	applyResults    []ApplyResult
-	applyComplete   bool
-	applyStartTime  time.Time
-	workerStarted   bool
-	workerName      string
+	applyProgress  int
+	applyTotal     int
+	applyResults   []ApplyResult
+	applyComplete  bool
+	applyStartTime time.Time
+	workerStarted  bool
+	workerName     string
 
 	// Step 5: ArgoCD cleanup
 	argoApps        []ArgoAppRef // Unique ArgoCD Applications from selected workloads
@@ -143,14 +143,14 @@ type ImportWizardModel struct {
 	argoCleanupDone bool         // Whether cleanup is complete
 
 	// Step 6: End-to-end test
-	testPhase       int           // Current test phase
-	testUnitSlug    string        // Unit being tested
-	testAnnotation  string        // The test annotation value
-	testStartTime   time.Time     // When test started
-	testEndTime     time.Time     // When test finished
-	testElapsed     time.Duration // Final elapsed time (set when complete)
-	testResults     []TestResult  // Results for each phase
-	testError       error         // Any error during test
+	testPhase      int           // Current test phase
+	testUnitSlug   string        // Unit being tested
+	testAnnotation string        // The test annotation value
+	testStartTime  time.Time     // When test started
+	testEndTime    time.Time     // When test finished
+	testElapsed    time.Duration // Final elapsed time (set when complete)
+	testResults    []TestResult  // Results for each phase
+	testError      error         // Any error during test
 
 	// UI components
 	viewport viewport.Model
@@ -198,62 +198,62 @@ type TestResult struct {
 // Import wizard styles
 var (
 	wizardTitleStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("212")).
-		Background(lipgloss.Color("236")).
-		Padding(0, 1).
-		MarginBottom(1)
+				Bold(true).
+				Foreground(lipgloss.Color("212")).
+				Background(lipgloss.Color("236")).
+				Padding(0, 1).
+				MarginBottom(1)
 
 	wizardProgressStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("245"))
+				Foreground(lipgloss.Color("245"))
 
 	wizardProgressBarFull = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("82"))
+				Foreground(lipgloss.Color("82"))
 
 	wizardProgressBarEmpty = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240"))
+				Foreground(lipgloss.Color("240"))
 
 	wizardPaneStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		Padding(0, 1)
+			BorderStyle(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("240")).
+			Padding(0, 1)
 
 	wizardPaneActiveStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("212")).
-		Padding(0, 1)
+				BorderStyle(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("212")).
+				Padding(0, 1)
 
 	wizardSelectedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("212")).
-		Bold(true)
+				Foreground(lipgloss.Color("212")).
+				Bold(true)
 
 	wizardCheckboxOn = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("82"))
+				Foreground(lipgloss.Color("82"))
 
 	wizardCheckboxOff = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240"))
+				Foreground(lipgloss.Color("240"))
 
 	wizardOwnerFlux = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("81"))
+			Foreground(lipgloss.Color("81"))
 
 	wizardOwnerArgo = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("141"))
+			Foreground(lipgloss.Color("141"))
 
 	wizardOwnerHelm = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("208"))
+			Foreground(lipgloss.Color("208"))
 
 	wizardOwnerNative = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("245"))
+				Foreground(lipgloss.Color("245"))
 
 	wizardHelpStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("245")).
-		MarginTop(1)
+			Foreground(lipgloss.Color("245")).
+			MarginTop(1)
 
 	wizardErrorStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("196"))
+				Foreground(lipgloss.Color("196"))
 
 	wizardSuccessStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("82"))
+				Foreground(lipgloss.Color("82"))
 )
 
 // NewImportWizardModel creates a new import wizard
@@ -3272,7 +3272,7 @@ func (m ImportWizardModel) renderTestProgress() string {
 			b.WriteString(wizardErrorStyle.Render("  ✗ TEST FAILED") + "\n\n")
 			b.WriteString(wizardErrorStyle.Render("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━") + "\n\n")
 			if m.testError != nil {
-				b.WriteString(wizardErrorStyle.Render("Error: " + m.testError.Error()) + "\n\n")
+				b.WriteString(wizardErrorStyle.Render("Error: "+m.testError.Error()) + "\n\n")
 			}
 			b.WriteString(dimStyle.Render("Press 'r' to retry or 'q' to quit."))
 		}

@@ -23,11 +23,11 @@ type ContextSnapshot struct {
 	Cluster      string    `json:"cluster"`
 	Namespace    string    `json:"namespace,omitempty"` // Empty means all namespaces
 
-	Summary          SnapshotSummary           `json:"summary"`
-	CriticalIssues   []CriticalIssue           `json:"critical_issues,omitempty"`
-	RecentChanges    []RecentChange            `json:"recent_changes,omitempty"`
-	OwnershipBreakdown map[string]int          `json:"ownership_breakdown"`
-	DependencyGraph  map[string]DependencyInfo `json:"dependency_graph,omitempty"`
+	Summary            SnapshotSummary           `json:"summary"`
+	CriticalIssues     []CriticalIssue           `json:"critical_issues,omitempty"`
+	RecentChanges      []RecentChange            `json:"recent_changes,omitempty"`
+	OwnershipBreakdown map[string]int            `json:"ownership_breakdown"`
+	DependencyGraph    map[string]DependencyInfo `json:"dependency_graph,omitempty"`
 }
 
 // SnapshotSummary provides high-level cluster health
@@ -60,8 +60,8 @@ type RecentChange struct {
 
 // DependencyInfo describes resource dependencies
 type DependencyInfo struct {
-	DependsOn   []string `json:"depends_on,omitempty"`
-	DependedBy  []string `json:"depended_by,omitempty"`
+	DependsOn  []string `json:"depends_on,omitempty"`
+	DependedBy []string `json:"depended_by,omitempty"`
 }
 
 // ContextSnapshotBuilder builds context snapshots

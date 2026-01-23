@@ -262,4 +262,3 @@ func (s *QueryStore) Get(name string) (*SavedQuery, bool) {
 	}
 	return nil, false
 }
-

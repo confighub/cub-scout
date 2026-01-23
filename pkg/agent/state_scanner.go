@@ -46,18 +46,18 @@ type StuckFinding struct {
 
 // StateScanResult contains findings from state scanning
 type StateScanResult struct {
-	ScannedAt time.Time       `json:"scannedAt"`
-	Findings  []StuckFinding  `json:"findings"`
+	ScannedAt time.Time        `json:"scannedAt"`
+	Findings  []StuckFinding   `json:"findings"`
 	Summary   StateScanSummary `json:"summary"`
 }
 
 // StateScanSummary counts findings by type
 type StateScanSummary struct {
-	HelmReleaseStuck    int `json:"helmReleaseStuck"`
-	KustomizationStuck  int `json:"kustomizationStuck"`
-	ApplicationStuck    int `json:"applicationStuck"`
-	SilentFailures      int `json:"silentFailures"`
-	Total               int `json:"total"`
+	HelmReleaseStuck   int `json:"helmReleaseStuck"`
+	KustomizationStuck int `json:"kustomizationStuck"`
+	ApplicationStuck   int `json:"applicationStuck"`
+	SilentFailures     int `json:"silentFailures"`
+	Total              int `json:"total"`
 }
 
 // NewStateScanner creates a new state scanner
@@ -378,18 +378,18 @@ func (s *StateScanner) checkHelmReleases(items []unstructured.Unstructured, thre
 				duration := time.Since(transitionTime)
 				if duration > threshold {
 					finding := StuckFinding{
-						CCVEID:    "CCVE-2025-0166", // HelmRelease stuck
-						Category:  "STATE",
-						Severity:  s.determineSeverity(duration),
-						Kind:      "HelmRelease",
-						Name:      name,
-						Namespace: namespace,
-						Condition: fmt.Sprintf("%s=%s", condType, status),
-						Reason:    reason,
-						Message:   truncateMessage(message, 100),
-						Duration:  formatDuration(duration),
+						CCVEID:      "CCVE-2025-0166", // HelmRelease stuck
+						Category:    "STATE",
+						Severity:    s.determineSeverity(duration),
+						Kind:        "HelmRelease",
+						Name:        name,
+						Namespace:   namespace,
+						Condition:   fmt.Sprintf("%s=%s", condType, status),
+						Reason:      reason,
+						Message:     truncateMessage(message, 100),
+						Duration:    formatDuration(duration),
 						Remediation: s.getHelmReleaseRemediation(reason),
-						Command:   s.getHelmReleaseCommand(namespace, name, reason),
+						Command:     s.getHelmReleaseCommand(namespace, name, reason),
 					}
 					findings = append(findings, finding)
 					break // Only report once per HelmRelease
@@ -472,18 +472,18 @@ func (s *StateScanner) checkKustomizations(items []unstructured.Unstructured, th
 				duration := time.Since(transitionTime)
 				if duration > threshold {
 					finding := StuckFinding{
-						CCVEID:    "CCVE-2025-0012", // Kustomization stuck
-						Category:  "STATE",
-						Severity:  s.determineSeverity(duration),
-						Kind:      "Kustomization",
-						Name:      name,
-						Namespace: namespace,
-						Condition: fmt.Sprintf("%s=%s", condType, status),
-						Reason:    reason,
-						Message:   truncateMessage(message, 100),
-						Duration:  formatDuration(duration),
+						CCVEID:      "CCVE-2025-0012", // Kustomization stuck
+						Category:    "STATE",
+						Severity:    s.determineSeverity(duration),
+						Kind:        "Kustomization",
+						Name:        name,
+						Namespace:   namespace,
+						Condition:   fmt.Sprintf("%s=%s", condType, status),
+						Reason:      reason,
+						Message:     truncateMessage(message, 100),
+						Duration:    formatDuration(duration),
 						Remediation: s.getKustomizationRemediation(reason),
-						Command:   s.getKustomizationCommand(namespace, name, reason),
+						Command:     s.getKustomizationCommand(namespace, name, reason),
 					}
 					findings = append(findings, finding)
 					break
@@ -552,18 +552,18 @@ func (s *StateScanner) checkApplications(items []unstructured.Unstructured, thre
 					duration := time.Since(startTime)
 					if duration > threshold {
 						finding := StuckFinding{
-							CCVEID:    "CCVE-2025-0169", // Application stuck syncing
-							Category:  "STATE",
-							Severity:  s.determineSeverity(duration),
-							Kind:      "Application",
-							Name:      name,
-							Namespace: namespace,
-							Condition: fmt.Sprintf("operationState.phase=%s", phase),
-							Reason:    phase,
-							Message:   truncateMessage(message, 100),
-							Duration:  formatDuration(duration),
+							CCVEID:      "CCVE-2025-0169", // Application stuck syncing
+							Category:    "STATE",
+							Severity:    s.determineSeverity(duration),
+							Kind:        "Application",
+							Name:        name,
+							Namespace:   namespace,
+							Condition:   fmt.Sprintf("operationState.phase=%s", phase),
+							Reason:      phase,
+							Message:     truncateMessage(message, 100),
+							Duration:    formatDuration(duration),
 							Remediation: s.getApplicationRemediation(phase),
-							Command:   s.getApplicationCommand(namespace, name, phase),
+							Command:     s.getApplicationCommand(namespace, name, phase),
 						}
 						findings = append(findings, finding)
 						continue
@@ -582,18 +582,18 @@ func (s *StateScanner) checkApplications(items []unstructured.Unstructured, thre
 					duration := time.Since(reconciledTime)
 					if duration > threshold {
 						finding := StuckFinding{
-							CCVEID:    "CCVE-2025-0169",
-							Category:  "STATE",
-							Severity:  s.determineSeverity(duration),
-							Kind:      "Application",
-							Name:      name,
-							Namespace: namespace,
-							Condition: fmt.Sprintf("health=%s, sync=%s", healthStatus, syncStatus),
-							Reason:    healthStatus,
-							Message:   fmt.Sprintf("Application unhealthy or out of sync for %s", formatDuration(duration)),
-							Duration:  formatDuration(duration),
+							CCVEID:      "CCVE-2025-0169",
+							Category:    "STATE",
+							Severity:    s.determineSeverity(duration),
+							Kind:        "Application",
+							Name:        name,
+							Namespace:   namespace,
+							Condition:   fmt.Sprintf("health=%s, sync=%s", healthStatus, syncStatus),
+							Reason:      healthStatus,
+							Message:     fmt.Sprintf("Application unhealthy or out of sync for %s", formatDuration(duration)),
+							Duration:    formatDuration(duration),
 							Remediation: s.getApplicationRemediation(healthStatus),
-							Command:   s.getApplicationCommand(namespace, name, healthStatus),
+							Command:     s.getApplicationCommand(namespace, name, healthStatus),
 						}
 						findings = append(findings, finding)
 					}
@@ -1831,12 +1831,12 @@ type UnresolvedResult struct {
 
 // UnresolvedSummary counts unresolved findings by source
 type UnresolvedSummary struct {
-	Trivy     int `json:"trivy"`
-	Kyverno   int `json:"kyverno"`
+	Trivy      int `json:"trivy"`
+	Kyverno    int `json:"kyverno"`
 	Gatekeeper int `json:"gatekeeper"`
-	Critical  int `json:"critical"`
-	High      int `json:"high"`
-	Total     int `json:"total"`
+	Critical   int `json:"critical"`
+	High       int `json:"high"`
+	Total      int `json:"total"`
 }
 
 // ScanUnresolvedFindings scans for unresolved findings from security tools
@@ -2134,17 +2134,17 @@ func (s *StateScanner) scanKyvernoPolicyReports(ctx context.Context) []Unresolve
 
 // DanglingFinding represents a resource that references non-existent targets
 type DanglingFinding struct {
-	CCVEID       string `json:"ccve_id"`
-	Category     string `json:"category"`
-	Severity     string `json:"severity"`
-	Kind         string `json:"kind"`
-	Name         string `json:"name"`
-	Namespace    string `json:"namespace"`
-	TargetKind   string `json:"target_kind"`
-	TargetName   string `json:"target_name"`
-	Message      string `json:"message"`
-	Remediation  string `json:"remediation"`
-	Command      string `json:"command"`
+	CCVEID      string `json:"ccve_id"`
+	Category    string `json:"category"`
+	Severity    string `json:"severity"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	Namespace   string `json:"namespace"`
+	TargetKind  string `json:"target_kind"`
+	TargetName  string `json:"target_name"`
+	Message     string `json:"message"`
+	Remediation string `json:"remediation"`
+	Command     string `json:"command"`
 }
 
 // DanglingResult contains all dangling resource findings

@@ -105,16 +105,16 @@ func init() {
 
 // CombinedScanResult holds results from all scanners
 type CombinedScanResult struct {
-	Kyverno     *agent.ScanResult        `json:"kyverno,omitempty"`
-	State       *agent.StateScanResult   `json:"state,omitempty"`
-	TimingBombs *agent.TimingBombResult  `json:"timingBombs,omitempty"`
-	Unresolved  *agent.UnresolvedResult  `json:"unresolved,omitempty"`
-	Dangling    *agent.DanglingResult    `json:"dangling,omitempty"`
-	Static      *agent.StaticScanResult  `json:"static,omitempty"`
+	Kyverno     *agent.ScanResult       `json:"kyverno,omitempty"`
+	State       *agent.StateScanResult  `json:"state,omitempty"`
+	TimingBombs *agent.TimingBombResult `json:"timingBombs,omitempty"`
+	Unresolved  *agent.UnresolvedResult `json:"unresolved,omitempty"`
+	Dangling    *agent.DanglingResult   `json:"dangling,omitempty"`
+	Static      *agent.StaticScanResult `json:"static,omitempty"`
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	// Check ConfigHub connection for full scan capabilities
 	// Note: --list and --file modes work with embedded patterns

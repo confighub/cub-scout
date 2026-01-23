@@ -284,8 +284,8 @@ const (
 	importStepArgoApps         // Select ArgoCD Application
 	importStepSetup            // Choose to create space/target or use existing
 	importStepCreateSpace
-	importStepCreateWorker  // Create worker (target auto-created when worker runs)
-	importStepWaitTarget    // Wait for target to be auto-created by running worker
+	importStepCreateWorker // Create worker (target auto-created when worker runs)
+	importStepWaitTarget   // Wait for target to be auto-created by running worker
 	importStepDiscovering
 	importStepSelection
 	importStepUnitStructure // Choose combined vs individual units (ArgoCD only)
@@ -323,23 +323,23 @@ const (
 
 // Create wizard steps
 const (
-	createStepSelectType = iota // Select space/unit/target
-	createStepEnterName         // Enter name
-	createStepUnitMethod        // Clone or empty (for units)
-	createStepSelectSource      // Select unit to clone (for units)
-	createStepSelectTarget      // Select target (for units)
-	createStepSelectWorker      // Select worker (for targets)
-	createStepSelectProvider    // Select provider (for targets)
-	createStepConfirm           // Confirm creation
-	createStepCreating          // Creating in progress
-	createStepComplete          // Done
+	createStepSelectType     = iota // Select space/unit/target
+	createStepEnterName             // Enter name
+	createStepUnitMethod            // Clone or empty (for units)
+	createStepSelectSource          // Select unit to clone (for units)
+	createStepSelectTarget          // Select target (for units)
+	createStepSelectWorker          // Select worker (for targets)
+	createStepSelectProvider        // Select provider (for targets)
+	createStepConfirm               // Confirm creation
+	createStepCreating              // Creating in progress
+	createStepComplete              // Done
 )
 
 // Delete wizard steps
 const (
-	deleteStepConfirm = iota // Confirm deletion
-	deleteStepDeleting       // Deletion in progress
-	deleteStepComplete       // Done
+	deleteStepConfirm  = iota // Confirm deletion
+	deleteStepDeleting        // Deletion in progress
+	deleteStepComplete        // Done
 )
 
 // Model represents the TUI state
@@ -480,11 +480,11 @@ type Model struct {
 	panelOrphans     []MapEntry            // Workloads not in ConfigHub
 
 	// Suggest view mode (g to open) - recommend Units from live resources
-	suggestMode     bool                      // Suggest view active
-	suggestLoading  bool                      // Loading cluster data
-	suggestError    error                     // Error fetching data
-	suggestProposal *HubAppSpaceSuggestion    // Generated suggestion
-	suggestCursor   int                       // Cursor for navigation
+	suggestMode     bool                   // Suggest view active
+	suggestLoading  bool                   // Loading cluster data
+	suggestError    error                  // Error fetching data
+	suggestProposal *HubAppSpaceSuggestion // Generated suggestion
+	suggestCursor   int                    // Cursor for navigation
 
 	// Launch local cluster TUI flag (L to switch)
 	launchLocalCluster bool // Switch to local cluster TUI on exit
@@ -1000,4 +1000,3 @@ func saveHubSnapshot(m *Model) {
 	}
 	_ = os.WriteFile(path, data, 0644)
 }
-
