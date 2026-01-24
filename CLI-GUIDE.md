@@ -10,6 +10,7 @@ Complete reference for all commands, options, TUI keys, and expected outputs.
 |---------|-------------|:----------:|:---------:|
 | `map` | Interactive TUI explorer | Yes | Yes |
 | `tree` | Hierarchical views (runtime, git, config) | Yes | Yes |
+| `status` | Show connection status, cluster, and worker info | Yes | Yes |
 | `discover` | Find workloads (alias for map workloads) | Yes | - |
 | `health` | Check for issues (alias for map issues) | Yes | - |
 | `trace` | Show GitOps ownership chain | Yes | - |
@@ -194,6 +195,70 @@ Next steps:
 **Relationship with `cub unit tree`:**
 - `cub-scout tree`: What's deployed in THIS cluster (cluster perspective)
 - `cub unit tree`: How Units relate ACROSS your fleet (ConfigHub perspective)
+
+---
+
+## `status` — Connection and Cluster Status
+
+**What it does:** Shows cub-scout connection status, cluster info, and worker status. Useful for verifying your ConfigHub connection.
+
+```bash
+./cub-scout status
+./cub-scout status --json
+```
+
+**Expected output (connected with worker):**
+```
+ConfigHub:  ● Connected (alexis@confighub.com)
+Cluster:    prod-east
+Context:    eks-prod-east
+Worker:     ● bridge-prod (connected)
+```
+
+**Expected output (connected, no worker):**
+```
+ConfigHub:  ● Connected
+Cluster:    default
+Context:    kind-cub-scout-test
+Worker:     (none for this cluster)
+```
+
+**Expected output (standalone):**
+```
+ConfigHub:  ○ Online (not authenticated)
+            Run: cub auth login
+Cluster:    default
+Context:    docker-desktop
+```
+
+**JSON output:**
+```bash
+./cub-scout status --json
+```
+```json
+{
+  "mode": "connected",
+  "email": "alexis@confighub.com",
+  "cluster_name": "prod-east",
+  "context": "eks-prod-east",
+  "space": "platform-prod",
+  "worker": {
+    "name": "bridge-prod",
+    "status": "connected",
+    "cluster": "prod-east"
+  }
+}
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--json` | Output as JSON |
+
+**TUI equivalent:** The Local Cluster TUI header shows the same information:
+```
+Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● bridge-prod
+```
 
 ---
 
@@ -902,6 +967,17 @@ Summary: 1 critical, 2 warning, 0 info
 Press `?` in the TUI to see help.
 
 ### Local Cluster Mode
+
+The TUI header shows your connection status at all times:
+
+```
+Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● bridge-prod
+```
+
+- **Connected** (green): Authenticated with ConfigHub
+- **Standalone** (gray): Not authenticated, local-only mode
+- **Worker ●** (green): Worker connected and syncing
+- **Worker ○** (red): Worker disconnected
 
 #### Navigation
 | Key | Action |

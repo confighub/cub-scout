@@ -291,3 +291,69 @@ RESULT: ✓ PROVEN - cub-scout works at level 'full'
   - Excludes remedy.go, import*.go, and test files
   - Added to CI workflow
 - CI includes read-only policy check
+
+---
+
+### 2026-01-24 - Connected Mode UX Improvements
+
+**Goal:** Improve visibility of ConfigHub connection status in CLI and TUI
+
+#### New `cub-scout status` Command
+- Created `cmd/cub-scout/status.go` with:
+  - Shows connection mode: Connected/Online/Offline
+  - Shows cluster name (from CLUSTER_NAME env)
+  - Shows kubectl context
+  - Shows worker status for current cluster (if connected)
+  - Supports `--json` output for scripting
+
+**CLI Output:**
+```
+$ ./cub-scout status
+ConfigHub:  ● Connected (alexis@confighub.com)
+Cluster:    prod-east
+Context:    eks-prod-east
+Worker:     ● bridge-prod (connected)
+
+$ ./cub-scout status --json
+{
+  "mode": "connected",
+  "cluster_name": "prod-east",
+  "context": "eks-prod-east",
+  "space": "platform-prod"
+}
+```
+
+#### Updated Local Cluster TUI Header
+- Added connection status fields to `LocalClusterModel`:
+  - `connectionMode`, `connectedEmail`, `workerName`, `workerStatus`
+- Added `connectionStatusMsg` for async status check on TUI init
+- Added `checkConnectionStatus()` command that runs on startup
+- Updated `renderModeHeader()` to show:
+  - **Connected** (green) or **Standalone** (gray)
+  - Cluster name and kubectl context
+  - Worker status with ● (connected) or ○ (disconnected) indicator
+
+**TUI Header:**
+```
+Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● bridge-prod
+```
+
+#### Documentation Updates
+- **CLI-GUIDE.md**:
+  - Added `status` to Top-Level Commands table
+  - Added full `status` command section with examples
+  - Updated TUI section with header format explanation
+- **README.md**:
+  - Added "Verify Connection" subsection under "How to Connect"
+  - Shows CLI, JSON, and TUI examples
+
+#### Tests
+- Added `status` command to smoke tests
+- All tests pass
+
+#### Files Modified
+- `cmd/cub-scout/status.go` (new)
+- `cmd/cub-scout/localcluster.go` (connection status in TUI)
+- `cmd/cub-scout/smoke_test.go` (added status tests)
+- `CLI-GUIDE.md` (status command docs)
+- `README.md` (verify connection section)

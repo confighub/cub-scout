@@ -519,7 +519,42 @@ Once authenticated, cub-scout automatically operates in **connected mode**:
 - **Import workloads:** Send discovered resources to ConfigHub for tracking and collaboration
 - **Worker access:** Read from any cluster that ConfigHub is connected to via a [Bridge Worker](https://docs.confighub.com/workers), even without direct kubectl access
 
-Your authentication is stored locally and shared between `cub` and `cub-scout`. Run `cub auth status` to verify your connection.
+Your authentication is stored locally and shared between `cub` and `cub-scout`.
+
+### Verify Connection
+
+Use `cub-scout status` to verify your connection status:
+
+```bash
+$ ./cub-scout status
+ConfigHub:  ● Connected (alexis@confighub.com)
+Cluster:    prod-east
+Context:    eks-prod-east
+Worker:     ● bridge-prod (connected)
+```
+
+JSON output is available for scripting:
+
+```bash
+$ ./cub-scout status --json
+{
+  "mode": "connected",
+  "email": "alexis@confighub.com",
+  "cluster_name": "prod-east",
+  "context": "eks-prod-east",
+  "space": "platform-prod",
+  "worker": {
+    "name": "bridge-prod",
+    "status": "connected"
+  }
+}
+```
+
+The TUI also shows connection status in its header:
+
+```
+Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● bridge-prod
+```
 
 ---
 

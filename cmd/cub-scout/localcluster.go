@@ -124,6 +124,12 @@ type LocalClusterModel struct {
 	clusterName string
 	contextName string // kubectl context name
 
+	// Connection status (checked async on startup)
+	connectionMode string // "offline", "online", "connected"
+	connectedEmail string // Email if connected
+	workerName     string // Worker name for this cluster
+	workerStatus   string // "connected", "disconnected", ""
+
 	// Search
 	searchMode  bool
 	searchQuery string
@@ -350,6 +356,14 @@ type localAuthCheckMsg struct {
 	authenticated bool
 }
 
+// connectionStatusMsg carries connection status from async check
+type connectionStatusMsg struct {
+	mode         string // "offline", "online", "connected"
+	email        string // Email if connected
+	workerName   string // Worker name for this cluster (if any)
+	workerStatus string // "connected", "disconnected", ""
+}
+
 type traceResultMsg struct {
 	output string
 	err    error
@@ -437,6 +451,7 @@ func (m LocalClusterModel) Init() tea.Cmd {
 	return tea.Batch(
 		m.spinner.Tick,
 		loadLocalClusterData,
+		checkConnectionStatus(m.clusterName),
 	)
 }
 
@@ -861,6 +876,79 @@ func checkCubAuthForSwitch() tea.Msg {
 	return localAuthCheckMsg{authenticated: err == nil}
 }
 
+// checkConnectionStatus checks ConfigHub connection and worker status
+func checkConnectionStatus(clusterName string) tea.Cmd {
+	return func() tea.Msg {
+		msg := connectionStatusMsg{mode: "offline"}
+
+		// Check cub context
+		out, err := exec.Command("cub", "context", "get", "--json").Output()
+		if err != nil {
+			// Try without --json for older cub versions
+			out, err = exec.Command("cub", "context", "get").Output()
+			if err != nil {
+				// Not connected, check if online
+				if _, verr := exec.Command("cub", "--version").Output(); verr == nil {
+					msg.mode = "online"
+				}
+				return msg
+			}
+			// Parse text output
+			lines := strings.Split(string(out), "\n")
+			for _, line := range lines {
+				if strings.HasPrefix(line, "Email:") {
+					msg.email = strings.TrimSpace(strings.TrimPrefix(line, "Email:"))
+				}
+			}
+			if msg.email != "" {
+				msg.mode = "connected"
+			} else {
+				msg.mode = "online"
+			}
+			return msg
+		}
+
+		// Parse JSON context
+		var ctx struct {
+			Email string `json:"email"`
+			Space string `json:"space"`
+		}
+		if err := json.Unmarshal(out, &ctx); err == nil && ctx.Email != "" {
+			msg.mode = "connected"
+			msg.email = ctx.Email
+
+			// Try to get worker status for this cluster
+			if ctx.Space != "" {
+				if wout, werr := exec.Command("cub", "worker", "list", "--space", ctx.Space, "--json").Output(); werr == nil {
+					var workers []struct {
+						Name      string `json:"name"`
+						Cluster   string `json:"cluster"`
+						Condition string `json:"condition"`
+					}
+					if json.Unmarshal(wout, &workers) == nil {
+						for _, w := range workers {
+							if w.Cluster == clusterName || w.Name == clusterName {
+								msg.workerName = w.Name
+								switch strings.ToLower(w.Condition) {
+								case "ready", "connected":
+									msg.workerStatus = "connected"
+								default:
+									msg.workerStatus = "disconnected"
+								}
+								break
+							}
+						}
+					}
+				}
+			}
+		} else {
+			msg.mode = "online"
+		}
+
+		return msg
+	}
+}
+
 func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -910,6 +998,13 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.authNeeded = true
 		}
+		return m, nil
+
+	case connectionStatusMsg:
+		m.connectionMode = msg.mode
+		m.connectedEmail = msg.email
+		m.workerName = msg.workerName
+		m.workerStatus = msg.workerStatus
 		return m, nil
 
 	case traceResultMsg:
@@ -1798,13 +1893,35 @@ var (
 )
 
 // renderModeHeader returns the mode indicator header shown at the top of all views
-// Format: Standalone │ Cluster: prod-east │ Context: eks-prod-east
+// Format: Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● bridge-prod
+// Or:     Standalone │ Cluster: prod-east │ Context: eks-prod-east
 func (m LocalClusterModel) renderModeHeader() string {
-	mode := lcModeStandaloneStyle.Render("Standalone")
+	var mode string
+	switch m.connectionMode {
+	case "connected":
+		mode = lcModeConnectedStyle.Render("Connected")
+	case "online":
+		// Online but not authenticated - show as standalone with hint
+		mode = lcModeStandaloneStyle.Render("Standalone")
+	default:
+		mode = lcModeStandaloneStyle.Render("Standalone")
+	}
+
 	cluster := lcModeHeaderStyle.Render(fmt.Sprintf(" │ Cluster: %s", m.clusterName))
 	context := lcModeHeaderStyle.Render(fmt.Sprintf(" │ Context: %s", m.contextName))
 
-	return mode + cluster + context + "\n"
+	var worker string
+	if m.workerName != "" {
+		indicator := "○" // disconnected indicator
+		style := lcModeStandaloneStyle
+		if m.workerStatus == "connected" {
+			indicator = "●"
+			style = lcModeConnectedStyle
+		}
+		worker = lcModeHeaderStyle.Render(" │ Worker: ") + style.Render(indicator+" "+m.workerName)
+	}
+
+	return mode + cluster + context + worker + "\n"
 }
 
 // getNamespaceFilter returns the current namespace filter name
