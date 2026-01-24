@@ -1,5 +1,7 @@
 # cub-scout -- explore and map GitOps clusters
 
+EXPERIMENTAL - please try it out and send feedback.  The cub-scout tool is an open source cluster explorer which is designed to work with existing k8s clusters as a 'standalone' (read only) tool.  You can also run cub-scout with more features in 'connected' mode, using your (free!) account on [ConfigHub](https://confighub.com).  
+
 **Demystify GitOps. See what's really happening in your cluster.**
 
 GitOps is powerful but can be a opaque at times. Where did this Deployment come from? Why isn't my change applying? Is this managed by Git or was it kubectl'd? cub-scout makes the invisible visible.
@@ -475,9 +477,9 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 ---
 
-## Part of ConfigHub
+## Connecting cub-scout ConfigHub
 
-cub-scout is the open-source cluster explorer from [ConfigHub](https://confighub.com).
+cub-scout is an experimental open-source cluster explorer which is designed to work with existing k8s clusters as a 'standalone' (read only) tool.  Or, if you have signed up, we recommended running cub-scout connected to [ConfigHub](https://confighub.com).
 
 | Feature | Standalone | Connected |
 |---------|:----------:|:---------:|
@@ -493,9 +495,9 @@ cub-scout is the open-source cluster explorer from [ConfigHub](https://confighub
 | Revision history | — | ✓ |
 | Team collaboration | — | ✓ |
 
-**Standalone:** No signup, works forever. All cluster exploration features.
+**Standalone:** No signup, works forever. Read-only cluster exploration features.
 
-**Connected:** Run `cub auth login` to link to ConfigHub for fleet visibility and import.
+**Connected:** Run `cub auth login` to link to ConfigHub to access more features and import apps.
 
 ---
 
