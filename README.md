@@ -501,6 +501,26 @@ cub-scout is an experimental open-source cluster explorer which is designed to w
 
 **Connected:** Run `cub auth login` to link to ConfigHub to access more features and import apps.
 
+### How to Connect
+
+To use connected mode features, authenticate your machine with the ConfigHub CLI:
+
+```bash
+# Install the ConfigHub CLI (if not already installed)
+brew install confighub/tap/cub
+
+# Authenticate (opens browser for login)
+cub auth login
+```
+
+Once authenticated, cub-scout automatically operates in **connected mode**:
+
+- **Fleet visibility:** Query resources across all clusters your organization has connected to ConfigHub
+- **Import workloads:** Send discovered resources to ConfigHub for tracking and collaboration
+- **Worker access:** Read from any cluster that ConfigHub is connected to via a [Bridge Worker](https://docs.confighub.com/workers), even without direct kubectl access
+
+Your authentication is stored locally and shared between `cub` and `cub-scout`. Run `cub auth status` to verify your connection.
+
 ---
 
 ## Documentation
