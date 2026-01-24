@@ -1,6 +1,6 @@
 # cub-scout -- explore and map GitOps clusters
 
-EXPERIMENTAL - please try it out and send feedback.  The cub-scout tool is an open source cluster explorer which is designed to work with existing k8s clusters as a 'standalone' (read only) tool.  You can also run cub-scout with more features in 'connected' mode, using your (free!) account on [ConfigHub](https://confighub.com).  
+Cub-scout is an open source cluster explorer which is designed to work with existing k8s clusters as a 'standalone' (read only) tool.  You can also run cub-scout with more features in 'connected' mode, using your (free!) account on [ConfigHub](https://confighub.com).  Note this tool is EXPERIMENTAL - please try it out and send feedback on here or via our Discord server.  
 
 **Demystify GitOps. See what's really happening in your cluster.**
 
