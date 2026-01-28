@@ -584,7 +584,7 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Community
 
-- **Discord:** [discord.gg/confighub](https://discord.gg/confighub)
+- **Discord:** [discord.gg/confighub](https://discord-auth.confighub.net/discord/join)
 - **Issues:** [GitHub Issues](https://github.com/confighub/cub-scout/issues)
 - **Website:** [confighub.com](https://confighub.com)
 
