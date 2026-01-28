@@ -27,6 +27,8 @@ var (
 	traceReverse   bool   // Reverse trace - walk ownerReferences up
 	traceDiff      bool   // Show diff between live and desired state
 	traceExplain   bool   // Show explanatory content for learning
+	traceHistory   bool   // Show deployment history
+	traceLimit     int    // Limit number of history entries
 )
 
 // ANSI color codes for colorful output
@@ -78,6 +80,9 @@ Examples:
   # Output as JSON
   cub-scout trace deployment/nginx -n demo --json
 
+  # Show deployment history (who deployed what, when)
+  cub-scout trace deployment/nginx -n demo --history
+
 The output shows:
   - The full chain from GitRepository → Kustomization/HelmRelease → Resource
   - Status and revision at each level
@@ -105,6 +110,8 @@ func init() {
 	traceCmd.Flags().BoolVarP(&traceReverse, "reverse", "r", false, "Reverse trace - walk ownerReferences up to find GitOps source")
 	traceCmd.Flags().BoolVarP(&traceDiff, "diff", "d", false, "Show diff between live state and desired state from Git")
 	traceCmd.Flags().BoolVar(&traceExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
+	traceCmd.Flags().BoolVar(&traceHistory, "history", false, "Show deployment history (who deployed what, when)")
+	traceCmd.Flags().IntVar(&traceLimit, "limit", 10, "Limit number of history entries (default: 10)")
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {
@@ -476,6 +483,38 @@ func outputTraceHuman(result *agent.TraceResult) error {
 		if i < len(result.Chain)-1 {
 			fmt.Printf("%s%s│%s\n", strings.Repeat("    ", i)+"    ", colorDim, colorReset)
 		}
+	}
+
+	// Show history if requested and available
+	if traceHistory && len(result.History) > 0 {
+		fmt.Printf("\n")
+		fmt.Printf("%s%sHistory:%s\n", colorBold, colorWhite, colorReset)
+		limit := traceLimit
+		if limit > len(result.History) {
+			limit = len(result.History)
+		}
+		for i := 0; i < limit; i++ {
+			h := result.History[i]
+			timeStr := h.Timestamp.Format("2006-01-02 15:04")
+			statusColor := colorGreen
+			if h.Status == "failed" || h.Status == "superseded" {
+				statusColor = colorYellow
+			}
+			fmt.Printf("  %s%-16s%s  %s%-20s%s  %s%s%s",
+				colorDim, timeStr, colorReset,
+				colorPurple, truncate(h.Revision, 20), colorReset,
+				statusColor, h.Status, colorReset)
+			if h.Source != "" {
+				fmt.Printf("  %s%s%s", colorDim, h.Source, colorReset)
+			}
+			fmt.Printf("\n")
+		}
+		if len(result.History) > limit {
+			fmt.Printf("  %s... and %d more (use --limit to show more)%s\n", colorDim, len(result.History)-limit, colorReset)
+		}
+	} else if traceHistory {
+		fmt.Printf("\n")
+		fmt.Printf("%s%sHistory:%s %sNo history available%s\n", colorBold, colorWhite, colorReset, colorDim, colorReset)
 	}
 
 	// Summary
@@ -862,6 +901,14 @@ func runArgoDiff(ctx context.Context, name string, ownership *agent.Ownership) e
 
 	fmt.Printf("\n%s%s✓ No differences - live state matches Git%s\n\n", colorBold, colorGreen, colorReset)
 	return nil
+}
+
+// truncate truncates a string to the given length
+func truncate(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen-3] + "..."
 }
 
 // runHelmDiff shows diff for Helm-managed resources

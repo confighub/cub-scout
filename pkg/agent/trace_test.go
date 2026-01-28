@@ -5,6 +5,8 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 )
@@ -226,6 +228,188 @@ func TestMultiTracerAvailableTracers(t *testing.T) {
 	}
 	if found["argocd"] {
 		t.Error("Did not expect 'argocd' in available tracers")
+	}
+}
+
+// ============================================================================
+// History Feature Tests (Task 1: Core data structures)
+// ============================================================================
+
+func TestHistoryEntryStruct(t *testing.T) {
+	// Test that HistoryEntry can be created and serialized correctly
+	ts := time.Date(2026, 1, 28, 10, 30, 0, 0, time.UTC)
+
+	entry := HistoryEntry{
+		Timestamp: ts,
+		Revision:  "v1.2.3@abc123",
+		Status:    "deployed",
+		Source:    "manual sync by alice@example.com",
+		Message:   "Deployment successful",
+		Duration:  "2.5s",
+	}
+
+	// Verify all fields are set correctly
+	if entry.Timestamp != ts {
+		t.Errorf("Timestamp = %v, want %v", entry.Timestamp, ts)
+	}
+	if entry.Revision != "v1.2.3@abc123" {
+		t.Errorf("Revision = %q, want %q", entry.Revision, "v1.2.3@abc123")
+	}
+	if entry.Status != "deployed" {
+		t.Errorf("Status = %q, want %q", entry.Status, "deployed")
+	}
+	if entry.Source != "manual sync by alice@example.com" {
+		t.Errorf("Source = %q, want %q", entry.Source, "manual sync by alice@example.com")
+	}
+	if entry.Message != "Deployment successful" {
+		t.Errorf("Message = %q, want %q", entry.Message, "Deployment successful")
+	}
+	if entry.Duration != "2.5s" {
+		t.Errorf("Duration = %q, want %q", entry.Duration, "2.5s")
+	}
+}
+
+func TestHistoryEntryJSON(t *testing.T) {
+	ts := time.Date(2026, 1, 28, 10, 30, 0, 0, time.UTC)
+
+	entry := HistoryEntry{
+		Timestamp: ts,
+		Revision:  "main@sha1:abc123",
+		Status:    "ReconciliationSucceeded",
+	}
+
+	// Test JSON marshaling
+	data, err := json.Marshal(entry)
+	if err != nil {
+		t.Fatalf("Failed to marshal HistoryEntry: %v", err)
+	}
+
+	// Verify JSON contains expected fields
+	jsonStr := string(data)
+	if !strings.Contains(jsonStr, `"revision":"main@sha1:abc123"`) {
+		t.Errorf("JSON missing revision field: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"status":"ReconciliationSucceeded"`) {
+		t.Errorf("JSON missing status field: %s", jsonStr)
+	}
+
+	// Test JSON unmarshaling
+	var decoded HistoryEntry
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("Failed to unmarshal HistoryEntry: %v", err)
+	}
+
+	if decoded.Revision != entry.Revision {
+		t.Errorf("Decoded Revision = %q, want %q", decoded.Revision, entry.Revision)
+	}
+}
+
+func TestTraceResultWithHistory(t *testing.T) {
+	now := time.Now()
+	hourAgo := now.Add(-1 * time.Hour)
+	dayAgo := now.Add(-24 * time.Hour)
+
+	result := TraceResult{
+		Object: ResourceRef{
+			Kind:      "Deployment",
+			Name:      "nginx",
+			Namespace: "prod",
+		},
+		Chain: []ChainLink{
+			{Kind: "Application", Name: "nginx-app", Ready: true},
+			{Kind: "Deployment", Name: "nginx", Ready: true},
+		},
+		FullyManaged: true,
+		Tool:         "argocd",
+		TracedAt:     now,
+		History: []HistoryEntry{
+			{Timestamp: hourAgo, Revision: "v1.2.3@abc123", Status: "deployed"},
+			{Timestamp: dayAgo, Revision: "v1.2.2@def456", Status: "deployed"},
+		},
+	}
+
+	// Verify history is populated
+	if len(result.History) != 2 {
+		t.Fatalf("Expected 2 history entries, got %d", len(result.History))
+	}
+
+	// Verify entries are in order (most recent first)
+	if result.History[0].Revision != "v1.2.3@abc123" {
+		t.Errorf("First history entry Revision = %q, want %q", result.History[0].Revision, "v1.2.3@abc123")
+	}
+	if result.History[1].Revision != "v1.2.2@def456" {
+		t.Errorf("Second history entry Revision = %q, want %q", result.History[1].Revision, "v1.2.2@def456")
+	}
+}
+
+func TestTraceResultHistoryEmpty(t *testing.T) {
+	result := TraceResult{
+		Object: ResourceRef{
+			Kind:      "Deployment",
+			Name:      "nginx",
+			Namespace: "default",
+		},
+		FullyManaged: true,
+		Tool:         "flux",
+		TracedAt:     time.Now(),
+		History:      nil, // No history
+	}
+
+	// Empty history should be valid
+	if result.History != nil && len(result.History) != 0 {
+		t.Errorf("Expected nil or empty history, got %d entries", len(result.History))
+	}
+
+	// JSON should omit empty history
+	data, err := json.Marshal(result)
+	if err != nil {
+		t.Fatalf("Failed to marshal TraceResult: %v", err)
+	}
+
+	// With omitempty, history field should not appear in JSON
+	if strings.Contains(string(data), `"history":null`) {
+		t.Log("History is null in JSON (acceptable)")
+	}
+}
+
+func TestTraceResultHistoryJSON(t *testing.T) {
+	ts := time.Date(2026, 1, 28, 10, 0, 0, 0, time.UTC)
+
+	result := TraceResult{
+		Object: ResourceRef{
+			Kind:      "Deployment",
+			Name:      "app",
+			Namespace: "prod",
+		},
+		FullyManaged: true,
+		Tool:         "helm",
+		TracedAt:     ts,
+		History: []HistoryEntry{
+			{Timestamp: ts, Revision: "v1", Status: "deployed"},
+		},
+	}
+
+	data, err := json.Marshal(result)
+	if err != nil {
+		t.Fatalf("Failed to marshal TraceResult with history: %v", err)
+	}
+
+	// Verify JSON contains history
+	if !strings.Contains(string(data), `"history":[`) {
+		t.Errorf("JSON missing history array: %s", string(data))
+	}
+
+	// Unmarshal and verify
+	var decoded TraceResult
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("Failed to unmarshal TraceResult: %v", err)
+	}
+
+	if len(decoded.History) != 1 {
+		t.Fatalf("Decoded history has %d entries, want 1", len(decoded.History))
+	}
+	if decoded.History[0].Status != "deployed" {
+		t.Errorf("Decoded history status = %q, want %q", decoded.History[0].Status, "deployed")
 	}
 }
 

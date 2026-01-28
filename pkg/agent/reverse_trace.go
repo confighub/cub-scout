@@ -342,6 +342,59 @@ func APIVersionKindToGVR(apiVersion, kind string) (schema.GroupVersionResource, 
 	}, nil
 }
 
+// K8sEvent represents a Kubernetes event for history extraction
+type K8sEvent struct {
+	Type           string     `json:"type"`           // Normal, Warning
+	Reason         string     `json:"reason"`         // ScalingReplicaSet, FailedScheduling, etc.
+	Message        string     `json:"message"`        // Human-readable description
+	FirstTimestamp *time.Time `json:"firstTimestamp"` // When event first occurred
+	LastTimestamp  *time.Time `json:"lastTimestamp"`  // When event last occurred
+	Count          int32      `json:"count"`          // Number of occurrences
+}
+
+// ParseEventsToHistory converts K8s events to universal HistoryEntry format
+// Events are sorted by timestamp descending (most recent first)
+func ParseEventsToHistory(events []K8sEvent) []HistoryEntry {
+	if len(events) == 0 {
+		return nil
+	}
+
+	history := make([]HistoryEntry, 0, len(events))
+	for _, e := range events {
+		var timestamp time.Time
+		if e.LastTimestamp != nil {
+			timestamp = *e.LastTimestamp
+		} else if e.FirstTimestamp != nil {
+			timestamp = *e.FirstTimestamp
+		}
+
+		source := e.Type
+		if e.Count > 1 {
+			source = fmt.Sprintf("%s (x%d)", e.Type, e.Count)
+		}
+
+		entry := HistoryEntry{
+			Timestamp: timestamp,
+			Revision:  "", // Events don't have revisions
+			Status:    e.Reason,
+			Message:   e.Message,
+			Source:    source,
+		}
+		history = append(history, entry)
+	}
+
+	// Sort by timestamp descending (most recent first)
+	for i := 0; i < len(history)-1; i++ {
+		for j := i + 1; j < len(history); j++ {
+			if history[j].Timestamp.After(history[i].Timestamp) {
+				history[i], history[j] = history[j], history[i]
+			}
+		}
+	}
+
+	return history
+}
+
 // KindToResource maps a kind to its resource name (plural)
 func KindToResource(kind string) string {
 	switch kind {

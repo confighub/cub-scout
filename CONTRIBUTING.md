@@ -84,6 +84,13 @@ Features should work in degraded environments:
 - No ConfigHub? Standalone mode works
 - No internet? Offline mode works
 
+### Universal Interface, Tool-Specific Implementation
+
+When building features that span multiple GitOps tools (Flux, ArgoCD, Helm, etc.):
+- **Interface must be universal** — same flags, same output format, same user experience
+- **Implementation can be tool-specific** — use native APIs, CLIs, or data sources for each tool
+- Example: `--history` shows deployment history universally, but fetches from ArgoCD's `status.history`, Flux's `status.history`, Helm's release secrets, etc.
+
 ## Questions?
 
 - **Discord:** [discord.gg/confighub](https://discord.gg/confighub) — Ask questions, get help

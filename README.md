@@ -130,6 +130,21 @@ Auto-detects the GitOps tool and shows the full chain: Git repo → Deployer →
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+**Show deployment history:**
+
+```bash
+cub-scout trace deploy/payment-api -n prod --history
+```
+
+```
+History:
+  2026-01-28 10:00  main@sha1:abc123f    deployed    auto-sync
+  2026-01-27 14:30  main@sha1:def456a    deployed    manual sync by alice@acme.com
+  2026-01-25 09:15  main@sha1:789ghib    deployed    auto-sync
+```
+
+History data is fetched from each tool's native storage: ArgoCD `status.history`, Flux `status.history`, Helm release secrets.
+
 ---
 
 ### Tree Command — Multiple Hierarchy Views
@@ -337,6 +352,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | `cub-scout tree` | Hierarchical views (runtime, git, config) |
 | `cub-scout tree suggest` | Suggested Hub/AppSpace organization |
 | `cub-scout trace deploy/x -n y` | Full ownership chain to Git source |
+| `cub-scout trace deploy/x -n y --history` | Deployment history (who deployed what, when) |
 | `cub-scout health` | Check for issues (scout-style alias) |
 | `cub-scout scan` | Configuration risk patterns (46 patterns) |
 

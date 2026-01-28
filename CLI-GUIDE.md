@@ -755,8 +755,28 @@ Orphan Metadata:
 | `--app` | Trace ArgoCD app by name |
 | `-r, --reverse` | Reverse trace — walks ownerRefs up, shows orphan metadata |
 | `-d, --diff` | Show diff between live and desired state |
+| `--history` | Show deployment history (who deployed what, when) |
+| `--limit` | Limit number of history entries (default: 10) |
 | `--explain` | Show learning content explaining the trace |
 | `--json` | Output as JSON |
+
+**History mode (`--history`):**
+```bash
+./cub-scout trace deploy/nginx -n prod --history
+
+# Output:
+# TRACE: Deployment/nginx in prod
+# ...
+# History:
+#   2026-01-28 10:00  v1.2.3@abc123         deployed    manual sync by alice@co.com
+#   2026-01-27 14:00  v1.2.2@def456         deployed    auto-sync
+#   2026-01-25 09:00  v1.2.1@789ghi         deployed    manual sync by bob@co.com
+```
+
+History data sources per tool:
+- **ArgoCD**: `status.history` on Application resource
+- **Flux**: `status.history` on Kustomization/HelmRelease
+- **Helm**: Release secrets (`sh.helm.release.v1.<name>.v<N>`)
 
 **Supported sources:** GitRepository, OCIRepository, HelmRepository, Bucket (Flux), plus standalone Helm releases.
 

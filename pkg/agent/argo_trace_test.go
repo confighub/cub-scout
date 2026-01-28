@@ -291,3 +291,169 @@ func TestArgoTracerParseAppOutputError(t *testing.T) {
 		t.Errorf("Unexpected error for empty JSON: %v", err)
 	}
 }
+
+// ============================================================================
+// History Feature Tests (Task 2: ArgoCD history extraction)
+// ============================================================================
+
+func TestArgoParseHistory(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	jsonData := `{
+		"metadata": {
+			"name": "nginx-app",
+			"namespace": "argocd"
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/repo.git",
+				"path": "./deploy",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "production"
+			}
+		},
+		"status": {
+			"sync": {
+				"status": "Synced",
+				"revision": "abc123"
+			},
+			"health": {
+				"status": "Healthy"
+			},
+			"resources": [],
+			"history": [
+				{
+					"revision": "abc123def456789",
+					"deployedAt": "2026-01-28T10:00:00Z"
+				},
+				{
+					"revision": "previous123456",
+					"deployedAt": "2026-01-27T08:30:00Z"
+				},
+				{
+					"revision": "older789012345",
+					"deployedAt": "2026-01-25T14:15:00Z"
+				}
+			]
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "nginx-app", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	// Verify history is populated
+	if len(result.History) != 3 {
+		t.Fatalf("Expected 3 history entries, got %d", len(result.History))
+	}
+
+	// Verify first entry (most recent)
+	if result.History[0].Revision != "abc123def456789" {
+		t.Errorf("History[0].Revision = %q, want %q", result.History[0].Revision, "abc123def456789")
+	}
+	if result.History[0].Status != "deployed" {
+		t.Errorf("History[0].Status = %q, want %q", result.History[0].Status, "deployed")
+	}
+	if result.History[0].Timestamp.IsZero() {
+		t.Error("History[0].Timestamp should not be zero")
+	}
+
+	// Verify second entry
+	if result.History[1].Revision != "previous123456" {
+		t.Errorf("History[1].Revision = %q, want %q", result.History[1].Revision, "previous123456")
+	}
+
+	// Verify third entry
+	if result.History[2].Revision != "older789012345" {
+		t.Errorf("History[2].Revision = %q, want %q", result.History[2].Revision, "older789012345")
+	}
+}
+
+func TestArgoHistoryEmpty(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	// Application with no history (newly created or history cleared)
+	jsonData := `{
+		"metadata": {
+			"name": "new-app",
+			"namespace": "argocd"
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/new-repo.git",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "default"
+			}
+		},
+		"status": {
+			"sync": {
+				"status": "Synced",
+				"revision": "abc123"
+			},
+			"health": {
+				"status": "Healthy"
+			},
+			"resources": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "new-app", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	// Empty history should be valid (nil or empty slice)
+	if result.History != nil && len(result.History) != 0 {
+		t.Errorf("Expected nil or empty history, got %d entries", len(result.History))
+	}
+}
+
+func TestArgoHistoryWithEmptyArray(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	// Application with explicit empty history array
+	jsonData := `{
+		"metadata": {
+			"name": "empty-history-app",
+			"namespace": "argocd"
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/repo.git",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "default"
+			}
+		},
+		"status": {
+			"sync": {
+				"status": "Synced",
+				"revision": "abc123"
+			},
+			"health": {
+				"status": "Healthy"
+			},
+			"resources": [],
+			"history": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "empty-history-app", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	// Empty history array should result in nil or empty History
+	if len(result.History) != 0 {
+		t.Errorf("Expected empty history, got %d entries", len(result.History))
+	}
+}

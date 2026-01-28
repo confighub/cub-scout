@@ -62,6 +62,12 @@ func TestSmoke_CLIHelp(t *testing.T) {
 			wantContains: []string{"trace", "Usage:"},
 		},
 		{
+			name:         "trace help has history flag",
+			args:         []string{"trace", "--help"},
+			wantExitCode: 0,
+			wantContains: []string{"--history", "deployment history"},
+		},
+		{
 			name:         "status help",
 			args:         []string{"status", "--help"},
 			wantExitCode: 0,

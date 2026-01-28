@@ -5,6 +5,7 @@ package agent
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -192,4 +193,75 @@ func TestExtractOrphanMetadata_NoLastApplied(t *testing.T) {
 
 	// Verify creation timestamp
 	assert.NotNil(t, meta.CreatedAt)
+}
+
+// ============================================================================
+// History Feature Tests (Task 5: Native history from K8s Events)
+// ============================================================================
+
+func TestNativeHistoryFromEvents(t *testing.T) {
+	events := []K8sEvent{
+		{
+			Type:           "Normal",
+			Reason:         "ScalingReplicaSet",
+			Message:        "Scaled up replica set nginx-abc123 to 3",
+			FirstTimestamp: mustParseTime("2026-01-28T10:00:00Z"),
+			LastTimestamp:  mustParseTime("2026-01-28T10:00:00Z"),
+			Count:          1,
+		},
+		{
+			Type:           "Normal",
+			Reason:         "SuccessfulCreate",
+			Message:        "Created pod: nginx-abc123-xyz",
+			FirstTimestamp: mustParseTime("2026-01-28T10:00:05Z"),
+			LastTimestamp:  mustParseTime("2026-01-28T10:00:05Z"),
+			Count:          1,
+		},
+		{
+			Type:           "Warning",
+			Reason:         "FailedScheduling",
+			Message:        "0/3 nodes are available: insufficient memory",
+			FirstTimestamp: mustParseTime("2026-01-27T15:00:00Z"),
+			LastTimestamp:  mustParseTime("2026-01-27T15:30:00Z"),
+			Count:          5,
+		},
+	}
+
+	history := ParseEventsToHistory(events)
+
+	assert.Len(t, history, 3)
+
+	// Most recent should be first
+	assert.Equal(t, "SuccessfulCreate", history[0].Status)
+	assert.Equal(t, "Created pod: nginx-abc123-xyz", history[0].Message)
+
+	// Second event
+	assert.Equal(t, "ScalingReplicaSet", history[1].Status)
+
+	// Warning event
+	assert.Equal(t, "FailedScheduling", history[2].Status)
+	assert.Contains(t, history[2].Source, "Warning")
+}
+
+func TestNativeHistoryNoEvents(t *testing.T) {
+	events := []K8sEvent{}
+
+	history := ParseEventsToHistory(events)
+
+	assert.Len(t, history, 0)
+}
+
+func TestNativeHistoryNilEvents(t *testing.T) {
+	history := ParseEventsToHistory(nil)
+
+	assert.Len(t, history, 0)
+}
+
+// Helper to parse time in tests
+func mustParseTime(s string) *time.Time {
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		panic(err)
+	}
+	return &t
 }

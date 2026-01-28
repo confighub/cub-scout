@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -308,4 +309,49 @@ func extractRevision(rev string) string {
 	}
 
 	return rev
+}
+
+// fluxResource represents the JSON structure of a Flux Kustomization or HelmRelease
+type fluxResource struct {
+	Status struct {
+		History []fluxHistoryEntry `json:"history"`
+	} `json:"status"`
+}
+
+// fluxHistoryEntry represents a single entry in Flux's status.history
+type fluxHistoryEntry struct {
+	Digest                 string    `json:"digest"`
+	FirstReconciled        time.Time `json:"firstReconciled"`
+	LastReconciled         time.Time `json:"lastReconciled"`
+	LastReconciledDuration string    `json:"lastReconciledDuration"`
+	LastReconciledStatus   string    `json:"lastReconciledStatus"`
+	TotalReconciliations   int       `json:"totalReconciliations"`
+	Metadata               struct {
+		Revision string `json:"revision"`
+	} `json:"metadata"`
+}
+
+// ParseFluxResourceHistory parses history from a Flux Kustomization or HelmRelease JSON
+func ParseFluxResourceHistory(data []byte) ([]HistoryEntry, error) {
+	var resource fluxResource
+	if err := json.Unmarshal(data, &resource); err != nil {
+		return nil, fmt.Errorf("parse flux resource: %w", err)
+	}
+
+	if len(resource.Status.History) == 0 {
+		return nil, nil
+	}
+
+	history := make([]HistoryEntry, 0, len(resource.Status.History))
+	for _, h := range resource.Status.History {
+		entry := HistoryEntry{
+			Timestamp: h.LastReconciled,
+			Revision:  h.Metadata.Revision,
+			Status:    h.LastReconciledStatus,
+			Duration:  h.LastReconciledDuration,
+		}
+		history = append(history, entry)
+	}
+
+	return history, nil
 }

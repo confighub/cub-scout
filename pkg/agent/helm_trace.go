@@ -344,3 +344,52 @@ func (h *HelmTracer) TraceByOwnership(ctx context.Context, ownership Ownership) 
 	// The ownership.Name is the release name
 	return h.TraceRelease(ctx, ownership.Name, ownership.Namespace)
 }
+
+// GetReleaseHistory returns the deployment history for a Helm release
+// History is returned sorted by version descending (most recent first)
+func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespace string) ([]HistoryEntry, error) {
+	secrets, err := h.client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
+		LabelSelector: fmt.Sprintf("owner=helm,name=%s", releaseName),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var releases []*helmRelease
+	for _, secret := range secrets.Items {
+		if !strings.HasPrefix(secret.Name, "sh.helm.release.v1.") {
+			continue
+		}
+
+		release, err := h.decodeRelease(secret.Data["release"])
+		if err != nil {
+			continue
+		}
+
+		releases = append(releases, release)
+	}
+
+	if len(releases) == 0 {
+		return nil, nil
+	}
+
+	// Sort by version descending (most recent first)
+	sort.Slice(releases, func(i, j int) bool {
+		return releases[i].Version > releases[j].Version
+	})
+
+	// Convert to HistoryEntry
+	history := make([]HistoryEntry, 0, len(releases))
+	for _, rel := range releases {
+		entry := HistoryEntry{
+			Timestamp: rel.Info.LastDeployed,
+			Revision:  fmt.Sprintf("v%d", rel.Version),
+			Status:    rel.Info.Status,
+			Message:   rel.Info.Description,
+			Source:    fmt.Sprintf("chart %s-%s", rel.Chart.Metadata.Name, rel.Chart.Metadata.Version),
+		}
+		history = append(history, entry)
+	}
+
+	return history, nil
+}

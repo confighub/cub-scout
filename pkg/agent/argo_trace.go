@@ -267,6 +267,19 @@ func (a *ArgoTracer) parseAppOutput(data []byte, appName, namespace string) (*Tr
 		}
 	}
 
+	// Extract deployment history
+	if len(app.Status.History) > 0 {
+		result.History = make([]HistoryEntry, 0, len(app.Status.History))
+		for _, h := range app.Status.History {
+			entry := HistoryEntry{
+				Timestamp: h.DeployedAt,
+				Revision:  h.Revision,
+				Status:    "deployed",
+			}
+			result.History = append(result.History, entry)
+		}
+	}
+
 	return result, nil
 }
 

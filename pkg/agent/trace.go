@@ -32,6 +32,32 @@ type TraceResult struct {
 
 	// ConfigHub contains ConfigHub-specific metadata if the resource is managed by ConfigHub
 	ConfigHub *TraceConfigHub `json:"confighub,omitempty"`
+
+	// History contains deployment/reconciliation history entries
+	// Ordered from most recent to oldest
+	History []HistoryEntry `json:"history,omitempty"`
+}
+
+// HistoryEntry represents a single deployment or reconciliation event
+// This is a universal format that works across all GitOps tools
+type HistoryEntry struct {
+	// Timestamp is when this event occurred
+	Timestamp time.Time `json:"timestamp"`
+
+	// Revision is the version/commit that was deployed (e.g., "v1.2.3@abc123", "main@sha1:def456")
+	Revision string `json:"revision"`
+
+	// Status is the outcome (e.g., "deployed", "ReconciliationSucceeded", "failed")
+	Status string `json:"status"`
+
+	// Source describes what/who triggered the event (e.g., "manual sync by alice@example.com", "auto-sync")
+	Source string `json:"source,omitempty"`
+
+	// Message provides additional context about the event
+	Message string `json:"message,omitempty"`
+
+	// Duration is how long the operation took (for Flux reconciliations)
+	Duration string `json:"duration,omitempty"`
 }
 
 // TraceConfigHub contains ConfigHub integration data for a trace

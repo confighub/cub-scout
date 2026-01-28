@@ -278,3 +278,187 @@ func TestExtractRevision(t *testing.T) {
 		})
 	}
 }
+
+// ============================================================================
+// History Feature Tests (Task 3: Flux history extraction)
+// ============================================================================
+
+func TestFluxKustomizationHistory(t *testing.T) {
+	// Simulated kubectl get kustomization -o json output
+	jsonData := `{
+		"apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+		"kind": "Kustomization",
+		"metadata": {
+			"name": "apps",
+			"namespace": "flux-system"
+		},
+		"status": {
+			"conditions": [
+				{
+					"type": "Ready",
+					"status": "True",
+					"reason": "ReconciliationSucceeded"
+				}
+			],
+			"lastAppliedRevision": "main@sha1:abc123",
+			"history": [
+				{
+					"digest": "sha256:abc123def456",
+					"firstReconciled": "2026-01-28T08:00:00Z",
+					"lastReconciled": "2026-01-28T10:00:00Z",
+					"lastReconciledDuration": "2.5s",
+					"lastReconciledStatus": "ReconciliationSucceeded",
+					"totalReconciliations": 5,
+					"metadata": {
+						"revision": "main@sha1:abc123def456"
+					}
+				},
+				{
+					"digest": "sha256:older789",
+					"firstReconciled": "2026-01-27T08:00:00Z",
+					"lastReconciled": "2026-01-27T15:00:00Z",
+					"lastReconciledDuration": "3.1s",
+					"lastReconciledStatus": "ReconciliationSucceeded",
+					"totalReconciliations": 10,
+					"metadata": {
+						"revision": "main@sha1:older789012"
+					}
+				}
+			]
+		}
+	}`
+
+	history, err := ParseFluxResourceHistory([]byte(jsonData))
+	if err != nil {
+		t.Fatalf("ParseFluxResourceHistory() error = %v", err)
+	}
+
+	// Verify history is populated
+	if len(history) != 2 {
+		t.Fatalf("Expected 2 history entries, got %d", len(history))
+	}
+
+	// Verify first entry (most recent)
+	if history[0].Revision != "main@sha1:abc123def456" {
+		t.Errorf("History[0].Revision = %q, want %q", history[0].Revision, "main@sha1:abc123def456")
+	}
+	if history[0].Status != "ReconciliationSucceeded" {
+		t.Errorf("History[0].Status = %q, want %q", history[0].Status, "ReconciliationSucceeded")
+	}
+	if history[0].Duration != "2.5s" {
+		t.Errorf("History[0].Duration = %q, want %q", history[0].Duration, "2.5s")
+	}
+	if history[0].Timestamp.IsZero() {
+		t.Error("History[0].Timestamp should not be zero")
+	}
+
+	// Verify second entry
+	if history[1].Revision != "main@sha1:older789012" {
+		t.Errorf("History[1].Revision = %q, want %q", history[1].Revision, "main@sha1:older789012")
+	}
+}
+
+func TestFluxHelmReleaseHistory(t *testing.T) {
+	// Simulated kubectl get helmrelease -o json output
+	jsonData := `{
+		"apiVersion": "helm.toolkit.fluxcd.io/v2",
+		"kind": "HelmRelease",
+		"metadata": {
+			"name": "redis",
+			"namespace": "flux-system"
+		},
+		"status": {
+			"conditions": [
+				{
+					"type": "Ready",
+					"status": "True",
+					"reason": "ReconciliationSucceeded"
+				}
+			],
+			"lastAppliedRevision": "17.0.0",
+			"history": [
+				{
+					"digest": "sha256:helm123",
+					"firstReconciled": "2026-01-28T09:00:00Z",
+					"lastReconciled": "2026-01-28T09:30:00Z",
+					"lastReconciledDuration": "15.2s",
+					"lastReconciledStatus": "ReconciliationSucceeded",
+					"totalReconciliations": 3,
+					"metadata": {
+						"revision": "17.0.0"
+					}
+				}
+			]
+		}
+	}`
+
+	history, err := ParseFluxResourceHistory([]byte(jsonData))
+	if err != nil {
+		t.Fatalf("ParseFluxResourceHistory() error = %v", err)
+	}
+
+	if len(history) != 1 {
+		t.Fatalf("Expected 1 history entry, got %d", len(history))
+	}
+
+	if history[0].Revision != "17.0.0" {
+		t.Errorf("History[0].Revision = %q, want %q", history[0].Revision, "17.0.0")
+	}
+	if history[0].Duration != "15.2s" {
+		t.Errorf("History[0].Duration = %q, want %q", history[0].Duration, "15.2s")
+	}
+}
+
+func TestFluxHistoryEmpty(t *testing.T) {
+	// Flux resource without history field
+	jsonData := `{
+		"apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+		"kind": "Kustomization",
+		"metadata": {
+			"name": "new-ks",
+			"namespace": "flux-system"
+		},
+		"status": {
+			"conditions": [
+				{
+					"type": "Ready",
+					"status": "True"
+				}
+			]
+		}
+	}`
+
+	history, err := ParseFluxResourceHistory([]byte(jsonData))
+	if err != nil {
+		t.Fatalf("ParseFluxResourceHistory() error = %v", err)
+	}
+
+	// Empty history should return nil or empty slice
+	if len(history) != 0 {
+		t.Errorf("Expected empty history, got %d entries", len(history))
+	}
+}
+
+func TestFluxHistoryWithEmptyArray(t *testing.T) {
+	// Flux resource with explicit empty history array
+	jsonData := `{
+		"apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+		"kind": "Kustomization",
+		"metadata": {
+			"name": "empty-history",
+			"namespace": "flux-system"
+		},
+		"status": {
+			"history": []
+		}
+	}`
+
+	history, err := ParseFluxResourceHistory([]byte(jsonData))
+	if err != nil {
+		t.Fatalf("ParseFluxResourceHistory() error = %v", err)
+	}
+
+	if len(history) != 0 {
+		t.Errorf("Expected empty history, got %d entries", len(history))
+	}
+}
