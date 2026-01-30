@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -256,6 +257,11 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("trace failed: %w", err)
 	}
 
+	// Enrich chain links with timing information
+	if len(result.Chain) > 0 {
+		enrichTraceWithTiming(ctx, result)
+	}
+
 	// Detect cross-owner references if we have a workload
 	if kind == "Deployment" || kind == "StatefulSet" || kind == "DaemonSet" || kind == "Pod" {
 		crossRefs, crossErr := detectCrossOwnerReferences(ctx, kind, name, traceNamespace, ownership)
@@ -304,6 +310,22 @@ func normalizeKind(kind string) string {
 		}
 		return kind
 	}
+}
+
+// enrichTraceWithTiming adds timing information to trace chain links
+func enrichTraceWithTiming(ctx context.Context, result *agent.TraceResult) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return
+	}
+
+	enricher := agent.NewTimingEnricher(dynClient)
+	result.Chain = enricher.EnrichChainWithTiming(ctx, result.Chain)
 }
 
 // detectCrossOwnerReferences detects cross-owner references in a resource
@@ -511,6 +533,18 @@ func outputTraceHuman(result *agent.TraceResult) error {
 				statusColor = colorYellow
 			}
 			fmt.Printf("%s%sStatus:%s %s%s%s\n", detailPrefix, colorDim, colorReset, statusColor, link.Status, colorReset)
+		}
+		// Show elapsed time if available
+		if link.LastTransitionTime != nil {
+			elapsed := time.Since(*link.LastTransitionTime)
+			elapsedStr := formatElapsed(elapsed)
+			elapsedColor := colorDim
+			// Highlight if stuck (e.g., reconciling for more than 5 minutes)
+			if !link.Ready && elapsed > 5*time.Minute {
+				elapsedColor = colorYellow
+				elapsedStr += " ⚠"
+			}
+			fmt.Printf("%s%sElapsed:%s %s%s%s\n", detailPrefix, colorDim, colorReset, elapsedColor, elapsedStr, colorReset)
 		}
 		if link.Message != "" && !link.Ready {
 			fmt.Printf("%s%sError:%s %s%s%s\n", detailPrefix, colorRed, colorReset, colorRed, link.Message, colorReset)
@@ -996,6 +1030,26 @@ func truncate(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen-3] + "..."
+}
+
+// formatElapsed formats a duration in a human-readable way
+func formatElapsed(d time.Duration) string {
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	if d < time.Hour {
+		mins := int(d.Minutes())
+		secs := int(d.Seconds()) % 60
+		return fmt.Sprintf("%dm %ds", mins, secs)
+	}
+	if d < 24*time.Hour {
+		hours := int(d.Hours())
+		mins := int(d.Minutes()) % 60
+		return fmt.Sprintf("%dh %dm", hours, mins)
+	}
+	days := int(d.Hours() / 24)
+	hours := int(d.Hours()) % 24
+	return fmt.Sprintf("%dd %dh", days, hours)
 }
 
 // runHelmDiff shows diff for Helm-managed resources
