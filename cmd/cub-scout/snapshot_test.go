@@ -361,3 +361,197 @@ func TestBuildMountsRelations_NoVolumes(t *testing.T) {
 		t.Errorf("expected 0 relations, got %d", len(relations))
 	}
 }
+
+func TestBuildReferencesRelations_EnvFrom(t *testing.T) {
+	// Pod with envFrom referencing ConfigMap and Secret
+	pod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "app-xyz",
+				"namespace": "prod",
+				"uid":       "pod-uid-123",
+			},
+			"spec": map[string]interface{}{
+				"containers": []interface{}{
+					map[string]interface{}{
+						"name":  "main",
+						"image": "app:latest",
+						"envFrom": []interface{}{
+							map[string]interface{}{
+								"configMapRef": map[string]interface{}{
+									"name": "app-env",
+								},
+							},
+							map[string]interface{}{
+								"secretRef": map[string]interface{}{
+									"name": "app-secrets",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	items := []unstructured.Unstructured{pod}
+	relations := buildReferencesRelations(items, "test-cluster")
+
+	// Should have 2 relations
+	if len(relations) != 2 {
+		t.Errorf("expected 2 relations, got %d", len(relations))
+		t.Logf("relations: %+v", relations)
+	}
+
+	foundConfigMap := false
+	foundSecret := false
+
+	for _, rel := range relations {
+		if rel.Type != "references" {
+			t.Errorf("expected type 'references', got %s", rel.Type)
+		}
+		if rel.From != "test-cluster/prod//Pod/app-xyz" {
+			t.Errorf("unexpected from: %s", rel.From)
+		}
+		if rel.To == "test-cluster/prod//ConfigMap/app-env" {
+			foundConfigMap = true
+		}
+		if rel.To == "test-cluster/prod//Secret/app-secrets" {
+			foundSecret = true
+		}
+	}
+
+	if !foundConfigMap {
+		t.Error("missing Pod -> ConfigMap relation")
+	}
+	if !foundSecret {
+		t.Error("missing Pod -> Secret relation")
+	}
+}
+
+func TestBuildReferencesRelations_EnvValueFrom(t *testing.T) {
+	// Pod with env[].valueFrom referencing ConfigMap and Secret
+	pod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "app-xyz",
+				"namespace": "prod",
+				"uid":       "pod-uid-123",
+			},
+			"spec": map[string]interface{}{
+				"containers": []interface{}{
+					map[string]interface{}{
+						"name":  "main",
+						"image": "app:latest",
+						"env": []interface{}{
+							map[string]interface{}{
+								"name": "DB_HOST",
+								"valueFrom": map[string]interface{}{
+									"configMapKeyRef": map[string]interface{}{
+										"name": "db-config",
+										"key":  "host",
+									},
+								},
+							},
+							map[string]interface{}{
+								"name": "DB_PASSWORD",
+								"valueFrom": map[string]interface{}{
+									"secretKeyRef": map[string]interface{}{
+										"name": "db-secrets",
+										"key":  "password",
+									},
+								},
+							},
+							map[string]interface{}{
+								"name":  "STATIC_VAR",
+								"value": "static-value",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	items := []unstructured.Unstructured{pod}
+	relations := buildReferencesRelations(items, "test-cluster")
+
+	// Should have 2 relations (static env var doesn't count)
+	if len(relations) != 2 {
+		t.Errorf("expected 2 relations, got %d", len(relations))
+		t.Logf("relations: %+v", relations)
+	}
+
+	foundConfigMap := false
+	foundSecret := false
+
+	for _, rel := range relations {
+		if rel.To == "test-cluster/prod//ConfigMap/db-config" {
+			foundConfigMap = true
+		}
+		if rel.To == "test-cluster/prod//Secret/db-secrets" {
+			foundSecret = true
+		}
+	}
+
+	if !foundConfigMap {
+		t.Error("missing Pod -> ConfigMap relation")
+	}
+	if !foundSecret {
+		t.Error("missing Pod -> Secret relation")
+	}
+}
+
+func TestBuildReferencesRelations_NoDuplicates(t *testing.T) {
+	// Pod that references the same Secret multiple times should produce only one relation
+	pod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "app-xyz",
+				"namespace": "prod",
+				"uid":       "pod-uid-123",
+			},
+			"spec": map[string]interface{}{
+				"containers": []interface{}{
+					map[string]interface{}{
+						"name":  "main",
+						"image": "app:latest",
+						"envFrom": []interface{}{
+							map[string]interface{}{
+								"secretRef": map[string]interface{}{
+									"name": "shared-secrets",
+								},
+							},
+						},
+						"env": []interface{}{
+							map[string]interface{}{
+								"name": "SECRET_KEY",
+								"valueFrom": map[string]interface{}{
+									"secretKeyRef": map[string]interface{}{
+										"name": "shared-secrets",
+										"key":  "key",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	items := []unstructured.Unstructured{pod}
+	relations := buildReferencesRelations(items, "test-cluster")
+
+	// Should have only 1 relation (deduplicated)
+	if len(relations) != 1 {
+		t.Errorf("expected 1 relation (deduplicated), got %d", len(relations))
+		t.Logf("relations: %+v", relations)
+	}
+}

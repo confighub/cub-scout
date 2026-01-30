@@ -227,6 +227,7 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 		relations = append(relations, buildOwnsRelations(allItems, clusterName)...)
 		relations = append(relations, buildSelectsRelations(allItems, clusterName)...)
 		relations = append(relations, buildMountsRelations(allItems, clusterName)...)
+		relations = append(relations, buildReferencesRelations(allItems, clusterName)...)
 	}
 
 	// Build snapshot
@@ -453,6 +454,139 @@ func buildMountsRelations(items []unstructured.Unstructured, clusterName string)
 						To:   secretID,
 						Type: "mounts",
 					})
+				}
+			}
+		}
+	}
+
+	return relations
+}
+
+// buildReferencesRelations finds Pod -> ConfigMap/Secret relations via envFrom and env valueFrom
+func buildReferencesRelations(items []unstructured.Unstructured, clusterName string) []GSFRelation {
+	var relations []GSFRelation
+
+	// Track already added relations to avoid duplicates
+	seen := make(map[string]bool)
+
+	for _, item := range items {
+		if item.GetKind() != "Pod" {
+			continue
+		}
+
+		// Build pod ID
+		gv := item.GroupVersionKind()
+		podID := fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, item.GetNamespace(), gv.Group, gv.Kind, item.GetName())
+		namespace := item.GetNamespace()
+
+		// Get spec.containers and spec.initContainers
+		spec, found, err := unstructured.NestedMap(item.Object, "spec")
+		if err != nil || !found {
+			continue
+		}
+
+		// Process both containers and initContainers
+		for _, containerType := range []string{"containers", "initContainers"} {
+			containersRaw, found, err := unstructured.NestedSlice(spec, containerType)
+			if err != nil || !found {
+				continue
+			}
+
+			for _, containerRaw := range containersRaw {
+				container, ok := containerRaw.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				// Process envFrom
+				envFromRaw, found, _ := unstructured.NestedSlice(container, "envFrom")
+				if found {
+					for _, efRaw := range envFromRaw {
+						ef, ok := efRaw.(map[string]interface{})
+						if !ok {
+							continue
+						}
+
+						// configMapRef
+						if cmRef, found, _ := unstructured.NestedMap(ef, "configMapRef"); found {
+							if name, ok := cmRef["name"].(string); ok && name != "" {
+								targetID := fmt.Sprintf("%s/%s//ConfigMap/%s", clusterName, namespace, name)
+								relKey := podID + "->" + targetID
+								if !seen[relKey] {
+									seen[relKey] = true
+									relations = append(relations, GSFRelation{
+										From: podID,
+										To:   targetID,
+										Type: "references",
+									})
+								}
+							}
+						}
+
+						// secretRef
+						if secRef, found, _ := unstructured.NestedMap(ef, "secretRef"); found {
+							if name, ok := secRef["name"].(string); ok && name != "" {
+								targetID := fmt.Sprintf("%s/%s//Secret/%s", clusterName, namespace, name)
+								relKey := podID + "->" + targetID
+								if !seen[relKey] {
+									seen[relKey] = true
+									relations = append(relations, GSFRelation{
+										From: podID,
+										To:   targetID,
+										Type: "references",
+									})
+								}
+							}
+						}
+					}
+				}
+
+				// Process env[].valueFrom
+				envRaw, found, _ := unstructured.NestedSlice(container, "env")
+				if found {
+					for _, eRaw := range envRaw {
+						e, ok := eRaw.(map[string]interface{})
+						if !ok {
+							continue
+						}
+
+						valueFrom, found, _ := unstructured.NestedMap(e, "valueFrom")
+						if !found {
+							continue
+						}
+
+						// configMapKeyRef
+						if cmRef, found, _ := unstructured.NestedMap(valueFrom, "configMapKeyRef"); found {
+							if name, ok := cmRef["name"].(string); ok && name != "" {
+								targetID := fmt.Sprintf("%s/%s//ConfigMap/%s", clusterName, namespace, name)
+								relKey := podID + "->" + targetID
+								if !seen[relKey] {
+									seen[relKey] = true
+									relations = append(relations, GSFRelation{
+										From: podID,
+										To:   targetID,
+										Type: "references",
+									})
+								}
+							}
+						}
+
+						// secretKeyRef
+						if secRef, found, _ := unstructured.NestedMap(valueFrom, "secretKeyRef"); found {
+							if name, ok := secRef["name"].(string); ok && name != "" {
+								targetID := fmt.Sprintf("%s/%s//Secret/%s", clusterName, namespace, name)
+								relKey := podID + "->" + targetID
+								if !seen[relKey] {
+									seen[relKey] = true
+									relations = append(relations, GSFRelation{
+										From: podID,
+										To:   targetID,
+										Type: "references",
+									})
+								}
+							}
+						}
+					}
 				}
 			}
 		}
