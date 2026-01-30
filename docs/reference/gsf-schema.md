@@ -11,6 +11,9 @@ cub-scout snapshot
 # Output to file
 cub-scout snapshot -o state.json
 
+# Include resource relations (owns, selects, mounts, references)
+cub-scout snapshot --relations
+
 # Pipe to jq
 cub-scout snapshot | jq '.entries[] | select(.owner.type == "flux")'
 
@@ -198,8 +201,10 @@ The snapshot command scans these resource types:
 | Kind | Group | Version |
 |------|-------|---------|
 | Deployment | apps | v1 |
+| ReplicaSet | apps | v1 |
 | StatefulSet | apps | v1 |
 | DaemonSet | apps | v1 |
+| Pod | core | v1 |
 | Service | core | v1 |
 | ConfigMap | core | v1 |
 | Secret | core | v1 |
@@ -237,9 +242,13 @@ ownership := agent.DetectOwnership(resource)
 fmt.Printf("Owner: %s (%s)\n", ownership.Type, ownership.SubType)
 ```
 
-## Relation Types (Future)
+## Relation Types
 
-> **Note:** Relations are defined in the schema but not yet populated by `snapshot`.
+Relations describe dependencies between resources. Use `--relations` flag to include them:
+
+```bash
+cub-scout snapshot --relations
+```
 
 | Type | Description | Example |
 |------|-------------|---------|
@@ -247,6 +256,39 @@ fmt.Printf("Owner: %s (%s)\n", ownership.Type, ownership.SubType)
 | `selects` | Label selector match | Service → Pod |
 | `mounts` | Volume reference | Pod → ConfigMap |
 | `references` | envFrom reference | Pod → Secret |
+
+### Relation Schema
+
+```json
+{
+  "relations": [
+    {
+      "from": "default/apps/ReplicaSet/nginx-abc123",
+      "to": "default//Pod/nginx-abc123-xyz",
+      "type": "owns"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `from` | string | Source resource ID |
+| `to` | string | Target resource ID |
+| `type` | string | Relation type (owns, selects, mounts, references) |
+
+### Relation Examples
+
+```bash
+# List all ownership relations
+cub-scout snapshot --relations | jq '.relations[] | select(.type == "owns")'
+
+# Find what a Service selects
+cub-scout snapshot --relations | jq '.relations[] | select(.from | contains("Service/nginx"))'
+
+# Find what mounts a specific ConfigMap
+cub-scout snapshot --relations | jq '.relations[] | select(.to | contains("ConfigMap/app-config"))'
+```
 
 ## Extended Format (Connected Mode)
 
