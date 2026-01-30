@@ -453,3 +453,15 @@ Audit found gaps in examples documentation. Fixed:
 - Release: https://github.com/confighub/cub-scout/releases/tag/v0.3.3
 - Features: Crossplane detection, cross-owner warnings, elapsed time
 - Demo: cross-owner-demo for prospects
+
+#### Core Docs: Crossplane (Experimental)
+Added Crossplane to all ownership detection tables:
+- `README.md` - Ownership table + support note with link to demo
+- `CLI-GUIDE.md` - Ownership table, `--owner` filter, query fields, priority
+- `CLAUDE.md` - Description line + ownership table
+- **Commit:** b4a62cb
+
+#### Issue #3 Update
+- Commented on Issue #3 noting Phase 1 (Crossplane) complete
+- Phase 2 (kro support) pending until API stabilizes
+- Issue remains open for Phase 2
