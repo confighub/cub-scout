@@ -74,6 +74,7 @@ Key concepts in app-config-rtmsg:
 | Demo | Status | Time | Description |
 |------|--------|------|-------------|
 | [demos/](../examples/demos/) | Test Fixtures | 30s-2m | YAML with ownership labels + nginx:alpine |
+| [demos/cross-owner-demo](../examples/demos/cross-owner-demo.yaml) | **Working** | 1m | Crossplane, cross-owner refs, elapsed time |
 | [demos/walkthrough.md](../examples/demos/walkthrough.md) | Working | 5-10m | Step-by-step demo walkthrough |
 | [impressive-demo/](../examples/impressive-demo/) | Test Fixtures | 5m | Conference demo with scan scenarios |
 
@@ -85,6 +86,23 @@ Key concepts in app-config-rtmsg:
 # DEPRECATED: ./test/atk/demo connected        # ConfigHub connected mode (requires cub auth)
 # DEPRECATED: ./test/atk/demo scenario clobber # Platform updates vs app overlays
 ```
+
+**Cross-Owner Reference Demo (NEW in v0.3.3):**
+```bash
+# Visual demo (no cluster required)
+./examples/demos/cross-owner-demo.sh
+
+# Real cluster demo
+kubectl apply -f examples/demos/cross-owner-demo.yaml
+./cub-scout trace deploy/api-server -n ecommerce
+```
+
+Shows:
+- **Crossplane detection** — Cloud infrastructure ownership (RDS, ElastiCache claims)
+- **Cross-owner warnings** — Flux deployment → Terraform secret references
+- **Elapsed time** — Time since last reconciliation with stuck resource highlighting
+
+Use case: Platform teams using Crossplane/Terraform for infrastructure while app teams use Flux/ArgoCD for workloads.
 
 **To convert demos to real apps:** See [examples/README.md — Converting Demos to Real Apps](../examples/README.md#converting-demos-to-real-apps)
 
