@@ -226,6 +226,7 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	if snapshotRelations {
 		relations = append(relations, buildOwnsRelations(allItems, clusterName)...)
 		relations = append(relations, buildSelectsRelations(allItems, clusterName)...)
+		relations = append(relations, buildMountsRelations(allItems, clusterName)...)
 	}
 
 	// Build snapshot
@@ -398,4 +399,64 @@ func matchesSelector(labels, selector map[string]string) bool {
 		}
 	}
 	return true
+}
+
+// buildMountsRelations finds Pod -> ConfigMap/Secret relations via volume mounts
+func buildMountsRelations(items []unstructured.Unstructured, clusterName string) []GSFRelation {
+	var relations []GSFRelation
+
+	for _, item := range items {
+		if item.GetKind() != "Pod" {
+			continue
+		}
+
+		// Build pod ID
+		gv := item.GroupVersionKind()
+		podID := fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, item.GetNamespace(), gv.Group, gv.Kind, item.GetName())
+		namespace := item.GetNamespace()
+
+		// Get spec.volumes
+		spec, found, err := unstructured.NestedMap(item.Object, "spec")
+		if err != nil || !found {
+			continue
+		}
+
+		volumesRaw, found, err := unstructured.NestedSlice(spec, "volumes")
+		if err != nil || !found {
+			continue
+		}
+
+		for _, volRaw := range volumesRaw {
+			vol, ok := volRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			// Check for configMap volume
+			if cm, found, _ := unstructured.NestedMap(vol, "configMap"); found {
+				if name, ok := cm["name"].(string); ok && name != "" {
+					configMapID := fmt.Sprintf("%s/%s//ConfigMap/%s", clusterName, namespace, name)
+					relations = append(relations, GSFRelation{
+						From: podID,
+						To:   configMapID,
+						Type: "mounts",
+					})
+				}
+			}
+
+			// Check for secret volume
+			if sec, found, _ := unstructured.NestedMap(vol, "secret"); found {
+				if name, ok := sec["secretName"].(string); ok && name != "" {
+					secretID := fmt.Sprintf("%s/%s//Secret/%s", clusterName, namespace, name)
+					relations = append(relations, GSFRelation{
+						From: podID,
+						To:   secretID,
+						Type: "mounts",
+					})
+				}
+			}
+		}
+	}
+
+	return relations
 }

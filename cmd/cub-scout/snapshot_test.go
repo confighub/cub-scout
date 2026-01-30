@@ -262,3 +262,102 @@ func TestBuildSelectsRelations_NoSelector(t *testing.T) {
 		t.Errorf("expected 0 relations, got %d", len(relations))
 	}
 }
+
+func TestBuildMountsRelations(t *testing.T) {
+	// Pod that mounts a ConfigMap and Secret
+	pod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "app-xyz",
+				"namespace": "prod",
+				"uid":       "pod-uid-123",
+			},
+			"spec": map[string]interface{}{
+				"volumes": []interface{}{
+					map[string]interface{}{
+						"name": "config-vol",
+						"configMap": map[string]interface{}{
+							"name": "app-config",
+						},
+					},
+					map[string]interface{}{
+						"name": "secret-vol",
+						"secret": map[string]interface{}{
+							"secretName": "app-secrets",
+						},
+					},
+					map[string]interface{}{
+						"name": "empty-vol",
+						"emptyDir": map[string]interface{}{},
+					},
+				},
+			},
+		},
+	}
+
+	items := []unstructured.Unstructured{pod}
+	relations := buildMountsRelations(items, "test-cluster")
+
+	// Should have 2 relations: ConfigMap and Secret (not emptyDir)
+	if len(relations) != 2 {
+		t.Errorf("expected 2 relations, got %d", len(relations))
+		t.Logf("relations: %+v", relations)
+	}
+
+	foundConfigMap := false
+	foundSecret := false
+
+	for _, rel := range relations {
+		if rel.Type != "mounts" {
+			t.Errorf("expected type 'mounts', got %s", rel.Type)
+		}
+		if rel.From != "test-cluster/prod//Pod/app-xyz" {
+			t.Errorf("unexpected from: %s", rel.From)
+		}
+		if rel.To == "test-cluster/prod//ConfigMap/app-config" {
+			foundConfigMap = true
+		}
+		if rel.To == "test-cluster/prod//Secret/app-secrets" {
+			foundSecret = true
+		}
+	}
+
+	if !foundConfigMap {
+		t.Error("missing Pod -> ConfigMap relation")
+	}
+	if !foundSecret {
+		t.Error("missing Pod -> Secret relation")
+	}
+}
+
+func TestBuildMountsRelations_NoVolumes(t *testing.T) {
+	// Pod without volumes should produce no relations
+	pod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "simple-pod",
+				"namespace": "prod",
+				"uid":       "pod-uid-123",
+			},
+			"spec": map[string]interface{}{
+				"containers": []interface{}{
+					map[string]interface{}{
+						"name":  "main",
+						"image": "nginx",
+					},
+				},
+			},
+		},
+	}
+
+	items := []unstructured.Unstructured{pod}
+	relations := buildMountsRelations(items, "test-cluster")
+
+	if len(relations) != 0 {
+		t.Errorf("expected 0 relations, got %d", len(relations))
+	}
+}
