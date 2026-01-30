@@ -22,6 +22,7 @@ var (
 	snapshotOutput    string
 	snapshotNamespace string
 	snapshotKind      string
+	snapshotRelations bool
 )
 
 // GSFSnapshot represents the GitOps State Format output
@@ -111,6 +112,7 @@ func init() {
 	snapshotCmd.Flags().StringVarP(&snapshotOutput, "output", "o", "", "Output file (default: stdout, use '-' for explicit stdout)")
 	snapshotCmd.Flags().StringVarP(&snapshotNamespace, "namespace", "n", "", "Filter by namespace")
 	snapshotCmd.Flags().StringVarP(&snapshotKind, "kind", "k", "", "Filter by kind")
+	snapshotCmd.Flags().BoolVar(&snapshotRelations, "relations", false, "Include resource relations (owns, selects, mounts, references)")
 }
 
 func runSnapshot(cmd *cobra.Command, args []string) error {
@@ -142,8 +144,10 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	// Resource types to scan
 	resources := []schema.GroupVersionResource{
 		{Group: "apps", Version: "v1", Resource: "deployments"},
+		{Group: "apps", Version: "v1", Resource: "replicasets"},
 		{Group: "apps", Version: "v1", Resource: "statefulsets"},
 		{Group: "apps", Version: "v1", Resource: "daemonsets"},
+		{Group: "", Version: "v1", Resource: "pods"},
 		{Group: "", Version: "v1", Resource: "services"},
 		{Group: "", Version: "v1", Resource: "configmaps"},
 		{Group: "", Version: "v1", Resource: "secrets"},
@@ -155,6 +159,9 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 		// Argo resources
 		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"},
 	}
+
+	// Store raw items for relation building
+	var allItems []unstructured.Unstructured
 
 	for _, gvr := range resources {
 		var list *unstructured.UnstructuredList
@@ -206,7 +213,18 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 			} else {
 				byOwner["unknown"]++
 			}
+
+			// Store for relation building
+			if snapshotRelations {
+				allItems = append(allItems, item)
+			}
 		}
+	}
+
+	// Build relations if requested
+	var relations []GSFRelation
+	if snapshotRelations {
+		relations = buildOwnsRelations(allItems, clusterName)
 	}
 
 	// Build snapshot
@@ -215,6 +233,7 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 		GeneratedAt: time.Now().UTC(),
 		Cluster:     clusterName,
 		Entries:     entries,
+		Relations:   relations,
 		Summary: GSFSummary{
 			Total:   len(entries),
 			ByKind:  byKind,
@@ -241,4 +260,59 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// buildOwnsRelations extracts ownership relations from OwnerReferences
+func buildOwnsRelations(items []unstructured.Unstructured, clusterName string) []GSFRelation {
+	var relations []GSFRelation
+
+	// Build a map of UID -> entry ID for lookups
+	uidToID := make(map[string]string)
+	for _, item := range items {
+		uid := string(item.GetUID())
+		// Build ID: cluster/namespace/group/kind/name
+		gv := item.GroupVersionKind()
+		entryID := fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, item.GetNamespace(), gv.Group, gv.Kind, item.GetName())
+		uidToID[uid] = entryID
+	}
+
+	// Extract ownerReferences from each item
+	for _, item := range items {
+		ownerRefs := item.GetOwnerReferences()
+		if len(ownerRefs) == 0 {
+			continue
+		}
+
+		// Build child ID
+		gv := item.GroupVersionKind()
+		childID := fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, item.GetNamespace(), gv.Group, gv.Kind, item.GetName())
+
+		for _, ref := range ownerRefs {
+			// Try to find the owner in our UID map
+			ownerID, found := uidToID[string(ref.UID)]
+			if !found {
+				// Owner not in our scanned resources, build ID from reference
+				// Parse apiVersion to get group
+				group := ""
+				if idx := len(ref.APIVersion) - 1; idx > 0 {
+					for i := 0; i < len(ref.APIVersion); i++ {
+						if ref.APIVersion[i] == '/' {
+							group = ref.APIVersion[:i]
+							break
+						}
+					}
+				}
+				ownerID = fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, item.GetNamespace(), group, ref.Kind, ref.Name)
+			}
+
+			// Create relation: owner owns child
+			relations = append(relations, GSFRelation{
+				From: ownerID,
+				To:   childID,
+				Type: "owns",
+			})
+		}
+	}
+
+	return relations
 }
