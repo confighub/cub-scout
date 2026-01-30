@@ -355,6 +355,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | `cub-scout trace deploy/x -n y --history` | Deployment history (who deployed what, when) |
 | `cub-scout health` | Check for issues (scout-style alias) |
 | `cub-scout scan` | Configuration risk patterns (46 patterns) |
+| `cub-scout snapshot --relations` | Export state with dependency graph (GSF format) |
 
 ### Tree Views
 
@@ -506,7 +507,7 @@ cub-scout is an experimental open-source cluster explorer which is designed to w
 | `tree` — Hierarchy views | ✓ | ✓ |
 | `scan` — Risk patterns | ✓ | ✓ |
 | `discover` / `health` | ✓ | ✓ |
-| `snapshot` — Export state | ✓ | ✓ |
+| `snapshot` — Export state (GSF) | ✓ | ✓ |
 | `import` — Send to ConfigHub | — | ✓ |
 | `fleet` — Multi-cluster queries | — | ✓ |
 | DRY↔WET↔LIVE compare | — | ✓ |

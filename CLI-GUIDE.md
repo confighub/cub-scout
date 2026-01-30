@@ -828,11 +828,20 @@ Summary: 1 critical, 2 warning, 0 info
 
 ---
 
-## `snapshot` — Export State as JSON
+## `snapshot` — Export State as JSON (GSF)
+
+Exports cluster state in GitOps State Format (GSF) — a JSON format for third-party tool integration.
 
 ```bash
 ./cub-scout snapshot -o state.json
 ./cub-scout snapshot -o - | jq '.entries[] | select(.owner.type == "Native")'
+
+# Include resource relations (dependency graph)
+./cub-scout snapshot --relations
+
+# Query relations
+./cub-scout snapshot --relations | jq '.relations[] | select(.type == "owns")'
+./cub-scout snapshot --relations | jq '.relations[] | select(.from | contains("Service/"))'
 ```
 
 **Options:**
@@ -841,6 +850,17 @@ Summary: 1 critical, 2 warning, 0 info
 | `-o, --output` | Output file (default: stdout) |
 | `-n, --namespace` | Filter by namespace |
 | `-k, --kind` | Filter by kind |
+| `--relations` | Include resource relations (owns, selects, mounts, references) |
+
+**Relation Types:**
+| Type | Description | Example |
+|------|-------------|---------|
+| `owns` | K8s OwnerReference | ReplicaSet → Pod |
+| `selects` | Label selector match | Service → Pod |
+| `mounts` | Volume reference | Pod → ConfigMap |
+| `references` | envFrom reference | Pod → Secret |
+
+See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema documentation.
 
 ---
 
