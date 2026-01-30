@@ -85,6 +85,7 @@ Each entry represents a Kubernetes resource with ownership metadata:
 | `helm` | Direct Helm release | `app.kubernetes.io/managed-by: Helm` label |
 | `terraform` | Managed by Terraform | `app.terraform.io/*` annotations |
 | `confighub` | Managed by ConfigHub | `confighub.com/UnitSlug` label |
+| `crossplane` | Managed by Crossplane | `crossplane.io/*` labels or XR owner references |
 | `k8s` | Kubernetes native | OwnerReferences only (no GitOps tool) |
 | `unknown` | No ownership detected | Fallback |
 
@@ -96,6 +97,9 @@ Each entry represents a Kubernetes resource with ownership metadata:
 | `flux` | `helmrelease` | Deployed via Flux HelmRelease |
 | `argo` | `application` | Deployed via Argo CD Application |
 | `helm` | `release` | Direct Helm release |
+| `crossplane` | `claim` | Created from a Crossplane Claim |
+| `crossplane` | `composite` | Created from a Composite Resource (XR) |
+| `crossplane` | `managed-resource` | Managed resource in a Composition |
 
 ## Detection Priority
 
@@ -106,8 +110,9 @@ When a resource has multiple ownership markers, detection follows this order:
 3. **Helm**
 4. **Terraform**
 5. **ConfigHub**
-6. **Kubernetes native** (`k8s`)
-7. **Unknown** (fallback)
+6. **Crossplane**
+7. **Kubernetes native** (`k8s`)
+8. **Unknown** (fallback)
 
 > **Note:** ConfigHub labels may coexist with Flux/Argo labels. In standalone mode, the GitOps deployer takes precedence. In connected mode, both `owner` and `deployer` fields are populated.
 
@@ -163,6 +168,25 @@ annotations:
 ```
 ```json
 { "type": "confighub", "name": "backend" }
+```
+
+### Crossplane (Claim)
+```yaml
+labels:
+  crossplane.io/claim-name: "my-database"
+  crossplane.io/claim-namespace: "prod"
+```
+```json
+{ "type": "crossplane", "subType": "claim", "name": "my-database", "namespace": "prod" }
+```
+
+### Crossplane (Composite)
+```yaml
+labels:
+  crossplane.io/composite: "my-xr-abc123"
+```
+```json
+{ "type": "crossplane", "subType": "composite", "name": "my-xr-abc123" }
 ```
 
 ## Drift Schema

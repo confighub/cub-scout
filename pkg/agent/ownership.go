@@ -16,6 +16,7 @@ const (
 	OwnerHelm       = "helm"
 	OwnerTerraform  = "terraform"
 	OwnerConfigHub  = "confighub"
+	OwnerCrossplane = "crossplane"
 	OwnerKubernetes = "k8s"
 	OwnerUnknown    = "unknown"
 )
@@ -47,6 +48,11 @@ func DetectOwnership(resource *unstructured.Unstructured) Ownership {
 
 	// Check for ConfigHub ownership
 	if ownership := detectConfigHubOwnership(labels, annotations); ownership.Type != "" {
+		return ownership
+	}
+
+	// Check for Crossplane ownership
+	if ownership := detectCrossplaneOwnership(labels, annotations, resource); ownership.Type != "" {
 		return ownership
 	}
 
@@ -215,6 +221,63 @@ func detectConfigHubOwnership(labels, annotations map[string]string) Ownership {
 			Namespace:  space,
 			Source:     "annotation:confighub.com/UnitSlug",
 			Confidence: "high",
+		}
+	}
+
+	return Ownership{}
+}
+
+func detectCrossplaneOwnership(labels, annotations map[string]string, resource *unstructured.Unstructured) Ownership {
+	// Crossplane Claim reference (managed resource created from a Claim)
+	if claimName, ok := labels["crossplane.io/claim-name"]; ok {
+		claimNS := labels["crossplane.io/claim-namespace"]
+		return Ownership{
+			Type:       OwnerCrossplane,
+			SubType:    "claim",
+			Name:       claimName,
+			Namespace:  claimNS,
+			Source:     "label:crossplane.io/claim-name",
+			Confidence: "high",
+		}
+	}
+
+	// Crossplane Composite reference (managed resource created from XR)
+	if composite, ok := labels["crossplane.io/composite"]; ok {
+		return Ownership{
+			Type:       OwnerCrossplane,
+			SubType:    "composite",
+			Name:       composite,
+			Source:     "label:crossplane.io/composite",
+			Confidence: "high",
+		}
+	}
+
+	// Crossplane composition resource name annotation
+	if compName, ok := annotations["crossplane.io/composition-resource-name"]; ok {
+		return Ownership{
+			Type:       OwnerCrossplane,
+			SubType:    "managed-resource",
+			Name:       compName,
+			Source:     "annotation:crossplane.io/composition-resource-name",
+			Confidence: "medium",
+		}
+	}
+
+	// Check owner references for Crossplane XR types
+	// Common Crossplane XR API groups: *.crossplane.io, *.upbound.io
+	owners := resource.GetOwnerReferences()
+	for _, owner := range owners {
+		apiVersion := owner.APIVersion
+		// Check if owner is a Crossplane resource
+		if strings.Contains(apiVersion, "crossplane.io") || strings.Contains(apiVersion, "upbound.io") {
+			return Ownership{
+				Type:       OwnerCrossplane,
+				SubType:    strings.ToLower(owner.Kind),
+				Name:       owner.Name,
+				Namespace:  resource.GetNamespace(),
+				Source:     "ownerRef:" + apiVersion,
+				Confidence: "high",
+			}
 		}
 	}
 

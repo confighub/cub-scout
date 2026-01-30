@@ -342,6 +342,116 @@ func TestDetectOwnership_ConfigHub(t *testing.T) {
 	}
 }
 
+func TestDetectOwnership_Crossplane(t *testing.T) {
+	tests := []struct {
+		name        string
+		labels      map[string]string
+		annotations map[string]string
+		owners      []metav1.OwnerReference
+		wantType    string
+		wantSubType string
+		wantName    string
+		wantNS      string
+	}{
+		{
+			name: "Crossplane Claim reference via labels",
+			labels: map[string]string{
+				"crossplane.io/claim-name":      "my-database",
+				"crossplane.io/claim-namespace": "prod",
+			},
+			wantType:    OwnerCrossplane,
+			wantSubType: "claim",
+			wantName:    "my-database",
+			wantNS:      "prod",
+		},
+		{
+			name: "Crossplane Composite reference via label",
+			labels: map[string]string{
+				"crossplane.io/composite": "my-xr-abc123",
+			},
+			wantType:    OwnerCrossplane,
+			wantSubType: "composite",
+			wantName:    "my-xr-abc123",
+			wantNS:      "",
+		},
+		{
+			name: "Crossplane composition resource name via annotation",
+			annotations: map[string]string{
+				"crossplane.io/composition-resource-name": "rds-instance",
+			},
+			wantType:    OwnerCrossplane,
+			wantSubType: "managed-resource",
+			wantName:    "rds-instance",
+			wantNS:      "",
+		},
+		{
+			name: "Crossplane owner reference (crossplane.io API group)",
+			owners: []metav1.OwnerReference{
+				{
+					APIVersion: "database.aws.crossplane.io/v1beta1",
+					Kind:       "RDSInstance",
+					Name:       "prod-db",
+				},
+			},
+			wantType:    OwnerCrossplane,
+			wantSubType: "rdsinstance",
+			wantName:    "prod-db",
+		},
+		{
+			name: "Crossplane owner reference (upbound.io API group)",
+			owners: []metav1.OwnerReference{
+				{
+					APIVersion: "rds.aws.upbound.io/v1beta1",
+					Kind:       "Instance",
+					Name:       "staging-db",
+				},
+			},
+			wantType:    OwnerCrossplane,
+			wantSubType: "instance",
+			wantName:    "staging-db",
+		},
+		{
+			name: "Crossplane claim takes precedence over composite label",
+			labels: map[string]string{
+				"crossplane.io/claim-name":      "primary-claim",
+				"crossplane.io/claim-namespace": "default",
+				"crossplane.io/composite":       "some-xr",
+			},
+			wantType:    OwnerCrossplane,
+			wantSubType: "claim",
+			wantName:    "primary-claim",
+			wantNS:      "default",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var resource *unstructured.Unstructured
+			if len(tt.owners) > 0 {
+				resource = newTestResourceWithOwners("test-ns", "test-resource", tt.owners)
+				resource.SetLabels(tt.labels)
+				resource.SetAnnotations(tt.annotations)
+			} else {
+				resource = newTestResource("test-ns", "test-resource", tt.labels, tt.annotations)
+			}
+			ownership := DetectOwnership(resource)
+
+			if ownership.Type != tt.wantType {
+				t.Errorf("Type = %q, want %q", ownership.Type, tt.wantType)
+			}
+			if ownership.SubType != tt.wantSubType {
+				t.Errorf("SubType = %q, want %q", ownership.SubType, tt.wantSubType)
+			}
+			if ownership.Name != tt.wantName {
+				t.Errorf("Name = %q, want %q", ownership.Name, tt.wantName)
+			}
+			if tt.wantNS != "" && ownership.Namespace != tt.wantNS {
+				t.Errorf("Namespace = %q, want %q", ownership.Namespace, tt.wantNS)
+			}
+		})
+	}
+}
+
 func TestDetectOwnership_K8s(t *testing.T) {
 	trueVal := true
 	falseVal := false
@@ -556,6 +666,32 @@ func TestDetectOwnership_Priority(t *testing.T) {
 
 		if ownership.Type != OwnerArgo {
 			t.Errorf("Type = %q, want %q (Argo should take precedence)", ownership.Type, OwnerArgo)
+		}
+	})
+
+	t.Run("Flux takes precedence over Crossplane", func(t *testing.T) {
+		resource := newTestResource("test-ns", "test", map[string]string{
+			"kustomize.toolkit.fluxcd.io/name": "my-app",
+			"crossplane.io/claim-name":         "my-claim",
+		}, nil)
+		ownership := DetectOwnership(resource)
+
+		if ownership.Type != OwnerFlux {
+			t.Errorf("Type = %q, want %q (Flux should take precedence)", ownership.Type, OwnerFlux)
+		}
+	})
+
+	t.Run("Crossplane takes precedence over K8s ownerRef", func(t *testing.T) {
+		resource := newTestResource("test-ns", "test", map[string]string{
+			"crossplane.io/claim-name": "my-claim",
+		}, nil)
+		resource.SetOwnerReferences([]metav1.OwnerReference{
+			{Kind: "ReplicaSet", Name: "some-rs"},
+		})
+		ownership := DetectOwnership(resource)
+
+		if ownership.Type != OwnerCrossplane {
+			t.Errorf("Type = %q, want %q (Crossplane should take precedence)", ownership.Type, OwnerCrossplane)
 		}
 	})
 }
