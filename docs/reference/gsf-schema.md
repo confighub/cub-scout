@@ -2,44 +2,57 @@
 
 The agent outputs GSF — a JSON format representing cluster state with ownership, drift, and relations.
 
+## Quick Start
+
+```bash
+# Output to stdout
+cub-scout snapshot
+
+# Output to file
+cub-scout snapshot -o state.json
+
+# Pipe to jq
+cub-scout snapshot | jq '.entries[] | select(.owner.type == "flux")'
+
+# Filter by namespace
+cub-scout snapshot --namespace prod
+
+# Filter by kind
+cub-scout snapshot --kind Deployment
+```
+
 ## Output Format
 
 ```json
 {
   "version": "gsf/v1",
   "generatedAt": "2025-12-29T12:00:00Z",
-  "cluster": "kind-atk",
+  "cluster": "prod-east",
   "entries": [
     {
-      "id": "kind-atk/prod/apps/v1/Deployment/backend",
-      "cluster": "kind-atk",
+      "id": "prod-east/prod/apps/Deployment/backend",
+      "cluster": "prod-east",
       "namespace": "prod",
       "kind": "Deployment",
       "name": "backend",
       "apiVersion": "apps/v1",
       "owner": {
-        "type": "ConfigHub",
-        "resource": { "kind": "Unit", "name": "backend", "namespace": "prod" },
-        "details": {
-          "spaceId": "550e8400-e29b-41d4-a716-446655440000",
-          "revision": "42"
-        }
+        "type": "flux",
+        "subType": "kustomization",
+        "name": "apps",
+        "namespace": "flux-system"
       },
-      "drift": null
+      "labels": {
+        "app": "backend"
+      }
     }
   ],
-  "relations": [
-    {
-      "from": "kind-atk/prod/apps/v1/Deployment/backend",
-      "to": "kind-atk/prod/v1/Service/backend",
-      "type": "selects"
-    }
-  ],
+  "relations": [],
   "summary": {
     "total": 45,
     "byKind": { "Deployment": 12, "Service": 15, "ConfigMap": 18 },
     "byOwner": { "flux": 30, "argo": 10, "unknown": 5 },
-    "drifted": 2
+    "drifted": 0
   }
 }
 ```
@@ -50,8 +63,8 @@ Each entry represents a Kubernetes resource with ownership metadata:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Unique ID: `{cluster}/{namespace}/{group}/{version}/{kind}/{name}` |
-| `cluster` | string | Cluster name |
+| `id` | string | Unique ID: `{cluster}/{namespace}/{group}/{kind}/{name}` |
+| `cluster` | string | Cluster name (from `CLUSTER_NAME` env or "default") |
 | `namespace` | string | Namespace (empty for cluster-scoped) |
 | `kind` | string | Resource kind |
 | `name` | string | Resource name |
@@ -59,38 +72,52 @@ Each entry represents a Kubernetes resource with ownership metadata:
 | `owner` | object | Ownership information (see below) |
 | `drift` | object | Drift information if detected |
 | `labels` | object | Resource labels |
-| `annotations` | object | Resource annotations |
 
 ## Owner Types
 
 | Type | Description | Detection Method |
 |------|-------------|------------------|
-| `ConfigHub` | Managed by ConfigHub | `confighub.com/UnitSlug` label |
-| `Flux` | Managed by Flux | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
-| `ArgoCD` | Managed by Argo CD | `argocd.argoproj.io/instance` label or tracking annotation |
-| `Helm` | Direct Helm release | `app.kubernetes.io/managed-by: Helm` label |
-| `Terraform` | Managed by Terraform | `app.terraform.io/*` annotations |
-| `Native` | Plain Kubernetes | OwnerReferences only |
+| `flux` | Managed by Flux | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
+| `argo` | Managed by Argo CD | `argocd.argoproj.io/instance` label or tracking annotation |
+| `helm` | Direct Helm release | `app.kubernetes.io/managed-by: Helm` label |
+| `terraform` | Managed by Terraform | `app.terraform.io/*` annotations |
+| `confighub` | Managed by ConfigHub | `confighub.com/UnitSlug` label |
+| `k8s` | Kubernetes native | OwnerReferences only (no GitOps tool) |
+| `unknown` | No ownership detected | Fallback |
 
-## Owner Detection
+## Owner SubTypes
 
-Ownership is detected by examining labels and annotations:
+| Type | SubType | Meaning |
+|------|---------|---------|
+| `flux` | `kustomization` | Deployed via Flux Kustomization |
+| `flux` | `helmrelease` | Deployed via Flux HelmRelease |
+| `argo` | `application` | Deployed via Argo CD Application |
+| `helm` | `release` | Direct Helm release |
 
-### ConfigHub
-```yaml
-labels:
-  confighub.com/UnitSlug: "backend"
-annotations:
-  confighub.com/UnitSlug: "backend"
-  confighub.com/SpaceID: "550e8400-e29b-41d4-a716-446655440000"
-  confighub.com/RevisionNum: "42"
-```
+## Detection Priority
+
+When a resource has multiple ownership markers, detection follows this order:
+
+1. **Flux** (Kustomization, then HelmRelease)
+2. **Argo CD**
+3. **Helm**
+4. **Terraform**
+5. **ConfigHub**
+6. **Kubernetes native** (`k8s`)
+7. **Unknown** (fallback)
+
+> **Note:** ConfigHub labels may coexist with Flux/Argo labels. In standalone mode, the GitOps deployer takes precedence. In connected mode, both `owner` and `deployer` fields are populated.
+
+## Owner Detection Examples
 
 ### Flux (Kustomization)
 ```yaml
 labels:
-  kustomize.toolkit.fluxcd.io/name: "podinfo"
+  kustomize.toolkit.fluxcd.io/name: "apps"
   kustomize.toolkit.fluxcd.io/namespace: "flux-system"
+```
+```json
+{ "type": "flux", "subType": "kustomization", "name": "apps", "namespace": "flux-system" }
 ```
 
 ### Flux (HelmRelease)
@@ -99,14 +126,17 @@ labels:
   helm.toolkit.fluxcd.io/name: "podinfo"
   helm.toolkit.fluxcd.io/namespace: "flux-system"
 ```
+```json
+{ "type": "flux", "subType": "helmrelease", "name": "podinfo", "namespace": "flux-system" }
+```
 
 ### Argo CD
 ```yaml
 labels:
   argocd.argoproj.io/instance: "guestbook"
-# or
-annotations:
-  argocd.argoproj.io/tracking-id: "..."
+```
+```json
+{ "type": "argo", "subType": "application", "name": "guestbook" }
 ```
 
 ### Helm (Direct)
@@ -117,20 +147,20 @@ annotations:
   meta.helm.sh/release-name: "my-release"
   meta.helm.sh/release-namespace: "default"
 ```
+```json
+{ "type": "helm", "subType": "release", "name": "my-release", "namespace": "default" }
+```
 
-## Detection Priority
-
-When an entry has multiple ownership markers, detection follows this priority:
-
-1. **ConfigHub** - Checked first (may coexist with deployers like Flux)
-2. **Flux Kustomization**
-3. **Flux HelmRelease**
-4. **Argo CD**
-5. **Helm**
-6. **Terraform**
-7. **Native** (fallback)
-
-This allows ConfigHub to track entries deployed via Flux or Argo while still showing the deployment mechanism.
+### ConfigHub
+```yaml
+labels:
+  confighub.com/UnitSlug: "backend"
+annotations:
+  confighub.com/SpaceID: "550e8400-e29b-41d4-a716-446655440000"
+```
+```json
+{ "type": "confighub", "name": "backend" }
+```
 
 ## Drift Schema
 
@@ -139,9 +169,6 @@ When drift is detected, the `drift` field contains:
 ```json
 {
   "type": "modified",
-  "changes": [
-    { "path": "spec.replicas", "from": 2, "to": 3 }
-  ],
   "summary": "replicas: 2 → 3",
   "detectedAt": "2025-12-29T12:00:00Z"
 }
@@ -150,11 +177,69 @@ When drift is detected, the `drift` field contains:
 | Field | Description |
 |-------|-------------|
 | `type` | `modified`, `missing`, or `extra` |
-| `changes` | List of field-level changes |
 | `summary` | Human-readable summary |
 | `detectedAt` | When drift was detected |
 
-## Relation Types
+## Summary Schema
+
+```json
+{
+  "total": 45,
+  "byKind": { "Deployment": 12, "Service": 15, "ConfigMap": 18 },
+  "byOwner": { "flux": 30, "argo": 10, "unknown": 5 },
+  "drifted": 2
+}
+```
+
+## Scanned Resources
+
+The snapshot command scans these resource types:
+
+| Kind | Group | Version |
+|------|-------|---------|
+| Deployment | apps | v1 |
+| StatefulSet | apps | v1 |
+| DaemonSet | apps | v1 |
+| Service | core | v1 |
+| ConfigMap | core | v1 |
+| Secret | core | v1 |
+| Ingress | networking.k8s.io | v1 |
+| GitRepository | source.toolkit.fluxcd.io | v1 |
+| Kustomization | kustomize.toolkit.fluxcd.io | v1 |
+| HelmRelease | helm.toolkit.fluxcd.io | v2 |
+| Application | argoproj.io | v1alpha1 |
+
+## Third-Party Integration
+
+GSF is designed for tool integration. Example uses:
+
+```bash
+# Count resources by owner
+cub-scout snapshot | jq '.summary.byOwner'
+
+# List all Flux-managed deployments
+cub-scout snapshot | jq '.entries[] | select(.owner.type == "flux" and .kind == "Deployment") | .name'
+
+# Find resources without ownership
+cub-scout snapshot | jq '.entries[] | select(.owner == null) | {kind, name, namespace}'
+
+# Export for external dashboard
+cub-scout snapshot -o /var/lib/dashboard/cluster-state.json
+```
+
+### Programmatic Access (Go)
+
+```go
+import "github.com/confighub/cub-scout/pkg/agent"
+
+// Detect ownership of any unstructured resource
+ownership := agent.DetectOwnership(resource)
+fmt.Printf("Owner: %s (%s)\n", ownership.Type, ownership.SubType)
+```
+
+## Relation Types (Future)
+
+> **Note:** Relations are defined in the schema but not yet populated by `snapshot`.
 
 | Type | Description | Example |
 |------|-------------|---------|
@@ -163,57 +248,27 @@ When drift is detected, the `drift` field contains:
 | `mounts` | Volume reference | Pod → ConfigMap |
 | `references` | envFrom reference | Pod → Secret |
 
-## Flux CRD Entries
-
-Flux custom resources are included:
-
-| Kind | Owner | Details |
-|------|-------|---------|
-| `GitRepository` | Flux | `url` |
-| `HelmRepository` | Flux | `url` |
-| `Kustomization` | Flux | `sourceRef` |
-| `HelmRelease` | Flux | `chart` |
-
-## Argo CD Application Entries
-
-```json
-{
-  "id": "kind-atk/argocd/argoproj.io/v1alpha1/Application/guestbook",
-  "kind": "Application",
-  "name": "guestbook",
-  "owner": {
-    "type": "ArgoCD",
-    "details": {
-      "repoURL": "https://github.com/argoproj/argocd-example-apps",
-      "destinationNamespace": "default",
-      "syncStatus": "Synced",
-      "healthStatus": "Healthy"
-    }
-  }
-}
-```
-
 ## Extended Format (Connected Mode)
 
 When connected to ConfigHub API, entries include additional fields:
 
 ```json
 {
-  "id": "prod-east/default/apps/v1/Deployment/backend",
+  "id": "prod-east/default/apps/Deployment/backend",
   "confighub": {
-    "org": "payments",
+    "org": "acme",
     "space": "payments-prod",
     "unit": "backend",
     "revision": 42
   },
   "owner": {
-    "type": "ConfigHub"
+    "type": "confighub"
   },
   "deployer": {
-    "type": "Flux",
-    "resource": { "kind": "Kustomization", "name": "payments" }
+    "type": "flux",
+    "subType": "kustomization",
+    "name": "payments"
   },
-  "drift": { "type": "modified", "summary": "replicas: 2 → 3" },
   "ccves": ["CCVE-DRIFT-002"]
 }
 ```
@@ -221,25 +276,7 @@ When connected to ConfigHub API, entries include additional fields:
 Extended fields:
 - `confighub` — Full ConfigHub hierarchy (Org → Space → Unit)
 - `deployer` — Separate from `owner` when ConfigHub manages via Flux/Argo
-- `ccves` — Active Config CVEs affecting this entry (46 active scanner patterns)
-
----
-
-## Generating GSF Output
-
-```bash
-# One-time GSF snapshot to stdout
-cub-scout snapshot -o -
-
-# GSF snapshot to file
-cub-scout snapshot -o cluster-state.json
-
-# Resource list as JSON
-cub-scout map list --json
-
-# Scan results as JSON
-cub-scout scan --json
-```
+- `ccves` — Active Config CVEs affecting this entry
 
 ---
 
@@ -247,4 +284,4 @@ cub-scout scan --json
 
 - [Command Reference](commands.md)
 - [Query Syntax](query-syntax.md)
-- [docs/ARCHITECTURE.md](../ARCHITECTURE.md) — How the Agent works
+- [Architecture](../ARCHITECTURE.md)
