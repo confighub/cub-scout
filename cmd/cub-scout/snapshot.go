@@ -224,7 +224,8 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	// Build relations if requested
 	var relations []GSFRelation
 	if snapshotRelations {
-		relations = buildOwnsRelations(allItems, clusterName)
+		relations = append(relations, buildOwnsRelations(allItems, clusterName)...)
+		relations = append(relations, buildSelectsRelations(allItems, clusterName)...)
 	}
 
 	// Build snapshot
@@ -315,4 +316,86 @@ func buildOwnsRelations(items []unstructured.Unstructured, clusterName string) [
 	}
 
 	return relations
+}
+
+// buildSelectsRelations finds Service -> Pod relations via label selectors
+func buildSelectsRelations(items []unstructured.Unstructured, clusterName string) []GSFRelation {
+	var relations []GSFRelation
+
+	// Collect all Pods with their labels, indexed by namespace
+	type podInfo struct {
+		id     string
+		labels map[string]string
+	}
+	podsByNamespace := make(map[string][]podInfo)
+
+	for _, item := range items {
+		if item.GetKind() != "Pod" {
+			continue
+		}
+		gv := item.GroupVersionKind()
+		podID := fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, item.GetNamespace(), gv.Group, gv.Kind, item.GetName())
+		podsByNamespace[item.GetNamespace()] = append(podsByNamespace[item.GetNamespace()], podInfo{
+			id:     podID,
+			labels: item.GetLabels(),
+		})
+	}
+
+	// For each Service, find matching Pods
+	for _, item := range items {
+		if item.GetKind() != "Service" {
+			continue
+		}
+
+		// Get service selector
+		spec, found, err := unstructured.NestedMap(item.Object, "spec")
+		if err != nil || !found {
+			continue
+		}
+
+		selectorRaw, found, err := unstructured.NestedMap(spec, "selector")
+		if err != nil || !found || len(selectorRaw) == 0 {
+			continue
+		}
+
+		// Convert selector to map[string]string
+		selector := make(map[string]string)
+		for k, v := range selectorRaw {
+			if vs, ok := v.(string); ok {
+				selector[k] = vs
+			}
+		}
+
+		if len(selector) == 0 {
+			continue
+		}
+
+		// Build service ID
+		gv := item.GroupVersionKind()
+		serviceID := fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, item.GetNamespace(), gv.Group, gv.Kind, item.GetName())
+
+		// Find matching Pods in the same namespace
+		pods := podsByNamespace[item.GetNamespace()]
+		for _, pod := range pods {
+			if matchesSelector(pod.labels, selector) {
+				relations = append(relations, GSFRelation{
+					From: serviceID,
+					To:   pod.id,
+					Type: "selects",
+				})
+			}
+		}
+	}
+
+	return relations
+}
+
+// matchesSelector checks if labels match all selector requirements
+func matchesSelector(labels, selector map[string]string) bool {
+	for k, v := range selector {
+		if labels[k] != v {
+			return false
+		}
+	}
+	return true
 }

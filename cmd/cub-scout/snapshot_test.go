@@ -130,3 +130,135 @@ func TestBuildOwnsRelations_NoOwners(t *testing.T) {
 		t.Errorf("expected 0 relations, got %d", len(relations))
 	}
 }
+
+func TestBuildSelectsRelations(t *testing.T) {
+	// Create a Service with selector and matching Pods
+
+	// Service with selector app=backend
+	service := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Service",
+			"metadata": map[string]interface{}{
+				"name":      "backend-svc",
+				"namespace": "prod",
+				"uid":       "svc-uid-123",
+			},
+			"spec": map[string]interface{}{
+				"selector": map[string]interface{}{
+					"app": "backend",
+				},
+			},
+		},
+	}
+
+	// Pod that matches the selector
+	matchingPod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "backend-xyz-abc",
+				"namespace": "prod",
+				"uid":       "pod-uid-456",
+				"labels": map[string]interface{}{
+					"app": "backend",
+				},
+			},
+		},
+	}
+
+	// Pod that doesn't match (different label)
+	nonMatchingPod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "frontend-xyz-abc",
+				"namespace": "prod",
+				"uid":       "pod-uid-789",
+				"labels": map[string]interface{}{
+					"app": "frontend",
+				},
+			},
+		},
+	}
+
+	// Pod in different namespace (shouldn't match)
+	differentNsPod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "backend-other",
+				"namespace": "staging",
+				"uid":       "pod-uid-999",
+				"labels": map[string]interface{}{
+					"app": "backend",
+				},
+			},
+		},
+	}
+
+	items := []unstructured.Unstructured{service, matchingPod, nonMatchingPod, differentNsPod}
+	relations := buildSelectsRelations(items, "test-cluster")
+
+	// Should have exactly 1 relation: Service -> matching Pod
+	if len(relations) != 1 {
+		t.Errorf("expected 1 relation, got %d", len(relations))
+		t.Logf("relations: %+v", relations)
+	}
+
+	if len(relations) > 0 {
+		rel := relations[0]
+		if rel.Type != "selects" {
+			t.Errorf("expected type 'selects', got %s", rel.Type)
+		}
+		if rel.From != "test-cluster/prod//Service/backend-svc" {
+			t.Errorf("unexpected from: %s", rel.From)
+		}
+		if rel.To != "test-cluster/prod//Pod/backend-xyz-abc" {
+			t.Errorf("unexpected to: %s", rel.To)
+		}
+	}
+}
+
+func TestBuildSelectsRelations_NoSelector(t *testing.T) {
+	// Service without selector should produce no relations
+	service := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Service",
+			"metadata": map[string]interface{}{
+				"name":      "external-svc",
+				"namespace": "prod",
+				"uid":       "svc-uid-123",
+			},
+			"spec": map[string]interface{}{
+				// No selector - e.g., ExternalName service
+			},
+		},
+	}
+
+	pod := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":      "some-pod",
+				"namespace": "prod",
+				"uid":       "pod-uid-456",
+				"labels": map[string]interface{}{
+					"app": "backend",
+				},
+			},
+		},
+	}
+
+	items := []unstructured.Unstructured{service, pod}
+	relations := buildSelectsRelations(items, "test-cluster")
+
+	if len(relations) != 0 {
+		t.Errorf("expected 0 relations, got %d", len(relations))
+	}
+}
