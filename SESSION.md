@@ -357,3 +357,74 @@ Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● brid
 - `cmd/cub-scout/smoke_test.go` (added status tests)
 - `CLI-GUIDE.md` (status command docs)
 - `README.md` (verify connection section)
+
+---
+
+### 2026-01-30 - Crossplane & Enhanced Trace Features (Issues #6, #4, #5)
+
+**Goal:** Add Crossplane detection, cross-owner reference detection, and elapsed time display
+
+#### Issue #6: Crossplane Owner Detection
+- Added `OwnerCrossplane = "crossplane"` constant
+- Created `detectCrossplaneOwnership()` function detecting:
+  - `crossplane.io/claim-name` label (Crossplane Claims)
+  - `crossplane.io/composite` label (Composite resources)
+  - `crossplane.io/composition-resource-name` annotation (Compositions)
+  - Owner references to `*.crossplane.io` or `*.upbound.io` API groups
+- Updated detection priority: Flux → Argo → Helm → Terraform → ConfigHub → **Crossplane** → k8s → unknown
+- Added comprehensive tests in `ownership_test.go`
+- Updated GSF schema docs with Crossplane subtypes and examples
+- **Commit:** 7fe196f
+
+#### Issue #4: Cross-Owner Reference Detection
+- Added `CrossReference` struct to `TraceResult` for tracking:
+  - Referenced resource (kind, name, namespace)
+  - Reference type (envFrom, valueFrom, volume, projected)
+  - Owner of referenced resource
+  - Status (exists/missing)
+- Created `pkg/agent/cross_ref.go` with:
+  - `CrossRefDetector` struct
+  - Reference extraction from: envFrom, env.valueFrom, volumes, projected volumes
+  - Deduplication of repeated references
+  - Support for containers and initContainers
+- Created comprehensive tests in `cross_ref_test.go`
+- Integrated into trace command with warning display
+- **Commit:** 9dbf6f9
+
+#### Issue #5: Elapsed Time in Trace Output
+- Added `TimingEnricher` in `pkg/agent/trace_timing.go`:
+  - Extracts timing from Flux resources (Kustomization, HelmRelease, GitRepository)
+  - Extracts timing from ArgoCD Applications (operationState.finishedAt)
+  - Extracts timing from Deployments/StatefulSets (status.conditions)
+  - Falls back to Ready/Available condition timestamps
+- Human-readable elapsed time formatting:
+  - `45s` (under 1 minute)
+  - `5m 30s` (under 1 hour)
+  - `2h 15m` (under 1 day)
+  - `3d 12h` (over 1 day)
+- Warning highlight for resources stuck non-ready >5 minutes (⚠)
+- Comprehensive tests in `trace_timing_test.go`
+- **Commit:** e5a3e9d
+
+#### Files Modified
+- `pkg/agent/ownership.go` (#6: Crossplane detection)
+- `pkg/agent/ownership_test.go` (#6: Crossplane tests)
+- `pkg/agent/trace.go` (#4: CrossReference struct)
+- `pkg/agent/cross_ref.go` (new, #4: cross-reference detection)
+- `pkg/agent/cross_ref_test.go` (new, #4: tests)
+- `pkg/agent/trace_timing.go` (new, #5: timing enrichment)
+- `pkg/agent/trace_timing_test.go` (new, #5: timing tests)
+- `cmd/cub-scout/trace.go` (#4, #5: CLI integration)
+- `docs/reference/gsf-schema.md` (#6: Crossplane schema)
+
+#### Tests
+All tests pass:
+```
+=== RUN   TestDetectOwnership_Crossplane
+--- PASS: TestDetectOwnership_Crossplane
+=== RUN   TestExtractWorkloadReferences_EnvFrom
+--- PASS: TestExtractWorkloadReferences_EnvFrom
+=== RUN   TestExtractTimingFromResource_Kustomization
+--- PASS: TestExtractTimingFromResource_Kustomization
+... (all 15+ new tests pass)
+```
