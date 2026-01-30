@@ -58,6 +58,28 @@ kubectl apply -f examples/apptique-examples/argo-applicationset/bootstrap/applic
 cub-scout map workloads | grep apptique
 ```
 
+### Platform Example (Recommended for Learning)
+
+A complete GitOps learning environment with ~35 resources — **included in this repo**:
+
+| Component | What It Shows |
+|-----------|---------------|
+| Flux Controllers | Source, Kustomize, Helm controllers |
+| Kustomizations | Base + overlay pattern (podinfo) |
+| HelmReleases | Prometheus stack via GitOps |
+| Orphan Resources | Debug leftovers, manual hotfixes |
+
+```bash
+cd examples/platform-example
+./setup.sh                                    # Deploy to kind cluster
+cub-scout map                                 # Explore with TUI
+cub-scout map orphans                         # Find shadow IT
+cub-scout trace deploy/podinfo -n podinfo     # Trace to Git source
+./cleanup.sh                                  # Clean up
+```
+
+See [platform-example/README.md](platform-example/README.md) for learning journeys and the clobbering demo.
+
 ### External Examples (GitHub)
 
 | Example | Repo | Shows |
@@ -88,6 +110,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | File/Folder | Type | What | Use When |
 |-------------|------|------|----------|
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
+| [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |
 | [flux-boutique/](flux-boutique/) | **Working** | 5-service Flux demo | TUI view showcase, trace demo |
 | [orphans/](orphans/) | **Working** | Realistic orphan resources | Orphan detection demo |
 | [demos/](demos/) | **Test Fixtures** | YAML with GitOps labels + nginx:alpine | Learning ownership detection |

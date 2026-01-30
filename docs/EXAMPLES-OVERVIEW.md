@@ -116,6 +116,45 @@ Real examples answering real questions. See [howto/fleet-queries.md](howto/fleet
 # DEPRECATED: ./test/atk/demo query                     # Live queries against cluster
 ```
 
+### Visual Demo Scripts
+
+Standalone scripts that show feature output with sample data (no cluster required).
+
+| Script | Description |
+|--------|-------------|
+| `cross-owner-demo.sh` | Crossplane detection, cross-owner refs, elapsed time (v0.3.3) |
+| `diverse-ownership-demo.yaml` | Multi-owner cluster for screenshots |
+| `tui-queries-demo.sh` | Saved queries feature |
+| `tui-trace-demo.sh` | GitOps trace feature |
+| `tui-import-demo.sh` | Import with path inference |
+| `fleet-queries-demo.sh` | Fleet query examples |
+| `kyverno-scan-demo.sh` | Kyverno policy scan |
+| `meta-pattern-demo.sh` | 5 meta-patterns (what Kyverno misses) |
+| `capture-workloads-screenshot.sh` | Create kind cluster for marketing screenshots |
+
+```bash
+./examples/demos/cross-owner-demo.sh      # New v0.3.3 features
+./examples/demos/tui-trace-demo.sh        # Trace walkthrough
+./examples/demos/meta-pattern-demo.sh     # Meta-pattern detection
+```
+
+### Demo YAML Fixtures
+
+YAML files used by `cub-scout demo` command and for manual testing:
+
+| File | Used By | Description |
+|------|---------|-------------|
+| `demo-full.yaml` | `cub-scout demo ccve` | CCVE-2025-0027 scenario |
+| `enterprise-healthy.yaml` | `cub-scout demo healthy` | IITS hub-and-spoke pattern |
+| `enterprise-unhealthy.yaml` | `cub-scout demo unhealthy` | Common GitOps problems |
+| `diverse-ownership-demo.yaml` | Screenshot capture | Multi-owner workloads |
+| `cross-owner-demo.yaml` | Cross-owner demo | Crossplane + Terraform + Flux |
+| `break-glass.yaml` | Break-glass scenarios | Emergency kubectl access |
+| `clobber-protection.yaml` | Clobber demo | Platform vs app overlay conflicts |
+| `multi-cluster.yaml` | Fleet demos | Multi-cluster simulation |
+
+See [demos/README.md](../examples/demos/README.md) for detailed walkthroughs.
+
 | Question | Command |
 |----------|---------|
 | What's running? | `cub-scout map` |
@@ -155,6 +194,27 @@ Multi-service demos designed to showcase all 17 TUI views:
 | Demo | Services | Status | Best For |
 |------|----------|--------|----------|
 | [flux-boutique/](../examples/flux-boutique/) | 5 | **Working** | TUI view showcase, trace demo |
+| [platform-example/](../examples/platform-example/) | ~35 | **Working** | Full GitOps learning environment |
+| [orphans/](../examples/orphans/) | ~20 | **Working** | Orphan detection demo |
+
+**Platform Example (Recommended for learning):**
+```bash
+cd examples/platform-example
+./setup.sh                              # Deploy Flux + orphans to kind cluster
+cub-scout map                           # Explore with TUI
+cub-scout trace deploy/podinfo -n podinfo  # Trace to Git source
+./cleanup.sh                            # Remove everything
+```
+
+Shows: Flux Kustomizations, HelmReleases, orphan resources, trace chains, clobbering demo.
+
+**Orphan Resources:**
+```bash
+kubectl apply -f examples/orphans/realistic-orphans.yaml
+cub-scout map orphans                   # Find all Native/unmanaged resources
+```
+
+Shows: Legacy systems, debug leftovers, manual hotfixes — resources GitOps doesn't know about.
 
 **Quick start:**
 ```bash
