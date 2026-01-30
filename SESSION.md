@@ -428,3 +428,28 @@ All tests pass:
 --- PASS: TestExtractTimingFromResource_Kustomization
 ... (all 15+ new tests pass)
 ```
+
+#### Cross-Owner Demo for Prospects
+Created new demo showcasing all v0.3.3 features:
+- `examples/demos/cross-owner-demo.yaml` - Full cluster demo with:
+  - Crossplane-managed resources (RDS, ElastiCache proxies with claim labels)
+  - Terraform-managed secrets (db-credentials, redis-credentials, payment-api-keys)
+  - Flux-managed workloads referencing Terraform secrets (cross-owner!)
+  - ArgoCD-managed analytics collector
+  - Native debug pod
+- `examples/demos/cross-owner-demo.sh` - Visual walkthrough (no cluster required)
+- **Commit:** 46c3be8
+
+#### Documentation Fixes
+Audit found gaps in examples documentation. Fixed:
+- Added `platform-example/` to both READMEs (full Flux learning environment)
+- Added `orphans/` to EXAMPLES-OVERVIEW.md
+- Added all 9 visual demo scripts to EXAMPLES-OVERVIEW.md
+- Added all 8 demo YAML fixtures to EXAMPLES-OVERVIEW.md
+- **Commits:** a4955e5, dd796f6
+
+#### Release v0.3.3
+- Tag: v0.3.3
+- Release: https://github.com/confighub/cub-scout/releases/tag/v0.3.3
+- Features: Crossplane detection, cross-owner warnings, elapsed time
+- Demo: cross-owner-demo for prospects
