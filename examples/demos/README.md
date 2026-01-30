@@ -146,12 +146,44 @@ Demo YAML files are in `test/atk/demos/`:
 
 ---
 
+## Cross-Owner Reference Demo (NEW)
+
+Shows the new features in v0.3.3: Crossplane detection, cross-owner references, elapsed time.
+
+```bash
+# Visual demo (no cluster required)
+./examples/demos/cross-owner-demo.sh
+
+# Real cluster demo
+kubectl apply -f examples/demos/cross-owner-demo.yaml
+./cub-scout trace deploy/api-server -n ecommerce
+./cub-scout map workloads -n ecommerce
+```
+
+Creates:
+- **Crossplane resources** - RDS and ElastiCache proxies with claim labels
+- **Terraform secrets** - DB credentials, Redis auth, payment API keys
+- **Flux workloads** - API server, payment service, frontend
+- **ArgoCD workload** - Analytics collector
+- **Native workload** - Debug pod
+
+Shows:
+- Crossplane ownership detection (claim-name, composite, composition)
+- Cross-owner reference warnings (Flux deployment → Terraform secret)
+- Elapsed time since last reconciliation
+- Warning highlights for stuck resources
+
+Use case: Platform teams using Crossplane/Terraform for infrastructure while app teams use Flux/ArgoCD for workloads.
+
+---
+
 ## Visual Demo Scripts
 
 Standalone scripts that show feature output with sample data (no cluster required).
 
 | Script | Description |
 |--------|-------------|
+| `cross-owner-demo.sh` | Crossplane, cross-owner refs, elapsed time |
 | `tui-queries-demo.sh` | Saved queries feature |
 | `fleet-queries-demo.sh` | Fleet query examples |
 | `tui-trace-demo.sh` | GitOps trace feature |

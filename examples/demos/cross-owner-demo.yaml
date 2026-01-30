@@ -1,0 +1,347 @@
+# Cross-Owner Reference Demo for cub-scout
+# Showcases: Crossplane detection, cross-owner references, elapsed time
+#
+# This demo simulates a realistic scenario where:
+# - Platform team manages cloud infrastructure with Crossplane
+# - Platform team manages secrets with Terraform
+# - App team deploys workloads with Flux
+# - App workloads reference platform-managed secrets (cross-owner)
+#
+# Run: kubectl apply -f cross-owner-demo.yaml
+# Then: ./cub-scout trace deploy/api-server -n ecommerce
+#       ./cub-scout map workloads
+
+---
+# Namespaces
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crossplane-system
+---
+
+# =============================================================================
+# CROSSPLANE-MANAGED RESOURCES (Platform Team - Infrastructure)
+# =============================================================================
+
+# Simulated Crossplane Composite Resource (XRD instance)
+# In real clusters, this would be a PostgreSQLInstance claim
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rds-proxy
+  namespace: crossplane-system
+  labels:
+    app: rds-proxy
+    # Crossplane claim labels
+    crossplane.io/claim-name: ecommerce-db
+    crossplane.io/claim-namespace: ecommerce
+    crossplane.io/composite: xpostgresqlinstance-abc123
+  annotations:
+    crossplane.io/composition-resource-name: rds-instance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rds-proxy
+  template:
+    metadata:
+      labels:
+        app: rds-proxy
+    spec:
+      containers:
+      - name: proxy
+        image: nginx:alpine
+        ports:
+        - containerPort: 5432
+
+---
+# Another Crossplane-managed resource (Redis claim)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticache-proxy
+  namespace: crossplane-system
+  labels:
+    app: elasticache-proxy
+    crossplane.io/claim-name: ecommerce-cache
+    crossplane.io/claim-namespace: ecommerce
+    crossplane.io/composite: xrediscluster-def456
+  annotations:
+    crossplane.io/composition-resource-name: elasticache-cluster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticache-proxy
+  template:
+    metadata:
+      labels:
+        app: elasticache-proxy
+    spec:
+      containers:
+      - name: proxy
+        image: nginx:alpine
+        ports:
+        - containerPort: 6379
+
+---
+# =============================================================================
+# TERRAFORM-MANAGED SECRETS (Platform Team - Credentials)
+# =============================================================================
+
+# Database credentials managed by Terraform (not GitOps)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+  namespace: ecommerce
+  labels:
+    app.kubernetes.io/managed-by: terraform
+  annotations:
+    # Terraform state tracking
+    app.terraform.io/workspace-name: ecommerce-prod
+    app.terraform.io/run-id: run-abc123xyz
+type: Opaque
+stringData:
+  DB_HOST: "ecommerce-db.cluster-xyz.us-east-1.rds.amazonaws.com"
+  DB_PORT: "5432"
+  DB_USER: "ecommerce_app"
+  DB_PASSWORD: "super-secret-password"
+  DB_NAME: "ecommerce"
+
+---
+# Redis credentials also managed by Terraform
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-credentials
+  namespace: ecommerce
+  labels:
+    app.kubernetes.io/managed-by: terraform
+  annotations:
+    app.terraform.io/workspace-name: ecommerce-prod
+    app.terraform.io/run-id: run-abc123xyz
+type: Opaque
+stringData:
+  REDIS_HOST: "ecommerce-cache.xyz.cache.amazonaws.com"
+  REDIS_PORT: "6379"
+  REDIS_AUTH_TOKEN: "redis-auth-token-here"
+
+---
+# External API key managed by Terraform (Stripe, etc.)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: payment-api-keys
+  namespace: ecommerce
+  labels:
+    app.kubernetes.io/managed-by: terraform
+  annotations:
+    app.terraform.io/workspace-name: ecommerce-secrets
+    app.terraform.io/run-id: run-def456xyz
+type: Opaque
+stringData:
+  STRIPE_API_KEY: "sk_live_xxxxxxxxxxxxx"
+  STRIPE_WEBHOOK_SECRET: "whsec_xxxxxxxxxxxxx"
+
+---
+# =============================================================================
+# FLUX-MANAGED WORKLOADS (App Team - Uses Platform Secrets)
+# =============================================================================
+
+# ConfigMap managed by Flux (same owner as deployment)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: ecommerce
+  labels:
+    app: api-server
+    kustomize.toolkit.fluxcd.io/name: ecommerce-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+data:
+  LOG_LEVEL: "info"
+  ENABLE_METRICS: "true"
+  MAX_CONNECTIONS: "100"
+
+---
+# Main API server - Flux managed, references Terraform secrets (CROSS-OWNER!)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-server
+  namespace: ecommerce
+  labels:
+    app: api-server
+    kustomize.toolkit.fluxcd.io/name: ecommerce-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-server
+  template:
+    metadata:
+      labels:
+        app: api-server
+    spec:
+      containers:
+      - name: api
+        image: gcr.io/google-samples/microservices-demo/productcatalogservice:v0.8.0
+        ports:
+        - containerPort: 8080
+        # Cross-owner reference: Flux deployment → Terraform secret
+        envFrom:
+        - secretRef:
+            name: db-credentials      # Terraform-managed!
+        - configMapRef:
+            name: api-config          # Flux-managed (same owner)
+        env:
+        # Individual key references to Terraform secrets
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials  # Terraform-managed!
+              key: REDIS_HOST
+
+---
+# Payment service - Flux managed, references Terraform payment keys
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: ecommerce
+  labels:
+    app: payment-service
+    kustomize.toolkit.fluxcd.io/name: ecommerce-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment
+        image: gcr.io/google-samples/microservices-demo/paymentservice:v0.8.0
+        ports:
+        - containerPort: 50051
+        # Cross-owner: Flux → Terraform
+        envFrom:
+        - secretRef:
+            name: payment-api-keys    # Terraform-managed!
+        # Also mount as volume
+        volumeMounts:
+        - name: certs
+          mountPath: /etc/certs
+          readOnly: true
+      volumes:
+      - name: certs
+        secret:
+          secretName: payment-api-keys  # Terraform-managed!
+
+---
+# Frontend - Flux managed, no cross-owner references
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: ecommerce
+  labels:
+    app: frontend
+    kustomize.toolkit.fluxcd.io/name: ecommerce-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: gcr.io/google-samples/microservices-demo/frontend:v0.8.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: API_URL
+          value: "http://api-server:8080"
+
+---
+# =============================================================================
+# ARGOCD-MANAGED WORKLOAD (Different Team)
+# =============================================================================
+
+# Analytics service managed by ArgoCD, also uses Terraform secrets
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-collector
+  namespace: ecommerce
+  labels:
+    app: analytics-collector
+    argocd.argoproj.io/instance: analytics-app
+    app.kubernetes.io/instance: analytics-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-collector
+  template:
+    metadata:
+      labels:
+        app: analytics-collector
+    spec:
+      containers:
+      - name: collector
+        image: nginx:alpine
+        # Cross-owner: ArgoCD → Terraform
+        envFrom:
+        - secretRef:
+            name: db-credentials      # Terraform-managed!
+
+---
+# =============================================================================
+# NATIVE WORKLOAD (No GitOps - Quick Debug Pod)
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-pod
+  namespace: ecommerce
+  labels:
+    app: debug-pod
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"debug-pod"}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-pod
+  template:
+    metadata:
+      labels:
+        app: debug-pod
+    spec:
+      containers:
+      - name: debug
+        image: nicolaka/netshoot:latest
+        command: ["sleep", "infinity"]
+        # Cross-owner: Native → Terraform (highest risk!)
+        envFrom:
+        - secretRef:
+            name: db-credentials
