@@ -256,6 +256,14 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("trace failed: %w", err)
 	}
 
+	// Detect cross-owner references if we have a workload
+	if kind == "Deployment" || kind == "StatefulSet" || kind == "DaemonSet" || kind == "Pod" {
+		crossRefs, crossErr := detectCrossOwnerReferences(ctx, kind, name, traceNamespace, ownership)
+		if crossErr == nil && len(crossRefs) > 0 {
+			result.CrossReferences = crossRefs
+		}
+	}
+
 	// Output results
 	if traceJSON {
 		return outputTraceJSON(result)
@@ -296,6 +304,34 @@ func normalizeKind(kind string) string {
 		}
 		return kind
 	}
+}
+
+// detectCrossOwnerReferences detects cross-owner references in a resource
+func detectCrossOwnerReferences(ctx context.Context, kind, name, namespace string, resourceOwner *agent.Ownership) ([]agent.CrossReference, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the resource
+	gvr := kindToGVR(kind)
+	if gvr.Resource == "" {
+		return nil, fmt.Errorf("unknown resource kind: %s", kind)
+	}
+
+	resource, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Detect cross-references
+	detector := agent.NewCrossRefDetector(dynClient)
+	return detector.DetectCrossReferences(ctx, resource, resourceOwner)
 }
 
 // detectResourceOwnership fetches the resource and detects its owner
@@ -483,6 +519,57 @@ func outputTraceHuman(result *agent.TraceResult) error {
 		if i < len(result.Chain)-1 {
 			fmt.Printf("%s%s│%s\n", strings.Repeat("    ", i)+"    ", colorDim, colorReset)
 		}
+	}
+
+	// Show cross-owner references if detected
+	if len(result.CrossReferences) > 0 {
+		fmt.Printf("\n")
+		fmt.Printf("%s%s⚠ Cross-owner references detected:%s\n", colorBold, colorYellow, colorReset)
+		for _, ref := range result.CrossReferences {
+			ownerColor := colorWhite
+			ownerType := "unknown"
+			if ref.Owner != nil {
+				ownerType = ref.Owner.Type
+				switch ownerType {
+				case "flux":
+					ownerColor = colorCyan
+				case "argo":
+					ownerColor = colorPurple
+				case "crossplane":
+					ownerColor = colorBlue
+				case "helm":
+					ownerColor = colorYellow
+				}
+			}
+
+			statusIcon := "✓"
+			statusColor := colorGreen
+			if ref.Status == "missing" {
+				statusIcon = "✗"
+				statusColor = colorRed
+			} else if ref.Status == "pending" {
+				statusIcon = "⏳"
+				statusColor = colorYellow
+			}
+
+			fmt.Printf("  %s%s%s %s%s/%s%s %s(owner: %s%s%s)%s\n",
+				statusColor, statusIcon, colorReset,
+				colorWhite, ref.Ref.Kind, ref.Ref.Name, colorReset,
+				colorDim, ownerColor, ownerType, colorDim, colorReset)
+
+			if ref.RefType != "" {
+				fmt.Printf("      %sreferenced via: %s%s\n", colorDim, ref.RefType, colorReset)
+			}
+			if ref.Owner != nil && ref.Owner.Name != "" {
+				fmt.Printf("      %smanaged by: %s%s\n", colorDim, ref.Owner.Name, colorReset)
+			}
+			if ref.Message != "" && ref.Status != "exists" {
+				fmt.Printf("      %s%s%s\n", colorRed, ref.Message, colorReset)
+			}
+		}
+		fmt.Printf("\n")
+		fmt.Printf("%s  💡 These resources are managed by different tools.%s\n", colorDim, colorReset)
+		fmt.Printf("%s     Changes to one tool won't automatically update the other.%s\n", colorDim, colorReset)
 	}
 
 	// Show history if requested and available

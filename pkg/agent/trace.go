@@ -36,6 +36,28 @@ type TraceResult struct {
 	// History contains deployment/reconciliation history entries
 	// Ordered from most recent to oldest
 	History []HistoryEntry `json:"history,omitempty"`
+
+	// CrossReferences contains resources referenced by this resource that have different owners
+	// For example, a Flux-managed Deployment referencing a Crossplane-created Secret
+	CrossReferences []CrossReference `json:"crossReferences,omitempty"`
+}
+
+// CrossReference represents a reference to a resource with a different owner
+type CrossReference struct {
+	// Ref is the referenced resource (e.g., Secret, ConfigMap)
+	Ref ResourceRef `json:"ref"`
+
+	// RefType describes how the resource is referenced (e.g., "secretRef", "configMapRef", "envFrom", "volume")
+	RefType string `json:"refType"`
+
+	// Owner is the ownership information for the referenced resource
+	Owner *Ownership `json:"owner,omitempty"`
+
+	// Status is the current status of the referenced resource (e.g., "exists", "missing", "pending")
+	Status string `json:"status"`
+
+	// Message provides additional context (e.g., why it's missing)
+	Message string `json:"message,omitempty"`
 }
 
 // HistoryEntry represents a single deployment or reconciliation event
