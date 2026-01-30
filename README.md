@@ -393,6 +393,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | **Flux** | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
 | **ArgoCD** | `argocd.argoproj.io/instance` label |
 | **Helm** | `app.kubernetes.io/managed-by: Helm` (standalone, not Flux-managed) |
+| **Crossplane** | `crossplane.io/claim-name` label or `*.crossplane.io` owner refs *(experimental)* |
 | **ConfigHub** | `confighub.com/UnitSlug` label |
 | **Native** | None of the above (kubectl-applied) |
 
@@ -401,6 +402,8 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 **ArgoCD sources supported:** Git, OCI, Helm charts
 
 **Helm tracing:** For standalone Helm releases (not managed by Flux HelmRelease), cub-scout reads release metadata directly from Kubernetes secrets.
+
+**Crossplane support (experimental):** cub-scout detects Crossplane-managed resources via claim labels, composite references, and owner references to `*.crossplane.io` or `*.upbound.io` API groups. Useful for platform teams managing cloud infrastructure alongside GitOps workloads. See [cross-owner-demo](examples/demos/cross-owner-demo.yaml) for a realistic scenario.
 
 ### ConfigHub OCI Registry Support
 

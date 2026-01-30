@@ -383,7 +383,7 @@ default           Deployment    nginx                         Native
 | `-q, --query` | Query expression |
 | `--namespace` | Filter by namespace |
 | `--kind` | Filter by resource kind |
-| `--owner` | Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native) |
+| `--owner` | Filter by owner (Flux, ArgoCD, Helm, Crossplane, ConfigHub, Native) |
 | `--since` | Resources changed since duration (1h, 24h, 7d) |
 | `--count` | Output count only |
 | `--names-only` | Output names only (for scripting) |
@@ -1143,7 +1143,7 @@ Press `:` to run shell commands:
 **Fields:**
 | Field | Values |
 |-------|--------|
-| `owner` | Flux, ArgoCD, Helm, ConfigHub, Native |
+| `owner` | Flux, ArgoCD, Helm, Crossplane, ConfigHub, Native |
 | `namespace` | Any namespace |
 | `kind` | Deployment, Service, ConfigMap, etc. |
 | `name` | Resource name |
@@ -1160,10 +1160,11 @@ Press `:` to run shell commands:
 | **Flux** | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
 | **ArgoCD** | `app.kubernetes.io/instance` + `argocd.argoproj.io/instance` labels |
 | **Helm** | `app.kubernetes.io/managed-by: Helm` label |
+| **Crossplane** | `crossplane.io/claim-name` label or `*.crossplane.io` owner refs *(experimental)* |
 | **ConfigHub** | `confighub.com/UnitSlug` label |
 | **Native** | None of the above (kubectl-applied) |
 
-**Priority:** Flux > ArgoCD > Helm > ConfigHub > Native
+**Priority:** Flux > ArgoCD > Helm > Crossplane > ConfigHub > Native
 
 ---
 

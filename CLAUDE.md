@@ -1,6 +1,6 @@
 # cub-scout
 
-Read-only Kubernetes observer. Detects ownership (Flux, ArgoCD, Helm, ConfigHub, Native).
+Read-only Kubernetes observer. Detects ownership (Flux, ArgoCD, Helm, Crossplane, ConfigHub, Native).
 
 ## Build & Run
 
@@ -43,6 +43,7 @@ go build ./cmd/cub-scout
 | Flux | `kustomize.toolkit.fluxcd.io/*` labels |
 | ArgoCD | `argocd.argoproj.io/instance` label |
 | Helm | `app.kubernetes.io/managed-by: Helm` |
+| Crossplane | `crossplane.io/claim-name` label *(experimental)* |
 | ConfigHub | `confighub.com/UnitSlug` label |
 | Native | None of the above |
 
