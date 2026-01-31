@@ -476,3 +476,66 @@ Aligned 7 principles across CLAUDE.md, README.md, and CONTRIBUTING.md:
 6. Graceful degradation — works without cluster, ConfigHub, internet
 7. Test everything — `go test ./...` must pass
 - **Commits:** 2b053f9, 43a4632
+
+---
+
+### 2026-01-31 - Crossplane Epic: Issues & PRs
+
+**Goal:** File comprehensive issues for Crossplane ownership detection and begin implementation
+
+#### Pre-Coding Test Requirements (CLAUDE.md)
+Added "Pre-Coding Test & Success Proof Requirements" section:
+- Unit Tests: Own behavior tests, no network calls
+- Examples: Sample YAML fixtures in `test/fixtures/` or `examples/`
+- E2E Tests: Scenario tests against real/mocked cluster
+- Graceful Degradation: Missing CRD tests, missing RBAC tests
+- Definition of Done: All conditions listed for feature completion
+
+#### Crossplane Epic Issues
+Filed comprehensive issue set for Crossplane ownership detection:
+
+| Issue | Title | Status |
+|-------|-------|--------|
+| #8 | [Parent] Crossplane ownership detection epic | Open |
+| #9 | Classify Crossplane control-plane resources as owned (system) | PR #15 |
+| #10 | Crossplane detection contract tests + fixtures | PR #16 |
+| #11 | Add Crossplane filter support (`--owner crossplane`) | Open |
+| #12 | Document Crossplane detection logic | Open |
+| #13 | Handle edge case: Crossplane + Flux/Argo co-management | Open |
+| #14 | E2E test: Crossplane in kind cluster | Open |
+
+#### GitHub Label
+Created `crossplane` label with description:
+> "Crossplane-related ownership detection, claims, composites, and XR resources"
+
+Applied to issues: #3, #8, #9, #10, #11, #12, #13, #14
+
+#### PRs Created from Patches
+Applied diff files from ~/Downloads to create PRs:
+
+**PR #15 (Issue #9):** Classify Crossplane control-plane resources as owned (system)
+- Branch: `issue-9-crossplane-system-ownership`
+- Adds detection for `pkg.crossplane.io/*` and `apiextensions.crossplane.io/*` API groups
+- These resources now classified as `owner: Crossplane (system)` rather than orphan
+- URL: https://github.com/confighub/cub-scout/pull/15
+
+**PR #16 (Issue #10):** Add Crossplane XR-first detection contract tests + fixtures
+- Branch: `issue-10-crossplane-detection-contract`
+- Contract tests codifying XR-first ownership rules:
+  - Composite label implies Crossplane ownership even without claim
+  - Claim labels enrich and take precedence over composite
+  - OwnerRef with `upbound.io` group implies Crossplane ownership
+- Files added:
+  - `test/fixtures/crossplane/` - YAML fixtures
+  - `test/unit/crossplane_contract_test.go` - Contract tests
+  - `examples/crossplane-system/` - Example resources
+- URL: https://github.com/confighub/cub-scout/pull/16
+
+#### Tests
+All tests pass for both PRs:
+```
+=== RUN   TestDetectOwnership_CrossplaneSystem
+--- PASS: TestDetectOwnership_CrossplaneSystem
+=== RUN   TestCrossplaneDetectionContract
+--- PASS: TestCrossplaneDetectionContract
+```
