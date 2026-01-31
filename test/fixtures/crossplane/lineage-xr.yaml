@@ -1,0 +1,8 @@
+apiVersion: database.example.org/v1alpha1
+kind: XPostgreSQLInstance
+metadata:
+  name: xpostgresqlinstance-abc123
+  labels:
+    crossplane.io/claim-name: ecommerce-db
+    crossplane.io/claim-namespace: ecommerce
+spec: {}

@@ -1,0 +1,10 @@
+apiVersion: rds.aws.upbound.io/v1beta1
+kind: Instance
+metadata:
+  name: staging-db
+  namespace: default
+  labels:
+    crossplane.io/composite: xpostgresqlinstance-abc123
+    crossplane.io/claim-name: ecommerce-db
+    crossplane.io/claim-namespace: ecommerce
+spec: {}

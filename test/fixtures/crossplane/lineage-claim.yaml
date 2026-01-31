@@ -1,0 +1,6 @@
+apiVersion: database.example.org/v1alpha1
+kind: PostgreSQLInstance
+metadata:
+  name: ecommerce-db
+  namespace: ecommerce
+spec: {}
