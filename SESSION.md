@@ -556,3 +556,22 @@ All tests pass for all PRs:
 === RUN   TestResolveCrossplaneLineage
 --- PASS: TestResolveCrossplaneLineage
 ```
+
+#### PRs Merged (2026-01-31)
+All three Crossplane PRs merged in dependency order:
+
+| PR | Issue | Merged At | What it does |
+|----|-------|-----------|--------------|
+| #15 | #9 | 10:23:36Z | Crossplane system ownership classification |
+| #16 | #10 | 10:23:58Z | XR-first detection contract tests (the spec) |
+| #17 | #11 | 10:24:28Z | Lineage resolver (Managed → XR → Claim) |
+
+**573 lines added** across 15 files. Crossplane is now **architecturally supported**.
+
+Issue #8 updated with progress comment: https://github.com/confighub/cub-scout/issues/8#issuecomment-3828105425
+
+#### Next Step: Issue #12 (Trace UX)
+Expose the lineage chain in `cub-scout trace` output so users see:
+- Managed Resource → Composite Resource (XR) → Claim (if present)
+- Evidence of which signals were used
+- Graceful "partial lineage" messaging when resolution is incomplete
