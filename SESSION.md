@@ -465,3 +465,14 @@ Added Crossplane to all ownership detection tables:
 - Commented on Issue #3 noting Phase 1 (Crossplane) complete
 - Phase 2 (kro support) pending until API stabilizes
 - Issue remains open for Phase 2
+
+#### Unified Project Principles
+Aligned 7 principles across CLAUDE.md, README.md, and CONTRIBUTING.md:
+1. Single cluster — standalone inspects one kubectl context
+2. Read-only by default — never modifies cluster state
+3. Deterministic — same input = same output, no AI/ML
+4. Parse, don't guess — ownership from labels, not heuristics
+5. Complement GitOps — works alongside Flux, Argo, Helm
+6. Graceful degradation — works without cluster, ConfigHub, internet
+7. Test everything — `go test ./...` must pass
+- **Commits:** 2b053f9, 43a4632
