@@ -499,7 +499,7 @@ Filed comprehensive issue set for Crossplane ownership detection:
 | #8 | [Parent] Crossplane ownership detection epic | Open |
 | #9 | Classify Crossplane control-plane resources as owned (system) | PR #15 |
 | #10 | Crossplane detection contract tests + fixtures | PR #16 |
-| #11 | Add Crossplane filter support (`--owner crossplane`) | Open |
+| #11 | Crossplane lineage resolver (XR-first) | PR #17 |
 | #12 | Document Crossplane detection logic | Open |
 | #13 | Handle edge case: Crossplane + Flux/Argo co-management | Open |
 | #14 | E2E test: Crossplane in kind cluster | Open |
@@ -531,11 +531,28 @@ Applied diff files from ~/Downloads to create PRs:
   - `examples/crossplane-system/` - Example resources
 - URL: https://github.com/confighub/cub-scout/pull/16
 
+**PR #17 (Issue #11):** Add Crossplane XR-first lineage resolver + tests
+- Branch: `issue-11-crossplane-lineage-resolver`
+- Adds `ResolveCrossplaneLineage()` function building chain: Managed → XR → Claim
+- Works with user-defined XRD API groups (e.g., `database.example.org`)
+- Evidence tracking for which signals were used
+- Files added:
+  - `pkg/agent/crossplane_lineage.go` - Core resolver implementation
+  - `test/unit/crossplane_lineage_test.go` - Contract tests
+  - `test/fixtures/crossplane/lineage-*.yaml` - Test fixtures
+  - `test/unit/helpers.go` - Added `LoadFixtureUnstructured` helper
+- URL: https://github.com/confighub/cub-scout/pull/17
+
+#### CI Toolchain Fix
+Fixed `release.yaml` to use `go-version-file: go.mod` instead of hardcoded `go-version: '1.21'`, aligning with ci.yaml.
+
 #### Tests
-All tests pass for both PRs:
+All tests pass for all PRs:
 ```
 === RUN   TestDetectOwnership_CrossplaneSystem
 --- PASS: TestDetectOwnership_CrossplaneSystem
 === RUN   TestCrossplaneDetectionContract
 --- PASS: TestCrossplaneDetectionContract
+=== RUN   TestResolveCrossplaneLineage
+--- PASS: TestResolveCrossplaneLineage
 ```
