@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
 )
 
 // FixturesDir is the path to shared test fixtures
@@ -233,6 +235,20 @@ func AssertOwnerDetected(t *testing.T, output string, kind, name, expectedOwner 
 // -----------------------------------------------------------------------------
 // Fixture Helpers
 // -----------------------------------------------------------------------------
+
+// LoadFixtureUnstructured loads a single YAML document into an Unstructured object.
+func LoadFixtureUnstructured(t *testing.T, relPath string) *unstructured.Unstructured {
+	t.Helper()
+	path := filepath.Join(FixturesDir, relPath)
+	b, err := os.ReadFile(path)
+	require.NoError(t, err)
+
+	var obj map[string]interface{}
+	require.NoError(t, yaml.Unmarshal(b, &obj))
+
+	u := &unstructured.Unstructured{Object: obj}
+	return u
+}
 
 // LoadFixture loads a test fixture file and returns its contents.
 func LoadFixture(t *testing.T, relativePath string) []byte {
