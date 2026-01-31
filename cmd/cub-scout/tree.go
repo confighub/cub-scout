@@ -34,9 +34,9 @@ var treeCmd = &cobra.Command{
 cub-scout tree provides different perspectives on your infrastructure:
 
   CLUSTER VIEWS (what the scout sees):
-    runtime     Deployment → ReplicaSet → Pod trees (default)
+    runtime     Deployment -> ReplicaSet -> Pod trees (default)
     ownership   Resources grouped by GitOps owner (Flux, ArgoCD, Helm)
-    composition Crossplane XR → composed resources (managed by Crossplane)
+    composition Crossplane XR -> composed resources (managed by Crossplane)
     workloads   Same as 'cub-scout map workloads' (alias)
 
   GIT VIEWS:
@@ -48,14 +48,14 @@ cub-scout tree provides different perspectives on your infrastructure:
     suggest     Suggested Hub/AppSpace organization based on cluster workloads
 
 Examples:
-  # Show runtime hierarchy (Deployment → ReplicaSet → Pod)
+  # Show runtime hierarchy (Deployment -> ReplicaSet -> Pod)
   cub-scout tree
   cub-scout tree runtime
 
   # Show resources by GitOps owner
   cub-scout tree ownership
 
-  # Show Crossplane composition trees (XR → composed resources)
+  # Show Crossplane composition trees (XR -> composed resources)
   cub-scout tree composition
 
   # Show Git repository structure
@@ -501,7 +501,7 @@ func runTreeGit(ctx context.Context) error {
 				branch = "main"
 			}
 			fmt.Printf("  %s %s/%s\n", connector, r.GetNamespace(), r.GetName())
-			fmt.Printf("      %s → %s\n", colorDim, url)
+			fmt.Printf("      %s-> %s\n", colorDim, url)
 			fmt.Printf("      branch: %s%s\n", branch, colorReset)
 		}
 	}
