@@ -603,15 +603,126 @@ All presentation-layer Crossplane features are now merged:
 
 **573+ lines added** across 20+ files. Crossplane is now **first-class**.
 
-#### Next Step: Issue #14 (Map & Summaries)
-Final Crossplane PR - make map/summaries reflect what we already know:
-- Introduce Crossplane owner bucket in map views
-- Reduce false orphan counts for Crossplane-managed resources
-- Respect XR-first semantics in aggregation
-- Keep summaries explainable and deterministic
+#### PR #20 Merged: Issue #14 (Map & Summaries)
+Final Crossplane PR - map/summaries now reflect Crossplane as first-class:
+- DisplayOwner canonicalization: `crossplane` → `Crossplane`, `terraform` → `Terraform`
+- Shell completion: Terraform and Crossplane added to `--owner` list
+- Help text: Updated `--owner` flag docs and `map orphans` description
+- `--explain` output: Added Crossplane and Terraform summary bullets
+- Clarified that Crossplane/Terraform-managed resources are not orphans
+- Tests: Added cases to existing `TestDisplayOwner`, new `TestCompleteOwnersIncludesCrossplaneAndTerraform`
+- **URL:** https://github.com/confighub/cub-scout/pull/20
 
-**Open Issues:**
+#### Final Crossplane Epic Summary
+All Crossplane features merged. Issue #8 closed.
+
+| PR | Issue | What it does |
+|----|-------|--------------|
+| #15 | #9 | Control-plane resources classified as owned |
+| #16 | #10 | XR-first detection contract tests (the spec) |
+| #17 | #11 | Lineage resolver (Managed → XR → Claim) |
+| #18 | #12 | Trace output with lineage chain display |
+| #19 | #13 | Composition-aware tree view |
+| #20 | #14 | Map/summaries treat Crossplane as first-class |
+
+**~700 lines added** across 25+ files. Crossplane is now **first-class**.
+
+---
+
+## Design Retrospective: Crossplane as First-Class Platform
+
+### Scope
+This retrospective documents the design and delivery of making Crossplane a first-class platform in cub-scout, covering Issues #9–#14 (PRs #15–#20) and closing parent Issue #8.
+
+The goal was not merely "support Crossplane," but to integrate it coherently across:
+- ownership detection
+- lineage explanation
+- exploration (tree)
+- aggregation (map/summaries)
+
+### Problem Statement
+User feedback highlighted that:
+- Crossplane-managed resources often appeared as "custom resources, not managed by anyone"
+- Claims were unreliable or absent
+- Platform intent was obscured, especially on Crossplane control-plane clusters
+- GitOps-centric ownership models did not explain platform composition
+
+This caused a trust gap: cub-scout appeared incorrect on Crossplane clusters.
+
+### Key Design Decisions
+
+**1. XR-first, not Claim-first**
+- Composite Resources (XRs) are the durable abstraction boundary.
+- Claims are optional enrichment, not a dependency.
+- This aligns with Crossplane v2 direction and avoids "good citizen labeling" requirements.
+
+**2. Separate detection, resolution, and presentation**
+- **Detection**: identify whether a resource is Crossplane-related.
+- **Resolution**: build lineage (Managed → XR → optional Claim).
+- **Presentation**: render trace/tree/map views without altering semantics.
+
+This separation allowed:
+- contract tests to lock behavior early
+- UX changes without semantic risk
+- predictable debugging when metadata is missing
+
+**3. Explicit treatment of system/control-plane resources**
+- Crossplane control-plane CRs are *owned*, not "unmanaged."
+- System ownership classification prevents false orphan narratives.
+- Trust is restored before adding advanced UX.
+
+**4. Graceful degradation over false certainty**
+- Missing metadata yields "partial lineage," not "unmanaged."
+- Resolver always returns evidence explaining what was (and wasn't) found.
+- This was a direct response to user feedback.
+
+**5. Tests as contracts, not afterthoughts**
+- XR-first behavior is locked in via fixture-based contract tests.
+- UX changes include renderer-focused unit tests.
+- CLAUDE.md was updated to require pre-coding success proofs.
+
+### Execution Strategy
+Work was intentionally staged:
+
+1. Correct ownership classification (stop lying to users).
+2. Define and test semantics (XR-first contract).
+3. Implement deterministic resolver.
+4. Expose lineage in trace.
+5. Enable composition-aware exploration (tree).
+6. Reflect reality in summaries (map).
+
+Each step shipped independently and improved the product on its own.
+
+### Outcomes
+Crossplane is now first-class in cub-scout:
+
+- **Ownership**: correctly classified, no false orphans
+- **Trace**: explains platform lineage clearly and honestly
+- **Tree**: reflects composition hierarchy users expect
+- **Map**: aggregates Crossplane distinctly and correctly
+
+The final system is deterministic, explainable, and extensible to other platforms.
+
+### What Worked Well
+- XR-first abstraction (aligned with Crossplane's own direction)
+- Contract tests before resolver logic (locked semantics early)
+- UX as pure presentation (no semantic coupling)
+- Addressing trust gaps before adding features
+- Staged PRs that each delivered standalone value
+- Patch-based handoff between Codex planning and Claude execution
+
+### What We'd Do Differently
+- Call out system/control-plane ownership even earlier in the design
+- Add performance guardrails earlier for large clusters (tree composition scans many resources)
+- The initial GitHub issue numbering was confusing (issues #12-#14 were reused for different purposes than originally filed)
+
+### Design Principle Reinforced
+> If the tool cannot explain *why* a resource exists, it must not claim to know *who* owns it.
+
+This principle now underpins cub-scout's platform support.
+
+---
+
+**Open Issues (remaining):**
 - #2: Kustomize overlay layer attribution (future)
 - #3: Platform composition tools - Phase 2 kro (pending API stabilization)
-- #8: Crossplane epic (near complete, awaiting #14)
-- #14: Map & ownership summaries (next)
