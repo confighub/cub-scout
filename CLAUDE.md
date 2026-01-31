@@ -25,9 +25,12 @@ go build ./cmd/cub-scout
 ## Key Principles
 
 1. **Single cluster** — standalone mode inspects one kubectl context; multi-cluster only via connected mode
-2. **Read-only by default** — never modifies cluster
+2. **Read-only by default** — never modifies cluster state
 3. **Deterministic** — same input = same output, no AI/ML
-4. **Test everything** — `go test ./...` must pass
+4. **Parse, don't guess** — ownership from actual labels, not heuristics
+5. **Complement GitOps** — works alongside Flux, Argo, Helm
+6. **Graceful degradation** — works without cluster, ConfigHub, or internet
+7. **Test everything** — `go test ./...` must pass
 
 ## Directory Structure
 

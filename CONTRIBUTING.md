@@ -64,32 +64,23 @@ test: Add unit tests for Helm label detection
 
 ## Project Principles
 
-### Read-Only by Default
+These principles apply to all contributions:
 
-cub-scout is a read-only observer. Commands should never modify cluster state unless:
-- Explicitly documented as write operations
-- Require explicit flags (e.g., `--apply`, `--force`)
+| Principle | What It Means |
+|-----------|---------------|
+| **Single cluster** | Standalone mode inspects one kubectl context; multi-cluster only via connected mode |
+| **Read-only by default** | Never modify cluster state; use `Get`, `List`, `Watch` only |
+| **Deterministic** | Same input = same output; no AI/ML in core logic |
+| **Parse, don't guess** | Ownership from actual labels, not heuristics |
+| **Complement GitOps** | Works alongside Flux, Argo, Helm — doesn't compete |
+| **Graceful degradation** | Works without cluster (`--file`), ConfigHub, or internet |
+| **Test everything** | `go test ./...` must pass |
 
-### Deterministic Behavior
+### Implementation Notes
 
-All logic must be deterministic:
-- Same input = same output
-- No AI/ML in core logic
-- Auditable and explainable
+**Read-only exceptions:** Commands may modify state only if explicitly documented and requiring explicit flags (e.g., `--apply`, `--force`).
 
-### Graceful Degradation
-
-Features should work in degraded environments:
-- No cluster? Use `--file` for static analysis
-- No ConfigHub? Standalone mode works
-- No internet? Offline mode works
-
-### Universal Interface, Tool-Specific Implementation
-
-When building features that span multiple GitOps tools (Flux, ArgoCD, Helm, etc.):
-- **Interface must be universal** — same flags, same output format, same user experience
-- **Implementation can be tool-specific** — use native APIs, CLIs, or data sources for each tool
-- Example: `--history` shows deployment history universally, but fetches from ArgoCD's `status.history`, Flux's `status.history`, Helm's release secrets, etc.
+**Universal interface:** When building features spanning multiple GitOps tools, the interface must be universal (same flags, same output) while implementation can be tool-specific.
 
 ## Questions?
 

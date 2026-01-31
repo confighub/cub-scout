@@ -484,15 +484,15 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 ## Design Principles
 
-**Wrap, don't reinvent.** cub-scout builds on existing tools rather than replacing them:
-
 | Principle | What It Means |
 |-----------|---------------|
 | **Single cluster** | Standalone mode inspects one kubectl context; multi-cluster only via connected mode |
-| **Use kubectl** | All cluster access goes through your existing kubeconfig |
-| **Use cub CLI** | Fleet queries use ConfigHub's `cub` CLI, not a parallel API |
+| **Read-only by default** | Never modifies cluster state; uses `Get`, `List`, `Watch` only |
+| **Deterministic** | Same input = same output; no AI/ML in core logic |
 | **Parse, don't guess** | Ownership comes from actual labels, not heuristics |
 | **Complement GitOps** | Works alongside Flux, Argo, Helm — doesn't compete |
+| **Graceful degradation** | Works without cluster (`--file`), ConfigHub, or internet |
+| **Test everything** | `go test ./...` must pass |
 
 **Why this matters:** Your existing tools, RBAC, and audit trails all still work. cub-scout is a lens, not a replacement.
 
