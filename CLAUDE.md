@@ -57,3 +57,37 @@ go build ./cmd/cub-scout
 go build ./cmd/cub-scout
 go test ./...
 ```
+
+## Pre-Coding Test & Success Proof Requirements
+
+All feature and bugfix issues **must define success before implementation**.
+
+### 1. Deterministic Unit Tests (Required)
+- Define exact inputs (fixtures, manifests, objects)
+- Define expected outputs (ownership classification, lineage graph, buckets)
+- Tests must be: order-independent, K8s-version tolerant, runnable without live cluster
+
+### 2. Example / Full Test Coverage (Required for user-visible behavior)
+- Add or extend an example under `examples/`
+- Or explicitly reference an existing example it validates against
+- Examples serve as: regression protection, documentation, demo artifacts
+
+### 3. E2E / Integration Proof (Required unless explicitly waived)
+For features affecting real cluster behavior, define validation in:
+- Standalone mode (single cluster, kubectl context)
+- Connected mode (mocked or recorded if CI cannot auth)
+- Fleet mode (if behavior aggregates across clusters)
+
+If E2E cannot run in CI: provide reproducible local script or contract test with recorded inputs/outputs.
+
+### 4. Graceful Degradation Rules (Required)
+Each issue must state:
+- What happens when metadata is missing
+- How partial results are surfaced
+- How false "unmanaged/orphan" states are avoided
+
+### 5. Definition of Done
+An issue is complete only when:
+- Tests exist and pass
+- Examples demonstrate expected behavior
+- User-facing output is correct **and explainable**
