@@ -570,8 +570,48 @@ All three Crossplane PRs merged in dependency order:
 
 Issue #8 updated with progress comment: https://github.com/confighub/cub-scout/issues/8#issuecomment-3828105425
 
-#### Next Step: Issue #12 (Trace UX)
-Expose the lineage chain in `cub-scout trace` output so users see:
-- Managed Resource → Composite Resource (XR) → Claim (if present)
-- Evidence of which signals were used
-- Graceful "partial lineage" messaging when resolution is incomplete
+#### PR #18 Merged: Issue #12 (Trace UX)
+Exposes the lineage chain in `cub-scout trace` output:
+- Added `Objects` field to `ReverseTraceResult` for local analysis
+- Created `trace_crossplane.go` render helper showing: managed → xr → claim
+- Evidence display of which signals were used
+- "(partial lineage)" messaging when XR/Claim objects not found
+- Unit tests covering nil input, XR-only, XR+Claim, partial chain, evidence formatting
+- **URL:** https://github.com/confighub/cub-scout/pull/18
+
+#### PR #19 Merged: Issue #13 (Composition Tree)
+Adds `cub-scout tree composition` command:
+- Groups Crossplane resources by their parent XR
+- Shows XR → Claim → Managed hierarchy in tree format
+- Uses existing `ResolveCrossplaneLineage()` resolver (no new detection logic)
+- Supports `--json` output for programmatic consumption
+- Handles partial lineage gracefully
+- Fixed edge case: XRs with claim labels no longer create spurious groupings
+- Replaced Unicode arrows with ASCII for GitHub compatibility
+- **URL:** https://github.com/confighub/cub-scout/pull/19
+
+#### Crossplane Story Complete
+All presentation-layer Crossplane features are now merged:
+
+| PR | Issue | What it does |
+|----|-------|--------------|
+| #15 | #9 | Control-plane resources classified as owned |
+| #16 | #10 | XR-first detection contract tests (the spec) |
+| #17 | #11 | Lineage resolver (Managed → XR → Claim) |
+| #18 | #12 | Trace output with lineage chain display |
+| #19 | #13 | Composition-aware tree view |
+
+**573+ lines added** across 20+ files. Crossplane is now **first-class**.
+
+#### Next Step: Issue #14 (Map & Summaries)
+Final Crossplane PR - make map/summaries reflect what we already know:
+- Introduce Crossplane owner bucket in map views
+- Reduce false orphan counts for Crossplane-managed resources
+- Respect XR-first semantics in aggregation
+- Keep summaries explainable and deterministic
+
+**Open Issues:**
+- #2: Kustomize overlay layer attribution (future)
+- #3: Platform composition tools - Phase 2 kro (pending API stabilization)
+- #8: Crossplane epic (near complete, awaiting #14)
+- #14: Map & ownership summaries (next)
