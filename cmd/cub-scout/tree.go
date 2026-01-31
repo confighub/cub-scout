@@ -34,8 +34,9 @@ var treeCmd = &cobra.Command{
 cub-scout tree provides different perspectives on your infrastructure:
 
   CLUSTER VIEWS (what the scout sees):
-    runtime     Deployment → ReplicaSet → Pod trees (default)
+    runtime     Deployment -> ReplicaSet -> Pod trees (default)
     ownership   Resources grouped by GitOps owner (Flux, ArgoCD, Helm)
+    composition Crossplane XR -> composed resources (managed by Crossplane)
     workloads   Same as 'cub-scout map workloads' (alias)
 
   GIT VIEWS:
@@ -47,12 +48,15 @@ cub-scout tree provides different perspectives on your infrastructure:
     suggest     Suggested Hub/AppSpace organization based on cluster workloads
 
 Examples:
-  # Show runtime hierarchy (Deployment → ReplicaSet → Pod)
+  # Show runtime hierarchy (Deployment -> ReplicaSet -> Pod)
   cub-scout tree
   cub-scout tree runtime
 
   # Show resources by GitOps owner
   cub-scout tree ownership
+
+  # Show Crossplane composition trees (XR -> composed resources)
+  cub-scout tree composition
 
   # Show Git repository structure
   cub-scout tree git
@@ -66,7 +70,7 @@ The 'tree' command complements 'cub unit tree' in the ConfigHub CLI:
   - cub unit tree:  How Units relate ACROSS your fleet
 `,
 	Args:      cobra.MaximumNArgs(1),
-	ValidArgs: []string{"runtime", "ownership", "workloads", "git", "patterns", "config", "suggest"},
+	ValidArgs: []string{"runtime", "ownership", "composition", "workloads", "git", "patterns", "config", "suggest"},
 	RunE:      runTree,
 }
 
@@ -92,6 +96,8 @@ func runTree(cmd *cobra.Command, args []string) error {
 		return runTreeRuntime(ctx)
 	case "ownership":
 		return runTreeOwnership(ctx)
+	case "composition":
+		return runTreeComposition(ctx)
 	case "workloads":
 		return runTreeWorkloads()
 	case "git":
@@ -103,7 +109,7 @@ func runTree(cmd *cobra.Command, args []string) error {
 	case "suggest":
 		return runTreeSuggest(ctx)
 	default:
-		return fmt.Errorf("unknown tree type: %s (valid: runtime, ownership, workloads, git, patterns, config, suggest)", viewType)
+		return fmt.Errorf("unknown tree type: %s (valid: runtime, ownership, composition, workloads, git, patterns, config, suggest)", viewType)
 	}
 }
 
@@ -495,7 +501,7 @@ func runTreeGit(ctx context.Context) error {
 				branch = "main"
 			}
 			fmt.Printf("  %s %s/%s\n", connector, r.GetNamespace(), r.GetName())
-			fmt.Printf("      %s → %s\n", colorDim, url)
+			fmt.Printf("      %s-> %s\n", colorDim, url)
 			fmt.Printf("      branch: %s%s\n", branch, colorReset)
 		}
 	}

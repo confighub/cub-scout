@@ -1,0 +1,22 @@
+apiVersion: database.example.org/v1alpha1
+kind: CompositeDatabase
+metadata:
+  name: example-xr
+  labels:
+    crossplane.io/claim-name: example-claim
+    crossplane.io/claim-namespace: app
+---
+apiVersion: database.example.org/v1alpha1
+kind: DatabaseClaim
+metadata:
+  name: example-claim
+  namespace: app
+---
+apiVersion: rds.aws.upbound.io/v1beta1
+kind: Instance
+metadata:
+  name: example-instance
+  labels:
+    crossplane.io/composite: example-xr
+    crossplane.io/claim-name: example-claim
+    crossplane.io/claim-namespace: app
