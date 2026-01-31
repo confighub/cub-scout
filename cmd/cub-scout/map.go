@@ -237,7 +237,7 @@ Examples:
   # Filter by namespace and kind
   cub-scout map list --namespace default --kind Deployment
 
-  # Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)
+  # Filter by owner (Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native)
   cub-scout map list --owner ConfigHub
 
   # Find unhealthy/failing resources
@@ -311,7 +311,7 @@ var mapWorkloadsCmd = &cobra.Command{
 	Short: "List workloads grouped by owner",
 	Long: `List all workloads (Deployments, StatefulSets, DaemonSets) grouped by owner.
 
-Owners: Flux, ArgoCD, Helm, ConfigHub, Native`,
+Owners: Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native`,
 	RunE: runMapWorkloads,
 }
 
@@ -391,10 +391,12 @@ var mapOrphansCmd = &cobra.Command{
 	Short:   "List orphaned resources (not managed by GitOps)",
 	Long: `Find resources deployed outside GitOps - shadow IT detection.
 
-Orphaned resources are those without GitOps ownership:
+Orphaned resources are those without detected GitOps or platform ownership:
 - kubectl apply'd directly
 - Created by operators/controllers not tracked by GitOps
 - Legacy resources from before GitOps adoption
+
+Note: Resources managed by Crossplane or Terraform controllers are not considered orphans.
 
 This is equivalent to: cub-scout map list -q "owner=Native"
 
@@ -484,7 +486,7 @@ func init() {
 	// List-specific flags
 	mapListCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapListCmd.Flags().StringVar(&mapKind, "kind", "", "Filter by resource kind")
-	mapListCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, Terraform, ConfigHub, Native)")
+	mapListCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native)")
 	mapListCmd.Flags().StringVarP(&mapQuery, "query", "q", "", "Query expression (e.g., 'kind=Deployment AND owner!=Native')")
 	mapListCmd.Flags().StringVar(&mapSince, "since", "", "Show resources changed since duration (e.g., 1h, 24h, 7d)")
 	mapListCmd.Flags().BoolVar(&mapCount, "count", false, "Output count only (no list)")
@@ -713,11 +715,17 @@ func runMapList(cmd *cobra.Command, args []string) error {
 		if byOwner["Helm"] > 0 {
 			fmt.Printf("• %d resources are managed by Helm → Installed via helm install/upgrade\n", byOwner["Helm"])
 		}
+		if byOwner["Terraform"] > 0 {
+			fmt.Printf("• %d resources are managed by Terraform → Provisioned by Terraform controllers\n", byOwner["Terraform"])
+		}
+		if byOwner["Crossplane"] > 0 {
+			fmt.Printf("• %d resources are managed by Crossplane → Created/controlled by Crossplane compositions\n", byOwner["Crossplane"])
+		}
 		if byOwner["ConfigHub"] > 0 {
 			fmt.Printf("• %d resources are managed by ConfigHub → Deployed via ConfigHub\n", byOwner["ConfigHub"])
 		}
 		if byOwner["Native"] > 0 {
-			fmt.Printf("• %d resources are Native → Applied manually, no Git source\n", byOwner["Native"])
+			fmt.Printf("• %d resources are Native → No detected GitOps or platform controller ownership\n", byOwner["Native"])
 		}
 		fmt.Println()
 		fmt.Println("NEXT STEPS:")

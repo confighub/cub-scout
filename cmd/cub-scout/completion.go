@@ -106,6 +106,8 @@ func completeOwners(cmd *cobra.Command, args []string, toComplete string) ([]str
 		"Flux",
 		"ArgoCD",
 		"Helm",
+		"Terraform",
+		"Crossplane",
 		"ConfigHub",
 		"Native",
 	}
