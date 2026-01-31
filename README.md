@@ -488,6 +488,7 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 | Principle | What It Means |
 |-----------|---------------|
+| **Single cluster** | Standalone mode inspects one kubectl context; multi-cluster only via connected mode |
 | **Use kubectl** | All cluster access goes through your existing kubeconfig |
 | **Use cub CLI** | Fleet queries use ConfigHub's `cub` CLI, not a parallel API |
 | **Parse, don't guess** | Ownership comes from actual labels, not heuristics |
