@@ -1,0 +1,7 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rds-proxy
+  namespace: crossplane-system
+  labels:
+    crossplane.io/composite: xpostgresqlinstance-abc123

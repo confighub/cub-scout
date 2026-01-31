@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+  namespace: crossplane-system
+  ownerReferences:
+    - apiVersion: rds.aws.upbound.io/v1beta1
+      kind: Instance
+      name: staging-db
+      uid: 00000000-0000-0000-0000-000000000000
+type: Opaque
