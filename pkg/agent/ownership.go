@@ -51,6 +51,11 @@ func DetectOwnership(resource *unstructured.Unstructured) Ownership {
 		return ownership
 	}
 
+	// Check for Crossplane system/control-plane ownership
+	if ownership := detectCrossplaneSystemOwnership(resource); ownership.Type != "" {
+		return ownership
+	}
+
 	// Check for Crossplane ownership
 	if ownership := detectCrossplaneOwnership(labels, annotations, resource); ownership.Type != "" {
 		return ownership
@@ -221,6 +226,55 @@ func detectConfigHubOwnership(labels, annotations map[string]string) Ownership {
 			Namespace:  space,
 			Source:     "annotation:confighub.com/UnitSlug",
 			Confidence: "high",
+		}
+	}
+
+	return Ownership{}
+}
+
+func detectCrossplaneSystemOwnership(resource *unstructured.Unstructured) Ownership {
+	apiVersion := resource.GetAPIVersion()
+	if apiVersion == "" {
+		return Ownership{}
+	}
+	group := strings.SplitN(apiVersion, "/", 2)[0]
+
+	// Crossplane control-plane / package manager API groups
+	// These resources are "owned by Crossplane" even if not managed by GitOps.
+	// Keeping this narrow avoids misclassifying provider-managed resources like *.aws.crossplane.io.
+	if group == "pkg.crossplane.io" || group == "apiextensions.crossplane.io" {
+		return Ownership{
+			Type:       OwnerCrossplane,
+			SubType:    "system",
+			Name:       resource.GetName(),
+			Namespace:  resource.GetNamespace(),
+			Source:     "apiGroup:" + group,
+			Confidence: "high",
+		}
+	}
+
+	// Heuristic: Crossplane system namespace resources that are clearly part of Crossplane's control plane.
+	// This is best-effort and intentionally conservative.
+	if resource.GetNamespace() == "crossplane-system" && (strings.HasSuffix(group, ".crossplane.io") || strings.HasSuffix(group, ".upbound.io")) {
+		kind := strings.ToLower(resource.GetKind())
+		systemKinds := map[string]bool{
+			"providerrevision":        true,
+			"configurationrevision":   true,
+			"functionrevision":        true,
+			"provider":                true,
+			"configuration":           true,
+			"function":                true,
+			"deploymentruntimeconfig": true,
+		}
+		if systemKinds[kind] {
+			return Ownership{
+				Type:       OwnerCrossplane,
+				SubType:    "system",
+				Name:       resource.GetName(),
+				Namespace:  resource.GetNamespace(),
+				Source:     "ns:crossplane-system kind:" + kind,
+				Confidence: "medium",
+			}
 		}
 	}
 

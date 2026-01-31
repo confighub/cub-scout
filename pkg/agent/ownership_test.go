@@ -452,6 +452,66 @@ func TestDetectOwnership_Crossplane(t *testing.T) {
 	}
 }
 
+func TestDetectOwnership_CrossplaneSystem(t *testing.T) {
+	tests := []struct {
+		name       string
+		apiVersion string
+		kind       string
+		namespace  string
+		resName    string
+		wantSource string
+	}{
+		{
+			name:       "pkg.crossplane.io group is classified as Crossplane system",
+			apiVersion: "pkg.crossplane.io/v1",
+			kind:       "ProviderRevision",
+			namespace:  "crossplane-system",
+			resName:    "provider-aws-1234abcd",
+			wantSource: "apiGroup:pkg.crossplane.io",
+		},
+		{
+			name:       "apiextensions.crossplane.io group is classified as Crossplane system",
+			apiVersion: "apiextensions.crossplane.io/v1",
+			kind:       "CompositeResourceDefinition",
+			namespace:  "",
+			resName:    "xpostgresqlinstances.database.example.org",
+			wantSource: "apiGroup:apiextensions.crossplane.io",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": tt.apiVersion,
+					"kind":       tt.kind,
+					"metadata": map[string]interface{}{
+						"name":      tt.resName,
+						"namespace": tt.namespace,
+					},
+				},
+			}
+
+			own := DetectOwnership(u)
+			if own.Type != OwnerCrossplane {
+				t.Errorf("Type = %q, want %q", own.Type, OwnerCrossplane)
+			}
+			if own.SubType != "system" {
+				t.Errorf("SubType = %q, want %q", own.SubType, "system")
+			}
+			if own.Name != tt.resName {
+				t.Errorf("Name = %q, want %q", own.Name, tt.resName)
+			}
+			if tt.namespace != "" && own.Namespace != tt.namespace {
+				t.Errorf("Namespace = %q, want %q", own.Namespace, tt.namespace)
+			}
+			if own.Source != tt.wantSource {
+				t.Errorf("Source = %q, want %q", own.Source, tt.wantSource)
+			}
+		})
+	}
+}
+
 func TestDetectOwnership_K8s(t *testing.T) {
 	trueVal := true
 	falseVal := false
