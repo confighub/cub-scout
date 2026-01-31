@@ -194,28 +194,6 @@ func (i *unstructuredIndex) findByName(name string) *unstructured.Unstructured {
 	return nil
 }
 
-func (i *unstructuredIndex) findByNameInGroups(name string, groupHints []string) *unstructured.Unstructured {
-	if name == "" {
-		return nil
-	}
-	for _, o := range i.all {
-		if o == nil {
-			continue
-		}
-		if o.GetName() != name {
-			continue
-		}
-		apiVersion := o.GetAPIVersion()
-		group := strings.SplitN(apiVersion, "/", 2)[0]
-		for _, h := range groupHints {
-			if strings.Contains(group, h) {
-				return o
-			}
-		}
-	}
-	return nil
-}
-
 func resourceRefFromUnstructured(u *unstructured.Unstructured) ResourceRef {
 	ref := ResourceRef{Kind: u.GetKind(), Name: u.GetName(), Namespace: u.GetNamespace()}
 	apiVersion := u.GetAPIVersion()
