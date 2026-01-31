@@ -723,6 +723,34 @@ This principle now underpins cub-scout's platform support.
 
 ---
 
+#### Follow-Up Issues Filed
+After completing the Crossplane epic, filed 4 concrete follow-up issues:
+
+| Issue | Title | Type |
+|-------|-------|------|
+| #21 | Platform composition support beyond Crossplane (kro) | enhancement |
+| #22 | Performance & scale guardrails for map and tree | enhancement |
+| #23 | Docs: Crossplane walkthrough demo | documentation |
+| #24 | Docs: Document the resolver pattern for generated resources | documentation |
+
+These extend the architecture now in `main` using the patterns established by the Crossplane work.
+
+---
+
+#### Release v0.4.0
+Tagged and released with complete Crossplane support:
+- First-class Crossplane ownership detection
+- XR-first lineage resolver
+- Composition-aware tree view
+- Map/summaries with Crossplane as distinct owner
+- Terraform also treated as first-class owner
+
+---
+
 **Open Issues (remaining):**
-- #2: Kustomize overlay layer attribution (future)
-- #3: Platform composition tools - Phase 2 kro (pending API stabilization)
+- #2: Kustomize overlay layer attribution
+- #3: Platform composition tools - Phase 2 kro
+- #21: kro support (extends Crossplane patterns)
+- #22: Performance guardrails
+- #23: Crossplane walkthrough docs
+- #24: Resolver pattern docs
