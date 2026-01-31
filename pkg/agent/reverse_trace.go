@@ -29,6 +29,10 @@ type ReverseTraceResult struct {
 	// Object is the starting resource
 	Object ResourceRef `json:"object"`
 
+	// Objects contains the unstructured objects fetched while building the K8s ownership chain.
+	// This enables additional local analysis (e.g., Crossplane lineage) without changing the JSON output.
+	Objects []*unstructured.Unstructured `json:"-"`
+
 	// K8sChain is the Kubernetes ownership chain (Pod → ReplicaSet → Deployment)
 	K8sChain []ChainLink `json:"k8sChain"`
 
@@ -78,6 +82,7 @@ func (r *ReverseTracer) Trace(ctx context.Context, kind, name, namespace string)
 			Name:      name,
 			Namespace: namespace,
 		},
+		Objects:  []*unstructured.Unstructured{},
 		K8sChain: []ChainLink{},
 		TracedAt: time.Now(),
 	}
@@ -94,6 +99,9 @@ func (r *ReverseTracer) Trace(ctx context.Context, kind, name, namespace string)
 		result.Error = fmt.Sprintf("failed to get resource: %v", err)
 		return result, nil
 	}
+
+	// Keep the starting object for local analysis
+	result.Objects = append(result.Objects, resource)
 
 	// Add starting resource to chain
 	result.K8sChain = append(result.K8sChain, r.resourceToChainLink(resource))
@@ -130,6 +138,9 @@ func (r *ReverseTracer) Trace(ctx context.Context, kind, name, namespace string)
 			// Can't fetch owner, stop here
 			break
 		}
+
+		// Keep the fetched owner object for local analysis
+		result.Objects = append(result.Objects, ownerResource)
 
 		result.K8sChain = append(result.K8sChain, r.resourceToChainLink(ownerResource))
 		current = ownerResource

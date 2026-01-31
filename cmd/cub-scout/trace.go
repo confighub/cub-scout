@@ -766,6 +766,15 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 		fmt.Printf("\n")
 	}
 
+	// If this looks Crossplane-managed, show XR-first lineage (Managed → XR → optional Claim).
+	// This does not alter ownership detection; it only surfaces what the resolver can infer
+	// from already-fetched objects.
+	if len(result.Objects) > 0 {
+		if lineage, ok := agent.ResolveCrossplaneLineage(result.Objects[0], result.Objects); ok {
+			fmt.Print(renderCrossplaneLineageHuman(lineage))
+		}
+	}
+
 	// Print ownership detection result
 	fmt.Printf("\n")
 	fmt.Printf("%s%sDetected Owner:%s ", colorBold, colorWhite, colorReset)
