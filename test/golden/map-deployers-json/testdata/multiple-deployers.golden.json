@@ -1,0 +1,26 @@
+[
+  {
+    "kind": "Deployment",
+    "name": "app-alpha",
+    "namespace": "cub-scout-golden-deployers",
+    "status": "Ready",
+    "ready": true,
+    "revision": "-"
+  },
+  {
+    "kind": "Deployment",
+    "name": "app-bravo",
+    "namespace": "cub-scout-golden-deployers",
+    "status": "Ready",
+    "ready": true,
+    "revision": "-"
+  },
+  {
+    "kind": "Deployment",
+    "name": "app-charlie",
+    "namespace": "cub-scout-golden-deployers",
+    "status": "Ready",
+    "ready": true,
+    "revision": "-"
+  }
+]

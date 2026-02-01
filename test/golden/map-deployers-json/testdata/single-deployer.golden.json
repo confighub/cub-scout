@@ -1,0 +1,10 @@
+[
+  {
+    "kind": "Deployment",
+    "name": "test-single",
+    "namespace": "cub-scout-golden-deployers",
+    "status": "Ready",
+    "ready": true,
+    "revision": "-"
+  }
+]

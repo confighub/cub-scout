@@ -1342,6 +1342,17 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 }
 
 // runMapDeployers lists GitOps deployers
+// DeployerEntry represents a GitOps deployer for JSON output.
+type DeployerEntry struct {
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+	Status     string `json:"status"`
+	Ready      bool   `json:"ready"`
+	Revision   string `json:"revision,omitempty"`
+	Resources  int    `json:"resources,omitempty"`
+}
+
 func runMapDeployers(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
@@ -1355,27 +1366,28 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
 
-	// Count by type
-	var ksCount, hrCount, appCount int
-
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "STATUS\tKIND\tNAME\tNAMESPACE\tREVISION\tRESOURCES")
-	fmt.Fprintln(w, "──────\t────\t────\t─────────\t────────\t─────────")
+	// Collect all deployers (initialize to empty slice for JSON output)
+	deployers := []DeployerEntry{}
 
 	// Flux Kustomizations
 	if ksList, err := dynClient.Resource(schema.GroupVersionResource{
 		Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations",
 	}).List(ctx, v1.ListOptions{}); err == nil {
 		for _, ks := range ksList.Items {
-			ksCount++
-			status := "✓"
-			if !isResourceReady(&ks) {
-				status = "✗"
+			ready := isResourceReady(&ks)
+			status := "Ready"
+			if !ready {
+				status = "NotReady"
 			}
-			rev := getLastAppliedRevision(&ks)
-			resources := getInventoryCount(&ks)
-			fmt.Fprintf(w, "%s\tKustomization\t%s\t%s\t%s\t%d\n",
-				status, ks.GetName(), ks.GetNamespace(), rev, resources)
+			deployers = append(deployers, DeployerEntry{
+				Kind:      "Kustomization",
+				Name:      ks.GetName(),
+				Namespace: ks.GetNamespace(),
+				Status:    status,
+				Ready:     ready,
+				Revision:  getLastAppliedRevision(&ks),
+				Resources: getInventoryCount(&ks),
+			})
 		}
 	}
 
@@ -1384,14 +1396,19 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases",
 	}).List(ctx, v1.ListOptions{}); err == nil {
 		for _, hr := range hrList.Items {
-			hrCount++
-			status := "✓"
-			if !isResourceReady(&hr) {
-				status = "✗"
+			ready := isResourceReady(&hr)
+			status := "Ready"
+			if !ready {
+				status = "NotReady"
 			}
-			rev := getLastAppliedRevision(&hr)
-			fmt.Fprintf(w, "%s\tHelmRelease\t%s\t%s\t%s\t-\n",
-				status, hr.GetName(), hr.GetNamespace(), rev)
+			deployers = append(deployers, DeployerEntry{
+				Kind:      "HelmRelease",
+				Name:      hr.GetName(),
+				Namespace: hr.GetNamespace(),
+				Status:    status,
+				Ready:     ready,
+				Revision:  getLastAppliedRevision(&hr),
+			})
 		}
 	}
 
@@ -1400,24 +1417,105 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		Group: "argoproj.io", Version: "v1alpha1", Resource: "applications",
 	}).List(ctx, v1.ListOptions{}); err == nil {
 		for _, app := range appList.Items {
-			appCount++
-			status := "✓"
-			if !isArgoAppHealthy(&app) {
-				status = "✗"
+			ready := isArgoAppHealthy(&app)
+			status := "Healthy"
+			if !ready {
+				status = "Unhealthy"
 			}
-			rev := getArgoRevision(&app)
-			resources := getArgoResourceCount(&app)
-			fmt.Fprintf(w, "%s\tApplication\t%s\t%s\t%s\t%d\n",
-				status, app.GetName(), app.GetNamespace(), rev, resources)
+			deployers = append(deployers, DeployerEntry{
+				Kind:      "Application",
+				Name:      app.GetName(),
+				Namespace: app.GetNamespace(),
+				Status:    status,
+				Ready:     ready,
+				Revision:  getArgoRevision(&app),
+				Resources: getArgoResourceCount(&app),
+			})
 		}
+	}
+
+	// Core Deployments (as deployers for clusters without GitOps)
+	if depList, err := dynClient.Resource(schema.GroupVersionResource{
+		Group: "apps", Version: "v1", Resource: "deployments",
+	}).List(ctx, v1.ListOptions{}); err == nil {
+		for _, dep := range depList.Items {
+			ns := dep.GetNamespace()
+			// Skip system namespaces
+			if isSystemNamespace(ns) {
+				continue
+			}
+			ready := isDeploymentReady(&dep)
+			status := "Ready"
+			if !ready {
+				status = "NotReady"
+			}
+			// Get generation as revision proxy
+			generation := dep.GetGeneration()
+			revision := fmt.Sprintf("gen-%d", generation)
+			deployers = append(deployers, DeployerEntry{
+				Kind:      "Deployment",
+				Name:      dep.GetName(),
+				Namespace: ns,
+				Status:    status,
+				Ready:     ready,
+				Revision:  revision,
+			})
+		}
+	}
+
+	// Sort for deterministic output: kind, namespace, name
+	sort.Slice(deployers, func(i, j int) bool {
+		if deployers[i].Kind != deployers[j].Kind {
+			return deployers[i].Kind < deployers[j].Kind
+		}
+		if deployers[i].Namespace != deployers[j].Namespace {
+			return deployers[i].Namespace < deployers[j].Namespace
+		}
+		return deployers[i].Name < deployers[j].Name
+	})
+
+	// JSON output
+	if mapJSON {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(deployers)
+	}
+
+	// Tabular output
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "STATUS\tKIND\tNAME\tNAMESPACE\tREVISION\tRESOURCES")
+	fmt.Fprintln(w, "──────\t────\t────\t─────────\t────────\t─────────")
+
+	var ksCount, hrCount, appCount, depCount int
+	for _, d := range deployers {
+		switch d.Kind {
+		case "Kustomization":
+			ksCount++
+		case "HelmRelease":
+			hrCount++
+		case "Application":
+			appCount++
+		case "Deployment":
+			depCount++
+		}
+		statusIcon := "✓"
+		if !d.Ready {
+			statusIcon = "✗"
+		}
+		resourceStr := "-"
+		if d.Resources > 0 {
+			resourceStr = fmt.Sprintf("%d", d.Resources)
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
+			statusIcon, d.Kind, d.Name, d.Namespace, d.Revision, resourceStr)
 	}
 
 	w.Flush()
 
 	// Summary
-	total := ksCount + hrCount + appCount
-	fmt.Printf("\n%d deployers: %d Kustomizations, %d HelmReleases, %d Applications\n",
-		total, ksCount, hrCount, appCount)
+	total := ksCount + hrCount + appCount + depCount
+	fmt.Printf("\n%d deployers: %d Kustomizations, %d HelmReleases, %d Applications, %d Deployments\n",
+		total, ksCount, hrCount, appCount, depCount)
 	fmt.Println("→ Visual guide: docs/diagrams/flux-architecture.svg")
 
 	return nil
