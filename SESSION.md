@@ -852,3 +852,109 @@ Added new sections:
 2. `:` key must remain supported (shell-out to cub CLI)
 3. Commands inherit context (cluster, namespace, resource)
 4. Standalone mode = what exists; Connected mode = what should exist
+
+---
+
+### v0.6 Issues Filed
+
+Extended debugging capabilities for post-v0.5:
+
+| # | Title | Description |
+|---|-------|-------------|
+| #39 | Container logs in debug mode | View crash logs with pattern detection |
+| #40 | Event timeline | See what happened recently with explanations |
+
+---
+
+### Guided Debug Mode Expanded (#37)
+
+Detailed specification for "demystify GitOps" feature:
+
+**User journey:**
+```
+debug → pick broken workload → workload status → ownership trace
+      → pipeline health → root cause summary → export/share
+```
+
+**Key design:**
+- Progressive disclosure (simple first, details on demand)
+- Inline education ("What this means" blocks)
+- No jargon without explanation
+- Actionable output (every dead-end suggests next steps)
+- Shareable summaries
+
+**Success metric:**
+> A developer who has never used Flux/Argo can identify why their workload isn't deploying within 60 seconds.
+
+---
+
+### GitHub Templates Created
+
+| File | Purpose |
+|------|---------|
+| `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist enforcing principles |
+| `.github/REVIEWING.md` | Reviewer checklist with quick-reject criteria |
+
+**Quick Reject Criteria:**
+1. Mutates cluster without explicit flag
+2. Requires ConfigHub for Standalone feature
+3. Breaks `:` shell-out
+4. Guesses ownership without metadata
+5. Fails without internet for offline feature
+
+---
+
+### Documentation Created
+
+| File | Purpose |
+|------|---------|
+| `docs/WHY_CONNECTED_MODE.md` | Value proposition for Connected Mode |
+| `docs/roadmap.md` | Version-by-version roadmap with Connected tracks |
+
+**Roadmap structure:**
+
+| Version | Focus | Mode |
+|---------|-------|------|
+| v0.5 | Explorer & Debugger | Standalone |
+| v0.6 | Deep debugging + Connected foundations | Both |
+| v0.7 | Fleet & impact intelligence | Connected |
+| v0.8 | Governance & collaboration | Connected |
+
+**Core distinction established:**
+- Standalone: "What exists right now, and why?"
+- Connected: "What should exist, what changed, across which environments?"
+
+---
+
+### Commits This Session
+
+```
+7cd55e1 session: Add v0.5 epic planning and update CONTRIBUTING.md
+de3f092 chore: Add PR template aligned to CONTRIBUTING.md
+cefb906 chore: Add reviewer checklist for PR reviews
+653c4ec docs: Add WHY_CONNECTED_MODE.md and update README
+ea1a3bf docs: Add comprehensive roadmap with Connected Mode tracks
+```
+
+---
+
+### Open Issues (Updated)
+
+**v0.5 (13 issues):** #26-#38
+**v0.6 (2 issues):** #39-#40
+**Backlog:** #2, #3, #21-#24
+
+---
+
+### Session Artifacts
+
+| Artifact | Location |
+|----------|----------|
+| Feature ideas synthesis | `~/Desktop/cub-scout-claude-ideas.md` |
+| Epic | GitHub #25 |
+| v0.5 issues | GitHub #26-#38 |
+| v0.6 issues | GitHub #39-#40 |
+| PR template | `.github/PULL_REQUEST_TEMPLATE.md` |
+| Reviewer checklist | `.github/REVIEWING.md` |
+| Connected Mode doc | `docs/WHY_CONNECTED_MODE.md` |
+| Roadmap | `docs/roadmap.md` |
