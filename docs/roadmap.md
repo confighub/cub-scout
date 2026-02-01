@@ -60,6 +60,8 @@ For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap
 
 v0.5 establishes cub-scout as a trustworthy, production-safe GitOps explorer and debugger.
 
+**Why OCI-first:** ConfigHub treats OCI publishing/consumption as a core transport. Git transport is intentionally deferred.
+
 ---
 
 ## Version 0.6 — Deep Debugging + Connected Mode Foundations
@@ -88,6 +90,17 @@ First integration with ConfigHub:
   - "What changed since last healthy?"
 - Intent-aware CLI suggestions in TUI
 
+### ConfigHub Backend (Already Exists)
+
+These Connected Mode features are powered by **existing ConfigHub engines**:
+
+| Engine | Powers |
+|--------|--------|
+| **ChangeSets API** | Revision-aware views, "what changed" queries |
+| **Views API** | Composable filters/projections (matches cub-scout lenses) |
+
+cub-scout surfaces results from these engines — it does not reimplement them.
+
 ### Notes
 
 - cub-scout remains read-only
@@ -110,7 +123,14 @@ First integration with ConfigHub:
 - Impact analysis before changes
 - Dependency blast radius analysis
 
-These features require intent aggregation and cross-environment visibility provided by ConfigHub.
+### ConfigHub Backend (Already Exists)
+
+| Engine | Powers |
+|--------|--------|
+| **Dependency Graph Engine** | Impact analysis, blast radius, topological ordering |
+| **Bridge/Worker Framework** | Fleet-wide visibility across targets |
+
+cub-scout queries these engines — it does not reimplement dependency resolution.
 
 ---
 
@@ -125,7 +145,14 @@ These features require intent aggregation and cross-environment visibility provi
 - Audit-friendly timelines
 - Shared, persistent debugging artifacts
 
-cub-scout surfaces governance outcomes but does not define or enforce policy.
+### ConfigHub Backend (Already Exists)
+
+| Engine | Powers |
+|--------|--------|
+| **Verifier Component** | Policy evaluation, validation outcomes |
+| **Helm Rendering** | Worker-side HelmRelease logic (Flux-oriented) |
+
+cub-scout surfaces governance outcomes — validation/policy belongs in ConfigHub.
 
 ---
 

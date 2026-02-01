@@ -166,6 +166,23 @@ Connected Mode depends on capabilities that cannot exist locally:
 - Indexing and query infrastructure
 - Governance and policy engines
 
+### Powered by Real ConfigHub Engines
+
+Connected Mode features are not vaporware — they're powered by existing ConfigHub backend components:
+
+| Feature | ConfigHub Engine |
+|---------|------------------|
+| History & "what changed" | ChangeSets API |
+| Views & projections | Views API (matches cub-scout lenses) |
+| Impact & blast radius | Dependency Graph Engine |
+| Fleet visibility | Bridge/Worker Framework |
+| Policy context | Verifier Component |
+| Helm explanations | Worker-side HelmRelease rendering |
+
+cub-scout surfaces results from these engines. It does not reimplement them.
+
+### What You're Paying For
+
 A paid ConfigHub subscription funds:
 - The ConfigHub control plane
 - Secure authentication and authorization
