@@ -1211,12 +1211,14 @@ func runMapStatus(cmd *cobra.Command, args []string) error {
 	if problems == 0 {
 		fmt.Printf("✓ healthy: %d/%d deployers, %d/%d workloads\n",
 			deployersReady, deployersTotal, workloadsReady, workloadsTotal)
-	} else {
-		fmt.Printf("✗ %d problem(s): %d/%d deployers, %d/%d workloads\n",
-			problems, deployersReady, deployersTotal, workloadsReady, workloadsTotal)
+		return nil
 	}
 
-	return nil
+	// Per cli-contract.md: exit code 1 for "Some unhealthy or error"
+	fmt.Printf("✗ %d problem(s): %d/%d deployers, %d/%d workloads\n",
+		problems, deployersReady, deployersTotal, workloadsReady, workloadsTotal)
+	os.Exit(1)
+	return nil // unreachable but required for compiler
 }
 
 // runMapProblems lists resources with issues
