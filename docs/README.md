@@ -47,6 +47,7 @@ Complete reference documentation:
 | **Commands** | [reference/commands.md](reference/commands.md) |
 | **Ownership & Precedence** | [reference/ownership-precedence.md](reference/ownership-precedence.md) |
 | **Health & Failure States** | [reference/health-failure-states.md](reference/health-failure-states.md) |
+| **CLI Contract** | [reference/cli-contract.md](reference/cli-contract.md) |
 | Query syntax | [reference/query-syntax.md](reference/query-syntax.md) |
 | Query library | [reference/query-library.md](reference/query-library.md) |
 | GSF schema | [reference/gsf-schema.md](reference/gsf-schema.md) |
