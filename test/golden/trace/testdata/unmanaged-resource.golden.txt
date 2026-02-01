@@ -1,0 +1,5 @@
+
+TRACE: Deployment/coredns in kube-system
+
+  [warning] resource not managed by Flux
+

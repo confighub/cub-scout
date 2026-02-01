@@ -97,8 +97,8 @@ func Normalize(s string) string {
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	s = strings.ReplaceAll(s, "\r", "")
 
-	// Normalize timestamps: 2025-01-15T10:30:00Z -> <TIMESTAMP>
-	timestampRegex := regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})`)
+	// Normalize timestamps: 2025-01-15T10:30:00Z or 2025-01-15T10:30:00.123456Z -> <TIMESTAMP>
+	timestampRegex := regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})`)
 	s = timestampRegex.ReplaceAllString(s, "<TIMESTAMP>")
 
 	// Normalize dates: 2025-01-15 10:30:00 -> <DATETIME>

@@ -1,0 +1,12 @@
+{
+  "chain": null,
+  "error": "resource not managed by Flux",
+  "fullyManaged": false,
+  "object": {
+    "kind": "Deployment",
+    "name": "coredns",
+    "namespace": "kube-system"
+  },
+  "tool": "flux",
+  "tracedAt": "\u003cTIMESTAMP\u003e"
+}
