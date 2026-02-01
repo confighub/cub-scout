@@ -211,6 +211,109 @@ See [WHY_CONNECTED_MODE.md](WHY_CONNECTED_MODE.md) for detailed value propositio
 
 ---
 
+## Future: CSV DICS (Declarative Intent via Flat Data)
+
+**Status:** Exploratory / Post-v0.5
+**Audience:** Small teams, early GitOps adopters, migration use cases
+
+CSV DICS is a proposed future feature that allows users to manage **simple, literal configuration intent** using flat data formats (CSV), without introducing a full templating or reconciliation system.
+
+This feature is intentionally positioned as:
+- a **discovery and simplification tool**
+- an **on-ramp to ConfigHub**
+- not a replacement for Helm, GitOps controllers, or ConfigHub itself
+
+---
+
+### Problem It Addresses
+
+Many clusters start with:
+- ad-hoc manifests
+- copy-pasted YAML
+- light variations across namespaces or environments
+
+For these cases:
+- Helm can feel too heavy
+- full ConfigHub adoption may feel premature
+- yet teams still want configuration expressed as *data*, not duplicated YAML
+
+---
+
+### Proposed Capabilities
+
+CSV DICS would allow users to:
+
+- **Export observed cluster state to CSV**
+  - One row per logical resource
+  - Flat, literal fields only (no templating)
+- **Diff CSV vs live cluster**
+  - Identify additions, removals, and value changes
+- **Render CSV back to literal Kubernetes manifests**
+  - Deterministic output
+  - No loops, conditionals, or inheritance
+- **Manage CSV in Git**
+  - Treat CSV as a simple declarative source of truth
+
+All apply actions remain external (kubectl, Flux, Argo, or ConfigHub worker).
+
+---
+
+### Explicit Non-Goals
+
+CSV DICS must **not**:
+- Become a templating language
+- Introduce reconciliation or controllers
+- Apply changes automatically
+- Replace Helm or Kustomize
+- Compete with ConfigHub's intent model
+
+CSV values are literal and explicit by design.
+
+---
+
+### Relationship to Existing cub-scout Features
+
+- **Complementary to Shareable Views**
+  - Shareable Views explain *what happened*
+  - CSV DICS helps simplify *what exists*
+- **Built on hierarchy maps**
+  - CSV export is derived from resource / ownership views
+- **Standalone by default**
+  - No ConfigHub required to use CSV DICS
+
+---
+
+### Graduation Path to ConfigHub
+
+CSV DICS is explicitly a **Level-1 intent system**.
+
+When teams need:
+- richer validation
+- history and timelines
+- fleet-wide consistency
+- impact analysis
+- governance and policy
+
+...they should graduate from CSV DICS to **ConfigHub**, which provides a full system of record for intent.
+
+CSV DICS should make this transition easier, not harder.
+
+---
+
+### Roadmap Placement
+
+CSV DICS is intentionally **out of scope for v0.5**.
+
+Potential placement:
+- v0.6+ as an experimental feature, or
+- gated behind an explicit `--experimental` flag
+
+Implementation should proceed only after:
+- Shareable Views are stable
+- Standalone explorer/debugger workflows are proven
+
+---
+
 ## Summary
 
 cub-scout evolves along two deliberate axes:
