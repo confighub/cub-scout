@@ -51,6 +51,7 @@ func init() {
 // Fixture: Creates a namespace with a healthy nginx deployment.
 func TestMapStatus_Healthy(t *testing.T) {
 	requireCluster(t)
+	requireGolden(t, "healthy")
 
 	// Setup: Create a healthy deployment
 	ns := "cub-scout-test-healthy"
@@ -71,16 +72,14 @@ func TestMapStatus_Healthy(t *testing.T) {
 	// Normalize and verify pattern
 	normalized := normalizeMapStatusOutput(result.Stdout + result.Stderr)
 
-	// Should contain healthy indicator
-	if !strings.Contains(normalized, "healthy") {
-		t.Errorf("expected healthy indicator in output:\n%s", normalized)
+	// 1. Verify format matches contract (anchored regex)
+	if !healthyOutputPattern.MatchString(normalized) {
+		t.Errorf("output does not match expected healthy format:\n%s\nExpected pattern: %s", normalized, healthyOutputPattern.String())
 	}
 
-	// Verify exit code and format match contract
-	// The exact counts depend on cluster state, but format must match
-	if !healthyOutputPattern.MatchString(normalized) {
-		t.Errorf("output does not match expected healthy format:\n%s", normalized)
-	}
+	// 2. Verify exact format via golden file (counts normalized)
+	goldenNormalized := normalizeMapStatusForGolden(normalized)
+	assertGolden(t, "healthy", goldenNormalized)
 }
 
 // TestMapStatus_Problems verifies map status output when some workloads have issues.
@@ -89,6 +88,7 @@ func TestMapStatus_Healthy(t *testing.T) {
 // Fixture: Creates a namespace with a failing deployment (image pull error).
 func TestMapStatus_Problems(t *testing.T) {
 	requireCluster(t)
+	requireGolden(t, "problems")
 
 	// Setup: Create a failing deployment
 	ns := "cub-scout-test-problems"
@@ -111,15 +111,14 @@ func TestMapStatus_Problems(t *testing.T) {
 	// Normalize and verify pattern
 	normalized := normalizeMapStatusOutput(result.Stdout + result.Stderr)
 
-	// Should contain problem indicator
-	if !strings.Contains(normalized, "problem") {
-		t.Errorf("expected problem indicator in output:\n%s", normalized)
+	// 1. Verify format matches contract (anchored regex)
+	if !problemsOutputPattern.MatchString(normalized) {
+		t.Errorf("output does not match expected problems format:\n%s\nExpected pattern: %s", normalized, problemsOutputPattern.String())
 	}
 
-	// Verify exit code and format match contract
-	if !problemsOutputPattern.MatchString(normalized) {
-		t.Errorf("output does not match expected problems format:\n%s", normalized)
-	}
+	// 2. Verify exact format via golden file (counts normalized)
+	goldenNormalized := normalizeMapStatusForGolden(normalized)
+	assertGolden(t, "problems", goldenNormalized)
 }
 
 // TestMapStatus_EmptyBaseline verifies map status output on a baseline empty state.
@@ -128,6 +127,7 @@ func TestMapStatus_Problems(t *testing.T) {
 // This test cleans up any test namespaces first and waits for deletion.
 func TestMapStatus_EmptyBaseline(t *testing.T) {
 	requireCluster(t)
+	requireGolden(t, "empty-baseline")
 
 	// Clean up any test namespaces that might exist and wait for full deletion
 	cleanupNamespaceAndWait(t, "cub-scout-test-healthy")
@@ -142,18 +142,19 @@ func TestMapStatus_EmptyBaseline(t *testing.T) {
 	// Normalize output
 	normalized := normalizeMapStatusOutput(result.Stdout + result.Stderr)
 
-	// Should show healthy with 0/0 counts
-	if !strings.Contains(normalized, "healthy") {
-		t.Errorf("expected healthy indicator in output:\n%s", normalized)
-	}
-	if !strings.Contains(normalized, "0/0") {
-		t.Errorf("expected 0/0 counts in output:\n%s", normalized)
+	// 1. Verify format matches contract (anchored regex)
+	if !healthyOutputPattern.MatchString(normalized) {
+		t.Errorf("output does not match expected healthy format:\n%s\nExpected pattern: %s", normalized, healthyOutputPattern.String())
 	}
 
-	// Verify format
-	if !healthyOutputPattern.MatchString(normalized) {
-		t.Errorf("output does not match expected healthy format:\n%s", normalized)
+	// 2. Verify text says "healthy:", not "unknown"
+	if !strings.Contains(normalized, "healthy:") {
+		t.Errorf("expected 'healthy:' in output, not 'unknown':\n%s", normalized)
 	}
+
+	// 3. Verify exact format via golden file (counts normalized)
+	goldenNormalized := normalizeMapStatusForGolden(normalized)
+	assertGolden(t, "empty-baseline", goldenNormalized)
 }
 
 // TestMapStatus_ClusterUnreachable verifies map status behavior when cluster is unreachable.
@@ -185,13 +186,16 @@ func TestMapStatus_ClusterUnreachable(t *testing.T) {
 	}
 }
 
-// Output format patterns per CLI contract
+// Output format patterns per CLI contract - ANCHORED to enforce exact format
+// These patterns match the ENTIRE output line, not substrings.
 var (
-	// healthyOutputPattern matches: ✓ healthy: X/Y deployers, A/B workloads
-	healthyOutputPattern = regexp.MustCompile(`✓ healthy: \d+/\d+ deployers, \d+/\d+ workloads`)
+	// healthyOutputPattern matches exactly: ✓ healthy: X/Y deployers, A/B workloads
+	// Per cli-contract.md: "[checkmark] healthy: X/Y deployers, A/B workloads"
+	healthyOutputPattern = regexp.MustCompile(`^✓ healthy: \d+/\d+ deployers, \d+/\d+ workloads\n$`)
 
-	// problemsOutputPattern matches: ✗ N problem(s): X/Y deployers, A/B workloads
-	problemsOutputPattern = regexp.MustCompile(`✗ \d+ problem\(s\): \d+/\d+ deployers, \d+/\d+ workloads`)
+	// problemsOutputPattern matches exactly: ✗ N problem(s): X/Y deployers, A/B workloads
+	// The contract doesn't specify unhealthy format, but this is the current implementation
+	problemsOutputPattern = regexp.MustCompile(`^✗ \d+ problem\(s\): \d+/\d+ deployers, \d+/\d+ workloads\n$`)
 )
 
 // requireCluster skips the test if no Kubernetes cluster is available.
@@ -202,6 +206,20 @@ func requireCluster(t *testing.T) {
 	cmd.Stderr = nil
 	if err := cmd.Run(); err != nil {
 		t.Skip("PRECONDITION: No Kubernetes cluster available")
+	}
+}
+
+// requireGolden skips the test if the golden file doesn't exist,
+// UNLESS updateGolden is true (meaning we're generating goldens).
+func requireGolden(t *testing.T, name string) {
+	t.Helper()
+	if updateGolden {
+		// When updating goldens, don't skip - we need to generate them
+		return
+	}
+	goldenPath := filepath.Join("testdata", name+".golden.txt")
+	if _, err := os.Stat(goldenPath); os.IsNotExist(err) {
+		t.Skipf("PRECONDITION: Golden file not found: %s (run UPDATE_GOLDEN=1 with cluster)", goldenPath)
 	}
 }
 
@@ -268,6 +286,54 @@ func normalizeMapStatusOutput(s string) string {
 	s = golden.Normalize(s)
 
 	return strings.TrimSpace(s) + "\n"
+}
+
+// normalizeMapStatusForGolden normalizes output for golden file comparison.
+// Replaces variable counts with <N> placeholders while preserving format.
+func normalizeMapStatusForGolden(s string) string {
+	s = normalizeMapStatusOutput(s)
+
+	// Replace numeric counts with <N> placeholder
+	// Pattern: X/Y -> <N>/<N>
+	countPattern := regexp.MustCompile(`\d+/\d+`)
+	s = countPattern.ReplaceAllString(s, "<N>/<N>")
+
+	// Replace problem count: N problem(s) -> <N> problem(s)
+	problemCountPattern := regexp.MustCompile(`\d+ problem`)
+	s = problemCountPattern.ReplaceAllString(s, "<N> problem")
+
+	return s
+}
+
+// assertGolden compares output against golden file.
+func assertGolden(t *testing.T, name, actual string) {
+	t.Helper()
+
+	goldenPath := filepath.Join("testdata", name+".golden.txt")
+
+	if updateGolden {
+		if err := os.MkdirAll("testdata", 0755); err != nil {
+			t.Fatalf("failed to create testdata dir: %v", err)
+		}
+		if err := os.WriteFile(goldenPath, []byte(actual), 0644); err != nil {
+			t.Fatalf("failed to write golden file: %v", err)
+		}
+		t.Logf("updated golden file: %s", goldenPath)
+		return
+	}
+
+	expected, err := os.ReadFile(goldenPath)
+	if os.IsNotExist(err) {
+		t.Fatalf("golden file not found: %s\n\nActual output:\n%s\n\nRun with UPDATE_GOLDEN=1 to create it:\n  UPDATE_GOLDEN=1 go test ./test/golden/map-status/...", goldenPath, actual)
+	}
+	if err != nil {
+		t.Fatalf("failed to read golden file: %v", err)
+	}
+
+	if actual != string(expected) {
+		t.Errorf("output does not match golden file %s\n\n--- EXPECTED ---\n%s\n--- ACTUAL ---\n%s",
+			goldenPath, string(expected), actual)
+	}
 }
 
 // runCubScoutWithEnv runs cub-scout with custom environment variables.
