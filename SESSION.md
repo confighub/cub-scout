@@ -754,3 +754,101 @@ Tagged and released with complete Crossplane support:
 - #22: Performance guardrails
 - #23: Crossplane walkthrough docs
 - #24: Resolver pattern docs
+
+---
+
+## Session: v0.5 Epic Planning
+
+**Date:** 2026-02-01
+**Goal:** Define v0.5 epic for Delegated GitOps Observability
+
+---
+
+### Research Phase
+
+Synthesized feature ideas from:
+- `cub-scout/docs/roadmap.md`
+- `confighub-agent/planning/` (TODO-MASTER, TUI-HUB-ENHANCEMENTS, RENDERED-MANIFEST-PATTERN)
+- Ghostty terminal emulator (TUI patterns: splits, key sequences, command palette)
+
+Key insight from launch planning:
+> "Orphan detection is 'nice-to-have,' not killer feature. **Navigation** is the real value."
+
+Wrote proposal to `~/Desktop/cub-scout-claude-ideas.md` with 9 phases of feature ideas.
+
+---
+
+### Epic Definition
+
+Created epic **#25: cub-scout v0.5 — GitOps Explorer and Debugger (OCI-first)**
+
+**Core identity:**
+> cub-scout is a GitOps explorer and debugger that helps humans understand live Kubernetes systems quickly, safely, and shareably — with optional intent context from ConfigHub.
+
+**Non-goals:**
+- No apply/reconcile
+- No rendering/diff
+- No policy enforcement
+- No Git transport (OCI only for this epic)
+
+---
+
+### Issues Filed
+
+| # | Title | Scope |
+|---|-------|-------|
+| #25 | **Epic: cub-scout v0.5 — GitOps Explorer and Debugger (OCI-first)** | Epic |
+| #26 | Add OCI GitOps fixtures for Flux and Argo | Foundation |
+| #27 | Fix Flux sourceRef parsing and deployer linkage | Foundation |
+| #28 | Detect delegated apply backend (Flux/Argo via OCI) | Foundation |
+| #29 | Expose Flux OCI source failure reasons | Failure Explanation |
+| #30 | Expose Flux apply/reconcile failure details | Failure Explanation |
+| #31 | Expose ArgoCD operation and failure details | Failure Explanation |
+| #32 | Add Delegated Apply summary panel | Failure Explanation |
+| #33 | Detect GitOps drift (kubectl smell) | Drift |
+| #34 | Add drift UI badges and CLI command | Drift |
+| #35 | Define canonical ownership graph schema | Export |
+| #36 | Export ownership graph (JSON + DOT) | Export |
+| #37 | Guided GitOps Debug Mode | Education |
+| #38 | Shareable diagnostic snapshots | Education |
+
+---
+
+### v0.5 Scope
+
+**MUST include:**
+- Delegated apply detection (Flux/Argo via OCI)
+- Failure-stage explanation
+- Delegated Apply summary panel
+- Drift detection (controller-based)
+- Exportable ownership graph
+- Guided Debug Mode
+- `:` command shell with CLI awareness
+- Navigation polish (keyboard help, search, namespace jump)
+- Mode indicators (read-only, namespace, cluster)
+
+**MUST NOT include:**
+- Git diffs
+- Policy enforcement
+- Fleet aggregation
+- Apply or fix actions
+- Split panes, command palette, quake mode
+
+---
+
+### CONTRIBUTING.md Updated
+
+Added new sections:
+- **Explorer and debugger** as first principle
+- **Standalone vs Connected mode** rule of thumb
+- **TUI & CLI Design Principles** — protects `:` shell-out, CLI awareness
+- **PR process** — asks "exploration or debugging?"
+
+---
+
+### Design Principles Established
+
+1. TUI is a **guided debug shell**, not CLI replacement
+2. `:` key must remain supported (shell-out to cub CLI)
+3. Commands inherit context (cluster, namespace, resource)
+4. Standalone mode = what exists; Connected mode = what should exist
