@@ -1,0 +1,17 @@
+# Scenario: Multiple explicit signals present - deterministic winner per precedence
+# Expected: Flux wins (priority 1) over ArgoCD (priority 2) and Helm (priority 3)
+# Reference: docs/reference/ownership-precedence.md - "first match wins"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multi-owner-app
+  namespace: production
+  labels:
+    # Flux label (priority 1)
+    kustomize.toolkit.fluxcd.io/name: multi-app
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+    # ArgoCD label (priority 2)
+    argocd.argoproj.io/instance: multi-app
+    # Helm label (priority 3)
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: multi-app

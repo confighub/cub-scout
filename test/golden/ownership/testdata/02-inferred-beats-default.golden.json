@@ -1,0 +1,15 @@
+{
+  "resource": {
+    "kind": "Pod",
+    "name": "nginx-abc123-xyz",
+    "namespace": "default"
+  },
+  "owner": {
+    "type": "Native",
+    "subType": "replicaset",
+    "name": "nginx-abc123",
+    "namespace": "default"
+  },
+  "confidence": "medium",
+  "source": "ownerRef:controller"
+}

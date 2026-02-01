@@ -1,0 +1,16 @@
+# Scenario: Explicit ownership (Flux label) beats inferred ownership (K8s ownerRef)
+# Expected: Flux wins because explicit labels (priority 1) beat K8s ownerRef (priority 8)
+# Reference: docs/reference/ownership-precedence.md
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: default
+  labels:
+    kustomize.toolkit.fluxcd.io/name: apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  ownerReferences:
+    - apiVersion: apps/v1
+      kind: ReplicaSet
+      name: nginx-controller-abc123
+      uid: 550e8400-e29b-41d4-a716-446655440000

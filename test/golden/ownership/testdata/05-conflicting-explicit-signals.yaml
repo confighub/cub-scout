@@ -1,0 +1,16 @@
+# Scenario: Conflicting explicit signals - ArgoCD vs Helm (both explicit)
+# Expected: ArgoCD wins (priority 2) over Helm (priority 3) per first-match-wins
+# Note: This is a valid real-world case where Argo deploys Helm charts
+# Reference: docs/reference/ownership-precedence.md
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helm-via-argo
+  namespace: default
+  labels:
+    # ArgoCD ownership (priority 2)
+    argocd.argoproj.io/instance: helm-app
+    # Helm labels (priority 3) - resource was templated by Helm but deployed by Argo
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: helm-app
+    helm.sh/chart: nginx-1.0.0

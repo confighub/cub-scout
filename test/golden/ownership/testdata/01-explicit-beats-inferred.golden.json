@@ -1,0 +1,15 @@
+{
+  "resource": {
+    "kind": "Deployment",
+    "name": "nginx",
+    "namespace": "default"
+  },
+  "owner": {
+    "type": "Flux",
+    "subType": "kustomization",
+    "name": "apps",
+    "namespace": "flux-system"
+  },
+  "confidence": "high",
+  "source": "label:kustomize.toolkit.fluxcd.io/name"
+}
