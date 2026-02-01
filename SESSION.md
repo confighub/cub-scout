@@ -1048,6 +1048,83 @@ cefb906 chore: Add reviewer checklist for PR reviews
 ea1a3bf docs: Add comprehensive roadmap with Connected Mode tracks
 e7204a0 session: Complete v0.5 planning session documentation
 0990e5a docs: Add crisp Standalone vs Connected one-liner to README
+4f930e0 session: Add design contract alignment documentation
+f7f6d22 docs: Annotate roadmap with ConfigHub backend engines
+97e7d59 docs: Address completeness gaps before v0.5 implementation
 ```
 
-GitHub issues #25, #35, #36, #38 updated directly (no commit needed).
+GitHub issues #25, #28, #35, #36, #38 updated directly.
+
+---
+
+## Completeness Check & Gap Fixes
+
+**Date:** 2026-02-01 (continued)
+
+Exec-level review confirmed ~95% coverage. Addressed 4 remaining gaps.
+
+---
+
+### ConfigHub Backend Engines (Real in Code)
+
+Connected Mode features are powered by **existing ConfigHub engines**:
+
+| Engine | Powers |
+|--------|--------|
+| ChangeSets API | History, "what changed" queries |
+| Views API | Projections (matches cub-scout lenses) |
+| Dependency Graph | Impact analysis, blast radius |
+| Bridge/Worker | Fleet visibility across targets |
+| Verifier | Policy evaluation, validation |
+| Helm Rendering | Worker-side HelmRelease logic |
+
+> cub-scout surfaces results — it does not reimplement.
+
+---
+
+### Gap Fixes Applied
+
+| Gap | Fix |
+|-----|-----|
+| Session vs Snapshot clarification | Created `docs/concepts/state-and-snapshots.md` |
+| Graph export vs Snapshot distinction | Added clarifying note to #36 |
+| Offline mode as first-class feature | Added to roadmap v0.5 section |
+| Connected Mode enrichment breadcrumb | Added to #38 |
+
+---
+
+### Apply Backend Detection (#28 Updated)
+
+OCI is the transport — apply may be via multiple backends:
+
+| Backend | Description |
+|---------|-------------|
+| `flux` | GitOps controller (Kustomization, HelmRelease) |
+| `argocd` | GitOps controller (Application) |
+| `worker` | ConfigHub direct apply |
+| `none` | No apply backend detected |
+
+> cub-scout must detect and explain the backend without assuming GitOps is present.
+
+---
+
+### Final Validation
+
+All v0.5 issues (#26-#38) pass:
+1. ✓ Improves exploration or debugging
+2. ✓ Operates on one hierarchy map
+3. ✓ Can be snapshotted deterministically
+4. ✓ Avoids Connected Mode assumptions
+
+**Completeness: 100%** — Ready for v0.5 implementation.
+
+---
+
+### Session Complete
+
+**Total commits:** 10
+**Issues created:** 16 (#25-#40)
+**Docs created/updated:** 8 files
+**Templates created:** 2 (.github/)
+
+All synced to GitHub.
