@@ -45,6 +45,7 @@ Complete reference documentation:
 | Topic | Reference |
 |-------|-----------|
 | **Commands** | [reference/commands.md](reference/commands.md) |
+| **Ownership & Precedence** | [reference/ownership-precedence.md](reference/ownership-precedence.md) |
 | Query syntax | [reference/query-syntax.md](reference/query-syntax.md) |
 | Query library | [reference/query-library.md](reference/query-library.md) |
 | GSF schema | [reference/gsf-schema.md](reference/gsf-schema.md) |
