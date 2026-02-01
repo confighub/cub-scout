@@ -77,7 +77,7 @@ func TestTrace_InvalidFormat(t *testing.T) {
 }
 
 // TestTrace_UnmanagedResource verifies trace behavior on a resource not managed by GitOps.
-// Expected: warning message + exit code 1.
+// Expected: TRACE header + warning message + exit code 0 (warning, not error).
 // Reference: cli-contract.md trace section - "Native resource" output.
 // Skips if no cluster available or golden file missing.
 func TestTrace_UnmanagedResource(t *testing.T) {
@@ -87,8 +87,8 @@ func TestTrace_UnmanagedResource(t *testing.T) {
 	// Use kube-system/coredns which is typically native/unmanaged
 	result := golden.RunCubScout(t, "trace", "deployment/coredns", "-n", "kube-system")
 
-	// Per CLI contract: exit code 1 for "not managed"
-	golden.AssertExitCode(t, 1, result)
+	// Unmanaged is a warning (informational), not an error - exit code 0
+	golden.AssertExitCode(t, 0, result)
 
 	// Normalize output and verify pattern
 	normalized := normalizeTraceOutput(result.Stdout + result.Stderr)
@@ -102,7 +102,7 @@ func TestTrace_UnmanagedResource(t *testing.T) {
 }
 
 // TestTrace_UnmanagedResourceJSON verifies --json output on unmanaged resource.
-// Expected: JSON with object, owner fields; exit code 1.
+// Expected: JSON with object, error, fullyManaged fields; exit code 0 (warning, not error).
 // Reference: cli-contract.md trace JSON output section.
 // Skips if no cluster available or golden file missing.
 func TestTrace_UnmanagedResourceJSON(t *testing.T) {
@@ -112,8 +112,8 @@ func TestTrace_UnmanagedResourceJSON(t *testing.T) {
 	// Use kube-system/coredns which is typically native/unmanaged
 	result := golden.RunCubScout(t, "trace", "deployment/coredns", "-n", "kube-system", "--json")
 
-	// Per CLI contract: exit code 1 for "not managed"
-	golden.AssertExitCode(t, 1, result)
+	// Unmanaged is a warning (informational), not an error - exit code 0
+	golden.AssertExitCode(t, 0, result)
 
 	// Verify JSON structure matches contract
 	var output map[string]interface{}
@@ -175,11 +175,16 @@ func requireCluster(t *testing.T) {
 	}
 }
 
-// requireGolden skips the test if the golden file doesn't exist.
+// requireGolden skips the test if the golden file doesn't exist,
+// UNLESS updateGolden is true (meaning we're generating goldens).
 // This allows cluster-dependent tests to be defined but skipped until
 // golden files are generated from a real cluster.
 func requireGolden(t *testing.T, name string) {
 	t.Helper()
+	if updateGolden {
+		// When updating goldens, don't skip - we need to generate them
+		return
+	}
 	goldenPath := filepath.Join("testdata", name+".golden.txt")
 	if _, err := os.Stat(goldenPath); os.IsNotExist(err) {
 		t.Skipf("PRECONDITION: Golden file not found: %s (run UPDATE_GOLDEN=1 with cluster)", goldenPath)
