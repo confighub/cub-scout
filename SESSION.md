@@ -958,3 +958,96 @@ ea1a3bf docs: Add comprehensive roadmap with Connected Mode tracks
 | Reviewer checklist | `.github/REVIEWING.md` |
 | Connected Mode doc | `docs/WHY_CONNECTED_MODE.md` |
 | Roadmap | `docs/roadmap.md` |
+
+---
+
+## Design Contract Alignment
+
+**Date:** 2026-02-01 (continued)
+
+Applied "Shareable Views" design contract to align existing issues.
+
+---
+
+### Conceptual Model (Non-Negotiable)
+
+Three distinct layers that must not be conflated:
+
+| Layer | Purpose | Properties |
+|-------|---------|------------|
+| **Hierarchy Maps** | Ways of viewing cluster data | Resource, Ownership, Pipeline lenses |
+| **Shareable Views** | Frozen snapshot of one lens | Immutable, sanitized, replayable |
+| **Session State** | Personal UI convenience | Local, mutable, never in snapshots |
+
+> "Hierarchy maps show how we see the system, session state remembers where I was, and shareable views capture what mattered."
+
+---
+
+### Issues Updated
+
+| Issue | Change |
+|-------|--------|
+| #25 (Epic) | Added conceptual model, three hierarchy lenses, validation criteria, extended non-goals |
+| #35 | Renamed to "Define unified internal graph schema", added lens projections |
+| #36 | Added `--lens` parameter, dependency on #35 |
+| #38 | Renamed to "Shareable hierarchy map snapshots (v1 format)", full spec |
+
+---
+
+### Snapshot v1 Format
+
+```json
+{
+  "snapshotVersion": "v1",
+  "lens": "pipeline",
+  "scope": { "namespace": "prod" },
+  "sanitization": { "clusterName": "redacted", "secrets": "removed" },
+  "graph": { },
+  "diagnostics": { }
+}
+```
+
+Key rules:
+- Each snapshot is ONE lens (resource/ownership/pipeline)
+- Session state NEVER embedded
+- Secrets NEVER included
+- Cluster name redacted by default
+
+---
+
+### Issue Validation Criteria
+
+For every v0.5 issue:
+1. Does this improve exploration or debugging?
+2. Does it operate on one hierarchy map?
+3. Can it be snapshotted deterministically?
+4. Does it avoid Connected Mode assumptions?
+
+All v0.5 issues (#26-#38) passed validation.
+
+---
+
+### Explicit Non-Goals Added to v0.5
+
+- Snapshot diffing
+- Snapshot history timelines
+- Connected Mode snapshot enrichment
+- Auto-sharing or cloud storage
+
+These are v0.6+ features.
+
+---
+
+### Commits This Session (Updated)
+
+```
+7cd55e1 session: Add v0.5 epic planning and update CONTRIBUTING.md
+de3f092 chore: Add PR template aligned to CONTRIBUTING.md
+cefb906 chore: Add reviewer checklist for PR reviews
+653c4ec docs: Add WHY_CONNECTED_MODE.md and update README
+ea1a3bf docs: Add comprehensive roadmap with Connected Mode tracks
+e7204a0 session: Complete v0.5 planning session documentation
+0990e5a docs: Add crisp Standalone vs Connected one-liner to README
+```
+
+GitHub issues #25, #35, #36, #38 updated directly (no commit needed).
