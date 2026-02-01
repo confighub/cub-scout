@@ -1,1 +1,0 @@
-Error: resource not managed by a detected GitOps tool

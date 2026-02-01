@@ -4,22 +4,26 @@
 // docs/reference/cli-contract.md
 //
 // Test scenarios cover:
-//   - Trace on unmanaged resource (warning + exit code)
-//   - Trace with --json output format (object, owner, error fields)
-//   - Trace failure states (exit code + message)
-//   - Error handling for invalid inputs
+//   - Error handling for invalid inputs (no cluster required)
+//   - Trace on unmanaged resource (cluster required)
+//   - Trace with --json output format (cluster required)
+//   - Trace failure states (cluster required)
 //
-// Tests requiring a Kubernetes cluster will skip if no cluster is available.
-// Cluster-dependent tests have provisional golden files that MUST be validated
-// against a real cluster before final merge. Run with UPDATE_GOLDEN=1 when
-// a cluster is available to capture actual output.
+// Cluster-dependent tests skip if BOTH conditions are not met:
+//  1. A Kubernetes cluster is available (kubectl cluster-info succeeds)
+//  2. The corresponding golden file exists
+//
+// To generate golden files for cluster-dependent tests:
+//   1. Ensure a cluster is available (kind, minikube, etc.)
+//   2. Run: UPDATE_GOLDEN=1 go test ./test/golden/trace/... -run TestTrace_
 //
 // Reference: docs/reference/cli-contract.md, docs/reference/health-failure-states.md
 //
 // Contract requirements for Native/unmanaged trace (per cli-contract.md):
-//   TRACE: Deployment/coredns in kube-system
-//     [warning] resource not managed by Flux
-//   Exit code: 1
+//
+//	TRACE: Deployment/coredns in kube-system
+//	  [warning] resource not managed by Flux
+//	Exit code: 1
 package trace
 
 import (
@@ -75,9 +79,10 @@ func TestTrace_InvalidFormat(t *testing.T) {
 // TestTrace_UnmanagedResource verifies trace behavior on a resource not managed by GitOps.
 // Expected: warning message + exit code 1.
 // Reference: cli-contract.md trace section - "Native resource" output.
-// Skips if no cluster available.
+// Skips if no cluster available or golden file missing.
 func TestTrace_UnmanagedResource(t *testing.T) {
 	requireCluster(t)
+	requireGolden(t, "unmanaged-resource")
 
 	// Use kube-system/coredns which is typically native/unmanaged
 	result := golden.RunCubScout(t, "trace", "deployment/coredns", "-n", "kube-system")
@@ -99,9 +104,10 @@ func TestTrace_UnmanagedResource(t *testing.T) {
 // TestTrace_UnmanagedResourceJSON verifies --json output on unmanaged resource.
 // Expected: JSON with object, owner fields; exit code 1.
 // Reference: cli-contract.md trace JSON output section.
-// Skips if no cluster available.
+// Skips if no cluster available or golden file missing.
 func TestTrace_UnmanagedResourceJSON(t *testing.T) {
 	requireCluster(t)
+	requireGolden(t, "unmanaged-resource-json")
 
 	// Use kube-system/coredns which is typically native/unmanaged
 	result := golden.RunCubScout(t, "trace", "deployment/coredns", "-n", "kube-system", "--json")
@@ -135,9 +141,10 @@ func TestTrace_UnmanagedResourceJSON(t *testing.T) {
 // TestTrace_ResourceNotFound verifies trace behavior when resource doesn't exist.
 // Expected: error message + exit code 1.
 // Reference: cli-contract.md error behavior section.
-// Skips if no cluster available.
+// Skips if no cluster available or golden file missing.
 func TestTrace_ResourceNotFound(t *testing.T) {
 	requireCluster(t)
+	requireGolden(t, "resource-not-found")
 
 	result := golden.RunCubScout(t, "trace", "deployment/does-not-exist", "-n", "default")
 
@@ -165,6 +172,17 @@ func requireCluster(t *testing.T) {
 	cmd.Stderr = nil
 	if err := cmd.Run(); err != nil {
 		t.Skip("PRECONDITION: No Kubernetes cluster available")
+	}
+}
+
+// requireGolden skips the test if the golden file doesn't exist.
+// This allows cluster-dependent tests to be defined but skipped until
+// golden files are generated from a real cluster.
+func requireGolden(t *testing.T, name string) {
+	t.Helper()
+	goldenPath := filepath.Join("testdata", name+".golden.txt")
+	if _, err := os.Stat(goldenPath); os.IsNotExist(err) {
+		t.Skipf("PRECONDITION: Golden file not found: %s (run UPDATE_GOLDEN=1 with cluster)", goldenPath)
 	}
 }
 
