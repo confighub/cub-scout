@@ -1,120 +1,184 @@
 # cub-scout Roadmap
 
-**Last Updated:** 2026-01-22
+## Explorer and Debugger for GitOps Systems
 
-Future features and improvements for cub-scout.
+**Last Updated:** 2026-02-01
 
-For completed work, see [archive/old-roadmap-jan.md](archive/old-roadmap-jan.md).
+This roadmap describes the planned evolution of cub-scout across standalone and connected modes.
 
----
+cub-scout follows three guiding principles:
+- Read-only by default
+- Explorer and debugger, not controller
+- Clear separation between live reality and external intent
 
-## Future Features (P2-P3)
-
-### `cub-scout learn` Command (P3)
-
-Interactive learning about GitOps concepts using your live cluster:
-
-```bash
-cub-scout learn gitops     # What is GitOps? Interactive explanation
-cub-scout learn flux       # How Flux works with live cluster examples
-cub-scout learn argocd     # How ArgoCD works with live cluster examples
-cub-scout learn kustomize  # What is Kustomize? Base + overlays explained
-cub-scout learn helm       # Helm releases, charts, values
-cub-scout learn ownership  # How cub-scout detects ownership
-```
-
-Each lesson:
-1. Explains the concept
-2. Shows examples from YOUR cluster (if available)
-3. Suggests commands to try
-4. Links to documentation
+For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap-jan.md).
 
 ---
 
-### Enhanced Import Wizard (P2)
+## Version 0.5 — Standalone Explorer and Debugger (Current Focus)
 
-Improved `cub-scout import --wizard` with:
-- Pattern detection (D2, Arnie, Banko, Fluxy)
-- Dependency detection between apps
-- Suggested ConfigHub structure
-- Step-by-step guided import
+**Status:** In progress
+**Epic:** [#25](https://github.com/confighub/cub-scout/issues/25)
+**Audience:** Individual engineers, SREs, platform teams
 
----
+### Core Capabilities
 
-### In-TUI Learning (P3)
+- Single-cluster exploration
+- Ownership and provenance tracing
+- Delegated apply visibility (Flux / Argo via OCI)
+- Failure-stage explanation (source vs apply)
+- GitOps drift detection (controller-based)
+- Guided GitOps Debug Mode
+- Exportable ownership/dependency graph (JSON, DOT)
+- Shareable diagnostic snapshots
+- TUI with `:` shell-out and CLI awareness
 
-Contextual tooltips when hovering/selecting items in the TUI:
+### v0.5 Issues
 
-```
-┌─ cub-scout map ───────────────────────────────────────────────────┐
-│ WORKLOADS BY OWNER                                                 │
-│                                                                    │
-│ Flux (28)                                                          │
-│ > ▶ frontend          production    Deployment  ✓                  │
-│                                                                    │
-│ ┌─ INFO ─────────────────────────────────────────────────────────┐ │
-│ │ This Deployment is managed by Flux via:                        │ │
-│ │   Kustomization: frontend (flux-system)                        │ │
-│ │ Changes should be made in Git, not kubectl.                    │ │
-│ │ Press T to trace the full ownership chain                      │ │
-│ └────────────────────────────────────────────────────────────────┘ │
-└────────────────────────────────────────────────────────────────────┘
-```
+| # | Title | Scope |
+|---|-------|-------|
+| #26 | OCI GitOps fixtures | Foundation |
+| #27 | Flux sourceRef parsing | Foundation |
+| #28 | Delegated apply detector | Foundation |
+| #29 | Flux source failure visibility | Failure Explanation |
+| #30 | Flux apply failure visibility | Failure Explanation |
+| #31 | Argo operation visibility | Failure Explanation |
+| #32 | Delegated Apply summary panel | Failure Explanation |
+| #33 | Drift detection | Drift |
+| #34 | Drift UI + CLI | Drift |
+| #35 | Ownership graph schema | Export |
+| #36 | Graph export (JSON + DOT) | Export |
+| #37 | Guided GitOps Debug Mode | Education |
+| #38 | Shareable snapshots | Education |
 
----
+### Non-goals for v0.5
 
-### JSON Output Consistency (P2)
+- No desired-state rendering
+- No Git diffs
+- No policy enforcement
+- No fleet views
 
-Ensure all commands support `--json`:
-- `map orphans --json` ✅
-- `map crashes --json`
-- `map issues --json`
-- `map workloads --json`
-- `map deployers --json`
-
----
-
-### Exit Codes for Scripting (P3)
-
-Consistent exit codes for CI/CD integration:
-
-| Exit Code | Meaning |
-|-----------|---------|
-| `0` | Success |
-| `1` | Error (command failed) |
-| `2` | Issues found (e.g., `map issues` found problems) |
-
-```bash
-cub-scout map issues || echo "Issues found!"
-cub-scout scan --severity critical && echo "No critical issues"
-```
+v0.5 establishes cub-scout as a trustworthy, production-safe GitOps explorer and debugger.
 
 ---
 
-### Advanced Diff & Tracing (P2-P3)
+## Version 0.6 — Deep Debugging + Connected Mode Foundations
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| Chart version diff | Show what changed between helm chart versions | P2 |
-| Layer-by-layer trace | Show which layer caused a change | P2 |
-| Upgrade impact preview | Before upgrading, show what will change | P3 |
+**Status:** Planned
+**Audience:** Teams using ConfigHub
+
+### Deep Debugging (Standalone)
+
+Extends v0.5 debug mode with Kubernetes-native insights:
+
+| # | Title | Description |
+|---|-------|-------------|
+| #39 | Container logs in debug mode | View crash logs with pattern detection |
+| #40 | Event timeline | See what happened recently with explanations |
+
+### Connected Mode Foundations
+
+First integration with ConfigHub:
+
+- ConfigHub authentication and connection
+- Target / space / revision context
+- Intended vs actual comparisons
+- History-aware debugging:
+  - "When did this break?"
+  - "What changed since last healthy?"
+- Intent-aware CLI suggestions in TUI
+
+### Notes
+
+- cub-scout remains read-only
+- All intent and history lives in ConfigHub
+- Graceful degradation when disconnected
 
 ---
 
-## Priority Summary
+## Version 0.7 — Fleet & Impact Intelligence (Connected)
 
-| Priority | Focus |
-|----------|-------|
-| **P2** | Import wizard, JSON consistency, chart diff |
-| **P3** | Learn command, exit codes, in-TUI learning |
+**Status:** Planned
+**Audience:** Platform and infrastructure teams
+
+### Capabilities
+
+- Fleet-wide health views
+- Cross-cluster comparisons
+- Version skew detection
+- Outlier identification ("this cluster is the weird one")
+- Impact analysis before changes
+- Dependency blast radius analysis
+
+These features require intent aggregation and cross-environment visibility provided by ConfigHub.
 
 ---
 
-## Validation Criteria
+## Version 0.8 — Governance & Collaboration Context (Connected)
 
-For each change, verify:
-- [ ] Solves a real user problem
-- [ ] Teaches, not just shows
-- [ ] Works with realistic scale (50+ resources)
-- [ ] No breaking changes to existing behavior
-- [ ] Can be tested/demoed
+**Status:** Exploratory
+
+### Capabilities
+
+- Policy evaluation context (read-only)
+- Approval and gate visibility
+- Audit-friendly timelines
+- Shared, persistent debugging artifacts
+
+cub-scout surfaces governance outcomes but does not define or enforce policy.
+
+---
+
+## Ongoing: UX & Performance Improvements
+
+These improvements may land in any release:
+
+| Feature | Description |
+|---------|-------------|
+| Split panes | View multiple things simultaneously |
+| Command palette | Fuzzy-search all actions |
+| Quick terminal | Quake-style overlay for quick lookups |
+| Inspector panel | Raw API responses and timing |
+| Large-cluster performance | 1000+ resource handling |
+| Session persistence | Save view preferences between sessions |
+| `cub-scout learn` | Interactive GitOps learning with live examples |
+| JSON output consistency | `--json` flag for all commands |
+| Exit codes | Consistent codes for CI/CD scripting |
+
+UX improvements must preserve:
+- Read-only guarantees
+- CLI discoverability
+- Explorer + debugger identity
+
+---
+
+## Free vs Connected
+
+| Capability | Standalone (Free) | Connected (Paid) |
+|------------|-------------------|------------------|
+| Single-cluster exploration | Yes | Yes |
+| Ownership tracing | Yes | Yes |
+| Failure explanation | Yes | Yes |
+| Drift detection | Yes | Yes |
+| Debug mode | Yes | Enhanced |
+| Graph export | Yes | Yes |
+| Snapshots | Yes | Yes |
+| Intent awareness | — | Yes |
+| History & time | — | Yes |
+| Fleet views | — | Yes |
+| Impact analysis | — | Yes |
+| Git-aware navigation | — | Yes |
+| Governance context | — | Yes |
+
+See [WHY_CONNECTED_MODE.md](WHY_CONNECTED_MODE.md) for detailed value proposition.
+
+---
+
+## Summary
+
+cub-scout evolves along two deliberate axes:
+
+- **Depth (Standalone):** Better exploration and debugging of live state
+- **Breadth (Connected):** Intent, history, fleets, and impact via ConfigHub
+
+This separation keeps cub-scout safe, focused, and valuable at every stage.

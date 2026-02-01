@@ -200,3 +200,11 @@ cub-scout connected to ConfigHub helps you understand:
 - across *all* your environments
 
 This is how teams reduce configuration **sprawl** and operate complex systems with confidence.
+
+---
+
+## Next Steps
+
+- See the [Roadmap](ROADMAP.md) for version-by-version Connected Mode plans
+- Try cub-scout standalone: `brew install confighub/tap/cub-scout`
+- Learn about ConfigHub: [confighub.com](https://confighub.com)

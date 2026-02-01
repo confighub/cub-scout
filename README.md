@@ -20,7 +20,8 @@ When connected to ConfigHub, it gains intent awareness, history, fleet context,
 and impact analysis — bridging what is running now with what should exist across
 environments.
 
-Learn more: [docs/WHY_CONNECTED_MODE.md](docs/WHY_CONNECTED_MODE.md)
+- [Why Connected Mode?](docs/WHY_CONNECTED_MODE.md) — Value proposition
+- [Roadmap](docs/ROADMAP.md) — Version-by-version plans
 
 ### Quickstart (2 minutes)
 
