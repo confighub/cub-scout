@@ -13,6 +13,15 @@ brew install confighub/tap/cub-scout
 cub-scout map
 ```
 
+## Optional: Connect to ConfigHub
+
+cub-scout works fully in standalone mode using only Kubernetes APIs.
+When connected to ConfigHub, it gains intent awareness, history, fleet context,
+and impact analysis — bridging what is running now with what should exist across
+environments.
+
+Learn more: [docs/WHY_CONNECTED_MODE.md](docs/WHY_CONNECTED_MODE.md)
+
 ### Quickstart (2 minutes)
 
 1. **Prerequisites:** kubectl access to a cluster (`kubectl get pods` works)
