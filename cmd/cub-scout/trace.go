@@ -425,7 +425,14 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 func outputTraceJSON(result *agent.TraceResult) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
-	return enc.Encode(result)
+	if err := enc.Encode(result); err != nil {
+		return err
+	}
+	// Per cli-contract.md: exit code 1 for "not managed"
+	if result.Error != "" && len(result.Chain) == 0 {
+		os.Exit(1)
+	}
+	return nil
 }
 
 // outputTraceHuman outputs the trace result in human-readable format with colors
@@ -453,8 +460,10 @@ func outputTraceHuman(result *agent.TraceResult) error {
 	}
 
 	if result.Error != "" && len(result.Chain) == 0 {
-		fmt.Printf("  %s⚠ %s%s\n\n", colorYellow, result.Error, colorReset)
-		return nil
+		// Per cli-contract.md: Native/unmanaged resources show warning and exit 1
+		fmt.Printf("  %s[warning] %s%s\n\n", colorYellow, result.Error, colorReset)
+		os.Exit(1)
+		return nil // unreachable but required for compiler
 	}
 
 	// Print chain
