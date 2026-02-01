@@ -7,7 +7,7 @@
 //   - Explicit labels beat inferred (ownerRef) ownership
 //   - Inferred ownership beats default (unknown)
 //   - Multiple signals resolve deterministically per precedence order
-//   - No signals result in "unknown"
+//   - No signals result in "Native" (CLI display for unmanaged)
 //   - Conflicting explicit signals resolve per first-match-wins
 //
 // Each test loads a fixture YAML and compares the ownership detection result
@@ -85,7 +85,7 @@ func TestOwnershipPrecedence_MultipleInferredDeterministic(t *testing.T) {
 }
 
 // TestOwnershipPrecedence_NoOwnerSignals verifies that resources without
-// ownership signals are classified as "unknown".
+// ownership signals are classified as "Native" (unmanaged) in CLI output.
 func TestOwnershipPrecedence_NoOwnerSignals(t *testing.T) {
 	runOwnershipGoldenTest(t, "04-no-owner-signals")
 }
@@ -186,10 +186,10 @@ func formatOwnerType(t string) string {
 		return "ConfigHub"
 	case agent.OwnerCrossplane:
 		return "Crossplane"
-	case agent.OwnerKubernetes:
+	case agent.OwnerKubernetes, agent.OwnerUnknown:
+		// Both k8s (ownerRef-only) and unknown (no signals) map to "Native" in CLI
+		// Reference: internal/mapsvc/types.go DisplayOwner()
 		return "Native"
-	case agent.OwnerUnknown:
-		return "Unknown"
 	default:
 		return strings.Title(t)
 	}
