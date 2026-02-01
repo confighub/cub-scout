@@ -91,3 +91,125 @@ An issue is complete only when:
 - Tests exist and pass
 - Examples demonstrate expected behavior
 - User-facing output is correct **and explainable**
+
+---
+
+## cub-scout v0.5 Delivery Addendum
+
+This addendum defines how the principles in this document are applied during the
+**v0.5 delivery phase**.
+
+v0.5 is a **trust and utility milestone**, not a completeness milestone.
+
+The goal is to ship a version that users can rely on daily, with clearly bounded
+capabilities and explicitly documented limitations.
+
+---
+
+## v0.5 Priorities (In Order)
+
+During v0.5 delivery, decisions MUST be evaluated against these priorities,
+in descending order:
+
+1. **Correctness of ownership and provenance**
+   - cub-scout must not make false claims about where resources came from.
+   - Unknown or ambiguous states are always preferable to incorrect certainty.
+
+2. **Honest, explainable output**
+   - Partial results are acceptable if clearly explained.
+   - Errors must explain what failed and why, not just that something failed.
+
+3. **Stability of the TUI and CLI**
+   - No panics, crashes, or undefined navigation behavior.
+   - Predictable keybindings and command behavior.
+
+4. **Scope discipline**
+   - Features that dilute trust or stability are out of scope.
+   - v0.5 is intentionally narrow.
+
+Completeness, performance optimizations, and breadth of controller support are
+explicitly secondary during this phase.
+
+---
+
+## Core Principles (Never Waived)
+
+The following principles are non-negotiable for v0.5:
+
+- Deterministic behavior
+- Parse, don't guess
+- Read-only by default
+- No AI/ML inference
+- Avoid false ownership or orphan claims
+- Graceful degradation in the presence of missing or partial data
+
+Any change that violates these principles MUST NOT ship.
+
+---
+
+## Strong Defaults (May Be Deferred with Explicit Waiver)
+
+The following expectations remain strong defaults but may be deferred for v0.5
+*only if a waiver is explicitly recorded*:
+
+- Full end-to-end (E2E) test coverage
+- Exhaustive controller support
+- Complete example coverage for all edge cases
+- Fleet-scale or connected-mode parity
+
+Deferral is acceptable only when the failure mode is safe and documented.
+
+---
+
+## Waivers (v0.5 Only)
+
+A requirement may be waived during v0.5 delivery **only if all conditions below
+are met**:
+
+1. The limitation is clearly documented (code comment, issue, or docs).
+2. The failure mode is safe:
+   - No false positives
+   - No misleading ownership or health claims
+3. A follow-up issue is filed and labeled appropriately.
+
+Waivers MUST be visible and intentional.
+Silent corner-cutting is not acceptable.
+
+---
+
+## Testing Expectations for v0.5
+
+For v0.5:
+
+- Logic affecting ownership, provenance, or reconciliation reasoning MUST have
+  deterministic tests.
+- UI and CLI changes MUST be exercised against at least one real cluster.
+- E2E tests are strongly encouraged but may be deferred via waiver.
+
+The absence of a test is acceptable only if:
+- The behavior is explicitly documented as provisional, AND
+- The risk surface is understood and bounded.
+
+---
+
+## Release Bar for v0.5
+
+v0.5 is considered shippable only if:
+
+- Ownership claims are reproducible and conservative.
+- The TUI does not panic on malformed or minimal clusters.
+- Known limitations are explicitly documented.
+- The tool can be recommended to another operator with clear caveats.
+
+---
+
+## Post–v0.5 Expectation
+
+This addendum is temporary.
+
+Future releases may:
+- Remove waiver allowances
+- Tighten testing requirements
+- Raise the completeness bar
+
+All work done under v0.5 constraints should assume later hardening.

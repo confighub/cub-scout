@@ -1,0 +1,48 @@
+name: v0.5 Waiver
+description: Request a waiver for a v0.5 requirement
+labels: ["v0.5", "waiver"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Waivers are exceptional and must be explicit.
+
+  - type: textarea
+    id: requirement
+    attributes:
+      label: Requirement Being Waived
+      description: Which rule, test, or expectation is being waived?
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why is this acceptable for v0.5?
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk Assessment
+      description: What is the worst-case outcome?
+    validations:
+      required: true
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Mitigation
+      description: How is the risk contained?
+    validations:
+      required: true
+
+  - type: textarea
+    id: followup
+    attributes:
+      label: Follow-Up Work
+      description: Link or describe post-v0.5 work.
+    validations:
+      required: true

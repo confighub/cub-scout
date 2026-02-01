@@ -1,0 +1,48 @@
+name: v0.5 Bug
+description: Bug affecting cub-scout v0.5
+labels: ["v0.5", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue reports a **v0.5-blocking bug**.
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed Behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Why does this matter for v0.5?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Steps, cluster details, or conditions.
+    validations:
+      required: true
+
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety Assessment
+      description: Does this produce misleading or unsafe output?
+    validations:
+      required: true

@@ -1,58 +1,79 @@
 ## Summary
 
-<!-- Brief description of what this PR does -->
+<!-- 1-2 sentences: what this PR does -->
 
-## Problem
+## Changes
 
-<!-- What user problem does this solve? -->
+<!-- Bullet list of changes -->
 
-## Type
+-
 
-<!-- Check one -->
+## Why
 
-- [ ] Exploration improvement (helps users understand what exists)
-- [ ] Debugging improvement (helps users understand why something failed)
-- [ ] Both
+<!-- Why is this change needed? -->
 
-## Scope
+## Review-by-Evidence
 
-<!-- Check one -->
+<!-- REQUIRED: All PRs must complete this section -->
 
-- [ ] Standalone mode (works without ConfigHub)
-- [ ] Connected mode (requires ConfigHub)
-- [ ] Both
+### What changed (1-3 bullets)
 
----
+-
+
+### Why (1 bullet)
+
+-
+
+### Tests added/updated
+
+<!-- List exact test files or "None" with justification -->
+
+-
+
+### Golden diffs?
+
+<!-- yes/no - if yes, paste small excerpt and explain why the change is intentional -->
+
+- [ ] No golden file changes
+- [ ] Yes - golden files changed (see below)
+
+<!-- If golden files changed:
+```
+[paste diff excerpt]
+```
+Explanation: [why this change is correct]
+-->
+
+### Cluster proof required?
+
+<!-- Required for: ownership/provenance, failure/health modeling, TUI core flows -->
+
+- [ ] Not required (change does not affect risky areas)
+- [ ] Yes - cluster proof provided (see below)
+
+<!-- If cluster proof required:
+**Commands run:**
+```bash
+[commands]
+```
+
+**Output:**
+```
+[relevant output or screenshot description]
+```
+-->
+
+### Risk assessment
+
+**Could this create false certainty (false ownership claims, misleading health status)?**
+
+- [ ] No - change does not affect ownership or health logic
+- [ ] No - covered by existing tests
+- [ ] Potential risk - mitigated by: [explain]
 
 ## Checklist
 
-### Core Principles
-
-- [ ] **Read-only** — No cluster mutations (or explicitly flagged exception)
-- [ ] **Deterministic** — Same input produces same output
-- [ ] **Parse, don't guess** — Uses actual labels/annotations, not heuristics
-
-### Testing
-
-- [ ] `go test ./...` passes
-- [ ] Added/updated tests for new functionality
-- [ ] Fixture-based or snapshot-based tests where applicable
-
-### TUI/CLI (if applicable)
-
-- [ ] `:` shell-out behavior preserved
-- [ ] CLI commands remain accessible
-- [ ] Context (cluster, namespace, resource) inherited correctly
-
-### Code Quality
-
-- [ ] `go fmt` and `go vet` pass
-- [ ] No new linter warnings
-- [ ] Functions focused and testable
-
----
-
-## Related Issues
-
-<!-- Link related issues: Fixes #XX, Part of #XX -->
-
+- [ ] CI passes
+- [ ] No false ownership/health claims introduced
+- [ ] Documentation updated if needed
+- [ ] Review-by-evidence section complete

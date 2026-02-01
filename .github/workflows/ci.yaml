@@ -45,6 +45,11 @@ jobs:
         with:
           version: latest
 
+      - name: Run govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
       - name: Check read-only policy
         run: ./scripts/check-readonly.sh
 

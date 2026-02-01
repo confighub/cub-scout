@@ -1,0 +1,28 @@
+name: v0.5 Release Gate
+description: Final go/no-go decision for v0.5
+labels: ["v0.5", "release"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue tracks the final v0.5 release decision.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Release Checklist
+      options:
+        - label: Ownership correctness verified
+        - label: Failure modeling verified
+        - label: TUI stability verified
+        - label: CLI contract verified
+        - label: Known limitations documented
+        - label: Waivers reviewed and approved
+
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision
+      description: GO or NO-GO, with justification.
+    validations:
+      required: true

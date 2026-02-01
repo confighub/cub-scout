@@ -1,0 +1,54 @@
+name: v0.5 Task
+description: Scoped work item for cub-scout v0.5 delivery
+labels: ["v0.5"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue represents a **scoped v0.5 delivery task**.
+        All fields are required.
+
+  - type: textarea
+    id: intent
+    attributes:
+      label: Intent
+      description: What problem does this task solve?
+      placeholder: Describe the problem, not the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: success
+    attributes:
+      label: Success Criteria
+      description: How do we know this task is done?
+      placeholder: List observable, verifiable outcomes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-Goals
+      description: What is explicitly out of scope?
+      placeholder: List behaviors or features this task will not address.
+    validations:
+      required: true
+
+  - type: textarea
+    id: failure
+    attributes:
+      label: Failure Modes
+      description: How can this fail, and how should failure surface?
+      placeholder: Describe safe vs unsafe failure modes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests & Verification
+      description: How will this be tested?
+      placeholder: Unit tests, real cluster runs, manual checks.
+    validations:
+      required: true
