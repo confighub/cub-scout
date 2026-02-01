@@ -1,0 +1,19 @@
+STATIC FILE SCAN
+File: <FILE>
+Resources: 1
+
+WARNING (2)
+────────────────────────────────────────────────────────────────────
+[W] Probe timeout exceeds period [CCVE-2025-0244]
+  Resource: default/Deployment/misconfigured-app
+  Message: livenessProbe timeout (<ELAPSED>) > period (<ELAPSED>) - probe may never succeed
+  → Remediation: Ensure probe timeoutSeconds <= periodSeconds
+
+[W] Missing resource limits [CCVE-2025-0248]
+  Resource: default/Deployment/misconfigured-app
+  Message: Container "app" has no resource limits defined
+  → Remediation: Add resources.limits.cpu and resources.limits.memory
+
+
+════════════════════════════════════════════════════════════════════
+Summary: 0 critical, 2 warning, 0 info

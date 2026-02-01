@@ -1,0 +1,31 @@
+{
+  "static": {
+    "file": "\u003cFILE\u003e",
+    "findings": [
+      {
+        "category": "SILENT",
+        "ccve_id": "CCVE-2025-0244",
+        "kind": "Deployment",
+        "message": "livenessProbe timeout (\u003cELAPSED\u003e) \u003e period (\u003cELAPSED\u003e) - probe may never succeed",
+        "name": "Probe timeout exceeds period",
+        "namespace": "default",
+        "remediation": "Ensure probe timeoutSeconds \u003c= periodSeconds",
+        "resource_name": "misconfigured-app",
+        "severity": "warning"
+      },
+      {
+        "category": "CONFIG",
+        "ccve_id": "CCVE-2025-0248",
+        "kind": "Deployment",
+        "message": "Container \"app\" has no resource limits defined",
+        "name": "Missing resource limits",
+        "namespace": "default",
+        "remediation": "Add resources.limits.cpu and resources.limits.memory",
+        "resource_name": "misconfigured-app",
+        "severity": "warning"
+      }
+    ],
+    "resourceCount": 1,
+    "scannedAt": "\u003cTIMESTAMP\u003e"
+  }
+}

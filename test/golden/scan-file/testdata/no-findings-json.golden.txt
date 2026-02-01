@@ -1,0 +1,8 @@
+{
+  "static": {
+    "file": "\u003cFILE\u003e",
+    "findings": [],
+    "resourceCount": 1,
+    "scannedAt": "\u003cTIMESTAMP\u003e"
+  }
+}

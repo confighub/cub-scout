@@ -1,0 +1,26 @@
+[
+  {
+    "id": "\u003cCLUSTER\u003e/cub-scout-golden-maplist-mixed//Deployment/helm-app",
+    "clusterName": "default",
+    "namespace": "cub-scout-golden-maplist-mixed",
+    "kind": "Deployment",
+    "name": "helm-app",
+    "apiVersion": "apps/v1",
+    "owner": "Helm",
+    "status": "Ready",
+    "createdAt": "\u003cTIMESTAMP\u003e",
+    "updatedAt": "\u003cTIMESTAMP\u003e"
+  },
+  {
+    "id": "\u003cCLUSTER\u003e/cub-scout-golden-maplist-mixed//Deployment/native-app",
+    "clusterName": "default",
+    "namespace": "cub-scout-golden-maplist-mixed",
+    "kind": "Deployment",
+    "name": "native-app",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "status": "Ready",
+    "createdAt": "\u003cTIMESTAMP\u003e",
+    "updatedAt": "\u003cTIMESTAMP\u003e"
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "\u003cCLUSTER\u003e/cub-scout-golden-maplist-single//Deployment/test-app",
+    "clusterName": "default",
+    "namespace": "cub-scout-golden-maplist-single",
+    "kind": "Deployment",
+    "name": "test-app",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "status": "Ready",
+    "createdAt": "\u003cTIMESTAMP\u003e",
+    "updatedAt": "\u003cTIMESTAMP\u003e"
+  }
+]

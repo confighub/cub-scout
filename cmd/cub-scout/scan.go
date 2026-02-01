@@ -927,9 +927,20 @@ func runFileScan(ctx context.Context, filename string, ccveDBDir string) error {
 	}
 
 	if scanJSON {
-		return outputCombinedJSON(&CombinedScanResult{Static: result})
+		if err := outputCombinedJSON(&CombinedScanResult{Static: result}); err != nil {
+			return err
+		}
+	} else {
+		if err := outputStaticScanHuman(result); err != nil {
+			return err
+		}
 	}
-	return outputStaticScanHuman(result)
+
+	// Per cli-contract.md: exit code 1 for "Issues found or error"
+	if len(result.Findings) > 0 || result.Error != "" {
+		os.Exit(1)
+	}
+	return nil
 }
 
 // outputStaticScanHuman outputs static scan results in human-readable format
