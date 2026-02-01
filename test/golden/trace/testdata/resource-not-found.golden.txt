@@ -1,0 +1,2 @@
+Error: trace failed: flux trace failed: exit status 1:
+deployments.apps "does-not-exist" not found
