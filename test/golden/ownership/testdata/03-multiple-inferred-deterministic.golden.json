@@ -1,0 +1,15 @@
+{
+  "resource": {
+    "kind": "Deployment",
+    "name": "multi-owner-app",
+    "namespace": "production"
+  },
+  "owner": {
+    "type": "Flux",
+    "subType": "kustomization",
+    "name": "multi-app",
+    "namespace": "flux-system"
+  },
+  "confidence": "high",
+  "source": "label:kustomize.toolkit.fluxcd.io/name"
+}

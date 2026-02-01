@@ -1,0 +1,14 @@
+# Scenario: No ownership signals present
+# Expected: Unknown (no labels, annotations, or ownerRefs that indicate ownership)
+# Reference: docs/reference/ownership-precedence.md - "Unknown" section
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+  labels:
+    app: my-app
+    environment: production
+data:
+  config.yaml: |
+    debug: false

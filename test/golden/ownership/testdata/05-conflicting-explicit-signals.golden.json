@@ -1,0 +1,14 @@
+{
+  "resource": {
+    "kind": "Deployment",
+    "name": "helm-via-argo",
+    "namespace": "default"
+  },
+  "owner": {
+    "type": "ArgoCD",
+    "subType": "application",
+    "name": "helm-app"
+  },
+  "confidence": "medium",
+  "source": "label:argocd.argoproj.io/instance"
+}

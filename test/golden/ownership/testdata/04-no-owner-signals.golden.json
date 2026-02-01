@@ -1,0 +1,10 @@
+{
+  "resource": {
+    "kind": "ConfigMap",
+    "name": "app-config",
+    "namespace": "default"
+  },
+  "owner": {
+    "type": "Unknown"
+  }
+}
