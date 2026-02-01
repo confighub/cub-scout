@@ -1,6 +1,19 @@
 // Copyright (C) ConfigHub, Inc.
 // SPDX-License-Identifier: MIT
 
+// Ownership detection tests - deterministic tests for v0.5 (#43)
+//
+// These tests verify ownership detection behavior as documented in:
+// docs/reference/ownership-precedence.md
+//
+// Tests cover:
+// - Individual owner types (Flux, ArgoCD, Helm, Terraform, ConfigHub, Crossplane, K8s)
+// - Precedence rules when multiple signals are present
+// - Unknown/ambiguous cases returning "unknown"
+// - Edge cases (empty values, malformed annotations)
+//
+// See TestDetectOwnership_Priority for precedence verification.
+
 package agent
 
 import (
