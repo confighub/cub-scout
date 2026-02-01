@@ -10,7 +10,16 @@
 //   - Error handling for invalid inputs
 //
 // Tests requiring a Kubernetes cluster will skip if no cluster is available.
+// Cluster-dependent tests have provisional golden files that MUST be validated
+// against a real cluster before final merge. Run with UPDATE_GOLDEN=1 when
+// a cluster is available to capture actual output.
+//
 // Reference: docs/reference/cli-contract.md, docs/reference/health-failure-states.md
+//
+// Contract requirements for Native/unmanaged trace (per cli-contract.md):
+//   TRACE: Deployment/coredns in kube-system
+//     [warning] resource not managed by Flux
+//   Exit code: 1
 package trace
 
 import (
