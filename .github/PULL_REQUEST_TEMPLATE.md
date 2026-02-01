@@ -1,3 +1,5 @@
+<!-- If this PR changes behavior or touches ownership/health/trace/CLI: Codex review is required before merge. See docs/codex-review-checklist.md -->
+
 ## Summary
 
 <!-- 1-2 sentences: what this PR does -->
