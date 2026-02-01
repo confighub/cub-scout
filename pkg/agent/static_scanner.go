@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -111,6 +112,22 @@ func (s *StaticScanner) ScanFile(ctx context.Context, filename string) (*StaticS
 			}
 		}
 	}
+
+	// Sort findings for deterministic output: by severity (critical > warning > info),
+	// then by CCVE ID, then by resource name
+	sort.Slice(result.Findings, func(i, j int) bool {
+		fi, fj := result.Findings[i], result.Findings[j]
+		// Severity order: critical=0, warning=1, info=2
+		sevOrder := map[string]int{"critical": 0, "warning": 1, "info": 2}
+		si, sj := sevOrder[fi.Severity], sevOrder[fj.Severity]
+		if si != sj {
+			return si < sj
+		}
+		if fi.CCVEID != fj.CCVEID {
+			return fi.CCVEID < fj.CCVEID
+		}
+		return fi.ResourceName < fj.ResourceName
+	})
 
 	return result, nil
 }

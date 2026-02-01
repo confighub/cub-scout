@@ -1,0 +1,12 @@
+# Malformed YAML - intentionally invalid for testing error handling.
+# Used for testing scan --file with expected exit code 1 (parse error).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken
+  labels:
+    app: broken
+    # Missing colon after key - invalid YAML
+    invalid_key value_without_colon
+spec:
+  replicas: 1

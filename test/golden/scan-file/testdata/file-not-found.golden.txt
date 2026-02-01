@@ -1,0 +1,3 @@
+
+⚠ failed to parse YAML: open /nonexistent/path/to/file.yaml: no such file or directory
+

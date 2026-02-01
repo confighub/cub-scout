@@ -1,0 +1,5 @@
+STATIC FILE SCAN
+File: <FILE>
+Resources: 1
+
+✓ No misconfigurations found
