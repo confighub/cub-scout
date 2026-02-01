@@ -31,7 +31,17 @@ For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap
 - Guided GitOps Debug Mode
 - Exportable ownership/dependency graph (JSON, DOT)
 - Shareable diagnostic snapshots
+- **Offline replay** of snapshots (first-class workflow)
 - TUI with `:` shell-out and CLI awareness
+
+### Offline Mode
+
+Offline replay of snapshots is a **first-class supported workflow**:
+
+- Incident review without cluster access
+- Onboarding with real examples
+- Security-restricted environments
+- Use `cub-scout snapshot view <file>` to replay any snapshot
 
 ### v0.5 Issues
 
