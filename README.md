@@ -15,13 +15,11 @@ cub-scout map
 
 ## Optional: Connect to ConfigHub
 
-cub-scout works fully in standalone mode using only Kubernetes APIs.
-When connected to ConfigHub, it gains intent awareness, history, fleet context,
-and impact analysis — bridging what is running now with what should exist across
-environments.
+**Standalone** answers: *"What exists right now, and why?"*
+**Connected** adds: *"What should exist, what changed, and what happens next?"*
 
-- [Why Connected Mode?](docs/WHY_CONNECTED_MODE.md) — Value proposition
-- [Roadmap](docs/ROADMAP.md) — Version-by-version plans
+- [Why Connected Mode?](docs/WHY_CONNECTED_MODE.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ### Quickstart (2 minutes)
 
