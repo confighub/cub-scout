@@ -78,7 +78,7 @@ The key principle is: **Git context is optional evidence, not a requirement.**
 |------|-------|------------|----------------|
 | **Offline** | (none) | No git context | Yes |
 | **Local** | `--git-root /path` | Local filesystem | Yes |
-| **Connected** | `--git-url` + `--git-ref` | GitHub tarball | Yes (with SHA) |
+| **Connected** | `--git-url` + `--git-ref` | GitHub tarball | Yes (full SHA) / No (branch/tag) |
 
 #### Mode Details
 

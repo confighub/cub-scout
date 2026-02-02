@@ -453,8 +453,9 @@ cub-scout patterns explain <pattern-id> --git-url https://github.com/org/repo --
 
 ### Determinism in Connected Mode
 
-**Commit SHA = deterministic.** When `--git-ref` is a full commit SHA, connected mode produces
-deterministic output for a given repository state. The same SHA always yields the same tarball content.
+**Commit SHA = deterministic.** When `--git-ref` is a full 40-character commit SHA, connected mode
+produces deterministic output for a given repository state. Pinned commit SHAs provide reproducible
+content snapshots for analysis.
 
 **Branch/tag = non-deterministic.** When `--git-ref` is a branch name (e.g., `main`) or tag,
 output may change over time as the ref advances. This is explicitly documented behavior.
@@ -462,46 +463,59 @@ output may change over time as the ref advances. This is explicitly documented b
 | `--git-ref` value | Deterministic? | Notes |
 |-------------------|----------------|-------|
 | Full commit SHA (40 chars) | Yes | Same SHA = same output |
-| Short commit SHA | Yes | Resolved to full SHA |
+| Short commit SHA | No | May be ambiguous or provider-dependent; prefer full SHA |
 | Branch name (e.g., `main`) | No | Output changes as branch advances |
-| Tag name (e.g., `v1.0.0`) | Mostly | Stable unless tag is force-pushed |
+| Tag name (e.g., `v1.0.0`) | No | Output changes if tag is force-pushed; recommend SHA |
 
-**Recommendation:** For reproducible auditing and CI/CD, always use full commit SHAs.
+**Recommendation:** For reproducible auditing and CI/CD, always use full 40-character commit SHAs.
+
+### Usage Errors (exit 2)
+
+The following flag combinations are invalid invocations and result in **exit code 2** (usage error):
+
+| Condition | Exit code |
+|-----------|-----------|
+| `--git-url` without `--git-ref` | 2 |
+| `--git-ref` without `--git-url` | 2 |
+| `--git-subpath` without `--git-url` or `--git-root` | 2 |
+| Both `--git-root` and `--git-url` | 2 |
+
+These are syntax/requirement errors, not runtime failures. The command exits immediately with an error message.
 
 ### Skip Behavior for Connected Mode
 
-Connected mode fetch failures result in **pattern-level SKIP**, not global command failure.
+Connected mode **runtime failures** result in **pattern-level SKIP**, not global command failure.
 This maintains consistency with `--git-root` behavior.
 
 **Skip reason strings (deterministic):**
 
 | Condition | skip_reason |
 |-----------|-------------|
-| `--git-url` provided without `--git-ref` | `git_ref required with git_url` |
-| Repository not found (404) | `git_url repository not found` |
-| Ref not found (branch/tag/SHA doesn't exist) | `git_ref not found` |
-| Fetch failed (network error, timeout) | `git_url fetch failed` |
-| Authentication required but not provided | `git_url authentication required` |
-| Tarball extraction failed | `git_url tarball invalid` |
+| Repository not found (404) | `git_source repository not found` |
+| Ref not found (branch/tag/SHA doesn't exist) | `git_source ref not found` |
+| Fetch failed (network error, timeout) | `git_source fetch failed` |
+| Authentication required but not provided | `git_source authentication required` |
+| Tarball extraction failed | `git_source tarball invalid` |
+| Rate limited (HTTP 429) | `git_source rate limited` |
 
 **Example output (fetch failure):**
 ```
 [SKIP] gitops.argocd.applicationset_generators
   ApplicationSet Generator Summary
-  skip_reason: git_url repository not found
+  skip_reason: git_source repository not found
   findings (0):
     (none)
 ```
 
-### No New Exit Codes
+### Exit Code Summary
 
-Connected mode does not introduce new exit codes:
+Connected mode uses standard exit codes:
 - Exit 0: All patterns passed (including skipped patterns)
-- Exit 2: Usage error (mutual exclusivity violation, missing `--git-ref`)
+- Exit 2: Usage error (invalid flag combination; see [Usage Errors](#usage-errors-exit-2))
 - Exit 4: One or more patterns failed
 
-Fetch failures cause pattern-level SKIP, not exit 2. This ensures graceful degradation
-when remote repositories are temporarily unavailable.
+**Runtime failures** (network errors, 404, auth) cause pattern-level SKIP, not exit 2.
+This ensures graceful degradation when remote repositories are temporarily unavailable.
 
 ### Authentication
 
@@ -516,7 +530,7 @@ Connected mode supports optional authentication via the `GITHUB_TOKEN` environme
 - Authentication is optional; public repos work without tokens
 - Private repos require `GITHUB_TOKEN` with appropriate permissions
 - Token is never logged or included in output
-- Invalid tokens result in pattern SKIP with `git_url authentication required`
+- Invalid tokens result in pattern SKIP with `git_source authentication required`
 
 ### Implementation Constraints
 
