@@ -72,7 +72,7 @@ Map shows the complete picture of how apps flow from source to production:
 | Level | What Map Shows | Command |
 |-------|----------------|---------|
 | **1. Repos** | Git URLs, OCI registries | `map trace` → shows source |
-| **2. DRY Templates** | Kustomizations, HelmReleases, Applications | `map deployers` |
+| **2. DRY Templates** | GitOps manifests (Kustomizations, HelmReleases, Applications) | `map deployers` (Deployments in v0.5) |
 | **3. WET Config** | ConfigHub Units, revisions | `map --hub` |
 | **4. Live Resources** | Deployments, Services, actual state | `map list` |
 

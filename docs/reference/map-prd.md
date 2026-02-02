@@ -101,7 +101,7 @@ Modern Kubernetes clusters have resources deployed by multiple tools:
 | `map list` | Scriptable resource listing | Standalone |
 | `map status` | One-line cluster health | Standalone |
 | `map workloads` | Workloads grouped by owner | Standalone |
-| `map deployers` | GitOps deployers (Flux + ArgoCD) | Standalone |
+| `map deployers` | Deployers (Deployments in v0.5) | Standalone |
 | `map orphans` | Unmanaged (Native) resources | Standalone |
 | `map crashes` | Crashing pods/deployments | Standalone |
 | `map issues` | Resources with problems | Standalone |

@@ -141,35 +141,60 @@ One-line health summary.
 cub-scout map status
 ```
 
-**Output format:**
+**Output format (healthy):**
 ```
-[checkmark] healthy: X/Y deployers, A/B workloads
+✓ healthy: <N>/<N> deployers, <N>/<N> workloads
+```
+
+**Output format (problems detected):**
+```
+✗ <N> problem(s): <N>/<N> deployers, <N>/<N> workloads
 ```
 
 **Exit codes:**
 | Code | Meaning |
 |------|---------|
 | 0 | All healthy |
-| 1 | Some unhealthy or error |
+| 1 | Problems detected or error |
 
 ---
 
 ## cub-scout map deployers
 
-List GitOps deployers (Flux Kustomizations, HelmReleases, Argo Applications).
+List deployers (Kubernetes Deployments) in the cluster.
+
+> **v0.5 contract:** Deployers are Kubernetes Deployments. Flux Kustomizations,
+> HelmReleases, and Argo Applications are out of scope for v0.5 and may be
+> added in a future release.
 
 ```bash
 cub-scout map deployers [flags]
 ```
 
-**Output format:**
-```
-STATUS  KIND           NAME        NAMESPACE    REVISION  RESOURCES
-Ready   Kustomization  my-app      flux-system  abc123    5
-Ready   HelmRelease    redis       default      v1.2.3    8
+### JSON Output (`--json`)
+
+```json
+[
+  {
+    "kind": "Deployment",
+    "name": "app-alpha",
+    "namespace": "default",
+    "status": "Ready",
+    "ready": true,
+    "revision": "-"
+  }
+]
 ```
 
-**Footer:** `N deployers: X Kustomizations, Y HelmReleases, Z Applications`
+**Stable JSON fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `kind` | string | Always `Deployment` in v0.5 |
+| `name` | string | Deployment name |
+| `namespace` | string | Deployment namespace |
+| `status` | string | Status string (e.g., `Ready`) |
+| `ready` | bool | Whether deployment is ready |
+| `revision` | string | Revision string (or `-` if unavailable) |
 
 ---
 
@@ -274,29 +299,42 @@ cub-scout scan [flags]
 | `--verbose` | bool | false | Detailed output |
 | `--include-unresolved` | bool | false | Include Trivy/Kyverno unresolved |
 
-### Output (Plain Text)
+### Static File Scan (`--file`)
+
+Scans a YAML file without cluster access.
 
 **No issues:**
 ```
-[checkmark] No issues found
+STATIC FILE SCAN
+File: <FILE>
+Resources: <N>
+
+✓ No misconfigurations found
 ```
 
 **Issues found:**
 ```
-[warning] CCVE-2025-0665: HelmRelease default/redis has interval=0 (reconciliation disabled)
-  Remediation: flux resume helmrelease redis -n default
+STATIC FILE SCAN
+File: <FILE>
+Resources: <N>
 
-[critical] HelmRelease production/api stuck in Failed state for 2h30m
-  Last message: upgrade failed: timed out waiting for condition
-  Remediation: flux reconcile helmrelease api -n production --force
+WARNING (<N>)
+────────────────────────────────────────────────────────────────────
+[W] Probe timeout exceeds period [CCVE-2025-0244]
+  Resource: default/Deployment/misconfigured-app
+  Message: livenessProbe timeout (10s) > period (5s) - probe may never succeed
+  → Remediation: Ensure probe timeoutSeconds <= periodSeconds
+
+════════════════════════════════════════════════════════════════════
+Summary: 0 critical, <N> warning, 0 info
 ```
 
 ### Exit Codes
 
 | Code | Meaning |
 |------|---------|
-| 0 | No issues found |
-| 1 | Issues found or error |
+| 0 | No misconfigurations found |
+| 1 | Misconfigurations found or error |
 
 ---
 

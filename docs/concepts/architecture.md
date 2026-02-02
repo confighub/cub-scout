@@ -279,7 +279,7 @@ The Agent supports multiple output modes via 14 top-level commands and 17 map su
 | `map list` | Plain text resource list | - |
 | `map status` | One-line health check | `s` |
 | `map workloads` | Workloads by owner | `w` |
-| `map deployers` | GitOps deployers | `p` |
+| `map deployers` | Deployers (Deployments in v0.5) | `p` |
 | `map orphans` | Unmanaged resources | `o` |
 | `map crashes` | Failing pods/deployments | `c` |
 | `map issues` | Resources with problems | `i` |
@@ -302,7 +302,7 @@ Press these keys in the interactive TUI to switch views:
 | `s` | Status | Dashboard overview |
 | `w` | Workloads | Workloads by owner |
 | `a` | Apps | Grouped by app label + variant |
-| `p` | Pipelines | GitOps deployers (Flux, ArgoCD) |
+| `p` | Pipelines | Deployers (Deployments in v0.5) |
 | `d` | Drift | Resources diverged from desired state |
 | `o` | Orphans | Native resources (not GitOps-managed) |
 | `c` | Crashes | Failing pods |

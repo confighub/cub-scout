@@ -286,7 +286,7 @@ cub-scout map --hub        # ConfigHub hierarchy TUI (Connected mode)
 cub-scout map list         # Plain text resource list
 cub-scout map status       # One-line health check
 cub-scout map workloads    # List workloads by owner
-cub-scout map deployers    # List GitOps deployers
+cub-scout map deployers    # List deployers (Deployments in v0.5)
 cub-scout map orphans      # Unmanaged (Native) resources
 cub-scout map crashes      # Failing pods/deployments
 cub-scout map issues       # Resources with problems
@@ -315,7 +315,7 @@ Press these keys in the interactive TUI to switch views:
 | `s` | Status | Dashboard overview |
 | `w` | Workloads | Workloads by owner |
 | `a` | Apps | Grouped by app label + variant |
-| `p` | Pipelines | GitOps deployers (Flux, ArgoCD) |
+| `p` | Pipelines | Deployers (Deployments in v0.5) |
 | `d` | Drift | Resources diverged from desired state |
 | `o` | Orphans | Native resources (not GitOps-managed) |
 | `c` | Crashes | Failing pods |

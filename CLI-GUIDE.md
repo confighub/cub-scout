@@ -397,10 +397,19 @@ default           Deployment    nginx                         Native
 ./cub-scout map status
 ```
 
-**Expected output:**
+**Expected output (healthy):**
 ```
-kind-kind: 45 resources | Flux: 12 ok | ArgoCD: 8 ok | Helm: 3 ok | Native: 22 | Issues: 0
+✓ healthy: <N>/<N> deployers, <N>/<N> workloads
 ```
+
+**Expected output (problems detected):**
+```
+✗ <N> problem(s): <N>/<N> deployers, <N>/<N> workloads
+```
+
+**Exit codes:**
+- `0`: All healthy
+- `1`: Problems detected or error
 
 ---
 
@@ -455,56 +464,41 @@ Total: 47 workloads │ 45 healthy │ 2 orphans
 
 ---
 
-### `map deployers` — GitOps Deployers
+### `map deployers` — Deployers
 
 ```bash
 ./cub-scout map deployers
+./cub-scout map deployers --json
 ```
 
-**Without cub-scout:**
-```bash
-kubectl get kustomizations -A
-kubectl get helmreleases -A
-kubectl get applications -A
+> **v0.5 contract:** Deployers are Kubernetes Deployments. Flux Kustomizations,
+> HelmReleases, and Argo Applications are out of scope for v0.5 and may be
+> added in a future release.
+
+**JSON output (`--json`):**
+
+```json
+[
+  {
+    "kind": "Deployment",
+    "name": "app-alpha",
+    "namespace": "default",
+    "status": "Ready",
+    "ready": true,
+    "revision": "-"
+  }
+]
 ```
 
-**Expected output:**
-
-```
-GITOPS DEPLOYERS
-════════════════════════════════════════════════════════════════════
-
-FLUX KUSTOMIZATIONS
-────────────────────────────────────────────────────────────────────
-  STATUS  NAMESPACE       NAME              REVISION               RESOURCES
-  ✓       flux-system     apps              main@sha1:abc123f      12
-  ✓       flux-system     infrastructure    main@sha1:abc123f       8
-  ✓       flux-system     monitoring        main@sha1:abc123f       5
-  ⏸       flux-system     staging           suspended               0
-
-FLUX HELM RELEASES
-────────────────────────────────────────────────────────────────────
-  STATUS  NAMESPACE       NAME              CHART                  VERSION
-  ✓       monitoring      kube-prometheus   prometheus-community   v45.3.0
-  ✗       cache           redis             bitnami/redis          v17.0.0
-    └─▶ Error: SourceNotReady - failed to fetch chart
-
-ARGOCD APPLICATIONS
-────────────────────────────────────────────────────────────────────
-  STATUS  NAMESPACE       NAME              REPO                   SYNC
-  ✓       argocd          cert-manager      charts.jetstack.io     Synced
-  ✓       argocd          external-secrets  charts.external-sec    Synced
-  ✗       argocd          payment-api       github.com/acme/apps   OutOfSync
-    └─▶ Diff: 3 resources differ from Git
-
-════════════════════════════════════════════════════════════════════
-Summary: 8 deployers │ 6 healthy │ 1 suspended │ 1 failed
-
-Pipeline Health:
-  ✓ platform-config@main  →  apps,infrastructure  →  20 resources
-  ⏸ platform-config@main  →  staging              →  suspended
-  ✗ app-manifests@main    →  redis                →  SourceNotReady
-```
+**Stable JSON fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `kind` | string | Always `Deployment` in v0.5 |
+| `name` | string | Deployment name |
+| `namespace` | string | Deployment namespace |
+| `status` | string | Status string (e.g., `Ready`) |
+| `ready` | bool | Whether deployment is ready |
+| `revision` | string | Revision string (or `-` if unavailable) |
 
 ---
 

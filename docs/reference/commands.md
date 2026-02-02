@@ -12,7 +12,7 @@ Complete reference for all cub-scout commands.
 | `map issues` | Show resources with problems |
 | `map crashes` | Show crashing pods |
 | `map workloads` | List workloads by owner |
-| `map deployers` | List GitOps deployers |
+| `map deployers` | List deployers (Deployments) |
 | `trace` | Show GitOps ownership chain |
 | `scan` | Scan for misconfigurations |
 | `tree` | Hierarchical resource views |
@@ -120,7 +120,7 @@ Show resources with problems (not Ready).
 cub-scout map issues [flags]
 ```
 
-Shows both deployer issues (Kustomization, HelmRelease, Application) and workload issues (Deployment, StatefulSet).
+Shows resources with unhealthy conditions.
 
 ### Examples
 
@@ -166,13 +166,14 @@ cub-scout map workloads [flags]
 
 ## map deployers
 
-List GitOps deployers.
+List deployers.
 
 ```bash
 cub-scout map deployers [flags]
 ```
 
-Shows Kustomizations, HelmReleases, and Applications.
+> **v0.5 contract:** Deployers are Kubernetes Deployments. Flux Kustomizations,
+> HelmReleases, and Argo Applications are out of scope for v0.5.
 
 ---
 
