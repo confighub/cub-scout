@@ -143,35 +143,30 @@ Polish and harden v0.9 before expanding scope. No new features beyond minor patt
 
 ---
 
-## v0.10 — Git-Aware Inference (Active)
+## v0.10 — Git-Aware Inference (Complete)
 
-**Status:** In progress (Track K)
+**Status:** Complete (Track K)
 
-### Goal
+### Completed
 
-Add optional Git repository context via `--git-root` flag for enhanced pattern evidence.
-Git-aware patterns improve explanations without requiring Git context for basic operation.
-
-### MVP Scope (v0.10.0)
-
-* `--git-root <path>` flag for `patterns detect` and `patterns explain`
-* Deterministic repo scanning (bounded, no network, lexicographic ordering)
-* Skip semantics for git-aware patterns when git-root absent
-* MVP patterns:
-  * `gitops.applicationset_generators`: ApplicationSet generator summary
-  * `gitops.flux_kustomization_paths`: Flux Kustomization path correlation
-
-### Non-goals (deferred to v0.10.x or later)
-
-* Full App-of-Apps hierarchy reconstruction
-* Tenant boundary inference
-* Overlay/variant enumeration
-* Submodule expansion
+- `--git-root <path>` flag for `patterns detect` and `patterns explain` (PR #76, #77)
+- `internal/gitctx` package for deterministic repo scanning
+- Determinism constraints: bounded scan, no network, lexicographic ordering, max-file cap
+- Pattern type system: Graph-only, Hybrid, Git-aware
+- Skip semantics for git-aware patterns when git-root absent/invalid
+- Hybrid patterns: reduced evidence without `--git-root`, enriched with valid `--git-root`
+- MVP Hybrid patterns (PR #78):
+  * `gitops.argocd.applicationset_generators`: ApplicationSet generator summary
+  * `gitops.flux.kustomization_paths`: Flux Kustomization path correlation
+- Testdata fixtures (`testdata/repo-argocd/`, `testdata/repo-flux/`)
+- Updated goldens for patterns list/detect/explain
 
 ### Key Principle
 
 **Git context is optional evidence.** All existing patterns continue to work without `--git-root`.
-Git-aware patterns SKIP with deterministic skip_reason when git-root is absent.
+Hybrid patterns run with reduced evidence when `--git-root` omitted, SKIP when provided but invalid.
+
+> v0.10 git-aware pattern semantics are stable. Additional hybrid/git-aware patterns may be added in future versions.
 
 ---
 
