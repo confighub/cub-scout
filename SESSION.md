@@ -1294,17 +1294,46 @@ Implementation of connected mode infrastructure:
 
 ---
 
+### PR #81: Connected Mode Integration Tests
+
+**Branch:** `track-v0.11/connected-integration-tests`
+
+Comprehensive integration tests for connected mode using httptest:
+
+**Test hooks added:**
+- `CUB_SCOUT_GITHUB_API_BASE` - Override GitHub API base URL (for httptest)
+- `CUB_SCOUT_TEST_GRAPH_JSON` - Load graph from JSON file (avoid cluster access)
+
+**Tests implemented:**
+- `TestConnectedModeEquivalence` - Verifies `--git-url + --git-ref` produces same output as `--git-root`
+- `TestConnectedModeFailures` - Tests all 6 failure scenarios produce correct skip_reasons:
+  - `git_source repository not found` (404 + repo doesn't exist)
+  - `git_source ref not found` (404 + repo exists)
+  - `git_source authentication required` (401)
+  - `git_source rate limited` (429)
+  - `git_source fetch failed` (5xx)
+  - `git_source tarball invalid` (200 with corrupt content)
+
+**Fixture:**
+- `testdata/connected-repo/` - Minimal repo with ApplicationSet + Kustomization
+
+**Golden files locked:**
+- 2 equivalence goldens (text + JSON)
+- 6 failure scenario goldens
+
+---
+
 ### v0.11 Status
 
 | Component | Status |
 |-----------|--------|
 | Contract (PR #79) | ✅ Merged |
 | Plumbing (PR #80) | ✅ Merged |
-| Integration tests (PR3) | Pending |
+| Integration tests (PR #81) | ✅ Created |
 
 ---
 
 ### Next Steps
 
-- PR3: Integration tests and golden updates for connected mode
+- Merge PR #81 when approved
 - Update ROADMAP.md when v0.11 complete

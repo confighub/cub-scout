@@ -40,6 +40,19 @@ const DefaultTimeout = 60 * time.Second
 // DefaultMaxSize is the default maximum tarball size (100 MB).
 const DefaultMaxSize = 100 * 1024 * 1024
 
+// DefaultGitHubAPIBase is the default GitHub API base URL.
+const DefaultGitHubAPIBase = "https://api.github.com"
+
+// getGitHubAPIBase returns the GitHub API base URL.
+// TEST HOOK: Uses CUB_SCOUT_GITHUB_API_BASE env var if set (for httptest integration tests).
+// In production this env var is never set, so api.github.com is always used.
+func getGitHubAPIBase() string {
+	if base := os.Getenv("CUB_SCOUT_GITHUB_API_BASE"); base != "" {
+		return strings.TrimSuffix(base, "/")
+	}
+	return DefaultGitHubAPIBase
+}
+
 // Result represents the outcome of a Materialize call.
 type Result struct {
 	// Path is the local directory containing the extracted snapshot.
@@ -125,7 +138,7 @@ func Materialize(opts Options) Result {
 
 	// Construct tarball URL
 	// GitHub API: GET /repos/{owner}/{repo}/tarball/{ref}
-	tarballURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/tarball/%s", owner, repo, opts.Ref)
+	tarballURL := fmt.Sprintf("%s/repos/%s/%s/tarball/%s", getGitHubAPIBase(), owner, repo, opts.Ref)
 
 	// Create request
 	req, err := http.NewRequest("GET", tarballURL, nil)
@@ -276,7 +289,7 @@ func mapHTTPStatus(status int) string {
 // When tarball returns 404, we check if the repo exists to determine the cause.
 func resolve404Reason(client *http.Client, owner, repo, token string) string {
 	// Check if repository exists
-	repoURL := fmt.Sprintf("https://api.github.com/repos/%s/%s", owner, repo)
+	repoURL := fmt.Sprintf("%s/repos/%s/%s", getGitHubAPIBase(), owner, repo)
 	req, err := http.NewRequest("HEAD", repoURL, nil)
 	if err != nil {
 		return SkipReasonRepoNotFound
