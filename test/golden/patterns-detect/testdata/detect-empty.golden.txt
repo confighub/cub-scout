@@ -1,0 +1,16 @@
+PATTERNS DETECT
+Schema: patterns.v1
+
+[FAIL] gitops.controller_presence
+  GitOps Controller Presence
+  findings (1):
+    - [warning] No GitOps controllers detected
+      evidence (3):
+        - No Argo CD Applications or ApplicationSets found
+        - No Flux Kustomizations, HelmReleases, or GitRepositories found
+        - This may indicate GitOps is not deployed, or CRDs are in namespaces not collected
+
+[SKIP] k8s.ownership_chain_complete
+  Kubernetes Ownership Chain Complete
+  findings (1):
+    - [info] No Deployments found in graph

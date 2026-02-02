@@ -21,6 +21,9 @@ Complete reference for all cub-scout commands.
 | `setup` | Set up shell completions |
 | `graph export` | Export resource graph as JSON (v0.6) |
 | `graph explain` | Explain a resource's graph relationships (v0.6) |
+| `patterns list` | List registered patterns (v0.7) |
+| `patterns detect` | Run pattern detection (v0.7) |
+| `patterns explain` | Explain a specific pattern (v0.7) |
 
 ---
 
@@ -441,6 +444,73 @@ Hint: Use 'cub-scout graph export --json' for the full graph.
 ```
 
 See [Graph Explain Contract](graph-explain-contract.md) for full output format documentation.
+
+---
+
+## patterns (v0.7)
+
+Pattern detection engine for analyzing resource graphs.
+
+> **v0.7 contract surface.** Does not modify v0.5 or v0.6 contracts.
+
+### patterns list
+
+List all registered patterns.
+
+```bash
+cub-scout patterns list
+```
+
+Output is deterministic: patterns are sorted by ID.
+
+### patterns detect
+
+Run all patterns against the resource graph.
+
+```bash
+cub-scout patterns detect [flags]
+```
+
+#### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Namespace to collect (empty = all namespaces) |
+| `--empty` | Use empty graph (skip cluster collection) |
+| `--json` | Output as JSON |
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | All patterns passed |
+| 4 | One or more patterns failed |
+
+### patterns explain
+
+Explain a specific pattern with detection results.
+
+```bash
+cub-scout patterns explain <pattern-id> [flags]
+```
+
+#### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Namespace to collect (empty = all namespaces) |
+| `--empty` | Use empty graph (skip cluster collection) |
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 2 | Usage error (missing argument) |
+| 3 | Unknown pattern ID |
+| 4 | Pattern failed |
+
+See [Patterns Contract Reference](patterns-contract.md) for full documentation.
 
 ---
 

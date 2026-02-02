@@ -1,0 +1,1 @@
+Error: requires exactly 1 argument: <pattern-id>

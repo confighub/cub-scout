@@ -25,19 +25,15 @@ For these commands:
 
 ---
 
-## v0.6 — Graph Foundation (Active)
+## v0.6 — Graph Foundation (Complete)
 
-**Status:** In progress (Track G)
+**Status:** Complete (Track G)
 
-### Completed: Phase 2 ✅
+### Completed
 - `graph export --json` with schema v1 (#59)
 - K8s ownership chain collectors (#60, PR #63)
 - GitOps CRDs as nodes (#61, PR #64)
 - `graph explain` command (#62, PR #65)
-
-### Up Next: Phase 3
-- Pattern detection foundations
-- Edge types for GitOps relationships
 
 ### Goal
 
@@ -61,16 +57,25 @@ Introduce a first-class **resource graph** that captures cluster-visible relatio
 
 ---
 
-## v0.7 — Pattern Detection & Explanation
+## v0.7 — Pattern Detection & Explanation (Active)
 
-**Status:** Planned
+**Status:** In progress (Track H)
 
-* Detect common GitOps patterns (App-of-Apps, ApplicationSet, Flux tenancy, mono-repo, Helm umbrella)
+### Completed: MVP ✅
+- Pattern engine foundation (`internal/patterns` package)
+- `patterns list` command
+- `patterns detect` command with text and JSON output
+- `patterns explain` command
+- MVP patterns:
+  - `k8s.ownership_chain_complete`: Checks Deployment → ReplicaSet → Pod chains
+  - `gitops.controller_presence`: Detects Argo CD and Flux controller CRDs
+- Deterministic output with golden tests
+- Contract documentation (`docs/reference/patterns-contract.md`)
+
+### Up Next
+* More GitOps patterns (App-of-Apps, ApplicationSet, Flux tenancy)
 * Evidence-backed, confidence-scored explanations
-* New CLI surfaces:
-  * `patterns list`
-  * `patterns detect --json`
-  * `patterns explain`
+* Edge types for GitOps relationships
 
 ---
 
@@ -116,4 +121,6 @@ Introduce a first-class **resource graph** that captures cluster-visible relatio
 
 * [docs/roadmap.md](docs/roadmap.md) — Detailed v0.5 epic and issue tracking
 * [docs/reference/cli-contract.md](docs/reference/cli-contract.md) — v0.5 CLI contract reference
+* [docs/reference/graph-contract.md](docs/reference/graph-contract.md) — v0.6 graph contract reference
+* [docs/reference/patterns-contract.md](docs/reference/patterns-contract.md) — v0.7 patterns contract reference
 * [docs/reference/gitops-patterns.md](docs/reference/gitops-patterns.md) — GitOps patterns conceptual reference

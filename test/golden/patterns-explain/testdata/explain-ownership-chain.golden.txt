@@ -1,0 +1,11 @@
+PATTERN EXPLAIN
+ID: k8s.ownership_chain_complete
+Name: Kubernetes Ownership Chain Complete
+Category: k8s
+
+Description:
+  Checks that Deployment → ReplicaSet → Pod ownership chains are complete. Incomplete chains may indicate orphaned resources or missing links.
+
+Result: [SKIP]
+  findings (1):
+    - [info] No Deployments found in graph

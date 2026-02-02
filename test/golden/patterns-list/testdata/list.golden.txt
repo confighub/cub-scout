@@ -1,0 +1,8 @@
+PATTERNS LIST
+Schema: patterns.v1
+
+Registered patterns (2):
+  - gitops.controller_presence
+    GitOps Controller Presence
+  - k8s.ownership_chain_complete
+    Kubernetes Ownership Chain Complete

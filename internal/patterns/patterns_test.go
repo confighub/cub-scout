@@ -1,0 +1,408 @@
+package patterns
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/confighub/cub-scout/internal/graph"
+)
+
+// buildTestGraph creates a complete ownership chain for testing.
+func buildTestGraph() *graph.Graph {
+	g := graph.NewGraph("test-cluster")
+
+	// Deployment
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/default/Deployment/nginx",
+		Cluster:    "test-cluster",
+		Namespace:  "default",
+		Kind:       "Deployment",
+		Name:       "nginx",
+		APIVersion: "apps/v1",
+		Labels:     map[string]string{"app": "nginx"},
+	})
+
+	// ReplicaSet
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/default/ReplicaSet/nginx-abc123",
+		Cluster:    "test-cluster",
+		Namespace:  "default",
+		Kind:       "ReplicaSet",
+		Name:       "nginx-abc123",
+		APIVersion: "apps/v1",
+		Labels:     map[string]string{"app": "nginx", "pod-template-hash": "abc123"},
+	})
+
+	// Pod
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/default/Pod/nginx-abc123-xyz789",
+		Cluster:    "test-cluster",
+		Namespace:  "default",
+		Kind:       "Pod",
+		Name:       "nginx-abc123-xyz789",
+		APIVersion: "v1",
+		Labels:     map[string]string{"app": "nginx"},
+	})
+
+	// Deployment → ReplicaSet edge
+	g.AddEdge(graph.Edge{
+		From: "test-cluster/default/Deployment/nginx",
+		To:   "test-cluster/default/ReplicaSet/nginx-abc123",
+		Type: graph.EdgeTypeOwns,
+		Evidence: []graph.Evidence{{
+			Field:  "metadata.ownerReferences",
+			Reason: "ReplicaSet nginx-abc123 has ownerReference to Deployment nginx",
+		}},
+	})
+
+	// ReplicaSet → Pod edge
+	g.AddEdge(graph.Edge{
+		From: "test-cluster/default/ReplicaSet/nginx-abc123",
+		To:   "test-cluster/default/Pod/nginx-abc123-xyz789",
+		Type: graph.EdgeTypeOwns,
+		Evidence: []graph.Evidence{{
+			Field:  "metadata.ownerReferences",
+			Reason: "Pod nginx-abc123-xyz789 has ownerReference to ReplicaSet nginx-abc123",
+		}},
+	})
+
+	return g
+}
+
+// buildTestGraphWithGitOps adds GitOps CRDs to the test graph.
+func buildTestGraphWithGitOps() *graph.Graph {
+	g := buildTestGraph()
+
+	// Add Argo CD Application
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/argocd/Application/my-app",
+		Cluster:    "test-cluster",
+		Namespace:  "argocd",
+		Kind:       "Application",
+		Name:       "my-app",
+		APIVersion: "argoproj.io/v1alpha1",
+		Labels:     map[string]string{"app.kubernetes.io/name": "my-app"},
+	})
+
+	// Add Flux Kustomization
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/flux-system",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "flux-system",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+
+	return g
+}
+
+func TestRegistry_List(t *testing.T) {
+	patterns := List()
+
+	// Should have at least 2 patterns registered (ownership chain + gitops presence)
+	if len(patterns) < 2 {
+		t.Errorf("expected at least 2 patterns, got %d", len(patterns))
+	}
+
+	// Should be sorted by ID
+	for i := 1; i < len(patterns); i++ {
+		if patterns[i].ID < patterns[i-1].ID {
+			t.Errorf("patterns not sorted: %s comes after %s", patterns[i].ID, patterns[i-1].ID)
+		}
+	}
+}
+
+func TestRegistry_Get(t *testing.T) {
+	// Known patterns should be found
+	p := Get("k8s.ownership_chain_complete")
+	if p == nil {
+		t.Fatal("expected to find k8s.ownership_chain_complete pattern")
+	}
+	if p.ID != "k8s.ownership_chain_complete" {
+		t.Errorf("expected ID k8s.ownership_chain_complete, got %s", p.ID)
+	}
+
+	// Unknown patterns should return nil
+	p = Get("nonexistent.pattern")
+	if p != nil {
+		t.Errorf("expected nil for nonexistent pattern, got %v", p)
+	}
+}
+
+func TestDetectAll_Deterministic(t *testing.T) {
+	g := buildTestGraph()
+
+	result1 := DetectAll(g)
+	result2 := DetectAll(g)
+
+	// Results should be identical
+	if len(result1.Patterns) != len(result2.Patterns) {
+		t.Errorf("results have different number of patterns: %d vs %d",
+			len(result1.Patterns), len(result2.Patterns))
+	}
+
+	for i := range result1.Patterns {
+		if result1.Patterns[i].ID != result2.Patterns[i].ID {
+			t.Errorf("pattern order differs at index %d: %s vs %s",
+				i, result1.Patterns[i].ID, result2.Patterns[i].ID)
+		}
+	}
+}
+
+func TestDetectOne(t *testing.T) {
+	g := buildTestGraph()
+
+	// Known pattern
+	pr := DetectOne(g, "k8s.ownership_chain_complete")
+	if pr == nil {
+		t.Fatal("expected result for known pattern")
+	}
+	if pr.ID != "k8s.ownership_chain_complete" {
+		t.Errorf("expected ID k8s.ownership_chain_complete, got %s", pr.ID)
+	}
+
+	// Unknown pattern
+	pr = DetectOne(g, "nonexistent.pattern")
+	if pr != nil {
+		t.Errorf("expected nil for unknown pattern, got %v", pr)
+	}
+}
+
+func TestOwnershipChainComplete_Pass(t *testing.T) {
+	g := buildTestGraph()
+
+	pr := DetectOne(g, "k8s.ownership_chain_complete")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusPass {
+		t.Errorf("expected pass status for complete chain, got %s", pr.Status)
+	}
+}
+
+func TestOwnershipChainComplete_NoDeployments(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	pr := DetectOne(g, "k8s.ownership_chain_complete")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusSkip {
+		t.Errorf("expected skip status for empty graph, got %s", pr.Status)
+	}
+}
+
+func TestOwnershipChainComplete_OrphanedReplicaSet(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	// Deployment
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/default/Deployment/nginx",
+		Cluster:    "test-cluster",
+		Namespace:  "default",
+		Kind:       "Deployment",
+		Name:       "nginx",
+		APIVersion: "apps/v1",
+	})
+
+	// Orphaned ReplicaSet (no owning Deployment)
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/default/ReplicaSet/orphan-rs",
+		Cluster:    "test-cluster",
+		Namespace:  "default",
+		Kind:       "ReplicaSet",
+		Name:       "orphan-rs",
+		APIVersion: "apps/v1",
+	})
+
+	pr := DetectOne(g, "k8s.ownership_chain_complete")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusFail {
+		t.Errorf("expected fail status for orphaned RS, got %s", pr.Status)
+	}
+
+	// Should have finding about orphaned RS
+	found := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "orphan-rs") && strings.Contains(f.Message, "no owning Deployment") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected finding about orphaned ReplicaSet")
+	}
+}
+
+func TestGitOpsPresence_BothPresent(t *testing.T) {
+	g := buildTestGraphWithGitOps()
+
+	pr := DetectOne(g, "gitops.controller_presence")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusPass {
+		t.Errorf("expected pass status for graph with GitOps CRDs, got %s", pr.Status)
+	}
+
+	// Should have findings for both Argo and Flux
+	hasArgo := false
+	hasFlux := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "Argo CD") {
+			hasArgo = true
+		}
+		if strings.Contains(f.Message, "Flux") {
+			hasFlux = true
+		}
+	}
+
+	if !hasArgo {
+		t.Error("expected Argo CD finding")
+	}
+	if !hasFlux {
+		t.Error("expected Flux finding")
+	}
+}
+
+func TestGitOpsPresence_NonePresent(t *testing.T) {
+	g := buildTestGraph() // No GitOps CRDs
+
+	pr := DetectOne(g, "gitops.controller_presence")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusFail {
+		t.Errorf("expected fail status for graph without GitOps CRDs, got %s", pr.Status)
+	}
+
+	// Should have warning about no GitOps
+	found := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "No GitOps controllers") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected finding about no GitOps controllers")
+	}
+}
+
+func TestRenderList(t *testing.T) {
+	output := RenderList()
+
+	// Should contain header
+	if !strings.Contains(output, "PATTERNS LIST") {
+		t.Error("expected PATTERNS LIST header")
+	}
+
+	// Should contain schema version
+	if !strings.Contains(output, SchemaVersion) {
+		t.Errorf("expected schema version %s", SchemaVersion)
+	}
+
+	// Should list known patterns
+	if !strings.Contains(output, "k8s.ownership_chain_complete") {
+		t.Error("expected ownership chain pattern in list")
+	}
+	if !strings.Contains(output, "gitops.controller_presence") {
+		t.Error("expected gitops presence pattern in list")
+	}
+}
+
+func TestRenderText_Deterministic(t *testing.T) {
+	g := buildTestGraph()
+
+	result := DetectAll(g)
+	output1 := RenderText(result)
+	output2 := RenderText(result)
+
+	if output1 != output2 {
+		t.Error("RenderText is not deterministic")
+	}
+}
+
+func TestRenderJSON_Deterministic(t *testing.T) {
+	g := buildTestGraph()
+
+	result := DetectAll(g)
+	output1, err1 := RenderJSON(result)
+	output2, err2 := RenderJSON(result)
+
+	if err1 != nil || err2 != nil {
+		t.Fatalf("RenderJSON errors: %v, %v", err1, err2)
+	}
+
+	if output1 != output2 {
+		t.Error("RenderJSON is not deterministic")
+	}
+}
+
+func TestAnyFail(t *testing.T) {
+	// Result with all pass
+	passResult := Result{
+		Patterns: []PatternResult{
+			{Status: StatusPass},
+			{Status: StatusPass},
+		},
+	}
+	if AnyFail(passResult) {
+		t.Error("expected false for all-pass result")
+	}
+
+	// Result with one fail
+	failResult := Result{
+		Patterns: []PatternResult{
+			{Status: StatusPass},
+			{Status: StatusFail},
+		},
+	}
+	if !AnyFail(failResult) {
+		t.Error("expected true for result with failures")
+	}
+
+	// Result with skip (not fail)
+	skipResult := Result{
+		Patterns: []PatternResult{
+			{Status: StatusSkip},
+			{Status: StatusPass},
+		},
+	}
+	if AnyFail(skipResult) {
+		t.Error("expected false for result with only skip/pass")
+	}
+}
+
+func TestSortFindings(t *testing.T) {
+	findings := []Finding{
+		{Severity: SeverityInfo, Resource: "z-resource", Message: "message"},
+		{Severity: SeverityError, Resource: "a-resource", Message: "message"},
+		{Severity: SeverityWarning, Resource: "b-resource", Message: "message"},
+	}
+
+	sortFindings(findings)
+
+	// Error should come first
+	if findings[0].Severity != SeverityError {
+		t.Errorf("expected error first, got %s", findings[0].Severity)
+	}
+
+	// Warning should come second
+	if findings[1].Severity != SeverityWarning {
+		t.Errorf("expected warning second, got %s", findings[1].Severity)
+	}
+
+	// Info should come last
+	if findings[2].Severity != SeverityInfo {
+		t.Errorf("expected info last, got %s", findings[2].Severity)
+	}
+}

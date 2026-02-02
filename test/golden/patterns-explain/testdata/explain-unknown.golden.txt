@@ -1,0 +1,5 @@
+Error: unknown pattern: nonexistent.pattern
+
+Available patterns:
+  - gitops.controller_presence
+  - k8s.ownership_chain_complete

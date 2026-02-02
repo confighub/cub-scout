@@ -1,0 +1,15 @@
+PATTERN EXPLAIN
+ID: gitops.controller_presence
+Name: GitOps Controller Presence
+Category: gitops
+
+Description:
+  Checks for the presence of GitOps controller CRDs (Argo CD Applications/ApplicationSets, Flux Kustomizations/HelmReleases). Detects which GitOps tools are in use.
+
+Result: [FAIL]
+  findings (1):
+    - [warning] No GitOps controllers detected
+      evidence (3):
+        - No Argo CD Applications or ApplicationSets found
+        - No Flux Kustomizations, HelmReleases, or GitRepositories found
+        - This may indicate GitOps is not deployed, or CRDs are in namespaces not collected
