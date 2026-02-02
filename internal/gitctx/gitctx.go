@@ -111,7 +111,7 @@ func OpenGitRoot(path string) *GitContext {
 }
 
 // Files returns the list of files in the repository, sorted lexicographically.
-// Results are cached after first call.
+// Results are cached after first call. Returns a copy to prevent mutation.
 //
 // The scan:
 //   - Excludes the .git directory
@@ -123,13 +123,15 @@ func (c *GitContext) Files() []string {
 		return nil
 	}
 
-	if c.scanned {
-		return c.files
+	if !c.scanned {
+		c.files = c.scanFiles()
+		c.scanned = true
 	}
 
-	c.files = c.scanFiles()
-	c.scanned = true
-	return c.files
+	// Return a copy to prevent mutation by callers
+	result := make([]string, len(c.files))
+	copy(result, c.files)
+	return result
 }
 
 // scanFiles performs the deterministic file enumeration.

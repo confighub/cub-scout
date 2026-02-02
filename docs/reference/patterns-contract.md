@@ -383,8 +383,7 @@ When `--git-root` is not provided or the path is unreadable, the pattern is skip
     (none)
 ```
 
-Note: These skip reasons only apply when `--git-root` is explicitly provided but unusable.
-Hybrid patterns run normally (with reduced evidence) when `--git-root` is simply omitted.
+Note: These skip reasons apply when `--git-root` is omitted for **git-aware** patterns, or when `--git-root` is provided but unusable. Hybrid patterns run normally (with reduced evidence) when `--git-root` is omitted.
 
 ### Git-Aware vs Graph-Only Patterns
 
