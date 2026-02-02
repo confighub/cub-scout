@@ -150,9 +150,43 @@ func sortFindings(findings []Finding) {
 		return findings[i].Message < findings[j].Message
 	})
 
-	// Also sort evidence within each finding
+	// Sort arrays within each finding for deterministic output
 	for i := range findings {
 		sort.Strings(findings[i].Evidence)
+		sort.Strings(findings[i].Refs)
+		// Sort remediation.links (steps maintain pattern-defined order)
+		if findings[i].Remediation != nil {
+			sort.Strings(findings[i].Remediation.Links)
+		}
+	}
+}
+
+// renderFinding renders a single finding to the string builder.
+func renderFinding(sb *strings.Builder, f Finding, indent string) {
+	sb.WriteString(fmt.Sprintf("%s- [%s] %s\n", indent, f.Severity, f.Message))
+	if f.Resource != "" {
+		sb.WriteString(fmt.Sprintf("%s  resource: %s\n", indent, f.Resource))
+	}
+	if len(f.Evidence) > 0 {
+		sb.WriteString(fmt.Sprintf("%s  evidence (%d):\n", indent, len(f.Evidence)))
+		for _, e := range f.Evidence {
+			sb.WriteString(fmt.Sprintf("%s    - %s\n", indent, e))
+		}
+	}
+	// Render remediation block only if present (v0.8+)
+	if f.Remediation != nil && f.Remediation.Summary != "" {
+		sb.WriteString(fmt.Sprintf("%s  Remediation: %s\n", indent, f.Remediation.Summary))
+		if len(f.Remediation.Steps) > 0 {
+			for _, step := range f.Remediation.Steps {
+				sb.WriteString(fmt.Sprintf("%s    - %s\n", indent, step))
+			}
+		}
+		if len(f.Remediation.Links) > 0 {
+			sb.WriteString(fmt.Sprintf("%s  Links:\n", indent))
+			for _, link := range f.Remediation.Links {
+				sb.WriteString(fmt.Sprintf("%s    - %s\n", indent, link))
+			}
+		}
 	}
 }
 
@@ -187,16 +221,7 @@ func RenderText(r Result) string {
 			sb.WriteString("    (none)\n")
 		} else {
 			for _, f := range pr.Findings {
-				sb.WriteString(fmt.Sprintf("    - [%s] %s\n", f.Severity, f.Message))
-				if f.Resource != "" {
-					sb.WriteString(fmt.Sprintf("      resource: %s\n", f.Resource))
-				}
-				if len(f.Evidence) > 0 {
-					sb.WriteString(fmt.Sprintf("      evidence (%d):\n", len(f.Evidence)))
-					for _, e := range f.Evidence {
-						sb.WriteString(fmt.Sprintf("        - %s\n", e))
-					}
-				}
+				renderFinding(&sb, f, "    ")
 			}
 		}
 		sb.WriteString("\n")
@@ -249,16 +274,7 @@ func RenderExplain(p *Pattern, pr *PatternResult) string {
 			sb.WriteString("    (none)\n")
 		} else {
 			for _, f := range pr.Findings {
-				sb.WriteString(fmt.Sprintf("    - [%s] %s\n", f.Severity, f.Message))
-				if f.Resource != "" {
-					sb.WriteString(fmt.Sprintf("      resource: %s\n", f.Resource))
-				}
-				if len(f.Evidence) > 0 {
-					sb.WriteString(fmt.Sprintf("      evidence (%d):\n", len(f.Evidence)))
-					for _, e := range f.Evidence {
-						sb.WriteString(fmt.Sprintf("        - %s\n", e))
-					}
-				}
+				renderFinding(&sb, f, "    ")
 			}
 		}
 	}

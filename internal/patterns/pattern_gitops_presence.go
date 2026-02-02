@@ -98,14 +98,28 @@ func detectGitOpsControllerPresence(g *graph.Graph) ([]Finding, Status) {
 	}
 
 	if !hasArgoCD && !hasFlux {
+		confidenceNoGitOps := 0.8
 		findings = append(findings, Finding{
-			Pattern:  "gitops.controller_presence",
-			Severity: SeverityWarning,
-			Message:  "No GitOps controllers detected",
+			Pattern:    "gitops.controller_presence",
+			Severity:   SeverityWarning,
+			Message:    "No GitOps controllers detected",
+			Confidence: &confidenceNoGitOps,
 			Evidence: []string{
 				"No Argo CD Applications or ApplicationSets found",
 				"No Flux Kustomizations, HelmReleases, or GitRepositories found",
 				"This may indicate GitOps is not deployed, or CRDs are in namespaces not collected",
+			},
+			Remediation: &Remediation{
+				Summary: "Install a GitOps controller (Argo CD or Flux) if you intend to manage cluster resources declaratively from Git.",
+				Steps: []string{
+					"Choose a controller: Argo CD for application-centric workflows, Flux for Git-native automation.",
+					"Install it using the official documentation.",
+					"Define GitOps resources (e.g., Argo CD Application/ApplicationSet or Flux Kustomization/HelmRelease) for your workloads.",
+				},
+				Links: []string{
+					"https://argo-cd.readthedocs.io/en/stable/getting_started/",
+					"https://fluxcd.io/flux/get-started/",
+				},
 			},
 		})
 		return findings, StatusFail

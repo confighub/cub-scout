@@ -73,6 +73,27 @@ type Finding struct {
 
 	// Evidence provides supporting details.
 	Evidence []string `json:"evidence,omitempty"`
+
+	// Confidence is a deterministic score (0.0-1.0) for the finding (v0.8+, optional).
+	Confidence *float64 `json:"confidence,omitempty"`
+
+	// Refs are stable identifiers for correlation across runs (v0.8+, optional).
+	Refs []string `json:"refs,omitempty"`
+
+	// Remediation provides actionable guidance (v0.8+, optional).
+	Remediation *Remediation `json:"remediation,omitempty"`
+}
+
+// Remediation provides structured guidance for resolving a finding.
+type Remediation struct {
+	// Summary is a brief description of the fix (required if Remediation is present).
+	Summary string `json:"summary"`
+
+	// Steps are ordered action steps (optional).
+	Steps []string `json:"steps,omitempty"`
+
+	// Links are canonical documentation URLs (optional).
+	Links []string `json:"links,omitempty"`
 }
 
 // Severity indicates the importance of a finding.
