@@ -1323,17 +1323,23 @@ Comprehensive integration tests for connected mode using httptest:
 
 ---
 
-### v0.11 Status
+### v0.11 Status: COMPLETE
 
 | Component | Status |
 |-----------|--------|
 | Contract (PR #79) | ✅ Merged |
 | Plumbing (PR #80) | ✅ Merged |
-| Integration tests (PR #81) | ✅ Created |
+| Integration tests (PR #81) | ✅ Merged |
+
+**Invariants now locked:**
+- `--git-root` ↔ `--git-url/--git-ref` equivalence proven and enforced
+- Skip reasons ABI-stable (goldens catch drift)
+- No network or git binary required for tests
+- No absolute path leakage (TMPDIR-safe)
 
 ---
 
 ### Next Steps
 
-- Merge PR #81 when approved
-- Update ROADMAP.md when v0.11 complete
+- Tag v0.11.1
+- Update ROADMAP.md
