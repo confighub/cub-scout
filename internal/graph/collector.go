@@ -70,10 +70,10 @@ func (c *Collector) CollectOwnershipChain(ctx context.Context, g *Graph, namespa
 					From: ownerID,
 					To:   nodeID,
 					Type: EdgeTypeOwns,
-					Evidence: Evidence{
-						Field:  fmt.Sprintf("metadata.ownerReferences[%s]", owner.Name),
+					Evidence: []Evidence{{
+						Field:  "metadata.ownerReferences",
 						Reason: fmt.Sprintf("ReplicaSet %s has ownerReference to Deployment %s", rs.Name, owner.Name),
-					},
+					}},
 				})
 			}
 		}
@@ -105,10 +105,10 @@ func (c *Collector) CollectOwnershipChain(ctx context.Context, g *Graph, namespa
 					From: ownerID,
 					To:   nodeID,
 					Type: EdgeTypeOwns,
-					Evidence: Evidence{
-						Field:  fmt.Sprintf("metadata.ownerReferences[%s]", owner.Name),
+					Evidence: []Evidence{{
+						Field:  "metadata.ownerReferences",
 						Reason: fmt.Sprintf("Pod %s has ownerReference to ReplicaSet %s", pod.Name, owner.Name),
-					},
+					}},
 				})
 			}
 		}

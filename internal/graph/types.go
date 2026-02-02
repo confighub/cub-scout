@@ -66,7 +66,8 @@ type Edge struct {
 	Type EdgeType `json:"type"`
 
 	// Evidence describes how this relationship was detected.
-	Evidence Evidence `json:"evidence"`
+	// Multiple evidence items may exist when a relationship is detected through multiple fields.
+	Evidence []Evidence `json:"evidence"`
 }
 
 // EdgeType represents the type of relationship between resources.
@@ -88,8 +89,9 @@ const (
 
 // Evidence describes how a relationship was detected.
 type Evidence struct {
-	// Field is the field path that established this relationship.
-	// Examples: "metadata.ownerReferences[0]", "spec.selector.matchLabels"
+	// Field is a stable label identifying the field that established this relationship.
+	// This is a path-like string, not a strict JSONPath.
+	// Examples: "metadata.ownerReferences", "spec.selector.matchLabels"
 	Field string `json:"field"`
 
 	// Reason is a human-readable explanation.

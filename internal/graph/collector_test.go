@@ -113,11 +113,15 @@ func TestCollectOwnershipChain_DeploymentReplicaSetPod(t *testing.T) {
 			if edge.Type != EdgeTypeOwns {
 				t.Errorf("expected edge type %q, got %q", EdgeTypeOwns, edge.Type)
 			}
-			if edge.Evidence.Field != "metadata.ownerReferences[nginx]" {
-				t.Errorf("expected field %q, got %q", "metadata.ownerReferences[nginx]", edge.Evidence.Field)
-			}
-			if edge.Evidence.Reason == "" {
-				t.Error("expected non-empty evidence reason")
+			if len(edge.Evidence) == 0 {
+				t.Error("expected non-empty evidence array")
+			} else {
+				if edge.Evidence[0].Field != "metadata.ownerReferences" {
+					t.Errorf("expected field %q, got %q", "metadata.ownerReferences", edge.Evidence[0].Field)
+				}
+				if edge.Evidence[0].Reason == "" {
+					t.Error("expected non-empty evidence reason")
+				}
 			}
 		}
 	}
@@ -134,8 +138,10 @@ func TestCollectOwnershipChain_DeploymentReplicaSetPod(t *testing.T) {
 			if edge.Type != EdgeTypeOwns {
 				t.Errorf("expected edge type %q, got %q", EdgeTypeOwns, edge.Type)
 			}
-			if edge.Evidence.Field != "metadata.ownerReferences[nginx-abc123]" {
-				t.Errorf("expected field %q, got %q", "metadata.ownerReferences[nginx-abc123]", edge.Evidence.Field)
+			if len(edge.Evidence) == 0 {
+				t.Error("expected non-empty evidence array")
+			} else if edge.Evidence[0].Field != "metadata.ownerReferences" {
+				t.Errorf("expected field %q, got %q", "metadata.ownerReferences", edge.Evidence[0].Field)
 			}
 		}
 	}

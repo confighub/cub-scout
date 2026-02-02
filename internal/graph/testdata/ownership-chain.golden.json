@@ -44,19 +44,23 @@
       "from": "test-cluster/default/Deployment/nginx",
       "to": "test-cluster/default/ReplicaSet/nginx-abc123",
       "type": "owns",
-      "evidence": {
-        "field": "metadata.ownerReferences[nginx]",
-        "reason": "ReplicaSet nginx-abc123 has ownerReference to Deployment nginx"
-      }
+      "evidence": [
+        {
+          "field": "metadata.ownerReferences",
+          "reason": "ReplicaSet nginx-abc123 has ownerReference to Deployment nginx"
+        }
+      ]
     },
     {
       "from": "test-cluster/default/ReplicaSet/nginx-abc123",
       "to": "test-cluster/default/Pod/nginx-abc123-xyz",
       "type": "owns",
-      "evidence": {
-        "field": "metadata.ownerReferences[nginx-abc123]",
-        "reason": "Pod nginx-abc123-xyz has ownerReference to ReplicaSet nginx-abc123"
-      }
+      "evidence": [
+        {
+          "field": "metadata.ownerReferences",
+          "reason": "Pod nginx-abc123-xyz has ownerReference to ReplicaSet nginx-abc123"
+        }
+      ]
     }
   ]
 }
