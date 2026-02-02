@@ -76,32 +76,67 @@ Introduce a first-class **resource graph** that captures cluster-visible relatio
 
 ---
 
-## v0.8 — Finding Enrichment (Active)
+## v0.8 — Finding Enrichment (Released)
 
-**Status:** In progress (Track I)
+**Status:** Released (`v0.8.0` content in `v0.9.0`) (Track I)
 
-### Goal
+### Completed
 
-Enrich pattern findings with actionability metadata without changing detection logic or breaking existing consumers.
-
-### Scope
-
-* Additive optional fields on findings:
+- Additive optional fields on findings:
   - `confidence`: deterministic score (0.0–1.0)
   - `refs`: stable resource identifiers for correlation
   - `remediation`: structured guidance (summary, steps, links)
-* Text rendering of remediation blocks
-* Backwards-compatible JSON (omitempty)
+- Text rendering of remediation blocks
+- Backwards-compatible JSON (omitempty)
+- Remediation wired to MVP patterns:
+  - `gitops.controller_presence`: Guidance for installing Argo CD or Flux
+  - `k8s.ownership_chain_complete`: Steps for investigating orphaned resources
+
+> v0.8 features shipped as part of v0.9.0 release due to combined merge.
+
+---
+
+## v0.9 — Pattern Prerequisites (Released)
+
+**Status:** Released (`v0.9.0`) (Track J)
+
+### Completed
+
+- Pattern prerequisite system:
+  - `requires_node_kind`: Graph must contain specific node kind
+  - `requires_any_of_kinds`: Graph must contain any of listed kinds
+  - `skip_reason`: Structured reason when prerequisites unmet
+- Prerequisites wired to `k8s.ownership_chain_complete` pattern
+- Contract documentation updated
+
+> v0.9 pattern prerequisites are stable. Additive prerequisite types may be added in future versions.
+
+---
+
+## v0.9.x — Stabilization Window (Active)
+
+**Status:** In progress
+
+### Goal
+
+Polish and harden v0.9 before expanding scope. No new features beyond minor pattern coverage gaps.
+
+### Scope
+
+* Wording polish and documentation alignment
+* Pattern coverage gaps (1–2 GitOps interpretive patterns)
+* Contract clarity improvements
+* Release notes cleanup
 
 ### Non-goals
 
-* No changes to pattern IDs or detection semantics
-* No changes to exit codes
+* No new prerequisite types
+* No hierarchical GitOps patterns
 * No Git parsing or external service integration
 
 ---
 
-## v0.9 — Git-Aware Inference
+## v0.10 — Git-Aware Inference
 
 **Status:** Planned
 
@@ -111,7 +146,7 @@ Enrich pattern findings with actionability metadata without changing detection l
 
 ---
 
-## v0.10 — ConfigHub Collaboration
+## v0.11 — ConfigHub Collaboration
 
 **Status:** Planned
 
@@ -121,7 +156,7 @@ Enrich pattern findings with actionability metadata without changing detection l
 
 ---
 
-## v1.0 — Fleet Intelligence & Stability
+## v1.0+ — Fleet Intelligence & Stability
 
 **Status:** Future
 
