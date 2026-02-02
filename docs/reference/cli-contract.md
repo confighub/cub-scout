@@ -8,6 +8,18 @@ breaking changes will be avoided.
 
 ---
 
+## Contract Freeze Notice
+
+> **v0.5 CLI surfaces are frozen.**
+>
+> The commands, output formats, and exit codes documented here are locked.
+> Changes to contracted behavior require a new minor version (v0.6+).
+>
+> If documentation and behavior ever diverge, **golden tests under
+> `test/golden/` are the source of truth**.
+
+---
+
 ## Stable Commands
 
 The following commands are stable for v0.5:
