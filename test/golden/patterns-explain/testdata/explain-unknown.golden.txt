@@ -1,5 +1,7 @@
 Error: unknown pattern: nonexistent.pattern
 
 Available patterns:
+  - gitops.argocd.resources_present
   - gitops.controller_presence
+  - gitops.flux.resources_present
   - k8s.ownership_chain_complete

@@ -1,8 +1,12 @@
 PATTERNS LIST
 Schema: patterns.v1
 
-Registered patterns (2):
+Registered patterns (4):
+  - gitops.argocd.resources_present
+    Argo CD Resources Present
   - gitops.controller_presence
     GitOps Controller Presence
+  - gitops.flux.resources_present
+    Flux Resources Present
   - k8s.ownership_chain_complete
     Kubernetes Ownership Chain Complete

@@ -862,3 +862,188 @@ func TestRenderJSON_OmitsEmptySkipReason(t *testing.T) {
 		t.Error("expected skip_reason to be omitted when empty")
 	}
 }
+
+// Tests for v0.9.2 GitOps interpretive patterns
+
+func TestArgoCDResourcesPresent_WithResources(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	// Add multiple Argo CD Applications
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/argocd/Application/app1",
+		Cluster:    "test-cluster",
+		Namespace:  "argocd",
+		Kind:       "Application",
+		Name:       "app1",
+		APIVersion: "argoproj.io/v1alpha1",
+	})
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/argocd/Application/app2",
+		Cluster:    "test-cluster",
+		Namespace:  "argocd",
+		Kind:       "Application",
+		Name:       "app2",
+		APIVersion: "argoproj.io/v1alpha1",
+	})
+
+	// Add one ApplicationSet
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/argocd/ApplicationSet/appset1",
+		Cluster:    "test-cluster",
+		Namespace:  "argocd",
+		Kind:       "ApplicationSet",
+		Name:       "appset1",
+		APIVersion: "argoproj.io/v1alpha1",
+	})
+
+	pr := DetectOne(g, "gitops.argocd.resources_present")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusPass {
+		t.Errorf("expected pass status, got %s", pr.Status)
+	}
+
+	// Should have 2 findings (one per kind)
+	if len(pr.Findings) != 2 {
+		t.Errorf("expected 2 findings (one per kind), got %d", len(pr.Findings))
+	}
+
+	// Check for correct counts in messages
+	hasApps := false
+	hasAppSets := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "Applications detected: 2") {
+			hasApps = true
+		}
+		if strings.Contains(f.Message, "ApplicationSets detected: 1") {
+			hasAppSets = true
+		}
+	}
+
+	if !hasApps {
+		t.Error("expected finding with Applications count")
+	}
+	if !hasAppSets {
+		t.Error("expected finding with ApplicationSets count")
+	}
+}
+
+func TestArgoCDResourcesPresent_Skipped(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+	// Empty graph - no Argo CD resources
+
+	pr := DetectOne(g, "gitops.argocd.resources_present")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusSkip {
+		t.Errorf("expected skip status when no Argo CD resources, got %s", pr.Status)
+	}
+
+	if pr.SkipReason == "" {
+		t.Error("expected skip_reason to be set")
+	}
+}
+
+func TestFluxResourcesPresent_WithResources(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	// Add Flux Kustomizations
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/flux-system",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "flux-system",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/apps",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "apps",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+
+	// Add HelmRelease
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/default/HelmRelease/nginx",
+		Cluster:    "test-cluster",
+		Namespace:  "default",
+		Kind:       "HelmRelease",
+		Name:       "nginx",
+		APIVersion: "helm.toolkit.fluxcd.io/v2",
+	})
+
+	// Add GitRepository
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/GitRepository/flux-system",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "GitRepository",
+		Name:       "flux-system",
+		APIVersion: "source.toolkit.fluxcd.io/v1",
+	})
+
+	pr := DetectOne(g, "gitops.flux.resources_present")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusPass {
+		t.Errorf("expected pass status, got %s", pr.Status)
+	}
+
+	// Should have 3 findings (one per kind)
+	if len(pr.Findings) != 3 {
+		t.Errorf("expected 3 findings (one per kind), got %d", len(pr.Findings))
+	}
+
+	// Check for correct counts
+	hasKustomizations := false
+	hasHelmReleases := false
+	hasGitRepos := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "Kustomizations detected: 2") {
+			hasKustomizations = true
+		}
+		if strings.Contains(f.Message, "HelmReleases detected: 1") {
+			hasHelmReleases = true
+		}
+		if strings.Contains(f.Message, "GitRepositories detected: 1") {
+			hasGitRepos = true
+		}
+	}
+
+	if !hasKustomizations {
+		t.Error("expected finding with Kustomizations count")
+	}
+	if !hasHelmReleases {
+		t.Error("expected finding with HelmReleases count")
+	}
+	if !hasGitRepos {
+		t.Error("expected finding with GitRepositories count")
+	}
+}
+
+func TestFluxResourcesPresent_Skipped(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+	// Empty graph - no Flux resources
+
+	pr := DetectOne(g, "gitops.flux.resources_present")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusSkip {
+		t.Errorf("expected skip status when no Flux resources, got %s", pr.Status)
+	}
+
+	if pr.SkipReason == "" {
+		t.Error("expected skip_reason to be set")
+	}
+}

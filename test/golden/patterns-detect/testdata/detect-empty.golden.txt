@@ -1,6 +1,12 @@
 PATTERNS DETECT
 Schema: patterns.v1
 
+[SKIP] gitops.argocd.resources_present
+  Argo CD Resources Present
+  skip_reason: no Application/ApplicationSet nodes in graph
+  findings (0):
+    (none)
+
 [FAIL] gitops.controller_presence
   GitOps Controller Presence
   findings (1):
@@ -16,6 +22,12 @@ Schema: patterns.v1
       Links:
         - https://argo-cd.readthedocs.io/en/stable/getting_started/
         - https://fluxcd.io/flux/get-started/
+
+[SKIP] gitops.flux.resources_present
+  Flux Resources Present
+  skip_reason: no Kustomization/HelmRelease/GitRepository nodes in graph
+  findings (0):
+    (none)
 
 [SKIP] k8s.ownership_chain_complete
   Kubernetes Ownership Chain Complete

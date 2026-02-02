@@ -8,6 +8,60 @@ How common GitOps patterns (App-of-Apps, ApplicationSet, Flux Tenancy, Mono-repo
 > described here may require integration with actual GitOps controllers and
 > are out of scope for the v0.5 standalone contract.
 
+---
+
+## Interpretive Patterns (v0.9.2+)
+
+cub-scout provides **interpretive patterns** that report GitOps resource presence without inferring hierarchy or relationships.
+
+### Available Patterns
+
+| Pattern ID | Reports |
+|------------|---------|
+| `gitops.argocd.resources_present` | Application and ApplicationSet counts |
+| `gitops.flux.resources_present` | Kustomization, HelmRelease, GitRepository counts |
+| `gitops.controller_presence` | Whether any GitOps controller CRDs exist |
+
+### What These Patterns Do
+
+```bash
+# Run all patterns
+./cub-scout patterns detect --empty
+
+# Example output when Argo CD resources present:
+# [PASS] gitops.argocd.resources_present
+#   - [info] Argo CD Applications detected: 5
+#   - [info] Argo CD ApplicationSets detected: 2
+```
+
+### What These Patterns Do NOT Do
+
+These are **interpretive signals**, not hierarchy inference:
+
+- They report **presence and counts**, not relationships
+- They do **not** infer App-of-Apps parent/child structures
+- They do **not** infer tenant boundaries or isolation rules
+- They do **not** correlate generators with generated resources
+
+**Why?** Hierarchy inference requires Git context to understand:
+- Which Application is a "parent" vs "child"
+- Which ApplicationSet generated which Application
+- Which Kustomization is infrastructure vs tenant
+
+Git-aware inference is planned for v0.10+.
+
+### Prerequisites Behavior
+
+These patterns use the prerequisite system (v0.9+):
+
+- **SKIP** when no relevant CRDs exist in the graph
+- **PASS** with info findings when resources detected
+- One finding per resource kind (not per resource instance)
+
+This keeps output readable and avoids verbosity in large clusters.
+
+---
+
 ## Quick Reference
 
 | Pattern | Deployer | TUI Detects | GUI Adds |
