@@ -353,6 +353,10 @@ func createDeterministicTarball(t *testing.T, dir string) []byte {
 		Mode:     0755,
 		Typeflag: tar.TypeDir,
 		ModTime:  modTime,
+		Uid:      0, // Zero for determinism
+		Gid:      0,
+		Uname:    "",
+		Gname:    "",
 	})
 
 	// Add files
@@ -367,6 +371,10 @@ func createDeterministicTarball(t *testing.T, dir string) []byte {
 			Name:    topDir + "/" + relPath,
 			Mode:    0644,
 			ModTime: modTime,
+			Uid:     0, // Zero for determinism
+			Gid:     0,
+			Uname:   "",
+			Gname:   "",
 		}
 
 		if info.IsDir() {

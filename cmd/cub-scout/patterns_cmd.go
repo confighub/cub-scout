@@ -308,7 +308,8 @@ func resolveGitContext(gitRoot, gitURL, gitRef, gitSubpath string) (*gitctx.GitC
 // buildPatternsGraph builds a graph for pattern detection.
 // Collects K8s ownership chain + GitOps CRDs.
 func buildPatternsGraph(namespace string, empty bool) (*graph.Graph, error) {
-	// Test hook: load graph from JSON file if CUB_SCOUT_TEST_GRAPH_JSON is set
+	// TEST HOOK: Load graph from JSON file to bypass cluster access in integration tests.
+	// In production this env var is never set, so real K8s graph collection is always used.
 	if graphJSONPath := os.Getenv("CUB_SCOUT_TEST_GRAPH_JSON"); graphJSONPath != "" {
 		return loadGraphFromJSON(graphJSONPath)
 	}

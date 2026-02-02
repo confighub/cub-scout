@@ -44,7 +44,8 @@ const DefaultMaxSize = 100 * 1024 * 1024
 const DefaultGitHubAPIBase = "https://api.github.com"
 
 // getGitHubAPIBase returns the GitHub API base URL.
-// Uses CUB_SCOUT_GITHUB_API_BASE env var if set (for testing), otherwise DefaultGitHubAPIBase.
+// TEST HOOK: Uses CUB_SCOUT_GITHUB_API_BASE env var if set (for httptest integration tests).
+// In production this env var is never set, so api.github.com is always used.
 func getGitHubAPIBase() string {
 	if base := os.Getenv("CUB_SCOUT_GITHUB_API_BASE"); base != "" {
 		return strings.TrimSuffix(base, "/")
