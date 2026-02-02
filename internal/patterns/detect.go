@@ -6,39 +6,32 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/confighub/cub-scout/internal/gitctx"
 	"github.com/confighub/cub-scout/internal/graph"
 )
 
 // DetectAll runs all registered patterns against the graph.
 // Results are in deterministic order (sorted by pattern ID).
+// This is a convenience wrapper that calls DetectAllWithGit with nil git context.
 func DetectAll(g *graph.Graph) Result {
+	return DetectAllWithGit(g, nil)
+}
+
+// DetectAllWithGit runs all registered patterns against the graph with optional git context.
+// Results are in deterministic order (sorted by pattern ID).
+// The gitCtx parameter may be nil (flag not provided) or invalid (flag provided but unusable).
+func DetectAllWithGit(g *graph.Graph, gitCtx *gitctx.GitContext) Result {
 	patterns := List()
 	results := make([]PatternResult, 0, len(patterns))
 
+	ctx := &DetectContext{
+		Graph: g,
+		Git:   gitCtx,
+	}
+
 	for _, p := range patterns {
-		// Check prerequisites first (v0.9+)
-		if skipReason := checkPrerequisites(p, g); skipReason != "" {
-			results = append(results, PatternResult{
-				ID:         p.ID,
-				Name:       p.Name,
-				Status:     StatusSkip,
-				SkipReason: skipReason,
-				Findings:   []Finding{},
-			})
-			continue
-		}
-
-		findings, status := p.Detect(g)
-
-		// Sort findings for deterministic output
-		sortFindings(findings)
-
-		results = append(results, PatternResult{
-			ID:       p.ID,
-			Name:     p.Name,
-			Status:   status,
-			Findings: findings,
-		})
+		pr := runPattern(p, ctx)
+		results = append(results, pr)
 	}
 
 	return Result{
@@ -49,15 +42,34 @@ func DetectAll(g *graph.Graph) Result {
 
 // DetectOne runs a single pattern against the graph.
 // Returns nil if the pattern is not found.
+// This is a convenience wrapper that calls DetectOneWithGit with nil git context.
 func DetectOne(g *graph.Graph, patternID string) *PatternResult {
+	return DetectOneWithGit(g, nil, patternID)
+}
+
+// DetectOneWithGit runs a single pattern against the graph with optional git context.
+// Returns nil if the pattern is not found.
+func DetectOneWithGit(g *graph.Graph, gitCtx *gitctx.GitContext, patternID string) *PatternResult {
 	p := Get(patternID)
 	if p == nil {
 		return nil
 	}
 
+	ctx := &DetectContext{
+		Graph: g,
+		Git:   gitCtx,
+	}
+
+	pr := runPattern(*p, ctx)
+	return &pr
+}
+
+// runPattern executes a single pattern and returns the result.
+// Handles prerequisites, git context requirements, and detection.
+func runPattern(p Pattern, ctx *DetectContext) PatternResult {
 	// Check prerequisites first (v0.9+)
-	if skipReason := checkPrerequisites(*p, g); skipReason != "" {
-		return &PatternResult{
+	if skipReason := checkPrerequisites(p, ctx.Graph); skipReason != "" {
+		return PatternResult{
 			ID:         p.ID,
 			Name:       p.Name,
 			Status:     StatusSkip,
@@ -66,10 +78,55 @@ func DetectOne(g *graph.Graph, patternID string) *PatternResult {
 		}
 	}
 
-	findings, status := p.Detect(g)
+	// Check git context requirements for git-aware patterns (v0.10+)
+	// Git-aware patterns SKIP when:
+	// - git context is nil (flag omitted) -> "no git_root provided"
+	// - git context is invalid (flag provided but unusable) -> specific reason
+	if p.PatternType == "git-aware" {
+		if ctx.Git == nil {
+			return PatternResult{
+				ID:         p.ID,
+				Name:       p.Name,
+				Status:     StatusSkip,
+				SkipReason: gitctx.SkipReasonNotProvided,
+				Findings:   []Finding{},
+			}
+		}
+		if !ctx.Git.Valid {
+			return PatternResult{
+				ID:         p.ID,
+				Name:       p.Name,
+				Status:     StatusSkip,
+				SkipReason: ctx.Git.SkipReason,
+				Findings:   []Finding{},
+			}
+		}
+	}
+
+	// Run detection
+	var findings []Finding
+	var status Status
+
+	if p.DetectWithGit != nil {
+		// v0.10+ pattern with git context support
+		findings, status = p.DetectWithGit(ctx)
+	} else if p.Detect != nil {
+		// v0.7+ pattern (graph-only)
+		findings, status = p.Detect(ctx.Graph)
+	} else {
+		// No detection function (shouldn't happen)
+		return PatternResult{
+			ID:       p.ID,
+			Name:     p.Name,
+			Status:   StatusSkip,
+			Findings: []Finding{},
+		}
+	}
+
+	// Sort findings for deterministic output
 	sortFindings(findings)
 
-	return &PatternResult{
+	return PatternResult{
 		ID:       p.ID,
 		Name:     p.Name,
 		Status:   status,
