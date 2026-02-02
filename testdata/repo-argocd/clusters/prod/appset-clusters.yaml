@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-apps
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - cluster: production
+            url: https://prod.example.com
+          - cluster: staging
+            url: https://staging.example.com
+  template:
+    metadata:
+      name: '{{cluster}}-apps'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/example/gitops
+        path: 'apps/{{cluster}}'
+      destination:
+        server: '{{url}}'

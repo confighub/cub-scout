@@ -1,11 +1,15 @@
 PATTERNS LIST
 Schema: patterns.v1
 
-Registered patterns (4):
+Registered patterns (6):
+  - gitops.argocd.applicationset_generators
+    ApplicationSet Generator Summary
   - gitops.argocd.resources_present
     Argo CD Resources Present
   - gitops.controller_presence
     GitOps Controller Presence
+  - gitops.flux.kustomization_paths
+    Flux Kustomization Paths
   - gitops.flux.resources_present
     Flux Resources Present
   - k8s.ownership_chain_complete

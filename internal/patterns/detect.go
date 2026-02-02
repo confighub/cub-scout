@@ -78,10 +78,13 @@ func runPattern(p Pattern, ctx *DetectContext) PatternResult {
 		}
 	}
 
-	// Check git context requirements for git-aware patterns (v0.10+)
+	// Check git context requirements (v0.10+)
 	// Git-aware patterns SKIP when:
 	// - git context is nil (flag omitted) -> "no git_root provided"
 	// - git context is invalid (flag provided but unusable) -> specific reason
+	// Hybrid patterns SKIP only when:
+	// - git context is provided but invalid -> specific reason
+	// (Hybrid patterns run with reduced evidence when git context is nil)
 	if p.PatternType == "git-aware" {
 		if ctx.Git == nil {
 			return PatternResult{
@@ -100,6 +103,17 @@ func runPattern(p Pattern, ctx *DetectContext) PatternResult {
 				SkipReason: ctx.Git.SkipReason,
 				Findings:   []Finding{},
 			}
+		}
+	}
+
+	// Hybrid patterns SKIP when git context is provided but invalid
+	if p.PatternType == "hybrid" && ctx.Git != nil && !ctx.Git.Valid {
+		return PatternResult{
+			ID:         p.ID,
+			Name:       p.Name,
+			Status:     StatusSkip,
+			SkipReason: ctx.Git.SkipReason,
+			Findings:   []Finding{},
 		}
 	}
 
