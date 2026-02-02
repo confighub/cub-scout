@@ -1087,7 +1087,7 @@ func TestApplicationSetGenerators_ReducedEvidence(t *testing.T) {
 	// Should have finding about count with hint about --git-root
 	found := false
 	for _, f := range pr.Findings {
-		if strings.Contains(f.Message, "ApplicationSets detected: 2") && strings.Contains(f.Message, "git-root") {
+		if strings.Contains(f.Message, "ApplicationSets in graph: 2") && strings.Contains(f.Message, "git-root") {
 			found = true
 			break
 		}
@@ -1149,7 +1149,7 @@ func TestFluxKustomizationPaths_ReducedEvidence(t *testing.T) {
 	// Should have finding about count with hint about --git-root
 	found := false
 	for _, f := range pr.Findings {
-		if strings.Contains(f.Message, "Kustomizations detected: 2") && strings.Contains(f.Message, "git-root") {
+		if strings.Contains(f.Message, "Flux Kustomizations in graph: 2") && strings.Contains(f.Message, "git-root") {
 			found = true
 			break
 		}

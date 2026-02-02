@@ -51,11 +51,12 @@ func detectApplicationSetGenerators(ctx *DetectContext) ([]Finding, Status) {
 	}
 
 	// Mode 1: Without git context (reduced evidence)
-	if ctx.Git == nil || !ctx.Git.Valid {
+	// Note: invalid git context is handled by engine (SKIP), so we only check for nil
+	if ctx.Git == nil {
 		findings = append(findings, Finding{
 			Pattern:  "gitops.argocd.applicationset_generators",
 			Severity: SeverityInfo,
-			Message:  fmt.Sprintf("ApplicationSets detected: %d (use --git-root for generator details)", appSetCount),
+			Message:  fmt.Sprintf("ApplicationSets in graph: %d (use --git-root for generator details)", appSetCount),
 		})
 		return findings, StatusPass
 	}
@@ -122,7 +123,7 @@ func detectApplicationSetGenerators(ctx *DetectContext) ([]Finding, Status) {
 	findings = append(findings, Finding{
 		Pattern:  "gitops.argocd.applicationset_generators",
 		Severity: SeverityInfo,
-		Message:  fmt.Sprintf("ApplicationSets in cluster: %d", appSetCount),
+		Message:  fmt.Sprintf("ApplicationSets in graph: %d", appSetCount),
 	})
 
 	return findings, StatusPass
@@ -142,11 +143,12 @@ func detectFluxKustomizationPaths(ctx *DetectContext) ([]Finding, Status) {
 	}
 
 	// Mode 1: Without git context (reduced evidence)
-	if ctx.Git == nil || !ctx.Git.Valid {
+	// Note: invalid git context is handled by engine (SKIP), so we only check for nil
+	if ctx.Git == nil {
 		findings = append(findings, Finding{
 			Pattern:  "gitops.flux.kustomization_paths",
 			Severity: SeverityInfo,
-			Message:  fmt.Sprintf("Flux Kustomizations detected: %d (use --git-root for path validation)", kustomizationCount),
+			Message:  fmt.Sprintf("Flux Kustomizations in graph: %d (use --git-root for path details)", kustomizationCount),
 		})
 		return findings, StatusPass
 	}
@@ -207,7 +209,7 @@ func detectFluxKustomizationPaths(ctx *DetectContext) ([]Finding, Status) {
 	findings = append(findings, Finding{
 		Pattern:  "gitops.flux.kustomization_paths",
 		Severity: SeverityInfo,
-		Message:  fmt.Sprintf("Flux Kustomizations in cluster: %d", kustomizationCount),
+		Message:  fmt.Sprintf("Flux Kustomizations in graph: %d", kustomizationCount),
 	})
 
 	return findings, StatusPass
