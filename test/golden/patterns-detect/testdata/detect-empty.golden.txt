@@ -12,5 +12,6 @@ Schema: patterns.v1
 
 [SKIP] k8s.ownership_chain_complete
   Kubernetes Ownership Chain Complete
-  findings (1):
-    - [info] No Deployments found in graph
+  skip_reason: no Deployment/ReplicaSet/Pod nodes in graph
+  findings (0):
+    (none)

@@ -22,13 +22,8 @@
       "id": "k8s.ownership_chain_complete",
       "name": "Kubernetes Ownership Chain Complete",
       "status": "skip",
-      "findings": [
-        {
-          "pattern": "k8s.ownership_chain_complete",
-          "severity": "info",
-          "message": "No Deployments found in graph"
-        }
-      ]
+      "skip_reason": "no Deployment/ReplicaSet/Pod nodes in graph",
+      "findings": []
     }
   ]
 }

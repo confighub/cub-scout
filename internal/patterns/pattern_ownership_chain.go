@@ -12,7 +12,10 @@ func init() {
 		Name:        "Kubernetes Ownership Chain Complete",
 		Description: "Checks that Deployment → ReplicaSet → Pod ownership chains are complete. Incomplete chains may indicate orphaned resources or missing links.",
 		Category:    "k8s",
-		Detect:      detectOwnershipChainComplete,
+		Prerequisites: []Prerequisite{
+			{Type: "requires_any_of_kinds", Kinds: []string{"Deployment", "ReplicaSet", "Pod"}},
+		},
+		Detect: detectOwnershipChainComplete,
 	})
 }
 
@@ -35,15 +38,6 @@ func detectOwnershipChainComplete(g *graph.Graph) ([]Finding, Status) {
 		case "Pod":
 			pods[node.ID] = node
 		}
-	}
-
-	// Skip pattern if no deployments exist
-	if len(deployments) == 0 {
-		return []Finding{{
-			Pattern:  "k8s.ownership_chain_complete",
-			Severity: SeverityInfo,
-			Message:  "No Deployments found in graph",
-		}}, StatusSkip
 	}
 
 	// Build edge maps: parent -> children
