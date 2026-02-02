@@ -1,9 +1,12 @@
 package patterns
 
 import (
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/confighub/cub-scout/internal/gitctx"
 	"github.com/confighub/cub-scout/internal/graph"
 )
 
@@ -1045,5 +1048,287 @@ func TestFluxResourcesPresent_Skipped(t *testing.T) {
 
 	if pr.SkipReason == "" {
 		t.Error("expected skip_reason to be set")
+	}
+}
+
+// Tests for v0.10 Hybrid git-aware patterns
+
+func TestApplicationSetGenerators_ReducedEvidence(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	// Add ApplicationSets
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/argocd/ApplicationSet/appset1",
+		Cluster:    "test-cluster",
+		Namespace:  "argocd",
+		Kind:       "ApplicationSet",
+		Name:       "appset1",
+		APIVersion: "argoproj.io/v1alpha1",
+	})
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/argocd/ApplicationSet/appset2",
+		Cluster:    "test-cluster",
+		Namespace:  "argocd",
+		Kind:       "ApplicationSet",
+		Name:       "appset2",
+		APIVersion: "argoproj.io/v1alpha1",
+	})
+
+	// Without git context - should run in reduced evidence mode
+	pr := DetectOneWithGit(g, nil, "gitops.argocd.applicationset_generators")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusPass {
+		t.Errorf("expected pass status for hybrid pattern without git context, got %s (skip_reason: %s)", pr.Status, pr.SkipReason)
+	}
+
+	// Should have finding about count with hint about --git-root
+	found := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "ApplicationSets in graph: 2") && strings.Contains(f.Message, "git-root") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected finding with ApplicationSet count and git-root hint")
+	}
+}
+
+func TestApplicationSetGenerators_Skipped_NoPrereqs(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+	// Empty graph - no ApplicationSets
+
+	pr := DetectOneWithGit(g, nil, "gitops.argocd.applicationset_generators")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusSkip {
+		t.Errorf("expected skip status when no ApplicationSets, got %s", pr.Status)
+	}
+
+	if !strings.Contains(pr.SkipReason, "ApplicationSet") {
+		t.Errorf("expected skip reason to mention ApplicationSet, got %s", pr.SkipReason)
+	}
+}
+
+func TestFluxKustomizationPaths_ReducedEvidence(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	// Add Kustomizations
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/flux-system",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "flux-system",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/apps",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "apps",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+
+	// Without git context - should run in reduced evidence mode
+	pr := DetectOneWithGit(g, nil, "gitops.flux.kustomization_paths")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusPass {
+		t.Errorf("expected pass status for hybrid pattern without git context, got %s (skip_reason: %s)", pr.Status, pr.SkipReason)
+	}
+
+	// Should have finding about count with hint about --git-root
+	found := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "Flux Kustomizations in graph: 2") && strings.Contains(f.Message, "git-root") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected finding with Kustomization count and git-root hint")
+	}
+}
+
+func TestFluxKustomizationPaths_Skipped_NoPrereqs(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+	// Empty graph - no Kustomizations
+
+	pr := DetectOneWithGit(g, nil, "gitops.flux.kustomization_paths")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusSkip {
+		t.Errorf("expected skip status when no Kustomizations, got %s", pr.Status)
+	}
+
+	if !strings.Contains(pr.SkipReason, "Kustomization") {
+		t.Errorf("expected skip reason to mention Kustomization, got %s", pr.SkipReason)
+	}
+}
+
+// getRepoRoot returns the absolute path to the repository root.
+func getRepoRoot(t *testing.T) string {
+	t.Helper()
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not determine test file location")
+	}
+	// internal/patterns/patterns_test.go -> repo root
+	return filepath.Join(filepath.Dir(thisFile), "..", "..")
+}
+
+func TestApplicationSetGenerators_EnrichedWithGitContext(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	// Add ApplicationSets
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/argocd/ApplicationSet/appset1",
+		Cluster:    "test-cluster",
+		Namespace:  "argocd",
+		Kind:       "ApplicationSet",
+		Name:       "appset1",
+		APIVersion: "argoproj.io/v1alpha1",
+	})
+
+	// Open git context for testdata/repo-argocd
+	repoRoot := getRepoRoot(t)
+	gitRoot := filepath.Join(repoRoot, "testdata", "repo-argocd")
+	gitCtx := gitctx.OpenGitRoot(gitRoot)
+	if gitCtx == nil || !gitCtx.Valid {
+		t.Skipf("git context not valid: %v", gitCtx)
+	}
+
+	pr := DetectOneWithGit(g, gitCtx, "gitops.argocd.applicationset_generators")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusPass {
+		t.Errorf("expected pass status with git context, got %s (skip_reason: %s)", pr.Status, pr.SkipReason)
+	}
+
+	// Should have enriched findings with generator types
+	hasGenerators := false
+	hasRefs := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "generators:") {
+			hasGenerators = true
+		}
+		for _, ref := range f.Refs {
+			if strings.HasPrefix(ref, "git:path:") {
+				hasRefs = true
+				// Verify refs are repo-relative (no absolute paths)
+				if strings.HasPrefix(ref, "git:path:/") {
+					t.Errorf("ref should be repo-relative, not absolute: %s", ref)
+				}
+			}
+		}
+	}
+
+	if !hasGenerators {
+		t.Error("expected finding with generator summary in enriched mode")
+	}
+	if !hasRefs {
+		t.Error("expected refs with git:path: prefix in enriched mode")
+	}
+}
+
+func TestFluxKustomizationPaths_EnrichedWithGitContext(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	// Add Kustomizations
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/flux-system",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "flux-system",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+
+	// Open git context for testdata/repo-flux
+	repoRoot := getRepoRoot(t)
+	gitRoot := filepath.Join(repoRoot, "testdata", "repo-flux")
+	gitCtx := gitctx.OpenGitRoot(gitRoot)
+	if gitCtx == nil || !gitCtx.Valid {
+		t.Skipf("git context not valid: %v", gitCtx)
+	}
+
+	pr := DetectOneWithGit(g, gitCtx, "gitops.flux.kustomization_paths")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusPass {
+		t.Errorf("expected pass status with git context, got %s (skip_reason: %s)", pr.Status, pr.SkipReason)
+	}
+
+	// Should have enriched findings with paths
+	hasPaths := false
+	hasRefs := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "paths:") {
+			hasPaths = true
+		}
+		for _, ref := range f.Refs {
+			if strings.HasPrefix(ref, "git:path:") {
+				hasRefs = true
+				// Verify refs are repo-relative (no absolute paths)
+				if strings.HasPrefix(ref, "git:path:/") {
+					t.Errorf("ref should be repo-relative, not absolute: %s", ref)
+				}
+			}
+		}
+	}
+
+	if !hasPaths {
+		t.Error("expected finding with path summary in enriched mode")
+	}
+	if !hasRefs {
+		t.Error("expected refs with git:path: prefix in enriched mode")
+	}
+}
+
+func TestHybridPattern_SkipsWhenGitContextInvalid(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	// Add ApplicationSets
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/argocd/ApplicationSet/appset1",
+		Cluster:    "test-cluster",
+		Namespace:  "argocd",
+		Kind:       "ApplicationSet",
+		Name:       "appset1",
+		APIVersion: "argoproj.io/v1alpha1",
+	})
+
+	// Create an invalid git context (provided but unusable)
+	gitCtx := &gitctx.GitContext{
+		Valid:      false,
+		SkipReason: "git_root path does not exist",
+	}
+
+	pr := DetectOneWithGit(g, gitCtx, "gitops.argocd.applicationset_generators")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	if pr.Status != StatusSkip {
+		t.Errorf("expected skip status when git context is invalid, got %s", pr.Status)
+	}
+
+	if pr.SkipReason != "git_root path does not exist" {
+		t.Errorf("expected specific skip reason, got %s", pr.SkipReason)
 	}
 }

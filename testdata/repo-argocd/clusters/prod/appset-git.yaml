@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: git-directory-apps
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/example/gitops
+        revision: HEAD
+        directories:
+          - path: apps/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/example/gitops
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc

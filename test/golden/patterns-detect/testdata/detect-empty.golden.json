@@ -2,6 +2,13 @@
   "schema_version": "patterns.v1",
   "patterns": [
     {
+      "id": "gitops.argocd.applicationset_generators",
+      "name": "ApplicationSet Generator Summary",
+      "status": "skip",
+      "skip_reason": "no ApplicationSet nodes in graph",
+      "findings": []
+    },
+    {
       "id": "gitops.argocd.resources_present",
       "name": "Argo CD Resources Present",
       "status": "skip",
@@ -37,6 +44,13 @@
           }
         }
       ]
+    },
+    {
+      "id": "gitops.flux.kustomization_paths",
+      "name": "Flux Kustomization Paths",
+      "status": "skip",
+      "skip_reason": "no Kustomization nodes in graph",
+      "findings": []
     },
     {
       "id": "gitops.flux.resources_present",
