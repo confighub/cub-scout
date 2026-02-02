@@ -110,11 +110,11 @@ func detectGitOpsControllerPresence(g *graph.Graph) ([]Finding, Status) {
 				"This may indicate GitOps is not deployed, or CRDs are in namespaces not collected",
 			},
 			Remediation: &Remediation{
-				Summary: "Install a GitOps controller (Argo CD or Flux) to manage cluster resources declaratively.",
+				Summary: "Install a GitOps controller (Argo CD or Flux) if you intend to manage cluster resources declaratively from Git.",
 				Steps: []string{
-					"Choose a GitOps tool: Argo CD for application-centric workflows, Flux for Git-native automation.",
-					"Install the controller following the official documentation.",
-					"Create Application or Kustomization resources to manage your workloads.",
+					"Choose a controller: Argo CD for application-centric workflows, Flux for Git-native automation.",
+					"Install it using the official documentation.",
+					"Define GitOps resources (e.g., Argo CD Application/ApplicationSet or Flux Kustomization/HelmRelease) for your workloads.",
 				},
 				Links: []string{
 					"https://argo-cd.readthedocs.io/en/stable/getting_started/",

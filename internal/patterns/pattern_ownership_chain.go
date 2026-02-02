@@ -89,11 +89,11 @@ func detectOwnershipChainComplete(g *graph.Graph) ([]Finding, Status) {
 					"No 'owns' edge from any Deployment to this ReplicaSet",
 				},
 				Remediation: &Remediation{
-					Summary: "Verify the ReplicaSet was created by a Deployment or is intentionally standalone.",
+					Summary: "Verify the ReplicaSet is owned by a Deployment, or confirm it is intentionally standalone.",
 					Steps: []string{
-						"Check if a Deployment with matching selector exists in the namespace.",
-						"Verify the ReplicaSet's metadata.ownerReferences field.",
-						"If orphaned after Deployment deletion, consider cleaning up the ReplicaSet.",
+						"Check for a Deployment in the namespace with a matching selector/labels.",
+						"Inspect the ReplicaSet metadata.ownerReferences.",
+						"If it's orphaned and not serving pods, consider cleaning it up.",
 					},
 					Links: []string{
 						"https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
@@ -137,11 +137,11 @@ func detectOwnershipChainComplete(g *graph.Graph) ([]Finding, Status) {
 					"This may indicate the Deployment has not created any replicas yet",
 				},
 				Remediation: &Remediation{
-					Summary: "Check if the Deployment controller is healthy and has created ReplicaSets.",
+					Summary: "Check whether the Deployment controller is healthy and has created ReplicaSets.",
 					Steps: []string{
-						"Run 'kubectl get rs -n <namespace>' to check for ReplicaSets.",
-						"Check Deployment status with 'kubectl describe deployment <name>'.",
-						"Verify the Deployment is not paused or scaled to zero.",
+						"Run `kubectl get rs -n <namespace>` and look for ReplicaSets owned by this Deployment.",
+						"Check status/events with `kubectl describe deployment <name> -n <namespace>`.",
+						"Verify the Deployment is not paused and is not scaled to zero.",
 					},
 					Links: []string{
 						"https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
