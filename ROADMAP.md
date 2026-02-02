@@ -29,6 +29,11 @@ For these commands:
 
 **Status:** In progress (Track G)
 
+### Current: Phase 2
+- K8s ownership chain collectors (#60)
+- GitOps CRDs as nodes (#61)
+- `graph explain` command (#62)
+
 ### Goal
 
 Introduce a first-class **resource graph** that captures cluster-visible relationships and supports GitOps-aware reasoning without changing v0.5 contracts.
