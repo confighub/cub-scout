@@ -6,7 +6,10 @@
 // This is a v0.7 contract surface that does not modify any v0.5 or v0.6 contracts.
 package patterns
 
-import "github.com/confighub/cub-scout/internal/graph"
+import (
+	"github.com/confighub/cub-scout/internal/gitctx"
+	"github.com/confighub/cub-scout/internal/graph"
+)
 
 // SchemaVersion is the patterns output schema version.
 const SchemaVersion = "patterns.v1"
@@ -25,6 +28,17 @@ const (
 	StatusSkip Status = "skip"
 )
 
+// DetectContext provides the execution context for pattern detection (v0.10+).
+// This combines the resource graph with optional git repository context.
+type DetectContext struct {
+	// Graph is the resource graph (always present).
+	Graph *graph.Graph
+
+	// Git is the optional git repository context (nil when --git-root not provided).
+	// Patterns should check for nil before using.
+	Git *gitctx.GitContext
+}
+
 // Pattern represents a registered pattern.
 type Pattern struct {
 	// ID is the unique pattern identifier (e.g., "k8s.ownership_chain_complete").
@@ -39,13 +53,26 @@ type Pattern struct {
 	// Category groups related patterns (e.g., "k8s", "gitops").
 	Category string `json:"category"`
 
+	// PatternType indicates whether this pattern requires git context (v0.10+).
+	// Valid values: "" (graph-only), "hybrid", "git-aware"
+	// Graph-only: runs without git context
+	// Hybrid: runs without git context but enriched when available
+	// Git-aware: SKIPs when git context unavailable
+	PatternType string `json:"-"`
+
 	// Prerequisites are conditions that must be met before detection runs (v0.9+).
 	// If any prerequisite is unmet, the pattern is skipped with a reason.
 	Prerequisites []Prerequisite `json:"-"`
 
-	// Detect runs the pattern detection against a graph.
+	// Detect runs the pattern detection against a graph (v0.7+ patterns).
 	// Returns findings and status. Errors are returned as findings with error severity.
+	// For patterns that don't need git context, this is the only field needed.
 	Detect func(g *graph.Graph) ([]Finding, Status) `json:"-"`
+
+	// DetectWithGit runs pattern detection with optional git context (v0.10+ patterns).
+	// If set, this is called instead of Detect. The git context may be nil.
+	// Patterns should check ctx.Git != nil && ctx.Git.Valid before using git data.
+	DetectWithGit func(ctx *DetectContext) ([]Finding, Status) `json:"-"`
 }
 
 // Prerequisite defines a condition that must be met before a pattern runs.

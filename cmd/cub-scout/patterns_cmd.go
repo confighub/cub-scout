@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/confighub/cub-scout/internal/gitctx"
 	"github.com/confighub/cub-scout/internal/graph"
 	"github.com/confighub/cub-scout/internal/patterns"
 	"github.com/spf13/cobra"
@@ -99,8 +100,10 @@ var (
 	patternsDetectNamespace string
 	patternsDetectEmpty     bool
 	patternsDetectJSON      bool
+	patternsDetectGitRoot   string
 	patternsExplainNamespace string
 	patternsExplainEmpty    bool
+	patternsExplainGitRoot  string
 )
 
 func init() {
@@ -113,10 +116,12 @@ func init() {
 	patternsDetectCmd.Flags().StringVarP(&patternsDetectNamespace, "namespace", "n", "", "Namespace to collect (empty = all namespaces)")
 	patternsDetectCmd.Flags().BoolVar(&patternsDetectEmpty, "empty", false, "Use empty graph (skip cluster collection)")
 	patternsDetectCmd.Flags().BoolVar(&patternsDetectJSON, "json", false, "Output as JSON")
+	patternsDetectCmd.Flags().StringVar(&patternsDetectGitRoot, "git-root", "", "Path to local Git repository for git-aware patterns (v0.10+)")
 
 	// Explain flags
 	patternsExplainCmd.Flags().StringVarP(&patternsExplainNamespace, "namespace", "n", "", "Namespace to collect (empty = all namespaces)")
 	patternsExplainCmd.Flags().BoolVar(&patternsExplainEmpty, "empty", false, "Use empty graph (skip cluster collection)")
+	patternsExplainCmd.Flags().StringVar(&patternsExplainGitRoot, "git-root", "", "Path to local Git repository for git-aware patterns (v0.10+)")
 }
 
 func runPatternsList(cmd *cobra.Command, args []string) error {
@@ -133,8 +138,15 @@ func runPatternsDetect(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	// Run detection
-	result := patterns.DetectAll(g)
+	// Open git context if provided (v0.10+)
+	// nil when flag not provided; may have Valid=false if path is invalid
+	var gitCtx *gitctx.GitContext
+	if patternsDetectGitRoot != "" {
+		gitCtx = gitctx.OpenGitRoot(patternsDetectGitRoot)
+	}
+
+	// Run detection with git context
+	result := patterns.DetectAllWithGit(g, gitCtx)
 
 	// Render output
 	if patternsDetectJSON {
@@ -178,8 +190,14 @@ func runPatternsExplain(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	// Run single pattern
-	pr := patterns.DetectOne(g, patternID)
+	// Open git context if provided (v0.10+)
+	var gitCtx *gitctx.GitContext
+	if patternsExplainGitRoot != "" {
+		gitCtx = gitctx.OpenGitRoot(patternsExplainGitRoot)
+	}
+
+	// Run single pattern with git context
+	pr := patterns.DetectOneWithGit(g, gitCtx, patternID)
 
 	// Render output
 	output := patterns.RenderExplain(p, pr)
