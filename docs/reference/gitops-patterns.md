@@ -62,6 +62,61 @@ This keeps output readable and avoids verbosity in large clusters.
 
 ---
 
+## Git-Aware Evidence (v0.10+)
+
+Starting with v0.10, cub-scout supports **optional Git context** via the `--git-root` flag.
+Git-aware patterns can correlate cluster state with repository structure.
+
+### Git-Aware = Optional Evidence
+
+The key principle is: **Git context is optional evidence, not a requirement.**
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| Graph-only | `cub-scout patterns detect` | All graph-based patterns run; git-aware patterns SKIP |
+| Git-enhanced | `cub-scout patterns detect --git-root /path` | All patterns run with full evidence |
+
+**Graph-only mode still works.** If you never provide `--git-root`, cub-scout continues to
+function exactly as it did in v0.9.x. Git-aware patterns simply SKIP with a deterministic reason.
+
+### What Git-Aware Patterns Can Detect
+
+With Git context, patterns can answer questions that the cluster alone cannot:
+
+| Question | Requires Git? | Example |
+|----------|---------------|---------|
+| "Which ApplicationSet generated this Application?" | Yes | Generator → Application correlation |
+| "Does this Kustomization path exist in the repo?" | Yes | Path validation |
+| "What overlays are available but not deployed?" | Yes | Overlay enumeration |
+| "Is this Argo CD Application using App-of-Apps?" | Yes | Parent/child relationship inference |
+
+### Determinism Guarantees
+
+Git-aware patterns maintain the same determinism guarantees as graph-only patterns:
+
+- No network access (no git fetch/clone)
+- No submodule expansion
+- Lexicographic file ordering
+- Same repo state = same output
+
+See [Patterns Contract Reference](patterns-contract.md#git-aware-patterns-v010) for full specification.
+
+### Planned Hybrid Patterns (v0.10 MVP)
+
+| Pattern ID | Type | Description |
+|------------|------|-------------|
+| `gitops.applicationset_generators` | Hybrid | Summarizes ApplicationSet generators; enriched with repo data when `--git-root` provided |
+| `gitops.flux_kustomization_paths` | Hybrid | Correlates Flux Kustomization paths; validates against repo when `--git-root` provided |
+
+**Hybrid patterns** run in both modes:
+- **Without `--git-root`**: PASS with info findings from graph-visible data only
+- **With `--git-root`**: PASS with enriched findings from repo correlation
+
+These are interpretive enhancements, not full hierarchy reconstruction.
+Full App-of-Apps and tenant inference may be added in future versions.
+
+---
+
 ## Quick Reference
 
 | Pattern | Deployer | TUI Detects | GUI Adds |

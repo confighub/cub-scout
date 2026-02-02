@@ -113,9 +113,16 @@ Introduce a first-class **resource graph** that captures cluster-visible relatio
 
 ---
 
-## v0.9.x — Stabilization Window (Active)
+## v0.9.x — Stabilization Window (Complete)
 
-**Status:** In progress
+**Status:** Complete (`v0.9.1`, `v0.9.2`)
+
+### Completed
+
+- v0.9.1: Roadmap alignment and release notes cleanup
+- v0.9.2: GitOps interpretive patterns:
+  - `gitops.argocd.resources_present`: Argo CD resource counts
+  - `gitops.flux.resources_present`: Flux resource counts
 
 ### Goal
 
@@ -136,13 +143,35 @@ Polish and harden v0.9 before expanding scope. No new features beyond minor patt
 
 ---
 
-## v0.10 — Git-Aware Inference
+## v0.10 — Git-Aware Inference (Active)
 
-**Status:** Planned
+**Status:** In progress (Track K)
 
-* Optional Git context to improve explanations
-* Overlay/variant inference
-* ApplicationSet generator interpretation
+### Goal
+
+Add optional Git repository context via `--git-root` flag for enhanced pattern evidence.
+Git-aware patterns improve explanations without requiring Git context for basic operation.
+
+### MVP Scope (v0.10.0)
+
+* `--git-root <path>` flag for `patterns detect` and `patterns explain`
+* Deterministic repo scanning (bounded, no network, lexicographic ordering)
+* Skip semantics for git-aware patterns when git-root absent
+* MVP patterns:
+  * `gitops.applicationset_generators`: ApplicationSet generator summary
+  * `gitops.flux_kustomization_paths`: Flux Kustomization path correlation
+
+### Non-goals (deferred to v0.10.x or later)
+
+* Full App-of-Apps hierarchy reconstruction
+* Tenant boundary inference
+* Overlay/variant enumeration
+* Submodule expansion
+
+### Key Principle
+
+**Git context is optional evidence.** All existing patterns continue to work without `--git-root`.
+Git-aware patterns SKIP with deterministic skip_reason when git-root is absent.
 
 ---
 
