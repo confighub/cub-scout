@@ -7,9 +7,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/confighub/cub-scout/internal/gitctx"
+	"github.com/confighub/cub-scout/internal/gitsource"
 	"github.com/confighub/cub-scout/internal/graph"
 	"github.com/confighub/cub-scout/internal/patterns"
 	"github.com/spf13/cobra"
@@ -97,13 +99,20 @@ Examples:
 
 // Flag variables for patterns commands (scoped to avoid conflicts)
 var (
-	patternsDetectNamespace string
-	patternsDetectEmpty     bool
-	patternsDetectJSON      bool
-	patternsDetectGitRoot   string
-	patternsExplainNamespace string
-	patternsExplainEmpty    bool
-	patternsExplainGitRoot  string
+	patternsDetectNamespace  string
+	patternsDetectEmpty      bool
+	patternsDetectJSON       bool
+	patternsDetectGitRoot    string
+	patternsDetectGitURL     string
+	patternsDetectGitRef     string
+	patternsDetectGitSubpath string
+
+	patternsExplainNamespace  string
+	patternsExplainEmpty      bool
+	patternsExplainGitRoot    string
+	patternsExplainGitURL     string
+	patternsExplainGitRef     string
+	patternsExplainGitSubpath string
 )
 
 func init() {
@@ -117,11 +126,17 @@ func init() {
 	patternsDetectCmd.Flags().BoolVar(&patternsDetectEmpty, "empty", false, "Use empty graph (skip cluster collection)")
 	patternsDetectCmd.Flags().BoolVar(&patternsDetectJSON, "json", false, "Output as JSON")
 	patternsDetectCmd.Flags().StringVar(&patternsDetectGitRoot, "git-root", "", "Path to local Git repository for git-aware patterns (v0.10+)")
+	patternsDetectCmd.Flags().StringVar(&patternsDetectGitURL, "git-url", "", "GitHub repository URL for connected mode (v0.11+)")
+	patternsDetectCmd.Flags().StringVar(&patternsDetectGitRef, "git-ref", "", "Git ref (commit SHA recommended) for connected mode (v0.11+)")
+	patternsDetectCmd.Flags().StringVar(&patternsDetectGitSubpath, "git-subpath", "", "Optional subpath within repository (v0.11+)")
 
 	// Explain flags
 	patternsExplainCmd.Flags().StringVarP(&patternsExplainNamespace, "namespace", "n", "", "Namespace to collect (empty = all namespaces)")
 	patternsExplainCmd.Flags().BoolVar(&patternsExplainEmpty, "empty", false, "Use empty graph (skip cluster collection)")
 	patternsExplainCmd.Flags().StringVar(&patternsExplainGitRoot, "git-root", "", "Path to local Git repository for git-aware patterns (v0.10+)")
+	patternsExplainCmd.Flags().StringVar(&patternsExplainGitURL, "git-url", "", "GitHub repository URL for connected mode (v0.11+)")
+	patternsExplainCmd.Flags().StringVar(&patternsExplainGitRef, "git-ref", "", "Git ref (commit SHA recommended) for connected mode (v0.11+)")
+	patternsExplainCmd.Flags().StringVar(&patternsExplainGitSubpath, "git-subpath", "", "Optional subpath within repository (v0.11+)")
 }
 
 func runPatternsList(cmd *cobra.Command, args []string) error {
@@ -131,6 +146,12 @@ func runPatternsList(cmd *cobra.Command, args []string) error {
 }
 
 func runPatternsDetect(cmd *cobra.Command, args []string) error {
+	// Validate git flags (exit 2 for invalid combinations)
+	if err := validateGitFlags(patternsDetectGitRoot, patternsDetectGitURL, patternsDetectGitRef, patternsDetectGitSubpath); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(2)
+	}
+
 	// Build graph
 	g, err := buildPatternsGraph(patternsDetectNamespace, patternsDetectEmpty)
 	if err != nil {
@@ -138,11 +159,10 @@ func runPatternsDetect(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	// Open git context if provided (v0.10+)
-	// nil when flag not provided; may have Valid=false if path is invalid
-	var gitCtx *gitctx.GitContext
-	if patternsDetectGitRoot != "" {
-		gitCtx = gitctx.OpenGitRoot(patternsDetectGitRoot)
+	// Resolve git context (local, connected, or nil)
+	gitCtx, cleanup := resolveGitContext(patternsDetectGitRoot, patternsDetectGitURL, patternsDetectGitRef, patternsDetectGitSubpath)
+	if cleanup != nil {
+		defer cleanup()
 	}
 
 	// Run detection with git context
@@ -172,6 +192,12 @@ func runPatternsDetect(cmd *cobra.Command, args []string) error {
 func runPatternsExplain(cmd *cobra.Command, args []string) error {
 	patternID := args[0]
 
+	// Validate git flags (exit 2 for invalid combinations)
+	if err := validateGitFlags(patternsExplainGitRoot, patternsExplainGitURL, patternsExplainGitRef, patternsExplainGitSubpath); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(2)
+	}
+
 	// Get pattern
 	p := patterns.Get(patternID)
 	if p == nil {
@@ -190,10 +216,10 @@ func runPatternsExplain(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	// Open git context if provided (v0.10+)
-	var gitCtx *gitctx.GitContext
-	if patternsExplainGitRoot != "" {
-		gitCtx = gitctx.OpenGitRoot(patternsExplainGitRoot)
+	// Resolve git context (local, connected, or nil)
+	gitCtx, cleanup := resolveGitContext(patternsExplainGitRoot, patternsExplainGitURL, patternsExplainGitRef, patternsExplainGitSubpath)
+	if cleanup != nil {
+		defer cleanup()
 	}
 
 	// Run single pattern with git context
@@ -209,6 +235,73 @@ func runPatternsExplain(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// validateGitFlags validates git flag combinations per v0.11 contract.
+// Returns an error for invalid combinations (caller should exit 2).
+func validateGitFlags(gitRoot, gitURL, gitRef, gitSubpath string) error {
+	// Check mutual exclusivity: --git-root vs --git-url
+	if gitRoot != "" && gitURL != "" {
+		return fmt.Errorf("--git-root and --git-url are mutually exclusive")
+	}
+
+	// Connected mode requires both --git-url and --git-ref
+	if gitURL != "" && gitRef == "" {
+		return fmt.Errorf("--git-url requires --git-ref")
+	}
+	if gitRef != "" && gitURL == "" {
+		return fmt.Errorf("--git-ref requires --git-url")
+	}
+
+	// --git-subpath requires either --git-root or connected mode
+	if gitSubpath != "" && gitRoot == "" && gitURL == "" {
+		return fmt.Errorf("--git-subpath requires --git-root or --git-url")
+	}
+
+	return nil
+}
+
+// resolveGitContext resolves git context from flags.
+// Returns (context, cleanup) where cleanup may be nil.
+// Runtime failures (network, auth) result in context.Valid=false with SkipReason.
+func resolveGitContext(gitRoot, gitURL, gitRef, gitSubpath string) (*gitctx.GitContext, func()) {
+	// Local mode: --git-root
+	if gitRoot != "" {
+		// Apply subpath if provided
+		path := gitRoot
+		if gitSubpath != "" {
+			path = filepath.Join(gitRoot, gitSubpath)
+		}
+		return gitctx.OpenGitRoot(path), nil
+	}
+
+	// Connected mode: --git-url + --git-ref
+	if gitURL != "" {
+		// Get token from environment (never log it)
+		token := os.Getenv("GITHUB_TOKEN")
+
+		result := gitsource.Materialize(gitsource.Options{
+			URL:     gitURL,
+			Ref:     gitRef,
+			Subpath: gitSubpath,
+			Token:   token,
+		})
+
+		// Runtime failure: return invalid context with skip reason
+		if result.SkipReason != "" {
+			return &gitctx.GitContext{
+				Valid:      false,
+				SkipReason: result.SkipReason,
+			}, result.Cleanup
+		}
+
+		// Success: open the snapshot as a git root
+		ctx := gitctx.OpenGitRoot(result.Path)
+		return ctx, result.Cleanup
+	}
+
+	// No git context requested
+	return nil, nil
 }
 
 // buildPatternsGraph builds a graph for pattern detection.
