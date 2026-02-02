@@ -75,15 +75,29 @@ func detectOwnershipChainComplete(g *graph.Graph) ([]Finding, Status) {
 	}
 
 	// Check for orphaned ReplicaSets (RS without owning Deployment)
+	confidenceOrphanedRS := 0.9
 	for rsID, rs := range replicasets {
 		if _, hasOwner := rsToDeployment[rsID]; !hasOwner {
 			findings = append(findings, Finding{
-				Pattern:  "k8s.ownership_chain_complete",
-				Severity: SeverityWarning,
-				Message:  fmt.Sprintf("ReplicaSet %q has no owning Deployment in graph", rs.Name),
-				Resource: rsID,
+				Pattern:    "k8s.ownership_chain_complete",
+				Severity:   SeverityWarning,
+				Message:    fmt.Sprintf("ReplicaSet %q has no owning Deployment in graph", rs.Name),
+				Resource:   rsID,
+				Confidence: &confidenceOrphanedRS,
+				Refs:       []string{fmt.Sprintf("k8s:ReplicaSet/%s/%s", rs.Namespace, rs.Name)},
 				Evidence: []string{
 					"No 'owns' edge from any Deployment to this ReplicaSet",
+				},
+				Remediation: &Remediation{
+					Summary: "Verify the ReplicaSet is owned by a Deployment, or confirm it is intentionally standalone.",
+					Steps: []string{
+						"Check for a Deployment in the namespace with a matching selector/labels.",
+						"Inspect the ReplicaSet metadata.ownerReferences.",
+						"If it's orphaned and not serving pods, consider cleaning it up.",
+					},
+					Links: []string{
+						"https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+					},
 				},
 			})
 		}
@@ -108,16 +122,30 @@ func detectOwnershipChainComplete(g *graph.Graph) ([]Finding, Status) {
 	}
 
 	// Check for Deployments without ReplicaSets
+	confidenceNoRS := 0.85
 	for deployID, deploy := range deployments {
 		if rsIDs, hasRS := deploymentToRS[deployID]; !hasRS || len(rsIDs) == 0 {
 			findings = append(findings, Finding{
-				Pattern:  "k8s.ownership_chain_complete",
-				Severity: SeverityWarning,
-				Message:  fmt.Sprintf("Deployment %q has no ReplicaSets in graph", deploy.Name),
-				Resource: deployID,
+				Pattern:    "k8s.ownership_chain_complete",
+				Severity:   SeverityWarning,
+				Message:    fmt.Sprintf("Deployment %q has no ReplicaSets in graph", deploy.Name),
+				Resource:   deployID,
+				Confidence: &confidenceNoRS,
+				Refs:       []string{fmt.Sprintf("k8s:Deployment/%s/%s", deploy.Namespace, deploy.Name)},
 				Evidence: []string{
 					"No 'owns' edge from this Deployment to any ReplicaSet",
 					"This may indicate the Deployment has not created any replicas yet",
+				},
+				Remediation: &Remediation{
+					Summary: "Check whether the Deployment controller is healthy and has created ReplicaSets.",
+					Steps: []string{
+						"Run `kubectl get rs -n <namespace>` and look for ReplicaSets owned by this Deployment.",
+						"Check status/events with `kubectl describe deployment <name> -n <namespace>`.",
+						"Verify the Deployment is not paused and is not scaled to zero.",
+					},
+					Links: []string{
+						"https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+					},
 				},
 			})
 		}
