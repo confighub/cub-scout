@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -307,6 +308,11 @@ func resolveGitContext(gitRoot, gitURL, gitRef, gitSubpath string) (*gitctx.GitC
 // buildPatternsGraph builds a graph for pattern detection.
 // Collects K8s ownership chain + GitOps CRDs.
 func buildPatternsGraph(namespace string, empty bool) (*graph.Graph, error) {
+	// Test hook: load graph from JSON file if CUB_SCOUT_TEST_GRAPH_JSON is set
+	if graphJSONPath := os.Getenv("CUB_SCOUT_TEST_GRAPH_JSON"); graphJSONPath != "" {
+		return loadGraphFromJSON(graphJSONPath)
+	}
+
 	// Get cluster name
 	cluster := os.Getenv("CUB_SCOUT_TEST_CLUSTER")
 	if cluster == "" {
@@ -361,4 +367,27 @@ func buildPatternsGraph(namespace string, empty bool) (*graph.Graph, error) {
 	}
 
 	return g, nil
+}
+
+// loadGraphFromJSON loads a graph from a JSON file for testing.
+// This is a test hook to avoid requiring real cluster access.
+func loadGraphFromJSON(path string) (*graph.Graph, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read graph JSON: %w", err)
+	}
+
+	var g graph.Graph
+	if err := json.Unmarshal(data, &g); err != nil {
+		return nil, fmt.Errorf("failed to parse graph JSON: %w", err)
+	}
+
+	// Override timestamp for deterministic output if test time is set
+	if testTime := os.Getenv("CUB_SCOUT_TEST_TIME"); testTime != "" {
+		if t, err := time.Parse(time.RFC3339, testTime); err == nil {
+			g.GeneratedAt = t
+		}
+	}
+
+	return &g, nil
 }

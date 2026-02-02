@@ -1,0 +1,41 @@
+PATTERNS DETECT
+Schema: patterns.v1
+
+[SKIP] gitops.argocd.applicationset_generators
+  ApplicationSet Generator Summary
+  skip_reason: git_source ref not found
+  findings (0):
+    (none)
+
+[PASS] gitops.argocd.resources_present
+  Argo CD Resources Present
+  findings (1):
+    - [info] Argo CD ApplicationSets detected: 1
+
+[PASS] gitops.controller_presence
+  GitOps Controller Presence
+  findings (2):
+    - [info] Argo CD controller detected
+      evidence (1):
+        - 1 ApplicationSet(s)
+    - [info] Flux controller detected
+      evidence (1):
+        - 1 Kustomization(s)
+
+[SKIP] gitops.flux.kustomization_paths
+  Flux Kustomization Paths
+  skip_reason: git_source ref not found
+  findings (0):
+    (none)
+
+[PASS] gitops.flux.resources_present
+  Flux Resources Present
+  findings (1):
+    - [info] Flux Kustomizations detected: 1
+
+[SKIP] k8s.ownership_chain_complete
+  Kubernetes Ownership Chain Complete
+  skip_reason: no Deployment/ReplicaSet/Pod nodes in graph
+  findings (0):
+    (none)
+

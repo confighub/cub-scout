@@ -1,0 +1,99 @@
+{
+  "schema_version": "patterns.v1",
+  "patterns": [
+    {
+      "id": "gitops.argocd.applicationset_generators",
+      "name": "ApplicationSet Generator Summary",
+      "status": "pass",
+      "findings": [
+        {
+          "pattern": "gitops.argocd.applicationset_generators",
+          "severity": "info",
+          "message": "ApplicationSet generators: git=1 list=1",
+          "refs": [
+            "git:path:argocd/applicationset.yaml"
+          ]
+        },
+        {
+          "pattern": "gitops.argocd.applicationset_generators",
+          "severity": "info",
+          "message": "ApplicationSets in graph: 1"
+        }
+      ]
+    },
+    {
+      "id": "gitops.argocd.resources_present",
+      "name": "Argo CD Resources Present",
+      "status": "pass",
+      "findings": [
+        {
+          "pattern": "gitops.argocd.resources_present",
+          "severity": "info",
+          "message": "Argo CD ApplicationSets detected: 1"
+        }
+      ]
+    },
+    {
+      "id": "gitops.controller_presence",
+      "name": "GitOps Controller Presence",
+      "status": "pass",
+      "findings": [
+        {
+          "pattern": "gitops.controller_presence",
+          "severity": "info",
+          "message": "Argo CD controller detected",
+          "evidence": [
+            "1 ApplicationSet(s)"
+          ]
+        },
+        {
+          "pattern": "gitops.controller_presence",
+          "severity": "info",
+          "message": "Flux controller detected",
+          "evidence": [
+            "1 Kustomization(s)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gitops.flux.kustomization_paths",
+      "name": "Flux Kustomization Paths",
+      "status": "pass",
+      "findings": [
+        {
+          "pattern": "gitops.flux.kustomization_paths",
+          "severity": "info",
+          "message": "Flux Kustomizations in graph: 1"
+        },
+        {
+          "pattern": "gitops.flux.kustomization_paths",
+          "severity": "info",
+          "message": "Kustomization paths: ./clusters/prod",
+          "refs": [
+            "git:path:flux/kustomization.yaml"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gitops.flux.resources_present",
+      "name": "Flux Resources Present",
+      "status": "pass",
+      "findings": [
+        {
+          "pattern": "gitops.flux.resources_present",
+          "severity": "info",
+          "message": "Flux Kustomizations detected: 1"
+        }
+      ]
+    },
+    {
+      "id": "k8s.ownership_chain_complete",
+      "name": "Kubernetes Ownership Chain Complete",
+      "status": "skip",
+      "skip_reason": "no Deployment/ReplicaSet/Pod nodes in graph",
+      "findings": []
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: test-appset
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - cluster: prod
+            url: https://kubernetes.default.svc
+          - cluster: staging
+            url: https://staging.example.com
+    - git:
+        repoURL: https://github.com/example/repo
+        revision: HEAD
+        directories:
+          - path: apps/*
+  template:
+    metadata:
+      name: '{{cluster}}-app'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/example/repo
+        targetRevision: HEAD
+        path: 'apps/{{path}}'
+      destination:
+        server: '{{url}}'
+        namespace: default

@@ -1,0 +1,24 @@
+{
+  "schema_version": "graph.v1",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "cluster": "test-cluster",
+  "nodes": [
+    {
+      "id": "test-cluster/argocd/ApplicationSet/test-appset",
+      "cluster": "test-cluster",
+      "namespace": "argocd",
+      "kind": "ApplicationSet",
+      "name": "test-appset",
+      "api_version": "argoproj.io/v1alpha1"
+    },
+    {
+      "id": "test-cluster/flux-system/Kustomization/test-kustomization",
+      "cluster": "test-cluster",
+      "namespace": "flux-system",
+      "kind": "Kustomization",
+      "name": "test-kustomization",
+      "api_version": "kustomize.toolkit.fluxcd.io/v1"
+    }
+  ],
+  "edges": []
+}

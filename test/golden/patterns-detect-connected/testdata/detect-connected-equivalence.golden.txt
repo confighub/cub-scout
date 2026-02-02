@@ -1,0 +1,41 @@
+PATTERNS DETECT
+Schema: patterns.v1
+
+[PASS] gitops.argocd.applicationset_generators
+  ApplicationSet Generator Summary
+  findings (2):
+    - [info] ApplicationSet generators: git=1 list=1
+    - [info] ApplicationSets in graph: 1
+
+[PASS] gitops.argocd.resources_present
+  Argo CD Resources Present
+  findings (1):
+    - [info] Argo CD ApplicationSets detected: 1
+
+[PASS] gitops.controller_presence
+  GitOps Controller Presence
+  findings (2):
+    - [info] Argo CD controller detected
+      evidence (1):
+        - 1 ApplicationSet(s)
+    - [info] Flux controller detected
+      evidence (1):
+        - 1 Kustomization(s)
+
+[PASS] gitops.flux.kustomization_paths
+  Flux Kustomization Paths
+  findings (2):
+    - [info] Flux Kustomizations in graph: 1
+    - [info] Kustomization paths: ./clusters/prod
+
+[PASS] gitops.flux.resources_present
+  Flux Resources Present
+  findings (1):
+    - [info] Flux Kustomizations detected: 1
+
+[SKIP] k8s.ownership_chain_complete
+  Kubernetes Ownership Chain Complete
+  skip_reason: no Deployment/ReplicaSet/Pod nodes in graph
+  findings (0):
+    (none)
+
