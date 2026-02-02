@@ -1,0 +1,27 @@
+{
+  "schema_version": "graph.v1",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "cluster": "test-cluster",
+  "nodes": [
+    {
+      "id": "test-cluster/argocd/Application/my-app",
+      "cluster": "test-cluster",
+      "namespace": "argocd",
+      "kind": "Application",
+      "name": "my-app",
+      "api_version": "argoproj.io/v1alpha1",
+      "labels": {
+        "app.kubernetes.io/name": "my-app"
+      }
+    },
+    {
+      "id": "test-cluster/flux-system/Kustomization/infra",
+      "cluster": "test-cluster",
+      "namespace": "flux-system",
+      "kind": "Kustomization",
+      "name": "infra",
+      "api_version": "kustomize.toolkit.fluxcd.io/v1"
+    }
+  ],
+  "edges": []
+}
