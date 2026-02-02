@@ -57,11 +57,11 @@ Introduce a first-class **resource graph** that captures cluster-visible relatio
 
 ---
 
-## v0.7 — Pattern Detection & Explanation (Active)
+## v0.7 — Pattern Detection & Explanation (Released)
 
-**Status:** In progress (Track H)
+**Status:** Released (`v0.7.0`) (Track H)
 
-### Completed: MVP ✅
+### Completed
 - Pattern engine foundation (`internal/patterns` package)
 - `patterns list` command
 - `patterns detect` command with text and JSON output
@@ -72,14 +72,36 @@ Introduce a first-class **resource graph** that captures cluster-visible relatio
 - Deterministic output with golden tests
 - Contract documentation (`docs/reference/patterns-contract.md`)
 
-### Up Next
-* More GitOps patterns (App-of-Apps, ApplicationSet, Flux tenancy)
-* Evidence-backed, confidence-scored explanations
-* Edge types for GitOps relationships
+> v0.7 pattern IDs and core output formats are stable. Additive fields may be added in future versions.
 
 ---
 
-## v0.8 — Git-Aware Inference
+## v0.8 — Finding Enrichment (Active)
+
+**Status:** In progress (Track I)
+
+### Goal
+
+Enrich pattern findings with actionability metadata without changing detection logic or breaking existing consumers.
+
+### Scope
+
+* Additive optional fields on findings:
+  - `confidence`: deterministic score (0.0–1.0)
+  - `refs`: stable resource identifiers for correlation
+  - `remediation`: structured guidance (summary, steps, links)
+* Text rendering of remediation blocks
+* Backwards-compatible JSON (omitempty)
+
+### Non-goals
+
+* No changes to pattern IDs or detection semantics
+* No changes to exit codes
+* No Git parsing or external service integration
+
+---
+
+## v0.9 — Git-Aware Inference
 
 **Status:** Planned
 
@@ -89,7 +111,7 @@ Introduce a first-class **resource graph** that captures cluster-visible relatio
 
 ---
 
-## v0.9 — ConfigHub Collaboration
+## v0.10 — ConfigHub Collaboration
 
 **Status:** Planned
 
@@ -122,5 +144,5 @@ Introduce a first-class **resource graph** that captures cluster-visible relatio
 * [docs/roadmap.md](docs/roadmap.md) — Detailed v0.5 epic and issue tracking
 * [docs/reference/cli-contract.md](docs/reference/cli-contract.md) — v0.5 CLI contract reference
 * [docs/reference/graph-contract.md](docs/reference/graph-contract.md) — v0.6 graph contract reference
-* [docs/reference/patterns-contract.md](docs/reference/patterns-contract.md) — v0.7 patterns contract reference
+* [docs/reference/patterns-contract.md](docs/reference/patterns-contract.md) — v0.7+ patterns contract reference
 * [docs/reference/gitops-patterns.md](docs/reference/gitops-patterns.md) — GitOps patterns conceptual reference
