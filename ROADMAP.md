@@ -29,10 +29,15 @@ For these commands:
 
 **Status:** In progress (Track G)
 
-### Current: Phase 2
-- K8s ownership chain collectors (#60)
-- GitOps CRDs as nodes (#61)
-- `graph explain` command (#62)
+### Completed: Phase 2 ✅
+- `graph export --json` with schema v1 (#59)
+- K8s ownership chain collectors (#60, PR #63)
+- GitOps CRDs as nodes (#61, PR #64)
+- `graph explain` command (#62, PR #65)
+
+### Up Next: Phase 3
+- Pattern detection foundations
+- Edge types for GitOps relationships
 
 ### Goal
 

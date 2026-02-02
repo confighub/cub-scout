@@ -961,6 +961,63 @@ ea1a3bf docs: Add comprehensive roadmap with Connected Mode tracks
 
 ---
 
+## Track G Phase 2: Graph Foundation Complete
+
+**Date:** 2026-02-02
+
+Track G Phase 2 delivered the graph foundation for cub-scout v0.6.
+
+### Issues Delivered
+
+| Issue | PR | Description |
+|-------|-----|-------------|
+| #59 | #59 | `graph export --json` with schema v1 |
+| #60 | #63 | K8s ownership chain collection + golden tests |
+| #61 | #64 | GitOps CRDs as nodes (best-effort) |
+| #62 | #65 | `graph explain` command + golden tests |
+
+### Key Technical Decisions
+
+- **Evidence format**: `[]Evidence` array (supports future multi-evidence scenarios)
+- **Evidence field**: Stable `metadata.ownerReferences` (not indexed)
+- **GitOps collection**: Dynamic client with best-effort skip on any error
+- **Exit codes**: 0=success, 2=usage error, 3=not found
+
+### Files Added
+
+- `internal/graph/graph.go` - Core graph types (Node, Edge, Evidence)
+- `internal/graph/collector.go` - K8s ownership chain collector
+- `internal/graph/collector_gitops.go` - GitOps CRD collector (Flux, ArgoCD)
+- `internal/graph/explain.go` - Deterministic explain renderer
+- `internal/graph/export.go` - JSON export with schema v1
+- `cmd/cub-scout/graph.go` - Root graph command
+- `cmd/cub-scout/graph_export.go` - `graph export` CLI
+- `cmd/cub-scout/graph_explain.go` - `graph explain` CLI
+- `docs/reference/graph-contract.md` - Schema specification
+- `docs/reference/graph-explain-contract.md` - Explain output contract
+
+### Tests
+
+- 7 explain tests (4 golden + 3 unit)
+- 4 export tests (2 golden + 2 unit)
+- 6 collector tests (ownership chain)
+- 1 GitOps collector test
+- All tests pass with `KUBECONFIG=/dev/null`
+
+### Graph Schema v1
+
+```json
+{
+  "schema_version": "graph.v1",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "cluster": "cluster-name",
+  "nodes": [...],
+  "edges": [...]
+}
+```
+
+---
+
 ## Design Contract Alignment
 
 **Date:** 2026-02-01 (continued)
