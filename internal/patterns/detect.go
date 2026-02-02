@@ -16,6 +16,18 @@ func DetectAll(g *graph.Graph) Result {
 	results := make([]PatternResult, 0, len(patterns))
 
 	for _, p := range patterns {
+		// Check prerequisites first (v0.9+)
+		if skipReason := checkPrerequisites(p, g); skipReason != "" {
+			results = append(results, PatternResult{
+				ID:         p.ID,
+				Name:       p.Name,
+				Status:     StatusSkip,
+				SkipReason: skipReason,
+				Findings:   []Finding{},
+			})
+			continue
+		}
+
 		findings, status := p.Detect(g)
 
 		// Sort findings for deterministic output
@@ -43,6 +55,17 @@ func DetectOne(g *graph.Graph, patternID string) *PatternResult {
 		return nil
 	}
 
+	// Check prerequisites first (v0.9+)
+	if skipReason := checkPrerequisites(*p, g); skipReason != "" {
+		return &PatternResult{
+			ID:         p.ID,
+			Name:       p.Name,
+			Status:     StatusSkip,
+			SkipReason: skipReason,
+			Findings:   []Finding{},
+		}
+	}
+
 	findings, status := p.Detect(g)
 	sortFindings(findings)
 
@@ -62,6 +85,47 @@ func AnyFail(r Result) bool {
 		}
 	}
 	return false
+}
+
+// checkPrerequisites evaluates pattern prerequisites against the graph.
+// Returns empty string if all prerequisites are met, or a skip reason if not.
+func checkPrerequisites(p Pattern, g *graph.Graph) string {
+	if len(p.Prerequisites) == 0 {
+		return ""
+	}
+
+	// Build a set of node kinds present in the graph
+	presentKinds := make(map[string]bool)
+	for _, node := range g.Nodes {
+		presentKinds[node.Kind] = true
+	}
+
+	// Evaluate prerequisites in declared order
+	for _, prereq := range p.Prerequisites {
+		switch prereq.Type {
+		case "requires_node_kind":
+			// All listed kinds must be present
+			for _, kind := range prereq.Kinds {
+				if !presentKinds[kind] {
+					return fmt.Sprintf("no %s nodes in graph", kind)
+				}
+			}
+		case "requires_any_of_kinds":
+			// At least one of the listed kinds must be present
+			found := false
+			for _, kind := range prereq.Kinds {
+				if presentKinds[kind] {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Sprintf("no %s nodes in graph", strings.Join(prereq.Kinds, "/"))
+			}
+		}
+	}
+
+	return ""
 }
 
 // sortFindings sorts findings by (severity, resource, message) for deterministic output.
@@ -111,6 +175,11 @@ func RenderText(r Result) string {
 
 		sb.WriteString(fmt.Sprintf("%s %s\n", indicator, pr.ID))
 		sb.WriteString(fmt.Sprintf("  %s\n", pr.Name))
+
+		// Skip reason (v0.9+) - only when status=skip and prereqs unmet
+		if pr.SkipReason != "" {
+			sb.WriteString(fmt.Sprintf("  skip_reason: %s\n", pr.SkipReason))
+		}
 
 		// Always print findings block
 		sb.WriteString(fmt.Sprintf("  findings (%d):\n", len(pr.Findings)))
@@ -169,6 +238,12 @@ func RenderExplain(p *Pattern, pr *PatternResult) string {
 		}
 
 		sb.WriteString(fmt.Sprintf("Result: %s\n", indicator))
+
+		// Skip reason (v0.9+) - only when status=skip and prereqs unmet
+		if pr.SkipReason != "" {
+			sb.WriteString(fmt.Sprintf("  skip_reason: %s\n", pr.SkipReason))
+		}
+
 		sb.WriteString(fmt.Sprintf("  findings (%d):\n", len(pr.Findings)))
 		if len(pr.Findings) == 0 {
 			sb.WriteString("    (none)\n")

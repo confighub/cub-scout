@@ -39,9 +39,22 @@ type Pattern struct {
 	// Category groups related patterns (e.g., "k8s", "gitops").
 	Category string `json:"category"`
 
+	// Prerequisites are conditions that must be met before detection runs (v0.9+).
+	// If any prerequisite is unmet, the pattern is skipped with a reason.
+	Prerequisites []Prerequisite `json:"-"`
+
 	// Detect runs the pattern detection against a graph.
 	// Returns findings and status. Errors are returned as findings with error severity.
 	Detect func(g *graph.Graph) ([]Finding, Status) `json:"-"`
+}
+
+// Prerequisite defines a condition that must be met before a pattern runs.
+type Prerequisite struct {
+	// Type is the prerequisite type (e.g., "requires_node_kind", "requires_any_of_kinds").
+	Type string
+
+	// Kinds is the list of node kinds required (for requires_node_kind or requires_any_of_kinds).
+	Kinds []string
 }
 
 // Finding represents a single detection result from a pattern.
@@ -95,6 +108,10 @@ type PatternResult struct {
 
 	// Status is the pattern result status.
 	Status Status `json:"status"`
+
+	// SkipReason explains why a pattern was skipped (v0.9+, optional).
+	// Only present when status is "skip" and prerequisites were unmet.
+	SkipReason string `json:"skip_reason,omitempty"`
 
 	// Findings lists all findings from this pattern.
 	Findings []Finding `json:"findings"`
