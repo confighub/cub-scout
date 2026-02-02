@@ -5,6 +5,8 @@ This document defines the contract for the patterns command surface.
 > **v0.7+ contract surface.** Does not modify any v0.5 or v0.6 contracts.
 >
 > **v0.9 additions (Track J).** Pattern prerequisites and skip reasons (additive, backwards-compatible).
+>
+> **v0.10 additions.** Optional `--git-root` flag for git-aware pattern evidence (additive, backwards-compatible).
 
 ## Overview
 
@@ -59,6 +61,7 @@ cub-scout patterns detect [flags]
 | `-n, --namespace` | Namespace to collect (empty = all namespaces) |
 | `--empty` | Use empty graph (skip cluster collection) |
 | `--json` | Output as JSON |
+| `--git-root <path>` | (v0.10+) Path to local Git repository for git-aware patterns |
 
 #### Text Output Format
 
@@ -166,6 +169,7 @@ cub-scout patterns explain <pattern-id> [flags]
 |------|-------------|
 | `-n, --namespace` | Namespace to collect (empty = all namespaces) |
 | `--empty` | Use empty graph (skip cluster collection) |
+| `--git-root <path>` | (v0.10+) Path to local Git repository for git-aware patterns |
 
 #### Output Format
 
@@ -323,6 +327,90 @@ The `skip_reason` field:
 
 ---
 
+## Git-Aware Patterns (v0.10+)
+
+Patterns may optionally use local Git repository data for enhanced detection.
+Git-aware evidence is **optional** — all patterns continue to function without `--git-root`.
+
+### The --git-root Flag
+
+```bash
+cub-scout patterns detect --git-root /path/to/repo
+cub-scout patterns explain <pattern-id> --git-root /path/to/repo
+```
+
+When provided:
+- Patterns that support git-aware detection gain access to repository files
+- Additional evidence or findings may be produced
+- Graph-only patterns are unaffected
+
+When omitted or unreadable:
+- Git-aware patterns SKIP with a deterministic skip_reason
+- Graph-only patterns run normally
+- No error is raised for missing `--git-root`
+
+### Determinism Constraints for Git Repository Scanning
+
+Git-aware patterns must maintain deterministic output:
+
+1. **Bounded scan**: Only files within the repository root are scanned
+2. **No network**: No git fetch, clone, or remote operations
+3. **No submodule expansion**: Submodules are not recursively scanned
+4. **Lexicographic ordering**: File paths are processed in sorted order (locale-independent)
+5. **Reproducible**: Same repository state = same output
+6. **Deterministic cap**: Scanning MUST enforce a deterministic maximum file limit (fixed default; optionally configurable). When exceeded, results include only the first N paths in sorted order
+
+### Skip Behavior for Git-Aware Patterns
+
+Git-aware patterns declare a prerequisite for git-root availability.
+When `--git-root` is not provided or the path is unreadable, the pattern is skipped.
+
+**Skip reason strings (deterministic):**
+
+| Condition | skip_reason |
+|-----------|-------------|
+| `--git-root` not provided | `no git_root provided` |
+| Path does not exist | `git_root path does not exist` |
+| Path is not a directory | `git_root path is not a directory` |
+| Path is not a Git repository | `git_root path is not a git repository` |
+
+**Example output (when `--git-root` provided but invalid):**
+```
+[SKIP] gitops.applicationset_generators
+  ApplicationSet Generator Summary
+  skip_reason: git_root path does not exist
+  findings (0):
+    (none)
+```
+
+Note: These skip reasons only apply when `--git-root` is explicitly provided but unusable.
+Hybrid patterns run normally (with reduced evidence) when `--git-root` is simply omitted.
+
+### Git-Aware vs Graph-Only Patterns
+
+| Pattern Type | Requires --git-root | Behavior when git-root absent |
+|--------------|---------------------|-------------------------------|
+| Graph-only | No | Runs normally |
+| Git-aware | Yes | SKIPs with skip_reason |
+| Hybrid | No (but enhanced) | Runs with reduced evidence |
+
+**Hybrid patterns** use git-root when available but can produce useful output from the graph alone.
+They do not SKIP when git-root is absent.
+
+### No Exit Code Changes
+
+The `--git-root` flag does not introduce new exit codes:
+- Exit 0: All patterns passed (including skipped patterns)
+- Exit 4: One or more patterns failed
+
+Skipped patterns do not cause exit code 4.
+
+Invalid `--git-root` inputs MUST NOT change the command's exit code behavior beyond pattern results.
+When `--git-root` is provided but unusable, affected patterns SKIP with deterministic reasons
+rather than causing a global usage error (exit 2).
+
+---
+
 ## Registered Patterns (v0.7+)
 
 ### k8s.ownership_chain_complete
@@ -362,6 +450,97 @@ Flux Kustomizations/HelmReleases). Detects which GitOps tools are in use.
 - Info: Argo CD controller detected (with counts)
 - Info: Flux controller detected (with counts)
 - Warning: No GitOps controllers detected
+
+---
+
+### gitops.argocd.resources_present (v0.9.2+)
+
+**Category:** gitops
+
+Reports the presence and count of Argo CD resources in the graph.
+
+**Prerequisites:**
+- `requires_any_of_kinds`: `["Application", "ApplicationSet"]`
+
+**Status logic:**
+- `pass`: At least one Argo CD resource found
+- `skip`: No Application or ApplicationSet nodes in graph
+
+**Findings:**
+- Info: Argo CD Applications detected: N
+- Info: Argo CD ApplicationSets detected: N
+
+---
+
+### gitops.flux.resources_present (v0.9.2+)
+
+**Category:** gitops
+
+Reports the presence and count of Flux resources in the graph.
+
+**Prerequisites:**
+- `requires_any_of_kinds`: `["Kustomization", "HelmRelease", "GitRepository"]`
+
+**Status logic:**
+- `pass`: At least one Flux resource found
+- `skip`: No Kustomization, HelmRelease, or GitRepository nodes in graph
+
+**Findings:**
+- Info: Flux Kustomizations detected: N
+- Info: Flux HelmReleases detected: N
+- Info: Flux GitRepositories detected: N
+
+---
+
+### gitops.applicationset_generators (v0.10+, planned)
+
+**Category:** gitops
+**Type:** Hybrid
+
+Summarizes ApplicationSet generators. Runs without `--git-root` with reduced evidence;
+enriched when `--git-root` is provided.
+
+**Prerequisites:**
+- `requires_any_of_kinds`: `["ApplicationSet"]`
+
+**Status logic:**
+- `pass`: ApplicationSet resources found in graph
+- `skip`: No ApplicationSet nodes in graph (prerequisite unmet)
+
+**Behavior by mode:**
+- Without `--git-root`: Info findings based on graph-visible ApplicationSet metadata only
+- With valid `--git-root`: Enriched findings with generator details from repo files
+- With invalid `--git-root`: SKIP with deterministic `skip_reason`
+
+**Findings:**
+- Info: ApplicationSet count and basic metadata (graph-only mode)
+- Info: Generator summary (cluster list, git, matrix, etc.) (git-enhanced mode)
+
+---
+
+### gitops.flux_kustomization_paths (v0.10+, planned)
+
+**Category:** gitops
+**Type:** Hybrid
+
+Correlates Flux Kustomization paths with Git repository structure. Runs without `--git-root`
+with reduced evidence; enriched when `--git-root` is provided.
+
+**Prerequisites:**
+- `requires_any_of_kinds`: `["Kustomization"]`
+
+**Status logic:**
+- `pass`: Kustomization resources found in graph
+- `skip`: No Kustomization nodes in graph (prerequisite unmet)
+
+**Behavior by mode:**
+- Without `--git-root`: Info findings based on `spec.path` from cluster resources only
+- With valid `--git-root`: Enriched findings validating paths exist in repo
+- With invalid `--git-root`: SKIP with deterministic `skip_reason`
+
+**Findings:**
+- Info: Kustomization paths from cluster (graph-only mode)
+- Info: Path correlation summary with repo validation (git-enhanced mode)
 
 ---
 
