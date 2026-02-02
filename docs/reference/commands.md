@@ -19,6 +19,7 @@ Complete reference for all cub-scout commands.
 | `discover` | Scout-style workload discovery |
 | `health` | Scout-style health check |
 | `setup` | Set up shell completions |
+| `graph export` | Export resource graph as JSON (v0.6) |
 
 ---
 
@@ -348,6 +349,44 @@ cub-scout setup --shell zsh
 # Preview without installing
 cub-scout setup --dry-run
 ```
+
+---
+
+## graph (v0.6)
+
+Resource graph operations for exploring cluster relationships.
+
+> **v0.6 contract surface.** Does not modify v0.5 contracts.
+
+### graph export
+
+Export the resource graph as deterministic JSON.
+
+```bash
+cub-scout graph export [flags]
+```
+
+#### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Output as JSON (default, only format supported) |
+| `-n, --namespace` | Namespace to collect (empty = all namespaces) |
+| `--empty` | Output empty graph (skip cluster collection) |
+
+#### Output Schema (graph.v1)
+
+```json
+{
+  "schema_version": "graph.v1",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "cluster": "cluster-name",
+  "nodes": [...],
+  "edges": [...]
+}
+```
+
+See [Graph Contract Reference](graph-contract.md) for full schema documentation.
 
 ---
 
