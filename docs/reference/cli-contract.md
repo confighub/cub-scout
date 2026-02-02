@@ -29,7 +29,7 @@ The following commands are stable for v0.5:
 | `cub-scout map` | Interactive TUI dashboard | v0.5 |
 | `cub-scout map list` | List resources (scriptable) | v0.5 |
 | `cub-scout map status` | One-line health check | v0.5 |
-| `cub-scout map deployers` | List GitOps deployers | v0.5 |
+| `cub-scout map deployers` | List deployers (Deployments) | v0.5 |
 | `cub-scout trace` | Trace resource to Git source | v0.5 |
 | `cub-scout scan` | Scan for CCVEs and issues | v0.5 |
 

@@ -42,7 +42,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `map list` | Plain text resource list | - | Yes | - |
 | `map status` | One-line health check | `s` | Yes | - |
 | `map workloads` | Workloads by owner | `w` | Yes | - |
-| `map deployers` | GitOps deployers | `p` | Yes | - |
+| `map deployers` | Deployers (Deployments) | `p` | Yes | - |
 | `map orphans` | Unmanaged resources | `o` | Yes | - |
 | `map crashes` | Failing pods/deployments | `c` | Yes | - |
 | `map issues` | Resources with problems | `i` | Yes | - |

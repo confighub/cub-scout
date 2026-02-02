@@ -2,6 +2,12 @@
 
 How common GitOps patterns (App-of-Apps, ApplicationSet, Flux Tenancy, Mono-repo) are detected and mapped.
 
+> **v0.5 Scope Note:** This document describes common GitOps patterns for
+> context and education. The v0.5 CLI contract (`map deployers`, `map status`,
+> etc.) does not depend on Flux or ArgoCD CRDs. Pattern detection features
+> described here may require integration with actual GitOps controllers and
+> are out of scope for the v0.5 standalone contract.
+
 ## Quick Reference
 
 | Pattern | Deployer | TUI Detects | GUI Adds |
