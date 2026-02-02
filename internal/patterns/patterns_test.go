@@ -406,3 +406,225 @@ func TestSortFindings(t *testing.T) {
 		t.Errorf("expected info last, got %s", findings[2].Severity)
 	}
 }
+
+// Track I (v0.8+) tests for enrichment fields
+
+func TestSortFindings_SortsRefs(t *testing.T) {
+	findings := []Finding{
+		{
+			Severity: SeverityWarning,
+			Message:  "test",
+			Refs:     []string{"z-ref", "a-ref", "m-ref"},
+		},
+	}
+
+	sortFindings(findings)
+
+	// Refs should be sorted alphabetically
+	if findings[0].Refs[0] != "a-ref" {
+		t.Errorf("expected refs sorted, got %v", findings[0].Refs)
+	}
+	if findings[0].Refs[1] != "m-ref" {
+		t.Errorf("expected refs sorted, got %v", findings[0].Refs)
+	}
+	if findings[0].Refs[2] != "z-ref" {
+		t.Errorf("expected refs sorted, got %v", findings[0].Refs)
+	}
+}
+
+func TestSortFindings_SortsRemediationLinks(t *testing.T) {
+	findings := []Finding{
+		{
+			Severity: SeverityWarning,
+			Message:  "test",
+			Remediation: &Remediation{
+				Summary: "Fix it",
+				Links:   []string{"https://z.com", "https://a.com"},
+			},
+		},
+	}
+
+	sortFindings(findings)
+
+	// Links should be sorted alphabetically
+	if findings[0].Remediation.Links[0] != "https://a.com" {
+		t.Errorf("expected links sorted, got %v", findings[0].Remediation.Links)
+	}
+}
+
+func TestSortFindings_PreservesStepsOrder(t *testing.T) {
+	findings := []Finding{
+		{
+			Severity: SeverityWarning,
+			Message:  "test",
+			Remediation: &Remediation{
+				Summary: "Fix it",
+				Steps:   []string{"step 2", "step 1", "step 3"},
+			},
+		},
+	}
+
+	sortFindings(findings)
+
+	// Steps should NOT be re-sorted (pattern-defined order)
+	if findings[0].Remediation.Steps[0] != "step 2" {
+		t.Errorf("expected steps order preserved, got %v", findings[0].Remediation.Steps)
+	}
+}
+
+func TestRenderText_WithRemediation(t *testing.T) {
+	confidence := 0.9
+	result := Result{
+		SchemaVersion: SchemaVersion,
+		Patterns: []PatternResult{
+			{
+				ID:     "test.pattern",
+				Name:   "Test Pattern",
+				Status: StatusFail,
+				Findings: []Finding{
+					{
+						Pattern:    "test.pattern",
+						Severity:   SeverityWarning,
+						Message:    "Something is wrong",
+						Confidence: &confidence,
+						Refs:       []string{"k8s:Pod/default/test"},
+						Remediation: &Remediation{
+							Summary: "Fix the thing",
+							Steps:   []string{"Do step 1", "Do step 2"},
+							Links:   []string{"https://example.com/docs"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	output := RenderText(result)
+
+	// Should contain remediation block
+	if !strings.Contains(output, "Remediation: Fix the thing") {
+		t.Error("expected remediation summary in output")
+	}
+	if !strings.Contains(output, "- Do step 1") {
+		t.Error("expected remediation steps in output")
+	}
+	if !strings.Contains(output, "Links:") {
+		t.Error("expected Links section in output")
+	}
+	if !strings.Contains(output, "- https://example.com/docs") {
+		t.Error("expected remediation link in output")
+	}
+}
+
+func TestRenderText_WithoutRemediation(t *testing.T) {
+	result := Result{
+		SchemaVersion: SchemaVersion,
+		Patterns: []PatternResult{
+			{
+				ID:     "test.pattern",
+				Name:   "Test Pattern",
+				Status: StatusFail,
+				Findings: []Finding{
+					{
+						Pattern:  "test.pattern",
+						Severity: SeverityWarning,
+						Message:  "Something is wrong",
+					},
+				},
+			},
+		},
+	}
+
+	output := RenderText(result)
+
+	// Should NOT contain remediation block
+	if strings.Contains(output, "Remediation:") {
+		t.Error("should not print remediation when absent")
+	}
+	if strings.Contains(output, "Links:") {
+		t.Error("should not print Links when remediation absent")
+	}
+}
+
+func TestRenderJSON_WithEnrichmentFields(t *testing.T) {
+	confidence := 0.85
+	result := Result{
+		SchemaVersion: SchemaVersion,
+		Patterns: []PatternResult{
+			{
+				ID:     "test.pattern",
+				Name:   "Test Pattern",
+				Status: StatusFail,
+				Findings: []Finding{
+					{
+						Pattern:    "test.pattern",
+						Severity:   SeverityWarning,
+						Message:    "Test message",
+						Confidence: &confidence,
+						Refs:       []string{"k8s:Pod/default/test"},
+						Remediation: &Remediation{
+							Summary: "Fix it",
+							Steps:   []string{"Step 1"},
+							Links:   []string{"https://example.com"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	output, err := RenderJSON(result)
+	if err != nil {
+		t.Fatalf("RenderJSON error: %v", err)
+	}
+
+	// Should contain new fields
+	if !strings.Contains(output, `"confidence": 0.85`) {
+		t.Error("expected confidence in JSON output")
+	}
+	if !strings.Contains(output, `"refs"`) {
+		t.Error("expected refs in JSON output")
+	}
+	if !strings.Contains(output, `"remediation"`) {
+		t.Error("expected remediation in JSON output")
+	}
+	if !strings.Contains(output, `"summary": "Fix it"`) {
+		t.Error("expected remediation summary in JSON output")
+	}
+}
+
+func TestRenderJSON_OmitsAbsentFields(t *testing.T) {
+	result := Result{
+		SchemaVersion: SchemaVersion,
+		Patterns: []PatternResult{
+			{
+				ID:     "test.pattern",
+				Name:   "Test Pattern",
+				Status: StatusPass,
+				Findings: []Finding{
+					{
+						Pattern:  "test.pattern",
+						Severity: SeverityInfo,
+						Message:  "All good",
+					},
+				},
+			},
+		},
+	}
+
+	output, err := RenderJSON(result)
+	if err != nil {
+		t.Fatalf("RenderJSON error: %v", err)
+	}
+
+	// Should NOT contain new optional fields when absent
+	if strings.Contains(output, `"confidence"`) {
+		t.Error("should not include confidence when nil")
+	}
+	if strings.Contains(output, `"refs"`) {
+		t.Error("should not include refs when nil/empty")
+	}
+	if strings.Contains(output, `"remediation"`) {
+		t.Error("should not include remediation when nil")
+	}
+}
