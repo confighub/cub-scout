@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -166,11 +167,11 @@ func TestIsValidSubpath(t *testing.T) {
 }
 
 func TestMapHTTPStatus(t *testing.T) {
+	// Note: 404 is handled separately by resolve404Reason, not mapHTTPStatus
 	tests := []struct {
-		name     string
-		status   int
-		hasToken bool
-		want     string
+		name   string
+		status int
+		want   string
 	}{
 		{
 			name:   "200 OK",
@@ -178,20 +179,9 @@ func TestMapHTTPStatus(t *testing.T) {
 			want:   "",
 		},
 		{
-			name:   "404 Not Found",
-			status: http.StatusNotFound,
-			want:   SkipReasonRepoNotFound,
-		},
-		{
-			name:   "401 Unauthorized without token",
+			name:   "401 Unauthorized",
 			status: http.StatusUnauthorized,
 			want:   SkipReasonAuthRequired,
-		},
-		{
-			name:     "401 Unauthorized with token",
-			status:   http.StatusUnauthorized,
-			hasToken: true,
-			want:     SkipReasonAuthRequired,
 		},
 		{
 			name:   "403 Forbidden",
@@ -222,8 +212,8 @@ func TestMapHTTPStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MapHTTPStatus(tt.status, tt.hasToken); got != tt.want {
-				t.Errorf("MapHTTPStatus(%d, %v) = %q, want %q", tt.status, tt.hasToken, got, tt.want)
+			if got := MapHTTPStatus(tt.status); got != tt.want {
+				t.Errorf("MapHTTPStatus(%d) = %q, want %q", tt.status, got, tt.want)
 			}
 		})
 	}
@@ -293,16 +283,12 @@ func createTestTarball(t *testing.T, topDir string, files map[string]string) []b
 }
 
 func TestMaterialize_HTTPStatusMapping(t *testing.T) {
+	// Note: 404 is tested separately in TestMaterialize_404Disambiguation
 	tests := []struct {
 		name           string
 		statusCode     int
 		wantSkipReason string
 	}{
-		{
-			name:           "404 - repository not found",
-			statusCode:     http.StatusNotFound,
-			wantSkipReason: SkipReasonRepoNotFound,
-		},
 		{
 			name:           "401 - authentication required",
 			statusCode:     http.StatusUnauthorized,
@@ -351,6 +337,65 @@ func TestMaterialize_HTTPStatusMapping(t *testing.T) {
 			}
 			if result.Path != "" {
 				t.Error("expected empty path for failed request")
+			}
+		})
+	}
+}
+
+func TestMaterialize_404Disambiguation(t *testing.T) {
+	tests := []struct {
+		name           string
+		repoExists     bool
+		wantSkipReason string
+	}{
+		{
+			name:           "repo does not exist - repository not found",
+			repoExists:     false,
+			wantSkipReason: SkipReasonRepoNotFound,
+		},
+		{
+			name:           "repo exists but ref not found - ref not found",
+			repoExists:     true,
+			wantSkipReason: SkipReasonRefNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Tarball endpoint always returns 404
+				if strings.Contains(r.URL.Path, "/tarball/") {
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+				// Repo existence check
+				if strings.HasPrefix(r.URL.Path, "/repos/") && !strings.Contains(r.URL.Path, "/tarball/") {
+					if tt.repoExists {
+						w.WriteHeader(http.StatusOK)
+					} else {
+						w.WriteHeader(http.StatusNotFound)
+					}
+					return
+				}
+				w.WriteHeader(http.StatusNotFound)
+			}))
+			defer server.Close()
+
+			client := &http.Client{
+				Transport: &rewriteTransport{
+					base:   http.DefaultTransport,
+					target: server.URL,
+				},
+			}
+
+			result := Materialize(Options{
+				URL:        "https://github.com/test/repo",
+				Ref:        "nonexistent-ref",
+				HTTPClient: client,
+			})
+
+			if result.SkipReason != tt.wantSkipReason {
+				t.Errorf("got skip_reason %q, want %q", result.SkipReason, tt.wantSkipReason)
 			}
 		})
 	}

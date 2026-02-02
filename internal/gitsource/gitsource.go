@@ -147,8 +147,14 @@ func Materialize(opts Options) Result {
 	}
 	defer resp.Body.Close()
 
-	// Map HTTP status to skip reason
-	skipReason := mapHTTPStatus(resp.StatusCode, opts.Token != "")
+	// Handle 404 specially: distinguish repo-not-found vs ref-not-found
+	if resp.StatusCode == http.StatusNotFound {
+		skipReason := resolve404Reason(client, owner, repo, opts.Token)
+		return Result{SkipReason: skipReason}
+	}
+
+	// Map other HTTP status codes to skip reasons
+	skipReason := mapHTTPStatus(resp.StatusCode)
 	if skipReason != "" {
 		return Result{SkipReason: skipReason}
 	}
@@ -246,15 +252,11 @@ func isValidSubpath(subpath string) bool {
 }
 
 // mapHTTPStatus maps HTTP status codes to deterministic skip reasons.
-func mapHTTPStatus(status int, hasToken bool) string {
+// Note: 404 is handled separately by resolve404Reason for proper disambiguation.
+func mapHTTPStatus(status int) string {
 	switch status {
 	case http.StatusOK:
 		return "" // Success
-
-	case http.StatusNotFound:
-		// 404 can mean repo not found or ref not found
-		// GitHub returns 404 for both cases
-		return SkipReasonRepoNotFound
 
 	case http.StatusUnauthorized, http.StatusForbidden:
 		return SkipReasonAuthRequired
@@ -268,6 +270,38 @@ func mapHTTPStatus(status int, hasToken bool) string {
 		}
 		return ""
 	}
+}
+
+// resolve404Reason distinguishes between repo-not-found and ref-not-found.
+// When tarball returns 404, we check if the repo exists to determine the cause.
+func resolve404Reason(client *http.Client, owner, repo, token string) string {
+	// Check if repository exists
+	repoURL := fmt.Sprintf("https://api.github.com/repos/%s/%s", owner, repo)
+	req, err := http.NewRequest("HEAD", repoURL, nil)
+	if err != nil {
+		return SkipReasonRepoNotFound
+	}
+
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "cub-scout/0.11")
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		// Network error checking repo - assume repo not found
+		return SkipReasonRepoNotFound
+	}
+	defer resp.Body.Close()
+
+	// If repo exists (200), then the ref was not found
+	if resp.StatusCode == http.StatusOK {
+		return SkipReasonRefNotFound
+	}
+
+	// Repo doesn't exist or access denied
+	return SkipReasonRepoNotFound
 }
 
 // extractTarball extracts a gzipped tarball to a destination directory.
@@ -329,9 +363,11 @@ func extractTarball(r io.Reader, destDir string, subpath string) (string, error)
 		// Construct destination path
 		destPath := filepath.Join(destDir, relPath)
 
-		// Security: ensure destPath is within destDir
+		// Security: ensure destPath is within destDir using filepath.Rel
 		cleanDest := filepath.Clean(destPath)
-		if !strings.HasPrefix(cleanDest, filepath.Clean(destDir)) {
+		cleanBase := filepath.Clean(destDir)
+		rel, err := filepath.Rel(cleanBase, cleanDest)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			continue // Skip paths that escape
 		}
 
@@ -379,9 +415,11 @@ func extractTarball(r io.Reader, destDir string, subpath string) (string, error)
 	if subpath != "" {
 		subpathDir := filepath.Join(destDir, subpath)
 		cleanSubpath := filepath.Clean(subpathDir)
+		cleanBase := filepath.Clean(destDir)
 
-		// Ensure subpath doesn't escape
-		if !strings.HasPrefix(cleanSubpath, filepath.Clean(destDir)) {
+		// Ensure subpath doesn't escape using filepath.Rel
+		rel, err := filepath.Rel(cleanBase, cleanSubpath)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			return "", fmt.Errorf("subpath escapes root")
 		}
 
