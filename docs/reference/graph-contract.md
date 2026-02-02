@@ -56,7 +56,7 @@ Each edge represents a relationship between two resources.
 | `from` | string | yes | Source node ID |
 | `to` | string | yes | Target node ID |
 | `type` | string | yes | Relationship type |
-| `evidence` | object | yes | How this relationship was detected |
+| `evidence` | array | yes | How this relationship was detected (array of evidence items) |
 
 ### Edge Types
 
@@ -69,11 +69,12 @@ Each edge represents a relationship between two resources.
 
 ### Evidence Schema
 
-Every edge includes evidence explaining how it was detected.
+Every edge includes an array of evidence items explaining how it was detected.
+Multiple evidence items may exist when a relationship is detected through multiple fields.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `field` | string | Field path that established the relationship |
+| `field` | string | Stable label identifying the field (path-like string, not strict JSONPath) |
 | `reason` | string | Human-readable explanation |
 
 ---
@@ -132,10 +133,12 @@ CUB_SCOUT_TEST_TIME=2026-01-01T00:00:00Z cub-scout graph export --json
       "from": "prod-east/default/Deployment/nginx",
       "to": "prod-east/default/ReplicaSet/nginx-abc123",
       "type": "owns",
-      "evidence": {
-        "field": "metadata.ownerReferences[nginx]",
-        "reason": "ReplicaSet nginx-abc123 has ownerReference to Deployment nginx"
-      }
+      "evidence": [
+        {
+          "field": "metadata.ownerReferences",
+          "reason": "ReplicaSet nginx-abc123 has ownerReference to Deployment nginx"
+        }
+      ]
     }
   ]
 }

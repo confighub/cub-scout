@@ -1,0 +1,66 @@
+{
+  "schema_version": "graph.v1",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "cluster": "test-cluster",
+  "nodes": [
+    {
+      "id": "test-cluster/default/Deployment/nginx",
+      "cluster": "test-cluster",
+      "namespace": "default",
+      "kind": "Deployment",
+      "name": "nginx",
+      "api_version": "apps/v1",
+      "labels": {
+        "app": "nginx"
+      }
+    },
+    {
+      "id": "test-cluster/default/Pod/nginx-abc123-xyz",
+      "cluster": "test-cluster",
+      "namespace": "default",
+      "kind": "Pod",
+      "name": "nginx-abc123-xyz",
+      "api_version": "v1",
+      "labels": {
+        "app": "nginx",
+        "pod-template-hash": "abc123"
+      }
+    },
+    {
+      "id": "test-cluster/default/ReplicaSet/nginx-abc123",
+      "cluster": "test-cluster",
+      "namespace": "default",
+      "kind": "ReplicaSet",
+      "name": "nginx-abc123",
+      "api_version": "apps/v1",
+      "labels": {
+        "app": "nginx",
+        "pod-template-hash": "abc123"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "test-cluster/default/Deployment/nginx",
+      "to": "test-cluster/default/ReplicaSet/nginx-abc123",
+      "type": "owns",
+      "evidence": [
+        {
+          "field": "metadata.ownerReferences",
+          "reason": "ReplicaSet nginx-abc123 has ownerReference to Deployment nginx"
+        }
+      ]
+    },
+    {
+      "from": "test-cluster/default/ReplicaSet/nginx-abc123",
+      "to": "test-cluster/default/Pod/nginx-abc123-xyz",
+      "type": "owns",
+      "evidence": [
+        {
+          "field": "metadata.ownerReferences",
+          "reason": "Pod nginx-abc123-xyz has ownerReference to ReplicaSet nginx-abc123"
+        }
+      ]
+    }
+  ]
+}
