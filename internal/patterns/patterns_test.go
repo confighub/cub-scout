@@ -406,3 +406,238 @@ func TestSortFindings(t *testing.T) {
 		t.Errorf("expected info last, got %s", findings[2].Severity)
 	}
 }
+
+// Tests for Track J prerequisites (v0.9+)
+
+func TestCheckPrerequisites_NoPrereqs(t *testing.T) {
+	g := graph.NewGraph("test")
+	p := Pattern{
+		ID:            "test.pattern",
+		Prerequisites: nil, // No prerequisites
+	}
+
+	reason := checkPrerequisites(p, g)
+	if reason != "" {
+		t.Errorf("expected empty skip reason for pattern without prereqs, got %s", reason)
+	}
+}
+
+func TestCheckPrerequisites_RequiresNodeKind_Met(t *testing.T) {
+	g := graph.NewGraph("test")
+	g.AddNode(graph.Node{Kind: "Deployment", ID: "test/default/Deployment/foo"})
+
+	p := Pattern{
+		ID: "test.pattern",
+		Prerequisites: []Prerequisite{
+			{Type: "requires_node_kind", Kinds: []string{"Deployment"}},
+		},
+	}
+
+	reason := checkPrerequisites(p, g)
+	if reason != "" {
+		t.Errorf("expected empty skip reason when prereq met, got %s", reason)
+	}
+}
+
+func TestCheckPrerequisites_RequiresNodeKind_Unmet(t *testing.T) {
+	g := graph.NewGraph("test")
+	// Empty graph - no Deployment
+
+	p := Pattern{
+		ID: "test.pattern",
+		Prerequisites: []Prerequisite{
+			{Type: "requires_node_kind", Kinds: []string{"Deployment"}},
+		},
+	}
+
+	reason := checkPrerequisites(p, g)
+	if reason == "" {
+		t.Error("expected skip reason when prereq not met")
+	}
+	if !strings.Contains(reason, "Deployment") {
+		t.Errorf("expected reason to mention Deployment, got %s", reason)
+	}
+}
+
+func TestCheckPrerequisites_RequiresAnyOfKinds_Met(t *testing.T) {
+	g := graph.NewGraph("test")
+	g.AddNode(graph.Node{Kind: "Pod", ID: "test/default/Pod/foo"})
+
+	p := Pattern{
+		ID: "test.pattern",
+		Prerequisites: []Prerequisite{
+			{Type: "requires_any_of_kinds", Kinds: []string{"Deployment", "ReplicaSet", "Pod"}},
+		},
+	}
+
+	reason := checkPrerequisites(p, g)
+	if reason != "" {
+		t.Errorf("expected empty skip reason when any-of prereq met, got %s", reason)
+	}
+}
+
+func TestCheckPrerequisites_RequiresAnyOfKinds_Unmet(t *testing.T) {
+	g := graph.NewGraph("test")
+	g.AddNode(graph.Node{Kind: "ConfigMap", ID: "test/default/ConfigMap/foo"})
+
+	p := Pattern{
+		ID: "test.pattern",
+		Prerequisites: []Prerequisite{
+			{Type: "requires_any_of_kinds", Kinds: []string{"Deployment", "ReplicaSet", "Pod"}},
+		},
+	}
+
+	reason := checkPrerequisites(p, g)
+	if reason == "" {
+		t.Error("expected skip reason when any-of prereq not met")
+	}
+	if !strings.Contains(reason, "Deployment") || !strings.Contains(reason, "ReplicaSet") || !strings.Contains(reason, "Pod") {
+		t.Errorf("expected reason to mention all required kinds, got %s", reason)
+	}
+}
+
+func TestCheckPrerequisites_MultiplePrereqs_FirstUnmet(t *testing.T) {
+	g := graph.NewGraph("test")
+	g.AddNode(graph.Node{Kind: "Pod", ID: "test/default/Pod/foo"})
+
+	p := Pattern{
+		ID: "test.pattern",
+		Prerequisites: []Prerequisite{
+			{Type: "requires_node_kind", Kinds: []string{"Deployment"}}, // Will fail
+			{Type: "requires_node_kind", Kinds: []string{"Pod"}},        // Would pass
+		},
+	}
+
+	reason := checkPrerequisites(p, g)
+	if reason == "" {
+		t.Error("expected skip reason when first prereq not met")
+	}
+	if !strings.Contains(reason, "Deployment") {
+		t.Errorf("expected reason to mention Deployment (first unmet), got %s", reason)
+	}
+}
+
+func TestDetectAll_WithPrereqs_Skipped(t *testing.T) {
+	// Temporarily register a test pattern with prerequisites
+	testPattern := Pattern{
+		ID:          "test.prereq_pattern",
+		Name:        "Test Prereq Pattern",
+		Description: "Test pattern with prerequisites",
+		Category:    "test",
+		Prerequisites: []Prerequisite{
+			{Type: "requires_node_kind", Kinds: []string{"NonexistentKind"}},
+		},
+		Detect: func(g *graph.Graph) ([]Finding, Status) {
+			// This should never be called
+			t.Error("Detect should not be called when prereqs unmet")
+			return nil, StatusPass
+		},
+	}
+
+	// Register and defer cleanup
+	Register(testPattern)
+	defer func() {
+		// Clean up by removing from registry
+		delete(registry, testPattern.ID)
+	}()
+
+	g := graph.NewGraph("test")
+	result := DetectAll(g)
+
+	// Find our test pattern result
+	var testResult *PatternResult
+	for i := range result.Patterns {
+		if result.Patterns[i].ID == "test.prereq_pattern" {
+			testResult = &result.Patterns[i]
+			break
+		}
+	}
+
+	if testResult == nil {
+		t.Fatal("expected test pattern in results")
+	}
+
+	if testResult.Status != StatusSkip {
+		t.Errorf("expected skip status, got %s", testResult.Status)
+	}
+
+	if testResult.SkipReason == "" {
+		t.Error("expected skip_reason to be set")
+	}
+
+	if len(testResult.Findings) != 0 {
+		t.Errorf("expected empty findings when skipped, got %d", len(testResult.Findings))
+	}
+}
+
+func TestRenderText_WithSkipReason(t *testing.T) {
+	result := Result{
+		SchemaVersion: SchemaVersion,
+		Patterns: []PatternResult{
+			{
+				ID:         "test.pattern",
+				Name:       "Test Pattern",
+				Status:     StatusSkip,
+				SkipReason: "no Deployment nodes in graph",
+				Findings:   []Finding{},
+			},
+		},
+	}
+
+	output := RenderText(result)
+
+	if !strings.Contains(output, "[SKIP]") {
+		t.Error("expected [SKIP] in output")
+	}
+
+	if !strings.Contains(output, "skip_reason: no Deployment nodes in graph") {
+		t.Error("expected skip_reason in output")
+	}
+}
+
+func TestRenderJSON_WithSkipReason(t *testing.T) {
+	result := Result{
+		SchemaVersion: SchemaVersion,
+		Patterns: []PatternResult{
+			{
+				ID:         "test.pattern",
+				Name:       "Test Pattern",
+				Status:     StatusSkip,
+				SkipReason: "no Deployment nodes in graph",
+				Findings:   []Finding{},
+			},
+		},
+	}
+
+	output, err := RenderJSON(result)
+	if err != nil {
+		t.Fatalf("RenderJSON error: %v", err)
+	}
+
+	if !strings.Contains(output, `"skip_reason": "no Deployment nodes in graph"`) {
+		t.Error("expected skip_reason in JSON output")
+	}
+}
+
+func TestRenderJSON_OmitsEmptySkipReason(t *testing.T) {
+	result := Result{
+		SchemaVersion: SchemaVersion,
+		Patterns: []PatternResult{
+			{
+				ID:       "test.pattern",
+				Name:     "Test Pattern",
+				Status:   StatusPass,
+				Findings: []Finding{},
+			},
+		},
+	}
+
+	output, err := RenderJSON(result)
+	if err != nil {
+		t.Fatalf("RenderJSON error: %v", err)
+	}
+
+	if strings.Contains(output, "skip_reason") {
+		t.Error("expected skip_reason to be omitted when empty")
+	}
+}
