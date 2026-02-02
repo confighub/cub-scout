@@ -1,0 +1,22 @@
+GRAPH EXPLAIN
+Target: test-cluster/default/Pod/nginx-abc123-xyz789
+Schema: graph.v1
+
+Node:
+  kind: Pod
+  name: nginx-abc123-xyz789
+  namespace: default
+  api_version: v1
+  id: test-cluster/default/Pod/nginx-abc123-xyz789
+  labels:
+    app=nginx
+
+Relationships:
+  outgoing (0):
+  incoming (1):
+    - owns <- test-cluster/default/ReplicaSet/nginx-abc123
+      evidence (1):
+        - field: metadata.ownerReferences
+          reason: Pod nginx-abc123-xyz789 has ownerReference to ReplicaSet nginx-abc123
+
+Hint: Use 'cub-scout graph export --json' for the full graph.
