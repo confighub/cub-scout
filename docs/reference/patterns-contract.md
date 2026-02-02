@@ -491,7 +491,7 @@ Reports the presence and count of Flux resources in the graph.
 
 ---
 
-### gitops.applicationset_generators (v0.10+, planned)
+### gitops.argocd.applicationset_generators (v0.10+, planned)
 
 **Category:** gitops
 **Type:** Hybrid
@@ -517,7 +517,7 @@ enriched when `--git-root` is provided.
 
 ---
 
-### gitops.flux_kustomization_paths (v0.10+, planned)
+### gitops.flux.kustomization_paths (v0.10+, planned)
 
 **Category:** gitops
 **Type:** Hybrid
