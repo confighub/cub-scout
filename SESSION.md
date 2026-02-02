@@ -1339,6 +1339,33 @@ Comprehensive integration tests for connected mode using httptest:
 
 ---
 
+### Pre-Release Sanity Check: PASSED
+
+**Date:** 2026-02-02
+
+Full 7-point sanity check completed before v0.11.1 tag:
+
+| Check | Status |
+|-------|--------|
+| 1. Build + install sanity | ✅ `go test ./...` + `go build` pass |
+| 2. Real connected-mode smoke | ✅ Real GitHub tarball fetch works |
+| 3. Real-world `--git-root` smoke | ✅ Local + subpath modes work |
+| 4. README examples audit | ✅ All patterns commands work |
+| 5. Determinism check | ✅ Text + JSON outputs identical on repeat |
+| 6. Cluster reality check (kind) | ✅ No panic, correct output |
+| 7. Packaging sanity (GoReleaser) | ✅ Snapshot build succeeds |
+
+**Connected mode verified against real GitHub:**
+- Public repo tarball fetch: ✅
+- No GITHUB_TOKEN required for public repos: ✅
+- `./subpath` handling: ✅
+- 404 disambiguation (repo vs ref): ✅
+- Deterministic output: ✅
+
+**No regressions found.**
+
+---
+
 ### Next Steps
 
 - Tag v0.11.1
