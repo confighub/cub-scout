@@ -1185,3 +1185,126 @@ All v0.5 issues (#26-#38) pass:
 **Templates created:** 2 (.github/)
 
 All synced to GitHub.
+
+---
+
+## Track L: v0.11 Connected Mode
+
+**Date:** 2026-02-02
+
+Implementing connected mode for git-aware patterns using GitHub tarball API.
+
+### Goal
+
+Enable git-aware patterns to use **remote Git repository snapshots** via GitHub tarball API,
+eliminating the requirement for local repository access.
+
+---
+
+### PR #79: Connected Mode Contract (Merged)
+
+**Branch:** `track-v0.11/connected-contract`
+
+Contract documentation defining connected mode semantics:
+
+**New flags:**
+- `--git-url <url>` - GitHub repository URL
+- `--git-ref <ref>` - Git ref (commit SHA recommended for determinism)
+- `--git-subpath <path>` - Optional subpath within repository
+
+**Usage errors (exit 2):**
+| Condition | Exit Code |
+|-----------|-----------|
+| `--git-url` without `--git-ref` | 2 |
+| `--git-ref` without `--git-url` | 2 |
+| `--git-subpath` without context | 2 |
+| Both `--git-root` and `--git-url` | 2 |
+
+**Skip reasons (contract-locked):**
+| Condition | skip_reason |
+|-----------|-------------|
+| Repository not found (404) | `git_source repository not found` |
+| Ref not found | `git_source ref not found` |
+| Auth required (401/403) | `git_source authentication required` |
+| Rate limited (429) | `git_source rate limited` |
+| Fetch failed | `git_source fetch failed` |
+| Invalid tarball | `git_source tarball invalid` |
+
+**Determinism:**
+- Full commit SHA (40 chars) = deterministic
+- Short SHA = not guaranteed (provider-dependent)
+- Branch/tag = non-deterministic
+
+---
+
+### PR #80: Connected Mode Plumbing (Merged)
+
+**Branch:** `track-v0.11/git-source-plumbing`
+
+Implementation of connected mode infrastructure:
+
+**New package: `internal/gitsource`**
+- GitHub URL parsing (supports `.git` suffix, trailing slash)
+- Tarball download with timeout and size limits
+- HTTP status → skip_reason mapping
+- 404 disambiguation (repo vs ref not found via repo existence check)
+- Subpath safety (reject path traversal, absolute paths)
+- `filepath.Rel` containment check (secure against prefix bypass)
+- Symlinks skipped for security
+- Creates fake `.git` directory for gitctx compatibility
+
+**CLI wiring:**
+- Added flags to `patterns detect` and `patterns explain`
+- `validateGitFlags()` enforces exit 2 for invalid combinations
+- `resolveGitContext()` materializes snapshot → passes to gitctx
+- Cleanup function for temp directory removal
+
+**Architecture:**
+- Connected mode materializes snapshot, reuses v0.10 gitctx path
+- Runtime failures → pattern-level SKIP (not exit 2)
+- Patterns unchanged — no special cases needed
+- `GITHUB_TOKEN` env var for private repo auth (never logged)
+
+**Tests:**
+- URL parsing tests
+- Subpath safety tests
+- HTTP status mapping tests (httptest, no network)
+- 404 disambiguation tests (repo exists vs not)
+- Flag validation tests
+
+**Files added:**
+- `internal/gitsource/gitsource.go` - Core materializer
+- `internal/gitsource/gitsource_test.go` - Unit tests
+- `cmd/cub-scout/patterns_cmd_test.go` - Flag validation tests
+
+**Files modified:**
+- `cmd/cub-scout/patterns_cmd.go` - Flag wiring + validation
+
+---
+
+### Key Technical Decisions
+
+1. **404 disambiguation**: When tarball returns 404, HEAD request to repo endpoint determines if repo exists → "ref not found" vs "repository not found"
+
+2. **Path containment**: Using `filepath.Rel` instead of `strings.HasPrefix` to prevent bypass when paths share prefix (e.g., `/tmp/repo` vs `/tmp/repo_evil`)
+
+3. **Snapshot reuse**: Connected mode extracts tarball to temp dir, creates fake `.git`, then passes path through existing `gitctx.OpenGitRoot` — patterns see no difference
+
+4. **Skip vs Exit**: Invalid flag combinations → exit 2; runtime failures (network, auth) → pattern SKIP with deterministic reason
+
+---
+
+### v0.11 Status
+
+| Component | Status |
+|-----------|--------|
+| Contract (PR #79) | ✅ Merged |
+| Plumbing (PR #80) | ✅ Merged |
+| Integration tests (PR3) | Pending |
+
+---
+
+### Next Steps
+
+- PR3: Integration tests and golden updates for connected mode
+- Update ROADMAP.md when v0.11 complete
