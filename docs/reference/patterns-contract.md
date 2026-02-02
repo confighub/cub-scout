@@ -1,8 +1,8 @@
-# Patterns Contract Reference (v0.7)
+# Patterns Contract Reference
 
-This document defines the v0.7 contract for the patterns command surface.
+This document defines the contract for the patterns command surface.
 
-> **v0.7 contract surface.** Does not modify any v0.5 or v0.6 contracts.
+> **v0.7+ contract surface.** Does not modify any v0.5 or v0.6 contracts.
 
 ## Overview
 
@@ -86,6 +86,26 @@ The **findings block is always printed**, even when empty:
     (none)
 ```
 
+**Remediation blocks (v0.8+):** When a finding includes remediation, it is rendered after the evidence:
+```
+    - [<severity>] <message>
+      resource: <resource-id>
+      evidence (<count>):
+        - <evidence>
+      Remediation: <summary>
+        - <step 1>
+        - <step 2>
+      Links:
+        - <url 1>
+        - <url 2>
+```
+
+Rules for remediation rendering:
+- `Remediation:` line is printed only if remediation is present and summary is non-empty
+- Steps are printed only if the steps array is non-empty
+- `Links:` section is printed only if links array is non-empty
+- No placeholder text (like "(none)") is printed for absent optional blocks
+
 #### JSON Output Format
 
 ```json
@@ -102,13 +122,22 @@ The **findings block is always printed**, even when empty:
           "severity": "info|warning|error",
           "message": "<message>",
           "resource": "<resource-id>",  // optional
-          "evidence": ["<evidence>", ...]  // optional
+          "evidence": ["<evidence>", ...],  // optional
+          "confidence": 0.9,  // optional, v0.8+
+          "refs": ["<ref>", ...],  // optional, v0.8+
+          "remediation": {  // optional, v0.8+
+            "summary": "<summary>",
+            "steps": ["<step>", ...],  // optional
+            "links": ["<url>", ...]  // optional
+          }
         }
       ]
     }
   ]
 }
 ```
+
+See [Finding Enrichment Fields (v0.8+)](#finding-enrichment-fields-v08) for details on optional fields.
 
 #### Exit Codes
 
@@ -169,11 +198,84 @@ All patterns output is deterministic:
 1. **Pattern ordering**: Patterns are always listed/processed in sorted order by ID
 2. **Finding ordering**: Findings are sorted by (severity, resource, message)
 3. **Evidence ordering**: Evidence strings are sorted alphabetically
-4. **Same input = same output**: Running patterns twice on the same graph produces identical output
+4. **Refs ordering (v0.8+)**: Refs are sorted alphabetically
+5. **Steps ordering (v0.8+)**: Remediation steps maintain pattern-defined order (not re-sorted)
+6. **Links ordering (v0.8+)**: Remediation links are sorted alphabetically
+7. **Same input = same output**: Running patterns twice on the same graph produces identical output
 
 ---
 
-## Registered Patterns (v0.7)
+## Finding Enrichment Fields (v0.8+)
+
+Starting with v0.8, findings MAY include additional optional fields for actionability.
+These fields are **additive** — consumers that only understand v0.7 fields may safely ignore them.
+
+### confidence
+
+- **Type:** number (0.0 to 1.0)
+- **Required:** No
+- **Description:** A deterministic confidence score for the finding. Must be stable given the same graph input.
+- **Usage:** Fixed constants per finding type, not dynamic heuristics.
+
+### refs
+
+- **Type:** array of strings
+- **Required:** No
+- **Description:** Stable identifiers that tools may use to correlate findings across runs.
+- **Examples:** `k8s:Deployment/ns/name`, `k8s:Pod/ns/name`, `crd:argoproj.io/Application`
+- **Ordering:** Sorted alphabetically for deterministic output.
+
+### remediation
+
+- **Type:** object
+- **Required:** No
+- **Description:** Structured, user-facing guidance for resolving the finding.
+
+**Remediation object fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `summary` | string | Yes (if remediation present) | Brief description of the fix |
+| `steps` | array of strings | No | Ordered action steps |
+| `links` | array of strings | No | Canonical documentation URLs |
+
+**Ordering rules:**
+- `steps` maintain pattern-defined order (not re-sorted) to preserve logical sequence
+- `links` are sorted alphabetically for deterministic output
+
+### Example with enrichment fields
+
+```json
+{
+  "pattern": "k8s.ownership_chain_complete",
+  "severity": "warning",
+  "message": "ReplicaSet \"orphan-rs\" has no owning Deployment in graph",
+  "resource": "test-cluster/default/ReplicaSet/orphan-rs",
+  "confidence": 0.9,
+  "refs": ["k8s:ReplicaSet/default/orphan-rs"],
+  "remediation": {
+    "summary": "Verify the ReplicaSet was created by a Deployment or is intentionally standalone.",
+    "steps": [
+      "Check if a Deployment with matching selector exists.",
+      "Verify the ReplicaSet's ownerReferences field.",
+      "If orphaned intentionally, consider adding an annotation to suppress this warning."
+    ],
+    "links": [
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/"
+    ]
+  }
+}
+```
+
+### Backwards Compatibility
+
+- Consumers that only understand v0.7 fields MUST continue to function.
+- New fields use `omitempty` in JSON — absent fields produce identical output to v0.7.
+- Text output only renders remediation blocks when present (no placeholders).
+
+---
+
+## Registered Patterns (v0.7+)
 
 ### k8s.ownership_chain_complete
 
