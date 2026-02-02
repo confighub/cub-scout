@@ -1,0 +1,22 @@
+GRAPH EXPLAIN
+Target: test-cluster/default/Deployment/nginx
+Schema: graph.v1
+
+Node:
+  kind: Deployment
+  name: nginx
+  namespace: default
+  api_version: apps/v1
+  id: test-cluster/default/Deployment/nginx
+  labels:
+    app=nginx
+
+Relationships:
+  outgoing (1):
+    - owns -> test-cluster/default/ReplicaSet/nginx-abc123
+      evidence (1):
+        - field: metadata.ownerReferences
+          reason: ReplicaSet nginx-abc123 has ownerReference to Deployment nginx
+  incoming (0):
+
+Hint: Use 'cub-scout graph export --json' for the full graph.

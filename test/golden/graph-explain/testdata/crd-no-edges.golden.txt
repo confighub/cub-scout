@@ -1,0 +1,18 @@
+GRAPH EXPLAIN
+Target: test-cluster/argocd/Application/my-app
+Schema: graph.v1
+
+Node:
+  kind: Application
+  name: my-app
+  namespace: argocd
+  api_version: argoproj.io/v1alpha1
+  id: test-cluster/argocd/Application/my-app
+  labels:
+    app.kubernetes.io/name=my-app
+
+Relationships:
+  outgoing (0):
+  incoming (0):
+
+Hint: Use 'cub-scout graph export --json' for the full graph.

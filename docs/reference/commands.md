@@ -20,6 +20,7 @@ Complete reference for all cub-scout commands.
 | `health` | Scout-style health check |
 | `setup` | Set up shell completions |
 | `graph export` | Export resource graph as JSON (v0.6) |
+| `graph explain` | Explain a resource's graph relationships (v0.6) |
 
 ---
 
@@ -387,6 +388,59 @@ cub-scout graph export [flags]
 ```
 
 See [Graph Contract Reference](graph-contract.md) for full schema documentation.
+
+### graph explain
+
+Explain a resource's relationships in the graph.
+
+```bash
+cub-scout graph explain <kind>/<name> -n <namespace>
+```
+
+Shows the resource's details and all incoming/outgoing edges with evidence.
+
+#### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Namespace of the resource (required) |
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 2 | Usage error (missing args / missing namespace) |
+| 3 | Target not found |
+
+#### Example Output
+
+```
+GRAPH EXPLAIN
+Target: cluster/default/Deployment/nginx
+Schema: graph.v1
+
+Node:
+  kind: Deployment
+  name: nginx
+  namespace: default
+  api_version: apps/v1
+  id: cluster/default/Deployment/nginx
+  labels:
+    app=nginx
+
+Relationships:
+  outgoing (1):
+    - owns -> cluster/default/ReplicaSet/nginx-abc123
+      evidence (1):
+        - field: metadata.ownerReferences
+          reason: ReplicaSet nginx-abc123 has ownerReference to Deployment nginx
+  incoming (0):
+
+Hint: Use 'cub-scout graph export --json' for the full graph.
+```
+
+See [Graph Explain Contract](graph-explain-contract.md) for full output format documentation.
 
 ---
 
