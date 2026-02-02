@@ -65,19 +65,34 @@ This keeps output readable and avoids verbosity in large clusters.
 ## Git-Aware Evidence (v0.10+)
 
 Starting with v0.10, cub-scout supports **optional Git context** via the `--git-root` flag.
+Starting with v0.11, cub-scout also supports **connected mode** via `--git-url`/`--git-ref` for remote repositories.
 Git-aware patterns can correlate cluster state with repository structure.
 
 ### Git-Aware = Optional Evidence
 
 The key principle is: **Git context is optional evidence, not a requirement.**
 
+### Git Context Modes
+
+| Mode | Flags | Git Source | Deterministic? |
+|------|-------|------------|----------------|
+| **Offline** | (none) | No git context | Yes |
+| **Local** | `--git-root /path` | Local filesystem | Yes |
+| **Connected** | `--git-url` + `--git-ref` | GitHub tarball | Yes (full SHA) / No (branch/tag) |
+
+#### Mode Details
+
 | Mode | Command | Behavior |
 |------|---------|----------|
-| Graph-only | `cub-scout patterns detect` | All graph-based patterns run; git-aware patterns SKIP |
-| Git-enhanced | `cub-scout patterns detect --git-root /path` | All patterns run with full evidence |
+| Offline | `cub-scout patterns detect` | Graph-based patterns run; git-aware patterns SKIP |
+| Local | `cub-scout patterns detect --git-root /path` | All patterns run with local repo evidence |
+| Connected | `cub-scout patterns detect --git-url URL --git-ref SHA` | All patterns run with remote repo evidence |
 
-**Graph-only mode still works.** If you never provide `--git-root`, cub-scout continues to
+**Offline mode always works.** If you never provide git flags, cub-scout continues to
 function exactly as it did in v0.9.x. Git-aware patterns simply SKIP with a deterministic reason.
+
+**Local vs Connected mode are mutually exclusive.** Providing both `--git-root` and `--git-url`
+results in exit code 2 (usage error).
 
 ### What Git-Aware Patterns Can Detect
 

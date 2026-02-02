@@ -170,7 +170,39 @@ Hybrid patterns run with reduced evidence when `--git-root` omitted, SKIP when p
 
 ---
 
-## v0.11 — ConfigHub Collaboration
+## v0.11 — Connected Mode (Active)
+
+**Status:** In progress (Track L)
+
+### Goal
+
+Enable git-aware patterns to use **remote Git repository snapshots** via GitHub tarball API,
+eliminating the requirement for local repository access.
+
+### MVP Scope (v0.11.0)
+
+* `--git-url <url>` and `--git-ref <ref>` flags for `patterns detect` and `patterns explain`
+* Mutual exclusivity with `--git-root` (exit 2 if both provided)
+* GitHub tarball download (no git binary required)
+* Deterministic output when `--git-ref` is a commit SHA
+* Pattern-level SKIP on fetch failures (not global exit 2)
+* Optional `GITHUB_TOKEN` authentication for private repos
+* Optional `--git-subpath <path>` for subdirectory filtering
+
+### Non-goals (deferred)
+
+* GitLab, Bitbucket, or other providers (GitHub-first MVP)
+* Full ConfigHub integration
+* Fleet-scale analysis
+
+### Key Principle
+
+**Fetch failures are pattern-level, not global.** Network issues cause affected patterns to SKIP
+with deterministic skip_reason strings, not command failure. This maintains graceful degradation.
+
+---
+
+## v0.12 — ConfigHub Collaboration
 
 **Status:** Planned
 

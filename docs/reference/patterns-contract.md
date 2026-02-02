@@ -62,6 +62,12 @@ cub-scout patterns detect [flags]
 | `--empty` | Use empty graph (skip cluster collection) |
 | `--json` | Output as JSON |
 | `--git-root <path>` | (v0.10+) Path to local Git repository for git-aware patterns |
+| `--git-url <url>` | (v0.11+) GitHub repository URL for connected mode |
+| `--git-ref <ref>` | (v0.11+) Git ref (commit SHA recommended for determinism) |
+| `--git-subpath <path>` | (v0.11+) Optional subpath within repository |
+
+**Flag exclusivity (v0.11+):** `--git-root` is mutually exclusive with `--git-url`/`--git-ref`.
+Providing both results in exit code 2 (usage error).
 
 #### Text Output Format
 
@@ -170,6 +176,12 @@ cub-scout patterns explain <pattern-id> [flags]
 | `-n, --namespace` | Namespace to collect (empty = all namespaces) |
 | `--empty` | Use empty graph (skip cluster collection) |
 | `--git-root <path>` | (v0.10+) Path to local Git repository for git-aware patterns |
+| `--git-url <url>` | (v0.11+) GitHub repository URL for connected mode |
+| `--git-ref <ref>` | (v0.11+) Git ref (commit SHA recommended for determinism) |
+| `--git-subpath <path>` | (v0.11+) Optional subpath within repository |
+
+**Flag exclusivity (v0.11+):** `--git-root` is mutually exclusive with `--git-url`/`--git-ref`.
+Providing both results in exit code 2 (usage error).
 
 #### Output Format
 
@@ -407,6 +419,142 @@ Skipped patterns do not cause exit code 4.
 Invalid `--git-root` inputs MUST NOT change the command's exit code behavior beyond pattern results.
 When `--git-root` is provided but unusable, affected patterns SKIP with deterministic reasons
 rather than causing a global usage error (exit 2).
+
+---
+
+## Connected Mode (v0.11+)
+
+Connected mode enables git-aware patterns to use **remote Git repository snapshots** instead of local repositories.
+This is useful for CI/CD pipelines, auditing, and scenarios where the repository is not available locally.
+
+### The --git-url and --git-ref Flags
+
+```bash
+cub-scout patterns detect --git-url https://github.com/org/repo --git-ref abc123def
+cub-scout patterns explain <pattern-id> --git-url https://github.com/org/repo --git-ref main
+```
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--git-url <url>` | Yes (for connected mode) | GitHub repository URL (e.g., `https://github.com/org/repo`) |
+| `--git-ref <ref>` | Yes (for connected mode) | Git ref: commit SHA, branch name, or tag |
+| `--git-subpath <path>` | No | Optional subpath within repository (e.g., `clusters/prod`) |
+
+### Mutual Exclusivity
+
+`--git-root` (local mode) and `--git-url`/`--git-ref` (connected mode) are **mutually exclusive**.
+
+| Flags provided | Result |
+|----------------|--------|
+| Neither | Graph-only patterns run; git-aware/hybrid patterns SKIP or run reduced |
+| `--git-root` only | Local mode (v0.10 behavior) |
+| `--git-url` + `--git-ref` | Connected mode (v0.11+) |
+| Both `--git-root` and `--git-url` | **Exit 2** (usage error) |
+
+### Determinism in Connected Mode
+
+**Commit SHA = deterministic.** When `--git-ref` is a full 40-character commit SHA, connected mode
+produces deterministic output for a given repository state. Pinned commit SHAs provide reproducible
+content snapshots for analysis.
+
+**Branch/tag = non-deterministic.** When `--git-ref` is a branch name (e.g., `main`) or tag,
+output may change over time as the ref advances. This is explicitly documented behavior.
+
+| `--git-ref` value | Deterministic? | Notes |
+|-------------------|----------------|-------|
+| Full commit SHA (40 chars) | Yes | Same SHA = same output |
+| Short commit SHA | No | May be ambiguous or provider-dependent; prefer full SHA |
+| Branch name (e.g., `main`) | No | Output changes as branch advances |
+| Tag name (e.g., `v1.0.0`) | No | Output changes if tag is force-pushed; recommend SHA |
+
+**Recommendation:** For reproducible auditing and CI/CD, always use full 40-character commit SHAs.
+
+### Usage Errors (exit 2)
+
+The following flag combinations are invalid invocations and result in **exit code 2** (usage error):
+
+| Condition | Exit code |
+|-----------|-----------|
+| `--git-url` without `--git-ref` | 2 |
+| `--git-ref` without `--git-url` | 2 |
+| `--git-subpath` without `--git-url` or `--git-root` | 2 |
+| Both `--git-root` and `--git-url` | 2 |
+
+These are syntax/requirement errors, not runtime failures. The command exits immediately with an error message.
+
+### Skip Behavior for Connected Mode
+
+Connected mode **runtime failures** result in **pattern-level SKIP**, not global command failure.
+This maintains consistency with `--git-root` behavior.
+
+**Skip reason strings (deterministic):**
+
+| Condition | skip_reason |
+|-----------|-------------|
+| Repository not found (404) | `git_source repository not found` |
+| Ref not found (branch/tag/SHA doesn't exist) | `git_source ref not found` |
+| Fetch failed (network error, timeout) | `git_source fetch failed` |
+| Authentication required but not provided | `git_source authentication required` |
+| Tarball extraction failed | `git_source tarball invalid` |
+| Rate limited (HTTP 429) | `git_source rate limited` |
+
+**Example output (fetch failure):**
+```
+[SKIP] gitops.argocd.applicationset_generators
+  ApplicationSet Generator Summary
+  skip_reason: git_source repository not found
+  findings (0):
+    (none)
+```
+
+### Exit Code Summary
+
+Connected mode uses standard exit codes:
+- Exit 0: All patterns passed (including skipped patterns)
+- Exit 2: Usage error (invalid flag combination; see [Usage Errors](#usage-errors-exit-2))
+- Exit 4: One or more patterns failed
+
+**Runtime failures** (network errors, 404, auth) cause pattern-level SKIP, not exit 2.
+This ensures graceful degradation when remote repositories are temporarily unavailable.
+
+### Authentication
+
+Connected mode supports optional authentication via the `GITHUB_TOKEN` environment variable.
+
+| `GITHUB_TOKEN` | Behavior |
+|----------------|----------|
+| Not set | Public repository access only (best-effort) |
+| Set | Used for tarball download authentication |
+
+**Notes:**
+- Authentication is optional; public repos work without tokens
+- Private repos require `GITHUB_TOKEN` with appropriate permissions
+- Token is never logged or included in output
+- Invalid tokens result in pattern SKIP with `git_source authentication required`
+
+### Implementation Constraints
+
+Connected mode maintains the same constraints as local mode:
+
+1. **No git binary required**: Uses GitHub tarball API, not git clone
+2. **No cloning**: Downloads and extracts tarball in memory or temp directory
+3. **No submodule expansion**: Submodules are not recursively fetched
+4. **Bounded scan**: Same file limits as local mode
+5. **Lexicographic ordering**: Same deterministic file ordering
+6. **Repo-relative refs**: All refs in output use `git:path:<relative>` format, never absolute paths
+
+### Subpath Filtering
+
+The optional `--git-subpath` flag limits scanning to a subdirectory:
+
+```bash
+cub-scout patterns detect \
+  --git-url https://github.com/org/repo \
+  --git-ref abc123 \
+  --git-subpath clusters/prod
+```
+
+Only files under `clusters/prod/` are scanned. Refs in output remain relative to subpath root.
 
 ---
 
