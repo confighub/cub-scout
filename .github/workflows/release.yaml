@@ -24,6 +24,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Build binary (required for golden tests)
+        run: go build ./cmd/cub-scout
+
       - name: Run tests
         run: go test ./...
 
