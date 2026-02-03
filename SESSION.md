@@ -2102,3 +2102,72 @@ Defined milestones for all 22 open issues:
 | `98a5190` | docs: add #25 (v0.5 epic) to v0.16 milestone |
 
 ---
+
+## v0.14.2 Implementation: Guided GitOps Debug Mode (#37)
+
+**Date:** 2026-02-03
+
+### Summary
+
+Implemented `cub-scout debug` - a guided debugging wizard for GitOps pipeline issues.
+
+### Files Created
+
+| File | Purpose |
+|------|---------|
+| `cmd/cub-scout/debug.go` | Cobra command, flags, entry point |
+| `cmd/cub-scout/debug_model.go` | Bubbletea model and state machine |
+| `cmd/cub-scout/debug_views.go` | View rendering for each step |
+| `cmd/cub-scout/debug_education.go` | Inline explanations for common issues |
+| `pkg/agent/workload_health.go` | Unhealthy workload detection |
+| `test/ascii/debug_test.go` | Golden tests |
+| `test/ascii/debug/testdata/crash_loop.json` | Test fixture |
+| `test/ascii/debug/crash_loop.txt` | Golden output |
+
+### Features
+
+1. **Interactive wizard** with step-by-step flow:
+   - Select mode (broken workload, failing pipeline, sync issue, freeform)
+   - Pick resource from filtered list
+   - View workload status with pod issues
+   - View ownership chain (K8s + GitOps)
+   - View pipeline health (Kustomization/HelmRelease/Application)
+   - View source health (GitRepository/OCIRepository)
+   - Root cause analysis with suggested fixes
+
+2. **Non-interactive mode** for direct analysis:
+   - `./cub-scout debug deployment/api-server -n production`
+
+3. **Multiple output formats**:
+   - ASCII (default, colored)
+   - JSON (`--format json`)
+   - Markdown (`--format md`)
+
+4. **Education layer** with inline explanations for:
+   - Pod states (CrashLoopBackOff, ImagePullBackOff, OOMKilled, Pending)
+   - Failure stages (source, build, apply, sync)
+   - GitOps concepts (Reconciling, Suspended, Stalled)
+
+5. **Test hooks** for fixture-based testing:
+   - `CUB_SCOUT_TEST_DEBUG_JSON` loads pre-built session
+
+### Reused Components
+
+| Component | From |
+|-----------|------|
+| `WorkloadHealthChecker` | New in `pkg/agent/workload_health.go` |
+| `ReverseTracer` | `pkg/agent/reverse_trace.go` |
+| `ApplyBackendDetector` | `pkg/agent/apply_backend.go` |
+| `ExtractFlux*Failure` | `pkg/agent/failure_details.go` |
+| `ExtractArgoFailure` | `pkg/agent/failure_details.go` |
+
+### Tests
+
+- Smoke test: `TestSmoke_CLIHelp/debug_help`
+- Golden tests: `TestDebug_CrashLoop`, `TestDebug_CrashLoop_JSON`, `TestDebug_CrashLoop_Markdown`
+
+### Documentation
+
+- Added to CLI-GUIDE.md with examples and options
+
+---

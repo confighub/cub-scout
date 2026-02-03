@@ -1,0 +1,135 @@
+{
+  "entryMode": 0,
+  "target": {
+    "kind": "Deployment",
+    "name": "api-server",
+    "namespace": "production"
+  },
+  "workloadStatus": {
+    "kind": "Deployment",
+    "name": "api-server",
+    "namespace": "production",
+    "replicas": 3,
+    "readyReplicas": 1,
+    "unavailableReplicas": 2,
+    "podIssues": [
+      {
+        "podName": "api-server-7d9b8c-x4k2p",
+        "phase": "Running",
+        "containerStatus": "CrashLoopBackOff",
+        "reason": "CrashLoopBackOff",
+        "message": "Back-off restarting failed container",
+        "restartCount": 15
+      }
+    ]
+  },
+  "containerLogs": [
+    {
+      "podName": "api-server-7d9b8c-x4k2p",
+      "containerName": "api-server",
+      "namespace": "production",
+      "lines": [
+        "<TIMESTAMP> INFO  Starting api-server v2.1.0",
+        "<TIMESTAMP> INFO  Loading configuration from /etc/config/app.yaml",
+        "<TIMESTAMP> ERROR Config file not found: /etc/config/app.yaml",
+        "<TIMESTAMP> ERROR no such file or directory: /etc/config/app.yaml",
+        "<TIMESTAMP> INFO  Attempting to connect to database",
+        "<TIMESTAMP> ERROR connection refused to postgres:5432",
+        "<TIMESTAMP> FATAL Cannot start without database connection, exiting"
+      ],
+      "totalLines": 7,
+      "truncated": false,
+      "previous": true,
+      "patterns": [
+        {
+          "type": "file_not_found",
+          "line": 4,
+          "match": "no such file or directory",
+          "explanation": "A required file or path does not exist",
+          "suggestion": "Check that ConfigMaps/Secrets are mounted correctly and paths are valid"
+        },
+        {
+          "type": "connection_refused",
+          "line": 6,
+          "match": "connection refused",
+          "explanation": "The application cannot connect to a dependent service",
+          "suggestion": "Check that the target service is running and the endpoint is correct"
+        }
+      ]
+    }
+  ],
+  "ownershipChain": {
+    "owner": "flux",
+    "ownerDetails": {
+      "type": "flux",
+      "subType": "kustomization",
+      "name": "apps",
+      "namespace": "flux-system"
+    },
+    "k8sChain": [
+      {
+        "kind": "Pod",
+        "name": "api-server-7d9b8c-x4k2p",
+        "namespace": "production",
+        "ready": false
+      },
+      {
+        "kind": "ReplicaSet",
+        "name": "api-server-7d9b8c",
+        "namespace": "production",
+        "ready": true
+      },
+      {
+        "kind": "Deployment",
+        "name": "api-server",
+        "namespace": "production",
+        "ready": false
+      }
+    ],
+    "gitopsChain": [
+      {
+        "kind": "Kustomization",
+        "name": "apps",
+        "namespace": "flux-system",
+        "ready": true
+      },
+      {
+        "kind": "OCIRepository",
+        "name": "platform-config",
+        "namespace": "flux-system",
+        "ready": true
+      }
+    ]
+  },
+  "deployerStatus": {
+    "kind": "Kustomization",
+    "name": "apps",
+    "namespace": "flux-system",
+    "ready": true,
+    "stage": "healthy"
+  },
+  "sourceStatus": {
+    "kind": "OCIRepository",
+    "name": "platform-config",
+    "namespace": "flux-system",
+    "ready": true,
+    "url": "oci://ghcr.io/acme/platform-config"
+  },
+  "rootCause": {
+    "category": "crash_loop",
+    "stage": "workload",
+    "confidence": "high",
+    "summary": "Workload Deployment/api-server has pod issues: CrashLoopBackOff",
+    "probableCauses": [
+      "Config file missing: /etc/config/app.yaml",
+      "Database connection refused: postgres:5432"
+    ],
+    "suggestedFixes": [
+      "kubectl get configmap -n production",
+      "kubectl logs api-server-7d9b8c-x4k2p -n production --previous",
+      "kubectl describe pod api-server-7d9b8c-x4k2p -n production"
+    ]
+  },
+  "startedAt": "<TIMESTAMP>",
+  "completedAt": "<TIMESTAMP>"
+}

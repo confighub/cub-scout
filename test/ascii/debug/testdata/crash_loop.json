@@ -1,0 +1,86 @@
+{
+  "entryMode": 0,
+  "target": {
+    "kind": "Deployment",
+    "name": "api-server",
+    "namespace": "production"
+  },
+  "workloadStatus": {
+    "kind": "Deployment",
+    "name": "api-server",
+    "namespace": "production",
+    "replicas": 3,
+    "readyReplicas": 1,
+    "unavailableReplicas": 2,
+    "podIssues": [
+      {
+        "podName": "api-server-7d9b8c-x4k2p",
+        "phase": "Running",
+        "containerStatus": "CrashLoopBackOff",
+        "reason": "CrashLoopBackOff",
+        "message": "Back-off restarting failed container",
+        "restartCount": 15
+      },
+      {
+        "podName": "api-server-7d9b8c-a1b2c",
+        "phase": "Running",
+        "containerStatus": "CrashLoopBackOff",
+        "reason": "CrashLoopBackOff",
+        "message": "Back-off restarting failed container",
+        "restartCount": 12
+      }
+    ]
+  },
+  "ownershipChain": {
+    "owner": "flux",
+    "ownerDetails": {
+      "type": "flux",
+      "subType": "kustomization",
+      "name": "apps",
+      "namespace": "flux-system"
+    },
+    "k8sChain": [
+      {"kind": "Pod", "name": "api-server-7d9b8c-x4k2p", "namespace": "production", "ready": false},
+      {"kind": "ReplicaSet", "name": "api-server-7d9b8c", "namespace": "production", "ready": true},
+      {"kind": "Deployment", "name": "api-server", "namespace": "production", "ready": false}
+    ],
+    "gitopsChain": [
+      {"kind": "Kustomization", "name": "apps", "namespace": "flux-system", "ready": true},
+      {"kind": "OCIRepository", "name": "platform-config", "namespace": "flux-system", "ready": true}
+    ]
+  },
+  "deployerStatus": {
+    "kind": "Kustomization",
+    "name": "apps",
+    "namespace": "flux-system",
+    "ready": true,
+    "suspended": false,
+    "stage": "healthy",
+    "lastAppliedRevision": "sha256:abc123",
+    "lastAttemptedRevision": "sha256:abc123"
+  },
+  "sourceStatus": {
+    "kind": "OCIRepository",
+    "name": "platform-config",
+    "namespace": "flux-system",
+    "ready": true,
+    "url": "oci://ghcr.io/acme/platform-config"
+  },
+  "rootCause": {
+    "category": "crash_loop",
+    "stage": "workload",
+    "confidence": "high",
+    "summary": "Workload Deployment/api-server has pod issues: CrashLoopBackOff",
+    "probableCauses": [
+      "Application error (check logs)",
+      "Missing configuration (ConfigMap, Secret)",
+      "Database/dependency unreachable"
+    ],
+    "suggestedFixes": [
+      "kubectl logs api-server-7d9b8c-x4k2p -n production --previous",
+      "kubectl describe pod api-server-7d9b8c-x4k2p -n production"
+    ]
+  },
+  "startedAt": "2026-02-03T10:00:00Z",
+  "completedAt": "2026-02-03T10:00:05Z"
+}

@@ -73,6 +73,12 @@ func TestSmoke_CLIHelp(t *testing.T) {
 			wantExitCode: 0,
 			wantContains: []string{"status", "connection", "Usage:"},
 		},
+		{
+			name:         "debug help",
+			args:         []string{"debug", "--help"},
+			wantExitCode: 0,
+			wantContains: []string{"debug", "wizard", "Usage:"},
+		},
 	}
 
 	for _, tt := range tests {

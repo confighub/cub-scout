@@ -4,7 +4,7 @@ Complete reference for all commands, options, TUI keys, and expected outputs.
 
 ---
 
-## Top-Level Commands (18)
+## Top-Level Commands (19)
 
 | Command | Description | Standalone | Connected |
 |---------|-------------|:----------:|:---------:|
@@ -12,6 +12,7 @@ Complete reference for all commands, options, TUI keys, and expected outputs.
 | `tree` | Hierarchical views (runtime, git, config) | Yes | Yes |
 | `status` | Show connection status, cluster, and worker info | Yes | Yes |
 | `gitops status` | Show GitOps pipeline health and failures | Yes | - |
+| `debug` | Guided GitOps debugging wizard | Yes | - |
 | `discover` | Find workloads (alias for map workloads) | Yes | - |
 | `health` | Check for issues (alias for map issues) | Yes | - |
 | `trace` | Show GitOps ownership chain | Yes | - |
@@ -383,6 +384,114 @@ NEXT STEPS
 | `argocd` | Application CRD present |
 | `worker` | ConfigHub worker labels on resources |
 | `none` | No GitOps backend detected |
+
+---
+
+## `debug` — Guided GitOps Debugging Wizard (v0.14.2)
+
+**What it does:** Walks you step-by-step through diagnosing why a workload isn't working correctly. Shows workload health, ownership chain, pipeline status, and root cause analysis with suggested fixes.
+
+```bash
+# Interactive wizard - pick from unhealthy workloads
+./cub-scout debug
+
+# Direct analysis of a specific workload
+./cub-scout debug deployment/api-server -n production
+
+# Output as JSON
+./cub-scout debug deployment/api-server -n production --format json
+
+# Output as Markdown
+./cub-scout debug deployment/api-server -n production --format md
+```
+
+**Without cub-scout:**
+```bash
+kubectl describe deployment api-server -n production
+kubectl get pods -l app=api-server -n production
+kubectl logs deployment/api-server -n production --previous
+kubectl describe kustomization apps -n flux-system
+kubectl describe ocirepository manifests -n flux-system
+# ... and manually correlate failures across resources
+```
+
+**Expected output:**
+```
+DEBUG: Deployment/api-server in production
+
+Workload: Deployment/api-server (1/3 ready)
+  - api-server-7d9b8c-x4k2p: CrashLoopBackOff
+
+Owner: flux
+  Managed by: flux/apps
+
+Pipeline: ✓ Kustomization/apps
+
+Source: ✓ OCIRepository/platform-config
+  URL: oci://ghcr.io/acme/platform-config
+
+─────────────────────────────────────────────────────────────
+ROOT CAUSE ANALYSIS
+
+Category: crash_loop
+Stage: workload
+
+Summary: Workload Deployment/api-server has pod issues: CrashLoopBackOff
+
+Probable Causes:
+  - Config file missing: /etc/config/app.yaml
+  - Database connection refused: postgres:5432
+
+Suggested Fixes:
+  kubectl get configmap -n production
+  kubectl logs api-server-7d9b8c-x4k2p -n production --previous
+  kubectl describe pod api-server-7d9b8c-x4k2p -n production
+```
+
+**Interactive wizard flow:**
+1. **Select Mode**: Broken workload, Failing pipeline, Sync issue, or Freeform
+2. **Pick Resource**: Select from filtered list of unhealthy resources
+3. **Workload Status**: View pod issues, restart counts, recent events
+4. **Container Logs**: View logs with automatic pattern detection (press `l`)
+5. **Ownership**: See K8s and GitOps ownership chains
+6. **Pipeline Health**: Check Kustomization/HelmRelease/Application status
+7. **Source Health**: Check GitRepository/OCIRepository status
+8. **Root Cause**: Get diagnosis with probable causes and suggested fixes
+
+**Container log pattern detection:**
+
+When viewing container logs, cub-scout automatically detects common error patterns:
+
+| Pattern | Example Match | Suggestion |
+|---------|--------------|------------|
+| connection_refused | `ECONNREFUSED`, `connect: connection refused` | Check target service is running |
+| file_not_found | `ENOENT`, `FileNotFoundError` | Check ConfigMaps/Secrets mounting |
+| permission_denied | `EACCES`, `forbidden` | Check security context and RBAC |
+| out_of_memory | `OOM`, `heap out of memory` | Increase memory limits |
+| database_error | `SQLSTATE`, `db error` | Check DB credentials and connectivity |
+| timeout | `deadline exceeded`, `ETIMEDOUT` | Check network and increase timeouts |
+| dns_error | `no such host`, `NXDOMAIN` | Check hostname and DNS |
+| panic | `panic:`, `SIGSEGV` | Check stack trace for root cause |
+
+Detected patterns are highlighted in the log view and used to enhance root cause analysis
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-n, --namespace` | Namespace of the resource |
+| `--format` | Output format: ascii, json, md |
+| `--non-interactive` | Run without prompts (requires resource arg) |
+
+**Root Cause Categories:**
+| Category | Description |
+|----------|-------------|
+| `source_auth` | Source authentication failed |
+| `source_fetch` | Source fetch failed (network, not found) |
+| `build_error` | Kustomize/Helm rendering failed |
+| `apply_error` | Kubernetes apply failed |
+| `crash_loop` | Container is crash-looping |
+| `image_pull` | Cannot pull container image |
+| `oom_killed` | Container ran out of memory |
 
 ---
 

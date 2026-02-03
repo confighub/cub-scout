@@ -1,0 +1,30 @@
+DEBUG: Deployment/api-server in production
+
+Workload: Deployment/api-server (1/3 ready)
+  - api-server-7d9b8c-x4k2p: CrashLoopBackOff
+  - api-server-7d9b8c-a1b2c: CrashLoopBackOff
+
+Owner: flux
+  Managed by: flux/apps
+
+Pipeline: ✓ Kustomization/apps
+
+Source: ✓ OCIRepository/platform-config
+  URL: oci://ghcr.io/acme/platform-config
+
+─────────────────────────────────────────────────────────────
+ROOT CAUSE ANALYSIS
+
+Category: crash_loop
+Stage: workload
+
+Summary: Workload Deployment/api-server has pod issues: CrashLoopBackOff
+
+Probable Causes:
+  - Application error (check logs)
+  - Missing configuration (ConfigMap, Secret)
+  - Database/dependency unreachable
+
+Suggested Fixes:
+  kubectl logs api-server-7d9b8c-x4k2p -n production --previous
+  kubectl describe pod api-server-7d9b8c-x4k2p -n production
