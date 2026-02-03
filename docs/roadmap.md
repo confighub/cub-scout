@@ -135,6 +135,7 @@ Offline replay of snapshots is a **first-class supported workflow**:
 | #22 | Performance & scale guardrails | 1000+ resource handling |
 | #23 | Crossplane walkthrough demo | Documentation |
 | #24 | Document resolver pattern | Generated resources |
+| #25 | v0.5 Epic closure | GitOps Explorer and Debugger complete |
 
 ### Capabilities
 

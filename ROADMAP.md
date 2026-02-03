@@ -229,6 +229,7 @@ Hybrid patterns run with reduced evidence when `--git-root` omitted, SKIP when p
 | #22 | Performance & scale guardrails |
 | #23 | Crossplane walkthrough demo |
 | #24 | Document resolver pattern |
+| #25 | v0.5 Epic closure |
 
 ---
 
