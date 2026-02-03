@@ -170,69 +170,90 @@ Hybrid patterns run with reduced evidence when `--git-root` omitted, SKIP when p
 
 ---
 
-## v0.14 — Sharable Artifacts & Delegated Apply (Released)
+## v0.14 — Sharable Artifacts & Delegated Apply
 
 **Status:** Released (`v0.14.0`, `v0.14.1`)
 
-### v0.14.0 — Portable Outputs
+### v0.14.0 — Portable Outputs (Released)
 
-**Delivered:**
 - `--format json` for tree, trace, and map list commands
 - `--format md` (Markdown) for all output commands
 - v0.14 JSON schema with determinism guarantees
 - Golden tests locking all output formats
 
-### v0.14.1 — Delegated Apply Observability
+### v0.14.1 — Delegated Apply Observability (Released)
 
-**Delivered:**
 - `cub-scout gitops status` command
 - Delegated apply backend detection (Flux/Argo/Worker)
 - Failure stage classification (source, build, apply, sync)
-- OCI GitOps fixtures for testing
-- SourceRef parsing for Flux deployers
-- Flux and Argo failure details extraction
+
+### v0.14.2 — Debug/Trace (Planned)
+
+| # | Title |
+|---|-------|
+| #2 | Kustomize overlay layer attribution |
+| #37 | Guided GitOps Debug Mode |
+| #39 | Container logs in debug mode |
+| #40 | Event timeline |
+
+### v0.14.3 — Drift Detection (Planned)
+
+| # | Title |
+|---|-------|
+| #33 | Detect GitOps drift |
+| #34 | Drift UI badges and CLI |
 
 ---
 
-## v0.11 — Connected Mode (Complete)
-
-**Status:** Complete (Track L)
-
-### Goal
-
-Enable git-aware patterns to use **remote Git repository snapshots** via GitHub tarball API,
-eliminating the requirement for local repository access.
-
-### MVP Scope (v0.11.0)
-
-* `--git-url <url>` and `--git-ref <ref>` flags for `patterns detect` and `patterns explain`
-* Mutual exclusivity with `--git-root` (exit 2 if both provided)
-* GitHub tarball download (no git binary required)
-* Deterministic output when `--git-ref` is a commit SHA
-* Pattern-level SKIP on fetch failures (not global exit 2)
-* Optional `GITHUB_TOKEN` authentication for private repos
-* Optional `--git-subpath <path>` for subdirectory filtering
-
-### Non-goals (deferred)
-
-* GitLab, Bitbucket, or other providers (GitHub-first MVP)
-* Full ConfigHub integration
-* Fleet-scale analysis
-
-### Key Principle
-
-**Fetch failures are pattern-level, not global.** Network issues cause affected patterns to SKIP
-with deterministic skip_reason strings, not command failure. This maintains graceful degradation.
-
----
-
-## v0.12 — ConfigHub Collaboration
+## v0.15 — Graph & Export
 
 **Status:** Planned
 
-* Connected mode enrichment via ConfigHub
-* Cluster ↔ Git intent correlation
-* Foundation for fleet-scale analysis
+| # | Title |
+|---|-------|
+| #35 | Define unified internal graph schema |
+| #36 | Export ownership graph (JSON + DOT) |
+| #38 | Shareable hierarchy map snapshots |
+
+---
+
+## v0.16 — Crossplane & Platform Composition
+
+**Status:** Planned
+
+| # | Title |
+|---|-------|
+| #3 | Support platform composition tools |
+| #8 | First-class Crossplane ownership & lineage |
+| #21 | Platform composition beyond Crossplane (kro) |
+| #22 | Performance & scale guardrails |
+| #23 | Crossplane walkthrough demo |
+| #24 | Document resolver pattern |
+
+---
+
+## v0.17 — TUI Polish
+
+**Status:** Planned
+
+| # | Title |
+|---|-------|
+| #88 | TUI snapshot golden tests |
+| #90 | TUI polish: consistent symbols/ordering |
+| #91 | CLI ↔ TUI symmetry flags |
+| #92 | Context-aware command suggestions |
+| #93 | Shell-out with cub completion |
+
+---
+
+## v0.18 — Documentation
+
+**Status:** Planned
+
+- Complete CLI reference documentation
+- All contracts documented
+- Examples updated
+- Demos verified
 
 ---
 

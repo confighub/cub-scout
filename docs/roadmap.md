@@ -61,7 +61,7 @@ For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap
 **Status:** v0.14.1 released (2026-02-03)
 **Audience:** Individual engineers, SREs, platform teams
 
-### v0.14.1 — Delegated Apply Observability
+### v0.14.1 — Delegated Apply Observability (Released)
 
 **Delivered:**
 - `cub-scout gitops status` command
@@ -71,58 +71,43 @@ For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap
 - SourceRef parsing for Flux deployers
 - Flux and Argo failure details extraction
 
-Future 0.14.x releases may include:
+### v0.14.2 — Debug/Trace (Planned)
 
-| Feature | Description |
-|---------|-------------|
-| `--format yaml` | kubectl-compatible output |
-| `graph export --format dot` | Graphviz visualization |
-| Snapshot format | Bundled JSON + metadata |
-| TUI snapshot goldens | #88 from v0.12 backlog |
+**Theme:** Guided GitOps debugging
 
----
+| # | Title | Description |
+|---|-------|-------------|
+| #2 | Kustomize overlay layer attribution | Trace through overlay layers |
+| #37 | Guided GitOps Debug Mode | Interactive debugging workflow |
+| #39 | Container logs in debug mode | View crash logs with pattern detection |
+| #40 | Event timeline | See what happened recently with explanations |
 
-## Version 0.15 — Documentation & Polish
+### v0.14.3 — Drift Detection (Planned)
 
-**Status:** Planned
-**Theme:** Bring docs, references, tests, demos, and examples up to date
+**Theme:** Detect when live state differs from desired
 
-### Goal
-
-Make cub-scout documentation complete, consistent, and easy to navigate. Every command, flag, and feature should be documented with examples.
-
-### Scope
-
-| Area | Work |
-|------|------|
-| **CLI Reference** | Ensure all commands documented in CLI-GUIDE.md and docs/reference/commands.md |
-| **Contract Docs** | Update cli-contract.md for v0.14+ commands |
-| **Golden Tests** | Ensure all user-facing output has golden tests |
-| **Examples** | Update examples/ with current command syntax |
-| **Demos** | Verify all demos work with current CLI |
-| **Navigation** | Add cross-references between related docs |
-| **Consistency** | Align terminology across all docs |
-
-### Non-goals
-
-- No new features
-- No schema changes
-- No contract changes
+| # | Title | Description |
+|---|-------|-------------|
+| #33 | Detect GitOps drift | kubectl smell detection |
+| #34 | Drift UI badges and CLI | Surface drift in TUI and CLI |
 
 ---
 
-## Version 0.16+ — Standalone Explorer and Debugger
+## Version 0.15 — Graph & Export
 
 **Status:** Planned
-**Epic:** [#25](https://github.com/confighub/cub-scout/issues/25)
-**Audience:** Individual engineers, SREs, platform teams
+**Theme:** Unified graph schema and shareable artifacts
 
-### Core Capabilities
+| # | Title | Description |
+|---|-------|-------------|
+| #35 | Define unified internal graph schema | Foundation for all graph operations |
+| #36 | Export ownership graph (JSON + DOT) | Graphviz visualization |
+| #38 | Shareable hierarchy map snapshots | Bundled JSON + metadata |
 
-- Delegated apply visibility (Flux / Argo via OCI)
-- Failure-stage explanation (source vs apply)
-- GitOps drift detection (controller-based)
-- Guided GitOps Debug Mode
+### Capabilities
+
+- Unified graph schema for all resource relationships
+- Export to JSON and DOT (Graphviz) formats
 - Shareable diagnostic snapshots
 - **Offline replay** of snapshots (first-class workflow)
 
@@ -135,127 +120,93 @@ Offline replay of snapshots is a **first-class supported workflow**:
 - Security-restricted environments
 - Use `cub-scout snapshot view <file>` to replay any snapshot
 
-### Completed (v0.14.1)
-
-| # | Title | Scope |
-|---|-------|-------|
-| #26 | OCI GitOps fixtures | Foundation |
-| #27 | Flux sourceRef parsing | Foundation |
-| #28 | Delegated apply detector | Foundation |
-| #29 | Flux source failure visibility | Failure Explanation |
-| #30 | Flux apply failure visibility | Failure Explanation |
-| #31 | Argo operation visibility | Failure Explanation |
-| #32 | Delegated Apply summary panel | Failure Explanation |
-
-### Open Issues
-
-| # | Title | Scope |
-|---|-------|-------|
-| #33 | Drift detection | Drift |
-| #34 | Drift UI + CLI | Drift |
-| #37 | Guided GitOps Debug Mode | Education |
-| #38 | Shareable snapshots | Education |
-
-### Non-goals
-
-- No desired-state rendering
-- No Git diffs
-- No policy enforcement
-- No fleet views
-
-**Why OCI-first:** ConfigHub treats OCI publishing/consumption as a core transport. Git transport is intentionally deferred.
-
 ---
 
-## Version 0.6 — Deep Debugging + Connected Mode Foundations
+## Version 0.16 — Crossplane & Platform Composition
 
 **Status:** Planned
-**Audience:** Teams using ConfigHub
-
-### Deep Debugging (Standalone)
-
-Extends v0.5 debug mode with Kubernetes-native insights:
+**Theme:** First-class support for platform composition tools
 
 | # | Title | Description |
 |---|-------|-------------|
-| #39 | Container logs in debug mode | View crash logs with pattern detection |
-| #40 | Event timeline | See what happened recently with explanations |
+| #3 | Support platform composition tools | Crossplane, kro |
+| #8 | First-class Crossplane ownership & lineage | XR-first, system resource classification |
+| #21 | Platform composition beyond Crossplane | kro support |
+| #22 | Performance & scale guardrails | 1000+ resource handling |
+| #23 | Crossplane walkthrough demo | Documentation |
+| #24 | Document resolver pattern | Generated resources |
 
-### Connected Mode Foundations
+### Capabilities
 
-First integration with ConfigHub:
+- Crossplane XR ownership detection
+- Claim → XR → Managed Resource lineage
+- System resource classification
+- Performance guardrails for large clusters
+- kro support (exploratory)
+
+---
+
+## Version 0.17 — TUI Polish
+
+**Status:** Planned
+**Theme:** Consistent, polished terminal experience
+
+| # | Title | Description |
+|---|-------|-------------|
+| #88 | TUI snapshot golden tests | Lock TUI output |
+| #90 | TUI polish: consistent symbols/ordering | Match CLI output |
+| #91 | CLI ↔ TUI symmetry flags | --owner, --depth, --from |
+| #92 | Context-aware command suggestions | Read-only panel |
+| #93 | Shell-out with cub completion | Integration with cub CLI |
+
+---
+
+## Version 0.18 — Documentation
+
+**Status:** Planned
+**Theme:** Complete, consistent, navigable documentation
+
+### Scope
+
+| Area | Work |
+|------|------|
+| **CLI Reference** | Ensure all commands documented |
+| **Contract Docs** | Document all version contracts |
+| **Golden Tests** | All user-facing output covered |
+| **Examples** | Update with current syntax |
+| **Demos** | Verify all demos work |
+| **Navigation** | Cross-references between docs |
+| **Consistency** | Align terminology |
+
+---
+
+## Connected Mode (Future)
+
+**Status:** Planned (post-v0.18)
+**Audience:** Teams using ConfigHub
+
+### Capabilities
 
 - ConfigHub authentication and connection
 - Target / space / revision context
 - Intended vs actual comparisons
-- History-aware debugging:
-  - "When did this break?"
-  - "What changed since last healthy?"
-- Intent-aware CLI suggestions in TUI
+- History-aware debugging
+- Fleet-wide health views
+- Cross-cluster comparisons
+- Impact analysis before changes
 
-### ConfigHub Backend (Already Exists)
+### ConfigHub Backend
 
-These Connected Mode features are powered by **existing ConfigHub engines**:
+These features are powered by **existing ConfigHub engines**:
 
 | Engine | Powers |
 |--------|--------|
 | **ChangeSets API** | Revision-aware views, "what changed" queries |
-| **Views API** | Composable filters/projections (matches cub-scout lenses) |
+| **Views API** | Composable filters/projections |
+| **Dependency Graph Engine** | Impact analysis, blast radius |
+| **Bridge/Worker Framework** | Fleet-wide visibility |
 
 cub-scout surfaces results from these engines — it does not reimplement them.
-
-### Notes
-
-- cub-scout remains read-only
-- All intent and history lives in ConfigHub
-- Graceful degradation when disconnected
-
----
-
-## Version 0.7 — Fleet & Impact Intelligence (Connected)
-
-**Status:** Planned
-**Audience:** Platform and infrastructure teams
-
-### Capabilities
-
-- Fleet-wide health views
-- Cross-cluster comparisons
-- Version skew detection
-- Outlier identification ("this cluster is the weird one")
-- Impact analysis before changes
-- Dependency blast radius analysis
-
-### ConfigHub Backend (Already Exists)
-
-| Engine | Powers |
-|--------|--------|
-| **Dependency Graph Engine** | Impact analysis, blast radius, topological ordering |
-| **Bridge/Worker Framework** | Fleet-wide visibility across targets |
-
-cub-scout queries these engines — it does not reimplement dependency resolution.
-
----
-
-## Version 0.8 — Governance & Collaboration Context (Connected)
-
-**Status:** Exploratory
-
-### Capabilities
-
-- Policy evaluation context (read-only)
-- Approval and gate visibility
-- Audit-friendly timelines
-- Shared, persistent debugging artifacts
-
-### ConfigHub Backend (Already Exists)
-
-| Engine | Powers |
-|--------|--------|
-| **Verifier Component** | Policy evaluation, validation outcomes |
-| **Helm Rendering** | Worker-side HelmRelease logic (Flux-oriented) |
-
-cub-scout surfaces governance outcomes — validation/policy belongs in ConfigHub.
 
 ---
 
