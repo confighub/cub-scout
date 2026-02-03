@@ -88,3 +88,42 @@ func TestDebug_CrashLoopWithLogs_Markdown(t *testing.T) {
 	goldenPath := filepath.Join(repoRoot, "test", "ascii", "debug", "crash_loop_with_logs.md.txt")
 	golden.AssertGolden(t, out, goldenPath)
 }
+
+func TestDebug_CrashLoopWithEvents(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "debug", "testdata", "crash_loop_with_events.json")
+
+	out := runner.RunWithEnv(t, repoRoot,
+		map[string]string{"CUB_SCOUT_TEST_DEBUG_JSON": fixtureAbs},
+		"debug",
+	)
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "debug", "crash_loop_with_events.txt")
+	golden.AssertGolden(t, out, goldenPath)
+}
+
+func TestDebug_CrashLoopWithEvents_JSON(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "debug", "testdata", "crash_loop_with_events.json")
+
+	out := runner.RunWithEnv(t, repoRoot,
+		map[string]string{"CUB_SCOUT_TEST_DEBUG_JSON": fixtureAbs},
+		"debug", "--format", "json",
+	)
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "debug", "crash_loop_with_events.json.txt")
+	golden.AssertGolden(t, out, goldenPath)
+}
+
+func TestDebug_CrashLoopWithEvents_Markdown(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "debug", "testdata", "crash_loop_with_events.json")
+
+	out := runner.RunWithEnv(t, repoRoot,
+		map[string]string{"CUB_SCOUT_TEST_DEBUG_JSON": fixtureAbs},
+		"debug", "--format", "md",
+	)
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "debug", "crash_loop_with_events.md.txt")
+	golden.AssertGolden(t, out, goldenPath)
+}

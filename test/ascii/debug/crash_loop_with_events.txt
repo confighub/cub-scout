@@ -1,0 +1,29 @@
+DEBUG: Deployment/api-server in production
+
+Workload: Deployment/api-server (1/3 ready)
+  - api-server-7d9b8c-x4k2p: CrashLoopBackOff
+
+Owner: flux
+  Managed by: flux/apps
+
+Pipeline: ✓ Kustomization/apps
+
+Source: ✓ OCIRepository/platform-config
+  URL: oci://ghcr.io/acme/platform-config
+
+─────────────────────────────────────────────────────────────
+ROOT CAUSE ANALYSIS
+
+Category: crash_loop
+Stage: workload
+
+Summary: Workload Deployment/api-server has pod issues: CrashLoopBackOff
+
+Probable Causes:
+  - ConfigMap 'api-config' not found (FailedMount)
+  - Container crash loop with 15 restarts
+
+Suggested Fixes:
+  kubectl get configmap api-config -n production
+  kubectl create configmap api-config --from-file=config.yaml -n production
+  kubectl logs api-server-7d9b8c-x4k2p -n production --previous

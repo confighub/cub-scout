@@ -1,0 +1,145 @@
+{
+  "entryMode": 0,
+  "target": {
+    "kind": "Deployment",
+    "name": "api-server",
+    "namespace": "production"
+  },
+  "workloadStatus": {
+    "kind": "Deployment",
+    "name": "api-server",
+    "namespace": "production",
+    "replicas": 3,
+    "readyReplicas": 1,
+    "unavailableReplicas": 2,
+    "podIssues": [
+      {
+        "podName": "api-server-7d9b8c-x4k2p",
+        "phase": "Running",
+        "containerStatus": "CrashLoopBackOff",
+        "reason": "CrashLoopBackOff",
+        "message": "Back-off restarting failed container",
+        "restartCount": 15
+      }
+    ]
+  },
+  "eventTimeline": {
+    "allEvents": [
+      {
+        "type": "Warning",
+        "reason": "BackOff",
+        "message": "Back-off restarting failed container",
+        "count": 15,
+        "firstTimestamp": "2026-02-03T09:00:00Z",
+        "lastTimestamp": "2026-02-03T10:00:00Z",
+        "resourceKind": "Pod",
+        "resourceName": "api-server-7d9b8c-x4k2p",
+        "explanation": "Container is in restart backoff (waiting before retry)",
+        "suggestion": "Check container logs with: kubectl logs <pod> --previous",
+        "severity": "error"
+      },
+      {
+        "type": "Warning",
+        "reason": "FailedMount",
+        "message": "MountVolume.SetUp failed for volume \"config\" : configmap \"api-config\" not found",
+        "count": 3,
+        "firstTimestamp": "2026-02-03T09:30:00Z",
+        "lastTimestamp": "2026-02-03T09:45:00Z",
+        "resourceKind": "Pod",
+        "resourceName": "api-server-7d9b8c-x4k2p",
+        "explanation": "Failed to mount a volume to the pod",
+        "suggestion": "Check volume exists, permissions, and node access to storage",
+        "severity": "error"
+      },
+      {
+        "type": "Normal",
+        "reason": "Pulled",
+        "message": "Container image \"ghcr.io/acme/api-server:v2.1.0\" already present on machine",
+        "count": 15,
+        "firstTimestamp": "2026-02-03T09:00:00Z",
+        "lastTimestamp": "2026-02-03T10:00:00Z",
+        "resourceKind": "Pod",
+        "resourceName": "api-server-7d9b8c-x4k2p",
+        "explanation": "Container image was successfully pulled",
+        "suggestion": "",
+        "severity": "info"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set api-server-7d9b8c to 3",
+        "count": 1,
+        "firstTimestamp": "2026-02-03T08:55:00Z",
+        "lastTimestamp": "2026-02-03T08:55:00Z",
+        "resourceKind": "Deployment",
+        "resourceName": "api-server",
+        "explanation": "Deployment is scaling the ReplicaSet (up or down)",
+        "suggestion": "",
+        "severity": "info"
+      },
+      {
+        "type": "Normal",
+        "reason": "Scheduled",
+        "message": "Successfully assigned production/api-server-7d9b8c-x4k2p to node-1",
+        "count": 1,
+        "firstTimestamp": "2026-02-03T08:55:05Z",
+        "lastTimestamp": "2026-02-03T08:55:05Z",
+        "resourceKind": "Pod",
+        "resourceName": "api-server-7d9b8c-x4k2p",
+        "explanation": "Pod was assigned to a node",
+        "suggestion": "",
+        "severity": "info"
+      }
+    ]
+  },
+  "ownershipChain": {
+    "owner": "flux",
+    "ownerDetails": {
+      "type": "flux",
+      "subType": "kustomization",
+      "name": "apps",
+      "namespace": "flux-system"
+    },
+    "k8sChain": [
+      {"kind": "Pod", "name": "api-server-7d9b8c-x4k2p", "namespace": "production", "ready": false},
+      {"kind": "ReplicaSet", "name": "api-server-7d9b8c", "namespace": "production", "ready": true},
+      {"kind": "Deployment", "name": "api-server", "namespace": "production", "ready": false}
+    ],
+    "gitopsChain": [
+      {"kind": "Kustomization", "name": "apps", "namespace": "flux-system", "ready": true},
+      {"kind": "OCIRepository", "name": "platform-config", "namespace": "flux-system", "ready": true}
+    ]
+  },
+  "deployerStatus": {
+    "kind": "Kustomization",
+    "name": "apps",
+    "namespace": "flux-system",
+    "ready": true,
+    "suspended": false,
+    "stage": "healthy"
+  },
+  "sourceStatus": {
+    "kind": "OCIRepository",
+    "name": "platform-config",
+    "namespace": "flux-system",
+    "ready": true,
+    "url": "oci://ghcr.io/acme/platform-config"
+  },
+  "rootCause": {
+    "category": "crash_loop",
+    "stage": "workload",
+    "confidence": "high",
+    "summary": "Workload Deployment/api-server has pod issues: CrashLoopBackOff",
+    "probableCauses": [
+      "ConfigMap 'api-config' not found (FailedMount)",
+      "Container crash loop with 15 restarts"
+    ],
+    "suggestedFixes": [
+      "kubectl get configmap api-config -n production",
+      "kubectl create configmap api-config --from-file=config.yaml -n production",
+      "kubectl logs api-server-7d9b8c-x4k2p -n production --previous"
+    ]
+  },
+  "startedAt": "2026-02-03T10:00:00Z",
+  "completedAt": "2026-02-03T10:00:05Z"
+}

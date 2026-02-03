@@ -214,6 +214,7 @@ func (m DebugModel) renderAnalysisView() string {
 		"Pick Resource",
 		"Workload Status",
 		"Container Logs",
+		"Event Timeline",
 		"Ownership",
 		"Pipeline Health",
 		"Source Health",
@@ -427,6 +428,114 @@ func (m DebugModel) renderContainerLogsStep() string {
 		}
 		b.WriteString("\n")
 		b.WriteString(debugDimStyle.Render("←/→ Switch Pod"))
+	}
+
+	return b.String()
+}
+
+// renderEventTimelineStep renders the event timeline view
+func (m DebugModel) renderEventTimelineStep() string {
+	var b strings.Builder
+
+	if m.session.EventTimeline == nil || len(m.session.EventTimeline.AllEvents) == 0 {
+		return debugDimStyle.Render("No events found for this workload")
+	}
+
+	b.WriteString(debugTitleStyle.Render("EVENT TIMELINE"))
+	b.WriteString("\n\n")
+
+	// Filter events based on showAll setting
+	var events []TimelineEvent
+	for _, e := range m.session.EventTimeline.AllEvents {
+		if m.eventShowAll || e.Severity != "info" {
+			events = append(events, e)
+		}
+	}
+
+	if len(events) == 0 {
+		b.WriteString(debugDimStyle.Render("No warning/error events. Press 'a' to show all events."))
+		return b.String()
+	}
+
+	// Show filter status
+	filterText := "Showing warnings/errors only"
+	if m.eventShowAll {
+		filterText = "Showing all events"
+	}
+	b.WriteString(debugDimStyle.Render(filterText))
+	b.WriteString("\n\n")
+
+	// Calculate visible range
+	maxVisible := 10
+	start := m.eventScrollPos
+	if start < 0 {
+		start = 0
+	}
+	end := start + maxVisible
+	if end > len(events) {
+		end = len(events)
+	}
+
+	// Render events
+	for i := start; i < end; i++ {
+		event := events[i]
+
+		// Timestamp
+		var timeStr string
+		if event.LastTimestamp != nil {
+			timeStr = event.LastTimestamp.Format("15:04:05")
+		} else if event.FirstTimestamp != nil {
+			timeStr = event.FirstTimestamp.Format("15:04:05")
+		} else {
+			timeStr = "unknown"
+		}
+
+		// Severity indicator
+		var severityStyle = debugDimStyle
+		var icon = "•"
+		switch event.Severity {
+		case "error":
+			severityStyle = debugErrorStyle
+			icon = "✗"
+		case "warning":
+			severityStyle = debugWarningStyle
+			icon = "⚠"
+		case "info":
+			icon = "ℹ"
+		}
+
+		// Event line
+		b.WriteString(fmt.Sprintf("%s %s ", debugDimStyle.Render(timeStr), severityStyle.Render(icon)))
+		b.WriteString(fmt.Sprintf("%s/%s: ", debugDimStyle.Render(event.ResourceKind), event.ResourceName))
+		b.WriteString(severityStyle.Render(event.Reason))
+		if event.Count > 1 {
+			b.WriteString(debugDimStyle.Render(fmt.Sprintf(" (x%d)", event.Count)))
+		}
+		b.WriteString("\n")
+
+		// Message (truncated)
+		msg := event.Message
+		if len(msg) > 70 {
+			msg = msg[:67] + "..."
+		}
+		b.WriteString(fmt.Sprintf("         %s\n", debugDimStyle.Render(msg)))
+
+		// Explanation if available
+		if event.Explanation != "" {
+			b.WriteString(fmt.Sprintf("         %s\n", debugSuccessStyle.Render("💡 "+event.Explanation)))
+		}
+		if event.Suggestion != "" {
+			b.WriteString(fmt.Sprintf("         %s\n", debugDimStyle.Render("→ "+event.Suggestion)))
+		}
+
+		b.WriteString("\n")
+	}
+
+	// Scroll indicator
+	if len(events) > maxVisible {
+		b.WriteString(strings.Repeat("─", 60))
+		b.WriteString("\n")
+		b.WriteString(debugDimStyle.Render(fmt.Sprintf("Showing %d-%d of %d events", start+1, end, len(events))))
 	}
 
 	return b.String()

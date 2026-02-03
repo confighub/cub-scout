@@ -453,10 +453,11 @@ Suggested Fixes:
 2. **Pick Resource**: Select from filtered list of unhealthy resources
 3. **Workload Status**: View pod issues, restart counts, recent events
 4. **Container Logs**: View logs with automatic pattern detection (press `l`)
-5. **Ownership**: See K8s and GitOps ownership chains
-6. **Pipeline Health**: Check Kustomization/HelmRelease/Application status
-7. **Source Health**: Check GitRepository/OCIRepository status
-8. **Root Cause**: Get diagnosis with probable causes and suggested fixes
+5. **Event Timeline**: View Kubernetes events with explanations (press `e`)
+6. **Ownership**: See K8s and GitOps ownership chains
+7. **Pipeline Health**: Check Kustomization/HelmRelease/Application status
+8. **Source Health**: Check GitRepository/OCIRepository status
+9. **Root Cause**: Get diagnosis with probable causes and suggested fixes
 
 **Container log pattern detection:**
 
@@ -473,7 +474,24 @@ When viewing container logs, cub-scout automatically detects common error patter
 | dns_error | `no such host`, `NXDOMAIN` | Check hostname and DNS |
 | panic | `panic:`, `SIGSEGV` | Check stack trace for root cause |
 
-Detected patterns are highlighted in the log view and used to enhance root cause analysis
+Detected patterns are highlighted in the log view and used to enhance root cause analysis.
+
+**Event timeline explanations:**
+
+When viewing the event timeline, cub-scout provides explanations for common Kubernetes events:
+
+| Event Reason | Explanation | Suggestion |
+|-------------|-------------|------------|
+| FailedScheduling | Kubernetes could not find a suitable node | Check node resources, taints/tolerations |
+| ImagePullBackOff | Repeated failures pulling container image | Verify image exists, check imagePullSecrets |
+| CrashLoopBackOff | Container keeps crashing and restarting | Check logs, verify config/secrets |
+| FailedMount | Failed to mount a volume to the pod | Check volume exists and permissions |
+| BackOff | Container is in restart backoff | Check container logs with --previous |
+| Unhealthy | Container failed health probe | Check probe config and app health |
+| Evicted | Pod was evicted from the node | Check for node resource pressure |
+| OOMKilled | Container ran out of memory | Increase memory limits |
+
+Press `a` to toggle between showing all events or only warnings/errors.
 
 **Options:**
 | Option | Description |
