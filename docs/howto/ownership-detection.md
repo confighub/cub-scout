@@ -33,10 +33,10 @@ debug-pod       prod         Native     ⚠ Orphan
 
 Map checks labels on each resource to determine ownership:
 
-| Owner | Detection | Labels Checked |
-|-------|-----------|----------------|
+| Owner | Detection | Labels/Annotations Checked |
+|-------|-----------|----------------------------|
 | **Flux** | Toolkit labels | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` |
-| **ArgoCD** | Both required | `app.kubernetes.io/instance` AND `argocd.argoproj.io/instance` |
+| **ArgoCD** | Argo label or tracking-id | `argocd.argoproj.io/instance` label OR `argocd.argoproj.io/tracking-id` annotation |
 | **Helm** | Managed-by label | `app.kubernetes.io/managed-by: Helm` |
 | **ConfigHub** | Unit slug | `confighub.com/UnitSlug` |
 | **Native** | Nothing detected | No GitOps ownership labels |
@@ -63,16 +63,21 @@ metadata:
 
 ### ArgoCD Detection
 
-ArgoCD requires BOTH labels (this prevents false positives):
+ArgoCD is detected by the presence of the Argo-specific label OR annotation:
 
 ```yaml
+# Detection via label (most common)
 metadata:
   labels:
-    app.kubernetes.io/instance: my-app        # Required
-    argocd.argoproj.io/instance: my-app       # Also required
+    argocd.argoproj.io/instance: my-app
+
+# Detection via tracking annotation (alternative)
+metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: "my-app:apps/Deployment:default/nginx"
 ```
 
-**Why both?** Some resources have only `app.kubernetes.io/instance` from other tools. Requiring both ensures accurate detection.
+**Note:** If the `argocd.argoproj.io/instance` label exists but is empty, cub-scout falls back to `app.kubernetes.io/instance` for the owner name.
 
 ### Helm Detection
 
@@ -136,11 +141,12 @@ Map uses labels for detection. If labels are missing or incorrect, ownership wil
 
 ### ArgoCD resource shows as Native
 
-Ensure BOTH labels are present:
-- `app.kubernetes.io/instance`
-- `argocd.argoproj.io/instance`
+Check for the Argo-specific label or annotation:
+```bash
+kubectl get deploy YOUR-DEPLOY -n YOUR-NS -o yaml | grep -E "argocd.argoproj.io/(instance|tracking-id)"
+```
 
-If only one is present, the resource won't be detected as ArgoCD.
+If neither `argocd.argoproj.io/instance` label nor `argocd.argoproj.io/tracking-id` annotation is present, the resource won't be detected as ArgoCD.
 
 ### Flux resource shows as Native
 

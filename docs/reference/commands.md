@@ -72,7 +72,8 @@ cub-scout map list [flags]
 |------|-------------|
 | `-n, --namespace` | Filter by namespace |
 | `-q, --query` | Filter by query |
-| `--json` | Output as JSON |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+| `--json` | Output as JSON (shorthand for `--format json`) |
 | `--count` | Show count only |
 | `--names-only` | Show names only |
 | `--explain` | Show explanatory content |
@@ -93,7 +94,10 @@ cub-scout map list -q "owner=Flux"
 cub-scout map list -q "owner!=Native AND kind=Deployment"
 
 # Output as JSON
-cub-scout map list --json
+cub-scout map list --format json
+
+# Output as Markdown
+cub-scout map list --format md
 ```
 
 ---
@@ -199,7 +203,8 @@ cub-scout trace <kind/name> [flags]
 | `--app` | Trace ArgoCD Application by name |
 | `-r, --reverse` | Reverse trace (walk up ownerReferences, show orphan metadata) |
 | `-d, --diff` | Show diff between live and Git state |
-| `--json` | Output as JSON |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+| `--json` | Output as JSON (shorthand for `--format json`) |
 | `--explain` | Show explanatory content |
 
 ### Examples
@@ -222,6 +227,10 @@ cub-scout trace deployment/debug-nginx -n default --reverse
 
 # Show what would change on reconciliation
 cub-scout trace deployment/nginx -n demo --diff
+
+# Output as JSON or Markdown
+cub-scout trace deployment/nginx -n demo --format json
+cub-scout trace deployment/nginx -n demo --format md
 ```
 
 ### Supported Sources
@@ -297,12 +306,21 @@ cub-scout tree [view] [flags]
 | `suggest` | Recommended ConfigHub structure |
 | `workloads` | Alias for map workloads |
 
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Filter by namespace |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+
 ### Examples
 
 ```bash
 cub-scout tree                  # Runtime hierarchy
 cub-scout tree ownership        # By owner
 cub-scout tree suggest          # Suggested ConfigHub structure
+cub-scout tree ownership --format json   # JSON output
+cub-scout tree runtime --format md       # Markdown output
 ```
 
 ---

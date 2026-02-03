@@ -10,9 +10,14 @@ go build ./cmd/cub-scout
 ./cub-scout map list         # Plain text
 ./cub-scout trace deploy/x -n y
 ./cub-scout scan
+./cub-scout gitops status    # GitOps pipeline health (v0.14)
+./cub-scout graph export     # Resource graph (v0.6)
+./cub-scout patterns detect  # Pattern detection (v0.7)
 ```
 
 **Always use `./cub-scout`** (local binary), not `cub-scout`.
+
+**Output formats (v0.14):** Most commands support `--format ascii|json|md`.
 
 ## Documentation
 
@@ -44,9 +49,10 @@ go build ./cmd/cub-scout
 
 | Owner | Detection |
 |-------|-----------|
-| Flux | `kustomize.toolkit.fluxcd.io/*` labels |
-| ArgoCD | `argocd.argoproj.io/instance` label |
+| Flux | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
+| ArgoCD | `argocd.argoproj.io/instance` label or tracking-id annotation |
 | Helm | `app.kubernetes.io/managed-by: Helm` |
+| Terraform | `app.terraform.io/run-id` annotation or managed label |
 | Crossplane | `crossplane.io/claim-name` label *(experimental)* |
 | ConfigHub | `confighub.com/UnitSlug` label |
 | Native | None of the above |

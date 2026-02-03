@@ -1,28 +1,29 @@
 # CLI Contract Reference
 
-This document defines the stable CLI behavior for cub-scout v0.5.
-These commands, flags, and output formats are considered stable and
-breaking changes will be avoided.
+This document defines the stable CLI behavior for cub-scout.
+Commands, flags, and output formats documented here are considered stable and
+breaking changes will be avoided within the same contract version.
 
-**This is the authoritative reference for v0.5.**
+**Current Version:** v0.14.1
 
 ---
 
-## Contract Freeze Notice
+## Contract Evolution
 
-> **v0.5 CLI surfaces are frozen.**
->
-> The commands, output formats, and exit codes documented here are locked.
-> Changes to contracted behavior require a new minor version (v0.6+).
->
+| Version | Key Additions |
+|---------|---------------|
+| v0.5 | Core commands: map, trace, scan |
+| v0.6 | graph export, graph explain |
+| v0.7 | patterns list/detect/explain |
+| v0.14 | `--format` flag (ascii/json/md), JSON schema guarantees |
+| v0.14.1 | gitops status command |
+
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.
 
 ---
 
 ## Stable Commands
-
-The following commands are stable for v0.5:
 
 | Command | Purpose | Stable Since |
 |---------|---------|--------------|
@@ -32,6 +33,12 @@ The following commands are stable for v0.5:
 | `cub-scout map deployers` | List deployers (Deployments) | v0.5 |
 | `cub-scout trace` | Trace resource to Git source | v0.5 |
 | `cub-scout scan` | Scan for CCVEs and issues | v0.5 |
+| `cub-scout graph export` | Export resource graph as JSON | v0.6 |
+| `cub-scout graph explain` | Explain resource relationships | v0.6 |
+| `cub-scout patterns list` | List registered patterns | v0.7 |
+| `cub-scout patterns detect` | Run pattern detection | v0.7 |
+| `cub-scout patterns explain` | Explain specific pattern | v0.7 |
+| `cub-scout gitops status` | GitOps pipeline health | v0.14.1 |
 
 ---
 
@@ -76,7 +83,8 @@ cub-scout map list [flags]
 | `--owner` | string | all | Filter by owner type |
 | `-q, --query` | string | - | Query expression |
 | `--since` | string | - | Time filter (1h, 24h, 7d) |
-| `--json` | bool | false | JSON output |
+| `--format` | string | ascii | Output format: ascii, json, md (v0.14+) |
+| `--json` | bool | false | JSON output (shorthand for --format json) |
 | `--count` | bool | false | Count only |
 | `--names-only` | bool | false | Names only (scripting) |
 
@@ -404,6 +412,68 @@ These may change in future versions:
 - TUI appearance and keybindings
 - New flags may be added
 - New JSON fields may be added
+
+---
+
+## cub-scout gitops status (v0.14.1)
+
+Show GitOps pipeline health and failure details.
+
+```bash
+cub-scout gitops status [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-n, --namespace` | string | all | Namespace to scan |
+| `--json` | bool | false | JSON output |
+
+### Output (Plain Text)
+
+```
+GITOPS STATUS
+════════════════════════════════════════════════════════════════════
+
+Backend:    flux
+Transport:  oci
+
+SOURCES (1)
+────────────────────────────────────────────────────────────────────
+  ✗ OCIRepository/manifests (flux-system)    failing
+    Reason:  AuthenticationFailed
+
+DEPLOYERS (1)
+────────────────────────────────────────────────────────────────────
+  ✗ Kustomization/app (flux-system)          failing at source
+
+Summary: 0 healthy, 1 failing
+
+NEXT STEPS
+────────────────────────────────────────────────────────────────────
+• Source failure: Check OCI registry credentials
+```
+
+### Output (JSON)
+
+```json
+{
+  "backend": "flux",
+  "transport": "oci",
+  "deployers": [...],
+  "sources": [...],
+  "healthyCount": 0,
+  "failedCount": 1
+}
+```
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success (even if failures shown) |
+| 1 | Error (cluster unreachable, etc.) |
 
 ---
 
