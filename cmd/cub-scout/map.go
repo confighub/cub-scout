@@ -37,7 +37,8 @@ var (
 	mapKind           string
 	mapOwner          string
 	mapQuery          string
-	mapJSON           bool
+	mapJSON           bool   // deprecated: use --format json
+	mapListFormat     string // output format: ascii, json
 	mapVerbose        bool
 	mapHub            bool   // --hub flag for ConfigHub hierarchy
 	mapSince          string // --since flag for time filtering
@@ -492,6 +493,7 @@ func init() {
 	mapListCmd.Flags().BoolVar(&mapCount, "count", false, "Output count only (no list)")
 	mapListCmd.Flags().BoolVar(&mapNamesOnly, "names-only", false, "Output names only (for scripting)")
 	mapListCmd.Flags().BoolVar(&mapExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
+	mapListCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json")
 
 	// Orphans-specific flags (same as list)
 	mapOrphansCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
@@ -655,10 +657,39 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		return nil
 	}
 
-	if mapJSON {
+	// Handle --format flag (v0.14 schema)
+	// Support deprecated --json flag for backward compatibility
+	effectiveFormat := mapListFormat
+	if mapJSON && effectiveFormat == "ascii" {
+		effectiveFormat = "json"
+	}
+
+	if effectiveFormat == "json" {
+		// Get cluster context
+		cluster := os.Getenv("CLUSTER_NAME")
+		if cluster == "" {
+			cluster = getCurrentContext()
+		}
+		if cluster == "" {
+			cluster = "unknown"
+		}
+
+		// Convert to mapsvc.Entry slice
+		mapsvcEntries := make([]mapsvc.Entry, len(entries))
+		for i, e := range entries {
+			mapsvcEntries[i] = mapsvc.Entry(e)
+		}
+
+		// Get namespace filter
+		var ns *string
+		if mapNamespace != "" {
+			ns = &mapNamespace
+		}
+
+		output := mapsvc.BuildOwnershipJSON(mapsvcEntries, cluster, ns)
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		return enc.Encode(entries)
+		return enc.Encode(output)
 	}
 
 	// Explain mode: show header explaining ownership detection

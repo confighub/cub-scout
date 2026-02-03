@@ -390,3 +390,149 @@ func containsHelper(s, substr string) bool {
 	}
 	return false
 }
+
+// =============================================================================
+// Ownership Schema Tests
+// =============================================================================
+
+func TestBuildOwnershipJSON_Basic(t *testing.T) {
+	entries := []Entry{
+		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: "Ready", OwnerDetails: map[string]string{"name": "kustomization/web-apps"}},
+		{Kind: "Deployment", Namespace: "api", Name: "backend", Owner: "Flux", Status: "Ready", OwnerDetails: map[string]string{"name": "kustomization/api-apps"}},
+		{Kind: "Deployment", Namespace: "default", Name: "legacy", Owner: "Native", Status: "Ready"},
+	}
+
+	output := BuildOwnershipJSON(entries, "test-cluster", nil)
+
+	// Verify structure
+	if output.Command != "ownership" {
+		t.Errorf("expected command=ownership, got %s", output.Command)
+	}
+	if output.Context.Cluster != "test-cluster" {
+		t.Errorf("expected cluster=test-cluster, got %s", output.Context.Cluster)
+	}
+
+	// Verify resources are sorted by (namespace, kind, name)
+	if len(output.Resources) != 3 {
+		t.Fatalf("expected 3 resources, got %d", len(output.Resources))
+	}
+	// api/Deployment/backend should come first
+	if output.Resources[0].ID.Namespace != "api" || output.Resources[0].ID.Name != "backend" {
+		t.Errorf("expected first resource to be api/backend, got %s/%s",
+			output.Resources[0].ID.Namespace, output.Resources[0].ID.Name)
+	}
+	// default/Deployment/legacy should come second
+	if output.Resources[1].ID.Namespace != "default" || output.Resources[1].ID.Name != "legacy" {
+		t.Errorf("expected second resource to be default/legacy, got %s/%s",
+			output.Resources[1].ID.Namespace, output.Resources[1].ID.Name)
+	}
+
+	// Verify owner types are normalized
+	if output.Resources[0].Owner.Type != "Flux" {
+		t.Errorf("expected owner.type=Flux, got %s", output.Resources[0].Owner.Type)
+	}
+	if output.Resources[1].Owner.Type != "Native" {
+		t.Errorf("expected owner.type=Native, got %s", output.Resources[1].Owner.Type)
+	}
+
+	// Verify owner refs
+	if output.Resources[0].Owner.Ref == nil {
+		t.Error("expected owner.ref for Flux item, got nil")
+	} else if output.Resources[0].Owner.Ref.Kind != "Kustomization" {
+		t.Errorf("expected owner.ref.kind=Kustomization, got %s", output.Resources[0].Owner.Ref.Kind)
+	}
+	if output.Resources[1].Owner.Ref != nil {
+		t.Error("expected nil owner.ref for Native item")
+	}
+
+	// Verify summary
+	if output.Summary.Total != 3 {
+		t.Errorf("expected total=3, got %d", output.Summary.Total)
+	}
+	if output.Summary.ByOwner["Flux"] != 2 {
+		t.Errorf("expected byOwner[Flux]=2, got %d", output.Summary.ByOwner["Flux"])
+	}
+	if output.Summary.ByOwner["Native"] != 1 {
+		t.Errorf("expected byOwner[Native]=1, got %d", output.Summary.ByOwner["Native"])
+	}
+	if output.Summary.ByStatus["Ready"] != 3 {
+		t.Errorf("expected byStatus[Ready]=3, got %d", output.Summary.ByStatus["Ready"])
+	}
+}
+
+func TestBuildOwnershipJSON_Deterministic(t *testing.T) {
+	entries := []Entry{
+		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: "Ready"},
+		{Kind: "Deployment", Namespace: "api", Name: "backend", Owner: "Flux", Status: "Ready"},
+		{Kind: "StatefulSet", Namespace: "api", Name: "db", Owner: "ArgoCD", Status: "Ready"},
+		{Kind: "Deployment", Namespace: "default", Name: "legacy", Owner: "Native", Status: "Unknown"},
+	}
+
+	// Generate JSON twice and verify it's identical
+	output1 := BuildOwnershipJSON(entries, "test-cluster", nil)
+	output2 := BuildOwnershipJSON(entries, "test-cluster", nil)
+
+	json1, _ := json.MarshalIndent(output1, "", "  ")
+	json2, _ := json.MarshalIndent(output2, "", "  ")
+
+	if string(json1) != string(json2) {
+		t.Error("JSON output is not deterministic")
+	}
+}
+
+func TestBuildOwnershipJSON_SortByNamespaceKindName(t *testing.T) {
+	// Create entries that would sort differently if not using (namespace, kind, name)
+	entries := []Entry{
+		{Kind: "StatefulSet", Namespace: "api", Name: "cache", Owner: "Flux", Status: "Ready"},
+		{Kind: "Deployment", Namespace: "api", Name: "backend", Owner: "Flux", Status: "Ready"},
+		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: "Ready"},
+		{Kind: "Deployment", Namespace: "api", Name: "gateway", Owner: "Flux", Status: "Ready"},
+	}
+
+	output := BuildOwnershipJSON(entries, "test-cluster", nil)
+
+	// Expected order: api/Deployment/backend, api/Deployment/gateway, api/StatefulSet/cache, web/Deployment/frontend
+	expected := []struct {
+		ns, kind, name string
+	}{
+		{"api", "Deployment", "backend"},
+		{"api", "Deployment", "gateway"},
+		{"api", "StatefulSet", "cache"},
+		{"web", "Deployment", "frontend"},
+	}
+
+	for i, exp := range expected {
+		res := output.Resources[i]
+		if res.ID.Namespace != exp.ns || res.ID.Kind != exp.kind || res.ID.Name != exp.name {
+			t.Errorf("resource[%d]: expected %s/%s/%s, got %s/%s/%s",
+				i, exp.ns, exp.kind, exp.name,
+				res.ID.Namespace, res.ID.Kind, res.ID.Name)
+		}
+	}
+}
+
+func TestBuildOwnershipJSON_NamespaceContext(t *testing.T) {
+	entries := []Entry{
+		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: "Ready"},
+	}
+
+	ns := "web"
+	output := BuildOwnershipJSON(entries, "test-cluster", &ns)
+
+	if output.Context.Namespace == nil || *output.Context.Namespace != "web" {
+		t.Error("expected context.namespace=web")
+	}
+}
+
+func TestBuildOwnershipJSON_StatusNormalization(t *testing.T) {
+	entries := []Entry{
+		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: ""},
+	}
+
+	output := BuildOwnershipJSON(entries, "test-cluster", nil)
+
+	// Empty status should be normalized to "Unknown"
+	if output.Resources[0].Status != "Unknown" {
+		t.Errorf("expected status=Unknown for empty status, got %s", output.Resources[0].Status)
+	}
+}

@@ -1,0 +1,68 @@
+{
+  "command": "ownership",
+  "context": {
+    "cluster": "test-cluster",
+    "namespace": null
+  },
+  "resources": [
+    {
+      "id": {
+        "kind": "Deployment",
+        "namespace": "default",
+        "name": "api"
+      },
+      "owner": {
+        "type": "Flux",
+        "ref": null
+      },
+      "status": "Ready"
+    },
+    {
+      "id": {
+        "kind": "Service",
+        "namespace": "default",
+        "name": "api"
+      },
+      "owner": {
+        "type": "Flux",
+        "ref": null
+      },
+      "status": "Ready"
+    },
+    {
+      "id": {
+        "kind": "Kustomization",
+        "namespace": "flux-system",
+        "name": "my-app"
+      },
+      "owner": {
+        "type": "Native",
+        "ref": null
+      },
+      "status": "Ready"
+    },
+    {
+      "id": {
+        "kind": "Deployment",
+        "namespace": "prod",
+        "name": "web"
+      },
+      "owner": {
+        "type": "Native",
+        "ref": null
+      },
+      "status": "NotReady"
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "byOwner": {
+      "Flux": 2,
+      "Native": 2
+    },
+    "byStatus": {
+      "NotReady": 1,
+      "Ready": 3
+    }
+  }
+}

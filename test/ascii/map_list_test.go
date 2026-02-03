@@ -40,3 +40,19 @@ func TestMapList_OwnerNative(t *testing.T) {
 	goldenPath := filepath.Join(repoRoot, "test", "ascii", "map", "list", "owner_native.txt")
 	golden.AssertGolden(t, out, goldenPath)
 }
+
+func TestMapList_FormatJSON(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "map", "list", "testdata", "basic.json")
+
+	out := runner.RunWithEnv(t, repoRoot,
+		map[string]string{
+			"CUB_SCOUT_TEST_MAP_ENTRIES_JSON": fixtureAbs,
+			"CLUSTER_NAME":                     "test-cluster",
+		},
+		"map", "list", "--format", "json",
+	)
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "map", "list", "basic.json.golden")
+	golden.AssertGolden(t, out, goldenPath)
+}

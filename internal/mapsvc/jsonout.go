@@ -411,3 +411,101 @@ func RelationshipForRole(role string) string {
 		return RelManages
 	}
 }
+
+// =============================================================================
+// Ownership Schema (v0.14)
+// =============================================================================
+
+// OwnershipOutput is the v0.14 JSON schema for `map list --format json`.
+// It's a flat, joinable inventory of resources with ownership attribution.
+type OwnershipOutput struct {
+	Command   string                `json:"command"`
+	Context   OwnershipContext      `json:"context"`
+	Resources []OwnershipResource   `json:"resources"`
+	Summary   OwnershipSummary      `json:"summary"`
+}
+
+// OwnershipContext captures query parameters for the ownership list.
+type OwnershipContext struct {
+	Cluster   string  `json:"cluster"`
+	Namespace *string `json:"namespace"` // null = all namespaces
+}
+
+// OwnershipResource represents a single resource with ownership attribution.
+type OwnershipResource struct {
+	ID     ResourceID `json:"id"`
+	Owner  Owner      `json:"owner"`
+	Status string     `json:"status"` // Ready, NotReady, Unknown, Progressing
+}
+
+// Owner represents the ownership attribution for a resource.
+type Owner struct {
+	Type string      `json:"type"`        // Flux, ArgoCD, Helm, ConfigHub, Native
+	Ref  *ResourceID `json:"ref"`         // null for Native
+}
+
+// OwnershipSummary provides aggregate counts.
+type OwnershipSummary struct {
+	Total    int            `json:"total"`
+	ByOwner  map[string]int `json:"byOwner"`
+	ByStatus map[string]int `json:"byStatus"`
+}
+
+// BuildOwnershipJSON builds v0.14 JSON output from entries.
+// Resources are sorted by (namespace, kind, name) for determinism.
+func BuildOwnershipJSON(entries []Entry, cluster string, namespace *string) OwnershipOutput {
+	// Sort entries for deterministic output
+	sortEntriesDeterministic(entries)
+
+	// Build resources
+	resources := make([]OwnershipResource, len(entries))
+	byOwner := make(map[string]int)
+	byStatus := make(map[string]int)
+
+	for i, e := range entries {
+		// Normalize owner to canonical form
+		ownerType := normalizeOwner(e.Owner)
+
+		// Build owner reference
+		var ownerRef *ResourceID
+		if e.OwnerDetails != nil && e.OwnerDetails["name"] != "" {
+			ownerRef = parseOwnerRef(e.OwnerDetails, e.Namespace)
+		}
+
+		// Normalize status
+		status := e.Status
+		if status == "" {
+			status = "Unknown"
+		}
+
+		resources[i] = OwnershipResource{
+			ID: ResourceID{
+				Kind:      e.Kind,
+				Namespace: e.Namespace,
+				Name:      e.Name,
+			},
+			Owner: Owner{
+				Type: ownerType,
+				Ref:  ownerRef,
+			},
+			Status: status,
+		}
+
+		byOwner[ownerType]++
+		byStatus[status]++
+	}
+
+	return OwnershipOutput{
+		Command: "ownership",
+		Context: OwnershipContext{
+			Cluster:   cluster,
+			Namespace: namespace,
+		},
+		Resources: resources,
+		Summary: OwnershipSummary{
+			Total:    len(entries),
+			ByOwner:  byOwner,
+			ByStatus: byStatus,
+		},
+	}
+}
