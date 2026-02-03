@@ -2084,10 +2084,10 @@ Defined milestones for all 22 open issues:
 
 | Version | Theme | Issues |
 |---------|-------|--------|
-| **v0.14.2** | Debug/Trace | #2, #37, #39, #40 |
+| **v0.14.2** | Debug/Trace | #37, #39, #40 ✅ |
 | **v0.14.3** | Drift Detection | #33, #34 |
 | **v0.15** | Graph & Export | #35, #36, #38 |
-| **v0.16** | Crossplane | #3, #8, #21, #22, #23, #24, #25 |
+| **v0.16** | Crossplane & Backlog | #2, #3, #8, #21, #22, #23, #24, #25 |
 | **v0.17** | TUI Polish | #88, #90, #91, #92, #93 |
 | **v0.18** | Documentation | — |
 
@@ -2267,8 +2267,8 @@ Added event timeline viewing with explanations to the debug wizard.
 - #39: Container logs in debug mode ✅
 - #40: Event timeline ✅
 
-**Remaining:**
-- #2: Kustomize overlay layer attribution (deferred to v0.15 or later)
+**Deferred to v0.16:**
+- #2: Kustomize overlay layer attribution
 
 ### Commits
 

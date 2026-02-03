@@ -71,16 +71,23 @@ For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap
 - SourceRef parsing for Flux deployers
 - Flux and Argo failure details extraction
 
-### v0.14.2 — Debug/Trace (Planned)
+### v0.14.2 — Debug/Trace (Released)
 
+**Status:** Released (2026-02-03)
 **Theme:** Guided GitOps debugging
 
-| # | Title | Description |
-|---|-------|-------------|
-| #2 | Kustomize overlay layer attribution | Trace through overlay layers |
-| #37 | Guided GitOps Debug Mode | Interactive debugging workflow |
-| #39 | Container logs in debug mode | View crash logs with pattern detection |
-| #40 | Event timeline | See what happened recently with explanations |
+**Delivered:**
+- `cub-scout debug` command with interactive wizard
+- Container log viewing with automatic pattern detection (13 patterns)
+- Event timeline viewing with explanations (25+ event types)
+- Education layer for common issues (CrashLoopBackOff, ImagePullBackOff, etc.)
+- Golden tests for all debug output formats
+
+| # | Title | Status |
+|---|-------|--------|
+| #37 | Guided GitOps Debug Mode | ✅ Released |
+| #39 | Container logs in debug mode | ✅ Released |
+| #40 | Event timeline | ✅ Released |
 
 ### v0.14.3 — Drift Detection (Planned)
 
@@ -129,6 +136,7 @@ Offline replay of snapshots is a **first-class supported workflow**:
 
 | # | Title | Description |
 |---|-------|-------------|
+| #2 | Kustomize overlay layer attribution | Trace through overlay layers |
 | #3 | Support platform composition tools | Crossplane, kro |
 | #8 | First-class Crossplane ownership & lineage | XR-first, system resource classification |
 | #21 | Platform composition beyond Crossplane | kro support |
