@@ -24,6 +24,7 @@ Complete reference for all cub-scout commands.
 | `patterns list` | List registered patterns (v0.7) |
 | `patterns detect` | Run pattern detection (v0.7) |
 | `patterns explain` | Explain a specific pattern (v0.7) |
+| `gitops status` | Show GitOps pipeline health (v0.14) |
 
 ---
 
@@ -511,6 +512,87 @@ cub-scout patterns explain <pattern-id> [flags]
 | 4 | Pattern failed |
 
 See [Patterns Contract Reference](patterns-contract.md) for full documentation.
+
+---
+
+## gitops (v0.14)
+
+GitOps pipeline status and diagnostics.
+
+> **v0.14 contract surface.** Provides visibility into delegated apply health.
+
+### gitops status
+
+Show the health of GitOps deployers and sources.
+
+```bash
+cub-scout gitops status [flags]
+```
+
+#### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Namespace to scan (empty = all namespaces) |
+| `--json` | Output as JSON |
+
+#### Detected Backends
+
+| Backend | Detection |
+|---------|-----------|
+| `flux` | Kustomization or HelmRelease CRDs present |
+| `argocd` | Application CRD present |
+| `worker` | ConfigHub worker labels |
+| `none` | No GitOps backend detected |
+
+#### Failure Stages
+
+| Stage | Description |
+|-------|-------------|
+| `source` | OCI/Git/Helm fetch failed |
+| `build` | Kustomize/Helm rendering failed |
+| `apply` | Kubernetes apply failed |
+| `sync` | ArgoCD sync failed |
+| `healthy` | All stages passed |
+
+#### Example Output
+
+```
+GITOPS STATUS
+════════════════════════════════════════════════════════════════════
+
+Backend:    flux
+Transport:  oci
+
+SOURCES (1)
+────────────────────────────────────────────────────────────────────
+  ✗ OCIRepository/manifests (flux-system)    failing
+    Reason:  AuthenticationFailed
+    Message: failed to login to OCI registry: UNAUTHORIZED
+
+DEPLOYERS (1)
+────────────────────────────────────────────────────────────────────
+  ✗ Kustomization/app (flux-system)          failing at source
+
+Summary: 0 healthy, 1 failing
+
+NEXT STEPS
+────────────────────────────────────────────────────────────────────
+• Source failure: Check OCI registry credentials and network access
+```
+
+#### JSON Output
+
+```json
+{
+  "backend": "flux",
+  "transport": "oci",
+  "deployers": [...],
+  "sources": [...],
+  "healthyCount": 0,
+  "failedCount": 1
+}
+```
 
 ---
 

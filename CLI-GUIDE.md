@@ -4,13 +4,14 @@ Complete reference for all commands, options, TUI keys, and expected outputs.
 
 ---
 
-## Top-Level Commands (17)
+## Top-Level Commands (18)
 
 | Command | Description | Standalone | Connected |
 |---------|-------------|:----------:|:---------:|
 | `map` | Interactive TUI explorer | Yes | Yes |
 | `tree` | Hierarchical views (runtime, git, config) | Yes | Yes |
 | `status` | Show connection status, cluster, and worker info | Yes | Yes |
+| `gitops status` | Show GitOps pipeline health and failures | Yes | - |
 | `discover` | Find workloads (alias for map workloads) | Yes | - |
 | `health` | Check for issues (alias for map issues) | Yes | - |
 | `trace` | Show GitOps ownership chain | Yes | - |
@@ -259,6 +260,129 @@ Context:    docker-desktop
 ```
 Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● bridge-prod
 ```
+
+---
+
+## `gitops status` — GitOps Pipeline Health (v0.14.1)
+
+**What it does:** Shows the health of your GitOps pipeline, including which backend is managing resources and where failures are occurring.
+
+```bash
+./cub-scout gitops status
+./cub-scout gitops status -n flux-system
+./cub-scout gitops status --json
+```
+
+**Without cub-scout:**
+```bash
+kubectl get kustomizations.kustomize.toolkit.fluxcd.io -A
+kubectl get helmreleases.helm.toolkit.fluxcd.io -A
+kubectl get applications.argoproj.io -A
+kubectl get ocirepositories.source.toolkit.fluxcd.io -A
+# ... and manually correlate Ready conditions and failure reasons
+```
+
+**Expected output (healthy):**
+```
+GITOPS STATUS
+════════════════════════════════════════════════════════════════════
+
+Backend:    flux
+Transport:  oci
+
+SOURCES (1)
+────────────────────────────────────────────────────────────────────
+  ✓ OCIRepository/manifests (flux-system)    healthy
+
+DEPLOYERS (1)
+────────────────────────────────────────────────────────────────────
+  ✓ Kustomization/app (flux-system)          healthy
+
+Summary: 1 healthy, 0 failing
+```
+
+**Expected output (with failures):**
+```
+GITOPS STATUS
+════════════════════════════════════════════════════════════════════
+
+Backend:    flux
+Transport:  oci
+
+SOURCES (1)
+────────────────────────────────────────────────────────────────────
+  ✗ OCIRepository/manifests (flux-system)    failing
+    Reason:  AuthenticationFailed
+    Message: failed to login to OCI registry: UNAUTHORIZED
+
+DEPLOYERS (2)
+────────────────────────────────────────────────────────────────────
+  ✓ Kustomization/app-frontend (flux-system)  healthy
+  ✗ Kustomization/app-backend (flux-system)   failing at source
+    Reason:  ArtifactFailed
+    Message: Source 'OCIRepository/flux-system/manifests' is not ready
+
+Summary: 1 healthy, 1 failing
+
+NEXT STEPS
+────────────────────────────────────────────────────────────────────
+• Source failure: Check OCI registry credentials and network access
+• Use 'kubectl describe ocirepository manifests -n flux-system' for details
+```
+
+**JSON output:**
+```bash
+./cub-scout gitops status --json
+```
+```json
+{
+  "backend": "flux",
+  "transport": "oci",
+  "deployers": [
+    {
+      "kind": "Kustomization",
+      "name": "app-frontend",
+      "namespace": "flux-system",
+      "ready": true,
+      "stage": "healthy"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "OCIRepository",
+      "name": "manifests",
+      "namespace": "flux-system",
+      "ready": true,
+      "url": "oci://ghcr.io/acme/manifests"
+    }
+  ],
+  "healthyCount": 1,
+  "failedCount": 0
+}
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-n, --namespace` | Namespace to scan (default: all) |
+| `--json` | Output as JSON |
+
+**Failure Stages:**
+| Stage | Description |
+|-------|-------------|
+| `source` | OCI/Git/Helm fetch failed (auth, network, not found) |
+| `build` | Kustomize/Helm rendering failed |
+| `apply` | Kubernetes apply failed (validation, RBAC) |
+| `sync` | ArgoCD sync failed |
+| `healthy` | All stages passed |
+
+**Detected Backends:**
+| Backend | Detection |
+|---------|-----------|
+| `flux` | Kustomization or HelmRelease CRDs present |
+| `argocd` | Application CRD present |
+| `worker` | ConfigHub worker labels on resources |
+| `none` | No GitOps backend detected |
 
 ---
 

@@ -82,13 +82,42 @@ Future 0.14.x releases may include:
 
 ---
 
-## Version 0.15+ — Standalone Explorer and Debugger
+## Version 0.15 — Documentation & Polish
+
+**Status:** Planned
+**Theme:** Bring docs, references, tests, demos, and examples up to date
+
+### Goal
+
+Make cub-scout documentation complete, consistent, and easy to navigate. Every command, flag, and feature should be documented with examples.
+
+### Scope
+
+| Area | Work |
+|------|------|
+| **CLI Reference** | Ensure all commands documented in CLI-GUIDE.md and docs/reference/commands.md |
+| **Contract Docs** | Update cli-contract.md for v0.14+ commands |
+| **Golden Tests** | Ensure all user-facing output has golden tests |
+| **Examples** | Update examples/ with current command syntax |
+| **Demos** | Verify all demos work with current CLI |
+| **Navigation** | Add cross-references between related docs |
+| **Consistency** | Align terminology across all docs |
+
+### Non-goals
+
+- No new features
+- No schema changes
+- No contract changes
+
+---
+
+## Version 0.16+ — Standalone Explorer and Debugger
 
 **Status:** Planned
 **Epic:** [#25](https://github.com/confighub/cub-scout/issues/25)
 **Audience:** Individual engineers, SREs, platform teams
 
-### Core Capabilities (from original v0.5 epic)
+### Core Capabilities
 
 - Delegated apply visibility (Flux / Argo via OCI)
 - Failure-stage explanation (source vs apply)
