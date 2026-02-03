@@ -34,10 +34,12 @@ func Run(t *testing.T, workDir string, args ...string) string {
 	cmd.Env = os.Environ()
 
 	if err := cmd.Run(); err != nil {
-		// Some commands exit non-zero intentionally (e.g., pattern failures)
+		// Some commands exit non-zero intentionally
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			// Exit code 4 (pattern failures) is acceptable
-			if exitErr.ExitCode() == 4 {
+			code := exitErr.ExitCode()
+			// Exit code 1: "not managed" (trace native resources) - per cli-contract.md
+			// Exit code 4: pattern failures
+			if code == 1 || code == 4 {
 				return stdout.String()
 			}
 		}
@@ -68,8 +70,12 @@ func RunWithEnv(t *testing.T, workDir string, env map[string]string, args ...str
 	}
 
 	if err := cmd.Run(); err != nil {
+		// Some commands exit non-zero intentionally
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			if exitErr.ExitCode() == 4 {
+			code := exitErr.ExitCode()
+			// Exit code 1: "not managed" (trace native resources) - per cli-contract.md
+			// Exit code 4: pattern failures
+			if code == 1 || code == 4 {
 				return stdout.String()
 			}
 		}

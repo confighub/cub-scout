@@ -1,0 +1,37 @@
+{
+  "object": {
+    "kind": "Deployment",
+    "name": "payment-api",
+    "namespace": "ecommerce"
+  },
+  "chain": [
+    {
+      "kind": "GitRepository",
+      "name": "ecommerce-apps",
+      "namespace": "flux-system",
+      "ready": true,
+      "status": "Fetched revision: main@sha1:abc1234",
+      "revision": "main@sha1:abc1234567890abcdef1234567890abcdef12",
+      "url": "https://github.com/acme/ecommerce-apps"
+    },
+    {
+      "kind": "Kustomization",
+      "name": "ecommerce-payment",
+      "namespace": "flux-system",
+      "ready": true,
+      "status": "Applied revision: main@sha1:abc1234",
+      "revision": "main@sha1:abc1234567890abcdef1234567890abcdef12",
+      "path": "./clusters/prod/ecommerce/payment"
+    },
+    {
+      "kind": "Deployment",
+      "name": "payment-api",
+      "namespace": "ecommerce",
+      "ready": true,
+      "status": "3/3 ready"
+    }
+  ],
+  "fullyManaged": true,
+  "tool": "Flux",
+  "tracedAt": "2025-01-15T10:30:00Z"
+}

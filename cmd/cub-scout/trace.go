@@ -118,6 +118,12 @@ func init() {
 func runTrace(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
+	// TEST HOOK: Load trace data from JSON file to bypass cluster access in tests.
+	// In production this env var is never set, so real tracing is always used.
+	if traceJSONFile := os.Getenv("CUB_SCOUT_TEST_TRACE_JSON"); traceJSONFile != "" {
+		return loadAndRenderTraceFromJSON(traceJSONFile)
+	}
+
 	// Parse resource reference
 	var kind, name string
 
@@ -1098,4 +1104,23 @@ func runHelmDiff(ctx context.Context, name, namespace string) error {
 	fmt.Printf("\n")
 
 	return nil
+}
+
+// loadAndRenderTraceFromJSON loads trace data from a JSON file and renders it.
+// This is used for golden testing to bypass cluster access.
+func loadAndRenderTraceFromJSON(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read trace JSON: %w", err)
+	}
+
+	var result agent.TraceResult
+	if err := json.Unmarshal(data, &result); err != nil {
+		return fmt.Errorf("failed to parse trace JSON: %w", err)
+	}
+
+	if traceJSON {
+		return outputTraceJSON(&result)
+	}
+	return outputTraceHuman(&result)
 }

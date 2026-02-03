@@ -1,0 +1,13 @@
+
+TRACE: Deployment/cert-manager in platform
+
+  ✓ Application/cert-manager
+    │ Namespace: argocd
+    │ URL: https://github.com/jetstack/cert-manager
+    │ Revision: v1.14.0
+    │ Status: Synced
+    │
+    └─▶ ✓ Deployment/cert-manager
+          Status: 1/1 ready
+
+✓ All levels in sync. Managed by ArgoCD.

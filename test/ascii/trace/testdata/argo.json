@@ -1,0 +1,28 @@
+{
+  "object": {
+    "kind": "Deployment",
+    "name": "cert-manager",
+    "namespace": "platform"
+  },
+  "chain": [
+    {
+      "kind": "Application",
+      "name": "cert-manager",
+      "namespace": "argocd",
+      "ready": true,
+      "status": "Synced",
+      "revision": "v1.14.0",
+      "url": "https://github.com/jetstack/cert-manager"
+    },
+    {
+      "kind": "Deployment",
+      "name": "cert-manager",
+      "namespace": "platform",
+      "ready": true,
+      "status": "1/1 ready"
+    }
+  ],
+  "fullyManaged": true,
+  "tool": "ArgoCD",
+  "tracedAt": "2025-01-15T10:30:00Z"
+}

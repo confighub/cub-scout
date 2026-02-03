@@ -1,0 +1,4 @@
+
+TRACE: Deployment/debug-nginx in temp-test
+
+  [warning] Resource is not managed by GitOps

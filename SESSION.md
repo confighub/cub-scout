@@ -1479,3 +1479,142 @@ The core outcome:
 ### Governing Principle
 
 > **cub-scout doesn't hide information. It organizes it — and proves what it knows.**
+
+---
+
+## v0.12: ASCII Contract Lock Phase
+
+**Date:** 2026-02-03
+**Theme:** Tree & Trace Contracts (ASCII locked)
+
+### Goal
+
+Make it impossible to:
+- Lose hierarchy
+- Lose ownership
+- Lose trace narration
+- Accidentally degrade user-facing explanations
+
+---
+
+### Milestone Created
+
+**v0.12 Milestone:** https://github.com/confighub/cub-scout/milestone/1
+
+| # | Title | Status |
+|---|-------|--------|
+| 82 | Tree runtime ASCII golden tests | ✅ Closed |
+| 83 | Trace ASCII golden tests | ✅ Closed |
+| 84 | Map list ASCII golden tests | ⏳ Open |
+| 85 | Map status ASCII golden tests | ⏳ Open |
+| 86 | Ownership ASCII golden tests | ⏳ Open |
+| 87 | Scan results ASCII golden tests | ⏳ Open |
+| 88 | TUI snapshot golden tests (stretch) | ⏳ Open |
+| 89 | Cross-reference ASCII golden tests | ⏳ Open |
+
+---
+
+### Completed: Trace ASCII Golden Tests
+
+**Test hook added to `cmd/cub-scout/trace.go`:**
+```go
+// TEST HOOK: Load trace data from JSON file to bypass cluster access in tests.
+if traceJSON := os.Getenv("CUB_SCOUT_TEST_TRACE_JSON"); traceJSON != "" {
+    return loadAndRenderTraceFromJSON(traceJSON)
+}
+```
+
+**Files created:**
+
+| File | Purpose |
+|------|---------|
+| `test/ascii/trace/testdata/flux.json` | Flux-managed deployment fixture |
+| `test/ascii/trace/testdata/argo.json` | ArgoCD-managed deployment fixture |
+| `test/ascii/trace/testdata/native.json` | Native/unmanaged resource fixture |
+| `test/ascii/trace/flux.txt` | Flux trace golden (GitRepository → Kustomization → Deployment) |
+| `test/ascii/trace/argo.txt` | ArgoCD trace golden (Application → Deployment) |
+| `test/ascii/trace/native.txt` | Native trace golden (unmanaged warning) |
+| `test/ascii/trace_test.go` | Three trace tests with `-update` support |
+
+**Runner updated:**
+- `test/ascii/runner/runner.go` now accepts exit code 1 (for "not managed" per CLI contract)
+
+**Golden outputs locked:**
+
+**Flux trace:**
+```
+TRACE: Deployment/payment-api in ecommerce
+
+  ✓ GitRepository/ecommerce-apps
+    │ Namespace: flux-system
+    │ URL: https://github.com/acme/ecommerce-apps
+    │ Revision: main@sha1:abc1234567890abcdef1234567890abcdef12
+    │ Status: Fetched revision: main@sha1:abc1234
+    │
+    └─▶ ✓ Kustomization/ecommerce-payment
+        │ Namespace: flux-system
+        │ Path: ./clusters/prod/ecommerce/payment
+        │ Revision: main@sha1:abc1234567890abcdef1234567890abcdef12
+        │ Status: Applied revision: main@sha1:abc1234
+        │
+        └─▶ ✓ Deployment/payment-api
+              Status: 3/3 ready
+
+✓ All levels in sync. Managed by Flux.
+```
+
+**ArgoCD trace:**
+```
+TRACE: Deployment/cert-manager in platform
+
+  ✓ Application/cert-manager
+    │ Namespace: argocd
+    │ URL: https://github.com/jetstack/cert-manager
+    │ Revision: v1.14.0
+    │ Status: Synced
+    │
+    └─▶ ✓ Deployment/cert-manager
+          Status: 1/1 ready
+
+✓ All levels in sync. Managed by ArgoCD.
+```
+
+**Native trace:**
+```
+TRACE: Deployment/debug-nginx in temp-test
+
+  [warning] Resource is not managed by GitOps
+```
+
+---
+
+### Tests Pass
+
+```bash
+$ go test ./test/ascii/...
+ok      github.com/confighub/cub-scout/test/ascii       0.983s
+```
+
+---
+
+### Non-Negotiable Contracts (v0.12)
+
+- Tree is the primary surface
+- Trace must tell a story
+- Ownership must be explicit and honest
+- Native ≠ bad; system-managed ≠ orphan
+- No absolute paths in output
+- No timestamps, IPs, or random IDs in ASCII
+- Any user-visible ASCII change requires a golden update
+
+---
+
+### Remaining Work
+
+**Recommended order:**
+1. Ownership hierarchy ASCII goldens (#86)
+2. Map status ASCII goldens (#85)
+3. Map list ASCII golden tests (#84)
+4. Cross-reference ASCII goldens (#89)
+5. Scan results ASCII goldens (#87)
+6. TUI snapshot goldens (#88, optional)

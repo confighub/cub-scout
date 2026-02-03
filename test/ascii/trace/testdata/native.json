@@ -1,0 +1,12 @@
+{
+  "object": {
+    "kind": "Deployment",
+    "name": "debug-nginx",
+    "namespace": "temp-test"
+  },
+  "chain": [],
+  "fullyManaged": false,
+  "tool": "",
+  "error": "Resource is not managed by GitOps",
+  "tracedAt": "2025-01-15T10:30:00Z"
+}
