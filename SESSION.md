@@ -2171,3 +2171,110 @@ Implemented `cub-scout debug` - a guided debugging wizard for GitOps pipeline is
 - Added to CLI-GUIDE.md with examples and options
 
 ---
+
+## v0.14.2 Implementation: Container Logs (#39)
+
+**Date:** 2026-02-03
+
+### Summary
+
+Added container log viewing with automatic pattern detection to the debug wizard.
+
+### Files Created/Modified
+
+| File | Purpose |
+|------|---------|
+| `pkg/agent/container_logs.go` | Log fetching and pattern detection |
+| `cmd/cub-scout/debug_model.go` | Added container logs step |
+| `cmd/cub-scout/debug_views.go` | Added log rendering |
+| `test/ascii/debug/testdata/crash_loop_with_logs.json` | Test fixture with logs |
+
+### Features
+
+1. **Container log fetching**:
+   - Fetch logs from pods with issues
+   - Toggle between current and previous logs (press `p`)
+   - Scroll through log lines (up/down)
+   - Switch between pods (left/right)
+
+2. **Automatic pattern detection** (13 patterns):
+   - connection_refused, file_not_found, permission_denied
+   - out_of_memory, database_error, authentication_failed
+   - timeout, config_missing, secret_missing
+   - dns_error, port_in_use, panic, fatal_error
+
+3. **Pattern highlighting**:
+   - Detected patterns highlighted in log view
+   - Explanations and suggestions shown
+   - Patterns used to enhance root cause analysis
+
+### Tests
+
+- Golden tests: `TestDebug_CrashLoopWithLogs`, `TestDebug_CrashLoopWithLogs_JSON`, `TestDebug_CrashLoopWithLogs_Markdown`
+
+---
+
+## v0.14.2 Implementation: Event Timeline (#40)
+
+**Date:** 2026-02-03
+
+### Summary
+
+Added event timeline viewing with explanations to the debug wizard.
+
+### Files Created/Modified
+
+| File | Purpose |
+|------|---------|
+| `pkg/agent/event_timeline.go` | Event fetching and explanations |
+| `cmd/cub-scout/debug_model.go` | Added event timeline step |
+| `cmd/cub-scout/debug_views.go` | Added event rendering |
+| `test/ascii/debug/testdata/crash_loop_with_events.json` | Test fixture with events |
+
+### Features
+
+1. **Event timeline fetching**:
+   - Fetch events for workload and related pods
+   - Events sorted by timestamp (most recent first)
+   - Merge workload and pod events into unified timeline
+
+2. **Event explanations** (25+ event types):
+   - Pod lifecycle: Scheduled, Pulled, Created, Started, Killing
+   - Scheduling: FailedScheduling, Preempted
+   - Images: ErrImagePull, ImagePullBackOff
+   - Containers: BackOff, CrashLoopBackOff, Unhealthy
+   - Volumes: FailedMount, FailedAttachVolume
+   - Deployments: ScalingReplicaSet, FailedCreate
+
+3. **Severity classification**:
+   - info (normal events)
+   - warning (non-critical issues)
+   - error (failures requiring attention)
+
+4. **Filter toggle**:
+   - Press `a` to toggle all events vs warnings/errors only
+
+### Tests
+
+- Golden tests: `TestDebug_CrashLoopWithEvents`, `TestDebug_CrashLoopWithEvents_JSON`, `TestDebug_CrashLoopWithEvents_Markdown`
+
+---
+
+## v0.14.2 Status
+
+**Completed:**
+- #37: Guided GitOps Debug Mode ✅
+- #39: Container logs in debug mode ✅
+- #40: Event timeline ✅
+
+**Remaining:**
+- #2: Kustomize overlay layer attribution (deferred to v0.15 or later)
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `0a6c4d9` | feat(debug): add guided GitOps debug mode with logs and events (#37, #39, #40) |
+| `83cfcf7` | feat(debug): add event timeline step with explanations (#40) |
+
+---
