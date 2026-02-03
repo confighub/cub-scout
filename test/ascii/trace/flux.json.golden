@@ -13,7 +13,7 @@
         "name": "ecommerce-apps"
       },
       "role": "source",
-      "relationship": "provides-manifests-to",
+      "relationship": "sources",
       "evidence": [
         {
           "type": "field",

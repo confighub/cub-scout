@@ -339,12 +339,15 @@ const (
 )
 
 // Relationship constants for trace chain edges.
+// Canonical vocabulary aligned with ASCII trace verbs.
 const (
-	RelProvidesManifsetsTo = "provides-manifests-to"
-	RelApplies             = "applies"
-	RelManages             = "manages"
-	RelManagedBy           = "managed-by"
-	RelSelects             = "selects"
+	RelSources   = "sources"    // Source provides manifests to deployer
+	RelApplies   = "applies"    // Deployer applies manifests to cluster
+	RelGenerates = "generates"  // Generator creates downstream resources
+	RelSyncs     = "syncs"      // Controller syncs resources
+	RelManages   = "manages"    // Controller manages child resource
+	RelManagedBy = "managed-by" // Workload back-reference to deployer
+	RelSelects   = "selects"    // Service selects pods
 )
 
 // EvidenceType constants for evidence entries.
@@ -378,7 +381,7 @@ func InferRelationship(fromKind, toKind string) string {
 
 	switch {
 	case fromRole == RoleSource && toRole == RoleDeployer:
-		return RelProvidesManifsetsTo
+		return RelSources
 	case fromRole == RoleDeployer && toRole == RoleWorkload:
 		return RelApplies
 	case fromRole == RoleDeployer && toRole == RoleIntermediate:
@@ -397,7 +400,7 @@ func InferRelationship(fromKind, toKind string) string {
 func RelationshipForRole(role string) string {
 	switch role {
 	case RoleSource:
-		return RelProvidesManifsetsTo
+		return RelSources
 	case RoleDeployer:
 		return RelApplies
 	case RoleWorkload:

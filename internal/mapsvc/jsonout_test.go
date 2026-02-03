@@ -252,7 +252,7 @@ func TestInferRelationship(t *testing.T) {
 		from, to string
 		expected string
 	}{
-		{"GitRepository", "Kustomization", RelProvidesManifsetsTo},
+		{"GitRepository", "Kustomization", RelSources},
 		{"Kustomization", "Deployment", RelApplies},
 		{"Kustomization", "ReplicaSet", RelManages},
 		{"ReplicaSet", "Pod", RelManages},
@@ -286,7 +286,7 @@ func TestTraceOutput_Structure(t *testing.T) {
 					Name:      "flux-system",
 				},
 				Role:         RoleSource,
-				Relationship: RelProvidesManifsetsTo,
+				Relationship: RelSources,
 				Evidence: []Evidence{
 					{
 						Type:  EvidenceField,
