@@ -1,0 +1,43 @@
+# Argo CD OCI pipeline - chart not found
+# Application cannot fetch OCI chart
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delegated-argo-not-found
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: missing-chart-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: oci://ghcr.io/acme/charts
+    chart: nonexistent-chart
+    targetRevision: 99.0.0
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: delegated-argo-not-found
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+status:
+  sync:
+    status: Unknown
+    revision: ""
+  health:
+    status: Unknown
+    message: ""
+  operationState:
+    phase: Error
+    message: "failed to fetch chart: chart \"nonexistent-chart\" version \"99.0.0\" not found in oci://ghcr.io/acme/charts repository"
+    finishedAt: "2026-02-03T10:00:30Z"
+  reconciledAt: "2026-02-03T10:00:30Z"
+  conditions:
+    - type: ComparisonError
+      status: "True"
+      message: "failed to fetch chart: chart \"nonexistent-chart\" version \"99.0.0\" not found in oci://ghcr.io/acme/charts repository"
+      lastTransitionTime: "2026-02-03T10:00:30Z"

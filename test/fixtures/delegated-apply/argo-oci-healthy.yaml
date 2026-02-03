@@ -1,0 +1,82 @@
+# Argo CD OCI pipeline - healthy state
+# Application syncs from OCI Helm chart
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delegated-argo-healthy
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: oci-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: oci://ghcr.io/acme/charts
+    chart: web-app
+    targetRevision: 1.2.3
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: delegated-argo-healthy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+status:
+  sync:
+    status: Synced
+    revision: "1.2.3"
+  health:
+    status: Healthy
+    message: ""
+  operationState:
+    phase: Succeeded
+    message: "successfully synced (all tasks run)"
+    finishedAt: "2026-02-03T10:01:00Z"
+    syncResult:
+      revision: "1.2.3"
+      source:
+        repoURL: oci://ghcr.io/acme/charts
+        chart: web-app
+        targetRevision: 1.2.3
+  reconciledAt: "2026-02-03T10:01:00Z"
+  resources:
+    - kind: Deployment
+      name: web-app
+      namespace: delegated-argo-healthy
+      status: Synced
+      health:
+        status: Healthy
+    - kind: Service
+      name: web-app
+      namespace: delegated-argo-healthy
+      status: Synced
+      health:
+        status: Healthy
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: delegated-argo-healthy
+  labels:
+    argocd.argoproj.io/instance: oci-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/acme/web-app:v1.2.3
+status:
+  availableReplicas: 3
+  readyReplicas: 3
+  replicas: 3

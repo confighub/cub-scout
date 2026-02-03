@@ -1,0 +1,89 @@
+# Flux OCI pipeline - healthy state
+# OCIRepository fetches from OCI registry, Kustomization applies manifests
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delegated-flux-healthy
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: app-manifests
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: oci://ghcr.io/acme/app-manifests
+  ref:
+    tag: v1.2.3
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: Succeeded
+      message: "stored artifact for digest 'sha256:abc123def456'"
+      lastTransitionTime: "2026-02-03T10:00:00Z"
+  artifact:
+    revision: "sha256:abc123def456789abc123def456789abc123def456789abc123def456789abcd"
+    lastUpdateTime: "2026-02-03T10:00:00Z"
+    path: "ocirepository/flux-system/app-manifests/sha256:abc123def456"
+    url: "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/app-manifests/sha256:abc123def456.tar.gz"
+  observedGeneration: 1
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-deploy
+  namespace: flux-system
+  labels:
+    kustomize.toolkit.fluxcd.io/name: app-deploy
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: OCIRepository
+    name: app-manifests
+    namespace: flux-system
+  path: ./deploy
+  targetNamespace: delegated-flux-healthy
+  prune: true
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: ReconciliationSucceeded
+      message: "Applied revision: sha256:abc123def456"
+      lastTransitionTime: "2026-02-03T10:01:00Z"
+  lastAppliedRevision: "sha256:abc123def456789abc123def456789abc123def456789abc123def456789abcd"
+  lastAttemptedRevision: "sha256:abc123def456789abc123def456789abc123def456789abc123def456789abcd"
+  observedGeneration: 1
+  inventory:
+    entries:
+      - id: delegated-flux-healthy_web-app_apps_Deployment
+        v: v1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: delegated-flux-healthy
+  labels:
+    kustomize.toolkit.fluxcd.io/name: app-deploy
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/acme/web-app:v1.2.3
+status:
+  availableReplicas: 3
+  readyReplicas: 3
+  replicas: 3

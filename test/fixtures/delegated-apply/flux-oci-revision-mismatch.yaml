@@ -1,0 +1,56 @@
+# Flux OCI pipeline - revision mismatch
+# OCIRepository has new revision, but Kustomization is stuck on old one
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delegated-flux-mismatch
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: updated-manifests
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: oci://ghcr.io/acme/app-manifests
+  ref:
+    tag: v2.0.0
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: Succeeded
+      message: "stored artifact for digest 'sha256:new456new789'"
+      lastTransitionTime: "2026-02-03T11:00:00Z"
+  artifact:
+    revision: "sha256:new456new789abc123new456new789abc123new456new789abc123new456new7"
+    lastUpdateTime: "2026-02-03T11:00:00Z"
+    path: "ocirepository/flux-system/updated-manifests/sha256:new456new789"
+    url: "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/updated-manifests/sha256:new456new789.tar.gz"
+  observedGeneration: 2
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: lagging-app
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: OCIRepository
+    name: updated-manifests
+    namespace: flux-system
+  path: ./deploy
+  targetNamespace: delegated-flux-mismatch
+  prune: true
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: ReconciliationFailed
+      message: "Deployment/delegated-flux-mismatch/web-app dry-run failed: error validating data: ValidationError(Deployment.spec.template.spec.containers[0]): unknown field \"newField\" in io.k8s.api.core.v1.Container"
+      lastTransitionTime: "2026-02-03T11:01:00Z"
+  lastAppliedRevision: "sha256:old123old456789old123old456789old123old456789old123old456789oldc"
+  lastAttemptedRevision: "sha256:new456new789abc123new456new789abc123new456new789abc123new456new7"
+  observedGeneration: 2

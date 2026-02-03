@@ -1,0 +1,83 @@
+# Flux OCI pipeline - cross-namespace sourceRef
+# OCIRepository in flux-system, Kustomization in app namespace references it
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-alpha
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: shared-manifests
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: oci://ghcr.io/acme/shared-manifests
+  ref:
+    tag: v1.0.0
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: Succeeded
+      message: "stored artifact for digest 'sha256:shared123456'"
+      lastTransitionTime: "2026-02-03T10:00:00Z"
+  artifact:
+    revision: "sha256:shared123456789shared123456789shared123456789shared123456789sha"
+    lastUpdateTime: "2026-02-03T10:00:00Z"
+    path: "ocirepository/flux-system/shared-manifests/sha256:shared123456"
+    url: "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/shared-manifests/sha256:shared123456.tar.gz"
+  observedGeneration: 1
+---
+# Kustomization in different namespace referencing OCIRepository in flux-system
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: alpha-app
+  namespace: team-alpha
+spec:
+  interval: 5m
+  sourceRef:
+    kind: OCIRepository
+    name: shared-manifests
+    namespace: flux-system
+  path: ./teams/alpha
+  targetNamespace: team-alpha
+  prune: true
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: ReconciliationSucceeded
+      message: "Applied revision: sha256:shared123456"
+      lastTransitionTime: "2026-02-03T10:01:00Z"
+  lastAppliedRevision: "sha256:shared123456789shared123456789shared123456789shared123456789sha"
+  lastAttemptedRevision: "sha256:shared123456789shared123456789shared123456789shared123456789sha"
+  observedGeneration: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpha-service
+  namespace: team-alpha
+  labels:
+    kustomize.toolkit.fluxcd.io/name: alpha-app
+    kustomize.toolkit.fluxcd.io/namespace: team-alpha
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: alpha-service
+  template:
+    metadata:
+      labels:
+        app: alpha-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/acme/alpha-service:v1.0.0
+status:
+  availableReplicas: 2
+  readyReplicas: 2
+  replicas: 2

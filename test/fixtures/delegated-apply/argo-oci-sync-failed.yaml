@@ -1,0 +1,49 @@
+# Argo CD OCI pipeline - sync failed
+# Application cannot sync due to manifest error
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delegated-argo-sync-fail
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: broken-oci-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: oci://ghcr.io/acme/charts
+    chart: broken-app
+    targetRevision: 1.0.0
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: delegated-argo-sync-fail
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+status:
+  sync:
+    status: OutOfSync
+    revision: "1.0.0"
+  health:
+    status: Degraded
+    message: "Deployment delegated-argo-sync-fail/broken-app has 0 available replicas"
+  operationState:
+    phase: Failed
+    message: "one or more objects failed to apply, reason: error validating data: ValidationError(Deployment.spec.template.spec.containers[0].resources.limits.memory): invalid type for io.k8s.apimachinery.pkg.api.resource.Quantity: got \"number\", expected \"string\""
+    finishedAt: "2026-02-03T10:01:00Z"
+    syncResult:
+      revision: "1.0.0"
+      source:
+        repoURL: oci://ghcr.io/acme/charts
+        chart: broken-app
+        targetRevision: 1.0.0
+  reconciledAt: "2026-02-03T10:01:00Z"
+  conditions:
+    - type: SyncError
+      status: "True"
+      message: "one or more objects failed to apply"
+      lastTransitionTime: "2026-02-03T10:01:00Z"

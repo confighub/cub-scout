@@ -1,0 +1,60 @@
+# Flux OCI pipeline - apply/build failure
+# OCIRepository is healthy, but Kustomization fails during apply
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delegated-flux-apply-fail
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: bad-manifests
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: oci://ghcr.io/acme/bad-manifests
+  ref:
+    tag: v1.0.0
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: Succeeded
+      message: "stored artifact for digest 'sha256:bad123bad456'"
+      lastTransitionTime: "2026-02-03T10:00:00Z"
+  artifact:
+    revision: "sha256:bad123bad456789bad123bad456789bad123bad456789bad123bad456789badc"
+    lastUpdateTime: "2026-02-03T10:00:00Z"
+    path: "ocirepository/flux-system/bad-manifests/sha256:bad123bad456"
+    url: "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/bad-manifests/sha256:bad123bad456.tar.gz"
+  observedGeneration: 1
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: broken-app
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: OCIRepository
+    name: bad-manifests
+    namespace: flux-system
+  path: ./deploy
+  targetNamespace: delegated-flux-apply-fail
+  prune: true
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: BuildFailed
+      message: "kustomize build failed: Error: accumulating resources: accumulation err='accumulating resources from './base': ... file 'deployment.yaml' is malformed: yaml: line 15: found character that cannot start any token'"
+      lastTransitionTime: "2026-02-03T10:01:00Z"
+    - type: Healthy
+      status: "False"
+      reason: BuildFailed
+      message: "build failed"
+      lastTransitionTime: "2026-02-03T10:01:00Z"
+  lastAttemptedRevision: "sha256:bad123bad456789bad123bad456789bad123bad456789bad123bad456789badc"
+  observedGeneration: 1

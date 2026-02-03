@@ -1,0 +1,54 @@
+# Flux OCI pipeline - artifact/tag not found
+# OCIRepository cannot find the requested tag
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delegated-flux-not-found
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: missing-tag
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: oci://ghcr.io/acme/app-manifests
+  ref:
+    tag: v99.0.0-does-not-exist
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: OCIOperationFailed
+      message: "failed to pull artifact from 'oci://ghcr.io/acme/app-manifests:v99.0.0-does-not-exist': manifest unknown"
+      lastTransitionTime: "2026-02-03T10:00:00Z"
+    - type: FetchFailed
+      status: "True"
+      reason: OCIOperationFailed
+      message: "failed to pull artifact from 'oci://ghcr.io/acme/app-manifests:v99.0.0-does-not-exist': manifest unknown"
+      lastTransitionTime: "2026-02-03T10:00:00Z"
+  observedGeneration: 1
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: missing-app
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: OCIRepository
+    name: missing-tag
+    namespace: flux-system
+  path: ./deploy
+  targetNamespace: delegated-flux-not-found
+  prune: true
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: ArtifactFailed
+      message: "Source 'OCIRepository/flux-system/missing-tag' is not ready, artifact not found"
+      lastTransitionTime: "2026-02-03T10:01:00Z"
+  observedGeneration: 1
