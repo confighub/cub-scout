@@ -2262,7 +2262,9 @@ Added event timeline viewing with explanations to the debug wizard.
 
 ## v0.14.2 Status
 
-**Completed:**
+**Status:** PENDING CODEX FEEDBACK (decision tomorrow)
+
+**Completed (code shipped):**
 - #37: Guided GitOps Debug Mode ✅
 - #39: Container logs in debug mode ✅
 - #40: Event timeline ✅
@@ -2276,5 +2278,49 @@ Added event timeline viewing with explanations to the debug wizard.
 |--------|-------------|
 | `0a6c4d9` | feat(debug): add guided GitOps debug mode with logs and events (#37, #39, #40) |
 | `83cfcf7` | feat(debug): add event timeline step with explanations (#40) |
+
+---
+
+## Codex Feedback (2026-02-03)
+
+### Open Design Question: ASCII vs JSON Canonical Truth
+
+We need to decide what is *canonical truth* now that v0.14 introduced JSON/MD formats and v0.14.2 adds guided TUI workflows.
+
+**The decision to make tomorrow:**
+
+#### Option A — ASCII is canonical truth
+- The ASCII renderers define meaning
+- JSON/MD are projections derived from the same internal model
+- Pros: matches v0.12/v0.13 worldview; "goldens = product"
+- Cons: JSON harder to guarantee as lossless; automation treats JSON as "secondary"
+
+#### Option B — JSON is canonical truth
+- JSON schema defines meaning
+- ASCII/MD are projections from JSON (or from the same canonical model)
+- Pros: strongest basis for shareability + automation; unambiguous; versioned schema = stable API
+- Cons: shifts worldview from v0.12/v0.13; requires re-stating contract narrative
+
+**Tie-breaker question:**
+> If a user reports a discrepancy, which output do we treat as authoritative: the ASCII tree/trace the user sees, or the JSON export?
+
+**What we must NOT do:**
+- Never have two sources of truth
+- Never let TUI invent meaning
+- Never let ASCII and JSON drift semantically
+
+### Tomorrow's Agenda
+
+1. Decide **canonical truth**: ASCII vs JSON
+2. Align docs/comments/tests accordingly (single source of truth)
+3. Confirm v0.14.3 scope (Drift Detection)
+4. Leave #2 parked
+
+### Resume Prompt
+
+> Project: cub-scout
+> Savepoint loaded. v0.14.2 shipped guided debug UX (wizard/logs/events). #2 Kustomize overlay attribution deferred.
+> Critical open question: is ASCII or JSON the canonical meaning contract? Decide and align tomorrow.
+> Next milestone likely v0.14.3 Drift Detection. Continue execution without redesign.
 
 ---
