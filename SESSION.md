@@ -1395,7 +1395,87 @@ To update goldens: `go test ./test/ascii/... -update`
 
 ---
 
-### Next Steps
+## Session Summary: ASCII-first Restoration & Golden Lock-in
 
-- Tag v0.11.1
-- Update ROADMAP.md
+**Date:** 2026-02-02
+
+This session **recovered and re-articulated the original cub-scout vision** (v0.4 era) and **locked it into concrete, testable artifacts**.
+
+The core outcome:
+> **The tree, trace, ownership, and hierarchy views are now explicitly the product surface**, not side effects.
+
+---
+
+### What Was Restored (Conceptually)
+
+1. **Resource hierarchy** — K8s runtime chains, CRD hierarchies
+2. **App hierarchy** — Inferred grouping, confidence-scored
+3. **Ownership chains** — Flux, Argo, Helm, Crossplane, Native (all first-class)
+4. **Traces** — Narrative, boxed ASCII, "how did this get here?"
+5. **Overlays & repo structure** — Kustomize bases/overlays, clobbering visible
+6. **Labels, paths, revisions, status** — Shown, not hidden
+7. **Queries & exploration** — Query anything you can see
+8. **Sharable graphs** — Tree ↔ graph ↔ export
+9. **Honesty** — Unknowns surfaced, confidence explicit
+
+---
+
+### Concrete Artifacts Produced
+
+| Artifact | Purpose |
+|----------|---------|
+| `test/ascii/golden/golden.go` | Golden helper with ANSI stripping |
+| `test/ascii/runner/runner.go` | CLI runner helper |
+| `test/ascii/tree_test.go` | First real golden test |
+| `test/ascii/tree/basic.txt` | Soul-lock test for tree output |
+| `CUB_SCOUT_TEST_TREE_JSON` hook | Test hook for tree command |
+
+**Golden locked:**
+- Hierarchy shape and ordering
+- Owner tags (Flux, ArgoCD, Native)
+- ReplicaSet → Pod structure
+- Status icons
+
+---
+
+### Current State
+
+| Component | Status |
+|-----------|--------|
+| v0.11.x connected mode | ✅ Complete and merged |
+| ASCII worldview | ✅ Fully articulated |
+| Golden test infrastructure | ✅ Implemented |
+| Tree golden | ✅ Locked |
+
+---
+
+### Immediate Next Steps
+
+1. **Tag v0.11.1** — Connected mode release
+2. **Update ROADMAP.md** — Reflect v0.11 completion
+3. **Add remaining goldens** — Trace (Flux/Argo/Native), Ownership, App hierarchy
+4. **Add CONTRIBUTING guardrail** — "User-facing ASCII must be golden-tested"
+
+---
+
+### v0.12 Planning (Unblocked)
+
+**Theme:** Make the structure impossible to miss.
+
+**Deliverables:**
+1. Tree-first default (`cub-scout map` lands on tree)
+2. Explicit `map tree` command with stable ASCII contract
+3. Trace parity (Argo = Flux = Native, same structure)
+4. App hierarchy promotion (visible confidence scoring)
+5. Ownership explanation (`explain` shows "why this owner")
+6. Overlay + clobber surfacing (ASCII diff views)
+7. Query discoverability (build query from tree selection)
+8. Graph export parity (tree ↔ graph round-trip)
+
+**Non-goals:** No new abstract models, no renaming, no hiding structure behind dashboards.
+
+---
+
+### Governing Principle
+
+> **cub-scout doesn't hide information. It organizes it — and proves what it knows.**
