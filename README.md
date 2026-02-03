@@ -155,6 +155,36 @@ History data is fetched from each tool's native storage: ArgoCD `status.history`
 
 ---
 
+### GitOps hierarchies (Flux, Argo CD, and friends)
+
+GitOps systems are not flat.
+
+Controllers create other controllers and workloads, forming hierarchies that can be difficult to reason about — especially when applications are composed from many GitOps resources.
+
+cub-scout makes these hierarchies visible and explainable using two primary surfaces:
+
+- **Tree** — what exists, how it is grouped, and who owns it
+- **Trace** — why something exists and which controller created it
+
+#### Why this matters (real-world example)
+
+As one user put it:
+
+> "An application could be made up of many GitOps resources
+> (Kustomizations, HelmReleases, etc.).
+>
+> Since Argo CD doesn't have dependsOn yet, many users model hierarchy using
+> App-of-Apps or ApplicationSets — sometimes ending up with
+> App-of-AppSets-of-App-of-Apps.
+>
+> It would be great to clearly see those relationships for issue triage."
+
+cub-scout helps by making these relationships explicit and telling the full creation story.
+
+See [docs/gitops-hierarchies.md](docs/gitops-hierarchies.md) for detailed examples covering Flux and Argo CD.
+
+---
+
 ### Tree Command — Multiple Hierarchy Views
 
 ```bash
