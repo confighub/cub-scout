@@ -1,0 +1,17 @@
+Runtime Hierarchy (4 Deployments)
+────────────────────────────────────────────────────────────
+├── ecommerce/frontend [Flux] 2/2 ready
+│   └── ReplicaSet frontend-5a9c7f [2/2]
+│       ├── Pod frontend-5a9c7f-11111 ✓ Running
+│       └── Pod frontend-5a9c7f-22222 ✓ Running
+├── ecommerce/payment-api [Flux] 3/3 ready
+│   └── ReplicaSet payment-api-7d4b8c [3/3]
+│       ├── Pod payment-api-7d4b8c-abc12 ✓ Running
+│       ├── Pod payment-api-7d4b8c-def34 ✓ Running
+│       └── Pod payment-api-7d4b8c-xyz99 ✓ Running
+├── platform/cert-manager [ArgoCD] 1/1 ready
+│   └── ReplicaSet cert-manager-5d8f9c7b4 [1/1]
+│       └── Pod cert-manager-5d8f9c7b4-abc12 ✓ Running
+├── temp-test/debug-nginx [Native] 1/1 ready
+│   └── ReplicaSet debug-nginx-6c5d7b [1/1]
+│       └── Pod debug-nginx-6c5d7b-def34 ✓ Running

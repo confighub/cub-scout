@@ -1,0 +1,69 @@
+[
+  {
+    "name": "payment-api",
+    "namespace": "ecommerce",
+    "kind": "Deployment",
+    "owner": "Flux",
+    "status": "3/3 ready",
+    "replicaSets": [
+      {
+        "name": "payment-api-7d4b8c",
+        "status": "3/3",
+        "pods": [
+          {"name": "payment-api-7d4b8c-abc12", "status": "Running"},
+          {"name": "payment-api-7d4b8c-def34", "status": "Running"},
+          {"name": "payment-api-7d4b8c-xyz99", "status": "Running"}
+        ]
+      }
+    ]
+  },
+  {
+    "name": "frontend",
+    "namespace": "ecommerce",
+    "kind": "Deployment",
+    "owner": "Flux",
+    "status": "2/2 ready",
+    "replicaSets": [
+      {
+        "name": "frontend-5a9c7f",
+        "status": "2/2",
+        "pods": [
+          {"name": "frontend-5a9c7f-11111", "status": "Running"},
+          {"name": "frontend-5a9c7f-22222", "status": "Running"}
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cert-manager",
+    "namespace": "platform",
+    "kind": "Deployment",
+    "owner": "ArgoCD",
+    "status": "1/1 ready",
+    "replicaSets": [
+      {
+        "name": "cert-manager-5d8f9c7b4",
+        "status": "1/1",
+        "pods": [
+          {"name": "cert-manager-5d8f9c7b4-abc12", "status": "Running"}
+        ]
+      }
+    ]
+  },
+  {
+    "name": "debug-nginx",
+    "namespace": "temp-test",
+    "kind": "Deployment",
+    "owner": "Native",
+    "status": "1/1 ready",
+    "replicaSets": [
+      {
+        "name": "debug-nginx-6c5d7b",
+        "status": "1/1",
+        "pods": [
+          {"name": "debug-nginx-6c5d7b-def34", "status": "Running"}
+        ]
+      }
+    ]
+  }
+]

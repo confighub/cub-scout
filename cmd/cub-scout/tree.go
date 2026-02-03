@@ -137,6 +137,11 @@ type PodNode struct {
 }
 
 func runTreeRuntime(ctx context.Context) error {
+	// TEST HOOK: Load tree data from JSON file to bypass cluster access in tests.
+	// In production this env var is never set, so real K8s collection is always used.
+	if treeJSON := os.Getenv("CUB_SCOUT_TEST_TREE_JSON"); treeJSON != "" {
+		return loadAndRenderTreeFromJSON(treeJSON)
+	}
 
 	cfg, err := buildConfig()
 	if err != nil {
@@ -286,6 +291,67 @@ func runTreeRuntime(ctx context.Context) error {
 	}
 
 	// Print tree
+	fmt.Printf("%sRuntime Hierarchy%s (%d Deployments)\n", colorBold, colorReset, len(trees))
+	fmt.Println(strings.Repeat("─", 60))
+
+	for _, tree := range trees {
+		ownerColor := getOwnerColor(tree.Owner)
+		fmt.Printf("├── %s%s%s/%s [%s%s%s] %s\n",
+			colorBold, tree.Namespace, colorReset,
+			tree.Name,
+			ownerColor, tree.Owner, colorReset,
+			tree.Status)
+
+		for i, rs := range tree.ReplicaSets {
+			rsPrefix := "│   ├──"
+			podPrefix := "│   │   "
+			if i == len(tree.ReplicaSets)-1 {
+				rsPrefix = "│   └──"
+				podPrefix = "│       "
+			}
+
+			fmt.Printf("%s ReplicaSet %s [%s]\n", rsPrefix, rs.Name, rs.Status)
+
+			for j, pod := range rs.Pods {
+				podConnector := "├──"
+				if j == len(rs.Pods)-1 {
+					podConnector = "└──"
+				}
+				statusIcon := getStatusIcon(pod.Status)
+				fmt.Printf("%s%s Pod %s %s\n", podPrefix, podConnector, pod.Name, statusIcon)
+			}
+		}
+	}
+
+	return nil
+}
+
+// loadAndRenderTreeFromJSON loads tree data from a JSON file and renders it.
+// This is a test hook to enable golden tests without cluster access.
+func loadAndRenderTreeFromJSON(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read tree JSON: %w", err)
+	}
+
+	var trees []RuntimeTree
+	if err := json.Unmarshal(data, &trees); err != nil {
+		return fmt.Errorf("failed to parse tree JSON: %w", err)
+	}
+
+	// Sort by namespace then name for determinism
+	sort.Slice(trees, func(i, j int) bool {
+		if trees[i].Namespace != trees[j].Namespace {
+			return trees[i].Namespace < trees[j].Namespace
+		}
+		return trees[i].Name < trees[j].Name
+	})
+
+	if treeJSON {
+		return json.NewEncoder(os.Stdout).Encode(trees)
+	}
+
+	// Print tree (same format as runTreeRuntime)
 	fmt.Printf("%sRuntime Hierarchy%s (%d Deployments)\n", colorBold, colorReset, len(trees))
 	fmt.Println(strings.Repeat("─", 60))
 
