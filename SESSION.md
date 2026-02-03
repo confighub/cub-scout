@@ -1682,3 +1682,142 @@ Deferred to v0.13:
 - Optional UX polish
 
 All built on top of locked ASCII contracts.
+
+---
+
+## v0.14: Sharable Artifacts & Portable Outputs
+
+**Date:** 2026-02-03
+**Theme:** JSON is the complete truth; ASCII/MD are projections
+
+### Goal
+
+Add `--format json` support to tree, trace, and map list commands with v0.14 schema guarantees:
+- Deterministic (same input = same output)
+- Lossless (display limits are metadata, not data loss)
+- Joinable (canonical `id` objects for cross-reference)
+- No timestamps by default
+
+---
+
+### Schema Specification
+
+Created `docs/v0.14-json-schema.md` defining:
+
+**Common Types:**
+- `ResourceID`: `{kind, namespace, name}` — canonical identity for joins
+- `Owner`: `{type, ref}` — ownership attribution
+- `Evidence`: `{type, key, value, path}` — structured proof of relationship
+- `DisplayMeta`: `{maxItems, totalItems}` — ASCII rendering parity
+
+**Canonical Owner Order:** `[Flux, ArgoCD, Helm, ConfigHub, Native]`
+
+**Canonical Relationships:** `sources`, `applies`, `generates`, `syncs`, `manages`, `managed-by`, `selects`
+
+---
+
+### Implementation Complete
+
+| Command | Schema | Status |
+|---------|--------|--------|
+| `tree ownership --format json` | OwnershipTreeOutput | ✅ Complete |
+| `trace --format json` | TraceOutput | ✅ Complete |
+| `map list --format json` | MapListOutput | ✅ Complete |
+
+---
+
+### Tree JSON (`tree ownership --format json`)
+
+**Types:** `OwnershipTreeOutput`, `OwnershipTreeGroup`, `OwnershipTreeItem`
+
+**Key features:**
+- Groups in canonical owner order
+- Items sorted by `(namespace, kind, name)`
+- `displayMeta` indicates what ASCII would show (lossless)
+- `ownerRef` parsed from OwnerDetails
+
+**Golden:** `test/ascii/tree/ownership.json`
+
+---
+
+### Trace JSON (`trace --format json`)
+
+**Types:** `TraceOutput`, `ChainNode`, `Evidence`, `TraceSummary`
+
+**Key features:**
+- Chain ordered source → deployer → workload
+- Role inference: `source`, `deployer`, `workload`, `intermediate`
+- Relationship vocabulary aligned with ASCII verbs
+- Structured evidence with type/key/value/path
+
+**Golden:** `test/ascii/trace/flux.json.golden`, `argo.json.golden`, `native.json.golden`
+
+---
+
+### Map List JSON (`map list --format json`)
+
+**Types:** `MapListOutput`, `MapListResource`, `Owner`, `MapListSummary`
+
+**Key features:**
+- Flat, joinable inventory (not tree structure)
+- Resources sorted by `(namespace, kind, name)`
+- Owner types normalized to canonical form
+- Summary arrays (not maps) for determinism:
+  - `byOwner`: All 5 canonical owners in order
+  - `byStatus`: Non-zero counts, alphabetically sorted
+- Status normalization: empty → `"Unknown"`
+
+**Golden:** `test/ascii/map/list/basic.json.golden`
+
+---
+
+### Contract Alignment Fixes
+
+**1. Command naming:** Changed `"command": "ownership"` → `"command": "map-list"` to match CLI surface
+
+**2. Summary determinism:** Changed `byOwner`/`byStatus` from maps to arrays:
+```json
+"byOwner": [
+  { "ownerType": "Flux", "count": 2 },
+  { "ownerType": "ArgoCD", "count": 0 },
+  { "ownerType": "Helm", "count": 0 },
+  { "ownerType": "ConfigHub", "count": 0 },
+  { "ownerType": "Native", "count": 2 }
+]
+```
+
+**3. Status normalization:** Documented empty/missing status → `"Unknown"`
+
+---
+
+### Files Modified
+
+| File | Purpose |
+|------|---------|
+| `internal/mapsvc/jsonout.go` | All v0.14 schema types + builders |
+| `internal/mapsvc/jsonout_test.go` | Unit tests for all schemas |
+| `cmd/cub-scout/tree.go` | `--format` flag, v0.14 JSON output |
+| `cmd/cub-scout/trace.go` | `--format` flag, v0.14 JSON output |
+| `cmd/cub-scout/map.go` | `--format` flag, v0.14 JSON output |
+| `docs/v0.14-json-schema.md` | Schema specification |
+| `test/ascii/map/list/basic.json.golden` | Map list golden |
+| `test/ascii/trace/*.json.golden` | Trace goldens |
+| `test/ascii/tree/ownership.json` | Tree ownership golden |
+
+---
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| (earlier) | feat(tree): add --format json with v0.14 schema |
+| (earlier) | feat(trace): add --format json with v0.14 schema |
+| (earlier) | fix(trace): align relationship vocabulary with ASCII verbs |
+| `d8d67cb` | feat(map): add ownership --format json (v0.14 schema) |
+| `71ecb77` | fix(map-list): align JSON schema with command surface + determinism |
+
+---
+
+### Next Step
+
+**`--format md`** as thin wrapper over canonical ASCII (tree + trace first), golden-tested.
