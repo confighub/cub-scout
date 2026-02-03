@@ -2,7 +2,7 @@
 
 ## Explorer and Debugger for GitOps Systems
 
-**Last Updated:** 2026-02-01
+**Last Updated:** 2026-02-03
 
 This roadmap describes the planned evolution of cub-scout across standalone and connected modes.
 
@@ -15,24 +15,77 @@ For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap
 
 ---
 
-## Version 0.5 — Standalone Explorer and Debugger (Current Focus)
+## Recent Releases
+
+### Version 0.14 — Sharable Artifacts & Portable Outputs (Current)
+
+**Status:** Released (2026-02-03)
+**Theme:** JSON is the complete truth; ASCII/MD are projections
+
+**Delivered:**
+- `--format json` for tree, trace, and map list commands
+- `--format md` (Markdown) for all output commands
+- v0.14 JSON schema with determinism guarantees
+- Golden tests locking all output formats
+
+**Schema guarantees:**
+- Deterministic (same input = same output)
+- Lossless (display limits are metadata, not data loss)
+- Joinable (canonical `id` objects for cross-reference)
+- No timestamps by default
+
+### Version 0.13 — CLI ↔ TUI Symmetry
+
+**Status:** Released
+**Theme:** Polished interaction layer
+
+**Delivered:**
+- TUI polish and keyboard navigation
+- CLI/TUI feature parity
+- Improved user experience
+
+### Version 0.12 — Tree & Trace Contracts (ASCII Locked)
+
+**Status:** Released
+**Theme:** Lock user-facing ASCII output
+
+**Delivered:**
+- Golden tests for tree, trace, map list, map status, scan, orphans
+- Test hook infrastructure for deterministic testing
+- GitOps hierarchies documentation
+
+---
+
+## Version 0.14.x — Incremental Improvements (Current Focus)
 
 **Status:** In progress
+**Audience:** Individual engineers, SREs, platform teams
+
+Future 0.14.x releases may include:
+
+| Feature | Description |
+|---------|-------------|
+| `--format yaml` | kubectl-compatible output |
+| `graph export --format dot` | Graphviz visualization |
+| Snapshot format | Bundled JSON + metadata |
+| TUI snapshot goldens | #88 from v0.12 backlog |
+
+---
+
+## Version 0.15+ — Standalone Explorer and Debugger
+
+**Status:** Planned
 **Epic:** [#25](https://github.com/confighub/cub-scout/issues/25)
 **Audience:** Individual engineers, SREs, platform teams
 
-### Core Capabilities
+### Core Capabilities (from original v0.5 epic)
 
-- Single-cluster exploration
-- Ownership and provenance tracing
 - Delegated apply visibility (Flux / Argo via OCI)
 - Failure-stage explanation (source vs apply)
 - GitOps drift detection (controller-based)
 - Guided GitOps Debug Mode
-- Exportable ownership/dependency graph (JSON, DOT)
 - Shareable diagnostic snapshots
 - **Offline replay** of snapshots (first-class workflow)
-- TUI with `:` shell-out and CLI awareness
 
 ### Offline Mode
 
@@ -43,7 +96,7 @@ Offline replay of snapshots is a **first-class supported workflow**:
 - Security-restricted environments
 - Use `cub-scout snapshot view <file>` to replay any snapshot
 
-### v0.5 Issues
+### Open Issues
 
 | # | Title | Scope |
 |---|-------|-------|
@@ -56,19 +109,15 @@ Offline replay of snapshots is a **first-class supported workflow**:
 | #32 | Delegated Apply summary panel | Failure Explanation |
 | #33 | Drift detection | Drift |
 | #34 | Drift UI + CLI | Drift |
-| #35 | Ownership graph schema | Export |
-| #36 | Graph export (JSON + DOT) | Export |
 | #37 | Guided GitOps Debug Mode | Education |
 | #38 | Shareable snapshots | Education |
 
-### Non-goals for v0.5
+### Non-goals
 
 - No desired-state rendering
 - No Git diffs
 - No policy enforcement
 - No fleet views
-
-v0.5 establishes cub-scout as a trustworthy, production-safe GitOps explorer and debugger.
 
 **Why OCI-first:** ConfigHub treats OCI publishing/consumption as a core transport. Git transport is intentionally deferred.
 
