@@ -6,9 +6,9 @@ Flags:
       --app string         Trace Argo CD application by name
   -d, --diff               Show diff between live state and desired state from Git
       --explain            Show explanatory content to help learn GitOps concepts
+      --format string      Output format: ascii, json (default "ascii")
   -h, --help               help for trace
       --history            Show deployment history (who deployed what, when)
-      --json               Output as JSON
       --limit int          Limit number of history entries (default: 10) (default 10)
   -n, --namespace string   Namespace of the resource (default: flux-system)
   -r, --reverse            Reverse trace - walk ownerReferences up to find GitOps source

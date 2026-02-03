@@ -1,0 +1,46 @@
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "platform",
+    "name": "cert-manager"
+  },
+  "chain": [
+    {
+      "id": {
+        "kind": "Application",
+        "namespace": "argocd",
+        "name": "cert-manager"
+      },
+      "role": "deployer",
+      "relationship": "applies",
+      "evidence": null
+    },
+    {
+      "id": {
+        "kind": "Deployment",
+        "namespace": "platform",
+        "name": "cert-manager"
+      },
+      "role": "workload",
+      "relationship": "managed-by",
+      "evidence": [
+        {
+          "type": "label",
+          "key": "argocd.argoproj.io/instance",
+          "value": "",
+          "path": "metadata.labels"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "ownerType": "ArgoCD",
+    "source": null,
+    "deployer": {
+      "kind": "Application",
+      "namespace": "argocd",
+      "name": "cert-manager"
+    }
+  }
+}

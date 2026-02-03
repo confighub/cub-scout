@@ -1,0 +1,75 @@
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "ecommerce",
+    "name": "payment-api"
+  },
+  "chain": [
+    {
+      "id": {
+        "kind": "GitRepository",
+        "namespace": "flux-system",
+        "name": "ecommerce-apps"
+      },
+      "role": "source",
+      "relationship": "provides-manifests-to",
+      "evidence": [
+        {
+          "type": "field",
+          "key": "spec.url",
+          "value": "https://github.com/acme/ecommerce-apps",
+          "path": "spec.url"
+        }
+      ]
+    },
+    {
+      "id": {
+        "kind": "Kustomization",
+        "namespace": "flux-system",
+        "name": "ecommerce-payment"
+      },
+      "role": "deployer",
+      "relationship": "applies",
+      "evidence": [
+        {
+          "type": "field",
+          "key": "spec.path",
+          "value": "./clusters/prod/ecommerce/payment",
+          "path": "spec.path"
+        }
+      ]
+    },
+    {
+      "id": {
+        "kind": "Deployment",
+        "namespace": "ecommerce",
+        "name": "payment-api"
+      },
+      "role": "workload",
+      "relationship": "managed-by",
+      "evidence": [
+        {
+          "type": "label",
+          "key": "kustomize.toolkit.fluxcd.io/name",
+          "value": "",
+          "path": "metadata.labels"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "ownerType": "Flux",
+    "source": {
+      "kind": "GitRepository",
+      "namespace": "flux-system",
+      "name": "ecommerce-apps",
+      "url": "https://github.com/acme/ecommerce-apps"
+    },
+    "deployer": {
+      "kind": "Kustomization",
+      "namespace": "flux-system",
+      "name": "ecommerce-payment"
+    }
+  }
+}

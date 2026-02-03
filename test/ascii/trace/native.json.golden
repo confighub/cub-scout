@@ -1,0 +1,14 @@
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "temp-test",
+    "name": "debug-nginx"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Native",
+    "source": null,
+    "deployer": null
+  }
+}

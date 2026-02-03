@@ -18,12 +18,14 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 var (
 	traceNamespace string
-	traceJSON      bool
+	traceJSON      bool   // deprecated: use --format json
+	traceFormat    string // output format: ascii, json
 	traceApp       string // For direct Argo app tracing
 	traceReverse   bool   // Reverse trace - walk ownerReferences up
 	traceDiff      bool   // Show diff between live and desired state
@@ -106,13 +108,17 @@ func init() {
 	rootCmd.AddCommand(traceCmd)
 
 	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system)")
-	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON")
+	traceCmd.Flags().StringVar(&traceFormat, "format", "ascii", "Output format: ascii, json")
+	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	traceCmd.Flags().StringVar(&traceApp, "app", "", "Trace Argo CD application by name")
 	traceCmd.Flags().BoolVarP(&traceReverse, "reverse", "r", false, "Reverse trace - walk ownerReferences up to find GitOps source")
 	traceCmd.Flags().BoolVarP(&traceDiff, "diff", "d", false, "Show diff between live state and desired state from Git")
 	traceCmd.Flags().BoolVar(&traceExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 	traceCmd.Flags().BoolVar(&traceHistory, "history", false, "Show deployment history (who deployed what, when)")
 	traceCmd.Flags().IntVar(&traceLimit, "limit", 10, "Limit number of history entries (default: 10)")
+
+	// Mark --json as deprecated
+	_ = traceCmd.Flags().MarkDeprecated("json", "use --format json instead")
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {
@@ -170,6 +176,12 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	// Create appropriate tracer
 	var result *agent.TraceResult
 
+	// Resolve effective format early (--format takes precedence over deprecated --json)
+	effectiveFormat := traceFormat
+	if traceJSON && effectiveFormat == "ascii" {
+		effectiveFormat = "json"
+	}
+
 	// If --app flag was used, go directly to Argo tracer
 	if traceApp != "" {
 		tracer := agent.NewArgoTracer()
@@ -180,8 +192,8 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		if appErr != nil {
 			return fmt.Errorf("trace failed: %w", appErr)
 		}
-		if traceJSON {
-			return outputTraceJSON(appResult)
+		if effectiveFormat == "json" {
+			return outputTraceJSONv014(appResult, kind, name, traceNamespace)
 		}
 		return outputTraceHuman(appResult)
 	}
@@ -276,11 +288,13 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Output results
-	if traceJSON {
-		return outputTraceJSON(result)
+	// Output results (effectiveFormat was resolved earlier)
+	switch effectiveFormat {
+	case "json":
+		return outputTraceJSONv014(result, kind, name, traceNamespace)
+	default:
+		return outputTraceHuman(result)
 	}
-	return outputTraceHuman(result)
 }
 
 // normalizeKind normalizes resource kind names
@@ -427,7 +441,7 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 	}
 }
 
-// outputTraceJSON outputs the trace result as JSON
+// outputTraceJSON outputs the trace result as JSON (legacy format)
 func outputTraceJSON(result *agent.TraceResult) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
@@ -439,6 +453,196 @@ func outputTraceJSON(result *agent.TraceResult) error {
 		os.Exit(1)
 	}
 	return nil
+}
+
+// outputTraceJSONv014 outputs the trace result using the v0.14 JSON schema.
+func outputTraceJSONv014(result *agent.TraceResult, kind, name, namespace string) error {
+	output := convertTraceToV014(result, kind, name, namespace)
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(output); err != nil {
+		return err
+	}
+
+	// Per cli-contract.md: exit code 1 for "not managed"
+	if result.Error != "" && len(result.Chain) == 0 {
+		os.Exit(1)
+	}
+	return nil
+}
+
+// convertTraceToV014 converts agent.TraceResult to mapsvc.TraceOutput.
+func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string) mapsvc.TraceOutput {
+	// Build target from the traced resource
+	target := mapsvc.ResourceID{
+		Kind:      kind,
+		Namespace: namespace,
+		Name:      name,
+	}
+
+	// Convert chain links to v0.14 chain nodes
+	var chain []mapsvc.ChainNode
+	for _, link := range result.Chain {
+		role := mapsvc.InferRole(link.Kind)
+		node := mapsvc.ChainNode{
+			ID: mapsvc.ResourceID{
+				Kind:      link.Kind,
+				Namespace: link.Namespace,
+				Name:      link.Name,
+			},
+			Role: role,
+			// Relationship is based on the node's role, not the edge
+			Relationship: mapsvc.RelationshipForRole(role),
+		}
+
+		// Build evidence from available metadata
+		node.Evidence = buildEvidence(link, result.Tool)
+
+		chain = append(chain, node)
+	}
+
+	// Build summary
+	summary := buildTraceSummary(result, chain)
+
+	return mapsvc.TraceOutput{
+		Command: "trace",
+		Target:  target,
+		Chain:   chain,
+		Summary: summary,
+	}
+}
+
+// buildEvidence constructs evidence from a chain link.
+func buildEvidence(link agent.ChainLink, tool string) []mapsvc.Evidence {
+	var evidence []mapsvc.Evidence
+
+	role := mapsvc.InferRole(link.Kind)
+
+	switch role {
+	case mapsvc.RoleSource:
+		// Source: evidence from URL field
+		if link.URL != "" {
+			evidence = append(evidence, mapsvc.Evidence{
+				Type:  mapsvc.EvidenceField,
+				Key:   "spec.url",
+				Value: link.URL,
+				Path:  "spec.url",
+			})
+		}
+
+	case mapsvc.RoleDeployer:
+		// Deployer: evidence from path and inventory
+		if link.Path != "" {
+			evidence = append(evidence, mapsvc.Evidence{
+				Type:  mapsvc.EvidenceField,
+				Key:   "spec.path",
+				Value: link.Path,
+				Path:  "spec.path",
+			})
+		}
+		// Add inventory evidence if we have children
+		for _, child := range link.Children {
+			evidence = append(evidence, mapsvc.Evidence{
+				Type:  mapsvc.EvidenceInventory,
+				Key:   "status.inventory",
+				Value: fmt.Sprintf("%s/%s/%s", child.Kind, child.Namespace, child.Name),
+				Path:  "status.inventory.entries",
+			})
+			// Limit to first 3 children to avoid huge evidence lists
+			if len(evidence) >= 4 {
+				break
+			}
+		}
+
+	case mapsvc.RoleWorkload, mapsvc.RoleIntermediate:
+		// Workload: evidence from labels
+		switch tool {
+		case "flux":
+			evidence = append(evidence, mapsvc.Evidence{
+				Type:  mapsvc.EvidenceLabel,
+				Key:   "kustomize.toolkit.fluxcd.io/name",
+				Value: findDeployerName(link),
+				Path:  "metadata.labels",
+			})
+		case "argocd":
+			evidence = append(evidence, mapsvc.Evidence{
+				Type:  mapsvc.EvidenceLabel,
+				Key:   "argocd.argoproj.io/instance",
+				Value: findDeployerName(link),
+				Path:  "metadata.labels",
+			})
+		case "helm":
+			evidence = append(evidence, mapsvc.Evidence{
+				Type:  mapsvc.EvidenceLabel,
+				Key:   "app.kubernetes.io/managed-by",
+				Value: "Helm",
+				Path:  "metadata.labels",
+			})
+		}
+	}
+
+	return evidence
+}
+
+// findDeployerName extracts deployer name from chain context.
+// This is a simplified version; full implementation would parse the trace chain.
+func findDeployerName(link agent.ChainLink) string {
+	// For now, return the link name if it's the deployer
+	if mapsvc.InferRole(link.Kind) == mapsvc.RoleDeployer {
+		return link.Name
+	}
+	return ""
+}
+
+// buildTraceSummary constructs the summary from trace result.
+func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode) mapsvc.TraceSummary {
+	summary := mapsvc.TraceSummary{
+		OwnerType: normalizeToolToOwner(result.Tool),
+	}
+
+	// Find source and deployer in chain
+	for _, node := range chain {
+		switch node.Role {
+		case mapsvc.RoleSource:
+			// Find URL from original chain
+			var url string
+			for _, link := range result.Chain {
+				if link.Kind == node.ID.Kind && link.Name == node.ID.Name {
+					url = link.URL
+					break
+				}
+			}
+			summary.Source = &mapsvc.TraceSourceRef{
+				Kind:      node.ID.Kind,
+				Namespace: node.ID.Namespace,
+				Name:      node.ID.Name,
+				URL:       url,
+			}
+		case mapsvc.RoleDeployer:
+			summary.Deployer = &mapsvc.ResourceID{
+				Kind:      node.ID.Kind,
+				Namespace: node.ID.Namespace,
+				Name:      node.ID.Name,
+			}
+		}
+	}
+
+	return summary
+}
+
+// normalizeToolToOwner converts tool name to owner type.
+func normalizeToolToOwner(tool string) string {
+	switch tool {
+	case "flux":
+		return "Flux"
+	case "argocd":
+		return "ArgoCD"
+	case "helm":
+		return "Helm"
+	default:
+		return "Native"
+	}
 }
 
 // outputTraceHuman outputs the trace result in human-readable format with colors

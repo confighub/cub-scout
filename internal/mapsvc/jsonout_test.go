@@ -212,3 +212,181 @@ func TestBuildOwnershipTreeJSON_SortByNamespaceKindName(t *testing.T) {
 		}
 	}
 }
+
+// =============================================================================
+// Trace Schema Tests
+// =============================================================================
+
+func TestInferRole(t *testing.T) {
+	tests := []struct {
+		kind     string
+		expected string
+	}{
+		{"GitRepository", RoleSource},
+		{"OCIRepository", RoleSource},
+		{"HelmRepository", RoleSource},
+		{"Bucket", RoleSource},
+		{"Kustomization", RoleDeployer},
+		{"HelmRelease", RoleDeployer},
+		{"Application", RoleDeployer},
+		{"ReplicaSet", RoleIntermediate},
+		{"Pod", RoleIntermediate},
+		{"Deployment", RoleWorkload},
+		{"StatefulSet", RoleWorkload},
+		{"Service", RoleWorkload},
+		{"ConfigMap", RoleWorkload},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.kind, func(t *testing.T) {
+			got := InferRole(tt.kind)
+			if got != tt.expected {
+				t.Errorf("InferRole(%q) = %q, want %q", tt.kind, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestInferRelationship(t *testing.T) {
+	tests := []struct {
+		from, to string
+		expected string
+	}{
+		{"GitRepository", "Kustomization", RelProvidesManifsetsTo},
+		{"Kustomization", "Deployment", RelApplies},
+		{"Kustomization", "ReplicaSet", RelManages},
+		{"ReplicaSet", "Pod", RelManages},
+		{"Deployment", "ReplicaSet", RelManagedBy}, // Workload to intermediate is managed-by
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.from+"->"+tt.to, func(t *testing.T) {
+			got := InferRelationship(tt.from, tt.to)
+			if got != tt.expected {
+				t.Errorf("InferRelationship(%q, %q) = %q, want %q", tt.from, tt.to, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestTraceOutput_Structure(t *testing.T) {
+	// Verify TraceOutput can be marshaled to JSON
+	output := TraceOutput{
+		Command: "trace",
+		Target: ResourceID{
+			Kind:      "Deployment",
+			Namespace: "web",
+			Name:      "frontend",
+		},
+		Chain: []ChainNode{
+			{
+				ID: ResourceID{
+					Kind:      "GitRepository",
+					Namespace: "flux-system",
+					Name:      "flux-system",
+				},
+				Role:         RoleSource,
+				Relationship: RelProvidesManifsetsTo,
+				Evidence: []Evidence{
+					{
+						Type:  EvidenceField,
+						Key:   "spec.url",
+						Value: "https://github.com/org/repo",
+						Path:  "spec.url",
+					},
+				},
+			},
+			{
+				ID: ResourceID{
+					Kind:      "Kustomization",
+					Namespace: "flux-system",
+					Name:      "web-apps",
+				},
+				Role:         RoleDeployer,
+				Relationship: RelApplies,
+				Evidence: []Evidence{
+					{
+						Type:  EvidenceInventory,
+						Key:   "status.inventory",
+						Value: "Deployment/web/frontend",
+						Path:  "status.inventory.entries",
+					},
+				},
+			},
+			{
+				ID: ResourceID{
+					Kind:      "Deployment",
+					Namespace: "web",
+					Name:      "frontend",
+				},
+				Role:         RoleWorkload,
+				Relationship: RelManagedBy,
+				Evidence: []Evidence{
+					{
+						Type:  EvidenceLabel,
+						Key:   "kustomize.toolkit.fluxcd.io/name",
+						Value: "web-apps",
+						Path:  "metadata.labels",
+					},
+				},
+			},
+		},
+		Summary: TraceSummary{
+			OwnerType: "Flux",
+			Source: &TraceSourceRef{
+				Kind:      "GitRepository",
+				Namespace: "flux-system",
+				Name:      "flux-system",
+				URL:       "https://github.com/org/repo",
+			},
+			Deployer: &ResourceID{
+				Kind:      "Kustomization",
+				Namespace: "flux-system",
+				Name:      "web-apps",
+			},
+		},
+	}
+
+	// Marshal and verify structure
+	data, err := json.MarshalIndent(output, "", "  ")
+	if err != nil {
+		t.Fatalf("failed to marshal TraceOutput: %v", err)
+	}
+
+	// Verify key fields are present
+	jsonStr := string(data)
+	expectedKeys := []string{
+		`"command": "trace"`,
+		`"target"`,
+		`"chain"`,
+		`"role": "source"`,
+		`"role": "deployer"`,
+		`"role": "workload"`,
+		`"relationship"`,
+		`"evidence"`,
+		`"type": "field"`,
+		`"type": "inventory"`,
+		`"type": "label"`,
+		`"summary"`,
+		`"ownerType": "Flux"`,
+	}
+
+	for _, key := range expectedKeys {
+		if !contains(jsonStr, key) {
+			t.Errorf("JSON output missing expected key: %s", key)
+		}
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

@@ -286,3 +286,125 @@ func normalizeKind(kind string) string {
 		return kind
 	}
 }
+
+// =============================================================================
+// Trace Schema (v0.14)
+// =============================================================================
+
+// TraceOutput is the v0.14 JSON schema for `trace <resource>`.
+type TraceOutput struct {
+	Command string       `json:"command"`
+	Target  ResourceID   `json:"target"`
+	Chain   []ChainNode  `json:"chain"`
+	Summary TraceSummary `json:"summary"`
+}
+
+// ChainNode represents a single node in the trace chain.
+type ChainNode struct {
+	ID           ResourceID `json:"id"`
+	Role         string     `json:"role"`         // source, deployer, workload, intermediate
+	Relationship string     `json:"relationship"` // provides-manifests-to, applies, manages, managed-by
+	Evidence     []Evidence `json:"evidence"`
+}
+
+// Evidence represents structured proof of a relationship.
+type Evidence struct {
+	Type  string `json:"type"`  // label, annotation, ownerRef, field, inventory
+	Key   string `json:"key"`   // the label/annotation/field key
+	Value string `json:"value"` // the actual value
+	Path  string `json:"path"`  // JSON path in the resource (e.g., metadata.labels)
+}
+
+// TraceSummary provides a quick overview of the trace.
+type TraceSummary struct {
+	OwnerType string          `json:"ownerType"` // Flux, ArgoCD, Helm, Native
+	Source    *TraceSourceRef `json:"source"`    // null if not found
+	Deployer  *ResourceID     `json:"deployer"`  // null if not found
+}
+
+// TraceSourceRef includes source resource info plus URL.
+type TraceSourceRef struct {
+	Kind      string `json:"kind"`
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+	URL       string `json:"url,omitempty"` // Git URL for GitRepository, registry for OCI
+}
+
+// ChainRole constants for trace chain nodes.
+const (
+	RoleSource       = "source"
+	RoleDeployer     = "deployer"
+	RoleWorkload     = "workload"
+	RoleIntermediate = "intermediate"
+)
+
+// Relationship constants for trace chain edges.
+const (
+	RelProvidesManifsetsTo = "provides-manifests-to"
+	RelApplies             = "applies"
+	RelManages             = "manages"
+	RelManagedBy           = "managed-by"
+	RelSelects             = "selects"
+)
+
+// EvidenceType constants for evidence entries.
+const (
+	EvidenceLabel      = "label"
+	EvidenceAnnotation = "annotation"
+	EvidenceOwnerRef   = "ownerRef"
+	EvidenceField      = "field"
+	EvidenceInventory  = "inventory"
+)
+
+// InferRole determines the role of a chain node based on its Kind.
+func InferRole(kind string) string {
+	switch kind {
+	case "GitRepository", "OCIRepository", "HelmRepository", "Bucket":
+		return RoleSource
+	case "Kustomization", "HelmRelease", "Application":
+		return RoleDeployer
+	case "ReplicaSet", "Pod":
+		return RoleIntermediate
+	default:
+		return RoleWorkload
+	}
+}
+
+// InferRelationship determines the relationship for a node based on its role.
+// The relationship describes what this node does (or its characteristic).
+func InferRelationship(fromKind, toKind string) string {
+	fromRole := InferRole(fromKind)
+	toRole := InferRole(toKind)
+
+	switch {
+	case fromRole == RoleSource && toRole == RoleDeployer:
+		return RelProvidesManifsetsTo
+	case fromRole == RoleDeployer && toRole == RoleWorkload:
+		return RelApplies
+	case fromRole == RoleDeployer && toRole == RoleIntermediate:
+		return RelManages
+	case fromRole == RoleIntermediate && toRole == RoleIntermediate:
+		return RelManages
+	case fromRole == RoleWorkload:
+		return RelManagedBy
+	default:
+		return RelManages
+	}
+}
+
+// RelationshipForRole returns the canonical relationship for a given role.
+// This is used when we know the role but not the adjacent nodes.
+func RelationshipForRole(role string) string {
+	switch role {
+	case RoleSource:
+		return RelProvidesManifsetsTo
+	case RoleDeployer:
+		return RelApplies
+	case RoleWorkload:
+		return RelManagedBy
+	case RoleIntermediate:
+		return RelManages
+	default:
+		return RelManages
+	}
+}
