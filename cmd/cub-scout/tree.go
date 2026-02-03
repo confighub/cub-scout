@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,6 +25,8 @@ var (
 	treeAll       bool
 	treeSpace     string // For ConfigHub tree
 	treeEdge      string // For ConfigHub tree (clone/link)
+	treeOwner     string // Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)
+	treeDepth     int    // Limit tree depth (0 = unlimited)
 )
 
 var treeCmd = &cobra.Command{
@@ -82,6 +85,8 @@ func init() {
 	treeCmd.Flags().BoolVarP(&treeAll, "all", "A", false, "Show all resources including system namespaces")
 	treeCmd.Flags().StringVar(&treeSpace, "space", "", "ConfigHub space for 'config' view (use '*' for all spaces)")
 	treeCmd.Flags().StringVar(&treeEdge, "edge", "clone", "Edge type for 'config' view: clone (inheritance) or link (dependencies)")
+	treeCmd.Flags().StringVar(&treeOwner, "owner", "", "Filter by owner: Flux, ArgoCD, Helm, ConfigHub, Native")
+	treeCmd.Flags().IntVar(&treeDepth, "depth", 0, "Limit tree depth (0 = unlimited)")
 }
 
 func runTree(cmd *cobra.Command, args []string) error {
@@ -406,8 +411,8 @@ func runTreeOwnership(ctx context.Context) error {
 		return fmt.Errorf("failed to list deployments: %w", err)
 	}
 
-	// Group by owner
-	byOwner := make(map[string][]RuntimeTree)
+	// Convert to mapsvc.Entry for shared renderer
+	var entries []mapsvc.Entry
 	for _, deploy := range deploys.Items {
 		ns := deploy.GetNamespace()
 		if !treeAll && isSystemNamespace(ns) {
@@ -416,50 +421,59 @@ func runTreeOwnership(ctx context.Context) error {
 
 		owner, _ := detectOwnership(&deploy)
 
-		tree := RuntimeTree{
+		entries = append(entries, mapsvc.Entry{
 			Name:      deploy.GetName(),
 			Namespace: ns,
 			Kind:      "Deployment",
 			Owner:     owner,
-		}
-		byOwner[owner] = append(byOwner[owner], tree)
+		})
 	}
 
 	if treeJSON {
+		// Group by owner for JSON output (legacy format)
+		// Apply owner filter for JSON too
+		byOwner := make(map[string][]RuntimeTree)
+		for _, e := range entries {
+			if treeOwner != "" && !strings.EqualFold(e.Owner, treeOwner) {
+				continue
+			}
+			byOwner[e.Owner] = append(byOwner[e.Owner], RuntimeTree{
+				Name:      e.Name,
+				Namespace: e.Namespace,
+				Kind:      e.Kind,
+				Owner:     e.Owner,
+			})
+		}
 		return json.NewEncoder(os.Stdout).Encode(byOwner)
 	}
 
-	// Print by owner
+	// Print header
 	fmt.Printf("%sOwnership Hierarchy%s\n", colorBold, colorReset)
 	fmt.Println(strings.Repeat("─", 60))
 
-	// Order: Flux, ArgoCD, Helm, ConfigHub, Native
-	owners := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
-	for _, owner := range owners {
-		resources := byOwner[owner]
-		if len(resources) == 0 {
-			continue
+	// Use shared renderer for canonical output structure
+	// FilterOwner and MaxDepth are applied in the renderer
+	opts := mapsvc.OwnershipTreeOpts{
+		ShowKind:     false,
+		ShowOwnerRef: false,
+		FilterOwner:  treeOwner,
+		MaxDepth:     treeDepth,
+	}
+	lines := mapsvc.BuildOwnershipTreeLines(entries, opts)
+
+	// Apply CLI colors to each line
+	for _, line := range lines {
+		if line.IsHeader {
+			ownerColor := getOwnerColor(line.Owner)
+			fmt.Printf("%s%s%s (%d)\n", ownerColor, line.Owner, colorReset, line.Count)
+		} else if line.Connector == "" {
+			fmt.Println()
+		} else if strings.HasPrefix(line.Name, "(+") {
+			// Depth truncation indicator
+			fmt.Printf("  %s %s%s%s\n", line.Connector, colorDim, line.Name, colorReset)
+		} else {
+			fmt.Printf("  %s %s/%s\n", line.Connector, line.Namespace, line.Name)
 		}
-
-		ownerColor := getOwnerColor(owner)
-		fmt.Printf("%s%s%s (%d)\n", ownerColor, owner, colorReset, len(resources))
-
-		// Sort by namespace then name
-		sort.Slice(resources, func(i, j int) bool {
-			if resources[i].Namespace != resources[j].Namespace {
-				return resources[i].Namespace < resources[j].Namespace
-			}
-			return resources[i].Name < resources[j].Name
-		})
-
-		for i, r := range resources {
-			connector := "├──"
-			if i == len(resources)-1 {
-				connector = "└──"
-			}
-			fmt.Printf("  %s %s/%s\n", connector, r.Namespace, r.Name)
-		}
-		fmt.Println()
 	}
 
 	return nil

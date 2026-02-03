@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/confighub/cub-scout/internal/mapsvc"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -189,6 +191,9 @@ type LocalClusterModel struct {
 	namespaces   []string // Sorted list of namespaces
 	namespaceIdx int      // 0 = all, 1+ = specific namespace index
 
+	// Tree depth control (CLI ↔ TUI symmetry with --depth flag)
+	treeMaxDepth int // Max items per owner group (0 = unlimited)
+
 	// Command mode (: key)
 	cmdMode       bool     // Command input active
 	cmdInput      string   // Current command being typed
@@ -197,6 +202,12 @@ type LocalClusterModel struct {
 	cmdRunning    bool     // Command is executing
 	cmdShowOutput bool     // Show command output
 	cmdOutput     string   // Output from last command
+
+	// Suggest mode (C key) - context-aware command suggestions
+	suggestMode bool // Show suggestion panel overlay
+
+	// Shell mode ($ key) - interactive subshell with cub-scout completion
+	shellMode bool // Shell is active (TUI suspended)
 }
 
 // GitOpsResource represents a Flux/ArgoCD resource
@@ -304,6 +315,10 @@ type localKeyMap struct {
 	PrevNamespace key.Binding
 	// Command palette
 	Command key.Binding
+	// Suggest commands
+	Suggest key.Binding
+	// Shell out
+	Shell key.Binding
 }
 
 func defaultLocalKeyMap() localKeyMap {
@@ -340,6 +355,8 @@ func defaultLocalKeyMap() localKeyMap {
 		NextNamespace: key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next ns")),
 		PrevNamespace: key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev ns")),
 		Command:       key.NewBinding(key.WithKeys(":"), key.WithHelp(":", "command")),
+		Suggest:       key.NewBinding(key.WithKeys("C"), key.WithHelp("C", "commands")),
+		Shell:         key.NewBinding(key.WithKeys("$"), key.WithHelp("$", "shell")),
 	}
 }
 
@@ -379,6 +396,11 @@ type scanResultMsg struct {
 type localCmdCompleteMsg struct {
 	output string
 	err    error
+}
+
+// shellExitMsg is sent when the interactive shell exits
+type shellExitMsg struct {
+	err error
 }
 
 // scanFinding represents a single CCVE finding for TUI display
@@ -1030,6 +1052,15 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case shellExitMsg:
+		m.shellMode = false
+		if msg.err != nil {
+			m.statusMsg = fmt.Sprintf("Shell exited with error: %v", msg.err)
+		} else {
+			m.statusMsg = "Returned from shell"
+		}
+		return m, nil
+
 	case tea.KeyMsg:
 		// Handle auth needed state
 		if m.authNeeded {
@@ -1049,6 +1080,12 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Handle help mode
 		if m.helpMode {
 			m.helpMode = false
+			return m, nil
+		}
+
+		// Handle suggest mode (close on any key)
+		if m.suggestMode {
+			m.suggestMode = false
 			return m, nil
 		}
 
@@ -1393,10 +1430,37 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, checkCubAuthForSwitch
 				case key.Matches(msg, m.keymap.Help):
 					m.helpMode = true
+				case key.Matches(msg, m.keymap.Suggest):
+					m.suggestMode = true
 				case key.Matches(msg, m.keymap.Refresh):
 					m.loading = true
 					m.statusMsg = "Refreshing..."
 					return m, loadLocalClusterData
+
+				// Tree depth control (CLI ↔ TUI symmetry with --depth flag)
+				// Only applies to workloads panel
+				case msg.String() == "[" && m.panelView == viewWorkloads:
+					// Decrease depth (min 1)
+					if m.treeMaxDepth > 1 {
+						m.treeMaxDepth--
+						m.updatePanelContent()
+					} else if m.treeMaxDepth == 0 {
+						m.treeMaxDepth = 10 // Start from 10 when coming from unlimited
+						m.updatePanelContent()
+					}
+					return m, nil
+				case msg.String() == "]" && m.panelView == viewWorkloads:
+					// Increase depth
+					if m.treeMaxDepth > 0 && m.treeMaxDepth < 50 {
+						m.treeMaxDepth++
+						m.updatePanelContent()
+					}
+					return m, nil
+				case msg.String() == "0" && m.panelView == viewWorkloads:
+					// Set unlimited depth
+					m.treeMaxDepth = 0
+					m.updatePanelContent()
+					return m, nil
 				}
 				return m, nil
 			}
@@ -1411,6 +1475,14 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Help):
 			m.helpMode = true
 			return m, nil
+
+		case key.Matches(msg, m.keymap.Suggest):
+			m.suggestMode = true
+			return m, nil
+
+		case key.Matches(msg, m.keymap.Shell):
+			m.shellMode = true
+			return m, m.runShellOut()
 
 		case key.Matches(msg, m.keymap.Search):
 			m.searchMode = true
@@ -1596,6 +1668,131 @@ func runAuthLogin() tea.Msg {
 	cmd.Stderr = os.Stderr
 	_ = cmd.Run()
 	return checkCubAuthForSwitch()
+}
+
+// runShellOut launches an interactive subshell with cub-scout completion enabled.
+// This is session-scoped: no dotfile modifications, completion sourced from temp file.
+func (m *LocalClusterModel) runShellOut() tea.Cmd {
+	return func() tea.Msg {
+		// Detect user's shell
+		shell := os.Getenv("SHELL")
+		if shell == "" {
+			shell = "/bin/bash"
+		}
+		shellName := filepath.Base(shell)
+
+		// Generate completion script to temp file
+		completionFile, err := os.CreateTemp("", "cub-scout-completion-*")
+		if err != nil {
+			return shellExitMsg{err: fmt.Errorf("failed to create temp file: %w", err)}
+		}
+		completionPath := completionFile.Name()
+		defer os.Remove(completionPath)
+
+		// Generate completion script based on shell type
+		if err := GenerateCompletionScript(completionFile, shellName); err != nil {
+			completionFile.Close()
+			return shellExitMsg{err: fmt.Errorf("failed to generate completion: %w", err)}
+		}
+		completionFile.Close()
+
+		// Build context environment variables (session-scoped)
+		// Note: We intentionally do NOT export CUB_EMAIL to avoid identity leakage
+		// into shell history, child processes, or debug logs.
+		env := os.Environ()
+		env = append(env, "CUB_SCOUT_TUI=1")
+		if m.contextName != "" {
+			env = append(env, "CUB_CONTEXT="+m.contextName)
+		}
+		if m.clusterName != "" {
+			env = append(env, "CUB_CLUSTER="+m.clusterName)
+		}
+		if m.namespaceIdx > 0 && m.namespaceIdx <= len(m.namespaces) {
+			env = append(env, "CUB_NAMESPACE="+m.namespaces[m.namespaceIdx-1])
+		}
+		if m.connectionMode == "connected" {
+			env = append(env, "CUB_CONNECTED=1")
+		}
+
+		// Create shell startup script that sources completion only (clean shell).
+		// We intentionally do NOT source user's .bashrc/.zshrc to ensure:
+		// 1. Deterministic behavior (no user aliases/functions affecting commands)
+		// 2. No unexpected side effects from user rc files
+		// 3. Predictable completion behavior
+		var cmd *exec.Cmd
+		switch shellName {
+		case "zsh":
+			// For zsh: create temp zdotdir with .zshrc that sources completion only
+			zdotdir, err := os.MkdirTemp("", "cub-scout-zdotdir-*")
+			if err != nil {
+				return shellExitMsg{err: fmt.Errorf("failed to create zdotdir: %w", err)}
+			}
+			defer os.RemoveAll(zdotdir)
+
+			// Clean shell with completion only - no user rc sourcing
+			zshrc := fmt.Sprintf(`# cub-scout clean shell session
+autoload -Uz compinit && compinit
+source %q
+PS1='cub-scout> '
+echo "cub-scout shell (clean). Tab-complete enabled. Type 'exit' to return to TUI."
+`, completionPath)
+			if err := os.WriteFile(filepath.Join(zdotdir, ".zshrc"), []byte(zshrc), 0644); err != nil {
+				return shellExitMsg{err: fmt.Errorf("failed to write zshrc: %w", err)}
+			}
+			env = append(env, "ZDOTDIR="+zdotdir)
+			cmd = exec.Command(shell, "-i")
+
+		case "bash":
+			// For bash: use --rcfile to source completion only (clean shell)
+			rcfile, err := os.CreateTemp("", "cub-scout-bashrc-*")
+			if err != nil {
+				return shellExitMsg{err: fmt.Errorf("failed to create bashrc: %w", err)}
+			}
+			rcfilePath := rcfile.Name()
+			defer os.Remove(rcfilePath)
+
+			// Clean shell with completion only - no user rc sourcing
+			bashrc := fmt.Sprintf(`# cub-scout clean shell session
+source %q
+PS1='cub-scout> '
+echo "cub-scout shell (clean). Tab-complete enabled. Type 'exit' to return to TUI."
+`, completionPath)
+			if _, err := rcfile.WriteString(bashrc); err != nil {
+				rcfile.Close()
+				return shellExitMsg{err: fmt.Errorf("failed to write bashrc: %w", err)}
+			}
+			rcfile.Close()
+			cmd = exec.Command(shell, "--rcfile", rcfilePath, "-i")
+
+		default:
+			// Fallback: just launch the shell with env vars, no completion
+			cmd = exec.Command(shell, "-i")
+		}
+
+		cmd.Env = env
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		err = cmd.Run()
+		return shellExitMsg{err: err}
+	}
+}
+
+// GenerateCompletionScript writes the cub-scout shell completion script to the given writer.
+// This generates the same output as `cub-scout completion [shell]`.
+func GenerateCompletionScript(w io.Writer, shell string) error {
+	switch shell {
+	case "bash":
+		return rootCmd.GenBashCompletion(w)
+	case "zsh":
+		return rootCmd.GenZshCompletion(w)
+	case "fish":
+		return rootCmd.GenFishCompletion(w, true)
+	default:
+		// For unknown shells, generate bash completion as fallback
+		return rootCmd.GenBashCompletion(w)
+	}
 }
 
 // showCrossReferences populates xref items based on current view and selected item
@@ -1810,6 +2007,11 @@ func (m LocalClusterModel) View() string {
 	// Help overlay
 	if m.helpMode {
 		return m.renderHelp()
+	}
+
+	// Suggest mode overlay
+	if m.suggestMode {
+		return m.renderSuggestions()
 	}
 
 	// Query selector mode
@@ -2124,14 +2326,23 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString(lcSectionStyle.Render("NAVIGATION"))
 	b.WriteString("\n")
 	b.WriteString("  " + lcNameStyle.Render("↑/k ↓/j") + "  Move up/down\n")
-	b.WriteString("  " + lcNameStyle.Render("] / [") + "   Next/prev namespace\n")
+	b.WriteString("  " + lcNameStyle.Render("] / [") + "   Next/prev namespace (outside panels)\n")
 	b.WriteString("  " + lcNameStyle.Render("Enter") + "    Cross-references (in panel view)\n")
 	b.WriteString("  " + lcNameStyle.Render("/") + "        Search\n")
 	b.WriteString("  " + lcNameStyle.Render("r") + "        Refresh data\n")
 	b.WriteString("\n")
 
+	b.WriteString(lcSectionStyle.Render("WORKLOADS PANEL (w)"))
+	b.WriteString("\n")
+	b.WriteString("  " + lcNameStyle.Render("[") + "  Decrease tree depth (fewer items per owner)\n")
+	b.WriteString("  " + lcNameStyle.Render("]") + "  Increase tree depth (more items per owner)\n")
+	b.WriteString("  " + lcNameStyle.Render("0") + "  Unlimited depth (show all items)\n")
+	b.WriteString("     " + lcDimStyle.Render("Maps to --depth flag on tree command") + "\n")
+	b.WriteString("\n")
+
 	b.WriteString(lcSectionStyle.Render("ACTIONS"))
 	b.WriteString("\n")
+	b.WriteString("  " + lcNameStyle.Render("C") + "  Suggest commands (context-aware)\n")
 	b.WriteString("  " + lcNameStyle.Render("Q") + "  Saved queries (filter resources)\n")
 	b.WriteString("  " + lcNameStyle.Render("T") + "  Trace ownership chain\n")
 	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for CCVEs\n")
@@ -2142,6 +2353,8 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("\n")
 	b.WriteString("  " + lcNameStyle.Render(":") + "  Run shell command (↑↓ for history)\n")
 	b.WriteString("     " + lcDimStyle.Render("e.g., kubectl get pods, cub-scout scan") + "\n")
+	b.WriteString("  " + lcNameStyle.Render("$") + "  Clean shell (with cub-scout tab-completion)\n")
+	b.WriteString("     " + lcDimStyle.Render("Isolated session, type 'exit' to return") + "\n")
 	b.WriteString("\n")
 
 	b.WriteString(lcSectionStyle.Render("MODE SWITCHING"))
@@ -2159,6 +2372,318 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString(lcDimStyle.Render("Press any key to close"))
 
 	return b.String()
+}
+
+// Suggestion represents a suggested command with description
+type Suggestion struct {
+	Command     string
+	Description string
+}
+
+// getSuggestions returns context-aware command suggestions based on current state.
+// This is a pure function of: panel view, selected item, connection context, filter state.
+//
+// Priority order: cub-scout commands first (trace/tree are the spine), then external tools.
+// Rule: 2 cub-scout commands + 1-2 external commands per panel.
+func (m LocalClusterModel) getSuggestions() []Suggestion {
+	var suggestions []Suggestion
+
+	// Get filtered entries for cursor lookup
+	entries := m.getFilteredEntries()
+
+	// Build tree command with current state (owner filter + depth)
+	treeCmd := "./cub-scout tree ownership"
+	if m.activeQuery != nil && strings.HasPrefix(m.activeQuery.Query, "owner=") {
+		owner := strings.TrimPrefix(m.activeQuery.Query, "owner=")
+		treeCmd += fmt.Sprintf(" --owner %s", owner)
+	}
+	if m.treeMaxDepth > 0 {
+		treeCmd += fmt.Sprintf(" --depth %d", m.treeMaxDepth)
+	}
+
+	switch m.panelView {
+	case viewWorkloads:
+		// Workloads: trace selected + tree with current state + kubectl
+		if m.cursor >= 0 && m.cursor < len(entries) {
+			e := entries[m.cursor]
+			kind := strings.ToLower(e.Kind)
+			// cub-scout first
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("./cub-scout trace %s/%s -n %s", kind, e.Name, e.Namespace),
+				Description: "Trace ownership chain to source",
+			})
+			suggestions = append(suggestions, Suggestion{
+				Command:     treeCmd,
+				Description: "Show ownership tree (current filters)",
+			})
+			// then kubectl
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("kubectl describe %s/%s -n %s", kind, e.Name, e.Namespace),
+				Description: "View resource details",
+			})
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("kubectl get %s/%s -n %s -o yaml", kind, e.Name, e.Namespace),
+				Description: "View full YAML manifest",
+			})
+		}
+
+	case viewOrphans:
+		// Orphans: trace to confirm no owner + tree Native + kubectl
+		if m.cursor >= 0 && m.cursor < len(entries) {
+			e := entries[m.cursor]
+			kind := strings.ToLower(e.Kind)
+			// cub-scout first
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("./cub-scout trace %s/%s -n %s", kind, e.Name, e.Namespace),
+				Description: "Trace to confirm no GitOps owner",
+			})
+			suggestions = append(suggestions, Suggestion{
+				Command:     "./cub-scout tree ownership --owner Native",
+				Description: "Show all orphaned resources",
+			})
+			// then kubectl
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("kubectl get %s/%s -n %s -o yaml", kind, e.Name, e.Namespace),
+				Description: "Check labels (missing GitOps annotations?)",
+			})
+		}
+
+	case viewPipelines:
+		// Pipelines: trace from deployer + map deployers + GitOps CLI
+		if m.cursor >= 0 && m.cursor < len(m.gitops) {
+			g := m.gitops[m.cursor]
+			// cub-scout first
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("./cub-scout trace %s/%s -n %s", strings.ToLower(g.Kind), g.Name, g.Namespace),
+				Description: "Trace deployer to Git source",
+			})
+			suggestions = append(suggestions, Suggestion{
+				Command:     "./cub-scout map deployers",
+				Description: "List all GitOps deployers",
+			})
+			// then GitOps CLI
+			switch g.Kind {
+			case "Kustomization":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("flux get kustomization %s -n %s", g.Name, g.Namespace),
+					Description: "Show Flux status and last applied",
+				})
+			case "HelmRelease":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("flux get helmrelease %s -n %s", g.Name, g.Namespace),
+					Description: "Show HelmRelease status",
+				})
+			case "Application":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("argocd app get %s", g.Name),
+					Description: "Show ArgoCD sync status",
+				})
+			}
+		}
+
+	case viewGitSources:
+		// Git sources: trace source + map sources + flux CLI
+		if m.cursor >= 0 && m.cursor < len(m.gitSources) {
+			src := m.gitSources[m.cursor]
+			// cub-scout first
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("./cub-scout trace %s/%s -n %s", strings.ToLower(src.Kind), src.Name, src.Namespace),
+				Description: "Trace source to downstream deployers",
+			})
+			suggestions = append(suggestions, Suggestion{
+				Command:     "./cub-scout map sources",
+				Description: "List all Git/OCI/Helm sources",
+			})
+			// then flux CLI
+			switch src.Kind {
+			case "GitRepository":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("flux get sources git %s -n %s", src.Name, src.Namespace),
+					Description: "Show GitRepository fetch status",
+				})
+			case "OCIRepository":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("flux get sources oci %s -n %s", src.Name, src.Namespace),
+					Description: "Show OCIRepository status",
+				})
+			case "HelmRepository":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("flux get sources helm %s -n %s", src.Name, src.Namespace),
+					Description: "Show HelmRepository status",
+				})
+			}
+		}
+
+	case viewCrashes:
+		// Crashes: trace to find owner + scan for issues + kubectl logs
+		if m.cursor >= 0 && m.cursor < len(entries) {
+			e := entries[m.cursor]
+			// cub-scout first
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("./cub-scout trace pod/%s -n %s", e.Name, e.Namespace),
+				Description: "Trace pod to owning deployer",
+			})
+			suggestions = append(suggestions, Suggestion{
+				Command:     "./cub-scout scan",
+				Description: "Scan cluster for configuration issues",
+			})
+			// then kubectl
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("kubectl logs %s -n %s --previous", e.Name, e.Namespace),
+				Description: "View previous container logs",
+			})
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("kubectl describe pod/%s -n %s", e.Name, e.Namespace),
+				Description: "Check events and exit codes",
+			})
+		}
+
+	case viewDrift:
+		// Drift: trace drifted resource + scan + reconcile command
+		if m.cursor >= 0 && m.cursor < len(m.gitops) {
+			g := m.gitops[m.cursor]
+			// cub-scout first
+			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("./cub-scout trace %s/%s -n %s", strings.ToLower(g.Kind), g.Name, g.Namespace),
+				Description: "Trace to find drift source",
+			})
+			suggestions = append(suggestions, Suggestion{
+				Command:     "./cub-scout scan",
+				Description: "Scan for configuration violations",
+			})
+			// then reconcile command
+			switch g.Kind {
+			case "Kustomization":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("flux reconcile kustomization %s -n %s --with-source", g.Name, g.Namespace),
+					Description: "Force reconciliation with fresh source",
+				})
+			case "HelmRelease":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("flux reconcile helmrelease %s -n %s --with-source", g.Name, g.Namespace),
+					Description: "Force reconciliation with fresh source",
+				})
+			case "Application":
+				suggestions = append(suggestions, Suggestion{
+					Command:     fmt.Sprintf("argocd app sync %s --prune", g.Name),
+					Description: "Sync and prune orphaned resources",
+				})
+			}
+		}
+
+	default:
+		// Dashboard: overview commands (cub-scout first)
+		suggestions = append(suggestions, Suggestion{
+			Command:     treeCmd,
+			Description: "Show ownership tree (current filters)",
+		})
+		suggestions = append(suggestions, Suggestion{
+			Command:     "./cub-scout map list",
+			Description: "List all workloads with owners",
+		})
+		suggestions = append(suggestions, Suggestion{
+			Command:     "./cub-scout scan",
+			Description: "Scan for configuration issues",
+		})
+		suggestions = append(suggestions, Suggestion{
+			Command:     "./cub-scout map deployers",
+			Description: "List all GitOps deployers",
+		})
+	}
+
+	// Limit to 4 suggestions max
+	if len(suggestions) > 4 {
+		suggestions = suggestions[:4]
+	}
+
+	return suggestions
+}
+
+// renderSuggestions renders the command suggestions overlay
+func (m LocalClusterModel) renderSuggestions() string {
+	var b strings.Builder
+
+	suggestions := m.getSuggestions()
+
+	b.WriteString(lcHeaderStyle.Render("╭────────────────────────────────────────────────────────────────╮"))
+	b.WriteString("\n")
+	b.WriteString(lcHeaderStyle.Render("│") + "  " + lcHeaderStyle.Render("SUGGESTED COMMANDS") + strings.Repeat(" ", 43) + lcHeaderStyle.Render("│"))
+	b.WriteString("\n")
+	b.WriteString(lcHeaderStyle.Render("╰────────────────────────────────────────────────────────────────╯"))
+	b.WriteString("\n\n")
+
+	// Show context
+	contextInfo := m.getSuggestionContext()
+	if contextInfo != "" {
+		b.WriteString(lcDimStyle.Render("Context: ") + lcCyanStyle.Render(contextInfo))
+		b.WriteString("\n\n")
+	}
+
+	if len(suggestions) == 0 {
+		b.WriteString(lcDimStyle.Render("No suggestions available for current selection."))
+		b.WriteString("\n")
+	} else {
+		for i, s := range suggestions {
+			// Command number
+			b.WriteString(lcNameStyle.Render(fmt.Sprintf("%d. ", i+1)))
+			// Command (copyable)
+			b.WriteString(lcCyanStyle.Render(s.Command))
+			b.WriteString("\n")
+			// Description
+			b.WriteString("   " + lcDimStyle.Render(s.Description))
+			b.WriteString("\n\n")
+		}
+	}
+
+	b.WriteString(lcDimStyle.Render("Copy a command and run it in your terminal. Press any key to close."))
+
+	return b.String()
+}
+
+// getSuggestionContext returns a description of the current selection context
+func (m LocalClusterModel) getSuggestionContext() string {
+	entries := m.getFilteredEntries()
+
+	switch m.panelView {
+	case viewWorkloads:
+		if m.cursor >= 0 && m.cursor < len(entries) {
+			e := entries[m.cursor]
+			return fmt.Sprintf("%s %s/%s (owner: %s)", e.Kind, e.Namespace, e.Name, e.Owner)
+		}
+		return "Workloads panel"
+	case viewOrphans:
+		if m.cursor >= 0 && m.cursor < len(entries) {
+			e := entries[m.cursor]
+			return fmt.Sprintf("Orphan: %s %s/%s", e.Kind, e.Namespace, e.Name)
+		}
+		return "Orphans panel"
+	case viewPipelines:
+		if m.cursor >= 0 && m.cursor < len(m.gitops) {
+			g := m.gitops[m.cursor]
+			return fmt.Sprintf("%s %s/%s", g.Kind, g.Namespace, g.Name)
+		}
+		return "Pipelines panel"
+	case viewGitSources:
+		if m.cursor >= 0 && m.cursor < len(m.gitSources) {
+			src := m.gitSources[m.cursor]
+			return fmt.Sprintf("%s %s/%s", src.Kind, src.Namespace, src.Name)
+		}
+		return "Git Sources panel"
+	case viewCrashes:
+		if m.cursor >= 0 && m.cursor < len(entries) {
+			e := entries[m.cursor]
+			return fmt.Sprintf("Crashing: %s/%s", e.Namespace, e.Name)
+		}
+		return "Crashes panel"
+	case viewDrift:
+		if m.cursor >= 0 && m.cursor < len(m.gitops) {
+			g := m.gitops[m.cursor]
+			return fmt.Sprintf("Drifted: %s %s/%s", g.Kind, g.Namespace, g.Name)
+		}
+		return "Drift panel"
+	default:
+		return "Dashboard"
+	}
 }
 
 // renderSplitView renders the split pane view with dashboard on left and details on right
@@ -2296,60 +2821,56 @@ func (m LocalClusterModel) getPanelWorkloads() string {
 	// Use filtered entries if query is active
 	entries := m.getFilteredEntries()
 
-	// Show filter status if active
+	// Show filter and depth status (TUI-specific framing)
+	var statusParts []string
 	if m.activeQuery != nil && m.activeQuery.Query != "" {
-		b.WriteString(lcCyanStyle.Render(fmt.Sprintf("Filter: %s (%d/%d)", m.activeQuery.Name, len(entries), len(m.entries))))
+		statusParts = append(statusParts, fmt.Sprintf("Filter: %s (%d/%d)", m.activeQuery.Name, len(entries), len(m.entries)))
+	}
+	if m.treeMaxDepth > 0 {
+		statusParts = append(statusParts, fmt.Sprintf("Depth: %d", m.treeMaxDepth))
+	}
+	if len(statusParts) > 0 {
+		b.WriteString(lcCyanStyle.Render(strings.Join(statusParts, " │ ")))
 		b.WriteString("\n\n")
 	}
 
-	// Group by owner
-	byOwner := map[string][]MapEntry{}
-	for _, e := range entries {
-		byOwner[e.Owner] = append(byOwner[e.Owner], e)
+	// Use shared renderer for ownership tree (canonical format)
+	// CLI ↔ TUI symmetry: MaxDepth maps to --depth flag
+	opts := mapsvc.OwnershipTreeOpts{
+		ShowKind:     false,
+		ShowOwnerRef: false,
+		MaxDepth:     m.treeMaxDepth,
 	}
+	lines := mapsvc.BuildOwnershipTreeLines(entries, opts)
 
-	owners := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
-	for _, owner := range owners {
-		entries := byOwner[owner]
-		if len(entries) == 0 {
-			continue
-		}
-
-		ownerStyle := lcDimStyle
-		switch owner {
-		case "Flux":
-			ownerStyle = lcCyanStyle
-		case "ArgoCD":
-			ownerStyle = lcPurpleStyle
-		case "Helm":
-			ownerStyle = lcWarnStyle
-		}
-
-		b.WriteString(ownerStyle.Render(fmt.Sprintf("%s (%d)", owner, len(entries))))
-		b.WriteString("\n")
-
-		// Sort by namespace/name
-		sort.Slice(entries, func(i, j int) bool {
-			if entries[i].Namespace != entries[j].Namespace {
-				return entries[i].Namespace < entries[j].Namespace
+	// Apply TUI styling to each line
+	for _, line := range lines {
+		if line.IsHeader {
+			// Owner header with color
+			ownerStyle := lcDimStyle
+			switch line.Owner {
+			case "Flux":
+				ownerStyle = lcCyanStyle
+			case "ArgoCD":
+				ownerStyle = lcPurpleStyle
+			case "Helm":
+				ownerStyle = lcWarnStyle
 			}
-			return entries[i].Name < entries[j].Name
-		})
-
-		for _, e := range entries {
-			// Build owner ref string (e.g., "kustomization/apps")
-			ownerRef := ""
-			if e.OwnerDetails != nil && e.OwnerDetails["name"] != "" {
-				ownerRef = lcDimStyle.Render(" → " + e.OwnerDetails["name"])
-			}
-
-			b.WriteString(fmt.Sprintf("  └── %s/%s %s%s\n",
-				e.Namespace,
-				lcNameStyle.Render(e.Name),
-				lcDimStyle.Render(e.Kind),
-				ownerRef))
+			b.WriteString(ownerStyle.Render(fmt.Sprintf("%s (%d)", line.Owner, line.Count)))
+			b.WriteString("\n")
+		} else if line.Connector == "" {
+			// Empty separator line
+			b.WriteString("\n")
+		} else if strings.HasPrefix(line.Name, "(+") {
+			// Depth truncation indicator
+			b.WriteString(fmt.Sprintf("  %s %s\n", line.Connector, lcDimStyle.Render(line.Name)))
+		} else {
+			// Entry line with styled name
+			b.WriteString(fmt.Sprintf("  %s %s/%s\n",
+				line.Connector,
+				line.Namespace,
+				lcNameStyle.Render(line.Name)))
 		}
-		b.WriteString("\n")
 	}
 
 	return b.String()
@@ -3378,10 +3899,37 @@ func (m LocalClusterModel) getPanelMaps() string {
 	if len(sources) == 0 {
 		b.WriteString(lcDimStyle.Render("No Git sources") + "\n")
 	} else {
-		for source, names := range sources {
-			b.WriteString(fmt.Sprintf("└── %s\n", lcCyanStyle.Render(source)))
-			for _, name := range names {
-				b.WriteString(fmt.Sprintf("    └── %s\n", lcNameStyle.Render(name)))
+		// Sort sources for determinism
+		sortedSources := make([]string, 0, len(sources))
+		for source := range sources {
+			sortedSources = append(sortedSources, source)
+		}
+		sort.Strings(sortedSources)
+
+		for i, source := range sortedSources {
+			names := sources[source]
+			sort.Strings(names) // Sort deployers for determinism
+
+			// Use proper tree connectors
+			sourceConnector := "├──"
+			if i == len(sortedSources)-1 {
+				sourceConnector = "└──"
+			}
+			b.WriteString(fmt.Sprintf("%s %s\n", sourceConnector, lcCyanStyle.Render(source)))
+
+			for j, name := range names {
+				nameConnector := "│   ├──"
+				if i == len(sortedSources)-1 {
+					nameConnector = "    ├──"
+				}
+				if j == len(names)-1 {
+					if i == len(sortedSources)-1 {
+						nameConnector = "    └──"
+					} else {
+						nameConnector = "│   └──"
+					}
+				}
+				b.WriteString(fmt.Sprintf("%s %s\n", nameConnector, lcNameStyle.Render(name)))
 			}
 		}
 	}

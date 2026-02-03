@@ -1,0 +1,12 @@
+Flux (2)
+  ├── api/backend
+  └── web/frontend
+
+ArgoCD (1)
+  └── db/postgres
+
+Helm (1)
+  └── redis/cache
+
+Native (1)
+  └── jobs/cronjob-runner

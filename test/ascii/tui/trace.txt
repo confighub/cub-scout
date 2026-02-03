@@ -1,0 +1,14 @@
+╭────────────────────────────────────────────────────────────────╮
+│  🔗 TRACE OWNERSHIP CHAIN                                     │
+╰────────────────────────────────────────────────────────────────╯
+
+SELECT RESOURCE TO TRACE
+─────────────────────────────────────────────────────────────────
+
+  Kustomization flux-system/infra (Flux)
+▸ Kustomization flux-system/apps (Flux)
+  HelmRelease  ingress/nginx-ingress (Flux)
+  Application  argocd/guestbook (ArgoCD)
+
+─────────────────────────────────────────────────────────────────
+↑/↓ select  Enter trace  Esc cancel

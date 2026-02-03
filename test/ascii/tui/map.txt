@@ -1,0 +1,20 @@
+MAP 1: GITOPS TREES
+✓ Kustomization infra → 12
+✓ Kustomization apps → 8
+✓ HelmRelease nginx → 5
+✓ Application guestbook → 3
+
+● Native: 2
+
+MAP 2: CONFIGHUB
+Press H for hierarchy
+
+MAP 3: REPO → DEPLOY
+├── flux-system @ ./apps
+│   └── apps
+├── flux-system @ ./infrastructure
+│   └── infra
+├── helm-charts
+│   └── nginx
+└── https://github.com/argoproj/argocd-example-apps @ guestbook
+    └── guestbook
