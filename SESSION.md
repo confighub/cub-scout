@@ -1609,12 +1609,76 @@ ok      github.com/confighub/cub-scout/test/ascii       0.983s
 
 ---
 
-### Remaining Work
+---
 
-**Recommended order:**
-1. Ownership hierarchy ASCII goldens (#86)
-2. Map status ASCII goldens (#85)
-3. Map list ASCII golden tests (#84)
-4. Cross-reference ASCII goldens (#89)
-5. Scan results ASCII goldens (#87)
-6. TUI snapshot goldens (#88, optional)
+## v0.12 COMPLETE — Tree & Trace Contracts (ASCII Locked)
+
+**Date:** 2026-02-03
+**Status:** MILESTONE CLOSED
+
+### Definition
+
+> **v0.12 locks cub-scout's user-facing ASCII contracts — tree, trace, map, ownership, scan, and cross-reference — making system structure visible, explainable, and provable.**
+
+### Final Milestone State
+
+```
+v0.12 — Tree & Trace Contracts
+Status: COMPLETE (7/7 closed)
+
+✔ #82 Tree runtime ASCII golden tests
+✔ #83 Trace ASCII golden tests
+✔ #84 Map list ASCII golden tests
+✔ #85 Map status ASCII golden tests
+✔ #86 Ownership ASCII golden tests
+✔ #87 Scan results ASCII golden tests
+✔ #89 Cross-reference ASCII golden tests
+
+Deferred to v0.13:
+→ #88 TUI snapshot golden tests
+```
+
+### Test Hooks (Production-Safe, Env-Gated)
+
+| Hook | Command |
+|------|---------|
+| `CUB_SCOUT_TEST_TREE_JSON` | `tree runtime` |
+| `CUB_SCOUT_TEST_TRACE_JSON` | `trace` |
+| `CUB_SCOUT_TEST_MAP_ENTRIES_JSON` | `map list`, `map orphans` |
+| `CUB_SCOUT_TEST_MAP_STATUS_JSON` | `map status` |
+| `CUB_SCOUT_TEST_SCAN_JSON` | `scan` |
+
+### Documentation Added
+
+- `README.md` — GitOps hierarchies section with user feedback
+- `docs/gitops-hierarchies.md` — Comprehensive hierarchy documentation:
+  - Flux explicit chains
+  - Argo CD emergent hierarchies (ApplicationSet, App-of-Apps)
+  - Tree + Trace mental model
+  - Concrete ASCII examples
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `8981ce3` | feat(ascii): add trace golden tests + v0.12 milestone |
+| `4ad88d7` | ascii: lock map status, map list, and xref output with goldens |
+| `1c05b86` | ascii: lock orphans and scan output with goldens (#86, #87) |
+| `3042dcd` | docs: add GitOps hierarchies documentation |
+
+### What v0.12 Guarantees
+
+- Deterministic ordering
+- No timestamps / random IDs in output
+- Ownership is explicit and honest
+- Native ≠ bad; system-managed ≠ orphan
+- Any user-visible ASCII change requires a golden update
+
+### v0.13 Preview
+
+- TUI snapshot goldens (#88)
+- Richer Argo meta-hierarchy visuals
+- Deeper trace narration
+- Optional UX polish
+
+All built on top of locked ASCII contracts.
