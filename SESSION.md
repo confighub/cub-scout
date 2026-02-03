@@ -2052,3 +2052,53 @@ All 7 issues passed Codex review. Non-blocking observations:
 **Verdict:** Ship it.
 
 ---
+
+## v0.14.1 Release & Documentation Sync
+
+**Date:** 2026-02-03
+
+### Release
+
+- Tagged and pushed `v0.14.1`
+- Closed issues #26-#32 on GitHub
+- Created release notes: `docs/releases/v0.14.0.md`, `docs/releases/v0.14.1.md`
+
+### Documentation Audit & Fixes
+
+Comprehensive audit of all `.md` files. Key fixes:
+
+| File | Fix |
+|------|-----|
+| `README.md` | Added `gitops status` to commands tables |
+| `CLAUDE.md` | Added v0.14 commands, Terraform owner, `--format` flag |
+| `docs/reference/commands.md` | Added `--format` flag to map list, trace, tree |
+| `docs/reference/cli-contract.md` | Updated for v0.5-v0.14.1, added stable commands |
+| `docs/howto/ownership-detection.md` | Fixed ArgoCD detection (OR not AND) |
+| `docs/v0.14-json-schema.md` | Changed status from "pending" to "implemented" |
+
+**Critical fix:** ArgoCD detection was documented as requiring BOTH `app.kubernetes.io/instance` AND `argocd.argoproj.io/instance`. Actually requires `argocd.argoproj.io/instance` label OR `argocd.argoproj.io/tracking-id` annotation.
+
+### Roadmap Planning
+
+Defined milestones for all 22 open issues:
+
+| Version | Theme | Issues |
+|---------|-------|--------|
+| **v0.14.2** | Debug/Trace | #2, #37, #39, #40 |
+| **v0.14.3** | Drift Detection | #33, #34 |
+| **v0.15** | Graph & Export | #35, #36, #38 |
+| **v0.16** | Crossplane | #3, #8, #21, #22, #23, #24, #25 |
+| **v0.17** | TUI Polish | #88, #90, #91, #92, #93 |
+| **v0.18** | Documentation | — |
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `ba531b5` | docs: update session + roadmap for v0.14.1 |
+| `1fbb0ca` | docs: add gitops status to CLI docs + v0.15 roadmap |
+| `bb5019e` | docs: comprehensive documentation update for v0.14.1 |
+| `e905f3c` | docs: update roadmap with v0.14.2-v0.18 milestones |
+| `98a5190` | docs: add #25 (v0.5 epic) to v0.16 milestone |
+
+---
