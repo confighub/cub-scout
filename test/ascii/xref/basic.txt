@@ -1,0 +1,10 @@
+╭────────────────────────────────────────────────────────────────╮
+│  CROSS-REFERENCES: my-deploy                                 │
+╰────────────────────────────────────────────────────────────────╯
+
+Related items for workload 'my-deploy':
+
+▸ Service web (default) — exposes
+  Kustomization my-app (flux-system) — managed by
+
+↑/k ↓/j navigate · Enter select · Esc close

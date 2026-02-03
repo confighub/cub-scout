@@ -1,0 +1,8 @@
+NAMESPACE    KIND           NAME    OWNER
+default      Deployment     api     Flux
+default      Service        api     Flux
+flux-system  Kustomization  my-app  Native
+prod         Deployment     web     Native
+
+Total: 4 resources
+By Owner: Flux(2) Native(2)

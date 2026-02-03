@@ -1,0 +1,6 @@
+NAMESPACE    KIND           NAME    OWNER
+flux-system  Kustomization  my-app  Native
+prod         Deployment     web     Native
+
+Total: 2 resources
+By Owner: Native(2)

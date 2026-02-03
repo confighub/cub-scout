@@ -509,6 +509,21 @@ func init() {
 func runMapList(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
+	// TEST HOOK: Load map entries from JSON file to bypass cluster access in tests.
+	if entriesJSON := os.Getenv("CUB_SCOUT_TEST_MAP_ENTRIES_JSON"); entriesJSON != "" {
+		entries, err := loadMapEntriesFromJSON(entriesJSON)
+		if err != nil {
+			return err
+		}
+		return renderMapListFromEntries(entries)
+	}
+
+	// Normal mode: collect from cluster
+	return runMapListFromCluster(ctx)
+}
+
+func runMapListFromCluster(ctx context.Context) error {
+
 	// Build Kubernetes config
 	cfg, err := buildConfig()
 	if err != nil {
@@ -529,7 +544,7 @@ func runMapList(cmd *cobra.Command, args []string) error {
 
 	// Collect resources
 	entries := []MapEntry{}
-	byOwner := map[string]int{}
+	byOwner := map[string]int{} // populated during collection; recomputed after filtering for summary correctness
 
 	// Resource types to scan
 	resources := []schema.GroupVersionResource{
@@ -568,6 +583,12 @@ func runMapList(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// NOTE: byOwner is recomputed inside renderMapListFromEntries after filtering
+	// to keep the summary consistent with the displayed table.
+	return renderMapListFromEntries(entries)
+}
+
+func renderMapListFromEntries(entries []MapEntry) error {
 	// Apply filters
 	filtered := []MapEntry{}
 
@@ -598,12 +619,22 @@ func runMapList(cmd *cobra.Command, args []string) error {
 	}
 	entries = filtered
 
+	// Recompute owner stats after filtering so the summary matches the table.
+	byOwner := map[string]int{}
+	for _, e := range entries {
+		byOwner[e.Owner]++
+	}
+
 	// Sort by namespace, then name
 	sort.Slice(entries, func(i, j int) bool {
 		if entries[i].Namespace != entries[j].Namespace {
 			return entries[i].Namespace < entries[j].Namespace
 		}
-		return entries[i].Name < entries[j].Name
+		if entries[i].Name != entries[j].Name {
+			return entries[i].Name < entries[j].Name
+		}
+		// Deterministic tie-breaker: Kind
+		return entries[i].Kind < entries[j].Kind
 	})
 
 	// Handle --count flag (output count only)
@@ -797,6 +828,52 @@ func processResource(item interface{}, gvr schema.GroupVersionResource, clusterN
 
 	byOwner[entry.Owner]++
 	return append(entries, entry)
+}
+
+// loadMapEntriesFromJSON loads a []MapEntry fixture used by ASCII golden tests.
+// This is only used when CUB_SCOUT_TEST_MAP_ENTRIES_JSON is set.
+func loadMapEntriesFromJSON(path string) ([]MapEntry, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read map entries fixture: %w", err)
+	}
+	var entries []MapEntry
+	if err := json.Unmarshal(b, &entries); err != nil {
+		return nil, fmt.Errorf("parse map entries fixture: %w", err)
+	}
+	return entries, nil
+}
+
+type mapStatusFixture struct {
+	DeployersReady int `json:"deployersReady"`
+	DeployersTotal int `json:"deployersTotal"`
+	WorkloadsReady int `json:"workloadsReady"`
+	WorkloadsTotal int `json:"workloadsTotal"`
+}
+
+// loadAndRenderMapStatusFromJSON renders map status from a JSON fixture.
+// This is only used when CUB_SCOUT_TEST_MAP_STATUS_JSON is set.
+func loadAndRenderMapStatusFromJSON(path string) error {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read map status fixture: %w", err)
+	}
+	var fx mapStatusFixture
+	if err := json.Unmarshal(b, &fx); err != nil {
+		return fmt.Errorf("parse map status fixture: %w", err)
+	}
+
+	problems := (fx.DeployersTotal - fx.DeployersReady) + (fx.WorkloadsTotal - fx.WorkloadsReady)
+	if problems == 0 {
+		fmt.Printf("✓ healthy: %d/%d deployers, %d/%d workloads\n",
+			fx.DeployersReady, fx.DeployersTotal, fx.WorkloadsReady, fx.WorkloadsTotal)
+		return nil
+	}
+
+	fmt.Printf("✗ %d problem(s): %d/%d deployers, %d/%d workloads\n",
+		problems, fx.DeployersReady, fx.DeployersTotal, fx.WorkloadsReady, fx.WorkloadsTotal)
+	os.Exit(1)
+	return nil // unreachable but required for compiler
 }
 
 // Fleet View: Hub/App Space model display
@@ -1136,6 +1213,11 @@ func resolveSavedQueries(queryExpr string) string {
 
 // runMapStatus shows a one-line health summary
 func runMapStatus(cmd *cobra.Command, args []string) error {
+	// TEST HOOK: Load map status counts from JSON file to bypass cluster access in tests.
+	if statusJSON := os.Getenv("CUB_SCOUT_TEST_MAP_STATUS_JSON"); statusJSON != "" {
+		return loadAndRenderMapStatusFromJSON(statusJSON)
+	}
+
 	ctx := context.Background()
 
 	cfg, err := buildConfig()
@@ -1344,13 +1426,13 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 // runMapDeployers lists GitOps deployers
 // DeployerEntry represents a GitOps deployer for JSON output.
 type DeployerEntry struct {
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace"`
-	Status     string `json:"status"`
-	Ready      bool   `json:"ready"`
-	Revision   string `json:"revision,omitempty"`
-	Resources  int    `json:"resources,omitempty"`
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Status    string `json:"status"`
+	Ready     bool   `json:"ready"`
+	Revision  string `json:"revision,omitempty"`
+	Resources int    `json:"resources,omitempty"`
 }
 
 func runMapDeployers(cmd *cobra.Command, args []string) error {

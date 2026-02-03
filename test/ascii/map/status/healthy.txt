@@ -1,0 +1,1 @@
+✓ healthy: 3/3 deployers, 5/5 workloads
