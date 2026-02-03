@@ -1818,6 +1818,72 @@ Created `docs/v0.14-json-schema.md` defining:
 
 ---
 
-### Next Step
+### Markdown Format (`--format md`)
 
-**`--format md`** as thin wrapper over canonical ASCII (tree + trace first), golden-tested.
+Added thin wrapper over canonical ASCII for all commands:
+
+| Command | Status |
+|---------|--------|
+| `tree runtime --format md` | ✅ Complete |
+| `tree ownership --format md` | ✅ Complete |
+| `trace --format md` | ✅ Complete |
+| `map list --format md` | ✅ Complete |
+
+**Implementation:**
+- Markdown wraps ASCII output in code blocks
+- No ANSI color codes in markdown output
+- Uses `getStatusIconNoColor()` helper for tree
+- Uses `outputTraceMarkdown()` for trace
+
+**Golden tests added:**
+- `test/ascii/map/list/basic.md.golden`
+- `test/ascii/trace/flux.md.golden`
+
+**Commits:**
+| Commit | Description |
+|--------|-------------|
+| `62d9f71` | feat(format): add --format md to tree, trace, and map list |
+
+---
+
+## v0.14 COMPLETE — Sharable Artifacts & Portable Outputs
+
+**Date:** 2026-02-03
+**Status:** COMPLETE
+
+### Summary
+
+All v0.14 deliverables are implemented:
+
+| Deliverable | Status |
+|-------------|--------|
+| `tree ownership --format json` | ✅ Complete |
+| `trace --format json` | ✅ Complete |
+| `map list --format json` | ✅ Complete |
+| `--format md` for tree, trace, map list | ✅ Complete |
+
+### Contract Guarantees
+
+- JSON output is deterministic (same input = same output)
+- JSON is lossless (display limits are metadata, not data loss)
+- JSON is joinable (canonical `id` objects for cross-reference)
+- JSON has no timestamps by default
+- Evidence is structured and bounded (proof, not raw dump)
+- Markdown is a thin projection over canonical ASCII
+
+### Golden Tests
+
+All format outputs are now locked:
+- ASCII: `*.txt` goldens
+- JSON: `*.json.golden` files
+- Markdown: `*.md.golden` files
+
+---
+
+### v0.15 Preview
+
+Potential next steps:
+- `--format yaml` for kubectl-compatible output
+- `graph export --format dot` for Graphviz visualization
+- Snapshot format (bundled JSON + metadata)
+- TUI snapshot goldens (#88 from v0.12 backlog)
