@@ -62,3 +62,18 @@ func TestTrace_Native(t *testing.T) {
 	goldenPath := filepath.Join(repoRoot, "test", "ascii", "trace", "native.txt")
 	golden.AssertGolden(t, out, goldenPath)
 }
+
+func TestTrace_FormatMarkdown(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "trace", "testdata", "flux.json")
+
+	out := runner.RunWithEnv(t, repoRoot,
+		map[string]string{
+			"CUB_SCOUT_TEST_TRACE_JSON": fixtureAbs,
+		},
+		"trace", "deployment/payment-api", "-n", "ecommerce", "--format", "md",
+	)
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "trace", "flux.md.golden")
+	golden.AssertGolden(t, out, goldenPath)
+}

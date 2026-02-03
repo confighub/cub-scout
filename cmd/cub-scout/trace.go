@@ -108,7 +108,7 @@ func init() {
 	rootCmd.AddCommand(traceCmd)
 
 	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system)")
-	traceCmd.Flags().StringVar(&traceFormat, "format", "ascii", "Output format: ascii, json")
+	traceCmd.Flags().StringVar(&traceFormat, "format", "ascii", "Output format: ascii, json, md")
 	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	traceCmd.Flags().StringVar(&traceApp, "app", "", "Trace Argo CD application by name")
 	traceCmd.Flags().BoolVarP(&traceReverse, "reverse", "r", false, "Reverse trace - walk ownerReferences up to find GitOps source")
@@ -292,6 +292,8 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	switch effectiveFormat {
 	case "json":
 		return outputTraceJSONv014(result, kind, name, traceNamespace)
+	case "md":
+		return outputTraceMarkdown(result)
 	default:
 		return outputTraceHuman(result)
 	}
@@ -888,6 +890,83 @@ func outputTraceHuman(result *agent.TraceResult) error {
 	return nil
 }
 
+// outputTraceMarkdown outputs the trace in markdown format (thin wrapper over ASCII, no colors).
+func outputTraceMarkdown(result *agent.TraceResult) error {
+	// Markdown header
+	fmt.Printf("## Trace: %s\n\n", result.Object.String())
+	fmt.Println("```")
+
+	if result.Error != "" && len(result.Chain) == 0 {
+		fmt.Printf("  [warning] %s\n", result.Error)
+		fmt.Println("```")
+		os.Exit(1)
+		return nil
+	}
+
+	// Print chain without colors
+	for i, link := range result.Chain {
+		prefix := "  "
+		if i > 0 {
+			prefix = strings.Repeat("    ", i-1) + "    └─▶ "
+		}
+
+		// Status icon
+		icon := "✓"
+		if !link.Ready {
+			icon = "✗"
+		}
+
+		fmt.Printf("%s%s %s/%s\n", prefix, icon, link.Kind, link.Name)
+
+		// Details
+		detailPrefix := strings.Repeat("    ", i) + "    │ "
+		if i == len(result.Chain)-1 {
+			detailPrefix = strings.Repeat("    ", i) + "      "
+		}
+
+		if link.Namespace != "" && link.Namespace != result.Object.Namespace {
+			fmt.Printf("%sNamespace: %s\n", detailPrefix, link.Namespace)
+		}
+		if link.URL != "" {
+			fmt.Printf("%sURL: %s\n", detailPrefix, link.URL)
+		}
+		if link.Path != "" {
+			fmt.Printf("%sPath: %s\n", detailPrefix, link.Path)
+		}
+		if link.Revision != "" {
+			fmt.Printf("%sRevision: %s\n", detailPrefix, link.Revision)
+		}
+		if link.Status != "" {
+			fmt.Printf("%sStatus: %s\n", detailPrefix, link.Status)
+		}
+		if link.Message != "" && !link.Ready {
+			fmt.Printf("%sError: %s\n", detailPrefix, link.Message)
+		}
+		if i < len(result.Chain)-1 {
+			fmt.Printf("%s│\n", strings.Repeat("    ", i)+"    ")
+		}
+	}
+
+	// Summary
+	fmt.Println()
+	if result.FullyManaged {
+		fmt.Printf("✓ All levels in sync. Managed by %s.\n", result.Tool)
+	} else {
+		for _, link := range result.Chain {
+			if !link.Ready {
+				fmt.Printf("⚠ Chain broken at %s/%s\n", link.Kind, link.Name)
+				if link.Message != "" {
+					fmt.Printf("  %s\n", link.Message)
+				}
+				break
+			}
+		}
+	}
+
+	fmt.Println("```")
+	return nil
+}
+
 // runReverseTrace performs a reverse trace - walking ownerReferences up to find GitOps source
 func runReverseTrace(ctx context.Context, kind, name, namespace string) error {
 	cfg, err := buildConfig()
@@ -1323,8 +1402,18 @@ func loadAndRenderTraceFromJSON(path string) error {
 		return fmt.Errorf("failed to parse trace JSON: %w", err)
 	}
 
-	if traceJSON {
-		return outputTraceJSON(&result)
+	// Resolve effective format
+	effectiveFormat := traceFormat
+	if traceJSON && effectiveFormat == "ascii" {
+		effectiveFormat = "json"
 	}
-	return outputTraceHuman(&result)
+
+	switch effectiveFormat {
+	case "json":
+		return outputTraceJSON(&result)
+	case "md":
+		return outputTraceMarkdown(&result)
+	default:
+		return outputTraceHuman(&result)
+	}
 }

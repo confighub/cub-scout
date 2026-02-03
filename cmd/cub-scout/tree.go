@@ -81,7 +81,7 @@ The 'tree' command complements 'cub unit tree' in the ConfigHub CLI:
 func init() {
 	rootCmd.AddCommand(treeCmd)
 
-	treeCmd.Flags().StringVar(&treeFormat, "format", "ascii", "Output format: ascii, json")
+	treeCmd.Flags().StringVar(&treeFormat, "format", "ascii", "Output format: ascii, json, md")
 	treeCmd.Flags().BoolVar(&treeJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	treeCmd.Flags().StringVarP(&treeNamespace, "namespace", "n", "", "Filter by namespace")
 	treeCmd.Flags().BoolVarP(&treeAll, "all", "A", false, "Show all resources including system namespaces")
@@ -357,44 +357,86 @@ func loadAndRenderTreeFromJSON(path string) error {
 		return trees[i].Name < trees[j].Name
 	})
 
-	if treeJSON {
-		return json.NewEncoder(os.Stdout).Encode(trees)
+	// Resolve effective format
+	effectiveFormat := treeFormat
+	if treeJSON && effectiveFormat == "ascii" {
+		effectiveFormat = "json"
 	}
 
-	// Print tree (same format as runTreeRuntime)
-	fmt.Printf("%sRuntime Hierarchy%s (%d Deployments)\n", colorBold, colorReset, len(trees))
-	fmt.Println(strings.Repeat("─", 60))
+	switch effectiveFormat {
+	case "json":
+		return json.NewEncoder(os.Stdout).Encode(trees)
 
-	for _, tree := range trees {
-		ownerColor := getOwnerColor(tree.Owner)
-		fmt.Printf("├── %s%s%s/%s [%s%s%s] %s\n",
-			colorBold, tree.Namespace, colorReset,
-			tree.Name,
-			ownerColor, tree.Owner, colorReset,
-			tree.Status)
+	case "md":
+		// Markdown output: thin wrapper over ASCII (no colors)
+		fmt.Println("## Runtime Hierarchy")
+		fmt.Println()
+		fmt.Println("```")
+		fmt.Printf("Runtime Hierarchy (%d Deployments)\n", len(trees))
+		fmt.Println(strings.Repeat("─", 60))
 
-		for i, rs := range tree.ReplicaSets {
-			rsPrefix := "│   ├──"
-			podPrefix := "│   │   "
-			if i == len(tree.ReplicaSets)-1 {
-				rsPrefix = "│   └──"
-				podPrefix = "│       "
-			}
+		for _, tree := range trees {
+			fmt.Printf("├── %s/%s [%s] %s\n",
+				tree.Namespace, tree.Name, tree.Owner, tree.Status)
 
-			fmt.Printf("%s ReplicaSet %s [%s]\n", rsPrefix, rs.Name, rs.Status)
-
-			for j, pod := range rs.Pods {
-				podConnector := "├──"
-				if j == len(rs.Pods)-1 {
-					podConnector = "└──"
+			for i, rs := range tree.ReplicaSets {
+				rsPrefix := "│   ├──"
+				podPrefix := "│   │   "
+				if i == len(tree.ReplicaSets)-1 {
+					rsPrefix = "│   └──"
+					podPrefix = "│       "
 				}
-				statusIcon := getStatusIcon(pod.Status)
-				fmt.Printf("%s%s Pod %s %s\n", podPrefix, podConnector, pod.Name, statusIcon)
+
+				fmt.Printf("%s ReplicaSet %s [%s]\n", rsPrefix, rs.Name, rs.Status)
+
+				for j, pod := range rs.Pods {
+					podConnector := "├──"
+					if j == len(rs.Pods)-1 {
+						podConnector = "└──"
+					}
+					statusIcon := getStatusIconNoColor(pod.Status)
+					fmt.Printf("%s%s Pod %s %s\n", podPrefix, podConnector, pod.Name, statusIcon)
+				}
 			}
 		}
-	}
+		fmt.Println("```")
+		return nil
 
-	return nil
+	default: // "ascii"
+		// Print tree with colors
+		fmt.Printf("%sRuntime Hierarchy%s (%d Deployments)\n", colorBold, colorReset, len(trees))
+		fmt.Println(strings.Repeat("─", 60))
+
+		for _, tree := range trees {
+			ownerColor := getOwnerColor(tree.Owner)
+			fmt.Printf("├── %s%s%s/%s [%s%s%s] %s\n",
+				colorBold, tree.Namespace, colorReset,
+				tree.Name,
+				ownerColor, tree.Owner, colorReset,
+				tree.Status)
+
+			for i, rs := range tree.ReplicaSets {
+				rsPrefix := "│   ├──"
+				podPrefix := "│   │   "
+				if i == len(tree.ReplicaSets)-1 {
+					rsPrefix = "│   └──"
+					podPrefix = "│       "
+				}
+
+				fmt.Printf("%s ReplicaSet %s [%s]\n", rsPrefix, rs.Name, rs.Status)
+
+				for j, pod := range rs.Pods {
+					podConnector := "├──"
+					if j == len(rs.Pods)-1 {
+						podConnector = "└──"
+					}
+					statusIcon := getStatusIcon(pod.Status)
+					fmt.Printf("%s%s Pod %s %s\n", podPrefix, podConnector, pod.Name, statusIcon)
+				}
+			}
+		}
+		return nil
+	}
 }
 
 func runTreeOwnership(ctx context.Context) error {
@@ -476,6 +518,31 @@ func runTreeOwnership(ctx context.Context) error {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(output)
+
+	case "md":
+		// Markdown output: thin wrapper over ASCII (no colors)
+		fmt.Println("## Ownership Hierarchy")
+		fmt.Println()
+		fmt.Println("```")
+
+		// Use shared renderer for canonical output structure
+		lines := mapsvc.BuildOwnershipTreeLines(entries, opts)
+
+		// Output without ANSI colors
+		for _, line := range lines {
+			if line.IsHeader {
+				fmt.Printf("%s (%d)\n", line.Owner, line.Count)
+			} else if line.Connector == "" {
+				fmt.Println()
+			} else if strings.HasPrefix(line.Name, "(+") {
+				// Depth truncation indicator
+				fmt.Printf("  %s %s\n", line.Connector, line.Name)
+			} else {
+				fmt.Printf("  %s %s/%s\n", line.Connector, line.Namespace, line.Name)
+			}
+		}
+
+		fmt.Println("```")
 
 	default: // "ascii"
 		// Print header
@@ -752,6 +819,21 @@ func getStatusIcon(status string) string {
 		return colorGreen + "✓ Succeeded" + colorReset
 	default:
 		return colorDim + "? " + status + colorReset
+	}
+}
+
+func getStatusIconNoColor(status string) string {
+	switch status {
+	case "Running":
+		return "✓ Running"
+	case "Pending":
+		return "⏳ Pending"
+	case "Failed":
+		return "✗ Failed"
+	case "Succeeded":
+		return "✓ Succeeded"
+	default:
+		return "? " + status
 	}
 }
 

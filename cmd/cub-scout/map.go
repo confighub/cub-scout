@@ -493,7 +493,7 @@ func init() {
 	mapListCmd.Flags().BoolVar(&mapCount, "count", false, "Output count only (no list)")
 	mapListCmd.Flags().BoolVar(&mapNamesOnly, "names-only", false, "Output names only (for scripting)")
 	mapListCmd.Flags().BoolVar(&mapExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
-	mapListCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json")
+	mapListCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
 	// Orphans-specific flags (same as list)
 	mapOrphansCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
@@ -690,6 +690,54 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(output)
+	}
+
+	if effectiveFormat == "md" {
+		// Markdown output: table format
+		fmt.Println("## Resource Inventory")
+		fmt.Println()
+
+		// Markdown table header
+		if mapVerbose {
+			fmt.Println("| Namespace | Kind | Name | Owner | Owner Detail |")
+			fmt.Println("|-----------|------|------|-------|--------------|")
+			for _, e := range entries {
+				detail := ""
+				if e.OwnerDetails != nil {
+					if space := e.OwnerDetails["space"]; space != "" {
+						detail = fmt.Sprintf("%s/%s", space, e.OwnerDetails["unit"])
+					} else if name := e.OwnerDetails["name"]; name != "" {
+						detail = name
+					}
+				}
+				fmt.Printf("| %s | %s | %s | %s | %s |\n",
+					e.Namespace, e.Kind, e.Name, e.Owner, detail)
+			}
+		} else {
+			fmt.Println("| Namespace | Kind | Name | Owner |")
+			fmt.Println("|-----------|------|------|-------|")
+			for _, e := range entries {
+				fmt.Printf("| %s | %s | %s | %s |\n",
+					e.Namespace, e.Kind, e.Name, e.Owner)
+			}
+		}
+
+		// Summary
+		fmt.Println()
+		fmt.Printf("**Total:** %d resources\n\n", len(entries))
+		fmt.Print("**By Owner:** ")
+		owners := make([]string, 0, len(byOwner))
+		for owner := range byOwner {
+			owners = append(owners, owner)
+		}
+		sort.Strings(owners)
+		ownerParts := make([]string, 0, len(owners))
+		for _, owner := range owners {
+			ownerParts = append(ownerParts, fmt.Sprintf("%s(%d)", owner, byOwner[owner]))
+		}
+		fmt.Println(strings.Join(ownerParts, " "))
+
+		return nil
 	}
 
 	// Explain mode: show header explaining ownership detection

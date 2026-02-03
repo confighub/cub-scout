@@ -56,3 +56,18 @@ func TestMapList_FormatJSON(t *testing.T) {
 	goldenPath := filepath.Join(repoRoot, "test", "ascii", "map", "list", "basic.json.golden")
 	golden.AssertGolden(t, out, goldenPath)
 }
+
+func TestMapList_FormatMarkdown(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "map", "list", "testdata", "basic.json")
+
+	out := runner.RunWithEnv(t, repoRoot,
+		map[string]string{
+			"CUB_SCOUT_TEST_MAP_ENTRIES_JSON": fixtureAbs,
+		},
+		"map", "list", "--format", "md",
+	)
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "map", "list", "basic.md.golden")
+	golden.AssertGolden(t, out, goldenPath)
+}
