@@ -1366,6 +1366,35 @@ Full 7-point sanity check completed before v0.11.1 tag:
 
 ---
 
+### ASCII Golden Test Infrastructure
+
+**Date:** 2026-02-02
+
+Added infrastructure for locking user-facing ASCII output:
+
+| File | Purpose |
+|------|---------|
+| `test/ascii/golden/golden.go` | Golden file helper with ANSI stripping |
+| `test/ascii/runner/runner.go` | CLI runner helper using `go run` |
+| `test/ascii/tree_test.go` | Tree runtime golden test |
+| `test/ascii/tree/basic.txt` | Golden file locking tree output |
+
+**Test hook added:**
+- `CUB_SCOUT_TEST_TREE_JSON` - Load tree data from JSON (bypasses cluster)
+
+**Golden locked:**
+```
+Runtime Hierarchy (4 Deployments)
+├── ecommerce/frontend [Flux] 2/2 ready
+├── ecommerce/payment-api [Flux] 3/3 ready
+├── platform/cert-manager [ArgoCD] 1/1 ready
+├── temp-test/debug-nginx [Native] 1/1 ready
+```
+
+To update goldens: `go test ./test/ascii/... -update`
+
+---
+
 ### Next Steps
 
 - Tag v0.11.1
