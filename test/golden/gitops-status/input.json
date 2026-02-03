@@ -1,0 +1,43 @@
+{
+  "backend": "flux",
+  "transport": "oci",
+  "confighubTarget": {
+    "space": "production",
+    "target": "us-west-2"
+  },
+  "deployers": [
+    {
+      "kind": "Kustomization",
+      "name": "app-frontend",
+      "namespace": "flux-system",
+      "ready": true,
+      "stage": "healthy",
+      "sourceRef": "OCIRepository/flux-system/manifests"
+    },
+    {
+      "kind": "Kustomization",
+      "name": "app-backend",
+      "namespace": "flux-system",
+      "ready": false,
+      "stage": "source",
+      "reason": "ArtifactFailed",
+      "message": "Source 'OCIRepository/flux-system/manifests' is not ready",
+      "sourceRef": "OCIRepository/flux-system/manifests",
+      "lastAppliedRevision": "sha256:abc123",
+      "lastAttemptedRevision": "sha256:def456"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "OCIRepository",
+      "name": "manifests",
+      "namespace": "flux-system",
+      "ready": false,
+      "reason": "AuthenticationFailed",
+      "message": "failed to login to OCI registry: UNAUTHORIZED",
+      "url": "oci://ghcr.io/acme/manifests"
+    }
+  ],
+  "healthyCount": 1,
+  "failedCount": 1
+}
