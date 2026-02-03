@@ -58,8 +58,18 @@ For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap
 
 ## Version 0.14.x — Incremental Improvements (Current Focus)
 
-**Status:** In progress
+**Status:** v0.14.1 released (2026-02-03)
 **Audience:** Individual engineers, SREs, platform teams
+
+### v0.14.1 — Delegated Apply Observability
+
+**Delivered:**
+- `cub-scout gitops status` command
+- Delegated apply backend detection (Flux/Argo/Worker)
+- Failure stage classification (source, build, apply, sync)
+- OCI GitOps fixtures for testing
+- SourceRef parsing for Flux deployers
+- Flux and Argo failure details extraction
 
 Future 0.14.x releases may include:
 
@@ -96,7 +106,7 @@ Offline replay of snapshots is a **first-class supported workflow**:
 - Security-restricted environments
 - Use `cub-scout snapshot view <file>` to replay any snapshot
 
-### Open Issues
+### Completed (v0.14.1)
 
 | # | Title | Scope |
 |---|-------|-------|
@@ -107,6 +117,11 @@ Offline replay of snapshots is a **first-class supported workflow**:
 | #30 | Flux apply failure visibility | Failure Explanation |
 | #31 | Argo operation visibility | Failure Explanation |
 | #32 | Delegated Apply summary panel | Failure Explanation |
+
+### Open Issues
+
+| # | Title | Scope |
+|---|-------|-------|
 | #33 | Drift detection | Drift |
 | #34 | Drift UI + CLI | Drift |
 | #37 | Guided GitOps Debug Mode | Education |

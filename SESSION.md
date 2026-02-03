@@ -1887,3 +1887,168 @@ Potential next steps:
 - `graph export --format dot` for Graphviz visualization
 - Snapshot format (bundled JSON + metadata)
 - TUI snapshot goldens (#88 from v0.12 backlog)
+
+---
+
+## v0.14.1: Delegated Apply Observability
+
+**Date:** 2026-02-03
+**Theme:** See where and why GitOps apply is failing
+
+### Goal
+
+Enable users to immediately see delegated apply status — which GitOps backend is managing the cluster, and where failures are occurring in the pipeline.
+
+---
+
+### Issues Completed
+
+| # | Title | Status |
+|---|-------|--------|
+| #26 | Add OCI GitOps fixtures for Flux and Argo | ✅ Complete |
+| #27 | Fix Flux sourceRef parsing and deployer linkage | ✅ Complete |
+| #28 | Detect delegated apply backend (Flux/Argo via OCI) | ✅ Complete |
+| #29 | Expose Flux OCI source failure reasons | ✅ Complete |
+| #30 | Expose Flux apply/reconcile failure details | ✅ Complete |
+| #31 | Expose ArgoCD operation and failure details | ✅ Complete |
+| #32 | Add Delegated Apply summary panel | ✅ Complete |
+
+---
+
+### Implementation Summary
+
+#### Fixtures (#26)
+
+Created 9 OCI GitOps fixtures in `test/fixtures/delegated-apply/`:
+- `flux-ocirepository-healthy.yaml` - Healthy OCI source
+- `flux-ocirepository-auth-failed.yaml` - Authentication failure
+- `flux-kustomization-healthy.yaml` - Healthy deployer
+- `flux-kustomization-source-failed.yaml` - Source stage failure
+- `flux-kustomization-apply-failed.yaml` - Apply stage failure
+- `flux-helmrelease-healthy.yaml` - Healthy Helm release
+- `flux-helmrelease-install-failed.yaml` - Install failure
+- `argo-application-healthy.yaml` - Healthy Argo app
+- `argo-application-sync-failed.yaml` - Sync failure
+
+#### SourceRef Parsing (#27)
+
+Created `pkg/agent/source_ref.go`:
+- `SourceRef` struct for deployer-to-source linkage
+- `DeployerRef` struct with namespace resolution
+- `ParseSourceRef()` supporting:
+  - Kustomization `spec.sourceRef`
+  - HelmRelease `spec.chartRef` and `spec.chart.spec.sourceRef`
+- Comprehensive tests in `source_ref_test.go`
+
+#### Apply Backend Detection (#28)
+
+Created `pkg/agent/apply_backend.go`:
+- `ApplyBackendDetector` struct
+- Backend types: `flux`, `argocd`, `worker`, `none`
+- Transport types: `oci`, `git`, `helm`, `unknown`
+- Detection by scanning for:
+  - Flux CRDs (Kustomization, HelmRelease)
+  - ArgoCD CRDs (Application)
+  - ConfigHub worker labels
+- Tests in `apply_backend_test.go`
+
+#### Failure Details (#29, #30, #31)
+
+Created `pkg/agent/failure_details.go`:
+- `FailureDetails` struct with stage classification
+- `FailureStage` enum: `source`, `build`, `apply`, `sync`, `healthy`, `unknown`
+- Extraction functions:
+  - `ExtractFluxSourceFailure()` - OCIRepository, GitRepository, HelmRepository
+  - `ExtractFluxDeployerFailure()` - Kustomization, HelmRelease
+  - `ExtractArgoFailure()` - Application operationState
+- Tests in `failure_details_test.go`
+
+#### GitOps Status Command (#32)
+
+Created `cmd/cub-scout/gitops.go`:
+- `cub-scout gitops status` command
+- `--json` flag for structured output
+- Human-readable ASCII output with:
+  - Backend and transport display
+  - ConfigHub target (if detected)
+  - Sources with health/failure status
+  - Deployers with stage classification
+  - NEXT STEPS guidance for failures
+- Test hook: `CUB_SCOUT_TEST_GITOPS_JSON`
+
+**Types:**
+```go
+type GitOpsSummary struct {
+    Backend         string
+    Transport       string
+    ConfigHubTarget *agent.ConfigHubTarget
+    Deployers       []DeployerStatus
+    Sources         []SourceStatus
+    HealthyCount    int
+    FailedCount     int
+}
+
+type DeployerStatus struct {
+    Kind, Name, Namespace string
+    Ready, Suspended      bool
+    Stage, Reason, Message string
+    SourceRef             string
+    // ... Argo-specific fields
+}
+
+type SourceStatus struct {
+    Kind, Name, Namespace string
+    Ready                 bool
+    Reason, Message, URL  string
+    ArtifactDigest        string
+}
+```
+
+---
+
+### Golden Tests
+
+Created `test/golden/gitops-status/`:
+- `input.json` - Test fixture with failing OCI source
+- `gitops_status_test.go` - Golden tests:
+  - `TestGitOpsStatus_JSON` - Validates JSON structure
+  - `TestGitOpsStatus_ASCII` - Validates human output
+  - `TestGitOpsStatus_Healthy` - All healthy scenario
+  - `TestGitOpsStatus_NoBackend` - No GitOps backend
+
+---
+
+### Unit Tests
+
+Created `cmd/cub-scout/gitops_test.go`:
+- `TestGitOpsStatusSummary_Format` - Summary structure tests
+- `TestDeployerStatus_IsHealthy` - Health check tests
+- `TestSourceStatus_IsHealthy` - Source health tests
+- `TestGitOpsSummary_HasFailures` - Failure detection tests
+- `TestGitOpsSummary_GetFailureCount` - Count accuracy tests
+
+---
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `bdc5029` | test(fixtures): add OCI GitOps fixtures for Flux and Argo (#26) |
+| `d57ee7e` | feat(agent): add sourceRef parsing for Flux deployer linkage (#27) |
+| `2904c3e` | feat(agent): add apply backend detection for Flux/Argo/Worker (#28) |
+| `fefcd86` | feat(agent): add failure details extraction for Flux and Argo (#29, #30, #31) |
+| `e37185b` | feat(cli): add gitops status command for delegated apply diagnostics (#32) |
+
+---
+
+### Codex Review
+
+All 7 issues passed Codex review. Non-blocking observations:
+- Missing `flux-oci-suspended.yaml` fixture (low priority)
+- HelmRelease v2beta2 not scanned (out of scope for v0.5)
+- Argo ApplicationSet not detected (out of scope for v0.5)
+- Exit code 0 even on failures (intentional, matches kubectl behavior)
+
+**Verdict:** Ship it.
+
+---

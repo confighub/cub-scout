@@ -170,9 +170,33 @@ Hybrid patterns run with reduced evidence when `--git-root` omitted, SKIP when p
 
 ---
 
-## v0.11 — Connected Mode (Active)
+## v0.14 — Sharable Artifacts & Delegated Apply (Released)
 
-**Status:** In progress (Track L)
+**Status:** Released (`v0.14.0`, `v0.14.1`)
+
+### v0.14.0 — Portable Outputs
+
+**Delivered:**
+- `--format json` for tree, trace, and map list commands
+- `--format md` (Markdown) for all output commands
+- v0.14 JSON schema with determinism guarantees
+- Golden tests locking all output formats
+
+### v0.14.1 — Delegated Apply Observability
+
+**Delivered:**
+- `cub-scout gitops status` command
+- Delegated apply backend detection (Flux/Argo/Worker)
+- Failure stage classification (source, build, apply, sync)
+- OCI GitOps fixtures for testing
+- SourceRef parsing for Flux deployers
+- Flux and Argo failure details extraction
+
+---
+
+## v0.11 — Connected Mode (Complete)
+
+**Status:** Complete (Track L)
 
 ### Goal
 
