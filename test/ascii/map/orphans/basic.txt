@@ -1,0 +1,18 @@
+
+ORPHAN RESOURCES
+════════════════════════════════════════════════════════════════════
+Resources not managed by GitOps (Flux, ArgoCD, Helm, ConfigHub).
+These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.
+
+NAMESPACE    KIND        NAME            OWNER
+default      ConfigMap   debug-config    Native
+kube-system  Deployment  metrics-server  Native
+temp-test    Deployment  debug-nginx     Native
+
+Total: 3 resources
+By Owner: Native(3)
+
+NEXT STEPS:
+→ To import into ConfigHub: cub-scout import --wizard
+→ To trace ownership:       cub-scout trace <kind>/<name> -n <namespace>
+→ Visual guide:             docs/diagrams/ownership-detection.svg

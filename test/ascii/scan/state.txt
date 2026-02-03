@@ -1,0 +1,30 @@
+
+STUCK RECONCILIATION SCAN
+Scanned at: 2025-01-15 10:30:00
+
+CRITICAL (1)
+────────────────────────────────────────────────────────────────────
+[C] HelmRelease/payment-api [CCVE-2025-0027]
+  Namespace: ecommerce
+  Condition: Ready=False (45m)
+  Reason: UpgradeFailed
+  Message: Helm upgrade failed: timed out waiting for condition
+  → Remediation: Check helm history and rollback if needed
+  FIX: helm rollback payment-api -n ecommerce
+
+
+WARNING (1)
+────────────────────────────────────────────────────────────────────
+[W] Kustomization/frontend [CCVE-2025-0028]
+  Namespace: flux-system
+  Condition: Ready=False (15m)
+  Reason: BuildFailed
+  Message: kustomize build failed: missing required field
+  → Remediation: Fix kustomization.yaml and commit
+  FIX: flux reconcile kustomization frontend -n flux-system
+
+
+════════════════════════════════════════════════════════════════════
+State Summary: 1 HelmRelease, 1 Kustomization, 0 Application stuck
+
+🔗 Track violations in ConfigHub: cub-scout scan --confighub

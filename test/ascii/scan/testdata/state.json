@@ -1,0 +1,42 @@
+{
+  "state": {
+    "scannedAt": "2025-01-15T10:30:00Z",
+    "findings": [
+      {
+        "ccveId": "CCVE-2025-0027",
+        "category": "stuck-reconciliation",
+        "severity": "critical",
+        "kind": "HelmRelease",
+        "name": "payment-api",
+        "namespace": "ecommerce",
+        "condition": "Ready=False",
+        "reason": "UpgradeFailed",
+        "message": "Helm upgrade failed: timed out waiting for condition",
+        "duration": "45m",
+        "remediation": "Check helm history and rollback if needed",
+        "command": "helm rollback payment-api -n ecommerce"
+      },
+      {
+        "ccveId": "CCVE-2025-0028",
+        "category": "stuck-reconciliation",
+        "severity": "warning",
+        "kind": "Kustomization",
+        "name": "frontend",
+        "namespace": "flux-system",
+        "condition": "Ready=False",
+        "reason": "BuildFailed",
+        "message": "kustomize build failed: missing required field",
+        "duration": "15m",
+        "remediation": "Fix kustomization.yaml and commit",
+        "command": "flux reconcile kustomization frontend -n flux-system"
+      }
+    ],
+    "summary": {
+      "helmReleaseStuck": 1,
+      "kustomizationStuck": 1,
+      "applicationStuck": 0,
+      "silentFailures": 0,
+      "total": 2
+    }
+  }
+}

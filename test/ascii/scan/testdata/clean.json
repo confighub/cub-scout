@@ -1,0 +1,13 @@
+{
+  "state": {
+    "scannedAt": "2025-01-15T10:30:00Z",
+    "findings": [],
+    "summary": {
+      "helmReleaseStuck": 0,
+      "kustomizationStuck": 0,
+      "applicationStuck": 0,
+      "silentFailures": 0,
+      "total": 0
+    }
+  }
+}

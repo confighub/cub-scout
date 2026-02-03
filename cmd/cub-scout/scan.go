@@ -142,6 +142,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return runFileScan(ctx, scanFile, policyDBDir)
 	}
 
+	// TEST HOOK: Load scan results from JSON file to bypass cluster access in tests.
+	// In production this env var is never set, so real cluster scanning is always used.
+	if scanJSON := os.Getenv("CUB_SCOUT_TEST_SCAN_JSON"); scanJSON != "" {
+		return loadAndRenderScanFromJSON(scanJSON)
+	}
+
 	// Build k8s config
 	cfg, err := buildConfig()
 	if err != nil {
@@ -1047,4 +1053,23 @@ func outputStaticFinding(f agent.StaticFinding) {
 		fmt.Printf("  %s→ Remediation:%s %s\n", colorYellow, colorReset, f.Remediation)
 	}
 	fmt.Printf("\n")
+}
+
+// loadAndRenderScanFromJSON loads scan results from a JSON file and renders them.
+// This is used for golden testing to bypass cluster access.
+func loadAndRenderScanFromJSON(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read scan JSON: %w", err)
+	}
+
+	var result CombinedScanResult
+	if err := json.Unmarshal(data, &result); err != nil {
+		return fmt.Errorf("failed to parse scan JSON: %w", err)
+	}
+
+	if scanJSON {
+		return outputCombinedJSON(&result)
+	}
+	return outputCombinedHuman(result.Kyverno, result.State, result.TimingBombs, result.Unresolved, result.Dangling)
 }

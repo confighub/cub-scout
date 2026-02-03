@@ -1,0 +1,4 @@
+
+✓ No issues found
+
+🔗 Track violations in ConfigHub: cub-scout scan --confighub
