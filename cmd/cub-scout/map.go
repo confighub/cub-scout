@@ -686,7 +686,7 @@ func renderMapListFromEntries(entries []MapEntry) error {
 			ns = &mapNamespace
 		}
 
-		output := mapsvc.BuildOwnershipJSON(mapsvcEntries, cluster, ns)
+		output := mapsvc.BuildMapListJSON(mapsvcEntries, cluster, ns)
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(output)

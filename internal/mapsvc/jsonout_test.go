@@ -392,21 +392,21 @@ func containsHelper(s, substr string) bool {
 }
 
 // =============================================================================
-// Ownership Schema Tests
+// Map List Schema Tests
 // =============================================================================
 
-func TestBuildOwnershipJSON_Basic(t *testing.T) {
+func TestBuildMapListJSON_Basic(t *testing.T) {
 	entries := []Entry{
 		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: "Ready", OwnerDetails: map[string]string{"name": "kustomization/web-apps"}},
 		{Kind: "Deployment", Namespace: "api", Name: "backend", Owner: "Flux", Status: "Ready", OwnerDetails: map[string]string{"name": "kustomization/api-apps"}},
 		{Kind: "Deployment", Namespace: "default", Name: "legacy", Owner: "Native", Status: "Ready"},
 	}
 
-	output := BuildOwnershipJSON(entries, "test-cluster", nil)
+	output := BuildMapListJSON(entries, "test-cluster", nil)
 
 	// Verify structure
-	if output.Command != "ownership" {
-		t.Errorf("expected command=ownership, got %s", output.Command)
+	if output.Command != "map-list" {
+		t.Errorf("expected command=map-list, got %s", output.Command)
 	}
 	if output.Context.Cluster != "test-cluster" {
 		t.Errorf("expected cluster=test-cluster, got %s", output.Context.Cluster)
@@ -449,18 +449,29 @@ func TestBuildOwnershipJSON_Basic(t *testing.T) {
 	if output.Summary.Total != 3 {
 		t.Errorf("expected total=3, got %d", output.Summary.Total)
 	}
-	if output.Summary.ByOwner["Flux"] != 2 {
-		t.Errorf("expected byOwner[Flux]=2, got %d", output.Summary.ByOwner["Flux"])
+
+	// Verify byOwner is an array in canonical order
+	if len(output.Summary.ByOwner) != 5 {
+		t.Fatalf("expected 5 owner counts (all canonical owners), got %d", len(output.Summary.ByOwner))
 	}
-	if output.Summary.ByOwner["Native"] != 1 {
-		t.Errorf("expected byOwner[Native]=1, got %d", output.Summary.ByOwner["Native"])
+	// Canonical order: Flux, ArgoCD, Helm, ConfigHub, Native
+	if output.Summary.ByOwner[0].OwnerType != "Flux" || output.Summary.ByOwner[0].Count != 2 {
+		t.Errorf("expected byOwner[0]={Flux,2}, got {%s,%d}", output.Summary.ByOwner[0].OwnerType, output.Summary.ByOwner[0].Count)
 	}
-	if output.Summary.ByStatus["Ready"] != 3 {
-		t.Errorf("expected byStatus[Ready]=3, got %d", output.Summary.ByStatus["Ready"])
+	if output.Summary.ByOwner[4].OwnerType != "Native" || output.Summary.ByOwner[4].Count != 1 {
+		t.Errorf("expected byOwner[4]={Native,1}, got {%s,%d}", output.Summary.ByOwner[4].OwnerType, output.Summary.ByOwner[4].Count)
+	}
+
+	// Verify byStatus only includes non-zero counts
+	if len(output.Summary.ByStatus) != 1 {
+		t.Fatalf("expected 1 status count, got %d", len(output.Summary.ByStatus))
+	}
+	if output.Summary.ByStatus[0].Status != "Ready" || output.Summary.ByStatus[0].Count != 3 {
+		t.Errorf("expected byStatus[0]={Ready,3}, got {%s,%d}", output.Summary.ByStatus[0].Status, output.Summary.ByStatus[0].Count)
 	}
 }
 
-func TestBuildOwnershipJSON_Deterministic(t *testing.T) {
+func TestBuildMapListJSON_Deterministic(t *testing.T) {
 	entries := []Entry{
 		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: "Ready"},
 		{Kind: "Deployment", Namespace: "api", Name: "backend", Owner: "Flux", Status: "Ready"},
@@ -469,8 +480,8 @@ func TestBuildOwnershipJSON_Deterministic(t *testing.T) {
 	}
 
 	// Generate JSON twice and verify it's identical
-	output1 := BuildOwnershipJSON(entries, "test-cluster", nil)
-	output2 := BuildOwnershipJSON(entries, "test-cluster", nil)
+	output1 := BuildMapListJSON(entries, "test-cluster", nil)
+	output2 := BuildMapListJSON(entries, "test-cluster", nil)
 
 	json1, _ := json.MarshalIndent(output1, "", "  ")
 	json2, _ := json.MarshalIndent(output2, "", "  ")
@@ -480,7 +491,7 @@ func TestBuildOwnershipJSON_Deterministic(t *testing.T) {
 	}
 }
 
-func TestBuildOwnershipJSON_SortByNamespaceKindName(t *testing.T) {
+func TestBuildMapListJSON_SortByNamespaceKindName(t *testing.T) {
 	// Create entries that would sort differently if not using (namespace, kind, name)
 	entries := []Entry{
 		{Kind: "StatefulSet", Namespace: "api", Name: "cache", Owner: "Flux", Status: "Ready"},
@@ -489,7 +500,7 @@ func TestBuildOwnershipJSON_SortByNamespaceKindName(t *testing.T) {
 		{Kind: "Deployment", Namespace: "api", Name: "gateway", Owner: "Flux", Status: "Ready"},
 	}
 
-	output := BuildOwnershipJSON(entries, "test-cluster", nil)
+	output := BuildMapListJSON(entries, "test-cluster", nil)
 
 	// Expected order: api/Deployment/backend, api/Deployment/gateway, api/StatefulSet/cache, web/Deployment/frontend
 	expected := []struct {
@@ -511,28 +522,53 @@ func TestBuildOwnershipJSON_SortByNamespaceKindName(t *testing.T) {
 	}
 }
 
-func TestBuildOwnershipJSON_NamespaceContext(t *testing.T) {
+func TestBuildMapListJSON_NamespaceContext(t *testing.T) {
 	entries := []Entry{
 		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: "Ready"},
 	}
 
 	ns := "web"
-	output := BuildOwnershipJSON(entries, "test-cluster", &ns)
+	output := BuildMapListJSON(entries, "test-cluster", &ns)
 
 	if output.Context.Namespace == nil || *output.Context.Namespace != "web" {
 		t.Error("expected context.namespace=web")
 	}
 }
 
-func TestBuildOwnershipJSON_StatusNormalization(t *testing.T) {
+func TestBuildMapListJSON_StatusNormalization(t *testing.T) {
 	entries := []Entry{
 		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: ""},
 	}
 
-	output := BuildOwnershipJSON(entries, "test-cluster", nil)
+	output := BuildMapListJSON(entries, "test-cluster", nil)
 
 	// Empty status should be normalized to "Unknown"
 	if output.Resources[0].Status != "Unknown" {
 		t.Errorf("expected status=Unknown for empty status, got %s", output.Resources[0].Status)
+	}
+}
+
+func TestBuildMapListJSON_CanonicalOwnerOrder(t *testing.T) {
+	entries := []Entry{
+		{Kind: "Deployment", Namespace: "a", Name: "one", Owner: "Native", Status: "Ready"},
+		{Kind: "Deployment", Namespace: "b", Name: "two", Owner: "ArgoCD", Status: "Ready"},
+	}
+
+	output := BuildMapListJSON(entries, "test-cluster", nil)
+
+	// byOwner should always be in canonical order: Flux, ArgoCD, Helm, ConfigHub, Native
+	expectedOrder := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
+	for i, expected := range expectedOrder {
+		if output.Summary.ByOwner[i].OwnerType != expected {
+			t.Errorf("byOwner[%d].ownerType: expected %s, got %s", i, expected, output.Summary.ByOwner[i].OwnerType)
+		}
+	}
+
+	// Verify counts
+	if output.Summary.ByOwner[1].Count != 1 { // ArgoCD
+		t.Errorf("expected ArgoCD count=1, got %d", output.Summary.ByOwner[1].Count)
+	}
+	if output.Summary.ByOwner[4].Count != 1 { // Native
+		t.Errorf("expected Native count=1, got %d", output.Summary.ByOwner[4].Count)
 	}
 }

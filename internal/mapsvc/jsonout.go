@@ -416,23 +416,23 @@ func RelationshipForRole(role string) string {
 // Ownership Schema (v0.14)
 // =============================================================================
 
-// OwnershipOutput is the v0.14 JSON schema for `map list --format json`.
+// MapListOutput is the v0.14 JSON schema for `map list --format json`.
 // It's a flat, joinable inventory of resources with ownership attribution.
-type OwnershipOutput struct {
-	Command   string                `json:"command"`
-	Context   OwnershipContext      `json:"context"`
-	Resources []OwnershipResource   `json:"resources"`
-	Summary   OwnershipSummary      `json:"summary"`
+type MapListOutput struct {
+	Command   string              `json:"command"`
+	Context   MapListContext      `json:"context"`
+	Resources []MapListResource   `json:"resources"`
+	Summary   MapListSummary      `json:"summary"`
 }
 
-// OwnershipContext captures query parameters for the ownership list.
-type OwnershipContext struct {
+// MapListContext captures query parameters for the map list.
+type MapListContext struct {
 	Cluster   string  `json:"cluster"`
 	Namespace *string `json:"namespace"` // null = all namespaces
 }
 
-// OwnershipResource represents a single resource with ownership attribution.
-type OwnershipResource struct {
+// MapListResource represents a single resource with ownership attribution.
+type MapListResource struct {
 	ID     ResourceID `json:"id"`
 	Owner  Owner      `json:"owner"`
 	Status string     `json:"status"` // Ready, NotReady, Unknown, Progressing
@@ -440,27 +440,40 @@ type OwnershipResource struct {
 
 // Owner represents the ownership attribution for a resource.
 type Owner struct {
-	Type string      `json:"type"`        // Flux, ArgoCD, Helm, ConfigHub, Native
-	Ref  *ResourceID `json:"ref"`         // null for Native
+	Type string      `json:"type"` // Flux, ArgoCD, Helm, ConfigHub, Native
+	Ref  *ResourceID `json:"ref"`  // null for Native
 }
 
-// OwnershipSummary provides aggregate counts.
-type OwnershipSummary struct {
-	Total    int            `json:"total"`
-	ByOwner  map[string]int `json:"byOwner"`
-	ByStatus map[string]int `json:"byStatus"`
+// MapListSummary provides aggregate counts in deterministic order.
+type MapListSummary struct {
+	Total    int           `json:"total"`
+	ByOwner  []OwnerCount  `json:"byOwner"`  // Canonical owner order
+	ByStatus []StatusCount `json:"byStatus"` // Sorted by status name
 }
 
-// BuildOwnershipJSON builds v0.14 JSON output from entries.
+// OwnerCount represents a count for a specific owner type.
+type OwnerCount struct {
+	OwnerType string `json:"ownerType"`
+	Count     int    `json:"count"`
+}
+
+// StatusCount represents a count for a specific status.
+type StatusCount struct {
+	Status string `json:"status"`
+	Count  int    `json:"count"`
+}
+
+// BuildMapListJSON builds v0.14 JSON output from entries.
 // Resources are sorted by (namespace, kind, name) for determinism.
-func BuildOwnershipJSON(entries []Entry, cluster string, namespace *string) OwnershipOutput {
+// Summary arrays use canonical ordering (owners) or alphabetical (status).
+func BuildMapListJSON(entries []Entry, cluster string, namespace *string) MapListOutput {
 	// Sort entries for deterministic output
 	sortEntriesDeterministic(entries)
 
-	// Build resources
-	resources := make([]OwnershipResource, len(entries))
-	byOwner := make(map[string]int)
-	byStatus := make(map[string]int)
+	// Build resources and count by owner/status
+	resources := make([]MapListResource, len(entries))
+	ownerCounts := make(map[string]int)
+	statusCounts := make(map[string]int)
 
 	for i, e := range entries {
 		// Normalize owner to canonical form
@@ -472,13 +485,13 @@ func BuildOwnershipJSON(entries []Entry, cluster string, namespace *string) Owne
 			ownerRef = parseOwnerRef(e.OwnerDetails, e.Namespace)
 		}
 
-		// Normalize status
+		// Normalize status (empty → "Unknown")
 		status := e.Status
 		if status == "" {
 			status = "Unknown"
 		}
 
-		resources[i] = OwnershipResource{
+		resources[i] = MapListResource{
 			ID: ResourceID{
 				Kind:      e.Kind,
 				Namespace: e.Namespace,
@@ -491,18 +504,39 @@ func BuildOwnershipJSON(entries []Entry, cluster string, namespace *string) Owne
 			Status: status,
 		}
 
-		byOwner[ownerType]++
-		byStatus[status]++
+		ownerCounts[ownerType]++
+		statusCounts[status]++
 	}
 
-	return OwnershipOutput{
-		Command: "ownership",
-		Context: OwnershipContext{
+	// Build byOwner array in canonical order (include all owners, even with 0 count)
+	byOwner := make([]OwnerCount, len(CanonicalOwnerOrder))
+	for i, owner := range CanonicalOwnerOrder {
+		byOwner[i] = OwnerCount{
+			OwnerType: owner,
+			Count:     ownerCounts[owner],
+		}
+	}
+
+	// Build byStatus array in alphabetical order (only include non-zero)
+	var byStatus []StatusCount
+	statusOrder := []string{"NotReady", "Pending", "Progressing", "Ready", "Unknown"}
+	for _, status := range statusOrder {
+		if count := statusCounts[status]; count > 0 {
+			byStatus = append(byStatus, StatusCount{
+				Status: status,
+				Count:  count,
+			})
+		}
+	}
+
+	return MapListOutput{
+		Command: "map-list",
+		Context: MapListContext{
 			Cluster:   cluster,
 			Namespace: namespace,
 		},
 		Resources: resources,
-		Summary: OwnershipSummary{
+		Summary: MapListSummary{
 			Total:    len(entries),
 			ByOwner:  byOwner,
 			ByStatus: byStatus,

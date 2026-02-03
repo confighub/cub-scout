@@ -1,5 +1,5 @@
 {
-  "command": "ownership",
+  "command": "map-list",
   "context": {
     "cluster": "test-cluster",
     "namespace": null
@@ -56,13 +56,37 @@
   ],
   "summary": {
     "total": 4,
-    "byOwner": {
-      "Flux": 2,
-      "Native": 2
-    },
-    "byStatus": {
-      "NotReady": 1,
-      "Ready": 3
-    }
+    "byOwner": [
+      {
+        "ownerType": "Flux",
+        "count": 2
+      },
+      {
+        "ownerType": "ArgoCD",
+        "count": 0
+      },
+      {
+        "ownerType": "Helm",
+        "count": 0
+      },
+      {
+        "ownerType": "ConfigHub",
+        "count": 0
+      },
+      {
+        "ownerType": "Native",
+        "count": 2
+      }
+    ],
+    "byStatus": [
+      {
+        "status": "NotReady",
+        "count": 1
+      },
+      {
+        "status": "Ready",
+        "count": 3
+      }
+    ]
   }
 }
