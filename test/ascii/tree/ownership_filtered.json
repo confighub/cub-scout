@@ -1,0 +1,53 @@
+{
+  "command": "tree",
+  "subtype": "ownership",
+  "context": {
+    "cluster": "test-cluster",
+    "namespace": null,
+    "filters": {
+      "owner": "Flux",
+      "maxItems": 0
+    }
+  },
+  "groups": [
+    {
+      "owner": "Flux",
+      "displayMeta": {
+        "maxItems": 2,
+        "totalItems": 2
+      },
+      "items": [
+        {
+          "id": {
+            "kind": "Deployment",
+            "namespace": "api",
+            "name": "backend"
+          },
+          "ownerRef": {
+            "kind": "Kustomization",
+            "namespace": "api",
+            "name": "api-apps"
+          }
+        },
+        {
+          "id": {
+            "kind": "Deployment",
+            "namespace": "web",
+            "name": "frontend"
+          },
+          "ownerRef": {
+            "kind": "Kustomization",
+            "namespace": "web",
+            "name": "web-apps"
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalResources": 2,
+    "byOwner": {
+      "Flux": 2
+    }
+  }
+}

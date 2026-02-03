@@ -20,7 +20,8 @@ import (
 )
 
 var (
-	treeJSON      bool
+	treeJSON      bool   // deprecated: use --format json
+	treeFormat    string // output format: ascii, json
 	treeNamespace string
 	treeAll       bool
 	treeSpace     string // For ConfigHub tree
@@ -80,13 +81,17 @@ The 'tree' command complements 'cub unit tree' in the ConfigHub CLI:
 func init() {
 	rootCmd.AddCommand(treeCmd)
 
-	treeCmd.Flags().BoolVar(&treeJSON, "json", false, "Output as JSON")
+	treeCmd.Flags().StringVar(&treeFormat, "format", "ascii", "Output format: ascii, json")
+	treeCmd.Flags().BoolVar(&treeJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	treeCmd.Flags().StringVarP(&treeNamespace, "namespace", "n", "", "Filter by namespace")
 	treeCmd.Flags().BoolVarP(&treeAll, "all", "A", false, "Show all resources including system namespaces")
 	treeCmd.Flags().StringVar(&treeSpace, "space", "", "ConfigHub space for 'config' view (use '*' for all spaces)")
 	treeCmd.Flags().StringVar(&treeEdge, "edge", "clone", "Edge type for 'config' view: clone (inheritance) or link (dependencies)")
 	treeCmd.Flags().StringVar(&treeOwner, "owner", "", "Filter by owner: Flux, ArgoCD, Helm, ConfigHub, Native")
 	treeCmd.Flags().IntVar(&treeDepth, "depth", 0, "Limit tree depth (0 = unlimited)")
+
+	// Mark --json as deprecated
+	_ = treeCmd.Flags().MarkDeprecated("json", "use --format json instead")
 }
 
 func runTree(cmd *cobra.Command, args []string) error {
@@ -393,6 +398,11 @@ func loadAndRenderTreeFromJSON(path string) error {
 }
 
 func runTreeOwnership(ctx context.Context) error {
+	// Resolve effective format (--format takes precedence over deprecated --json)
+	effectiveFormat := treeFormat
+	if treeJSON && effectiveFormat == "ascii" {
+		effectiveFormat = "json"
+	}
 
 	cfg, err := buildConfig()
 	if err != nil {
@@ -403,6 +413,9 @@ func runTreeOwnership(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create dynamic client: %w", err)
 	}
+
+	// Get current context name for cluster field
+	clusterName := getCurrentContext()
 
 	// Get Deployments
 	deployGVR := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
@@ -419,64 +432,92 @@ func runTreeOwnership(ctx context.Context) error {
 			continue
 		}
 
-		owner, _ := detectOwnership(&deploy)
+		owner, ownerName := detectOwnership(&deploy)
+
+		// Build ownerDetails map from ownerName
+		var ownerDetails map[string]string
+		if ownerName != "" && ownerName != "-" {
+			// Format: "kind/name" based on owner type
+			kindPrefix := ownerKindPrefix(owner)
+			ownerDetails = map[string]string{
+				"name": kindPrefix + "/" + ownerName,
+			}
+		}
 
 		entries = append(entries, mapsvc.Entry{
-			Name:      deploy.GetName(),
-			Namespace: ns,
-			Kind:      "Deployment",
-			Owner:     owner,
+			Name:         deploy.GetName(),
+			Namespace:    ns,
+			Kind:         "Deployment",
+			Owner:        owner,
+			OwnerDetails: ownerDetails,
 		})
 	}
 
-	if treeJSON {
-		// Group by owner for JSON output (legacy format)
-		// Apply owner filter for JSON too
-		byOwner := make(map[string][]RuntimeTree)
-		for _, e := range entries {
-			if treeOwner != "" && !strings.EqualFold(e.Owner, treeOwner) {
-				continue
-			}
-			byOwner[e.Owner] = append(byOwner[e.Owner], RuntimeTree{
-				Name:      e.Name,
-				Namespace: e.Namespace,
-				Kind:      e.Kind,
-				Owner:     e.Owner,
-			})
-		}
-		return json.NewEncoder(os.Stdout).Encode(byOwner)
-	}
-
-	// Print header
-	fmt.Printf("%sOwnership Hierarchy%s\n", colorBold, colorReset)
-	fmt.Println(strings.Repeat("─", 60))
-
-	// Use shared renderer for canonical output structure
-	// FilterOwner and MaxDepth are applied in the renderer
+	// Build opts for shared renderer
 	opts := mapsvc.OwnershipTreeOpts{
 		ShowKind:     false,
 		ShowOwnerRef: false,
 		FilterOwner:  treeOwner,
 		MaxDepth:     treeDepth,
 	}
-	lines := mapsvc.BuildOwnershipTreeLines(entries, opts)
 
-	// Apply CLI colors to each line
-	for _, line := range lines {
-		if line.IsHeader {
-			ownerColor := getOwnerColor(line.Owner)
-			fmt.Printf("%s%s%s (%d)\n", ownerColor, line.Owner, colorReset, line.Count)
-		} else if line.Connector == "" {
-			fmt.Println()
-		} else if strings.HasPrefix(line.Name, "(+") {
-			// Depth truncation indicator
-			fmt.Printf("  %s %s%s%s\n", line.Connector, colorDim, line.Name, colorReset)
-		} else {
-			fmt.Printf("  %s %s/%s\n", line.Connector, line.Namespace, line.Name)
+	// Output based on format
+	switch effectiveFormat {
+	case "json":
+		// v0.14 JSON schema output
+		var namespace *string
+		if treeNamespace != "" {
+			namespace = &treeNamespace
+		}
+
+		output := mapsvc.BuildOwnershipTreeJSON(entries, opts, clusterName, namespace)
+
+		// Use MarshalIndent for deterministic, readable output
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(output)
+
+	default: // "ascii"
+		// Print header
+		fmt.Printf("%sOwnership Hierarchy%s\n", colorBold, colorReset)
+		fmt.Println(strings.Repeat("─", 60))
+
+		// Use shared renderer for canonical output structure
+		lines := mapsvc.BuildOwnershipTreeLines(entries, opts)
+
+		// Apply CLI colors to each line
+		for _, line := range lines {
+			if line.IsHeader {
+				ownerColor := getOwnerColor(line.Owner)
+				fmt.Printf("%s%s%s (%d)\n", ownerColor, line.Owner, colorReset, line.Count)
+			} else if line.Connector == "" {
+				fmt.Println()
+			} else if strings.HasPrefix(line.Name, "(+") {
+				// Depth truncation indicator
+				fmt.Printf("  %s %s%s%s\n", line.Connector, colorDim, line.Name, colorReset)
+			} else {
+				fmt.Printf("  %s %s/%s\n", line.Connector, line.Namespace, line.Name)
+			}
 		}
 	}
 
 	return nil
+}
+
+// ownerKindPrefix returns the deployer kind prefix for owner type.
+func ownerKindPrefix(owner string) string {
+	switch owner {
+	case "Flux":
+		return "kustomization" // Could also be helmrelease
+	case "ArgoCD":
+		return "application"
+	case "Helm":
+		return "release"
+	case "ConfigHub":
+		return "unit"
+	default:
+		return ""
+	}
 }
 
 func runTreeWorkloads() error {

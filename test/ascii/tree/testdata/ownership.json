@@ -1,0 +1,36 @@
+[
+  {
+    "kind": "Deployment",
+    "namespace": "web",
+    "name": "frontend",
+    "owner": "Flux",
+    "ownerDetails": {"name": "kustomization/web-apps"}
+  },
+  {
+    "kind": "Deployment",
+    "namespace": "api",
+    "name": "backend",
+    "owner": "Flux",
+    "ownerDetails": {"name": "kustomization/api-apps"}
+  },
+  {
+    "kind": "Deployment",
+    "namespace": "redis",
+    "name": "cache",
+    "owner": "Helm",
+    "ownerDetails": {"name": "release/redis"}
+  },
+  {
+    "kind": "StatefulSet",
+    "namespace": "db",
+    "name": "postgres",
+    "owner": "ArgoCD",
+    "ownerDetails": {"name": "application/database"}
+  },
+  {
+    "kind": "Deployment",
+    "namespace": "default",
+    "name": "legacy-app",
+    "owner": "Native"
+  }
+]

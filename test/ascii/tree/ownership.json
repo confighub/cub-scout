@@ -1,0 +1,115 @@
+{
+  "command": "tree",
+  "subtype": "ownership",
+  "context": {
+    "cluster": "test-cluster",
+    "namespace": null,
+    "filters": {
+      "owner": null,
+      "maxItems": 0
+    }
+  },
+  "groups": [
+    {
+      "owner": "Flux",
+      "displayMeta": {
+        "maxItems": 2,
+        "totalItems": 2
+      },
+      "items": [
+        {
+          "id": {
+            "kind": "Deployment",
+            "namespace": "api",
+            "name": "backend"
+          },
+          "ownerRef": {
+            "kind": "Kustomization",
+            "namespace": "api",
+            "name": "api-apps"
+          }
+        },
+        {
+          "id": {
+            "kind": "Deployment",
+            "namespace": "web",
+            "name": "frontend"
+          },
+          "ownerRef": {
+            "kind": "Kustomization",
+            "namespace": "web",
+            "name": "web-apps"
+          }
+        }
+      ]
+    },
+    {
+      "owner": "ArgoCD",
+      "displayMeta": {
+        "maxItems": 1,
+        "totalItems": 1
+      },
+      "items": [
+        {
+          "id": {
+            "kind": "StatefulSet",
+            "namespace": "db",
+            "name": "postgres"
+          },
+          "ownerRef": {
+            "kind": "Application",
+            "namespace": "db",
+            "name": "database"
+          }
+        }
+      ]
+    },
+    {
+      "owner": "Helm",
+      "displayMeta": {
+        "maxItems": 1,
+        "totalItems": 1
+      },
+      "items": [
+        {
+          "id": {
+            "kind": "Deployment",
+            "namespace": "redis",
+            "name": "cache"
+          },
+          "ownerRef": {
+            "kind": "HelmRelease",
+            "namespace": "redis",
+            "name": "redis"
+          }
+        }
+      ]
+    },
+    {
+      "owner": "Native",
+      "displayMeta": {
+        "maxItems": 1,
+        "totalItems": 1
+      },
+      "items": [
+        {
+          "id": {
+            "kind": "Deployment",
+            "namespace": "default",
+            "name": "legacy-app"
+          },
+          "ownerRef": null
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalResources": 5,
+    "byOwner": {
+      "ArgoCD": 1,
+      "Flux": 2,
+      "Helm": 1,
+      "Native": 1
+    }
+  }
+}
