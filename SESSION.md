@@ -2848,3 +2848,37 @@ Portable debug bundles for offline inspection and sharing across time/people.
 > v0.14.6 shipped. Debug Bundle v1 complete with packaging, inspect/replay commands, and documentation. Ready for v0.15 (Replay & Time-Series Reasoning).
 
 ---
+
+## Release Summary: Explainable Debugging Arc Complete
+
+**v0.14.6 — Debug Bundle v1 (shipped)**
+
+Portable, deterministic debug artifacts with offline inspect and replay.
+Completes **Explainable Debugging arc** (v0.14.3–v0.14.6).
+
+### Arc Summary
+
+| Version | Theme | Key Deliverables |
+|---------|-------|------------------|
+| v0.14.3 | Drift Detection | Drift JSON schema, comparator engine, CI semantics |
+| v0.14.4 | Drift Coverage | Env vars, resources, pull policy drift |
+| v0.14.5 | Drift Correlation | Correlation helpers, narrative renderer |
+| v0.14.6 | Debug Bundles | Portable snapshots, offline inspect/replay |
+
+### Contract Integrity
+
+All semantic contracts preserved:
+- JSON facts unchanged throughout arc
+- ASCII strictly derived (f(JSON)+g)
+- Exit codes consistent across commands
+- Leak Test respected end-to-end
+- Determinism guaranteed
+
+### Next Milestone
+
+**v0.15 — Replay & Time-Series Reasoning**
+
+Qualitative shift: multiple bundles + ordering = time-aware reasoning.
+Single bundles remain immutable; temporal meaning requires explicit new schema.
+
+---

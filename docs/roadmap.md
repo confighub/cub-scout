@@ -185,6 +185,21 @@ Bundles are pure packaging of existing facts.
 
 ---
 
+### Explainable Debugging Arc — Complete
+
+**v0.14.3–v0.14.6** delivers the complete Explainable Debugging arc:
+
+| Version | Capability |
+|---------|------------|
+| v0.14.3 | Drift detection (what changed?) |
+| v0.14.4 | Drift coverage expansion |
+| v0.14.5 | Drift ↔ debug correlation (why it broke) |
+| v0.14.6 | Portable debug bundles (share and replay) |
+
+All semantic contracts preserved throughout. Ready for v0.15.
+
+---
+
 ## v0.15 — Replay & Time-Series Reasoning
 
 **Status:** Planned
