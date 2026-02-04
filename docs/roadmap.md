@@ -70,54 +70,41 @@ No new semantic authorities. No architectural churn.
 
 ---
 
-## v0.14.4 — Drift Coverage Expansion
+## v0.14.4 — Drift Coverage Expansion (RELEASED)
 
+**Status:** Released (2026-02-04)
 **Theme:** More signal, same rails
 
-### Scope (high leverage, mechanical)
+### Delivered
 
-Add new drift types using the existing comparator → JSON → ASCII pipeline.
+- **Environment variable drift** (#94)
+  - Path: `spec.template.spec.containers[name=<container>].env[name=<VAR>]`
+  - Classification: config, Severity: warning
 
-Planned drift types:
+- **Resource requests/limits drift** (#95)
+  - Path: `spec.template.spec.containers[name=<container>].resources.<type>.<resource>`
+  - Classification: capacity
+  - Severity: warning (normal), critical (invalid config)
 
-1. **Environment variable drift**
-   - name → desired/live
-   - classification: config
-   - severity: warning
+- **Image pull policy drift** (#96)
+  - Path: `spec.template.spec.containers[name=<container>].imagePullPolicy`
+  - Classification: rollout, Severity: warning
 
-2. **Resource requests / limits drift**
-   - cpu / memory
-   - classification: capacity
-   - severity: warning / critical (invalid configs)
+- **Documentation** (#97)
+  - `docs/drift.md` - main user guide
+  - `docs/reference/exit-codes.md` - CI exit codes
+  - `docs/reference/severity-taxonomy.md` - severity reference
+  - `examples/drift/` - 3 example scenarios
 
-3. **Image pull policy drift**
-   - Always / IfNotPresent / Never
-   - classification: rollout
+### Commits
 
-4. *(Optional)* **Restart / probe configuration drift**
-
-### Non-goals
-
-- No new flags
-- No new exit semantics
-- No TUI changes
-
-### Deliverables
-
-- Comparator extensions + tests
-- JSON schema updates
-- ASCII renderer automatically reflects new drift types
-- Docs + examples updated in lockstep
-
-### PR Plan
-
-1. **PR1** — Drift comparator extensions (env vars, resources)
-2. **PR2** — Drift comparator extensions (image pull policy)
-3. **PR3** — ASCII renderer auto-reflects new drift (goldens)
-4. **PR4** — JSON schema + reference docs
-5. **PR5** — User docs + examples
-
-Each PR must pass Semantic Safety Checklist.
+| PR | Commit | Description |
+|----|--------|-------------|
+| PR1 | `1bc4192` | Environment variable drift |
+| PR2 | `f0d9f50` | Resource requests/limits drift |
+| PR3 | `18e97fa` | Image pull policy drift |
+| PR4 | `be92c6e` | JSON schema + reference docs |
+| PR5 | `00fadf7` | User docs + examples |
 
 ---
 
