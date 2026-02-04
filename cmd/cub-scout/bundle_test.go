@@ -1510,6 +1510,246 @@ func createTestCatalog(t *testing.T, tmpDir string) string {
 	return catalogDir
 }
 
+// Attribution replay tests
+
+func TestBundleReplay_AttributionJSON(t *testing.T) {
+	// Create a bundle with attribution
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "replay-attribution-bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+
+	builder := agent.NewAttributionGraphBuilder()
+	builder.SetSource("test-bundle", time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC), "v0.16.0")
+	builder.AddNode(agent.AttributionNode{
+		Type:    agent.NodeXR,
+		Ref:     agent.AttributionRef{Kind: "XPostgreSQLInstance", Name: "xpostgresql-abc", UID: "uid-xr"},
+		Present: true,
+	})
+	builder.AddNode(agent.AttributionNode{
+		Type:    agent.NodeMR,
+		Ref:     agent.AttributionRef{Kind: "Instance", Name: "staging-db", Namespace: "crossplane-system", UID: "uid-mr"},
+		Present: true,
+	})
+	builder.AddEdge(agent.AttributionEdge{
+		Type:     agent.EdgeOwns,
+		From:     "xr:uid:uid-xr",
+		To:       "mr:uid:uid-mr",
+		Evidence: agent.EvidenceOwnerReference,
+	})
+
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "XPostgreSQLInstance",
+				Name:      "xpostgresql-abc",
+				Namespace: "default",
+			},
+		},
+		Attribution: builder.Build(),
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Read and verify attribution JSON structure
+	reader := agent.NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	if readBundle.Attribution == nil {
+		t.Fatal("Attribution should not be nil")
+	}
+
+	// Marshal to JSON
+	jsonBytes, err := json.MarshalIndent(readBundle.Attribution, "", "  ")
+	if err != nil {
+		t.Fatalf("JSON marshal failed: %v", err)
+	}
+
+	// Parse back and verify structure
+	var parsed agent.AttributionGraph
+	if err := json.Unmarshal(jsonBytes, &parsed); err != nil {
+		t.Fatalf("JSON unmarshal failed: %v", err)
+	}
+
+	if parsed.SchemaVersion != agent.AttributionGraphSchemaVersion {
+		t.Errorf("SchemaVersion = %s, want %s", parsed.SchemaVersion, agent.AttributionGraphSchemaVersion)
+	}
+	if len(parsed.Nodes) != 2 {
+		t.Errorf("Nodes count = %d, want 2", len(parsed.Nodes))
+	}
+	if len(parsed.Edges) != 1 {
+		t.Errorf("Edges count = %d, want 1", len(parsed.Edges))
+	}
+}
+
+func TestBundleReplay_AttributionASCII_Deterministic(t *testing.T) {
+	// Create a bundle with attribution
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "replay-attr-ascii-bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+
+	builder := agent.NewAttributionGraphBuilder()
+	builder.AddNode(agent.AttributionNode{
+		Type:    agent.NodeXR,
+		Ref:     agent.AttributionRef{Kind: "XPostgreSQLInstance", Name: "xpostgresql-abc", UID: "uid-xr"},
+		Present: true,
+	})
+	builder.AddNode(agent.AttributionNode{
+		Type:    agent.NodeMR,
+		Ref:     agent.AttributionRef{Kind: "Instance", Name: "staging-db", Namespace: "crossplane-system", UID: "uid-mr"},
+		Present: true,
+	})
+	builder.AddEdge(agent.AttributionEdge{
+		Type:     agent.EdgeOwns,
+		From:     "xr:uid:uid-xr",
+		To:       "mr:uid:uid-mr",
+		Evidence: agent.EvidenceOwnerReference,
+	})
+
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "XPostgreSQLInstance",
+				Name:      "xpostgresql-abc",
+				Namespace: "default",
+			},
+		},
+		Attribution: builder.Build(),
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Read and render multiple times - should be deterministic
+	reader := agent.NewBundleReader()
+	var outputs []string
+
+	for i := 0; i < 3; i++ {
+		readBundle, err := reader.Read(bundleDir)
+		if err != nil {
+			t.Fatalf("Read %d failed: %v", i, err)
+		}
+
+		output := agent.RenderAttributionGraphASCII(readBundle.Attribution)
+		outputs = append(outputs, output)
+	}
+
+	// All outputs should be identical
+	for i := 1; i < len(outputs); i++ {
+		if outputs[i] != outputs[0] {
+			t.Errorf("ASCII output %d differs from output 0", i)
+		}
+	}
+
+	// Verify expected content
+	if !strings.Contains(outputs[0], "Attribution Graph") {
+		t.Error("Output missing 'Attribution Graph' header")
+	}
+	if !strings.Contains(outputs[0], agent.AttributionGraphSchemaVersion) {
+		t.Errorf("Output missing schema version %s", agent.AttributionGraphSchemaVersion)
+	}
+	if !strings.Contains(outputs[0], "Nodes:") {
+		t.Error("Output missing 'Nodes:' section")
+	}
+	if !strings.Contains(outputs[0], "Edges:") {
+		t.Error("Output missing 'Edges:' section")
+	}
+}
+
+func TestBundleReplay_AttributionMissing(t *testing.T) {
+	// Create a bundle WITHOUT attribution
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "no-attribution-bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1", Path: "spec.replicas"},
+		},
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Read bundle
+	reader := agent.NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	// Verify attribution is missing or empty
+	if readBundle.Attribution != nil && !readBundle.Attribution.IsEmpty() {
+		t.Error("Attribution should be nil or empty for bundle without attribution")
+	}
+
+	// Verify HasAttribution is false in summary
+	summary := agent.Summarize(readBundle)
+	if summary.AttributionPresent {
+		t.Error("AttributionPresent should be false")
+	}
+}
+
+func TestBundleReplay_AttributionEmpty(t *testing.T) {
+	// Create a bundle with an empty attribution graph
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "empty-attribution-bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+
+	// Empty attribution graph (no nodes or edges)
+	builder := agent.NewAttributionGraphBuilder()
+	emptyGraph := builder.Build()
+
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		Attribution: emptyGraph,
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Verify attribution.json was NOT written (empty graph = omit file)
+	attrPath := filepath.Join(bundleDir, "attribution.json")
+	if _, err := os.Stat(attrPath); err == nil {
+		t.Error("attribution.json should not be written for empty graph")
+	}
+
+	// Read bundle and verify
+	reader := agent.NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	summary := agent.Summarize(readBundle)
+	if summary.AttributionPresent {
+		t.Error("AttributionPresent should be false for empty graph")
+	}
+}
+
 // Helper to patch bundle metadata createdAt (for ordering tests)
 func patchBundleMetadataCreatedAt(t *testing.T, bundleDir string, createdAt time.Time) {
 	t.Helper()

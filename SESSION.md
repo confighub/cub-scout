@@ -2956,3 +2956,306 @@ Single bundles remain immutable; temporal meaning requires explicit new schema.
 See `docs/v0.15-design-checkpoint.md` for full specification.
 
 ---
+
+## v0.16 PR1 — Attribution Graph Foundation
+
+**Date:** 2026-02-04
+**Status:** Implementation complete, tests passing
+
+### Scope
+
+Define attribution-graph.v1 schema and integrate with bundle format. This is the foundation for Crossplane composition lineage (and future Kustomize overlay attribution).
+
+### Deliverables
+
+| Item | Status |
+|------|--------|
+| Schema types (`attribution_graph.go`) | ✅ Complete |
+| Builder pattern with deterministic output | ✅ Complete |
+| Node/edge ID generation strategies | ✅ Complete |
+| Validation functions | ✅ Complete |
+| Bundle read/write support | ✅ Complete |
+| ASCII renderer | ✅ Complete |
+| CLI `bundle replay --section attribution` | ✅ Complete |
+| Tests (34 total) | ✅ All passing |
+
+### Schema Design
+
+```
+attribution-graph.v1
+├── schema_version: "attribution-graph.v1"
+├── generated_from: { bundle_id, generated_at, cub_scout_version }
+├── nodes[]: { id, type, ref, present }
+├── edges[]: { id, type, from, to, evidence }
+└── summary: { nodes_by_type, edges_by_type, unattributed_count, ambiguous_count }
+```
+
+**Node types:** xr, mr, claim, composition, composition_revision
+**Edge types:** owns, selected_composition, selected_composition_revision
+**Evidence types:** owner_reference, composite_label, claim_label, spec_composition_ref, spec_composition_revision_ref
+
+### Key Decisions
+
+1. **Node ID strategy:** Prefer UID (`<type>:uid:<uid>`), fallback to canonical ref string
+2. **Edge ID strategy:** SHA256 hash of `type|from|to|evidence`
+3. **Determinism:** Nodes/edges sorted by ID before serialization
+4. **Empty graph:** Not written to bundle (omit `attribution.json` file)
+5. **Bundle-first:** Attribution captured at bundle creation, not computed at replay
+
+### Files Created/Modified
+
+**New files:**
+- `pkg/agent/attribution_graph.go` — Core types and builder
+- `pkg/agent/attribution_graph_test.go` — 12 unit tests
+- `pkg/agent/attribution_graph_render.go` — ASCII renderer
+- `pkg/agent/attribution_graph_render_test.go` — 11 render tests
+
+**Modified files:**
+- `pkg/agent/debug_bundle.go` — Added Attribution field, read/write support
+- `pkg/agent/debug_bundle_test.go` — Added 7 attribution tests
+- `cmd/cub-scout/bundle.go` — Added attribution section replay
+- `cmd/cub-scout/bundle_test.go` — Added 4 attribution CLI tests
+
+### Test Coverage
+
+All 34 attribution-related tests pass:
+- Schema tests: determinism, sorting, ID generation, validation, JSON round-trip
+- Bundle tests: write with/without attribution, read with/without, empty graph handling
+- Render tests: header, summary, nodes, edges, determinism
+- CLI tests: JSON output, ASCII determinism, missing section error, empty graph
+
+### What This Enables
+
+- Foundation for PR2: Wire attribution capture into debug commands
+- Foundation for PR3: Crossplane controller queries (XR → MR traversal)
+- Future: Kustomize overlay attribution using same schema
+
+---
+
+## v0.16 PR2 — Debug Bundle Capture Wiring
+
+**Date:** 2026-02-04
+**Status:** Implementation complete, tests passing
+
+### Scope
+
+Add a real production path that runs debug analysis, writes a Debug Bundle to disk, and populates `attribution.json` using the existing Crossplane lineage resolver.
+
+### Deliverables
+
+| Item | Status |
+|------|--------|
+| `--save-bundle <dir>` flag on debug command | ✅ Complete |
+| Session → DebugBundle conversion | ✅ Complete |
+| Crossplane lineage → AttributionGraph conversion | ✅ Complete |
+| Test fixtures for Crossplane resources | ✅ Complete |
+| Unit tests for attribution_crossplane.go | ✅ Complete |
+| CLI tests for --save-bundle | ✅ Complete |
+| All tests passing | ✅ 50+ tests |
+
+### Key Implementation Details
+
+**Bundle directory naming:** Deterministic, no timestamps
+- Format: `<kind>-<namespace>-<name>` (lowercase)
+- Example: `deployment-production-api`
+
+**Attribution population flow:**
+1. After `runDebugAnalysis()` completes
+2. If `--save-bundle` is set, call `saveDebugBundle()`
+3. Fetch target object as unstructured
+4. Call `AttributionGraphForTarget()` which:
+   - Resolves Crossplane lineage via existing `ResolveCrossplaneLineage()`
+   - Converts to AttributionGraph via `BuildAttributionGraphFromCrossplaneLineage()`
+5. Write bundle with attribution included
+
+**Test hooks for CI:**
+- `CUB_SCOUT_TEST_TARGET_OBJECT=<path>` — Load target from fixture file
+
+### Files Created/Modified
+
+**New files:**
+- `pkg/agent/attribution_crossplane.go` — Lineage → attribution conversion
+- `pkg/agent/attribution_crossplane_test.go` — 7 unit tests
+- `cmd/cub-scout/debug_test.go` — 6 CLI tests
+- `test/fixtures/crossplane/managed_with_composite_label.json`
+- `test/fixtures/crossplane/deployment_no_crossplane.json`
+
+**Modified files:**
+- `cmd/cub-scout/debug.go` — Added `--save-bundle` flag, bundle writing logic
+
+### Test Coverage
+
+All tests pass:
+- `BuildAttributionGraphFromCrossplaneLineage` — basic, with claim, nil, evidence mapping, determinism
+- `resourceRefToAttributionRef` — full ref, version only, minimal
+- `generateBundleDirName` — with/without namespace
+- `buildDebugBundleFromSession` — full session conversion
+- `populateAttributionFromFixture` — with/without Crossplane signals
+- `saveDebugBundle` integration tests
+
+### What This Enables
+
+- `cub-scout debug deployment/api -n prod --save-bundle ./bundles`
+- Offline inspection: `cub-scout bundle inspect ./bundles/deployment-prod-api`
+- Attribution replay: `cub-scout bundle replay ./bundles/... --section attribution`
+- CI artifacts: Save debug state for later analysis
+
+---
+
+## v0.16 PR3 — Attribution Report
+
+**Date:** 2026-02-04
+**Status:** Implementation complete, tests passing
+
+### Scope
+
+Produce a human-usable ownership explanation derived strictly from attribution-graph.v1, with deterministic scoring and ranking.
+
+### Deliverables
+
+| Item | Status |
+|------|--------|
+| Schema `attribution-report.v1` | ✅ Complete |
+| Scoring algorithm (owner_reference > composite_label > claim_label) | ✅ Complete |
+| Reason codes (enum, not free text) | ✅ Complete |
+| ASCII renderer | ✅ Complete |
+| CLI `bundle replay --section attribution-report` | ✅ Complete |
+| Tests (16 new) | ✅ All passing |
+
+### Scoring Table
+
+| Evidence | Score |
+|----------|-------|
+| `owner_reference` | 100 |
+| `composite_label` | 80 |
+| `claim_label` | 60 |
+
+### Reason Codes
+
+- `owned_via_owner_ref` — Kubernetes ownerReference
+- `owned_via_label` — Crossplane label
+- `unattributed` — No owner found
+- `ambiguous` — Multiple equally-ranked owners
+
+### Key Decisions
+
+1. **Items sorted by ref** — Canonical ref string (kind/ns/name)
+2. **Deterministic tie-break** — Alphabetical by owner ref when scores equal
+3. **Report targets MR nodes** — Only managed resources appear in report
+
+### Files Created
+
+- `pkg/agent/attribution_report.go` — Types and builder
+- `pkg/agent/attribution_report_render.go` — ASCII renderer
+- `pkg/agent/attribution_report_test.go` — 9 tests
+- `pkg/agent/attribution_report_render_test.go` — 7 tests
+
+### Files Modified
+
+- `cmd/cub-scout/bundle.go` — Added `--section attribution-report`
+
+---
+
+## v0.16 PR4 — Kustomize Overlay Attribution
+
+**Date:** 2026-02-04
+**Status:** Implementation complete, tests passing
+
+### Scope
+
+Extend attribution-graph.v1 to include Kustomize overlay ownership via explicit `--kustomize` flag on debug command.
+
+### Deliverables
+
+| Item | Status |
+|------|--------|
+| `--kustomize <path>` flag on debug | ✅ Complete |
+| `BuildKustomizeOverlayOwnership()` builder | ✅ Complete |
+| `MergeAttributionGraphs()` helper | ✅ Complete |
+| Path normalization (abs → basename+hash) | ✅ Complete |
+| `NodeK8sObject` for generic targets | ✅ Complete |
+| `NodeKustomizeOverlay` node type | ✅ Complete |
+| `EvidenceKustomizeOverlay` evidence | ✅ Complete |
+| `ReasonOwnedViaKustomize` reason code | ✅ Complete |
+| Tests (26 new) | ✅ All passing |
+
+### Updated Scoring Table
+
+| Evidence | Score |
+|----------|-------|
+| `owner_reference` | 100 |
+| `kustomize_origin` | 90 (reserved for future annotation-based detection) |
+| `composite_label` | 80 |
+| `kustomize_overlay` | 75 |
+| `claim_label` | 60 |
+
+### Key Decisions
+
+1. **Explicit opt-in** — Requires `--kustomize` flag (no guessing)
+2. **Overlay as owner** — Uses `owns` edge so it appears in report
+3. **Crossplane precedence** — ownerRef (100) beats kustomize (75)
+4. **Path safety** — Absolute paths use basename+hash (no path leakage)
+
+### Files Created
+
+- `pkg/agent/attribution_kustomize.go` — Kustomize ownership builder
+- `pkg/agent/attribution_kustomize_test.go` — 7 tests
+- `pkg/agent/attribution_graph_merge.go` — Deterministic graph merge
+- `pkg/agent/attribution_graph_merge_test.go` — 8 tests
+- `test/fixtures/kustomize/overlay1/kustomization.yaml`
+
+### Files Modified
+
+- `pkg/agent/attribution_graph.go` — Added NodeK8sObject, NodeKustomizeOverlay, EvidenceKustomizeOverlay
+- `pkg/agent/attribution_report.go` — Added ScoreKustomizeOverlay, ReasonOwnedViaKustomize
+- `pkg/agent/attribution_report_render.go` — Handle kustomize reason
+- `cmd/cub-scout/debug.go` — Added --kustomize flag, populateKustomizeAttribution()
+
+---
+
+## v0.16 Summary — Platform Composition & Attribution
+
+**Date:** 2026-02-04
+**Status:** COMPLETE — Ready for v0.16.0 release
+
+### Arc Overview
+
+| PR | Scope | Status |
+|----|-------|--------|
+| PR1 | Attribution Graph Foundation | ✅ Complete |
+| PR2 | Debug Bundle Capture Wiring | ✅ Complete |
+| PR3 | Attribution Report | ✅ Complete |
+| PR4 | Kustomize Overlay Attribution | ✅ Complete |
+
+### Capabilities Delivered
+
+1. **Crossplane composition lineage** — XR → MR ownership captured in bundles
+2. **Kustomize overlay attribution** — Explicit `--kustomize` flag declares provenance
+3. **Ownership reports** — Human-readable explanation with scoring
+4. **Deterministic merge** — Multiple attribution sources combine safely
+5. **Bundle replay** — Offline inspection of captured attribution
+
+### Contract Integrity
+
+- **f(JSON)+g** — All ASCII derived from JSON facts
+- **Determinism** — Same input always produces same output
+- **Additive schema** — New node/edge/evidence types, no breaking changes
+- **Explicit opt-in** — Attribution requires user-provided context
+
+### CLI Usage
+
+```bash
+# Capture debug bundle with Crossplane attribution
+cub-scout debug deployment/api -n prod --save-bundle ./bundles
+
+# Capture with Kustomize overlay context
+cub-scout debug deployment/api -n prod --save-bundle ./bundles --kustomize ./overlays/prod
+
+# Replay attribution graph
+cub-scout bundle replay ./bundles/deployment-prod-api --section attribution
+
+# Replay ownership report
+cub-scout bundle replay ./bundles/deployment-prod-api --section attribution-report
+```
+
+---

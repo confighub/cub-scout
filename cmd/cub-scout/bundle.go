@@ -108,6 +108,8 @@ Replay does NOT:
 Supported sections:
 - drift: Re-render drift findings (default)
 - correlation: Re-render drift-debug correlation narrative
+- attribution: Re-render composition lineage graph (v0.16+)
+- attribution-report: Re-render ownership report with rankings (v0.16+)
 
 Output is deterministic: same bundle always produces identical output.
 
@@ -415,8 +417,14 @@ func runBundleReplay(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate --section
-	if bundleSection != "drift" && bundleSection != "correlation" {
-		fmt.Fprintf(os.Stderr, "Error: invalid --section value %q (valid: drift, correlation)\n", bundleSection)
+	validSections := map[string]bool{
+		"drift":              true,
+		"correlation":        true,
+		"attribution":        true,
+		"attribution-report": true,
+	}
+	if !validSections[bundleSection] {
+		fmt.Fprintf(os.Stderr, "Error: invalid --section value %q (valid: drift, correlation, attribution, attribution-report)\n", bundleSection)
 		os.Exit(BundleReplayExitError)
 	}
 
@@ -433,6 +441,10 @@ func runBundleReplay(cmd *cobra.Command, args []string) error {
 		return replayDrift(bundle)
 	case "correlation":
 		return replayCorrelation(bundle)
+	case "attribution":
+		return replayAttribution(bundle)
+	case "attribution-report":
+		return replayAttributionReport(bundle)
 	default:
 		return fmt.Errorf("unknown section: %s", bundleSection)
 	}
@@ -539,6 +551,74 @@ func outputReplayCorrelationJSON(corr agent.DriftCorrelation) error {
 
 func outputReplayCorrelationASCII(corr agent.DriftCorrelation) error {
 	output := agent.RenderCorrelationASCII(corr)
+	fmt.Print(output)
+	return nil
+}
+
+func replayAttribution(bundle *agent.DebugBundle) error {
+	// Check if bundle has attribution
+	if bundle.Attribution == nil || bundle.Attribution.IsEmpty() {
+		fmt.Fprintf(os.Stderr, "Error: bundle has no attribution section\n")
+		os.Exit(BundleReplayExitError)
+		return nil
+	}
+
+	// Output based on format
+	switch bundleFormat {
+	case "json":
+		return outputReplayAttributionJSON(bundle.Attribution)
+	case "ascii":
+		return outputReplayAttributionASCII(bundle.Attribution)
+	default:
+		return fmt.Errorf("unknown format: %s (valid: ascii, json)", bundleFormat)
+	}
+}
+
+func outputReplayAttributionJSON(graph *agent.AttributionGraph) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(graph)
+}
+
+func outputReplayAttributionASCII(graph *agent.AttributionGraph) error {
+	output := agent.RenderAttributionGraphASCII(graph)
+	fmt.Print(output)
+	return nil
+}
+
+func replayAttributionReport(bundle *agent.DebugBundle) error {
+	// Check if bundle has attribution
+	if bundle.Attribution == nil || bundle.Attribution.IsEmpty() {
+		fmt.Fprintf(os.Stderr, "Error: bundle has no attribution section (required for report)\n")
+		os.Exit(BundleReplayExitError)
+		return nil
+	}
+
+	// Build report from graph
+	report, err := agent.BuildAttributionReport(bundle.Attribution)
+	if err != nil {
+		return fmt.Errorf("failed to build attribution report: %w", err)
+	}
+
+	// Output based on format
+	switch bundleFormat {
+	case "json":
+		return outputReplayAttributionReportJSON(report)
+	case "ascii":
+		return outputReplayAttributionReportASCII(report)
+	default:
+		return fmt.Errorf("unknown format: %s (valid: ascii, json)", bundleFormat)
+	}
+}
+
+func outputReplayAttributionReportJSON(report *agent.AttributionReport) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(report)
+}
+
+func outputReplayAttributionReportASCII(report *agent.AttributionReport) error {
+	output := agent.RenderAttributionReportASCII(report)
 	fmt.Print(output)
 	return nil
 }

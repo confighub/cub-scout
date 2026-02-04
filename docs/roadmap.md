@@ -242,11 +242,50 @@ Graphs become *views over artefacts*, not new semantic layers.
 
 ## v0.16 — Platform Composition & Attribution
 
-**Status:** Planned
+**Status:** Released
 
 Theme: *Why this change exists*
 
-* Kustomize overlay attribution (#2)
+### v0.16.0 — Attribution Graph Foundation (PR1)
+
+**Status:** Released
+
+* **Attribution Graph v1** (`attribution-graph.v1`): Composition lineage schema
+  * Node types: xr, mr, claim, composition, composition_revision, k8s_object, kustomize_overlay
+  * Edge types: owns, selected_composition, selected_composition_revision
+  * Evidence types: owner_reference, composite_label, claim_label, kustomize_overlay, spec refs
+* Bundle integration: `attribution.json` as optional section
+* Replay support: `bundle replay --section attribution`
+
+### v0.16.1 — Debug Bundle Capture (PR2)
+
+**Status:** Released
+
+* `cub-scout debug ... --save-bundle <dir>` writes debug bundles
+* Crossplane lineage automatically captured as attribution
+* Test hooks for CI-safe testing (`CUB_SCOUT_TEST_TARGET_OBJECT`)
+* Deterministic bundle directory naming
+
+### v0.16.2 — Attribution Report (PR3)
+
+**Status:** Released
+
+* `attribution-report.v1` schema with scoring and rankings
+* Reason codes: owned_via_owner_ref, owned_via_label, unattributed, ambiguous
+* Replay support: `bundle replay --section attribution-report`
+
+### v0.16.3 — Kustomize Overlay Attribution (PR4)
+
+**Status:** Released
+
+* `--kustomize <path>` flag for explicit overlay provenance
+* `kustomize_overlay` evidence type (score=75)
+* `owned_via_kustomize` reason code
+* Deterministic graph merge for multiple attribution sources
+* Non-Crossplane targets supported via `k8s_object` node type
+
+### Deferred
+
 * Crossplane ownership and lineage (#8, #21)
 * Platform composition tools (kro) (#22)
 
@@ -318,7 +357,8 @@ Theme: *Long-lived trust*
 * v0.14.5: #98, #99
 * v0.14.6: #100–#102
 * v0.15.0: PR1 (Catalog), PR2 (Diff), PR3 (Timeline)
-* v0.16: #2, #8, #21–#22
+* v0.16.0–v0.16.3: PR1 (Attribution Graph), PR2 (Bundle Capture), PR3 (Report), PR4 (Kustomize)
+* v0.17+: #8, #21–#22
 * v0.19: #88–#93
 
 Issues remain the execution unit; versions define intent.

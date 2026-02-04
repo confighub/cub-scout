@@ -1,0 +1,19 @@
+{
+  "apiVersion": "rds.aws.upbound.io/v1beta1",
+  "kind": "Instance",
+  "metadata": {
+    "name": "staging-db-abc123",
+    "namespace": "crossplane-system",
+    "uid": "mr-uid-abc123",
+    "labels": {
+      "crossplane.io/composite": "xpostgresql-staging"
+    }
+  },
+  "spec": {
+    "forProvider": {
+      "engine": "postgres",
+      "engineVersion": "14",
+      "instanceClass": "db.t3.micro"
+    }
+  }
+}

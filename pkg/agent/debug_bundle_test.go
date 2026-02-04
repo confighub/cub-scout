@@ -502,3 +502,282 @@ func TestYesNo(t *testing.T) {
 		t.Error("yesNo(false) should return No")
 	}
 }
+
+func TestBundleWriter_WriteWithAttribution(t *testing.T) {
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "attribution-bundle")
+
+	writer := NewBundleWriter("v0.16.0-test")
+
+	// Build attribution graph
+	builder := NewAttributionGraphBuilder()
+	builder.AddNode(AttributionNode{
+		Type:    NodeXR,
+		Ref:     AttributionRef{Kind: "XPostgreSQLInstance", Name: "xpostgresql-abc", UID: "uid-xr"},
+		Present: true,
+	})
+	builder.AddNode(AttributionNode{
+		Type:    NodeMR,
+		Ref:     AttributionRef{Kind: "Instance", Name: "staging-db", UID: "uid-mr"},
+		Present: true,
+	})
+	builder.AddEdge(AttributionEdge{
+		Type:     EdgeOwns,
+		From:     "xr:uid:uid-xr",
+		To:       "mr:uid:uid-mr",
+		Evidence: EvidenceOwnerReference,
+	})
+
+	bundle := &DebugBundle{
+		Metadata: BundleMetadata{
+			Label: "attribution-test",
+			Target: BundleTarget{
+				Kind:      "Instance",
+				Name:      "staging-db",
+				Namespace: "crossplane-system",
+			},
+		},
+		Attribution: builder.Build(),
+	}
+
+	err := writer.Write(bundle, bundleDir)
+	if err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Verify attribution.json exists
+	attributionPath := filepath.Join(bundleDir, "attribution.json")
+	if _, err := os.Stat(attributionPath); os.IsNotExist(err) {
+		t.Error("Expected attribution.json to exist")
+	}
+
+	// Verify metadata has attribution flag
+	if !bundle.Metadata.Contents.HasAttribution {
+		t.Error("Contents.HasAttribution should be true")
+	}
+}
+
+func TestBundleWriter_WriteWithoutAttribution(t *testing.T) {
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "no-attribution-bundle")
+
+	writer := NewBundleWriter("v0.16.0-test")
+
+	bundle := &DebugBundle{
+		Metadata: BundleMetadata{
+			Target: BundleTarget{
+				Kind: "Deployment",
+				Name: "api",
+			},
+		},
+		// No attribution
+	}
+
+	err := writer.Write(bundle, bundleDir)
+	if err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Verify attribution.json does NOT exist
+	attributionPath := filepath.Join(bundleDir, "attribution.json")
+	if _, err := os.Stat(attributionPath); err == nil {
+		t.Error("attribution.json should not exist for bundle without attribution")
+	}
+
+	// Verify metadata has attribution flag false
+	if bundle.Metadata.Contents.HasAttribution {
+		t.Error("Contents.HasAttribution should be false")
+	}
+}
+
+func TestBundleWriter_WriteEmptyAttribution(t *testing.T) {
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "empty-attribution-bundle")
+
+	writer := NewBundleWriter("v0.16.0-test")
+
+	// Empty graph (no nodes or edges)
+	emptyGraph := &AttributionGraph{
+		SchemaVersion: AttributionGraphSchemaVersion,
+		Nodes:         []AttributionNode{},
+		Edges:         []AttributionEdge{},
+	}
+
+	bundle := &DebugBundle{
+		Metadata: BundleMetadata{
+			Target: BundleTarget{
+				Kind: "Deployment",
+				Name: "api",
+			},
+		},
+		Attribution: emptyGraph,
+	}
+
+	err := writer.Write(bundle, bundleDir)
+	if err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Verify attribution.json does NOT exist (empty graph is not written)
+	attributionPath := filepath.Join(bundleDir, "attribution.json")
+	if _, err := os.Stat(attributionPath); err == nil {
+		t.Error("attribution.json should not exist for empty attribution graph")
+	}
+
+	// Verify metadata has attribution flag false
+	if bundle.Metadata.Contents.HasAttribution {
+		t.Error("Contents.HasAttribution should be false for empty graph")
+	}
+}
+
+func TestBundleReader_ReadWithAttribution(t *testing.T) {
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "read-attribution-bundle")
+
+	// Build and write a bundle with attribution
+	writer := NewBundleWriter("v0.16.0-test")
+
+	builder := NewAttributionGraphBuilder()
+	builder.AddNode(AttributionNode{
+		Type:    NodeXR,
+		Ref:     AttributionRef{Kind: "XPostgreSQLInstance", Name: "xpostgresql-abc", UID: "uid-xr"},
+		Present: true,
+	})
+	builder.AddNode(AttributionNode{
+		Type:    NodeMR,
+		Ref:     AttributionRef{Kind: "Instance", Name: "staging-db", UID: "uid-mr"},
+		Present: true,
+	})
+	builder.AddEdge(AttributionEdge{
+		Type:     EdgeOwns,
+		From:     "xr:uid:uid-xr",
+		To:       "mr:uid:uid-mr",
+		Evidence: EvidenceOwnerReference,
+	})
+
+	originalBundle := &DebugBundle{
+		Metadata: BundleMetadata{
+			Label: "read-attribution-test",
+			Target: BundleTarget{
+				Kind: "Instance",
+				Name: "staging-db",
+			},
+		},
+		Attribution: builder.Build(),
+	}
+
+	if err := writer.Write(originalBundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Read it back
+	reader := NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	// Verify attribution was read
+	if readBundle.Attribution == nil {
+		t.Fatal("Attribution should not be nil")
+	}
+	if readBundle.Attribution.SchemaVersion != AttributionGraphSchemaVersion {
+		t.Errorf("SchemaVersion = %s, want %s", readBundle.Attribution.SchemaVersion, AttributionGraphSchemaVersion)
+	}
+	if len(readBundle.Attribution.Nodes) != 2 {
+		t.Errorf("Expected 2 nodes, got %d", len(readBundle.Attribution.Nodes))
+	}
+	if len(readBundle.Attribution.Edges) != 1 {
+		t.Errorf("Expected 1 edge, got %d", len(readBundle.Attribution.Edges))
+	}
+
+	// Verify HasAttribution is set correctly
+	if !readBundle.Metadata.Contents.HasAttribution {
+		t.Error("Contents.HasAttribution should be true after reading")
+	}
+}
+
+func TestBundleReader_ReadWithoutAttribution(t *testing.T) {
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "no-attribution-bundle")
+
+	// Write a bundle without attribution
+	writer := NewBundleWriter("v0.16.0-test")
+	bundle := &DebugBundle{
+		Metadata: BundleMetadata{
+			Target: BundleTarget{
+				Kind: "Deployment",
+				Name: "api",
+			},
+		},
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Read it back
+	reader := NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	// Verify attribution is nil
+	if readBundle.Attribution != nil {
+		t.Error("Attribution should be nil for bundle without attribution")
+	}
+
+	// Verify HasAttribution is false
+	if readBundle.Metadata.Contents.HasAttribution {
+		t.Error("Contents.HasAttribution should be false")
+	}
+}
+
+func TestSummarize_WithAttribution(t *testing.T) {
+	builder := NewAttributionGraphBuilder()
+	builder.AddNode(AttributionNode{Type: NodeXR, Ref: AttributionRef{UID: "xr1"}})
+	builder.AddNode(AttributionNode{Type: NodeMR, Ref: AttributionRef{UID: "mr1"}})
+	builder.AddNode(AttributionNode{Type: NodeMR, Ref: AttributionRef{UID: "mr2"}})
+	builder.AddEdge(AttributionEdge{Type: EdgeOwns, From: "xr:uid:xr1", To: "mr:uid:mr1", Evidence: EvidenceOwnerReference})
+	builder.AddEdge(AttributionEdge{Type: EdgeOwns, From: "xr:uid:xr1", To: "mr:uid:mr2", Evidence: EvidenceOwnerReference})
+
+	bundle := &DebugBundle{
+		Metadata: BundleMetadata{
+			Target: BundleTarget{Kind: "Instance", Name: "db"},
+		},
+		Attribution: builder.Build(),
+	}
+
+	summary := Summarize(bundle)
+
+	if !summary.AttributionPresent {
+		t.Error("AttributionPresent should be true")
+	}
+	if summary.AttributionNodes != 3 {
+		t.Errorf("AttributionNodes = %d, want 3", summary.AttributionNodes)
+	}
+	if summary.AttributionEdges != 2 {
+		t.Errorf("AttributionEdges = %d, want 2", summary.AttributionEdges)
+	}
+}
+
+func TestSummarize_WithoutAttribution(t *testing.T) {
+	bundle := &DebugBundle{
+		Metadata: BundleMetadata{
+			Target: BundleTarget{Kind: "Deployment", Name: "api"},
+		},
+	}
+
+	summary := Summarize(bundle)
+
+	if summary.AttributionPresent {
+		t.Error("AttributionPresent should be false")
+	}
+	if summary.AttributionNodes != 0 {
+		t.Errorf("AttributionNodes = %d, want 0", summary.AttributionNodes)
+	}
+	if summary.AttributionEdges != 0 {
+		t.Errorf("AttributionEdges = %d, want 0", summary.AttributionEdges)
+	}
+}

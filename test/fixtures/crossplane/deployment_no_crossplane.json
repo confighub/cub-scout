@@ -1,0 +1,35 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "api-server",
+    "namespace": "production",
+    "uid": "deploy-uid-xyz789",
+    "labels": {
+      "app": "api-server"
+    }
+  },
+  "spec": {
+    "replicas": 3,
+    "selector": {
+      "matchLabels": {
+        "app": "api-server"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "api-server"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "api",
+            "image": "api:v1.0.0"
+          }
+        ]
+      }
+    }
+  }
+}

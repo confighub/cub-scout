@@ -8,15 +8,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 var (
 	debugNamespace      string
 	debugFormat         string
 	debugNonInteractive bool
+	debugSaveBundleDir  string
+	debugKustomizePath  string
 )
 
 var debugCmd = &cobra.Command{
@@ -58,6 +68,8 @@ func init() {
 	debugCmd.Flags().StringVarP(&debugNamespace, "namespace", "n", "", "Namespace of the resource (default: all namespaces)")
 	debugCmd.Flags().StringVar(&debugFormat, "format", "ascii", "Output format: ascii, json, md")
 	debugCmd.Flags().BoolVar(&debugNonInteractive, "non-interactive", false, "Run without interactive prompts (requires resource argument)")
+	debugCmd.Flags().StringVar(&debugSaveBundleDir, "save-bundle", "", "Save debug bundle to directory (non-interactive only)")
+	debugCmd.Flags().StringVar(&debugKustomizePath, "kustomize", "", "Kustomize overlay directory for attribution (requires --save-bundle)")
 }
 
 func runDebug(cmd *cobra.Command, args []string) error {
@@ -127,6 +139,13 @@ func runDebugNonInteractive(ctx context.Context, resource, namespace, format str
 	session, err := runDebugAnalysis(ctx, cfg, kind, name, namespace)
 	if err != nil {
 		return err
+	}
+
+	// Save bundle if requested
+	if debugSaveBundleDir != "" {
+		if err := saveDebugBundle(ctx, cfg, session, debugSaveBundleDir); err != nil {
+			return fmt.Errorf("failed to save bundle: %w", err)
+		}
 	}
 
 	// Output based on format
@@ -270,6 +289,313 @@ func outputDebugASCII(session *DebugSession) error {
 	// Root cause
 	if session.RootCause != nil {
 		renderRootCause(session.RootCause)
+	}
+
+	return nil
+}
+
+// saveDebugBundle creates and writes a debug bundle from the session
+func saveDebugBundle(ctx context.Context, cfg *rest.Config, session *DebugSession, outputDir string) error {
+	// Generate deterministic bundle directory name
+	bundleDirName := generateBundleDirName(session.Target)
+	bundlePath := filepath.Join(outputDir, bundleDirName)
+
+	// Build the debug bundle
+	bundle := buildDebugBundleFromSession(session)
+
+	// Attempt to populate attribution if this is a Crossplane-managed resource
+	if err := populateAttribution(ctx, cfg, session, bundle); err != nil {
+		// Non-fatal: attribution is optional enrichment
+		_ = err
+	}
+
+	// Enrich with kustomize overlay attribution if --kustomize provided
+	if debugKustomizePath != "" {
+		if err := populateKustomizeAttribution(session, bundle, debugKustomizePath); err != nil {
+			// Non-fatal: kustomize attribution is optional enrichment
+			_ = err
+		}
+	}
+
+	// Write the bundle
+	writer := agent.NewBundleWriter(BuildTag)
+	if err := writer.Write(bundle, bundlePath); err != nil {
+		return err
+	}
+
+	fmt.Fprintf(os.Stderr, "Bundle saved to: %s\n", bundlePath)
+	return nil
+}
+
+// populateKustomizeAttribution adds kustomize overlay ownership to the bundle
+func populateKustomizeAttribution(session *DebugSession, bundle *agent.DebugBundle, kustomizePath string) error {
+	// Build target ref
+	targetRef := agent.AttributionRef{
+		Kind:      session.Target.Kind,
+		Name:      session.Target.Name,
+		Namespace: session.Target.Namespace,
+	}
+
+	// Determine target node type:
+	// - If bundle already has Crossplane attribution (has MR node), use NodeMR
+	// - Otherwise use NodeK8sObject for generic targets
+	targetNodeType := agent.NodeK8sObject
+	if bundle.Attribution != nil {
+		for _, n := range bundle.Attribution.Nodes {
+			if n.Type == agent.NodeMR {
+				targetNodeType = agent.NodeMR
+				break
+			}
+		}
+	}
+
+	// Build kustomize attribution fragment
+	kustomizeGraph, err := agent.BuildKustomizeOverlayOwnership(kustomizePath, targetRef, targetNodeType)
+	if err != nil {
+		return err
+	}
+
+	// Merge into existing attribution
+	bundle.Attribution = agent.MergeAttributionGraphs(bundle.Attribution, kustomizeGraph)
+	return nil
+}
+
+// generateBundleDirName creates a deterministic bundle directory name from target
+func generateBundleDirName(target ResourceRef) string {
+	// Format: <kind>-<namespace>-<name> or <kind>-<name> if no namespace
+	name := strings.ToLower(target.Kind)
+	if target.Namespace != "" {
+		name += "-" + target.Namespace
+	}
+	name += "-" + target.Name
+	return name
+}
+
+// buildDebugBundleFromSession converts a DebugSession to a DebugBundle
+func buildDebugBundleFromSession(session *DebugSession) *agent.DebugBundle {
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      session.Target.Kind,
+				Name:      session.Target.Name,
+				Namespace: session.Target.Namespace,
+			},
+		},
+	}
+
+	// Populate session data
+	bundle.Session = &agent.DebugSessionData{
+		Target: agent.BundleTarget{
+			Kind:      session.Target.Kind,
+			Name:      session.Target.Name,
+			Namespace: session.Target.Namespace,
+		},
+		StartedAt:   session.StartedAt,
+		CompletedAt: session.CompletedAt,
+	}
+
+	// Convert workload health
+	if session.WorkloadStatus != nil {
+		bundle.Session.WorkloadHealth = &agent.WorkloadHealthSnapshot{
+			Kind:                session.WorkloadStatus.Kind,
+			Name:                session.WorkloadStatus.Name,
+			Namespace:           session.WorkloadStatus.Namespace,
+			Replicas:            session.WorkloadStatus.Replicas,
+			ReadyReplicas:       session.WorkloadStatus.ReadyReplicas,
+			UnavailableReplicas: session.WorkloadStatus.UnavailableReplicas,
+		}
+		for _, issue := range session.WorkloadStatus.PodIssues {
+			bundle.Session.WorkloadHealth.PodIssues = append(bundle.Session.WorkloadHealth.PodIssues, agent.PodIssue{
+				PodName:         issue.PodName,
+				Phase:           issue.Phase,
+				ContainerStatus: issue.ContainerStatus,
+				Reason:          issue.Reason,
+				Message:         issue.Message,
+				RestartCount:    issue.RestartCount,
+			})
+		}
+	}
+
+	// Convert ownership chain
+	if session.OwnershipChain != nil {
+		bundle.Session.OwnershipChain = &agent.OwnershipSnapshot{
+			Owner: session.OwnershipChain.Owner,
+		}
+		for _, link := range session.OwnershipChain.K8sChain {
+			bundle.Session.OwnershipChain.K8sChain = append(bundle.Session.OwnershipChain.K8sChain, agent.ChainLink{
+				Kind:      link.Kind,
+				Name:      link.Name,
+				Namespace: link.Namespace,
+				Ready:     link.Ready,
+				Status:    link.Status,
+			})
+		}
+		for _, link := range session.OwnershipChain.GitOpsChain {
+			bundle.Session.OwnershipChain.GitOpsChain = append(bundle.Session.OwnershipChain.GitOpsChain, agent.ChainLink{
+				Kind:      link.Kind,
+				Name:      link.Name,
+				Namespace: link.Namespace,
+				Ready:     link.Ready,
+				Status:    link.Status,
+			})
+		}
+	}
+
+	// Convert deployer status
+	if session.DeployerStatus != nil {
+		bundle.Session.DeployerStatus = &agent.DeployerSnapshot{
+			Kind:      session.DeployerStatus.Kind,
+			Name:      session.DeployerStatus.Name,
+			Namespace: session.DeployerStatus.Namespace,
+			Ready:     session.DeployerStatus.Ready,
+			Suspended: session.DeployerStatus.Suspended,
+			Stage:     session.DeployerStatus.Stage,
+			Reason:    session.DeployerStatus.Reason,
+			Message:   session.DeployerStatus.Message,
+		}
+	}
+
+	// Convert source status
+	if session.SourceStatus != nil {
+		bundle.Session.SourceStatus = &agent.SourceSnapshot{
+			Kind:      session.SourceStatus.Kind,
+			Name:      session.SourceStatus.Name,
+			Namespace: session.SourceStatus.Namespace,
+			Ready:     session.SourceStatus.Ready,
+			URL:       session.SourceStatus.URL,
+			Reason:    session.SourceStatus.Reason,
+			Message:   session.SourceStatus.Message,
+		}
+	}
+
+	// Convert root cause
+	if session.RootCause != nil {
+		bundle.Session.RootCause = &agent.RootCauseSnapshot{
+			Category:       session.RootCause.Category,
+			Stage:          session.RootCause.Stage,
+			Confidence:     session.RootCause.Confidence,
+			Summary:        session.RootCause.Summary,
+			ProbableCauses: session.RootCause.ProbableCauses,
+			SuggestedFixes: session.RootCause.SuggestedFixes,
+		}
+	}
+
+	// Convert events if present
+	if session.EventTimeline != nil {
+		for _, event := range session.EventTimeline.AllEvents {
+			bundle.Events = append(bundle.Events, agent.TimelineEvent{
+				ResourceKind: event.ResourceKind,
+				ResourceName: event.ResourceName,
+				Severity:     event.Severity,
+				K8sEvent: agent.K8sEvent{
+					Type:    event.Type,
+					Reason:  event.Reason,
+					Message: event.Message,
+					Count:   event.Count,
+				},
+				Explanation: event.Explanation,
+				Suggestion:  event.Suggestion,
+			})
+		}
+	}
+
+	// Convert logs if present
+	if session.ContainerLogs != nil {
+		for _, log := range session.ContainerLogs {
+			result := agent.ContainerLogResult{
+				PodName:       log.PodName,
+				ContainerName: log.ContainerName,
+				Namespace:     log.Namespace,
+				Lines:         log.Lines,
+				TotalLines:    log.TotalLines,
+				Truncated:     log.Truncated,
+				Previous:      log.Previous,
+				Error:         log.Error,
+			}
+			for _, p := range log.Patterns {
+				result.Patterns = append(result.Patterns, agent.LogPattern{
+					Type:        p.Type,
+					Line:        p.Line,
+					Match:       p.Match,
+					Explanation: p.Explanation,
+					Suggestion:  p.Suggestion,
+				})
+			}
+			bundle.Logs = append(bundle.Logs, result)
+		}
+	}
+
+	return bundle
+}
+
+// populateAttribution attempts to add Crossplane attribution to the bundle
+func populateAttribution(ctx context.Context, cfg *rest.Config, session *DebugSession, bundle *agent.DebugBundle) error {
+	// TEST HOOK: Load target object from file for testing
+	if targetPath := os.Getenv("CUB_SCOUT_TEST_TARGET_OBJECT"); targetPath != "" {
+		return populateAttributionFromFixture(targetPath, bundle)
+	}
+
+	// Skip if no config provided
+	if cfg == nil {
+		return nil
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	// Fetch target object
+	target, err := fetchTargetObject(ctx, dynClient, session.Target)
+	if err != nil {
+		return err
+	}
+
+	// Build attribution graph
+	bundleID := generateBundleDirName(session.Target)
+	attribution := agent.AttributionGraphForTarget(target, []*unstructured.Unstructured{target}, bundleID)
+	if attribution != nil && !attribution.IsEmpty() {
+		bundle.Attribution = attribution
+	}
+
+	return nil
+}
+
+// fetchTargetObject fetches the target resource as unstructured
+func fetchTargetObject(ctx context.Context, dynClient dynamic.Interface, target ResourceRef) (*unstructured.Unstructured, error) {
+	gvr, err := agent.KindToGVR(target.Kind)
+	if err != nil {
+		return nil, err
+	}
+
+	if target.Namespace != "" {
+		return dynClient.Resource(gvr).Namespace(target.Namespace).Get(ctx, target.Name, metav1.GetOptions{})
+	}
+	return dynClient.Resource(gvr).Get(ctx, target.Name, metav1.GetOptions{})
+}
+
+// populateAttributionFromFixture loads target from fixture file for testing
+func populateAttributionFromFixture(targetPath string, bundle *agent.DebugBundle) error {
+	data, err := os.ReadFile(targetPath)
+	if err != nil {
+		return err
+	}
+
+	target := &unstructured.Unstructured{}
+	if err := target.UnmarshalJSON(data); err != nil {
+		// Try YAML
+		return fmt.Errorf("failed to parse target object: %w", err)
+	}
+
+	// Use the target alone as the object set
+	bundleID := generateBundleDirName(ResourceRef{
+		Kind:      target.GetKind(),
+		Name:      target.GetName(),
+		Namespace: target.GetNamespace(),
+	})
+	attribution := agent.AttributionGraphForTarget(target, []*unstructured.Unstructured{target}, bundleID)
+	if attribution != nil && !attribution.IsEmpty() {
+		bundle.Attribution = attribution
 	}
 
 	return nil
