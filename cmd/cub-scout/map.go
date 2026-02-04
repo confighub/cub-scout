@@ -509,6 +509,11 @@ func init() {
 	_ = mapListCmd.RegisterFlagCompletionFunc("kind", completeKinds)
 	_ = mapListCmd.RegisterFlagCompletionFunc("owner", completeOwners)
 	_ = mapListCmd.RegisterFlagCompletionFunc("since", completeSince)
+
+	// Register completions for mapCmd shared flags (#93 CLI ↔ TUI symmetry)
+	_ = mapCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
+	_ = mapCmd.RegisterFlagCompletionFunc("kind", completeKinds)
+	_ = mapCmd.RegisterFlagCompletionFunc("owner", completeOwners)
 }
 
 func runMapList(cmd *cobra.Command, args []string) error {
