@@ -20,6 +20,19 @@ var (
 	driftFile      string
 	driftNamespace string
 	driftFormat    string
+	driftFailOn    string
+)
+
+// Exit codes for drift command (CI contract)
+const (
+	// DriftExitOK indicates no failure triggered
+	DriftExitOK = 0
+
+	// DriftExitError indicates operational error (bad args, file read, etc.)
+	DriftExitError = 1
+
+	// DriftExitFailure indicates findings met the --fail-on threshold
+	DriftExitFailure = 2
 )
 
 var driftCmd = &cobra.Command{
@@ -44,9 +57,24 @@ Examples:
   # Output as JSON (for CI/automation)
   cub-scout drift --file manifests/deployment.yaml --format json
 
+  # Fail CI if any warning or critical drift found
+  cub-scout drift --file manifests/ --fail-on warning
+
+  # Fail CI only on critical drift
+  cub-scout drift --file manifests/ --fail-on critical
+
 Output formats:
   ascii  Human-readable output (default)
   json   Machine-readable JSON (v0.14.3 schema)
+
+Exit codes:
+  0  No failure triggered (or no --fail-on specified)
+  1  Operational error (bad arguments, file read failure, etc.)
+  2  Findings met the --fail-on severity threshold
+
+CI/Automation note:
+  Exit status is determined solely by JSON facts (severity field) and the
+  --fail-on flag. ASCII output does not affect CI behavior.
 `,
 	RunE: runDrift,
 }
@@ -57,6 +85,7 @@ func init() {
 	driftCmd.Flags().StringVar(&driftFile, "file", "", "YAML file or directory containing desired state (required)")
 	driftCmd.Flags().StringVarP(&driftNamespace, "namespace", "n", "", "Namespace to compare (default: all namespaces)")
 	driftCmd.Flags().StringVar(&driftFormat, "format", "ascii", "Output format: ascii, json")
+	driftCmd.Flags().StringVar(&driftFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning, critical)")
 
 	driftCmd.MarkFlagRequired("file")
 }
@@ -64,40 +93,67 @@ func init() {
 func runDrift(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
+	// Validate --fail-on if provided
+	if driftFailOn != "" {
+		if !isValidSeverityLevel(driftFailOn) {
+			fmt.Fprintf(os.Stderr, "Error: invalid --fail-on value %q (valid: info, warning, critical)\n", driftFailOn)
+			os.Exit(DriftExitError)
+		}
+	}
+
+	var report agent.DriftReport
+
 	// TEST HOOK: Load drift data from JSON file to bypass cluster access in tests.
 	if driftJSON := os.Getenv("CUB_SCOUT_TEST_DRIFT_JSON"); driftJSON != "" {
-		return loadAndRenderDriftFromJSON(driftJSON)
+		var err error
+		report, err = loadDriftFromJSON(driftJSON)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Build Kubernetes clients
+		kubeClient, dynamicClient, err := buildDriftClients()
+		if err != nil {
+			return fmt.Errorf("failed to create Kubernetes clients: %w", err)
+		}
+
+		// Configure comparator options
+		opts := agent.DefaultDriftOptions()
+		opts.Namespace = driftNamespace
+
+		// Create comparator
+		comparator := agent.NewDriftComparator(kubeClient, dynamicClient, opts)
+
+		// Run comparison
+		findings, err := comparator.CompareFromFile(ctx, driftFile)
+		if err != nil {
+			return fmt.Errorf("drift comparison failed: %w", err)
+		}
+
+		// Build report
+		report = buildDriftReport(ctx, findings, driftFile, driftNamespace)
 	}
-
-	// Build Kubernetes clients
-	kubeClient, dynamicClient, err := buildDriftClients()
-	if err != nil {
-		return fmt.Errorf("failed to create Kubernetes clients: %w", err)
-	}
-
-	// Configure comparator options
-	opts := agent.DefaultDriftOptions()
-	opts.Namespace = driftNamespace
-
-	// Create comparator
-	comparator := agent.NewDriftComparator(kubeClient, dynamicClient, opts)
-
-	// Run comparison
-	findings, err := comparator.CompareFromFile(ctx, driftFile)
-	if err != nil {
-		return fmt.Errorf("drift comparison failed: %w", err)
-	}
-
-	// Build report
-	report := buildDriftReport(ctx, findings, driftFile, driftNamespace)
 
 	// Output based on format
+	var outputErr error
 	switch driftFormat {
 	case "json":
-		return outputDriftJSON(report)
+		outputErr = outputDriftJSON(report)
 	default:
-		return outputDriftASCII(report)
+		outputErr = outputDriftASCII(report)
 	}
+
+	if outputErr != nil {
+		return outputErr
+	}
+
+	// Check exit condition based on --fail-on (JSON facts only)
+	exitCode := computeDriftExitCode(report, driftFailOn)
+	if exitCode != DriftExitOK {
+		os.Exit(exitCode)
+	}
+
+	return nil
 }
 
 func buildDriftClients() (kubernetes.Interface, dynamic.Interface, error) {
@@ -199,23 +255,95 @@ func outputDriftASCII(report agent.DriftReport) error {
 	return nil
 }
 
-func loadAndRenderDriftFromJSON(filename string) error {
+func loadDriftFromJSON(filename string) (agent.DriftReport, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		return fmt.Errorf("read test fixture: %w", err)
+		return agent.DriftReport{}, fmt.Errorf("read test fixture: %w", err)
 	}
 
 	var report agent.DriftReport
 	if err := json.Unmarshal(data, &report); err != nil {
-		return fmt.Errorf("parse test fixture: %w", err)
+		return agent.DriftReport{}, fmt.Errorf("parse test fixture: %w", err)
 	}
 
-	switch driftFormat {
-	case "json":
-		return outputDriftJSON(report)
-	default:
-		return outputDriftASCII(report)
+	return report, nil
+}
+
+// isValidSeverityLevel checks if a severity level string is valid.
+func isValidSeverityLevel(level string) bool {
+	switch level {
+	case "info", "warning", "critical":
+		return true
 	}
+	return false
+}
+
+// computeDriftExitCode determines the exit code based on findings and --fail-on.
+// This uses JSON facts (severity field) only - ASCII output does not affect this.
+// Contract: Leak Test compliance - exit behavior depends only on structural facts.
+func computeDriftExitCode(report agent.DriftReport, failOn string) int {
+	// No --fail-on specified = pure reporting mode, always exit 0
+	if failOn == "" {
+		return DriftExitOK
+	}
+
+	// No findings = no failure
+	if len(report.Findings) == 0 {
+		return DriftExitOK
+	}
+
+	// Compute max severity from findings (JSON facts)
+	maxSeverity := getMaxSeverity(report.Findings)
+
+	// Compare max severity against threshold
+	if severityMeetsThreshold(maxSeverity, failOn) {
+		return DriftExitFailure
+	}
+
+	return DriftExitOK
+}
+
+// getMaxSeverity returns the highest severity from findings.
+// Severity ranking: critical > warning > info
+func getMaxSeverity(findings []agent.DriftFinding) agent.DriftSeverity {
+	var max agent.DriftSeverity = agent.DriftSeverityInfo
+
+	for _, f := range findings {
+		if severityRank(f.Severity) > severityRank(max) {
+			max = f.Severity
+		}
+	}
+
+	return max
+}
+
+// severityRank returns a numeric rank for severity comparison.
+// Higher rank = more severe.
+func severityRank(s agent.DriftSeverity) int {
+	switch s {
+	case agent.DriftSeverityCritical:
+		return 3
+	case agent.DriftSeverityWarning:
+		return 2
+	case agent.DriftSeverityInfo:
+		return 1
+	}
+	return 0
+}
+
+// severityMeetsThreshold returns true if maxSeverity >= threshold.
+func severityMeetsThreshold(maxSeverity agent.DriftSeverity, threshold string) bool {
+	thresholdRank := 0
+	switch threshold {
+	case "critical":
+		thresholdRank = 3
+	case "warning":
+		thresholdRank = 2
+	case "info":
+		thresholdRank = 1
+	}
+
+	return severityRank(maxSeverity) >= thresholdRank
 }
 
 func getCurrentClusterName() string {
