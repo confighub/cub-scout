@@ -1,4 +1,4 @@
-# OFFICIAL SAVEPOINT — cub-scout
+# ✅ OFFICIAL SAVEPOINT — cub-scout
 
 **Date:** 2026-02-04
 **Version line:** v0.16.x
@@ -9,7 +9,7 @@
 
 ---
 
-## What Is Shipped (COMPLETE)
+## 📦 What Is Shipped (COMPLETE)
 
 ### v0.16.0 — Composition Attribution (RELEASED)
 
@@ -21,19 +21,19 @@
 
 | Capability                                    | Status   |
 | --------------------------------------------- | -------- |
-| Attribution graph (`attribution-graph.v1`)    | Locked |
-| Attribution report (`attribution-report.v1`)  | Locked |
-| Debug bundle capture (`debug --save-bundle`)  | Done        |
-| Crossplane ownership (XR/MR/Composition)      | Done        |
-| Kustomize overlay attribution (`--kustomize`) | Done        |
-| Offline replay (graph + report)               | Done        |
-| Deterministic merge + scoring                 | Done        |
+| Attribution graph (`attribution-graph.v1`)    | ✅ Locked |
+| Attribution report (`attribution-report.v1`)  | ✅ Locked |
+| Debug bundle capture (`debug --save-bundle`)  | ✅        |
+| Crossplane ownership (XR/MR/Composition)      | ✅        |
+| Kustomize overlay attribution (`--kustomize`) | ✅        |
+| Offline replay (graph + report)               | ✅        |
+| Deterministic merge + scoring                 | ✅        |
 
 Ownership is now **explicit, reproducible, and explainable** across Crossplane and Kustomize — with no inference, no guessing, and no replay-time computation.
 
 ---
 
-## Semantic Contracts (LOCKED)
+## 🧠 Semantic Contracts (LOCKED)
 
 These are **non-negotiable** going forward:
 
@@ -52,7 +52,7 @@ Schemas sealed:
 
 ---
 
-## Testing State (COMPLETE)
+## 🧪 Testing State (COMPLETE)
 
 ### Canonical full test
 
@@ -83,24 +83,24 @@ Testing is now **auditable, repeatable, and CI-ready**.
 
 ---
 
-## Documentation State
+## 📚 Documentation State
 
 | Document          | Status                       |
 | ----------------- | ---------------------------- |
-| `SESSION.md`      | Up to date                 |
-| `docs/roadmap.md` | v0.16 marked Released      |
-| Release notes     | `docs/releases/v0.16.0.md` |
-| Testing guide     | Updated for attribution    |
+| `SESSION.md`      | ✅ Up to date                 |
+| `docs/roadmap.md` | ✅ v0.16 marked Released      |
+| Release notes     | ✅ `docs/releases/v0.16.0.md` |
+| Testing guide     | ✅ Updated for attribution    |
 
 ---
 
-## Roadmap Position
+## 🧭 Roadmap Position
 
 ### Completed arcs
 
 * v0.14 — Explainable Debugging
 * v0.15 — Replay & Time-Series Reasoning
-* **v0.16 — Composition Attribution**
+* **v0.16 — Composition Attribution** ✅
 
 ### Next planned (NOT STARTED)
 
@@ -116,7 +116,7 @@ No active PRs. No partial work in progress.
 
 ---
 
-## Current State
+## ⏸ Current State
 
 **Paused by design.**
 
@@ -132,7 +132,7 @@ Work can resume at any time without re-deriving context.
 
 ---
 
-## RESUME PROMPT (WHEN READY)
+## ▶️ RESUME PROMPT (WHEN READY)
 
 > **Project:** cub-scout
 > **Savepoint loaded.**
