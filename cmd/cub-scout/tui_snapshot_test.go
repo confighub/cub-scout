@@ -260,6 +260,30 @@ func TestTUISnapshot_SuggestDashboard(t *testing.T) {
 	compareGolden(t, got, goldenPath)
 }
 
+// TestTUISnapshot_SuggestWithCLIFlags tests that suggestions include CLI flags from viewOpts.
+// Verifies CLI↔TUI symmetry: --owner/--namespace/--depth/--kind flags appear in tree command.
+func TestTUISnapshot_SuggestWithCLIFlags(t *testing.T) {
+	m := initialLocalModel()
+	m.ready = true
+	m.width = testWidth
+	m.height = testHeight
+	m.panelMode = false
+
+	// Set CLI flags via viewOpts (not activeQuery)
+	m.viewOpts = ViewOptions{
+		Owner:     "Crossplane",
+		Namespace: "infra",
+		Depth:     3,
+		Kind:      "Composition",
+	}
+
+	got := m.renderSuggestions()
+
+	repoRoot := findRepoRoot(t)
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "tui", "suggest_cli_flags.txt")
+	compareGolden(t, got, goldenPath)
+}
+
 // TestShellCompletion_BashGeneration tests that bash completion is generated correctly.
 // This verifies the completion script contains expected patterns and is deterministic.
 func TestShellCompletion_BashGeneration(t *testing.T) {

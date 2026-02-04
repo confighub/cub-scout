@@ -2412,14 +2412,26 @@ func (m LocalClusterModel) getSuggestions() []Suggestion {
 	// Get filtered entries for cursor lookup
 	entries := m.getFilteredEntries()
 
-	// Build tree command with current state (owner filter + depth)
+	// Build tree command with current state (CLI flags + TUI state)
+	// CLI↔TUI symmetry: viewOpts from --owner/--namespace/--depth/--kind flags
 	treeCmd := "./cub-scout tree ownership"
-	if m.activeQuery != nil && strings.HasPrefix(m.activeQuery.Query, "owner=") {
+	// CLI flags take precedence
+	if m.viewOpts.Owner != "" {
+		treeCmd += fmt.Sprintf(" --owner %s", m.viewOpts.Owner)
+	} else if m.activeQuery != nil && strings.HasPrefix(m.activeQuery.Query, "owner=") {
 		owner := strings.TrimPrefix(m.activeQuery.Query, "owner=")
 		treeCmd += fmt.Sprintf(" --owner %s", owner)
 	}
-	if m.treeMaxDepth > 0 {
+	if m.viewOpts.Depth > 0 {
+		treeCmd += fmt.Sprintf(" --depth %d", m.viewOpts.Depth)
+	} else if m.treeMaxDepth > 0 {
 		treeCmd += fmt.Sprintf(" --depth %d", m.treeMaxDepth)
+	}
+	if m.viewOpts.Namespace != "" {
+		treeCmd += fmt.Sprintf(" --namespace %s", m.viewOpts.Namespace)
+	}
+	if m.viewOpts.Kind != "" {
+		treeCmd += fmt.Sprintf(" --kind %s", m.viewOpts.Kind)
 	}
 
 	switch m.panelView {
