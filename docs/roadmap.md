@@ -1,386 +1,373 @@
 # cub-scout Roadmap
 
-## Explorer and Debugger for GitOps Systems
+> **Audience:** humans and AI contributors (Claude, Codex, reviewers)
+> **Purpose:** single, authoritative forward plan that subsumes prior roadmap documents and scattered issues.
+
+This roadmap reflects the current *shipped reality* (v0.14.3), the locked semantic contract, and an aggressive but disciplined execution plan through v0.16.
 
 **Last Updated:** 2026-02-04
 
-This roadmap describes the planned evolution of cub-scout across standalone and connected modes.
+---
 
-cub-scout follows three guiding principles:
-- Read-only by default
-- Explorer and debugger, not controller
-- Clear separation between live reality and external intent
+## Guiding Principles (Locked)
 
-For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap-jan.md).
+These principles are not up for renegotiation unless explicitly revised.
+
+1. **Single semantic model**
+   All outputs derive from one internal model.
+
+2. **Complementary authorities**
+   - JSON → structural facts (machine authority)
+   - ASCII → f(JSON) + g (human authority)
+
+3. **Leak Test invariant**
+   If removing ASCII narrative would change machine behavior, meaning has leaked and must be fixed.
+
+4. **Determinism first**
+   Outputs must be replayable, diffable, and golden-tested.
+
+5. **Capability before polish**
+   UI/TUI polish only happens once artefacts and correlations are rich.
+
+These principles govern *all* work below.
 
 ---
 
-## Recent Releases
+## Current State (Ground Truth)
 
-### Version 0.14 — Sharable Artifacts & Portable Outputs (Current)
+### v0.14.3 — Drift Detection (RELEASED)
 
-**Status:** Released (2026-02-03)
-**Theme:** JSON is the complete truth; ASCII/MD are projections
-
-**Delivered:**
-- `--format json` for tree, trace, and map list commands
-- `--format md` (Markdown) for all output commands
-- v0.14 JSON schema with determinism guarantees
-- Golden tests locking all output formats
-
-**Schema guarantees:**
-- Deterministic (same input = same output)
-- Lossless (display limits are metadata, not data loss)
-- Joinable (canonical `id` objects for cross-reference)
-- No timestamps by default
-
-### Version 0.13 — CLI ↔ TUI Symmetry
-
-**Status:** Released
-**Theme:** Polished interaction layer
+**Status:** Shipped (2026-02-04)
 
 **Delivered:**
-- TUI polish and keyboard navigation
-- CLI/TUI feature parity
-- Improved user experience
+- Drift JSON schema + deterministic ordering
+- Drift comparator engine (replicas, images)
+- CI semantics via `--fail-on` (JSON-driven)
+- ASCII drift renderer as f(JSON)+g
 
-### Version 0.12 — Tree & Trace Contracts (ASCII Locked)
+**Contracts enforced:**
+- R1–R6 semantic rules
+- Leak Test (exit behavior independent of ASCII)
 
-**Status:** Released
-**Theme:** Lock user-facing ASCII output
-
-**Delivered:**
-- Golden tests for tree, trace, map list, map status, scan, orphans
-- Test hook infrastructure for deterministic testing
-- GitOps hierarchies documentation
+**Value unlocked:**
+- First-class drift detection
+- Automation-ready facts
+- Human-readable explanations
 
 ---
 
-## Version 0.14.x — Incremental Improvements (Current Focus)
+## v0.14.x Theme — Drift as Diagnostic & Shareable Truth
 
-**Status:** v0.14.1 released (2026-02-03)
-**Audience:** Individual engineers, SREs, platform teams
+v0.14.x is about *exploiting* drift detection, not redesigning it.
 
-### v0.14.1 — Delegated Apply Observability (Released)
+Focus:
+- Expand drift **coverage**
+- Correlate drift with **debugging signals**
+- Make drift and debugging **shareable artefacts**
+- Finish with complete docs, tests, examples, and demos
 
-**Delivered:**
-- `cub-scout gitops status` command
-- Delegated apply backend detection (Flux/Argo/Worker)
-- Failure stage classification (source, build, apply, sync)
-- OCI GitOps fixtures for testing
-- SourceRef parsing for Flux deployers
-- Flux and Argo failure details extraction
-
-### v0.14.2 — Debug/Trace (Released)
-
-**Status:** Released (2026-02-03)
-**Theme:** Guided GitOps debugging
-
-**Delivered:**
-- `cub-scout debug` command with interactive wizard
-- Container log viewing with automatic pattern detection (13 patterns)
-- Event timeline viewing with explanations (25+ event types)
-- Education layer for common issues (CrashLoopBackOff, ImagePullBackOff, etc.)
-- Golden tests for all debug output formats
-
-| # | Title | Status |
-|---|-------|--------|
-| #37 | Guided GitOps Debug Mode | ✅ Released |
-| #39 | Container logs in debug mode | ✅ Released |
-| #40 | Event timeline | ✅ Released |
-
-### v0.14.3 — Drift Detection (Released)
-
-**Status:** Released (2026-02-04)
-**Theme:** Detect when live state differs from desired
-
-**Delivered:**
-- `cub-scout drift --file <path>` command
-- Drift report JSON schema with classifications (capacity, image, config, etc.)
-- Severity levels: critical, warning, info
-- `--fail-on` exit codes for CI integration (0=OK, 1=error, 2=threshold met)
-- ASCII renderer implementing f(JSON)+g semantic contract
-- Deterministic ordering: severity desc > object_id asc > path asc
-
-| # | Title | Status |
-|---|-------|--------|
-| #33 | Detect GitOps drift | ✅ Released |
-| #34 | Drift UI badges and CLI | ⏳ TUI badges deferred (optional polish)
+No new semantic authorities. No architectural churn.
 
 ---
 
-## Version 0.15 — Graph & Export
+## v0.14.4 — Drift Coverage Expansion
 
-**Status:** Planned
-**Theme:** Unified graph schema and shareable artifacts
+**Theme:** More signal, same rails
 
-| # | Title | Description |
-|---|-------|-------------|
-| #35 | Define unified internal graph schema | Foundation for all graph operations |
-| #36 | Export ownership graph (JSON + DOT) | Graphviz visualization |
-| #38 | Shareable hierarchy map snapshots | Bundled JSON + metadata |
+### Scope (high leverage, mechanical)
 
-### Capabilities
+Add new drift types using the existing comparator → JSON → ASCII pipeline.
 
-- Unified graph schema for all resource relationships
-- Export to JSON and DOT (Graphviz) formats
-- Shareable diagnostic snapshots
-- **Offline replay** of snapshots (first-class workflow)
+Planned drift types:
 
-### Offline Mode
+1. **Environment variable drift**
+   - name → desired/live
+   - classification: config
+   - severity: warning
 
-Offline replay of snapshots is a **first-class supported workflow**:
+2. **Resource requests / limits drift**
+   - cpu / memory
+   - classification: capacity
+   - severity: warning / critical (invalid configs)
 
-- Incident review without cluster access
-- Onboarding with real examples
-- Security-restricted environments
-- Use `cub-scout snapshot view <file>` to replay any snapshot
+3. **Image pull policy drift**
+   - Always / IfNotPresent / Never
+   - classification: rollout
 
----
+4. *(Optional)* **Restart / probe configuration drift**
 
-## Version 0.16 — Crossplane & Platform Composition
+### Non-goals
 
-**Status:** Planned
-**Theme:** First-class support for platform composition tools
+- No new flags
+- No new exit semantics
+- No TUI changes
 
-| # | Title | Description |
-|---|-------|-------------|
-| #2 | Kustomize overlay layer attribution | Trace through overlay layers |
-| #3 | Support platform composition tools | Crossplane, kro |
-| #8 | First-class Crossplane ownership & lineage | XR-first, system resource classification |
-| #21 | Platform composition beyond Crossplane | kro support |
-| #22 | Performance & scale guardrails | 1000+ resource handling |
-| #23 | Crossplane walkthrough demo | Documentation |
-| #24 | Document resolver pattern | Generated resources |
-| #25 | v0.5 Epic closure | GitOps Explorer and Debugger complete |
+### Deliverables
 
-### Capabilities
+- Comparator extensions + tests
+- JSON schema updates
+- ASCII renderer automatically reflects new drift types
+- Docs + examples updated in lockstep
 
-- Crossplane XR ownership detection
-- Claim → XR → Managed Resource lineage
-- System resource classification
-- Performance guardrails for large clusters
-- kro support (exploratory)
+### PR Plan
+
+1. **PR1** — Drift comparator extensions (env vars, resources)
+2. **PR2** — Drift comparator extensions (image pull policy)
+3. **PR3** — ASCII renderer auto-reflects new drift (goldens)
+4. **PR4** — JSON schema + reference docs
+5. **PR5** — User docs + examples
+
+Each PR must pass Semantic Safety Checklist.
 
 ---
 
-## Version 0.17 — TUI Polish
+## v0.14.5 — Drift ↔ Debug Correlation
 
-**Status:** Planned
-**Theme:** Consistent, polished terminal experience
+**Theme:** Why this broke
 
-| # | Title | Description |
-|---|-------|-------------|
-| #88 | TUI snapshot golden tests | Lock TUI output |
-| #90 | TUI polish: consistent symbols/ordering | Match CLI output |
-| #91 | CLI ↔ TUI symmetry flags | --owner, --depth, --from |
-| #92 | Context-aware command suggestions | Read-only panel |
-| #93 | Shell-out with cub completion | Integration with cub CLI |
+This release connects drift facts to existing debugging signals (logs, events).
 
----
+### Core idea
 
-## Version 0.18 — Documentation
-
-**Status:** Planned
-**Theme:** Complete, consistent, navigable documentation
+Every drift finding can be correlated with logs and events via shared object identity.
 
 ### Scope
 
-| Area | Work |
-|------|------|
-| **CLI Reference** | Ensure all commands documented |
-| **Contract Docs** | Document all version contracts |
-| **Golden Tests** | All user-facing output covered |
-| **Examples** | Update with current syntax |
-| **Demos** | Verify all demos work |
-| **Navigation** | Cross-references between docs |
-| **Consistency** | Align terminology |
+- Link drift findings to:
+  - container logs
+  - Kubernetes events
+- Debug flows can answer:
+  - "show drift for this object"
+  - "show logs/events for objects with critical drift"
+  - "this failure occurred with no drift" (important signal)
+
+### Semantics
+
+- Correlation statements are **narrative only** (ASCII/TUI)
+- No new JSON meaning required
+- Correlation helpers are join utilities over existing JSON facts; they introduce no new semantic meaning
+
+### Correlation Helpers (Implementation)
+
+Pure functions in `pkg/agent/` that:
+- Join `DriftFinding.object_id` with log entries and events
+- Return **references**, not new facts
+
+Examples:
+- `FindingsForObject(objectID string) []DriftFinding`
+- `EventsForFindings(findings []DriftFinding) []Event`
+- `LogsForFindings(findings []DriftFinding) []LogEntry`
+
+Constraints:
+- No new JSON schema
+- No new fields added to findings
+- Correlation results are render-time only
+- All conclusions remain narrative (ASCII/TUI)
+
+### Deliverables
+
+- Correlation helpers (joins on object_id)
+- Narrative explanations in debug output
+- Tests proving correlation does not invent facts
+- Docs explaining correlation semantics
 
 ---
 
-## Connected Mode (Future)
+## v0.14.6 — Shared Debug Artefacts (Debug Bundle v1)
 
-**Status:** Planned (post-v0.18)
-**Audience:** Teams using ConfigHub
+**Theme:** Debugging across time and people
 
-### Capabilities
+### Goal
 
-- ConfigHub authentication and connection
-- Target / space / revision context
-- Intended vs actual comparisons
-- History-aware debugging
-- Fleet-wide health views
-- Cross-cluster comparisons
-- Impact analysis before changes
+Make debugging reproducible, portable, and asynchronous.
 
-### ConfigHub Backend
+### Concept: Debug Bundle
 
-These features are powered by **existing ConfigHub engines**:
+A Debug Bundle is a structured snapshot containing drift and debugging context.
 
-| Engine | Powers |
-|--------|--------|
-| **ChangeSets API** | Revision-aware views, "what changed" queries |
-| **Views API** | Composable filters/projections |
-| **Dependency Graph Engine** | Impact analysis, blast radius |
-| **Bridge/Worker Framework** | Fleet-wide visibility |
-
-cub-scout surfaces results from these engines — it does not reimplement them.
+It introduces **no new semantics** — only packaging and replay.
 
 ---
 
-## Ongoing: UX & Performance Improvements
+## Debug Bundle v1 — Specification
 
-These improvements may land in any release:
+### Bundle Layout
 
-| Feature | Description |
-|---------|-------------|
-| Split panes | View multiple things simultaneously |
-| Command palette | Fuzzy-search all actions |
-| Quick terminal | Quake-style overlay for quick lookups |
-| Inspector panel | Raw API responses and timing |
-| Large-cluster performance | 1000+ resource handling |
-| Session persistence | Save view preferences between sessions |
-| `cub-scout learn` | Interactive GitOps learning with live examples |
-| JSON output consistency | `--json` flag for all commands |
-| Exit codes | Consistent codes for CI/CD scripting |
+```
+debug-bundle/
+├─ metadata.json
+├─ drift.json
+├─ events.json
+├─ logs.json
+└─ README.md
+```
 
-UX improvements must preserve:
-- Read-only guarantees
-- CLI discoverability
-- Explorer + debugger identity
+### Contents
 
----
+- **metadata.json**
+  - cub-scout version
+  - bundle format version
+  - optional label (env, incident id)
 
-## Free vs Connected
+- **drift.json**
+  - v0.14.3+ drift report (canonical facts)
 
-| Capability | Standalone (Free) | Connected (Paid) |
-|------------|-------------------|------------------|
-| Single-cluster exploration | Yes | Yes |
-| Ownership tracing | Yes | Yes |
-| Failure explanation | Yes | Yes |
-| Drift detection | Yes | Yes |
-| Debug mode | Yes | Enhanced |
-| Graph export | Yes | Yes |
-| Snapshots | Yes | Yes |
-| Intent awareness | — | Yes |
-| History & time | — | Yes |
-| Fleet views | — | Yes |
-| Impact analysis | — | Yes |
-| Git-aware navigation | — | Yes |
-| Governance context | — | Yes |
+- **events.json**
+  - structured Kubernetes events (existing schema)
 
-See [WHY_CONNECTED_MODE.md](WHY_CONNECTED_MODE.md) for detailed value proposition.
+- **logs.json**
+  - structured container logs + detected patterns
 
----
+- **README.md** (generated)
+  - what this bundle contains
+  - how to inspect it
+  - semantic guarantees
 
-## Future: CSV DICS (Declarative Intent via Flat Data)
+### Target Metadata
 
-**Status:** Exploratory / Post-v0.5
-**Audience:** Small teams, early GitOps adopters, migration use cases
+Debug Bundles may include existing target metadata (e.g., ConfigHubTarget) if already emitted by cub-scout. Bundles do not introduce new target semantics.
 
-CSV DICS is a proposed future feature that allows users to manage **simple, literal configuration intent** using flat data formats (CSV), without introducing a full templating or reconciliation system.
+### Commands
 
-This feature is intentionally positioned as:
-- a **discovery and simplification tool**
-- an **on-ramp to ConfigHub**
-- not a replacement for Helm, GitOps controllers, or ConfigHub itself
+- `cub-scout debug bundle --out <dir|tar>`
+- `cub-scout debug inspect <bundle>`
 
----
+ASCII and TUI views render *from the bundle*, not the cluster.
 
-### Problem It Addresses
+### Renderer Source Abstraction
 
-Many clusters start with:
-- ad-hoc manifests
-- copy-pasted YAML
-- light variations across namespaces or environments
+ASCII/TUI renderers will accept a generic data source (cluster or bundle). This is a mechanical refactor; no rendering logic or semantics change.
 
-For these cases:
-- Helm can feel too heavy
-- full ConfigHub adoption may feel premature
-- yet teams still want configuration expressed as *data*, not duplicated YAML
+### Guarantees
+
+- Replayable
+- Deterministic
+- Shareable
+- No hidden meaning
 
 ---
 
-### Proposed Capabilities
+## Documentation Skeleton
 
-CSV DICS would allow users to:
+To be filled as features land:
 
-- **Export observed cluster state to CSV**
-  - One row per logical resource
-  - Flat, literal fields only (no templating)
-- **Diff CSV vs live cluster**
-  - Identify additions, removals, and value changes
-- **Render CSV back to literal Kubernetes manifests**
-  - Deterministic output
-  - No loops, conditionals, or inheritance
-- **Manage CSV in Git**
-  - Treat CSV as a simple declarative source of truth
+```
+docs/
+├─ semantic-contract.md        # DONE (anchor)
+├─ roadmap.md                  # THIS DOCUMENT
+├─ drift.md                    # what drift is, how to use it
+├─ ci-integration.md           # JSON + --fail-on
+├─ debugging.md                # logs, events, correlation
+├─ debug-bundles.md            # bundle spec + walkthrough
+└─ reference/
+   ├─ json-schema.md
+   ├─ exit-codes.md
+   ├─ severity-taxonomy.md
+   └─ bundle-schema.md         # Debug Bundle v1 schema reference
+```
 
-All apply actions remain external (kubectl, Flux, Argo, or ConfigHub worker).
-
----
-
-### Explicit Non-Goals
-
-CSV DICS must **not**:
-- Become a templating language
-- Introduce reconciliation or controllers
-- Apply changes automatically
-- Replace Helm or Kustomize
-- Compete with ConfigHub's intent model
-
-CSV values are literal and explicit by design.
+Examples / demos live alongside docs.
 
 ---
 
-### Relationship to Existing cub-scout Features
+## v0.15 — Replay & Time-Series Reasoning
 
-- **Complementary to Shareable Views**
-  - Shareable Views explain *what happened*
-  - CSV DICS helps simplify *what exists*
-- **Built on hierarchy maps**
-  - CSV export is derived from resource / ownership views
-- **Standalone by default**
-  - No ConfigHub required to use CSV DICS
+**Status:** Planned (after v0.14.x complete)
+**Theme:** Compare debug bundles over time
 
----
+### Scope
 
-### Graduation Path to ConfigHub
+- Compare debug bundles over time
+- Before/after drift analysis
+- Time-series reasoning
 
-CSV DICS is explicitly a **Level-1 intent system**.
+### Graph & Export Issues (#35, #36, #38)
 
-When teams need:
-- richer validation
-- history and timelines
-- fleet-wide consistency
-- impact analysis
-- governance and policy
+These older "Graph & Export" issues are **not separate initiatives**.
 
-...they should graduate from CSV DICS to **ConfigHub**, which provides a full system of record for intent.
+They are **realized through replayable Debug Bundles** and time-series comparison built on those bundles. Visualization (graphs) becomes a *view* over replayed artefacts, not a new semantic layer.
 
-CSV DICS should make this transition easier, not harder.
+**Status:** Deferred → subsumed by v0.15 Replay & Comparison
 
 ---
 
-### Roadmap Placement
+## v0.16 — Kustomize Overlay Attribution (#2)
 
-CSV DICS is intentionally **out of scope for v0.5**.
+**Status:** Planned
+**Theme:** Attribution answers "this overlay caused this drift"
 
-Potential placement:
-- v0.6+ as an experimental feature, or
-- gated behind an explicit `--experimental` flag
+Reintroduced with real value context now that drift detection is complete.
 
-Implementation should proceed only after:
-- Shareable Views are stable
-- Standalone explorer/debugger workflows are proven
+### Parked Issues
+
+| # | Title | Rationale |
+|---|-------|-----------|
+| #2 | Kustomize overlay layer attribution | Needs drift as foundation; now unblocked |
+| #3 | Platform composition (kro) | API not stable; park until v0.17+ |
+
+---
+
+## v0.18 — Connected Workflows
+
+**Status:** Planned (after v0.16)
+**Theme:** Operate with cub-scout
+
+This is the "operate with cub-scout" release — workflows that connect cub-scout to external systems.
+
+### Scope
+
+- **Import / inspect artefacts** — load external debug bundles, snapshots
+- **Write / export outputs** — generate patches, reports, structured exports
+- **Git workflows** — PR context, patch generation, commit attribution
+- **Fleet view** — multi-cluster / multi-namespace rollups
+
+### Rationale
+
+Connected workflows only make sense after:
+- Artefacts exist (v0.14.6 bundles)
+- Replay works (v0.15)
+- Attribution is available (v0.16)
+
+---
+
+## v0.19 — TUI Polish
+
+**Status:** Planned (after v0.18)
+**Theme:** The TUI becomes delightful because the underlying model is already powerful
+
+### Rationale
+
+TUI polish is **presentation leverage**, not capability leverage.
+
+Only after v0.14–v0.18 does TUI polish make sense, because then:
+- The TUI has **rich artefacts to browse**
+- It can navigate **fleet, history, attribution**
+- It becomes a *window over substance*, not a substitute for it
+
+UI serves substance, not the other way around.
+
+### Parked Issues
+
+| # | Title |
+|---|-------|
+| #34 | Drift UI badges (optional polish) |
+| #88 | TUI snapshot golden tests |
+| #90 | TUI polish: consistent symbols/ordering |
+| #91 | CLI ↔ TUI symmetry flags |
+| #92 | Context-aware command suggestions |
+| #93 | Shell-out with cub completion |
 
 ---
 
 ## Summary
 
-cub-scout evolves along two deliberate axes:
+cub-scout is transitioning from *capability creation* to *capability exploitation*.
 
-- **Depth (Standalone):** Better exploration and debugging of live state
-- **Breadth (Connected):** Intent, history, fleets, and impact via ConfigHub
+v0.14.x completes drift as:
+- factual (JSON)
+- automatable (CI)
+- explainable (ASCII)
+- debuggable (correlation)
+- shareable (debug bundles)
 
-This separation keeps cub-scout safe, focused, and valuable at every stage.
+Future releases build on this foundation without reopening semantics.
