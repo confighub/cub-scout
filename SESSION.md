@@ -2671,3 +2671,55 @@ Connect drift facts to existing debugging signals (logs, events) via shared obje
 > v0.14.5 shipped. Correlation helpers and narrative renderer complete. Ready for v0.14.6 (Debug Bundle v1).
 
 ---
+
+## v0.14.6: Debug Bundle v1 (IN PROGRESS)
+
+**Date:** 2026-02-04
+**Status:** IN PROGRESS
+
+### Theme
+
+Portable debug bundles for offline inspection and sharing across time/people.
+
+### Commits
+
+| PR | Commit | Description |
+|----|--------|-------------|
+| PR1 | `b97c9d8` | feat(debug): add Debug Bundle v1 packaging (#100) |
+
+### Scope Delivered So Far
+
+**PR1: Debug Bundle v1 Packaging (#100)** ✅
+- Bundle types: `BundleMetadata`, `DebugBundle`, `DebugSessionData`
+- `BundleWriter` for writing bundles to directory structure
+- `BundleReader` for reading bundles back
+- `Summarize()` for quick bundle inspection
+- Layout: `metadata.json`, `session.json`, `drift.json`, `events.json`, `logs.json`, `README.md`
+
+**PR2: Bundle Inspect/Replay (#101)** - PENDING
+- CLI commands for inspecting bundles
+- Replay support for offline analysis
+
+**PR3: Bundle Documentation (#102)** - PENDING
+- Bundle format documentation
+- Usage examples
+
+### Files Created
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `pkg/agent/debug_bundle.go` | 404 | Bundle types and write/read |
+| `pkg/agent/debug_bundle_test.go` | 499 | 9 tests |
+
+### Semantic Contract Compliance
+
+- Bundles are pure packaging of existing facts
+- No new interpretation or semantics
+- Reuses existing types (`ChainLink`, `PodIssue`) from trace.go and workload_health.go
+- Deterministic output layout
+
+### Resume Prompt
+
+> v0.14.6 PR1 complete (bundle packaging). PR2 pending (inspect/replay commands). PR3 pending (documentation).
+
+---
