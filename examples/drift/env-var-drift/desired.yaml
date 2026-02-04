@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: app
+        image: myapp:v1.0
+        env:
+        - name: LOG_LEVEL
+          value: "info"
+        - name: PORT
+          value: "8080"
