@@ -1,0 +1,24 @@
+Drift Report
+============
+
+Cluster: prod-east
+Source:  manifests/deployment.yaml (file)
+Namespace: production
+
+[Capacity] Capacity Drift
+└─ [WARNING] Deployment:production/api
+      path: spec.replicas
+      desired: 3
+      live:    5
+
+[Image] Image Drift
+└─ [WARNING] Deployment:production/web
+      path: spec.template.spec.containers[0].image
+      desired: nginx:1.19
+      live:    nginx:1.21
+
+Summary
+-------
+Total findings: 2
+Affected objects: 2
+By severity: warning=2

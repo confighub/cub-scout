@@ -1,0 +1,74 @@
+{
+  "command": "drift",
+  "context": {
+    "cluster": "prod-east",
+    "namespace": null,
+    "desiredSource": {
+      "type": "git",
+      "ref": "abc123",
+      "url": "https://github.com/acme/infra"
+    },
+    "liveSource": {
+      "type": "cluster",
+      "ref": "prod-east"
+    }
+  },
+  "findings": [
+    {
+      "id": "drift:Deployment:prod/api:spec.replicas",
+      "object_id": "Deployment:prod/api",
+      "object": {
+        "kind": "Deployment",
+        "namespace": "prod",
+        "name": "api"
+      },
+      "path": "spec.replicas",
+      "desired": 3,
+      "live": 1,
+      "classification": "capacity",
+      "severity": "warning"
+    },
+    {
+      "id": "drift:Deployment:prod/web:spec.template.spec.containers[0].image",
+      "object_id": "Deployment:prod/web",
+      "object": {
+        "kind": "Deployment",
+        "namespace": "prod",
+        "name": "web"
+      },
+      "path": "spec.template.spec.containers[0].image",
+      "desired": "nginx:1.19",
+      "live": "apache:2.4",
+      "classification": "image",
+      "severity": "critical"
+    },
+    {
+      "id": "drift:Deployment:prod/worker:spec.template.spec.containers[0].env[0].value",
+      "object_id": "Deployment:prod/worker",
+      "object": {
+        "kind": "Deployment",
+        "namespace": "prod",
+        "name": "worker"
+      },
+      "path": "spec.template.spec.containers[0].env[0].value",
+      "desired": "production",
+      "live": "staging",
+      "classification": "config",
+      "severity": "info"
+    }
+  ],
+  "summary": {
+    "totalFindings": 3,
+    "bySeverity": [
+      { "severity": "critical", "count": 1 },
+      { "severity": "warning", "count": 1 },
+      { "severity": "info", "count": 1 }
+    ],
+    "byClassification": [
+      { "classification": "capacity", "count": 1 },
+      { "classification": "image", "count": 1 },
+      { "classification": "config", "count": 1 }
+    ],
+    "affectedObjects": 3
+  }
+}

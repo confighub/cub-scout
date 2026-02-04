@@ -214,44 +214,10 @@ func outputDriftJSON(report agent.DriftReport) error {
 }
 
 func outputDriftASCII(report agent.DriftReport) error {
-	// v0.14.3 PR2: JSON only, ASCII placeholder
-	// ASCII rendering will be implemented in PR4
-	fmt.Printf("Drift Report\n")
-	fmt.Printf("============\n\n")
-	fmt.Printf("Cluster: %s\n", report.Context.Cluster)
-	fmt.Printf("Source:  %s (%s)\n", report.Context.DesiredSource.Ref, report.Context.DesiredSource.Type)
-	fmt.Printf("\n")
-
-	if len(report.Findings) == 0 {
-		fmt.Printf("No drift detected.\n")
-		return nil
-	}
-
-	fmt.Printf("Found %d drift finding(s):\n\n", len(report.Findings))
-
-	for _, f := range report.Findings {
-		severity := string(f.Severity)
-		switch f.Severity {
-		case agent.DriftSeverityCritical:
-			severity = "[CRITICAL]"
-		case agent.DriftSeverityWarning:
-			severity = "[WARNING]"
-		case agent.DriftSeverityInfo:
-			severity = "[INFO]"
-		}
-
-		fmt.Printf("%s %s\n", severity, f.ObjectID)
-		fmt.Printf("  Path:     %s\n", f.Path)
-		fmt.Printf("  Desired:  %v\n", f.Desired)
-		fmt.Printf("  Live:     %v\n", f.Live)
-		fmt.Printf("  Class:    %s\n", f.Classification)
-		fmt.Printf("\n")
-	}
-
-	// Summary
-	fmt.Printf("Summary: %d finding(s) across %d object(s)\n",
-		report.Summary.TotalFindings, report.Summary.AffectedObjects)
-
+	// ASCII renderer implements f(JSON) + g.
+	// See pkg/agent/drift_render.go for implementation.
+	output := agent.RenderDriftASCII(report)
+	fmt.Print(output)
 	return nil
 }
 
