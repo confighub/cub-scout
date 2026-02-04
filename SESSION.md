@@ -2762,3 +2762,89 @@ Portable debug bundles for offline inspection and sharing across time/people.
 - Output deterministic: same bundle → identical output
 - Exit codes match drift command semantics
 
+
+### PR3: Bundle Documentation (#102)
+
+**Status:** COMPLETE
+
+**Commit:** `560affc`
+
+**Files:**
+- `docs/debug-bundle.md` (264 lines) - Comprehensive bundle documentation
+- `docs/README.md` - Added debug-bundle.md and drift.md to index
+- `docs/drift.md` - Updated "Future versions" to "Related documentation"
+
+**Contents:**
+1. What is a Debug Bundle? (purpose, use cases)
+2. What's inside (exact layout, file descriptions)
+3. Commands (inspect, replay with all flags)
+4. CI integration (exit codes)
+5. Examples (inspect, replay drift, replay correlation, CI gating)
+6. Determinism and contracts (guarantees table)
+7. Versioning and compatibility (format version rules)
+8. FAQ (offline replay, missing files, etc.)
+
+---
+
+## v0.14.6: Debug Bundle v1 (SHIPPED)
+
+**Date:** 2026-02-04
+**Status:** SHIPPED
+
+### Theme
+
+Portable debug bundles for offline inspection and sharing across time/people.
+
+### Commits
+
+| PR | Commit | Description |
+|----|--------|-------------|
+| PR1 | `b97c9d8` | feat(debug): add Debug Bundle v1 packaging (#100) |
+| PR2 | `4ff1a18` | feat(bundle): add bundle inspect command (#101) |
+| PR2 | `7f0b1f4` | feat(bundle): add bundle replay command (#101) |
+| PR3 | `560affc` | docs: add Debug Bundle documentation (#102) |
+
+### Scope Delivered
+
+**PR1: Debug Bundle v1 Packaging (#100)**
+- Bundle types: `BundleMetadata`, `DebugBundle`, `DebugSessionData`
+- `BundleWriter` for writing bundles to directory structure
+- `BundleReader` for reading bundles back
+- `Summarize()` for quick bundle inspection
+- Layout: `metadata.json`, `session.json`, `drift.json`, `events.json`, `logs.json`, `README.md`
+
+**PR2: Bundle Inspect/Replay Commands (#101)**
+- `cub-scout bundle inspect <path>` - Show bundle metadata and contents
+- `cub-scout bundle replay <path>` - Re-render bundle with existing renderers
+- Flags: `--format ascii|json`, `--section drift|correlation`, `--fail-on`
+- Exit codes match drift command semantics
+
+**PR3: Bundle Documentation (#102)**
+- Comprehensive `docs/debug-bundle.md` (264 lines)
+- Added to docs index
+- FAQ section
+
+### Files Created
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `pkg/agent/debug_bundle.go` | 404 | Bundle types and write/read |
+| `pkg/agent/debug_bundle_test.go` | 499 | 9 tests |
+| `cmd/cub-scout/bundle.go` | 580 | CLI commands |
+| `cmd/cub-scout/bundle_test.go` | 499 | 19 tests |
+| `docs/debug-bundle.md` | 264 | Documentation |
+
+### Semantic Contract Compliance
+
+- Bundles are pure packaging of existing facts
+- No new interpretation or semantics
+- Deterministic output: same bundle → identical output
+- Uses captured timestamps only (no wall-clock)
+- No cluster/git access in replay (offline by design)
+- ASCII = f(JSON) + g
+
+### Resume Prompt
+
+> v0.14.6 shipped. Debug Bundle v1 complete with packaging, inspect/replay commands, and documentation. Ready for v0.15 (Replay & Time-Series Reasoning).
+
+---
