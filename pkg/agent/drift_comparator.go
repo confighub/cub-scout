@@ -54,17 +54,21 @@ type DriftOptions struct {
 	// IncludeEnv enables environment variable comparison (future)
 	IncludeEnv bool
 
-	// IncludeResources enables resource requests/limits comparison (future)
+	// IncludeResources enables resource requests/limits comparison
 	IncludeResources bool
+
+	// IncludePullPolicy enables image pull policy comparison
+	IncludePullPolicy bool
 }
 
 // DefaultDriftOptions returns sensible defaults for v0.14.4.
 func DefaultDriftOptions() DriftOptions {
 	return DriftOptions{
-		IncludeReplicas:  true,
-		IncludeImages:    true,
-		IncludeEnv:       true, // v0.14.4 PR1
-		IncludeResources: true, // v0.14.4 PR2
+		IncludeReplicas:   true,
+		IncludeImages:     true,
+		IncludeEnv:        true, // v0.14.4 PR1
+		IncludeResources:  true, // v0.14.4 PR2
+		IncludePullPolicy: true, // v0.14.4 PR3
 	}
 }
 
@@ -171,6 +175,12 @@ func (c *DriftComparator) compareResource(desired, live map[string]interface{}) 
 	if c.options.IncludeResources {
 		resourceFindings := c.compareResources(objID, desired, live)
 		findings = append(findings, resourceFindings...)
+	}
+
+	// Compare image pull policy (v0.14.4+)
+	if c.options.IncludePullPolicy {
+		policyFindings := c.comparePullPolicy(objID, desired, live)
+		findings = append(findings, policyFindings...)
 	}
 
 	return findings
@@ -581,6 +591,67 @@ func parseResourceQuantity(s string) float64 {
 
 // normalizeResourceValue returns nil for empty strings, otherwise the value.
 func normalizeResourceValue(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+// comparePullPolicy compares imagePullPolicy between desired and live containers.
+// Findings use path format: spec.template.spec.containers[name=<container>].imagePullPolicy
+// Classification: rollout, Severity: warning
+func (c *DriftComparator) comparePullPolicy(objID DriftObjectID, desired, live map[string]interface{}) []DriftFinding {
+	var findings []DriftFinding
+
+	desiredContainers := extractContainers(desired)
+	liveContainers := extractContainers(live)
+
+	// Build map of live containers by name
+	liveByName := make(map[string]map[string]interface{})
+	for _, container := range liveContainers {
+		name, _ := getStringField(container, "name")
+		if name != "" {
+			liveByName[name] = container
+		}
+	}
+
+	// Compare each desired container's pull policy
+	for _, desiredContainer := range desiredContainers {
+		containerName, _ := getStringField(desiredContainer, "name")
+		if containerName == "" {
+			continue
+		}
+
+		liveContainer, exists := liveByName[containerName]
+		if !exists {
+			continue
+		}
+
+		// Get pull policies (note: Kubernetes defaults to IfNotPresent for tagged images)
+		desiredPolicy, _ := getStringField(desiredContainer, "imagePullPolicy")
+		livePolicy, _ := getStringField(liveContainer, "imagePullPolicy")
+
+		// Only report drift if both are explicitly set and different,
+		// or if one is set and the other isn't
+		if desiredPolicy != livePolicy && (desiredPolicy != "" || livePolicy != "") {
+			path := fmt.Sprintf("spec.template.spec.containers[name=%s].imagePullPolicy", containerName)
+			finding := NewDriftFinding(
+				objID,
+				path,
+				normalizePolicyValue(desiredPolicy),
+				normalizePolicyValue(livePolicy),
+				DriftRollout,
+				DriftSeverityWarning,
+			)
+			findings = append(findings, finding)
+		}
+	}
+
+	return findings
+}
+
+// normalizePolicyValue returns nil for empty strings, otherwise the value.
+func normalizePolicyValue(s string) interface{} {
 	if s == "" {
 		return nil
 	}

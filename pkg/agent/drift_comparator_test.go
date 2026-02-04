@@ -994,6 +994,225 @@ func TestParseResourceQuantity(t *testing.T) {
 	}
 }
 
+// TestDriftComparator_ComparePullPolicy tests imagePullPolicy drift detection.
+func TestDriftComparator_ComparePullPolicy(t *testing.T) {
+	comparator := &DriftComparator{
+		options: DriftOptions{
+			IncludePullPolicy: true,
+		},
+	}
+
+	tests := []struct {
+		name         string
+		desired      map[string]interface{}
+		live         map[string]interface{}
+		wantFindings int
+		wantPath     string
+		wantDesired  interface{}
+		wantLive     interface{}
+	}{
+		{
+			name:         "no drift - same policy",
+			desired:      makeDeploymentWithPullPolicy("web", "prod", "Always"),
+			live:         makeDeploymentWithPullPolicy("web", "prod", "Always"),
+			wantFindings: 0,
+		},
+		{
+			name:         "drift - Always to IfNotPresent",
+			desired:      makeDeploymentWithPullPolicy("web", "prod", "Always"),
+			live:         makeDeploymentWithPullPolicy("web", "prod", "IfNotPresent"),
+			wantFindings: 1,
+			wantPath:     "spec.template.spec.containers[name=app].imagePullPolicy",
+			wantDesired:  "Always",
+			wantLive:     "IfNotPresent",
+		},
+		{
+			name:         "drift - IfNotPresent to Never",
+			desired:      makeDeploymentWithPullPolicy("web", "prod", "IfNotPresent"),
+			live:         makeDeploymentWithPullPolicy("web", "prod", "Never"),
+			wantFindings: 1,
+			wantPath:     "spec.template.spec.containers[name=app].imagePullPolicy",
+			wantDesired:  "IfNotPresent",
+			wantLive:     "Never",
+		},
+		{
+			name:         "drift - policy added (not in desired)",
+			desired:      makeDeploymentWithPullPolicy("web", "prod", ""),
+			live:         makeDeploymentWithPullPolicy("web", "prod", "Always"),
+			wantFindings: 1,
+			wantPath:     "spec.template.spec.containers[name=app].imagePullPolicy",
+			wantDesired:  nil,
+			wantLive:     "Always",
+		},
+		{
+			name:         "drift - policy removed (not in live)",
+			desired:      makeDeploymentWithPullPolicy("web", "prod", "Always"),
+			live:         makeDeploymentWithPullPolicy("web", "prod", ""),
+			wantFindings: 1,
+			wantPath:     "spec.template.spec.containers[name=app].imagePullPolicy",
+			wantDesired:  "Always",
+			wantLive:     nil,
+		},
+		{
+			name:         "no drift - both empty",
+			desired:      makeDeploymentWithPullPolicy("web", "prod", ""),
+			live:         makeDeploymentWithPullPolicy("web", "prod", ""),
+			wantFindings: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			findings := comparator.compareResource(tt.desired, tt.live)
+
+			// Filter for pull policy findings (rollout classification)
+			var policyFindings []DriftFinding
+			for _, f := range findings {
+				if f.Classification == DriftRollout {
+					policyFindings = append(policyFindings, f)
+				}
+			}
+
+			if len(policyFindings) != tt.wantFindings {
+				t.Errorf("got %d policy findings, want %d", len(policyFindings), tt.wantFindings)
+				for _, f := range policyFindings {
+					t.Logf("  finding: %s (desired=%v, live=%v)", f.Path, f.Desired, f.Live)
+				}
+			}
+
+			if tt.wantFindings > 0 && len(policyFindings) > 0 {
+				f := policyFindings[0]
+				if f.Path != tt.wantPath {
+					t.Errorf("path = %s, want %s", f.Path, tt.wantPath)
+				}
+				if f.Desired != tt.wantDesired {
+					t.Errorf("desired = %v, want %v", f.Desired, tt.wantDesired)
+				}
+				if f.Live != tt.wantLive {
+					t.Errorf("live = %v, want %v", f.Live, tt.wantLive)
+				}
+				if f.Severity != DriftSeverityWarning {
+					t.Errorf("severity = %s, want warning", f.Severity)
+				}
+			}
+		})
+	}
+}
+
+// TestDriftComparator_PullPolicy_MultipleContainers tests pull policy across containers.
+func TestDriftComparator_PullPolicy_MultipleContainers(t *testing.T) {
+	comparator := &DriftComparator{
+		options: DriftOptions{
+			IncludePullPolicy: true,
+		},
+	}
+
+	desired := map[string]interface{}{
+		"kind":       "Deployment",
+		"apiVersion": "apps/v1",
+		"metadata":   map[string]interface{}{"name": "web", "namespace": "prod"},
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":            "app",
+							"image":           "nginx:1.19",
+							"imagePullPolicy": "Always",
+						},
+						map[string]interface{}{
+							"name":            "sidecar",
+							"image":           "envoy:1.0",
+							"imagePullPolicy": "IfNotPresent",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	live := map[string]interface{}{
+		"kind":       "Deployment",
+		"apiVersion": "apps/v1",
+		"metadata":   map[string]interface{}{"name": "web", "namespace": "prod"},
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":            "app",
+							"image":           "nginx:1.19",
+							"imagePullPolicy": "IfNotPresent", // changed
+						},
+						map[string]interface{}{
+							"name":            "sidecar",
+							"image":           "envoy:1.0",
+							"imagePullPolicy": "Never", // changed
+						},
+					},
+				},
+			},
+		},
+	}
+
+	findings := comparator.compareResource(desired, live)
+
+	// Filter for policy findings
+	var policyFindings []DriftFinding
+	for _, f := range findings {
+		if f.Classification == DriftRollout {
+			policyFindings = append(policyFindings, f)
+		}
+	}
+
+	if len(policyFindings) != 2 {
+		t.Errorf("got %d policy findings, want 2", len(policyFindings))
+	}
+
+	// Check both containers are represented
+	foundApp := false
+	foundSidecar := false
+	for _, f := range policyFindings {
+		if strings.Contains(f.Path, "name=app") {
+			foundApp = true
+		}
+		if strings.Contains(f.Path, "name=sidecar") {
+			foundSidecar = true
+		}
+	}
+
+	if !foundApp {
+		t.Error("missing finding for app container")
+	}
+	if !foundSidecar {
+		t.Error("missing finding for sidecar container")
+	}
+}
+
+// makeDeploymentWithPullPolicy creates a test deployment with the given pull policy.
+func makeDeploymentWithPullPolicy(name, namespace, policy string) map[string]interface{} {
+	container := map[string]interface{}{
+		"name":  "app",
+		"image": "nginx:1.19",
+	}
+	if policy != "" {
+		container["imagePullPolicy"] = policy
+	}
+
+	return map[string]interface{}{
+		"kind":       "Deployment",
+		"apiVersion": "apps/v1",
+		"metadata":   map[string]interface{}{"name": name, "namespace": namespace},
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []interface{}{container},
+				},
+			},
+		},
+	}
+}
+
 // makeDeploymentWithResources creates a test deployment with resource requests/limits.
 func makeDeploymentWithResources(name, namespace, cpuReq, memReq, cpuLim, memLim string) map[string]interface{} {
 	resources := map[string]interface{}{}
