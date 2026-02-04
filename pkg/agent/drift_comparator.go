@@ -63,8 +63,8 @@ func DefaultDriftOptions() DriftOptions {
 	return DriftOptions{
 		IncludeReplicas:  true,
 		IncludeImages:    true,
-		IncludeEnv:       true,  // v0.14.4+
-		IncludeResources: false, // v0.14.4+ PR2
+		IncludeEnv:       true, // v0.14.4 PR1
+		IncludeResources: true, // v0.14.4 PR2
 	}
 }
 
@@ -165,6 +165,12 @@ func (c *DriftComparator) compareResource(desired, live map[string]interface{}) 
 	if c.options.IncludeEnv {
 		envFindings := c.compareEnvVars(objID, desired, live)
 		findings = append(findings, envFindings...)
+	}
+
+	// Compare resource requests/limits (v0.14.4+)
+	if c.options.IncludeResources {
+		resourceFindings := c.compareResources(objID, desired, live)
+		findings = append(findings, resourceFindings...)
 	}
 
 	return findings
@@ -393,6 +399,192 @@ func sortEnvVarsByName(vars []envVar) {
 			}
 		}
 	}
+}
+
+// compareResources compares resource requests/limits between desired and live containers.
+// Findings use path format: spec.template.spec.containers[name=<container>].resources.<type>.<resource>
+// Classification: capacity
+// Severity: warning (normal drift), critical (invalid configs like limits < requests)
+func (c *DriftComparator) compareResources(objID DriftObjectID, desired, live map[string]interface{}) []DriftFinding {
+	var findings []DriftFinding
+
+	desiredContainers := extractContainers(desired)
+	liveContainers := extractContainers(live)
+
+	// Build map of live containers by name
+	liveByName := make(map[string]map[string]interface{})
+	for _, container := range liveContainers {
+		name, _ := getStringField(container, "name")
+		if name != "" {
+			liveByName[name] = container
+		}
+	}
+
+	// Compare each desired container's resources
+	for _, desiredContainer := range desiredContainers {
+		containerName, _ := getStringField(desiredContainer, "name")
+		if containerName == "" {
+			continue
+		}
+
+		liveContainer, exists := liveByName[containerName]
+		if !exists {
+			continue
+		}
+
+		// Extract resources
+		desiredResources := extractResources(desiredContainer)
+		liveResources := extractResources(liveContainer)
+
+		// Compare requests (sorted for determinism: cpu, memory)
+		for _, resourceName := range []string{"cpu", "memory"} {
+			desiredReq := desiredResources.Requests[resourceName]
+			liveReq := liveResources.Requests[resourceName]
+
+			if desiredReq != liveReq && (desiredReq != "" || liveReq != "") {
+				path := fmt.Sprintf("spec.template.spec.containers[name=%s].resources.requests.%s", containerName, resourceName)
+				severity := classifyResourceSeverity(desiredReq, liveReq, desiredResources.Limits[resourceName], liveResources.Limits[resourceName])
+				finding := NewDriftFinding(
+					objID,
+					path,
+					normalizeResourceValue(desiredReq),
+					normalizeResourceValue(liveReq),
+					DriftCapacity,
+					severity,
+				)
+				findings = append(findings, finding)
+			}
+		}
+
+		// Compare limits (sorted for determinism: cpu, memory)
+		for _, resourceName := range []string{"cpu", "memory"} {
+			desiredLim := desiredResources.Limits[resourceName]
+			liveLim := liveResources.Limits[resourceName]
+
+			if desiredLim != liveLim && (desiredLim != "" || liveLim != "") {
+				path := fmt.Sprintf("spec.template.spec.containers[name=%s].resources.limits.%s", containerName, resourceName)
+				severity := classifyResourceSeverity(desiredResources.Requests[resourceName], liveResources.Requests[resourceName], desiredLim, liveLim)
+				finding := NewDriftFinding(
+					objID,
+					path,
+					normalizeResourceValue(desiredLim),
+					normalizeResourceValue(liveLim),
+					DriftCapacity,
+					severity,
+				)
+				findings = append(findings, finding)
+			}
+		}
+	}
+
+	return findings
+}
+
+// containerResources holds extracted resource requests and limits.
+type containerResources struct {
+	Requests map[string]string
+	Limits   map[string]string
+}
+
+// extractResources extracts resource requests and limits from a container.
+func extractResources(container map[string]interface{}) containerResources {
+	result := containerResources{
+		Requests: make(map[string]string),
+		Limits:   make(map[string]string),
+	}
+
+	resources, ok := container["resources"].(map[string]interface{})
+	if !ok {
+		return result
+	}
+
+	// Extract requests
+	if requests, ok := resources["requests"].(map[string]interface{}); ok {
+		for k, v := range requests {
+			if s, ok := v.(string); ok {
+				result.Requests[k] = s
+			}
+		}
+	}
+
+	// Extract limits
+	if limits, ok := resources["limits"].(map[string]interface{}); ok {
+		for k, v := range limits {
+			if s, ok := v.(string); ok {
+				result.Limits[k] = s
+			}
+		}
+	}
+
+	return result
+}
+
+// classifyResourceSeverity determines severity for resource drift.
+// Returns critical if the live config is invalid (e.g., limits < requests).
+// Returns warning for normal drift.
+func classifyResourceSeverity(desiredReq, liveReq, desiredLim, liveLim string) DriftSeverity {
+	// Check if live config is invalid (limits < requests)
+	if liveReq != "" && liveLim != "" {
+		reqValue := parseResourceQuantity(liveReq)
+		limValue := parseResourceQuantity(liveLim)
+		if reqValue > 0 && limValue > 0 && limValue < reqValue {
+			return DriftSeverityCritical
+		}
+	}
+	return DriftSeverityWarning
+}
+
+// parseResourceQuantity parses a Kubernetes resource quantity to a comparable float.
+// This is a simplified parser for common formats (e.g., "100m", "1Gi", "500Mi").
+func parseResourceQuantity(s string) float64 {
+	if s == "" {
+		return 0
+	}
+
+	// Handle CPU millicores (e.g., "100m", "500m")
+	if strings.HasSuffix(s, "m") {
+		val, err := strconv.ParseFloat(strings.TrimSuffix(s, "m"), 64)
+		if err == nil {
+			return val / 1000
+		}
+	}
+
+	// Handle memory with suffixes
+	multipliers := map[string]float64{
+		"Ki": 1024,
+		"Mi": 1024 * 1024,
+		"Gi": 1024 * 1024 * 1024,
+		"Ti": 1024 * 1024 * 1024 * 1024,
+		"K":  1000,
+		"M":  1000 * 1000,
+		"G":  1000 * 1000 * 1000,
+		"T":  1000 * 1000 * 1000 * 1000,
+	}
+
+	for suffix, mult := range multipliers {
+		if strings.HasSuffix(s, suffix) {
+			val, err := strconv.ParseFloat(strings.TrimSuffix(s, suffix), 64)
+			if err == nil {
+				return val * mult
+			}
+		}
+	}
+
+	// Try parsing as plain number
+	val, err := strconv.ParseFloat(s, 64)
+	if err == nil {
+		return val
+	}
+
+	return 0
+}
+
+// normalizeResourceValue returns nil for empty strings, otherwise the value.
+func normalizeResourceValue(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
 }
 
 // fetchLiveResource fetches a resource from the cluster.
