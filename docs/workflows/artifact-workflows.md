@@ -76,6 +76,57 @@ cub-scout bundle replay ./debug-bundle --section attribution > attribution.txt
 | **Offline** | No cluster access required for replay |
 | **Portable** | Works on any machine with cub-scout |
 
+## Git Context (v0.18+)
+
+When creating bundles, cub-scout automatically captures git repository context:
+
+```json
+{
+  "gitContext": {
+    "repoRoot": "/home/runner/work/myapp/myapp",
+    "commitSHA": "abc123def456789",
+    "branch": "main",
+    "remoteURL": "https://github.com/myorg/myapp.git"
+  }
+}
+```
+
+### What's captured
+
+| Field | Description |
+|-------|-------------|
+| `repoRoot` | Absolute path to repository root |
+| `commitSHA` | Current HEAD commit SHA |
+| `branch` | Current branch name |
+| `remoteURL` | Origin remote URL |
+
+### Key design decisions
+
+- **Pure metadata** — git context is informational only; replay semantics are unchanged
+- **Automatic capture** — captured at bundle creation time if running in a git repository
+- **Graceful absence** — if not in a git repo, `gitContext` is omitted (not null/empty)
+- **No live git ops** — replay never touches git; context is for correlation only
+
+### Use cases
+
+1. **CI traceability** — link bundle to the exact commit that produced it
+2. **Issue correlation** — include commit SHA when sharing bundles in bug reports
+3. **Audit trail** — know which branch/repo a bundle came from
+
+### Viewing git context
+
+```bash
+# Bundle inspect shows git context when present
+cub-scout bundle inspect ./debug-bundle
+
+# Output includes:
+# Git Context
+#   Repo:            /home/runner/work/myapp/myapp
+#   Commit:          abc123def456789
+#   Branch:          main
+#   Remote:          https://github.com/myorg/myapp.git
+```
+
 ## Commands Reference
 
 | Command | Purpose |

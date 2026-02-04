@@ -360,6 +360,24 @@ func renderBundleInspectASCII(bundle *agent.DebugBundle, summary agent.BundleSum
 	}
 	b.WriteString("\n")
 
+	// Git Context section (v0.18+)
+	if bundle.Metadata.GitContext != nil {
+		b.WriteString("Git Context\n")
+		if bundle.Metadata.GitContext.RepoRoot != "" {
+			b.WriteString(fmt.Sprintf("  Repo:            %s\n", bundle.Metadata.GitContext.RepoRoot))
+		}
+		if bundle.Metadata.GitContext.CommitSHA != "" {
+			b.WriteString(fmt.Sprintf("  Commit:          %s\n", bundle.Metadata.GitContext.CommitSHA))
+		}
+		if bundle.Metadata.GitContext.Branch != "" {
+			b.WriteString(fmt.Sprintf("  Branch:          %s\n", bundle.Metadata.GitContext.Branch))
+		}
+		if bundle.Metadata.GitContext.RemoteURL != "" {
+			b.WriteString(fmt.Sprintf("  Remote:          %s\n", bundle.Metadata.GitContext.RemoteURL))
+		}
+		b.WriteString("\n")
+	}
+
 	// Contents section
 	b.WriteString("Contents\n")
 	b.WriteString(contentsLine("session.json", summary.SessionPresent, 0))

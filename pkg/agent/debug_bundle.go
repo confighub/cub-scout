@@ -17,7 +17,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -44,6 +46,27 @@ type BundleMetadata struct {
 
 	// Contents lists what files are included in the bundle
 	Contents BundleContents `json:"contents"`
+
+	// GitContext is optional git repository context (v0.18+)
+	// This is pure metadata for workflow context — replay semantics are unchanged.
+	GitContext *BundleGitContext `json:"gitContext,omitempty"`
+}
+
+// BundleGitContext contains git repository context for workflow integration.
+// This is pure metadata — replay behavior does not depend on these fields.
+// Added in v0.18 for CI/PR workflow context.
+type BundleGitContext struct {
+	// RepoRoot is the absolute path to the repository root
+	RepoRoot string `json:"repoRoot,omitempty"`
+
+	// CommitSHA is the current commit SHA (if available)
+	CommitSHA string `json:"commitSHA,omitempty"`
+
+	// Branch is the current branch name (if available)
+	Branch string `json:"branch,omitempty"`
+
+	// RemoteURL is the origin remote URL (if available)
+	RemoteURL string `json:"remoteURL,omitempty"`
 }
 
 // BundleTarget identifies the debug target.
@@ -196,6 +219,11 @@ func (w *BundleWriter) Write(bundle *DebugBundle, outputDir string) error {
 		HasEvents:      len(bundle.Events) > 0,
 		HasLogs:        len(bundle.Logs) > 0,
 		HasAttribution: bundle.Attribution != nil && !bundle.Attribution.IsEmpty(),
+	}
+
+	// Capture git context if available (v0.18+ workflow integration)
+	if bundle.Metadata.GitContext == nil {
+		bundle.Metadata.GitContext = CaptureGitContext()
 	}
 
 	// Write metadata.json
@@ -432,4 +460,47 @@ func Summarize(bundle *DebugBundle) BundleSummary {
 	}
 
 	return summary
+}
+
+// CaptureGitContext captures git repository context from the current directory.
+// Returns nil if not in a git repository or git is not available.
+// This is pure metadata for workflow integration — replay semantics are unchanged.
+func CaptureGitContext() *BundleGitContext {
+	// Check if we're in a git repository
+	repoRoot := gitCommand("rev-parse", "--show-toplevel")
+	if repoRoot == "" {
+		return nil
+	}
+
+	ctx := &BundleGitContext{
+		RepoRoot: repoRoot,
+	}
+
+	// Get current commit SHA
+	if sha := gitCommand("rev-parse", "HEAD"); sha != "" {
+		ctx.CommitSHA = sha
+	}
+
+	// Get current branch
+	if branch := gitCommand("rev-parse", "--abbrev-ref", "HEAD"); branch != "" && branch != "HEAD" {
+		ctx.Branch = branch
+	}
+
+	// Get origin remote URL (if available)
+	if remote := gitCommand("remote", "get-url", "origin"); remote != "" {
+		ctx.RemoteURL = remote
+	}
+
+	return ctx
+}
+
+// gitCommand runs a git command and returns the trimmed output.
+// Returns empty string on any error (git not installed, not a repo, etc.).
+func gitCommand(args ...string) string {
+	cmd := exec.Command("git", args...)
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }

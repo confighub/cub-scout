@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Artifact Workflow Demo — v0.18 (#103)
+# Artifact Workflow Demo — v0.18 (#103, #104)
 #
 # This script demonstrates the end-to-end artifact workflow:
-#   1. CI produces a debug bundle
-#   2. Developer inspects the bundle
+#   1. CI produces a debug bundle (with git context)
+#   2. Developer inspects the bundle (sees repo/commit/branch)
 #   3. Developer replays sections
 #   4. Developer exports human-readable reports
 #
 # All operations are file-based and reproducible.
 # No live cluster access required for replay.
+# Git context is pure metadata — replay semantics are unchanged.
 #
 # Usage:
 #   ./examples/workflows/artifact-workflow-demo.sh
@@ -48,11 +49,11 @@ echo ""
 # Create a minimal test bundle (simulating what CI would produce)
 mkdir -p "$BUNDLE_DIR"
 
-# metadata.json
+# metadata.json (with git context - v0.18+)
 cat > "$BUNDLE_DIR/metadata.json" << 'METADATA'
 {
   "formatVersion": "v1",
-  "cubScoutVersion": "0.16.0",
+  "cubScoutVersion": "0.18.0",
   "createdAt": "2026-02-04T10:00:00Z",
   "label": "ci-run-12345",
   "target": {
@@ -66,6 +67,12 @@ cat > "$BUNDLE_DIR/metadata.json" << 'METADATA'
     "hasEvents": false,
     "hasLogs": false,
     "hasAttribution": true
+  },
+  "gitContext": {
+    "repoRoot": "/home/runner/work/myapp/myapp",
+    "commitSHA": "abc123def456789",
+    "branch": "main",
+    "remoteURL": "https://github.com/myorg/myapp.git"
   }
 }
 METADATA
@@ -162,7 +169,14 @@ cat > "$BUNDLE_DIR/README.md" << 'README'
 
 **Target:** Deployment/web-frontend (production)
 **Created:** 2026-02-04T10:00:00Z
-**Tool Version:** cub-scout 0.16.0
+**Tool Version:** cub-scout 0.18.0
+
+## Git Context
+
+- **Repo:** /home/runner/work/myapp/myapp
+- **Commit:** abc123def456789
+- **Branch:** main
+- **Remote:** https://github.com/myorg/myapp.git
 
 ## Contents
 
@@ -248,8 +262,8 @@ echo "  Demo Complete"
 echo "=============================================="
 echo ""
 echo "This workflow demonstrated:"
-echo "  1. CI produces artifacts (bundle directory)"
-echo "  2. Developer downloads and inspects locally"
+echo "  1. CI produces artifacts (bundle directory with git context)"
+echo "  2. Developer downloads and inspects locally (sees repo/commit/branch)"
 echo "  3. Developer replays any section offline"
 echo "  4. Developer exports reports (JSON + human-readable)"
 echo ""
@@ -257,7 +271,12 @@ echo "All operations are:"
 echo "  - File-based (no cluster access for replay)"
 echo "  - Deterministic (same input = same output)"
 echo "  - Self-contained (bundle has everything needed)"
+echo "  - Git-aware (repo, commit, branch captured as context)"
+echo ""
+echo "Git context is pure metadata — replay semantics are unchanged."
 echo ""
 echo "For real CI usage, replace step 1 with:"
 echo "  cub-scout debug deploy/web-frontend -n production --non-interactive --save-bundle ./artifacts/bundle"
+echo ""
+echo "Git context is automatically captured when running in a git repository."
 echo ""
