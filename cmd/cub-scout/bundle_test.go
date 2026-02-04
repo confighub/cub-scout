@@ -395,3 +395,330 @@ func sliceEqual(a, b []string) bool {
 	}
 	return true
 }
+
+// Replay tests
+
+func TestBundleReplay_DriftJSON(t *testing.T) {
+	// Create a bundle with drift findings
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "replay-drift-bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{
+				ID:             "drift:Deployment:prod/api:spec.replicas",
+				ObjectID:       "Deployment:prod/api",
+				Path:           "spec.replicas",
+				Classification: agent.DriftCapacity,
+				Severity:       agent.DriftSeverityWarning,
+			},
+		},
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Read and build report
+	reader := agent.NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	report := agent.DriftReport{
+		Command:  "bundle replay",
+		Findings: readBundle.DriftFindings,
+		Summary:  buildDriftSummaryFromFindings(readBundle.DriftFindings),
+	}
+
+	// Verify report structure
+	if report.Command != "bundle replay" {
+		t.Errorf("Command = %s, want bundle replay", report.Command)
+	}
+	if len(report.Findings) != 1 {
+		t.Errorf("Findings count = %d, want 1", len(report.Findings))
+	}
+	if report.Summary.TotalFindings != 1 {
+		t.Errorf("Summary.TotalFindings = %d, want 1", report.Summary.TotalFindings)
+	}
+}
+
+func TestBundleReplay_DriftASCII_Deterministic(t *testing.T) {
+	// Create a bundle with drift findings
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "replay-ascii-bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{
+				ID:             "drift:Deployment:prod/api:spec.replicas",
+				ObjectID:       "Deployment:prod/api",
+				Path:           "spec.replicas",
+				Classification: agent.DriftCapacity,
+				Severity:       agent.DriftSeverityWarning,
+			},
+			{
+				ID:             "drift:Deployment:prod/api:spec.template.spec.containers[0].image",
+				ObjectID:       "Deployment:prod/api",
+				Path:           "spec.template.spec.containers[0].image",
+				Classification: agent.DriftImage,
+				Severity:       agent.DriftSeverityCritical,
+			},
+		},
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Read and render multiple times
+	reader := agent.NewBundleReader()
+	var outputs []string
+
+	for i := 0; i < 3; i++ {
+		readBundle, err := reader.Read(bundleDir)
+		if err != nil {
+			t.Fatalf("Read %d failed: %v", i, err)
+		}
+
+		report := agent.DriftReport{
+			Command:  "bundle replay",
+			Findings: readBundle.DriftFindings,
+			Summary:  buildDriftSummaryFromFindings(readBundle.DriftFindings),
+		}
+
+		output := agent.RenderDriftASCII(report)
+		outputs = append(outputs, output)
+	}
+
+	// All outputs should be identical
+	for i := 1; i < len(outputs); i++ {
+		if outputs[i] != outputs[0] {
+			t.Errorf("ASCII output %d differs from output 0", i)
+		}
+	}
+}
+
+func TestBundleReplay_Correlation(t *testing.T) {
+	// Create a bundle with drift and events
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "replay-corr-bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{
+				ID:             "drift:1",
+				Path:           "spec.replicas",
+				Classification: agent.DriftCapacity,
+			},
+		},
+		Events: []agent.TimelineEvent{
+			{
+				ResourceKind: "Deployment",
+				ResourceName: "api",
+				K8sEvent:     agent.K8sEvent{Type: "Warning", Reason: "FailedScheduling"},
+			},
+		},
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Read and build correlation
+	reader := agent.NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	corr := agent.DriftCorrelation{
+		ObjectID:   "Deployment:prod/api",
+		Findings:   readBundle.DriftFindings,
+		Events:     readBundle.Events,
+		Logs:       readBundle.Logs,
+		HasDrift:   len(readBundle.DriftFindings) > 0,
+		HasFailure: hasFailureSignalsInBundle(readBundle.Events, readBundle.Logs),
+	}
+
+	// Verify correlation structure
+	if !corr.HasDrift {
+		t.Error("HasDrift should be true")
+	}
+	if !corr.HasFailure {
+		t.Error("HasFailure should be true (Warning event)")
+	}
+
+	// Render and check for expected content
+	output := agent.RenderCorrelationASCII(corr)
+	if !strings.Contains(output, "Drift-Debug Correlation") {
+		t.Error("Output should contain header")
+	}
+	if !strings.Contains(output, "spec.replicas") {
+		t.Error("Output should contain drift path")
+	}
+}
+
+func TestBundleReplay_FailOnSeverity(t *testing.T) {
+	findings := []agent.DriftFinding{
+		{Severity: agent.DriftSeverityInfo},
+		{Severity: agent.DriftSeverityWarning},
+	}
+
+	tests := []struct {
+		name     string
+		failOn   string
+		wantExit int
+	}{
+		{"no fail-on", "", BundleReplayExitOK},
+		{"fail-on info, has warning", "info", BundleReplayExitFailure},
+		{"fail-on warning, has warning", "warning", BundleReplayExitFailure},
+		{"fail-on critical, has warning", "critical", BundleReplayExitOK},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := computeReplayExitCode(findings, tt.failOn)
+			if got != tt.wantExit {
+				t.Errorf("computeReplayExitCode() = %d, want %d", got, tt.wantExit)
+			}
+		})
+	}
+}
+
+func TestBundleReplay_NoFindings(t *testing.T) {
+	findings := []agent.DriftFinding{}
+
+	// Even with fail-on, empty findings should return OK
+	got := computeReplayExitCode(findings, "info")
+	if got != BundleReplayExitOK {
+		t.Errorf("computeReplayExitCode(empty, info) = %d, want %d", got, BundleReplayExitOK)
+	}
+}
+
+func TestBuildDriftSummaryFromFindings(t *testing.T) {
+	findings := []agent.DriftFinding{
+		{Severity: agent.DriftSeverityCritical, Classification: agent.DriftImage},
+		{Severity: agent.DriftSeverityWarning, Classification: agent.DriftCapacity},
+		{Severity: agent.DriftSeverityWarning, Classification: agent.DriftCapacity},
+		{Severity: agent.DriftSeverityInfo, Classification: agent.DriftConfig},
+	}
+
+	summary := buildDriftSummaryFromFindings(findings)
+
+	if summary.TotalFindings != 4 {
+		t.Errorf("TotalFindings = %d, want 4", summary.TotalFindings)
+	}
+
+	// Check severity counts
+	severityMap := make(map[agent.DriftSeverity]int)
+	for _, sc := range summary.BySeverity {
+		severityMap[sc.Severity] = sc.Count
+	}
+
+	if severityMap[agent.DriftSeverityCritical] != 1 {
+		t.Errorf("Critical count = %d, want 1", severityMap[agent.DriftSeverityCritical])
+	}
+	if severityMap[agent.DriftSeverityWarning] != 2 {
+		t.Errorf("Warning count = %d, want 2", severityMap[agent.DriftSeverityWarning])
+	}
+	if severityMap[agent.DriftSeverityInfo] != 1 {
+		t.Errorf("Info count = %d, want 1", severityMap[agent.DriftSeverityInfo])
+	}
+
+	// Check classification counts
+	classMap := make(map[agent.DriftClassification]int)
+	for _, cc := range summary.ByClassification {
+		classMap[cc.Classification] = cc.Count
+	}
+
+	if classMap[agent.DriftImage] != 1 {
+		t.Errorf("Image count = %d, want 1", classMap[agent.DriftImage])
+	}
+	if classMap[agent.DriftCapacity] != 2 {
+		t.Errorf("Capacity count = %d, want 2", classMap[agent.DriftCapacity])
+	}
+	if classMap[agent.DriftConfig] != 1 {
+		t.Errorf("Config count = %d, want 1", classMap[agent.DriftConfig])
+	}
+}
+
+func TestHasFailureSignalsInBundle(t *testing.T) {
+	tests := []struct {
+		name   string
+		events []agent.TimelineEvent
+		logs   []agent.ContainerLogResult
+		want   bool
+	}{
+		{
+			name:   "no signals",
+			events: []agent.TimelineEvent{{K8sEvent: agent.K8sEvent{Type: "Normal"}}},
+			logs:   []agent.ContainerLogResult{},
+			want:   false,
+		},
+		{
+			name:   "warning event",
+			events: []agent.TimelineEvent{{K8sEvent: agent.K8sEvent{Type: "Warning"}}},
+			logs:   []agent.ContainerLogResult{},
+			want:   true,
+		},
+		{
+			name:   "error severity",
+			events: []agent.TimelineEvent{{Severity: "error"}},
+			logs:   []agent.ContainerLogResult{},
+			want:   true,
+		},
+		{
+			name:   "log error",
+			events: []agent.TimelineEvent{},
+			logs:   []agent.ContainerLogResult{{Error: "connection refused"}},
+			want:   true,
+		},
+		{
+			name:   "log pattern error",
+			events: []agent.TimelineEvent{},
+			logs:   []agent.ContainerLogResult{{Patterns: []agent.LogPattern{{Type: "error"}}}},
+			want:   true,
+		},
+		{
+			name:   "log pattern panic",
+			events: []agent.TimelineEvent{},
+			logs:   []agent.ContainerLogResult{{Patterns: []agent.LogPattern{{Type: "panic"}}}},
+			want:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := hasFailureSignalsInBundle(tt.events, tt.logs)
+			if got != tt.want {
+				t.Errorf("hasFailureSignalsInBundle() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
