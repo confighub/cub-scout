@@ -1,0 +1,58 @@
+╭────────────────────────────────────────────────────────────────╮
+│  LOCAL CLUSTER TUI HELP                                       │
+╰────────────────────────────────────────────────────────────────╯
+
+VIEWS
+  s  Status/Dashboard
+  w  Workloads by owner
+  a  Apps (grouped by app label + variant)
+  p  Pipelines (GitOps deployers)
+  d  Drift detection
+  o  Orphans (Native resources)
+  c  Crashes (failing pods)
+  i  Issues (unhealthy resources)
+  u  sUspended (paused/forgotten resources)
+  b  Bypass (factory bypass detection)
+  x  Sprawl (config sprawl analysis)
+  D  Dependencies (upstream/downstream)
+  G  Git sources (forward trace)
+  4  Cluster Data (all data sources TUI reads)
+  5/A  App Hierarchy (inferred ConfigHub model)
+  M  Three Maps view
+  Tab  Cycle views
+
+NAVIGATION
+  ↑/k ↓/j  Move up/down
+  ] / [   Next/prev namespace (outside panels)
+  Enter    Cross-references (in panel view)
+  /        Search
+  r        Refresh data
+
+WORKLOADS PANEL (w)
+  [  Decrease tree depth (fewer items per owner)
+  ]  Increase tree depth (more items per owner)
+  0  Unlimited depth (show all items)
+     Maps to --depth flag on tree command
+
+ACTIONS
+  C  Suggest commands (context-aware)
+  Q  Saved queries (filter resources)
+  T  Trace ownership chain
+  S  Scan for CCVEs
+  I  Import wizard (bring workloads to ConfigHub)
+
+COMMAND PALETTE
+  :  Run shell command (↑↓ for history)
+     e.g., kubectl get pods, cub-scout scan
+  $  Clean shell (with cub-scout tab-completion)
+     Isolated session, type 'exit' to return
+
+MODE SWITCHING
+  H  Switch to ConfigHub hierarchy
+     (requires cub auth login)
+
+QUIT
+  q  Quit
+  ?  Show this help
+
+Press any key to close

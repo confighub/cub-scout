@@ -1,0 +1,18 @@
+ Standalone  │ Cluster: test-cluster │ Context: default
+ ✓ ALL HEALTHY
+
+  Deployers  0/0
+  Workloads  0/0
+
+  PIPELINES
+  ────────────────────────────────────────────────
+  No GitOps pipelines found
+
+  OWNERSHIP
+  ────────────────────────────────────────────────
+  No workloads found
+
+────────────────────────────────────────────────────────────────
+ns: All (8) | [:]cmd []/[]ns [w]ork [p]ipe [d]rift [o]rph [T]race [S]can | [H]ub [?] [q]
+
+💡 Want more? Press H for ConfigHub hierarchy, I to import workloads
