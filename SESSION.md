@@ -2923,3 +2923,36 @@ Single bundles remain immutable; temporal meaning requires explicit new schema.
 4. Tests for determinism catch regression magnets early
 
 ---
+
+## v0.15 Design Checkpoint — APPROVED
+
+**Date:** 2026-02-04
+**Status:** Design approved, ready for PR1
+
+### Semantic Decisions
+
+| Question | Answer |
+|----------|--------|
+| Bundle catalog | File-backed manifest (`catalog.json`), no DB |
+| Temporal joins | Explicit join mode (`object_id` default), no inference |
+| Comparison schema | New `bundle-diff.v1` and `bundle-timeline.v1` schemas |
+| Ordering | Explicit modes only (manifest, created_at, sequence, input) |
+
+### Non-negotiable Axioms
+
+1. Bundles remain immutable (v1 stays valid)
+2. Time-series meaning only when explicitly constructed
+3. New meaning = new JSON schema
+4. ASCII remains f(JSON)+g
+
+### Implementation Plan
+
+| PR | Scope |
+|----|-------|
+| PR1 | Catalog v1: schema + init/add/list/validate |
+| PR2 | Pairwise diff: bundle-diff.v1 schema + command |
+| PR3 | Timeline: bundle-timeline.v1 schema + command |
+
+See `docs/v0.15-design-checkpoint.md` for full specification.
+
+---
