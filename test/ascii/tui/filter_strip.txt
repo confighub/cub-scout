@@ -1,0 +1,26 @@
+ Standalone  │ Cluster: test-cluster │ Context: default
+Filters: owner=Flux depth=2
+ 1 FAILURE(S)
+
+  Deployers  3/3
+  Workloads  5/6
+
+  PROBLEMS
+  ────────────────────────────────────────────────
+  prod/crashing-pod  CrashLoopBackOff
+
+  PIPELINES
+  ────────────────────────────────────────────────
+  flux-system  ->  apps
+  redis-chart  ->  redis
+  https://github.com/example/app  ->  database
+
+  OWNERSHIP
+  ────────────────────────────────────────────────
+  Flux(3) Argo(1) Helm(1) Native(1)
+  ████████████████████░░░░
+
+────────────────────────────────────────────────────────────────
+ns: All (8) | [:]cmd []/[]ns [w]ork [p]ipe [d]rift [o]rph [T]race [S]can | [H]ub [?] [q]
+
+💡 Want more? Press H for ConfigHub hierarchy, I to import workloads

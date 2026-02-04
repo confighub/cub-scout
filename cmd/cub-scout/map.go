@@ -476,6 +476,9 @@ func init() {
 	// Hub flag (same as 'map hub' subcommand)
 	mapCmd.Flags().BoolVar(&mapHub, "hub", false, "Launch ConfigHub hierarchy TUI (requires cub auth)")
 
+	// Shared view flags (CLI ↔ TUI symmetry: --owner, --namespace, --depth, --kind)
+	AddSharedViewFlags(mapCmd)
+
 	// Fleet-specific flags
 	mapFleetCmd.Flags().StringVar(&fleetApp, "app", "", "Filter by app label")
 	mapFleetCmd.Flags().StringVar(&fleetSpace, "space", "", "Filter by space (App Space)")

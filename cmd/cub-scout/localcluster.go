@@ -208,6 +208,9 @@ type LocalClusterModel struct {
 
 	// Shell mode ($ key) - interactive subshell with cub-scout completion
 	shellMode bool // Shell is active (TUI suspended)
+
+	// CLI ↔ TUI symmetry: shared view options from --owner, --namespace, --depth, --kind flags
+	viewOpts ViewOptions
 }
 
 // GitOpsResource represents a Flux/ArgoCD resource
@@ -424,6 +427,12 @@ type xrefItem struct {
 }
 
 func initialLocalModel() LocalClusterModel {
+	return initialLocalModelWithOpts(sharedViewOpts)
+}
+
+// initialLocalModelWithOpts creates a LocalClusterModel with the given view options.
+// This enables CLI ↔ TUI symmetry: flags like --owner, --namespace are passed through.
+func initialLocalModelWithOpts(opts ViewOptions) LocalClusterModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
@@ -447,6 +456,7 @@ func initialLocalModel() LocalClusterModel {
 		clusterName: clusterName,
 		contextName: contextName,
 		panelPane:   vp,
+		viewOpts:    opts,
 	}
 
 	// Restore from snapshot if available and matches current cluster
@@ -2126,6 +2136,17 @@ func (m LocalClusterModel) renderModeHeader() string {
 	return mode + cluster + context + worker + "\n"
 }
 
+// renderFilterStrip returns the CLI filter indicator strip.
+// Shows active CLI flags (--owner, --namespace, --depth, --kind) for CLI ↔ TUI symmetry.
+// Returns empty string if no CLI filters are active.
+func (m LocalClusterModel) renderFilterStrip() string {
+	text := m.viewOpts.FilterStripText()
+	if text == "" {
+		return ""
+	}
+	return lcCyanStyle.Render(text) + "\n"
+}
+
 // getNamespaceFilter returns the current namespace filter name
 // Returns "All" if no filter is active (idx=0), or the namespace name
 func (m *LocalClusterModel) getNamespaceFilter() string {
@@ -2692,6 +2713,9 @@ func (m LocalClusterModel) renderSplitView() string {
 
 	// Mode header (always shown)
 	b.WriteString(m.renderModeHeader())
+
+	// CLI filter strip (--owner, --namespace, --depth, --kind)
+	b.WriteString(m.renderFilterStrip())
 
 	// Calculate pane dimensions for 50/50 split
 	leftWidth := (m.width / 2) - 2
@@ -4650,6 +4674,9 @@ func (m LocalClusterModel) renderDashboard() string {
 
 	// Mode header (always shown)
 	b.WriteString(m.renderModeHeader())
+
+	// CLI filter strip (--owner, --namespace, --depth, --kind)
+	b.WriteString(m.renderFilterStrip())
 
 	if m.loading {
 		b.WriteString("\n  " + m.spinner.View() + " Loading cluster data...\n")

@@ -500,3 +500,37 @@ func TestTUISymbols_NoRawGlyphs(t *testing.T) {
 	// This test just confirms the views render without error.
 	t.Log("Symbol consistency verified by #90 refactor - all views render successfully")
 }
+
+// TestTUISnapshot_FilterStrip tests CLI ↔ TUI symmetry filter strip display (#91)
+func TestTUISnapshot_FilterStrip(t *testing.T) {
+	m := createTestModel(viewportMaxWidth, viewportMaxHeight)
+	m.view = viewDashboard
+	m.panelMode = false
+
+	// Set CLI flags via viewOpts
+	m.viewOpts = ViewOptions{
+		Owner: "Flux",
+		Depth: 2,
+	}
+
+	got := m.View()
+
+	repoRoot := findRepoRoot(t)
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "tui", "filter_strip.txt")
+	compareGolden(t, got, goldenPath)
+}
+
+// TestTUISnapshot_FilterStrip_NoFilters tests filter strip is absent when no flags set
+func TestTUISnapshot_FilterStrip_NoFilters(t *testing.T) {
+	m := createTestModel(viewportMinWidth, viewportMinHeight)
+	m.view = viewDashboard
+	m.panelMode = false
+	m.viewOpts = ViewOptions{} // No filters
+
+	got := m.View()
+
+	// Verify "Filters:" doesn't appear when no flags are set
+	if strings.Contains(got, "Filters:") {
+		t.Error("filter strip should not appear when no CLI flags are set")
+	}
+}
