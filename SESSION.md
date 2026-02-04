@@ -1,3 +1,163 @@
+# OFFICIAL SAVEPOINT — cub-scout
+
+**Date:** 2026-02-04
+**Version line:** v0.16.x
+**Latest release:** **v0.16.0**
+**Commit:** `dc56fb5` (release) + `65d3b51` (testing strategy)
+**Repo state:** Clean, green, synced
+**Semantic status:** Stable and sealed
+
+---
+
+## What Is Shipped (COMPLETE)
+
+### v0.16.0 — Composition Attribution (RELEASED)
+
+**Tag:** `v0.16.0`
+**GitHub Release:** Published
+**Tests:** All passing (`go test ./...`, race-safe)
+
+### Core capabilities delivered
+
+| Capability                                    | Status   |
+| --------------------------------------------- | -------- |
+| Attribution graph (`attribution-graph.v1`)    | Locked |
+| Attribution report (`attribution-report.v1`)  | Locked |
+| Debug bundle capture (`debug --save-bundle`)  | Done        |
+| Crossplane ownership (XR/MR/Composition)      | Done        |
+| Kustomize overlay attribution (`--kustomize`) | Done        |
+| Offline replay (graph + report)               | Done        |
+| Deterministic merge + scoring                 | Done        |
+
+Ownership is now **explicit, reproducible, and explainable** across Crossplane and Kustomize — with no inference, no guessing, and no replay-time computation.
+
+---
+
+## Semantic Contracts (LOCKED)
+
+These are **non-negotiable** going forward:
+
+* Bundle-first reasoning only
+* No new meaning without new schema
+* ASCII output = **f(JSON) + g**
+* Deterministic output everywhere
+* Unknowns are first-class (`unattributed`, `ambiguous`)
+* Replay is offline and read-only
+* Attribution is a **semantic promise**, not a best-effort feature
+
+Schemas sealed:
+
+* `attribution-graph.v1`
+* `attribution-report.v1`
+
+---
+
+## Testing State (COMPLETE)
+
+### Canonical full test
+
+* **`scripts/full-test.sh`** — executable proof of correctness
+
+  * build
+  * unit tests
+  * race detection
+  * fixture-based E2E
+  * determinism checks
+  * attribution contract validation
+
+### Testing taxonomy (documented)
+
+Five equal-weight groups (20% each):
+
+1. Unit Tests
+2. Integration Tests
+3. GitOps E2E
+4. **Attribution Contract** (new, explicit)
+5. Connected Mode
+
+Docs updated in:
+
+* `docs/reference/testing.md`
+
+Testing is now **auditable, repeatable, and CI-ready**.
+
+---
+
+## Documentation State
+
+| Document          | Status                       |
+| ----------------- | ---------------------------- |
+| `SESSION.md`      | Up to date                 |
+| `docs/roadmap.md` | v0.16 marked Released      |
+| Release notes     | `docs/releases/v0.16.0.md` |
+| Testing guide     | Updated for attribution    |
+
+---
+
+## Roadmap Position
+
+### Completed arcs
+
+* v0.14 — Explainable Debugging
+* v0.15 — Replay & Time-Series Reasoning
+* **v0.16 — Composition Attribution**
+
+### Next planned (NOT STARTED)
+
+* **v0.17 — Stabilization Window**
+
+  * CI YAML
+  * Performance baselines
+  * UX polish
+  * Contract audits
+  * Test hardening
+
+No active PRs. No partial work in progress.
+
+---
+
+## Current State
+
+**Paused by design.**
+
+The system is:
+
+* coherent
+* documented
+* tested
+* released
+
+This is a safe, stable checkpoint.
+Work can resume at any time without re-deriving context.
+
+---
+
+## RESUME PROMPT (WHEN READY)
+
+> **Project:** cub-scout
+> **Savepoint loaded.**
+> v0.16.0 is released with composition attribution across Crossplane and Kustomize.
+> Attribution schemas are locked; `scripts/full-test.sh` is the canonical contract proof.
+>
+> **Next options:**
+>
+> * Start **v0.17 Stabilization** (CI, perf baselines, UX polish, audits), or
+> * Draft an architectural note explaining the attribution model, or
+> * Extend docs/demos using existing semantics only.
+>
+> No new schemas or semantics unless explicitly declared.
+
+---
+
+This savepoint is **hard, stable, and resumable**.
+
+---
+---
+
+# Historical Session Logs
+
+---
+
 # Session Log: Codex Deep Code Review
 
 **Date:** 2026-01-23
