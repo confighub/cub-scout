@@ -160,7 +160,7 @@ Theme: *More signal, same rails*
 
 ### v0.14.5 — Drift ↔ Debug Correlation
 
-**Status:** Planned (In Progress)
+**Status:** Released
 
 Theme: *Why this broke*
 

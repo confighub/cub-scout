@@ -2615,3 +2615,59 @@ Will add narrative explanations connecting drift to debug signals in ASCII/TUI o
 > v0.14.5 PR1 complete (correlation helpers). PR2 pending (narrative debug flows). Unified roadmap committed. Ready for PR2 implementation.
 
 ---
+
+## v0.14.5: Drift-Debug Correlation (SHIPPED)
+
+**Date:** 2026-02-04
+**Status:** SHIPPED
+
+### Theme
+
+Connect drift facts to existing debugging signals (logs, events) via shared object identity.
+
+### Commits
+
+| PR | Commit | Description |
+|----|--------|-------------|
+| PR1 | `ceca07d` | feat(drift): add correlation helpers for drift-debug joins (#98) |
+| PR2 | `436dc0c` | feat(drift): add correlation narrative renderer (#99) |
+
+### Scope Delivered
+
+**PR1: Correlation Helpers (#98)**
+- Pure join functions in `pkg/agent/drift_correlation.go`
+- Join on `object_id` only — returns references, not interpretations
+- Functions: `FindingsForObject`, `EventsForObject`, `LogsForObject`, `CorrelateAll`
+- `TestNoNewFactsIntroduced` proves Leak Test compliance
+
+**PR2: Narrative Renderer (#99)**
+- ASCII rendering of correlation in `pkg/agent/drift_correlation_render.go`
+- Implements "g" portion of f(JSON)+g model
+- Explains four correlation states:
+  - Drift + Failure → "may have caused"
+  - Drift only → "may be intentional"
+  - Failure only → "runtime issue"
+  - Neither → "healthy"
+- `TestNarrativeDerivesFromFacts` proves no fact invention
+
+### Files Created
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `pkg/agent/drift_correlation.go` | 222 | Join functions |
+| `pkg/agent/drift_correlation_test.go` | 351 | 15 tests |
+| `pkg/agent/drift_correlation_render.go` | 272 | Narrative rendering |
+| `pkg/agent/drift_correlation_render_test.go` | 263 | 10 tests |
+
+### Semantic Contract Compliance
+
+- Correlation helpers: reference-only (no new facts)
+- Narrative renderer: narrative-only (derives from correlation structure)
+- No new JSON fields or schema changes
+- Leak Test: proven via explicit tests
+
+### Resume Prompt
+
+> v0.14.5 shipped. Correlation helpers and narrative renderer complete. Ready for v0.14.6 (Debug Bundle v1).
+
+---

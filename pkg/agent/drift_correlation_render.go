@@ -5,6 +5,7 @@ package agent
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -197,12 +198,13 @@ func formatDriftOnlyExplanation(corr DriftCorrelation) string {
 	var parts []string
 	parts = append(parts, fmt.Sprintf("Found %d configuration difference(s)", driftCount))
 
-	// Add classification breakdown if diverse
+	// Add classification breakdown if diverse (sorted for determinism)
 	if len(classifications) > 1 {
 		classStrs := []string{}
 		for class, count := range classifications {
 			classStrs = append(classStrs, fmt.Sprintf("%d %s", count, class))
 		}
+		sort.Strings(classStrs)
 		parts = append(parts, fmt.Sprintf("Categories: %s", strings.Join(classStrs, ", ")))
 	}
 
@@ -256,6 +258,7 @@ func extractFailureSignalTypes(events []TimelineEvent, logs []ContainerLogResult
 	for t := range types {
 		result = append(result, t)
 	}
+	sort.Strings(result) // Deterministic ordering
 	return result
 }
 
