@@ -2723,3 +2723,42 @@ Portable debug bundles for offline inspection and sharing across time/people.
 > v0.14.6 PR1 complete (bundle packaging). PR2 pending (inspect/replay commands). PR3 pending (documentation).
 
 ---
+
+### PR2: Bundle Inspect/Replay Commands (#101)
+
+**Status:** COMPLETE
+
+**Commits:**
+| Commit | Description |
+|--------|-------------|
+| `4ff1a18` | feat(bundle): add bundle inspect command |
+| `7f0b1f4` | feat(bundle): add bundle replay command |
+
+**CLI Surface:**
+- `cub-scout bundle inspect <path>` - Show bundle metadata and contents
+- `cub-scout bundle replay <path>` - Re-render bundle with existing renderers
+
+**Flags:**
+- `--format ascii|json` - Output format
+- `--fail-on info|warning|critical` - CI gating (replay only)
+- `--section drift|correlation` - Section to replay (replay only)
+
+**Tests:**
+| Test | Purpose |
+|------|---------|
+| TestBundleInspect_Deterministic | Output consistency |
+| TestBundleInspect_JSONOutput | JSON structure |
+| TestBundleInspect_NoTimestampGeneration | Uses captured time |
+| TestBundleInspect_StableFileOrdering | Stable ordering |
+| TestBundleReplay_DriftJSON | JSON replay |
+| TestBundleReplay_DriftASCII_Deterministic | ASCII determinism |
+| TestBundleReplay_Correlation | Correlation replay |
+| TestBundleReplay_FailOnSeverity | Exit code semantics |
+| TestHasFailureSignalsInBundle | Failure detection |
+
+**Semantic Guarantees:**
+- Replay uses captured timestamps only
+- No cluster/git/filesystem access (beyond bundle)
+- Output deterministic: same bundle → identical output
+- Exit codes match drift command semantics
+

@@ -173,12 +173,12 @@ Correlation is explanatory only; no new JSON facts.
 
 ### v0.14.6 — Debug Bundle v1
 
-**Status:** In Progress (PR1 complete)
+**Status:** In Progress (PR1, PR2 complete)
 
 Theme: *Debugging across time and people*
 
 * Debug Bundle v1 packaging (#100) ✅
-* Bundle inspect/replay (#101)
+* Bundle inspect/replay (#101) ✅
 * Bundle documentation (#102)
 
 Bundles are pure packaging of existing facts.
