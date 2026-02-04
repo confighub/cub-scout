@@ -31,3 +31,6 @@ jobs:
 
       - name: Full test suite
         run: ./scripts/full-test.sh
+
+      - name: Contract audit (schema immutability + golden determinism)
+        run: ./scripts/contract-audit.sh
