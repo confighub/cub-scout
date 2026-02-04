@@ -34,3 +34,6 @@ jobs:
 
       - name: Contract audit (schema immutability + golden determinism)
         run: ./scripts/contract-audit.sh
+
+      - name: Artifact workflow demo
+        run: ./examples/workflows/artifact-workflow-demo.sh

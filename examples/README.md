@@ -109,10 +109,12 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 
 | File/Folder | Type | What | Use When |
 |-------------|------|------|----------|
+| [workflows/](workflows/) | **Working** | Artifact workflow demos (CI → local) | CI/CD integration, sharing bundles |
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |
 | [flux-boutique/](flux-boutique/) | **Working** | 5-service Flux demo | TUI view showcase, trace demo |
 | [orphans/](orphans/) | **Working** | Realistic orphan resources | Orphan detection demo |
+| [drift/](drift/) | **Working** | Drift detection examples | Learning drift detection |
 | [demos/](demos/) | **Test Fixtures** | YAML with GitOps labels + nginx:alpine | Learning ownership detection |
 | [impressive-demo/](impressive-demo/) | **Test Fixtures** | Conference demo with CCVE scenarios | Presentations, videos |
 | [scripts/](scripts/) | **Integration Code** | k9s, Slack, CI/CD scripts | Adding to your workflow |
