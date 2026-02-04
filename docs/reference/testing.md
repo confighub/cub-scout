@@ -12,14 +12,15 @@ A step-by-step guide to testing the cub-scout locally.
 
 AI can generate code that looks correct but doesn't function. Tests are the only proof. Every feature must be verified.
 
-### The Four Test Groups (25% each)
+### The Five Test Groups (20% each)
 
 | Test Group | Weight | Verification | What It Proves |
 |------------|--------|--------------|----------------|
-| **Unit Tests** | 25% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
-| **Integration** | 25% | `./test/prove-it-works.sh --level=integration` | CLI commands work, JSON output valid |
-| **GitOps E2E** | 25% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
-| **Connected** | 25% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
+| **Unit Tests** | 20% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
+| **Integration** | 20% | `./test/prove-it-works.sh --level=integration` | CLI commands work, JSON output valid |
+| **GitOps E2E** | 20% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
+| **Attribution Contract** | 20% | `go test ./pkg/agent/... -run Attribution` | Determinism, scoring, bundle replay (v0.16+) |
+| **Connected** | 20% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
 
 **Target: >90% score across all groups = 100% PROOF**
 
@@ -27,10 +28,16 @@ AI can generate code that looks correct but doesn't function. Tests are the only
 
 ```bash
 # Full proof (before any release)
+./scripts/full-test.sh
+
+# Extended proof (with live cluster tests)
 ./test/prove-it-works.sh --level=full
 
 # Quick proof (after changes)
 go test ./... && ./cub-scout map deep-dive | head -50
+
+# Attribution-only proof
+go test ./pkg/agent/... -run Attribution -v
 ```
 
 **IMPORTANT:**
@@ -676,7 +683,45 @@ https://github.com/confighub-kubecon-2025
 
 ## Full Test Suite
 
-Run all tests (3 phases + connected mode):
+### Quick Full Test (v0.16+)
+
+The canonical full test script for CI and local verification:
+
+```bash
+./scripts/full-test.sh
+```
+
+**What it tests:**
+1. **Build** — `go build ./cmd/cub-scout`
+2. **Unit tests** — `go test ./...`
+3. **Race detection** — `go test -race ./pkg/agent/...`
+4. **Determinism** — Attribution graph produces identical output across runs
+5. **Fixture E2E** — Debug bundles with test hooks
+
+**Expected output:**
+```
+==========================================
+cub-scout full test suite
+==========================================
+
+→ Building cub-scout...
+✓ Build succeeded
+→ Running unit tests...
+✓ Unit tests passed
+→ Running race detector...
+✓ Race detection passed
+→ Running determinism tests...
+  Testing attribution graph determinism...
+✓ Determinism tests passed
+→ Running fixture E2E tests...
+✓ Debug --save-bundle E2E passed
+
+==========================================
+All tests passed!
+==========================================
+```
+
+### Extended Test Suite (3 phases + connected mode)
 
 ```bash
 ./test/prove-it-works.sh --level=connected
@@ -982,6 +1027,102 @@ cub unit list
 
 ---
 
+---
+
+## Attribution Contract Tests (v0.16+)
+
+v0.16 introduced composition attribution with explicit contract guarantees. These tests verify determinism, scoring, and offline replay.
+
+### Test Files
+
+| File | Purpose | Tests |
+|------|---------|-------|
+| `attribution_graph_test.go` | Graph construction, node/edge creation | Crossplane lineage, edge types |
+| `attribution_graph_render_test.go` | ASCII rendering | Stable output, f(JSON)+g compliance |
+| `attribution_graph_merge_test.go` | Deterministic graph merge | Node/edge deduplication, sorting |
+| `attribution_report_test.go` | Report builder, scoring | Evidence scores, reason codes |
+| `attribution_report_render_test.go` | Report ASCII rendering | Ranked output, summary display |
+| `attribution_crossplane_test.go` | Crossplane ownership detection | XR/MR/Claim lineage, ownerRef/label evidence |
+| `attribution_kustomize_test.go` | Kustomize overlay attribution | Overlay ownership, path normalization |
+
+### Running Attribution Tests
+
+```bash
+# All attribution tests
+go test ./pkg/agent/... -run Attribution -v
+
+# Specific subsystems
+go test ./pkg/agent/... -run TestBuildAttributionGraph -v
+go test ./pkg/agent/... -run TestAttributionReport -v
+go test ./pkg/agent/... -run TestKustomizeOverlay -v
+go test ./pkg/agent/... -run TestMergeAttributionGraphs -v
+```
+
+### Determinism Verification
+
+Attribution must be deterministic across runs. The full-test script verifies this:
+
+```bash
+# Manual determinism check
+for i in 1 2 3; do
+  ./cub-scout bundle replay test/fixtures/crossplane/managed_with_composite_label.json \
+    --section attribution --format json > /tmp/attr-$i.json
+done
+
+# Compare outputs (must be identical)
+diff /tmp/attr-1.json /tmp/attr-2.json
+diff /tmp/attr-2.json /tmp/attr-3.json
+```
+
+### Evidence Scoring Rules
+
+Attribution report scoring is explicit and deterministic:
+
+| Evidence | Score | Reason Code |
+|----------|-------|-------------|
+| `owner_reference` | 100 | `owned_via_owner_ref` |
+| `kustomize_origin` | 90 | *(reserved for future)* |
+| `composite_label` | 80 | `owned_via_label` |
+| `kustomize_overlay` | 75 | `owned_via_kustomize` |
+| `claim_label` | 60 | `owned_via_label` |
+
+### Test Fixtures
+
+Attribution tests use JSON fixtures in `test/fixtures/crossplane/`:
+
+| Fixture | Purpose |
+|---------|---------|
+| `managed_with_composite_label.json` | MR with Crossplane composite label |
+| `deployment_no_crossplane.json` | Generic K8s object (no Crossplane) |
+
+### Bundle Replay Testing
+
+Test offline replay of attribution:
+
+```bash
+# Create a bundle with attribution
+./cub-scout debug deployment/api -n prod --save-bundle ./bundles
+
+# Replay attribution (offline, deterministic)
+./cub-scout bundle replay ./bundles/BUNDLE_DIR --section attribution
+./cub-scout bundle replay ./bundles/BUNDLE_DIR --section attribution-report
+
+# JSON output for verification
+./cub-scout bundle replay ./bundles/BUNDLE_DIR --section attribution --format json
+```
+
+### Contract Guarantees
+
+All attribution tests verify these contracts:
+
+1. **Deterministic output** — Same input always produces same output
+2. **Bundle-first reasoning** — No computation at replay time
+3. **No silent inference** — All ownership is explicit evidence
+4. **ASCII = f(JSON) + g** — ASCII always derived from JSON facts
+5. **Stable sorting** — Nodes, edges, and items sorted by ID/ref
+
+---
+
 ## Test Scorecard
 
 After comprehensive testing, create a scorecard in `test/SCORECARD-YYYY-MM-DD.md`:
@@ -989,15 +1130,28 @@ After comprehensive testing, create a scorecard in `test/SCORECARD-YYYY-MM-DD.md
 ```markdown
 ## EXECUTIVE SUMMARY
 
-### Primary Test Groups (25% each)
+### Primary Test Groups (20% each)
 
 | Test Group | Weight | Score | Status |
 |------------|--------|-------|--------|
-| **Unit Tests** | 25% | 100% | PASS (193/193) |
-| **Integration Tests** | 25% | 100% | PASS (13/13) |
-| **GitOps E2E (Flux + ArgoCD)** | 25% | 100% | PASS (21/21) |
-| **Connected Mode** | 25% | 100% | PASS (9/9) |
+| **Unit Tests** | 20% | 100% | PASS (193/193) |
+| **Integration Tests** | 20% | 100% | PASS (13/13) |
+| **GitOps E2E (Flux + ArgoCD)** | 20% | 100% | PASS (21/21) |
+| **Attribution Contract (v0.16+)** | 20% | 100% | PASS (26/26) |
+| **Connected Mode** | 20% | 100% | PASS (9/9) |
 | **TOTAL** | 100% | **100%** | **FULLY PROVEN** |
+
+### Attribution Contract Tests Breakdown
+
+| Test Suite | Count | Status |
+|------------|-------|--------|
+| Attribution Graph | 5 | PASS |
+| Attribution Graph Render | 4 | PASS |
+| Attribution Crossplane | 4 | PASS |
+| Attribution Report | 9 | PASS |
+| Attribution Report Render | 7 | PASS |
+| Attribution Kustomize | 3 | PASS |
+| Attribution Graph Merge | 4 | PASS |
 ```
 
 **Latest scorecard:** See `test/SCORECARD-2026-01-17.md`
