@@ -1,0 +1,56 @@
+{
+  "command": "drift",
+  "context": {
+    "cluster": "prod-east",
+    "namespace": "production",
+    "desiredSource": {
+      "type": "file",
+      "ref": "manifests/deployment.yaml"
+    },
+    "liveSource": {
+      "type": "cluster",
+      "ref": "prod-east"
+    }
+  },
+  "findings": [
+    {
+      "id": "drift:Deployment:production/api:spec.replicas",
+      "object_id": "Deployment:production/api",
+      "object": {
+        "kind": "Deployment",
+        "namespace": "production",
+        "name": "api"
+      },
+      "path": "spec.replicas",
+      "desired": 3,
+      "live": 5,
+      "classification": "capacity",
+      "severity": "warning"
+    },
+    {
+      "id": "drift:Deployment:production/web:spec.template.spec.containers[0].image",
+      "object_id": "Deployment:production/web",
+      "object": {
+        "kind": "Deployment",
+        "namespace": "production",
+        "name": "web"
+      },
+      "path": "spec.template.spec.containers[0].image",
+      "desired": "nginx:1.19",
+      "live": "nginx:1.21",
+      "classification": "image",
+      "severity": "warning"
+    }
+  ],
+  "summary": {
+    "totalFindings": 2,
+    "bySeverity": [
+      { "severity": "warning", "count": 2 }
+    ],
+    "byClassification": [
+      { "classification": "capacity", "count": 1 },
+      { "classification": "image", "count": 1 }
+    ],
+    "affectedObjects": 2
+  }
+}
