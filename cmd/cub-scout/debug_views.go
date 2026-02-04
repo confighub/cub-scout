@@ -295,7 +295,7 @@ func (m DebugModel) renderWorkloadStatusStep() string {
 	if len(ws.PodIssues) > 0 {
 		b.WriteString("Pod Issues:\n")
 		for _, issue := range ws.PodIssues {
-			icon := debugErrorStyle.Render("✗")
+			icon := debugErrorStyle.Render(SymError)
 			b.WriteString(fmt.Sprintf("  %s %s   %s (restarted %d times)\n",
 				icon, issue.PodName, debugWarningStyle.Render(issue.ContainerStatus), issue.RestartCount))
 			if issue.Message != "" {
@@ -496,10 +496,10 @@ func (m DebugModel) renderEventTimelineStep() string {
 		switch event.Severity {
 		case "error":
 			severityStyle = debugErrorStyle
-			icon = "✗"
+			icon = SymError
 		case "warning":
 			severityStyle = debugWarningStyle
-			icon = "⚠"
+			icon = SymWarning
 		case "info":
 			icon = "ℹ"
 		}
@@ -569,9 +569,9 @@ func (m DebugModel) renderOwnershipStep() string {
 			if i == len(oc.K8sChain)-1 {
 				prefix = "  └─"
 			}
-			icon := debugSuccessStyle.Render("✓")
+			icon := debugSuccessStyle.Render(SymOK)
 			if !link.Ready {
-				icon = debugErrorStyle.Render("✗")
+				icon = debugErrorStyle.Render(SymError)
 			}
 			b.WriteString(fmt.Sprintf("%s %s %s/%s\n", prefix, icon, link.Kind, link.Name))
 		}
@@ -586,9 +586,9 @@ func (m DebugModel) renderOwnershipStep() string {
 			if i == len(oc.GitOpsChain)-1 {
 				prefix = "  └─"
 			}
-			icon := debugSuccessStyle.Render("✓")
+			icon := debugSuccessStyle.Render(SymOK)
 			if !link.Ready {
-				icon = debugErrorStyle.Render("✗")
+				icon = debugErrorStyle.Render(SymError)
 			}
 			b.WriteString(fmt.Sprintf("%s %s %s/%s\n", prefix, icon, link.Kind, link.Name))
 		}
@@ -610,9 +610,9 @@ func (m DebugModel) renderPipelineStep() string {
 	b.WriteString(debugTitleStyle.Render("PIPELINE HEALTH"))
 	b.WriteString("\n\n")
 
-	icon := debugSuccessStyle.Render("✓")
+	icon := debugSuccessStyle.Render(SymOK)
 	if !ds.Ready {
-		icon = debugErrorStyle.Render("✗")
+		icon = debugErrorStyle.Render(SymError)
 	}
 
 	b.WriteString(fmt.Sprintf("%s %s/%s in %s\n", icon, ds.Kind, ds.Name, ds.Namespace))
@@ -653,9 +653,9 @@ func (m DebugModel) renderSourceStep() string {
 	b.WriteString(debugTitleStyle.Render("SOURCE HEALTH"))
 	b.WriteString("\n\n")
 
-	icon := debugSuccessStyle.Render("✓")
+	icon := debugSuccessStyle.Render(SymOK)
 	if !ss.Ready {
-		icon = debugErrorStyle.Render("✗")
+		icon = debugErrorStyle.Render(SymError)
 	}
 
 	b.WriteString(fmt.Sprintf("%s %s/%s in %s\n", icon, ss.Kind, ss.Name, ss.Namespace))

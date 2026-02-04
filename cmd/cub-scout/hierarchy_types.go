@@ -129,36 +129,42 @@ func titleCase(s string) string {
 
 // renderStatusIcon returns a styled status icon with trailing space for the given status.
 // Returns empty string for unknown status, allowing callers to handle their own defaults.
+// Uses canonical symbols from symbols.go.
 func renderStatusIcon(status string) string {
 	switch status {
 	case "ok":
-		return statusOK.Render(iconCheckOK) + " "
+		return statusOK.Render(SymOK) + " "
 	case "warn":
-		return statusWarn.Render(iconCheckWarn) + " "
+		return statusWarn.Render(SymWarning) + " "
 	case "error":
-		return statusErr.Render(iconCheckErr) + " "
+		return statusErr.Render(SymError) + " "
 	default:
 		return ""
 	}
 }
 
-// Tree icons
+// Tree icons — aliases to canonical symbols (see symbols.go)
+// These aliases exist for backward compatibility within hierarchy code.
 const (
-	iconExpanded  = "▼"
-	iconCollapsed = "▶"
-	iconBranch    = "├─"
-	iconLast      = "└─"
-	iconPipe      = "│ "
-	iconSpace     = "  "
-	iconActive    = "●"
-	iconInactive  = "○"
-	iconCheckOK   = "✓"
-	iconCheckWarn = "⚠"
-	iconCheckErr  = "✗"
-	iconFolder    = "📁"
-	iconUnit      = "📦"
-	iconTarget    = "🎯"
-	iconWorker    = "⚙"
+	iconExpanded  = SymExpanded
+	iconCollapsed = SymCollapsed
+	iconBranch    = SymBranch
+	iconLast      = SymLast
+	iconPipe      = SymPipe
+	iconSpace     = SymIndent
+	iconActive    = SymActive
+	iconInactive  = SymInactive
+	iconCheckOK   = SymOK
+	iconCheckWarn = SymWarning
+	iconCheckErr  = SymError
+)
+
+// Domain-specific icons (emoji)
+const (
+	iconFolder = "📁"
+	iconUnit   = "📦"
+	iconTarget = "🎯"
+	iconWorker = "⚙"
 )
 
 // Data structures from cub CLI

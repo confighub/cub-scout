@@ -3983,9 +3983,9 @@ func (m Model) renderActivityView() string {
 		}
 		for i := 0; i < count; i++ {
 			act := activities[i]
-			status := syncedStyle.Render("✓")
+			status := syncedStyle.Render(SymOK)
 			if !act.synced {
-				status = notSyncedStyle.Render("⚠")
+				status = notSyncedStyle.Render(SymWarning)
 			}
 			b.WriteString(fmt.Sprintf("  %s  %-20s  %s  rev %d",
 				status,
@@ -4305,13 +4305,13 @@ func (m Model) renderPanelView() string {
 		if hasLive && len(liveWorkloads) > 0 {
 			// Show first workload with status
 			w := liveWorkloads[0]
-			statusIcon := "✓"
+			statusIcon := SymOK
 			statusStyle := okStyle
 			if w.Status == "NotReady" || w.Status == "Pending" {
-				statusIcon = "⚠"
+				statusIcon = SymWarning
 				statusStyle = warnStyle
 			} else if w.Status == "Failed" {
-				statusIcon = "✗"
+				statusIcon = SymError
 				statusStyle = errStyle
 			}
 
@@ -5293,16 +5293,16 @@ func (m Model) renderImportWizard() string {
 					statusIcon = dimStyle.Render("○")
 					status = dimStyle.Render("Native (no GitOps)")
 				} else if w.ExtractedConfig != "" {
-					statusIcon = statusOK.Render("✓")
+					statusIcon = statusOK.Render(SymOK)
 					// Show brief summary of what was extracted
 					lines := strings.Count(w.ExtractedConfig, "\n")
 					status = statusOK.Render(fmt.Sprintf("%s %s/%s (%d lines)",
 						w.GitOpsRef.Kind, w.GitOpsRef.Namespace, w.GitOpsRef.Name, lines))
 				} else if w.ConfigError != nil {
-					statusIcon = statusErr.Render("✗")
+					statusIcon = statusErr.Render(SymError)
 					status = statusErr.Render(fmt.Sprintf("Failed: %v", w.ConfigError))
 				} else {
-					statusIcon = statusWarn.Render("⚠")
+					statusIcon = statusWarn.Render(SymWarning)
 					status = statusWarn.Render("No config extracted")
 				}
 
@@ -5411,36 +5411,36 @@ func (m Model) renderImportWizard() string {
 
 		// Summary - use consistent formatting with checkmarks aligned
 		if m.importCreateNewSpace {
-			b.WriteString(fmt.Sprintf("%s Created space: %s\n", statusOK.Render("✓"), activeStyle.Render(m.importSpace)))
-			b.WriteString(fmt.Sprintf("%s Created worker: %s\n", statusOK.Render("✓"), activeStyle.Render(m.importNewWorkerName)))
+			b.WriteString(fmt.Sprintf("%s Created space: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importSpace)))
+			b.WriteString(fmt.Sprintf("%s Created worker: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importNewWorkerName)))
 			if m.importSelectedWorker != "" {
 				// Worker was started automatically and is running
-				b.WriteString(fmt.Sprintf("%s Worker started and running\n", statusOK.Render("✓")))
+				b.WriteString(fmt.Sprintf("%s Worker started and running\n", statusOK.Render(SymOK)))
 				if m.importNewTargetName != "" {
-					b.WriteString(fmt.Sprintf("%s Target auto-created: %s\n", statusOK.Render("✓"), activeStyle.Render(m.importNewTargetName)))
+					b.WriteString(fmt.Sprintf("%s Target auto-created: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importNewTargetName)))
 				}
 			}
 		} else if m.importSelectedWorker != "" {
-			b.WriteString(fmt.Sprintf("%s Using existing worker: %s\n", statusOK.Render("✓"), activeStyle.Render(m.importSelectedWorker)))
+			b.WriteString(fmt.Sprintf("%s Using existing worker: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importSelectedWorker)))
 			if m.importNewTargetName != "" {
-				b.WriteString(fmt.Sprintf("%s Target auto-created: %s\n", statusOK.Render("✓"), activeStyle.Render(m.importNewTargetName)))
+				b.WriteString(fmt.Sprintf("%s Target auto-created: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importNewTargetName)))
 			}
 		}
 
 		if m.importProgress == m.importTotal {
-			b.WriteString(fmt.Sprintf("%s Imported %d workloads as units\n", statusOK.Render("✓"), m.importProgress))
+			b.WriteString(fmt.Sprintf("%s Imported %d workloads as units\n", statusOK.Render(SymOK), m.importProgress))
 		} else {
-			b.WriteString(fmt.Sprintf("%s Imported %d/%d workloads as units\n", statusWarn.Render("⚠"), m.importProgress, m.importTotal))
+			b.WriteString(fmt.Sprintf("%s Imported %d/%d workloads as units\n", statusWarn.Render(SymWarning), m.importProgress, m.importTotal))
 		}
 
 		// Show test result
 		if m.importTestRan {
 			if m.importTestResult != nil && m.importTestResult.Success {
-				b.WriteString(fmt.Sprintf("%s Pipeline test passed: %s\n", statusOK.Render("✓"), m.importTestResult.Message))
+				b.WriteString(fmt.Sprintf("%s Pipeline test passed: %s\n", statusOK.Render(SymOK), m.importTestResult.Message))
 			} else if m.importError != nil {
-				b.WriteString(fmt.Sprintf("%s Pipeline test failed: %v\n", statusErr.Render("✗"), m.importError))
+				b.WriteString(fmt.Sprintf("%s Pipeline test failed: %v\n", statusErr.Render(SymError), m.importError))
 			} else {
-				b.WriteString(fmt.Sprintf("%s Pipeline test failed\n", statusErr.Render("✗")))
+				b.WriteString(fmt.Sprintf("%s Pipeline test failed\n", statusErr.Render(SymError)))
 			}
 		} else {
 			b.WriteString(fmt.Sprintf("%s Pipeline test: skipped\n", dimStyle.Render("○")))

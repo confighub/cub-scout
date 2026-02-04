@@ -621,9 +621,9 @@ func renderOwnership(chain *OwnershipChainResult) {
 }
 
 func renderDeployerStatus(status *DeployerStatus) {
-	icon := "✓"
+	icon := SymOK
 	if !status.Ready {
-		icon = "✗"
+		icon = SymError
 	}
 	fmt.Printf("Pipeline: %s %s/%s\n", icon, status.Kind, status.Name)
 	if status.Stage != "" && status.Stage != "healthy" {
@@ -639,9 +639,9 @@ func renderDeployerStatus(status *DeployerStatus) {
 }
 
 func renderSourceStatus(status *SourceStatus) {
-	icon := "✓"
+	icon := SymOK
 	if !status.Ready {
-		icon = "✗"
+		icon = SymError
 	}
 	fmt.Printf("Source: %s %s/%s\n", icon, status.Kind, status.Name)
 	if status.URL != "" {

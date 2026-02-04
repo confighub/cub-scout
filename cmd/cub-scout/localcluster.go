@@ -2803,9 +2803,9 @@ func (m LocalClusterModel) renderDashboardCompact() string {
 				b.WriteString(fmt.Sprintf("... +%d more\n", len(m.gitops)-5))
 				break
 			}
-			statusIcon := lcOkStyle.Render("✓")
+			statusIcon := lcOkStyle.Render(SymOK)
 			if g.Status != "Ready" && g.Status != "Healthy" {
-				statusIcon = lcWarnStyle.Render("⚠")
+				statusIcon = lcWarnStyle.Render(SymWarning)
 			}
 			b.WriteString(fmt.Sprintf("%s %s\n", statusIcon, g.Name))
 		}
@@ -2942,10 +2942,10 @@ func (m LocalClusterModel) getPanelPipelines() string {
 
 // renderPipelineFlow renders a visual pipeline flow for a GitOps resource
 func renderPipelineFlow(b *strings.Builder, g GitOpsResource) {
-	statusIcon := lcOkStyle.Render("✓")
+	statusIcon := lcOkStyle.Render(SymOK)
 	statusStyle := lcOkStyle
 	if g.Status != "Ready" && g.Status != "Healthy" {
-		statusIcon = lcWarnStyle.Render("⚠")
+		statusIcon = lcWarnStyle.Render(SymWarning)
 		statusStyle = lcWarnStyle
 	}
 
@@ -3022,7 +3022,7 @@ func (m LocalClusterModel) getPanelDrift() string {
 				statusStyle = lcErrStyle
 			}
 			b.WriteString(fmt.Sprintf("  %s %s/%s\n",
-				statusStyle.Render("⚠"),
+				statusStyle.Render(SymWarning),
 				g.Namespace,
 				lcNameStyle.Render(g.Name)))
 			b.WriteString(fmt.Sprintf("     Status: %s\n", statusStyle.Render(g.Status)))
@@ -3042,7 +3042,7 @@ func (m LocalClusterModel) getPanelDrift() string {
 				statusStyle = lcErrStyle
 			}
 			b.WriteString(fmt.Sprintf("  %s %s/%s\n",
-				statusStyle.Render("⚠"),
+				statusStyle.Render(SymWarning),
 				g.Namespace,
 				lcNameStyle.Render(g.Name)))
 			b.WriteString(fmt.Sprintf("     Status: %s\n", statusStyle.Render(g.Status)))
@@ -3058,7 +3058,7 @@ func (m LocalClusterModel) getPanelDrift() string {
 		b.WriteString(lcSectionStyle.Render("OTHER") + lcDimStyle.Render(fmt.Sprintf(" (%d)", len(otherDrifted))) + "\n")
 		for _, g := range otherDrifted {
 			b.WriteString(fmt.Sprintf("  %s %s/%s: %s\n",
-				lcWarnStyle.Render("⚠"),
+				lcWarnStyle.Render(SymWarning),
 				g.Namespace,
 				lcNameStyle.Render(g.Name),
 				g.Status))
@@ -3126,7 +3126,7 @@ func (m LocalClusterModel) getPanelCrashes() string {
 	b.WriteString(fmt.Sprintf("Found %d crashing:\n\n", len(crashes)))
 	for _, e := range crashes {
 		b.WriteString(fmt.Sprintf("%s %s/%s %s\n",
-			lcErrStyle.Render("✗"),
+			lcErrStyle.Render(SymError),
 			e.Namespace,
 			lcNameStyle.Render(e.Name),
 			lcDimStyle.Render(e.Status)))
@@ -3166,9 +3166,9 @@ func (m LocalClusterModel) getPanelIssues() string {
 
 	b.WriteString(fmt.Sprintf("Found %d issues:\n\n", len(issues)))
 	for _, e := range issues {
-		icon := lcWarnStyle.Render("⚠")
+		icon := lcWarnStyle.Render(SymWarning)
 		if e.Status == "Failed" || e.Status == "Error" {
-			icon = lcErrStyle.Render("✗")
+			icon = lcErrStyle.Render(SymError)
 		}
 		b.WriteString(fmt.Sprintf("%s %s %s/%s: %s\n",
 			icon,
@@ -3209,7 +3209,7 @@ func (m LocalClusterModel) getPanelBypass() string {
 			ownerStyle = lcWarnStyle
 		}
 		b.WriteString(fmt.Sprintf("%s %s: %d resources\n",
-			lcOkStyle.Render("✓"),
+			lcOkStyle.Render(SymOK),
 			ownerStyle.Render(owner),
 			count))
 	}
@@ -3308,7 +3308,7 @@ func (m LocalClusterModel) getPanelSuspended() string {
 		b.WriteString(fmt.Sprintf("Found %d suspended resources:\n\n", len(suspended)))
 		for _, s := range suspended {
 			b.WriteString(fmt.Sprintf("  %s %s/%s\n",
-				lcWarnStyle.Render("⏸"),
+				lcWarnStyle.Render(SymPaused),
 				s.Namespace,
 				lcNameStyle.Render(s.Name)))
 			b.WriteString(fmt.Sprintf("    Kind: %s\n", s.Kind))
@@ -3327,7 +3327,7 @@ func (m LocalClusterModel) getPanelSuspended() string {
 		for _, s := range stale {
 			age := now.Sub(s.LastApplied).Round(time.Hour * 24)
 			b.WriteString(fmt.Sprintf("  %s %s/%s\n",
-				lcWarnStyle.Render("⚠"),
+				lcWarnStyle.Render(SymWarning),
 				s.Namespace,
 				lcNameStyle.Render(s.Name)))
 			b.WriteString(fmt.Sprintf("    Last sync: %s ago\n", age))
@@ -3691,9 +3691,9 @@ func (m LocalClusterModel) getPanelGitSources() string {
 	if len(gitRepos) > 0 {
 		b.WriteString(lcCyanStyle.Render("GIT REPOSITORIES") + "\n")
 		for _, src := range gitRepos {
-			statusIcon := lcOkStyle.Render("✓")
+			statusIcon := lcOkStyle.Render(SymOK)
 			if src.Status != "Ready" {
-				statusIcon = lcWarnStyle.Render("⚠")
+				statusIcon = lcWarnStyle.Render(SymWarning)
 			}
 
 			// URL (truncate if long)
@@ -3749,9 +3749,9 @@ func (m LocalClusterModel) getPanelGitSources() string {
 	if len(ociRepos) > 0 {
 		b.WriteString(lcPurpleStyle.Render("OCI REPOSITORIES") + " " + lcDimStyle.Render("(Gitless GitOps)") + "\n")
 		for _, src := range ociRepos {
-			statusIcon := lcOkStyle.Render("✓")
+			statusIcon := lcOkStyle.Render(SymOK)
 			if src.Status != "Ready" {
-				statusIcon = lcWarnStyle.Render("⚠")
+				statusIcon = lcWarnStyle.Render(SymWarning)
 			}
 
 			url := src.URL
@@ -3788,9 +3788,9 @@ func (m LocalClusterModel) getPanelGitSources() string {
 	if len(helmRepos) > 0 {
 		b.WriteString(lcWarnStyle.Render("HELM REPOSITORIES") + "\n")
 		for _, src := range helmRepos {
-			statusIcon := lcOkStyle.Render("✓")
+			statusIcon := lcOkStyle.Render(SymOK)
 			if src.Status != "Ready" {
-				statusIcon = lcWarnStyle.Render("⚠")
+				statusIcon = lcWarnStyle.Render(SymWarning)
 			}
 
 			url := src.URL
@@ -3850,9 +3850,9 @@ func (m LocalClusterModel) getPanelMaps() string {
 				kindStyle = lcWarnStyle
 			}
 
-			statusIcon := lcOkStyle.Render("✓")
+			statusIcon := lcOkStyle.Render(SymOK)
 			if g.Status != "Ready" && g.Status != "Healthy" {
-				statusIcon = lcWarnStyle.Render("⚠")
+				statusIcon = lcWarnStyle.Render(SymWarning)
 			}
 
 			b.WriteString(fmt.Sprintf("%s %s %s",
@@ -3988,9 +3988,9 @@ func (m LocalClusterModel) getPanelClusterData() string {
 			b.WriteString(fmt.Sprintf("├── Kustomizations (%d)\n", fluxKustomizations))
 			for _, g := range m.gitops {
 				if g.Kind == "Kustomization" {
-					statusIcon := lcOkStyle.Render("✓")
+					statusIcon := lcOkStyle.Render(SymOK)
 					if g.Status != "Ready" {
-						statusIcon = lcWarnStyle.Render("⚠")
+						statusIcon = lcWarnStyle.Render(SymWarning)
 					}
 					b.WriteString(fmt.Sprintf("│   %s %s\n", statusIcon, lcNameStyle.Render(g.Namespace+"/"+g.Name)))
 					b.WriteString(fmt.Sprintf("│   │  Status: %s\n", lcDimStyle.Render(g.Status)))
@@ -4026,9 +4026,9 @@ func (m LocalClusterModel) getPanelClusterData() string {
 			b.WriteString(fmt.Sprintf("├── HelmReleases (%d)\n", fluxHelmReleases))
 			for _, g := range m.gitops {
 				if g.Kind == "HelmRelease" {
-					statusIcon := lcOkStyle.Render("✓")
+					statusIcon := lcOkStyle.Render(SymOK)
 					if g.Status != "Ready" {
-						statusIcon = lcWarnStyle.Render("⚠")
+						statusIcon = lcWarnStyle.Render(SymWarning)
 					}
 					b.WriteString(fmt.Sprintf("│   %s %s\n", statusIcon, lcNameStyle.Render(g.Namespace+"/"+g.Name)))
 					b.WriteString(fmt.Sprintf("│   │  Status: %s\n", lcDimStyle.Render(g.Status)))
@@ -4041,9 +4041,9 @@ func (m LocalClusterModel) getPanelClusterData() string {
 		// Git sources with full details
 		for _, s := range m.gitSources {
 			if s.Kind == "GitRepository" {
-				statusIcon := lcOkStyle.Render("✓")
+				statusIcon := lcOkStyle.Render(SymOK)
 				if s.Status != "Ready" {
-					statusIcon = lcWarnStyle.Render("⚠")
+					statusIcon = lcWarnStyle.Render(SymWarning)
 				}
 				b.WriteString(fmt.Sprintf("├── GitRepository: %s %s\n", statusIcon, lcNameStyle.Render(s.Namespace+"/"+s.Name)))
 				b.WriteString(fmt.Sprintf("│   │  URL: %s\n", lcDimStyle.Render(s.URL)))
@@ -4065,9 +4065,9 @@ func (m LocalClusterModel) getPanelClusterData() string {
 		// Helm repositories
 		for _, s := range m.gitSources {
 			if s.Kind == "HelmRepository" {
-				statusIcon := lcOkStyle.Render("✓")
+				statusIcon := lcOkStyle.Render(SymOK)
 				if s.Status != "Ready" {
-					statusIcon = lcWarnStyle.Render("⚠")
+					statusIcon = lcWarnStyle.Render(SymWarning)
 				}
 				b.WriteString(fmt.Sprintf("├── HelmRepository: %s %s\n", statusIcon, lcNameStyle.Render(s.Name)))
 				b.WriteString(fmt.Sprintf("│   └─ URL: %s\n", lcDimStyle.Render(s.URL)))
@@ -4076,9 +4076,9 @@ func (m LocalClusterModel) getPanelClusterData() string {
 		// OCI repositories
 		for _, s := range m.gitSources {
 			if s.Kind == "OCIRepository" {
-				statusIcon := lcOkStyle.Render("✓")
+				statusIcon := lcOkStyle.Render(SymOK)
 				if s.Status != "Ready" {
-					statusIcon = lcWarnStyle.Render("⚠")
+					statusIcon = lcWarnStyle.Render(SymWarning)
 				}
 				b.WriteString(fmt.Sprintf("└── OCIRepository: %s %s\n", statusIcon, lcNameStyle.Render(s.Name)))
 				b.WriteString(fmt.Sprintf("    └─ URL: %s\n", lcDimStyle.Render(s.URL)))
@@ -4099,10 +4099,10 @@ func (m LocalClusterModel) getPanelClusterData() string {
 			b.WriteString(fmt.Sprintf("├── Applications (%d)\n", argoApps))
 			for _, g := range m.gitops {
 				if g.Kind == "Application" {
-					statusIcon := lcOkStyle.Render("✓")
+					statusIcon := lcOkStyle.Render(SymOK)
 					status := g.Status
 					if status != "Healthy" && status != "Synced" && status != "Healthy/Synced" {
-						statusIcon = lcWarnStyle.Render("⚠")
+						statusIcon = lcWarnStyle.Render(SymWarning)
 					}
 					b.WriteString(fmt.Sprintf("│   %s %s\n", statusIcon, lcNameStyle.Render(g.Namespace+"/"+g.Name)))
 					b.WriteString(fmt.Sprintf("│   │  Status: %s\n", lcDimStyle.Render(status)))
@@ -4165,10 +4165,10 @@ func (m LocalClusterModel) getPanelClusterData() string {
 			if count == len(releases) {
 				prefix = "└──"
 			}
-			statusIcon := lcOkStyle.Render("✓")
+			statusIcon := lcOkStyle.Render(SymOK)
 			for _, e := range entries {
 				if e.Status != "Ready" && e.Status != "Running" {
-					statusIcon = lcWarnStyle.Render("⚠")
+					statusIcon = lcWarnStyle.Render(SymWarning)
 					break
 				}
 			}
@@ -4208,9 +4208,9 @@ func (m LocalClusterModel) getPanelClusterData() string {
 				if unitSlug == "" && e.OwnerDetails != nil {
 					unitSlug = e.OwnerDetails["unit"]
 				}
-				statusIcon := lcOkStyle.Render("✓")
+				statusIcon := lcOkStyle.Render(SymOK)
 				if e.Status != "Ready" && e.Status != "Running" {
-					statusIcon = lcWarnStyle.Render("⚠")
+					statusIcon = lcWarnStyle.Render(SymWarning)
 				}
 				b.WriteString(fmt.Sprintf("%s %s %s/%s\n", prefix, statusIcon, e.Kind, lcNameStyle.Render(e.Name)))
 				if unitSlug != "" {
@@ -4354,9 +4354,9 @@ func (m LocalClusterModel) getPanelAppHierarchy() string {
 	// Helper for status icons
 	statusIcon := func(ready bool) string {
 		if ready {
-			return "✓"
+			return SymOK
 		}
-		return "✗"
+		return SymError
 	}
 
 	// ═══════════════════════════════════════════════════════════════════════════

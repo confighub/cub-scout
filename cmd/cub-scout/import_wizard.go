@@ -3207,10 +3207,10 @@ func (m ImportWizardModel) renderTestProgress() string {
 			if r.Phase == p.phase {
 				completed = true
 				if r.Success {
-					icon = wizardSuccessStyle.Render("✓")
+					icon = wizardSuccessStyle.Render(SymOK)
 					label = wizardSuccessStyle.Render(p.label)
 				} else {
-					icon = wizardErrorStyle.Render("✗")
+					icon = wizardErrorStyle.Render(SymError)
 					label = wizardErrorStyle.Render(p.label)
 				}
 				break
@@ -3307,9 +3307,9 @@ func (m ImportWizardModel) renderTestDetails() string {
 		b.WriteString("\n")
 	} else {
 		for _, r := range m.testResults {
-			statusIcon := wizardSuccessStyle.Render("✓")
+			statusIcon := wizardSuccessStyle.Render(SymOK)
 			if !r.Success {
-				statusIcon = wizardErrorStyle.Render("✗")
+				statusIcon = wizardErrorStyle.Render(SymError)
 			}
 
 			b.WriteString(fmt.Sprintf("%s %s\n", statusIcon, r.Label))

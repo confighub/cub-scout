@@ -475,10 +475,10 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 // outputSourceStatus outputs a single source status
 func outputSourceStatus(src SourceStatus) {
 	// Status icon
-	icon := "✓"
+	icon := SymOK
 	iconColor := colorGreen
 	if !src.Ready {
-		icon = "✗"
+		icon = SymError
 		iconColor = colorRed
 	}
 
@@ -526,14 +526,14 @@ func outputSourceStatus(src SourceStatus) {
 // outputDeployerStatus outputs a single deployer status
 func outputDeployerStatus(dep DeployerStatus) {
 	// Status icon
-	icon := "✓"
+	icon := SymOK
 	iconColor := colorGreen
 	if !dep.Ready {
-		icon = "✗"
+		icon = SymError
 		iconColor = colorRed
 	}
 	if dep.Suspended {
-		icon = "⏸"
+		icon = SymPaused
 		iconColor = colorYellow
 	}
 

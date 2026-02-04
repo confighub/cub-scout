@@ -290,7 +290,7 @@ func printCombinedResult(r *CombinedResult) {
 		fmt.Println("│ ALIGNMENT                                                   │")
 		fmt.Println("└─────────────────────────────────────────────────────────────┘")
 		for _, a := range r.Alignment {
-			status := "✓"
+			status := SymOK
 			if a.Status == "git-only" {
 				status = "⚠ git-only"
 			} else if a.Status == "cluster-only" {

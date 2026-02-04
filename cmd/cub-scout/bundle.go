@@ -413,9 +413,9 @@ func renderBundleInspectASCII(bundle *agent.DebugBundle, summary agent.BundleSum
 }
 
 func contentsLine(filename string, present bool, count int) string {
-	status := "✗"
+	status := SymError
 	if present {
-		status = "✓"
+		status = SymOK
 	}
 	if count > 0 {
 		return fmt.Sprintf("  %s %-15s (%d items)\n", status, filename, count)

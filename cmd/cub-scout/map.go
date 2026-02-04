@@ -1080,18 +1080,18 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 				}
 
 				// Status icon
-				icon := "✓"
+				icon := SymOK
 				if u.Status == "Drifted" {
-					icon = "⚠"
+					icon = SymWarning
 				} else if u.Status == "Failed" || u.Status == "Error" {
-					icon = "✗"
+					icon = SymError
 				}
 
 				// Revision status
 				revStatus := fmt.Sprintf("@ rev %d", u.Revision)
 				if u.LiveRevision > 0 && u.LiveRevision < u.Revision {
 					revStatus = fmt.Sprintf("@ rev %d ← behind!", u.LiveRevision)
-					icon = "⚠"
+					icon = SymWarning
 				}
 
 				target := u.Target
@@ -1659,9 +1659,9 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		case "Deployment":
 			depCount++
 		}
-		statusIcon := "✓"
+		statusIcon := SymOK
 		if !d.Ready {
-			statusIcon = "✗"
+			statusIcon = SymError
 		}
 		resourceStr := "-"
 		if d.Resources > 0 {
@@ -1715,9 +1715,9 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 			}
 
 			total++
-			status := "✓"
+			status := SymOK
 			if !isDeploymentReady(&dep) {
-				status = "✗"
+				status = SymError
 			}
 
 			owner, managedBy := detectOwnership(&dep)
@@ -2910,10 +2910,10 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			// Conditions
 			conditions, _, _ := unstructured.NestedSlice(gr.Object, "status", "conditions")
 
-			icon := "✓"
+			icon := SymOK
 			statusMsg := "Ready"
 			if !isResourceReady(&gr) {
-				icon = "✗"
+				icon = SymError
 				statusMsg = getConditionMessage(&gr)
 			}
 
@@ -3011,10 +3011,10 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			artifactChecksum, _, _ := unstructured.NestedString(hr.Object, "status", "artifact", "digest")
 			conditions, _, _ := unstructured.NestedSlice(hr.Object, "status", "conditions")
 
-			icon := "✓"
+			icon := SymOK
 			statusMsg := "Ready"
 			if !isResourceReady(&hr) {
-				icon = "✗"
+				icon = SymError
 				statusMsg = getConditionMessage(&hr)
 			}
 
@@ -3089,10 +3089,10 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			artifactChecksum, _, _ := unstructured.NestedString(oci.Object, "status", "artifact", "digest")
 			conditions, _, _ := unstructured.NestedSlice(oci.Object, "status", "conditions")
 
-			icon := "✓"
+			icon := SymOK
 			statusMsg := "Ready"
 			if !isResourceReady(&oci) {
-				icon = "✗"
+				icon = SymError
 				statusMsg = getConditionMessage(&oci)
 			}
 
@@ -3163,10 +3163,10 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			artifactChecksum, _, _ := unstructured.NestedString(bucket.Object, "status", "artifact", "digest")
 			conditions, _, _ := unstructured.NestedSlice(bucket.Object, "status", "conditions")
 
-			icon := "✓"
+			icon := SymOK
 			statusMsg := "Ready"
 			if !isResourceReady(&bucket) {
-				icon = "✗"
+				icon = SymError
 				statusMsg = getConditionMessage(&bucket)
 			}
 
@@ -3245,10 +3245,10 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			observedChartName, _, _ := unstructured.NestedString(hc.Object, "status", "observedChartName")
 			conditions, _, _ := unstructured.NestedSlice(hc.Object, "status", "conditions")
 
-			icon := "✓"
+			icon := SymOK
 			statusMsg := "Ready"
 			if !isResourceReady(&hc) {
-				icon = "✗"
+				icon = SymError
 				statusMsg = getConditionMessage(&hc)
 			}
 
@@ -3343,10 +3343,10 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			// Conditions
 			conditions, _, _ := unstructured.NestedSlice(ks.Object, "status", "conditions")
 
-			icon := "✓"
+			icon := SymOK
 			statusMsg := "Ready"
 			if !isResourceReady(&ks) {
-				icon = "✗"
+				icon = SymError
 				statusMsg = getConditionMessage(&ks)
 			}
 
@@ -3546,9 +3546,9 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 						connector = "└─"
 					}
 
-					podIcon := "✓"
+					podIcon := SymOK
 					if podPhase != "Running" {
-						podIcon = "✗"
+						podIcon = SymError
 					}
 
 					restartStr := ""
@@ -3601,10 +3601,10 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			lastApplied, _, _ := unstructured.NestedString(hr.Object, "status", "lastAppliedRevision")
 			lastReleaseRev, _, _ := unstructured.NestedInt64(hr.Object, "status", "lastReleaseRevision")
 
-			icon := "✓"
+			icon := SymOK
 			statusMsg := "Ready"
 			if !isResourceReady(&hr) {
-				icon = "✗"
+				icon = SymError
 				statusMsg = getConditionMessage(&hr)
 			}
 
@@ -3749,9 +3749,9 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			// History
 			history, _, _ := unstructured.NestedSlice(app.Object, "status", "history")
 
-			icon := "✓"
+			icon := SymOK
 			if syncStatus != "Synced" || healthStatus != "Healthy" {
-				icon = "✗"
+				icon = SymError
 			}
 
 			fmt.Printf("\n%s %s/%s\n", icon, ns, name)
@@ -3834,9 +3834,9 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 							healthStr = h
 						}
 					}
-					statusIcon := "✓"
+					statusIcon := SymOK
 					if rStatus != "Synced" || (healthStr != "" && healthStr != "Healthy") {
-						statusIcon = "✗"
+						statusIcon = SymError
 					}
 					if healthStr != "" {
 						fmt.Printf("              %s %s/%s (%s, %s)\n", statusIcon, rNs, rName, kind, healthStr)
@@ -3879,9 +3879,9 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 						srHookPhase, _ := srMap["hookPhase"].(string)
 						srSyncPhase, _ := srMap["syncPhase"].(string)
 
-						srIcon := "✓"
+						srIcon := SymOK
 						if srStatus != "Synced" {
-							srIcon = "✗"
+							srIcon = SymError
 						}
 
 						// Show sync phase and hook phase if present
@@ -4004,9 +4004,9 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 						connector = "└─"
 					}
 
-					podIcon := "✓"
+					podIcon := SymOK
 					if podPhase != "Running" {
-						podIcon = "✗"
+						podIcon = SymError
 					}
 
 					restartStr := ""
@@ -4062,11 +4062,11 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 			// Status
 			conditions, _, _ := unstructured.NestedSlice(appSet.Object, "status", "conditions")
 
-			icon := "✓"
+			icon := SymOK
 			for _, c := range conditions {
 				if cMap, ok := c.(map[string]interface{}); ok {
 					if cMap["type"] == "ErrorOccurred" && cMap["status"] == "True" {
-						icon = "✗"
+						icon = SymError
 						break
 					}
 				}
@@ -4690,9 +4690,9 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 					revIcon := "·"
 					switch rev.status {
 					case "deployed":
-						revIcon = "✓"
+						revIcon = SymOK
 					case "failed":
-						revIcon = "✗"
+						revIcon = SymError
 					case "superseded":
 						revIcon = "↑"
 					}
@@ -4829,9 +4829,9 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 							connector = "└─"
 						}
 
-						podIcon := "✓"
+						podIcon := SymOK
 						if podPhase != "Running" {
-							podIcon = "✗"
+							podIcon = SymError
 						}
 
 						restartStr := ""
@@ -5562,9 +5562,9 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 	// Helper to get status icon
 	statusIcon := func(ready bool) string {
 		if ready {
-			return "✓"
+			return SymOK
 		}
-		return "✗"
+		return SymError
 	}
 
 	// Sort units by owner then name
@@ -5612,9 +5612,9 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 					wlChildPrefix = "│     "
 				}
 
-				wlIcon := "✓"
+				wlIcon := SymOK
 				if !wl.ready {
-					wlIcon = "✗"
+					wlIcon = SymError
 				}
 
 				fmt.Printf("%s %s %s/%s (%s)\n", wlPrefix, wlIcon, wl.kind, wl.name, wl.replicas)
@@ -5667,9 +5667,9 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 								podPrefix = rsChildPrefix + "└─"
 							}
 
-							podIcon := "✓"
+							podIcon := SymOK
 							if pod.phase != "Running" {
-								podIcon = "✗"
+								podIcon = SymError
 							}
 
 							// Format: Pod/name (Running, 10.0.0.1, 0 restarts)
@@ -5742,9 +5742,9 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 				wlPrefix = "└─"
 				wlChildPrefix = "   "
 			}
-			wlIcon := "✓"
+			wlIcon := SymOK
 			if !wl.ready {
-				wlIcon = "✗"
+				wlIcon = SymError
 			}
 			fmt.Printf("%s %s %s/%s (%s)\n", wlPrefix, wlIcon, wl.namespace, wl.name, wl.replicas)
 
@@ -5793,9 +5793,9 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 						if isLastPod {
 							podPrefix = rsChildPrefix + "└─"
 						}
-						podIcon := "✓"
+						podIcon := SymOK
 						if pod.phase != "Running" {
-							podIcon = "✗"
+							podIcon = SymError
 						}
 						restartInfo := ""
 						if pod.restarts > 0 {

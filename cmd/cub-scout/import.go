@@ -700,7 +700,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 	fmt.Printf("Creating App Space: %s... ", proposal.AppSpace)
 	result, err := CreateAppSpaceWithResult(proposal.AppSpace, true, nil)
 	if err != nil {
-		fmt.Println("✗")
+		fmt.Println(SymError)
 		if logger != nil {
 			logger.Log("FAILED: App Space creation: %v", err)
 			logger.LogResult(0, 1, err)
@@ -708,7 +708,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 		return fmt.Errorf("create space: %w", err)
 	}
 	if result.Created {
-		fmt.Println("✓")
+		fmt.Println(SymOK)
 		if logger != nil {
 			logger.Log("Created App Space: %s", proposal.AppSpace)
 		}
@@ -768,7 +768,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 			continue
 		}
 
-		fmt.Println("✓")
+		fmt.Println(SymOK)
 		if logger != nil {
 			logger.Log("  OK: created with labels %v", labels)
 		}

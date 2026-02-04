@@ -259,9 +259,9 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("  ✓ Found %d managed resources:\n", len(managedResources))
 			for _, r := range managedResources {
-				healthIcon := "✓"
+				healthIcon := SymOK
 				if r.Health != "Healthy" && r.Health != "" {
-					healthIcon = "⚠"
+					healthIcon = SymWarning
 				}
 				fmt.Printf("    %s %s/%s (%s)\n", healthIcon, r.Kind, r.Name, r.Health)
 			}

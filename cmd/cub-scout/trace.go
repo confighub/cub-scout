@@ -689,10 +689,10 @@ func outputTraceHuman(result *agent.TraceResult) error {
 		// Status icon with color
 		var icon, iconColor string
 		if link.Ready {
-			icon = "✓"
+			icon = SymOK
 			iconColor = colorGreen
 		} else {
-			icon = "✗"
+			icon = SymError
 			iconColor = colorRed
 		}
 
@@ -797,10 +797,10 @@ func outputTraceHuman(result *agent.TraceResult) error {
 				}
 			}
 
-			statusIcon := "✓"
+			statusIcon := SymOK
 			statusColor := colorGreen
 			if ref.Status == "missing" {
-				statusIcon = "✗"
+				statusIcon = SymError
 				statusColor = colorRed
 			} else if ref.Status == "pending" {
 				statusIcon = "⏳"
@@ -911,9 +911,9 @@ func outputTraceMarkdown(result *agent.TraceResult) error {
 		}
 
 		// Status icon
-		icon := "✓"
+		icon := SymOK
 		if !link.Ready {
-			icon = "✗"
+			icon = SymError
 		}
 
 		fmt.Printf("%s%s %s/%s\n", prefix, icon, link.Kind, link.Name)
@@ -1037,10 +1037,10 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 		// Status icon
 		var icon, iconColor string
 		if link.Ready {
-			icon = "✓"
+			icon = SymOK
 			iconColor = colorGreen
 		} else {
-			icon = "✗"
+			icon = SymError
 			iconColor = colorRed
 		}
 
