@@ -1,0 +1,16 @@
+[
+  {
+    "schema_version": "drift.v1",
+    "object": {
+      "kind": "Deployment",
+      "name": "api-server",
+      "namespace": "api"
+    },
+    "severity": "info",
+    "category": "image",
+    "field": "spec.template.spec.containers[0].image",
+    "expected": "api-server:v1.2.3",
+    "actual": "api-server:v1.2.3",
+    "message": "Image matches expected (stable release)"
+  }
+]

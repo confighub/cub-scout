@@ -1,0 +1,24 @@
+{
+  "formatVersion": "v1",
+  "cubScoutVersion": "0.18.0",
+  "createdAt": "2026-02-03T14:00:00Z",
+  "label": "staging-snapshot-2026-02-03",
+  "target": {
+    "kind": "Deployment",
+    "name": "api-server",
+    "namespace": "api"
+  },
+  "contents": {
+    "hasSession": true,
+    "hasDrift": true,
+    "hasEvents": false,
+    "hasLogs": false,
+    "hasAttribution": false
+  },
+  "gitContext": {
+    "repoRoot": "/home/runner/work/api-server/api-server",
+    "commitSHA": "abc123def456789",
+    "branch": "main",
+    "remoteURL": "https://github.com/myorg/api-server.git"
+  }
+}

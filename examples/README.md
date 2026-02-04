@@ -109,7 +109,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 
 | File/Folder | Type | What | Use When |
 |-------------|------|------|----------|
-| [workflows/](workflows/) | **Working** | Artifact workflow demos (CI → local) | CI/CD integration, sharing bundles |
+| [workflows/](workflows/) | **Working** | Artifact + fleet demos (CI → local, env comparison) | CI/CD integration, sharing bundles, comparing environments |
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |
 | [flux-boutique/](flux-boutique/) | **Working** | 5-service Flux demo | TUI view showcase, trace demo |

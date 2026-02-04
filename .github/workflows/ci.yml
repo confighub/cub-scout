@@ -37,3 +37,6 @@ jobs:
 
       - name: Artifact workflow demo
         run: ./examples/workflows/artifact-workflow-demo.sh
+
+      - name: Fleet demo
+        run: ./examples/workflows/fleet-demo/fleet-demo.sh

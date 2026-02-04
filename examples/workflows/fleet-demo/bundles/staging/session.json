@@ -1,0 +1,9 @@
+{
+  "target": {
+    "kind": "Deployment",
+    "name": "api-server",
+    "namespace": "api"
+  },
+  "startedAt": "2026-02-03T14:00:00Z",
+  "completedAt": "2026-02-03T14:00:04Z"
+}

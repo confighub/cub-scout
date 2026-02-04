@@ -127,6 +127,86 @@ cub-scout bundle inspect ./debug-bundle
 #   Remote:          https://github.com/myorg/myapp.git
 ```
 
+## Fleet & Environment Views (v0.18+)
+
+"Fleet" in cub-scout means: an **explicit set of bundles with labels**.
+
+No inference from namespaces, clusters, or git branches. Environment labels are metadata you declare.
+
+### Quick start
+
+```bash
+# Run the demo
+./examples/workflows/fleet-demo/fleet-demo.sh
+```
+
+### Creating a catalog
+
+```bash
+# Initialize catalog
+cub-scout catalog init ./my-catalog
+
+# Add bundles with environment labels
+cub-scout catalog add ./my-catalog ./bundle-prod \
+  --id prod \
+  --label env=production \
+  --sequence 1
+
+cub-scout catalog add ./my-catalog ./bundle-staging \
+  --id staging \
+  --label env=staging \
+  --sequence 2
+
+cub-scout catalog add ./my-catalog ./bundle-dev \
+  --id dev \
+  --label env=development \
+  --sequence 3
+```
+
+### Viewing the fleet
+
+```bash
+# List all bundles in catalog
+cub-scout catalog list ./my-catalog
+
+# Output:
+#   [1] prod
+#       Labels:  env=production
+#       Seq:     1
+#   [2] staging
+#       Labels:  env=staging
+#       Seq:     2
+#   [3] dev
+#       Labels:  env=development
+#       Seq:     3
+```
+
+### Comparing environments
+
+```bash
+# Compare prod vs staging
+cub-scout bundle diff ./my-catalog/bundles/prod ./my-catalog/bundles/staging
+
+# Compare staging vs dev
+cub-scout bundle diff ./my-catalog/bundles/staging ./my-catalog/bundles/dev
+```
+
+### Key design decisions
+
+- **Explicit labeling** — `env=production` is a label you set, not inferred
+- **Sequence ordering** — `--sequence` defines promotion order, not timestamps
+- **Catalog-based** — catalogs are portable directories, not databases
+- **Offline comparison** — diff reads bundles, no cluster access
+
+### What "fleet" is NOT
+
+- Not cluster discovery
+- Not namespace inference
+- Not git branch mapping
+- Not automatic aggregation
+
+It's just: "here are my bundles, here are their labels, compare them."
+
 ## Commands Reference
 
 | Command | Purpose |
@@ -135,6 +215,10 @@ cub-scout bundle inspect ./debug-bundle
 | `cub-scout bundle inspect <dir>` | View bundle metadata |
 | `cub-scout bundle replay <dir>` | Replay bundle sections |
 | `cub-scout bundle replay <dir> --format json` | Export as JSON |
+| `cub-scout catalog init <dir>` | Create a new catalog |
+| `cub-scout catalog add <catalog> <bundle>` | Add bundle with labels |
+| `cub-scout catalog list <catalog>` | List bundles in catalog |
+| `cub-scout bundle diff <a> <b>` | Compare two bundles |
 
 ## Example: GitHub Actions
 
@@ -160,5 +244,6 @@ jobs:
 
 ## See Also
 
-- [Demo script](../../examples/workflows/artifact-workflow-demo.sh)
+- [Artifact workflow demo](../../examples/workflows/artifact-workflow-demo.sh)
+- [Fleet demo](../../examples/workflows/fleet-demo/fleet-demo.sh)
 - [Debug Bundle schema](../reference/schemas.md)
