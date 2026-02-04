@@ -2882,3 +2882,44 @@ Qualitative shift: multiple bundles + ordering = time-aware reasoning.
 Single bundles remain immutable; temporal meaning requires explicit new schema.
 
 ---
+
+---
+
+## Explainable Debugging Arc — Retrospective
+
+**Arc:** v0.14.3 – v0.14.6
+**Duration:** Completed 2026-02-04
+**Status:** SEALED — stable API
+
+### What Was Built
+
+| Version | Deliverable | Contract Status |
+|---------|-------------|-----------------|
+| v0.14.3 | Drift detection core | Stable JSON schema |
+| v0.14.4 | Drift coverage (env, resources, pull policy) | Additive only |
+| v0.14.5 | Drift ↔ debug correlation | Narrative-only (no new facts) |
+| v0.14.6 | Debug Bundle v1 | Immutable packaging |
+
+### Design Principles Upheld
+
+- **f(JSON) + g**: ASCII always derived from JSON facts
+- **Leak Test**: No meaning in ASCII that isn't in JSON
+- **Determinism**: Same input → same output, always
+- **No silent expansion**: New meaning requires new schema
+- **Immutability**: Bundles are snapshots, not living documents
+
+### What This Enables
+
+- Reproducible postmortems (share bundle, not cluster)
+- CI-safe failure artifacts (offline inspect/replay)
+- Time as data (bundles are immutable timestamps)
+- v0.15 can compose, not repair
+
+### Lessons Learned
+
+1. Packaging before interpretation prevents semantic debt
+2. Correlation as narrative (not facts) preserves contract integrity
+3. Explicit versioning (formatVersion) enables safe evolution
+4. Tests for determinism catch regression magnets early
+
+---
