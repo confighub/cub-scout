@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -1208,3 +1209,321 @@ func TestBundleDiff_GoldenC_CorrelationChanged(t *testing.T) {
 }
 
 // Golden test D: Error strings (already covered by TestBundleDiff_JoinCompositeNotImplemented and TestBundleDiff_JoinNoneNotImplemented)
+
+// Timeline tests
+
+func TestBundleTimeline_JSON(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogDir := createTestCatalog(t, tmpDir)
+
+	timeline, err := agent.BuildTimeline(catalogDir, agent.OrderManifest, agent.JoinObjectID)
+	if err != nil {
+		t.Fatalf("BuildTimeline failed: %v", err)
+	}
+
+	// Marshal to JSON
+	jsonBytes, err := json.MarshalIndent(timeline, "", "  ")
+	if err != nil {
+		t.Fatalf("JSON marshal failed: %v", err)
+	}
+
+	// Parse back and verify structure
+	var parsed agent.BundleTimeline
+	if err := json.Unmarshal(jsonBytes, &parsed); err != nil {
+		t.Fatalf("JSON unmarshal failed: %v", err)
+	}
+
+	if parsed.SchemaVersion != agent.BundleTimelineSchemaVersion {
+		t.Errorf("SchemaVersion = %s, want %s", parsed.SchemaVersion, agent.BundleTimelineSchemaVersion)
+	}
+	if parsed.JoinMode != agent.JoinObjectID {
+		t.Errorf("JoinMode = %s, want object_id", parsed.JoinMode)
+	}
+}
+
+func TestBundleTimeline_ASCII(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogDir := createTestCatalog(t, tmpDir)
+
+	timeline, err := agent.BuildTimeline(catalogDir, agent.OrderManifest, agent.JoinObjectID)
+	if err != nil {
+		t.Fatalf("BuildTimeline failed: %v", err)
+	}
+
+	// Render ASCII
+	output := agent.RenderBundleTimelineASCII(timeline)
+
+	// Verify expected content
+	if !strings.Contains(output, "Bundle Timeline") {
+		t.Error("Output missing 'Bundle Timeline' header")
+	}
+	if !strings.Contains(output, "Catalog:") {
+		t.Error("Output missing 'Catalog:' line")
+	}
+	if !strings.Contains(output, "Order:") {
+		t.Error("Output missing 'Order:' line")
+	}
+	if !strings.Contains(output, "Join:") {
+		t.Error("Output missing 'Join:' line")
+	}
+	if !strings.Contains(output, "Summary") {
+		t.Error("Output missing 'Summary' section")
+	}
+}
+
+func TestBundleTimeline_JoinCompositeNotImplemented(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogDir := createTestCatalog(t, tmpDir)
+
+	_, err := agent.BuildTimeline(catalogDir, agent.OrderManifest, agent.JoinComposite)
+	if err == nil {
+		t.Fatal("Expected error for composite join")
+	}
+
+	expected := "join mode 'composite' not yet implemented"
+	if err.Error() != expected {
+		t.Errorf("Error = %q, want exactly %q", err.Error(), expected)
+	}
+}
+
+func TestBundleTimeline_JoinNoneNotImplemented(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogDir := createTestCatalog(t, tmpDir)
+
+	_, err := agent.BuildTimeline(catalogDir, agent.OrderManifest, agent.JoinNone)
+	if err == nil {
+		t.Fatal("Expected error for none join")
+	}
+
+	expected := "join mode 'none' not yet implemented"
+	if err.Error() != expected {
+		t.Errorf("Error = %q, want exactly %q", err.Error(), expected)
+	}
+}
+
+func TestBundleTimeline_BadCatalogPath(t *testing.T) {
+	_, err := agent.BuildTimeline("/nonexistent/catalog", agent.OrderManifest, agent.JoinObjectID)
+	if err == nil {
+		t.Error("Expected error for nonexistent catalog")
+	}
+}
+
+// Golden test: Single bundle catalog
+func TestBundleTimeline_GoldenA_SingleBundle(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogDir := filepath.Join(tmpDir, "catalog")
+
+	// Initialize catalog
+	writer := agent.NewCatalogWriter()
+	writer.Init(catalogDir)
+
+	// Create and add one bundle
+	bundleDir := filepath.Join(tmpDir, "bundle")
+	bundleWriter := agent.NewBundleWriter("test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "snapshot",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1", ObjectID: "Deployment:prod/api", Path: "spec.replicas"},
+			{ID: "drift-2", ObjectID: "Deployment:prod/api", Path: "spec.image"},
+		},
+	}
+	bundleWriter.Write(bundle, bundleDir)
+	writer.Add(catalogDir, bundleDir, agent.CatalogEntry{ID: "snapshot"})
+
+	timeline, _ := agent.BuildTimeline(catalogDir, agent.OrderManifest, agent.JoinObjectID)
+
+	// Verify: 1 bundle, 1 series, 1 point, 0 gaps
+	if timeline.Summary.BundleCount != 1 {
+		t.Errorf("BundleCount = %d, want 1", timeline.Summary.BundleCount)
+	}
+	if timeline.Summary.SeriesCount != 1 {
+		t.Errorf("SeriesCount = %d, want 1", timeline.Summary.SeriesCount)
+	}
+	if timeline.Summary.TotalPoints != 1 {
+		t.Errorf("TotalPoints = %d, want 1", timeline.Summary.TotalPoints)
+	}
+	if timeline.Summary.GapCount != 0 {
+		t.Errorf("GapCount = %d, want 0", timeline.Summary.GapCount)
+	}
+}
+
+// Golden test: Two bundles with gap
+func TestBundleTimeline_GoldenB_TwoBundlesWithGap(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogDir := filepath.Join(tmpDir, "catalog")
+
+	writer := agent.NewCatalogWriter()
+	writer.Init(catalogDir)
+
+	bundleWriter := agent.NewBundleWriter("test")
+
+	// Bundle 1: api object present
+	bundle1Dir := filepath.Join(tmpDir, "bundle1")
+	bundle1 := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "before",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1", ObjectID: "Deployment:prod/api", Path: "spec.replicas"},
+		},
+	}
+	bundleWriter.Write(bundle1, bundle1Dir)
+	writer.Add(catalogDir, bundle1Dir, agent.CatalogEntry{ID: "before"})
+
+	// Bundle 2: api object gone (different object)
+	bundle2Dir := filepath.Join(tmpDir, "bundle2")
+	bundle2 := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "after",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-2", ObjectID: "Deployment:prod/worker", Path: "spec.replicas"},
+		},
+	}
+	bundleWriter.Write(bundle2, bundle2Dir)
+	writer.Add(catalogDir, bundle2Dir, agent.CatalogEntry{ID: "after"})
+
+	timeline, _ := agent.BuildTimeline(catalogDir, agent.OrderManifest, agent.JoinObjectID)
+
+	// Verify: 2 bundles, 2 series (api and worker), gaps present
+	if timeline.Summary.BundleCount != 2 {
+		t.Errorf("BundleCount = %d, want 2", timeline.Summary.BundleCount)
+	}
+	if timeline.Summary.SeriesCount != 2 {
+		t.Errorf("SeriesCount = %d, want 2 (api and worker)", timeline.Summary.SeriesCount)
+	}
+	// api: present, missing (1 gap)
+	// worker: missing, present (1 gap)
+	// Total: 2 gaps
+	if timeline.Summary.GapCount != 2 {
+		t.Errorf("GapCount = %d, want 2", timeline.Summary.GapCount)
+	}
+}
+
+// Golden test: Ordering modes produce different results
+func TestBundleTimeline_GoldenC_OrderingModes(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogDir := filepath.Join(tmpDir, "catalog")
+
+	writer := agent.NewCatalogWriter()
+	writer.Init(catalogDir)
+
+	bundleWriter := agent.NewBundleWriter("test")
+
+	// Add bundles in reverse chronological order
+	t3 := time.Date(2024, 1, 15, 12, 0, 0, 0, time.UTC)
+	t1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	t2 := time.Date(2024, 1, 15, 11, 0, 0, 0, time.UTC)
+
+	// Third (added first to catalog)
+	b3Dir := filepath.Join(tmpDir, "b3")
+	b3 := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "third",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{{ID: "d3", ObjectID: "Deployment:prod/api"}},
+	}
+	bundleWriter.Write(b3, b3Dir)
+	patchBundleMetadataCreatedAt(t, b3Dir, t3)
+	writer.Add(catalogDir, b3Dir, agent.CatalogEntry{ID: "third"})
+
+	// First (added second to catalog)
+	b1Dir := filepath.Join(tmpDir, "b1")
+	b1 := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "first",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{{ID: "d1", ObjectID: "Deployment:prod/api"}},
+	}
+	bundleWriter.Write(b1, b1Dir)
+	patchBundleMetadataCreatedAt(t, b1Dir, t1)
+	writer.Add(catalogDir, b1Dir, agent.CatalogEntry{ID: "first"})
+
+	// Second (added third to catalog)
+	b2Dir := filepath.Join(tmpDir, "b2")
+	b2 := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "second",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{{ID: "d2", ObjectID: "Deployment:prod/api"}},
+	}
+	bundleWriter.Write(b2, b2Dir)
+	patchBundleMetadataCreatedAt(t, b2Dir, t2)
+	writer.Add(catalogDir, b2Dir, agent.CatalogEntry{ID: "second"})
+
+	// Manifest order: third, first, second
+	manifestTimeline, _ := agent.BuildTimeline(catalogDir, agent.OrderManifest, agent.JoinObjectID)
+	if manifestTimeline.Series[0].Points[0].BundleID != "third" {
+		t.Errorf("Manifest order: first = %q, want third", manifestTimeline.Series[0].Points[0].BundleID)
+	}
+
+	// CreatedAt order: first, second, third
+	createdAtTimeline, _ := agent.BuildTimeline(catalogDir, agent.OrderCreatedAt, agent.JoinObjectID)
+	if createdAtTimeline.Series[0].Points[0].BundleID != "first" {
+		t.Errorf("CreatedAt order: first = %q, want first", createdAtTimeline.Series[0].Points[0].BundleID)
+	}
+	if createdAtTimeline.Series[0].Points[1].BundleID != "second" {
+		t.Errorf("CreatedAt order: second = %q, want second", createdAtTimeline.Series[0].Points[1].BundleID)
+	}
+	if createdAtTimeline.Series[0].Points[2].BundleID != "third" {
+		t.Errorf("CreatedAt order: third = %q, want third", createdAtTimeline.Series[0].Points[2].BundleID)
+	}
+}
+
+// Helper to create a test catalog for timeline tests
+func createTestCatalog(t *testing.T, tmpDir string) string {
+	t.Helper()
+
+	catalogDir := filepath.Join(tmpDir, "catalog")
+
+	writer := agent.NewCatalogWriter()
+	if err := writer.Init(catalogDir); err != nil {
+		t.Fatalf("Failed to init catalog: %v", err)
+	}
+
+	bundleWriter := agent.NewBundleWriter("test")
+	bundleDir := filepath.Join(tmpDir, "bundle")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "test",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1", ObjectID: "Deployment:prod/api", Path: "spec.replicas"},
+		},
+	}
+	if err := bundleWriter.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Failed to write bundle: %v", err)
+	}
+	if err := writer.Add(catalogDir, bundleDir, agent.CatalogEntry{ID: "test"}); err != nil {
+		t.Fatalf("Failed to add bundle: %v", err)
+	}
+
+	return catalogDir
+}
+
+// Helper to patch bundle metadata createdAt (for ordering tests)
+func patchBundleMetadataCreatedAt(t *testing.T, bundleDir string, createdAt time.Time) {
+	t.Helper()
+
+	metadataPath := filepath.Join(bundleDir, "metadata.json")
+
+	reader := agent.NewBundleReader()
+	bundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Failed to read bundle: %v", err)
+	}
+
+	bundle.Metadata.CreatedAt = createdAt
+
+	data, _ := json.MarshalIndent(bundle.Metadata, "", "  ")
+	os.WriteFile(metadataPath, data, 0644)
+}

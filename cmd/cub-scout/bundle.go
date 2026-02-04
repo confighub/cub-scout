@@ -16,10 +16,12 @@ import (
 )
 
 var (
-	bundleFormat   string
-	bundleFailOn   string
-	bundleSection  string
-	bundleDiffJoin string
+	bundleFormat       string
+	bundleFailOn       string
+	bundleSection      string
+	bundleDiffJoin     string
+	bundleTimelineJoin string
+	bundleTimelineOrder string
 )
 
 var bundleCmd = &cobra.Command{
@@ -44,6 +46,7 @@ Commands:
   inspect  Show bundle metadata and contents summary
   replay   Re-render bundle contents with existing renderers
   diff     Compare two bundles and show what changed
+  timeline Show time-series view of objects across a catalog
 
 Examples:
   # Inspect a bundle
@@ -57,6 +60,9 @@ Examples:
 
   # Compare two bundles
   cub-scout bundle diff ./bundle-before ./bundle-after
+
+  # Show timeline from a catalog
+  cub-scout bundle timeline ./my-catalog --order created_at
 `,
 }
 
@@ -166,6 +172,47 @@ Examples:
 	RunE: runBundleDiff,
 }
 
+var bundleTimelineCmd = &cobra.Command{
+	Use:   "timeline <catalog>",
+	Short: "Show time-series view of objects across a catalog",
+	Long: `Build a timeline showing how objects evolve across bundles in a catalog.
+
+This command reads a catalog and produces a time-series view (bundle-timeline.v1)
+showing each object's state at each bundle in the timeline.
+
+Output includes:
+- Per-object series aligned to bundle order
+- Per-point summaries: drift count, correlation presence
+- Gap detection (objects missing from some bundles)
+
+Ordering modes control bundle order in the timeline:
+- manifest: Order as listed in catalog.json (default)
+- created_at: Sort by bundle creation time
+- sequence: Sort by catalog sequence field
+- input: Preserve CLI argument order (not applicable for catalog)
+
+Join modes control how objects are matched across bundles:
+- object_id: Join on the object_id field (default)
+- composite: Join on (kind, namespace, name) - not yet implemented
+- none: No joining - not yet implemented
+
+Timeline is offline-only: reads catalog and bundles, no cluster/git access.
+Output is deterministic: same catalog + same order = identical timeline.
+
+Examples:
+  # Show timeline with default ordering (manifest)
+  cub-scout bundle timeline ./my-catalog
+
+  # Order by creation time
+  cub-scout bundle timeline ./my-catalog --order created_at
+
+  # Output as JSON
+  cub-scout bundle timeline ./my-catalog --format json
+`,
+	Args: cobra.ExactArgs(1),
+	RunE: runBundleTimeline,
+}
+
 // BundleReplayExitOK indicates no failure triggered
 const BundleReplayExitOK = 0
 
@@ -180,6 +227,7 @@ func init() {
 	bundleCmd.AddCommand(bundleInspectCmd)
 	bundleCmd.AddCommand(bundleReplayCmd)
 	bundleCmd.AddCommand(bundleDiffCmd)
+	bundleCmd.AddCommand(bundleTimelineCmd)
 
 	bundleInspectCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ascii, json")
 
@@ -189,6 +237,10 @@ func init() {
 
 	bundleDiffCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ascii, json")
 	bundleDiffCmd.Flags().StringVar(&bundleDiffJoin, "join", "object_id", "Join mode: object_id, composite, none")
+
+	bundleTimelineCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ascii, json")
+	bundleTimelineCmd.Flags().StringVar(&bundleTimelineJoin, "join", "object_id", "Join mode: object_id, composite, none")
+	bundleTimelineCmd.Flags().StringVar(&bundleTimelineOrder, "order", "manifest", "Order: manifest, created_at, sequence")
 }
 
 func runBundleInspect(cmd *cobra.Command, args []string) error {
@@ -677,6 +729,65 @@ func outputBundleDiffJSON(diff *agent.BundleDiff) error {
 
 func outputBundleDiffASCII(diff *agent.BundleDiff) error {
 	output := agent.RenderBundleDiffASCII(diff)
+	fmt.Print(output)
+	return nil
+}
+
+func runBundleTimeline(cmd *cobra.Command, args []string) error {
+	catalogPath := args[0]
+
+	// Parse order mode
+	var orderMode agent.OrderMode
+	switch bundleTimelineOrder {
+	case "manifest":
+		orderMode = agent.OrderManifest
+	case "created_at":
+		orderMode = agent.OrderCreatedAt
+	case "sequence":
+		orderMode = agent.OrderSequence
+	default:
+		return fmt.Errorf("invalid order mode: %s (valid: manifest, created_at, sequence)", bundleTimelineOrder)
+	}
+
+	// Parse join mode
+	var joinMode agent.JoinMode
+	switch bundleTimelineJoin {
+	case "object_id":
+		joinMode = agent.JoinObjectID
+	case "composite":
+		joinMode = agent.JoinComposite
+	case "none":
+		joinMode = agent.JoinNone
+	default:
+		return fmt.Errorf("invalid join mode: %s (valid: object_id, composite, none)", bundleTimelineJoin)
+	}
+
+	// Build timeline
+	timeline, err := agent.BuildTimeline(catalogPath, orderMode, joinMode)
+	if err != nil {
+		// Handle "not yet implemented" errors with exact messages
+		return err
+	}
+
+	// Output based on format
+	switch bundleFormat {
+	case "json":
+		return outputBundleTimelineJSON(timeline)
+	case "ascii":
+		return outputBundleTimelineASCII(timeline)
+	default:
+		return fmt.Errorf("unknown format: %s (valid: ascii, json)", bundleFormat)
+	}
+}
+
+func outputBundleTimelineJSON(timeline *agent.BundleTimeline) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(timeline)
+}
+
+func outputBundleTimelineASCII(timeline *agent.BundleTimeline) error {
+	output := agent.RenderBundleTimelineASCII(timeline)
 	fmt.Print(output)
 	return nil
 }
