@@ -2,7 +2,7 @@
 
 ## Explorer and Debugger for GitOps Systems
 
-**Last Updated:** 2026-02-03
+**Last Updated:** 2026-02-04
 
 This roadmap describes the planned evolution of cub-scout across standalone and connected modes.
 
@@ -89,14 +89,23 @@ For archived roadmap items, see [archive/old-roadmap-jan.md](archive/old-roadmap
 | #39 | Container logs in debug mode | ✅ Released |
 | #40 | Event timeline | ✅ Released |
 
-### v0.14.3 — Drift Detection (Planned)
+### v0.14.3 — Drift Detection (Released)
 
+**Status:** Released (2026-02-04)
 **Theme:** Detect when live state differs from desired
 
-| # | Title | Description |
-|---|-------|-------------|
-| #33 | Detect GitOps drift | kubectl smell detection |
-| #34 | Drift UI badges and CLI | Surface drift in TUI and CLI |
+**Delivered:**
+- `cub-scout drift --file <path>` command
+- Drift report JSON schema with classifications (capacity, image, config, etc.)
+- Severity levels: critical, warning, info
+- `--fail-on` exit codes for CI integration (0=OK, 1=error, 2=threshold met)
+- ASCII renderer implementing f(JSON)+g semantic contract
+- Deterministic ordering: severity desc > object_id asc > path asc
+
+| # | Title | Status |
+|---|-------|--------|
+| #33 | Detect GitOps drift | ✅ Released |
+| #34 | Drift UI badges and CLI | ⏳ TUI badges deferred (optional polish)
 
 ---
 

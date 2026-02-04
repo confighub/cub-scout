@@ -2311,6 +2311,95 @@ We need to decide what is *canonical truth* now that v0.14 introduced JSON/MD fo
 
 ---
 
+## v0.14.3: Drift Detection
+
+**Date:** 2026-02-04
+**Status:** SHIPPED
+
+### Summary
+
+Implemented drift detection — comparing desired state (from file/git) to live state (from cluster) and reporting differences as structured findings.
+
+### Commits
+
+| PR | Commit | Description |
+|----|--------|-------------|
+| PR1 | `3455c41` | feat: add drift report schema + deterministic ordering |
+| PR2 | `6879bab` | feat: add drift comparator engine and JSON CLI |
+| PR3 | `02ecfdf` | feat: add --fail-on exit semantics driven by drift severity |
+| PR4 | `507bda8` | feat: add ASCII drift renderer as f(JSON)+g |
+
+### Scope Delivered
+
+**Types and Schema (PR1):**
+- `DriftReport`, `DriftFinding`, `DriftSummary` types in `pkg/agent/drift.go`
+- Classifications: capacity, image, config, resource, rollout, health, label, annotation, other
+- Severities: critical, warning, info
+- Canonical ordering: severity desc > object_id asc > path asc
+- `BuildDriftSummary()` for deterministic summary generation
+
+**Comparator Engine (PR2):**
+- `DriftComparator` in `pkg/agent/drift_comparator.go`
+- Compares desired YAML to live cluster state
+- Supports: spec.replicas, container images
+- Severity inference: scale down=warning, scale up=info, different image repo=critical, different tag=warning
+
+**CI Exit Codes (PR3):**
+- `--fail-on` flag with levels: info, warning, critical
+- Exit codes: 0=OK, 1=error, 2=failure threshold met
+- `computeDriftExitCode()` uses JSON facts only (Leak Test compliant)
+
+**ASCII Renderer (PR4):**
+- `RenderDriftASCII()` in `pkg/agent/drift_render.go`
+- Implements f(JSON)+g model from semantic contract
+- Groups by classification, orders by max severity
+- Tree connectors, severity icons, classification labels
+
+### Contracts Enforced
+
+- **R1 (Single Fact Source):** All drift facts in JSON; ASCII cannot invent facts
+- **R2 (Lossless Structure):** ASCII facts traceable to JSON via deterministic f
+- **R3 (Narrative Is Additive):** ASCII adds grouping/labels without changing facts
+- **R5 (Stable Identity):** Finding IDs: `drift:{Kind}:{ns}/{name}:{path}`
+- **R6 (Ordering Is Narrative):** Classification order derived from severity field
+- **Leak Test:** Exit code depends only on JSON severity field, not ASCII rendering
+
+### Test Coverage
+
+| Package | Tests |
+|---------|-------|
+| `pkg/agent/drift_test.go` | 6 tests: sorting, summary, ID generation, determinism |
+| `pkg/agent/drift_comparator_test.go` | 4 tests: replicas, images, severity inference |
+| `cmd/cub-scout/drift_test.go` | 5 tests: exit codes, threshold logic |
+| `pkg/agent/drift_render_test.go` | 8 tests: rendering, grouping, ordering |
+
+### Files Created
+
+| File | Purpose |
+|------|---------|
+| `pkg/agent/drift.go` | Drift types and summary builder |
+| `pkg/agent/drift_test.go` | Type unit tests |
+| `pkg/agent/drift_comparator.go` | Comparison engine |
+| `pkg/agent/drift_comparator_test.go` | Engine tests |
+| `pkg/agent/drift_render.go` | ASCII renderer (f+g) |
+| `pkg/agent/drift_render_test.go` | Render tests |
+| `cmd/cub-scout/drift.go` | CLI command |
+| `cmd/cub-scout/drift_test.go` | Exit code tests |
+| `test/fixtures/drift/drift-fixture.json` | Basic test fixture |
+| `test/fixtures/drift/drift-mixed-severity.json` | Mixed severity fixture |
+| `test/fixtures/drift/drift-ascii.golden` | Golden ASCII output |
+
+### Deferred
+
+- **PR5 (TUI integration):** Optional polish for v0.15 or later
+- UI badges showing drift in map/tree views
+
+### Resume Prompt
+
+> v0.14.3 shipped. Drift detection complete with JSON schema, comparator, exit codes, and ASCII renderer. Semantic contract (f(JSON)+g) enforced throughout. PR5 (TUI badges) deferred. Ready for v0.15 (Graph & Export) or tag release.
+
+---
+
 ## Semantic Contract Resolution (2026-02-04)
 
 **Decision: Neither ASCII nor JSON is "canonical" — they have different authorities.**
