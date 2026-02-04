@@ -126,9 +126,9 @@ The v0.14 line marks a **second major arc** of the project: from static inspecti
 
 **Status:** Released
 
-* Guided GitOps Debug Mode (#37)
-* Container logs (#39)
-* Event timeline (#40)
+* Guided GitOps Debug Mode (#37) ✅
+* Container logs (#39) ✅
+* Event timeline (#40) ✅
 
 ---
 
@@ -164,8 +164,8 @@ Theme: *More signal, same rails*
 
 Theme: *Why this broke*
 
-* Correlation helpers (#98)
-* Narrative correlation in debug flows (#99)
+* Correlation helpers (#98) ✅
+* Narrative correlation in debug flows (#99) ✅
 
 Correlation is explanatory only; no new JSON facts.
 
@@ -206,7 +206,7 @@ All semantic contracts preserved throughout. Ready for v0.15.
 
 Theme: *What changed over time?*
 
-This release **subsumes earlier "Graph & Export" ideas** (#35, #36, #38).
+This release **subsumes earlier "Graph & Export" ideas** (#35 ✅, #36 ✅, #38 ✅).
 
 ### v0.15.0 — Multi-Bundle Operations
 
@@ -284,22 +284,36 @@ Theme: *Why this change exists*
 * Deterministic graph merge for multiple attribution sources
 * Non-Crossplane targets supported via `k8s_object` node type
 
+### Completed Issues
+
+* Crossplane ownership and lineage (#8) ✅
+* Kustomize overlay attribution (#2) ✅
+
 ### Deferred
 
-* Crossplane ownership and lineage (#8, #21)
-* Platform composition tools (kro) (#22)
+* Platform composition beyond Crossplane (kro) (#21)
+* Performance & scale guardrails (#22)
 
 ---
 
 ## v0.17 — Stabilization Window
 
-**Status:** Planned
+**Status:** In Progress
 
 Theme: *Harden before workflows*
 
-* Performance and scale guardrails (#23)
+### Completed
+
+* CI workflows (gofmt, lint, tests) ✅
+* Performance benchmark scaffolding ✅
+* Contract audit (schema immutability + golden determinism) ✅
+* Epic cleanup and closure (#25) ✅
+
+### Remaining
+
+* Performance and scale guardrails (#22)
 * Resolver pattern documentation (#24)
-* Epic cleanup and closure (#25)
+* Crossplane walkthrough demo (#23)
 
 ---
 
@@ -354,11 +368,11 @@ Theme: *Long-lived trust*
 
 ## Issue Alignment Snapshot
 
-* v0.14.5: #98, #99
-* v0.14.6: #100–#102
-* v0.15.0: PR1 (Catalog), PR2 (Diff), PR3 (Timeline)
-* v0.16.0–v0.16.3: PR1 (Attribution Graph), PR2 (Bundle Capture), PR3 (Report), PR4 (Kustomize)
-* v0.17+: #8, #21–#22
-* v0.19: #88–#93
+* v0.14.5: #98 ✅, #99 ✅
+* v0.14.6: #100 ✅, #101 ✅, #102 ✅
+* v0.15.0: #35 ✅, #36 ✅, #38 ✅, #40 ✅
+* v0.16.0–v0.16.3: #2 ✅, #8 ✅
+* v0.17: #25 ✅, #21, #22, #23, #24
+* v0.19: #88, #90, #91, #92, #93
 
 Issues remain the execution unit; versions define intent.
