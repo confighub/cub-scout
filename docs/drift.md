@@ -247,6 +247,6 @@ See `docs/reference/severity-taxonomy.md` for the full classification and severi
 - Requires cluster access for live state
 - Does not detect missing resources (desired exists, live doesn't)
 
-**Future versions:**
-- v0.14.5: Drift correlation with logs/events
-- v0.14.6: Debug bundles for portable debugging
+**Related documentation:**
+- [Debug Bundles](debug-bundle.md) — Portable snapshots for offline inspection
+- [Semantic Contract](semantic-contract.md) — f(JSON) + g model

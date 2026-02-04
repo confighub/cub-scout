@@ -45,6 +45,8 @@ Complete reference documentation:
 | Topic | Reference |
 |-------|-----------|
 | **Commands** | [reference/commands.md](reference/commands.md) |
+| **Debug Bundles** | [debug-bundle.md](debug-bundle.md) |
+| **Drift Detection** | [drift.md](drift.md) |
 | **Ownership & Precedence** | [reference/ownership-precedence.md](reference/ownership-precedence.md) |
 | **Health & Failure States** | [reference/health-failure-states.md](reference/health-failure-states.md) |
 | **CLI Contract** | [reference/cli-contract.md](reference/cli-contract.md) |
