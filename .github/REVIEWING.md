@@ -4,6 +4,16 @@ Use this checklist when reviewing PRs to cub-scout.
 
 ---
 
+## Semantic Safety
+
+PRs affecting **output, renderers, drift detection, or JSON schemas** must also pass the [Semantic Safety Checklist](SEMANTIC-SAFETY.md).
+
+Key question: *Did narrative semantics (g) leak into structural facts (f)?*
+
+See: [docs/semantic-contract.md](../docs/semantic-contract.md) for the full model.
+
+---
+
 ## Identity Check
 
 > **cub-scout is a read-only GitOps explorer and debugger.**

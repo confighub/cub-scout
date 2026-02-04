@@ -75,6 +75,18 @@ PR descriptions should briefly answer:
 
 ---
 
+## Semantic Contract
+
+cub-scout separates **structural facts** (JSON) from **narrative explanation** (ASCII).
+
+> **ASCII = f(JSON) + g**
+
+JSON is the authoritative record of what is true. ASCII explains why it matters. This separation enables deterministic automation while preserving human-readable output.
+
+Contributors touching renderers, output formats, or drift detection should read [`docs/semantic-contract.md`](docs/semantic-contract.md) and follow the [Semantic Safety Checklist](.github/SEMANTIC-SAFETY.md).
+
+---
+
 ## Project Principles
 
 These principles apply to **all** contributions:

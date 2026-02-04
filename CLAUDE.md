@@ -26,6 +26,7 @@ go build ./cmd/cub-scout
 | [README.md](README.md) | Project overview, install, quick start |
 | [CLI-GUIDE.md](CLI-GUIDE.md) | Complete CLI reference with examples |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [docs/semantic-contract.md](docs/semantic-contract.md) | ASCII vs JSON meaning contract (R1-R6) |
 
 ## Key Principles
 

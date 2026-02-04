@@ -2309,18 +2309,67 @@ We need to decide what is *canonical truth* now that v0.14 introduced JSON/MD fo
 - Never let TUI invent meaning
 - Never let ASCII and JSON drift semantically
 
-### Tomorrow's Agenda
+---
 
-1. Decide **canonical truth**: ASCII vs JSON
-2. Align docs/comments/tests accordingly (single source of truth)
-3. Confirm v0.14.3 scope (Drift Detection)
-4. Leave #2 parked
+## Semantic Contract Resolution (2026-02-04)
 
-### Resume Prompt
+**Decision: Neither ASCII nor JSON is "canonical" — they have different authorities.**
 
-> Project: cub-scout
-> Savepoint loaded. v0.14.2 shipped guided debug UX (wizard/logs/events). #2 Kustomize overlay attribution deferred.
-> Critical open question: is ASCII or JSON the canonical meaning contract? Decide and align tomorrow.
-> Next milestone likely v0.14.3 Drift Detection. Continue execution without redesign.
+Codex provided a unified semantic contract that resolves the false dichotomy:
+
+> **ASCII = f(JSON) + g**
+
+Where:
+- **JSON** = structural facts (machine authority)
+- **f** = deterministic 1-to-1 mapping from facts to ASCII skeleton
+- **g** = narrative semantics (human authority) — ordering, grouping, labels, emphasis
+
+### Key Principle
+
+JSON and ASCII are *complementary*, not competing:
+- **JSON is authoritative for structural facts** (identity, relationships, severity, counts)
+- **ASCII is authoritative for explanation** (why it matters, debugging story)
+
+### The Leak Test (Mandatory Invariant)
+
+> If removing ASCII headings, grouping, or ordering would change how a machine *should* behave, then narrative semantics have leaked into structure.
+
+If the leak test fails:
+- Add the missing meaning to JSON as an explicit field, OR
+- Revise ASCII so it no longer implies machine-relevant meaning
+
+### Rules (R1-R6)
+
+| Rule | Name | Summary |
+|------|------|---------|
+| R1 | Single Fact Source | All structural facts in JSON; ASCII cannot invent facts |
+| R2 | Lossless Structure | ASCII facts traceable to JSON via deterministic f |
+| R3 | Narrative Is Additive | ASCII may add g, but cannot change fact interpretation |
+| R4 | No Meaning by Placement | Headings are visual unless backed by JSON fields |
+| R5 | Stable Identity | Referencable items in ASCII must have JSON IDs |
+| R6 | Ordering Is Narrative | Unless explicitly semantic via JSON field |
+
+### Files Created
+
+| File | Purpose |
+|------|---------|
+| `docs/semantic-contract.md` | Full contract with definitions, rules, examples |
+| `.github/SEMANTIC-SAFETY.md` | PR review checklist enforcing R1-R6 + Leak Test |
+
+### Files Updated
+
+| File | Change |
+|------|--------|
+| `.github/REVIEWING.md` | Added Semantic Safety section at top |
+| `CONTRIBUTING.md` | Added Semantic Contract section with f(JSON)+g model |
+| `CLAUDE.md` | Added semantic-contract.md to documentation table |
+
+### Impact
+
+This resolution:
+- Enables v0.14.3 Drift Detection without semantic churn
+- Gates CI/policy on JSON without freezing ASCII storytelling
+- Gives reviewers a concrete question: "did g leak into f?"
+- Aligns humans and AIs on how to reason about outputs
 
 ---
