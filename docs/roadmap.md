@@ -321,14 +321,121 @@ Theme: *Harden before workflows*
 
 **Status:** Planned
 
-Theme: *Operate with cub-scout*
+**Theme:** *Bring cub-scout to where decisions happen*
 
-This release restores and completes the **workflow layer** that was always implied:
+> This release reconnects cub-scout with its original intent from **v0.2–v0.3 ("why connected")**:
+> not as an active controller, but as a **context-aware, read-only companion** embedded in real workflows.
 
-* Import / inspect artefacts
-* Write / export outputs
-* Git workflows (patches, PR context)
-* Fleet view (multi-cluster / multi-namespace)
+All semantic foundations (graphs, replay, attribution, determinism) are already complete.
+v0.18 focuses on **operability and placement**, not new meaning.
+
+---
+
+### What "Connected" Means (and Does *Not* Mean)
+
+**Connected means:**
+
+* cub-scout fits naturally into **CI, PR review, and local debugging**
+* outputs are **exportable, shareable, and inspectable**
+* context travels with artefacts, not with running systems
+
+**Connected does NOT mean:**
+
+* mutating clusters
+* applying changes
+* acting as a controller or policy engine
+
+cub-scout remains **read-only, explainable, and deterministic**.
+
+---
+
+### Core Capabilities
+
+#### 1. Artifact Import & Export
+
+cub-scout can be used as a **producer and consumer of workflow artefacts**:
+
+* Import:
+  * debug bundles
+  * catalogs (multi-bundle sets)
+* Export:
+  * reports (JSON + human-readable)
+  * snapshots suitable for PRs, tickets, and archives
+
+This restores the original "share the explanation, not just the output" goal.
+
+---
+
+#### 2. Git-Aware, Read-Only Workflows
+
+Building on early intent from v0.2/v0.3:
+
+* cub-scout runs in CI or locally
+* produces bundles and reports
+* results are reviewed **alongside code changes**
+* no implicit filesystem or git ordering
+* no live cluster access required
+
+Git context is **adjacent**, not authoritative.
+
+---
+
+#### 3. Fleet & Environment Views (Explicit, Shallow)
+
+Connected workflows often span environments:
+
+* multiple clusters
+* multiple namespaces
+* multiple points in time
+
+v0.18 surfaces existing capabilities:
+
+* catalogs
+* timelines
+* ordered bundle sets
+
+Without:
+
+* implicit aggregation
+* inferred topology
+* hidden joins
+
+All ordering and grouping remain explicit and inspectable.
+
+---
+
+#### 4. Action Adjacency
+
+As originally intended:
+
+* cub-scout explains *what* and *why*
+* cub-scout may suggest *what to inspect next*
+* cub-scout exports context to other tools
+
+It does **not** execute actions itself.
+
+---
+
+### Scope Constraints (Intentional)
+
+* No new schemas
+* No new inference
+* No semantic expansion
+* No controller behavior
+
+v0.18 is about **placement**, not power.
+
+---
+
+### Outcome
+
+After v0.18:
+
+* cub-scout fits naturally into real workflows
+* explanations travel between people and systems
+* users no longer have to bridge tools mentally
+
+This fulfills the original "why connected" vision on top of a now-solid foundation.
 
 ---
 
