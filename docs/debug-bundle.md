@@ -7,12 +7,73 @@
 
 ## What is a Debug Bundle?
 
-A debug bundle is a portable snapshot of *already-derived* facts and outputs, packaged for:
+> A **debug bundle** is an immutable snapshot of cub-scout's derived facts from a single run, designed for deterministic offline replay.
+
+### Formal Definition
+
+A bundle is a **closed set of deterministic artifacts** that, taken together, are sufficient to reproduce the *same JSON and ASCII outputs* that cub-scout produced at capture time, **without accessing the cluster, git, or wall-clock time**.
+
+Key properties: *closed*, *deterministic*, *reproducible*.
+
+### What a Bundle IS
+
+- An **immutable, portable snapshot** of already-derived facts
+- Produced by a **single cub-scout execution**
+- Captured at a **specific point in time**
+- **Self-contained** — no external dependencies for replay
+
+### What a Bundle is NOT
+
+- A live view
+- A cache
+- A database
+- A time-series
+- A source of new meaning
+
+### Bundle Guarantees
+
+If two people have the same bundle:
+
+| Guarantee | Description |
+|-----------|-------------|
+| Identical JSON | `bundle replay` produces byte-identical JSON |
+| Identical ASCII | Output identical (modulo terminal width) |
+| Identical exit codes | CI behavior is reproducible |
+| No external access | Cluster, git, network never consulted |
+
+This makes bundles safe for: CI artifacts, incident handoff, offline debugging, long-term archiving.
+
+### What a Bundle Does NOT Imply
+
+A bundle does **not** imply:
+
+- Continuity with any other bundle
+- "Before" or "after"
+- "Latest"
+- "Regression"
+- "Same object across time"
+
+All temporal meaning requires **explicit multi-bundle semantics** (catalogs, ordering, join rules) — see v0.15+.
+
+### Bundle vs Timeline
+
+| Concept | Scope | Mutability | Meaning Source |
+|---------|-------|------------|----------------|
+| Bundle | One execution snapshot | Immutable | Existing facts |
+| Timeline | Multiple bundles | Derived | New schema (v0.15+) |
+
+A timeline is *computed from bundles*. A bundle is never computed from a timeline.
+
+---
+
+## Use Cases
+
+Debug bundles are designed for:
 
 - **Offline inspection** — analyze issues without cluster access
 - **Sharing** — send to teammates, attach to tickets, store for later
 - **Reproducibility** — same bundle always produces identical output
-- **Time-travel** — compare bundles from different points in time
+- **Archiving** — preserve debug state for future reference
 
 Debug bundles contain **captured facts only** — no new interpretation happens during creation.
 
