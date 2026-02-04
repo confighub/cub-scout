@@ -1,7 +1,7 @@
 // Copyright (C) ConfigHub, Inc.
 // SPDX-License-Identifier: MIT
 
-// Package agent provides drift detection for v0.14.3.
+// Package agent provides drift detection for v0.14.4.
 //
 // This file implements the drift comparator engine that compares
 // desired state (from file/git) against live state (from cluster).
@@ -58,13 +58,13 @@ type DriftOptions struct {
 	IncludeResources bool
 }
 
-// DefaultDriftOptions returns sensible defaults for v0.14.3.
+// DefaultDriftOptions returns sensible defaults for v0.14.4.
 func DefaultDriftOptions() DriftOptions {
 	return DriftOptions{
-		IncludeReplicas: true,
-		IncludeImages:   true,
-		IncludeEnv:      false,      // v0.14.4+
-		IncludeResources: false,     // v0.14.4+
+		IncludeReplicas:  true,
+		IncludeImages:    true,
+		IncludeEnv:       true,  // v0.14.4+
+		IncludeResources: false, // v0.14.4+ PR2
 	}
 }
 
@@ -161,6 +161,12 @@ func (c *DriftComparator) compareResource(desired, live map[string]interface{}) 
 		findings = append(findings, imageFindings...)
 	}
 
+	// Compare environment variables (v0.14.4+)
+	if c.options.IncludeEnv {
+		envFindings := c.compareEnvVars(objID, desired, live)
+		findings = append(findings, envFindings...)
+	}
+
 	return findings
 }
 
@@ -250,6 +256,143 @@ func (c *DriftComparator) compareImages(objID DriftObjectID, desired, live map[s
 	}
 
 	return findings
+}
+
+// compareEnvVars compares environment variables between desired and live containers.
+// Findings use path format: spec.template.spec.containers[name=<container>].env[name=<VAR>]
+// Classification: config, Severity: warning
+func (c *DriftComparator) compareEnvVars(objID DriftObjectID, desired, live map[string]interface{}) []DriftFinding {
+	var findings []DriftFinding
+
+	desiredContainers := extractContainers(desired)
+	liveContainers := extractContainers(live)
+
+	// Build map of live containers by name
+	liveByName := make(map[string]map[string]interface{})
+	for _, container := range liveContainers {
+		name, _ := getStringField(container, "name")
+		if name != "" {
+			liveByName[name] = container
+		}
+	}
+
+	// Compare each desired container's env vars
+	for _, desiredContainer := range desiredContainers {
+		containerName, _ := getStringField(desiredContainer, "name")
+		if containerName == "" {
+			continue
+		}
+
+		liveContainer, exists := liveByName[containerName]
+		if !exists {
+			// Container doesn't exist in live - skip (container drift is different)
+			continue
+		}
+
+		// Extract and compare env vars
+		desiredEnv := extractEnvVars(desiredContainer)
+		liveEnv := extractEnvVars(liveContainer)
+
+		// Build map of live env vars by name
+		liveEnvByName := make(map[string]string)
+		for _, e := range liveEnv {
+			liveEnvByName[e.Name] = e.Value
+		}
+
+		// Track which live vars we've seen (for detecting removed vars)
+		seenLiveVars := make(map[string]bool)
+
+		// Check desired vars against live (sorted for determinism)
+		sortEnvVarsByName(desiredEnv)
+		for _, dv := range desiredEnv {
+			path := fmt.Sprintf("spec.template.spec.containers[name=%s].env[name=%s]", containerName, dv.Name)
+
+			liveValue, existsInLive := liveEnvByName[dv.Name]
+			seenLiveVars[dv.Name] = true
+
+			if !existsInLive {
+				// Var in desired but not in live (removed)
+				finding := NewDriftFinding(
+					objID,
+					path,
+					dv.Value,
+					nil, // nil indicates missing
+					DriftConfig,
+					DriftSeverityWarning,
+				)
+				findings = append(findings, finding)
+			} else if dv.Value != liveValue {
+				// Var exists but value changed
+				finding := NewDriftFinding(
+					objID,
+					path,
+					dv.Value,
+					liveValue,
+					DriftConfig,
+					DriftSeverityWarning,
+				)
+				findings = append(findings, finding)
+			}
+		}
+
+		// Check for vars in live but not in desired (added vars)
+		sortEnvVarsByName(liveEnv)
+		for _, lv := range liveEnv {
+			if !seenLiveVars[lv.Name] {
+				path := fmt.Sprintf("spec.template.spec.containers[name=%s].env[name=%s]", containerName, lv.Name)
+				finding := NewDriftFinding(
+					objID,
+					path,
+					nil, // nil indicates missing in desired
+					lv.Value,
+					DriftConfig,
+					DriftSeverityWarning,
+				)
+				findings = append(findings, finding)
+			}
+		}
+	}
+
+	return findings
+}
+
+// envVar represents an environment variable name-value pair.
+type envVar struct {
+	Name  string
+	Value string
+}
+
+// extractEnvVars extracts environment variables from a container.
+func extractEnvVars(container map[string]interface{}) []envVar {
+	envList, ok := container["env"].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	var vars []envVar
+	for _, e := range envList {
+		envMap, ok := e.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := getStringField(envMap, "name")
+		value, _ := getStringField(envMap, "value")
+		if name != "" {
+			vars = append(vars, envVar{Name: name, Value: value})
+		}
+	}
+	return vars
+}
+
+// sortEnvVarsByName sorts env vars by name for deterministic comparison.
+func sortEnvVarsByName(vars []envVar) {
+	for i := 0; i < len(vars)-1; i++ {
+		for j := i + 1; j < len(vars); j++ {
+			if vars[i].Name > vars[j].Name {
+				vars[i], vars[j] = vars[j], vars[i]
+			}
+		}
+	}
 }
 
 // fetchLiveResource fetches a resource from the cluster.

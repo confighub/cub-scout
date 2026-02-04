@@ -368,3 +368,370 @@ func TestClassifyReplicaSeverity(t *testing.T) {
 		})
 	}
 }
+
+// TestDriftComparator_CompareEnvVars tests environment variable drift detection.
+func TestDriftComparator_CompareEnvVars(t *testing.T) {
+	comparator := &DriftComparator{
+		options: DriftOptions{
+			IncludeEnv: true,
+		},
+	}
+
+	tests := []struct {
+		name          string
+		desired       map[string]interface{}
+		live          map[string]interface{}
+		wantFindings  int
+		wantPaths     []string
+		checkDesired  map[string]interface{} // path -> expected desired value
+		checkLive     map[string]interface{} // path -> expected live value
+	}{
+		{
+			name: "no drift - same env vars",
+			desired: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "LOG_LEVEL", "value": "info"},
+				{"name": "PORT", "value": "8080"},
+			}),
+			live: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "LOG_LEVEL", "value": "info"},
+				{"name": "PORT", "value": "8080"},
+			}),
+			wantFindings: 0,
+		},
+		{
+			name: "drift - changed value",
+			desired: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "LOG_LEVEL", "value": "info"},
+			}),
+			live: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "LOG_LEVEL", "value": "debug"},
+			}),
+			wantFindings: 1,
+			wantPaths:    []string{"spec.template.spec.containers[name=app].env[name=LOG_LEVEL]"},
+			checkDesired: map[string]interface{}{
+				"spec.template.spec.containers[name=app].env[name=LOG_LEVEL]": "info",
+			},
+			checkLive: map[string]interface{}{
+				"spec.template.spec.containers[name=app].env[name=LOG_LEVEL]": "debug",
+			},
+		},
+		{
+			name: "drift - added var (in live, not in desired)",
+			desired: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "LOG_LEVEL", "value": "info"},
+			}),
+			live: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "LOG_LEVEL", "value": "info"},
+				{"name": "DEBUG", "value": "true"},
+			}),
+			wantFindings: 1,
+			wantPaths:    []string{"spec.template.spec.containers[name=app].env[name=DEBUG]"},
+			checkDesired: map[string]interface{}{
+				"spec.template.spec.containers[name=app].env[name=DEBUG]": nil,
+			},
+			checkLive: map[string]interface{}{
+				"spec.template.spec.containers[name=app].env[name=DEBUG]": "true",
+			},
+		},
+		{
+			name: "drift - removed var (in desired, not in live)",
+			desired: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "LOG_LEVEL", "value": "info"},
+				{"name": "FEATURE_FLAG", "value": "enabled"},
+			}),
+			live: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "LOG_LEVEL", "value": "info"},
+			}),
+			wantFindings: 1,
+			wantPaths:    []string{"spec.template.spec.containers[name=app].env[name=FEATURE_FLAG]"},
+			checkDesired: map[string]interface{}{
+				"spec.template.spec.containers[name=app].env[name=FEATURE_FLAG]": "enabled",
+			},
+			checkLive: map[string]interface{}{
+				"spec.template.spec.containers[name=app].env[name=FEATURE_FLAG]": nil,
+			},
+		},
+		{
+			name: "drift - multiple changes",
+			desired: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "A_VAR", "value": "a"},
+				{"name": "B_VAR", "value": "b"},
+				{"name": "C_VAR", "value": "c"},
+			}),
+			live: makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+				{"name": "A_VAR", "value": "a"},       // same
+				{"name": "B_VAR", "value": "changed"}, // changed
+				{"name": "D_VAR", "value": "d"},       // added
+				// C_VAR removed
+			}),
+			wantFindings: 3, // B changed, C removed, D added
+		},
+		{
+			name: "no drift - empty env in both",
+			desired: makeDeploymentWithEnv("web", "prod", nil),
+			live:    makeDeploymentWithEnv("web", "prod", nil),
+			wantFindings: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			findings := comparator.compareResource(tt.desired, tt.live)
+
+			// Filter for env findings
+			var envFindings []DriftFinding
+			for _, f := range findings {
+				if f.Classification == DriftConfig {
+					envFindings = append(envFindings, f)
+				}
+			}
+
+			if len(envFindings) != tt.wantFindings {
+				t.Errorf("got %d env findings, want %d", len(envFindings), tt.wantFindings)
+				for _, f := range envFindings {
+					t.Logf("  finding: %s (desired=%v, live=%v)", f.Path, f.Desired, f.Live)
+				}
+			}
+
+			// Check specific paths if specified
+			if tt.wantPaths != nil {
+				for _, wantPath := range tt.wantPaths {
+					found := false
+					for _, f := range envFindings {
+						if f.Path == wantPath {
+							found = true
+							// Check desired/live values if specified
+							if tt.checkDesired != nil {
+								if expected, ok := tt.checkDesired[wantPath]; ok {
+									if f.Desired != expected {
+										t.Errorf("path %s: desired = %v, want %v", wantPath, f.Desired, expected)
+									}
+								}
+							}
+							if tt.checkLive != nil {
+								if expected, ok := tt.checkLive[wantPath]; ok {
+									if f.Live != expected {
+										t.Errorf("path %s: live = %v, want %v", wantPath, f.Live, expected)
+									}
+								}
+							}
+							break
+						}
+					}
+					if !found {
+						t.Errorf("expected finding for path %s, not found", wantPath)
+					}
+				}
+			}
+
+			// Verify all findings have warning severity and config classification
+			for _, f := range envFindings {
+				if f.Severity != DriftSeverityWarning {
+					t.Errorf("finding %s: severity = %s, want warning", f.Path, f.Severity)
+				}
+				if f.Classification != DriftConfig {
+					t.Errorf("finding %s: classification = %s, want config", f.Path, f.Classification)
+				}
+			}
+		})
+	}
+}
+
+// TestDriftComparator_EnvVars_Determinism verifies that reordered env lists produce identical output.
+func TestDriftComparator_EnvVars_Determinism(t *testing.T) {
+	comparator := &DriftComparator{
+		options: DriftOptions{
+			IncludeEnv: true,
+		},
+	}
+
+	// Desired has vars in one order
+	desired := makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+		{"name": "ZEBRA", "value": "z"},
+		{"name": "ALPHA", "value": "a"},
+		{"name": "MIKE", "value": "m"},
+	})
+
+	// Live has different values, in different order
+	live := makeDeploymentWithEnv("web", "prod", []map[string]interface{}{
+		{"name": "MIKE", "value": "changed_m"},
+		{"name": "ALPHA", "value": "changed_a"},
+		{"name": "ZEBRA", "value": "changed_z"},
+	})
+
+	// Run comparison twice
+	findings1 := comparator.compareResource(desired, live)
+	findings2 := comparator.compareResource(desired, live)
+
+	// Filter for env findings
+	var env1, env2 []DriftFinding
+	for _, f := range findings1 {
+		if f.Classification == DriftConfig {
+			env1 = append(env1, f)
+		}
+	}
+	for _, f := range findings2 {
+		if f.Classification == DriftConfig {
+			env2 = append(env2, f)
+		}
+	}
+
+	if len(env1) != len(env2) {
+		t.Fatalf("non-deterministic: got %d findings first, %d second", len(env1), len(env2))
+	}
+
+	// Verify findings are in same order (alphabetical by var name)
+	for i := range env1 {
+		if env1[i].Path != env2[i].Path {
+			t.Errorf("non-deterministic order: position %d has %s vs %s", i, env1[i].Path, env2[i].Path)
+		}
+	}
+
+	// Verify alphabetical order (ALPHA, MIKE, ZEBRA)
+	expectedOrder := []string{
+		"spec.template.spec.containers[name=app].env[name=ALPHA]",
+		"spec.template.spec.containers[name=app].env[name=MIKE]",
+		"spec.template.spec.containers[name=app].env[name=ZEBRA]",
+	}
+	for i, expected := range expectedOrder {
+		if i >= len(env1) {
+			t.Errorf("missing finding at position %d", i)
+			continue
+		}
+		if env1[i].Path != expected {
+			t.Errorf("position %d: got %s, want %s", i, env1[i].Path, expected)
+		}
+	}
+}
+
+// TestDriftComparator_EnvVars_MultipleContainers tests env comparison across multiple containers.
+func TestDriftComparator_EnvVars_MultipleContainers(t *testing.T) {
+	comparator := &DriftComparator{
+		options: DriftOptions{
+			IncludeEnv: true,
+		},
+	}
+
+	desired := map[string]interface{}{
+		"kind":       "Deployment",
+		"apiVersion": "apps/v1",
+		"metadata":   map[string]interface{}{"name": "web", "namespace": "prod"},
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":  "app",
+							"image": "nginx:1.19",
+							"env": []interface{}{
+								map[string]interface{}{"name": "LOG_LEVEL", "value": "info"},
+							},
+						},
+						map[string]interface{}{
+							"name":  "sidecar",
+							"image": "envoy:1.0",
+							"env": []interface{}{
+								map[string]interface{}{"name": "PROXY_PORT", "value": "8080"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	live := map[string]interface{}{
+		"kind":       "Deployment",
+		"apiVersion": "apps/v1",
+		"metadata":   map[string]interface{}{"name": "web", "namespace": "prod"},
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":  "app",
+							"image": "nginx:1.19",
+							"env": []interface{}{
+								map[string]interface{}{"name": "LOG_LEVEL", "value": "debug"}, // changed
+							},
+						},
+						map[string]interface{}{
+							"name":  "sidecar",
+							"image": "envoy:1.0",
+							"env": []interface{}{
+								map[string]interface{}{"name": "PROXY_PORT", "value": "9090"}, // changed
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	findings := comparator.compareResource(desired, live)
+
+	// Filter for env findings
+	var envFindings []DriftFinding
+	for _, f := range findings {
+		if f.Classification == DriftConfig {
+			envFindings = append(envFindings, f)
+		}
+	}
+
+	if len(envFindings) != 2 {
+		t.Errorf("got %d env findings, want 2", len(envFindings))
+	}
+
+	// Check that both containers are represented
+	foundApp := false
+	foundSidecar := false
+	for _, f := range envFindings {
+		if f.Path == "spec.template.spec.containers[name=app].env[name=LOG_LEVEL]" {
+			foundApp = true
+		}
+		if f.Path == "spec.template.spec.containers[name=sidecar].env[name=PROXY_PORT]" {
+			foundSidecar = true
+		}
+	}
+
+	if !foundApp {
+		t.Error("missing finding for app container")
+	}
+	if !foundSidecar {
+		t.Error("missing finding for sidecar container")
+	}
+}
+
+// makeDeploymentWithEnv creates a test deployment with the given env vars.
+func makeDeploymentWithEnv(name, namespace string, env []map[string]interface{}) map[string]interface{} {
+	var envList []interface{}
+	if env != nil {
+		for _, e := range env {
+			envList = append(envList, e)
+		}
+	}
+
+	containers := []interface{}{
+		map[string]interface{}{
+			"name":  "app",
+			"image": "nginx:1.19",
+		},
+	}
+
+	if envList != nil {
+		containers[0].(map[string]interface{})["env"] = envList
+	}
+
+	return map[string]interface{}{
+		"kind":       "Deployment",
+		"apiVersion": "apps/v1",
+		"metadata":   map[string]interface{}{"name": name, "namespace": namespace},
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": containers,
+				},
+			},
+		},
+	}
+}
