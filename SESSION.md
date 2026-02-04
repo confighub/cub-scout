@@ -2462,3 +2462,68 @@ This resolution:
 - Aligns humans and AIs on how to reason about outputs
 
 ---
+
+## v0.14.4: Drift Coverage Expansion
+
+**Date:** 2026-02-04
+**Status:** IN PROGRESS
+
+### Theme
+
+Expand drift coverage without touching semantics, UX contracts, or CI behavior.
+
+### Roadmap Update
+
+Comprehensive roadmap rewrite committed (`ba75565`):
+- v0.14.4–v0.14.6: Drift exploitation (coverage, correlation, bundles)
+- v0.15: Replay & time-series reasoning
+- v0.16: Kustomize overlay attribution
+- v0.18: Connected workflows
+- v0.19: TUI polish (explicitly last)
+
+### Issues Filed
+
+| # | Title | Version |
+|---|-------|---------|
+| #94 | feat(drift): detect environment variable changes | v0.14.4 |
+| #95 | feat(drift): detect resource requests/limits changes | v0.14.4 |
+| #96 | feat(drift): detect image pull policy changes | v0.14.4 |
+| #97 | docs: add drift documentation and examples | v0.14.4 |
+| #98 | feat(agent): add drift-debug correlation helpers | v0.14.5 |
+| #99 | feat(debug): show drift correlation in debug flows | v0.14.5 |
+| #100 | feat(debug): implement Debug Bundle v1 | v0.14.6 |
+| #101 | feat(debug): add bundle inspect command | v0.14.6 |
+| #102 | docs: add debug bundle documentation | v0.14.6 |
+
+### PR1: Environment Variable Drift (#94) — COMPLETE
+
+**Commit:** `1bc4192`
+
+**Scope:**
+- Compare `spec.template.spec.containers[].env` between desired and live
+- Path format: `spec.template.spec.containers[name=<container>].env[name=<VAR>]`
+- Classification: `config`, Severity: `warning`
+- Detects: added vars, removed vars, changed values
+- Deterministic ordering by variable name
+
+**Tests:**
+- 6 scenarios: no drift, changed, added, removed, multiple, empty
+- Determinism test (reordered lists → identical output)
+- Multiple containers test
+
+**Files Modified:**
+- `pkg/agent/drift_comparator.go` (+155 lines)
+- `pkg/agent/drift_comparator_test.go` (+367 lines)
+
+### Next Steps
+
+- PR2 (#95): Resource requests/limits drift
+- PR3 (#96): Image pull policy drift
+- PR4: JSON schema + reference docs
+- PR5 (#97): User docs + examples
+
+### Resume Prompt
+
+> v0.14.4 PR1 (env var drift) shipped. Roadmap updated through v0.19. Issues #94-#102 filed. Continue with PR2 (resource drift) using same pattern.
+
+---
