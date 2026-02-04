@@ -1,360 +1,284 @@
-# cub-scout Roadmap
+# cub-scout Unified Roadmap
 
-> **Audience:** humans and AI contributors (Claude, Codex, reviewers)
-> **Purpose:** single, authoritative forward plan that subsumes prior roadmap documents and scattered issues.
-
-This roadmap reflects the current *shipped reality* (v0.14.3), the locked semantic contract, and an aggressive but disciplined execution plan through v0.16.
-
-**Last Updated:** 2026-02-04
-
----
-
-## Guiding Principles (Locked)
-
-These principles are not up for renegotiation unless explicitly revised.
-
-1. **Single semantic model**
-   All outputs derive from one internal model.
-
-2. **Complementary authorities**
-   - JSON → structural facts (machine authority)
-   - ASCII → f(JSON) + g (human authority)
-
-3. **Leak Test invariant**
-   If removing ASCII narrative would change machine behavior, meaning has leaked and must be fixed.
-
-4. **Determinism first**
-   Outputs must be replayable, diffable, and golden-tested.
-
-5. **Capability before polish**
-   UI/TUI polish only happens once artefacts and correlations are rich.
-
-These principles govern *all* work below.
+> **Status:** Authoritative
+>
+> This document **replaces and subsumes**:
+>
+> * `/ROADMAP.md`
+> * `/docs/roadmap.md`
+> * scattered milestone notes and implicit issue groupings
+>
+> It reconciles *historical releases*, *current shipped reality*, and the *forward execution plan* through v0.19.
 
 ---
 
-## Current State (Ground Truth)
+## How to Read This Roadmap
 
-### v0.14.3 — Drift Detection (RELEASED)
+* **Released** sections are sealed unless explicitly reopened.
+* **Planned** sections describe *intent*, not promises.
+* Each version has a **theme** explaining why it exists.
+* Issues are grouped where they belong *now*, not where they were first imagined.
 
-**Status:** Shipped (2026-02-04)
-
-**Delivered:**
-- Drift JSON schema + deterministic ordering
-- Drift comparator engine (replicas, images)
-- CI semantics via `--fail-on` (JSON-driven)
-- ASCII drift renderer as f(JSON)+g
-
-**Contracts enforced:**
-- R1–R6 semantic rules
-- Leak Test (exit behavior independent of ASCII)
-
-**Value unlocked:**
-- First-class drift detection
-- Automation-ready facts
-- Human-readable explanations
+Semantic contracts, determinism guarantees, and the ASCII = f(JSON) + g model are assumed and not re-litigated here.
 
 ---
 
-## v0.14.x Theme — Drift as Diagnostic & Shareable Truth
+## Released History (Locked)
 
-v0.14.x is about *exploiting* drift detection, not redesigning it.
+### v0.5 — Contract-Locked CLI
 
-Focus:
-- Expand drift **coverage**
-- Correlate drift with **debugging signals**
-- Make drift and debugging **shareable artefacts**
-- Finish with complete docs, tests, examples, and demos
+**Status:** Released (v0.5.0)
 
-No new semantic authorities. No architectural churn.
+Theme: *Trustworthy, script-safe CLI*
 
----
+* Canonical CLI surfaces: `trace`, `map status`, `scan --file`, `map list --json`, `map deployers --json`
+* Deterministic output, stable exit codes, locked JSON schemas
 
-## v0.14.4 — Drift Coverage Expansion (RELEASED)
-
-**Status:** Released (2026-02-04)
-**Theme:** More signal, same rails
-
-### Delivered
-
-- **Environment variable drift** (#94)
-  - Path: `spec.template.spec.containers[name=<container>].env[name=<VAR>]`
-  - Classification: config, Severity: warning
-
-- **Resource requests/limits drift** (#95)
-  - Path: `spec.template.spec.containers[name=<container>].resources.<type>.<resource>`
-  - Classification: capacity
-  - Severity: warning (normal), critical (invalid config)
-
-- **Image pull policy drift** (#96)
-  - Path: `spec.template.spec.containers[name=<container>].imagePullPolicy`
-  - Classification: rollout, Severity: warning
-
-- **Documentation** (#97)
-  - `docs/drift.md` - main user guide
-  - `docs/reference/exit-codes.md` - CI exit codes
-  - `docs/reference/severity-taxonomy.md` - severity reference
-  - `examples/drift/` - 3 example scenarios
-
-### Commits
-
-| PR | Commit | Description |
-|----|--------|-------------|
-| PR1 | `1bc4192` | Environment variable drift |
-| PR2 | `f0d9f50` | Resource requests/limits drift |
-| PR3 | `18e97fa` | Image pull policy drift |
-| PR4 | `be92c6e` | JSON schema + reference docs |
-| PR5 | `00fadf7` | User docs + examples |
+> v0.5 contracts are sealed. Changes require a future minor.
 
 ---
 
-## v0.14.5 — Drift ↔ Debug Correlation
+### v0.6 — Graph Foundation
 
-**Theme:** Why this broke
+**Status:** Complete
 
-This release connects drift facts to existing debugging signals (logs, events).
+Theme: *First-class resource graph*
 
-### Core idea
-
-Every drift finding can be correlated with logs and events via shared object identity.
-
-### Scope
-
-- Link drift findings to:
-  - container logs
-  - Kubernetes events
-- Debug flows can answer:
-  - "show drift for this object"
-  - "show logs/events for objects with critical drift"
-  - "this failure occurred with no drift" (important signal)
-
-### Semantics
-
-- Correlation statements are **narrative only** (ASCII/TUI)
-- No new JSON meaning required
-- Correlation helpers are join utilities over existing JSON facts; they introduce no new semantic meaning
-
-### Correlation Helpers (Implementation)
-
-Pure functions in `pkg/agent/` that:
-- Join `DriftFinding.object_id` with log entries and events
-- Return **references**, not new facts
-
-Examples:
-- `FindingsForObject(objectID string) []DriftFinding`
-- `EventsForFindings(findings []DriftFinding) []Event`
-- `LogsForFindings(findings []DriftFinding) []LogEntry`
-
-Constraints:
-- No new JSON schema
-- No new fields added to findings
-- Correlation results are render-time only
-- All conclusions remain narrative (ASCII/TUI)
-
-### Deliverables
-
-- Correlation helpers (joins on object_id)
-- Narrative explanations in debug output
-- Tests proving correlation does not invent facts
-- Docs explaining correlation semantics
+* Unified graph model (nodes, edges, evidence)
+* Ownership chain collectors
+* GitOps CRDs as graph nodes
+* `graph export --json`, `graph explain`
 
 ---
 
-## v0.14.6 — Shared Debug Artefacts (Debug Bundle v1)
+### v0.7 — Pattern Detection & Explanation
 
-**Theme:** Debugging across time and people
+**Status:** Released (v0.7.0)
 
-### Goal
+Theme: *Explainable inference*
 
-Make debugging reproducible, portable, and asynchronous.
-
-### Concept: Debug Bundle
-
-A Debug Bundle is a structured snapshot containing drift and debugging context.
-
-It introduces **no new semantics** — only packaging and replay.
+* Pattern engine + list/detect/explain
+* Deterministic output with golden tests
+* Stable pattern IDs
 
 ---
 
-## Debug Bundle v1 — Specification
+### v0.8 — Finding Enrichment
 
-### Bundle Layout
+**Status:** Released (via v0.9.0)
 
-```
-debug-bundle/
-├─ metadata.json
-├─ drift.json
-├─ events.json
-├─ logs.json
-└─ README.md
-```
+Theme: *Richer findings without breaking contracts*
 
-### Contents
-
-- **metadata.json**
-  - cub-scout version
-  - bundle format version
-  - optional label (env, incident id)
-
-- **drift.json**
-  - v0.14.3+ drift report (canonical facts)
-
-- **events.json**
-  - structured Kubernetes events (existing schema)
-
-- **logs.json**
-  - structured container logs + detected patterns
-
-- **README.md** (generated)
-  - what this bundle contains
-  - how to inspect it
-  - semantic guarantees
-
-### Target Metadata
-
-Debug Bundles may include existing target metadata (e.g., ConfigHubTarget) if already emitted by cub-scout. Bundles do not introduce new target semantics.
-
-### Commands
-
-- `cub-scout debug bundle --out <dir|tar>`
-- `cub-scout debug inspect <bundle>`
-
-ASCII and TUI views render *from the bundle*, not the cluster.
-
-### Renderer Source Abstraction
-
-ASCII/TUI renderers will accept a generic data source (cluster or bundle). This is a mechanical refactor; no rendering logic or semantics change.
-
-### Guarantees
-
-- Replayable
-- Deterministic
-- Shareable
-- No hidden meaning
+* Optional additive fields: confidence, refs, remediation
+* Backwards-compatible JSON
 
 ---
 
-## Documentation Skeleton
+### v0.9 — Pattern Prerequisites
 
-To be filled as features land:
+**Status:** Released (v0.9.0–v0.9.2)
 
-```
-docs/
-├─ semantic-contract.md        # DONE (anchor)
-├─ roadmap.md                  # THIS DOCUMENT
-├─ drift.md                    # what drift is, how to use it
-├─ ci-integration.md           # JSON + --fail-on
-├─ debugging.md                # logs, events, correlation
-├─ debug-bundles.md            # bundle spec + walkthrough
-└─ reference/
-   ├─ json-schema.md
-   ├─ exit-codes.md
-   ├─ severity-taxonomy.md
-   └─ bundle-schema.md         # Debug Bundle v1 schema reference
-```
+Theme: *Correctness before cleverness*
 
-Examples / demos live alongside docs.
+* Structured prerequisite system
+* Skip semantics with explicit reasons
+
+---
+
+### v0.10 — Git-Aware Inference
+
+**Status:** Complete
+
+Theme: *Optional git context as evidence*
+
+* `--git-root` support
+* Hybrid patterns (graph-only vs git-aware)
+* Deterministic repo scanning
+
+---
+
+## v0.14 Line — Sharable Artifacts & Explainable Debugging
+
+The v0.14 line marks a **second major arc** of the project: from static inspection to *explainable, shareable diagnostics*.
+
+---
+
+### v0.14.0 — Portable Outputs
+
+**Status:** Released
+
+* JSON + Markdown formats
+* Deterministic v0.14 schema
+
+---
+
+### v0.14.1 — Delegated Apply Observability
+
+**Status:** Released
+
+* `gitops status` command
+* Delegated apply backend detection
+* Failure stage classification
+
+---
+
+### v0.14.2 — Guided Debug UX
+
+**Status:** Released
+
+* Guided GitOps Debug Mode (#37)
+* Container logs (#39)
+* Event timeline (#40)
+
+---
+
+### v0.14.3 — Drift Detection (Core)
+
+**Status:** Released
+
+Theme: *What changed?*
+
+* Drift JSON schema
+* Comparator engine
+* CI semantics (`--fail-on`)
+* ASCII renderer as f(JSON) + g
+
+---
+
+### v0.14.4 — Drift Coverage Expansion
+
+**Status:** Released
+
+Theme: *More signal, same rails*
+
+* Env var drift (#94)
+* Resource requests/limits drift (#95)
+* Image pull policy drift (#96)
+* Complete docs and examples (#97)
+
+---
+
+### v0.14.5 — Drift ↔ Debug Correlation
+
+**Status:** Planned (In Progress)
+
+Theme: *Why this broke*
+
+* Correlation helpers (#98)
+* Narrative correlation in debug flows (#99)
+
+Correlation is explanatory only; no new JSON facts.
+
+---
+
+### v0.14.6 — Debug Bundle v1
+
+**Status:** Planned
+
+Theme: *Debugging across time and people*
+
+* Debug Bundle v1 packaging (#100)
+* Bundle inspect/replay (#101)
+* Bundle documentation (#102)
+
+Bundles are pure packaging of existing facts.
 
 ---
 
 ## v0.15 — Replay & Time-Series Reasoning
 
-**Status:** Planned (after v0.14.x complete)
-**Theme:** Compare debug bundles over time
+**Status:** Planned
 
-### Scope
+Theme: *What changed over time?*
 
-- Compare debug bundles over time
-- Before/after drift analysis
-- Time-series reasoning
+This release **subsumes earlier "Graph & Export" ideas** (#35, #36, #38).
 
-### Graph & Export Issues (#35, #36, #38)
+* Replay debug bundles
+* Compare snapshots (before/after)
+* Time-series reasoning
 
-These older "Graph & Export" issues are **not separate initiatives**.
-
-They are **realized through replayable Debug Bundles** and time-series comparison built on those bundles. Visualization (graphs) becomes a *view* over replayed artefacts, not a new semantic layer.
-
-**Status:** Deferred → subsumed by v0.15 Replay & Comparison
+Graphs become *views over artefacts*, not new semantic layers.
 
 ---
 
-## v0.16 — Kustomize Overlay Attribution (#2)
+## v0.16 — Platform Composition & Attribution
 
 **Status:** Planned
-**Theme:** Attribution answers "this overlay caused this drift"
 
-Reintroduced with real value context now that drift detection is complete.
+Theme: *Why this change exists*
 
-### Parked Issues
+* Kustomize overlay attribution (#2)
+* Crossplane ownership and lineage (#8, #21)
+* Platform composition tools (kro) (#22)
 
-| # | Title | Rationale |
-|---|-------|-----------|
-| #2 | Kustomize overlay layer attribution | Needs drift as foundation; now unblocked |
-| #3 | Platform composition (kro) | API not stable; park until v0.17+ |
+---
+
+## v0.17 — Stabilization Window
+
+**Status:** Planned
+
+Theme: *Harden before workflows*
+
+* Performance and scale guardrails (#23)
+* Resolver pattern documentation (#24)
+* Epic cleanup and closure (#25)
 
 ---
 
 ## v0.18 — Connected Workflows
 
-**Status:** Planned (after v0.16)
-**Theme:** Operate with cub-scout
+**Status:** Planned
 
-This is the "operate with cub-scout" release — workflows that connect cub-scout to external systems.
+Theme: *Operate with cub-scout*
 
-### Scope
+This release restores and completes the **workflow layer** that was always implied:
 
-- **Import / inspect artefacts** — load external debug bundles, snapshots
-- **Write / export outputs** — generate patches, reports, structured exports
-- **Git workflows** — PR context, patch generation, commit attribution
-- **Fleet view** — multi-cluster / multi-namespace rollups
-
-### Rationale
-
-Connected workflows only make sense after:
-- Artefacts exist (v0.14.6 bundles)
-- Replay works (v0.15)
-- Attribution is available (v0.16)
+* Import / inspect artefacts
+* Write / export outputs
+* Git workflows (patches, PR context)
+* Fleet view (multi-cluster / multi-namespace)
 
 ---
 
 ## v0.19 — TUI Polish
 
-**Status:** Planned (after v0.18)
-**Theme:** The TUI becomes delightful because the underlying model is already powerful
+**Status:** Planned
 
-### Rationale
+Theme: *Delight on top of substance*
 
-TUI polish is **presentation leverage**, not capability leverage.
+* TUI snapshot goldens (#88)
+* Visual consistency and ordering (#90)
+* CLI ↔ TUI symmetry flags (#91)
+* Context-aware suggestions (#92)
+* Shell-out completion (#93)
 
-Only after v0.14–v0.18 does TUI polish make sense, because then:
-- The TUI has **rich artefacts to browse**
-- It can navigate **fleet, history, attribution**
-- It becomes a *window over substance*, not a substitute for it
-
-UI serves substance, not the other way around.
-
-### Parked Issues
-
-| # | Title |
-|---|-------|
-| #34 | Drift UI badges (optional polish) |
-| #88 | TUI snapshot golden tests |
-| #90 | TUI polish: consistent symbols/ordering |
-| #91 | CLI ↔ TUI symmetry flags |
-| #92 | Context-aware command suggestions |
-| #93 | Shell-out with cub completion |
+TUI polish is intentionally last.
 
 ---
 
-## Summary
+## v1.0+ — Fleet Intelligence & Stability
 
-cub-scout is transitioning from *capability creation* to *capability exploitation*.
+Theme: *Long-lived trust*
 
-v0.14.x completes drift as:
-- factual (JSON)
-- automatable (CI)
-- explainable (ASCII)
-- debuggable (correlation)
-- shareable (debug bundles)
+* Cross-cluster correlation
+* Rollout intelligence
+* Stable schemas and deprecation policy
 
-Future releases build on this foundation without reopening semantics.
+---
+
+## Guiding Principles (Still True)
+
+* **Explainability first** — every inference must be attributable
+* **No silent contract expansion** — new meaning requires new surfaces
+* **Determinism over convenience** — replay and diff always work
+
+---
+
+## Issue Alignment Snapshot
+
+* v0.14.5: #98, #99
+* v0.14.6: #100–#102
+* v0.16: #2, #8, #21–#22
+* v0.19: #88–#93
+
+Issues remain the execution unit; versions define intent.
