@@ -2536,3 +2536,82 @@ Expand drift coverage without touching semantics, UX contracts, or CI behavior.
 > v0.14.4 shipped. Drift coverage expanded: env vars (#94), resources (#95), pull policy (#96), docs (#97). Ready for v0.14.5 (drift-debug correlation) or v0.15.
 
 ---
+
+## v0.14.5: Drift-Debug Correlation (In Progress)
+
+**Date:** 2026-02-04
+**Status:** PR1 COMPLETE, PR2 PENDING
+
+### Theme
+
+Connect drift facts to existing debugging signals (logs, events) via shared object identity.
+
+### Documentation Cleanup (Pre-requisite)
+
+Before starting v0.14.5, unified the roadmap and removed redundant v0.5 docs.
+
+| Commit | Description |
+|--------|-------------|
+| `1a098e5` | docs: unify roadmap, remove redundant v0.5 docs |
+
+**Changes:**
+- Replaced `docs/roadmap.md` with unified roadmap (v0.5-v0.19)
+- Replaced `/ROADMAP.md` with pointer to `docs/roadmap.md`
+- Deleted `docs/v0.5-delivery.md` (v0.5 shipped)
+- Deleted `docs/v0.5-checklist.md` (v0.5 shipped)
+- Deleted `docs/v0.5-review-strategy.md` (v0.5 shipped)
+- Archived `RELEASE-v0.5.md` to `docs/archive/`
+
+### PR1: Correlation Helpers (#98)
+
+**Commit:** `ceca07d`
+**Status:** COMPLETE
+
+Created pure join functions that correlate drift findings with logs and events via shared object identity.
+
+**Functions implemented:**
+
+| Function | Purpose |
+|----------|---------|
+| `FindingsForObject(findings, objectID)` | Filter findings by object_id |
+| `FindingsForObjectID(findings, kind, ns, name)` | Convenience wrapper |
+| `EventsForObject(events, kind, name)` | Filter events by resource identity |
+| `EventsForFindings(findings, events)` | Join events with findings |
+| `LogsForObject(logs, namespace, podNames)` | Filter logs by workload identity |
+| `LogsForFindings(findings, logs, objectToPods)` | Join logs with findings |
+| `CorrelateAll(...)` | Main entry point - builds full correlation |
+| `ObjectsWithDrift(findings)` | Unique object IDs with drift |
+| `ObjectsWithCriticalDrift(findings)` | Objects with critical severity |
+| `hasFailureSignals(events, logs)` | Detect warning events / error logs |
+
+**Semantic contract compliance:**
+- Pure join functions only — no interpretations
+- Returns references to existing facts
+- No new JSON fields or schema changes
+- `TestNoNewFactsIntroduced` proves Leak Test compliance
+
+**Files created:**
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `pkg/agent/drift_correlation.go` | 222 | Correlation helper functions |
+| `pkg/agent/drift_correlation_test.go` | 351 | 15 comprehensive tests |
+
+### PR2: Narrative Correlation in Debug Flows (#99)
+
+**Status:** PENDING
+
+Will add narrative explanations connecting drift to debug signals in ASCII/TUI output.
+
+### Issue Mapping
+
+| # | Title | Status |
+|---|-------|--------|
+| #98 | Correlation helpers | COMPLETE |
+| #99 | Narrative correlation in debug flows | PENDING |
+
+### Resume Prompt
+
+> v0.14.5 PR1 complete (correlation helpers). PR2 pending (narrative debug flows). Unified roadmap committed. Ready for PR2 implementation.
+
+---
