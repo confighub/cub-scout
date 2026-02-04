@@ -3419,3 +3419,106 @@ cub-scout bundle replay ./bundles/deployment-prod-api --section attribution-repo
 ```
 
 ---
+
+## v0.19 TUI Polish — CLI ↔ TUI Symmetry
+
+**Date:** 2026-02-04
+**Status:** COMPLETE
+
+### Arc Overview
+
+v0.19 completes the TUI polish work started with #88 and #90:
+
+| Issue | Title | Status |
+|-------|-------|--------|
+| #88 | TUI snapshot golden tests | ✅ Complete (prior session) |
+| #90 | Consistent symbols and ordering | ✅ Complete (prior session) |
+| #91 | CLI ↔ TUI symmetry flags | ✅ Complete |
+| #92 | Context-aware command suggestions | ✅ Complete |
+| #93 | Shell completion | ✅ Complete |
+
+### Implementation Summary
+
+#### #91 — CLI ↔ TUI Symmetry Flags (`8a2702f`)
+
+Created shared `ViewOptions` struct for filter state between CLI and TUI:
+
+```go
+type ViewOptions struct {
+    Owner     string  // --owner (Flux, ArgoCD, Helm, etc.)
+    Namespace string  // --namespace
+    Depth     int     // --depth (0 = unlimited)
+    Kind      string  // --kind (Deployment, StatefulSet, etc.)
+}
+```
+
+**Files created:**
+- `cmd/cub-scout/flags_shared.go` — ViewOptions, AddSharedViewFlags(), validation
+- `cmd/cub-scout/flags_shared_test.go` — Unit tests
+- `test/ascii/tui/filter_strip.txt` — Golden test
+
+**TUI display:** Filter strip appears below mode header when flags active:
+```
+ Standalone  │ Cluster: prod │ Context: eks-prod
+Filters: owner=Flux depth=2
+```
+
+#### #92 — Context-Aware Suggestions (`ed11234`)
+
+Enhanced `getSuggestions()` to include CLI flags in suggested commands:
+
+```
+SUGGESTED COMMANDS
+Context: Dashboard
+
+1. ./cub-scout tree ownership --owner Crossplane --depth 3 --namespace infra
+   Show ownership tree (current filters)
+```
+
+CLI flags (`viewOpts`) take precedence over TUI-internal state (`activeQuery`).
+
+**Files created:**
+- `test/ascii/tui/suggest_cli_flags.txt` — Golden test
+
+#### #93 — Shell Completion (`ffe2d7c`)
+
+Registered flag completion functions for `mapCmd` shared flags:
+
+```go
+_ = mapCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
+_ = mapCmd.RegisterFlagCompletionFunc("kind", completeKinds)
+_ = mapCmd.RegisterFlagCompletionFunc("owner", completeOwners)
+```
+
+**Tests added:**
+- `TestCompleteOwnersMatchesValidOwners` — CLI ↔ TUI symmetry
+- `TestFilterPrefix` — Prefix filtering
+- `TestCompleteKindsIncludesFluxAndArgoTypes` — GitOps CRD coverage
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `8a2702f` | feat(tui): add CLI↔TUI symmetry with shared view flags (#91) |
+| `ed11234` | feat(tui): enhance suggestions with CLI flag symmetry (#92) |
+| `ffe2d7c` | feat(cli): add shell completion for shared view flags (#93) |
+
+### CLI Usage
+
+```bash
+# TUI with filters (filter strip displayed)
+./cub-scout map --owner Flux --depth 2
+
+# Tab completion works for flags
+./cub-scout map --owner <TAB>
+# → Flux  ArgoCD  Helm  Terraform  Crossplane  ConfigHub  Native
+
+./cub-scout map --namespace <TAB>
+# → (live cluster namespaces)
+
+# Generate shell completion
+./cub-scout completion bash >> ~/.bashrc
+./cub-scout completion zsh > "${fpath[1]}/_cub-scout"
+```
+
+---

@@ -441,15 +441,15 @@ This fulfills the original "why connected" vision on top of a now-solid foundati
 
 ## v0.19 — TUI Polish
 
-**Status:** Planned
+**Status:** ✅ Shipped
 
 Theme: *Delight on top of substance*
 
-* TUI snapshot goldens (#88)
-* Visual consistency and ordering (#90)
-* CLI ↔ TUI symmetry flags (#91)
-* Context-aware suggestions (#92)
-* Shell-out completion (#93)
+* TUI snapshot goldens (#88) ✅
+* Visual consistency and ordering (#90) ✅
+* CLI ↔ TUI symmetry flags (#91) ✅
+* Context-aware suggestions (#92) ✅
+* Shell-out completion (#93) ✅
 
 TUI polish is intentionally last.
 
@@ -480,6 +480,6 @@ Theme: *Long-lived trust*
 * v0.15.0: #35 ✅, #36 ✅, #38 ✅, #40 ✅
 * v0.16.0–v0.16.3: #2 ✅, #8 ✅
 * v0.17: #25 ✅, #21, #22, #23, #24
-* v0.19: #88, #90, #91, #92, #93
+* v0.19: #88 ✅, #90 ✅, #91 ✅, #92 ✅, #93 ✅
 
 Issues remain the execution unit; versions define intent.
