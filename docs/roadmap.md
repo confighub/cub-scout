@@ -202,15 +202,39 @@ All semantic contracts preserved throughout. Ready for v0.15.
 
 ## v0.15 — Replay & Time-Series Reasoning
 
-**Status:** Planned
+**Status:** Released
 
 Theme: *What changed over time?*
 
 This release **subsumes earlier "Graph & Export" ideas** (#35, #36, #38).
 
-* Replay debug bundles
-* Compare snapshots (before/after)
-* Time-series reasoning
+### v0.15.0 — Multi-Bundle Operations
+
+**Status:** Released
+
+* **Catalog v1** (`catalog.v1`): File-backed manifest for indexing multiple bundles
+  * Explicit ordering (manifest/created_at/sequence)
+  * Deterministic tie-break by ID
+  * Portable directory-based structure
+* **Pairwise Diff** (`bundle-diff.v1`): Compare two bundles
+  * Join mode: object_id (composite/none deferred)
+  * Per-object status: added/removed/changed/unchanged/ambiguous/unjoinable
+  * Per-section summaries: drift, correlation
+* **Timeline** (`bundle-timeline.v1`): N-bundle time-series view
+  * Aligned points per bundle order
+  * Gap detection (missing points are first-class)
+  * Presence + per-point summaries (not full diffs)
+
+Commands:
+* `cub-scout catalog init/add/list/validate`
+* `cub-scout bundle diff <A> <B> [--join ...] [--format ...]`
+* `cub-scout bundle timeline <catalog> [--order ...] [--join ...] [--format ...]`
+
+Key constraints:
+* Read-only computation (no cluster/git access)
+* New meaning = new schema (bundle-diff.v1, bundle-timeline.v1)
+* No implicit ordering (never filesystem-based)
+* ASCII = f(JSON) + g
 
 Graphs become *views over artefacts*, not new semantic layers.
 
@@ -293,6 +317,7 @@ Theme: *Long-lived trust*
 
 * v0.14.5: #98, #99
 * v0.14.6: #100–#102
+* v0.15.0: PR1 (Catalog), PR2 (Diff), PR3 (Timeline)
 * v0.16: #2, #8, #21–#22
 * v0.19: #88–#93
 
