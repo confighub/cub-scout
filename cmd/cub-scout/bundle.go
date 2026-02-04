@@ -16,9 +16,10 @@ import (
 )
 
 var (
-	bundleFormat  string
-	bundleFailOn  string
-	bundleSection string
+	bundleFormat   string
+	bundleFailOn   string
+	bundleSection  string
+	bundleDiffJoin string
 )
 
 var bundleCmd = &cobra.Command{
@@ -42,6 +43,7 @@ Bundles are pure packaging of existing facts — no new interpretation.
 Commands:
   inspect  Show bundle metadata and contents summary
   replay   Re-render bundle contents with existing renderers
+  diff     Compare two bundles and show what changed
 
 Examples:
   # Inspect a bundle
@@ -52,6 +54,9 @@ Examples:
 
   # Replay bundle as JSON
   cub-scout bundle replay ./debug-bundle-2024-01-15 --format json
+
+  # Compare two bundles
+  cub-scout bundle diff ./bundle-before ./bundle-after
 `,
 }
 
@@ -122,6 +127,45 @@ Examples:
 	RunE: runBundleReplay,
 }
 
+var bundleDiffCmd = &cobra.Command{
+	Use:   "diff <bundleA> <bundleB>",
+	Short: "Compare two bundles and show what changed",
+	Long: `Compare two debug bundles and produce a diff showing what changed.
+
+This command reads two bundles and produces a structured diff (bundle-diff.v1)
+describing what objects changed between them.
+
+Output includes:
+- Per-object status: added, removed, changed, unchanged
+- Per-section status: drift, correlation
+- Summary counts by status
+
+Join modes control how objects are matched across bundles:
+- object_id: Join on the object_id field (default)
+- composite: Join on (kind, namespace, name) - not yet implemented
+- none: No joining, independent snapshots - not yet implemented
+
+Diff is offline-only: reads bundles, no cluster/git access.
+Output is deterministic: same bundles always produce identical diff.
+
+Exit codes:
+  0  Success
+  1  Error (bad arguments, read failure)
+
+Examples:
+  # Compare two bundles
+  cub-scout bundle diff ./bundle-before ./bundle-after
+
+  # Output as JSON
+  cub-scout bundle diff ./bundle-before ./bundle-after --format json
+
+  # Specify join mode (only object_id supported currently)
+  cub-scout bundle diff ./bundle-before ./bundle-after --join object_id
+`,
+	Args: cobra.ExactArgs(2),
+	RunE: runBundleDiff,
+}
+
 // BundleReplayExitOK indicates no failure triggered
 const BundleReplayExitOK = 0
 
@@ -135,12 +179,16 @@ func init() {
 	rootCmd.AddCommand(bundleCmd)
 	bundleCmd.AddCommand(bundleInspectCmd)
 	bundleCmd.AddCommand(bundleReplayCmd)
+	bundleCmd.AddCommand(bundleDiffCmd)
 
 	bundleInspectCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ascii, json")
 
 	bundleReplayCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ascii, json")
 	bundleReplayCmd.Flags().StringVar(&bundleFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning, critical)")
 	bundleReplayCmd.Flags().StringVar(&bundleSection, "section", "drift", "Section to replay: drift, correlation")
+
+	bundleDiffCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ascii, json")
+	bundleDiffCmd.Flags().StringVar(&bundleDiffJoin, "join", "object_id", "Join mode: object_id, composite, none")
 }
 
 func runBundleInspect(cmd *cobra.Command, args []string) error {
@@ -571,4 +619,64 @@ func buildDriftSummaryFromFindings(findings []agent.DriftFinding) agent.DriftSum
 		BySeverity:       bySeverity,
 		ByClassification: byClassification,
 	}
+}
+
+func runBundleDiff(cmd *cobra.Command, args []string) error {
+	bundlePathA := args[0]
+	bundlePathB := args[1]
+
+	// Parse join mode
+	var joinMode agent.JoinMode
+	switch bundleDiffJoin {
+	case "object_id":
+		joinMode = agent.JoinObjectID
+	case "composite":
+		joinMode = agent.JoinComposite
+	case "none":
+		joinMode = agent.JoinNone
+	default:
+		return fmt.Errorf("invalid join mode: %s (valid: object_id, composite, none)", bundleDiffJoin)
+	}
+
+	// Read both bundles
+	reader := agent.NewBundleReader()
+
+	bundleA, err := reader.Read(bundlePathA)
+	if err != nil {
+		return fmt.Errorf("failed to read bundle A: %w", err)
+	}
+
+	bundleB, err := reader.Read(bundlePathB)
+	if err != nil {
+		return fmt.Errorf("failed to read bundle B: %w", err)
+	}
+
+	// Compute diff
+	diff, err := agent.DiffBundles(bundleA, bundleB, joinMode)
+	if err != nil {
+		// Handle "not yet implemented" errors with exact messages
+		return err
+	}
+
+	// Output based on format
+	switch bundleFormat {
+	case "json":
+		return outputBundleDiffJSON(diff)
+	case "ascii":
+		return outputBundleDiffASCII(diff)
+	default:
+		return fmt.Errorf("unknown format: %s (valid: ascii, json)", bundleFormat)
+	}
+}
+
+func outputBundleDiffJSON(diff *agent.BundleDiff) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(diff)
+}
+
+func outputBundleDiffASCII(diff *agent.BundleDiff) error {
+	output := agent.RenderBundleDiffASCII(diff)
+	fmt.Print(output)
+	return nil
 }

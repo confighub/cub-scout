@@ -722,3 +722,489 @@ func TestHasFailureSignalsInBundle(t *testing.T) {
 		})
 	}
 }
+
+// Bundle Diff tests
+
+func TestBundleDiff_JSON(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create two bundles
+	bundleDirA := filepath.Join(tmpDir, "bundle-a")
+	bundleDirB := filepath.Join(tmpDir, "bundle-b")
+
+	t1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	t2 := time.Date(2024, 1, 15, 11, 0, 0, 0, time.UTC)
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+
+	bundleA := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label: "before",
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1", ObjectID: "Deployment:prod/api", Path: "spec.replicas"},
+		},
+	}
+	// Manually set time for determinism
+	bundleA.Metadata.CreatedAt = t1
+
+	bundleB := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label: "after",
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1", ObjectID: "Deployment:prod/api", Path: "spec.replicas"},
+			{ID: "drift-2", ObjectID: "Deployment:prod/api", Path: "spec.image"},
+		},
+	}
+	bundleB.Metadata.CreatedAt = t2
+
+	if err := writer.Write(bundleA, bundleDirA); err != nil {
+		t.Fatalf("Write A failed: %v", err)
+	}
+	if err := writer.Write(bundleB, bundleDirB); err != nil {
+		t.Fatalf("Write B failed: %v", err)
+	}
+
+	// Read bundles and diff
+	reader := agent.NewBundleReader()
+	readA, _ := reader.Read(bundleDirA)
+	readB, _ := reader.Read(bundleDirB)
+
+	diff, err := agent.DiffBundles(readA, readB, agent.JoinObjectID)
+	if err != nil {
+		t.Fatalf("DiffBundles failed: %v", err)
+	}
+
+	// Marshal to JSON
+	jsonBytes, err := json.MarshalIndent(diff, "", "  ")
+	if err != nil {
+		t.Fatalf("JSON marshal failed: %v", err)
+	}
+
+	// Parse back and verify structure
+	var parsed agent.BundleDiff
+	if err := json.Unmarshal(jsonBytes, &parsed); err != nil {
+		t.Fatalf("JSON unmarshal failed: %v", err)
+	}
+
+	if parsed.SchemaVersion != agent.BundleDiffSchemaVersion {
+		t.Errorf("SchemaVersion = %s, want %s", parsed.SchemaVersion, agent.BundleDiffSchemaVersion)
+	}
+	if parsed.JoinMode != agent.JoinObjectID {
+		t.Errorf("JoinMode = %s, want object_id", parsed.JoinMode)
+	}
+}
+
+func TestBundleDiff_ASCII(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	bundleDirA := filepath.Join(tmpDir, "bundle-a")
+	bundleDirB := filepath.Join(tmpDir, "bundle-b")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+
+	bundleA := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label: "before",
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+	}
+
+	bundleB := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label: "after",
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+	}
+
+	if err := writer.Write(bundleA, bundleDirA); err != nil {
+		t.Fatalf("Write A failed: %v", err)
+	}
+	if err := writer.Write(bundleB, bundleDirB); err != nil {
+		t.Fatalf("Write B failed: %v", err)
+	}
+
+	// Read and diff
+	reader := agent.NewBundleReader()
+	readA, _ := reader.Read(bundleDirA)
+	readB, _ := reader.Read(bundleDirB)
+
+	diff, err := agent.DiffBundles(readA, readB, agent.JoinObjectID)
+	if err != nil {
+		t.Fatalf("DiffBundles failed: %v", err)
+	}
+
+	// Render ASCII
+	output := agent.RenderBundleDiffASCII(diff)
+
+	// Verify expected content
+	if !strings.Contains(output, "Bundle Diff") {
+		t.Error("Output missing 'Bundle Diff' header")
+	}
+	if !strings.Contains(output, "From:") {
+		t.Error("Output missing 'From:' line")
+	}
+	if !strings.Contains(output, "To:") {
+		t.Error("Output missing 'To:' line")
+	}
+	if !strings.Contains(output, "Join: object_id") {
+		t.Error("Output missing 'Join: object_id'")
+	}
+	if !strings.Contains(output, "Summary") {
+		t.Error("Output missing 'Summary' section")
+	}
+}
+
+func TestBundleDiff_JoinCompositeNotImplemented(t *testing.T) {
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api"},
+		},
+	}
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	reader := agent.NewBundleReader()
+	readBundle, _ := reader.Read(bundleDir)
+
+	_, err := agent.DiffBundles(readBundle, readBundle, agent.JoinComposite)
+	if err == nil {
+		t.Fatal("Expected error for composite join")
+	}
+
+	expected := "join mode 'composite' not yet implemented"
+	if err.Error() != expected {
+		t.Errorf("Error = %q, want exactly %q", err.Error(), expected)
+	}
+}
+
+func TestBundleDiff_JoinNoneNotImplemented(t *testing.T) {
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "bundle")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api"},
+		},
+	}
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	reader := agent.NewBundleReader()
+	readBundle, _ := reader.Read(bundleDir)
+
+	_, err := agent.DiffBundles(readBundle, readBundle, agent.JoinNone)
+	if err == nil {
+		t.Fatal("Expected error for none join")
+	}
+
+	expected := "join mode 'none' not yet implemented"
+	if err.Error() != expected {
+		t.Errorf("Error = %q, want exactly %q", err.Error(), expected)
+	}
+}
+
+func TestBundleDiff_BadPath(t *testing.T) {
+	reader := agent.NewBundleReader()
+	_, err := reader.Read("/nonexistent/path")
+	if err == nil {
+		t.Error("Expected error for nonexistent path")
+	}
+}
+
+// Golden test A: No changes
+func TestBundleDiff_GoldenA_NoChanges(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	t1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	t2 := time.Date(2024, 1, 15, 11, 0, 0, 0, time.UTC)
+
+	bundleDirA := filepath.Join(tmpDir, "bundle-a")
+	bundleDirB := filepath.Join(tmpDir, "bundle-b")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+
+	// Create identical bundles
+	bundleA := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label: "snapshot-1",
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1", ObjectID: "Deployment:prod/api", Path: "spec.replicas", Desired: 3, Live: 2},
+		},
+	}
+	bundleA.Metadata.CreatedAt = t1
+
+	bundleB := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label: "snapshot-2",
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1", ObjectID: "Deployment:prod/api", Path: "spec.replicas", Desired: 3, Live: 2},
+		},
+	}
+	bundleB.Metadata.CreatedAt = t2
+
+	writer.Write(bundleA, bundleDirA)
+	writer.Write(bundleB, bundleDirB)
+
+	reader := agent.NewBundleReader()
+	readA, _ := reader.Read(bundleDirA)
+	readB, _ := reader.Read(bundleDirB)
+
+	diff, _ := agent.DiffBundles(readA, readB, agent.JoinObjectID)
+
+	// Verify: all unchanged
+	if diff.Summary.Unchanged != 1 {
+		t.Errorf("Summary.Unchanged = %d, want 1", diff.Summary.Unchanged)
+	}
+	if diff.Summary.Changed != 0 {
+		t.Errorf("Summary.Changed = %d, want 0", diff.Summary.Changed)
+	}
+	if diff.Summary.Added != 0 {
+		t.Errorf("Summary.Added = %d, want 0", diff.Summary.Added)
+	}
+	if diff.Summary.Removed != 0 {
+		t.Errorf("Summary.Removed = %d, want 0", diff.Summary.Removed)
+	}
+
+	// Verify object status
+	for _, obj := range diff.Objects {
+		if obj.Status != agent.StatusUnchanged {
+			t.Errorf("Object %s status = %v, want unchanged", obj.Identity, obj.Status)
+		}
+	}
+}
+
+// Golden test B: Added/removed + drift changed
+func TestBundleDiff_GoldenB_AddedRemovedChanged(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	t1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	t2 := time.Date(2024, 1, 15, 11, 0, 0, 0, time.UTC)
+
+	bundleDirA := filepath.Join(tmpDir, "bundle-a")
+	bundleDirB := filepath.Join(tmpDir, "bundle-b")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+
+	// Bundle A: obj-1 (drift count 2), obj-2
+	bundleA := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "before",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1a", ObjectID: "Deployment:prod/api", Path: "spec.replicas"},
+			{ID: "drift-1b", ObjectID: "Deployment:prod/api", Path: "spec.image"},
+			{ID: "drift-2a", ObjectID: "Deployment:prod/worker", Path: "spec.replicas"},
+		},
+	}
+	bundleA.Metadata.CreatedAt = t1
+
+	// Bundle B: obj-1 (drift count 5 - changed), obj-2 removed, obj-3 added
+	bundleB := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "after",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "drift-1a", ObjectID: "Deployment:prod/api", Path: "spec.replicas"},
+			{ID: "drift-1b", ObjectID: "Deployment:prod/api", Path: "spec.image"},
+			{ID: "drift-1c", ObjectID: "Deployment:prod/api", Path: "spec.resources"},
+			{ID: "drift-1d", ObjectID: "Deployment:prod/api", Path: "spec.env"},
+			{ID: "drift-1e", ObjectID: "Deployment:prod/api", Path: "spec.labels"},
+			{ID: "drift-3a", ObjectID: "Deployment:prod/frontend", Path: "spec.replicas"},
+		},
+	}
+	bundleB.Metadata.CreatedAt = t2
+
+	writer.Write(bundleA, bundleDirA)
+	writer.Write(bundleB, bundleDirB)
+
+	reader := agent.NewBundleReader()
+	readA, _ := reader.Read(bundleDirA)
+	readB, _ := reader.Read(bundleDirB)
+
+	diff, _ := agent.DiffBundles(readA, readB, agent.JoinObjectID)
+
+	// Verify counts
+	if diff.Summary.Changed != 1 {
+		t.Errorf("Summary.Changed = %d, want 1", diff.Summary.Changed)
+	}
+	if diff.Summary.Removed != 1 {
+		t.Errorf("Summary.Removed = %d, want 1", diff.Summary.Removed)
+	}
+	if diff.Summary.Added != 1 {
+		t.Errorf("Summary.Added = %d, want 1", diff.Summary.Added)
+	}
+
+	// Verify ordering is deterministic: api, frontend, worker
+	expectedOrder := []string{
+		"Deployment:prod/api",
+		"Deployment:prod/frontend",
+		"Deployment:prod/worker",
+	}
+	for i, obj := range diff.Objects {
+		if obj.Identity != expectedOrder[i] {
+			t.Errorf("Objects[%d].Identity = %q, want %q", i, obj.Identity, expectedOrder[i])
+		}
+	}
+
+	// Verify api shows drift:changed
+	var apiObj *agent.ObjectDiff
+	for i := range diff.Objects {
+		if diff.Objects[i].Identity == "Deployment:prod/api" {
+			apiObj = &diff.Objects[i]
+			break
+		}
+	}
+	if apiObj == nil {
+		t.Fatal("api object not found")
+	}
+
+	var driftSection *agent.SectionDiff
+	for i := range apiObj.Sections {
+		if apiObj.Sections[i].Name == "drift" {
+			driftSection = &apiObj.Sections[i]
+			break
+		}
+	}
+	if driftSection == nil {
+		t.Fatal("drift section not found")
+	}
+	if driftSection.Status != agent.SectionChanged {
+		t.Errorf("drift section status = %v, want changed", driftSection.Status)
+	}
+}
+
+// Golden test C: Correlation changed
+func TestBundleDiff_GoldenC_CorrelationChanged(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	t1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	t2 := time.Date(2024, 1, 15, 11, 0, 0, 0, time.UTC)
+
+	bundleDirA := filepath.Join(tmpDir, "bundle-a")
+	bundleDirB := filepath.Join(tmpDir, "bundle-b")
+
+	writer := agent.NewBundleWriter("v0.14.6-test")
+
+	// Bundle A with correlation
+	bundleA := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "before",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		Session: &agent.DebugSessionData{
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+			RootCause: &agent.RootCauseSnapshot{
+				Category:   "deployment",
+				Stage:      "rollout",
+				Confidence: "high",
+				Summary:    "Rollout stuck due to insufficient resources",
+			},
+		},
+	}
+	bundleA.Metadata.CreatedAt = t1
+
+	// Bundle B with different correlation
+	bundleB := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Label:  "after",
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+		Session: &agent.DebugSessionData{
+			Target: agent.BundleTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+			RootCause: &agent.RootCauseSnapshot{
+				Category:   "deployment",
+				Stage:      "running",
+				Confidence: "high",
+				Summary:    "Rollout completed successfully", // Changed!
+			},
+		},
+	}
+	bundleB.Metadata.CreatedAt = t2
+
+	writer.Write(bundleA, bundleDirA)
+	writer.Write(bundleB, bundleDirB)
+
+	reader := agent.NewBundleReader()
+	readA, _ := reader.Read(bundleDirA)
+	readB, _ := reader.Read(bundleDirB)
+
+	diff, _ := agent.DiffBundles(readA, readB, agent.JoinObjectID)
+
+	// Verify object is changed
+	if diff.Summary.Changed != 1 {
+		t.Errorf("Summary.Changed = %d, want 1", diff.Summary.Changed)
+	}
+
+	// Find the api object and verify correlation changed
+	var apiObj *agent.ObjectDiff
+	for i := range diff.Objects {
+		if diff.Objects[i].Identity == "Deployment:prod/api" {
+			apiObj = &diff.Objects[i]
+			break
+		}
+	}
+	if apiObj == nil {
+		t.Fatal("api object not found")
+	}
+	if apiObj.Status != agent.StatusChanged {
+		t.Errorf("api status = %v, want changed", apiObj.Status)
+	}
+
+	// Find correlation section
+	var corrSection *agent.SectionDiff
+	for i := range apiObj.Sections {
+		if apiObj.Sections[i].Name == "correlation" {
+			corrSection = &apiObj.Sections[i]
+			break
+		}
+	}
+	if corrSection == nil {
+		t.Fatal("correlation section not found")
+	}
+	if corrSection.Status != agent.SectionChanged {
+		t.Errorf("correlation section status = %v, want changed", corrSection.Status)
+	}
+}
+
+// Golden test D: Error strings (already covered by TestBundleDiff_JoinCompositeNotImplemented and TestBundleDiff_JoinNoneNotImplemented)
