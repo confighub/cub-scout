@@ -779,6 +779,8 @@ Total: 47 workloads │ 45 healthy │ 2 orphans
 ./cub-scout map orphans
 ```
 
+**Aliases:** `map native`, `map unmanaged`
+
 Lists resources not managed by any GitOps tool (Flux, ArgoCD, Helm, ConfigHub).
 
 **Default behavior:** System namespaces are hidden to reduce noise:
@@ -833,6 +835,8 @@ Lists pods in CrashLoopBackOff, Error, ImagePullBackOff.
 ./cub-scout map issues
 ```
 
+**Aliases:** `map problems`
+
 Shows resources with conditions != Ready.
 
 ---
@@ -883,6 +887,8 @@ Combined health + ownership view.
 ./cub-scout map deep-dive
 ```
 
+**Aliases:** `map cluster-data`, `map data`, `map sources`
+
 Maximum detail for all GitOps resources with LiveTree views:
 - Flux: GitRepositories, Kustomizations, HelmReleases
 - ArgoCD: Applications, AppProjects, ApplicationSets
@@ -896,6 +902,8 @@ Maximum detail for all GitOps resources with LiveTree views:
 ```bash
 ./cub-scout map app-hierarchy
 ```
+
+**Aliases:** `map hierarchy`, `map infer`
 
 Infers ConfigHub-style hierarchy from cluster analysis.
 
@@ -1784,12 +1792,17 @@ Press `:` to run shell commands:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `KUBECONFIG` | `~/.kube/config` | Path to kubeconfig |
-| `CLUSTER_NAME` | `default` | Name for this cluster |
+| `KUBECONFIG` | `~/.kube/config` | Path to kubeconfig file |
+| `CLUSTER_NAME` | `default` | Name for this cluster in output |
+| `CUB_SCOUT_ASSUME_YES` | `0` | Skip confirmation prompts in example scripts (`1` = yes) |
+| `CUB_SCOUT_TELEMETRY` | `1` | Enable/disable anonymous usage telemetry (`0` = disabled) |
+| `CUB_SCOUT_GITHUB_API_BASE` | GitHub API | Override GitHub API base URL (for testing/enterprise) |
 
 ---
 
 ## Exit Codes
+
+### General
 
 | Code | Meaning |
 |------|---------|
@@ -1797,12 +1810,34 @@ Press `:` to run shell commands:
 | 1 | Error (check stderr) |
 | 2 | No cluster connection |
 
+### `bundle replay` and `drift` with `--fail-on`
+
+When using `--fail-on <level>`, the exit code reflects the maximum severity found:
+
+| Code | Meaning |
+|------|---------|
+| 0 | No findings at or above threshold |
+| 1 | Error during execution |
+| 3 | Info-level findings (when `--fail-on info`) |
+| 4 | Warning-level findings (when `--fail-on warning`) |
+| 5 | Critical-level findings (when `--fail-on critical`) |
+
+**Example:**
+```bash
+# Exit non-zero if any critical drift found
+./cub-scout drift --file desired.yaml --fail-on critical
+echo $?  # 5 if critical drift, 0 otherwise
+
+# CI pipeline usage
+./cub-scout bundle replay ./bundle --fail-on warning || exit 1
+```
+
 ---
 
 ## See Also
 
 - [README.md](README.md) — Project overview
-- [docs/COMMAND-MATRIX.md](docs/COMMAND-MATRIX.md) — Complete reference table
-- [docs/SCAN-GUIDE.md](docs/SCAN-GUIDE.md) — CCVE scanning deep dive
-- [docs/ALTERNATIVES.md](docs/ALTERNATIVES.md) — Comparison with other tools
+- [docs/FAQ.md](docs/FAQ.md) — Frequently asked questions
+- [docs/semantic-contract.md](docs/semantic-contract.md) — Output format guarantees
+- [docs/testing/README.md](docs/testing/README.md) — Testing documentation
 - [CONTRIBUTING.md](CONTRIBUTING.md) — How to contribute
