@@ -36,6 +36,10 @@ const (
 // TestConnectedModeEquivalence verifies that connected mode produces the same
 // output as local mode when given the same repository content.
 func TestConnectedModeEquivalence(t *testing.T) {
+	// Ensure the fixture has a valid .git directory
+	// (Git doesn't track nested .git directories, so we create it during test)
+	ensureGitDir(t, testFixtureDir)
+
 	// Build the binary
 	binary := buildBinary(t)
 
@@ -432,4 +436,36 @@ func readTarball(data []byte) ([]string, error) {
 		names = append(names, hdr.Name)
 	}
 	return names, nil
+}
+
+// ensureGitDir creates a minimal .git directory if it doesn't exist.
+// This is needed because Git doesn't track nested .git directories,
+// so the fixture's .git directory won't exist after checkout in CI.
+func ensureGitDir(t *testing.T, dir string) {
+	t.Helper()
+
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	gitDir := filepath.Join(absDir, ".git")
+
+	// Check if .git/HEAD exists (minimal valid git repo)
+	headPath := filepath.Join(gitDir, "HEAD")
+	if _, err := os.Stat(headPath); err == nil {
+		// Already exists and valid
+		return
+	}
+
+	// Create minimal git structure
+	if err := os.MkdirAll(filepath.Join(gitDir, "refs", "heads"), 0755); err != nil {
+		t.Fatalf("Failed to create .git/refs/heads: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(gitDir, "objects"), 0755); err != nil {
+		t.Fatalf("Failed to create .git/objects: %v", err)
+	}
+	if err := os.WriteFile(headPath, []byte("ref: refs/heads/main\n"), 0644); err != nil {
+		t.Fatalf("Failed to create .git/HEAD: %v", err)
+	}
 }
