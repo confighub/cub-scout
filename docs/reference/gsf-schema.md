@@ -350,4 +350,4 @@ Extended fields:
 
 - [Command Reference](commands.md)
 - [Query Syntax](query-syntax.md)
-- [Architecture](../ARCHITECTURE.md)
+- [Architecture](../concepts/architecture.md)

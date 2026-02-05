@@ -378,6 +378,6 @@ Each examples file should include this maintainer note:
 |-----|---------|
 | [README.md](../README.md) | Project overview |
 | [CLI-GUIDE.md](../CLI-GUIDE.md) | Complete CLI reference |
-| [COMMAND-MATRIX.md](COMMAND-MATRIX.md) | Full command/option matrix |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | How it works, GSF protocol |
-| [SCAN-GUIDE.md](SCAN-GUIDE.md) | CCVE scanning deep dive |
+| [Command Matrix](reference/command-matrix.md) | Full command/option matrix |
+| [Architecture](concepts/architecture.md) | How it works, GSF protocol |
+| [Scan for CCVEs](howto/scan-for-ccves.md) | CCVE scanning deep dive |

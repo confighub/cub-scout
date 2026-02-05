@@ -191,6 +191,6 @@ Format: `CCVE-2025-XXXX`
 
 ## See Also
 
-- [02-HUB-APPSPACE-MODEL.md](planning/map/02-HUB-APPSPACE-MODEL.md) — Full model specification
-- [IMPORT-JESPER-OVERVIEW.md](planning/historical/IMPORT-JESPER-OVERVIEW.md) — Import architecture
-- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE user guide
+- [Hub/AppSpace Examples](hub-appspace-examples.md) — Model examples
+- [Import to ConfigHub](../howto/import-to-confighub.md) — Import architecture
+- [Scan for CCVEs](../howto/scan-for-ccves.md) — CCVE user guide

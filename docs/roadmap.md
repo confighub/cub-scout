@@ -8,7 +8,7 @@
 > * `/docs/roadmap.md`
 > * scattered milestone notes and implicit issue groupings
 >
-> It reconciles *historical releases*, *current shipped reality*, and the *forward execution plan* through v0.19.
+> It reconciles *historical releases*, *current shipped reality*, and the *forward execution plan*.
 
 ---
 
@@ -40,7 +40,7 @@ Theme: *Trustworthy, script-safe CLI*
 
 ### v0.6 — Graph Foundation
 
-**Status:** Complete
+**Status:** Released
 
 Theme: *First-class resource graph*
 
@@ -87,7 +87,7 @@ Theme: *Correctness before cleverness*
 
 ### v0.10 — Git-Aware Inference
 
-**Status:** Complete
+**Status:** Released
 
 Theme: *Optional git context as evidence*
 
@@ -196,7 +196,7 @@ Bundles are pure packaging of existing facts.
 | v0.14.5 | Drift ↔ debug correlation (why it broke) |
 | v0.14.6 | Portable debug bundles (share and replay) |
 
-All semantic contracts preserved throughout. Ready for v0.15.
+All semantic contracts preserved throughout.
 
 ---
 
@@ -292,13 +292,12 @@ Theme: *Why this change exists*
 ### Deferred
 
 * Platform composition beyond Crossplane (kro) (#21)
-* Performance & scale guardrails (#22)
 
 ---
 
 ## v0.17 — Stabilization Window
 
-**Status:** In Progress
+**Status:** Released (Non-semantic)
 
 Theme: *Harden before workflows*
 
@@ -309,27 +308,24 @@ Theme: *Harden before workflows*
 * Contract audit (schema immutability + golden determinism) ✅
 * Epic cleanup and closure (#25) ✅
 
-### Remaining
+### Docs / Guardrails (Non-blocking)
 
-* Performance and scale guardrails (#22)
 * Resolver pattern documentation (#24)
+* Performance & scale expectations (#22)
 * Crossplane walkthrough demo (#23)
+
+These are **polish**, not missing functionality.
 
 ---
 
 ## v0.18 — Connected Workflows
 
-**Status:** Planned
+**Status:** Released
 
 **Theme:** *Bring cub-scout to where decisions happen*
 
-> This release reconnects cub-scout with its original intent from **v0.2–v0.3 ("why connected")**:
+> This release fulfills the **original v0.2–v0.3 "why connected" intent**:
 > not as an active controller, but as a **context-aware, read-only companion** embedded in real workflows.
-
-All semantic foundations (graphs, replay, attribution, determinism) are already complete.
-v0.18 focuses on **operability and placement**, not new meaning.
-
----
 
 ### What "Connected" Means (and Does *Not* Mean)
 
@@ -347,121 +343,107 @@ v0.18 focuses on **operability and placement**, not new meaning.
 
 cub-scout remains **read-only, explainable, and deterministic**.
 
----
+### Delivered
 
-### Core Capabilities
+* Artifact-first workflows (CI → bundle → replay)
+* Git-aware, read-only workflows (context captured, not authoritative)
+* Explicit fleet & environment views (catalog + diff)
+* CI-backed demos and examples
+* Zero new schemas or inference
 
-#### 1. Artifact Import & Export
-
-cub-scout can be used as a **producer and consumer of workflow artefacts**:
-
-* Import:
-  * debug bundles
-  * catalogs (multi-bundle sets)
-* Export:
-  * reports (JSON + human-readable)
-  * snapshots suitable for PRs, tickets, and archives
-
-This restores the original "share the explanation, not just the output" goal.
-
----
-
-#### 2. Git-Aware, Read-Only Workflows
-
-Building on early intent from v0.2/v0.3:
-
-* cub-scout runs in CI or locally
-* produces bundles and reports
-* results are reviewed **alongside code changes**
-* no implicit filesystem or git ordering
-* no live cluster access required
-
-Git context is **adjacent**, not authoritative.
-
----
-
-#### 3. Fleet & Environment Views (Explicit, Shallow)
-
-Connected workflows often span environments:
-
-* multiple clusters
-* multiple namespaces
-* multiple points in time
-
-v0.18 surfaces existing capabilities:
-
-* catalogs
-* timelines
-* ordered bundle sets
-
-Without:
-
-* implicit aggregation
-* inferred topology
-* hidden joins
-
-All ordering and grouping remain explicit and inspectable.
-
----
-
-#### 4. Action Adjacency
-
-As originally intended:
-
-* cub-scout explains *what* and *why*
-* cub-scout may suggest *what to inspect next*
-* cub-scout exports context to other tools
-
-It does **not** execute actions itself.
-
----
-
-### Scope Constraints (Intentional)
-
-* No new schemas
-* No new inference
-* No semantic expansion
-* No controller behavior
-
-v0.18 is about **placement**, not power.
-
----
-
-### Outcome
-
-After v0.18:
-
-* cub-scout fits naturally into real workflows
-* explanations travel between people and systems
-* users no longer have to bridge tools mentally
-
-This fulfills the original "why connected" vision on top of a now-solid foundation.
+cub-scout is now **operationally connected** while remaining offline-capable.
 
 ---
 
 ## v0.19 — TUI Polish
 
-**Status:** ✅ Shipped
+**Status:** Released
 
 Theme: *Delight on top of substance*
 
-* TUI snapshot goldens (#88) ✅
+* Canonical visual vocabulary (`symbols.go`) ✅
+* TUI snapshot golden tests (#88) ✅
 * Visual consistency and ordering (#90) ✅
 * CLI ↔ TUI symmetry flags (#91) ✅
 * Context-aware suggestions (#92) ✅
-* Shell-out completion (#93) ✅
+* Shell completion (#93) ✅
 
-TUI polish is intentionally last.
+The UX surface is now **stable and locked**.
 
 ---
 
-## v1.0+ — Fleet Intelligence & Stability
+# What Is Left on the Roadmap
 
-Theme: *Long-lived trust*
+Everything below is **new work**.
+Nothing here represents unfinished 0.x promises.
 
-* Cross-cluster correlation
-* Rollout intelligence
-* Stable schemas and deprecation policy
+---
+
+## v1.x — Connected Mode (ConfigHub)
+
+**Status:** Planned
+
+**Theme:** *Shared intent, history, and fleets*
+
+Connected Mode integrates cub-scout with **ConfigHub**, the system of record for configuration intent, history, and fleets.
+
+This work is explicitly motivated by `WHY_CONNECTED_MODE.md`.
+
+### Definition
+
+Connected Mode means:
+
+* cub-scout participates in **importing state into ConfigHub**
+* ConfigHub owns **storage, indexing, and lifecycle**
+* cub-scout remains:
+  * read-only
+  * bundle-first
+  * deterministic
+  * non-controller
+
+---
+
+### Remaining Capabilities (Authoritative)
+
+#### 1. Connected Import into ConfigHub
+
+* Import bundles into ConfigHub
+* Import cluster-captured state via cub-scout
+* Explicit, one-shot, auditable imports
+
+#### 2. Git as a First-Class Source
+
+* Import Git intent (not just metadata)
+* Compare:
+  * Git ↔ cluster
+  * Git ↔ Git
+* No mutation, no continuous sync
+
+#### 3. Shared Fleet Definitions
+
+* Fleets stored durably in ConfigHub
+* Fleets spanning clusters, git sources, history
+* cub-scout as the exploration and explanation surface
+
+#### 4. Surfacing ConfigHub Engines
+
+* History (ChangeSets)
+* Views / projections
+* Impact & blast radius
+* Policy context (explanatory only)
+
+cub-scout surfaces results; it does not reimplement engines.
+
+---
+
+### Explicit Non-Goals
+
+Connected Mode does **not** introduce:
+
+* Controllers or agents
+* Continuous reconciliation
+* Policy enforcement
+* Silent semantic expansion
 
 ---
 
@@ -470,6 +452,7 @@ Theme: *Long-lived trust*
 * **Explainability first** — every inference must be attributable
 * **No silent contract expansion** — new meaning requires new surfaces
 * **Determinism over convenience** — replay and diff always work
+* **Artifacts over live dependencies** — bundles travel, clusters don't
 
 ---
 
@@ -479,7 +462,7 @@ Theme: *Long-lived trust*
 * v0.14.6: #100 ✅, #101 ✅, #102 ✅
 * v0.15.0: #35 ✅, #36 ✅, #38 ✅, #40 ✅
 * v0.16.0–v0.16.3: #2 ✅, #8 ✅
-* v0.17: #25 ✅, #21, #22, #23, #24
+* v0.17: #25 ✅ | Deferred: #21, #22, #23, #24
 * v0.19: #88 ✅, #90 ✅, #91 ✅, #92 ✅, #93 ✅
 
 Issues remain the execution unit; versions define intent.

@@ -246,4 +246,4 @@ jobs:
 
 - [Artifact workflow demo](../../examples/workflows/artifact-workflow-demo.sh)
 - [Fleet demo](../../examples/workflows/fleet-demo/fleet-demo.sh)
-- [Debug Bundle schema](../reference/schemas.md)
+- [Debug Bundle schema](../debug-bundle.md)

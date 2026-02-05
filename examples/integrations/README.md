@@ -159,5 +159,5 @@ cub-scout scan --json | jq '.findings[]'
 ## See Also
 
 - [examples/README.md](../README.md) - All examples
-- [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) - GSF protocol
-- [docs/EXTENDING.md](../../docs/EXTENDING.md) - Custom integrations
+- [docs/concepts/architecture.md](../../docs/concepts/architecture.md) - GSF protocol
+- [docs/howto/extending.md](../../docs/howto/extending.md) - Custom integrations

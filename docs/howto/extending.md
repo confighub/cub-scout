@@ -422,6 +422,6 @@ Submit your plugin via PR to be listed.
 
 ## See Also
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — GSF protocol and API contracts
-- [CLI Guide](../CLI-GUIDE.md) — CLI reference and configuration
-- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE detection and remediation
+- [Architecture](../concepts/architecture.md) — GSF protocol and API contracts
+- [CLI Guide](../../CLI-GUIDE.md) — CLI reference and configuration
+- [Scan for CCVEs](scan-for-ccves.md) — CCVE detection and remediation

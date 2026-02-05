@@ -369,9 +369,9 @@ $ cub-scout map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
 |-----|--------------|
 | [docs/EXAMPLES-OVERVIEW.md](../docs/EXAMPLES-OVERVIEW.md) | Central examples overview |
 | [CLI-GUIDE.md](../CLI-GUIDE.md) | Complete CLI reference (14 commands, 17 subcommands) |
-| [docs/COMMAND-MATRIX.md](../docs/COMMAND-MATRIX.md) | Full command/option matrix |
-| [docs/map/howto/import-to-confighub.md](../docs/map/howto/import-to-confighub.md) | Import workloads into ConfigHub |
+| [docs/reference/command-matrix.md](../docs/reference/command-matrix.md) | Full command/option matrix |
+| [docs/howto/import-to-confighub.md](../docs/howto/import-to-confighub.md) | Import workloads into ConfigHub |
 | [README.md](../README.md) | Project overview |
-| [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) | How it works, GSF protocol |
-| [docs/SCAN-GUIDE.md](../docs/SCAN-GUIDE.md) | CCVE scanning (46 patterns) |
+| [docs/concepts/architecture.md](../docs/concepts/architecture.md) | How it works, GSF protocol |
+| [docs/howto/scan-for-ccves.md](../docs/howto/scan-for-ccves.md) | CCVE scanning (46 patterns) |
 | [test/README.md](../test/README.md) | Testing documentation |

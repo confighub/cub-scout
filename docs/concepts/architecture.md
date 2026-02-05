@@ -403,7 +403,7 @@ The Agent detects ownership by examining labels and annotations:
 
 ### Adding Custom Ownership Detectors
 
-See [EXTENDING.md](EXTENDING.md) for how to add custom ownership detection.
+See [Extending cub-scout](../howto/extending.md) for how to add custom ownership detection.
 
 ---
 
@@ -431,7 +431,7 @@ See [EXTENDING.md](EXTENDING.md) for how to add custom ownership detection.
 
 ### Adding Custom Resources
 
-See [EXTENDING.md](EXTENDING.md) for watching custom CRDs.
+See [Extending cub-scout](../howto/extending.md) for watching custom CRDs.
 
 ---
 
@@ -468,8 +468,8 @@ For a more restrictive policy, see [manifests/agent-minimal-rbac.yaml](../manife
 
 ## See Also
 
-- [CLI-GUIDE.md](../CLI-GUIDE.md) — Complete CLI reference (14 commands, 17 subcommands, 17 views)
-- [COMMAND-MATRIX.md](COMMAND-MATRIX.md) — Full command/option matrix
-- [GSF-SCHEMA.md](GSF-SCHEMA.md) — GitOps State Format JSON schema
-- [SCAN-GUIDE.md](SCAN-GUIDE.md) — CCVE detection and remediation (46 patterns)
-- [EXTENDING.md](EXTENDING.md) — Extension points and customization
+- [CLI Guide](../../CLI-GUIDE.md) — Complete CLI reference (14 commands, 17 subcommands, 17 views)
+- [Command Matrix](../reference/command-matrix.md) — Full command/option matrix
+- [GSF Schema](../reference/gsf-schema.md) — GitOps State Format JSON schema
+- [Scan for CCVEs](../howto/scan-for-ccves.md) — CCVE detection and remediation (46 patterns)
+- [Extending cub-scout](../howto/extending.md) — Extension points and customization
