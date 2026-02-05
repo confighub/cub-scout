@@ -1,5 +1,7 @@
 # cub-scout Test Inventory
 
+> **Authoritative testing reference:** [docs/testing/README.md](../docs/testing/README.md)
+
 **Created:** 2026-01-14
 **Purpose:** Complete inventory of all tests, ensuring comprehensive coverage
 

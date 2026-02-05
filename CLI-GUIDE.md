@@ -759,10 +759,34 @@ Total: 47 workloads │ 45 healthy │ 2 orphans
 ./cub-scout map orphans
 ```
 
+Lists resources not managed by any GitOps tool (Flux, ArgoCD, Helm, ConfigHub).
+
+**Default behavior:** System namespaces are hidden to reduce noise:
+- `kube-system`, `kube-public`, `kube-node-lease`
+- `flux-system`, `argocd`, `cert-manager`, `ingress-nginx`, `local-path-storage`
+
+**Flags:**
+| Flag | Description |
+|------|-------------|
+| `--include-system` | Include system namespaces |
+| `--namespace` | Filter to specific namespace |
+
+**Examples:**
+```bash
+./cub-scout map orphans                    # User namespaces only (default)
+./cub-scout map orphans --include-system   # Include system namespaces
+./cub-scout map orphans --namespace prod   # Specific namespace
+./cub-scout map orphans --json             # JSON output
+```
+
 **Expected output:**
 ```
-ORPHAN RESOURCES (not managed by GitOps)
-═══════════════════════════════════════════════════════════════════
+ORPHAN RESOURCES
+════════════════════════════════════════════════════════════════════
+Resources not managed by GitOps (Flux, ArgoCD, Helm, ConfigHub).
+These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.
+
+Note: System namespaces hidden by default. Use --include-system to show all.
 
 NAMESPACE         KIND          NAME                    AGE
 default           Deployment    debug-pod               3d
@@ -1233,6 +1257,270 @@ See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema
 ./cub-scout demo scenario bigbank
 ./cub-scout demo quick --cleanup
 ```
+
+---
+
+## `bundle` — Debug Bundles (v0.14)
+
+Work with debug bundles for offline inspection and sharing.
+
+**What it does:** Debug bundles are portable snapshots of debugging context that can be inspected offline or shared across time and people.
+
+**When to use it:** When you need to capture, share, or compare debugging state across time or with others.
+
+**A bundle contains:**
+- `metadata.json` — Bundle version, target, creation time, tool version
+- `session.json` — Debug session data (if captured)
+- `drift.json` — Drift findings (if captured)
+- `events.json` — Timeline events (if captured)
+- `logs.json` — Container logs (if captured)
+- `README.md` — Human-readable summary
+
+```bash
+# Inspect a bundle
+./cub-scout bundle inspect ./debug-bundle-2024-01-15
+
+# Replay bundle as ASCII
+./cub-scout bundle replay ./debug-bundle-2024-01-15
+
+# Replay bundle as JSON
+./cub-scout bundle replay ./debug-bundle-2024-01-15 --format json
+
+# Compare two bundles
+./cub-scout bundle diff ./bundle-before ./bundle-after
+
+# Show timeline from a catalog
+./cub-scout bundle timeline ./my-catalog --order created_at
+```
+
+**Subcommands:**
+| Command | Description |
+|---------|-------------|
+| `inspect` | Show bundle metadata and contents summary |
+| `replay` | Re-render bundle contents with existing renderers |
+| `diff` | Compare two bundles and show what changed |
+| `timeline` | Show time-series view of objects across a catalog |
+
+**Related commands:** `debug`, `catalog`
+
+---
+
+## `catalog` — Bundle Catalogs (v0.15)
+
+Manage catalogs of debug bundles for multi-bundle operations.
+
+**What it does:** A catalog is a file-backed manifest that indexes multiple bundles, enabling multi-bundle comparisons, timeline construction, and explicit ordering.
+
+**When to use it:** When you need to track multiple debug bundles over time (e.g., before/after a fix, or daily snapshots).
+
+**Catalog layout:**
+```
+catalog/
+  catalog.json      # Manifest with bundle entries
+  bundles/          # Copied bundle directories
+    bundle-1/
+    bundle-2/
+```
+
+```bash
+# Create a new catalog
+./cub-scout catalog init ./my-catalog
+
+# Add a bundle with custom ID
+./cub-scout catalog add ./my-catalog ./debug-bundle --id before-fix
+
+# Add with labels and scope
+./cub-scout catalog add ./my-catalog ./debug-bundle \
+  --id after-fix \
+  --label ticket=INC-123 \
+  --scope prod/api/Deployment/api
+
+# List bundles
+./cub-scout catalog list ./my-catalog
+
+# Validate integrity
+./cub-scout catalog validate ./my-catalog
+```
+
+**Subcommands:**
+| Command | Description |
+|---------|-------------|
+| `init` | Create a new empty catalog |
+| `add` | Add a bundle to a catalog |
+| `list` | List bundles in a catalog |
+| `validate` | Validate catalog integrity |
+
+**Related commands:** `bundle`, `bundle timeline`
+
+---
+
+## `graph` — Resource Graph (v0.6)
+
+Resource graph operations for exploring cluster relationships.
+
+**What it does:** Exports and explains the resource relationship graph showing how resources connect to each other.
+
+**When to use it:** When you need to understand resource dependencies or export the graph for external tools.
+
+```bash
+# Export resource graph as JSON
+./cub-scout graph export
+
+# Export with relations (owns, selects, mounts, references)
+./cub-scout graph export --relations
+
+# Explain a specific resource's relationships
+./cub-scout graph explain deploy/nginx -n default
+```
+
+**Subcommands:**
+| Command | Description |
+|---------|-------------|
+| `export` | Export resource graph as JSON |
+| `explain` | Explain a resource's graph relationships |
+
+**Related commands:** `snapshot`, `tree`
+
+---
+
+## `patterns` — Pattern Detection (v0.7)
+
+Pattern detection engine for analyzing resource graphs.
+
+**What it does:** Runs deterministic checks against the resource graph and reports findings. Each pattern has a unique ID, description, and detection logic.
+
+**When to use it:** When you want to detect specific anti-patterns or misconfigurations beyond CCVE scanning.
+
+```bash
+# List all registered patterns
+./cub-scout patterns list
+
+# Run pattern detection
+./cub-scout patterns detect
+
+# Run detection with JSON output
+./cub-scout patterns detect --json
+
+# Explain a specific pattern with results
+./cub-scout patterns explain orphan-configmap
+```
+
+**Subcommands:**
+| Command | Description |
+|---------|-------------|
+| `list` | List all registered patterns |
+| `detect` | Run pattern detection against the cluster |
+| `explain` | Explain a specific pattern with results |
+
+**Related commands:** `scan`, `graph`
+
+---
+
+## `drift` — Drift Detection (v0.14.3)
+
+Detect differences between desired state (from file/git) and live state (from cluster).
+
+**What it does:** Compares what should exist (desired) against what actually exists (live) and reports any differences as drift findings.
+
+**When to use it:** In CI/CD pipelines or before deployments to verify cluster state matches expectations.
+
+```bash
+# Compare a YAML file against the cluster
+./cub-scout drift --file manifests/deployment.yaml
+
+# Compare with namespace filter
+./cub-scout drift --file manifests/ -n production
+
+# Output as JSON (for CI/automation)
+./cub-scout drift --file manifests/deployment.yaml --format json
+
+# Fail CI if any warning or critical drift found
+./cub-scout drift --file manifests/ --fail-on warning
+
+# Fail CI only on critical drift
+./cub-scout drift --file manifests/ --fail-on critical
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--file` | YAML file or directory containing desired state (required) |
+| `-n, --namespace` | Namespace to compare (default: all) |
+| `--format` | Output format: ascii, json (default: ascii) |
+| `--fail-on` | Exit non-zero if max severity >= level (info, warning, critical) |
+
+**Exit codes:**
+| Code | Meaning |
+|------|---------|
+| 0 | No failure triggered (or no --fail-on specified) |
+| 1 | Operational error |
+| 2 | Findings met the --fail-on severity threshold |
+
+**Related commands:** `scan`, `bundle diff`
+
+---
+
+## `apply` — Apply Proposal (GUI Integration)
+
+Apply a Hub/App Space proposal to create resources in ConfigHub.
+
+**What it does:** This is the GUI companion to `cub-scout import`. It reads a proposal JSON and creates the specified resources in ConfigHub.
+
+**When to use it:** When integrating with a GUI that generates proposals, or for scripted fleet operations.
+
+```bash
+# Single cluster: generate, edit, apply
+./cub-scout import --json > proposal.json
+# (GUI displays, user edits)
+./cub-scout apply proposal.json
+
+# Fleet: multiple clusters → unified proposal → apply
+./cub-scout import-cluster-aggregator cluster*.json --suggest --json | ./cub-scout apply -
+
+# Dry-run to preview
+./cub-scout apply proposal.json --dry-run
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Preview what would be created without making changes |
+| `--no-log` | Disable logging to file |
+
+**Related commands:** `import`, `import-cluster-aggregator`
+
+---
+
+## `import-cluster-aggregator` — Fleet Import (GUI Integration)
+
+Aggregate import data from multiple clusters into a fleet view.
+
+**What it does:** This is the GUI/multi-cluster companion to `cub-scout import`. It combines import data from multiple clusters and can generate a unified proposal.
+
+**When to use it:** When onboarding multiple clusters to ConfigHub simultaneously.
+
+```bash
+# Full workflow: scan clusters, generate unified proposal, apply
+for ctx in cluster-a cluster-b; do
+  kubectl config use-context $ctx
+  ./cub-scout import --json > ${ctx}.json
+done
+./cub-scout import-cluster-aggregator cluster-*.json --suggest --json | ./cub-scout apply -
+
+# Generate unified proposal
+./cub-scout import-cluster-aggregator cluster1.json cluster2.json --suggest
+
+# Just aggregate (no proposal)
+./cub-scout import-cluster-aggregator cluster1.json cluster2.json cluster3.json
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--json` | Output as JSON |
+| `--suggest` | Generate unified Hub/App Space proposal |
+
+**Related commands:** `import`, `apply`
 
 ---
 

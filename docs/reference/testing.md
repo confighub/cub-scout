@@ -1,5 +1,9 @@
 # cub-scout Testing Guide
 
+> **Authoritative testing reference:** [docs/testing/README.md](../testing/README.md)
+>
+> This file provides a detailed walkthrough. For the canonical test categories and percentages, see the authoritative guide.
+
 A step-by-step guide to testing the cub-scout locally.
 
 ---

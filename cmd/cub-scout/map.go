@@ -33,19 +33,20 @@ import (
 )
 
 var (
-	mapNamespace      string
-	mapKind           string
-	mapOwner          string
-	mapQuery          string
-	mapJSON           bool   // deprecated: use --format json
-	mapListFormat     string // output format: ascii, json
-	mapVerbose        bool
-	mapHub            bool   // --hub flag for ConfigHub hierarchy
-	mapSince          string // --since flag for time filtering
-	mapCount          bool   // --count flag for count-only output
-	mapNamesOnly      bool   // --names-only flag for names-only output
-	mapExplain        bool   // --explain flag for learning mode
-	deepDiveConnected bool   // --connected flag for ConfigHub integration in deep-dive
+	mapNamespace        string
+	mapKind             string
+	mapOwner            string
+	mapQuery            string
+	mapJSON             bool   // deprecated: use --format json
+	mapListFormat       string // output format: ascii, json
+	mapVerbose          bool
+	mapHub              bool   // --hub flag for ConfigHub hierarchy
+	mapSince            string // --since flag for time filtering
+	mapCount            bool   // --count flag for count-only output
+	mapNamesOnly        bool   // --names-only flag for names-only output
+	mapExplain          bool   // --explain flag for learning mode
+	deepDiveConnected   bool   // --connected flag for ConfigHub integration in deep-dive
+	orphanIncludeSystem bool   // --include-system flag for showing system resources
 )
 
 // MapEntry is an alias for mapsvc.Entry representing a resource in the fleet map.
@@ -399,12 +400,17 @@ Orphaned resources are those without detected GitOps or platform ownership:
 
 Note: Resources managed by Crossplane or Terraform controllers are not considered orphans.
 
-This is equivalent to: cub-scout map list -q "owner=Native"
+By default, system namespaces are filtered out to reduce noise:
+  kube-system, kube-public, kube-node-lease, flux-system, argocd,
+  cert-manager, ingress-nginx, local-path-storage
+
+Use --include-system to show all namespaces.
 
 Examples:
-  cub-scout map orphans             # List all orphaned resources
-  cub-scout map orphans --json      # JSON output
-  cub-scout map orphans --namespace prod  # Filter by namespace`,
+  cub-scout map orphans                    # User namespaces only (default)
+  cub-scout map orphans --include-system   # Include system namespaces
+  cub-scout map orphans --json             # JSON output
+  cub-scout map orphans --namespace prod   # Filter by specific namespace`,
 	RunE: runMapOrphans,
 }
 
@@ -498,8 +504,9 @@ func init() {
 	mapListCmd.Flags().BoolVar(&mapExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 	mapListCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
-	// Orphans-specific flags (same as list)
+	// Orphans-specific flags
 	mapOrphansCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
+	mapOrphansCmd.Flags().BoolVar(&orphanIncludeSystem, "include-system", false, "Include system namespaces (kube-system, flux-system, argocd, etc.)")
 
 	// Deep-dive flags
 	mapClusterDataCmd.Flags().BoolVar(&deepDiveConnected, "connected", false, "Show ConfigHub context for managed resources (requires cub auth)")
@@ -2584,12 +2591,16 @@ func runMapOrphans(cmd *cobra.Command, args []string) error {
 		fmt.Println("════════════════════════════════════════════════════════════════════")
 		fmt.Println("Resources not managed by GitOps (Flux, ArgoCD, Helm, ConfigHub).")
 		fmt.Println("These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.")
+		if !orphanIncludeSystem && mapNamespace == "" {
+			fmt.Println()
+			fmt.Println("Note: System namespaces hidden by default. Use --include-system to show all.")
+		}
 		fmt.Println()
 	}
 
-	// Set the owner filter to Native and run list
+	// Set the owner filter to Native and run list with orphan filtering
 	mapOwner = "Native"
-	err := runMapList(cmd, args)
+	err := runMapListWithOrphanFilter(cmd, args)
 
 	// Print next steps if in table mode and no error
 	if showHeader && err == nil {
@@ -2601,6 +2612,27 @@ func runMapOrphans(cmd *cobra.Command, args []string) error {
 	}
 
 	return err
+}
+
+// runMapListWithOrphanFilter runs map list but filters out system namespaces unless --include-system is set
+func runMapListWithOrphanFilter(cmd *cobra.Command, args []string) error {
+	// If --include-system is set or a specific namespace is requested, use standard list
+	if orphanIncludeSystem || mapNamespace != "" {
+		return runMapList(cmd, args)
+	}
+
+	// Otherwise, we need to filter system namespaces
+	// Build a query that excludes system namespaces
+	excludeQuery := "namespace!=kube-system AND namespace!=kube-public AND namespace!=kube-node-lease AND namespace!=flux-system AND namespace!=argocd AND namespace!=cert-manager AND namespace!=ingress-nginx AND namespace!=local-path-storage"
+
+	// Combine with any existing query
+	if mapQuery != "" {
+		mapQuery = fmt.Sprintf("(%s) AND (%s)", mapQuery, excludeQuery)
+	} else {
+		mapQuery = excludeQuery
+	}
+
+	return runMapList(cmd, args)
 }
 
 // completeSince provides tab completion for --since flag

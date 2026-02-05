@@ -4,13 +4,14 @@ ORPHAN RESOURCES
 Resources not managed by GitOps (Flux, ArgoCD, Helm, ConfigHub).
 These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.
 
-NAMESPACE    KIND        NAME            OWNER
-default      ConfigMap   debug-config    Native
-kube-system  Deployment  metrics-server  Native
-temp-test    Deployment  debug-nginx     Native
+Note: System namespaces hidden by default. Use --include-system to show all.
 
-Total: 3 resources
-By Owner: Native(3)
+NAMESPACE  KIND        NAME          OWNER
+default    ConfigMap   debug-config  Native
+temp-test  Deployment  debug-nginx   Native
+
+Total: 2 resources
+By Owner: Native(2)
 
 NEXT STEPS:
 → To import into ConfigHub: cub-scout import --wizard

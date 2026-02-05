@@ -1,8 +1,35 @@
 #!/bin/bash
 # Platform Example Setup Script
 # Deploys flux2-kustomize-helm-example + orphan resources for cub-scout demo
+#
+# Usage: ./setup.sh [-y|--yes]
+#   -y, --yes    Skip confirmation prompts (for CI/automation)
+#
+# Environment variables:
+#   CUB_SCOUT_ASSUME_YES=1   Same as -y flag
 
 set -e
+
+# Parse arguments
+ASSUME_YES="${CUB_SCOUT_ASSUME_YES:-0}"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -y|--yes)
+            ASSUME_YES=1
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [-y|--yes]"
+            exit 1
+            ;;
+    esac
+done
+
+# Auto-yes if not a TTY (CI/automation)
+if [[ ! -t 0 ]]; then
+    ASSUME_YES=1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GREEN='\033[0;32m'
@@ -48,10 +75,14 @@ echo ""
 # Check if Flux is already installed
 if kubectl get namespace flux-system &> /dev/null; then
     echo -e "${YELLOW}Flux appears to be already installed.${NC}"
-    read -p "Continue anyway? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 0
+    if [[ "$ASSUME_YES" != "1" ]]; then
+        read -p "Continue anyway? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 0
+        fi
+    else
+        echo "Continuing (--yes mode)..."
     fi
 fi
 

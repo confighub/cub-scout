@@ -1,6 +1,9 @@
 #!/bin/bash
 # Impressive Demo: CCVE Detection in Action
 # "How ConfigHub Agent Would Have Saved BIGBANK 4 Hours"
+#
+# Usage: ./demo-script.sh {setup|run|cleanup} [--batch]
+#   --batch    Skip pauses for automated/CI runs
 
 set -euo pipefail
 
@@ -14,8 +17,22 @@ NC='\033[0m'
 # Demo configuration
 DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MAP_TOOL="../../test/atk/map"
+BATCH_MODE=0
+
+# Check for --batch flag
+for arg in "$@"; do
+    if [[ "$arg" == "--batch" ]]; then
+        BATCH_MODE=1
+    fi
+done
 
 pause() {
+    if [[ "$BATCH_MODE" == "1" ]]; then
+        echo ""
+        echo "(batch mode - continuing...)"
+        sleep 1
+        return
+    fi
     echo ""
     echo -e "${BOLD}Press ENTER to continue...${NC}"
     read -r

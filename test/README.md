@@ -1,31 +1,40 @@
 # cub-scout Test Suite
 
+> **Authoritative testing reference:** [docs/testing/README.md](../docs/testing/README.md)
+>
+> This file provides a quick reference. For complete testing documentation, see the authoritative guide.
+
 All tests live in this directory, organized by type.
 
 ---
 
-## Our goal when doing AI-Assisted Development is 100% Test Coverage
+## Quick Start
 
-**CRITICAL:** When using AI to write code, 100% test coverage is non-negotiable.
+```bash
+# Fast check (no cluster)
+go build ./cmd/cub-scout && go test ./...
 
-> "If you can't prove it works, it doesn't work."
-
-AI can generate code that looks correct but doesn't function. Tests are the only proof. We attempt to verify every feature.  
-
-### The Four Test Groups (25% each)
-
-| Test Group | Weight | Verification | What It Proves |
-|------------|--------|--------------|----------------|
-| **Unit Tests** | 25% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
-| **Integration** | 25% | `./test/prove-it-works.sh --level=integration` | CLI commands work, JSON output valid |
-| **GitOps E2E** | 25% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
-| **Connected** | 25% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
-
-**Total: 500+ tests for 100% PROOF**
+# Full proof (with cluster)
+./scripts/full-test.sh
+```
 
 **IMPORTANT:**
 - Always use `./cub-scout`, not `cub-scout` (binary is local, not in PATH)
-- See [CLI-GUIDE.md](../CLI-GUIDE.md) for the complete CLI reference (14 commands, 17 map subcommands, 17 TUI views)
+- See [CLI-GUIDE.md](../CLI-GUIDE.md) for the complete CLI reference
+
+---
+
+## The Five Test Groups (20% each)
+
+| Test Group | Weight | Verification | What It Proves |
+|------------|--------|--------------|----------------|
+| **Unit Tests** | 20% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
+| **Integration** | 20% | `go test -tags=integration ./test/integration/...` | CLI commands work, JSON output valid |
+| **GitOps E2E** | 20% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
+| **Attribution Contract** | 20% | `go test ./pkg/agent/... -run Attribution` | Determinism, scoring, bundle replay (v0.16+) |
+| **Connected** | 20% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
+
+**Target: >90% score across all groups = FULLY PROVEN**
 
 ---
 
