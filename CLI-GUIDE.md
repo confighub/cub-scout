@@ -499,6 +499,26 @@ Press `a` to toggle between showing all events or only warnings/errors.
 | `-n, --namespace` | Namespace of the resource |
 | `--format` | Output format: ascii, json, md |
 | `--non-interactive` | Run without prompts (requires resource arg) |
+| `--save-bundle <dir>` | Save debug bundle to directory (non-interactive only) |
+| `--kustomize <dir>` | Kustomize overlay directory for attribution (requires `--save-bundle`) |
+
+**Kustomize Attribution:**
+
+When saving a debug bundle with `--save-bundle`, you can optionally provide a Kustomize overlay directory with `--kustomize`. This records the overlay as an explicit ownership edge in the attribution graph.
+
+```bash
+# Save debug bundle with Kustomize overlay attribution
+./cub-scout debug deployment/api -n prod --non-interactive \
+  --save-bundle ./bundles \
+  --kustomize ./overlays/prod
+```
+
+This is useful when:
+- You want to trace a resource back to its Kustomize overlay source
+- You're building an attribution graph that includes build-time provenance
+- You need to answer "which overlay produced this resource?"
+
+The overlay attribution is opt-in (explicit flag required) and does not guess or infer overlay relationships.
 
 **Root Cause Categories:**
 | Category | Description |
