@@ -901,6 +901,64 @@ Infers ConfigHub-style hierarchy from cluster analysis.
 
 ---
 
+### `map patterns` — GitOps Repository Analysis
+
+**What it does:** Analyzes your GitOps repositories to discover organizational patterns and suggest ConfigHub structure.
+
+```bash
+./cub-scout map patterns
+./cub-scout map patterns --json
+./cub-scout map patterns --verbose
+```
+
+**Aliases:** `map repos`, `map structure`
+
+**Expected output:**
+```
+GITOPS REPOSITORY PATTERNS
+════════════════════════════════════════════════════════════════════
+
+REPOSITORY PATTERNS
+────────────────────────────────────────────────────────────────────
+  monorepo     1 repository with multiple apps
+  polyrepo     0 repositories (one per app)
+
+PATH CONVENTIONS
+────────────────────────────────────────────────────────────────────
+  flux2-kustomize-helm    apps/*/overlays/{env}
+  d2-style                clusters/{cluster}/apps/*
+
+ENVIRONMENT CHAINS
+────────────────────────────────────────────────────────────────────
+  payment-api:  dev → staging → prod
+  frontend:     dev → prod
+
+SUGGESTED CONFIGHUB STRUCTURE
+────────────────────────────────────────────────────────────────────
+  Hub: platform
+  ├── AppSpace: payments
+  │   └── Units: payment-api-dev, payment-api-staging, payment-api-prod
+  └── AppSpace: frontend
+      └── Units: frontend-dev, frontend-prod
+```
+
+**Shows:**
+- Repository patterns (monorepo, polyrepo, platform, external)
+- Path conventions (D2-style, flux2-kustomize-helm, etc.)
+- Environment chains (same app across dev/staging/prod)
+- Team groupings (from namespace patterns)
+- Suggested ConfigHub organization (Hubs, AppSpaces)
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--json` | Output as JSON for tooling |
+| `--verbose` | Include detailed path information |
+
+**When to use it:** Before importing into ConfigHub, to understand your GitOps structure and plan the organization.
+
+---
+
 ### `map queries` — Saved Queries
 
 ```bash
@@ -1114,6 +1172,7 @@ Summary: 1 critical, 2 warning, 0 info
 | `--threshold` | Duration threshold for stuck (default: 5m) |
 | `--json` | Output as JSON |
 | `--verbose` | Detailed output |
+| `--explain` | Show explanatory content to help learn GitOps risk concepts |
 
 ---
 
