@@ -9,7 +9,7 @@ Demos that create resources, show problems, and let you explore.
 ## Running Demos
 
 ```bash
-cub-scout demo --list           # List all demos
+cub-scout demo list           # List all demos
 cub-scout demo quick            # Run quick demo
 cub-scout demo <name> --cleanup # Remove demo resources
 ```

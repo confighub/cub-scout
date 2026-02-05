@@ -357,7 +357,7 @@ IITS-style enterprise GitOps patterns with running pods and realistic ownership 
 Use the `demo` script for easy management:
 
 ```bash
-cub-scout demo --list              # List available demos
+cub-scout demo list              # List available demos
 cub-scout demo healthy             # Apply healthy demo (pods run)
 cub-scout demo unhealthy           # Apply unhealthy demo (pods run)
 cub-scout demo healthy --no-pods   # Apply without running pods

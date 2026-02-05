@@ -5670,6 +5670,15 @@ type LocalClusterResult struct {
 // runLocalClusterTUI launches the Go-native local cluster TUI
 // Returns: (switchToHub, hubContext, switchToImport, error)
 func runLocalClusterTUI() (bool, string, bool, error) {
+	// #111: Validate owner flag before launching TUI
+	if sharedViewOpts.Owner != "" {
+		if err := ValidateOwner(sharedViewOpts.Owner); err != nil {
+			return false, "", false, err
+		}
+		// Normalize to canonical case
+		sharedViewOpts.Owner = NormalizeOwner(sharedViewOpts.Owner)
+	}
+
 	m := initialLocalModel()
 	p := tea.NewProgram(m, tea.WithAltScreen())
 

@@ -43,7 +43,7 @@ Status:        Artifact is up to date
 			resourceName:  "nginx",
 			namespace:     "demo",
 			wantChainLen:  3,
-			wantFullyMgd:  false,           // "Managed by Flux" doesn't indicate ready status
+			wantFullyMgd:  true,            // #107: "Managed by Flux" is now a positive indicator
 			wantFirstKind: "GitRepository", // Reversed: source first
 			wantLastKind:  "Deployment",    // Object parses as Deployment/nginx
 		},
@@ -67,7 +67,7 @@ Status:        Stored artifact
 			resourceName:  "redis",
 			namespace:     "cache",
 			wantChainLen:  3,
-			wantFullyMgd:  false, // "Managed by Flux" doesn't indicate ready status
+			wantFullyMgd:  true, // #107: "Managed by Flux" is now a positive indicator
 			wantFirstKind: "HelmRepository",
 			wantLastKind:  "Deployment", // Object parses as Deployment/redis
 		},
@@ -145,6 +145,9 @@ func TestFluxTracerIsReadyStatus(t *testing.T) {
 		{"Release reconciliation succeeded", true},
 		{"Ready", true},
 		{"Stored artifact", true},
+		{"Managed by Flux", true},               // #107: ownership indicator is positive
+		{"Fetched revision main@sha1:abc123", true},
+		{"Health check passed", true},
 
 		// Negative cases
 		{"kustomize build failed", false},
@@ -222,7 +225,7 @@ Namespace:     demo
 Status:        Managed by Flux`,
 			wantKind:  "Deployment",
 			wantName:  "nginx",
-			wantReady: false, // "Managed by Flux" doesn't match ready patterns
+			wantReady: true, // #107: "Managed by Flux" is now a positive indicator
 		},
 	}
 

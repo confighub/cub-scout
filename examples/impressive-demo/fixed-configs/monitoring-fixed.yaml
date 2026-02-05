@@ -41,7 +41,7 @@ spec:
           mountPath: /var/lib/grafana
 
       # Sidecar for dashboard provisioning
-      - name: grafana-sc-dashboard
+      - name: grafana-sidecar
         image: kiwigrid/k8s-sidecar:1.25.2
         env:
         # ✅ FIXED: No spaces after commas

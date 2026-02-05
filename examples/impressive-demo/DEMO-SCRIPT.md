@@ -158,7 +158,7 @@ cub-scout demo ccve
 cub-scout demo scenario bigbank-incident
 
 # List all available demos with timing
-cub-scout demo --list
+cub-scout demo list
 ```
 
 For Brian's larger scale demos (312 units, 3 clusters), see:

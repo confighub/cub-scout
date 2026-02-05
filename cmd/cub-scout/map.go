@@ -519,6 +519,15 @@ func init() {
 func runMapList(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
+	// #111: Validate owner flag before doing any work
+	if mapOwner != "" {
+		if err := ValidateOwner(mapOwner); err != nil {
+			return err
+		}
+		// Normalize to canonical case (e.g., "flux" → "Flux")
+		mapOwner = NormalizeOwner(mapOwner)
+	}
+
 	// TEST HOOK: Load map entries from JSON file to bypass cluster access in tests.
 	if entriesJSON := os.Getenv("CUB_SCOUT_TEST_MAP_ENTRIES_JSON"); entriesJSON != "" {
 		entries, err := loadMapEntriesFromJSON(entriesJSON)

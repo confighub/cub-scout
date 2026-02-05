@@ -33,39 +33,43 @@ var (
 
 // Demo represents a runnable demo
 type Demo struct {
-	Name        string
-	Description string
-	Duration    string
-	Standalone  bool
-	Run         func() error
-	Cleanup     func() error
+	Name         string
+	Description  string
+	Duration     string
+	Standalone   bool
+	RequiresCRDs []string // CRDs required for this demo (e.g., "flux", "argo")
+	Run          func() error
+	Cleanup      func() error
 }
 
 // Available demos
 var demos = map[string]Demo{
 	"quick": {
-		Name:        "quick",
-		Description: "Fastest path to WOW - see Map in action",
-		Duration:    "~30 sec",
-		Standalone:  true,
-		Run:         runDemoQuick,
-		Cleanup:     cleanupDemoQuick,
+		Name:         "quick",
+		Description:  "Fastest path to WOW - see Map in action",
+		Duration:     "~30 sec",
+		Standalone:   true,
+		RequiresCRDs: []string{"flux", "argo"}, // Uses flux-basic.yaml and argo-basic.yaml
+		Run:          runDemoQuick,
+		Cleanup:      cleanupDemoQuick,
 	},
 	"ccve": {
 		Name:        "ccve",
 		Description: "CCVE-2025-0027 detection - the BIGBANK story",
 		Duration:    "~2 min",
 		Standalone:  true,
-		Run:         runDemoCCVE,
-		Cleanup:     cleanupDemoCCVE,
+		// No CRDs required - uses plain Kubernetes resources
+		Run:     runDemoCCVE,
+		Cleanup: cleanupDemoCCVE,
 	},
 	"query": {
-		Name:        "query",
-		Description: "Query language demo - filter by owner, namespace",
-		Duration:    "~1 min",
-		Standalone:  true,
-		Run:         runDemoQuery,
-		Cleanup:     cleanupDemoQuery,
+		Name:         "query",
+		Description:  "Query language demo - filter by owner, namespace",
+		Duration:     "~1 min",
+		Standalone:   true,
+		RequiresCRDs: []string{"flux", "argo"}, // Uses multi-cluster.yaml with GitOps resources
+		Run:          runDemoQuery,
+		Cleanup:      cleanupDemoQuery,
 	},
 }
 
@@ -76,16 +80,18 @@ var scenarios = map[string]Demo{
 		Description: "Walk through the BIGBANK 4-hour outage",
 		Duration:    "~3 min",
 		Standalone:  true,
-		Run:         runScenarioBigbank,
-		Cleanup:     cleanupDemoCCVE, // Same fixtures
+		// No CRDs required - uses plain Kubernetes resources
+		Run:     runScenarioBigbank,
+		Cleanup: cleanupDemoCCVE, // Same fixtures
 	},
 	"break-glass": {
-		Name:        "break-glass",
-		Description: "Emergency kubectl -> Accept/Reject workflow",
-		Duration:    "~2 min",
-		Standalone:  true,
-		Run:         runScenarioBreakGlass,
-		Cleanup:     cleanupScenarioBreakGlass,
+		Name:         "break-glass",
+		Description:  "Emergency kubectl -> Accept/Reject workflow",
+		Duration:     "~2 min",
+		Standalone:   true,
+		RequiresCRDs: []string{"flux"}, // Uses Flux Kustomization references
+		Run:          runScenarioBreakGlass,
+		Cleanup:      cleanupScenarioBreakGlass,
 	},
 }
 
@@ -95,7 +101,7 @@ var demoCmd = &cobra.Command{
 	Long: `Run interactive demos to showcase cub-scout features.
 
 Examples:
-  cub-scout demo --list             # List available demos
+  cub-scout demo list             # List available demos
   cub-scout demo quick              # Quick demo (~30 sec)
   cub-scout demo ccve               # CCVE-2025-0027 demo (~2 min)
   cub-scout demo query              # Query language demo
@@ -128,7 +134,7 @@ Available scenarios:
 		name := args[0]
 		scenario, ok := scenarios[name]
 		if !ok {
-			return fmt.Errorf("unknown scenario: %s\nRun 'cub-scout demo --list' to see available scenarios", name)
+			return fmt.Errorf("unknown scenario: %s\nRun 'cub-scout demo list' to see available scenarios", name)
 		}
 		if demoCleanup {
 			return scenario.Cleanup()
@@ -158,7 +164,7 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	// Handle "scenario" as first arg
 	if name == "scenario" {
 		if len(args) < 2 {
-			return fmt.Errorf("scenario name required\nRun 'cub-scout demo --list' to see available scenarios")
+			return fmt.Errorf("scenario name required\nRun 'cub-scout demo list' to see available scenarios")
 		}
 		scenarioName := args[1]
 		scenario, ok := scenarios[scenarioName]
@@ -168,16 +174,25 @@ func runDemo(cmd *cobra.Command, args []string) error {
 		if demoCleanup {
 			return scenario.Cleanup()
 		}
+		// #106: Check prerequisites before running scenario
+		if err := checkDemoPrerequisites(scenario); err != nil {
+			return err
+		}
 		return scenario.Run()
 	}
 
 	demo, ok := demos[name]
 	if !ok {
-		return fmt.Errorf("unknown demo: %s\nRun 'cub-scout demo --list' to see available demos", name)
+		return fmt.Errorf("unknown demo: %s\nRun 'cub-scout demo list' to see available demos", name)
 	}
 
 	if demoCleanup {
 		return demo.Cleanup()
+	}
+
+	// #106: Check prerequisites before running demo
+	if err := checkDemoPrerequisites(demo); err != nil {
+		return err
 	}
 
 	return demo.Run()
@@ -256,6 +271,82 @@ func runCubAgent(args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+// checkDemoPrerequisites verifies that required CRDs are installed
+// Returns nil if all prerequisites are met, or an error explaining what's missing
+func checkDemoPrerequisites(demo Demo) error {
+	if len(demo.RequiresCRDs) == 0 {
+		return nil // No CRDs required
+	}
+
+	var missing []string
+	var installHints []string
+
+	for _, crd := range demo.RequiresCRDs {
+		switch crd {
+		case "flux":
+			if !hasFluxCRDs() {
+				missing = append(missing, "Flux CRDs (GitRepository, Kustomization)")
+				installHints = append(installHints, "flux install")
+			}
+		case "argo":
+			if !hasArgoCRDs() {
+				missing = append(missing, "ArgoCD CRDs (Application)")
+				installHints = append(installHints, "kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml")
+			}
+		}
+	}
+
+	if len(missing) == 0 {
+		return nil
+	}
+
+	// Build helpful error message
+	fmt.Println()
+	fmt.Println(demoErrStyle.Render("⚠ Demo prerequisites not met"))
+	fmt.Println()
+	fmt.Println(demoBoldStyle.Render("Missing:"))
+	for _, m := range missing {
+		fmt.Printf("  • %s\n", m)
+	}
+	fmt.Println()
+	fmt.Println(demoBoldStyle.Render("To install:"))
+	for _, h := range installHints {
+		fmt.Printf("  $ %s\n", h)
+	}
+	fmt.Println()
+	fmt.Println(demoDimStyle.Render("The demo '" + demo.Name + "' requires GitOps CRDs to demonstrate ownership detection."))
+	fmt.Println(demoDimStyle.Render("Without these CRDs, resources will show as 'Native' instead of 'Flux' or 'ArgoCD'."))
+	fmt.Println()
+	fmt.Println(demoDimStyle.Render("Alternatives:"))
+	fmt.Println(demoDimStyle.Render("  • Run 'cub-scout demo ccve' (no CRDs required)"))
+	fmt.Println(demoDimStyle.Render("  • See docs/getting-started/first-map.md for setup"))
+	fmt.Println()
+
+	return fmt.Errorf("missing prerequisites for demo '%s'", demo.Name)
+}
+
+// hasFluxCRDs checks if Flux CRDs are installed
+func hasFluxCRDs() bool {
+	// Check for GitRepository CRD
+	cmd := exec.Command("kubectl", "api-resources", "--api-group=source.toolkit.fluxcd.io", "-o", "name")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(out), "gitrepositories")
+}
+
+// hasArgoCRDs checks if ArgoCD CRDs are installed
+func hasArgoCRDs() bool {
+	// Check for Application CRD
+	cmd := exec.Command("kubectl", "api-resources", "--api-group=argoproj.io", "-o", "name")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(out), "applications")
 }
 
 // ============================================================================

@@ -43,12 +43,13 @@ func init() {
 
 // StatusInfo holds status information for display
 type StatusInfo struct {
-	Mode        string      `json:"mode"` // "offline", "online", "connected"
+	Mode        string      `json:"mode"` // "offline", "online", "connected", "auth_expired"
 	Email       string      `json:"email,omitempty"`
 	ClusterName string      `json:"cluster_name"`
 	Context     string      `json:"context"`
 	Space       string      `json:"space,omitempty"`
 	Worker      *WorkerInfo `json:"worker,omitempty"`
+	AuthValid   *bool       `json:"auth_valid,omitempty"` // nil if offline/online, true/false if has context
 }
 
 // WorkerInfo holds worker status
@@ -82,14 +83,24 @@ func runStatus(cmd *cobra.Command) error {
 	// Check ConfigHub connection by running cub context get
 	cubCtx, email, err := getStatusCubContext()
 	if err == nil && cubCtx != nil {
-		status.Mode = "connected"
+		// Context exists - now validate auth token
+		authValid := validateAuthToken()
+		status.AuthValid = &authValid
+
+		if authValid {
+			status.Mode = "connected"
+		} else {
+			status.Mode = "auth_expired"
+		}
 		status.Email = email
 		status.Space = cubCtx.Settings.DefaultSpace
 
-		// Try to get worker status for the current cluster
-		worker := getWorkerForCluster(cubCtx.Settings.DefaultSpace, status.ClusterName)
-		if worker != nil {
-			status.Worker = worker
+		// Try to get worker status for the current cluster (only if auth is valid)
+		if authValid {
+			worker := getWorkerForCluster(cubCtx.Settings.DefaultSpace, status.ClusterName)
+			if worker != nil {
+				status.Worker = worker
+			}
 		}
 	} else if isOnline() {
 		status.Mode = "online"
@@ -115,6 +126,15 @@ func printStatus(s StatusInfo) {
 			fmt.Printf(" (%s)", s.Email)
 		}
 		fmt.Println()
+	case "auth_expired":
+		// #108: Show clear warning when auth token is expired
+		fmt.Printf("ConfigHub:  \033[33m●\033[0m Connected (auth expired)")
+		if s.Email != "" {
+			fmt.Printf(" (%s)", s.Email)
+		}
+		fmt.Println()
+		fmt.Println("            \033[33m⚠\033[0m Token expired or invalid")
+		fmt.Println("            Run: cub auth login")
 	case "online":
 		fmt.Println("ConfigHub:  \033[33m○\033[0m Online (not authenticated)")
 		fmt.Println("            Run: cub auth login")
@@ -226,4 +246,20 @@ func getWorkerForCluster(space, clusterName string) *WorkerInfo {
 	}
 
 	return nil
+}
+
+// validateAuthToken checks if the current ConfigHub auth token is valid
+// Returns true if token is valid, false if expired or invalid
+func validateAuthToken() bool {
+	// Use cub auth get-token which will fail if token is expired
+	// This is a lightweight check that doesn't make a network request
+	// if the token is expired (it checks expiry locally)
+	out, err := exec.Command("cub", "auth", "get-token").Output()
+	if err != nil {
+		return false
+	}
+
+	// If we got a non-empty token, auth is valid
+	token := strings.TrimSpace(string(out))
+	return token != ""
 }

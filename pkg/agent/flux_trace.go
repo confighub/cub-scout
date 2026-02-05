@@ -254,12 +254,16 @@ func (f *FluxTracer) isReadyStatus(status string) bool {
 	}
 
 	// Positive indicators
+	// "managed by" indicates the resource is under GitOps control - a success state
 	if strings.Contains(status, "applied") ||
 		strings.Contains(status, "succeeded") ||
 		strings.Contains(status, "ready") ||
 		strings.Contains(status, "up to date") ||
 		strings.Contains(status, "stored") ||
-		strings.Contains(status, "artifact is") {
+		strings.Contains(status, "artifact is") ||
+		strings.Contains(status, "managed by") ||
+		strings.Contains(status, "fetched") ||
+		strings.Contains(status, "health check passed") {
 		return true
 	}
 

@@ -1226,7 +1226,7 @@ See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema
 ## `demo` — Interactive Demos
 
 ```bash
-./cub-scout demo --list
+./cub-scout demo list
 ./cub-scout demo quick
 ./cub-scout demo ccve
 ./cub-scout demo query

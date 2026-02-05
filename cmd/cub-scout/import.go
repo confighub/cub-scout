@@ -812,9 +812,14 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 
 func fetchManifest(kind, namespace, name string) ([]byte, error) {
 	cmd := exec.Command("kubectl", "get", strings.ToLower(kind), name, "-n", namespace, "-o", "yaml")
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, err
+		// #112: Propagate actual error message instead of generic "exit status 1"
+		errMsg := strings.TrimSpace(string(output))
+		if errMsg == "" {
+			errMsg = err.Error()
+		}
+		return nil, fmt.Errorf("kubectl get %s %s -n %s: %s", kind, name, namespace, errMsg)
 	}
 
 	// Strip server-side fields that interfere with kubectl apply's three-way merge
@@ -902,7 +907,19 @@ func createUnitWithManifestSimple(space, slug string, labels []string, manifest 
 		if strings.Contains(string(output), "already exists") {
 			return nil
 		}
-		return fmt.Errorf("%s", strings.TrimSpace(string(output)))
+		// #112: Provide actionable error with context
+		errMsg := strings.TrimSpace(string(output))
+		if errMsg == "" {
+			errMsg = err.Error()
+		}
+		// Check for common auth issues and provide remediation hints
+		if strings.Contains(errMsg, "401") ||
+			strings.Contains(errMsg, "unauthorized") ||
+			strings.Contains(errMsg, "token") ||
+			strings.Contains(errMsg, "expired") {
+			return fmt.Errorf("%s\n\nHint: Your ConfigHub token may be expired. Run: cub auth login", errMsg)
+		}
+		return fmt.Errorf("cub unit create %s: %s", slug, errMsg)
 	}
 	return nil
 }
@@ -1085,7 +1102,8 @@ func createUnitWithConfig(space, unitSlug, config string) error {
 		if strings.Contains(string(output), "already exists") {
 			return nil
 		}
-		return fmt.Errorf("%s", string(output))
+		// #112: Provide actionable error with context
+		return formatCubError("unit create", unitSlug, string(output), err)
 	}
 	return nil
 }
@@ -1108,7 +1126,8 @@ func createUnitWithConfigAndLabels(space, unitSlug, config, labels string) error
 		if strings.Contains(string(output), "already exists") {
 			return nil
 		}
-		return fmt.Errorf("%s", string(output))
+		// #112: Provide actionable error with context
+		return formatCubError("unit create", unitSlug, string(output), err)
 	}
 	return nil
 }
@@ -1121,9 +1140,45 @@ func createUnit(space, unitSlug string) error {
 		if strings.Contains(string(output), "already exists") {
 			return nil
 		}
-		return fmt.Errorf("%s", string(output))
+		// #112: Provide actionable error with context
+		return formatCubError("unit create", unitSlug, string(output), err)
 	}
 	return nil
+}
+
+// formatCubError formats a cub CLI error with actionable context
+// #112: Ensure error messages are helpful, not just "exit status 1"
+func formatCubError(command, resource, output string, originalErr error) error {
+	errMsg := strings.TrimSpace(output)
+	if errMsg == "" {
+		errMsg = originalErr.Error()
+	}
+
+	// Check for common auth issues and provide remediation hints
+	lowerMsg := strings.ToLower(errMsg)
+	if strings.Contains(lowerMsg, "401") ||
+		strings.Contains(lowerMsg, "unauthorized") ||
+		strings.Contains(lowerMsg, "token") ||
+		strings.Contains(lowerMsg, "expired") ||
+		strings.Contains(lowerMsg, "not authenticated") {
+		return fmt.Errorf("%s\n\n→ Hint: Your ConfigHub token may be expired.\n  Run: cub auth login", errMsg)
+	}
+
+	// Check for network errors
+	if strings.Contains(lowerMsg, "connection refused") ||
+		strings.Contains(lowerMsg, "no such host") ||
+		strings.Contains(lowerMsg, "network") {
+		return fmt.Errorf("%s\n\n→ Hint: Cannot reach ConfigHub API.\n  Check your network connection and ConfigHub status.", errMsg)
+	}
+
+	// Check for permission errors
+	if strings.Contains(lowerMsg, "403") ||
+		strings.Contains(lowerMsg, "forbidden") ||
+		strings.Contains(lowerMsg, "permission") {
+		return fmt.Errorf("%s\n\n→ Hint: You may not have permission for this operation.\n  Check your space access in ConfigHub.", errMsg)
+	}
+
+	return fmt.Errorf("cub %s %s: %s", command, resource, errMsg)
 }
 
 // labelWorkload applies a ConfigHub label to a workload
