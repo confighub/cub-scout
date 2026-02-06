@@ -76,6 +76,20 @@ cd examples/platform-example
 |---------|-------|
 | [crossplane-system/](../examples/crossplane-system/) | Crossplane ownership detection |
 
+### Lifecycle Hazards Examples
+
+| Example | Shows |
+|---------|-------|
+| [lifecycle-hazards/](../examples/lifecycle-hazards/) | Helm hooks under ArgoCD, phase mapping |
+
+```bash
+# List hooks and their ArgoCD phase mapping
+./cub-scout map hooks --file examples/lifecycle-hazards/helm-hooks.yaml
+
+# Scan for lifecycle hazards
+./cub-scout scan --file examples/lifecycle-hazards/helm-hooks.yaml --lifecycle-hazards
+```
+
 ### Integration Examples
 
 | Integration | Status | Description |
