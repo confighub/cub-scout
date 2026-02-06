@@ -1,0 +1,131 @@
+# Example Helm hooks that demonstrate lifecycle hazards when deployed via ArgoCD
+#
+# This file contains common Helm hook patterns that require attention when
+# migrating from helm install to ArgoCD-managed deployments.
+#
+# Usage:
+#   ./cub-scout map hooks --file examples/lifecycle-hazards/helm-hooks.yaml
+#   ./cub-scout scan --file examples/lifecycle-hazards/helm-hooks.yaml --lifecycle-hazards
+---
+# HAZARD 1: Ambiguous hook phase mapping
+# post-install + post-upgrade both map to PostSync, but ArgoCD treats every sync
+# as an upgrade-equivalent. The distinction between "first install" and "upgrade"
+# is lost. See: helm-hook-ambiguity rule.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  namespace: prod
+  annotations:
+    helm.sh/hook: "post-install,post-upgrade"
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: "before-hook-creation"
+spec:
+  template:
+    metadata:
+      name: db-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate
+        image: myapp/migrations:latest
+        command: ["./migrate", "up"]
+---
+# HAZARD 2: Non-idempotent post-hook
+# This Job runs after every sync (PostSync). If it's not idempotent (e.g., sends
+# a notification unconditionally), you'll get duplicate notifications on every
+# sync, not just on changes. See: postsync-idempotency-risk rule.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: notify-deploy
+  namespace: prod
+  annotations:
+    helm.sh/hook: "post-install"
+    helm.sh/hook-delete-policy: "hook-succeeded"
+spec:
+  template:
+    metadata:
+      name: notify-deploy
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: notify
+        image: curlimages/curl:latest
+        command:
+        - curl
+        - -X
+        - POST
+        - https://slack.example.com/webhook
+        - -d
+        - '{"text": "Deployed to production!"}'
+---
+# SAFE: Explicit ArgoCD hook annotation
+# When using ArgoCD, prefer native argocd.argoproj.io/hook annotations.
+# This avoids ambiguity and gives you control over sync phases.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: presync-check
+  namespace: prod
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  template:
+    metadata:
+      name: presync-check
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: check
+        image: myapp/healthcheck:latest
+        command: ["./check", "--ready"]
+---
+# SAFE: Idempotent post-sync job
+# This job checks for changes before taking action, making it safe to run
+# on every sync.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postsync-verify
+  namespace: prod
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  template:
+    metadata:
+      name: postsync-verify
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: verify
+        image: myapp/verify:latest
+        command: ["./verify", "--smoke-test"]
+---
+# Non-hook resource for comparison
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+  labels:
+    app: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: myapp/api:latest
+        ports:
+        - containerPort: 8080

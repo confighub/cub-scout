@@ -819,6 +819,62 @@ Total: 2 orphaned resources
 
 ---
 
+### `map hooks` — Lifecycle Hooks
+
+```bash
+./cub-scout map hooks
+```
+
+Lists resources with lifecycle hook annotations (Helm and ArgoCD).
+
+**Detected annotations:**
+| Annotation | Tool | Purpose |
+|------------|------|---------|
+| `helm.sh/hook` | Helm | Hook phase (pre-install, post-upgrade, etc.) |
+| `helm.sh/hook-weight` | Helm | Execution order within phase |
+| `argocd.argoproj.io/hook` | ArgoCD | Hook phase (PreSync, Sync, PostSync) |
+| `argocd.argoproj.io/sync-wave` | ArgoCD | Execution order within sync |
+
+**Helm to ArgoCD Phase Mapping:**
+| Helm Hook | ArgoCD Phase |
+|-----------|--------------|
+| `pre-install`, `pre-upgrade` | PreSync |
+| `post-install`, `post-upgrade` | PostSync |
+| `test`, `test-success` | PostSync |
+
+**Flags:**
+| Flag | Description |
+|------|-------------|
+| `--file` | YAML file to analyze (static analysis) |
+| `--namespace` | Filter by namespace |
+| `--format` | Output format: ascii, json, md |
+
+**Examples:**
+```bash
+./cub-scout map hooks                         # All hooks from cluster
+./cub-scout map hooks --namespace prod        # Hooks in prod namespace
+./cub-scout map hooks --file chart.yaml       # Static analysis
+./cub-scout map hooks --format json           # JSON output
+```
+
+**Expected output:**
+```
+LIFECYCLE HOOKS
+════════════════════════════════════════════════════════════════════
+Source: live cluster
+
+KIND                 NAME                           NAMESPACE       HELM HOOK                 ARGO PHASE      WEIGHT
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Job                  db-backup                      prod            post-install              PostSync
+Job                  db-migrate                     prod            post-install,post-upgrade PostSync        -5
+
+Total: 2 hook(s)
+```
+
+**Use case:** When migrating Helm charts to ArgoCD, use this to understand which hooks exist and how they'll map to ArgoCD sync phases. Combine with `scan --lifecycle-hazards` to detect potential issues.
+
+---
+
 ### `map crashes` — Failing Pods
 
 ```bash

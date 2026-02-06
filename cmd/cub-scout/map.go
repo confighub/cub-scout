@@ -47,6 +47,7 @@ var (
 	mapExplain          bool   // --explain flag for learning mode
 	deepDiveConnected   bool   // --connected flag for ConfigHub integration in deep-dive
 	orphanIncludeSystem bool   // --include-system flag for showing system resources
+	hooksFile           string // --file flag for static analysis of hooks
 )
 
 // MapEntry is an alias for mapsvc.Entry representing a resource in the fleet map.
@@ -414,6 +415,27 @@ Examples:
 	RunE: runMapOrphans,
 }
 
+var mapHooksCmd = &cobra.Command{
+	Use:   "hooks",
+	Short: "Show lifecycle hooks (Helm and ArgoCD)",
+	Long: `List all resources with hook annotations and their lifecycle phase mappings.
+
+Shows resources with:
+- helm.sh/hook annotations (pre-install, post-upgrade, etc.)
+- argocd.argoproj.io/hook annotations (PreSync, Sync, PostSync, etc.)
+- argocd.argoproj.io/sync-wave for ordering
+- helm.sh/hook-weight for ordering
+
+Use this to understand how hooks are ordered and which phase they run in.
+
+Examples:
+  cub-scout map hooks                    # All hooks
+  cub-scout map hooks --namespace prod   # Hooks in prod namespace
+  cub-scout map hooks --json             # JSON output
+  cub-scout map hooks --file chart.yaml  # From file (static analysis)`,
+	RunE: runMapHooks,
+}
+
 // mapHubCmd launches the ConfigHub hierarchy TUI
 var mapHubCmd = &cobra.Command{
 	Use:   "hub",
@@ -475,6 +497,7 @@ func init() {
 	mapCmd.AddCommand(mapBypassCmd)
 	mapCmd.AddCommand(mapCrashesCmd)
 	mapCmd.AddCommand(mapOrphansCmd)
+	mapCmd.AddCommand(mapHooksCmd)
 	mapCmd.AddCommand(mapHubCmd)
 	mapCmd.AddCommand(mapClusterDataCmd)
 	mapCmd.AddCommand(mapAppHierarchyCmd)
@@ -507,6 +530,11 @@ func init() {
 	// Orphans-specific flags
 	mapOrphansCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapOrphansCmd.Flags().BoolVar(&orphanIncludeSystem, "include-system", false, "Include system namespaces (kube-system, flux-system, argocd, etc.)")
+
+	// Hooks-specific flags
+	mapHooksCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
+	mapHooksCmd.Flags().StringVar(&hooksFile, "file", "", "YAML file to analyze (static analysis)")
+	mapHooksCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
 	// Deep-dive flags
 	mapClusterDataCmd.Flags().BoolVar(&deepDiveConnected, "connected", false, "Show ConfigHub context for managed resources (requires cub auth)")
@@ -2648,6 +2676,256 @@ func runMapListWithOrphanFilter(cmd *cobra.Command, args []string) error {
 	}
 
 	return runMapList(cmd, args)
+}
+
+// runMapHooks shows resources with lifecycle hook annotations
+func runMapHooks(cmd *cobra.Command, args []string) error {
+	type hookInfo struct {
+		Kind        string   `json:"kind"`
+		Name        string   `json:"name"`
+		Namespace   string   `json:"namespace,omitempty"`
+		HelmHooks   []string `json:"helmHooks,omitempty"`
+		ArgoHook    string   `json:"argoHook,omitempty"`
+		HookWeight  string   `json:"hookWeight,omitempty"`
+		SyncWave    string   `json:"syncWave,omitempty"`
+		MappedPhase string   `json:"mappedPhase,omitempty"`
+	}
+
+	var hooks []hookInfo
+
+	// Static analysis mode (--file)
+	if hooksFile != "" {
+		scanner, err := agent.NewStaticScanner("")
+		if err != nil {
+			return fmt.Errorf("failed to create scanner: %w", err)
+		}
+		objects, err := scanner.LoadObjectsFromFile(hooksFile)
+		if err != nil {
+			return fmt.Errorf("failed to load file: %w", err)
+		}
+
+		for _, obj := range objects {
+			annotations := obj.GetAnnotations()
+			if annotations == nil {
+				continue
+			}
+
+			helmHook := annotations["helm.sh/hook"]
+			argoHook := annotations["argocd.argoproj.io/hook"]
+			hookWeight := annotations["helm.sh/hook-weight"]
+			syncWave := annotations["argocd.argoproj.io/sync-wave"]
+
+			// Only include resources with hook annotations
+			if helmHook == "" && argoHook == "" {
+				continue
+			}
+
+			ns := obj.GetNamespace()
+			if mapNamespace != "" && ns != mapNamespace {
+				continue
+			}
+
+			info := hookInfo{
+				Kind:       obj.GetKind(),
+				Name:       obj.GetName(),
+				Namespace:  ns,
+				HookWeight: hookWeight,
+				SyncWave:   syncWave,
+				ArgoHook:   argoHook,
+			}
+
+			if helmHook != "" {
+				info.HelmHooks = strings.Split(helmHook, ",")
+				// Map Helm hook to ArgoCD phase
+				info.MappedPhase = mapHelmHookToArgoPhase(helmHook)
+			}
+
+			hooks = append(hooks, info)
+		}
+	} else {
+		// Live cluster mode
+		cfg, err := buildConfig()
+		if err != nil {
+			return fmt.Errorf("failed to get cluster config: %w", err)
+		}
+
+		dynClient, err := dynamic.NewForConfig(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to create dynamic client: %w", err)
+		}
+
+		// List common hook-bearing resources
+		gvrs := []schema.GroupVersionResource{
+			{Group: "batch", Version: "v1", Resource: "jobs"},
+			{Group: "", Version: "v1", Resource: "pods"},
+			{Group: "", Version: "v1", Resource: "configmaps"},
+			{Group: "", Version: "v1", Resource: "secrets"},
+			{Group: "", Version: "v1", Resource: "serviceaccounts"},
+		}
+
+		ctx := context.Background()
+		for _, gvr := range gvrs {
+			var list *unstructured.UnstructuredList
+			var listErr error
+
+			if mapNamespace != "" {
+				list, listErr = dynClient.Resource(gvr).Namespace(mapNamespace).List(ctx, v1.ListOptions{})
+			} else {
+				list, listErr = dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
+			}
+			if listErr != nil {
+				continue // Skip resources we can't access
+			}
+
+			for _, obj := range list.Items {
+				annotations := obj.GetAnnotations()
+				if annotations == nil {
+					continue
+				}
+
+				helmHook := annotations["helm.sh/hook"]
+				argoHook := annotations["argocd.argoproj.io/hook"]
+				hookWeight := annotations["helm.sh/hook-weight"]
+				syncWave := annotations["argocd.argoproj.io/sync-wave"]
+
+				if helmHook == "" && argoHook == "" {
+					continue
+				}
+
+				info := hookInfo{
+					Kind:       obj.GetKind(),
+					Name:       obj.GetName(),
+					Namespace:  obj.GetNamespace(),
+					HookWeight: hookWeight,
+					SyncWave:   syncWave,
+					ArgoHook:   argoHook,
+				}
+
+				if helmHook != "" {
+					info.HelmHooks = strings.Split(helmHook, ",")
+					info.MappedPhase = mapHelmHookToArgoPhase(helmHook)
+				}
+
+				hooks = append(hooks, info)
+			}
+		}
+	}
+
+	// Sort by namespace, then kind, then name for deterministic output
+	sort.Slice(hooks, func(i, j int) bool {
+		if hooks[i].Namespace != hooks[j].Namespace {
+			return hooks[i].Namespace < hooks[j].Namespace
+		}
+		if hooks[i].Kind != hooks[j].Kind {
+			return hooks[i].Kind < hooks[j].Kind
+		}
+		return hooks[i].Name < hooks[j].Name
+	})
+
+	// Output based on format
+	switch mapListFormat {
+	case "json":
+		output := map[string]interface{}{
+			"hooks": hooks,
+			"count": len(hooks),
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(output)
+
+	case "md":
+		fmt.Println("# Lifecycle Hooks")
+		fmt.Println()
+		if len(hooks) == 0 {
+			fmt.Println("No hooks found.")
+			return nil
+		}
+		fmt.Println("| Kind | Name | Namespace | Helm Hook | ArgoCD Phase | Weight/Wave |")
+		fmt.Println("|------|------|-----------|-----------|--------------|-------------|")
+		for _, h := range hooks {
+			helmHook := strings.Join(h.HelmHooks, ", ")
+			phase := h.ArgoHook
+			if phase == "" && h.MappedPhase != "" {
+				phase = h.MappedPhase + " (mapped)"
+			}
+			weight := h.HookWeight
+			if weight == "" {
+				weight = h.SyncWave
+			}
+			fmt.Printf("| %s | %s | %s | %s | %s | %s |\n",
+				h.Kind, h.Name, h.Namespace, helmHook, phase, weight)
+		}
+		return nil
+
+	default: // ascii
+		fmt.Println()
+		fmt.Println("LIFECYCLE HOOKS")
+		fmt.Println("════════════════════════════════════════════════════════════════════")
+		if hooksFile != "" {
+			fmt.Printf("Source: %s (static analysis)\n", hooksFile)
+		} else {
+			fmt.Println("Source: live cluster")
+		}
+		fmt.Println()
+
+		if len(hooks) == 0 {
+			fmt.Println("No hooks found.")
+			return nil
+		}
+
+		fmt.Printf("%-20s %-30s %-15s %-25s %-15s %s\n",
+			"KIND", "NAME", "NAMESPACE", "HELM HOOK", "ARGO PHASE", "WEIGHT")
+		fmt.Println(strings.Repeat("─", 120))
+
+		for _, h := range hooks {
+			helmHook := strings.Join(h.HelmHooks, ",")
+			if len(helmHook) > 25 {
+				helmHook = helmHook[:22] + "..."
+			}
+			phase := h.ArgoHook
+			if phase == "" && h.MappedPhase != "" {
+				phase = h.MappedPhase
+			}
+			weight := h.HookWeight
+			if weight == "" {
+				weight = h.SyncWave
+			}
+			fmt.Printf("%-20s %-30s %-15s %-25s %-15s %s\n",
+				h.Kind, truncate(h.Name, 30), h.Namespace, helmHook, phase, weight)
+		}
+
+		fmt.Printf("\nTotal: %d hook(s)\n", len(hooks))
+		return nil
+	}
+}
+
+// mapHelmHookToArgoPhase maps Helm hook annotations to ArgoCD phases
+func mapHelmHookToArgoPhase(helmHook string) string {
+	hooks := strings.Split(helmHook, ",")
+	phases := make(map[string]bool)
+
+	for _, h := range hooks {
+		h = strings.TrimSpace(h)
+		switch h {
+		case "pre-install", "pre-upgrade", "pre-rollback":
+			phases["PreSync"] = true
+		case "post-install", "post-upgrade", "post-rollback":
+			phases["PostSync"] = true
+		case "pre-delete":
+			phases["PreSync"] = true // Runs before delete
+		case "post-delete":
+			phases["PostSync"] = true // Runs after delete
+		case "test", "test-success", "test-failure":
+			phases["PostSync"] = true // Tests run after install
+		}
+	}
+
+	var result []string
+	for phase := range phases {
+		result = append(result, phase)
+	}
+	sort.Strings(result)
+	return strings.Join(result, ",")
 }
 
 // completeSince provides tab completion for --since flag
