@@ -3,8 +3,9 @@
 **Date:** 2026-02-06
 **Version line:** v0.19.x (preparing v1.0)
 **Latest release:** **v0.19.6**
+**Latest commit:** `98b602c`
 **Repo state:** Clean, green, synced
-**Semantic status:** Stable and sealed — preparing for v1.0
+**Semantic status:** Stable and sealed — awaiting user feedback before v1.0
 
 ---
 
@@ -23,6 +24,16 @@ Key changes:
 - Hub package tests added
 - Removed "experimental" messaging
 - GOTOOLCHAIN=local for air-gapped builds
+
+### Post-v0.19.6 (main branch, not yet released)
+
+Discoverability improvements for v1.0:
+- README: "Getting Value Fast", "Choose Your Interface", "Standalone vs Connected", "Maps & Trees"
+- README: Bundle summaries section (ticket/pr/slack formats)
+- CLI help: Popular commands, interface options, tips
+- Docs: `docs/concepts/mental-model.md` (3-minute overview)
+- Docs: `docs/releases/v1.0.0.md` (release notes draft)
+- CLI contract: Expanded `bundle summarize` documentation
 
 ### Previous releases: v0.16.0–v0.19.5
 
