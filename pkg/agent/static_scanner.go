@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // StaticScanResult holds results from static file analysis
@@ -158,6 +159,22 @@ func (s *StaticScanner) parseYAMLFile(filename string) ([]map[string]interface{}
 	}
 
 	return resources, nil
+}
+
+// LoadObjectsFromFile parses a YAML file and returns unstructured objects.
+// This is used by lifecycle hazards scanning.
+func (s *StaticScanner) LoadObjectsFromFile(filename string) ([]*unstructured.Unstructured, error) {
+	resources, err := s.parseYAMLFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	var objects []*unstructured.Unstructured
+	for _, r := range resources {
+		obj := &unstructured.Unstructured{Object: r}
+		objects = append(objects, obj)
+	}
+	return objects, nil
 }
 
 // patternMatchesKind checks if a pattern applies to the resource kind

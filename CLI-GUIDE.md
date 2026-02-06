@@ -1174,6 +1174,7 @@ Summary: 1 critical, 2 warning, 0 info
 | `--kyverno` | Kyverno scan only (PolicyReports) |
 | `--timing-bombs` | Expiring certs, quota limits |
 | `--dangling` | Orphan HPAs, Services, Ingress, NetworkPolicy |
+| `--lifecycle-hazards` | GitOps lifecycle hazards (Helm hooks under ArgoCD) |
 | `--include-unresolved` | Include Trivy/Kyverno findings |
 | `--file` | YAML file to scan (static analysis, no cluster) |
 | `--list` | List all KPOL policies in database |
@@ -1181,6 +1182,36 @@ Summary: 1 critical, 2 warning, 0 info
 | `--json` | Output as JSON |
 | `--verbose` | Detailed output |
 | `--explain` | Show explanatory content to help learn GitOps risk concepts |
+
+### Lifecycle Hazards (v0.19.5)
+
+Detect GitOps lifecycle hazards — Helm hook semantics that behave differently under ArgoCD.
+
+```bash
+# Scan a YAML file for lifecycle hazards
+./cub-scout scan --lifecycle-hazards --file manifest.yaml
+```
+
+**Detected hazards:**
+| Rule | Detection |
+|------|-----------|
+| Helm hook ambiguity | Comma-separated `helm.sh/hook` values (e.g., `post-install,post-upgrade`) |
+| PostSync idempotency | Job with `hook-delete-policy: before-hook-creation` reruns on every sync |
+
+**Example output:**
+```
+GitOps Lifecycle Hazards
+──────────────────────────────────────────────────
+
+Helm Hook Ambiguity (1)
+────────────────────────────────────────
+
+⚠ Job/db-migrate (ns: prod)
+  Hooks: post-install, post-upgrade
+  Phase: PostSync
+  Risk: ArgoCD maps comma-separated Helm hooks to a single phase
+  Fix:  Split into separate resources or convert to ArgoCD Sync hook
+```
 
 ---
 

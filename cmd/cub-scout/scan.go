@@ -29,6 +29,7 @@ var (
 	scanTimingBombs       bool
 	scanIncludeUnresolved bool
 	scanDangling          bool
+	scanLifecycleHazards  bool
 	scanThreshold         string
 	scanFile              string
 	scanExplain           bool
@@ -98,6 +99,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanTimingBombs, "timing-bombs", false, "Scan for timing bombs (expiring certs, quota limits)")
 	scanCmd.Flags().BoolVar(&scanIncludeUnresolved, "include-unresolved", false, "Include unresolved findings from Trivy/Kyverno")
 	scanCmd.Flags().BoolVar(&scanDangling, "dangling", false, "Scan for dangling/orphan resources (HPA, Service, Ingress, NetworkPolicy)")
+	scanCmd.Flags().BoolVar(&scanLifecycleHazards, "lifecycle-hazards", false, "Scan for GitOps lifecycle hazards (Helm hooks under ArgoCD)")
 	scanCmd.Flags().StringVar(&scanThreshold, "threshold", "5m", "Duration threshold for stuck detection (e.g., 30s, 2m, 5m)")
 	scanCmd.Flags().StringVar(&scanFile, "file", "", "YAML file to scan (static analysis, no cluster required)")
 	scanCmd.Flags().BoolVar(&scanExplain, "explain", false, "Show explanatory content to help learn GitOps risk concepts")
@@ -105,12 +107,13 @@ func init() {
 
 // CombinedScanResult holds results from all scanners
 type CombinedScanResult struct {
-	Kyverno     *agent.ScanResult       `json:"kyverno,omitempty"`
-	State       *agent.StateScanResult  `json:"state,omitempty"`
-	TimingBombs *agent.TimingBombResult `json:"timingBombs,omitempty"`
-	Unresolved  *agent.UnresolvedResult `json:"unresolved,omitempty"`
-	Dangling    *agent.DanglingResult   `json:"dangling,omitempty"`
-	Static      *agent.StaticScanResult `json:"static,omitempty"`
+	Kyverno          *agent.ScanResult              `json:"kyverno,omitempty"`
+	State            *agent.StateScanResult         `json:"state,omitempty"`
+	TimingBombs      *agent.TimingBombResult        `json:"timingBombs,omitempty"`
+	Unresolved       *agent.UnresolvedResult        `json:"unresolved,omitempty"`
+	Dangling         *agent.DanglingResult          `json:"dangling,omitempty"`
+	LifecycleHazards *agent.LifecycleHazardResult   `json:"lifecycleHazards,omitempty"`
+	Static           *agent.StaticScanResult        `json:"static,omitempty"`
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -261,14 +264,24 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Run Lifecycle Hazards scan
+	var lifecycleHazardsResult *agent.LifecycleHazardResult
+	if scanLifecycleHazards {
+		// For now, lifecycle hazards scanner works with file input
+		// Cluster-based scanning will be added in a future release
+		fmt.Printf("\n%s⚠ Lifecycle hazards scanning requires --file input%s\n", colorYellow, colorReset)
+		fmt.Printf("  Use: cub-scout scan --lifecycle-hazards --file manifest.yaml\n\n")
+	}
+
 	// Output results
 	if scanJSON {
 		return outputCombinedJSON(&CombinedScanResult{
-			Kyverno:     kyvernoResult,
-			State:       stateResult,
-			TimingBombs: timingBombResult,
-			Unresolved:  unresolvedResult,
-			Dangling:    danglingResult,
+			Kyverno:          kyvernoResult,
+			State:            stateResult,
+			TimingBombs:      timingBombResult,
+			Unresolved:       unresolvedResult,
+			Dangling:         danglingResult,
+			LifecycleHazards: lifecycleHazardsResult,
 		})
 	}
 	return outputCombinedHuman(kyvernoResult, stateResult, timingBombResult, unresolvedResult, danglingResult)
@@ -932,18 +945,39 @@ func runFileScan(ctx context.Context, filename string, ccveDBDir string) error {
 		return fmt.Errorf("static scan failed: %w", err)
 	}
 
+	// Run lifecycle hazards scan if requested
+	var lifecycleResult *agent.LifecycleHazardResult
+	if scanLifecycleHazards {
+		objects, err := scanner.LoadObjectsFromFile(filename)
+		if err != nil {
+			return fmt.Errorf("failed to load objects for lifecycle scan: %w", err)
+		}
+		lifecycleScanner := agent.NewLifecycleHazardScannerFromObjects(objects)
+		lifecycleResult = lifecycleScanner.ScanObjects(objects)
+	}
+
 	if scanJSON {
-		if err := outputCombinedJSON(&CombinedScanResult{Static: result}); err != nil {
+		if err := outputCombinedJSON(&CombinedScanResult{
+			Static:           result,
+			LifecycleHazards: lifecycleResult,
+		}); err != nil {
 			return err
 		}
 	} else {
 		if err := outputStaticScanHuman(result); err != nil {
 			return err
 		}
+		if lifecycleResult != nil && lifecycleResult.Summary.Total > 0 {
+			fmt.Print(agent.RenderLifecycleHazardsASCII(lifecycleResult))
+		}
 	}
 
 	// Per cli-contract.md: exit code 1 for "Issues found or error"
-	if len(result.Findings) > 0 || result.Error != "" {
+	hasFindings := len(result.Findings) > 0 || result.Error != ""
+	if lifecycleResult != nil {
+		hasFindings = hasFindings || lifecycleResult.Summary.Total > 0
+	}
+	if hasFindings {
 		os.Exit(1)
 	}
 	return nil
