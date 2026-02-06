@@ -393,6 +393,8 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | `cub-scout trace deploy/x -n y --history` | Deployment history (who deployed what, when) |
 | `cub-scout health` | Check for issues (scout-style alias) |
 | `cub-scout scan` | Configuration risk patterns (46 patterns) |
+| `cub-scout scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD |
+| `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) |
 | `cub-scout gitops status` | GitOps pipeline health and failure diagnosis |
 | `cub-scout snapshot --relations` | Export state with dependency graph (GSF format) |
 
