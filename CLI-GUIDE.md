@@ -1387,6 +1387,43 @@ Work with debug bundles for offline inspection and sharing.
 | `replay` | Re-render bundle contents with existing renderers |
 | `diff` | Compare two bundles and show what changed |
 | `timeline` | Show time-series view of objects across a catalog |
+| `summarize` | Generate human-readable summary for tickets, PRs, or Slack |
+
+### `bundle summarize` (v0.19.5)
+
+Generate human-readable summaries from debug bundles for external systems.
+
+```bash
+# Generate ticket summary (stdout)
+./cub-scout bundle summarize ./bundle
+
+# Generate ticket summary (write to file)
+./cub-scout bundle summarize ./bundle --format ticket --out jira.md
+
+# Generate PR summary
+./cub-scout bundle summarize ./bundle --format pr
+
+# Generate Slack notification (Block Kit JSON)
+./cub-scout bundle summarize ./bundle --format slack --out notification.json
+
+# Structured JSON output
+./cub-scout bundle summarize ./bundle --format json
+```
+
+**Format options:**
+| Format | Output | Use Case |
+|--------|--------|----------|
+| `ascii` | Human-readable plain text (default) | Terminal |
+| `ticket` | Markdown for Jira/ServiceNow | Incident documentation |
+| `pr` | Markdown for PR description/comment | Code review |
+| `slack` | Slack Block Kit JSON | Channel notifications |
+| `json` | Structured data | Tooling integration |
+
+**Ticket format includes:**
+- Context: cluster, namespace, target, git commit
+- What changed: drift counts, affected resources
+- Risk signals: critical/warning findings
+- Evidence: bundle path for audit trail
 
 **Related commands:** `debug`, `catalog`
 

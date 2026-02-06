@@ -16,12 +16,13 @@ import (
 )
 
 var (
-	bundleFormat       string
-	bundleFailOn       string
-	bundleSection      string
-	bundleDiffJoin     string
-	bundleTimelineJoin string
+	bundleFormat        string
+	bundleFailOn        string
+	bundleSection       string
+	bundleDiffJoin      string
+	bundleTimelineJoin  string
 	bundleTimelineOrder string
+	bundleSummarizeOut  string
 )
 
 var bundleCmd = &cobra.Command{
@@ -215,6 +216,44 @@ Examples:
 	RunE: runBundleTimeline,
 }
 
+var bundleSummarizeCmd = &cobra.Command{
+	Use:   "summarize <path>",
+	Short: "Generate human-readable summary for tickets, PRs, or Slack",
+	Long: `Generate a summary from a debug bundle for use in external systems.
+
+This command reads a bundle and produces a human-readable summary optimized
+for different destinations: Jira/ServiceNow tickets, pull request descriptions,
+or Slack notifications.
+
+Format options:
+  ticket  Markdown summary for Jira/ServiceNow with sections:
+          What happened, Impact, Evidence, Next steps
+  pr      Markdown summary for PR description/comment with sections:
+          Summary, Changes detected, Risk signals
+  slack   Slack Block Kit JSON for channel notifications
+  ascii   Human-readable plain text (default)
+  json    Structured summary data for tooling
+
+Output is deterministic: same bundle always produces identical summary.
+All content derives from bundle facts — no external lookups.
+
+Examples:
+  # Generate ticket summary (stdout)
+  cub-scout bundle summarize ./bundle
+
+  # Generate ticket summary (write to file)
+  cub-scout bundle summarize ./bundle --format ticket --out jira.md
+
+  # Generate Slack notification (JSON)
+  cub-scout bundle summarize ./bundle --format slack --out notification.json
+
+  # Generate PR summary
+  cub-scout bundle summarize ./bundle --format pr
+`,
+	Args: cobra.ExactArgs(1),
+	RunE: runBundleSummarize,
+}
+
 // BundleReplayExitOK indicates no failure triggered
 const BundleReplayExitOK = 0
 
@@ -230,6 +269,7 @@ func init() {
 	bundleCmd.AddCommand(bundleReplayCmd)
 	bundleCmd.AddCommand(bundleDiffCmd)
 	bundleCmd.AddCommand(bundleTimelineCmd)
+	bundleCmd.AddCommand(bundleSummarizeCmd)
 
 	bundleInspectCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ascii, json")
 
@@ -243,6 +283,9 @@ func init() {
 	bundleTimelineCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ascii, json")
 	bundleTimelineCmd.Flags().StringVar(&bundleTimelineJoin, "join", "object_id", "Join mode: object_id, composite, none")
 	bundleTimelineCmd.Flags().StringVar(&bundleTimelineOrder, "order", "manifest", "Order: manifest, created_at, sequence")
+
+	bundleSummarizeCmd.Flags().StringVar(&bundleFormat, "format", "ascii", "Output format: ticket, pr, slack, ascii, json")
+	bundleSummarizeCmd.Flags().StringVar(&bundleSummarizeOut, "out", "", "Output file path (default: stdout)")
 }
 
 func runBundleInspect(cmd *cobra.Command, args []string) error {
@@ -888,4 +931,486 @@ func outputBundleTimelineASCII(timeline *agent.BundleTimeline) error {
 	output := agent.RenderBundleTimelineASCII(timeline)
 	fmt.Print(output)
 	return nil
+}
+
+// BundleSummary is the structured summary output for bundle summarize.
+// All fields are derived from bundle contents — no external lookups.
+type BundleSummary struct {
+	// FormatVersion for the summary schema
+	FormatVersion string `json:"formatVersion"`
+
+	// Cluster is the target cluster name
+	Cluster string `json:"cluster,omitempty"`
+
+	// Namespace is the target namespace
+	Namespace string `json:"namespace,omitempty"`
+
+	// Target describes the resource that was debugged
+	Target string `json:"target"`
+
+	// CapturedAt is when the bundle was created (ISO 8601)
+	CapturedAt string `json:"capturedAt"`
+
+	// GitContext contains optional git context
+	GitContext *BundleSummaryGitContext `json:"gitContext,omitempty"`
+
+	// Changes summarizes what was detected
+	Changes BundleSummaryChanges `json:"changes"`
+
+	// RiskSignals are potential issues detected
+	RiskSignals []BundleSummaryRiskSignal `json:"riskSignals,omitempty"`
+
+	// Evidence provides bundle hash and path
+	Evidence BundleSummaryEvidence `json:"evidence"`
+}
+
+// BundleSummaryGitContext is simplified git context for summaries.
+type BundleSummaryGitContext struct {
+	Commit string `json:"commit,omitempty"`
+	Branch string `json:"branch,omitempty"`
+	Remote string `json:"remote,omitempty"`
+}
+
+// BundleSummaryChanges summarizes detected changes.
+type BundleSummaryChanges struct {
+	DriftCount int      `json:"driftCount"`
+	EventCount int      `json:"eventCount"`
+	Categories []string `json:"categories,omitempty"`
+	Objects    []string `json:"objects,omitempty"`
+}
+
+// BundleSummaryRiskSignal represents a potential issue.
+type BundleSummaryRiskSignal struct {
+	Level   string `json:"level"` // warning, critical
+	Message string `json:"message"`
+}
+
+// BundleSummaryEvidence provides bundle provenance.
+type BundleSummaryEvidence struct {
+	BundlePath string `json:"bundlePath"`
+	BundleHash string `json:"bundleHash,omitempty"`
+}
+
+func runBundleSummarize(cmd *cobra.Command, args []string) error {
+	bundlePath := args[0]
+
+	// Validate format
+	validFormats := map[string]bool{
+		"ticket": true,
+		"pr":     true,
+		"slack":  true,
+		"ascii":  true,
+		"json":   true,
+	}
+	if !validFormats[bundleFormat] {
+		return fmt.Errorf("invalid format: %s (valid: ticket, pr, slack, ascii, json)", bundleFormat)
+	}
+
+	// Read the bundle
+	reader := agent.NewBundleReader()
+	bundle, err := reader.Read(bundlePath)
+	if err != nil {
+		return fmt.Errorf("failed to read bundle: %w", err)
+	}
+
+	// Build summary from bundle
+	summary := buildBundleSummary(bundle, bundlePath)
+
+	// Generate output based on format
+	var output string
+	switch bundleFormat {
+	case "json":
+		data, err := json.MarshalIndent(summary, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to encode JSON: %w", err)
+		}
+		output = string(data) + "\n"
+	case "ticket":
+		output = renderSummaryTicket(summary)
+	case "pr":
+		output = renderSummaryPR(summary)
+	case "slack":
+		output = renderSummarySlack(summary)
+	case "ascii":
+		output = renderSummaryASCII(summary)
+	}
+
+	// Write output
+	if bundleSummarizeOut != "" {
+		if err := os.WriteFile(bundleSummarizeOut, []byte(output), 0644); err != nil {
+			return fmt.Errorf("failed to write output file: %w", err)
+		}
+		fmt.Printf("Summary written to %s\n", bundleSummarizeOut)
+	} else {
+		fmt.Print(output)
+	}
+
+	return nil
+}
+
+func buildBundleSummary(bundle *agent.DebugBundle, bundlePath string) BundleSummary {
+	summary := BundleSummary{
+		FormatVersion: "v1",
+		Cluster:       bundle.Metadata.Target.Cluster,
+		Namespace:     bundle.Metadata.Target.Namespace,
+		Target:        fmt.Sprintf("%s/%s", bundle.Metadata.Target.Kind, bundle.Metadata.Target.Name),
+		CapturedAt:    bundle.Metadata.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		Evidence: BundleSummaryEvidence{
+			BundlePath: bundlePath,
+		},
+	}
+
+	// Add git context if present
+	if bundle.Metadata.GitContext != nil {
+		summary.GitContext = &BundleSummaryGitContext{
+			Commit: bundle.Metadata.GitContext.CommitSHA,
+			Branch: bundle.Metadata.GitContext.Branch,
+			Remote: bundle.Metadata.GitContext.RemoteURL,
+		}
+	}
+
+	// Build changes summary
+	summary.Changes = BundleSummaryChanges{
+		DriftCount: len(bundle.DriftFindings),
+		EventCount: len(bundle.Events),
+	}
+
+	// Extract categories and objects from drift findings
+	categorySet := make(map[string]bool)
+	objectSet := make(map[string]bool)
+	for _, f := range bundle.DriftFindings {
+		categorySet[string(f.Classification)] = true
+		objectSet[f.ObjectID] = true
+	}
+
+	// Convert to sorted lists
+	for cat := range categorySet {
+		summary.Changes.Categories = append(summary.Changes.Categories, cat)
+	}
+	sort.Strings(summary.Changes.Categories)
+
+	for obj := range objectSet {
+		summary.Changes.Objects = append(summary.Changes.Objects, obj)
+	}
+	sort.Strings(summary.Changes.Objects)
+
+	// Build risk signals
+	criticalCount := 0
+	warningCount := 0
+	for _, f := range bundle.DriftFindings {
+		if f.Severity == agent.DriftSeverityCritical {
+			criticalCount++
+		} else if f.Severity == agent.DriftSeverityWarning {
+			warningCount++
+		}
+	}
+
+	if criticalCount > 0 {
+		summary.RiskSignals = append(summary.RiskSignals, BundleSummaryRiskSignal{
+			Level:   "critical",
+			Message: fmt.Sprintf("%d critical drift finding(s)", criticalCount),
+		})
+	}
+	if warningCount > 0 {
+		summary.RiskSignals = append(summary.RiskSignals, BundleSummaryRiskSignal{
+			Level:   "warning",
+			Message: fmt.Sprintf("%d warning drift finding(s)", warningCount),
+		})
+	}
+
+	// Check for failure signals in events
+	for _, e := range bundle.Events {
+		if e.Type == "Warning" || e.Severity == "error" {
+			summary.RiskSignals = append(summary.RiskSignals, BundleSummaryRiskSignal{
+				Level:   "warning",
+				Message: "Warning events detected in timeline",
+			})
+			break
+		}
+	}
+
+	return summary
+}
+
+func renderSummaryTicket(s BundleSummary) string {
+	var b strings.Builder
+
+	b.WriteString("## cub-scout Diagnostic Summary\n\n")
+
+	// Context section
+	if s.Cluster != "" {
+		b.WriteString(fmt.Sprintf("**Cluster:** %s\n", s.Cluster))
+	}
+	if s.Namespace != "" {
+		b.WriteString(fmt.Sprintf("**Namespace:** %s\n", s.Namespace))
+	}
+	b.WriteString(fmt.Sprintf("**Target:** %s\n", s.Target))
+	b.WriteString(fmt.Sprintf("**Captured:** %s\n", s.CapturedAt))
+
+	if s.GitContext != nil && s.GitContext.Commit != "" {
+		shortCommit := s.GitContext.Commit
+		if len(shortCommit) > 7 {
+			shortCommit = shortCommit[:7]
+		}
+		b.WriteString(fmt.Sprintf("**Git Commit:** %s", shortCommit))
+		if s.GitContext.Branch != "" {
+			b.WriteString(fmt.Sprintf(" (%s)", s.GitContext.Branch))
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("\n")
+
+	// What changed section
+	b.WriteString("### What Changed\n\n")
+	if s.Changes.DriftCount == 0 && s.Changes.EventCount == 0 {
+		b.WriteString("No drift or events detected.\n")
+	} else {
+		if s.Changes.DriftCount > 0 {
+			b.WriteString(fmt.Sprintf("- **%d drift finding(s)** detected\n", s.Changes.DriftCount))
+			for _, obj := range s.Changes.Objects {
+				b.WriteString(fmt.Sprintf("  - %s\n", obj))
+			}
+		}
+		if s.Changes.EventCount > 0 {
+			b.WriteString(fmt.Sprintf("- **%d event(s)** in timeline\n", s.Changes.EventCount))
+		}
+		if len(s.Changes.Categories) > 0 {
+			b.WriteString(fmt.Sprintf("- Categories: %s\n", strings.Join(s.Changes.Categories, ", ")))
+		}
+	}
+	b.WriteString("\n")
+
+	// Risk signals section
+	if len(s.RiskSignals) > 0 {
+		b.WriteString("### Risk Signals\n\n")
+		for _, r := range s.RiskSignals {
+			icon := "warning"
+			if r.Level == "critical" {
+				icon = "critical"
+			}
+			b.WriteString(fmt.Sprintf("- **[%s]** %s\n", icon, r.Message))
+		}
+		b.WriteString("\n")
+	}
+
+	// Evidence section
+	b.WriteString("### Evidence\n\n")
+	b.WriteString(fmt.Sprintf("- Bundle: `%s`\n", s.Evidence.BundlePath))
+	b.WriteString("\n")
+
+	// Footer
+	b.WriteString("---\n")
+	b.WriteString("*Generated by cub-scout*\n")
+
+	return b.String()
+}
+
+func renderSummaryPR(s BundleSummary) string {
+	var b strings.Builder
+
+	b.WriteString("## cub-scout Change Summary\n\n")
+
+	// High-level summary
+	b.WriteString("### Summary\n\n")
+	if s.Changes.DriftCount == 0 {
+		b.WriteString("- No drift detected\n")
+	} else {
+		b.WriteString(fmt.Sprintf("- %d drift finding(s) across %d resource(s)\n", s.Changes.DriftCount, len(s.Changes.Objects)))
+	}
+	if len(s.RiskSignals) == 0 {
+		b.WriteString("- No risk signals\n")
+	}
+	b.WriteString("\n")
+
+	// Resource changes
+	if len(s.Changes.Objects) > 0 {
+		b.WriteString("### Resource Changes\n\n")
+		for _, obj := range s.Changes.Objects {
+			b.WriteString(fmt.Sprintf("- %s\n", obj))
+		}
+		b.WriteString("\n")
+	}
+
+	// Risk signals
+	if len(s.RiskSignals) > 0 {
+		b.WriteString("### Risk Signals\n\n")
+		for _, r := range s.RiskSignals {
+			icon := ":warning:"
+			if r.Level == "critical" {
+				icon = ":x:"
+			}
+			b.WriteString(fmt.Sprintf("- %s %s\n", icon, r.Message))
+		}
+		b.WriteString("\n")
+	}
+
+	// Evidence
+	b.WriteString("### Evidence\n\n")
+	b.WriteString(fmt.Sprintf("Bundle: `%s`\n", s.Evidence.BundlePath))
+	if s.GitContext != nil && s.GitContext.Commit != "" {
+		shortCommit := s.GitContext.Commit
+		if len(shortCommit) > 7 {
+			shortCommit = shortCommit[:7]
+		}
+		b.WriteString(fmt.Sprintf("Commit: `%s`\n", shortCommit))
+	}
+
+	return b.String()
+}
+
+func renderSummarySlack(s BundleSummary) string {
+	// Build Slack Block Kit JSON
+	blocks := []map[string]interface{}{
+		{
+			"type": "header",
+			"text": map[string]interface{}{
+				"type": "plain_text",
+				"text": "cub-scout Diagnostic Summary",
+			},
+		},
+		{
+			"type": "section",
+			"fields": []map[string]interface{}{
+				{"type": "mrkdwn", "text": fmt.Sprintf("*Target:*\n%s", s.Target)},
+				{"type": "mrkdwn", "text": fmt.Sprintf("*Captured:*\n%s", s.CapturedAt)},
+			},
+		},
+	}
+
+	// Add cluster/namespace if present
+	if s.Cluster != "" || s.Namespace != "" {
+		fields := []map[string]interface{}{}
+		if s.Cluster != "" {
+			fields = append(fields, map[string]interface{}{"type": "mrkdwn", "text": fmt.Sprintf("*Cluster:*\n%s", s.Cluster)})
+		}
+		if s.Namespace != "" {
+			fields = append(fields, map[string]interface{}{"type": "mrkdwn", "text": fmt.Sprintf("*Namespace:*\n%s", s.Namespace)})
+		}
+		blocks = append(blocks, map[string]interface{}{
+			"type":   "section",
+			"fields": fields,
+		})
+	}
+
+	// Add changes summary
+	var changesText string
+	if s.Changes.DriftCount == 0 && s.Changes.EventCount == 0 {
+		changesText = ":white_check_mark: No drift or events detected"
+	} else {
+		parts := []string{}
+		if s.Changes.DriftCount > 0 {
+			parts = append(parts, fmt.Sprintf(":mag: %d drift finding(s)", s.Changes.DriftCount))
+		}
+		if s.Changes.EventCount > 0 {
+			parts = append(parts, fmt.Sprintf(":clock3: %d event(s)", s.Changes.EventCount))
+		}
+		changesText = strings.Join(parts, " | ")
+	}
+	blocks = append(blocks, map[string]interface{}{
+		"type": "section",
+		"text": map[string]interface{}{
+			"type": "mrkdwn",
+			"text": changesText,
+		},
+	})
+
+	// Add risk signals if any
+	if len(s.RiskSignals) > 0 {
+		blocks = append(blocks, map[string]interface{}{"type": "divider"})
+		riskLines := []string{}
+		for _, r := range s.RiskSignals {
+			icon := ":warning:"
+			if r.Level == "critical" {
+				icon = ":rotating_light:"
+			}
+			riskLines = append(riskLines, fmt.Sprintf("%s %s", icon, r.Message))
+		}
+		blocks = append(blocks, map[string]interface{}{
+			"type": "section",
+			"text": map[string]interface{}{
+				"type": "mrkdwn",
+				"text": strings.Join(riskLines, "\n"),
+			},
+		})
+	}
+
+	// Context block with bundle path
+	blocks = append(blocks, map[string]interface{}{
+		"type": "context",
+		"elements": []map[string]interface{}{
+			{"type": "mrkdwn", "text": fmt.Sprintf("Bundle: `%s`", s.Evidence.BundlePath)},
+		},
+	})
+
+	output := map[string]interface{}{
+		"blocks": blocks,
+	}
+
+	data, _ := json.MarshalIndent(output, "", "  ")
+	return string(data) + "\n"
+}
+
+func renderSummaryASCII(s BundleSummary) string {
+	var b strings.Builder
+
+	b.WriteString("cub-scout Diagnostic Summary\n")
+	b.WriteString(strings.Repeat("─", 50))
+	b.WriteString("\n\n")
+
+	// Context
+	b.WriteString(fmt.Sprintf("Target:     %s\n", s.Target))
+	if s.Cluster != "" {
+		b.WriteString(fmt.Sprintf("Cluster:    %s\n", s.Cluster))
+	}
+	if s.Namespace != "" {
+		b.WriteString(fmt.Sprintf("Namespace:  %s\n", s.Namespace))
+	}
+	b.WriteString(fmt.Sprintf("Captured:   %s\n", s.CapturedAt))
+	if s.GitContext != nil && s.GitContext.Commit != "" {
+		shortCommit := s.GitContext.Commit
+		if len(shortCommit) > 7 {
+			shortCommit = shortCommit[:7]
+		}
+		b.WriteString(fmt.Sprintf("Commit:     %s\n", shortCommit))
+	}
+	b.WriteString("\n")
+
+	// Changes
+	b.WriteString("Changes\n")
+	if s.Changes.DriftCount == 0 && s.Changes.EventCount == 0 {
+		b.WriteString("  No drift or events detected.\n")
+	} else {
+		if s.Changes.DriftCount > 0 {
+			b.WriteString(fmt.Sprintf("  %s %d drift finding(s)\n", SymWarning, s.Changes.DriftCount))
+		}
+		if s.Changes.EventCount > 0 {
+			b.WriteString(fmt.Sprintf("  %s %d event(s)\n", SymActive, s.Changes.EventCount))
+		}
+		if len(s.Changes.Objects) > 0 {
+			b.WriteString("  Objects:\n")
+			for _, obj := range s.Changes.Objects {
+				b.WriteString(fmt.Sprintf("    - %s\n", obj))
+			}
+		}
+	}
+	b.WriteString("\n")
+
+	// Risk signals
+	if len(s.RiskSignals) > 0 {
+		b.WriteString("Risk Signals\n")
+		for _, r := range s.RiskSignals {
+			sym := SymWarning
+			if r.Level == "critical" {
+				sym = SymError
+			}
+			b.WriteString(fmt.Sprintf("  %s %s\n", sym, r.Message))
+		}
+		b.WriteString("\n")
+	}
+
+	// Evidence
+	b.WriteString("Evidence\n")
+	b.WriteString(fmt.Sprintf("  Bundle: %s\n", s.Evidence.BundlePath))
+
+	return b.String()
 }
