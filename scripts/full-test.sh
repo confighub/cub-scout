@@ -22,6 +22,28 @@ echo "cub-scout full test suite"
 echo "=========================================="
 echo ""
 
+# Prevent automatic toolchain download (for air-gapped environments)
+export GOTOOLCHAIN=local
+
+# Check Go version (requires 1.24+)
+REQUIRED_GO_VERSION="1.24"
+CURRENT_GO_VERSION=$(go version 2>/dev/null | grep -oE 'go[0-9]+\.[0-9]+' | sed 's/go//')
+if [ -z "$CURRENT_GO_VERSION" ]; then
+  fail "Go is not installed. Please install Go $REQUIRED_GO_VERSION or later."
+fi
+
+# Compare versions (simple major.minor check)
+CURRENT_MAJOR=$(echo "$CURRENT_GO_VERSION" | cut -d. -f1)
+CURRENT_MINOR=$(echo "$CURRENT_GO_VERSION" | cut -d. -f2)
+REQUIRED_MAJOR=$(echo "$REQUIRED_GO_VERSION" | cut -d. -f1)
+REQUIRED_MINOR=$(echo "$REQUIRED_GO_VERSION" | cut -d. -f2)
+
+if [ "$CURRENT_MAJOR" -lt "$REQUIRED_MAJOR" ] || \
+   ([ "$CURRENT_MAJOR" -eq "$REQUIRED_MAJOR" ] && [ "$CURRENT_MINOR" -lt "$REQUIRED_MINOR" ]); then
+  fail "Go $REQUIRED_GO_VERSION+ required, but found Go $CURRENT_GO_VERSION. Please upgrade."
+fi
+pass "Go version check passed (Go $CURRENT_GO_VERSION)"
+
 # 1) Build
 info "Building cub-scout..."
 go build ./cmd/cub-scout || fail "Build failed"

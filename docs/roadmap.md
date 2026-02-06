@@ -150,7 +150,7 @@ cub-scout is now **operationally connected** while remaining offline-capable.
 
 ## v0.19 — TUI Polish & Evidence Workflows
 
-**Status:** Released (v0.19.0–v0.19.5)
+**Status:** Released (v0.19.0–v0.19.6)
 
 Theme: *Delight on top of substance*
 
@@ -176,6 +176,15 @@ Theme: *Delight on top of substance*
 * `map hooks` — list resources with lifecycle hook annotations
 * Helm-to-ArgoCD phase mapping (pre-install→PreSync, post-install→PostSync)
 * `examples/lifecycle-hazards/` — documentation and example manifests
+
+### v0.19.6: 1.0 Readiness
+
+* Real connected mode auth (LoadAuth/SaveAuth with JSON persistence)
+* Real connectivity check (HTTP HEAD to ConfigHub with timeout)
+* CLI contract v1.0 frozen (`docs/reference/cli-contract.md`)
+* Hub package tests added
+* Removed "experimental" messaging from README
+* GOTOOLCHAIN=local for air-gapped build compatibility
 
 The UX surface is now **stable and locked**.
 

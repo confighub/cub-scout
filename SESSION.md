@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-06
 **Version line:** v0.19.x (preparing v1.0)
-**Latest release:** **v0.19.5**
+**Latest release:** **v0.19.6**
 **Repo state:** Clean, green, synced
 **Semantic status:** Stable and sealed — preparing for v1.0
 
@@ -10,15 +10,23 @@
 
 ## 📦 What Is Shipped (COMPLETE)
 
-### v0.19.5 — GitOps Lifecycle Hazards (RELEASED)
+### v0.19.6 — 1.0 Readiness (RELEASED)
 
-**Tag:** `v0.19.5`
+**Tag:** `v0.19.6`
 **GitHub Release:** Published
 **Tests:** All passing (`go test ./...`, race-safe)
 
-### Previous releases: v0.16.0–v0.19.4
+Key changes:
+- Real connected mode auth (LoadAuth/SaveAuth with JSON persistence)
+- Real connectivity check (HTTP HEAD with timeout)
+- CLI contract v1.0 frozen
+- Hub package tests added
+- Removed "experimental" messaging
+- GOTOOLCHAIN=local for air-gapped builds
 
-All v0.16–v0.19.4 releases are complete. See `docs/roadmap.md` for details.
+### Previous releases: v0.16.0–v0.19.5
+
+All v0.16–v0.19.5 releases are complete. See `docs/roadmap.md` for details.
 
 ### Core capabilities delivered
 

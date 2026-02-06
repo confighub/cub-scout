@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -80,30 +81,51 @@ func runStatus(cmd *cobra.Command) error {
 		Context:     getCurrentContext(),
 	}
 
-	// Check ConfigHub connection by running cub context get
-	cubCtx, email, err := getStatusCubContext()
-	if err == nil && cubCtx != nil {
-		// Context exists - now validate auth token
-		authValid := validateAuthToken()
-		status.AuthValid = &authValid
+	// Use pkg/hub for base connectivity/auth state
+	hubMode := hub.CurrentMode()
+	switch hubMode {
+	case hub.Offline:
+		status.Mode = "offline"
+	case hub.Online:
+		status.Mode = "online"
+	case hub.Connected:
+		status.Mode = "connected"
+	}
 
-		if authValid {
-			status.Mode = "connected"
-		} else {
-			status.Mode = "auth_expired"
+	// If we have local auth, check if cub CLI is available for richer status
+	if hub.IsAuthenticated() {
+		auth, _ := hub.LoadAuth()
+		if auth != nil && auth.Email != "" {
+			status.Email = auth.Email
 		}
-		status.Email = email
-		status.Space = cubCtx.Settings.DefaultSpace
 
-		// Try to get worker status for the current cluster (only if auth is valid)
-		if authValid {
-			worker := getWorkerForCluster(cubCtx.Settings.DefaultSpace, status.ClusterName)
-			if worker != nil {
-				status.Worker = worker
+		// Try to get extended status from cub CLI (optional dependency)
+		if cubInstalled() {
+			cubCtx, email, err := getStatusCubContext()
+			if err == nil && cubCtx != nil {
+				// cub CLI context overrides local auth for email
+				if email != "" {
+					status.Email = email
+				}
+				status.Space = cubCtx.Settings.DefaultSpace
+
+				// Validate token via cub CLI
+				authValid := validateAuthToken()
+				status.AuthValid = &authValid
+
+				if !authValid {
+					status.Mode = "auth_expired"
+				}
+
+				// Try to get worker status (only if auth is valid)
+				if authValid && cubCtx.Settings.DefaultSpace != "" {
+					worker := getWorkerForCluster(cubCtx.Settings.DefaultSpace, status.ClusterName)
+					if worker != nil {
+						status.Worker = worker
+					}
+				}
 			}
 		}
-	} else if isOnline() {
-		status.Mode = "online"
 	}
 
 	if jsonOutput {
@@ -198,10 +220,9 @@ func getClusterName() string {
 	return name
 }
 
-// isOnline checks basic internet connectivity
-func isOnline() bool {
-	// Simple check - if we can run cub without errors, we're probably online
-	_, err := exec.Command("cub", "--version").Output()
+// cubInstalled checks if the cub CLI is available
+func cubInstalled() bool {
+	_, err := exec.LookPath("cub")
 	return err == nil
 }
 

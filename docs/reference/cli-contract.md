@@ -624,12 +624,25 @@ cub-scout status [flags]
 |------|------|---------|-------------|
 | `--json` | bool | false | JSON output |
 
+### Behavior
+
+The status command uses `pkg/hub` for connectivity and authentication state:
+
+- **Offline**: No network connectivity or `CUB_SCOUT_OFFLINE=true`
+- **Online**: Network available but not authenticated
+- **Connected**: Authenticated with ConfigHub
+
+**Optional dependency:** If the `cub` CLI is installed, status provides richer
+information including workspace, auth token validation, and worker status.
+Without `cub`, basic mode detection still works via `pkg/hub`.
+
 ### Output (Plain Text)
 
 ```
 ConfigHub:  ● Connected (user@example.com)
 Cluster:    prod-east
 Context:    eks-prod-east
+Worker:     ● bridge-prod (connected)
 ```
 
 ### Output (JSON)
@@ -639,7 +652,12 @@ Context:    eks-prod-east
   "mode": "connected",
   "email": "user@example.com",
   "cluster_name": "prod-east",
-  "context": "eks-prod-east"
+  "context": "eks-prod-east",
+  "space": "platform-prod",
+  "worker": {
+    "name": "bridge-prod",
+    "status": "connected"
+  }
 }
 ```
 
