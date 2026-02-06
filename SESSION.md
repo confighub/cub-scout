@@ -1,21 +1,24 @@
 # ✅ OFFICIAL SAVEPOINT — cub-scout
 
-**Date:** 2026-02-04
-**Version line:** v0.16.x
-**Latest release:** **v0.16.0**
-**Commit:** `dc56fb5` (release) + `65d3b51` (testing strategy)
+**Date:** 2026-02-06
+**Version line:** v0.19.x (preparing v1.0)
+**Latest release:** **v0.19.5**
 **Repo state:** Clean, green, synced
-**Semantic status:** Stable and sealed
+**Semantic status:** Stable and sealed — preparing for v1.0
 
 ---
 
 ## 📦 What Is Shipped (COMPLETE)
 
-### v0.16.0 — Composition Attribution (RELEASED)
+### v0.19.5 — GitOps Lifecycle Hazards (RELEASED)
 
-**Tag:** `v0.16.0`
+**Tag:** `v0.19.5`
 **GitHub Release:** Published
 **Tests:** All passing (`go test ./...`, race-safe)
+
+### Previous releases: v0.16.0–v0.19.4
+
+All v0.16–v0.19.4 releases are complete. See `docs/roadmap.md` for details.
 
 ### Core capabilities delivered
 

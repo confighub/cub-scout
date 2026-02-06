@@ -2,6 +2,20 @@
 // This is the SINGLE SOURCE OF TRUTH for all ConfigHub connectivity.
 package hub
 
+import (
+	"net/http"
+	"os"
+	"time"
+)
+
+const (
+	// ConfigHubHealthEndpoint is the endpoint used to check ConfigHub connectivity.
+	ConfigHubHealthEndpoint = "https://api.confighub.com/health"
+
+	// ConnectivityTimeout is the maximum time to wait for connectivity check.
+	ConnectivityTimeout = 2 * time.Second
+)
+
 // Mode represents the current operating mode of cub-scout.
 type Mode int
 
@@ -49,9 +63,33 @@ func CurrentMode() Mode {
 	return Online
 }
 
-// hasConnectivity checks if we can reach the internet.
+// hasConnectivity checks if we can reach ConfigHub.
+// Returns false if:
+// - CUB_SCOUT_OFFLINE=true environment variable is set
+// - Telemetry is disabled (implies user wants offline mode)
+// - HTTP request to ConfigHub health endpoint fails or times out
 func hasConnectivity() bool {
-	// TODO: Implement connectivity check
-	// For now, assume online unless explicitly disabled
-	return !telemetryDisabled()
+	// Check explicit offline mode
+	if os.Getenv("CUB_SCOUT_OFFLINE") == "true" {
+		return false
+	}
+
+	// Check if user has opted out of network activity
+	if telemetryDisabled() {
+		return false
+	}
+
+	// Perform actual connectivity check
+	client := &http.Client{
+		Timeout: ConnectivityTimeout,
+	}
+
+	resp, err := client.Head(ConfigHubHealthEndpoint)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	// Any 2xx or 3xx response indicates connectivity
+	return resp.StatusCode < 400
 }

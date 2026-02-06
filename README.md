@@ -2,7 +2,7 @@
 
 Cub-scout is an open source cluster explorer which is designed to work with existing k8s/gitops clusters as a 'standalone' (read only) tool.  You can also run cub-scout with more features in ['connected' mode](#connecting-cub-scout-confighub), using your (free!) account on [ConfigHub](https://confighub.com).  Or you can [integrate its behaviour](https://github.com/confighub/cub-scout/blob/main/docs/reference/gsf-schema.md) into your own favourite tool.
 
-NOTE: experimental project.  Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues) or joining [Discord](https://discord.gg/confighub).  
+Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues) or joining [Discord](https://discord.gg/confighub).
 
 **Demystify GitOps. See what's really happening in your cluster.**
 
@@ -543,7 +543,7 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 ## Connecting cub-scout ConfigHub
 
-cub-scout is an experimental open-source cluster explorer which is designed to work with existing k8s clusters as a 'standalone' (read only) tool.  Or, if you have signed up, we recommended running cub-scout connected to [ConfigHub](https://confighub.com).
+cub-scout is an open-source cluster explorer designed to work with existing Kubernetes clusters as a standalone (read-only) tool. For additional features, connect to [ConfigHub](https://confighub.com).
 
 | Feature | Standalone | Connected |
 |---------|:----------:|:---------:|

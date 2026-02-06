@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 )
@@ -26,18 +27,38 @@ func IsAuthenticated() bool {
 // LoadAuth loads authentication state from local storage.
 func LoadAuth() (*Auth, error) {
 	configPath := authConfigPath()
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return &Auth{}, nil
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &Auth{}, nil
+		}
+		return nil, err
 	}
 
-	// TODO: Implement actual auth loading
-	return &Auth{}, nil
+	var auth Auth
+	if err := json.Unmarshal(data, &auth); err != nil {
+		// Corrupted file - return empty auth rather than error
+		// User can re-login to fix
+		return &Auth{}, nil
+	}
+	return &auth, nil
 }
 
 // SaveAuth saves authentication state to local storage.
 func SaveAuth(auth *Auth) error {
-	// TODO: Implement auth saving
-	return nil
+	configPath := authConfigPath()
+	dir := filepath.Dir(configPath)
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(auth, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	// Write with restrictive permissions (user-only read/write)
+	return os.WriteFile(configPath, data, 0600)
 }
 
 // ClearAuth removes authentication state (logout).

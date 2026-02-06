@@ -20,12 +20,11 @@ func telemetryDisabled() bool {
 		return true
 	}
 
-	// Check config file
+	// Check config file - presence of file means disabled
+	// (filename is "telemetry-disabled", created by DisableTelemetry())
 	configPath := telemetryConfigPath()
 	if _, err := os.Stat(configPath); err == nil {
-		// Config file exists, read the setting
-		// TODO: Implement config file reading
-		return false
+		return true // File exists = telemetry disabled
 	}
 
 	return false
@@ -58,6 +57,19 @@ func telemetryConfigPath() string {
 
 // SendStartupPing sends a telemetry ping on startup.
 // Only called if telemetry is enabled and we're in Online or Connected mode.
+//
+// Current behavior (v1.0): No-op. Telemetry infrastructure is not yet deployed.
+// When implemented, this will send only:
+//   - Anonymous session ID (rotated daily)
+//   - cub-scout version
+//   - OS/arch
+//
+// It will NEVER send:
+//   - Cluster names or data
+//   - Resource information
+//   - User identity (unless authenticated)
+//
+// Users can opt out via CUB_SCOUT_TELEMETRY=false or `cub-scout telemetry disable`.
 func SendStartupPing() error {
 	if !TelemetryEnabled() {
 		return nil
@@ -67,7 +79,8 @@ func SendStartupPing() error {
 		return nil
 	}
 
-	// TODO: Implement HTTP POST to TelemetryEndpoint
-	// Just sends machine IP, no cluster data
+	// v1.0: Telemetry endpoint not yet deployed - this is intentionally a no-op.
+	// The infrastructure (TelemetryEnabled, telemetryDisabled, etc.) is in place
+	// so users can pre-emptively opt out before telemetry goes live.
 	return nil
 }

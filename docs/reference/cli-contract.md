@@ -4,7 +4,7 @@ This document defines the stable CLI behavior for cub-scout.
 Commands, flags, and output formats documented here are considered stable and
 breaking changes will be avoided within the same contract version.
 
-**Current Version:** v0.14.1
+**Current Version:** v1.0
 
 ---
 
@@ -17,6 +17,10 @@ breaking changes will be avoided within the same contract version.
 | v0.7 | patterns list/detect/explain |
 | v0.14 | `--format` flag (ascii/json/md), JSON schema guarantees |
 | v0.14.1 | gitops status command |
+| v0.15 | bundle replay, bundle diff, bundle timeline, catalog |
+| v0.16 | Attribution graph/report, Crossplane lineage, Kustomize overlay |
+| v0.19 | Shell completion, map hooks, scan --lifecycle-hazards, bundle summarize |
+| v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
 
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.
@@ -31,14 +35,24 @@ breaking changes will be avoided within the same contract version.
 | `cub-scout map list` | List resources (scriptable) | v0.5 |
 | `cub-scout map status` | One-line health check | v0.5 |
 | `cub-scout map deployers` | List deployers (Deployments) | v0.5 |
+| `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
 | `cub-scout trace` | Trace resource to Git source | v0.5 |
 | `cub-scout scan` | Scan for CCVEs and issues | v0.5 |
+| `cub-scout scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
 | `cub-scout graph export` | Export resource graph as JSON | v0.6 |
 | `cub-scout graph explain` | Explain resource relationships | v0.6 |
 | `cub-scout patterns list` | List registered patterns | v0.7 |
 | `cub-scout patterns detect` | Run pattern detection | v0.7 |
 | `cub-scout patterns explain` | Explain specific pattern | v0.7 |
 | `cub-scout gitops status` | GitOps pipeline health | v0.14.1 |
+| `cub-scout bundle inspect` | Show bundle metadata and contents | v0.15 |
+| `cub-scout bundle replay` | Re-render bundle contents | v0.15 |
+| `cub-scout bundle diff` | Compare two bundles | v0.15 |
+| `cub-scout bundle timeline` | Time-series view across catalog | v0.15 |
+| `cub-scout bundle summarize` | Generate summary for tickets/PRs | v0.19 |
+| `cub-scout catalog list` | List bundles in a catalog | v0.15 |
+| `cub-scout completion` | Generate shell completion script | v0.19 |
+| `cub-scout status` | Show connection status and cluster info | v1.0 |
 
 ---
 
@@ -398,20 +412,30 @@ Error: invalid query: unknown field "foo"
 
 ## Compatibility Notes
 
-### v0.5 Guarantees
+### v1.0 Guarantees
 
-1. **Flag names are stable** - existing flags will not be renamed or removed
-2. **JSON schema is stable** - fields will not be removed, only added
-3. **Exit codes are stable** - 0 = success, 1 = error/issues
-4. **Query syntax is stable** - existing operators work as documented
+1. **Flag names are stable** — existing flags will not be renamed or removed
+2. **JSON schema is stable** — fields will not be removed, only added
+3. **Exit codes are stable** — 0 = success, 1 = error/issues
+4. **Query syntax is stable** — existing operators work as documented
+5. **Sealed schemas** — `attribution-graph.v1` and `attribution-report.v1` are locked
 
-### Future Changes (v0.6+)
+### What May Change (v1.x)
 
-These may change in future versions:
+These may change in minor versions without being considered breaking:
 - Plain text output formatting (column widths, alignment)
 - TUI appearance and keybindings
 - New flags may be added
-- New JSON fields may be added
+- New JSON fields may be added (additive only)
+- Connected mode features may expand
+
+### Breaking Change Policy
+
+Breaking changes require a new major version (v2.0+). We define breaking as:
+- Removing a command or flag
+- Changing exit code semantics
+- Removing JSON fields
+- Changing query syntax in incompatible ways
 
 ---
 
@@ -474,6 +498,161 @@ NEXT STEPS
 |------|---------|
 | 0 | Success (even if failures shown) |
 | 1 | Error (cluster unreachable, etc.) |
+
+---
+
+## cub-scout scan --lifecycle-hazards (v0.19)
+
+Detect Helm lifecycle hook risks when running under ArgoCD.
+
+```bash
+cub-scout scan --lifecycle-hazards [flags]
+```
+
+Helm hooks (pre-install, post-install, etc.) behave differently under ArgoCD
+sync waves. This scanner identifies potential issues.
+
+### Output
+
+```
+LIFECYCLE HAZARDS
+════════════════════════════════════════════════════════════════════
+
+Found 2 hazard(s)
+
+WARNING
+────────────────────────────────────────────────────────────────────
+[W] Helm pre-install hook may conflict with ArgoCD PreSync
+    Resource: default/Job/db-migrate
+    Helm Phase: pre-install
+    ArgoCD Phase: PreSync
+    Risk: Hook may run twice or in unexpected order
+```
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | No hazards found |
+| 1 | Hazards found or error |
+
+---
+
+## cub-scout map hooks (v0.19)
+
+List all resources with lifecycle hook annotations (Helm or ArgoCD).
+
+```bash
+cub-scout map hooks [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-n, --namespace` | string | all | Filter by namespace |
+| `--json` | bool | false | JSON output |
+
+### Output
+
+```
+LIFECYCLE HOOKS
+════════════════════════════════════════════════════════════════════
+
+NAMESPACE   KIND   NAME         HOOK TYPE    PHASE
+default     Job    db-migrate   helm         pre-install
+default     Job    cleanup      argocd       PostSync
+```
+
+---
+
+## cub-scout bundle summarize (v0.19)
+
+Generate a human-readable summary suitable for tickets, PRs, or Slack.
+
+```bash
+cub-scout bundle summarize <bundle-path> [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--format` | string | text | Output format: text, md, slack |
+
+### Output
+
+Produces a concise summary of the bundle's findings, suitable for
+pasting into external systems.
+
+---
+
+## cub-scout completion (v0.19)
+
+Generate shell completion scripts.
+
+```bash
+cub-scout completion [bash|zsh|fish|powershell]
+```
+
+### Usage
+
+```bash
+# Bash (add to ~/.bashrc)
+source <(cub-scout completion bash)
+
+# Zsh (add to ~/.zshrc)
+source <(cub-scout completion zsh)
+
+# Fish
+cub-scout completion fish | source
+```
+
+---
+
+## cub-scout status (v1.0)
+
+Show connection status and cluster info.
+
+```bash
+cub-scout status [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--json` | bool | false | JSON output |
+
+### Output (Plain Text)
+
+```
+ConfigHub:  ● Connected (user@example.com)
+Cluster:    prod-east
+Context:    eks-prod-east
+```
+
+### Output (JSON)
+
+```json
+{
+  "mode": "connected",
+  "email": "user@example.com",
+  "cluster_name": "prod-east",
+  "context": "eks-prod-east"
+}
+```
+
+---
+
+## Environment Variables (v1.0)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CLUSTER_NAME` | `default` | Name for this cluster |
+| `KUBECONFIG` | `~/.kube/config` | Path to kubeconfig |
+| `CUB_SCOUT_OFFLINE` | unset | Set to `true` to force offline mode |
+| `CUB_SCOUT_TELEMETRY` | unset | Set to `false` to disable telemetry |
 
 ---
 
