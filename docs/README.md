@@ -25,6 +25,7 @@ Task-based guides:
 |------|-------|
 | Find orphan resources | [howto/find-orphans.md](howto/find-orphans.md) |
 | Trace ownership chains | [howto/trace-ownership.md](howto/trace-ownership.md) |
+| Crossplane walkthrough | [howto/crossplane-walkthrough.md](howto/crossplane-walkthrough.md) |
 | Query resources | [howto/query-resources.md](howto/query-resources.md) |
 | Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
 | Tree hierarchies | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
