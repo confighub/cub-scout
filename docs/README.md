@@ -57,6 +57,7 @@ Complete reference documentation:
 | Keybindings | [reference/keybindings.md](reference/keybindings.md) |
 | GitOps patterns | [reference/gitops-patterns.md](reference/gitops-patterns.md) |
 | GitOps repo structures | [reference/gitops-repo-structures.md](reference/gitops-repo-structures.md) |
+| Resolver pattern | [reference/resolver-pattern.md](reference/resolver-pattern.md) |
 | Hub/AppSpace examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
 | Map PRD | [reference/map-prd.md](reference/map-prd.md) |
 | Command matrix | [reference/command-matrix.md](reference/command-matrix.md) |
