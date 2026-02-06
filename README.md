@@ -488,6 +488,15 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) |
 | `cub-scout gitops status` | GitOps pipeline health and failure diagnosis |
 | `cub-scout snapshot --relations` | Export state with dependency graph (GSF format) |
+| `cub-scout bundle summarize` | Generate summary for Jira, PRs, or Slack |
+
+### Bundle Summaries (Export to External Systems)
+
+| Command | Output |
+|---------|--------|
+| `cub-scout bundle summarize ./bundle --format ticket` | Markdown for Jira/ServiceNow |
+| `cub-scout bundle summarize ./bundle --format pr` | Markdown for PR descriptions |
+| `cub-scout bundle summarize ./bundle --format slack` | Slack Block Kit JSON |
 
 ### Tree Views
 

@@ -568,7 +568,7 @@ default     Job    cleanup      argocd       PostSync
 
 ## cub-scout bundle summarize (v0.19)
 
-Generate a human-readable summary suitable for tickets, PRs, or Slack.
+Generate summaries from debug bundles for external systems (Jira, PRs, Slack).
 
 ```bash
 cub-scout bundle summarize <bundle-path> [flags]
@@ -578,12 +578,36 @@ cub-scout bundle summarize <bundle-path> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--format` | string | text | Output format: text, md, slack |
+| `--format` | string | ascii | Output format: ticket, pr, slack, ascii, json |
+| `--out` | string | stdout | Output file path |
+
+### Formats
+
+| Format | Output | Use Case |
+|--------|--------|----------|
+| `ticket` | Markdown | Jira, ServiceNow incident tickets |
+| `pr` | Markdown | Pull request descriptions/comments |
+| `slack` | Slack Block Kit JSON | Channel notifications |
+| `ascii` | Plain text | Human reading (default) |
+| `json` | Structured JSON | Downstream tooling |
+
+### Examples
+
+```bash
+# Jira/ServiceNow ticket
+cub-scout bundle summarize ./bundle --format ticket --out incident.md
+
+# PR description
+cub-scout bundle summarize ./bundle --format pr
+
+# Slack notification
+cub-scout bundle summarize ./bundle --format slack --out notification.json
+```
 
 ### Output
 
-Produces a concise summary of the bundle's findings, suitable for
-pasting into external systems.
+Produces a deterministic summary of the bundle's findings. Same bundle
+always produces identical output. All content derives from bundle facts.
 
 ---
 
