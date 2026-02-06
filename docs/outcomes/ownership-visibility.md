@@ -166,10 +166,10 @@ Consider admission controllers that require GitOps labels in production namespac
 
 ## Demo
 
-Try the orphan-hunt scenario:
+Try the orphan scenario:
 
 ```bash
-# DEPRECATED: ./test/atk/demo scenario orphan-hunt
+./cub-scout demo scenario orphan
 ```
 
 This creates orphan resources and walks through finding and handling them.

@@ -232,7 +232,7 @@ Try the import demo:
 
 ```bash
 # First, run the quick demo to create test resources
-# DEPRECATED: ./test/atk/demo quick
+./cub-scout demo quick
 
 # Then run import
 cub-scout import

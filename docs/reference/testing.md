@@ -591,7 +591,7 @@ Summary: 2 critical, 3 warning, 1 info
 Interactive demos with narrative walkthroughs:
 
 ```bash
-# DEPRECATED: ./test/atk/demo --list
+./cub-scout demo list
 ```
 
 **Expected output:**
@@ -608,9 +608,9 @@ Available Demos
 
 Scenarios (Narrative Demos)
 
-  scenario bigbank-incident ~3 min       Walk through the BIGBANK 4-hour outage
-  scenario orphan-hunt ~2 min       Find and fix orphan resources
-  scenario monday-morning ~1 min       Weekly health check ritual
+  scenario bigbank     ~3 min       Walk through the BIGBANK 4-hour outage
+  scenario orphan      ~2 min       Find and fix orphan resources
+  scenario monday      ~1 min       Weekly health check ritual
 ```
 
 ### Quick Demo (~30 sec)
@@ -618,7 +618,7 @@ Scenarios (Narrative Demos)
 Fastest path to see the Map in action:
 
 ```bash
-# DEPRECATED: ./test/atk/demo quick
+./cub-scout demo quick
 ```
 
 ### CCVE-2025-0027 Demo (~2 min)
@@ -626,7 +626,7 @@ Fastest path to see the Map in action:
 The headline story — this exact bug caused a 4-hour outage at BIGBANK:
 
 ```bash
-# DEPRECATED: ./test/atk/demo ccve
+./cub-scout demo ccve
 ```
 
 ### Narrative Scenarios
@@ -634,36 +634,23 @@ The headline story — this exact bug caused a 4-hour outage at BIGBANK:
 Walk through real incidents with storytelling:
 
 ```bash
-# DEPRECATED: ./test/atk/demo scenario bigbank-incident   # The BIGBANK 4-hour outage story
-# DEPRECATED: ./test/atk/demo scenario orphan-hunt    # "What's this mystery-app?"
-# DEPRECATED: ./test/atk/demo scenario monday-morning # Weekly health check ritual
-# DEPRECATED: ./test/atk/demo scenario clobber        # Platform vs app config protection
+./cub-scout demo scenario bigbank   # The BIGBANK 4-hour outage story
+./cub-scout demo scenario orphan    # "What's this mystery-app?"
+./cub-scout demo scenario monday    # Weekly health check ritual
 ```
 
 ### Other Demos
 
 ```bash
-# DEPRECATED: ./test/atk/demo query                   # Query language syntax
-# DEPRECATED: ./test/atk/demo connected               # ConfigHub connected mode
-```
-
-### TUI Demo Scripts
-
-Interactive demo scripts in `examples/demos/`:
-
-```bash
-examples/demos/kyverno-scan-demo.sh     # KPOL database (460 patterns)
-examples/demos/tui-trace-demo.sh        # Resource tracing
-examples/demos/tui-queries-demo.sh      # TUI query interface
-examples/demos/tui-import-demo.sh       # Import wizard
-examples/demos/fleet-queries-demo.sh    # Fleet queries
+./cub-scout demo query              # Query language syntax
+./cub-scout demo connected          # ConfigHub connected mode
 ```
 
 ### Cleanup Demos
 
 ```bash
-# DEPRECATED: ./test/atk/demo quick --cleanup
-# DEPRECATED: ./test/atk/demo ccve --cleanup
+./cub-scout demo quick --cleanup
+./cub-scout demo ccve --cleanup
 ```
 
 ## Want More?

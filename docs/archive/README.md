@@ -55,3 +55,10 @@ The content has been consolidated into CLI-GUIDE.md and the docs/ directory.
 
 **Case Studies:**
 - `EXAMPLES-TUI-MAP-FLEET-IITS-STUDIES.md` - Enterprise case studies
+
+**Design Documents (v0.19.x archive):**
+- `v0.14-json-schema.md` - v0.14 JSON schema specification
+- `v0.15-design-checkpoint.md` - v0.15 design checkpoint
+- `v0.19-experience-report.md` - v0.19 experience report
+- `codex-review-checklist.md` - Internal review checklist
+- `gitops-hierarchies.md` - GitOps hierarchy concepts (superseded by howto/)

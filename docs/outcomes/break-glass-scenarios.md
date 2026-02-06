@@ -193,7 +193,7 @@ LIVE (cluster)     CONFIGUB (store)     OCI (transport)     FLUX/ARGO
 
 ```bash
 # Simulate break-glass scenario
-# DEPRECATED: ./test/atk/demo scenario orphan-hunt
+./cub-scout demo scenario orphan
 
 # Shows:
 # 1. Orphan resources created
