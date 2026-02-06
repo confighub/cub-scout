@@ -148,13 +148,13 @@ cub-scout is now **operationally connected** while remaining offline-capable.
 
 ---
 
-## v0.19 — TUI Polish
+## v0.19 — TUI Polish & Evidence Workflows
 
-**Status:** Released
+**Status:** Released (v0.19.0–v0.19.5)
 
 Theme: *Delight on top of substance*
 
-Delivered:
+### v0.19.0–v0.19.3: TUI Polish
 
 * Canonical visual vocabulary
 * TUI snapshot golden tests
@@ -164,6 +164,18 @@ Delivered:
 * Resolver pattern documentation (#24) ✅
 * Crossplane walkthrough (#23) ✅
 * Performance & scale guardrails (#22) ✅
+
+### v0.19.4: Evidence Adjacency
+
+* `bundle summarize` command — export for tickets, PRs, Slack
+* Docs audit — archived stale docs, fixed DEPRECATED references
+
+### v0.19.5: GitOps Lifecycle Hazards
+
+* `scan --lifecycle-hazards` — detect Helm hook risks under ArgoCD
+* `map hooks` — list resources with lifecycle hook annotations
+* Helm-to-ArgoCD phase mapping (pre-install→PreSync, post-install→PostSync)
+* `examples/lifecycle-hazards/` — documentation and example manifests
 
 The UX surface is now **stable and locked**.
 
