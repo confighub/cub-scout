@@ -3522,3 +3522,122 @@ _ = mapCmd.RegisterFlagCompletionFunc("owner", completeOwners)
 ```
 
 ---
+
+## v0.19.4 + v0.19.5 — GitOps Lifecycle Hazards
+
+**Date:** 2026-02-06
+**Status:** COMPLETE — Released as v0.19.5
+
+### Arc Overview
+
+Completes NEXT-PLAN.md work areas A, B, and C:
+
+| Area | Scope | Version | Status |
+|------|-------|---------|--------|
+| A | Docs Audit | v0.19.4 | ✅ Complete |
+| B | Evidence Adjacency | v0.19.4 | ✅ Complete |
+| C | GitOps Lifecycle Hazards | v0.19.5 | ✅ Complete |
+
+### Area A: Docs Audit (`76a8db7`)
+
+Fixed DEPRECATED references across documentation:
+- `docs/demos/README.md`
+- `docs/EXAMPLES-OVERVIEW.md`
+- `docs/reference/testing.md`
+- `docs/howto/import-to-confighub.md`
+- `docs/outcomes/break-glass-scenarios.md`
+- `docs/outcomes/ownership-visibility.md`
+
+### Area B: Evidence Adjacency — Bundle Summarize (`0732c84`)
+
+Added `bundle summarize` command for ticket/PR/Slack export:
+
+```bash
+./cub-scout bundle summarize ./bundles/deployment-prod-api --format ticket
+./cub-scout bundle summarize ./bundles/deployment-prod-api --format pr
+./cub-scout bundle summarize ./bundles/deployment-prod-api --format slack
+```
+
+**Formats:**
+| Format | Output |
+|--------|--------|
+| `ticket` | Markdown for Jira/Linear |
+| `pr` | Pull request description |
+| `slack` | Slack Block Kit JSON |
+| `ascii` | Terminal-friendly |
+| `json` | Machine-readable |
+
+**Files created:**
+- Updated `cmd/cub-scout/bundle.go` — BundleSummary, renderTicket/PR/Slack
+- `cmd/cub-scout/bundle_test.go` — 8 tests
+
+### Area C: GitOps Lifecycle Hazards
+
+#### Lifecycle Hazards Scanner (`8a17919`)
+
+Detects Helm hook risks when deploying via ArgoCD:
+
+```bash
+./cub-scout scan --file chart.yaml --lifecycle-hazards
+```
+
+**Rules detected:**
+| Rule | Severity | Description |
+|------|----------|-------------|
+| `helm-hook-ambiguity` | Warning | post-install+post-upgrade mapped to single phase |
+| `postsync-idempotency-risk` | Warning | Non-idempotent Job may rerun on every sync |
+
+**Files created:**
+- `pkg/agent/lifecycle_hazards.go` — LifecycleHazardScanner
+- `pkg/agent/lifecycle_hazards_test.go` — 7 tests
+- Updated `pkg/agent/static_scanner.go` — LoadObjectsFromFile()
+- Updated `cmd/cub-scout/scan.go` — --lifecycle-hazards flag
+
+#### Map Hooks Command (`08bb441`)
+
+Lists resources with lifecycle hook annotations:
+
+```bash
+./cub-scout map hooks                         # Live cluster
+./cub-scout map hooks --file chart.yaml       # Static analysis
+./cub-scout map hooks --format json           # JSON output
+```
+
+**Detected annotations:**
+| Annotation | Tool |
+|------------|------|
+| `helm.sh/hook` | Helm |
+| `helm.sh/hook-weight` | Helm |
+| `argocd.argoproj.io/hook` | ArgoCD |
+| `argocd.argoproj.io/sync-wave` | ArgoCD |
+
+**Helm to ArgoCD phase mapping:**
+| Helm Hook | ArgoCD Phase |
+|-----------|--------------|
+| `pre-install`, `pre-upgrade` | PreSync |
+| `post-install`, `post-upgrade` | PostSync |
+| `test`, `test-success` | PostSync |
+
+**Files created:**
+- Updated `cmd/cub-scout/map.go` — mapHooksCmd, runMapHooks, mapHelmHookToArgoPhase
+- `cmd/cub-scout/map_hooks_test.go` — 4 test functions
+- `examples/lifecycle-hazards/helm-hooks.yaml` — Example manifests
+- `examples/lifecycle-hazards/README.md` — Documentation
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `76a8db7` | docs: archive stale docs and fix DEPRECATED references |
+| `0732c84` | feat(bundle): add summarize command for ticket/PR/Slack export |
+| `8a17919` | feat(scan): add lifecycle hazards scanner for Helm hooks under ArgoCD |
+| `08bb441` | feat(map): add hooks command for lifecycle hook visibility |
+
+### Tags
+
+| Tag | Content |
+|-----|---------|
+| `v0.19.4` | Docs audit + bundle summarize |
+| `v0.19.5` | Lifecycle hazards scanner + map hooks |
+
+---
