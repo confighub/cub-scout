@@ -26,29 +26,46 @@ var rootCmd = &cobra.Command{
 	Short: "Explore and map GitOps in your clusters",
 	Long: `cub-scout - explore and map GitOps in your clusters
 
-cub-scout observes Kubernetes clusters and detects resource ownership.
-It provides commands for:
+Offline-first, deterministic, read-only cluster explorer for Kubernetes and GitOps.
 
-  - Discovering resources and their ownership (Flux, Argo CD, Helm, ConfigHub, Native)
-  - Mapping cluster state with interactive TUI
-  - Tracing ownership chains from Git to deployed resources
-  - Finding orphaned resources not managed by GitOps
+POPULAR COMMANDS
+  map              Interactive TUI dashboard — explore cluster visually
+  map list         List resources with ownership (scriptable, supports --json)
+  tree             Hierarchical views: runtime, ownership, git, composition
+  trace            Trace any resource to its Git source
+  scan             Find misconfigurations (46 patterns)
+  gitops status    GitOps pipeline health check
 
-Works standalone or connected to ConfigHub for additional features.
+CHOOSE YOUR INTERFACE
+  TUI:   cub-scout map                       Interactive exploration
+  CLI:   cub-scout map list -q "owner=Flux"  Scripting and pipelines
+  JSON:  cub-scout map list --json | jq      Automation and tooling
+
+STANDALONE VS CONNECTED
+  Standalone (default): Works offline, reads from kubectl context
+  Connected:            Optional ConfigHub integration for fleet features
+                        Run 'cub auth login' to enable
+
+TIPS
+  • Use 'tree ownership' to see all resources grouped by GitOps tool
+  • Add --json to most commands for machine-readable output
+  • Press '?' in TUI for keyboard shortcuts
 
 Environment Variables:
   CLUSTER_NAME            Name for this cluster (default: default)
   KUBECONFIG              Path to kubeconfig file (default: ~/.kube/config)
+  CUB_SCOUT_OFFLINE       Set to 'true' to force offline mode
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("cub-scout - explore and map GitOps in your clusters")
 		fmt.Println()
-		fmt.Println("Try:")
+		fmt.Println("Quick start:")
 		fmt.Println("  cub-scout map              Interactive TUI (press ? for help)")
-		fmt.Println("  cub-scout trace deploy/x   Trace a resource to its Git source")
-		fmt.Println("  cub-scout --help           Full command reference")
+		fmt.Println("  cub-scout tree ownership   See resources by GitOps owner")
+		fmt.Println("  cub-scout trace deploy/x   Trace a resource to Git")
+		fmt.Println("  cub-scout map list --json  JSON output for automation")
 		fmt.Println()
-		fmt.Println("Prerequisites: kubectl access to a cluster")
+		fmt.Println("Run 'cub-scout --help' for all commands")
 	},
 }
 

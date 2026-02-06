@@ -1,32 +1,123 @@
 # cub-scout -- explore and map GitOps clusters
 
-Cub-scout is an open source cluster explorer which is designed to work with existing k8s/gitops clusters as a 'standalone' (read only) tool.  You can also run cub-scout with more features in ['connected' mode](#connecting-cub-scout-confighub), using your (free!) account on [ConfigHub](https://confighub.com).  Or you can [integrate its behaviour](https://github.com/confighub/cub-scout/blob/main/docs/reference/gsf-schema.md) into your own favourite tool.
+**Offline-first. Deterministic. Read-only.**
+
+cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It works standalone (no network required) or connected to [ConfigHub](https://confighub.com) for additional features. Outputs are deterministic and safe for automation.
 
 Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues) or joining [Discord](https://discord.gg/confighub).
 
-**Demystify GitOps. See what's really happening in your cluster.**
+---
 
-GitOps is powerful but can be a opaque at times. Where did this Deployment come from? Why isn't my change applying? Is this managed by Git or was it kubectl'd? cub-scout makes the invisible visible.
+## Getting Value Fast
 
 ```bash
 brew install confighub/tap/cub-scout
+cub-scout map                    # Interactive TUI — explore your cluster
+cub-scout map list --json | jq   # JSON output — pipe to your tools
+cub-scout tree ownership         # See resources grouped by GitOps owner
+cub-scout trace deploy/app -n ns # Trace any resource to its Git source
+cub-scout scan                   # Find misconfigurations (46 patterns)
+```
+
+**What you get in 60 seconds:**
+- See which resources are managed by Flux, ArgoCD, Helm, or kubectl
+- Trace any Deployment back to its Git source
+- Find orphaned resources not managed by GitOps
+- Detect stuck reconciliations and configuration risks
+
+---
+
+## Choose Your Interface
+
+cub-scout supports three interfaces for different workflows:
+
+| Interface | Launch | Best For |
+|-----------|--------|----------|
+| **TUI** | `cub-scout map` | Interactive exploration, debugging |
+| **CLI** | `cub-scout map list` | Scripting, one-liners, pipelines |
+| **JSON** | `--json` or `--format json` | Automation, downstream tools |
+
+**TUI (Interactive):**
+```bash
+cub-scout map           # Full dashboard with keyboard navigation
+cub-scout map deep-dive # Tree views with live expansion
+```
+
+**CLI (Scripting):**
+```bash
+cub-scout map list -q "owner=Native"     # Find unmanaged resources
+cub-scout map status                      # One-line health check (CI-friendly)
+cub-scout tree ownership --format ascii   # Plain text tree
+```
+
+**JSON (Automation):**
+```bash
+cub-scout map list --json | jq '.[] | select(.owner=="Native")'
+cub-scout graph export | jq '.nodes | length'
+cub-scout scan --json > findings.json
+```
+
+---
+
+## Standalone vs Connected
+
+cub-scout works fully offline. Connected mode is optional.
+
+| Feature | Standalone | Connected |
+|---------|:----------:|:---------:|
+| Map cluster resources | ✓ | ✓ |
+| Trace to Git source | ✓ | ✓ |
+| Tree views (runtime, ownership, git) | ✓ | ✓ |
+| Scan for misconfigurations | ✓ | ✓ |
+| Deterministic JSON output | ✓ | ✓ |
+| Debug bundles (capture & replay) | ✓ | ✓ |
+| Import workloads to ConfigHub | — | ✓ |
+| Fleet queries (multi-cluster) | — | ✓ |
+| DRY↔WET↔LIVE comparison | — | ✓ |
+
+**Standalone:** Works offline, no signup needed. Reads from your kubectl context.
+
+**Connected:** Run `cub auth login` for ConfigHub features. [Learn more](docs/WHY_CONNECTED_MODE.md)
+
+---
+
+## Maps & Trees
+
+cub-scout provides multiple views into your cluster:
+
+```bash
+# Runtime hierarchy: Deployment → ReplicaSet → Pod
+cub-scout tree runtime
+
+# Ownership view: resources grouped by GitOps tool
+cub-scout tree ownership
+
+# Git structure: detected repo layout
+cub-scout tree git
+
+# Crossplane: XR → composed resources
+cub-scout tree composition
+
+# Interactive dashboard with all views
 cub-scout map
 ```
 
-## Optional: Connect to ConfigHub
+**TUI navigation:**
+- Press `s` for status dashboard
+- Press `w` for workloads by owner
+- Press `4` for deep-dive tree views
+- Press `T` to trace selected resource
+- Press `?` for all shortcuts
 
-**Standalone** answers: *"What exists right now, and why?"*
-**Connected** adds: *"What should exist, what changed, and what happens next?"*
+---
 
-- [Why Connected Mode?](docs/WHY_CONNECTED_MODE.md)
-- [Roadmap](docs/ROADMAP.md)
+## Quickstart (2 minutes)
 
-### Quickstart (2 minutes)
-
-1. **Prerequisites:** kubectl access to a cluster (`kubectl get pods` works)
-2. **First command:** `cub-scout map` — launches interactive TUI
-3. **Press `?`** for keyboard shortcuts
-4. **Try:** `cub-scout trace deploy/<name> -n <namespace>` on any deployment
+1. **Install:** `brew install confighub/tap/cub-scout`
+2. **Prerequisites:** kubectl access to a cluster (`kubectl get pods` works)
+3. **First command:** `cub-scout map` — launches interactive TUI
+4. **Press `?`** for keyboard shortcuts
+5. **Try:** `cub-scout trace deploy/<name> -n <namespace>` on any deployment
 
 ---
 
