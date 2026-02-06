@@ -4,8 +4,11 @@
 package agent
 
 import (
+	"fmt"
 	"testing"
 	"time"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // BenchmarkAttributionGraphBuild measures graph construction time.
@@ -128,5 +131,59 @@ func BenchmarkAttributionReportRender(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = RenderAttributionReportASCII(report)
+	}
+}
+
+// makeCrossplaneObjects creates n Crossplane-managed objects for benchmarking.
+func makeCrossplaneObjects(n int) []*unstructured.Unstructured {
+	objs := make([]*unstructured.Unstructured, n)
+	for i := 0; i < n; i++ {
+		objs[i] = &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "rds.aws.crossplane.io/v1alpha1",
+				"kind":       "Instance",
+				"metadata": map[string]interface{}{
+					"name":      fmt.Sprintf("instance-%d", i),
+					"namespace": "default",
+					"labels": map[string]interface{}{
+						"crossplane.io/composite": "xr-database",
+					},
+				},
+			},
+		}
+	}
+	return objs
+}
+
+// BenchmarkCrossplaneLineageNoIndex measures resolver without pre-built index (O(n²)).
+// This benchmark demonstrates the cost of rebuilding the index per-call.
+func BenchmarkCrossplaneLineageNoIndex(b *testing.B) {
+	sizes := []int{10, 100, 500}
+	for _, n := range sizes {
+		objs := makeCrossplaneObjects(n)
+		b.Run(fmt.Sprintf("n=%d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				for _, obj := range objs {
+					ResolveCrossplaneLineage(obj, objs)
+				}
+			}
+		})
+	}
+}
+
+// BenchmarkCrossplaneLineageWithIndex measures resolver with pre-built index (O(n)).
+// This benchmark shows the improvement from reusing a single index.
+func BenchmarkCrossplaneLineageWithIndex(b *testing.B) {
+	sizes := []int{10, 100, 500}
+	for _, n := range sizes {
+		objs := makeCrossplaneObjects(n)
+		b.Run(fmt.Sprintf("n=%d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				idx := NewUnstructuredIndex(objs) // Build once per batch
+				for _, obj := range objs {
+					ResolveCrossplaneLineageWithIndex(obj, idx)
+				}
+			}
+		})
 	}
 }

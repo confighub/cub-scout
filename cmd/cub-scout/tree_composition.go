@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +30,12 @@ type CrossplaneCompositionTree struct {
 }
 
 func runTreeComposition(ctx context.Context) error {
+	debug := os.Getenv("CUB_SCOUT_DEBUG") != ""
+	var startTotal time.Time
+	if debug {
+		startTotal = time.Now()
+	}
+
 	cfg, err := buildConfig()
 	if err != nil {
 		return fmt.Errorf("failed to build config: %w", err)
@@ -39,7 +46,14 @@ func runTreeComposition(ctx context.Context) error {
 		return fmt.Errorf("failed to create dynamic client: %w", err)
 	}
 
+	var startList time.Time
+	if debug {
+		startList = time.Now()
+	}
 	objs, warnings := listAllObjectsForComposition(ctx, dynClient)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[debug] list: %d objects in %v\n", len(objs), time.Since(startList))
+	}
 	if len(warnings) > 0 {
 		for _, w := range warnings {
 			fmt.Printf("%sNote:%s %s\n", colorYellow, colorReset, w)
@@ -50,7 +64,16 @@ func runTreeComposition(ctx context.Context) error {
 		return nil
 	}
 
+	var startIndex time.Time
+	if debug {
+		startIndex = time.Now()
+	}
 	byXR := buildCompositionIndex(objs)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[debug] index: %d XRs from %d objects in %v\n", len(byXR), len(objs), time.Since(startIndex))
+		fmt.Fprintf(os.Stderr, "[debug] total: %v\n", time.Since(startTotal))
+	}
+
 	if treeJSON {
 		return json.NewEncoder(os.Stdout).Encode(byXR)
 	}
@@ -119,11 +142,15 @@ func listAllObjectsForComposition(ctx context.Context, dynClient dynamic.Interfa
 }
 
 // buildCompositionIndex groups resources by XR using the lineage resolver.
+// Uses a pre-built index for O(n) instead of O(n²) complexity.
 func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*CrossplaneCompositionTree {
 	byXR := make(map[string]*CrossplaneCompositionTree)
 
+	// Build index once, reuse for all objects
+	idx := agent.NewUnstructuredIndex(objs)
+
 	for _, obj := range objs {
-		lineage, ok := agent.ResolveCrossplaneLineage(obj, objs)
+		lineage, ok := agent.ResolveCrossplaneLineageWithIndex(obj, idx)
 		if !ok || lineage == nil {
 			continue
 		}

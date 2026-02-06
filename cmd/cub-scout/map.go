@@ -549,6 +549,11 @@ func runMapList(cmd *cobra.Command, args []string) error {
 }
 
 func runMapListFromCluster(ctx context.Context) error {
+	debug := os.Getenv("CUB_SCOUT_DEBUG") != ""
+	var startTotal time.Time
+	if debug {
+		startTotal = time.Now()
+	}
 
 	// Build Kubernetes config
 	cfg, err := buildConfig()
@@ -589,7 +594,13 @@ func runMapListFromCluster(ctx context.Context) error {
 		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"},
 	}
 
+	var startList time.Time
+	if debug {
+		startList = time.Now()
+	}
+	listCount := 0
 	for _, gvr := range resources {
+		listCount++
 		if mapNamespace != "" {
 			l, err := dynClient.Resource(gvr).Namespace(mapNamespace).List(ctx, v1.ListOptions{})
 			if err != nil {
@@ -607,6 +618,10 @@ func runMapListFromCluster(ctx context.Context) error {
 				entries = processResource(&item, gvr, clusterName, entries, byOwner)
 			}
 		}
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "[debug] list: %d resources from %d types in %v\n", len(entries), listCount, time.Since(startList))
+		fmt.Fprintf(os.Stderr, "[debug] total: %v\n", time.Since(startTotal))
 	}
 
 	// NOTE: byOwner is recomputed inside renderMapListFromEntries after filtering

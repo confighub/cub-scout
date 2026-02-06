@@ -40,7 +40,23 @@ type CrossplaneLineage struct {
 //
 // The objects slice should include, at minimum, Crossplane XRs and (optionally) Claims.
 // If the XR/Claim objects are not present, the resolver still returns refs with Present=false.
+//
+// For batch operations, prefer ResolveCrossplaneLineageWithIndex to avoid O(n²) index rebuilds.
 func ResolveCrossplaneLineage(target *unstructured.Unstructured, objects []*unstructured.Unstructured) (*CrossplaneLineage, bool) {
+	return ResolveCrossplaneLineageWithIndex(target, NewUnstructuredIndex(objects))
+}
+
+// ResolveCrossplaneLineageWithIndex is like ResolveCrossplaneLineage but accepts a pre-built index.
+// Use this for batch operations to avoid rebuilding the index for each call.
+//
+// Example:
+//
+//	idx := agent.NewUnstructuredIndex(objects)
+//	for _, obj := range objects {
+//	    lineage, ok := agent.ResolveCrossplaneLineageWithIndex(obj, idx)
+//	    // ...
+//	}
+func ResolveCrossplaneLineageWithIndex(target *unstructured.Unstructured, idx *UnstructuredIndex) (*CrossplaneLineage, bool) {
 	if target == nil {
 		return nil, false
 	}
@@ -50,7 +66,6 @@ func ResolveCrossplaneLineage(target *unstructured.Unstructured, objects []*unst
 		return nil, false
 	}
 
-	idx := newUnstructuredIndex(objects)
 	lineage := &CrossplaneLineage{
 		Managed: CrossplaneLineageNode{Ref: resourceRefFromUnstructured(target), Present: true},
 	}
@@ -126,15 +141,20 @@ func ResolveCrossplaneLineage(target *unstructured.Unstructured, objects []*unst
 	return lineage, true
 }
 
-// unstructuredIndex provides simple deterministic lookups over a set of objects.
+// UnstructuredIndex provides simple deterministic lookups over a set of objects.
 // It deliberately avoids discovery/pluralization so it can work with arbitrary CRDs.
-type unstructuredIndex struct {
+//
+// Exported to allow callers to build the index once and reuse it across multiple
+// resolver invocations, avoiding O(n²) index rebuilds on large object sets.
+type UnstructuredIndex struct {
 	byKey map[string]*unstructured.Unstructured
 	all   []*unstructured.Unstructured
 }
 
-func newUnstructuredIndex(objects []*unstructured.Unstructured) *unstructuredIndex {
-	idx := &unstructuredIndex{byKey: make(map[string]*unstructured.Unstructured), all: objects}
+// NewUnstructuredIndex builds an index over the given objects.
+// Build this once and pass to ResolveCrossplaneLineageWithIndex for efficient batch operations.
+func NewUnstructuredIndex(objects []*unstructured.Unstructured) *UnstructuredIndex {
+	idx := &UnstructuredIndex{byKey: make(map[string]*unstructured.Unstructured), all: objects}
 	for _, o := range objects {
 		if o == nil {
 			continue
@@ -145,15 +165,25 @@ func newUnstructuredIndex(objects []*unstructured.Unstructured) *unstructuredInd
 	return idx
 }
 
-func (i *unstructuredIndex) keyFor(apiVersion, kind, name, namespace string) string {
+// Len returns the number of indexed objects.
+func (i *UnstructuredIndex) Len() int {
+	return len(i.all)
+}
+
+// newUnstructuredIndex is the internal constructor (kept for backward compat).
+func newUnstructuredIndex(objects []*unstructured.Unstructured) *UnstructuredIndex {
+	return NewUnstructuredIndex(objects)
+}
+
+func (i *UnstructuredIndex) keyFor(apiVersion, kind, name, namespace string) string {
 	return apiVersion + "|" + kind + "|" + namespace + "|" + name
 }
 
-func (i *unstructuredIndex) findByGVKNameNamespace(apiVersion, kind, name, namespace string) *unstructured.Unstructured {
+func (i *UnstructuredIndex) findByGVKNameNamespace(apiVersion, kind, name, namespace string) *unstructured.Unstructured {
 	return i.byKey[i.keyFor(apiVersion, kind, name, namespace)]
 }
 
-func (i *unstructuredIndex) findByResourceRef(ref ResourceRef) *unstructured.Unstructured {
+func (i *UnstructuredIndex) findByResourceRef(ref ResourceRef) *unstructured.Unstructured {
 	// ResourceRef may not contain apiVersion/kind in all cases; fall back to name+namespace scan.
 	if ref.Kind != "" && ref.Group != "" && ref.Version != "" {
 		apiVersion := ref.Group + "/" + ref.Version
@@ -164,7 +194,7 @@ func (i *unstructuredIndex) findByResourceRef(ref ResourceRef) *unstructured.Uns
 	return i.findByNameNamespace(ref.Name, ref.Namespace)
 }
 
-func (i *unstructuredIndex) findByNameNamespace(name, namespace string) *unstructured.Unstructured {
+func (i *UnstructuredIndex) findByNameNamespace(name, namespace string) *unstructured.Unstructured {
 	if name == "" {
 		return nil
 	}
@@ -179,7 +209,7 @@ func (i *unstructuredIndex) findByNameNamespace(name, namespace string) *unstruc
 	return nil
 }
 
-func (i *unstructuredIndex) findByName(name string) *unstructured.Unstructured {
+func (i *UnstructuredIndex) findByName(name string) *unstructured.Unstructured {
 	if name == "" {
 		return nil
 	}
