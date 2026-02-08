@@ -732,31 +732,9 @@ func renderMapListFromEntries(entries []MapEntry) error {
 	}
 
 	if effectiveFormat == "json" {
-		// Get cluster context
-		cluster := os.Getenv("CLUSTER_NAME")
-		if cluster == "" {
-			cluster = getCurrentContext()
-		}
-		if cluster == "" {
-			cluster = "unknown"
-		}
-
-		// Convert to mapsvc.Entry slice
-		mapsvcEntries := make([]mapsvc.Entry, len(entries))
-		for i, e := range entries {
-			mapsvcEntries[i] = mapsvc.Entry(e)
-		}
-
-		// Get namespace filter
-		var ns *string
-		if mapNamespace != "" {
-			ns = &mapNamespace
-		}
-
-		output := mapsvc.BuildMapListJSON(mapsvcEntries, cluster, ns)
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		return enc.Encode(output)
+		return enc.Encode(entries)
 	}
 
 	if effectiveFormat == "md" {
