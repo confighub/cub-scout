@@ -56,6 +56,16 @@ cub-scout map [flags]
 | `?` | Help |
 | `q` | Quit |
 
+### Pipeline Source Semantics
+
+In the pipelines view (`p`):
+- Flux `Kustomization`: source from `spec.sourceRef.name`
+- Flux `HelmRelease`: source from `spec.chart.spec.chart`
+- Argo CD `Application`: source from `spec.source.repoURL`
+- `unknown`: source field missing/unreadable
+
+See `docs/reference/pipeline-source-resolution.md` for details.
+
 ---
 
 ## map list
@@ -232,6 +242,20 @@ cub-scout trace deployment/nginx -n demo --diff
 cub-scout trace deployment/nginx -n demo --format json
 cub-scout trace deployment/nginx -n demo --format md
 ```
+
+### Argo Context Troubleshooting
+
+If trace fails due to stale/invalid Argo endpoint context, run:
+
+```bash
+argocd context
+argocd app list
+argocd logout <server>
+argocd login <server>
+cub-scout trace --app <app-name>
+```
+
+See `docs/howto/trace-context-troubleshooting.md` for the full flow.
 
 ### Supported Sources
 

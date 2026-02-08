@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: regression-workloads-dev
+  labels:
+    cub-scout.io/regression-suite: argo-hierarchy
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: regression-workloads-prod
+  labels:
+    cub-scout.io/regression-suite: argo-hierarchy
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workloads-generator
+  namespace: argocd
+  labels:
+    cub-scout.io/regression-suite: argo-hierarchy
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+          - env: prod
+  template:
+    metadata:
+      name: workloads-{{env}}
+    spec:
+      project: default
+      source:
+        repoURL: https://git.example.local/platform.git
+        targetRevision: main
+        path: argo/applicationset/{{env}}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: regression-workloads-{{env}}
+status:
+  conditions:
+    - type: ResourcesUpToDate
+      status: "True"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: workloads-dev
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/application-set-name: workloads-generator
+    cub-scout.io/regression-suite: argo-hierarchy
+  annotations:
+    cub-scout.io/generated-by-applicationset: workloads-generator
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/applicationset/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: regression-workloads-dev
+status:
+  sync:
+    status: Synced
+    revision: defabc123456
+  health:
+    status: Healthy
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: workloads-prod
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/application-set-name: workloads-generator
+    cub-scout.io/regression-suite: argo-hierarchy
+  annotations:
+    cub-scout.io/generated-by-applicationset: workloads-generator
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/applicationset/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: regression-workloads-prod
+status:
+  sync:
+    status: Synced
+    revision: efabcd123456
+  health:
+    status: Healthy
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-api
+  namespace: regression-workloads-dev
+  labels:
+    app: inventory-api
+    argocd.argoproj.io/instance: workloads-dev
+    cub-scout.io/regression-suite: argo-hierarchy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory-api
+  template:
+    metadata:
+      labels:
+        app: inventory-api
+        argocd.argoproj.io/instance: workloads-dev
+        cub-scout.io/regression-suite: argo-hierarchy
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-api
+  namespace: regression-workloads-prod
+  labels:
+    app: checkout-api
+    argocd.argoproj.io/instance: workloads-prod
+    cub-scout.io/regression-suite: argo-hierarchy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout-api
+  template:
+    metadata:
+      labels:
+        app: checkout-api
+        argocd.argoproj.io/instance: workloads-prod
+        cub-scout.io/regression-suite: argo-hierarchy
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/pause:3.9

@@ -2945,6 +2945,9 @@ func (m LocalClusterModel) getPanelPipelines() string {
 		}
 	}
 	b.WriteString(fmt.Sprintf("%d/%d pipelines healthy\n\n", healthy, len(m.gitops)))
+	if hasUnknownPipelineSource(m.gitops) {
+		b.WriteString(lcDimStyle.Render(unknownPipelineSourceHelp()) + "\n\n")
+	}
 
 	// Flux Kustomizations
 	if len(kustomizations) > 0 {
@@ -2986,10 +2989,7 @@ func renderPipelineFlow(b *strings.Builder, g GitOpsResource) {
 	}
 
 	// Visual flow: Source ──▶ Deployer ──▶ Resources
-	source := g.Source
-	if source == "" {
-		source = "unknown"
-	}
+	source := displayPipelineSource(g.Source)
 
 	// Truncate source if too long
 	if len(source) > 20 {
@@ -3016,6 +3016,32 @@ func renderPipelineFlow(b *strings.Builder, g GitOpsResource) {
 	if g.Status != "Ready" && g.Status != "Healthy" && g.Status != "" {
 		b.WriteString(fmt.Sprintf("  %s\n", statusStyle.Render("status: "+g.Status)))
 	}
+}
+
+// displayPipelineSource returns the human-facing source value used in pipeline views.
+// Source resolution order by deployer kind:
+//  1. Flux Kustomization: spec.sourceRef.name
+//  2. Flux HelmRelease:   spec.chart.spec.chart
+//  3. Argo Application:   spec.source.repoURL
+//  4. Fallback:           "unknown" (missing/unreadable source field)
+func displayPipelineSource(source string) string {
+	if strings.TrimSpace(source) == "" {
+		return "unknown"
+	}
+	return source
+}
+
+func hasUnknownPipelineSource(gitops []GitOpsResource) bool {
+	for _, g := range gitops {
+		if displayPipelineSource(g.Source) == "unknown" {
+			return true
+		}
+	}
+	return false
+}
+
+func unknownPipelineSourceHelp() string {
+	return "unknown = source field missing/unreadable (spec.sourceRef/spec.source.repoURL/spec.chart)"
 }
 
 func (m LocalClusterModel) getPanelDrift() string {
@@ -4759,10 +4785,7 @@ func (m LocalClusterModel) renderDashboard() string {
 				break
 			}
 			// Format: source@rev  ->  name  ->  N resources
-			source := g.Source
-			if source == "" {
-				source = "unknown"
-			}
+			source := displayPipelineSource(g.Source)
 			resourceCount := ""
 			if g.InventoryCount > 0 {
 				resourceCount = fmt.Sprintf("  ->  %d resources", g.InventoryCount)
@@ -4824,6 +4847,9 @@ func (m LocalClusterModel) renderDashboard() string {
 			if nativePct > 30 {
 				b.WriteString("\n  " + lcWarnStyle.Render(fmt.Sprintf("⚠ %d%% unmanaged (Native) — check security", nativePct)) + "\n")
 			}
+		}
+		if hasUnknownPipelineSource(m.gitops) {
+			b.WriteString("  " + lcDimStyle.Render(unknownPipelineSourceHelp()) + "\n")
 		}
 	}
 	b.WriteString("\n")

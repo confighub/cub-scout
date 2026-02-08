@@ -78,6 +78,12 @@ PLAIN TEXT MODE:
 
 Local cluster mode reads from your current kubectl context.
 Hub mode requires ConfigHub authentication (cub auth login).
+
+Pipeline source semantics (TUI p view):
+  - Flux Kustomization: spec.sourceRef.name
+  - Flux HelmRelease:   spec.chart.spec.chart
+  - Argo Application:   spec.source.repoURL
+  - unknown:            source field missing/unreadable
 `,
 	RunE: runMapTUI,
 }

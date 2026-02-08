@@ -186,6 +186,7 @@ Theme: *Delight on top of substance*
 * Hub package tests added
 * Removed "experimental" messaging from README
 * GOTOOLCHAIN=local for air-gapped build compatibility
+* Release-readiness Argo regression audit command + fixtures added (`test/regression/argo-version-audit.sh`, issue #125)
 
 The UX surface is now **stable and locked**.
 

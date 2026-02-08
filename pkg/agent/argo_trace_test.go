@@ -4,6 +4,7 @@
 package agent
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -455,5 +456,62 @@ func TestArgoHistoryWithEmptyArray(t *testing.T) {
 	// Empty history array should result in nil or empty History
 	if len(result.History) != 0 {
 		t.Errorf("Expected empty history, got %d entries", len(result.History))
+	}
+}
+
+func TestFormatArgoContextError(t *testing.T) {
+	tests := []struct {
+		name       string
+		output     string
+		wantMatch  bool
+		wantReason string
+	}{
+		{
+			name:       "stale endpoint",
+			output:     "rpc error: code = Unavailable desc = connection error: dial tcp 10.0.0.1:443: i/o timeout",
+			wantMatch:  true,
+			wantReason: "unreachable or stale",
+		},
+		{
+			name:       "missing login",
+			output:     "FATA[0000] Argo CD server address unspecified",
+			wantMatch:  true,
+			wantReason: "missing or expired",
+		},
+		{
+			name:      "unrelated command failure",
+			output:    "application not found",
+			wantMatch: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := FormatArgoContextError(tt.output)
+			if ok != tt.wantMatch {
+				t.Fatalf("FormatArgoContextError() match = %v, want %v (msg=%q)", ok, tt.wantMatch, got)
+			}
+			if !tt.wantMatch {
+				return
+			}
+
+			// Ensure remediation path is always present and actionable.
+			required := []string{
+				"argocd context",
+				"argocd app list",
+				"argocd logout <server>",
+				"argocd login <server>",
+				"cub-scout trace --app <app-name>",
+			}
+			for _, r := range required {
+				if !strings.Contains(got, r) {
+					t.Fatalf("expected remediation command %q in message: %s", r, got)
+				}
+			}
+
+			if !strings.Contains(got, tt.wantReason) {
+				t.Fatalf("expected reason fragment %q in message: %s", tt.wantReason, got)
+			}
+		})
 	}
 }

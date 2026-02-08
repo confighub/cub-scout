@@ -174,6 +174,15 @@ go test -tags=integration ./test/integration/... && \
 ./test/prove-it-works.sh --level=examples    # Examples only
 ```
 
+## Version Regression Audits
+
+```bash
+# v0.4.0 vs v0.19.6 Argo hierarchy audit (issue #125)
+./test/regression/argo-version-audit.sh
+```
+
+See `test/regression/README.md` for details and output artifacts.
+
 ---
 
 ## Directory Structure

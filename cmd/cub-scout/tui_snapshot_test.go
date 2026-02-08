@@ -216,6 +216,26 @@ func TestTUISnapshot_Map(t *testing.T) {
 	compareGolden(t, got, goldenPath)
 }
 
+// TestTUISnapshot_PipelinesUnknownSource locks wording for unknown source semantics.
+func TestTUISnapshot_PipelinesUnknownSource(t *testing.T) {
+	m := initialLocalModel()
+	m.ready = true
+	m.width = testWidth
+	m.height = testHeight
+
+	m.gitops = []GitOpsResource{
+		{Kind: "Kustomization", Name: "apps", Namespace: "flux-system", Status: "Ready", Source: "", Path: "./apps", InventoryCount: 8},
+		{Kind: "HelmRelease", Name: "nginx", Namespace: "ingress", Status: "Ready", Source: "nginx", InventoryCount: 2},
+		{Kind: "Application", Name: "guestbook", Namespace: "argocd", Status: "Healthy", Source: "", Path: "guestbook", InventoryCount: 3},
+	}
+
+	got := m.getPanelPipelines()
+
+	repoRoot := findRepoRoot(t)
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "tui", "pipelines_unknown_source.txt")
+	compareGolden(t, got, goldenPath)
+}
+
 // TestTUISnapshot_SuggestWorkloads tests the suggestion overlay for workloads panel.
 // Verifies that cub-scout commands are prioritized (trace/tree first, then kubectl).
 func TestTUISnapshot_SuggestWorkloads(t *testing.T) {
@@ -297,10 +317,10 @@ func TestShellCompletion_BashGeneration(t *testing.T) {
 
 	// Verify key patterns are present (Cobra-generated patterns)
 	expectedPatterns := []string{
-		"cub-scout",               // Command name
-		"__cub-scout_debug",       // Debug function
-		"__cub-scout_init",        // Init function
-		"COMPREPLY",               // Bash completion variable
+		"cub-scout",         // Command name
+		"__cub-scout_debug", // Debug function
+		"__cub-scout_init",  // Init function
+		"COMPREPLY",         // Bash completion variable
 	}
 
 	for _, pattern := range expectedPatterns {
@@ -327,9 +347,9 @@ func TestShellCompletion_ZshGeneration(t *testing.T) {
 
 	// Verify key patterns are present (Cobra-generated patterns)
 	expectedPatterns := []string{
-		"cub-scout",     // Command name
-		"#compdef",      // Zsh compdef header
-		"_cub-scout",    // Zsh completion function
+		"cub-scout",  // Command name
+		"#compdef",   // Zsh compdef header
+		"_cub-scout", // Zsh completion function
 	}
 
 	for _, pattern := range expectedPatterns {
