@@ -97,6 +97,10 @@ Complete reference for all interactive TUI views.
 - Flux: Kustomizations, HelmReleases
 - ArgoCD: Applications, ApplicationSets
 - Status: Applied/Synced, Suspended, Failed
+- Source value follows deployer-specific extraction rules
+- `unknown` means source field missing/unreadable (not a failure by itself)
+
+See: `docs/reference/pipeline-source-resolution.md`
 
 **Layout:**
 ```

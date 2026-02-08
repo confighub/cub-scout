@@ -1,0 +1,14 @@
+3/3 pipelines healthy
+
+unknown = source field missing/unreadable (spec.sourceRef/spec.source.repoURL/spec.chart)
+
+FLUX KUSTOMIZATIONS
+✓ unknown ──▶ apps ──▶ 8 resources
+  path: ./apps
+
+FLUX HELM RELEASES
+✓ nginx ──▶ nginx ──▶ 2 resources
+
+ARGOCD APPLICATIONS
+✓ unknown ──▶ guestbook ──▶ 3 resources
+  path: guestbook

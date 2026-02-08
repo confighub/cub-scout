@@ -4,9 +4,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -99,6 +101,12 @@ Diff mode (--diff) shows what would change if GitOps reconciled:
   - For Flux: runs 'flux diff kustomization' or 'flux diff helmrelease'
   - For ArgoCD: runs 'argocd app diff'
   - Useful for debugging "why isn't my change applying?" and upgrade tracing
+
+Trace context troubleshooting (ArgoCD):
+  - argocd context
+  - argocd app list
+  - argocd logout <server>
+  - argocd login <server>
 `,
 	Args: cobra.RangeArgs(0, 2),
 	RunE: runTrace,
@@ -1309,11 +1317,17 @@ func runArgoDiff(ctx context.Context, name string, ownership *agent.Ownership) e
 
 	// Run argocd app diff
 	cmd := exec.CommandContext(ctx, "argocd", "app", "diff", appName)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+	cmd.Stderr = io.MultiWriter(os.Stderr, &stderrBuf)
 
 	err := cmd.Run()
 	if err != nil {
+		combinedOutput := stderrBuf.String() + stdoutBuf.String()
+		if help, ok := agent.FormatArgoContextError(combinedOutput); ok {
+			return fmt.Errorf("%s", help)
+		}
+
 		// Exit code 1 means there are differences
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if exitErr.ExitCode() == 1 {

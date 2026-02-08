@@ -93,11 +93,9 @@ func (a *ArgoTracer) traceApplication(ctx context.Context, appName, namespace st
 			}, nil
 		}
 
-		// Check for authentication/connection errors
-		if strings.Contains(combinedOutput, "server address unspecified") ||
-			strings.Contains(combinedOutput, "not logged in") ||
-			strings.Contains(combinedOutput, "authentication required") {
-			return nil, fmt.Errorf("argocd CLI not connected - run 'argocd login <server>' first")
+		// Detect stale/invalid context and print actionable remediation path.
+		if help, ok := FormatArgoContextError(combinedOutput); ok {
+			return nil, fmt.Errorf("%s", help)
 		}
 
 		return nil, fmt.Errorf("argocd app get failed: %w: %s", err, combinedOutput)
@@ -311,4 +309,61 @@ func (a *ArgoTracer) TraceByOwnership(ctx context.Context, ownership Ownership) 
 
 	// The ownership.Name is the Application name
 	return a.TraceApplication(ctx, ownership.Name)
+}
+
+// FormatArgoContextError detects stale/invalid argocd context errors and
+// returns a remediation-focused message. The bool return is true when a
+// context issue was detected.
+func FormatArgoContextError(output string) (string, bool) {
+	out := strings.ToLower(output)
+
+	containsAny := func(parts ...string) bool {
+		for _, p := range parts {
+			if strings.Contains(out, p) {
+				return true
+			}
+		}
+		return false
+	}
+
+	reason := ""
+	switch {
+	case containsAny(
+		"server address unspecified",
+		"not logged in",
+		"authentication required",
+		"unauthorized",
+		"permission denied",
+		"token is expired",
+	):
+		reason = "authentication/context is missing or expired"
+	case containsAny(
+		"context deadline exceeded",
+		"connection refused",
+		"i/o timeout",
+		"dial tcp",
+		"no such host",
+		"x509:",
+		"certificate signed by unknown authority",
+		"tls:",
+		"rpc error: code = unavailable",
+		"transport is closing",
+	):
+		reason = "current Argo endpoint is unreachable or stale"
+	default:
+		return "", false
+	}
+
+	msg := fmt.Sprintf(
+		"argocd context appears stale or invalid (%s).\n\n"+
+			"Trace context troubleshooting:\n"+
+			"  1) argocd context\n"+
+			"  2) argocd app list\n"+
+			"  3) argocd logout <server>\n"+
+			"  4) argocd login <server>\n\n"+
+			"Then retry:\n"+
+			"  cub-scout trace --app <app-name>",
+		reason,
+	)
+	return msg, true
 }
