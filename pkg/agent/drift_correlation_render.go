@@ -86,7 +86,7 @@ func RenderCorrelationASCII(corr DriftCorrelation) string {
 	b.WriteString("\n\n")
 
 	// Summary with icon
-	icon := "ℹ"
+	var icon string
 	if corr.HasDrift && corr.HasFailure {
 		icon = "⚠"
 	} else if corr.HasFailure {

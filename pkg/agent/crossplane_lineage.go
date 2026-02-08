@@ -170,11 +170,6 @@ func (i *UnstructuredIndex) Len() int {
 	return len(i.all)
 }
 
-// newUnstructuredIndex is the internal constructor (kept for backward compat).
-func newUnstructuredIndex(objects []*unstructured.Unstructured) *UnstructuredIndex {
-	return NewUnstructuredIndex(objects)
-}
-
 func (i *UnstructuredIndex) keyFor(apiVersion, kind, name, namespace string) string {
 	return apiVersion + "|" + kind + "|" + namespace + "|" + name
 }

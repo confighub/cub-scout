@@ -25,8 +25,8 @@ const (
 	DebugStepSelectMode = iota
 	DebugStepPickResource
 	DebugStepWorkloadStatus
-	DebugStepContainerLogs  // Step for viewing container logs
-	DebugStepEventTimeline  // Step for viewing event timeline
+	DebugStepContainerLogs // Step for viewing container logs
+	DebugStepEventTimeline // Step for viewing event timeline
 	DebugStepOwnership
 	DebugStepPipelineHealth
 	DebugStepSourceHealth
@@ -230,8 +230,8 @@ type ChainLink struct {
 // RootCauseAnalysis is the final diagnosis
 type RootCauseAnalysis struct {
 	// Classification
-	Category   string `json:"category"` // source_auth, source_fetch, build_error, apply_error, workload_crash
-	Stage      string `json:"stage"`    // source, build, apply, sync, workload
+	Category   string `json:"category"`   // source_auth, source_fetch, build_error, apply_error, workload_crash
+	Stage      string `json:"stage"`      // source, build, apply, sync, workload
 	Confidence string `json:"confidence"` // high, medium, low
 
 	// Details
@@ -249,8 +249,7 @@ type RootCauseAnalysis struct {
 // DebugModel is the Bubbletea model for the debug wizard
 type DebugModel struct {
 	// Navigation
-	step   int
-	cursor int
+	step int
 
 	// Step 1: Entry mode selection
 	entryModes      []DebugEntryMode
@@ -259,7 +258,6 @@ type DebugModel struct {
 	// Step 2: Resource picker
 	resources      []ResourceItem
 	resourceCursor int
-	filterInput    string
 
 	// Step: Container logs
 	logPodCursor    int  // Which pod's logs to show
@@ -267,9 +265,8 @@ type DebugModel struct {
 	logShowPrevious bool // Show previous container logs
 
 	// Step: Event timeline
-	eventScrollPos  int  // Scroll position in event list
-	eventShowAll    bool // Show all events vs just warnings/errors
-	eventFilterKind string // Filter by resource kind (Pod, Deployment, etc.)
+	eventScrollPos int  // Scroll position in event list
+	eventShowAll   bool // Show all events vs just warnings/errors
 
 	// Session state
 	session *DebugSession
@@ -291,9 +288,7 @@ type DebugModel struct {
 	err  error
 
 	// Help/Education overlay
-	showHelp      bool
-	showEducation bool
-	educationKey  string
+	showHelp bool
 }
 
 // ResourceItem represents a resource in the picker
@@ -987,13 +982,13 @@ func runDebugAnalysisFromModel(ctx context.Context, dynClient dynamic.Interface,
 				url, _, _ := unstructured.NestedString(obj.Object, "spec", "url")
 
 				session.SourceStatus = &SourceStatus{
-					Kind:    link.Kind,
-					Name:    link.Name,
+					Kind:      link.Kind,
+					Name:      link.Name,
 					Namespace: link.Namespace,
-					Ready:   failure.Ready,
-					Reason:  failure.Reason,
-					Message: failure.Message,
-					URL:     url,
+					Ready:     failure.Ready,
+					Reason:    failure.Reason,
+					Message:   failure.Message,
+					URL:       url,
 				}
 				break
 			}

@@ -87,7 +87,9 @@ func init() {
 	driftCmd.Flags().StringVar(&driftFormat, "format", "ascii", "Output format: ascii, json")
 	driftCmd.Flags().StringVar(&driftFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning, critical)")
 
-	driftCmd.MarkFlagRequired("file")
+	if err := driftCmd.MarkFlagRequired("file"); err != nil {
+		panic(err)
+	}
 }
 
 func runDrift(cmd *cobra.Command, args []string) error {
