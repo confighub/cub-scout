@@ -1,11 +1,20 @@
-name: v0.5 Bug
-description: Bug affecting cub-scout v0.5
-labels: ["v0.5", "bug"]
+name: Bug report
+description: Report a bug affecting current cub-scout releases
+labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        This issue reports a **v0.5-blocking bug**.
+        Thanks for reporting a bug. Please include concrete evidence so we can reproduce quickly.
+
+  - type: input
+    id: version
+    attributes:
+      label: cub-scout Version
+      description: Output of `cub-scout version`
+      placeholder: v1.0.0
+    validations:
+      required: true
 
   - type: textarea
     id: observed
@@ -27,7 +36,7 @@ body:
     id: impact
     attributes:
       label: Impact
-      description: Why does this matter for v0.5?
+      description: Why does this matter for current releases?
     validations:
       required: true
 
@@ -35,7 +44,7 @@ body:
     id: reproduction
     attributes:
       label: Reproduction
-      description: Steps, cluster details, or conditions.
+      description: Steps, cluster details, files, or commands.
     validations:
       required: true
 
@@ -43,6 +52,6 @@ body:
     id: safety
     attributes:
       label: Safety Assessment
-      description: Does this produce misleading or unsafe output?
+      description: Could this create misleading output, false certainty, or unsafe guidance?
     validations:
       required: true

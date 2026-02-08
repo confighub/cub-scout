@@ -5,39 +5,56 @@ package gitops
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 )
 
-func TestParseFluxExample(t *testing.T) {
-	// Clone the example repo to a temp directory
-	tmpDir, err := os.MkdirTemp("", "flux-example-*")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
+func TestParseSingleRepoFixture(t *testing.T) {
+	tmpDir := t.TempDir()
 
-	// Clone the repo
-	cmd := exec.Command("git", "clone", "--depth=1",
-		"https://github.com/fluxcd/flux2-kustomize-helm-example.git",
-		tmpDir)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("failed to clone repo: %v\n%s", err, output)
+	paths := []string{
+		filepath.Join(tmpDir, "apps", "base", "podinfo"),
+		filepath.Join(tmpDir, "apps", "staging"),
+		filepath.Join(tmpDir, "apps", "prod"),
+		filepath.Join(tmpDir, "infrastructure", "monitoring"),
+		filepath.Join(tmpDir, "clusters", "staging"),
+		filepath.Join(tmpDir, "clusters", "prod"),
+	}
+	for _, p := range paths {
+		if err := os.MkdirAll(p, 0o755); err != nil {
+			t.Fatalf("failed to create directory %s: %v", p, err)
+		}
 	}
 
-	// Parse the repo
+	kustomization := "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n  - ../base/podinfo\n"
+	if err := os.WriteFile(filepath.Join(tmpDir, "apps", "staging", "kustomization.yaml"), []byte(kustomization), 0o644); err != nil {
+		t.Fatalf("failed to write staging kustomization: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "apps", "prod", "kustomization.yaml"), []byte(kustomization), 0o644); err != nil {
+		t.Fatalf("failed to write prod kustomization: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "clusters", "staging", "apps.yaml"), []byte("kind: Kustomization\n"), 0o644); err != nil {
+		t.Fatalf("failed to write staging cluster file: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "clusters", "prod", "apps.yaml"), []byte("kind: Kustomization\n"), 0o644); err != nil {
+		t.Fatalf("failed to write prod cluster file: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "apps", "base", "podinfo", "kustomization.yaml"), []byte("kind: Kustomization\n"), 0o644); err != nil {
+		t.Fatalf("failed to write base kustomization: %v", err)
+	}
+
 	result, err := ParseRepo(tmpDir)
 	if err != nil {
 		t.Fatalf("failed to parse repo: %v", err)
 	}
+	if result.Type != RepoTypeSingleRepo {
+		t.Fatalf("expected repo type %q, got %q", RepoTypeSingleRepo, result.Type)
+	}
 
-	// Verify apps were found
 	if len(result.Apps) == 0 {
 		t.Error("expected to find apps, got none")
 	}
 
-	// Find podinfo
 	var podinfo *AppDefinition
 	for i := range result.Apps {
 		if result.Apps[i].Name == "podinfo" {
@@ -50,14 +67,10 @@ func TestParseFluxExample(t *testing.T) {
 		t.Fatal("expected to find podinfo app")
 	}
 
-	t.Logf("Found podinfo app:")
-	t.Logf("  Base: %s", podinfo.BasePath)
-	t.Logf("  Variants: %d", len(podinfo.Variants))
-	for _, v := range podinfo.Variants {
-		t.Logf("    - %s (%s)", v.Name, v.Path)
+	if podinfo.BasePath != "apps/base/podinfo" {
+		t.Fatalf("expected base path apps/base/podinfo, got %s", podinfo.BasePath)
 	}
 
-	// Verify variants
 	if len(podinfo.Variants) < 2 {
 		t.Errorf("expected at least 2 variants (staging, prod), got %d", len(podinfo.Variants))
 	}
@@ -81,24 +94,26 @@ func TestParseFluxExample(t *testing.T) {
 		t.Error("expected prod variant")
 	}
 
-	// Verify clusters were found
 	if len(result.Clusters) == 0 {
 		t.Error("expected to find clusters, got none")
 	}
 
-	t.Logf("\nClusters found: %d", len(result.Clusters))
+	hasStagingCluster := false
+	hasProdCluster := false
 	for _, c := range result.Clusters {
-		t.Logf("  - %s (%s)", c.Name, c.Path)
+		if c.Name == "staging" {
+			hasStagingCluster = true
+		}
+		if c.Name == "prod" {
+			hasProdCluster = true
+		}
+	}
+	if !hasStagingCluster || !hasProdCluster {
+		t.Fatalf("expected both staging and prod clusters, got: %+v", result.Clusters)
 	}
 
-	// Verify infrastructure was found
 	if len(result.Infrastructure) == 0 {
 		t.Error("expected to find infrastructure, got none")
-	}
-
-	t.Logf("\nInfrastructure found: %d", len(result.Infrastructure))
-	for _, i := range result.Infrastructure {
-		t.Logf("  - %s (%s)", i.Name, i.Path)
 	}
 }
 

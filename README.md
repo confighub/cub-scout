@@ -272,7 +272,7 @@ As one user put it:
 
 cub-scout helps by making these relationships explicit and telling the full creation story.
 
-See [docs/gitops-hierarchies.md](docs/gitops-hierarchies.md) for detailed examples covering Flux and Argo CD.
+See [docs/howto/tree-hierarchies.md](docs/howto/tree-hierarchies.md) for detailed examples covering Flux and Argo CD.
 
 ---
 

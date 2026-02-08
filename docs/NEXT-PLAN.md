@@ -1,8 +1,12 @@
 # cub-scout Next Plan: v0.19.x and v1.x
 
-> **Status:** Draft for review
+> **Status:** Historical planning draft
 > **Date:** 2026-02-06
 > **Scope:** Three work areas across standalone and connected modes
+>
+> **Authoritative roadmap:** [`docs/roadmap.md`](roadmap.md)
+>
+> This document is retained as planning context and rationale. Where it conflicts with `docs/roadmap.md`, the roadmap document wins.
 
 ---
 

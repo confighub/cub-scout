@@ -1,4 +1,8 @@
-# ✅ OFFICIAL SAVEPOINT — cub-scout
+# ✅ SESSION NOTES — cub-scout
+
+> **Roadmap source of truth:** [`docs/roadmap.md`](docs/roadmap.md)
+>
+> This file is a session log and may include historical snapshots that are useful for context but are not authoritative roadmap commitments.
 
 **Date:** 2026-02-06
 **Version line:** v0.19.x (preparing v1.0)
@@ -118,23 +122,23 @@ Testing is now **auditable, repeatable, and CI-ready**.
 
 ## 🧭 Roadmap Position
 
-### Completed arcs
+### v0.x Status
 
-* v0.14 — Explainable Debugging
-* v0.15 — Replay & Time-Series Reasoning
-* **v0.16 — Composition Attribution** ✅
+* v0.x delivery is complete and locked
+* v0.19.x completed UX and evidence workflow hardening
+* v0.19.6 completed 1.0 readiness items
 
-### Next planned (NOT STARTED)
+### Active Forward Plan
 
-* **v0.17 — Stabilization Window**
+* v1.x Connected Mode with ConfigHub:
+  * connected import flows
+  * git as first-class source
+  * shared fleet definitions
+  * surfaced ConfigHub engines (history, views, impact, policy context)
 
-  * CI YAML
-  * Performance baselines
-  * UX polish
-  * Contract audits
-  * Test hardening
+### Deferred / Future
 
-No active PRs. No partial work in progress.
+* Open future items remain tracked for platform composition extensions (for example, kro support)
 
 ---
 
@@ -157,17 +161,15 @@ Work can resume at any time without re-deriving context.
 ## ▶️ RESUME PROMPT (WHEN READY)
 
 > **Project:** cub-scout
-> **Savepoint loaded.**
-> v0.16.0 is released with composition attribution across Crossplane and Kustomize.
-> Attribution schemas are locked; `scripts/full-test.sh` is the canonical contract proof.
+> **Session context loaded.**
+> v0.x is complete and v1.0 contracts are locked.
+> Forward work is v1.x Connected Mode execution as defined in `docs/roadmap.md`.
 >
 > **Next options:**
 >
-> * Start **v0.17 Stabilization** (CI, perf baselines, UX polish, audits), or
-> * Draft an architectural note explaining the attribution model, or
-> * Extend docs/demos using existing semantics only.
->
-> No new schemas or semantics unless explicitly declared.
+> * Execute prioritized v1.x connected capabilities, or
+> * Continue docs/examples and release hardening without semantic expansion, or
+> * Perform maintenance improvements with tests and contract safety checks.
 
 ---
 

@@ -4,30 +4,39 @@ Complete reference for all commands, options, TUI keys, and expected outputs.
 
 ---
 
-## Top-Level Commands (19)
+## Top-Level Commands
 
-| Command | Description | Standalone | Connected |
-|---------|-------------|:----------:|:---------:|
-| `map` | Interactive TUI explorer | Yes | Yes |
-| `tree` | Hierarchical views (runtime, git, config) | Yes | Yes |
-| `status` | Show connection status, cluster, and worker info | Yes | Yes |
-| `gitops status` | Show GitOps pipeline health and failures | Yes | - |
-| `debug` | Guided GitOps debugging wizard | Yes | - |
-| `discover` | Find workloads (alias for map workloads) | Yes | - |
-| `health` | Check for issues (alias for map issues) | Yes | - |
-| `trace` | Show GitOps ownership chain | Yes | - |
-| `scan` | Scan and score issues | Yes | - |
-| `snapshot` | Dump cluster state as JSON | Yes | - |
-| `import` | Import workloads into ConfigHub | - | Yes |
-| `import-argocd` | Import ArgoCD Application | - | Yes |
-| `app-space` | Manage App Spaces | - | Yes |
-| `remedy` | Execute CCVE remediation | Yes | - |
-| `combined` | Git repo + cluster alignment | Yes | Yes |
-| `parse-repo` | Parse GitOps repo structure | Yes | - |
-| `demo` | Run interactive demos | Yes | - |
-| `version` | Print version | Yes | - |
-| `completion` | Generate shell completions | Yes | - |
-| `setup` | Set up shell config | Yes | - |
+The table below reflects the current `cub-scout --help` output.
+
+| Command | Description |
+|---------|-------------|
+| `app-space` | Manage App Spaces |
+| `apply` | Apply a proposal from JSON (GUI) |
+| `bundle` | Work with debug bundles |
+| `catalog` | Manage bundle catalogs |
+| `combined` | Show Git repo structure + cluster workloads aligned |
+| `completion` | Generate shell completion script |
+| `debug` | Guided GitOps debugging wizard |
+| `demo` | Run interactive demos |
+| `discover` | Discover resources (alias for `map workloads`) |
+| `drift` | Detect drift between desired and live state |
+| `gitops` | GitOps status and diagnostics |
+| `graph` | Resource graph operations |
+| `health` | Check issues (alias for `map issues`) |
+| `import` | Import workloads into ConfigHub |
+| `import-argocd` | Import an ArgoCD Application into ConfigHub |
+| `import-cluster-aggregator` | Aggregate imports from multiple clusters (GUI) |
+| `map` | Interactive map of resources and ownership |
+| `parse-repo` | Parse a GitOps repository structure |
+| `patterns` | Pattern detection engine |
+| `remedy` | Execute remediation for CCVE findings |
+| `scan` | Scan for CCVEs and stuck states |
+| `setup` | Set up shell completions and configuration |
+| `snapshot` | Dump cluster state as GSF JSON |
+| `status` | Show connection status and cluster info |
+| `trace` | Trace any resource to its Git source |
+| `tree` | Show hierarchical views of resources |
+| `version` | Print version information |
 
 ---
 
