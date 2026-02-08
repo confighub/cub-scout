@@ -1,11 +1,20 @@
-name: v0.5 Release Gate
-description: Final go/no-go decision for v0.5
-labels: ["v0.5", "release"]
+name: Release gate
+description: Track final go/no-go decision for an upcoming release
+labels: ["release"]
 body:
   - type: markdown
     attributes:
       value: |
-        This issue tracks the final v0.5 release decision.
+        Use this issue to document the release decision based on evidence.
+
+  - type: input
+    id: release_version
+    attributes:
+      label: Release Version
+      description: Which release is being gated?
+      placeholder: v1.0.0
+    validations:
+      required: true
 
   - type: checkboxes
     id: checklist
@@ -14,8 +23,8 @@ body:
       options:
         - label: Ownership correctness verified
         - label: Failure modeling verified
-        - label: TUI stability verified
-        - label: CLI contract verified
+        - label: TUI and CLI behavior verified
+        - label: CLI contract and docs verified
         - label: Known limitations documented
         - label: Waivers reviewed and approved
 
@@ -23,6 +32,6 @@ body:
     id: decision
     attributes:
       label: Decision
-      description: GO or NO-GO, with justification.
+      description: GO or NO-GO, with justification and links to evidence.
     validations:
       required: true

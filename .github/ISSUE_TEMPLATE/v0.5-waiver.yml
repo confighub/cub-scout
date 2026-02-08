@@ -1,11 +1,20 @@
-name: v0.5 Waiver
-description: Request a waiver for a v0.5 requirement
-labels: ["v0.5", "waiver"]
+name: Waiver
+description: Request a waiver for a release requirement
+labels: ["waiver"]
 body:
   - type: markdown
     attributes:
       value: |
-        Waivers are exceptional and must be explicit.
+        Waivers are exceptional and must be explicit with clear risk ownership.
+
+  - type: input
+    id: release_version
+    attributes:
+      label: Release Version
+      description: Which release is this waiver for?
+      placeholder: v1.0.0
+    validations:
+      required: true
 
   - type: textarea
     id: requirement
@@ -19,7 +28,7 @@ body:
     id: rationale
     attributes:
       label: Rationale
-      description: Why is this acceptable for v0.5?
+      description: Why is this acceptable for the target release?
     validations:
       required: true
 
@@ -43,6 +52,6 @@ body:
     id: followup
     attributes:
       label: Follow-Up Work
-      description: Link or describe post-v0.5 work.
+      description: Link or describe post-release follow-up.
     validations:
       required: true

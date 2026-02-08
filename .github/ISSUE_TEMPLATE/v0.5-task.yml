@@ -1,12 +1,11 @@
-name: v0.5 Task
-description: Scoped work item for cub-scout v0.5 delivery
-labels: ["v0.5"]
+name: Task
+description: Scoped work item for cub-scout delivery
+labels: ["task"]
 body:
   - type: markdown
     attributes:
       value: |
-        This issue represents a **scoped v0.5 delivery task**.
-        All fields are required.
+        This issue represents a scoped delivery task. All fields are required.
 
   - type: textarea
     id: intent

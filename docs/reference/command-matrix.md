@@ -2,59 +2,67 @@
 
 Complete reference of all commands, options, TUI keys, and availability.
 
-**Legend:**
-- **Standalone**: Works with just kubectl access
-- **Connected**: Requires ConfigHub auth (`cub auth login`)
-- **Full Product**: Available in ConfigHub Pro
+> This matrix is aligned to current `cub-scout --help` output.
+> Dynamic availability still depends on cluster access, auth state, and installed companion CLIs.
 
 ---
 
 ## Top-Level Commands
 
-| Command | Description | Standalone | Connected | Full Product |
-|---------|-------------|:----------:|:---------:|:------------:|
-| `map` | Interactive TUI explorer | Yes | Yes | Yes |
-| `tree` | Hierarchical views (runtime, git, config) | Yes | Yes | Yes |
-| `discover` | Find workloads (alias for map workloads) | Yes | - | - |
-| `health` | Check for issues (alias for map issues) | Yes | - | - |
-| `trace` | Show GitOps ownership chain | Yes | - | - |
-| `scan` | Scan for CCVEs | Yes | - | Yes |
-| `snapshot` | Dump cluster state as JSON | Yes | - | - |
-| `import` | Import workloads into ConfigHub | - | Yes | Yes |
-| `import-argocd` | Import ArgoCD Application | - | Yes | Yes |
-| `app-space` | Manage App Spaces | - | Yes | Yes |
-| `remedy` | Execute CCVE remediation | Yes | - | Yes |
-| `combined` | Git repo + cluster alignment | Yes | Yes | Yes |
-| `parse-repo` | Parse GitOps repo structure | Yes | - | - |
-| `demo` | Run interactive demos | Yes | - | - |
-| `version` | Print version | Yes | - | - |
-| `completion` | Generate shell completions | Yes | - | - |
-| `setup` | Set up shell config | Yes | - | - |
+| Command | Description |
+|---------|-------------|
+| `app-space` | Manage App Spaces |
+| `apply` | Apply a proposal from JSON (GUI) |
+| `bundle` | Work with debug bundles |
+| `catalog` | Manage bundle catalogs |
+| `combined` | Show Git repo structure + cluster workloads aligned |
+| `completion` | Generate shell completion script |
+| `debug` | Guided GitOps debugging wizard |
+| `demo` | Run interactive demos |
+| `discover` | Discover resources (alias for `map workloads`) |
+| `drift` | Detect drift between desired and live state |
+| `gitops` | GitOps status and diagnostics |
+| `graph` | Resource graph operations |
+| `health` | Check cluster issues (alias for `map issues`) |
+| `import` | Import workloads into ConfigHub |
+| `import-argocd` | Import an ArgoCD Application into ConfigHub |
+| `import-cluster-aggregator` | Aggregate imports from multiple clusters (GUI) |
+| `map` | Interactive map of resources and ownership |
+| `parse-repo` | Parse a GitOps repository structure |
+| `patterns` | Pattern detection engine |
+| `remedy` | Execute remediation for CCVE findings |
+| `scan` | Scan for CCVEs and stuck states |
+| `setup` | Set up shell completions and configuration |
+| `snapshot` | Dump cluster state as GSF JSON |
+| `status` | Show connection status and cluster info |
+| `trace` | Trace any resource to its Git source |
+| `tree` | Show hierarchical views of resources |
+| `version` | Print version information |
 
 ---
 
 ## `map` Subcommands
 
-| Command | Description | TUI Key | Standalone | Connected |
-|---------|-------------|:-------:|:----------:|:---------:|
-| `map` (default) | Interactive TUI | - | Yes | Yes |
-| `map --hub` | ConfigHub hierarchy TUI | `H` | - | Yes |
-| `map list` | Plain text resource list | - | Yes | - |
-| `map status` | One-line health check | `s` | Yes | - |
-| `map workloads` | Workloads by owner | `w` | Yes | - |
-| `map deployers` | Deployers (Deployments) | `p` | Yes | - |
-| `map orphans` | Unmanaged resources | `o` | Yes | - |
-| `map crashes` | Failing pods/deployments | `c` | Yes | - |
-| `map issues` | Resources with problems | `i` | Yes | - |
-| `map drift` | Desired vs actual state | `d` | Yes | - |
-| `map bypass` | Factory bypass detection | `b` | Yes | - |
-| `map sprawl` | Configuration sprawl | `x` | Yes | - |
-| `map deep-dive` | All cluster data with LiveTree | `4` | Yes | Yes |
-| `map app-hierarchy` | Inferred ConfigHub model | `5`/`A` | Yes | - |
-| `map dashboard` | Unified health dashboard | - | Yes | - |
-| `map fleet` | Multi-cluster fleet view | - | - | Yes |
-| `map hub` | ConfigHub hierarchy | `H` | - | Yes |
-| `map queries` | Saved queries | - | Yes | - |
+| Command | Description | TUI Key | Notes |
+|---------|-------------|:-------:|-------|
+| `map` (default) | Interactive TUI | - | Local cluster explorer |
+| `map --hub` | ConfigHub hierarchy TUI | `H` | Requires ConfigHub auth/context |
+| `map list` | Plain text resource list | - | Scriptable output |
+| `map status` | One-line health check | `s` | CI-friendly status summary |
+| `map workloads` | Workloads by owner | `w` | Ownership-focused view |
+| `map deployers` | Deployers (Deployments) | `p` | Deployer slice |
+| `map orphans` | Unmanaged resources | `o` | Native/orphan focus |
+| `map crashes` | Failing pods/deployments | `c` | Crash/failure focus |
+| `map issues` | Resources with problems | `i` | Consolidated problems |
+| `map drift` | Desired vs actual state | `d` | Drift-focused slice |
+| `map bypass` | Factory bypass detection | `b` | Governance/debug slice |
+| `map sprawl` | Configuration sprawl | `x` | Config-sprawl slice |
+| `map deep-dive` | All cluster data with LiveTree | `4` | Deep inspection |
+| `map app-hierarchy` | Inferred ConfigHub model | `5`/`A` | Inference view |
+| `map dashboard` | Unified health dashboard | - | Summary dashboard |
+| `map fleet` | Multi-cluster fleet view | - | Connected/fleet workflows |
+| `map hub` | ConfigHub hierarchy | `H` | Hub view shortcut |
+| `map queries` | Saved queries | - | Query workflow support |
 
 ---
 
@@ -77,14 +85,14 @@ Complete reference of all commands, options, TUI keys, and availability.
 
 ## `tree` Subcommands
 
-| Command | Description | Standalone | Connected |
-|---------|-------------|:----------:|:---------:|
-| `tree` or `tree runtime` | Deployment → ReplicaSet → Pod trees | Yes | - |
-| `tree ownership` | Resources grouped by GitOps owner | Yes | - |
-| `tree git` | Git repository structure | Yes | - |
-| `tree patterns` | Detected GitOps patterns (D2, Arnie, etc.) | Yes | - |
-| `tree config` | ConfigHub Unit relationships | - | Yes |
-| `tree suggest` | Suggested Hub/AppSpace organization | Yes | - |
+| Command | Description | Notes |
+|---------|-------------|-------|
+| `tree` or `tree runtime` | Deployment → ReplicaSet → Pod trees | Runtime hierarchy view |
+| `tree ownership` | Resources grouped by GitOps owner | Ownership hierarchy |
+| `tree git` | Git repository structure | Git source structure |
+| `tree patterns` | Detected GitOps patterns (D2, Arnie, etc.) | Pattern view |
+| `tree config` | ConfigHub Unit relationships | Requires ConfigHub/cub context |
+| `tree suggest` | Suggested Hub/AppSpace organization | Suggestion workflow |
 
 ---
 

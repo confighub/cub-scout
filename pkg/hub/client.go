@@ -16,7 +16,10 @@ type Client struct {
 
 // NewClient creates a new ConfigHub client.
 func NewClient() *Client {
-	auth, _ := LoadAuth()
+	auth, err := LoadAuth()
+	if err != nil || auth == nil {
+		auth = &Auth{}
+	}
 	return &Client{
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
@@ -55,6 +58,9 @@ func (c *Client) RequireConnected() error {
 func (c *Client) RequirePaid() error {
 	if err := c.RequireConnected(); err != nil {
 		return err
+	}
+	if c.auth == nil {
+		return fmt.Errorf("this feature requires a paid ConfigHub subscription.\n\nUpgrade at %s", WebBaseURL+"/pricing")
 	}
 	if !c.auth.IsPaidTier() {
 		return fmt.Errorf("this feature requires a paid ConfigHub subscription.\n\nUpgrade at %s", WebBaseURL+"/pricing")

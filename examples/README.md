@@ -256,12 +256,12 @@ Copy-paste scripts for common integrations.
 
 | Script | What It Does |
 |--------|--------------|
-| [k9s-plugin.yaml](scripts/k9s-plugin.yaml) | Add map/scan commands to k9s |
-| [slack-alerting.sh](scripts/slack-alerting.sh) | Alert on drift/CCVEs |
-| [github-workflow.yaml](scripts/github-workflow.yaml) | CI/CD gate for CCVEs |
-| [prometheus-metrics.sh](scripts/prometheus-metrics.sh) | Export metrics |
-| [audit-images.sh](scripts/audit-images.sh) | Find all image versions |
-| [find-orphans.sh](scripts/find-orphans.sh) | Find unmanaged resources |
+| [k9s plugin](scripts/README.md#k9s-plugin) | Add map/scan commands to k9s |
+| [Slack alerting](scripts/README.md#slack-alerting) | Alert on drift/CCVEs |
+| [GitHub Actions](scripts/README.md#github-actions) | CI/CD gate for CCVEs |
+| [Prometheus metrics](scripts/README.md#prometheus-metrics) | Export metrics |
+| [Image audit](scripts/README.md#image-audit) | Find all image versions |
+| [Find orphans](scripts/README.md#find-orphans) | Find unmanaged resources |
 
 See [scripts/README.md](scripts/README.md) for usage.
 

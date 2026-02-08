@@ -5,7 +5,8 @@
 > This document **replaces and subsumes**:
 >
 > * `/ROADMAP.md`
-> * `/docs/roadmap.md`
+> * `/docs/NEXT-PLAN.md` (historical planning draft)
+> * `/SESSION.md` roadmap/status snapshots
 > * scattered milestone notes and implicit issue groupings
 >
 > It reconciles *historical releases*, *current shipped reality*, and the *forward execution plan*.

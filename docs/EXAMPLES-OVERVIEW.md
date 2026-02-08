@@ -26,12 +26,11 @@ cub-scout includes built-in demos. Run `./cub-scout demo list` to see all availa
 # Quick demos
 ./cub-scout demo quick              # Ownership detection (~30 sec)
 ./cub-scout demo ccve               # CCVE-2025-0027 (~2 min)
-./cub-scout demo healthy            # Enterprise healthy pattern
-./cub-scout demo unhealthy          # Common GitOps problems
+./cub-scout demo query              # Query language filtering (~1 min)
 
 # Scenarios
-./cub-scout demo scenario bigbank   # BIGBANK incident
-./cub-scout demo scenario orphan    # Find shadow IT
+./cub-scout demo scenario bigbank-incident  # BIGBANK incident
+./cub-scout demo scenario break-glass       # Emergency kubectl workflow
 
 # Cleanup
 ./cub-scout demo quick --cleanup
