@@ -294,10 +294,10 @@ var mapProblemsCmd = &cobra.Command{
 	Use:     "issues",
 	Aliases: []string{"problems"},
 	Short:   "List resources with issues",
-	Long: `List resources that have issues - failed deployments, stuck reconciliations, etc.
+	Long: `List resources that have issues - failed workloads, stuck reconciliations, etc.
 
 Shows:
-  - Deployments with unavailable replicas
+  - Deployments/StatefulSets with unavailable replicas
   - Flux Kustomizations/HelmReleases not ready
   - Argo CD Applications not synced/healthy`,
 	RunE: runMapProblems,
@@ -318,7 +318,7 @@ Shows:
 var mapWorkloadsCmd = &cobra.Command{
 	Use:   "workloads",
 	Short: "List workloads grouped by owner",
-	Long: `List all workloads (Deployments, StatefulSets, DaemonSets) grouped by owner.
+	Long: `List canonical workloads (Deployments, StatefulSets) grouped by owner.
 
 Owners: Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native`,
 	RunE: runMapWorkloads,
@@ -354,7 +354,7 @@ var mapDashboardCmd = &cobra.Command{
 
 Shows:
 - Deployer health (Flux Kustomizations, HelmReleases, ArgoCD Applications)
-- Workload health (Deployments, StatefulSets, DaemonSets)
+- Workload health (Deployments, StatefulSets)
 - GitOps coverage percentage
 - Breakdown by owner with visual bars
 - Shadow IT warnings for native workloads
@@ -1402,21 +1402,16 @@ func runMapStatus(cmd *cobra.Command, args []string) error {
 	// Count workloads
 	workloadsReady, workloadsTotal := 0, 0
 
-	// Check Deployments
-	if depList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "apps", Version: "v1", Resource: "deployments",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, dep := range depList.Items {
-			ns := dep.GetNamespace()
-			if strings.HasPrefix(ns, "kube-") || ns == "local-path-storage" {
-				continue
-			}
-			workloadsTotal++
-			if isDeploymentReady(&dep) {
-				workloadsReady++
-			}
+	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+		ns := workload.GetNamespace()
+		if strings.HasPrefix(ns, "kube-") || ns == "local-path-storage" {
+			return
 		}
-	}
+		workloadsTotal++
+		if isWorkloadReady(workload) {
+			workloadsReady++
+		}
+	})
 
 	// Output
 	problems := (deployersTotal - deployersReady) + (workloadsTotal - workloadsReady)
@@ -1490,22 +1485,17 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Check Deployments
-	if depList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "apps", Version: "v1", Resource: "deployments",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, dep := range depList.Items {
-			ns := dep.GetNamespace()
-			if strings.HasPrefix(ns, "kube-") || ns == "local-path-storage" {
-				continue
-			}
-			if !isDeploymentReady(&dep) {
-				desired, available := getDeploymentReplicas(&dep)
-				workloadIssues = append(workloadIssues, fmt.Sprintf("✗ Deployment/%s in %s: %d/%d ready",
-					dep.GetName(), ns, available, desired))
-			}
+	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+		ns := workload.GetNamespace()
+		if strings.HasPrefix(ns, "kube-") || ns == "local-path-storage" {
+			return
 		}
-	}
+		if !isWorkloadReady(workload) {
+			desired, available := getWorkloadReplicas(workload)
+			workloadIssues = append(workloadIssues, fmt.Sprintf("✗ %s/%s in %s: %d/%d ready",
+				workload.GetKind(), workload.GetName(), ns, available, desired))
+		}
+	})
 
 	totalIssues := len(deployerIssues) + len(workloadIssues)
 
@@ -1749,41 +1739,48 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 
 	// Count by owner
 	ownerCounts := map[string]int{}
+	kindCounts := map[string]int{}
 	var total int
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "STATUS\tNAMESPACE\tNAME\tOWNER\tMANAGED-BY\tIMAGE")
-	fmt.Fprintln(w, "──────\t─────────\t────\t─────\t──────────\t─────")
+	fmt.Fprintln(w, "STATUS\tKIND\tNAMESPACE\tNAME\tOWNER\tMANAGED-BY\tIMAGE")
+	fmt.Fprintln(w, "──────\t────\t─────────\t────\t─────\t──────────\t─────")
 
-	// Get Deployments
-	if depList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "apps", Version: "v1", Resource: "deployments",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, dep := range depList.Items {
-			ns := dep.GetNamespace()
-			if isSystemNamespace(ns) {
-				continue
-			}
-
-			total++
-			status := SymOK
-			if !isDeploymentReady(&dep) {
-				status = SymError
-			}
-
-			owner, managedBy := detectOwnership(&dep)
-			ownerCounts[owner]++
-			image := getContainerImage(&dep)
-
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
-				status, ns, dep.GetName(), owner, managedBy, image)
+	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+		ns := workload.GetNamespace()
+		if isSystemNamespace(ns) {
+			return
 		}
-	}
+
+		total++
+		kind := workload.GetKind()
+		kindCounts[kind]++
+
+		status := SymOK
+		if !isWorkloadReady(workload) {
+			status = SymError
+		}
+
+		owner, managedBy := detectOwnership(workload)
+		ownerCounts[owner]++
+		image := getContainerImage(workload)
+
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			status, kind, ns, workload.GetName(), owner, managedBy, image)
+	})
 
 	w.Flush()
 
 	// Summary
 	if total > 0 {
+		kindOrder := []string{"Deployment", "StatefulSet"}
+		kindParts := []string{}
+		for _, kind := range kindOrder {
+			if count := kindCounts[kind]; count > 0 {
+				kindParts = append(kindParts, fmt.Sprintf("%d %s", count, kind))
+			}
+		}
+
 		// Build owner breakdown in consistent order
 		owners := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
 		var parts []string
@@ -1792,7 +1789,11 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 				parts = append(parts, fmt.Sprintf("%d %s", count, owner))
 			}
 		}
-		fmt.Printf("\n%d workloads: %s\n", total, strings.Join(parts, ", "))
+		if len(parts) > 0 {
+			fmt.Printf("\n%d workloads (%s): %s\n", total, strings.Join(kindParts, ", "), strings.Join(parts, ", "))
+		} else {
+			fmt.Printf("\n%d workloads (%s)\n", total, strings.Join(kindParts, ", "))
+		}
 	}
 
 	return nil
@@ -1886,30 +1887,25 @@ func runMapSprawl(cmd *cobra.Command, args []string) error {
 
 	var fluxCount, argoCount, helmCount, configHubCount, nativeCount int
 
-	// Get all Deployments and count by owner
-	if depList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "apps", Version: "v1", Resource: "deployments",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, dep := range depList.Items {
-			ns := dep.GetNamespace()
-			if isSystemNamespace(ns) {
-				continue
-			}
-			owner, _ := detectOwnership(&dep)
-			switch owner {
-			case "Flux":
-				fluxCount++
-			case "ArgoCD":
-				argoCount++
-			case "Helm":
-				helmCount++
-			case "ConfigHub":
-				configHubCount++
-			case "Native":
-				nativeCount++
-			}
+	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+		ns := workload.GetNamespace()
+		if isSystemNamespace(ns) {
+			return
 		}
-	}
+		owner, _ := detectOwnership(workload)
+		switch owner {
+		case "Flux":
+			fluxCount++
+		case "ArgoCD":
+			argoCount++
+		case "Helm":
+			helmCount++
+		case "ConfigHub":
+			configHubCount++
+		case "Native":
+			nativeCount++
+		}
+	})
 
 	total := fluxCount + argoCount + helmCount + configHubCount + nativeCount
 	managed := total - nativeCount
@@ -2008,35 +2004,29 @@ func runMapDashboard(cmd *cobra.Command, args []string) error {
 	workloadsReady, workloadsTotal := 0, 0
 	var fluxCount, argoCount, helmCount, configHubCount, nativeCount int
 
-	// Check Deployments
-	if depList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "apps", Version: "v1", Resource: "deployments",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, dep := range depList.Items {
-			ns := dep.GetNamespace()
-			if isSystemNamespace(ns) {
-				continue
-			}
-			workloadsTotal++
-			if isDeploymentReady(&dep) {
-				workloadsReady++
-			}
-			// Count by owner
-			owner, _ := detectOwnership(&dep)
-			switch owner {
-			case "Flux":
-				fluxCount++
-			case "ArgoCD":
-				argoCount++
-			case "Helm":
-				helmCount++
-			case "ConfigHub":
-				configHubCount++
-			case "Native":
-				nativeCount++
-			}
+	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+		ns := workload.GetNamespace()
+		if isSystemNamespace(ns) {
+			return
 		}
-	}
+		workloadsTotal++
+		if isWorkloadReady(workload) {
+			workloadsReady++
+		}
+		owner, _ := detectOwnership(workload)
+		switch owner {
+		case "Flux":
+			fluxCount++
+		case "ArgoCD":
+			argoCount++
+		case "Helm":
+			helmCount++
+		case "ConfigHub":
+			configHubCount++
+		case "Native":
+			nativeCount++
+		}
+	})
 
 	// Health status
 	problems := (deployersTotal - deployersReady) + (workloadsTotal - workloadsReady)
@@ -2103,29 +2093,24 @@ func runMapBypass(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "NAMESPACE\tNAME\tIMAGE")
-	fmt.Fprintln(w, "─────────\t────\t─────")
+	fmt.Fprintln(w, "KIND\tNAMESPACE\tNAME\tIMAGE")
+	fmt.Fprintln(w, "────\t─────────\t────\t─────")
 
 	var nativeCount int
 
-	// Get all Deployments
-	if depList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "apps", Version: "v1", Resource: "deployments",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, dep := range depList.Items {
-			ns := dep.GetNamespace()
-			if isSystemNamespace(ns) {
-				continue
-			}
-
-			owner, _ := detectOwnership(&dep)
-			if owner == "Native" {
-				nativeCount++
-				image := getContainerImage(&dep)
-				fmt.Fprintf(w, "%s\t%s\t%s\n", ns, dep.GetName(), image)
-			}
+	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+		ns := workload.GetNamespace()
+		if isSystemNamespace(ns) {
+			return
 		}
-	}
+
+		owner, _ := detectOwnership(workload)
+		if owner == "Native" {
+			nativeCount++
+			image := getContainerImage(workload)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", workload.GetKind(), ns, workload.GetName(), image)
+		}
+	})
 
 	w.Flush()
 
@@ -2155,6 +2140,45 @@ func makeBar(count, total, width int) string {
 
 // Helper functions for the new commands
 
+type workloadResource struct {
+	kind     string
+	resource string
+}
+
+var canonicalWorkloadResources = []workloadResource{
+	{kind: "Deployment", resource: "deployments"},
+	{kind: "StatefulSet", resource: "statefulsets"},
+}
+
+func forEachCanonicalWorkload(ctx context.Context, dynClient dynamic.Interface, namespace string, fn func(*unstructured.Unstructured)) {
+	for _, workload := range canonicalWorkloadResources {
+		gvr := schema.GroupVersionResource{
+			Group:    "apps",
+			Version:  "v1",
+			Resource: workload.resource,
+		}
+
+		resourceClient := dynClient.Resource(gvr)
+		listFn := resourceClient.List
+		if namespace != "" {
+			listFn = resourceClient.Namespace(namespace).List
+		}
+
+		workloadList, err := listFn(ctx, v1.ListOptions{})
+		if err != nil {
+			continue
+		}
+
+		for i := range workloadList.Items {
+			item := workloadList.Items[i]
+			if item.GetKind() == "" {
+				item.SetKind(workload.kind)
+			}
+			fn(&item)
+		}
+	}
+}
+
 func isResourceReady(obj *unstructured.Unstructured) bool {
 	conditions, found, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
 	if !found {
@@ -2179,21 +2203,30 @@ func isArgoAppHealthy(obj *unstructured.Unstructured) bool {
 }
 
 func isDeploymentReady(obj *unstructured.Unstructured) bool {
-	desired, _, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
-	available, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyReplicas")
-	if desired == 0 {
-		desired = 1
-	}
-	return available >= desired
+	return isWorkloadReady(obj)
 }
 
 func getDeploymentReplicas(obj *unstructured.Unstructured) (int64, int64) {
-	desired, _, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
-	available, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyReplicas")
-	if desired == 0 {
-		desired = 1
+	return getWorkloadReplicas(obj)
+}
+
+func isWorkloadReady(obj *unstructured.Unstructured) bool {
+	desired, ready := getWorkloadReplicas(obj)
+	return ready >= desired
+}
+
+func getWorkloadReplicas(obj *unstructured.Unstructured) (int64, int64) {
+	switch obj.GetKind() {
+	case "Deployment", "StatefulSet":
+		desired, _, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
+		ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyReplicas")
+		if desired == 0 {
+			desired = 1
+		}
+		return desired, ready
+	default:
+		return 1, 0
 	}
-	return desired, available
 }
 
 func getConditionReason(obj *unstructured.Unstructured) string {
