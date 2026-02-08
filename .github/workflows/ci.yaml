@@ -136,8 +136,9 @@ jobs:
 
       - name: Install ArgoCD
         run: |
-          kubectl create namespace argocd
-          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+          kubectl create namespace argocd || true
+          # Use server-side apply to avoid oversized last-applied annotations on Argo CRDs.
+          kubectl apply --server-side --force-conflicts -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
           kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=180s
 
       - name: Deploy Flux example

@@ -16,10 +16,6 @@ func init() {
 	})
 }
 
-// GitOps CRD kinds to check for
-var argoCDKinds = []string{"Application", "ApplicationSet"}
-var fluxKinds = []string{"Kustomization", "HelmRelease", "GitRepository"}
-
 // detectGitOpsControllerPresence checks for GitOps controller CRDs in the graph.
 func detectGitOpsControllerPresence(g *graph.Graph) ([]Finding, Status) {
 	var findings []Finding

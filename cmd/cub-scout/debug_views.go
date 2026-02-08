@@ -17,9 +17,6 @@ var (
 			Foreground(lipgloss.Color("212")).
 			MarginBottom(1)
 
-	debugSubtitleStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("241"))
-
 	debugSelectedStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("82")).
 				Bold(true)

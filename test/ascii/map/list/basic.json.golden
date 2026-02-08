@@ -1,92 +1,50 @@
-{
-  "command": "map-list",
-  "context": {
-    "cluster": "test-cluster",
-    "namespace": null
+[
+  {
+    "id": "default/default/apps/Deployment/api",
+    "clusterName": "default",
+    "namespace": "default",
+    "kind": "Deployment",
+    "name": "api",
+    "apiVersion": "apps/v1",
+    "owner": "Flux",
+    "status": "Ready",
+    "createdAt": "<TIMESTAMP>",
+    "updatedAt": "<TIMESTAMP>"
   },
-  "resources": [
-    {
-      "id": {
-        "kind": "Deployment",
-        "namespace": "default",
-        "name": "api"
-      },
-      "owner": {
-        "type": "Flux",
-        "ref": null
-      },
-      "status": "Ready"
-    },
-    {
-      "id": {
-        "kind": "Service",
-        "namespace": "default",
-        "name": "api"
-      },
-      "owner": {
-        "type": "Flux",
-        "ref": null
-      },
-      "status": "Ready"
-    },
-    {
-      "id": {
-        "kind": "Kustomization",
-        "namespace": "flux-system",
-        "name": "my-app"
-      },
-      "owner": {
-        "type": "Native",
-        "ref": null
-      },
-      "status": "Ready"
-    },
-    {
-      "id": {
-        "kind": "Deployment",
-        "namespace": "prod",
-        "name": "web"
-      },
-      "owner": {
-        "type": "Native",
-        "ref": null
-      },
-      "status": "NotReady"
-    }
-  ],
-  "summary": {
-    "total": 4,
-    "byOwner": [
-      {
-        "ownerType": "Flux",
-        "count": 2
-      },
-      {
-        "ownerType": "ArgoCD",
-        "count": 0
-      },
-      {
-        "ownerType": "Helm",
-        "count": 0
-      },
-      {
-        "ownerType": "ConfigHub",
-        "count": 0
-      },
-      {
-        "ownerType": "Native",
-        "count": 2
-      }
-    ],
-    "byStatus": [
-      {
-        "status": "NotReady",
-        "count": 1
-      },
-      {
-        "status": "Ready",
-        "count": 3
-      }
-    ]
+  {
+    "id": "default/default//Service/api",
+    "clusterName": "default",
+    "namespace": "default",
+    "kind": "Service",
+    "name": "api",
+    "apiVersion": "v1",
+    "owner": "Flux",
+    "status": "Ready",
+    "createdAt": "<TIMESTAMP>",
+    "updatedAt": "<TIMESTAMP>"
+  },
+  {
+    "id": "default/flux-system/kustomize.toolkit.fluxcd.io/Kustomization/my-app",
+    "clusterName": "default",
+    "namespace": "flux-system",
+    "kind": "Kustomization",
+    "name": "my-app",
+    "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+    "owner": "Native",
+    "status": "Ready",
+    "createdAt": "<TIMESTAMP>",
+    "updatedAt": "<TIMESTAMP>"
+  },
+  {
+    "id": "default/prod/apps/Deployment/web",
+    "clusterName": "default",
+    "namespace": "prod",
+    "kind": "Deployment",
+    "name": "web",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "status": "NotReady",
+    "createdAt": "<TIMESTAMP>",
+    "updatedAt": "<TIMESTAMP>"
   }
-}
+]
