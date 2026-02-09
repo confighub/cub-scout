@@ -97,16 +97,16 @@ tags:
 cub-scout scan --validate ./my-risks/RISK-2025-9001.yaml
 
 # Test against a specific resource
-cub-scout scan --test-ccve RISK-2025-9001 --resource my-namespace/Deployment/redis
+cub-scout scan --test-risk RISK-2025-9001 --resource my-namespace/Deployment/redis
 
 # Run with custom risk directory (flag name remains legacy for compatibility)
-cub-scout scan --ccve-dir ./my-risks
+cub-scout scan --risk-dir ./my-risks
 ```
 
 ### Sharing risk issues
 
 1. **Community contribution**: Open a PR to add to the main database
-2. **Private risk issues**: Use `--ccve-dir` for organization-specific patterns
+2. **Private risk issues**: Use `--risk-dir` for organization-specific patterns
 3. **ConfigHub risk issues**: Upload via ConfigHub for fleet-wide scanning
 
 ---

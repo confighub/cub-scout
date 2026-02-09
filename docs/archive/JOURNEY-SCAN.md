@@ -1,7 +1,7 @@
 # Journey: Scanning for Issues
 
 **Time:** 5 minutes
-**Goal:** Find configuration anti-patterns (CCVEs) in your cluster
+**Goal:** Find configuration anti-patterns (risk issues) in your cluster
 
 **Prerequisites:** Have a Kubernetes cluster running.
 
@@ -9,7 +9,7 @@
 
 ## What is Scanning?
 
-Scanning detects **CCVEs** (Cloud Configuration Vulnerabilities and Exposures) — configuration anti-patterns that cause real problems.
+Scanning detects **risk issues** (Cloud Configuration Vulnerabilities and Exposures) — configuration anti-patterns that cause real problems.
 
 Examples:
 - Missing resource limits
@@ -33,7 +33,7 @@ Examples:
 │                                                                              │
 │  Cluster: kind-atk                                                           │
 │  Scanned: 47 resources                                                       │
-│  Findings: 12 CCVEs                                                          │
+│  Findings: 12 risk issues                                                          │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
@@ -48,17 +48,17 @@ Examples:
 ┌─ TOP ISSUES ─────────────────────────────────────────────────────────────────┐
 │                                                                              │
 │  CRITICAL                                                                    │
-│  ✗ CCVE-2025-0027  Grafana sidecar with whitespace in data sources          │
+│  ✗ RISK-2025-0027  Grafana sidecar with whitespace in data sources          │
 │    payments-prod/grafana                                                     │
 │                                                                              │
-│  ✗ CCVE-2025-0089  Flux HelmRelease stuck in pending-upgrade                │
+│  ✗ RISK-2025-0089  Flux HelmRelease stuck in pending-upgrade                │
 │    payments-prod/redis                                                       │
 │                                                                              │
 │  HIGH                                                                        │
-│  ⚠ CCVE-2025-0001  Deployment missing resource limits                       │
+│  ⚠ RISK-2025-0001  Deployment missing resource limits                       │
 │    default/mystery-app                                                       │
 │                                                                              │
-│  ⚠ CCVE-2025-0042  Orphan resource - no GitOps owner                        │
+│  ⚠ RISK-2025-0042  Orphan resource - no GitOps owner                        │
 │    default/legacy-service                                                    │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -70,10 +70,10 @@ Press [Enter] on a finding for details, [q] to quit
 
 ## Step 2: View Finding Details
 
-Press **Enter** on a CCVE to see details:
+Press **Enter** on a risk issue to see details:
 
 ```
-┌─ CCVE-2025-0027: Grafana sidecar whitespace bug ─────────────────────────────┐
+┌─ RISK-2025-0027: Grafana sidecar whitespace bug ─────────────────────────────┐
 │                                                                              │
 │  Severity: Critical                                                          │
 │  Category: CONFIG                                                            │
@@ -107,7 +107,7 @@ Press [Esc] to go back, [f] to fix (if remediation available)
 
 ## Step 3: Filter by Category
 
-CCVEs are categorized:
+risk issues are categorized:
 
 | Category | What It Detects |
 |----------|-----------------|
@@ -172,7 +172,7 @@ Filter by category:
   "total_resources": 47,
   "findings": [
     {
-      "ccve_id": "CCVE-2025-0027",
+      "risk_id": "RISK-2025-0027",
       "severity": "Critical",
       "category": "CONFIG",
       "resource": {
@@ -202,9 +202,9 @@ Use in CI/CD:
 
 ---
 
-## Step 7: Common CCVEs
+## Step 7: Common risk issues
 
-### CCVE-2025-0001: Missing Resource Limits
+### RISK-2025-0001: Missing Resource Limits
 
 ```yaml
 # Problem: No limits set
@@ -226,7 +226,7 @@ containers:
       cpu: "500m"
 ```
 
-### CCVE-2025-0042: Orphan Resource
+### RISK-2025-0042: Orphan Resource
 
 ```bash
 # Problem: Resource created via kubectl, not tracked by GitOps
@@ -237,7 +237,7 @@ kubectl get deploy mystery-app -o yaml | grep -A5 labels
 # Or delete if no longer needed
 ```
 
-### CCVE-2025-0089: Flux HelmRelease Stuck
+### RISK-2025-0089: Flux HelmRelease Stuck
 
 ```bash
 # Problem: HelmRelease stuck in pending-upgrade
@@ -250,7 +250,7 @@ helm rollback <release> <revision> -n <namespace>
 
 ---
 
-## CCVE Database
+## risk issue Database
 
 cub-scout includes **46 active scanner patterns** plus **4,500+ reference patterns** covering:
 
@@ -263,7 +263,7 @@ cub-scout includes **46 active scanner patterns** plus **4,500+ reference patter
 - Traefik
 - And more...
 
-The CCVE database is maintained in [confighubai/confighub-scan](https://github.com/confighubai/confighub-scan).
+The risk issue database is maintained in [confighubai/confighub-scan](https://github.com/confighubai/confighub-scan).
 
 ---
 
@@ -286,8 +286,8 @@ Use Map to **see** your cluster. Use Scan to **validate** it.
 | Journey | What You'll Learn |
 |---------|-------------------|
 | [**JOURNEY-QUERY.md**](JOURNEY-QUERY.md) | Query across fleet |
-| [**SCAN-GUIDE.md**](../SCAN-GUIDE.md) | Full CCVE reference |
-| [**EXTENDING.md**](../EXTENDING.md) | Add custom CCVEs |
+| [**SCAN-GUIDE.md**](../SCAN-GUIDE.md) | Full risk issue reference |
+| [**EXTENDING.md**](../EXTENDING.md) | Add custom risk issues |
 
 ---
 
@@ -307,11 +307,11 @@ Filter to actionable items:
 ./test/atk/scan -q "severity=Critical OR severity=High"
 ```
 
-### "Unknown CCVE"
+### "Unknown risk issue"
 
-Update the CCVE database:
+Update the risk issue database:
 ```bash
-git pull  # Get latest CCVE definitions
+git pull  # Get latest risk issue definitions
 ```
 
 ---
@@ -322,6 +322,6 @@ git pull  # Get latest CCVE definitions
 
 ## See Also
 
-- [Scan Guide](../SCAN-GUIDE.md) — Full CCVE scanning documentation
+- [Scan Guide](../SCAN-GUIDE.md) — Full risk issue scanning documentation
 - [TUI-SCAN.md](TUI-SCAN.md) — Kyverno policy scanning
 - [CLI Guide](../../CLI-GUIDE.md) — Full command reference

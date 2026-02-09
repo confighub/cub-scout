@@ -104,12 +104,12 @@ Currently we detect orphans via missing labels. With trace:
 - Confirm resource truly has no Flux/Argo owner
 - Distinguish "never managed" from "was managed, now orphaned"
 
-### 4. CCVE Enhancement
+### 4. risk issue Enhancement
 
-New CCVEs possible:
-- `CCVE-FLUX-TRACE-001`: Resource not in any Flux trace (orphan)
-- `CCVE-FLUX-TRACE-002`: Trace shows stale revision (drift)
-- `CCVE-FLUX-TRACE-003`: Trace chain broken at intermediate level
+New risk issues possible:
+- `RISK-FLUX-TRACE-001`: Resource not in any Flux trace (orphan)
+- `RISK-FLUX-TRACE-002`: Trace shows stale revision (drift)
+- `RISK-FLUX-TRACE-003`: Trace chain broken at intermediate level
 
 ---
 
@@ -185,13 +185,13 @@ func FluxTrace(ctx context.Context, kind, name, namespace string) (*FluxTraceRes
 - `pkg/agent/agent.go` (add batch trace option)
 - `test/atk/map` (optional --trace flag)
 
-### Phase 4: CCVE Trace Checks
+### Phase 4: risk issue Trace Checks
 
-**Goal:** New CCVE patterns using trace data
+**Goal:** New risk issue patterns using trace data
 
-**New CCVEs:**
+**New risk issues:**
 ```yaml
-# CCVE-FLUX-TRACE-001
+# RISK-FLUX-TRACE-001
 name: flux-trace-orphan
 title: "Resource not in any Flux trace"
 category: ORPHAN
@@ -352,7 +352,7 @@ Application/frontend-app     ✓ Synced (sha1:abc123)
 | **1b** | `cub-scout trace` for Argo resources | 2-3 hours |
 | **2** | `map trace` and enhanced pipelines | 3-4 hours |
 | **3** | Efficient batch tracing for overview | 4-6 hours |
-| **4** | CCVE patterns using trace | 2-3 hours |
+| **4** | risk issue patterns using trace | 2-3 hours |
 | **5** | TUI trace tab with interactive navigation | 4-6 hours |
 
 **Total:** ~18-25 hours of work

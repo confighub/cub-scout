@@ -214,13 +214,13 @@ cub-scout trace deployment/frontend -n apptique-prod
 #   deployment/frontend → Application/apptique-prod → Git repo
 ```
 
-### 4. Test CCVE Scanning
+### 4. Test risk issue Scanning
 
 ```bash
 # Scan for configuration issues
 cub-scout scan
 
-# Expected: No critical CCVEs in clean deployment
+# Expected: No critical risk issues in clean deployment
 # (The apptique manifests follow best practices)
 ```
 
@@ -329,7 +329,7 @@ These scenarios demonstrate the **Rendered Manifest pattern goals** using real K
 |----------|------------|------|
 | **[Monday Panic](scenarios/monday-panic/)** | "47 clusters, where's the problem?" | Find broken deployment in 30 seconds |
 | **[Drift Detection](scenarios/drift-detection/)** | "Someone edited prod directly" | Detect kubectl changes |
-| **[Security Patch](scenarios/security-patch/)** | "CVE affects 847 services" | Find and fix CCVEs |
+| **[Security Patch](scenarios/security-patch/)** | "CVE affects 847 services" | Find and fix risk issues |
 
 ### Quick Start — Monday Panic
 
@@ -372,16 +372,16 @@ kubectl delete -f examples/apptique-examples/scenarios/drift-detection/base-depl
 # 1. Deploy vulnerable deployments
 kubectl apply -k examples/apptique-examples/scenarios/security-patch/
 
-# 2. Scan for CCVEs
+# 2. Scan for risk issues
 cub-scout scan
 
 # Expected output:
 # CRITICAL (1)
-# [CCVE-2025-0027] apptique-vulnerable/grafana-ccve
+# [RISK-2025-0027] apptique-vulnerable/grafana-risk
 #
 # HIGH (2)
-# [CCVE-2025-0001] apptique-vulnerable/no-limits
-# [CCVE-2025-0003] apptique-vulnerable/latest-tag
+# [RISK-2025-0001] apptique-vulnerable/no-limits
+# [RISK-2025-0003] apptique-vulnerable/latest-tag
 
 # 3. Cleanup
 kubectl delete -k examples/apptique-examples/scenarios/security-patch/

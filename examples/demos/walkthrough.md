@@ -1,10 +1,10 @@
-# Demo Walkthrough: Mixed Ownership with CCVEs
+# Demo Walkthrough: Mixed Ownership with risk issues
 
 **Status: Working** — Step-by-step walkthrough with expected output at each step.
 
 > **Maintainer note:** When updating this file, also update [docs/EXAMPLES-OVERVIEW.md](../../docs/EXAMPLES-OVERVIEW.md).
 
-This example creates a realistic multi-owner cluster with ConfigHub-managed resources, introduces problems and CCVEs, shows how to diagnose them using the map tool, then fixes them.
+This example creates a realistic multi-owner cluster with ConfigHub-managed resources, introduces problems and risk issues, shows how to diagnose them using the map tool, then fixes them.
 
 ---
 
@@ -165,7 +165,7 @@ cub-scout map suspended
 
 ---
 
-## Step 7: Scan for CCVEs
+## Step 7: Scan for risk issues
 
 ```bash
 cub-scout scan
@@ -178,12 +178,12 @@ CONFIG CVE SCAN: kind-atk
 
 INFO (1)
 ────────────────────────────────────────────────────────────────────
-[CCVE-FLUX-005] flux-system/monitoring-stack
+[RISK-FLUX-005] flux-system/monitoring-stack
 
 ════════════════════════════════════════════════════════════════════
 Summary: 0 critical, 0 warning, 1 info
 
-⚠ Run './scan <CCVE-ID>' for remediation steps
+⚠ Run './scan <RISK-ID>' for remediation steps
 ```
 
 ---
@@ -205,7 +205,7 @@ cub-scout scan --json
     "info": 1
   },
   "findings": [
-    {"id":"CCVE-FLUX-005","resource":"flux-system/monitoring-stack","severity":"Info"}
+    {"id":"RISK-FLUX-005","resource":"flux-system/monitoring-stack","severity":"Info"}
   ]
 }
 ```
@@ -298,7 +298,7 @@ STATUS  NAMESPACE                NAME                      OWNER       MANAGED-B
 
 ---
 
-## Step 12: Verify No CCVEs
+## Step 12: Verify No risk issues
 
 ```bash
 cub-scout scan
@@ -335,8 +335,8 @@ kubectl delete -f test/atk/demos/demo-full.yaml
 | `cub-scout map confighub` | ConfigHub hierarchy (requires cub auth) |
 | `cub-scout map --json` | JSON output |
 | `cub-scout map --mode=hub` | Experimental hub hierarchy mode |
-| `cub-scout scan` | Scan for CCVEs |
-| `cub-scout scan --list` | List all CCVEs |
+| `cub-scout scan` | Scan for risk issues |
+| `cub-scout scan --list` | List all risk issues |
 | `cub-scout scan --json` | JSON output |
 
 ### Hierarchy Display Modes
@@ -386,21 +386,21 @@ Features demonstrated:
 
 ### Enterprise Unhealthy Demo
 
-Shows common GitOps problems and CCVEs:
+Shows common GitOps problems and risk issues:
 
 ```bash
 cub-scout demo unhealthy           # Apply with running pods
 cub-scout map                      # See the chaos (Problems section)
-cub-scout scan                     # Find CCVEs
+cub-scout scan                     # Find risk issues
 cub-scout demo unhealthy --cleanup # Cleanup
 ```
 
 Problems demonstrated:
-- CCVE-FLUX-005: Suspended Kustomization (forgotten maintenance)
+- RISK-FLUX-005: Suspended Kustomization (forgotten maintenance)
 - HelmRelease with invalid chart version (SourceNotReady)
 - Orphan resources (no GitOps owner)
 - Duplicate payment services (coordination failure)
-- CCVE-2025-0027: Grafana sidecar namespace whitespace bug (documented in YAML)
+- RISK-2025-0027: Grafana sidecar namespace whitespace bug (documented in YAML)
 
 ### --no-pods Mode
 

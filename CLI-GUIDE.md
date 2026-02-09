@@ -29,8 +29,8 @@ The table below reflects the current `cub-scout --help` output.
 | `map` | Interactive map of resources and ownership |
 | `parse-repo` | Parse a GitOps repository structure |
 | `patterns` | Pattern detection engine |
-| `remedy` | Execute remediation for CCVE findings |
-| `scan` | Scan for CCVEs and stuck states |
+| `remedy` | Execute remediation for risk issue findings |
+| `scan` | Scan for risk issues and stuck states |
 | `setup` | Set up shell completions and configuration |
 | `snapshot` | Dump cluster state as GSF JSON |
 | `status` | Show connection status and cluster info |
@@ -1212,19 +1212,19 @@ History data sources per tool:
 
 **Expected output:**
 ```
-CCVE SCAN: kind-kind
+risk issue SCAN: kind-kind
 ═══════════════════════════════════════════════════════════════════
 
 CRITICAL (1)
 ───────────────────────────────────────────────────────────────────
-[CCVE-2025-0001] GitRepository not ready
+[RISK-2025-0001] GitRepository not ready
   Resource: flux-system/GitRepository/apps
   Message:  authentication required
   Fix:      kubectl create secret generic git-credentials ...
 
 WARNING (2)
 ───────────────────────────────────────────────────────────────────
-[CCVE-2025-0005] Application out of sync
+[RISK-2025-0005] Application out of sync
   Resource: argocd/Application/guestbook
 
 ═══════════════════════════════════════════════════════════════════
@@ -1319,7 +1319,7 @@ See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema
 ## `remedy` — Execute Remediation
 
 ```bash
-./cub-scout remedy CCVE-2025-0687 -n production --dry-run
+./cub-scout remedy RISK-2025-0687 -n production --dry-run
 ./cub-scout remedy --all --dry-run -n production
 ./cub-scout remedy --list
 ```
@@ -1332,7 +1332,7 @@ See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema
 | `--dry-run` | Show what would be changed (default: true) |
 | `--force` | Skip confirmation for high-risk actions |
 | `--file` | YAML file to scan and fix |
-| `--list` | List auto-fixable CCVEs |
+| `--list` | List auto-fixable risk issues |
 | `--json` | Output as JSON |
 | `--audit` | Log actions to audit file (default: true) |
 | `--audit-file` | Audit log file path |
@@ -1435,7 +1435,7 @@ See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema
 ```bash
 ./cub-scout demo list
 ./cub-scout demo quick
-./cub-scout demo ccve
+./cub-scout demo risk
 ./cub-scout demo query
 ./cub-scout demo scenario bigbank
 ./cub-scout demo quick --cleanup
@@ -1609,7 +1609,7 @@ Pattern detection engine for analyzing resource graphs.
 
 **What it does:** Runs deterministic checks against the resource graph and reports findings. Each pattern has a unique ID, description, and detection logic.
 
-**When to use it:** When you want to detect specific anti-patterns or misconfigurations beyond CCVE scanning.
+**When to use it:** When you want to detect specific anti-patterns or misconfigurations beyond risk issue scanning.
 
 ```bash
 # List all registered patterns
@@ -1811,7 +1811,7 @@ Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● brid
 |-----|--------|-------------|
 | `Q` | Saved Queries | Filter with saved queries |
 | `T` | Trace | Trace ownership chain |
-| `S` | Scan | Scan for CCVEs |
+| `S` | Scan | Scan for risk issues |
 | `I` | Import | Import wizard |
 
 #### Command Palette (`:`)

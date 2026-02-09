@@ -57,7 +57,7 @@ The `EXAMPLES-OVERVIEW.md` and `demos/README.md` are full of:
 **Action:** Rewrite to reflect current Go CLI:
 ```bash
 # Replace deprecated bash demos with:
-./cub-scout demo ccve
+./cub-scout demo risk
 ./cub-scout demo healthy
 ./cub-scout demo hooks  # NEW
 ```

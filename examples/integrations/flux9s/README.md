@@ -10,7 +10,7 @@
 | **ConfigHub Context** | Unit, Space, Revision for ConfigHub-managed resources |
 | **Relationship View** | Tree showing GitRepo → Kustomization → Deployment |
 | **Status Aggregation** | Health summary across all deployers |
-| **CCVE Indicators** | Warning badges for detected issues |
+| **risk issue Indicators** | Warning badges for detected issues |
 | **Drift Detection** | Shows when live state differs from desired |
 
 ## Mockup: Resource List with Agent Data
@@ -26,7 +26,7 @@
 │ tenant-a       True   Suspended   ConfigHub  tenant-a    prod     ℹ 1      │
 │ tenant-b       True   Applied     ConfigHub  tenant-b    prod     -        │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ Summary: 5 resources │ ConfigHub: 4 │ Flux: 1 │ Health: 4/5 │ CCVEs: 4     │
+│ Summary: 5 resources │ ConfigHub: 4 │ Flux: 1 │ Health: 4/5 │ risk issues: 4     │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ :agent  Agent View  :graph  Relationships  :issues  Show Issues            │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -47,7 +47,7 @@
 │                                                                             │
 │  Managed Resources                                                          │
 │  ─────────────────────────────────────────────────────────────────────────  │
-│  KIND         NAME           NAMESPACE   STATUS   DRIFT   CCVE              │
+│  KIND         NAME           NAMESPACE   STATUS   DRIFT   risk issue              │
 │  Deployment   backend        prod        Ready    -       -                 │
 │  Deployment   frontend       prod        Ready    -       -                 │
 │  Service      backend        prod        Ready    -       -                 │
@@ -112,7 +112,7 @@
 │  10:30  Kustomization/apps reconciled (rev 42 → 43)                        │
 │  10:28  Drift detected: ConfigMap/app-config                               │
 │  10:15  HelmRelease/monitoring upgraded (v1.2.0 → v1.2.1)                  │
-│  10:02  CCVE-2025-0008 resolved: Kustomization/infra                       │
+│  10:02  RISK-2025-0008 resolved: Kustomization/infra                       │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -184,7 +184,7 @@ The integration would require these Agent API endpoints:
 | `GET /api/map/resource?kind=X&ns=Y&name=Z` | Single resource details |
 | `GET /api/map/graph?root=Kind/name` | Relationship graph |
 | `GET /api/summary` | Fleet-wide aggregation |
-| `GET /api/ccve/findings` | CCVE scan results |
+| `GET /api/risk/findings` | risk issue scan results |
 | `GET /api/drift` | Drift detection results |
 | `WS /ws/watch` | Real-time updates |
 

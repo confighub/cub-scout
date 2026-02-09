@@ -236,7 +236,7 @@ $ ./test/atk/scan
 ✓ No Config CVEs detected
 
 Scanned: 16 resources
-Patterns: 1,700+ CCVEs
+Patterns: 1,700+ risk issues
 ```
 
 ---
@@ -248,19 +248,19 @@ $ ./test/atk/scan
 ```
 
 ```
-CRITICAL  CCVE-2025-0027  Grafana sidecar whitespace bug
+CRITICAL  RISK-2025-0027  Grafana sidecar whitespace bug
           ConfigMap/grafana-dashboards (monitoring)
           Fix: Remove leading/trailing whitespace from dashboard JSON keys
 
-WARNING   CCVE-2025-0043  Thanos sidecar not uploading
+WARNING   RISK-2025-0043  Thanos sidecar not uploading
           StatefulSet/prometheus (monitoring)
           Fix: Check objstore.yml bucket configuration
 
-WARNING   CCVE-2025-0066  SSL redirect blocking ACME
+WARNING   RISK-2025-0066  SSL redirect blocking ACME
           Ingress/api-gateway (default)
           Fix: Add annotation kubernetes.io/ingress.allow-http: "true"
 
-INFO      CCVE-2025-0084  PDB allows zero available
+INFO      RISK-2025-0084  PDB allows zero available
           PodDisruptionBudget/redis-pdb (cache)
           Fix: Set minAvailable to at least 1
 
@@ -268,7 +268,7 @@ INFO      CCVE-2025-0084  PDB allows zero available
 Summary: 1 CRITICAL, 2 WARNING, 1 INFO
 
 Scanned: 16 resources
-Patterns: 1,700+ CCVEs
+Patterns: 1,700+ risk issues
 ```
 
 **Severity levels:**
@@ -306,7 +306,7 @@ $ ./test/atk/scan --json
 {
   "findings": [
     {
-      "id": "CCVE-2025-0027",
+      "id": "RISK-2025-0027",
       "severity": "critical",
       "name": "Grafana sidecar whitespace bug",
       "resource": {
@@ -366,25 +366,25 @@ Cleanup: ./test/atk/demo quick --cleanup
 
 ---
 
-### CCVE Demo
+### risk issue Demo
 
 ```bash
-$ ./test/atk/demo ccve
+$ ./test/atk/demo risk
 ```
 
 ```
-cub-scout - CCVE Demo
+cub-scout - risk issue Demo
 ════════════════════════════
 
 Creating resources with known issues...
-  ✓ namespace/demo-ccve created
+  ✓ namespace/demo-risk created
   ✓ configmap/grafana-dashboards created (with whitespace bug)
   ✓ deployment/grafana created
 
 Running scan...
 
-CRITICAL  CCVE-2025-0027  Grafana sidecar whitespace bug
-          ConfigMap/grafana-dashboards (demo-ccve)
+CRITICAL  RISK-2025-0027  Grafana sidecar whitespace bug
+          ConfigMap/grafana-dashboards (demo-risk)
           Fix: Remove leading/trailing whitespace from dashboard JSON keys
 
 ────────────────────────────────────────────────
@@ -392,7 +392,7 @@ Summary: 1 CRITICAL
 
 The scanner detected a real configuration issue!
 
-Cleanup: ./test/atk/demo ccve --cleanup
+Cleanup: ./test/atk/demo risk --cleanup
 ```
 
 ---
@@ -528,5 +528,5 @@ Cleanup: ./test/atk/demo unhealthy --cleanup
 ## See Also
 
 - [Testing Guide](../TESTING-GUIDE.md) - Step-by-step testing walkthrough
-- [Scan Guide](../SCAN-GUIDE.md) - CCVE scanner details
+- [Scan Guide](../SCAN-GUIDE.md) - risk issue scanner details
 - [JOURNEY-QUERY.md](JOURNEY-QUERY.md) - Fleet query scenarios

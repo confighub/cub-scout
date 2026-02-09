@@ -66,7 +66,7 @@ Scanned at: 2026-01-09 14:30:00
 
 CRITICAL (1)
 ────────────────────────────────────────────────────────────────────
-[C] HelmRelease/redis-cluster [CCVE-2025-0166]
+[C] HelmRelease/redis-cluster [RISK-2025-0166]
   Namespace: production
   Condition: Ready=False (2h30m)
   Reason: UpgradeFailed
@@ -76,7 +76,7 @@ CRITICAL (1)
 
 WARNING (2)
 ────────────────────────────────────────────────────────────────────
-[W] Kustomization/monitoring [CCVE-2025-0012]
+[W] Kustomization/monitoring [RISK-2025-0012]
   Namespace: flux-system
   Condition: Ready=False (15m)
   Reason: BuildFailed
@@ -84,7 +84,7 @@ WARNING (2)
   → Remediation: Check kustomization.yaml syntax; verify paths exist in source
   FIX: flux reconcile ks monitoring -n flux-system --with-source
 
-[W] Application/frontend [CCVE-2025-0169]
+[W] Application/frontend [RISK-2025-0169]
   Namespace: argocd
   Condition: health=Degraded, sync=OutOfSync
   Reason: Degraded
@@ -191,7 +191,7 @@ Press `c` in the TUI dashboard to run a Kyverno policy scan:
 ./test/atk/map scan
 
 # Or
-./test/atk/map ccve
+./test/atk/map risk
 ```
 
 ## KPOL Policy Database
@@ -324,6 +324,6 @@ This allows tracking violations back to ConfigHub units for fleet-wide remediati
 
 ## Related
 
-- [Scan Guide](../SCAN-GUIDE.md) — Full CCVE scanning (46 active + 4,500 ref patterns)
+- [Scan Guide](../SCAN-GUIDE.md) — Full risk issue scanning (46 active + 4,500 ref patterns)
 - [TUI-TRACE.md](TUI-TRACE.md) — Trace resource ownership chains
 - [README.md](../README.md) — Main documentation

@@ -12,7 +12,7 @@ These scenarios demonstrate the **Rendered Manifest (RM) pattern goals** using r
 |------|------------|------|
 | **Monday Panic** | "47 clusters, where's the problem?" | Find broken deployment in 30 seconds |
 | **Drift Detection** | "Someone edited prod directly" | Detect kubectl changes |
-| **Security Patch** | "CVE affects 847 services" | Find and fix CCVEs |
+| **Security Patch** | "CVE affects 847 services" | Find and fix risk issues |
 
 ---
 
@@ -111,7 +111,7 @@ argocd app sync apptique-prod --force
 
 ---
 
-## Scenario 3: Security Patch (CCVE Scanning)
+## Scenario 3: Security Patch (risk issue Scanning)
 
 **The story:** A security vulnerability affects multiple services. You need to find all affected deployments and patch them.
 
@@ -119,13 +119,13 @@ argocd app sync apptique-prod --force
 # Deploy the scenario
 kubectl apply -f security-patch/
 
-# This creates deployments with known CCVEs:
-# - CCVE-2025-0027: Grafana sidecar whitespace bug
-# - CCVE-2025-0001: Missing resource limits
-# - CCVE-2025-0003: Latest tag usage
+# This creates deployments with known risk issues:
+# - RISK-2025-0027: Grafana sidecar whitespace bug
+# - RISK-2025-0001: Missing resource limits
+# - RISK-2025-0003: Latest tag usage
 ```
 
-**Find all CCVEs:**
+**Find all risk issues:**
 ```bash
 cub-scout scan
 
@@ -133,13 +133,13 @@ cub-scout scan
 # CONFIG CVE SCAN
 # ════════════════════════════════════════════════════════════════════
 # CRITICAL (1)
-# [CCVE-2025-0027] apptique-monitoring/grafana-ccve
+# [RISK-2025-0027] apptique-monitoring/grafana-risk
 #   Grafana dashboard sidecar label selector whitespace bug
 #
 # HIGH (2)
-# [CCVE-2025-0001] apptique-vulnerable/no-limits
+# [RISK-2025-0001] apptique-vulnerable/no-limits
 #   Missing resource limits - can cause node exhaustion
-# [CCVE-2025-0003] apptique-vulnerable/latest-tag
+# [RISK-2025-0003] apptique-vulnerable/latest-tag
 #   Using :latest tag - unpredictable deployments
 ```
 
@@ -169,7 +169,7 @@ These scenarios use **namespaces to simulate clusters**. In a real fleet:
 | Drift Detection | apptique-prod | Any production cluster |
 | Security Patch | apptique-{monitoring,vulnerable} | All clusters |
 
-**The cub-scout works the same way** — it detects ownership, traces sources, and scans for CCVEs regardless of whether you're testing locally or running across 100 clusters.
+**The cub-scout works the same way** — it detects ownership, traces sources, and scans for risk issues regardless of whether you're testing locally or running across 100 clusters.
 
 ---
 

@@ -8,7 +8,7 @@ Welcome! This repo contains the **cub-scout** — please try it!
 - **Hub/App Space model** — Architecture for application spaces and platform governance
 - **Examples** — IITS use cases, app config patterns, integrations
 - **GSF (GitOps State Format)** — Standard JSON format for GitOps integrations
-- **CCVE database** — 1,700+ configuration anti-patterns (including Kyverno policies)
+- **risk issue database** — 1,700+ configuration anti-patterns (including Kyverno policies)
 
 For the Agent and TUI, start with [README.md](../README.md). For architecture and planning, see [docs/planning/](planning/).
 
@@ -171,7 +171,7 @@ Shows you:
 Answers: "What config bugs exist?"
 
 Shows you:
-- 1,700+ known configuration anti-patterns (CCVEs)
+- 1,700+ known configuration anti-patterns (risk issues)
 - Real bugs that have caused outages at other companies
 - Severity and category for each finding
 - How to fix each issue
@@ -183,7 +183,7 @@ Answers: "Same questions, all my clusters"
 Shows you:
 - Aggregated view across all connected clusters
 - Consistent ownership detection everywhere
-- Fleet-wide CCVE scanning results
+- Fleet-wide risk issue scanning results
 - Which clusters are behind on deployments
 
 ---
@@ -196,7 +196,7 @@ These are problems we would like to solve if we are correct — not problems we 
 
 ## Research
 
-For detailed research on Kubernetes configuration issues and CCVE mining:
-- [K8s CCVE Issues Research](planning/ccve/K8S-CCVE-ISSUES-RESEARCH.md) — GitHub issues analysis (controller bugs, API validation gaps)
-- [CCVE Mining Log](#) — Session-by-session CCVE discovery
-- [K8s Exhaustive Mining Plan](planning/ccve/K8S-EXHAUSTIVE-MINING-PLAN.md) — Research strategy
+For detailed research on Kubernetes configuration issues and risk issue mining:
+- [K8s risk issue Issues Research](planning/risk/K8S-RISK-ISSUES-RESEARCH.md) — GitHub issues analysis (controller bugs, API validation gaps)
+- [risk issue Mining Log](#) — Session-by-session risk issue discovery
+- [K8s Exhaustive Mining Plan](planning/risk/K8S-EXHAUSTIVE-MINING-PLAN.md) — Research strategy

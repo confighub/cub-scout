@@ -12,20 +12,20 @@ The cub-scout exposes a standardized API that can be consumed by GUI tools. Thes
 
 > For working code, see [argocd-extension/](argocd-extension/)
 
-The Argo CD extension adds a "CCVEs" tab and status badge to application views.
+The Argo CD extension adds a "risk issues" tab and status badge to application views.
 
 ### Status Panel (Badge in Application Header)
 
 ```
 ┌─ guestbook ─────────────────────────────────────────────────────────┐
-│ [Synced] [Healthy]  ⚠️ 2 CCVEs                         ⚙️ Settings  │
+│ [Synced] [Healthy]  ⚠️ 2 risk issues                         ⚙️ Settings  │
 ├─────────────────────────────────────────────────────────────────────┤
 ```
 
-### Application Tab (Full CCVE View)
+### Application Tab (Full risk issue View)
 
 ```
-┌─ CCVEs ─────────────────────────────────────────────────────────────┐
+┌─ risk issues ─────────────────────────────────────────────────────────────┐
 │                                                                     │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                          │
 │  │    0     │  │    2     │  │    3     │                          │
@@ -33,10 +33,10 @@ The Argo CD extension adds a "CCVEs" tab and status badge to application views.
 │  └──────────┘  └──────────┘  └──────────┘                          │
 │                                                                     │
 │  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ ▶ CCVE-2025-0023  WARNING  default/Deployment/guestbook-ui  │   │
+│  │ ▶ RISK-2025-0023  WARNING  default/Deployment/guestbook-ui  │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ ▶ CCVE-2025-0027  WARNING  monitoring/Deployment/grafana    │   │
+│  │ ▶ RISK-2025-0027  WARNING  monitoring/Deployment/grafana    │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
@@ -46,7 +46,7 @@ The Argo CD extension adds a "CCVEs" tab and status badge to application views.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│ ▼ CCVE-2025-0023  WARNING  default/Deployment/guestbook-ui         │
+│ ▼ RISK-2025-0023  WARNING  default/Deployment/guestbook-ui         │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  Container lacks resource limits                                    │
@@ -63,11 +63,11 @@ The Argo CD extension adds a "CCVEs" tab and status badge to application views.
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Resource Tab (Per-Resource CCVEs)
+### Resource Tab (Per-Resource risk issues)
 
 ```
 ┌─ Deployment/guestbook-ui ───────────────────────────────────────────┐
-│ Summary │ YAML │ Events │ Logs │ CCVEs │                            │
+│ Summary │ YAML │ Events │ Logs │ risk issues │                            │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  Ownership                                                          │
@@ -80,7 +80,7 @@ The Argo CD extension adds a "CCVEs" tab and status badge to application views.
 │                                                                     │
 │  Config CVEs                                                        │
 │  ──────────────────────────────────────────────────────────────     │
-│  ℹ️  CCVE-2025-0023: Missing resource limits                        │
+│  ℹ️  RISK-2025-0023: Missing resource limits                        │
 │      Remediation: Add resources.limits to container spec            │
 │      [View Details]                                                 │
 │                                                                     │
@@ -93,7 +93,7 @@ The Argo CD extension adds a "CCVEs" tab and status badge to application views.
 
 > This is a proposal. See [flux9s/](flux9s/) for details.
 
-flux9s is a K9s-inspired terminal UI for Flux. The integration adds ownership and CCVE columns.
+flux9s is a K9s-inspired terminal UI for Flux. The integration adds ownership and risk issue columns.
 
 ### Resource List with Agent Data
 
@@ -108,7 +108,7 @@ flux9s is a K9s-inspired terminal UI for Flux. The integration adds ownership an
 │ tenant-a       True   Suspended   ConfigHub  tenant-a    prod     ℹ 1      │
 │ tenant-b       True   Applied     ConfigHub  tenant-b    prod     -        │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ Summary: 5 resources │ ConfigHub: 4 │ Flux: 1 │ Health: 4/5 │ CCVEs: 4     │
+│ Summary: 5 resources │ ConfigHub: 4 │ Flux: 1 │ Health: 4/5 │ risk issues: 4     │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ :agent  Agent View  :graph  Relationships  :issues  Show Issues            │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -129,7 +129,7 @@ flux9s is a K9s-inspired terminal UI for Flux. The integration adds ownership an
 │                                                                             │
 │  Managed Resources                                                          │
 │  ─────────────────────────────────────────────────────────────────────────  │
-│  KIND         NAME           NAMESPACE   STATUS   DRIFT   CCVE              │
+│  KIND         NAME           NAMESPACE   STATUS   DRIFT   risk issue              │
 │  Deployment   backend        prod        Ready    -       -                 │
 │  Deployment   frontend       prod        Ready    -       -                 │
 │  Service      backend        prod        Ready    -       -                 │
@@ -194,7 +194,7 @@ flux9s is a K9s-inspired terminal UI for Flux. The integration adds ownership an
 │  10:30  Kustomization/apps reconciled (rev 42 → 43)                        │
 │  10:28  Drift detected: ConfigMap/app-config                               │
 │  10:15  HelmRelease/monitoring upgraded (v1.2.0 → v1.2.1)                  │
-│  10:02  CCVE-2025-0008 resolved: Kustomization/infra                       │
+│  10:02  RISK-2025-0008 resolved: Kustomization/infra                       │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -247,7 +247,7 @@ The Flux Operator provides a web UI with GitOps graph visualization. The integra
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 │  ┌─ Legend ─────────────────────────────────────────────────────────────┐  │
-│  │ ConfigHub ████  Flux ████  Helm ████  Native ████   ⚠ Drift  🔴 CCVE │  │
+│  │ ConfigHub ████  Flux ████  Helm ████  Native ████   ⚠ Drift  🔴 risk issue │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -268,7 +268,7 @@ The Flux Operator provides a web UI with GitOps graph visualization. The integra
 │  └─────────────────────────┘  └────────────────────────┘                   │
 │                                                                             │
 │  ┌─ ConfigHub Spaces ───────────────────────────────────────────────────┐  │
-│  │ Space              Units  Healthy  Drifted  CCVEs                    │  │
+│  │ Space              Units  Healthy  Drifted  risk issues                    │  │
 │  │ payments-prod        12      12        0       0                     │  │
 │  │ payments-staging      8       7        1       1                     │  │
 │  │ monitoring            5       4        0       2                     │  │
@@ -276,8 +276,8 @@ The Flux Operator provides a web UI with GitOps graph visualization. The integra
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                             │
 │  ┌─ Issues ─────────────────────────────────────────────────────────────┐  │
-│  │ 🔴 CCVE-2025-0004  Kustomization/monitoring  BuildFailed             │  │
-│  │ ⚠️  CCVE-2025-0023  Deployment/api           Missing limits          │  │
+│  │ 🔴 RISK-2025-0004  Kustomization/monitoring  BuildFailed             │  │
+│  │ ⚠️  RISK-2025-0023  Deployment/api           Missing limits          │  │
 │  │ ⚠️  DRIFT          ConfigMap/app-config     LOG_LEVEL changed        │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                             │
@@ -299,7 +299,7 @@ All integrations would use these standardized endpoints:
 | `GET /api/map/resource?kind=X&ns=Y&name=Z` | Single resource details |
 | `GET /api/map/graph?root=Kind/name` | Relationship graph |
 | `GET /api/summary` | Fleet-wide aggregation |
-| `GET /api/ccve/findings` | CCVE scan results |
+| `GET /api/risk/findings` | risk issue scan results |
 | `GET /api/drift` | Drift detection results |
 | `WS /ws/watch` | Real-time updates |
 

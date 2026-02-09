@@ -1,20 +1,20 @@
-# Impressive Demo: CCVE Detection in Action
+# Impressive Demo: risk issue Detection in Action
 
 **Status: Working** — Full demo with scripts, YAML fixtures, and slides for conference presentations.
 
-**"How cub-scout + CCVE Scanner Would Have Saved BIGBANK 4 Hours"**
+**"How cub-scout + risk issue Scanner Would Have Saved BIGBANK 4 Hours"**
 
-This demo showcases cub-scout's CCVE scanner detecting real-world GitOps misconfigurations **before they cause outages**.
+This demo showcases cub-scout's risk issue scanner detecting real-world GitOps misconfigurations **before they cause outages**.
 
 ## Demo Duration: 5 minutes
 
 ## What This Demo Shows
 
-1. **Real-world incident detection** - CCVE-2025-0027 (Grafana namespace whitespace) from BIGBANK FluxCon 2025
-2. **Pre-deployment blocking** - Critical CCVEs caught before reaching production
+1. **Real-world incident detection** - RISK-2025-0027 (Grafana namespace whitespace) from BIGBANK FluxCon 2025
+2. **Pre-deployment blocking** - Critical risk issues caught before reaching production
 3. **Cross-reference validation** - Detecting broken links that Kubernetes API doesn't enforce
 4. **Ownership visualization** - Map tool showing Flux, ConfigHub, and Native resource management
-5. **Time to resolution** - 30 seconds with CCVE vs 4 hours without
+5. **Time to resolution** - 30 seconds with risk issue vs 4 hours without
 
 ## Architecture
 
@@ -26,12 +26,12 @@ This demo showcases cub-scout's CCVE scanner detecting real-world GitOps misconf
 │  Flux CD (GitOps)              cub-scout               │
 │  ├── podinfo (demo app)        ├── Watches cluster          │
 │  └── monitoring stack          ├── Detects ownership        │
-│                                └── Scans for CCVEs          │
+│                                └── Scans for risk issues          │
 │                                                              │
-│  Intentional CCVEs:                                          │
-│  ❌ CCVE-2025-0027: Grafana namespace whitespace (BIGBANK incident)│
-│  ❌ CCVE-2025-0028: Traefik service not found                 │
-│  ❌ CCVE-2025-0034: cert-manager Issuer missing               │
+│  Intentional risk issues:                                          │
+│  ❌ RISK-2025-0027: Grafana namespace whitespace (BIGBANK incident)│
+│  ❌ RISK-2025-0028: Traefik service not found                 │
+│  ❌ RISK-2025-0034: cert-manager Issuer missing               │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -82,12 +82,12 @@ Flux(3)
 ███
 ```
 
-### Step 2: Add Monitoring with CCVE-2025-0027 (Grafana Namespace Whitespace)
+### Step 2: Add Monitoring with RISK-2025-0027 (Grafana Namespace Whitespace)
 
 This is the **exact error** that caused a 4-hour outage at BIGBANK.
 
 ```bash
-# Deploy monitoring stack with intentional CCVE
+# Deploy monitoring stack with intentional risk issue
 kubectl apply -f bad-configs/monitoring-bad.yaml
 ```
 
@@ -99,7 +99,7 @@ kubectl apply -f bad-configs/monitoring-bad.yaml
 
 **cub-scout detects:**
 ```
-🔥 CCVE-2025-0027 detected (Critical, confidence: high)
+🔥 RISK-2025-0027 detected (Critical, confidence: high)
    Grafana sidecar namespace whitespace error
 
    Location: Deployment/grafana, line 47
@@ -111,8 +111,8 @@ kubectl apply -f bad-configs/monitoring-bad.yaml
    during FluxCon 2025 presentation.
 
    Time to fix:
-   - Without CCVE: 4 hours (debugging sidecar logs)
-   - With CCVE: 30 seconds (immediate detection + fix command)
+   - Without risk issue: 4 hours (debugging sidecar logs)
+   - With risk issue: 30 seconds (immediate detection + fix command)
 ```
 
 **Fix:**
@@ -121,7 +121,7 @@ kubectl set env deployment/grafana -n monitoring \
   NAMESPACE="monitoring,grafana,observability"
 ```
 
-### Step 3: Add Ingress with CCVE-2025-0028 (Traefik Service Not Found)
+### Step 3: Add Ingress with RISK-2025-0028 (Traefik Service Not Found)
 
 ```bash
 # Deploy ingress with wrong service name
@@ -136,7 +136,7 @@ kubectl apply -f bad-configs/ingress-bad.yaml
 
 **cub-scout detects:**
 ```
-❌ CCVE-2025-0028 detected (Critical, confidence: high)
+❌ RISK-2025-0028 detected (Critical, confidence: high)
    Traefik IngressRoute service not found
 
    Location: IngressRoute/grafana-web, line 12
@@ -155,7 +155,7 @@ kubectl patch ingressroute grafana-web --type=json \
   -p='[{"op":"replace","path":"/spec/routes/0/services/0/name","value":"grafana-service"}]'
 ```
 
-### Step 4: Add TLS with CCVE-2025-0034 (cert-manager Issuer Missing)
+### Step 4: Add TLS with RISK-2025-0034 (cert-manager Issuer Missing)
 
 ```bash
 # Deploy certificate with missing Issuer
@@ -170,7 +170,7 @@ kubectl apply -f bad-configs/certificate-bad.yaml
 
 **cub-scout detects:**
 ```
-❌ CCVE-2025-0034 detected (Critical, confidence: high)
+❌ RISK-2025-0034 detected (Critical, confidence: high)
    cert-manager Certificate Issuer not found
 
    Location: Certificate/grafana-tls, line 8
@@ -184,7 +184,7 @@ kubectl apply -f bad-configs/certificate-bad.yaml
    Certificate/grafana-tls → ClusterIssuer/letsencrypt-prod ❌ NOT FOUND
 
    Pre-deployment blocking recommended:
-   This CCVE should BLOCK deployment until Issuer exists.
+   This risk issue should BLOCK deployment until Issuer exists.
 ```
 
 **Fix:**
@@ -215,9 +215,9 @@ cub-scout map
   Flux(8)
   ████████
 
-  CCVE Scan Results:
-  ✓ 0 Critical CCVEs detected
-  ✓ 0 Warning CCVEs detected
+  risk issue Scan Results:
+  ✓ 0 Critical risk issues detected
+  ✓ 0 Warning risk issues detected
   ✓ All resources validated
 ```
 
@@ -235,14 +235,14 @@ case "${1:-}" in
     # Create kind cluster, install Flux
     ;;
   run)
-    echo "🎬 Starting CCVE Detection Demo"
+    echo "🎬 Starting risk issue Detection Demo"
     echo "================================"
     echo ""
 
     # Step 1: Show healthy state
-    # Step 2: Introduce CCVE-2025-0027
-    # Step 3: Introduce CCVE-2025-0028
-    # Step 4: Introduce CCVE-2025-0034
+    # Step 2: Introduce RISK-2025-0027
+    # Step 3: Introduce RISK-2025-0028
+    # Step 4: Introduce RISK-2025-0034
     # Step 5: Fix all and show healthy
     ;;
   cleanup)
@@ -254,13 +254,13 @@ esac
 ## Key Talking Points
 
 ### For Developers:
-> "See that Grafana error? That's CCVE-2025-0027 - the exact same bug that took down BIGBANK's dashboards for 4 hours. ConfigHub caught it instantly."
+> "See that Grafana error? That's RISK-2025-0027 - the exact same bug that took down BIGBANK's dashboards for 4 hours. ConfigHub caught it instantly."
 
 ### For Platform Teams:
 > "This isn't just linting - we're doing cross-reference validation. Kubernetes accepts this IngressRoute, but the service doesn't exist. ConfigHub catches that."
 
 ### For Executives:
-> "4 hours of downtime vs 30 seconds to fix. That's the power of learning from real-world incidents and encoding them as CCVEs."
+> "4 hours of downtime vs 30 seconds to fix. That's the power of learning from real-world incidents and encoding them as risk issues."
 
 ## What Makes This Demo Impressive
 
@@ -272,20 +272,20 @@ esac
 
 ## Extending This Demo
 
-### Add More CCVEs:
-- CCVE-2025-0001: Flux GitRepository URL typo
-- CCVE-2025-0004: Argo Application sync failed
-- CCVE-2025-0041: Prometheus ServiceMonitor not discovered
+### Add More risk issues:
+- RISK-2025-0001: Flux GitRepository URL typo
+- RISK-2025-0004: Argo Application sync failed
+- RISK-2025-0041: Prometheus ServiceMonitor not discovered
 
 ### Add ConfigHub Integration:
 - Show Space/Unit/Revision tracking
 - Demonstrate lineage-aware scanning (base → dev → prod)
-- Show CCVE history over time
+- Show risk issue history over time
 
-### Add CCVE Scanner Integration:
-- Pre-deployment: `cub unit update` shows CCVEs before apply
-- Runtime: Agent logs CCVEs as they appear
-- Blocking: Critical CCVEs prevent deployment
+### Add risk issue Scanner Integration:
+- Pre-deployment: `cub unit update` shows risk issues before apply
+- Runtime: Agent logs risk issues as they appear
+- Blocking: Critical risk issues prevent deployment
 
 ## Files in This Demo
 
@@ -298,10 +298,10 @@ impressive-demo/
 │   ├── namespace.yaml
 │   ├── podinfo-source.yaml
 │   └── podinfo-kustomization.yaml
-├── bad-configs/                        # Intentional CCVEs
-│   ├── monitoring-bad.yaml             # CCVE-2025-0027 (Grafana)
-│   ├── ingress-bad.yaml                # CCVE-2025-0028 (Traefik)
-│   └── certificate-bad.yaml            # CCVE-2025-0034 (cert-manager)
+├── bad-configs/                        # Intentional risk issues
+│   ├── monitoring-bad.yaml             # RISK-2025-0027 (Grafana)
+│   ├── ingress-bad.yaml                # RISK-2025-0028 (Traefik)
+│   └── certificate-bad.yaml            # RISK-2025-0034 (cert-manager)
 └── fixed-configs/                      # Fixed versions
     ├── monitoring-fixed.yaml
     ├── ingress-fixed.yaml
@@ -312,15 +312,15 @@ impressive-demo/
 ## Success Metrics
 
 After this demo, viewers should:
-1. ✅ Understand what CCVEs are (like CVEs for config)
+1. ✅ Understand what risk issues are (like CVEs for config)
 2. ✅ Remember the BIGBANK incident story
 3. ✅ Want to try cub-scout on their clusters
 4. ✅ Share the demo with their teams
-5. ✅ Consider contributing CCVEs from their incidents
+5. ✅ Consider contributing risk issues from their incidents
 
 ## Next Steps
 
 - Record video walkthrough
-- Create blog post: "How CCVE-2025-0027 Would Have Saved BIGBANK 4 Hours"
+- Create blog post: "How RISK-2025-0027 Would Have Saved BIGBANK 4 Hours"
 - Submit to CNCF blog / conference talks
 - Add to ConfigHub documentation as showcase

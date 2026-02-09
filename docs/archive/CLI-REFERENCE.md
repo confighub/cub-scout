@@ -34,7 +34,7 @@ cd cub-scout
 | [`import-argocd`](#import-argocd) | Import ArgoCD Application into ConfigHub |
 | [`map`](#map) | Interactive resource map and queries |
 | [`parse-repo`](#parse-repo) | Parse GitOps repository structure |
-| [`scan`](#scan) | Scan for CCVEs and stuck states |
+| [`scan`](#scan) | Scan for risk issues and stuck states |
 | [`snapshot`](#snapshot) | Dump cluster state as GSF JSON |
 | [`trace`](#trace) | Show GitOps ownership chain |
 | [`version`](#version) | Print version information |
@@ -547,7 +547,7 @@ cub-scout parse-repo --url https://github.com/org/repo --json
 
 ## scan
 
-Scan the cluster for CCVEs including stuck states and Kyverno violations.
+Scan the cluster for risk issues including stuck states and Kyverno violations.
 
 ```bash
 cub-scout scan [flags]
@@ -570,12 +570,12 @@ cub-scout scan [flags]
 
 1. **State scan** (`--state`) — Detect stuck HelmReleases, Kustomizations, and Applications
 2. **Kyverno scan** (`--kyverno`) — Map PolicyReport violations to KPOL database
-3. **Dangling scan** (`--dangling`) — Find orphan resources pointing to non-existent targets (CCVE-2025-0687 to 0690)
+3. **Dangling scan** (`--dangling`) — Find orphan resources pointing to non-existent targets (RISK-2025-0687 to 0690)
 
 ### Output
 
 For stuck resources:
-- **CCVE ID** — Reference to pattern database
+- **risk issue ID** — Reference to pattern database
 - **Duration** — How long resource has been stuck
 - **Remediation** — What to do
 - **FIX command** — Copy-paste kubectl/flux/argocd command
@@ -723,7 +723,7 @@ Display cluster ownership map via TUI.
 
 ### ./test/atk/scan
 
-Scan for CCVEs via TUI.
+Scan for risk issues via TUI.
 
 ```bash
 ./test/atk/scan [flags]
@@ -733,7 +733,7 @@ Scan for CCVEs via TUI.
 |------|-------------|
 | `--severity SEV` | Filter by severity: critical, warning, info |
 | `--category CAT` | Filter by category |
-| `--ccve-dir DIR` | Additional CCVE definitions |
+| `--risk-dir DIR` | Additional risk issue definitions |
 
 ### ./test/atk/demo
 
@@ -747,7 +747,7 @@ Run interactive demos.
 |----------|-------------|
 | `quick` | 30-second overview |
 | `full` | Complete walkthrough |
-| `ccve` | Focus on CCVE scanning |
+| `risk` | Focus on risk issue scanning |
 
 ### ./test/atk/verify
 
@@ -807,16 +807,16 @@ webhooks:
 
 ## Troubleshooting
 
-### CCVEs not detecting patterns
+### risk issues not detecting patterns
 
-1. Validate CCVE definition:
+1. Validate risk issue definition:
    ```bash
-   cub-scout scan --validate ./my-ccves/CCVE-2025-9001.yaml
+   cub-scout scan --validate ./my-risk issues/RISK-2025-9001.yaml
    ```
 
 2. Test against specific resource:
    ```bash
-   cub-scout scan --test-ccve CCVE-2025-9001 --resource my-namespace/Deployment/my-app
+   cub-scout scan --test-risk RISK-2025-9001 --resource my-namespace/Deployment/my-app
    ```
 
 ---
@@ -929,7 +929,7 @@ After connecting, ConfigHub can:
 ## See Also
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — GSF protocol, API contracts
-- [Scan Guide](../SCAN-GUIDE.md) — CCVE detection and remediation
+- [Scan Guide](../SCAN-GUIDE.md) — risk issue detection and remediation
 - [EXTENDING.md](EXTENDING.md) — Extension points and customization
 - [IMPORTING-WORKLOADS.md](IMPORTING-WORKLOADS.md) — Import cluster workloads
 - [TUI-SCAN.md](TUI-SCAN.md) — Cluster scanning documentation

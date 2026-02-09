@@ -92,4 +92,4 @@ cub unit update redis --where "environment=production" --set replicas=5
 
 - [IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../../../docs/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Helm patterns
 - [REPO-SKELETON-TAXONOMY.md](../../../../docs/planning/REPO-SKELETON-TAXONOMY.md) — Full taxonomy
-- [Kostis: Helm Anti-patterns](https://codefresh.io/blog/argo-cd-application-anti-patterns/) — Avoid hardcoded values (CCVE-2025-3722)
+- [Kostis: Helm Anti-patterns](https://codefresh.io/blog/argo-cd-application-anti-patterns/) — Avoid hardcoded values (RISK-2025-3722)

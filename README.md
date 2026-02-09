@@ -443,7 +443,7 @@ CONFIG RISK SCAN: prod-east
 
 CRITICAL (1)
 ────────────────────────────────────────────────────────────────────
-  [CCVE-2025-0027] Grafana sidecar namespace whitespace error
+  [RISK-2025-0027] Grafana sidecar namespace whitespace error
     Resource: monitoring/ConfigMap/grafana-sidecar
     Impact:   Dashboard injection fails silently
     Fix:      Remove spaces: NAMESPACE="monitoring,grafana"
@@ -451,17 +451,17 @@ CRITICAL (1)
 
 WARNING (2)
 ────────────────────────────────────────────────────────────────────
-  [CCVE-2025-0043] Thanos sidecar not uploading to object storage
+  [RISK-2025-0043] Thanos sidecar not uploading to object storage
     Resource: monitoring/StatefulSet/prometheus
     Fix:      Check objstore.yml bucket configuration
 
-  [CCVE-2025-0066] SSL redirect blocking ACME HTTP-01 challenge
+  [RISK-2025-0066] SSL redirect blocking ACME HTTP-01 challenge
     Resource: ingress/Ingress/api-gateway
     Fix:      Add: kubernetes.io/ingress.allow-http: "true"
 
 INFO (1)
 ────────────────────────────────────────────────────────────────────
-  [CCVE-2025-0084] PodDisruptionBudget allows zero available
+  [RISK-2025-0084] PodDisruptionBudget allows zero available
     Resource: cache/PodDisruptionBudget/redis-pdb
     Fix:      Set minAvailable to at least 1
 

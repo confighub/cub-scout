@@ -5,7 +5,7 @@
 > **Use instead:**
 > - `cub-scout map` — Local cluster TUI (replaces `./map`)
 > - `cub-scout map --hub` — ConfigHub hierarchy TUI (replaces `./map-confighub`)
-> - `cub-scout scan` — CCVE scanner (replaces `./scan`)
+> - `cub-scout scan` — risk issue scanner (replaces `./scan`)
 > - `cub-scout trace` — Ownership tracing
 > - `go test ./...` — All tests (replaces `./verify`)
 >
@@ -70,7 +70,7 @@ The tool automatically detects application/variant patterns in unit slugs:
 
 Supported variant names: `dev`, `staging`, `prod`, `qa`, `test`
 
-### `scan` - CCVE Scanner
+### `scan` - risk issue Scanner
 
 Scans cluster for ConfigHub Common Vulnerabilities and Errors.
 
@@ -78,7 +78,7 @@ Scans cluster for ConfigHub Common Vulnerabilities and Errors.
 ```bash
 ./scan                           # Scan all resources
 ./scan traefik                   # Scan Traefik resources only
-./scan --ccve CCVE-2025-0027     # Scan for specific CCVE
+./scan --risk RISK-2025-0027     # Scan for specific risk issue
 ./scan traefik --auto-fix        # Scan and create fixes
 ./scan --severity high           # High severity only
 ```
@@ -93,7 +93,7 @@ auto-fix: false
 severity: high
 ```
 
-**Behind the scenes:** The scan tool queries the Map, applies CCVE detection Functions, and optionally creates changesets (Action with side effects).
+**Behind the scenes:** The scan tool queries the Map, applies risk issue detection Functions, and optionally creates changesets (Action with side effects).
 
 ### `verify` - Ownership Verification
 
@@ -183,7 +183,7 @@ Interactive demos to show the agent in action:
 ```bash
 ./demo --list              # List all demos
 ./demo quick               # 30-second ownership demo
-./demo ccve                # CCVE-2025-0027 (BIGBANK Grafana bug)
+./demo risk                # RISK-2025-0027 (BIGBANK Grafana bug)
 ./demo scenario clobber    # Platform updates vs app overlays
 ./demo connected           # ConfigHub connected mode
 ```

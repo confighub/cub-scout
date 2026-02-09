@@ -117,7 +117,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [drift/](drift/) | **Working** | Drift detection examples | Learning drift detection |
 | [lifecycle-hazards/](lifecycle-hazards/) | **Working** | Helm hooks under ArgoCD | Learning lifecycle hazards |
 | [demos/](demos/) | **Test Fixtures** | YAML with GitOps labels + nginx:alpine | Learning ownership detection |
-| [impressive-demo/](impressive-demo/) | **Test Fixtures** | Conference demo with CCVE scenarios | Presentations, videos |
+| [impressive-demo/](impressive-demo/) | **Test Fixtures** | Conference demo with risk issue scenarios | Presentations, videos |
 | [scripts/](scripts/) | **Integration Code** | k9s, Slack, CI/CD scripts | Adding to your workflow |
 | [integrations/](integrations/) | **Plugins** | ArgoCD extension, Flux operator | Building on the agent |
 | [rm-demos-argocd/](rm-demos-argocd/) | **Simulation** | Rendered Manifest simulations | Sales presentations |
@@ -187,7 +187,7 @@ TUI mockup showing how ConfigHub can manage non-Kubernetes configuration (based 
 ```bash
 cub-scout demo list              # List all demos
 cub-scout demo quick             # 30-second demo
-cub-scout demo ccve              # CCVE-2025-0027 detection
+cub-scout demo risk              # RISK-2025-0027 detection
 cub-scout demo healthy           # Enterprise healthy pattern
 cub-scout demo unhealthy         # Common GitOps problems
 cub-scout demo <name> --cleanup  # Remove demo resources
@@ -196,7 +196,7 @@ cub-scout demo <name> --cleanup  # Remove demo resources
 | Demo | Time | Shows |
 |------|------|-------|
 | `quick` | ~30 sec | Ownership detection, map dashboard |
-| `ccve` | ~2 min | CCVE-2025-0027 (BIGBANK Grafana bug) |
+| `risk` | ~2 min | RISK-2025-0027 (BIGBANK Grafana bug) |
 | `healthy` | ~2 min | IITS hub-and-spoke pattern |
 | `unhealthy` | ~2 min | Suspended resources, broken deployers |
 | `scenario clobber` | ~2 min | Platform updates vs app overlays |
@@ -257,8 +257,8 @@ Copy-paste scripts for common integrations.
 | Script | What It Does |
 |--------|--------------|
 | [k9s plugin](scripts/README.md#k9s-plugin) | Add map/scan commands to k9s |
-| [Slack alerting](scripts/README.md#slack-alerting) | Alert on drift/CCVEs |
-| [GitHub Actions](scripts/README.md#github-actions) | CI/CD gate for CCVEs |
+| [Slack alerting](scripts/README.md#slack-alerting) | Alert on drift/risk issues |
+| [GitHub Actions](scripts/README.md#github-actions) | CI/CD gate for risk issues |
 | [Prometheus metrics](scripts/README.md#prometheus-metrics) | Export metrics |
 | [Image audit](scripts/README.md#image-audit) | Find all image versions |
 | [Find orphans](scripts/README.md#find-orphans) | Find unmanaged resources |
@@ -327,7 +327,7 @@ $ cub-scout scan
 CONFIG CVE SCAN
 ════════════════════════════════════════════════════════════════════
 CRITICAL (1)
-[CCVE-2025-0027] demo-monitoring/grafana    ← BIGBANK 4-hour outage bug
+[RISK-2025-0027] demo-monitoring/grafana    ← BIGBANK 4-hour outage bug
 ════════════════════════════════════════════════════════════════════
 ```
 
@@ -374,5 +374,5 @@ $ cub-scout map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
 | [docs/howto/import-to-confighub.md](../docs/howto/import-to-confighub.md) | Import workloads into ConfigHub |
 | [README.md](../README.md) | Project overview |
 | [docs/concepts/architecture.md](../docs/concepts/architecture.md) | How it works, GSF protocol |
-| [docs/howto/scan-for-ccves.md](../docs/howto/scan-for-ccves.md) | CCVE scanning (46 patterns) |
+| [docs/howto/scan-for-risk issues.md](../docs/howto/scan-for-risk issues.md) | risk issue scanning (46 patterns) |
 | [test/README.md](../test/README.md) | Testing documentation |

@@ -19,7 +19,7 @@ cub-scout demo <name> --cleanup # Remove demo resources
 | Demo | Time | Description |
 |------|------|-------------|
 | `quick` | ~30 sec | Fastest path to see Map in action |
-| `ccve` | ~2 min | CCVE-2025-0027: The BIGBANK Grafana bug |
+| `risk` | ~2 min | RISK-2025-0027: The BIGBANK Grafana bug |
 | `healthy` | ~2 min | Enterprise healthy (IITS hub-and-spoke) |
 | `unhealthy` | ~2 min | Common GitOps problems |
 | `connected` | ~1 min | ConfigHub connected mode (requires cub auth) |
@@ -56,20 +56,20 @@ Shows:
 
 ---
 
-## CCVE Demo
+## risk issue Demo
 
 The BIGBANK Grafana bug that caused a 4-hour outage.
 
 ```bash
-cub-scout demo ccve
+cub-scout demo risk
 ```
 
 Creates:
 - Grafana deployment with sidecar config
-- ConfigMap with namespace whitespace bug (CCVE-2025-0027)
+- ConfigMap with namespace whitespace bug (RISK-2025-0027)
 
 Shows:
-- CCVE scanner detecting the bug
+- risk issue scanner detecting the bug
 - Remediation steps
 - Before/after fix
 
@@ -100,7 +100,7 @@ Shows:
 
 ## Enterprise Unhealthy Demo
 
-Common GitOps problems and CCVEs.
+Common GitOps problems and risk issues.
 
 ```bash
 cub-scout demo unhealthy
@@ -110,11 +110,11 @@ Creates:
 - Suspended Kustomization (forgotten maintenance)
 - HelmRelease with invalid chart (SourceNotReady)
 - Orphan resources (no GitOps owner)
-- CCVE-2025-0027 bug
+- RISK-2025-0027 bug
 
 Shows:
 - Problem detection
-- CCVE scanner output
+- risk issue scanner output
 - Troubleshooting workflow
 
 ---
@@ -140,7 +140,7 @@ Demo YAML files are in `test/atk/demos/`:
 
 | File | Used By |
 |------|---------|
-| `demo-full.yaml` | ccve demo |
+| `demo-full.yaml` | risk demo |
 | `enterprise-healthy.yaml` | healthy demo |
 | `enterprise-unhealthy.yaml` | unhealthy demo |
 
@@ -234,4 +234,4 @@ kind delete cluster --name cub-scout-demo
 - [examples/impressive-demo/](../impressive-demo/) - Full conference demo
 - [docs/TESTING-GUIDE.md](../../docs/TESTING-GUIDE.md) - Testing guide
 - [docs/map/howto/trace-ownership.md](../../docs/map/howto/trace-ownership.md) - Trace documentation
-- [docs/map/howto/scan-for-ccves.md](../../docs/map/howto/scan-for-ccves.md) - Scan documentation
+- [docs/map/howto/scan-for-risk issues.md](../../docs/map/howto/scan-for-risk issues.md) - Scan documentation

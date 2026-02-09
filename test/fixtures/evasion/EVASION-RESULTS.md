@@ -51,7 +51,7 @@ spec.metrics: Forbidden: must specify at least one Object or External metric to 
 
 **Attempt:** Use string "100%" instead of integer for minAvailable.
 
-**Result:** Correctly detected as CCVE-2025-0678:
+**Result:** Correctly detected as RISK-2025-0678:
 ```
 PodDisruptionBudget/evasion-pdb-string-percent
 Reason: MinAvailable100Percent

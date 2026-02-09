@@ -31,10 +31,10 @@ The `cub-scout remedy` subcommand is the **only** exception. It can apply fixes 
 
 ```bash
 # Dry-run (default) - shows what would change
-cub-scout remedy CCVE-2025-0027
+cub-scout remedy RISK-2025-0027
 
 # Apply changes (requires explicit flag + confirmation)
-cub-scout remedy CCVE-2025-0027 --apply
+cub-scout remedy RISK-2025-0027 --apply
 ```
 
 ### RBAC Requirements
@@ -64,7 +64,7 @@ For the `remedy` command (optional), you'd need:
 ### Audit Trail
 
 - All `remedy` actions are logged to `~/.cub-scout/remedy.log`
-- Dry-run output can be captured: `cub-scout remedy CCVE-X --dry-run > plan.yaml`
+- Dry-run output can be captured: `cub-scout remedy RISK-X --dry-run > plan.yaml`
 - The `remedy` command prints a summary of changes after completion
 
 ## Vulnerability Reporting

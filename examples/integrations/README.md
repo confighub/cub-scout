@@ -18,7 +18,7 @@ Plugins and extensions for popular Kubernetes tools.
 
 | Integration | Status | Description |
 |-------------|--------|-------------|
-| [argocd-extension/](argocd-extension/) | **Working** | Argo CD UI extension with CCVE tab |
+| [argocd-extension/](argocd-extension/) | **Working** | Argo CD UI extension with risk issue tab |
 | [confighub-oci/](confighub-oci/) | **Working** | ConfigHub OCI registry integration for Flux and ArgoCD |
 | [flux-operator/](flux-operator/) | **Working** | Prometheus metrics exporter for Flux Operator |
 | [flux9s/](flux9s/) | **Proposal** | flux9s TUI enhancement with ownership columns |
@@ -29,15 +29,15 @@ Plugins and extensions for popular Kubernetes tools.
 
 **Status: Working**
 
-Adds a "CCVEs" tab and status badge to Argo CD application views.
+Adds a "risk issues" tab and status badge to Argo CD application views.
 
 ```bash
 # Install the extension
 kubectl apply -f argocd-extension/
 
 # Extension adds:
-# - CCVE badge in application header
-# - CCVEs tab with findings
+# - risk issue badge in application header
+# - risk issues tab with findings
 # - Per-resource ownership info
 ```
 
@@ -78,15 +78,15 @@ See [confighub-oci/README.md](confighub-oci/README.md) for setup examples.
 
 **Status: Working**
 
-Prometheus metrics exporter that exposes CCVE findings as metrics.
+Prometheus metrics exporter that exposes risk issue findings as metrics.
 
 ```bash
 # Deploy the exporter
-kubectl apply -f flux-operator/ccve-exporter.yaml
+kubectl apply -f flux-operator/risk-exporter.yaml
 
 # Metrics exposed at :9877/metrics
-# confighub_ccve_findings{severity="critical",cluster="prod"} 1
-# confighub_ccve_findings{severity="warning",cluster="prod"} 3
+# confighub_risk_findings{severity="critical",cluster="prod"} 1
+# confighub_risk_findings{severity="warning",cluster="prod"} 3
 ```
 
 See [flux-operator/README.md](flux-operator/README.md) for setup.
@@ -111,7 +111,7 @@ All integrations use the Agent's JSON API:
 # Get cluster map
 cub-scout snapshot -o - | jq '.entries[]'
 
-# Get CCVE findings
+# Get risk issue findings
 cub-scout scan --json | jq '.findings[]'
 ```
 
@@ -123,7 +123,7 @@ cub-scout scan --json | jq '.findings[]'
 |----------|-------------|
 | `GET /api/map` | Full resource map with ownership |
 | `GET /api/map?namespace=X` | Filter by namespace |
-| `GET /api/ccve/findings` | CCVE scan results |
+| `GET /api/risk/findings` | risk issue scan results |
 | `GET /api/summary` | Fleet-wide aggregation |
 | `WS /ws/watch` | Real-time updates |
 
@@ -146,7 +146,7 @@ cub-scout scan --json | jq '.findings[]'
   ],
   "findings": [
     {
-      "id": "CCVE-2025-0027",
+      "id": "RISK-2025-0027",
       "severity": "critical",
       "resource": "monitoring/grafana"
     }

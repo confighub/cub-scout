@@ -6,7 +6,7 @@ An Argo CD UI extension that integrates with the cub-scout to show:
 - **ConfigHub context** - Space, Unit, revision for ConfigHub-managed resources
 - **Relationship graph** - Full delivery pipeline visualization
 - **Drift detection** - Live vs desired state
-- **CCVE findings** - Known misconfigurations
+- **risk issue findings** - Known misconfigurations
 
 ## Screenshots (Mockup)
 
@@ -40,7 +40,7 @@ An Argo CD UI extension that integrates with the cub-scout to show:
 │  └─────────────────────────────────────────────────────────────┘   │
 │                                                                     │
 │  ┌─ Issues ────────────────────────────────────────────────────┐   │
-│  │ ⚠️ CCVE-2025-0023: Missing resource limits (info)           │   │
+│  │ ⚠️ RISK-2025-0023: Missing resource limits (info)           │   │
 │  │    Resource: Deployment/guestbook-ui                        │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │                                                                     │
@@ -73,7 +73,7 @@ An Argo CD UI extension that integrates with the cub-scout to show:
 │                                                                     │
 │  Config CVEs                                                        │
 │  ──────────────────────────────────────────────────────────────     │
-│  ℹ️  CCVE-2025-0023: Missing resource limits                        │
+│  ℹ️  RISK-2025-0023: Missing resource limits                        │
 │      Remediation: Add resources.limits to container spec            │
 │      [View Details]                                                 │
 │                                                                     │
@@ -109,7 +109,7 @@ An Argo CD UI extension that integrates with the cub-scout to show:
 │  ┌───────────────────────────────────────────────────────────────┐  │
 │  │  GET /api/map           - Resource ownership map              │  │
 │  │  GET /api/map/graph     - Relationship graph                  │  │
-│  │  GET /api/ccve/findings - CCVE scan results                   │  │
+│  │  GET /api/risk/findings - risk issue scan results                   │  │
 │  │  GET /api/drift         - Drift detection results             │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
@@ -208,15 +208,15 @@ Returns relationship graph:
 }
 ```
 
-### GET /api/ccve/findings
+### GET /api/risk/findings
 
-Returns CCVE findings:
+Returns risk issue findings:
 
 ```json
 {
   "findings": [
     {
-      "id": "CCVE-2025-0023",
+      "id": "RISK-2025-0023",
       "severity": "info",
       "resource": "default/Deployment/guestbook-ui",
       "message": "Container lacks resource limits"

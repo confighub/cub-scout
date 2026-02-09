@@ -113,7 +113,7 @@ Same issue - GitOps CRDs are not installed. The demo creates resources with GitO
 
 ```bash
 ./cub-scout demo quick --cleanup
-./cub-scout demo ccve --cleanup
+./cub-scout demo risk --cleanup
 ```
 
 ---

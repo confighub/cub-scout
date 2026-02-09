@@ -11,9 +11,9 @@
 |-----------|--------|---------|
 | `map` | ✅ Ready | `cub-scout map` |
 | `scan` | ✅ Ready | `cub-scout scan` |
-| CCVE-2025-0027 detection | ✅ Ready | Built into `cub-scout scan` |
+| RISK-2025-0027 detection | ✅ Ready | Built into `cub-scout scan` |
 | `drift merge` | ❌ Not built | Needs implementation |
-| CCVE-2025-0027 fixture | ✅ Ready | `examples/impressive-demo/bad-configs/monitoring-bad.yaml` |
+| RISK-2025-0027 fixture | ✅ Ready | `examples/impressive-demo/bad-configs/monitoring-bad.yaml` |
 | Mixed ownership fixture | ✅ Ready | `test/atk/fixtures/mixed.yaml` |
 | Native/orphan fixture | ✅ Ready | `test/atk/fixtures/native-basic.yaml` |
 | Demo runner | ✅ Ready | `cub-scout demo` |
@@ -45,7 +45,7 @@ kubectl apply -f test/atk/fixtures/mixed.yaml
 # 2. Orphan resources (Native, no owner)
 kubectl apply -f test/atk/fixtures/native-basic.yaml
 
-# 3. Grafana CCVE (the BIGBANK bug)
+# 3. Grafana risk issue (the BIGBANK bug)
 kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml
 
 # 4. Create some "drift" by editing a deployment
@@ -100,7 +100,7 @@ cub-scout map workloads | grep -E "(Native|drift)"
 **Question:** "Is this config safe?"
 
 ```bash
-# Scan for CCVEs
+# Scan for risk issues
 cub-scout scan
 ```
 
@@ -111,7 +111,7 @@ CONFIG CVE SCAN: kind-demo
 
 CRITICAL (1)
 ────────────────────────────────────────────────────────────────────
-[CCVE-2025-0027] monitoring/grafana - Namespace whitespace in sidecar
+[RISK-2025-0027] monitoring/grafana - Namespace whitespace in sidecar
   Impact: BIGBANK Capital Markets - 3-day outage (FluxCon 2025)
   Fix: Remove spaces from namespace list
 
@@ -121,7 +121,7 @@ Summary: 1 critical, 0 warning, 0 info
 
 **Magic:** 10 seconds to find a bug that took BIGBANK 3 days.
 
-**Screenshot moment:** The CCVE with real-world incident citation.
+**Screenshot moment:** The risk issue with real-world incident citation.
 
 ---
 
@@ -151,8 +151,8 @@ The demo runner provides the fastest path to a demo:
 # Quick demo (~30 sec) - fastest path to WOW
 cub-scout demo quick
 
-# CCVE-2025-0027 demo (~2 min) - the BIGBANK 4-hour outage story
-cub-scout demo ccve
+# RISK-2025-0027 demo (~2 min) - the BIGBANK 4-hour outage story
+cub-scout demo risk
 
 # Narrative scenario (~3 min) - walk through the incident
 cub-scout demo scenario bigbank-incident

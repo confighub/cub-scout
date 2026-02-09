@@ -15,7 +15,7 @@ A practical guide to verifying cub-scout works correctly in your environment.
 - [Demo Scenarios](#demo-scenarios)
 - [Connected Mode Testing](#connected-mode-testing)
 - [What Gets Tested](#what-gets-tested)
-- [CCVE and Remedy Testing (Independent)](#ccve-and-remedy-testing-independent)
+- [risk issue and Remedy Testing (Independent)](#risk-and-remedy-testing-independent)
 - [Common Issues](#common-issues)
 - [Related Documentation](#related-documentation)
 
@@ -81,7 +81,7 @@ PHASE 1: Standard Tests (8 passed)
 PHASE 2: Demos (4 passed)
 ================================================================================
 ✓ demo quick
-✓ demo ccve
+✓ demo risk
 ✓ demo healthy
 ✓ demo unhealthy
 
@@ -108,8 +108,8 @@ Beyond unit tests, narrative demos prove the system solves real problems:
 # 30-second cluster overview
 ./test/atk/demo quick
 
-# CCVE detection story (the 4-hour outage)
-./test/atk/demo ccve
+# risk issue detection story (the 4-hour outage)
+./test/atk/demo risk
 
 # Healthy vs unhealthy cluster states
 ./test/atk/demo healthy
@@ -119,7 +119,7 @@ Beyond unit tests, narrative demos prove the system solves real problems:
 ### Scenario Demos
 
 ```bash
-# BIGBANK incident: CCVE-2025-0027 detection
+# BIGBANK incident: RISK-2025-0027 detection
 ./test/atk/demo scenario bigbank-incident
 
 # Find orphaned resources (13 orphans typical)
@@ -209,14 +209,14 @@ Each ownership type is tested end-to-end:
 | `flux-helm` | Flux | Podinfo via HelmRelease | 7 resources |
 | `native-basic` | Native | kubectl-applied nginx | 6 resources |
 
-### CCVE Scanning
+### risk issue Scanning
 
 ```bash
 # Scan for configuration vulnerabilities
 ./test/atk/scan
 
 # What it checks:
-# - 4,500+ CCVE patterns in database
+# - 4,500+ risk issue patterns in database
 # - 460 Kyverno policy patterns (KPOL)
 # - Stuck reconciliation states
 # - Timing bombs (expiring certs, quotas)
@@ -225,25 +225,25 @@ Each ownership type is tested end-to-end:
 
 ---
 
-## CCVE and Remedy Testing (Independent)
+## risk issue and Remedy Testing (Independent)
 
-**IMPORTANT:** CCVE scanning and remedy functionality can and should be tested **separately** from the rest of the cub-scout project. These components:
+**IMPORTANT:** risk issue scanning and remedy functionality can and should be tested **separately** from the rest of the cub-scout project. These components:
 
 - Do NOT require ConfigHub connection or workers
 - Do NOT require the `cub` CLI
 - Only require a Kubernetes cluster (for remedy E2E tests)
 - Can be validated independently during development
 
-### CCVE-Only Testing (No Cluster Needed)
+### RISK-Only Testing (No Cluster Needed)
 
 ```bash
-# Validate CCVE remedy functions exist
+# Validate risk issue remedy functions exist
 ./test/validate-functions.sh
 
-# Run CCVE package tests
-go test ./pkg/ccve/... -v
+# Run risk issue package tests
+go test ./pkg/risk/... -v
 
-# List auto-fixable CCVEs (no cluster)
+# List auto-fixable risk issues (no cluster)
 ./cub-scout remedy --list
 
 # Static file scan (no cluster)
@@ -260,15 +260,15 @@ go test ./pkg/remedy/... -v
 ./test/remedy-e2e.sh
 
 # Manual dry-run test
-./cub-scout remedy CCVE-2025-0147 --dry-run -n default
+./cub-scout remedy RISK-2025-0147 --dry-run -n default
 ```
 
 ### Why This Separation Matters
 
-1. **Faster iteration** - Test CCVE patterns without full integration testing
+1. **Faster iteration** - Test risk issue patterns without full integration testing
 2. **No infrastructure** - Remedy framework works without ConfigHub
-3. **CI/CD friendly** - Validate CCVE/remedy in lightweight pipelines
-4. **Independent development** - CCVE team can work without ConfigHub setup
+3. **CI/CD friendly** - Validate risk issue/remedy in lightweight pipelines
+4. **Independent development** - risk issue team can work without ConfigHub setup
 
 ---
 
@@ -384,7 +384,7 @@ ls -la docs/planning/sessions/test-runs/
 | How do I validate expected outputs? | `./test/validate-expected-outputs.sh` |
 | Where are test logs? | `docs/planning/sessions/test-runs/` |
 | How do I test ownership detection? | `./test/atk/verify` |
-| How do I test CCVE scanning? | `./test/atk/scan` |
+| How do I test risk issue scanning? | `./test/atk/scan` |
 | How do I test remedy framework? | `go test ./pkg/remedy/... -v && ./test/remedy-e2e.sh` |
 | Where are expected outputs defined? | `test/expected-outputs/` (31 files) |
 

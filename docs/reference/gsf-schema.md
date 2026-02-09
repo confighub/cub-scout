@@ -335,14 +335,14 @@ When connected to ConfigHub API, entries include additional fields:
     "subType": "kustomization",
     "name": "payments"
   },
-  "ccves": ["RISK-DRIFT-002"]
+  "risk issues": ["RISK-DRIFT-002"]
 }
 ```
 
 Extended fields:
 - `confighub` — Full ConfigHub hierarchy (Org → Space → Unit)
 - `deployer` — Separate from `owner` when ConfigHub manages via Flux/Argo
-- `ccves` — Active config risk issues affecting this entry
+- `risk issues` — Active config risk issues affecting this entry
 
 ---
 

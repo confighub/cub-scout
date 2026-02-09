@@ -34,7 +34,7 @@ ConfigHub's **Map** is the queryable graph of everything running across your fle
 **Three things the Map provides:**
 
 1. **Visibility** — See everything, across all clusters, all deployers
-2. **Detection** — Find problems before they cause outages (CCVEs)
+2. **Detection** — Find problems before they cause outages (risk issues)
 3. **Control** — Accept or revert drift, your choice
 
 ---
@@ -394,7 +394,7 @@ value: "monitoring,grafana,observability"  # No spaces
 ```bash
 $ cub scan grafana
 
-CCVE-0027 CRITICAL
+RISK-0027 CRITICAL
   Resource: Deployment/grafana-sidecar
   Location: spec.template.spec.containers[0].env[NAMESPACE]
   Problem: Spaces in comma-separated namespace list
@@ -412,9 +412,9 @@ CCVE-0027 CRITICAL
 
 **30 seconds vs 4 hours.**
 
-Every CCVE is a lesson from a real incident. When you scan, you're applying the collective knowledge of every production outage we've documented.
+Every risk issue is a lesson from a real incident. When you scan, you're applying the collective knowledge of every production outage we've documented.
 
-**Talking point:** "This is CCVE-0027. No one needs to debug this for 4 hours ever again."
+**Talking point:** "This is RISK-0027. No one needs to debug this for 4 hours ever again."
 
 ---
 
@@ -609,15 +609,15 @@ ConfigHub stores **WET manifests** (rendered, complete). Git stores DRY (templat
 
 ---
 
-## WOW Moment #7: "CCVEs - Learning from Every Incident"
+## WOW Moment #7: "risk issues - Learning from Every Incident"
 
 ### The Concept
 
-Just as CVEs catalog security vulnerabilities in software, CCVEs catalog configuration vulnerabilities in infrastructure.
+Just as CVEs catalog security vulnerabilities in software, risk issues catalog configuration vulnerabilities in infrastructure.
 
-### The Database (660 CCVEs + 460 Kyverno Policies)
+### The Database (660 risk issues + 460 Kyverno Policies)
 
-| Tool | CCVEs | Examples |
+| Tool | risk issues | Examples |
 |------|-------|----------|
 | Kubernetes Core | 165 | Scheduler bugs, RBAC issues, StatefulSet validation |
 | Flux CD | 28 | HelmRelease stuck, CRD upgrade failures |
@@ -636,19 +636,19 @@ Just as CVEs catalog security vulnerabilities in software, CCVEs catalog configu
 # Scan everything
 $ cub scan
 
-CCVE-0027 CRITICAL  grafana-sidecar     Spaces in namespace list
-CCVE-0031 HIGH      ingressroute-api    Service reference doesn't exist
-CCVE-0034 HIGH      certificate-prod    Issuer 'letsencrypt' not found
-CCVE-0012 MEDIUM    kustomization-app   Source 'git-repo' not ready
+RISK-0027 CRITICAL  grafana-sidecar     Spaces in namespace list
+RISK-0031 HIGH      ingressroute-api    Service reference doesn't exist
+RISK-0034 HIGH      certificate-prod    Issuer 'letsencrypt' not found
+RISK-0012 MEDIUM    kustomization-app   Source 'git-repo' not ready
 
-4 CCVEs found. 2 critical/high.
+4 risk issues found. 2 critical/high.
 ```
 
 ### The WOW
 
-**Every CCVE is a real incident that happened to someone.** When you scan, you're checking for every documented production outage pattern.
+**Every risk issue is a real incident that happened to someone.** When you scan, you're checking for every documented production outage pattern.
 
-**Talking point:** "Found a production incident? Submit it to the CCVE database. Get credit. Help others avoid the same mistake."
+**Talking point:** "Found a production incident? Submit it to the risk issue database. Get credit. Help others avoid the same mistake."
 
 ---
 
@@ -683,7 +683,7 @@ on:
   schedule: "0 */6 * * *"
 steps:
   - query: "Labels['deployer'] = 'traefik'"
-  - function: scan-traefik-ccves
+  - function: scan-traefik-risk issues
   - if: "severity >= 'high'"
     then:
       - create: changeset
@@ -729,17 +729,17 @@ META-PATTERN FINDINGS
 
 STATE-STUCK (2)
 ────────────────────────────────────────────────────────────────────
-  CCVE-2025-0632  HelmRelease/redis-cluster pending 47 minutes
+  RISK-2025-0632  HelmRelease/redis-cluster pending 47 minutes
                   → ArgoCD Redis init job deadlock
                   FIX: kubectl delete job argocd-redis-init
 
-  CCVE-2025-0656  CSIDriver/csi-hostpath in terminating loop
+  RISK-2025-0656  CSIDriver/csi-hostpath in terminating loop
                   → Scheduler preemption caused deadlock
                   FIX: kubectl delete pod -n kube-system csi-*
 
 SILENT-CONFIG (1)
 ────────────────────────────────────────────────────────────────────
-  CCVE-2025-0027  ConfigMap/grafana-sidecar namespace typo
+  RISK-2025-0027  ConfigMap/grafana-sidecar namespace typo
                   → Spaces in comma-separated list
                   FIX: Remove spaces: "monitoring,grafana"
 
@@ -761,7 +761,7 @@ Summary: 3 issues found. Kyverno detected: 0/3
 
 ### The Meta-Pattern Research
 
-Based on analysis of 660 CCVEs, we identified 5 meta-patterns that cover 90% of config failures:
+Based on analysis of 660 risk issues, we identified 5 meta-patterns that cover 90% of config failures:
 
 ```
 STATE-STUCK (26%)
@@ -791,7 +791,7 @@ SILENT-CONFIG (14%)
 └── Duplicate YAML keys merged
 ```
 
-See: [CCVE Database](https://github.com/confighubai/confighub-scan) for meta-pattern detection research
+See: [risk issue Database](https://github.com/confighubai/confighub-scan) for meta-pattern detection research
 
 ---
 
@@ -815,7 +815,7 @@ See: [CCVE Database](https://github.com/confighubai/confighub-scan) for meta-pat
 | "Why is prod different from staging?" | Manual diff, hours | `cub map diff staging prod` |
 | "What actually deploys?" | Mental compilation | WET manifests, what you see is what deploys |
 | "Is this a base issue or overlay?" | Multi-dimensional debugging | One manifest, one source |
-| "Why did Grafana break?" | 4 hours (BIGBANK) | CCVE-0027, 30 seconds |
+| "Why did Grafana break?" | 4 hours (BIGBANK) | RISK-0027, 30 seconds |
 | "Which patches applied?" | Run kustomize build locally | Already rendered in Unit |
 
 ### Operational Problems
@@ -844,7 +844,7 @@ See: [CCVE Database](https://github.com/confighubai/confighub-scan) for meta-pat
 | Metric | Traditional | With ConfigHub |
 |--------|-------------|----------------|
 | Time to find "what's running" | Hours | 30 seconds |
-| Time to debug config issue | Hours (BIGBANK: 3-day cascade) | Seconds (CCVE detection) |
+| Time to debug config issue | Hours (BIGBANK: 3-day cascade) | Seconds (risk issue detection) |
 | Time for CVE response | Days | Minutes |
 | Clusters queryable at once | 1 | All |
 | Deployers visible | 1 | All (Flux, Argo, Helm, Native) |
@@ -880,11 +880,11 @@ The BIGBANK incident: One misplaced space in a Grafana config file caused a **3-
 ### 2. Story (Emotional Connection)
 > At FluxCon 2025, BIGBANK shared a story about a **3-day cascade of breakages** caused by a single space character in their Grafana config. The sidecar was silently failing. Logs showed nothing. The team debugged for days. One misplaced space. Three days of pain.
 
-### 3. Solution (Map + CCVEs)
+### 3. Solution (Map + risk issues)
 > ConfigHub's Map is the queryable graph of everything. Install the agent, run `cub map`, see everything. Run `cub scan`, find problems before they become outages.
 
 ### 4. Demo (Proof)
-> Watch: Install agent. Query the fleet. Find the 4 unowned resources. Scan for CCVEs. Fix the Grafana issue in 30 seconds.
+> Watch: Install agent. Query the fleet. Find the 4 unowned resources. Scan for risk issues. Fix the Grafana issue in 30 seconds.
 
 ### 5. Scale (Enterprise Value)
 > "What version of redis runs across 50 clusters?" One query. No one else can do this.
@@ -902,7 +902,7 @@ The BIGBANK incident: One misplaced space in a Grafana config file caused a **3-
 | Multi-deployer | - | Argo only | Flux only | All (no context) | All (with context) |
 | Fleet queries | - | - | - | - | Yes |
 | Drift detection | - | Sync status | Sync status | - | Content diff |
-| CCVEs | - | - | - | - | Yes |
+| risk issues | - | - | - | - | Yes |
 | Ownership detection | - | Argo only | Flux only | - | All tools |
 | WET manifests | - | - | - | - | Yes |
 
@@ -915,7 +915,7 @@ The BIGBANK incident: One misplaced space in a Grafana config file caused a **3-
 | "50 clusters in one query" | Demo with real multi-cluster setup |
 | "30 seconds vs 4 hours" | Side-by-side video comparison |
 | "Cross-tool visibility" | Demo cluster with Flux + Argo + Helm |
-| "CCVEs prevent outages" | More documented incidents (like BIGBANK) |
+| "risk issues prevent outages" | More documented incidents (like BIGBANK) |
 | "Teams stop forking" | Customer testimonial |
 
 ---
@@ -931,7 +931,7 @@ The BIGBANK incident: One misplaced space in a Grafana config file caused a **3-
 ## Next Steps
 
 1. **Refine demos** — Script exact commands for each WOW moment
-2. **Collect more CCVEs** — Document more real-world incidents
+2. **Collect more risk issues** — Document more real-world incidents
 3. **Build proof points** — Multi-cluster demo environment
 4. **Customer stories** — Find early adopters with good outcomes
 5. **Competitive teardown** — Detailed comparison with Argo/Flux/Lens
@@ -944,7 +944,7 @@ The BIGBANK incident: One misplaced space in a Grafana config file caused a **3-
 > "312 units across 3 clusters. 4 unowned. That's the 2am deployment someone forgot about."
 
 **On speed:**
-> "30 seconds vs 4 hours. Every CCVE is a lesson from a real incident."
+> "30 seconds vs 4 hours. Every risk issue is a lesson from a real incident."
 
 **On fleet queries:**
 > "This is impossible with native Argo or Flux. Each only sees its own cluster."

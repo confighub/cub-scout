@@ -1,4 +1,4 @@
-# CCVE Detection Demo - Presentation Talking Points
+# risk issue Detection Demo - Presentation Talking Points
 
 ## Opening Hook (30 seconds)
 
@@ -19,20 +19,20 @@
 - Average cost: $5,600/minute of downtime
 - BIGBANK incident: 4 hours = $1.3M+ in lost productivity
 
-## Slide 2: Introducing CCVEs
+## Slide 2: Introducing risk issues
 
 **Title:** What if we learned from every incident?
 
 **Talking Points:**
-- CCVEs = CVEs for infrastructure configuration
+- risk issues = CVEs for infrastructure configuration
 - Catalog of real-world misconfigurations
 - Programmatic detection with CEL expressions
 - Community-contributed (like CVE database)
 
 **Key Message:**
-> "Just as you scan code for CVE vulnerabilities, scan your Kubernetes manifests for CCVE misconfigurations."
+> "Just as you scan code for CVE vulnerabilities, scan your Kubernetes manifests for risk issue misconfigurations."
 
-## Slide 3: The BIGBANK Incident (CCVE-2025-0027)
+## Slide 3: The BIGBANK Incident (RISK-2025-0027)
 
 **Title:** Real Story: The Space That Cost 4 Hours
 
@@ -57,7 +57,7 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 ```
 
 **Talking Point:**
-> "This is now CCVE-2025-0027. Anyone can scan their clusters for it. No one needs to debug this for 4 hours ever again."
+> "This is now RISK-2025-0027. Anyone can scan their clusters for it. No one needs to debug this for 4 hours ever again."
 
 ## Slide 4: Live Demo Setup
 
@@ -65,7 +65,7 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 
 **What to Say:**
 - "I've set up a demo cluster with Flux CD"
-- "I'm going to intentionally introduce 3 CCVEs"
+- "I'm going to intentionally introduce 3 risk issues"
 - "Watch how fast cub-scout catches them"
 
 **Set Expectations:**
@@ -73,13 +73,13 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 - Focus on detection speed and clarity
 - Note the cross-reference validation
 
-## Slide 5: Demo - CCVE-2025-0027
+## Slide 5: Demo - RISK-2025-0027
 
 **Title:** Demo Part 1: The BIGBANK Error
 
 **What to Say:**
 - "Deploying Grafana with the exact BIGBANK configuration..."
-- "cub-scout detects CCVE-2025-0027 immediately"
+- "cub-scout detects RISK-2025-0027 immediately"
 - "Look at the output - it tells us:"
   - Exact location (Deployment/grafana, env NAMESPACE)
   - The problem (spaces in list)
@@ -89,7 +89,7 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 **Key Moment:**
 > "This is the 'aha moment' - seeing that exact incident correlation makes it real."
 
-## Slide 6: Demo - CCVE-2025-0028
+## Slide 6: Demo - RISK-2025-0028
 
 **Title:** Demo Part 2: Cross-Reference Validation
 
@@ -100,9 +100,9 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 - "It knows Service 'grafana-servic' doesn't exist"
 
 **Key Insight:**
-> "This is what makes CCVEs powerful - we're validating relationships that Kubernetes doesn't check."
+> "This is what makes risk issues powerful - we're validating relationships that Kubernetes doesn't check."
 
-## Slide 7: Demo - CCVE-2025-0034
+## Slide 7: Demo - RISK-2025-0034
 
 **Title:** Demo Part 3: Pre-Deployment Blocking
 
@@ -124,11 +124,11 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 - Cluster healthy again
 
 **Compare:**
-- Without CCVE: Hours of debugging per issue
-- With CCVE: Seconds to fix
+- Without risk issue: Hours of debugging per issue
+- With risk issue: Seconds to fix
 
 **Talking Point:**
-> "That's the power of learning from incidents and encoding them as CCVEs."
+> "That's the power of learning from incidents and encoding them as risk issues."
 
 ## Slide 9: Architecture
 
@@ -136,21 +136,21 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 
 **Components:**
 1. cub-scout (in-cluster observer)
-2. CCVE Database (50+ definitions, growing)
+2. risk issue Database (50+ definitions, growing)
 3. Scanner Function (pre + post deployment)
 4. CLI/UI Integration (inline results)
 
 **Keep It Simple:**
 - Agent watches cluster
 - Detects ownership (Flux, Argo, ConfigHub, Native)
-- Runs CCVE scanner
+- Runs risk issue scanner
 - Shows results with remediation
 
 ## Slide 10: Competitive Comparison
 
 **Title:** Why Not Just Use kubectl/Polaris/Falco?
 
-| Feature | kubectl describe | Polaris | Falco | CCVE Scanner |
+| Feature | kubectl describe | Polaris | Falco | risk issue Scanner |
 |---------|------------------|---------|-------|--------------|
 | Pre-deployment | ❌ | ✅ | ❌ | ✅ |
 | Post-deployment | ✅ | ❌ | ✅ | ✅ |
@@ -160,11 +160,11 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 | Cross-reference | ❌ | ❌ | ❌ | ✅ |
 
 **Talking Point:**
-> "CCVEs complement existing tools - they're specifically for GitOps configuration errors learned from real production incidents."
+> "risk issues complement existing tools - they're specifically for GitOps configuration errors learned from real production incidents."
 
-## Slide 11: CCVE Coverage
+## Slide 11: risk issue Coverage
 
-**Title:** 50 CCVEs and Growing
+**Title:** 50 risk issues and Growing
 
 **Current Coverage:**
 - Flux CD (6): Source, reconciliation, build errors
@@ -177,49 +177,49 @@ value: "monitoring,grafana,observability"  # ✅ No spaces
 - And 5 more tools...
 
 **Community Aspect:**
-> "Found a production incident? Submit it to the CCVE database. Get credit. Help others avoid the same mistake."
+> "Found a production incident? Submit it to the risk issue database. Get credit. Help others avoid the same mistake."
 
 ## Slide 12: Getting Started
 
 **Title:** Try It Today
 
 **Three Tiers:**
-1. **Free/OSS**: CCVE database + CLI scanner
+1. **Free/OSS**: risk issue database + CLI scanner
    - GitHub: monadic/cub-scout
    - Scan your cluster today
 
 2. **Pro**: cub-scout integration
    - Automatic scanning on every revision
    - Pre-deployment blocking
-   - CCVE history tracking
+   - risk issue history tracking
 
 3. **Enterprise**: Managed service
    - Compliance reports
-   - Custom CCVE creation
+   - Custom risk issue creation
    - Fleet-wide dashboards
 
 ## Closing Hook (30 seconds)
 
-> "Configuration errors are inevitable. But debugging the same error for 4 hours - that's preventable. CCVEs turn every incident into a learning opportunity for the entire community. Start scanning today."
+> "Configuration errors are inevitable. But debugging the same error for 4 hours - that's preventable. risk issues turn every incident into a learning opportunity for the entire community. Start scanning today."
 
 ## Q&A Prep
 
 **Common Questions:**
 
 **Q: "How many false positives?"**
-A: "We aim for zero false positives on Critical severity. Each CCVE has confidence scoring. Conservative by design - we'd rather miss an edge case than cry wolf."
+A: "We aim for zero false positives on Critical severity. Each risk issue has confidence scoring. Conservative by design - we'd rather miss an edge case than cry wolf."
 
 **Q: "Does this work without ConfigHub?"**
-A: "Yes! The CCVE database and scanner are open source. ConfigHub integration adds features like lineage tracking and auto-remediation, but the core value is free."
+A: "Yes! The risk issue database and scanner are open source. ConfigHub integration adds features like lineage tracking and auto-remediation, but the core value is free."
 
-**Q: "Can I contribute my own CCVEs?"**
-A: "Absolutely! Just like CVEs, we want community contributions. Had a production incident? Turn it into a CCVE so no one else hits it."
+**Q: "Can I contribute my own risk issues?"**
+A: "Absolutely! Just like CVEs, we want community contributions. Had a production incident? Turn it into a risk issue so no one else hits it."
 
 **Q: "What about sensitive information?"**
-A: "CCVEs are patterns, not your actual config. We don't need your secrets or specific values - just the error pattern. Think: 'spaces in comma-separated list', not 'monitoring, grafana'."
+A: "risk issues are patterns, not your actual config. We don't need your secrets or specific values - just the error pattern. Think: 'spaces in comma-separated list', not 'monitoring, grafana'."
 
 **Q: "How do you keep up with tool changes?"**
-A: "Each CCVE specifies affected versions. When tools change behavior, we deprecate old CCVEs and create new ones. Just like CVEs work."
+A: "Each risk issue specifies affected versions. When tools change behavior, we deprecate old risk issues and create new ones. Just like CVEs work."
 
 ## Demo Tips
 
@@ -229,7 +229,7 @@ A: "Each CCVE specifies affected versions. When tools change behavior, we deprec
 - Know your timings (5 min total)
 
 **During Demo:**
-- Pause after each CCVE detection to let it sink in
+- Pause after each risk issue detection to let it sink in
 - Read the BIGBANK incident description verbatim - powerful
 - Point out the exact line numbers in YAML
 - Show the fix commands clearly
@@ -242,10 +242,10 @@ A: "Each CCVE specifies affected versions. When tools change behavior, we deprec
 ## Call to Action
 
 **For Developers:**
-"Scan your clusters this week. Find your CCVEs. I bet you have at least one."
+"Scan your clusters this week. Find your risk issues. I bet you have at least one."
 
 **For Platform Teams:**
 "Install cub-scout in dev. See what it finds. Share results with your team."
 
 **For Leaders:**
-"Ask your team: How many hours did we spend debugging config errors last quarter? Now imagine if all those were CCVEs."
+"Ask your team: How many hours did we spend debugging config errors last quarter? Now imagine if all those were risk issues."

@@ -200,7 +200,7 @@ Pre-built fixtures for demos are in `examples/demos/`:
 | Fixture | Description |
 |---------|-------------|
 | `ownership-demo/` | Flux + ArgoCD + Native resources |
-| `ccve-demo/` | Misconfigured resources for scanning |
+| `risk-demo/` | Misconfigured resources for scanning |
 | `drift-demo/` | Resources with drift |
 
 ```bash

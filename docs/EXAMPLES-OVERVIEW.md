@@ -25,7 +25,7 @@ cub-scout includes built-in demos. Run `./cub-scout demo list` to see all availa
 ```bash
 # Quick demos
 ./cub-scout demo quick              # Ownership detection (~30 sec)
-./cub-scout demo ccve               # RISK-2025-0027 (~2 min)
+./cub-scout demo risk               # RISK-2025-0027 (~2 min)
 ./cub-scout demo query              # Query language filtering (~1 min)
 
 # Scenarios

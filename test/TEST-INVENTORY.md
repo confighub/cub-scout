@@ -18,7 +18,7 @@
 | `pkg/agent/argo_trace_test.go` | 3 | ArgoCD ownership chain tracing |
 | `pkg/agent/trace_test.go` | 5 | General trace functionality |
 | `pkg/agent/relationships_test.go` | 4 | Resource relationship detection |
-| `pkg/agent/state_scanner_test.go` | 8 | CCVE state scanning |
+| `pkg/agent/state_scanner_test.go` | 8 | risk issue state scanning |
 | `pkg/agent/kyverno_scan_test.go` | 3 | Kyverno policy scanning |
 | `pkg/query/query_test.go` | 12 | Query language parsing |
 | `pkg/remedy/executor_test.go` | 6 | Remedy execution |
@@ -52,7 +52,7 @@
 - `cub-scout map deployers` - GitOps deployer listing
 - `cub-scout map orphans` - Orphan detection
 - `cub-scout map issues` - Issue listing
-- `cub-scout scan` - CCVE scanning
+- `cub-scout scan` - risk issue scanning
 - `cub-scout scan --json` - Scan JSON output
 - `cub-scout trace` - Ownership tracing
 - Query language filters
@@ -64,7 +64,7 @@
 | Demo | What It Proves |
 |------|----------------|
 | `demo quick` | Apply fixtures → map status/list/issues works |
-| `demo ccve` | CCVE-2025-0027 detection scenario |
+| `demo risk` | RISK-2025-0027 detection scenario |
 | `demo healthy` | Enterprise healthy cluster view |
 | `demo unhealthy` | Enterprise problem detection |
 | `demo connected` | ConfigHub connected mode (requires auth) |
@@ -82,7 +82,7 @@
 |---------|------------|
 | `argocd-extension/extension.js` | JavaScript syntax check |
 | `argocd-extension/scanner-cronjob.yaml` | kubectl dry-run |
-| `flux-operator/ccve-exporter.yaml` | kubectl dry-run |
+| `flux-operator/risk-exporter.yaml` | kubectl dry-run |
 | `impressive-demo/bad-configs/` | kubectl dry-run |
 | `impressive-demo/fixed-configs/` | kubectl dry-run |
 | `impressive-demo/demo-script.sh` | Executable check |
@@ -143,7 +143,7 @@
 ### MEDIUM Priority
 
 1. **No trace E2E demo** - Only integration test
-2. **No scan --ccve E2E demo** - Specific CCVE filtering
+2. **No scan --risk E2E demo** - Specific risk issue filtering
 3. **Import wizard not tested E2E** - Only TUI teatest
 
 ### LOW Priority

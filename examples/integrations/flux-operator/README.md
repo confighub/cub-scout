@@ -10,7 +10,7 @@
 | **Ownership Panel** | Breakdown by owner (ConfigHub/Flux/Argo/Helm/Native) |
 | **ConfigHub Context** | Link nodes to Space/Unit/Revision |
 | **Drift Indicators** | Visual markers for drifted resources |
-| **CCVE Badges** | Warning indicators on affected nodes |
+| **risk issue Badges** | Warning indicators on affected nodes |
 | **Prometheus Metrics** | Export ownership and status data |
 
 ## Mockup: Enhanced GitOps Graph
@@ -53,7 +53,7 @@
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 │  ┌─ Legend ─────────────────────────────────────────────────────────────┐  │
-│  │ ConfigHub ████  Flux ████  Helm ████  Native ████   ⚠ Drift  🔴 CCVE │  │
+│  │ ConfigHub ████  Flux ████  Helm ████  Native ████   ⚠ Drift  🔴 risk issue │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -74,7 +74,7 @@
 │  └─────────────────────────┘  └────────────────────────┘                   │
 │                                                                             │
 │  ┌─ ConfigHub Spaces ───────────────────────────────────────────────────┐  │
-│  │ Space              Units  Healthy  Drifted  CCVEs                    │  │
+│  │ Space              Units  Healthy  Drifted  risk issues                    │  │
 │  │ payments-prod        12      12        0       0                     │  │
 │  │ payments-staging      8       7        1       1                     │  │
 │  │ monitoring            5       4        0       2                     │  │
@@ -82,8 +82,8 @@
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                             │
 │  ┌─ Issues ─────────────────────────────────────────────────────────────┐  │
-│  │ 🔴 CCVE-2025-0004  Kustomization/monitoring  BuildFailed             │  │
-│  │ ⚠️  CCVE-2025-0023  Deployment/api           Missing limits          │  │
+│  │ 🔴 RISK-2025-0004  Kustomization/monitoring  BuildFailed             │  │
+│  │ ⚠️  RISK-2025-0023  Deployment/api           Missing limits          │  │
 │  │ ⚠️  DRIFT          ConfigMap/app-config     LOG_LEVEL changed        │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                             │
@@ -117,7 +117,7 @@
 │   Kubernetes API     │  │  cub-scout     │  │    Prometheus        │
 │                      │  │                      │  │                      │
 │  - FluxInstance      │  │  GET /api/map        │  │  agent_resource_*    │
-│  - Kustomization     │  │  GET /api/graph      │  │  agent_ccve_*        │
+│  - Kustomization     │  │  GET /api/graph      │  │  agent_risk_*        │
 │  - HelmRelease       │  │  GET /api/summary    │  │  agent_drift_*       │
 │  - GitRepository     │  │  WS /ws/watch        │  │                      │
 └──────────────────────┘  └──────────────────────┘  └──────────────────────┘
@@ -131,7 +131,7 @@ Export Agent data as Prometheus metrics for Grafana dashboards.
 
 ```yaml
 # agent-deployment.yaml includes Prometheus exporter
-# See ccve-exporter.yaml for full manifest
+# See risk-exporter.yaml for full manifest
 ```
 
 **Metrics exported:**
@@ -150,10 +150,10 @@ agent_confighub_drift_total{space="payments-prod"} 1
 agent_resource_health{owner="ConfigHub",status="ready"} 43
 agent_resource_health{owner="ConfigHub",status="degraded"} 2
 
-# CCVE findings
-agent_ccve_total{severity="critical"} 0
-agent_ccve_total{severity="warning"} 3
-agent_ccve_finding{id="CCVE-2025-0023",resource="default/Deployment/api"} 1
+# risk issue findings
+agent_risk_total{severity="critical"} 0
+agent_risk_total{severity="warning"} 3
+agent_risk_finding{id="RISK-2025-0023",resource="default/Deployment/api"} 1
 ```
 
 ### Option 2: API Integration (Proposed)
@@ -230,11 +230,11 @@ export function GraphNode({ node, agentInfo }: GraphNodeProps) {
         <circle cx={18} cy={-18} r={6} fill="#f59e0b" />
       )}
 
-      {/* CCVE badge */}
-      {agentInfo?.ccves?.length > 0 && (
+      {/* risk issue badge */}
+      {agentInfo?.riskIssues?.length > 0 && (
         <g transform="translate(-20, -20)">
-          <circle r={8} fill={ccveSeverityColor(agentInfo.ccves)} />
-          <text fill="white" fontSize={10}>{agentInfo.ccves.length}</text>
+          <circle r={8} fill={riskSeverityColor(agentInfo.riskIssues)} />
+          <text fill="white" fontSize={10}>{agentInfo.riskIssues.length}</text>
         </g>
       )}
     </g>
@@ -277,7 +277,7 @@ kubectl apply -f agent-deployment.yaml
 ## Files
 
 - `README.md` - This file
-- `ccve-exporter.yaml` - Prometheus exporter (from previous example)
+- `risk-exporter.yaml` - Prometheus exporter (from previous example)
 - `agent-deployment.yaml` - Standalone agent deployment
 
 ## References

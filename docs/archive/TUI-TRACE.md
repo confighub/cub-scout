@@ -233,17 +233,17 @@ When something is wrong, trace immediately shows which level in the chain has th
 cub-scout trace deployment/api -n prod --json | jq '.chain[] | select(.ready == false)'
 ```
 
-## Related CCVEs
+## Related risk issues
 
-Trace-based detection enables these CCVE patterns:
+Trace-based detection enables these risk issue patterns:
 
-| CCVE | Category | Description |
+| risk issue | Category | Description |
 |------|----------|-------------|
-| CCVE-2025-0638 | ORPHAN | Resource not in any GitOps trace |
-| CCVE-2025-0639 | DRIFT | Trace shows stale revision |
-| CCVE-2025-0640 | APPLY | Trace chain broken at intermediate level |
-| CCVE-2025-0641 | STATE | Trace shows reconciliation stuck |
-| CCVE-2025-0642 | SOURCE | Trace source not fetching |
+| RISK-2025-0638 | ORPHAN | Resource not in any GitOps trace |
+| RISK-2025-0639 | DRIFT | Trace shows stale revision |
+| RISK-2025-0640 | APPLY | Trace chain broken at intermediate level |
+| RISK-2025-0641 | STATE | Trace shows reconciliation stuck |
+| RISK-2025-0642 | SOURCE | Trace source not fetching |
 
 ## Requirements
 

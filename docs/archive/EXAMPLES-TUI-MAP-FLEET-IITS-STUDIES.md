@@ -156,18 +156,18 @@ CONFIG CVE SCAN: kind-atk
 
 CRITICAL (1)
 ────────────────────────────────────────────────────────────────────
-[CCVE-2025-0027] demo-monitoring/grafana
+[RISK-2025-0027] demo-monitoring/grafana
 
 INFO (3)
 ────────────────────────────────────────────────────────────────────
-[CCVE-FLUX-005] flux-system/monitoring-stack
-[CCVE-2025-0019] demo-payments/debug-tools
-[CCVE-2025-0019] demo-payments/payment-api
+[RISK-FLUX-005] flux-system/monitoring-stack
+[RISK-2025-0019] demo-payments/debug-tools
+[RISK-2025-0019] demo-payments/payment-api
 
 Summary: 1 critical, 0 warning, 3 info
 ```
 
-**CCVE-2025-0027** is the Grafana namespace whitespace bug that caused [BIGBANK's 4-hour outage](https://www.youtube.com/watch?v=VJiuu-GqfXk).
+**RISK-2025-0027** is the Grafana namespace whitespace bug that caused [BIGBANK's 4-hour outage](https://www.youtube.com/watch?v=VJiuu-GqfXk).
 
 ---
 
@@ -479,7 +479,7 @@ From [08-CASE-STUDIES-IITS.md](planning/map/08-CASE-STUDIES-IITS.md):
 ## See Also
 
 - [CLI-REFERENCE.md](CLI-REFERENCE.md) — Full command reference
-- [TUI-SCAN.md](TUI-SCAN.md) — CCVE scanning documentation
+- [TUI-SCAN.md](TUI-SCAN.md) — risk issue scanning documentation
 - [TUI-TRACE.md](TUI-TRACE.md) — Resource tracing
 - [IMPORTING-WORKLOADS.md](IMPORTING-WORKLOADS.md) — Import into ConfigHub
 - [examples/](../examples/) — Interactive demos

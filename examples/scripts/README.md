@@ -19,7 +19,7 @@ plugin:
 
   confighub-scan:
     shortCut: Shift-V
-    description: Scan for CCVEs
+    description: Scan for risk issues
     command: sh
     args: ["-c", "cub-scout scan"]
 
@@ -32,7 +32,7 @@ plugin:
 
 ## Slack Alerting
 
-Alert on drift or CCVEs:
+Alert on drift or risk issues:
 
 ```bash
 #!/bin/bash
@@ -49,7 +49,7 @@ fi
 
 ## GitHub Actions
 
-CI/CD gate for CCVEs:
+CI/CD gate for risk issues:
 
 ```yaml
 # .github/workflows/check-cluster.yml
@@ -65,12 +65,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Scan for CCVEs
+      - name: Scan for risk issues
         run: |
           cub-scout scan --json > scan-results.json
           CRITICAL=$(jq '[.findings[] | select(.severity == "critical")] | length' scan-results.json)
           if [ "$CRITICAL" -gt 0 ]; then
-            echo "Found $CRITICAL critical CCVEs"
+            echo "Found $CRITICAL critical risk issues"
             exit 1
           fi
 ```

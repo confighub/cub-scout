@@ -225,7 +225,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 |---------|-------------|
 | `demo list` | List available demos |
 | `demo quick` | Quick demo (~30 sec) |
-| `demo ccve` | Legacy risk demo (~2 min) |
+| `demo risk` | Legacy risk demo (~2 min) |
 | `demo query` | Query language demo |
 | `demo scenario <name>` | Narrative scenario demo |
 | `demo --cleanup` | Remove demo resources |

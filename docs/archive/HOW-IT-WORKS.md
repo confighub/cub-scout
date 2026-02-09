@@ -28,14 +28,14 @@ A practical guide to cub-scout: what it does, how it connects, and how to use it
 
 1. **What's running?** — Discover all resources in your cluster
 2. **Who owns it?** — Detect if Flux, ArgoCD, Helm, or native kubectl manages each resource
-3. **Is it configured correctly?** — Scan for CCVEs (Configuration Common Vulnerabilities and Exposures)
+3. **Is it configured correctly?** — Scan for risk issues (Configuration Common Vulnerabilities and Exposures)
 
 It's a single Go binary that runs on your laptop, in CI, or as a Pod in your cluster.
 
 ```bash
 # Quick examples
 cub-scout map list          # What's running + who owns it
-cub-scout scan                           # Find misconfigurations (CCVEs)
+cub-scout scan                           # Find misconfigurations (risk issues)
 cub-scout trace deploy/nginx -n default  # Follow ownership chain
 ```
 
@@ -58,7 +58,7 @@ Works without any ConfigHub account. Reads directly from your Kubernetes cluster
 # List all resources and their owners
 cub-scout map list
 
-# Scan for CCVEs
+# Scan for risk issues
 cub-scout scan
 
 # Trace ownership chain
@@ -189,7 +189,7 @@ cub-scout import -n my-namespace
 | Command | Description | Example |
 |---------|-------------|---------|
 | `map list --standalone` | List resources + owners from cluster | `cub-scout map list -n prod` |
-| `scan` | Detect CCVEs and stuck states | `cub-scout scan --namespace default` |
+| `scan` | Detect risk issues and stuck states | `cub-scout scan --namespace default` |
 | `trace` | Follow GitOps ownership chain | `cub-scout trace deploy/nginx -n default` |
 | `snapshot` | Export cluster state as GSF JSON | `cub-scout snapshot -n default -o state.json` |
 | `parse-repo` | Analyze GitOps repo structure | `cub-scout parse-repo ./my-repo` |
@@ -325,7 +325,7 @@ cub-scout map fleet                 # View fleet across spaces
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │                       │
         │ K8s watcher           │ Unit/Space mgmt       │ Fleet data
-        │ CCVE scanner          │ Worker mgmt           │ UI dashboard
+        │ risk issue scanner          │ Worker mgmt           │ UI dashboard
         │ Trace/ownership       │ Auth (login)          │ API
         │                       │                       │
         ▼                       ▼                       ▼
@@ -373,11 +373,11 @@ Run in pipelines for pre-deploy checks:
 
 ```yaml
 # GitHub Actions example
-- name: Scan for CCVEs
+- name: Scan for risk issues
   run: |
-    cub-scout scan --json > ccve-report.json
-    if jq -e '.findings | length > 0' ccve-report.json; then
-      echo "CCVEs found!"
+    cub-scout scan --json > risk-report.json
+    if jq -e '.findings | length > 0' risk-report.json; then
+      echo "risk issues found!"
       exit 1
     fi
 ```
@@ -391,7 +391,7 @@ Run in pipelines for pre-deploy checks:
 | Command | Standalone? | Notes |
 |---------|-------------|-------|
 | `map list --standalone` | ✅ Yes | Queries K8s directly |
-| `scan` | ✅ Yes | CCVE detection from K8s |
+| `scan` | ✅ Yes | risk issue detection from K8s |
 | `trace` | ✅ Yes | Follows ownerRefs in K8s |
 | `snapshot` | ✅ Yes | Dumps cluster as JSON |
 | `parse-repo` | ✅ Yes | Analyzes Git repo locally |
@@ -411,7 +411,7 @@ Run in pipelines for pre-deploy checks:
 
 | Question | Answer |
 |----------|--------|
-| What is cub-scout? | Read-only K8s observer + CCVE scanner |
+| What is cub-scout? | Read-only K8s observer + risk issue scanner |
 | Does it modify my cluster? | No, read-only (`get`, `list`, `watch` only) |
 | Do I need ConfigHub? | No, standalone mode works without it |
 | Where does it run? | Laptop, CI, or as a Pod in-cluster |
@@ -436,7 +436,7 @@ Run in pipelines for pre-deploy checks:
 | Document | Description |
 |----------|-------------|
 | [README.md](../README.md) | Quick start and installation |
-| [Scan Guide](../SCAN-GUIDE.md) | Understanding CCVEs and the scanner |
+| [Scan Guide](../SCAN-GUIDE.md) | Understanding risk issues and the scanner |
 | [CLI Guide](../../CLI-GUIDE.md) | Full CLI documentation |
 | [Testing Guide](../TESTING-GUIDE.md) | Running tests |
 | [Examples Overview](../EXAMPLES-OVERVIEW.md) | Central examples overview |
@@ -456,7 +456,7 @@ Run in pipelines for pre-deploy checks:
 |----------|-------------|
 | [JOURNEY-FIRST-SETUP.md](JOURNEY-FIRST-SETUP.md) | Initial setup walkthrough |
 | [JOURNEY-MAP.md](JOURNEY-MAP.md) | Using the map command |
-| [JOURNEY-SCAN.md](JOURNEY-SCAN.md) | CCVE scanning walkthrough |
+| [JOURNEY-SCAN.md](JOURNEY-SCAN.md) | risk issue scanning walkthrough |
 | [JOURNEY-IMPORT.md](JOURNEY-IMPORT.md) | Importing workloads |
 | [JOURNEY-QUERY.md](JOURNEY-QUERY.md) | Query syntax and examples |
 
@@ -473,7 +473,7 @@ Run in pipelines for pre-deploy checks:
 
 | Document | Description |
 |----------|-------------|
-| [confighub-scan](https://github.com/confighubai/confighub-scan) | CCVE database (46 active + 4,500 ref) |
+| [confighub-scan](https://github.com/confighubai/confighub-scan) | risk issue database (46 active + 4,500 ref) |
 | [GSF-SCHEMA.md](../GSF-SCHEMA.md) | GitOps State Format specification |
 | [EXTENDING.md](../EXTENDING.md) | Adding custom detectors |
 
@@ -483,7 +483,7 @@ Run in pipelines for pre-deploy checks:
 # See what's in the cluster
 ./test/atk/map
 
-# Run CCVE scan
+# Run risk issue scan
 ./test/atk/scan
 
 # Verify ownership detection

@@ -82,7 +82,7 @@ These expected outputs serve three functions:
 | File | Demo | Mode |
 |------|------|------|
 | `demos/quick.yaml` | Quick 30-second demo | standalone |
-| `demos/ccve.yaml` | CCVE-2025-0027 detection | standalone |
+| `demos/risk.yaml` | RISK-2025-0027 detection | standalone |
 | `demos/connected.yaml` | ConfigHub connected mode | connected |
 | `demos/query.yaml` | Query language demo | standalone |
 | `demos/healthy.yaml` | Enterprise healthy cluster | standalone |
@@ -144,7 +144,7 @@ expected-outputs/
 │   └── demo.yaml
 ├── demos/                    # Demo scripts
 │   ├── quick.yaml
-│   ├── ccve.yaml
+│   ├── risk.yaml
 │   ├── connected.yaml
 │   ├── query.yaml
 │   ├── healthy.yaml
