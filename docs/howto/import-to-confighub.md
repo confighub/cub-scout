@@ -1,244 +1,134 @@
-# How To: Import Workloads to ConfigHub
+# Canonical Import Path: Argo/Helm to ConfigHub
 
-The import wizard brings existing Kubernetes workloads into ConfigHub management. This guide shows how to import from various sources.
+This is the canonical migration path for moving existing ArgoCD/Helm-managed workloads into ConfigHub.
 
-## The Problem
+Scope boundary:
+- This guide is only about workload import and controller cutover.
+- Helm/Kustomize rendering pipelines are Provisional scope.
+- Do not treat this import flow as a rendering/templating workflow.
 
-You have workloads deployed by Flux, ArgoCD, or Helm. You want to:
-- Manage them centrally in ConfigHub
-- Get DRY → WET → Live visibility
-- Use the Hub/AppSpace model for platform + app team collaboration
+The path is intentionally:
+- single-cluster first
+- namespace-scoped
+- additive first, destructive later
 
-**Question:** How do I bring my existing GitOps workloads into ConfigHub?
+That keeps rollout and rollback simple.
+
+## Scope
+
+Use this when your workloads are currently managed by:
+- Argo CD Applications (including App-of-Apps/ApplicationSet-generated apps)
+- Helm releases
+- Mixed Argo/Helm/native workloads in the same namespace
 
 ## Prerequisites
 
-Before importing:
-1. ConfigHub account (sign up at app.confighub.com)
-2. `cub` CLI installed and authenticated
-3. Worker connected to ConfigHub
-
 ```bash
-# Check authentication
+# Connected mode auth
+cub auth login
+
+# Verify context and cluster access
 cub context get
-
-# Check worker status
-cub worker list
+kubectl get ns
 ```
 
-## The Solution
+## Canonical Path
 
-### CLI: Run import
+### 1. Baseline Current State
 
 ```bash
-cub-scout import
+cub-scout map list -q "owner=ArgoCD OR owner=Helm OR owner=Native"
+cub-scout map workloads
 ```
 
-This launches an interactive wizard.
+Capture this before migration so you can compare after import.
 
-### TUI: Press 'i'
-
-In the TUI (with `--hub` mode), press `i` to start the import wizard.
-
-## Import Wizard Steps
-
-### Step 1: Choose Import Source
-
-```
-What do you want to import?
-
-> [1] Kubernetes namespace
-  [2] ArgoCD Application
-  [3] Flux Kustomization
-  [4] Helm Release
-```
-
-### Step 2: Select Target
-
-For namespace import:
-```
-Select namespace:
-  > production
-    staging
-    development
-```
-
-For ArgoCD:
-```
-Select Application:
-  > frontend (argocd)
-    backend (argocd)
-    payment-api (argocd)
-```
-
-### Step 3: Discover Workloads
-
-The wizard shows what will be imported:
-```
-Discovered workloads in 'production':
-
-  Deployments: 5
-  Services: 8
-  ConfigMaps: 12
-  Secrets: 3
-
-Continue? [Y/n]
-```
-
-### Step 4: Configure Space/Unit
-
-```
-ConfigHub Space: [production]
-Unit name: [frontend]
-```
-
-### Step 5: Extract Configuration
-
-The wizard extracts manifests and creates ConfigHub Units:
-```
-Extracting configuration...
-  ✓ frontend/deployment.yaml
-  ✓ frontend/service.yaml
-  ✓ frontend/configmap.yaml
-
-Creating ConfigHub Unit: frontend
-  ✓ Unit created
-  ✓ Revision pushed
-```
-
-### Step 6: Handle GitOps Controller (Optional)
-
-For ArgoCD imports:
-```
-The ArgoCD Application 'frontend' currently manages these resources.
-
-What would you like to do?
-  > [1] Leave ArgoCD Application unchanged
-    [2] Disable ArgoCD auto-sync
-    [3] Delete ArgoCD Application (ConfigHub will manage)
-```
-
-### Step 7: Test Pipeline
-
-```
-Testing ConfigHub pipeline...
-  ✓ Unit deployed via OCI
-  ✓ Resources match expected state
-  ✓ Import complete!
-```
-
-## Import Scenarios
-
-### Scenario 1: Import from Namespace
-
-Best for: Starting fresh, importing kubectl-applied resources
+### 2. Start With One Namespace
 
 ```bash
-cub-scout import
-# Select: Kubernetes namespace
-# Select: your-namespace
+cub-scout import -n <namespace> --dry-run
 ```
 
-### Scenario 2: Import ArgoCD Application
+Review:
+- discovered workloads
+- suggested App Space
+- suggested Units/labels
 
-Best for: Migrating from ArgoCD to ConfigHub
+If the proposal is wrong, stop and adjust naming/labels strategy first.
+
+### 3. Execute Import
 
 ```bash
-cub-scout import
-# Select: ArgoCD Application
-# Select: your-app
-# Choose: Delete ArgoCD Application (ConfigHub will manage)
+cub-scout import -n <namespace>
 ```
 
-### Scenario 3: Import Flux Kustomization
-
-Best for: Migrating from Flux to ConfigHub
+Or non-interactive:
 
 ```bash
-cub-scout import
-# Select: Flux Kustomization
-# Select: your-kustomization
+cub-scout import -n <namespace> -y
 ```
 
-## After Import
-
-### Verify in ConfigHub
+### 4. Verify Units and Mapping
 
 ```bash
-# Check unit was created
-cub unit list
-
-# Check deployment pipeline
-cub unit get YOUR-UNIT
+cub unit list --space <suggested-space>
+cub-scout map workloads
+cub-scout tree ownership
 ```
 
-### Verify in TUI
+Success criteria:
+- expected Units exist in ConfigHub
+- workload ownership context is still coherent
+- no unexpected resource drift
+
+### 5. Keep Existing Deployer During Validation
+
+Do not immediately remove Argo/Helm control. First validate that ConfigHub state is correct.
+
+For Argo App-of-Apps/ApplicationSet setups:
+- treat generated/child Applications as workload sources of truth
+- treat parent orchestration objects as orchestration metadata, not business workload Units
+
+### 6. Cut Over by Policy, Not Accident
+
+After validation, pick one controller-of-record per workload path.
+
+Recommended order:
+1. validate ConfigHub import result
+2. update team policy for controller ownership
+3. remove duplicate reconciliation paths only after policy is explicit
+
+Avoid dual-control long term (two systems reconciling the same manifests).
+
+### 7. Repeat Namespace by Namespace
 
 ```bash
-cub-scout map --hub
-# Navigate to your space/unit
+# Example: expand to next namespace
+cub-scout import -n <next-namespace> --dry-run
+cub-scout import -n <next-namespace> -y
 ```
 
-### Check Ownership Changed
-
-```bash
-cub-scout map list -q "namespace=YOUR-NS"
-# Should show owner=ConfigHub now
-```
-
-## Handling App of Apps
-
-**Warning:** ArgoCD App of Apps patterns manage Application CRs, not workloads directly.
-
-When importing an App of Apps:
-```
-Warning: This Application manages other Applications, not workloads.
-
-Recommendation: Import the child Applications instead.
-
-Child Applications found:
-  - frontend
-  - backend
-  - payment-api
-
-Import children instead? [Y/n]
-```
+Scale out only after single-namespace validation passes.
 
 ## Rollback
 
-If import fails or you want to undo:
+If a namespace migration is not acceptable:
 
 ```bash
-# Delete ConfigHub Unit
-cub unit delete YOUR-UNIT
-
-# If ArgoCD Application was deleted, recreate it
-kubectl apply -f your-argocd-app.yaml
-
-# If Flux Kustomization was deleted, recreate it
-kubectl apply -f your-kustomization.yaml
+# Remove created Units (space-scoped)
+cub unit list --space <space>
+cub unit delete <unit-slug> --space <space>
 ```
 
-## Best Practices
+Then continue using your existing Argo/Helm flow while you revise mapping.
 
-1. **Import one at a time**: Start with a single app to test the flow
-2. **Keep GitOps controller first**: Use option [1] to leave Flux/ArgoCD unchanged during testing
-3. **Verify pipeline**: Use `cub unit apply` to test the ConfigHub pipeline works
-4. **Switch gradually**: Only delete GitOps controller after ConfigHub is proven working
+## Notes
 
-## Demo
+- `cub-scout import --json` is for proposal automation and GUI workflows.
+- `cub-scout import --wizard` runs the interactive TUI wizard.
+- This path prioritizes predictable migration over fast migration.
 
-Try the import demo:
-
-```bash
-# First, run the quick demo to create test resources
-./cub-scout demo quick
-
-# Then run import
-cub-scout import
-```
-
-## Next Steps
+## Related Docs
 
 - [Business Outcomes](../../outcomes/README.md) - Why ConfigHub import matters
 - [ConfigHub Documentation](https://docs.confighub.com) - Full ConfigHub guide

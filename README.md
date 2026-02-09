@@ -732,6 +732,7 @@ Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● brid
 | [SECURITY.md](SECURITY.md) | Read-only guarantee, RBAC, vulnerability reporting |
 | [docs/getting-started/scale-demo.md](docs/getting-started/scale-demo.md) | See cub-scout at scale |
 | [docs/howto/scan-for-risks.md](docs/howto/scan-for-risks.md) | Risk scanning (46 patterns) |
+| [docs/howto/import-to-confighub.md](docs/howto/import-to-confighub.md) | Canonical Argo/Helm → ConfigHub migration path |
 | [examples/](examples/) | Demo scenarios |
 
 ---
