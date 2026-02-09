@@ -172,16 +172,16 @@ Risk: High (secrets, deployments outside GitOps)
 
 **The problem:** A YAML whitespace error in a Grafana sidecar annotation caused a 4-hour production outage. The config looked correct in Git but deployed incorrectly.
 
-**CCVE-2025-0027** now detects this pattern:
+**RISK-2025-0027** now detects this pattern:
 ```bash
 $ cub-scout scan
 ```
 ```
-CONFIG CVE SCAN: prod-east
+CONFIG RISK SCAN: prod-east
 
 CRITICAL (1)
 ────────────────────────────────────────────────────────────────
-[CCVE-2025-0027] monitoring/grafana
+[RISK-2025-0027] monitoring/grafana
   Grafana sidecar whitespace in annotation
   Risk: Dashboard loading failure, 4-hour outage pattern
   Fix: Remove trailing whitespace from grafana.ini annotation

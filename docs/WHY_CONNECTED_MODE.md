@@ -1,256 +1,73 @@
-# Why Connect cub-scout to ConfigHub (and Why It's Worth Paying For)
+# Why Connect cub-scout to ConfigHub
 
----
+## TL;DR
 
-## Overview
+`cub-scout` is a free, read-only cluster explorer.
 
-**cub-scout** is a free, read-only cluster explorer for Kubernetes and GitOps.
+- Standalone mode answers: what exists now, who owns it, and what looks risky.
+- Connected mode answers: what should exist, what changed over time, and what this affects across environments.
 
-On its own, cub-scout helps you understand:
-- What is running in your cluster right now
-- How resources were applied (Flux, Argo, Helm)
-- Why something is broken
-- Whether GitOps discipline has been violated
+Connected mode is optional. Standalone remains fully usable without ConfigHub.
 
-However, there are hard limits to what any tool can learn from a single cluster's APIs.
+## What Standalone Gives You (Free)
 
-**Connected Mode** exists to go beyond those limits by integrating cub-scout with **ConfigHub**, the system of record for configuration intent, history, and fleet-level context.
+With only Kubernetes access (`kubectl` context), `cub-scout` provides:
 
-Connected mode is optional and requires ConfigHub authentication via `cub auth login`.
+- live ownership and provenance tracing (Flux, Argo CD, Helm, native)
+- health/issue/risk scanning in the current cluster
+- relationship exports (JSON/graph) for debugging and handoff
+- deterministic local workflows that do not mutate cluster state
 
----
+## Why Standalone Has a Hard Ceiling
 
-## The Core Distinction
+A cluster API can only show current observed state. It cannot reliably answer:
 
-**Standalone cub-scout answers:**
+- what changed last week and why
+- whether one cluster is an outlier vs the rest of the fleet
+- what should happen in another environment before a rollout
+- how imported state maps to durable org structure
 
-> *"What exists right now, and why?"*
+Those require durable history, indexing, and cross-environment context outside a single cluster.
 
-**Connected cub-scout answers:**
+## What Connected Mode Unlocks
 
-> *"What should exist, what changed, across which environments — and what happens next?"*
+When connected to ConfigHub, `cub-scout` can use:
 
-Both modes are valuable. They solve different problems.
+- intent context (DRY/WET/LIVE)
+- change history and timeline correlations
+- fleet comparison and outlier detection
+- import/adoption workflows (break-glass to managed)
+- dependency-aware impact analysis
+- governance context and approvals metadata
 
----
+`cub-scout` still remains read-only. Connected mode adds context, not control.
 
-## What You Get Without Connecting (Always Free)
+## Interface Boundaries (Authoritative)
 
-Standalone cub-scout requires only Kubernetes API access (`kubectl` context).
-GitOps-specific insights appear when Flux/Argo/Helm resources are present.
+- `cub` CLI is the external interface contract for connected workflows.
+- `confighub-agent` depends on `cub` command behavior (arguments, exit codes, stdout/JSON shape), documented in `/Users/alexis/Public/github-repos/confighub-agent/README.md:16`.
+- `cub-scout` connected mode depends on `cub auth login` semantics (credential/session creation and context resolution), documented in `/Users/alexis/Public/github-repos/cub-scout/README.md:80`.
+- Standalone `cub-scout` must continue to function without `cub`.
 
-It provides:
+This is the ownership split:
 
-- Single-cluster exploration
-- Ownership and provenance tracing
-- Delegated apply visibility (Flux / Argo via OCI)
-- Failure-stage explanation (source vs apply/reconcile)
-- Drift detection using GitOps controller signals
-- Guided GitOps debugging
-- Risk scanning from live cluster state
-- Exportable ownership/dependency graphs (JSON, DOT)
-- Shareable, sanitized diagnostic snapshots
-- Full local CLI and TUI workflows
+- `cub-scout`: deterministic discovery, explanation, evidence export
+- ConfigHub: system of record, lifecycle state, migration semantics
 
-No account required.
-No network dependency.
-No mutation of cluster state.
+## Paid Value Boundary
 
----
+Connected value is paid because it requires hosted platform capabilities:
 
-## Why Standalone Mode Has Limits
+- durable multi-tenant storage
+- cross-cluster indexing and query infrastructure
+- fleet/governance APIs
+- retention, auditability, and operations at scale
 
-A Kubernetes cluster can only show **current reality**.
+The CLI remains free and safe to run offline.
 
-It cannot reliably answer:
-- What *should* exist
-- What changed last week
-- Whether this cluster is an outlier
-- What will be affected by an upcoming change
-- How intent differs across environments
+## Roadmap Alignment
 
-Solving those problems requires a **system of record outside the cluster**.
+For sequencing and boundaries:
 
----
-
-## What Connecting to ConfigHub Unlocks
-
-### 1. DRY/WET/LIVE Intent Awareness
-
-Understand what *should* exist, not just what does.
-
-- ConfigHub spaces, targets, and revisions
-- Declarative ownership definitions
-- DRY -> WET -> LIVE comparisons across environments
-
-ConfigHub treats configuration as **first-class data**, rather than scattered files and templates.
-
----
-
-### 2. History and Change Context
-
-Answer questions clusters cannot.
-
-- "When did this break?"
-- "What changed since it last worked?"
-- Correlated timelines across config revisions and reconciliations
-
-History requires durable storage and indexing beyond the cluster.
-
----
-
-### 3. Fleet & Multi-Cluster Views
-
-See the bigger picture.
-
-- Fleet-wide health
-- Cross-cluster comparisons
-- Version skew and rollout state
-- Outlier detection ("this cluster is the weird one")
-- Connected fleet queries from one place
-
-These insights cannot be inferred from a single cluster in isolation.
-
----
-
-### 4. Import and Managed-State Adoption
-
-Move from observed runtime to managed configuration.
-
-- Workload import into ConfigHub spaces
-- Guided Hub/App Space organization
-- "Break-glass to managed" transition path
-
-This closes the loop between what you discover and what you manage.
-
----
-
-### 5. Impact Analysis (Before You Change Things)
-
-Understand consequences ahead of time.
-
-- Blast radius analysis
-- Downstream dependency impact
-- Cross-environment effects
-
-This requires intent, scope, and relationships across environments.
-
----
-
-### 6. Git-Aware Navigation
-
-Bridge runtime and source control.
-
-- Repo, branch, path, and commit context
-- Commit authorship and messages
-- Navigation from resource → intent source
-
-cub-scout remains read-only; ConfigHub manages source access and connected data securely.
-
----
-
-### 7. Governance and Policy Context
-
-Surface governance information without enforcing it.
-
-- Policy evaluation results
-- Approval and gate context
-- Compliance signals
-
-cub-scout explains outcomes; ConfigHub owns governance state.
-
----
-
-### 8. Smarter Debugging and CLI Guidance
-
-Make the right next step obvious.
-
-- Context-aware command suggestions
-- Richer explanations in the TUI
-- Better command completion using intent metadata
-
-This builds on cub-scout's existing role as a guided debug shell.
-
----
-
-## Interface Boundary (Important)
-
-Connected mode depends on the external `cub` CLI contract (auth/context semantics and command behavior).
-
-- `cub-scout` connected workflows rely on `cub auth login` and resolved ConfigHub context.
-- Standalone `cub-scout` workflows remain available without `cub`.
-
-This separation keeps cluster exploration resilient while allowing connected capabilities to evolve.
-
----
-
-## Why Connected Mode Is a Paid Feature
-
-Connected Mode depends on capabilities that cannot exist locally:
-
-- Durable storage of intent and history
-- Secure, multi-tenant APIs
-- Cross-cluster aggregation
-- Indexing and query infrastructure
-- Governance and policy engines
-
-### Powered by Real ConfigHub Engines
-
-Connected Mode features are not vaporware — they're powered by existing ConfigHub backend components:
-
-| Feature | ConfigHub Engine |
-|---------|------------------|
-| History & "what changed" | ChangeSets API |
-| Views & projections | Views API (matches cub-scout lenses) |
-| Impact & blast radius | Dependency Graph Engine |
-| Fleet visibility | Bridge/Worker Framework |
-| Policy context | Verifier Component |
-| Helm explanations | Worker-side HelmRelease rendering |
-
-cub-scout surfaces results from these engines. It does not reimplement them.
-
-### What You're Paying For
-
-A paid ConfigHub subscription funds:
-- The ConfigHub control plane
-- Secure authentication and authorization
-- Ongoing data retention and analysis
-- Support for teams operating at scale
-
-cub-scout itself remains free, read-only, and safe.
-
----
-
-## What Connected Mode Does *Not* Change
-
-Even when connected:
-
-- cub-scout never applies changes
-- cub-scout never enforces policy
-- cub-scout never becomes a system of record
-- cub-scout always degrades gracefully when disconnected
-
-Connected Mode **adds context**, not control.
-
----
-
-## Summary
-
-cub-scout alone helps you understand **what is happening**.
-
-cub-scout connected to ConfigHub helps you understand:
-- what *should* be happening
-- what *changed*
-- what *will be affected next*
-- across *all* your environments
-
-This is how teams reduce configuration **sprawl** and operate complex systems with confidence.
-
----
-
-## Next Steps
-
-- See the [Unified Roadmap](roadmap.md) for version-by-version plans
-- See the [1.x Connected Plan](roadmap-1x-connected-upsell.md) for connected sequencing and upsell boundaries
-- Try cub-scout standalone: `brew install confighub/tap/cub-scout`
-- Learn about ConfigHub: [confighub.com](https://confighub.com)
+- `docs/roadmap.md`
+- `docs/roadmap-1x-connected-upsell.md`

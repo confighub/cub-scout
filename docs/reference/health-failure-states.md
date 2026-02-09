@@ -199,19 +199,19 @@ For workload aggregation, cub-scout uses four health levels:
 
 cub-scout's scanner detects these silent failure conditions:
 
-### CCVE-2025-0665: Disabled Reconciliation
+### RISK-2025-0665: Disabled Reconciliation
 - **Signal:** `spec.interval: 0` (or unset)
 - **Risk:** Resource will never reconcile changes from Git
 
-### CCVE-2025-0662: Optional ValuesFrom Missing
+### RISK-2025-0662: Optional ValuesFrom Missing
 - **Signal:** `spec.valuesFrom[*].optional: true` with missing source
 - **Risk:** Helm values silently defaulting, potential misconfiguration
 
-### CCVE-2025-0666: Suspended Source
+### RISK-2025-0666: Suspended Source
 - **Signal:** Source dependency is suspended
 - **Risk:** Resource appears healthy but cannot receive updates
 
-### CCVE-2025-0169: Argo Operation Stuck
+### RISK-2025-0169: Argo Operation Stuck
 - **Signal:** `operationState.phase: Running` > threshold
 - **Risk:** Sync operation hung, cluster may be drifting
 

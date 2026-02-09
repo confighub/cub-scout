@@ -19,7 +19,7 @@ The Agent solves this by defining:
 1. **GSF (GitOps State Format)** — A universal schema for representing resources, ownership, drift, relations, and findings
 2. **Detection contracts** — How ownership is determined (with priority and confidence)
 3. **Output contracts** — How state is transmitted (snapshot, streaming, API)
-4. **Extension contracts** — How third parties add detectors, CCVEs, and outputs
+4. **Extension contracts** — How third parties add detectors, risk issues, and outputs
 
 ### What You Can Build With GSF
 
@@ -47,7 +47,7 @@ GSF is valuable because it enables things that weren't possible when every tool 
 │                      THE AGENT CONTRACT                              │
 │                                                                      │
 │  Input:    Kubernetes API (informers)                               │
-│  Process:  Ownership detection + CCVE scanning                      │
+│  Process:  Ownership detection + risk scanning                      │
 │  Output:   GSF (GitOps State Format)                                │
 │                                                                      │
 │  Guarantees:                                                         │
@@ -69,7 +69,7 @@ GSF is valuable because it enables things that weren't possible when every tool 
 │  │ cub-scout (read-only)                                   │  │
 │  │                                                               │  │
 │  │  ┌──────────┐   ┌───────────┐   ┌──────────┐   ┌──────────┐  │  │
-│  │  │ Watcher  │ → │ Ownership │ → │  CCVE    │ → │  Output  │  │  │
+│  │  │ Watcher  │ → │ Ownership │ → │  Risk    │ → │  Output  │  │  │
 │  │  │(informer)│   │ Detector  │   │ Scanner  │   │ (GSF)    │  │  │
 │  │  └──────────┘   └───────────┘   └──────────┘   └──────────┘  │  │
 │  │                                                       │       │  │
@@ -160,7 +160,7 @@ interface GSFDriftField {
 }
 
 interface GSFFinding {
-  id: string;                    // CCVE ID, e.g., "CCVE-2025-0027"
+  id: string;                    // Risk ID, e.g., "RISK-2025-0027"
   severity: "critical" | "warning" | "info";
   category: "SOURCE" | "RENDER" | "APPLY" | "DRIFT" | "DEPEND" | "STATE" | "ORPHAN" | "CONFIG";
   resource: string;              // Entry ID
@@ -234,7 +234,7 @@ See [gsf-schema.json](./gsf-schema.json) for the full JSON Schema.
   ],
   "findings": [
     {
-      "id": "CCVE-2025-0011",
+      "id": "RISK-2025-0011",
       "severity": "warning",
       "category": "DRIFT",
       "resource": "prod-east/default/Deployment/nginx",
@@ -257,12 +257,12 @@ The Agent supports multiple output modes via 14 top-level commands and 17 map su
 |---------|-------------|------|
 | `map` | Interactive TUI explorer | Standalone/Connected |
 | `trace` | Show GitOps ownership chain | Standalone |
-| `scan` | Scan for CCVEs (46 patterns) | Standalone |
+| `scan` | Scan for risk issues (46 patterns) | Standalone |
 | `snapshot` | Dump cluster state as GSF JSON | Standalone |
 | `import` | Import workloads into ConfigHub | Connected |
 | `import-argocd` | Import ArgoCD Application | Connected |
 | `app-space` | Manage App Spaces | Connected |
-| `remedy` | Execute CCVE remediation | Standalone |
+| `remedy` | Execute risk remediation | Standalone |
 | `combined` | Git repo + cluster alignment | Standalone/Connected |
 | `parse-repo` | Parse GitOps repo structure | Standalone |
 | `demo` | Run interactive demos | Standalone |
@@ -471,5 +471,5 @@ For a more restrictive policy, see [manifests/agent-minimal-rbac.yaml](../manife
 - [CLI Guide](../../CLI-GUIDE.md) — Complete CLI reference (14 commands, 17 subcommands, 17 views)
 - [Command Matrix](../reference/command-matrix.md) — Full command/option matrix
 - [GSF Schema](../reference/gsf-schema.md) — GitOps State Format JSON schema
-- [Scan for CCVEs](../howto/scan-for-ccves.md) — CCVE detection and remediation (46 patterns)
+- [Scan for risk issues](../howto/scan-for-risks.md) — Risk detection and remediation (46 patterns)
 - [Extending cub-scout](../howto/extending.md) — Extension points and customization

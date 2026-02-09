@@ -29,7 +29,7 @@ Task-based guides:
 | Query resources | [howto/query-resources.md](howto/query-resources.md) |
 | Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
 | Tree hierarchies | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
-| Scan for CCVEs | [howto/scan-for-ccves.md](howto/scan-for-ccves.md) |
+| Scan for risk issues | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Ownership detection | [howto/ownership-detection.md](howto/ownership-detection.md) |
 | Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
 | Scan for risks | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
@@ -107,7 +107,7 @@ See [diagrams/](diagrams/) for visual explanations using [D2](https://d2lang.com
 | [platform-example](../examples/platform-example/) | Full GitOps environment with base/overlays pattern |
 | [flux-boutique](../examples/flux-boutique/) | Simple Flux demo |
 | [orphans](../examples/orphans/) | Detecting orphan resources |
-| [impressive-demo](../examples/impressive-demo/) | Comprehensive demo with CCVE scanning |
+| [impressive-demo](../examples/impressive-demo/) | Comprehensive demo with risk scanning |
 
 See [EXAMPLES-OVERVIEW.md](EXAMPLES-OVERVIEW.md) for all examples.
 

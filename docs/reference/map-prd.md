@@ -66,14 +66,14 @@ Modern Kubernetes clusters have resources deployed by multiple tools:
 | `map` | Interactive TUI explorer | Standalone/Connected |
 | `tree` | Hierarchical views (runtime, ownership, git, etc.) | Standalone/Connected |
 | `trace` | Show GitOps ownership chain | Standalone |
-| `scan` | Scan for CCVEs | Standalone |
+| `scan` | Scan for risk issues | Standalone |
 | `discover` | Find workloads by owner (alias for `map workloads`) | Standalone |
 | `health` | Check cluster health (alias for `map issues`) | Standalone |
 | `snapshot` | Dump cluster state as JSON | Standalone |
 | `import` | Import workloads into ConfigHub | Connected |
 | `import-argocd` | Import ArgoCD Application | Connected |
 | `app-space` | Manage App Spaces | Connected |
-| `remedy` | Execute CCVE remediation | Standalone |
+| `remedy` | Execute risk remediation | Standalone |
 | `combined` | Git repo + cluster alignment | Standalone/Connected |
 | `parse-repo` | Parse GitOps repo structure | Standalone |
 | `demo` | Run interactive demos | Standalone |
@@ -202,7 +202,7 @@ Command palette supports:
 ### User Value
 - Ownership detection accuracy: 100% for labeled resources
 - Query response time: < 1 second for 1000 resources
-- CCVE scan coverage: 46 active patterns
+- risk scan coverage: 46 active patterns
 
 ### Upgrade Path
 - Connect rate: OSS users who connect to ConfigHub
@@ -233,7 +233,7 @@ Core operations (`map`, `list`, `trace`, `scan`) are read-only:
 ### Phase 1 (Complete)
 - Ownership detection (Flux, ArgoCD, Helm, ConfigHub, Native)
 - TUI views (status, workloads, pipelines, orphans, crashes, issues)
-- CCVE scanning (46 active patterns)
+- risk scanning (46 active patterns)
 - Query language with saved queries
 - Trace command (forward and reverse)
 
@@ -247,7 +247,7 @@ Core operations (`map`, `list`, `trace`, `scan`) are read-only:
 - **Help overlay** (`?`) — Full keybinding reference
 
 ### Phase 3 (In Progress)
-- Remedy command — Execute auto-remediation for CCVEs
+- Remedy command — Execute auto-remediation for risk issues
 - Combined command — Git + cluster alignment
 - Parse-repo command — Analyze GitOps repo structure
 

@@ -163,9 +163,9 @@ apps/payment-api/overlays/prod/  →  Unit (references base)
 
 ### Configuration Pattern
 
-Cloud Configuration Vulnerability and Exposure. Configuration anti-pattern that causes problems.
+Cataloged risk issue. Configuration anti-pattern that causes problems.
 
-Format: `CCVE-2025-XXXX`
+Format: `RISK-2025-XXXX`
 
 ### Categories
 
@@ -193,4 +193,4 @@ Format: `CCVE-2025-XXXX`
 
 - [Hub/AppSpace Examples](hub-appspace-examples.md) — Model examples
 - [Import to ConfigHub](../howto/import-to-confighub.md) — Import architecture
-- [Scan for CCVEs](../howto/scan-for-ccves.md) — CCVE user guide
+- [Scan for risk issues](../howto/scan-for-risks.md) — risk scanning guide

@@ -171,7 +171,7 @@ cub-scout map list
 # Find orphan resources (Native)
 cub-scout map list -q "owner=Native"
 
-# CCVE scanning
+# risk scanning
 cub-scout scan
 
 # Trace ownership chain

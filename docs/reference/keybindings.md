@@ -75,7 +75,7 @@ Help:        ? (help)  q (quit)
 | Key | Action | Mode |
 |-----|--------|------|
 | `T` | Trace ownership chain | Local |
-| `S` | Scan for CCVEs | Local |
+| `S` | Scan for risk issues | Local |
 | `f` | Preview fix (dry-run) | Scan results |
 | `F` | Apply fix | Scan results |
 | `i` | Import wizard | ConfigHub |

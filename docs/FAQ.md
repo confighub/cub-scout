@@ -311,10 +311,10 @@ echo $KUBECONFIG
 Check that:
 1. Resources are actually deployed (not just manifests)
 2. You're scanning the right namespace
-3. The CCVE pattern matches your configuration
+3. The risk pattern matches your configuration
 
 ```bash
-# List all CCVE patterns
+# List all risk patterns
 ./cub-scout patterns list
 
 # Scan with verbose output

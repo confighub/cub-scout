@@ -1,6 +1,6 @@
 # Extending the cub-scout and TUI
 
-This document describes how to add custom CCVEs, ownership detectors, resource watchers, webhooks, and output plugins.
+This document describes how to add custom risk issues, ownership detectors, resource watchers, webhooks, and output plugins.
 
 ---
 
@@ -8,7 +8,7 @@ This document describes how to add custom CCVEs, ownership detectors, resource w
 
 | Extension | What You Can Do |
 |-----------|-----------------|
-| **Custom CCVEs** | Add your own config anti-pattern detectors |
+| **Custom risk issues** | Add your own config anti-pattern detectors |
 | **Custom Ownership** | Detect ownership from custom labels/annotations |
 | **Custom Resources** | Watch additional CRDs |
 | **Webhooks** | Receive real-time events |
@@ -16,16 +16,16 @@ This document describes how to add custom CCVEs, ownership detectors, resource w
 
 ---
 
-## 1. Custom CCVEs
+## 1. Custom risk issues
 
 Add your own configuration anti-pattern detectors.
 
-### CCVE Definition Format
+### Risk Definition Format
 
 Create a YAML file in `cve/`:
 
 ```yaml
-id: CCVE-2025-9001
+id: RISK-2025-9001
 name: Custom Redis MaxMemory Not Set
 version: "1.0"
 severity: warning
@@ -90,24 +90,24 @@ tags:
 | `greater_than` | Numeric comparison |
 | `less_than` | Numeric comparison |
 
-### Testing Custom CCVEs
+### Testing Custom risk issues
 
 ```bash
-# Validate CCVE definition
-cub-scout scan --validate ./my-ccves/CCVE-2025-9001.yaml
+# Validate risk definition
+cub-scout scan --validate ./my-risks/RISK-2025-9001.yaml
 
 # Test against a specific resource
-cub-scout scan --test-ccve CCVE-2025-9001 --resource my-namespace/Deployment/redis
+cub-scout scan --test-ccve RISK-2025-9001 --resource my-namespace/Deployment/redis
 
-# Run with custom CCVE directory
-cub-scout scan --ccve-dir ./my-ccves
+# Run with custom risk directory (flag name remains legacy for compatibility)
+cub-scout scan --ccve-dir ./my-risks
 ```
 
-### Sharing CCVEs
+### Sharing risk issues
 
 1. **Community contribution**: Open a PR to add to the main database
-2. **Private CCVEs**: Use `--ccve-dir` for organization-specific patterns
-3. **ConfigHub CCVEs**: Upload via ConfigHub for fleet-wide scanning
+2. **Private risk issues**: Use `--ccve-dir` for organization-specific patterns
+3. **ConfigHub risk issues**: Upload via ConfigHub for fleet-wide scanning
 
 ---
 
@@ -305,7 +305,7 @@ webhooks:
   "timestamp": "2025-01-02T18:30:00Z",
   "cluster": "prod-east",
   "data": {
-    "id": "CCVE-2025-0027",
+    "id": "RISK-2025-0027",
     "severity": "critical",
     "resource": "prod-east/monitoring/ConfigMap/grafana-sidecar",
     "message": "Namespace whitespace in sidecar config"
@@ -424,4 +424,4 @@ Submit your plugin via PR to be listed.
 
 - [Architecture](../concepts/architecture.md) — GSF protocol and API contracts
 - [CLI Guide](../../CLI-GUIDE.md) — CLI reference and configuration
-- [Scan for CCVEs](scan-for-ccves.md) — CCVE detection and remediation
+- [Scan for risk issues](scan-for-risks.md) — Risk detection and remediation

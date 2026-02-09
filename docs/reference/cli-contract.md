@@ -37,7 +37,7 @@ breaking changes will be avoided within the same contract version.
 | `cub-scout map deployers` | List deployers (Flux/ArgoCD + core Deployments) | v0.5 |
 | `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
 | `cub-scout trace` | Trace resource to Git source | v0.5 |
-| `cub-scout scan` | Scan for CCVEs and issues | v0.5 |
+| `cub-scout scan` | Scan for risk issues and issues | v0.5 |
 | `cub-scout scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
 | `cub-scout graph export` | Export resource graph as JSON | v0.6 |
 | `cub-scout graph explain` | Explain resource relationships | v0.6 |
@@ -319,7 +319,7 @@ TRACE: Deployment/coredns in kube-system
 
 ## cub-scout scan
 
-Scan for CCVEs and stuck states.
+Scan for risk issues and stuck states.
 
 ```bash
 cub-scout scan [flags]
@@ -362,7 +362,7 @@ Resources: <N>
 
 WARNING (<N>)
 ────────────────────────────────────────────────────────────────────
-[W] Probe timeout exceeds period [CCVE-2025-0244]
+[W] Probe timeout exceeds period [RISK-2025-0244]
   Resource: default/Deployment/misconfigured-app
   Message: livenessProbe timeout (10s) > period (5s) - probe may never succeed
   → Remediation: Ensure probe timeoutSeconds <= periodSeconds

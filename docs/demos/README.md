@@ -13,7 +13,7 @@ go build ./cmd/cub-scout
 
 # Run demos
 ./cub-scout demo quick                     # Quick ownership detection (~30 sec)
-./cub-scout demo ccve                      # CCVE-2025-0027 demo (~2 min)
+./cub-scout demo ccve                      # RISK-2025-0027 demo (~2 min)
 ./cub-scout demo query                     # Query language demo (~1 min)
 
 # Narrative scenarios
@@ -33,7 +33,7 @@ go build ./cmd/cub-scout
 | Demo | Duration | What It Shows |
 |------|----------|---------------|
 | `quick` | ~30 sec | Ownership detection across Flux, ArgoCD, Helm, Native |
-| `ccve` | ~2 min | CCVE-2025-0027 detection story |
+| `ccve` | ~2 min | RISK-2025-0027 detection story |
 | `query` | ~1 min | Query language filtering and practical slices |
 
 ### Narrative Scenarios

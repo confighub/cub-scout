@@ -65,7 +65,7 @@ Deliverables:
 - Better connected hierarchy navigation defaults (cluster-aware filtering and clear mode state).
 - First-class trace context diagnostics and reset path in connected workflows.
 - Canonical migration guide from Argo/Helm to ConfigHub (#130), promoted out of archive.
-- Update all the 'why connected' docs and.md files to be consistent and complete
+- Update all "why connected" docs and roadmap sections to be consistent and complete
 
 Exit criteria:
 - A user can import one real cluster and understand Hub/App Space/Unit mapping without external guidance.
@@ -162,6 +162,7 @@ Exit criteria:
 3. Finalize workload scope contract (#129).
 4. Draft and publish canonical migration path (#130).
 5. Start lineage fixture implementation for #128.
+6. Add a clear user-facing explainer for the ASCII vs JSON model (what is canonical data vs presentation).
 
 ## Source references
 

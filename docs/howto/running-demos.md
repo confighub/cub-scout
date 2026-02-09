@@ -24,7 +24,7 @@ cub-scout map list                # List all resources with owners
 # Find orphans (shadow IT)
 cub-scout map list -q "owner=Native"
 
-# CCVE scanning
+# risk scanning
 cub-scout scan
 
 # Trace ownership
@@ -44,7 +44,7 @@ cub-scout map list -q "namespace=prod*"
 | Demo | Duration | What It Shows |
 |------|----------|---------------|
 | **Ownership Detection** | ~30 sec | Resources grouped by owner (Flux, ArgoCD, Native) |
-| **CCVE Scanning** | ~2 min | CCVE-2025-0027: Grafana whitespace bug |
+| **Risk Scanning** | ~2 min | RISK-2025-0027: Grafana whitespace bug |
 | **Query Language** | ~1 min | Filter with `owner!=Native`, `namespace=prod*` |
 | **Orphan Hunt** | ~2 min | Find mystery Native resources |
 
@@ -105,9 +105,9 @@ cub-scout map
 
 ---
 
-## Demo 3: CCVE Scanning
+## Demo 3: Risk Scanning
 
-**Goal:** Detect misconfigurations like CCVE-2025-0027 (Grafana sidecar whitespace).
+**Goal:** Detect misconfigurations like RISK-2025-0027 (Grafana sidecar whitespace).
 
 ```bash
 # Scan current cluster

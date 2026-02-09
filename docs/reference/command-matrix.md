@@ -30,8 +30,8 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `map` | Interactive map of resources and ownership |
 | `parse-repo` | Parse a GitOps repository structure |
 | `patterns` | Pattern detection engine |
-| `remedy` | Execute remediation for CCVE findings |
-| `scan` | Scan for CCVEs and stuck states |
+| `remedy` | Execute remediation for risk findings |
+| `scan` | Scan for risk issues and stuck states |
 | `setup` | Set up shell completions and configuration |
 | `snapshot` | Dump cluster state as GSF JSON |
 | `status` | Show connection status and cluster info |
@@ -188,7 +188,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--dry-run` | Show what would be changed (default: true) |
 | `--force` | Skip confirmation for high-risk actions |
 | `--file` | YAML file to scan and fix |
-| `--list` | List auto-fixable CCVEs |
+| `--list` | List auto-fixable risk issues |
 | `--json` | Output as JSON |
 | `--audit` | Log actions to audit file (default: true) |
 | `--audit-file` | Audit log file path |
@@ -225,7 +225,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 |---------|-------------|
 | `demo list` | List available demos |
 | `demo quick` | Quick demo (~30 sec) |
-| `demo ccve` | CCVE-2025-0027 demo (~2 min) |
+| `demo ccve` | Legacy risk demo (~2 min) |
 | `demo query` | Query language demo |
 | `demo scenario <name>` | Narrative scenario demo |
 | `demo --cleanup` | Remove demo resources |
@@ -278,7 +278,7 @@ Press `?` in the TUI to see this help.
 |-----|--------|-------------|
 | `Q` | Saved Queries | Filter resources with saved queries |
 | `T` | Trace | Trace ownership chain for selected |
-| `S` | Scan | Scan for CCVEs |
+| `S` | Scan | Scan for risk issues |
 | `I` | Import | Import wizard (bring workloads to ConfigHub) |
 
 ### Command Palette (`:`)
