@@ -15,6 +15,7 @@ import (
 	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
@@ -459,22 +460,15 @@ func runTreeOwnership(ctx context.Context) error {
 	// Get current context name for cluster field
 	clusterName := getCurrentContext()
 
-	// Get Deployments
-	deployGVR := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
-	deploys, err := dynClient.Resource(deployGVR).Namespace(treeNamespace).List(ctx, v1.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to list deployments: %w", err)
-	}
-
 	// Convert to mapsvc.Entry for shared renderer
 	var entries []mapsvc.Entry
-	for _, deploy := range deploys.Items {
-		ns := deploy.GetNamespace()
+	forEachCanonicalWorkload(ctx, dynClient, treeNamespace, func(workload *unstructured.Unstructured) {
+		ns := workload.GetNamespace()
 		if !treeAll && isSystemNamespace(ns) {
-			continue
+			return
 		}
 
-		owner, ownerName := detectOwnership(&deploy)
+		owner, ownerName := detectOwnership(workload)
 
 		// Build ownerDetails map from ownerName
 		var ownerDetails map[string]string
@@ -487,13 +481,13 @@ func runTreeOwnership(ctx context.Context) error {
 		}
 
 		entries = append(entries, mapsvc.Entry{
-			Name:         deploy.GetName(),
+			Name:         workload.GetName(),
 			Namespace:    ns,
-			Kind:         "Deployment",
+			Kind:         workload.GetKind(),
 			Owner:        owner,
 			OwnerDetails: ownerDetails,
 		})
-	}
+	})
 
 	// Build opts for shared renderer
 	opts := mapsvc.OwnershipTreeOpts{

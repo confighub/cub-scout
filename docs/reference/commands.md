@@ -12,7 +12,7 @@ Complete reference for all cub-scout commands.
 | `map issues` | Show resources with problems |
 | `map crashes` | Show crashing pods |
 | `map workloads` | List workloads by owner |
-| `map deployers` | List deployers (Deployments) |
+| `map deployers` | List GitOps deployers (Flux, ArgoCD, core Deployments) |
 | `trace` | Show GitOps ownership chain |
 | `scan` | Scan for misconfigurations |
 | `tree` | Hierarchical resource views |
@@ -170,7 +170,11 @@ Shows pods with:
 
 ## map workloads
 
-List workloads grouped by owner.
+List canonical workloads grouped by owner.
+
+Canonical workload scope (v1.0):
+- `Deployment`
+- `StatefulSet`
 
 ```bash
 cub-scout map workloads [flags]
@@ -186,14 +190,17 @@ cub-scout map workloads [flags]
 
 ## map deployers
 
-List deployers.
+List GitOps deployers.
 
 ```bash
 cub-scout map deployers [flags]
 ```
 
-> **v0.5 contract:** Deployers are Kubernetes Deployments. Flux Kustomizations,
-> HelmReleases, and Argo Applications are out of scope for v0.5.
+Canonical deployer scope (v1.0):
+- Flux `Kustomization`
+- Flux `HelmRelease`
+- Argo CD `Application`
+- Core Kubernetes `Deployment` (fallback where GitOps CRDs are absent)
 
 ---
 

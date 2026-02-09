@@ -34,7 +34,7 @@ breaking changes will be avoided within the same contract version.
 | `cub-scout map` | Interactive TUI dashboard | v0.5 |
 | `cub-scout map list` | List resources (scriptable) | v0.5 |
 | `cub-scout map status` | One-line health check | v0.5 |
-| `cub-scout map deployers` | List deployers (Deployments) | v0.5 |
+| `cub-scout map deployers` | List deployers (Flux/ArgoCD + core Deployments) | v0.5 |
 | `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
 | `cub-scout trace` | Trace resource to Git source | v0.5 |
 | `cub-scout scan` | Scan for CCVEs and issues | v0.5 |
@@ -191,15 +191,21 @@ cub-scout map status
 | 0 | All healthy |
 | 1 | Problems detected or error |
 
+Canonical workload scope counted by `map status` (v1.0):
+- `Deployment`
+- `StatefulSet`
+
 ---
 
 ## cub-scout map deployers
 
-List deployers (Kubernetes Deployments) in the cluster.
+List deployers in the cluster.
 
-> **v0.5 contract:** Deployers are Kubernetes Deployments. Flux Kustomizations,
-> HelmReleases, and Argo Applications are out of scope for v0.5 and may be
-> added in a future release.
+Canonical deployer scope (v1.0):
+- Flux `Kustomization`
+- Flux `HelmRelease`
+- Argo CD `Application`
+- Core Kubernetes `Deployment` (fallback where GitOps CRDs are absent)
 
 ```bash
 cub-scout map deployers [flags]
@@ -210,12 +216,13 @@ cub-scout map deployers [flags]
 ```json
 [
   {
-    "kind": "Deployment",
-    "name": "app-alpha",
-    "namespace": "default",
-    "status": "Ready",
+    "kind": "Application",
+    "name": "frontend",
+    "namespace": "argocd",
+    "status": "Healthy",
     "ready": true,
-    "revision": "-"
+    "revision": "HEAD",
+    "resources": 12
   }
 ]
 ```
@@ -223,12 +230,13 @@ cub-scout map deployers [flags]
 **Stable JSON fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `kind` | string | Always `Deployment` in v0.5 |
-| `name` | string | Deployment name |
-| `namespace` | string | Deployment namespace |
-| `status` | string | Status string (e.g., `Ready`) |
-| `ready` | bool | Whether deployment is ready |
+| `kind` | string | Deployer kind (`Kustomization`, `HelmRelease`, `Application`, `Deployment`) |
+| `name` | string | Deployer name |
+| `namespace` | string | Deployer namespace |
+| `status` | string | Status string (for example `Ready`, `Healthy`, `NotReady`, `Unhealthy`) |
+| `ready` | bool | Whether the deployer is healthy/ready |
 | `revision` | string | Revision string (or `-` if unavailable) |
+| `resources` | number | Number of managed resources when available |
 
 ---
 
