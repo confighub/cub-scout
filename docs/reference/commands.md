@@ -16,6 +16,7 @@ Complete reference for all cub-scout commands.
 | `trace` | Show GitOps ownership chain |
 | `scan` | Scan for misconfigurations |
 | `tree` | Hierarchical resource views |
+| `import` | Import workloads into ConfigHub |
 | `discover` | Scout-style workload discovery |
 | `health` | Scout-style health check |
 | `setup` | Set up shell completions |
@@ -362,6 +363,48 @@ cub-scout tree runtime --format md       # Markdown output
 
 `tree ownership` includes owner references for managed resources.
 For ArgoCD resources, this includes optional lineage to parent `Application` and/or `ApplicationSet` when discoverable.
+
+---
+
+## import
+
+Import workloads into ConfigHub.
+
+```bash
+cub-scout import [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Import one namespace (default: auto-discover all non-system namespaces with workloads) |
+| `--dry-run` | Preview without creating anything |
+| `-y, --yes` | Skip confirmation prompt |
+| `--json` | Output proposal JSON (implies dry-run) |
+| `--no-log` | Disable local import log file |
+| `-w, --wizard` | Launch interactive import wizard |
+
+### Canonical Migration Path
+
+Use the canonical Argo/Helm migration flow:
+`docs/howto/import-to-confighub.md`
+
+### Examples
+
+```bash
+# Preview one namespace migration
+cub-scout import -n payments-prod --dry-run
+
+# Execute namespace import
+cub-scout import -n payments-prod
+
+# Non-interactive import
+cub-scout import -n payments-prod -y
+
+# Proposal JSON for automation/GUI
+cub-scout import -n payments-prod --json
+```
 
 ---
 
