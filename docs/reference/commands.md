@@ -364,6 +364,11 @@ cub-scout tree runtime --format md       # Markdown output
 `tree ownership` includes owner references for managed resources.
 For ArgoCD resources, this includes optional lineage to parent `Application` and/or `ApplicationSet` when discoverable.
 
+`tree git --format json` emits:
+- `gitRepositories[]` (Flux GitRepository sources)
+- `argoApplications[]` (Argo Applications with optional `generatedByApplicationSet` and `parentApplication`)
+- `applicationSets[]` (Argo ApplicationSets with `generatorTypes[]` and `generatedApplications[]`)
+
 ---
 
 ## import

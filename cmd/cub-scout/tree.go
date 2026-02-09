@@ -147,6 +147,36 @@ type PodNode struct {
 	Node   string `json:"node,omitempty"`
 }
 
+type treeGitRepoJSON struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	URL       string `json:"url"`
+}
+
+type treeGitAppJSON struct {
+	Name                      string `json:"name"`
+	Namespace                 string `json:"namespace"`
+	RepoURL                   string `json:"repoURL"`
+	Path                      string `json:"path"`
+	GeneratedByApplicationSet string `json:"generatedByApplicationSet,omitempty"`
+	ParentApplication         string `json:"parentApplication,omitempty"`
+}
+
+type treeGitApplicationSetJSON struct {
+	Name                  string   `json:"name"`
+	Namespace             string   `json:"namespace"`
+	RepoURL               string   `json:"repoURL,omitempty"`
+	Path                  string   `json:"path,omitempty"`
+	GeneratorTypes        []string `json:"generatorTypes,omitempty"`
+	GeneratedApplications []string `json:"generatedApplications,omitempty"`
+}
+
+type treeGitJSON struct {
+	GitRepositories  []treeGitRepoJSON           `json:"gitRepositories"`
+	ArgoApplications []treeGitAppJSON            `json:"argoApplications"`
+	ApplicationSets  []treeGitApplicationSetJSON `json:"applicationSets"`
+}
+
 func runTreeRuntime(ctx context.Context) error {
 	// TEST HOOK: Load tree data from JSON file to bypass cluster access in tests.
 	// In production this env var is never set, so real K8s collection is always used.
@@ -616,7 +646,7 @@ func runTreeWorkloads() error {
 }
 
 func runTreeGit(ctx context.Context) error {
-
+	jsonOutput := treeJSON || strings.EqualFold(treeFormat, "json")
 	cfg, err := buildConfig()
 	if err != nil {
 		return fmt.Errorf("failed to build config: %w", err)
@@ -635,8 +665,10 @@ func runTreeGit(ctx context.Context) error {
 	}
 
 	gitRepos, err := dynClient.Resource(gitRepoGVR).Namespace("").List(ctx, v1.ListOptions{})
+	warnings := []string{}
 	if err != nil {
-		fmt.Printf("%sNote:%s Could not list GitRepositories (Flux may not be installed)\n", colorYellow, colorReset)
+		warnings = append(warnings, "Could not list GitRepositories (Flux may not be installed)")
+		gitRepos = nil
 	}
 
 	// Try to get ArgoCD Applications
@@ -648,121 +680,350 @@ func runTreeGit(ctx context.Context) error {
 
 	argoApps, err := dynClient.Resource(argoAppGVR).Namespace("").List(ctx, v1.ListOptions{})
 	if err != nil {
-		fmt.Printf("%sNote:%s Could not list ArgoCD Applications (ArgoCD may not be installed)\n", colorYellow, colorReset)
+		warnings = append(warnings, "Could not list ArgoCD Applications (ArgoCD may not be installed)")
+		argoApps = nil
 	}
 
-	if treeJSON {
-		result := map[string]interface{}{
-			"gitRepositories":  []interface{}{},
-			"argoApplications": []interface{}{},
-		}
-		if gitRepos != nil {
-			repos := []map[string]string{}
-			for _, r := range gitRepos.Items {
-				spec, _ := r.Object["spec"].(map[string]interface{})
-				url, _ := spec["url"].(string)
-				repos = append(repos, map[string]string{
-					"name":      r.GetName(),
-					"namespace": r.GetNamespace(),
-					"url":       url,
-				})
-			}
-			result["gitRepositories"] = repos
-		}
-		if argoApps != nil {
-			apps := []map[string]string{}
-			for _, a := range argoApps.Items {
-				spec, _ := a.Object["spec"].(map[string]interface{})
-				source, _ := spec["source"].(map[string]interface{})
-				repoURL, _ := source["repoURL"].(string)
-				path, _ := source["path"].(string)
-				apps = append(apps, map[string]string{
-					"name":      a.GetName(),
-					"namespace": a.GetNamespace(),
-					"repoURL":   repoURL,
-					"path":      path,
-				})
-			}
-			result["argoApplications"] = apps
-		}
+	argoAppSetGVR := schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "applicationsets",
+	}
+	argoAppSets, err := dynClient.Resource(argoAppSetGVR).Namespace("").List(ctx, v1.ListOptions{})
+	if err != nil {
+		warnings = append(warnings, "Could not list ArgoCD ApplicationSets (ApplicationSet CRD may not be installed)")
+		argoAppSets = nil
+	}
+
+	result := buildTreeGitJSON(gitRepos, argoApps, argoAppSets)
+	if jsonOutput {
 		return json.NewEncoder(os.Stdout).Encode(result)
 	}
 
 	fmt.Printf("%sGit Source Hierarchy%s\n", colorBold, colorReset)
 	fmt.Println(strings.Repeat("─", 60))
+	for _, warning := range warnings {
+		fmt.Printf("%sNote:%s %s\n", colorYellow, colorReset, warning)
+	}
 
 	// Print Flux GitRepositories
-	if gitRepos != nil && len(gitRepos.Items) > 0 {
-		fmt.Printf("\n%sFlux GitRepositories%s (%d)\n", colorCyan, colorReset, len(gitRepos.Items))
-		for i, r := range gitRepos.Items {
+	if len(result.GitRepositories) > 0 {
+		fmt.Printf("\n%sFlux GitRepositories%s (%d)\n", colorCyan, colorReset, len(result.GitRepositories))
+		for i, r := range result.GitRepositories {
 			connector := "├──"
-			if i == len(gitRepos.Items)-1 {
+			if i == len(result.GitRepositories)-1 {
 				connector = "└──"
 			}
-			spec, _ := r.Object["spec"].(map[string]interface{})
-			url, _ := spec["url"].(string)
-			ref, _ := spec["ref"].(map[string]interface{})
-			branch, _ := ref["branch"].(string)
-			if branch == "" {
-				branch = "main"
-			}
-			fmt.Printf("  %s %s/%s\n", connector, r.GetNamespace(), r.GetName())
-			fmt.Printf("      %s-> %s\n", colorDim, url)
-			fmt.Printf("      branch: %s%s\n", branch, colorReset)
+			fmt.Printf("  %s %s/%s\n", connector, r.Namespace, r.Name)
+			fmt.Printf("      %s-> %s%s\n", colorDim, r.URL, colorReset)
 		}
 	}
 
 	// Print ArgoCD Applications
-	if argoApps != nil && len(argoApps.Items) > 0 {
-		fmt.Printf("\n%sArgoCD Applications%s (%d)\n", colorPurple, colorReset, len(argoApps.Items))
+	if len(result.ArgoApplications) > 0 {
+		fmt.Printf("\n%sArgoCD Applications%s (%d)\n", colorPurple, colorReset, len(result.ArgoApplications))
 
-		// Group by repo URL
-		byRepo := make(map[string][]map[string]string)
-		for _, a := range argoApps.Items {
-			spec, _ := a.Object["spec"].(map[string]interface{})
-			source, _ := spec["source"].(map[string]interface{})
-			repoURL, _ := source["repoURL"].(string)
-			path, _ := source["path"].(string)
-
-			byRepo[repoURL] = append(byRepo[repoURL], map[string]string{
-				"name":      a.GetName(),
-				"namespace": a.GetNamespace(),
-				"path":      path,
-			})
+		byRepo := make(map[string][]treeGitAppJSON)
+		repoKeys := make(map[string]struct{})
+		for _, app := range result.ArgoApplications {
+			key := app.RepoURL
+			if key == "" {
+				key = "(unknown repo)"
+			}
+			repoKeys[key] = struct{}{}
+			byRepo[key] = append(byRepo[key], app)
 		}
 
-		repoIdx := 0
-		for repoURL, apps := range byRepo {
+		repos := make([]string, 0, len(repoKeys))
+		for key := range repoKeys {
+			repos = append(repos, key)
+		}
+		sort.Strings(repos)
+
+		for repoIdx, repoURL := range repos {
 			repoConnector := "├──"
-			if repoIdx == len(byRepo)-1 {
+			if repoIdx == len(repos)-1 {
 				repoConnector = "└──"
 			}
 			fmt.Printf("  %s %s\n", repoConnector, repoURL)
 
+			apps := byRepo[repoURL]
 			for i, app := range apps {
 				appConnector := "│   ├──"
 				if i == len(apps)-1 {
 					appConnector = "│   └──"
 				}
-				if repoIdx == len(byRepo)-1 {
+				if repoIdx == len(repos)-1 {
 					appConnector = strings.Replace(appConnector, "│", " ", 1)
 				}
-				path := app["path"]
+				path := app.Path
 				if path == "" {
 					path = "."
 				}
-				fmt.Printf("  %s %s (%s)\n", appConnector, app["name"], path)
+				fmt.Printf("  %s %s (%s)", appConnector, app.Name, path)
+
+				notes := []string{}
+				if app.GeneratedByApplicationSet != "" {
+					notes = append(notes, "generated by applicationset/"+app.GeneratedByApplicationSet)
+				}
+				if app.ParentApplication != "" {
+					notes = append(notes, "child of application/"+app.ParentApplication)
+				}
+				if len(notes) > 0 {
+					fmt.Printf(" %s[%s]%s", colorDim, strings.Join(notes, "; "), colorReset)
+				}
+				fmt.Println()
 			}
-			repoIdx++
 		}
 	}
 
-	if (gitRepos == nil || len(gitRepos.Items) == 0) && (argoApps == nil || len(argoApps.Items) == 0) {
+	if len(result.ApplicationSets) > 0 {
+		fmt.Printf("\n%sArgoCD ApplicationSets%s (%d)\n", colorPurple, colorReset, len(result.ApplicationSets))
+		for i, appSet := range result.ApplicationSets {
+			connector := "├──"
+			if i == len(result.ApplicationSets)-1 {
+				connector = "└──"
+			}
+
+			path := appSet.Path
+			if path == "" {
+				path = "."
+			}
+
+			fmt.Printf("  %s %s/%s (%s)\n", connector, appSet.Namespace, appSet.Name, path)
+			if len(appSet.GeneratorTypes) > 0 {
+				fmt.Printf("      generators: %s\n", strings.Join(appSet.GeneratorTypes, ","))
+			}
+			if appSet.RepoURL != "" {
+				fmt.Printf("      %s-> %s%s\n", colorDim, appSet.RepoURL, colorReset)
+			}
+			if len(appSet.GeneratedApplications) == 0 {
+				fmt.Println("      generates: (none detected)")
+				continue
+			}
+
+			for _, appName := range appSet.GeneratedApplications {
+				fmt.Printf("      -> %s\n", appName)
+			}
+		}
+	}
+
+	if len(result.GitRepositories) == 0 && len(result.ArgoApplications) == 0 && len(result.ApplicationSets) == 0 {
 		fmt.Printf("\n%sNo Git sources found.%s\n", colorDim, colorReset)
 		fmt.Println("Install Flux or ArgoCD to see Git source hierarchy.")
 	}
 
 	return nil
+}
+
+func buildTreeGitJSON(gitRepos, argoApps, argoAppSets *unstructured.UnstructuredList) treeGitJSON {
+	result := treeGitJSON{
+		GitRepositories:  make([]treeGitRepoJSON, 0),
+		ArgoApplications: make([]treeGitAppJSON, 0),
+		ApplicationSets:  make([]treeGitApplicationSetJSON, 0),
+	}
+
+	if gitRepos != nil {
+		for _, r := range gitRepos.Items {
+			spec, _ := r.Object["spec"].(map[string]interface{})
+			url, _ := spec["url"].(string)
+			result.GitRepositories = append(result.GitRepositories, treeGitRepoJSON{
+				Name:      r.GetName(),
+				Namespace: r.GetNamespace(),
+				URL:       url,
+			})
+		}
+		sort.Slice(result.GitRepositories, func(i, j int) bool {
+			left := result.GitRepositories[i]
+			right := result.GitRepositories[j]
+			if left.Namespace != right.Namespace {
+				return left.Namespace < right.Namespace
+			}
+			return left.Name < right.Name
+		})
+	}
+
+	appSetByNamespacedName := map[string]int{}
+	appSetByName := map[string]int{}
+	if argoAppSets != nil {
+		for _, appSet := range argoAppSets.Items {
+			spec, _ := appSet.Object["spec"].(map[string]interface{})
+			repoURL, path := parseAppSetTemplateSource(spec)
+			result.ApplicationSets = append(result.ApplicationSets, treeGitApplicationSetJSON{
+				Name:           appSet.GetName(),
+				Namespace:      appSet.GetNamespace(),
+				RepoURL:        repoURL,
+				Path:           path,
+				GeneratorTypes: detectApplicationSetGeneratorTypes(spec),
+			})
+		}
+		sort.Slice(result.ApplicationSets, func(i, j int) bool {
+			left := result.ApplicationSets[i]
+			right := result.ApplicationSets[j]
+			if left.Namespace != right.Namespace {
+				return left.Namespace < right.Namespace
+			}
+			return left.Name < right.Name
+		})
+		for idx, appSet := range result.ApplicationSets {
+			key := appSet.Namespace + "/" + appSet.Name
+			appSetByNamespacedName[key] = idx
+			if _, exists := appSetByName[appSet.Name]; !exists {
+				appSetByName[appSet.Name] = idx
+			}
+		}
+	}
+
+	if argoApps != nil {
+		for _, app := range argoApps.Items {
+			spec, _ := app.Object["spec"].(map[string]interface{})
+			source, _ := spec["source"].(map[string]interface{})
+			repoURL, _ := source["repoURL"].(string)
+			path, _ := source["path"].(string)
+
+			generatedByAppSet := resolveGeneratedByApplicationSet(&app)
+			parentApp := resolveParentApplicationForArgoApp(&app)
+
+			result.ArgoApplications = append(result.ArgoApplications, treeGitAppJSON{
+				Name:                      app.GetName(),
+				Namespace:                 app.GetNamespace(),
+				RepoURL:                   repoURL,
+				Path:                      path,
+				GeneratedByApplicationSet: generatedByAppSet,
+				ParentApplication:         parentApp,
+			})
+
+			if generatedByAppSet == "" || len(result.ApplicationSets) == 0 {
+				continue
+			}
+
+			nsKey := app.GetNamespace() + "/" + generatedByAppSet
+			if idx, ok := appSetByNamespacedName[nsKey]; ok {
+				result.ApplicationSets[idx].GeneratedApplications = append(result.ApplicationSets[idx].GeneratedApplications, app.GetName())
+				continue
+			}
+			if idx, ok := appSetByName[generatedByAppSet]; ok {
+				result.ApplicationSets[idx].GeneratedApplications = append(result.ApplicationSets[idx].GeneratedApplications, app.GetName())
+			}
+		}
+		sort.Slice(result.ArgoApplications, func(i, j int) bool {
+			left := result.ArgoApplications[i]
+			right := result.ArgoApplications[j]
+			if left.Namespace != right.Namespace {
+				return left.Namespace < right.Namespace
+			}
+			return left.Name < right.Name
+		})
+	}
+
+	for idx := range result.ApplicationSets {
+		sort.Strings(result.ApplicationSets[idx].GeneratedApplications)
+	}
+
+	return result
+}
+
+func parseAppSetTemplateSource(spec map[string]interface{}) (repoURL, path string) {
+	template, _ := spec["template"].(map[string]interface{})
+	templateSpec, _ := template["spec"].(map[string]interface{})
+	source, _ := templateSpec["source"].(map[string]interface{})
+	repoURL, _ = source["repoURL"].(string)
+	path, _ = source["path"].(string)
+	return repoURL, path
+}
+
+func detectApplicationSetGeneratorTypes(spec map[string]interface{}) []string {
+	generators, _ := spec["generators"].([]interface{})
+	if len(generators) == 0 {
+		return nil
+	}
+
+	known := []string{"list", "clusters", "git", "matrix", "merge", "pullRequest", "scmProvider", "clusterDecisionResource", "plugin"}
+	seen := map[string]struct{}{}
+	for _, g := range generators {
+		generatorMap, ok := g.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for _, key := range known {
+			if _, ok := generatorMap[key]; ok {
+				seen[key] = struct{}{}
+			}
+		}
+	}
+
+	if len(seen) == 0 {
+		return []string{"unknown"}
+	}
+
+	out := make([]string, 0, len(seen))
+	for key := range seen {
+		out = append(out, key)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func resolveGeneratedByApplicationSet(app *unstructured.Unstructured) string {
+	for _, ownerRef := range app.GetOwnerReferences() {
+		if strings.EqualFold(ownerRef.Kind, "ApplicationSet") {
+			name := strings.TrimSpace(ownerRef.Name)
+			if name != "" {
+				return name
+			}
+		}
+	}
+
+	labels := app.GetLabels()
+	if labels != nil {
+		if name := strings.TrimSpace(labels["argocd.argoproj.io/application-set-name"]); name != "" {
+			return name
+		}
+	}
+
+	annotations := app.GetAnnotations()
+	if annotations != nil {
+		if name := strings.TrimSpace(annotations["argocd.argoproj.io/application-set-name"]); name != "" {
+			return name
+		}
+		if name := strings.TrimSpace(annotations["cub-scout.io/generated-by-applicationset"]); name != "" {
+			return name
+		}
+	}
+
+	return ""
+}
+
+func resolveParentApplicationForArgoApp(app *unstructured.Unstructured) string {
+	self := strings.TrimSpace(app.GetName())
+
+	for _, ownerRef := range app.GetOwnerReferences() {
+		if strings.EqualFold(ownerRef.Kind, "Application") {
+			name := strings.TrimSpace(ownerRef.Name)
+			if name != "" && name != self {
+				return name
+			}
+		}
+	}
+
+	annotations := app.GetAnnotations()
+	if annotations != nil {
+		if name := strings.TrimSpace(annotations["cub-scout.io/parent-application"]); name != "" && name != self {
+			return name
+		}
+	}
+
+	labels := app.GetLabels()
+	if labels != nil {
+		if name := strings.TrimSpace(labels["app.kubernetes.io/part-of"]); name != "" && name != self {
+			return name
+		}
+		if name := strings.TrimSpace(labels["argocd.argoproj.io/instance"]); name != "" && name != self {
+			return name
+		}
+	}
+
+	return ""
 }
 
 func runTreePatterns() error {
