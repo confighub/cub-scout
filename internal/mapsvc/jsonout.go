@@ -7,6 +7,8 @@
 // See docs/v0.14-json-schema.md for the full specification.
 package mapsvc
 
+import "strings"
+
 // ResourceID is the canonical identity for cross-schema joins.
 type ResourceID struct {
 	Kind      string `json:"kind"`
@@ -23,18 +25,18 @@ type DisplayMeta struct {
 
 // OwnershipTreeOutput is the v0.14 JSON schema for `tree ownership`.
 type OwnershipTreeOutput struct {
-	Command string                 `json:"command"`
-	Subtype string                 `json:"subtype"`
-	Context OwnershipTreeContext   `json:"context"`
-	Groups  []OwnershipTreeGroup   `json:"groups"`
-	Summary OwnershipTreeSummary   `json:"summary"`
+	Command string               `json:"command"`
+	Subtype string               `json:"subtype"`
+	Context OwnershipTreeContext `json:"context"`
+	Groups  []OwnershipTreeGroup `json:"groups"`
+	Summary OwnershipTreeSummary `json:"summary"`
 }
 
 // OwnershipTreeContext captures query parameters.
 type OwnershipTreeContext struct {
-	Cluster   string                    `json:"cluster"`
-	Namespace *string                   `json:"namespace"` // null = all namespaces
-	Filters   OwnershipTreeFilters      `json:"filters"`
+	Cluster   string               `json:"cluster"`
+	Namespace *string              `json:"namespace"` // null = all namespaces
+	Filters   OwnershipTreeFilters `json:"filters"`
 }
 
 // OwnershipTreeFilters captures active filters.
@@ -45,15 +47,16 @@ type OwnershipTreeFilters struct {
 
 // OwnershipTreeGroup represents resources under one owner.
 type OwnershipTreeGroup struct {
-	Owner       string                   `json:"owner"`
-	DisplayMeta DisplayMeta              `json:"displayMeta"`
-	Items       []OwnershipTreeItem      `json:"items"`
+	Owner       string              `json:"owner"`
+	DisplayMeta DisplayMeta         `json:"displayMeta"`
+	Items       []OwnershipTreeItem `json:"items"`
 }
 
 // OwnershipTreeItem represents a single resource in the tree.
 type OwnershipTreeItem struct {
-	ID       ResourceID  `json:"id"`
-	OwnerRef *ResourceID `json:"ownerRef"` // null for Native
+	ID       ResourceID   `json:"id"`
+	OwnerRef *ResourceID  `json:"ownerRef"` // null for Native
+	Lineage  []ResourceID `json:"lineage,omitempty"`
 }
 
 // OwnershipTreeSummary provides aggregate counts.
@@ -111,10 +114,14 @@ func BuildOwnershipTreeJSON(entries []Entry, opts OwnershipTreeOpts, cluster str
 				},
 			}
 
-			// Parse ownerRef from OwnerDetails if available
-			if e.OwnerDetails != nil && e.OwnerDetails["name"] != "" {
+			if e.OwnerDetails != nil {
 				// OwnerDetails["name"] is like "kustomization/web-apps" or "release/redis"
-				item.OwnerRef = parseOwnerRef(e.OwnerDetails, e.Namespace)
+				if e.OwnerDetails["name"] != "" {
+					item.OwnerRef = parseOwnerRef(e.OwnerDetails, e.Namespace)
+				}
+				if lineage := parseLineageRefs(e.OwnerDetails, e.Namespace); len(lineage) > 0 {
+					item.Lineage = lineage
+				}
 			}
 
 			items[i] = item
@@ -256,6 +263,38 @@ func parseOwnerRef(details map[string]string, defaultNamespace string) *Resource
 	}
 }
 
+func parseLineageRefs(details map[string]string, defaultNamespace string) []ResourceID {
+	if details == nil {
+		return nil
+	}
+	lineage := strings.TrimSpace(details["lineage"])
+	if lineage == "" {
+		return nil
+	}
+
+	segments := strings.Split(lineage, "<-")
+	refs := make([]ResourceID, 0, len(segments))
+	for _, segment := range segments {
+		name := strings.TrimSpace(segment)
+		if name == "" {
+			continue
+		}
+
+		ref := parseOwnerRef(map[string]string{
+			"name":      name,
+			"namespace": details["namespace"],
+		}, defaultNamespace)
+		if ref != nil {
+			refs = append(refs, *ref)
+		}
+	}
+
+	if len(refs) == 0 {
+		return nil
+	}
+	return refs
+}
+
 // splitOwnerRef splits "kind/name" into parts.
 func splitOwnerRef(ref string) []string {
 	idx := -1
@@ -280,6 +319,8 @@ func normalizeKind(kind string) string {
 		return "HelmRelease"
 	case "application", "Application":
 		return "Application"
+	case "applicationset", "ApplicationSet":
+		return "ApplicationSet"
 	case "release", "Release":
 		return "HelmRelease" // Helm release
 	default:
@@ -419,10 +460,10 @@ func RelationshipForRole(role string) string {
 // MapListOutput is the v0.14 JSON schema for `map list --format json`.
 // It's a flat, joinable inventory of resources with ownership attribution.
 type MapListOutput struct {
-	Command   string              `json:"command"`
-	Context   MapListContext      `json:"context"`
-	Resources []MapListResource   `json:"resources"`
-	Summary   MapListSummary      `json:"summary"`
+	Command   string            `json:"command"`
+	Context   MapListContext    `json:"context"`
+	Resources []MapListResource `json:"resources"`
+	Summary   MapListSummary    `json:"summary"`
 }
 
 // MapListContext captures query parameters for the map list.

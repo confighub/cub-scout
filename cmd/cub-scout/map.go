@@ -1736,6 +1736,7 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
+	argoLineage := buildArgoLineageIndex(ctx, dynClient)
 
 	// Count by owner
 	ownerCounts := map[string]int{}
@@ -1762,6 +1763,14 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 		}
 
 		owner, managedBy := detectOwnership(workload)
+		if owner == "ArgoCD" {
+			if appName, _, lineage := resolveArgoOwnershipLineage(workload, argoLineage); appName != "" {
+				managedBy = appName
+				if lineage != "" {
+					managedBy = appName + " <- " + lineage
+				}
+			}
+		}
 		ownerCounts[owner]++
 		image := getContainerImage(workload)
 
@@ -2406,6 +2415,157 @@ func getArgoResourceCount(obj *unstructured.Unstructured) int {
 	return len(resources)
 }
 
+type argoOwnershipLineage struct {
+	ApplicationName      string
+	ApplicationNamespace string
+	ParentApplication    string
+	ParentApplicationSet string
+}
+
+type argoLineageIndex struct {
+	byAppName          map[string]argoOwnershipLineage
+	byNamespacedAppKey map[string]argoOwnershipLineage
+}
+
+func newArgoLineageIndex() *argoLineageIndex {
+	return &argoLineageIndex{
+		byAppName:          map[string]argoOwnershipLineage{},
+		byNamespacedAppKey: map[string]argoOwnershipLineage{},
+	}
+}
+
+func buildArgoLineageIndex(ctx context.Context, dynClient dynamic.Interface) *argoLineageIndex {
+	index := newArgoLineageIndex()
+
+	appGVR := schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
+	appList, err := dynClient.Resource(appGVR).List(ctx, v1.ListOptions{})
+	if err != nil {
+		return index
+	}
+
+	for _, app := range appList.Items {
+		lineage := argoOwnershipLineage{
+			ApplicationName:      app.GetName(),
+			ApplicationNamespace: app.GetNamespace(),
+		}
+
+		labels := app.GetLabels()
+		if labels != nil {
+			parentApp := strings.TrimSpace(labels["argocd.argoproj.io/instance"])
+			if parentApp != "" && parentApp != lineage.ApplicationName {
+				lineage.ParentApplication = parentApp
+			}
+		}
+		if lineage.ParentApplication == "" {
+			annotations := app.GetAnnotations()
+			if annotations != nil {
+				parentApp := parseArgoTrackingIDAppName(annotations["argocd.argoproj.io/tracking-id"])
+				if parentApp != "" && parentApp != lineage.ApplicationName {
+					lineage.ParentApplication = parentApp
+				}
+			}
+		}
+
+		for _, ownerRef := range app.GetOwnerReferences() {
+			if strings.EqualFold(ownerRef.Kind, "ApplicationSet") && ownerRef.Name != "" {
+				lineage.ParentApplicationSet = ownerRef.Name
+				break
+			}
+		}
+
+		index.add(lineage)
+	}
+
+	return index
+}
+
+func argoLineageDetailScore(lineage argoOwnershipLineage) int {
+	score := 0
+	if lineage.ParentApplicationSet != "" {
+		score += 2
+	}
+	if lineage.ParentApplication != "" {
+		score += 1
+	}
+	if lineage.ApplicationNamespace == "argocd" {
+		score += 1
+	}
+	return score
+}
+
+func (idx *argoLineageIndex) add(lineage argoOwnershipLineage) {
+	if lineage.ApplicationName == "" {
+		return
+	}
+
+	nsKey := lineage.ApplicationNamespace + "/" + lineage.ApplicationName
+	idx.byNamespacedAppKey[nsKey] = lineage
+
+	current, exists := idx.byAppName[lineage.ApplicationName]
+	if !exists || argoLineageDetailScore(lineage) > argoLineageDetailScore(current) {
+		idx.byAppName[lineage.ApplicationName] = lineage
+	}
+}
+
+func (idx *argoLineageIndex) lookupByAppName(appName string) (argoOwnershipLineage, bool) {
+	if idx == nil {
+		return argoOwnershipLineage{}, false
+	}
+	lineage, ok := idx.byAppName[appName]
+	return lineage, ok
+}
+
+func parseArgoTrackingIDAppName(trackingID string) string {
+	if trackingID == "" {
+		return ""
+	}
+	parts := strings.SplitN(trackingID, ":", 2)
+	if len(parts) == 0 {
+		return ""
+	}
+	return strings.TrimSpace(parts[0])
+}
+
+func argoApplicationNameFromResource(obj *unstructured.Unstructured) string {
+	labels := obj.GetLabels()
+	if labels != nil {
+		if appName := strings.TrimSpace(labels["argocd.argoproj.io/instance"]); appName != "" {
+			return appName
+		}
+	}
+	annotations := obj.GetAnnotations()
+	if annotations != nil {
+		return parseArgoTrackingIDAppName(annotations["argocd.argoproj.io/tracking-id"])
+	}
+	return ""
+}
+
+func resolveArgoOwnershipLineage(obj *unstructured.Unstructured, index *argoLineageIndex) (appName, appNamespace, lineage string) {
+	appName = argoApplicationNameFromResource(obj)
+	if appName == "" {
+		return "", "", ""
+	}
+
+	if index == nil {
+		return appName, "", ""
+	}
+
+	appLineage, ok := index.lookupByAppName(appName)
+	if !ok {
+		return appName, "", ""
+	}
+
+	segments := []string{}
+	if appLineage.ParentApplicationSet != "" {
+		segments = append(segments, "applicationset/"+appLineage.ParentApplicationSet)
+	}
+	if appLineage.ParentApplication != "" {
+		segments = append(segments, "application/"+appLineage.ParentApplication)
+	}
+
+	return appName, appLineage.ApplicationNamespace, strings.Join(segments, " <- ")
+}
+
 func detectOwnership(obj *unstructured.Unstructured) (string, string) {
 	labels := obj.GetLabels()
 	if labels == nil {
@@ -2434,9 +2594,8 @@ func detectOwnership(obj *unstructured.Unstructured) (string, string) {
 	}
 	// ArgoCD tracking-id annotation (format: <app-name>:<group>/<kind>:<namespace>/<name>)
 	if tracking, ok := annotations["argocd.argoproj.io/tracking-id"]; ok {
-		parts := strings.SplitN(tracking, ":", 2)
-		if len(parts) > 0 && parts[0] != "" {
-			return "ArgoCD", parts[0]
+		if appName := parseArgoTrackingIDAppName(tracking); appName != "" {
+			return "ArgoCD", appName
 		}
 	}
 	// Helm

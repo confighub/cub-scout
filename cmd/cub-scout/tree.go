@@ -459,6 +459,7 @@ func runTreeOwnership(ctx context.Context) error {
 
 	// Get current context name for cluster field
 	clusterName := getCurrentContext()
+	argoLineage := buildArgoLineageIndex(ctx, dynClient)
 
 	// Convert to mapsvc.Entry for shared renderer
 	var entries []mapsvc.Entry
@@ -469,6 +470,15 @@ func runTreeOwnership(ctx context.Context) error {
 		}
 
 		owner, ownerName := detectOwnership(workload)
+		ownerNamespace := ""
+		lineage := ""
+		if owner == "ArgoCD" {
+			if appName, appNamespace, appLineage := resolveArgoOwnershipLineage(workload, argoLineage); appName != "" {
+				ownerName = appName
+				ownerNamespace = appNamespace
+				lineage = appLineage
+			}
+		}
 
 		// Build ownerDetails map from ownerName
 		var ownerDetails map[string]string
@@ -477,6 +487,12 @@ func runTreeOwnership(ctx context.Context) error {
 			kindPrefix := ownerKindPrefix(owner)
 			ownerDetails = map[string]string{
 				"name": kindPrefix + "/" + ownerName,
+			}
+			if ownerNamespace != "" {
+				ownerDetails["namespace"] = ownerNamespace
+			}
+			if lineage != "" {
+				ownerDetails["lineage"] = lineage
 			}
 		}
 
@@ -492,7 +508,7 @@ func runTreeOwnership(ctx context.Context) error {
 	// Build opts for shared renderer
 	opts := mapsvc.OwnershipTreeOpts{
 		ShowKind:     false,
-		ShowOwnerRef: false,
+		ShowOwnerRef: true,
 		FilterOwner:  treeOwner,
 		MaxDepth:     treeDepth,
 	}
@@ -532,7 +548,11 @@ func runTreeOwnership(ctx context.Context) error {
 				// Depth truncation indicator
 				fmt.Printf("  %s %s\n", line.Connector, line.Name)
 			} else {
-				fmt.Printf("  %s %s/%s\n", line.Connector, line.Namespace, line.Name)
+				fmt.Printf("  %s %s/%s", line.Connector, line.Namespace, line.Name)
+				if line.OwnerRef != "" {
+					fmt.Printf(" -> %s", line.OwnerRef)
+				}
+				fmt.Println()
 			}
 		}
 
@@ -557,7 +577,11 @@ func runTreeOwnership(ctx context.Context) error {
 				// Depth truncation indicator
 				fmt.Printf("  %s %s%s%s\n", line.Connector, colorDim, line.Name, colorReset)
 			} else {
-				fmt.Printf("  %s %s/%s\n", line.Connector, line.Namespace, line.Name)
+				fmt.Printf("  %s %s/%s", line.Connector, line.Namespace, line.Name)
+				if line.OwnerRef != "" {
+					fmt.Printf(" %s-> %s%s", colorDim, line.OwnerRef, colorReset)
+				}
+				fmt.Println()
 			}
 		}
 	}

@@ -213,6 +213,45 @@ func TestBuildOwnershipTreeJSON_SortByNamespaceKindName(t *testing.T) {
 	}
 }
 
+func TestBuildOwnershipTreeJSON_ArgoLineage(t *testing.T) {
+	entries := []Entry{
+		{
+			Kind:      "Deployment",
+			Namespace: "payments",
+			Name:      "payments-api",
+			Owner:     "ArgoCD",
+			OwnerDetails: map[string]string{
+				"name":      "application/payments-prod",
+				"namespace": "argocd",
+				"lineage":   "applicationset/payments-set <- application/root-app",
+			},
+		},
+	}
+
+	output := BuildOwnershipTreeJSON(entries, OwnershipTreeOpts{}, "test-cluster", nil)
+
+	if len(output.Groups) != 1 || len(output.Groups[0].Items) != 1 {
+		t.Fatalf("expected one group/item, got groups=%d", len(output.Groups))
+	}
+	item := output.Groups[0].Items[0]
+
+	if item.OwnerRef == nil {
+		t.Fatalf("expected ownerRef for Argo item")
+	}
+	if item.OwnerRef.Kind != "Application" || item.OwnerRef.Name != "payments-prod" || item.OwnerRef.Namespace != "argocd" {
+		t.Fatalf("unexpected ownerRef: %#v", item.OwnerRef)
+	}
+	if len(item.Lineage) != 2 {
+		t.Fatalf("expected two lineage refs, got %d (%#v)", len(item.Lineage), item.Lineage)
+	}
+	if item.Lineage[0].Kind != "ApplicationSet" || item.Lineage[0].Name != "payments-set" {
+		t.Fatalf("unexpected first lineage ref: %#v", item.Lineage[0])
+	}
+	if item.Lineage[1].Kind != "Application" || item.Lineage[1].Name != "root-app" {
+		t.Fatalf("unexpected second lineage ref: %#v", item.Lineage[1])
+	}
+}
+
 // =============================================================================
 // Trace Schema Tests
 // =============================================================================

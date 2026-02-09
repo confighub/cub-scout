@@ -8,6 +8,7 @@ import (
 	"sort"
 	"testing"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -188,4 +189,104 @@ func newWorkload(kind, name, namespace string, desired, ready int64) *unstructur
 			},
 		},
 	}
+}
+
+func TestResolveArgoOwnershipLineage_AppOfAppsParent(t *testing.T) {
+	scheme := runtime.NewScheme()
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}: "ApplicationList",
+	}
+
+	childApp := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "payments-prod",
+				"namespace": "argocd",
+				"labels": map[string]interface{}{
+					"argocd.argoproj.io/instance": "root-app",
+				},
+			},
+		},
+	}
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, childApp)
+	index := buildArgoLineageIndex(context.Background(), client)
+
+	workload := &unstructured.Unstructured{}
+	workload.SetLabels(map[string]string{"argocd.argoproj.io/instance": "payments-prod"})
+
+	appName, appNamespace, lineage := resolveArgoOwnershipLineage(workload, index)
+	if appName != "payments-prod" {
+		t.Fatalf("expected app name payments-prod, got %q", appName)
+	}
+	if appNamespace != "argocd" {
+		t.Fatalf("expected app namespace argocd, got %q", appNamespace)
+	}
+	if lineage != "application/root-app" {
+		t.Fatalf("expected app-of-apps lineage, got %q", lineage)
+	}
+}
+
+func TestResolveArgoOwnershipLineage_ApplicationSetParent(t *testing.T) {
+	scheme := runtime.NewScheme()
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}: "ApplicationList",
+	}
+
+	appFromSet := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "checkout-prod",
+				"namespace": "argocd",
+			},
+		},
+	}
+	appFromSet.SetOwnerReferences([]metav1.OwnerReference{
+		{
+			APIVersion: "argoproj.io/v1alpha1",
+			Kind:       "ApplicationSet",
+			Name:       "checkout-set",
+			Controller: boolPtr(true),
+		},
+	})
+
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, appFromSet)
+	index := buildArgoLineageIndex(context.Background(), client)
+
+	workload := &unstructured.Unstructured{}
+	workload.SetLabels(map[string]string{"argocd.argoproj.io/instance": "checkout-prod"})
+
+	appName, appNamespace, lineage := resolveArgoOwnershipLineage(workload, index)
+	if appName != "checkout-prod" {
+		t.Fatalf("expected app name checkout-prod, got %q", appName)
+	}
+	if appNamespace != "argocd" {
+		t.Fatalf("expected app namespace argocd, got %q", appNamespace)
+	}
+	if lineage != "applicationset/checkout-set" {
+		t.Fatalf("expected applicationset lineage, got %q", lineage)
+	}
+}
+
+func TestResolveArgoOwnershipLineage_NoIndexMatchFallsBackToApplicationName(t *testing.T) {
+	workload := &unstructured.Unstructured{}
+	workload.SetLabels(map[string]string{"argocd.argoproj.io/instance": "billing-prod"})
+
+	appName, appNamespace, lineage := resolveArgoOwnershipLineage(workload, newArgoLineageIndex())
+	if appName != "billing-prod" {
+		t.Fatalf("expected app name fallback, got %q", appName)
+	}
+	if appNamespace != "" {
+		t.Fatalf("expected empty namespace fallback, got %q", appNamespace)
+	}
+	if lineage != "" {
+		t.Fatalf("expected empty lineage fallback, got %q", lineage)
+	}
+}
+
+func boolPtr(v bool) *bool {
+	return &v
 }
