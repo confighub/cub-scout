@@ -242,3 +242,4 @@ cub-scout import
 
 - [Business Outcomes](../../outcomes/README.md) - Why ConfigHub import matters
 - [ConfigHub Documentation](https://docs.confighub.com) - Full ConfigHub guide
+- [Import Docs Crosswalk](../reference/import-docs-crosswalk.md) - Archived import docs mapped to current docs

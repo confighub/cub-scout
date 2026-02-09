@@ -1,5 +1,13 @@
 # Journey: Import Workloads
 
+**Archive status:** Historical reference only (not canonical for current releases).
+
+Use these maintained docs first:
+
+- [How To: Import Workloads to ConfigHub](../howto/import-to-confighub.md)
+- [Trace Context Troubleshooting](../howto/trace-context-troubleshooting.md)
+- [Import Docs Crosswalk](../reference/import-docs-crosswalk.md)
+
 **Time:** 5-10 minutes
 **Goal:** Import your cluster workloads into ConfigHub as Units
 

@@ -52,6 +52,11 @@ The content has been consolidated into CLI-GUIDE.md and the docs/ directory.
 - `IMPORT-FROM-SOURCES.md` - Import architecture
 - `IMPORT-GIT-REFERENCE-ARCHITECTURES.md` - GitOps import patterns
 - `IMPORTING-WORKLOADS.md` - Workload import guide
+- `JOURNEY-IMPORT.md` - Historical journey walkthrough
+
+Canonical import docs:
+- [`docs/howto/import-to-confighub.md`](../howto/import-to-confighub.md)
+- [`docs/reference/import-docs-crosswalk.md`](../reference/import-docs-crosswalk.md)
 
 **Case Studies:**
 - `EXAMPLES-TUI-MAP-FLEET-IITS-STUDIES.md` - Enterprise case studies
