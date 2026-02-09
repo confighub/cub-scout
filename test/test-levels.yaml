@@ -102,6 +102,7 @@ levels:
       - kubectl apply -f examples/flux-boutique/boutique.yaml
       - kubectl apply -f examples/apptique-examples/flux-monorepo/
       - ./cub-scout map list -n boutique --json > /tmp/boutique.json
+      - ./test/atk/examples --verify-all
       - ./test/validate-expected-outputs.sh --category=examples
     expected_outputs:
       - test/expected-outputs/examples/flux-boutique.txt

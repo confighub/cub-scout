@@ -90,9 +90,11 @@ go test -tags=integration ./test/integration/...
 |-------|-------|----------------|
 | Phase 1: Standard | 8 | Preflight, build, ATK verify/map/scan |
 | Phase 2: Demos | 4 | quick, ccve, healthy, unhealthy work |
-| Phase 3: Examples | 8 | All example folders work |
+| Phase 3: Examples | 8+ | Local examples + external ConfigHub examples verify |
 
 **Run time:** ~4 minutes (requires cluster)
+
+`--level=examples` and `--level=full` also run `./test/atk/examples --verify-all` using local-first source resolution (local checkout first, GitHub clone fallback).
 
 ---
 

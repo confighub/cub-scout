@@ -65,7 +65,7 @@ When connected to ConfigHub, you see additional context:
 ```
 
 The capture process:
-1. Clones the example repo from GitHub
+1. Resolves source with local-first lookup (local checkout first, GitHub clone fallback)
 2. Deploys to current Kubernetes cluster
 3. Runs `./test/atk/map` and captures output
 4. Saves to `{example_name}.txt`
@@ -155,3 +155,5 @@ Fixtures may need regeneration when:
 - **Public examples** work with any GitHub account
 - Fixtures are cluster-specific (your results may vary slightly)
 - Connected mode fixtures require ConfigHub authentication
+- Set `ATK_EXAMPLES_LOCAL_ROOTS` to override local source roots
+- Set `ATK_EXAMPLES_STRICT=1` to fail instead of skip when a source cannot be resolved

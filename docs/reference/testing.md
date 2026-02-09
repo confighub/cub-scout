@@ -721,8 +721,10 @@ All tests passed!
 **What it tests:**
 - Phase 1: Preflight, build, unit tests, integration tests, ATK verify/map/scan
 - Phase 2: All demos (quick, ccve, healthy, unhealthy)
-- Phase 3: Examples validation (integrations, configs)
+- Phase 3: Examples validation (integrations, configs, external ConfigHub examples)
 - Connected mode: Worker status, targets, ConfigHub API
+
+Phase 3 now includes `./test/atk/examples --verify-all` with local-first source resolution (local checkout first, GitHub clone fallback).
 
 **Expected output:**
 ```

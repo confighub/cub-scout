@@ -346,6 +346,9 @@ if [[ $CURRENT_IDX -ge 5 ]]; then
         subsection "Example Scripts"
         run_test "impressive-demo exists" "test -x examples/impressive-demo/demo-script.sh"
 
+        subsection "ConfigHub External Examples"
+        run_test "verify external examples (local-first)" "./test/atk/examples --verify-all"
+
         # Integration scripts tests skipped - files planned but not yet created
         # subsection "Integration Scripts"
         # run_test "k9s-plugin valid" "test -f examples/scripts/k9s-plugin.yaml"

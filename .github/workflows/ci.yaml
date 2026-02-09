@@ -266,4 +266,4 @@ jobs:
           cluster_name: full-test-cluster
 
       - name: Run prove-it-works
-        run: ./test/prove-it-works.sh --level=gitops
+        run: ./test/prove-it-works.sh --level=full

@@ -9,16 +9,41 @@
 #   ./examples --capture    # Deploy examples, run map, capture output
 #   ./examples --capture global_app  # Capture specific example
 #   ./examples --verify-all # Full verification: clone, deploy, map, scan, compare output
+#
+# Environment:
+#   ATK_EXAMPLES_LOCAL_ROOTS  Colon-separated local roots to search first.
+#                             Default: "<project>/..:$HOME/Public/github-repos:$HOME/github-repos"
+#   ATK_EXAMPLES_STRICT       1 = fail when source is unavailable, 0 = skip (default: 0)
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 FIXTURES_DIR="${SCRIPT_DIR}/../../test/fixtures/expected-output/examples"
+ATK_EXAMPLES_STRICT="${ATK_EXAMPLES_STRICT:-0}"
 
 R='\033[0;31m'
 G='\033[0;32m'
 Y='\033[0;33m'
 NC='\033[0m'
+
+# Local source roots for local-first mode.
+if [[ -n "${ATK_EXAMPLES_LOCAL_ROOTS:-}" ]]; then
+    IFS=':' read -r -a EXAMPLE_LOCAL_ROOTS <<< "${ATK_EXAMPLES_LOCAL_ROOTS}"
+else
+    EXAMPLE_LOCAL_ROOTS=(
+        "${PROJECT_ROOT}/.."
+        "${HOME}/Public/github-repos"
+        "${HOME}/github-repos"
+    )
+fi
+
+# Per-example source resolution state.
+EXAMPLE_SOURCE_DIR=""
+EXAMPLE_SOURCE_TEMP_DIR=""
+EXAMPLE_SOURCE_LABEL=""
+EXAMPLE_SOURCE_KIND=""
+GH_CAN_QUERY=0
 
 # Counters stored in temp file for subshell
 RESULTS_FILE=$(mktemp)
@@ -42,39 +67,142 @@ skip() {
     echo "$p $f $((s+1))" > "$RESULTS_FILE"
 }
 
-# Capture mode: clone, deploy, map, capture output
-capture_example() {
-    local name="$1"
-    local path="$2"
+print_local_roots() {
+    echo "Local source roots:"
+    for root in "${EXAMPLE_LOCAL_ROOTS[@]}"; do
+        echo "  - ${root}"
+    done
+}
 
-    # Parse org/repo/subpath
+parse_repo_path() {
+    local path="$1"
     local org repo subpath
+
     org="${path%%/*}"
     local rest="${path#*/}"
     repo="${rest%%/*}"
     subpath="${rest#*/}"
     [[ "$repo" == "$subpath" ]] && subpath=""
 
-    local clone_url="https://github.com/${org}/${repo}.git"
-    local temp_dir=$(mktemp -d)
-    local example_dir="${temp_dir}/${repo}"
-    [[ -n "$subpath" ]] && example_dir="${example_dir}/${subpath}"
+    printf '%s\n%s\n%s\n' "$org" "$repo" "$subpath"
+}
+
+find_local_example_dir() {
+    local org="$1"
+    local repo="$2"
+    local subpath="$3"
+    local root candidate
+
+    for root in "${EXAMPLE_LOCAL_ROOTS[@]}"; do
+        [[ -d "$root" ]] || continue
+
+        candidate="${root}/${repo}"
+        [[ -n "$subpath" ]] && candidate="${candidate}/${subpath}"
+        if [[ -d "$candidate" ]]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+
+        candidate="${root}/${org}/${repo}"
+        [[ -n "$subpath" ]] && candidate="${candidate}/${subpath}"
+        if [[ -d "$candidate" ]]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+cleanup_example_source() {
+    if [[ -n "${EXAMPLE_SOURCE_TEMP_DIR}" ]]; then
+        rm -rf "${EXAMPLE_SOURCE_TEMP_DIR}"
+    fi
+    EXAMPLE_SOURCE_DIR=""
+    EXAMPLE_SOURCE_TEMP_DIR=""
+    EXAMPLE_SOURCE_LABEL=""
+    EXAMPLE_SOURCE_KIND=""
+}
+
+resolve_example_source() {
+    local path="$1"
+    local org repo subpath
+    local local_dir clone_url temp_dir
+
+    local -a _parts
+    mapfile -t _parts < <(parse_repo_path "$path")
+    org="${_parts[0]}"
+    repo="${_parts[1]}"
+    subpath="${_parts[2]}"
+    clone_url="https://github.com/${org}/${repo}.git"
+
+    if local_dir="$(find_local_example_dir "$org" "$repo" "$subpath")"; then
+        EXAMPLE_SOURCE_DIR="$local_dir"
+        EXAMPLE_SOURCE_TEMP_DIR=""
+        EXAMPLE_SOURCE_LABEL="$local_dir"
+        EXAMPLE_SOURCE_KIND="local"
+        return 0
+    fi
+
+    temp_dir="$(mktemp -d)"
+    if git clone --depth 1 "${clone_url}" "${temp_dir}/${repo}" >/dev/null 2>&1; then
+        EXAMPLE_SOURCE_DIR="${temp_dir}/${repo}"
+        [[ -n "$subpath" ]] && EXAMPLE_SOURCE_DIR="${EXAMPLE_SOURCE_DIR}/${subpath}"
+        if [[ ! -d "${EXAMPLE_SOURCE_DIR}" ]]; then
+            rm -rf "${temp_dir}"
+            return 1
+        fi
+        EXAMPLE_SOURCE_TEMP_DIR="${temp_dir}"
+        EXAMPLE_SOURCE_LABEL="${clone_url}"
+        EXAMPLE_SOURCE_KIND="clone"
+        return 0
+    fi
+
+    rm -rf "${temp_dir}"
+    return 1
+}
+
+handle_missing_source() {
+    local name="$1"
+    local path="$2"
+    if [[ "${ATK_EXAMPLES_STRICT}" == "1" ]]; then
+        fail "${name}: source unavailable (${path})"
+        return 1
+    fi
+    skip "${name}: source unavailable (${path})"
+    return 0
+}
+
+# Capture mode: clone, deploy, map, capture output
+capture_example() {
+    local name="$1"
+    local path="$2"
+    local org repo subpath
+    local -a _parts
+    mapfile -t _parts < <(parse_repo_path "$path")
+    org="${_parts[0]}"
+    repo="${_parts[1]}"
+    subpath="${_parts[2]}"
+    local example_dir
 
     echo ""
     echo "Capturing: ${name}"
     echo "═══════════════════════════════════════════"
-    echo "Repo: ${clone_url}"
-    echo "Subpath: ${subpath:-<root>}"
+    echo "Source path: ${path}"
     echo ""
 
-    # Step 1: Clone
-    echo "1. Cloning repository..."
-    if ! git clone --depth 1 "${clone_url}" "${temp_dir}/${repo}" 2>/dev/null; then
-        fail "${name}: failed to clone"
-        rm -rf "$temp_dir"
-        return 1
+    # Step 1: Resolve source (local-first, then clone fallback)
+    echo "1. Resolving example source (local-first)..."
+    if ! resolve_example_source "$path"; then
+        handle_missing_source "$name" "$path"
+        return $?
     fi
-    pass "Cloned ${org}/${repo}"
+    example_dir="${EXAMPLE_SOURCE_DIR}"
+    if [[ "${EXAMPLE_SOURCE_KIND}" == "local" ]]; then
+        pass "Using local source: ${EXAMPLE_SOURCE_LABEL}"
+    else
+        pass "Cloned source: ${EXAMPLE_SOURCE_LABEL}"
+    fi
 
     # Step 2: Find deploy method and deploy
     echo ""
@@ -191,7 +319,7 @@ EOF
 
     if [[ "$deployed" == "false" ]]; then
         skip "${name}: no deployable manifests found"
-        rm -rf "$temp_dir"
+        cleanup_example_source
         return 0
     fi
 
@@ -230,7 +358,7 @@ EOF
     echo ""
     echo "5. Cleaning up..."
     kubectl delete namespace "$namespace" --wait=false 2>/dev/null || true
-    rm -rf "$temp_dir"
+    cleanup_example_source
     pass "Cleanup complete"
 
     return 0
@@ -240,35 +368,32 @@ EOF
 verify_example() {
     local name="$1"
     local path="$2"
-
-    # Parse org/repo/subpath
     local org repo subpath
-    org="${path%%/*}"
-    local rest="${path#*/}"
-    repo="${rest%%/*}"
-    subpath="${rest#*/}"
-    [[ "$repo" == "$subpath" ]] && subpath=""
-
-    local clone_url="https://github.com/${org}/${repo}.git"
-    local temp_dir=$(mktemp -d)
-    local example_dir="${temp_dir}/${repo}"
-    [[ -n "$subpath" ]] && example_dir="${example_dir}/${subpath}"
+    local -a _parts
+    mapfile -t _parts < <(parse_repo_path "$path")
+    org="${_parts[0]}"
+    repo="${_parts[1]}"
+    subpath="${_parts[2]}"
+    local example_dir
 
     echo ""
     echo "Verifying: ${name}"
     echo "═══════════════════════════════════════════"
-    echo "Repo: ${clone_url}"
-    echo "Subpath: ${subpath:-<root>}"
+    echo "Source path: ${path}"
     echo ""
 
-    # Step 1: Clone
-    echo "1. Cloning repository..."
-    if ! git clone --depth 1 "${clone_url}" "${temp_dir}/${repo}" 2>/dev/null; then
-        fail "${name}: failed to clone"
-        rm -rf "$temp_dir"
-        return 1
+    # Step 1: Resolve source (local-first, then clone fallback)
+    echo "1. Resolving example source (local-first)..."
+    if ! resolve_example_source "$path"; then
+        handle_missing_source "$name" "$path"
+        return $?
     fi
-    pass "Cloned ${org}/${repo}"
+    example_dir="${EXAMPLE_SOURCE_DIR}"
+    if [[ "${EXAMPLE_SOURCE_KIND}" == "local" ]]; then
+        pass "Using local source: ${EXAMPLE_SOURCE_LABEL}"
+    else
+        pass "Cloned source: ${EXAMPLE_SOURCE_LABEL}"
+    fi
 
     # Step 2: Find deploy method and deploy
     echo ""
@@ -355,7 +480,7 @@ EOF
 
     if [[ "$deployed" == "false" ]]; then
         skip "${name}: no deployable manifests found"
-        rm -rf "$temp_dir"
+        cleanup_example_source
         return 0
     fi
 
@@ -418,7 +543,7 @@ EOF
     kubectl delete namespace "$namespace" --wait=false 2>/dev/null || true
     # Clean up ArgoCD Application if created
     kubectl delete application "verify-${name//_/-}" -n argocd 2>/dev/null || true
-    rm -rf "$temp_dir"
+    cleanup_example_source
     pass "Cleanup complete"
 
     return 0
@@ -445,35 +570,59 @@ test_example() {
     echo "Testing: ${name}"
     echo "─────────────────────────────────────────"
 
-    # Test 1: Repo exists
+    local local_dir=""
+    if local_dir="$(find_local_example_dir "$org" "$repo" "$subpath")"; then
+        pass "${name}: ${path} exists locally (${local_dir})"
+
+        if [[ -f "${local_dir}/README.md" ]]; then
+            pass "${name}: has README.md (local)"
+        else
+            skip "${name}: no README.md (local)"
+        fi
+
+        if [[ -d "${local_dir}/cluster" ]]; then
+            pass "${name}: has cluster/ directory (local)"
+        else
+            skip "${name}: no cluster/ directory (local)"
+        fi
+        return 0
+    fi
+
+    # Fallback to GitHub API checks when available
+    if [[ "${GH_CAN_QUERY}" -ne 1 ]]; then
+        skip "${name}: source not found locally and GitHub API unavailable"
+        return 0
+    fi
+
+    # Test 1: Repo exists (remote)
     if gh api "repos/${org}/${repo}" &>/dev/null; then
         if [[ -n "$subpath" ]]; then
             if gh api "repos/${org}/${repo}/contents/${subpath}" &>/dev/null; then
-                pass "${name}: ${path} exists"
+                pass "${name}: ${path} exists (GitHub)"
             else
-                fail "${name}: ${path} (subpath not found)"
+                fail "${name}: ${path} (subpath not found on GitHub)"
                 return 1
             fi
         else
-            pass "${name}: ${path} exists"
+            pass "${name}: ${path} exists (GitHub)"
         fi
     else
-        fail "${name}: ${path} (repo not found)"
+        fail "${name}: ${path} (repo not found on GitHub)"
         return 1
     fi
 
-    # Test 2: Has README
+    # Test 2: Has README (remote)
     local readme_path="${subpath:+${subpath}/}README.md"
     if gh api "repos/${org}/${repo}/contents/${readme_path}" &>/dev/null; then
-        pass "${name}: has README.md"
+        pass "${name}: has README.md (GitHub)"
     else
         skip "${name}: no README.md"
     fi
 
-    # Test 3: Has cluster directory
+    # Test 3: Has cluster directory (remote)
     local cluster_path="${subpath:+${subpath}/}cluster"
     if gh api "repos/${org}/${repo}/contents/${cluster_path}" &>/dev/null; then
-        pass "${name}: has cluster/ directory"
+        pass "${name}: has cluster/ directory (GitHub)"
     else
         skip "${name}: no cluster/ directory"
     fi
@@ -518,11 +667,13 @@ main() {
         echo "══════════════════════════════════"
         echo ""
         echo "This will:"
-        echo "  1. Clone each example repo"
+        echo "  1. Resolve each example source (local-first, clone fallback)"
         echo "  2. Deploy to current cluster"
         echo "  3. Run map and capture output"
         echo "  4. Save to test/fixtures/expected-output/examples/"
         echo "  5. Clean up deployed resources"
+        echo ""
+        print_local_roots
         echo ""
 
         # Check kubectl
@@ -559,12 +710,14 @@ main() {
         echo "════════════════════════════════"
         echo ""
         echo "This will for each example:"
-        echo "  1. Clone repository"
+        echo "  1. Resolve source (local-first, clone fallback)"
         echo "  2. Deploy to current cluster"
         echo "  3. Run map and verify output"
         echo "  4. Run scan and verify output"
         echo "  5. Compare with expected output (if available)"
         echo "  6. Clean up resources"
+        echo ""
+        print_local_roots
         echo ""
 
         # Check kubectl
@@ -605,15 +758,13 @@ main() {
     echo "ConfigHub Examples Test"
     echo "========================"
 
-    # Check gh CLI
-    if ! command -v gh &>/dev/null; then
-        echo -e "${R}✗${NC} gh CLI not found"
-        exit 1
-    fi
-
-    if ! gh auth status &>/dev/null 2>&1; then
-        echo -e "${R}✗${NC} gh not authenticated (run: gh auth login)"
-        exit 1
+    # GitHub API checks are optional in local-first mode.
+    if command -v gh &>/dev/null && gh auth status &>/dev/null 2>&1; then
+        GH_CAN_QUERY=1
+        echo -e "${G}✓${NC} GitHub API checks enabled"
+    else
+        GH_CAN_QUERY=0
+        echo -e "${Y}○${NC} GitHub API checks disabled (using local-only checks)"
     fi
 
     for i in "${!names[@]}"; do
