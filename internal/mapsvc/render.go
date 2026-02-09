@@ -136,6 +136,9 @@ func BuildOwnershipTreeLines(entries []Entry, opts OwnershipTreeOpts) []Ownershi
 			}
 			if opts.ShowOwnerRef && e.OwnerDetails != nil && e.OwnerDetails["name"] != "" {
 				line.OwnerRef = e.OwnerDetails["name"]
+				if lineage := strings.TrimSpace(e.OwnerDetails["lineage"]); lineage != "" {
+					line.OwnerRef += " <- " + lineage
+				}
 			}
 
 			lines = append(lines, line)

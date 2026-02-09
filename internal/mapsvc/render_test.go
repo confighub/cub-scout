@@ -123,3 +123,28 @@ func TestFormatOwnershipTree_FilterOwnerAndDepth(t *testing.T) {
 		t.Error("should not contain ArgoCD when filtering by Flux")
 	}
 }
+
+func TestFormatOwnershipTree_ShowOwnerRefWithLineage(t *testing.T) {
+	entries := []Entry{
+		{
+			Name:      "payments-api",
+			Namespace: "payments",
+			Kind:      "Deployment",
+			Owner:     "ArgoCD",
+			OwnerDetails: map[string]string{
+				"name":    "application/payments-prod",
+				"lineage": "applicationset/payments-set <- application/root-app",
+			},
+		},
+	}
+
+	opts := OwnershipTreeOpts{ShowOwnerRef: true}
+	got := FormatOwnershipTree(entries, opts)
+
+	if !strings.Contains(got, "payments/payments-api") {
+		t.Fatalf("expected workload path in output, got:\n%s", got)
+	}
+	if !strings.Contains(got, "application/payments-prod <- applicationset/payments-set <- application/root-app") {
+		t.Fatalf("expected owner ref lineage in output, got:\n%s", got)
+	}
+}

@@ -62,6 +62,7 @@ Complete reference for all interactive TUI views.
 - Resources organized under owner sections
 - Status indicators (✓ healthy, ⚠ warning, ✗ error)
 - Namespace and name
+- For ArgoCD workloads, `MANAGED-BY` may include lineage to parent `ApplicationSet` or parent `Application` when detected
 
 **Layout:**
 ```

@@ -176,6 +176,12 @@ Canonical workload scope (v1.0):
 - `Deployment`
 - `StatefulSet`
 
+Argo lineage semantics:
+- `MANAGED-BY` shows the owning Application.
+- If lineage is detected, it is appended as:
+  `application-name <- applicationset/<name>` or
+  `application-name <- applicationset/<name> <- application/<parent>`
+
 ```bash
 cub-scout map workloads [flags]
 ```
@@ -330,7 +336,7 @@ cub-scout tree [view] [flags]
 | View | Description |
 |------|-------------|
 | `runtime` | Deployment → ReplicaSet → Pod (default) |
-| `ownership` | Resources by GitOps owner |
+| `ownership` | Resources by GitOps owner (+ ownerRef lineage) |
 | `git` | Git source structure |
 | `patterns` | Detected GitOps patterns |
 | `config` | ConfigHub relationships |
@@ -353,6 +359,9 @@ cub-scout tree suggest          # Suggested ConfigHub structure
 cub-scout tree ownership --format json   # JSON output
 cub-scout tree runtime --format md       # Markdown output
 ```
+
+`tree ownership` includes owner references for managed resources.
+For ArgoCD resources, this includes optional lineage to parent `Application` and/or `ApplicationSet` when discoverable.
 
 ---
 
