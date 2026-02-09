@@ -173,6 +173,6 @@ Exit criteria:
 - `docs/archive/IMPORTING-WORKLOADS.md`
 - `docs/archive/JOURNEY-IMPORT.md`
 - `docs/reference/rendered-manifest-and-argo-product-guide.md`
+- `docs/reference/connected-tiers-and-views-product-guide.md`
 - `docs/roadmap-rendered-manifest-and-argo.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/VIEW-TIERS.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/RM-DEMOS-ARGOCD.md`
+- `docs/roadmap-connected-views-and-launch.md`

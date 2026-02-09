@@ -59,6 +59,7 @@ Complete reference documentation:
 | GitOps patterns | [reference/gitops-patterns.md](reference/gitops-patterns.md) |
 | GitOps repo structures | [reference/gitops-repo-structures.md](reference/gitops-repo-structures.md) |
 | Rendered Manifest + Argo guide | [reference/rendered-manifest-and-argo-product-guide.md](reference/rendered-manifest-and-argo-product-guide.md) |
+| Connected tiers + views guide | [reference/connected-tiers-and-views-product-guide.md](reference/connected-tiers-and-views-product-guide.md) |
 | Resolver pattern | [reference/resolver-pattern.md](reference/resolver-pattern.md) |
 | Hub/AppSpace examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
 | Map PRD | [reference/map-prd.md](reference/map-prd.md) |
@@ -130,4 +131,5 @@ Real-world use cases:
 |-------------|---------|
 | [roadmap.md](roadmap.md) | Future features (P2-P3) |
 | [roadmap-rendered-manifest-and-argo.md](roadmap-rendered-manifest-and-argo.md) | Backlog split from RM/App-of-Apps planning docs |
+| [roadmap-connected-views-and-launch.md](roadmap-connected-views-and-launch.md) | Backlog split from view-tier/mockup/launch planning docs |
 | `archive/` | Historical documentation |
