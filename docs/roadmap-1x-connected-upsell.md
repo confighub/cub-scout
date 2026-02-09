@@ -6,7 +6,7 @@ Date: 2026-02-08
 ## Why this plan
 
 This plan synthesizes:
-- Artem feedback themes (Argo hierarchy trust, context clarity, workload scope, migration path)
+- Feedback themes (Argo hierarchy trust, context clarity, workload scope, migration path)
 - Existing cub-scout roadmap direction (`docs/roadmap.md`)
 - Connected/fleet value framing from local planning docs
 
@@ -58,6 +58,7 @@ Deliverables:
 - Better connected hierarchy navigation defaults (cluster-aware filtering and clear mode state).
 - First-class trace context diagnostics and reset path in connected workflows.
 - Canonical migration guide from Argo/Helm to ConfigHub (#130), promoted out of archive.
+- Update all the 'why connected' docs and.md files to be consistent and complete
 
 Exit criteria:
 - A user can import one real cluster and understand Hub/App Space/Unit mapping without external guidance.
