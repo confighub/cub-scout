@@ -4,16 +4,32 @@
 >
 > This file is a session log and may include historical snapshots that are useful for context but are not authoritative roadmap commitments.
 
-**Date:** 2026-02-06
+**Date:** 2026-02-09
 **Version line:** v0.19.x (preparing v1.0)
-**Latest release:** **v0.19.6**
-**Latest commit:** `98b602c`
+**Latest release:** **v0.19.7**
+**Latest commit:** `6c6a2d7`
 **Repo state:** Clean, green, synced
 **Semantic status:** Stable and sealed — awaiting user feedback before v1.0
 
 ---
 
 ## 📦 What Is Shipped (COMPLETE)
+
+### v0.19.7 — Argo Lineage & v1 Readiness Audits (RELEASED)
+
+**Tag:** `v0.19.7`
+**GitHub Release:** Published
+**Tests:** All passing (`go test ./...`, race-safe)
+
+Key changes:
+- **Argo App-of-Apps lineage** in ownership views (#128, #136)
+- **ApplicationSet generator visualization** in tree git (#132, #139)
+- **Canonical workload scope** aligned across map/tree/docs (#129, #135)
+- **Trace context hardening** for stale Argo endpoints (#127, #134)
+- **Canonical migration path** from Argo/Helm to ConfigHub (#130, #137)
+- **Archive import docs normalized** to canonical crosswalk (#133, #138)
+- **Argo regression audit script** with CI-friendly fixtures (#125)
+- **v1.0 readiness** hardening across docs, CI, and tests (#123, #124)
 
 ### v0.19.6 — 1.0 Readiness (RELEASED)
 
@@ -28,16 +44,6 @@ Key changes:
 - Hub package tests added
 - Removed "experimental" messaging
 - GOTOOLCHAIN=local for air-gapped builds
-
-### Post-v0.19.6 (main branch, not yet released)
-
-Discoverability improvements for v1.0:
-- README: "Getting Value Fast", "Choose Your Interface", "Standalone vs Connected", "Maps & Trees"
-- README: Bundle summaries section (ticket/pr/slack formats)
-- CLI help: Popular commands, interface options, tips
-- Docs: `docs/concepts/mental-model.md` (3-minute overview)
-- Docs: `docs/releases/v1.0.0.md` (release notes draft)
-- CLI contract: Expanded `bundle summarize` documentation
 
 ### Previous releases: v0.16.0–v0.19.5
 
