@@ -1,0 +1,201 @@
+version: 1
+source_docs:
+  value_props: "https://github.com/confighubai/confighub-agent/blob/main/planning/RENDERED-MANIFEST-PATTERN.md"
+  use_cases: "https://github.com/confighubai/confighub-agent/blob/main/planning/RENDERED-MANIFEST-PATTERN-FULL-PRODUCT.md"
+  demo_scenarios: "https://github.com/confighubai/confighub-agent/blob/main/planning/REPO-SKELETON-TAXONOMY.md"
+principles:
+  - single-cluster-first
+  - skeleton-aware-coverage
+examples:
+  - id: flux_boutique
+    repo: cub-scout
+    path: examples/flux-boutique
+    skeleton_id: flux-tenant-mono
+    required: true
+    value_props:
+      - single cluster ownership visibility
+      - source tracing from workload to deployer
+    use_cases:
+      - fleet model baseline
+      - fast break/fix verification
+    demo_scenarios:
+      - Monday Panic
+    required_paths:
+      - README.md
+      - boutique.yaml
+  - id: apptique_flux_monorepo
+    repo: cub-scout
+    path: examples/apptique-examples/flux-monorepo
+    skeleton_id: flux-tenant-mono
+    required: true
+    value_props:
+      - repo skeleton normalization
+      - drift-aware rollout confidence
+    use_cases:
+      - cross-fleet query baseline
+      - rollout planning
+    demo_scenarios:
+      - Security Patch
+    required_paths:
+      - clusters/dev/kustomization.yaml
+      - clusters/prod/kustomization.yaml
+      - infrastructure/gitrepository.yaml
+  - id: apptique_argo_applicationset
+    repo: cub-scout
+    path: examples/apptique-examples/argo-applicationset
+    skeleton_id: argo-appset-mono
+    required: true
+    value_props:
+      - applicationset generator lineage
+      - source-to-live provenance
+    use_cases:
+      - blast radius estimation input
+      - source tracing across generated apps
+    demo_scenarios:
+      - Monday Panic
+    required_paths:
+      - bootstrap/applicationset.yaml
+  - id: apptique_argo_app_of_apps
+    repo: cub-scout
+    path: examples/apptique-examples/argo-app-of-apps
+    skeleton_id: argo-aoa-mono
+    required: true
+    value_props:
+      - app-of-apps parent child visibility
+      - operational hierarchy clarity
+    use_cases:
+      - hierarchy-first debugging
+      - dependency-driven change planning
+    demo_scenarios:
+      - 2AM kubectl
+    required_paths:
+      - root/root-app.yaml
+      - apps/apptique-dev.yaml
+      - apps/apptique-prod.yaml
+  - id: rm_demos_argocd
+    repo: cub-scout
+    path: examples/rm-demos-argocd
+    skeleton_id: argo-appset-mono
+    required: true
+    value_props:
+      - rendered manifest bridge verification
+      - original vs rendered parity checks
+    use_cases:
+      - migration readiness validation
+      - rollout confidence checks
+    demo_scenarios:
+      - Security Patch
+    required_paths:
+      - README.md
+      - repo-patterns/applicationsets
+  - id: confighub_global_app
+    repo: examples
+    path: global-app
+    skeleton_id: confighub-rendered
+    required: false
+    value_props:
+      - confighub unit/target mapping
+      - single-cluster-first onboarding
+    use_cases:
+      - import and hierarchy bootstrap
+      - baseline change propagation
+    demo_scenarios:
+      - Monday Panic
+    required_paths:
+      - README.md
+      - cluster
+  - id: confighub_helm_platform_components
+    repo: examples
+    path: helm-platform-components
+    skeleton_id: helm-umbrella
+    required: false
+    value_props:
+      - platform component composition visibility
+      - rendered artifact provenance
+    use_cases:
+      - source tracing from umbrella charts
+      - impact analysis for shared components
+    demo_scenarios:
+      - Security Patch
+    required_paths:
+      - README.md
+  - id: confighub_vm_fleet
+    repo: examples
+    path: vm-fleet
+    skeleton_id: confighub-rendered
+    required: false
+    value_props:
+      - fleet model at infra/app boundary
+      - region-aware target mapping
+    use_cases:
+      - cross-region rollout planning
+      - drift and skew checks
+    demo_scenarios:
+      - 2AM kubectl
+    required_paths:
+      - README.md
+      - aws
+  - id: rendered_manifest_flux_helm_kustomize
+    repo: examples-internal
+    path: rendered-manifest/flux-helm-kustomize
+    skeleton_id: flux-helm-mono
+    required: false
+    value_props:
+      - rendered-manifest parity checks
+      - flux source/render/deploy boundary clarity
+    use_cases:
+      - original vs rendered migration validation
+      - rollout artifact verification
+    demo_scenarios:
+      - Security Patch
+    required_paths:
+      - base/kustomization.yaml
+      - clusters
+  - id: rendered_manifest_argo_umbrella_charts
+    repo: examples-internal
+    path: rendered-manifest/argo-umbrella-charts
+    skeleton_id: helm-umbrella
+    required: false
+    value_props:
+      - umbrella chart rendered-source contract
+      - applicationset hierarchy traceability
+    use_cases:
+      - generator-to-app lineage checks
+      - migration readiness evidence
+    demo_scenarios:
+      - Monday Panic
+    required_paths:
+      - clusters/applicationset.yaml
+      - charts
+  - id: confighub_public_hello_world_bridge
+    repo: confighub/public
+    path: examples/hello-world-bridge
+    skeleton_id: confighub-function
+    required: false
+    value_props:
+      - function/bridge provenance checks
+      - connected mode source contract sanity
+    use_cases:
+      - quick integration sanity
+      - CLI to source navigation
+    demo_scenarios:
+      - 2AM kubectl
+    required_paths:
+      - README.md
+      - main.go
+  - id: confighub_public_hello_world_function
+    repo: confighub/public
+    path: examples/hello-world-function
+    skeleton_id: confighub-function
+    required: false
+    value_props:
+      - function execution packaging contract
+      - source to rendered traceability
+    use_cases:
+      - function pipeline smoke
+      - change impact preflight
+    demo_scenarios:
+      - Security Patch
+    required_paths:
+      - README.md
+      - main.go

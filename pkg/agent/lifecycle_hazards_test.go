@@ -4,10 +4,14 @@
 package agent
 
 import (
+	"context"
 	"strings"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 )
 
 func TestLifecycleHazardScanner_HelmHookAmbiguity(t *testing.T) {
@@ -368,4 +372,102 @@ func makeHookObject(kind, name, namespace string, annotations map[string]string)
 	obj.SetNamespace(namespace)
 	obj.SetAnnotations(annotations)
 	return obj
+}
+
+func newLifecycleFakeClient(objects ...runtime.Object) *dynamicfake.FakeDynamicClient {
+	scheme := runtime.NewScheme()
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "batch", Version: "v1", Resource: "jobs"}:        "JobList",
+		{Group: "batch", Version: "v1", Resource: "cronjobs"}:    "CronJobList",
+		{Group: "", Version: "v1", Resource: "pods"}:             "PodList",
+		{Group: "", Version: "v1", Resource: "configmaps"}:       "ConfigMapList",
+		{Group: "", Version: "v1", Resource: "secrets"}:          "SecretList",
+		{Group: "", Version: "v1", Resource: "serviceaccounts"}:  "ServiceAccountList",
+		{Group: "", Version: "v1", Resource: "services"}:         "ServiceList",
+		{Group: "apps", Version: "v1", Resource: "deployments"}:  "DeploymentList",
+		{Group: "apps", Version: "v1", Resource: "statefulsets"}: "StatefulSetList",
+		{Group: "apps", Version: "v1", Resource: "daemonsets"}:   "DaemonSetList",
+	}
+	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
+}
+
+func TestLifecycleHazardScanner_CollectClusterObjects(t *testing.T) {
+	jobHook := &unstructured.Unstructured{}
+	jobHook.SetAPIVersion("batch/v1")
+	jobHook.SetKind("Job")
+	jobHook.SetName("db-migrate")
+	jobHook.SetNamespace("prod")
+	jobHook.SetAnnotations(map[string]string{
+		HelmHookAnnotation: "post-install",
+	})
+
+	deployNoHook := &unstructured.Unstructured{}
+	deployNoHook.SetAPIVersion("apps/v1")
+	deployNoHook.SetKind("Deployment")
+	deployNoHook.SetName("api")
+	deployNoHook.SetNamespace("prod")
+
+	cmHook := &unstructured.Unstructured{}
+	cmHook.SetAPIVersion("v1")
+	cmHook.SetKind("ConfigMap")
+	cmHook.SetName("hook-cm")
+	cmHook.SetNamespace("dev")
+	cmHook.SetAnnotations(map[string]string{
+		HelmHookAnnotation: "pre-install,post-upgrade",
+	})
+
+	client := newLifecycleFakeClient(jobHook, deployNoHook, cmHook)
+	scanner := &LifecycleHazardScanner{client: client}
+
+	objects, err := scanner.collectClusterObjects(context.Background())
+	if err != nil {
+		t.Fatalf("collectClusterObjects failed: %v", err)
+	}
+
+	if len(objects) != 2 {
+		t.Fatalf("collectClusterObjects len = %d, want 2", len(objects))
+	}
+
+	names := map[string]bool{}
+	for _, obj := range objects {
+		names[obj.GetName()] = true
+	}
+	if !names["db-migrate"] || !names["hook-cm"] {
+		t.Fatalf("collectClusterObjects missing expected hook objects: got names=%v", names)
+	}
+}
+
+func TestLifecycleHazardScanner_CollectNamespaceObjects(t *testing.T) {
+	jobProd := &unstructured.Unstructured{}
+	jobProd.SetAPIVersion("batch/v1")
+	jobProd.SetKind("Job")
+	jobProd.SetName("job-prod")
+	jobProd.SetNamespace("prod")
+	jobProd.SetAnnotations(map[string]string{
+		HelmHookAnnotation: "post-install",
+	})
+
+	jobDev := &unstructured.Unstructured{}
+	jobDev.SetAPIVersion("batch/v1")
+	jobDev.SetKind("Job")
+	jobDev.SetName("job-dev")
+	jobDev.SetNamespace("dev")
+	jobDev.SetAnnotations(map[string]string{
+		HelmHookAnnotation: "post-upgrade",
+	})
+
+	client := newLifecycleFakeClient(jobProd, jobDev)
+	scanner := &LifecycleHazardScanner{client: client}
+
+	objects, err := scanner.collectNamespaceObjects(context.Background(), "prod")
+	if err != nil {
+		t.Fatalf("collectNamespaceObjects failed: %v", err)
+	}
+
+	if len(objects) != 1 {
+		t.Fatalf("collectNamespaceObjects len = %d, want 1", len(objects))
+	}
+	if objects[0].GetName() != "job-prod" {
+		t.Fatalf("collectNamespaceObjects[0].name = %q, want %q", objects[0].GetName(), "job-prod")
+	}
 }

@@ -107,13 +107,13 @@ func init() {
 
 // CombinedScanResult holds results from all scanners
 type CombinedScanResult struct {
-	Kyverno          *agent.ScanResult              `json:"kyverno,omitempty"`
-	State            *agent.StateScanResult         `json:"state,omitempty"`
-	TimingBombs      *agent.TimingBombResult        `json:"timingBombs,omitempty"`
-	Unresolved       *agent.UnresolvedResult        `json:"unresolved,omitempty"`
-	Dangling         *agent.DanglingResult          `json:"dangling,omitempty"`
-	LifecycleHazards *agent.LifecycleHazardResult   `json:"lifecycleHazards,omitempty"`
-	Static           *agent.StaticScanResult        `json:"static,omitempty"`
+	Kyverno          *agent.ScanResult            `json:"kyverno,omitempty"`
+	State            *agent.StateScanResult       `json:"state,omitempty"`
+	TimingBombs      *agent.TimingBombResult      `json:"timingBombs,omitempty"`
+	Unresolved       *agent.UnresolvedResult      `json:"unresolved,omitempty"`
+	Dangling         *agent.DanglingResult        `json:"dangling,omitempty"`
+	LifecycleHazards *agent.LifecycleHazardResult `json:"lifecycleHazards,omitempty"`
+	Static           *agent.StaticScanResult      `json:"static,omitempty"`
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -267,10 +267,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Run Lifecycle Hazards scan
 	var lifecycleHazardsResult *agent.LifecycleHazardResult
 	if scanLifecycleHazards {
-		// For now, lifecycle hazards scanner works with file input
-		// Cluster-based scanning will be added in a future release
-		fmt.Printf("\n%s⚠ Lifecycle hazards scanning requires --file input%s\n", colorYellow, colorReset)
-		fmt.Printf("  Use: cub-scout scan --lifecycle-hazards --file manifest.yaml\n\n")
+		lifecycleScanner, err := agent.NewLifecycleHazardScanner(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to create lifecycle hazard scanner: %w", err)
+		}
+		if scanNamespace != "" {
+			lifecycleHazardsResult, err = lifecycleScanner.ScanNamespace(ctx, scanNamespace)
+		} else {
+			lifecycleHazardsResult, err = lifecycleScanner.Scan(ctx)
+		}
+		if err != nil {
+			return fmt.Errorf("lifecycle hazards scan failed: %w", err)
+		}
 	}
 
 	// Output results
@@ -284,7 +292,14 @@ func runScan(cmd *cobra.Command, args []string) error {
 			LifecycleHazards: lifecycleHazardsResult,
 		})
 	}
-	return outputCombinedHuman(kyvernoResult, stateResult, timingBombResult, unresolvedResult, danglingResult)
+	if err := outputCombinedHuman(kyvernoResult, stateResult, timingBombResult, unresolvedResult, danglingResult); err != nil {
+		return err
+	}
+	if lifecycleHazardsResult != nil {
+		fmt.Printf("\n")
+		fmt.Print(agent.RenderLifecycleHazardsASCII(lifecycleHazardsResult))
+	}
+	return nil
 }
 
 // findPolicyDBDir locates the Kyverno policy database

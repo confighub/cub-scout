@@ -28,7 +28,7 @@ go build ./cmd/cub-scout && go test ./...
 
 | Test Group | Weight | Verification | What It Proves |
 |------------|--------|--------------|----------------|
-| **Unit Tests** | 20% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
+| **Unit Tests** | 20% | `go test ./...` | Ownership detection, query parsing, risk pattern checks |
 | **Integration** | 20% | `go test -tags=integration ./test/integration/...` | CLI commands work, JSON output valid |
 | **GitOps E2E** | 20% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
 | **Attribution Contract** | 20% | `go test ./pkg/agent/... -run Attribution` | Determinism, scoring, bundle replay (v0.16+) |
@@ -64,7 +64,7 @@ go test -tags=integration ./test/integration/...  # Integration tests
 |---------|-------------|
 | `map status/list/deployers/orphans/issues` | Integration + E2E |
 | `map drift/crashes/workloads` | TUI tests |
-| `scan` (CCVE detection) | Integration + E2E |
+| `scan` (risk detection) | Integration + E2E |
 | `trace` (ownership chains) | Unit + Integration |
 | `import` (ConfigHub onboarding) | TUI + E2E |
 | Query language | Unit + Integration + E2E |
@@ -99,7 +99,7 @@ go test ./...
 
 | Category | Tests | What It Proves |
 |----------|-------|----------------|
-| Unit tests | ~68 | Ownership detection, query parsing, CCVE patterns |
+| Unit tests | ~68 | Ownership detection, query parsing, risk pattern checks |
 | TUI tests (teatest) | ~77 | All keybindings work, views render, snapshots |
 | CLI tests | ~34 | Logger, suggestions, import wizard |
 
@@ -119,7 +119,7 @@ go test -tags=integration ./test/integration/...
 | TestMapDeployers | GitOps deployer listing works |
 | TestMapOrphans | Orphan detection works |
 | TestMapIssues | Issue listing works |
-| TestScan | CCVE scanning produces output |
+| TestScan | Risk scanning produces output |
 | TestScanJSON | Scan JSON output is valid |
 | TestTrace | Ownership tracing works on real deployment |
 | TestQuery | Query language filters work |
@@ -136,9 +136,9 @@ go test -tags=integration ./test/integration/...
 
 | Phase | Tests | What It Proves |
 |-------|-------|----------------|
-| Phase 1: Standard | 8 | Preflight, build, ATK verify/map/scan |
-| Phase 2: Demos | 4 | quick, ccve, healthy, unhealthy work |
-| Phase 3: Examples | 8+ | Local examples + external ConfigHub examples verify |
+| Phase 1: Standard | 8 | Preflight, build, unit+integration checks |
+| Phase 2: Demos | 5 | `cub-scout demo` quick/risk/query + scenarios |
+| Phase 3: Examples | 8+ | Real examples catalog + cluster example validation |
 
 **Examples covered in Phase 3:**
 
@@ -146,7 +146,7 @@ go test -tags=integration ./test/integration/...
 |---------|------|----------------|
 | `apptique-examples/` | Working | Flux monorepo, Argo ApplicationSet, App of Apps |
 | `flux-boutique/` | Working | 5-service Flux demo, TUI views, trace |
-| `impressive-demo/` | Test Fixtures | CCVE scenarios, conference demo |
+| `impressive-demo/` | Test Fixtures | Risk-story scenarios, conference demo |
 | `integrations/argocd-extension/` | Working | ArgoCD UI extension |
 | `integrations/flux-operator/` | Working | Flux metrics exporter |
 | `rm-demos-argocd/` | Concept | Rendered Manifest simulations |
@@ -155,7 +155,8 @@ go test -tags=integration ./test/integration/...
 
 **Run time:** ~4 minutes (requires cluster)
 
-`--level=examples` and `--level=full` run `./test/atk/examples --verify-all` using local-first source resolution (local checkout first, GitHub clone fallback).
+`--level=examples` and `--level=full` run real examples catalog verification:
+`go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1`
 
 ---
 
@@ -200,19 +201,20 @@ test/
 │   ├── ownership_test.go          # Ownership detection logic
 │   └── cub_cli_test.go            # cub CLI output parsing
 ├── integration/                   # Go integration tests (cluster)
-│   └── connected_test.go          # 12 integration tests
-├── atk/                           # Agent Test Kit (E2E)
-│   ├── demo                       # Interactive demos
-│   ├── verify                     # Ownership detection E2E
-│   ├── verify-connected           # Connected mode verification
-│   └── fixtures/                  # K8s manifests
+│   ├── connected_test.go          # 12 integration tests
+│   └── real_examples_catalog_test.go  # Real examples catalog gate
+├── examples/                      # Real examples catalog
+│   ├── README.md                  # Catalog usage
+│   └── real-examples-catalog.yaml # Skeleton/value-prop/use-case matrix
+├── atk/                           # Agent Test Kit (deprecated/manual)
+│   └── ...                        # retained during migration
 └── fixtures/                      # Shared test data
 
 examples/                          # Phase 3: All examples
 ├── apptique-examples/             # Real GitOps patterns (Flux, Argo)
 ├── flux-boutique/                 # 5-service Flux demo
 ├── demos/                         # Test fixtures with ownership labels
-├── impressive-demo/               # Conference demo with CCVE scenarios
+├── impressive-demo/               # Conference demo with risk-story scenarios
 ├── integrations/                  # ArgoCD extension, Flux operator
 ├── rm-demos-argocd/               # Rendered Manifest simulations
 ├── app-config-rtmsg/              # Non-K8s config TUI mockup
@@ -232,25 +234,28 @@ examples/                          # Phase 3: All examples
 | `pkg/agent/argo_trace_test.go` | 3 | ArgoCD ownership chain tracing |
 | `pkg/agent/trace_test.go` | 5 | General trace functionality |
 | `pkg/agent/relationships_test.go` | 4 | Resource relationship detection |
-| `pkg/agent/state_scanner_test.go` | 8 | CCVE state scanning |
+| `pkg/agent/state_scanner_test.go` | 8 | Risk state scanning |
 | `pkg/query/query_test.go` | 12 | Query language parsing |
 | `pkg/remedy/executor_test.go` | 6 | Remedy execution |
 | `cmd/cub-scout/localcluster_test.go` | 36 | Local cluster TUI keybindings |
 | `cmd/cub-scout/hierarchy_test.go` | 27 | Hub TUI navigation |
 | `cmd/cub-scout/import_wizard_test.go` | 8 | Import wizard flow |
 
-### E2E Demos (`./test/atk/demo`)
+### E2E Demos (`./cub-scout demo`)
 
 | Demo | What It Proves |
 |------|----------------|
 | `quick` | Apply fixtures → map status/list/issues works |
-| `ccve` | CCVE-2025-0027 detection scenario |
-| `healthy` | Enterprise healthy cluster view |
-| `unhealthy` | Enterprise problem detection |
-| `connected` | ConfigHub connected mode (requires auth) |
+| `risk demo` | Risk detection scenario from real outage pattern |
+| `query` | Query language filtering and ownership slice |
 | `scenario bigbank-incident` | Full BIGBANK narrative |
-| `scenario orphan-hunt` | Orphan detection workflow |
-| `scenario monday-morning` | Health check workflow |
+| `scenario break-glass` | Emergency kubectl apply accept/reject workflow |
+
+### Real Examples Catalog
+
+| Check | What It Proves |
+|------|----------------|
+| `go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1` | Repo skeleton coverage and scenario/value-prop alignment against real local examples |
 
 ---
 
@@ -396,7 +401,7 @@ Checks:
 | Category | Target | Status |
 |----------|--------|--------|
 | Ownership detection (6 types) | 100% | ✓ |
-| CCVE patterns (46) | 100% | ✓ |
+| Risk patterns (46) | 100% | ✓ |
 | cub CLI parsing | 100% | ✓ |
 | TUI keybindings | 100% | ✓ |
 | All demos run without error | 100% | ✓ |

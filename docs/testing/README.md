@@ -31,7 +31,7 @@ When using AI to write code, 100% test coverage is non-negotiable.
 
 | Test Group | Weight | Verification | What It Proves |
 |------------|--------|--------------|----------------|
-| **Unit Tests** | 20% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
+| **Unit Tests** | 20% | `go test ./...` | Ownership detection, query parsing, risk pattern checks |
 | **Integration** | 20% | `go test -tags=integration ./test/integration/...` | CLI commands work, JSON output valid |
 | **GitOps E2E** | 20% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
 | **Attribution Contract** | 20% | `go test ./pkg/agent/... -run Attribution` | Determinism, scoring, bundle replay (v0.16+) |
@@ -51,7 +51,7 @@ go test ./...
 
 | Category | Tests | What It Proves |
 |----------|-------|----------------|
-| Unit tests | ~68 | Ownership detection (all 6 types), query parsing, CCVE patterns |
+| Unit tests | ~68 | Ownership detection (all 6 types), query parsing, risk pattern checks |
 | TUI tests (teatest) | ~77 | All keybindings work, views render, snapshots match |
 | CLI tests | ~34 | Logger, suggestions, import wizard |
 
@@ -71,7 +71,7 @@ go test -tags=integration ./test/integration/...
 | TestMapDeployers | GitOps deployer listing works |
 | TestMapOrphans | Orphan detection works |
 | TestMapIssues | Issue listing works |
-| TestScan | CCVE scanning produces output |
+| TestScan | Risk scanning produces output |
 | TestScanJSON | Scan JSON output is valid |
 | TestTrace | Ownership tracing works |
 | TestQuery | Query language filters work |
@@ -88,13 +88,14 @@ go test -tags=integration ./test/integration/...
 
 | Phase | Tests | What It Proves |
 |-------|-------|----------------|
-| Phase 1: Standard | 8 | Preflight, build, ATK verify/map/scan |
-| Phase 2: Demos | 4 | quick, ccve, healthy, unhealthy work |
-| Phase 3: Examples | 8+ | Local examples + external ConfigHub examples verify |
+| Phase 1: Standard | 8 | Preflight, build, unit+integration checks |
+| Phase 2: Demos | 5 | `cub-scout demo` quick/risk/query + scenarios |
+| Phase 3: Examples | 8+ | Real examples catalog + cluster example validation |
 
 **Run time:** ~4 minutes (requires cluster)
 
-`--level=examples` and `--level=full` also run `./test/atk/examples --verify-all` using local-first source resolution (local checkout first, GitHub clone fallback).
+`--level=examples` and `--level=full` also run real examples catalog verification:
+`go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1`
 
 ---
 
@@ -119,6 +120,30 @@ The `prove-it-works.sh` script supports 7 levels:
 
 ---
 
+## Pre-1.0 ATK Cleanup Plan
+
+Goal: keep behavior stable while moving daily testing and demos to `cub-scout` commands and Go integration tests.
+
+### Phase 1: Default path (done)
+
+- `./test/prove-it-works.sh` demo coverage runs through `./cub-scout demo ...`
+- CI demos run through `./cub-scout demo ...`
+- Real examples are gated by `TestRealExamplesCatalog`
+
+### Phase 2: Active-doc cleanup (in progress)
+
+- Replace active references to legacy wrapper scripts in docs and examples
+- Keep `test/atk/` documented as legacy/manual only during migration
+- Avoid introducing new active-doc dependencies on wrapper commands
+
+### Phase 3: Removal readiness (before 1.0)
+
+- Ensure required fixtures and demos are reachable without wrappers
+- Ensure regression coverage lives in Go/integration tests
+- Archive or delete wrapper scripts that no longer add unique value
+
+---
+
 ## Writing Tests
 
 ### The Golden Rule
@@ -135,7 +160,7 @@ Every testable behavior needs proof:
 ### What Must Be Tested
 
 1. **Ownership detection** — Every owner type (Flux, ArgoCD, Helm, ConfigHub, Crossplane, Native)
-2. **CCVE patterns** — Every pattern in the catalog (46 patterns)
+2. **Risk patterns** — Every pattern in the catalog (46 patterns)
 3. **TUI keybindings** — Every key press has expected behavior
 4. **CLI commands** — Every command produces valid output
 5. **Attribution** — Deterministic graph and report generation
@@ -198,12 +223,11 @@ test/
 │   └── cub_cli_test.go            # cub CLI output parsing
 ├── integration/                   # Go integration tests (cluster)
 │   └── connected_test.go          # 12 integration tests
-├── atk/                           # Agent Test Kit (E2E)
-│   ├── setup-cluster              # Create Kind + Flux + ArgoCD
-│   ├── teardown-cluster           # Destroy cluster
-│   ├── verify                     # Ownership verification
-│   ├── demo                       # Interactive demos
-│   └── fixtures/                  # K8s manifests
+├── examples/                      # Real examples catalog + references
+│   ├── README.md                  # Catalog usage
+│   └── real-examples-catalog.yaml # Skeleton/value-prop/use-case matrix
+├── atk/                           # Legacy Agent Test Kit (deprecated/manual)
+│   └── ...                        # retained for migration period
 ├── fixtures/                      # Shared test data
 └── golden/                        # TUI golden snapshots
 ```
@@ -283,7 +307,7 @@ cub worker list
 | Category | Target | Status |
 |----------|--------|--------|
 | Ownership detection (6 types) | 100% | PASS |
-| CCVE patterns (46) | 100% | PASS |
+| Risk patterns (46) | 100% | PASS |
 | TUI keybindings | 100% | PASS |
 | All demos run without error | 100% | PASS |
 | Demo cleanup works | 100% | PASS |

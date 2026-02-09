@@ -57,6 +57,9 @@ jobs:
       - name: Run unit tests
         run: go test ./... -v
 
+      - name: Verify real examples catalog
+        run: go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1 -v
+
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
@@ -229,18 +232,25 @@ jobs:
 
       - name: Run quick demo
         run: |
-          ./test/atk/demo quick
-          ./test/atk/demo quick --cleanup
+          ./cub-scout demo quick
+          ./cub-scout demo quick --cleanup
 
       - name: Run ccve demo
         run: |
-          ./test/atk/demo ccve
-          ./test/atk/demo ccve --cleanup
+          ./cub-scout demo ccve
+          ./cub-scout demo ccve --cleanup
+
+      - name: Run query demo
+        run: |
+          ./cub-scout demo query
+          ./cub-scout demo query --cleanup
 
       - name: Run scenarios
         run: |
-          ./test/atk/demo scenario bigbank-incident || true
-          ./test/atk/demo scenario break-glass || true
+          ./cub-scout demo scenario bigbank-incident || true
+          ./cub-scout demo scenario bigbank-incident --cleanup || true
+          ./cub-scout demo scenario break-glass || true
+          ./cub-scout demo scenario break-glass --cleanup || true
 
   # ==========================================================================
   # Full test (manual trigger only)

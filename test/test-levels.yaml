@@ -73,22 +73,24 @@ levels:
 
   # Level 4: Demos (< 10 minutes, needs cluster)
   demos:
-    description: "All demo scripts run without errors"
+    description: "Go demo command scenarios run without errors"
     requirements:
       cluster: true
       flux: true
       argocd: true
       confighub: false
     tests:
-      - ./test/atk/demo quick
-      - ./test/atk/demo ccve
-      - ./test/atk/demo healthy
-      - ./test/atk/demo unhealthy
-      - ./test/atk/demo scenario bigbank-incident
-      - ./test/atk/demo scenario break-glass
+      - ./cub-scout demo quick
+      - ./cub-scout demo ccve
+      - ./cub-scout demo query
+      - ./cub-scout demo scenario bigbank-incident
+      - ./cub-scout demo scenario break-glass
     cleanup:
-      - ./test/atk/demo quick --cleanup
-      - ./test/atk/demo ccve --cleanup
+      - ./cub-scout demo quick --cleanup
+      - ./cub-scout demo ccve --cleanup
+      - ./cub-scout demo query --cleanup
+      - ./cub-scout demo scenario bigbank-incident --cleanup
+      - ./cub-scout demo scenario break-glass --cleanup
 
   # Level 5: Examples E2E (< 15 minutes, needs cluster + GitOps)
   examples:
@@ -102,7 +104,7 @@ levels:
       - kubectl apply -f examples/flux-boutique/boutique.yaml
       - kubectl apply -f examples/apptique-examples/flux-monorepo/
       - ./cub-scout map list -n boutique --json > /tmp/boutique.json
-      - ./test/atk/examples --verify-all
+      - go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1
       - ./test/validate-expected-outputs.sh --category=examples
     expected_outputs:
       - test/expected-outputs/examples/flux-boutique.txt

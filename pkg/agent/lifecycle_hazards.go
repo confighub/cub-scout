@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
@@ -330,13 +332,71 @@ func getMappedPhase(hooks []string) string {
 }
 
 func (s *LifecycleHazardScanner) collectClusterObjects(ctx context.Context) ([]*unstructured.Unstructured, error) {
-	// For now, collect Jobs and other hook-capable resources
-	// This is a simplified implementation
-	return nil, fmt.Errorf("cluster scanning not yet implemented - use ScanObjects with pre-loaded resources")
+	resources := []schema.GroupVersionResource{
+		{Group: "batch", Version: "v1", Resource: "jobs"},
+		{Group: "batch", Version: "v1", Resource: "cronjobs"},
+		{Group: "", Version: "v1", Resource: "pods"},
+		{Group: "", Version: "v1", Resource: "configmaps"},
+		{Group: "", Version: "v1", Resource: "secrets"},
+		{Group: "", Version: "v1", Resource: "serviceaccounts"},
+		{Group: "", Version: "v1", Resource: "services"},
+		{Group: "apps", Version: "v1", Resource: "deployments"},
+		{Group: "apps", Version: "v1", Resource: "statefulsets"},
+		{Group: "apps", Version: "v1", Resource: "daemonsets"},
+	}
+
+	var objects []*unstructured.Unstructured
+	for _, gvr := range resources {
+		list, err := s.client.Resource(gvr).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			// Best-effort scanning across clusters with variable CRDs/RBAC.
+			continue
+		}
+		for i := range list.Items {
+			item := list.Items[i].DeepCopy()
+			annotations := item.GetAnnotations()
+			if annotations == nil || annotations[HelmHookAnnotation] == "" {
+				continue
+			}
+			objects = append(objects, item)
+		}
+	}
+
+	return objects, nil
 }
 
 func (s *LifecycleHazardScanner) collectNamespaceObjects(ctx context.Context, namespace string) ([]*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("namespace scanning not yet implemented - use ScanObjects with pre-loaded resources")
+	resources := []schema.GroupVersionResource{
+		{Group: "batch", Version: "v1", Resource: "jobs"},
+		{Group: "batch", Version: "v1", Resource: "cronjobs"},
+		{Group: "", Version: "v1", Resource: "pods"},
+		{Group: "", Version: "v1", Resource: "configmaps"},
+		{Group: "", Version: "v1", Resource: "secrets"},
+		{Group: "", Version: "v1", Resource: "serviceaccounts"},
+		{Group: "", Version: "v1", Resource: "services"},
+		{Group: "apps", Version: "v1", Resource: "deployments"},
+		{Group: "apps", Version: "v1", Resource: "statefulsets"},
+		{Group: "apps", Version: "v1", Resource: "daemonsets"},
+	}
+
+	var objects []*unstructured.Unstructured
+	for _, gvr := range resources {
+		list, err := s.client.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			// Best-effort scanning across clusters with variable CRDs/RBAC.
+			continue
+		}
+		for i := range list.Items {
+			item := list.Items[i].DeepCopy()
+			annotations := item.GetAnnotations()
+			if annotations == nil || annotations[HelmHookAnnotation] == "" {
+				continue
+			}
+			objects = append(objects, item)
+		}
+	}
+
+	return objects, nil
 }
 
 // RenderLifecycleHazardsASCII produces human-readable output.

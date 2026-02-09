@@ -313,17 +313,22 @@ if [[ $CURRENT_IDX -ge 4 ]]; then
         skip_test "Demos" "no cluster available"
     else
         subsection "Quick Demo"
-        run_test "demo quick" "./test/atk/demo quick"
-        run_test "demo quick cleanup" "./test/atk/demo quick --cleanup"
+        run_test "demo quick" "./cub-scout demo quick"
+        run_test "demo quick cleanup" "./cub-scout demo quick --cleanup"
 
         subsection "CCVE Demo"
-        run_test "demo ccve" "./test/atk/demo ccve"
-        run_test "demo ccve cleanup" "./test/atk/demo ccve --cleanup"
+        run_test "demo ccve" "./cub-scout demo ccve"
+        run_test "demo ccve cleanup" "./cub-scout demo ccve --cleanup"
+
+        subsection "Query Demo"
+        run_test "demo query" "./cub-scout demo query"
+        run_test "demo query cleanup" "./cub-scout demo query --cleanup"
 
         subsection "Scenarios"
-        run_test "scenario bigbank-incident" "./test/atk/demo scenario bigbank-incident"
-        run_test "scenario break-glass" "./test/atk/demo scenario break-glass"
-        run_test "scenario break-glass cleanup" "./test/atk/demo scenario break-glass --cleanup"
+        run_test "scenario bigbank-incident" "./cub-scout demo scenario bigbank-incident"
+        run_test "scenario bigbank-incident cleanup" "./cub-scout demo scenario bigbank-incident --cleanup"
+        run_test "scenario break-glass" "./cub-scout demo scenario break-glass"
+        run_test "scenario break-glass cleanup" "./cub-scout demo scenario break-glass --cleanup"
 
         subsection "Visual Demos"
         run_test "fleet-queries-demo" "./examples/demos/fleet-queries-demo.sh | head -30"
@@ -337,6 +342,9 @@ fi
 if [[ $CURRENT_IDX -ge 5 ]]; then
     section "LEVEL 5: EXAMPLES E2E"
 
+    subsection "Real Examples Catalog"
+    run_test "verify real examples catalog (local-first)" "go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1"
+
     if ! check_cluster; then
         skip_test "Examples" "no cluster available"
     else
@@ -345,9 +353,6 @@ if [[ $CURRENT_IDX -ge 5 ]]; then
 
         subsection "Example Scripts"
         run_test "impressive-demo exists" "test -x examples/impressive-demo/demo-script.sh"
-
-        subsection "ConfigHub External Examples"
-        run_test "verify external examples (local-first)" "./test/atk/examples --verify-all"
 
         # Integration scripts tests skipped - files planned but not yet created
         # subsection "Integration Scripts"

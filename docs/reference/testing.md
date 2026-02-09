@@ -1,1150 +1,135 @@
 # cub-scout Testing Guide
 
-> **Authoritative testing reference:** [docs/testing/README.md](../testing/README.md)
+> Canonical source: `docs/testing/README.md`.
 >
-> This file provides a detailed walkthrough. For the canonical test categories and percentages, see the authoritative guide.
+> This guide is the operator playbook for running the full suite locally and in CI.
 
-A step-by-step guide to testing the cub-scout locally.
-
----
-
-## AI-Assisted Development = 100% Test Coverage
-
-**CRITICAL:** When using AI to write code, 100% test coverage is non-negotiable.
-
-> "If you can't prove it works, it doesn't work."
-
-AI can generate code that looks correct but doesn't function. Tests are the only proof. Every feature must be verified.
-
-### The Five Test Groups (20% each)
-
-| Test Group | Weight | Verification | What It Proves |
-|------------|--------|--------------|----------------|
-| **Unit Tests** | 20% | `go test ./...` | Ownership detection, query parsing, CCVE patterns |
-| **Integration** | 20% | `./test/prove-it-works.sh --level=integration` | CLI commands work, JSON output valid |
-| **GitOps E2E** | 20% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
-| **Attribution Contract** | 20% | `go test ./pkg/agent/... -run Attribution` | Determinism, scoring, bundle replay (v0.16+) |
-| **Connected** | 20% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
-
-**Target: >90% score across all groups = 100% PROOF**
-
-### Quick Verification
+## Quick Start
 
 ```bash
-# Full proof (before any release)
-./scripts/full-test.sh
+# Fast check (no cluster)
+go build ./cmd/cub-scout && go test ./...
 
-# Extended proof (with live cluster tests)
+# Full verification (cluster + demos + examples)
 ./test/prove-it-works.sh --level=full
-
-# Quick proof (after changes)
-go test ./... && ./cub-scout map deep-dive | head -50
-
-# Attribution-only proof
-go test ./pkg/agent/... -run Attribution -v
 ```
 
-**IMPORTANT:**
-- Always use `./cub-scout`, not `cub-scout` (binary is local, not in PATH)
-- See [CLI-GUIDE.md](../CLI-GUIDE.md) for the complete CLI reference
+Always run the local binary as `./cub-scout`.
 
----
+## Test Groups (Quality Bar)
 
-## Prerequisites
+| Group | Weight | Command | Proof |
+|---|---:|---|---|
+| Unit | 20% | `go test ./...` | Core logic and CLI/TUI behavior |
+| Integration | 20% | `go test -tags=integration ./test/integration/...` | Commands and JSON contracts |
+| GitOps E2E | 20% | `./test/prove-it-works.sh --level=gitops` | Flux/Argo ownership + trace behavior |
+| Attribution contract | 20% | `go test ./pkg/agent/... -run Attribution` | Deterministic evidence + scoring |
+| Connected | 20% | `./test/prove-it-works.sh --level=connected` | `cub` auth/context-dependent flows |
 
-```bash
-# macOS
-brew install kind kubectl fluxcd/tap/flux
+Target: `>90%` across groups before release.
 
-# Verify
-kind --version
-kubectl version --client
-flux --version
-```
+## Test Levels (`prove-it-works.sh`)
 
-## Step 1: Set Up Test Cluster
+| Level | Cluster | ConfigHub | Scope |
+|---|---|---|---|
+| `smoke` | no | no | build/version/help sanity |
+| `unit` | no | no | all `go test ./...` |
+| `integration` | yes | no | local map/scan/trace command checks |
+| `gitops` | yes | no | Flux + Argo deploy/trace path |
+| `demos` | yes | no | `cub-scout demo` command suite |
+| `examples` | yes | no | real examples catalog + example checks |
+| `connected` | yes | yes | worker/import/app-space paths |
+| `full` | yes | yes | all levels |
 
-Creates a Kind cluster with Flux CD and Argo CD pre-installed.
-
-```bash
-./test/atk/setup-cluster
-```
-
-**Expected output:**
-
-```
-Creating Kind cluster 'atk'...
-Cluster 'atk' already exists
-Switched to context "kind-atk".
-Installing Flux...
-Flux already installed
-Installing Argo CD...
-Argo CD already installed
-
-=== Cluster Status ===
-Context: kind-atk
-
-Namespaces:
-argocd                  Active   47h
-flux-system             Active   47h
-
-Flux controllers:
-NAME                      READY
-helm-controller           1
-kustomize-controller      1
-notification-controller   1
-source-controller         1
-Argo CD controllers:
-NAME                               READY
-argocd-applicationset-controller   1
-argocd-dex-server                  1
-argocd-notifications-controller    1
-argocd-redis                       1
-argocd-repo-server                 1
-argocd-server                      1
-
-✓ Cluster ready for ATK tests
-Run: ./test/atk/verify --your-cluster
-```
-
-## Step 2: Build the Agent
+Run with:
 
 ```bash
-go build ./cmd/cub-scout
+./test/prove-it-works.sh --level=<level>
 ```
 
-**Expected output:** (none on success)
+## Real Examples Strategy (Pre-1.0)
 
-Verify with:
+Real examples are now a first-class gate.
 
-```bash
-./cub-scout --help
-```
+### Catalog Source
 
-**Expected output:**
+- `test/examples/real-examples-catalog.yaml`
+- `test/examples/README.md`
 
-```
-cub-scout - Kubernetes resource visibility and ownership detection
-
-The cub-scout observes Kubernetes clusters and detects resource ownership.
-It provides commands for:
-
-  - Mapping resources and their ownership (Flux, Argo CD, Helm, ConfigHub, Native)
-  - Scanning for CCVEs (configuration anti-patterns)
-  - Tracing ownership chains
-  - Importing resources into ConfigHub
-
-Interacts with ConfigHub via the cub CLI (like kubectl, flux, argocd).
-
-Environment Variables:
-  CLUSTER_NAME            Name for this cluster (default: default)
-  KUBECONFIG              Path to kubeconfig file (default: ~/.kube/config)
-
-Usage:
-  cub-scout [command]
-
-Available Commands:
-  completion  Generate the autocompletion script for the specified shell
-  help        Help about any command
-  import      Import resources into ConfigHub
-  map         Interactive map of resources and ownership
-  scan        Scan for CCVEs
-  trace       Trace resource ownership chain
-  version     Print version information
-
-Flags:
-  -h, --help   help for cub-scout
-
-Use "cub-scout [command] --help" for more information about a command.
-```
-
-## Step 3: Run Ownership Detection Tests
-
-Tests that the agent correctly identifies who manages each resource (Flux, Argo CD, ConfigHub, Helm, or native K8s).
+### Gate Test
 
 ```bash
-./test/atk/verify
+go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1
 ```
 
-**Expected output:**
+This enforces:
 
-```
-=== Testing: argo-basic ===
-Applying fixture...
-namespace/atk-argo-basic created
-application.argoproj.io/guestbook created
-Waiting for reconciliation...
-Detecting resources in atk-argo-basic...
-Found 5 resources
-Detected:
-  ArgoCD  deployment/guestbook-ui             app=
-  ArgoCD  service/guestbook-ui                app=
-  Native  configmap/kube-root-ca.crt
-  Native  pod/guestbook-ui-84774bdc6f-mpwz5
-  ArgoCD  replicaset/guestbook-ui-84774bdc6f  app=
+- skeleton coverage for key repo patterns
+- scenario coverage for incident-style demos
+- required-path existence for required examples
+- optional validation of sibling repos when present locally
 
-Cleaning up...
-namespace "atk-argo-basic" deleted
-application.argoproj.io "guestbook" deleted
-✓ argo-basic (5 resources detected)
+## ATK Deprecation Plan (Pre-1.0)
 
-=== Testing: confighub-basic ===
-Applying fixture...
-namespace/atk-confighub-basic created
-deployment.apps/backend created
-service/backend created
-configmap/backend-config created
-Waiting for reconciliation...
-Detecting resources in atk-confighub-basic...
-Found 6 resources
-Detected:
-  ConfigHub  deployment/backend             unit=backend rev=42
-  ConfigHub  service/backend                unit=backend rev=42
-  ConfigHub  configmap/backend-config       unit=backend rev=42
-  Native     configmap/kube-root-ca.crt
-  Native     pod/backend-6ddd6cbbcb-2hrkp
-  ConfigHub  replicaset/backend-6ddd6cbbcb  unit=backend rev=42
+Goal: move testing and demos to `cub-scout` commands and Go tests, keeping legacy scripts only as migration scaffolding.
 
-Cleaning up...
-namespace "atk-confighub-basic" deleted
-✓ confighub-basic (6 resources detected)
+### Phase 1: Default path switched (done)
 
-=== Testing: confighub-variant ===
-Applying fixture...
-namespace/atk-confighub-variant created
-deployment.apps/payment-service-dev created
-service/payment-service-dev created
-configmap/payment-service-dev-config created
-Waiting for reconciliation...
-Detecting resources in atk-confighub-variant...
-Found 6 resources
-Detected:
-  ConfigHub  deployment/payment-service-dev             unit=payment-service-dev rev=42
-  ConfigHub  service/payment-service-dev                unit=payment-service-dev rev=42
-  Native     configmap/kube-root-ca.crt
-  ConfigHub  configmap/payment-service-dev-config       unit=payment-service-dev rev=42
-  Native     pod/payment-service-dev-866f96fd88-tvpkh
-  ConfigHub  replicaset/payment-service-dev-866f96fd88  unit=payment-service-dev rev=42
+- `test/prove-it-works.sh` demos run via `./cub-scout demo ...`
+- CI demos run via `./cub-scout demo ...`
+- examples gate uses `TestRealExamplesCatalog`
 
-Cleaning up...
-namespace "atk-confighub-variant" deleted
-✓ confighub-variant (6 resources detected)
+### Phase 2: Legacy references cleanup (in progress)
 
-=== Testing: flux-basic ===
-Applying fixture...
-namespace/atk-flux-basic created
-gitrepository.source.toolkit.fluxcd.io/podinfo created
-kustomization.kustomize.toolkit.fluxcd.io/podinfo created
-Waiting for reconciliation...
-Detecting resources in atk-flux-basic...
-Found 8 resources
-Detected:
-  Flux    deployment/podinfo             kustomization=podinfo namespace=atk-flux-basic
-  Flux    service/podinfo                kustomization=podinfo namespace=atk-flux-basic
-  Native  configmap/kube-root-ca.crt
-  Native  pod/podinfo-69c97645d7-n97rk
-  Native  pod/podinfo-69c97645d7-tfndg
-  Native  replicaset/podinfo-69c97645d7
-  Flux    gitrepository/podinfo          url=https://github.com/stefanprodan/podinfo
-  Flux    kustomization/podinfo          sourceRef=podinfo
+- remove `test/atk/*` references from active docs and user-facing examples
+- keep `test/atk/` marked as legacy/manual until parity is complete
+- block new active-doc references to legacy wrappers
 
-Cleaning up...
-namespace "atk-flux-basic" deleted
-✓ flux-basic (8 resources detected)
+### Phase 3: Removal readiness (before 1.0)
 
-=== Testing: flux-helm ===
-Applying fixture...
-namespace/atk-flux-helm created
-helmrepository.source.toolkit.fluxcd.io/podinfo created
-helmrelease.helm.toolkit.fluxcd.io/podinfo created
-Waiting for reconciliation...
-Detecting resources in atk-flux-helm...
-Found 7 resources
-Detected:
-  Flux    deployment/podinfo            helmRelease=podinfo namespace=atk-flux-helm
-  Flux    service/podinfo               helmRelease=podinfo namespace=atk-flux-helm
-  Native  configmap/kube-root-ca.crt
-  Native  pod/podinfo-8bf94758f-kjr7c
-  Native  replicaset/podinfo-8bf94758f
-  Flux    helmrepository/podinfo        url=https://stefanprodan.github.io/podinfo
-  Flux    helmrelease/podinfo           chart=podinfo
+- ensure all required fixtures are reachable without wrapper scripts
+- ensure regression coverage exists in Go/integration tests
+- delete or archive legacy wrappers that are no longer needed
 
-Cleaning up...
-namespace "atk-flux-helm" deleted
-✓ flux-helm (7 resources detected)
+## Connected Mode Test Boundary
 
-=== Testing: native-basic ===
-Applying fixture...
-namespace/atk-native-basic created
-deployment.apps/nginx created
-service/nginx created
-configmap/nginx-config created
-Waiting for reconciliation...
-Detecting resources in atk-native-basic...
-Found 6 resources
-Detected:
-  Native  deployment/nginx
-  Native  service/nginx
-  Native  configmap/kube-root-ca.crt
-  Native  configmap/nginx-config
-  Native  pod/nginx-77bf8679f9-qvhh8
-  Native  replicaset/nginx-77bf8679f9
+Connected tests must verify only the supported interface boundary:
 
-Cleaning up...
-namespace "atk-native-basic" deleted
-✓ native-basic (6 resources detected)
+- authentication and context via `cub auth ...`
+- data/actions via `cub` command contracts consumed by `cub-scout`
 
-================================
-Results: 6 passed, 0 failed
-```
+Do not add direct ConfigHub HTTP calls in `cub-scout` tests.
 
-## Step 4: Try the Map Dashboard
+## Lifecycle Hazard Coverage
 
-First, apply some test fixtures so there's something to see:
+Risk scanning includes lifecycle hazard paths.
+
+### Static manifest scan
 
 ```bash
-kubectl apply -f test/atk/fixtures/flux-basic.yaml
-kubectl apply -f test/atk/fixtures/confighub-basic.yaml
-kubectl wait --for=condition=Ready pods -l app=podinfo -n atk-flux-basic --timeout=60s
+./cub-scout scan --lifecycle-hazards --file <manifest.yaml>
 ```
 
-Then run the map:
+### Live cluster scan
 
 ```bash
-cub-scout map
+./cub-scout scan --lifecycle-hazards
 ```
 
-**Expected output:**
+The live scan is best-effort and reads hook-annotated objects across common resource types.
 
-```
-  ✓ ALL HEALTHY   atk
-
-  Deployers  1/1 ✓
-  Workloads  12/12 ✓
-
-  PIPELINES
-  ────────────────────────────────────────────────
-  ✓ stefanprodan/podinfo@6.5.0  →  podinfo  →  3 resources
-
-  OWNERSHIP
-  ────────────────────────────────────────────────
-  Flux(1) ConfigHub(1) Native(10)
-  ██░░░░░░░░░░
-
-  ConfigHub Hierarchy:
-  Org → Space → Unit (with Resources, Targets, Workers)
-
-  Cluster Resources with ConfigHub Labels:
-  demo-prod / backend @ rev 42  [atk-confighub-basic/backend]
-```
-
-> **Note:** Use `cub-scout map --mode=hub` for experimental Hub → App Space → Application → Variant hierarchy.
-
-### Map Subcommands
-
-#### Status (one-liner)
-
-```bash
-cub-scout map status
-```
-
-**Expected output:**
-
-```
-✓ atk: 1 deployers, 12 workloads — all healthy
-```
-
-#### Workloads by Owner
-
-```bash
-cub-scout map workloads
-```
-
-**Expected output:**
-
-```
-STATUS  NAMESPACE                NAME                      OWNER       MANAGED-BY           IMAGE
-────────────────────────────────────────────────────────────────────────────────────────────────────
-✓       atk-confighub-basic     backend                   ConfigHub   backend             nginx:alpine
-✓       atk-flux-basic          podinfo                   Flux        podinfo             podinfo:6.5.0
-✓       argocd                  argocd-applicationset-controller  Native      -                   argocd:v3.2.3
-✓       argocd                  argocd-notifications-controller  Native      -                   argocd:v3.2.3
-✓       argocd                  argocd-repo-server        Native      -                   argocd:v3.2.3
-✓       argocd                  argocd-server             Native      -                   argocd:v3.2.3
-✓       argocd                  argocd-dex-server         Native      -                   dex:v2.43.0
-✓       flux-system             helm-controller           Native      -                   helm-controller:v1.3.0
-✓       flux-system             kustomize-controller      Native      -                   kustomize-controller:v1.6.1
-✓       flux-system             notification-controller   Native      -                   notification-controller:v1.6.0
-✓       argocd                  argocd-redis              Native      -                   redis:8.2.2-alpine
-✓       flux-system             source-controller         Native      -                   source-controller:v1.6.2
-```
-
-#### Pipelines
-
-```bash
-cub-scout map pipelines
-```
-
-**Expected output:**
-
-```
-SOURCE                                      DEPLOYER                 TARGET
-────────────────────────────────────────────────────────────────────────────────
-✓ stefanprodan/podinfo@6.5.0              → podinfo              → 3 resources
-```
-
-#### Deployers
-
-```bash
-cub-scout map deployers
-```
-
-**Expected output:**
-
-```
-STATUS  KIND            NAME                      NAMESPACE            REVISION   RESOURCES
-─────────────────────────────────────────────────────────────────────────────────────────────
-✓       Kustomization   podinfo                   atk-flux-basic       abc1234    3
-```
-
-#### Sources
-
-```bash
-cub-scout map sources
-```
-
-**Expected output:**
-
-```
-STATUS  TYPE           URL                                       REF          REVISION
-────────────────────────────────────────────────────────────────────────────────────────────
-✓       Git           stefanprodan/podinfo                       6.5.0        abc1234
-```
-
-#### JSON Output
-
-```bash
-cub-scout map --json
-```
-
-**Expected output:**
-
-```json
-{
-  "cluster": "kind-atk",
-  "scannedAt": "2025-12-31T09:10:00Z",
-  "gitops": [
-    {
-      "kind": "Kustomization",
-      "name": "podinfo",
-      "namespace": "atk-flux-basic",
-      "owner": "Flux",
-      "ready": true,
-      "suspended": false,
-      "revision": "6.5.0@sha1:abc1234",
-      "shortRevision": "abc1234",
-      "inventoryCount": 3
-    },
-    {
-      "kind": "GitRepository",
-      "name": "podinfo",
-      "namespace": "atk-flux-basic",
-      "owner": "Flux",
-      "url": "https://github.com/stefanprodan/podinfo",
-      "shortUrl": "stefanprodan/podinfo",
-      "ref": "6.5.0",
-      "ready": true
-    }
-  ],
-  "workloads": [
-    {
-      "name": "podinfo",
-      "namespace": "atk-flux-basic",
-      "owner": "Flux",
-      "ownerRef": "podinfo",
-      "ready": true,
-      "desired": 2,
-      "available": 2,
-      "image": "podinfo:6.5.0"
-    },
-    {
-      "name": "backend",
-      "namespace": "atk-confighub-basic",
-      "owner": "ConfigHub",
-      "ownerRef": "backend",
-      "confighub": {
-        "unit": "backend",
-        "space": "demo-prod",
-        "spaceId": "550e8400-e29b-41d4-a716-446655440000",
-        "revision": "42"
-      },
-      "ready": true,
-      "desired": 1,
-      "available": 1,
-      "image": "nginx:alpine"
-    }
-  ]
-}
-```
-
-## Step 5: Scan for Config CVEs
-
-```bash
-cub-scout scan
-```
-
-**Expected output (healthy cluster):**
-
-```
-CONFIG CVE SCAN: kind-atk
-════════════════════════════════════════════════════════════════════
-
-✓ No Config CVEs detected
-```
-
-### List Available CCVEs
-
-```bash
-cub-scout scan --list
-```
-
-**Expected output:**
-
-```
-Config CVE Catalog:
-
-ID                 CAT      Name                                       Severity
---                 ---      ----                                       --------
-CCVE-2025-0001     SOURCE   GitRepository not ready                    critical
-CCVE-2025-0002     RENDER   Kustomization build failed                 critical
-CCVE-2025-0003     SOURCE   HelmRelease chart not ready                critical
-CCVE-2025-0004     APPLY    Application sync failed                    critical
-CCVE-2025-0005     DRIFT    Application out of sync                    warning
-...
-CCVE-2025-0027     CONFIG   Grafana sidecar namespace whitespace err   critical
-CCVE-2025-0028     DEPEND   IngressRoute service not found             critical
-...
-```
-
-**Categories:**
-- **SOURCE** — Git/Helm repository issues
-- **RENDER** — Kustomization/HelmRelease build failures
-- **APPLY** — Sync/deploy failures
-- **DRIFT** — Live state differs from desired
-- **CONFIG** — Configuration anti-patterns (like CCVE-2025-0027)
-- **DEPEND** — Missing dependencies (services, secrets, issuers)
-- **STATE** — Health/status issues
-- **ORPHAN** — Unmanaged resources
-
-### JSON Output
-
-```bash
-cub-scout scan --json
-```
-
-**Expected output:**
-
-```json
-{
-  "cluster": "kind-atk",
-  "scannedAt": "2025-12-31T09:11:39Z",
-  "summary": {
-    "critical": 0,
-    "warning": 0,
-    "info": 0
-  },
-  "findings": []
-}
-```
-
-### Example with Problems
-
-If there were issues, the scan would show:
-
-```
-CONFIG CVE SCAN: prod-east
-════════════════════════════════════════════════════════════════════
-
-CRITICAL (2)
-────────────────────────────────────────────────────────────────────
-[CCVE-FLUX-001] monitoring/prometheus-stack
-[CCVE-ARGO-001] argocd/payments-api
-
-WARNING (3)
-────────────────────────────────────────────────────────────────────
-[CCVE-ARGO-003] argocd/frontend
-[CCVE-CH-001] production/Deployment/orders-api
-[CCVE-CH-005] production/Deployment/users-service
-
-INFO (1)
-────────────────────────────────────────────────────────────────────
-[CCVE-FLUX-005] staging/feature-flag-service
-
-════════════════════════════════════════════════════════════════════
-Summary: 2 critical, 3 warning, 1 info
-
-⚠ Run './scan <CCVE-ID>' for remediation steps
-```
-
-## Step 6: Try the Demos
-
-Interactive demos with narrative walkthroughs:
-
-```bash
-./cub-scout demo list
-```
-
-**Expected output:**
-
-```
-Available Demos
-
-  NAME                 TIME         DESCRIPTION
-  ────────────────────────────────────────────────────────────────
-  quick                ~30 sec      Fastest path to WOW (--no-pods mode)
-  ccve                 ~2 min       CCVE-2025-0027: The BIGBANK Grafana bug
-  healthy              ~2 min       Enterprise healthy (IITS hub-and-spoke)
-  unhealthy            ~2 min       Enterprise unhealthy (common problems)
-
-Scenarios (Narrative Demos)
-
-  scenario bigbank     ~3 min       Walk through the BIGBANK 4-hour outage
-  scenario orphan      ~2 min       Find and fix orphan resources
-  scenario monday      ~1 min       Weekly health check ritual
-```
-
-### Quick Demo (~30 sec)
-
-Fastest path to see the Map in action:
-
-```bash
-./cub-scout demo quick
-```
-
-### CCVE-2025-0027 Demo (~2 min)
-
-The headline story — this exact bug caused a 4-hour outage at BIGBANK:
-
-```bash
-./cub-scout demo ccve
-```
-
-### Narrative Scenarios
-
-Walk through real incidents with storytelling:
-
-```bash
-./cub-scout demo scenario bigbank   # The BIGBANK 4-hour outage story
-./cub-scout demo scenario orphan    # "What's this mystery-app?"
-./cub-scout demo scenario monday    # Weekly health check ritual
-```
-
-### Other Demos
-
-```bash
-./cub-scout demo query              # Query language syntax
-./cub-scout demo connected          # ConfigHub connected mode
-```
-
-### Cleanup Demos
-
-```bash
-./cub-scout demo quick --cleanup
-./cub-scout demo ccve --cleanup
-```
-
-## Want More?
-
-Connect to ConfigHub for fleet-wide capabilities:
-
-| Feature | Standalone | Connected |
-|---------|------------|-----------|
-| Ownership detection | ✓ | ✓ |
-| Drift detection | ✓ | ✓ |
-| CCVE scanning | ✓ | ✓ |
-| Fleet-wide queries | — | ✓ |
-| Cross-cluster map | — | ✓ |
-| Drift merge | — | ✓ |
-| ConfigHub UI | — | ✓ |
-
-See: https://confighub.com/docs/getting-started
-
-For larger scale demos (312 units, 3 clusters), see Brian's KubeCon 2025 demo:
-https://github.com/confighub-kubecon-2025
-
-## Full Test Suite
-
-### Quick Full Test (v0.16+)
-
-The canonical full test script for CI and local verification:
-
-```bash
-./scripts/full-test.sh
-```
-
-**What it tests:**
-1. **Build** — `go build ./cmd/cub-scout`
-2. **Unit tests** — `go test ./...`
-3. **Race detection** — `go test -race ./pkg/agent/...`
-4. **Determinism** — Attribution graph produces identical output across runs
-5. **Fixture E2E** — Debug bundles with test hooks
-
-**Expected output:**
-```
-==========================================
-cub-scout full test suite
-==========================================
-
-→ Building cub-scout...
-✓ Build succeeded
-→ Running unit tests...
-✓ Unit tests passed
-→ Running race detector...
-✓ Race detection passed
-→ Running determinism tests...
-  Testing attribution graph determinism...
-✓ Determinism tests passed
-→ Running fixture E2E tests...
-✓ Debug --save-bundle E2E passed
-
-==========================================
-All tests passed!
-==========================================
-```
-
-### Extended Test Suite (3 phases + connected mode)
-
-```bash
-./test/prove-it-works.sh --level=connected
-```
-
-**What it tests:**
-- Phase 1: Preflight, build, unit tests, integration tests, ATK verify/map/scan
-- Phase 2: All demos (quick, ccve, healthy, unhealthy)
-- Phase 3: Examples validation (integrations, configs, external ConfigHub examples)
-- Connected mode: Worker status, targets, ConfigHub API
-
-Phase 3 now includes `./test/atk/examples --verify-all` with local-first source resolution (local checkout first, GitHub clone fallback).
+## Release Minimum
 
-**Expected output:**
-```
-Phase 1 (Standard):  8 passed
-Phase 2 (Demos):     4 passed
-Phase 3 (Examples):  5 passed
-
-All tests passed
-```
-
-**Test logs:** `docs/planning/sessions/test-runs/test-run-YYYY-MM-DD_HH-MM-SS.log`
-
-## Cleanup
-
-Remove test fixtures:
-
-```bash
-kubectl delete -f test/atk/fixtures/flux-basic.yaml
-kubectl delete -f test/atk/fixtures/confighub-basic.yaml
-```
-
-Tear down the cluster entirely:
-
-```bash
-./test/atk/teardown-cluster
-```
-
-Or keep the cluster but remove ATK namespaces:
-
-```bash
-./test/atk/teardown-cluster --keep
-```
-
-## Testing Principles
-
-### No Untested Code
-
-Every feature must have tests. In Jan 2026, we deleted ~500 lines of dead code that was never tested:
-- An "agent daemon" that would sync to a non-existent HTTP API
-- Environment variables (`CONFIGHUB_AGENT_TOKEN`) that don't exist in the real system
-- API endpoints (`app.confighub.com/api/...`) that were never built
-
-**Lesson:** Code without tests is invisible dead code. If you can't test it, don't write it.
-
-### ConfigHub Integration
-
-The only integration with ConfigHub is via the `cub` CLI. Tests that need ConfigHub should:
-1. Use `cub auth status` to check authentication
-2. Shell to `cub` commands (e.g., `exec.Command("cub", "unit", "list", "--json")`)
-3. Never make direct HTTP calls to ConfigHub
-
-## Quick Reference
-
-| Command | Description |
-|---------|-------------|
-| `./test/atk/setup-cluster` | Create Kind + Flux + Argo CD |
-| `./test/atk/verify` | Run all ownership tests |
-| `./test/atk/verify flux-basic` | Run single test |
-| `./test/atk/verify --list` | List available fixtures |
-| `cub-scout map` | Full dashboard |
-| `cub-scout map status` | One-line health check |
-| `cub-scout map workloads` | List workloads by owner |
-| `cub-scout map pipelines` | List delivery pipelines |
-| `cub-scout map confighub` | ConfigHub hierarchy (requires cub auth) |
-| `cub-scout map --json` | JSON output |
-| `cub-scout map --mode=hub` | Experimental hub hierarchy mode |
-| `cub-scout scan` | Scan for CCVEs |
-| `cub-scout scan --list` | List all CCVEs |
-| `cub-scout scan --json` | JSON output |
-| `cub-scout scan` | Kyverno policy scan |
-| `cub-scout scan --list` | List KPOL policies |
-| `cub-scout scan -n <ns>` | Scan specific namespace |
-| `./test/atk/teardown-cluster` | Delete cluster |
-
-### Hierarchy Display Modes
-
-| Mode | Flag | Hierarchy |
-|------|------|-----------|
-| **Standard** (default) | `--mode=standard` | Org → Space → Unit |
-| **Hub** (experimental) | `--mode=hub` | Hub → App Space → Application → Variant |
-
----
-
-## GitOps E2E Testing
-
-GitOps E2E tests verify that BOTH Flux and ArgoCD work correctly with ownership detection, trace commands, and deep-dive views.
-
-### Flux Testing
-
-```bash
-# 1. Deploy Flux resources
-kubectl apply -f examples/flux-boutique/
-
-# 2. Wait for reconciliation
-kubectl wait --for=condition=Ready kustomization/boutique -n flux-system --timeout=60s
-
-# 3. Verify ownership detection
-./cub-scout map list -n boutique | grep Flux
-
-# 4. Test trace command
-./cub-scout trace deploy/cart -n boutique
-```
-
-**Expected trace output:**
-
-```
-TRACE: Deployment/cart in boutique
-
-  ✗ GitRepository/boutique
-    │ URL: https://github.com/stefanprodan/podinfo
-    │ Revision: master@sha1:b6b680fe507b...
-    │
-    └─▶ ✗ Kustomization/cart
-        │ Path: ./kustomize
-        │ Revision: master@sha1:b6b680fe507b...
-        │
-        └─▶ ✗ Deployment/cart
-              Status: Managed by Flux
-```
-
-### ArgoCD Testing
-
-```bash
-# 1. Port-forward to ArgoCD
-kubectl port-forward svc/argocd-server -n argocd 8080:443 &
-
-# 2. Login to ArgoCD
-argocd login localhost:8080 --username admin \
-  --password $(kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d)
-
-# 3. Verify ownership detection
-./cub-scout map list -n guestbook | grep ArgoCD
-
-# 4. Test trace --app command
-./cub-scout trace --app guestbook
-```
-
-**Expected trace output:**
-
-```
-TRACE: Application/guestbook
-
-  ✓ Source/argoproj/argocd-example-apps
-    │ URL: https://github.com/argoproj/argocd-example-apps.git
-    │ Path: guestbook
-    │ Status: Available
-    │
-    └─▶ ✓ Application/guestbook
-        │ Namespace: argocd
-        │ Status: Synced / Healthy
-        │
-        └─▶ ✓ Service/guestbook-ui
-            │ Namespace: guestbook
-            │
-            └─▶ ✓ Deployment/guestbook-ui
-                  Status: Synced / Healthy
-
-✓ All levels in sync. Managed by argocd.
-```
-
-### Trace All Owner Types
-
-Test that trace works for ALL 5 owner types:
-
-```bash
-# Flux (forward trace)
-./cub-scout trace deploy/cart -n boutique
-
-# ArgoCD (forward trace)
-./cub-scout trace --app guestbook
-
-# ConfigHub (reverse trace)
-./cub-scout trace deploy/feature-flags -n platform-core
-
-# Helm (reverse trace)
-./cub-scout trace deploy/inventory-service -n team-inventory
-
-# Native (reverse trace - should warn about unmanaged resource)
-./cub-scout trace deploy/legacy-auth -n legacy-apps
-```
-
----
-
-## Deep-Dive and App-Hierarchy
-
-### Deep-Dive
-
-The `map deep-dive` command shows ALL cluster data sources with LiveTree:
-
-```bash
-./cub-scout map deep-dive
-```
-
-**What it must include:**
-- Flux GitRepositories (with status, URL, revision)
-- Flux HelmRepositories (with status, URL)
-- Flux Kustomizations (with path, applied revision)
-- Flux HelmReleases (with chart, version)
-- ArgoCD Applications (with sync status, health)
-- Workloads by owner (grouped by Flux/ArgoCD/Helm/ConfigHub/Native)
-- LiveTree (Deployment → ReplicaSet → Pod hierarchy)
-
-**Verification:**
+Before tagging a release candidate:
 
-```bash
-# Should produce 500+ lines with real data
-./cub-scout map deep-dive | wc -l
+1. `go test ./...`
+2. `go test -tags=integration ./test/integration/...`
+3. `go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1`
+4. `./test/prove-it-works.sh --level=full`
 
-# Check for all sections
-./cub-scout map deep-dive | grep -E "(GitRepository|Kustomization|Application|WORKLOADS)"
-```
-
-### App-Hierarchy
-
-The `map app-hierarchy` command shows the inferred ConfigHub model:
-
-```bash
-./cub-scout map app-hierarchy
-```
-
-**What it must include:**
-- Units tree with workload expansion
-- Namespace → AppSpace inference
-- Ownership graph (which owner type manages each unit)
-- Label analysis (app.kubernetes.io/* labels)
-- ConfigHub mapping suggestions
-
-**Verification:**
-
-```bash
-# Should produce 400+ lines
-./cub-scout map app-hierarchy | wc -l
-
-# Check for units and namespaces
-./cub-scout map app-hierarchy | grep -E "(Unit|Namespace|Ownership)"
-```
-
----
-
-## Connected Mode Testing
-
-Connected mode requires a ConfigHub account and worker.
-
-### Prerequisites
-
-```bash
-# 1. Check authentication
-cub auth status
-
-# 2. Start a worker
-cub worker run dev --space tutorial
-
-# 3. Verify worker is Ready
-cub worker list
-```
-
-### Import Testing
-
-```bash
-# Dry-run import (no changes)
-./cub-scout import --dry-run --namespace boutique
-
-# Expected output:
-# DISCOVERED
-#   boutique (5 workloads)
-#
-# WILL CREATE
-#   App Space: boutique-team
-#   • boutique
-#     labels: team=boutique, variant=default, app=boutique
-#     workloads: 5
-#
-# (dry-run mode - no changes made)
-
-# Actual import
-./cub-scout import --namespace boutique
-
-# Verify units created
-cub unit list
-```
-
-### Fleet View Testing
-
-```bash
-# Fleet view (requires app/variant labels)
-./cub-scout map fleet
-
-# If no units with labels, shows:
-# No units found with app/variant labels.
-# To use fleet view, import with Hub/App Space model:
-#   cub-scout import --namespace myapp-prod --model hub-appspace
-```
-
----
-
----
-
-## Attribution Contract Tests (v0.16+)
-
-v0.16 introduced composition attribution with explicit contract guarantees. These tests verify determinism, scoring, and offline replay.
-
-### Test Files
-
-| File | Purpose | Tests |
-|------|---------|-------|
-| `attribution_graph_test.go` | Graph construction, node/edge creation | Crossplane lineage, edge types |
-| `attribution_graph_render_test.go` | ASCII rendering | Stable output, f(JSON)+g compliance |
-| `attribution_graph_merge_test.go` | Deterministic graph merge | Node/edge deduplication, sorting |
-| `attribution_report_test.go` | Report builder, scoring | Evidence scores, reason codes |
-| `attribution_report_render_test.go` | Report ASCII rendering | Ranked output, summary display |
-| `attribution_crossplane_test.go` | Crossplane ownership detection | XR/MR/Claim lineage, ownerRef/label evidence |
-| `attribution_kustomize_test.go` | Kustomize overlay attribution | Overlay ownership, path normalization |
-
-### Running Attribution Tests
-
-```bash
-# All attribution tests
-go test ./pkg/agent/... -run Attribution -v
-
-# Specific subsystems
-go test ./pkg/agent/... -run TestBuildAttributionGraph -v
-go test ./pkg/agent/... -run TestAttributionReport -v
-go test ./pkg/agent/... -run TestKustomizeOverlay -v
-go test ./pkg/agent/... -run TestMergeAttributionGraphs -v
-```
-
-### Determinism Verification
-
-Attribution must be deterministic across runs. The full-test script verifies this:
-
-```bash
-# Manual determinism check
-for i in 1 2 3; do
-  ./cub-scout bundle replay test/fixtures/crossplane/managed_with_composite_label.json \
-    --section attribution --format json > /tmp/attr-$i.json
-done
-
-# Compare outputs (must be identical)
-diff /tmp/attr-1.json /tmp/attr-2.json
-diff /tmp/attr-2.json /tmp/attr-3.json
-```
-
-### Evidence Scoring Rules
-
-Attribution report scoring is explicit and deterministic:
-
-| Evidence | Score | Reason Code |
-|----------|-------|-------------|
-| `owner_reference` | 100 | `owned_via_owner_ref` |
-| `kustomize_origin` | 90 | *(reserved for future)* |
-| `composite_label` | 80 | `owned_via_label` |
-| `kustomize_overlay` | 75 | `owned_via_kustomize` |
-| `claim_label` | 60 | `owned_via_label` |
-
-### Test Fixtures
-
-Attribution tests use JSON fixtures in `test/fixtures/crossplane/`:
-
-| Fixture | Purpose |
-|---------|---------|
-| `managed_with_composite_label.json` | MR with Crossplane composite label |
-| `deployment_no_crossplane.json` | Generic K8s object (no Crossplane) |
-
-### Bundle Replay Testing
-
-Test offline replay of attribution:
-
-```bash
-# Create a bundle with attribution
-./cub-scout debug deployment/api -n prod --save-bundle ./bundles
-
-# Replay attribution (offline, deterministic)
-./cub-scout bundle replay ./bundles/BUNDLE_DIR --section attribution
-./cub-scout bundle replay ./bundles/BUNDLE_DIR --section attribution-report
-
-# JSON output for verification
-./cub-scout bundle replay ./bundles/BUNDLE_DIR --section attribution --format json
-```
-
-### Contract Guarantees
-
-All attribution tests verify these contracts:
-
-1. **Deterministic output** — Same input always produces same output
-2. **Bundle-first reasoning** — No computation at replay time
-3. **No silent inference** — All ownership is explicit evidence
-4. **ASCII = f(JSON) + g** — ASCII always derived from JSON facts
-5. **Stable sorting** — Nodes, edges, and items sorted by ID/ref
-
----
-
-## Test Scorecard
-
-After comprehensive testing, create a scorecard in `test/SCORECARD-YYYY-MM-DD.md`:
-
-```markdown
-## EXECUTIVE SUMMARY
-
-### Primary Test Groups (20% each)
-
-| Test Group | Weight | Score | Status |
-|------------|--------|-------|--------|
-| **Unit Tests** | 20% | 100% | PASS (193/193) |
-| **Integration Tests** | 20% | 100% | PASS (13/13) |
-| **GitOps E2E (Flux + ArgoCD)** | 20% | 100% | PASS (21/21) |
-| **Attribution Contract (v0.16+)** | 20% | 100% | PASS (26/26) |
-| **Connected Mode** | 20% | 100% | PASS (9/9) |
-| **TOTAL** | 100% | **100%** | **FULLY PROVEN** |
-
-### Attribution Contract Tests Breakdown
-
-| Test Suite | Count | Status |
-|------------|-------|--------|
-| Attribution Graph | 5 | PASS |
-| Attribution Graph Render | 4 | PASS |
-| Attribution Crossplane | 4 | PASS |
-| Attribution Report | 9 | PASS |
-| Attribution Report Render | 7 | PASS |
-| Attribution Kustomize | 3 | PASS |
-| Attribution Graph Merge | 4 | PASS |
-```
+## Related Docs
 
-**Latest scorecard:** See `test/SCORECARD-2026-01-17.md`
+- `docs/testing/README.md`
+- `test/README.md`
+- `test/examples/README.md`
+- `docs/roadmap-1x-connected-upsell.md`
