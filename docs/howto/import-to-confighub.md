@@ -1,7 +1,11 @@
 # Canonical Import Path: Argo/Helm to ConfigHub
 
 This is the canonical migration path for moving existing ArgoCD/Helm-managed workloads into ConfigHub.
-It follows Brian's canonical "single-cluster first, additive then cutover" import model.
+
+Scope boundary:
+- This guide is only about workload import and controller cutover.
+- Helm/Kustomize rendering pipelines are Provisional scope.
+- Do not treat this import flow as a rendering/templating workflow.
 
 The path is intentionally:
 - single-cluster first
