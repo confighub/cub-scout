@@ -172,8 +172,7 @@ Exit criteria:
 - `docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md`
 - `docs/archive/IMPORTING-WORKLOADS.md`
 - `docs/archive/JOURNEY-IMPORT.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/REPO-SKELETON-TAXONOMY.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/RENDERED-MANIFEST-PATTERN.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/RENDERED-MANIFEST-PATTERN-FULL-PRODUCT.md`
+- `docs/reference/rendered-manifest-and-argo-product-guide.md`
+- `docs/roadmap-rendered-manifest-and-argo.md`
 - `/Users/alexis/Public/github-repos/confighub-agent/planning/VIEW-TIERS.md`
 - `/Users/alexis/Public/github-repos/confighub-agent/planning/RM-DEMOS-ARGOCD.md`
