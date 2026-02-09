@@ -1,8 +1,17 @@
 # Import Patterns: GitOps Architectures → ConfigHub
 
-**Pattern reference** — How App-of-Apps, ApplicationSet, Flux Tenancy, and Mono-repo patterns map to Hub → App Space → Unit.
+**Archive status:** Historical reference only (not canonical for current releases).
 
-**Prerequisites:** Read [IMPORT-FROM-SOURCES.md](IMPORT-FROM-SOURCES.md) for LIVE vs GIT capabilities, and [02-HUB-APPSPACE-MODEL.md](planning/map/02-HUB-APPSPACE-MODEL.md) for the model.
+Use these maintained docs first:
+
+- [GitOps Patterns Reference](../reference/gitops-patterns.md)
+- [View Hierarchies with tree](../howto/tree-hierarchies.md)
+- [Pipeline Source Resolution](../reference/pipeline-source-resolution.md)
+- [Import Docs Crosswalk](../reference/import-docs-crosswalk.md)
+
+**Pattern reference** - How App-of-Apps, ApplicationSet, Flux Tenancy, and Mono-repo patterns map to Hub -> App Space -> Unit.
+
+**Historical prerequisites:** Read [IMPORT-FROM-SOURCES.md](IMPORT-FROM-SOURCES.md) for LIVE vs GIT capabilities.
 
 ---
 

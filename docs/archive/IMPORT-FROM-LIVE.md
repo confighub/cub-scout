@@ -1,6 +1,15 @@
 # Import from LIVE: How Detection Works Without Git
 
-**Technical explainer** — How we detect ownership, variant, and structure from the cluster without parsing Git repos.
+**Archive status:** Historical reference only (not canonical for current releases).
+
+Use these maintained docs first:
+
+- [How To: Import Workloads to ConfigHub](../howto/import-to-confighub.md)
+- [Pipeline Source Resolution](../reference/pipeline-source-resolution.md)
+- [GitOps Patterns Reference](../reference/gitops-patterns.md)
+- [Import Docs Crosswalk](../reference/import-docs-crosswalk.md)
+
+**Technical explainer** - How we detect ownership, variant, and structure from the cluster without parsing Git repos.
 
 ---
 

@@ -1,6 +1,15 @@
 # Importing Workloads into ConfigHub
 
-**Status: Working** — Import your cluster workloads into ConfigHub in 30 seconds.
+**Archive status:** Historical reference only (not canonical for current releases).
+
+Use these maintained docs first:
+
+- [How To: Import Workloads to ConfigHub](../howto/import-to-confighub.md)
+- [Commands Reference](../reference/commands.md)
+- [Trace Context Troubleshooting](../howto/trace-context-troubleshooting.md)
+- [Import Docs Crosswalk](../reference/import-docs-crosswalk.md)
+
+**Historical status:** Working snapshot from pre-1.0 iteration.
 
 ---
 

@@ -1,6 +1,15 @@
 # Import Architecture: TUI vs GUI
 
-**Architecture** — What the TUI handles (single cluster, LIVE data) vs what the GUI handles (fleet, Git integration).
+**Archive status:** Historical reference only (not canonical for current releases).
+
+Use these maintained docs first:
+
+- [How To: Import Workloads to ConfigHub](../howto/import-to-confighub.md)
+- [GitOps Patterns Reference](../reference/gitops-patterns.md)
+- [Roadmap 1.x Connected/Upsell](../roadmap-1x-connected-upsell.md)
+- [Import Docs Crosswalk](../reference/import-docs-crosswalk.md)
+
+**Architecture** - What the TUI handles (single cluster, LIVE data) vs what the GUI handles (fleet, Git integration).
 
 ---
 
