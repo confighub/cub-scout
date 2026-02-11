@@ -78,6 +78,27 @@ cub-scout trace deploy/podinfo -n podinfo --diff
 
 ---
 
+## Trace with Source Artifacts
+
+Include source artifact provenance (read-only):
+
+```bash
+cub-scout trace deploy/podinfo -n podinfo --artifacts
+```
+
+For Flux sources (`GitRepository`, `OCIRepository`, `HelmRepository`, `Bucket`),
+trace adds:
+
+- artifact URL
+- artifact revision
+- artifact digest
+- artifact last update time
+
+JSON output places these under `summary.source.artifact`.
+If provenance cannot be read, fields are still present with explicit `unknown` values.
+
+---
+
 ## What Trace Shows
 
 | Information | Example |

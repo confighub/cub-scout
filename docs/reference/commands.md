@@ -13,6 +13,11 @@ Complete reference for all cub-scout commands.
 | `map crashes` | Show crashing pods |
 | `map workloads` | List workloads by owner |
 | `map deployers` | List GitOps deployers (Flux, ArgoCD, core Deployments) |
+| `map cronjobs` | List CronJobs with schedule/run state |
+| `map jobs` | List Jobs with CronJob linkage and run state |
+| `map actions` | Read-only operator action preview (runbook output) |
+| `map activity` | Unified activity timeline from Flux/Argo/Helm/events |
+| `map previews` | Detect PR preview environments |
 | `trace` | Show GitOps ownership chain |
 | `scan` | Scan for misconfigurations |
 | `tree` | Hierarchical resource views |
@@ -211,6 +216,138 @@ Canonical deployer scope (v1.0):
 
 ---
 
+## map cronjobs
+
+List CronJobs with schedule, active jobs, last schedule time, and owner.
+
+```bash
+cub-scout map cronjobs [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--namespace` | Filter by namespace |
+| `--owner` | Filter by owner (for example `Flux`, `Native`) |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+
+### Examples
+
+```bash
+cub-scout map cronjobs
+cub-scout map cronjobs --namespace operations
+cub-scout map cronjobs --owner Flux --format json
+```
+
+---
+
+## map jobs
+
+List Jobs with owning CronJob and run status.
+
+```bash
+cub-scout map jobs [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--namespace` | Filter by namespace |
+| `--owner` | Filter by owner (for example `Flux`, `Native`) |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+
+### Examples
+
+```bash
+cub-scout map jobs
+cub-scout map jobs --namespace operations
+cub-scout map jobs --format json
+```
+
+---
+
+## map actions
+
+Generate read-only operator action previews for a target resource.
+
+```bash
+cub-scout map actions <kind/name> -n <namespace> [flags]
+```
+
+No mutation is performed. Output is intended as runbook guidance.
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Namespace of the target resource |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+
+### Examples
+
+```bash
+cub-scout map actions deployment/payment-api -n ecommerce
+cub-scout map actions cronjob/nightly-backup -n operations --format json
+```
+
+---
+
+## map activity
+
+Show normalized activity from Flux, ArgoCD, Helm release history, and Kubernetes Events.
+
+```bash
+cub-scout map activity [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--namespace` | Filter by namespace |
+| `--owner` | Filter by owner (`Flux`, `ArgoCD`, `Helm`) |
+| `--since` | Time filter (for example `24h`, `7d`) |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+
+### Examples
+
+```bash
+cub-scout map activity
+cub-scout map activity --owner Flux --since 24h
+cub-scout map activity --namespace prod --format json
+```
+
+---
+
+## map previews
+
+Detect ephemeral preview environments using deterministic label/annotation heuristics
+including PR metadata and Forgejo/Gitea hints.
+
+```bash
+cub-scout map previews [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--namespace` | Filter by namespace |
+| `--stale-after` | Mark previews stale after duration (for example `72h`) |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+
+### Examples
+
+```bash
+cub-scout map previews
+cub-scout map previews --stale-after 72h
+cub-scout map previews --format json
+```
+
+---
+
 ## trace
 
 Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, or standalone Helm**.
@@ -227,6 +364,7 @@ cub-scout trace <kind/name> [flags]
 | `--app` | Trace ArgoCD Application by name |
 | `-r, --reverse` | Reverse trace (walk up ownerReferences, show orphan metadata) |
 | `-d, --diff` | Show diff between live and Git state |
+| `--artifacts` | Include source artifact provenance (`url`, `revision`, `digest`, `lastUpdateTime`) |
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
 | `--json` | Output as JSON (shorthand for `--format json`) |
 | `--explain` | Show explanatory content |
@@ -251,6 +389,9 @@ cub-scout trace deployment/debug-nginx -n default --reverse
 
 # Show what would change on reconciliation
 cub-scout trace deployment/nginx -n demo --diff
+
+# Show source artifact provenance (read-only)
+cub-scout trace deployment/nginx -n demo --artifacts
 
 # Output as JSON or Markdown
 cub-scout trace deployment/nginx -n demo --format json

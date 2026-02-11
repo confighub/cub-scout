@@ -6,6 +6,8 @@ breaking changes will be avoided within the same contract version.
 
 **Current Version:** v1.0
 
+**Output model:** JSON is the canonical contract. ASCII/Markdown output is a rendering of the same fields.
+
 ---
 
 ## Contract Evolution
@@ -20,6 +22,7 @@ breaking changes will be avoided within the same contract version.
 | v0.15 | bundle replay, bundle diff, bundle timeline, catalog |
 | v0.16 | Attribution graph/report, Crossplane lineage, Kustomize overlay |
 | v0.19 | Shell completion, map hooks, scan --lifecycle-hazards, bundle summarize |
+| v0.20 | Flux operator interop read-only slice (`map cronjobs/jobs/actions/activity/previews`, `trace --artifacts`) |
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
 
 > If documentation and behavior ever diverge, **golden tests under
@@ -36,6 +39,11 @@ breaking changes will be avoided within the same contract version.
 | `cub-scout map status` | One-line health check | v0.5 |
 | `cub-scout map deployers` | List deployers (Flux/ArgoCD + core Deployments) | v0.5 |
 | `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
+| `cub-scout map cronjobs` | List CronJobs with schedule/run state | v0.20 |
+| `cub-scout map jobs` | List Jobs with CronJob linkage and status | v0.20 |
+| `cub-scout map actions` | Read-only action/runbook previews | v0.20 |
+| `cub-scout map activity` | Unified operational timeline | v0.20 |
+| `cub-scout map previews` | Preview environment detection heuristics | v0.20 |
 | `cub-scout trace` | Trace resource to Git source | v0.5 |
 | `cub-scout scan` | Scan for risk issues and issues | v0.5 |
 | `cub-scout scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
@@ -240,6 +248,110 @@ cub-scout map deployers [flags]
 
 ---
 
+## cub-scout map cronjobs
+
+List CronJobs with deterministic ordering by `(namespace, name)`.
+
+```bash
+cub-scout map cronjobs [--namespace <ns>] [--owner <owner>] [--format ascii|json|md]
+```
+
+Stable JSON fields per entry:
+- `name`
+- `namespace`
+- `schedule`
+- `suspend`
+- `activeJobs`
+- `lastScheduleTime`
+- `lastRunStatus`
+- `owner`
+- `lineage` (optional)
+
+---
+
+## cub-scout map jobs
+
+List Jobs with CronJob owner linkage (when ownerReferences are present).
+
+```bash
+cub-scout map jobs [--namespace <ns>] [--owner <owner>] [--format ascii|json|md]
+```
+
+Stable JSON fields per entry:
+- `name`
+- `namespace`
+- `cronJob` (optional)
+- `active`
+- `succeeded`
+- `failed`
+- `lastRunStatus`
+- `startTime` (optional)
+- `completionTime` (optional)
+- `owner`
+- `lineage` (optional)
+
+---
+
+## cub-scout map actions
+
+Show read-only operator action previews for a specific resource.
+
+```bash
+cub-scout map actions <kind/name> -n <namespace> [--format ascii|json|md]
+```
+
+No mutation path is provided by this command.
+
+Stable JSON fields per action:
+- `actionType`
+- `commandPreview`
+- `riskLevel`
+- `requiresConfirmation`
+- `whySuggested`
+- `expectedImpact`
+
+---
+
+## cub-scout map activity
+
+Show normalized activity from Flux/Argo/Helm/events, sorted descending by time.
+
+```bash
+cub-scout map activity [--namespace <ns>] [--owner Flux|ArgoCD|Helm] [--since 24h] [--format ascii|json|md]
+```
+
+Stable JSON fields per event:
+- `time`
+- `source`
+- `resource`
+- `action`
+- `result`
+- `message` (optional)
+- `suggestedNextStep` (optional)
+- `owner` (optional)
+
+---
+
+## cub-scout map previews
+
+Detect preview environments using deterministic label/annotation heuristics.
+
+```bash
+cub-scout map previews [--namespace <ns>] [--stale-after 72h] [--format ascii|json|md]
+```
+
+Stable JSON fields per preview:
+- `previewID`
+- `repo`
+- `prNumber`
+- `namespaceOrTarget`
+- `age`
+- `stale`
+- `cleanupSuggestion`
+- `matchReason` (optional)
+
+---
+
 ## cub-scout trace
 
 Trace a resource to its Git source.
@@ -258,7 +370,9 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | `-r, --reverse` | bool | false | Walk ownerRefs up |
 | `-d, --diff` | bool | false | Show Git vs live diff |
 | `--history` | bool | false | Show deployment history |
-| `--json` | bool | false | JSON output |
+| `--artifacts` | bool | false | Include source artifact provenance |
+| `--format` | string | ascii | Output format: ascii, json, md |
+| `--json` | bool | false | Deprecated shorthand for `--format json` |
 | `--limit` | int | 10 | History entry limit |
 | `--explain` | bool | false | Show learning content |
 
@@ -293,20 +407,43 @@ TRACE: Deployment/coredns in kube-system
 
 ```json
 {
-  "resource": {
+  "command": "trace",
+  "target": {
     "kind": "Deployment",
     "name": "nginx",
     "namespace": "demo"
   },
-  "owner": {
-    "type": "flux",
-    "subType": "kustomization",
-    "name": "apps",
-    "namespace": "flux-system"
-  },
-  "chain": [...]
+  "chain": [],
+  "summary": {
+    "ownerType": "Flux",
+    "source": {
+      "kind": "GitRepository",
+      "namespace": "flux-system",
+      "name": "apps",
+      "url": "https://github.com/acme/apps"
+    },
+    "deployer": {
+      "kind": "Kustomization",
+      "namespace": "flux-system",
+      "name": "apps"
+    }
+  }
 }
 ```
+
+When `--artifacts` is enabled and source provenance is available, JSON adds:
+
+```json
+"artifact": {
+  "url": "http://source-controller...tar.gz",
+  "revision": "main@sha1:abc123",
+  "digest": "sha256:...",
+  "lastUpdateTime": "2026-02-11T15:31:07Z",
+  "sourceKind": "GitRepository"
+}
+```
+
+If artifact metadata is missing/unreadable, the artifact fields are present with `unknown` values.
 
 ### Exit Codes
 

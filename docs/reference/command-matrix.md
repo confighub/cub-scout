@@ -51,6 +51,11 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `map status` | One-line health check | `s` | CI-friendly status summary |
 | `map workloads` | Workloads by owner | `w` | Ownership-focused view |
 | `map deployers` | Deployers (Deployments) | `p` | Deployer slice |
+| `map cronjobs` | CronJob schedule/run view | - | Read-only operator visibility |
+| `map jobs` | Job run history view | - | Read-only operator visibility |
+| `map actions <kind/name>` | Action previews (runbook) | - | No mutation; preview only |
+| `map activity` | Unified activity timeline | - | Flux/Argo/Helm/Event signals |
+| `map previews` | Preview env detection | - | PR/Forgejo/Gitea heuristics |
 | `map orphans` | Unmanaged resources | `o` | Native/orphan focus |
 | `map crashes` | Failing pods/deployments | `c` | Crash/failure focus |
 | `map issues` | Resources with problems | `i` | Consolidated problems |
@@ -74,12 +79,14 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--json` | Output in JSON format | `map`, `map list` |
 | `--verbose` | Show additional details | `map` |
 | `-q, --query` | Query expression | `map list` |
-| `--namespace` | Filter by namespace | `map list` |
+| `--namespace` | Filter by namespace | `map list`, `map cronjobs`, `map jobs`, `map activity`, `map previews`, `map actions` |
 | `--kind` | Filter by resource kind | `map list` |
-| `--owner` | Filter by owner type | `map list` |
-| `--since` | Resources changed since | `map list` |
+| `--owner` | Filter by owner type | `map list`, `map cronjobs`, `map jobs`, `map activity` |
+| `--since` | Resources changed / timeline window | `map list`, `map activity` |
 | `--count` | Output count only | `map list` |
 | `--names-only` | Output names only | `map list` |
+| `--stale-after` | Preview staleness threshold | `map previews` |
+| `--format` | Output format (`ascii`, `json`, `md`) | `map list`, `map hooks`, `map cronjobs`, `map jobs`, `map actions`, `map activity`, `map previews` |
 
 ---
 
@@ -116,6 +123,8 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--app` | Trace ArgoCD app by name |
 | `-r, --reverse` | Reverse trace (walk ownerRefs up) |
 | `--diff` | Show what would change on next reconciliation |
+| `--artifacts` | Include source artifact provenance fields |
+| `--format` | Output format (`ascii`, `json`, `md`) |
 | `--json` | Output as JSON |
 
 ---
