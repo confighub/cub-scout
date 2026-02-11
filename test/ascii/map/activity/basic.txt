@@ -1,0 +1,9 @@
+
+ACTIVITY
+════════════════════════════════════════════════════════════════════
+TIME                  SOURCE              RESOURCE                                     ACTION        RESULT   MESSAGE
+<TIMESTAMP>  flux.kustomization  Kustomization/flux-system/ecommerce-payment  ready         success  Applied revision main@sha1:abc1234
+<TIMESTAMP>  argocd.application  Application/argocd/payment-preview           sync-status   failed   sync=OutOfSync health=Degraded
+<TIMESTAMP>  k8s.event           Deployment/ecommerce/payment-api             failedcreate  warning  Failed to create pod sandbox
+
+Total: 3 activity event(s)

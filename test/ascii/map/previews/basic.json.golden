@@ -1,0 +1,26 @@
+{
+  "count": 2,
+  "previews": [
+    {
+      "previewID": "ghcr.io/acme/ecommerce#142",
+      "repo": "ghcr.io/acme/ecommerce",
+      "prNumber": "142",
+      "namespaceOrTarget": "preview-pr-142",
+      "age": "25h",
+      "stale": false,
+      "cleanupSuggestion": "Keep active preview and re-check against stale threshold.",
+      "matchReason": "label:preview=true; annotation:forgejo-url=https://forgejo.example.com/acme/ecommerce/pulls/142"
+    },
+    {
+      "previewID": "ghcr.io/acme/payments#91",
+      "repo": "ghcr.io/acme/payments",
+      "prNumber": "91",
+      "namespaceOrTarget": "preview-pr-91",
+      "age": "95h",
+      "stale": true,
+      "cleanupSuggestion": "Review PR status and delete preview resources if no longer needed.",
+      "matchReason": "label:pull-request=91"
+    }
+  ],
+  "staleAfter": "72h0m0s"
+}

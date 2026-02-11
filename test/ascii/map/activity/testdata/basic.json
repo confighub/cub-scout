@@ -1,0 +1,32 @@
+[
+  {
+    "time": "2026-02-11T15:50:00Z",
+    "source": "k8s.event",
+    "resource": "Deployment/ecommerce/payment-api",
+    "action": "failedcreate",
+    "result": "warning",
+    "message": "Failed to create pod sandbox",
+    "suggestedNextStep": "Inspect event stream and pod describe output.",
+    "owner": "Native"
+  },
+  {
+    "time": "2026-02-11T15:55:00Z",
+    "source": "flux.kustomization",
+    "resource": "Kustomization/flux-system/ecommerce-payment",
+    "action": "ready",
+    "result": "success",
+    "message": "Applied revision main@sha1:abc1234",
+    "suggestedNextStep": "No action needed.",
+    "owner": "Flux"
+  },
+  {
+    "time": "2026-02-11T15:52:00Z",
+    "source": "argocd.application",
+    "resource": "Application/argocd/payment-preview",
+    "action": "sync-status",
+    "result": "failed",
+    "message": "sync=OutOfSync health=Degraded",
+    "suggestedNextStep": "Run argocd app diff payment-preview and inspect health.",
+    "owner": "ArgoCD"
+  }
+]

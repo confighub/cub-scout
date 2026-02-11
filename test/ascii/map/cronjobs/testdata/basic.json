@@ -1,0 +1,23 @@
+[
+  {
+    "name": "nightly-backup",
+    "namespace": "operations",
+    "schedule": "0 2 * * *",
+    "suspend": false,
+    "activeJobs": 0,
+    "lastScheduleTime": "2026-02-11T02:00:00Z",
+    "lastRunStatus": "success",
+    "owner": "Flux",
+    "lineage": "flux/kustomization/ops-jobs"
+  },
+  {
+    "name": "stuck-report",
+    "namespace": "reports",
+    "schedule": "*/30 * * * *",
+    "suspend": false,
+    "activeJobs": 1,
+    "lastScheduleTime": "2026-02-11T15:30:00Z",
+    "lastRunStatus": "running",
+    "owner": "Native"
+  }
+]

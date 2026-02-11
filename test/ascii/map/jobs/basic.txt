@@ -1,0 +1,8 @@
+
+JOBS
+════════════════════════════════════════════════════════════════════
+NAMESPACE   NAME                 CRONJOB         ACTIVE  SUCCEEDED  FAILED  LAST-RUN  OWNER
+operations  nightly-backup-2901  nightly-backup  0       1          0       success   Flux
+reports     stuck-report-7782    stuck-report    1       0          0       running   Native
+
+Total: 2 job(s)

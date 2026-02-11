@@ -1,0 +1,10 @@
+
+ACTION PREVIEW: Deployment/payment-api (ecommerce)
+════════════════════════════════════════════════════════════════════
+
+[MEDIUM] rollout-restart
+  Command: kubectl rollout restart deployment/payment-api -n ecommerce
+  Why:     Safely recycle pods after config/image/runtime dependency changes.
+  Impact:  Controller creates new pods gradually; old pods terminate after replacement.
+
+Total: 1 action(s)

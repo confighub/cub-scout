@@ -1,0 +1,75 @@
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "ecommerce",
+    "name": "payment-api"
+  },
+  "chain": [
+    {
+      "id": {
+        "kind": "GitRepository",
+        "namespace": "flux-system",
+        "name": "ecommerce-apps"
+      },
+      "role": "source",
+      "relationship": "sources",
+      "evidence": [
+        {
+          "type": "field",
+          "key": "spec.url",
+          "value": "https://github.com/acme/ecommerce-apps",
+          "path": "spec.url"
+        }
+      ]
+    },
+    {
+      "id": {
+        "kind": "Kustomization",
+        "namespace": "flux-system",
+        "name": "ecommerce-payment"
+      },
+      "role": "deployer",
+      "relationship": "applies",
+      "evidence": [
+        {
+          "type": "field",
+          "key": "spec.path",
+          "value": "./clusters/prod/ecommerce/payment",
+          "path": "spec.path"
+        }
+      ]
+    },
+    {
+      "id": {
+        "kind": "Deployment",
+        "namespace": "ecommerce",
+        "name": "payment-api"
+      },
+      "role": "workload",
+      "relationship": "managed-by",
+      "evidence": null
+    }
+  ],
+  "summary": {
+    "ownerType": "Flux",
+    "source": {
+      "kind": "GitRepository",
+      "namespace": "flux-system",
+      "name": "ecommerce-apps",
+      "url": "https://github.com/acme/ecommerce-apps",
+      "artifact": {
+        "url": "http://source-controller.flux-system.svc.cluster.local/gitrepository/flux-system/ecommerce-apps/main@sha1:abc1234567890abcdef1234567890abcdef12.tar.gz",
+        "revision": "main@sha1:abc1234567890abcdef1234567890abcdef12",
+        "digest": "sha256:4f14c88a40f88fca5f9de4f05d2a4b9e67d1f7f1bdcb6e43ec73f2bc1f5a77ab",
+        "lastUpdateTime": "<TIMESTAMP>",
+        "sourceKind": "GitRepository"
+      }
+    },
+    "deployer": {
+      "kind": "Kustomization",
+      "namespace": "flux-system",
+      "name": "ecommerce-payment"
+    }
+  }
+}

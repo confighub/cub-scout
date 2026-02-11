@@ -1,0 +1,29 @@
+{
+  "count": 2,
+  "jobs": [
+    {
+      "name": "nightly-backup-2901",
+      "namespace": "operations",
+      "cronJob": "nightly-backup",
+      "active": 0,
+      "succeeded": 1,
+      "failed": 0,
+      "lastRunStatus": "success",
+      "startTime": "<TIMESTAMP>",
+      "completionTime": "<TIMESTAMP>",
+      "owner": "Flux",
+      "lineage": "flux/kustomization/ops-jobs"
+    },
+    {
+      "name": "stuck-report-7782",
+      "namespace": "reports",
+      "cronJob": "stuck-report",
+      "active": 1,
+      "succeeded": 0,
+      "failed": 0,
+      "lastRunStatus": "running",
+      "startTime": "<TIMESTAMP>",
+      "owner": "Native"
+    }
+  ]
+}

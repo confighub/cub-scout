@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -33,21 +34,23 @@ import (
 )
 
 var (
-	mapNamespace        string
-	mapKind             string
-	mapOwner            string
-	mapQuery            string
-	mapJSON             bool   // deprecated: use --format json
-	mapListFormat       string // output format: ascii, json
-	mapVerbose          bool
-	mapHub              bool   // --hub flag for ConfigHub hierarchy
-	mapSince            string // --since flag for time filtering
-	mapCount            bool   // --count flag for count-only output
-	mapNamesOnly        bool   // --names-only flag for names-only output
-	mapExplain          bool   // --explain flag for learning mode
-	deepDiveConnected   bool   // --connected flag for ConfigHub integration in deep-dive
-	orphanIncludeSystem bool   // --include-system flag for showing system resources
-	hooksFile           string // --file flag for static analysis of hooks
+	mapNamespace         string
+	mapKind              string
+	mapOwner             string
+	mapQuery             string
+	mapJSON              bool   // deprecated: use --format json
+	mapListFormat        string // output format: ascii, json
+	mapVerbose           bool
+	mapHub               bool   // --hub flag for ConfigHub hierarchy
+	mapSince             string // --since flag for time filtering
+	mapCount             bool   // --count flag for count-only output
+	mapNamesOnly         bool   // --names-only flag for names-only output
+	mapExplain           bool   // --explain flag for learning mode
+	mapActivitySince     string // --since flag for map activity
+	mapPreviewStaleAfter string // --stale-after flag for map previews
+	deepDiveConnected    bool   // --connected flag for ConfigHub integration in deep-dive
+	orphanIncludeSystem  bool   // --include-system flag for showing system resources
+	hooksFile            string // --file flag for static analysis of hooks
 )
 
 // MapEntry is an alias for mapsvc.Entry representing a resource in the fleet map.
@@ -442,6 +445,74 @@ Examples:
 	RunE: runMapHooks,
 }
 
+var mapCronjobsCmd = &cobra.Command{
+	Use:   "cronjobs",
+	Short: "List CronJobs with schedule/run visibility and ownership",
+	Long: `List CronJobs with schedule and recent run state.
+
+Shows:
+- Schedule and suspend state
+- Active jobs count
+- Last schedule time
+- Last run status (success/failed/running/unknown)
+- Ownership and lineage hints (Flux/Argo/Helm/Native)`,
+	RunE: runMapCronJobs,
+}
+
+var mapJobsCmd = &cobra.Command{
+	Use:   "jobs",
+	Short: "List Jobs with owning CronJob and run status",
+	Long: `List Jobs with ownership and execution status.
+
+Shows:
+- Owning CronJob (when present)
+- Active/succeeded/failed counts
+- Derived run status
+- Ownership and lineage hints`,
+	RunE: runMapJobs,
+}
+
+var mapActionsCmd = &cobra.Command{
+	Use:   "actions <kind/name>",
+	Short: "Show read-only operator action previews for a resource",
+	Long: `Generate read-only action previews (runbook guidance) for a resource.
+
+No cluster mutations are performed.
+
+Examples:
+  cub-scout map actions deployment/api -n prod
+  cub-scout map actions cronjob/nightly-backup -n operations --format json`,
+	Args: cobra.ExactArgs(1),
+	RunE: runMapActions,
+}
+
+var mapActivityCmd = &cobra.Command{
+	Use:   "activity",
+	Short: "Show recent GitOps/runtime activity timeline",
+	Long: `Show a normalized timeline of recent activity from Flux resources and Kubernetes events.
+
+Examples:
+  cub-scout map activity
+  cub-scout map activity --owner Flux --since 24h
+  cub-scout map activity --namespace prod --format json`,
+	RunE: runMapActivity,
+}
+
+var mapPreviewsCmd = &cobra.Command{
+	Use:   "previews",
+	Short: "Detect ephemeral PR preview environments",
+	Long: `Detect ephemeral preview environments using label/annotation heuristics.
+
+Provider-aware hints:
+- Gitea/Forgejo repo or URL metadata
+- PR number/preview namespace labels
+
+Examples:
+  cub-scout map previews
+  cub-scout map previews --stale-after 72h --format json`,
+	RunE: runMapPreviews,
+}
+
 // mapHubCmd launches the ConfigHub hierarchy TUI
 var mapHubCmd = &cobra.Command{
 	Use:   "hub",
@@ -504,6 +575,11 @@ func init() {
 	mapCmd.AddCommand(mapCrashesCmd)
 	mapCmd.AddCommand(mapOrphansCmd)
 	mapCmd.AddCommand(mapHooksCmd)
+	mapCmd.AddCommand(mapCronjobsCmd)
+	mapCmd.AddCommand(mapJobsCmd)
+	mapCmd.AddCommand(mapActionsCmd)
+	mapCmd.AddCommand(mapActivityCmd)
+	mapCmd.AddCommand(mapPreviewsCmd)
 	mapCmd.AddCommand(mapHubCmd)
 	mapCmd.AddCommand(mapClusterDataCmd)
 	mapCmd.AddCommand(mapAppHierarchyCmd)
@@ -542,6 +618,27 @@ func init() {
 	mapHooksCmd.Flags().StringVar(&hooksFile, "file", "", "YAML file to analyze (static analysis)")
 	mapHooksCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
+	// CronJobs/jobs/action/activity/previews flags
+	mapCronjobsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
+	mapCronjobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)")
+	mapCronjobsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
+
+	mapJobsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
+	mapJobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)")
+	mapJobsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
+
+	mapActionsCmd.Flags().StringVarP(&mapNamespace, "namespace", "n", "", "Namespace of the target resource")
+	mapActionsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
+
+	mapActivityCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
+	mapActivityCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm)")
+	mapActivityCmd.Flags().StringVar(&mapActivitySince, "since", "", "Show activity since duration (e.g., 1h, 24h, 7d)")
+	mapActivityCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
+
+	mapPreviewsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
+	mapPreviewsCmd.Flags().StringVar(&mapPreviewStaleAfter, "stale-after", "72h", "Mark previews as stale after duration (e.g., 24h, 72h, 7d)")
+	mapPreviewsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
+
 	// Deep-dive flags
 	mapClusterDataCmd.Flags().BoolVar(&deepDiveConnected, "connected", false, "Show ConfigHub context for managed resources (requires cub auth)")
 
@@ -550,6 +647,15 @@ func init() {
 	_ = mapListCmd.RegisterFlagCompletionFunc("kind", completeKinds)
 	_ = mapListCmd.RegisterFlagCompletionFunc("owner", completeOwners)
 	_ = mapListCmd.RegisterFlagCompletionFunc("since", completeSince)
+	_ = mapCronjobsCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
+	_ = mapCronjobsCmd.RegisterFlagCompletionFunc("owner", completeOwners)
+	_ = mapJobsCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
+	_ = mapJobsCmd.RegisterFlagCompletionFunc("owner", completeOwners)
+	_ = mapActionsCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
+	_ = mapActivityCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
+	_ = mapActivityCmd.RegisterFlagCompletionFunc("owner", completeOwners)
+	_ = mapActivityCmd.RegisterFlagCompletionFunc("since", completeSince)
+	_ = mapPreviewsCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
 
 	// Register completions for mapCmd shared flags (#93 CLI ↔ TUI symmetry)
 	_ = mapCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
@@ -3073,6 +3179,1302 @@ func runMapHooks(cmd *cobra.Command, args []string) error {
 		fmt.Printf("\nTotal: %d hook(s)\n", len(hooks))
 		return nil
 	}
+}
+
+type mapCronJobRow struct {
+	Name             string `json:"name"`
+	Namespace        string `json:"namespace"`
+	Schedule         string `json:"schedule"`
+	Suspend          bool   `json:"suspend"`
+	ActiveJobs       int    `json:"activeJobs"`
+	LastScheduleTime string `json:"lastScheduleTime"`
+	LastRunStatus    string `json:"lastRunStatus"`
+	Owner            string `json:"owner"`
+	Lineage          string `json:"lineage,omitempty"`
+}
+
+type mapJobRow struct {
+	Name           string `json:"name"`
+	Namespace      string `json:"namespace"`
+	CronJob        string `json:"cronJob,omitempty"`
+	Active         int64  `json:"active"`
+	Succeeded      int64  `json:"succeeded"`
+	Failed         int64  `json:"failed"`
+	LastRunStatus  string `json:"lastRunStatus"`
+	StartTime      string `json:"startTime,omitempty"`
+	CompletionTime string `json:"completionTime,omitempty"`
+	Owner          string `json:"owner"`
+	Lineage        string `json:"lineage,omitempty"`
+}
+
+type mapActionPreview struct {
+	Target               string `json:"target"`
+	Namespace            string `json:"namespace,omitempty"`
+	ActionType           string `json:"actionType"`
+	CommandPreview       string `json:"commandPreview"`
+	RiskLevel            string `json:"riskLevel"`
+	RequiresConfirmation bool   `json:"requiresConfirmation"`
+	WhySuggested         string `json:"whySuggested"`
+	ExpectedImpact       string `json:"expectedImpact"`
+}
+
+type mapActivityRow struct {
+	Time              string `json:"time"`
+	Source            string `json:"source"`
+	Resource          string `json:"resource"`
+	Action            string `json:"action"`
+	Result            string `json:"result"`
+	Message           string `json:"message,omitempty"`
+	SuggestedNextStep string `json:"suggestedNextStep,omitempty"`
+	Owner             string `json:"owner,omitempty"`
+}
+
+type mapPreviewRow struct {
+	PreviewID         string `json:"previewID"`
+	Repo              string `json:"repo"`
+	PRNumber          string `json:"prNumber"`
+	NamespaceOrTarget string `json:"namespaceOrTarget"`
+	Age               string `json:"age"`
+	Stale             bool   `json:"stale"`
+	CleanupSuggestion string `json:"cleanupSuggestion"`
+	MatchReason       string `json:"matchReason,omitempty"`
+}
+
+func runMapCronJobs(cmd *cobra.Command, args []string) error {
+	if mapOwner != "" {
+		if err := ValidateOwner(mapOwner); err != nil {
+			return err
+		}
+		mapOwner = NormalizeOwner(mapOwner)
+	}
+
+	var rows []mapCronJobRow
+	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_CRONJOBS_JSON"); fixture != "" {
+		loaded, err := loadCronJobsFixture(fixture)
+		if err != nil {
+			return err
+		}
+		rows = loaded
+	} else {
+		loaded, err := collectCronJobs(context.Background())
+		if err != nil {
+			return err
+		}
+		rows = loaded
+	}
+
+	return renderMapCronJobs(rows)
+}
+
+func runMapJobs(cmd *cobra.Command, args []string) error {
+	if mapOwner != "" {
+		if err := ValidateOwner(mapOwner); err != nil {
+			return err
+		}
+		mapOwner = NormalizeOwner(mapOwner)
+	}
+
+	var rows []mapJobRow
+	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_JOBS_JSON"); fixture != "" {
+		loaded, err := loadJobsFixture(fixture)
+		if err != nil {
+			return err
+		}
+		rows = loaded
+	} else {
+		loaded, err := collectJobs(context.Background())
+		if err != nil {
+			return err
+		}
+		rows = loaded
+	}
+
+	return renderMapJobs(rows)
+}
+
+func runMapActions(cmd *cobra.Command, args []string) error {
+	kind, name, err := parseKindNameArg(args[0])
+	if err != nil {
+		return err
+	}
+	kind = normalizeKind(kind)
+	ns := mapNamespace
+	if ns == "" {
+		ns = "default"
+	}
+
+	var actions []mapActionPreview
+	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_ACTIONS_JSON"); fixture != "" {
+		loaded, err := loadActionsFixture(fixture)
+		if err != nil {
+			return err
+		}
+		actions = loaded
+	} else {
+		loaded, err := buildActionPreviews(context.Background(), kind, name, ns)
+		if err != nil {
+			return err
+		}
+		actions = loaded
+	}
+
+	sort.Slice(actions, func(i, j int) bool {
+		if actions[i].Target != actions[j].Target {
+			return actions[i].Target < actions[j].Target
+		}
+		return actions[i].ActionType < actions[j].ActionType
+	})
+
+	format := effectiveMapFormat()
+	switch format {
+	case "json":
+		output := map[string]interface{}{
+			"target":  fmt.Sprintf("%s/%s", kind, name),
+			"actions": actions,
+			"count":   len(actions),
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(output)
+	case "md":
+		fmt.Printf("# Action Preview: %s/%s\n\n", kind, name)
+		if len(actions) == 0 {
+			fmt.Println("No actions available.")
+			return nil
+		}
+		fmt.Println("| Action | Command | Risk | Why | Impact |")
+		fmt.Println("|--------|---------|------|-----|--------|")
+		for _, a := range actions {
+			fmt.Printf("| %s | `%s` | %s | %s | %s |\n", a.ActionType, a.CommandPreview, a.RiskLevel, a.WhySuggested, a.ExpectedImpact)
+		}
+		return nil
+	default:
+		fmt.Println()
+		fmt.Printf("ACTION PREVIEW: %s/%s (%s)\n", kind, name, ns)
+		fmt.Println(strings.Repeat("═", 68))
+		if len(actions) == 0 {
+			fmt.Println("No actions available.")
+			return nil
+		}
+		for _, a := range actions {
+			fmt.Printf("\n[%s] %s\n", strings.ToUpper(a.RiskLevel), a.ActionType)
+			fmt.Printf("  Command: %s\n", a.CommandPreview)
+			fmt.Printf("  Why:     %s\n", a.WhySuggested)
+			fmt.Printf("  Impact:  %s\n", a.ExpectedImpact)
+		}
+		fmt.Printf("\nTotal: %d action(s)\n", len(actions))
+		return nil
+	}
+}
+
+func runMapActivity(cmd *cobra.Command, args []string) error {
+	if mapOwner != "" {
+		if err := ValidateOwner(mapOwner); err != nil {
+			return err
+		}
+		mapOwner = NormalizeOwner(mapOwner)
+	}
+
+	var rows []mapActivityRow
+	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_ACTIVITY_JSON"); fixture != "" {
+		loaded, err := loadActivityFixture(fixture)
+		if err != nil {
+			return err
+		}
+		rows = loaded
+	} else {
+		loaded, err := collectActivity(context.Background())
+		if err != nil {
+			return err
+		}
+		rows = loaded
+	}
+
+	return renderMapActivity(rows)
+}
+
+func runMapPreviews(cmd *cobra.Command, args []string) error {
+	staleAfter, err := parseDurationWithDays(mapPreviewStaleAfter)
+	if err != nil {
+		return fmt.Errorf("invalid --stale-after: %w", err)
+	}
+
+	var rows []mapPreviewRow
+	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_PREVIEWS_JSON"); fixture != "" {
+		loaded, err := loadPreviewsFixture(fixture)
+		if err != nil {
+			return err
+		}
+		rows = loaded
+	} else {
+		loaded, err := collectPreviews(context.Background(), staleAfter)
+		if err != nil {
+			return err
+		}
+		rows = loaded
+	}
+
+	return renderMapPreviews(rows, staleAfter)
+}
+
+func collectCronJobs(ctx context.Context) ([]mapCronJobRow, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build kubernetes config: %w", err)
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	cronGVR := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"}
+	list, err := dynClient.Resource(cronGVR).List(ctx, v1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("list cronjobs: %w", err)
+	}
+
+	jobStatusByCron := map[string]string{}
+	jobTimeByCron := map[string]time.Time{}
+	jobGVR := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+	if jobs, listErr := dynClient.Resource(jobGVR).List(ctx, v1.ListOptions{}); listErr == nil {
+		for _, job := range jobs.Items {
+			status := deriveJobRunStatus(&job)
+			t := jobActivityTime(&job)
+			for _, ref := range job.GetOwnerReferences() {
+				if ref.Kind != "CronJob" {
+					continue
+				}
+				key := fmt.Sprintf("%s/%s", job.GetNamespace(), ref.Name)
+				if existing, ok := jobTimeByCron[key]; !ok || t.After(existing) {
+					jobTimeByCron[key] = t
+					jobStatusByCron[key] = status
+				}
+			}
+		}
+	}
+
+	rows := make([]mapCronJobRow, 0, len(list.Items))
+	for _, item := range list.Items {
+		ns := item.GetNamespace()
+		if mapNamespace != "" && ns != mapNamespace {
+			continue
+		}
+
+		owner, ownerName := detectOwnership(&item)
+		if mapOwner != "" && !strings.EqualFold(owner, mapOwner) {
+			continue
+		}
+
+		schedule, _, _ := unstructured.NestedString(item.Object, "spec", "schedule")
+		suspend, _, _ := unstructured.NestedBool(item.Object, "spec", "suspend")
+		active, _, _ := unstructured.NestedSlice(item.Object, "status", "active")
+		lastSchedule, _, _ := unstructured.NestedString(item.Object, "status", "lastScheduleTime")
+		lastSuccessful, _, _ := unstructured.NestedString(item.Object, "status", "lastSuccessfulTime")
+
+		lastRun := "unknown"
+		key := fmt.Sprintf("%s/%s", ns, item.GetName())
+		if len(active) > 0 {
+			lastRun = "running"
+		} else if s := jobStatusByCron[key]; s != "" {
+			lastRun = s
+		} else if lastSuccessful != "" {
+			lastRun = "success"
+		}
+
+		rows = append(rows, mapCronJobRow{
+			Name:             item.GetName(),
+			Namespace:        ns,
+			Schedule:         schedule,
+			Suspend:          suspend,
+			ActiveJobs:       len(active),
+			LastScheduleTime: firstNonEmpty(lastSchedule, "unknown"),
+			LastRunStatus:    lastRun,
+			Owner:            owner,
+			Lineage:          formatOwnerLineage(owner, ownerName),
+		})
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].Namespace != rows[j].Namespace {
+			return rows[i].Namespace < rows[j].Namespace
+		}
+		return rows[i].Name < rows[j].Name
+	})
+	return rows, nil
+}
+
+func collectJobs(ctx context.Context) ([]mapJobRow, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build kubernetes config: %w", err)
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	jobGVR := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+	list, err := dynClient.Resource(jobGVR).List(ctx, v1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("list jobs: %w", err)
+	}
+
+	rows := make([]mapJobRow, 0, len(list.Items))
+	for _, item := range list.Items {
+		ns := item.GetNamespace()
+		if mapNamespace != "" && ns != mapNamespace {
+			continue
+		}
+
+		owner, ownerName := detectOwnership(&item)
+		if mapOwner != "" && !strings.EqualFold(owner, mapOwner) {
+			continue
+		}
+
+		var cronJob string
+		for _, ref := range item.GetOwnerReferences() {
+			if ref.Kind == "CronJob" {
+				cronJob = ref.Name
+				break
+			}
+		}
+
+		active, _, _ := unstructured.NestedInt64(item.Object, "status", "active")
+		succeeded, _, _ := unstructured.NestedInt64(item.Object, "status", "succeeded")
+		failed, _, _ := unstructured.NestedInt64(item.Object, "status", "failed")
+		startTime, _, _ := unstructured.NestedString(item.Object, "status", "startTime")
+		completionTime, _, _ := unstructured.NestedString(item.Object, "status", "completionTime")
+
+		rows = append(rows, mapJobRow{
+			Name:           item.GetName(),
+			Namespace:      ns,
+			CronJob:        cronJob,
+			Active:         active,
+			Succeeded:      succeeded,
+			Failed:         failed,
+			LastRunStatus:  deriveJobRunStatus(&item),
+			StartTime:      startTime,
+			CompletionTime: completionTime,
+			Owner:          owner,
+			Lineage:        formatOwnerLineage(owner, ownerName),
+		})
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].Namespace != rows[j].Namespace {
+			return rows[i].Namespace < rows[j].Namespace
+		}
+		return rows[i].Name < rows[j].Name
+	})
+	return rows, nil
+}
+
+func buildActionPreviews(ctx context.Context, kind, name, namespace string) ([]mapActionPreview, error) {
+	gvr := gvrForActionKind(kind)
+	if gvr.Resource == "" {
+		return nil, fmt.Errorf("unsupported kind for action previews: %s", kind)
+	}
+
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build kubernetes config: %w", err)
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	if _, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{}); err != nil {
+		return nil, fmt.Errorf("load target resource: %w", err)
+	}
+
+	target := fmt.Sprintf("%s/%s", kind, name)
+	switch kind {
+	case "Deployment", "StatefulSet", "DaemonSet":
+		return []mapActionPreview{
+			{
+				Target:               target,
+				Namespace:            namespace,
+				ActionType:           "rollout-restart",
+				CommandPreview:       fmt.Sprintf("kubectl rollout restart %s/%s -n %s", strings.ToLower(kind), name, namespace),
+				RiskLevel:            "medium",
+				RequiresConfirmation: true,
+				WhySuggested:         "Safely recycle pods after config/image/runtime dependency changes.",
+				ExpectedImpact:       "Controller creates new pods gradually; old pods terminate after replacement.",
+			},
+		}, nil
+	case "Pod":
+		return []mapActionPreview{
+			{
+				Target:               target,
+				Namespace:            namespace,
+				ActionType:           "delete-pod",
+				CommandPreview:       fmt.Sprintf("kubectl delete pod/%s -n %s", name, namespace),
+				RiskLevel:            "medium",
+				RequiresConfirmation: true,
+				WhySuggested:         "Force recreation when pod is stuck, crashlooping, or carrying stale runtime state.",
+				ExpectedImpact:       "If managed by a controller, a replacement pod is recreated automatically.",
+			},
+		}, nil
+	case "CronJob":
+		return []mapActionPreview{
+			{
+				Target:               target,
+				Namespace:            namespace,
+				ActionType:           "run-job-from-cronjob",
+				CommandPreview:       fmt.Sprintf("kubectl create job --from=cronjob/%s %s-manual-$(date +%%s) -n %s", name, name, namespace),
+				RiskLevel:            "medium",
+				RequiresConfirmation: true,
+				WhySuggested:         "Run an immediate one-off execution using the CronJob template.",
+				ExpectedImpact:       "Creates an ad-hoc Job without changing the CronJob schedule.",
+			},
+		}, nil
+	default:
+		return nil, nil
+	}
+}
+
+func collectActivity(ctx context.Context) ([]mapActivityRow, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build kubernetes config: %w", err)
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	rows := make([]mapActivityRow, 0, 128)
+	rows = append(rows, collectFluxActivity(ctx, dynClient)...)
+	rows = append(rows, collectArgoActivity(ctx, dynClient)...)
+	rows = append(rows, collectHelmReleaseActivity(ctx, dynClient)...)
+	rows = append(rows, collectEventActivity(ctx, dynClient)...)
+
+	return rows, nil
+}
+
+func collectPreviews(ctx context.Context, staleAfter time.Duration) ([]mapPreviewRow, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build kubernetes config: %w", err)
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	type signal struct {
+		namespace   string
+		target      string
+		name        string
+		labels      map[string]string
+		annotations map[string]string
+		createdAt   time.Time
+	}
+
+	signals := make([]signal, 0, 256)
+	nsGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
+	if nsList, err := dynClient.Resource(nsGVR).List(ctx, v1.ListOptions{}); err == nil {
+		for _, ns := range nsList.Items {
+			signals = append(signals, signal{
+				namespace:   ns.GetName(),
+				target:      "Namespace/" + ns.GetName(),
+				name:        ns.GetName(),
+				labels:      ns.GetLabels(),
+				annotations: ns.GetAnnotations(),
+				createdAt:   ns.GetCreationTimestamp().Time,
+			})
+		}
+	}
+
+	workloadGVRs := []schema.GroupVersionResource{
+		{Group: "apps", Version: "v1", Resource: "deployments"},
+		{Group: "apps", Version: "v1", Resource: "statefulsets"},
+		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"},
+	}
+	for _, gvr := range workloadGVRs {
+		list, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
+		if err != nil {
+			continue
+		}
+		for _, obj := range list.Items {
+			signals = append(signals, signal{
+				namespace:   obj.GetNamespace(),
+				target:      fmt.Sprintf("%s/%s/%s", obj.GetKind(), obj.GetNamespace(), obj.GetName()),
+				name:        obj.GetName(),
+				labels:      obj.GetLabels(),
+				annotations: obj.GetAnnotations(),
+				createdAt:   obj.GetCreationTimestamp().Time,
+			})
+		}
+	}
+
+	byID := map[string]mapPreviewRow{}
+	now := time.Now()
+	for _, s := range signals {
+		if mapNamespace != "" && s.namespace != mapNamespace {
+			continue
+		}
+		detected, pr, repo, reason := detectPreviewMetadata(s.name, s.labels, s.annotations)
+		if !detected {
+			continue
+		}
+
+		id := s.namespace
+		if pr != "" {
+			id = fmt.Sprintf("%s/pr-%s", s.namespace, pr)
+		}
+		if repo != "" {
+			id = fmt.Sprintf("%s#%s", repo, firstNonEmpty(pr, "unknown"))
+		}
+
+		age := now.Sub(s.createdAt)
+		if age < 0 {
+			age = 0
+		}
+		row := mapPreviewRow{
+			PreviewID:         id,
+			Repo:              firstNonEmpty(repo, "unknown"),
+			PRNumber:          firstNonEmpty(pr, "unknown"),
+			NamespaceOrTarget: s.namespace,
+			Age:               formatAgeShort(age),
+			Stale:             age >= staleAfter,
+			CleanupSuggestion: "Keep active preview and re-check against stale threshold.",
+			MatchReason:       reason,
+		}
+		if row.Stale {
+			row.CleanupSuggestion = "Review PR status and delete preview resources if no longer needed."
+		}
+		if existing, ok := byID[id]; !ok || len(existing.MatchReason) < len(row.MatchReason) {
+			byID[id] = row
+		}
+	}
+
+	rows := make([]mapPreviewRow, 0, len(byID))
+	for _, row := range byID {
+		rows = append(rows, row)
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].NamespaceOrTarget != rows[j].NamespaceOrTarget {
+			return rows[i].NamespaceOrTarget < rows[j].NamespaceOrTarget
+		}
+		return rows[i].PreviewID < rows[j].PreviewID
+	})
+	return rows, nil
+}
+
+func collectFluxActivity(ctx context.Context, dynClient dynamic.Interface) []mapActivityRow {
+	rows := make([]mapActivityRow, 0, 64)
+	type fluxType struct {
+		gvr    schema.GroupVersionResource
+		source string
+		owner  string
+	}
+	types := []fluxType{
+		{gvr: schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}, source: "flux.kustomization", owner: "Flux"},
+		{gvr: schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}, source: "flux.helmrelease", owner: "Flux"},
+	}
+	for _, t := range types {
+		list, err := dynClient.Resource(t.gvr).List(ctx, v1.ListOptions{})
+		if err != nil {
+			continue
+		}
+		for _, obj := range list.Items {
+			ns := obj.GetNamespace()
+			if mapNamespace != "" && ns != mapNamespace {
+				continue
+			}
+			if mapOwner != "" && !strings.EqualFold(t.owner, mapOwner) {
+				continue
+			}
+			conditions, found, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
+			if !found || len(conditions) == 0 {
+				continue
+			}
+			for _, c := range conditions {
+				cMap, ok := c.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				conditionType, _ := cMap["type"].(string)
+				conditionStatus, _ := cMap["status"].(string)
+				reason, _ := cMap["reason"].(string)
+				message, _ := cMap["message"].(string)
+				transition, _ := cMap["lastTransitionTime"].(string)
+
+				rows = append(rows, mapActivityRow{
+					Time:              normalizeTimeString(transition, obj.GetCreationTimestamp().Time),
+					Source:            t.source,
+					Resource:          fmt.Sprintf("%s/%s/%s", obj.GetKind(), ns, obj.GetName()),
+					Action:            firstNonEmpty(strings.ToLower(conditionType), "reconcile"),
+					Result:            classifyConditionResult(conditionStatus, reason, message),
+					Message:           firstNonEmpty(message, reason),
+					SuggestedNextStep: suggestNextStepFromCondition(reason, message),
+					Owner:             t.owner,
+				})
+			}
+		}
+	}
+	return rows
+}
+
+func collectArgoActivity(ctx context.Context, dynClient dynamic.Interface) []mapActivityRow {
+	rows := make([]mapActivityRow, 0, 32)
+	gvr := schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
+	list, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
+	if err != nil {
+		return rows
+	}
+	for _, app := range list.Items {
+		ns := app.GetNamespace()
+		if mapNamespace != "" && ns != mapNamespace {
+			continue
+		}
+		if mapOwner != "" && !strings.EqualFold(mapOwner, "ArgoCD") {
+			continue
+		}
+		syncStatus, _, _ := unstructured.NestedString(app.Object, "status", "sync", "status")
+		healthStatus, _, _ := unstructured.NestedString(app.Object, "status", "health", "status")
+		finishedAt, _, _ := unstructured.NestedString(app.Object, "status", "operationState", "finishedAt")
+		message := fmt.Sprintf("sync=%s health=%s", firstNonEmpty(syncStatus, "unknown"), firstNonEmpty(healthStatus, "unknown"))
+		result := "pending"
+		if strings.EqualFold(syncStatus, "Synced") && strings.EqualFold(healthStatus, "Healthy") {
+			result = "success"
+		} else if strings.EqualFold(syncStatus, "OutOfSync") || strings.EqualFold(healthStatus, "Degraded") {
+			result = "failed"
+		}
+		rows = append(rows, mapActivityRow{
+			Time:              normalizeTimeString(finishedAt, app.GetCreationTimestamp().Time),
+			Source:            "argocd.application",
+			Resource:          fmt.Sprintf("Application/%s/%s", ns, app.GetName()),
+			Action:            "sync-status",
+			Result:            result,
+			Message:           message,
+			SuggestedNextStep: "Use 'argocd app get <name>' and 'argocd app diff <name>' for deeper details.",
+			Owner:             "ArgoCD",
+		})
+	}
+	return rows
+}
+
+func collectHelmReleaseActivity(ctx context.Context, dynClient dynamic.Interface) []mapActivityRow {
+	rows := make([]mapActivityRow, 0, 32)
+	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
+	list, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
+	if err != nil {
+		return rows
+	}
+	for _, sec := range list.Items {
+		ns := sec.GetNamespace()
+		if mapNamespace != "" && ns != mapNamespace {
+			continue
+		}
+		name := sec.GetName()
+		if !strings.HasPrefix(name, "sh.helm.release.v1.") {
+			continue
+		}
+		if mapOwner != "" && !strings.EqualFold(mapOwner, "Helm") {
+			continue
+		}
+		labels := sec.GetLabels()
+		releaseName := ""
+		if labels != nil {
+			releaseName = labels["name"]
+		}
+		if releaseName == "" {
+			releaseName = name
+		}
+		status := "unknown"
+		revision := ""
+		if labels != nil {
+			status = firstNonEmpty(labels["status"], "unknown")
+			revision = labels["version"]
+		}
+		result := "pending"
+		if strings.EqualFold(status, "deployed") {
+			result = "success"
+		} else if strings.EqualFold(status, "failed") || strings.EqualFold(status, "superseded") {
+			result = "failed"
+		}
+
+		rows = append(rows, mapActivityRow{
+			Time:              sec.GetCreationTimestamp().Time.UTC().Format(time.RFC3339),
+			Source:            "helm.release",
+			Resource:          fmt.Sprintf("Release/%s/%s", ns, releaseName),
+			Action:            "release-revision",
+			Result:            result,
+			Message:           strings.TrimSpace(fmt.Sprintf("revision=%s status=%s", firstNonEmpty(revision, "unknown"), status)),
+			SuggestedNextStep: "Use 'helm history <release> -n <namespace>' for release timeline.",
+			Owner:             "Helm",
+		})
+	}
+	return rows
+}
+
+func collectEventActivity(ctx context.Context, dynClient dynamic.Interface) []mapActivityRow {
+	rows := make([]mapActivityRow, 0, 128)
+	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "events"}
+	list, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
+	if err != nil {
+		return rows
+	}
+	for _, ev := range list.Items {
+		ns := ev.GetNamespace()
+		if mapNamespace != "" && ns != mapNamespace {
+			continue
+		}
+		// mapOwner filter: only include event rows when owner filter is not set.
+		if mapOwner != "" {
+			continue
+		}
+		reason, _, _ := unstructured.NestedString(ev.Object, "reason")
+		msg, _, _ := unstructured.NestedString(ev.Object, "message")
+		evType, _, _ := unstructured.NestedString(ev.Object, "type")
+		kind, _, _ := unstructured.NestedString(ev.Object, "involvedObject", "kind")
+		objName, _, _ := unstructured.NestedString(ev.Object, "involvedObject", "name")
+		objNS, _, _ := unstructured.NestedString(ev.Object, "involvedObject", "namespace")
+		when := eventTimestamp(&ev)
+		result := "normal"
+		if strings.EqualFold(evType, "Warning") {
+			result = "warning"
+		}
+		resource := fmt.Sprintf("%s/%s/%s", firstNonEmpty(kind, "Resource"), firstNonEmpty(objNS, ns), firstNonEmpty(objName, ev.GetName()))
+		rows = append(rows, mapActivityRow{
+			Time:              when.UTC().Format(time.RFC3339),
+			Source:            "k8s.event",
+			Resource:          resource,
+			Action:            firstNonEmpty(strings.ToLower(reason), "event"),
+			Result:            result,
+			Message:           msg,
+			SuggestedNextStep: agent.GetEventSuggestion(reason),
+			Owner:             "Native",
+		})
+	}
+	return rows
+}
+
+func renderMapCronJobs(rows []mapCronJobRow) error {
+	format := effectiveMapFormat()
+	switch format {
+	case "json":
+		output := map[string]interface{}{
+			"cronjobs": rows,
+			"count":    len(rows),
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(output)
+	case "md":
+		fmt.Println("# CronJobs")
+		fmt.Println()
+		if len(rows) == 0 {
+			fmt.Println("No CronJobs found.")
+			return nil
+		}
+		fmt.Println("| Namespace | Name | Schedule | Suspend | Active | Last Schedule | Last Run | Owner |")
+		fmt.Println("|-----------|------|----------|---------|--------|---------------|----------|-------|")
+		for _, r := range rows {
+			fmt.Printf("| %s | %s | `%s` | %t | %d | %s | %s | %s |\n", r.Namespace, r.Name, r.Schedule, r.Suspend, r.ActiveJobs, r.LastScheduleTime, r.LastRunStatus, r.Owner)
+		}
+		return nil
+	default:
+		fmt.Println()
+		fmt.Println("CRONJOBS")
+		fmt.Println("════════════════════════════════════════════════════════════════════")
+		if len(rows) == 0 {
+			fmt.Println("No CronJobs found.")
+			return nil
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "NAMESPACE\tNAME\tSCHEDULE\tSUSPEND\tACTIVE\tLAST-SCHEDULE\tLAST-RUN\tOWNER")
+		for _, r := range rows {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%t\t%d\t%s\t%s\t%s\n", r.Namespace, r.Name, r.Schedule, r.Suspend, r.ActiveJobs, r.LastScheduleTime, r.LastRunStatus, r.Owner)
+		}
+		w.Flush()
+		fmt.Printf("\nTotal: %d cronjob(s)\n", len(rows))
+		return nil
+	}
+}
+
+func renderMapJobs(rows []mapJobRow) error {
+	format := effectiveMapFormat()
+	switch format {
+	case "json":
+		output := map[string]interface{}{
+			"jobs":  rows,
+			"count": len(rows),
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(output)
+	case "md":
+		fmt.Println("# Jobs")
+		fmt.Println()
+		if len(rows) == 0 {
+			fmt.Println("No Jobs found.")
+			return nil
+		}
+		fmt.Println("| Namespace | Name | CronJob | Active | Succeeded | Failed | Last Run | Owner |")
+		fmt.Println("|-----------|------|---------|--------|-----------|--------|----------|-------|")
+		for _, r := range rows {
+			fmt.Printf("| %s | %s | %s | %d | %d | %d | %s | %s |\n", r.Namespace, r.Name, firstNonEmpty(r.CronJob, "-"), r.Active, r.Succeeded, r.Failed, r.LastRunStatus, r.Owner)
+		}
+		return nil
+	default:
+		fmt.Println()
+		fmt.Println("JOBS")
+		fmt.Println("════════════════════════════════════════════════════════════════════")
+		if len(rows) == 0 {
+			fmt.Println("No Jobs found.")
+			return nil
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "NAMESPACE\tNAME\tCRONJOB\tACTIVE\tSUCCEEDED\tFAILED\tLAST-RUN\tOWNER")
+		for _, r := range rows {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n", r.Namespace, r.Name, firstNonEmpty(r.CronJob, "-"), r.Active, r.Succeeded, r.Failed, r.LastRunStatus, r.Owner)
+		}
+		w.Flush()
+		fmt.Printf("\nTotal: %d job(s)\n", len(rows))
+		return nil
+	}
+}
+
+func renderMapActivity(rows []mapActivityRow) error {
+	cutoff := time.Time{}
+	if mapActivitySince != "" {
+		d, err := parseDurationWithDays(mapActivitySince)
+		if err != nil {
+			return fmt.Errorf("invalid --since: %w", err)
+		}
+		cutoff = time.Now().Add(-d)
+	}
+
+	filtered := make([]mapActivityRow, 0, len(rows))
+	for _, row := range rows {
+		if mapNamespace != "" && !strings.Contains(row.Resource, "/"+mapNamespace+"/") {
+			continue
+		}
+		if mapOwner != "" && !strings.EqualFold(row.Owner, mapOwner) {
+			continue
+		}
+		if !cutoff.IsZero() {
+			if ts, ok := parseAnyTime(row.Time); ok && ts.Before(cutoff) {
+				continue
+			}
+		}
+		filtered = append(filtered, row)
+	}
+	rows = filtered
+
+	sort.Slice(rows, func(i, j int) bool {
+		ti, _ := parseAnyTime(rows[i].Time)
+		tj, _ := parseAnyTime(rows[j].Time)
+		if !ti.Equal(tj) {
+			return ti.After(tj)
+		}
+		if rows[i].Source != rows[j].Source {
+			return rows[i].Source < rows[j].Source
+		}
+		if rows[i].Resource != rows[j].Resource {
+			return rows[i].Resource < rows[j].Resource
+		}
+		return rows[i].Action < rows[j].Action
+	})
+
+	format := effectiveMapFormat()
+	switch format {
+	case "json":
+		output := map[string]interface{}{
+			"activity": rows,
+			"count":    len(rows),
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(output)
+	case "md":
+		fmt.Println("# Activity")
+		fmt.Println()
+		if len(rows) == 0 {
+			fmt.Println("No activity found.")
+			return nil
+		}
+		fmt.Println("| Time | Source | Resource | Action | Result | Message |")
+		fmt.Println("|------|--------|----------|--------|--------|---------|")
+		for _, r := range rows {
+			fmt.Printf("| %s | %s | %s | %s | %s | %s |\n", r.Time, r.Source, r.Resource, r.Action, r.Result, strings.ReplaceAll(r.Message, "|", "\\|"))
+		}
+		return nil
+	default:
+		fmt.Println()
+		fmt.Println("ACTIVITY")
+		fmt.Println("════════════════════════════════════════════════════════════════════")
+		if len(rows) == 0 {
+			fmt.Println("No activity found.")
+			return nil
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "TIME\tSOURCE\tRESOURCE\tACTION\tRESULT\tMESSAGE")
+		for _, r := range rows {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", r.Time, r.Source, r.Resource, r.Action, r.Result, truncate(r.Message, 80))
+		}
+		w.Flush()
+		fmt.Printf("\nTotal: %d activity event(s)\n", len(rows))
+		return nil
+	}
+}
+
+func renderMapPreviews(rows []mapPreviewRow, staleAfter time.Duration) error {
+	format := effectiveMapFormat()
+	switch format {
+	case "json":
+		output := map[string]interface{}{
+			"previews":   rows,
+			"count":      len(rows),
+			"staleAfter": staleAfter.String(),
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(output)
+	case "md":
+		fmt.Println("# Preview Environments")
+		fmt.Println()
+		if len(rows) == 0 {
+			fmt.Println("No preview environments detected.")
+			return nil
+		}
+		fmt.Println("| Preview ID | Namespace | Repo | PR | Age | Stale | Suggestion |")
+		fmt.Println("|------------|-----------|------|----|-----|-------|------------|")
+		for _, r := range rows {
+			fmt.Printf("| %s | %s | %s | %s | %s | %t | %s |\n", r.PreviewID, r.NamespaceOrTarget, r.Repo, r.PRNumber, r.Age, r.Stale, r.CleanupSuggestion)
+		}
+		return nil
+	default:
+		fmt.Println()
+		fmt.Println("PREVIEW ENVIRONMENTS")
+		fmt.Println("════════════════════════════════════════════════════════════════════")
+		if len(rows) == 0 {
+			fmt.Println("No preview environments detected.")
+			return nil
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "PREVIEW-ID\tNAMESPACE\tREPO\tPR\tAGE\tSTALE\tMATCH")
+		for _, r := range rows {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%t\t%s\n", r.PreviewID, r.NamespaceOrTarget, r.Repo, r.PRNumber, r.Age, r.Stale, truncate(r.MatchReason, 48))
+		}
+		w.Flush()
+		fmt.Printf("\nTotal: %d preview environment(s)\n", len(rows))
+		return nil
+	}
+}
+
+func loadCronJobsFixture(path string) ([]mapCronJobRow, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read cronjobs fixture: %w", err)
+	}
+	var rows []mapCronJobRow
+	if err := json.Unmarshal(b, &rows); err != nil {
+		return nil, fmt.Errorf("parse cronjobs fixture: %w", err)
+	}
+	return rows, nil
+}
+
+func loadJobsFixture(path string) ([]mapJobRow, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read jobs fixture: %w", err)
+	}
+	var rows []mapJobRow
+	if err := json.Unmarshal(b, &rows); err != nil {
+		return nil, fmt.Errorf("parse jobs fixture: %w", err)
+	}
+	return rows, nil
+}
+
+func loadActionsFixture(path string) ([]mapActionPreview, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read actions fixture: %w", err)
+	}
+	var rows []mapActionPreview
+	if err := json.Unmarshal(b, &rows); err != nil {
+		return nil, fmt.Errorf("parse actions fixture: %w", err)
+	}
+	return rows, nil
+}
+
+func loadActivityFixture(path string) ([]mapActivityRow, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read activity fixture: %w", err)
+	}
+	var rows []mapActivityRow
+	if err := json.Unmarshal(b, &rows); err != nil {
+		return nil, fmt.Errorf("parse activity fixture: %w", err)
+	}
+	return rows, nil
+}
+
+func loadPreviewsFixture(path string) ([]mapPreviewRow, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read previews fixture: %w", err)
+	}
+	var rows []mapPreviewRow
+	if err := json.Unmarshal(b, &rows); err != nil {
+		return nil, fmt.Errorf("parse previews fixture: %w", err)
+	}
+	return rows, nil
+}
+
+func deriveJobRunStatus(job *unstructured.Unstructured) string {
+	active, _, _ := unstructured.NestedInt64(job.Object, "status", "active")
+	succeeded, _, _ := unstructured.NestedInt64(job.Object, "status", "succeeded")
+	failed, _, _ := unstructured.NestedInt64(job.Object, "status", "failed")
+	if active > 0 {
+		return "running"
+	}
+
+	conditions, found, _ := unstructured.NestedSlice(job.Object, "status", "conditions")
+	if found {
+		for _, c := range conditions {
+			cMap, ok := c.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			t, _ := cMap["type"].(string)
+			s, _ := cMap["status"].(string)
+			if strings.EqualFold(s, "True") {
+				if t == "Complete" {
+					return "success"
+				}
+				if t == "Failed" {
+					return "failed"
+				}
+			}
+		}
+	}
+
+	if succeeded > 0 {
+		return "success"
+	}
+	if failed > 0 {
+		return "failed"
+	}
+	return "unknown"
+}
+
+func jobActivityTime(job *unstructured.Unstructured) time.Time {
+	if completion, _, _ := unstructured.NestedString(job.Object, "status", "completionTime"); completion != "" {
+		if t, ok := parseAnyTime(completion); ok {
+			return t
+		}
+	}
+	if start, _, _ := unstructured.NestedString(job.Object, "status", "startTime"); start != "" {
+		if t, ok := parseAnyTime(start); ok {
+			return t
+		}
+	}
+	return job.GetCreationTimestamp().Time
+}
+
+func parseKindNameArg(arg string) (string, string, error) {
+	parts := strings.SplitN(arg, "/", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid resource format %q (use kind/name)", arg)
+	}
+	if parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("invalid resource format %q (use kind/name)", arg)
+	}
+	return parts[0], parts[1], nil
+}
+
+func gvrForActionKind(kind string) schema.GroupVersionResource {
+	switch kind {
+	case "Deployment":
+		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	case "StatefulSet":
+		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "statefulsets"}
+	case "DaemonSet":
+		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "daemonsets"}
+	case "Pod":
+		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	case "CronJob":
+		return schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"}
+	default:
+		return schema.GroupVersionResource{}
+	}
+}
+
+func effectiveMapFormat() string {
+	format := mapListFormat
+	if mapJSON && format == "ascii" {
+		return "json"
+	}
+	return format
+}
+
+func parseDurationWithDays(raw string) (time.Duration, error) {
+	v := strings.TrimSpace(raw)
+	if v == "" {
+		return 0, nil
+	}
+	if strings.HasSuffix(v, "d") {
+		n, err := strconv.Atoi(strings.TrimSuffix(v, "d"))
+		if err != nil {
+			return 0, fmt.Errorf("invalid day duration %q", raw)
+		}
+		return time.Duration(n) * 24 * time.Hour, nil
+	}
+	return time.ParseDuration(v)
+}
+
+func formatOwnerLineage(owner, ownerName string) string {
+	if ownerName == "" || ownerName == "-" {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s", strings.ToLower(owner), ownerName)
+}
+
+func classifyConditionResult(conditionStatus, reason, message string) string {
+	status := strings.ToLower(conditionStatus)
+	combined := strings.ToLower(reason + " " + message)
+	switch {
+	case status == "true" && !strings.Contains(combined, "fail"):
+		return "success"
+	case status == "false" || strings.Contains(combined, "fail") || strings.Contains(combined, "error"):
+		return "failed"
+	default:
+		return "pending"
+	}
+}
+
+func suggestNextStepFromCondition(reason, message string) string {
+	r := strings.ToLower(reason + " " + message)
+	switch {
+	case strings.Contains(r, "artifact"):
+		return "Check source readiness and repository/registry access for the referenced source."
+	case strings.Contains(r, "healthcheckfailed"):
+		return "Inspect workload health conditions and rollout status."
+	case strings.Contains(r, "progressdeadlineexceeded"):
+		return "Check pod startup failures and rollout progress; consider rollback if needed."
+	default:
+		return "Inspect controller status details and reconcile conditions for this resource."
+	}
+}
+
+func eventTimestamp(ev *unstructured.Unstructured) time.Time {
+	for _, path := range [][]string{
+		{"eventTime"},
+		{"lastTimestamp"},
+		{"firstTimestamp"},
+		{"metadata", "creationTimestamp"},
+	} {
+		if v, found, _ := unstructured.NestedString(ev.Object, path...); found && v != "" {
+			if t, ok := parseAnyTime(v); ok {
+				return t
+			}
+		}
+	}
+	return ev.GetCreationTimestamp().Time
+}
+
+func normalizeTimeString(raw string, fallback time.Time) string {
+	if raw == "" {
+		return fallback.UTC().Format(time.RFC3339)
+	}
+	if t, ok := parseAnyTime(raw); ok {
+		return t.UTC().Format(time.RFC3339)
+	}
+	return fallback.UTC().Format(time.RFC3339)
+}
+
+func parseAnyTime(raw string) (time.Time, bool) {
+	layouts := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02 15:04:05 -0700 MST",
+	}
+	for _, l := range layouts {
+		if t, err := time.Parse(l, raw); err == nil {
+			return t, true
+		}
+	}
+	return time.Time{}, false
+}
+
+func formatAgeShort(age time.Duration) string {
+	if age < time.Minute {
+		return fmt.Sprintf("%ds", int(age.Seconds()))
+	}
+	if age < time.Hour {
+		return fmt.Sprintf("%dm", int(age.Minutes()))
+	}
+	if age < 24*time.Hour {
+		return fmt.Sprintf("%dh", int(age.Hours()))
+	}
+	return fmt.Sprintf("%dd", int(age.Hours()/24))
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func detectPreviewMetadata(name string, labels, annotations map[string]string) (bool, string, string, string) {
+	all := make(map[string]string, len(labels)+len(annotations))
+	for k, v := range labels {
+		all["label:"+k] = v
+	}
+	for k, v := range annotations {
+		all["annotation:"+k] = v
+	}
+
+	lowerName := strings.ToLower(name)
+	detected := strings.Contains(lowerName, "preview") || strings.Contains(lowerName, "pr-")
+	var prNumber string
+	var repo string
+	reasons := make([]string, 0, 2)
+
+	rePR := regexp.MustCompile(`(?i)(?:^|[^0-9])(?:pr[-_/ ]?|pull[-_/ ]?request[-_/ ]?)([0-9]{1,7})`)
+	reDigits := regexp.MustCompile(`\b([0-9]{1,7})\b`)
+
+	for key, value := range all {
+		lk := strings.ToLower(key)
+		lv := strings.ToLower(value)
+		if strings.Contains(lk, "preview") || strings.Contains(lv, "preview") || strings.Contains(lk, "pull-request") || strings.Contains(lk, "pr-number") {
+			detected = true
+			reasons = append(reasons, fmt.Sprintf("%s=%s", key, value))
+		}
+		if strings.Contains(lk, "forgejo") || strings.Contains(lv, "forgejo") || strings.Contains(lk, "gitea") || strings.Contains(lv, "gitea") {
+			detected = true
+			reasons = append(reasons, fmt.Sprintf("%s=%s", key, value))
+		}
+		if prNumber == "" && (strings.Contains(lk, "pr") || strings.Contains(lk, "pull-request") || strings.Contains(lv, "pr-")) {
+			if m := rePR.FindStringSubmatch(value); len(m) == 2 {
+				prNumber = m[1]
+			} else if m := reDigits.FindStringSubmatch(value); len(m) == 2 {
+				prNumber = m[1]
+			}
+		}
+		if repo == "" && (strings.Contains(lk, "repo") || strings.Contains(lk, "repository") || strings.Contains(lk, "url") || strings.Contains(lk, "git")) {
+			repo = value
+		}
+	}
+
+	if prNumber != "" {
+		detected = true
+	}
+	reason := "preview heuristic match"
+	if len(reasons) > 0 {
+		sort.Strings(reasons)
+		reason = strings.Join(reasons, "; ")
+	}
+	return detected, prNumber, repo, reason
 }
 
 // mapHelmHookToArgoPhase maps Helm hook annotations to ArgoCD phases

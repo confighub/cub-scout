@@ -1,0 +1,8 @@
+
+PREVIEW ENVIRONMENTS
+════════════════════════════════════════════════════════════════════
+PREVIEW-ID                  NAMESPACE       REPO                    PR   AGE  STALE  MATCH
+ghcr.io/acme/ecommerce#142  preview-pr-142  ghcr.io/acme/ecommerce  142  25h  false  label:preview=true; annotation:forgejo-url=ht...
+ghcr.io/acme/payments#91    preview-pr-91   ghcr.io/acme/payments   91   95h  true   label:pull-request=91
+
+Total: 2 preview environment(s)

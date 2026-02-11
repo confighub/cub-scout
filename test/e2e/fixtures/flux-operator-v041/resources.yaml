@@ -1,0 +1,125 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: operations
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: preview-pr-142
+  labels:
+    preview: "true"
+    pull-request: "142"
+  annotations:
+    forgejo-url: https://forgejo.example.com/acme/ecommerce/pulls/142
+    repository: ghcr.io/acme/ecommerce
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: ecommerce-apps
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/acme/ecommerce-apps
+  ref:
+    branch: main
+status:
+  artifact:
+    url: http://source-controller.flux-system.svc.cluster.local/gitrepository/flux-system/ecommerce-apps/main@sha1:abc1234567890abcdef1234567890abcdef12.tar.gz
+    revision: main@sha1:abc1234567890abcdef1234567890abcdef12
+    digest: sha256:4f14c88a40f88fca5f9de4f05d2a4b9e67d1f7f1bdcb6e43ec73f2bc1f5a77ab
+    lastUpdateTime: "2026-02-11T15:31:07Z"
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: Succeeded
+      message: stored artifact for revision 'main@sha1:abc1234567890abcdef1234567890abcdef12'
+      lastTransitionTime: "2026-02-11T15:31:07Z"
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ecommerce-payment
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./clusters/prod/ecommerce/payment
+  sourceRef:
+    kind: GitRepository
+    name: ecommerce-apps
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: ReconciliationSucceeded
+      message: Applied revision main@sha1:abc1234567890abcdef1234567890abcdef12
+      lastTransitionTime: "2026-02-11T15:35:00Z"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nightly-backup
+  namespace: operations
+  labels:
+    kustomize.toolkit.fluxcd.io/name: ecommerce-payment
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: backup
+              image: alpine:3.20
+              command: ["sh", "-c", "echo backup"]
+status:
+  lastScheduleTime: "2026-02-11T02:00:00Z"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nightly-backup-2901
+  namespace: operations
+  ownerReferences:
+    - apiVersion: batch/v1
+      kind: CronJob
+      name: nightly-backup
+      uid: 9e149b8f-5d57-4b1b-8252-9eca82f0b88d
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: backup
+          image: alpine:3.20
+          command: ["sh", "-c", "echo backup"]
+status:
+  startTime: "2026-02-11T02:00:03Z"
+  completionTime: "2026-02-11T02:03:41Z"
+  succeeded: 1
+  conditions:
+    - type: Complete
+      status: "True"
+      lastTransitionTime: "2026-02-11T02:03:41Z"
+---
+apiVersion: v1
+kind: Event
+metadata:
+  name: payment-api.184f4b2f7d5b8a36
+  namespace: operations
+reason: FailedCreate
+type: Warning
+message: Failed to create pod sandbox
+involvedObject:
+  apiVersion: apps/v1
+  kind: Deployment
+  name: payment-api
+  namespace: operations
+eventTime: "2026-02-11T15:50:00Z"

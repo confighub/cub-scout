@@ -1,0 +1,8 @@
+
+CRONJOBS
+════════════════════════════════════════════════════════════════════
+NAMESPACE   NAME            SCHEDULE      SUSPEND  ACTIVE  LAST-SCHEDULE         LAST-RUN  OWNER
+operations  nightly-backup  0 2 * * *     false    0       <TIMESTAMP>  success   Flux
+reports     stuck-report    */30 * * * *  false    1       <TIMESTAMP>  running   Native
+
+Total: 2 cronjob(s)

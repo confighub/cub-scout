@@ -1,0 +1,23 @@
+
+TRACE: Deployment/payment-api in ecommerce
+
+  ✓ GitRepository/ecommerce-apps
+    │ Namespace: flux-system
+    │ URL: https://github.com/acme/ecommerce-apps
+    │ Revision: main@sha1:abc1234567890abcdef1234567890abcdef12
+    │ Artifact URL: unknown
+    │ Artifact Revision: unknown
+    │ Artifact Digest: unknown
+    │ Artifact Updated: unknown
+    │ Status: Fetched revision: main@sha1:abc1234
+    │
+    └─▶ ✓ Kustomization/ecommerce-payment
+        │ Namespace: flux-system
+        │ Path: ./clusters/prod/ecommerce/payment
+        │ Revision: main@sha1:abc1234567890abcdef1234567890abcdef12
+        │ Status: Applied revision: main@sha1:abc1234
+        │
+        └─▶ ✓ Deployment/payment-api
+              Status: 3/3 ready
+
+✓ All levels in sync. Managed by Flux.

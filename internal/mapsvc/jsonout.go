@@ -365,10 +365,20 @@ type TraceSummary struct {
 
 // TraceSourceRef includes source resource info plus URL.
 type TraceSourceRef struct {
-	Kind      string `json:"kind"`
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
-	URL       string `json:"url,omitempty"` // Git URL for GitRepository, registry for OCI
+	Kind      string            `json:"kind"`
+	Namespace string            `json:"namespace"`
+	Name      string            `json:"name"`
+	URL       string            `json:"url,omitempty"` // Git URL for GitRepository, registry for OCI
+	Artifact  *TraceArtifactRef `json:"artifact,omitempty"`
+}
+
+// TraceArtifactRef captures source artifact provenance when requested (`trace --artifacts`).
+type TraceArtifactRef struct {
+	URL            string `json:"url"`
+	Revision       string `json:"revision"`
+	Digest         string `json:"digest"`
+	LastUpdateTime string `json:"lastUpdateTime"`
+	SourceKind     string `json:"sourceKind"`
 }
 
 // ChainRole constants for trace chain nodes.

@@ -1,0 +1,12 @@
+[
+  {
+    "target": "Deployment/payment-api",
+    "namespace": "ecommerce",
+    "actionType": "rollout-restart",
+    "commandPreview": "kubectl rollout restart deployment/payment-api -n ecommerce",
+    "riskLevel": "medium",
+    "requiresConfirmation": true,
+    "whySuggested": "Safely recycle pods after config/image/runtime dependency changes.",
+    "expectedImpact": "Controller creates new pods gradually; old pods terminate after replacement."
+  }
+]

@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -34,6 +35,7 @@ var (
 	traceExplain   bool   // Show explanatory content for learning
 	traceHistory   bool   // Show deployment history
 	traceLimit     int    // Limit number of history entries
+	traceArtifacts bool   // Include source artifact provenance in output
 )
 
 // ANSI color codes for colorful output
@@ -124,6 +126,7 @@ func init() {
 	traceCmd.Flags().BoolVar(&traceExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 	traceCmd.Flags().BoolVar(&traceHistory, "history", false, "Show deployment history (who deployed what, when)")
 	traceCmd.Flags().IntVar(&traceLimit, "limit", 10, "Limit number of history entries (default: 10)")
+	traceCmd.Flags().BoolVar(&traceArtifacts, "artifacts", false, "Include source artifact provenance (url/revision/digest/update time)")
 
 	// Mark --json as deprecated
 	_ = traceCmd.Flags().MarkDeprecated("json", "use --format json instead")
@@ -200,10 +203,17 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		if appErr != nil {
 			return fmt.Errorf("trace failed: %w", appErr)
 		}
-		if effectiveFormat == "json" {
-			return outputTraceJSONv014(appResult, kind, name, traceNamespace)
+		artifacts := buildUnknownTraceArtifacts(appResult)
+		if traceArtifacts {
+			artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifacts(ctx, appResult))
 		}
-		return outputTraceHuman(appResult)
+		if effectiveFormat == "json" {
+			return outputTraceJSONv014(appResult, kind, name, traceNamespace, artifacts)
+		}
+		if effectiveFormat == "md" {
+			return outputTraceMarkdown(appResult, artifacts)
+		}
+		return outputTraceHuman(appResult, artifacts)
 	}
 
 	// Detect ownership to choose the right tracer
@@ -296,14 +306,19 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	artifacts := buildUnknownTraceArtifacts(result)
+	if traceArtifacts {
+		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifacts(ctx, result))
+	}
+
 	// Output results (effectiveFormat was resolved earlier)
 	switch effectiveFormat {
 	case "json":
-		return outputTraceJSONv014(result, kind, name, traceNamespace)
+		return outputTraceJSONv014(result, kind, name, traceNamespace, artifacts)
 	case "md":
-		return outputTraceMarkdown(result)
+		return outputTraceMarkdown(result, artifacts)
 	default:
-		return outputTraceHuman(result)
+		return outputTraceHuman(result, artifacts)
 	}
 }
 
@@ -466,8 +481,8 @@ func outputTraceJSON(result *agent.TraceResult) error {
 }
 
 // outputTraceJSONv014 outputs the trace result using the v0.14 JSON schema.
-func outputTraceJSONv014(result *agent.TraceResult, kind, name, namespace string) error {
-	output := convertTraceToV014(result, kind, name, namespace)
+func outputTraceJSONv014(result *agent.TraceResult, kind, name, namespace string, artifacts map[string]mapsvc.TraceArtifactRef) error {
+	output := convertTraceToV014(result, kind, name, namespace, artifacts)
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
@@ -483,7 +498,7 @@ func outputTraceJSONv014(result *agent.TraceResult, kind, name, namespace string
 }
 
 // convertTraceToV014 converts agent.TraceResult to mapsvc.TraceOutput.
-func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string) mapsvc.TraceOutput {
+func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string, artifacts map[string]mapsvc.TraceArtifactRef) mapsvc.TraceOutput {
 	// Build target from the traced resource
 	target := mapsvc.ResourceID{
 		Kind:      kind,
@@ -513,7 +528,7 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string)
 	}
 
 	// Build summary
-	summary := buildTraceSummary(result, chain)
+	summary := buildTraceSummary(result, chain, artifacts)
 
 	return mapsvc.TraceOutput{
 		Command: "trace",
@@ -606,7 +621,7 @@ func findDeployerName(link agent.ChainLink) string {
 }
 
 // buildTraceSummary constructs the summary from trace result.
-func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode) mapsvc.TraceSummary {
+func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, artifacts map[string]mapsvc.TraceArtifactRef) mapsvc.TraceSummary {
 	summary := mapsvc.TraceSummary{
 		OwnerType: normalizeToolToOwner(result.Tool),
 	}
@@ -629,6 +644,15 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode) maps
 				Name:      node.ID.Name,
 				URL:       url,
 			}
+			if traceArtifacts {
+				if art, ok := artifacts[traceArtifactKey(node.ID.Kind, node.ID.Namespace, node.ID.Name)]; ok {
+					artCopy := art
+					summary.Source.Artifact = &artCopy
+				} else {
+					unknown := traceArtifactUnknownForKind(node.ID.Kind)
+					summary.Source.Artifact = &unknown
+				}
+			}
 		case mapsvc.RoleDeployer:
 			summary.Deployer = &mapsvc.ResourceID{
 				Kind:      node.ID.Kind,
@@ -643,10 +667,10 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode) maps
 
 // normalizeToolToOwner converts tool name to owner type.
 func normalizeToolToOwner(tool string) string {
-	switch tool {
+	switch strings.ToLower(strings.TrimSpace(tool)) {
 	case "flux":
 		return "Flux"
-	case "argocd":
+	case "argocd", "argo":
 		return "ArgoCD"
 	case "helm":
 		return "Helm"
@@ -656,7 +680,7 @@ func normalizeToolToOwner(tool string) string {
 }
 
 // outputTraceHuman outputs the trace result in human-readable format with colors
-func outputTraceHuman(result *agent.TraceResult) error {
+func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.TraceArtifactRef) error {
 	// Header
 	fmt.Printf("\n")
 	fmt.Printf("%s%sTRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
@@ -755,6 +779,13 @@ func outputTraceHuman(result *agent.TraceResult) error {
 		}
 		if link.Revision != "" {
 			fmt.Printf("%s%sRevision:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorPurple, link.Revision, colorReset)
+		}
+		if traceArtifacts && isTraceSourceKind(link.Kind) {
+			artifact := artifactForLink(link, artifacts)
+			fmt.Printf("%s%sArtifact URL:%s %s\n", detailPrefix, colorDim, colorReset, artifact.URL)
+			fmt.Printf("%s%sArtifact Revision:%s %s\n", detailPrefix, colorDim, colorReset, artifact.Revision)
+			fmt.Printf("%s%sArtifact Digest:%s %s\n", detailPrefix, colorDim, colorReset, artifact.Digest)
+			fmt.Printf("%s%sArtifact Updated:%s %s\n", detailPrefix, colorDim, colorReset, artifact.LastUpdateTime)
 		}
 		if link.Status != "" {
 			statusColor := colorGreen
@@ -899,7 +930,7 @@ func outputTraceHuman(result *agent.TraceResult) error {
 }
 
 // outputTraceMarkdown outputs the trace in markdown format (thin wrapper over ASCII, no colors).
-func outputTraceMarkdown(result *agent.TraceResult) error {
+func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.TraceArtifactRef) error {
 	// Markdown header
 	fmt.Printf("## Trace: %s\n\n", result.Object.String())
 	fmt.Println("```")
@@ -943,6 +974,13 @@ func outputTraceMarkdown(result *agent.TraceResult) error {
 		}
 		if link.Revision != "" {
 			fmt.Printf("%sRevision: %s\n", detailPrefix, link.Revision)
+		}
+		if traceArtifacts && isTraceSourceKind(link.Kind) {
+			artifact := artifactForLink(link, artifacts)
+			fmt.Printf("%sArtifact URL: %s\n", detailPrefix, artifact.URL)
+			fmt.Printf("%sArtifact Revision: %s\n", detailPrefix, artifact.Revision)
+			fmt.Printf("%sArtifact Digest: %s\n", detailPrefix, artifact.Digest)
+			fmt.Printf("%sArtifact Updated: %s\n", detailPrefix, artifact.LastUpdateTime)
 		}
 		if link.Status != "" {
 			fmt.Printf("%sStatus: %s\n", detailPrefix, link.Status)
@@ -1373,6 +1411,198 @@ func formatElapsed(d time.Duration) string {
 	return fmt.Sprintf("%dd %dh", days, hours)
 }
 
+func traceArtifactKey(kind, namespace, name string) string {
+	return fmt.Sprintf("%s/%s/%s", kind, namespace, name)
+}
+
+func isTraceSourceKind(kind string) bool {
+	switch kind {
+	case "GitRepository", "OCIRepository", "HelmRepository", "Bucket":
+		return true
+	default:
+		return false
+	}
+}
+
+func traceArtifactUnknownForKind(kind string) mapsvc.TraceArtifactRef {
+	sourceKind := kind
+	if strings.TrimSpace(sourceKind) == "" {
+		sourceKind = "unknown"
+	}
+	return mapsvc.TraceArtifactRef{
+		URL:            "unknown",
+		Revision:       "unknown",
+		Digest:         "unknown",
+		LastUpdateTime: "unknown",
+		SourceKind:     sourceKind,
+	}
+}
+
+func normalizeTraceArtifact(kind string, artifact mapsvc.TraceArtifactRef) mapsvc.TraceArtifactRef {
+	out := artifact
+	if strings.TrimSpace(out.URL) == "" {
+		out.URL = "unknown"
+	}
+	if strings.TrimSpace(out.Revision) == "" {
+		out.Revision = "unknown"
+	}
+	if strings.TrimSpace(out.Digest) == "" {
+		out.Digest = "unknown"
+	}
+	if strings.TrimSpace(out.LastUpdateTime) == "" {
+		out.LastUpdateTime = "unknown"
+	}
+	if strings.TrimSpace(out.SourceKind) == "" {
+		out.SourceKind = firstNonEmpty(kind, "unknown")
+	}
+	return out
+}
+
+func buildUnknownTraceArtifacts(result *agent.TraceResult) map[string]mapsvc.TraceArtifactRef {
+	artifacts := make(map[string]mapsvc.TraceArtifactRef)
+	if result == nil {
+		return artifacts
+	}
+	for _, link := range result.Chain {
+		if !isTraceSourceKind(link.Kind) {
+			continue
+		}
+		key := traceArtifactKey(link.Kind, link.Namespace, link.Name)
+		if _, ok := artifacts[key]; ok {
+			continue
+		}
+		artifacts[key] = traceArtifactUnknownForKind(link.Kind)
+	}
+	return artifacts
+}
+
+func mergeTraceArtifacts(base, updates map[string]mapsvc.TraceArtifactRef) map[string]mapsvc.TraceArtifactRef {
+	merged := make(map[string]mapsvc.TraceArtifactRef, len(base)+len(updates))
+	for key, value := range base {
+		merged[key] = value
+	}
+	for key, value := range updates {
+		kind := strings.SplitN(key, "/", 2)[0]
+		merged[key] = normalizeTraceArtifact(kind, value)
+	}
+	return merged
+}
+
+func collectTraceArtifacts(ctx context.Context, result *agent.TraceResult) map[string]mapsvc.TraceArtifactRef {
+	artifacts := make(map[string]mapsvc.TraceArtifactRef)
+	if result == nil || len(result.Chain) == 0 {
+		return artifacts
+	}
+
+	sources := make([]agent.ChainLink, 0, 4)
+	for _, link := range result.Chain {
+		if isTraceSourceKind(link.Kind) {
+			sources = append(sources, link)
+		}
+	}
+	if len(sources) == 0 {
+		return artifacts
+	}
+
+	cfg, err := buildConfig()
+	if err != nil {
+		return artifacts
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return artifacts
+	}
+
+	for _, source := range sources {
+		gvr := kindToGVR(source.Kind)
+		if gvr.Resource == "" {
+			continue
+		}
+		obj, err := dynClient.Resource(gvr).Namespace(source.Namespace).Get(ctx, source.Name, v1.GetOptions{})
+		if err != nil {
+			continue
+		}
+
+		artifact := traceArtifactUnknownForKind(source.Kind)
+		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "url"); ok && strings.TrimSpace(v) != "" {
+			artifact.URL = v
+		}
+		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "revision"); ok && strings.TrimSpace(v) != "" {
+			artifact.Revision = v
+		}
+		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "digest"); ok && strings.TrimSpace(v) != "" {
+			artifact.Digest = v
+		}
+		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "lastUpdateTime"); ok && strings.TrimSpace(v) != "" {
+			artifact.LastUpdateTime = v
+		}
+
+		key := traceArtifactKey(source.Kind, source.Namespace, source.Name)
+		artifacts[key] = normalizeTraceArtifact(source.Kind, artifact)
+	}
+
+	return artifacts
+}
+
+func artifactForLink(link agent.ChainLink, artifacts map[string]mapsvc.TraceArtifactRef) mapsvc.TraceArtifactRef {
+	if len(artifacts) > 0 {
+		key := traceArtifactKey(link.Kind, link.Namespace, link.Name)
+		if artifact, ok := artifacts[key]; ok {
+			return normalizeTraceArtifact(link.Kind, artifact)
+		}
+	}
+	return traceArtifactUnknownForKind(link.Kind)
+}
+
+type traceArtifactFixtureItem struct {
+	Kind           string `json:"kind"`
+	Namespace      string `json:"namespace"`
+	Name           string `json:"name"`
+	URL            string `json:"url"`
+	Revision       string `json:"revision"`
+	Digest         string `json:"digest"`
+	LastUpdateTime string `json:"lastUpdateTime"`
+	SourceKind     string `json:"sourceKind"`
+}
+
+func loadTraceArtifactsFromJSON(path string) (map[string]mapsvc.TraceArtifactRef, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read trace artifact JSON: %w", err)
+	}
+
+	artifacts := make(map[string]mapsvc.TraceArtifactRef)
+
+	var items []traceArtifactFixtureItem
+	if err := json.Unmarshal(data, &items); err == nil {
+		for _, item := range items {
+			kind := firstNonEmpty(item.Kind, item.SourceKind)
+			if kind == "" || item.Name == "" {
+				continue
+			}
+			key := traceArtifactKey(kind, item.Namespace, item.Name)
+			artifacts[key] = normalizeTraceArtifact(kind, mapsvc.TraceArtifactRef{
+				URL:            item.URL,
+				Revision:       item.Revision,
+				Digest:         item.Digest,
+				LastUpdateTime: item.LastUpdateTime,
+				SourceKind:     firstNonEmpty(item.SourceKind, kind),
+			})
+		}
+		return artifacts, nil
+	}
+
+	var byKey map[string]mapsvc.TraceArtifactRef
+	if err := json.Unmarshal(data, &byKey); err != nil {
+		return nil, fmt.Errorf("failed to parse trace artifact JSON: %w", err)
+	}
+	for key, artifact := range byKey {
+		kind := strings.SplitN(key, "/", 2)[0]
+		artifacts[key] = normalizeTraceArtifact(kind, artifact)
+	}
+	return artifacts, nil
+}
+
 // runHelmDiff shows diff for Helm-managed resources
 func runHelmDiff(ctx context.Context, name, namespace string) error {
 	// Check if helm-diff plugin is available
@@ -1422,12 +1652,23 @@ func loadAndRenderTraceFromJSON(path string) error {
 		effectiveFormat = "json"
 	}
 
+	artifacts := buildUnknownTraceArtifacts(&result)
+	if traceArtifacts {
+		if fixture := os.Getenv("CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON"); fixture != "" {
+			loaded, err := loadTraceArtifactsFromJSON(fixture)
+			if err != nil {
+				return err
+			}
+			artifacts = mergeTraceArtifacts(artifacts, loaded)
+		}
+	}
+
 	switch effectiveFormat {
 	case "json":
-		return outputTraceJSON(&result)
+		return outputTraceJSONv014(&result, result.Object.Kind, result.Object.Name, result.Object.Namespace, artifacts)
 	case "md":
-		return outputTraceMarkdown(&result)
+		return outputTraceMarkdown(&result, artifacts)
 	default:
-		return outputTraceHuman(&result)
+		return outputTraceHuman(&result, artifacts)
 	}
 }
