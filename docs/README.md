@@ -130,6 +130,7 @@ Real-world use cases:
 | File/Folder | Purpose |
 |-------------|---------|
 | [roadmap.md](roadmap.md) | Future features (P2-P3) |
+| [releases/v0.20.0-slice-plan.md](releases/v0.20.0-slice-plan.md) | Concrete Flux-operator-inspired standalone slice plan |
 | [roadmap-rendered-manifest-and-argo.md](roadmap-rendered-manifest-and-argo.md) | Backlog split from RM/App-of-Apps planning docs |
 | [roadmap-connected-views-and-launch.md](roadmap-connected-views-and-launch.md) | Backlog split from view-tier/mockup/launch planning docs |
 | `archive/` | Historical documentation |
