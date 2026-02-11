@@ -199,7 +199,7 @@ Nothing here represents unfinished 0.x promises.
 
 ---
 
-## v0.20.0 — Flux Operator Workflow Parity Slice
+## v0.20.0 — Flux Operator Interop Slice
 
 **Status:** Proposed
 **Theme:** *Read-only operator workflows with stronger runtime evidence*
