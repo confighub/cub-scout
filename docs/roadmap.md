@@ -207,31 +207,30 @@ The UX surface is now **stable and locked**.
 
 ---
 
+## v0.20.0 — Flux Operator Interop Slice
+
+**Status:** Released (2026-02-12)
+**Theme:** *Read-only operator workflows with stronger runtime evidence*
+
+Delivered:
+
+* `map cronjobs` and `map jobs` for schedule/run visibility
+* `map actions` for read-only runbook/action preview
+* `trace --artifacts` for source artifact provenance
+* `map activity` for normalized GitOps action timeline
+* `map previews` for ephemeral PR environment detection
+
+See details:
+
+* `docs/releases/v0.20.0-release-notes.md`
+* `docs/releases/v0.20.0-slice-plan.md` (historical planning record)
+
+---
+
 # What Is Left on the Roadmap
 
 Everything below is **new work**.
 Nothing here represents unfinished 0.x promises.
-
----
-
-## v0.20.0 — Flux Operator Interop Slice
-
-**Status:** Proposed
-**Theme:** *Read-only operator workflows with stronger runtime evidence*
-
-This is a **scoped, optional standalone slice** for teams that want Flux-operator-style operational visibility in CLI form without mutation.
-
-Planned scope:
-
-* `map cronjobs` and `map jobs` for schedule/run visibility
-* `map actions` as read-only runbook/action preview
-* `trace --artifacts` for source artifact provenance
-* `map activity` for normalized GitOps action timeline
-* `map previews` for ephemeral PR environment detection (Gitea/Forgejo aware heuristics)
-
-See detailed plan:
-
-* `docs/releases/v0.20.0-slice-plan.md`
 
 ---
 
