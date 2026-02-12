@@ -62,6 +62,7 @@ Human-friendly JSON contract index: [json-contracts.md](json-contracts.md)
 | `cub-scout bundle summarize` | Generate summary for tickets/PRs | v0.19 |
 | `cub-scout catalog list` | List bundles in a catalog | v0.15 |
 | `cub-scout completion` | Generate shell completion script | v0.19 |
+| `cub-scout connect` | Configure kube context from server URL or kubeconfig import | v1.0 |
 | `cub-scout status` | Show connection status and cluster info | v1.0 |
 
 ---
@@ -755,6 +756,39 @@ cub-scout bundle summarize ./bundle --format slack --out notification.json
 
 Produces a deterministic summary of the bundle's findings. Same bundle
 always produces identical output. All content derives from bundle facts.
+
+---
+
+## cub-scout connect (v1.0)
+
+Configure a kube context for cub-scout using either direct server credentials
+or by importing an existing kubeconfig context.
+
+```bash
+cub-scout connect [server-url] [flags]
+```
+
+### Core Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--server` | string | - | Kubernetes API server URL (alternative to positional arg) |
+| `--from-kubeconfig` | string | - | Import from existing kubeconfig file |
+| `--from-context` | string | - | Source context in imported kubeconfig |
+| `--context` | string | derived | Destination context name |
+| `--kubeconfig` | string | first `KUBECONFIG` entry or `~/.kube/config` | Destination kubeconfig path |
+| `--skip-verify` | bool | false | Skip Kubernetes API connectivity check |
+| `--map` | bool | false | Launch `cub-scout map` immediately after connect |
+
+### Authentication Flags
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--token` | string | Bearer token auth (or `K8S_BEARER_TOKEN`) |
+| `--username`, `--password` | string | Basic auth credentials |
+| `--client-cert`, `--client-key` | string | TLS client certificate auth |
+
+Exactly one auth mode is accepted when using direct server mode.
 
 ---
 
