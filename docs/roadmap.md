@@ -24,6 +24,21 @@ Semantic contracts, determinism guarantees, and the ASCII = f(JSON) + g model ar
 
 ---
 
+## Current Planning and Backlog Docs
+
+`docs/roadmap.md` is the canonical roadmap. The files below are active planning/backlog inputs and must not override this document.
+
+| File | Status | Role |
+|------|--------|------|
+| `docs/roadmap-rendered-manifest-and-argo.md` | Planning only (non-authoritative) | Workstream backlog for rendered-manifest + Argo hierarchy |
+| `docs/roadmap-connected-views-and-launch.md` | Planning only (non-authoritative) | Workstream backlog for connected views and launch narrative |
+| `docs/roadmap-1x-connected-upsell.md` | Draft for review (non-authoritative) | Candidate sequencing for 1.x connected packaging/upsell |
+| `docs/releases/v0.20.0-slice-plan.md` | Proposed plan (non-authoritative) | Scoped implementation plan for the v0.20.0 standalone slice |
+
+Graduation rule: move an item from these files into this roadmap (or a release plan) before treating it as committed execution scope.
+
+---
+
 ## Released History (Locked)
 
 ### v0.5 — Contract-Locked CLI

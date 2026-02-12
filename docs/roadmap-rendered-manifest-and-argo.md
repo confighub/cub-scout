@@ -3,6 +3,9 @@
 Status: Planning only (non-authoritative)
 Last updated: 2026-02-09
 
+> Canonical roadmap: `docs/roadmap.md`
+> This file is a supplemental backlog/workstream plan. If any content conflicts, `docs/roadmap.md` wins.
+
 This file is the roadmap group for Rendered Manifest + Argo hierarchy work.
 Product semantics are defined in:
 
@@ -130,4 +133,3 @@ Roadmap extraction source docs:
 - `/Users/alexis/Public/github-repos/confighub-agent/planning/RENDERED-MANIFEST-PATTERN.md`
 - `/Users/alexis/Public/github-repos/confighub-agent/planning/RENDERED-MANIFEST-PATTERN-FULL-PRODUCT.md`
 - `/Users/alexis/Public/github-repos/confighub-agent/planning/REPO-SKELETON-TAXONOMY.md`
-

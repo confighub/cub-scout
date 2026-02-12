@@ -3,6 +3,9 @@
 Status: Planning only (non-authoritative)
 Last updated: 2026-02-09
 
+> Canonical roadmap: `docs/roadmap.md`
+> This file is a supplemental backlog/workstream plan. If any content conflicts, `docs/roadmap.md` wins.
+
 This document tracks rollout sequencing for tiered views and launch narrative work.
 Authoritative behavior is in:
 
@@ -101,4 +104,3 @@ Roadmap extraction source docs:
 - `/Users/alexis/Public/github-repos/confighub-agent/planning/VIEW-TIERS.md`
 - `/Users/alexis/Public/github-repos/confighub-agent/planning/RM-MOCKUPS.md`
 - `/Users/alexis/Public/github-repos/confighub-agent/planning/PRODUCT-PLAN-LAUNCH.md`
-

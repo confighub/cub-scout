@@ -3,6 +3,9 @@
 Status: Draft for review
 Date: 2026-02-08
 
+> Canonical roadmap: `docs/roadmap.md`
+> This file is a supplemental draft for sequencing and packaging. If any content conflicts, `docs/roadmap.md` wins.
+
 ## Why this plan
 
 This plan synthesizes:
