@@ -24,6 +24,7 @@ Complete reference for all cub-scout commands.
 | `import` | Import workloads into ConfigHub |
 | `discover` | Scout-style workload discovery |
 | `health` | Scout-style health check |
+| `connect` | Quickly configure kube context from server URL or kubeconfig |
 | `setup` | Set up shell completions |
 | `graph export` | Export resource graph as JSON (v0.6) |
 | `graph explain` | Explain a resource's graph relationships (v0.6) |
@@ -574,6 +575,41 @@ Scout-style health check (alias for `map issues`).
 
 ```bash
 cub-scout health [flags]
+```
+
+---
+
+## connect
+
+Quickly create or import a kubeconfig context for Cub Scout.
+
+```bash
+cub-scout connect [server-url] [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--server` | Kubernetes API server URL (alternative to positional arg) |
+| `--token` | Bearer token authentication (or use `K8S_BEARER_TOKEN`) |
+| `--username`, `--password` | Basic auth credentials |
+| `--client-cert`, `--client-key` | TLS client cert authentication |
+| `--from-kubeconfig` | Import context from an existing kubeconfig file |
+| `--from-context` | Context name inside source kubeconfig |
+| `--context` | Destination context name |
+| `--kubeconfig` | Destination kubeconfig path |
+| `--skip-verify` | Skip API connectivity check |
+| `--map` | Launch `cub-scout map` immediately |
+
+### Examples
+
+```bash
+# Direct API server connection with token
+cub-scout connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod
+
+# Import from shared kubeconfig and launch map
+cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
 ```
 
 ---

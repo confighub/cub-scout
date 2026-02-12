@@ -17,6 +17,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `catalog` | Manage bundle catalogs |
 | `combined` | Show Git repo structure + cluster workloads aligned |
 | `completion` | Generate shell completion script |
+| `connect` | Quickly configure kube context from server URL or kubeconfig |
 | `debug` | Guided GitOps debugging wizard |
 | `demo` | Run interactive demos |
 | `discover` | Discover resources (alias for `map workloads`) |
@@ -38,6 +39,24 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `trace` | Trace any resource to its Git source |
 | `tree` | Show hierarchical views of resources |
 | `version` | Print version information |
+
+---
+
+## `connect` Options
+
+| Option | Description |
+|--------|-------------|
+| `[server-url]` | Kubernetes API endpoint (defaults to `https://` if scheme omitted) |
+| `--server` | Explicit server URL (alternative to positional arg) |
+| `--token` | Bearer token auth (or use `K8S_BEARER_TOKEN`) |
+| `--username`, `--password` | Basic auth credentials |
+| `--client-cert`, `--client-key` | TLS client certificate auth |
+| `--from-kubeconfig` | Import context from an existing kubeconfig |
+| `--from-context` | Context name within `--from-kubeconfig` |
+| `--context` | Name for created/imported destination context |
+| `--kubeconfig` | Destination kubeconfig path |
+| `--skip-verify` | Skip Kubernetes API connectivity check |
+| `--map` | Launch `cub-scout map` immediately after connect |
 
 ---
 
