@@ -17,6 +17,17 @@ New to cub-scout? Start here:
 
 ---
 
+## Common Entry Points
+
+| I need... | Start here |
+|-----------|------------|
+| JSON contract docs | [reference/json-contracts.md](reference/json-contracts.md) |
+| JSON vs ASCII semantics | [semantic-contract.md](semantic-contract.md) |
+| Full command/flag reference | [reference/commands.md](reference/commands.md) |
+| End-to-end CLI guide | [../CLI-GUIDE.md](../CLI-GUIDE.md) |
+
+---
+
 ## How-To Guides
 
 Task-based guides:
@@ -32,7 +43,6 @@ Task-based guides:
 | Scan for risk issues | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Ownership detection | [howto/ownership-detection.md](howto/ownership-detection.md) |
 | Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
-| Scan for risks | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Advanced queries | [howto/advanced-queries.md](howto/advanced-queries.md) |
 | Run demos | [howto/running-demos.md](howto/running-demos.md) |
 | Extending cub-scout | [howto/extending.md](howto/extending.md) |
@@ -45,6 +55,8 @@ Complete reference documentation:
 
 | Topic | Reference |
 |-------|-----------|
+| **JSON Contracts (Start Here)** | [reference/json-contracts.md](reference/json-contracts.md) |
+| **Semantic Contract (JSON vs ASCII)** | [semantic-contract.md](semantic-contract.md) |
 | **Commands** | [reference/commands.md](reference/commands.md) |
 | **Debug Bundles** | [debug-bundle.md](debug-bundle.md) |
 | **Drift Detection** | [drift.md](drift.md) |

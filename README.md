@@ -57,6 +57,10 @@ cub-scout graph export | jq '.nodes | length'
 cub-scout scan --json > findings.json
 ```
 
+Need contract docs for automation?
+- [docs/reference/json-contracts.md](docs/reference/json-contracts.md)
+- [docs/semantic-contract.md](docs/semantic-contract.md)
+
 ---
 
 ## Standalone vs Connected

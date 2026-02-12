@@ -207,7 +207,8 @@ For automation, use `--format json`:
 }
 ```
 
-See `docs/v0.14-json-schema.md` for the full schema specification.
+For current JSON contract entry points, see [reference/json-contracts.md](reference/json-contracts.md).
+The historical v0.14 schema doc is archived at [archive/v0.14-json-schema.md](archive/v0.14-json-schema.md).
 
 ---
 

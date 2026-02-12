@@ -475,12 +475,13 @@ Use `cub-scout tree` to understand your cluster, then `cub unit tree` to see cro
 | `-A, --all` | Include system namespaces |
 | `--space` | ConfigHub space (for config view) |
 | `--edge` | clone (inheritance) or link (dependencies) |
-| `--json` | JSON output |
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `--json` | Shorthand for `--format json` |
 
 ---
 
 ## See Also
 
 - [Fleet Queries](fleet-queries.md) - Multi-cluster queries with ConfigHub
-- [Import to ConfigHub](../map/howto/import-to-confighub.md) - Import workloads
+- [Import to ConfigHub](import-to-confighub.md) - Import workloads
 - [CLI Reference](../../CLI-GUIDE.md) - Full command reference

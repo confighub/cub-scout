@@ -316,5 +316,6 @@ Currently, compare them externally (e.g., `diff -r bundle1 bundle2`). Future ver
 ## See Also
 
 - [Drift Detection](drift.md) — Understanding drift findings
-- [v0.14 JSON Schema](v0.14-json-schema.md) — Full JSON schema reference
+- [JSON Contracts and Output Model](reference/json-contracts.md) — Current contract entry points
+- [v0.14 JSON Schema (Historical)](archive/v0.14-json-schema.md) — Archived reference
 - [Semantic Contract](semantic-contract.md) — f(JSON) + g model

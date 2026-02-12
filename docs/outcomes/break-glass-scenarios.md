@@ -204,5 +204,5 @@ LIVE (cluster)     CONFIGUB (store)     OCI (transport)     FLUX/ARGO
 ## See Also
 
 - [Ownership Visibility](ownership-visibility.md) — The Native bucket insight
-- [Find Orphans](../map/howto/find-orphans.md) — How to find unmanaged resources
-- [Import to ConfigHub](../map/howto/import-to-confighub.md) — Adopting resources
+- [Find Orphans](../howto/find-orphans.md) — How to find unmanaged resources
+- [Import to ConfigHub](../howto/import-to-confighub.md) — Adopting resources

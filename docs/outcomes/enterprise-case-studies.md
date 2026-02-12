@@ -243,4 +243,4 @@ The query language solves "needle in haystack" fleet problems:
 - [Ownership Visibility](ownership-visibility.md) — The Native bucket insight
 - [ConfigHub Integration](confighub-integration.md) — DRY → WET → Live journey
 - [IITS ArgoCD Fleet Patterns](https://www.iits-consulting.de) — Original research
-- [Query Reference](../map/howto/query-resources.md) — Full query documentation
+- [Query Reference](../howto/query-resources.md) — Full query documentation

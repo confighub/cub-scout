@@ -32,6 +32,8 @@ Complete reference for all cub-scout commands.
 | `patterns explain` | Explain a specific pattern (v0.7) |
 | `gitops status` | Show GitOps pipeline health (v0.14) |
 
+For JSON contract navigation, start with [JSON Contracts and Output Model](json-contracts.md).
+
 ---
 
 ## map
@@ -509,6 +511,8 @@ For ArgoCD resources, this includes optional lineage to parent `Application` and
 - `gitRepositories[]` (Flux GitRepository sources)
 - `argoApplications[]` (Argo Applications with optional `generatedByApplicationSet` and `parentApplication`)
 - `applicationSets[]` (Argo ApplicationSets with `generatorTypes[]` and `generatedApplications[]`)
+
+For JSON contract details and schema ownership by surface, see [JSON Contracts and Output Model](json-contracts.md).
 
 ---
 
