@@ -134,6 +134,7 @@ cub-scout map
 ![cub-scout workloads view](docs/images/map-workloads.png)
 
 Press `T` to trace any resource. Press `4` for deep-dive. Press `?` for help.
+For image inventory and refresh scripts, see [docs/images/README.md](docs/images/README.md).
 
 ---
 
@@ -481,6 +482,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | Command | What You Get |
 |---------|--------------|
 | `cub-scout map` | Interactive TUI - press `?` for help |
+| `cub-scout connect ... --map` | Quick connect to a cluster API and launch the TUI |
 | `cub-scout discover` | Find workloads by owner (scout-style alias) |
 | `cub-scout tree` | Hierarchical views (runtime, git, config) |
 | `cub-scout tree suggest` | Suggested Hub/AppSpace organization |

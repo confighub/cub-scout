@@ -278,3 +278,4 @@ When something is wrong:
 
 - [concepts/clobbering-problem.md](../concepts/clobbering-problem.md) — Why diffs matter
 - [diagrams/ownership-trace.d2](../diagrams/ownership-trace.d2) — Visual trace diagram
+- [diagrams/README.md](../diagrams/README.md) — Diagram index and regeneration guide

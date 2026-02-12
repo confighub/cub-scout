@@ -1,5 +1,9 @@
 # The Clobbering Problem
 
+> Status: Current (Deep Dive)
+> Last reviewed: 2026-02-12
+> Concepts index: [README.md](README.md)
+
 Why setting the wrong value in a GitOps pipeline is so easy — and how to prevent it.
 
 ---
@@ -172,5 +176,6 @@ cub-scout trace deploy/podinfo -n podinfo --diff
 ## See Also
 
 - [diagrams/clobbering-problem.d2](../diagrams/clobbering-problem.d2) — Visual explanation
+- [diagrams/README.md](../diagrams/README.md) — Diagram index and regeneration guide
 - [howto/trace-ownership.md](../howto/trace-ownership.md) — Tracing guide
 - [examples/platform-example/](../../examples/platform-example/) — Live demo

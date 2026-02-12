@@ -88,6 +88,7 @@ Understand the "why":
 
 | Concept | Explanation |
 |---------|-------------|
+| Concepts index (start here) | [concepts/README.md](concepts/README.md) |
 | GitOps Overview | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
 | The Clobbering Problem | [concepts/clobbering-problem.md](concepts/clobbering-problem.md) |
 | Architecture | [concepts/architecture.md](concepts/architecture.md) |
@@ -111,6 +112,12 @@ See [diagrams/](diagrams/) for visual explanations using [D2](https://d2lang.com
 | [Upgrade Tracing](diagrams/upgrade-tracing.svg) | Finding what changed |
 
 > **Note:** "D2 pattern" in `tree patterns` refers to a GitOps repository pattern (Flux CD "Control Plane" style), not the D2 diagram language.
+
+Diagram source/render index:
+- [diagrams/README.md](diagrams/README.md)
+
+Terminal screenshots and GIF capture scripts:
+- [images/README.md](images/README.md)
 
 ---
 

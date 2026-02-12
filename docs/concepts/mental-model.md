@@ -1,5 +1,9 @@
 # Mental Model: cub-scout in 3 Minutes
 
+> Status: Current (Primary)
+> Last reviewed: 2026-02-12
+> Concepts index: [README.md](README.md)
+
 cub-scout helps you understand what's running in your Kubernetes cluster and where it came from.
 
 ---

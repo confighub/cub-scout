@@ -1,5 +1,9 @@
 # Live Cluster Inference: Detection Without Git
 
+> Status: Current (Primary)
+> Last reviewed: 2026-02-12
+> Concepts index: [README.md](README.md)
+
 How cub-scout detects ownership, variant, and structure from your cluster without parsing Git repos.
 
 ## The Insight: Git Access Not Required

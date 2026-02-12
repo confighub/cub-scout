@@ -1,5 +1,9 @@
 # cub-scout Architecture
 
+> Status: Current (Deep Dive)
+> Last reviewed: 2026-02-12
+> Concepts index: [README.md](README.md)
+
 The Agent is a protocol, not just a tool. This document describes that protocol: a stable contract for representing GitOps state that other tools can build on.
 
 ---

@@ -1,5 +1,9 @@
 # GitOps Overview
 
+> Status: Current (Primary)
+> Last reviewed: 2026-02-12
+> Concepts index: [README.md](README.md)
+
 ## What is GitOps?
 
 GitOps uses Git repositories as the source of truth for your infrastructure. Changes flow through Git, and automation ensures your cluster matches what's in Git.

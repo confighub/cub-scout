@@ -1,5 +1,9 @@
 # State and Snapshots in cub-scout
 
+> Status: Current (Deep Dive)
+> Last reviewed: 2026-02-12
+> Concepts index: [README.md](README.md)
+
 cub-scout has two distinct state concepts that must not be conflated.
 
 ---

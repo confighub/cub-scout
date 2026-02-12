@@ -1,5 +1,9 @@
 # Alternatives & Related Tools
 
+> Status: Current (Deep Dive)
+> Last reviewed: 2026-02-12
+> Concepts index: [README.md](README.md)
+
 This document helps you understand when to use cub-scout vs other tools.
 
 ## Comparison Matrix

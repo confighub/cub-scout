@@ -1,5 +1,9 @@
 # TUI vs GUI: Scope and Capabilities
 
+> Status: Current (Deep Dive)
+> Last reviewed: 2026-02-12
+> Concepts index: [README.md](README.md)
+
 How cub-scout (TUI) relates to ConfigHub (GUI) and what each can do.
 
 ## The Scope Rule
