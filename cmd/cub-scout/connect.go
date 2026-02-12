@@ -49,7 +49,7 @@ You can connect in two ways:
 
 Examples:
   # Direct connect with bearer token
-  cub-scout connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod --go
+  cub-scout connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod --map
 
   # Direct connect with client cert auth
   cub-scout connect api.example.com:6443 \
@@ -58,7 +58,7 @@ Examples:
     --context prod
 
   # Import an existing context from shared kubeconfig and launch map immediately
-  cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --go
+  cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runConnect,
@@ -81,7 +81,10 @@ func init() {
 	connectCmd.Flags().StringVar(&connectSourceContext, "from-context", "", "Context name inside --from-kubeconfig to import")
 	connectCmd.Flags().StringVar(&connectKubeconfigPath, "kubeconfig", "", "Destination kubeconfig path (default: first KUBECONFIG entry or ~/.kube/config)")
 	connectCmd.Flags().BoolVar(&connectSkipVerify, "skip-verify", false, "Skip Kubernetes API connectivity check")
-	connectCmd.Flags().BoolVar(&connectLaunchMap, "go", false, "Launch cub-scout map immediately after connect")
+	connectCmd.Flags().BoolVar(&connectLaunchMap, "map", false, "Launch cub-scout map immediately after connect")
+	connectCmd.Flags().BoolVar(&connectLaunchMap, "go", false, "Deprecated alias for --map")
+	_ = connectCmd.Flags().MarkHidden("go")
+	_ = connectCmd.Flags().MarkDeprecated("go", "use --map")
 
 	rootCmd.AddCommand(connectCmd)
 }

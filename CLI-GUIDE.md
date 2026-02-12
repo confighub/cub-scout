@@ -47,10 +47,10 @@ The table below reflects the current `cub-scout --help` output.
 
 ```bash
 # Direct server + bearer token
-./cub-scout connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod --go
+./cub-scout connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod --map
 
 # Import context from shared kubeconfig
-./cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --go
+./cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
 ```
 
 **Options (common):**
@@ -60,7 +60,7 @@ The table below reflects the current `cub-scout --help` output.
 | `--namespace` | Default namespace for context |
 | `--kubeconfig` | Destination kubeconfig path |
 | `--skip-verify` | Skip API connectivity check |
-| `--go` | Launch `cub-scout map` immediately |
+| `--map` | Launch `cub-scout map` immediately |
 
 ---
 
