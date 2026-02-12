@@ -4,6 +4,7 @@ Usage:
 
 Flags:
       --app string         Trace Argo CD application by name
+      --artifacts          Include source artifact provenance (url/revision/digest/update time)
   -d, --diff               Show diff between live state and desired state from Git
       --explain            Show explanatory content to help learn GitOps concepts
       --format string      Output format: ascii, json, md (default "ascii")
