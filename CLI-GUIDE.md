@@ -16,6 +16,7 @@ The table below reflects the current `cub-scout --help` output.
 | `catalog` | Manage bundle catalogs |
 | `combined` | Show Git repo structure + cluster workloads aligned |
 | `completion` | Generate shell completion script |
+| `connect` | Quickly configure kube context from server URL or kubeconfig |
 | `debug` | Guided GitOps debugging wizard |
 | `demo` | Run interactive demos |
 | `discover` | Discover resources (alias for `map workloads`) |
@@ -37,6 +38,29 @@ The table below reflects the current `cub-scout --help` output.
 | `trace` | Trace any resource to its Git source |
 | `tree` | Show hierarchical views of resources |
 | `version` | Print version information |
+
+---
+
+## `connect` — Quick Cluster Connect
+
+**What it does:** Creates or imports a kubeconfig context, sets it as current, optionally verifies API access, and can launch the TUI immediately.
+
+```bash
+# Direct server + bearer token
+./cub-scout connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod --go
+
+# Import context from shared kubeconfig
+./cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --go
+```
+
+**Options (common):**
+| Option | Description |
+|--------|-------------|
+| `--context` | Context name to create |
+| `--namespace` | Default namespace for context |
+| `--kubeconfig` | Destination kubeconfig path |
+| `--skip-verify` | Skip API connectivity check |
+| `--go` | Launch `cub-scout map` immediately |
 
 ---
 
