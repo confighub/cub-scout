@@ -27,6 +27,25 @@ cub-scout scan                   # Find misconfigurations (46 patterns)
 
 ---
 
+## Quick Connect (New Cluster)
+
+Use this when you want "just connect and go" with minimal setup.
+
+```bash
+# Option A: import an existing kubeconfig context (includes auth from that kubeconfig)
+cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
+
+# Option B: connect directly to API endpoint with token
+cub-scout connect https://api.ske-vcl-pro.2b093a9fd9.s.ske.eu01.onstackit.cloud \
+  --token "$K8S_BEARER_TOKEN" \
+  --context ske-vcl-pro \
+  --map
+```
+
+If you prefer CLI-only (no TUI launch), omit `--map`.
+
+---
+
 ## Choose Your Interface
 
 cub-scout supports three interfaces for different workflows:
