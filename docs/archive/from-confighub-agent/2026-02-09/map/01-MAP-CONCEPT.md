@@ -100,6 +100,9 @@ This is a *proposed* Map — showing how your cluster could be organized into Hu
 
 ### Stage 3: Connected
 
+> Scope note (current `cub-scout`): worker/controller sync behavior in this section is ConfigHub platform scope.
+> `cub-scout` remains read-only and non-controller in canonical roadmap scope.
+
 When you connect to ConfigHub:
 
 1. The proposed structure becomes real (Hub, App Space, Units with labels)
@@ -138,6 +141,9 @@ Hierarchy: Application -> Variant -> Target
 
 ### When Connected
 
+> Scope note (current `cub-scout`): policy enforcement and worker execution are surfaced as platform context.
+> They are not implemented as mutating/runtime controllers inside `cub-scout`.
+
 | Element | Description |
 |---------|-------------|
 | **Hub** | Platform governance — constraints, policies, base configs |
@@ -150,6 +156,9 @@ Hierarchy: Application -> Variant -> Target
 ---
 
 ## The Map Command
+
+> Command note: examples here use legacy `cub-agent` wording from historical planning docs.
+> Canonical command surface is documented in `docs/reference/commands.md`.
 
 ```bash
 # Interactive TUI dashboard
@@ -168,6 +177,8 @@ cub-agent map fleet --space payments-team
 ```
 
 **Map subcommands:**
+
+> Historical note: `./test/atk/map *` entries are legacy demo wrappers, not current stable `cub-scout` command IDs.
 
 | Command | Description |
 |---------|-------------|

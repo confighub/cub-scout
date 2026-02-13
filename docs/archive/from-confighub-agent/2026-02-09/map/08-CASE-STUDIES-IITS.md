@@ -105,6 +105,9 @@ cub unit diff cert-manager --variant dev --vs-source
 
 ## Problem 2: Umbrella Charts Diverge
 
+> Scope note (current `cub-scout`): Hub constraints/policy enforcement shown below are ConfigHub platform behavior.
+> `cub-scout` may surface policy context but does not enforce policy.
+
 ### Traditional Pattern
 
 ```
@@ -248,6 +251,9 @@ Hint: Base changed container name from 'app' to 'main'
 
 ## Problem 5: Trigger/Action Divergence
 
+> Scope note (current `cub-scout`): actions/triggers here are platform workflow engine examples,
+> not direct `cub-scout` feature commitments.
+
 ### Traditional Pattern
 
 ```yaml
@@ -296,6 +302,9 @@ actions:
 ---
 
 ## Problem 6: No Fleet-Wide Queries
+
+> Scope note: saved-query lifecycle examples below describe platform query features.
+> Use `cub-scout` command docs for currently shipped local/connected query surfaces.
 
 ### Traditional Pattern
 
@@ -348,6 +357,9 @@ cub query @cert-manager-versions
 ---
 
 ## Use Cases: Real Questions Answered
+
+> Command note: examples in this section mix historical `cub`/`cub-agent` flows.
+> For current `cub-scout` commands and flags, use `docs/reference/commands.md`.
 
 ### "What's running across all my clusters?"
 
@@ -523,6 +535,9 @@ Hub: managed-service-catalog
 ---
 
 ## Demo: Try It Yourself
+
+> Historical note: `./test/atk/*` scripts and some example repos are legacy demo scaffolding.
+> Treat these as reference context, not current release-contract automation.
 
 ### Quick Demo (30 seconds)
 

@@ -291,6 +291,9 @@ gitops-repo/
 
 ## What We Need
 
+> Scope note: this section is historical adoption backlog, not a committed release contract.
+> Promote items to `docs/roadmap.md` before treating them as guaranteed deliverables.
+
 ### For Flux
 - [x] Fluxy Architecture Reference — well documented
 - [ ] Map TUI demo against Fluxy repos
@@ -301,6 +304,9 @@ gitops-repo/
 - [ ] Map TUI demo against Argo repos
 
 ### Map Integration Points
+
+> Command note: `cub-agent` references are legacy examples from earlier planning iterations.
+> Current command contracts live in `docs/reference/commands.md`.
 
 The `cub-agent map` TUI should:
 
@@ -411,6 +417,9 @@ resources:
 | Version strategy | External products versioned (`v1.0.0/`), internal apps use `/prod`, `/dev`, `/base` |
 
 ### Map Integration Opportunity
+
+> Scope note: this mapping is directional product/design intent.
+> Treat as backlog input unless an item is explicitly promoted into current roadmap scope.
 
 `cub-agent map` should detect:
 1. `clusters/*/` structure → one Flux Kustomization per cluster

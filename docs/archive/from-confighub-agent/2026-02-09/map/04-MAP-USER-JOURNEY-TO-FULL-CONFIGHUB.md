@@ -155,6 +155,9 @@ Hierarchy: Application -> Variant -> Target
 
 ## Stage 4: Worker Connected
 
+> Scope note (current `cub-scout`): worker lifecycle/reconciliation behavior is ConfigHub platform scope.
+> Canonical `cub-scout` roadmap scope stays read-only and non-controller.
+
 **Command:**
 ```bash
 cub worker run --target prod-east
@@ -189,6 +192,9 @@ Hub
 ---
 
 ## Stage 5: Full Platform
+
+> Scope note (current `cub-scout`): mutation/approval workflows below are platform engine examples (`cub`),
+> not direct `cub-scout` command commitments.
 
 **What you get:**
 
@@ -240,6 +246,9 @@ cub promote \
 ---
 
 ## Commands by Stage
+
+> Command note: `cub-agent` and `cub` examples below are preserved for historical journey framing.
+> Use `docs/reference/commands.md` for current `cub-scout` command contracts.
 
 ### Stage 1: Standalone
 ```bash
