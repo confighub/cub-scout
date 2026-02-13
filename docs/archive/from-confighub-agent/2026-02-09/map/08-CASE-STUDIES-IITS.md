@@ -1,5 +1,11 @@
 # Case Studies: IITS Fleet Patterns
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> Use these maintained docs for current behavior and scope:
+> - `docs/roadmap.md`
+> - `docs/reference/import-docs-crosswalk.md`
+> - `docs/reference/hub-appspace-examples.md`
+
 Real-world enterprise GitOps problems from IITS consulting, mapped to ConfigHub solutions.
 
 Based on:

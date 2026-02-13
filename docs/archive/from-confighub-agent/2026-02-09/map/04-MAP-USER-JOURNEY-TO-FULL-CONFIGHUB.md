@@ -1,5 +1,11 @@
 # Map User Journey to Full ConfigHub
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> Use these maintained docs for current behavior and scope:
+> - `docs/roadmap.md`
+> - `docs/reference/import-docs-crosswalk.md`
+> - `docs/reference/connected-tiers-and-views-product-guide.md`
+
 The path from read-only discovery to the full ConfigHub platform.
 
 ---

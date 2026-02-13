@@ -40,6 +40,7 @@ Candidate tasks:
 - Maintain realistic examples with many workloads/namespaces
 - Include orphan/break-glass scenarios as optional but reproducible cases
 - Publish expected-output snapshots for core navigation flows
+- Maintain adoption-pattern proof coverage for Fluxy/Banko/Arnie-style structures
 
 Exit criteria:
 

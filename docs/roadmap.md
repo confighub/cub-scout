@@ -33,7 +33,7 @@ Semantic contracts, determinism guarantees, and the ASCII = f(JSON) + g model ar
 | `docs/roadmap-rendered-manifest-and-argo.md` | Planning only (non-authoritative) | Workstream backlog for rendered-manifest + Argo hierarchy |
 | `docs/roadmap-connected-views-and-launch.md` | Planning only (non-authoritative) | Workstream backlog for connected views and launch narrative |
 | `docs/roadmap-1x-connected-upsell.md` | Draft for review (non-authoritative) | Candidate sequencing for 1.x connected packaging/upsell |
-| `docs/releases/v0.20.0-slice-plan.md` | Proposed plan (non-authoritative) | Scoped implementation plan for the v0.20.0 standalone slice |
+| `docs/releases/v0.20.0-slice-plan.md` | Delivered historical plan (non-authoritative) | Scoped implementation plan used for shipped v0.20.0 slice |
 
 Graduation rule: move an item from these files into this roadmap (or a release plan) before treating it as committed execution scope.
 
@@ -255,6 +255,32 @@ Connected Mode means:
   * bundle-first
   * deterministic
   * non-controller
+
+---
+
+### Archive MAP Doc Reconciliation
+
+The archived MAP series under `docs/archive/from-confighub-agent/2026-02-09/map/` is historical planning input.
+Current canonical behavior and scope are defined by:
+
+* `docs/reference/connected-tiers-and-views-product-guide.md`
+* `docs/reference/gitops-repo-structures.md`
+* `docs/reference/hub-appspace-examples.md`
+* `docs/reference/import-docs-crosswalk.md`
+
+Coverage currently represented in this roadmap:
+
+* Standalone -> discovery -> connected adoption path (read-only exploration + import context)
+* Git/source visibility and comparison direction
+* Fleet topology/history surfaces as connected/fleet features
+
+Not in scope for `cub-scout` implementation (by design):
+
+* Worker/controller lifecycle commands in `cub-scout`
+* Continuous reconciliation or policy enforcement in `cub-scout`
+* Mutating platform workflows (`drift accept`, `mutate`, `promote`) implemented directly in `cub-scout`
+
+Legacy `cub-agent` command examples in archive docs are non-canonical; current command contract is `docs/reference/commands.md`.
 
 ---
 

@@ -1,5 +1,11 @@
 # The Map
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> Use these maintained docs for current behavior and scope:
+> - `docs/roadmap.md`
+> - `docs/reference/import-docs-crosswalk.md`
+> - `docs/reference/connected-tiers-and-views-product-guide.md`
+
 **What does ConfigHub do?** We give you a Map of the Truth: your application, your sources of truth and your operational infrastructure.  So that you always know what is being deployed, comply with regulations, and can see how to fix any operational issues as soon as they arise.
 
 ---

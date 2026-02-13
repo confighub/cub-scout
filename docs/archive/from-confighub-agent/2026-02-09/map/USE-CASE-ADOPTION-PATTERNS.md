@@ -1,5 +1,11 @@
 # Use Case: Adoption Patterns for Flux/Argo Organizations
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> Use these maintained docs for current behavior and scope:
+> - `docs/roadmap.md`
+> - `docs/reference/import-docs-crosswalk.md`
+> - `docs/reference/gitops-repo-structures.md`
+
 **Goal:** Make ConfigHub easier to adopt for organizations already using Flux or Argo CD.
 
 **Status:** Research + reference gathering
