@@ -29,7 +29,7 @@ demos:
     workers: []
 
   ccve:
-    description: "CCVE-2025-0027 detection - the BIGBANK story"
+    description: "Risk issue detection (CCVE-2025-0027) - the BIGBANK story"
     time: "2 min"
     standalone: true
     cluster: true

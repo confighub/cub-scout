@@ -3899,7 +3899,7 @@ func (m Model) renderHelpOverlay() string {
 	b.WriteString("\n")
 	b.WriteString("  " + cmdStyle.Render("cub-scout map crashes") + "   " + descStyle.Render("List crashing resources"))
 	b.WriteString("\n")
-	b.WriteString("  " + cmdStyle.Render("cub-scout scan") + "          " + descStyle.Render("Scan for CCVEs"))
+	b.WriteString("  " + cmdStyle.Render("cub-scout scan") + "          " + descStyle.Render("Scan for risk issues"))
 	b.WriteString("\n")
 	b.WriteString("  " + cmdStyle.Render("cub-scout trace") + "         " + descStyle.Render("Trace ownership"))
 	b.WriteString("\n\n")

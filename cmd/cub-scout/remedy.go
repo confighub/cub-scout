@@ -34,12 +34,12 @@ var (
 )
 
 var remedyCmd = &cobra.Command{
-	Use:   "remedy [CCVE-ID]",
-	Short: "Execute remediation for CCVE findings",
-	Long: `Execute automated remediation for detected CCVE issues.
+	Use:   "remedy [RISK-ID]",
+	Short: "Execute remediation for risk issue findings",
+	Long: `Execute automated remediation for detected risk issues.
 
 The remedy command can:
-1. Fix a specific CCVE finding by ID
+1. Fix a specific risk issue finding by ID
 2. Fix all auto-fixable findings in a namespace
 3. Show what would be fixed (dry-run mode)
 
@@ -47,7 +47,7 @@ Examples:
   # Show what would be fixed (always run first!)
   cub-scout remedy CCVE-2025-0687 --dry-run -n production
 
-  # Fix a specific CCVE issue
+  # Fix a specific risk issue
   cub-scout remedy CCVE-2025-0687 -n production
 
   # Fix all auto-fixable issues in namespace (dry-run)
@@ -59,16 +59,16 @@ Examples:
   # Scan file and fix issues
   cub-scout remedy --file manifest.yaml --dry-run
 
-  # List auto-fixable CCVEs
+  # List auto-fixable risk issues
   cub-scout remedy --list
 
 Supported remedy types (auto-fixable):
-  - config_fix:      786 CCVEs - kubectl apply/patch
-  - trigger_action:  169 CCVEs - rollout restart, scale
-  - delete_resource: 348 CCVEs - delete orphaned resources (needs --force)
-  - restart:          70 CCVEs - restart pods
+  - config_fix:      786 issues - kubectl apply/patch
+  - trigger_action:  169 issues - rollout restart, scale
+  - delete_resource: 348 issues - delete orphaned resources (needs --force)
+  - restart:          70 issues - restart pods
 
-Total auto-fixable: 1,373 CCVEs (40%)
+Total auto-fixable: 1,373 risk issues (40%)
 `,
 	RunE: runRemedy,
 }
@@ -82,7 +82,7 @@ func init() {
 	remedyCmd.Flags().BoolVar(&remedyAll, "all", false, "Fix all auto-fixable issues")
 	remedyCmd.Flags().BoolVar(&remedyJSON, "json", false, "Output as JSON")
 	remedyCmd.Flags().StringVar(&remedyFile, "file", "", "YAML file to scan and fix")
-	remedyCmd.Flags().BoolVar(&remedyList, "list", false, "List auto-fixable CCVEs")
+	remedyCmd.Flags().BoolVar(&remedyList, "list", false, "List auto-fixable risk issues")
 	remedyCmd.Flags().StringVar(&remedyTimeout, "timeout", "30s", "Timeout for each action")
 	remedyCmd.Flags().BoolVar(&remedyAudit, "audit", true, "Log actions to audit file")
 	remedyCmd.Flags().StringVar(&remedyAuditFile, "audit-file", "remedy-audit.log", "Audit log file path")
@@ -156,9 +156,9 @@ func runRemedy(cmd *cobra.Command, args []string) error {
 		return runRemedyAll(ctx, reg, timeout)
 	}
 
-	// Single CCVE mode
+	// Single risk issue mode
 	if len(args) < 1 {
-		return fmt.Errorf("CCVE ID required (e.g., CCVE-2025-0687) or use --all")
+		return fmt.Errorf("risk issue ID required (e.g., CCVE-2025-0687) or use --all")
 	}
 
 	ccveID := args[0]
@@ -166,18 +166,18 @@ func runRemedy(cmd *cobra.Command, args []string) error {
 }
 
 func runRemedySingle(ctx context.Context, reg *remedy.Registry, ccveID string, timeout time.Duration) error {
-	// Load CCVE definition
+	// Load risk issue definition
 	ccve, err := loadCCVE(ccveID)
 	if err != nil {
-		return fmt.Errorf("load CCVE %s: %w", ccveID, err)
+		return fmt.Errorf("load risk issue %s: %w", ccveID, err)
 	}
 
 	// Check if auto-fixable
 	if !remedy.IsAutoFixable(remedy.RemedyType(ccve.RemedyType)) {
-		return fmt.Errorf("CCVE %s has remedy type %q which is not auto-fixable", ccveID, ccve.RemedyType)
+		return fmt.Errorf("risk issue %s has remedy type %q which is not auto-fixable", ccveID, ccve.RemedyType)
 	}
 
-	// Create finding from CCVE
+	// Create finding from risk issue
 	finding := &remedy.Finding{
 		CCVE:       ccveID,
 		Namespace:  remedyNamespace,
@@ -412,7 +412,7 @@ func runRemedyFile(ctx context.Context, reg *remedy.Registry, file string, timeo
 
 	fmt.Printf("  Total findings:  %d\n", len(result.Findings))
 	fmt.Printf("  Auto-fixable:    %d\n", autoFixable)
-	fmt.Printf("\n%sRun 'cub-scout remedy CCVE-ID --file %s' to fix specific issues%s\n\n",
+	fmt.Printf("\n%sRun 'cub-scout remedy RISK-ID --file %s' to fix specific issues%s\n\n",
 		colorDim, file, colorReset)
 
 	return nil
@@ -421,7 +421,7 @@ func runRemedyFile(ctx context.Context, reg *remedy.Registry, file string, timeo
 func listAutoFixableCCVEs() error {
 	ccveDir := findCCVEDir()
 	if ccveDir == "" {
-		return fmt.Errorf("CCVE database not found")
+		return fmt.Errorf("risk issue database not found")
 	}
 
 	// Count by remedy type
@@ -457,7 +457,7 @@ func listAutoFixableCCVEs() error {
 		}
 	}
 
-	fmt.Printf("\n%s%sAUTO-FIXABLE CCVEs%s\n\n", colorBold, colorCyan, colorReset)
+	fmt.Printf("\n%s%sAUTO-FIXABLE RISK ISSUES%s\n\n", colorBold, colorCyan, colorReset)
 	fmt.Printf("%-18s %6s %s\n", "REMEDY TYPE", "COUNT", "DESCRIPTION")
 	fmt.Printf("%-18s %6s %s\n", "-----------", "-----", "-----------")
 	fmt.Printf("%-18s %6d %s\n", "config_fix", counts["config_fix"], "kubectl apply/patch")
@@ -474,7 +474,7 @@ func listAutoFixableCCVEs() error {
 	return nil
 }
 
-// CCVEDefinition represents a CCVE YAML file
+// CCVEDefinition represents a risk issue YAML file
 type CCVEDefinition struct {
 	ID         string   `yaml:"id"`
 	Category   string   `yaml:"category"`
@@ -489,7 +489,7 @@ type CCVEDefinition struct {
 func loadCCVE(id string) (*CCVEDefinition, error) {
 	ccveDir := findCCVEDir()
 	if ccveDir == "" {
-		return nil, fmt.Errorf("CCVE database not found")
+		return nil, fmt.Errorf("risk issue database not found")
 	}
 
 	filename := filepath.Join(ccveDir, id+".yaml")

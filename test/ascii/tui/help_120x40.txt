@@ -38,7 +38,7 @@ ACTIONS
   C  Suggest commands (context-aware)
   Q  Saved queries (filter resources)
   T  Trace ownership chain
-  S  Scan for CCVEs
+  S  Scan for risk issues
   I  Import wizard (bring workloads to ConfigHub)
 
 COMMAND PALETTE
