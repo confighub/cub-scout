@@ -143,7 +143,7 @@ cub-scout map list -n boutique-dev
 | Architecture | Pattern | Proof |
 |--------------|---------|-------|
 | Monorepo + Kustomize | Single repo, overlays per env | apptique/flux-monorepo |
-| Multi-repo + ApplicationSets | Separate repos, generator | IITS examples |
+| Multi-repo + ApplicationSets | Separate repos, generator | apptique/argo-applicationset |
 | App of Apps | Parent→children Applications | apptique/argo-app-of-apps |
 | Helm Umbrella | Chart of charts | confighub/examples |
 | Mixed Flux + ArgoCD | Both tools together | Internal testing |
@@ -154,7 +154,7 @@ cub-scout map list -n boutique-dev
 
 - [Ownership Visibility](ownership-visibility.md) - The Native bucket insight
 - [ConfigHub Integration](confighub-integration.md) - DRY → WET → Live journey
-- [Enterprise Case Studies](enterprise-case-studies.md) - Real GitOps problems from IITS research
+- [Enterprise Case Studies](enterprise-case-studies.md) - Real enterprise GitOps challenges
 - [Break Glass Scenarios](break-glass-scenarios.md) - When GitOps isn't fast enough (TODO)
 
 ---

@@ -141,7 +141,7 @@ Real-world use cases:
 
 | Outcome | Description |
 |---------|-------------|
-| [Enterprise Case Studies](outcomes/enterprise-case-studies.md) | IITS research findings |
+| [Enterprise Case Studies](outcomes/enterprise-case-studies.md) | Real-world enterprise GitOps challenges |
 
 ---
 

@@ -775,9 +775,9 @@ Total: 47 workloads │ 45 healthy │ 2 orphans
 ./cub-scout map deployers --json
 ```
 
-> **v0.5 contract:** Deployers are Kubernetes Deployments. Flux Kustomizations,
-> HelmReleases, and Argo Applications are out of scope for v0.5 and may be
-> added in a future release.
+> **Deployer scope:** Deployers are Kubernetes Deployments (StatefulSets,
+> DaemonSets also included). Flux Kustomizations, HelmReleases, and Argo
+> Applications are surfaced via `map` and `trace` but not listed as deployers.
 
 **JSON output (`--json`):**
 
@@ -976,7 +976,7 @@ Combined health + ownership view.
 ./cub-scout map deep-dive
 ```
 
-**Aliases:** `map cluster-data`, `map data`, `map sources`
+**Aliases:** `map cluster-data`, `map data`
 
 Maximum detail for all GitOps resources with LiveTree views:
 - Flux: GitRepositories, Kustomizations, HelmReleases
@@ -1935,7 +1935,7 @@ Press `:` to run shell commands:
 | Owner | Detection Method |
 |-------|------------------|
 | **Flux** | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
-| **ArgoCD** | `app.kubernetes.io/instance` + `argocd.argoproj.io/instance` labels |
+| **ArgoCD** | `argocd.argoproj.io/instance` label (primary), `app.kubernetes.io/instance` fallback, or `argocd.argoproj.io/tracking-id` annotation |
 | **Helm** | `app.kubernetes.io/managed-by: Helm` label |
 | **Crossplane** | `crossplane.io/claim-name` label or `*.crossplane.io` owner refs *(experimental)* |
 | **ConfigHub** | `confighub.com/UnitSlug` label |

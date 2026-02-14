@@ -270,7 +270,7 @@ Map is tested against these patterns:
 | Pattern | Example | Status |
 |---------|---------|--------|
 | Monorepo + Kustomize | apptique/flux-monorepo | Tested |
-| Multi-repo + ApplicationSets | IITS examples | Tested |
+| Multi-repo + ApplicationSets | apptique/argo-applicationset | Tested |
 | App of Apps | apptique/argo-app-of-apps | Tested |
 | Helm umbrella | confighub/examples | Tested |
 | Mixed Flux + ArgoCD | — | Tested |

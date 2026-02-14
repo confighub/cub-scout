@@ -557,7 +557,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | Owner | How Detected |
 |-------|--------------|
 | **Flux** | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
-| **ArgoCD** | `argocd.argoproj.io/instance` label |
+| **ArgoCD** | `argocd.argoproj.io/instance` label, `app.kubernetes.io/instance` fallback, or `argocd.argoproj.io/tracking-id` annotation |
 | **Helm** | `app.kubernetes.io/managed-by: Helm` (standalone, not Flux-managed) |
 | **Crossplane** | `crossplane.io/claim-name` label or `*.crossplane.io` owner refs *(experimental)* |
 | **ConfigHub** | `confighub.com/UnitSlug` label |
@@ -604,6 +604,8 @@ flux bootstrap github --owner=you --repository=fleet-infra --path=clusters/stagi
 # Explore with cub-scout
 cub-scout map
 ```
+
+**Tested scale boundary:** cub-scout is tested against clusters with up to ~150 resources in automated CI and ~500 resources in offline fixture tests. Ownership detection and scanning logic are exercised at 500-resource scale via `go test -bench`. Larger clusters are expected to work but performance characteristics above 1000 resources are not yet profiled. If your cluster has 500+ resources, run `cub-scout map` interactively first to verify responsiveness.
 
 ---
 

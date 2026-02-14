@@ -388,7 +388,7 @@ When `--git-root` is not provided or the path is unreadable, the pattern is skip
 
 **Example output (when `--git-root` provided but invalid):**
 ```
-[SKIP] gitops.applicationset_generators
+[SKIP] gitops.argocd.applicationset_generators
   ApplicationSet Generator Summary
   skip_reason: git_root path does not exist
   findings (0):
@@ -639,7 +639,7 @@ Reports the presence and count of Flux resources in the graph.
 
 ---
 
-### gitops.applicationset_generators (v0.10+, planned)
+### gitops.argocd.applicationset_generators (v0.10+)
 
 **Category:** gitops
 **Type:** Hybrid

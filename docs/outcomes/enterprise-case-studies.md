@@ -1,14 +1,14 @@
 # Enterprise Case Studies: Real GitOps Problems Solved
 
-Real-world enterprise GitOps challenges documented by [IITS Consulting](https://www.iits-consulting.de) and how Map solves them.
+Real-world enterprise GitOps challenges and how Map solves them.
 
-**Source:** Artem Lajko's research with ~25-30 enterprise teams running multi-cluster GitOps at scale.
+**Source:** Research with enterprise teams running multi-cluster GitOps at scale.
 
 ---
 
 ## The 47-Namespace Problem
 
-> **IITS Pain Point:** "What you see in the Git repository isn't what actually gets deployed... you need to mentally compile all these layers."
+> **Enterprise Pain Point:** "What you see in the Git repository isn't what actually gets deployed... you need to mentally compile all these layers."
 
 **The scenario:** Platform team manages 47 namespaces across 12 clusters. Each cluster runs Flux + ArgoCD + some Helm releases. An incident occurs at 2am.
 
@@ -51,7 +51,7 @@ $ cub-scout map
 
 ## The Monday Morning Hunt
 
-> **IITS Pain Point:** "Multi-tool chaos — Flux + Argo + Helm + kubectl in same cluster"
+> **Enterprise Pain Point:** "Multi-tool chaos — Flux + Argo + Helm + kubectl in same cluster"
 
 **The scenario:** You arrive Monday morning. Over the weekend, three different people made changes:
 - DevOps ran a hotfix via kubectl
@@ -86,7 +86,7 @@ By Owner: Native(3)
 
 ## The 50-Cluster Version Query
 
-> **IITS Pain Point:** "Can't query fleet — What version of redis across 50 clusters?"
+> **Enterprise Pain Point:** "Can't query fleet — What version of redis across 50 clusters?"
 
 **The scenario:** Security reports a CVE in Redis 6.2.x. You need to know: which clusters are affected?
 
@@ -123,7 +123,7 @@ Affected: 6 clusters
 
 ## Problem → Solution Summary
 
-From [IITS fleet architecture research](https://www.iits-consulting.de):
+Common enterprise challenges and solutions:
 
 | Enterprise Problem | Before | With Map/ConfigHub |
 |--------------------|--------|-------------------|
@@ -140,7 +140,7 @@ From [IITS fleet architecture research](https://www.iits-consulting.de):
 
 ## The Shadow IT Discovery
 
-> **IITS Pain Point:** "Per-cluster sprawl — 50 clusters × N apps = explosion of config files"
+> **Enterprise Pain Point:** "Per-cluster sprawl — 50 clusters × N apps = explosion of config files"
 
 **The scenario:** Quarterly security audit asks: "Show me everything running in production that isn't in Git."
 
@@ -242,5 +242,5 @@ The query language solves "needle in haystack" fleet problems:
 
 - [Ownership Visibility](ownership-visibility.md) — The Native bucket insight
 - [ConfigHub Integration](confighub-integration.md) — DRY → WET → Live journey
-- [IITS ArgoCD Fleet Patterns](https://www.iits-consulting.de) — Original research
+- [ArgoCD Fleet Patterns](../reference/gitops-repo-structures.md) — GitOps repository patterns
 - [Query Reference](../howto/query-resources.md) — Full query documentation
