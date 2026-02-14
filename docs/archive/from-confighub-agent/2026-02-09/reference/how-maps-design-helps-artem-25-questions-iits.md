@@ -1,5 +1,13 @@
 # How the Map-First Design Answers Community Questions
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> For current `cub-scout` behavior and command contracts, use:
+> - `docs/roadmap.md`
+> - `docs/reference/commands.md`
+> - `docs/reference/import-docs-crosswalk.md`
+>
+> Scope note: examples here that use mutating `cub` workflows (`drift accept`, `mutate`, `promote`, `changeset`, worker lifecycle) describe ConfigHub platform behavior, not direct `cub-scout` command commitments.
+
 **Purpose:** Objection handling for community skepticism — maps each concern to a Map-first response.
 
 **Status:** Current

@@ -1,5 +1,13 @@
 # How ConfigHub Solves Enterprise GitOps Pain
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> For current `cub-scout` behavior and command contracts, use:
+> - `docs/roadmap.md`
+> - `docs/reference/commands.md`
+> - `docs/reference/import-docs-crosswalk.md`
+>
+> Scope note: examples here that use mutating `cub` workflows (`drift accept`, `mutate`, `promote`, `changeset`, worker lifecycle) describe ConfigHub platform behavior, not direct `cub-scout` command commitments.
+
 **Purpose:** Solution analysis for IITS use cases — maps pain points from real-world Argo CD and Flux CD fleet patterns to ConfigHub solutions.
 
 **Status:** Current

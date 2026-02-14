@@ -1,5 +1,13 @@
 # IITS Value Analysis: What Adds MOST Value?
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> For current `cub-scout` behavior and command contracts, use:
+> - `docs/roadmap.md`
+> - `docs/reference/commands.md`
+> - `docs/reference/import-docs-crosswalk.md`
+>
+> Scope note: examples here that use mutating `cub` workflows (`drift accept`, `mutate`, `promote`, `changeset`, worker lifecycle) describe ConfigHub platform behavior, not direct `cub-scout` command commitments.
+
 **Date:** 2026-01-06
 **Question:** Is Hub + App Space the right split? What adds MOST value to IITS and similar customers?
 

@@ -1,5 +1,13 @@
 # ConfigHub: Zero-Friction Adoption
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> For current `cub-scout` behavior and command contracts, use:
+> - `docs/roadmap.md`
+> - `docs/reference/commands.md`
+> - `docs/reference/import-docs-crosswalk.md`
+>
+> Scope note: examples here that use mutating `cub` workflows (`drift accept`, `mutate`, `promote`, `changeset`, worker lifecycle) describe ConfigHub platform behavior, not direct `cub-scout` command commitments.
+
 **Status:** Current
 **Last Updated:** 2025-12-30
 

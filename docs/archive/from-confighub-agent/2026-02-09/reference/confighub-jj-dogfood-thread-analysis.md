@@ -1,5 +1,13 @@
 # How the New Model Addresses These Problems
 
+> **Archive status:** Historical planning context (non-canonical for current releases).
+> For current `cub-scout` behavior and command contracts, use:
+> - `docs/roadmap.md`
+> - `docs/reference/commands.md`
+> - `docs/reference/import-docs-crosswalk.md`
+>
+> Scope note: examples here that use mutating `cub` workflows (`drift accept`, `mutate`, `promote`, `changeset`, worker lifecycle) describe ConfigHub platform behavior, not direct `cub-scout` command commitments.
+
 **Purpose:** Maps real user pain points to solutions in the Hub/App Space model. Validates that the model solves actual problems.
 
 **Status:** Current

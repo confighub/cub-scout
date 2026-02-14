@@ -85,10 +85,26 @@ Candidate tasks:
 - Maintain claim -> demo -> status matrix
 - Keep preview/upsell surfaces tied to real limitations
 - Track onboarding-to-connected conversion moments
+- Define and maintain a testing gate contract (feature x mode x tool matrix, expected-output snapshots, per-run proof artifact)
 
 Exit criteria:
 
 - Every claim in top-level docs maps to runnable proof or marked planned status.
+
+## Workstream F: Testing Gate Contract
+
+Goal: make release-readiness measurable, repeatable, and auditable.
+
+Candidate tasks:
+
+- Maintain required coverage matrix for core surfaces by feature x mode x tool.
+- Enforce expected-output snapshot/golden comparisons for key map/trace/navigation flows.
+- Publish a per-run proof artifact in CI summarizing matrix coverage and gate outcomes.
+
+Exit criteria:
+
+- CI fails when required gate coverage regresses.
+- A proof artifact exists for each run covering promoted capability claims.
 
 ## Promotion Rule
 
@@ -97,6 +113,7 @@ Promote backlog items into release roadmap only when:
 1. Contract impact is known.
 2. Test/fixture strategy is defined.
 3. Tier boundary (OSS/Connected/Fleet) is explicit.
+4. Testing gate definition exists (matrix coverage, expected-output checks, proof artifact expectations).
 
 ## Source Lineage
 
