@@ -136,11 +136,11 @@ Hub: apptique-platform
 
 ---
 
-## IITS Enterprise Patterns
+## Enterprise Patterns
 
-The apptique examples map directly to the **IITS Hub-and-Spoke** enterprise pattern. See [iits-patterns.yaml](iits-patterns.yaml) for the full mapping.
+The apptique examples map directly to the **Hub-and-Spoke** enterprise pattern. See [iits-patterns.yaml](iits-patterns.yaml) for the full mapping.
 
-### The IITS Problems (and ConfigHub Solutions)
+### Common Enterprise Problems (and Solutions)
 
 | Problem | Pain | Solution |
 |---------|------|----------|
@@ -151,7 +151,7 @@ The apptique examples map directly to the **IITS Hub-and-Spoke** enterprise patt
 | **Multi-tool chaos** | Flux + Argo + Helm + kubectl | Single map view |
 | **Can't query fleet** | "What version across 50 clusters?" | `cub query "app=X"` |
 
-### Try the IITS Queries
+### Try the Enterprise Queries
 
 ```bash
 # All prod instances
@@ -167,12 +167,12 @@ The apptique examples map directly to the **IITS Hub-and-Spoke** enterprise patt
 ./cub-scout map list -q "owner=Flux OR owner=ArgoCD"
 ```
 
-### IITS Deep Dive
+### Deep Dive
 
 | Resource | Description |
 |----------|-------------|
-| [enterprise-case-studies.md](../../../docs/outcomes/enterprise-case-studies.md) | How cub-scout solves IITS problems |
-| [iits-patterns.yaml](iits-patterns.yaml) | Apptique → IITS pattern mapping |
+| [enterprise-case-studies.md](../../../docs/outcomes/enterprise-case-studies.md) | How cub-scout solves enterprise GitOps problems |
+| [iits-patterns.yaml](iits-patterns.yaml) | Apptique → enterprise pattern mapping |
 
 ---
 

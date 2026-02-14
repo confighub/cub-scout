@@ -65,13 +65,13 @@ rm-demos-argocd/
 
 These demos work regardless of how you've organized things. See `repo-patterns/` for examples:
 
-| Your Setup | ConfigHub Sees |
-|------------|----------------|
-| Monorepo with 50 folders | 50 Units in one App Space |
-| Multi-repo, one per team | Multiple App Spaces |
-| Helm umbrella charts | Units with Helm values |
-| ApplicationSets | Generator Units → Instance Units |
-| **Mixed (all of the above)** | **All visible in one hierarchy** |
+| Your Setup | cub-scout Shows |
+|------------|-----------------|
+| Monorepo with 50 folders | All 50 workloads, one `map list` |
+| Multi-repo, one per team | Unified view across namespaces |
+| Helm umbrella charts | Release → sub-chart tracing |
+| ApplicationSets | Generated app → source tracing |
+| **Mixed (all of the above)** | **All visible in one cluster view** |
 
 ## Why ArgoCD Users Should Care
 
@@ -95,10 +95,10 @@ ConfigHub doesn't replace ArgoCD — it **completes** it.
 Before running fleet demos, verify with single cluster:
 
 ```bash
-cub-scout map                             # See what's running
-cub-scout map -q "owner=ArgoCD"           # Verify ownership detection
-cub-scout import -n <namespace>           # Import to ConfigHub
-cub unit list --space <space>             # Verify hierarchy
+./cub-scout map                              # See what's running
+./cub-scout map list -q "owner=ArgoCD"       # Verify ownership detection
+./cub-scout trace deployment/frontend -n app # Trace to Git source
+./cub-scout scan                             # Check for misconfigurations
 ```
 
 ## See Also

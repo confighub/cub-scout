@@ -1,6 +1,23 @@
 # Repo Pattern: ArgoCD ApplicationSets
 
-Using ApplicationSets to generate Applications dynamically.
+## The Problem
+
+Your ApplicationSet generates Applications dynamically across clusters.
+During an incident you need: *"Which clusters actually received the payment-api deployment?"*
+
+ArgoCD's UI shows each Application individually. With 32 production clusters, scrolling through the UI is not an answer.
+
+**cub-scout shows you what's actually running:**
+
+```
+$ ./cub-scout map list -q "owner=ArgoCD" -q "name=payment-api*"
+
+  STATUS  NAMESPACE  NAME                          OWNER   MANAGED-BY
+  ✓       payments   payment-api                   ArgoCD  payment-api-prod-us-east-1
+  ✓       payments   payment-api                   ArgoCD  payment-api-prod-us-west-1
+  ✓       payments   payment-api                   ArgoCD  payment-api-prod-eu-west-1
+  ✗       payments   payment-api                   ArgoCD  payment-api-prod-ap-south-1  ← PROBLEM
+```
 
 ## Structure
 
@@ -30,48 +47,50 @@ spec:
         namespace: payments
 ```
 
-## How ConfigHub Sees This
-
-```yaml
-Hub: acme-platform
-
-App Space: payments-team
-  Units:
-    # The generator
-    - payment-api-appset (type: generator)
-
-    # Generated instances (automatically tracked)
-    - payment-api-prod-us-east-1 (instance_of: payment-api-appset)
-    - payment-api-prod-us-west-1 (instance_of: payment-api-appset)
-    - payment-api-prod-eu-west-1 (instance_of: payment-api-appset)
-    # ... (all 32 production clusters)
-```
-
-## Key Commands
+## How cub-scout Sees This
 
 ```bash
-# See all generators
-cub unit list --where "type=generator"
+# See all ArgoCD-managed resources
+$ ./cub-scout map list -q "owner=ArgoCD"
 
-# See what a generator creates
-cub unit list --where "instance_of=payment-api-appset"
+  STATUS  NAMESPACE  NAME         OWNER   MANAGED-BY
+  ✓       payments   payment-api  ArgoCD  payment-api-prod-us-east-1
+  ✓       payments   payment-api  ArgoCD  payment-api-prod-us-west-1
+  ✓       payments   payment-api  ArgoCD  payment-api-prod-eu-west-1
 
-# See orphaned instances (generator deleted but instances remain)
-cub unit list --where "instance_of!=null AND instance_of.exists=false"
+# Trace any generated app back to its source
+$ ./cub-scout trace deployment/payment-api -n payments
 
-# Update the generator (propagates to all instances)
-cub unit update payment-api-appset --set image.tag=v2.1.0
-# This updates the source, all generated Applications re-sync
+  Deployment/payment-api (payments)
+  ├── Owner: ArgoCD
+  ├── Application: payment-api-prod-us-east-1 (argocd)
+  └── Source: github.com/acme/configs → apps/payment-api@HEAD
+
+# Check GitOps health for all ArgoCD apps
+$ ./cub-scout gitops status
+
+  GitOps Pipeline Health
+  ═══════════════════════
+  ArgoCD Applications: 32 synced, 1 degraded
+  ✗ payment-api-prod-ap-south-1: SyncFailed (ImagePullBackOff)
+
+# Scan for configuration issues across generated apps
+$ ./cub-scout scan -n payments
+
+  RISK SCAN: payments namespace
+  ─────────────────────────────
+  HIGH (1)
+  [RISK-2025-0001] payments/payment-api — missing resource limits
 ```
 
-## The ConfigHub Advantage
+## Why ApplicationSets Benefit from cub-scout
 
-| ApplicationSet Alone | + ConfigHub |
+| ApplicationSet Alone | + cub-scout |
 |---------------------|-------------|
-| See generated Apps in ArgoCD UI | Query generated instances fleet-wide |
-| No visibility into what's generated where | `cub unit list --where "instance_of=X"` |
-| Manual tracking of generators | Automatic generator → instance tracking |
-| No fleet-wide updates | Update generator, all instances follow |
+| See generated Apps in ArgoCD UI | Query all generated workloads in one command |
+| Click through each app individually | `map list -q "owner=ArgoCD"` across all |
+| Manual tracking of sync failures | `gitops status` shows all failures at once |
+| No single-cluster config scanning | `scan` checks all generated resources |
 
 ## Skeleton Classification
 
@@ -84,9 +103,7 @@ cub unit update payment-api-appset --set image.tag=v2.1.0
 
 **Skeleton ID:** `argo-appset-mono` or `argo-appset-multi`
 
-## References
+## See Also
 
-- [IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../../../docs/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Pattern 2: ApplicationSet
-- [REPO-SKELETON-TAXONOMY.md](../../../../docs/planning/REPO-SKELETON-TAXONOMY.md) — Full taxonomy
-- [Kostis: ApplicationSet Best Practices](https://codefresh.io/blog/how-to-structure-your-argo-cd-repositories-using-application-sets/) — Official guide
-- [RISK-2025-3724](https://github.com/confighubai/confighub-scan/blob/main/scanner/RISK-2025-3724.yaml) — Complex ApplicationSet anti-pattern
+- [Apptique ApplicationSet](../../../apptique-examples/argo-applicationset/) — Working ApplicationSet with directory generator
+- [Apptique App-of-Apps](../../../apptique-examples/argo-app-of-apps/) — Alternative: parent manages children

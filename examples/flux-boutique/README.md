@@ -1,29 +1,30 @@
 # Flux Boutique Demo
 
-A multi-service Flux demo showcasing cub-scout TUI views with 5 microservices.
+## The Problem
 
-## What It Shows
+You have 5 microservices deployed by Flux from the same Git repo.
+A team member asks: *"Which Kustomization deploys the payment service?"*
+With `kubectl` alone you'd need to cross-reference GitRepositories, Kustomizations, and Deployments manually.
 
-| TUI View | What You'll See |
-|----------|-----------------|
-| `s` Status | 7 deployers, 10 workloads, 90% GitOps managed |
-| `w` Workloads | All services grouped under Flux |
-| `p` Pipelines | 5 Kustomizations + podinfo + ArgoCD app |
-| `T` Trace | Full chain: GitRepository → Kustomization → Deployment |
-| `G` Git Sources | Single repo deploying multiple services |
+**cub-scout answers this in one command:**
 
-## Quick Setup
-
-```bash
-# Apply to any cluster with Flux installed
-kubectl apply -f boutique.yaml
-
-# Wait for deployments
-kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s
-
-# Explore with TUI
-cub-scout map
 ```
+$ ./cub-scout trace deployment/payment -n boutique
+
+  Deployment/payment (boutique)
+  ├── Owner: Flux
+  ├── Kustomization: payment (boutique)
+  └── Source: GitRepository/boutique → stefanprodan/podinfo@master
+```
+
+## What It Demonstrates
+
+| What you'll see | Why it matters |
+|-----------------|----------------|
+| 5 services, all Flux-managed | Ownership detection works across multiple Kustomizations |
+| Single GitRepository → 5 Kustomizations | Source fan-out visibility |
+| Full trace from Deployment → Kustomization → GitRepository | Answers "where does this come from?" instantly |
+| No orphans or unmanaged resources | Everything has a clear owner |
 
 ## Architecture
 
@@ -36,8 +37,24 @@ GitRepository/boutique (stefanprodan/podinfo)
 └── Kustomization/shipping → Deployment/shipping
 ```
 
-All 5 services use the same source (podinfo) with different names via Kustomize patches.
-This simulates a real microservices architecture where multiple services share infrastructure patterns.
+Pattern: **Flux monorepo** — one GitRepository, multiple Kustomizations with patches.
+This is the most common Flux deployment pattern for microservices.
+
+## Quick Start
+
+```bash
+# Requires: Flux installed on your cluster
+kubectl apply -f boutique.yaml
+
+# Wait for deployments
+kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s
+
+# See ownership at a glance
+./cub-scout map
+
+# Trace any service to its source
+./cub-scout trace deployment/frontend -n boutique
+```
 
 ## Resources Created
 
@@ -50,6 +67,13 @@ This simulates a real microservices architecture where multiple services share i
 | Service | 5 | One per deployment |
 | HPA | 5 | Auto-scaling for each service |
 
+## Offline Use
+
+```bash
+# Scan the fixture without a cluster
+./cub-scout scan --file boutique.yaml
+```
+
 ## Cleanup
 
 ```bash
@@ -58,6 +82,5 @@ kubectl delete ns boutique
 
 ## See Also
 
-- [FluxCD Community Microservices Demo](https://github.com/fluxcd-community/microservices-demo) - Full 20-service demo (requires newer K8s)
-- [Google Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo) - 11-service e-commerce demo
-- [flux2-kustomize-helm-example](https://github.com/fluxcd/flux2-kustomize-helm-example) - Multi-env reference architecture
+- [Apptique Flux Monorepo](../apptique-examples/flux-monorepo/) — multi-environment version (dev/prod overlays)
+- [Platform Example](../platform-example/) — full env-per-folder (Arnie) pattern with orphans

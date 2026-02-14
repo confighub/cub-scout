@@ -1,6 +1,23 @@
 # Repo Pattern: Multi-Repo per Team
 
-Each team has their own repository for configuration.
+## The Problem
+
+Three teams, three repos, three ArgoCD namespaces. During an incident you need to answer:
+*"Which teams are still running the old Alpine base image?"*
+
+Nobody has cross-repo visibility. You'd need to `kubectl get` across namespaces and manually match repos.
+
+**cub-scout gives you a single-cluster answer:**
+
+```
+$ ./cub-scout map list -q "image=*alpine:3.18*"
+
+  STATUS  NAMESPACE   NAME               OWNER   MANAGED-BY         IMAGE
+  ✓       payments    payment-api        ArgoCD  payment-api        api:2.4.1 (alpine:3.18)
+  ✓       payments    payment-processor  ArgoCD  payment-processor  processor:1.2 (alpine:3.18)
+  ✓       platform    redis              ArgoCD  redis              redis:7.2 (alpine:3.18)
+  ✓       orders      order-api          ArgoCD  order-api          api:3.1 (alpine:3.19) ← already updated
+```
 
 ## Structure
 
@@ -22,54 +39,50 @@ platform-team/configs/          # Platform team repo
 └── argocd/
 ```
 
-## How ConfigHub Sees This
-
-```yaml
-Hub: acme-platform
-  Sources:
-    - https://github.com/acme/payments-configs
-    - https://github.com/acme/orders-configs
-    - https://github.com/acme/platform-configs
-
-App Spaces:
-  payments-team:
-    Units: [payment-api, payment-processor]
-
-  orders-team:
-    Units: [order-api, order-processor]
-
-  platform-team:
-    Units: [redis, postgres, kafka]
-```
-
-## Key Commands
+## How cub-scout Sees This
 
 ```bash
-# See all units across all teams
-cub unit list
+# All workloads across all teams, one view
+$ ./cub-scout map list
 
-# See just payments team
-cub unit list --space payments-team
+  STATUS  NAMESPACE  NAME               OWNER   MANAGED-BY
+  ✓       payments   payment-api        ArgoCD  payment-api
+  ✓       payments   payment-processor  ArgoCD  payment-processor
+  ✓       orders     order-api          ArgoCD  order-api
+  ✓       orders     order-processor    ArgoCD  order-processor
+  ✓       platform   redis              ArgoCD  redis
+  ✓       platform   postgres           ArgoCD  postgres
+  ✓       platform   kafka              ArgoCD  kafka
 
-# Cross-team query: "What's running the old base image?"
-cub unit list --where "image.base=alpine:3.18*"
-# Returns units from ALL teams
+# Trace any workload back to its repo
+$ ./cub-scout trace deployment/payment-api -n payments
 
-# Bulk update across teams (each team approves their own)
-cub unit update \
-  --where "image.base=alpine:3.18*" \
-  --set image.base=alpine:3.19.1
-# Creates: CS-1 (payments), CS-2 (orders), CS-3 (platform)
+  Deployment/payment-api (payments)
+  ├── Owner: ArgoCD
+  ├── Application: payment-api (argocd)
+  └── Source: github.com/acme/payments-configs@main
+
+# See ownership tree by tool
+$ ./cub-scout tree ownership
+
+  ArgoCD (7 resources)
+  ├── Application/payment-api → payments/payment-api
+  ├── Application/payment-processor → payments/payment-processor
+  ├── Application/order-api → orders/order-api
+  ├── Application/order-processor → orders/order-processor
+  ├── Application/redis → platform/redis
+  ├── Application/postgres → platform/postgres
+  └── Application/kafka → platform/kafka
 ```
 
-## Benefits of Multi-Repo + ConfigHub
+## Why Multi-Repo Benefits from cub-scout
 
-| Without ConfigHub | With ConfigHub |
+| Without cub-scout | With cub-scout |
 |-------------------|----------------|
-| 3 separate ArgoCD views | 1 unified fleet view |
-| Can't query across repos | Fleet-wide queries |
-| Bulk updates = 3 PRs | Bulk updates = 1 command |
-| No cross-team visibility | Full visibility |
+| 3 separate ArgoCD views | 1 unified cluster view |
+| Can't query across repos | Cluster-wide queries |
+| No cross-team visibility | Full ownership visibility |
+| Manual incident triage | `map list -q "image=*vulnerable*"` |
 
 ## Skeleton Classification
 
@@ -82,8 +95,7 @@ cub unit update \
 
 **Skeleton ID:** `argo-flat-multi` or `argo-aoa-multi`
 
-## References
+## See Also
 
-- [IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../../../docs/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Multi-repo patterns
-- [REPO-SKELETON-TAXONOMY.md](../../../../docs/planning/REPO-SKELETON-TAXONOMY.md) — Full taxonomy
-- [Kostis: App vs Config Repos](https://codefresh.io/blog/how-to-structure-your-argo-cd-repositories-using-application-sets/) — Why separate repos can be useful
+- [Apptique App-of-Apps](../../../apptique-examples/argo-app-of-apps/) — Working multi-app Argo hierarchy
+- [Platform Example](../../../platform-example/) — Mixed ownership (Flux + orphans)
