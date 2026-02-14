@@ -65,6 +65,21 @@ go build ./cmd/cub-scout
 go test ./...
 ```
 
+## Backlog Tracking
+
+Future ideas live in supplemental planning docs (`docs/roadmap-*.md`, `docs/reference/*-product-guide.md`).
+These are non-authoritative and easy to forget during sprint planning.
+
+Rules:
+- `docs/roadmap.md` contains an **Untracked Backlog Checklist** at the top
+- When a new idea appears in any planning doc, add it to the checklist
+- When an item graduates to real work, file a GitHub issue and remove the checklist entry
+- The master tracking issue is **#154** — keep it current
+
+This prevents ideas from being trapped in prose nobody re-reads.
+
+---
+
 ## Pre-Coding Test & Success Proof Requirements
 
 All feature and bugfix issues **must define success before implementation**.

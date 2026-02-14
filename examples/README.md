@@ -112,6 +112,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [workflows/](workflows/) | **Working** | Artifact + fleet demos (CI → local, env comparison) | CI/CD integration, sharing bundles, comparing environments |
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |
+| [d2-control-plane/](d2-control-plane/) | **Working** | Flux "Control Plane" pattern (infra + apps) | D2 pattern detection, layer separation |
 | [flux-boutique/](flux-boutique/) | **Working** | 5-service Flux demo | TUI view showcase, trace demo |
 | [orphans/](orphans/) | **Working** | Realistic orphan resources | Orphan detection demo |
 | [drift/](drift/) | **Working** | Drift detection examples | Learning drift detection |
@@ -197,7 +198,7 @@ cub-scout demo <name> --cleanup  # Remove demo resources
 |------|------|-------|
 | `quick` | ~30 sec | Ownership detection, map dashboard |
 | `risk` | ~2 min | RISK-2025-0027 (BIGBANK Grafana bug) |
-| `healthy` | ~2 min | IITS hub-and-spoke pattern |
+| `healthy` | ~2 min | Enterprise hub-and-spoke pattern |
 | `unhealthy` | ~2 min | Suspended resources, broken deployers |
 | `scenario clobber` | ~2 min | Platform updates vs app overlays |
 

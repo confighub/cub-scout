@@ -350,7 +350,7 @@ kubectl delete -f test/atk/demos/demo-full.yaml
 
 ## Enterprise Demos
 
-IITS-style enterprise GitOps patterns with running pods and realistic ownership attribution.
+Enterprise GitOps patterns with running pods and realistic ownership attribution.
 
 ### Demo Runner
 

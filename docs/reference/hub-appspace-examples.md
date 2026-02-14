@@ -150,7 +150,7 @@ confighub ▾
 
 ---
 
-## Example 4: IITS Pattern (Jesper Examples)
+## Example 4: Enterprise Pattern (Jesper Examples)
 
 Real spaces: `jesper-argocd`, `jesper-fluxcd`, `example-jesper-argocd-team`
 
@@ -443,7 +443,7 @@ confighub ▾
 | **KubeCon Demo** | `platform-*` (workers, targets) | `app*-dev`, `app*-prod` (units) |
 | **TraderX** | `*-base`, `*-infra` | `*-prod-{region}` |
 | **curious-cub** | `*-base`, `*-infra` | `*-dev`, `*-staging`, `*-prod` |
-| **IITS/Jesper** | (none) | Per-deployer workspaces |
+| **Enterprise/Jesper** | (none) | Per-deployer workspaces |
 | **Banko (Flux)** | `platform/` (versioned) | `clusters/*`, `apps/` |
 | **Arnie (ArgoCD)** | `base/`, `variants/` | `envs/*` (one per environment) |
 

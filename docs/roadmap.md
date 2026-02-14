@@ -13,6 +13,62 @@
 
 ---
 
+## Untracked Backlog Checklist
+
+The planning docs below contain future ideas not yet tracked as GitHub issues.
+This checklist prevents ideas from being forgotten during sprint planning.
+When an item graduates to real work, file a dedicated issue and remove it here.
+
+Tracking issue: **#154** (master backlog tracking)
+
+### Rendered Manifest + Argo (`roadmap-rendered-manifest-and-argo.md`)
+
+- [ ] Workstream A: Distinguish "ConfigHub via OCI" ownership in trace outputs
+- [ ] Workstream A: Show explicit `source → render → OCI → deployer → workload` chain
+- [ ] Workstream A: Source staleness/sync signals where evidence is available
+- [ ] Workstream B: Source inventory view — broader vision beyond `map sources` (#148)
+- [ ] Workstream C: Schema extension for `rendered_from` / `original_source` (beyond #150)
+- [ ] Workstream D: Bridge pattern — Git→Flux→cluster (beyond #151)
+- [ ] Workstream D: Bridge pattern — Git→Argo→cluster
+- [ ] Workstream D: Bridge pattern — Git→ConfigHub→OCI→deployer
+- [ ] Workstream D: Bridge pattern — Live import→ConfigHub→OCI→deployer
+- [ ] Workstream E: Orphan detection for broken ApplicationSet generator links
+- [ ] Workstream F: Fleet query ergonomics and provenance readability
+- [ ] Workstream F: Impact analysis ergonomics and multi-cluster context clarity
+- [ ] Workstream G: Platform-only surfaces (Functions, Actions, ChangeSets, saved queries, alert triggers, dependency graphing, time-travel UX, three-state drift resolution, bulk operations)
+
+### Connected Views + Launch (`roadmap-connected-views-and-launch.md`)
+
+- [ ] Workstream A: Navigation-first messaging and "aha in seconds" walkthrough
+- [ ] Workstream B: Scale-real demo assets (realistic many-workload examples)
+- [ ] Workstream B: Expected-output snapshots for core navigation flows
+- [ ] Workstream C: WET-LIVE panel clarity and causality messaging
+- [ ] Workstream C: Break-glass decision ergonomics and audit visibility
+- [ ] Workstream C: Hierarchy consistency across map/tree/unit surfaces
+- [ ] Workstream D: Fleet view delivery sequence (by-cluster → compare → matrix → revisions → rollout/deps/incident/security)
+- [ ] Workstream E: Claim→demo→status proof matrix
+- [ ] Workstream F: Testing gate contract (coverage matrix, CI-enforced gate, per-run proof artifact)
+
+### Pattern Contract (`reference/patterns-contract.md`)
+
+- [x] `gitops.argocd.applicationset_generators` pattern (implemented; doc ID drift fixed in #153)
+- [ ] `gitops.flux_kustomization_paths` pattern (planned, not implemented)
+
+### Connected Mode Ideas (`NEXT-PLAN.md`, `WHY_CONNECTED_MODE.md`)
+
+- [ ] ConfigHub summary storage and Slack integration for drift/sync notifications
+- [ ] Connected import flows (`cub-scout connected import bundle/git/cluster`)
+- [ ] Intent vs render vs observed three-way comparison
+- [ ] Hook compatibility verifier
+
+### Scale and Testing
+
+- [ ] Production-scale E2E testing (500+ resources, mixed ownership, deep hierarchies)
+- [ ] TUI performance profiling at scale (500+ resources)
+- [ ] CI-enforced coverage metrics
+
+---
+
 ## How to Read This Roadmap
 
 * **Released** sections are sealed unless explicitly reopened.

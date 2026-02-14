@@ -55,7 +55,7 @@ var demos = map[string]Demo{
 	},
 	"ccve": {
 		Name:        "ccve",
-		Description: "CCVE-2025-0027 detection - the BIGBANK story",
+		Description: "Risk issue detection (CCVE-2025-0027) - the BIGBANK story",
 		Duration:    "~2 min",
 		Standalone:  true,
 		// No CRDs required - uses plain Kubernetes resources
@@ -103,7 +103,7 @@ var demoCmd = &cobra.Command{
 Examples:
   cub-scout demo list             # List available demos
   cub-scout demo quick              # Quick demo (~30 sec)
-  cub-scout demo ccve               # CCVE-2025-0027 demo (~2 min)
+  cub-scout demo ccve               # Risk issue detection demo (~2 min)
   cub-scout demo query              # Query language demo
   cub-scout demo scenario bigbank   # Narrative scenario
 
@@ -380,7 +380,7 @@ func runDemoQuick() error {
 	fmt.Println(demoPassStyle.Render("That's the Map - your cluster at a glance."))
 	fmt.Println()
 	fmt.Println(demoDimStyle.Render("Next: cub-scout scan to find config issues"))
-	fmt.Println(demoDimStyle.Render("      cub-scout demo ccve to see CCVE-2025-0027 (the BIGBANK incident)"))
+	fmt.Println(demoDimStyle.Render("      cub-scout demo ccve to see risk issue detection (the BIGBANK incident)"))
 
 	return nil
 }
@@ -405,7 +405,7 @@ func runDemoCCVE() error {
 	repoRoot := getRepoRoot()
 	badConfigPath := filepath.Join(repoRoot, "examples", "impressive-demo", "bad-configs", "monitoring-bad.yaml")
 
-	fmt.Println(demoBoldStyle.Render("CCVE-2025-0027 Demo: The BIGBANK 4-Hour Outage"))
+	fmt.Println(demoBoldStyle.Render("Risk Issue Detection Demo: The BIGBANK 4-Hour Outage"))
 	fmt.Println()
 	fmt.Println(demoDimStyle.Render("This exact bug caused a 4-hour outage at BIGBANK Capital Markets (FluxCon 2025)"))
 	fmt.Println()
@@ -414,7 +414,7 @@ func runDemoCCVE() error {
 	_ = kubectlApply(badConfigPath)
 
 	fmt.Println()
-	fmt.Println(demoInfoStyle.Render("Step 2: Running CCVE scan..."))
+	fmt.Println(demoInfoStyle.Render("Step 2: Running risk scan..."))
 	time.Sleep(2 * time.Second)
 	fmt.Println()
 	_ = runCubAgent("scan")
@@ -438,7 +438,7 @@ func cleanupDemoCCVE() error {
 	repoRoot := getRepoRoot()
 	badConfigPath := filepath.Join(repoRoot, "examples", "impressive-demo", "bad-configs", "monitoring-bad.yaml")
 
-	fmt.Println(demoInfoStyle.Render("Cleaning up CCVE demo resources..."))
+	fmt.Println(demoInfoStyle.Render("Cleaning up risk demo resources..."))
 	_ = kubectlDelete(badConfigPath)
 	fmt.Println(demoPassStyle.Render("Cleanup complete."))
 

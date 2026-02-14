@@ -116,12 +116,12 @@ Git-aware patterns maintain the same determinism guarantees as graph-only patter
 
 See [Patterns Contract Reference](patterns-contract.md#git-aware-patterns-v010) for full specification.
 
-### Planned Hybrid Patterns (v0.10 MVP)
+### Hybrid Patterns (v0.10+)
 
-| Pattern ID | Type | Description |
-|------------|------|-------------|
-| `gitops.applicationset_generators` | Hybrid | Summarizes ApplicationSet generators; enriched with repo data when `--git-root` provided |
-| `gitops.flux_kustomization_paths` | Hybrid | Correlates Flux Kustomization paths; validates against repo when `--git-root` provided |
+| Pattern ID | Type | Status | Description |
+|------------|------|--------|-------------|
+| `gitops.argocd.applicationset_generators` | Hybrid | Implemented | Summarizes ApplicationSet generators; enriched with repo data when `--git-root` provided |
+| `gitops.flux_kustomization_paths` | Hybrid | Planned | Correlates Flux Kustomization paths; validates against repo when `--git-root` provided |
 
 **Hybrid patterns** run in both modes:
 - **Without `--git-root`**: PASS with info findings from graph-visible data only

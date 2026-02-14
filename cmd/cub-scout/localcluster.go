@@ -406,7 +406,7 @@ type shellExitMsg struct {
 	err error
 }
 
-// scanFinding represents a single CCVE finding for TUI display
+// scanFinding represents a single risk issue finding for TUI display
 type scanFinding struct {
 	CCVE      string
 	Severity  string
@@ -2366,7 +2366,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("C") + "  Suggest commands (context-aware)\n")
 	b.WriteString("  " + lcNameStyle.Render("Q") + "  Saved queries (filter resources)\n")
 	b.WriteString("  " + lcNameStyle.Render("T") + "  Trace ownership chain\n")
-	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for CCVEs\n")
+	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for risk issues\n")
 	b.WriteString("  " + lcNameStyle.Render("I") + "  Import wizard (bring workloads to ConfigHub)\n")
 	b.WriteString("\n")
 
@@ -2515,7 +2515,7 @@ func (m LocalClusterModel) getSuggestions() []Suggestion {
 		}
 
 	case viewGitSources:
-		// Git sources: trace source + map sources + flux CLI
+		// Git sources: trace source + deep-dive + flux CLI
 		if m.cursor >= 0 && m.cursor < len(m.gitSources) {
 			src := m.gitSources[m.cursor]
 			// cub-scout first
@@ -2524,8 +2524,8 @@ func (m LocalClusterModel) getSuggestions() []Suggestion {
 				Description: "Trace source to downstream deployers",
 			})
 			suggestions = append(suggestions, Suggestion{
-				Command:     "./cub-scout map sources",
-				Description: "List all Git/OCI/Helm sources",
+				Command:     "./cub-scout map deep-dive",
+				Description: "Deep dive into all GitOps resources with live tree views",
 			})
 			// then flux CLI
 			switch src.Kind {
@@ -5188,7 +5188,7 @@ func (m LocalClusterModel) runScan() tea.Cmd {
 // runRemedyDryRun runs the remedy command in dry-run mode
 func (m LocalClusterModel) runRemedyDryRun() tea.Cmd {
 	return func() tea.Msg {
-		// Collect CCVE IDs from findings
+		// Collect risk issue IDs from findings
 		var ccveIDs []string
 		seen := make(map[string]bool)
 		for _, f := range m.scanFindings {
@@ -5286,10 +5286,10 @@ func parseScanOutput(output string) ([]scanFinding, map[string]int) {
 	findings := []scanFinding{}
 	categories := map[string]int{}
 
-	// CCVE categories
+	// Risk issue categories
 	knownCategories := []string{"STATE", "ORPHAN", "DRIFT", "CONFIG", "SOURCE", "RENDER", "APPLY", "DEPEND"}
 
-	// Pattern to match CCVE findings: [S] CCVE-2025-XXXX: message
+	// Pattern to match risk issue findings: [S] CCVE-2025-XXXX: message
 	// Severity markers: [C] critical, [W] warning, [I] info, [S] state
 	ccvePattern := regexp.MustCompile(`\[([CWIS])\]\s+(CCVE-\d{4}-\d{4})[:\s]+(.*)`)
 
@@ -5307,7 +5307,7 @@ func parseScanOutput(output string) ([]scanFinding, map[string]int) {
 			}
 		}
 
-		// Try to match CCVE pattern
+		// Try to match risk issue pattern
 		matches := ccvePattern.FindStringSubmatch(line)
 		if len(matches) >= 4 {
 			severity := "info"
@@ -5427,7 +5427,7 @@ func (m LocalClusterModel) renderScan() string {
 
 	b.WriteString(lcHeaderStyle.Render("╭────────────────────────────────────────────────────────────────╮"))
 	b.WriteString("\n")
-	b.WriteString(lcHeaderStyle.Render("│") + "  " + lcHeaderStyle.Render("🔍 CCVE SCAN RESULTS") + strings.Repeat(" ", 41) + lcHeaderStyle.Render("│"))
+	b.WriteString(lcHeaderStyle.Render("│") + "  " + lcHeaderStyle.Render("🔍 RISK SCAN RESULTS") + strings.Repeat(" ", 41) + lcHeaderStyle.Render("│"))
 	b.WriteString("\n")
 	b.WriteString(lcHeaderStyle.Render("╰────────────────────────────────────────────────────────────────╯"))
 	b.WriteString("\n\n")

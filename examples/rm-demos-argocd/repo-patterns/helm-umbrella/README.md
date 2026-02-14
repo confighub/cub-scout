@@ -1,6 +1,21 @@
 # Repo Pattern: Helm Umbrella Charts
 
-Using umbrella charts to manage multiple sub-charts with shared values.
+## The Problem
+
+Your platform team manages an umbrella chart with 4 sub-charts. After a Redis upgrade,
+you need to know: *"Is the new Redis version actually running, or did Helm say it deployed
+but the pods are still on the old image?"*
+
+`helm list` says the release is deployed. But "deployed" and "running" are different things.
+
+**cub-scout shows what's actually live:**
+
+```
+$ ./cub-scout map list -q "owner=Helm" -q "name=redis*"
+
+  STATUS  NAMESPACE  NAME   OWNER  MANAGED-BY     IMAGE
+  ✓       platform   redis  Helm   platform-stack  redis:7.2.4  ← confirmed live
+```
 
 ## Structure
 
@@ -18,64 +33,53 @@ platform-charts/
 └── values-prod.yaml        # Prod overrides
 ```
 
-## How ConfigHub Sees This
-
-```yaml
-Hub: acme-platform
-  Source: https://github.com/acme/platform-charts (Helm)
-
-App Space: platform-team
-  Units:
-    # Each sub-chart becomes a Unit
-    - redis
-        values_files: [values.yaml, values-prod.yaml]
-    - postgres
-        values_files: [values.yaml, values-prod.yaml]
-    - kafka
-        values_files: [values.yaml, values-prod.yaml]
-    - monitoring
-        values_files: [values.yaml, values-prod.yaml]
-```
-
-## Key Commands
+## How cub-scout Sees This
 
 ```bash
-# See all platform units
-cub unit list --space platform-team
+# See all Helm-managed resources
+$ ./cub-scout map list -q "owner=Helm"
 
-# Update a specific value across all environments
-cub unit update redis --set redis.replicas=5
+  STATUS  NAMESPACE  NAME        OWNER  MANAGED-BY      IMAGE
+  ✓       platform   redis       Helm   platform-stack  redis:7.2.4
+  ✓       platform   postgres    Helm   platform-stack  postgres:16.1
+  ✓       platform   kafka       Helm   platform-stack  kafka:3.7.0
+  ✓       monitoring prometheus  Helm   platform-stack  prometheus:2.51
+  ✓       monitoring grafana     Helm   platform-stack  grafana:10.4
 
-# Update the chart version for all units
-cub unit update --space platform-team --set chart.version=2.0.0
+# Trace a sub-chart resource back to the umbrella release
+$ ./cub-scout trace deployment/redis -n platform
 
-# See which clusters have which chart version
-cub unit list --where "chart.version!=2.0.0"
+  Deployment/redis (platform)
+  ├── Owner: Helm
+  └── Release: platform-stack (platform)
+
+# Check for drift between Helm release and live state
+$ ./cub-scout drift --helm-release platform-stack -n platform
+
+  Drift Report
+  ════════════
+  No drift detected.
+
+# Scan for misconfigurations across all platform components
+$ ./cub-scout scan -n platform -n monitoring
+
+  RISK SCAN
+  ─────────
+  HIGH (1)
+  [RISK-2025-0027] monitoring/grafana — known dashboard auth bypass
+
+  WARNING (1)
+  [RISK-2025-0001] platform/kafka — missing resource limits
 ```
 
-## The ConfigHub Advantage with Helm
+## Why Helm Umbrella Benefits from cub-scout
 
-| Helm Umbrella Alone | + ConfigHub |
+| Helm Umbrella Alone | + cub-scout |
 |--------------------|-------------|
-| One values file per env | Query across all envs |
-| No visibility across clusters | Fleet-wide Helm values visibility |
-| `helm upgrade` per cluster | One command, all clusters |
-| No drift detection | Detect when live != desired |
-
-## Example: Update Redis Across Fleet
-
-```bash
-# Traditional way
-for cluster in $(kubectl config get-contexts -o name); do
-  kubectl config use-context $cluster
-  helm upgrade platform ./platform-charts -f values-prod.yaml --set redis.replicas=5
-done
-# (Repeat for 47 clusters, hope you don't miss one)
-
-# ConfigHub way
-cub unit update redis --where "environment=production" --set replicas=5
-# Done. All 47 clusters. With approval workflow.
-```
+| `helm list` shows release status | `map list` shows live pod state |
+| `helm get values` per release | Query across all releases |
+| No visibility into what's running | Full image + owner visibility |
+| No config scanning | `scan` catches known misconfigurations |
 
 ## Skeleton Classification
 
@@ -88,8 +92,7 @@ cub unit update redis --where "environment=production" --set replicas=5
 
 **Skeleton ID:** `helm-umbrella`
 
-## References
+## See Also
 
-- [IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../../../docs/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Helm patterns
-- [REPO-SKELETON-TAXONOMY.md](../../../../docs/planning/REPO-SKELETON-TAXONOMY.md) — Full taxonomy
-- [Kostis: Helm Anti-patterns](https://codefresh.io/blog/argo-cd-application-anti-patterns/) — Avoid hardcoded values (RISK-2025-3722)
+- [Flux Boutique](../../../flux-boutique/) — Flux managing Kustomize (compare with Helm)
+- [Platform Example](../../../platform-example/) — Flux HelmRelease managing Prometheus stack

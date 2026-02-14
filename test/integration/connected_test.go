@@ -299,7 +299,7 @@ func TestMapIssues(t *testing.T) {
 }
 
 // =============================================================================
-// CCVE Scanner Tests
+// Risk Scanner Tests
 // =============================================================================
 
 // TestScan verifies the scan command works

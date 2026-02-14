@@ -88,6 +88,39 @@ examples:
     required_paths:
       - README.md
       - repo-patterns/applicationsets
+  - id: platform_example
+    repo: cub-scout
+    path: examples/platform-example
+    skeleton_id: flux-tenant-mono
+    required: true
+    value_props:
+      - env-per-folder (Arnie) pattern visibility
+      - kustomize base/overlay ownership tracing
+    use_cases:
+      - enterprise hub-and-spoke demo baseline
+      - orphan detection with mixed ownership
+    demo_scenarios:
+      - Monday Panic
+    required_paths:
+      - README.md
+      - apps/backend/base/deployment.yaml
+      - clusters/prod/kustomization.yaml
+  - id: d2_control_plane
+    repo: cub-scout
+    path: examples/d2-control-plane
+    skeleton_id: flux-tenant-mono
+    required: true
+    value_props:
+      - D2 "Control Plane" pattern detection
+      - infrastructure vs application layer separation
+    use_cases:
+      - Flux reference architecture demo
+      - pattern detection verification
+    demo_scenarios:
+      - Monday Panic
+    required_paths:
+      - README.md
+      - control-plane.yaml
   - id: confighub_global_app
     repo: examples
     path: global-app

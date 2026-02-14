@@ -528,7 +528,7 @@ Requires ConfigHub authentication. Run 'cub auth login' first.
 
 var mapClusterDataCmd = &cobra.Command{
 	Use:     "deep-dive",
-	Aliases: []string{"cluster-data", "data", "sources"},
+	Aliases: []string{"cluster-data", "data"},
 	Short:   "Deep dive into all GitOps resources with live tree views",
 	Long: `Deep dive into all GitOps resources with maximum detail and live state.
 
@@ -6824,7 +6824,7 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 		fmt.Println("  • Revision history and change tracking")
 		fmt.Println("  • Cross-cluster dependencies and links")
 		fmt.Println("  • Drift detection against desired state")
-		fmt.Println("  • CCVE scanning results and remediation")
+		fmt.Println("  • Risk scanning results and remediation")
 		fmt.Println("  • Team ownership and RBAC")
 		fmt.Println()
 		fmt.Println("  Try: cub-scout map deep-dive --connected")

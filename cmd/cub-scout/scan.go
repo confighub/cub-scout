@@ -37,8 +37,8 @@ var (
 
 var scanCmd = &cobra.Command{
 	Use:   "scan [flags]",
-	Short: "Scan for CCVEs and stuck states",
-	Long: `Scan the cluster for CCVEs including Kyverno violations and stuck reconciliation states.
+	Short: "Scan for risk issues and stuck states",
+	Long: `Scan the cluster for risk issues including Kyverno violations and stuck reconciliation states.
 
 Pattern database: 46 active scanner patterns + 4,500+ reference database
 See: https://github.com/confighubai/confighub-scan
@@ -82,7 +82,7 @@ The output shows:
   - Stuck HelmReleases/Kustomizations/Applications with remediation commands
   - Kyverno policy violations from PolicyReports
   - Severity (critical, warning, info) based on duration/impact
-  - CCVE identifiers where matched
+  - Risk issue identifiers where matched
 `,
 	RunE: runScan,
 }
@@ -455,7 +455,7 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 		fmt.Printf("  %sDangling Resources%s — Resources pointing to nothing\n", colorPurple, colorReset)
 		fmt.Printf("       HPA, Service, Ingress targeting deleted workloads\n")
 		fmt.Printf("       Risk: Broken routing, wasted capacity\n\n")
-		fmt.Printf("%sEach finding has a CCVE ID (e.g., CCVE-2025-0027) from our Risk Scorecard database.%s\n", colorDim, colorReset)
+		fmt.Printf("%sEach finding has a risk issue ID (e.g., CCVE-2025-0027) from our Risk Scorecard database.%s\n", colorDim, colorReset)
 		fmt.Printf("%sSee: https://github.com/confighubai/confighub-scan%s\n", colorDim, colorReset)
 		fmt.Printf("\n")
 	}

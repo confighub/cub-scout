@@ -1,10 +1,42 @@
-# Environment Variable Drift Example
+# Environment Variable Drift
 
-This example shows drift detection for environment variables.
+## The Problem
 
-## Scenario
+Your Git manifest says `LOG_LEVEL=info`, but someone `kubectl set env`'d it to `debug`
+in production during an incident — and forgot to revert it.
 
-The desired manifest specifies `LOG_LEVEL=info`, but the live cluster has `LOG_LEVEL=debug`.
+The deployment is running. ArgoCD says "Synced." But the live state doesn't match Git.
+
+**cub-scout catches it:**
+
+```
+$ ./cub-scout drift --file desired.yaml
+
+  Drift Report
+  ════════════
+  Cluster: prod-cluster
+  Source:  desired.yaml (file)
+
+  [Config] Configuration Drift
+  └─ [WARNING] Deployment:prod/api
+        path: spec.template.spec.containers[name=app].env[name=LOG_LEVEL]
+        desired: info
+        live:    debug
+
+  Summary: 1 finding, 1 affected object
+```
+
+## How It Works
+
+```
+desired.yaml (Git)          Live Cluster
+─────────────────           ─────────────────
+LOG_LEVEL: info    ──→  ✗  LOG_LEVEL: debug   ← DRIFTED
+PORT: 8080         ──→  ✓  PORT: 8080         ← matches
+```
+
+cub-scout compares the desired manifest against what's actually running.
+Any mismatch is a drift finding with a severity and classification.
 
 ## Desired State
 
@@ -21,9 +53,6 @@ spec:
     matchLabels:
       app: api
   template:
-    metadata:
-      labels:
-        app: api
     spec:
       containers:
       - name: app
@@ -35,54 +64,29 @@ spec:
           value: "8080"
 ```
 
-## Running Drift Detection
+## Quick Start
 
 ```bash
-cub-scout drift --file desired.yaml
-```
+# Detect drift
+./cub-scout drift --file desired.yaml
 
-## ASCII Output
+# JSON output for tooling
+./cub-scout drift --file desired.yaml --format json
 
-```
-Drift Report
-============
-
-Cluster: prod-cluster
-Source:  desired.yaml (file)
-
-[Config] Configuration Drift
-└─ [WARNING] Deployment:prod/api
-      path: spec.template.spec.containers[name=app].env[name=LOG_LEVEL]
-      desired: info
-      live:    debug
-
-Summary
--------
-Total findings: 1
-Affected objects: 1
-By severity: warning=1
+# CI gate: fail if any drift detected
+./cub-scout drift --file desired.yaml --fail-on warning
+echo $?  # Returns 2 if drift found
 ```
 
 ## JSON Output
 
-```bash
-cub-scout drift --file desired.yaml --format json
-```
-
 ```json
 {
   "command": "drift",
-  "context": {
-    "cluster": "prod-cluster",
-    "namespace": null,
-    "desiredSource": { "type": "file", "ref": "desired.yaml" },
-    "liveSource": { "type": "cluster", "ref": "prod-cluster" }
-  },
   "findings": [
     {
       "id": "drift:Deployment:prod/api:spec.template.spec.containers[name=app].env[name=LOG_LEVEL]",
       "object_id": "Deployment:prod/api",
-      "object": { "kind": "Deployment", "namespace": "prod", "name": "api" },
       "path": "spec.template.spec.containers[name=app].env[name=LOG_LEVEL]",
       "desired": "info",
       "live": "debug",
@@ -99,10 +103,7 @@ cub-scout drift --file desired.yaml --format json
 }
 ```
 
-## CI Usage
+## See Also
 
-```bash
-# Fail CI if any env var drift is detected
-cub-scout drift --file desired.yaml --fail-on warning
-echo $?  # Returns 2 if drift found
-```
+- [Image Policy Drift](../image-policy-drift/) — imagePullPolicy divergence
+- [Resource Drift](../resource-drift/) — CPU/memory request drift (with invalid config detection)

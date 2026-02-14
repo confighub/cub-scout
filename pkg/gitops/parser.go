@@ -29,13 +29,15 @@ import (
 type RepoType string
 
 const (
-	RepoTypeSingleRepo     RepoType = "single-repo"    // Traditional apps/infra/clusters
-	RepoTypeD2Fleet        RepoType = "d2-fleet"       // Fleet management (clusters, tenants)
-	RepoTypeD2Infra        RepoType = "d2-infra"       // Infrastructure components
-	RepoTypeD2Apps         RepoType = "d2-apps"        // Application components
-	RepoTypeAppOfApps      RepoType = "app-of-apps"    // Argo app-of-apps pattern
-	RepoTypeApplicationSet RepoType = "applicationset" // Argo ApplicationSet generators
-	RepoTypeHelmUmbrella   RepoType = "helm-umbrella"  // Helm umbrella chart with dependencies
+	RepoTypeSingleRepo     RepoType = "single-repo"      // Traditional apps/infra/clusters
+	RepoTypeD2Fleet        RepoType = "d2-fleet"          // Fleet management (clusters, tenants)
+	RepoTypeD2Infra        RepoType = "d2-infra"          // Infrastructure components
+	RepoTypeD2Apps         RepoType = "d2-apps"           // Application components
+	RepoTypeAppOfApps      RepoType = "argo-aoa-mono"     // Argo app-of-apps pattern (canonical skeleton ID)
+	RepoTypeApplicationSet RepoType = "argo-appset-mono"  // Argo ApplicationSet generators (canonical skeleton ID)
+	RepoTypeHelmUmbrella   RepoType = "helm-umbrella"     // Helm umbrella chart with dependencies
+	RepoTypeFluxTenantMono RepoType = "flux-tenant-mono"  // Flux multi-tenancy pattern (canonical skeleton ID)
+	RepoTypeFluxHelmMono   RepoType = "flux-helm-mono"    // Flux with HelmRelease pattern (canonical skeleton ID)
 	RepoTypeUnknown        RepoType = "unknown"
 )
 

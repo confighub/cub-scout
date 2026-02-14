@@ -20,7 +20,7 @@ cub-scout demo <name> --cleanup # Remove demo resources
 |------|------|-------------|
 | `quick` | ~30 sec | Fastest path to see Map in action |
 | `risk` | ~2 min | RISK-2025-0027: The BIGBANK Grafana bug |
-| `healthy` | ~2 min | Enterprise healthy (IITS hub-and-spoke) |
+| `healthy` | ~2 min | Enterprise healthy (hub-and-spoke) |
 | `unhealthy` | ~2 min | Common GitOps problems |
 | `connected` | ~1 min | ConfigHub connected mode (requires cub auth) |
 
@@ -79,7 +79,7 @@ Story: [BIGBANK - GitOps Lessons Learned](https://www.youtube.com/watch?v=VJiuu-
 
 ## Enterprise Healthy Demo
 
-IITS-style hub-and-spoke GitOps pattern, all working correctly.
+Enterprise hub-and-spoke GitOps pattern, all working correctly.
 
 ```bash
 cub-scout demo healthy
