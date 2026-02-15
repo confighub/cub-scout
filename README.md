@@ -4,7 +4,7 @@
 
 cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It works standalone (no network required) or connected to [ConfigHub](https://confighub.com) for additional features. Outputs are deterministic and safe for automation.
 
-Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues) or joining [Discord](https://discord.gg/confighub).
+Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues) or joining [Discord](https://discord-auth.confighub.net/discord/join) via ConfigHub signup.
 
 ---
 
@@ -664,7 +664,7 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 **Why this matters:** Your existing tools, RBAC, and audit trails all still work. cub-scout is a lens, not a replacement.
 
-> **🧪 Built with AI assistance:** This project was developed with AI pair programming. It's read-only by default, deterministic (no ML inference), and CI-tested. We'd love to hear what you learn using it — [open an issue](https://github.com/confighub/cub-scout/issues) or join [Discord](https://discord.gg/confighub).
+> **🧪 Built with AI assistance:** This project was developed with AI pair programming. It's read-only by default, deterministic (no ML inference), and CI-tested. We'd love to hear what you learn using it — [open an issue](https://github.com/confighub/cub-scout/issues) or join [Discord](https://discord-auth.confighub.net/discord/join) via ConfigHub.
 
 ---
 
