@@ -77,7 +77,7 @@ Every example directory now follows the pattern:
 | `apptique-examples/flux-monorepo/README.md` | Kustomization chain, offline parse-repo |
 | `drift/README.md` | Parent file tying 3 drift examples together |
 | `workflows/README.md` | Artifact workflow + fleet demo coverage |
-| `d2-control-plane/README.md` | D2 "Control Plane" Flux reference architecture |
+| `d2-control-plane/README.md` | Control Plane (controlplaneio-fluxcd) Flux reference architecture |
 | `d2-control-plane/control-plane.yaml` | Full YAML fixture with Flux labels |
 
 ### 6. Issues Filed
