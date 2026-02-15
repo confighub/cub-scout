@@ -39,6 +39,42 @@ No false orphans. No noise.
 | Configuration | `platform-config` | Crossplane (system) |
 | CompositeResourceDefinition | `xpostgresqlinstances.database.example.org` | Crossplane (system) |
 
+## How cub-scout Sees It
+
+```
+./cub-scout tree ownership
+
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+
+Flux (28 resources)
+────────────────────────────────────────────────────────────────────
+  ├── boutique/cart              Deployment   ✓ 2/2
+  └── ... (27 more)
+
+Crossplane (4 resources)
+────────────────────────────────────────────────────────────────────
+  Managed by: pkg.crossplane.io/* and apiextensions.crossplane.io/* API groups
+
+  ├── crossplane-system/provider-aws               Provider          ✓ Healthy
+  ├── crossplane-system/provider-aws-1234abcd       ProviderRevision  ✓ Active
+  ├── crossplane-system/platform-config             Configuration     ✓ Healthy
+  └── crossplane-system/xpostgresqlinstances.db.x   XRD               ✓ Offered
+
+Native (0 resources)
+────────────────────────────────────────────────────────────────────
+  No orphans detected ✓
+
+════════════════════════════════════════════════════════════════════
+Ownership Distribution:
+
+  Flux         ████████████████████████████████████░░░░  88%
+  Crossplane   █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  12%
+  Native       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%
+
+→ Without Crossplane detection, those 4 would show as orphans
+```
+
 ## How Detection Works
 
 cub-scout detects Crossplane ownership via:

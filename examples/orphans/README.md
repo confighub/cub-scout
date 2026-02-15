@@ -56,24 +56,51 @@ Total: ~20 orphan resources across 3 namespaces
 ## Expected Output
 
 ```
-cub-scout map orphans
+cub-scout tree ownership
 
-ORPHAN RESOURCES (20)
-────────────────────────────────────────
-These resources have no GitOps owner.
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
 
-NAMESPACE       KIND            NAME                    AGE
-legacy-apps     Deployment      legacy-prometheus       3d
-legacy-apps     Service         legacy-prometheus       3d
-legacy-apps     ConfigMap       legacy-prometheus-config 3d
-temp-testing    Deployment      debug-nginx             1d
-temp-testing    Deployment      debug-busybox           1d
-default         Deployment      hotfix-worker           12h
-default         ConfigMap       old-feature-flags       7d
-default         ConfigMap       manual-override         2d
-default         Secret          manual-api-key          5d
-default         CronJob         manual-cleanup          4d
-...
+Flux (28 resources)
+────────────────────────────────────────────────────────────────────
+  ├── boutique/cart              Deployment   ✓ 2/2
+  ├── boutique/checkout          Deployment   ✓ 1/1
+  ├── boutique/frontend          Deployment   ✓ 3/3
+  └── ... (24 more)
+
+Helm (5 resources)
+────────────────────────────────────────────────────────────────────
+  ├── monitoring/prometheus      Deployment   ✓ 1/1
+  └── ... (4 more)
+
+Native (20 resources)  ⚠ ORPHANS — not managed by GitOps
+────────────────────────────────────────────────────────────────────
+  No GitOps labels detected — likely kubectl-applied
+
+  NAMESPACE       KIND            NAME                     AGE
+  ├── legacy-apps
+  │   ├── Deployment     legacy-prometheus                 3d
+  │   ├── Service        legacy-prometheus                 3d
+  │   └── ConfigMap      legacy-prometheus-config          3d
+  ├── temp-testing
+  │   ├── Deployment     debug-nginx                      1d
+  │   └── Deployment     debug-busybox                    1d
+  └── default
+      ├── Deployment     hotfix-worker                    12h
+      ├── ConfigMap      old-feature-flags                 7d
+      ├── ConfigMap      manual-override                   2d
+      ├── Secret         manual-api-key                    5d
+      └── CronJob        manual-cleanup                    4d
+
+════════════════════════════════════════════════════════════════════
+Ownership Distribution:
+
+  Flux       ████████████████████████████░░░░░░░░░░░░  53%
+  Helm       █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   9%
+  Native     ████████████████████░░░░░░░░░░░░░░░░░░░░  38%  ← orphans
+
+→ To trace an orphan:  cub-scout trace deploy/debug-nginx -n temp-testing
+→ To import orphans:   cub-scout import -n legacy-apps
 ```
 
 ## See Also

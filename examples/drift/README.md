@@ -20,6 +20,31 @@ requests.cpu:      ──→  ✗   requests.cpu:          CRITICAL: invalid con
   100m                        500m (> limits!)
 ```
 
+## How cub-scout Sees Drift
+
+```
+DRIFT REPORT
+════════════════════════════════════════════════════════════════════
+
+Flux (3 drifted resources)
+────────────────────────────────────────────────────────────────────
+  ├── Deployment:prod/api         [Config]    WARNING
+  │   └── env LOG_LEVEL: info → debug
+  ├── Deployment:prod/worker      [Rollout]   WARNING
+  │   └── imagePullPolicy: Always → IfNotPresent
+  └── Deployment:prod/web         [Capacity]  CRITICAL
+      └── requests.cpu: 100m → 500m  ⚠ exceeds limits (200m)
+
+════════════════════════════════════════════════════════════════════
+Summary: 3 findings │ 2 warning │ 1 critical │ 3 affected objects
+
+  Config     █████████████░░░░░░░░░░░░░░░░░░  33%
+  Rollout    █████████████░░░░░░░░░░░░░░░░░░  33%
+  Capacity   █████████████░░░░░░░░░░░░░░░░░░  33%  ← includes invalid state
+
+→ Fix critical first: cub-scout drift --file desired.yaml --fail-on critical
+```
+
 ## Examples
 
 | Example | Drift Type | Severity | Why It Matters |

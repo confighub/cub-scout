@@ -38,6 +38,23 @@ PORT: 8080         ──→  ✓  PORT: 8080         ← matches
 cub-scout compares the desired manifest against what's actually running.
 Any mismatch is a drift finding with a severity and classification.
 
+## Ownership Context
+
+```
+./cub-scout trace deploy/api -n prod
+
+TRACE: Deployment:prod/api
+════════════════════════════════════════════════════════════════════
+  GitRepository/platform-config (flux-system)
+  └── Kustomization/apps (flux-system)
+      └── Deployment/api (prod)               ← Owner: Flux
+          ├── env LOG_LEVEL: info (Git)
+          │                  debug (Live)      ← DRIFT
+          └── env PORT: 8080 (Git = Live)      ✓ OK
+```
+
+The drift is in a Flux-managed resource — someone bypassed GitOps with `kubectl set env`.
+
 ## Desired State
 
 ```yaml

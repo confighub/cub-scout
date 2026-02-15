@@ -52,6 +52,31 @@ limits.memory:   512Mi ──→  ✓  limits.memory:   512Mi← matches
 When `limits < requests`, Kubernetes rejects the pod spec. Existing pods keep running,
 but any scale-up, rollout, or node migration will fail.
 
+## Ownership Context
+
+```
+./cub-scout trace deploy/web -n prod
+
+TRACE: Deployment:prod/web
+════════════════════════════════════════════════════════════════════
+  GitRepository/platform-config (flux-system)
+  └── Kustomization/apps (flux-system)
+      └── Deployment/web (prod)                    ← Owner: Flux
+          ├── resources.requests.cpu:  100m (Git)
+          │                            500m (Live)  ← CRITICAL DRIFT
+          ├── resources.limits.cpu:    200m (Git = Live)  ✓ OK
+          ├── resources.requests.memory: 256Mi      ✓ OK
+          └── resources.limits.memory:   512Mi      ✓ OK
+
+  ⚠ INVALID STATE: requests.cpu (500m) > limits.cpu (200m)
+  ┌──────────────────────────────────────────────────────┐
+  │  Current pods: running (created before the edit)     │
+  │  Next restart: FAIL — Insufficient cpu               │
+  │  Next scale-up: FAIL — pod spec rejected             │
+  │  Next rollout: FAIL — new ReplicaSet blocked         │
+  └──────────────────────────────────────────────────────┘
+```
+
 ## Desired State
 
 ```yaml

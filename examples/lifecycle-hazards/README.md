@@ -1,6 +1,53 @@
 # Lifecycle Hazards Example
 
-This example demonstrates GitOps lifecycle hazards when migrating Helm charts to ArgoCD.
+## The Problem
+
+You're migrating a Helm chart to ArgoCD. The chart has `post-install` and `post-upgrade`
+hooks — but ArgoCD doesn't distinguish between install and upgrade. Every sync is an "upgrade."
+
+Your `db-migrate` Job runs on `post-install,post-upgrade`. Under Helm, it ran once on install
+and once per upgrade. Under ArgoCD, it runs on **every single sync** — including manual
+retries and auto-sync.
+
+**cub-scout detects these hazards:**
+
+```
+./cub-scout scan --file helm-hooks.yaml --lifecycle-hazards
+
+LIFECYCLE HAZARD SCAN
+════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────┐
+│  Helm Chart Migration → ArgoCD                                   │
+│                                                                   │
+│  helm.sh/hook annotation         ArgoCD Phase    Hazard?         │
+│  ─────────────────────           ────────────    ───────         │
+│  pre-install            ──→      PreSync         ⚠ ambiguous    │
+│  pre-upgrade            ──→      PreSync         ⚠ ambiguous    │
+│  post-install           ──→      PostSync        ⚠ ambiguous    │
+│  post-upgrade           ──→      PostSync        ⚠ ambiguous    │
+│  test                   ──→      PostSync        ⚠ runs on sync │
+│  argocd.argoproj.io/hook ──→     (explicit)      ✓ safe         │
+└─────────────────────────────────────────────────────────────────┘
+
+Hazards (2):
+  ├── [WARNING] Job/db-migrate
+  │   Rule: helm-hook-ambiguity
+  │   Risk: ArgoCD treats every sync as upgrade;
+  │         post-install may run unexpectedly
+  │
+  └── [WARNING] Job/notify-deploy
+      Rule: postsync-idempotency-risk
+      Risk: Job runs on every sync;
+            ensure operation is idempotent
+
+Safe (1):
+  └── [OK] Job/schema-validate
+      argocd.argoproj.io/hook: PreSync  ← explicit, no ambiguity
+
+════════════════════════════════════════════════════════════════════
+Summary: 2 hazards │ 1 safe │ 3 hooks scanned
+```
 
 ## Quick Start
 
