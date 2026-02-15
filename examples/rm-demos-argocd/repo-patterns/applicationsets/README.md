@@ -83,6 +83,33 @@ $ ./cub-scout scan -n payments
   [RISK-2025-0001] payments/payment-api — missing resource limits
 ```
 
+## Ownership Tree
+
+```
+./cub-scout tree ownership
+
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+
+ArgoCD (33 resources)
+────────────────────────────────────────────────────────────────────
+  ApplicationSet/payment-api (argocd)
+  │   Generator: clusters (selector: environment=production)
+  │
+  ├── Application/payment-api-prod-us-east-1 → payments/payment-api  ✓
+  ├── Application/payment-api-prod-us-west-1 → payments/payment-api  ✓
+  ├── Application/payment-api-prod-eu-west-1 → payments/payment-api  ✓
+  ├── Application/payment-api-prod-ap-south-1 → payments/payment-api ✗ SyncFailed
+  └── ... (28 more clusters)
+
+════════════════════════════════════════════════════════════════════
+
+  ✓ 31 synced   ✗ 1 degraded   Total: 32 clusters
+
+→ Find the problem: cub-scout gitops status
+→ Drill into it:    cub-scout trace deploy/payment-api -n payments
+```
+
 ## Why ApplicationSets Benefit from cub-scout
 
 | ApplicationSet Alone | + cub-scout |

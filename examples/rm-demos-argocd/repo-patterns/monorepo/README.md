@@ -72,6 +72,38 @@ $ ./cub-scout map list -q "namespace=*-prod"
   ✓       inventory-prod  inventory-api  Flux   inventory-api-prod
 ```
 
+## Ownership Tree
+
+```
+./cub-scout tree ownership
+
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+
+Flux (9 resources)
+────────────────────────────────────────────────────────────────────
+  GitRepository/platform-configs (flux-system)
+  │
+  ├── payments
+  │   ├── Kustomization/payment-api-dev      → Deployment/payment-api (payments-dev)      ✓
+  │   ├── Kustomization/payment-api-staging   → Deployment/payment-api (payments-staging)  ✓
+  │   └── Kustomization/payment-api-prod      → Deployment/payment-api (payments-prod)     ✓
+  │
+  ├── orders
+  │   ├── Kustomization/order-api-dev         → Deployment/order-api (orders-dev)          ✓
+  │   ├── Kustomization/order-api-staging     → Deployment/order-api (orders-staging)      ✓
+  │   └── Kustomization/order-api-prod        → Deployment/order-api (orders-prod)         ✓
+  │
+  └── inventory
+      ├── Kustomization/inventory-api-dev     → Deployment/inventory-api (inventory-dev)    ✓
+      ├── Kustomization/inventory-api-staging → Deployment/inventory-api (inventory-staging) ✓
+      └── Kustomization/inventory-api-prod    → Deployment/inventory-api (inventory-prod)   ✓
+
+════════════════════════════════════════════════════════════════════
+Summary: 1 GitRepository │ 9 Kustomizations │ 9 Deployments
+         3 apps × 3 envs = 9 paths, all from one repo
+```
+
 ## Skeleton Classification
 
 | Dimension | Value |

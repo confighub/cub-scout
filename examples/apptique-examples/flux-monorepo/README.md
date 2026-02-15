@@ -55,6 +55,39 @@ flux-monorepo/
 2. Each cluster has a Flux Kustomization CR pointing to an overlay path
 3. Kustomize builds base + overlay → produces Deployments in the target namespace
 
+## How cub-scout Sees It
+
+```
+./cub-scout tree ownership
+
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+
+Flux (4 resources)
+────────────────────────────────────────────────────────────────────
+  GitRepository/apptique-examples (flux-system)
+  │   URL: confighub/cub-scout@main
+  │   Status: ✓ Artifact up to date
+  │
+  ├── Kustomization/apptique-dev (flux-system)
+  │   Path: ./apps/apptique/overlays/dev
+  │   └── Deployment/frontend (apptique-dev)     ✓ 1/1
+  │
+  └── Kustomization/apptique-prod (flux-system)
+      Path: ./apps/apptique/overlays/prod
+      └── Deployment/frontend (apptique-prod)    ✓ 2/2
+
+════════════════════════════════════════════════════════════════════
+
+  Git Source           Kustomization        Overlay Path             Workload
+  ──────────           ─────────────        ────────────             ────────
+  apptique-examples →  apptique-dev    →    overlays/dev/       →   frontend (1r)
+                    →  apptique-prod   →    overlays/prod/      →   frontend (2r)
+
+→ Trace the full chain: cub-scout trace deploy/frontend -n apptique-dev
+→ Parse repo offline:   cub-scout parse-repo --path flux-monorepo/
+```
+
 ## What It Demonstrates
 
 | What you'll see | Why it matters |
