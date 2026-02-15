@@ -46,6 +46,27 @@ image: myworker:latest    ──→  ✓  image: myworker:latest         ← mat
 
 Drifting from `Always` → `IfNotPresent` means your pods silently stop getting updates.
 
+## Ownership Context
+
+```
+./cub-scout trace deploy/worker -n prod
+
+TRACE: Deployment:prod/worker
+════════════════════════════════════════════════════════════════════
+  GitRepository/platform-config (flux-system)
+  └── Kustomization/apps (flux-system)
+      └── Deployment/worker (prod)                     ← Owner: Flux
+          ├── imagePullPolicy: Always (Git)
+          │                    IfNotPresent (Live)      ← DRIFT
+          └── image: myworker:latest (Git = Live)       ✓ OK
+
+  Impact:
+  ├── Pod worker-8f7d6c-abc12  Running  image cached 21d ago
+  ├── Pod worker-8f7d6c-def34  Running  image cached 21d ago
+  └── Pod worker-8f7d6c-ghi56  Running  image cached 21d ago
+      └── ⚠ All 3 pods using stale image (3 weeks old)
+```
+
 ## Desired State
 
 ```yaml
