@@ -72,6 +72,39 @@ $ ./cub-scout scan -n platform -n monitoring
   [RISK-2025-0001] platform/kafka — missing resource limits
 ```
 
+## Ownership Tree
+
+```
+./cub-scout tree ownership
+
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+
+Helm (5 resources)
+────────────────────────────────────────────────────────────────────
+  Release: platform-stack (platform)
+  │   Chart: platform-charts (umbrella)
+  │   Status: deployed (revision 14)
+  │
+  ├── platform/redis          Deployment   ✓ 3/3   redis:7.2.4
+  ├── platform/postgres       Deployment   ✓ 1/1   postgres:16.1
+  ├── platform/kafka          Deployment   ✓ 3/3   kafka:3.7.0
+  ├── monitoring/prometheus   Deployment   ✓ 1/1   prometheus:2.51
+  └── monitoring/grafana      Deployment   ✓ 1/1   grafana:10.4
+
+════════════════════════════════════════════════════════════════════
+
+  Umbrella Chart        Sub-charts              Live Pods
+  ──────────────        ──────────              ─────────
+  platform-stack   →    redis (sub-chart)  →    3 pods, redis:7.2.4 ✓
+                   →    postgres           →    1 pod,  postgres:16.1 ✓
+                   →    kafka              →    3 pods, kafka:3.7.0 ✓
+                   →    monitoring         →    2 pods (prometheus + grafana)
+
+→ Verify live images: cub-scout map list -q "owner=Helm"
+→ Check for drift:    cub-scout drift --helm-release platform-stack -n platform
+```
+
 ## Why Helm Umbrella Benefits from cub-scout
 
 | Helm Umbrella Alone | + cub-scout |

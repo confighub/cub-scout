@@ -39,6 +39,35 @@ argo-applicationset/
 2. Generates one Application per directory (`dev`, `prod`)
 3. Each Application deploys to its own namespace
 
+## How cub-scout Sees It
+
+```
+./cub-scout tree ownership
+
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+
+ArgoCD (4 resources)
+────────────────────────────────────────────────────────────────────
+  ApplicationSet/apptique (argocd)
+  │
+  ├── generates → Application/apptique-dev (argocd)
+  │              └── Deployment/frontend (apptique-dev)     ✓ 1/1
+  │
+  └── generates → Application/apptique-prod (argocd)
+                 └── Deployment/frontend (apptique-prod)    ✓ 2/2
+
+════════════════════════════════════════════════════════════════════
+
+  Generator                 Discovered           Deployed
+  ─────────                 ──────────           ────────
+  apps/apptique/ scanner →  dev/ directory  →    apptique-dev/frontend
+                         →  prod/ directory →    apptique-prod/frontend
+
+→ Add a directory = add an environment (no YAML changes needed)
+→ Trace any app:   cub-scout trace deploy/frontend -n apptique-prod
+```
+
 ## What It Demonstrates
 
 | What you'll see | Why it matters |

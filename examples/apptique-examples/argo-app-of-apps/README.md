@@ -45,6 +45,33 @@ argo-app-of-apps/
 2. Each child app syncs its respective manifests directory
 3. Two-level hierarchy: Root → Child App → Workloads
 
+## How cub-scout Sees It
+
+```
+./cub-scout tree ownership
+
+OWNERSHIP HIERARCHY
+════════════════════════════════════════════════════════════════════
+
+ArgoCD (5 resources)
+────────────────────────────────────────────────────────────────────
+  Application/apptique-apps (root)
+  ├── Application/apptique-dev (child)
+  │   └── Deployment/frontend (apptique-dev)      ✓ 1/1
+  └── Application/apptique-prod (child)
+      └── Deployment/frontend (apptique-prod)      ✓ 2/2
+
+════════════════════════════════════════════════════════════════════
+
+  Root App           Child Apps          Workloads
+  ──────────         ──────────          ─────────
+  apptique-apps ──→  apptique-dev  ──→  frontend (1 replica)
+                └──→ apptique-prod ──→  frontend (2 replicas)
+
+→ Trace any level: cub-scout trace deploy/frontend -n apptique-dev
+→ Check all sync:  cub-scout gitops status
+```
+
 ## What It Demonstrates
 
 | What you'll see | Why it matters |
