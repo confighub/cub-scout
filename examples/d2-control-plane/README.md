@@ -1,10 +1,15 @@
-# D2 Control Plane Pattern
+# Control Plane — Flux Reference Architecture
+
+> **[Control Plane](https://controlplane.io)** (controlplaneio-fluxcd) maintains the
+> production-grade Flux reference architectures. cub-scout uses the shorthand **D2** for
+> their split-repo pattern internally.
 
 ## The Problem
 
-You've adopted the Flux reference architecture: `clusters/`, `infrastructure/`, and `apps/`
-in separate directories (or repos). Your cluster has platform components (cert-manager, monitoring)
-managed by the platform team, and tenant apps (payment-api, frontend) managed by dev teams.
+You've adopted the Control Plane Flux reference architecture: `clusters/`, `infrastructure/`,
+and `apps/` in separate directories (or repos). Your cluster has platform components
+(cert-manager, monitoring) managed by the platform team, and tenant apps (payment-api,
+frontend) managed by dev teams.
 
 During an incident you need to answer: *"Is the problem in infrastructure or in an app?
 Who owns the broken resource?"*
@@ -42,8 +47,8 @@ $ ./cub-scout tree ownership
 
 ## Architecture
 
-The D2 pattern (named after the Flux CD "Control Plane" reference architecture) separates
-concerns into three layers:
+The [Control Plane reference architecture](https://github.com/controlplaneio-fluxcd)
+separates concerns into three layers:
 
 ```
 platform-config/
@@ -87,7 +92,7 @@ platform-config/
 
 | What you'll see | Why it matters |
 |-----------------|----------------|
-| Pattern auto-detection ("D2-style") | cub-scout recognizes the Flux reference architecture |
+| Pattern auto-detection ("Control Plane / D2-style") | cub-scout recognizes the Control Plane Flux reference architecture |
 | Infrastructure vs app separation in ownership tree | Answers "is it platform or app?" instantly |
 | Flux Kustomization chains | GitRepository → Kustomization → HelmRelease → Deployment |
 | Mixed deployer types (Kustomization + HelmRelease) | Real clusters use both |
@@ -129,17 +134,18 @@ flux get kustomizations --watch
 
 ## Pattern Variants
 
-The D2 pattern has several real-world variants:
+The Control Plane architecture has several real-world variants:
 
 | Variant | Description | Example |
 |---------|-------------|---------|
-| **Single-repo D2** | All layers in one repo | This example |
-| **Multi-repo D2** (Fluxy) | fleet-repo + infra-repo + apps-repo | See [Multi-Repo Fleet](../rm-demos-argocd/repo-patterns/multi-repo/) |
-| **D2 + OCI** | Git → CI → OCI artifact → Flux | Enterprise pattern |
+| **Single-repo** | All layers in one repo | This example |
+| **Split-repo** (D2 split) | fleet-repo + infra-repo + apps-repo | See [Multi-Repo Fleet](../rm-demos-argocd/repo-patterns/multi-repo/) |
+| **Control Plane + OCI** | Git → CI → OCI artifact → Flux | Enterprise pattern |
 
 ## See Also
 
-- [Platform Example](../platform-example/) — Full D2 learning environment with orphans
+- [controlplaneio-fluxcd](https://github.com/controlplaneio-fluxcd) — Control Plane's Flux reference architectures
+- [Platform Example](../platform-example/) — Full Control Plane learning environment with orphans
 - [Flux Boutique](../flux-boutique/) — Simpler Flux-only example
 - [Flux Monorepo](../apptique-examples/flux-monorepo/) — Monorepo variant with overlays
 - [GitOps Repo Structures](../../docs/reference/gitops-repo-structures.md) — All patterns documented

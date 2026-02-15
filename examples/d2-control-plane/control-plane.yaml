@@ -1,6 +1,10 @@
-# D2 "Control Plane" Pattern — Flux Reference Architecture
+# Control Plane — Flux Reference Architecture
 #
-# This fixture represents the standard Flux CD reference architecture:
+# Based on the reference architectures maintained by Control Plane
+# (https://github.com/controlplaneio-fluxcd). cub-scout uses "D2" as
+# an internal shorthand for this pattern family.
+#
+# This fixture represents the standard structure:
 # - clusters/ directory for per-cluster bootstrap
 # - infrastructure/ for platform components (cert-manager, monitoring)
 # - apps/ for tenant applications (payment-api, frontend)

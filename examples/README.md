@@ -112,7 +112,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [workflows/](workflows/) | **Working** | Artifact + fleet demos (CI → local, env comparison) | CI/CD integration, sharing bundles, comparing environments |
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |
-| [d2-control-plane/](d2-control-plane/) | **Working** | Flux "Control Plane" pattern (infra + apps) | D2 pattern detection, layer separation |
+| [d2-control-plane/](d2-control-plane/) | **Working** | [Control Plane](https://controlplane.io) Flux ref arch (infra + apps) | Pattern detection, layer separation |
 | [flux-boutique/](flux-boutique/) | **Working** | 5-service Flux demo | TUI view showcase, trace demo |
 | [orphans/](orphans/) | **Working** | Realistic orphan resources | Orphan detection demo |
 | [drift/](drift/) | **Working** | Drift detection examples | Learning drift detection |
