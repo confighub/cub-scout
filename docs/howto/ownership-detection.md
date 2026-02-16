@@ -2,6 +2,8 @@
 
 Map automatically detects who manages each Kubernetes resource. This guide explains how ownership detection works and how to interpret the results.
 
+Owner detection identifies **who** manages a resource. `cub-scout trace` then uses that owner type to resolve the appropriate source chain. See [Trace Ownership](trace-ownership.md#owner-detection-vs-trace-chain).
+
 ## The Problem
 
 Your cluster has resources from multiple sources:

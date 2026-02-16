@@ -347,6 +347,7 @@ Legacy `cub-agent` command examples in archive docs are non-canonical; current c
 * Import bundles into ConfigHub
 * Import cluster-captured state via cub-scout
 * Explicit, one-shot, auditable imports
+* Intentionally deferred from late 0.x to keep read-only-first stabilization tight; now staged as 1.x Connected Mode scope
 
 #### 2. Git as a First-Class Source
 

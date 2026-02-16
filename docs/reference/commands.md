@@ -355,6 +355,10 @@ cub-scout map previews --format json
 
 Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, or standalone Helm**.
 
+Owner detection for `trace` uses the same deterministic precedence as `map list`.
+After owner detection, `trace` resolves with an owner-specific chain resolver (Flux, ArgoCD, or Helm).
+For detailed rules, see `docs/reference/ownership-precedence.md` and `docs/howto/trace-ownership.md`.
+
 ```bash
 cub-scout trace <kind/name> [flags]
 ```

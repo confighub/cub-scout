@@ -65,6 +65,26 @@ Press **w** for Workloads view:
 
 ---
 
+## How Owner Detection Works
+
+The `OWNER` column is deterministic and rule-based (not heuristic guessing).
+`cub-scout` checks resource metadata signals in fixed precedence order:
+
+`Flux -> ArgoCD -> Helm -> Terraform -> ConfigHub -> Crossplane -> Kubernetes ownerRefs -> Unknown`
+
+To validate a specific row:
+
+```bash
+kubectl get <kind> <name> -n <namespace> -o yaml
+cub-scout trace <kind>/<name> -n <namespace>
+```
+
+Use these references for full rules and examples:
+- [Ownership precedence](../reference/ownership-precedence.md)
+- [Ownership detection guide](../howto/ownership-detection.md)
+
+---
+
 ## Trace Ownership
 
 Press **t** on any resource to trace where it came from:

@@ -14,6 +14,28 @@ In mixed environments with multiple GitOps tools:
 
 ---
 
+## Owner Detection vs Trace Chain
+
+`trace` has two steps:
+
+1. Detect owner type from resource signals (same deterministic precedence used by `map list`).
+2. Resolve the chain using the matching source resolver.
+
+| Owner detected | Chain resolver |
+|----------------|----------------|
+| Flux | Flux source + Kustomization/HelmRelease chain |
+| ArgoCD | Argo Application/ApplicationSet/App-of-Apps chain |
+| Helm (standalone) | Helm release metadata from cluster secrets |
+| Native/Unknown | Kubernetes ownerRef chain + orphan metadata |
+
+This means Argo traces are resolved from Argo resources directly (not by reusing Flux semantics).
+
+See also:
+- [Ownership precedence rules](../reference/ownership-precedence.md)
+- [Ownership detection guide](ownership-detection.md)
+
+---
+
 ## Basic Trace
 
 ```bash

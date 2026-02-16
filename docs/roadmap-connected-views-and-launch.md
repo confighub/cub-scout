@@ -41,6 +41,7 @@ Candidate tasks:
 - Include orphan/break-glass scenarios as optional but reproducible cases
 - Publish expected-output snapshots for core navigation flows
 - Maintain adoption-pattern proof coverage for Fluxy/Banko/Arnie-style structures
+- Collaborate with operators on real domain->platform mapping patterns and feed validated mappings back into examples/docs
 
 Exit criteria:
 
@@ -55,6 +56,7 @@ Candidate tasks:
 - Panel/WET-LIVE clarity and causality messaging
 - Break-glass decision ergonomics and audit visibility
 - Hierarchy consistency across map/tree/unit surfaces
+- Document label-based mapping decisions (and tradeoffs) for common repo/domain projection patterns
 
 Exit criteria:
 

@@ -438,6 +438,8 @@ confighub ▾
 
 ## Summary: Pattern → Hub/AppSpace Mapping
 
+These mappings are working defaults, not immutable doctrine. Domain-to-platform projection is an active collaboration area, and examples should evolve as real fleet patterns are validated.
+
 | Pattern | Hub Contains | AppSpaces Contain |
 |---------|--------------|-------------------|
 | **KubeCon Demo** | `platform-*` (workers, targets) | `app*-dev`, `app*-prod` (units) |
