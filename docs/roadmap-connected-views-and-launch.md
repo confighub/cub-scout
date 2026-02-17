@@ -62,6 +62,12 @@ Exit criteria:
 
 - Connected users can resolve state ambiguity without leaving the workflow.
 
+Tracking issues:
+
+- #163 Experiment: Comparative Labels for Grouped Map Output
+- #164 Experiment: Meaning-First Browse Mode (Read-only)
+- #165 Experiment: Hybrid Semantic + Structural Grouping
+
 ## Workstream D: Fleet View Delivery
 
 Goal: ship fleet-only views in a coherent sequence.
