@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://confighub.com/schemas/outcome-receipt.v1.schema.json",
+  "title": "OutcomeReceipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "outcome_receipt_id",
+    "created_at",
+    "execution_receipt_id",
+    "result",
+    "message",
+    "post_scan_status",
+    "finding_count",
+    "confighub_outcome_id",
+    "attestation_digest"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "outcome-receipt.v1"
+    },
+    "outcome_receipt_id": {
+      "type": "string",
+      "pattern": "^or_[a-z0-9]{16}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "execution_receipt_id": {
+      "type": "string",
+      "pattern": "^xr_[a-z0-9]{16}$"
+    },
+    "result": {
+      "type": "string",
+      "enum": ["applied", "blocked", "escalated", "rolled_back", "unknown"]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "post_scan_status": {
+      "type": "string",
+      "enum": ["pass", "warn", "fail", "unknown"]
+    },
+    "finding_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "finding_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rollback_ref": {
+      "type": "string"
+    },
+    "confighub_outcome_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "attestation_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://confighub.com/schemas/execution-receipt.v1.schema.json",
+  "title": "ExecutionReceipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "execution_receipt_id",
+    "created_at",
+    "decision_receipt_id",
+    "intent_id",
+    "runtime",
+    "run_id",
+    "status",
+    "started_at",
+    "ended_at",
+    "token_ref",
+    "confighub_execution_id",
+    "attestation_digest"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "execution-receipt.v1"
+    },
+    "execution_receipt_id": {
+      "type": "string",
+      "pattern": "^xr_[a-z0-9]{16}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decision_receipt_id": {
+      "type": "string",
+      "pattern": "^dr_[a-z0-9]{16}$"
+    },
+    "intent_id": {
+      "type": "string",
+      "pattern": "^ci_[a-z0-9]{16}$"
+    },
+    "runtime": {
+      "type": "string",
+      "enum": ["confighub-actions", "unknown"]
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["succeeded", "failed", "partial", "skipped", "unknown"]
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "token_ref": {
+      "type": "string",
+      "description": "Reference/token handle only; never the token value."
+    },
+    "artifact_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^sha256:[a-f0-9]{64}$"
+      }
+    },
+    "confighub_execution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "attestation_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "outcome_receipt_id": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

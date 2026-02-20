@@ -13,7 +13,8 @@ New to cub-scout? Start here:
 | **1. Install** | [getting-started/install.md](getting-started/install.md) |
 | **2. First Map** | [getting-started/first-map.md](getting-started/first-map.md) |
 | **3. Understand GitOps** | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
-| **4. Scale Demo** | [getting-started/scale-demo.md](getting-started/scale-demo.md) |
+| **4. App + AI GitOps (Plain English)** | [getting-started/app-and-ai-gitops-plain-english.md](getting-started/app-and-ai-gitops-plain-english.md) |
+| **5. Scale Demo** | [getting-started/scale-demo.md](getting-started/scale-demo.md) |
 
 ---
 
@@ -76,6 +77,9 @@ Complete reference documentation:
 | Resolver pattern | [reference/resolver-pattern.md](reference/resolver-pattern.md) |
 | Hub/AppSpace examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
 | Map PRD | [reference/map-prd.md](reference/map-prd.md) |
+| GitOps checkpoint PRD (proposal) | [reference/gitops-checkpoint-prd.md](reference/gitops-checkpoint-prd.md) |
+| GitOps checkpoint schemas | [reference/gitops-checkpoint-schemas.md](reference/gitops-checkpoint-schemas.md) |
+| Stored in Git vs ConfigHub (DRY vs WET) | [reference/stored-in-git-vs-confighub.md](reference/stored-in-git-vs-confighub.md) |
 | Command matrix | [reference/command-matrix.md](reference/command-matrix.md) |
 | Glossary | [reference/glossary.md](reference/glossary.md) |
 | Testing guide | [reference/testing.md](reference/testing.md) |

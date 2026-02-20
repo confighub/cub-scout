@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://confighub.com/schemas/change-interaction-card.v1.schema.json",
+  "title": "ChangeInteractionCard v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "card_id",
+    "created_at",
+    "trust_tier",
+    "identity",
+    "intent",
+    "decision",
+    "execution",
+    "post_scan",
+    "outcome"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "change-interaction-card.v1"
+    },
+    "card_id": {
+      "type": "string",
+      "pattern": "^cic_[a-z0-9]{16}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trust_tier": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo", "branch", "commit_sha", "trailers"],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit_sha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "trailers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent_id", "summary", "domain", "targets"],
+      "properties": {
+        "intent_id": {
+          "type": "string",
+          "pattern": "^ci_[a-z0-9]{16}$"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "type": "string",
+          "enum": ["app", "platform", "runtime", "policy", "unknown"]
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "namespace", "name"],
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "explorer_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scan_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "adapter": {
+          "type": "string"
+        },
+        "attestation": {
+          "type": "string"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "reason"],
+      "properties": {
+        "result": {
+          "type": "string",
+          "enum": ["ALLOW", "ESCALATE", "BLOCK"]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "policy_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "run_id", "status", "started_at", "ended_at"],
+      "properties": {
+        "runtime": {
+          "type": "string",
+          "enum": ["confighub-actions", "unknown"]
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["succeeded", "failed", "partial", "skipped", "unknown"]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ended_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "post_scan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "finding_count"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pass", "warn", "fail", "unknown"]
+        },
+        "finding_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "message"],
+      "properties": {
+        "result": {
+          "type": "string",
+          "enum": ["applied", "blocked", "escalated", "rolled_back", "unknown"]
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "checkpoint_ref": {
+          "type": "string"
+        },
+        "execution_report_ref": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

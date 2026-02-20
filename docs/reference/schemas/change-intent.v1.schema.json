@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://confighub.com/schemas/change-intent.v1.schema.json",
+  "title": "ChangeIntent v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "intent_id",
+    "created_at",
+    "repo",
+    "branch",
+    "commit_sha",
+    "actor",
+    "summary",
+    "domain",
+    "targets"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "change-intent.v1"
+    },
+    "intent_id": {
+      "type": "string",
+      "pattern": "^ci_[a-z0-9]{16}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "repo": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "name"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["human", "agent", "system"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        }
+      }
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["app", "platform", "runtime", "policy", "unknown"]
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "namespace", "name"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "namespace": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "proposed_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "action"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "type": "string",
+            "enum": ["create", "update", "delete", "rename", "unknown"]
+          }
+        }
+      }
+    },
+    "artifact_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk_hints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
