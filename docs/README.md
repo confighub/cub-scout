@@ -154,7 +154,7 @@ Real-world use cases:
 | File/Folder | Purpose |
 |-------------|---------|
 | [roadmap.md](roadmap.md) | Canonical roadmap and current execution scope |
-| [releases/v0.20.0-release-notes.md](releases/v0.20.0-release-notes.md) | Latest release notes (v0.20.0) |
+| [releases/v1.0.0.md](releases/v1.0.0.md) | Latest release notes (v1.0.0) |
 | [releases/v0.20.0-slice-plan.md](releases/v0.20.0-slice-plan.md) | Historical implementation plan for shipped v0.20.0 slice |
 | [roadmap-rendered-manifest-and-argo.md](roadmap-rendered-manifest-and-argo.md) | Backlog split from RM/App-of-Apps planning docs |
 | [roadmap-connected-views-and-launch.md](roadmap-connected-views-and-launch.md) | Backlog split from view-tier/mockup/launch planning docs |

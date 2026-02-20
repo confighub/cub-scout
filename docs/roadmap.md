@@ -283,6 +283,24 @@ See details:
 
 ---
 
+## v1.0.0 — Stable Contract Baseline
+
+**Status:** Released (2026-02-20)
+**Theme:** *General availability for the standalone contract surface*
+
+Delivered:
+
+* First stable major tag: `v1.0.0`
+* CLI contract v1.0 is now GA (`docs/reference/cli-contract.md`)
+* Standalone map/tree/trace/scan and JSON contract surfaces remain read-only and deterministic
+* Standard GitHub Release + Homebrew + container artifacts via existing release automation
+
+See details:
+
+* `docs/releases/v1.0.0.md`
+
+---
+
 # What Is Left on the Roadmap
 
 Everything below is **new work**.
@@ -290,7 +308,7 @@ Nothing here represents unfinished 0.x promises.
 
 ---
 
-## v1.x — Connected Mode (ConfigHub)
+## v1.1+ — Connected Mode (ConfigHub)
 
 **Status:** Planned
 **Theme:** *Shared intent, history, and fleets*
@@ -347,7 +365,7 @@ Legacy `cub-agent` command examples in archive docs are non-canonical; current c
 * Import bundles into ConfigHub
 * Import cluster-captured state via cub-scout
 * Explicit, one-shot, auditable imports
-* Intentionally deferred from late 0.x to keep read-only-first stabilization tight; now staged as 1.x Connected Mode scope
+* Intentionally deferred from late 0.x to keep read-only-first stabilization tight; now staged as 1.1+ Connected Mode scope
 
 #### 2. Git as a First-Class Source
 
