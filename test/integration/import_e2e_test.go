@@ -125,8 +125,14 @@ func spaceExistsInList(t *testing.T, slug string) bool {
 	}
 
 	for _, s := range spaces {
+		// cub space list --json nests Space data inside a "Space" object
 		if s["Slug"] == slug {
 			return true
+		}
+		if inner, ok := s["Space"].(map[string]interface{}); ok {
+			if inner["Slug"] == slug {
+				return true
+			}
 		}
 	}
 	return false
@@ -402,8 +408,15 @@ func TestImportFullRoundTrip(t *testing.T) {
 	}
 
 	// Verify no null slugs (issue #1 regression)
+	// cub unit list --json nests unit data: [{Unit: {Slug: "..."}, ...}, ...]
 	for _, u := range units {
 		slug, _ := u["Slug"].(string)
+		if slug == "" {
+			// Check nested structure
+			if inner, ok := u["Unit"].(map[string]interface{}); ok {
+				slug, _ = inner["Slug"].(string)
+			}
+		}
 		if slug == "" || slug == "null" {
 			t.Errorf("Unit has null or empty slug (issue #1 pattern): %v", u)
 		}

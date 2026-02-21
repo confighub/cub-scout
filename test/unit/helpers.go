@@ -442,8 +442,14 @@ func SpaceExists(t *testing.T, slug string) bool {
 	}
 
 	for _, s := range spaces {
+		// cub space list --json nests Space data inside a "Space" object
 		if s["Slug"] == slug {
 			return true
+		}
+		if inner, ok := s["Space"].(map[string]interface{}); ok {
+			if inner["Slug"] == slug {
+				return true
+			}
 		}
 	}
 	return false
