@@ -31,7 +31,7 @@
 
 | File | Tests | What It Proves |
 |------|-------|----------------|
-| `test/fixtures/patterns/patterns_test.go` | 18 | Complex GitOps pattern ownership detection |
+| `test/fixtures/patterns/patterns_test.go` | 22 | Complex GitOps pattern ownership + bridge detection |
 
 **Patterns tested:**
 - 3-level App-of-Apps (ArgoCD: root → 2 intermediates → 4 leaves → 4 Deployments)
@@ -39,6 +39,27 @@
 - Flux multi-tenant (platform ks + 3 tenant kustomizations + 4 Deployments)
 - Mixed-tool cluster (all 7 ownership types: Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native)
 - Determinism verification (same input → same ownership classification)
+
+### A2b. Bridge Pattern Tests (No Cluster Required)
+
+| File | Tests | What It Proves |
+|------|-------|----------------|
+| `internal/patterns/pattern_bridge_test.go` | 13 | Bridge pattern detection with programmatic graphs |
+| `test/fixtures/patterns/patterns_test.go` | 4 (bridge) | Bridge pattern fixture integration tests |
+
+**Bridge patterns tested:**
+- Git → Flux delivery bridge (GitRepository + Kustomization + Flux-labeled workloads)
+- Git → ArgoCD delivery bridge (Application + ArgoCD-labeled workloads)
+- ConfigHub → OCI delivery bridge (OCIRepository with ConfigHub origin + dual-managed workloads)
+- Live import (ConfigHub labels without GitOps deployer labels)
+
+**Unit tests cover:** detection, skip (prerequisites unmet), and edge cases (no workloads, non-ConfigHub OCI)
+
+**Fixture YAMLs:**
+- `test/fixtures/patterns/bridge-git-flux/bridge-git-flux.yaml`
+- `test/fixtures/patterns/bridge-git-argocd/bridge-git-argocd.yaml`
+- `test/fixtures/patterns/bridge-confighub-oci/bridge-confighub-oci.yaml`
+- `test/fixtures/patterns/bridge-live-import/bridge-live-import.yaml`
 
 ### A3. Scale & Performance Tests (No Cluster Required)
 

@@ -189,6 +189,54 @@ labels:
 { "type": "crossplane", "subType": "composite", "name": "my-xr-abc123" }
 ```
 
+## Delivery Chain Metadata (v1.1+)
+
+The trace chain output includes optional delivery pipeline metadata on each `ChainNode`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `deliveryStage` | string | Pipeline stage: `source`, `render`, `artifact`, `deployer`, `workload` |
+| `renderedFrom` | string | What rendered this resource's manifests (e.g., `confighub:space/payments-prod/target/east-1`) |
+| `originalSource` | string | Original source-of-truth (e.g., `git:https://github.com/org/repo`) |
+
+All fields use `omitempty` — they are absent when not applicable, preserving backward compatibility.
+
+### Delivery Stages
+
+| Stage | Kinds | Description |
+|-------|-------|-------------|
+| `source` | GitRepository, HelmRepository, Bucket | Where manifests originate |
+| `artifact` | OCIRepository | Packaged/published artifact |
+| `deployer` | Kustomization, HelmRelease, Application | Applies manifests to cluster |
+| `workload` | Deployment, StatefulSet, DaemonSet, Service, ConfigMap, Secret, Ingress, ReplicaSet, Pod, Job, CronJob | Running cluster resources |
+
+The `render` stage is reserved for future use when explicit render steps (e.g., Kustomize build, Helm template) are tracked in the chain.
+
+### Example: Trace with Delivery Metadata
+
+```json
+{
+  "chain": [
+    {
+      "id": {"kind": "GitRepository", "namespace": "flux-system", "name": "app-repo"},
+      "role": "source",
+      "deliveryStage": "source",
+      "originalSource": "git:https://github.com/org/app-repo"
+    },
+    {
+      "id": {"kind": "Kustomization", "namespace": "flux-system", "name": "web-apps"},
+      "role": "deployer",
+      "deliveryStage": "deployer"
+    },
+    {
+      "id": {"kind": "Deployment", "namespace": "web", "name": "frontend"},
+      "role": "workload",
+      "deliveryStage": "workload"
+    }
+  ]
+}
+```
+
 ## Drift Schema
 
 When drift is detected, the `drift` field contains:

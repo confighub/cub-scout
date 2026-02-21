@@ -166,6 +166,14 @@ type ChainLink struct {
 
 	// OCISource contains parsed OCI source information (for OCI-based sources)
 	OCISource *OCISourceInfo `json:"ociSource,omitempty"`
+
+	// RenderedFrom identifies what rendered this resource's manifests (v1.1+).
+	// Example: "confighub:space/payments-prod/target/east-1"
+	RenderedFrom string `json:"renderedFrom,omitempty"`
+
+	// OriginalSource identifies the original source-of-truth for this resource (v1.1+).
+	// Example: "git:https://github.com/org/repo"
+	OriginalSource string `json:"originalSource,omitempty"`
 }
 
 // IsHealthy returns true if this chain link is in a healthy state

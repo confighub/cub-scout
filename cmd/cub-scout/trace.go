@@ -521,6 +521,21 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string,
 			Relationship: mapsvc.RelationshipForRole(role),
 		}
 
+		// Delivery chain metadata (v1.1+)
+		node.DeliveryStage = mapsvc.InferDeliveryStage(link.Kind)
+		node.RenderedFrom = link.RenderedFrom
+		node.OriginalSource = link.OriginalSource
+
+		// Populate OriginalSource for source nodes with URLs
+		if link.URL != "" && node.OriginalSource == "" && mapsvc.InferDeliveryStage(link.Kind) == mapsvc.StageSource {
+			node.OriginalSource = "git:" + link.URL
+		}
+
+		// Populate RenderedFrom for ConfigHub OCI chains
+		if link.OCISource != nil && link.OCISource.IsConfigHub && node.RenderedFrom == "" {
+			node.RenderedFrom = fmt.Sprintf("confighub:space/%s/target/%s", link.OCISource.Space, link.OCISource.Target)
+		}
+
 		// Build evidence from available metadata
 		node.Evidence = buildEvidence(link, result.Tool)
 

@@ -431,6 +431,107 @@ func containsHelper(s, substr string) bool {
 }
 
 // =============================================================================
+// Delivery Stage Tests (v1.1+)
+// =============================================================================
+
+func TestInferDeliveryStage(t *testing.T) {
+	tests := []struct {
+		kind     string
+		expected string
+	}{
+		// Sources
+		{"GitRepository", StageSource},
+		{"HelmRepository", StageSource},
+		{"Bucket", StageSource},
+
+		// Artifacts
+		{"OCIRepository", StageArtifact},
+
+		// Deployers
+		{"Kustomization", StageDeployer},
+		{"HelmRelease", StageDeployer},
+		{"Application", StageDeployer},
+
+		// Workloads
+		{"Deployment", StageWorkload},
+		{"StatefulSet", StageWorkload},
+		{"DaemonSet", StageWorkload},
+		{"Service", StageWorkload},
+		{"ConfigMap", StageWorkload},
+		{"Secret", StageWorkload},
+		{"Ingress", StageWorkload},
+		{"ReplicaSet", StageWorkload},
+		{"Pod", StageWorkload},
+		{"Job", StageWorkload},
+		{"CronJob", StageWorkload},
+
+		// Unknown kinds
+		{"CustomResource", ""},
+		{"SomeOtherKind", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.kind, func(t *testing.T) {
+			got := InferDeliveryStage(tt.kind)
+			if got != tt.expected {
+				t.Errorf("InferDeliveryStage(%q) = %q, want %q", tt.kind, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestChainNode_DeliveryStageOmitEmpty(t *testing.T) {
+	// ChainNode with no delivery chain fields should not include them in JSON
+	node := ChainNode{
+		ID:           ResourceID{Kind: "Deployment", Namespace: "default", Name: "test"},
+		Role:         RoleWorkload,
+		Relationship: RelManagedBy,
+		Evidence:     []Evidence{},
+	}
+
+	data, err := json.Marshal(node)
+	if err != nil {
+		t.Fatalf("failed to marshal ChainNode: %v", err)
+	}
+
+	jsonStr := string(data)
+	for _, field := range []string{"deliveryStage", "renderedFrom", "originalSource"} {
+		if containsHelper(jsonStr, field) {
+			t.Errorf("expected %q to be omitted from JSON when empty, got: %s", field, jsonStr)
+		}
+	}
+}
+
+func TestChainNode_DeliveryStagePresent(t *testing.T) {
+	// ChainNode with delivery chain fields should include them in JSON
+	node := ChainNode{
+		ID:             ResourceID{Kind: "GitRepository", Namespace: "flux-system", Name: "repo"},
+		Role:           RoleSource,
+		Relationship:   RelSources,
+		Evidence:       []Evidence{},
+		DeliveryStage:  StageSource,
+		OriginalSource: "git:https://github.com/org/repo",
+	}
+
+	data, err := json.Marshal(node)
+	if err != nil {
+		t.Fatalf("failed to marshal ChainNode: %v", err)
+	}
+
+	jsonStr := string(data)
+	if !containsHelper(jsonStr, `"deliveryStage":"source"`) {
+		t.Errorf("expected deliveryStage in JSON, got: %s", jsonStr)
+	}
+	if !containsHelper(jsonStr, `"originalSource":"git:https://github.com/org/repo"`) {
+		t.Errorf("expected originalSource in JSON, got: %s", jsonStr)
+	}
+	// renderedFrom should still be omitted
+	if containsHelper(jsonStr, "renderedFrom") {
+		t.Errorf("expected renderedFrom to be omitted when empty, got: %s", jsonStr)
+	}
+}
+
+// =============================================================================
 // Map List Schema Tests
 // =============================================================================
 

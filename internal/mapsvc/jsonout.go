@@ -342,10 +342,13 @@ type TraceOutput struct {
 
 // ChainNode represents a single node in the trace chain.
 type ChainNode struct {
-	ID           ResourceID `json:"id"`
-	Role         string     `json:"role"`         // source, deployer, workload, intermediate
-	Relationship string     `json:"relationship"` // provides-manifests-to, applies, manages, managed-by
-	Evidence     []Evidence `json:"evidence"`
+	ID             ResourceID `json:"id"`
+	Role           string     `json:"role"`                      // source, deployer, workload, intermediate
+	Relationship   string     `json:"relationship"`              // provides-manifests-to, applies, manages, managed-by
+	Evidence       []Evidence `json:"evidence"`
+	DeliveryStage  string     `json:"deliveryStage,omitempty"`   // source, render, artifact, deployer, workload (v1.1+)
+	RenderedFrom   string     `json:"renderedFrom,omitempty"`    // provenance: what rendered this resource's manifests (v1.1+)
+	OriginalSource string     `json:"originalSource,omitempty"`  // provenance: original source-of-truth (v1.1+)
 }
 
 // Evidence represents structured proof of a relationship.
@@ -460,6 +463,36 @@ func RelationshipForRole(role string) string {
 		return RelManages
 	default:
 		return RelManages
+	}
+}
+
+// Delivery stage constants for trace chain nodes (v1.1+).
+// These classify where a resource sits in the delivery pipeline:
+//
+//	source → render → artifact → deployer → workload
+const (
+	StageSource   = "source"
+	StageRender   = "render"
+	StageArtifact = "artifact"
+	StageDeployer = "deployer"
+	StageWorkload = "workload"
+)
+
+// InferDeliveryStage determines the delivery pipeline stage from a resource Kind.
+// Returns "" for kinds that don't map to a known stage.
+func InferDeliveryStage(kind string) string {
+	switch kind {
+	case "GitRepository", "HelmRepository", "Bucket":
+		return StageSource
+	case "OCIRepository":
+		return StageArtifact
+	case "Kustomization", "HelmRelease", "Application":
+		return StageDeployer
+	case "Deployment", "StatefulSet", "DaemonSet", "Service", "ConfigMap", "Secret", "Ingress",
+		"ReplicaSet", "Pod", "Job", "CronJob":
+		return StageWorkload
+	default:
+		return ""
 	}
 }
 

@@ -5,6 +5,7 @@
 //   - Multi-generator ApplicationSets (ArgoCD)
 //   - Flux multi-tenant Kustomizations
 //   - Mixed-tool clusters (all 7 ownership types)
+//   - Bridge delivery patterns (Git→Flux, Git→ArgoCD, ConfigHub→OCI, Live Import)
 //
 // All tests are fully offline — no cluster required.
 //
@@ -13,12 +14,15 @@ package patterns
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/confighub/cub-scout/internal/graph"
+	"github.com/confighub/cub-scout/internal/patterns"
 	"github.com/confighub/cub-scout/pkg/agent"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -457,5 +461,131 @@ func TestAllFixtures_DeterministicOwnership(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// --- Bridge pattern fixture integration tests ---
+
+// buildGraphFromObjects constructs a graph.Graph from parsed YAML objects.
+// Each object becomes a graph Node with labels extracted from metadata.
+func buildGraphFromObjects(objects []*unstructured.Unstructured) *graph.Graph {
+	g := graph.NewGraph("fixture-cluster")
+	for _, obj := range objects {
+		nodeID := fmt.Sprintf("fixture-cluster/%s/%s/%s",
+			obj.GetNamespace(), obj.GetKind(), obj.GetName())
+		labels := obj.GetLabels()
+		if labels == nil {
+			labels = map[string]string{}
+		}
+		g.AddNode(graph.Node{
+			ID:         nodeID,
+			Cluster:    "fixture-cluster",
+			Namespace:  obj.GetNamespace(),
+			Kind:       obj.GetKind(),
+			Name:       obj.GetName(),
+			APIVersion: obj.GetAPIVersion(),
+			Labels:     labels,
+		})
+	}
+	return g
+}
+
+func TestBridgeGitFlux_Fixture(t *testing.T) {
+	path := filepath.Join(fixtureDir(t), "bridge-git-flux", "bridge-git-flux.yaml")
+	objects := loadObjects(t, path)
+	g := buildGraphFromObjects(objects)
+
+	pr := patterns.DetectOne(g, "delivery.bridge.git_flux")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+	if pr.Status != patterns.StatusPass {
+		t.Errorf("expected pass, got %s (skip: %s)", pr.Status, pr.SkipReason)
+	}
+	if len(pr.Findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d", len(pr.Findings))
+	}
+
+	f := pr.Findings[0]
+	if !strings.Contains(f.Message, "1 sources") {
+		t.Errorf("expected 1 source, got: %s", f.Message)
+	}
+	if !strings.Contains(f.Message, "1 deployers") {
+		t.Errorf("expected 1 deployer, got: %s", f.Message)
+	}
+	if !strings.Contains(f.Message, "2 managed workloads") {
+		t.Errorf("expected 2 managed workloads, got: %s", f.Message)
+	}
+}
+
+func TestBridgeGitArgoCD_Fixture(t *testing.T) {
+	path := filepath.Join(fixtureDir(t), "bridge-git-argocd", "bridge-git-argocd.yaml")
+	objects := loadObjects(t, path)
+	g := buildGraphFromObjects(objects)
+
+	pr := patterns.DetectOne(g, "delivery.bridge.git_argocd")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+	if pr.Status != patterns.StatusPass {
+		t.Errorf("expected pass, got %s (skip: %s)", pr.Status, pr.SkipReason)
+	}
+	if len(pr.Findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d", len(pr.Findings))
+	}
+
+	f := pr.Findings[0]
+	if !strings.Contains(f.Message, "1 Applications") {
+		t.Errorf("expected 1 Application, got: %s", f.Message)
+	}
+	if !strings.Contains(f.Message, "2 managed workloads") {
+		t.Errorf("expected 2 managed workloads, got: %s", f.Message)
+	}
+}
+
+func TestBridgeConfigHubOCI_Fixture(t *testing.T) {
+	path := filepath.Join(fixtureDir(t), "bridge-confighub-oci", "bridge-confighub-oci.yaml")
+	objects := loadObjects(t, path)
+	g := buildGraphFromObjects(objects)
+
+	pr := patterns.DetectOne(g, "delivery.bridge.confighub_oci")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+	if pr.Status != patterns.StatusPass {
+		t.Errorf("expected pass, got %s (skip: %s)", pr.Status, pr.SkipReason)
+	}
+	if len(pr.Findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d", len(pr.Findings))
+	}
+
+	f := pr.Findings[0]
+	if !strings.Contains(f.Message, "1 OCI sources with ConfigHub origin") {
+		t.Errorf("expected 1 ConfigHub OCI source, got: %s", f.Message)
+	}
+	if !strings.Contains(f.Message, "1 dual-managed workloads") {
+		t.Errorf("expected 1 dual-managed workload, got: %s", f.Message)
+	}
+}
+
+func TestBridgeLiveImport_Fixture(t *testing.T) {
+	path := filepath.Join(fixtureDir(t), "bridge-live-import", "bridge-live-import.yaml")
+	objects := loadObjects(t, path)
+	g := buildGraphFromObjects(objects)
+
+	pr := patterns.DetectOne(g, "delivery.bridge.live_import")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+	if pr.Status != patterns.StatusPass {
+		t.Errorf("expected pass, got %s (skip: %s)", pr.Status, pr.SkipReason)
+	}
+	if len(pr.Findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d", len(pr.Findings))
+	}
+
+	f := pr.Findings[0]
+	if !strings.Contains(f.Message, "2 resources with ConfigHub ownership but no GitOps deployer") {
+		t.Errorf("expected 2 live imports, got: %s", f.Message)
 	}
 }
