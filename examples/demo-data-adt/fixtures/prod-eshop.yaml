@@ -1,0 +1,87 @@
+# Prod environment for eshop app (US region)
+# Labels: App=eshop, AppOwner=Product, TargetRole=prod, TargetRegion=us-east
+# NOTE: api image is 4.2.0 (intentional version skew vs dev which has 4.2.1)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eshop-api
+  namespace: us-prod-eshop
+  labels:
+    app.kubernetes.io/name: eshop-api
+    app.kubernetes.io/instance: eshop
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: eshop-api-1.0.0
+    confighub.com/UnitSlug: eshop-api
+  annotations:
+    confighub.com/SpaceName: us-prod-eshop
+    confighub.com/Labels.App: eshop
+    confighub.com/Labels.AppOwner: Product
+    confighub.com/Labels.TargetRole: prod
+    confighub.com/Labels.TargetRegion: us-east
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eshop-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eshop-api
+    spec:
+      containers:
+        - name: api
+          image: eshop/api:4.2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: LOG_LEVEL
+              value: warn
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eshop-worker
+  namespace: us-prod-eshop
+  labels:
+    app.kubernetes.io/name: eshop-worker
+    app.kubernetes.io/instance: eshop
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: eshop-worker-1.0.0
+    confighub.com/UnitSlug: eshop-worker
+  annotations:
+    confighub.com/SpaceName: us-prod-eshop
+    confighub.com/Labels.App: eshop
+    confighub.com/Labels.AppOwner: Product
+    confighub.com/Labels.TargetRole: prod
+    confighub.com/Labels.TargetRegion: us-east
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eshop-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eshop-worker
+    spec:
+      containers:
+        - name: worker
+          image: eshop/worker:4.2.1
+          env:
+            - name: LOG_LEVEL
+              value: warn
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

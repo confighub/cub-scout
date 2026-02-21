@@ -1,0 +1,40 @@
+# Prod environment for website app (US region)
+# Labels: App=website, AppOwner=Marketing, TargetRole=prod, TargetRegion=us-east
+# Managed by ArgoCD (different owner than eshop which uses Helm)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-frontend
+  namespace: us-prod-website
+  labels:
+    app.kubernetes.io/name: website-frontend
+    app.kubernetes.io/instance: website
+    argocd.argoproj.io/instance: website-prod
+    confighub.com/UnitSlug: website-frontend
+  annotations:
+    confighub.com/SpaceName: us-prod-website
+    confighub.com/Labels.App: website
+    confighub.com/Labels.AppOwner: Marketing
+    confighub.com/Labels.TargetRole: prod
+    confighub.com/Labels.TargetRegion: us-east
+    argocd.argoproj.io/tracking-id: "website-prod:apps/Deployment:us-prod-website/website-frontend"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: website-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: website-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: website/frontend:2.1.0
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi

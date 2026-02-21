@@ -45,6 +45,7 @@ Worked examples showing how cub-scout discovers workloads and proposes ConfigHub
 | [import-from-live/](import-from-live/) | **ArgoCD** (Arnie) | Cluster-only discovery — no Git required |
 | [combined-git-live/](combined-git-live/) | **Flux** (Banko) | Git repo + cluster alignment |
 | [fleet-import/](fleet-import/) | **Multi-cluster** | Aggregating imports from 2 clusters into a unified proposal |
+| [demo-data-adt/](demo-data-adt/) | **App-Deployment-Target** | Multi-app × multi-env with version skew detection |
 
 These examples use static fixtures (no live cluster needed) and include expected JSON output for validation.
 
@@ -124,6 +125,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [import-from-live/](import-from-live/) | **Working** | Cluster-only import (ArgoCD/Arnie pattern) | Learning import discovery, no Git needed |
 | [combined-git-live/](combined-git-live/) | **Working** | Git + cluster alignment (Flux/Banko pattern) | Learning combined discovery, Git drift detection |
 | [fleet-import/](fleet-import/) | **Working** | Multi-cluster fleet aggregation | Learning fleet import, cross-cluster proposals |
+| [demo-data-adt/](demo-data-adt/) | **Working** | App-Deployment-Target model (multi-app × multi-env) | Learning ADT model, version skew, scan |
 | [workflows/](workflows/) | **Working** | Artifact + fleet demos (CI → local, env comparison) | CI/CD integration, sharing bundles, comparing environments |
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |

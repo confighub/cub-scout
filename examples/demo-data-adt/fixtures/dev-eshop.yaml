@@ -1,0 +1,80 @@
+# Dev environment for eshop app
+# Labels: App=eshop, AppOwner=Product, TargetRole=dev, TargetRegion=us-east
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eshop-api
+  namespace: dev-eshop
+  labels:
+    app.kubernetes.io/name: eshop-api
+    app.kubernetes.io/instance: eshop
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: eshop-api-1.0.0
+    confighub.com/UnitSlug: eshop-api
+  annotations:
+    confighub.com/SpaceName: dev-eshop
+    confighub.com/Labels.App: eshop
+    confighub.com/Labels.AppOwner: Product
+    confighub.com/Labels.TargetRole: dev
+    confighub.com/Labels.TargetRegion: us-east
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eshop-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eshop-api
+    spec:
+      containers:
+        - name: api
+          image: eshop/api:4.2.1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: LOG_LEVEL
+              value: debug
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eshop-worker
+  namespace: dev-eshop
+  labels:
+    app.kubernetes.io/name: eshop-worker
+    app.kubernetes.io/instance: eshop
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: eshop-worker-1.0.0
+    confighub.com/UnitSlug: eshop-worker
+  annotations:
+    confighub.com/SpaceName: dev-eshop
+    confighub.com/Labels.App: eshop
+    confighub.com/Labels.AppOwner: Product
+    confighub.com/Labels.TargetRole: dev
+    confighub.com/Labels.TargetRegion: us-east
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eshop-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eshop-worker
+    spec:
+      containers:
+        - name: worker
+          image: eshop/worker:4.2.1
+          env:
+            - name: LOG_LEVEL
+              value: debug
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
