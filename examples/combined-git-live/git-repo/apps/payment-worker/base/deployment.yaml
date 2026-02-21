@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-worker
+  labels:
+    app.kubernetes.io/name: payment-worker
+    app.kubernetes.io/part-of: banko
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: payment-worker
+        app.kubernetes.io/part-of: banko
+    spec:
+      containers:
+        - name: worker
+          image: banko/payment-worker:v1.8.2
+          env:
+            - name: QUEUE_URL
+              value: "rabbitmq:5672"
+            - name: DB_HOST
+              value: "postgres:5432"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

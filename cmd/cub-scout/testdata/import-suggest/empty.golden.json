@@ -1,0 +1,12 @@
+{
+  "testDescription": "empty",
+  "inputSummary": {
+    "workloadCount": 0,
+    "namespaces": [],
+    "owners": {}
+  },
+  "suggestion": {
+    "appSpace": "imported-team",
+    "units": []
+  }
+}

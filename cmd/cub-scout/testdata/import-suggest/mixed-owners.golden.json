@@ -1,0 +1,52 @@
+{
+  "testDescription": "mixed-owners",
+  "inputSummary": {
+    "workloadCount": 4,
+    "namespaces": [
+      "checkout"
+    ],
+    "owners": {
+      "ArgoCD": 1,
+      "Flux": 1,
+      "Helm": 1,
+      "Native": 1
+    }
+  },
+  "suggestion": {
+    "appSpace": "checkout-team",
+    "units": [
+      {
+        "slug": "checkout",
+        "app": "checkout",
+        "variant": "default",
+        "workloads": [
+          "Deployment/checkout/debug-tools"
+        ]
+      },
+      {
+        "slug": "checkout-api-prod",
+        "app": "checkout-api",
+        "variant": "prod",
+        "workloads": [
+          "Deployment/checkout/checkout-api"
+        ]
+      },
+      {
+        "slug": "checkout-db",
+        "app": "checkout-db",
+        "variant": "default",
+        "workloads": [
+          "StatefulSet/checkout/checkout-db"
+        ]
+      },
+      {
+        "slug": "checkout-frontend-prod",
+        "app": "checkout-frontend",
+        "variant": "prod",
+        "workloads": [
+          "Deployment/checkout/checkout-frontend"
+        ]
+      }
+    ]
+  }
+}

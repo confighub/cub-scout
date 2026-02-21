@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-service
+  labels:
+    app.kubernetes.io/name: notifications-service
+    app.kubernetes.io/part-of: banko
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: notifications-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: notifications-service
+        app.kubernetes.io/part-of: banko
+    spec:
+      containers:
+        - name: notifications
+          image: banko/notifications-service:v0.3.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SMTP_HOST
+              value: "mailgun:587"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

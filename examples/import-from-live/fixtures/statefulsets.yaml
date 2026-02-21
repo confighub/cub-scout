@@ -1,0 +1,90 @@
+# Copyright (C) ConfigHub, Inc.
+# SPDX-License-Identifier: MIT
+#
+# Three Redis StatefulSets managed by Helm — one per environment.
+# The Helm ownership label (app.kubernetes.io/managed-by: Helm) is how
+# cub-scout detects these as Helm-managed.
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: myapp-dev
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: redis-18.6.1
+    app.kubernetes.io/instance: redis
+spec:
+  serviceName: redis-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          ports:
+            - containerPort: 6379
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: myapp-staging
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: redis-18.6.1
+    app.kubernetes.io/instance: redis
+spec:
+  serviceName: redis-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          ports:
+            - containerPort: 6379
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: myapp-prod
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: redis-18.6.1
+    app.kubernetes.io/instance: redis
+spec:
+  serviceName: redis-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          ports:
+            - containerPort: 6379

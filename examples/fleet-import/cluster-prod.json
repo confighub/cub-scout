@@ -1,0 +1,95 @@
+{
+  "namespace": "payment-prod",
+  "model": "hub-appspace",
+  "workloads": [
+    {
+      "kind": "Deployment",
+      "namespace": "payment-prod",
+      "name": "payment-api",
+      "owner": "Flux",
+      "connected": false,
+      "ready": true,
+      "replicas": 3,
+      "kustomizationPath": "./apps/payment-api/overlays/prod",
+      "labels": {
+        "app.kubernetes.io/name": "payment-api",
+        "app.kubernetes.io/part-of": "banko",
+        "environment": "prod",
+        "kustomize.toolkit.fluxcd.io/name": "banko-prod",
+        "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+      }
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "payment-prod",
+      "name": "payment-worker",
+      "owner": "Flux",
+      "connected": false,
+      "ready": true,
+      "replicas": 2,
+      "kustomizationPath": "./apps/payment-worker/overlays/prod",
+      "labels": {
+        "app.kubernetes.io/name": "payment-worker",
+        "app.kubernetes.io/part-of": "banko",
+        "environment": "prod",
+        "kustomize.toolkit.fluxcd.io/name": "banko-prod",
+        "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+      }
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "payment-prod",
+      "name": "redis",
+      "owner": "Helm",
+      "connected": false,
+      "ready": true,
+      "replicas": 3,
+      "labels": {
+        "app.kubernetes.io/name": "redis",
+        "app.kubernetes.io/managed-by": "Helm",
+        "environment": "prod"
+      }
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "payment-prod",
+      "name": "cache-warmer",
+      "owner": "Native",
+      "connected": false,
+      "ready": true,
+      "replicas": 1,
+      "labels": {
+        "app.kubernetes.io/name": "cache-warmer"
+      }
+    }
+  ],
+  "suggestion": {
+    "appSpace": "banko-team",
+    "units": [
+      {
+        "slug": "payment-api-prod",
+        "app": "payment-api",
+        "variant": "prod",
+        "workloads": ["payment-prod/payment-api"]
+      },
+      {
+        "slug": "payment-worker-prod",
+        "app": "payment-worker",
+        "variant": "prod",
+        "workloads": ["payment-prod/payment-worker"]
+      },
+      {
+        "slug": "redis-prod",
+        "app": "redis",
+        "variant": "prod",
+        "workloads": ["payment-prod/redis"]
+      },
+      {
+        "slug": "cache-warmer",
+        "app": "cache-warmer",
+        "variant": "default",
+        "workloads": ["payment-prod/cache-warmer"]
+      }
+    ]
+  }
+}

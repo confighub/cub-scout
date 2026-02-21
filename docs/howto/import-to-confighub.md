@@ -2,8 +2,24 @@
 
 This is the canonical migration path for moving existing ArgoCD/Helm-managed workloads into ConfigHub.
 
+## Ownership Split
+
+The import process involves two tools with distinct responsibilities:
+
+| Step | Who | What |
+|------|-----|------|
+| **Discover** | cub-scout | Scan cluster, detect ownership, propose App structure |
+| **Import** | ConfigHub | Create Units, set up bridge workers, connect OCI pipeline |
+| **Deploy** | Flux/ArgoCD | Pull rendered manifests from ConfigHub's OCI registry, apply to cluster |
+
+cub-scout is read-only — it discovers and proposes. ConfigHub handles the actual import and lifecycle.
+
+For cluster-only discovery (no Git required), see [Import from Live](import-from-live.md).
+
+## Scope
+
 Scope boundary:
-- This guide is only about workload import and controller cutover.
+- This guide covers workload discovery (cub-scout) and import (ConfigHub).
 - Helm/Kustomize rendering pipelines are Provisional scope.
 - Do not treat this import flow as a rendering/templating workflow.
 
@@ -130,6 +146,10 @@ Then continue using your existing Argo/Helm flow while you revise mapping.
 
 ## Related Docs
 
-- [Business Outcomes](../../outcomes/README.md) - Why ConfigHub import matters
-- [ConfigHub Documentation](https://docs.confighub.com) - Full ConfigHub guide
-- [Import Docs Crosswalk](../reference/import-docs-crosswalk.md) - Archived import docs mapped to current docs
+- [Import from Live](import-from-live.md) — Cluster-only discovery (no Git required)
+- [Import from Live Example](../../examples/import-from-live/) — Worked example with fixtures
+- [Combined Git+Live Example](../../examples/combined-git-live/) — Git repo + cluster alignment
+- [Fleet Import Example](../../examples/fleet-import/) — Multi-cluster aggregation
+- [Business Outcomes](../../outcomes/README.md) — Why ConfigHub import matters
+- [ConfigHub Documentation](https://docs.confighub.com) — Full ConfigHub guide
+- [Import Docs Crosswalk](../reference/import-docs-crosswalk.md) — Archived import docs mapped to current docs

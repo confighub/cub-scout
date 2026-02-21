@@ -1,0 +1,77 @@
+{
+  "namespace": "payment-dev",
+  "model": "hub-appspace",
+  "workloads": [
+    {
+      "kind": "Deployment",
+      "namespace": "payment-dev",
+      "name": "payment-api",
+      "owner": "Flux",
+      "connected": false,
+      "ready": true,
+      "replicas": 1,
+      "kustomizationPath": "./apps/payment-api/overlays/dev",
+      "labels": {
+        "app.kubernetes.io/name": "payment-api",
+        "app.kubernetes.io/part-of": "banko",
+        "environment": "dev",
+        "kustomize.toolkit.fluxcd.io/name": "banko-dev",
+        "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+      }
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "payment-dev",
+      "name": "payment-worker",
+      "owner": "Flux",
+      "connected": false,
+      "ready": true,
+      "replicas": 1,
+      "kustomizationPath": "./apps/payment-worker/overlays/dev",
+      "labels": {
+        "app.kubernetes.io/name": "payment-worker",
+        "app.kubernetes.io/part-of": "banko",
+        "environment": "dev",
+        "kustomize.toolkit.fluxcd.io/name": "banko-dev",
+        "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+      }
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "payment-dev",
+      "name": "redis",
+      "owner": "Helm",
+      "connected": false,
+      "ready": true,
+      "replicas": 1,
+      "labels": {
+        "app.kubernetes.io/name": "redis",
+        "app.kubernetes.io/managed-by": "Helm",
+        "environment": "dev"
+      }
+    }
+  ],
+  "suggestion": {
+    "appSpace": "banko-team",
+    "units": [
+      {
+        "slug": "payment-api-dev",
+        "app": "payment-api",
+        "variant": "dev",
+        "workloads": ["payment-dev/payment-api"]
+      },
+      {
+        "slug": "payment-worker-dev",
+        "app": "payment-worker",
+        "variant": "dev",
+        "workloads": ["payment-dev/payment-worker"]
+      },
+      {
+        "slug": "redis-dev",
+        "app": "redis",
+        "variant": "dev",
+        "workloads": ["payment-dev/redis"]
+      }
+    ]
+  }
+}

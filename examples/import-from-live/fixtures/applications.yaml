@@ -1,0 +1,87 @@
+# Copyright (C) ConfigHub, Inc.
+# SPDX-License-Identifier: MIT
+#
+# ArgoCD Application CRs for the "Arnie" pattern (folder-per-environment).
+# Three Applications pointing at envs/dev, envs/staging, envs/prod in the
+# same deploy repo.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/instance: myapp-dev
+    environment: dev
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/acme/myapp-deploy.git
+    targetRevision: HEAD
+    path: envs/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: myapp-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/instance: myapp-staging
+    environment: staging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/acme/myapp-deploy.git
+    targetRevision: HEAD
+    path: envs/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: myapp-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/instance: myapp-prod
+    environment: prod
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/acme/myapp-deploy.git
+    targetRevision: HEAD
+    path: envs/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: myapp-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

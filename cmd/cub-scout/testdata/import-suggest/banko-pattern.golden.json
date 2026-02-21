@@ -1,0 +1,50 @@
+{
+  "testDescription": "banko-pattern",
+  "inputSummary": {
+    "workloadCount": 4,
+    "namespaces": [
+      "payment-dev",
+      "payment-prod"
+    ],
+    "owners": {
+      "Flux": 4
+    }
+  },
+  "suggestion": {
+    "appSpace": "payment-team",
+    "units": [
+      {
+        "slug": "payment-api-dev",
+        "app": "payment-api",
+        "variant": "dev",
+        "workloads": [
+          "Deployment/payment-dev/payment-api"
+        ]
+      },
+      {
+        "slug": "payment-api-prod",
+        "app": "payment-api",
+        "variant": "prod",
+        "workloads": [
+          "Deployment/payment-prod/payment-api"
+        ]
+      },
+      {
+        "slug": "payment-worker-dev",
+        "app": "payment-worker",
+        "variant": "dev",
+        "workloads": [
+          "Deployment/payment-dev/payment-worker"
+        ]
+      },
+      {
+        "slug": "payment-worker-prod",
+        "app": "payment-worker",
+        "variant": "prod",
+        "workloads": [
+          "Deployment/payment-prod/payment-worker"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "gitRepo": {
+    "type": "flux-tenant-mono",
+    "apps": [
+      {
+        "name": "payment-api",
+        "basePath": "apps/payment-api/base",
+        "variants": [
+          { "name": "dev", "path": "apps/payment-api/overlays/dev" },
+          { "name": "prod", "path": "apps/payment-api/overlays/prod" }
+        ]
+      },
+      {
+        "name": "payment-worker",
+        "basePath": "apps/payment-worker/base",
+        "variants": [
+          { "name": "dev", "path": "apps/payment-worker/overlays/dev" },
+          { "name": "prod", "path": "apps/payment-worker/overlays/prod" }
+        ]
+      },
+      {
+        "name": "notifications-service",
+        "basePath": "apps/notifications-service/base",
+        "variants": []
+      }
+    ]
+  },
+  "cluster": {
+    "namespace": "payment-dev,payment-prod",
+    "model": "hub-appspace",
+    "workloads": [
+      {
+        "kind": "Deployment",
+        "namespace": "payment-dev",
+        "name": "payment-api",
+        "owner": "Flux",
+        "connected": false,
+        "ready": true,
+        "replicas": 1,
+        "kustomizationPath": "./apps/payment-api/overlays/dev",
+        "labels": {
+          "app.kubernetes.io/name": "payment-api",
+          "app.kubernetes.io/part-of": "banko",
+          "environment": "dev",
+          "kustomize.toolkit.fluxcd.io/name": "banko-dev",
+          "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+        }
+      },
+      {
+        "kind": "Deployment",
+        "namespace": "payment-prod",
+        "name": "payment-api",
+        "owner": "Flux",
+        "connected": false,
+        "ready": true,
+        "replicas": 3,
+        "kustomizationPath": "./apps/payment-api/overlays/prod",
+        "labels": {
+          "app.kubernetes.io/name": "payment-api",
+          "app.kubernetes.io/part-of": "banko",
+          "environment": "prod",
+          "kustomize.toolkit.fluxcd.io/name": "banko-prod",
+          "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+        }
+      },
+      {
+        "kind": "Deployment",
+        "namespace": "payment-dev",
+        "name": "payment-worker",
+        "owner": "Flux",
+        "connected": false,
+        "ready": true,
+        "replicas": 1,
+        "kustomizationPath": "./apps/payment-worker/overlays/dev",
+        "labels": {
+          "app.kubernetes.io/name": "payment-worker",
+          "app.kubernetes.io/part-of": "banko",
+          "environment": "dev",
+          "kustomize.toolkit.fluxcd.io/name": "banko-dev",
+          "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+        }
+      },
+      {
+        "kind": "Deployment",
+        "namespace": "payment-prod",
+        "name": "payment-worker",
+        "owner": "Flux",
+        "connected": false,
+        "ready": true,
+        "replicas": 2,
+        "kustomizationPath": "./apps/payment-worker/overlays/prod",
+        "labels": {
+          "app.kubernetes.io/name": "payment-worker",
+          "app.kubernetes.io/part-of": "banko",
+          "environment": "prod",
+          "kustomize.toolkit.fluxcd.io/name": "banko-prod",
+          "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+        }
+      },
+      {
+        "kind": "Deployment",
+        "namespace": "payment-prod",
+        "name": "cache-warmer",
+        "owner": "Native",
+        "connected": false,
+        "ready": true,
+        "replicas": 1,
+        "labels": {
+          "app.kubernetes.io/name": "cache-warmer"
+        }
+      }
+    ]
+  },
+  "alignment": [
+    {
+      "app": "payment-api",
+      "gitVariant": "dev",
+      "livePath": "./apps/payment-api/overlays/dev",
+      "status": "aligned",
+      "workloads": ["payment-dev/payment-api"]
+    },
+    {
+      "app": "payment-api",
+      "gitVariant": "prod",
+      "livePath": "./apps/payment-api/overlays/prod",
+      "status": "aligned",
+      "workloads": ["payment-prod/payment-api"]
+    },
+    {
+      "app": "payment-worker",
+      "gitVariant": "dev",
+      "livePath": "./apps/payment-worker/overlays/dev",
+      "status": "aligned",
+      "workloads": ["payment-dev/payment-worker"]
+    },
+    {
+      "app": "payment-worker",
+      "gitVariant": "prod",
+      "livePath": "./apps/payment-worker/overlays/prod",
+      "status": "aligned",
+      "workloads": ["payment-prod/payment-worker"]
+    },
+    {
+      "app": "notifications-service",
+      "gitVariant": "",
+      "status": "git-only"
+    },
+    {
+      "app": "cache-warmer",
+      "status": "cluster-only",
+      "workloads": ["payment-prod/cache-warmer"]
+    }
+  ],
+  "proposal": {
+    "hubBases": [
+      { "name": "payment-api", "gitPath": "apps/payment-api/base", "source": "git" },
+      { "name": "payment-worker", "gitPath": "apps/payment-worker/base", "source": "git" },
+      { "name": "notifications-service", "gitPath": "apps/notifications-service/base", "source": "git" }
+    ],
+    "appSpace": "banko-team",
+    "deployer": "Flux",
+    "reconciliation": [
+      { "match": { "variant": "prod" }, "drift": "revert", "approval": "required" },
+      { "match": { "variant": "dev" }, "drift": "accept", "approval": "none" }
+    ],
+    "units": [
+      {
+        "slug": "cache-warmer",
+        "app": "cache-warmer",
+        "variant": "default",
+        "workloads": ["payment-prod/cache-warmer"],
+        "status": "cluster-only",
+        "labels": { "app": "cache-warmer", "variant": "default" }
+      },
+      {
+        "slug": "notifications-service",
+        "app": "notifications-service",
+        "variant": "default",
+        "gitPath": "apps/notifications-service/base",
+        "status": "git-only",
+        "labels": { "app": "notifications-service", "variant": "default" }
+      },
+      {
+        "slug": "payment-api-dev",
+        "app": "payment-api",
+        "variant": "dev",
+        "upstream": "payment-api",
+        "gitPath": "apps/payment-api/overlays/dev",
+        "workloads": ["payment-dev/payment-api"],
+        "status": "aligned",
+        "labels": { "app": "payment-api", "variant": "dev", "team": "banko" }
+      },
+      {
+        "slug": "payment-api-prod",
+        "app": "payment-api",
+        "variant": "prod",
+        "upstream": "payment-api",
+        "gitPath": "apps/payment-api/overlays/prod",
+        "workloads": ["payment-prod/payment-api"],
+        "status": "aligned",
+        "labels": { "app": "payment-api", "variant": "prod", "team": "banko" }
+      },
+      {
+        "slug": "payment-worker-dev",
+        "app": "payment-worker",
+        "variant": "dev",
+        "upstream": "payment-worker",
+        "gitPath": "apps/payment-worker/overlays/dev",
+        "workloads": ["payment-dev/payment-worker"],
+        "status": "aligned",
+        "labels": { "app": "payment-worker", "variant": "dev", "team": "banko" }
+      },
+      {
+        "slug": "payment-worker-prod",
+        "app": "payment-worker",
+        "variant": "prod",
+        "upstream": "payment-worker",
+        "gitPath": "apps/payment-worker/overlays/prod",
+        "workloads": ["payment-prod/payment-worker"],
+        "status": "aligned",
+        "labels": { "app": "payment-worker", "variant": "prod", "team": "banko" }
+      }
+    ],
+    "clusterOnly": [
+      {
+        "app": "cache-warmer",
+        "workloads": ["payment-prod/cache-warmer"],
+        "owner": "Native"
+      }
+    ]
+  }
+}
