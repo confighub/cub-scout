@@ -63,9 +63,25 @@ Tracking issue: **#154** (master backlog tracking)
 
 ### Scale and Testing
 
-- [ ] Production-scale E2E testing (500+ resources, mixed ownership, deep hierarchies)
-- [ ] TUI performance profiling at scale (500+ resources)
+- [x] Production-scale E2E testing (500+ resources, mixed ownership, deep hierarchies) — resolved by #155, #156
+- [x] TUI performance profiling at scale (500+ resources) — resolved by #157
 - [ ] CI-enforced coverage metrics
+
+### 1.x Connected Upsell (`roadmap-1x-connected-upsell.md`)
+
+- [ ] Connected hierarchy navigation defaults (cluster-aware filtering, clear mode state)
+- [ ] Trace context diagnostics and documented reset path for connected workflows
+- [ ] "Break-glass to managed" flow documentation and guided testing
+- [ ] User-facing explainer for ASCII vs JSON model (canonical data vs presentation)
+
+### Documentation Gaps (`NEXT-PLAN.md`)
+
+- [ ] Unified examples index (consolidate EXAMPLES-OVERVIEW.md, examples/README.md, demos/README.md)
+- [ ] Integrate WHY_CONNECTED_MODE.md content into roadmap v1.x section with concrete issues
+
+### Patterns (`reference/patterns-contract.md`)
+
+- [ ] Connected mode `--git-url` / `--git-ref` / `--git-subpath` flags for remote Git pattern enrichment
 
 ---
 
@@ -418,7 +434,7 @@ Connected Mode does **not** introduce:
 * v0.x is **complete**
 * v0.18 fulfilled the original "why connected" *operationally*
 * v0.19 locked UX, behavior, and performance
-* Open issues #3/#21 (kro) remain for future work
+* Open issues #3/#21 (kro), #149-#151 (delivery chain), #158 (connected example), #163-#166 (experiments/evidence) remain for future work
 * The remaining roadmap is **Connected Mode with ConfigHub**:
 
   * import
