@@ -27,6 +27,7 @@ Start here for machine-readable output contracts.
 | Bundle diff | [../bundle-diff.md](../bundle-diff.md) | `bundle-diff.v1` |
 | Bundle timeline | [../bundle-timeline.md](../bundle-timeline.md) | `bundle-timeline.v1` |
 | Catalog | [../catalog.md](../catalog.md) | `catalog.v1` |
+| Evidence export | [evidence-export-v1.md](evidence-export-v1.md) | `evidence-export.v1` |
 | General CLI JSON behavior | [cli-contract.md](cli-contract.md) + [commands.md](commands.md) | Command-specific |
 | GitOps checkpoint proposal schemas | [gitops-checkpoint-schemas.md](gitops-checkpoint-schemas.md) | `change-intent.v1`, `execution-report.v1`, `change-interaction-card.v1`, `decision-receipt.v1`, `execution-receipt.v1`, `outcome-receipt.v1` |
 
