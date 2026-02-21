@@ -1,4 +1,4 @@
- Standalone  │ Cluster: test-cluster │ Context: default
+ Standalone  │ Cluster: test-cluster │ Context: test-context
 Filters: owner=Flux depth=2
  1 FAILURE(S)
 

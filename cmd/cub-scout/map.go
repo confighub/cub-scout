@@ -609,6 +609,12 @@ func init() {
 	mapListCmd.Flags().BoolVar(&mapExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 	mapListCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
+	// Status-specific flags
+	mapStatusCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
+
+	// Issues-specific flags
+	mapProblemsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
+
 	// Orphans-specific flags
 	mapOrphansCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapOrphansCmd.Flags().BoolVar(&orphanIncludeSystem, "include-system", false, "Include system namespaces (kube-system, flux-system, argocd, etc.)")
@@ -643,6 +649,8 @@ func init() {
 	mapClusterDataCmd.Flags().BoolVar(&deepDiveConnected, "connected", false, "Show ConfigHub context for managed resources (requires cub auth)")
 
 	// Register shell completion functions for flags
+	_ = mapStatusCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
+	_ = mapProblemsCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
 	_ = mapListCmd.RegisterFlagCompletionFunc("namespace", completeNamespaces)
 	_ = mapListCmd.RegisterFlagCompletionFunc("kind", completeKinds)
 	_ = mapListCmd.RegisterFlagCompletionFunc("owner", completeOwners)
@@ -1466,41 +1474,37 @@ func runMapStatus(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
 
+	// Resolve namespace filter
+	nsFilter := mapNamespace
+
 	// Count deployers
 	deployersReady, deployersTotal := 0, 0
 
-	// Check Flux Kustomizations
-	if ksList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, ks := range ksList.Items {
-			deployersTotal++
-			if isResourceReady(&ks) {
-				deployersReady++
-			}
+	for _, deployerGVR := range []schema.GroupVersionResource{
+		{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"},
+		{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"},
+		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"},
+	} {
+		rc := dynClient.Resource(deployerGVR)
+		listFn := rc.List
+		if nsFilter != "" {
+			listFn = rc.Namespace(nsFilter).List
 		}
-	}
-
-	// Check Flux HelmReleases
-	if hrList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, hr := range hrList.Items {
-			deployersTotal++
-			if isResourceReady(&hr) {
-				deployersReady++
-			}
+		list, err := listFn(ctx, v1.ListOptions{})
+		if err != nil {
+			continue
 		}
-	}
-
-	// Check ArgoCD Applications
-	if appList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "argoproj.io", Version: "v1alpha1", Resource: "applications",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, app := range appList.Items {
+		isArgo := deployerGVR.Group == "argoproj.io"
+		for _, item := range list.Items {
 			deployersTotal++
-			if isArgoAppHealthy(&app) {
-				deployersReady++
+			if isArgo {
+				if isArgoAppHealthy(&item) {
+					deployersReady++
+				}
+			} else {
+				if isResourceReady(&item) {
+					deployersReady++
+				}
 			}
 		}
 	}
@@ -1508,7 +1512,7 @@ func runMapStatus(cmd *cobra.Command, args []string) error {
 	// Count workloads
 	workloadsReady, workloadsTotal := 0, 0
 
-	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+	forEachCanonicalWorkload(ctx, dynClient, nsFilter, func(workload *unstructured.Unstructured) {
 		ns := workload.GetNamespace()
 		if strings.HasPrefix(ns, "kube-") || ns == "local-path-storage" {
 			return
@@ -1548,50 +1552,52 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
 
+	// Resolve namespace filter
+	nsFilter := mapNamespace
+
 	// Track deployer vs workload issues separately
 	deployerIssues := []string{}
 	workloadIssues := []string{}
 
-	// Check Flux Kustomizations
-	if ksList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, ks := range ksList.Items {
-			if !isResourceReady(&ks) {
-				reason := getConditionReason(&ks)
-				deployerIssues = append(deployerIssues, fmt.Sprintf("✗ Kustomization/%s in %s: %s",
-					ks.GetName(), ks.GetNamespace(), reason))
+	// Check deployers (Flux Kustomizations, Flux HelmReleases, ArgoCD Applications)
+	type deployerCheck struct {
+		gvr    schema.GroupVersionResource
+		kind   string
+		isArgo bool
+	}
+	deployerChecks := []deployerCheck{
+		{schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}, "Kustomization", false},
+		{schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}, "HelmRelease", false},
+		{schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}, "Application", true},
+	}
+	for _, dc := range deployerChecks {
+		rc := dynClient.Resource(dc.gvr)
+		listFn := rc.List
+		if nsFilter != "" {
+			listFn = rc.Namespace(nsFilter).List
+		}
+		list, err := listFn(ctx, v1.ListOptions{})
+		if err != nil {
+			continue
+		}
+		for _, item := range list.Items {
+			if dc.isArgo {
+				if !isArgoAppHealthy(&item) {
+					status := getArgoStatus(&item)
+					deployerIssues = append(deployerIssues, fmt.Sprintf("✗ %s/%s in %s: %s",
+						dc.kind, item.GetName(), item.GetNamespace(), status))
+				}
+			} else {
+				if !isResourceReady(&item) {
+					reason := getConditionReason(&item)
+					deployerIssues = append(deployerIssues, fmt.Sprintf("✗ %s/%s in %s: %s",
+						dc.kind, item.GetName(), item.GetNamespace(), reason))
+				}
 			}
 		}
 	}
 
-	// Check Flux HelmReleases
-	if hrList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, hr := range hrList.Items {
-			if !isResourceReady(&hr) {
-				reason := getConditionReason(&hr)
-				deployerIssues = append(deployerIssues, fmt.Sprintf("✗ HelmRelease/%s in %s: %s",
-					hr.GetName(), hr.GetNamespace(), reason))
-			}
-		}
-	}
-
-	// Check ArgoCD Applications
-	if appList, err := dynClient.Resource(schema.GroupVersionResource{
-		Group: "argoproj.io", Version: "v1alpha1", Resource: "applications",
-	}).List(ctx, v1.ListOptions{}); err == nil {
-		for _, app := range appList.Items {
-			if !isArgoAppHealthy(&app) {
-				status := getArgoStatus(&app)
-				deployerIssues = append(deployerIssues, fmt.Sprintf("✗ Application/%s in %s: %s",
-					app.GetName(), app.GetNamespace(), status))
-			}
-		}
-	}
-
-	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+	forEachCanonicalWorkload(ctx, dynClient, nsFilter, func(workload *unstructured.Unstructured) {
 		ns := workload.GetNamespace()
 		if strings.HasPrefix(ns, "kube-") || ns == "local-path-storage" {
 			return

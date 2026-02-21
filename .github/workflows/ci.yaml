@@ -94,8 +94,14 @@ jobs:
         with:
           cluster_name: test-cluster
 
+      - name: Build binary for golden tests
+        run: go build ./cmd/cub-scout
+
       - name: Run integration tests
         run: go test -tags=integration ./test/integration/... -v
+
+      - name: Run cluster-dependent golden tests
+        run: go test ./test/golden/... -count=1 -v
 
       - name: Test map commands
         run: |

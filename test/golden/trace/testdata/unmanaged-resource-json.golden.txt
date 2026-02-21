@@ -1,12 +1,15 @@
 {
-  "chain": null,
-  "error": "resource not managed by Flux",
-  "fullyManaged": false,
-  "object": {
+  "command": "trace",
+  "target": {
     "kind": "Deployment",
-    "name": "coredns",
-    "namespace": "kube-system"
+    "namespace": "kube-system",
+    "name": "coredns"
   },
-  "tool": "flux",
-  "tracedAt": "\u003cTIMESTAMP\u003e"
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  }
 }
+Flag --json has been deprecated, use --format json instead
