@@ -1,0 +1,378 @@
+# Mixed-tool cluster with all 7 ownership types for ownership detection tests.
+#
+# Contains one resource per ownership type to verify correct classification:
+#   1. Flux         — kustomize.toolkit.fluxcd.io labels
+#   2. ArgoCD       — argocd.argoproj.io/instance label
+#   3. Helm         — app.kubernetes.io/managed-by: Helm
+#   4. Terraform    — app.terraform.io/run-id annotation
+#   5. Crossplane   — crossplane.io/claim-name label
+#   6. ConfigHub    — confighub.com/UnitSlug label
+#   7. Native       — no ownership labels
+#
+# Plus supporting Flux/Argo control-plane resources and extra workloads (~25 total).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infra
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+# ─── Flux control plane ───
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: cluster-repo
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://git.example.local/cluster.git
+  ref:
+    branch: main
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+  artifact:
+    revision: main@sha1:aaa111bbb222
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-ks
+  namespace: flux-system
+spec:
+  sourceRef:
+    kind: GitRepository
+    name: cluster-repo
+  path: ./apps
+  interval: 10m
+  prune: true
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+---
+# ─── ArgoCD control plane ───
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/infra.git
+    targetRevision: main
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infra
+status:
+  sync:
+    status: Synced
+  health:
+    status: Healthy
+---
+# ─── 1. Flux-managed Deployment ───
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flux-web
+  namespace: apps
+  labels:
+    app: flux-web
+    kustomize.toolkit.fluxcd.io/name: apps-ks
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flux-web
+  template:
+    metadata:
+      labels:
+        app: flux-web
+        kustomize.toolkit.fluxcd.io/name: apps-ks
+        kustomize.toolkit.fluxcd.io/namespace: flux-system
+    spec:
+      containers:
+        - name: web
+          image: registry.k8s.io/pause:3.9
+---
+# ─── 2. ArgoCD-managed Deployment ───
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argo-api
+  namespace: infra
+  labels:
+    app: argo-api
+    argocd.argoproj.io/instance: infra-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: argo-api
+  template:
+    metadata:
+      labels:
+        app: argo-api
+        argocd.argoproj.io/instance: infra-app
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/pause:3.9
+---
+# ─── 3. Helm-managed Deployment ───
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helm-redis
+  namespace: data
+  labels:
+    app: helm-redis
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: redis-18.0.0
+  annotations:
+    meta.helm.sh/release-name: redis
+    meta.helm.sh/release-namespace: data
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helm-redis
+  template:
+    metadata:
+      labels:
+        app: helm-redis
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: redis
+          image: registry.k8s.io/pause:3.9
+---
+# ─── 4. Terraform-managed Deployment ───
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tf-vpc-controller
+  namespace: infra
+  labels:
+    app: tf-vpc-controller
+  annotations:
+    app.terraform.io/run-id: run-abc123xyz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tf-vpc-controller
+  template:
+    metadata:
+      labels:
+        app: tf-vpc-controller
+    spec:
+      containers:
+        - name: controller
+          image: registry.k8s.io/pause:3.9
+---
+# ─── 5. Crossplane-managed Deployment ───
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xp-database
+  namespace: data
+  labels:
+    app: xp-database
+    crossplane.io/claim-name: my-database
+    crossplane.io/claim-namespace: data
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xp-database
+  template:
+    metadata:
+      labels:
+        app: xp-database
+        crossplane.io/claim-name: my-database
+    spec:
+      containers:
+        - name: db
+          image: registry.k8s.io/pause:3.9
+---
+# ─── 6. ConfigHub-managed Deployment ───
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ch-config-sync
+  namespace: apps
+  labels:
+    app: ch-config-sync
+    confighub.com/UnitSlug: unit-config-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ch-config-sync
+  template:
+    metadata:
+      labels:
+        app: ch-config-sync
+        confighub.com/UnitSlug: unit-config-sync
+    spec:
+      containers:
+        - name: sync
+          image: registry.k8s.io/pause:3.9
+---
+# ─── 7. Native (unmanaged) Deployment ───
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-cron
+  namespace: apps
+  labels:
+    app: legacy-cron
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacy-cron
+  template:
+    metadata:
+      labels:
+        app: legacy-cron
+    spec:
+      containers:
+        - name: cron
+          image: registry.k8s.io/pause:3.9
+---
+# ─── Additional resources for variety ───
+# Flux-managed Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: flux-web-svc
+  namespace: apps
+  labels:
+    app: flux-web
+    kustomize.toolkit.fluxcd.io/name: apps-ks
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: flux-web
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+# ArgoCD-managed Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: argo-api-svc
+  namespace: infra
+  labels:
+    app: argo-api
+    argocd.argoproj.io/instance: infra-app
+spec:
+  selector:
+    app: argo-api
+  ports:
+    - port: 443
+      targetPort: 8443
+---
+# Helm-managed ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: data
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: redis-18.0.0
+  annotations:
+    meta.helm.sh/release-name: redis
+    meta.helm.sh/release-namespace: data
+data:
+  redis.conf: |
+    maxmemory 256mb
+---
+# Native ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: apps
+data:
+  log_level: info
+---
+# Flux-managed StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: flux-postgres
+  namespace: data
+  labels:
+    app: flux-postgres
+    kustomize.toolkit.fluxcd.io/name: apps-ks
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  serviceName: flux-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flux-postgres
+  template:
+    metadata:
+      labels:
+        app: flux-postgres
+        kustomize.toolkit.fluxcd.io/name: apps-ks
+        kustomize.toolkit.fluxcd.io/namespace: flux-system
+    spec:
+      containers:
+        - name: postgres
+          image: registry.k8s.io/pause:3.9
+---
+# Monitoring — Native DaemonSet (no ownership)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      containers:
+        - name: exporter
+          image: registry.k8s.io/pause:3.9

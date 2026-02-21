@@ -1,0 +1,309 @@
+# 3-Level App-of-Apps hierarchy for ownership detection tests.
+#
+# Structure:
+#   Level 0: platform-root (root Application)
+#   Level 1: team-frontend, team-backend (intermediate Applications)
+#   Level 2: frontend-dev, frontend-prod, backend-dev, backend-prod (leaf Applications)
+#   Level 3: Deployments managed by each leaf Application
+#
+# All leaf Deployments carry argocd.argoproj.io/instance labels
+# pointing to their parent leaf Application.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: frontend-dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: frontend-prod
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backend-dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backend-prod
+---
+# Level 0: Root Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/aoa/root
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+status:
+  sync:
+    status: Synced
+    revision: aaa111222333
+  health:
+    status: Healthy
+---
+# Level 1: Team frontend (child of platform-root)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-frontend
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform-root
+  annotations:
+    cub-scout.io/parent-application: platform-root
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/aoa/teams/frontend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+status:
+  sync:
+    status: Synced
+    revision: bbb111222333
+  health:
+    status: Healthy
+---
+# Level 1: Team backend (child of platform-root)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-backend
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform-root
+  annotations:
+    cub-scout.io/parent-application: platform-root
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/aoa/teams/backend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+status:
+  sync:
+    status: Synced
+    revision: ccc111222333
+  health:
+    status: Healthy
+---
+# Level 2: frontend-dev (child of team-frontend)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: team-frontend
+  annotations:
+    cub-scout.io/parent-application: team-frontend
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/aoa/apps/frontend-dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend-dev
+status:
+  sync:
+    status: Synced
+    revision: ddd111222333
+  health:
+    status: Healthy
+---
+# Level 2: frontend-prod (child of team-frontend)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: team-frontend
+  annotations:
+    cub-scout.io/parent-application: team-frontend
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/aoa/apps/frontend-prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend-prod
+status:
+  sync:
+    status: Synced
+    revision: eee111222333
+  health:
+    status: Healthy
+---
+# Level 2: backend-dev (child of team-backend)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: team-backend
+  annotations:
+    cub-scout.io/parent-application: team-backend
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/aoa/apps/backend-dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backend-dev
+status:
+  sync:
+    status: Synced
+    revision: fff111222333
+  health:
+    status: Healthy
+---
+# Level 2: backend-prod (child of team-backend)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: team-backend
+  annotations:
+    cub-scout.io/parent-application: team-backend
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/platform.git
+    targetRevision: main
+    path: argo/aoa/apps/backend-prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backend-prod
+status:
+  sync:
+    status: Synced
+    revision: ggg111222333
+  health:
+    status: Healthy
+---
+# Level 3: Deployment managed by frontend-dev
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-ui
+  namespace: frontend-dev
+  labels:
+    app: web-ui
+    argocd.argoproj.io/instance: frontend-dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-ui
+  template:
+    metadata:
+      labels:
+        app: web-ui
+        argocd.argoproj.io/instance: frontend-dev
+    spec:
+      containers:
+        - name: web
+          image: registry.k8s.io/pause:3.9
+---
+# Level 3: Deployment managed by frontend-prod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-ui
+  namespace: frontend-prod
+  labels:
+    app: web-ui
+    argocd.argoproj.io/instance: frontend-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-ui
+  template:
+    metadata:
+      labels:
+        app: web-ui
+        argocd.argoproj.io/instance: frontend-prod
+    spec:
+      containers:
+        - name: web
+          image: registry.k8s.io/pause:3.9
+---
+# Level 3: Deployment managed by backend-dev
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-server
+  namespace: backend-dev
+  labels:
+    app: api-server
+    argocd.argoproj.io/instance: backend-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-server
+  template:
+    metadata:
+      labels:
+        app: api-server
+        argocd.argoproj.io/instance: backend-dev
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/pause:3.9
+---
+# Level 3: Deployment managed by backend-prod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-server
+  namespace: backend-prod
+  labels:
+    app: api-server
+    argocd.argoproj.io/instance: backend-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-server
+  template:
+    metadata:
+      labels:
+        app: api-server
+        argocd.argoproj.io/instance: backend-prod
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/pause:3.9

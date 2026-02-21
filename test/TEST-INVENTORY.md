@@ -27,6 +27,41 @@
 
 **Total: ~68 unit tests**
 
+### A2. Pattern Ownership Tests (No Cluster Required)
+
+| File | Tests | What It Proves |
+|------|-------|----------------|
+| `test/fixtures/patterns/patterns_test.go` | 18 | Complex GitOps pattern ownership detection |
+
+**Patterns tested:**
+- 3-level App-of-Apps (ArgoCD: root → 2 intermediates → 4 leaves → 4 Deployments)
+- Multi-generator ApplicationSet (ArgoCD: 2 list generators → 5 Applications → 5 Deployments)
+- Flux multi-tenant (platform ks + 3 tenant kustomizations + 4 Deployments)
+- Mixed-tool cluster (all 7 ownership types: Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native)
+- Determinism verification (same input → same ownership classification)
+
+### A3. Scale & Performance Tests (No Cluster Required)
+
+| File | Tests | What It Proves |
+|------|-------|----------------|
+| `test/scale/scale_smoke_test.go` | 5 | scan --file at 200/500/1000/2000 resources within time gates |
+| `pkg/agent/attribution_bench_test.go` | 4 CI gates + 8 benchmarks | Attribution graph build + ownership detection at 500/1000/2000 nodes |
+| `cmd/cub-scout/tui_bench_test.go` | 3 CI gates + 4 benchmarks | TUI View() render at 500/1000 entries within 3s gate |
+| `cmd/cub-scout/tui_memory_test.go` | 2 | TUI memory < 200MB/500MB at 500/1000 resources |
+| `cmd/cub-scout/tui_profile_test.go` | 2 (gated) | CPU + heap profiling (CUB_SCOUT_PROFILE=1) |
+
+**CI gate tests (must pass):**
+- `TestScaleScanFile_1000Resources` — < 10s
+- `TestScaleScanFile_2000Resources` — < 20s
+- `TestAttributionGraphBuild_1000Nodes_Within3s`
+- `TestAttributionGraphBuild_2000Nodes_Within5s`
+- `TestOwnershipDetection_1000_Within2s`
+- `TestOwnershipDetection_2000_Within3s`
+- `TestTUIRender_Dashboard_500_Within3s`
+- `TestTUIRender_AllViews_500_Within3s`
+- `TestTUIMemory_500Resources_Under200MB`
+- `TestTUIMemory_1000Resources_Under500MB`
+
 ### B. Go TUI Tests (teatest, No Cluster Required)
 
 | File | Tests | What It Proves |

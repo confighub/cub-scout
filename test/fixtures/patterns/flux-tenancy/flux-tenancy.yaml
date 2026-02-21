@@ -1,0 +1,238 @@
+# Flux multi-tenant cluster for ownership detection tests.
+#
+# Structure:
+#   Platform Kustomization (flux-system) → reconciles platform infra
+#   3 Tenant Kustomizations (team-alpha, team-beta, team-gamma)
+#   Each tenant has a Deployment with Flux ownership labels
+#   Platform also manages a shared Deployment (ingress-nginx)
+#
+# Ownership signals: kustomize.toolkit.fluxcd.io/name + /namespace labels
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-alpha
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-beta
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-gamma
+---
+# Flux GitRepository source
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: platform-repo
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://git.example.local/platform.git
+  ref:
+    branch: main
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+  artifact:
+    revision: main@sha1:abc123def456
+    lastUpdateTime: "2025-01-15T10:00:00Z"
+---
+# Platform Kustomization — manages shared infra
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: platform-infra
+  namespace: flux-system
+spec:
+  sourceRef:
+    kind: GitRepository
+    name: platform-repo
+  path: ./infra
+  interval: 10m
+  targetNamespace: platform
+  prune: true
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+  lastAppliedRevision: main@sha1:abc123def456
+---
+# Tenant Kustomizations
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tenant-alpha
+  namespace: flux-system
+spec:
+  sourceRef:
+    kind: GitRepository
+    name: platform-repo
+  path: ./tenants/alpha
+  interval: 10m
+  targetNamespace: team-alpha
+  prune: true
+  serviceAccountName: tenant-alpha
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+  lastAppliedRevision: main@sha1:abc123def456
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tenant-beta
+  namespace: flux-system
+spec:
+  sourceRef:
+    kind: GitRepository
+    name: platform-repo
+  path: ./tenants/beta
+  interval: 10m
+  targetNamespace: team-beta
+  prune: true
+  serviceAccountName: tenant-beta
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+  lastAppliedRevision: main@sha1:abc123def456
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tenant-gamma
+  namespace: flux-system
+spec:
+  sourceRef:
+    kind: GitRepository
+    name: platform-repo
+  path: ./tenants/gamma
+  interval: 10m
+  targetNamespace: team-gamma
+  prune: true
+  serviceAccountName: tenant-gamma
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+  lastAppliedRevision: main@sha1:abc123def456
+---
+# Platform-managed shared Deployment (ingress-nginx)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-nginx
+  namespace: platform
+  labels:
+    app: ingress-nginx
+    kustomize.toolkit.fluxcd.io/name: platform-infra
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ingress-nginx
+  template:
+    metadata:
+      labels:
+        app: ingress-nginx
+        kustomize.toolkit.fluxcd.io/name: platform-infra
+        kustomize.toolkit.fluxcd.io/namespace: flux-system
+    spec:
+      containers:
+        - name: controller
+          image: registry.k8s.io/ingress-nginx/controller:v1.10.0
+---
+# Tenant Alpha workload
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpha-api
+  namespace: team-alpha
+  labels:
+    app: alpha-api
+    kustomize.toolkit.fluxcd.io/name: tenant-alpha
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: alpha-api
+  template:
+    metadata:
+      labels:
+        app: alpha-api
+        kustomize.toolkit.fluxcd.io/name: tenant-alpha
+        kustomize.toolkit.fluxcd.io/namespace: flux-system
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/pause:3.9
+---
+# Tenant Beta workload
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beta-worker
+  namespace: team-beta
+  labels:
+    app: beta-worker
+    kustomize.toolkit.fluxcd.io/name: tenant-beta
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: beta-worker
+  template:
+    metadata:
+      labels:
+        app: beta-worker
+        kustomize.toolkit.fluxcd.io/name: tenant-beta
+        kustomize.toolkit.fluxcd.io/namespace: flux-system
+    spec:
+      containers:
+        - name: worker
+          image: registry.k8s.io/pause:3.9
+---
+# Tenant Gamma workload
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gamma-frontend
+  namespace: team-gamma
+  labels:
+    app: gamma-frontend
+    kustomize.toolkit.fluxcd.io/name: tenant-gamma
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gamma-frontend
+  template:
+    metadata:
+      labels:
+        app: gamma-frontend
+        kustomize.toolkit.fluxcd.io/name: tenant-gamma
+        kustomize.toolkit.fluxcd.io/namespace: flux-system
+    spec:
+      containers:
+        - name: web
+          image: registry.k8s.io/pause:3.9
