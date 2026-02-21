@@ -374,6 +374,32 @@ if [[ $CURRENT_IDX -ge 6 ]]; then
 
         subsection "Import Preview"
         run_test "import dry-run" "./cub-scout import -n boutique --dry-run"
+
+        subsection "Import E2E (fixtures)"
+        # Deploy test fixtures and run dry-run import against them
+        E2E_NS="e2e-prove-$(date +%s)"
+        kubectl create namespace "$E2E_NS" > /dev/null 2>&1
+        kubectl apply -f test/fixtures/import-e2e/ -n "$E2E_NS" > /dev/null 2>&1
+        sleep 3
+
+        run_test "import dry-run JSON (fixtures)" "./cub-scout import -n $E2E_NS --dry-run --json | python3 -c 'import sys,json; d=json.load(sys.stdin); print(f\"workloads={len(d[\"workloads\"])}, appSpace={d[\"suggestion\"][\"appSpace\"]}\")'"
+
+        # Full round-trip only if CUB_E2E_FULL=1
+        if [[ "${CUB_E2E_FULL:-0}" == "1" ]]; then
+            subsection "Import Full Round-Trip"
+            SPACE_NAME="e2e-prove-$(date +%s)"
+            run_test "import apply" "./cub-scout import -n $E2E_NS -y --no-log"
+            # Verify space was created
+            run_test "verify space" "cub space list --json | python3 -c 'import sys,json; spaces=[s[\"Slug\"] for s in json.load(sys.stdin)]; print(\"Spaces:\", spaces[:5])'"
+            # Cleanup the space (find it from the dry-run output)
+            CREATED_SPACE=$(./cub-scout import -n "$E2E_NS" --dry-run --json 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin)["suggestion"]["appSpace"])' 2>/dev/null)
+            if [[ -n "$CREATED_SPACE" ]]; then
+                run_test "cleanup space" "cub space delete $CREATED_SPACE --recursive"
+            fi
+        fi
+
+        # Always clean up the namespace
+        kubectl delete namespace "$E2E_NS" --ignore-not-found --wait=false > /dev/null 2>&1
     fi
 fi
 
