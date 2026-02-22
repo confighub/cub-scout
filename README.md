@@ -86,6 +86,8 @@ Need contract docs for automation?
 
 cub-scout works fully offline. Connected mode is optional.
 
+> **Release scope:** v1.0 focuses on standalone use cases — cluster exploration, ownership detection, tracing, and scanning with no external dependencies. The 1.x series will progressively add connected use cases for [ConfigHub](https://confighub.com) (import, fleet queries, history, and policy context).
+
 | Feature | Standalone | Connected |
 |---------|:----------:|:---------:|
 | Map cluster resources | ✓ | ✓ |
