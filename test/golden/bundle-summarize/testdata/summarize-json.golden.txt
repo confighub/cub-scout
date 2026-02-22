@@ -1,0 +1,42 @@
+{
+  "capturedAt": "\u003cTIMESTAMP\u003e",
+  "changes": {
+    "categories": [
+      "capacity",
+      "config",
+      "image"
+    ],
+    "driftCount": 3,
+    "eventCount": 2,
+    "objects": [
+      "Deployment:payments/payments-api",
+      "HPA:payments/payments-hpa"
+    ]
+  },
+  "cluster": "prod-east",
+  "evidence": {
+    "bundlePath": "\u003cBUNDLE_PATH\u003e"
+  },
+  "formatVersion": "v1",
+  "gitContext": {
+    "branch": "main",
+    "commit": "abc\u003cELAPSED\u003eef456",
+    "remote": "https://github.com/acme/apps"
+  },
+  "namespace": "payments",
+  "riskSignals": [
+    {
+      "level": "critical",
+      "message": "2 critical drift finding(s)"
+    },
+    {
+      "level": "warning",
+      "message": "1 warning drift finding(s)"
+    },
+    {
+      "level": "warning",
+      "message": "Warning events detected in timeline"
+    }
+  ],
+  "target": "Deployment/payments-api"
+}

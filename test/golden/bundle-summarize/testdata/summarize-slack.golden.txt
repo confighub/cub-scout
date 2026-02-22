@@ -1,0 +1,63 @@
+{
+  "blocks": [
+    {
+      "text": {
+        "text": "cub-scout Diagnostic Summary",
+        "type": "plain_text"
+      },
+      "type": "header"
+    },
+    {
+      "fields": [
+        {
+          "text": "*Target:*\nDeployment/payments-api",
+          "type": "mrkdwn"
+        },
+        {
+          "text": "*Captured:*\n\u003cTIMESTAMP\u003e",
+          "type": "mrkdwn"
+        }
+      ],
+      "type": "section"
+    },
+    {
+      "fields": [
+        {
+          "text": "*Cluster:*\nprod-east",
+          "type": "mrkdwn"
+        },
+        {
+          "text": "*Namespace:*\npayments",
+          "type": "mrkdwn"
+        }
+      ],
+      "type": "section"
+    },
+    {
+      "text": {
+        "text": ":mag: 3 drift finding(s) | :clock3: 2 event(s)",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "text": {
+        "text": ":rotating_light: 2 critical drift finding(s)\n:warning: 1 warning drift finding(s)\n:warning: Warning events detected in timeline",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "elements": [
+        {
+          "text": "Bundle: `\u003cBUNDLE_PATH\u003e`",
+          "type": "mrkdwn"
+        }
+      ],
+      "type": "context"
+    }
+  ]
+}

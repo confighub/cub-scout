@@ -1,0 +1,23 @@
+{
+  "formatVersion": "v1",
+  "cubScoutVersion": "v1.0.0-test",
+  "createdAt": "2026-02-06T14:30:00Z",
+  "target": {
+    "kind": "Deployment",
+    "name": "payments-api",
+    "namespace": "payments",
+    "cluster": "prod-east"
+  },
+  "contents": {
+    "hasSession": false,
+    "hasDrift": true,
+    "hasEvents": true,
+    "hasLogs": false,
+    "hasAttribution": false
+  },
+  "gitContext": {
+    "commitSHA": "abc123def456",
+    "branch": "main",
+    "remoteURL": "https://github.com/acme/apps"
+  }
+}

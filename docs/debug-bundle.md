@@ -191,6 +191,29 @@ cub-scout bundle replay <path>
 - **drift** — Re-render drift findings (same output as `drift` command)
 - **correlation** — Re-render drift-debug correlation narrative
 
+### Summarize a Bundle
+
+Generate evidence summaries for external systems (Jira, PRs, Slack, CI/CD):
+
+```bash
+cub-scout bundle summarize <path> [--format ticket|pr|slack|ascii|json] [--out file]
+```
+
+**Formats:**
+
+| Format | Use Case |
+|--------|----------|
+| `ascii` | Terminal display (default) |
+| `json` | Machine consumption, CI/CD pipelines |
+| `ticket` | Jira, ServiceNow, GitHub Issues |
+| `pr` | Pull request descriptions |
+| `slack` | Slack Block Kit notifications |
+
+Output is derived entirely from bundle contents — no cluster or external access.
+Same bundle always produces identical output.
+
+For the full schema, see [Evidence Export v1](reference/evidence-export-v1.md).
+
 ---
 
 ## CI Integration

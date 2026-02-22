@@ -85,7 +85,9 @@ type Space struct {
 	Slug string
 }
 
-// RequireSpace fails the test if no active space is set in cub.
+// RequireSpace fails the test if no active space is set in cub, or if that
+// space no longer exists in ConfigHub. This prevents stale default-space
+// references (e.g. from a deleted E2E import space) from causing hard failures.
 func RequireSpace(t *testing.T) Space {
 	t.Helper()
 	RequireCubAuth(t)
@@ -99,6 +101,17 @@ func RequireSpace(t *testing.T) Space {
 	slug := strings.TrimSpace(string(output))
 	if slug == "" || slug == "null" {
 		t.Skip("PRECONDITION: Active space is null or empty")
+	}
+
+	// Validate the space actually exists — a stale default space (e.g. from a
+	// deleted E2E import run) will pass the checks above but fail every command.
+	cmd = exec.Command("cub", "unit", "list", "--json", "--space", slug)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		if strings.Contains(string(out), "not found") ||
+			strings.Contains(string(out), "failed to resolve space") {
+			t.Skipf("PRECONDITION: Default space %q no longer exists — run: cub context set space <valid-slug>", slug)
+		}
+		t.Skipf("PRECONDITION: Cannot access space %q: %s", slug, string(out))
 	}
 
 	return Space{Slug: slug}
