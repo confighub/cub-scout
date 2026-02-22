@@ -122,6 +122,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [scripts/](scripts/) | **Integration Code** | k9s, Slack, CI/CD scripts | Adding to your workflow |
 | [integrations/](integrations/) | **Plugins** | ArgoCD extension, Flux operator | Building on the agent |
 | [rm-demos-argocd/](rm-demos-argocd/) | **Simulation** | Rendered Manifest simulations | Sales presentations |
+| [demo-data/](demo-data/) | **Working** | App-Deployment-Target model (6 apps × 2 targets) | ConfigHub labels, version skew, bridge patterns |
 | [app-config-rtmsg/](app-config-rtmsg/) | **Concept Demo** | Non-K8s config management TUI | Understanding Hub/Space model |
 
 > **Note:** For **real GitOps applications** you can deploy, see [Real-World Examples](#real-world-examples) below.

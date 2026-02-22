@@ -385,7 +385,8 @@ const (
 	viewportMaxHeight = 40
 )
 
-// createTestModel creates a LocalClusterModel with realistic test data
+// createTestModel creates a LocalClusterModel with realistic test data.
+// Uses fixed clusterName and contextName to avoid dependence on local kubectl state.
 func createTestModel(width, height int) LocalClusterModel {
 	m := initialLocalModel()
 	m.ready = true
@@ -393,6 +394,7 @@ func createTestModel(width, height int) LocalClusterModel {
 	m.width = width
 	m.height = height
 	m.clusterName = "test-cluster"
+	m.contextName = "test-context"
 
 	// Realistic workload entries
 	m.entries = []MapEntry{

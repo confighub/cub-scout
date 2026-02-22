@@ -1,4 +1,4 @@
- Standalone  │ Cluster: test-cluster │ Context: default
+ Standalone  │ Cluster: test-cluster │ Context: test-context
 ╭──────────────────────────────────────╮ ╭──────────────────────────────────────╮
 │ SUMMARY                              │ │ WORKLOADS                            │
 │ Total: 6 workloads                   │ │                                      │

@@ -1,4 +1,4 @@
- Standalone  │ Cluster: test-cluster │ Context: default
+ Standalone  │ Cluster: test-cluster │ Context: test-context
  1 FAILURE(S)
 
   Deployers  3/3

@@ -69,6 +69,22 @@ cd examples/platform-example
 | [drift/resource-drift/](../examples/drift/resource-drift/) | Resource requests/limits drift |
 | [drift/image-policy-drift/](../examples/drift/image-policy-drift/) | Image pull policy drift |
 
+### App-Deployment-Target Examples
+
+| Example | Shows |
+|---------|-------|
+| [demo-data/](../examples/demo-data/) | 6 apps × 2 targets with ConfigHub labels, version skew, bridge patterns |
+
+```bash
+# Scan manifests (no cluster required)
+./cub-scout scan --file examples/demo-data/manifests.yaml
+
+# Apply and explore
+kubectl apply -f examples/demo-data/manifests.yaml
+./cub-scout map workloads
+./cub-scout patterns detect
+```
+
 ### Crossplane Examples
 
 | Example | Shows |

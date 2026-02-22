@@ -1,7 +1,15 @@
 PATTERNS LIST
 Schema: patterns.v1
 
-Registered patterns (6):
+Registered patterns (10):
+  - delivery.bridge.confighub_oci
+    ConfigHub → OCI Delivery Bridge
+  - delivery.bridge.git_argocd
+    Git → ArgoCD Delivery Bridge
+  - delivery.bridge.git_flux
+    Git → Flux Delivery Bridge
+  - delivery.bridge.live_import
+    Live Import (ConfigHub without GitOps)
   - gitops.argocd.applicationset_generators
     ApplicationSet Generator Summary
   - gitops.argocd.resources_present

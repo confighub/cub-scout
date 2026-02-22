@@ -63,8 +63,8 @@ func TestMapStatus_Healthy(t *testing.T) {
 	createDeployment(t, ns, "nginx-healthy", "nginx:alpine")
 	waitForDeploymentReady(t, ns, "nginx-healthy", 60*time.Second)
 
-	// Run map status
-	result := golden.RunCubScout(t, "map", "status")
+	// Run map status scoped to test namespace (avoids cross-test pollution)
+	result := golden.RunCubScout(t, "map", "status", "--namespace", ns)
 
 	// Per cli-contract.md: exit code 0 for "All healthy"
 	golden.AssertExitCode(t, 0, result)
@@ -102,8 +102,8 @@ func TestMapStatus_Problems(t *testing.T) {
 	// Wait a moment for the deployment to register as not ready
 	time.Sleep(3 * time.Second)
 
-	// Run map status
-	result := golden.RunCubScout(t, "map", "status")
+	// Run map status scoped to test namespace (avoids cross-test pollution)
+	result := golden.RunCubScout(t, "map", "status", "--namespace", ns)
 
 	// Per cli-contract.md: exit code 1 for "Some unhealthy or error"
 	golden.AssertExitCode(t, 1, result)
@@ -124,19 +124,21 @@ func TestMapStatus_Problems(t *testing.T) {
 // TestMapStatus_EmptyBaseline verifies map status output on a baseline empty state.
 // Expected: ✓ healthy: 0/0 deployers, 0/0 workloads + exit code 0.
 // Reference: cli-contract.md - 0/0 is considered healthy (nothing unhealthy).
-// This test cleans up any test namespaces first and waits for deletion.
+// Uses --namespace on a dedicated empty namespace to avoid cross-test pollution.
 func TestMapStatus_EmptyBaseline(t *testing.T) {
 	requireCluster(t)
 	requireGolden(t, "empty-baseline")
 
-	// Clean up any test namespaces that might exist and wait for full deletion
-	cleanupNamespaceAndWait(t, "cub-scout-test-healthy")
-	cleanupNamespaceAndWait(t, "cub-scout-test-problems")
+	// Use a dedicated empty namespace — no dependence on global cluster state
+	ns := "cub-scout-test-empty"
+	cleanupNamespaceAndWait(t, ns)
+	createNamespace(t, ns)
+	defer cleanupNamespace(t, ns)
 
-	// Run map status on clean cluster
-	result := golden.RunCubScout(t, "map", "status")
+	// Run map status scoped to the empty namespace
+	result := golden.RunCubScout(t, "map", "status", "--namespace", ns)
 
-	// Empty cluster with 0/0 deployers and 0/0 workloads is healthy
+	// Empty namespace with 0/0 deployers and 0/0 workloads is healthy
 	golden.AssertExitCode(t, 0, result)
 
 	// Normalize output

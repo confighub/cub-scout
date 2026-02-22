@@ -691,6 +691,85 @@ with reduced evidence; enriched when `--git-root` is provided.
 
 ---
 
+### delivery.bridge.git_flux (v1.1+)
+
+**Category:** delivery
+
+Detects Git → Flux delivery pipelines by identifying GitRepository sources connected
+through Kustomization/HelmRelease deployers to workloads with Flux labels.
+
+**Prerequisites:**
+- `requires_any_of_kinds`: `["GitRepository"]`
+- Also requires at least one: `Kustomization` or `HelmRelease`
+
+**Status logic:**
+- `pass`: Git → Flux delivery bridge detected (GitRepository + deployer + Flux-labeled workloads)
+- `skip`: No GitRepository nodes or no Flux deployer nodes in graph
+
+**Findings:**
+- Info: "Git → Flux delivery bridge: N sources, M deployers, P managed workloads"
+
+---
+
+### delivery.bridge.git_argocd (v1.1+)
+
+**Category:** delivery
+
+Detects Git → ArgoCD delivery pipelines by identifying Application deployers connected
+to workloads with `argocd.argoproj.io/instance` labels.
+
+**Prerequisites:**
+- `requires_any_of_kinds`: `["Application"]`
+
+**Status logic:**
+- `pass`: Git → ArgoCD delivery bridge detected (Application + ArgoCD-labeled workloads)
+- `skip`: No Application nodes in graph
+
+**Findings:**
+- Info: "Git → ArgoCD delivery bridge: N Applications, M managed workloads"
+
+---
+
+### delivery.bridge.confighub_oci (v1.1+)
+
+**Category:** delivery
+
+Detects ConfigHub → OCI delivery pipelines by identifying OCIRepository sources with
+ConfigHub origin (URL pattern or labels) connected to workloads with both deployer
+and `confighub.com/UnitSlug` labels.
+
+**Prerequisites:**
+- `requires_any_of_kinds`: `["OCIRepository"]`
+
+**Status logic:**
+- `pass`: ConfigHub → OCI delivery bridge detected (OCIRepository with ConfigHub evidence)
+- `skip`: No OCIRepository nodes in graph
+
+**Findings:**
+- Info: "ConfigHub → OCI delivery bridge: N OCI sources with ConfigHub origin"
+
+---
+
+### delivery.bridge.live_import (v1.1+)
+
+**Category:** delivery
+
+Detects live-imported resources that have ConfigHub ownership (`confighub.com/UnitSlug` label)
+but no GitOps deployer labels (Flux, ArgoCD, or Helm). These are resources managed by
+ConfigHub via direct import rather than through a GitOps delivery pipeline.
+
+**Prerequisites:**
+- `requires_any_of_kinds`: `["Deployment", "StatefulSet", "DaemonSet"]`
+
+**Status logic:**
+- `pass`: Live-imported resources detected (ConfigHub labels without GitOps deployer labels)
+- `skip`: No workload nodes in graph
+
+**Findings:**
+- Info: "Live import: N resources with ConfigHub ownership but no GitOps deployer"
+
+---
+
 ## Schema Version
 
 The schema version is `patterns.v1`. Changes to the schema require a new version.

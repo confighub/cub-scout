@@ -288,6 +288,142 @@ func BenchmarkOwnershipDetection_500Resources(b *testing.B) {
 	}
 }
 
+// BenchmarkAttributionGraphBuild_1000Nodes measures graph construction at 1000 nodes.
+func BenchmarkAttributionGraphBuild_1000Nodes(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = buildScaleGraph(1000)
+	}
+}
+
+// BenchmarkAttributionGraphBuild_2000Nodes measures graph construction at 2000 nodes.
+func BenchmarkAttributionGraphBuild_2000Nodes(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = buildScaleGraph(2000)
+	}
+}
+
+// TestAttributionGraphBuild_1000Nodes_Within3s asserts 1000-node graph completes within 3s.
+func TestAttributionGraphBuild_1000Nodes_Within3s(t *testing.T) {
+	start := time.Now()
+	graph := buildScaleGraph(1000)
+	_ = RenderAttributionGraphASCII(graph)
+
+	elapsed := time.Since(start)
+	if elapsed > 3*time.Second {
+		t.Errorf("1000-node graph build+render took %v (want < 3s)", elapsed)
+	}
+	t.Logf("1000-node graph build+render: %v", elapsed)
+}
+
+// TestAttributionGraphBuild_2000Nodes_Within5s asserts 2000-node graph completes within 5s.
+func TestAttributionGraphBuild_2000Nodes_Within5s(t *testing.T) {
+	start := time.Now()
+	graph := buildScaleGraph(2000)
+	_ = RenderAttributionGraphASCII(graph)
+
+	elapsed := time.Since(start)
+	if elapsed > 5*time.Second {
+		t.Errorf("2000-node graph build+render took %v (want < 5s)", elapsed)
+	}
+	t.Logf("2000-node graph build+render: %v", elapsed)
+}
+
+// BenchmarkOwnershipDetection_1000Resources measures ownership detection at 1000 resources.
+func BenchmarkOwnershipDetection_1000Resources(b *testing.B) {
+	objs := makeMixedOwnershipObjects(1000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, obj := range objs {
+			DetectOwnership(obj)
+		}
+	}
+}
+
+// BenchmarkOwnershipDetection_2000Resources measures ownership detection at 2000 resources.
+func BenchmarkOwnershipDetection_2000Resources(b *testing.B) {
+	objs := makeMixedOwnershipObjects(2000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, obj := range objs {
+			DetectOwnership(obj)
+		}
+	}
+}
+
+// TestOwnershipDetection_1000_Within2s asserts 1000-resource detection completes within 2s.
+func TestOwnershipDetection_1000_Within2s(t *testing.T) {
+	objs := makeMixedOwnershipObjects(1000)
+
+	start := time.Now()
+	for _, obj := range objs {
+		DetectOwnership(obj)
+	}
+	elapsed := time.Since(start)
+
+	if elapsed > 2*time.Second {
+		t.Errorf("ownership detection for 1000 resources took %v (want < 2s)", elapsed)
+	}
+	t.Logf("ownership detection for 1000 resources: %v", elapsed)
+}
+
+// TestOwnershipDetection_2000_Within3s asserts 2000-resource detection completes within 3s.
+func TestOwnershipDetection_2000_Within3s(t *testing.T) {
+	objs := makeMixedOwnershipObjects(2000)
+
+	start := time.Now()
+	for _, obj := range objs {
+		DetectOwnership(obj)
+	}
+	elapsed := time.Since(start)
+
+	if elapsed > 3*time.Second {
+		t.Errorf("ownership detection for 2000 resources took %v (want < 3s)", elapsed)
+	}
+	t.Logf("ownership detection for 2000 resources: %v", elapsed)
+}
+
+// buildScaleGraph creates an n-node attribution graph with mixed ownership types and edges.
+func buildScaleGraph(n int) *AttributionGraph {
+	builder := NewAttributionGraphBuilder()
+
+	for j := 0; j < n; j++ {
+		nodeType := NodeK8sObject
+		switch j % 5 {
+		case 0:
+			nodeType = NodeClaim
+		case 1:
+			nodeType = NodeXR
+		case 2:
+			nodeType = NodeMR
+		case 3:
+			nodeType = NodeClaim
+		}
+
+		builder.AddNode(AttributionNode{
+			Type: nodeType,
+			Ref: AttributionRef{
+				Kind:      "Deployment",
+				Name:      fmt.Sprintf("workload-%04d", j),
+				Namespace: fmt.Sprintf("ns-%02d", j%20),
+				UID:       fmt.Sprintf("uid-%04d", j),
+			},
+			Present: true,
+		})
+
+		if j%5 != 0 && j >= 5 {
+			parentIdx := (j / 5) * 5
+			builder.AddEdge(AttributionEdge{
+				Type:     EdgeOwns,
+				From:     fmt.Sprintf("claim:uid:uid-%04d", parentIdx),
+				To:       fmt.Sprintf("k8s_object:uid:uid-%04d", j),
+				Evidence: EvidenceOwnerReference,
+			})
+		}
+	}
+
+	return builder.Build()
+}
+
 // makeMixedOwnershipObjects creates n objects with varied ownership labels.
 func makeMixedOwnershipObjects(n int) []*unstructured.Unstructured {
 	objs := make([]*unstructured.Unstructured, n)

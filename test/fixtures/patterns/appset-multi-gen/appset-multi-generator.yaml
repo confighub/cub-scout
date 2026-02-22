@@ -1,0 +1,313 @@
+# ApplicationSet with multiple generators for ownership detection tests.
+#
+# Structure:
+#   ApplicationSet "multi-env-apps" uses:
+#     - List generator: [dev, staging, prod] environments
+#     - List generator: [us-east, eu-west] clusters
+#   Produces 5 Applications (3 env + 2 cluster-scoped)
+#   Each Application manages a Deployment with argocd.argoproj.io/instance label
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-prod
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infra-us-east
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infra-eu-west
+---
+# ApplicationSet with multiple generators
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: multi-env-apps
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            namespace: app-dev
+          - env: staging
+            namespace: app-staging
+          - env: prod
+            namespace: app-prod
+    - list:
+        elements:
+          - env: us-east
+            namespace: infra-us-east
+          - env: eu-west
+            namespace: infra-eu-west
+  template:
+    metadata:
+      name: app-{{env}}
+    spec:
+      project: default
+      source:
+        repoURL: https://git.example.local/apps.git
+        targetRevision: main
+        path: envs/{{env}}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+status:
+  conditions:
+    - type: ResourcesUpToDate
+      status: "True"
+---
+# Generated Application: dev
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-dev
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/application-set-name: multi-env-apps
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/apps.git
+    targetRevision: main
+    path: envs/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app-dev
+status:
+  sync:
+    status: Synced
+    revision: a1b2c3d4e5f6
+  health:
+    status: Healthy
+---
+# Generated Application: staging
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-staging
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/application-set-name: multi-env-apps
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/apps.git
+    targetRevision: main
+    path: envs/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app-staging
+status:
+  sync:
+    status: Synced
+    revision: b2c3d4e5f6a1
+  health:
+    status: Healthy
+---
+# Generated Application: prod
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-prod
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/application-set-name: multi-env-apps
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/apps.git
+    targetRevision: main
+    path: envs/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app-prod
+status:
+  sync:
+    status: Synced
+    revision: c3d4e5f6a1b2
+  health:
+    status: Healthy
+---
+# Generated Application: us-east
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-us-east
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/application-set-name: multi-env-apps
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/apps.git
+    targetRevision: main
+    path: envs/us-east
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infra-us-east
+status:
+  sync:
+    status: Synced
+    revision: d4e5f6a1b2c3
+  health:
+    status: Healthy
+---
+# Generated Application: eu-west
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-eu-west
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/application-set-name: multi-env-apps
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.local/apps.git
+    targetRevision: main
+    path: envs/eu-west
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infra-eu-west
+status:
+  sync:
+    status: Synced
+    revision: e5f6a1b2c3d4
+  health:
+    status: Healthy
+---
+# Leaf Deployments managed by generated Applications
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: app-dev
+  labels:
+    app: web-app
+    argocd.argoproj.io/instance: app-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+        argocd.argoproj.io/instance: app-dev
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: app-staging
+  labels:
+    app: web-app
+    argocd.argoproj.io/instance: app-staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+        argocd.argoproj.io/instance: app-staging
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: app-prod
+  labels:
+    app: web-app
+    argocd.argoproj.io/instance: app-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+        argocd.argoproj.io/instance: app-prod
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: infra-agent
+  namespace: infra-us-east
+  labels:
+    app: infra-agent
+    argocd.argoproj.io/instance: app-us-east
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infra-agent
+  template:
+    metadata:
+      labels:
+        app: infra-agent
+        argocd.argoproj.io/instance: app-us-east
+    spec:
+      containers:
+        - name: agent
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: infra-agent
+  namespace: infra-eu-west
+  labels:
+    app: infra-agent
+    argocd.argoproj.io/instance: app-eu-west
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infra-agent
+  template:
+    metadata:
+      labels:
+        app: infra-agent
+        argocd.argoproj.io/instance: app-eu-west
+    spec:
+      containers:
+        - name: agent
+          image: registry.k8s.io/pause:3.9

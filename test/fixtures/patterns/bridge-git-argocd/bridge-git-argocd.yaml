@@ -1,0 +1,32 @@
+# Bridge fixture: Git → ArgoCD delivery chain
+# Application → 2 Deployments with argocd.argoproj.io/instance labels
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-app
+  namespace: argocd
+spec:
+  source:
+    repoURL: https://github.com/org/app-repo
+    path: frontend/
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: web
+  labels:
+    argocd.argoproj.io/instance: frontend-app
+spec:
+  replicas: 2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-worker
+  namespace: web
+  labels:
+    argocd.argoproj.io/instance: frontend-app
+spec:
+  replicas: 1

@@ -33,6 +33,21 @@ levels:
     expected_tests: 170
     coverage_target: 60%
 
+  # Level 1.5: Scale tests (< 2 minutes, no cluster)
+  scale:
+    description: "Scale and performance tests - pattern ownership, scan at 1000/2000 resources, TUI render benchmarks"
+    requirements:
+      cluster: false
+      flux: false
+      argocd: false
+      confighub: false
+    tests:
+      - go test ./test/fixtures/patterns/ -v
+      - go test ./test/scale/ -v -timeout 120s
+      - go test ./pkg/agent/ -run 'TestAttributionGraphBuild_1000|TestAttributionGraphBuild_2000|TestOwnershipDetection_1000|TestOwnershipDetection_2000' -v
+      - go test ./cmd/cub-scout/ -run 'TestTUIRender_|TestTUIMemory_' -v
+    expected_tests: 37
+
   # Level 2: Integration (< 2 minutes, needs cluster)
   integration:
     description: "Integration tests against real cluster"

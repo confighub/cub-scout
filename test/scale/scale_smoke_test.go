@@ -201,6 +201,56 @@ func TestScaleScanFile_500Resources_JSON(t *testing.T) {
 		elapsed, result.ExitCode, len(result.Stdout))
 }
 
+// TestScaleScanFile_1000Resources verifies that scan --file completes on 1000
+// mixed-ownership resources without panic and within 10 seconds.
+func TestScaleScanFile_1000Resources(t *testing.T) {
+	fixturePath := generateScaleFixture(t, 1000)
+
+	start := time.Now()
+	result := golden.RunCubScout(t, "scan", "--file", fixturePath)
+	elapsed := time.Since(start)
+
+	if result.ExitCode != 0 && result.ExitCode != 1 {
+		t.Errorf("unexpected exit code %d (want 0 or 1)\nstderr: %s", result.ExitCode, result.Stderr)
+	}
+
+	if len(result.Stdout) == 0 {
+		t.Error("scan produced no output for 1000 resources")
+	}
+
+	if elapsed > 10*time.Second {
+		t.Errorf("scan took %v (want < 10s) for 1000 resources", elapsed)
+	}
+
+	t.Logf("scan --file completed in %v for 1000 resources (exit=%d, output=%d bytes)",
+		elapsed, result.ExitCode, len(result.Stdout))
+}
+
+// TestScaleScanFile_2000Resources verifies that scan --file completes on 2000
+// mixed-ownership resources without panic and within 20 seconds.
+func TestScaleScanFile_2000Resources(t *testing.T) {
+	fixturePath := generateScaleFixture(t, 2000)
+
+	start := time.Now()
+	result := golden.RunCubScout(t, "scan", "--file", fixturePath)
+	elapsed := time.Since(start)
+
+	if result.ExitCode != 0 && result.ExitCode != 1 {
+		t.Errorf("unexpected exit code %d (want 0 or 1)\nstderr: %s", result.ExitCode, result.Stderr)
+	}
+
+	if len(result.Stdout) == 0 {
+		t.Error("scan produced no output for 2000 resources")
+	}
+
+	if elapsed > 20*time.Second {
+		t.Errorf("scan took %v (want < 20s) for 2000 resources", elapsed)
+	}
+
+	t.Logf("scan --file completed in %v for 2000 resources (exit=%d, output=%d bytes)",
+		elapsed, result.ExitCode, len(result.Stdout))
+}
+
 // TestScaleScanFile_200Resources verifies scan at a more moderate scale.
 func TestScaleScanFile_200Resources(t *testing.T) {
 	fixturePath := generateScaleFixture(t, 200)

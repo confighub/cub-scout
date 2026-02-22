@@ -1,0 +1,1103 @@
+# demo-data: App-Deployment-Target manifests
+#
+# 6 apps x 2 targets = 12 Deployments + 12 Services
+# Plus Flux source/deployer resources for bridge pattern detection.
+#
+# Labels:
+#   confighub.com/UnitSlug     — ConfigHub unit identity
+#   confighub.com/SpaceName    — ConfigHub space (app-target)
+#   confighub.com/App          — application name
+#   confighub.com/AppOwner     — owning team
+#   confighub.com/TargetRole   — target role (production)
+#   confighub.com/TargetRegion — target region
+#
+# Intentional version skew: eshop-api:4.2.1 (us-prod) vs eshop-api:4.2.0 (eu-prod)
+#
+# Usage:
+#   kubectl apply -f examples/demo-data/manifests.yaml
+#   cub-scout scan --file examples/demo-data/manifests.yaml
+#   cub-scout map workloads
+#   cub-scout patterns detect
+
+# ============================================================
+# Namespaces
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: us-prod-aichat
+  labels:
+    confighub.com/SpaceName: us-prod-aichat
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: us-prod-website
+  labels:
+    confighub.com/SpaceName: us-prod-website
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: us-prod-docs
+  labels:
+    confighub.com/SpaceName: us-prod-docs
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: us-prod-eshop
+  labels:
+    confighub.com/SpaceName: us-prod-eshop
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: us-prod-portal
+  labels:
+    confighub.com/SpaceName: us-prod-portal
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: us-prod-platform
+  labels:
+    confighub.com/SpaceName: us-prod-platform
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eu-prod-aichat
+  labels:
+    confighub.com/SpaceName: eu-prod-aichat
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eu-prod-website
+  labels:
+    confighub.com/SpaceName: eu-prod-website
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eu-prod-docs
+  labels:
+    confighub.com/SpaceName: eu-prod-docs
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eu-prod-eshop
+  labels:
+    confighub.com/SpaceName: eu-prod-eshop
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eu-prod-portal
+  labels:
+    confighub.com/SpaceName: eu-prod-portal
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eu-prod-platform
+  labels:
+    confighub.com/SpaceName: eu-prod-platform
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+---
+
+# ============================================================
+# Flux Sources
+# ============================================================
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: platform-apps
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://github.com/acme-corp/platform-apps
+  ref:
+    branch: main
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: confighub-bundles
+  namespace: flux-system
+  labels:
+    confighub.com/SpaceName: acme-platform
+    confighub.com/UnitSlug: confighub-bundles
+spec:
+  interval: 5m
+  url: oci://registry.confighub.com/acme-corp/bundles
+  ref:
+    tag: latest
+---
+
+# ============================================================
+# Flux Deployers — one Kustomization per app-target
+# ============================================================
+
+# --- us-prod ---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: us-prod-aichat
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/aichat/overlays/us-prod
+  targetNamespace: us-prod-aichat
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: us-prod-website
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/website/overlays/us-prod
+  targetNamespace: us-prod-website
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: us-prod-docs
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/docs/overlays/us-prod
+  targetNamespace: us-prod-docs
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: us-prod-eshop
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/eshop/overlays/us-prod
+  targetNamespace: us-prod-eshop
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: us-prod-portal
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/portal/overlays/us-prod
+  targetNamespace: us-prod-portal
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: us-prod-platform
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/platform/overlays/us-prod
+  targetNamespace: us-prod-platform
+  prune: true
+---
+
+# --- eu-prod ---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: eu-prod-aichat
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/aichat/overlays/eu-prod
+  targetNamespace: eu-prod-aichat
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: eu-prod-website
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/website/overlays/eu-prod
+  targetNamespace: eu-prod-website
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: eu-prod-docs
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/docs/overlays/eu-prod
+  targetNamespace: eu-prod-docs
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: eu-prod-eshop
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/eshop/overlays/eu-prod
+  targetNamespace: eu-prod-eshop
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: eu-prod-portal
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/portal/overlays/eu-prod
+  targetNamespace: eu-prod-portal
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: eu-prod-platform
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: platform-apps
+  path: ./apps/platform/overlays/eu-prod
+  targetNamespace: eu-prod-platform
+  prune: true
+---
+
+# ConfigHub OCI deployer
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: confighub-deploy
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: OCIRepository
+    name: confighub-bundles
+  prune: true
+---
+
+# ============================================================
+# Workloads — US-PROD
+# ============================================================
+
+# --- aichat (us-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aichat-api
+  namespace: us-prod-aichat
+  labels:
+    app: aichat-api
+    confighub.com/UnitSlug: aichat-us-prod
+    confighub.com/SpaceName: us-prod-aichat
+    confighub.com/App: aichat
+    confighub.com/AppOwner: ai-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+    kustomize.toolkit.fluxcd.io/name: us-prod-aichat
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aichat-api
+  template:
+    metadata:
+      labels:
+        app: aichat-api
+    spec:
+      containers:
+        - name: api
+          image: registry.acme.com/aichat-api:2.1.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - name: REGION
+              value: us-east-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aichat-api
+  namespace: us-prod-aichat
+  labels:
+    confighub.com/UnitSlug: aichat-us-prod
+    confighub.com/SpaceName: us-prod-aichat
+    confighub.com/App: aichat
+    kustomize.toolkit.fluxcd.io/name: us-prod-aichat
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: aichat-api
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+
+# --- website (us-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-frontend
+  namespace: us-prod-website
+  labels:
+    app: website-frontend
+    confighub.com/UnitSlug: website-us-prod
+    confighub.com/SpaceName: us-prod-website
+    confighub.com/App: website
+    confighub.com/AppOwner: product-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+    kustomize.toolkit.fluxcd.io/name: us-prod-website
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: website-frontend
+  template:
+    metadata:
+      labels:
+        app: website-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: registry.acme.com/website-frontend:3.8.2
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          env:
+            - name: LOG_LEVEL
+              value: warn
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: website-frontend
+  namespace: us-prod-website
+  labels:
+    confighub.com/UnitSlug: website-us-prod
+    confighub.com/SpaceName: us-prod-website
+    confighub.com/App: website
+    kustomize.toolkit.fluxcd.io/name: us-prod-website
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: website-frontend
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+
+# --- docs (us-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docs-server
+  namespace: us-prod-docs
+  labels:
+    app: docs-server
+    confighub.com/UnitSlug: docs-us-prod
+    confighub.com/SpaceName: us-prod-docs
+    confighub.com/App: docs
+    confighub.com/AppOwner: product-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+    kustomize.toolkit.fluxcd.io/name: us-prod-docs
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: docs-server
+  template:
+    metadata:
+      labels:
+        app: docs-server
+    spec:
+      containers:
+        - name: server
+          image: registry.acme.com/docs-server:1.4.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: LOG_LEVEL
+              value: info
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docs-server
+  namespace: us-prod-docs
+  labels:
+    confighub.com/UnitSlug: docs-us-prod
+    confighub.com/SpaceName: us-prod-docs
+    confighub.com/App: docs
+    kustomize.toolkit.fluxcd.io/name: us-prod-docs
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: docs-server
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+
+# --- eshop (us-prod) — version 4.2.1 (NEWER than eu-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eshop-api
+  namespace: us-prod-eshop
+  labels:
+    app: eshop-api
+    confighub.com/UnitSlug: eshop-us-prod
+    confighub.com/SpaceName: us-prod-eshop
+    confighub.com/App: eshop
+    confighub.com/AppOwner: commerce-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+    kustomize.toolkit.fluxcd.io/name: us-prod-eshop
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: eshop-api
+  template:
+    metadata:
+      labels:
+        app: eshop-api
+    spec:
+      containers:
+        - name: api
+          image: registry.acme.com/eshop-api:4.2.1
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "1"
+              memory: 1Gi
+            limits:
+              cpu: "4"
+              memory: 4Gi
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - name: REGION
+              value: us-east-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eshop-api
+  namespace: us-prod-eshop
+  labels:
+    confighub.com/UnitSlug: eshop-us-prod
+    confighub.com/SpaceName: us-prod-eshop
+    confighub.com/App: eshop
+    kustomize.toolkit.fluxcd.io/name: us-prod-eshop
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: eshop-api
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+
+# --- portal (us-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal-dashboard
+  namespace: us-prod-portal
+  labels:
+    app: portal-dashboard
+    confighub.com/UnitSlug: portal-us-prod
+    confighub.com/SpaceName: us-prod-portal
+    confighub.com/App: portal
+    confighub.com/AppOwner: platform-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+    kustomize.toolkit.fluxcd.io/name: us-prod-portal
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: portal-dashboard
+  template:
+    metadata:
+      labels:
+        app: portal-dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: registry.acme.com/portal-dashboard:1.0.3
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          env:
+            - name: LOG_LEVEL
+              value: info
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portal-dashboard
+  namespace: us-prod-portal
+  labels:
+    confighub.com/UnitSlug: portal-us-prod
+    confighub.com/SpaceName: us-prod-portal
+    confighub.com/App: portal
+    kustomize.toolkit.fluxcd.io/name: us-prod-portal
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: portal-dashboard
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+
+# --- platform (us-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-controller
+  namespace: us-prod-platform
+  labels:
+    app: platform-controller
+    confighub.com/UnitSlug: platform-us-prod
+    confighub.com/SpaceName: us-prod-platform
+    confighub.com/App: platform
+    confighub.com/AppOwner: platform-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: us-east-1
+    kustomize.toolkit.fluxcd.io/name: us-prod-platform
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: platform-controller
+  template:
+    metadata:
+      labels:
+        app: platform-controller
+    spec:
+      containers:
+        - name: controller
+          image: registry.acme.com/platform-controller:0.9.1
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          env:
+            - name: LOG_LEVEL
+              value: info
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-controller
+  namespace: us-prod-platform
+  labels:
+    confighub.com/UnitSlug: platform-us-prod
+    confighub.com/SpaceName: us-prod-platform
+    confighub.com/App: platform
+    kustomize.toolkit.fluxcd.io/name: us-prod-platform
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: platform-controller
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+
+# ============================================================
+# Workloads — EU-PROD
+# ============================================================
+
+# --- aichat (eu-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aichat-api
+  namespace: eu-prod-aichat
+  labels:
+    app: aichat-api
+    confighub.com/UnitSlug: aichat-eu-prod
+    confighub.com/SpaceName: eu-prod-aichat
+    confighub.com/App: aichat
+    confighub.com/AppOwner: ai-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+    kustomize.toolkit.fluxcd.io/name: eu-prod-aichat
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aichat-api
+  template:
+    metadata:
+      labels:
+        app: aichat-api
+    spec:
+      containers:
+        - name: api
+          image: registry.acme.com/aichat-api:2.1.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - name: REGION
+              value: eu-west-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aichat-api
+  namespace: eu-prod-aichat
+  labels:
+    confighub.com/UnitSlug: aichat-eu-prod
+    confighub.com/SpaceName: eu-prod-aichat
+    confighub.com/App: aichat
+    kustomize.toolkit.fluxcd.io/name: eu-prod-aichat
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: aichat-api
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+
+# --- website (eu-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-frontend
+  namespace: eu-prod-website
+  labels:
+    app: website-frontend
+    confighub.com/UnitSlug: website-eu-prod
+    confighub.com/SpaceName: eu-prod-website
+    confighub.com/App: website
+    confighub.com/AppOwner: product-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+    kustomize.toolkit.fluxcd.io/name: eu-prod-website
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: website-frontend
+  template:
+    metadata:
+      labels:
+        app: website-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: registry.acme.com/website-frontend:3.8.2
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          env:
+            - name: LOG_LEVEL
+              value: info
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: website-frontend
+  namespace: eu-prod-website
+  labels:
+    confighub.com/UnitSlug: website-eu-prod
+    confighub.com/SpaceName: eu-prod-website
+    confighub.com/App: website
+    kustomize.toolkit.fluxcd.io/name: eu-prod-website
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: website-frontend
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+
+# --- docs (eu-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docs-server
+  namespace: eu-prod-docs
+  labels:
+    app: docs-server
+    confighub.com/UnitSlug: docs-eu-prod
+    confighub.com/SpaceName: eu-prod-docs
+    confighub.com/App: docs
+    confighub.com/AppOwner: product-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+    kustomize.toolkit.fluxcd.io/name: eu-prod-docs
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docs-server
+  template:
+    metadata:
+      labels:
+        app: docs-server
+    spec:
+      containers:
+        - name: server
+          image: registry.acme.com/docs-server:1.4.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: LOG_LEVEL
+              value: info
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docs-server
+  namespace: eu-prod-docs
+  labels:
+    confighub.com/UnitSlug: docs-eu-prod
+    confighub.com/SpaceName: eu-prod-docs
+    confighub.com/App: docs
+    kustomize.toolkit.fluxcd.io/name: eu-prod-docs
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: docs-server
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+
+# --- eshop (eu-prod) — version 4.2.0 (BEHIND us-prod 4.2.1) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eshop-api
+  namespace: eu-prod-eshop
+  labels:
+    app: eshop-api
+    confighub.com/UnitSlug: eshop-eu-prod
+    confighub.com/SpaceName: eu-prod-eshop
+    confighub.com/App: eshop
+    confighub.com/AppOwner: commerce-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+    kustomize.toolkit.fluxcd.io/name: eu-prod-eshop
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: eshop-api
+  template:
+    metadata:
+      labels:
+        app: eshop-api
+    spec:
+      containers:
+        - name: api
+          image: registry.acme.com/eshop-api:4.2.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - name: REGION
+              value: eu-west-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eshop-api
+  namespace: eu-prod-eshop
+  labels:
+    confighub.com/UnitSlug: eshop-eu-prod
+    confighub.com/SpaceName: eu-prod-eshop
+    confighub.com/App: eshop
+    kustomize.toolkit.fluxcd.io/name: eu-prod-eshop
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: eshop-api
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+
+# --- portal (eu-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal-dashboard
+  namespace: eu-prod-portal
+  labels:
+    app: portal-dashboard
+    confighub.com/UnitSlug: portal-eu-prod
+    confighub.com/SpaceName: eu-prod-portal
+    confighub.com/App: portal
+    confighub.com/AppOwner: platform-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+    kustomize.toolkit.fluxcd.io/name: eu-prod-portal
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portal-dashboard
+  template:
+    metadata:
+      labels:
+        app: portal-dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: registry.acme.com/portal-dashboard:1.0.3
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: LOG_LEVEL
+              value: info
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portal-dashboard
+  namespace: eu-prod-portal
+  labels:
+    confighub.com/UnitSlug: portal-eu-prod
+    confighub.com/SpaceName: eu-prod-portal
+    confighub.com/App: portal
+    kustomize.toolkit.fluxcd.io/name: eu-prod-portal
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: portal-dashboard
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+
+# --- platform (eu-prod) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-controller
+  namespace: eu-prod-platform
+  labels:
+    app: platform-controller
+    confighub.com/UnitSlug: platform-eu-prod
+    confighub.com/SpaceName: eu-prod-platform
+    confighub.com/App: platform
+    confighub.com/AppOwner: platform-team
+    confighub.com/TargetRole: production
+    confighub.com/TargetRegion: eu-west-1
+    kustomize.toolkit.fluxcd.io/name: eu-prod-platform
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-controller
+  template:
+    metadata:
+      labels:
+        app: platform-controller
+    spec:
+      containers:
+        - name: controller
+          image: registry.acme.com/platform-controller:0.9.1
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          env:
+            - name: LOG_LEVEL
+              value: debug
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-controller
+  namespace: eu-prod-platform
+  labels:
+    confighub.com/UnitSlug: platform-eu-prod
+    confighub.com/SpaceName: eu-prod-platform
+    confighub.com/App: platform
+    kustomize.toolkit.fluxcd.io/name: eu-prod-platform
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  selector:
+    app: platform-controller
+  ports:
+    - port: 80
+      targetPort: 8080

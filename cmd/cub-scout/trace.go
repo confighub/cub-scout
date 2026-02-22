@@ -466,20 +466,6 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 	}
 }
 
-// outputTraceJSON outputs the trace result as JSON (legacy format)
-func outputTraceJSON(result *agent.TraceResult) error {
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(result); err != nil {
-		return err
-	}
-	// Per cli-contract.md: exit code 1 for "not managed"
-	if result.Error != "" && len(result.Chain) == 0 {
-		os.Exit(1)
-	}
-	return nil
-}
-
 // outputTraceJSONv014 outputs the trace result using the v0.14 JSON schema.
 func outputTraceJSONv014(result *agent.TraceResult, kind, name, namespace string, artifacts map[string]mapsvc.TraceArtifactRef) error {
 	output := convertTraceToV014(result, kind, name, namespace, artifacts)
@@ -519,6 +505,21 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string,
 			Role: role,
 			// Relationship is based on the node's role, not the edge
 			Relationship: mapsvc.RelationshipForRole(role),
+		}
+
+		// Delivery chain metadata (v1.1+)
+		node.DeliveryStage = mapsvc.InferDeliveryStage(link.Kind)
+		node.RenderedFrom = link.RenderedFrom
+		node.OriginalSource = link.OriginalSource
+
+		// Populate OriginalSource for source nodes with URLs
+		if link.URL != "" && node.OriginalSource == "" && mapsvc.InferDeliveryStage(link.Kind) == mapsvc.StageSource {
+			node.OriginalSource = "git:" + link.URL
+		}
+
+		// Populate RenderedFrom for ConfigHub OCI chains
+		if link.OCISource != nil && link.OCISource.IsConfigHub && node.RenderedFrom == "" {
+			node.RenderedFrom = fmt.Sprintf("confighub:space/%s/target/%s", link.OCISource.Space, link.OCISource.Target)
 		}
 
 		// Build evidence from available metadata

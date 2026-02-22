@@ -1,6 +1,10 @@
 Error: unknown pattern: nonexistent.pattern
 
 Available patterns:
+  - delivery.bridge.confighub_oci
+  - delivery.bridge.git_argocd
+  - delivery.bridge.git_flux
+  - delivery.bridge.live_import
   - gitops.argocd.applicationset_generators
   - gitops.argocd.resources_present
   - gitops.controller_presence
