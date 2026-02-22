@@ -2,6 +2,34 @@
   "schema_version": "patterns.v1",
   "patterns": [
     {
+      "id": "delivery.bridge.confighub_oci",
+      "name": "ConfigHub → OCI Delivery Bridge",
+      "status": "skip",
+      "skip_reason": "no OCIRepository nodes in graph",
+      "findings": []
+    },
+    {
+      "id": "delivery.bridge.git_argocd",
+      "name": "Git → ArgoCD Delivery Bridge",
+      "status": "skip",
+      "skip_reason": "no Application nodes in graph",
+      "findings": []
+    },
+    {
+      "id": "delivery.bridge.git_flux",
+      "name": "Git → Flux Delivery Bridge",
+      "status": "skip",
+      "skip_reason": "no GitRepository nodes in graph",
+      "findings": []
+    },
+    {
+      "id": "delivery.bridge.live_import",
+      "name": "Live Import (ConfigHub without GitOps)",
+      "status": "skip",
+      "skip_reason": "no Deployment/StatefulSet/DaemonSet nodes in graph",
+      "findings": []
+    },
+    {
       "id": "gitops.argocd.applicationset_generators",
       "name": "ApplicationSet Generator Summary",
       "status": "pass",

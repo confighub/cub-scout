@@ -21,7 +21,9 @@
           "value": "https://github.com/acme/ecommerce-apps",
           "path": "spec.url"
         }
-      ]
+      ],
+      "deliveryStage": "source",
+      "originalSource": "git:https://github.com/acme/ecommerce-apps"
     },
     {
       "id": {
@@ -38,7 +40,8 @@
           "value": "./clusters/prod/ecommerce/payment",
           "path": "spec.path"
         }
-      ]
+      ],
+      "deliveryStage": "deployer"
     },
     {
       "id": {
@@ -48,7 +51,8 @@
       },
       "role": "workload",
       "relationship": "managed-by",
-      "evidence": null
+      "evidence": null,
+      "deliveryStage": "workload"
     }
   ],
   "summary": {

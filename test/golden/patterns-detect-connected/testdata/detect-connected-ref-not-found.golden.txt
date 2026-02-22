@@ -1,6 +1,30 @@
 PATTERNS DETECT
 Schema: patterns.v1
 
+[SKIP] delivery.bridge.confighub_oci
+  ConfigHub → OCI Delivery Bridge
+  skip_reason: no OCIRepository nodes in graph
+  findings (0):
+    (none)
+
+[SKIP] delivery.bridge.git_argocd
+  Git → ArgoCD Delivery Bridge
+  skip_reason: no Application nodes in graph
+  findings (0):
+    (none)
+
+[SKIP] delivery.bridge.git_flux
+  Git → Flux Delivery Bridge
+  skip_reason: no GitRepository nodes in graph
+  findings (0):
+    (none)
+
+[SKIP] delivery.bridge.live_import
+  Live Import (ConfigHub without GitOps)
+  skip_reason: no Deployment/StatefulSet/DaemonSet nodes in graph
+  findings (0):
+    (none)
+
 [SKIP] gitops.argocd.applicationset_generators
   ApplicationSet Generator Summary
   skip_reason: git_source ref not found
