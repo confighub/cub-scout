@@ -3,11 +3,13 @@ package unit
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -299,4 +301,156 @@ func RunCubJSON(t *testing.T, v interface{}, args ...string) {
 	args = append(args, "--json")
 	output := RunCub(t, args...)
 	require.NoError(t, json.Unmarshal([]byte(output), v), "Failed to parse cub JSON output")
+}
+
+// RunCubAgentAllowFailure runs cub-scout and returns output even on non-zero exit.
+func RunCubAgentAllowFailure(t *testing.T, args ...string) (string, error) {
+	t.Helper()
+	cubAgent := os.Getenv("CUB_AGENT")
+	if cubAgent == "" {
+		cubAgent = "./cub-scout"
+	}
+
+	cmd := exec.Command(cubAgent, args...)
+	output, err := cmd.CombinedOutput()
+	return string(output), err
+}
+
+// -----------------------------------------------------------------------------
+// E2E Lifecycle Helpers — Create and clean up test resources
+// -----------------------------------------------------------------------------
+
+// CreateTestNamespace creates a uniquely named Kubernetes namespace and registers
+// cleanup to delete it when the test completes. Returns the namespace name.
+func CreateTestNamespace(t *testing.T, prefix string) string {
+	t.Helper()
+	RequireCluster(t)
+
+	name := fmt.Sprintf("%s-%d", prefix, time.Now().UnixMilli())
+
+	cmd := exec.Command("kubectl", "create", "namespace", name)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Failed to create namespace %s: %s", name, string(output))
+
+	t.Cleanup(func() {
+		cleanupCmd := exec.Command("kubectl", "delete", "namespace", name, "--ignore-not-found", "--wait=false")
+		if out, err := cleanupCmd.CombinedOutput(); err != nil {
+			t.Logf("Warning: cleanup namespace %s failed: %s (%v)", name, string(out), err)
+		}
+	})
+
+	t.Logf("Created test namespace: %s", name)
+	return name
+}
+
+// DeployFixtures applies all YAML files from a directory into the given namespace.
+// Files are applied in alphabetical order.
+func DeployFixtures(t *testing.T, namespace, fixtureDir string) {
+	t.Helper()
+
+	entries, err := os.ReadDir(fixtureDir)
+	require.NoError(t, err, "Failed to read fixture dir: %s", fixtureDir)
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
+			continue
+		}
+
+		path := filepath.Join(fixtureDir, entry.Name())
+		cmd := exec.Command("kubectl", "apply", "-f", path, "-n", namespace)
+		output, err := cmd.CombinedOutput()
+		require.NoError(t, err, "Failed to apply fixture %s: %s", path, string(output))
+		t.Logf("Applied fixture: %s", entry.Name())
+	}
+}
+
+// WaitForDeployments waits until all deployments in the namespace are available
+// or the timeout is reached.
+func WaitForDeployments(t *testing.T, namespace string, timeout time.Duration) {
+	t.Helper()
+
+	cmd := exec.Command("kubectl", "wait", "--for=condition=available",
+		"deployment", "--all", "-n", namespace,
+		fmt.Sprintf("--timeout=%ds", int(timeout.Seconds())))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("Warning: not all deployments available in %s (may be OK for test): %s", namespace, string(output))
+	}
+}
+
+// CreateTestSpace creates a uniquely named ConfigHub space and registers cleanup
+// to delete it when the test completes. Returns the space slug.
+func CreateTestSpace(t *testing.T, prefix string) string {
+	t.Helper()
+	RequireCubAuth(t)
+
+	slug := fmt.Sprintf("%s-%d", prefix, time.Now().UnixMilli())
+
+	cmd := exec.Command("cub", "space", "create", slug)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Failed to create space %s: %s", slug, string(output))
+
+	t.Cleanup(func() {
+		DeleteSpace(t, slug)
+	})
+
+	t.Logf("Created test space: %s", slug)
+	return slug
+}
+
+// DeleteSpace deletes a ConfigHub space and all its units recursively.
+func DeleteSpace(t *testing.T, slug string) {
+	t.Helper()
+
+	cmd := exec.Command("cub", "space", "delete", slug, "--recursive")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("Warning: cleanup space %s failed: %s (%v)", slug, string(output), err)
+	} else {
+		t.Logf("Deleted test space: %s", slug)
+	}
+}
+
+// ListUnitsInSpace returns the units in a ConfigHub space as parsed JSON objects.
+func ListUnitsInSpace(t *testing.T, space string) []map[string]interface{} {
+	t.Helper()
+
+	cmd := exec.Command("cub", "unit", "list", "--space", space, "--json")
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Failed to list units in space %s: %s", space, string(output))
+
+	var units []map[string]interface{}
+	require.NoError(t, json.Unmarshal(output, &units), "Failed to parse units JSON from space %s", space)
+	return units
+}
+
+// SpaceExists checks if a ConfigHub space exists.
+func SpaceExists(t *testing.T, slug string) bool {
+	t.Helper()
+
+	cmd := exec.Command("cub", "space", "list", "--json")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("Warning: space list failed: %s (%v)", string(output), err)
+		return false
+	}
+
+	var spaces []map[string]interface{}
+	if err := json.Unmarshal(output, &spaces); err != nil {
+		t.Logf("Warning: failed to parse space list: %v", err)
+		return false
+	}
+
+	for _, s := range spaces {
+		// cub space list --json nests Space data inside a "Space" object
+		if s["Slug"] == slug {
+			return true
+		}
+		if inner, ok := s["Space"].(map[string]interface{}); ok {
+			if inner["Slug"] == slug {
+				return true
+			}
+		}
+	}
+	return false
 }

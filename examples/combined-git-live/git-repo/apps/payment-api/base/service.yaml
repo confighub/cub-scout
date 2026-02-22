@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api
+  labels:
+    app.kubernetes.io/name: payment-api
+    app.kubernetes.io/part-of: banko
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: payment-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

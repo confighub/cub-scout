@@ -1,0 +1,182 @@
+# Cluster state: Flux-managed workloads + one cluster-only Deployment.
+# Apply these to simulate what cub-scout would discover from a live cluster.
+#
+# Flux-managed workloads carry kustomize.toolkit.fluxcd.io/* labels.
+# The cache-warmer Deployment has no GitOps labels (Native owner).
+
+---
+# payment-api in dev (Flux-managed)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: payment-dev
+  labels:
+    app.kubernetes.io/name: payment-api
+    app.kubernetes.io/part-of: banko
+    environment: dev
+    kustomize.toolkit.fluxcd.io/name: banko-dev
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: payment-api
+        app.kubernetes.io/part-of: banko
+        environment: dev
+    spec:
+      containers:
+        - name: api
+          image: banko/payment-api:v1.8.2
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+# payment-api in prod (Flux-managed)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: payment-prod
+  labels:
+    app.kubernetes.io/name: payment-api
+    app.kubernetes.io/part-of: banko
+    environment: prod
+    kustomize.toolkit.fluxcd.io/name: banko-prod
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: payment-api
+        app.kubernetes.io/part-of: banko
+        environment: prod
+    spec:
+      containers:
+        - name: api
+          image: banko/payment-api:v1.8.2
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+# payment-worker in dev (Flux-managed)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-worker
+  namespace: payment-dev
+  labels:
+    app.kubernetes.io/name: payment-worker
+    app.kubernetes.io/part-of: banko
+    environment: dev
+    kustomize.toolkit.fluxcd.io/name: banko-dev
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: payment-worker
+        app.kubernetes.io/part-of: banko
+        environment: dev
+    spec:
+      containers:
+        - name: worker
+          image: banko/payment-worker:v1.8.2
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+# payment-worker in prod (Flux-managed)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-worker
+  namespace: payment-prod
+  labels:
+    app.kubernetes.io/name: payment-worker
+    app.kubernetes.io/part-of: banko
+    environment: prod
+    kustomize.toolkit.fluxcd.io/name: banko-prod
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: payment-worker
+        app.kubernetes.io/part-of: banko
+        environment: prod
+    spec:
+      containers:
+        - name: worker
+          image: banko/payment-worker:v1.8.2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+# cache-warmer in prod (cluster-only -- not in Git)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache-warmer
+  namespace: payment-prod
+  labels:
+    app.kubernetes.io/name: cache-warmer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cache-warmer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cache-warmer
+    spec:
+      containers:
+        - name: warmer
+          image: banko/cache-warmer:v0.2.1
+          env:
+            - name: REDIS_URL
+              value: "redis:6379"
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi

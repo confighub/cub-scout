@@ -1,0 +1,17 @@
+# Copyright (C) ConfigHub, Inc.
+# SPDX-License-Identifier: MIT
+#
+# An unmanaged ConfigMap — no GitOps labels, no Helm annotation.
+# cub-scout classifies this as "Native" (not managed by any known controller).
+# It appears in the discovery output but is excluded from the App structure
+# proposal because it has no ownership signal.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: debug-config
+  namespace: myapp-prod
+data:
+  DEBUG_LEVEL: "verbose"
+  TRACE_ENABLED: "true"
+  LOG_FORMAT: "json"

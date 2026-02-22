@@ -189,8 +189,51 @@ Format: `RISK-2025-XXXX`
 
 ---
 
+## Emerging Concepts (ConfigHub Evolution)
+
+> **Note:** ConfigHub's data model is evolving. The concepts below describe the
+> direction of travel. The current API still uses Space/Unit/Target. cub-scout
+> uses App/Deployment language in user-facing output while mapping to the
+> current API under the hood.
+
+### App (Multi-Unit)
+
+A collection of components (api, worker, database) owned by one team, deployed
+together. The "App" is what users think about — the Unit is the implementation detail.
+
+```
+App: payment-service
+├── Components: api, worker, redis
+└── Deployments: dev, staging, prod
+```
+
+### Deployment (App × Target)
+
+The junction of an App and a Target. What you get when you deploy an App to a
+specific environment. Maps to what was previously "a Space with multiple Units."
+
+### OCI Transport
+
+ConfigHub's default transport for rendered manifests. The pipeline is:
+
+```
+Git → ConfigHub renders → OCI artifact → Flux/Argo pulls from OCI → cluster
+```
+
+cub-scout does not interact with OCI directly. It discovers workloads from the
+cluster end of this pipeline.
+
+### Bridge Worker
+
+Connector between ConfigHub and external systems (Kubernetes, ArgoCD, Flux).
+Bridge workers handle the actual deployment — ConfigHub orchestrates, Flux/Argo
+apply.
+
+---
+
 ## See Also
 
 - [Hub/AppSpace Examples](hub-appspace-examples.md) — Model examples
 - [Import to ConfigHub](../howto/import-to-confighub.md) — Import architecture
+- [Import from Live](../howto/import-from-live.md) — Cluster-only import (no Git required)
 - [Scan for risk issues](../howto/scan-for-risks.md) — risk scanning guide

@@ -2131,6 +2131,459 @@ func TestBundleSummarize_RiskSignals(t *testing.T) {
 	}
 }
 
+// =============================================================================
+// Evidence Export v1 Contract Tests (#166)
+//
+// These tests validate the BundleSummary schema against the evidence-export-v1
+// spec (docs/reference/evidence-export-v1.md). They ensure that:
+// 1. Required fields are always present in JSON output
+// 2. Optional fields are omitted (not null) when absent
+// 3. All 5 rendering formats produce output without panics
+// 4. The mapping from DebugBundle → BundleSummary is stable
+// =============================================================================
+
+func TestEvidenceExportV1_RequiredFields(t *testing.T) {
+	// Per evidence-export-v1.md, these fields are required:
+	// formatVersion, target, capturedAt, changes, evidence.bundlePath
+
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "contract-required-fields")
+
+	writer := agent.NewBundleWriter("v0.20.0-test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+			},
+		},
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	reader := agent.NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	summary := buildBundleSummary(readBundle, bundleDir)
+
+	// Marshal to JSON and parse as generic map to verify wire format
+	jsonBytes, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		t.Fatalf("JSON marshal failed: %v", err)
+	}
+
+	var raw map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &raw); err != nil {
+		t.Fatalf("JSON unmarshal to map failed: %v", err)
+	}
+
+	// Required fields per spec
+	requiredTopLevel := []string{"formatVersion", "target", "capturedAt", "changes", "evidence"}
+	for _, field := range requiredTopLevel {
+		if _, ok := raw[field]; !ok {
+			t.Errorf("Required field %q missing from JSON output", field)
+		}
+	}
+
+	// formatVersion must be "v1"
+	if fv, ok := raw["formatVersion"].(string); !ok || fv != "v1" {
+		t.Errorf("formatVersion = %v, want \"v1\"", raw["formatVersion"])
+	}
+
+	// evidence.bundlePath is required
+	evidence, ok := raw["evidence"].(map[string]interface{})
+	if !ok {
+		t.Fatal("evidence field is not an object")
+	}
+	if _, ok := evidence["bundlePath"]; !ok {
+		t.Error("Required field evidence.bundlePath missing")
+	}
+
+	// changes must have driftCount and eventCount
+	changes, ok := raw["changes"].(map[string]interface{})
+	if !ok {
+		t.Fatal("changes field is not an object")
+	}
+	for _, field := range []string{"driftCount", "eventCount"} {
+		if _, ok := changes[field]; !ok {
+			t.Errorf("Required field changes.%s missing", field)
+		}
+	}
+}
+
+func TestEvidenceExportV1_OptionalFieldsOmitted(t *testing.T) {
+	// Per spec: "Omit absent fields: Optional fields are omitted, not null"
+	// When cluster, namespace, gitContext, riskSignals are not set, they
+	// should be absent from JSON (not present as null).
+	//
+	// Note: We build the BundleSummary directly (not via Write/Read) because
+	// BundleWriter.Write auto-captures git context from the working directory.
+	// This test validates the summary → JSON contract, not the capture behavior.
+
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			FormatVersion:   "v1",
+			CubScoutVersion: "v0.20.0-test",
+			CreatedAt:       time.Date(2026, 2, 6, 10, 0, 0, 0, time.UTC),
+			Target: agent.BundleTarget{
+				Kind: "Deployment",
+				Name: "api",
+				// No namespace, no cluster
+			},
+			// No GitContext
+		},
+		// No drift findings, no events → no risk signals
+	}
+
+	summary := buildBundleSummary(bundle, "/tmp/test-bundle")
+	jsonBytes, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		t.Fatalf("JSON marshal failed: %v", err)
+	}
+
+	jsonStr := string(jsonBytes)
+
+	// Optional fields with omitempty should not appear
+	optionalOmitted := []string{"cluster", "namespace", "gitContext", "riskSignals"}
+	for _, field := range optionalOmitted {
+		// Check the JSON string for the key - it should not appear
+		if strings.Contains(jsonStr, `"`+field+`"`) {
+			t.Errorf("Optional field %q should be omitted when empty, but found in JSON:\n%s", field, jsonStr)
+		}
+	}
+
+	// Optional nested fields should also be omitted
+	nestedOptional := []string{"categories", "objects"}
+	for _, field := range nestedOptional {
+		if strings.Contains(jsonStr, `"`+field+`"`) {
+			t.Errorf("Optional nested field %q should be omitted when empty", field)
+		}
+	}
+}
+
+func TestEvidenceExportV1_FullPayload(t *testing.T) {
+	// Verify a fully populated BundleSummary matches the spec schema
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "contract-full-payload")
+
+	writer := agent.NewBundleWriter("v0.20.0-test")
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "payments-api",
+				Namespace: "payments",
+				Cluster:   "prod-east",
+			},
+			GitContext: &agent.BundleGitContext{
+				CommitSHA: "abc123def456",
+				Branch:    "main",
+				RemoteURL: "https://github.com/acme/apps",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{
+				ID:             "d1",
+				ObjectID:       "Deployment:payments/payments-api",
+				Path:           "spec.replicas",
+				Classification: agent.DriftCapacity,
+				Severity:       agent.DriftSeverityCritical,
+			},
+			{
+				ID:             "d2",
+				ObjectID:       "Deployment:payments/payments-api",
+				Path:           "spec.template.spec.containers[0].image",
+				Classification: agent.DriftImage,
+				Severity:       agent.DriftSeverityWarning,
+			},
+			{
+				ID:             "d3",
+				ObjectID:       "HPA:payments/payments-hpa",
+				Path:           "spec.minReplicas",
+				Classification: agent.DriftConfig,
+				Severity:       agent.DriftSeverityCritical,
+			},
+		},
+		Events: []agent.TimelineEvent{
+			{ResourceKind: "Pod", ResourceName: "payments-api-abc", K8sEvent: agent.K8sEvent{Type: "Warning", Reason: "FailedScheduling"}},
+			{ResourceKind: "Pod", ResourceName: "payments-api-def"},
+		},
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	reader := agent.NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	summary := buildBundleSummary(readBundle, bundleDir)
+
+	// Marshal to JSON, then unmarshal to verify round-trip
+	jsonBytes, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		t.Fatalf("JSON marshal failed: %v", err)
+	}
+
+	var parsed BundleSummary
+	if err := json.Unmarshal(jsonBytes, &parsed); err != nil {
+		t.Fatalf("JSON round-trip unmarshal failed: %v", err)
+	}
+
+	// Verify all expected fields
+	if parsed.FormatVersion != "v1" {
+		t.Errorf("FormatVersion = %s, want v1", parsed.FormatVersion)
+	}
+	if parsed.Cluster != "prod-east" {
+		t.Errorf("Cluster = %s, want prod-east", parsed.Cluster)
+	}
+	if parsed.Namespace != "payments" {
+		t.Errorf("Namespace = %s, want payments", parsed.Namespace)
+	}
+	if parsed.Target != "Deployment/payments-api" {
+		t.Errorf("Target = %s, want Deployment/payments-api", parsed.Target)
+	}
+	if parsed.CapturedAt == "" {
+		t.Error("CapturedAt should not be empty")
+	}
+
+	// Verify git context round-trips
+	if parsed.GitContext == nil {
+		t.Fatal("GitContext should not be nil")
+	}
+	if parsed.GitContext.Commit != "abc123def456" {
+		t.Errorf("GitContext.Commit = %s, want abc123def456", parsed.GitContext.Commit)
+	}
+	if parsed.GitContext.Branch != "main" {
+		t.Errorf("GitContext.Branch = %s, want main", parsed.GitContext.Branch)
+	}
+	if parsed.GitContext.Remote != "https://github.com/acme/apps" {
+		t.Errorf("GitContext.Remote = %s, want https://github.com/acme/apps", parsed.GitContext.Remote)
+	}
+
+	// Verify changes
+	if parsed.Changes.DriftCount != 3 {
+		t.Errorf("DriftCount = %d, want 3", parsed.Changes.DriftCount)
+	}
+	if parsed.Changes.EventCount != 2 {
+		t.Errorf("EventCount = %d, want 2", parsed.Changes.EventCount)
+	}
+	// Categories should be sorted per spec
+	for i := 1; i < len(parsed.Changes.Categories); i++ {
+		if parsed.Changes.Categories[i] < parsed.Changes.Categories[i-1] {
+			t.Errorf("Categories not sorted: %v", parsed.Changes.Categories)
+			break
+		}
+	}
+	// Objects should be sorted per spec
+	for i := 1; i < len(parsed.Changes.Objects); i++ {
+		if parsed.Changes.Objects[i] < parsed.Changes.Objects[i-1] {
+			t.Errorf("Objects not sorted: %v", parsed.Changes.Objects)
+			break
+		}
+	}
+
+	// Verify risk signals (3 drift findings: 2 critical, 1 warning, plus 1 warning event)
+	if len(parsed.RiskSignals) == 0 {
+		t.Error("RiskSignals should not be empty with critical/warning drift")
+	}
+	for _, rs := range parsed.RiskSignals {
+		if rs.Level != "critical" && rs.Level != "warning" {
+			t.Errorf("RiskSignal level = %s, want critical or warning", rs.Level)
+		}
+		if rs.Message == "" {
+			t.Error("RiskSignal message should not be empty")
+		}
+	}
+
+	// Verify evidence
+	if parsed.Evidence.BundlePath != bundleDir {
+		t.Errorf("Evidence.BundlePath = %s, want %s", parsed.Evidence.BundlePath, bundleDir)
+	}
+}
+
+func TestEvidenceExportV1_AllFormatsNoPanic(t *testing.T) {
+	// Every rendering format should handle all bundle shapes without panicking.
+	// Spec lists 5 formats: json, ascii, ticket, pr, slack
+
+	bundles := []struct {
+		name    string
+		summary BundleSummary
+	}{
+		{
+			name: "full",
+			summary: BundleSummary{
+				FormatVersion: "v1",
+				Cluster:       "prod",
+				Namespace:     "app",
+				Target:        "Deployment/api",
+				CapturedAt:    "2026-02-06T10:00:00Z",
+				GitContext:    &BundleSummaryGitContext{Commit: "abc", Branch: "main", Remote: "https://github.com/a/b"},
+				Changes:       BundleSummaryChanges{DriftCount: 3, EventCount: 5, Categories: []string{"capacity", "config"}, Objects: []string{"Deployment:prod/a"}},
+				RiskSignals:   []BundleSummaryRiskSignal{{Level: "critical", Message: "3 critical"}},
+				Evidence:      BundleSummaryEvidence{BundlePath: "/tmp/bundle"},
+			},
+		},
+		{
+			name: "minimal",
+			summary: BundleSummary{
+				FormatVersion: "v1",
+				Target:        "Deployment/api",
+				CapturedAt:    "2026-02-06T10:00:00Z",
+				Changes:       BundleSummaryChanges{DriftCount: 0, EventCount: 0},
+				Evidence:      BundleSummaryEvidence{BundlePath: "/tmp/bundle"},
+			},
+		},
+		{
+			name: "no-git",
+			summary: BundleSummary{
+				FormatVersion: "v1",
+				Cluster:       "staging",
+				Target:        "StatefulSet/db",
+				CapturedAt:    "2026-02-06T10:00:00Z",
+				Changes:       BundleSummaryChanges{DriftCount: 1, EventCount: 0, Categories: []string{"config"}},
+				RiskSignals:   []BundleSummaryRiskSignal{{Level: "warning", Message: "1 warning"}},
+				Evidence:      BundleSummaryEvidence{BundlePath: "/tmp/bundle"},
+			},
+		},
+	}
+
+	formats := []struct {
+		name   string
+		render func(BundleSummary) string
+	}{
+		{"ascii", renderSummaryASCII},
+		{"ticket", renderSummaryTicket},
+		{"pr", renderSummaryPR},
+		{"slack", renderSummarySlack},
+	}
+
+	for _, bundle := range bundles {
+		for _, format := range formats {
+			t.Run(bundle.name+"/"+format.name, func(t *testing.T) {
+				output := format.render(bundle.summary)
+				if output == "" {
+					t.Errorf("%s/%s produced empty output", bundle.name, format.name)
+				}
+			})
+		}
+
+		// Also test JSON format
+		t.Run(bundle.name+"/json", func(t *testing.T) {
+			data, err := json.MarshalIndent(bundle.summary, "", "  ")
+			if err != nil {
+				t.Errorf("JSON marshal failed: %v", err)
+			}
+			if len(data) == 0 {
+				t.Error("JSON produced empty output")
+			}
+		})
+	}
+}
+
+func TestEvidenceExportV1_MappingStability(t *testing.T) {
+	// Verify the mapping from DebugBundle → BundleSummary matches
+	// the spec in evidence-export-v1.md (Mapping table).
+	//
+	// This test creates a known DebugBundle, builds BundleSummary,
+	// and asserts each field maps correctly per the spec table.
+
+	tmpDir := t.TempDir()
+	bundleDir := filepath.Join(tmpDir, "contract-mapping")
+
+	writer := agent.NewBundleWriter("v0.20.0-test")
+
+	fixedTime := time.Date(2026, 2, 6, 14, 30, 0, 0, time.UTC)
+
+	bundle := &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			CreatedAt: fixedTime,
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "payments-api",
+				Namespace: "payments",
+				Cluster:   "prod-east",
+			},
+			GitContext: &agent.BundleGitContext{
+				CommitSHA: "abc123",
+				Branch:    "main",
+				RemoteURL: "https://github.com/acme/apps",
+			},
+		},
+		DriftFindings: []agent.DriftFinding{
+			{ID: "d1", ObjectID: "Deployment:payments/payments-api", Classification: agent.DriftCapacity, Severity: agent.DriftSeverityCritical},
+		},
+		Events: []agent.TimelineEvent{
+			{ResourceKind: "Pod", ResourceName: "api-1"},
+			{ResourceKind: "Pod", ResourceName: "api-2"},
+		},
+	}
+
+	if err := writer.Write(bundle, bundleDir); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	reader := agent.NewBundleReader()
+	readBundle, err := reader.Read(bundleDir)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+
+	summary := buildBundleSummary(readBundle, bundleDir)
+
+	// Spec: formatVersion ← hard-coded "v1"
+	if summary.FormatVersion != "v1" {
+		t.Errorf("Mapping: formatVersion = %s, want v1 (hard-coded per spec)", summary.FormatVersion)
+	}
+
+	// Spec: cluster ← metadata.json → target.cluster
+	if summary.Cluster != "prod-east" {
+		t.Errorf("Mapping: cluster = %s, want prod-east (from target.cluster)", summary.Cluster)
+	}
+
+	// Spec: namespace ← metadata.json → target.namespace
+	if summary.Namespace != "payments" {
+		t.Errorf("Mapping: namespace = %s, want payments (from target.namespace)", summary.Namespace)
+	}
+
+	// Spec: target ← metadata.json → target.kind/name (concatenated)
+	if summary.Target != "Deployment/payments-api" {
+		t.Errorf("Mapping: target = %s, want Deployment/payments-api (kind/name)", summary.Target)
+	}
+
+	// Spec: changes.driftCount ← drift.json → len(findings)
+	if summary.Changes.DriftCount != 1 {
+		t.Errorf("Mapping: changes.driftCount = %d, want 1 (len of drift findings)", summary.Changes.DriftCount)
+	}
+
+	// Spec: changes.eventCount ← events.json → len(events)
+	if summary.Changes.EventCount != 2 {
+		t.Errorf("Mapping: changes.eventCount = %d, want 2 (len of events)", summary.Changes.EventCount)
+	}
+
+	// Spec: gitContext ← metadata.json → gitContext (direct copy)
+	if summary.GitContext == nil {
+		t.Fatal("Mapping: gitContext should not be nil (from metadata.gitContext)")
+	}
+	if summary.GitContext.Commit != "abc123" {
+		t.Errorf("Mapping: gitContext.commit = %s, want abc123", summary.GitContext.Commit)
+	}
+
+	// Spec: evidence.bundlePath ← input argument
+	if summary.Evidence.BundlePath != bundleDir {
+		t.Errorf("Mapping: evidence.bundlePath = %s, want %s (input arg)", summary.Evidence.BundlePath, bundleDir)
+	}
+}
+
 func TestBundleSummarize_Deterministic(t *testing.T) {
 	// Create a bundle
 	tmpDir := t.TempDir()

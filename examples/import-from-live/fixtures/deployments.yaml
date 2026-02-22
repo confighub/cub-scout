@@ -1,0 +1,150 @@
+# Copyright (C) ConfigHub, Inc.
+# SPDX-License-Identifier: MIT
+#
+# Six Deployments managed by ArgoCD — api and worker across three environments.
+# Each has the argocd.argoproj.io/instance label pointing back to its
+# ArgoCD Application, plus app.kubernetes.io/name for the component name.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: myapp-dev
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/instance: myapp-dev
+    argocd.argoproj.io/instance: myapp-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+    spec:
+      containers:
+        - name: api
+          image: acme/api:v1.2.0
+          ports:
+            - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: myapp-staging
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/instance: myapp-staging
+    argocd.argoproj.io/instance: myapp-staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+    spec:
+      containers:
+        - name: api
+          image: acme/api:v1.2.0
+          ports:
+            - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: myapp-prod
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/instance: myapp-prod
+    argocd.argoproj.io/instance: myapp-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+    spec:
+      containers:
+        - name: api
+          image: acme/api:v1.2.0
+          ports:
+            - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: myapp-dev
+  labels:
+    app.kubernetes.io/name: worker
+    app.kubernetes.io/instance: myapp-dev
+    argocd.argoproj.io/instance: myapp-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worker
+    spec:
+      containers:
+        - name: worker
+          image: acme/worker:v1.2.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: myapp-staging
+  labels:
+    app.kubernetes.io/name: worker
+    app.kubernetes.io/instance: myapp-staging
+    argocd.argoproj.io/instance: myapp-staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worker
+    spec:
+      containers:
+        - name: worker
+          image: acme/worker:v1.2.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: myapp-prod
+  labels:
+    app.kubernetes.io/name: worker
+    app.kubernetes.io/instance: myapp-prod
+    argocd.argoproj.io/instance: myapp-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worker
+    spec:
+      containers:
+        - name: worker
+          image: acme/worker:v1.2.0

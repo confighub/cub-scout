@@ -1,0 +1,77 @@
+{
+  "appSpace": "myapp-team",
+  "units": [
+    {
+      "slug": "api-dev",
+      "app": "api",
+      "variant": "dev",
+      "workloads": [
+        "Deployment/myapp-dev/api"
+      ]
+    },
+    {
+      "slug": "api-prod",
+      "app": "api",
+      "variant": "prod",
+      "workloads": [
+        "Deployment/myapp-prod/api"
+      ]
+    },
+    {
+      "slug": "api-staging",
+      "app": "api",
+      "variant": "staging",
+      "workloads": [
+        "Deployment/myapp-staging/api"
+      ]
+    },
+    {
+      "slug": "redis-dev",
+      "app": "redis",
+      "variant": "dev",
+      "workloads": [
+        "StatefulSet/myapp-dev/redis"
+      ]
+    },
+    {
+      "slug": "redis-prod",
+      "app": "redis",
+      "variant": "prod",
+      "workloads": [
+        "StatefulSet/myapp-prod/redis"
+      ]
+    },
+    {
+      "slug": "redis-staging",
+      "app": "redis",
+      "variant": "staging",
+      "workloads": [
+        "StatefulSet/myapp-staging/redis"
+      ]
+    },
+    {
+      "slug": "worker-dev",
+      "app": "worker",
+      "variant": "dev",
+      "workloads": [
+        "Deployment/myapp-dev/worker"
+      ]
+    },
+    {
+      "slug": "worker-prod",
+      "app": "worker",
+      "variant": "prod",
+      "workloads": [
+        "Deployment/myapp-prod/worker"
+      ]
+    },
+    {
+      "slug": "worker-staging",
+      "app": "worker",
+      "variant": "staging",
+      "workloads": [
+        "Deployment/myapp-staging/worker"
+      ]
+    }
+  ]
+}

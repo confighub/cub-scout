@@ -1,0 +1,42 @@
+{
+  "testDescription": "namespace-fallback",
+  "inputSummary": {
+    "workloadCount": 3,
+    "namespaces": [
+      "orders-prod",
+      "orders-staging"
+    ],
+    "owners": {
+      "Helm": 3
+    }
+  },
+  "suggestion": {
+    "appSpace": "orders-team",
+    "units": [
+      {
+        "slug": "orders-api-prod",
+        "app": "orders-api",
+        "variant": "prod",
+        "workloads": [
+          "Deployment/orders-prod/orders-api"
+        ]
+      },
+      {
+        "slug": "orders-api-staging",
+        "app": "orders-api",
+        "variant": "staging",
+        "workloads": [
+          "Deployment/orders-staging/orders-api"
+        ]
+      },
+      {
+        "slug": "orders-worker-prod",
+        "app": "orders-worker",
+        "variant": "prod",
+        "workloads": [
+          "Deployment/orders-prod/orders-worker"
+        ]
+      }
+    ]
+  }
+}

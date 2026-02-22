@@ -114,6 +114,15 @@ kubectl apply -f examples/demo-data/manifests.yaml
 | [flux9s/](../examples/integrations/flux9s/) | Proposal | K9s-style TUI for Flux |
 | [confighub-oci/](../examples/integrations/confighub-oci/) | Working | ConfigHub OCI integration |
 
+### Import & Discovery Examples
+
+| Example | Pattern | Shows |
+|---------|---------|-------|
+| [import-from-live/](../examples/import-from-live/) | ArgoCD | Cluster-only discovery — no Git required |
+| [combined-git-live/](../examples/combined-git-live/) | Flux | Git repo + cluster alignment |
+| [fleet-import/](../examples/fleet-import/) | Multi-cluster | Aggregating imports from 2 clusters |
+| [demo-data-adt/](../examples/demo-data-adt/) | App-Deployment-Target | Multi-app × multi-env with version skew |
+
 ### Real-World Examples
 
 #### Apptique (Google Online Boutique)

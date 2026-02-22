@@ -451,9 +451,21 @@ These mappings are working defaults, not immutable doctrine. Domain-to-platform 
 
 ---
 
+## Worked Import Examples
+
+These examples show cub-scout's import discovery in action, with static fixtures and expected JSON output:
+
+| Example | Pattern | What It Shows |
+|---------|---------|---------------|
+| [Import from Live](../../examples/import-from-live/) | Arnie (ArgoCD) | Cluster-only discovery, variant inference from Application paths |
+| [Combined Git + Live](../../examples/combined-git-live/) | Banko (Flux) | Git repo + cluster alignment, drift detection |
+| [Fleet Import](../../examples/fleet-import/) | Multi-cluster | Aggregating 2 cluster imports into a unified App proposal |
+
 ## See Also
 
 - [Hub/AppSpace Model](#hub-appspace-model) - Conceptual model
 - [Adoption Patterns](#adoption-patterns) - Banko/Arnie source details
+- [Import to ConfigHub](../howto/import-to-confighub.md) - Full migration path
+- [Import from Live](../howto/import-from-live.md) - Cluster-only import guide
 - [Keybindings Reference](keybindings.md) - All keyboard shortcuts
 - [Views Reference](views.md) - What each view shows
