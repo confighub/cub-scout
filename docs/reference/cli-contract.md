@@ -757,6 +757,9 @@ cub-scout bundle summarize ./bundle --format slack --out notification.json
 Produces a deterministic summary of the bundle's findings. Same bundle
 always produces identical output. All content derives from bundle facts.
 
+For the full evidence export schema, field reference, and rendering mappings, see
+[Evidence Export v1](evidence-export-v1.md).
+
 ---
 
 ## cub-scout connect (v1.0)

@@ -1,0 +1,24 @@
+[
+  {
+    "type": "Warning",
+    "reason": "FailedScheduling",
+    "message": "0/3 nodes are available: 3 Insufficient memory",
+    "firstTimestamp": "2026-02-06T14:25:00Z",
+    "lastTimestamp": "2026-02-06T14:28:00Z",
+    "count": 4,
+    "resourceKind": "Pod",
+    "resourceName": "payments-api-abc123",
+    "severity": "warning"
+  },
+  {
+    "type": "Normal",
+    "reason": "Scheduled",
+    "message": "Successfully assigned payments/payments-api-def456 to node-2",
+    "firstTimestamp": "2026-02-06T14:20:00Z",
+    "lastTimestamp": "2026-02-06T14:20:00Z",
+    "count": 1,
+    "resourceKind": "Pod",
+    "resourceName": "payments-api-def456",
+    "severity": "info"
+  }
+]

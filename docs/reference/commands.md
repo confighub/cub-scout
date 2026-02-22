@@ -31,6 +31,7 @@ Complete reference for all cub-scout commands.
 | `patterns list` | List registered patterns (v0.7) |
 | `patterns detect` | Run pattern detection (v0.7) |
 | `patterns explain` | Explain a specific pattern (v0.7) |
+| `bundle summarize` | Generate evidence summaries from debug bundles (v0.19) |
 | `gitops status` | Show GitOps pipeline health (v0.14) |
 
 For JSON contract navigation, start with [JSON Contracts and Output Model](json-contracts.md).
@@ -803,6 +804,60 @@ cub-scout patterns explain <pattern-id> [flags]
 | 4 | Pattern failed |
 
 See [Patterns Contract Reference](patterns-contract.md) for full documentation.
+
+---
+
+## bundle summarize (v0.19)
+
+Generate evidence summaries from debug bundles for external systems (Jira, PRs, Slack).
+
+```bash
+cub-scout bundle summarize <bundle-path> [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--format` | string | `ascii` | Output format: `ticket`, `pr`, `slack`, `ascii`, `json` |
+| `--out` | string | stdout | Output file path |
+
+### Formats
+
+| Format | Output | Use Case |
+|--------|--------|----------|
+| `ticket` | Markdown | Jira, ServiceNow incident tickets |
+| `pr` | Markdown | Pull request descriptions/comments |
+| `slack` | Slack Block Kit JSON | Channel notifications |
+| `ascii` | Plain text | Human reading (default) |
+| `json` | Structured JSON | Downstream tooling, CI/CD |
+
+### Examples
+
+```bash
+# Jira/ServiceNow ticket
+cub-scout bundle summarize ./bundle --format ticket --out incident.md
+
+# PR description
+cub-scout bundle summarize ./bundle --format pr
+
+# Slack notification
+cub-scout bundle summarize ./bundle --format slack --out notification.json
+
+# Machine-readable JSON
+cub-scout bundle summarize ./bundle --format json
+```
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Summary generated successfully |
+| 1 | Bundle read error or invalid format |
+
+Output is deterministic: same bundle always produces identical output. All content derives from bundle facts only.
+
+For the full evidence export schema, see [Evidence Export v1](evidence-export-v1.md).
 
 ---
 

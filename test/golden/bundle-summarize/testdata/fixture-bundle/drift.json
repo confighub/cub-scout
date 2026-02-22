@@ -1,0 +1,44 @@
+[
+  {
+    "id": "drift:Deployment:payments/payments-api:spec.replicas",
+    "object_id": "Deployment:payments/payments-api",
+    "object": {
+      "kind": "Deployment",
+      "namespace": "payments",
+      "name": "payments-api"
+    },
+    "path": "spec.replicas",
+    "desired": 3,
+    "live": 5,
+    "classification": "capacity",
+    "severity": "critical"
+  },
+  {
+    "id": "drift:Deployment:payments/payments-api:spec.template.spec.containers[0].image",
+    "object_id": "Deployment:payments/payments-api",
+    "object": {
+      "kind": "Deployment",
+      "namespace": "payments",
+      "name": "payments-api"
+    },
+    "path": "spec.template.spec.containers[0].image",
+    "desired": "acme/payments:v2.1.0",
+    "live": "acme/payments:v2.0.9",
+    "classification": "image",
+    "severity": "warning"
+  },
+  {
+    "id": "drift:HPA:payments/payments-hpa:spec.minReplicas",
+    "object_id": "HPA:payments/payments-hpa",
+    "object": {
+      "kind": "HPA",
+      "namespace": "payments",
+      "name": "payments-hpa"
+    },
+    "path": "spec.minReplicas",
+    "desired": 2,
+    "live": 1,
+    "classification": "config",
+    "severity": "critical"
+  }
+]

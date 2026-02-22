@@ -19,8 +19,8 @@ import (
 //
 // See: https://github.com/confighubai/confighub-agent/issues/1
 func TestCubCLIOutputStructure(t *testing.T) {
-	// Skip if cub not available
-	RequireCubAuth(t)
+	// Skip if cub not available or default space doesn't exist
+	RequireSpace(t)
 
 	t.Run("unit list returns nested Unit objects", func(t *testing.T) {
 		output := RunCub(t, "unit", "list", "--json")
@@ -116,7 +116,7 @@ func TestCubCLIOutputStructure(t *testing.T) {
 // TestCubCLINoNullSlugs verifies that cub CLI never returns null slugs.
 // Null slugs indicate a parsing error in the CLI output.
 func TestCubCLINoNullSlugs(t *testing.T) {
-	RequireCubAuth(t)
+	RequireSpace(t)
 
 	t.Run("units have non-null slugs", func(t *testing.T) {
 		var units []map[string]interface{}

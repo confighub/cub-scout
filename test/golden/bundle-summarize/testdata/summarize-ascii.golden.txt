@@ -1,0 +1,21 @@
+cub-scout Diagnostic Summary
+──────────────────────────────────────────────────
+
+Target:     Deployment/payments-api
+Cluster:    prod-east
+Namespace:  payments
+Captured:   <TIMESTAMP>
+Commit:     abc<ELAPSED>Changes
+  ⚠ 3 drift finding(s)
+  ● 2 event(s)
+  Objects:
+    - Deployment:payments/payments-api
+    - HPA:payments/payments-hpa
+
+Risk Signals
+  ✗ 2 critical drift finding(s)
+  ⚠ 1 warning drift finding(s)
+  ⚠ Warning events detected in timeline
+
+Evidence
+  Bundle: <BUNDLE_PATH>

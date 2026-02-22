@@ -18,6 +18,19 @@ Start here for machine-readable output contracts.
 | Exact command usage and JSON-capable flags | [commands.md](commands.md) |
 | Historical v0.14 schema document | [../archive/v0.14-json-schema.md](../archive/v0.14-json-schema.md) |
 
+## Field Naming Conventions
+
+JSON field casing is **per-surface and frozen by compatibility**. No global normalization.
+
+| Surface | Convention | Example fields |
+|---------|------------|----------------|
+| CLI commands (map, trace, bundle summarize) | camelCase | `formatVersion`, `capturedAt`, `driftCount` |
+| Debug bundle metadata | camelCase | `cubScoutVersion`, `createdAt`, `gitContext` |
+| Versioned schema artifacts (graph, catalog, bundle-diff/timeline, checkpoints) | snake_case + `schema_version` | `schema_version`, `join_mode`, `bundle_count` |
+
+Existing surfaces keep their original field names — no renames for style consistency.
+When fields cross surface boundaries, mapping is explicit (e.g., metadata `createdAt` → catalog `created_at`).
+
 ## Current Contract Sources by Surface
 
 | Surface | Primary contract doc | Schema version signal |
@@ -49,6 +62,7 @@ Useful golden directories:
 - `test/golden/ownership/`
 - `test/golden/trace/`
 - `test/golden/map-status/`
+- `test/golden/bundle-summarize/`
 
 ## Historical Note
 
