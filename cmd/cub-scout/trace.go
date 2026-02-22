@@ -466,20 +466,6 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 	}
 }
 
-// outputTraceJSON outputs the trace result as JSON (legacy format)
-func outputTraceJSON(result *agent.TraceResult) error {
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(result); err != nil {
-		return err
-	}
-	// Per cli-contract.md: exit code 1 for "not managed"
-	if result.Error != "" && len(result.Chain) == 0 {
-		os.Exit(1)
-	}
-	return nil
-}
-
 // outputTraceJSONv014 outputs the trace result using the v0.14 JSON schema.
 func outputTraceJSONv014(result *agent.TraceResult, kind, name, namespace string, artifacts map[string]mapsvc.TraceArtifactRef) error {
 	output := convertTraceToV014(result, kind, name, namespace, artifacts)
