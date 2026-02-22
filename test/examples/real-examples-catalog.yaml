@@ -88,6 +88,21 @@ examples:
     required_paths:
       - README.md
       - repo-patterns/applicationsets
+  - id: rm_demos_argocd_helm_umbrella
+    repo: cub-scout
+    path: examples/rm-demos-argocd/repo-patterns/helm-umbrella
+    skeleton_id: helm-umbrella
+    required: true
+    value_props:
+      - umbrella chart sub-chart visibility
+      - helm release vs live state verification
+    use_cases:
+      - platform component upgrade validation
+      - sub-chart ownership tracing
+    demo_scenarios:
+      - Security Patch
+    required_paths:
+      - README.md
   - id: platform_example
     repo: cub-scout
     path: examples/platform-example
