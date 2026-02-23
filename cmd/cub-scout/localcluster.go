@@ -19,6 +19,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/confighub/cub-scout/internal/mapsvc"
+	"github.com/confighub/cub-scout/pkg/hub"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -449,14 +450,15 @@ func initialLocalModelWithOpts(opts ViewOptions) LocalClusterModel {
 	contextName := getCurrentContext()
 
 	m := LocalClusterModel{
-		loading:     true,
-		spinner:     s,
-		keymap:      defaultLocalKeyMap(),
-		view:        viewDashboard,
-		clusterName: clusterName,
-		contextName: contextName,
-		panelPane:   vp,
-		viewOpts:    opts,
+		loading:        true,
+		spinner:        s,
+		keymap:         defaultLocalKeyMap(),
+		view:           viewDashboard,
+		clusterName:    clusterName,
+		contextName:    contextName,
+		panelPane:      vp,
+		viewOpts:       opts,
+		connectionMode: hub.QuickMode().String(), // Instant display; async check refines later
 	}
 
 	// Restore from snapshot if available and matches current cluster
@@ -2099,6 +2101,10 @@ var (
 				Foreground(lipgloss.Color("82")).
 				Background(lipgloss.Color("236")).
 				Padding(0, 1)
+	lcModeOfflineStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("245")).
+			Background(lipgloss.Color("236")).
+			Padding(0, 1)
 	lcModeHeaderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("252")).
 				Background(lipgloss.Color("236"))
@@ -2112,10 +2118,9 @@ func (m LocalClusterModel) renderModeHeader() string {
 	switch m.connectionMode {
 	case "connected":
 		mode = lcModeConnectedStyle.Render("Connected")
-	case "online":
-		// Online but not authenticated - show as standalone with hint
-		mode = lcModeStandaloneStyle.Render("Standalone")
-	default:
+	case "offline":
+		mode = lcModeOfflineStyle.Render("Offline")
+	default: // "online" or unset
 		mode = lcModeStandaloneStyle.Render("Standalone")
 	}
 
