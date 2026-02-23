@@ -47,6 +47,44 @@ func (m Mode) String() string {
 	}
 }
 
+// QuickMode returns the current mode using only local checks (no network).
+// It checks:
+//  1. CUB_SCOUT_OFFLINE=true environment variable → Offline
+//  2. Telemetry disabled (file or env) → Offline
+//  3. ~/.cub-scout/auth.json has valid token → Connected
+//  4. Otherwise → Online
+//
+// Unlike CurrentMode(), this never makes HTTP requests and returns instantly.
+// Use this for informational display (e.g., TUI header).
+// Use CurrentMode() when you need authoritative connectivity status.
+func QuickMode() Mode {
+	if os.Getenv("CUB_SCOUT_OFFLINE") == "true" {
+		return Offline
+	}
+	if telemetryDisabled() {
+		return Offline
+	}
+	if IsAuthenticated() {
+		return Connected
+	}
+	return Online
+}
+
+// DisplayName returns the user-facing mode label.
+// Offline → "Offline", Online → "Standalone", Connected → "Connected".
+func (m Mode) DisplayName() string {
+	switch m {
+	case Offline:
+		return "Offline"
+	case Online:
+		return "Standalone"
+	case Connected:
+		return "Connected"
+	default:
+		return "Unknown"
+	}
+}
+
 // CurrentMode returns the current operating mode.
 // It checks connectivity and authentication state.
 func CurrentMode() Mode {

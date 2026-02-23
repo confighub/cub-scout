@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestMode_String(t *testing.T) {
@@ -90,6 +91,110 @@ func TestCurrentMode_Connected(t *testing.T) {
 		t.Log("CurrentMode() = Connected (as expected)")
 	}
 }
+
+// --- QuickMode tests ---
+
+func TestQuickMode_OfflineEnvVar(t *testing.T) {
+	origHome := os.Getenv("HOME")
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	defer func() { os.Setenv("HOME", origHome) }()
+
+	t.Setenv("CUB_SCOUT_OFFLINE", "true")
+	t.Setenv("CUB_SCOUT_TELEMETRY", "")
+
+	if got := QuickMode(); got != Offline {
+		t.Errorf("QuickMode() = %v, want Offline when CUB_SCOUT_OFFLINE=true", got)
+	}
+}
+
+func TestQuickMode_TelemetryDisabled(t *testing.T) {
+	origHome := os.Getenv("HOME")
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	defer func() { os.Setenv("HOME", origHome) }()
+
+	t.Setenv("CUB_SCOUT_OFFLINE", "")
+	t.Setenv("CUB_SCOUT_TELEMETRY", "false")
+
+	if got := QuickMode(); got != Offline {
+		t.Errorf("QuickMode() = %v, want Offline when telemetry disabled", got)
+	}
+}
+
+func TestQuickMode_NoAuth(t *testing.T) {
+	origHome := os.Getenv("HOME")
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	defer func() { os.Setenv("HOME", origHome) }()
+
+	t.Setenv("CUB_SCOUT_OFFLINE", "")
+	t.Setenv("CUB_SCOUT_TELEMETRY", "")
+
+	if got := QuickMode(); got != Online {
+		t.Errorf("QuickMode() = %v, want Online when no auth file", got)
+	}
+}
+
+func TestQuickMode_WithAuth(t *testing.T) {
+	origHome := os.Getenv("HOME")
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	defer func() { os.Setenv("HOME", origHome) }()
+
+	t.Setenv("CUB_SCOUT_OFFLINE", "")
+	t.Setenv("CUB_SCOUT_TELEMETRY", "")
+
+	if err := SaveAuth(&Auth{Token: "valid-token"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := QuickMode(); got != Connected {
+		t.Errorf("QuickMode() = %v, want Connected when auth token present", got)
+	}
+}
+
+func TestQuickMode_Fast(t *testing.T) {
+	// QuickMode must never make network calls — verify it returns fast.
+	origHome := os.Getenv("HOME")
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	defer func() { os.Setenv("HOME", origHome) }()
+
+	t.Setenv("CUB_SCOUT_OFFLINE", "")
+	t.Setenv("CUB_SCOUT_TELEMETRY", "")
+
+	start := time.Now()
+	_ = QuickMode()
+	elapsed := time.Since(start)
+
+	if elapsed > 100*time.Millisecond {
+		t.Errorf("QuickMode() took %v, expected < 100ms (should not make network calls)", elapsed)
+	}
+}
+
+// --- DisplayName tests ---
+
+func TestMode_DisplayName(t *testing.T) {
+	tests := []struct {
+		mode Mode
+		want string
+	}{
+		{Offline, "Offline"},
+		{Online, "Standalone"},
+		{Connected, "Connected"},
+		{Mode(99), "Unknown"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			if got := tt.mode.DisplayName(); got != tt.want {
+				t.Errorf("Mode(%d).DisplayName() = %q, want %q", tt.mode, got, tt.want)
+			}
+		})
+	}
+}
+
+// --- hasConnectivity tests ---
 
 func TestHasConnectivity_OfflineEnvVar(t *testing.T) {
 	// Use a temp directory
