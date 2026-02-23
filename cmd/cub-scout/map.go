@@ -553,7 +553,7 @@ This is the CLI equivalent of pressing '5' or 'A' in the interactive TUI.
 
 Shows:
 - Inferred Hub (from infrastructure/platform patterns)
-- Inferred AppSpaces (from namespace patterns like prod, staging, dev)
+- Inferred Apps (from namespace patterns like prod, staging, dev)
 - Inferred labels (groups, teams)
 
 Note: This is a heuristic interpretation. Connect to ConfigHub for actual hierarchy.`,
@@ -592,7 +592,7 @@ func init() {
 
 	// Fleet-specific flags
 	mapFleetCmd.Flags().StringVar(&fleetApp, "app", "", "Filter by app label")
-	mapFleetCmd.Flags().StringVar(&fleetSpace, "space", "", "Filter by space (App Space)")
+	mapFleetCmd.Flags().StringVar(&fleetSpace, "space", "", "Filter by space (App)")
 
 	// Global map flags
 	mapCmd.PersistentFlags().BoolVar(&mapJSON, "json", false, "Output in JSON format")
@@ -1120,10 +1120,10 @@ func loadAndRenderMapStatusFromJSON(path string) error {
 	return nil // unreachable but required for compiler
 }
 
-// Fleet View: Hub/App Space model display
+// Fleet View: App model display
 var mapFleetCmd = &cobra.Command{
 	Use:   "fleet",
-	Short: "Show fleet view grouped by app and variant (Hub/App Space model)",
+	Short: "Show fleet view grouped by app and variant (App model)",
 	Long: `Display units across spaces grouped by app and variant labels.
 
 This view requires units imported with --model hub-appspace, which adds:
@@ -1144,7 +1144,7 @@ Example:
   # Filter to specific app
   cub-scout map fleet --app payment-api
 
-  # Filter to specific space (App Space)
+  # Filter to specific space (App)
   cub-scout map fleet --space payments-team
 `,
 	RunE: runMapFleet,
@@ -1175,9 +1175,9 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(units) == 0 {
-		fmt.Println("No units found with app/variant labels.")
-		fmt.Println("\nTo use fleet view, import with Hub/App Space model:")
-		fmt.Println("  cub-scout import --namespace myapp-prod --model hub-appspace")
+		fmt.Println("No deployments found with app/variant labels.")
+		fmt.Println("\nTo use fleet view, import with App model:")
+		fmt.Println("  cub-scout import --namespace myapp-prod")
 		return nil
 	}
 
@@ -1203,7 +1203,7 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 	}
 	sort.Strings(appNames)
 
-	fmt.Println("ConfigHub Fleet View (Hub/App Space Model)")
+	fmt.Println("ConfigHub Fleet View (App Model)")
 	fmt.Println("Hierarchy: Application → Variant → Target")
 	fmt.Println()
 

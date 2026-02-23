@@ -76,7 +76,7 @@ Shows:
 - Path conventions (D2-style, flux2-kustomize-helm, etc.)
 - Environment chains (same app across dev/staging/prod)
 - Team groupings (from namespace patterns)
-- Suggested ConfigHub organization (Hubs, AppSpaces)
+- Suggested ConfigHub organization (Hubs, Apps)
 
 This helps you understand your GitOps structure and plan imports.
 
@@ -789,7 +789,7 @@ func printPatterns(r *PatternsResult) {
 	for _, hub := range r.Suggested.Hubs {
 		fmt.Printf("\n├── Hub: %s\n", hub.Name)
 		for _, space := range hub.AppSpaces {
-			fmt.Printf("│   └── AppSpace: %s [%s]\n", space.Name, space.Env)
+			fmt.Printf("│   └── App: %s [%s]\n", space.Name, space.Env)
 		}
 	}
 	fmt.Println()

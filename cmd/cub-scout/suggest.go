@@ -418,8 +418,8 @@ func (s *ImportSuggestion) TotalWorkloads() int {
 	return count
 }
 
-// SuggestHubAppSpaceStructure analyzes workloads and suggests a Hub/App Space structure
-// Key difference: One App Space contains ALL variants via labels (not one space per env)
+// SuggestHubAppSpaceStructure analyzes workloads and suggests an App model structure
+// Key difference: One App contains ALL variants via labels (not one space per env)
 func SuggestHubAppSpaceStructure(workloads []WorkloadInfo, defaultSpace string) HubAppSpaceSuggestion {
 	// Group workloads by inferred app and variant
 	type unitKey struct {
@@ -477,8 +477,8 @@ func SuggestHubAppSpaceStructure(workloads []WorkloadInfo, defaultSpace string) 
 	return suggestion
 }
 
-// inferAppSpace suggests an App Space name (team workspace)
-// In Hub/App Space model, this is the team's workspace containing all their variants
+// inferAppSpace suggests an App name (team workspace)
+// In the App model, this is the team's workspace containing all their variants
 func inferAppSpace(workloads []WorkloadInfo, defaultSpace string) string {
 	if defaultSpace != "" {
 		return defaultSpace
@@ -519,8 +519,8 @@ func inferAppSpace(workloads []WorkloadInfo, defaultSpace string) string {
 
 // Print displays the Hub/App Space suggestion
 func (s *HubAppSpaceSuggestion) Print() {
-	fmt.Printf("Suggested structure (Hub/App Space model):\n")
-	fmt.Printf("  App Space: %s\n", s.AppSpace)
+	fmt.Printf("Suggested structure (App model):\n")
+	fmt.Printf("  App: %s\n", s.AppSpace)
 	fmt.Println()
 
 	// Group by app for display
@@ -894,7 +894,7 @@ func suggestReconciliationRules(variants map[string]bool) []ReconciliationRule {
 // Print displays the full proposal
 func (p *FullProposal) Print() {
 	fmt.Println("┌─────────────────────────────────────────────────────────────┐")
-	fmt.Println("│ PROPOSED HUB/APP SPACE MODEL                                │")
+	fmt.Println("│ PROPOSED APP MODEL                                           │")
 	fmt.Println("└─────────────────────────────────────────────────────────────┘")
 
 	// Hub Bases
@@ -906,7 +906,7 @@ func (p *FullProposal) Print() {
 	}
 
 	// App Space
-	fmt.Printf("\n  APP SPACE: %s\n", p.AppSpace)
+	fmt.Printf("\n  APP: %s\n", p.AppSpace)
 
 	// Deployer
 	if p.Deployer != "" {

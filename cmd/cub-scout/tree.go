@@ -50,7 +50,7 @@ cub-scout tree provides different perspectives on your infrastructure:
 
   CONFIGHUB VIEWS (wraps 'cub unit tree'):
     config      ConfigHub Unit inheritance (--edge clone) or dependencies (--edge link)
-    suggest     Suggested Hub/AppSpace organization based on cluster workloads
+    suggest     Suggested App model organization based on cluster workloads
 
 Examples:
   # Show runtime hierarchy (Deployment -> ReplicaSet -> Pod)
@@ -1174,7 +1174,7 @@ func runTreeSuggest(ctx context.Context) error {
 	}
 
 	// Print suggestion
-	fmt.Printf("%sHub/AppSpace Suggestion%s\n", colorBold, colorReset)
+	fmt.Printf("%sApp Model Suggestion%s\n", colorBold, colorReset)
 	fmt.Println(strings.Repeat("─", 60))
 	fmt.Println()
 	fmt.Println("Based on cluster workloads, here's a suggested ConfigHub structure:")

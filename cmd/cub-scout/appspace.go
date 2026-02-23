@@ -14,20 +14,20 @@ import (
 
 var appSpaceCmd = &cobra.Command{
 	Use:   "app-space",
-	Short: "Manage App Spaces",
-	Long:  `Create, list, and manage App Spaces in ConfigHub.`,
+	Short: "Manage Apps",
+	Long:  `Create, list, and manage Apps in ConfigHub.`,
 }
 
 var appSpaceCreateCmd = &cobra.Command{
 	Use:   "create <name>",
-	Short: "Create an App Space",
-	Long: `Create a new App Space in ConfigHub.
+	Short: "Create an App",
+	Long: `Create a new App in ConfigHub.
 
-An App Space is a team workspace containing all environments (dev, staging, prod)
+An App is a team workspace containing all environments (dev, staging, prod)
 for applications managed by a single deployer (Flux or Argo CD).
 
 Examples:
-  # Create an App Space
+  # Create an App
   cub-scout app-space create payments-team
 
   # Create and set as current context
@@ -42,8 +42,8 @@ Examples:
 
 var appSpaceListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List App Spaces",
-	Long:  `List all App Spaces in the current organization.`,
+	Short: "List Apps",
+	Long:  `List all Apps in the current organization.`,
 	RunE:  runAppSpaceList,
 }
 
@@ -83,7 +83,7 @@ func runAppSpaceCreate(cmd *cobra.Command, args []string) error {
 	cubCmd.Stderr = os.Stderr
 
 	if err := cubCmd.Run(); err != nil {
-		return fmt.Errorf("create app space: %w", err)
+		return fmt.Errorf("create app: %w", err)
 	}
 
 	return nil
@@ -103,14 +103,14 @@ func runAppSpaceList(cmd *cobra.Command, args []string) error {
 	return cubCmd.Run()
 }
 
-// AppSpaceResult represents the result of creating an App Space
+// AppSpaceResult represents the result of creating an App
 type AppSpaceResult struct {
 	Name    string `json:"name"`
 	Created bool   `json:"created"`
 	Error   string `json:"error,omitempty"`
 }
 
-// CreateAppSpaceWithResult creates an App Space and returns structured result
+// CreateAppSpaceWithResult creates an App and returns structured result
 func CreateAppSpaceWithResult(name string, setContext bool, labels []string) (*AppSpaceResult, error) {
 	result := &AppSpaceResult{Name: name}
 
@@ -134,7 +134,7 @@ func CreateAppSpaceWithResult(name string, setContext bool, labels []string) (*A
 			return result, nil
 		}
 		result.Error = strings.TrimSpace(string(output))
-		return result, fmt.Errorf("create app space: %w", err)
+		return result, fmt.Errorf("create app: %w", err)
 	}
 
 	result.Created = true

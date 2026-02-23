@@ -69,9 +69,13 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
   cub-scout demo quick
   ```
 
+- [ ] **Explore the CLI reference** — [CLI-GUIDE.md](../../CLI-GUIDE.md) has everything
+
 ---
 
-## First Hour
+## Ready for Connected Mode? *(1.x)*
+
+> These steps require a ConfigHub account. Everything above works standalone.
 
 - [ ] **Connect to ConfigHub** — Free account, unlocks import and fleet features
   ```bash
@@ -86,13 +90,7 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
 
 - [ ] **See the full walkthrough** — [First Import guide](first-import.md) (10 minutes)
 
----
-
-## When You're Comfortable
-
 - [ ] **Import more namespaces** — Follow the [Migration Playbook](../howto/migration-playbook.md)
-
-- [ ] **Explore the CLI reference** — [CLI-GUIDE.md](../../CLI-GUIDE.md) has everything
 
 - [ ] **Learn why connected matters** — [WHY_CONNECTED_MODE.md](../WHY_CONNECTED_MODE.md)
 

@@ -73,7 +73,7 @@ var (
 
 func init() {
 	fleetCmd.Flags().BoolVar(&fleetJSON, "json", false, "Output as JSON")
-	fleetCmd.Flags().BoolVar(&fleetSuggest, "suggest", false, "Generate unified Hub/App Space proposal")
+	fleetCmd.Flags().BoolVar(&fleetSuggest, "suggest", false, "Generate unified App model proposal")
 	rootCmd.AddCommand(fleetCmd)
 }
 

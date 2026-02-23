@@ -4564,10 +4564,10 @@ func (m LocalClusterModel) getPanelAppHierarchy() string {
 	}
 
 	// ═══════════════════════════════════════════════════════════════════════════
-	// NAMESPACE ANALYSIS - Inferred AppSpaces
+	// NAMESPACE ANALYSIS - Inferred Apps
 	// ═══════════════════════════════════════════════════════════════════════════
 	b.WriteString("\n")
-	b.WriteString(lcSectionStyle.Render("NAMESPACE ANALYSIS") + lcDimStyle.Render(" → Inferred AppSpaces") + "\n")
+	b.WriteString(lcSectionStyle.Render("NAMESPACE ANALYSIS") + lcDimStyle.Render(" → Inferred Apps") + "\n")
 	b.WriteString("───────────────────────────────────────────────────────────\n")
 
 	// Group entries by namespace pattern (environment)
