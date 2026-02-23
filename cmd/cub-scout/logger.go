@@ -90,7 +90,7 @@ func (l *ImportLogger) LogProposal(proposal *FullProposal) {
 		return
 	}
 	l.Section("PROPOSAL")
-	l.Log("App Space: %s", proposal.AppSpace)
+	l.Log("App: %s", proposal.AppSpace)
 	l.Log("Units: %d", len(proposal.Units))
 	for _, u := range proposal.Units {
 		l.Log("  %s (app=%s, variant=%s)", u.Slug, u.App, u.Variant)

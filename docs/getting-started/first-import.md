@@ -1,5 +1,8 @@
 # First Import: Connect and Import in 10 Minutes
 
+> **1.x Connected** — This guide requires a ConfigHub account.
+> For standalone features (no account needed), see [First Map](first-map.md).
+
 **Time:** 10 minutes
 **Goal:** Connect to ConfigHub, import one namespace, see what you unlock
 
@@ -61,25 +64,22 @@ Pick a namespace you know well. Preview what cub-scout will propose:
 ```
 Discovered 4 workloads in payments-prod:
 
-  App: payments
-  Components:
+  App: payments-team
+
+  Deployments:
     payment-api      Deployment   owner=ArgoCD   variant=prod
     order-svc        Deployment   owner=ArgoCD   variant=prod
     redis            StatefulSet  owner=Helm     variant=prod
-    debug-config     ConfigMap    owner=Native   (unmanaged)
 
-  Proposed mapping:
-    Space: payments-team
-    Units: payment-api, order-svc, redis
-    Labels: app=payments, variant=prod
+  Labels: app=payments, variant=prod
 
   Skipped: debug-config (Native/unmanaged — import separately if desired)
 
 No changes made. Use without --dry-run to import.
 ```
 
-> **API note:** The output says "Space" and "Units" — those are the current CLI names.
-> Read them as: Space = where this App lives, Unit = a component of the App.
+> **API note:** The `cub` CLI currently uses `--space` and `unit` commands while the
+> API evolves. Read them as: Space = App, Unit = Deployment.
 
 **What to check:**
 - Do the component names make sense to your team?
@@ -100,8 +100,8 @@ If the proposal looks right:
 
 ```
 Imported 3 workloads to ConfigHub:
-  Space: payments-team
-  Units: payment-api, order-svc, redis
+  App: payments-team
+  Deployments: payment-api, order-svc, redis
 
 Your existing deployer (ArgoCD, Helm) is still running.
 ConfigHub is now aware of these workloads.

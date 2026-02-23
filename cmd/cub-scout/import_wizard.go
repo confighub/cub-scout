@@ -1649,14 +1649,14 @@ func (m ImportWizardModel) applyImport() tea.Msg {
 	return applyStartMsg{}
 }
 
-// startApplyCmd creates the app space and triggers first unit
+// startApplyCmd creates the app and triggers first deployment
 func (m ImportWizardModel) startApplyCmd() tea.Cmd {
 	return func() tea.Msg {
 		if m.proposal == nil {
 			return wizardErrMsg{err: fmt.Errorf("no proposal to apply")}
 		}
 
-		// Create App Space first
+		// Create App first
 		_, err := CreateAppSpaceWithResult(m.proposal.AppSpace, true, nil)
 		if err != nil {
 			return wizardErrMsg{err: fmt.Errorf("create space: %w", err)}
@@ -2571,7 +2571,7 @@ func (m ImportWizardModel) renderProposalTree() string {
 	b.WriteString(dimStyle.Render("→← expand/collapse  e edit  d delete"))
 	b.WriteString("\n\n")
 
-	// Tree root: App Space
+	// Tree root: App
 	appSpaceIcon := "📁"
 	appSpaceName := wizardSelectedStyle.Render(m.proposal.AppSpace)
 	b.WriteString(fmt.Sprintf("%s %s\n", appSpaceIcon, appSpaceName))
@@ -2737,7 +2737,7 @@ func (m ImportWizardModel) renderEditOverlay() string {
 		b.WriteString(dimStyle.Render("enter confirm  esc cancel"))
 
 	case editModeRenameSpace:
-		b.WriteString(headerStyle.Render("Rename App Space"))
+		b.WriteString(headerStyle.Render("Rename App"))
 		b.WriteString("\n\n")
 		b.WriteString("Current: ")
 		b.WriteString(m.proposal.AppSpace)
@@ -2826,7 +2826,7 @@ func (m ImportWizardModel) renderArchitectureDiagram() string {
 	b.WriteString(boxColor.Render("│") + "  " + titleStyle.Render("ConfigHub") + "                " + boxColor.Render("│") + "\n")
 	b.WriteString(boxColor.Render("│") + "                           " + boxColor.Render("│") + "\n")
 
-	// App Space
+	// App
 	spaceName := wizardTruncate(m.proposal.AppSpace, 18)
 	b.WriteString(boxColor.Render("│") + "  " + spaceStyle.Render(spaceName) + strings.Repeat(" ", 25-len(spaceName)) + boxColor.Render("│") + "\n")
 
@@ -2912,18 +2912,18 @@ func (m ImportWizardModel) renderApplyProgress() string {
 
 	if !m.applyComplete {
 		// Still in progress
-		b.WriteString(dimStyle.Render("Creating your App Space and Units in ConfigHub."))
+		b.WriteString(dimStyle.Render("Creating your App and Deployments in ConfigHub."))
 		b.WriteString("\n")
 		b.WriteString(dimStyle.Render("This registers your workloads for management."))
 		b.WriteString("\n\n")
 
-		b.WriteString(fmt.Sprintf("Creating App Space: %s\n", m.proposal.AppSpace))
+		b.WriteString(fmt.Sprintf("Creating App: %s\n", m.proposal.AppSpace))
 		if m.applyProgress > 0 {
 			b.WriteString(wizardSuccessStyle.Render("  ✓ Created") + "\n")
 		}
 		b.WriteString("\n")
 
-		b.WriteString("Creating Units:\n")
+		b.WriteString("Creating Deployments:\n")
 		for i, unit := range m.proposal.Units {
 			if i < len(m.applyResults) {
 				result := m.applyResults[i]

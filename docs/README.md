@@ -31,28 +31,35 @@ New to cub-scout? Start here:
 
 ## How-To Guides
 
-Task-based guides:
+### v1.0 Standalone
 
 | Task | Guide |
 |------|-------|
 | Find orphan resources | [howto/find-orphans.md](howto/find-orphans.md) |
 | Trace ownership chains | [howto/trace-ownership.md](howto/trace-ownership.md) |
-| Crossplane walkthrough | [howto/crossplane-walkthrough.md](howto/crossplane-walkthrough.md) |
 | Query resources | [howto/query-resources.md](howto/query-resources.md) |
-| Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
-| Tree hierarchies | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
-| Scan for risk issues | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Ownership detection | [howto/ownership-detection.md](howto/ownership-detection.md) |
-| Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
+| Scan for risk issues | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
+| Tree hierarchies | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
 | Advanced queries | [howto/advanced-queries.md](howto/advanced-queries.md) |
+| Crossplane walkthrough | [howto/crossplane-walkthrough.md](howto/crossplane-walkthrough.md) |
 | Run demos | [howto/running-demos.md](howto/running-demos.md) |
 | Extending cub-scout | [howto/extending.md](howto/extending.md) |
+
+### 1.x Connected *(requires ConfigHub)*
+
+| Task | Guide |
+|------|-------|
+| Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
+| Import from live cluster | [howto/import-from-live.md](howto/import-from-live.md) |
+| Migration playbook | [howto/migration-playbook.md](howto/migration-playbook.md) |
+| Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
 
 ---
 
 ## Reference
 
-Complete reference documentation:
+### v1.0 Standalone
 
 | Topic | Reference |
 |-------|-----------|
@@ -64,7 +71,6 @@ Complete reference documentation:
 | **Ownership & Precedence** | [reference/ownership-precedence.md](reference/ownership-precedence.md) |
 | **Health & Failure States** | [reference/health-failure-states.md](reference/health-failure-states.md) |
 | **CLI Contract** | [reference/cli-contract.md](reference/cli-contract.md) |
-| Import docs crosswalk | [reference/import-docs-crosswalk.md](reference/import-docs-crosswalk.md) |
 | Query syntax | [reference/query-syntax.md](reference/query-syntax.md) |
 | Query library | [reference/query-library.md](reference/query-library.md) |
 | GSF schema | [reference/gsf-schema.md](reference/gsf-schema.md) |
@@ -72,18 +78,24 @@ Complete reference documentation:
 | Keybindings | [reference/keybindings.md](reference/keybindings.md) |
 | GitOps patterns | [reference/gitops-patterns.md](reference/gitops-patterns.md) |
 | GitOps repo structures | [reference/gitops-repo-structures.md](reference/gitops-repo-structures.md) |
-| Rendered Manifest + Argo guide | [reference/rendered-manifest-and-argo-product-guide.md](reference/rendered-manifest-and-argo-product-guide.md) |
-| Connected tiers + views guide | [reference/connected-tiers-and-views-product-guide.md](reference/connected-tiers-and-views-product-guide.md) |
-| Resolver pattern | [reference/resolver-pattern.md](reference/resolver-pattern.md) |
-| Hub/AppSpace examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
 | Map PRD | [reference/map-prd.md](reference/map-prd.md) |
-| GitOps checkpoint PRD (proposal) | [reference/gitops-checkpoint-prd.md](reference/gitops-checkpoint-prd.md) |
-| GitOps checkpoint schemas | [reference/gitops-checkpoint-schemas.md](reference/gitops-checkpoint-schemas.md) |
-| Stored in Git vs ConfigHub (DRY vs WET) | [reference/stored-in-git-vs-confighub.md](reference/stored-in-git-vs-confighub.md) |
 | Command matrix | [reference/command-matrix.md](reference/command-matrix.md) |
 | Glossary | [reference/glossary.md](reference/glossary.md) |
 | Testing guide | [reference/testing.md](reference/testing.md) |
 | CLI guide | [../CLI-GUIDE.md](../CLI-GUIDE.md) |
+
+### 1.x Connected *(requires ConfigHub)*
+
+| Topic | Reference |
+|-------|-----------|
+| Import docs crosswalk | [reference/import-docs-crosswalk.md](reference/import-docs-crosswalk.md) |
+| Connected tiers + views guide | [reference/connected-tiers-and-views-product-guide.md](reference/connected-tiers-and-views-product-guide.md) |
+| App model examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
+| Rendered Manifest + Argo guide | [reference/rendered-manifest-and-argo-product-guide.md](reference/rendered-manifest-and-argo-product-guide.md) |
+| Stored in Git vs ConfigHub | [reference/stored-in-git-vs-confighub.md](reference/stored-in-git-vs-confighub.md) |
+| Resolver pattern | [reference/resolver-pattern.md](reference/resolver-pattern.md) |
+| GitOps checkpoint PRD (proposal) | [reference/gitops-checkpoint-prd.md](reference/gitops-checkpoint-prd.md) |
+| GitOps checkpoint schemas | [reference/gitops-checkpoint-schemas.md](reference/gitops-checkpoint-schemas.md) |
 
 ---
 

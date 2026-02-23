@@ -137,8 +137,8 @@ func TestLogProposal(t *testing.T) {
 
 	contentStr := string(content)
 
-	if !strings.Contains(contentStr, "App Space: my-team") {
-		t.Error("Missing App Space")
+	if !strings.Contains(contentStr, "App: my-team") {
+		t.Error("Missing App")
 	}
 
 	if !strings.Contains(contentStr, "nginx-prod") {

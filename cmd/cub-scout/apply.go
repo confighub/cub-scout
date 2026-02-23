@@ -16,7 +16,7 @@ import (
 var applyCmd = &cobra.Command{
 	Use:   "apply [proposal.json]",
 	Short: "Apply a proposal from JSON (GUI)",
-	Long: `Apply a Hub/App Space proposal to create resources in ConfigHub.
+	Long: `Apply an App model proposal to create resources in ConfigHub.
 
 This is the GUI companion to "cub-scout import".
 
@@ -161,10 +161,10 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 		logger.Section("APPLYING")
 	}
 
-	// Step 1: Create App Space
-	fmt.Printf("  Creating App Space: %s\n", proposal.AppSpace)
+	// Step 1: Create App
+	fmt.Printf("  Creating App: %s\n", proposal.AppSpace)
 	if logger != nil {
-		logger.Log("Creating App Space: %s", proposal.AppSpace)
+		logger.Log("Creating App: %s", proposal.AppSpace)
 	}
 	if !dryRun {
 		if err := createAppSpaceForImport(proposal.AppSpace); err != nil {
@@ -180,9 +180,9 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 		}
 	}
 
-	// Step 2: Create Units
+	// Step 2: Create Deployments
 	fmt.Println()
-	fmt.Println("  Creating Units:")
+	fmt.Println("  Creating Deployments:")
 
 	created := 0
 	skipped := 0
@@ -201,7 +201,7 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 		if len(unit.Workloads) == 0 {
 			fmt.Printf("    • %s (skipped - no workloads)\n", unit.Slug)
 			if logger != nil {
-				logger.Log("Skipped unit %s: no workloads", unit.Slug)
+				logger.Log("Skipped deployment %s: no workloads", unit.Slug)
 			}
 			skipped++
 			continue
@@ -209,7 +209,7 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 
 		fmt.Printf("    • %s [%s]\n", unit.Slug, labelStr)
 		if logger != nil {
-			logger.Log("Creating unit: %s [%s]", unit.Slug, labelStr)
+			logger.Log("Creating deployment: %s [%s]", unit.Slug, labelStr)
 		}
 
 		if !dryRun {
@@ -249,7 +249,7 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 			if err := createUnitWithManifest(proposal.AppSpace, unit.Slug, labels, manifest); err != nil {
 				fmt.Printf("      ⚠ failed to create: %v\n", err)
 				if logger != nil {
-					logger.Log("  FAILED: create unit: %v", err)
+					logger.Log("  FAILED: create deployment: %v", err)
 				}
 				skipped++
 				continue
@@ -265,7 +265,7 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 	}
 
 	fmt.Println()
-	fmt.Printf("  Summary: %d units created, %d skipped\n", created, skipped)
+	fmt.Printf("  Summary: %d deployments created, %d skipped\n", created, skipped)
 
 	if logger != nil {
 		logger.LogResult(created, skipped, nil)

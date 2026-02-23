@@ -30,7 +30,7 @@ type CombinedResult struct {
 	GitRepo   *gitops.RepoStructure `json:"gitRepo,omitempty"`
 	Cluster   *ImportResult         `json:"cluster,omitempty"`
 	Alignment []AlignmentEntry      `json:"alignment,omitempty"`
-	Proposal  *FullProposal         `json:"proposal,omitempty"` // Hub/App Space proposal
+	Proposal  *FullProposal         `json:"proposal,omitempty"` // App model proposal
 }
 
 // AlignmentEntry shows how Git apps align with cluster workloads
@@ -52,20 +52,20 @@ This helps you understand:
 - What workloads are deployed in the cluster
 - How they align (or don't)
 
-Use --suggest to generate a full Hub/App Space model proposal.
-Use --apply to create the App Space and Units in ConfigHub.
+Use --suggest to generate a full App model proposal.
+Use --apply to create the App and Deployments in ConfigHub.
 
 Examples:
   # Combine Git repo with current cluster
   cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo
 
-  # Generate Hub/App Space proposal
+  # Generate App model proposal
   cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo --suggest
 
   # Preview what would be created (dry-run)
   cub-scout combined --namespace demo --suggest --apply --dry-run
 
-  # Apply: create App Space and Units in ConfigHub
+  # Apply: create App and Deployments in ConfigHub
   cub-scout combined --namespace demo --suggest --apply
 
   # Use local Git repo with JSON output
@@ -79,8 +79,8 @@ func init() {
 	combinedCmd.Flags().StringVar(&combinedGitPath, "git-path", "", "Local path to Git repository")
 	combinedCmd.Flags().StringVarP(&combinedNamespace, "namespace", "n", "", "Namespace to scan in cluster")
 	combinedCmd.Flags().BoolVar(&combinedJSON, "json", false, "Output as JSON")
-	combinedCmd.Flags().BoolVar(&combinedSuggest, "suggest", false, "Generate Hub/App Space model proposal")
-	combinedCmd.Flags().BoolVar(&combinedApply, "apply", false, "Create App Space and Units in ConfigHub")
+	combinedCmd.Flags().BoolVar(&combinedSuggest, "suggest", false, "Generate App model proposal")
+	combinedCmd.Flags().BoolVar(&combinedApply, "apply", false, "Create App and Deployments in ConfigHub")
 	combinedCmd.Flags().BoolVar(&combinedDryRun, "dry-run", false, "Show what would be created without making changes")
 
 	rootCmd.AddCommand(combinedCmd)
@@ -150,7 +150,7 @@ func runCombined(cmd *cobra.Command, args []string) error {
 		result.Alignment = buildAlignment(result.GitRepo, result.Cluster)
 	}
 
-	// Build full Hub/App Space proposal if --suggest
+	// Build full App model proposal if --suggest
 	if combinedSuggest && result.GitRepo != nil {
 		result.Proposal = SuggestFullProposal(result.GitRepo.Apps, workloads, "")
 	}
@@ -160,7 +160,7 @@ func runCombined(cmd *cobra.Command, args []string) error {
 		result.Proposal = SuggestFullProposal(nil, workloads, "")
 	}
 
-	// Apply: create App Space and Units in ConfigHub
+	// Apply: create App and Deployments in ConfigHub
 	if combinedApply && result.Proposal != nil {
 		if err := applyProposal(result.Proposal, workloads, combinedDryRun); err != nil {
 			return err
@@ -352,7 +352,7 @@ func convertToSuggestionJSON(s *HubAppSpaceSuggestion) *SuggestionJSON {
 	}
 }
 
-// applyProposal creates the App Space and Units in ConfigHub
+// applyProposal creates the App and Deployments in ConfigHub
 func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool) error {
 	// Index workloads by namespace/name for manifest lookup
 	workloadIndex := make(map[string]WorkloadInfo)
@@ -370,8 +370,8 @@ func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool
 		fmt.Println()
 	}
 
-	// Step 1: Create App Space
-	fmt.Printf("  Creating App Space: %s\n", proposal.AppSpace)
+	// Step 1: Create App
+	fmt.Printf("  Creating App: %s\n", proposal.AppSpace)
 	if !dryRun {
 		if err := createAppSpaceForImport(proposal.AppSpace); err != nil {
 			return fmt.Errorf("create space: %w", err)
@@ -379,9 +379,9 @@ func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool
 		fmt.Printf("    ✓ Space created\n")
 	}
 
-	// Step 2: Create Units with workloads
+	// Step 2: Create Deployments with workloads
 	fmt.Println()
-	fmt.Println("  Creating Units:")
+	fmt.Println("  Creating Deployments:")
 
 	created := 0
 	skipped := 0
@@ -436,12 +436,12 @@ func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool
 	}
 
 	fmt.Println()
-	fmt.Printf("  Summary: %d units created, %d skipped\n", created, skipped)
+	fmt.Printf("  Summary: %d deployments created, %d skipped\n", created, skipped)
 
 	return nil
 }
 
-// createAppSpaceForImport creates an App Space for import using cub-scout app-space create
+// createAppSpaceForImport creates an App for import using cub-scout app-space create
 func createAppSpaceForImport(name string) error {
 	result, err := CreateAppSpaceWithResult(name, true, nil)
 	if err != nil {

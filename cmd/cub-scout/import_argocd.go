@@ -416,8 +416,8 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 
 	fmt.Println()
 
-	// Create the unit with workload resources
-	fmt.Printf("Creating unit: %s\n", appName)
+	// Create the deployment with workload resources
+	fmt.Printf("Creating deployment: %s\n", appName)
 
 	// Combine all managed resources into a single YAML
 	var workloadYAML strings.Builder

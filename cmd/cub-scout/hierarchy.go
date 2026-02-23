@@ -2138,11 +2138,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, loadSuggestDataCmd()
 
 		case key.Matches(msg, m.keymap.HubView):
-			// Toggle Hub/AppSpace view mode
+			// Toggle App model view mode
 			m.hubViewMode = !m.hubViewMode
 			m.rebuildFlatList()
 			if m.hubViewMode {
-				m.statusMsg = "Hub/AppSpace view enabled"
+				m.statusMsg = "App model view enabled"
 			} else {
 				m.statusMsg = "Standard view"
 			}
@@ -3133,7 +3133,7 @@ func (m *Model) advanceImportStep() (tea.Model, tea.Cmd) {
 		selected := m.getSelectedWorkloads()
 		if len(selected) > 0 {
 			// For ArgoCD imports, always use combined structure (1 Unit per Application)
-			// per Hub/AppSpace/Unit model - skip the unit structure step
+			// per App/Deployment model - skip the unit structure step
 			if m.importSource == importSourceArgoCD {
 				m.importUnitStructure = unitStructureCombined
 				m.importStep = importStepExtractConfig
@@ -3841,7 +3841,7 @@ func (m Model) renderHelpOverlay() string {
 	b.WriteString("\n")
 	b.WriteString("  " + keyStyle.Render("a") + "          " + descStyle.Render("Activity view (recent changes)"))
 	b.WriteString("\n")
-	b.WriteString("  " + keyStyle.Render("B") + "          " + descStyle.Render("Toggle Hub/AppSpace view"))
+	b.WriteString("  " + keyStyle.Render("B") + "          " + descStyle.Render("Toggle App model view"))
 	b.WriteString("\n")
 	b.WriteString("  " + keyStyle.Render("M") + "          " + descStyle.Render("Three Maps view (GitOps + ConfigHub + Repos)"))
 	b.WriteString("\n")
@@ -4146,8 +4146,8 @@ func (m Model) renderMapsView() string {
 	}
 	b.WriteString("\n")
 
-	// MAP 2b: Hub/AppSpace Model
-	b.WriteString(sectionStyle.Render("MAP 2b: HUB/APPSPACE MODEL") + " " + dimStyle.Render("(Platform + App Teams)"))
+	// MAP 2b: App Model
+	b.WriteString(sectionStyle.Render("MAP 2b: APP MODEL") + " " + dimStyle.Render("(Platform + App Teams)"))
 	b.WriteString("\n")
 
 	// Categorize spaces into platform vs app spaces
@@ -4183,7 +4183,7 @@ func (m Model) renderMapsView() string {
 	}
 
 	b.WriteString("  │\n")
-	b.WriteString(fmt.Sprintf("  └── %s\n", cyanStyle.Render("App Spaces (Teams)")))
+	b.WriteString(fmt.Sprintf("  └── %s\n", cyanStyle.Render("Apps (Teams)")))
 	if len(appSpaces) > 0 {
 		shown := 5
 		if len(appSpaces) < shown {
@@ -4428,7 +4428,7 @@ func (m Model) renderSuggestView() string {
 	// Show suggestion
 	proposal := m.suggestProposal
 
-	b.WriteString(sectionStyle.Render("Suggested App Space: ") + nameStyle.Render(proposal.AppSpace))
+	b.WriteString(sectionStyle.Render("Suggested App: ") + nameStyle.Render(proposal.AppSpace))
 	b.WriteString("\n\n")
 
 	b.WriteString(sectionStyle.Render("Suggested Units:"))
@@ -4538,7 +4538,7 @@ func (m Model) renderCreateWizard() string {
 		b.WriteString(activeStyle.Render("_"))
 
 	case createStepUnitMethod:
-		b.WriteString(dimStyle.Render("Creating unit: " + m.createName))
+		b.WriteString(dimStyle.Render("Creating deployment: " + m.createName))
 		b.WriteString("\n\n")
 		b.WriteString("How would you like to create this unit?\n\n")
 		options := []string{"Clone from existing unit", "Start with empty config"}
@@ -4551,7 +4551,7 @@ func (m Model) renderCreateWizard() string {
 		}
 
 	case createStepSelectSource:
-		b.WriteString(dimStyle.Render("Creating unit: " + m.createName))
+		b.WriteString(dimStyle.Render("Creating deployment: " + m.createName))
 		b.WriteString("\n\n")
 		b.WriteString("Select unit to clone:\n\n")
 		if len(m.createUnits) == 0 {
@@ -4568,7 +4568,7 @@ func (m Model) renderCreateWizard() string {
 		}
 
 	case createStepSelectTarget:
-		b.WriteString(dimStyle.Render("Creating unit: " + m.createName))
+		b.WriteString(dimStyle.Render("Creating deployment: " + m.createName))
 		b.WriteString("\n")
 		if m.createCloneFrom != "" {
 			b.WriteString(dimStyle.Render("Clone from: " + m.createCloneFrom))
@@ -5495,7 +5495,7 @@ func (m *Model) rebuildFlatList() {
 		m.flatList = append(m.flatList, node)
 		if node.Expanded {
 			if m.hubViewMode && node.Type == "org" {
-				// Hub/AppSpace view: group spaces
+				// App model view: group spaces
 				m.addHubAppSpaceView(node)
 			} else {
 				m.addChildrenToFlatList(node, 1)
@@ -5565,9 +5565,9 @@ func (m *Model) unitMatchesCurrentCluster(node *TreeNode) bool {
 	return matchesCluster(targetSlug, m.currentCluster)
 }
 
-// addHubAppSpaceView adds spaces grouped into Hub (platform) and AppSpaces (apps)
+// addHubAppSpaceView adds spaces grouped into Hub (platform) and Apps (apps)
 func (m *Model) addHubAppSpaceView(orgNode *TreeNode) {
-	// Categorize spaces into Hub (platform) vs AppSpaces
+	// Categorize spaces into Hub (platform) vs Apps
 	var hubSpaces, appSpaces []*TreeNode
 	for _, child := range orgNode.Children {
 		if child.Type != "space" {
@@ -5611,11 +5611,11 @@ func (m *Model) addHubAppSpaceView(orgNode *TreeNode) {
 		}
 	}
 
-	// Create virtual AppSpaces group node
+	// Create virtual Apps group node
 	if len(appSpaces) > 0 {
 		appGroup := &TreeNode{
 			ID:       orgNode.ID + "/appspaces",
-			Name:     "📦 AppSpaces (Teams)",
+			Name:     "📦 Apps (Teams)",
 			Type:     "app_group",
 			Info:     fmt.Sprintf("(%d spaces)", len(appSpaces)),
 			Parent:   orgNode,
@@ -6068,7 +6068,7 @@ func formatUnitDetails(jsonData []byte, basicData CubUnitData) string {
 	return b.String()
 }
 
-// formatGroupPatternContext creates context about Hub/AppSpace patterns
+// formatGroupPatternContext creates context about App model patterns
 func formatGroupPatternContext(node *TreeNode) string {
 	var b strings.Builder
 
@@ -6149,7 +6149,7 @@ func formatGroupPatternContext(node *TreeNode) string {
 
 	b.WriteString("\n")
 	b.WriteString("─────────────────────────────────────\n")
-	b.WriteString("Press B to toggle Hub/AppSpace view\n")
+	b.WriteString("Press B to toggle App model view\n")
 	b.WriteString("See: docs/map/reference/hub-appspace-examples.md\n")
 
 	return b.String()
@@ -6221,24 +6221,24 @@ func detectPatternFromSpaces(spaces []*TreeNode) string {
 		b.WriteString("Pattern: Banko (Flux)\n")
 		b.WriteString("• Cluster-per-directory structure\n")
 		b.WriteString("• Versioned platform components\n")
-		b.WriteString("• platform/ → Hub, clusters/* → AppSpaces\n")
+		b.WriteString("• platform/ → Hub, clusters/* → Apps\n")
 	} else if hasBase && hasDevStagingProd {
 		b.WriteString("Pattern: Arnie (ArgoCD)\n")
 		b.WriteString("• Folders-per-environment\n")
 		b.WriteString("• Promotion = file copy\n")
-		b.WriteString("• base/ → Hub, envs/* → AppSpaces\n")
+		b.WriteString("• base/ → Hub, envs/* → Apps\n")
 	} else if hasRegions && (hasBase || hasInfra) {
 		b.WriteString("Pattern: TraderX (Multi-region)\n")
-		b.WriteString("• Base/Infra Hub + regional AppSpaces\n")
+		b.WriteString("• Base/Infra Hub + regional Apps\n")
 		b.WriteString("• Labels: variant, region\n")
 	} else if hasPlatform && hasDevStagingProd {
 		b.WriteString("Pattern: KubeCon Demo\n")
 		b.WriteString("• Platform team + App teams\n")
-		b.WriteString("• platform-* → Hub, app*-dev/prod → AppSpaces\n")
+		b.WriteString("• platform-* → Hub, app*-dev/prod → Apps\n")
 	} else if hasBase && hasInfra && hasDevStagingProd {
 		b.WriteString("Pattern: curious-cub (Standard)\n")
 		b.WriteString("• Base/Infra Hub\n")
-		b.WriteString("• dev/staging/prod AppSpaces\n")
+		b.WriteString("• dev/staging/prod Apps\n")
 	} else if hasDevStagingProd {
 		b.WriteString("Pattern: Environment-based\n")
 		b.WriteString("• Spaces per environment (dev/staging/prod)\n")
@@ -6971,7 +6971,7 @@ func (m Model) renderTree() string {
 			b.WriteString(groupStyle.Render(node.Name))
 
 		case "hub_group", "app_group":
-			// Virtual grouping nodes for Hub/AppSpace view
+			// Virtual grouping nodes for App model view
 			b.WriteString(groupStyle.Render(node.Name))
 
 		case "unit":

@@ -107,7 +107,7 @@ var importCmd = &cobra.Command{
 
 This command:
   1. Discovers workloads (Deployments, StatefulSets, DaemonSets)
-  2. Suggests an App Space and Units structure
+  2. Suggests an App and Deployments structure
   3. Creates everything in ConfigHub
 
 That's it. One command.
@@ -273,7 +273,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Step 4: Confirm
 	if !importYes {
-		fmt.Printf("\nImport %d units into App Space '%s'? [y/N] ", len(proposal.Units), proposal.AppSpace)
+		fmt.Printf("\nImport %d deployments into App '%s'? [y/N] ", len(proposal.Units), proposal.AppSpace)
 		if !confirm() {
 			if logger != nil {
 				logger.Log("User aborted import")
@@ -287,7 +287,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 	// Step 5: Apply
 	if logger != nil {
 		logger.Section("APPLYING")
-		logger.Log("Creating App Space: %s", proposal.AppSpace)
+		logger.Log("Creating App: %s", proposal.AppSpace)
 	}
 	return applyImportWithLogger(proposal, allWorkloads, logger)
 }
@@ -669,7 +669,7 @@ func printDiscovery(namespaces []string, workloads []WorkloadInfo, proposal *Ful
 	fmt.Println("┌─────────────────────────────────────────────────────────────┐")
 	fmt.Println("│ WILL CREATE                                                 │")
 	fmt.Println("└─────────────────────────────────────────────────────────────┘")
-	fmt.Printf("  App Space: %s\n\n", proposal.AppSpace)
+	fmt.Printf("  App: %s\n\n", proposal.AppSpace)
 
 	for _, unit := range proposal.Units {
 		labels := []string{}
@@ -683,7 +683,7 @@ func printDiscovery(namespaces []string, workloads []WorkloadInfo, proposal *Ful
 		fmt.Printf("    workloads: %d\n", len(unit.Workloads))
 	}
 
-	fmt.Printf("\n  Total: %d units\n", len(proposal.Units))
+	fmt.Printf("\n  Total: %d deployments\n", len(proposal.Units))
 }
 
 func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger) error {
@@ -696,13 +696,13 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 
 	fmt.Println()
 
-	// Create App Space
-	fmt.Printf("Creating App Space: %s... ", proposal.AppSpace)
+	// Create App
+	fmt.Printf("Creating App: %s... ", proposal.AppSpace)
 	result, err := CreateAppSpaceWithResult(proposal.AppSpace, true, nil)
 	if err != nil {
 		fmt.Println(SymError)
 		if logger != nil {
-			logger.Log("FAILED: App Space creation: %v", err)
+			logger.Log("FAILED: App creation: %v", err)
 			logger.LogResult(0, 1, err)
 		}
 		return fmt.Errorf("create space: %w", err)
@@ -710,16 +710,16 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 	if result.Created {
 		fmt.Println(SymOK)
 		if logger != nil {
-			logger.Log("Created App Space: %s", proposal.AppSpace)
+			logger.Log("Created App: %s", proposal.AppSpace)
 		}
 	} else {
 		fmt.Println("(exists)")
 		if logger != nil {
-			logger.Log("App Space already exists: %s", proposal.AppSpace)
+			logger.Log("App already exists: %s", proposal.AppSpace)
 		}
 	}
 
-	// Create Units
+	// Create Deployments
 	created := 0
 	failed := 0
 
@@ -728,9 +728,9 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 			continue
 		}
 
-		fmt.Printf("Creating unit: %s... ", unit.Slug)
+		fmt.Printf("Creating deployment: %s... ", unit.Slug)
 		if logger != nil {
-			logger.Log("Creating unit: %s", unit.Slug)
+			logger.Log("Creating deployment: %s", unit.Slug)
 		}
 
 		// Get first workload's manifest
@@ -762,7 +762,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 		if err := createUnitWithManifestSimple(proposal.AppSpace, unit.Slug, labels, manifest); err != nil {
 			fmt.Printf("✗ (%v)\n", err)
 			if logger != nil {
-				logger.Log("  FAILED: create unit: %v", err)
+				logger.Log("  FAILED: create deployment: %v", err)
 			}
 			failed++
 			continue
@@ -781,9 +781,9 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 	var finalErr error
 	if failed > 0 {
 		fmt.Printf("Done: %d created, %d failed\n", created, failed)
-		finalErr = fmt.Errorf("%d units failed", failed)
+		finalErr = fmt.Errorf("%d deployments failed", failed)
 	} else {
-		fmt.Printf("Done: %d units created\n", created)
+		fmt.Printf("Done: %d deployments created\n", created)
 	}
 
 	if logger != nil {
@@ -795,7 +795,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 	}
 
 	fmt.Println()
-	fmt.Println("View your units:")
+	fmt.Println("View your deployments:")
 	fmt.Printf("  cub unit list --space %s\n", proposal.AppSpace)
 
 	// Ask to start worker and set targets (skip if -y was used)
@@ -1009,7 +1009,7 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 		fmt.Printf("  cub unit set-target <unit> <target> --space %s\n", proposal.AppSpace)
 	} else {
 		// Set target on all units
-		fmt.Printf("Setting target '%s' on units...\n", targetSlug)
+		fmt.Printf("Setting target '%s' on deployments...\n", targetSlug)
 		if logger != nil {
 			logger.Log("Target found: %s", targetSlug)
 		}
