@@ -40,19 +40,20 @@ It reads labels and annotations — it never modifies anything.
 
 ## What cub-scout Proposes
 
-Given the detected workloads, cub-scout suggests:
+Given the detected workloads, cub-scout suggests an App structure:
 
-- **App Space** — a team workspace name (inferred from namespace patterns)
-- **Units** — one per workload variant, with `app` and `variant` labels
+- **App** — the logical application (inferred from namespace/workload patterns)
+- **Components** — individual workload pieces (api, worker, db) with `app` and `variant` labels
 - **Variant** — inferred from GitOps paths (`envs/prod` → `prod`) or namespace patterns (`myapp-prod` → `prod`)
 
-The proposal uses the current ConfigHub API (Space/Unit). In practice, think of it as:
+> **API note:** The proposal currently uses Space/Unit terminology in CLI output.
+> Read "Space" as where the App lives, "Unit" as a component of the App.
 
 | cub-scout proposes | You should read as |
 |--------------------|--------------------|
-| App Space: `myapp-team` | Team workspace for the myapp service |
-| Unit: `api-prod` | The api component, production deployment |
-| Unit: `api-dev` | The api component, dev deployment |
+| Space: `myapp-team` | Team workspace for the myapp service |
+| Unit: `api-prod` | The api component, production Deployment |
+| Unit: `api-dev` | The api component, dev Deployment |
 
 ## Variant Inference Priority
 
@@ -69,11 +70,11 @@ cub-scout infers the environment variant in this order:
 cub-scout's job stops at the proposal. It discovers and explains — it doesn't create anything in ConfigHub.
 
 The next steps are ConfigHub's responsibility:
-- Create Units from the proposal (via `cub unit create` or the ConfigHub UI)
-- Set up bridge workers and targets
+- Create the App and its Deployments from the proposal
+- Set up bridge workers and Targets
 - Connect the OCI pipeline (ConfigHub renders → Flux/Argo deploys)
 
-See [Import to ConfigHub](import-to-confighub.md) for the full migration path.
+See [Import to ConfigHub](import-to-confighub.md) for the full migration path, or [Migration Playbook](migration-playbook.md) for the comprehensive guide.
 
 ## Worked Example
 
@@ -81,6 +82,6 @@ See [examples/import-from-live/](../../examples/import-from-live/) for a complet
 
 ## Related Docs
 
+- [Migration Playbook](migration-playbook.md) — Comprehensive guide with assessment, planning, validation, and rollback
 - [Import to ConfigHub](import-to-confighub.md) — Full migration path (includes ConfigHub steps)
 - [ConfigHub Glossary](../reference/glossary.md) — Terminology reference
-- [Hub/AppSpace Examples](../reference/hub-appspace-examples.md) — Real-world mapping patterns

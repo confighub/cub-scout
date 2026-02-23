@@ -17,6 +17,10 @@ Org: acme-corp
 
 ### Platform Hub
 
+> **Transitioning:** The Hub/AppSpace model is being replaced by App/Deployment/Target.
+> See [ConfigHub Model](#confighub-model-app-centric) below for the new language.
+> The current API still uses these concepts.
+
 Governance layer that constrains what teams can do. Owns base templates.
 
 ```
@@ -24,42 +28,32 @@ Org: acme-corp
 └── Platform Hub: platform-team
     ├── Base Catalog (templates)
     ├── Policies (what's allowed)
-    └── App Spaces (team workspaces)
+    └── Spaces (team workspaces)
 ```
 
-**Hub owns the skeletons.** Base templates, shared configs, and reusable patterns live in the Hub's Base Catalog.
-
-### App Space
+### Space (formerly App Space)
 
 Team workspace. One deployer (Argo OR Flux), one team. Contains Units.
+In the new model, a Space maps to where an App's Deployments live.
 
 ```
-App Space: payments-team
+Space: payments-team
 ├── Deployer: ArgoCD
 └── Units: payment-api, order-svc, redis
 ```
 
-**App Space ≠ Environment.** Environments are labels (`variant=prod`), not separate spaces.
+**Space ≠ Environment.** Environments are labels (`variant=prod`), not separate spaces.
 
 ### Unit
 
-Single deployable workload with labels. The atomic element of config.
+Single deployable workload component with labels. In the new model, a Unit
+maps to a component of an App.
 
 ```
 Unit: payment-api
 ├── Labels: app=payment-api, variant=prod, region=us-east
 ├── Source: apps/payment-api/overlays/prod
 └── Target: prod-east-cluster
-```
-
-### App (Application)
-
-**App = a name.** Just a label value like `app=payment-api`.
-
-The "application" emerges from querying Units with that label:
-```bash
-cub query "Labels['app'] = 'payment-api'"
-# Returns all Units for payment-api across all variants/regions
 ```
 
 ### Variant
@@ -117,7 +111,7 @@ Git repository registered with ConfigHub. Contains pattern metadata (app-of-apps
 
 Tool that syncs Git to cluster: Flux CD or Argo CD.
 
-**One App Space = One Deployer.** Can't mix Flux and Argo in same App Space.
+**One Space = One Deployer.** Can't mix Flux and Argo in the same Space.
 
 ### Target
 
@@ -141,20 +135,21 @@ Discover workloads from running cluster. TUI capability.
 
 ```bash
 ./cub-scout import -n payment-prod
-# Scans cluster, detects ownership, suggests App Space structure
+# Scans cluster, detects ownership, suggests App structure
 ```
 
 ### GIT Import
 
 Parse Git repo structure for base templates, overlays, variants. GUI capability.
+Git import is the default source; live import is first-class when Git is unavailable.
 
-### Base Unit
+### Base Template
 
-Template in Hub's Base Catalog. Created from `base/` folders in Git. Never deployed directly.
+Template in the platform catalog. Created from `base/` folders in Git. Never deployed directly.
 
 ```
-apps/payment-api/base/  →  Base Unit in Hub Catalog
-apps/payment-api/overlays/prod/  →  Unit (references base)
+apps/payment-api/base/  →  Base template in catalog
+apps/payment-api/overlays/prod/  →  App component (references base)
 ```
 
 ---
@@ -189,17 +184,23 @@ Format: `RISK-2025-XXXX`
 
 ---
 
-## Emerging Concepts (ConfigHub Evolution)
+## ConfigHub Model (App-Centric)
 
-> **Note:** ConfigHub's data model is evolving. The concepts below describe the
-> direction of travel. The current API still uses Space/Unit/Target. cub-scout
-> uses App/Deployment language in user-facing output while mapping to the
-> current API under the hood.
+ConfigHub is moving to app-centric language. The invariant is unchanged:
+nothing implicit ever deploys, nothing observed silently overwrites intent.
 
-### App (Multi-Unit)
+### Operating Boundary
 
-A collection of components (api, worker, database) owned by one team, deployed
-together. The "App" is what users think about — the Unit is the implementation detail.
+| System | Role |
+|--------|------|
+| **ConfigHub** | Stores/publishes explicit intended state + provenance |
+| **Flux/Argo** | Reconcile runtime (ConfigHub does not replace your deployer) |
+| **cub-scout** | Reports reality and drift (read-only observer) |
+
+### App
+
+A logical application — the thing your team thinks of as "a service." Contains
+components (api, worker, database) owned by one team.
 
 ```
 App: payment-service
@@ -207,10 +208,14 @@ App: payment-service
 └── Deployments: dev, staging, prod
 ```
 
-### Deployment (App × Target)
+### Deployment
 
-The junction of an App and a Target. What you get when you deploy an App to a
-specific environment. Maps to what was previously "a Space with multiple Units."
+An App deployed to a specific Target (App × environment). What you get when you
+deploy an App to production, staging, etc.
+
+### Target
+
+A Kubernetes cluster managed by ConfigHub. Connected via a Bridge Worker.
 
 ### OCI Transport
 
@@ -229,11 +234,26 @@ Connector between ConfigHub and external systems (Kubernetes, ArgoCD, Flux).
 Bridge workers handle the actual deployment — ConfigHub orchestrates, Flux/Argo
 apply.
 
+### Temporary API Mapping
+
+While APIs evolve, the new concepts map to current CLI commands:
+
+| New Concept | Current CLI | Notes |
+|-------------|-------------|-------|
+| App | Space | A Space holds one App's Deployments |
+| App component | Unit | A Unit is a deployable component |
+| Deployment | Space + Units + Target | Junction of App × environment |
+| Target | Target | Unchanged |
+
+The `cub` CLI still uses `cub unit list`, `cub space delete`, etc. Read the
+output through the App/Deployment lens.
+
 ---
 
 ## See Also
 
-- [Hub/AppSpace Examples](hub-appspace-examples.md) — Model examples
+- [Migration Playbook](../howto/migration-playbook.md) — Comprehensive migration guide
 - [Import to ConfigHub](../howto/import-to-confighub.md) — Import architecture
 - [Import from Live](../howto/import-from-live.md) — Cluster-only import (no Git required)
+- [Hub/AppSpace Examples](hub-appspace-examples.md) — Mapping pattern examples
 - [Scan for risk issues](../howto/scan-for-risks.md) — risk scanning guide

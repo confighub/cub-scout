@@ -71,17 +71,30 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
 
 ---
 
-## When You're Comfortable
+## First Hour
 
-- [ ] **Connect to ConfigHub** — Unlock fleet-wide visibility (free account)
-  - See [WHY_CONNECTED_MODE.md](../WHY_CONNECTED_MODE.md)
-
-- [ ] **Import your apps** — Share ownership data with your team
+- [ ] **Connect to ConfigHub** — Free account, unlocks import and fleet features
   ```bash
-  cub-scout import --dry-run --namespace myapp
+  cub auth login
+  cub-scout status    # Should show ● Connected
   ```
 
+- [ ] **Preview an import** — See what cub-scout would tell ConfigHub
+  ```bash
+  cub-scout import --dry-run -n <namespace>
+  ```
+
+- [ ] **See the full walkthrough** — [First Import guide](first-import.md) (10 minutes)
+
+---
+
+## When You're Comfortable
+
+- [ ] **Import more namespaces** — Follow the [Migration Playbook](../howto/migration-playbook.md)
+
 - [ ] **Explore the CLI reference** — [CLI-GUIDE.md](../../CLI-GUIDE.md) has everything
+
+- [ ] **Learn why connected matters** — [WHY_CONNECTED_MODE.md](../WHY_CONNECTED_MODE.md)
 
 ---
 
