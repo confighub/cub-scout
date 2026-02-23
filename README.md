@@ -104,6 +104,8 @@ cub-scout works fully offline. Connected mode is optional.
 
 **Connected:** Run `cub auth login` for ConfigHub features. [Learn more](docs/WHY_CONNECTED_MODE.md)
 
+**Ready to connect?** See the [First Import guide](docs/getting-started/first-import.md) for a 10-minute walkthrough.
+
 ---
 
 ## Maps & Trees

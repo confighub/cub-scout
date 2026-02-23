@@ -71,6 +71,7 @@ Tracking issue: **#154** (master backlog tracking)
 
 - [ ] Connected hierarchy navigation defaults (cluster-aware filtering)
 - [x] Mode state visibility in TUI (QuickMode for instant display, Offline/Standalone/Connected distinction)
+- [x] Canonical migration guide from Argo/Helm to ConfigHub (`docs/howto/migration-playbook.md`)
 - [ ] Trace context diagnostics and documented reset path for connected workflows
 - [ ] "Break-glass to managed" flow documentation and guided testing
 - [ ] User-facing explainer for ASCII vs JSON model (canonical data vs presentation)
