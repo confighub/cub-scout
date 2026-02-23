@@ -13,7 +13,7 @@ New to cub-scout? Start here:
 | **1. Install** | [getting-started/install.md](getting-started/install.md) |
 | **2. First Map** | [getting-started/first-map.md](getting-started/first-map.md) |
 | **3. Understand GitOps** | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
-| **4. App + AI GitOps (Plain English)** | [getting-started/app-and-ai-gitops-plain-english.md](getting-started/app-and-ai-gitops-plain-english.md) |
+| **4. App + AI GitOps (Plain English)** | [reference/app-and-ai-gitops-plain-english.md](reference/app-and-ai-gitops-plain-english.md) |
 | **5. Scale Demo** | [getting-started/scale-demo.md](getting-started/scale-demo.md) |
 
 ---

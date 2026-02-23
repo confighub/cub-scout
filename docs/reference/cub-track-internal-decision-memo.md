@@ -252,7 +252,7 @@ Outcome:
 
 ## Related Docs
 
-1. `docs/getting-started/app-and-ai-gitops-plain-english.md`
+1. `docs/reference/app-and-ai-gitops-plain-english.md`
 2. `docs/reference/cub-track-mvp-upsell-and-dual-store.md`
 3. `docs/reference/stored-in-git-vs-confighub.md`
 
