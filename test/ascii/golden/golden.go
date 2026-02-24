@@ -19,7 +19,16 @@ import (
 	"testing"
 )
 
+// update is a flag to update golden files instead of comparing.
+// Also supports UPDATE_GOLDEN=1 environment variable for CI-friendly usage.
 var update = flag.Bool("update", false, "update golden files")
+
+func init() {
+	if os.Getenv("UPDATE_GOLDEN") == "1" {
+		v := true
+		update = &v
+	}
+}
 
 // Normalize makes CLI output stable across platforms and minor environment differences.
 func Normalize(s string) string {

@@ -24,7 +24,17 @@ import (
 )
 
 // updateGolden is a flag to update golden files instead of comparing.
+// Also supports UPDATE_GOLDEN=1 environment variable for CI-friendly usage.
 var updateGolden = flag.Bool("update", false, "update golden files")
+
+func init() {
+	if os.Getenv("UPDATE_GOLDEN") == "1" {
+		// Defer setting until after flag.Parse — but since we use a pointer,
+		// we can set the underlying value directly.
+		v := true
+		updateGolden = &v
+	}
+}
 
 // Result captures the output of a CLI command execution.
 type Result struct {

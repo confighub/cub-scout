@@ -4,6 +4,8 @@
 
 This is the authoritative testing reference for cub-scout. All other testing docs defer to this one.
 
+> **Writing new tests?** See [BEST-PRACTICES.md](BEST-PRACTICES.md) for the cookbook — decision tables, copy-paste patterns, and fixture conventions.
+
 ---
 
 ## Quick Start
