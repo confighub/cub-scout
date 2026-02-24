@@ -96,7 +96,7 @@ type SavedQuery struct {
 	Query       string
 }
 
-// Built-in saved queries
+// Built-in saved queries (standalone/offline mode order)
 var savedQueries = []SavedQuery{
 	{Name: "all", Description: "All resources (no filter)", Query: ""},
 	{Name: "orphans", Description: "Unmanaged resources (Native)", Query: "owner=Native"},
@@ -107,6 +107,28 @@ var savedQueries = []SavedQuery{
 	{Name: "confighub", Description: "ConfigHub-managed resources", Query: "owner=ConfigHub"},
 	{Name: "prod", Description: "Production namespaces", Query: "namespace=*-prod,prod-*,production"},
 	{Name: "dev", Description: "Development namespaces", Query: "namespace=*-dev,dev-*,development"},
+}
+
+// connectedQueries is the query order for connected mode — surfaces ConfigHub
+// and managed presets first, since connected users care about managed state.
+var connectedQueries = []SavedQuery{
+	{Name: "all", Description: "All resources (no filter)", Query: ""},
+	{Name: "confighub", Description: "ConfigHub-managed resources", Query: "owner=ConfigHub"},
+	{Name: "managed", Description: "All managed resources (non-Native)", Query: "owner!=Native"},
+	{Name: "orphans", Description: "Unmanaged resources (Native)", Query: "owner=Native"},
+	{Name: "flux", Description: "Flux-managed resources", Query: "owner=Flux"},
+	{Name: "argo", Description: "ArgoCD-managed resources", Query: "owner=ArgoCD"},
+	{Name: "helm", Description: "Helm-managed resources", Query: "owner=Helm"},
+	{Name: "prod", Description: "Production namespaces", Query: "namespace=*-prod,prod-*,production"},
+	{Name: "dev", Description: "Development namespaces", Query: "namespace=*-dev,dev-*,development"},
+}
+
+// getEffectiveQueries returns the query list appropriate for the current connection mode.
+func (m LocalClusterModel) getEffectiveQueries() []SavedQuery {
+	if m.connectionMode == "connected" {
+		return connectedQueries
+	}
+	return savedQueries
 }
 
 // LocalClusterModel represents the local cluster TUI state
@@ -212,6 +234,10 @@ type LocalClusterModel struct {
 
 	// CLI ↔ TUI symmetry: shared view options from --owner, --namespace, --depth, --kind flags
 	viewOpts ViewOptions
+
+	// Connected mode navigation: tracks whether user has explicitly navigated,
+	// so we don't override their view when connectionStatusMsg arrives.
+	userHasNavigated bool
 }
 
 // GitOpsResource represents a Flux/ArgoCD resource
@@ -467,12 +493,25 @@ func initialLocalModelWithOpts(opts ViewOptions) LocalClusterModel {
 		m.panelView = localView(snap.PanelView)
 		m.cursor = snap.Cursor
 		m.namespaceIdx = snap.NamespaceIdx
-		// Restore active query by name
+		m.userHasNavigated = true // Snapshot = explicit prior state; don't override
+		// Restore active query by name — search both query lists
+		// since the saved query may have been from a different mode
 		if snap.ActiveQuery != "" {
-			for i := range savedQueries {
-				if savedQueries[i].Name == snap.ActiveQuery {
-					m.activeQuery = &savedQueries[i]
+			queries := m.getEffectiveQueries()
+			for i := range queries {
+				if queries[i].Name == snap.ActiveQuery {
+					m.activeQuery = &queries[i]
 					break
+				}
+			}
+			// Fallback: check other list if not found (e.g., "managed" saved while
+			// connected, but restoring in standalone mode)
+			if m.activeQuery == nil {
+				for i := range savedQueries {
+					if savedQueries[i].Name == snap.ActiveQuery {
+						m.activeQuery = &savedQueries[i]
+						break
+					}
 				}
 			}
 		}
@@ -1039,6 +1078,13 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.connectedEmail = msg.email
 		m.workerName = msg.workerName
 		m.workerStatus = msg.workerStatus
+		// Connected mode default: auto-navigate to App Hierarchy if user hasn't
+		// explicitly navigated yet. This surfaces the ConfigHub-aware view first.
+		if msg.mode == "connected" && !m.userHasNavigated && !m.panelMode {
+			m.panelMode = true
+			m.panelView = viewAppHierarchy
+			m.updatePanelContent()
+		}
 		return m, nil
 
 	case traceResultMsg:
@@ -1212,14 +1258,15 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Handle query mode (saved query selector)
 		if m.queryMode {
+			queries := m.getEffectiveQueries()
 			switch msg.String() {
 			case "esc":
 				m.queryMode = false
 				return m, nil
 			case "enter":
 				// Apply selected query
-				if m.queryCursor >= 0 && m.queryCursor < len(savedQueries) {
-					q := savedQueries[m.queryCursor]
+				if m.queryCursor >= 0 && m.queryCursor < len(queries) {
+					q := queries[m.queryCursor]
 					if q.Query == "" {
 						// "all" query - clear filter
 						m.activeQuery = nil
@@ -1236,7 +1283,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			case "down", "j":
-				if m.queryCursor < len(savedQueries)-1 {
+				if m.queryCursor < len(queries)-1 {
 					m.queryCursor++
 				}
 				return m, nil
@@ -1513,94 +1560,110 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Dashboard):
 			m.panelMode = false
 			m.panelFocused = false
+			m.userHasNavigated = true
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Workloads):
 			m.panelMode = true
 			m.panelView = viewWorkloads
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Pipelines):
 			m.panelMode = true
 			m.panelView = viewPipelines
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Drift):
 			m.panelMode = true
 			m.panelView = viewDrift
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Orphans):
 			m.panelMode = true
 			m.panelView = viewOrphans
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Crashes):
 			m.panelMode = true
 			m.panelView = viewCrashes
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Issues):
 			m.panelMode = true
 			m.panelView = viewIssues
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Bypass):
 			m.panelMode = true
 			m.panelView = viewBypass
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Sprawl):
 			m.panelMode = true
 			m.panelView = viewSprawl
+			m.userHasNavigated = true
 			m.updatePanelContent()
 
 		case key.Matches(msg, m.keymap.Suspended):
 			m.panelMode = true
 			m.panelView = viewSuspended
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Apps):
 			m.panelMode = true
 			m.panelView = viewApps
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Dependencies):
 			m.panelMode = true
 			m.panelView = viewDependencies
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.GitSources):
 			m.panelMode = true
 			m.panelView = viewGitSources
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.ClusterData):
 			m.panelMode = true
 			m.panelView = viewClusterData
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.AppHierarchy):
 			m.panelMode = true
 			m.panelView = viewAppHierarchy
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Maps):
 			m.panelMode = true
 			m.panelView = viewMaps
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
@@ -1608,6 +1671,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// If no panel, open workloads panel
 			m.panelMode = true
 			m.panelView = viewWorkloads
+			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
 
@@ -1998,6 +2062,9 @@ func (m LocalClusterModel) getPanelTitle() string {
 	case viewClusterData:
 		return "CLUSTER DATA"
 	case viewAppHierarchy:
+		if m.connectionMode == "connected" {
+			return "APP HIERARCHY (Connected)"
+		}
 		return "APP HIERARCHY"
 	case viewMaps:
 		return "MAPS"
@@ -2849,6 +2916,21 @@ func (m LocalClusterModel) renderDashboardCompact() string {
 				statusIcon = lcWarnStyle.Render(SymWarning)
 			}
 			b.WriteString(fmt.Sprintf("%s %s\n", statusIcon, g.Name))
+		}
+	}
+
+	// ConfigHub context — shown only when connected
+	if m.connectionMode == "connected" {
+		b.WriteString("\n")
+		b.WriteString(lcSectionStyle.Render("CONFIGHUB") + "\n")
+		b.WriteString(lcOkStyle.Render("● Connected") + "\n")
+		chCount := byOwner["ConfigHub"]
+		if chCount > 0 {
+			b.WriteString(fmt.Sprintf("  Managed: %d workloads\n", chCount))
+		}
+		nativeCount := byOwner["Native"]
+		if nativeCount > 0 {
+			b.WriteString(fmt.Sprintf("  Unmanaged: %d (importable)\n", nativeCount))
 		}
 	}
 
@@ -4394,13 +4476,28 @@ func formatAge(d time.Duration) string {
 func (m LocalClusterModel) getPanelAppHierarchy() string {
 	var b strings.Builder
 
-	// Header and Legend
-	b.WriteString(lcSectionStyle.Render("APP HIERARCHY") + lcDimStyle.Render(" (Inferred ConfigHub Model)") + "\n\n")
-	b.WriteString(lcDimStyle.Render("Legend: ✓ Ready  ✗ Not Ready  ⚡ Flux  🅰 Argo  ⎈ Helm  📦 ConfigHub  ☸ Native") + "\n\n")
-
-	// Disclaimer
-	b.WriteString(lcWarnStyle.Render("⚠ This is TUI's interpretation.") + "\n")
-	b.WriteString(lcDimStyle.Render("  Connect to ConfigHub for official hierarchy.") + "\n\n")
+	// Header and Legend — framing adapts to connection state
+	if m.connectionMode == "connected" {
+		b.WriteString(lcSectionStyle.Render("APP HIERARCHY") + lcOkStyle.Render(" (ConfigHub Connected)") + "\n")
+		if m.connectedEmail != "" {
+			b.WriteString(lcDimStyle.Render(fmt.Sprintf("  %s", m.connectedEmail)))
+		}
+		if m.workerName != "" {
+			indicator := "○"
+			if m.workerStatus == "connected" {
+				indicator = "●"
+			}
+			b.WriteString(lcDimStyle.Render(fmt.Sprintf(" │ Worker: %s %s", indicator, m.workerName)))
+		}
+		b.WriteString("\n")
+		b.WriteString(lcDimStyle.Render("Legend: ✓ Ready  ✗ Not Ready  ⚡ Flux  🅰 Argo  ⎈ Helm  📦 ConfigHub  ☸ Native") + "\n\n")
+	} else {
+		b.WriteString(lcSectionStyle.Render("APP HIERARCHY") + lcDimStyle.Render(" (Inferred ConfigHub Model)") + "\n\n")
+		b.WriteString(lcDimStyle.Render("Legend: ✓ Ready  ✗ Not Ready  ⚡ Flux  🅰 Argo  ⎈ Helm  📦 ConfigHub  ☸ Native") + "\n\n")
+		// Disclaimer — only shown in standalone/offline mode
+		b.WriteString(lcWarnStyle.Render("⚠ This is TUI's interpretation.") + "\n")
+		b.WriteString(lcDimStyle.Render("  Connect to ConfigHub for official hierarchy.") + "\n\n")
+	}
 
 	// Helper for owner icons
 	ownerIcon := func(owner string) string {
@@ -4695,19 +4792,21 @@ func (m LocalClusterModel) getPanelAppHierarchy() string {
 	}
 
 	// ═══════════════════════════════════════════════════════════════════════════
-	// WHAT CONFIGHUB PROVIDES
+	// WHAT CONFIGHUB PROVIDES — only shown in standalone/offline mode
 	// ═══════════════════════════════════════════════════════════════════════════
-	b.WriteString("\n")
-	b.WriteString(lcDimStyle.Render("╭─────────────────────────────────────────────────────────╮") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + " 💡 What ConfigHub provides:                            " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + "   • Official hierarchy (not inferred)                 " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + "   • Dependency tracking (explicit, not guessed)       " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + "   • Cross-cluster visibility (fleet-wide)             " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + "   • Change history and audit trail                    " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + "   • Impact analysis before changes                    " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + "                                                       " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("│") + " Run: " + lcNameStyle.Render("cub-scout map --hub") + " to connect              " + lcDimStyle.Render("│") + "\n")
-	b.WriteString(lcDimStyle.Render("╰─────────────────────────────────────────────────────────╯") + "\n")
+	if m.connectionMode != "connected" {
+		b.WriteString("\n")
+		b.WriteString(lcDimStyle.Render("╭─────────────────────────────────────────────────────────╮") + "\n")
+		b.WriteString(lcDimStyle.Render("│") + " 💡 What ConfigHub provides:                            " + lcDimStyle.Render("│") + "\n")
+		b.WriteString(lcDimStyle.Render("│") + "   • Official hierarchy (not inferred)                 " + lcDimStyle.Render("│") + "\n")
+		b.WriteString(lcDimStyle.Render("│") + "   • Dependency tracking (explicit, not guessed)       " + lcDimStyle.Render("│") + "\n")
+		b.WriteString(lcDimStyle.Render("│") + "   • Cross-cluster visibility (fleet-wide)             " + lcDimStyle.Render("│") + "\n")
+		b.WriteString(lcDimStyle.Render("│") + "   • Change history and audit trail                    " + lcDimStyle.Render("│") + "\n")
+		b.WriteString(lcDimStyle.Render("│") + "   • Impact analysis before changes                    " + lcDimStyle.Render("│") + "\n")
+		b.WriteString(lcDimStyle.Render("│") + "                                                       " + lcDimStyle.Render("│") + "\n")
+		b.WriteString(lcDimStyle.Render("│") + " Run: " + lcNameStyle.Render("cub-scout map --hub") + " to connect              " + lcDimStyle.Render("│") + "\n")
+		b.WriteString(lcDimStyle.Render("╰─────────────────────────────────────────────────────────╯") + "\n")
+	}
 
 	return b.String()
 }
@@ -5636,7 +5735,8 @@ func (m LocalClusterModel) renderQuerySelector() string {
 		lcDimStyle.Render("MATCHES")))
 	b.WriteString("\n")
 
-	for i, q := range savedQueries {
+	queries := m.getEffectiveQueries()
+	for i, q := range queries {
 		// Highlight cursor position
 		cursor := "  "
 		nameStyle := lcNameStyle
@@ -5653,7 +5753,7 @@ func (m LocalClusterModel) renderQuerySelector() string {
 		switch q.Name {
 		case "orphans":
 			matchStyle = lcWarnStyle
-		case "gitops", "confighub":
+		case "gitops", "confighub", "managed":
 			matchStyle = lcOkStyle
 		case "flux":
 			matchStyle = lcCyanStyle
