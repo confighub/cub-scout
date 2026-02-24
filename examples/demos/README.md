@@ -2,8 +2,6 @@
 
 **Status: Working** — All demos apply real Kubernetes resources and run on your cluster.
 
-> **Maintainer note:** When updating this file, also update [docs/EXAMPLES-OVERVIEW.md](../../docs/EXAMPLES-OVERVIEW.md).
-
 Demos that create resources, show problems, and let you explore.
 
 ## Running Demos

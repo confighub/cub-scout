@@ -1,5 +1,7 @@
 # Why Connect cub-scout to ConfigHub
 
+> **Note:** This content has been integrated into the canonical roadmap at [`docs/roadmap.md`](roadmap.md) (v1.1+ Connected Mode section). This file is retained for historical reference but the roadmap is the authoritative source.
+
 ## TL;DR
 
 `cub-scout` is a free, read-only cluster explorer.

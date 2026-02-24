@@ -79,8 +79,8 @@ Tracking issue: **#154** (master backlog tracking)
 
 ### Documentation Gaps (`NEXT-PLAN.md`)
 
-- [ ] Unified examples index (consolidate EXAMPLES-OVERVIEW.md, examples/README.md, demos/README.md)
-- [ ] Integrate WHY_CONNECTED_MODE.md content into roadmap v1.x section with concrete issues
+- [x] Unified examples index (consolidate EXAMPLES-OVERVIEW.md, examples/README.md, demos/README.md)
+- [x] Integrate WHY_CONNECTED_MODE.md content into roadmap v1.x section with concrete issues
 
 ### Patterns (`reference/patterns-contract.md`)
 
@@ -334,7 +334,40 @@ Nothing here represents unfinished 0.x promises.
 
 Connected Mode integrates cub-scout with **ConfigHub**, the system of record for configuration intent, history, and fleets.
 
-This work is explicitly motivated by `WHY_CONNECTED_MODE.md`.
+### Why Connected Mode Exists
+
+Standalone cub-scout answers: *what exists now, who owns it, and what looks risky.*
+
+Connected mode answers: *what should exist, what changed over time, and what this affects across environments.*
+
+A cluster API can only show current observed state. It cannot reliably answer what changed last week, whether one cluster is an outlier, what should happen before a rollout, or how imported state maps to org structure. Those require durable history, indexing, and cross-environment context outside a single cluster.
+
+Connected mode adds context, not control. cub-scout remains read-only.
+
+### What Connected Mode Unlocks
+
+* Intent context (DRY/WET/LIVE)
+* Change history and timeline correlations
+* Fleet comparison and outlier detection
+* Import/adoption workflows (break-glass to managed)
+* Dependency-aware impact analysis
+* Governance context and approvals metadata
+
+### Interface Boundaries
+
+* `cub` CLI is the external interface contract for connected workflows
+* `confighub-agent` depends on `cub` command behavior (arguments, exit codes, JSON shape)
+* `cub-scout` connected mode depends on `cub auth login` for credential/session management
+* Standalone `cub-scout` must continue to function without `cub`
+
+Ownership split:
+
+* **cub-scout:** deterministic discovery, explanation, evidence export
+* **ConfigHub:** system of record, lifecycle state, migration semantics
+
+### Paid Value Boundary
+
+Connected value is paid because it requires hosted platform capabilities: durable multi-tenant storage, cross-cluster indexing, fleet/governance APIs, retention and auditability at scale. The CLI remains free and safe to run offline.
 
 ### Definition
 
