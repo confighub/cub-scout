@@ -907,3 +907,94 @@ func TestSnapshotExpiry(t *testing.T) {
 		t.Error("expected nil for expired snapshot, but got a snapshot")
 	}
 }
+
+// --- Connected Hierarchy Navigation Default Tests ---
+
+// TestConnectedDefaultView verifies that receiving a connected status message
+// auto-navigates to the App Hierarchy panel when the user hasn't navigated yet.
+func TestConnectedDefaultView(t *testing.T) {
+	m := testLocalModel()
+	// Simulate async connection confirmation
+	updated, _ := m.Update(connectionStatusMsg{mode: "connected", email: "user@example.com"})
+	fm := updated.(LocalClusterModel)
+	if !fm.panelMode {
+		t.Error("expected connected mode to activate panel mode")
+	}
+	if fm.panelView != viewAppHierarchy {
+		t.Errorf("expected connected mode to default to App Hierarchy, got view=%d", fm.panelView)
+	}
+}
+
+// TestConnectedNoOverrideAfterNav verifies that auto-navigation does not
+// override a view the user has explicitly chosen.
+func TestConnectedNoOverrideAfterNav(t *testing.T) {
+	m := testLocalModel()
+	m.userHasNavigated = true
+	m.panelMode = true
+	m.panelView = viewWorkloads
+	updated, _ := m.Update(connectionStatusMsg{mode: "connected", email: "user@example.com"})
+	fm := updated.(LocalClusterModel)
+	if fm.panelView != viewWorkloads {
+		t.Errorf("expected user navigation to be preserved, got view=%d", fm.panelView)
+	}
+}
+
+// TestStandaloneNoAutoNav verifies that standalone mode does not auto-navigate.
+func TestStandaloneNoAutoNav(t *testing.T) {
+	m := testLocalModel()
+	updated, _ := m.Update(connectionStatusMsg{mode: "online"})
+	fm := updated.(LocalClusterModel)
+	if fm.panelMode {
+		t.Error("standalone mode should not auto-navigate to panel view")
+	}
+}
+
+// TestAppHierarchyConnectedNoDisclaimer verifies the App Hierarchy view
+// removes the disclaimer and marketing box when connected.
+func TestAppHierarchyConnectedNoDisclaimer(t *testing.T) {
+	m := testLocalModel()
+	m.connectionMode = "connected"
+	m.connectedEmail = "user@example.com"
+	content := m.getPanelAppHierarchy()
+	if bytes.Contains([]byte(content), []byte("This is TUI's interpretation")) {
+		t.Error("connected mode should not show inferred disclaimer")
+	}
+	if bytes.Contains([]byte(content), []byte("What ConfigHub provides")) {
+		t.Error("connected mode should not show marketing box")
+	}
+	if !bytes.Contains([]byte(content), []byte("ConfigHub Connected")) {
+		t.Error("connected mode should show 'ConfigHub Connected' header")
+	}
+}
+
+// TestAppHierarchyStandaloneShowsDisclaimer verifies the disclaimer is shown
+// in standalone mode.
+func TestAppHierarchyStandaloneShowsDisclaimer(t *testing.T) {
+	m := testLocalModel()
+	m.connectionMode = "online"
+	content := m.getPanelAppHierarchy()
+	if !bytes.Contains([]byte(content), []byte("This is TUI's interpretation")) {
+		t.Error("standalone mode should show inferred disclaimer")
+	}
+}
+
+// TestQueryPresetsConnected verifies that connected mode reorders query
+// presets to surface ConfigHub and managed presets first.
+func TestQueryPresetsConnected(t *testing.T) {
+	m := testLocalModel()
+	m.connectionMode = "connected"
+	queries := m.getEffectiveQueries()
+	if queries[1].Name != "confighub" {
+		t.Errorf("expected confighub as second query in connected mode, got %s", queries[1].Name)
+	}
+	if queries[2].Name != "managed" {
+		t.Errorf("expected managed as third query in connected mode, got %s", queries[2].Name)
+	}
+
+	// Verify standalone keeps original order
+	m.connectionMode = "online"
+	queries = m.getEffectiveQueries()
+	if queries[1].Name != "orphans" {
+		t.Errorf("expected orphans as second query in standalone mode, got %s", queries[1].Name)
+	}
+}

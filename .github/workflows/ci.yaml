@@ -101,6 +101,9 @@ jobs:
       - name: Run integration tests
         run: go test -tags=integration ./test/integration/... -v
 
+      - name: Run E2E tests (internal model + cluster)
+        run: go test -tags=e2e ./cmd/cub-scout/... -v -timeout 120s
+
       - name: Run cluster-dependent golden tests
         run: go test ./test/golden/... -count=1 -v
 

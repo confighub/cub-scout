@@ -69,7 +69,7 @@ Tracking issue: **#154** (master backlog tracking)
 
 ### 1.x Connected Upsell (`roadmap-1x-connected-upsell.md`)
 
-- [ ] Connected hierarchy navigation defaults (cluster-aware filtering)
+- [x] Connected hierarchy navigation defaults (cluster-aware filtering, auto-nav to App Hierarchy when connected, mode-aware query presets)
 - [x] Mode state visibility in TUI (QuickMode for instant display, Offline/Standalone/Connected distinction)
 - [x] Canonical migration guide from Argo/Helm to ConfigHub (`docs/howto/migration-playbook.md`)
 - [ ] Trace context diagnostics and documented reset path for connected workflows

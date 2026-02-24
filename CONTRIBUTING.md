@@ -36,14 +36,23 @@ go test ./... -v
 All PRs must pass the test suite:
 
 ```bash
+go build ./cmd/cub-scout
 go test ./... -v
 ```
 
-Add tests for new functionality. We aim for high coverage on:
+**What tests do I need?** Use this quick guide:
 
-* Ownership detection logic
-* Query parsing
-* CLI command behavior
+| Change type | Required tests |
+|---|---|
+| Ownership detection logic | Unit test + pattern fixture |
+| New CLI subcommand | Golden test + integration test |
+| New TUI view/keybinding | teatest snapshot |
+| CLI output format change | ASCII golden test |
+| Connected mode feature | Integration test with skip guard |
+
+For the full cookbook with copy-paste patterns, see [docs/testing/BEST-PRACTICES.md](docs/testing/BEST-PRACTICES.md).
+
+For the authoritative testing reference (test groups, tiers, CI), see [docs/testing/README.md](docs/testing/README.md).
 
 Fixture-based and snapshot-based tests are preferred where possible.
 
