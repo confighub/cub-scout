@@ -252,10 +252,16 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		// Get k8s client for Helm tracing (reads release secrets)
 		cfg, cfgErr := buildConfig()
 		if cfgErr != nil {
+			if help, ok := agent.FormatHelmContextError(cfgErr.Error()); ok {
+				return fmt.Errorf("%s", help)
+			}
 			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
 		}
 		clientset, clientErr := kubernetes.NewForConfig(cfg)
 		if clientErr != nil {
+			if help, ok := agent.FormatHelmContextError(clientErr.Error()); ok {
+				return fmt.Errorf("%s", help)
+			}
 			return fmt.Errorf("failed to create kubernetes client: %w", clientErr)
 		}
 		tracer := agent.NewHelmTracer(clientset)
@@ -263,6 +269,11 @@ func runTrace(cmd *cobra.Command, args []string) error {
 			result, err = tracer.TraceRelease(ctx, ownership.Name, traceNamespace)
 		} else {
 			result, err = tracer.Trace(ctx, kind, name, traceNamespace)
+		}
+		if err != nil {
+			if help, ok := agent.FormatHelmContextError(err.Error()); ok {
+				return fmt.Errorf("%s", help)
+			}
 		}
 
 	default:

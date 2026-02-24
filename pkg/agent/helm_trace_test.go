@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -503,5 +504,85 @@ func TestHelmHistoryNoRelease(t *testing.T) {
 
 	if len(history) != 0 {
 		t.Errorf("Expected empty history, got %d entries", len(history))
+	}
+}
+
+func TestFormatHelmContextError(t *testing.T) {
+	tests := []struct {
+		name       string
+		output     string
+		wantMatch  bool
+		wantReason string
+	}{
+		{
+			name:       "connection refused",
+			output:     "dial tcp 10.0.0.1:6443: connect: connection refused",
+			wantMatch:  true,
+			wantReason: "cluster endpoint is unreachable",
+		},
+		{
+			name:       "TLS error",
+			output:     "x509: certificate signed by unknown authority",
+			wantMatch:  true,
+			wantReason: "cluster endpoint is unreachable",
+		},
+		{
+			name:       "i/o timeout",
+			output:     "dial tcp 192.168.1.100:6443: i/o timeout",
+			wantMatch:  true,
+			wantReason: "cluster endpoint is unreachable",
+		},
+		{
+			name:       "secrets forbidden",
+			output:     "secrets is forbidden: User \"system:serviceaccount:default:default\" cannot list resource \"secrets\"",
+			wantMatch:  true,
+			wantReason: "insufficient permissions",
+		},
+		{
+			name:       "cannot list resource",
+			output:     "cannot list resource \"secrets\" in API group \"\" in the namespace \"kube-system\"",
+			wantMatch:  true,
+			wantReason: "insufficient permissions",
+		},
+		{
+			name:      "normal output not matched",
+			output:    "release nginx found in namespace default",
+			wantMatch: false,
+		},
+		{
+			name:      "no release found (not a context error)",
+			output:    "no Helm release found managing this resource",
+			wantMatch: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := FormatHelmContextError(tt.output)
+			if ok != tt.wantMatch {
+				t.Fatalf("FormatHelmContextError() match = %v, want %v (msg=%q)", ok, tt.wantMatch, got)
+			}
+			if !tt.wantMatch {
+				return
+			}
+
+			// Ensure remediation path is present and actionable.
+			required := []string{
+				"kubectl cluster-info",
+				"kubectl auth can-i list secrets",
+				"kubectl config use-context",
+				"helm list",
+				"cub-scout trace",
+			}
+			for _, r := range required {
+				if !strings.Contains(got, r) {
+					t.Fatalf("expected remediation command %q in message: %s", r, got)
+				}
+			}
+
+			if !strings.Contains(got, tt.wantReason) {
+				t.Fatalf("expected reason fragment %q in message: %s", tt.wantReason, got)
+			}
+		})
 	}
 }

@@ -4,6 +4,7 @@
 package agent
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -463,5 +464,91 @@ func TestFluxHistoryWithEmptyArray(t *testing.T) {
 
 	if len(history) != 0 {
 		t.Errorf("Expected empty history, got %d entries", len(history))
+	}
+}
+
+func TestFormatFluxContextError(t *testing.T) {
+	tests := []struct {
+		name       string
+		output     string
+		wantMatch  bool
+		wantReason string
+	}{
+		{
+			name:       "CRD absent",
+			output:     "error: no matches for kind \"Kustomization\" in version \"kustomize.toolkit.fluxcd.io/v1\"",
+			wantMatch:  true,
+			wantReason: "CRDs or controllers are not installed",
+		},
+		{
+			name:       "server resource type missing",
+			output:     "the server doesn't have a resource type \"Kustomization\"",
+			wantMatch:  true,
+			wantReason: "CRDs or controllers are not installed",
+		},
+		{
+			name:       "no flux object found",
+			output:     "✗ no flux object found for Deployment/nginx in namespace demo",
+			wantMatch:  true,
+			wantReason: "CRDs or controllers are not installed",
+		},
+		{
+			name:       "connection refused",
+			output:     "dial tcp 10.0.0.1:6443: connect: connection refused",
+			wantMatch:  true,
+			wantReason: "cluster endpoint is unreachable",
+		},
+		{
+			name:       "TLS error",
+			output:     "x509: certificate signed by unknown authority",
+			wantMatch:  true,
+			wantReason: "cluster endpoint is unreachable",
+		},
+		{
+			name:       "i/o timeout",
+			output:     "dial tcp 192.168.1.100:6443: i/o timeout",
+			wantMatch:  true,
+			wantReason: "cluster endpoint is unreachable",
+		},
+		{
+			name:      "normal output not matched",
+			output:    "Object: Deployment/nginx\nNamespace: demo\nStatus: Managed by Flux",
+			wantMatch: false,
+		},
+		{
+			name:      "resource not managed (not a context error)",
+			output:    "object not managed by Flux",
+			wantMatch: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := FormatFluxContextError(tt.output)
+			if ok != tt.wantMatch {
+				t.Fatalf("FormatFluxContextError() match = %v, want %v (msg=%q)", ok, tt.wantMatch, got)
+			}
+			if !tt.wantMatch {
+				return
+			}
+
+			// Ensure remediation path is present and actionable.
+			required := []string{
+				"kubectl cluster-info",
+				"flux check",
+				"flux install",
+				"kubectl config use-context",
+				"cub-scout trace",
+			}
+			for _, r := range required {
+				if !strings.Contains(got, r) {
+					t.Fatalf("expected remediation command %q in message: %s", r, got)
+				}
+			}
+
+			if !strings.Contains(got, tt.wantReason) {
+				t.Fatalf("expected reason fragment %q in message: %s", tt.wantReason, got)
+			}
+		})
 	}
 }

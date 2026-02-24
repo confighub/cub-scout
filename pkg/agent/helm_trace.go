@@ -335,6 +335,58 @@ func (h *HelmTracer) buildTraceResult(release *helmRelease, kind, name, namespac
 	return result, nil
 }
 
+// FormatHelmContextError detects cluster connectivity or permission errors
+// during Helm tracing and returns a remediation-focused message. The bool
+// return is true when a context issue was detected.
+func FormatHelmContextError(output string) (string, bool) {
+	out := strings.ToLower(output)
+
+	containsAny := func(parts ...string) bool {
+		for _, p := range parts {
+			if strings.Contains(out, p) {
+				return true
+			}
+		}
+		return false
+	}
+
+	reason := ""
+	switch {
+	case containsAny(
+		"connection refused",
+		"i/o timeout",
+		"dial tcp",
+		"x509:",
+		"certificate signed by unknown authority",
+		"tls:",
+		"no such host",
+	):
+		reason = "cluster endpoint is unreachable or certificate is invalid"
+	case containsAny(
+		"forbidden",
+		"cannot list resource",
+		"secrets is forbidden",
+		"unauthorized",
+	):
+		reason = "insufficient permissions to read Helm release secrets"
+	default:
+		return "", false
+	}
+
+	msg := fmt.Sprintf(
+		"helm trace context appears stale or invalid (%s).\n\n"+
+			"Trace context troubleshooting:\n"+
+			"  1) kubectl cluster-info\n"+
+			"  2) kubectl auth can-i list secrets -n <namespace>\n"+
+			"  3) kubectl config use-context <context>\n"+
+			"  4) helm list -n <namespace>\n\n"+
+			"Then retry:\n"+
+			"  cub-scout trace <kind>/<name> -n <namespace>",
+		reason,
+	)
+	return msg, true
+}
+
 // TraceByOwnership traces a resource by its Helm ownership labels
 func (h *HelmTracer) TraceByOwnership(ctx context.Context, ownership Ownership) (*TraceResult, error) {
 	if ownership.Type != OwnerHelm {
