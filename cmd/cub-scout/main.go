@@ -22,8 +22,10 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "cub-scout",
-	Short: "Explore and map GitOps in your clusters",
+	Use:           "cub-scout",
+	Short:         "Explore and map GitOps in your clusters",
+	SilenceErrors: true, // We print errors in main() — don't let cobra duplicate them
+	SilenceUsage:  true, // Don't print usage on runtime errors
 	Long: `cub-scout - explore and map GitOps in your clusters
 
 Offline-first, deterministic, read-only cluster explorer for Kubernetes and GitOps.
