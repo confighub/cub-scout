@@ -65,6 +65,7 @@ Tracking issue: **#154** (master backlog tracking)
 
 - [x] Production-scale E2E testing (500+ resources, mixed ownership, deep hierarchies) — resolved by #155, #156
 - [x] TUI performance profiling at scale (500+ resources) — resolved by #157
+- [x] Testing best practices cookbook (`docs/testing/BEST-PRACTICES.md`) — build tag standards, fixture conventions, golden patterns, cluster lifecycle, example-driven testing (#176)
 - [ ] CI-enforced coverage metrics
 
 ### 1.x Connected Upsell (`roadmap-1x-connected-upsell.md`)
