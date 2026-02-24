@@ -203,6 +203,7 @@ LIVE (cluster)     CONFIGUB (store)     OCI (transport)     FLUX/ARGO
 
 ## See Also
 
+- [Break-Glass to Managed](../howto/break-glass-to-managed.md) — Step-by-step guide with guided testing
 - [Ownership Visibility](ownership-visibility.md) — The Native bucket insight
 - [Find Orphans](../howto/find-orphans.md) — How to find unmanaged resources
 - [Import to ConfigHub](../howto/import-to-confighub.md) — Adopting resources
