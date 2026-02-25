@@ -591,6 +591,9 @@ For JSON contract details and schema ownership by surface, see [JSON Contracts a
 
 Import workloads into ConfigHub.
 
+> **Terminology:** The CLI currently uses Space/Unit commands. These map to App/Deployment
+> in the new model. See [Glossary](glossary.md#confighub-model-app-centric).
+
 ```bash
 cub-scout import [flags]
 ```

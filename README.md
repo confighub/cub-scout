@@ -380,7 +380,9 @@ HUB/APPSPACE SUGGESTION
 Detected pattern: D2 (Control Plane style)
   └── clusters/prod, clusters/staging structure
 
-Suggested Hub/AppSpace organization:
+Suggested Hub/AppSpace organization
+(Space maps to App, Unit maps to App component in the new model;
+see docs/reference/glossary.md for the full mapping):
 
   Hub: acme-platform
   ├── Space: boutique-prod
