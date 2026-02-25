@@ -469,12 +469,21 @@ Connected Mode does **not** introduce:
 
 ---
 
-### Linked v1.1 Issues (Docs + Contract Alignment)
+### Linked v1.1 Issues (Docs + Contract Alignment) — All Closed
 
-* #183 — align connected-import roadmap scope with shipped `cub-scout import`
-* #184 — reconcile `commands.md` completeness claim with actual coverage
-* #185 — fix `bundle summarize` default-format help mismatch
-* #186 — add app-centric transition mapping (App/Deployment/Target ↔ Space/Unit)
+* ~~#183~~ — align connected-import roadmap scope with shipped `cub-scout import`
+* ~~#184~~ — reconcile `commands.md` completeness claim with actual coverage
+* ~~#185~~ — fix `bundle summarize` default-format help mismatch
+* ~~#186~~ — add app-centric transition mapping (App/Deployment/Target ↔ Space/Unit)
+
+### v1.2 — cub-scan Integration + Argo Hierarchy (In Progress)
+
+* #190 — wire `ConfighubScanProvider.ScanFile()` to `cub-scan` binary
+* #191 — wire `ListPolicies()` to `risk-catalog-v1.json`
+* #192 — schema parity tests between `cub-scan Finding` and `scan.normalized.v1`
+* #193 — provider selection logic (auto-detect cub-scan)
+* #194 — Argo App-of-Apps parent/child lineage
+* #195 — ApplicationSet → generated Application lineage
 
 ---
 
@@ -491,8 +500,9 @@ Connected Mode does **not** introduce:
 
 * v0.x is **complete**
 * v1.0.0 is the stable contract baseline (2026-02-20)
-* v1.1 Phase A (trust hardening) and Phase B (connected foundation) are **complete**
-* Open issues: #3/#21 (kro), #149-#151 (delivery chain), #163-#166 (experiments/evidence), #183-#186 (docs/contract alignment)
+* v1.1.0 released (2026-02-25) — connected foundation, scan provider boundary, docs alignment
+* v1.2 in progress — cub-scan integration (#190-#193), Argo hierarchy (#194-#195)
+* Open backlog: #3/#21 (kro), #149-#151 (delivery chain), #163-#165 (experiments)
 * The remaining roadmap is **Connected Mode with ConfigHub**:
 
   * import
