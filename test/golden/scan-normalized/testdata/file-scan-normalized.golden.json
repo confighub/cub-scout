@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "category": "SILENT",
+      "id": "CCVE-2025-0244",
+      "message": "livenessProbe timeout (15s) \u003e period (10s) - probe may never succeed",
+      "namespace": "default",
+      "remediation": "Ensure probe timeoutSeconds \u003c= periodSeconds",
+      "resource": "Deployment/misconfigured-app",
+      "severity": "warning",
+      "title": "Probe timeout exceeds period",
+      "track": "static"
+    },
+    {
+      "category": "CONFIG",
+      "id": "CCVE-2025-0248",
+      "message": "Container \"app\" has no resource limits defined",
+      "namespace": "default",
+      "remediation": "Add resources.limits.cpu and resources.limits.memory",
+      "resource": "Deployment/misconfigured-app",
+      "severity": "warning",
+      "title": "Missing resource limits",
+      "track": "static"
+    }
+  ],
+  "scanned_at": "\u003cTIMESTAMP\u003e",
+  "schema_version": "scan.normalized.v1",
+  "summary": {
+    "critical": 0,
+    "info": 0,
+    "total": 2,
+    "warning": 2
+  }
+}

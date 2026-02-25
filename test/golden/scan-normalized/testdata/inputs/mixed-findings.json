@@ -1,0 +1,72 @@
+{
+  "kyverno": {
+    "scannedAt": "2025-01-15T10:00:00Z",
+    "findings": [
+      {
+        "policyName": "require-labels",
+        "policyID": "KPOL-001",
+        "resource": "Deployment/frontend",
+        "namespace": "production",
+        "severity": "warning",
+        "message": "Missing required label: team",
+        "rule": "check-team-label"
+      }
+    ],
+    "summary": {
+      "critical": 0,
+      "warning": 1,
+      "info": 0,
+      "total": 1
+    }
+  },
+  "state": {
+    "scannedAt": "2025-01-15T10:00:00Z",
+    "findings": [
+      {
+        "ccveId": "CCVE-2025-0027",
+        "category": "stuck-reconciliation",
+        "severity": "critical",
+        "kind": "HelmRelease",
+        "name": "payment-api",
+        "namespace": "ecommerce",
+        "condition": "Ready=False",
+        "reason": "UpgradeFailed",
+        "message": "Helm upgrade failed: timed out",
+        "duration": "45m",
+        "remediation": "Check helm history and rollback",
+        "command": "helm rollback payment-api -n ecommerce"
+      }
+    ],
+    "summary": {
+      "helmReleaseStuck": 1,
+      "kustomizationStuck": 0,
+      "applicationStuck": 0,
+      "silentFailures": 0,
+      "total": 1
+    }
+  },
+  "timingBombs": {
+    "scannedAt": "2025-01-15T10:00:00Z",
+    "findings": [
+      {
+        "ccveId": "CCVE-2025-0051",
+        "severity": "warning",
+        "kind": "Secret",
+        "name": "tls-cert",
+        "namespace": "ingress",
+        "expiresAt": "2025-02-01T00:00:00Z",
+        "expiresIn": "17d",
+        "reason": "TLS certificate expiring",
+        "message": "Certificate expires in 17 days",
+        "remediation": "Renew certificate",
+        "command": "kubectl get secret tls-cert -n ingress -o yaml"
+      }
+    ],
+    "summary": {
+      "critical": 0,
+      "warning": 1,
+      "info": 0,
+      "total": 1
+    }
+  }
+}

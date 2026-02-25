@@ -8,13 +8,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/confighub/cub-scout/internal/scan"
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
 )
@@ -33,6 +32,7 @@ var (
 	scanThreshold         string
 	scanFile              string
 	scanExplain           bool
+	scanNormalizedJSON    bool
 )
 
 var scanCmd = &cobra.Command{
@@ -103,18 +103,12 @@ func init() {
 	scanCmd.Flags().StringVar(&scanThreshold, "threshold", "5m", "Duration threshold for stuck detection (e.g., 30s, 2m, 5m)")
 	scanCmd.Flags().StringVar(&scanFile, "file", "", "YAML file to scan (static analysis, no cluster required)")
 	scanCmd.Flags().BoolVar(&scanExplain, "explain", false, "Show explanatory content to help learn GitOps risk concepts")
+	scanCmd.Flags().BoolVar(&scanNormalizedJSON, "normalized-json", false, "Output normalized findings JSON (scan.normalized.v1 schema)")
 }
 
-// CombinedScanResult holds results from all scanners
-type CombinedScanResult struct {
-	Kyverno          *agent.ScanResult            `json:"kyverno,omitempty"`
-	State            *agent.StateScanResult       `json:"state,omitempty"`
-	TimingBombs      *agent.TimingBombResult      `json:"timingBombs,omitempty"`
-	Unresolved       *agent.UnresolvedResult      `json:"unresolved,omitempty"`
-	Dangling         *agent.DanglingResult        `json:"dangling,omitempty"`
-	LifecycleHazards *agent.LifecycleHazardResult `json:"lifecycleHazards,omitempty"`
-	Static           *agent.StaticScanResult      `json:"static,omitempty"`
-}
+// CombinedScanResult is the legacy type name, preserved for compatibility
+// with the CUB_SCOUT_TEST_SCAN_JSON test hook and rendering functions.
+type CombinedScanResult = scan.CombinedResult
 
 func runScan(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
@@ -132,23 +126,23 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Find policy database directory
-	policyDBDir := findPolicyDBDir()
+	// Create scan provider
+	provider := scan.NewLegacyProvider(scan.ProviderConfig{})
 
 	// List mode - show all KPOL policies
 	if scanList {
-		return listKPOLPolicies(policyDBDir)
+		return listKPOLPolicies(provider)
 	}
 
 	// File mode - static analysis of YAML file (no cluster required)
 	if scanFile != "" {
-		return runFileScan(ctx, scanFile, policyDBDir)
+		return runFileScan(ctx, provider, scanFile)
 	}
 
 	// TEST HOOK: Load scan results from JSON file to bypass cluster access in tests.
 	// In production this env var is never set, so real cluster scanning is always used.
-	if scanJSON := os.Getenv("CUB_SCOUT_TEST_SCAN_JSON"); scanJSON != "" {
-		return loadAndRenderScanFromJSON(scanJSON)
+	if testJSON := os.Getenv("CUB_SCOUT_TEST_SCAN_JSON"); testJSON != "" {
+		return loadAndRenderScanFromJSON(testJSON)
 	}
 
 	// Build k8s config
@@ -157,201 +151,72 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to build kubernetes config: %w", err)
 	}
 
+	// Parse threshold duration
+	threshold, err := time.ParseDuration(scanThreshold)
+	if err != nil {
+		return fmt.Errorf("invalid threshold duration %q: %w", scanThreshold, err)
+	}
+
 	// Determine what to scan (default: both)
 	runKyverno := !scanStateOnly || scanKyvernoOnly
 	runState := !scanKyvernoOnly || scanStateOnly
-	// If both flags are set, run both
 	if scanStateOnly && scanKyvernoOnly {
 		runKyverno = true
 		runState = true
 	}
 
-	var kyvernoResult *agent.ScanResult
-	var stateResult *agent.StateScanResult
-	var timingBombResult *agent.TimingBombResult
-	var unresolvedResult *agent.UnresolvedResult
-	var danglingResult *agent.DanglingResult
-
-	// Run Kyverno scan
-	if runKyverno {
-		scanner, err := agent.NewKyvernoScanner(cfg, policyDBDir)
-		if err != nil {
-			return fmt.Errorf("failed to create kyverno scanner: %w", err)
-		}
-
-		if scanner.Available(ctx) {
-			if scanNamespace != "" {
-				kyvernoResult, err = scanner.ScanNamespace(ctx, scanNamespace)
-			} else {
-				kyvernoResult, err = scanner.Scan(ctx)
-			}
-			if err != nil {
-				return fmt.Errorf("kyverno scan failed: %w", err)
-			}
-		} else if scanKyvernoOnly {
-			// Only warn if Kyverno was explicitly requested
-			if scanJSON {
-				return outputCombinedJSON(&CombinedScanResult{
-					Kyverno: &agent.ScanResult{Error: "Kyverno not installed or PolicyReport CRD not found"},
-				})
-			}
-			fmt.Printf("\n%s⚠ Kyverno not installed%s\n", colorYellow, colorReset)
-			fmt.Printf("  PolicyReport CRD not found in cluster.\n")
-			fmt.Printf("  Install Kyverno: https://kyverno.io/docs/installation/\n\n")
-			return nil
-		}
+	// Execute scan through provider
+	result, err := provider.ScanCluster(ctx, scan.ClusterScanOpts{
+		Config:              cfg,
+		Namespace:           scanNamespace,
+		RunKyverno:          runKyverno,
+		RunState:            runState,
+		RunTimingBombs:      scanTimingBombs,
+		RunUnresolved:       scanIncludeUnresolved,
+		RunDangling:         scanDangling,
+		RunLifecycleHazards: scanLifecycleHazards,
+		Threshold:           threshold,
+	})
+	if err != nil {
+		return err
 	}
 
-	// Run State scan
-	if runState {
-		stateScanner, err := agent.NewStateScanner(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create state scanner: %w", err)
+	// Handle Kyverno-only mode where Kyverno is not installed
+	if scanKyvernoOnly && result.Kyverno == nil && !runState {
+		if scanJSON || scanNormalizedJSON {
+			return outputCombinedJSON(&CombinedScanResult{
+				Kyverno: &agent.ScanResult{Error: "Kyverno not installed or PolicyReport CRD not found"},
+			})
 		}
-
-		// Parse threshold duration
-		threshold, err := time.ParseDuration(scanThreshold)
-		if err != nil {
-			return fmt.Errorf("invalid threshold duration %q: %w", scanThreshold, err)
-		}
-
-		if scanNamespace != "" {
-			stateResult, err = stateScanner.ScanNamespaceWithThreshold(ctx, scanNamespace, threshold)
-		} else {
-			stateResult, err = stateScanner.ScanWithThreshold(ctx, threshold)
-		}
-		if err != nil {
-			return fmt.Errorf("state scan failed: %w", err)
-		}
-	}
-
-	// Run Timing Bombs scan
-	if scanTimingBombs {
-		stateScanner, err := agent.NewStateScanner(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create state scanner for timing bombs: %w", err)
-		}
-
-		timingBombResult, err = stateScanner.ScanTimingBombs(ctx)
-		if err != nil {
-			return fmt.Errorf("timing bomb scan failed: %w", err)
-		}
-	}
-
-	// Run Unresolved Findings scan
-	if scanIncludeUnresolved {
-		stateScanner, err := agent.NewStateScanner(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create state scanner for unresolved: %w", err)
-		}
-
-		unresolvedResult, err = stateScanner.ScanUnresolvedFindings(ctx)
-		if err != nil {
-			return fmt.Errorf("unresolved findings scan failed: %w", err)
-		}
-	}
-
-	// Run Dangling Resources scan
-	if scanDangling {
-		stateScanner, err := agent.NewStateScanner(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create state scanner for dangling: %w", err)
-		}
-
-		danglingResult, err = stateScanner.ScanDanglingResources(ctx)
-		if err != nil {
-			return fmt.Errorf("dangling resources scan failed: %w", err)
-		}
-	}
-
-	// Run Lifecycle Hazards scan
-	var lifecycleHazardsResult *agent.LifecycleHazardResult
-	if scanLifecycleHazards {
-		lifecycleScanner, err := agent.NewLifecycleHazardScanner(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create lifecycle hazard scanner: %w", err)
-		}
-		if scanNamespace != "" {
-			lifecycleHazardsResult, err = lifecycleScanner.ScanNamespace(ctx, scanNamespace)
-		} else {
-			lifecycleHazardsResult, err = lifecycleScanner.Scan(ctx)
-		}
-		if err != nil {
-			return fmt.Errorf("lifecycle hazards scan failed: %w", err)
-		}
+		fmt.Printf("\n%s⚠ Kyverno not installed%s\n", colorYellow, colorReset)
+		fmt.Printf("  PolicyReport CRD not found in cluster.\n")
+		fmt.Printf("  Install Kyverno: https://kyverno.io/docs/installation/\n\n")
+		return nil
 	}
 
 	// Output results
-	if scanJSON {
-		return outputCombinedJSON(&CombinedScanResult{
-			Kyverno:          kyvernoResult,
-			State:            stateResult,
-			TimingBombs:      timingBombResult,
-			Unresolved:       unresolvedResult,
-			Dangling:         danglingResult,
-			LifecycleHazards: lifecycleHazardsResult,
-		})
+	if scanNormalizedJSON {
+		return outputNormalizedJSON(result)
 	}
-	if err := outputCombinedHuman(kyvernoResult, stateResult, timingBombResult, unresolvedResult, danglingResult); err != nil {
+	if scanJSON {
+		return outputCombinedJSON(result)
+	}
+	if err := outputCombinedHuman(result.Kyverno, result.State, result.TimingBombs, result.Unresolved, result.Dangling); err != nil {
 		return err
 	}
-	if lifecycleHazardsResult != nil {
+	if result.LifecycleHazards != nil {
 		fmt.Printf("\n")
-		fmt.Print(agent.RenderLifecycleHazardsASCII(lifecycleHazardsResult))
+		fmt.Print(agent.RenderLifecycleHazardsASCII(result.LifecycleHazards))
 	}
 	return nil
 }
 
-// findPolicyDBDir locates the Kyverno policy database
-func findPolicyDBDir() string {
-	// Try relative to executable
-	exe, err := os.Executable()
-	if err == nil {
-		dir := filepath.Join(filepath.Dir(exe), "..", "cve", "ccve", "kyverno")
-		if _, err := os.Stat(dir); err == nil {
-			return dir
-		}
-	}
-
-	// Try relative to current directory
-	cwd, err := os.Getwd()
-	if err == nil {
-		dir := filepath.Join(cwd, "cve", "ccve", "kyverno")
-		if _, err := os.Stat(dir); err == nil {
-			return dir
-		}
-	}
-
-	// Try common locations
-	locations := []string{
-		"/usr/local/share/confighub/cve/ccve/kyverno",
-		"/usr/share/confighub/cve/ccve/kyverno",
-	}
-	for _, loc := range locations {
-		if _, err := os.Stat(loc); err == nil {
-			return loc
-		}
-	}
-
-	return ""
-}
-
-// listKPOLPolicies lists all policies in the database
-func listKPOLPolicies(policyDBDir string) error {
-	if policyDBDir == "" {
-		return fmt.Errorf("policy database not found")
-	}
-
-	scanner := agent.NewKyvernoScannerWithClient(nil, policyDBDir)
-	policies, err := scanner.GetPolicyCatalog()
+// listKPOLPolicies lists all policies via the scan provider.
+func listKPOLPolicies(provider scan.Provider) error {
+	policies, err := provider.ListPolicies()
 	if err != nil {
-		return fmt.Errorf("failed to load policy catalog: %w", err)
+		return err
 	}
-
-	// Sort by ID
-	sort.Slice(policies, func(i, j int) bool {
-		return policies[i].ID < policies[j].ID
-	})
 
 	if scanJSON {
 		enc := json.NewEncoder(os.Stdout)
@@ -942,55 +807,38 @@ func outputDanglingFinding(f agent.DanglingFinding) {
 	fmt.Printf("\n")
 }
 
-// runFileScan performs static analysis on a YAML file without requiring cluster access
-func runFileScan(ctx context.Context, filename string, ccveDBDir string) error {
-	// Determine CCVE database directory (parent of kyverno dir)
-	ccveDir := ccveDBDir
-	if strings.HasSuffix(ccveDir, "/kyverno") {
-		ccveDir = filepath.Dir(ccveDir)
-	}
-
-	scanner, err := agent.NewStaticScanner(ccveDir)
+// runFileScan performs static analysis on a YAML file via the scan provider.
+func runFileScan(ctx context.Context, provider scan.Provider, filename string) error {
+	combined, err := provider.ScanFile(ctx, scan.FileScanOpts{
+		Filename:            filename,
+		RunLifecycleHazards: scanLifecycleHazards,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to create static scanner: %w", err)
+		return err
 	}
 
-	result, err := scanner.ScanFile(ctx, filename)
-	if err != nil {
-		return fmt.Errorf("static scan failed: %w", err)
-	}
-
-	// Run lifecycle hazards scan if requested
-	var lifecycleResult *agent.LifecycleHazardResult
-	if scanLifecycleHazards {
-		objects, err := scanner.LoadObjectsFromFile(filename)
-		if err != nil {
-			return fmt.Errorf("failed to load objects for lifecycle scan: %w", err)
+	// Output
+	if scanNormalizedJSON {
+		if err := outputNormalizedJSON(combined); err != nil {
+			return err
 		}
-		lifecycleScanner := agent.NewLifecycleHazardScannerFromObjects(objects)
-		lifecycleResult = lifecycleScanner.ScanObjects(objects)
-	}
-
-	if scanJSON {
-		if err := outputCombinedJSON(&CombinedScanResult{
-			Static:           result,
-			LifecycleHazards: lifecycleResult,
-		}); err != nil {
+	} else if scanJSON {
+		if err := outputCombinedJSON(combined); err != nil {
 			return err
 		}
 	} else {
-		if err := outputStaticScanHuman(result); err != nil {
+		if err := outputStaticScanHuman(combined.Static); err != nil {
 			return err
 		}
-		if lifecycleResult != nil && lifecycleResult.Summary.Total > 0 {
-			fmt.Print(agent.RenderLifecycleHazardsASCII(lifecycleResult))
+		if combined.LifecycleHazards != nil && combined.LifecycleHazards.Summary.Total > 0 {
+			fmt.Print(agent.RenderLifecycleHazardsASCII(combined.LifecycleHazards))
 		}
 	}
 
 	// Per cli-contract.md: exit code 1 for "Issues found or error"
-	hasFindings := len(result.Findings) > 0 || result.Error != ""
-	if lifecycleResult != nil {
-		hasFindings = hasFindings || lifecycleResult.Summary.Total > 0
+	hasFindings := combined.Static != nil && (len(combined.Static.Findings) > 0 || combined.Static.Error != "")
+	if combined.LifecycleHazards != nil {
+		hasFindings = hasFindings || combined.LifecycleHazards.Summary.Total > 0
 	}
 	if hasFindings {
 		os.Exit(1)
@@ -1104,6 +952,14 @@ func outputStaticFinding(f agent.StaticFinding) {
 	fmt.Printf("\n")
 }
 
+// outputNormalizedJSON outputs the combined result in the scan.normalized.v1 schema.
+func outputNormalizedJSON(result *CombinedScanResult) error {
+	normalized := scan.Normalize(result)
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(normalized)
+}
+
 // loadAndRenderScanFromJSON loads scan results from a JSON file and renders them.
 // This is used for golden testing to bypass cluster access.
 func loadAndRenderScanFromJSON(path string) error {
@@ -1117,6 +973,9 @@ func loadAndRenderScanFromJSON(path string) error {
 		return fmt.Errorf("failed to parse scan JSON: %w", err)
 	}
 
+	if scanNormalizedJSON {
+		return outputNormalizedJSON(&result)
+	}
 	if scanJSON {
 		return outputCombinedJSON(&result)
 	}

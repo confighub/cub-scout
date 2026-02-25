@@ -92,37 +92,41 @@ func runStatus(cmd *cobra.Command) error {
 		status.Mode = "connected"
 	}
 
-	// If we have local auth, check if cub CLI is available for richer status
-	if hub.IsAuthenticated() {
-		auth, _ := hub.LoadAuth()
-		if auth != nil && auth.Email != "" {
-			status.Email = auth.Email
-		}
+	// Check local auth for email (fast, file-only)
+	auth, _ := hub.LoadAuth()
+	if auth != nil && auth.Email != "" {
+		status.Email = auth.Email
+	}
 
-		// Try to get extended status from cub CLI (optional dependency)
-		if cubInstalled() {
-			cubCtx, email, err := getStatusCubContext()
-			if err == nil && cubCtx != nil {
-				// cub CLI context overrides local auth for email
-				if email != "" {
-					status.Email = email
-				}
-				status.Space = cubCtx.Settings.DefaultSpace
+	// Try cub CLI for richer status (does not depend on local auth.json)
+	if cubInstalled() {
+		cubCtx, email, err := getStatusCubContext()
+		if err == nil && cubCtx != nil {
+			// cub CLI context overrides local auth for email
+			if email != "" {
+				status.Email = email
+			}
+			status.Space = cubCtx.Settings.DefaultSpace
 
-				// Validate token via cub CLI
-				authValid := validateAuthToken()
-				status.AuthValid = &authValid
+			// If hub reported offline/online but cub CLI has a context,
+			// upgrade to connected
+			if status.Mode != "connected" {
+				status.Mode = "connected"
+			}
 
-				if !authValid {
-					status.Mode = "auth_expired"
-				}
+			// Validate token via cub CLI
+			authValid := validateAuthToken()
+			status.AuthValid = &authValid
 
-				// Try to get worker status (only if auth is valid)
-				if authValid && cubCtx.Settings.DefaultSpace != "" {
-					worker := getWorkerForCluster(cubCtx.Settings.DefaultSpace, status.ClusterName)
-					if worker != nil {
-						status.Worker = worker
-					}
+			if !authValid {
+				status.Mode = "auth_expired"
+			}
+
+			// Try to get worker status (only if auth is valid)
+			if authValid && cubCtx.Settings.DefaultSpace != "" {
+				worker := getWorkerForCluster(cubCtx.Settings.DefaultSpace, status.ClusterName)
+				if worker != nil {
+					status.Worker = worker
 				}
 			}
 		}

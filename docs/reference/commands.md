@@ -1,38 +1,50 @@
 # Command Reference
 
-Complete reference for all cub-scout commands.
+Curated reference for common cub-scout commands with usage examples.
+
+For the **exhaustive stable surface** (all contracted commands, flags, exit codes, and output schemas), see [CLI Contract Reference](cli-contract.md).
 
 ## Overview
 
-| Command | Purpose |
-|---------|---------|
-| `map` | Interactive cluster explorer (TUI) |
-| `map list` | List resources by ownership |
-| `map orphans` | Find resources without GitOps owner |
-| `map issues` | Show resources with problems |
-| `map crashes` | Show crashing pods |
-| `map workloads` | List workloads by owner |
-| `map deployers` | List GitOps deployers (Flux, ArgoCD, core Deployments) |
-| `map cronjobs` | List CronJobs with schedule/run state |
-| `map jobs` | List Jobs with CronJob linkage and run state |
-| `map actions` | Read-only operator action preview (runbook output) |
-| `map activity` | Unified activity timeline from Flux/Argo/Helm/events |
-| `map previews` | Detect PR preview environments |
-| `trace` | Show GitOps ownership chain |
-| `scan` | Scan for misconfigurations |
-| `tree` | Hierarchical resource views |
-| `import` | Import workloads into ConfigHub |
-| `discover` | Scout-style workload discovery |
-| `health` | Scout-style health check |
-| `connect` | Quickly configure kube context from server URL or kubeconfig |
-| `setup` | Set up shell completions |
-| `graph export` | Export resource graph as JSON (v0.6) |
-| `graph explain` | Explain a resource's graph relationships (v0.6) |
-| `patterns list` | List registered patterns (v0.7) |
-| `patterns detect` | Run pattern detection (v0.7) |
-| `patterns explain` | Explain a specific pattern (v0.7) |
-| `bundle summarize` | Generate evidence summaries from debug bundles (v0.19) |
-| `gitops status` | Show GitOps pipeline health (v0.14) |
+| Command | Purpose | Stable Since |
+|---------|---------|--------------|
+| `map` | Interactive cluster explorer (TUI) | v0.5 |
+| `map list` | List resources by ownership | v0.5 |
+| `map status` | One-line cluster health check | v0.5 |
+| `map orphans` | Find resources without GitOps owner | v0.5 |
+| `map issues` | Show resources with problems | v0.5 |
+| `map crashes` | Show crashing pods | v0.5 |
+| `map workloads` | List workloads by owner | v0.5 |
+| `map deployers` | List GitOps deployers (Flux, ArgoCD, core Deployments) | v0.5 |
+| `map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
+| `map cronjobs` | List CronJobs with schedule/run state | v0.20 |
+| `map jobs` | List Jobs with CronJob linkage and run state | v0.20 |
+| `map actions` | Read-only operator action preview (runbook output) | v0.20 |
+| `map activity` | Unified activity timeline from Flux/Argo/Helm/events | v0.20 |
+| `map previews` | Detect PR preview environments | v0.20 |
+| `trace` | Show GitOps ownership chain | v0.5 |
+| `scan` | Scan for misconfigurations | v0.5 |
+| `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
+| `tree` | Hierarchical resource views | v0.5 |
+| `import` | Import workloads into ConfigHub | v1.0 |
+| `discover` | Scout-style workload discovery | v0.5 |
+| `health` | Scout-style health check | v0.5 |
+| `status` | Show connection status and cluster info | v1.0 |
+| `connect` | Quickly configure kube context from server URL or kubeconfig | v1.0 |
+| `setup` | Set up shell completions | v0.19 |
+| `graph export` | Export resource graph as JSON | v0.6 |
+| `graph explain` | Explain a resource's graph relationships | v0.6 |
+| `patterns list` | List registered patterns | v0.7 |
+| `patterns detect` | Run pattern detection | v0.7 |
+| `patterns explain` | Explain a specific pattern | v0.7 |
+| `bundle inspect` | Show bundle metadata and contents | v0.15 |
+| `bundle summarize` | Generate evidence summaries from debug bundles | v0.19 |
+| `bundle replay` | Re-render bundle contents | v0.15 |
+| `bundle diff` | Compare two bundles | v0.15 |
+| `bundle timeline` | Time-series view across catalog | v0.15 |
+| `catalog list` | List bundles in a catalog | v0.15 |
+| `gitops status` | Show GitOps pipeline health | v0.14.1 |
+| `completion` | Generate shell completion script | v0.19 |
 
 For JSON contract navigation, start with [JSON Contracts and Output Model](json-contracts.md).
 
@@ -75,6 +87,33 @@ In the pipelines view (`p`):
 - `unknown`: source field missing/unreadable
 
 See `docs/reference/pipeline-source-resolution.md` for details.
+
+---
+
+## map status
+
+One-line cluster health summary.
+
+```bash
+cub-scout map status [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Filter by namespace |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+
+### Examples
+
+```bash
+cub-scout map status
+cub-scout map status -n production
+cub-scout map status --format json
+```
+
+See [CLI Contract Reference](cli-contract.md) for exit codes and JSON schema.
 
 ---
 
@@ -217,6 +256,32 @@ Canonical deployer scope (v1.0):
 - Flux `HelmRelease`
 - Argo CD `Application`
 - Core Kubernetes `Deployment` (fallback where GitOps CRDs are absent)
+
+---
+
+## map hooks
+
+List lifecycle hooks (Helm pre/post-install, ArgoCD sync hooks).
+
+```bash
+cub-scout map hooks [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Filter by namespace |
+| `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+
+### Examples
+
+```bash
+cub-scout map hooks
+cub-scout map hooks -n production
+```
+
+See [CLI Contract Reference](cli-contract.md) for full output details.
 
 ---
 
@@ -619,6 +684,33 @@ cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --ma
 
 ---
 
+## status
+
+Show connection status, cluster info, and worker status.
+
+```bash
+cub-scout status [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Output as JSON |
+
+### Examples
+
+```bash
+cub-scout status
+cub-scout status --json
+```
+
+Displays ConfigHub connection mode (Offline/Online/Connected), current cluster
+name, kubectl context, and optional worker/space info when the `cub` CLI is
+available.
+
+---
+
 ## setup
 
 Set up shell completions and configuration.
@@ -858,6 +950,58 @@ cub-scout bundle summarize ./bundle --format json
 Output is deterministic: same bundle always produces identical output. All content derives from bundle facts only.
 
 For the full evidence export schema, see [Evidence Export v1](evidence-export-v1.md).
+
+---
+
+## bundle inspect (v0.15)
+
+Show bundle metadata, contents, and structure.
+
+```bash
+cub-scout bundle inspect <bundle-path>
+```
+
+---
+
+## bundle replay (v0.15)
+
+Re-render bundle contents through the current rendering pipeline.
+
+```bash
+cub-scout bundle replay <bundle-path> [flags]
+```
+
+---
+
+## bundle diff (v0.15)
+
+Compare two bundles and show differences.
+
+```bash
+cub-scout bundle diff <bundle-a> <bundle-b> [flags]
+```
+
+---
+
+## bundle timeline (v0.15)
+
+Time-series view of bundles in a catalog directory.
+
+```bash
+cub-scout bundle timeline <catalog-path> [flags]
+```
+
+---
+
+## catalog list (v0.15)
+
+List bundles in a catalog directory with metadata.
+
+```bash
+cub-scout catalog list <catalog-path> [flags]
+```
+
+See [CLI Contract Reference](cli-contract.md) for full flag and output documentation for all bundle and catalog commands.
 
 ---
 

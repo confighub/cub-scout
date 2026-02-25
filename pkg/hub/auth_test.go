@@ -157,6 +157,14 @@ func TestIsAuthenticated(t *testing.T) {
 	}
 }
 
+func TestCubCLIAuthenticated_NoCubBinary(t *testing.T) {
+	// When cub is not in PATH, CubCLIAuthenticated should return false.
+	t.Setenv("PATH", t.TempDir()) // empty dir — no cub binary
+	if CubCLIAuthenticated() {
+		t.Error("CubCLIAuthenticated() = true, want false when cub is not installed")
+	}
+}
+
 func TestIsPaidTier(t *testing.T) {
 	tests := []struct {
 		tier string
