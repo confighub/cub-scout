@@ -91,6 +91,58 @@ func RunCubScout(t *testing.T, args ...string) Result {
 	}
 }
 
+// RunCubScoutWithEnv executes the cub-scout binary with extra environment variables.
+func RunCubScoutWithEnv(t *testing.T, env map[string]string, args ...string) Result {
+	t.Helper()
+
+	binary := os.Getenv("CUB_SCOUT_BINARY")
+	if binary == "" {
+		binary = filepath.Join(projectRoot(t), "cub-scout")
+	}
+
+	if _, err := os.Stat(binary); os.IsNotExist(err) {
+		t.Fatalf("cub-scout binary not found at %s - run 'go build ./cmd/cub-scout' first", binary)
+	}
+
+	cmd := exec.Command(binary, args...)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	cmd.Env = append(os.Environ(),
+		"NO_COLOR=1",
+		"TERM=dumb",
+		"CI=true",
+	)
+	for k, v := range env {
+		cmd.Env = append(cmd.Env, k+"="+v)
+	}
+
+	err := cmd.Run()
+
+	exitCode := 0
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		} else {
+			t.Fatalf("failed to run cub-scout: %v", err)
+		}
+	}
+
+	return Result{
+		Stdout:   stdout.String(),
+		Stderr:   stderr.String(),
+		ExitCode: exitCode,
+	}
+}
+
+// ProjectRoot returns the project root directory (exported for use by golden test packages).
+func ProjectRoot(t *testing.T) string {
+	t.Helper()
+	return projectRoot(t)
+}
+
 // Normalize removes non-deterministic content from CLI output:
 //   - ANSI escape codes (colors)
 //   - Timestamps (ISO 8601, RFC 3339, etc.)

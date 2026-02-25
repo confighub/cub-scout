@@ -378,12 +378,19 @@ Legacy `cub-agent` command examples in archive docs are non-canonical; current c
 
 ### Remaining Capabilities (Authoritative)
 
-#### 1. Connected Import into ConfigHub
+#### 1. Connected Import Evolution (1.1+)
 
-* Import bundles into ConfigHub
-* Import cluster-captured state via cub-scout
-* Explicit, one-shot, auditable imports
-* Intentionally deferred from late 0.x to keep read-only-first stabilization tight; now staged as 1.1+ Connected Mode scope
+Basic `cub-scout import` shipped in v1.0:
+* Namespace-scoped workload discovery and import (`cub-scout import -n <ns>`)
+* Interactive wizard (`cub-scout import --wizard`)
+* Dry-run and JSON proposal modes
+* See `docs/reference/commands.md` and `docs/howto/import-to-confighub.md`
+
+Remaining 1.1+ scope — evolve import, not introduce it:
+* App-centric transition mapping (App/Deployment/Target to Space/Unit) — see #186
+* OCI-first source language alignment
+* Evidence contract integration with bundle/scan surfaces
+* Import from bundle artifacts (not just live cluster)
 
 #### 2. Git as a First-Class Source
 

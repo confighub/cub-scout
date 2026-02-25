@@ -7,6 +7,15 @@ import (
 	"time"
 )
 
+func TestConfigHubHealthEndpoint(t *testing.T) {
+	// Ensure the health endpoint points to the real ConfigHub domain.
+	// api.confighub.com does not exist — hub.confighub.com is correct.
+	want := "https://hub.confighub.com/health"
+	if ConfigHubHealthEndpoint != want {
+		t.Errorf("ConfigHubHealthEndpoint = %q, want %q", ConfigHubHealthEndpoint, want)
+	}
+}
+
 func TestMode_String(t *testing.T) {
 	tests := []struct {
 		mode Mode

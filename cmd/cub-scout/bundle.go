@@ -238,10 +238,13 @@ Output is deterministic: same bundle always produces identical summary.
 All content derives from bundle facts — no external lookups.
 
 Examples:
-  # Generate ticket summary (stdout)
+  # Generate ASCII summary (default)
   cub-scout bundle summarize ./bundle
 
-  # Generate ticket summary (write to file)
+  # Generate ticket summary for Jira/ServiceNow
+  cub-scout bundle summarize ./bundle --format ticket
+
+  # Write ticket summary to file
   cub-scout bundle summarize ./bundle --format ticket --out jira.md
 
   # Generate Slack notification (JSON)

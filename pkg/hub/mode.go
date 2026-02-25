@@ -10,7 +10,7 @@ import (
 
 const (
 	// ConfigHubHealthEndpoint is the endpoint used to check ConfigHub connectivity.
-	ConfigHubHealthEndpoint = "https://api.confighub.com/health"
+	ConfigHubHealthEndpoint = "https://hub.confighub.com/health"
 
 	// ConnectivityTimeout is the maximum time to wait for connectivity check.
 	ConnectivityTimeout = 2 * time.Second
@@ -87,14 +87,15 @@ func (m Mode) DisplayName() string {
 
 // CurrentMode returns the current operating mode.
 // It checks connectivity and authentication state.
+// Authentication is checked via both local auth.json and cub CLI token store.
 func CurrentMode() Mode {
 	// Check if user has disabled network or we're air-gapped
 	if !hasConnectivity() {
 		return Offline
 	}
 
-	// Check if user is authenticated
-	if IsAuthenticated() {
+	// Check if user is authenticated via local auth.json or cub CLI
+	if IsAuthenticated() || CubCLIAuthenticated() {
 		return Connected
 	}
 

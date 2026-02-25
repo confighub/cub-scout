@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "category": "",
+      "id": "KPOL-001",
+      "message": "Missing required label: team",
+      "namespace": "production",
+      "resource": "Deployment/frontend",
+      "severity": "warning",
+      "title": "require-labels",
+      "track": "kyverno"
+    },
+    {
+      "category": "stuck-reconciliation",
+      "command": "helm rollback payment-api -n ecommerce",
+      "id": "CCVE-2025-0027",
+      "message": "Helm upgrade failed: timed out",
+      "namespace": "ecommerce",
+      "remediation": "Check helm history and rollback",
+      "resource": "HelmRelease/payment-api",
+      "severity": "critical",
+      "title": "HelmRelease/payment-api stuck",
+      "track": "state"
+    },
+    {
+      "category": "",
+      "command": "kubectl get secret tls-cert -n ingress -o yaml",
+      "id": "CCVE-2025-0051",
+      "message": "Certificate expires in 17 days",
+      "namespace": "ingress",
+      "remediation": "Renew certificate",
+      "resource": "Secret/tls-cert",
+      "severity": "warning",
+      "title": "Secret/tls-cert expires 17d",
+      "track": "timing-bomb"
+    }
+  ],
+  "scanned_at": "\u003cTIMESTAMP\u003e",
+  "schema_version": "scan.normalized.v1",
+  "summary": {
+    "critical": 1,
+    "info": 0,
+    "total": 3,
+    "warning": 2
+  }
+}
