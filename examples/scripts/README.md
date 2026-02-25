@@ -2,8 +2,6 @@
 
 **Status: Working** — Copy-paste scripts for integrating cub-scout into your workflow.
 
-> **Maintainer note:** When updating this file, also update [docs/EXAMPLES-OVERVIEW.md](../../docs/EXAMPLES-OVERVIEW.md).
-
 ## k9s Plugin
 
 Add map/scan commands to k9s:

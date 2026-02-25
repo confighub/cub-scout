@@ -2,8 +2,6 @@
 
 **Status: Working** — Step-by-step walkthrough with expected output at each step.
 
-> **Maintainer note:** When updating this file, also update [docs/EXAMPLES-OVERVIEW.md](../../docs/EXAMPLES-OVERVIEW.md).
-
 This example creates a realistic multi-owner cluster with ConfigHub-managed resources, introduces problems and risk issues, shows how to diagnose them using the map tool, then fixes them.
 
 ---

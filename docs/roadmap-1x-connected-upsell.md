@@ -43,41 +43,38 @@ The goal is to sequence 1.x so we:
 
 ## 1.x roadmap (execution order)
 
-### Phase A: 1.0.x trust hardening (now)
+### Phase A: 1.0.x trust hardening — Complete
 
-Scope:
-- Close P0s before broad connected expansion.
+**Status:** Complete (all issues closed)
 
-Primary issues:
+Primary issues (all closed):
 - #125 regression audit for Argo tree/appset/app-of-apps
 - #126 pipeline semantics (`unknown -> ...`)
 - #127 trace context hardening
 - #129 workload scope definition
 
-Exit criteria:
-- Reproducible v0.4.0 vs v0.19.6 comparison report exists and is linked from docs.
-- Known behavior gaps are classified as intentional or regression.
-- Map/trace UX has no unresolved “what does this mean?” dead ends.
+### Phase B: 1.1 connected foundation — Complete
 
-### Phase B: 1.1 connected foundation (next)
+**Status:** Complete (PR #177)
 
-Scope:
-- Make connected mode clearly better than OSS for single-cluster operations.
+Delivered:
+- Connected hierarchy navigation defaults (cluster-aware filtering, mode-aware presets)
+- Mode state visibility in TUI (QuickMode, Offline/Standalone/Connected)
+- First-class trace context diagnostics (Flux, Helm, ConfigHub) with TUI remediation
+- Canonical migration guide from Argo/Helm to ConfigHub (#130)
+- Break-glass to managed flow documentation and guided testing
+- ASCII vs JSON model explainer
+- WHY_CONNECTED_MODE.md integrated into roadmap
+- Examples index consolidated
+- Duplicate CLI error output fixed
 
-Deliverables:
-- Better connected hierarchy navigation defaults (cluster-aware filtering and clear mode state).
-- First-class trace context diagnostics and reset path in connected workflows.
-- Canonical migration guide from Argo/Helm to ConfigHub (#130), promoted out of archive.
-- Update all "why connected" docs and roadmap sections to be consistent and complete
-
-Exit criteria:
-- A user can import one real cluster and understand Hub/App Space/Unit mapping without external guidance.
+Exit criteria met:
+- User can import one real cluster and understand Hub/App Space/Unit mapping without external guidance.
 - “Break-glass to managed” flow is documented and testable in one guided path.
 
-### Phase C: 1.2 Argo hierarchy intelligence (next)
+### Phase C: 1.2 Argo hierarchy intelligence — Scoped
 
-Scope:
-- Resolve App-of-Apps/ApplicationSet visibility gap and unify tree mental model.
+**Status:** Scoped (issues #128, #132 closed as scope definitions; runtime implementation is future work)
 
 Deliverables:
 - Ownership/tree lineage support for:
@@ -89,10 +86,9 @@ Deliverables:
 Exit criteria:
 - Argo users can answer “who generated this app?” and “what is parent of this app?” in one command/view.
 
-### Phase D: 1.3 fleet and governance expansion (later)
+### Phase D: 1.3 fleet and governance expansion — Scoped
 
-Scope:
-- Fleet-level workflows and governance surfaces that justify paid tiers.
+**Status:** Scoped (issues #131, #133 closed as scope definitions)
 
 Deliverables:
 - Multi-cluster topology view and scoped roadmap implementation (#131).
@@ -158,14 +154,16 @@ Exit criteria:
 - Risk: Complex connected story dilutes OSS value.
   - Mitigation: keep OSS reflexes sharp (map, trace, scan) and additive messaging.
 
-## Near-term actions (next 2 sprints)
+## Near-term actions — Complete
 
-1. Complete #125 and publish comparison report.
-2. Land #126 + #127 with tests and docs.
-3. Finalize workload scope contract (#129).
-4. Draft and publish canonical migration path (#130).
-5. Start lineage fixture implementation for #128.
-6. Add a clear user-facing explainer for the ASCII vs JSON model (what is canonical data vs presentation).
+All 6 original near-term actions are done:
+
+1. ~~Complete #125 and publish comparison report.~~ Done
+2. ~~Land #126 + #127 with tests and docs.~~ Done
+3. ~~Finalize workload scope contract (#129).~~ Done
+4. ~~Draft and publish canonical migration path (#130).~~ Done (#172–#177)
+5. ~~Start lineage fixture implementation for #128.~~ Scoped (#128 closed)
+6. ~~Add a clear user-facing explainer for the ASCII vs JSON model.~~ Done (`docs/howto/ascii-vs-json.md`)
 
 ## Source references
 

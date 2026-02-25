@@ -101,6 +101,9 @@ func (f *FluxTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 	}
 
 	if err != nil {
+		if help, ok := FormatFluxContextError(errorOutput); ok {
+			return nil, fmt.Errorf("%s", help)
+		}
 		return nil, fmt.Errorf("flux trace failed: %w: %s", err, stderrStr)
 	}
 
@@ -313,6 +316,59 @@ func extractRevision(rev string) string {
 	}
 
 	return rev
+}
+
+// FormatFluxContextError detects stale/invalid Flux context errors and
+// returns a remediation-focused message. The bool return is true when a
+// context issue was detected.
+func FormatFluxContextError(output string) (string, bool) {
+	out := strings.ToLower(output)
+
+	containsAny := func(parts ...string) bool {
+		for _, p := range parts {
+			if strings.Contains(out, p) {
+				return true
+			}
+		}
+		return false
+	}
+
+	reason := ""
+	switch {
+	case containsAny(
+		"no matches for kind",
+		"the server doesn't have a resource type",
+		"no flux object found",
+		"unable to recognize",
+		"flux is not installed",
+	):
+		reason = "Flux CRDs or controllers are not installed"
+	case containsAny(
+		"connection refused",
+		"i/o timeout",
+		"dial tcp",
+		"x509:",
+		"certificate signed by unknown authority",
+		"tls:",
+		"no such host",
+	):
+		reason = "cluster endpoint is unreachable or certificate is invalid"
+	default:
+		return "", false
+	}
+
+	msg := fmt.Sprintf(
+		"flux context appears stale or invalid (%s).\n\n"+
+			"Trace context troubleshooting:\n"+
+			"  1) kubectl cluster-info\n"+
+			"  2) flux check\n"+
+			"  3) flux install\n"+
+			"  4) kubectl config use-context <context>\n\n"+
+			"Then retry:\n"+
+			"  cub-scout trace <kind>/<name> -n <namespace>",
+		reason,
+	)
+	return msg, true
 }
 
 // fluxResource represents the JSON structure of a Flux Kustomization or HelmRelease

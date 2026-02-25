@@ -6,6 +6,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -296,4 +297,67 @@ func (r *TraceResult) EnrichWithConfigHub(labels, annotations map[string]string)
 	}
 
 	r.ConfigHub = ch
+}
+
+// FormatConfigHubContextError detects ConfigHub connectivity/auth errors and
+// returns a remediation-focused message. The bool return is true when a
+// context issue was detected.
+//
+// ConfigHub errors are treated as warnings — standalone trace always proceeds.
+func FormatConfigHubContextError(output string) (string, bool) {
+	out := strings.ToLower(output)
+
+	containsAny := func(parts ...string) bool {
+		for _, p := range parts {
+			if strings.Contains(out, p) {
+				return true
+			}
+		}
+		return false
+	}
+
+	reason := ""
+	switch {
+	case containsAny(
+		"unauthorized",
+		"401",
+		"token expired",
+		"token is expired",
+		"forbidden",
+		"403",
+		"authentication required",
+	):
+		reason = "ConfigHub authentication is missing or expired"
+	case containsAny(
+		"connection refused",
+		"timeout",
+		"no such host",
+		"dial tcp",
+		"i/o timeout",
+	):
+		reason = "ConfigHub API is unreachable"
+	case containsAny(
+		"space not found",
+		"unit not found",
+		"no active space",
+		"no worker",
+	):
+		reason = "ConfigHub space or unit context is invalid"
+	default:
+		return "", false
+	}
+
+	msg := fmt.Sprintf(
+		"ConfigHub enrichment failed (%s).\n"+
+			"Standalone trace completed successfully — connected metadata unavailable.\n\n"+
+			"Trace context troubleshooting:\n"+
+			"  1) cub auth status\n"+
+			"  2) cub auth login\n"+
+			"  3) cub context get\n"+
+			"  4) cub worker list\n\n"+
+			"Then retry:\n"+
+			"  cub-scout trace <kind>/<name> -n <namespace>",
+		reason,
+	)
+	return msg, true
 }

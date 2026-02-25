@@ -2,7 +2,7 @@
 
 All examples, demos, and integration code in one place.
 
-> **Maintainer note:** When updating this file, also update [docs/EXAMPLES-OVERVIEW.md](../docs/EXAMPLES-OVERVIEW.md).
+> **This is the canonical examples index.** `docs/EXAMPLES-OVERVIEW.md` redirects here.
 
 ## Status Legend
 
@@ -387,7 +387,6 @@ $ cub-scout map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
 
 | Doc | What's in it |
 |-----|--------------|
-| [docs/EXAMPLES-OVERVIEW.md](../docs/EXAMPLES-OVERVIEW.md) | Central examples overview |
 | [CLI-GUIDE.md](../CLI-GUIDE.md) | Complete CLI reference (14 commands, 17 subcommands) |
 | [docs/reference/command-matrix.md](../docs/reference/command-matrix.md) | Full command/option matrix |
 | [docs/howto/import-to-confighub.md](../docs/howto/import-to-confighub.md) | Import workloads into ConfigHub |

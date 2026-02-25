@@ -473,3 +473,100 @@ func TestEnrichWithConfigHub(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatConfigHubContextError(t *testing.T) {
+	tests := []struct {
+		name       string
+		output     string
+		wantMatch  bool
+		wantReason string
+	}{
+		{
+			name:       "auth expired",
+			output:     "HTTP 401: token expired",
+			wantMatch:  true,
+			wantReason: "authentication is missing or expired",
+		},
+		{
+			name:       "unauthorized",
+			output:     "request failed: unauthorized",
+			wantMatch:  true,
+			wantReason: "authentication is missing or expired",
+		},
+		{
+			name:       "forbidden",
+			output:     "403 Forbidden",
+			wantMatch:  true,
+			wantReason: "authentication is missing or expired",
+		},
+		{
+			name:       "API unreachable",
+			output:     "dial tcp 10.0.0.1:443: connection refused",
+			wantMatch:  true,
+			wantReason: "API is unreachable",
+		},
+		{
+			name:       "timeout",
+			output:     "context deadline exceeded: timeout",
+			wantMatch:  true,
+			wantReason: "API is unreachable",
+		},
+		{
+			name:       "space not found",
+			output:     "space not found: production",
+			wantMatch:  true,
+			wantReason: "space or unit context is invalid",
+		},
+		{
+			name:       "no worker",
+			output:     "no worker running for space",
+			wantMatch:  true,
+			wantReason: "space or unit context is invalid",
+		},
+		{
+			name:      "normal output not matched",
+			output:    "enrichment complete: unit=payment-api space=production",
+			wantMatch: false,
+		},
+		{
+			name:      "empty output not matched",
+			output:    "",
+			wantMatch: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := FormatConfigHubContextError(tt.output)
+			if ok != tt.wantMatch {
+				t.Fatalf("FormatConfigHubContextError() match = %v, want %v (msg=%q)", ok, tt.wantMatch, got)
+			}
+			if !tt.wantMatch {
+				return
+			}
+
+			// Ensure remediation path is present and actionable.
+			required := []string{
+				"cub auth status",
+				"cub auth login",
+				"cub context get",
+				"cub worker list",
+				"cub-scout trace",
+			}
+			for _, r := range required {
+				if !strings.Contains(got, r) {
+					t.Fatalf("expected remediation command %q in message: %s", r, got)
+				}
+			}
+
+			if !strings.Contains(got, tt.wantReason) {
+				t.Fatalf("expected reason fragment %q in message: %s", tt.wantReason, got)
+			}
+
+			// ConfigHub errors must indicate standalone trace still succeeds
+			if !strings.Contains(got, "Standalone trace completed successfully") {
+				t.Fatalf("expected graceful degradation note in message: %s", got)
+			}
+		})
+	}
+}

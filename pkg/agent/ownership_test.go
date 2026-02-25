@@ -770,6 +770,89 @@ func TestDetectOwnership_Priority(t *testing.T) {
 }
 
 // Benchmark tests for ownership detection
+// TestDetectOwnership_BreakGlass verifies the ownership detection for
+// the break-glass scenario: a Flux-managed resource alongside a Native
+// orphan created via kubectl during an incident. This matches the fixture
+// in examples/demos/break-glass.yaml.
+func TestDetectOwnership_BreakGlass(t *testing.T) {
+	t.Run("Flux-managed payment-api", func(t *testing.T) {
+		resource := newTestResource("break-glass-demo", "payment-api", map[string]string{
+			"app":                                  "payment-api",
+			"kustomize.toolkit.fluxcd.io/name":      "payment-api",
+			"kustomize.toolkit.fluxcd.io/namespace": "break-glass-demo",
+		}, map[string]string{
+			"confighub.com/revision":    "42",
+			"confighub.com/deployed-by": "flux",
+			"confighub.com/deployed-at": "2026-01-14T12:15:00Z",
+		})
+		ownership := DetectOwnership(resource)
+
+		if ownership.Type != OwnerFlux {
+			t.Errorf("payment-api: Type = %q, want %q", ownership.Type, OwnerFlux)
+		}
+		if ownership.SubType != "kustomization" {
+			t.Errorf("payment-api: SubType = %q, want %q", ownership.SubType, "kustomization")
+		}
+		if ownership.Name != "payment-api" {
+			t.Errorf("payment-api: Name = %q, want %q", ownership.Name, "payment-api")
+		}
+		if ownership.Confidence != "high" {
+			t.Errorf("payment-api: Confidence = %q, want %q", ownership.Confidence, "high")
+		}
+	})
+
+	t.Run("Native hotfix-cache (break-glass orphan)", func(t *testing.T) {
+		// hotfix-cache has NO GitOps labels — only break-glass annotations
+		resource := newTestResource("break-glass-demo", "hotfix-cache", map[string]string{
+			"app": "hotfix-cache",
+			// NO flux/argo/helm/terraform/confighub labels
+		}, map[string]string{
+			"break-glass/incident":  "INC-4521",
+			"break-glass/applied-by": "admin",
+			"break-glass/applied-at": "2026-01-14T14:23:00Z",
+			"break-glass/reason":     "Emergency cache fix for payment processing failures",
+		})
+		ownership := DetectOwnership(resource)
+
+		if ownership.Type != OwnerUnknown {
+			t.Errorf("hotfix-cache: Type = %q, want %q (should be orphan/Native)", ownership.Type, OwnerUnknown)
+		}
+	})
+
+	t.Run("Native hotfix-cache-config (break-glass ConfigMap)", func(t *testing.T) {
+		resource := newTestResource("break-glass-demo", "hotfix-cache-config", map[string]string{
+			"app": "hotfix-cache",
+		}, map[string]string{
+			"break-glass/incident":  "INC-4521",
+			"break-glass/applied-by": "admin",
+		})
+		ownership := DetectOwnership(resource)
+
+		if ownership.Type != OwnerUnknown {
+			t.Errorf("hotfix-cache-config: Type = %q, want %q (should be orphan/Native)", ownership.Type, OwnerUnknown)
+		}
+	})
+
+	t.Run("Break-glass annotations do not confer ownership", func(t *testing.T) {
+		// Even with many annotations, if no GitOps label is present,
+		// the resource must be classified as unknown (Native).
+		resource := newTestResource("prod", "emergency-fix", map[string]string{
+			"app":         "emergency-fix",
+			"team":        "platform",
+			"environment": "production",
+		}, map[string]string{
+			"break-glass/incident":  "INC-9999",
+			"break-glass/applied-by": "oncall",
+			"kubectl.kubernetes.io/last-applied-configuration": "{}",
+		})
+		ownership := DetectOwnership(resource)
+
+		if ownership.Type != OwnerUnknown {
+			t.Errorf("emergency-fix: Type = %q, want %q", ownership.Type, OwnerUnknown)
+		}
+	})
+}
+
 func BenchmarkDetectOwnership_Flux(b *testing.B) {
 	resource := newTestResource("test-ns", "test", map[string]string{
 		"kustomize.toolkit.fluxcd.io/name":      "my-app",

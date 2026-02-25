@@ -2,8 +2,6 @@
 
 Plugins and extensions for popular Kubernetes tools.
 
-> **Maintainer note:** When updating this file, also update [docs/EXAMPLES-OVERVIEW.md](../../docs/EXAMPLES-OVERVIEW.md).
-
 ## Status Legend
 
 | Status | Meaning |

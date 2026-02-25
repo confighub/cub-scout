@@ -19,6 +19,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/confighub/cub-scout/internal/mapsvc"
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -5237,8 +5238,14 @@ func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 					out, cmdErr = cmd.CombinedOutput()
 					output = string(out)
 				}
-				if cmdErr != nil && output == "" {
-					err = cmdErr
+				if cmdErr != nil {
+					// Detect context/connectivity issues and provide remediation
+					if help, ok := agent.FormatFluxContextError(output); ok {
+						err = fmt.Errorf("%s", help)
+						output = ""
+					} else if output == "" {
+						err = cmdErr
+					}
 				}
 			}
 
@@ -5249,7 +5256,13 @@ func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 				out, cmdErr := cmd.CombinedOutput()
 				output = string(out)
 				if cmdErr != nil {
-					err = cmdErr
+					// Detect context/connectivity issues and provide remediation
+					if help, ok := agent.FormatArgoContextError(output); ok {
+						err = fmt.Errorf("%s", help)
+						output = ""
+					} else {
+						err = cmdErr
+					}
 				}
 			} else {
 				// For workloads, try to find the parent Application
@@ -5473,7 +5486,16 @@ func (m LocalClusterModel) renderTrace() string {
 
 	// Show error if any
 	if m.traceError != nil {
-		b.WriteString(lcErrStyle.Render("Error: "+m.traceError.Error()) + "\n")
+		errMsg := m.traceError.Error()
+		if strings.Contains(errMsg, "Trace context troubleshooting:") {
+			// Structured remediation — render each line clearly
+			b.WriteString(lcErrStyle.Render("⚠ Context Issue Detected") + "\n\n")
+			for _, line := range strings.Split(errMsg, "\n") {
+				b.WriteString("  " + line + "\n")
+			}
+		} else {
+			b.WriteString(lcErrStyle.Render("Error: "+errMsg) + "\n")
+		}
 		b.WriteString("\n" + lcDimStyle.Render("Press any key to continue") + "\n")
 		return b.String()
 	}
