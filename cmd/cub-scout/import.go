@@ -110,6 +110,9 @@ This command:
   2. Suggests an App and Deployments structure
   3. Creates everything in ConfigHub
 
+Terminology: the API currently uses Space/Unit; see docs/reference/glossary.md
+for the App/Deployment mapping.
+
 That's it. One command.
 
 Examples:
