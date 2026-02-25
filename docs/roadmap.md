@@ -422,6 +422,15 @@ Connected Mode does **not** introduce:
 
 ---
 
+### Linked v1.1 Issues (Docs + Contract Alignment)
+
+* #183 — align connected-import roadmap scope with shipped `cub-scout import`
+* #184 — reconcile `commands.md` completeness claim with actual coverage
+* #185 — fix `bundle summarize` default-format help mismatch
+* #186 — add app-centric transition mapping (App/Deployment/Target ↔ Space/Unit)
+
+---
+
 ## Guiding Principles (Still True)
 
 * **Explainability first**
@@ -436,7 +445,7 @@ Connected Mode does **not** introduce:
 * v0.x is **complete**
 * v0.18 fulfilled the original "why connected" *operationally*
 * v0.19 locked UX, behavior, and performance
-* Open issues #3/#21 (kro), #149-#151 (delivery chain), #158 (connected example), #163-#166 (experiments/evidence) remain for future work
+* Open issues #3/#21 (kro), #149-#151 (delivery chain), #158 (connected example), #163-#166 (experiments/evidence), and #183-#186 (docs/contract alignment) remain for future work
 * The remaining roadmap is **Connected Mode with ConfigHub**:
 
   * import
