@@ -15,23 +15,20 @@
 
 ## Untracked Backlog Checklist
 
-The planning docs below contain future ideas not yet tracked as GitHub issues.
-This checklist prevents ideas from being forgotten during sprint planning.
-When an item graduates to real work, file a dedicated issue and remove it here.
+This checklist tracks ideas from planning docs. Items marked "scoped" had issues filed and
+closed as scope definitions — the contract/design was documented but runtime implementation
+remains future work. Items marked "resolved" had issues filed, implemented, and closed.
 
-Tracking issue: **#154** (master backlog tracking)
+Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 ### Rendered Manifest + Argo (`roadmap-rendered-manifest-and-argo.md`)
 
-- [ ] Workstream A: Distinguish "ConfigHub via OCI" ownership in trace outputs
-- [ ] Workstream A: Show explicit `source → render → OCI → deployer → workload` chain
+- [ ] Workstream A: Distinguish "ConfigHub via OCI" ownership in trace outputs (relates to [ConfigHub rendered manifests](https://docs.confighub.com/guide/rendered-manifests/))
+- [x] Workstream A: Show explicit `source → render → OCI → deployer → workload` chain — scoped in #149
 - [ ] Workstream A: Source staleness/sync signals where evidence is available
-- [ ] Workstream B: Source inventory view — broader vision beyond `map sources` (#148)
-- [ ] Workstream C: Schema extension for `rendered_from` / `original_source` (beyond #150)
-- [ ] Workstream D: Bridge pattern — Git→Flux→cluster (beyond #151)
-- [ ] Workstream D: Bridge pattern — Git→Argo→cluster
-- [ ] Workstream D: Bridge pattern — Git→ConfigHub→OCI→deployer
-- [ ] Workstream D: Bridge pattern — Live import→ConfigHub→OCI→deployer
+- [x] Workstream B: Source inventory view — resolved #148
+- [x] Workstream C: Schema extension for `rendered_from` / `original_source` — scoped in #150
+- [x] Workstream D: Bridge patterns (Git→Flux, Git→Argo, Git→ConfigHub→OCI, Live→ConfigHub→OCI) — scoped in #151
 - [ ] Workstream E: Orphan detection for broken ApplicationSet generator links
 - [ ] Workstream F: Fleet query ergonomics and provenance readability
 - [ ] Workstream F: Impact analysis ergonomics and multi-cluster context clarity
@@ -40,7 +37,7 @@ Tracking issue: **#154** (master backlog tracking)
 ### Connected Views + Launch (`roadmap-connected-views-and-launch.md`)
 
 - [ ] Workstream A: Navigation-first messaging and "aha in seconds" walkthrough
-- [ ] Workstream B: Scale-real demo assets (realistic many-workload examples)
+- [x] Workstream B: Scale-real demo assets — resolved #158
 - [ ] Workstream B: Expected-output snapshots for core navigation flows
 - [ ] Workstream C: WET-LIVE panel clarity and causality messaging
 - [ ] Workstream C: Break-glass decision ergonomics and audit visibility
@@ -54,12 +51,21 @@ Tracking issue: **#154** (master backlog tracking)
 - [x] `gitops.argocd.applicationset_generators` pattern (implemented; doc ID drift fixed in #153)
 - [ ] `gitops.flux_kustomization_paths` pattern (planned, not implemented)
 
-### Connected Mode Ideas (`NEXT-PLAN.md`, `WHY_CONNECTED_MODE.md`)
+### Connected Mode Ideas
 
 - [ ] ConfigHub summary storage and Slack integration for drift/sync notifications
 - [ ] Connected import flows (`cub-scout connected import bundle/git/cluster`)
 - [ ] Intent vs render vs observed three-way comparison
 - [ ] Hook compatibility verifier
+- [ ] Import wizard with auto-detection (`--wizard` flag, from `gitops-repo-structures.md`)
+- [ ] Snapshot enrichment with ConfigHub intent/history metadata (from `state-and-snapshots.md`)
+
+### Extension & Integration Ideas (`howto/extending.md`)
+
+- [ ] Webhook event streaming (entry/drift/finding events)
+- [ ] Output plugin architecture (Kafka, custom destinations)
+- [ ] Config-based custom ownership detectors (YAML, no Go required)
+- [ ] Config-based CRD watching (YAML status extraction)
 
 ### Scale and Testing
 
@@ -68,7 +74,7 @@ Tracking issue: **#154** (master backlog tracking)
 - [x] Testing best practices cookbook (`docs/testing/BEST-PRACTICES.md`) — build tag standards, fixture conventions, golden patterns, cluster lifecycle, example-driven testing (#176)
 - [ ] CI-enforced coverage metrics
 
-### 1.x Connected Upsell (`roadmap-1x-connected-upsell.md`)
+### 1.x Connected Upsell (`roadmap-1x-connected-upsell.md`) — Complete
 
 - [x] Connected hierarchy navigation defaults (cluster-aware filtering, auto-nav to App Hierarchy when connected, mode-aware query presets)
 - [x] Mode state visibility in TUI (QuickMode for instant display, Offline/Standalone/Connected distinction)
@@ -77,7 +83,7 @@ Tracking issue: **#154** (master backlog tracking)
 - [x] "Break-glass to managed" flow documentation and guided testing
 - [x] User-facing explainer for ASCII vs JSON model (canonical data vs presentation)
 
-### Documentation Gaps (`NEXT-PLAN.md`)
+### Documentation Gaps (`NEXT-PLAN.md`) — Complete
 
 - [x] Unified examples index (consolidate EXAMPLES-OVERVIEW.md, examples/README.md, demos/README.md)
 - [x] Integrate WHY_CONNECTED_MODE.md content into roadmap v1.x section with concrete issues
@@ -484,9 +490,9 @@ Connected Mode does **not** introduce:
 ## Summary
 
 * v0.x is **complete**
-* v0.18 fulfilled the original "why connected" *operationally*
-* v0.19 locked UX, behavior, and performance
-* Open issues #3/#21 (kro), #149-#151 (delivery chain), #158 (connected example), #163-#166 (experiments/evidence), and #183-#186 (docs/contract alignment) remain for future work
+* v1.0.0 is the stable contract baseline (2026-02-20)
+* v1.1 Phase A (trust hardening) and Phase B (connected foundation) are **complete**
+* Open issues: #3/#21 (kro), #149-#151 (delivery chain), #163-#166 (experiments/evidence), #183-#186 (docs/contract alignment)
 * The remaining roadmap is **Connected Mode with ConfigHub**:
 
   * import
