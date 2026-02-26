@@ -239,6 +239,10 @@ type LocalClusterModel struct {
 	// Connected mode navigation: tracks whether user has explicitly navigated,
 	// so we don't override their view when connectionStatusMsg arrives.
 	userHasNavigated bool
+
+	// noInit skips background commands in Init() — used by tests to prevent
+	// loadLocalClusterData and checkConnectionStatus from clobbering test fixtures.
+	noInit bool
 }
 
 // GitOpsResource represents a Flux/ArgoCD resource
@@ -522,6 +526,9 @@ func initialLocalModelWithOpts(opts ViewOptions) LocalClusterModel {
 }
 
 func (m LocalClusterModel) Init() tea.Cmd {
+	if m.noInit {
+		return nil
+	}
 	return tea.Batch(
 		m.spinner.Tick,
 		loadLocalClusterData,

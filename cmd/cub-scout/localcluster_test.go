@@ -51,6 +51,7 @@ func testLocalModel() LocalClusterModel {
 		clusterName: "test-cluster",
 		panelPane:   vp,
 		namespaces:  []string{"default", "database", "prod"},
+		noInit:      true,
 	}
 
 	return m
