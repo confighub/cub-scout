@@ -285,6 +285,88 @@ func TestResolveCatalogPath_EnvMissing(t *testing.T) {
 	}
 }
 
+func TestLoadRiskCatalog(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogPath := filepath.Join(tmpDir, "risk-catalog-v1.json")
+
+	catalogJSON := `[
+		{"id": "CCVE-2025-0001", "name": "Test finding 1", "severity": "critical", "category": "STATE"},
+		{"id": "CCVE-2025-0002", "name": "Test finding 2", "severity": "warning", "category": "CONFIG"},
+		{"id": "", "name": "Empty ID entry", "severity": "info", "category": "SKIP"}
+	]`
+
+	if err := os.WriteFile(catalogPath, []byte(catalogJSON), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	entries, err := loadRiskCatalog(catalogPath)
+	if err != nil {
+		t.Fatalf("loadRiskCatalog() error = %v", err)
+	}
+
+	// Empty-ID entry should be skipped
+	if len(entries) != 2 {
+		t.Fatalf("entry count = %d, want 2 (empty ID skipped)", len(entries))
+	}
+
+	if entries[0].ID != "CCVE-2025-0001" {
+		t.Errorf("entries[0].ID = %q, want CCVE-2025-0001", entries[0].ID)
+	}
+	if entries[0].Name != "Test finding 1" {
+		t.Errorf("entries[0].Name = %q", entries[0].Name)
+	}
+	if entries[0].Severity != "critical" {
+		t.Errorf("entries[0].Severity = %q", entries[0].Severity)
+	}
+	if entries[0].Category != "STATE" {
+		t.Errorf("entries[0].Category = %q", entries[0].Category)
+	}
+	if entries[1].ID != "CCVE-2025-0002" {
+		t.Errorf("entries[1].ID = %q, want CCVE-2025-0002", entries[1].ID)
+	}
+}
+
+func TestLoadRiskCatalog_InvalidJSON(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogPath := filepath.Join(tmpDir, "bad-catalog.json")
+
+	if err := os.WriteFile(catalogPath, []byte("not json"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := loadRiskCatalog(catalogPath)
+	if err == nil {
+		t.Error("loadRiskCatalog() should return error for invalid JSON")
+	}
+}
+
+func TestConfighubScanProvider_ListPolicies_WithCatalog(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogPath := filepath.Join(tmpDir, "risk-catalog-v1.json")
+
+	catalogJSON := `[
+		{"id": "CCVE-2025-0001", "name": "Test", "severity": "critical", "category": "STATE"},
+		{"id": "CCVE-2025-0002", "name": "Test 2", "severity": "warning", "category": "CONFIG"}
+	]`
+	if err := os.WriteFile(catalogPath, []byte(catalogJSON), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("CUB_SCAN_CATALOG", catalogPath)
+
+	p := NewConfighubScanProvider(ProviderConfig{})
+	entries, err := p.ListPolicies()
+	if err != nil {
+		t.Fatalf("ListPolicies() error = %v", err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("entry count = %d, want 2", len(entries))
+	}
+	if entries[0].ID != "CCVE-2025-0001" {
+		t.Errorf("entries[0].ID = %q, want CCVE-2025-0001", entries[0].ID)
+	}
+}
+
 // --- test helpers ---
 
 // writeFakeCubScan creates a shell script that mimics the cub-scan binary.

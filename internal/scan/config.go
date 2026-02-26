@@ -41,6 +41,28 @@ func ResolveConfig(explicit ProviderConfig) ProviderConfig {
 	return resolved
 }
 
+// SelectProvider returns the best available scan provider.
+//
+// Selection logic:
+//  1. CUB_SCOUT_SCAN_PROVIDER=legacy forces LegacyProvider
+//  2. If cub-scan binary is available, returns ConfighubScanProvider
+//  3. Otherwise returns LegacyProvider
+//
+// The ConfighubScanProvider falls back internally to LegacyProvider for
+// operations not yet supported by cub-scan (e.g., cluster scanning).
+func SelectProvider(cfg ProviderConfig) Provider {
+	if os.Getenv("CUB_SCOUT_SCAN_PROVIDER") == "legacy" {
+		return NewLegacyProvider(cfg)
+	}
+
+	confighub := NewConfighubScanProvider(cfg)
+	if confighub.Available() {
+		return confighub
+	}
+
+	return NewLegacyProvider(cfg)
+}
+
 // probeLegacyPolicyDBDir probes hardcoded filesystem locations for the
 // Kyverno policy database. This is the legacy discovery mechanism preserved
 // as a fallback for backward compatibility.

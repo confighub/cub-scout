@@ -81,9 +81,21 @@ func (p *ConfighubScanProvider) ScanFile(ctx context.Context, opts FileScanOpts)
 }
 
 // ListPolicies delegates to confighub-scan when available, otherwise falls back.
+// ListPolicies loads the risk catalog from risk-catalog-v1.json when available,
+// otherwise falls back to the legacy Kyverno-only policy listing.
 func (p *ConfighubScanProvider) ListPolicies() ([]PolicyEntry, error) {
-	// TODO(#191): invoke confighub-scan binary for policy listing
-	return p.fallback.ListPolicies()
+	catalogPath := resolveCatalogPath()
+	if catalogPath == "" {
+		return p.fallback.ListPolicies()
+	}
+
+	entries, err := loadRiskCatalog(catalogPath)
+	if err != nil {
+		// Fall back if catalog is corrupt/unreadable.
+		return p.fallback.ListPolicies()
+	}
+
+	return entries, nil
 }
 
 // --- cub-scan binary invocation ---
@@ -245,4 +257,45 @@ func mapCubScanResult(cs *cubScanResult, filename string) *agent.StaticScanResul
 	result.ResourceCount = len(cs.Findings) // best estimate; cub-scan doesn't report resource count separately
 
 	return result
+}
+
+// --- risk catalog loading (#191) ---
+
+// riskCatalogEntry represents a single entry in risk-catalog-v1.json.
+// The catalog may contain more fields than we map; we only extract what
+// PolicyEntry needs.
+type riskCatalogEntry struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Severity string `json:"severity"`
+	Category string `json:"category"`
+}
+
+// loadRiskCatalog parses risk-catalog-v1.json into PolicyEntry slice.
+// The catalog file is a JSON array of entries.
+func loadRiskCatalog(path string) ([]PolicyEntry, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read risk catalog: %w", err)
+	}
+
+	var entries []riskCatalogEntry
+	if err := json.Unmarshal(data, &entries); err != nil {
+		return nil, fmt.Errorf("parse risk catalog: %w", err)
+	}
+
+	policies := make([]PolicyEntry, 0, len(entries))
+	for _, e := range entries {
+		if e.ID == "" {
+			continue // skip entries without an ID
+		}
+		policies = append(policies, PolicyEntry{
+			ID:       e.ID,
+			Name:     e.Name,
+			Severity: e.Severity,
+			Category: e.Category,
+		})
+	}
+
+	return policies, nil
 }

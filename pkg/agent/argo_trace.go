@@ -105,11 +105,22 @@ func (a *ArgoTracer) traceApplication(ctx context.Context, appName, namespace st
 	return a.parseAppOutput(stdout.Bytes(), appName, namespace)
 }
 
+// argoOwnerRef mirrors metav1.OwnerReference for JSON parsing.
+type argoOwnerRef struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Controller *bool  `json:"controller,omitempty"`
+}
+
 // argoApp represents the structure of argocd app get output
 type argoApp struct {
 	Metadata struct {
-		Name      string `json:"name"`
-		Namespace string `json:"namespace"`
+		Name            string            `json:"name"`
+		Namespace       string            `json:"namespace"`
+		Labels          map[string]string `json:"labels,omitempty"`
+		Annotations     map[string]string `json:"annotations,omitempty"`
+		OwnerReferences []argoOwnerRef    `json:"ownerReferences,omitempty"`
 	} `json:"metadata"`
 	Spec struct {
 		Source struct {
@@ -278,7 +289,89 @@ func (a *ArgoTracer) parseAppOutput(data []byte, appName, namespace string) (*Tr
 		}
 	}
 
+	// Detect App-of-Apps parent lineage (#194)
+	parent, parentConf := resolveParentFromArgoApp(&app)
+	if parent != "" {
+		result.ParentApplication = parent
+		result.LineageConfidence = parentConf
+	}
+
+	// Detect ApplicationSet generator lineage (#195)
+	appSet, appSetConf := resolveApplicationSetFromArgoApp(&app)
+	if appSet != "" {
+		result.GeneratedByApplicationSet = appSet
+		// Use the more explicit confidence if both are set.
+		if result.LineageConfidence == "" || appSetConf == "explicit" {
+			result.LineageConfidence = appSetConf
+		}
+	}
+
 	return result, nil
+}
+
+// resolveParentFromArgoApp detects an App-of-Apps parent Application from
+// the parsed argocd app get output. Returns (parentName, confidence).
+// Confidence: "explicit" for ownerReference, "inferred" for label/annotation.
+func resolveParentFromArgoApp(app *argoApp) (string, string) {
+	self := strings.TrimSpace(app.Metadata.Name)
+
+	// 1. ownerReferences with Kind=Application (explicit)
+	for _, ref := range app.Metadata.OwnerReferences {
+		if strings.EqualFold(ref.Kind, "Application") {
+			name := strings.TrimSpace(ref.Name)
+			if name != "" && name != self {
+				return name, "explicit"
+			}
+		}
+	}
+
+	// 2. cub-scout.io/parent-application annotation (inferred)
+	if name := strings.TrimSpace(app.Metadata.Annotations["cub-scout.io/parent-application"]); name != "" && name != self {
+		return name, "inferred"
+	}
+
+	// 3. argocd.argoproj.io/managed-by annotation (inferred)
+	if name := strings.TrimSpace(app.Metadata.Annotations["argocd.argoproj.io/managed-by"]); name != "" && name != self {
+		return name, "inferred"
+	}
+
+	// 4. app.kubernetes.io/part-of label (inferred)
+	if name := strings.TrimSpace(app.Metadata.Labels["app.kubernetes.io/part-of"]); name != "" && name != self {
+		return name, "inferred"
+	}
+
+	return "", ""
+}
+
+// resolveApplicationSetFromArgoApp detects an ApplicationSet generator from
+// the parsed argocd app get output. Returns (appSetName, confidence).
+func resolveApplicationSetFromArgoApp(app *argoApp) (string, string) {
+	// 1. ownerReferences with Kind=ApplicationSet (explicit)
+	for _, ref := range app.Metadata.OwnerReferences {
+		if strings.EqualFold(ref.Kind, "ApplicationSet") {
+			name := strings.TrimSpace(ref.Name)
+			if name != "" {
+				return name, "explicit"
+			}
+		}
+	}
+
+	// 2. argocd.argoproj.io/application-set-name label (inferred)
+	if name := strings.TrimSpace(app.Metadata.Labels["argocd.argoproj.io/application-set-name"]); name != "" {
+		return name, "inferred"
+	}
+
+	// 3. argocd.argoproj.io/application-set-name annotation (inferred)
+	if name := strings.TrimSpace(app.Metadata.Annotations["argocd.argoproj.io/application-set-name"]); name != "" {
+		return name, "inferred"
+	}
+
+	// 4. cub-scout.io/generated-by-applicationset annotation (inferred)
+	if name := strings.TrimSpace(app.Metadata.Annotations["cub-scout.io/generated-by-applicationset"]); name != "" {
+		return name, "inferred"
+	}
+
+	return "", ""
 }
 
 // extractRepoName extracts a readable name from a git URL

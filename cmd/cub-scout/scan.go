@@ -126,8 +126,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Create scan provider
-	provider := scan.NewLegacyProvider(scan.ProviderConfig{})
+	// Create scan provider (auto-selects cub-scan when available)
+	provider := scan.SelectProvider(scan.ProviderConfig{})
 
 	// List mode - show all KPOL policies
 	if scanList {
