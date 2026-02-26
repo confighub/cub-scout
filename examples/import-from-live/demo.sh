@@ -2,13 +2,16 @@
 # demo.sh — End-to-end import demo with a kind cluster
 #
 # Creates a kind cluster, populates it with the "Arnie" pattern fixtures
-# (ArgoCD + Helm + Native), and runs cub-scout import --dry-run.
+# (ArgoCD + Helm + Native), and runs cub-scout import.
 #
 # Usage:
-#   ./demo.sh          # Full demo (create cluster, populate, run import, teardown)
-#   ./demo.sh --keep   # Keep cluster running after demo for interactive exploration
+#   ./demo.sh                # Dry-run only (no ConfigHub changes), teardown after
+#   ./demo.sh --keep         # Keep cluster running after demo
+#   ./demo.sh --live         # Actually import into ConfigHub (requires cub auth)
+#   ./demo.sh --live --keep  # Import + keep cluster
 #
 # Prerequisites: kind, kubectl, docker (running)
+#                --live also requires: cub CLI authenticated (cub auth login)
 
 set -euo pipefail
 
@@ -17,8 +20,14 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FIXTURES="$SCRIPT_DIR/fixtures"
 CLUSTER_NAME="import-demo"
 KEEP=false
+LIVE=false
 
-[[ "${1:-}" == "--keep" ]] && KEEP=true
+for arg in "$@"; do
+    case "$arg" in
+        --keep) KEEP=true ;;
+        --live) LIVE=true ;;
+    esac
+done
 
 # Colors
 CYAN='\033[0;36m'
@@ -52,6 +61,14 @@ done
 
 if ! docker info >/dev/null 2>&1; then
     echo "Docker is not running"; exit 1
+fi
+
+if $LIVE; then
+    command -v cub >/dev/null 2>&1 || { echo "Missing: cub (required for --live). Install from https://confighub.com/docs/cli"; exit 1; }
+    if ! cub auth get-token >/dev/null 2>&1; then
+        echo "ConfigHub auth required for --live. Run: cub auth login"; exit 1
+    fi
+    step "ConfigHub auth OK"
 fi
 
 # Build cub-scout
@@ -145,6 +162,16 @@ note "Machine-readable proposal for scripting/GUI integration."
 echo ""
 
 "$CUB" import --dry-run --json 2>/dev/null | python3 -m json.tool 2>/dev/null || "$CUB" import --dry-run --json
+
+# --- Live Import ---
+if $LIVE; then
+    banner "Running: cub-scout import --yes (LIVE)"
+    note "Creating App + Units in ConfigHub..."
+    echo ""
+
+    "$CUB" import --yes
+    step "Import complete — resources created in ConfigHub"
+fi
 
 # --- Map ---
 banner "Bonus: cub-scout map list"
