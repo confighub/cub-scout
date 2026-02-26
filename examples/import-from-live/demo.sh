@@ -21,6 +21,7 @@ FIXTURES="$SCRIPT_DIR/fixtures"
 CLUSTER_NAME="import-demo"
 KEEP=false
 LIVE=false
+WORKER_PID=""
 
 for arg in "$@"; do
     case "$arg" in
@@ -43,6 +44,13 @@ note()    { echo -e "${DIM}  $1${NC}"; }
 warn()    { echo -e "${YELLOW}⚠${NC} $1"; }
 
 cleanup() {
+    # Stop the worker if we started one
+    if [[ -n "$WORKER_PID" ]]; then
+        kill "$WORKER_PID" 2>/dev/null || true
+        wait "$WORKER_PID" 2>/dev/null || true
+        step "Worker stopped (PID $WORKER_PID)"
+    fi
+
     if $KEEP; then
         warn "Cluster '$CLUSTER_NAME' kept running. Delete with: kind delete cluster --name $CLUSTER_NAME"
     else
@@ -171,6 +179,50 @@ if $LIVE; then
 
     "$CUB" import --yes
     step "Import complete — resources created in ConfigHub"
+
+    # --- Worker + Target ---
+    banner "Starting Worker + Wiring Targets"
+
+    KUBE_CONTEXT=$(kubectl config current-context)
+    SPACE="myapp-team"
+    EXPECTED_TARGET="dev-kubernetes-yaml-${KUBE_CONTEXT}"
+
+    step "Starting worker for space '$SPACE'..."
+    cub worker run dev --space "$SPACE" >/dev/null 2>&1 &
+    WORKER_PID=$!
+    note "Worker PID: $WORKER_PID"
+
+    step "Waiting for target to register..."
+    TARGET_SLUG=""
+    for i in $(seq 1 45); do
+        if cub target list --space "$SPACE" 2>/dev/null | grep -q "$EXPECTED_TARGET"; then
+            TARGET_SLUG="$EXPECTED_TARGET"
+            break
+        fi
+        printf "."
+        sleep 1
+    done
+    echo ""
+
+    if [[ -n "$TARGET_SLUG" ]]; then
+        step "Target registered: $TARGET_SLUG"
+
+        for unit in api redis worker; do
+            if cub unit set-target "$unit" "$TARGET_SLUG" --space "$SPACE" 2>/dev/null; then
+                step "$unit → $TARGET_SLUG"
+            else
+                warn "$unit: failed to set target"
+            fi
+        done
+
+        echo ""
+        step "Verifying unit status..."
+        cub unit list --space "$SPACE"
+    else
+        warn "Target did not register in 30s."
+        note "Expected: $EXPECTED_TARGET"
+        note "Run manually: cub worker run dev --space $SPACE"
+    fi
 fi
 
 # --- Map ---
