@@ -502,7 +502,7 @@ Known limitation:
 * `ConfighubScanProvider.ScanCluster()` delegates to the legacy provider.
   `cub-scan` is a static file scanner with no cluster-scanning mode.
   Wiring it for cluster scans (export resources → invoke cub-scan) is
-  planned for a future release. The fallback is safe and correct.
+  tracked in #200. The fallback is safe and correct.
 
 ---
 
