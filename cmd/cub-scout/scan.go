@@ -113,16 +113,15 @@ type CombinedScanResult = scan.CombinedResult
 func runScan(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
-	// Check ConfigHub connection for full scan capabilities
-	// Note: --list and --file modes work with embedded patterns
-	// Full cluster scanning requires ConfigHub pattern database
+	// Check ConfigHub connection for full scan capabilities.
+	// --list and --file modes work with embedded patterns; cluster scanning
+	// benefits from the ConfigHub pattern database when connected.
+	// Currently: embedded patterns are sufficient for all scan modes.
+	// Future: when pattern DB is fully API-hosted, enforce auth for cluster scans.
 	client := hub.NewClient()
 	if !scanList && scanFile == "" {
-		if err := client.RequireConnected(); err != nil {
-			// TODO: When pattern database is fully migrated to ConfigHub API,
-			// uncomment this to enforce auth. For now, use embedded patterns.
-			// return err
-			_ = err // Placeholder: will enforce auth when pattern DB is API-based
+		if err := client.RequireConnected(); err != nil && scanVerbose {
+			fmt.Fprintf(os.Stderr, "Note: not connected to ConfigHub (%v); using embedded patterns\n", err)
 		}
 	}
 

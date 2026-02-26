@@ -2515,11 +2515,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case unitAppliedMsg:
 		m.importLoading = false
 		if msg.err != nil {
-			m.importError = msg.err
+			m.importApplyError = msg.err
 		}
-		// TODO: Re-enable test step after fixing apply issues
-		// Skip test step for now - go directly to complete
-		m.importStep = importStepComplete
+		// Proceed to test step — its UI already handles apply errors gracefully
+		// by showing a warning and letting the user skip the pipeline test.
+		m.importStep = importStepTest
+		m.importCursor = 0
 
 	case testUpdateCompleteMsg:
 		m.importLoading = false

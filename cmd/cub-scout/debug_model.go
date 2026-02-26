@@ -6,6 +6,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -289,6 +293,9 @@ type DebugModel struct {
 
 	// Help/Education overlay
 	showHelp bool
+
+	// Status message (shown briefly after clipboard/export actions)
+	statusMsg string
 }
 
 // ResourceItem represents a resource in the picker
@@ -588,15 +595,114 @@ func (m DebugModel) handlePickResourceKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) 
 func (m DebugModel) handleSummaryKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "c":
-		// Copy to clipboard - TODO
+		text := m.plainTextSummary()
+		if err := copyToClipboard(text); err != nil {
+			m.statusMsg = fmt.Sprintf("Clipboard error: %v", err)
+		} else {
+			m.statusMsg = "Copied to clipboard"
+		}
 		return m, nil
 	case "e":
-		// Export - TODO
+		text := m.plainTextSummary()
+		path, err := exportDebugSummary(text)
+		if err != nil {
+			m.statusMsg = fmt.Sprintf("Export error: %v", err)
+		} else {
+			m.statusMsg = fmt.Sprintf("Exported to %s", path)
+		}
 		return m, nil
 	case "enter", "q":
 		return m, tea.Quit
 	}
 	return m, nil
+}
+
+// plainTextSummary generates an unstyled plain-text version of the debug summary.
+func (m DebugModel) plainTextSummary() string {
+	var b strings.Builder
+
+	b.WriteString("cub-scout debug summary\n")
+	b.WriteString(strings.Repeat("=", 60) + "\n\n")
+
+	b.WriteString(fmt.Sprintf("Target: %s\n", m.session.Target.String()))
+	b.WriteString(fmt.Sprintf("Time:   %s\n\n", m.session.StartedAt.Format(time.RFC3339)))
+
+	if m.session.WorkloadStatus != nil {
+		ws := m.session.WorkloadStatus
+		if ws.IsHealthy() {
+			b.WriteString("Workload: Healthy\n")
+		} else {
+			b.WriteString(fmt.Sprintf("Workload: %d/%d ready\n", ws.ReadyReplicas, ws.Replicas))
+		}
+	}
+
+	if m.session.OwnershipChain != nil {
+		b.WriteString(fmt.Sprintf("Owner:    %s\n", m.session.OwnershipChain.Owner))
+	}
+
+	if m.session.DeployerStatus != nil {
+		ds := m.session.DeployerStatus
+		if ds.Ready {
+			b.WriteString("Pipeline: Healthy\n")
+		} else {
+			b.WriteString(fmt.Sprintf("Pipeline: %s\n", ds.Stage))
+		}
+	}
+
+	if m.session.SourceStatus != nil {
+		ss := m.session.SourceStatus
+		if ss.Ready {
+			b.WriteString("Source:   Healthy\n")
+		} else {
+			b.WriteString(fmt.Sprintf("Source:   %s\n", ss.Reason))
+		}
+	}
+
+	if m.session.RootCause != nil {
+		b.WriteString("\n" + strings.Repeat("-", 60) + "\n\n")
+		b.WriteString(fmt.Sprintf("Root Cause: %s\n\n", m.session.RootCause.Summary))
+
+		if len(m.session.RootCause.SuggestedFixes) > 0 {
+			b.WriteString("Next Steps:\n")
+			for i, fix := range m.session.RootCause.SuggestedFixes {
+				b.WriteString(fmt.Sprintf("  %d. %s\n", i+1, fix))
+			}
+		}
+	}
+
+	return b.String()
+}
+
+// copyToClipboard copies text to the system clipboard.
+func copyToClipboard(text string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("pbcopy")
+	case "linux":
+		// Try xclip first, fall back to xsel
+		if _, err := exec.LookPath("xclip"); err == nil {
+			cmd = exec.Command("xclip", "-selection", "clipboard")
+		} else if _, err := exec.LookPath("xsel"); err == nil {
+			cmd = exec.Command("xsel", "--clipboard", "--input")
+		} else {
+			return fmt.Errorf("no clipboard tool found (install xclip or xsel)")
+		}
+	default:
+		return fmt.Errorf("clipboard not supported on %s", runtime.GOOS)
+	}
+	cmd.Stdin = strings.NewReader(text)
+	return cmd.Run()
+}
+
+// exportDebugSummary writes the debug summary to a timestamped file and returns the path.
+func exportDebugSummary(text string) (string, error) {
+	filename := fmt.Sprintf("cub-scout-debug-%s.txt", time.Now().Format("20060102-150405"))
+	path := filepath.Join(".", filename)
+	if err := os.WriteFile(path, []byte(text), 0644); err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
 // View implements tea.Model

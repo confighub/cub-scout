@@ -777,6 +777,9 @@ func (m DebugModel) renderSummaryView() string {
 	b.WriteString("\n")
 	b.WriteString(strings.Repeat("─", 60))
 	b.WriteString("\n")
+	if m.statusMsg != "" {
+		b.WriteString(debugSuccessStyle.Render(m.statusMsg) + "\n")
+	}
 	b.WriteString(debugDimStyle.Render("c Copy  e Export  Enter/q Done"))
 
 	return b.String()
