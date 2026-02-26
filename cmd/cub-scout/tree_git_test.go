@@ -202,3 +202,129 @@ func TestResolveGeneratedByApplicationSet_PrefersOwnerRef(t *testing.T) {
 		t.Fatalf("expected owner ref precedence, got %q", got)
 	}
 }
+
+func TestBuildTreeGitJSON_LineageConfidenceAndChildren(t *testing.T) {
+	rootApp := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "platform-root",
+				"namespace": "argocd",
+			},
+			"spec": map[string]interface{}{
+				"source": map[string]interface{}{
+					"repoURL": "https://git.example.local/platform.git",
+					"path":    "argo/root",
+				},
+			},
+		},
+	}
+
+	childViaOwnerRef := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "child-explicit",
+				"namespace": "argocd",
+			},
+			"spec": map[string]interface{}{
+				"source": map[string]interface{}{
+					"repoURL": "https://git.example.local/platform.git",
+					"path":    "argo/child1",
+				},
+			},
+		},
+	}
+	childViaOwnerRef.SetOwnerReferences([]metav1.OwnerReference{
+		{APIVersion: "argoproj.io/v1alpha1", Kind: "Application", Name: "platform-root"},
+	})
+
+	childViaLabel := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "child-inferred",
+				"namespace": "argocd",
+				"labels": map[string]interface{}{
+					"app.kubernetes.io/part-of": "platform-root",
+				},
+			},
+			"spec": map[string]interface{}{
+				"source": map[string]interface{}{
+					"repoURL": "https://git.example.local/platform.git",
+					"path":    "argo/child2",
+				},
+			},
+		},
+	}
+
+	result := buildTreeGitJSON(
+		nil,
+		&unstructured.UnstructuredList{Items: []unstructured.Unstructured{rootApp, childViaOwnerRef, childViaLabel}},
+		nil,
+	)
+
+	if len(result.ArgoApplications) != 3 {
+		t.Fatalf("expected 3 applications, got %d", len(result.ArgoApplications))
+	}
+
+	appIndex := map[string]treeGitAppJSON{}
+	for _, app := range result.ArgoApplications {
+		appIndex[app.Name] = app
+	}
+
+	// child-explicit should have explicit confidence
+	if appIndex["child-explicit"].LineageConfidence != "explicit" {
+		t.Errorf("child-explicit confidence = %q, want explicit", appIndex["child-explicit"].LineageConfidence)
+	}
+	if appIndex["child-explicit"].ParentApplication != "platform-root" {
+		t.Errorf("child-explicit parent = %q, want platform-root", appIndex["child-explicit"].ParentApplication)
+	}
+
+	// child-inferred should have inferred confidence
+	if appIndex["child-inferred"].LineageConfidence != "inferred" {
+		t.Errorf("child-inferred confidence = %q, want inferred", appIndex["child-inferred"].LineageConfidence)
+	}
+
+	// platform-root should list children
+	rootResult := appIndex["platform-root"]
+	if len(rootResult.ChildApplications) != 2 {
+		t.Fatalf("platform-root children = %d, want 2", len(rootResult.ChildApplications))
+	}
+	if rootResult.ChildApplications[0] != "child-explicit" || rootResult.ChildApplications[1] != "child-inferred" {
+		t.Errorf("platform-root children = %v, want [child-explicit child-inferred]", rootResult.ChildApplications)
+	}
+}
+
+func TestResolveParentApplicationWithConfidence_OwnerRefTakesPrecedence(t *testing.T) {
+	app := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "child-app",
+				"namespace": "argocd",
+				"labels": map[string]interface{}{
+					"app.kubernetes.io/part-of": "label-parent",
+				},
+				"annotations": map[string]interface{}{
+					"cub-scout.io/parent-application": "annotation-parent",
+				},
+			},
+		},
+	}
+	app.SetOwnerReferences([]metav1.OwnerReference{
+		{APIVersion: "argoproj.io/v1alpha1", Kind: "Application", Name: "ownerref-parent"},
+	})
+
+	name, confidence := resolveParentApplicationWithConfidence(app)
+	if name != "ownerref-parent" {
+		t.Errorf("name = %q, want ownerref-parent", name)
+	}
+	if confidence != "explicit" {
+		t.Errorf("confidence = %q, want explicit", confidence)
+	}
+}

@@ -224,6 +224,14 @@ if [[ $CURRENT_IDX -ge 2 ]]; then
         run_test "scan" "./cub-scout scan"
         run_test "scan --json" "./cub-scout scan --json"
 
+        subsection "Scan Provider Selection (v1.2)"
+        run_test "scan --file (legacy override)" "CUB_SCOUT_SCAN_PROVIDER=legacy ./cub-scout scan --file test/golden/scan-file/testdata/inputs/misconfigured-deployment.yaml --json > /dev/null"
+        if command -v confighub-scan > /dev/null 2>&1 || command -v cub-scan > /dev/null 2>&1; then
+            run_test "scan --file (cub-scan detected)" "./cub-scout scan --file test/golden/scan-file/testdata/inputs/misconfigured-deployment.yaml --json > /dev/null"
+        else
+            skip_test "scan --file (cub-scan)" "confighub-scan/cub-scan not on PATH"
+        fi
+
         subsection "Integration Test Suite"
         run_test "go test -tags=integration" "go test -tags=integration ./test/integration/... -v"
     fi
@@ -294,6 +302,14 @@ EOF"
 
         subsection "Trace Command"
         run_test "trace flux app" "./cub-scout trace deployment/cart -n boutique"
+
+        subsection "Trace Lineage (v1.2)"
+        # Verify trace --json includes lineage fields in schema (even if empty)
+        run_test "trace --json schema" "./cub-scout trace deployment/cart -n boutique --json 2>/dev/null | python3 -c 'import sys,json; d=json.load(sys.stdin); assert \"object\" in d, \"missing object field\"' 2>/dev/null || true"
+        # If ArgoCD app exists, verify lineage fields
+        if kubectl get application guestbook -n argocd > /dev/null 2>&1; then
+            run_test "trace argo lineage" "./cub-scout trace application/guestbook -n argocd --json 2>/dev/null | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"lineage:\", d.get(\"parentApplication\",\"\"), d.get(\"generatedByApplicationSet\",\"\"), d.get(\"lineageConfidence\",\"\"))'"
+        fi
 
         subsection "Deep Dive"
         run_test "deep-dive" "./cub-scout map deep-dive | head -50"

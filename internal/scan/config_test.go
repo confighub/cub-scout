@@ -3,6 +3,7 @@ package scan
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -84,5 +85,56 @@ func TestResolveConfig_EmptyWhenNothingFound(t *testing.T) {
 	// Just verify no panic and CCVEDir is consistent
 	if got.PolicyDBDir == "" && got.CCVEDir != "" {
 		t.Error("CCVEDir should be empty when PolicyDBDir is empty")
+	}
+}
+
+// --- SelectProvider tests ---
+
+func TestSelectProvider_DefaultReturnsLegacy(t *testing.T) {
+	// With no cub-scan binary on PATH, SelectProvider should return LegacyProvider.
+	tmpDir := t.TempDir()
+	t.Setenv("PATH", tmpDir)
+	t.Setenv("CUB_SCOUT_SCAN_PROVIDER", "")
+
+	p := SelectProvider(ProviderConfig{})
+	if p.Name() != "legacy" {
+		t.Errorf("Name() = %q, want legacy (no cub-scan binary available)", p.Name())
+	}
+}
+
+func TestSelectProvider_ReturnsConfighubWhenBinaryAvailable(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake binary test not supported on Windows")
+	}
+
+	tmpDir := t.TempDir()
+	fakeBinary := filepath.Join(tmpDir, "confighub-scan")
+	writeFakeCubScan(t, fakeBinary, `{"findings":[]}`)
+
+	t.Setenv("PATH", tmpDir)
+	t.Setenv("CUB_SCOUT_SCAN_PROVIDER", "")
+
+	p := SelectProvider(ProviderConfig{})
+	if p.Name() != "confighub-scan" {
+		t.Errorf("Name() = %q, want confighub-scan (binary available on PATH)", p.Name())
+	}
+}
+
+func TestSelectProvider_EnvForcesLegacy(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake binary test not supported on Windows")
+	}
+
+	// Even with cub-scan binary available, CUB_SCOUT_SCAN_PROVIDER=legacy forces legacy.
+	tmpDir := t.TempDir()
+	fakeBinary := filepath.Join(tmpDir, "confighub-scan")
+	writeFakeCubScan(t, fakeBinary, `{"findings":[]}`)
+
+	t.Setenv("PATH", tmpDir)
+	t.Setenv("CUB_SCOUT_SCAN_PROVIDER", "legacy")
+
+	p := SelectProvider(ProviderConfig{})
+	if p.Name() != "legacy" {
+		t.Errorf("Name() = %q, want legacy (env override)", p.Name())
 	}
 }

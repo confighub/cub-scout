@@ -459,6 +459,267 @@ func TestArgoHistoryWithEmptyArray(t *testing.T) {
 	}
 }
 
+// ============================================================================
+// App-of-Apps and ApplicationSet Lineage Tests (#194, #195)
+// ============================================================================
+
+func TestArgoTrace_AppOfApps_OwnerRef(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	jsonData := `{
+		"metadata": {
+			"name": "payments-dev",
+			"namespace": "argocd",
+			"ownerReferences": [
+				{
+					"apiVersion": "argoproj.io/v1alpha1",
+					"kind": "Application",
+					"name": "platform-root",
+					"controller": true
+				}
+			]
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/platform.git",
+				"path": "apps/payments-dev",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "payments"
+			}
+		},
+		"status": {
+			"sync": {"status": "Synced", "revision": "abc123"},
+			"health": {"status": "Healthy"},
+			"resources": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "payments-dev", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	if result.ParentApplication != "platform-root" {
+		t.Errorf("ParentApplication = %q, want platform-root", result.ParentApplication)
+	}
+	if result.LineageConfidence != "explicit" {
+		t.Errorf("LineageConfidence = %q, want explicit", result.LineageConfidence)
+	}
+}
+
+func TestArgoTrace_AppOfApps_Label(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	jsonData := `{
+		"metadata": {
+			"name": "orders-dev",
+			"namespace": "argocd",
+			"labels": {
+				"app.kubernetes.io/part-of": "platform-root"
+			}
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/platform.git",
+				"path": "apps/orders-dev",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "orders"
+			}
+		},
+		"status": {
+			"sync": {"status": "Synced", "revision": "def456"},
+			"health": {"status": "Healthy"},
+			"resources": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "orders-dev", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	if result.ParentApplication != "platform-root" {
+		t.Errorf("ParentApplication = %q, want platform-root", result.ParentApplication)
+	}
+	if result.LineageConfidence != "inferred" {
+		t.Errorf("LineageConfidence = %q, want inferred", result.LineageConfidence)
+	}
+}
+
+func TestArgoTrace_ApplicationSet_OwnerRef(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	jsonData := `{
+		"metadata": {
+			"name": "workloads-dev",
+			"namespace": "argocd",
+			"ownerReferences": [
+				{
+					"apiVersion": "argoproj.io/v1alpha1",
+					"kind": "ApplicationSet",
+					"name": "workloads-generator"
+				}
+			]
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/platform.git",
+				"path": "envs/dev",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "default"
+			}
+		},
+		"status": {
+			"sync": {"status": "Synced", "revision": "abc123"},
+			"health": {"status": "Healthy"},
+			"resources": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "workloads-dev", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	if result.GeneratedByApplicationSet != "workloads-generator" {
+		t.Errorf("GeneratedByApplicationSet = %q, want workloads-generator", result.GeneratedByApplicationSet)
+	}
+	if result.LineageConfidence != "explicit" {
+		t.Errorf("LineageConfidence = %q, want explicit", result.LineageConfidence)
+	}
+}
+
+func TestArgoTrace_ApplicationSet_Label(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	jsonData := `{
+		"metadata": {
+			"name": "workloads-prod",
+			"namespace": "argocd",
+			"labels": {
+				"argocd.argoproj.io/application-set-name": "workloads-generator"
+			}
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/platform.git",
+				"path": "envs/prod",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "default"
+			}
+		},
+		"status": {
+			"sync": {"status": "Synced", "revision": "def456"},
+			"health": {"status": "Healthy"},
+			"resources": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "workloads-prod", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	if result.GeneratedByApplicationSet != "workloads-generator" {
+		t.Errorf("GeneratedByApplicationSet = %q, want workloads-generator", result.GeneratedByApplicationSet)
+	}
+	if result.LineageConfidence != "inferred" {
+		t.Errorf("LineageConfidence = %q, want inferred", result.LineageConfidence)
+	}
+}
+
+func TestArgoTrace_NoLineage(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	jsonData := `{
+		"metadata": {
+			"name": "standalone-app",
+			"namespace": "argocd"
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/app.git",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "default"
+			}
+		},
+		"status": {
+			"sync": {"status": "Synced", "revision": "abc123"},
+			"health": {"status": "Healthy"},
+			"resources": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "standalone-app", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	if result.ParentApplication != "" {
+		t.Errorf("ParentApplication = %q, want empty", result.ParentApplication)
+	}
+	if result.GeneratedByApplicationSet != "" {
+		t.Errorf("GeneratedByApplicationSet = %q, want empty", result.GeneratedByApplicationSet)
+	}
+	if result.LineageConfidence != "" {
+		t.Errorf("LineageConfidence = %q, want empty", result.LineageConfidence)
+	}
+}
+
+func TestArgoTrace_SelfReferenceIgnored(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	// App whose part-of label points to itself should not report as child
+	jsonData := `{
+		"metadata": {
+			"name": "self-ref",
+			"namespace": "argocd",
+			"labels": {
+				"app.kubernetes.io/part-of": "self-ref"
+			}
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/org/app.git",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "default"
+			}
+		},
+		"status": {
+			"sync": {"status": "Synced", "revision": "abc123"},
+			"health": {"status": "Healthy"},
+			"resources": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "self-ref", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	if result.ParentApplication != "" {
+		t.Errorf("ParentApplication = %q, want empty (self-reference should be ignored)", result.ParentApplication)
+	}
+}
+
 func TestFormatArgoContextError(t *testing.T) {
 	tests := []struct {
 		name       string
