@@ -47,7 +47,7 @@ func TestTraceLineage_JSONContractShape(t *testing.T) {
 	ns, name := parts[0], parts[1]
 
 	// Run trace --json
-	output := runCubAgentAllowFailures(t, "trace", "deploy/"+name, "-n", ns, "--json")
+	output := runCubAgentAllowFailures(t, "trace", "deploy/"+name, "-n", ns, "--format", "json")
 
 	// Parse JSON
 	var result map[string]interface{}
@@ -126,7 +126,7 @@ func TestTraceLineage_ArgoAppWithParent(t *testing.T) {
 	}
 
 	// Trace the child application
-	output := runCubAgentAllowFailures(t, "trace", "application/"+targetName, "-n", targetNS, "--json")
+	output := runCubAgentAllowFailures(t, "trace", "application/"+targetName, "-n", targetNS, "--format", "json")
 
 	var result map[string]interface{}
 	if err := json.Unmarshal([]byte(output), &result); err != nil {
@@ -196,7 +196,7 @@ func TestTraceLineage_ArgoAppFromApplicationSet(t *testing.T) {
 	}
 
 	// Trace the generated application
-	output := runCubAgentAllowFailures(t, "trace", "application/"+targetName, "-n", targetNS, "--json")
+	output := runCubAgentAllowFailures(t, "trace", "application/"+targetName, "-n", targetNS, "--format", "json")
 
 	var result map[string]interface{}
 	if err := json.Unmarshal([]byte(output), &result); err != nil {

@@ -25,7 +25,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 )
 
@@ -122,10 +121,11 @@ func TestScanProvider_FileScan_WithFakeCubScan(t *testing.T) {
 	}
 
 	// Verify finding IDs match what fake binary returns
+	// JSON output uses snake_case: ccve_id (from StaticFinding.CCVEID json tag)
 	if len(findings) >= 1 {
 		f0, _ := findings[0].(map[string]interface{})
-		if ccve, _ := f0["ccveId"].(string); ccve != "CCVE-2025-0244" {
-			t.Errorf("findings[0].ccveId = %q, want CCVE-2025-0244", ccve)
+		if ccve, _ := f0["ccve_id"].(string); ccve != "CCVE-2025-0244" {
+			t.Errorf("findings[0].ccve_id = %q, want CCVE-2025-0244", ccve)
 		}
 	}
 }
