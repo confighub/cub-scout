@@ -49,7 +49,7 @@ func ResolveConfig(explicit ProviderConfig) ProviderConfig {
 //  3. Otherwise returns LegacyProvider
 //
 // The ConfighubScanProvider falls back internally to LegacyProvider for
-// operations not yet supported by cub-scan (e.g., cluster scanning).
+// cluster scanning (cub-scan is a static file scanner).
 func SelectProvider(cfg ProviderConfig) Provider {
 	if os.Getenv("CUB_SCOUT_SCAN_PROVIDER") == "legacy" {
 		return NewLegacyProvider(cfg)

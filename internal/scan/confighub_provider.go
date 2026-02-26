@@ -40,9 +40,13 @@ func (p *ConfighubScanProvider) Available() bool {
 	return p.resolveBinary() != ""
 }
 
-// ScanCluster delegates to confighub-scan when available, otherwise falls back.
+// ScanCluster delegates to the legacy provider for all cluster scan types.
+// cub-scan is a static file scanner — it has no cluster-scanning mode.
+// Wiring it for cluster scans would require exporting live resources to
+// temp files and iterating, which is planned for a future release.
+// The legacy provider gives correct, deterministic results for all runtime
+// scan types (state, timing bombs, dangling, lifecycle hazards) and Kyverno.
 func (p *ConfighubScanProvider) ScanCluster(ctx context.Context, opts ClusterScanOpts) (*CombinedResult, error) {
-	// TODO(#190): invoke confighub-scan binary for cluster scanning
 	return p.fallback.ScanCluster(ctx, opts)
 }
 

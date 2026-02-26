@@ -476,7 +476,12 @@ Connected Mode does **not** introduce:
 * ~~#185~~ — fix `bundle summarize` default-format help mismatch
 * ~~#186~~ — add app-centric transition mapping (App/Deployment/Target ↔ Space/Unit)
 
-### v1.2 — cub-scan Integration + Argo Hierarchy (In Progress)
+### v1.2 — cub-scan Integration + Argo Hierarchy
+
+**Status:** Released (2026-02-26)
+**Theme:** *External scan engine + Argo lineage depth*
+
+Delivered:
 
 * #190 — wire `ConfighubScanProvider.ScanFile()` to `cub-scan` binary
 * #191 — wire `ListPolicies()` to `risk-catalog-v1.json`
@@ -484,6 +489,20 @@ Connected Mode does **not** introduce:
 * #193 — provider selection logic (auto-detect cub-scan)
 * #194 — Argo App-of-Apps parent/child lineage
 * #195 — ApplicationSet → generated Application lineage
+
+Quality/hardening (non-issue):
+
+* Fix TUI test isolation (`noInit` to prevent Init() clobbering test fixtures)
+* Debug summary clipboard (`c`) and file export (`e`) implemented
+* Import wizard test step re-enabled after unit apply
+* Scan auth surfaced under `--verbose` instead of silently swallowed
+
+Known limitation:
+
+* `ConfighubScanProvider.ScanCluster()` delegates to the legacy provider.
+  `cub-scan` is a static file scanner with no cluster-scanning mode.
+  Wiring it for cluster scans (export resources → invoke cub-scan) is
+  planned for a future release. The fallback is safe and correct.
 
 ---
 
@@ -501,7 +520,7 @@ Connected Mode does **not** introduce:
 * v0.x is **complete**
 * v1.0.0 is the stable contract baseline (2026-02-20)
 * v1.1.0 released (2026-02-25) — connected foundation, scan provider boundary, docs alignment
-* v1.2 in progress — cub-scan integration (#190-#193), Argo hierarchy (#194-#195)
+* v1.2.0 released (2026-02-26) — cub-scan file integration, Argo hierarchy lineage, quality fixes
 * Open backlog: #3/#21 (kro), #149-#151 (delivery chain), #163-#165 (experiments)
 * The remaining roadmap is **Connected Mode with ConfigHub**:
 
