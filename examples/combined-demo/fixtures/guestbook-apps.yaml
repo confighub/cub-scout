@@ -1,0 +1,57 @@
+# Copyright (C) ConfigHub, Inc.
+# SPDX-License-Identifier: MIT
+#
+# Two real ArgoCD Applications that sync against argoproj/argocd-example-apps.
+# With syncPolicy.automated + CreateNamespace, ArgoCD will actually create
+# the workloads - unlike the Arnie fixtures which are kubectl-applied with labels.
+#
+# helm-guestbook:      Helm chart rendering
+# kustomize-guestbook: Kustomize overlay rendering
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: helm-guestbook
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: guestbook
+    app.kubernetes.io/instance: helm-guestbook
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: HEAD
+    path: helm-guestbook
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: guestbook
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kustomize-guestbook
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: guestbook
+    app.kubernetes.io/instance: kustomize-guestbook
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: HEAD
+    path: kustomize-guestbook
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: guestbook
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
