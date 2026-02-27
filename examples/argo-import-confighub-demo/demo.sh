@@ -10,9 +10,10 @@
 #   ./demo.sh --live         # Full import into ConfigHub (~6 min, requires cub auth)
 #   ./demo.sh --keep         # Keep cluster running for exploration
 #   ./demo.sh --live --keep  # Import + keep cluster
+#   ./demo.sh --live --confighub-url=http://localhost:9090  # Local dev override
 #
 # Prerequisites: docker, kind, kubectl, go
-#                --live also requires: cub CLI authenticated (cub auth login)
+#                --live also requires: cub, curl, python3 (cub auth login)
 
 set -euo pipefail
 
@@ -23,6 +24,7 @@ GUESTBOOK_FIXTURES="$SCRIPT_DIR/fixtures"
 CLUSTER_NAME="argo-import-demo"
 KEEP=false
 LIVE=false
+CONFIGHUB_URL_OVERRIDE=""
 WORKER_PID=""
 PORT_FORWARD_PID=""
 
@@ -30,6 +32,7 @@ for arg in "$@"; do
     case "$arg" in
         --keep) KEEP=true ;;
         --live) LIVE=true ;;
+        --confighub-url=*) CONFIGHUB_URL_OVERRIDE="${arg#*=}" ;;
     esac
 done
 
@@ -85,12 +88,33 @@ if ! docker info >/dev/null 2>&1; then
 fi
 
 if $LIVE; then
-    command -v cub >/dev/null 2>&1 || { fail "Missing: cub (required for --live)"; exit 1; }
+    LIVE_MISSING=""
+    for tool in cub curl python3; do
+        command -v "$tool" >/dev/null 2>&1 || LIVE_MISSING="$LIVE_MISSING $tool"
+    done
+    if [[ -n "$LIVE_MISSING" ]]; then
+        fail "Missing tools required for --live:$LIVE_MISSING"
+        exit 1
+    fi
     if ! cub auth get-token >/dev/null 2>&1; then
         fail "ConfigHub auth required for --live. Run: cub auth login"
         exit 1
     fi
-    step "ConfigHub auth OK"
+
+    # Resolve ConfigHub URL for in-cluster renderer worker
+    if [[ -n "$CONFIGHUB_URL_OVERRIDE" ]]; then
+        CONFIGHUB_SERVER_URL="$CONFIGHUB_URL_OVERRIDE"
+    elif [[ -n "${CONFIGHUB_URL:-}" ]]; then
+        CONFIGHUB_SERVER_URL="$CONFIGHUB_URL"
+    else
+        CONFIGHUB_SERVER_URL=$(cub info 2>/dev/null | grep "Server URL:" | awk '{print $NF}')
+    fi
+    if [[ -z "$CONFIGHUB_SERVER_URL" ]]; then
+        fail "Could not determine ConfigHub URL. Set CONFIGHUB_URL or use --confighub-url=<url>"
+        exit 1
+    fi
+    step "ConfigHub: $CONFIGHUB_SERVER_URL"
+    step "Auth OK (cub, curl, python3 present)"
 fi
 
 step "Building cub-scout..."
@@ -313,10 +337,19 @@ if $LIVE; then
         # Deploy ArgoCD renderer in-cluster
         step "Deploying ArgoCD renderer worker in-cluster..."
 
-        # Get docker host IP reachable from kind
-        DOCKER_HOST_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}' "${CLUSTER_NAME}-control-plane" 2>/dev/null | head -1)
-        if [ -z "$DOCKER_HOST_IP" ]; then
-            DOCKER_HOST_IP="host.docker.internal"
+        # For public URLs (https://hub.confighub.com), the in-cluster worker
+        # can reach them directly. For local dev (localhost:*), we need the
+        # docker gateway IP so the kind container can reach the host.
+        RENDERER_CONFIGHUB_URL="$CONFIGHUB_SERVER_URL"
+        if echo "$CONFIGHUB_SERVER_URL" | grep -qE "localhost|127\.0\.0\.1"; then
+            DOCKER_HOST_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}' "${CLUSTER_NAME}-control-plane" 2>/dev/null | head -1)
+            if [ -z "$DOCKER_HOST_IP" ]; then
+                DOCKER_HOST_IP="host.docker.internal"
+            fi
+            PORT=$(echo "$CONFIGHUB_SERVER_URL" | grep -oE ':[0-9]+$' | tr -d ':')
+            PORT="${PORT:-9090}"
+            RENDERER_CONFIGHUB_URL="http://${DOCKER_HOST_IP}:${PORT}"
+            note "Local dev detected, renderer will use: $RENDERER_CONFIGHUB_URL"
         fi
 
         WORKER_MANIFEST=$(mktemp)
@@ -326,7 +359,7 @@ if $LIVE; then
             -t argocdrenderer \
             -n confighub-worker \
             --image-pull-policy IfNotPresent \
-            -e "CONFIGHUB_URL=http://${DOCKER_HOST_IP}:9090" \
+            -e "CONFIGHUB_URL=$RENDERER_CONFIGHUB_URL" \
             -e "ARGOCD_SERVER=argocd-server.argocd.svc.cluster.local" \
             -e "ARGOCD_AUTH_TOKEN=$ARGOCD_TOKEN" \
             -e "ARGOCD_INSECURE=true" \
