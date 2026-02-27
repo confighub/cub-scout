@@ -422,15 +422,22 @@ if $LIVE; then
     fi
 else
     banner "Act 4: The Pipeline (cub gitops import)"
-    note "Skipped - requires --live flag"
-    note "Run: ./demo.sh --live  to see the full render pipeline"
+    note "Not running - add --live to enable (requires ConfigHub auth)"
     echo ""
-    note "cub gitops import would:"
+    note "This is the production import path for ArgoCD/Flux clusters."
+    note "cub gitops import creates a live render pipeline:"
+    echo ""
     note "  1. Discover ArgoCD Applications on the cluster"
     note "  2. Deploy an in-cluster renderer worker"
     note "  3. Render each Application through the actual ArgoCD renderer"
     note "  4. Create dry/wet unit pairs with MergeUnits links"
-    note "  5. The wet units auto-update when the renderer produces new output"
+    note "  5. Wet units auto-update as Git changes — no re-import needed"
+    echo ""
+    note "For ArgoCD-managed apps, this produces the best result: controller-rendered"
+    note "manifests with continuous updates. Acts 2-3 capture static snapshots only."
+    echo ""
+    note "  ./demo.sh --live                                 # with cub auth"
+    note "  ./demo.sh --live --confighub-url=http://localhost:9090  # local dev"
 fi
 
 # ============================================================
@@ -439,23 +446,23 @@ fi
 banner "Act 5: The Comparison"
 echo ""
 cat <<'TABLE'
-                          cub-scout    import-argocd    cub gitops
-                          import       (per-app)        import
+                          cub gitops     import-argocd    cub-scout
+                          import         (per-app)        import
 ---------------------------------------------------------------
-helm-guestbook (ArgoCD)      Y              Y              Y*
-kustomize-guestbook          Y              Y              Y*
-myapp-dev api+worker         Y              Y              Y*
-myapp-staging api+worker     Y              Y              Y*
-myapp-prod api+worker        Y              Y              Y*
-redis (Helm x 3 envs)       Y              .              .
-debug-config (Native)        Y              .              .
+helm-guestbook (ArgoCD)      Y              Y              Y
+kustomize-guestbook          Y              Y              Y
+myapp-dev api+worker         Y              Y              Y
+myapp-staging api+worker     Y              Y              Y
+myapp-prod api+worker        Y              Y              Y
+redis (Helm x 3 envs)       .              .              Y
+debug-config (Native)        .              .              Y
 ---------------------------------------------------------------
-Unit model                flat groups    per-app        dry/wet pairs
-Rendering                 raw snapshot   raw snapshot   controller-rendered
-Pipeline                  static         static         linked (auto-update)
+Unit model                dry/wet pairs  per-app        flat groups
+Rendering                 controller     raw snapshot   raw snapshot
+Pipeline                  auto-updating  static         static
+Best for                  production     one-time       full inventory
 
 Y = found/imported    . = not visible to this tool
-* = requires --live flag
 TABLE
 echo ""
 

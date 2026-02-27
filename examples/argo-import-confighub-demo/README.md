@@ -1,10 +1,11 @@
 # ArgoCD Import to ConfigHub Demo
 
 Three import paths into ConfigHub. Same cluster. Different depths. This demo
-runs `cub-scout import`, `cub-scout import-argocd`, and `cub gitops import`
-against a kind cluster with real ArgoCD. Each tool operates at a different
-layer -- from broad cluster inventory to full rendered pipeline -- and the
-demo shows how they complement each other.
+runs `cub gitops import`, `cub-scout import-argocd`, and `cub-scout import`
+against a kind cluster with real ArgoCD to show how they complement each other.
+`cub gitops import` is the production path (rendered pipeline with auto-updates),
+while the cub-scout tools provide quick discovery and catch resources outside
+ArgoCD's scope.
 
 ## Quick Start
 
@@ -17,6 +18,9 @@ demo shows how they complement each other.
 
 # Keep cluster running for interactive exploration
 ./demo.sh --keep
+
+# Local dev: explicit ConfigHub URL
+./demo.sh --live --confighub-url=http://localhost:9090
 ```
 
 ## Prerequisites
@@ -28,8 +32,13 @@ demo shows how they complement each other.
 | kubectl | All modes | `brew install kubectl` |
 | go | All modes (builds cub-scout) | [go.dev](https://go.dev) |
 | cub | `--live` mode only | [confighub.com/docs/cli](https://confighub.com/docs/cli) |
+| curl | `--live` mode only | Usually pre-installed |
+| python3 | `--live` mode only | Usually pre-installed |
 
 For `--live` mode, authenticate first: `cub auth login`
+
+You can also pass `--confighub-url=<url>` to override the ConfigHub server URL
+(useful for local dev). By default, the demo reads the URL from `cub info`.
 
 ---
 
@@ -305,11 +314,12 @@ Redis and debug-config don't appear anywhere in Act 3 output.
 
 ### Act 4: The Pipeline (cub gitops import)
 
-> Requires `--live` flag and ConfigHub authentication.
-
 This is the production-grade import path. While Acts 2-3 produce static
 snapshots, `cub gitops import` builds a **live render pipeline** that
 continuously produces the exact manifests your GitOps controller would apply.
+
+> Run `./demo.sh --live` to see this act. Requires ConfigHub authentication
+> (`cub auth login`) because it creates real ConfigHub units and workers.
 
 The demo sets up the full pipeline:
 
@@ -374,45 +384,46 @@ The demo prints a summary table and recommendation. You should see:
 ```
 === Act 5: The Comparison ===
 
-                          cub-scout    import-argocd    cub gitops
-                          import       (per-app)        import
+                          cub gitops     import-argocd    cub-scout
+                          import         (per-app)        import
 ---------------------------------------------------------------
-helm-guestbook (ArgoCD)      Y              Y              Y*
-kustomize-guestbook          Y              Y              Y*
-myapp-dev api+worker         Y              Y              Y*
-myapp-staging api+worker     Y              Y              Y*
-myapp-prod api+worker        Y              Y              Y*
-redis (Helm x 3 envs)       Y              .              .
-debug-config (Native)        Y              .              .
+helm-guestbook (ArgoCD)      Y              Y              Y
+kustomize-guestbook          Y              Y              Y
+myapp-dev api+worker         Y              Y              Y
+myapp-staging api+worker     Y              Y              Y
+myapp-prod api+worker        Y              Y              Y
+redis (Helm x 3 envs)       .              .              Y
+debug-config (Native)        .              .              Y
 ---------------------------------------------------------------
-Unit model                flat groups    per-app        dry/wet pairs
-Rendering                 raw snapshot   raw snapshot   controller-rendered
-Pipeline                  static         static         linked (auto-update)
+Unit model                dry/wet pairs  per-app        flat groups
+Rendering                 controller     raw snapshot   raw snapshot
+Pipeline                  auto-updating  static         static
+Best for                  production     one-time       full inventory
 
 Y = found/imported    . = not visible to this tool
-* = requires --live flag
 
 When to use which:
 
-  cub-scout import        Universal coverage. Sees everything.
-                          Best for: initial discovery, Helm/Native resources
+  cub gitops import       Full render pipeline. Controller-rendered output.
+                          Best for: ongoing ArgoCD/Flux management with auto-updates
 
   cub-scout import-argocd Per-Application detail. Extracts Git path labels.
-                          Best for: importing specific ArgoCD Applications
+                          Best for: one-time import of specific ArgoCD Applications
 
-  cub gitops import       Full render pipeline. Controller-rendered output.
-                          Best for: continuous pipeline with auto-updates
+  cub-scout import        Universal coverage. Sees everything.
+                          Best for: initial cluster discovery, Helm/Native resources
 ```
 
 The key takeaways from this table:
 
-- **Breadth:** `cub-scout import` is the only tool that sees Helm and Native
-  resources. Use it for full cluster inventory.
-- **Depth:** `cub gitops import` is the only tool that renders through the
-  actual controller and creates a live pipeline. Use it for ongoing ArgoCD
-  management.
-- **Middle ground:** `import-argocd` gives per-Application detail without
-  needing ConfigHub infrastructure. Good for one-time imports.
+- **Production path:** `cub gitops import` is the only tool that renders
+  through the actual controller and creates an auto-updating pipeline. Use it
+  for ongoing ArgoCD management -- this is the recommended path for ArgoCD clusters.
+- **Quick import:** `import-argocd` gives per-Application detail without
+  needing ConfigHub infrastructure. Good for one-time imports or previewing
+  what an Application contains.
+- **Full inventory:** `cub-scout import` is the only tool that sees Helm and
+  Native resources. Use it to catch everything ArgoCD doesn't manage.
 
 ---
 
