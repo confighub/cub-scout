@@ -382,73 +382,73 @@ unit contains the fully-expanded Kubernetes manifests that ArgoCD would apply.
 The demo prints a summary table and recommendation. You should see:
 
 ```
-=== Act 5: The Comparison ===
+=== Act 5: Management and Discovery ===
 
-                          cub gitops     import-argocd    cub-scout
-                          import         (per-app)        import
+                     MANAGEMENT                    DISCOVERY
+                     cub gitops     import-argocd  cub-scout
+                     import         (per-app)      import
 ---------------------------------------------------------------
-helm-guestbook (ArgoCD)      Y              Y              Y
-kustomize-guestbook          Y              Y              Y
-myapp-dev api+worker         Y              Y              Y
-myapp-staging api+worker     Y              Y              Y
-myapp-prod api+worker        Y              Y              Y
-redis (Helm x 3 envs)       .              .              Y
-debug-config (Native)        .              .              Y
+helm-guestbook          Y              Y              Y
+kustomize-guestbook     Y              Y              Y
+myapp-dev               Y              Y              Y
+myapp-staging           Y              Y              Y
+myapp-prod              Y              Y              Y
+redis (Helm)            .              .              Y
+debug-config (Native)   .              .              Y
 ---------------------------------------------------------------
-Unit model                dry/wet pairs  per-app        flat groups
-Rendering                 controller     raw snapshot   raw snapshot
-Pipeline                  auto-updating  static         static
-Best for                  production     one-time       full inventory
+Unit model           dry/wet pairs  per-app        flat groups
+Rendering            controller     raw snapshot   raw snapshot
+Pipeline             auto-updating  static         static
 
 Y = found/imported    . = not visible to this tool
-
-When to use which:
-
-  cub gitops import       Full render pipeline. Controller-rendered output.
-                          Best for: ongoing ArgoCD/Flux management with auto-updates
-
-  cub-scout import-argocd Per-Application detail. Extracts Git path labels.
-                          Best for: one-time import of specific ArgoCD Applications
-
-  cub-scout import        Universal coverage. Sees everything.
-                          Best for: initial cluster discovery, Helm/Native resources
 ```
 
-The key takeaways from this table:
+The key takeaways:
 
-- **Production path:** `cub gitops import` is the only tool that renders
-  through the actual controller and creates an auto-updating pipeline. Use it
-  for ongoing ArgoCD management -- this is the recommended path for ArgoCD clusters.
-- **Quick import:** `import-argocd` gives per-Application detail without
-  needing ConfigHub infrastructure. Good for one-time imports or previewing
-  what an Application contains.
-- **Full inventory:** `cub-scout import` is the only tool that sees Helm and
-  Native resources. Use it to catch everything ArgoCD doesn't manage.
+- **Management** (left side): `cub gitops import` manages ArgoCD Applications
+  as a live pipeline -- rendered manifests, auto-updating units, dry/wet pairs.
+  `import-argocd` is the lightweight alternative when you don't need a pipeline.
+- **Discovery** (right side): `cub-scout import` finds everything on the cluster
+  regardless of ownership type. It's the only tool that sees Helm and Native
+  resources.
+- **Use together:** Run `cub gitops import` for your ArgoCD apps, then
+  `cub-scout import` to catch what's left (Helm, Native, unlabeled).
 
 ---
 
 ## When to Use Which
 
-| Scenario | Tool |
-|----------|------|
+### Management (cub gitops)
+
+| Scenario | Command |
+|----------|---------|
 | "Set up continuous pipeline for ArgoCD apps" | `cub gitops import` |
-| "Import a specific ArgoCD Application (one-time)" | `cub-scout import-argocd <name>` |
-| "Import everything, including Helm and Native" | `cub-scout import --yes` |
+| "See what ArgoCD would render from source" | `cub gitops import` (dry/wet pairs) |
+| "Keep ConfigHub units in sync as Git changes" | `cub gitops import` (auto-updating) |
+| "Import ArgoCD + Flux apps with rendered manifests" | `cub gitops import` |
+
+### Discovery (cub-scout)
+
+| Scenario | Command |
+|----------|---------|
+| "Import a specific ArgoCD Application (quick)" | `cub-scout import-argocd <name>` |
 | "What's running on my cluster?" | `cub-scout map list` |
-| "How would I organize this into ConfigHub?" | `cub-scout import --dry-run` |
-| "Find Helm/Native resources ArgoCD doesn't manage" | `cub-scout import` |
+| "Import everything, including Helm and Native" | `cub-scout import --yes` |
+| "Find resources ArgoCD doesn't manage" | `cub-scout import` |
 | "What changed since last sync?" | `cub-scout gitops status` |
 
 ### Decision Tree
 
 ```
-Are you importing ArgoCD Applications?
+Do you have ArgoCD or Flux Applications?
   YES -->
-    Do you want a live pipeline (auto-updates when Git changes)?
-      YES --> cub gitops import (rendered manifests, dry/wet pairs)
-      NO, one-time import --> cub-scout import-argocd (per-app, Git path labels)
-  NO, or mixed ownership (Helm, Native, etc.) -->
-    cub-scout import (broad coverage, all workload types)
+    cub gitops import   (rendered pipeline, auto-updating dry/wet pairs)
+    Then also run:
+    cub-scout import    (catches Helm/Native resources outside ArgoCD/Flux)
+  NO, or just exploring -->
+    cub-scout import    (broad discovery, all workload types)
+    or:
+    cub-scout import-argocd <name>  (quick per-app import, no pipeline needed)
 ```
 
 ---
@@ -472,8 +472,9 @@ Are you importing ArgoCD Applications?
    | gitops   |    | import-  |    | import   |
    | import   |    | argocd   |    |          |
    +----------+    +----------+    +----------+
+   MANAGEMENT      quick import    DISCOVERY
    rendered +      per-app         all workloads
-   live pipeline   one-time        broad coverage
+   auto-updating   static          broad coverage
 ```
 
 ### How Each Tool Works

@@ -443,39 +443,38 @@ fi
 # ============================================================
 # ACT 5 - THE COMPARISON
 # ============================================================
-banner "Act 5: The Comparison"
+banner "Act 5: Management and Discovery"
 echo ""
 cat <<'TABLE'
-                          cub gitops     import-argocd    cub-scout
-                          import         (per-app)        import
+                     MANAGEMENT                    DISCOVERY
+                     cub gitops     import-argocd  cub-scout
+                     import         (per-app)      import
 ---------------------------------------------------------------
-helm-guestbook (ArgoCD)      Y              Y              Y
-kustomize-guestbook          Y              Y              Y
-myapp-dev api+worker         Y              Y              Y
-myapp-staging api+worker     Y              Y              Y
-myapp-prod api+worker        Y              Y              Y
-redis (Helm x 3 envs)       .              .              Y
-debug-config (Native)        .              .              Y
+helm-guestbook          Y              Y              Y
+kustomize-guestbook     Y              Y              Y
+myapp-dev               Y              Y              Y
+myapp-staging           Y              Y              Y
+myapp-prod              Y              Y              Y
+redis (Helm)            .              .              Y
+debug-config (Native)   .              .              Y
 ---------------------------------------------------------------
-Unit model                dry/wet pairs  per-app        flat groups
-Rendering                 controller     raw snapshot   raw snapshot
-Pipeline                  auto-updating  static         static
-Best for                  production     one-time       full inventory
+Unit model           dry/wet pairs  per-app        flat groups
+Rendering            controller     raw snapshot   raw snapshot
+Pipeline             auto-updating  static         static
 
 Y = found/imported    . = not visible to this tool
 TABLE
 echo ""
 
-echo -e "${BOLD}When to use which:${NC}"
+echo -e "${BOLD}Management:${NC} cub gitops import"
+echo "  Rendered pipeline with auto-updating dry/wet unit pairs."
+echo "  Use for ArgoCD/Flux apps you want to manage continuously."
 echo ""
-echo "  cub gitops import       Full render pipeline. Controller-rendered output."
-echo "                          Best for: ongoing ArgoCD/Flux management with auto-updates"
+echo -e "${BOLD}Discovery:${NC} cub-scout import + import-argocd"
+echo "  Broad cluster inventory (import) or quick per-app detail (import-argocd)."
+echo "  Use to find everything, including Helm/Native resources outside ArgoCD."
 echo ""
-echo "  cub-scout import-argocd Per-Application detail. Extracts Git path labels."
-echo "                          Best for: one-time import of specific ArgoCD Applications"
-echo ""
-echo "  cub-scout import        Universal coverage. Sees everything."
-echo "                          Best for: initial cluster discovery, Helm/Native resources"
+echo -e "${BOLD}Together:${NC} cub gitops import for ArgoCD apps, then cub-scout import for the rest."
 echo ""
 
 # ============================================================
