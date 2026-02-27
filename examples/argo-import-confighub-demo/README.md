@@ -534,8 +534,32 @@ worker runs in-cluster and also connects to ConfigHub. Both need network
 access to your ConfigHub instance. Check firewall rules and
 `CONFIGHUB_URL` reachability from inside the kind cluster.
 
+## Future: Connected Mode Integration
+
+Today these three tools run independently. A planned connected-mode feature
+([#201](https://github.com/confighub/cub-scout/issues/201)) would let
+cub-scout delegate to `cub gitops import` when it detects ArgoCD or Flux
+controllers on a cluster:
+
+```
+cub-scout import --yes
+  |
+  |-- ArgoCD Applications detected
+  |   --> delegate to: cub gitops import (rendered pipeline)
+  |
+  |-- Helm releases (no ArgoCD)
+  |   --> handle directly: cub unit create (static snapshot)
+  |
+  `-- Native resources
+      --> handle directly: cub unit create (static snapshot)
+```
+
+This would give you the best of both worlds in a single command: broad
+coverage from `cub-scout import` for Helm/Native resources, plus live
+rendered pipelines from `cub gitops import` for ArgoCD-managed apps.
+
 ## Related
 
 - [`examples/import-from-live/`](../import-from-live/) - Simpler demo with just `cub-scout import`
 - [CLI-GUIDE.md](../../CLI-GUIDE.md) - Complete CLI reference
-- [Issue #201](https://github.com/confighubai/cub-scout/issues/201) - Design: connected-mode upgrade path
+- [#201](https://github.com/confighub/cub-scout/issues/201) - Design: connected-mode upgrade path
