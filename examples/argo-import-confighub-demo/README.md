@@ -377,9 +377,9 @@ Each Application gets a **dry** unit (the Application spec as declared) and a
 **wet** unit (the rendered output from the actual ArgoCD renderer). The wet
 unit contains the fully-expanded Kubernetes manifests that ArgoCD would apply.
 
-### Act 5: The Comparison
+### Act 5: Management and Discovery with these tools
 
-The demo prints a summary table and recommendation. You should see:
+The demo prints a summary table. You should see:
 
 ```
 === Act 5: Management and Discovery ===
