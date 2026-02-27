@@ -97,6 +97,34 @@ Deployments in the `guestbook` namespace.
 fixture application, and guestbook sync status. If ArgoCD takes longer than
 expected, the demo continues gracefully.
 
+You should see output like:
+
+```
+=== Act 1: The Cluster ===
+
+>> Creating kind cluster...
+>> Cluster ready: kind-combined-demo
+
+>> Installing ArgoCD (this takes 2-4 minutes)...
+>> Waiting for ArgoCD deployments...
+>> ArgoCD installed and ready
+
+>> Applying Arnie fixtures...
+   3 ArgoCD Application CRs (myapp-dev/staging/prod) - CRs exist but not synced
+   6 Deployments (api + worker x 3 envs) - ArgoCD labels, applied by kubectl
+   3 StatefulSets (redis x 3 envs) - Helm-managed
+   1 ConfigMap (debug-config) - Native/unmanaged
+
+>> Applying guestbook Applications (real ArgoCD sync)...
+   2 ArgoCD Applications: helm-guestbook + kustomize-guestbook
+   These have syncPolicy.automated - ArgoCD will create real workloads
+
+>> Waiting for guestbook apps to sync (up to 120s)...
+>> Guestbook apps synced - ArgoCD created real workloads
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+helm-guestbook   0/1     1            0           1s
+```
+
 ### Act 2: The Observer (cub-scout)
 
 Runs three cub-scout commands:
@@ -117,6 +145,77 @@ did. The Arnie deployments appear as "ArgoCD" because they have the
 `argocd.argoproj.io/instance` label -- even though ArgoCD didn't create them.
 This is correct behavior: ownership is determined by labels, not runtime state.
 
+You should see `map list` output like:
+
+```
+NAMESPACE       KIND         NAME                   OWNER
+guestbook       Deployment   helm-guestbook         ArgoCD    <-- real synced
+guestbook       Service      helm-guestbook         ArgoCD
+guestbook       Deployment   kustomize-guestbook-ui ArgoCD
+guestbook       Service      kustomize-guestbook-ui ArgoCD
+myapp-dev       Deployment   api                    ArgoCD    <-- Arnie (labels only)
+myapp-dev       StatefulSet  redis                  Helm      <-- Helm-managed
+myapp-dev       Deployment   worker                 ArgoCD
+myapp-prod      Deployment   api                    ArgoCD
+myapp-prod      ConfigMap    debug-config           Native    <-- no labels
+myapp-prod      StatefulSet  redis                  Helm
+myapp-prod      Deployment   worker                 ArgoCD
+myapp-staging   Deployment   api                    ArgoCD
+myapp-staging   StatefulSet  redis                  Helm
+myapp-staging   Deployment   worker                 ArgoCD
+...
+Total: 70 resources
+By Owner: ArgoCD(10) Helm(3) Native(57)
+```
+
+And `gitops status` output like:
+
+```
+GITOPS STATUS
+================================================================
+
+  Backend:   ARGOCD
+  Transport: GIT
+
+  ! 3/5 deployers failing
+
+DEPLOYERS
+----------------------------------------------------------------
+  Y Application/helm-guestbook         Sync: Synced    Health: Healthy
+  Y Application/kustomize-guestbook    Sync: Synced    Health: Healthy
+  X Application/myapp-dev              Sync: Unknown   Health: Healthy
+  X Application/myapp-prod             Sync: Unknown   Health: Healthy
+  X Application/myapp-staging          Sync: Unknown   Health: Healthy
+```
+
+Notice: helm-guestbook and kustomize-guestbook are Synced/Healthy (real ArgoCD).
+The myapp-* apps show Unknown sync because ArgoCD recognizes the Application
+CRs but the source repo (`acme/myapp-deploy.git`) doesn't exist.
+
+And `import --dry-run` output like:
+
+```
+DISCOVERED
+  guestbook (2 workloads)
+  myapp-dev (3 workloads)
+  myapp-prod (3 workloads)
+  myapp-staging (3 workloads)
+
+WILL CREATE
+  App: guestbook-team
+
+  * api       workloads: 3    <-- api across 3 envs
+  * guestbook workloads: 1    <-- kustomize-guestbook
+  * helm-guestbook workloads: 1
+  * redis     workloads: 3    <-- Helm redis (invisible to ArgoCD tools)
+  * worker    workloads: 3    <-- worker across 3 envs
+
+  Total: 5 deployments
+```
+
+Notice that `import --dry-run` groups resources across namespaces into logical
+units. Redis appears here but won't appear in Act 3.
+
 ### Act 3: The Application Importer (import-argocd)
 
 Runs the per-Application importer:
@@ -136,6 +235,72 @@ but ArgoCD shows them as OutOfSync because it didn't actually sync them.
 source path, sync status, health, and path-derived labels. This is richer
 than the flat workload view from `cub-scout import`, but it *only sees
 ArgoCD Applications*. Redis and debug-config are invisible.
+
+You should see `import-argocd --list` output like:
+
+```
+ArgoCD Applications in namespace 'argocd'
+======================================
+
+NAME                      SYNC         HEALTH       DESTINATION
+----                      ----         ------       -----------
+helm-guestbook            Synced       Healthy      local:guestbook
+kustomize-guestbook       Synced       Healthy      local:guestbook
+myapp-dev                 Unknown      Healthy      local:myapp-dev
+myapp-prod                Unknown      Healthy      local:myapp-prod
+myapp-staging             Unknown      Healthy      local:myapp-staging
+```
+
+And for a real synced app (`helm-guestbook --dry-run`):
+
+```
+Step 1: Reading ArgoCD Application 'helm-guestbook' from namespace 'argocd'...
+  Y Found Application: helm-guestbook
+    Source: https://github.com/argoproj/argocd-example-apps.git (path: helm-guestbook)
+    Sync: Synced, Health: Healthy
+
+Step 3: Finding resources managed by 'helm-guestbook' in namespace 'guestbook'...
+  Y Found 2 managed resources:
+    Y Deployment/helm-guestbook (Healthy)
+    Y Service/helm-guestbook (Healthy)
+
+Import Summary
+  Space: helm-guestbook
+  Unit: helm-guestbook
+  Resources: 2 (1 Deployment, 1 Service)
+  Labels: app=helm-guestbook
+```
+
+And for an Arnie app (`myapp-dev --dry-run`):
+
+```
+Step 1: Reading ArgoCD Application 'myapp-dev' from namespace 'argocd'...
+  Y Found Application: myapp-dev
+    Source: https://github.com/acme/myapp-deploy.git (path: envs/dev)
+    Sync: Unknown, Health: Healthy
+
+Step 3: Finding resources managed by 'myapp-dev' in namespace 'myapp-dev'...
+  Y Found 2 managed resources:
+    ! Deployment/api (Progressing)
+    ! Deployment/worker (Progressing)
+
+Step 4: Extracting labels from Git path...
+  Y Extracted labels from path 'envs/dev':
+    variant=dev
+
+Import Summary
+  Space: myapp-dev
+  Unit: myapp-dev
+  Resources: 2 (2 Deployment)
+  Labels: variant=dev, app=myapp-dev
+```
+
+Notice the differences: helm-guestbook is Synced with Healthy resources;
+myapp-dev is Unknown sync with Progressing resources. Also notice that
+import-argocd extracted `variant=dev` from the Git path `envs/dev` --
+a label that `cub-scout import` wouldn't know about.
+
+Redis and debug-config don't appear anywhere in Act 3 output.
 
 ### Act 4: The Pipeline (cub gitops import)
 
@@ -161,11 +326,46 @@ what ArgoCD would actually apply, not raw snapshots. And the dry/wet pairs
 are linked: when the renderer produces new output, the wet unit auto-updates.
 This is a continuous pipeline, not a one-time import.
 
-### Act 5: The Comparison
-
-The summary table shows what each tool found:
+You should see output like (exact target names will vary):
 
 ```
+>> Getting ArgoCD auth token...
+>> ArgoCD auth token obtained
+>> Creating ConfigHub space 'combined-demo'...
+>> Starting discovery worker...
+>> Deploying ArgoCD renderer worker in-cluster...
+>> Waiting for targets to register...
+>> Both targets registered
+
+>> cub gitops discover  (finding ArgoCD Applications)
+  Discovered 5 applications
+
+>> cub gitops import  (creating dry/wet unit pairs)
+  Imported helm-guestbook (dry + wet)
+  Imported kustomize-guestbook (dry + wet)
+  Imported myapp-dev (dry + wet)
+  Imported myapp-staging (dry + wet)
+  Imported myapp-prod (dry + wet)
+
+>> Units created by cub gitops import:
+  helm-guestbook            (dry)
+  helm-guestbook-rendered   (wet)
+  kustomize-guestbook       (dry)
+  kustomize-guestbook-rendered (wet)
+  ...
+```
+
+Each Application gets a **dry** unit (the Application spec as declared) and a
+**wet** unit (the rendered output from the actual ArgoCD renderer). The wet
+unit contains the fully-expanded Kubernetes manifests that ArgoCD would apply.
+
+### Act 5: The Comparison
+
+The demo prints a summary table and recommendation. You should see:
+
+```
+=== Act 5: The Comparison ===
+
                           cub-scout    import-argocd    cub gitops
                           import       (per-app)        import
 ---------------------------------------------------------------
@@ -180,7 +380,25 @@ debug-config (Native)        Y              .              .
 Unit model                flat groups    per-app        dry/wet pairs
 Rendering                 raw snapshot   raw snapshot   controller-rendered
 Pipeline                  static         static         linked (auto-update)
+
+Y = found/imported    . = not visible to this tool
+* = requires --live flag
+
+When to use which:
+
+  cub-scout import        Universal coverage. Sees everything.
+                          Best for: initial discovery, Helm/Native resources
+
+  cub-scout import-argocd Per-Application detail. Extracts Git path labels.
+                          Best for: importing specific ArgoCD Applications
+
+  cub gitops import       Full render pipeline. Controller-rendered output.
+                          Best for: continuous pipeline with auto-updates
 ```
+
+The two bottom rows (redis and debug-config) are the key takeaway: only
+`cub-scout import` can see them. If your cluster has Helm releases or
+manually-applied resources, you need `cub-scout import` to get full coverage.
 
 ---
 
