@@ -20,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ARNIE_FIXTURES="$SCRIPT_DIR/../import-from-live/fixtures"
 GUESTBOOK_FIXTURES="$SCRIPT_DIR/fixtures"
-CLUSTER_NAME="combined-demo"
+CLUSTER_NAME="argo-import-demo"
 KEEP=false
 LIVE=false
 WORKER_PID=""
@@ -266,7 +266,7 @@ if $LIVE; then
     note "Requires ConfigHub infrastructure + in-cluster renderer"
     echo ""
 
-    SPACE="combined-demo"
+    SPACE="argo-import-demo"
     KUBE_CONTEXT=$(kubectl config current-context)
 
     # Get ArgoCD auth token
@@ -428,14 +428,14 @@ echo ""
 
 echo -e "${BOLD}When to use which:${NC}"
 echo ""
-echo "  cub-scout import        Universal coverage. Sees everything."
-echo "                          Best for: initial discovery, Helm/Native resources"
+echo "  cub gitops import       Full render pipeline. Controller-rendered output."
+echo "                          Best for: ongoing ArgoCD/Flux management with auto-updates"
 echo ""
 echo "  cub-scout import-argocd Per-Application detail. Extracts Git path labels."
-echo "                          Best for: importing specific ArgoCD Applications"
+echo "                          Best for: one-time import of specific ArgoCD Applications"
 echo ""
-echo "  cub gitops import       Full render pipeline. Controller-rendered output."
-echo "                          Best for: continuous pipeline with auto-updates"
+echo "  cub-scout import        Universal coverage. Sees everything."
+echo "                          Best for: initial cluster discovery, Helm/Native resources"
 echo ""
 
 # ============================================================

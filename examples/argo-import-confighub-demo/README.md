@@ -1,9 +1,10 @@
-# Combined Demo: Three Tools, Same Cluster, Different Lenses
+# ArgoCD Import to ConfigHub Demo
 
-Three import paths. Same cluster. Different lenses. This demo runs
-`cub-scout import`, `cub-scout import-argocd`, and `cub gitops import`
-against a kind cluster with real ArgoCD to show what each tool sees,
-what it misses, and why you might need all three.
+Three import paths into ConfigHub. Same cluster. Different depths. This demo
+runs `cub-scout import`, `cub-scout import-argocd`, and `cub gitops import`
+against a kind cluster with real ArgoCD. Each tool operates at a different
+layer -- from broad cluster inventory to full rendered pipeline -- and the
+demo shows how they complement each other.
 
 ## Quick Start
 
@@ -38,7 +39,7 @@ The demo creates a kind cluster with **real ArgoCD** and two distinct fixture
 sets that create a deliberate contrast:
 
 ```
-kind-combined-demo
+kind-argo-import-demo
 |
 |-- argocd/                              ArgoCD server (real, running)
 |   |-- Application: helm-guestbook     <-- real, synced by ArgoCD
@@ -103,7 +104,7 @@ You should see output like:
 === Act 1: The Cluster ===
 
 >> Creating kind cluster...
->> Cluster ready: kind-combined-demo
+>> Cluster ready: kind-argo-import-demo
 
 >> Installing ArgoCD (this takes 2-4 minutes)...
 >> Waiting for ArgoCD deployments...
@@ -141,9 +142,9 @@ redis, guestbook). Notice it sees redis (Helm) and debug-config (Native)
 alongside the ArgoCD workloads.
 
 **Key insight:** cub-scout reports what the labels say, not what the controller
-did. The Arnie deployments appear as "ArgoCD" because they have the
-`argocd.argoproj.io/instance` label -- even though ArgoCD didn't create them.
-This is correct behavior: ownership is determined by labels, not runtime state.
+did. This gives broad coverage but only produces static snapshots -- it captures
+what's on the cluster right now, not what the controller would render from
+source. For ArgoCD-managed apps, `cub gitops import` (Act 4) goes deeper.
 
 You should see `map list` output like:
 
@@ -306,7 +307,11 @@ Redis and debug-config don't appear anywhere in Act 3 output.
 
 > Requires `--live` flag and ConfigHub authentication.
 
-Sets up the full ConfigHub render pipeline:
+This is the production-grade import path. While Acts 2-3 produce static
+snapshots, `cub gitops import` builds a **live render pipeline** that
+continuously produces the exact manifests your GitOps controller would apply.
+
+The demo sets up the full pipeline:
 
 1. Gets ArgoCD auth token from the cluster
 2. Creates a ConfigHub space
@@ -316,22 +321,25 @@ Sets up the full ConfigHub render pipeline:
 6. Runs `cub gitops import` to create dry/wet unit pairs
 
 **What to look for:** `cub gitops discover` finds the same 5 Applications.
-But `cub gitops import` goes further: it renders them through the actual
-ArgoCD renderer, producing the exact YAML that ArgoCD would apply. For
-helm-guestbook, this means the Helm chart is fully expanded. The result is
-dry/wet unit pairs with MergeUnits links.
+But `cub gitops import` goes further: it renders each Application through
+the actual ArgoCD renderer, producing the exact YAML that ArgoCD would apply.
+For helm-guestbook, this means the Helm chart is fully template-expanded --
+not the raw chart source that Acts 2-3 would capture, but the final rendered
+Kubernetes manifests. The result is dry/wet unit pairs with MergeUnits links.
 
-**Key insight:** This is the only tool that produces *rendered manifests* --
-what ArgoCD would actually apply, not raw snapshots. And the dry/wet pairs
-are linked: when the renderer produces new output, the wet unit auto-updates.
-This is a continuous pipeline, not a one-time import.
+**Key insight:** This is the only tool that produces *rendered manifests* and
+keeps them current. The dry/wet pairs are linked: when you push a change to
+Git, ArgoCD re-renders, the renderer worker picks it up, and the wet unit in
+ConfigHub auto-updates. No re-import needed. This makes it the right choice
+for ongoing ArgoCD management, while Acts 2-3 are better suited for initial
+discovery and one-time imports.
 
 You should see output like (exact target names will vary):
 
 ```
 >> Getting ArgoCD auth token...
 >> ArgoCD auth token obtained
->> Creating ConfigHub space 'combined-demo'...
+>> Creating ConfigHub space 'argo-import-demo'...
 >> Starting discovery worker...
 >> Deploying ArgoCD renderer worker in-cluster...
 >> Waiting for targets to register...
@@ -396,9 +404,15 @@ When to use which:
                           Best for: continuous pipeline with auto-updates
 ```
 
-The two bottom rows (redis and debug-config) are the key takeaway: only
-`cub-scout import` can see them. If your cluster has Helm releases or
-manually-applied resources, you need `cub-scout import` to get full coverage.
+The key takeaways from this table:
+
+- **Breadth:** `cub-scout import` is the only tool that sees Helm and Native
+  resources. Use it for full cluster inventory.
+- **Depth:** `cub gitops import` is the only tool that renders through the
+  actual controller and creates a live pipeline. Use it for ongoing ArgoCD
+  management.
+- **Middle ground:** `import-argocd` gives per-Application detail without
+  needing ConfigHub infrastructure. Good for one-time imports.
 
 ---
 
@@ -406,23 +420,24 @@ manually-applied resources, you need `cub-scout import` to get full coverage.
 
 | Scenario | Tool |
 |----------|------|
+| "Set up continuous pipeline for ArgoCD apps" | `cub gitops import` |
+| "Import a specific ArgoCD Application (one-time)" | `cub-scout import-argocd <name>` |
+| "Import everything, including Helm and Native" | `cub-scout import --yes` |
 | "What's running on my cluster?" | `cub-scout map list` |
 | "How would I organize this into ConfigHub?" | `cub-scout import --dry-run` |
-| "Import everything, including Helm and Native" | `cub-scout import --yes` |
-| "Import this specific ArgoCD Application" | `cub-scout import-argocd <name>` |
-| "Set up continuous render pipeline for ArgoCD apps" | `cub gitops import` |
 | "Find Helm/Native resources ArgoCD doesn't manage" | `cub-scout import` |
 | "What changed since last sync?" | `cub-scout gitops status` |
 
 ### Decision Tree
 
 ```
-Do you need to see ALL resources (including Helm, Native)?
-  YES --> cub-scout import
-  NO, just ArgoCD Applications -->
-    Do you need rendered manifests and auto-updating pipelines?
-      YES --> cub gitops import
-      NO, one-time import is fine --> cub-scout import-argocd
+Are you importing ArgoCD Applications?
+  YES -->
+    Do you want a live pipeline (auto-updates when Git changes)?
+      YES --> cub gitops import (rendered manifests, dry/wet pairs)
+      NO, one-time import --> cub-scout import-argocd (per-app, Git path labels)
+  NO, or mixed ownership (Helm, Native, etc.) -->
+    cub-scout import (broad coverage, all workload types)
 ```
 
 ---
@@ -440,34 +455,39 @@ Do you need to see ALL resources (including Helm, Native)?
  |       |               |               |                 |
  +-------+---------------+---------------+-----------------+
          |               |               |
-    +----+----+     +----+----+     +----+----+
-    |         |     |         |     |         |
-    v         v     v         v     v         v
- +------+  +------+  +------+
- |scout |  |argocd|  |gitops|   cub-scout import: sees ALL (Y Y Y)
- |import|  |import|  |import|   import-argocd:    ArgoCD only (Y . .)
- +------+  +------+  +------+   cub gitops:       ArgoCD rendered (Y . .)
+         v               v               v
+   +----------+    +----------+    +----------+
+   | cub      |    | scout    |    | scout    |
+   | gitops   |    | import-  |    | import   |
+   | import   |    | argocd   |    |          |
+   +----------+    +----------+    +----------+
+   rendered +      per-app         all workloads
+   live pipeline   one-time        broad coverage
 ```
 
 ### How Each Tool Works
 
-**cub-scout import** (workload-level)
+**cub gitops import** (pipeline-level) -- the production path
+- Discovers: ArgoCD Applications (or Flux HelmReleases/Kustomizations)
+- Renders: through actual ArgoCD/Flux renderer (in-cluster worker)
+- Creates: dry/wet unit pairs with MergeUnits links that auto-update
+- Requires: ConfigHub space + discovery worker + in-cluster renderer worker
+- Strength: the only tool that produces controller-rendered manifests and
+  keeps them current as Git changes
+
+**cub-scout import-argocd** (application-level) -- per-app detail
+- Reads: ArgoCD Application CRs + their managed resources
+- Extracts: Git source path, sync/health status, path-derived labels
+- Creates: per-Application ConfigHub units (static snapshot)
+- Requires: kubectl access + ArgoCD CRDs
+- Strength: quick per-Application import without ConfigHub infrastructure
+
+**cub-scout import** (workload-level) -- broad discovery
 - Reads: Deployments, StatefulSets, DaemonSets
 - Detects ownership: labels (`argocd.argoproj.io/instance`, `app.kubernetes.io/managed-by: Helm`, etc.)
 - Creates: flat ConfigHub units with raw manifest snapshots
 - Requires: kubectl access only
-
-**cub-scout import-argocd** (application-level)
-- Reads: ArgoCD Application CRs + their managed resources
-- Extracts: Git source path, sync/health status, path-derived labels
-- Creates: per-Application ConfigHub units
-- Requires: kubectl access + ArgoCD CRDs
-
-**cub gitops import** (pipeline-level)
-- Discovers: ArgoCD Applications (or Flux HelmReleases/Kustomizations)
-- Renders: through actual ArgoCD renderer (in-cluster worker)
-- Creates: dry/wet unit pairs with MergeUnits links
-- Requires: ConfigHub space + discovery worker + in-cluster renderer worker
+- Strength: the only tool that sees Helm and Native resources
 
 ---
 
