@@ -286,15 +286,26 @@ if $LIVE; then
     echo ""
 
     SPACE="flux-import-demo"
+    DISCOVERY_WORKER_SLUG="discovery-worker"
+    RENDERER_WORKER_SLUG="flux-renderer-worker"
+    DISCOVERY_LOG="${TMPDIR:-/tmp}/flux-import-demo-discovery-worker.log"
     step "Creating ConfigHub space '$SPACE'..."
     cub space create "$SPACE" 2>/dev/null || warn "Space may already exist"
     echo ""
 
     # Start discovery worker
+    step "Recreating discovery worker '$DISCOVERY_WORKER_SLUG'..."
+    cub worker delete --space "$SPACE" "$DISCOVERY_WORKER_SLUG" >/dev/null 2>&1 || true
+    cub worker create --space "$SPACE" "$DISCOVERY_WORKER_SLUG" >/dev/null
+
     step "Starting discovery worker..."
-    cub worker run --space "$SPACE" -t Kubernetes discovery-worker >/dev/null 2>&1 &
+    cub worker run --space "$SPACE" -t Kubernetes "$DISCOVERY_WORKER_SLUG" >"$DISCOVERY_LOG" 2>&1 &
     WORKER_PID=$!
     sleep 5
+    if ! kill -0 "$WORKER_PID" 2>/dev/null; then
+        warn "Discovery worker exited early. Log: $DISCOVERY_LOG"
+        tail -n 20 "$DISCOVERY_LOG" || true
+    fi
 
     # Deploy kustomize renderer in-cluster
     step "Deploying kustomize renderer worker in-cluster..."
@@ -313,6 +324,10 @@ if $LIVE; then
         note "Local dev detected, renderer will use: $RENDERER_CONFIGHUB_URL"
     fi
 
+    step "Recreating renderer worker '$RENDERER_WORKER_SLUG'..."
+    cub worker delete --space "$SPACE" "$RENDERER_WORKER_SLUG" >/dev/null 2>&1 || true
+    cub worker create --space "$SPACE" "$RENDERER_WORKER_SLUG" >/dev/null
+
     WORKER_MANIFEST=$(mktemp)
     cub worker install --space "$SPACE" \
         --export \
@@ -321,7 +336,7 @@ if $LIVE; then
         -n confighub-worker \
         --image-pull-policy IfNotPresent \
         -e "CONFIGHUB_URL=$RENDERER_CONFIGHUB_URL" \
-        flux-renderer > "$WORKER_MANIFEST"
+        "$RENDERER_WORKER_SLUG" > "$WORKER_MANIFEST"
 
     kubectl create namespace confighub-worker 2>/dev/null || true
     kubectl apply -f "$WORKER_MANIFEST"
@@ -329,7 +344,7 @@ if $LIVE; then
 
     step "Waiting for renderer deployment..."
     kubectl -n confighub-worker wait --for=condition=available \
-        deployment --all --timeout=120s 2>/dev/null || warn "Renderer not ready"
+        "deployment/$RENDERER_WORKER_SLUG" --timeout=120s 2>/dev/null || warn "Renderer not ready"
 
     # Wait for targets
     step "Waiting for targets to register..."
@@ -348,13 +363,16 @@ if $LIVE; then
     if ! $TARGETS_READY; then
         warn "Targets not registered - cub gitops import may fail"
         cub target list --space "$SPACE" 2>/dev/null || true
+        kubectl -n confighub-worker get pods 2>/dev/null || true
+        kubectl -n confighub-worker logs "deployment/$RENDERER_WORKER_SLUG" --tail=40 2>/dev/null || true
     else
         step "Targets registered"
     fi
 
     # Extract target slugs
-    K8S_TARGET=$(cub target list --space "$SPACE" 2>/dev/null | grep "kubernetes" | head -1 | awk '{print $1}')
-    RENDERER_TARGET=$(cub target list --space "$SPACE" 2>/dev/null | grep "fluxrenderer" | head -1 | awk '{print $1}')
+    TARGET_OUTPUT=$(cub target list --space "$SPACE" 2>/dev/null || true)
+    K8S_TARGET=$(echo "$TARGET_OUTPUT" | awk '/kubernetes/ {print $1; exit}' || true)
+    RENDERER_TARGET=$(echo "$TARGET_OUTPUT" | awk '/fluxrenderer/ {print $1; exit}' || true)
 
     if [[ -n "$K8S_TARGET" ]]; then
         step "cub gitops discover  (finding Flux Kustomizations)"

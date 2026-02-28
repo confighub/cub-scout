@@ -264,10 +264,11 @@ continuously produces the exact manifests Flux would apply.
 The demo sets up the full pipeline:
 
 1. Creates a ConfigHub space
-2. Starts a discovery worker (local, reads K8s API)
-3. Deploys a Flux renderer worker in-cluster (`-t fluxrenderer`)
-4. Runs `cub gitops discover` to find Flux deployers
-5. Runs `cub gitops import` to create dry/wet unit pairs for deployers that can render
+2. Recreates and starts a discovery BridgeWorker (`cub worker delete/create ... discovery-worker`, then `cub worker run -t Kubernetes`)
+3. Recreates a renderer BridgeWorker slug (`cub worker delete/create ... flux-renderer-worker`)
+4. Deploys that Flux renderer worker in-cluster (`cub worker install -t fluxrenderer ... flux-renderer-worker`)
+5. Runs `cub gitops discover` to find Flux deployers
+6. Runs `cub gitops import` to create dry/wet unit pairs for deployers that can render
 
 **Key insight:** This is the only tool that produces *rendered manifests* and
 keeps them current. The dry/wet pairs are linked: when you push a change to
@@ -394,7 +395,9 @@ Do you have Flux Kustomizations or HelmReleases?
 - Renders: through actual Flux renderer (in-cluster worker, `-t fluxrenderer`)
 - Creates: dry/wet unit pairs with MergeUnits links that auto-update
 - Note: only deployers with resolvable sources are imported in this fixture
-- Requires: ConfigHub space + discovery worker + in-cluster renderer worker
+- Requires: ConfigHub space + discovery BridgeWorker slug + discovery worker run
+  (`cub worker create` + `cub worker run`) + renderer BridgeWorker slug
+  (`cub worker create`) + in-cluster renderer install (`cub worker install`)
 - Strength: the only tool that produces controller-rendered manifests and
   keeps them current as Git changes
 
