@@ -53,6 +53,7 @@ New to cub-scout? Start here:
 | Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
 | Import from live cluster | [howto/import-from-live.md](howto/import-from-live.md) |
 | ArgoCD import demo (3 tools) | [examples/argo-import-confighub-demo/](../examples/argo-import-confighub-demo/) |
+| Flux import demo (D2 pattern) | [examples/flux-import-confighub-demo/](../examples/flux-import-confighub-demo/) |
 | Migration playbook | [howto/migration-playbook.md](howto/migration-playbook.md) |
 | Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
 

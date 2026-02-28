@@ -43,12 +43,13 @@ Worked examples showing how cub-scout discovers workloads and proposes ConfigHub
 | Example | Pattern | Shows |
 |---------|---------|-------|
 | [argo-import-confighub-demo/](argo-import-confighub-demo/) | **ArgoCD → ConfigHub** | Three import tools compared on real ArgoCD cluster (kind) |
+| [flux-import-confighub-demo/](flux-import-confighub-demo/) | **Flux → ConfigHub** | Management + discovery on real Flux cluster with D2 pattern (kind) |
 | [import-from-live/](import-from-live/) | **ArgoCD** (Arnie) | Cluster-only discovery — no Git required |
 | [combined-git-live/](combined-git-live/) | **Flux** (Banko) | Git repo + cluster alignment |
 | [fleet-import/](fleet-import/) | **Multi-cluster** | Aggregating imports from 2 clusters into a unified proposal |
 | [demo-data-adt/](demo-data-adt/) | **App-Deployment-Target** | Multi-app × multi-env with version skew detection |
 
-The `argo-import-confighub-demo` runs against a real kind cluster with ArgoCD. The others use static fixtures (no live cluster needed) and include expected JSON output for validation.
+The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against real kind clusters. The others use static fixtures (no live cluster needed) and include expected JSON output for validation.
 
 ### Apptique Examples
 
@@ -124,6 +125,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | File/Folder | Type | What | Use When |
 |-------------|------|------|----------|
 | [argo-import-confighub-demo/](argo-import-confighub-demo/) | **Working** | Three import tools on real ArgoCD cluster | Comparing cub gitops / import-argocd / import |
+| [flux-import-confighub-demo/](flux-import-confighub-demo/) | **Working** | Management + discovery on real Flux cluster | Flux D2 pattern, tree/trace, cub gitops import |
 | [import-from-live/](import-from-live/) | **Working** | Cluster-only import (ArgoCD/Arnie pattern) | Learning import discovery, no Git needed |
 | [combined-git-live/](combined-git-live/) | **Working** | Git + cluster alignment (Flux/Banko pattern) | Learning combined discovery, Git drift detection |
 | [fleet-import/](fleet-import/) | **Working** | Multi-cluster fleet aggregation | Learning fleet import, cross-cluster proposals |

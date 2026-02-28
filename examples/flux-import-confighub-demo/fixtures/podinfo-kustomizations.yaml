@@ -1,0 +1,42 @@
+# Real Flux Kustomizations — Flux will actually reconcile these
+#
+# podinfo is the canonical Flux demo app. These resources create:
+#   1. A GitRepository pointing at stefanprodan/podinfo
+#   2. A Kustomization that deploys podinfo into the "podinfo" namespace
+#
+# After applying, Flux pulls the source and creates real Deployments/Services.
+# This is the Flux equivalent of ArgoCD's guestbook apps with syncPolicy.automated.
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: podinfo
+
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: podinfo
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://github.com/stefanprodan/podinfo
+  ref:
+    tag: 6.7.0
+
+---
+# Kustomization: deploys podinfo from the repo's ./kustomize directory
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: podinfo
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./kustomize
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: podinfo
+  targetNamespace: podinfo

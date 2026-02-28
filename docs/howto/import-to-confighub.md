@@ -155,6 +155,7 @@ Rollback is safe: import creates ConfigHub state only — it never modifies the 
 
 - [Migration Playbook](migration-playbook.md) — Comprehensive guide with assessment, planning, validation, and rollback
 - [ArgoCD Import Demo](../../examples/argo-import-confighub-demo/) — Three import tools compared on real ArgoCD cluster (kind)
+- [Flux Import Demo](../../examples/flux-import-confighub-demo/) — Management + discovery on real Flux cluster with D2 pattern (kind)
 - [Import from Live](import-from-live.md) — Cluster-only discovery (no Git required)
 - [Import from Live Example](../../examples/import-from-live/) — Worked example with fixtures
 - [Combined Git+Live Example](../../examples/combined-git-live/) — Git repo + cluster alignment
