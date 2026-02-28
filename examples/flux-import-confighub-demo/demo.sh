@@ -14,7 +14,7 @@
 #   ./demo.sh --live --confighub-url=http://localhost:9090  # Local dev override
 #
 # Prerequisites: docker, kind, kubectl, go, flux
-#                --live also requires: cub, curl, python3 (cub auth login)
+#                --live also requires: cub (cub auth login)
 
 set -euo pipefail
 
@@ -84,7 +84,7 @@ fi
 
 if $LIVE; then
     LIVE_MISSING=""
-    for tool in cub curl python3; do
+    for tool in cub; do
         command -v "$tool" >/dev/null 2>&1 || LIVE_MISSING="$LIVE_MISSING $tool"
     done
     if [[ -n "$LIVE_MISSING" ]]; then
@@ -109,7 +109,7 @@ if $LIVE; then
         exit 1
     fi
     step "ConfigHub: $CONFIGHUB_SERVER_URL"
-    step "Auth OK (cub, curl, python3 present)"
+    step "Auth OK (cub present)"
 fi
 
 step "Building cub-scout..."
@@ -138,9 +138,32 @@ flux install --timeout=5m
 step "Flux installed"
 echo ""
 
+# --- Wait for Flux CRDs ---
+step "Waiting for Flux CRDs..."
+if ! kubectl wait --for=condition=Established --timeout=120s \
+    crd/gitrepositories.source.toolkit.fluxcd.io \
+    crd/kustomizations.kustomize.toolkit.fluxcd.io \
+    crd/helmreleases.helm.toolkit.fluxcd.io >/dev/null 2>&1; then
+    fail "Flux CRDs not established in time"
+    exit 1
+fi
+
 # --- Apply D2 brownfield fixtures ---
 step "Applying D2 brownfield fixtures (Control Plane pattern)..."
-kubectl apply -f "$D2_FIXTURES/d2-brownfield.yaml" 2>/dev/null || true
+D2_APPLIED=false
+for i in $(seq 1 5); do
+    if kubectl apply -f "$D2_FIXTURES/d2-brownfield.yaml"; then
+        D2_APPLIED=true
+        break
+    fi
+    warn "D2 fixture apply failed (attempt $i/5), retrying in 5s..."
+    sleep 5
+done
+
+if ! $D2_APPLIED; then
+    fail "Could not apply D2 fixtures"
+    exit 1
+fi
 echo ""
 note "Flux CRs: GitRepository, 2 Kustomizations (infrastructure + apps)"
 note "          2 per-app Kustomizations (payment-api, frontend)"
@@ -162,7 +185,8 @@ echo ""
 step "Waiting for podinfo to sync (up to 120s)..."
 PODINFO_SYNCED=false
 for i in $(seq 1 24); do
-    if kubectl get deployment podinfo -n podinfo >/dev/null 2>&1; then
+    if kubectl wait --for=condition=available --timeout=5s deployment/podinfo -n podinfo >/dev/null 2>&1 \
+        && kubectl wait --for=condition=Ready --timeout=5s kustomization/podinfo -n flux-system >/dev/null 2>&1; then
         PODINFO_SYNCED=true
         break
     fi
@@ -405,7 +429,7 @@ echo ""
 
 echo -e "${BOLD}Management:${NC} cub gitops import"
 echo "  Rendered pipeline with auto-updating dry/wet unit pairs."
-echo "  Use for Flux Kustomizations you want to manage continuously."
+echo "  Use for renderable Flux deployers you want to manage continuously."
 echo ""
 echo -e "${BOLD}Discovery:${NC} cub-scout import + tree/trace"
 echo "  Broad cluster inventory (import) or Flux-specific structure (tree/trace)."

@@ -33,8 +33,6 @@ outside Flux's scope.
 | go | All modes (builds cub-scout) | [go.dev](https://go.dev) |
 | flux | All modes (installs Flux) | `brew install fluxcd/tap/flux` |
 | cub | `--live` mode only | [confighub.com/docs/cli](https://confighub.com/docs/cli) |
-| curl | `--live` mode only | Usually pre-installed |
-| python3 | `--live` mode only | Usually pre-installed |
 
 For `--live` mode, authenticate first: `cub auth login`
 
@@ -268,8 +266,8 @@ The demo sets up the full pipeline:
 1. Creates a ConfigHub space
 2. Starts a discovery worker (local, reads K8s API)
 3. Deploys a Flux renderer worker in-cluster (`-t fluxrenderer`)
-4. Runs `cub gitops discover` to find Kustomizations/HelmReleases
-5. Runs `cub gitops import` to create dry/wet unit pairs
+4. Runs `cub gitops discover` to find Flux deployers
+5. Runs `cub gitops import` to create dry/wet unit pairs for deployers that can render
 
 **Key insight:** This is the only tool that produces *rendered manifests* and
 keeps them current. The dry/wet pairs are linked: when you push a change to
@@ -303,7 +301,7 @@ Y = found/imported    . = not visible to this tool
 
 Management: cub gitops import
   Rendered pipeline with auto-updating dry/wet unit pairs.
-  Use for Flux Kustomizations you want to manage continuously.
+  Use for renderable Flux deployers you want to manage continuously.
 
 Discovery: cub-scout import + tree/trace
   Broad cluster inventory (import) or Flux-specific structure (tree/trace).
@@ -312,10 +310,14 @@ Discovery: cub-scout import + tree/trace
 Together: cub gitops import for Flux apps, then cub-scout import for the rest.
 ```
 
+In this fixture, `cert-manager` and `monitoring` HelmReleases point to
+intentionally missing chart sources, so they remain discovery-only.
+
 The key takeaways:
 
-- **Management** (left side): `cub gitops import` manages Flux Kustomizations
-  as a live pipeline -- rendered manifests, auto-updating units, dry/wet pairs.
+- **Management** (left side): `cub gitops import` manages renderable Flux
+  deployers as a live pipeline -- rendered manifests, auto-updating units,
+  dry/wet pairs.
 - **Discovery** (middle + right): `tree/trace` reveals Flux-specific structure
   (ownership chains, D2 pattern detection). `cub-scout import` finds everything
   regardless of ownership type, including Helm and Native resources.
@@ -333,7 +335,7 @@ The key takeaways:
 | "Set up continuous pipeline for Flux apps" | `cub gitops import` |
 | "See what Flux would render from source" | `cub gitops import` (dry/wet pairs) |
 | "Keep ConfigHub units in sync as Git changes" | `cub gitops import` (auto-updating) |
-| "Import Kustomizations + HelmReleases with rendered manifests" | `cub gitops import` |
+| "Import renderable Flux deployers with rendered manifests" | `cub gitops import` |
 
 ### Discovery (cub-scout)
 
@@ -391,6 +393,7 @@ Do you have Flux Kustomizations or HelmReleases?
 - Discovers: Flux Kustomizations and HelmReleases
 - Renders: through actual Flux renderer (in-cluster worker, `-t fluxrenderer`)
 - Creates: dry/wet unit pairs with MergeUnits links that auto-update
+- Note: only deployers with resolvable sources are imported in this fixture
 - Requires: ConfigHub space + discovery worker + in-cluster renderer worker
 - Strength: the only tool that produces controller-rendered manifests and
   keeps them current as Git changes
