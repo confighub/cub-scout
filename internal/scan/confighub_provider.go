@@ -8,9 +8,17 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
+	"sigs.k8s.io/yaml"
 )
 
 // ConfighubScanProvider delegates scanning to the confighub-scan binary when
@@ -22,6 +30,10 @@ type ConfighubScanProvider struct {
 	// binaryPath caches the resolved cub-scan binary path.
 	// Empty string means not resolved yet; "-" means not found.
 	binaryPath string
+
+	// test seams
+	exportManifestFn    func(context.Context, ClusterScanOpts) (string, func(), error)
+	legacyScanClusterFn func(context.Context, ClusterScanOpts) (*CombinedResult, error)
 }
 
 // NewConfighubScanProvider creates a ConfighubScanProvider that probes for the
@@ -40,14 +52,48 @@ func (p *ConfighubScanProvider) Available() bool {
 	return p.resolveBinary() != ""
 }
 
-// ScanCluster delegates to the legacy provider for all cluster scan types.
-// cub-scan is a static file scanner — it has no cluster-scanning mode.
-// Wiring it for cluster scans would require exporting live resources to
-// temp files and iterating — tracked in #200.
-// The legacy provider gives correct, deterministic results for all runtime
-// scan types (state, timing bombs, dangling, lifecycle hazards) and Kyverno.
+// ScanCluster keeps runtime-oriented scans on the legacy provider and, when
+// cub-scan is available, additionally exports live resources to a temporary
+// manifest and runs a static cub-scan pass against that manifest.
+// If export or cub-scan execution fails, the legacy result is returned.
 func (p *ConfighubScanProvider) ScanCluster(ctx context.Context, opts ClusterScanOpts) (*CombinedResult, error) {
-	return p.fallback.ScanCluster(ctx, opts)
+	legacyScan := p.legacyScanClusterFn
+	if legacyScan == nil {
+		legacyScan = p.fallback.ScanCluster
+	}
+
+	legacyResult, err := legacyScan(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	binary := p.resolveBinary()
+	if binary == "" {
+		return legacyResult, nil
+	}
+
+	exportManifest := p.exportManifestFn
+	if exportManifest == nil {
+		exportManifest = exportClusterResourcesToManifest
+	}
+
+	manifestPath, cleanup, err := exportManifest(ctx, opts)
+	if err != nil {
+		return legacyResult, nil
+	}
+	if cleanup != nil {
+		defer cleanup()
+	}
+
+	cs, err := p.invokeCubScan(ctx, binary, manifestPath)
+	if err != nil {
+		return legacyResult, nil
+	}
+
+	_ = persistRawFindingsV1(cs)
+	legacyResult.Static = mapCubScanResult(cs, manifestPath)
+
+	return legacyResult, nil
 }
 
 // ScanFile delegates to confighub-scan when available, otherwise falls back.
@@ -191,18 +237,18 @@ type cubScanResult struct {
 
 // cubScanFinding represents a single finding from cub-scan.
 type cubScanFinding struct {
-	ID           string              `json:"id"`
-	Name         string              `json:"name"`
-	Category     string              `json:"category"`
-	Track        string              `json:"track"`
-	Severity     string              `json:"severity"`
-	Confidence   string              `json:"confidence,omitempty"`
-	Tool         string              `json:"tool,omitempty"`
-	Resource     cubScanResourceRef  `json:"resource"`
-	Message      string              `json:"message"`
-	RemedyType   string              `json:"remedy_type,omitempty"`
-	RemedySafety string              `json:"remedy_safety,omitempty"`
-	Remediation  cubScanRemediation  `json:"remediation"`
+	ID           string             `json:"id"`
+	Name         string             `json:"name"`
+	Category     string             `json:"category"`
+	Track        string             `json:"track"`
+	Severity     string             `json:"severity"`
+	Confidence   string             `json:"confidence,omitempty"`
+	Tool         string             `json:"tool,omitempty"`
+	Resource     cubScanResourceRef `json:"resource"`
+	Message      string             `json:"message"`
+	RemedyType   string             `json:"remedy_type,omitempty"`
+	RemedySafety string             `json:"remedy_safety,omitempty"`
+	Remediation  cubScanRemediation `json:"remediation"`
 }
 
 // cubScanResourceRef identifies a Kubernetes resource in cub-scan output.
@@ -302,4 +348,134 @@ func loadRiskCatalog(path string) ([]PolicyEntry, error) {
 	}
 
 	return policies, nil
+}
+
+func exportClusterResourcesToManifest(ctx context.Context, opts ClusterScanOpts) (string, func(), error) {
+	dc, err := discovery.NewDiscoveryClientForConfig(opts.Config)
+	if err != nil {
+		return "", nil, err
+	}
+	dyn, err := dynamic.NewForConfig(opts.Config)
+	if err != nil {
+		return "", nil, err
+	}
+
+	apiResourceLists, err := dc.ServerPreferredResources()
+	if err != nil && !discovery.IsGroupDiscoveryFailedError(err) {
+		return "", nil, err
+	}
+
+	var resources []unstructured.Unstructured
+	for _, apiList := range apiResourceLists {
+		gv, err := schema.ParseGroupVersion(apiList.GroupVersion)
+		if err != nil {
+			continue
+		}
+		for _, ar := range apiList.APIResources {
+			if strings.Contains(ar.Name, "/") || !supportsList(ar.Verbs) {
+				continue
+			}
+			gvr := schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: ar.Name}
+
+			var list *unstructured.UnstructuredList
+			if ar.Namespaced {
+				if opts.Namespace != "" {
+					list, err = dyn.Resource(gvr).Namespace(opts.Namespace).List(ctx, v1.ListOptions{})
+				} else {
+					list, err = dyn.Resource(gvr).Namespace(v1.NamespaceAll).List(ctx, v1.ListOptions{})
+				}
+			} else {
+				list, err = dyn.Resource(gvr).List(ctx, v1.ListOptions{})
+			}
+			if err != nil {
+				continue
+			}
+			resources = append(resources, list.Items...)
+		}
+	}
+
+	sort.Slice(resources, func(i, j int) bool {
+		a := resources[i]
+		b := resources[j]
+		if a.GetAPIVersion() != b.GetAPIVersion() {
+			return a.GetAPIVersion() < b.GetAPIVersion()
+		}
+		if a.GetKind() != b.GetKind() {
+			return a.GetKind() < b.GetKind()
+		}
+		if a.GetNamespace() != b.GetNamespace() {
+			return a.GetNamespace() < b.GetNamespace()
+		}
+		return a.GetName() < b.GetName()
+	})
+
+	tmpFile, err := os.CreateTemp("", "cub-scout-scan-*.yaml")
+	if err != nil {
+		return "", nil, err
+	}
+	defer tmpFile.Close()
+
+	for i, obj := range resources {
+		cleanObjectForExport(&obj)
+		y, err := yaml.Marshal(obj.Object)
+		if err != nil {
+			continue
+		}
+		if i > 0 {
+			if _, err := tmpFile.WriteString("---\n"); err != nil {
+				return "", nil, err
+			}
+		}
+		if _, err := tmpFile.Write(y); err != nil {
+			return "", nil, err
+		}
+	}
+
+	path := tmpFile.Name()
+	cleanup := func() { _ = os.Remove(path) }
+	return path, cleanup, nil
+}
+
+func supportsList(verbs v1.Verbs) bool {
+	for _, v := range verbs {
+		if v == "list" {
+			return true
+		}
+	}
+	return false
+}
+
+func cleanObjectForExport(obj *unstructured.Unstructured) {
+	unstructured.RemoveNestedField(obj.Object, "metadata", "managedFields")
+	unstructured.RemoveNestedField(obj.Object, "metadata", "resourceVersion")
+	unstructured.RemoveNestedField(obj.Object, "metadata", "uid")
+	unstructured.RemoveNestedField(obj.Object, "metadata", "generation")
+	unstructured.RemoveNestedField(obj.Object, "metadata", "creationTimestamp")
+	unstructured.RemoveNestedField(obj.Object, "metadata", "selfLink")
+	unstructured.RemoveNestedField(obj.Object, "status")
+}
+
+func persistRawFindingsV1(cs *cubScanResult) error {
+	dir := os.Getenv("CUB_SCOUT_SCAN_RAW_DIR")
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	payload := struct {
+		Version   string           `json:"version"`
+		ScannedAt string           `json:"scanned_at,omitempty"`
+		Findings  []cubScanFinding `json:"findings"`
+	}{
+		Version:   "risk-scan-findings-v1",
+		ScannedAt: cs.ScannedAt,
+		Findings:  cs.Findings,
+	}
+	b, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return err
+	}
+	name := filepath.Join(dir, fmt.Sprintf("risk-scan-findings-v1-%d.json", time.Now().UnixNano()))
+	return os.WriteFile(name, b, 0o644)
 }

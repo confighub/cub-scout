@@ -5,7 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
+
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 func TestConfighubScanProvider_Name(t *testing.T) {
@@ -194,6 +197,84 @@ func TestConfighubScanProvider_ScanFile_CubScanNameAlternative(t *testing.T) {
 	}
 }
 
+func TestConfighubScanProvider_ScanCluster_WithCubScan_UsesLegacyAndAddsStatic(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake binary test not supported on Windows")
+	}
+
+	tmpDir := t.TempDir()
+	fakeBinary := filepath.Join(tmpDir, "confighub-scan")
+	writeFakeCubScan(t, fakeBinary, fakeCubScanOutput)
+	t.Setenv("PATH", tmpDir)
+	t.Setenv("CUB_SCOUT_SCAN_RAW_DIR", tmpDir)
+
+	manifest := filepath.Join(tmpDir, "cluster-export.yaml")
+	if err := os.WriteFile(manifest, []byte("apiVersion: v1\nkind: Pod\nmetadata:\n  name: p\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewConfighubScanProvider(ProviderConfig{})
+	p.binaryPath = ""
+	p.legacyScanClusterFn = func(ctx context.Context, opts ClusterScanOpts) (*CombinedResult, error) {
+		return &CombinedResult{State: &agent.StateScanResult{Summary: agent.StateScanSummary{Total: 1}}}, nil
+	}
+	p.exportManifestFn = func(ctx context.Context, opts ClusterScanOpts) (string, func(), error) {
+		return manifest, func() {}, nil
+	}
+
+	result, err := p.ScanCluster(context.Background(), ClusterScanOpts{})
+	if err != nil {
+		t.Fatalf("ScanCluster() error = %v", err)
+	}
+	if result.State == nil || result.State.Summary.Total != 1 {
+		t.Fatalf("legacy runtime findings not preserved: %#v", result.State)
+	}
+	if result.Static == nil || len(result.Static.Findings) != 2 {
+		t.Fatalf("static findings = %#v, want 2 findings from cub-scan", result.Static)
+	}
+
+	entries, err := os.ReadDir(tmpDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rawFound := false
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "risk-scan-findings-v1-") {
+			rawFound = true
+			break
+		}
+	}
+	if !rawFound {
+		t.Fatal("expected persisted risk-scan-findings-v1 artifact")
+	}
+}
+
+func TestConfighubScanProvider_ScanCluster_ExportFailure_FallsBackLegacy(t *testing.T) {
+	tmpDir := t.TempDir()
+	fakeBinary := filepath.Join(tmpDir, "confighub-scan")
+	writeFakeCubScan(t, fakeBinary, fakeCubScanOutput)
+	t.Setenv("PATH", tmpDir)
+
+	p := NewConfighubScanProvider(ProviderConfig{})
+	p.binaryPath = ""
+	p.legacyScanClusterFn = func(ctx context.Context, opts ClusterScanOpts) (*CombinedResult, error) {
+		return &CombinedResult{TimingBombs: &agent.TimingBombResult{}}, nil
+	}
+	p.exportManifestFn = func(ctx context.Context, opts ClusterScanOpts) (string, func(), error) {
+		return "", nil, context.DeadlineExceeded
+	}
+
+	result, err := p.ScanCluster(context.Background(), ClusterScanOpts{})
+	if err != nil {
+		t.Fatalf("ScanCluster() error = %v", err)
+	}
+	if result.TimingBombs == nil {
+		t.Fatal("expected legacy result when export fails")
+	}
+	if result.Static != nil {
+		t.Fatalf("Static should be nil on fallback, got %#v", result.Static)
+	}
+}
 func TestMapCubScanResult(t *testing.T) {
 	cs := &cubScanResult{
 		Findings: []cubScanFinding{
