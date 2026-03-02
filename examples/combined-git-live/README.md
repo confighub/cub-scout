@@ -79,21 +79,34 @@ The alignment result sorts every app into one of three buckets:
 cub-scout doesn't guess whether `git-only` or `cluster-only` is a problem.
 It reports the facts. You decide what to do about it.
 
-## 4. Here's the Proposal
+Sample summary from this scenario:
 
-When you add `--suggest`, cub-scout generates a ConfigHub App structure:
+```text
+SUMMARY
+  aligned: 4
+  git-only: 1
+  cluster-only: 1
+
+NON-ALIGNED
+  notifications-service  git-only
+  cache-warmer          cluster-only
+```
+
+## 4. Here's the Suggested App Model
+
+When you add `--suggest`, cub-scout generates a suggested ConfigHub app model:
 
 ```
-PROPOSED HUB/APP SPACE MODEL
+PROPOSED APP MODEL (SUGGESTION ONLY)
 
-  HUB (Platform Catalog)
-    Base: payment-api (apps/payment-api/base)
-    Base: payment-worker (apps/payment-worker/base)
-    Base: notifications-service (apps/notifications-service/base)
+  Catalog Bases
+    payment-api            (apps/payment-api/base)
+    payment-worker         (apps/payment-worker/base)
+    notifications-service  (apps/notifications-service/base)
 
-  APP SPACE: banko-team
+  Team Scope: banko-team
     Deployer: Flux
-    Reconciliation Rules:
+    Reconciliation Rules (proposed policy, not applied by combined):
       variant=prod  -> drift:revert, approval:required
       variant=dev   -> drift:accept, approval:none
 
@@ -114,6 +127,9 @@ PROPOSED HUB/APP SPACE MODEL
   Summary: 4 aligned, 1 git-only, 1 cluster-only
 ```
 
+Note: current JSON output still uses legacy keys like `model: "hub-appspace"` and
+`appSpace` for compatibility, even when we describe the result as an app model.
+
 Variant inference comes from the Kustomization overlay paths:
 `overlays/dev` becomes variant `dev`, `overlays/prod` becomes variant `prod`.
 
@@ -127,6 +143,9 @@ Variant inference comes from the Kustomization overlay paths:
 
 - **Read-only.** cub-scout never modifies the cluster or the Git repo. The
   `--suggest` flag produces a proposal, not an action.
+
+- **Policy is suggested, not enforced here.** Reconciliation/approval rules in
+  `--suggest` output are planning defaults for ConfigHub, not an applied control loop.
 
 - **Variant inference is deterministic.** It comes from Kustomization paths, not
   guessing. If the path contains `overlays/prod`, the variant is `prod`.
@@ -152,14 +171,23 @@ kubectl apply -f examples/combined-git-live/cluster-fixtures/deployments.yaml
 # Run combined alignment
 ./cub-scout combined \
   --git-path examples/combined-git-live/git-repo \
-  --namespace payment-dev \
+  --namespace payment-dev,payment-prod \
   --suggest
 
 # JSON output for scripting
 ./cub-scout combined \
   --git-path examples/combined-git-live/git-repo \
-  --namespace payment-dev \
+  --namespace payment-dev,payment-prod \
   --suggest --json | jq '.alignment[] | select(.status != "aligned")'
+
+# Optional: quick check against expected output fixture
+./cub-scout combined \
+  --git-path examples/combined-git-live/git-repo \
+  --namespace payment-dev,payment-prod \
+  --suggest --json > /tmp/combined-live.json
+
+jq -r '.alignment | group_by(.status) | map({status: .[0].status, count: length})' /tmp/combined-live.json
+jq -r '.alignment | group_by(.status) | map({status: .[0].status, count: length})' examples/combined-git-live/expected-output/alignment.json
 ```
 
 ## See Also

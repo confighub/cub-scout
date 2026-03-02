@@ -439,6 +439,16 @@ With `--keep`, the cluster stays running for interactive exploration:
 ./cub-scout scan
 ```
 
+## Feedback
+
+Please share quick feedback on these:
+
+1. Was the dry/wet model clear after Act 4?
+2. Which output was most useful: `map`, `gitops status`, `tree/trace`, or `cub gitops import` results?
+3. Where did setup friction appear most: auth, workers, targets, or import?
+4. Did the app/team/variant label mapping match how your teams think about ownership?
+5. After this demo, does ConfigHub operational control-plane path make sense? If not, what feels unclear or missing?
+
 ## Troubleshooting
 
 **Flux takes too long to install**

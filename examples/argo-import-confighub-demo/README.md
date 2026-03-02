@@ -524,6 +524,16 @@ With `--keep`, the cluster stays running for interactive exploration:
 ./cub-scout gitops status
 ```
 
+## Feedback
+
+Please share quick feedback on these:
+
+1. Was the flow from ArgoCD Application -> rendered manifests -> ConfigHub dry/wet units clear?
+2. Which output was most useful: `map`, `gitops status`, `import-argocd`, or `cub gitops import` results?
+3. Did any app/team/variant label mapping look wrong or confusing?
+4. Where did setup friction appear most: auth, workers, targets, or import?
+5. After this demo, does ConfigHub operational control-plane path make sense? If not, what feels unclear or missing?
+
 ## Troubleshooting
 
 **ArgoCD takes too long to install**
