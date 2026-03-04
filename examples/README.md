@@ -48,6 +48,7 @@ Worked examples showing how cub-scout discovers workloads and proposes ConfigHub
 | [combined-git-live/](combined-git-live/) | **Flux** (Banko) | Git repo + cluster alignment |
 | [fleet-import/](fleet-import/) | **Multi-cluster** | Aggregating imports from 2 clusters into a unified proposal |
 | [demo-data-adt/](demo-data-adt/) | **App-Deployment-Target** | Multi-app × multi-env with version skew detection |
+| [new-user-puzzle-quest/](new-user-puzzle-quest/) | **AI onboarding** | Quest-style walkthrough for Claude/Codex users |
 
 The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against real kind clusters. The others use static fixtures (no live cluster needed) and include expected JSON output for validation.
 
@@ -130,6 +131,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [combined-git-live/](combined-git-live/) | **Working** | Git + cluster alignment (Flux/Banko pattern) | Learning combined discovery, Git drift detection |
 | [fleet-import/](fleet-import/) | **Working** | Multi-cluster fleet aggregation | Learning fleet import, cross-cluster proposals |
 | [demo-data-adt/](demo-data-adt/) | **Working** | App-Deployment-Target model (multi-app × multi-env) | Learning ADT model, version skew, scan |
+| [new-user-puzzle-quest/](new-user-puzzle-quest/) | **Working** | Quest-style new-user walkthrough (AI-assisted) | Guided capability/discovery/import validation |
 | [workflows/](workflows/) | **Working** | Artifact + fleet demos (CI → local, env comparison) | CI/CD integration, sharing bundles, comparing environments |
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |
