@@ -155,30 +155,36 @@ func TestRunCombined_GitPathWithBundleJSON(t *testing.T) {
 }
 
 type combinedFlagState struct {
-	gitURL    string
-	gitPath   string
-	namespace string
-	bundle    string
-	json      bool
-	suggest   bool
-	apply     bool
-	dryRun    bool
+	gitURL         string
+	gitPath        string
+	gitURLCompare  string
+	gitPathCompare string
+	namespace      string
+	bundle         string
+	json           bool
+	suggest        bool
+	apply          bool
+	dryRun         bool
 }
 
 func setCombinedFlagState(next combinedFlagState) func() {
 	prev := combinedFlagState{
-		gitURL:    combinedGitURL,
-		gitPath:   combinedGitPath,
-		namespace: combinedNamespace,
-		bundle:    combinedBundle,
-		json:      combinedJSON,
-		suggest:   combinedSuggest,
-		apply:     combinedApply,
-		dryRun:    combinedDryRun,
+		gitURL:         combinedGitURL,
+		gitPath:        combinedGitPath,
+		gitURLCompare:  combinedGitURLCompare,
+		gitPathCompare: combinedGitPathCompare,
+		namespace:      combinedNamespace,
+		bundle:         combinedBundle,
+		json:           combinedJSON,
+		suggest:        combinedSuggest,
+		apply:          combinedApply,
+		dryRun:         combinedDryRun,
 	}
 
 	combinedGitURL = next.gitURL
 	combinedGitPath = next.gitPath
+	combinedGitURLCompare = next.gitURLCompare
+	combinedGitPathCompare = next.gitPathCompare
 	combinedNamespace = next.namespace
 	combinedBundle = next.bundle
 	combinedJSON = next.json
@@ -189,6 +195,8 @@ func setCombinedFlagState(next combinedFlagState) func() {
 	return func() {
 		combinedGitURL = prev.gitURL
 		combinedGitPath = prev.gitPath
+		combinedGitURLCompare = prev.gitURLCompare
+		combinedGitPathCompare = prev.gitPathCompare
 		combinedNamespace = prev.namespace
 		combinedBundle = prev.bundle
 		combinedJSON = prev.json

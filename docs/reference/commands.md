@@ -27,6 +27,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
 | `tree` | Hierarchical resource views | v0.5 |
 | `import` | Import workloads into ConfigHub | v1.0 |
+| `combined` | Compare Git and cluster/bundle structures | v1.0 |
 | `discover` | Scout-style workload discovery | v0.5 |
 | `health` | Scout-style health check | v0.5 |
 | `status` | Show connection status and cluster info | v1.0 |
@@ -649,6 +650,44 @@ cub-scout import --from-bundle ./debug-bundle --dry-run --json
 `import --json` output includes an `evidence` block:
 - `evidence.source`: `cluster` or `bundle`
 - `evidence.bundlePath`: set when source is `bundle`
+
+---
+
+## combined
+
+Show alignment across Git, live cluster, bundle snapshots, and Git↔Git compare.
+
+```bash
+cub-scout combined [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--git-url` | Left-side Git repository URL |
+| `--git-path` | Left-side local Git repository path |
+| `--git-url-compare` | Right-side Git repository URL for Git↔Git compare |
+| `--git-path-compare` | Right-side local Git repository path for Git↔Git compare |
+| `-n, --namespace` | Namespace to scan from live cluster |
+| `--bundle` | Use debug bundle directory as offline cluster snapshot |
+| `--suggest` | Generate App model proposal |
+| `--apply` | Apply proposal to ConfigHub |
+| `--dry-run` | Preview apply behavior without making changes |
+| `--json` | Output JSON |
+
+### Examples
+
+```bash
+# Git ↔ live cluster compare
+cub-scout combined --git-path ./repo --namespace payments --json
+
+# Git ↔ bundle (offline cluster snapshot) compare
+cub-scout combined --git-path ./repo --bundle ./debug-bundle --json
+
+# Git ↔ Git compare (left vs right)
+cub-scout combined --git-path ./repo-a --git-path-compare ./repo-b --json
+```
 
 ---
 

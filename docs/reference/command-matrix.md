@@ -230,7 +230,10 @@ Complete reference of all commands, options, TUI keys, and availability.
 |--------|-------------|
 | `--git-url` | Git repository URL |
 | `--git-path` | Local path to Git repo |
+| `--git-url-compare` | Right-side Git repository URL for Git↔Git compare |
+| `--git-path-compare` | Right-side local Git repository path for Git↔Git compare |
 | `-n, --namespace` | Namespace to scan |
+| `--bundle` | Debug bundle directory as offline cluster snapshot |
 | `--suggest` | Generate Hub/App Space proposal |
 | `--apply` | Create App Space and Units |
 | `--dry-run` | Show without making changes |

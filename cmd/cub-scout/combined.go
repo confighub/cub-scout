@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/confighub/cub-scout/pkg/gitops"
@@ -16,22 +17,25 @@ import (
 )
 
 var (
-	combinedGitURL    string
-	combinedGitPath   string
-	combinedNamespace string
-	combinedBundle    string
-	combinedJSON      bool
-	combinedSuggest   bool
-	combinedApply     bool
-	combinedDryRun    bool
+	combinedGitURL         string
+	combinedGitPath        string
+	combinedGitURLCompare  string
+	combinedGitPathCompare string
+	combinedNamespace      string
+	combinedBundle         string
+	combinedJSON           bool
+	combinedSuggest        bool
+	combinedApply          bool
+	combinedDryRun         bool
 )
 
 // CombinedResult shows Git repo structure + Cluster workloads together
 type CombinedResult struct {
-	GitRepo   *gitops.RepoStructure `json:"gitRepo,omitempty"`
-	Cluster   *ImportResult         `json:"cluster,omitempty"`
-	Alignment []AlignmentEntry      `json:"alignment,omitempty"`
-	Proposal  *FullProposal         `json:"proposal,omitempty"` // App model proposal
+	GitRepo    *gitops.RepoStructure `json:"gitRepo,omitempty"`
+	GitCompare []GitCompareEntry     `json:"gitCompare,omitempty"`
+	Cluster    *ImportResult         `json:"cluster,omitempty"`
+	Alignment  []AlignmentEntry      `json:"alignment,omitempty"`
+	Proposal   *FullProposal         `json:"proposal,omitempty"` // App model proposal
 }
 
 // AlignmentEntry shows how Git apps align with cluster workloads
@@ -41,6 +45,15 @@ type AlignmentEntry struct {
 	LivePath   string   `json:"livePath,omitempty"`   // From cluster deployer
 	Status     string   `json:"status"`               // "aligned", "git-only", "cluster-only"
 	Workloads  []string `json:"workloads,omitempty"`
+}
+
+// GitCompareEntry represents a Git↔Git comparison row.
+type GitCompareEntry struct {
+	App       string `json:"app"`
+	Variant   string `json:"variant,omitempty"`
+	Status    string `json:"status"` // "aligned", "left-only", "right-only"
+	LeftPath  string `json:"leftPath,omitempty"`
+	RightPath string `json:"rightPath,omitempty"`
 }
 
 var combinedCmd = &cobra.Command{
@@ -74,6 +87,9 @@ Examples:
 
   # Offline Git ↔ cluster compare from a debug bundle
   cub-scout combined --git-path ./my-repo --bundle ./debug-bundle --json
+
+  # Git ↔ Git compare (left vs right repo)
+  cub-scout combined --git-path ./repo-a --git-path-compare ./repo-b --json
 `,
 	RunE: runCombined,
 }
@@ -81,6 +97,8 @@ Examples:
 func init() {
 	combinedCmd.Flags().StringVar(&combinedGitURL, "git-url", "", "Git repository URL to parse")
 	combinedCmd.Flags().StringVar(&combinedGitPath, "git-path", "", "Local path to Git repository")
+	combinedCmd.Flags().StringVar(&combinedGitURLCompare, "git-url-compare", "", "Right-side Git repository URL for Git↔Git compare")
+	combinedCmd.Flags().StringVar(&combinedGitPathCompare, "git-path-compare", "", "Right-side local Git repository path for Git↔Git compare")
 	combinedCmd.Flags().StringVarP(&combinedNamespace, "namespace", "n", "", "Namespace to scan in cluster")
 	combinedCmd.Flags().StringVar(&combinedBundle, "bundle", "", "Debug bundle directory to use as cluster snapshot (offline)")
 	combinedCmd.Flags().BoolVar(&combinedJSON, "json", false, "Output as JSON")
@@ -94,40 +112,29 @@ func init() {
 func runCombined(cmd *cobra.Command, args []string) error {
 	result := &CombinedResult{}
 
-	// Parse Git repo if provided
-	if combinedGitURL != "" || combinedGitPath != "" {
-		var repoPath string
-		var cleanup func()
+	// Parse left-side Git repo (primary).
+	leftRepo, leftCleanup, err := loadCombinedRepoSource(combinedGitURL, combinedGitPath)
+	if err != nil {
+		return err
+	}
+	if leftCleanup != nil {
+		defer leftCleanup()
+	}
+	result.GitRepo = leftRepo
 
-		if combinedGitURL != "" {
-			tmpDir, err := os.MkdirTemp("", "gitops-combined-*")
-			if err != nil {
-				return fmt.Errorf("create temp dir: %w", err)
-			}
-			cleanup = func() { os.RemoveAll(tmpDir) }
-
-			if !combinedJSON {
-				fmt.Fprintf(os.Stderr, "Cloning %s...\n", combinedGitURL)
-			}
-			gitCmd := exec.Command("git", "clone", "--depth=1", combinedGitURL, tmpDir)
-			if output, err := gitCmd.CombinedOutput(); err != nil {
-				cleanup()
-				return fmt.Errorf("clone failed: %w\n%s", err, output)
-			}
-			repoPath = tmpDir
-		} else {
-			repoPath = combinedGitPath
-		}
-
-		if cleanup != nil {
-			defer cleanup()
-		}
-
-		repo, err := gitops.ParseRepo(repoPath)
-		if err != nil {
-			return fmt.Errorf("parse repo: %w", err)
-		}
-		result.GitRepo = repo
+	// Parse right-side Git repo (compare).
+	rightRepo, rightCleanup, err := loadCombinedRepoSource(combinedGitURLCompare, combinedGitPathCompare)
+	if err != nil {
+		return err
+	}
+	if rightCleanup != nil {
+		defer rightCleanup()
+	}
+	if rightRepo != nil && leftRepo == nil {
+		return fmt.Errorf("--git-url-compare/--git-path-compare requires --git-url or --git-path")
+	}
+	if leftRepo != nil && rightRepo != nil {
+		result.GitCompare = buildGitComparison(leftRepo, rightRepo)
 	}
 
 	// Collect cluster-side workloads from live namespace OR bundle snapshot.
@@ -148,13 +155,13 @@ func runCombined(cmd *cobra.Command, args []string) error {
 	}
 
 	// Build alignment if we have both
-	if result.GitRepo != nil && result.Cluster != nil {
-		result.Alignment = buildAlignment(result.GitRepo, result.Cluster)
+	if leftRepo != nil && result.Cluster != nil {
+		result.Alignment = buildAlignment(leftRepo, result.Cluster)
 	}
 
 	// Build full App model proposal if --suggest
-	if combinedSuggest && result.GitRepo != nil {
-		result.Proposal = SuggestFullProposal(result.GitRepo.Apps, workloads, "")
+	if combinedSuggest && leftRepo != nil {
+		result.Proposal = SuggestFullProposal(leftRepo.Apps, workloads, "")
 	}
 
 	// Build proposal from cluster-only if no Git repo
@@ -188,6 +195,51 @@ func runCombined(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func loadCombinedRepoSource(gitURL, gitPath string) (*gitops.RepoStructure, func(), error) {
+	gitURL = strings.TrimSpace(gitURL)
+	gitPath = strings.TrimSpace(gitPath)
+
+	if gitURL == "" && gitPath == "" {
+		return nil, nil, nil
+	}
+	if gitURL != "" && gitPath != "" {
+		return nil, nil, fmt.Errorf("--git-url and --git-path cannot be used together")
+	}
+
+	var (
+		repoPath string
+		cleanup  func()
+	)
+	if gitURL != "" {
+		tmpDir, err := os.MkdirTemp("", "gitops-combined-*")
+		if err != nil {
+			return nil, nil, fmt.Errorf("create temp dir: %w", err)
+		}
+		cleanup = func() { os.RemoveAll(tmpDir) }
+
+		if !combinedJSON {
+			fmt.Fprintf(os.Stderr, "Cloning %s...\n", gitURL)
+		}
+		gitCmd := exec.Command("git", "clone", "--depth=1", gitURL, tmpDir)
+		if output, err := gitCmd.CombinedOutput(); err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("clone failed: %w\n%s", err, output)
+		}
+		repoPath = tmpDir
+	} else {
+		repoPath = gitPath
+	}
+
+	repo, err := gitops.ParseRepo(repoPath)
+	if err != nil {
+		if cleanup != nil {
+			cleanup()
+		}
+		return nil, nil, fmt.Errorf("parse repo: %w", err)
+	}
+	return repo, cleanup, nil
+}
+
 func resolveCombinedWorkloadsSource(namespace, bundlePath string) ([]WorkloadInfo, string, error) {
 	if namespace != "" && bundlePath != "" {
 		return nil, "", fmt.Errorf("--namespace and --bundle cannot be used together")
@@ -214,6 +266,109 @@ func resolveCombinedWorkloadsSource(namespace, bundlePath string) ([]WorkloadInf
 	}
 
 	return []WorkloadInfo{}, "", nil
+}
+
+func buildGitComparison(left, right *gitops.RepoStructure) []GitCompareEntry {
+	if left == nil || right == nil {
+		return nil
+	}
+
+	leftIndex := indexRepoAppsForCompare(left)
+	rightIndex := indexRepoAppsForCompare(right)
+
+	keySet := make(map[gitCompareKey]struct{}, len(leftIndex)+len(rightIndex))
+	for k := range leftIndex {
+		keySet[k] = struct{}{}
+	}
+	for k := range rightIndex {
+		keySet[k] = struct{}{}
+	}
+
+	keys := make([]gitCompareKey, 0, len(keySet))
+	for k := range keySet {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].App != keys[j].App {
+			return keys[i].App < keys[j].App
+		}
+		return keys[i].Variant < keys[j].Variant
+	})
+
+	entries := make([]GitCompareEntry, 0, len(keys))
+	for _, key := range keys {
+		leftPath, leftOK := leftIndex[key]
+		rightPath, rightOK := rightIndex[key]
+		entry := GitCompareEntry{
+			App:       key.App,
+			Variant:   key.Variant,
+			LeftPath:  leftPath,
+			RightPath: rightPath,
+		}
+		switch {
+		case leftOK && rightOK:
+			entry.Status = "aligned"
+		case leftOK:
+			entry.Status = "left-only"
+		default:
+			entry.Status = "right-only"
+		}
+		entries = append(entries, entry)
+	}
+	return entries
+}
+
+type gitCompareKey struct {
+	App     string
+	Variant string
+}
+
+func indexRepoAppsForCompare(repo *gitops.RepoStructure) map[gitCompareKey]string {
+	index := make(map[gitCompareKey]string)
+	for _, app := range repo.Apps {
+		appName := strings.TrimSpace(app.Name)
+		if appName == "" {
+			continue
+		}
+		if len(app.Variants) == 0 {
+			key := gitCompareKey{
+				App:     appName,
+				Variant: "default",
+			}
+			setComparePath(index, key, app.BasePath)
+			continue
+		}
+
+		for _, variant := range app.Variants {
+			variantName := strings.TrimSpace(variant.Name)
+			if variantName == "" {
+				variantName = "default"
+			}
+			path := strings.TrimSpace(variant.Path)
+			if path == "" {
+				path = app.BasePath
+			}
+			key := gitCompareKey{
+				App:     appName,
+				Variant: variantName,
+			}
+			setComparePath(index, key, path)
+		}
+	}
+	return index
+}
+
+func setComparePath(index map[gitCompareKey]string, key gitCompareKey, path string) {
+	current, exists := index[key]
+	path = strings.TrimSpace(path)
+	if !exists {
+		index[key] = path
+		return
+	}
+	// Keep deterministic tie-breaking for duplicate app/variant rows.
+	if current == "" || (path != "" && path < current) {
+		index[key] = path
+	}
 }
 
 func buildAlignment(repo *gitops.RepoStructure, cluster *ImportResult) []AlignmentEntry {
@@ -332,6 +487,30 @@ func printCombinedResult(r *CombinedResult) {
 			}
 			if a.LivePath != "" {
 				fmt.Printf(" [path: %s]", a.LivePath)
+			}
+			fmt.Println()
+		}
+		fmt.Println()
+	}
+
+	if len(r.GitCompare) > 0 {
+		fmt.Println("┌─────────────────────────────────────────────────────────────┐")
+		fmt.Println("│ GIT COMPARE                                                 │")
+		fmt.Println("└─────────────────────────────────────────────────────────────┘")
+		for _, c := range r.GitCompare {
+			status := SymOK
+			if c.Status == "left-only" || c.Status == "right-only" {
+				status = "⚠ " + c.Status
+			}
+			fmt.Printf("  %s %s", status, c.App)
+			if c.Variant != "" {
+				fmt.Printf(" (variant=%s)", c.Variant)
+			}
+			if c.LeftPath != "" {
+				fmt.Printf(" [left: %s]", c.LeftPath)
+			}
+			if c.RightPath != "" {
+				fmt.Printf(" [right: %s]", c.RightPath)
 			}
 			fmt.Println()
 		}
