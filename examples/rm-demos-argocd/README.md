@@ -103,6 +103,6 @@ Before running fleet demos, verify with single cluster:
 
 ## See Also
 
-- [docs/map/howto/import-to-confighub.md](../../docs/map/howto/import-to-confighub.md) — Import workloads to ConfigHub
+- [docs/howto/import-to-confighub.md](../../docs/howto/import-to-confighub.md) — Import workloads to ConfigHub
 - [docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Pattern → ConfigHub mapping (archived)
-- [docs/map/reference/gitops-repo-structures.md](../../docs/map/reference/gitops-repo-structures.md) — GitOps repository patterns
+- [docs/reference/gitops-repo-structures.md](../../docs/reference/gitops-repo-structures.md) — GitOps repository patterns

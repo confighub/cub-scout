@@ -95,6 +95,14 @@ var scenarios = map[string]Demo{
 	},
 }
 
+var demoAliases = map[string]string{
+	"risk": "ccve",
+}
+
+var scenarioAliases = map[string]string{
+	"bigbank": "bigbank-incident",
+}
+
 var demoCmd = &cobra.Command{
 	Use:   "demo [name]",
 	Short: "Run interactive demos",
@@ -105,7 +113,7 @@ Examples:
   cub-scout demo quick              # Quick demo (~30 sec)
   cub-scout demo ccve               # Risk issue detection demo (~2 min)
   cub-scout demo query              # Query language demo
-  cub-scout demo scenario bigbank   # Narrative scenario
+  cub-scout demo scenario bigbank-incident   # Narrative scenario
 
   cub-scout demo quick --cleanup    # Remove demo resources`,
 	Args: cobra.MaximumNArgs(2),
@@ -131,7 +139,7 @@ Available scenarios:
   break-glass         Emergency kubectl -> Accept/Reject workflow`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		name := args[0]
+		name := canonicalScenarioName(args[0])
 		scenario, ok := scenarios[name]
 		if !ok {
 			return fmt.Errorf("unknown scenario: %s\nRun 'cub-scout demo list' to see available scenarios", name)
@@ -153,6 +161,20 @@ func init() {
 	demoScenarioCmd.Flags().BoolVar(&demoCleanup, "cleanup", false, "Remove scenario resources")
 }
 
+func canonicalDemoName(name string) string {
+	if alias, ok := demoAliases[name]; ok {
+		return alias
+	}
+	return name
+}
+
+func canonicalScenarioName(name string) string {
+	if alias, ok := scenarioAliases[name]; ok {
+		return alias
+	}
+	return name
+}
+
 func runDemo(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		listDemos()
@@ -166,7 +188,7 @@ func runDemo(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return fmt.Errorf("scenario name required\nRun 'cub-scout demo list' to see available scenarios")
 		}
-		scenarioName := args[1]
+		scenarioName := canonicalScenarioName(args[1])
 		scenario, ok := scenarios[scenarioName]
 		if !ok {
 			return fmt.Errorf("unknown scenario: %s", scenarioName)
@@ -181,7 +203,8 @@ func runDemo(cmd *cobra.Command, args []string) error {
 		return scenario.Run()
 	}
 
-	demo, ok := demos[name]
+	demoName := canonicalDemoName(name)
+	demo, ok := demos[demoName]
 	if !ok {
 		return fmt.Errorf("unknown demo: %s\nRun 'cub-scout demo list' to see available demos", name)
 	}

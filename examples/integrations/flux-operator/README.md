@@ -285,4 +285,4 @@ kubectl apply -f agent-deployment.yaml
 - [Flux Operator](https://fluxcd.control-plane.io/operator/)
 - [Flux Operator Web UI](https://fluxoperator.dev/web-ui/)
 - [Stefan Prodan's Blog](https://stefanprodan.com/blog/2024/flux-operator/)
-- [cub-scout GSF Schema](../../docs/GSF-SCHEMA.md)
+- [cub-scout GSF Schema](../../../docs/reference/gsf-schema.md)

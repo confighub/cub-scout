@@ -183,8 +183,7 @@ Interactive demos to show the agent in action:
 ```bash
 ./demo --list              # List all demos
 ./demo quick               # 30-second ownership demo
-./demo risk                # RISK-2025-0027 (BIGBANK Grafana bug)
+./demo ccve                # RISK-2025-0027 (BIGBANK Grafana bug)
 ./demo scenario clobber    # Platform updates vs app overlays
 ./demo connected           # ConfigHub connected mode
 ```
-

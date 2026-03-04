@@ -214,19 +214,19 @@ TUI mockup showing how ConfigHub can manage non-Kubernetes configuration (based 
 ```bash
 cub-scout demo list              # List all demos
 cub-scout demo quick             # 30-second demo
-cub-scout demo risk              # RISK-2025-0027 detection
-cub-scout demo healthy           # Enterprise healthy pattern
-cub-scout demo unhealthy         # Common GitOps problems
+cub-scout demo ccve              # RISK-2025-0027 detection
+cub-scout demo query             # Query language walkthrough
+cub-scout demo scenario break-glass # Emergency kubectl workflow
 cub-scout demo <name> --cleanup  # Remove demo resources
 ```
 
 | Demo | Time | Shows |
 |------|------|-------|
 | `quick` | ~30 sec | Ownership detection, map dashboard |
-| `risk` | ~2 min | RISK-2025-0027 (BIGBANK Grafana bug) |
-| `healthy` | ~2 min | Enterprise hub-and-spoke pattern |
-| `unhealthy` | ~2 min | Suspended resources, broken deployers |
-| `scenario clobber` | ~2 min | Platform updates vs app overlays |
+| `ccve` | ~2 min | RISK-2025-0027 (BIGBANK Grafana bug) |
+| `query` | ~1 min | Filter by owner, namespace, and cluster |
+| `scenario bigbank-incident` | ~3 min | BIGBANK outage walkthrough |
+| `scenario break-glass` | ~2 min | Emergency kubectl and follow-up decisions |
 
 See [demos/README.md](demos/README.md) for detailed walkthroughs.
 
@@ -400,5 +400,5 @@ $ cub-scout map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
 | [docs/howto/import-to-confighub.md](../docs/howto/import-to-confighub.md) | Import workloads into ConfigHub |
 | [README.md](../README.md) | Project overview |
 | [docs/concepts/architecture.md](../docs/concepts/architecture.md) | How it works, GSF protocol |
-| [docs/howto/scan-for-risk issues.md](../docs/howto/scan-for-risk issues.md) | risk issue scanning (46 patterns) |
+| [docs/howto/scan-for-risks.md](../docs/howto/scan-for-risks.md) | risk issue scanning (46 patterns) |
 | [test/README.md](../test/README.md) | Testing documentation |

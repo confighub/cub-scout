@@ -224,6 +224,6 @@ cub-scout map list
 
 ## See Also
 
-- [docs/SCALE-DEMO.md](../../docs/SCALE-DEMO.md) - Scale testing guide
+- [docs/getting-started/scale-demo.md](../../docs/getting-started/scale-demo.md) - Scale testing guide
 - [docs/diagrams/](../../docs/diagrams/) - Visual explanations
 - [flux2-kustomize-helm-example](https://github.com/fluxcd/flux2-kustomize-helm-example) - Upstream repo

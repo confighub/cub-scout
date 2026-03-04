@@ -105,5 +105,5 @@ Ownership Distribution:
 
 ## See Also
 
-- [docs/SCALE-DEMO.md](../../docs/SCALE-DEMO.md) - Full scale demo guide
+- [docs/getting-started/scale-demo.md](../../docs/getting-started/scale-demo.md) - Full scale demo guide
 - [CLI-GUIDE.md](../../CLI-GUIDE.md) - Command reference
