@@ -52,6 +52,8 @@ Worked examples showing how cub-scout discovers workloads and proposes ConfigHub
 
 The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against real kind clusters. The others use static fixtures (no live cluster needed) and include expected JSON output for validation.
 
+**New to cub-scout?** Try the [Puzzle Quest](puzzle-quest.md) — a guided walkthrough that takes you from zero to full cluster discovery and ConfigHub import.
+
 ### Apptique Examples
 
 Multiple GitOps patterns using Google's Online Boutique app — **included in this repo**:
