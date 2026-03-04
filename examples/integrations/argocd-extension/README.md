@@ -228,4 +228,4 @@ Returns risk issue findings:
 ## References
 
 - [Argo CD UI Extensions](https://argo-cd.readthedocs.io/en/stable/developer-guide/extensions/ui-extensions/)
-- [cub-scout GSF Schema](../../docs/GSF-SCHEMA.md)
+- [cub-scout GSF Schema](../../../docs/reference/gsf-schema.md)

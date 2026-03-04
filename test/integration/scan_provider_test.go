@@ -20,7 +20,9 @@
 package integration
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -54,8 +56,8 @@ func TestScanProvider_LegacyEnvOverride(t *testing.T) {
 	}
 
 	// Verify output is valid JSON with static findings
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -99,8 +101,8 @@ func TestScanProvider_FileScan_WithFakeCubScan(t *testing.T) {
 	}
 
 	// Verify output is valid JSON
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -165,8 +167,8 @@ func TestScanProvider_NormalizedJSON_WithFakeCubScan(t *testing.T) {
 	}
 
 	// Verify normalized JSON structure
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -232,8 +234,8 @@ func TestScanProvider_FallbackToLegacy_WhenBinaryFails(t *testing.T) {
 	}
 
 	// Should still produce valid JSON (from legacy fallback)
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("fallback output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -242,7 +244,134 @@ func TestScanProvider_FallbackToLegacy_WhenBinaryFails(t *testing.T) {
 	}
 }
 
+// TestScanProvider_ClusterScan_WithFakeCubScan verifies cluster scan path:
+// legacy runtime signals are preserved while static findings are populated from cub-scan.
+func TestScanProvider_ClusterScan_WithFakeCubScan(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake binary test not supported on Windows")
+	}
+	skipIfNoCluster(t)
+
+	cubScout := getCubAgentPath()
+	tmpDir := t.TempDir()
+	fakeBinary := filepath.Join(tmpDir, "confighub-scan")
+	writeFakeBinary(t, fakeBinary, fakeCubScanClusterJSON)
+
+	cmd := exec.Command(cubScout, "scan", "--json")
+	cmd.Env = append(os.Environ(),
+		"PATH="+tmpDir+":"+os.Getenv("PATH"),
+		"CUB_SCOUT_SCAN_PROVIDER=",
+		"CUB_SCOUT_SCAN_RAW_DIR="+tmpDir,
+		"NO_COLOR=1",
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exitErr.ExitCode() != 1 {
+				t.Fatalf("unexpected exit code %d: %s", exitErr.ExitCode(), output)
+			}
+		} else {
+			t.Fatalf("failed to run cub-scout: %v", err)
+		}
+	}
+
+	result, err := parseJSONMap(output)
+	if err != nil {
+		t.Fatalf("cluster scan output is not valid JSON: %v\n%s", err, output)
+	}
+
+	if _, ok := result["state"]; !ok {
+		t.Error("cluster scan JSON missing 'state' field (legacy runtime output should remain)")
+	}
+	if !hasStaticFindingID(result, "CCVE-CLUSTER-FAKE-0001") {
+		t.Fatalf("cluster scan static findings missing expected fake cub-scan finding id")
+	}
+}
+
+// TestScanProvider_ClusterScan_FallbackToLegacy_WhenBinaryFails verifies that
+// a failing cub-scan binary does not poison cluster scan output.
+func TestScanProvider_ClusterScan_FallbackToLegacy_WhenBinaryFails(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake binary test not supported on Windows")
+	}
+	skipIfNoCluster(t)
+
+	cubScout := getCubAgentPath()
+	tmpDir := t.TempDir()
+	fakeBinary := filepath.Join(tmpDir, "confighub-scan")
+	writeFakeBinary(t, fakeBinary, "") // empty output -> provider fallback
+
+	cmd := exec.Command(cubScout, "scan", "--json")
+	cmd.Env = append(os.Environ(),
+		"PATH="+tmpDir+":"+os.Getenv("PATH"),
+		"CUB_SCOUT_SCAN_PROVIDER=",
+		"NO_COLOR=1",
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exitErr.ExitCode() != 1 {
+				t.Fatalf("unexpected exit code %d: %s", exitErr.ExitCode(), output)
+			}
+		} else {
+			t.Fatalf("failed to run cub-scout: %v", err)
+		}
+	}
+
+	result, err := parseJSONMap(output)
+	if err != nil {
+		t.Fatalf("cluster scan fallback output is not valid JSON: %v\n%s", err, output)
+	}
+
+	if _, ok := result["state"]; !ok {
+		t.Error("cluster scan fallback JSON missing 'state' field")
+	}
+	if hasStaticFindingID(result, "CCVE-CLUSTER-FAKE-0001") {
+		t.Fatalf("cluster scan fallback unexpectedly included fake cub-scan finding id")
+	}
+}
+
 // --- helpers ---
+
+func hasStaticFindingID(result map[string]interface{}, wantID string) bool {
+	static, ok := result["static"].(map[string]interface{})
+	if !ok {
+		return false
+	}
+	findings, ok := static["findings"].([]interface{})
+	if !ok {
+		return false
+	}
+	for _, raw := range findings {
+		f, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if id, _ := f["ccve_id"].(string); id == wantID {
+			return true
+		}
+	}
+	return false
+}
+
+// parseJSONMap tolerates warning/log lines around JSON output from CLI commands.
+func parseJSONMap(output []byte) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	if err := json.Unmarshal(output, &result); err == nil {
+		return result, nil
+	}
+
+	start := bytes.IndexByte(output, '{')
+	end := bytes.LastIndexByte(output, '}')
+	if start == -1 || end == -1 || end < start {
+		return nil, fmt.Errorf("no JSON object found in output")
+	}
+
+	if err := json.Unmarshal(output[start:end+1], &result); err != nil {
+		return nil, fmt.Errorf("parse JSON payload: %w", err)
+	}
+	return result, nil
+}
 
 // findFixture returns the absolute path to a fixture file relative to project root.
 func findFixture(t *testing.T, relPath string) string {
@@ -290,3 +419,5 @@ func writeFakeBinary(t *testing.T, path, jsonOutput string) {
 
 // fakeCubScanJSON is a canned JSON response from a fake cub-scan binary.
 const fakeCubScanJSON = `{"findings":[{"id":"CCVE-2025-0244","name":"Probe timeout exceeds period","category":"SILENT","track":"static","severity":"warning","confidence":"high","tool":"cub-scan","resource":{"kind":"Deployment","name":"misconfigured-app","namespace":"default"},"message":"livenessProbe timeout (15s) > period (10s)","remedy_type":"config","remedy_safety":"safe","remediation":{"steps":["Ensure probe timeoutSeconds <= periodSeconds"],"commands":[]}},{"id":"CCVE-2025-0248","name":"Missing resource limits","category":"CONFIG","track":"static","severity":"warning","confidence":"high","tool":"cub-scan","resource":{"kind":"Deployment","name":"misconfigured-app","namespace":"default"},"message":"Container app has no resource limits defined","remedy_type":"config","remedy_safety":"safe","remediation":{"steps":["Add resources.limits.cpu and resources.limits.memory"],"commands":["kubectl set resources deployment/misconfigured-app --limits=cpu=500m,memory=256Mi"]}}],"scanned_at":"2026-02-25T12:00:00Z","file":"test.yaml","summary":{"total":2,"critical":0,"warning":2,"info":0}}`
+
+const fakeCubScanClusterJSON = `{"findings":[{"id":"CCVE-CLUSTER-FAKE-0001","name":"Cluster fake finding","category":"CONFIG","track":"static","severity":"warning","confidence":"high","tool":"cub-scan","resource":{"kind":"Deployment","name":"cluster-fake","namespace":"default"},"message":"fake cluster finding for integration test","remedy_type":"config","remedy_safety":"safe","remediation":{"steps":["none"],"commands":[]}}],"scanned_at":"2026-03-04T12:00:00Z","file":"cluster-export.yaml","summary":{"total":1,"critical":0,"warning":1,"info":0}}`

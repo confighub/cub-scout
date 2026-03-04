@@ -82,6 +82,10 @@ Revision:      main@sha1:abc123`,
 						if link.Kind != "ConfigHub OCI" {
 							t.Errorf("Kind = %q, want %q", link.Kind, "ConfigHub OCI")
 						}
+						// Keep Flux source object identity stable for artifact lookup/GVR fetch.
+						if link.Name != "confighub-prod" {
+							t.Errorf("Name = %q, want %q", link.Name, "confighub-prod")
+						}
 					} else {
 						if link.Kind != "OCIRepository" {
 							t.Errorf("Kind = %q, want %q for generic OCI", link.Kind, "OCIRepository")

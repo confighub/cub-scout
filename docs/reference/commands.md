@@ -491,6 +491,7 @@ See `docs/howto/trace-context-troubleshooting.md` for the full flow.
 |-------------|-------|
 | GitRepository | Flux |
 | OCIRepository | Flux |
+| ConfigHub OCI (OCI target path) | Flux |
 | HelmRepository | Flux |
 | Bucket | Flux |
 | Repository (Git/Helm) | ArgoCD |
@@ -536,6 +537,12 @@ cub-scout scan --file deployment.yaml
 cub-scout scan --list
 ```
 
+Provider behavior:
+- `scan --file`: uses `confighub-scan` / `cub-scan` when available, otherwise legacy scanner.
+- Cluster `scan`: preserves legacy runtime/state checks and augments static findings through
+  `cluster export -> cub-scan` when available.
+- Fallback is safe: if export or `cub-scan` fails, output falls back to legacy provider results.
+
 ---
 
 ## tree
@@ -580,8 +587,13 @@ For ArgoCD resources, this includes optional lineage to parent `Application` and
 
 `tree git --format json` emits:
 - `gitRepositories[]` (Flux GitRepository sources)
-- `argoApplications[]` (Argo Applications with optional `generatedByApplicationSet` and `parentApplication`)
+- `argoApplications[]` (Argo Applications with optional `generatedByApplicationSet`, `applicationSetLinkStatus`, and `parentApplication`)
 - `applicationSets[]` (Argo ApplicationSets with `generatorTypes[]` and `generatedApplications[]`)
+
+`applicationSetLinkStatus` values:
+- `resolved`: referenced ApplicationSet exists in-cluster
+- `orphan`: explicit ownerReference points to a missing ApplicationSet
+- `unknown`: inferred label/annotation points to a missing ApplicationSet
 
 For JSON contract details and schema ownership by surface, see [JSON Contracts and Output Model](json-contracts.md).
 

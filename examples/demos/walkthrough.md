@@ -346,70 +346,28 @@ kubectl delete -f test/atk/demos/demo-full.yaml
 
 ---
 
-## Enterprise Demos
+## Demo Runner
 
-Enterprise GitOps patterns with running pods and realistic ownership attribution.
-
-### Demo Runner
-
-Use the `demo` script for easy management:
+Use the built-in demo runner:
 
 ```bash
-cub-scout demo list              # List available demos
-cub-scout demo healthy             # Apply healthy demo (pods run)
-cub-scout demo unhealthy           # Apply unhealthy demo (pods run)
-cub-scout demo healthy --no-pods   # Apply without running pods
-cub-scout demo healthy --cleanup   # Remove demo resources
+cub-scout demo list                      # List available demos
+cub-scout demo quick                     # Ownership + map overview
+cub-scout demo ccve                      # BIGBANK risk issue story
+cub-scout demo query                     # Query language walkthrough
+cub-scout demo scenario bigbank-incident # Narrative outage scenario
+cub-scout demo scenario break-glass      # Emergency kubectl scenario
+cub-scout demo quick --no-pods           # Fast structural run
+cub-scout demo quick --cleanup           # Remove demo resources
 ```
 
-### Enterprise Healthy Demo
+### Demo Focus Areas
 
-Shows a well-architected hub-and-spoke GitOps deployment:
-
-```bash
-cub-scout demo healthy             # Apply with running pods
-cub-scout map                      # See ownership attribution
-cub-scout map confighub            # See ConfigHub hierarchy display
-cub-scout demo healthy --cleanup   # Cleanup
-```
-
-Features demonstrated:
-- Platform layer (cert-manager, prometheus, grafana) via Argo CD
-- Team workloads via Flux HelmRelease and Argo Application
-- Helm-managed inventory service
-- ConfigHub-pure resources (feature-flags)
-- Multiple deployers coexisting cleanly
-- ConfigHub annotations showing Space → Unit → Revision
-- **All pods running healthy** (uses nginx:alpine)
-
-### Enterprise Unhealthy Demo
-
-Shows common GitOps problems and risk issues:
-
-```bash
-cub-scout demo unhealthy           # Apply with running pods
-cub-scout map                      # See the chaos (Problems section)
-cub-scout scan                     # Find risk issues
-cub-scout demo unhealthy --cleanup # Cleanup
-```
-
-Problems demonstrated:
-- RISK-FLUX-005: Suspended Kustomization (forgotten maintenance)
-- HelmRelease with invalid chart version (SourceNotReady)
-- Orphan resources (no GitOps owner)
-- Duplicate payment services (coordination failure)
-- RISK-2025-0027: Grafana sidecar namespace whitespace bug (documented in YAML)
-
-### --no-pods Mode
-
-Use `--no-pods` for structural demos where you only want to show ownership patterns without waiting for pods:
-
-```bash
-cub-scout demo healthy --no-pods   # Fast apply, pods won't run
-cub-scout map                      # Still shows ownership correctly
-```
-
-This replaces `nginx:alpine` with a non-existent image, so pods stay in `ImagePullBackOff`.
+- `quick` — fast ownership detection and status views.
+- `ccve` — reproduces and detects the RISK-2025-0027 Grafana namespace bug.
+- `query` — demonstrates query filtering for owners, namespaces, and orphans.
+- `scenario bigbank-incident` — guided outage story based on real incident patterns.
+- `scenario break-glass` — break-glass deployment plus follow-up decision workflow.
 
 ---
 

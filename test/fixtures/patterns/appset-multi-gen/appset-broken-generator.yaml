@@ -1,0 +1,36 @@
+# ApplicationSet broken-generator lineage fixture.
+# Contains Argo Applications that reference ApplicationSets that do not exist:
+# - explicit ownerReference (should be orphan)
+# - inferred label (should remain unknown)
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: explicit-broken-app
+  namespace: argocd
+  ownerReferences:
+    - apiVersion: argoproj.io/v1alpha1
+      kind: ApplicationSet
+      name: missing-explicit-set
+spec:
+  source:
+    repoURL: https://git.example.local/platform.git
+    path: argo/apps/explicit-broken
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: inferred-broken-app
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/application-set-name: missing-inferred-set
+spec:
+  source:
+    repoURL: https://git.example.local/platform.git
+    path: argo/apps/inferred-broken
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo

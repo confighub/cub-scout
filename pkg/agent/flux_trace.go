@@ -231,10 +231,7 @@ func (f *FluxTracer) parseSection(section string) (*ChainLink, error) {
 		// For ConfigHub OCI sources, update the Kind
 		if ociInfo.IsConfigHub {
 			link.Kind = "ConfigHub OCI"
-			// Optionally update the name to show space/target
-			if ociInfo.Space != "" && ociInfo.Target != "" {
-				link.Name = FormatConfigHubOCISource(ociInfo)
-			}
+			// Preserve the Flux OCIRepository object name for stable lookup and artifact joins.
 		}
 	}
 

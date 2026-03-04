@@ -1474,9 +1474,9 @@ make test-import-delegation
 ```bash
 ./cub-scout demo list
 ./cub-scout demo quick
-./cub-scout demo risk
+./cub-scout demo ccve
 ./cub-scout demo query
-./cub-scout demo scenario bigbank
+./cub-scout demo scenario bigbank-incident
 ./cub-scout demo quick --cleanup
 ```
 

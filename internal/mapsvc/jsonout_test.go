@@ -263,6 +263,7 @@ func TestInferRole(t *testing.T) {
 	}{
 		{"GitRepository", RoleSource},
 		{"OCIRepository", RoleSource},
+		{"ConfigHub OCI", RoleSource},
 		{"HelmRepository", RoleSource},
 		{"Bucket", RoleSource},
 		{"Kustomization", RoleDeployer},
@@ -446,6 +447,7 @@ func TestInferDeliveryStage(t *testing.T) {
 
 		// Artifacts
 		{"OCIRepository", StageArtifact},
+		{"ConfigHub OCI", StageArtifact},
 
 		// Deployers
 		{"Kustomization", StageDeployer},

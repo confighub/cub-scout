@@ -499,12 +499,12 @@ Quality/hardening (non-issue):
 * Import wizard test step re-enabled after unit apply
 * Scan auth surfaced under `--verbose` instead of silently swallowed
 
-Known limitation:
+Follow-up delivered:
 
-* `ConfighubScanProvider.ScanCluster()` delegates to the legacy provider.
-  `cub-scan` is a static file scanner with no cluster-scanning mode.
-  Wiring it for cluster scans (export resources → invoke cub-scan) is
-  tracked in #200. The fallback is safe and correct.
+* #200 — cluster scan path now exports live resources and invokes `cub-scan`
+  for static findings, while preserving legacy runtime signals.
+* Fallback remains safe and deterministic: if export or `cub-scan` fails,
+  scan output falls back to legacy provider results.
 
 ---
 

@@ -152,7 +152,7 @@ The demo runner provides the fastest path to a demo:
 cub-scout demo quick
 
 # RISK-2025-0027 demo (~2 min) - the BIGBANK 4-hour outage story
-cub-scout demo risk
+cub-scout demo ccve
 
 # Narrative scenario (~3 min) - walk through the incident
 cub-scout demo scenario bigbank-incident

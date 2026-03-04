@@ -1,0 +1,12 @@
+[
+  {
+    "kind": "OCIRepository",
+    "namespace": "flux-system",
+    "name": "confighub-prod",
+    "url": "http://source-controller.flux-system.svc.cluster.local/ocirepository/flux-system/confighub-prod/latest@sha1:abc123def456.tar.gz",
+    "revision": "latest@sha1:abc123def456",
+    "digest": "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "lastUpdateTime": "2026-03-01T12:00:00Z",
+    "sourceKind": "OCIRepository"
+  }
+]

@@ -192,4 +192,4 @@ The integration would require these Agent API endpoints:
 
 - [flux9s GitHub](https://github.com/dgunzy/flux9s)
 - [flux9s Documentation](https://flux9s.ca/)
-- [cub-scout GSF Schema](../../docs/GSF-SCHEMA.md)
+- [cub-scout GSF Schema](../../../docs/reference/gsf-schema.md)

@@ -84,7 +84,7 @@ with the new SHA256 checksums automatically.
 
 - [ ] All tests pass (`go test ./...`)
 - [ ] Golden tests are current (no `-update` needed)
-- [ ] ROADMAP.md reflects current version status
+- [ ] docs/roadmap.md reflects current version status
 - [ ] Version tag follows semver (vX.Y.Z)
 - [ ] Release notes describe changes clearly
 - [ ] After release: verify GitHub artifacts exist

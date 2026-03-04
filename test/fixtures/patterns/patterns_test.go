@@ -151,10 +151,10 @@ func TestAoA3Level_DeploymentInstanceLabels(t *testing.T) {
 
 	// Each leaf Deployment should have instance label matching its parent Application
 	expected := map[string]string{
-		"frontend-dev/Deployment/web-ui":      "frontend-dev",
-		"frontend-prod/Deployment/web-ui":     "frontend-prod",
-		"backend-dev/Deployment/api-server":   "backend-dev",
-		"backend-prod/Deployment/api-server":  "backend-prod",
+		"frontend-dev/Deployment/web-ui":     "frontend-dev",
+		"frontend-prod/Deployment/web-ui":    "frontend-prod",
+		"backend-dev/Deployment/api-server":  "backend-dev",
+		"backend-prod/Deployment/api-server": "backend-prod",
 	}
 
 	ownerMap := detectAll(objects)
@@ -219,6 +219,46 @@ func TestAppSetMultiGen_ApplicationSetPresent(t *testing.T) {
 	}
 }
 
+func TestAppSetBrokenGen_FixtureHasBrokenAndInferredLinks(t *testing.T) {
+	path := filepath.Join(fixtureDir(t), "appset-multi-gen", "appset-broken-generator.yaml")
+	objects := loadObjects(t, path)
+
+	apps := filterByKind(objects, "Application")
+	if len(apps) != 2 {
+		t.Fatalf("expected 2 Applications, got %d", len(apps))
+	}
+
+	appSets := filterByKind(objects, "ApplicationSet")
+	if len(appSets) != 0 {
+		t.Fatalf("expected 0 ApplicationSets, got %d", len(appSets))
+	}
+
+	var explicitBroken, inferredBroken bool
+	for _, app := range apps {
+		switch app.GetName() {
+		case "explicit-broken-app":
+			for _, ref := range app.GetOwnerReferences() {
+				if strings.EqualFold(ref.Kind, "ApplicationSet") && ref.Name == "missing-explicit-set" {
+					explicitBroken = true
+					break
+				}
+			}
+		case "inferred-broken-app":
+			labels := app.GetLabels()
+			if labels["argocd.argoproj.io/application-set-name"] == "missing-inferred-set" {
+				inferredBroken = true
+			}
+		}
+	}
+
+	if !explicitBroken {
+		t.Fatalf("explicit-broken-app is missing explicit broken ApplicationSet ownerReference")
+	}
+	if !inferredBroken {
+		t.Fatalf("inferred-broken-app is missing inferred ApplicationSet label")
+	}
+}
+
 // --- Flux Tenancy Tests ---
 
 func TestFluxTenancy_TenantIsolation(t *testing.T) {
@@ -227,10 +267,10 @@ func TestFluxTenancy_TenantIsolation(t *testing.T) {
 
 	// Each tenant's workload should be Flux-owned with the correct Kustomization name
 	expected := map[string]string{
-		"team-alpha/Deployment/alpha-api":       "tenant-alpha",
-		"team-beta/Deployment/beta-worker":      "tenant-beta",
-		"team-gamma/Deployment/gamma-frontend":  "tenant-gamma",
-		"platform/Deployment/ingress-nginx":     "platform-infra",
+		"team-alpha/Deployment/alpha-api":      "tenant-alpha",
+		"team-beta/Deployment/beta-worker":     "tenant-beta",
+		"team-gamma/Deployment/gamma-frontend": "tenant-gamma",
+		"platform/Deployment/ingress-nginx":    "platform-infra",
 	}
 
 	for _, obj := range objects {
@@ -288,13 +328,13 @@ func TestMixedTool_AllOwnersDetected(t *testing.T) {
 
 	expected := map[string]string{
 		// 7 ownership types
-		"apps/Deployment/flux-web":            agent.OwnerFlux,
-		"infra/Deployment/argo-api":           agent.OwnerArgo,
-		"data/Deployment/helm-redis":          agent.OwnerHelm,
-		"infra/Deployment/tf-vpc-controller":  agent.OwnerTerraform,
-		"data/Deployment/xp-database":         agent.OwnerCrossplane,
-		"apps/Deployment/ch-config-sync":      agent.OwnerConfigHub,
-		"apps/Deployment/legacy-cron":         agent.OwnerUnknown,
+		"apps/Deployment/flux-web":           agent.OwnerFlux,
+		"infra/Deployment/argo-api":          agent.OwnerArgo,
+		"data/Deployment/helm-redis":         agent.OwnerHelm,
+		"infra/Deployment/tf-vpc-controller": agent.OwnerTerraform,
+		"data/Deployment/xp-database":        agent.OwnerCrossplane,
+		"apps/Deployment/ch-config-sync":     agent.OwnerConfigHub,
+		"apps/Deployment/legacy-cron":        agent.OwnerUnknown,
 	}
 
 	ownerMap := detectAll(objects)
@@ -416,6 +456,7 @@ func TestPatternFixtures_ScanFileDoesNotPanic(t *testing.T) {
 	}{
 		{"aoa-3level", "aoa-deep/aoa-3level.yaml"},
 		{"appset-multi-gen", "appset-multi-gen/appset-multi-generator.yaml"},
+		{"appset-broken-gen", "appset-multi-gen/appset-broken-generator.yaml"},
 		{"flux-tenancy", "flux-tenancy/flux-tenancy.yaml"},
 		{"mixed-tool", "mixed-tool/mixed-tool-cluster.yaml"},
 	}
@@ -443,6 +484,7 @@ func TestAllFixtures_DeterministicOwnership(t *testing.T) {
 	fixtures := []string{
 		"aoa-deep/aoa-3level.yaml",
 		"appset-multi-gen/appset-multi-generator.yaml",
+		"appset-multi-gen/appset-broken-generator.yaml",
 		"flux-tenancy/flux-tenancy.yaml",
 		"mixed-tool/mixed-tool-cluster.yaml",
 	}

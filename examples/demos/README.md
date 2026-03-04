@@ -17,18 +17,15 @@ cub-scout demo <name> --cleanup # Remove demo resources
 | Demo | Time | Description |
 |------|------|-------------|
 | `quick` | ~30 sec | Fastest path to see Map in action |
-| `risk` | ~2 min | RISK-2025-0027: The BIGBANK Grafana bug |
-| `healthy` | ~2 min | Enterprise healthy (hub-and-spoke) |
-| `unhealthy` | ~2 min | Common GitOps problems |
-| `connected` | ~1 min | ConfigHub connected mode (requires cub auth) |
+| `ccve` | ~2 min | RISK-2025-0027: The BIGBANK Grafana bug |
+| `query` | ~1 min | Query language filtering by owner/namespace/cluster |
 
 ## Narrative Scenarios
 
 | Scenario | Time | Story |
 |----------|------|-------|
 | `bigbank-incident` | ~3 min | Walk through the BIGBANK 4-hour outage |
-| `orphan-hunt` | ~2 min | Find and fix orphan resources |
-| `monday-morning` | ~1 min | Weekly health check ritual |
+| `break-glass` | ~2 min | Emergency kubectl change and follow-up decisions |
 
 Run with: `cub-scout demo scenario <name>`
 
@@ -54,12 +51,12 @@ Shows:
 
 ---
 
-## risk issue Demo
+## CCVE Demo
 
 The BIGBANK Grafana bug that caused a 4-hour outage.
 
 ```bash
-cub-scout demo risk
+cub-scout demo ccve
 ```
 
 Creates:
@@ -75,45 +72,18 @@ Story: [BIGBANK - GitOps Lessons Learned](https://www.youtube.com/watch?v=VJiuu-
 
 ---
 
-## Enterprise Healthy Demo
+## Query Demo
 
-Enterprise hub-and-spoke GitOps pattern, all working correctly.
-
-```bash
-cub-scout demo healthy
-```
-
-Creates:
-- Platform layer (cert-manager, prometheus) via Argo CD
-- Team workloads via Flux HelmRelease and Argo Application
-- Helm-managed services
-- ConfigHub-pure resources (feature-flags)
-
-Shows:
-- Multiple deployers coexisting
-- ConfigHub hierarchy (Space → Unit → Revision)
-- All pods healthy
-
----
-
-## Enterprise Unhealthy Demo
-
-Common GitOps problems and risk issues.
+Query language walkthrough with realistic mixed ownership fixtures.
 
 ```bash
-cub-scout demo unhealthy
+cub-scout demo query
 ```
 
-Creates:
-- Suspended Kustomization (forgotten maintenance)
-- HelmRelease with invalid chart (SourceNotReady)
-- Orphan resources (no GitOps owner)
-- RISK-2025-0027 bug
-
 Shows:
-- Problem detection
-- risk issue scanner output
-- Troubleshooting workflow
+- Filtering by owner and namespace
+- OR/AND query patterns
+- Fast orphan discovery (`owner=Native`)
 
 ---
 
@@ -126,21 +96,23 @@ Shows:
 
 Example:
 ```bash
-cub-scout demo healthy --no-pods   # Fast structural demo
-cub-scout demo healthy --cleanup   # Clean up after
+cub-scout demo quick --no-pods   # Fast structural demo
+cub-scout demo quick --cleanup   # Clean up after
 ```
 
 ---
 
 ## Demo Fixtures
 
-Demo YAML files are in `test/atk/demos/`:
+Demo YAML files are in `test/atk/fixtures/`, `examples/demos/`, and `examples/impressive-demo/bad-configs/`:
 
 | File | Used By |
 |------|---------|
-| `demo-full.yaml` | risk demo |
-| `enterprise-healthy.yaml` | healthy demo |
-| `enterprise-unhealthy.yaml` | unhealthy demo |
+| `test/atk/fixtures/flux-basic.yaml` | quick demo |
+| `test/atk/fixtures/argo-basic.yaml` | quick demo |
+| `examples/impressive-demo/bad-configs/monitoring-bad.yaml` | ccve demo |
+| `examples/demos/multi-cluster.yaml` | query demo |
+| `examples/demos/break-glass.yaml` | break-glass scenario |
 
 ---
 
@@ -230,6 +202,6 @@ kind delete cluster --name cub-scout-demo
 
 - [examples/README.md](../README.md) - All examples
 - [examples/impressive-demo/](../impressive-demo/) - Full conference demo
-- [docs/TESTING-GUIDE.md](../../docs/TESTING-GUIDE.md) - Testing guide
-- [docs/map/howto/trace-ownership.md](../../docs/map/howto/trace-ownership.md) - Trace documentation
-- [docs/map/howto/scan-for-risk issues.md](../../docs/map/howto/scan-for-risk issues.md) - Scan documentation
+- [docs/testing/README.md](../../docs/testing/README.md) - Testing guide
+- [docs/howto/trace-ownership.md](../../docs/howto/trace-ownership.md) - Trace documentation
+- [docs/howto/scan-for-risks.md](../../docs/howto/scan-for-risks.md) - Scan documentation

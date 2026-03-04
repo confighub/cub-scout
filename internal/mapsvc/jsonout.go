@@ -343,12 +343,12 @@ type TraceOutput struct {
 // ChainNode represents a single node in the trace chain.
 type ChainNode struct {
 	ID             ResourceID `json:"id"`
-	Role           string     `json:"role"`                      // source, deployer, workload, intermediate
-	Relationship   string     `json:"relationship"`              // provides-manifests-to, applies, manages, managed-by
+	Role           string     `json:"role"`         // source, deployer, workload, intermediate
+	Relationship   string     `json:"relationship"` // provides-manifests-to, applies, manages, managed-by
 	Evidence       []Evidence `json:"evidence"`
-	DeliveryStage  string     `json:"deliveryStage,omitempty"`   // source, render, artifact, deployer, workload (v1.1+)
-	RenderedFrom   string     `json:"renderedFrom,omitempty"`    // provenance: what rendered this resource's manifests (v1.1+)
-	OriginalSource string     `json:"originalSource,omitempty"`  // provenance: original source-of-truth (v1.1+)
+	DeliveryStage  string     `json:"deliveryStage,omitempty"`  // source, render, artifact, deployer, workload (v1.1+)
+	RenderedFrom   string     `json:"renderedFrom,omitempty"`   // provenance: what rendered this resource's manifests (v1.1+)
+	OriginalSource string     `json:"originalSource,omitempty"` // provenance: original source-of-truth (v1.1+)
 }
 
 // Evidence represents structured proof of a relationship.
@@ -416,7 +416,7 @@ const (
 // InferRole determines the role of a chain node based on its Kind.
 func InferRole(kind string) string {
 	switch kind {
-	case "GitRepository", "OCIRepository", "HelmRepository", "Bucket":
+	case "GitRepository", "OCIRepository", "ConfigHub OCI", "HelmRepository", "Bucket":
 		return RoleSource
 	case "Kustomization", "HelmRelease", "Application":
 		return RoleDeployer
@@ -484,7 +484,7 @@ func InferDeliveryStage(kind string) string {
 	switch kind {
 	case "GitRepository", "HelmRepository", "Bucket":
 		return StageSource
-	case "OCIRepository":
+	case "OCIRepository", "ConfigHub OCI":
 		return StageArtifact
 	case "Kustomization", "HelmRelease", "Application":
 		return StageDeployer

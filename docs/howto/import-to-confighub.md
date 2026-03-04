@@ -172,6 +172,6 @@ make test-import-delegation
 - [Import from Live Example](../../examples/import-from-live/) — Worked example with fixtures
 - [Combined Git+Live Example](../../examples/combined-git-live/) — Git repo + cluster alignment
 - [Fleet Import Example](../../examples/fleet-import/) — Multi-cluster aggregation
-- [Business Outcomes](../../outcomes/README.md) — Why ConfigHub import matters
+- [Business Outcomes](../outcomes/README.md) — Why ConfigHub import matters
 - [ConfigHub Documentation](https://docs.confighub.com) — Full ConfigHub guide
 - [Import Docs Crosswalk](../reference/import-docs-crosswalk.md) — Archived import docs mapped to current docs

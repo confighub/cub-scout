@@ -117,10 +117,12 @@
 
 ### D. Bash E2E Demos (Requires Cluster)
 
+These entries are validated via the `test/atk/demo` script surface (not `cub-scout demo` directly).
+
 | Demo | What It Proves |
 |------|----------------|
 | `demo quick` | Apply fixtures → map status/list/issues works |
-| `demo risk` | RISK-2025-0027 detection scenario |
+| `demo ccve` | RISK-2025-0027 detection scenario |
 | `demo healthy` | Enterprise healthy cluster view |
 | `demo unhealthy` | Enterprise problem detection |
 | `demo connected` | ConfigHub connected mode (requires auth) |

@@ -60,6 +60,16 @@ func TestParseOCISource(t *testing.T) {
 			},
 		},
 		{
+			name: "OCI registry prefix without ConfigHub target path",
+			url:  "oci://oci.confighub.com/some/other/path",
+			expected: OCISourceInfo{
+				Raw:         "oci://oci.confighub.com/some/other/path",
+				IsConfigHub: false,
+				Registry:    "oci.confighub.com",
+				Repository:  "some/other/path",
+			},
+		},
+		{
 			name: "Invalid URL - no oci:// prefix",
 			url:  "https://github.com/org/repo",
 			expected: OCISourceInfo{
