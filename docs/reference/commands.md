@@ -581,8 +581,13 @@ For ArgoCD resources, this includes optional lineage to parent `Application` and
 
 `tree git --format json` emits:
 - `gitRepositories[]` (Flux GitRepository sources)
-- `argoApplications[]` (Argo Applications with optional `generatedByApplicationSet` and `parentApplication`)
+- `argoApplications[]` (Argo Applications with optional `generatedByApplicationSet`, `applicationSetLinkStatus`, and `parentApplication`)
 - `applicationSets[]` (Argo ApplicationSets with `generatorTypes[]` and `generatedApplications[]`)
+
+`applicationSetLinkStatus` values:
+- `resolved`: referenced ApplicationSet exists in-cluster
+- `orphan`: explicit ownerReference points to a missing ApplicationSet
+- `unknown`: inferred label/annotation points to a missing ApplicationSet
 
 For JSON contract details and schema ownership by surface, see [JSON Contracts and Output Model](json-contracts.md).
 

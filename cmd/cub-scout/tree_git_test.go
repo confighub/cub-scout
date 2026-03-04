@@ -156,6 +156,125 @@ func TestBuildTreeGitJSON_IncludesApplicationSetRelationships(t *testing.T) {
 	}
 }
 
+func TestBuildTreeGitJSON_ApplicationSetLinkStatus(t *testing.T) {
+	appSet := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "ApplicationSet",
+			"metadata": map[string]interface{}{
+				"name":      "existing-set",
+				"namespace": "argocd",
+			},
+			"spec": map[string]interface{}{
+				"generators": []interface{}{
+					map[string]interface{}{
+						"list": map[string]interface{}{
+							"elements": []interface{}{map[string]interface{}{"env": "dev"}},
+						},
+					},
+				},
+				"template": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"source": map[string]interface{}{
+							"repoURL": "https://git.example.local/platform.git",
+							"path":    "apps/{{env}}",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	resolvedApp := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "resolved-app",
+				"namespace": "argocd",
+				"labels": map[string]interface{}{
+					"argocd.argoproj.io/application-set-name": "existing-set",
+				},
+			},
+			"spec": map[string]interface{}{
+				"source": map[string]interface{}{
+					"repoURL": "https://git.example.local/platform.git",
+					"path":    "apps/dev",
+				},
+			},
+		},
+	}
+
+	orphanApp := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "orphan-app",
+				"namespace": "argocd",
+			},
+			"spec": map[string]interface{}{
+				"source": map[string]interface{}{
+					"repoURL": "https://git.example.local/platform.git",
+					"path":    "apps/orphan",
+				},
+			},
+		},
+	}
+	orphanApp.SetOwnerReferences([]metav1.OwnerReference{
+		{
+			APIVersion: "argoproj.io/v1alpha1",
+			Kind:       "ApplicationSet",
+			Name:       "missing-set",
+		},
+	})
+
+	unknownApp := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Application",
+			"metadata": map[string]interface{}{
+				"name":      "unknown-app",
+				"namespace": "argocd",
+				"annotations": map[string]interface{}{
+					"argocd.argoproj.io/application-set-name": "missing-inferred-set",
+				},
+			},
+			"spec": map[string]interface{}{
+				"source": map[string]interface{}{
+					"repoURL": "https://git.example.local/platform.git",
+					"path":    "apps/unknown",
+				},
+			},
+		},
+	}
+
+	result := buildTreeGitJSON(
+		nil,
+		&unstructured.UnstructuredList{Items: []unstructured.Unstructured{resolvedApp, orphanApp, unknownApp}},
+		&unstructured.UnstructuredList{Items: []unstructured.Unstructured{appSet}},
+	)
+
+	appIndex := map[string]treeGitAppJSON{}
+	for _, app := range result.ArgoApplications {
+		appIndex[app.Name] = app
+	}
+
+	if got := appIndex["resolved-app"].ApplicationSetLinkStatus; got != "resolved" {
+		t.Fatalf("resolved-app link status = %q, want resolved", got)
+	}
+	if got := appIndex["orphan-app"].ApplicationSetLinkStatus; got != "orphan" {
+		t.Fatalf("orphan-app link status = %q, want orphan", got)
+	}
+	if got := appIndex["unknown-app"].ApplicationSetLinkStatus; got != "unknown" {
+		t.Fatalf("unknown-app link status = %q, want unknown", got)
+	}
+
+	if got := result.ApplicationSets[0].GeneratedApplications; !reflect.DeepEqual(got, []string{"resolved-app"}) {
+		t.Fatalf("generated apps = %#v, want [resolved-app]", got)
+	}
+}
+
 func TestDetectApplicationSetGeneratorTypes_UnknownFallback(t *testing.T) {
 	spec := map[string]interface{}{
 		"generators": []interface{}{
