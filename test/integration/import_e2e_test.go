@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -155,6 +156,7 @@ type importDryRunResult struct {
 	Namespaces []string         `json:"namespaces"`
 	Proposal   *importProposal  `json:"proposal"`
 	Workloads  []importWorkload `json:"workloads"`
+	Evidence   *importEvidence  `json:"evidence,omitempty"`
 }
 
 // importProposal matches the "proposal" object in the JSON output.
@@ -192,6 +194,11 @@ type importWorkload struct {
 	Ready     bool              `json:"ready"`
 	Replicas  int32             `json:"replicas"`
 	Labels    map[string]string `json:"labels,omitempty"`
+}
+
+type importEvidence struct {
+	Source     string `json:"source"`
+	BundlePath string `json:"bundlePath,omitempty"`
 }
 
 // =============================================================================
@@ -337,6 +344,36 @@ func TestImportDryRunSuggestionContract(t *testing.T) {
 
 	t.Logf("Contract check passed: %d workloads, %d units",
 		len(result.Workloads), len(result.Proposal.Units))
+}
+
+// TestImportFromBundleDryRunJSONConnectedContract verifies bundle-driven import
+// JSON contract in connected environments (skip when not authenticated).
+func TestImportFromBundleDryRunJSONConnectedContract(t *testing.T) {
+	skipIfNotConnected(t)
+
+	bundlePath := filepath.Join("..", "..", "examples", "workflows", "fleet-demo", "bundles", "dev")
+	output := runCubAgent(t, "import", "--from-bundle", bundlePath, "--dry-run", "--json")
+
+	var result importDryRunResult
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("Failed to parse import bundle JSON output: %v", err)
+	}
+
+	if result.Evidence == nil {
+		t.Fatal("Expected evidence block in JSON output")
+	}
+	if result.Evidence.Source != "bundle" {
+		t.Fatalf("evidence.source = %q, want bundle", result.Evidence.Source)
+	}
+	if result.Evidence.BundlePath != bundlePath {
+		t.Fatalf("evidence.bundlePath = %q, want %q", result.Evidence.BundlePath, bundlePath)
+	}
+	if result.Proposal == nil || result.Proposal.AppSpace == "" {
+		t.Fatal("Expected non-empty proposal.appSpace for bundle import dry-run")
+	}
+	if len(result.Workloads) == 0 {
+		t.Fatal("Expected at least one workload from bundle import dry-run")
+	}
 }
 
 // =============================================================================

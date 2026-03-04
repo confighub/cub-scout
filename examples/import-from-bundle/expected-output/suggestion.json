@@ -1,0 +1,48 @@
+{
+  "evidence": {
+    "source": "bundle",
+    "bundlePath": "examples/workflows/fleet-demo/bundles/dev"
+  },
+  "namespaces": [
+    "api"
+  ],
+  "proposal": {
+    "appSpace": "api-team",
+    "units": [
+      {
+        "slug": "api",
+        "app": "api",
+        "variant": "default",
+        "workloads": [
+          "api/api-server"
+        ],
+        "status": "cluster-only",
+        "labels": {
+          "app": "api",
+          "team": "api",
+          "variant": "default"
+        }
+      }
+    ],
+    "clusterOnly": [
+      {
+        "app": "api",
+        "workloads": [
+          "api/api-server"
+        ],
+        "owner": "Native"
+      }
+    ]
+  },
+  "workloads": [
+    {
+      "kind": "Deployment",
+      "namespace": "api",
+      "name": "api-server",
+      "owner": "Native",
+      "connected": false,
+      "ready": false,
+      "replicas": 0
+    }
+  ]
+}
