@@ -1,0 +1,21 @@
+{
+  "_comment": [
+    "MCP server configuration for cub-scout read-only observation gateway.",
+    "Use with Claude Code, Cursor, or any MCP-compatible AI client.",
+    "",
+    "Standalone mode: serves map, trace, scan, explain, doctor tools.",
+    "Connected mode: adds ConfigHub routing for history, fleet, impact, compare.",
+    "",
+    "Requires: cub-scout v1.4+ (issue #214).",
+    "Until v1.4 ships, use CLI command execution instead (see prompts.md)."
+  ],
+  "mcpServers": {
+    "cub-scout": {
+      "command": "cub-scout",
+      "args": ["mcp", "serve"],
+      "env": {
+        "KUBECONFIG": "${KUBECONFIG:-~/.kube/config}"
+      }
+    }
+  }
+}

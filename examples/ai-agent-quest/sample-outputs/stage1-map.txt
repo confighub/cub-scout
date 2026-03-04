@@ -1,0 +1,49 @@
+# Stage 1: "Map My Cluster"
+# Source: argo-import-confighub-demo cluster (kind)
+# Commands and expected outputs for demo mode
+
+$ ./cub-scout map list
+
+NAMESPACE        KIND         NAME                    OWNER     SOURCE
+argocd           Deployment   argocd-server           Helm      helm/argocd
+argocd           Deployment   argocd-repo-server      Helm      helm/argocd
+argocd           Deployment   argocd-redis            Helm      helm/argocd
+argocd           StatefulSet  argocd-application-ctrl Helm      helm/argocd
+guestbook        Deployment   guestbook-ui            ArgoCD    guestbook-app
+myapp-dev        Deployment   api                     ArgoCD    myapp-dev
+myapp-dev        Deployment   worker                  ArgoCD    myapp-dev
+myapp-dev        StatefulSet  redis                   ArgoCD    myapp-dev
+myapp-prod       Deployment   api                     ArgoCD    myapp-prod
+myapp-prod       Deployment   worker                  ArgoCD    myapp-prod
+myapp-prod       StatefulSet  redis                   ArgoCD    myapp-prod
+myapp-staging    Deployment   api                     ArgoCD    myapp-staging
+myapp-staging    Deployment   worker                  ArgoCD    myapp-staging
+kube-system      Deployment   coredns                 Native    --
+kube-system      DaemonSet    kindnet                 Native    --
+kube-system      DaemonSet    kube-proxy              Native    --
+local-path-stor  Deployment   local-path-provisioner  Native    --
+...
+
+(63 resources total)
+
+$ ./cub-scout map list --json | jq -r '.[].owner' | sort | uniq -c | sort -rn
+
+     47 Native
+     12 ArgoCD
+      4 Helm
+
+$ ./cub-scout map list --json | jq 'length'
+
+63
+
+$ ./cub-scout map orphans
+
+NAMESPACE        KIND         NAME                    AGE    NOTES
+kube-system      Deployment   coredns                 2h     system component
+kube-system      DaemonSet    kindnet                 2h     system component
+kube-system      DaemonSet    kube-proxy              2h     system component
+local-path-stor  Deployment   local-path-provisioner  2h     system component
+default          ConfigMap    manual-config           45m    no owner labels
+default          Deployment   forgotten-nginx         30m    no owner labels
+
+47 unmanaged resources (42 system components, 5 user workloads)
