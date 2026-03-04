@@ -768,6 +768,8 @@ Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● brid
 | [docs/getting-started/checklist.md](docs/getting-started/checklist.md) | New user checklist |
 | [docs/testing/README.md](docs/testing/README.md) | Testing guide & how to write tests |
 | [SECURITY.md](SECURITY.md) | Read-only guarantee, RBAC, vulnerability reporting |
+| [docs/ai/cub-scout-skill.md](docs/ai/cub-scout-skill.md) | AI skill profile to load in Claude/Codex |
+| [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md) | Full guide: using cub-scout from AI tools (Claude/CLI/Slack) |
 | [docs/getting-started/scale-demo.md](docs/getting-started/scale-demo.md) | See cub-scout at scale |
 | [docs/howto/claude-capability-assistant.md](docs/howto/claude-capability-assistant.md) | Run "can I do X?" AI-assisted demo flow |
 | [docs/howto/scan-for-risks.md](docs/howto/scan-for-risks.md) | Risk scanning (46 patterns) |

@@ -23,6 +23,7 @@ go build ./cmd/cub-scout
 
 For demo flow "Can I do X with cub-scout or ConfigHub?":
 
+- Start from shared skill profile: [docs/ai/cub-scout-skill.md](docs/ai/cub-scout-skill.md)
 - Use [docs/howto/claude-capability-assistant.md](docs/howto/claude-capability-assistant.md) as the operating playbook.
 - If a request is not currently supported, file using:
   - `./scripts/create-ai-capability-issue.sh ...`

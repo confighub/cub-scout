@@ -22,6 +22,7 @@ New to cub-scout? Start here:
 
 | I need... | Start here |
 |-----------|------------|
+| AI skill profile (Claude/Codex) | [ai/cub-scout-skill.md](ai/cub-scout-skill.md) |
 | JSON contract docs | [reference/json-contracts.md](reference/json-contracts.md) |
 | JSON vs ASCII semantics | [semantic-contract.md](semantic-contract.md) |
 | Full command/flag reference | [reference/commands.md](reference/commands.md) |
@@ -56,6 +57,7 @@ New to cub-scout? Start here:
 | Flux import demo (D2 pattern) | [examples/flux-import-confighub-demo/](../examples/flux-import-confighub-demo/) |
 | Migration playbook | [howto/migration-playbook.md](howto/migration-playbook.md) |
 | Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
+| Using cub-scout from an AI tool | [howto/using-cub-scout-from-ai-tool.md](howto/using-cub-scout-from-ai-tool.md) |
 | Claude capability assistant | [howto/claude-capability-assistant.md](howto/claude-capability-assistant.md) |
 
 ---

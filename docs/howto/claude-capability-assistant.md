@@ -1,5 +1,10 @@
 # Claude Capability Assistant for cub-scout + ConfigHub
 
+For interface selection and broader expectations (Claude session vs CLI vs Slack), see:
+[using-cub-scout-from-ai-tool.md](using-cub-scout-from-ai-tool.md).
+For the shared Claude/Codex skill profile, see:
+[../ai/cub-scout-skill.md](../ai/cub-scout-skill.md).
+
 Use this guide when you want Claude to answer:
 
 - "Can I do X with cub-scout or ConfigHub?"
