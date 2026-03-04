@@ -1,0 +1,124 @@
+# Stage 2: "Trace the Lineage"
+# Source: argo-import-confighub-demo cluster (kind)
+# Commands and expected outputs for demo mode
+
+$ ./cub-scout trace deploy/guestbook-ui -n guestbook --explain
+
+TRACE: deploy/guestbook-ui (namespace: guestbook)
+
+  Owner:     ArgoCD
+  App:       guestbook-app
+  Source:    https://github.com/argoproj/argocd-example-apps.git
+  Path:      guestbook
+  Revision:  HEAD (resolved: a3b1c2d)
+  Sync:      Synced
+  Health:    Healthy
+
+  Chain:
+    Git repo (argocd-example-apps.git)
+     └─ ArgoCD Application (guestbook-app)
+         └─ Deployment (guestbook-ui)
+             └─ ReplicaSet (guestbook-ui-7b5d8c9f4)
+                 └─ Pod (guestbook-ui-7b5d8c9f4-x2k9j)
+
+  Explain:
+    This workload is managed by ArgoCD Application "guestbook-app".
+    The Application pulls manifests from a Git repository and applies
+    them to the cluster. The source repository and revision are resolved
+    and the sync status is healthy. This is a complete ownership chain.
+
+
+$ ./cub-scout trace deploy/api -n myapp-prod --explain
+
+TRACE: deploy/api (namespace: myapp-prod)
+
+  Owner:     ArgoCD
+  App:       myapp-prod
+  Source:    https://github.com/acme/myapp-deploy.git
+  Path:      environments/prod
+  Revision:  main
+  Sync:      OutOfSync
+  Health:    Degraded
+
+  Chain:
+    Git repo (acme/myapp-deploy.git)  [UNRESOLVABLE — repo does not exist]
+     └─ ArgoCD Application (myapp-prod)
+         └─ Deployment (api)
+             └─ ReplicaSet (api-6d4f9c8b7)
+                 └─ Pod (api-6d4f9c8b7-m4n2p)
+
+  Explain:
+    This workload is managed by ArgoCD Application "myapp-prod".
+    The ownership labels are real. However, the source repository
+    (acme/myapp-deploy.git) is a brownfield fixture — it does not
+    resolve to a real Git repo. The Application shows OutOfSync
+    because ArgoCD cannot fetch from a fictional source.
+    cub-scout reports what the metadata says. It does not guess.
+
+
+$ ./cub-scout trace deploy/argocd-server -n argocd --explain
+
+TRACE: deploy/argocd-server (namespace: argocd)
+
+  Owner:     Helm
+  Release:   argocd (namespace: argocd)
+  Chart:     argo-cd
+  Version:   5.46.8
+
+  Chain:
+    Helm Release (argocd)
+     └─ Deployment (argocd-server)
+         └─ ReplicaSet (argocd-server-5f8d7c9b6)
+             └─ Pod (argocd-server-5f8d7c9b6-k8j3r)
+
+  Explain:
+    This workload is managed by Helm release "argocd". The chart
+    source and version are known. The Git repository that stores
+    the Helm values is not tracked in cluster metadata — Helm
+    records chart provenance but not values provenance.
+
+
+$ ./cub-scout trace deploy/forgotten-nginx -n default --explain
+
+TRACE: deploy/forgotten-nginx (namespace: default)
+
+  Owner:     Native
+  Source:    (none)
+
+  Chain:
+    Deployment (forgotten-nginx)
+     └─ ReplicaSet (forgotten-nginx-7f9d8c4b2)
+         └─ Pod (forgotten-nginx-7f9d8c4b2-q5w1e)
+
+  Explain:
+    This workload has no ownership labels. It was likely created
+    with `kubectl apply` or `kubectl create` directly. There is
+    no GitOps controller managing it. It will not be reconciled
+    if modified or deleted.
+
+
+$ ./cub-scout tree
+
+argocd (Helm: argocd)
+ ├─ Deployment/argocd-server
+ ├─ Deployment/argocd-repo-server
+ ├─ Deployment/argocd-redis
+ └─ StatefulSet/argocd-application-controller
+
+guestbook-app (ArgoCD)
+ └─ Deployment/guestbook-ui
+
+myapp-dev (ArgoCD)
+ ├─ Deployment/api
+ ├─ Deployment/worker
+ └─ StatefulSet/redis
+
+myapp-staging (ArgoCD)
+ ├─ Deployment/api
+ ├─ Deployment/worker
+ └─ StatefulSet/redis
+
+myapp-prod (ArgoCD)
+ ├─ Deployment/api
+ ├─ Deployment/worker
+ └─ StatefulSet/redis

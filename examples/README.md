@@ -12,6 +12,12 @@ All examples, demos, and integration code in one place.
 | **Mockup** | UI designs/mockups for discussion |
 | **Proposal** | Architecture proposals, not yet implemented |
 
+## Start Here
+
+**Using an AI assistant?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI agent reason about a live Kubernetes cluster using cub-scout as its observation layer. Works with Claude Code, Copilot, or any CLI-capable AI. No account required for the standalone stages.
+
+**Learning cub-scout hands-on?** Try the [Puzzle Quest](new-user-puzzle-quest/) — a guided walkthrough from zero to full cluster discovery.
+
 ## Quick Start
 
 ```bash
@@ -48,11 +54,14 @@ Worked examples showing how cub-scout discovers workloads and proposes ConfigHub
 | [combined-git-live/](combined-git-live/) | **Flux** (Banko) | Git repo + cluster alignment |
 | [fleet-import/](fleet-import/) | **Multi-cluster** | Aggregating imports from 2 clusters into a unified proposal |
 | [demo-data-adt/](demo-data-adt/) | **App-Deployment-Target** | Multi-app × multi-env with version skew detection |
-| [new-user-puzzle-quest/](new-user-puzzle-quest/) | **AI onboarding** | Quest-style walkthrough for Claude/Codex users |
+| [ai-agent-quest/](ai-agent-quest/) | **AI + K8s** | Give your AI agent cluster vision — standalone observation + ConfigHub intelligence |
+| [new-user-puzzle-quest/](new-user-puzzle-quest/) | **Hands-on learning** | Step-by-step quest for first-time operators |
 
 The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against real kind clusters. The others use static fixtures (no live cluster needed) and include expected JSON output for validation.
 
-**New to cub-scout?** Try the [Puzzle Quest](new-user-puzzle-quest/) — a guided walkthrough that takes you from zero to full cluster discovery and ConfigHub import.
+**Using AI tools?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI reason about cluster state and hit the wall that ConfigHub removes.
+
+**Learning hands-on?** Try the [Puzzle Quest](new-user-puzzle-quest/) — a guided walkthrough from zero to full cluster discovery and ConfigHub import.
 
 ### Apptique Examples
 
