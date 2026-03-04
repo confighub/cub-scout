@@ -1,0 +1,65 @@
+name: AI capability gap
+description: Requested workflow could not be completed via cub-scout/ConfigHub during AI-assisted usage
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for features discovered during AI-assisted demos (Claude/Codex/etc).
+        Include command evidence and the exact user intent.
+
+  - type: textarea
+    id: user-goal
+    attributes:
+      label: User Goal
+      description: What did the user want to do?
+      placeholder: "I want to import cluster workloads and then generate Git patches/upgrades."
+    validations:
+      required: true
+
+  - type: textarea
+    id: attempted
+    attributes:
+      label: Commands Attempted
+      description: Exact commands and flags used.
+      placeholder: |
+        ./cub-scout import --dry-run -n payments
+        ./cub-scout import -n payments -y
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed Behavior
+      description: What happened?
+      placeholder: "Import completed, but no Git patch/upgrade workflow is available."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen instead?
+      placeholder: "Offer optional Git-aware upgrade/patch workflow after import."
+    validations:
+      required: true
+
+  - type: textarea
+    id: demo-impact
+    attributes:
+      label: Demo/User Impact
+      description: Why this matters in demos or onboarding.
+      placeholder: "Users ask for this in first 10 minutes; current gap creates confusion."
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Paste key output snippets, screenshots, or links.
+      placeholder: "Command output, logs, screenshots, PR links."
+    validations:
+      required: true

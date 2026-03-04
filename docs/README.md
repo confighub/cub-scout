@@ -56,6 +56,7 @@ New to cub-scout? Start here:
 | Flux import demo (D2 pattern) | [examples/flux-import-confighub-demo/](../examples/flux-import-confighub-demo/) |
 | Migration playbook | [howto/migration-playbook.md](howto/migration-playbook.md) |
 | Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
+| Claude capability assistant | [howto/claude-capability-assistant.md](howto/claude-capability-assistant.md) |
 
 ---
 

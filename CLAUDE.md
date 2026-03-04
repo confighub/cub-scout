@@ -19,6 +19,15 @@ go build ./cmd/cub-scout
 
 **Output formats (v0.14):** Most commands support `--format ascii|json|md`.
 
+## Claude Capability-Assistant Mode
+
+For demo flow "Can I do X with cub-scout or ConfigHub?":
+
+- Use [docs/howto/claude-capability-assistant.md](docs/howto/claude-capability-assistant.md) as the operating playbook.
+- If a request is not currently supported, file using:
+  - `./scripts/create-ai-capability-issue.sh ...`
+  - or issue template: `AI capability gap`
+
 ## Documentation
 
 | File | Purpose |
