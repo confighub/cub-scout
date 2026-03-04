@@ -491,6 +491,7 @@ See `docs/howto/trace-context-troubleshooting.md` for the full flow.
 |-------------|-------|
 | GitRepository | Flux |
 | OCIRepository | Flux |
+| ConfigHub OCI (OCI target path) | Flux |
 | HelmRepository | Flux |
 | Bucket | Flux |
 | Repository (Git/Helm) | ArgoCD |

@@ -293,6 +293,123 @@ func TestArgoTracerParseAppOutputError(t *testing.T) {
 	}
 }
 
+func TestArgoTrace_SourceSyncSignals_OutOfSync(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	jsonData := `{
+		"metadata": {
+			"name": "checkout-app",
+			"namespace": "argocd"
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/acme/checkout.git",
+				"path": "./apps/checkout",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "checkout"
+			}
+		},
+		"status": {
+			"sync": {
+				"status": "OutOfSync",
+				"revision": "abc123"
+			},
+			"health": {
+				"status": "Healthy"
+			},
+			"reconciledAt": "2026-03-01T12:34:56Z",
+			"resources": []
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "checkout-app", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	if len(result.Chain) == 0 {
+		t.Fatal("expected source link in trace chain")
+	}
+
+	source := result.Chain[0]
+	if source.Kind != "Source" {
+		t.Fatalf("source kind = %q, want Source", source.Kind)
+	}
+	if source.Ready {
+		t.Fatalf("source.Ready = true, want false when app sync is OutOfSync")
+	}
+	if !strings.Contains(source.Status, "OutOfSync") {
+		t.Fatalf("source.Status = %q, want to contain OutOfSync", source.Status)
+	}
+	if !strings.Contains(source.Message, "reconciledAt=2026-03-01T12:34:56Z") {
+		t.Fatalf("source.Message = %q, want reconciledAt signal", source.Message)
+	}
+	if source.LastTransitionTime == nil {
+		t.Fatal("source.LastTransitionTime = nil, want parsed reconciledAt time")
+	}
+}
+
+func TestArgoTrace_SourceStalenessSignal_FromHistoryFallback(t *testing.T) {
+	tracer := NewArgoTracer()
+
+	jsonData := `{
+		"metadata": {
+			"name": "billing-app",
+			"namespace": "argocd"
+		},
+		"spec": {
+			"source": {
+				"repoURL": "https://github.com/acme/billing.git",
+				"path": "./apps/billing",
+				"targetRevision": "main"
+			},
+			"destination": {
+				"server": "https://kubernetes.default.svc",
+				"namespace": "billing"
+			}
+		},
+		"status": {
+			"sync": {
+				"status": "Synced",
+				"revision": "def456"
+			},
+			"health": {
+				"status": "Healthy"
+			},
+			"resources": [],
+			"history": [
+				{
+					"revision": "def456",
+					"deployedAt": "2026-02-15T10:00:00Z"
+				}
+			]
+		}
+	}`
+
+	result, err := tracer.parseAppOutput([]byte(jsonData), "billing-app", "argocd")
+	if err != nil {
+		t.Fatalf("parseAppOutput() error = %v", err)
+	}
+
+	if len(result.Chain) == 0 {
+		t.Fatal("expected source link in trace chain")
+	}
+
+	source := result.Chain[0]
+	if !source.Ready {
+		t.Fatalf("source.Ready = false, want true for Synced app")
+	}
+	if !strings.Contains(source.Message, "history.deployedAt=2026-02-15T10:00:00Z") {
+		t.Fatalf("source.Message = %q, want history fallback signal", source.Message)
+	}
+	if source.LastTransitionTime == nil {
+		t.Fatal("source.LastTransitionTime = nil, want history-derived timing")
+	}
+}
+
 // ============================================================================
 // History Feature Tests (Task 2: ArgoCD history extraction)
 // ============================================================================

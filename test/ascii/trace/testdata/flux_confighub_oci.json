@@ -1,0 +1,46 @@
+{
+  "object": {
+    "kind": "Deployment",
+    "name": "payments-api",
+    "namespace": "payments"
+  },
+  "chain": [
+    {
+      "kind": "ConfigHub OCI",
+      "name": "confighub-prod",
+      "namespace": "flux-system",
+      "ready": true,
+      "status": "stored artifact for revision 'latest@sha1:abc123def456'",
+      "revision": "latest@sha1:abc123def456",
+      "url": "oci://oci.api.confighub.com/target/prod/us-west",
+      "ociSource": {
+        "raw": "oci://oci.api.confighub.com/target/prod/us-west",
+        "isConfigHub": true,
+        "instance": "api.confighub.com",
+        "space": "prod",
+        "target": "us-west",
+        "registry": "oci.api.confighub.com",
+        "repository": "target/prod/us-west"
+      }
+    },
+    {
+      "kind": "Kustomization",
+      "name": "payments-app",
+      "namespace": "flux-system",
+      "ready": true,
+      "status": "Applied revision: latest@sha1:abc123def456",
+      "revision": "latest@sha1:abc123def456",
+      "path": "./clusters/prod/payments"
+    },
+    {
+      "kind": "Deployment",
+      "name": "payments-api",
+      "namespace": "payments",
+      "ready": true,
+      "status": "2/2 ready"
+    }
+  ],
+  "fullyManaged": true,
+  "tool": "Flux",
+  "tracedAt": "2026-03-01T12:00:00Z"
+}

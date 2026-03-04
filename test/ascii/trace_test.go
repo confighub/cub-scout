@@ -47,6 +47,21 @@ func TestTrace_Argo(t *testing.T) {
 	golden.AssertGolden(t, out, goldenPath)
 }
 
+func TestTrace_Argo_SourceSignals(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "trace", "testdata", "argo_source_signals.json")
+
+	out := runner.RunWithEnv(t, repoRoot,
+		map[string]string{
+			"CUB_SCOUT_TEST_TRACE_JSON": fixtureAbs,
+		},
+		"trace", "deployment/checkout", "-n", "checkout",
+	)
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "trace", "argo_source_signals.txt")
+	golden.AssertGolden(t, out, goldenPath)
+}
+
 func TestTrace_Native(t *testing.T) {
 	repoRoot := runner.RepoRoot(t)
 	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "trace", "testdata", "native.json")

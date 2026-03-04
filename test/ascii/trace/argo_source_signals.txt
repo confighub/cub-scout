@@ -1,0 +1,21 @@
+
+TRACE: Deployment/checkout in checkout
+
+  ✗ Source/acme/checkout
+    │ Namespace: argocd
+    │ URL: https://github.com/acme/checkout
+    │ Path: ./apps/checkout
+    │ Revision: main
+    │ Status: OutOfSync (reconciledAt: <TIMESTAMP>)
+    │ Error: application sync status is OutOfSync; reconciledAt=<TIMESTAMP>
+    │
+    └─▶ ✗ Application/checkout-app
+        │ Namespace: argocd
+        │ Revision: abc123
+        │ Status: OutOfSync / Healthy
+        │
+        └─▶ ✓ Deployment/checkout
+              Status: 1/1 ready
+
+⚠ Chain broken at Source/acme/checkout
+  application sync status is OutOfSync; reconciledAt=<TIMESTAMP>

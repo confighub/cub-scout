@@ -171,6 +171,8 @@ Real-world use cases:
 | File/Folder | Purpose |
 |-------------|---------|
 | [roadmap.md](roadmap.md) | Canonical roadmap and current execution scope |
+| [workflows/agent-milestone-plan.md](workflows/agent-milestone-plan.md) | Agent-based execution plan for remaining roadmap milestones |
+| [workflows/m1-task-cards.md](workflows/m1-task-cards.md) | Executable M1 task cards with proof-first and iterative verification gates |
 | [releases/v1.0.0.md](releases/v1.0.0.md) | Latest release notes (v1.0.0) |
 | [releases/v0.20.0-slice-plan.md](releases/v0.20.0-slice-plan.md) | Historical implementation plan for shipped v0.20.0 slice |
 | [roadmap-rendered-manifest-and-argo.md](roadmap-rendered-manifest-and-argo.md) | Backlog split from RM/App-of-Apps planning docs |

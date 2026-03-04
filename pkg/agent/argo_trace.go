@@ -139,7 +139,8 @@ type argoApp struct {
 			Status   string `json:"status"`
 			Revision string `json:"revision"`
 		} `json:"sync"`
-		Health struct {
+		ReconciledAt string `json:"reconciledAt,omitempty"`
+		Health       struct {
 			Status  string `json:"status"`
 			Message string `json:"message"`
 		} `json:"health"`
@@ -185,15 +186,40 @@ func (a *ArgoTracer) parseAppOutput(data []byte, appName, namespace string) (*Tr
 		TracedAt:     time.Now(),
 	}
 
+	sourceSync := strings.TrimSpace(app.Status.Sync.Status)
+	if sourceSync == "" {
+		sourceSync = "Unknown"
+	}
+	sourceReady := strings.EqualFold(app.Status.Sync.Status, "Synced")
+	sourceStatus := sourceSync
+
+	var sourceLastTransition *time.Time
+	sourceSignal := []string{}
+	if !sourceReady && strings.TrimSpace(app.Status.Sync.Status) != "" {
+		sourceSignal = append(sourceSignal, fmt.Sprintf("application sync status is %s", app.Status.Sync.Status))
+	}
+	if reconciled, ok := parseArgoStatusTimestamp(app.Status.ReconciledAt); ok {
+		sourceLastTransition = &reconciled
+		sourceStatus = fmt.Sprintf("%s (reconciledAt: %s)", sourceStatus, app.Status.ReconciledAt)
+		sourceSignal = append(sourceSignal, fmt.Sprintf("reconciledAt=%s", app.Status.ReconciledAt))
+	} else if len(app.Status.History) > 0 && !app.Status.History[0].DeployedAt.IsZero() {
+		deployedAt := app.Status.History[0].DeployedAt.UTC()
+		sourceLastTransition = &deployedAt
+		sourceSignal = append(sourceSignal, fmt.Sprintf("history.deployedAt=%s", deployedAt.Format(time.RFC3339)))
+	}
+
 	// Add source as first chain link (simulating a GitRepository)
 	sourceLink := ChainLink{
-		Kind:     "Source",
-		Name:     extractRepoName(app.Spec.Source.RepoURL),
-		URL:      app.Spec.Source.RepoURL,
-		Path:     app.Spec.Source.Path,
-		Revision: app.Spec.Source.TargetRevision,
-		Ready:    true, // Argo doesn't track source health separately
-		Status:   "Available",
+		Kind:               "Source",
+		Name:               extractRepoName(app.Spec.Source.RepoURL),
+		URL:                app.Spec.Source.RepoURL,
+		Path:               app.Spec.Source.Path,
+		Revision:           app.Spec.Source.TargetRevision,
+		Ready:              sourceReady,
+		Status:             sourceStatus,
+		StatusReason:       sourceSync,
+		Message:            strings.Join(sourceSignal, "; "),
+		LastTransitionTime: sourceLastTransition,
 	}
 	if app.Spec.Source.Chart != "" {
 		sourceLink.Kind = "HelmChart"
@@ -372,6 +398,20 @@ func resolveApplicationSetFromArgoApp(app *argoApp) (string, string) {
 	}
 
 	return "", ""
+}
+
+func parseArgoStatusTimestamp(raw string) (time.Time, bool) {
+	ts := strings.TrimSpace(raw)
+	if ts == "" {
+		return time.Time{}, false
+	}
+	if t, err := time.Parse(time.RFC3339, ts); err == nil {
+		return t, true
+	}
+	if t, err := time.Parse(time.RFC3339Nano, ts); err == nil {
+		return t, true
+	}
+	return time.Time{}, false
 }
 
 // extractRepoName extracts a readable name from a git URL

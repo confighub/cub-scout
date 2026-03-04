@@ -466,6 +466,8 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}
 	case "OCIRepository":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "ocirepositories"}
+	case "ConfigHub OCI":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "ocirepositories"}
 	case "HelmRepository":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}
 	case "Bucket":
@@ -657,7 +659,7 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, arti
 				URL:       url,
 			}
 			if traceArtifacts {
-				if art, ok := artifacts[traceArtifactKey(node.ID.Kind, node.ID.Namespace, node.ID.Name)]; ok {
+				if art, ok := lookupTraceArtifact(node.ID.Kind, node.ID.Namespace, node.ID.Name, artifacts); ok {
 					artCopy := art
 					summary.Source.Artifact = &artCopy
 				} else {
@@ -1429,7 +1431,7 @@ func traceArtifactKey(kind, namespace, name string) string {
 
 func isTraceSourceKind(kind string) bool {
 	switch kind {
-	case "GitRepository", "OCIRepository", "HelmRepository", "Bucket":
+	case "GitRepository", "OCIRepository", "ConfigHub OCI", "HelmRepository", "Bucket":
 		return true
 	default:
 		return false
@@ -1558,12 +1560,56 @@ func collectTraceArtifacts(ctx context.Context, result *agent.TraceResult) map[s
 
 func artifactForLink(link agent.ChainLink, artifacts map[string]mapsvc.TraceArtifactRef) mapsvc.TraceArtifactRef {
 	if len(artifacts) > 0 {
-		key := traceArtifactKey(link.Kind, link.Namespace, link.Name)
-		if artifact, ok := artifacts[key]; ok {
+		if artifact, ok := lookupTraceArtifact(link.Kind, link.Namespace, link.Name, artifacts); ok {
 			return normalizeTraceArtifact(link.Kind, artifact)
 		}
 	}
 	return traceArtifactUnknownForKind(link.Kind)
+}
+
+func lookupTraceArtifact(kind, namespace, name string, artifacts map[string]mapsvc.TraceArtifactRef) (mapsvc.TraceArtifactRef, bool) {
+	if len(artifacts) == 0 {
+		return mapsvc.TraceArtifactRef{}, false
+	}
+
+	var fallback mapsvc.TraceArtifactRef
+	var foundFallback bool
+
+	for _, key := range traceArtifactLookupKeys(kind, namespace, name) {
+		if artifact, ok := artifacts[key]; ok {
+			norm := normalizeTraceArtifact(kind, artifact)
+			if isUnknownTraceArtifact(norm) {
+				if !foundFallback {
+					fallback = norm
+					foundFallback = true
+				}
+				continue
+			}
+			return norm, true
+		}
+	}
+	if foundFallback {
+		return fallback, true
+	}
+	return mapsvc.TraceArtifactRef{}, false
+}
+
+func traceArtifactLookupKeys(kind, namespace, name string) []string {
+	keys := []string{traceArtifactKey(kind, namespace, name)}
+	switch kind {
+	case "ConfigHub OCI":
+		keys = append(keys, traceArtifactKey("OCIRepository", namespace, name))
+	case "OCIRepository":
+		keys = append(keys, traceArtifactKey("ConfigHub OCI", namespace, name))
+	}
+	return keys
+}
+
+func isUnknownTraceArtifact(artifact mapsvc.TraceArtifactRef) bool {
+	return strings.TrimSpace(artifact.URL) == "unknown" &&
+		strings.TrimSpace(artifact.Revision) == "unknown" &&
+		strings.TrimSpace(artifact.Digest) == "unknown" &&
+		strings.TrimSpace(artifact.LastUpdateTime) == "unknown"
 }
 
 type traceArtifactFixtureItem struct {

@@ -1,0 +1,79 @@
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "payments",
+    "name": "payments-api"
+  },
+  "chain": [
+    {
+      "id": {
+        "kind": "ConfigHub OCI",
+        "namespace": "flux-system",
+        "name": "confighub-prod"
+      },
+      "role": "source",
+      "relationship": "sources",
+      "evidence": [
+        {
+          "type": "field",
+          "key": "spec.url",
+          "value": "oci://oci.api.confighub.com/target/prod/us-west",
+          "path": "spec.url"
+        }
+      ],
+      "deliveryStage": "artifact",
+      "renderedFrom": "confighub:space/prod/target/us-west"
+    },
+    {
+      "id": {
+        "kind": "Kustomization",
+        "namespace": "flux-system",
+        "name": "payments-app"
+      },
+      "role": "deployer",
+      "relationship": "applies",
+      "evidence": [
+        {
+          "type": "field",
+          "key": "spec.path",
+          "value": "./clusters/prod/payments",
+          "path": "spec.path"
+        }
+      ],
+      "deliveryStage": "deployer"
+    },
+    {
+      "id": {
+        "kind": "Deployment",
+        "namespace": "payments",
+        "name": "payments-api"
+      },
+      "role": "workload",
+      "relationship": "managed-by",
+      "evidence": null,
+      "deliveryStage": "workload"
+    }
+  ],
+  "summary": {
+    "ownerType": "Flux",
+    "source": {
+      "kind": "ConfigHub OCI",
+      "namespace": "flux-system",
+      "name": "confighub-prod",
+      "url": "oci://oci.api.confighub.com/target/prod/us-west",
+      "artifact": {
+        "url": "http://source-controller.flux-system.svc.cluster.local/ocirepository/flux-system/confighub-prod/latest@sha1:abc123def456.tar.gz",
+        "revision": "latest@sha1:abc123def456",
+        "digest": "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        "lastUpdateTime": "<TIMESTAMP>",
+        "sourceKind": "OCIRepository"
+      }
+    },
+    "deployer": {
+      "kind": "Kustomization",
+      "namespace": "flux-system",
+      "name": "payments-app"
+    }
+  }
+}

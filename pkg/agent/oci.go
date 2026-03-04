@@ -60,22 +60,21 @@ func ParseOCISource(url string) OCISourceInfo {
 		info.Repository = parts[1]
 	}
 
-	// Check if this is a ConfigHub OCI registry
-	// ConfigHub OCI registry format: oci.{instance-host}
-	if strings.HasPrefix(info.Registry, "oci.") {
+	// Check if this is a ConfigHub OCI registry.
+	// We require both the registry prefix and target path layout:
+	// oci://oci.<instance>/target/<space>/<target>
+	if IsConfigHubOCI(url) {
 		info.IsConfigHub = true
 		info.Instance = strings.TrimPrefix(info.Registry, "oci.")
 
 		// Parse ConfigHub repository format: target/{space}/{target}
-		if strings.HasPrefix(info.Repository, "target/") {
-			repoPath := strings.TrimPrefix(info.Repository, "target/")
-			targetParts := strings.SplitN(repoPath, "/", 2)
-			if len(targetParts) >= 1 {
-				info.Space = targetParts[0]
-			}
-			if len(targetParts) >= 2 {
-				info.Target = targetParts[1]
-			}
+		repoPath := strings.TrimPrefix(info.Repository, "target/")
+		targetParts := strings.SplitN(repoPath, "/", 2)
+		if len(targetParts) >= 1 {
+			info.Space = targetParts[0]
+		}
+		if len(targetParts) >= 2 {
+			info.Target = targetParts[1]
 		}
 	}
 

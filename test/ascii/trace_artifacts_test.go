@@ -50,3 +50,17 @@ func TestTraceFlux_ArtifactsUnknown(t *testing.T) {
 	goldenPath := filepath.Join(repoRoot, "test", "ascii", "trace", "flux_artifacts_unknown.txt")
 	golden.AssertGolden(t, out, goldenPath)
 }
+
+func TestTraceFlux_ConfigHubOCI_ArtifactsJSON(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	traceFixture := filepath.Join(repoRoot, "test", "ascii", "trace", "testdata", "flux_confighub_oci.json")
+	artifactFixture := filepath.Join(repoRoot, "test", "ascii", "trace", "testdata", "flux_confighub_oci.artifacts.json")
+
+	out := runner.RunWithEnv(t, repoRoot, map[string]string{
+		"CUB_SCOUT_TEST_TRACE_JSON":           traceFixture,
+		"CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON": artifactFixture,
+	}, "trace", "deployment/payments-api", "-n", "payments", "--artifacts", "--format", "json")
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "trace", "flux_confighub_oci_artifacts.json.golden")
+	golden.AssertGolden(t, out, goldenPath)
+}

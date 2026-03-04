@@ -108,7 +108,7 @@ Include source artifact provenance (read-only):
 cub-scout trace deploy/podinfo -n podinfo --artifacts
 ```
 
-For Flux sources (`GitRepository`, `OCIRepository`, `HelmRepository`, `Bucket`),
+For Flux sources (`GitRepository`, `OCIRepository`, `ConfigHub OCI`, `HelmRepository`, `Bucket`),
 trace adds:
 
 - artifact URL
@@ -149,9 +149,11 @@ Shows: GitRepository → Kustomization → Deployment
 cub-scout trace deploy/app -n namespace
 ```
 
-Shows: OCIRepository → Kustomization → Deployment
+Shows: ConfigHub OCI/OCIRepository → Kustomization → Deployment
 
-**Supported Flux sources:** GitRepository, OCIRepository, HelmRepository, Bucket
+**Supported Flux sources:** GitRepository, OCIRepository, ConfigHub OCI, HelmRepository, Bucket
+
+`ConfigHub OCI` is shown when the OCI URL matches ConfigHub target layout (`oci://oci.<instance>/target/<space>/<target>`).
 
 ### ArgoCD Resources
 
@@ -161,6 +163,12 @@ cub-scout trace deploy/app -n namespace
 ```
 
 Shows: Repository → Application → Deployment
+
+Source sync/staleness signals (when Argo evidence exists):
+
+- Source status reflects application sync (`Synced`, `OutOfSync`, `Unknown`).
+- If `status.reconciledAt` exists, source status/message includes that timestamp.
+- If `reconciledAt` is missing but history exists, source message falls back to latest `history.deployedAt`.
 
 ### Helm Resources (Standalone)
 
