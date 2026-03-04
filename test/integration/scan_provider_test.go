@@ -20,7 +20,9 @@
 package integration
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -54,8 +56,8 @@ func TestScanProvider_LegacyEnvOverride(t *testing.T) {
 	}
 
 	// Verify output is valid JSON with static findings
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -99,8 +101,8 @@ func TestScanProvider_FileScan_WithFakeCubScan(t *testing.T) {
 	}
 
 	// Verify output is valid JSON
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -165,8 +167,8 @@ func TestScanProvider_NormalizedJSON_WithFakeCubScan(t *testing.T) {
 	}
 
 	// Verify normalized JSON structure
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -232,8 +234,8 @@ func TestScanProvider_FallbackToLegacy_WhenBinaryFails(t *testing.T) {
 	}
 
 	// Should still produce valid JSON (from legacy fallback)
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("fallback output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -273,8 +275,8 @@ func TestScanProvider_ClusterScan_WithFakeCubScan(t *testing.T) {
 		}
 	}
 
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("cluster scan output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -316,8 +318,8 @@ func TestScanProvider_ClusterScan_FallbackToLegacy_WhenBinaryFails(t *testing.T)
 		}
 	}
 
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
+	result, err := parseJSONMap(output)
+	if err != nil {
 		t.Fatalf("cluster scan fallback output is not valid JSON: %v\n%s", err, output)
 	}
 
@@ -350,6 +352,25 @@ func hasStaticFindingID(result map[string]interface{}, wantID string) bool {
 		}
 	}
 	return false
+}
+
+// parseJSONMap tolerates warning/log lines around JSON output from CLI commands.
+func parseJSONMap(output []byte) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	if err := json.Unmarshal(output, &result); err == nil {
+		return result, nil
+	}
+
+	start := bytes.IndexByte(output, '{')
+	end := bytes.LastIndexByte(output, '}')
+	if start == -1 || end == -1 || end < start {
+		return nil, fmt.Errorf("no JSON object found in output")
+	}
+
+	if err := json.Unmarshal(output[start:end+1], &result); err != nil {
+		return nil, fmt.Errorf("parse JSON payload: %w", err)
+	}
+	return result, nil
 }
 
 // findFixture returns the absolute path to a fixture file relative to project root.
