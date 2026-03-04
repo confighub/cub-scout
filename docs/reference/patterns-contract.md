@@ -665,7 +665,7 @@ enriched when `--git-root` is provided.
 
 ---
 
-### gitops.flux_kustomization_paths (v0.10+, planned)
+### gitops.flux_kustomization_paths (v0.10+)
 
 **Category:** gitops
 **Type:** Hybrid

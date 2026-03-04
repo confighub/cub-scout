@@ -8,6 +8,6 @@ Available patterns:
   - gitops.argocd.applicationset_generators
   - gitops.argocd.resources_present
   - gitops.controller_presence
-  - gitops.flux.kustomization_paths
   - gitops.flux.resources_present
+  - gitops.flux_kustomization_paths
   - k8s.ownership_chain_complete

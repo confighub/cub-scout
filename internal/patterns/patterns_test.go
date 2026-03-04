@@ -631,6 +631,7 @@ func TestRenderJSON_OmitsAbsentFields(t *testing.T) {
 		t.Error("should not include remediation when nil")
 	}
 }
+
 // Tests for Track J prerequisites (v0.9+)
 
 func TestCheckPrerequisites_NoPrereqs(t *testing.T) {
@@ -1137,7 +1138,7 @@ func TestFluxKustomizationPaths_ReducedEvidence(t *testing.T) {
 	})
 
 	// Without git context - should run in reduced evidence mode
-	pr := DetectOneWithGit(g, nil, "gitops.flux.kustomization_paths")
+	pr := DetectOneWithGit(g, nil, "gitops.flux_kustomization_paths")
 	if pr == nil {
 		t.Fatal("expected result")
 	}
@@ -1159,11 +1160,53 @@ func TestFluxKustomizationPaths_ReducedEvidence(t *testing.T) {
 	}
 }
 
+func TestFluxKustomizationPaths_UnderscoreID(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/flux-system",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "flux-system",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+
+	pr := DetectOneWithGit(g, nil, "gitops.flux_kustomization_paths")
+	if pr == nil {
+		t.Fatal("expected result for underscore pattern ID")
+	}
+	if pr.ID != "gitops.flux_kustomization_paths" {
+		t.Fatalf("expected canonical underscore ID, got %q", pr.ID)
+	}
+}
+
+func TestFluxKustomizationPaths_LegacyIDAlias(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/flux-system",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "flux-system",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+
+	pr := DetectOneWithGit(g, nil, "gitops.flux.kustomization_paths")
+	if pr == nil {
+		t.Fatal("expected result for legacy dotted pattern ID alias")
+	}
+	if pr.ID != "gitops.flux_kustomization_paths" {
+		t.Fatalf("expected canonical underscore ID from alias lookup, got %q", pr.ID)
+	}
+}
+
 func TestFluxKustomizationPaths_Skipped_NoPrereqs(t *testing.T) {
 	g := graph.NewGraph("test-cluster")
 	// Empty graph - no Kustomizations
 
-	pr := DetectOneWithGit(g, nil, "gitops.flux.kustomization_paths")
+	pr := DetectOneWithGit(g, nil, "gitops.flux_kustomization_paths")
 	if pr == nil {
 		t.Fatal("expected result")
 	}
@@ -1265,7 +1308,7 @@ func TestFluxKustomizationPaths_EnrichedWithGitContext(t *testing.T) {
 		t.Skipf("git context not valid: %v", gitCtx)
 	}
 
-	pr := DetectOneWithGit(g, gitCtx, "gitops.flux.kustomization_paths")
+	pr := DetectOneWithGit(g, gitCtx, "gitops.flux_kustomization_paths")
 	if pr == nil {
 		t.Fatal("expected result")
 	}

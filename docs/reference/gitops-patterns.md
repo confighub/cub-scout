@@ -121,7 +121,7 @@ See [Patterns Contract Reference](patterns-contract.md#git-aware-patterns-v010) 
 | Pattern ID | Type | Status | Description |
 |------------|------|--------|-------------|
 | `gitops.argocd.applicationset_generators` | Hybrid | Implemented | Summarizes ApplicationSet generators; enriched with repo data when `--git-root` provided |
-| `gitops.flux_kustomization_paths` | Hybrid | Planned | Correlates Flux Kustomization paths; validates against repo when `--git-root` provided |
+| `gitops.flux_kustomization_paths` | Hybrid | Implemented | Correlates Flux Kustomization paths; validates against repo when `--git-root` provided |
 
 **Hybrid patterns** run in both modes:
 - **Without `--git-root`**: PASS with info findings from graph-visible data only

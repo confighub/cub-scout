@@ -16,9 +16,9 @@ Registered patterns (10):
     Argo CD Resources Present
   - gitops.controller_presence
     GitOps Controller Presence
-  - gitops.flux.kustomization_paths
-    Flux Kustomization Paths
   - gitops.flux.resources_present
     Flux Resources Present
+  - gitops.flux_kustomization_paths
+    Flux Kustomization Paths
   - k8s.ownership_chain_complete
     Kubernetes Ownership Chain Complete
