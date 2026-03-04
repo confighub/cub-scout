@@ -36,6 +36,7 @@ POPULAR COMMANDS
   tree             Hierarchical views: runtime, ownership, git, composition
   trace            Trace any resource to its Git source
   scan             Find misconfigurations (46 patterns)
+  import           Preview/import workloads to ConfigHub (connected mode)
   gitops status    GitOps pipeline health check
 
 CHOOSE YOUR INTERFACE
@@ -45,12 +46,13 @@ CHOOSE YOUR INTERFACE
 
 STANDALONE VS CONNECTED
   Standalone (default): Works offline, reads from kubectl context
-  Connected:            Optional ConfigHub integration for fleet features
+  Connected:            Optional ConfigHub integration for import/fleet features
                         Run 'cub auth login' to enable
 
 TIPS
   • Use 'tree ownership' to see all resources grouped by GitOps tool
   • Add --json to most commands for machine-readable output
+  • Use 'import --dry-run -n <namespace>' to preview ConfigHub import
   • Press '?' in TUI for keyboard shortcuts
 
 Environment Variables:
@@ -66,6 +68,7 @@ Environment Variables:
 		fmt.Println("  cub-scout tree ownership   See resources by GitOps owner")
 		fmt.Println("  cub-scout trace deploy/x   Trace a resource to Git")
 		fmt.Println("  cub-scout map list --json  JSON output for automation")
+		fmt.Println("  cub-scout import --dry-run Preview ConfigHub import (connected)")
 		fmt.Println()
 		fmt.Println("Run 'cub-scout --help' for all commands")
 	},

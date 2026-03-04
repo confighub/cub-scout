@@ -1369,8 +1369,13 @@ See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema
 ```bash
 ./cub-scout import -n production
 ./cub-scout import -n production --dry-run
+./cub-scout import --yes --connect
 ./cub-scout import --wizard
 ```
+
+When ArgoCD/Flux workloads are detected and matching targets are available in
+the App Space, `import` delegates those workloads to `cub gitops discover` +
+`cub gitops import`, then imports Helm/Native leftovers via the snapshot path.
 
 **Options:**
 | Option | Description |
@@ -1380,7 +1385,17 @@ See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema
 | `--dry-run` | Preview without making changes |
 | `--json` | Output as JSON |
 | `-y, --yes` | Skip confirmation |
+| `--connect` | Start worker and set targets after import |
+| `--no-connect` | Skip worker/target setup after import |
 | `--no-log` | Disable logging to file |
+
+**Repeatable checks (authors and users):**
+
+```bash
+make test-import-delegation
+# or:
+./scripts/test-import-delegation.sh
+```
 
 ---
 

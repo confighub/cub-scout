@@ -14,6 +14,9 @@ This is the authoritative testing reference for cub-scout. All other testing doc
 # Fast check (no cluster, ~30 sec)
 go build ./cmd/cub-scout && go test ./...
 
+# Connected import delegation check (no cluster, ~10 sec)
+make test-import-delegation
+
 # Full proof (with cluster, ~5 min)
 ./scripts/full-test.sh
 
@@ -58,6 +61,20 @@ go test ./...
 | CLI tests | ~34 | Logger, suggestions, import wizard |
 
 **Run time:** ~10 seconds
+
+### Tier 1.5: Import Delegation Checks (No Cluster)
+
+```bash
+make test-import-delegation
+# or:
+./scripts/test-import-delegation.sh
+```
+
+What this proves:
+- Target selection for Kubernetes + Argo/Flux renderer targets is deterministic.
+- Workload filtering after delegation keeps Helm/Native leftovers only.
+- Namespace extraction for delegated GitOps import scopes is stable.
+- CLI help exposes delegation behavior and `--connect` / `--no-connect` flags.
 
 ### Tier 2: Integration Tests (Requires Cluster)
 

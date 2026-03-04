@@ -343,7 +343,8 @@ The key takeaways:
 | Scenario | Command |
 |----------|---------|
 | "What's running on my cluster?" | `cub-scout map list` |
-| "Import everything, including Helm and Native" | `cub-scout import --yes` |
+| "Import everything, including Helm and Native" | `cub-scout import` (review + confirm once) |
+| "Non-interactive broad import + immediate connect" | `cub-scout import --yes --connect` |
 | "See Flux ownership chains and D2 layers" | `cub-scout tree ownership` |
 | "Trace a resource back to its Git source" | `cub-scout trace deploy/<name> -n <ns>` |
 | "Find resources Flux doesn't manage" | `cub-scout import` |
@@ -357,6 +358,7 @@ Do you have Flux Kustomizations or HelmReleases?
     cub gitops import   (rendered pipeline, auto-updating dry/wet pairs)
     Then also run:
     cub-scout import    (catches Helm/Native resources outside Flux)
+                       (single confirm: import + worker/target connect)
   NO, or just exploring -->
     cub-scout import    (broad discovery, all workload types)
     cub-scout tree ownership  (see Flux chains if Flux is present)
@@ -469,6 +471,14 @@ The brownfield HelmRelease references a HelmRepository (`jetstack`) that
 doesn't exist in the cluster. The trace shows this failure, which is
 expected behavior -- it demonstrates graceful degradation on missing chain
 links.
+
+## Repeatable Import Check
+
+Validate connected import delegation behavior locally:
+
+```bash
+make test-import-delegation
+```
 
 ## Related
 

@@ -1,7 +1,7 @@
 # cub-scout Makefile
 # Canonical verification commands for development and CI
 
-.PHONY: build test test-race fmt lint clean regression-argo
+.PHONY: build test test-race fmt lint clean regression-argo test-import-delegation
 
 # Default target
 all: build test
@@ -44,3 +44,7 @@ verify-full: fmt-check build test test-race
 # Run Argo regression audit (v0.4.0 vs v0.19.6)
 regression-argo:
 	./test/regression/argo-version-audit.sh
+
+# Repeatable checks for connected import delegation flow
+test-import-delegation:
+	./scripts/test-import-delegation.sh

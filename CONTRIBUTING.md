@@ -38,6 +38,7 @@ All PRs must pass the test suite:
 ```bash
 go build ./cmd/cub-scout
 go test ./... -v
+make test-import-delegation
 ```
 
 **What tests do I need?** Use this quick guide:
@@ -49,6 +50,7 @@ go test ./... -v
 | New TUI view/keybinding | teatest snapshot |
 | CLI output format change | ASCII golden test |
 | Connected mode feature | Integration test with skip guard |
+| `import` delegation / connected import flow | `make test-import-delegation` + `go test ./cmd/cub-scout -count=1` |
 
 For the full cookbook with copy-paste patterns, see [docs/testing/BEST-PRACTICES.md](docs/testing/BEST-PRACTICES.md).
 
@@ -75,7 +77,8 @@ Use clear, descriptive commit messages:
 2. Create a feature branch (`git checkout -b feature/my-feature`)
 3. Make your changes with tests
 4. Ensure `go test ./... -v` passes
-5. Submit a pull request
+5. Ensure `make test-import-delegation` passes for import/delegation changes
+6. Submit a pull request
 
 PR descriptions should briefly answer:
 

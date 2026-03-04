@@ -1,7 +1,7 @@
 # Import from Live Cluster
 
-Discover workloads from a running Kubernetes cluster and propose a ConfigHub
-App structure -- without touching Git, without modifying anything.
+Discover workloads from a running Kubernetes cluster, propose a ConfigHub
+App structure, and optionally import immediately.
 
 This example uses the "Arnie" pattern: ArgoCD with a folder-per-environment
 (`envs/dev`, `envs/staging`, `envs/prod`) in a single deploy repo.
@@ -14,8 +14,8 @@ and organize it into ConfigHub, but you don't want to start by hand-mapping
 everything from Git repos.
 
 `cub-scout import --dry-run` reads your live cluster and proposes an App
-structure. No Git access required. No cluster modifications. Just read-only
-discovery.
+structure. `cub-scout import` then creates the App/Units in ConfigHub and can
+immediately connect a worker/target after one confirmation.
 
 ## What's Running
 
@@ -57,6 +57,27 @@ To scope discovery to specific namespaces:
 
 ```bash
 ./cub-scout import --dry-run -n myapp-prod
+```
+
+Import for real (interactive):
+
+```bash
+./cub-scout import
+```
+
+The command shows discovered workloads and proposed units, then asks:
+
+```text
+Import this into ConfigHub? [y/N]
+```
+
+If you answer `y`, cub-scout imports the units and immediately starts a worker,
+waits for target registration, sets targets, and prints the ConfigHub space URL.
+
+Non-interactive equivalent:
+
+```bash
+./cub-scout import --yes --connect
 ```
 
 ### What the ASCII Output Looks Like
@@ -250,23 +271,15 @@ to an App.
 
 ## What Happens Next
 
-cub-scout's job stops at the proposal. It reads the cluster, detects ownership,
-and suggests a structure. It does not write anything to the cluster or to
-ConfigHub.
+Typical flow:
 
-The next step -- actually creating the App Space and Units in ConfigHub -- is
-handled by ConfigHub's bridge import. That is ConfigHub's responsibility, not
-cub-scout's.
+1. **Discover and review** with `cub-scout import --dry-run`
+2. **Import** with `cub-scout import` (or `--yes --connect`)
+3. **Connect** (automatic in the default interactive flow): worker starts, target is set
+4. **Operate**: use ConfigHub for visibility and control while Flux/Argo continue reconciling
 
-The typical flow:
-
-1. **cub-scout discovers** (this example) -- read-only scan, propose structure
-2. **You review** -- adjust naming, merge or split Apps as needed
-3. **ConfigHub imports** -- bridge import creates the Space, Units, and OCI pipeline
-4. **Flux/Argo deploys** -- your existing deployers continue to run, now tracked by ConfigHub
-
-For details on the ConfigHub side, see the
-[ConfigHub bridge import documentation](https://docs.confighub.com/guides/bridge-import).
+For production rendered pipelines, use `cub gitops import` for Argo/Flux apps,
+then run `cub-scout import` to catch resources outside the GitOps controller scope.
 
 ## Fixtures
 

@@ -30,7 +30,28 @@ var (
 	importJSON      bool
 	importNoLog     bool
 	importWizard    bool
+	importConnect   bool
+	importNoConnect bool
 )
+
+type cubTargetRef struct {
+	Slug         string
+	ProviderType string
+	Toolchain    string
+}
+
+type gitOpsDelegationResult struct {
+	ArgoWanted    bool
+	FluxWanted    bool
+	ArgoDelegated bool
+	FluxDelegated bool
+	ArgoReason    string
+	FluxReason    string
+}
+
+func (r gitOpsDelegationResult) AnyDelegated() bool {
+	return r.ArgoDelegated || r.FluxDelegated
+}
 
 // GitOpsReference identifies the GitOps resource that manages a workload
 type GitOpsReference struct {
@@ -108,7 +129,12 @@ var importCmd = &cobra.Command{
 This command:
   1. Discovers workloads (Deployments, StatefulSets, DaemonSets)
   2. Suggests an App and Deployments structure
-  3. Creates everything in ConfigHub
+  3. Imports into ConfigHub
+
+When ArgoCD/Flux workloads are found and matching GitOps targets are available
+in the App Space, cub-scout delegates those workloads to:
+  cub gitops discover + cub gitops import
+and imports Helm/Native leftovers via the snapshot path.
 
 Terminology: the API currently uses Space/Unit; see docs/reference/glossary.md
 for the App/Deployment mapping.
@@ -133,6 +159,9 @@ Examples:
 
   # Interactive TUI wizard (recommended)
   cub-scout import --wizard
+
+  # Non-interactive import + immediate cluster connection
+  cub-scout import --yes --connect
 `,
 	RunE: runImport,
 }
@@ -144,11 +173,17 @@ func init() {
 	importCmd.Flags().BoolVar(&importJSON, "json", false, "Output as JSON (for GUI/scripting)")
 	importCmd.Flags().BoolVar(&importNoLog, "no-log", false, "Disable logging to file")
 	importCmd.Flags().BoolVarP(&importWizard, "wizard", "w", false, "Launch interactive TUI wizard")
+	importCmd.Flags().BoolVar(&importConnect, "connect", false, "After import, start worker and set targets")
+	importCmd.Flags().BoolVar(&importNoConnect, "no-connect", false, "Do not start worker/targets after import")
 
 	rootCmd.AddCommand(importCmd)
 }
 
 func runImport(cmd *cobra.Command, args []string) error {
+	if importConnect && importNoConnect {
+		return fmt.Errorf("--connect and --no-connect cannot be used together")
+	}
+
 	// Wizard mode - launch interactive TUI
 	if importWizard {
 		return RunImportWizard()
@@ -276,7 +311,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Step 4: Confirm
 	if !importYes {
-		fmt.Printf("\nImport %d deployments into App '%s'? [y/N] ", len(proposal.Units), proposal.AppSpace)
+		fmt.Printf("\nImport this into ConfigHub? [y/N] ")
 		if !confirm() {
 			if logger != nil {
 				logger.Log("User aborted import")
@@ -287,12 +322,51 @@ func runImport(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Connection behavior:
+	// - Interactive confirmation defaults to connect now
+	// - Non-interactive (-y) preserves legacy behavior unless --connect is set
+	shouldConnect := importConnect
+	if !importYes && !importNoConnect && !importConnect {
+		shouldConnect = true
+	}
+	if importNoConnect {
+		shouldConnect = false
+	}
+
 	// Step 5: Apply
 	if logger != nil {
 		logger.Section("APPLYING")
 		logger.Log("Creating App: %s", proposal.AppSpace)
 	}
-	return applyImportWithLogger(proposal, allWorkloads, logger)
+
+	// Try delegating Argo/Flux workloads to cub gitops import first.
+	delegation, err := attemptGitOpsDelegation(proposal.AppSpace, allWorkloads, logger)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: GitOps delegation failed, falling back to scout import: %v\n", err)
+		if logger != nil {
+			logger.Log("GitOps delegation failed, fallback to scout import: %v", err)
+		}
+	}
+
+	if delegation.ArgoWanted || delegation.FluxWanted {
+		printDelegationSummary(delegation)
+	}
+
+	// If a controller was delegated successfully, skip snapshot import for those workloads.
+	scoutWorkloads := filterScoutWorkloadsAfterDelegation(allWorkloads, delegation)
+	if len(scoutWorkloads) == 0 && delegation.AnyDelegated() {
+		fmt.Println()
+		fmt.Println("No Helm/Native leftovers to snapshot-import.")
+		fmt.Printf("GitOps-managed workloads imported via cub gitops import into App '%s'.\n", proposal.AppSpace)
+		return printSpaceSummary(proposal.AppSpace)
+	}
+
+	proposalToApply := proposal
+	if len(scoutWorkloads) != len(allWorkloads) {
+		proposalToApply = SuggestFullProposal(nil, scoutWorkloads, proposal.AppSpace)
+	}
+
+	return applyImportWithLogger(proposalToApply, scoutWorkloads, logger, shouldConnect)
 }
 
 // discoverNamespacesWithWorkloads finds all namespaces that have Deployments, StatefulSets, or DaemonSets
@@ -689,7 +763,243 @@ func printDiscovery(namespaces []string, workloads []WorkloadInfo, proposal *Ful
 	fmt.Printf("\n  Total: %d deployments\n", len(proposal.Units))
 }
 
-func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger) error {
+func printDelegationSummary(r gitOpsDelegationResult) {
+	fmt.Println()
+	fmt.Println("GitOps delegation:")
+	if r.ArgoWanted {
+		if r.ArgoDelegated {
+			fmt.Println("  ✓ ArgoCD workloads -> cub gitops import")
+		} else {
+			fmt.Printf("  ○ ArgoCD workloads -> scout snapshot (%s)\n", r.ArgoReason)
+		}
+	}
+	if r.FluxWanted {
+		if r.FluxDelegated {
+			fmt.Println("  ✓ Flux workloads -> cub gitops import")
+		} else {
+			fmt.Printf("  ○ Flux workloads -> scout snapshot (%s)\n", r.FluxReason)
+		}
+	}
+}
+
+func filterScoutWorkloadsAfterDelegation(workloads []WorkloadInfo, r gitOpsDelegationResult) []WorkloadInfo {
+	filtered := make([]WorkloadInfo, 0, len(workloads))
+	for _, w := range workloads {
+		if w.Owner == "ArgoCD" && r.ArgoDelegated {
+			continue
+		}
+		if w.Owner == "Flux" && r.FluxDelegated {
+			continue
+		}
+		filtered = append(filtered, w)
+	}
+	return filtered
+}
+
+func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *ImportLogger) (gitOpsDelegationResult, error) {
+	result := gitOpsDelegationResult{}
+	needArgo := false
+	needFlux := false
+	for _, w := range workloads {
+		if w.Owner == "ArgoCD" {
+			needArgo = true
+		}
+		if w.Owner == "Flux" {
+			needFlux = true
+		}
+	}
+	result.ArgoWanted = needArgo
+	result.FluxWanted = needFlux
+
+	if !needArgo && !needFlux {
+		return result, nil
+	}
+
+	if logger != nil {
+		logger.Section("GITOPS DELEGATION")
+		logger.Log("Trying cub gitops import for GitOps-managed workloads in space %s", space)
+	}
+
+	// Ensure space exists so target lookups and gitops commands can run.
+	if _, err := CreateAppSpaceWithResult(space, true, nil); err != nil {
+		msg := fmt.Sprintf("cannot ensure app space: %v", err)
+		if needArgo {
+			result.ArgoReason = msg
+		}
+		if needFlux {
+			result.FluxReason = msg
+		}
+		return result, err
+	}
+
+	targets, err := loadCubTargets(space)
+	if err != nil {
+		msg := fmt.Sprintf("cannot list targets: %v", err)
+		if needArgo {
+			result.ArgoReason = msg
+		}
+		if needFlux {
+			result.FluxReason = msg
+		}
+		return result, nil
+	}
+
+	k8sTarget, argoRendererTarget, fluxRendererTarget := selectGitOpsTargets(targets)
+	if k8sTarget == "" {
+		msg := "no Kubernetes discovery target in this App Space"
+		if needArgo {
+			result.ArgoReason = msg
+		}
+		if needFlux {
+			result.FluxReason = msg
+		}
+		return result, nil
+	}
+
+	if needArgo {
+		if argoRendererTarget == "" {
+			result.ArgoReason = "no ArgoCD renderer target in this App Space"
+		} else {
+			argoNamespaces := gitOpsNamespacesForOwner(workloads, "ArgoCD", "argocd")
+			if err := runGitOpsImportForNamespaces(space, k8sTarget, argoRendererTarget, argoNamespaces, "ArgoCD", logger); err != nil {
+				result.ArgoReason = err.Error()
+			} else {
+				result.ArgoDelegated = true
+			}
+		}
+	}
+
+	if needFlux {
+		if fluxRendererTarget == "" {
+			result.FluxReason = "no Flux renderer target in this App Space"
+		} else {
+			fluxNamespaces := gitOpsNamespacesForOwner(workloads, "Flux", "flux-system")
+			if err := runGitOpsImportForNamespaces(space, k8sTarget, fluxRendererTarget, fluxNamespaces, "Flux", logger); err != nil {
+				result.FluxReason = err.Error()
+			} else {
+				result.FluxDelegated = true
+			}
+		}
+	}
+
+	if needArgo && !result.ArgoDelegated && result.ArgoReason == "" {
+		result.ArgoReason = "delegation unavailable"
+	}
+	if needFlux && !result.FluxDelegated && result.FluxReason == "" {
+		result.FluxReason = "delegation unavailable"
+	}
+
+	return result, nil
+}
+
+func loadCubTargets(space string) ([]cubTargetRef, error) {
+	out, err := exec.Command("cub", "target", "list", "--space", space, "--json").Output()
+	if err != nil {
+		return nil, err
+	}
+	var raw []struct {
+		Target struct {
+			Slug         string `json:"Slug"`
+			ProviderType string `json:"ProviderType"`
+			Toolchain    string `json:"ToolchainType"`
+		} `json:"Target"`
+	}
+	if err := json.Unmarshal(out, &raw); err != nil {
+		return nil, err
+	}
+	targets := make([]cubTargetRef, 0, len(raw))
+	for _, t := range raw {
+		if t.Target.Slug == "" {
+			continue
+		}
+		targets = append(targets, cubTargetRef{
+			Slug:         t.Target.Slug,
+			ProviderType: t.Target.ProviderType,
+			Toolchain:    t.Target.Toolchain,
+		})
+	}
+	return targets, nil
+}
+
+func selectGitOpsTargets(targets []cubTargetRef) (k8sTarget, argoRenderer, fluxRenderer string) {
+	for _, t := range targets {
+		slug := strings.ToLower(t.Slug)
+		provider := strings.ToLower(t.ProviderType)
+		toolchain := strings.ToLower(t.Toolchain)
+		all := slug + " " + provider + " " + toolchain
+
+		if k8sTarget == "" && (strings.Contains(all, "kubernetes") || strings.Contains(all, "k8s")) {
+			k8sTarget = t.Slug
+		}
+		if argoRenderer == "" &&
+			(strings.Contains(all, "argocdrenderer") || (strings.Contains(all, "argocd") && strings.Contains(all, "renderer"))) {
+			argoRenderer = t.Slug
+		}
+		if fluxRenderer == "" &&
+			(strings.Contains(all, "fluxrenderer") || (strings.Contains(all, "flux") && strings.Contains(all, "renderer"))) {
+			fluxRenderer = t.Slug
+		}
+	}
+	return k8sTarget, argoRenderer, fluxRenderer
+}
+
+func gitOpsNamespacesForOwner(workloads []WorkloadInfo, owner, fallback string) []string {
+	seen := make(map[string]bool)
+	var namespaces []string
+	for _, w := range workloads {
+		if w.Owner != owner || w.GitOpsRef == nil {
+			continue
+		}
+		ns := strings.TrimSpace(w.GitOpsRef.Namespace)
+		if ns == "" {
+			continue
+		}
+		if seen[ns] {
+			continue
+		}
+		seen[ns] = true
+		namespaces = append(namespaces, ns)
+	}
+	if len(namespaces) == 0 {
+		namespaces = []string{fallback}
+	}
+	sort.Strings(namespaces)
+	return namespaces
+}
+
+func runGitOpsImportForNamespaces(space, k8sTarget, rendererTarget string, namespaces []string, label string, logger *ImportLogger) error {
+	for _, ns := range namespaces {
+		where := fmt.Sprintf("metadata.namespace = '%s'", ns)
+		fmt.Printf("\nDelegating %s namespace '%s' via cub gitops import...\n", label, ns)
+		if logger != nil {
+			logger.Log("Delegating %s ns=%s using k8s=%s renderer=%s", label, ns, k8sTarget, rendererTarget)
+		}
+
+		discoverCmd := exec.Command("cub", "gitops", "discover",
+			"--space", space,
+			k8sTarget,
+			"--where-resource", where,
+		)
+		discoverOutput, err := discoverCmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("cub gitops discover failed for %s/%s: %s", label, ns, strings.TrimSpace(string(discoverOutput)))
+		}
+
+		importCmd := exec.Command("cub", "gitops", "import",
+			"--space", space,
+			k8sTarget, rendererTarget,
+			"--where-resource", where,
+			"--wait",
+		)
+		importOutput, err := importCmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("cub gitops import failed for %s/%s: %s", label, ns, strings.TrimSpace(string(importOutput)))
+		}
+	}
+	return nil
+}
+
+func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger, shouldConnect bool) error {
 	// Index workloads
 	workloadIndex := make(map[string]WorkloadInfo)
 	for _, w := range workloads {
@@ -797,20 +1107,16 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 		return finalErr
 	}
 
-	fmt.Println()
-	fmt.Println("View your deployments:")
-	fmt.Printf("  cub unit list --space %s\n", proposal.AppSpace)
-
-	// Ask to start worker and set targets (skip if -y was used)
-	if !importYes {
-		fmt.Printf("\nStart worker and set targets? [Y/n] ")
-		if confirmDefault(true) {
-			fmt.Println()
-			return startWorkerAndSetTargets(proposal, logger)
+	if shouldConnect {
+		fmt.Println()
+		fmt.Println("Connecting this App to your cluster (worker + targets)...")
+		if err := startWorkerAndSetTargets(proposal, logger); err != nil {
+			return err
 		}
+		return nil
 	}
 
-	return nil
+	return printSpaceSummary(proposal.AppSpace)
 }
 
 func fetchManifest(kind, namespace, name string) ([]byte, error) {
@@ -937,20 +1243,6 @@ func confirm() bool {
 	return response == "y" || response == "yes"
 }
 
-// confirmDefault returns the default if user just presses enter
-func confirmDefault(defaultYes bool) bool {
-	reader := bufio.NewReader(os.Stdin)
-	response, err := reader.ReadString('\n')
-	if err != nil {
-		return defaultYes
-	}
-	response = strings.ToLower(strings.TrimSpace(response))
-	if response == "" {
-		return defaultYes
-	}
-	return response == "y" || response == "yes"
-}
-
 // startWorkerAndSetTargets starts worker, waits for targets, sets them on units
 func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) error {
 	if logger != nil {
@@ -966,9 +1258,10 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 	}
 	kubeContext := strings.TrimSpace(string(ctxOut))
 
-	fmt.Printf("Starting worker for space '%s'...\n", proposal.AppSpace)
+	fmt.Printf("Starting worker for App '%s'...\n", proposal.AppSpace)
 
-	// Start worker in background with output to devnull
+	// Start worker in background with output to devnull.
+	// Command exits while worker keeps running.
 	workerCmd := exec.Command("cub", "worker", "run", "dev", "--space", proposal.AppSpace)
 	devNull, _ := os.Open(os.DevNull)
 	workerCmd.Stdout = devNull
@@ -978,6 +1271,7 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 		return fmt.Errorf("start worker: %w", err)
 	}
 	devNull.Close()
+	go func() { _ = workerCmd.Wait() }()
 
 	if logger != nil {
 		logger.Log("Worker started (PID %d)", workerCmd.Process.Pid)
@@ -1033,23 +1327,76 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 		}
 	}
 
-	// Show next steps
+	if err := printSpaceSummary(proposal.AppSpace); err != nil {
+		return err
+	}
+
 	fmt.Println()
 	fmt.Println("Next: Sync via your deployer to apply changes:")
 	fmt.Println("  ArgoCD:  argocd app sync <app-name>")
 	fmt.Println("  Flux:    flux reconcile kustomization <name>")
 	fmt.Println()
-	fmt.Println("Worker is running. Press Ctrl+C to stop.")
-	fmt.Println()
+	fmt.Printf("Worker running in background (PID %d)\n", workerCmd.Process.Pid)
 
 	if logger != nil {
-		logger.Log("Worker running in foreground")
+		logger.Log("Worker running in background")
 	}
 
-	// Now attach to worker output
-	workerCmd.Wait()
-
 	return nil
+}
+
+func printSpaceSummary(space string) error {
+	fmt.Println()
+	fmt.Println("Imported units now visible in ConfigHub:")
+	listCmd := exec.Command("cub", "unit", "list", "--space", space)
+	listCmd.Stdout = os.Stdout
+	listCmd.Stderr = os.Stderr
+	if err := listCmd.Run(); err != nil {
+		fmt.Printf("  (could not list units: %v)\n", err)
+	}
+
+	if url := getSpaceURL(space); url != "" {
+		fmt.Println()
+		fmt.Println("View in browser:")
+		fmt.Printf("  %s\n", url)
+	}
+	return nil
+}
+
+func getSpaceURL(spaceSlug string) string {
+	ctxCmd := exec.Command("cub", "context", "get", "--json")
+	ctxOutput, err := ctxCmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	var ctx CubContext
+	if err := json.Unmarshal(ctxOutput, &ctx); err != nil {
+		return ""
+	}
+	serverURL := strings.TrimSpace(ctx.Coordinate.ServerURL)
+	if serverURL == "" {
+		return ""
+	}
+
+	spaceCmd := exec.Command("cub", "space", "list", "--json")
+	spaceOutput, err := spaceCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("%s/spaces/%s", serverURL, spaceSlug)
+	}
+
+	var spaces []CubSpaceData
+	if err := json.Unmarshal(spaceOutput, &spaces); err != nil {
+		return fmt.Sprintf("%s/spaces/%s", serverURL, spaceSlug)
+	}
+
+	for _, s := range spaces {
+		if s.Space.Slug == spaceSlug {
+			return fmt.Sprintf("%s/spaces/%s", serverURL, s.Space.SpaceID)
+		}
+	}
+
+	return fmt.Sprintf("%s/spaces/%s", serverURL, spaceSlug)
 }
 
 func outputEmptyJSON() error {

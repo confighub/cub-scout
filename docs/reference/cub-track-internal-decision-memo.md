@@ -221,27 +221,31 @@ Message:
 2. Track AI-assisted chart mutations in Git with searchable intent/outcome history.
 3. Add optional connected controls for risk and enterprise audit.
 
+## Traefik Helm Example (Base + App Units)
+
+Use the complete reference:
+
+1. `docs/reference/traefik-helm-dry-wet-unit-worked-example.md`
+
+That walkthrough includes:
+
+1. upstream Traefik chart pinning as platform DRY base unit,
+2. app-owned DRY overlays with bounded field ownership,
+3. renderer-unit dry->wet composition with OCI delivery,
+4. app change -> platform approval -> upstream DRY promotion path.
+
 ## score.dev Example (Apps + Agents)
 
-Scenario:
+Use the complete end-to-end reference:
 
-1. Team maintains `score.yaml` for `checkout`.
-2. Agent updates workload, probes, and env bindings.
-3. Platform generator renders Kubernetes manifests and/or Helm values.
-4. Git commit includes mutation linkage trailer.
-5. Flux/Argo reconciles generated manifests.
+1. `docs/reference/scoredev-dry-wet-unit-worked-example.md`
 
-Next-gen loop:
+That walkthrough includes:
 
-1. `ChangeIntent`: "increase checkout resilience and right-size resources."
-2. Pre-scan evaluates policy (probes present, limits bounded, env restrictions).
-3. Decision is recorded (`ALLOW` in staging, `ESCALATE` in prod).
-4. Attested execution runs with scoped token.
-5. Post-scan and runtime outcome are attached as receipts.
-
-Outcome:
-
-1. team can answer both "what changed in generated manifests" and "why/under what controls it changed."
+1. Score DRY intent -> WET render pipeline.
+2. Flux and Argo controller-equivalent wiring.
+3. `cub gitops import` dry/wet pair creation with MergeUnits linkage.
+4. AI mutation + explainability overlay using `cub track`.
 
 ## Why Skeptical Teams Adopt
 
@@ -255,4 +259,6 @@ Outcome:
 1. `docs/reference/app-and-ai-gitops-plain-english.md`
 2. `docs/reference/cub-track-mvp-upsell-and-dual-store.md`
 3. `docs/reference/stored-in-git-vs-confighub.md`
-
+4. `docs/reference/scoredev-dry-wet-unit-worked-example.md`
+5. `docs/reference/dual-approval-gitops-gh-pr-and-ch-mr.md`
+6. `docs/reference/traefik-helm-dry-wet-unit-worked-example.md`

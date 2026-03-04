@@ -1,6 +1,6 @@
 # cub-scout -- explore and map GitOps clusters
 
-**Offline-first. Deterministic. Read-only.**
+**Offline-first. Deterministic. Cluster read-only.**
 
 cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It works standalone (no network required) or connected to [ConfigHub](https://confighub.com) for additional features. Outputs are deterministic and safe for automation.
 
@@ -17,6 +17,7 @@ cub-scout map list --json | jq   # JSON output — pipe to your tools
 cub-scout tree ownership         # See resources grouped by GitOps owner
 cub-scout trace deploy/app -n ns # Trace any resource to its Git source
 cub-scout scan                   # Find misconfigurations (46 patterns)
+cub-scout import --dry-run -n ns # Preview ConfigHub import (connected)
 ```
 
 **What you get in 60 seconds:**
@@ -103,6 +104,7 @@ cub-scout works fully offline. Connected mode is optional.
 **Standalone:** Works offline, no signup needed. Reads from your kubectl context.
 
 **Connected:** Run `cub auth login` for ConfigHub features. [Learn more](docs/WHY_CONNECTED_MODE.md)
+Connected import writes inventory/state to ConfigHub, not cluster manifests.
 
 **Ready to connect?** See the [First Import guide](docs/getting-started/first-import.md) for a 10-minute walkthrough.
 
@@ -630,6 +632,9 @@ git clone https://github.com/confighub/cub-scout.git
 cd cub-scout
 go build ./cmd/cub-scout
 ./cub-scout version
+
+# Repeatable connected-import delegation check
+make test-import-delegation
 ```
 
 ### Docker
@@ -652,7 +657,7 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 4. Match against known ownership patterns (Flux, Argo, Helm, etc.)
 5. Display results
 
-**Read-only by default.** We only use `Get`, `List`, `Watch` — never `Create`, `Update`, `Delete`. See [SECURITY.md](SECURITY.md) for details.
+**Cluster read-only by default.** We only use `Get`, `List`, `Watch` against Kubernetes — never `Create`, `Update`, `Delete`. Connected import can write ConfigHub records, but never mutates cluster resources. See [SECURITY.md](SECURITY.md) for details.
 
 ---
 
@@ -661,7 +666,7 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 | Principle | What It Means |
 |-----------|---------------|
 | **Single cluster** | Standalone mode inspects one kubectl context; multi-cluster only via connected mode |
-| **Read-only by default** | Never modifies cluster state; uses `Get`, `List`, `Watch` only |
+| **Cluster read-only by default** | Never modifies cluster state; uses `Get`, `List`, `Watch` only |
 | **Deterministic** | Same input = same output; no AI/ML in core logic |
 | **Parse, don't guess** | Ownership comes from actual labels, not heuristics |
 | **Complement GitOps** | Works alongside Flux, Argo, Helm — doesn't compete |
@@ -693,9 +698,9 @@ cub-scout is an open-source cluster explorer designed to work with existing Kube
 | Revision history | — | ✓ |
 | Team collaboration | — | ✓ |
 
-**Standalone:** No signup, works forever. Read-only cluster exploration features.
+**Standalone:** No signup, works forever. Cluster read-only exploration features.
 
-**Connected:** Run `cub auth login` to link to ConfigHub to access more features and import apps.
+**Connected:** Run `cub auth login` to link to ConfigHub for import/fleet features. Import writes ConfigHub state only, not cluster manifests.
 
 ### How to Connect
 

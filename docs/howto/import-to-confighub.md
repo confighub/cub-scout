@@ -11,10 +11,11 @@ The import process involves three roles with distinct responsibilities:
 | Step | Who | What |
 |------|-----|------|
 | **Discover** | cub-scout | Scan cluster, detect ownership, propose App structure |
+| **Delegate (when available)** | cub-scout + `cub gitops import` | Import Argo/Flux workloads via rendered GitOps path |
 | **Import** | ConfigHub | Create Apps/Deployments, set up bridge workers, connect OCI pipeline |
 | **Deploy** | Flux/ArgoCD | Pull rendered manifests from ConfigHub's OCI registry, apply to cluster |
 
-cub-scout is read-only — it discovers and proposes. ConfigHub handles the actual import and lifecycle.
+cub-scout is read-only in discovery mode (`--dry-run`). Non-dry-run import creates ConfigHub state and may delegate Argo/Flux workloads to `cub gitops import` when matching targets exist.
 
 For cluster-only discovery (no Git required), see [Import from Live](import-from-live.md).
 
@@ -86,7 +87,7 @@ cub-scout import -n <namespace>
 Or non-interactive:
 
 ```bash
-cub-scout import -n <namespace> -y
+cub-scout import -n <namespace> --yes --connect
 ```
 
 ### 4. Verify Import
@@ -143,13 +144,24 @@ cub unit delete <unit-slug> --space <space>
 
 Then continue using your existing Argo/Helm flow while you revise mapping.
 
-Rollback is safe: import creates ConfigHub state only — it never modifies the cluster.
+Rollback is safe: import creates ConfigHub state only — it does not modify workload manifests in the cluster.
 
 ## Notes
 
 - `cub-scout import --json` is for proposal automation and GUI workflows.
 - `cub-scout import --wizard` runs the interactive TUI wizard.
+- `cub-scout import` now performs connected delegation for Argo/Flux when available, then imports leftovers.
 - This path prioritizes predictable migration over fast migration.
+
+## Repeatable Delegation Check
+
+For authors and users validating import behavior after upgrades:
+
+```bash
+make test-import-delegation
+# or:
+./scripts/test-import-delegation.sh
+```
 
 ## Related Docs
 

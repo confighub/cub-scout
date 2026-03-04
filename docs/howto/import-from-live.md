@@ -1,6 +1,6 @@
 # Import from Live Cluster
 
-Discover workloads from a running cluster and propose an App structure for ConfigHub — without needing Git access.
+Discover workloads from a running cluster and propose or import an App structure for ConfigHub — without needing Git access.
 
 ## When to Use This
 
@@ -13,7 +13,7 @@ Discover workloads from a running cluster and propose an App structure for Confi
 
 cub-scout reads the cluster (Deployments, StatefulSets, DaemonSets), detects who manages each workload, and proposes how to organize them as Apps in ConfigHub.
 
-It reads labels and annotations — it never modifies anything.
+`--dry-run` is read-only. `import` (without `--dry-run`) creates ConfigHub state and can start worker/target setup.
 
 ## Quick Start
 
@@ -26,6 +26,12 @@ It reads labels and annotations — it never modifies anything.
 
 # Get structured JSON output
 ./cub-scout import --dry-run --json
+
+# Import now (single confirmation)
+./cub-scout import
+
+# Non-interactive import + immediate connect
+./cub-scout import --yes --connect
 ```
 
 ## What cub-scout Detects
@@ -67,12 +73,12 @@ cub-scout infers the environment variant in this order:
 
 ## What Happens Next
 
-cub-scout's job stops at the proposal. It discovers and explains — it doesn't create anything in ConfigHub.
+Typical path:
 
-The next steps are ConfigHub's responsibility:
-- Create the App and its Deployments from the proposal
-- Set up bridge workers and Targets
-- Connect the OCI pipeline (ConfigHub renders → Flux/Argo deploys)
+1. Discover and review with `./cub-scout import --dry-run`
+2. Import with `./cub-scout import` (or `--yes --connect`)
+3. For Argo/Flux workloads, import may delegate to `cub gitops import` when matching targets exist
+4. Helm/Native leftovers are imported via snapshot path
 
 See [Import to ConfigHub](import-to-confighub.md) for the full migration path, or [Migration Playbook](migration-playbook.md) for the comprehensive guide.
 
@@ -85,3 +91,9 @@ See [examples/import-from-live/](../../examples/import-from-live/) for a complet
 - [Migration Playbook](migration-playbook.md) — Comprehensive guide with assessment, planning, validation, and rollback
 - [Import to ConfigHub](import-to-confighub.md) — Full migration path (includes ConfigHub steps)
 - [ConfigHub Glossary](../reference/glossary.md) — Terminology reference
+
+Quick validation command:
+
+```bash
+make test-import-delegation
+```

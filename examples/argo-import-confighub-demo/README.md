@@ -433,7 +433,8 @@ The key takeaways:
 |----------|---------|
 | "Import a specific ArgoCD Application (quick)" | `cub-scout import-argocd <name>` |
 | "What's running on my cluster?" | `cub-scout map list` |
-| "Import everything, including Helm and Native" | `cub-scout import --yes` |
+| "Import everything, including Helm and Native" | `cub-scout import` (review + confirm once) |
+| "Non-interactive broad import + immediate connect" | `cub-scout import --yes --connect` |
 | "Find resources ArgoCD doesn't manage" | `cub-scout import` |
 | "What changed since last sync?" | `cub-scout gitops status` |
 
@@ -445,6 +446,7 @@ Do you have ArgoCD or Flux Applications?
     cub gitops import   (rendered pipeline, auto-updating dry/wet pairs)
     Then also run:
     cub-scout import    (catches Helm/Native resources outside ArgoCD/Flux)
+                       (single confirm: import + worker/target connect)
   NO, or just exploring -->
     cub-scout import    (broad discovery, all workload types)
     or:
@@ -556,29 +558,38 @@ worker runs in-cluster and also connects to ConfigHub. Both need network
 access to your ConfigHub instance. Check firewall rules and
 `CONFIGHUB_URL` reachability from inside the kind cluster.
 
-## Future: Connected Mode Integration
+## Repeatable Import Check
 
-Today these three tools run independently. A planned connected-mode feature
-([#201](https://github.com/confighub/cub-scout/issues/201)) would let
-cub-scout delegate to `cub gitops import` when it detects ArgoCD or Flux
-controllers on a cluster:
+Validate connected import delegation behavior locally:
+
+```bash
+make test-import-delegation
+```
+
+## Connected Mode Delegation (Current)
+
+`cub-scout import` now tries connected-mode delegation automatically:
 
 ```
-cub-scout import --yes
+cub-scout import
   |
-  |-- ArgoCD Applications detected
+  |-- ArgoCD/Flux workloads + required targets present
   |   --> delegate to: cub gitops import (rendered pipeline)
   |
-  |-- Helm releases (no ArgoCD)
-  |   --> handle directly: cub unit create (static snapshot)
+  |-- Helm/Native workloads
+  |   --> import directly via cub-scout snapshot path
   |
-  `-- Native resources
-      --> handle directly: cub unit create (static snapshot)
+  `-- Missing gitops prerequisites
+      --> fallback to cub-scout snapshot for those workloads
 ```
 
-This would give you the best of both worlds in a single command: broad
-coverage from `cub-scout import` for Helm/Native resources, plus live
-rendered pipelines from `cub gitops import` for ArgoCD-managed apps.
+This gives a single-command path with mixed ownership support:
+- GitOps-managed workloads use `cub gitops import` when possible.
+- Helm/Native (and any undelegated GitOps workloads) stay on the scout import path.
+
+Delegation requires targets in the same App Space:
+- a Kubernetes discovery target
+- and an Argo or Flux renderer target (`argocdrenderer` / `fluxrenderer`)
 
 ## Related
 
