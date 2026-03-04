@@ -202,8 +202,8 @@ func (a *ArgoTracer) parseAppOutput(data []byte, appName, namespace string) (*Tr
 		sourceLastTransition = &reconciled
 		sourceStatus = fmt.Sprintf("%s (reconciledAt: %s)", sourceStatus, app.Status.ReconciledAt)
 		sourceSignal = append(sourceSignal, fmt.Sprintf("reconciledAt=%s", app.Status.ReconciledAt))
-	} else if len(app.Status.History) > 0 && !app.Status.History[0].DeployedAt.IsZero() {
-		deployedAt := app.Status.History[0].DeployedAt.UTC()
+	} else if len(app.Status.History) > 0 && !app.Status.History[len(app.Status.History)-1].DeployedAt.IsZero() {
+		deployedAt := app.Status.History[len(app.Status.History)-1].DeployedAt.UTC()
 		sourceLastTransition = &deployedAt
 		sourceSignal = append(sourceSignal, fmt.Sprintf("history.deployedAt=%s", deployedAt.Format(time.RFC3339)))
 	}

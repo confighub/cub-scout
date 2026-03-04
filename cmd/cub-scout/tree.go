@@ -1043,38 +1043,6 @@ func resolveGeneratedByApplicationSet(app *unstructured.Unstructured) string {
 	return ""
 }
 
-func resolveParentApplicationForArgoApp(app *unstructured.Unstructured) string {
-	self := strings.TrimSpace(app.GetName())
-
-	for _, ownerRef := range app.GetOwnerReferences() {
-		if strings.EqualFold(ownerRef.Kind, "Application") {
-			name := strings.TrimSpace(ownerRef.Name)
-			if name != "" && name != self {
-				return name
-			}
-		}
-	}
-
-	annotations := app.GetAnnotations()
-	if annotations != nil {
-		if name := strings.TrimSpace(annotations["cub-scout.io/parent-application"]); name != "" && name != self {
-			return name
-		}
-	}
-
-	labels := app.GetLabels()
-	if labels != nil {
-		if name := strings.TrimSpace(labels["app.kubernetes.io/part-of"]); name != "" && name != self {
-			return name
-		}
-		if name := strings.TrimSpace(labels["argocd.argoproj.io/instance"]); name != "" && name != self {
-			return name
-		}
-	}
-
-	return ""
-}
-
 // resolveGeneratedByApplicationSetWithConfidence returns (name, confidence)
 // where confidence is "explicit" for ownerReference, "inferred" for label/annotation.
 func resolveGeneratedByApplicationSetWithConfidence(app *unstructured.Unstructured) (string, string) {
