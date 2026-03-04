@@ -47,6 +47,7 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 5. **Complement GitOps** — works alongside Flux, Argo, Helm
 6. **Graceful degradation** — works without cluster, ConfigHub, or internet
 7. **Test everything** — `go test ./...` must pass
+8. **CLI/TUI parity** — CLI and TUI are two renderings of one model. Every feature must have both a CLI command (with `--format ascii|json|md`) and a TUI equivalent. CLI is not a second-class citizen.
 
 ## Directory Structure
 

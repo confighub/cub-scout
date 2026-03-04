@@ -1,5 +1,7 @@
 # cub-scout Unified Roadmap
 
+> **Positioning:** The read-only agentic observation layer that makes Kubernetes and GitOps understandable.
+
 > **Status:** Authoritative
 >
 > This document **replaces and subsumes**:
@@ -29,14 +31,14 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] Workstream B: Source inventory view — resolved #148
 - [x] Workstream C: Schema extension for `rendered_from` / `original_source` — scoped in #150
 - [x] Workstream D: Bridge patterns (Git→Flux, Git→Argo, Git→ConfigHub→OCI, Live→ConfigHub→OCI) — scoped in #151
-- [ ] Workstream E: Orphan detection for broken ApplicationSet generator links
+- [x] Workstream E: Orphan detection for broken ApplicationSet generator links — graduated to #232
 - [ ] Workstream F: Fleet query ergonomics and provenance readability
 - [ ] Workstream F: Impact analysis ergonomics and multi-cluster context clarity
 - [ ] Workstream G: Platform-only surfaces (Functions, Actions, ChangeSets, saved queries, alert triggers, dependency graphing, time-travel UX, three-state drift resolution, bulk operations)
 
 ### Connected Views + Launch (`roadmap-connected-views-and-launch.md`)
 
-- [ ] Workstream A: Navigation-first messaging and "aha in seconds" walkthrough
+- [x] Workstream A: Navigation-first messaging and "aha in seconds" walkthrough — graduated to #224
 - [x] Workstream B: Scale-real demo assets — resolved #158
 - [ ] Workstream B: Expected-output snapshots for core navigation flows
 - [ ] Workstream C: WET-LIVE panel clarity and causality messaging
@@ -53,18 +55,18 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 ### Connected Mode Ideas
 
-- [ ] ConfigHub summary storage and Slack integration for drift/sync notifications
+- [x] ConfigHub summary storage and Slack integration for drift/sync notifications — graduated to #209, #210
 - [ ] Connected import flows (`cub-scout connected import bundle/git/cluster`)
-- [ ] Intent vs render vs observed three-way comparison
+- [x] Intent vs render vs observed three-way comparison — graduated to #213
 - [ ] Hook compatibility verifier
 - [ ] Import wizard with auto-detection (`--wizard` flag, from `gitops-repo-structures.md`)
 - [ ] Snapshot enrichment with ConfigHub intent/history metadata (from `state-and-snapshots.md`)
 
 ### Extension & Integration Ideas (`howto/extending.md`)
 
-- [ ] Webhook event streaming (entry/drift/finding events)
+- [x] Webhook event streaming (entry/drift/finding events) — graduated to #234
 - [ ] Output plugin architecture (Kafka, custom destinations)
-- [ ] Config-based custom ownership detectors (YAML, no Go required)
+- [x] Config-based custom ownership detectors (YAML, no Go required) — graduated to #233
 - [ ] Config-based CRD watching (YAML status extraction)
 
 ### Scale and Testing
@@ -506,12 +508,141 @@ Known limitation:
 
 ---
 
+### v1.3.1 — Housekeeping
+
+**Status:** In Progress
+**Theme:** *Release hygiene*
+
+* #204 — argo-import-confighub-demo determinism (pin versions + stronger readiness)
+* #206 — roadmap summary cleanup (remove closed #149-#151 from open backlog line)
+
+---
+
+## v1.4 — Discover & Connect
+
+**Status:** Planned
+**Theme:** *New user onboarding, immediate cluster value, and AI observation gateway*
+
+This milestone focuses on making cub-scout immediately useful to new users and positioning it as the read-only agentic observation layer for AI tools.
+
+### New User Experience
+
+* #218 — `cub-scout doctor` — single-command cluster health summary
+* #219 — `cub-scout explain <resource>` — plain-English ownership and lineage
+* #223 — interactive quickstart wizard for new users
+* #224 — navigation-first messaging and "aha in seconds" walkthrough
+
+### Distribution & Accessibility
+
+* #221 — kubectl plugin (`kubectl cub-scout`)
+* #222 — Homebrew formula + goreleaser pre-built binaries
+
+### Visual & Shareable Output
+
+* #220 — visual graph export (HTML/SVG) — shareable ownership topology
+
+### AI Observation Gateway
+
+* #214 — MCP gateway — read-only observation with ConfigHub routing
+
+### Connected Import
+
+* #208 — created units linked back to cluster resources
+
+---
+
+## v1.5 — AI-Native Ops
+
+**Status:** Planned
+**Theme:** *AI tooling platform for Kubernetes and GitOps observation*
+
+### MCP Architecture
+
+ConfigHub is the MCP server (owns the full read-write loop):
+
+```
+AI chat (any interface) → MCP → ConfigHub API endpoints → trigger changes → GUI updates display
+```
+
+cub-scout provides a read-only MCP gateway:
+- **Standalone:** serves basic cluster observation tools (map, trace, scan, explain)
+- **Connected:** routes to ConfigHub for richer responses (history, fleet, impact)
+
+This positions cub-scout as the local observation interface for AI agents,
+while ConfigHub provides the durable backend and full MCP server capabilities.
+
+### Issues
+
+* #212 — context-pack v2: model-agnostic Kubernetes evidence for any LLM
+* #215 — safe ask-mode contract: verify, dry-run, explicit confirm for AI operations
+* #217 — run-to-issue evidence capture for failed AI sessions
+* #225 — AI tool integration examples (Claude Code, Copilot, Cursor)
+
+---
+
+## v1.6 — Connected Value
+
+**Status:** Planned
+**Theme:** *ConfigHub-powered insights that clusters cannot provide alone*
+
+This milestone delivers the "aha moment" for connected mode: what ConfigHub knows that your cluster API cannot tell you.
+
+### DRY/WET/LIVE Comparison
+
+* #226 — WET vs LIVE vs DRY comparison view (TUI panel + CLI report)
+* #213 — intent vs render vs observed three-way compare command
+
+### Change History & Audit
+
+* #227 — change history/timeline from ConfigHub ChangeSets
+* #231 — audit trail for break-glass accept/reject decisions
+
+### Fleet Intelligence
+
+* #229 — fleet outlier detection — identify clusters that diverge
+* #228 — impact preview — blast radius analysis before config changes
+
+### Demo & Onboarding
+
+* #230 — "connect and compare" 60-second demo flow
+
+---
+
+## v1.7 — Platform Scale
+
+**Status:** Planned
+**Theme:** *Composition tools, fleet infrastructure, and extensibility*
+
+### Platform Composition
+
+* #3 — Support platform composition tools (Crossplane, kro)
+* #21 — Platform composition support beyond Crossplane (kro)
+
+### Fleet Infrastructure
+
+* #209 — persist drift/sync/risk summary storage for query and trend
+* #210 — Slack: publish connected drift/sync/risk digests with deep links
+
+### Extensibility
+
+* #233 — config-based custom ownership detectors (YAML, no Go required)
+* #234 — webhook event streaming for entry/drift/finding events
+
+### Experiments
+
+* #163 — Comparative Labels for Grouped Map Output
+* #164 — Meaning-First Browse Mode (Read-only)
+* #165 — Hybrid Semantic + Structural Grouping
+
+---
+
 ## Guiding Principles (Still True)
 
 * **Explainability first**
 * **No silent contract expansion**
 * **Determinism over convenience**
 * **Artifacts over live dependencies**
+* **CLI/TUI parity** — CLI and TUI are two renderings of one model. Every feature must have both a CLI command (with `--format ascii|json|md`) and a TUI equivalent. CLI is not a second-class citizen.
 
 ---
 
@@ -521,12 +652,31 @@ Known limitation:
 * v1.0.0 is the stable contract baseline (2026-02-20)
 * v1.1.0 released (2026-02-25) — connected foundation, scan provider boundary, docs alignment
 * v1.2.0 released (2026-02-26) — cub-scan file integration, Argo hierarchy lineage, quality fixes
-* Open backlog: #3/#21 (kro), #149-#151 (delivery chain), #163-#165 (experiments)
-* The remaining roadmap is **Connected Mode with ConfigHub**:
+* v1.3.0 released (2026-03-04) — determinism hardening + release hygiene
 
-  * import
-  * git as source
-  * fleets
-  * shared history
+### Forward Roadmap
+
+| Milestone | Theme | Key Deliverables |
+|-----------|-------|-----------------|
+| **v1.3.1** | Housekeeping | Demo determinism, roadmap cleanup |
+| **v1.4** | Discover & Connect | `doctor`, `explain`, kubectl plugin, Homebrew, MCP gateway, quickstart wizard |
+| **v1.5** | AI-Native Ops | Context-pack v2, safe ask-mode, evidence capture, AI tool integration examples |
+| **v1.6** | Connected Value | WET/LIVE/DRY comparison, change history, impact preview, fleet outliers, audit trail |
+| **v1.7** | Platform Scale | kro, summary storage, Slack digests, custom ownership detectors, webhook streaming |
+
+### Strategic Positioning
+
+**"The read-only agentic observation layer that makes Kubernetes and GitOps understandable."**
+
+* For **new users:** instant cluster understanding in one command (v1.4)
+* For **ConfigHub:** the bridge from "I can see what's happening" to "I can see what SHOULD be happening" (v1.6)
+* For **AI + K8s users:** the safe, deterministic, read-only interface that every AI tool uses to understand clusters (v1.5)
+
+### MCP Architecture
+
+ConfigHub is the MCP server (full read-write loop):
+`AI chat → MCP → ConfigHub API endpoints → trigger changes → GUI updates display`
+
+cub-scout provides the read-only MCP gateway — standalone observation + ConfigHub routing when connected.
 
 There is no other hidden work.
