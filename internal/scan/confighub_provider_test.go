@@ -275,6 +275,43 @@ func TestConfighubScanProvider_ScanCluster_ExportFailure_FallsBackLegacy(t *test
 		t.Fatalf("Static should be nil on fallback, got %#v", result.Static)
 	}
 }
+
+func TestConfighubScanProvider_ScanCluster_CubScanFailure_FallsBackLegacy(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake binary test not supported on Windows")
+	}
+
+	tmpDir := t.TempDir()
+	fakeBinary := filepath.Join(tmpDir, "confighub-scan")
+	writeFakeCubScan(t, fakeBinary, "") // empty output triggers fallback on execution error
+	t.Setenv("PATH", tmpDir)
+
+	manifest := filepath.Join(tmpDir, "cluster-export.yaml")
+	if err := os.WriteFile(manifest, []byte("apiVersion: v1\nkind: Pod\nmetadata:\n  name: p\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewConfighubScanProvider(ProviderConfig{})
+	p.binaryPath = ""
+	p.legacyScanClusterFn = func(ctx context.Context, opts ClusterScanOpts) (*CombinedResult, error) {
+		return &CombinedResult{State: &agent.StateScanResult{Summary: agent.StateScanSummary{Total: 7}}}, nil
+	}
+	p.exportManifestFn = func(ctx context.Context, opts ClusterScanOpts) (string, func(), error) {
+		return manifest, func() {}, nil
+	}
+
+	result, err := p.ScanCluster(context.Background(), ClusterScanOpts{})
+	if err != nil {
+		t.Fatalf("ScanCluster() error = %v", err)
+	}
+	if result.State == nil || result.State.Summary.Total != 7 {
+		t.Fatalf("expected legacy state result, got %#v", result.State)
+	}
+	if result.Static != nil {
+		t.Fatalf("Static should be nil on fallback, got %#v", result.Static)
+	}
+}
+
 func TestMapCubScanResult(t *testing.T) {
 	cs := &cubScanResult{
 		Findings: []cubScanFinding{

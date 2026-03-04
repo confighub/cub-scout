@@ -537,6 +537,12 @@ cub-scout scan --file deployment.yaml
 cub-scout scan --list
 ```
 
+Provider behavior:
+- `scan --file`: uses `confighub-scan` / `cub-scan` when available, otherwise legacy scanner.
+- Cluster `scan`: preserves legacy runtime/state checks and augments static findings through
+  `cluster export -> cub-scan` when available.
+- Fallback is safe: if export or `cub-scan` fails, output falls back to legacy provider results.
+
 ---
 
 ## tree
