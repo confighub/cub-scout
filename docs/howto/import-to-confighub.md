@@ -19,6 +19,8 @@ cub-scout is read-only in discovery mode (`--dry-run`). Non-dry-run import creat
 
 For cluster-only discovery (no Git required), see [Import from Live](import-from-live.md).
 
+For bundle-based import previews (no cluster discovery), see [Import from Bundle Example](../../examples/import-from-bundle/).
+
 > **API note:** The `cub` CLI currently uses Space/Unit commands while APIs evolve
 > toward App/Deployment language. See [Glossary](../reference/glossary.md) for the mapping.
 
@@ -148,8 +150,9 @@ Rollback is safe: import creates ConfigHub state only — it does not modify wor
 
 ## Notes
 
-- `cub-scout import --json` is for proposal automation and GUI workflows.
+- `cub-scout import --json` is for proposal automation and GUI workflows (`evidence.source` shows `cluster` vs `bundle`).
 - `cub-scout import --wizard` runs the interactive TUI wizard.
+- `cub-scout import --from-bundle <path>` uses bundle facts instead of live cluster discovery.
 - `cub-scout import` now performs connected delegation for Argo/Flux when available, then imports leftovers.
 - This path prioritizes predictable migration over fast migration.
 
@@ -170,6 +173,7 @@ make test-import-delegation
 - [Flux Import Demo](../../examples/flux-import-confighub-demo/) — Management + discovery on real Flux cluster with D2 pattern (kind)
 - [Import from Live](import-from-live.md) — Cluster-only discovery (no Git required)
 - [Import from Live Example](../../examples/import-from-live/) — Worked example with fixtures
+- [Import from Bundle Example](../../examples/import-from-bundle/) — Worked example with expected dry-run JSON output
 - [Combined Git+Live Example](../../examples/combined-git-live/) — Git repo + cluster alignment
 - [Fleet Import Example](../../examples/fleet-import/) — Multi-cluster aggregation
 - [Business Outcomes](../outcomes/README.md) — Why ConfigHub import matters

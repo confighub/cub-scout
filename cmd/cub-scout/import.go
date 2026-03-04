@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,14 +25,15 @@ import (
 )
 
 var (
-	importNamespace string
-	importDryRun    bool
-	importYes       bool
-	importJSON      bool
-	importNoLog     bool
-	importWizard    bool
-	importConnect   bool
-	importNoConnect bool
+	importNamespace  string
+	importDryRun     bool
+	importYes        bool
+	importJSON       bool
+	importNoLog      bool
+	importWizard     bool
+	importConnect    bool
+	importNoConnect  bool
+	importFromBundle string
 )
 
 type cubTargetRef struct {
@@ -121,6 +123,11 @@ type UnitJSON struct {
 	Workloads []string `json:"workloads"`
 }
 
+type importEvidenceJSON struct {
+	Source     string `json:"source"`
+	BundlePath string `json:"bundlePath,omitempty"`
+}
+
 var importCmd = &cobra.Command{
 	Use:   "import",
 	Short: "Import workloads into ConfigHub",
@@ -157,6 +164,9 @@ Examples:
   # JSON output (for GUI integration)
   cub-scout import --json
 
+  # Preview import proposal from an existing debug bundle
+  cub-scout import --from-bundle ./debug-bundle --dry-run --json
+
   # Interactive TUI wizard (recommended)
   cub-scout import --wizard
 
@@ -175,6 +185,7 @@ func init() {
 	importCmd.Flags().BoolVarP(&importWizard, "wizard", "w", false, "Launch interactive TUI wizard")
 	importCmd.Flags().BoolVar(&importConnect, "connect", false, "After import, start worker and set targets")
 	importCmd.Flags().BoolVar(&importNoConnect, "no-connect", false, "Do not start worker/targets after import")
+	importCmd.Flags().StringVar(&importFromBundle, "from-bundle", "", "Import from a debug bundle directory instead of live cluster discovery")
 
 	rootCmd.AddCommand(importCmd)
 }
@@ -186,12 +197,20 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Wizard mode - launch interactive TUI
 	if importWizard {
+		if importFromBundle != "" {
+			return fmt.Errorf("--wizard cannot be used with --from-bundle")
+		}
 		return RunImportWizard()
 	}
 
 	// JSON mode = dry-run (never change anything when outputting JSON)
 	if importJSON {
 		importDryRun = true
+	}
+
+	// Bundle import path bypasses live cluster discovery.
+	if importFromBundle != "" {
+		return runImportFromBundle(importFromBundle)
 	}
 
 	// Initialize logger (unless disabled or JSON mode)
@@ -367,6 +386,230 @@ func runImport(cmd *cobra.Command, args []string) error {
 	}
 
 	return applyImportWithLogger(proposalToApply, scoutWorkloads, logger, shouldConnect)
+}
+
+func runImportFromBundle(bundlePath string) error {
+	if importNamespace != "" {
+		return fmt.Errorf("--namespace cannot be used with --from-bundle")
+	}
+
+	proposal, workloads, namespaces, err := buildImportFromBundlePreview(bundlePath)
+	if err != nil {
+		return err
+	}
+
+	if len(workloads) == 0 {
+		if importJSON {
+			return outputEmptyJSON()
+		}
+		fmt.Println("No workloads found in bundle.")
+		return nil
+	}
+
+	if importJSON {
+		return outputProposalJSON(proposal, workloads, namespaces)
+	}
+
+	printDiscovery(namespaces, workloads, proposal)
+
+	if importDryRun {
+		fmt.Println("\n(dry-run mode - no changes made)")
+		fmt.Println("Run without --dry-run to import.")
+		return nil
+	}
+
+	if !importYes {
+		fmt.Printf("\nImport this into ConfigHub? [y/N] ")
+		if !confirm() {
+			fmt.Println("Aborted.")
+			return nil
+		}
+	}
+
+	// Connection behavior:
+	// - Interactive confirmation defaults to connect now
+	// - Non-interactive (-y) preserves legacy behavior unless --connect is set
+	shouldConnect := importConnect
+	if !importYes && !importNoConnect && !importConnect {
+		shouldConnect = true
+	}
+	if importNoConnect {
+		shouldConnect = false
+	}
+
+	return applyImportWithLogger(proposal, workloads, nil, shouldConnect)
+}
+
+func buildImportFromBundlePreview(bundlePath string) (*FullProposal, []WorkloadInfo, []string, error) {
+	reader := agent.NewBundleReader()
+	bundle, err := reader.Read(bundlePath)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("read bundle %q: %w", bundlePath, err)
+	}
+
+	workload, err := workloadFromBundle(bundle)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	workloads := []WorkloadInfo{workload}
+	namespaces := collectNamespacesFromWorkloads(workloads, bundle.Metadata.Target.Namespace)
+	proposal := SuggestFullProposal(nil, workloads, "")
+	return proposal, workloads, namespaces, nil
+}
+
+func workloadFromBundle(bundle *agent.DebugBundle) (WorkloadInfo, error) {
+	kind := strings.TrimSpace(bundle.Metadata.Target.Kind)
+	name := strings.TrimSpace(bundle.Metadata.Target.Name)
+	namespace := strings.TrimSpace(bundle.Metadata.Target.Namespace)
+
+	workload := WorkloadInfo{
+		Kind:      kind,
+		Name:      name,
+		Namespace: namespace,
+		Owner:     "Native",
+		Replicas:  0,
+		Ready:     false,
+	}
+
+	if bundle.Session != nil {
+		if health := bundle.Session.WorkloadHealth; health != nil {
+			if strings.TrimSpace(health.Kind) != "" {
+				workload.Kind = strings.TrimSpace(health.Kind)
+			}
+			if strings.TrimSpace(health.Name) != "" {
+				workload.Name = strings.TrimSpace(health.Name)
+			}
+			if strings.TrimSpace(health.Namespace) != "" {
+				workload.Namespace = strings.TrimSpace(health.Namespace)
+			}
+			workload.Replicas = health.Replicas
+			workload.Ready = health.ReadyReplicas == health.Replicas
+		}
+
+		owner := inferOwnerFromBundleSession(bundle.Session)
+		if owner != "" {
+			workload.Owner = owner
+		}
+
+		workload.KustomizationPath, workload.ApplicationPath = inferPathsFromBundleSession(bundle.Session)
+		if bundle.Session.SourceStatus != nil {
+			workload.SourceRepo = strings.TrimSpace(bundle.Session.SourceStatus.URL)
+		}
+	}
+
+	if workload.Kind == "" || workload.Name == "" {
+		return WorkloadInfo{}, fmt.Errorf("bundle target is missing required kind/name")
+	}
+
+	return workload, nil
+}
+
+func inferOwnerFromBundleSession(session *agent.DebugSessionData) string {
+	if session == nil {
+		return "Native"
+	}
+
+	if session.OwnershipChain != nil {
+		if owner := normalizeOwnerFromBundle(session.OwnershipChain.Owner); owner != "" {
+			return owner
+		}
+		for _, link := range session.OwnershipChain.GitOpsChain {
+			if owner := ownerFromDeployerKind(link.Kind); owner != "" {
+				return owner
+			}
+		}
+	}
+
+	if session.DeployerStatus != nil {
+		if owner := ownerFromDeployerKind(session.DeployerStatus.Kind); owner != "" {
+			return owner
+		}
+	}
+
+	return "Native"
+}
+
+func inferPathsFromBundleSession(session *agent.DebugSessionData) (string, string) {
+	if session == nil || session.OwnershipChain == nil {
+		return "", ""
+	}
+
+	var kustomizationPath, applicationPath string
+	for _, link := range session.OwnershipChain.GitOpsChain {
+		path := strings.TrimSpace(link.Path)
+		if path == "" {
+			continue
+		}
+		switch strings.ToLower(strings.TrimSpace(link.Kind)) {
+		case "kustomization":
+			if kustomizationPath == "" {
+				kustomizationPath = path
+			}
+		case "application":
+			if applicationPath == "" {
+				applicationPath = path
+			}
+		}
+	}
+	return kustomizationPath, applicationPath
+}
+
+func normalizeOwnerFromBundle(owner string) string {
+	switch strings.ToLower(strings.TrimSpace(owner)) {
+	case "":
+		return ""
+	case "argocd", "argo", "argo cd":
+		return "ArgoCD"
+	case "flux":
+		return "Flux"
+	case "helm":
+		return "Helm"
+	case "native":
+		return "Native"
+	case "confighub", "config hub":
+		return "ConfigHub"
+	case "terraform":
+		return "Terraform"
+	case "crossplane":
+		return "Crossplane"
+	default:
+		return strings.TrimSpace(owner)
+	}
+}
+
+func ownerFromDeployerKind(kind string) string {
+	switch strings.ToLower(strings.TrimSpace(kind)) {
+	case "application", "applicationset":
+		return "ArgoCD"
+	case "kustomization", "helmrelease":
+		return "Flux"
+	default:
+		return ""
+	}
+}
+
+func collectNamespacesFromWorkloads(workloads []WorkloadInfo, fallback string) []string {
+	nsSet := make(map[string]struct{})
+	for _, w := range workloads {
+		ns := strings.TrimSpace(w.Namespace)
+		if ns != "" {
+			nsSet[ns] = struct{}{}
+		}
+	}
+
+	if len(nsSet) == 0 {
+		if fallback = strings.TrimSpace(fallback); fallback != "" {
+			nsSet[fallback] = struct{}{}
+		}
+	}
+
+	namespaces := make([]string, 0, len(nsSet))
+	for ns := range nsSet {
+		namespaces = append(namespaces, ns)
+	}
+	sort.Strings(namespaces)
+	return namespaces
 }
 
 // discoverNamespacesWithWorkloads finds all namespaces that have Deployments, StatefulSets, or DaemonSets
@@ -1404,6 +1647,7 @@ func outputEmptyJSON() error {
 		"namespaces": []string{},
 		"workloads":  []WorkloadJSON{},
 		"proposal":   nil,
+		"evidence":   buildImportEvidenceJSON(),
 	}
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
@@ -1432,11 +1676,24 @@ func outputProposalJSON(proposal *FullProposal, workloads []WorkloadInfo, namesp
 		"namespaces": namespaces,
 		"workloads":  wJSON,
 		"proposal":   proposal,
+		"evidence":   buildImportEvidenceJSON(),
 	}
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(result)
+}
+
+func buildImportEvidenceJSON() importEvidenceJSON {
+	if strings.TrimSpace(importFromBundle) != "" {
+		return importEvidenceJSON{
+			Source:     "bundle",
+			BundlePath: importFromBundle,
+		}
+	}
+	return importEvidenceJSON{
+		Source: "cluster",
+	}
 }
 
 // createUnitWithConfig creates a unit with initial configuration from stdin

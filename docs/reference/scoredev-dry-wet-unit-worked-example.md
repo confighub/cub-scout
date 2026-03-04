@@ -392,16 +392,26 @@ attestation:
 This is the recommended promotion path when an app-level change should become a
 platform default:
 
-1. App team edits app-owned DRY fields (`score.yaml` or app overlay unit) and opens a GitHub PR.
-2. ConfigHub links the PR to a change card/MR using a shared `change_id`.
-3. Platform engineer reviews and merge-approves the app PR in GitHub.
-4. ConfigHub evaluates policy and allows execution only on `ALLOW` (or approved `ESCALATE`).
-5. After successful rollout, ConfigHub opens a promotion PR against platform DRY/base defaults.
-6. Platform maintainers merge the upstream DRY promotion PR.
-7. App-specific override is reduced or removed to avoid long-lived drift.
+1. App team edits app-owned DRY fields (`score.yaml` or app overlay unit).
+2. ConfigHub renders/evaluates candidate WET, posts evidence, and opens/updates a ConfigHub MR (plus paired Git PR if mirror is enabled).
+3. Platform engineer reviews and merge-approves the app change in ConfigHub.
+4. ConfigHub enforces governed deploy decision (`ALLOW|ESCALATE|BLOCK`) for that merged change.
+5. On `ALLOW` (or approved `ESCALATE`), execution runs with scoped token, then verification and attestation are recorded.
+6. After successful rollout, ConfigHub opens a promotion PR/MR to upstream Platform DRY/Base Unit when reusable, if not done already.
+7. After required upstream approvals, ConfigHub merges the promotion PR in Git.
+8. App-specific override is reduced or removed to avoid long-lived drift.
 
 This keeps team velocity high while still converging reusable behavior into the
 platform's main DRY contract.
+
+Guardrail:
+
+1. Do not auto-write directly to platform main DRY without separate upstream review/merge.
+
+Live-origin variant:
+
+1. If observer tooling detects a live-only Score-related change, ConfigHub creates a proposal MR from live evidence.
+2. Accepted proposals are converted into DRY source edits and follow the same promotion path above.
 
 ---
 

@@ -19,6 +19,7 @@ var (
 	combinedGitURL    string
 	combinedGitPath   string
 	combinedNamespace string
+	combinedBundle    string
 	combinedJSON      bool
 	combinedSuggest   bool
 	combinedApply     bool
@@ -70,6 +71,9 @@ Examples:
 
   # Use local Git repo with JSON output
   cub-scout combined --git-path ./my-repo --namespace demo --suggest --json
+
+  # Offline Git ↔ cluster compare from a debug bundle
+  cub-scout combined --git-path ./my-repo --bundle ./debug-bundle --json
 `,
 	RunE: runCombined,
 }
@@ -78,6 +82,7 @@ func init() {
 	combinedCmd.Flags().StringVar(&combinedGitURL, "git-url", "", "Git repository URL to parse")
 	combinedCmd.Flags().StringVar(&combinedGitPath, "git-path", "", "Local path to Git repository")
 	combinedCmd.Flags().StringVarP(&combinedNamespace, "namespace", "n", "", "Namespace to scan in cluster")
+	combinedCmd.Flags().StringVar(&combinedBundle, "bundle", "", "Debug bundle directory to use as cluster snapshot (offline)")
 	combinedCmd.Flags().BoolVar(&combinedJSON, "json", false, "Output as JSON")
 	combinedCmd.Flags().BoolVar(&combinedSuggest, "suggest", false, "Generate App model proposal")
 	combinedCmd.Flags().BoolVar(&combinedApply, "apply", false, "Create App and Deployments in ConfigHub")
@@ -125,20 +130,17 @@ func runCombined(cmd *cobra.Command, args []string) error {
 		result.GitRepo = repo
 	}
 
-	// Scan cluster if namespace provided
-	var workloads []WorkloadInfo
-	if combinedNamespace != "" {
-		var err error
-		workloads, err = discoverWorkloads(combinedNamespace)
-		if err != nil {
-			return fmt.Errorf("discover workloads: %w", err)
-		}
-
+	// Collect cluster-side workloads from live namespace OR bundle snapshot.
+	workloads, clusterNamespace, err := resolveCombinedWorkloadsSource(combinedNamespace, combinedBundle)
+	if err != nil {
+		return err
+	}
+	if len(workloads) > 0 || clusterNamespace != "" {
 		suggestion := SuggestHubAppSpaceStructure(workloads, "")
 		suggestionJSON := convertToSuggestionJSON(&suggestion)
 
 		result.Cluster = &ImportResult{
-			Namespace:  combinedNamespace,
+			Namespace:  clusterNamespace,
 			Model:      "hub-appspace",
 			Workloads:  convertToWorkloadJSON(workloads),
 			Suggestion: suggestionJSON,
@@ -184,6 +186,34 @@ func runCombined(cmd *cobra.Command, args []string) error {
 		printCombinedResult(result)
 	}
 	return nil
+}
+
+func resolveCombinedWorkloadsSource(namespace, bundlePath string) ([]WorkloadInfo, string, error) {
+	if namespace != "" && bundlePath != "" {
+		return nil, "", fmt.Errorf("--namespace and --bundle cannot be used together")
+	}
+
+	if bundlePath != "" {
+		_, workloads, namespaces, err := buildImportFromBundlePreview(bundlePath)
+		if err != nil {
+			return nil, "", fmt.Errorf("load bundle workloads: %w", err)
+		}
+		clusterNamespace := ""
+		if len(namespaces) > 0 {
+			clusterNamespace = namespaces[0]
+		}
+		return workloads, clusterNamespace, nil
+	}
+
+	if namespace != "" {
+		workloads, err := discoverWorkloads(namespace)
+		if err != nil {
+			return nil, "", fmt.Errorf("discover workloads: %w", err)
+		}
+		return workloads, namespace, nil
+	}
+
+	return []WorkloadInfo{}, "", nil
 }
 
 func buildAlignment(repo *gitops.RepoStructure, cluster *ImportResult) []AlignmentEntry {

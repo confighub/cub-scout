@@ -58,6 +58,7 @@ Use commit trailers + compact receipt objects.
 5. Pre/post scan detailed findings and evidence links
 6. Adapter-normalized evidence and cross-repo indexes
 7. Retention-governed sensitive data (e.g., optional transcripts)
+8. Live observation/drift evidence and proposal MR lineage (`LIVE -> CH MR`)
 
 ### WET constraints
 
@@ -81,6 +82,7 @@ Each receipt references authoritative WET records in ConfigHub by ID and digest.
 2. Writing token values or sensitive auth material to Git
 3. Treating Git as the primary runtime telemetry store
 4. Storing mutable indexes/search state in Git
+5. Silently overwriting DRY intent from live observations without explicit review
 
 ## Practical Rule
 

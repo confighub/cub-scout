@@ -176,13 +176,24 @@ spec:
 This is the key promotion path:
 
 1. App team adds a feature/config change in app DRY unit (for example new middleware rule).
-2. Platform engineer reviews and merge-approves source PR in GitHub.
-3. ConfigHub policy decides `ALLOW|ESCALATE|BLOCK` for deploy execution.
-4. On allowed execution, rollout and verification complete.
-5. If broadly useful, ConfigHub opens a separate promotion PR to platform base DRY.
-6. Platform team merges upstream promotion and app unit override is minimized.
+2. ConfigHub renders/evaluates candidate WET, posts evidence, and opens/updates a ConfigHub MR (plus paired Git PR if mirror is enabled).
+3. Platform engineer reviews and merge-approves the app change in ConfigHub.
+4. ConfigHub decision gate enforces `ALLOW|ESCALATE|BLOCK` for that merged change.
+5. On `ALLOW` (or approved `ESCALATE`), rollout executes with scoped token, then verification and attestation complete.
+6. After successful rollout, ConfigHub opens a promotion PR/MR to upstream Platform DRY/Base Unit when reusable, if not done already.
+7. After required upstream approvals, ConfigHub merges the promotion PR in Git.
+8. App unit override is minimized to avoid long-term drift.
 
 This avoids permanent app forks while preserving app-team velocity.
+
+Guardrail:
+
+1. Never auto-write directly to platform main DRY without separate upstream review/merge.
+
+Live-origin variant:
+
+1. If observer tooling detects a live Traefik/config drift event, ConfigHub creates a proposal MR from live evidence.
+2. Accepted proposals become DRY edits and continue through the same governed promotion path.
 
 ---
 

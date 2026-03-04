@@ -8,10 +8,11 @@ Last updated: 2026-02-28
 Define a bidirectional workflow where:
 
 1. Teams can start from GitHub PRs or from ConfigHub Merge Requests (MRs).
-2. GitHub remains the source merge authority.
-3. ConfigHub remains the governed execution authority.
-4. Flux/Argo remain reconcilers.
-5. OCI is the default WET transport.
+2. Teams can also start from live-cluster observations captured as ConfigHub MR proposals.
+3. GitHub remains the source merge authority.
+4. ConfigHub remains the governed execution authority.
+5. Flux/Argo remain reconcilers.
+6. OCI is the default WET transport.
 
 This gives users both entry points without split-brain approvals.
 
@@ -22,6 +23,7 @@ This gives users both entry points without split-brain approvals.
 3. ConfigHub `ALLOW|ESCALATE|BLOCK` is required for governed apply.
 4. One canonical `change_id` links all artifacts across systems.
 5. One canonical content commit (`merged_sha`) is the source truth.
+6. Nothing observed from live state silently overwrites DRY intent.
 
 ## Authority Boundary
 
@@ -79,6 +81,17 @@ decision:
 7. Flux/Argo reconcile published WET artifact.
 8. ConfigHub finalizes attestation and outcome receipts.
 
+### Path C: LIVE observation -> ConfigHub MR proposal
+
+1. Observer tooling detects live mutation or drift (`cub-scout`/evidence adapters).
+2. ConfigHub creates a proposal MR from live evidence using a new `change_id`.
+3. Proposal includes live snapshot, drift class, and suggested DRY patch; no source is overwritten automatically.
+4. Reviewer decides to either discard/revert live state or accept and continue as a source change.
+5. If accepted, ConfigHub opens/updates paired GitHub PR (or internal source branch) with proposed DRY edits.
+6. Source merge happens through normal approval policy.
+7. ConfigHub applies governed decision (`ALLOW|ESCALATE|BLOCK`) for execution/promotion.
+8. Attestation links live evidence, source merge, and outcome under one `change_id`.
+
 ## State Machine (Single Logical Change)
 
 ```mermaid
@@ -115,13 +128,15 @@ Execution gating rule:
    `pull_request.opened`, `pull_request.synchronize`, `pull_request.closed`, `pull_request.merged`.
 2. ConfigHub webhook/status callback:
    `mr.created`, `mr.updated`, `decision.updated`, `execution.completed`, `attestation.recorded`.
-3. Idempotent upsert endpoint:
+3. Live observation ingest:
+   `live.observed`, `live.drift_detected`, `live.proposal_created`.
+4. Idempotent upsert endpoint:
    `POST /v1/changes/upsert` keyed by `change_id`.
-4. Link endpoint:
+5. Link endpoint:
    `POST /v1/changes/{change_id}/links` for PR/MR/card references.
-5. Decision endpoint:
+6. Decision endpoint:
    `POST /v1/changes/{change_id}/decision` with `ALLOW|ESCALATE|BLOCK`.
-6. Execution endpoint:
+7. Execution endpoint:
    `POST /v1/changes/{change_id}/execute` requiring prior allow state.
 
 ## Conflict Rules
@@ -131,12 +146,13 @@ Execution gating rule:
 3. If GitHub PR closes unmerged, CH MR moves to `abandoned`.
 4. If CH MR is withdrawn, bot closes PR unless explicitly detached.
 5. If two CH MRs target same app/env and overlapping fields, require serialization.
+6. If live state changes again while proposal MR is open, mark MR stale and require refresh/re-evaluation.
 
 ## Data Placement (DRY/WET)
 
 1. GitHub stores source commits, PR review history, and optional compact receipts.
 2. OCI stores WET deployment artifacts (digest-pinned).
-3. ConfigHub stores decision graph, approvals, execution telemetry, and attestation.
+3. ConfigHub stores live observation evidence, decision graph, approvals, execution telemetry, and attestation.
 4. Shared IDs and digests are written back to both sides for traceability.
 
 ## Flux/Argo Compatibility
@@ -150,7 +166,8 @@ Execution gating rule:
 
 1. Phase 1: GitHub-first (`PR -> CH evaluate -> status checks`).
 2. Phase 2: ConfigHub-authoring (`CH MR -> bot PR`).
-3. Phase 3: full dual-entry with single state machine and strict gate enforcement.
+3. Phase 3: live-observation proposals (`LIVE -> CH MR`) with explicit review before write-back.
+4. Phase 4: full multi-entry state machine with strict gate enforcement.
 
 ## Positioning Line
 

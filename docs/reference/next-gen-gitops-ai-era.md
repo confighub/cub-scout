@@ -65,6 +65,21 @@ Combined result:
 
 1. app intent and agent behavior are linked in one audit path.
 
+## LIVE-Origin Change Path (Kargo-Style, Governed)
+
+Live changes can enter the same model without breaking intent control:
+
+1. observer detects live mutation/drift,
+2. ConfigHub creates a proposal MR from live evidence,
+3. reviewers decide accept or revert (no silent overwrite),
+4. accepted proposal becomes DRY source change (paired PR/MR),
+5. governed decision (`ALLOW|ESCALATE|BLOCK`) gates execution,
+6. attestation links live evidence -> source change -> runtime outcome.
+
+Rule:
+
+1. live is evidence and proposal input, never automatic source-of-truth replacement.
+
 ## Practical Boundary by Component
 
 1. `cub-track`: Git-native mutation ledger (`enable`, `explain`, `search`)

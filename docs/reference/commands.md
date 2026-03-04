@@ -620,6 +620,7 @@ cub-scout import [flags]
 | `--json` | Output proposal JSON (implies dry-run) |
 | `--no-log` | Disable local import log file |
 | `-w, --wizard` | Launch interactive import wizard |
+| `--from-bundle` | Import proposal/apply from a debug bundle directory (offline path, no cluster discovery) |
 
 ### Canonical Migration Path
 
@@ -640,7 +641,14 @@ cub-scout import -n payments-prod -y
 
 # Proposal JSON for automation/GUI
 cub-scout import -n payments-prod --json
+
+# Proposal JSON from a debug bundle (offline)
+cub-scout import --from-bundle ./debug-bundle --dry-run --json
 ```
+
+`import --json` output includes an `evidence` block:
+- `evidence.source`: `cluster` or `bundle`
+- `evidence.bundlePath`: set when source is `bundle`
 
 ---
 
