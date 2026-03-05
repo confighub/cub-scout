@@ -25,9 +25,9 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 ### Rendered Manifest + Argo (`roadmap-rendered-manifest-and-argo.md`)
 
-- [ ] Workstream A: Distinguish "ConfigHub via OCI" ownership in trace outputs (relates to [ConfigHub rendered manifests](https://docs.confighub.com/guide/rendered-manifests/))
+- [x] Workstream A: Distinguish "ConfigHub via OCI" ownership in trace outputs (relates to [ConfigHub rendered manifests](https://docs.confighub.com/guide/rendered-manifests/)) — validated by `TestArgoTracerConfigHubOCIDetection` + trace ASCII/JSON proofs
 - [x] Workstream A: Show explicit `source → render → OCI → deployer → workload` chain — scoped in #149
-- [ ] Workstream A: Source staleness/sync signals where evidence is available
+- [x] Workstream A: Source staleness/sync signals where evidence is available — validated by `TestArgoTrace` + trace ASCII/JSON proofs
 - [x] Workstream B: Source inventory view — resolved #148
 - [x] Workstream C: Schema extension for `rendered_from` / `original_source` — scoped in #150
 - [x] Workstream D: Bridge patterns (Git→Flux, Git→Argo, Git→ConfigHub→OCI, Live→ConfigHub→OCI) — scoped in #151
