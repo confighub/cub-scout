@@ -507,7 +507,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | Command | What It Detects |
 |---------|------------------|
 | `cub-scout scan` | Full scan (state + Kyverno findings) |
-| `cub-scout scan --state` | Stuck HelmRelease/Kustomization/Application reconciliations |
+| `cub-scout scan --state` | Stuck reconciliations plus pod runtime failures (ImagePullBackOff, CrashLoopBackOff, Pending, Evicted) |
 | `cub-scout scan --kyverno` | Kyverno PolicyReport violations |
 | `cub-scout scan --lifecycle-hazards` | Helm hooks that conflict with ArgoCD lifecycle behavior |
 | `cub-scout scan --timing-bombs` | Expiring certs and quota/resource timing risks |

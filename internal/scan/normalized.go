@@ -87,6 +87,22 @@ func Normalize(combined *CombinedResult) *NormalizedResult {
 				Command:     f.Command,
 			})
 		}
+
+		// Runtime findings (pod-level failures from scan --state)
+		for _, f := range combined.State.RuntimeFindings {
+			findings = append(findings, NormalizedFinding{
+				ID:          f.CCVEID,
+				Title:       fmt.Sprintf("Pod/%s %s", f.Name, f.FailureType),
+				Category:    f.Category,
+				Track:       "runtime",
+				Severity:    f.Severity,
+				Resource:    fmt.Sprintf("%s/%s", f.Kind, f.Name),
+				Namespace:   f.Namespace,
+				Message:     f.Message,
+				Remediation: f.Remediation,
+				Command:     f.Command,
+			})
+		}
 	}
 
 	// Timing bomb findings

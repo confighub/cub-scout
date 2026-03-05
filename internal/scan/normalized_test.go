@@ -75,6 +75,46 @@ func TestNormalize_StateFindings(t *testing.T) {
 	}
 }
 
+func TestNormalize_RuntimeFindings(t *testing.T) {
+	combined := &CombinedResult{
+		State: &agent.StateScanResult{
+			RuntimeFindings: []agent.RuntimeFailureFinding{
+				{
+					CCVEID:      "CCVE-2025-0690",
+					Category:    "RUNTIME",
+					Severity:    "critical",
+					Kind:        "Pod",
+					Name:        "api-1",
+					Namespace:   "prod",
+					FailureType: "ImagePullBackOff",
+					Message:     "pull access denied",
+					Remediation: "Check imagePullSecrets",
+					Command:     "kubectl describe pod api-1 -n prod",
+				},
+			},
+		},
+	}
+
+	got := Normalize(combined)
+	if got.Summary.Total != 1 {
+		t.Fatalf("Total = %d, want 1", got.Summary.Total)
+	}
+
+	f := got.Findings[0]
+	if f.Track != "runtime" {
+		t.Errorf("Track = %q, want runtime", f.Track)
+	}
+	if f.Resource != "Pod/api-1" {
+		t.Errorf("Resource = %q, want Pod/api-1", f.Resource)
+	}
+	if f.Namespace != "prod" {
+		t.Errorf("Namespace = %q, want prod", f.Namespace)
+	}
+	if f.Command != "kubectl describe pod api-1 -n prod" {
+		t.Errorf("Command = %q, want kubectl describe pod api-1 -n prod", f.Command)
+	}
+}
+
 func TestNormalize_KyvernoFindings(t *testing.T) {
 	combined := &CombinedResult{
 		Kyverno: &agent.ScanResult{

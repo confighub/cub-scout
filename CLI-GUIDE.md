@@ -1259,7 +1259,7 @@ Summary: 1 critical, 2 warning, 0 info
 | Option | Description |
 |--------|-------------|
 | `-n, --namespace` | Namespace to scan |
-| `--state` | State scan only (stuck reconciliations) |
+| `--state` | State scan only (stuck reconciliations + pod runtime failures) |
 | `--kyverno` | Kyverno scan only (PolicyReports) |
 | `--timing-bombs` | Expiring certs, quota limits |
 | `--dangling` | Orphan HPAs, Services, Ingress, NetworkPolicy |

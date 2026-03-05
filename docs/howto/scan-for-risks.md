@@ -15,7 +15,7 @@ go build ./cmd/cub-scout
 Common variants:
 
 ```bash
-# State-only checks
+# State-only checks (stuck reconciliations + runtime pod failures)
 ./cub-scout scan --state
 
 # Kyverno-only checks
@@ -30,6 +30,7 @@ Common variants:
 The scanner evaluates live cluster state against a maintained risk-pattern catalog. Typical findings include:
 
 - stuck GitOps reconciliation
+- pod runtime failures (ImagePullBackOff, ErrImagePull, CrashLoopBackOff, Pending, Evicted)
 - invalid or missing dependencies
 - drift and ownership gaps
 - fragile lifecycle sequencing patterns
