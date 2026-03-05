@@ -123,3 +123,60 @@ func TestEmitProofArtifact_FailsWhenUnitSuccessMissingCoverage(t *testing.T) {
 		t.Fatalf("expected explicit coverage requirement error, got: %s", string(output))
 	}
 }
+
+func TestEmitProofArtifact_FailsWhenUnitSuccessCoverageNotNumeric(t *testing.T) {
+	outDir := t.TempDir()
+	cmd := exec.Command("bash", "./emit-proof-artifact.sh", outDir)
+	cmd.Env = append(os.Environ(),
+		"PROOF_TIMESTAMP=2026-01-01T00:00:00Z",
+		"GITHUB_RUN_ID=112",
+		"PROOF_UNIT=success",
+		"PROOF_COVERAGE_TOTAL=twenty-seven",
+		"PROOF_COVERAGE_MIN=25.0",
+	)
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("expected failure when coverage values are non-numeric; output=%s", string(output))
+	}
+	if !strings.Contains(string(output), "coverage fields must be numeric percentages when unit tier succeeds") {
+		t.Fatalf("expected numeric coverage error, got: %s", string(output))
+	}
+}
+
+func TestEmitProofArtifact_FailsWhenUnitSuccessCoverageOutOfRange(t *testing.T) {
+	outDir := t.TempDir()
+	cmd := exec.Command("bash", "./emit-proof-artifact.sh", outDir)
+	cmd.Env = append(os.Environ(),
+		"PROOF_TIMESTAMP=2026-01-01T00:00:00Z",
+		"GITHUB_RUN_ID=113",
+		"PROOF_UNIT=success",
+		"PROOF_COVERAGE_TOTAL=101.0",
+		"PROOF_COVERAGE_MIN=25.0",
+	)
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("expected failure for out-of-range coverage values; output=%s", string(output))
+	}
+	if !strings.Contains(string(output), "coverage fields must be between 0 and 100 when unit tier succeeds") {
+		t.Fatalf("expected range validation error, got: %s", string(output))
+	}
+}
+
+func TestEmitProofArtifact_FailsWhenUnitSuccessCoverageTotalBelowMinimum(t *testing.T) {
+	outDir := t.TempDir()
+	cmd := exec.Command("bash", "./emit-proof-artifact.sh", outDir)
+	cmd.Env = append(os.Environ(),
+		"PROOF_TIMESTAMP=2026-01-01T00:00:00Z",
+		"GITHUB_RUN_ID=114",
+		"PROOF_UNIT=success",
+		"PROOF_COVERAGE_TOTAL=24.9",
+		"PROOF_COVERAGE_MIN=25.0",
+	)
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("expected failure when coverage total is below minimum; output=%s", string(output))
+	}
+	if !strings.Contains(string(output), "coverage total must be greater than or equal to coverage minimum") {
+		t.Fatalf("expected total/min validation error, got: %s", string(output))
+	}
+}
