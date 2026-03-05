@@ -53,9 +53,10 @@ Schema: patterns.v1
 
 [PASS] gitops.flux_kustomization_paths
   Flux Kustomization Paths
-  findings (2):
+  findings (3):
     - [info] Flux Kustomizations in graph: 1
     - [info] Kustomization paths: ./clusters/prod
+    - [info] Path validation: existing=1 missing=0
 
 [SKIP] k8s.ownership_chain_complete
   Kubernetes Ownership Chain Complete
