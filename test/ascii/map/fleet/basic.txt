@@ -1,0 +1,19 @@
+ConfigHub Fleet View (App Model)
+Hierarchy: Application → Variant → Target
+
+  billing-api
+  └── variant: dev
+      └── ✓ eu-west-1 @ rev 12
+
+  checkout
+  ├── variant: dev
+  │   └── ✓ dev-1 @ rev 9
+  └── variant: prod
+      ├── ⚠ prod-us @ rev 40 ← behind!
+      ├── ⚠ prod-eu @ rev 42
+      └── ✗ prod-ap @ rev 42
+
+  ops
+  └── variant: prod
+      └── ✓ ops-team @ rev 5
+
