@@ -61,7 +61,7 @@ jobs:
       - name: Enforce coverage gate
         run: ./scripts/ci/check-coverage.sh coverage.out
         env:
-          COVERAGE_MIN_PERCENT: "15.0"
+          COVERAGE_MIN_PERCENT: "25.0"
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
