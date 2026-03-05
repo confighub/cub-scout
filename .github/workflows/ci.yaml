@@ -308,6 +308,39 @@ jobs:
           CUB_AUTH_TOKEN: ${{ secrets.CUB_AUTH_TOKEN }}
 
   # ==========================================================================
+  # Proof artifact (always publish run matrix)
+  # ==========================================================================
+  proof-artifact:
+    name: Proof Artifact
+    runs-on: ubuntu-latest
+    needs:
+      - unit
+      - integration
+      - gitops
+      - demos
+      - connected
+      - full
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Emit proof artifact
+        run: ./scripts/ci/emit-proof-artifact.sh ./proof-artifact
+        env:
+          PROOF_UNIT: ${{ needs.unit.result }}
+          PROOF_INTEGRATION: ${{ needs.integration.result }}
+          PROOF_GITOPS: ${{ needs.gitops.result }}
+          PROOF_DEMOS: ${{ needs.demos.result }}
+          PROOF_CONNECTED: ${{ needs.connected.result }}
+          PROOF_FULL: ${{ needs.full.result }}
+
+      - name: Upload proof artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-proof-artifact
+          path: ./proof-artifact
+
+  # ==========================================================================
   # Full test (manual trigger only)
   # ==========================================================================
   full:
