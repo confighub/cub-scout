@@ -30,6 +30,9 @@ jobs:
   unit:
     name: Unit Tests
     runs-on: ubuntu-latest
+    outputs:
+      coverage_total: ${{ steps.coverage_metric.outputs.coverage_total }}
+      coverage_min: ${{ steps.coverage_metric.outputs.coverage_min }}
     steps:
       - uses: actions/checkout@v4
 
@@ -62,6 +65,17 @@ jobs:
         run: ./scripts/ci/check-coverage.sh coverage.out
         env:
           COVERAGE_MIN_PERCENT: "25.0"
+
+      - name: Capture coverage metric
+        id: coverage_metric
+        run: |
+          total="$(awk '/^total:/{gsub("%","",$3); print $3}' coverage-summary.txt)"
+          if [[ -z "${total}" ]]; then
+            echo "failed to extract total coverage from coverage-summary.txt" >&2
+            exit 1
+          fi
+          echo "coverage_total=${total}" >> "$GITHUB_OUTPUT"
+          echo "coverage_min=25.0" >> "$GITHUB_OUTPUT"
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -346,6 +360,8 @@ jobs:
           PROOF_DEMOS: ${{ needs.demos.result }}
           PROOF_CONNECTED: ${{ needs.connected.result }}
           PROOF_FULL: ${{ needs.full.result }}
+          PROOF_COVERAGE_TOTAL: ${{ needs.unit.outputs.coverage_total }}
+          PROOF_COVERAGE_MIN: ${{ needs.unit.outputs.coverage_min }}
 
       - name: Upload proof artifact
         uses: actions/upload-artifact@v4

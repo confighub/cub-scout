@@ -25,6 +25,8 @@ func TestEmitProofArtifact_WritesExpectedFiles(t *testing.T) {
 		"PROOF_DEMOS=skipped",
 		"PROOF_CONNECTED=skipped",
 		"PROOF_FULL=skipped",
+		"PROOF_COVERAGE_TOTAL=27.7",
+		"PROOF_COVERAGE_MIN=25.0",
 	)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -59,6 +61,12 @@ func TestEmitProofArtifact_WritesExpectedFiles(t *testing.T) {
 	if got := doc["generated_at"]; got != "2026-01-01T00:00:00Z" {
 		t.Fatalf("generated_at mismatch: got=%v want=2026-01-01T00:00:00Z", got)
 	}
+	if got := doc["coverage_total"]; got != "27.7" {
+		t.Fatalf("coverage_total mismatch: got=%v want=27.7", got)
+	}
+	if got := doc["coverage_min"]; got != "25.0" {
+		t.Fatalf("coverage_min mismatch: got=%v want=25.0", got)
+	}
 
 	md := string(mdBytes)
 	if !strings.Contains(md, "| unit | success |") {
@@ -66,6 +74,9 @@ func TestEmitProofArtifact_WritesExpectedFiles(t *testing.T) {
 	}
 	if !strings.Contains(md, "| gitops | success |") {
 		t.Fatalf("markdown missing gitops row: %s", md)
+	}
+	if !strings.Contains(md, "Coverage total: 27.7% (required >= 25.0%)") {
+		t.Fatalf("markdown missing coverage summary: %s", md)
 	}
 }
 
@@ -94,4 +105,3 @@ func TestEmitProofArtifact_DefaultsToSkipped(t *testing.T) {
 		t.Fatalf("expected default skipped integration row: %s", md)
 	}
 }
-
