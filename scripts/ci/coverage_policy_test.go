@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -46,5 +47,53 @@ func TestCoveragePolicy_ProofArtifactCoverageWiring(t *testing.T) {
 	}
 	if !regexp.MustCompile(`PROOF_COVERAGE_MIN:\s*\$\{\{\s*needs\.unit\.outputs\.coverage_min\s*\}\}`).MatchString(content) {
 		t.Fatalf("proof-artifact coverage min env wiring missing")
+	}
+}
+
+func TestCoveragePolicy_TestingReadmeDocumentsCoverageGate(t *testing.T) {
+	workflowPath := filepath.Join("..", "..", ".github", "workflows", "ci.yaml")
+	workflow, err := os.ReadFile(workflowPath)
+	if err != nil {
+		t.Fatalf("read workflow: %v", err)
+	}
+	m := regexp.MustCompile(`COVERAGE_MIN_PERCENT:\s*"([^"]+)"`).FindStringSubmatch(string(workflow))
+	if len(m) < 2 {
+		t.Fatalf("COVERAGE_MIN_PERCENT not found in workflow")
+	}
+	requiredThreshold := m[1]
+
+	readmePath := filepath.Join("..", "..", "docs", "testing", "README.md")
+	readme, err := os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatalf("read docs/testing/README.md: %v", err)
+	}
+	content := string(readme)
+
+	if !strings.Contains(content, "COVERAGE_MIN_PERCENT") {
+		t.Fatalf("docs/testing/README.md must document COVERAGE_MIN_PERCENT")
+	}
+	if !strings.Contains(content, requiredThreshold) {
+		t.Fatalf("docs/testing/README.md missing current threshold value %s", requiredThreshold)
+	}
+}
+
+func TestCoveragePolicy_TestingReadmeDocumentsProofArtifactCoverageFields(t *testing.T) {
+	readmePath := filepath.Join("..", "..", "docs", "testing", "README.md")
+	readme, err := os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatalf("read docs/testing/README.md: %v", err)
+	}
+	content := string(readme)
+
+	requiredMarkers := []string{
+		"proof-matrix.json",
+		"proof-summary.md",
+		"coverage_total",
+		"coverage_min",
+	}
+	for _, marker := range requiredMarkers {
+		if !strings.Contains(content, marker) {
+			t.Fatalf("docs/testing/README.md missing proof artifact marker %q", marker)
+		}
 	}
 }

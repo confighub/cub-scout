@@ -46,7 +46,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [ ] Workstream C: Hierarchy consistency across map/tree/unit surfaces
 - [ ] Workstream D: Fleet view delivery sequence (by-cluster → compare → matrix → revisions → rollout/deps/incident/security)
 - [ ] Workstream E: Claim→demo→status proof matrix
-- [ ] Workstream F: Testing gate contract (coverage matrix, CI-enforced gate, per-run proof artifact)
+- [x] Workstream F: Testing gate contract (coverage matrix, CI-enforced gate, per-run proof artifact) — graduated to #244, #245, #256, #258, #259, #260
 
 ### Pattern Contract (`reference/patterns-contract.md`)
 
@@ -74,7 +74,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] Production-scale E2E testing (500+ resources, mixed ownership, deep hierarchies) — resolved by #155, #156
 - [x] TUI performance profiling at scale (500+ resources) — resolved by #157
 - [x] Testing best practices cookbook (`docs/testing/BEST-PRACTICES.md`) — build tag standards, fixture conventions, golden patterns, cluster lifecycle, example-driven testing (#176)
-- [ ] CI-enforced coverage metrics
+- [x] CI-enforced coverage metrics — graduated to #245, #256, #260
 
 ### 1.x Connected Upsell (`roadmap-1x-connected-upsell.md`) — Complete
 
