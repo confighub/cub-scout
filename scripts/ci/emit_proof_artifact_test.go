@@ -105,3 +105,21 @@ func TestEmitProofArtifact_DefaultsToSkipped(t *testing.T) {
 		t.Fatalf("expected default skipped integration row: %s", md)
 	}
 }
+
+func TestEmitProofArtifact_FailsWhenUnitSuccessMissingCoverage(t *testing.T) {
+	outDir := t.TempDir()
+	cmd := exec.Command("bash", "./emit-proof-artifact.sh", outDir)
+	cmd.Env = append(os.Environ(),
+		"PROOF_TIMESTAMP=2026-01-01T00:00:00Z",
+		"GITHUB_RUN_ID=111",
+		"PROOF_UNIT=success",
+		// Intentionally omit PROOF_COVERAGE_TOTAL / PROOF_COVERAGE_MIN.
+	)
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("expected failure when unit success lacks coverage fields; output=%s", string(output))
+	}
+	if !strings.Contains(string(output), "coverage fields are required when unit tier succeeds") {
+		t.Fatalf("expected explicit coverage requirement error, got: %s", string(output))
+	}
+}
