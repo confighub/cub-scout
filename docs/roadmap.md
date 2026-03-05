@@ -32,8 +32,8 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] Workstream C: Schema extension for `rendered_from` / `original_source` — scoped in #150
 - [x] Workstream D: Bridge patterns (Git→Flux, Git→Argo, Git→ConfigHub→OCI, Live→ConfigHub→OCI) — scoped in #151
 - [x] Workstream E: Orphan detection for broken ApplicationSet generator links — graduated to #232
-- [ ] Workstream F: Fleet query ergonomics and provenance readability
-- [ ] Workstream F: Impact analysis ergonomics and multi-cluster context clarity
+- [x] Workstream F: Fleet query ergonomics and provenance readability — graduated to #242, #251
+- [x] Workstream F: Impact analysis ergonomics and multi-cluster context clarity — graduated to #243, #254
 - [ ] Workstream G: Platform-only surfaces (Functions, Actions, ChangeSets, saved queries, alert triggers, dependency graphing, time-travel UX, three-state drift resolution, bulk operations)
 
 ### Connected Views + Launch (`roadmap-connected-views-and-launch.md`)
