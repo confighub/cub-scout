@@ -1257,6 +1257,25 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 	for _, appName := range appNames {
 		variants := apps[appName]
 		fmt.Printf("  %s\n", appName)
+		appTargets := 0
+		appBehind := 0
+		appDrifted := 0
+		appFailed := 0
+		for _, appUnits := range variants {
+			for _, u := range appUnits {
+				appTargets++
+				if u.LiveRevision > 0 && u.LiveRevision < u.Revision {
+					appBehind++
+				}
+				if u.Status == "Drifted" {
+					appDrifted++
+				}
+				if u.Status == "Failed" || u.Status == "Error" {
+					appFailed++
+				}
+			}
+		}
+		fmt.Printf("    impact: %d targets, %d behind, %d drifted, %d failed\n", appTargets, appBehind, appDrifted, appFailed)
 
 		// Sort variant names
 		variantNames := make([]string, 0, len(variants))

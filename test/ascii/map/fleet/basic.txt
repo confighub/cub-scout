@@ -3,10 +3,12 @@ Hierarchy: Application → Variant → Target
 Impact: 3 apps, 6 targets, 1 behind, 1 drifted, 1 failed
 
   billing-api
+    impact: 1 targets, 0 behind, 0 drifted, 0 failed
   └── variant: dev
       └── ✓ eu-west-1 @ rev 12 [space=billing-team]
 
   checkout
+    impact: 4 targets, 1 behind, 1 drifted, 1 failed
   ├── variant: dev
   │   └── ✓ dev-1 @ rev 9 [space=checkout-team-dev]
   └── variant: prod
@@ -15,6 +17,7 @@ Impact: 3 apps, 6 targets, 1 behind, 1 drifted, 1 failed
       └── ⚠ prod-us @ rev 40 ← behind! [space=checkout-team]
 
   ops
+    impact: 1 targets, 0 behind, 0 drifted, 0 failed
   └── variant: prod
       └── ✓ ops-team @ rev 5 [space=ops-team]
 
