@@ -28,3 +28,21 @@ func TestRoadmapStatus_FleetAndCoverageWorkstreamsMarkedComplete(t *testing.T) {
 	}
 }
 
+func TestRoadmapStatus_TraceOCIAndSourceSignalsMarkedComplete(t *testing.T) {
+	roadmapPath := filepath.Join("..", "..", "docs", "roadmap.md")
+	b, err := os.ReadFile(roadmapPath)
+	if err != nil {
+		t.Fatalf("read roadmap: %v", err)
+	}
+	content := string(b)
+
+	requiredCheckedItems := []string{
+		"- [x] Workstream A: Distinguish \"ConfigHub via OCI\" ownership in trace outputs",
+		"- [x] Workstream A: Source staleness/sync signals where evidence is available",
+	}
+	for _, item := range requiredCheckedItems {
+		if !strings.Contains(content, item) {
+			t.Fatalf("roadmap missing completed trace marker: %s", item)
+		}
+	}
+}
