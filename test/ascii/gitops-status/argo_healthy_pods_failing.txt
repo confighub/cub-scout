@@ -1,0 +1,26 @@
+
+GITOPS STATUS
+════════════════════════════════════════════════════════════════════
+
+  Backend:   ARGOCD
+  Transport: GIT
+
+  ⚠ 1/1 deployers failing
+
+DEPLOYERS
+────────────────────────────────────────────────────────────────────
+  ✗ Application/myapp-prod
+      Namespace: argocd
+      Stage: sync
+      Sync: Unknown
+      Health: Healthy (ArgoCD)
+      Pods: 0/6 running
+      ⚠ Warning: 0/6 pods running - ArgoCD health may be misleading
+      Runtime issues:
+        ImagePullBackOff: 3 pod(s)
+        CrashLoopBackOff: 3 pod(s)
+
+
+NEXT STEPS:
+→ Trace failing resource:  cub-scout trace application/myapp-prod -n argocd
+→ Scan for issues:         cub-scout scan --state

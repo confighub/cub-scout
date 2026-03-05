@@ -792,6 +792,8 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "daemonsets"}
 	case "Service":
 		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
+	case "Pod":
+		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 	case "ConfigMap":
 		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
 	case "Secret":

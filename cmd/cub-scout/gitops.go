@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -125,12 +126,21 @@ type DeployerStatus struct {
 	SourceRef string `json:"sourceRef,omitempty"`
 
 	// Argo-specific fields
-	SyncStatus   string `json:"syncStatus,omitempty"`
-	HealthStatus string `json:"healthStatus,omitempty"`
+	SyncStatus    string         `json:"syncStatus,omitempty"`
+	HealthStatus  string         `json:"healthStatus,omitempty"`
+	PodReady      int            `json:"podReady,omitempty"`
+	PodTotal      int            `json:"podTotal,omitempty"`
+	RuntimeIssues []RuntimeIssue `json:"runtimeIssues,omitempty"`
 
 	// Revision information
 	LastAppliedRevision   string `json:"lastAppliedRevision,omitempty"`
 	LastAttemptedRevision string `json:"lastAttemptedRevision,omitempty"`
+}
+
+// RuntimeIssue summarizes pod runtime failures for an Argo Application.
+type RuntimeIssue struct {
+	Reason string `json:"reason"`
+	Count  int    `json:"count"`
 }
 
 // IsHealthy returns true if the deployer is healthy
@@ -307,6 +317,7 @@ func buildGitOpsSummary(ctx context.Context, client dynamic.Interface, info *age
 				status.SyncStatus = details.SyncStatus
 				status.HealthStatus = details.HealthStatus
 				status.LastAttemptedRevision = details.LastAttemptedRevision
+				enrichArgoApplicationRuntimeStatus(ctx, client, &status, resource)
 			}
 		}
 
@@ -350,6 +361,161 @@ func fetchDeployerResource(ctx context.Context, client dynamic.Interface, ref ag
 	return resource
 }
 
+func enrichArgoApplicationRuntimeStatus(ctx context.Context, client dynamic.Interface, status *DeployerStatus, app *unstructured.Unstructured) {
+	if client == nil || status == nil || app == nil {
+		return
+	}
+
+	appName := strings.TrimSpace(status.Name)
+	if appName == "" {
+		appName = strings.TrimSpace(app.GetName())
+	}
+	if appName == "" {
+		return
+	}
+
+	destinationNamespace, _, _ := unstructured.NestedString(app.Object, "spec", "destination", "namespace")
+	destinationNamespace = strings.TrimSpace(destinationNamespace)
+	if destinationNamespace == "" {
+		return
+	}
+
+	podsGVR := kindToGVR("Pod")
+	if podsGVR.Resource == "" {
+		return
+	}
+
+	podList, err := client.Resource(podsGVR).Namespace(destinationNamespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return
+	}
+
+	issueCounts := map[string]int{}
+	for i := range podList.Items {
+		pod := &podList.Items[i]
+		if strings.TrimSpace(pod.GetLabels()["argocd.argoproj.io/instance"]) != appName {
+			continue
+		}
+
+		status.PodTotal++
+		if isPodReadyForGitOpsStatus(pod) {
+			status.PodReady++
+			continue
+		}
+
+		if reason := extractPodRuntimeIssueReason(pod); reason != "" {
+			issueCounts[reason]++
+		}
+	}
+
+	if len(issueCounts) == 0 {
+		return
+	}
+
+	issues := make([]RuntimeIssue, 0, len(issueCounts))
+	for reason, count := range issueCounts {
+		issues = append(issues, RuntimeIssue{
+			Reason: reason,
+			Count:  count,
+		})
+	}
+
+	sort.Slice(issues, func(i, j int) bool {
+		if runtimeIssueOrder(issues[i].Reason) == runtimeIssueOrder(issues[j].Reason) {
+			return issues[i].Reason < issues[j].Reason
+		}
+		return runtimeIssueOrder(issues[i].Reason) < runtimeIssueOrder(issues[j].Reason)
+	})
+
+	status.RuntimeIssues = issues
+}
+
+func isPodReadyForGitOpsStatus(pod *unstructured.Unstructured) bool {
+	phase, _, _ := unstructured.NestedString(pod.Object, "status", "phase")
+	if !strings.EqualFold(strings.TrimSpace(phase), "Running") {
+		return false
+	}
+
+	containerStatuses, found, _ := unstructured.NestedSlice(pod.Object, "status", "containerStatuses")
+	if !found || len(containerStatuses) == 0 {
+		return false
+	}
+
+	for _, raw := range containerStatuses {
+		status, ok := raw.(map[string]interface{})
+		if !ok {
+			return false
+		}
+		ready, ok := status["ready"].(bool)
+		if !ok || !ready {
+			return false
+		}
+	}
+	return true
+}
+
+func extractPodRuntimeIssueReason(pod *unstructured.Unstructured) string {
+	checkStatuses := func(statuses []interface{}) string {
+		for _, raw := range statuses {
+			status, ok := raw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			state, _ := status["state"].(map[string]interface{})
+			waiting, _ := state["waiting"].(map[string]interface{})
+			if waiting == nil {
+				continue
+			}
+
+			reason := strings.TrimSpace(fmt.Sprintf("%v", waiting["reason"]))
+			switch reason {
+			case "ImagePullBackOff", "ErrImagePull", "CrashLoopBackOff":
+				return reason
+			case "CreateContainerError", "CreateContainerConfigError":
+				return "CreateContainerError"
+			}
+		}
+		return ""
+	}
+
+	initStatuses, _, _ := unstructured.NestedSlice(pod.Object, "status", "initContainerStatuses")
+	if reason := checkStatuses(initStatuses); reason != "" {
+		return reason
+	}
+
+	containerStatuses, _, _ := unstructured.NestedSlice(pod.Object, "status", "containerStatuses")
+	if reason := checkStatuses(containerStatuses); reason != "" {
+		return reason
+	}
+
+	phase, _, _ := unstructured.NestedString(pod.Object, "status", "phase")
+	statusReason, _, _ := unstructured.NestedString(pod.Object, "status", "reason")
+
+	if strings.EqualFold(strings.TrimSpace(phase), "Failed") && strings.EqualFold(strings.TrimSpace(statusReason), "Evicted") {
+		return "Evicted"
+	}
+
+	if strings.EqualFold(strings.TrimSpace(phase), "Pending") {
+		return "Pending"
+	}
+
+	return ""
+}
+
+func runtimeIssueOrder(reason string) int {
+	order := map[string]int{
+		"ImagePullBackOff":     0,
+		"ErrImagePull":         1,
+		"CrashLoopBackOff":     2,
+		"CreateContainerError": 3,
+		"Pending":              4,
+		"Evicted":              5,
+	}
+	if idx, ok := order[reason]; ok {
+		return idx
+	}
+	return 99
+}
 
 // outputGitOpsStatusJSON outputs the summary as JSON
 func outputGitOpsStatusJSON(summary GitOpsSummary) error {
@@ -582,7 +748,24 @@ func outputDeployerStatus(dep DeployerStatus) {
 			if dep.HealthStatus != "Healthy" {
 				healthColor = colorRed
 			}
-			fmt.Printf("      %sHealth:%s %s%s%s\n", colorDim, colorReset, healthColor, dep.HealthStatus, colorReset)
+			healthLabel := dep.HealthStatus + " (ArgoCD)"
+			fmt.Printf("      %sHealth:%s %s%s%s\n", colorDim, colorReset, healthColor, healthLabel, colorReset)
+		}
+
+		if dep.PodTotal > 0 {
+			fmt.Printf("      Pods: %d/%d running\n", dep.PodReady, dep.PodTotal)
+		}
+
+		if strings.EqualFold(dep.HealthStatus, "Healthy") && dep.PodTotal > 0 && dep.PodReady < dep.PodTotal {
+			fmt.Printf("      %s⚠ Warning:%s %d/%d pods running - ArgoCD health may be misleading\n",
+				colorYellow, colorReset, dep.PodReady, dep.PodTotal)
+		}
+
+		if len(dep.RuntimeIssues) > 0 {
+			fmt.Printf("      %sRuntime issues:%s\n", colorDim, colorReset)
+			for _, issue := range dep.RuntimeIssues {
+				fmt.Printf("        %s: %d pod(s)\n", issue.Reason, issue.Count)
+			}
 		}
 	}
 
