@@ -275,6 +275,32 @@ func runTrace(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("%s", help)
 			}
 		}
+		// Helm-via-ArgoCD template mode fallback:
+		// If Helm labels are present but no release secret exists, try tracing via
+		// an Argo Application that explicitly reports this resource.
+		if shouldAttemptHelmViaArgoFallback(ownership, result) {
+			dynClient, dynErr := dynamic.NewForConfig(cfg)
+			if dynErr == nil {
+				fallbackResult, fallbackOwnership, fallbackUsed := tryHelmViaArgoFallback(
+					ctx,
+					dynClient,
+					kind,
+					name,
+					traceNamespace,
+					ownership,
+					result,
+					func(ctx context.Context, appName, appNamespace string) (*agent.TraceResult, error) {
+						argoTracer := agent.NewArgoTracer()
+						return argoTracer.Trace(ctx, "Application", appName, appNamespace)
+					},
+				)
+				if fallbackUsed {
+					result = fallbackResult
+					ownership = fallbackOwnership
+					err = nil
+				}
+			}
+		}
 
 	default:
 		// Try Flux first, then Argo, then report not managed
@@ -331,6 +357,320 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	default:
 		return outputTraceHuman(result, artifacts)
 	}
+}
+
+type traceApplicationFunc func(ctx context.Context, appName, appNamespace string) (*agent.TraceResult, error)
+
+func shouldAttemptHelmViaArgoFallback(ownership *agent.Ownership, helmResult *agent.TraceResult) bool {
+	if ownership == nil || ownership.Type != agent.OwnerHelm {
+		return false
+	}
+	if helmResult == nil {
+		return false
+	}
+	errMsg := strings.ToLower(strings.TrimSpace(helmResult.Error))
+	if errMsg == "" {
+		return false
+	}
+	return (strings.Contains(errMsg, "helm release") && strings.Contains(errMsg, "not found")) ||
+		strings.Contains(errMsg, "no helm release found managing this resource")
+}
+
+func tryHelmViaArgoFallback(
+	ctx context.Context,
+	dynClient dynamic.Interface,
+	kind, name, namespace string,
+	ownership *agent.Ownership,
+	helmResult *agent.TraceResult,
+	traceApp traceApplicationFunc,
+) (*agent.TraceResult, *agent.Ownership, bool) {
+	if !shouldAttemptHelmViaArgoFallback(ownership, helmResult) {
+		return nil, nil, false
+	}
+	if dynClient == nil || traceApp == nil {
+		return nil, nil, false
+	}
+
+	resource, err := fetchTraceResource(ctx, dynClient, kind, name, namespace)
+	if err != nil || resource == nil {
+		return nil, nil, false
+	}
+	if !isHelmManagedResource(resource) {
+		return nil, nil, false
+	}
+
+	apps, err := listArgoApplications(ctx, dynClient)
+	if err != nil || len(apps) == 0 {
+		return nil, nil, false
+	}
+
+	appName, appNamespace, ok := selectArgoApplicationForResource(resource, apps)
+	if !ok {
+		return nil, nil, false
+	}
+
+	argoResult, traceErr := traceApp(ctx, appName, appNamespace)
+	if traceErr != nil || argoResult == nil || len(argoResult.Chain) == 0 {
+		return nil, nil, false
+	}
+
+	annotateHelmViaArgoTrace(argoResult, resource, kind, name, namespace)
+
+	return argoResult, &agent.Ownership{
+		Type:       agent.OwnerArgo,
+		SubType:    "application",
+		Name:       appName,
+		Namespace:  appNamespace,
+		Source:     "fallback:helm-via-argo",
+		Confidence: "medium",
+	}, true
+}
+
+func fetchTraceResource(ctx context.Context, dynClient dynamic.Interface, kind, name, namespace string) (*unstructured.Unstructured, error) {
+	gvr := kindToGVR(kind)
+	if gvr.Resource == "" {
+		return nil, fmt.Errorf("unknown resource kind: %s", kind)
+	}
+	return dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
+}
+
+func isHelmManagedResource(resource *unstructured.Unstructured) bool {
+	labels := resource.GetLabels()
+	if labels == nil {
+		return false
+	}
+	if strings.EqualFold(strings.TrimSpace(labels["app.kubernetes.io/managed-by"]), "helm") {
+		return true
+	}
+	return strings.TrimSpace(labels["helm.sh/chart"]) != ""
+}
+
+func listArgoApplications(ctx context.Context, dynClient dynamic.Interface) ([]unstructured.Unstructured, error) {
+	appGVR := schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "applications",
+	}
+	list, err := dynClient.Resource(appGVR).Namespace("").List(ctx, v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return list.Items, nil
+}
+
+func selectArgoApplicationForResource(resource *unstructured.Unstructured, apps []unstructured.Unstructured) (string, string, bool) {
+	targetKind := strings.TrimSpace(resource.GetKind())
+	targetName := strings.TrimSpace(resource.GetName())
+	targetNamespace := strings.TrimSpace(resource.GetNamespace())
+	if targetKind == "" || targetName == "" {
+		return "", "", false
+	}
+
+	matches := make([]unstructured.Unstructured, 0, len(apps))
+	for _, app := range apps {
+		if !argoApplicationManagesResource(&app, targetKind, targetName, targetNamespace) {
+			continue
+		}
+		if !argoApplicationTargetsNamespace(&app, targetNamespace) {
+			continue
+		}
+		matches = append(matches, app)
+	}
+	if len(matches) == 0 {
+		return "", "", false
+	}
+
+	preferred := preferredArgoApplicationNames(resource)
+	if len(preferred) > 0 {
+		preferredMatches := make([]unstructured.Unstructured, 0, len(matches))
+		for _, app := range matches {
+			if _, ok := preferred[strings.TrimSpace(app.GetName())]; ok {
+				preferredMatches = append(preferredMatches, app)
+			}
+		}
+		matches = preferredMatches
+	}
+
+	if len(matches) != 1 {
+		return "", "", false
+	}
+
+	return strings.TrimSpace(matches[0].GetName()), strings.TrimSpace(matches[0].GetNamespace()), true
+}
+
+func preferredArgoApplicationNames(resource *unstructured.Unstructured) map[string]struct{} {
+	preferred := make(map[string]struct{})
+
+	if labelApp := strings.TrimSpace(resource.GetLabels()["argocd.argoproj.io/instance"]); labelApp != "" {
+		preferred[labelApp] = struct{}{}
+	}
+
+	if trackingID := strings.TrimSpace(resource.GetAnnotations()["argocd.argoproj.io/tracking-id"]); trackingID != "" {
+		if appName := parseArgoTrackingIDApplication(trackingID); appName != "" {
+			preferred[appName] = struct{}{}
+		}
+	}
+
+	return preferred
+}
+
+func parseArgoTrackingIDApplication(trackingID string) string {
+	parts := strings.SplitN(strings.TrimSpace(trackingID), ":", 2)
+	if len(parts) < 1 {
+		return ""
+	}
+	return strings.TrimSpace(parts[0])
+}
+
+func argoApplicationTargetsNamespace(app *unstructured.Unstructured, targetNamespace string) bool {
+	if targetNamespace == "" {
+		return true
+	}
+	destNamespace, found, _ := unstructured.NestedString(app.Object, "spec", "destination", "namespace")
+	if !found {
+		return true
+	}
+	destNamespace = strings.TrimSpace(destNamespace)
+	if destNamespace == "" {
+		return true
+	}
+	return destNamespace == targetNamespace
+}
+
+func argoApplicationManagesResource(app *unstructured.Unstructured, targetKind, targetName, targetNamespace string) bool {
+	resources, found, _ := unstructured.NestedSlice(app.Object, "status", "resources")
+	if !found || len(resources) == 0 {
+		return false
+	}
+
+	for _, raw := range resources {
+		item, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		resKind := strings.TrimSpace(fmt.Sprintf("%v", item["kind"]))
+		resName := strings.TrimSpace(fmt.Sprintf("%v", item["name"]))
+		resNamespace := strings.TrimSpace(fmt.Sprintf("%v", item["namespace"]))
+
+		if !strings.EqualFold(resKind, targetKind) {
+			continue
+		}
+		if resName != targetName {
+			continue
+		}
+		if targetNamespace != "" && resNamespace != targetNamespace {
+			continue
+		}
+		return true
+	}
+
+	return false
+}
+
+func annotateHelmViaArgoTrace(result *agent.TraceResult, resource *unstructured.Unstructured, kind, name, namespace string) {
+	if result == nil || resource == nil {
+		return
+	}
+
+	labels := resource.GetLabels()
+	chartName, chartVersion := parseHelmChartLabel(strings.TrimSpace(labels["helm.sh/chart"]))
+	if chartName == "" {
+		chartName = strings.TrimSpace(labels["app.kubernetes.io/instance"])
+	}
+	if chartName == "" {
+		chartName = name
+	}
+
+	helmLink := agent.ChainLink{
+		Kind:      "HelmChart",
+		Name:      chartName,
+		Namespace: namespace,
+		Ready:     true,
+		Status:    "template mode",
+		Revision:  chartVersion,
+	}
+
+	if !traceChainHasResource(result.Chain, helmLink.Kind, helmLink.Name, helmLink.Namespace) {
+		result.Chain = insertHelmChartAfterApplication(result.Chain, helmLink)
+	}
+	if !traceChainHasResource(result.Chain, kind, name, namespace) {
+		result.Chain = append(result.Chain, agent.ChainLink{
+			Kind:      kind,
+			Name:      name,
+			Namespace: namespace,
+			Ready:     true,
+			Status:    "Observed",
+		})
+	}
+
+	explanation := "Detected Helm-via-ArgoCD template mode: resource has Helm metadata but no Helm release secret. ArgoCD renders and applies this chart, so Helm CLI cannot manage it directly."
+	if strings.TrimSpace(result.Error) == "" {
+		result.Error = explanation
+	} else if !strings.Contains(result.Error, explanation) {
+		result.Error = strings.TrimSpace(result.Error + " " + explanation)
+	}
+
+	result.Object = agent.ResourceRef{
+		Kind:      kind,
+		Name:      name,
+		Namespace: namespace,
+	}
+	result.Tool = "argocd"
+}
+
+func parseHelmChartLabel(chartLabel string) (string, string) {
+	chartLabel = strings.TrimSpace(chartLabel)
+	if chartLabel == "" {
+		return "", ""
+	}
+	lastDash := strings.LastIndex(chartLabel, "-")
+	if lastDash <= 0 || lastDash == len(chartLabel)-1 {
+		return chartLabel, ""
+	}
+
+	name := strings.TrimSpace(chartLabel[:lastDash])
+	version := strings.TrimSpace(chartLabel[lastDash+1:])
+	if name == "" || version == "" || !containsDigit(version) {
+		return chartLabel, ""
+	}
+	return name, version
+}
+
+func containsDigit(s string) bool {
+	for _, r := range s {
+		if r >= '0' && r <= '9' {
+			return true
+		}
+	}
+	return false
+}
+
+func insertHelmChartAfterApplication(chain []agent.ChainLink, helmLink agent.ChainLink) []agent.ChainLink {
+	out := make([]agent.ChainLink, 0, len(chain)+1)
+	inserted := false
+
+	for _, link := range chain {
+		out = append(out, link)
+		if !inserted && link.Kind == "Application" {
+			out = append(out, helmLink)
+			inserted = true
+		}
+	}
+
+	if !inserted {
+		out = append(out, helmLink)
+	}
+
+	return out
+}
+
+func traceChainHasResource(chain []agent.ChainLink, kind, name, namespace string) bool {
+	for _, link := range chain {
+		if link.Kind == kind && link.Name == name && link.Namespace == namespace {
+			return true
+		}
+	}
+	return false
 }
 
 // normalizeKind normalizes resource kind names
