@@ -4,17 +4,17 @@ Impact: 3 apps, 6 targets, 1 behind, 1 drifted, 1 failed
 
   billing-api
   └── variant: dev
-      └── ✓ eu-west-1 @ rev 12
+      └── ✓ eu-west-1 @ rev 12 [space=billing-team]
 
   checkout
   ├── variant: dev
-  │   └── ✓ dev-1 @ rev 9
+  │   └── ✓ dev-1 @ rev 9 [space=checkout-team-dev]
   └── variant: prod
-      ├── ✗ prod-ap @ rev 42
-      ├── ⚠ prod-eu @ rev 42
-      └── ⚠ prod-us @ rev 40 ← behind!
+      ├── ✗ prod-ap @ rev 42 [space=checkout-team]
+      ├── ⚠ prod-eu @ rev 42 [space=checkout-team]
+      └── ⚠ prod-us @ rev 40 ← behind! [space=checkout-team]
 
   ops
   └── variant: prod
-      └── ✓ ops-team @ rev 5
+      └── ✓ ops-team @ rev 5 [space=ops-team]
 
