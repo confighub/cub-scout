@@ -1221,11 +1221,24 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 
 	// Group by app, then variant
 	apps := make(map[string]map[string][]FleetUnit)
+	behindCount := 0
+	driftedCount := 0
+	failedCount := 0
 	for _, u := range units {
 		if apps[u.App] == nil {
 			apps[u.App] = make(map[string][]FleetUnit)
 		}
 		apps[u.App][u.Variant] = append(apps[u.App][u.Variant], u)
+
+		if u.LiveRevision > 0 && u.LiveRevision < u.Revision {
+			behindCount++
+		}
+		if u.Status == "Drifted" {
+			driftedCount++
+		}
+		if u.Status == "Failed" || u.Status == "Error" {
+			failedCount++
+		}
 	}
 
 	// Sort app names
@@ -1237,6 +1250,8 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("ConfigHub Fleet View (App Model)")
 	fmt.Println("Hierarchy: Application → Variant → Target")
+	fmt.Printf("Impact: %d apps, %d targets, %d behind, %d drifted, %d failed\n",
+		len(appNames), len(units), behindCount, driftedCount, failedCount)
 	fmt.Println()
 
 	for _, appName := range appNames {
@@ -1252,6 +1267,24 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 
 		for i, variantName := range variantNames {
 			units := variants[variantName]
+			sort.Slice(units, func(a, b int) bool {
+				aTarget := strings.TrimSpace(units[a].Target)
+				if aTarget == "" {
+					aTarget = units[a].Space
+				}
+				bTarget := strings.TrimSpace(units[b].Target)
+				if bTarget == "" {
+					bTarget = units[b].Space
+				}
+				if aTarget != bTarget {
+					return aTarget < bTarget
+				}
+				if units[a].Space != units[b].Space {
+					return units[a].Space < units[b].Space
+				}
+				return units[a].Slug < units[b].Slug
+			})
+
 			isLastVariant := i == len(variantNames)-1
 			variantPrefix := "├──"
 			if isLastVariant {
@@ -1278,9 +1311,12 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 
 				// Status icon
 				icon := SymOK
-				if u.Status == "Drifted" {
+				isFailed := u.Status == "Failed" || u.Status == "Error"
+				isDrifted := u.Status == "Drifted"
+				if isDrifted {
 					icon = SymWarning
-				} else if u.Status == "Failed" || u.Status == "Error" {
+				}
+				if isFailed {
 					icon = SymError
 				}
 
@@ -1288,7 +1324,9 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 				revStatus := fmt.Sprintf("@ rev %d", u.Revision)
 				if u.LiveRevision > 0 && u.LiveRevision < u.Revision {
 					revStatus = fmt.Sprintf("@ rev %d ← behind!", u.LiveRevision)
-					icon = SymWarning
+					if !isFailed {
+						icon = SymWarning
+					}
 				}
 
 				target := u.Target
