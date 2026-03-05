@@ -4,6 +4,9 @@
 package agent
 
 import (
+	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -892,4 +895,131 @@ func TestFormatArgoContextError(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestArgoTraceApplication_FallsBackToKubectlWhenArgoCLIContextIsStale(t *testing.T) {
+	tempDir := t.TempDir()
+	argocdPath := writeExecScript(t, tempDir, "argocd", `#!/usr/bin/env bash
+echo "rpc error: code = Unavailable desc = connection error: dial tcp 10.0.0.1:443: i/o timeout" >&2
+exit 1
+`)
+	kubectlPath := writeExecScript(t, tempDir, "kubectl", `#!/usr/bin/env bash
+cat <<'JSON'
+{
+  "items": [
+    {
+      "metadata": {"name": "checkout", "namespace": "argocd"},
+      "spec": {
+        "source": {"repoURL": "https://github.com/acme/checkout.git", "path": "envs/prod", "targetRevision": "main"},
+        "destination": {"server": "https://kubernetes.default.svc", "namespace": "prod"}
+      },
+      "status": {
+        "sync": {"status": "Synced", "revision": "abc123"},
+        "health": {"status": "Healthy"},
+        "resources": []
+      }
+    }
+  ]
+}
+JSON
+`)
+
+	tracer := NewArgoTracerWithPaths(argocdPath, kubectlPath)
+	result, err := tracer.TraceApplication(context.Background(), "checkout")
+	if err != nil {
+		t.Fatalf("TraceApplication() fallback error = %v", err)
+	}
+	if result == nil {
+		t.Fatalf("TraceApplication() result is nil")
+	}
+	if !strings.Contains(result.Error, "ArgoCD CLI unavailable") {
+		t.Fatalf("expected degraded-mode warning in result.Error, got: %q", result.Error)
+	}
+	if result.Object.Namespace != "argocd" {
+		t.Fatalf("result.Object.Namespace = %q, want argocd", result.Object.Namespace)
+	}
+	if len(result.Chain) < 2 {
+		t.Fatalf("expected source + application chain from kubectl fallback, got len=%d", len(result.Chain))
+	}
+	if result.Chain[1].Kind != "Application" {
+		t.Fatalf("expected second link kind Application, got %q", result.Chain[1].Kind)
+	}
+}
+
+func TestArgoTraceApplication_FallbackHonorsNamespaceFilter(t *testing.T) {
+	tempDir := t.TempDir()
+	argocdPath := writeExecScript(t, tempDir, "argocd", `#!/usr/bin/env bash
+echo "FATA[0000] Argo CD server address unspecified" >&2
+exit 1
+`)
+	kubectlPath := writeExecScript(t, tempDir, "kubectl", `#!/usr/bin/env bash
+cat <<'JSON'
+{
+  "items": [
+    {
+      "metadata": {"name": "checkout", "namespace": "argocd"},
+      "spec": {
+        "source": {"repoURL": "https://github.com/acme/checkout.git", "targetRevision": "main"},
+        "destination": {"server": "https://kubernetes.default.svc", "namespace": "prod"}
+      },
+      "status": {"sync": {"status": "Synced", "revision": "a1"}, "health": {"status": "Healthy"}, "resources": []}
+    },
+    {
+      "metadata": {"name": "checkout", "namespace": "team-b"},
+      "spec": {
+        "source": {"repoURL": "https://github.com/acme/checkout-alt.git", "targetRevision": "main"},
+        "destination": {"server": "https://kubernetes.default.svc", "namespace": "team-b"}
+      },
+      "status": {"sync": {"status": "OutOfSync", "revision": "b2"}, "health": {"status": "Degraded"}, "resources": []}
+    }
+  ]
+}
+JSON
+`)
+
+	tracer := NewArgoTracerWithPaths(argocdPath, kubectlPath)
+	result, err := tracer.traceApplication(context.Background(), "checkout", "team-b")
+	if err != nil {
+		t.Fatalf("traceApplication() fallback error = %v", err)
+	}
+	if result.Object.Namespace != "team-b" {
+		t.Fatalf("result.Object.Namespace = %q, want team-b", result.Object.Namespace)
+	}
+	if result.Chain[0].URL != "https://github.com/acme/checkout-alt.git" {
+		t.Fatalf("selected fallback application repoURL = %q, want team-b app", result.Chain[0].URL)
+	}
+}
+
+func TestArgoTraceApplication_ContextError_WhenKubectlFallbackFails(t *testing.T) {
+	tempDir := t.TempDir()
+	argocdPath := writeExecScript(t, tempDir, "argocd", `#!/usr/bin/env bash
+echo "rpc error: code = Unavailable desc = connection error: dial tcp 10.0.0.1:443: i/o timeout" >&2
+exit 1
+`)
+	kubectlPath := writeExecScript(t, tempDir, "kubectl", `#!/usr/bin/env bash
+echo "error: forbidden" >&2
+exit 1
+`)
+
+	tracer := NewArgoTracerWithPaths(argocdPath, kubectlPath)
+	_, err := tracer.TraceApplication(context.Background(), "checkout")
+	if err == nil {
+		t.Fatalf("expected error when both argocd and kubectl fallback fail")
+	}
+	got := err.Error()
+	if !strings.Contains(got, "argocd context appears stale or invalid") {
+		t.Fatalf("expected stale-context remediation, got: %s", got)
+	}
+	if !strings.Contains(got, "kubectl fallback failed") {
+		t.Fatalf("expected kubectl fallback failure detail, got: %s", got)
+	}
+}
+
+func writeExecScript(t *testing.T, dir, name, content string) string {
+	t.Helper()
+	path := filepath.Join(dir, name)
+	if err := os.WriteFile(path, []byte(content), 0o755); err != nil {
+		t.Fatalf("write script %s: %v", name, err)
+	}
+	return path
 }

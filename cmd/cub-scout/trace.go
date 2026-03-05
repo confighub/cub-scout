@@ -723,6 +723,10 @@ func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.Tra
 		os.Exit(1)
 		return nil // unreachable but required for compiler
 	}
+	if result.Error != "" {
+		// Degraded mode: still render available chain, but make missing context explicit.
+		fmt.Printf("  %s[warning] %s%s\n\n", colorYellow, result.Error, colorReset)
+	}
 
 	// Print chain
 	for i, link := range result.Chain {
@@ -954,6 +958,9 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 		fmt.Println("```")
 		os.Exit(1)
 		return nil
+	}
+	if result.Error != "" {
+		fmt.Printf("  [warning] %s\n\n", result.Error)
 	}
 
 	// Print chain without colors
