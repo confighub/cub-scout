@@ -502,6 +502,28 @@ Summary: 1 CRITICAL │ 2 WARNING │ 1 INFO
 Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 ```
 
+### Scan Variants
+
+| Command | What It Detects |
+|---------|------------------|
+| `cub-scout scan` | Full scan (state + Kyverno findings) |
+| `cub-scout scan --state` | Stuck HelmRelease/Kustomization/Application reconciliations |
+| `cub-scout scan --kyverno` | Kyverno PolicyReport violations |
+| `cub-scout scan --lifecycle-hazards` | Helm hooks that conflict with ArgoCD lifecycle behavior |
+| `cub-scout scan --timing-bombs` | Expiring certs and quota/resource timing risks |
+| `cub-scout scan --dangling` | Orphan HPA/Service/Ingress/NetworkPolicy resources |
+| `cub-scout scan --file manifest.yaml` | Static YAML analysis (no cluster required) |
+| `cub-scout scan --json` | JSON output for CI/CD pipelines |
+| `cub-scout scan --normalized-json` | Normalized JSON (`scan.normalized.v1`) for downstream tooling |
+
+**Want deeper scanning?** See [confighub-scan](https://github.com/confighubai/confighub-scan) for:
+
+- 285 scanner rules (vs 46 patterns in `cub-scout scan`)
+- 3,513 risk patterns in the catalog
+- Custom CEL + Rego policy integration
+- Kyverno and Trivy integration options
+- ConfigHub GUI integration
+
 ---
 
 ## Quick Commands
