@@ -1,0 +1,62 @@
+[
+  {
+    "Slug": "billing-dev-eu",
+    "Space": "billing-team",
+    "App": "billing-api",
+    "Variant": "dev",
+    "Revision": 12,
+    "LiveRevision": 12,
+    "Status": "Healthy",
+    "Target": "eu-west-1"
+  },
+  {
+    "Slug": "checkout-prod-us",
+    "Space": "checkout-team",
+    "App": "checkout",
+    "Variant": "prod",
+    "Revision": 42,
+    "LiveRevision": 40,
+    "Status": "Healthy",
+    "Target": "prod-us"
+  },
+  {
+    "Slug": "checkout-prod-eu",
+    "Space": "checkout-team",
+    "App": "checkout",
+    "Variant": "prod",
+    "Revision": 42,
+    "LiveRevision": 42,
+    "Status": "Drifted",
+    "Target": "prod-eu"
+  },
+  {
+    "Slug": "checkout-dev",
+    "Space": "checkout-team-dev",
+    "App": "checkout",
+    "Variant": "dev",
+    "Revision": 9,
+    "LiveRevision": 9,
+    "Status": "Healthy",
+    "Target": "dev-1"
+  },
+  {
+    "Slug": "checkout-prod-ap",
+    "Space": "checkout-team",
+    "App": "checkout",
+    "Variant": "prod",
+    "Revision": 42,
+    "LiveRevision": 0,
+    "Status": "Failed",
+    "Target": "prod-ap"
+  },
+  {
+    "Slug": "ops-prod",
+    "Space": "ops-team",
+    "App": "ops",
+    "Variant": "prod",
+    "Revision": 5,
+    "LiveRevision": 5,
+    "Status": "Healthy",
+    "Target": ""
+  }
+]

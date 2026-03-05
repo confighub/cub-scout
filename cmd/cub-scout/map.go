@@ -1088,6 +1088,38 @@ func loadMapEntriesFromJSON(path string) ([]MapEntry, error) {
 	return entries, nil
 }
 
+// loadFleetUnitsFromJSON loads a []FleetUnit fixture used by ASCII golden tests.
+// This is only used when CUB_SCOUT_TEST_MAP_FLEET_JSON is set.
+func loadFleetUnitsFromJSON(path, space, appFilter string) ([]FleetUnit, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read map fleet fixture: %w", err)
+	}
+	var units []FleetUnit
+	if err := json.Unmarshal(b, &units); err != nil {
+		return nil, fmt.Errorf("parse map fleet fixture: %w", err)
+	}
+
+	filtered := make([]FleetUnit, 0, len(units))
+	for _, u := range units {
+		// Keep semantics aligned with live path: app label is required.
+		if strings.TrimSpace(u.App) == "" {
+			continue
+		}
+		if space != "" && u.Space != space {
+			continue
+		}
+		if appFilter != "" && u.App != appFilter {
+			continue
+		}
+		if strings.TrimSpace(u.Variant) == "" {
+			u.Variant = "default"
+		}
+		filtered = append(filtered, u)
+	}
+	return filtered, nil
+}
+
 type mapStatusFixture struct {
 	DeployersReady int `json:"deployersReady"`
 	DeployersTotal int `json:"deployersTotal"`
@@ -1274,6 +1306,10 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 }
 
 func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
+	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_FLEET_JSON"); fixture != "" {
+		return loadFleetUnitsFromJSON(fixture, space, appFilter)
+	}
+
 	// Build cub command to list units
 	args := []string{"unit", "list", "--json"}
 	if space != "" {
