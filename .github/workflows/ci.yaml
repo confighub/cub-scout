@@ -56,7 +56,20 @@ jobs:
         run: ./scripts/check-readonly.sh
 
       - name: Run unit tests
-        run: go test ./... -v
+        run: go test ./... -v -covermode=atomic -coverprofile=coverage.out
+
+      - name: Enforce coverage gate
+        run: ./scripts/ci/check-coverage.sh coverage.out
+        env:
+          COVERAGE_MIN_PERCENT: "15.0"
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.out
+            coverage-summary.txt
 
       - name: Verify real examples catalog
         run: go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1 -v
