@@ -46,3 +46,17 @@ func TestRoadmapStatus_TraceOCIAndSourceSignalsMarkedComplete(t *testing.T) {
 		}
 	}
 }
+
+func TestRoadmapStatus_CoreNavigationSnapshotsMarkedComplete(t *testing.T) {
+	roadmapPath := filepath.Join("..", "..", "docs", "roadmap.md")
+	b, err := os.ReadFile(roadmapPath)
+	if err != nil {
+		t.Fatalf("read roadmap: %v", err)
+	}
+	content := string(b)
+
+	requiredCheckedItem := "- [x] Workstream B: Expected-output snapshots for core navigation flows"
+	if !strings.Contains(content, requiredCheckedItem) {
+		t.Fatalf("roadmap missing completed navigation snapshot marker: %s", requiredCheckedItem)
+	}
+}
