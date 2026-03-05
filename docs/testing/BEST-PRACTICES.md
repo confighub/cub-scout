@@ -20,6 +20,7 @@ Before writing code, check this table. Every change type has a minimum test expe
 | **CLI output format change** | ASCII golden in `test/ascii/<cmd>/` | Contract test if struct is exported |
 | **Connected mode feature** | Integration test with `skipIfNotConnected(t)` gate | Dry-run test (no ConfigHub writes) |
 | **Schema change to locked struct** | Contract test in `test/contract/` | Golden hash comparison |
+| **CI test-gate policy or thresholds** | `go test ./scripts/ci -count=1` + update `docs/testing/README.md` contract text | Add drift check in `coverage_policy_test.go` |
 
 **Minimum bar (from CLAUDE.md):**
 - Tests exist and pass

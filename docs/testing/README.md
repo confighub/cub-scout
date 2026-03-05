@@ -28,6 +28,31 @@ make test-import-delegation
 
 ---
 
+## CI Coverage Gate and Proof Artifact Contract
+
+CI unit tests enforce a coverage floor with `scripts/ci/check-coverage.sh`.
+
+- `COVERAGE_MIN_PERCENT` is currently `25.0` in `.github/workflows/ci.yaml`.
+- The unit tier must publish `coverage_total` and `coverage_min`.
+- Proof publishing writes both:
+  - `proof-matrix.json`
+  - `proof-summary.md`
+
+When `PROOF_UNIT=success`, `scripts/ci/emit-proof-artifact.sh` requires:
+
+- `coverage_total` and `coverage_min` to be present (not `unknown`)
+- numeric percentage values in `[0, 100]`
+- `coverage_total >= coverage_min`
+
+Local reproducibility:
+
+```bash
+go test ./scripts/ci -count=1
+go test ./scripts/ci -run 'TestCoveragePolicy_|TestEmitProofArtifact_' -count=1
+```
+
+---
+
 ## The Five Test Groups
 
 When using AI to write code, 100% test coverage is non-negotiable.
