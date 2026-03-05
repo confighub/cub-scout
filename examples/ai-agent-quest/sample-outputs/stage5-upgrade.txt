@@ -1,0 +1,129 @@
+# Stage 5: "The Upgrade" — Connected Mode
+# Source: Example output showing ConfigHub connected mode capabilities
+# NOTE: This is example output. Actual results depend on your ConfigHub data.
+
+## Prerequisites
+
+$ cub auth login
+Authentication successful
+Context: shadow-bear
+Organization: ConfigHub
+
+$ ./cub-scout status
+ConfigHub:  ● Connected
+Cluster:    default
+Context:    kind-argo-import-demo
+
+---
+
+## Question 1: "What changed in this cluster in the last week?"
+
+### Commands
+
+$ cub changeset list --space myapp-team
+NAME              SPACE         STATE      START-TAG    END-TAG    DESCRIPTION
+cs-20260304-001   myapp-team    Applied    v1.4.2       v1.4.3     ci-bot: rolled API image
+cs-20260303-001   myapp-team    Applied    --           --         sarah: scaled workers 3→1
+cs-20260228-001   myapp-team    Applied    --           --         config: updated db pool settings
+
+$ cub unit list --space myapp-team
+NAME     SPACE         CHANGESET         TARGET                    STATUS    LAST-ACTION
+api      myapp-team    cs-20260304-001   dev-kubernetes-yaml-...   Ready     Applied
+worker   myapp-team    cs-20260303-001   dev-kubernetes-yaml-...   Ready     Applied
+redis    myapp-team                      dev-kubernetes-yaml-...   Ready     --
+
+### AI Report
+
+Three changes in the last 7 days:
+
+1. **Tuesday (cs-20260304-001)**: ci-bot rolled the API image from v1.4.2 to v1.4.3
+   - Automated change via CI pipeline
+   - Applied successfully to dev environment
+
+2. **Monday (cs-20260303-001)**: sarah manually scaled the worker from 3 to 1 replicas
+   - Manual change — might be intentional debugging or forgotten hotfix
+   - Worth investigating if this should be permanent
+
+3. **Last Friday (cs-20260228-001)**: shared-config ConfigMap updated
+   - Database connection pool settings changed
+   - Applied across all environments
+
+---
+
+## Question 2: "Is this cluster consistent with production?"
+
+### Commands
+
+$ cub space list | grep -E "myapp|prod"
+myapp-team       dev      4 units
+myapp-staging    staging  4 units
+myapp-prod       prod     4 units
+
+$ cub unit get api --space myapp-team
+Name: api
+Image: acme/api:v1.4.3
+Replicas: 1
+
+$ cub unit get api --space myapp-prod
+Name: api
+Image: acme/api:v1.4.1
+Replicas: 3
+
+### AI Report
+
+Fleet consistency check:
+
+| Cluster | API Version | Replicas | Status |
+|---------|-------------|----------|--------|
+| myapp-team (dev) | v1.4.3 | 1 | Current |
+| myapp-staging | v1.4.3 | 2 | Current |
+| myapp-prod | v1.4.1 | 3 | **2 versions behind** |
+
+**Findings:**
+- Production is running API v1.4.1 — two versions behind the fleet norm of v1.4.3
+- The worker service has 1 replica in dev but 3 in prod — confirms the manual scaling from Monday
+- This drift should be investigated: is prod intentionally pinned, or did deploys fail?
+
+---
+
+## Question 3: "What's the blast radius of changing shared database config?"
+
+### Commands
+
+$ cub link list --space myapp-team
+SOURCE              TARGET           TYPE      SPACE
+shared-db-config    api              config    myapp-team
+shared-db-config    worker           config    myapp-team
+shared-db-config    auth-service     config    myapp-team
+shared-db-config    cron-jobs        config    myapp-team
+
+$ cub space list | grep -E "prod|staging"
+myapp-staging    staging  4 units
+myapp-prod       prod     4 units
+
+### AI Report
+
+Impact analysis for `shared-db-config`:
+
+| Dependent Service | Environments | Risk |
+|-------------------|--------------|------|
+| api | dev, staging, prod | HIGH |
+| worker | dev, staging, prod | HIGH |
+| auth-service | dev, staging, prod | HIGH |
+| cron-jobs | dev, staging, prod | MEDIUM |
+
+**Summary:**
+- 4 services depend on shared-db-config
+- All 3 environments (dev, staging, prod) would be affected
+- **Risk: HIGH** — this touches production workloads
+
+**Recommendation:**
+- Test change in dev first
+- Use a ChangeSet to stage the rollout
+- Consider canary deployment for production
+
+---
+
+## Passphrase
+
+**"My AI remembers. My AI compares. My AI predicts."**
