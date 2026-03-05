@@ -1,0 +1,107 @@
+# Stage 4: "What Changed?" — The Wall
+# Source: argo-import-confighub-demo cluster (kind)
+# This stage demonstrates the AI hitting its limitations
+
+## User Prompt
+
+> What changed in this cluster in the last week? Who made changes and
+> why? Is this cluster different from our other production clusters?
+> If I change the shared database config, what would be affected?
+
+## AI Response
+
+I'll try to answer these questions using the tools available to me.
+
+### Question 1: "What changed in this cluster in the last week?"
+
+$ ./cub-scout map list
+[Shows current state - 70 resources, ownership breakdown]
+
+$ kubectl get events -A --sort-by='.lastTimestamp' | tail -20
+[Shows recent events - but only last hour, mostly ImagePullBackOff errors]
+
+**My honest answer:**
+
+I can see what EXISTS right now. But I cannot see what CHANGED.
+
+- The Kubernetes API does not store change history
+- Events expire after approximately 1 hour
+- ArgoCD tracks sync timestamps but not diffs
+- I have no way to know what was different yesterday, let alone last week
+
+### Question 2: "Who made changes and why?"
+
+$ kubectl get applications -n argocd -o jsonpath='{...initiatedBy.username}'
+[Empty - no attribution recorded]
+
+**My honest answer:**
+
+I cannot tell you WHO made changes. The cluster API does not store attribution.
+ArgoCD can record the initiator of a sync, but this cluster's Applications
+show no initiator data. The "why" is never stored anywhere I can access.
+
+### Question 3: "Is this cluster different from our other production clusters?"
+
+$ ./cub-scout status
+ConfigHub: Connected
+Cluster: default
+Context: kind-argo-import-demo
+
+**My honest answer:**
+
+I can only see ONE cluster at a time through kubectl. I have no way to:
+- List your other clusters
+- Compare configurations across clusters
+- Detect drift between environments
+
+The kubectl context points to this cluster only. I am blind to the fleet.
+
+### Question 4: "What's the blast radius of changing shared database config?"
+
+$ ./cub-scout map list --json | jq '.[] | select(.name | contains("config"))'
+[Shows ConfigMaps, but no dependency information]
+
+**My honest answer:**
+
+I can list ConfigMaps. I could grep for references in pod specs. But I cannot:
+- Show you a dependency graph
+- Identify all consumers of a config
+- Calculate impact across environments or clusters
+
+---
+
+## The Wall
+
+| Question | What I Can See | What I Cannot See |
+|----------|---------------|-------------------|
+| What changed? | Current state | Change history |
+| Who changed it? | Resource metadata | Attribution, intent |
+| Is this different? | This cluster | Other clusters |
+| What's the impact? | Resource list | Dependency graph |
+
+These are not cub-scout limitations. These are Kubernetes API limitations.
+
+The cluster API is a snapshot of NOW. It has:
+- No memory (history expires)
+- No fleet context (one cluster at a time)
+- No intent model (desired vs observed)
+- No dependency graph (references not tracked)
+
+---
+
+## What Would Unlock These Answers
+
+To answer these questions, I would need:
+
+1. **Change history** stored outside the cluster
+2. **Fleet context** from a system that knows all clusters
+3. **Intent model** showing what SHOULD exist vs what DOES exist
+4. **Dependency graph** tracking relationships between configs and consumers
+
+This data lives in ConfigHub.
+
+---
+
+## Passphrase
+
+**"Sight without memory is not enough."**

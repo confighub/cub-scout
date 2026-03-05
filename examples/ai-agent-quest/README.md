@@ -37,8 +37,11 @@ understand your cluster."
 | Tool | How cub-scout connects |
 |------|----------------------|
 | Claude Code | Runs `./cub-scout` commands directly in terminal |
-| Any MCP client | Via `cub-scout mcp serve` gateway (v1.4+) |
+| Cursor, Windsurf | Shell execution of `./cub-scout` commands |
 | Any CLI-capable agent | Shell execution of `./cub-scout` commands |
+
+> **Note:** MCP gateway (`cub-scout mcp serve`) is planned for v1.4.
+> Until then, all AI tools connect via direct CLI execution, which works great.
 
 ### Execution Modes
 
@@ -267,16 +270,21 @@ The AI provides the judgment.
 
 ### Follow-up prompt
 
-> Capture everything you found as an evidence bundle I can attach to
+> Summarize everything you found as an evidence report I can attach to
 > an issue.
 
 ```bash
-./cub-scout bundle create --output /tmp/cluster-evidence.tar.gz
-./cub-scout bundle summarize --output /tmp/cluster-summary.md
+# Generate a human-readable summary from your diagnostic session
+./cub-scout bundle summarize
+
+# Or export the full diagnostic data as JSON for automation
+./cub-scout gitops status --json > /tmp/gitops-status.json
+./cub-scout scan --json > /tmp/scan-results.json
+./cub-scout map list --json > /tmp/ownership-map.json
 ```
 
-Your AI just created a portable, timestamped evidence package.
-Attach it to a GitHub issue, a Jira ticket, or a Slack thread.
+Your AI can generate a portable evidence package by combining these outputs
+with its diagnostic reasoning. Attach to a GitHub issue, Jira ticket, or Slack.
 
 ### Passphrase
 
@@ -296,7 +304,7 @@ Stop. Look at what your AI can do now.
 | Find lifecycle hazards and policy violations | `scan` |
 | Diagnose pipeline health | `gitops status` |
 | Generate structured reports | AI reasoning |
-| Capture portable evidence | `bundle create` |
+| Export evidence as JSON | `--json` flag on any command |
 
 Your AI is now a **read-only cluster expert**. It can see everything
 that exists *right now*.
@@ -365,16 +373,18 @@ That data lives in **ConfigHub**.
 
 Connect ConfigHub. Watch your AI's capabilities transform.
 
-### What ConfigHub adds to the MCP surface
+### Two CLIs, One AI
 
-ConfigHub is the MCP server. It owns the full loop:
+In connected mode, your AI uses two command-line tools:
 
-```
-AI chat → MCP → ConfigHub API → trigger changes → GUI updates display
-```
+| Tool | Purpose | Example |
+|------|---------|---------|
+| `./cub-scout` | Cluster observation | `./cub-scout map list`, `./cub-scout trace` |
+| `cub` | ConfigHub queries | `cub changeset list`, `cub unit list` |
 
-When your AI connects through cub-scout's MCP gateway, its tool surface
-expands from cluster observation to full operational intelligence:
+The AI combines both to answer questions neither could answer alone.
+
+### What ConfigHub adds
 
 | Tool surface | Standalone | + ConfigHub |
 |-------------|-----------|-------------|
@@ -420,7 +430,17 @@ Now return to the questions from Stage 4. Your AI can answer them.
 
 > What changed in this cluster in the last week?
 
-Your AI queries ConfigHub ChangeSets and reports:
+Your AI queries ConfigHub ChangeSets:
+
+```bash
+# Query change history
+cub changeset list --space myapp-team
+
+# See unit status and recent changes
+cub unit list --space myapp-team
+```
+
+And reports:
 
 - "Three changes in the last 7 days."
 - "Tuesday: ci-bot rolled the API image from v1.4.2 to v1.4.3."
@@ -431,7 +451,18 @@ Your AI queries ConfigHub ChangeSets and reports:
 
 > Is this cluster consistent with production?
 
-Your AI queries the fleet and reports:
+Your AI queries the fleet:
+
+```bash
+# List all spaces (environments) in your organization
+cub space list
+
+# Compare unit configuration across spaces
+cub unit list --space myapp-prod
+cub unit list --space myapp-staging
+```
+
+And reports:
 
 - "us-west-2 is running API v1.4.1 — two versions behind the fleet
   norm of v1.4.3. us-east-1 and eu-west-1 are consistent."
@@ -440,7 +471,17 @@ Your AI queries the fleet and reports:
 
 > What is the blast radius if I change the shared database config?
 
-Your AI queries the dependency graph and reports:
+Your AI queries the dependency graph:
+
+```bash
+# Show unit dependencies (links)
+cub link list --space myapp-team
+
+# Show which units depend on a specific config
+cub unit get shared-db-config --space myapp-team
+```
+
+And reports:
 
 - "4 services depend on shared-db-config across 2 environments."
 - "api-gateway, worker-service, auth-service, and cron-jobs would all
@@ -647,10 +688,10 @@ kind delete cluster --name flux-import-demo    # Flux path
 - **CLI/TUI parity.** Every command shown here works in both CLI and TUI
   mode. The quest uses CLI for scriptability, but the same exploration
   works interactively in the TUI.
-- **Every command exists today** (Act 1). Act 2 uses connected mode
-  commands that are available when ConfigHub is connected. The MCP
-  gateway (v1.4) and history/compare/fleet commands (v1.6) will make
-  Act 2 smoother but the import/status/dry-run commands work now.
+- **Every command exists today** (Act 1). Act 2 uses the `cub` CLI
+  for ConfigHub queries (`cub changeset list`, `cub unit list`, etc.)
+  combined with `cub-scout` for cluster observation. The MCP gateway
+  (v1.4) will unify these into a single tool surface.
 
 ### Related Quests
 

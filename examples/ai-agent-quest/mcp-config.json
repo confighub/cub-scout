@@ -1,16 +1,20 @@
 {
   "_comment": [
-    "MCP server configuration for cub-scout read-only observation gateway.",
-    "Use with Claude Code, Cursor, or any MCP-compatible AI client.",
+    "MCP server configuration for cub-scout (PLANNED - NOT YET AVAILABLE).",
     "",
-    "Standalone mode: serves map, trace, scan, explain, doctor tools.",
-    "Connected mode: adds ConfigHub routing for history, fleet, impact, compare.",
+    "STATUS: The 'cub-scout mcp serve' command is planned for v1.4.",
+    "This config file is provided for future use.",
     "",
-    "Requires: cub-scout v1.4+ (issue #214).",
-    "Until v1.4 ships, use CLI command execution instead (see prompts.md)."
+    "CURRENT APPROACH: Use direct CLI execution instead:",
+    "- Claude Code: runs ./cub-scout commands directly",
+    "- Cursor/Windsurf: shell execution of ./cub-scout commands",
+    "- Any CLI-capable agent: shell execution",
+    "",
+    "See prompts.md for copy-paste prompts that work today."
   ],
   "mcpServers": {
     "cub-scout": {
+      "_status": "PLANNED - requires cub-scout v1.4+",
       "command": "cub-scout",
       "args": ["mcp", "serve"],
       "env": {
