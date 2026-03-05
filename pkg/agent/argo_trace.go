@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"sort"
 	"strings"
 	"time"
 )
@@ -17,19 +18,37 @@ import (
 type ArgoTracer struct {
 	// argocdPath is the path to the argocd CLI (default: "argocd")
 	argocdPath string
+	// kubectlPath is the path to kubectl (default: "kubectl")
+	kubectlPath string
 }
 
 // NewArgoTracer creates a new Argo CD tracer
 func NewArgoTracer() *ArgoTracer {
 	return &ArgoTracer{
-		argocdPath: "argocd",
+		argocdPath:  "argocd",
+		kubectlPath: "kubectl",
 	}
 }
 
 // NewArgoTracerWithPath creates an Argo tracer with a custom CLI path
 func NewArgoTracerWithPath(path string) *ArgoTracer {
 	return &ArgoTracer{
-		argocdPath: path,
+		argocdPath:  path,
+		kubectlPath: "kubectl",
+	}
+}
+
+// NewArgoTracerWithPaths creates an Argo tracer with custom CLI paths.
+func NewArgoTracerWithPaths(argocdPath, kubectlPath string) *ArgoTracer {
+	if strings.TrimSpace(argocdPath) == "" {
+		argocdPath = "argocd"
+	}
+	if strings.TrimSpace(kubectlPath) == "" {
+		kubectlPath = "kubectl"
+	}
+	return &ArgoTracer{
+		argocdPath:  argocdPath,
+		kubectlPath: kubectlPath,
 	}
 }
 
@@ -95,7 +114,13 @@ func (a *ArgoTracer) traceApplication(ctx context.Context, appName, namespace st
 
 		// Detect stale/invalid context and print actionable remediation path.
 		if help, ok := FormatArgoContextError(combinedOutput); ok {
-			return nil, fmt.Errorf("%s", help)
+			// Graceful degradation: fallback to kubectl-based Application CR trace.
+			fallbackResult, fallbackErr := a.traceApplicationViaKubectl(ctx, appName, namespace)
+			if fallbackErr == nil {
+				fallbackResult.Error = "ArgoCD CLI unavailable - showing kubectl-based Application trace only. Run 'argocd login <server>' for full CLI-backed trace context."
+				return fallbackResult, nil
+			}
+			return nil, fmt.Errorf("%s\n\nkubectl fallback failed: %v", help, fallbackErr)
 		}
 
 		return nil, fmt.Errorf("argocd app get failed: %w: %s", err, combinedOutput)
@@ -103,6 +128,67 @@ func (a *ArgoTracer) traceApplication(ctx context.Context, appName, namespace st
 
 	// Parse the JSON output
 	return a.parseAppOutput(stdout.Bytes(), appName, namespace)
+}
+
+// traceApplicationViaKubectl degrades to Application CR inspection when the
+// argocd CLI context is stale/unavailable.
+func (a *ArgoTracer) traceApplicationViaKubectl(ctx context.Context, appName, namespace string) (*TraceResult, error) {
+	args := []string{"get", "applications.argoproj.io", "--all-namespaces", "-o", "json"}
+	cmd := exec.CommandContext(ctx, a.kubectlPath, args...)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("kubectl get applications failed: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+
+	var appList struct {
+		Items []argoApp `json:"items"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &appList); err != nil {
+		return nil, fmt.Errorf("parse kubectl applications output: %w", err)
+	}
+
+	matches := make([]argoApp, 0, len(appList.Items))
+	for _, app := range appList.Items {
+		if strings.TrimSpace(app.Metadata.Name) != appName {
+			continue
+		}
+		if namespace != "" && strings.TrimSpace(app.Metadata.Namespace) != namespace {
+			continue
+		}
+		matches = append(matches, app)
+	}
+	if len(matches) == 0 {
+		if namespace != "" {
+			return nil, fmt.Errorf("application %q not found via kubectl in namespace %q", appName, namespace)
+		}
+		return nil, fmt.Errorf("application %q not found via kubectl", appName)
+	}
+
+	sort.Slice(matches, func(i, j int) bool {
+		if matches[i].Metadata.Namespace == matches[j].Metadata.Namespace {
+			return matches[i].Metadata.Name < matches[j].Metadata.Name
+		}
+		return matches[i].Metadata.Namespace < matches[j].Metadata.Namespace
+	})
+
+	selected := matches[0]
+	if namespace == "" {
+		for _, candidate := range matches {
+			if strings.TrimSpace(candidate.Metadata.Namespace) == "argocd" {
+				selected = candidate
+				break
+			}
+		}
+	}
+
+	selectedData, err := json.Marshal(selected)
+	if err != nil {
+		return nil, fmt.Errorf("marshal kubectl-selected application: %w", err)
+	}
+
+	return a.parseAppOutput(selectedData, selected.Metadata.Name, selected.Metadata.Namespace)
 }
 
 // argoOwnerRef mirrors metav1.OwnerReference for JSON parsing.
