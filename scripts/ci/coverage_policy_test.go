@@ -24,3 +24,27 @@ func TestCoveragePolicy_CIThresholdIs25Percent(t *testing.T) {
 	}
 }
 
+func TestCoveragePolicy_ProofArtifactCoverageWiring(t *testing.T) {
+	workflowPath := filepath.Join("..", "..", ".github", "workflows", "ci.yaml")
+	b, err := os.ReadFile(workflowPath)
+	if err != nil {
+		t.Fatalf("read workflow: %v", err)
+	}
+	content := string(b)
+
+	if !regexp.MustCompile(`(?m)^\s*outputs:\s*$`).MatchString(content) {
+		t.Fatalf("unit job outputs block missing")
+	}
+	if !regexp.MustCompile(`coverage_total:\s*\$\{\{\s*steps\.coverage_metric\.outputs\.coverage_total\s*\}\}`).MatchString(content) {
+		t.Fatalf("unit coverage_total output mapping missing")
+	}
+	if !regexp.MustCompile(`coverage_min:\s*\$\{\{\s*steps\.coverage_metric\.outputs\.coverage_min\s*\}\}`).MatchString(content) {
+		t.Fatalf("unit coverage_min output mapping missing")
+	}
+	if !regexp.MustCompile(`PROOF_COVERAGE_TOTAL:\s*\$\{\{\s*needs\.unit\.outputs\.coverage_total\s*\}\}`).MatchString(content) {
+		t.Fatalf("proof-artifact coverage total env wiring missing")
+	}
+	if !regexp.MustCompile(`PROOF_COVERAGE_MIN:\s*\$\{\{\s*needs\.unit\.outputs\.coverage_min\s*\}\}`).MatchString(content) {
+		t.Fatalf("proof-artifact coverage min env wiring missing")
+	}
+}
