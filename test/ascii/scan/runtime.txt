@@ -1,0 +1,21 @@
+
+RUNTIME FAILURES
+Scanned at: 2026-03-05 12:00:00
+
+✗ ImagePullBackOff (2 pods)
+  Affected: myapp-dev/api-7d9b8c-1, myapp-prod/api-7d9b8c-2
+  Image: acme/api:v1.2.0
+  Reason: pull access denied, repository does not exist
+  Suggestion: Check imagePullSecrets or verify image exists in registry
+
+✗ CrashLoopBackOff (1 pod)
+  Affected: myapp-dev/worker-6dbf6f-1
+  Image: acme/worker:v2.0.1
+  Reason: back-off 5m0s restarting failed container
+  Suggestion: Inspect pod logs and recent config changes
+
+STATE ISSUES
+✓ No state issues found
+
+🔗 Track violations in ConfigHub: cub-scout scan --confighub
+

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -326,6 +327,29 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 
 	hasOutput := false
 
+	// Output runtime failures first (direct pod-level breakages).
+	if stateResult != nil && len(stateResult.RuntimeFindings) > 0 {
+		hasOutput = true
+		fmt.Printf("%s%sRUNTIME FAILURES%s\n", colorBold, colorCyan, colorReset)
+		fmt.Printf("%sScanned at: %s%s\n\n", colorDim, stateResult.ScannedAt.Format("2006-01-02 15:04:05"), colorReset)
+
+		for _, group := range groupRuntimeFailures(stateResult.RuntimeFindings) {
+			podLabel := "pods"
+			if len(group.Pods) == 1 {
+				podLabel = "pod"
+			}
+			fmt.Printf("%s✗ %s (%d %s)%s\n", colorRed, group.FailureType, len(group.Pods), podLabel, colorReset)
+			fmt.Printf("  %sAffected:%s %s\n", colorDim, colorReset, strings.Join(group.Pods, ", "))
+			if group.Image != "" {
+				fmt.Printf("  %sImage:%s %s\n", colorDim, colorReset, group.Image)
+			}
+			if group.Message != "" {
+				fmt.Printf("  %sReason:%s %s\n", colorDim, colorReset, group.Message)
+			}
+			fmt.Printf("  %sSuggestion:%s %s\n\n", colorDim, colorReset, group.Suggestion)
+		}
+	}
+
 	// Output state findings first (stuck resources are more urgent)
 	if stateResult != nil && len(stateResult.Findings) > 0 {
 		hasOutput = true
@@ -382,6 +406,10 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 			colorRed, stateResult.Summary.HelmReleaseStuck, colorReset,
 			colorYellow, stateResult.Summary.KustomizationStuck, colorReset,
 			colorCyan, stateResult.Summary.ApplicationStuck, colorReset)
+	} else if stateResult != nil && len(stateResult.RuntimeFindings) > 0 {
+		// Explicitly distinguish runtime failures from GitOps state issues.
+		fmt.Printf("STATE ISSUES\n")
+		fmt.Printf("%s%s✓ No state issues found%s\n\n", colorBold, colorGreen, colorReset)
 	}
 
 	// Output Kyverno findings
@@ -661,6 +689,70 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 	fmt.Printf("%s🔗 Track violations in ConfigHub: cub-scout scan --confighub%s\n\n", colorDim, colorReset)
 
 	return nil
+}
+
+type runtimeFailureGroup struct {
+	FailureType string
+	Pods        []string
+	Image       string
+	Message     string
+	Suggestion  string
+}
+
+func groupRuntimeFailures(findings []agent.RuntimeFailureFinding) []runtimeFailureGroup {
+	byType := map[string]*runtimeFailureGroup{}
+
+	for _, finding := range findings {
+		group, ok := byType[finding.FailureType]
+		if !ok {
+			group = &runtimeFailureGroup{
+				FailureType: finding.FailureType,
+				Suggestion:  finding.Remediation,
+			}
+			byType[finding.FailureType] = group
+		}
+
+		group.Pods = append(group.Pods, fmt.Sprintf("%s/%s", finding.Namespace, finding.Name))
+		if group.Image == "" && finding.Image != "" {
+			group.Image = finding.Image
+		}
+		if group.Message == "" {
+			group.Message = strings.TrimSpace(finding.Message)
+			if group.Message == "" {
+				group.Message = strings.TrimSpace(finding.Reason)
+			}
+		}
+		if group.Suggestion == "" && finding.Remediation != "" {
+			group.Suggestion = finding.Remediation
+		}
+	}
+
+	ordered := make([]runtimeFailureGroup, 0, len(byType))
+	for _, group := range byType {
+		sort.Strings(group.Pods)
+		ordered = append(ordered, *group)
+	}
+
+	sort.Slice(ordered, func(i, j int) bool {
+		return runtimeFailureOrder(ordered[i].FailureType) < runtimeFailureOrder(ordered[j].FailureType)
+	})
+
+	return ordered
+}
+
+func runtimeFailureOrder(failureType string) int {
+	order := map[string]int{
+		"ImagePullBackOff":     0,
+		"ErrImagePull":         1,
+		"CrashLoopBackOff":     2,
+		"CreateContainerError": 3,
+		"Pending":              4,
+		"Evicted":              5,
+	}
+	if idx, ok := order[failureType]; ok {
+		return idx
+	}
+	return 99
 }
 
 // outputStuckFinding outputs a single stuck finding with remediation

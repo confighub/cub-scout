@@ -1029,6 +1029,201 @@ func TestScanContractSummaryConsistency(t *testing.T) {
 	assert.Equal(t, 1, result.Summary.KustomizationStuck, "Expected 1 stuck Kustomization")
 }
 
+func TestScanRuntimeFailures_DetectsCommonPodFailureTypes(t *testing.T) {
+	oldCreatedAt := time.Now().Add(-30 * time.Minute).Format(time.RFC3339)
+
+	imagePullBackoffPod := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]interface{}{
+			"name":              "api-7d9b8c-1",
+			"namespace":         "myapp-dev",
+			"creationTimestamp": oldCreatedAt,
+		},
+		"status": map[string]interface{}{
+			"phase": "Pending",
+			"containerStatuses": []interface{}{
+				map[string]interface{}{
+					"name":  "api",
+					"image": "acme/api:v1.2.0",
+					"state": map[string]interface{}{
+						"waiting": map[string]interface{}{
+							"reason":  "ImagePullBackOff",
+							"message": "pull access denied, repository does not exist",
+						},
+					},
+				},
+			},
+		},
+	}}
+
+	crashLoopPod := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]interface{}{
+			"name":              "worker-6dbf6f-1",
+			"namespace":         "myapp-dev",
+			"creationTimestamp": oldCreatedAt,
+		},
+		"status": map[string]interface{}{
+			"phase": "Running",
+			"containerStatuses": []interface{}{
+				map[string]interface{}{
+					"name":  "worker",
+					"image": "acme/worker:v2.0.1",
+					"state": map[string]interface{}{
+						"waiting": map[string]interface{}{
+							"reason":  "CrashLoopBackOff",
+							"message": "back-off 5m0s restarting failed container",
+						},
+					},
+				},
+			},
+		},
+	}}
+
+	pendingTooLongPod := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]interface{}{
+			"name":              "scheduler-blocked-1",
+			"namespace":         "myapp-dev",
+			"creationTimestamp": oldCreatedAt,
+		},
+		"status": map[string]interface{}{
+			"phase":   "Pending",
+			"reason":  "Unschedulable",
+			"message": "0/3 nodes are available: insufficient cpu",
+		},
+	}}
+
+	evictedPod := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]interface{}{
+			"name":              "cache-evicted-1",
+			"namespace":         "myapp-prod",
+			"creationTimestamp": oldCreatedAt,
+		},
+		"status": map[string]interface{}{
+			"phase":   "Failed",
+			"reason":  "Evicted",
+			"message": "The node had condition: [MemoryPressure]",
+		},
+	}}
+
+	healthyPod := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]interface{}{
+			"name":              "healthy-1",
+			"namespace":         "myapp-dev",
+			"creationTimestamp": oldCreatedAt,
+		},
+		"status": map[string]interface{}{
+			"phase": "Running",
+			"containerStatuses": []interface{}{
+				map[string]interface{}{
+					"name":  "app",
+					"image": "acme/app:v1.0.0",
+					"state": map[string]interface{}{
+						"running": map[string]interface{}{
+							"startedAt": oldCreatedAt,
+						},
+					},
+				},
+			},
+		},
+	}}
+
+	client := newFakeDynamicClientForScan(imagePullBackoffPod, crashLoopPod, pendingTooLongPod, evictedPod, healthyPod)
+	scanner := NewStateScannerWithClient(client)
+
+	result, err := scanner.ScanWithThreshold(context.Background(), 5*time.Minute)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	// Contract: runtime findings are tracked separately and grouped by failure type.
+	assert.Len(t, result.RuntimeFindings, 4, "expected 4 runtime failure findings")
+	assert.Equal(t, 4, result.Summary.RuntimeFailures, "runtime summary count should match runtime findings length")
+	assert.Equal(t, len(result.Findings), result.Summary.Total, "stuck summary total contract should remain unchanged")
+
+	gotTypes := map[string]int{}
+	for _, f := range result.RuntimeFindings {
+		gotTypes[f.FailureType]++
+	}
+	assert.Equal(t, 1, gotTypes["ImagePullBackOff"], "expected one ImagePullBackOff finding")
+	assert.Equal(t, 1, gotTypes["CrashLoopBackOff"], "expected one CrashLoopBackOff finding")
+	assert.Equal(t, 1, gotTypes["Pending"], "expected one long-pending finding")
+	assert.Equal(t, 1, gotTypes["Evicted"], "expected one evicted finding")
+}
+
+func TestScanRuntimeFailures_RespectsNamespaceFilter(t *testing.T) {
+	oldCreatedAt := time.Now().Add(-20 * time.Minute).Format(time.RFC3339)
+
+	teamAPod := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]interface{}{
+			"name":              "api-team-a",
+			"namespace":         "team-a",
+			"creationTimestamp": oldCreatedAt,
+		},
+		"status": map[string]interface{}{
+			"phase": "Pending",
+			"containerStatuses": []interface{}{
+				map[string]interface{}{
+					"name":  "api",
+					"image": "acme/team-a:v1.0.0",
+					"state": map[string]interface{}{
+						"waiting": map[string]interface{}{
+							"reason":  "ErrImagePull",
+							"message": "pull access denied",
+						},
+					},
+				},
+			},
+		},
+	}}
+
+	teamBPod := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]interface{}{
+			"name":              "api-team-b",
+			"namespace":         "team-b",
+			"creationTimestamp": oldCreatedAt,
+		},
+		"status": map[string]interface{}{
+			"phase": "Pending",
+			"containerStatuses": []interface{}{
+				map[string]interface{}{
+					"name":  "api",
+					"image": "acme/team-b:v1.0.0",
+					"state": map[string]interface{}{
+						"waiting": map[string]interface{}{
+							"reason":  "ErrImagePull",
+							"message": "pull access denied",
+						},
+					},
+				},
+			},
+		},
+	}}
+
+	client := newFakeDynamicClientForScan(teamAPod, teamBPod)
+	scanner := NewStateScannerWithClient(client)
+
+	result, err := scanner.ScanNamespaceWithThreshold(context.Background(), "team-a", 5*time.Minute)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	require.Len(t, result.RuntimeFindings, 1, "expected only team-a runtime finding")
+	assert.Equal(t, "team-a", result.RuntimeFindings[0].Namespace)
+	assert.Equal(t, "ErrImagePull", result.RuntimeFindings[0].FailureType)
+	assert.Equal(t, 1, result.Summary.RuntimeFailures)
+}
+
 // TestScanDanglingResourcesEmpty tests scanning with no resources
 func TestScanDanglingResourcesEmpty(t *testing.T) {
 	t.Run("Empty cluster returns no findings", func(t *testing.T) {

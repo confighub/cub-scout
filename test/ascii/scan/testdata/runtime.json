@@ -1,0 +1,60 @@
+{
+  "state": {
+    "scannedAt": "2026-03-05T12:00:00Z",
+    "runtimeFindings": [
+      {
+        "ccveId": "CCVE-2025-0690",
+        "category": "RUNTIME",
+        "severity": "critical",
+        "kind": "Pod",
+        "name": "api-7d9b8c-1",
+        "namespace": "myapp-dev",
+        "failureType": "ImagePullBackOff",
+        "container": "api",
+        "image": "acme/api:v1.2.0",
+        "reason": "ImagePullBackOff",
+        "message": "pull access denied, repository does not exist",
+        "duration": "22m",
+        "remediation": "Check imagePullSecrets or verify image exists in registry"
+      },
+      {
+        "ccveId": "CCVE-2025-0690",
+        "category": "RUNTIME",
+        "severity": "critical",
+        "kind": "Pod",
+        "name": "api-7d9b8c-2",
+        "namespace": "myapp-prod",
+        "failureType": "ImagePullBackOff",
+        "container": "api",
+        "image": "acme/api:v1.2.0",
+        "reason": "ImagePullBackOff",
+        "message": "pull access denied, repository does not exist",
+        "duration": "19m",
+        "remediation": "Check imagePullSecrets or verify image exists in registry"
+      },
+      {
+        "ccveId": "CCVE-2025-0692",
+        "category": "RUNTIME",
+        "severity": "warning",
+        "kind": "Pod",
+        "name": "worker-6dbf6f-1",
+        "namespace": "myapp-dev",
+        "failureType": "CrashLoopBackOff",
+        "container": "worker",
+        "image": "acme/worker:v2.0.1",
+        "reason": "CrashLoopBackOff",
+        "message": "back-off 5m0s restarting failed container",
+        "duration": "41m",
+        "remediation": "Inspect pod logs and recent config changes"
+      }
+    ],
+    "summary": {
+      "helmReleaseStuck": 0,
+      "kustomizationStuck": 0,
+      "applicationStuck": 0,
+      "silentFailures": 0,
+      "runtimeFailures": 3,
+      "total": 0
+    }
+  }
+}

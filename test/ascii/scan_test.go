@@ -46,3 +46,18 @@ func TestScan_Clean(t *testing.T) {
 	goldenPath := filepath.Join(repoRoot, "test", "ascii", "scan", "clean.txt")
 	golden.AssertGolden(t, out, goldenPath)
 }
+
+func TestScan_RuntimeFailures(t *testing.T) {
+	repoRoot := runner.RepoRoot(t)
+	fixtureAbs := filepath.Join(repoRoot, "test", "ascii", "scan", "testdata", "runtime.json")
+
+	out := runner.RunWithEnv(t, repoRoot,
+		map[string]string{
+			"CUB_SCOUT_TEST_SCAN_JSON": fixtureAbs,
+		},
+		"scan", "--state",
+	)
+
+	goldenPath := filepath.Join(repoRoot, "test", "ascii", "scan", "runtime.txt")
+	golden.AssertGolden(t, out, goldenPath)
+}

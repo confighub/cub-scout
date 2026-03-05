@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -45,12 +46,31 @@ type StuckFinding struct {
 	Command     string `json:"command,omitempty"`
 }
 
+// RuntimeFailureFinding represents a runtime pod failure detected by scan --state.
+type RuntimeFailureFinding struct {
+	CCVEID      string `json:"ccveId"`
+	Category    string `json:"category"`
+	Severity    string `json:"severity"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	Namespace   string `json:"namespace"`
+	FailureType string `json:"failureType"`
+	Container   string `json:"container,omitempty"`
+	Image       string `json:"image,omitempty"`
+	Reason      string `json:"reason,omitempty"`
+	Message     string `json:"message,omitempty"`
+	Duration    string `json:"duration,omitempty"`
+	Remediation string `json:"remediation"`
+	Command     string `json:"command,omitempty"`
+}
+
 // StateScanResult contains findings from state scanning
 type StateScanResult struct {
-	ScannedAt time.Time        `json:"scannedAt"`
-	Findings  []StuckFinding   `json:"findings"`
-	Summary   StateScanSummary `json:"summary"`
-	Warnings  []string         `json:"warnings,omitempty"`
+	ScannedAt       time.Time               `json:"scannedAt"`
+	Findings        []StuckFinding          `json:"findings"`
+	RuntimeFindings []RuntimeFailureFinding `json:"runtimeFindings,omitempty"`
+	Summary         StateScanSummary        `json:"summary"`
+	Warnings        []string                `json:"warnings,omitempty"`
 }
 
 // StateScanSummary counts findings by type
@@ -59,6 +79,7 @@ type StateScanSummary struct {
 	KustomizationStuck int `json:"kustomizationStuck"`
 	ApplicationStuck   int `json:"applicationStuck"`
 	SilentFailures     int `json:"silentFailures"`
+	RuntimeFailures    int `json:"runtimeFailures"`
 	Total              int `json:"total"`
 }
 
@@ -100,8 +121,9 @@ func (s *StateScanner) Scan(ctx context.Context) (*StateScanResult, error) {
 // ScanWithThreshold performs a state scan with a custom threshold
 func (s *StateScanner) ScanWithThreshold(ctx context.Context, threshold time.Duration) (*StateScanResult, error) {
 	result := &StateScanResult{
-		ScannedAt: time.Now(),
-		Findings:  []StuckFinding{},
+		ScannedAt:       time.Now(),
+		Findings:        []StuckFinding{},
+		RuntimeFindings: []RuntimeFailureFinding{},
 	}
 	var warnings []string
 
@@ -119,6 +141,11 @@ func (s *StateScanner) ScanWithThreshold(ctx context.Context, threshold time.Dur
 	argoFindings := s.scanApplications(ctx, threshold, &warnings)
 	result.Findings = append(result.Findings, argoFindings...)
 	result.Summary.ApplicationStuck = len(argoFindings)
+
+	// Scan pod runtime failures (ImagePullBackOff, CrashLoopBackOff, etc.)
+	runtimeFindings := s.scanRuntimeFailures(ctx, "", threshold, &warnings)
+	result.RuntimeFindings = append(result.RuntimeFindings, runtimeFindings...)
+	result.Summary.RuntimeFailures = len(runtimeFindings)
 
 	// Scan for silent failures (Ready=True but misconfigured)
 	silentFindings := s.scanSilentFailures(ctx, &warnings)
@@ -138,8 +165,9 @@ func (s *StateScanner) ScanNamespace(ctx context.Context, namespace string) (*St
 // ScanNamespaceWithThreshold scans a specific namespace with custom threshold
 func (s *StateScanner) ScanNamespaceWithThreshold(ctx context.Context, namespace string, threshold time.Duration) (*StateScanResult, error) {
 	result := &StateScanResult{
-		ScannedAt: time.Now(),
-		Findings:  []StuckFinding{},
+		ScannedAt:       time.Now(),
+		Findings:        []StuckFinding{},
+		RuntimeFindings: []RuntimeFailureFinding{},
 	}
 	var warnings []string
 
@@ -157,6 +185,11 @@ func (s *StateScanner) ScanNamespaceWithThreshold(ctx context.Context, namespace
 	argoFindings := s.scanApplicationsNamespace(ctx, namespace, threshold, &warnings)
 	result.Findings = append(result.Findings, argoFindings...)
 	result.Summary.ApplicationStuck = len(argoFindings)
+
+	// Scan pod runtime failures in namespace
+	runtimeFindings := s.scanRuntimeFailures(ctx, namespace, threshold, &warnings)
+	result.RuntimeFindings = append(result.RuntimeFindings, runtimeFindings...)
+	result.Summary.RuntimeFailures = len(runtimeFindings)
 
 	// Scan for silent failures in namespace
 	silentFindings := s.scanSilentFailuresNamespace(ctx, namespace, &warnings)
@@ -648,6 +681,238 @@ func (s *StateScanner) checkApplications(items []unstructured.Unstructured, thre
 	}
 
 	return findings
+}
+
+// scanRuntimeFailures scans Pods for runtime failures that are not captured by
+// GitOps reconciler state (for example ImagePullBackOff / CrashLoopBackOff).
+func (s *StateScanner) scanRuntimeFailures(ctx context.Context, namespace string, threshold time.Duration, warnings *[]string) []RuntimeFailureFinding {
+	gvr := schema.GroupVersionResource{
+		Group:    "",
+		Version:  "v1",
+		Resource: "pods",
+	}
+
+	var (
+		list *unstructured.UnstructuredList
+		err  error
+	)
+	if namespace != "" {
+		list, err = s.client.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
+	} else {
+		list, err = s.client.Resource(gvr).List(ctx, v1.ListOptions{})
+	}
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			*warnings = append(*warnings, formatScanWarning(gvr, namespace, err))
+		}
+		return nil
+	}
+
+	findings := make([]RuntimeFailureFinding, 0, len(list.Items))
+	for i := range list.Items {
+		finding, ok := s.detectRuntimeFailureForPod(list.Items[i], threshold)
+		if !ok {
+			continue
+		}
+		findings = append(findings, finding)
+	}
+
+	sort.Slice(findings, func(i, j int) bool {
+		if findings[i].FailureType == findings[j].FailureType {
+			if findings[i].Namespace == findings[j].Namespace {
+				return findings[i].Name < findings[j].Name
+			}
+			return findings[i].Namespace < findings[j].Namespace
+		}
+		return findings[i].FailureType < findings[j].FailureType
+	})
+
+	return findings
+}
+
+func (s *StateScanner) detectRuntimeFailureForPod(pod unstructured.Unstructured, threshold time.Duration) (RuntimeFailureFinding, bool) {
+	failureType, container, image, reason, message, hasWaitingFailure := podWaitingFailure(&pod)
+	age, ageKnown := podAge(&pod)
+	if !hasWaitingFailure {
+		phase, _, _ := unstructured.NestedString(pod.Object, "status", "phase")
+		statusReason, _, _ := unstructured.NestedString(pod.Object, "status", "reason")
+		statusMessage, _, _ := unstructured.NestedString(pod.Object, "status", "message")
+
+		if strings.EqualFold(phase, "Failed") && strings.EqualFold(statusReason, "Evicted") {
+			return buildRuntimeFailureFinding(&pod, "Evicted", "", "", statusReason, statusMessage, age), true
+		}
+
+		if strings.EqualFold(phase, "Pending") && ageKnown && age > threshold {
+			if strings.TrimSpace(statusReason) == "" {
+				statusReason = "PendingTooLong"
+			}
+			if strings.TrimSpace(statusMessage) == "" {
+				statusMessage = "Pod has been pending beyond threshold"
+			}
+			return buildRuntimeFailureFinding(&pod, "Pending", "", "", statusReason, statusMessage, age), true
+		}
+
+		return RuntimeFailureFinding{}, false
+	}
+
+	return buildRuntimeFailureFinding(&pod, failureType, container, image, reason, message, age), true
+}
+
+func podWaitingFailure(pod *unstructured.Unstructured) (failureType, container, image, reason, message string, ok bool) {
+	checkStatuses := func(statuses []interface{}) (string, string, string, string, string, bool) {
+		for _, raw := range statuses {
+			status, castOK := raw.(map[string]interface{})
+			if !castOK {
+				continue
+			}
+
+			state, _ := status["state"].(map[string]interface{})
+			waiting, _ := state["waiting"].(map[string]interface{})
+			if waiting == nil {
+				continue
+			}
+
+			waitingReason := strings.TrimSpace(fmt.Sprintf("%v", waiting["reason"]))
+			if waitingReason == "" {
+				continue
+			}
+
+			switch waitingReason {
+			case "ImagePullBackOff", "ErrImagePull", "CrashLoopBackOff":
+				return waitingReason,
+					strings.TrimSpace(fmt.Sprintf("%v", status["name"])),
+					strings.TrimSpace(fmt.Sprintf("%v", status["image"])),
+					waitingReason,
+					strings.TrimSpace(fmt.Sprintf("%v", waiting["message"])),
+					true
+			case "CreateContainerError", "CreateContainerConfigError":
+				return "CreateContainerError",
+					strings.TrimSpace(fmt.Sprintf("%v", status["name"])),
+					strings.TrimSpace(fmt.Sprintf("%v", status["image"])),
+					waitingReason,
+					strings.TrimSpace(fmt.Sprintf("%v", waiting["message"])),
+					true
+			}
+		}
+		return "", "", "", "", "", false
+	}
+
+	initStatuses, _, _ := unstructured.NestedSlice(pod.Object, "status", "initContainerStatuses")
+	if ft, c, img, r, msg, found := checkStatuses(initStatuses); found {
+		return ft, c, img, r, msg, true
+	}
+
+	containerStatuses, _, _ := unstructured.NestedSlice(pod.Object, "status", "containerStatuses")
+	if ft, c, img, r, msg, found := checkStatuses(containerStatuses); found {
+		return ft, c, img, r, msg, true
+	}
+
+	return "", "", "", "", "", false
+}
+
+func podAge(pod *unstructured.Unstructured) (time.Duration, bool) {
+	createdAt := pod.GetCreationTimestamp().Time
+	if createdAt.IsZero() {
+		rawCreatedAt, found, _ := unstructured.NestedString(pod.Object, "metadata", "creationTimestamp")
+		if found && strings.TrimSpace(rawCreatedAt) != "" {
+			if parsed, err := time.Parse(time.RFC3339, rawCreatedAt); err == nil {
+				createdAt = parsed
+			}
+		}
+	}
+	if createdAt.IsZero() {
+		return 0, false
+	}
+	age := time.Since(createdAt)
+	if age < 0 {
+		return 0, true
+	}
+	return age, true
+}
+
+func buildRuntimeFailureFinding(
+	pod *unstructured.Unstructured,
+	failureType, container, image, reason, message string,
+	age time.Duration,
+) RuntimeFailureFinding {
+	namespace := pod.GetNamespace()
+	name := pod.GetName()
+
+	remediation := runtimeFailureRemediation(failureType)
+	finding := RuntimeFailureFinding{
+		CCVEID:      runtimeFailureCCVEID(failureType),
+		Category:    "RUNTIME",
+		Severity:    runtimeFailureSeverity(failureType),
+		Kind:        "Pod",
+		Name:        name,
+		Namespace:   namespace,
+		FailureType: failureType,
+		Container:   container,
+		Image:       image,
+		Reason:      strings.TrimSpace(reason),
+		Message:     truncateMessage(strings.TrimSpace(message), 160),
+		Remediation: remediation,
+	}
+
+	if age > 0 {
+		finding.Duration = formatDuration(age)
+	}
+
+	switch failureType {
+	case "CrashLoopBackOff":
+		finding.Command = fmt.Sprintf("kubectl logs %s -n %s --previous", name, namespace)
+	default:
+		finding.Command = fmt.Sprintf("kubectl describe pod %s -n %s", name, namespace)
+	}
+
+	return finding
+}
+
+func runtimeFailureSeverity(failureType string) string {
+	switch failureType {
+	case "ImagePullBackOff", "ErrImagePull", "Evicted":
+		return "critical"
+	case "CrashLoopBackOff", "CreateContainerError", "Pending":
+		return "warning"
+	default:
+		return "info"
+	}
+}
+
+func runtimeFailureCCVEID(failureType string) string {
+	switch failureType {
+	case "ImagePullBackOff":
+		return "CCVE-2025-0690"
+	case "ErrImagePull":
+		return "CCVE-2025-0691"
+	case "CrashLoopBackOff":
+		return "CCVE-2025-0692"
+	case "CreateContainerError":
+		return "CCVE-2025-0693"
+	case "Pending":
+		return "CCVE-2025-0694"
+	case "Evicted":
+		return "CCVE-2025-0695"
+	default:
+		return "CCVE-2025-0699"
+	}
+}
+
+func runtimeFailureRemediation(failureType string) string {
+	switch failureType {
+	case "ImagePullBackOff", "ErrImagePull":
+		return "Check imagePullSecrets or verify image exists in registry"
+	case "CrashLoopBackOff":
+		return "Inspect pod logs and recent config changes"
+	case "CreateContainerError":
+		return "Check referenced ConfigMaps/Secrets and container command"
+	case "Pending":
+		return "Check scheduler events, resource requests, and node capacity"
+	case "Evicted":
+		return "Check node pressure and pod resource limits"
+	default:
+		return "Inspect pod events and controller status"
+	}
 }
 
 // determineSeverity determines severity based on duration
