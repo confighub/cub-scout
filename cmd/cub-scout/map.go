@@ -1333,8 +1333,12 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 				if target == "" {
 					target = u.Space
 				}
+				spaceProvenance := u.Space
+				if spaceProvenance == "" {
+					spaceProvenance = "unknown"
+				}
 
-				fmt.Printf("  %s %s %s %s\n", unitPrefix, icon, target, revStatus)
+				fmt.Printf("  %s %s %s %s [space=%s]\n", unitPrefix, icon, target, revStatus, spaceProvenance)
 			}
 		}
 		fmt.Println()
