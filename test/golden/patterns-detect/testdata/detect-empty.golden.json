@@ -74,17 +74,17 @@
       ]
     },
     {
-      "id": "gitops.flux.kustomization_paths",
-      "name": "Flux Kustomization Paths",
-      "status": "skip",
-      "skip_reason": "no Kustomization nodes in graph",
-      "findings": []
-    },
-    {
       "id": "gitops.flux.resources_present",
       "name": "Flux Resources Present",
       "status": "skip",
       "skip_reason": "no Kustomization/HelmRelease/GitRepository nodes in graph",
+      "findings": []
+    },
+    {
+      "id": "gitops.flux_kustomization_paths",
+      "name": "Flux Kustomization Paths",
+      "status": "skip",
+      "skip_reason": "no Kustomization nodes in graph",
       "findings": []
     },
     {

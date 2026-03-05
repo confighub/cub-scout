@@ -46,16 +46,16 @@ Schema: patterns.v1
       evidence (1):
         - 1 Kustomization(s)
 
-[PASS] gitops.flux.kustomization_paths
-  Flux Kustomization Paths
-  findings (2):
-    - [info] Flux Kustomizations in graph: 1
-    - [info] Kustomization paths: ./clusters/prod
-
 [PASS] gitops.flux.resources_present
   Flux Resources Present
   findings (1):
     - [info] Flux Kustomizations detected: 1
+
+[PASS] gitops.flux_kustomization_paths
+  Flux Kustomization Paths
+  findings (2):
+    - [info] Flux Kustomizations in graph: 1
+    - [info] Kustomization paths: ./clusters/prod
 
 [SKIP] k8s.ownership_chain_complete
   Kubernetes Ownership Chain Complete

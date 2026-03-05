@@ -9,10 +9,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	patternIDApplicationSetGenerators     = "gitops.argocd.applicationset_generators"
+	patternIDFluxKustomizationPaths       = "gitops.flux_kustomization_paths"
+	legacyPatternIDFluxKustomizationPaths = "gitops.flux.kustomization_paths"
+)
+
 func init() {
 	// ApplicationSet generators pattern (Hybrid)
 	Register(Pattern{
-		ID:          "gitops.argocd.applicationset_generators",
+		ID:          patternIDApplicationSetGenerators,
 		Name:        "ApplicationSet Generator Summary",
 		Description: "Summarizes ApplicationSet generators. Runs without --git-root with reduced evidence; enriched when --git-root is provided.",
 		Category:    "gitops",
@@ -25,7 +31,7 @@ func init() {
 
 	// Flux Kustomization paths pattern (Hybrid)
 	Register(Pattern{
-		ID:          "gitops.flux.kustomization_paths",
+		ID:          patternIDFluxKustomizationPaths,
 		Name:        "Flux Kustomization Paths",
 		Description: "Correlates Flux Kustomization paths with Git repository structure. Runs without --git-root with reduced evidence; enriched when --git-root is provided.",
 		Category:    "gitops",
@@ -35,6 +41,9 @@ func init() {
 		},
 		DetectWithGit: detectFluxKustomizationPaths,
 	})
+
+	// Backward compatibility for legacy dotted ID.
+	RegisterAlias(legacyPatternIDFluxKustomizationPaths, patternIDFluxKustomizationPaths)
 }
 
 // detectApplicationSetGenerators analyzes ApplicationSet generators.
@@ -54,7 +63,7 @@ func detectApplicationSetGenerators(ctx *DetectContext) ([]Finding, Status) {
 	// Note: invalid git context is handled by engine (SKIP), so we only check for nil
 	if ctx.Git == nil {
 		findings = append(findings, Finding{
-			Pattern:  "gitops.argocd.applicationset_generators",
+			Pattern:  patternIDApplicationSetGenerators,
 			Severity: SeverityInfo,
 			Message:  fmt.Sprintf("ApplicationSets in graph: %d (use --git-root for generator details)", appSetCount),
 		})
@@ -112,7 +121,7 @@ func detectApplicationSetGenerators(ctx *DetectContext) ([]Finding, Status) {
 
 		sort.Strings(refs)
 		findings = append(findings, Finding{
-			Pattern:  "gitops.argocd.applicationset_generators",
+			Pattern:  patternIDApplicationSetGenerators,
 			Severity: SeverityInfo,
 			Message:  fmt.Sprintf("ApplicationSet generators: %s", strings.Join(parts, " ")),
 			Refs:     refs,
@@ -121,7 +130,7 @@ func detectApplicationSetGenerators(ctx *DetectContext) ([]Finding, Status) {
 
 	// Also report graph count
 	findings = append(findings, Finding{
-		Pattern:  "gitops.argocd.applicationset_generators",
+		Pattern:  patternIDApplicationSetGenerators,
 		Severity: SeverityInfo,
 		Message:  fmt.Sprintf("ApplicationSets in graph: %d", appSetCount),
 	})
@@ -146,7 +155,7 @@ func detectFluxKustomizationPaths(ctx *DetectContext) ([]Finding, Status) {
 	// Note: invalid git context is handled by engine (SKIP), so we only check for nil
 	if ctx.Git == nil {
 		findings = append(findings, Finding{
-			Pattern:  "gitops.flux.kustomization_paths",
+			Pattern:  patternIDFluxKustomizationPaths,
 			Severity: SeverityInfo,
 			Message:  fmt.Sprintf("Flux Kustomizations in graph: %d (use --git-root for path details)", kustomizationCount),
 		})
@@ -198,7 +207,7 @@ func detectFluxKustomizationPaths(ctx *DetectContext) ([]Finding, Status) {
 
 		sort.Strings(refs)
 		findings = append(findings, Finding{
-			Pattern:  "gitops.flux.kustomization_paths",
+			Pattern:  patternIDFluxKustomizationPaths,
 			Severity: SeverityInfo,
 			Message:  fmt.Sprintf("Kustomization paths: %s", strings.Join(paths, ", ")),
 			Refs:     refs,
@@ -207,7 +216,7 @@ func detectFluxKustomizationPaths(ctx *DetectContext) ([]Finding, Status) {
 
 	// Report cluster count
 	findings = append(findings, Finding{
-		Pattern:  "gitops.flux.kustomization_paths",
+		Pattern:  patternIDFluxKustomizationPaths,
 		Severity: SeverityInfo,
 		Message:  fmt.Sprintf("Flux Kustomizations in graph: %d", kustomizationCount),
 	})

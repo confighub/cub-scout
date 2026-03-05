@@ -85,26 +85,6 @@
       ]
     },
     {
-      "id": "gitops.flux.kustomization_paths",
-      "name": "Flux Kustomization Paths",
-      "status": "pass",
-      "findings": [
-        {
-          "pattern": "gitops.flux.kustomization_paths",
-          "severity": "info",
-          "message": "Flux Kustomizations in graph: 1"
-        },
-        {
-          "pattern": "gitops.flux.kustomization_paths",
-          "severity": "info",
-          "message": "Kustomization paths: ./clusters/prod",
-          "refs": [
-            "git:path:flux/kustomization.yaml"
-          ]
-        }
-      ]
-    },
-    {
       "id": "gitops.flux.resources_present",
       "name": "Flux Resources Present",
       "status": "pass",
@@ -113,6 +93,26 @@
           "pattern": "gitops.flux.resources_present",
           "severity": "info",
           "message": "Flux Kustomizations detected: 1"
+        }
+      ]
+    },
+    {
+      "id": "gitops.flux_kustomization_paths",
+      "name": "Flux Kustomization Paths",
+      "status": "pass",
+      "findings": [
+        {
+          "pattern": "gitops.flux_kustomization_paths",
+          "severity": "info",
+          "message": "Flux Kustomizations in graph: 1"
+        },
+        {
+          "pattern": "gitops.flux_kustomization_paths",
+          "severity": "info",
+          "message": "Kustomization paths: ./clusters/prod",
+          "refs": [
+            "git:path:flux/kustomization.yaml"
+          ]
         }
       ]
     },

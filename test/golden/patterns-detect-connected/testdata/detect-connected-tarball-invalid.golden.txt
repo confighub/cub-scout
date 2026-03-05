@@ -46,16 +46,16 @@ Schema: patterns.v1
       evidence (1):
         - 1 Kustomization(s)
 
-[SKIP] gitops.flux.kustomization_paths
-  Flux Kustomization Paths
-  skip_reason: git_source tarball invalid
-  findings (0):
-    (none)
-
 [PASS] gitops.flux.resources_present
   Flux Resources Present
   findings (1):
     - [info] Flux Kustomizations detected: 1
+
+[SKIP] gitops.flux_kustomization_paths
+  Flux Kustomization Paths
+  skip_reason: git_source tarball invalid
+  findings (0):
+    (none)
 
 [SKIP] k8s.ownership_chain_complete
   Kubernetes Ownership Chain Complete

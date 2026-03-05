@@ -4,6 +4,7 @@ import "sort"
 
 // registry holds all registered patterns.
 var registry = make(map[string]Pattern)
+var aliases = make(map[string]string)
 
 // Register adds a pattern to the registry.
 // Panics if a pattern with the same ID is already registered.
@@ -11,11 +12,35 @@ func Register(p Pattern) {
 	if _, exists := registry[p.ID]; exists {
 		panic("pattern already registered: " + p.ID)
 	}
+	if _, exists := aliases[p.ID]; exists {
+		panic("pattern ID collides with alias: " + p.ID)
+	}
 	registry[p.ID] = p
+}
+
+// RegisterAlias maps a legacy pattern ID to a canonical pattern ID.
+// Panics if alias collides with a registered pattern or existing alias.
+func RegisterAlias(alias, canonical string) {
+	if alias == "" || canonical == "" {
+		panic("alias and canonical must be non-empty")
+	}
+	if alias == canonical {
+		return
+	}
+	if _, exists := registry[alias]; exists {
+		panic("alias collides with pattern ID: " + alias)
+	}
+	if _, exists := aliases[alias]; exists {
+		panic("alias already registered: " + alias)
+	}
+	aliases[alias] = canonical
 }
 
 // Get returns a pattern by ID, or nil if not found.
 func Get(id string) *Pattern {
+	if canonical, ok := aliases[id]; ok {
+		id = canonical
+	}
 	if p, ok := registry[id]; ok {
 		return &p
 	}

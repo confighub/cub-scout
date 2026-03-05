@@ -51,7 +51,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 ### Pattern Contract (`reference/patterns-contract.md`)
 
 - [x] `gitops.argocd.applicationset_generators` pattern (implemented; doc ID drift fixed in #153)
-- [ ] `gitops.flux_kustomization_paths` pattern (planned, not implemented)
+- [x] `gitops.flux_kustomization_paths` pattern (implemented)
 
 ### Connected Mode Ideas
 
