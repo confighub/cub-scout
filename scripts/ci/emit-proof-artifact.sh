@@ -20,9 +20,28 @@ full_result="${PROOF_FULL:-skipped}"
 coverage_total="${PROOF_COVERAGE_TOTAL:-unknown}"
 coverage_min="${PROOF_COVERAGE_MIN:-unknown}"
 
+is_numeric_percent() {
+  [[ "$1" =~ ^[0-9]+([.][0-9]+)?$ ]]
+}
+
 if [[ "${unit_result}" == "success" ]]; then
   if [[ "${coverage_total}" == "unknown" || "${coverage_min}" == "unknown" ]]; then
     echo "coverage fields are required when unit tier succeeds" >&2
+    exit 1
+  fi
+
+  if ! is_numeric_percent "${coverage_total}" || ! is_numeric_percent "${coverage_min}"; then
+    echo "coverage fields must be numeric percentages when unit tier succeeds" >&2
+    exit 1
+  fi
+
+  if ! awk -v total="${coverage_total}" -v min="${coverage_min}" 'BEGIN {exit !(total+0 >= 0 && total+0 <= 100 && min+0 >= 0 && min+0 <= 100)}'; then
+    echo "coverage fields must be between 0 and 100 when unit tier succeeds" >&2
+    exit 1
+  fi
+
+  if ! awk -v total="${coverage_total}" -v min="${coverage_min}" 'BEGIN {exit !(total+0 >= min+0)}'; then
+    echo "coverage total must be greater than or equal to coverage minimum" >&2
     exit 1
   fi
 fi
