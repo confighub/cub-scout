@@ -20,6 +20,13 @@ full_result="${PROOF_FULL:-skipped}"
 coverage_total="${PROOF_COVERAGE_TOTAL:-unknown}"
 coverage_min="${PROOF_COVERAGE_MIN:-unknown}"
 
+if [[ "${unit_result}" == "success" ]]; then
+  if [[ "${coverage_total}" == "unknown" || "${coverage_min}" == "unknown" ]]; then
+    echo "coverage fields are required when unit tier succeeds" >&2
+    exit 1
+  fi
+fi
+
 json_path="${out_dir}/proof-matrix.json"
 md_path="${out_dir}/proof-summary.md"
 
