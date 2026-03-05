@@ -1,6 +1,7 @@
 package patterns
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -1340,6 +1341,81 @@ func TestFluxKustomizationPaths_EnrichedWithGitContext(t *testing.T) {
 	}
 	if !hasRefs {
 		t.Error("expected refs with git:path: prefix in enriched mode")
+	}
+}
+
+func TestFluxKustomizationPaths_EnrichedValidationSummary(t *testing.T) {
+	g := graph.NewGraph("test-cluster")
+
+	g.AddNode(graph.Node{
+		ID:         "test-cluster/flux-system/Kustomization/flux-system",
+		Cluster:    "test-cluster",
+		Namespace:  "flux-system",
+		Kind:       "Kustomization",
+		Name:       "flux-system",
+		APIVersion: "kustomize.toolkit.fluxcd.io/v1",
+	})
+
+	gitRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(gitRoot, ".git"), 0o755); err != nil {
+		t.Fatalf("mkdir .git: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(gitRoot, "flux"), 0o755); err != nil {
+		t.Fatalf("mkdir flux: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(gitRoot, "clusters", "prod"), 0o755); err != nil {
+		t.Fatalf("mkdir existing path: %v", err)
+	}
+
+	// Existing path
+	if err := os.WriteFile(filepath.Join(gitRoot, "clusters", "prod", "kustomization.yaml"), []byte("apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n"), 0o644); err != nil {
+		t.Fatalf("write existing kustomization: %v", err)
+	}
+	// Flux manifest that points at both an existing and missing path.
+	manifest := []byte(
+		"apiVersion: kustomize.toolkit.fluxcd.io/v1\n" +
+			"kind: Kustomization\n" +
+			"metadata:\n" +
+			"  name: existing\n" +
+			"spec:\n" +
+			"  path: ./clusters/prod\n" +
+			"---\n" +
+			"apiVersion: kustomize.toolkit.fluxcd.io/v1\n" +
+			"kind: Kustomization\n" +
+			"metadata:\n" +
+			"  name: missing\n" +
+			"spec:\n" +
+			"  path: ./apps/backend\n",
+	)
+	if err := os.WriteFile(filepath.Join(gitRoot, "flux", "kustomization.yaml"), manifest, 0o644); err != nil {
+		t.Fatalf("write flux manifest: %v", err)
+	}
+
+	gitCtx := gitctx.OpenGitRoot(gitRoot)
+	if gitCtx == nil || !gitCtx.Valid {
+		t.Fatalf("git context not valid: %+v", gitCtx)
+	}
+
+	pr := DetectOneWithGit(g, gitCtx, "gitops.flux_kustomization_paths")
+	if pr == nil {
+		t.Fatal("expected result")
+	}
+
+	hasValidationSummary := false
+	hasMissingPathList := false
+	for _, f := range pr.Findings {
+		if strings.Contains(f.Message, "Path validation: existing=1 missing=1") {
+			hasValidationSummary = true
+		}
+		if strings.Contains(f.Message, "Missing repo paths:") && strings.Contains(f.Message, "./apps/backend") {
+			hasMissingPathList = true
+		}
+	}
+	if !hasValidationSummary {
+		t.Fatal("expected enriched validation summary finding")
+	}
+	if !hasMissingPathList {
+		t.Fatal("expected missing path list finding")
 	}
 }
 

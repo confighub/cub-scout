@@ -113,6 +113,11 @@
           "refs": [
             "git:path:flux/kustomization.yaml"
           ]
+        },
+        {
+          "pattern": "gitops.flux_kustomization_paths",
+          "severity": "info",
+          "message": "Path validation: existing=1 missing=0"
         }
       ]
     },

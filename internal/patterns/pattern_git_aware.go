@@ -164,9 +164,12 @@ func detectFluxKustomizationPaths(ctx *DetectContext) ([]Finding, Status) {
 
 	// Mode 2: With valid git context (enriched)
 	pathCounts := make(map[string]int)
+	existingPaths := make(map[string]struct{})
+	missingPaths := make(map[string]struct{})
 	var refs []string
 
 	files := ctx.Git.Files()
+	repoPathSet := buildRepoPathSet(files)
 	for _, file := range files {
 		if !isYAMLFile(file) {
 			continue
@@ -188,6 +191,11 @@ func detectFluxKustomizationPaths(ctx *DetectContext) ([]Finding, Status) {
 			path := extractSpecPath(doc)
 			if path != "" {
 				pathCounts[path]++
+				if repoPathExists(repoPathSet, path) {
+					existingPaths[path] = struct{}{}
+				} else {
+					missingPaths[path] = struct{}{}
+				}
 			}
 
 			// Add repo-relative ref (bounded to first 10)
@@ -212,6 +220,21 @@ func detectFluxKustomizationPaths(ctx *DetectContext) ([]Finding, Status) {
 			Message:  fmt.Sprintf("Kustomization paths: %s", strings.Join(paths, ", ")),
 			Refs:     refs,
 		})
+
+		findings = append(findings, Finding{
+			Pattern:  patternIDFluxKustomizationPaths,
+			Severity: SeverityInfo,
+			Message:  fmt.Sprintf("Path validation: existing=%d missing=%d", len(existingPaths), len(missingPaths)),
+		})
+
+		if len(missingPaths) > 0 {
+			missing := sortedSetKeys(missingPaths)
+			findings = append(findings, Finding{
+				Pattern:  patternIDFluxKustomizationPaths,
+				Severity: SeverityInfo,
+				Message:  fmt.Sprintf("Missing repo paths: %s", strings.Join(missing, ", ")),
+			})
+		}
 	}
 
 	// Report cluster count
@@ -301,4 +324,58 @@ func extractSpecPath(doc map[string]interface{}) string {
 
 	path, _ := spec["path"].(string)
 	return path
+}
+
+func buildRepoPathSet(files []string) map[string]struct{} {
+	paths := make(map[string]struct{})
+	for _, file := range files {
+		normalized := normalizeRepoPath(file)
+		if normalized == "" {
+			continue
+		}
+		paths[normalized] = struct{}{}
+
+		dir := filepath.ToSlash(filepath.Dir(normalized))
+		for dir != "" && dir != "." && dir != "/" {
+			paths[dir] = struct{}{}
+			next := filepath.ToSlash(filepath.Dir(dir))
+			if next == dir {
+				break
+			}
+			dir = next
+		}
+	}
+	return paths
+}
+
+func repoPathExists(repoPaths map[string]struct{}, specPath string) bool {
+	normalized := normalizeRepoPath(specPath)
+	if normalized == "" {
+		return false
+	}
+	_, exists := repoPaths[normalized]
+	return exists
+}
+
+func normalizeRepoPath(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return ""
+	}
+	path = filepath.ToSlash(filepath.Clean(path))
+	path = strings.TrimPrefix(path, "./")
+	path = strings.TrimPrefix(path, "/")
+	if path == "." {
+		return ""
+	}
+	return path
+}
+
+func sortedSetKeys(values map[string]struct{}) []string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
