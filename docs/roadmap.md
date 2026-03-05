@@ -40,7 +40,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 - [x] Workstream A: Navigation-first messaging and "aha in seconds" walkthrough — graduated to #224
 - [x] Workstream B: Scale-real demo assets — resolved #158
-- [ ] Workstream B: Expected-output snapshots for core navigation flows
+- [x] Workstream B: Expected-output snapshots for core navigation flows — validated by `test/ascii` map status/list + tree golden proofs
 - [ ] Workstream C: WET-LIVE panel clarity and causality messaging
 - [ ] Workstream C: Break-glass decision ergonomics and audit visibility
 - [ ] Workstream C: Hierarchy consistency across map/tree/unit surfaces
