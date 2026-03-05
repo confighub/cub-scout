@@ -1,0 +1,30 @@
+{
+  "backend": "argocd",
+  "transport": "git",
+  "deployers": [
+    {
+      "kind": "Application",
+      "name": "myapp-prod",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "sync",
+      "syncStatus": "Unknown",
+      "healthStatus": "Healthy",
+      "podReady": 0,
+      "podTotal": 6,
+      "runtimeIssues": [
+        {
+          "reason": "ImagePullBackOff",
+          "count": 3
+        },
+        {
+          "reason": "CrashLoopBackOff",
+          "count": 3
+        }
+      ]
+    }
+  ],
+  "sources": [],
+  "healthyCount": 0,
+  "failedCount": 1
+}
