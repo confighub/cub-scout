@@ -64,6 +64,7 @@ Human-friendly JSON contract index: [json-contracts.md](json-contracts.md)
 | `cub-scout completion` | Generate shell completion script | v0.19 |
 | `cub-scout connect` | Configure kube context from server URL or kubeconfig import | v1.0 |
 | `cub-scout status` | Show connection status and cluster info | v1.0 |
+| `cub-scout mcp serve` | Serve read-only MCP observation tools over stdio | v1.4 |
 
 ---
 

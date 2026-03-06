@@ -97,6 +97,7 @@ cub-scout map list --json | jq '.[] | select(.owner=="Native")'
 cub-scout graph export | jq '.nodes | length'
 cub-scout graph export --format svg --output graph.svg
 cub-scout scan --json > findings.json
+cub-scout mcp serve
 ```
 
 Need contract docs for automation?

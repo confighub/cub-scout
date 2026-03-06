@@ -1673,6 +1673,32 @@ Resource graph operations for exploring cluster relationships.
 
 ---
 
+## `mcp` — Model Context Protocol Gateway (v1.4)
+
+Read-only MCP gateway that exposes cub-scout observation tools over stdio.
+
+**What it does:** Hosts MCP tools backed by existing CLI JSON outputs.
+
+**When to use it:** When integrating cub-scout with AI clients that speak MCP.
+
+```bash
+# Start MCP stdio server
+./cub-scout mcp serve
+```
+
+**Served tools (current slice):**
+- `map` → `map list --json`
+- `trace` → `trace --format json`
+- `scan` → `scan --json`
+- `explain` → `explain --format json`
+
+**Safety contract:**
+- read-only behavior only
+- no kubernetes mutation path
+- no ConfigHub write path
+
+---
+
 ## `patterns` — Pattern Detection (v0.7)
 
 Pattern detection engine for analyzing resource graphs.

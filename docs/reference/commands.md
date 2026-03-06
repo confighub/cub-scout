@@ -36,6 +36,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `status` | Show connection status and cluster info | v1.0 |
 | `connect` | Quickly configure kube context from server URL or kubeconfig | v1.0 |
 | `setup` | Set up shell completions | v0.19 |
+| `mcp serve` | Serve read-only MCP tools over stdio | v1.4 |
 | `graph export` | Export resource graph as JSON/DOT/SVG/HTML | v0.6 |
 | `graph explain` | Explain a resource's graph relationships | v0.6 |
 | `patterns list` | List registered patterns | v0.7 |
@@ -862,6 +863,33 @@ cub-scout setup --shell zsh
 
 # Preview without installing
 cub-scout setup --dry-run
+```
+
+---
+
+## mcp
+
+Read-only MCP gateway for AI agent tooling.
+
+### mcp serve
+
+Serve MCP over stdio and expose observation tools (`map`, `trace`, `scan`, `explain`).
+
+```bash
+cub-scout mcp serve
+```
+
+#### Notes
+
+- Uses existing CLI JSON surfaces internally (`map list --json`, `trace --format json`, etc.).
+- Standalone and read-only: no cluster mutations and no ConfigHub write path.
+- Protocol transport is stdio with `Content-Length` framed JSON-RPC messages.
+
+#### Example
+
+```bash
+# Run as MCP server process (stdio)
+cub-scout mcp serve
 ```
 
 ---
