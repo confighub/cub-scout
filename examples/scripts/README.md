@@ -2,6 +2,18 @@
 
 **Status: Working** — Copy-paste scripts for integrating cub-scout into your workflow.
 
+## Connected Demo Readiness
+
+Fail-fast checks for `--live` demo runs (workers, targets, connected workloads):
+
+```bash
+# Argo demo space
+./verify-connected-demo.sh --space argo-import-demo --renderer argocdrenderer
+
+# Flux demo space
+./verify-connected-demo.sh --space flux-import-demo --renderer fluxrenderer
+```
+
 ## k9s Plugin
 
 Add map/scan commands to k9s:

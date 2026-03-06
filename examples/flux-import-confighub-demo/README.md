@@ -23,6 +23,14 @@ outside Flux's scope.
 ./demo.sh --live --confighub-url=http://localhost:9090
 ```
 
+## Connected Readiness Check
+
+After a `--live` run, verify the demo has active workers/targets and connected workloads:
+
+```bash
+../scripts/verify-connected-demo.sh --space flux-import-demo --renderer fluxrenderer
+```
+
 ## Prerequisites
 
 | Tool | Required for | Install |
