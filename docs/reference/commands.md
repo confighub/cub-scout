@@ -76,10 +76,13 @@ cub-scout map [flags]
 | Key | Action |
 |-----|--------|
 | `1-5` | Switch tabs |
+| `M` | Open Three Maps view |
 | `H` | Hub view (ConfigHub hierarchy) |
 | `j/k` | Navigate up/down |
 | `Enter` | Select/expand |
-| `t` | Trace selected resource |
+| `T` | Trace selected resource |
+| `e` | Export graph as HTML (Maps view) |
+| `E` | Export graph as SVG (Maps view) |
 | `?` | Help |
 | `q` | Quit |
 

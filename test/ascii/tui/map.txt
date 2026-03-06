@@ -1,4 +1,6 @@
 MAP 1: GITOPS TREES
+Press e to export HTML or E to export SVG
+
 ✓ Kustomization infra → 12
 ✓ Kustomization apps → 8
 ✓ HelmRelease nginx → 5

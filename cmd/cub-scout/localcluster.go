@@ -315,6 +315,9 @@ type localKeyMap struct {
 	Hub     key.Binding
 	Tab     key.Binding
 	Enter   key.Binding
+	// Maps panel export actions
+	ExportHTML key.Binding
+	ExportSVG  key.Binding
 	// View shortcuts
 	Dashboard key.Binding
 	Workloads key.Binding
@@ -367,6 +370,8 @@ func defaultLocalKeyMap() localKeyMap {
 		Hub:           key.NewBinding(key.WithKeys("H"), key.WithHelp("H", "ConfigHub")),
 		Tab:           key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next view")),
 		Enter:         key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
+		ExportHTML:    key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "export html")),
+		ExportSVG:     key.NewBinding(key.WithKeys("E"), key.WithHelp("E", "export svg")),
 		Dashboard:     key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "status")),
 		Workloads:     key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "workloads")),
 		Pipelines:     key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "pipelines")),
@@ -426,6 +431,12 @@ type scanResultMsg struct {
 	err        error
 	findings   []scanFinding  // Parsed findings for category display
 	categories map[string]int // Category counts
+}
+
+type graphExportMsg struct {
+	format     string
+	outputPath string
+	err        error
 }
 
 type localCmdCompleteMsg struct {
@@ -1109,6 +1120,14 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.scanCategories = msg.categories
 		return m, nil
 
+	case graphExportMsg:
+		if msg.err != nil {
+			m.statusMsg = fmt.Sprintf("Graph export failed (%s): %v", msg.format, msg.err)
+		} else {
+			m.statusMsg = fmt.Sprintf("Graph export (%s) saved to %s", msg.format, msg.outputPath)
+		}
+		return m, nil
+
 	case localCmdCompleteMsg:
 		m.cmdRunning = false
 		if msg.err != nil {
@@ -1410,6 +1429,14 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Toggle focus between dashboard and panel
 				m.panelFocused = !m.panelFocused
 				return m, nil
+
+			case key.Matches(msg, m.keymap.ExportHTML) && m.panelView == viewMaps:
+				m.statusMsg = "Exporting graph (html)..."
+				return m, m.runGraphExport("html")
+
+			case key.Matches(msg, m.keymap.ExportSVG) && m.panelView == viewMaps:
+				m.statusMsg = "Exporting graph (svg)..."
+				return m, m.runGraphExport("svg")
 
 			case m.panelFocused:
 				// Panel scrolling when focused
@@ -2447,6 +2474,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("Q") + "  Saved queries (filter resources)\n")
 	b.WriteString("  " + lcNameStyle.Render("T") + "  Trace ownership chain\n")
 	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for risk issues\n")
+	b.WriteString("  " + lcNameStyle.Render("e/E") + "  Export graph from MAPS panel (HTML/SVG)\n")
 	b.WriteString("  " + lcNameStyle.Render("I") + "  Import wizard (bring workloads to ConfigHub)\n")
 	b.WriteString("\n")
 
@@ -2684,6 +2712,20 @@ func (m LocalClusterModel) getSuggestions() []Suggestion {
 			}
 		}
 
+	case viewMaps:
+		suggestions = append(suggestions, Suggestion{
+			Command:     "./cub-scout graph export --format html --output graph.html",
+			Description: "Export interactive ownership topology",
+		})
+		suggestions = append(suggestions, Suggestion{
+			Command:     "./cub-scout graph export --format svg --output graph.svg",
+			Description: "Export embeddable static diagram",
+		})
+		suggestions = append(suggestions, Suggestion{
+			Command:     "./cub-scout graph export --format dot --output graph.dot",
+			Description: "Export Graphviz source for docs tooling",
+		})
+
 	default:
 		// Dashboard: overview commands (cub-scout first)
 		suggestions = append(suggestions, Suggestion{
@@ -2865,8 +2907,16 @@ func (m LocalClusterModel) renderSplitView() string {
 	if nsIndicator != "" {
 		b.WriteString(nsIndicator + " " + lcDimStyle.Render("|") + " ")
 	}
-	b.WriteString(lcDimStyle.Render("[]/[]ns [w]ork [p]ipe [d]rift [o]rph | Tab:focus Esc:close [H]ub [?] [q]"))
+	footer := "[]/[]ns [w]ork [p]ipe [d]rift [o]rph | Tab:focus Esc:close [H]ub [?] [q]"
+	if m.panelView == viewMaps {
+		footer = "[]/[]ns [e]xport html [E]xport svg | Tab:focus Esc:close [H]ub [?] [q]"
+	}
+	b.WriteString(lcDimStyle.Render(footer))
 	b.WriteString("\n")
+	if m.statusMsg != "" {
+		b.WriteString(lcDimStyle.Render(m.statusMsg))
+		b.WriteString("\n")
+	}
 
 	return b.String()
 }
@@ -3995,6 +4045,7 @@ func (m LocalClusterModel) getPanelMaps() string {
 
 	// MAP 1: GitOps Resource Trees
 	b.WriteString(lcSectionStyle.Render("MAP 1: GITOPS TREES") + "\n")
+	b.WriteString(lcDimStyle.Render("Press e to export HTML or E to export SVG") + "\n\n")
 
 	if len(m.gitops) == 0 {
 		b.WriteString(lcDimStyle.Render("No GitOps deployers") + "\n")
@@ -5305,6 +5356,78 @@ func (m LocalClusterModel) runScan() tea.Cmd {
 			err:        err,
 			findings:   findings,
 			categories: categories,
+		}
+	}
+}
+
+var runGraphExportCommand = runGraphExportViaCLI
+
+func graphExportOutputPath(format string) string {
+	filename := fmt.Sprintf("cub-scout-graph-%s.%s", time.Now().Format("20060102-150405"), format)
+	return filepath.Join(".", filename)
+}
+
+func runGraphExportViaCLI(format, outputPath string) error {
+	args := []string{"graph", "export", "--format", format, "--output", outputPath}
+
+	var primaryErr error
+	bin := strings.TrimSpace(os.Args[0])
+	if bin != "" {
+		cmd := exec.Command(bin, args...)
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			return nil
+		}
+		if details := strings.TrimSpace(string(out)); details != "" {
+			primaryErr = fmt.Errorf("%w: %s", err, details)
+		} else {
+			primaryErr = err
+		}
+	}
+
+	cmd := exec.Command("cub-scout", args...)
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		return nil
+	}
+	if details := strings.TrimSpace(string(out)); details != "" {
+		if primaryErr != nil {
+			return fmt.Errorf("%v; fallback cub-scout failed: %w: %s", primaryErr, err, details)
+		}
+		return fmt.Errorf("%w: %s", err, details)
+	}
+	if primaryErr != nil {
+		return fmt.Errorf("%v; fallback cub-scout failed: %w", primaryErr, err)
+	}
+	return err
+}
+
+func (m LocalClusterModel) runGraphExport(format string) tea.Cmd {
+	return func() tea.Msg {
+		normalized := strings.ToLower(strings.TrimSpace(format))
+		if normalized == "" {
+			normalized = "html"
+		}
+		switch normalized {
+		case "html", "svg", "dot", "json":
+		default:
+			return graphExportMsg{
+				format: normalized,
+				err:    fmt.Errorf("unsupported graph export format %q", normalized),
+			}
+		}
+
+		outputPath := graphExportOutputPath(normalized)
+		if err := runGraphExportCommand(normalized, outputPath); err != nil {
+			return graphExportMsg{
+				format:     normalized,
+				outputPath: outputPath,
+				err:        err,
+			}
+		}
+		return graphExportMsg{
+			format:     normalized,
+			outputPath: outputPath,
 		}
 	}
 }

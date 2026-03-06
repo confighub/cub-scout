@@ -39,6 +39,7 @@ ACTIONS
   Q  Saved queries (filter resources)
   T  Trace ownership chain
   S  Scan for risk issues
+  e/E  Export graph from MAPS panel (HTML/SVG)
   I  Import wizard (bring workloads to ConfigHub)
 
 COMMAND PALETTE

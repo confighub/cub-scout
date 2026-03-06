@@ -6,8 +6,10 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -339,6 +341,98 @@ func TestLocalClusterMaps(t *testing.T) {
 	fm := finalModel.(LocalClusterModel)
 	if !fm.panelMode || fm.panelView != viewMaps {
 		t.Errorf("expected maps view, got panelMode=%v view=%v", fm.panelMode, fm.panelView)
+	}
+}
+
+// TestLocalClusterMapsExportShortcut tests 'e' key in maps panel starts graph export.
+func TestLocalClusterMapsExportShortcut(t *testing.T) {
+	m := testLocalModel()
+	m.panelMode = true
+	m.panelView = viewMaps
+	m.updatePanelContent()
+
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	fm := updated.(LocalClusterModel)
+
+	if cmd == nil {
+		t.Fatal("expected export command when pressing 'e' in maps view")
+	}
+	if !strings.Contains(strings.ToLower(fm.statusMsg), "exporting graph") {
+		t.Fatalf("expected exporting status message, got %q", fm.statusMsg)
+	}
+}
+
+// TestLocalClusterSplitViewShowsMapsExportHint tests split footer includes export hint for maps panel.
+func TestLocalClusterSplitViewShowsMapsExportHint(t *testing.T) {
+	m := testLocalModel()
+	m.panelMode = true
+	m.panelView = viewMaps
+	m.updatePanelContent()
+
+	view := m.renderSplitView()
+	if !strings.Contains(view, "e") || !strings.Contains(strings.ToLower(view), "export") {
+		t.Fatalf("expected maps split view footer to mention export shortcut, got:\n%s", view)
+	}
+}
+
+// TestLocalClusterMapsExportCompletionStatus tests successful completion status message.
+func TestLocalClusterMapsExportCompletionStatus(t *testing.T) {
+	m := testLocalModel()
+	m.panelMode = true
+	m.panelView = viewMaps
+	m.updatePanelContent()
+
+	original := runGraphExportCommand
+	runGraphExportCommand = func(format, outputPath string) error {
+		return nil
+	}
+	defer func() {
+		runGraphExportCommand = original
+	}()
+
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	if cmd == nil {
+		t.Fatal("expected export command")
+	}
+
+	msg := cmd()
+	updated2, _ := updated.(LocalClusterModel).Update(msg)
+	fm := updated2.(LocalClusterModel)
+
+	if !strings.Contains(strings.ToLower(fm.statusMsg), "saved") {
+		t.Fatalf("expected successful save status, got %q", fm.statusMsg)
+	}
+	if !strings.Contains(strings.ToLower(fm.statusMsg), "html") {
+		t.Fatalf("expected html format in status, got %q", fm.statusMsg)
+	}
+}
+
+// TestLocalClusterMapsExportFailureStatus tests failed completion status message.
+func TestLocalClusterMapsExportFailureStatus(t *testing.T) {
+	m := testLocalModel()
+	m.panelMode = true
+	m.panelView = viewMaps
+	m.updatePanelContent()
+
+	original := runGraphExportCommand
+	runGraphExportCommand = func(format, outputPath string) error {
+		return fmt.Errorf("boom")
+	}
+	defer func() {
+		runGraphExportCommand = original
+	}()
+
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	if cmd == nil {
+		t.Fatal("expected export command")
+	}
+
+	msg := cmd()
+	updated2, _ := updated.(LocalClusterModel).Update(msg)
+	fm := updated2.(LocalClusterModel)
+
+	if !strings.Contains(strings.ToLower(fm.statusMsg), "failed") {
+		t.Fatalf("expected failure status, got %q", fm.statusMsg)
 	}
 }
 
