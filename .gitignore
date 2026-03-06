@@ -1,5 +1,6 @@
 # Binaries
 /cub-scout
+/kubectl-cub_scout
 *.exe
 *.dll
 *.so

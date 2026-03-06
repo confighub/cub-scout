@@ -18,6 +18,7 @@ cub-scout tree ownership         # See resources grouped by GitOps owner
 cub-scout trace deploy/app -n ns # Trace any resource to its Git source
 cub-scout scan                   # Find misconfigurations (46 patterns)
 cub-scout import --dry-run -n ns # Preview ConfigHub import (connected)
+kubectl cub-scout map status     # Same command surface via kubectl plugin
 ```
 
 **What you get in 60 seconds:**
@@ -143,10 +144,28 @@ cub-scout map
 ## Quickstart (2 minutes)
 
 1. **Install:** `brew install confighub/tap/cub-scout`
-2. **Prerequisites:** kubectl access to a cluster (`kubectl get pods` works)
-3. **First command:** `cub-scout map` — launches interactive TUI
-4. **Press `?`** for keyboard shortcuts
-5. **Try:** `cub-scout trace deploy/<name> -n <namespace>` on any deployment
+2. **Optional kubectl plugin alias:** `cp "$(command -v cub-scout)" /usr/local/bin/kubectl-cub_scout`
+3. **Verify plugin mode:** `kubectl cub-scout version`
+4. **Prerequisites:** kubectl access to a cluster (`kubectl get pods` works)
+5. **First command:** `cub-scout map` — launches interactive TUI
+6. **Press `?`** for keyboard shortcuts
+7. **Try:** `cub-scout trace deploy/<name> -n <namespace>` on any deployment
+
+## kubectl Plugin Mode
+
+kubectl discovers plugins by executable name. For `kubectl cub-scout`, it looks
+for `kubectl-cub_scout` on `PATH`.
+
+```bash
+# Build both binaries locally
+make build-kubectl-plugin
+
+# Run through kubectl (same command surface)
+kubectl cub-scout map list --json
+kubectl cub-scout map
+```
+
+If you installed via Homebrew, both `cub-scout` and `kubectl-cub_scout` are installed automatically.
 
 ---
 
