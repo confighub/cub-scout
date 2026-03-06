@@ -80,6 +80,12 @@ func TestSmoke_CLIHelp(t *testing.T) {
 			wantContains: []string{"status", "connection", "Usage:"},
 		},
 		{
+			name:         "history help",
+			args:         []string{"history", "--help"},
+			wantExitCode: 0,
+			wantContains: []string{"history", "ChangeSets", "Usage:"},
+		},
+		{
 			name:         "debug help",
 			args:         []string{"debug", "--help"},
 			wantExitCode: 0,
@@ -143,7 +149,7 @@ func TestSmoke_RootCommand(t *testing.T) {
 	}
 
 	// Verify key subcommands exist
-	expectedCmds := []string{"version", "completion", "map", "quickstart", "scan", "trace", "status"}
+	expectedCmds := []string{"version", "completion", "map", "quickstart", "scan", "trace", "status", "history"}
 	for _, name := range expectedCmds {
 		found := false
 		for _, cmd := range rootCmd.Commands() {

@@ -24,6 +24,7 @@ The table below reflects the current `cub-scout --help` output.
 | `gitops` | GitOps status and diagnostics |
 | `graph` | Resource graph operations |
 | `health` | Check issues (alias for `map issues`) |
+| `history` | Show connected change history from ConfigHub ChangeSets |
 | `import` | Import workloads into ConfigHub |
 | `import-argocd` | Import an ArgoCD Application into ConfigHub |
 | `import-cluster-aggregator` | Aggregate imports from multiple clusters (GUI) |
@@ -319,6 +320,29 @@ Context:    docker-desktop
 ```
 Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● bridge-prod
 ```
+
+---
+
+## `history` — Connected Change Timeline
+
+**What it does:** Shows connected-mode resource history from ConfigHub ChangeSets.
+
+```bash
+./cub-scout history deploy/my-app -n prod
+./cub-scout history deploy/my-app -n prod --since 24h --format json
+./cub-scout history deploy/my-app --since 2w --format md
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-n, --namespace` | Optional namespace scope |
+| `--since` | Lookback window (`24h`, `7d`, `2w`) |
+| `--format` | Output format: `ascii`, `json`, `md` |
+
+**Graceful behavior:**
+- Not connected: `history requires ConfigHub connection. Run: cub auth login`
+- No matching history: clear message that the resource may not be imported yet
 
 ---
 

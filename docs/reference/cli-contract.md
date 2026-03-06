@@ -64,6 +64,7 @@ Human-friendly JSON contract index: [json-contracts.md](json-contracts.md)
 | `cub-scout completion` | Generate shell completion script | v0.19 |
 | `cub-scout connect` | Configure kube context from server URL or kubeconfig import | v1.0 |
 | `cub-scout status` | Show connection status and cluster info | v1.0 |
+| `cub-scout history` | Connected change timeline from ConfigHub ChangeSets | v1.4 |
 | `cub-scout mcp serve` | Serve read-only MCP observation tools over stdio | v1.4 |
 
 ---
@@ -867,6 +868,48 @@ Worker:     ● bridge-prod (connected)
     "name": "bridge-prod",
     "status": "connected"
   }
+}
+```
+
+---
+
+## cub-scout history (v1.4)
+
+Show connected resource history from ConfigHub ChangeSets.
+
+```bash
+cub-scout history <resource> [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-n, --namespace` | string | empty | Optional namespace scope |
+| `--since` | string | `7d` | Lookback window (`24h`, `7d`, `2w`) |
+| `--format` | string | `ascii` | Output format: `ascii`, `json`, `md` |
+
+### Connected Behavior
+
+- Requires ConfigHub authentication (`cub auth login`).
+- Uses read-only ChangeSet queries from ConfigHub.
+- Returns clear empty-history messaging when no matching tracked changes exist.
+
+### Output (JSON)
+
+```json
+{
+  "resource": "deploy/my-app",
+  "namespace": "prod",
+  "since": "7d",
+  "entries": [
+    {
+      "timestamp": "2026-03-03T14:22:00Z",
+      "actor": "ci-bot",
+      "change": "image: v1.4.2 -> v1.4.3",
+      "changeset": "CS-4821"
+    }
+  ]
 }
 ```
 

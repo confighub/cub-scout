@@ -586,6 +586,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | `cub-scout scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD |
 | `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) |
 | `cub-scout gitops status` | GitOps pipeline health and failure diagnosis |
+| `cub-scout history deploy/x -n y --since 7d` | Connected ChangeSet timeline for one resource |
 | `cub-scout snapshot --relations` | Export state with dependency graph (GSF format) |
 | `cub-scout bundle summarize` | Generate summary for Jira, PRs, or Slack |
 
@@ -760,6 +761,7 @@ cub-scout is an open-source cluster explorer designed to work with existing Kube
 | `snapshot` — Export state (GSF) | ✓ | ✓ |
 | `import` — Send to ConfigHub | — | ✓ |
 | `fleet` — Multi-cluster queries | — | ✓ |
+| `history` — ChangeSet timeline | — | ✓ |
 | DRY↔WET↔LIVE compare | — | ✓ |
 | Revision history | — | ✓ |
 | Team collaboration | — | ✓ |
