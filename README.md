@@ -21,6 +21,25 @@ cub-scout import --dry-run -n ns # Preview ConfigHub import (connected)
 kubectl cub-scout map status     # Same command surface via kubectl plugin
 ```
 
+## Install Channels
+
+```bash
+# Homebrew
+brew install confighub/tap/cub-scout
+
+# Go install
+go install github.com/confighub/cub-scout/cmd/cub-scout@latest
+
+# Binary download
+curl -sL https://github.com/confighub/cub-scout/releases/latest
+
+# Container
+docker run ghcr.io/confighub/cub-scout:latest version
+
+# kubectl krew (after manifest publication in krew-index)
+kubectl krew install cub-scout
+```
+
 **What you get in 60 seconds:**
 - See which resources are managed by Flux, ArgoCD, Helm, or kubectl
 - Trace any Deployment back to its Git source
