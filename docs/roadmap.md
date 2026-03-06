@@ -510,11 +510,13 @@ Follow-up delivered:
 
 ### v1.3.1 — Housekeeping
 
-**Status:** In Progress
+**Status:** Released (2026-03-06)
 **Theme:** *Release hygiene*
 
+Delivered:
+
 * #204 — argo-import-confighub-demo determinism (pin versions + stronger readiness)
-* #206 — roadmap summary cleanup (remove closed #149-#151 from open backlog line)
+* #206 — roadmap summary cleanup (remove closed #149-#151 from open backlog tracking language)
 
 ---
 
