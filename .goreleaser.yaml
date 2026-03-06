@@ -25,9 +25,27 @@ builds:
       - -s -w
       - -X main.BuildTag={{.Version}}
       - -X main.BuildDate={{.Date}}
+  - id: kubectl-cub-scout
+    main: ./cmd/cub-scout
+    binary: kubectl-cub_scout
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.BuildTag={{.Version}}
+      - -X main.BuildDate={{.Date}}
 
 archives:
   - id: default
+    ids:
+      - cub-scout
+      - kubectl-cub-scout
     formats:
       - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
@@ -64,8 +82,10 @@ brews:
     license: "MIT"
     install: |
       bin.install "cub-scout"
+      bin.install "kubectl-cub_scout"
     test: |
       system "#{bin}/cub-scout", "version"
+      system "#{bin}/kubectl-cub_scout", "version"
 
 dockers:
   - image_templates:

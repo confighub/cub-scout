@@ -8,6 +8,7 @@ brew install confighub/tap/cub-scout
 
 # Verify installation
 cub-scout version
+kubectl cub-scout version
 ```
 
 ## Alternative Methods
@@ -63,11 +64,26 @@ For tracing GitOps ownership chains, install these if you use them:
 # Check cub-scout version
 cub-scout version
 
+# Check kubectl plugin mode
+kubectl cub-scout version
+
 # Quick cluster scan
 cub-scout map list
 
 # Interactive TUI
 cub-scout map
+```
+
+## kubectl Plugin Mode
+
+kubectl discovers plugins by executable name. For `kubectl cub-scout`, it looks
+for `kubectl-cub_scout` in `PATH`.
+
+Homebrew installs both binaries automatically. For source builds:
+
+```bash
+make build-kubectl-plugin
+sudo cp kubectl-cub_scout /usr/local/bin/
 ```
 
 ## Next Steps

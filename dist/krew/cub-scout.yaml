@@ -1,0 +1,41 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: cub-scout
+spec:
+  version: v0.0.0
+  homepage: https://github.com/confighub/cub-scout
+  shortDescription: Explore and map GitOps in your clusters
+  description: |
+    cub-scout is an offline-first, deterministic, read-only cluster explorer
+    for Kubernetes and GitOps. Run it as a kubectl plugin via
+    `kubectl cub-scout ...`.
+  platforms:
+    - selector:
+        matchLabels:
+          os: linux
+          arch: amd64
+      uri: https://github.com/confighub/cub-scout/releases/download/v0.0.0/cub-scout_v0.0.0_linux_amd64.tar.gz
+      sha256: REPLACE_WITH_LINUX_AMD64_SHA256
+      bin: kubectl-cub_scout
+    - selector:
+        matchLabels:
+          os: linux
+          arch: arm64
+      uri: https://github.com/confighub/cub-scout/releases/download/v0.0.0/cub-scout_v0.0.0_linux_arm64.tar.gz
+      sha256: REPLACE_WITH_LINUX_ARM64_SHA256
+      bin: kubectl-cub_scout
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: amd64
+      uri: https://github.com/confighub/cub-scout/releases/download/v0.0.0/cub-scout_v0.0.0_darwin_amd64.tar.gz
+      sha256: REPLACE_WITH_DARWIN_AMD64_SHA256
+      bin: kubectl-cub_scout
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: arm64
+      uri: https://github.com/confighub/cub-scout/releases/download/v0.0.0/cub-scout_v0.0.0_darwin_arm64.tar.gz
+      sha256: REPLACE_WITH_DARWIN_ARM64_SHA256
+      bin: kubectl-cub_scout

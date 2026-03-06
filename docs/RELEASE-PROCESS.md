@@ -9,6 +9,7 @@ Every tagged release automatically produces:
 1. **GitHub Release** with binaries
    - linux/amd64, linux/arm64
    - darwin/amd64, darwin/arm64
+   - Includes both `cub-scout` and `kubectl-cub_scout`
    - checksums.txt
 
 2. **Homebrew Formula**
@@ -18,6 +19,10 @@ Every tagged release automatically produces:
 3. **Docker Images**
    - `ghcr.io/confighub/cub-scout:<version>`
    - `ghcr.io/confighub/cub-scout:latest`
+
+4. **Krew Manifest Template**
+   - Source template: `dist/krew/cub-scout.yaml`
+   - Update `spec.version`, `uri`, and `sha256` values per release before submitting to krew-index
 
 ## How to Release
 
@@ -89,6 +94,7 @@ with the new SHA256 checksums automatically.
 - [ ] Release notes describe changes clearly
 - [ ] After release: verify GitHub artifacts exist
 - [ ] After release: verify `brew info confighub/tap/cub-scout` shows new version
+- [ ] Prepare krew manifest from `dist/krew/cub-scout.yaml` with release checksums
 
 ## Troubleshooting
 

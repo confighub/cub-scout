@@ -1,7 +1,7 @@
 # cub-scout Makefile
 # Canonical verification commands for development and CI
 
-.PHONY: build test test-race fmt lint clean regression-argo test-import-delegation
+.PHONY: build build-kubectl-plugin test test-race fmt lint clean regression-argo test-import-delegation
 
 # Default target
 all: build test
@@ -9,6 +9,11 @@ all: build test
 # Build the binary
 build:
 	go build ./cmd/cub-scout
+
+# Build kubectl plugin-compatible binary alias (kubectl-cub_scout)
+build-kubectl-plugin: build
+	cp cub-scout kubectl-cub_scout
+	chmod +x kubectl-cub_scout
 
 # Run all tests
 test:
@@ -29,6 +34,7 @@ fmt-check:
 # Clean build artifacts
 clean:
 	rm -f cub-scout
+	rm -f kubectl-cub_scout
 	go clean ./...
 
 # Run lint (requires golangci-lint)
