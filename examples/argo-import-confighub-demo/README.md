@@ -116,6 +116,8 @@ Creates the kind cluster, installs real ArgoCD (~2-4 min for all 6
 deployments), and applies both fixture sets. The guestbook Applications have
 `syncPolicy.automated`, so ArgoCD fetches the source repos and creates real
 Deployments in the `guestbook` namespace.
+This demo pins both the ArgoCD release and guestbook source revision for
+deterministic behavior across reruns.
 
 **What happens:** You'll see ArgoCD install progress, namespace creation,
 fixture application, and guestbook sync status. If ArgoCD takes longer than
@@ -129,7 +131,7 @@ You should see output like:
 >> Creating kind cluster...
 >> Cluster ready: kind-argo-import-demo
 
->> Installing ArgoCD (this takes 2-4 minutes)...
+>> Installing ArgoCD v3.3.2 (this takes 2-4 minutes)...
 >> Waiting for ArgoCD deployments...
 >> ArgoCD installed and ready
 
