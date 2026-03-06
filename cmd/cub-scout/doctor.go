@@ -171,7 +171,7 @@ func runDoctorFromFixture(path, namespaceLabel string) (DoctorSummary, error) {
 func runDoctorFromCluster(ctx context.Context, namespaceLabel string) (DoctorSummary, error) {
 	entries, cluster, err := collectDoctorEntries(ctx, doctorNamespace)
 	if err != nil {
-		return DoctorSummary{}, err
+		return DoctorSummary{}, withKubeRecoveryHint(err, "cub-scout doctor")
 	}
 
 	findings, err := collectDoctorFindings(ctx, doctorNamespace)
@@ -393,19 +393,23 @@ func renderDoctorASCII(summary DoctorSummary) string {
 	fmt.Fprintf(&b, "Top Issues:\n")
 	if len(summary.TopIssues) == 0 {
 		fmt.Fprintf(&b, "  (none)\n")
-		return b.String()
+	} else {
+		for i, issue := range summary.TopIssues {
+			ns := issue.Namespace
+			if ns == "" {
+				ns = "-"
+			}
+			msg := issue.Message
+			if msg == "" {
+				msg = "no details"
+			}
+			fmt.Fprintf(&b, "  %d. %s (ns: %s) - %s [%s]\n", i+1, issue.Resource, ns, msg, issue.Severity)
+		}
 	}
 
-	for i, issue := range summary.TopIssues {
-		ns := issue.Namespace
-		if ns == "" {
-			ns = "-"
-		}
-		msg := issue.Message
-		if msg == "" {
-			msg = "no details"
-		}
-		fmt.Fprintf(&b, "  %d. %s (ns: %s) - %s [%s]\n", i+1, issue.Resource, ns, msg, issue.Severity)
+	hints := doctorTryNextHints(summary)
+	if len(hints) > 0 {
+		b.WriteString(renderTryNextSection(hints))
 	}
 
 	return b.String()

@@ -5,3 +5,8 @@ StatefulSet/redis in namespace prod:
   Health: Healthy
   Risks: Not assessed
   Drift: Unknown
+
+TRY NEXT:
+  - Follow the chain in detail: cub-scout trace statefulset/redis -n prod --explain
+  - See all Helm-owned resources: cub-scout map list -n prod -q "owner=Helm"
+  - Check overall health: cub-scout doctor -n prod

@@ -62,17 +62,11 @@ Environment Variables:
   CUB_SCOUT_OFFLINE       Set to 'true' to force offline mode
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("cub-scout - explore and map GitOps in your clusters")
-		fmt.Println()
-		fmt.Println("Quick start:")
-		fmt.Println("  cub-scout quickstart       Guided first-run tour")
-		fmt.Println("  cub-scout map              Interactive TUI (press ? for help)")
-		fmt.Println("  cub-scout tree ownership   See resources by GitOps owner")
-		fmt.Println("  cub-scout trace deploy/x   Trace a resource to Git")
-		fmt.Println("  cub-scout map list --json  JSON output for automation")
-		fmt.Println("  cub-scout import --dry-run Preview ConfigHub import (connected)")
-		fmt.Println()
-		fmt.Println("Run 'cub-scout --help' for all commands")
+		firstRun, err := detectAndMarkFirstRun()
+		if err != nil {
+			firstRun = false
+		}
+		renderRootLanding(os.Stdout, firstRun)
 	},
 }
 

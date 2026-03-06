@@ -5,3 +5,8 @@ Deployment/frontend in namespace prod:
   Health: Healthy
   Risks: Not assessed
   Drift: Unknown
+
+TRY NEXT:
+  - Follow the chain in detail: cub-scout trace deployment/frontend -n prod --explain
+  - See all ArgoCD-owned resources: cub-scout map list -n prod -q "owner=ArgoCD"
+  - Check overall health: cub-scout doctor -n prod

@@ -8,3 +8,9 @@
 - **Health:** Healthy
 - **Risks:** Not assessed
 - **Drift:** Unknown
+
+### Try Next
+
+- `cub-scout trace deployment/payments-api -n prod --explain`
+- `cub-scout map list -n prod -q "owner=Flux"`
+- `cub-scout doctor -n prod`

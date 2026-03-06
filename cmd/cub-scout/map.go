@@ -706,13 +706,13 @@ func runMapListFromCluster(ctx context.Context) error {
 	// Build Kubernetes config
 	cfg, err := buildConfig()
 	if err != nil {
-		return fmt.Errorf("build kubernetes config: %w", err)
+		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", err), "cub-scout map list")
 	}
 
 	// Create dynamic client
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("create dynamic client: %w", err)
+		return withKubeRecoveryHint(fmt.Errorf("create dynamic client: %w", err), "cub-scout map list")
 	}
 
 	// Get cluster name
@@ -1007,6 +1007,11 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		fmt.Println("→ See the Git→Deployment chain: cub-scout trace <kind>/<name> -n <namespace>")
 		fmt.Println("→ See the full GitOps pipeline:  cub-scout map deployers")
 		fmt.Println("→ Visual guide:                  docs/diagrams/ownership-detection.svg")
+	} else {
+		hints := mapListTryNextHints(entries, byOwner, mapNamespace)
+		if len(hints) > 0 {
+			fmt.Print(renderTryNextSection(hints))
+		}
 	}
 
 	return nil

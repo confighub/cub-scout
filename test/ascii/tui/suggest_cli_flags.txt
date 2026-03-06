@@ -4,16 +4,16 @@
 
 Context: Dashboard
 
-1. ./cub-scout tree ownership --owner Crossplane --depth 3 --namespace infra --kind Composition
-   Show ownership tree (current filters)
+1. ./cub-scout doctor
+   Cluster health summary and top issues
 
 2. ./cub-scout map list
    List all workloads with owners
 
-3. ./cub-scout scan
-   Scan for configuration issues
+3. ./cub-scout map orphans
+   Find unmanaged resources quickly
 
-4. ./cub-scout map deployers
-   List all GitOps deployers
+4. ./cub-scout quickstart --yes
+   Guided command path for first-run users
 
 Copy a command and run it in your terminal. Press any key to close.

@@ -92,8 +92,11 @@ cub-scout version
 # Check kubectl plugin mode
 kubectl cub-scout version
 
-# Quick cluster scan
-cub-scout map list
+# Guided first run (non-interactive)
+cub-scout quickstart --yes
+
+# One-command summary
+cub-scout doctor
 
 # Interactive TUI
 cub-scout map

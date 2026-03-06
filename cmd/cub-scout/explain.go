@@ -345,6 +345,10 @@ func renderExplainText(summary ExplainSummary) string {
 			fmt.Fprintf(&b, "    - %s\n", note)
 		}
 	}
+	hints := explainTryNextHints(summary)
+	if len(hints) > 0 {
+		b.WriteString(renderTryNextSection(hints))
+	}
 	return b.String()
 }
 
@@ -365,5 +369,6 @@ func renderExplainMarkdown(summary ExplainSummary) string {
 			fmt.Fprintf(&b, "  - %s\n", note)
 		}
 	}
+	b.WriteString(renderTryNextMarkdown(explainTryNextHints(summary)))
 	return b.String()
 }

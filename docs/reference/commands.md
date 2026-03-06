@@ -22,6 +22,9 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `map actions` | Read-only operator action preview (runbook output) | v0.20 |
 | `map activity` | Unified activity timeline from Flux/Argo/Helm/events | v0.20 |
 | `map previews` | Detect PR preview environments | v0.20 |
+| `quickstart` | Guided first-run walkthrough | v1.4 |
+| `doctor` | One-command cluster health summary | v1.4 |
+| `explain` | Plain-English ownership and lineage for one resource | v1.4 |
 | `trace` | Show GitOps ownership chain | v0.5 |
 | `scan` | Scan for misconfigurations | v0.5 |
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
@@ -158,6 +161,65 @@ cub-scout map list --format json
 
 # Output as Markdown
 cub-scout map list --format md
+```
+
+### Navigation Hints
+
+In default ASCII mode, `map list` includes a `TRY NEXT` section with contextual follow-up commands (for example `map orphans`, `explain`, and `doctor`).
+
+Machine-readable formats (`--format json` and `--format md`) do not include these hints.
+
+---
+
+## quickstart
+
+Guided first-run walkthrough across map, doctor, explain, ownership, and risk signals.
+
+```bash
+cub-scout quickstart [flags]
+```
+
+### Examples
+
+```bash
+cub-scout quickstart
+cub-scout quickstart --yes
+cub-scout quickstart -n production --yes
+```
+
+---
+
+## doctor
+
+Single-command cluster health summary (ownership, health, risk, drift, top issues).
+
+```bash
+cub-scout doctor [flags]
+```
+
+### Examples
+
+```bash
+cub-scout doctor
+cub-scout doctor -n production
+cub-scout doctor --format json
+```
+
+---
+
+## explain
+
+Plain-English ownership and lineage for a single resource.
+
+```bash
+cub-scout explain <kind/name> [flags]
+```
+
+### Examples
+
+```bash
+cub-scout explain deploy/payments-api -n prod
+cub-scout explain deployment/payments-api -n prod --format md
 ```
 
 ---
