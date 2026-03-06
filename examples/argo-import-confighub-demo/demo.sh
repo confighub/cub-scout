@@ -10,6 +10,7 @@
 #   ./demo.sh --live         # Full import into ConfigHub (~6 min, requires cub auth)
 #   ./demo.sh --keep         # Keep cluster running for exploration
 #   ./demo.sh --live --keep  # Import + keep cluster
+#   ./demo.sh --live --seed-history  # Also seed tagged synthetic ChangeSet history
 #   ./demo.sh --live --confighub-url=http://localhost:9090  # Local dev override
 #
 # Prerequisites: docker, kind, kubectl, go
@@ -26,14 +27,21 @@ ARGOCD_VERSION="v3.3.2"
 ARGOCD_INSTALL_URL="https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml"
 KEEP=false
 LIVE=false
+SEED_HISTORY=false
 CONFIGHUB_URL_OVERRIDE=""
 WORKER_PID=""
 PORT_FORWARD_PID=""
+WORKER_LIFECYCLE_SCRIPT="$SCRIPT_DIR/../scripts/demo-worker-lifecycle.sh"
+VERIFY_CONNECTED_SCRIPT="$SCRIPT_DIR/../scripts/verify-connected-demo.sh"
+SEED_HISTORY_SCRIPT="$SCRIPT_DIR/../scripts/seed-connected-demo-history.sh"
+DISCOVERY_WORKER_PID_FILE=""
+DISCOVERY_WORKER_LOG=""
 
 for arg in "$@"; do
     case "$arg" in
         --keep) KEEP=true ;;
         --live) LIVE=true ;;
+        --seed-history) SEED_HISTORY=true ;;
         --confighub-url=*) CONFIGHUB_URL_OVERRIDE="${arg#*=}" ;;
     esac
 done
@@ -68,10 +76,17 @@ cleanup() {
         kill "$PORT_FORWARD_PID" 2>/dev/null || true
         wait "$PORT_FORWARD_PID" 2>/dev/null || true
     fi
-    if [[ -n "$WORKER_PID" ]]; then
-        kill "$WORKER_PID" 2>/dev/null || true
-        wait "$WORKER_PID" 2>/dev/null || true
-        step "Worker stopped"
+    if [[ -n "$DISCOVERY_WORKER_PID_FILE" ]]; then
+        if $KEEP; then
+            bash "$WORKER_LIFECYCLE_SCRIPT" cleanup --pid-file "$DISCOVERY_WORKER_PID_FILE" --keep >/dev/null 2>&1 || true
+            step "Discovery worker left running"
+            if [[ -n "$DISCOVERY_WORKER_LOG" ]]; then
+                note "Discovery worker log: $DISCOVERY_WORKER_LOG"
+            fi
+        else
+            bash "$WORKER_LIFECYCLE_SCRIPT" cleanup --pid-file "$DISCOVERY_WORKER_PID_FILE" >/dev/null 2>&1 || true
+            step "Discovery worker stopped"
+        fi
     fi
     if $KEEP; then
         warn "Cluster '$CLUSTER_NAME' kept running. Delete with: kind delete cluster --name $CLUSTER_NAME"
@@ -125,6 +140,12 @@ if $LIVE; then
         fail "Could not determine ConfigHub URL. Set CONFIGHUB_URL or use --confighub-url=<url>"
         exit 1
     fi
+    for helper in "$WORKER_LIFECYCLE_SCRIPT" "$VERIFY_CONNECTED_SCRIPT" "$SEED_HISTORY_SCRIPT"; do
+        if [[ ! -f "$helper" ]]; then
+            fail "Missing helper script: $helper"
+            exit 1
+        fi
+    done
     step "ConfigHub: $CONFIGHUB_SERVER_URL"
     step "Auth OK (cub, curl, python3 present)"
 fi
@@ -301,6 +322,11 @@ if $LIVE; then
 
     SPACE="argo-import-demo"
     KUBE_CONTEXT=$(kubectl config current-context)
+    DISCOVERY_WORKER_SLUG="discovery-worker"
+    WORKER_STATE_DIR="${TMPDIR:-/tmp}/cub-scout-demo-workers"
+    mkdir -p "$WORKER_STATE_DIR"
+    DISCOVERY_WORKER_PID_FILE="$WORKER_STATE_DIR/${SPACE}-${DISCOVERY_WORKER_SLUG}.pid"
+    DISCOVERY_WORKER_LOG="$WORKER_STATE_DIR/${SPACE}-${DISCOVERY_WORKER_SLUG}.log"
 
     # Get ArgoCD auth token
     step "Getting ArgoCD auth token..."
@@ -337,11 +363,21 @@ if $LIVE; then
         step "Creating ConfigHub space '$SPACE'..."
         cub space create "$SPACE" 2>/dev/null || true
 
-        # Start discovery worker
+        # Start discovery worker with persistent lifecycle handling
         step "Starting discovery worker..."
-        cub worker run dev --space "$SPACE" >/dev/null 2>&1 &
-        WORKER_PID=$!
-        note "Discovery worker PID: $WORKER_PID"
+        if ! bash "$WORKER_LIFECYCLE_SCRIPT" start \
+            --space "$SPACE" \
+            --worker "$DISCOVERY_WORKER_SLUG" \
+            --target Kubernetes \
+            --pid-file "$DISCOVERY_WORKER_PID_FILE" \
+            --log-file "$DISCOVERY_WORKER_LOG"; then
+            warn "Discovery worker start failed. Log: $DISCOVERY_WORKER_LOG"
+            tail -n 20 "$DISCOVERY_WORKER_LOG" 2>/dev/null || true
+        fi
+        if [[ -f "$DISCOVERY_WORKER_PID_FILE" ]]; then
+            WORKER_PID="$(cat "$DISCOVERY_WORKER_PID_FILE" 2>/dev/null || true)"
+            note "Discovery worker PID: ${WORKER_PID:-unknown}"
+        fi
 
         # Deploy ArgoCD renderer in-cluster
         step "Deploying ArgoCD renderer worker in-cluster..."
@@ -428,6 +464,26 @@ if $LIVE; then
             warn "Targets not found - skipping cub gitops import"
             note "K8S_TARGET=$K8S_TARGET  RENDERER_TARGET=$RENDERER_TARGET"
         fi
+
+        step "Connected readiness check"
+        if ! bash "$VERIFY_CONNECTED_SCRIPT" --space "$SPACE" --renderer argocdrenderer; then
+            warn "Connected readiness check failed (inspect worker/target state before demoing history)"
+        fi
+
+        if $SEED_HISTORY; then
+            step "Seeding synthetic demo ChangeSet history"
+            seed_args=(--space "$SPACE" --allow-synthetic --apply)
+            if [[ -n "${CI:-}" ]]; then
+                seed_args+=(--allow-ci)
+            fi
+            if ! bash "$SEED_HISTORY_SCRIPT" "${seed_args[@]}"; then
+                warn "Synthetic history seeding failed"
+            else
+                note "Synthetic markers: demo=true, synthetic=true, source=cub-scout-demo-seed"
+            fi
+        else
+            note "Synthetic history seeding skipped (use --seed-history for storytelling demos)"
+        fi
     fi
 else
     banner "Act 4: The Pipeline (cub gitops import)"
@@ -446,6 +502,7 @@ else
     note "manifests with continuous updates. Acts 2-3 capture static snapshots only."
     echo ""
     note "  ./demo.sh --live                                 # with cub auth"
+    note "  ./demo.sh --live --seed-history                  # add synthetic history for demo storytelling"
     note "  ./demo.sh --live --confighub-url=http://localhost:9090  # local dev"
 fi
 
@@ -503,6 +560,9 @@ if $KEEP; then
     echo "    $CUB trace deploy/api -n myapp-prod   # Trace ownership chain"
     echo ""
     echo "  Teardown:"
+    if [[ -n "$DISCOVERY_WORKER_PID_FILE" ]]; then
+        echo "    bash \"$WORKER_LIFECYCLE_SCRIPT\" stop --pid-file \"$DISCOVERY_WORKER_PID_FILE\""
+    fi
     echo "    kind delete cluster --name $CLUSTER_NAME"
 else
     echo "Cluster torn down. Run with --keep to explore interactively."
