@@ -13,6 +13,11 @@ temp-test  Deployment  debug-nginx   Native
 Total: 2 resources
 By Owner: Native(2)
 
+TRY NEXT:
+  - Found 2 unmanaged resources: cub-scout map orphans
+  - Explain one resource end-to-end: cub-scout explain deployment/debug-nginx -n temp-test
+  - Get a one-command health summary: cub-scout doctor
+
 NEXT STEPS:
 → To import into ConfigHub: cub-scout import --wizard
 → To trace ownership:       cub-scout trace <kind>/<name> -n <namespace>

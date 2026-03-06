@@ -11,6 +11,11 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
   brew install confighub/tap/cub-scout
   ```
 
+- [ ] **Run quickstart once**
+  ```bash
+  cub-scout quickstart --yes
+  ```
+
 - [ ] **Run your first map**
   ```bash
   cub-scout map
@@ -49,7 +54,7 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
 
 - [ ] **Explore CLI variants** — Same data, different formats
   ```bash
-  cub-scout map status              # One-liner health check
+  cub-scout doctor                  # One-command health summary
   cub-scout map list                # Plain text list
   cub-scout map list --format json  # JSON for scripts
   ```
@@ -69,7 +74,7 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
   cub-scout demo quick
   ```
 
-- [ ] **Explore the CLI reference** — [CLI-GUIDE.md](../../CLI-GUIDE.md) has everything
+- [ ] **Explore the CLI reference** — [Command Reference](../reference/commands.md) has everything
 
 ---
 
@@ -114,7 +119,7 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
 
 - **In the TUI:** Press `?` for help
 - **On the CLI:** `cub-scout --help` or `cub-scout <command> --help`
-- **Documentation:** [CLI-GUIDE.md](../../CLI-GUIDE.md)
+- **Documentation:** [Command Reference](../reference/commands.md)
 - **Questions:** [Open an issue](https://github.com/confighub/cub-scout/issues)
 - **Community:** [Discord](https://discord.gg/confighub)
 

@@ -7,3 +7,8 @@ Deployment/legacy-api in namespace default:
   Drift: Unknown
   Notes:
     - partial trace: no GitOps owner chain was discovered
+
+TRY NEXT:
+  - Find unmanaged resources: cub-scout map orphans -n default
+  - Find unhealthy resources: cub-scout map issues -n default
+  - Check overall health: cub-scout doctor -n default

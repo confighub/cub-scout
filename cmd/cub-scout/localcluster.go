@@ -2177,9 +2177,9 @@ var (
 				Background(lipgloss.Color("236")).
 				Padding(0, 1)
 	lcModeOfflineStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("245")).
-			Background(lipgloss.Color("236")).
-			Padding(0, 1)
+				Foreground(lipgloss.Color("245")).
+				Background(lipgloss.Color("236")).
+				Padding(0, 1)
 	lcModeHeaderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("252")).
 				Background(lipgloss.Color("236"))
@@ -2522,6 +2522,10 @@ func (m LocalClusterModel) getSuggestions() []Suggestion {
 			kind := strings.ToLower(e.Kind)
 			// cub-scout first
 			suggestions = append(suggestions, Suggestion{
+				Command:     fmt.Sprintf("./cub-scout explain %s/%s -n %s", kind, e.Name, e.Namespace),
+				Description: "Plain-English ownership and lineage",
+			})
+			suggestions = append(suggestions, Suggestion{
 				Command:     fmt.Sprintf("./cub-scout trace %s/%s -n %s", kind, e.Name, e.Namespace),
 				Description: "Trace ownership chain to source",
 			})
@@ -2533,10 +2537,6 @@ func (m LocalClusterModel) getSuggestions() []Suggestion {
 			suggestions = append(suggestions, Suggestion{
 				Command:     fmt.Sprintf("kubectl describe %s/%s -n %s", kind, e.Name, e.Namespace),
 				Description: "View resource details",
-			})
-			suggestions = append(suggestions, Suggestion{
-				Command:     fmt.Sprintf("kubectl get %s/%s -n %s -o yaml", kind, e.Name, e.Namespace),
-				Description: "View full YAML manifest",
 			})
 		}
 
@@ -2687,20 +2687,20 @@ func (m LocalClusterModel) getSuggestions() []Suggestion {
 	default:
 		// Dashboard: overview commands (cub-scout first)
 		suggestions = append(suggestions, Suggestion{
-			Command:     treeCmd,
-			Description: "Show ownership tree (current filters)",
+			Command:     "./cub-scout doctor",
+			Description: "Cluster health summary and top issues",
 		})
 		suggestions = append(suggestions, Suggestion{
 			Command:     "./cub-scout map list",
 			Description: "List all workloads with owners",
 		})
 		suggestions = append(suggestions, Suggestion{
-			Command:     "./cub-scout scan",
-			Description: "Scan for configuration issues",
+			Command:     "./cub-scout map orphans",
+			Description: "Find unmanaged resources quickly",
 		})
 		suggestions = append(suggestions, Suggestion{
-			Command:     "./cub-scout map deployers",
-			Description: "List all GitOps deployers",
+			Command:     "./cub-scout quickstart --yes",
+			Description: "Guided command path for first-run users",
 		})
 	}
 

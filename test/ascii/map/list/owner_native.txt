@@ -4,3 +4,8 @@ prod         Deployment     web     Native
 
 Total: 2 resources
 By Owner: Native(2)
+
+TRY NEXT:
+  - Found 2 unmanaged resources: cub-scout map orphans
+  - Explain one resource end-to-end: cub-scout explain deployment/web -n prod
+  - Get a one-command health summary: cub-scout doctor

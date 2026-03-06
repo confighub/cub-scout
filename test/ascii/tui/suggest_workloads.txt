@@ -4,16 +4,16 @@
 
 Context: Deployment web/frontend (owner: Flux)
 
-1. ./cub-scout trace deployment/frontend -n web
+1. ./cub-scout explain deployment/frontend -n web
+   Plain-English ownership and lineage
+
+2. ./cub-scout trace deployment/frontend -n web
    Trace ownership chain to source
 
-2. ./cub-scout tree ownership
+3. ./cub-scout tree ownership
    Show ownership tree (current filters)
 
-3. kubectl describe deployment/frontend -n web
+4. kubectl describe deployment/frontend -n web
    View resource details
-
-4. kubectl get deployment/frontend -n web -o yaml
-   View full YAML manifest
 
 Copy a command and run it in your terminal. Press any key to close.

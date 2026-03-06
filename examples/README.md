@@ -29,7 +29,13 @@ git clone https://github.com/confighub/cub-scout.git
 cd cub-scout
 go build ./cmd/cub-scout
 
-# Try it on your cluster
+# First run (guided)
+cub-scout quickstart --yes
+
+# One-command cluster summary
+cub-scout doctor
+
+# Interactive exploration
 cub-scout map
 
 # Or run a demo
@@ -404,7 +410,7 @@ $ cub-scout map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
 
 | Doc | What's in it |
 |-----|--------------|
-| [CLI-GUIDE.md](../CLI-GUIDE.md) | Complete CLI reference (14 commands, 17 subcommands) |
+| [docs/reference/commands.md](../docs/reference/commands.md) | Command reference with common examples |
 | [docs/reference/command-matrix.md](../docs/reference/command-matrix.md) | Full command/option matrix |
 | [docs/howto/import-to-confighub.md](../docs/howto/import-to-confighub.md) | Import workloads into ConfigHub |
 | [README.md](../README.md) | Project overview |
