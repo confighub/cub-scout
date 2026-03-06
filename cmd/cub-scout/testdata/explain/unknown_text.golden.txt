@@ -1,0 +1,9 @@
+Deployment/legacy-api in namespace default:
+  Owner: Unknown - no recognized ownership labels found
+  Source: unknown
+  Deployed via: partial trace only
+  Health: Unavailable
+  Risks: Not assessed
+  Drift: Unknown
+  Notes:
+    - partial trace: no GitOps owner chain was discovered
