@@ -38,6 +38,21 @@ func TestConnectAndCompareExample_IndexedInExamplesREADME(t *testing.T) {
 	}
 }
 
+func TestConnectAndCompareDemoScript_UsesCompareCommand(t *testing.T) {
+	path := filepath.Join("..", "..", "examples", "connect-and-compare", "demo.sh")
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read demo script: %v", err)
+	}
+	script := string(content)
+	if !strings.Contains(script, " compare ") {
+		t.Fatalf("expected connect-and-compare demo to call `cub-scout compare` alias")
+	}
+	if strings.Contains(script, " combined ") {
+		t.Fatalf("connect-and-compare demo should avoid direct `combined` invocation")
+	}
+}
+
 func TestConnectAndCompareDemoScript_VerifySnapshots(t *testing.T) {
 	repoRoot, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {

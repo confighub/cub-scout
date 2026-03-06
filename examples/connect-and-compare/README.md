@@ -36,6 +36,5 @@ This example is deterministic and does not require a live cluster.
 
 - Synthetic/demo history remains explicitly fixture-driven in this flow.
 - No ConfigHub write operations are executed by this example.
-- Compare step uses `cub-scout combined --git-path ... --bundle ... --json` to
-  produce deterministic intent-vs-observed evidence until `cub-scout compare`
-  lands as a dedicated command.
+- Compare step uses `cub-scout compare --git-path ... --bundle ... --json` for
+  deterministic intent-vs-observed evidence from offline fixtures.

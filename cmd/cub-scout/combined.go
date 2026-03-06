@@ -95,6 +95,9 @@ Examples:
 }
 
 func init() {
+	// compare is the user-facing name for intent-vs-observed workflows.
+	combinedCmd.Aliases = []string{"compare"}
+
 	combinedCmd.Flags().StringVar(&combinedGitURL, "git-url", "", "Git repository URL to parse")
 	combinedCmd.Flags().StringVar(&combinedGitPath, "git-path", "", "Local path to Git repository")
 	combinedCmd.Flags().StringVar(&combinedGitURLCompare, "git-url-compare", "", "Right-side Git repository URL for Git↔Git compare")
