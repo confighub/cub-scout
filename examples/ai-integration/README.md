@@ -48,6 +48,32 @@ Use a custom output directory:
 - [Cursor](cursor/README.md)
 - [GitHub Copilot](copilot/README.md)
 
+## Failed Run -> Issue Draft
+
+When an AI-assisted session fails or is partial, capture an issue-ready draft:
+
+```bash
+./scripts/run-to-issue-evidence.sh \
+  --title "Capability gap: deterministic post-import patch flow" \
+  --goal "Import workloads and produce deterministic patch follow-up" \
+  --expected "A supported command sequence for post-import patch planning" \
+  --impact "Blocks AI-assisted remediation handoff" \
+  --transcript examples/ai-integration/testdata/failed-session.transcript.txt \
+  --output /tmp/cub-scout-issue-draft.md
+```
+
+To open directly on GitHub (requires `gh`):
+
+```bash
+./scripts/run-to-issue-evidence.sh \
+  --title "Capability gap: deterministic post-import patch flow" \
+  --goal "Import workloads and produce deterministic patch follow-up" \
+  --expected "A supported command sequence for post-import patch planning" \
+  --impact "Blocks AI-assisted remediation handoff" \
+  --transcript examples/ai-integration/testdata/failed-session.transcript.txt \
+  --open
+```
+
 ## Notes
 
 - Fixture mode is explicit and opt-in via `CUB_SCOUT_TEST_*` env vars.

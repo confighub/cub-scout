@@ -66,18 +66,29 @@ If the user approves filing a request:
    - actual output
    - expected behavior
    - demo impact
-2. File issue via helper script:
+2. Generate issue-ready draft from transcript:
 
 ```bash
-./scripts/create-ai-capability-issue.sh \
-  "Capability gap: <short title>" \
-  "<user goal>" \
-  "<commands attempted>" \
-  "<observed gap>" \
-  "<expected behavior>"
+./scripts/run-to-issue-evidence.sh \
+  --title "Capability gap: <short title>" \
+  --goal "<user goal>" \
+  --expected "<expected behavior>" \
+  --impact "<demo/user impact>" \
+  --transcript <failed-session-transcript.txt> \
+  --output /tmp/cub-scout-issue-draft.md
 ```
 
-Or use GitHub template: `AI capability gap`.
+3. Optional direct open:
+
+```bash
+./scripts/run-to-issue-evidence.sh \
+  --title "Capability gap: <short title>" \
+  --goal "<user goal>" \
+  --expected "<expected behavior>" \
+  --impact "<demo/user impact>" \
+  --transcript <failed-session-transcript.txt> \
+  --open
+```
 
 ## 5) Response Format for Claude
 

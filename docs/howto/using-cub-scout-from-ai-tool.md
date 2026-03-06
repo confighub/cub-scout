@@ -168,7 +168,31 @@ Capture:
 - expected behavior
 - demo/user impact
 
-File with helper script:
+Generate an issue-ready draft from a failed session transcript:
+
+```bash
+./scripts/run-to-issue-evidence.sh \
+  --title "Capability gap: <short title>" \
+  --goal "<user goal>" \
+  --expected "<expected behavior>" \
+  --impact "<demo/user impact>" \
+  --transcript <failed-session-transcript.txt> \
+  --output /tmp/cub-scout-issue-draft.md
+```
+
+Open directly on GitHub:
+
+```bash
+./scripts/run-to-issue-evidence.sh \
+  --title "Capability gap: <short title>" \
+  --goal "<user goal>" \
+  --expected "<expected behavior>" \
+  --impact "<demo/user impact>" \
+  --transcript <failed-session-transcript.txt> \
+  --open
+```
+
+Fallback (manual fields):
 
 ```bash
 ./scripts/create-ai-capability-issue.sh \
@@ -178,8 +202,6 @@ File with helper script:
   "<observed gap>" \
   "<expected behavior>"
 ```
-
-Or use GitHub issue template: `AI capability gap`.
 
 ## Related Guides
 

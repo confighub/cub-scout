@@ -101,12 +101,13 @@ When user approves filing a request, capture:
 Then file issue:
 
 ```bash
-./scripts/create-ai-capability-issue.sh \
-  "Capability gap: <short title>" \
-  "<user goal>" \
-  "<commands attempted>" \
-  "<observed gap>" \
-  "<expected behavior>"
+./scripts/run-to-issue-evidence.sh \
+  --title "Capability gap: <short title>" \
+  --goal "<user goal>" \
+  --expected "<expected behavior>" \
+  --impact "<demo/user impact>" \
+  --transcript <failed-session-transcript.txt> \
+  --open
 ```
 
-Or use GitHub template: `AI capability gap`.
+Fallback (manual fields): `./scripts/create-ai-capability-issue.sh ...`
