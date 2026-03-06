@@ -123,3 +123,47 @@ func TestRenderExplainMarkdown_ContainsHeadingsAndFields(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildExplainSummary_UnknownOwnerUsesExplicitMessage(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "legacy-api",
+			Namespace: "default",
+		},
+		Error: "resource not managed by any detected GitOps tool",
+	}
+
+	summary := buildExplainSummary(result)
+
+	if summary.Owner != "Unknown - no recognized ownership labels found" {
+		t.Fatalf("owner = %q, want explicit unknown-owner message", summary.Owner)
+	}
+	if len(summary.Notes) == 0 {
+		t.Fatalf("expected partial-trace notes for unknown owner")
+	}
+}
+
+func TestRenderExplainText_IncludesPartialTraceNotes(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/legacy-api",
+		Namespace:   "default",
+		Owner:       "Unknown - no recognized ownership labels found",
+		Source:      "unknown",
+		DeployedVia: "partial trace only",
+		Health:      "Unavailable",
+		Risks:       "Not assessed",
+		Drift:       "Unknown",
+		Notes: []string{
+			"partial trace: no GitOps owner chain was discovered",
+		},
+	}
+
+	out := renderExplainText(summary)
+	if !strings.Contains(out, "Notes:") {
+		t.Fatalf("expected Notes section in explain text:\\n%s", out)
+	}
+	if !strings.Contains(out, "partial trace: no GitOps owner chain was discovered") {
+		t.Fatalf("expected partial-trace note in explain text:\\n%s", out)
+	}
+}

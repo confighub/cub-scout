@@ -42,14 +42,15 @@ func init() {
 
 // ExplainSummary is the canonical model for explain output.
 type ExplainSummary struct {
-	Resource    string `json:"resource"`
-	Namespace   string `json:"namespace"`
-	Owner       string `json:"owner"`
-	Source      string `json:"source"`
-	DeployedVia string `json:"deployedVia"`
-	Health      string `json:"health"`
-	Risks       string `json:"risks"`
-	Drift       string `json:"drift"`
+	Resource    string   `json:"resource"`
+	Namespace   string   `json:"namespace"`
+	Owner       string   `json:"owner"`
+	Source      string   `json:"source"`
+	DeployedVia string   `json:"deployedVia"`
+	Health      string   `json:"health"`
+	Risks       string   `json:"risks"`
+	Drift       string   `json:"drift"`
+	Notes       []string `json:"notes,omitempty"`
 }
 
 func runExplain(cmd *cobra.Command, args []string) error {
@@ -73,7 +74,8 @@ func runExplain(cmd *cobra.Command, args []string) error {
 
 	traceResult, err := traceForExplain(cmd.Context(), kind, name, ns)
 	if err != nil {
-		return err
+		summary := buildExplainSummaryFromFailure(kind, name, ns, err)
+		return outputExplainSummary(summary, format)
 	}
 
 	summary := buildExplainSummary(traceResult)
@@ -84,6 +86,10 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		summary.Namespace = ns
 	}
 
+	return outputExplainSummary(summary, format)
+}
+
+func outputExplainSummary(summary ExplainSummary, format string) error {
 	switch format {
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
@@ -115,41 +121,89 @@ func traceForExplain(ctx context.Context, kind, name, namespace string) (*agent.
 		ownership = &agent.Ownership{Type: agent.OwnerUnknown}
 	}
 
-	var tracer agent.Tracer
-	switch ownership.Type {
-	case agent.OwnerArgo:
-		tracer = agent.NewArgoTracer()
-	case agent.OwnerHelm:
+	tracers := buildExplainTracerCandidates(ownership.Type)
+	if len(tracers) == 0 {
+		return nil, fmt.Errorf("no available tracer candidates for owner type %q", ownership.Type)
+	}
+
+	var (
+		lastErr   error
+		candidate *agent.TraceResult
+	)
+
+	for _, tracer := range tracers {
+		if tracer == nil || !tracer.Available() {
+			continue
+		}
+
+		result, err := tracer.Trace(ctx, kind, name, namespace)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if result == nil {
+			continue
+		}
+		if result.Object.Kind == "" {
+			result.Object.Kind = kind
+			result.Object.Name = name
+			result.Object.Namespace = namespace
+		}
+		candidate = result
+		if len(result.Chain) > 0 {
+			return result, nil
+		}
+		if strings.TrimSpace(result.Error) == "" {
+			return result, nil
+		}
+	}
+
+	if candidate != nil {
+		return candidate, nil
+	}
+	if lastErr != nil {
+		return nil, lastErr
+	}
+	return nil, fmt.Errorf("unable to trace resource via available tracers")
+}
+
+func buildExplainTracerCandidates(ownerType string) []agent.Tracer {
+	var tracers []agent.Tracer
+
+	addFlux := func() { tracers = append(tracers, agent.NewFluxTracer()) }
+	addArgo := func() { tracers = append(tracers, agent.NewArgoTracer()) }
+	addHelm := func() {
 		cfg, cfgErr := buildConfig()
 		if cfgErr != nil {
-			return nil, cfgErr
+			return
 		}
 		clientset, clientErr := kubernetes.NewForConfig(cfg)
 		if clientErr != nil {
-			return nil, clientErr
+			return
 		}
-		tracer = agent.NewHelmTracer(clientset)
+		tracers = append(tracers, agent.NewHelmTracer(clientset))
+	}
+
+	switch ownerType {
+	case agent.OwnerArgo:
+		addArgo()
+		addFlux()
+		addHelm()
+	case agent.OwnerHelm:
+		addHelm()
+		addFlux()
+		addArgo()
+	case agent.OwnerFlux:
+		addFlux()
+		addArgo()
+		addHelm()
 	default:
-		tracer = agent.NewFluxTracer()
+		addFlux()
+		addArgo()
+		addHelm()
 	}
 
-	if tracer == nil || !tracer.Available() {
-		return nil, fmt.Errorf("required CLI for explain not available for owner type %q", ownership.Type)
-	}
-
-	result, err := tracer.Trace(ctx, kind, name, namespace)
-	if err != nil {
-		return nil, err
-	}
-	if result == nil {
-		return nil, fmt.Errorf("no trace result available")
-	}
-	if result.Object.Kind == "" {
-		result.Object.Kind = kind
-		result.Object.Name = name
-		result.Object.Namespace = namespace
-	}
-	return result, nil
+	return tracers
 }
 
 func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
@@ -186,16 +240,36 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 	}
 
 	if result.Error != "" {
-		summary.Owner = "Unknown"
+		summary.Owner = "Unknown - no recognized ownership labels found"
 		if summary.Health == "Unknown" {
 			summary.Health = "Unavailable"
 		}
 		if summary.DeployedVia == "unknown" {
 			summary.DeployedVia = "partial trace only"
 		}
+		summary.Notes = append(summary.Notes, "partial trace: no GitOps owner chain was discovered")
 	}
 
 	return summary
+}
+
+func buildExplainSummaryFromFailure(kind, name, namespace string, err error) ExplainSummary {
+	note := "partial trace: no GitOps owner chain was discovered"
+	if err != nil && strings.TrimSpace(err.Error()) != "" {
+		note = fmt.Sprintf("partial trace: %s", strings.TrimSpace(err.Error()))
+	}
+
+	return ExplainSummary{
+		Resource:    fmt.Sprintf("%s/%s", kind, name),
+		Namespace:   namespace,
+		Owner:       "Unknown - no recognized ownership labels found",
+		Source:      "unknown",
+		DeployedVia: "partial trace only",
+		Health:      "Unavailable",
+		Risks:       "Not assessed",
+		Drift:       "Unknown",
+		Notes:       []string{note},
+	}
 }
 
 func explainOwner(tool string) string {
@@ -265,6 +339,12 @@ func renderExplainText(summary ExplainSummary) string {
 	fmt.Fprintf(&b, "  Health: %s\n", summary.Health)
 	fmt.Fprintf(&b, "  Risks: %s\n", summary.Risks)
 	fmt.Fprintf(&b, "  Drift: %s\n", summary.Drift)
+	if len(summary.Notes) > 0 {
+		fmt.Fprintf(&b, "  Notes:\n")
+		for _, note := range summary.Notes {
+			fmt.Fprintf(&b, "    - %s\n", note)
+		}
+	}
 	return b.String()
 }
 
@@ -279,5 +359,11 @@ func renderExplainMarkdown(summary ExplainSummary) string {
 	fmt.Fprintf(&b, "- **Health:** %s\n", summary.Health)
 	fmt.Fprintf(&b, "- **Risks:** %s\n", summary.Risks)
 	fmt.Fprintf(&b, "- **Drift:** %s\n", summary.Drift)
+	if len(summary.Notes) > 0 {
+		fmt.Fprintf(&b, "- **Notes:**\n")
+		for _, note := range summary.Notes {
+			fmt.Fprintf(&b, "  - %s\n", note)
+		}
+	}
 	return b.String()
 }
