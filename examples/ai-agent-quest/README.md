@@ -440,6 +440,14 @@ cub changeset list --space myapp-team
 cub unit list --space myapp-team
 ```
 
+If your demo space has no history yet, you can seed synthetic demo ChangeSets explicitly:
+
+```bash
+./examples/scripts/seed-connected-demo-history.sh --space myapp-team --allow-synthetic --apply
+```
+
+Synthetic records are tagged (`demo=true`, `synthetic=true`) and are for demo storytelling only.
+
 And reports:
 
 - "Three changes in the last 7 days."

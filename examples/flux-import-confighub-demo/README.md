@@ -31,6 +31,12 @@ After a `--live` run, verify the demo has active workers/targets and connected w
 ../scripts/verify-connected-demo.sh --space flux-import-demo --renderer fluxrenderer
 ```
 
+Optional (demo storytelling only): seed tagged synthetic ChangeSet history.
+
+```bash
+../scripts/seed-connected-demo-history.sh --space flux-import-demo --allow-synthetic --apply
+```
+
 ## Prerequisites
 
 | Tool | Required for | Install |
