@@ -1,0 +1,84 @@
+{
+  "version": "v2",
+  "generatedAt": "<TIMESTAMP>",
+  "cluster": "kind-dev",
+  "namespace": "prod",
+  "provenance": {
+    "source": "fixture",
+    "deterministic": true,
+    "confidence": "high"
+  },
+  "ownershipSummary": {
+    "flux": 1,
+    "argocd": 1,
+    "helm": 0,
+    "native": 1,
+    "other": 0,
+    "unmanaged": 1
+  },
+  "topRisks": [
+    {
+      "severity": "CRITICAL",
+      "resource": "Deployment/checkout",
+      "namespace": "prod",
+      "message": "missing resource limits"
+    },
+    {
+      "severity": "WARNING",
+      "resource": "Deployment/debug-shell",
+      "namespace": "prod",
+      "message": "no probes configured"
+    },
+    {
+      "severity": "INFO",
+      "resource": "Application/payments",
+      "namespace": "argocd",
+      "message": "sync lag observed"
+    }
+  ],
+  "traceSeeds": [
+    {
+      "kind": "Application",
+      "name": "payments",
+      "namespace": "argocd",
+      "owner": "ArgoCD",
+      "status": "OutOfSync",
+      "confidence": "high",
+      "traceCommand": "cub-scout trace application/payments -n argocd"
+    },
+    {
+      "kind": "Deployment",
+      "name": "checkout",
+      "namespace": "prod",
+      "owner": "Flux",
+      "status": "Ready",
+      "confidence": "high",
+      "traceCommand": "cub-scout trace deployment/checkout -n prod"
+    },
+    {
+      "kind": "Deployment",
+      "name": "debug-shell",
+      "namespace": "prod",
+      "owner": "Native",
+      "status": "NotReady",
+      "confidence": "low",
+      "traceCommand": "cub-scout trace deployment/debug-shell -n prod"
+    }
+  ],
+  "commandEvidence": [
+    {
+      "command": "cub-scout map list --json -n prod",
+      "purpose": "ownership and inventory baseline"
+    },
+    {
+      "command": "cub-scout scan --json -n prod",
+      "purpose": "risk findings and severity summary"
+    },
+    {
+      "command": "cub-scout doctor --format json -n prod",
+      "purpose": "compact health + ownership + risk summary"
+    }
+  ],
+  "truncated": false,
+  "sizeBytes": 2009
+}

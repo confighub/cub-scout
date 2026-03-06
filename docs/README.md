@@ -60,6 +60,7 @@ New to cub-scout? Start here:
 | Using cub-scout from an AI tool | [howto/using-cub-scout-from-ai-tool.md](howto/using-cub-scout-from-ai-tool.md) |
 | Claude capability assistant | [howto/claude-capability-assistant.md](howto/claude-capability-assistant.md) |
 | AI ask-mode safety contract | [howto/ai-ask-mode-contract.md](howto/ai-ask-mode-contract.md) |
+| Context-pack v2 for AI handoffs | [howto/context-pack-v2.md](howto/context-pack-v2.md) |
 
 ---
 
