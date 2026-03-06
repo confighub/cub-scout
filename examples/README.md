@@ -71,6 +71,12 @@ The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against re
 |---------|---------|-------|
 | [graph-export/](graph-export/) | **Topology sharing** | Export graph data as JSON/DOT/SVG/HTML for docs, Slack, and presentations |
 
+### AI Gateway Example
+
+| Example | Pattern | Shows |
+|---------|---------|-------|
+| [mcp-gateway/](mcp-gateway/) | **MCP stdio server** | Serve read-only `map`/`trace`/`scan`/`explain` tools to AI clients |
+
 **Using AI tools?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI reason about cluster state and hit the wall that ConfigHub removes.
 
 **Learning hands-on?** Try the [Puzzle Quest](new-user-puzzle-quest/) — a guided walkthrough from zero to full cluster discovery and ConfigHub import.
