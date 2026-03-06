@@ -34,6 +34,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `discover` | Scout-style workload discovery | v0.5 |
 | `health` | Scout-style health check | v0.5 |
 | `status` | Show connection status and cluster info | v1.0 |
+| `history` | Show connected change history from ConfigHub ChangeSets | v1.4 |
 | `connect` | Quickly configure kube context from server URL or kubeconfig | v1.0 |
 | `setup` | Set up shell completions | v0.19 |
 | `mcp serve` | Serve read-only MCP tools over stdio | v1.4 |
@@ -837,6 +838,43 @@ cub-scout status --json
 Displays ConfigHub connection mode (Offline/Online/Connected), current cluster
 name, kubectl context, and optional worker/space info when the `cub` CLI is
 available.
+
+---
+
+## history
+
+Show connected change history for one resource from ConfigHub ChangeSets.
+
+```bash
+cub-scout history <resource> [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Optional namespace scope |
+| `--since` | Lookback window (examples: `24h`, `7d`, `2w`) |
+| `--format` | Output format: `ascii`, `json`, `md` |
+
+### Examples
+
+```bash
+# Default lookback (7d), ASCII output
+cub-scout history deploy/my-app -n prod
+
+# JSON for automation
+cub-scout history deploy/my-app -n prod --since 24h --format json
+
+# Markdown timeline for tickets/PRs
+cub-scout history deploy/my-app --since 2w --format md
+```
+
+### Connected Mode Notes
+
+- Requires ConfigHub authentication (`cub auth login`).
+- Uses read-only ChangeSet queries under the hood.
+- If no history is found, output clearly notes the resource may not be imported yet.
 
 ---
 
