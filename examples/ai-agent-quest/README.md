@@ -420,8 +420,8 @@ still works.
 # Preview what ConfigHub would structure (still read-only)
 ./cub-scout import --dry-run
 
-# Import (requires confirmation)
-./cub-scout import -y
+# Import + connect workers/targets
+./cub-scout import -y --connect
 ```
 
 ### Step 3 — Ask the same questions again

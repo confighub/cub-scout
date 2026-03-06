@@ -157,8 +157,8 @@ echo ""
 echo -e "  ${CYAN}cub-scout import -n myapp --dry-run${NC}"
 echo -e "  ${DIM}-> Preview import for one namespace${NC}"
 echo ""
-echo -e "  ${CYAN}cub-scout import -y${NC}"
-echo -e "  ${DIM}-> Import without confirmation${NC}"
+echo -e "  ${CYAN}cub-scout import -y --connect${NC}"
+echo -e "  ${DIM}-> Import without confirmation and connect worker/targets${NC}"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
