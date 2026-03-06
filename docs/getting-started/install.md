@@ -27,6 +27,23 @@ sudo mv cub-scout /usr/local/bin/
 curl -LO https://github.com/confighub/cub-scout/releases/latest/download/cub-scout-darwin-arm64.tar.gz
 tar xzf cub-scout-darwin-arm64.tar.gz
 sudo mv cub-scout /usr/local/bin/
+
+# Windows (PowerShell, amd64)
+curl.exe -LO https://github.com/confighub/cub-scout/releases/latest/download/cub-scout-windows-amd64.zip
+tar -xf cub-scout-windows-amd64.zip
+.\cub-scout.exe version
+```
+
+### Go Install
+
+```bash
+go install github.com/confighub/cub-scout/cmd/cub-scout@latest
+```
+
+### Container
+
+```bash
+docker run ghcr.io/confighub/cub-scout:latest version
 ```
 
 ### Build from Source
@@ -36,6 +53,14 @@ git clone https://github.com/confighub/cub-scout.git
 cd cub-scout
 go build -o cub-scout ./cmd/cub-scout
 sudo mv cub-scout /usr/local/bin/
+```
+
+### kubectl krew
+
+After `cub-scout` is published in krew-index:
+
+```bash
+kubectl krew install cub-scout
 ```
 
 ## Prerequisites
