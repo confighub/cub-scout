@@ -1,0 +1,9 @@
+Verdict: BLOCKED_CONFIRMATION
+Mode: connected
+Risk: high
+Verify: ok
+Command: ./cub-scout import -n payments
+DryRunCommand: ./cub-scout import -n payments --dry-run
+RequiresConfirm: true
+AllowedToExecute: false
+NextAction: run dry-run; then rerun with --confirm yes
