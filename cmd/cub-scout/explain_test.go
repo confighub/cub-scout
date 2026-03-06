@@ -1,0 +1,125 @@
+package main
+
+import (
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/confighub/cub-scout/pkg/agent"
+)
+
+func TestBuildExplainSummary_FromTraceResult(t *testing.T) {
+	now := time.Date(2026, 3, 6, 12, 0, 0, 0, time.UTC)
+	result := &agent.TraceResult{
+		Tool: "flux",
+		Object: agent.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "payments-api",
+			Namespace: "prod",
+		},
+		Chain: []agent.ChainLink{
+			{
+				Kind:      "GitRepository",
+				Name:      "platform-config",
+				Namespace: "flux-system",
+				URL:       "https://github.com/acme/platform-config.git",
+				Revision:  "main@sha1:abc1234",
+				Ready:     true,
+				Status:    "Ready",
+			},
+			{
+				Kind:      "Kustomization",
+				Name:      "payments",
+				Namespace: "flux-system",
+				Path:      "./apps/payments",
+				Revision:  "main@sha1:abc1234",
+				Ready:     true,
+				Status:    "Ready",
+			},
+			{
+				Kind:      "Deployment",
+				Name:      "payments-api",
+				Namespace: "prod",
+				Ready:     true,
+				Status:    "Healthy",
+			},
+		},
+		TracedAt: now,
+	}
+
+	summary := buildExplainSummary(result)
+
+	if summary.Owner != "Flux" {
+		t.Fatalf("owner = %q, want Flux", summary.Owner)
+	}
+	if !strings.Contains(summary.Source, "https://github.com/acme/platform-config.git") {
+		t.Fatalf("source missing git URL: %q", summary.Source)
+	}
+	if !strings.Contains(summary.Source, "./apps/payments") {
+		t.Fatalf("source missing kustomize path: %q", summary.Source)
+	}
+	if !strings.Contains(summary.DeployedVia, "GitRepository/platform-config") || !strings.Contains(summary.DeployedVia, "Kustomization/payments") {
+		t.Fatalf("deployed-via chain incomplete: %q", summary.DeployedVia)
+	}
+	if !strings.Contains(summary.Health, "Healthy") {
+		t.Fatalf("health = %q, want Healthy", summary.Health)
+	}
+}
+
+func TestRenderExplainText_ContainsPlainEnglishSections(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/payments-api",
+		Namespace:   "prod",
+		Owner:       "ArgoCD",
+		Source:      "git@github.com:acme/platform.git (path: apps/payments, revision: main@abc1234)",
+		DeployedVia: "Application/payments -> HelmRelease/payments -> Deployment/payments-api",
+		Health:      "Healthy",
+		Risks:       "1 WARNING",
+		Drift:       "None detected",
+	}
+
+	out := renderExplainText(summary)
+
+	required := []string{
+		"Deployment/payments-api in namespace prod:",
+		"Owner: ArgoCD",
+		"Source: git@github.com:acme/platform.git",
+		"Deployed via: Application/payments -> HelmRelease/payments -> Deployment/payments-api",
+		"Health: Healthy",
+		"Risks: 1 WARNING",
+		"Drift: None detected",
+	}
+	for _, s := range required {
+		if !strings.Contains(out, s) {
+			t.Fatalf("expected %q in explain text:\n%s", s, out)
+		}
+	}
+}
+
+func TestRenderExplainMarkdown_ContainsHeadingsAndFields(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/payments-api",
+		Namespace:   "prod",
+		Owner:       "Flux",
+		Source:      "https://github.com/acme/platform-config.git (path: ./apps/payments, revision: main@abc1234)",
+		DeployedVia: "GitRepository/platform-config -> Kustomization/payments -> Deployment/payments-api",
+		Health:      "Healthy",
+		Risks:       "0 findings",
+		Drift:       "None detected",
+	}
+
+	out := renderExplainMarkdown(summary)
+
+	required := []string{
+		"## Explain",
+		"- **Resource:** `Deployment/payments-api`",
+		"- **Namespace:** `prod`",
+		"- **Owner:** Flux",
+		"- **Source:** https://github.com/acme/platform-config.git",
+	}
+	for _, s := range required {
+		if !strings.Contains(out, s) {
+			t.Fatalf("expected %q in explain markdown:\n%s", s, out)
+		}
+	}
+}
