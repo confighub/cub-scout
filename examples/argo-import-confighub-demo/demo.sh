@@ -22,6 +22,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ARNIE_FIXTURES="$SCRIPT_DIR/../import-from-live/fixtures"
 GUESTBOOK_FIXTURES="$SCRIPT_DIR/fixtures"
 CLUSTER_NAME="argo-import-demo"
+ARGOCD_VERSION="v3.3.2"
+ARGOCD_INSTALL_URL="https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml"
 KEEP=false
 LIVE=false
 CONFIGHUB_URL_OVERRIDE=""
@@ -50,6 +52,16 @@ step()    { echo -e "${GREEN}>>${NC} $1"; }
 note()    { echo -e "${DIM}   $1${NC}"; }
 warn()    { echo -e "${YELLOW}!!${NC} $1"; }
 fail()    { echo -e "${RED}!!${NC} $1"; }
+
+guestbook_app_ready() {
+    local app="$1"
+    local sync_status health_status
+
+    sync_status="$(kubectl get application "$app" -n argocd -o jsonpath='{.status.sync.status}' 2>/dev/null || true)"
+    health_status="$(kubectl get application "$app" -n argocd -o jsonpath='{.status.health.status}' 2>/dev/null || true)"
+
+    [[ "$sync_status" == "Synced" && "$health_status" == "Healthy" ]]
+}
 
 cleanup() {
     if [[ -n "$PORT_FORWARD_PID" ]]; then
@@ -138,9 +150,9 @@ step "Cluster ready: kind-$CLUSTER_NAME"
 echo ""
 
 # --- Install real ArgoCD ---
-step "Installing ArgoCD (this takes 2-4 minutes)..."
+step "Installing ArgoCD ${ARGOCD_VERSION} (this takes 2-4 minutes)..."
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side -n argocd -f "$ARGOCD_INSTALL_URL"
 
 step "Waiting for ArgoCD deployments..."
 ARGOCD_READY=true
@@ -195,12 +207,9 @@ echo ""
 step "Waiting for guestbook apps to sync (up to 120s)..."
 GUESTBOOK_SYNCED=false
 for i in $(seq 1 24); do
-    if kubectl get namespace guestbook >/dev/null 2>&1; then
-        DEPLOY_COUNT=$(kubectl get deployments -n guestbook --no-headers 2>/dev/null | wc -l | tr -d ' ')
-        if [[ "$DEPLOY_COUNT" -gt 0 ]]; then
-            GUESTBOOK_SYNCED=true
-            break
-        fi
+    if guestbook_app_ready helm-guestbook && guestbook_app_ready kustomize-guestbook; then
+        GUESTBOOK_SYNCED=true
+        break
     fi
     printf "."
     sleep 5
