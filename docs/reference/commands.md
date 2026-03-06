@@ -876,7 +876,7 @@ Read-only MCP gateway for AI agent tooling.
 
 ### mcp serve
 
-Serve MCP over stdio and expose observation tools (`map`, `trace`, `scan`, `explain`).
+Serve MCP over stdio and expose read-only tools.
 
 ```bash
 cub-scout mcp serve
@@ -884,7 +884,8 @@ cub-scout mcp serve
 
 #### Notes
 
-- Uses existing CLI JSON surfaces internally (`map list --json`, `trace --format json`, etc.).
+- Standalone tools: `map`, `trace`, `scan`, `explain` (via existing cub-scout JSON surfaces).
+- Connected tools (when authenticated to ConfigHub): `confighub_changesets`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - Protocol transport is stdio with `Content-Length` framed JSON-RPC messages.
 

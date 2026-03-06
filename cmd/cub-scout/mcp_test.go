@@ -25,6 +25,29 @@ func TestNewMCPGateway_ToolsIncludeStandaloneSet(t *testing.T) {
 	}
 }
 
+func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
+	gateway := newMCPGatewayWithMode(nil, nil, true)
+	tools := gateway.toolsForList()
+
+	var names []string
+	for _, tool := range tools {
+		names = append(names, tool.Name)
+	}
+
+	want := []string{
+		"confighub_changesets",
+		"confighub_unit_get",
+		"confighub_units",
+		"explain",
+		"map",
+		"scan",
+		"trace",
+	}
+	if !reflect.DeepEqual(names, want) {
+		t.Fatalf("tool names = %v, want %v", names, want)
+	}
+}
+
 func TestMCPGatewayHandleRequest_ToolsList(t *testing.T) {
 	gateway := newMCPGateway(nil)
 	req := mcpRequest{
@@ -141,6 +164,49 @@ func TestMCPGatewayHandleRequest_ToolsCallValidationError(t *testing.T) {
 	}
 	if len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, "resource") {
 		t.Fatalf("unexpected error text: %+v", result.Content)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConnectedChangesets(t *testing.T) {
+	var gotStandaloneArgs []string
+	var gotConnectedArgs []string
+
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			gotStandaloneArgs = append([]string(nil), args...)
+			return `{"standalone":true}`, nil
+		},
+		func(ctx context.Context, args []string) (string, error) {
+			gotConnectedArgs = append([]string(nil), args...)
+			return `{"connected":true}`, nil
+		},
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`11`),
+		Method:  "tools/call",
+		Params: json.RawMessage(`{
+			"name":"confighub_changesets",
+			"arguments":{"space":"platform","where":"Slug LIKE 'release-%'"}
+		}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	if len(gotStandaloneArgs) != 0 {
+		t.Fatalf("standalone runner should not be used, got args %v", gotStandaloneArgs)
+	}
+	wantConnected := []string{"changeset", "list", "--json", "--space", "platform", "--where", "Slug LIKE 'release-%'"}
+	if !reflect.DeepEqual(gotConnectedArgs, wantConnected) {
+		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantConnected)
 	}
 }
 
