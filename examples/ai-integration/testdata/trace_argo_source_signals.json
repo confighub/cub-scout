@@ -1,0 +1,38 @@
+{
+  "object": {
+    "kind": "Deployment",
+    "name": "checkout",
+    "namespace": "checkout"
+  },
+  "chain": [
+    {
+      "kind": "Source",
+      "name": "acme/checkout",
+      "namespace": "argocd",
+      "ready": false,
+      "status": "OutOfSync (reconciledAt: 2026-03-01T12:34:56Z)",
+      "revision": "main",
+      "url": "https://github.com/acme/checkout",
+      "path": "./apps/checkout",
+      "message": "application sync status is OutOfSync; reconciledAt=2026-03-01T12:34:56Z"
+    },
+    {
+      "kind": "Application",
+      "name": "checkout-app",
+      "namespace": "argocd",
+      "ready": false,
+      "status": "OutOfSync / Healthy",
+      "revision": "abc123"
+    },
+    {
+      "kind": "Deployment",
+      "name": "checkout",
+      "namespace": "checkout",
+      "ready": true,
+      "status": "1/1 ready"
+    }
+  ],
+  "fullyManaged": false,
+  "tool": "ArgoCD",
+  "tracedAt": "2026-03-01T12:35:00Z"
+}

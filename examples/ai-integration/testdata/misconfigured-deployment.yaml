@@ -1,0 +1,45 @@
+# Misconfigured deployment with intentional issues for testing.
+# Used for testing scan --file with expected exit code 1.
+#
+# Known issues in this file:
+# 1. CCVE-2025-0244: Probe timeout (15s) exceeds period (10s) - warning
+# 2. CCVE-2025-0248: Missing resource limits - warning
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: misconfigured-app
+  namespace: default
+  labels:
+    app: misconfigured
+  # Included finalizer marker used in scanner fixture scenarios
+  finalizers:
+    - orphan.example.com/cleanup
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: misconfigured
+  template:
+    metadata:
+      labels:
+        app: misconfigured
+    spec:
+      containers:
+        - name: app
+          image: nginx:latest
+          ports:
+            - containerPort: 8080
+          # Probe timeout > period - triggers CCVE-2025-0244 (warning)
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 10

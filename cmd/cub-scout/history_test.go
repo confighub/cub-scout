@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -189,5 +191,90 @@ func withHistoryFlagsForTest() func() {
 		historyFormat = prevFormat
 		historyNamespace = prevNamespace
 		historySince = prevSince
+	}
+}
+
+func TestRunHistory_UsesFixtureJSONWithoutConnection(t *testing.T) {
+	restoreFlags := withHistoryFlagsForTest()
+	defer restoreFlags()
+
+	prevRequire := requireHistoryConnectedFn
+	requireHistoryConnectedFn = func() error { return errHistoryDisconnected }
+	defer func() { requireHistoryConnectedFn = prevRequire }()
+
+	prevFetch := fetchHistoryEntriesFn
+	fetchHistoryEntriesFn = func(ctx context.Context, q historyQuery) ([]historyEntry, error) {
+		t.Fatalf("fetchHistoryEntriesFn should not be called in fixture mode")
+		return nil, nil
+	}
+	defer func() { fetchHistoryEntriesFn = prevFetch }()
+
+	prevNow := historyNowFn
+	historyNowFn = func() time.Time { return time.Date(2026, 3, 6, 12, 0, 0, 0, time.UTC) }
+	defer func() { historyNowFn = prevNow }()
+
+	fixturePath := filepath.Join(t.TempDir(), "changesets.json")
+	fixtureJSON := `[
+	  {
+	    "Slug": "CS-9901",
+	    "CreatedAt": "2026-03-05T09:20:00Z",
+	    "Description": "image: v2.3.1 -> v2.3.2",
+	    "CreatedBy": {"Slug":"release-bot"}
+	  }
+	]`
+	if err := os.WriteFile(fixturePath, []byte(fixtureJSON), 0o644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	t.Setenv("CUB_SCOUT_TEST_HISTORY_JSON", fixturePath)
+
+	historyFormat = "json"
+	historySince = "7d"
+	historyNamespace = "prod"
+
+	cmd := &cobra.Command{}
+	cmd.SetContext(context.Background())
+
+	out := captureStdout(t, func() {
+		if err := runHistory(cmd, []string{"deploy/checkout"}); err != nil {
+			t.Fatalf("runHistory() error = %v", err)
+		}
+	})
+
+	var payload historyResult
+	if err := json.Unmarshal([]byte(out), &payload); err != nil {
+		t.Fatalf("json decode output: %v\n%s", err, out)
+	}
+	if len(payload.Entries) != 1 {
+		t.Fatalf("entries = %d, want 1", len(payload.Entries))
+	}
+	if payload.Entries[0].ChangeSet != "CS-9901" {
+		t.Fatalf("changeset = %q, want CS-9901", payload.Entries[0].ChangeSet)
+	}
+}
+
+func TestRunHistory_FixtureReadError(t *testing.T) {
+	restoreFlags := withHistoryFlagsForTest()
+	defer restoreFlags()
+
+	prevRequire := requireHistoryConnectedFn
+	requireHistoryConnectedFn = func() error { return nil }
+	defer func() { requireHistoryConnectedFn = prevRequire }()
+
+	prevFetch := fetchHistoryEntriesFn
+	fetchHistoryEntriesFn = func(ctx context.Context, q historyQuery) ([]historyEntry, error) {
+		return []historyEntry{}, nil
+	}
+	defer func() { fetchHistoryEntriesFn = prevFetch }()
+
+	t.Setenv("CUB_SCOUT_TEST_HISTORY_JSON", filepath.Join(t.TempDir(), "missing.json"))
+
+	cmd := &cobra.Command{}
+	cmd.SetContext(context.Background())
+	err := runHistory(cmd, []string{"deploy/checkout"})
+	if err == nil {
+		t.Fatal("expected error for missing fixture file")
+	}
+	if !strings.Contains(err.Error(), "read history fixture") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

@@ -1,0 +1,24 @@
+[
+  {
+    "Slug": "CS-9012",
+    "CreatedAt": "2026-03-06T09:15:00Z",
+    "Description": "image: checkout:v2.4.0 -> checkout:v2.4.1",
+    "CreatedBy": {
+      "Slug": "release-bot"
+    }
+  },
+  {
+    "Slug": "CS-9007",
+    "CreatedAt": "2026-03-05T18:40:00Z",
+    "Description": "replicas: 2 -> 3",
+    "CreatedBy": {
+      "Email": "sre-oncall@example.com"
+    }
+  },
+  {
+    "Slug": "CS-8998",
+    "CreatedAt": "2026-03-03T08:05:00Z",
+    "Description": "old change outside 24h window",
+    "CreatedBy": "alex"
+  }
+]

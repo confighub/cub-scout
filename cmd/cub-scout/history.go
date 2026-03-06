@@ -89,10 +89,6 @@ func runHistory(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := requireHistoryConnectedFn(); err != nil {
-		return err
-	}
-
 	query := historyQuery{
 		Resource:  strings.TrimSpace(args[0]),
 		Namespace: strings.TrimSpace(historyNamespace),
@@ -101,7 +97,7 @@ func runHistory(cmd *cobra.Command, args []string) error {
 		Now:       historyNowFn().UTC(),
 	}
 
-	entries, err := fetchHistoryEntriesFn(cmd.Context(), query)
+	entries, err := resolveHistoryEntries(cmd.Context(), query)
 	if err != nil {
 		return err
 	}
@@ -125,6 +121,26 @@ func runHistory(cmd *cobra.Command, args []string) error {
 		fmt.Print(renderHistoryASCII(result))
 		return nil
 	}
+}
+
+func resolveHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry, error) {
+	if fixture := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")); fixture != "" {
+		raw, err := os.ReadFile(fixture)
+		if err != nil {
+			return nil, fmt.Errorf("read history fixture %q: %w", fixture, err)
+		}
+		entries, err := buildHistoryEntriesFromChangeSets(string(raw), q.Now.Add(-q.Window))
+		if err != nil {
+			return nil, fmt.Errorf("parse history fixture %q: %w", fixture, err)
+		}
+		return entries, nil
+	}
+
+	if err := requireHistoryConnectedFn(); err != nil {
+		return nil, err
+	}
+
+	return fetchHistoryEntriesFn(ctx, q)
 }
 
 func requireHistoryConnected() error {

@@ -76,6 +76,7 @@ The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against re
 | Example | Pattern | Shows |
 |---------|---------|-------|
 | [mcp-gateway/](mcp-gateway/) | **MCP stdio server** | Serve read-only `map`/`trace`/`scan`/`explain` tools to AI clients |
+| [ai-integration/](ai-integration/) | **Per-tool AI integrations** | Reproducible Claude/Cursor/Copilot MCP + CLI examples (offline fixtures) |
 
 **Using AI tools?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI reason about cluster state and hit the wall that ConfigHub removes.
 

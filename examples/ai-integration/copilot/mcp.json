@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "cub-scout": {
+      "command": "./cub-scout",
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "cwd": "/path/to/cub-scout"
+    }
+  }
+}
