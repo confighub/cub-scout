@@ -1,0 +1,7 @@
+$ ./cub-scout import --dry-run -n payments
+Connected mode: true
+Scanning namespace payments...
+2026-03-06T19:22:01Z ERROR expected follow-up command "patch-plan" not found
+Observed: import preview completed, but no deterministic patch/upgrade continuation path
+Token seen in stderr: github_pat_demo_redacted_example
+/tmp/cub-scout-ai-session-019/output.log

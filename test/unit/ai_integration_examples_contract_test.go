@@ -12,6 +12,7 @@ func TestAIIntegrationExamplesContract(t *testing.T) {
 		filepath.Join("..", "..", "examples", "ai-integration", "README.md"),
 		filepath.Join("..", "..", "examples", "ai-integration", "run-fixture-session.sh"),
 		filepath.Join("..", "..", "examples", "ai-integration", "testdata", "history_changesets.json"),
+		filepath.Join("..", "..", "examples", "ai-integration", "testdata", "failed-session.transcript.txt"),
 		filepath.Join("..", "..", "examples", "ai-integration", "claude-code", "README.md"),
 		filepath.Join("..", "..", "examples", "ai-integration", "claude-code", "mcp.json"),
 		filepath.Join("..", "..", "examples", "ai-integration", "cursor", "README.md"),
