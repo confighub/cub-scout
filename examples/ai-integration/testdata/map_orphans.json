@@ -1,0 +1,32 @@
+[
+  {
+    "id": "default/temp-test/apps/Deployment/debug-nginx",
+    "clusterName": "default",
+    "namespace": "temp-test",
+    "kind": "Deployment",
+    "name": "debug-nginx",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "status": "Ready"
+  },
+  {
+    "id": "default/kube-system/apps/Deployment/metrics-server",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "Deployment",
+    "name": "metrics-server",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "status": "Ready"
+  },
+  {
+    "id": "default/default//ConfigMap/debug-config",
+    "clusterName": "default",
+    "namespace": "default",
+    "kind": "ConfigMap",
+    "name": "debug-config",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "status": "Ready"
+  }
+]
