@@ -1,0 +1,4 @@
+Change History (last 3650d): deploy/checkout (namespace: prod)
+  2026-03-06 09:15  image: checkout:v2.4.0 -> checkout:v2.4.1  by: release-bot  changeset: CS-9012
+  2026-03-05 18:40  replicas: 2 -> 3  by: sre-oncall@example.com  changeset: CS-9007
+  2026-03-03 08:05  old change outside 24h window  by: alex  changeset: CS-8998

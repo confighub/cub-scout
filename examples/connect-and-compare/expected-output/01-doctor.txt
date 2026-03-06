@@ -1,0 +1,26 @@
+Cluster: kind-connect-demo (namespace: all)
+Resources: 5 total
+
+Ownership:
+  Flux: 3 (60%)
+  ArgoCD: 1 (20%)
+  Helm: 0 (0%)
+  Native: 1 (20%)  <- 1 unmanaged
+
+Health:
+  Healthy: 2
+  Warning: 3
+  Error: 0
+
+Risks: 3 findings (1 CRITICAL, 1 WARNING, 1 INFO)
+Drift: 2 resources drifted from declared state
+
+Top Issues:
+  1. Deployment/checkout (ns: prod) - image tag drifted from approved release [CRITICAL]
+  2. Deployment/worker (ns: prod) - resource limits are missing [WARNING]
+  3. ConfigMap/manual-hotfix (ns: prod) - manual patch detected [INFO]
+
+TRY NEXT:
+  - Review unmanaged resources: cub-scout map orphans
+  - Explain your top issue: cub-scout explain deployment/checkout -n prod
+  - Run the guided path: cub-scout quickstart --yes

@@ -1,0 +1,42 @@
+{
+  "gitRepo": {
+    "type": "single-repo"
+  },
+  "cluster": {
+    "namespace": "api",
+    "model": "hub-appspace",
+    "workloads": [
+      {
+        "kind": "Deployment",
+        "namespace": "api",
+        "name": "api-server",
+        "owner": "Native",
+        "connected": false,
+        "ready": false,
+        "replicas": 0
+      }
+    ],
+    "suggestion": {
+      "appSpace": "api-team",
+      "units": [
+        {
+          "slug": "api",
+          "app": "api",
+          "variant": "default",
+          "workloads": [
+            "api/api-server"
+          ]
+        }
+      ]
+    }
+  },
+  "alignment": [
+    {
+      "app": "api-server",
+      "status": "cluster-only",
+      "workloads": [
+        "api/api-server"
+      ]
+    }
+  ]
+}
