@@ -14,6 +14,26 @@ Fail-fast checks for `--live` demo runs (workers, targets, connected workloads):
 ./verify-connected-demo.sh --space flux-import-demo --renderer fluxrenderer
 ```
 
+## Synthetic History Seed (Demo Only)
+
+Create tagged synthetic ChangeSets for storytelling demos.
+
+```bash
+# Dry run (default)
+./seed-connected-demo-history.sh --space argo-import-demo --allow-synthetic
+
+# Apply (explicit)
+./seed-connected-demo-history.sh --space argo-import-demo --allow-synthetic --apply
+```
+
+Safety contract:
+- Requires `--allow-synthetic`.
+- Synthetic records are tagged with:
+  - `demo=true`
+  - `synthetic=true`
+  - `source=cub-scout-demo-seed`
+- Never run against production spaces.
+
 ## k9s Plugin
 
 Add map/scan commands to k9s:
