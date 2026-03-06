@@ -6,6 +6,7 @@
 #   2) At least one Kubernetes target in the given space
 #   3) At least one renderer target (argocdrenderer/fluxrenderer, or generic renderer)
 #   4) Connected workload count from `cub-scout import --dry-run --json`
+#      (labels + existing unit link-back in the target App Space)
 #
 # Usage:
 #   examples/scripts/verify-connected-demo.sh --space argo-import-demo --renderer argocdrenderer

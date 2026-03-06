@@ -36,6 +36,9 @@ var (
 	importFromBundle string
 )
 
+var listUnitSlugsForSpace = fetchUnitSlugsForSpace
+var labelWorkloadForImport = labelWorkload
+
 type cubTargetRef struct {
 	Slug         string
 	ProviderType string
@@ -1252,7 +1255,10 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 	// Index workloads
 	workloadIndex := make(map[string]WorkloadInfo)
 	for _, w := range workloads {
-		key := fmt.Sprintf("%s/%s", w.Namespace, w.Name)
+		key := canonicalWorkloadRef(fmt.Sprintf("%s/%s", w.Namespace, w.Name))
+		if key == "" {
+			continue
+		}
 		workloadIndex[key] = w
 	}
 
@@ -1296,7 +1302,8 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 		}
 
 		// Get first workload's manifest
-		w, ok := workloadIndex[unit.Workloads[0]]
+		workloadRef := canonicalWorkloadRef(unit.Workloads[0])
+		w, ok := workloadIndex[workloadRef]
 		if !ok {
 			fmt.Println("✗ (workload not found)")
 			if logger != nil {
@@ -1335,6 +1342,11 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 			logger.Log("  OK: created with labels %v", labels)
 		}
 		created++
+
+		labelFailures := linkUnitWorkloadsToCluster(unit, workloadIndex, labelWorkloadForImport, logger)
+		if labelFailures > 0 {
+			fmt.Printf("  ! warning: %d workload link(s) failed for unit %s\n", labelFailures, unit.Slug)
+		}
 	}
 
 	fmt.Println()
@@ -1660,9 +1672,37 @@ func outputEmptyJSON() error {
 	return enc.Encode(result)
 }
 
+func linkUnitWorkloadsToCluster(unit UnitProposal, workloadIndex map[string]WorkloadInfo, labelFn func(kind, namespace, name, unitSlug string) error, logger *ImportLogger) int {
+	if len(unit.Workloads) == 0 {
+		return 0
+	}
+
+	labelFailures := 0
+	for _, ref := range unit.Workloads {
+		workloadRef := canonicalWorkloadRef(ref)
+		workload, ok := workloadIndex[workloadRef]
+		if !ok {
+			labelFailures++
+			if logger != nil {
+				logger.Log("  WARN: label skip, workload ref not found: %s", ref)
+			}
+			continue
+		}
+		if err := labelFn(workload.Kind, workload.Namespace, workload.Name, unit.Slug); err != nil {
+			labelFailures++
+			if logger != nil {
+				logger.Log("  WARN: label workload failed %s/%s (%s): %v", workload.Namespace, workload.Name, unit.Slug, err)
+			}
+		}
+	}
+	return labelFailures
+}
+
 func outputProposalJSON(proposal *FullProposal, workloads []WorkloadInfo, namespaces []string) error {
-	wJSON := make([]WorkloadJSON, 0, len(workloads))
-	for _, w := range workloads {
+	resolvedWorkloads := resolveConnectedWorkloadsFromProposal(proposal, workloads)
+
+	wJSON := make([]WorkloadJSON, 0, len(resolvedWorkloads))
+	for _, w := range resolvedWorkloads {
 		wJSON = append(wJSON, WorkloadJSON{
 			Kind:              w.Kind,
 			Namespace:         w.Namespace,
@@ -1688,6 +1728,165 @@ func outputProposalJSON(proposal *FullProposal, workloads []WorkloadInfo, namesp
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(result)
+}
+
+func resolveConnectedWorkloadsFromProposal(proposal *FullProposal, workloads []WorkloadInfo) []WorkloadInfo {
+	if proposal == nil || strings.TrimSpace(proposal.AppSpace) == "" || len(proposal.Units) == 0 || len(workloads) == 0 {
+		return workloads
+	}
+
+	needsFallback := false
+	for _, w := range workloads {
+		if strings.TrimSpace(w.UnitSlug) == "" {
+			needsFallback = true
+			break
+		}
+	}
+	if !needsFallback {
+		return workloads
+	}
+
+	existingUnitSlugs, err := listUnitSlugsForSpace(proposal.AppSpace)
+	if err != nil || len(existingUnitSlugs) == 0 {
+		return workloads
+	}
+
+	workloadToUnit := make(map[string]string)
+	for _, unit := range proposal.Units {
+		if !existingUnitSlugs[unit.Slug] {
+			continue
+		}
+		for _, ref := range unit.Workloads {
+			key := canonicalWorkloadRef(ref)
+			if key == "" {
+				continue
+			}
+			if _, exists := workloadToUnit[key]; !exists {
+				workloadToUnit[key] = unit.Slug
+			}
+		}
+	}
+	if len(workloadToUnit) == 0 {
+		return workloads
+	}
+
+	updated := make([]WorkloadInfo, len(workloads))
+	copy(updated, workloads)
+	for i := range updated {
+		if strings.TrimSpace(updated[i].UnitSlug) != "" {
+			continue
+		}
+		key := canonicalWorkloadRef(fmt.Sprintf("%s/%s", updated[i].Namespace, updated[i].Name))
+		if key == "" {
+			continue
+		}
+		if slug := workloadToUnit[key]; slug != "" {
+			updated[i].UnitSlug = slug
+		}
+	}
+
+	return updated
+}
+
+func fetchUnitSlugsForSpace(space string) (map[string]bool, error) {
+	space = strings.TrimSpace(space)
+	if space == "" {
+		return map[string]bool{}, nil
+	}
+
+	cmd := exec.Command("cub", "unit", "list", "--space", space, "--json", "--quiet")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	return parseUnitSlugsFromListJSON(output)
+}
+
+func parseUnitSlugsFromListJSON(raw []byte) (map[string]bool, error) {
+	var decoded interface{}
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		return nil, err
+	}
+
+	entries := extractUnitListEntries(decoded)
+	slugs := make(map[string]bool)
+	for _, entry := range entries {
+		if slug := extractUnitSlug(entry); slug != "" {
+			slugs[slug] = true
+		}
+	}
+	return slugs, nil
+}
+
+func extractUnitListEntries(decoded interface{}) []interface{} {
+	switch typed := decoded.(type) {
+	case []interface{}:
+		return typed
+	case map[string]interface{}:
+		for _, key := range []string{"units", "Units", "items", "Items", "data", "Data"} {
+			if items, ok := typed[key].([]interface{}); ok {
+				return items
+			}
+		}
+		return []interface{}{typed}
+	default:
+		return nil
+	}
+}
+
+func extractUnitSlug(entry interface{}) string {
+	m, ok := entry.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	if unit, ok := m["Unit"].(map[string]interface{}); ok {
+		if slug := readUnitSlug(unit); slug != "" {
+			return slug
+		}
+	}
+	if unit, ok := m["unit"].(map[string]interface{}); ok {
+		if slug := readUnitSlug(unit); slug != "" {
+			return slug
+		}
+	}
+
+	return readUnitSlug(m)
+}
+
+func readUnitSlug(m map[string]interface{}) string {
+	for _, key := range []string{"Slug", "slug"} {
+		if value, ok := m[key].(string); ok {
+			value = strings.TrimSpace(value)
+			if value != "" {
+				return value
+			}
+		}
+	}
+	return ""
+}
+
+func canonicalWorkloadRef(ref string) string {
+	ref = strings.TrimSpace(ref)
+	if ref == "" {
+		return ""
+	}
+
+	parts := strings.Split(ref, "/")
+	switch len(parts) {
+	case 2:
+		if parts[0] == "" || parts[1] == "" {
+			return ""
+		}
+		return parts[0] + "/" + parts[1]
+	case 3:
+		if parts[1] == "" || parts[2] == "" {
+			return ""
+		}
+		return parts[1] + "/" + parts[2]
+	default:
+		return ""
+	}
 }
 
 func buildImportEvidenceJSON() importEvidenceJSON {

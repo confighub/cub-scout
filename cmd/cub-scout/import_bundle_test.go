@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -335,6 +336,172 @@ func TestOutputProposalJSON_ClusterEvidenceSource(t *testing.T) {
 	}
 	if result.Evidence.Source != "cluster" {
 		t.Fatalf("evidence.source = %q, want cluster", result.Evidence.Source)
+	}
+}
+
+func TestOutputProposalJSON_ConnectedFallbackFromExistingUnits(t *testing.T) {
+	restore := setImportFlagState(importFlagState{
+		fromBundle: "",
+		noLog:      true,
+	})
+	defer restore()
+
+	prevLookup := listUnitSlugsForSpace
+	listUnitSlugsForSpace = func(space string) (map[string]bool, error) {
+		if space != "orders-team" {
+			t.Fatalf("space lookup = %q, want orders-team", space)
+		}
+		return map[string]bool{
+			"orders-api": true,
+		}, nil
+	}
+	defer func() {
+		listUnitSlugsForSpace = prevLookup
+	}()
+
+	proposal := &FullProposal{
+		AppSpace: "orders-team",
+		Units: []UnitProposal{
+			{
+				Slug:      "orders-api",
+				Workloads: []string{"Deployment/orders/orders-api"},
+			},
+		},
+	}
+	workloads := []WorkloadInfo{
+		{
+			Kind:      "Deployment",
+			Namespace: "orders",
+			Name:      "orders-api",
+			Owner:     "Native",
+		},
+	}
+
+	output := captureStdout(t, func() {
+		if err := outputProposalJSON(proposal, workloads, []string{"orders"}); err != nil {
+			t.Fatalf("outputProposalJSON() error = %v", err)
+		}
+	})
+
+	var result struct {
+		Workloads []WorkloadJSON `json:"workloads"`
+	}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("parse JSON: %v\n%s", err, output)
+	}
+	if len(result.Workloads) != 1 {
+		t.Fatalf("len(workloads) = %d, want 1", len(result.Workloads))
+	}
+	if !result.Workloads[0].Connected {
+		t.Fatal("workloads[0].connected = false, want true")
+	}
+	if result.Workloads[0].UnitSlug != "orders-api" {
+		t.Fatalf("workloads[0].unitSlug = %q, want orders-api", result.Workloads[0].UnitSlug)
+	}
+}
+
+func TestCanonicalWorkloadRef(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{name: "namespace/name", in: "payments/api", want: "payments/api"},
+		{name: "kind/namespace/name", in: "Deployment/payments/api", want: "payments/api"},
+		{name: "empty", in: "", want: ""},
+		{name: "invalid", in: "payments", want: ""},
+		{name: "invalid-empty-segment", in: "Deployment//api", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := canonicalWorkloadRef(tt.in)
+			if got != tt.want {
+				t.Fatalf("canonicalWorkloadRef(%q) = %q, want %q", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseUnitSlugsFromListJSON(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want []string
+	}{
+		{
+			name: "array with Unit wrapper",
+			raw: `[
+				{"Unit":{"Slug":"api-dev"}},
+				{"Unit":{"Slug":"worker-dev"}}
+			]`,
+			want: []string{"api-dev", "worker-dev"},
+		},
+		{
+			name: "top-level units key",
+			raw: `{
+				"units": [
+					{"unit":{"slug":"api-prod"}},
+					{"slug":"worker-prod"}
+				]
+			}`,
+			want: []string{"api-prod", "worker-prod"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseUnitSlugsFromListJSON([]byte(tt.raw))
+			if err != nil {
+				t.Fatalf("parseUnitSlugsFromListJSON() error = %v", err)
+			}
+			for _, slug := range tt.want {
+				if !got[slug] {
+					t.Fatalf("expected slug %q in %v", slug, got)
+				}
+			}
+		})
+	}
+}
+
+func TestLinkUnitWorkloadsToCluster(t *testing.T) {
+	unit := UnitProposal{
+		Slug:      "orders-api",
+		Workloads: []string{"orders/api", "Deployment/orders/worker", "bad-ref"},
+	}
+	workloadIndex := map[string]WorkloadInfo{
+		"orders/api": {
+			Kind:      "Deployment",
+			Namespace: "orders",
+			Name:      "api",
+		},
+		"orders/worker": {
+			Kind:      "Deployment",
+			Namespace: "orders",
+			Name:      "worker",
+		},
+	}
+
+	var calls []string
+	failures := linkUnitWorkloadsToCluster(unit, workloadIndex, func(kind, namespace, name, unitSlug string) error {
+		calls = append(calls, fmt.Sprintf("%s/%s/%s->%s", kind, namespace, name, unitSlug))
+		if name == "worker" {
+			return fmt.Errorf("simulated label failure")
+		}
+		return nil
+	}, nil)
+
+	if failures != 2 {
+		t.Fatalf("link failures = %d, want 2", failures)
+	}
+	if len(calls) != 2 {
+		t.Fatalf("label call count = %d, want 2", len(calls))
+	}
+	if calls[0] != "Deployment/orders/api->orders-api" {
+		t.Fatalf("first label call = %q, want Deployment/orders/api->orders-api", calls[0])
+	}
+	if calls[1] != "Deployment/orders/worker->orders-api" {
+		t.Fatalf("second label call = %q, want Deployment/orders/worker->orders-api", calls[1])
 	}
 }
 

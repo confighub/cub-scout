@@ -712,6 +712,7 @@ cub-scout import --from-bundle ./debug-bundle --dry-run --json
 `import --json` output includes an `evidence` block:
 - `evidence.source`: `cluster` or `bundle`
 - `evidence.bundlePath`: set when source is `bundle`
+- `workloads[].connected`: true when the workload is already linked by `confighub.com/UnitSlug` or when a proposed unit slug already exists in the target App Space.
 
 ---
 
