@@ -20,8 +20,12 @@ in every export to enable consumers to verify compatibility.
 ## Export Format
 
 ```bash
-cub-scout graph export --json
+cub-scout graph export --format json
 ```
+
+`json` is the canonical contract surface (`graph.v1`). Visual renderings
+(`--format dot|svg|html`) are shareability formats layered on top of the same
+graph data and do not change the `graph.v1` schema contract.
 
 ### Top-Level Fields
 
@@ -95,7 +99,7 @@ For testing, set `CUB_SCOUT_TEST_TIME` environment variable to override
 `generated_at` with a fixed timestamp:
 
 ```bash
-CUB_SCOUT_TEST_TIME=2026-01-01T00:00:00Z cub-scout graph export --json
+CUB_SCOUT_TEST_TIME=2026-01-01T00:00:00Z cub-scout graph export --format json
 ```
 
 ---

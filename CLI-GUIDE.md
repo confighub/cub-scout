@@ -1650,8 +1650,14 @@ Resource graph operations for exploring cluster relationships.
 # Export resource graph as JSON
 ./cub-scout graph export
 
-# Export with relations (owns, selects, mounts, references)
-./cub-scout graph export --relations
+# Export Graphviz DOT for docs/tooling
+./cub-scout graph export --format dot --output graph.dot
+
+# Export embeddable SVG
+./cub-scout graph export --format svg --output graph.svg
+
+# Export self-contained interactive HTML
+./cub-scout graph export --format html --output graph.html
 
 # Explain a specific resource's relationships
 ./cub-scout graph explain deploy/nginx -n default
@@ -1660,7 +1666,7 @@ Resource graph operations for exploring cluster relationships.
 **Subcommands:**
 | Command | Description |
 |---------|-------------|
-| `export` | Export resource graph as JSON |
+| `export` | Export resource graph as JSON/DOT/SVG/HTML |
 | `explain` | Explain a resource's graph relationships |
 
 **Related commands:** `snapshot`, `tree`

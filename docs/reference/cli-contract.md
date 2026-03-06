@@ -49,7 +49,7 @@ Human-friendly JSON contract index: [json-contracts.md](json-contracts.md)
 | `cub-scout trace` | Trace resource to Git source | v0.5 |
 | `cub-scout scan` | Scan for risk issues and issues | v0.5 |
 | `cub-scout scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
-| `cub-scout graph export` | Export resource graph as JSON | v0.6 |
+| `cub-scout graph export` | Export resource graph as JSON/DOT/SVG/HTML | v0.6 |
 | `cub-scout graph explain` | Explain resource relationships | v0.6 |
 | `cub-scout patterns list` | List registered patterns | v0.7 |
 | `cub-scout patterns detect` | Run pattern detection | v0.7 |

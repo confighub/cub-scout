@@ -65,6 +65,12 @@ Worked examples showing how cub-scout discovers workloads and proposes ConfigHub
 
 The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against real kind clusters. The others use static fixtures (no live cluster needed) and include expected JSON output for validation.
 
+### Visualization Example
+
+| Example | Pattern | Shows |
+|---------|---------|-------|
+| [graph-export/](graph-export/) | **Topology sharing** | Export graph data as JSON/DOT/SVG/HTML for docs, Slack, and presentations |
+
 **Using AI tools?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI reason about cluster state and hit the wall that ConfigHub removes.
 
 **Learning hands-on?** Try the [Puzzle Quest](new-user-puzzle-quest/) — a guided walkthrough from zero to full cluster discovery and ConfigHub import.
