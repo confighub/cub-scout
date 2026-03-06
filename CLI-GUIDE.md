@@ -30,6 +30,7 @@ The table below reflects the current `cub-scout --help` output.
 | `map` | Interactive map of resources and ownership |
 | `parse-repo` | Parse a GitOps repository structure |
 | `patterns` | Pattern detection engine |
+| `quickstart` | Guided first-run tour across doctor, explain, ownership, and scan |
 | `remedy` | Execute remediation for risk issue findings |
 | `scan` | Scan for risk issues and stuck states |
 | `setup` | Set up shell completions and configuration |
@@ -61,6 +62,30 @@ The table below reflects the current `cub-scout --help` output.
 | `--kubeconfig` | Destination kubeconfig path |
 | `--skip-verify` | Skip API connectivity check |
 | `--map` | Launch `cub-scout map` immediately |
+
+---
+
+## `quickstart` — Guided First-Run Tour
+
+**What it does:** Runs a short wizard over your current cluster context and surfaces immediate value in one flow: doctor summary, explain, ownership snapshot, top finding, and next steps.
+
+```bash
+./cub-scout quickstart
+./cub-scout quickstart --yes
+./cub-scout quickstart --namespace production --top-finding 1
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-y, --yes` | Non-interactive mode (no pause prompts) |
+| `-n, --namespace` | Scope doctor + finding collection to one namespace |
+| `--top-finding` | 1-based finding index to highlight after severity sort |
+
+**Graceful degradation behavior:**
+- No cluster connectivity: wizard prints fallback guidance for example bundle mode.
+- Empty cluster: doctor/ownership steps still run and explain no representative workload.
+- No connected context: connected-mode preview step is skipped.
 
 ---
 

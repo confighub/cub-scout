@@ -31,6 +31,7 @@ var rootCmd = &cobra.Command{
 Offline-first, deterministic, read-only cluster explorer for Kubernetes and GitOps.
 
 POPULAR COMMANDS
+  quickstart       Guided first-run tour across doctor/explain/ownership/scan
   map              Interactive TUI dashboard — explore cluster visually
   map list         List resources with ownership (scriptable, supports --json)
   tree             Hierarchical views: runtime, ownership, git, composition
@@ -64,6 +65,7 @@ Environment Variables:
 		fmt.Println("cub-scout - explore and map GitOps in your clusters")
 		fmt.Println()
 		fmt.Println("Quick start:")
+		fmt.Println("  cub-scout quickstart       Guided first-run tour")
 		fmt.Println("  cub-scout map              Interactive TUI (press ? for help)")
 		fmt.Println("  cub-scout tree ownership   See resources by GitOps owner")
 		fmt.Println("  cub-scout trace deploy/x   Trace a resource to Git")
