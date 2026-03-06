@@ -1,0 +1,56 @@
+{
+  "cluster": "kind-dev",
+  "namespace": "prod",
+  "entries": [
+    {
+      "id": "default/prod/apps/Deployment/checkout",
+      "clusterName": "kind-dev",
+      "namespace": "prod",
+      "kind": "Deployment",
+      "name": "checkout",
+      "apiVersion": "apps/v1",
+      "owner": "Flux",
+      "status": "Ready"
+    },
+    {
+      "id": "default/prod/apps/Deployment/debug-shell",
+      "clusterName": "kind-dev",
+      "namespace": "prod",
+      "kind": "Deployment",
+      "name": "debug-shell",
+      "apiVersion": "apps/v1",
+      "owner": "Native",
+      "status": "NotReady"
+    },
+    {
+      "id": "default/argocd/argoproj.io/Application/payments",
+      "clusterName": "kind-dev",
+      "namespace": "argocd",
+      "kind": "Application",
+      "name": "payments",
+      "apiVersion": "argoproj.io/v1alpha1",
+      "owner": "ArgoCD",
+      "status": "OutOfSync"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "critical",
+      "resource": "Deployment/checkout",
+      "namespace": "prod",
+      "message": "missing resource limits"
+    },
+    {
+      "severity": "warning",
+      "resource": "Deployment/debug-shell",
+      "namespace": "prod",
+      "message": "no probes configured"
+    },
+    {
+      "severity": "info",
+      "resource": "Application/payments",
+      "namespace": "argocd",
+      "message": "sync lag observed"
+    }
+  ]
+}
