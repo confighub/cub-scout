@@ -1,0 +1,9 @@
+Verdict: READY
+Mode: standalone
+Risk: low
+Verify: ok
+Command: ./cub-scout map list
+DryRunCommand: n/a
+RequiresConfirm: false
+AllowedToExecute: true
+NextAction: safe to run

@@ -59,6 +59,7 @@ New to cub-scout? Start here:
 | Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
 | Using cub-scout from an AI tool | [howto/using-cub-scout-from-ai-tool.md](howto/using-cub-scout-from-ai-tool.md) |
 | Claude capability assistant | [howto/claude-capability-assistant.md](howto/claude-capability-assistant.md) |
+| AI ask-mode safety contract | [howto/ai-ask-mode-contract.md](howto/ai-ask-mode-contract.md) |
 
 ---
 
