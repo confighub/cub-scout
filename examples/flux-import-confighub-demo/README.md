@@ -16,6 +16,9 @@ outside Flux's scope.
 # Full pipeline including ConfigHub import (~6 min, requires cub auth)
 ./demo.sh --live
 
+# Full pipeline + seeded synthetic history (demo storytelling)
+./demo.sh --live --seed-history
+
 # Keep cluster running for interactive exploration
 ./demo.sh --keep
 
@@ -36,6 +39,10 @@ Optional (demo storytelling only): seed tagged synthetic ChangeSet history.
 ```bash
 ../scripts/seed-connected-demo-history.sh --space flux-import-demo --allow-synthetic --apply
 ```
+
+When `--keep` is used with `--live`, the demo leaves the discovery worker
+running and prints a `demo-worker-lifecycle.sh stop --pid-file ...` command so
+connected state is preserved for extended sessions.
 
 ## Prerequisites
 

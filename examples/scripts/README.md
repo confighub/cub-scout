@@ -14,6 +14,26 @@ Fail-fast checks for `--live` demo runs (workers, targets, connected workloads):
 ./verify-connected-demo.sh --space flux-import-demo --renderer fluxrenderer
 ```
 
+## Demo Worker Lifecycle
+
+Manage detached discovery workers for long-running `--live --keep` demos:
+
+```bash
+# Start detached discovery worker
+./demo-worker-lifecycle.sh start \
+  --space argo-import-demo \
+  --worker discovery-worker \
+  --target Kubernetes \
+  --pid-file /tmp/cub-scout-demo-workers/argo-import-demo-discovery-worker.pid \
+  --log-file /tmp/cub-scout-demo-workers/argo-import-demo-discovery-worker.log
+
+# Keep running during cleanup
+./demo-worker-lifecycle.sh cleanup --pid-file /tmp/cub-scout-demo-workers/argo-import-demo-discovery-worker.pid --keep
+
+# Stop explicitly when done
+./demo-worker-lifecycle.sh stop --pid-file /tmp/cub-scout-demo-workers/argo-import-demo-discovery-worker.pid
+```
+
 ## Synthetic History Seed (Demo Only)
 
 Create tagged synthetic ChangeSets for storytelling demos.
