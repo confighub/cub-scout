@@ -362,7 +362,7 @@ jq '.workloads[] | {name, namespace, owner, connected}' /tmp/cub-import-proposal
   across dev/staging/prod — that tracks").
 - At least one label mapping to question or note.
 - Confirm `(dry-run mode - no changes made)` appears in the ASCII output.
-- All workloads should show `"connected": false` — nothing is imported yet.
+- On a fresh cluster, workloads should usually show `"connected": false`; if this space was already imported, connected workloads may already appear as `true`.
 
 ### Success condition
 

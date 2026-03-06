@@ -151,9 +151,11 @@ Rollback is safe: import creates ConfigHub state only — it does not modify wor
 ## Notes
 
 - `cub-scout import --json` is for proposal automation and GUI workflows (`evidence.source` shows `cluster` vs `bundle`).
+- `workloads[].connected` in `--json` is computed from live cluster labels and a same-space unit lookup, so reruns can stay connected even before labels are re-read.
 - `cub-scout import --wizard` runs the interactive TUI wizard.
 - `cub-scout import --from-bundle <path>` uses bundle facts instead of live cluster discovery.
 - `cub-scout import` now performs connected delegation for Argo/Flux when available, then imports leftovers.
+- Snapshot-imported workloads are linked back with `confighub.com/UnitSlug=<unit-slug>` labels.
 - This path prioritizes predictable migration over fast migration.
 
 ## Repeatable Delegation Check
