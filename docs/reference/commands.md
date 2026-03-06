@@ -36,7 +36,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `status` | Show connection status and cluster info | v1.0 |
 | `connect` | Quickly configure kube context from server URL or kubeconfig | v1.0 |
 | `setup` | Set up shell completions | v0.19 |
-| `graph export` | Export resource graph as JSON | v0.6 |
+| `graph export` | Export resource graph as JSON/DOT/SVG/HTML | v0.6 |
 | `graph explain` | Explain a resource's graph relationships | v0.6 |
 | `patterns list` | List registered patterns | v0.7 |
 | `patterns detect` | Run pattern detection | v0.7 |
@@ -874,7 +874,7 @@ Resource graph operations for exploring cluster relationships.
 
 ### graph export
 
-Export the resource graph as deterministic JSON.
+Export the resource graph as deterministic JSON, DOT, SVG, or HTML.
 
 ```bash
 cub-scout graph export [flags]
@@ -884,7 +884,10 @@ cub-scout graph export [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--json` | Output as JSON (default, only format supported) |
+| `--format` | Output format: `json` (default), `dot`, `svg`, `html` |
+| `-o, --output` | Write output to a file instead of stdout |
+| `--max-nodes` | Max nodes for visual formats (`dot`/`svg`/`html`), `0` = unlimited |
+| `--json` | Deprecated alias for `--format json` |
 | `-n, --namespace` | Namespace to collect (empty = all namespaces) |
 | `--empty` | Output empty graph (skip cluster collection) |
 
@@ -901,6 +904,19 @@ cub-scout graph export [flags]
 ```
 
 See [Graph Contract Reference](graph-contract.md) for full schema documentation.
+
+#### Visual Export Examples
+
+```bash
+# Graphviz DOT for docs or Graphviz tooling
+cub-scout graph export --format dot > graph.dot
+
+# Static SVG for docs/wiki embeds
+cub-scout graph export --format svg --output graph.svg
+
+# Self-contained interactive HTML for sharing
+cub-scout graph export --format html --output graph.html
+```
 
 ### graph explain
 

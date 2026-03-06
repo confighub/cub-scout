@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/confighub/cub-scout/internal/graph"
@@ -19,13 +20,13 @@ var graphCmd = &cobra.Command{
 This is a v0.6 contract surface. It does not modify any v0.5 contracts.
 
 Available subcommands:
-  export    Export the resource graph as JSON`,
+  export    Export the resource graph as JSON, DOT, SVG, or HTML`,
 }
 
 var graphExportCmd = &cobra.Command{
 	Use:   "export",
-	Short: "Export resource graph as JSON",
-	Long: `Export the resource graph as deterministic JSON.
+	Short: "Export resource graph",
+	Long: `Export the resource graph in deterministic formats.
 
 The output includes:
   - schema_version: Graph schema version (graph.v1)
@@ -34,12 +35,19 @@ The output includes:
   - nodes: Resources in the graph
   - edges: Relationships with evidence
 
-Output is deterministic: same input produces identical output.`,
+Supported formats:
+  - json (default): machine-readable graph payload
+  - dot: Graphviz DOT
+  - svg: embeddable static visual
+  - html: self-contained interactive visual`,
 	RunE: runGraphExport,
 }
 
 var (
 	graphExportJSON      bool
+	graphExportFormat    string
+	graphExportOutput    string
+	graphExportMaxNodes  int
 	graphExportNamespace string
 	graphExportEmpty     bool
 )
@@ -48,7 +56,11 @@ func init() {
 	rootCmd.AddCommand(graphCmd)
 	graphCmd.AddCommand(graphExportCmd)
 
-	graphExportCmd.Flags().BoolVar(&graphExportJSON, "json", true, "Output as JSON (default, only format supported)")
+	graphExportCmd.Flags().BoolVar(&graphExportJSON, "json", false, "DEPRECATED: use --format json")
+	_ = graphExportCmd.Flags().MarkDeprecated("json", "use --format json")
+	graphExportCmd.Flags().StringVar(&graphExportFormat, "format", "json", "Output format: json|dot|svg|html")
+	graphExportCmd.Flags().StringVarP(&graphExportOutput, "output", "o", "", "Write output to file (default: stdout)")
+	graphExportCmd.Flags().IntVar(&graphExportMaxNodes, "max-nodes", 300, "Maximum nodes in visual formats (0 = unlimited)")
 	graphExportCmd.Flags().StringVarP(&graphExportNamespace, "namespace", "n", "", "Namespace to collect (empty = all namespaces)")
 	graphExportCmd.Flags().BoolVar(&graphExportEmpty, "empty", false, "Output empty graph (skip cluster collection)")
 }
@@ -91,10 +103,26 @@ func runGraphExport(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Export
-	data, err := g.Export()
+	if graphExportMaxNodes < 0 {
+		return fmt.Errorf("--max-nodes must be >= 0")
+	}
+
+	format := strings.ToLower(strings.TrimSpace(graphExportFormat))
+	if graphExportJSON {
+		format = "json"
+	}
+
+	data, err := renderGraphOutput(g, format, graphExportMaxNodes)
 	if err != nil {
 		return fmt.Errorf("failed to export graph: %w", err)
+	}
+
+	if outputPath := strings.TrimSpace(graphExportOutput); outputPath != "" {
+		if err := os.WriteFile(outputPath, data, 0644); err != nil {
+			return fmt.Errorf("write output file: %w", err)
+		}
+		fmt.Fprintf(os.Stderr, "Wrote graph export (%s) to %s\n", format, outputPath)
+		return nil
 	}
 
 	fmt.Println(string(data))
