@@ -1,0 +1,31 @@
+{
+  "cluster": "kind-connect-demo",
+  "namespace": "all",
+  "entries": [
+    {"kind": "Deployment", "name": "checkout", "namespace": "prod", "owner": "Flux", "status": "Ready"},
+    {"kind": "Service", "name": "checkout", "namespace": "prod", "owner": "Flux", "status": "Ready"},
+    {"kind": "Deployment", "name": "worker", "namespace": "prod", "owner": "Flux", "status": "Drifted"},
+    {"kind": "ConfigMap", "name": "manual-hotfix", "namespace": "prod", "owner": "Native", "status": "Pending"},
+    {"kind": "Application", "name": "checkout", "namespace": "argocd", "owner": "ArgoCD", "status": "NotReady"}
+  ],
+  "findings": [
+    {
+      "severity": "critical",
+      "resource": "Deployment/checkout",
+      "namespace": "prod",
+      "message": "image tag drifted from approved release"
+    },
+    {
+      "severity": "warning",
+      "resource": "Deployment/worker",
+      "namespace": "prod",
+      "message": "resource limits are missing"
+    },
+    {
+      "severity": "info",
+      "resource": "ConfigMap/manual-hotfix",
+      "namespace": "prod",
+      "message": "manual patch detected"
+    }
+  ]
+}

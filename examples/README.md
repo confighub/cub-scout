@@ -77,6 +77,7 @@ The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against re
 |---------|---------|-------|
 | [mcp-gateway/](mcp-gateway/) | **MCP stdio server** | Serve read-only `map`/`trace`/`scan`/`explain` tools to AI clients |
 | [ai-integration/](ai-integration/) | **Per-tool AI integrations** | Reproducible Claude/Cursor/Copilot MCP + CLI examples (offline fixtures) |
+| [connect-and-compare/](connect-and-compare/) | **Connected value story** | 60-second fixture demo: doctor -> connect -> compare -> history |
 
 **Using AI tools?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI reason about cluster state and hit the wall that ConfigHub removes.
 
@@ -162,6 +163,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [fleet-import/](fleet-import/) | **Working** | Multi-cluster fleet aggregation | Learning fleet import, cross-cluster proposals |
 | [demo-data-adt/](demo-data-adt/) | **Working** | App-Deployment-Target model (multi-app × multi-env) | Learning ADT model, version skew, scan |
 | [new-user-puzzle-quest/](new-user-puzzle-quest/) | **Working** | Quest-style new-user walkthrough (AI-assisted) | Guided capability/discovery/import validation |
+| [connect-and-compare/](connect-and-compare/) | **Working** | 60-second connected-mode fixture flow | Standalone->connected value narrative for demos/recordings |
 | [workflows/](workflows/) | **Working** | Artifact + fleet demos (CI → local, env comparison) | CI/CD integration, sharing bundles, comparing environments |
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |
