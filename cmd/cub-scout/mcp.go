@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -37,13 +38,19 @@ var mcpServeCmd = &cobra.Command{
 	Short: "Serve MCP over stdio",
 	Long: `Serve a read-only Model Context Protocol (MCP) gateway over stdio.
 
-Supported tools in this slice:
+Supported tools in standalone mode:
   - map
   - trace
   - scan
   - explain
 
-All tool responses are sourced from existing cub-scout CLI JSON output.`,
+Additional tools in connected mode (when authenticated to ConfigHub):
+  - confighub_changesets
+  - confighub_units
+  - confighub_unit_get
+
+Standalone tools are sourced from existing cub-scout CLI JSON output.
+Connected tools are sourced from read-only cub CLI queries.`,
 	RunE: runMCPServe,
 }
 
@@ -63,6 +70,7 @@ type mcpToolDescriptor struct {
 type mcpTool struct {
 	Descriptor mcpToolDescriptor
 	BuildArgs  func(arguments map[string]interface{}) ([]string, error)
+	Runner     mcpToolRunner
 }
 
 type mcpGateway struct {
@@ -92,7 +100,7 @@ type mcpError struct {
 }
 
 func runMCPServe(cmd *cobra.Command, args []string) error {
-	gateway := newMCPGateway(runMCPToolCommand)
+	gateway := newMCPGatewayWithMode(runMCPToolCommand, runMCPConnectedToolCommand, detectMCPConnectedMode())
 	return serveMCP(cmd.Context(), os.Stdin, os.Stdout, gateway)
 }
 
@@ -134,8 +142,15 @@ func serveMCP(ctx context.Context, in io.Reader, out io.Writer, gateway *mcpGate
 }
 
 func newMCPGateway(runner mcpToolRunner) *mcpGateway {
+	return newMCPGatewayWithMode(runner, nil, false)
+}
+
+func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, connected bool) *mcpGateway {
 	if runner == nil {
 		runner = runMCPToolCommand
+	}
+	if connectedRunner == nil {
+		connectedRunner = runMCPConnectedToolCommand
 	}
 
 	tools := map[string]mcpTool{
@@ -252,6 +267,110 @@ func newMCPGateway(runner mcpToolRunner) *mcpGateway {
 			},
 		},
 	}
+	if connected {
+		tools["confighub_changesets"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_changesets",
+				Description: "Connected-mode ChangeSet history from ConfigHub (cub changeset list --json).",
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional ConfigHub space slug or ID.",
+						},
+						"where": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional filter expression passed to --where.",
+						},
+					},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				args := []string{"changeset", "list", "--json"}
+				if space := argString(arguments, "space"); space != "" {
+					args = append(args, "--space", space)
+				}
+				if where := argString(arguments, "where"); where != "" {
+					args = append(args, "--where", where)
+				}
+				return args, nil
+			},
+			Runner: connectedRunner,
+		}
+		tools["confighub_units"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_units",
+				Description: "Connected-mode fleet/unit context from ConfigHub (cub unit list --json).",
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional ConfigHub space slug or ID.",
+						},
+						"where": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional filter expression passed to --where.",
+						},
+						"contains": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional full-text contains query passed to --contains.",
+						},
+					},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				args := []string{"unit", "list", "--json"}
+				if space := argString(arguments, "space"); space != "" {
+					args = append(args, "--space", space)
+				}
+				if where := argString(arguments, "where"); where != "" {
+					args = append(args, "--where", where)
+				}
+				if contains := argString(arguments, "contains"); contains != "" {
+					args = append(args, "--contains", contains)
+				}
+				return args, nil
+			},
+			Runner: connectedRunner,
+		}
+		tools["confighub_unit_get"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_unit_get",
+				Description: "Connected-mode unit details from ConfigHub (cub unit get --json).",
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"unit": map[string]interface{}{
+							"type":        "string",
+							"description": "Required unit slug or ID.",
+						},
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional ConfigHub space slug or ID.",
+						},
+					},
+					"required":             []string{"unit"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				unit := argString(arguments, "unit")
+				if unit == "" {
+					return nil, fmt.Errorf("missing required argument: unit")
+				}
+				args := []string{"unit", "get", "--json", unit}
+				if space := argString(arguments, "space"); space != "" {
+					args = append(args, "--space", space)
+				}
+				return args, nil
+			},
+			Runner: connectedRunner,
+		}
+	}
 
 	names := make([]string, 0, len(tools))
 	for name := range tools {
@@ -348,7 +467,12 @@ func (g *mcpGateway) callTool(ctx context.Context, paramsRaw json.RawMessage) ma
 		return mcpToolError(err.Error())
 	}
 
-	output, err := g.runTool(ctx, args)
+	runner := g.runTool
+	if tool.Runner != nil {
+		runner = tool.Runner
+	}
+
+	output, err := runner(ctx, args)
 	if err != nil {
 		return mcpToolError(err.Error())
 	}
@@ -415,6 +539,32 @@ func runMCPToolCommand(ctx context.Context, args []string) (string, error) {
 	}
 
 	return strings.TrimSpace(stdout.String()), nil
+}
+
+func runMCPConnectedToolCommand(ctx context.Context, args []string) (string, error) {
+	cmd := exec.CommandContext(ctx, "cub", args...)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return "", fmt.Errorf("connected tool command failed (cub %s): %s", strings.Join(args, " "), msg)
+	}
+
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+func detectMCPConnectedMode() bool {
+	if hub.CurrentMode() != hub.Connected {
+		return false
+	}
+	_, err := exec.LookPath("cub")
+	return err == nil
 }
 
 func readMCPFrame(r *bufio.Reader) ([]byte, error) {

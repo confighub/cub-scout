@@ -98,6 +98,7 @@ cub-scout graph export | jq '.nodes | length'
 cub-scout graph export --format svg --output graph.svg
 cub-scout scan --json > findings.json
 cub-scout mcp serve
+# (connected mode also exposes confighub_changesets/confighub_units/confighub_unit_get)
 ```
 
 Need contract docs for automation?

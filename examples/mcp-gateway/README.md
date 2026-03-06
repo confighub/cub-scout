@@ -6,11 +6,16 @@ Run cub-scout as a read-only MCP server over stdio:
 ./cub-scout mcp serve
 ```
 
-This exposes these tools in the current slice:
+This exposes these standalone tools:
 - `map`
 - `trace`
 - `scan`
 - `explain`
+
+When connected to ConfigHub (`cub auth login`), it additionally exposes:
+- `confighub_changesets`
+- `confighub_units`
+- `confighub_unit_get`
 
 ## Tool Behavior
 
@@ -20,6 +25,9 @@ The gateway reuses existing CLI JSON command outputs:
 - `trace` -> `trace --format json`
 - `scan` -> `scan --json`
 - `explain` -> `explain --format json`
+- `confighub_changesets` -> `cub changeset list --json`
+- `confighub_units` -> `cub unit list --json`
+- `confighub_unit_get` -> `cub unit get --json`
 
 That keeps MCP responses aligned with the normal CLI contract.
 

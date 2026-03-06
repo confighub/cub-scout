@@ -1686,11 +1686,16 @@ Read-only MCP gateway that exposes cub-scout observation tools over stdio.
 ./cub-scout mcp serve
 ```
 
-**Served tools (current slice):**
+**Served tools (standalone):**
 - `map` → `map list --json`
 - `trace` → `trace --format json`
 - `scan` → `scan --json`
 - `explain` → `explain --format json`
+
+**Additional tools (connected mode):**
+- `confighub_changesets` → `cub changeset list --json`
+- `confighub_units` → `cub unit list --json`
+- `confighub_unit_get` → `cub unit get --json`
 
 **Safety contract:**
 - read-only behavior only
