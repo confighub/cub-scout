@@ -1908,6 +1908,7 @@ Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● brid
 | `Q` | Saved Queries | Filter with saved queries |
 | `T` | Trace | Trace ownership chain |
 | `S` | Scan | Scan for risk issues |
+| `e` / `E` | Export Graph | In `M` (Maps) view, export graph as HTML / SVG |
 | `I` | Import | Import wizard |
 
 #### Command Palette (`:`)

@@ -21,6 +21,7 @@ Use `graph export` to generate shareable topology artifacts from the same
 
 ## Notes
 
+- TUI parity: in `./cub-scout map`, press `M` for Maps, then `e` (HTML) or `E` (SVG).
 - `--max-nodes` applies to visual formats (`dot`, `svg`, `html`) to keep large
   clusters shareable.
 - `--format json` remains the contract format for automation and schema checks.

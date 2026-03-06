@@ -157,6 +157,7 @@ cub-scout map
 **TUI navigation:**
 - Press `s` for status dashboard
 - Press `w` for workloads by owner
+- Press `M`, then `e`/`E` to export graph (HTML/SVG)
 - Press `4` for deep-dive tree views
 - Press `T` to trace selected resource
 - Press `?` for all shortcuts
