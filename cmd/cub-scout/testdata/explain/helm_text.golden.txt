@@ -1,0 +1,7 @@
+StatefulSet/redis in namespace prod:
+  Owner: Helm
+  Source: unknown (revision: chart@1.2.3)
+  Deployed via: HelmRelease/redis -> StatefulSet/redis
+  Health: Healthy
+  Risks: Not assessed
+  Drift: Unknown
