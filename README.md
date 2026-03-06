@@ -12,6 +12,7 @@ Please send feedback by [opening an issue](https://github.com/confighub/cub-scou
 
 ```bash
 brew install confighub/tap/cub-scout
+cub-scout quickstart             # Guided first-run tour of your current cluster
 cub-scout map                    # Interactive TUI — explore your cluster
 cub-scout map list --json | jq   # JSON output — pipe to your tools
 cub-scout tree ownership         # See resources grouped by GitOps owner
@@ -166,9 +167,10 @@ cub-scout map
 2. **Optional kubectl plugin alias:** `cp "$(command -v cub-scout)" /usr/local/bin/kubectl-cub_scout`
 3. **Verify plugin mode:** `kubectl cub-scout version`
 4. **Prerequisites:** kubectl access to a cluster (`kubectl get pods` works)
-5. **First command:** `cub-scout map` — launches interactive TUI
-6. **Press `?`** for keyboard shortcuts
-7. **Try:** `cub-scout trace deploy/<name> -n <namespace>` on any deployment
+5. **Run guided tour:** `cub-scout quickstart`
+6. **Then launch map:** `cub-scout map`
+7. **Press `?`** for keyboard shortcuts
+8. **Try:** `cub-scout trace deploy/<name> -n <namespace>` on any deployment
 
 ## kubectl Plugin Mode
 
