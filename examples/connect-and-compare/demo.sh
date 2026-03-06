@@ -81,7 +81,7 @@ Connected mode established (fixture replay path for demo).
 STEP2
 
 echo "[3/4] Compare step: Git intent vs bundle snapshot"
-"$CUB" combined --git-path "$GIT_FIXTURE" --bundle "$BUNDLE_FIXTURE" --json > "$OUTPUT_DIR/03-compare.json"
+"$CUB" compare --git-path "$GIT_FIXTURE" --bundle "$BUNDLE_FIXTURE" --json > "$OUTPUT_DIR/03-compare.json"
 
 echo "[4/4] History step: ConfigHub ChangeSet timeline"
 CUB_SCOUT_TEST_HISTORY_JSON="$HISTORY_FIXTURE" "$CUB" history deploy/checkout -n prod --since 3650d --format ascii > "$OUTPUT_DIR/04-history.txt"
