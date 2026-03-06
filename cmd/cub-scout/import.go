@@ -158,8 +158,11 @@ Examples:
   # Preview what would be created
   cub-scout import --dry-run
 
-  # Skip confirmation
+  # Skip confirmation (legacy: no auto-connect)
   cub-scout import -y
+
+  # Skip confirmation + connect worker/targets now
+  cub-scout import -y --connect
 
   # JSON output (for GUI integration)
   cub-scout import --json
@@ -341,15 +344,9 @@ func runImport(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Connection behavior:
-	// - Interactive confirmation defaults to connect now
-	// - Non-interactive (-y) preserves legacy behavior unless --connect is set
-	shouldConnect := importConnect
-	if !importYes && !importNoConnect && !importConnect {
-		shouldConnect = true
-	}
-	if importNoConnect {
-		shouldConnect = false
+	shouldConnect, showConnectHint := resolveImportConnectionMode(importYes, importConnect, importNoConnect)
+	if showConnectHint {
+		fmt.Println("\nTip: add --connect to start worker/targets now and avoid detached units.")
 	}
 
 	// Step 5: Apply
@@ -426,9 +423,17 @@ func runImportFromBundle(bundlePath string) error {
 		}
 	}
 
-	// Connection behavior:
-	// - Interactive confirmation defaults to connect now
-	// - Non-interactive (-y) preserves legacy behavior unless --connect is set
+	shouldConnect, showConnectHint := resolveImportConnectionMode(importYes, importConnect, importNoConnect)
+	if showConnectHint {
+		fmt.Println("\nTip: add --connect to start worker/targets now and avoid detached units.")
+	}
+
+	return applyImportWithLogger(proposal, workloads, nil, shouldConnect)
+}
+
+// resolveImportConnectionMode determines whether import should auto-connect workers/targets
+// and whether a non-interactive hint should be shown.
+func resolveImportConnectionMode(importYes, importConnect, importNoConnect bool) (bool, bool) {
 	shouldConnect := importConnect
 	if !importYes && !importNoConnect && !importConnect {
 		shouldConnect = true
@@ -437,7 +442,8 @@ func runImportFromBundle(bundlePath string) error {
 		shouldConnect = false
 	}
 
-	return applyImportWithLogger(proposal, workloads, nil, shouldConnect)
+	showConnectHint := importYes && !importConnect && !importNoConnect
+	return shouldConnect, showConnectHint
 }
 
 func buildImportFromBundlePreview(bundlePath string) (*FullProposal, []WorkloadInfo, []string, error) {
