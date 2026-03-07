@@ -28,6 +28,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `impact` | Connected blast-radius preview for one unit | v1.6 |
 | `fleet outliers` | Connected cluster-drift outlier report | v1.6 |
 | `trace` | Show GitOps ownership chain | v0.5 |
+| `watch --webhook <url>` | Stream observation events to a webhook | v1.7 |
 | `scan` | Scan for misconfigurations | v0.5 |
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
 | `tree` | Hierarchical resource views | v0.5 |
@@ -627,6 +628,54 @@ See `docs/howto/trace-context-troubleshooting.md` for the full flow.
 | Bucket | Flux |
 | Repository (Git/Helm) | ArgoCD |
 | Helm secrets | Standalone Helm |
+
+---
+
+## watch
+
+Stream observation events to a webhook.
+
+```bash
+cub-scout watch --webhook <url> [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--webhook` | Webhook URL to receive events |
+| `--interval` | Polling interval (default: `20s`) |
+| `-n, --namespace` | Namespace filter |
+| `--owner` | Owner display-name filter |
+| `--severity` | Finding severity filter (`critical,warning,info`) |
+| `--once` | Run one collection cycle and exit |
+| `--max-queued-events` | Max buffered events while webhook is unreachable |
+
+### Event Types
+
+- `resource.discovered`
+- `ownership.changed`
+- `drift.detected`
+- `scan.finding`
+
+### Event Payload
+
+```json
+{
+  "type": "drift.detected",
+  "timestamp": "2026-03-07T11:00:00Z",
+  "resource": {"kind": "Deployment", "name": "api", "namespace": "prod"},
+  "owner": {"type": "ArgoCD", "name": "api-app"},
+  "severity": "warning",
+  "details": {"category": "STATE", "message": "out of sync"}
+}
+```
+
+### Example
+
+```bash
+cub-scout watch --webhook https://hooks.example.com/cub-scout --interval 30s
+```
 
 ---
 

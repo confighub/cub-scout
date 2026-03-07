@@ -36,6 +36,7 @@ POPULAR COMMANDS
   map list         List resources with ownership (scriptable, supports --json)
   tree             Hierarchical views: runtime, ownership, git, composition
   trace            Trace any resource to its Git source
+  watch            Stream observation events to webhook
   scan             Find misconfigurations (46 patterns)
   import           Preview/import workloads to ConfigHub (connected mode)
   gitops status    GitOps pipeline health check
