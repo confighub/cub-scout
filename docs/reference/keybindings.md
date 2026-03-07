@@ -5,8 +5,8 @@ Complete reference for all TUI keyboard shortcuts.
 ## Quick Reference
 
 ```
-Navigation:  ↑/k ↓/j ←/h →/l  Enter  Tab  ]/[ (namespace)
-Views:       s w p d o c i u a b x M D G 4 5/A (Hub: P Panel, g Suggest, B Hub/AppSpace, a Toggle)
+Navigation:  ↑/k ↓/j ← →  Enter  Tab  ]/[ (namespace)
+Views:       s w p h d o c i u a b x M D G 4 5/A (Hub: P Panel, g Suggest, B Hub/AppSpace, a Toggle)
 Actions:     T (trace) S (scan) f/F (fix) i (import) / Q :
 Help:        ? (help)  q (quit)
 ```
@@ -19,8 +19,8 @@ Help:        ? (help)  q (quit)
 |-----|--------|
 | `↑` or `k` | Move up |
 | `↓` or `j` | Move down |
-| `←` or `h` | Collapse / go back |
-| `→` or `l` | Expand / go forward |
+| `←` | Collapse / go back |
+| `→` | Expand / go forward |
 | `Enter` | Select / load details / cross-references |
 | `Tab` | Switch focus (list ↔ details) |
 | `]` | Next namespace |
@@ -36,6 +36,7 @@ Help:        ? (help)  q (quit)
 | `s` | Status | Health dashboard |
 | `w` | Workloads | Resources by owner |
 | `p` | Pipelines | GitOps deployers |
+| `h` | History | Connected ChangeSet timeline |
 | `P` | Pipelines (enhanced) | Visual flow with type grouping |
 | `d` | Drift | Out-of-sync resources |
 | `D` | Dependencies | Upstream/downstream relations |
@@ -132,9 +133,9 @@ Help:        ? (help)  q (quit)
 
 ---
 
-## Vim-Style Navigation
+## Vim-Style Navigation (Hub Tree)
 
-The TUI supports vim-style navigation:
+ConfigHub Hub tree navigation supports vim-style keys:
 
 | Vim Key | Standard Key | Action |
 |---------|--------------|--------|
@@ -220,8 +221,8 @@ Print this and keep handy:
 │  NAVIGATION       VIEWS              ACTIONS                    │
 │  ↑/k  Up          s  Status          T  Trace                   │
 │  ↓/j  Down        w  Workloads       S  Scan                    │
-│  ←/h  Collapse    p  Pipelines       f  Preview fix             │
-│  →/l  Expand      d  Drift           F  Apply fix               │
+│  ←    Collapse    p  Pipelines       f  Preview fix             │
+│  →    Expand      h  History         F  Apply fix               │
 │  Tab  Focus       o  Orphans         i  Import                  │
 │  Enter Select     c  Crashes         /  Search                  │
 │  ]/[  Namespace   u  Suspended       Q  Queries                 │

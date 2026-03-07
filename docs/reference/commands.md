@@ -81,6 +81,7 @@ cub-scout map [flags]
 | `H` | Hub view (ConfigHub hierarchy) |
 | `j/k` | Navigate up/down |
 | `Enter` | Select/expand |
+| `h` | Open history timeline panel (connected ChangeSets) |
 | `T` | Trace selected resource |
 | `e` | Export graph as HTML (Maps view) |
 | `E` | Export graph as SVG (Maps view) |

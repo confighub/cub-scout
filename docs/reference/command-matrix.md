@@ -273,8 +273,8 @@ Press `?` in the TUI to see this help.
 |-----|--------|
 | `↑`/`k` | Move up |
 | `↓`/`j` | Move down |
-| `←`/`h` | Collapse / go to parent |
-| `→`/`l` | Expand |
+| `←` | Collapse / go to parent |
+| `→` | Expand |
 | `Enter` | Cross-references (in panel view) |
 | `Tab` | Cycle views |
 | `[` | Previous namespace |
@@ -290,6 +290,7 @@ Press `?` in the TUI to see this help.
 | `w` | Workloads | Workloads by owner |
 | `a` | Apps | Grouped by app label + variant |
 | `p` | Pipelines | GitOps deployers (Flux, ArgoCD) |
+| `h` | History | Connected ChangeSet timeline |
 | `d` | Drift | Resources diverged from desired state |
 | `o` | Orphans | Native resources (not GitOps-managed) |
 | `c` | Crashes | Failing pods |

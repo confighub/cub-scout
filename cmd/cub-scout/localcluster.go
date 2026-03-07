@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -195,6 +196,11 @@ type LocalClusterModel struct {
 	scanFindings   []scanFinding  // Parsed findings
 	scanCategories map[string]int // Category counts
 
+	// History panel mode (connected timeline)
+	historyPanelLoading bool          // Is history query running
+	historyPanelError   error         // History query error
+	historyPanelResult  historyResult // Last loaded history timeline
+
 	// Cross-reference navigation
 	xrefMode       bool       // In cross-reference view mode
 	xrefItems      []xrefItem // Cross-reference items
@@ -293,6 +299,7 @@ const (
 	viewIssues
 	viewBypass
 	viewSprawl
+	viewHistory
 	viewMaps
 	viewTracePicker  // Trace resource picker
 	viewTraceResult  // Trace result display
@@ -328,6 +335,7 @@ type localKeyMap struct {
 	Issues    key.Binding
 	Bypass    key.Binding
 	Sprawl    key.Binding
+	History   key.Binding
 	Maps      key.Binding
 	// Actions on selected resource
 	Trace key.Binding
@@ -381,6 +389,7 @@ func defaultLocalKeyMap() localKeyMap {
 		Issues:        key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "issues")),
 		Bypass:        key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "bypass")),
 		Sprawl:        key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "sprawl")),
+		History:       key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "history")),
 		Maps:          key.NewBinding(key.WithKeys("M"), key.WithHelp("M", "maps")),
 		Trace:         key.NewBinding(key.WithKeys("T"), key.WithHelp("T", "trace")),
 		Scan:          key.NewBinding(key.WithKeys("S"), key.WithHelp("S", "scan")),
@@ -431,6 +440,11 @@ type scanResultMsg struct {
 	err        error
 	findings   []scanFinding  // Parsed findings for category display
 	categories map[string]int // Category counts
+}
+
+type localHistoryLoadedMsg struct {
+	result historyResult
+	err    error
 }
 
 type graphExportMsg struct {
@@ -1120,6 +1134,13 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.scanCategories = msg.categories
 		return m, nil
 
+	case localHistoryLoadedMsg:
+		m.historyPanelLoading = false
+		m.historyPanelError = msg.err
+		m.historyPanelResult = msg.result
+		m.updatePanelContent()
+		return m, nil
+
 	case graphExportMsg:
 		if msg.err != nil {
 			m.statusMsg = fmt.Sprintf("Graph export failed (%s): %v", msg.format, msg.err)
@@ -1489,6 +1510,8 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, m.keymap.Sprawl):
 					m.panelView = viewSprawl
 					m.updatePanelContent()
+				case key.Matches(msg, m.keymap.History):
+					return m, m.openHistoryPanel()
 				case key.Matches(msg, m.keymap.Suspended):
 					m.panelView = viewSuspended
 					m.updatePanelContent()
@@ -1652,6 +1675,11 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.panelView = viewSprawl
 			m.userHasNavigated = true
 			m.updatePanelContent()
+			return m, nil
+
+		case key.Matches(msg, m.keymap.History):
+			m.userHasNavigated = true
+			return m, m.openHistoryPanel()
 
 		case key.Matches(msg, m.keymap.Suspended):
 			m.panelMode = true
@@ -2048,6 +2076,8 @@ func (m *LocalClusterModel) updatePanelContent() {
 		content = m.getPanelBypass()
 	case viewSprawl:
 		content = m.getPanelSprawl()
+	case viewHistory:
+		content = m.getPanelHistory()
 	case viewSuspended:
 		content = m.getPanelSuspended()
 	case viewApps:
@@ -2086,6 +2116,8 @@ func (m LocalClusterModel) getPanelTitle() string {
 		return "BYPASS"
 	case viewSprawl:
 		return "SPRAWL"
+	case viewHistory:
+		return "HISTORY"
 	case viewSuspended:
 		return "SUSPENDED"
 	case viewApps:
@@ -2443,6 +2475,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("u") + "  sUspended (paused/forgotten resources)\n")
 	b.WriteString("  " + lcNameStyle.Render("b") + "  Bypass (factory bypass detection)\n")
 	b.WriteString("  " + lcNameStyle.Render("x") + "  Sprawl (config sprawl analysis)\n")
+	b.WriteString("  " + lcNameStyle.Render("h") + "  History timeline (connected ChangeSets)\n")
 	b.WriteString("  " + lcNameStyle.Render("D") + "  Dependencies (upstream/downstream)\n")
 	b.WriteString("  " + lcNameStyle.Render("G") + "  Git sources (forward trace)\n")
 	b.WriteString("  " + lcNameStyle.Render("4") + "  Cluster Data (all data sources TUI reads)\n")
@@ -2836,6 +2869,11 @@ func (m LocalClusterModel) getSuggestionContext() string {
 			return fmt.Sprintf("Drifted: %s %s/%s", g.Kind, g.Namespace, g.Name)
 		}
 		return "Drift panel"
+	case viewHistory:
+		if target, namespace, ok := m.historyPanelTarget(); ok {
+			return fmt.Sprintf("History: %s (ns: %s)", target, namespace)
+		}
+		return "History panel"
 	default:
 		return "Dashboard"
 	}
@@ -2907,7 +2945,7 @@ func (m LocalClusterModel) renderSplitView() string {
 	if nsIndicator != "" {
 		b.WriteString(nsIndicator + " " + lcDimStyle.Render("|") + " ")
 	}
-	footer := "[]/[]ns [w]ork [p]ipe [d]rift [o]rph | Tab:focus Esc:close [H]ub [?] [q]"
+	footer := "[]/[]ns [w]ork [p]ipe [h]ist [d]rift [o]rph | Tab:focus Esc:close [H]ub [?] [q]"
 	if m.panelView == viewMaps {
 		footer = "[]/[]ns [e]xport html [E]xport svg | Tab:focus Esc:close [H]ub [?] [q]"
 	}
@@ -3121,6 +3159,141 @@ func (m LocalClusterModel) getPanelPipelines() string {
 		b.WriteString("\n")
 	}
 
+	return b.String()
+}
+
+func (m LocalClusterModel) historyPanelTarget() (resource, namespace string, ok bool) {
+	entries := m.getFilteredEntries()
+	if len(entries) == 0 {
+		return "", "", false
+	}
+	idx := m.cursor
+	if idx < 0 {
+		idx = 0
+	}
+	if idx >= len(entries) {
+		idx = len(entries) - 1
+	}
+	selected := entries[idx]
+	kind := strings.ToLower(strings.TrimSpace(selected.Kind))
+	name := strings.TrimSpace(selected.Name)
+	namespace = strings.TrimSpace(selected.Namespace)
+	if kind == "" || name == "" {
+		return "", "", false
+	}
+	return kind + "/" + name, namespace, true
+}
+
+func (m *LocalClusterModel) openHistoryPanel() tea.Cmd {
+	m.panelMode = true
+	m.panelView = viewHistory
+	m.historyPanelLoading = true
+	m.historyPanelError = nil
+	m.historyPanelResult = historyResult{}
+	m.updatePanelContent()
+	return m.runHistoryPanel()
+}
+
+func (m LocalClusterModel) runHistoryPanel() tea.Cmd {
+	resource, namespace, ok := m.historyPanelTarget()
+	if !ok {
+		return func() tea.Msg {
+			return localHistoryLoadedMsg{err: fmt.Errorf("no workload selected for history")}
+		}
+	}
+
+	return func() tea.Msg {
+		window, err := parseHistorySince("7d")
+		if err != nil {
+			return localHistoryLoadedMsg{err: err}
+		}
+		query := historyQuery{
+			Resource:  resource,
+			Namespace: namespace,
+			Since:     "7d",
+			Window:    window,
+			Now:       historyNowFn().UTC(),
+		}
+		entries, err := resolveHistoryEntries(context.Background(), query)
+		if err != nil {
+			return localHistoryLoadedMsg{err: err}
+		}
+		return localHistoryLoadedMsg{
+			result: historyResult{
+				Resource:  resource,
+				Namespace: namespace,
+				Since:     query.Since,
+				Entries:   entries,
+			},
+		}
+	}
+}
+
+func (m LocalClusterModel) getPanelHistory() string {
+	var b strings.Builder
+
+	resource, namespace, hasTarget := m.historyPanelTarget()
+	if hasTarget {
+		b.WriteString(fmt.Sprintf("Target: %s", resource))
+		if namespace != "" {
+			b.WriteString(fmt.Sprintf(" (namespace: %s)", namespace))
+		}
+		b.WriteString("\n")
+	}
+
+	if m.historyPanelLoading {
+		b.WriteString(lcDimStyle.Render("Loading connected change history..."))
+		b.WriteString("\n")
+		return b.String()
+	}
+
+	if m.historyPanelError != nil {
+		if errors.Is(m.historyPanelError, errHistoryDisconnected) {
+			b.WriteString(lcWarnStyle.Render("History requires ConfigHub connection."))
+			b.WriteString("\n")
+			b.WriteString(lcDimStyle.Render("Run: cub auth login, then press h again."))
+			b.WriteString("\n")
+			return b.String()
+		}
+		b.WriteString(lcErrStyle.Render("History load failed: " + m.historyPanelError.Error()))
+		b.WriteString("\n")
+		return b.String()
+	}
+
+	if m.historyPanelResult.Resource == "" {
+		if !hasTarget {
+			b.WriteString(lcDimStyle.Render("No workload selected. Move cursor in workloads and press h."))
+			b.WriteString("\n")
+		}
+		return b.String()
+	}
+
+	b.WriteString(fmt.Sprintf("Window: %s\n\n", m.historyPanelResult.Since))
+	if len(m.historyPanelResult.Entries) == 0 {
+		b.WriteString(lcDimStyle.Render("No history available — resource not yet imported to ConfigHub."))
+		b.WriteString("\n")
+		return b.String()
+	}
+
+	for _, entry := range m.historyPanelResult.Entries {
+		actor := strings.TrimSpace(entry.Actor)
+		if actor == "" {
+			actor = "unknown"
+		}
+		changeSet := strings.TrimSpace(entry.ChangeSet)
+		if changeSet == "" {
+			changeSet = "-"
+		}
+		b.WriteString(fmt.Sprintf("%s  %s\n",
+			entry.Timestamp.Format("2006-01-02 15:04"),
+			entry.Change))
+		b.WriteString(lcDimStyle.Render(fmt.Sprintf("  by: %s  changeset: %s", actor, changeSet)))
+		b.WriteString("\n")
+	}
+
+	b.WriteString("\n")
+	b.WriteString(lcDimStyle.Render("Tip: run `cub-scout history <resource> -n <namespace> --format md` for shareable output."))
+	b.WriteString("\n")
 	return b.String()
 }
 
@@ -5024,7 +5197,7 @@ func (m LocalClusterModel) renderDashboard() string {
 	if nsIndicator != "" {
 		b.WriteString(nsIndicator + " " + lcDimStyle.Render("|") + " ")
 	}
-	b.WriteString(lcDimStyle.Render("[:]cmd []/[]ns [w]ork [p]ipe [d]rift [o]rph [T]race [S]can | [H]ub [?] [q]"))
+	b.WriteString(lcDimStyle.Render("[:]cmd []/[]ns [w]ork [p]ipe [h]ist [d]rift [o]rph [T]race [S]can | [H]ub [?] [q]"))
 	b.WriteString("\n")
 
 	// Show active query or status message

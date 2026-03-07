@@ -13,6 +13,6 @@
   No workloads found
 
 ────────────────────────────────────────────────────────────────
-ns: All (8) | [:]cmd []/[]ns [w]ork [p]ipe [d]rift [o]rph [T]race [S]can | [H]ub [?] [q]
+ns: All (8) | [:]cmd []/[]ns [w]ork [p]ipe [h]ist [d]rift [o]rph [T]race [S]can | [H]ub [?] [q]
 
 💡 Want more? Press H for ConfigHub hierarchy, I to import workloads
