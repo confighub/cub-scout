@@ -170,8 +170,13 @@ Watch additional CRDs beyond the defaults.
 
 ### Configuration
 
+Create one of these files:
+
+- `~/.cub-scout/resources.yaml` (default)
+- or set `CUB_SCOUT_RESOURCE_CONFIG=/path/to/resources.yaml`
+
 ```yaml
-# config/resources.yaml
+# ~/.cub-scout/resources.yaml
 resources:
   # Standard format
   - group: mycompany.io
@@ -189,7 +194,29 @@ resources:
       progressingValues: ["Pending", "Building"]
 ```
 
-**Note:** Configuration-based resource watching is not yet implemented. Currently, custom resources must be registered in Go code.
+### Where It Applies
+
+Configured resources are appended to built-in defaults for:
+
+- `cub-scout map list`
+- `cub-scout watch`
+
+### Matching Rules
+
+1. Built-in resources are always included first.
+2. Configured resources are appended in YAML order.
+3. Duplicate Group/Version/Resource entries are deduplicated.
+4. Invalid entries (missing group/version/resource) are skipped.
+
+### Behavior on Errors
+
+- Missing config file: silently ignored.
+- Invalid config file: warning printed once to stderr, then defaults continue.
+
+### Status Extraction Fields
+
+`status.*` keys are accepted for forward compatibility, but this slice does not
+override status rendering with those fields yet.
 
 ### Programmatic Registration
 

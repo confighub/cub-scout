@@ -262,6 +262,9 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 
 Event types: `resource.discovered`, `ownership.changed`, `drift.detected`, `scan.finding`.
 
+Custom CRDs for watch/map can be configured in `~/.cub-scout/resources.yaml`
+or via `CUB_SCOUT_RESOURCE_CONFIG`.
+
 ## `summary slack` Options
 
 | Option | Description |
