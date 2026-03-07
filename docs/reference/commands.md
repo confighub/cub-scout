@@ -40,6 +40,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `history` | Show connected change history from ConfigHub ChangeSets | v1.4 |
 | `audit list` | Show connected break-glass accept/reject audit trail | v1.6 |
 | `summary list` | Query persisted connected drift/sync/risk snapshots | v1.7 |
+| `summary slack` | Publish connected summary digest to Slack webhook | v1.7 |
 | `connect` | Quickly configure kube context from server URL or kubeconfig | v1.0 |
 | `setup` | Set up shell completions | v0.19 |
 | `mcp serve` | Serve read-only MCP tools over stdio | v1.4 |
@@ -998,6 +999,56 @@ cub-scout summary list --since 48h --namespace prod --json
 - Optional overrides:
   - `CUB_SCOUT_SUMMARY_DIR` (storage path)
   - `CUB_SCOUT_SUMMARY_RETENTION_DAYS` (retention window)
+
+---
+
+## summary slack
+
+Build a connected digest from persisted summary records and post to Slack Incoming Webhook.
+
+```bash
+cub-scout summary slack [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--webhook-url` | Slack incoming webhook URL (or `CUB_SCOUT_SLACK_WEBHOOK_URL`) |
+| `--since` | Digest lookback window (examples: `24h`, `7d`, `2w`) |
+| `--type` | Filter by type (`scan`, `gitops-status`) |
+| `--cluster` | Filter by cluster/context name |
+| `-n, --namespace` | Filter by namespace |
+| `--batch-size` | Max entries included in digest body |
+| `--dedupe-window` | Skip duplicate digest signatures within this window |
+| `--force` | Bypass dedupe and always post |
+| `--dry-run` | Print webhook payload JSON without posting |
+
+### Examples
+
+```bash
+# Post the last 24h digest to Slack
+cub-scout summary slack --webhook-url https://hooks.slack.com/services/...
+
+# Scope to one cluster and namespace
+cub-scout summary slack --since 7d --cluster kind-dev --namespace prod
+
+# Render payload only (no webhook post)
+cub-scout summary slack --dry-run --since 24h
+```
+
+### Digest Contract
+
+Each digest includes:
+- Severity breakdown (risk critical/warning/info)
+- Affected scope (clusters + namespaces)
+- Sync/drift summary (`sync failed/out-of-sync`, `drift total`)
+- Next-action command (`cub-scout summary list ... --format md`)
+
+Noise controls:
+- Windowing: `--since`
+- Batching: `--batch-size`
+- Deduping: signature state file + `--dedupe-window` (`--force` bypass)
 
 ---
 

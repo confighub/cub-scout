@@ -244,6 +244,28 @@ Connected storage defaults:
 
 ---
 
+## `summary slack` Options
+
+| Option | Description |
+|--------|-------------|
+| `--webhook-url` | Slack incoming webhook URL (`CUB_SCOUT_SLACK_WEBHOOK_URL` fallback) |
+| `--since` | Digest lookback window (`24h`, `7d`, `2w`) |
+| `--type` | Summary type filter (`scan`, `gitops-status`) |
+| `--cluster` | Cluster/context filter |
+| `-n, --namespace` | Namespace filter |
+| `--batch-size` | Max entries included in digest body |
+| `--dedupe-window` | Skip duplicate digest signatures within this window |
+| `--force` | Bypass dedupe and always post |
+| `--dry-run` | Print payload JSON without posting |
+
+Digest content contract:
+- Severity breakdown (`risk critical/warning/info`)
+- Affected scope (`clusters`, `namespaces`)
+- Sync/drift totals (`sync failed/out-of-sync`, `drift total`)
+- Next action command (`cub-scout summary list ... --format md`)
+
+---
+
 ## `import-argocd` Options
 
 | Option | Description |
