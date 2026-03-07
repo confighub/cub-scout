@@ -26,6 +26,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `doctor` | One-command cluster health summary | v1.4 |
 | `explain` | Plain-English ownership and lineage for one resource | v1.4 |
 | `impact` | Connected blast-radius preview for one unit | v1.6 |
+| `fleet outliers` | Connected cluster-drift outlier report | v1.6 |
 | `trace` | Show GitOps ownership chain | v0.5 |
 | `scan` | Scan for misconfigurations | v0.5 |
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
@@ -269,6 +270,33 @@ Requires ConfigHub authentication.
 cub-scout impact unit/shared-db-config
 cub-scout impact shared-db-config --format md
 cub-scout impact shared-db-config --json
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `--json` | Output as JSON (shorthand for `--format json`) |
+
+---
+
+## fleet outliers
+
+Identify clusters that diverge from fleet norms (connected mode).
+
+```bash
+cub-scout fleet outliers [flags]
+```
+
+Requires ConfigHub authentication and at least two clusters with target data.
+
+### Examples
+
+```bash
+cub-scout fleet outliers
+cub-scout fleet outliers --format md
+cub-scout fleet outliers --json
 ```
 
 ### Flags

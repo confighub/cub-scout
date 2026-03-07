@@ -22,6 +22,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `demo` | Run interactive demos |
 | `discover` | Discover resources (alias for `map workloads`) |
 | `drift` | Detect drift between desired and live state |
+| `fleet` | Fleet-level connected insights |
 | `gitops` | GitOps status and diagnostics |
 | `graph` | Resource graph operations |
 | `health` | Check cluster issues (alias for `map issues`) |
@@ -168,6 +169,15 @@ Complete reference of all commands, options, TUI keys, and availability.
 ---
 
 ## `impact` Options
+
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format (`ascii`, `json`, `md`) |
+| `--json` | Output as JSON |
+
+---
+
+## `fleet outliers` Options
 
 | Option | Description |
 |--------|-------------|
