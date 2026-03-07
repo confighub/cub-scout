@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -220,6 +221,78 @@ func TestHierarchyInitialView(t *testing.T) {
 
 	if !bytes.Contains([]byte(view), []byte("test-org")) {
 		t.Errorf("expected view to contain 'test-org' organization, got: %s", view[:min(len(view), 500)])
+	}
+}
+
+func TestRenderPanelView_DryWetLiveColumns(t *testing.T) {
+	unitData := CubUnitData{}
+	unitData.Unit.Slug = "checkout"
+	unitData.Unit.HeadRevisionNum = 4
+	unitData.Unit.LiveRevisionNum = 3
+	unitData.UnitStatus.SyncStatus = "OutOfSync"
+	unitData.UnitStatus.Drift = "Drifted"
+	unitData.Space.Slug = "payments-prod"
+
+	orgNode := &TreeNode{
+		ID:       "org-1",
+		Name:     "acme",
+		Type:     "organization",
+		Expanded: true,
+	}
+	spaceNode := &TreeNode{
+		ID:       "space-1",
+		Name:     "payments-prod",
+		Type:     "space",
+		Parent:   orgNode,
+		Expanded: true,
+	}
+	unitsGroup := &TreeNode{
+		ID:       "units-1",
+		Name:     "units",
+		Type:     "units",
+		Parent:   spaceNode,
+		Expanded: true,
+	}
+	unitNode := &TreeNode{
+		ID:     "unit-1",
+		Name:   "checkout",
+		Type:   "unit",
+		Parent: unitsGroup,
+		Data:   unitData,
+	}
+	unitsGroup.Children = []*TreeNode{unitNode}
+	spaceNode.Children = []*TreeNode{unitsGroup}
+	orgNode.Children = []*TreeNode{spaceNode}
+
+	liveEntry := MapEntry{
+		Kind:         "Deployment",
+		Name:         "checkout",
+		Namespace:    "prod",
+		Status:       "Ready",
+		OwnerDetails: map[string]string{"revision": "3"},
+	}
+
+	m := Model{
+		width:            140,
+		panelMode:        true,
+		panelLoading:     false,
+		nodes:            []*TreeNode{orgNode},
+		panelWorkloads:   []MapEntry{liveEntry},
+		panelCorrelation: map[string][]MapEntry{"checkout": []MapEntry{liveEntry}},
+	}
+
+	out := m.renderPanelView()
+	for _, want := range []string{
+		"DRY (Intent)",
+		"WET (Rendered)",
+		"LIVE (Cluster)",
+		"head:4",
+		"live:3 sync:OutOfSync drift:Drifted",
+		"DRY: 1 units │ WET: 1 statuses │ LIVE: 1 workloads",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("renderPanelView output missing %q\n%s", want, out)
+		}
 	}
 }
 

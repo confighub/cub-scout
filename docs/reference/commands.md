@@ -751,7 +751,7 @@ cub-scout combined [flags]
 ### Examples
 
 ```bash
-# Resource compare mode (LIVE snapshot + connected upsell/degradation notes)
+# Resource compare mode (DRY/WET/LIVE when linked; LIVE-only otherwise)
 cub-scout compare deploy/checkout -n prod --format ascii
 cub-scout compare deploy/checkout -n prod --format json
 
@@ -764,6 +764,11 @@ cub-scout combined --git-path ./repo --bundle ./debug-bundle --json
 # Git ↔ Git compare (left vs right)
 cub-scout combined --git-path ./repo-a --git-path-compare ./repo-b --json
 ```
+
+Resource compare mode behavior:
+- If the live resource is linked to ConfigHub (`confighub.com/UnitSlug`), output includes DRY/WET/LIVE sections.
+- When DRY/WET/LIVE values differ, output includes a mismatch highlight section (`Diff Highlights` in ASCII, `Mismatches` table in Markdown/JSON).
+- If not linked (or not connected), output degrades to LIVE-only with explicit notes.
 
 ---
 

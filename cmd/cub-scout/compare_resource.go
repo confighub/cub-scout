@@ -4,11 +4,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/confighub/cub-scout/pkg/hub"
@@ -16,6 +21,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+	"sigs.k8s.io/yaml"
 )
 
 type compareSideSummary struct {
@@ -24,6 +30,8 @@ type compareSideSummary struct {
 	Kind            string   `json:"kind,omitempty"`
 	Name            string   `json:"name,omitempty"`
 	Namespace       string   `json:"namespace,omitempty"`
+	UnitSlug        string   `json:"unitSlug,omitempty"`
+	SpaceName       string   `json:"spaceName,omitempty"`
 	Generation      int64    `json:"generation,omitempty"`
 	ResourceVersion string   `json:"resourceVersion,omitempty"`
 	Replicas        *int64   `json:"replicas,omitempty"`
@@ -33,19 +41,42 @@ type compareSideSummary struct {
 }
 
 type compareResourceResult struct {
-	Resource  string              `json:"resource"`
-	Namespace string              `json:"namespace,omitempty"`
-	Mode      string              `json:"mode"`
-	Connected bool                `json:"connected"`
-	Dry       *compareSideSummary `json:"dry,omitempty"`
-	Wet       *compareSideSummary `json:"wet,omitempty"`
-	Live      compareSideSummary  `json:"live"`
-	Notes     []string            `json:"notes,omitempty"`
+	Resource   string                 `json:"resource"`
+	Namespace  string                 `json:"namespace,omitempty"`
+	Mode       string                 `json:"mode"`
+	Connected  bool                   `json:"connected"`
+	Dry        *compareSideSummary    `json:"dry,omitempty"`
+	Wet        *compareSideSummary    `json:"wet,omitempty"`
+	Live       compareSideSummary     `json:"live"`
+	Mismatches []compareFieldMismatch `json:"mismatches,omitempty"`
+	Notes      []string               `json:"notes,omitempty"`
+}
+
+type compareFieldMismatch struct {
+	Field string `json:"field"`
+	Dry   string `json:"dry"`
+	Wet   string `json:"wet"`
+	Live  string `json:"live"`
+}
+
+type compareResourceRef struct {
+	Kind      string
+	Name      string
+	Namespace string
+}
+
+type compareDryWetResult struct {
+	Dry   *compareSideSummary
+	Wet   *compareSideSummary
+	Notes []string
 }
 
 var (
-	loadCompareLiveSnapshotFn = loadCompareLiveSnapshot
-	compareConnectedFn        = isCompareConnected
+	loadCompareLiveSnapshotFn   = loadCompareLiveSnapshot
+	loadCompareDryWetSnapshotFn = loadCompareDryWetSnapshots
+	compareConnectedFn          = isCompareConnected
+	compareDefaultSpaceFn       = detectCompareSpace
+	runCompareCubCommand        = runCompareCubCommandImpl
 )
 
 func runCombinedResourceCompare(cmd *cobra.Command, args []string) error {
@@ -122,24 +153,306 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 
 	connected := compareConnectedFn()
 	notes := make([]string, 0, 2)
+	mode := "live-only"
 	if connected {
-		notes = append(notes, "Connected mode detected; DRY/WET expected-state comparison wiring is pending in this command.")
+		unitSlug := strings.TrimSpace(live.UnitSlug)
+		if unitSlug == "" {
+			notes = append(notes, "Connected mode detected, but this LIVE resource is not linked to a ConfigHub unit (`confighub.com/UnitSlug` missing).")
+		} else {
+			space := strings.TrimSpace(live.SpaceName)
+			if space == "" {
+				space = compareDefaultSpaceFn()
+			}
+			dryWet, err := loadCompareDryWetSnapshotFn(ctx, unitSlug, space, compareResourceRef{
+				Kind:      kind,
+				Name:      name,
+				Namespace: ns,
+			})
+			if err != nil {
+				notes = append(notes, fmt.Sprintf("Connected DRY/WET lookup failed for unit %s: %v", unitSlug, err))
+			} else {
+				if dryWet.Dry != nil || dryWet.Wet != nil {
+					mode = "dry-wet-live"
+				}
+				notes = append(notes, dryWet.Notes...)
+				if dryWet.Dry == nil {
+					notes = append(notes, "DRY snapshot unavailable for linked unit.")
+				}
+				if dryWet.Wet == nil {
+					notes = append(notes, "WET snapshot unavailable for linked unit.")
+				}
+				return finalizeCompareResourceResult(compareResourceResult{
+					Resource:  kind + "/" + name,
+					Namespace: ns,
+					Mode:      mode,
+					Connected: connected,
+					Dry:       dryWet.Dry,
+					Wet:       dryWet.Wet,
+					Live:      live,
+					Notes:     notes,
+				}), nil
+			}
+		}
 	} else {
 		notes = append(notes, "Connect to ConfigHub to unlock DRY/WET/LIVE expected-state comparison.")
 	}
 
-	return compareResourceResult{
+	return finalizeCompareResourceResult(compareResourceResult{
 		Resource:  kind + "/" + name,
 		Namespace: ns,
-		Mode:      "live-only",
+		Mode:      mode,
 		Connected: connected,
 		Live:      live,
 		Notes:     notes,
-	}, nil
+	}), nil
 }
 
 func isCompareConnected() bool {
 	return hub.NewClient().RequireConnected() == nil
+}
+
+func detectCompareSpace() string {
+	cubCtx, _, err := getStatusCubContext()
+	if err != nil || cubCtx == nil {
+		return ""
+	}
+	return strings.TrimSpace(cubCtx.Settings.DefaultSpace)
+}
+
+var errCompareResourceNotFoundInManifest = errors.New("resource not found in manifest")
+
+func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, target compareResourceRef) (compareDryWetResult, error) {
+	unitSlug = strings.TrimSpace(unitSlug)
+	if unitSlug == "" {
+		return compareDryWetResult{}, fmt.Errorf("missing unit slug")
+	}
+
+	dryRaw, err := runCompareCubCommand(ctx, compareUnitGetArgs(unitSlug, space))
+	if err != nil {
+		return compareDryWetResult{}, fmt.Errorf("cub unit get: %w", err)
+	}
+
+	dryYAML, err := decodeCompareUnitDataFromGetJSON(dryRaw)
+	if err != nil {
+		return compareDryWetResult{}, fmt.Errorf("decode unit get data: %w", err)
+	}
+	drySummary, dryErr := extractCompareSummaryFromManifestYAML("dry", dryYAML, target)
+	if dryErr != nil && !errors.Is(dryErr, errCompareResourceNotFoundInManifest) {
+		return compareDryWetResult{}, fmt.Errorf("extract DRY snapshot: %w", dryErr)
+	}
+
+	wetRaw, err := runCompareCubCommand(ctx, compareUnitLivedataArgs(unitSlug, space))
+	if err != nil {
+		return compareDryWetResult{
+			Dry:   drySummary,
+			Notes: []string{fmt.Sprintf("WET lookup failed for unit %s: %v", unitSlug, err)},
+		}, nil
+	}
+	wetSummary, wetErr := extractCompareSummaryFromManifestYAML("wet", wetRaw, target)
+	if wetErr != nil && !errors.Is(wetErr, errCompareResourceNotFoundInManifest) {
+		return compareDryWetResult{}, fmt.Errorf("extract WET snapshot: %w", wetErr)
+	}
+
+	notes := make([]string, 0, 3)
+	if errors.Is(dryErr, errCompareResourceNotFoundInManifest) {
+		notes = append(notes, "DRY manifest found but target resource was not present in unit intent data.")
+	}
+	if errors.Is(wetErr, errCompareResourceNotFoundInManifest) {
+		notes = append(notes, "WET manifest found but target resource was not present in rendered output.")
+	}
+	if drySummary != nil && drySummary.SpaceName == "" {
+		drySummary.SpaceName = space
+	}
+	if wetSummary != nil && wetSummary.SpaceName == "" {
+		wetSummary.SpaceName = space
+	}
+	return compareDryWetResult{
+		Dry:   drySummary,
+		Wet:   wetSummary,
+		Notes: notes,
+	}, nil
+}
+
+func compareUnitGetArgs(unitSlug, space string) []string {
+	args := []string{"unit", "get", unitSlug, "--json", "--quiet"}
+	if strings.TrimSpace(space) != "" {
+		args = append(args, "--space", strings.TrimSpace(space))
+	}
+	return args
+}
+
+func compareUnitLivedataArgs(unitSlug, space string) []string {
+	args := []string{"unit", "livedata", unitSlug}
+	if strings.TrimSpace(space) != "" {
+		args = append(args, "--space", strings.TrimSpace(space))
+	}
+	return args
+}
+
+func runCompareCubCommandImpl(ctx context.Context, args []string) (string, error) {
+	cmd := exec.CommandContext(ctx, "cub", args...)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return "", fmt.Errorf("cub %s failed: %s", strings.Join(args, " "), msg)
+	}
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+func decodeCompareUnitDataFromGetJSON(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", fmt.Errorf("empty unit get output")
+	}
+
+	var payload interface{}
+	if err := json.Unmarshal([]byte(trimmed), &payload); err != nil {
+		return "", fmt.Errorf("parse unit get json: %w", err)
+	}
+
+	base64Value := findCompareUnitDataBase64(payload)
+	if base64Value == "" {
+		return "", fmt.Errorf("unit get output missing Unit.Data")
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(base64Value)
+	if err != nil {
+		decoded, err = base64.RawStdEncoding.DecodeString(base64Value)
+		if err != nil {
+			return "", fmt.Errorf("decode Unit.Data base64: %w", err)
+		}
+	}
+	return strings.TrimSpace(string(decoded)), nil
+}
+
+func findCompareUnitDataBase64(payload interface{}) string {
+	switch typed := payload.(type) {
+	case map[string]interface{}:
+		for _, key := range []string{"Unit", "unit"} {
+			if nested, ok := typed[key].(map[string]interface{}); ok {
+				if value, ok := nested["Data"].(string); ok && strings.TrimSpace(value) != "" {
+					return strings.TrimSpace(value)
+				}
+				if value, ok := nested["data"].(string); ok && strings.TrimSpace(value) != "" {
+					return strings.TrimSpace(value)
+				}
+			}
+		}
+		for _, key := range []string{"Data", "data"} {
+			if value, ok := typed[key].(string); ok && strings.TrimSpace(value) != "" {
+				return strings.TrimSpace(value)
+			}
+		}
+	case []interface{}:
+		for _, item := range typed {
+			if value := findCompareUnitDataBase64(item); value != "" {
+				return value
+			}
+		}
+	}
+	return ""
+}
+
+func extractCompareSummaryFromManifestYAML(source string, manifestYAML string, target compareResourceRef) (*compareSideSummary, error) {
+	docs := strings.Split(manifestYAML, "\n---")
+	for _, doc := range docs {
+		rawDoc := strings.TrimSpace(doc)
+		if rawDoc == "" {
+			continue
+		}
+		var obj map[string]interface{}
+		if err := yaml.Unmarshal([]byte(rawDoc), &obj); err != nil {
+			return nil, fmt.Errorf("parse manifest YAML: %w", err)
+		}
+		summary := summarizeCompareManifestObject(source, obj)
+		if !matchesCompareSummaryTarget(summary, target) {
+			continue
+		}
+		return summary, nil
+	}
+	return nil, errCompareResourceNotFoundInManifest
+}
+
+func summarizeCompareManifestObject(source string, obj map[string]interface{}) *compareSideSummary {
+	summary := &compareSideSummary{
+		Source: source,
+		Images: extractCompareImages(obj),
+	}
+
+	if apiVersion, ok := obj["apiVersion"].(string); ok {
+		summary.APIVersion = strings.TrimSpace(apiVersion)
+	}
+	if kind, ok := obj["kind"].(string); ok {
+		summary.Kind = strings.TrimSpace(kind)
+	}
+	if metadata, ok := obj["metadata"].(map[string]interface{}); ok {
+		if name, ok := metadata["name"].(string); ok {
+			summary.Name = strings.TrimSpace(name)
+		}
+		if namespace, ok := metadata["namespace"].(string); ok {
+			summary.Namespace = strings.TrimSpace(namespace)
+		}
+		if labels, ok := metadata["labels"].(map[string]interface{}); ok {
+			summary.LabelCount = len(labels)
+		}
+		if annotations, ok := metadata["annotations"].(map[string]interface{}); ok {
+			summary.AnnotationCount = len(annotations)
+		}
+	}
+	if replicas, ok := readCompareReplicas(obj); ok {
+		summary.Replicas = &replicas
+	}
+	return summary
+}
+
+func readCompareReplicas(obj map[string]interface{}) (int64, bool) {
+	spec, ok := obj["spec"].(map[string]interface{})
+	if !ok {
+		return 0, false
+	}
+	raw, ok := spec["replicas"]
+	if !ok || raw == nil {
+		return 0, false
+	}
+	switch typed := raw.(type) {
+	case int:
+		return int64(typed), true
+	case int32:
+		return int64(typed), true
+	case int64:
+		return typed, true
+	case float64:
+		return int64(typed), true
+	case string:
+		n, err := strconv.ParseInt(strings.TrimSpace(typed), 10, 64)
+		if err != nil {
+			return 0, false
+		}
+		return n, true
+	default:
+		return 0, false
+	}
+}
+
+func matchesCompareSummaryTarget(summary *compareSideSummary, target compareResourceRef) bool {
+	if summary == nil {
+		return false
+	}
+	if !strings.EqualFold(strings.TrimSpace(summary.Kind), strings.TrimSpace(target.Kind)) {
+		return false
+	}
+	if !strings.EqualFold(strings.TrimSpace(summary.Name), strings.TrimSpace(target.Name)) {
+		return false
+	}
+	docNamespace := strings.TrimSpace(summary.Namespace)
+	targetNamespace := strings.TrimSpace(target.Namespace)
+	return docNamespace == "" || strings.EqualFold(docNamespace, targetNamespace)
 }
 
 func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) (compareSideSummary, error) {
@@ -167,16 +480,29 @@ func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) 
 }
 
 func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSummary {
+	labels := obj.GetLabels()
+	annotations := obj.GetAnnotations()
+	unitSlug := strings.TrimSpace(labels["confighub.com/UnitSlug"])
+	if unitSlug == "" {
+		unitSlug = strings.TrimSpace(annotations["confighub.com/UnitSlug"])
+	}
+	spaceName := strings.TrimSpace(annotations["confighub.com/SpaceName"])
+	if spaceName == "" {
+		spaceName = strings.TrimSpace(labels["confighub.com/SpaceName"])
+	}
+
 	out := compareSideSummary{
 		Source:          "cluster",
 		APIVersion:      obj.GetAPIVersion(),
 		Kind:            obj.GetKind(),
 		Name:            obj.GetName(),
 		Namespace:       obj.GetNamespace(),
+		UnitSlug:        unitSlug,
+		SpaceName:       spaceName,
 		Generation:      obj.GetGeneration(),
 		ResourceVersion: obj.GetResourceVersion(),
-		LabelCount:      len(obj.GetLabels()),
-		AnnotationCount: len(obj.GetAnnotations()),
+		LabelCount:      len(labels),
+		AnnotationCount: len(annotations),
 		Images:          extractCompareImages(obj.Object),
 	}
 	if replicas, ok, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas"); ok {
@@ -211,6 +537,104 @@ func extractCompareImages(obj map[string]interface{}) []string {
 	return images
 }
 
+func finalizeCompareResourceResult(result compareResourceResult) compareResourceResult {
+	result.Mismatches = detectCompareFieldMismatches(result.Dry, result.Wet, result.Live)
+	return result
+}
+
+func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSideSummary) []compareFieldMismatch {
+	type compareFieldDescriptor struct {
+		Name    string
+		Extract func(*compareSideSummary) string
+	}
+	fields := []compareFieldDescriptor{
+		{
+			Name: "apiVersion",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil {
+					return ""
+				}
+				return strings.TrimSpace(side.APIVersion)
+			},
+		},
+		{
+			Name: "kind",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil {
+					return ""
+				}
+				return strings.TrimSpace(side.Kind)
+			},
+		},
+		{
+			Name: "namespace",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil {
+					return ""
+				}
+				return strings.TrimSpace(side.Namespace)
+			},
+		},
+		{
+			Name: "replicas",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil || side.Replicas == nil {
+					return ""
+				}
+				return fmt.Sprintf("%d", *side.Replicas)
+			},
+		},
+		{
+			Name: "images",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil || len(side.Images) == 0 {
+					return ""
+				}
+				return strings.Join(side.Images, ", ")
+			},
+		},
+	}
+
+	out := make([]compareFieldMismatch, 0, len(fields))
+	for _, field := range fields {
+		dryValue := field.Extract(dry)
+		wetValue := field.Extract(wet)
+		liveValue := field.Extract(&live)
+		if !compareFieldHasDivergence(dryValue, wetValue, liveValue) {
+			continue
+		}
+		out = append(out, compareFieldMismatch{
+			Field: field.Name,
+			Dry:   displayCompareFieldValue(dryValue),
+			Wet:   displayCompareFieldValue(wetValue),
+			Live:  displayCompareFieldValue(liveValue),
+		})
+	}
+	return out
+}
+
+func compareFieldHasDivergence(values ...string) bool {
+	unique := make(map[string]struct{}, len(values))
+	nonEmpty := 0
+	for _, raw := range values {
+		value := strings.TrimSpace(raw)
+		if value == "" {
+			continue
+		}
+		nonEmpty++
+		unique[value] = struct{}{}
+	}
+	return nonEmpty >= 2 && len(unique) >= 2
+}
+
+func displayCompareFieldValue(raw string) string {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return "-"
+	}
+	return value
+}
+
 func renderCompareResourceASCII(result compareResourceResult) string {
 	var b strings.Builder
 
@@ -226,21 +650,18 @@ func renderCompareResourceASCII(result compareResourceResult) string {
 		b.WriteString("Connection: standalone\n")
 	}
 
-	b.WriteString("\nLIVE (cluster)\n")
-	b.WriteString(fmt.Sprintf("  apiVersion: %s\n", valueOrDash(result.Live.APIVersion)))
-	b.WriteString(fmt.Sprintf("  kind: %s\n", valueOrDash(result.Live.Kind)))
-	b.WriteString(fmt.Sprintf("  name: %s\n", valueOrDash(result.Live.Name)))
-	b.WriteString(fmt.Sprintf("  namespace: %s\n", valueOrDash(result.Live.Namespace)))
-	if result.Live.Generation > 0 {
-		b.WriteString(fmt.Sprintf("  generation: %d\n", result.Live.Generation))
+	if result.Dry != nil {
+		renderCompareASCIISection(&b, "DRY (unit intent)", *result.Dry)
 	}
-	if result.Live.Replicas != nil {
-		b.WriteString(fmt.Sprintf("  replicas: %d\n", *result.Live.Replicas))
+	if result.Wet != nil {
+		renderCompareASCIISection(&b, "WET (rendered target)", *result.Wet)
 	}
-	if len(result.Live.Images) > 0 {
-		b.WriteString("  images:\n")
-		for _, image := range result.Live.Images {
-			b.WriteString(fmt.Sprintf("    - %s\n", image))
+	renderCompareASCIISection(&b, "LIVE (cluster)", result.Live)
+	if len(result.Mismatches) > 0 {
+		b.WriteString("\nDiff Highlights\n")
+		for _, mismatch := range result.Mismatches {
+			b.WriteString(fmt.Sprintf("  - %s: DRY=%s | WET=%s | LIVE=%s\n",
+				mismatch.Field, mismatch.Dry, mismatch.Wet, mismatch.Live))
 		}
 	}
 
@@ -269,21 +690,26 @@ func renderCompareResourceMarkdown(result compareResourceResult) string {
 		b.WriteString("- Connection: `standalone`\n\n")
 	}
 
-	b.WriteString("### LIVE (cluster)\n\n")
-	b.WriteString("| Field | Value |\n")
-	b.WriteString("|---|---|\n")
-	b.WriteString(fmt.Sprintf("| apiVersion | %s |\n", mdValueOrDash(result.Live.APIVersion)))
-	b.WriteString(fmt.Sprintf("| kind | %s |\n", mdValueOrDash(result.Live.Kind)))
-	b.WriteString(fmt.Sprintf("| name | %s |\n", mdValueOrDash(result.Live.Name)))
-	b.WriteString(fmt.Sprintf("| namespace | %s |\n", mdValueOrDash(result.Live.Namespace)))
-	if result.Live.Generation > 0 {
-		b.WriteString(fmt.Sprintf("| generation | %d |\n", result.Live.Generation))
+	if result.Dry != nil {
+		renderCompareMarkdownSection(&b, "DRY (unit intent)", *result.Dry)
 	}
-	if result.Live.Replicas != nil {
-		b.WriteString(fmt.Sprintf("| replicas | %d |\n", *result.Live.Replicas))
+	if result.Wet != nil {
+		renderCompareMarkdownSection(&b, "WET (rendered target)", *result.Wet)
 	}
-	if len(result.Live.Images) > 0 {
-		b.WriteString(fmt.Sprintf("| images | `%s` |\n", strings.Join(result.Live.Images, "`, `")))
+	renderCompareMarkdownSection(&b, "LIVE (cluster)", result.Live)
+	if len(result.Mismatches) > 0 {
+		b.WriteString("\n### Mismatches\n\n")
+		b.WriteString("| Field | DRY | WET | LIVE |\n")
+		b.WriteString("|---|---|---|---|\n")
+		for _, mismatch := range result.Mismatches {
+			b.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n",
+				mismatch.Field,
+				mdCompareFieldValue(mismatch.Dry),
+				mdCompareFieldValue(mismatch.Wet),
+				mdCompareFieldValue(mismatch.Live),
+			))
+		}
+		b.WriteString("\n")
 	}
 
 	if len(result.Notes) > 0 {
@@ -294,6 +720,46 @@ func renderCompareResourceMarkdown(result compareResourceResult) string {
 	}
 
 	return b.String()
+}
+
+func renderCompareASCIISection(b *strings.Builder, title string, side compareSideSummary) {
+	b.WriteString("\n" + title + "\n")
+	b.WriteString(fmt.Sprintf("  apiVersion: %s\n", valueOrDash(side.APIVersion)))
+	b.WriteString(fmt.Sprintf("  kind: %s\n", valueOrDash(side.Kind)))
+	b.WriteString(fmt.Sprintf("  name: %s\n", valueOrDash(side.Name)))
+	b.WriteString(fmt.Sprintf("  namespace: %s\n", valueOrDash(side.Namespace)))
+	if side.Generation > 0 {
+		b.WriteString(fmt.Sprintf("  generation: %d\n", side.Generation))
+	}
+	if side.Replicas != nil {
+		b.WriteString(fmt.Sprintf("  replicas: %d\n", *side.Replicas))
+	}
+	if len(side.Images) > 0 {
+		b.WriteString("  images:\n")
+		for _, image := range side.Images {
+			b.WriteString(fmt.Sprintf("    - %s\n", image))
+		}
+	}
+}
+
+func renderCompareMarkdownSection(b *strings.Builder, title string, side compareSideSummary) {
+	b.WriteString("### " + title + "\n\n")
+	b.WriteString("| Field | Value |\n")
+	b.WriteString("|---|---|\n")
+	b.WriteString(fmt.Sprintf("| apiVersion | %s |\n", mdValueOrDash(side.APIVersion)))
+	b.WriteString(fmt.Sprintf("| kind | %s |\n", mdValueOrDash(side.Kind)))
+	b.WriteString(fmt.Sprintf("| name | %s |\n", mdValueOrDash(side.Name)))
+	b.WriteString(fmt.Sprintf("| namespace | %s |\n", mdValueOrDash(side.Namespace)))
+	if side.Generation > 0 {
+		b.WriteString(fmt.Sprintf("| generation | %d |\n", side.Generation))
+	}
+	if side.Replicas != nil {
+		b.WriteString(fmt.Sprintf("| replicas | %d |\n", *side.Replicas))
+	}
+	if len(side.Images) > 0 {
+		b.WriteString(fmt.Sprintf("| images | `%s` |\n", strings.Join(side.Images, "`, `")))
+	}
+	b.WriteString("\n")
 }
 
 func valueOrDash(raw string) string {
@@ -309,4 +775,12 @@ func mdValueOrDash(raw string) string {
 		return value
 	}
 	return "`" + value + "`"
+}
+
+func mdCompareFieldValue(raw string) string {
+	value := displayCompareFieldValue(raw)
+	if value == "-" {
+		return value
+	}
+	return "`" + strings.ReplaceAll(value, "`", "\\`") + "`"
 }

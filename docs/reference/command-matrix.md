@@ -242,6 +242,8 @@ Complete reference of all commands, options, TUI keys, and availability.
 
 Resource compare mode uses one positional argument:
 - `cub-scout compare <kind/name> -n <namespace> --format ascii|json|md`
+- Linked resources show DRY/WET/LIVE sections; unlinked resources degrade to LIVE-only with notes.
+- Linked resource output includes mismatch highlights across DRY/WET/LIVE when values diverge.
 
 ---
 
@@ -373,7 +375,7 @@ Press `?` in the TUI to see this help.
 | `a` | Activity | Recent changes view |
 | `B` | Toggle | Hub/AppSpace view |
 | `M` | Maps | Three Maps view (GitOps + ConfigHub + Repos) |
-| `P` | Panel | WET↔LIVE side-by-side view |
+| `P` | Panel | DRY↔WET↔LIVE side-by-side view |
 | `c` | Create | Create new resource |
 | `d`/`x` | Delete | Delete selected resource |
 | `i` | Import | Import workloads from Kubernetes |

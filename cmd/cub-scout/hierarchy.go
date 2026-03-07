@@ -66,7 +66,7 @@ func loadSpaceDataCmd(spaceSlug string) tea.Cmd {
 	}
 }
 
-// loadPanelDataCmd fetches cluster workloads for the WET↔LIVE panel view
+// loadPanelDataCmd fetches cluster workloads for the DRY↔WET↔LIVE panel view
 func loadPanelDataCmd(unitSlugs []string) tea.Cmd {
 	return func() tea.Msg {
 		ctx := context.Background()
@@ -3846,7 +3846,7 @@ func (m Model) renderHelpOverlay() string {
 	b.WriteString("\n")
 	b.WriteString("  " + keyStyle.Render("M") + "          " + descStyle.Render("Three Maps view (GitOps + ConfigHub + Repos)"))
 	b.WriteString("\n")
-	b.WriteString("  " + keyStyle.Render("P") + "          " + descStyle.Render("Panel view (WET↔LIVE side-by-side)"))
+	b.WriteString("  " + keyStyle.Render("P") + "          " + descStyle.Render("Panel view (DRY↔WET↔LIVE side-by-side)"))
 	b.WriteString("\n")
 	b.WriteString("  " + keyStyle.Render("c") + "          " + descStyle.Render("Create new resource"))
 	b.WriteString("\n")
@@ -4224,7 +4224,7 @@ func (m Model) renderMapsView() string {
 	return b.String()
 }
 
-// renderPanelView shows WET (ConfigHub) vs LIVE (Cluster) side-by-side
+// renderPanelView shows DRY (intent), WET (rendered), and LIVE (cluster) side-by-side
 func (m Model) renderPanelView() string {
 	var b strings.Builder
 
@@ -4239,7 +4239,7 @@ func (m Model) renderPanelView() string {
 	// Header
 	b.WriteString(titleStyle.Render("╭────────────────────────────────────────────────────────────────╮"))
 	b.WriteString("\n")
-	b.WriteString(titleStyle.Render("│") + "  " + titleStyle.Render("📊  PANEL VIEW") + "           " + dimStyle.Render("WET (ConfigHub) ↔ LIVE (Cluster)") + "  " + titleStyle.Render("│"))
+	b.WriteString(titleStyle.Render("│") + "  " + titleStyle.Render("📊  PANEL VIEW") + "       " + dimStyle.Render("DRY (Intent) ↔ WET (Rendered) ↔ LIVE (Cluster)") + "  " + titleStyle.Render("│"))
 	b.WriteString("\n")
 	b.WriteString(titleStyle.Render("╰────────────────────────────────────────────────────────────────╯"))
 	b.WriteString("\n\n")
@@ -4260,10 +4260,10 @@ func (m Model) renderPanelView() string {
 		return b.String()
 	}
 
-	// Calculate pane width for side-by-side display
-	paneWidth := 32
-	if m.width > 80 {
-		paneWidth = (m.width - 10) / 2
+	// Calculate pane width for three-column display.
+	paneWidth := 22
+	if m.width > 110 {
+		paneWidth = (m.width - 14) / 3
 	}
 
 	// Collect units from the tree
@@ -4286,21 +4286,37 @@ func (m Model) renderPanelView() string {
 		}
 	}
 
-	// WET column header
-	wetHeader := sectionStyle.Render("WET (ConfigHub)")
+	dryHeader := sectionStyle.Render("DRY (Intent)")
+	wetHeader := sectionStyle.Render("WET (Rendered)")
 	liveHeader := sectionStyle.Render("LIVE (Cluster)")
-	b.WriteString(fmt.Sprintf("  %-*s  │  %s\n", paneWidth, wetHeader, liveHeader))
-	b.WriteString(fmt.Sprintf("  %s──┼──%s\n", strings.Repeat("─", paneWidth), strings.Repeat("─", paneWidth)))
+	b.WriteString(fmt.Sprintf("  %-*s │ %-*s │ %s\n", paneWidth, dryHeader, paneWidth, wetHeader, liveHeader))
+	b.WriteString(fmt.Sprintf("  %s─┼─%s─┼─%s\n",
+		strings.Repeat("─", paneWidth), strings.Repeat("─", paneWidth), strings.Repeat("─", paneWidth)))
 
-	// Show each unit with its correlated workloads
+	// Show each unit with its correlated workloads across DRY/WET/LIVE columns.
 	for _, unit := range units {
 		unitSlug := unit.Unit.Slug
 		unitRev := unit.Unit.HeadRevisionNum
 
-		// WET side: unit info
-		wetLine := fmt.Sprintf("%s (Rev %d)", nameStyle.Render(unitSlug), unitRev)
+		dryLine := fmt.Sprintf("%s (head:%d)", nameStyle.Render(unitSlug), unitRev)
+		if space := strings.TrimSpace(unit.Space.Slug); space != "" {
+			dryLine += dimStyle.Render(" @" + space)
+		}
 
-		// LIVE side: correlated workloads
+		syncStatus := strings.TrimSpace(unit.UnitStatus.SyncStatus)
+		if syncStatus == "" {
+			syncStatus = "unknown"
+		}
+		driftStatus := strings.TrimSpace(unit.UnitStatus.Drift)
+		if driftStatus == "" {
+			driftStatus = "unknown"
+		}
+		wetLine := fmt.Sprintf("live:%d sync:%s drift:%s", unit.Unit.LiveRevisionNum, syncStatus, driftStatus)
+		if unit.Unit.LiveRevisionNum > 0 && unitRev > unit.Unit.LiveRevisionNum {
+			wetLine += warnStyle.Render(fmt.Sprintf(" (%d pending)", unitRev-unit.Unit.LiveRevisionNum))
+		}
+
+		// LIVE side: correlated workloads.
 		liveWorkloads, hasLive := m.panelCorrelation[unitSlug]
 		var liveLine string
 		if hasLive && len(liveWorkloads) > 0 {
@@ -4336,26 +4352,30 @@ func (m Model) renderPanelView() string {
 			liveLine = dimStyle.Render("—")
 		}
 
-		b.WriteString(fmt.Sprintf("  %-*s  │  %s\n", paneWidth, wetLine, liveLine))
+		b.WriteString(fmt.Sprintf("  %-*s │ %-*s │ %s\n", paneWidth, dryLine, paneWidth, wetLine, liveLine))
 	}
 
-	// Show orphans section if any
+	// Show orphans section if any.
 	if len(m.panelOrphans) > 0 {
 		b.WriteString("\n")
-		b.WriteString(fmt.Sprintf("  %-*s  │  %s\n", paneWidth, "", warnStyle.Render("ORPHANS (not in ConfigHub)")))
-		b.WriteString(fmt.Sprintf("  %s──┼──%s\n", strings.Repeat("─", paneWidth), strings.Repeat("─", paneWidth)))
+		b.WriteString(fmt.Sprintf("  %-*s │ %-*s │ %s\n",
+			paneWidth, "", paneWidth, "", warnStyle.Render("ORPHANS (not in ConfigHub)")))
+		b.WriteString(fmt.Sprintf("  %s─┼─%s─┼─%s\n",
+			strings.Repeat("─", paneWidth), strings.Repeat("─", paneWidth), strings.Repeat("─", paneWidth)))
 
 		for i, orphan := range m.panelOrphans {
 			if i >= 5 { // Limit to first 5 orphans
-				b.WriteString(fmt.Sprintf("  %-*s  │  %s\n", paneWidth, "", dimStyle.Render(fmt.Sprintf("  ... and %d more", len(m.panelOrphans)-5))))
+				b.WriteString(fmt.Sprintf("  %-*s │ %-*s │ %s\n", paneWidth, "", paneWidth, "",
+					dimStyle.Render(fmt.Sprintf("  ... and %d more", len(m.panelOrphans)-5))))
 				break
 			}
+			dryLine := dimStyle.Render("—")
 			wetLine := dimStyle.Render("—")
 			liveLine := warnStyle.Render("🔴 ") + fmt.Sprintf("%s/%s", orphan.Kind, orphan.Name)
 			if orphan.Namespace != "" {
 				liveLine += dimStyle.Render(fmt.Sprintf(" (%s)", orphan.Namespace))
 			}
-			b.WriteString(fmt.Sprintf("  %-*s  │  %s\n", paneWidth, wetLine, liveLine))
+			b.WriteString(fmt.Sprintf("  %-*s │ %-*s │ %s\n", paneWidth, dryLine, paneWidth, wetLine, liveLine))
 		}
 	}
 
@@ -4366,7 +4386,8 @@ func (m Model) renderPanelView() string {
 	synced := len(m.panelCorrelation)
 	orphanCount := len(m.panelOrphans)
 	totalLive := len(m.panelWorkloads)
-	summary := fmt.Sprintf("WET: %d units │ LIVE: %d workloads │ Correlated: %d │ Orphans: %d",
+	summary := fmt.Sprintf("DRY: %d units │ WET: %d statuses │ LIVE: %d workloads │ Correlated: %d │ Orphans: %d",
+		len(units),
 		len(units), totalLive, synced, orphanCount)
 	b.WriteString(summary)
 	b.WriteString("\n\n")
@@ -6681,7 +6702,7 @@ func (m Model) View() string {
 		return m.renderMapsView()
 	}
 
-	// Panel view (WET↔LIVE)
+	// Panel view (DRY↔WET↔LIVE)
 	if m.panelMode {
 		return m.renderPanelView()
 	}
