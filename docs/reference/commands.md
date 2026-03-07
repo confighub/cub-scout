@@ -232,13 +232,15 @@ cub-scout explain deployment/payments-api -n prod --format md
 
 ## map orphans
 
-Find resources not managed by GitOps.
+Find orphan resources, including unmanaged resources and explicit Argo ApplicationSet-link orphans.
 
 ```bash
 cub-scout map orphans [flags]
 ```
 
-Shows resources where `owner=Native` - not managed by Flux, ArgoCD, Helm, or ConfigHub.
+Shows:
+- Resources where `owner=Native` (not managed by Flux, ArgoCD, Helm, or ConfigHub)
+- ArgoCD `Application` resources with explicit `ApplicationSet` lineage that points to a missing generator
 
 ### Examples
 
@@ -584,7 +586,7 @@ cub-scout scan [flags]
 | `--state` | State scan only (stuck reconciliations) |
 | `--kyverno` | Kyverno scan only |
 | `--timing-bombs` | Scan for expiring certs/quotas |
-| `--dangling` | Scan for dangling resources |
+| `--dangling` | Scan for dangling resources (includes Argo ApplicationSet-link orphans and generator errors) |
 | `--file` | Scan a YAML file (static analysis) |
 | `--list` | List all known patterns |
 | `--json` | Output as JSON |

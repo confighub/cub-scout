@@ -1,0 +1,42 @@
+[
+  {
+    "id": "default/default//ConfigMap/debug-config",
+    "clusterName": "default",
+    "namespace": "default",
+    "kind": "ConfigMap",
+    "name": "debug-config",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "status": "Ready"
+  },
+  {
+    "id": "default/argocd/argoproj.io/Application/payments-dev",
+    "clusterName": "default",
+    "namespace": "argocd",
+    "kind": "Application",
+    "name": "payments-dev",
+    "apiVersion": "argoproj.io/v1alpha1",
+    "owner": "ArgoCD",
+    "status": "Degraded",
+    "ownerDetails": {
+      "generatedByApplicationSet": "missing-generator",
+      "applicationSetConfidence": "explicit",
+      "applicationSetLinkStatus": "orphan"
+    }
+  },
+  {
+    "id": "default/argocd/argoproj.io/Application/payments-prod",
+    "clusterName": "default",
+    "namespace": "argocd",
+    "kind": "Application",
+    "name": "payments-prod",
+    "apiVersion": "argoproj.io/v1alpha1",
+    "owner": "ArgoCD",
+    "status": "Healthy",
+    "ownerDetails": {
+      "generatedByApplicationSet": "existing-generator",
+      "applicationSetConfidence": "explicit",
+      "applicationSetLinkStatus": "resolved"
+    }
+  }
+]

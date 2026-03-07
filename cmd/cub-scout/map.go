@@ -50,6 +50,7 @@ var (
 	mapPreviewStaleAfter string // --stale-after flag for map previews
 	deepDiveConnected    bool   // --connected flag for ConfigHub integration in deep-dive
 	orphanIncludeSystem  bool   // --include-system flag for showing system resources
+	orphanIncludeAppSet  bool   // include explicit ApplicationSet-link orphans in map orphans
 	hooksFile            string // --file flag for static analysis of hooks
 )
 
@@ -724,6 +725,7 @@ func runMapListFromCluster(ctx context.Context) error {
 	// Collect resources
 	entries := []MapEntry{}
 	byOwner := map[string]int{} // populated during collection; recomputed after filtering for summary correctness
+	appSetLookup := loadMapApplicationSetLookup(ctx, dynClient, mapNamespace)
 
 	// Resource types to scan
 	resources := []schema.GroupVersionResource{
@@ -755,7 +757,7 @@ func runMapListFromCluster(ctx context.Context) error {
 				continue // Skip resources that don't exist
 			}
 			for _, item := range l.Items {
-				entries = processResource(&item, gvr, clusterName, entries, byOwner)
+				entries = processResourceWithLookup(&item, gvr, clusterName, entries, byOwner, appSetLookup)
 			}
 		} else {
 			l, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
@@ -763,7 +765,7 @@ func runMapListFromCluster(ctx context.Context) error {
 				continue
 			}
 			for _, item := range l.Items {
-				entries = processResource(&item, gvr, clusterName, entries, byOwner)
+				entries = processResourceWithLookup(&item, gvr, clusterName, entries, byOwner, appSetLookup)
 			}
 		}
 	}
@@ -797,8 +799,14 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		if mapKind != "" && e.Kind != mapKind {
 			continue
 		}
-		if mapOwner != "" && !strings.EqualFold(e.Owner, mapOwner) {
-			continue
+		if mapOwner != "" {
+			if orphanIncludeAppSet && strings.EqualFold(mapOwner, "Native") {
+				if !isMapOrphanCandidate(e) {
+					continue
+				}
+			} else if !strings.EqualFold(e.Owner, mapOwner) {
+				continue
+			}
 		}
 		// Query filter
 		if q != nil && !q.Matches(e) {
@@ -1017,7 +1025,27 @@ func renderMapListFromEntries(entries []MapEntry) error {
 	return nil
 }
 
-func processResource(item interface{}, gvr schema.GroupVersionResource, clusterName string, entries []MapEntry, byOwner map[string]int) []MapEntry {
+func processResource(
+	item interface{},
+	gvr schema.GroupVersionResource,
+	clusterName string,
+	entries []MapEntry,
+	byOwner map[string]int,
+) []MapEntry {
+	return processResourceWithLookup(item, gvr, clusterName, entries, byOwner, mapApplicationSetLookup{
+		byNamespacedName: map[string]int{},
+		byName:           map[string]int{},
+	})
+}
+
+func processResourceWithLookup(
+	item interface{},
+	gvr schema.GroupVersionResource,
+	clusterName string,
+	entries []MapEntry,
+	byOwner map[string]int,
+	appSetLookup mapApplicationSetLookup,
+) []MapEntry {
 	// Type assert to unstructured.Unstructured
 	unstr, ok := item.(*unstructured.Unstructured)
 	if !ok {
@@ -1068,6 +1096,9 @@ func processResource(item interface{}, gvr schema.GroupVersionResource, clusterN
 			}
 		}
 	}
+	if gvr.Group == "argoproj.io" && gvr.Resource == "applications" {
+		annotateMapApplicationSetLineage(&entry, unstr, appSetLookup)
+	}
 
 	// "Native" means no GitOps owner detected (not managed by Flux, Argo, Helm, or ConfigHub).
 	// These are resources deployed directly via kubectl, or system components like the GitOps
@@ -1077,6 +1108,90 @@ func processResource(item interface{}, gvr schema.GroupVersionResource, clusterN
 
 	byOwner[entry.Owner]++
 	return append(entries, entry)
+}
+
+type mapApplicationSetLookup struct {
+	byNamespacedName map[string]int
+	byName           map[string]int
+}
+
+func loadMapApplicationSetLookup(ctx context.Context, dynClient dynamic.Interface, namespace string) mapApplicationSetLookup {
+	lookup := mapApplicationSetLookup{
+		byNamespacedName: map[string]int{},
+		byName:           map[string]int{},
+	}
+
+	gvr := schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "applicationsets",
+	}
+
+	var (
+		list *unstructured.UnstructuredList
+		err  error
+	)
+	if namespace != "" {
+		list, err = dynClient.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
+	} else {
+		list, err = dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
+	}
+	if err != nil || list == nil {
+		return lookup
+	}
+
+	for idx, appSet := range list.Items {
+		key := appSet.GetNamespace() + "/" + appSet.GetName()
+		lookup.byNamespacedName[key] = idx
+		if _, exists := lookup.byName[appSet.GetName()]; !exists {
+			lookup.byName[appSet.GetName()] = idx
+		}
+	}
+
+	return lookup
+}
+
+func annotateMapApplicationSetLineage(entry *MapEntry, app *unstructured.Unstructured, lookup mapApplicationSetLookup) {
+	if entry == nil || app == nil {
+		return
+	}
+
+	generatedBy, confidence := resolveGeneratedByApplicationSetWithConfidence(app)
+	if generatedBy == "" {
+		return
+	}
+
+	status, _, _ := classifyApplicationSetLink(
+		app.GetNamespace(),
+		generatedBy,
+		confidence,
+		lookup.byNamespacedName,
+		lookup.byName,
+	)
+
+	if entry.OwnerDetails == nil {
+		entry.OwnerDetails = map[string]string{}
+	}
+	entry.OwnerDetails["generatedByApplicationSet"] = generatedBy
+	if confidence != "" {
+		entry.OwnerDetails["applicationSetConfidence"] = confidence
+	}
+	if status != "" {
+		entry.OwnerDetails["applicationSetLinkStatus"] = status
+	}
+}
+
+func isMapOrphanCandidate(entry MapEntry) bool {
+	if strings.EqualFold(entry.Owner, "Native") {
+		return true
+	}
+	if !strings.EqualFold(entry.Owner, "ArgoCD") || !strings.EqualFold(entry.Kind, "Application") {
+		return false
+	}
+	if entry.OwnerDetails == nil {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(entry.OwnerDetails["applicationSetLinkStatus"]), "orphan")
 }
 
 // loadMapEntriesFromJSON loads a []MapEntry fixture used by ASCII golden tests.
@@ -3024,12 +3139,20 @@ func runMapOrphans(cmd *cobra.Command, args []string) error {
 		fmt.Println("════════════════════════════════════════════════════════════════════")
 		fmt.Println("Resources not managed by GitOps (Flux, ArgoCD, Helm, ConfigHub).")
 		fmt.Println("These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.")
+		fmt.Println("Also includes Argo Applications with explicit links to missing ApplicationSets.")
 		if !orphanIncludeSystem && mapNamespace == "" {
 			fmt.Println()
 			fmt.Println("Note: System namespaces hidden by default. Use --include-system to show all.")
 		}
 		fmt.Println()
 	}
+
+	// Include Native resources plus explicit ApplicationSet-link orphans.
+	prevAppSetOrphanMode := orphanIncludeAppSet
+	orphanIncludeAppSet = true
+	defer func() {
+		orphanIncludeAppSet = prevAppSetOrphanMode
+	}()
 
 	// Set the owner filter to Native and run list with orphan filtering
 	mapOwner = "Native"
