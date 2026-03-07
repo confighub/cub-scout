@@ -167,3 +167,19 @@ func TestRenderExplainText_IncludesPartialTraceNotes(t *testing.T) {
 		t.Fatalf("expected partial-trace note in explain text:\\n%s", out)
 	}
 }
+
+func TestExplainOwner_Custom(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "platform-api",
+			Namespace: "default",
+		},
+		Error: "custom owner detected: Internal Platform (trace chain unavailable for custom owners)",
+	}
+
+	summary := buildExplainSummary(result)
+	if summary.Owner != "Internal Platform" {
+		t.Fatalf("owner = %q, want %q", summary.Owner, "Internal Platform")
+	}
+}

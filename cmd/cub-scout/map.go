@@ -63,6 +63,16 @@ func displayOwner(owner string) string {
 	return mapsvc.DisplayOwner(owner)
 }
 
+func displayOwnership(ownership agent.Ownership) string {
+	if ownership.Type == agent.OwnerCustom {
+		if name := strings.TrimSpace(ownership.Name); name != "" {
+			return name
+		}
+		return "Custom"
+	}
+	return displayOwner(ownership.Type)
+}
+
 var mapCmd = &cobra.Command{
 	Use:   "map",
 	Short: "Interactive map of resources and ownership",
@@ -1065,7 +1075,7 @@ func processResourceWithLookup(
 		Kind:        unstr.GetKind(),
 		Name:        unstr.GetName(),
 		APIVersion:  unstr.GetAPIVersion(),
-		Owner:       displayOwner(ownership.Type),
+		Owner:       displayOwnership(ownership),
 		Labels:      labels,
 		Status:      detectStatus(unstr),
 		CreatedAt:   unstr.GetCreationTimestamp().Time,
@@ -2896,43 +2906,15 @@ func resolveArgoOwnershipLineage(obj *unstructured.Unstructured, index *argoLine
 }
 
 func detectOwnership(obj *unstructured.Unstructured) (string, string) {
-	labels := obj.GetLabels()
-	if labels == nil {
-		labels = map[string]string{}
-	}
-	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
+	ownership := agent.DetectOwnership(obj)
+	owner := displayOwnership(ownership)
+
+	managedBy := strings.TrimSpace(ownership.Name)
+	if managedBy == "" {
+		managedBy = "-"
 	}
 
-	// ConfigHub
-	if slug, ok := labels["confighub.com/UnitSlug"]; ok {
-		return "ConfigHub", slug
-	}
-	// Flux Kustomize
-	if name, ok := labels["kustomize.toolkit.fluxcd.io/name"]; ok {
-		return "Flux", name
-	}
-	// Flux Helm
-	if name, ok := labels["helm.toolkit.fluxcd.io/name"]; ok {
-		return "Flux", name
-	}
-	// ArgoCD - check both label and tracking-id annotation
-	if instance, ok := labels["argocd.argoproj.io/instance"]; ok {
-		return "ArgoCD", instance
-	}
-	// ArgoCD tracking-id annotation (format: <app-name>:<group>/<kind>:<namespace>/<name>)
-	if tracking, ok := annotations["argocd.argoproj.io/tracking-id"]; ok {
-		if appName := parseArgoTrackingIDAppName(tracking); appName != "" {
-			return "ArgoCD", appName
-		}
-	}
-	// Helm
-	if labels["app.kubernetes.io/managed-by"] == "Helm" {
-		name := annotations["meta.helm.sh/release-name"]
-		return "Helm", name
-	}
-	return "Native", "-"
+	return owner, managedBy
 }
 
 func getContainerImage(obj *unstructured.Unstructured) string {

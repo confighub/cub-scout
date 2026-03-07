@@ -115,92 +115,52 @@ cub-scout scan --risk-dir ./my-risks
 
 Add detection for custom deployment tools.
 
-### Ownership Detector Interface
+### Configuration File
 
-```go
-// pkg/ownership/detector.go
+Create one of these files:
 
-type Detector interface {
-    // Name returns the owner type name (e.g., "mydeployer")
-    Name() string
+- `~/.cub-scout/detectors.yaml` (default)
+- or set `CUB_SCOUT_OWNERSHIP_DETECTORS=/path/to/detectors.yaml`
 
-    // Priority returns detection priority (lower = higher priority)
-    Priority() int
-
-    // Detect checks if this detector owns the resource
-    // Returns (owner, confidence) where confidence is 0.0-1.0
-    Detect(obj *unstructured.Unstructured) (*Owner, float64)
-}
-
-type Owner struct {
-    Type   string            // e.g., "mydeployer"
-    Ref    string            // e.g., "pipeline/prod-deploy"
-    Labels map[string]string // Additional ownership metadata
-}
-```
-
-### Example: Custom Detector
-
-```go
-// pkg/ownership/mydeployer.go
-
-type MyDeployerDetector struct{}
-
-func (d *MyDeployerDetector) Name() string {
-    return "mydeployer"
-}
-
-func (d *MyDeployerDetector) Priority() int {
-    return 50  // Between Flux (20) and Unknown (100)
-}
-
-func (d *MyDeployerDetector) Detect(obj *unstructured.Unstructured) (*Owner, float64) {
-    labels := obj.GetLabels()
-
-    // Check for our custom label
-    if pipeline, ok := labels["mycompany.io/deployed-by"]; ok {
-        return &Owner{
-            Type: "mydeployer",
-            Ref:  pipeline,
-            Labels: map[string]string{
-                "pipeline": pipeline,
-            },
-        }, 1.0  // High confidence
-    }
-
-    return nil, 0
-}
-```
-
-### Registering Custom Detectors
-
-```go
-// In your main.go or init
-
-import "github.com/confighub/agent/pkg/ownership"
-
-func init() {
-    ownership.Register(&MyDeployerDetector{})
-}
-```
-
-### Configuration-Based Detectors
-
-For simple label/annotation detection, use config:
+Example:
 
 ```yaml
-# config/ownership.yaml
 detectors:
-  - name: mydeployer
-    priority: 50
+  - name: internal-platform
     labels:
-      - key: mycompany.io/deployed-by
-        ref_field: true  # Use this label's value as the owner ref
+      - key: platform.company.com/managed-by
+        value: "platform-controller"
+    owner_name: "Internal Platform"
+    owner_type: "custom"
+
+  - name: pulumi
     annotations:
-      - key: mycompany.io/pipeline-id
+      - key: pulumi.com/stack
+    owner_name: "Pulumi"
+    owner_type: "custom"
 ```
 
-**Note:** Configuration-based detectors are not yet implemented. Currently, custom detectors must be added in Go code.
+### Matching Rules
+
+1. Built-in detectors run first (Flux, ArgoCD, Helm, Terraform, ConfigHub, Crossplane).
+2. Custom detectors run after built-ins, in YAML order.
+3. A detector matches when all listed label/annotation rules match.
+4. `value` is optional: when omitted, key existence is enough.
+5. First matching custom detector wins.
+
+### Behavior on Errors
+
+- Missing config file: silently ignored (default behavior only).
+- Invalid config file: warning is printed once to stderr, then built-ins continue.
+- Invalid detector entry (missing `name`, no usable rules): that entry is skipped.
+
+### Where It Appears
+
+Custom owners appear in:
+
+- `cub-scout map list` owner column
+- `cub-scout explain` owner field
+- `cub-scout trace` warning text for unsupported non-GitOps trace chains
 
 ---
 

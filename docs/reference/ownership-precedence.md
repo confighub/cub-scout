@@ -23,8 +23,9 @@ cub-scout checks for ownership signals in the following order. The **first match
 | 5 | **ConfigHub** | Label or annotation: `confighub.com/UnitSlug` |
 | 6 | **Crossplane (system)** | API group: `pkg.crossplane.io` or `apiextensions.crossplane.io` |
 | 7 | **Crossplane (managed)** | Labels: `crossplane.io/claim-name`, `crossplane.io/composite`, or ownerRef to Crossplane resource |
-| 8 | **Kubernetes (native)** | OwnerReferences present (controller preferred) |
-| 9 | **Unknown** | No ownership signals detected |
+| 8 | **Custom (config file)** | `~/.cub-scout/detectors.yaml` (or `$CUB_SCOUT_OWNERSHIP_DETECTORS`) detectors, first matching detector wins |
+| 9 | **Kubernetes (native)** | OwnerReferences present (controller preferred) |
+| 10 | **Unknown** | No ownership signals detected |
 
 ---
 
@@ -170,6 +171,36 @@ determine ownership from available signals.
 
 ---
 
+### Custom (Config File)
+
+**Confidence: High** (explicit configured match rules)
+
+Custom detectors are loaded from:
+
+- `~/.cub-scout/detectors.yaml`
+- or `$CUB_SCOUT_OWNERSHIP_DETECTORS` (path override)
+
+Format:
+
+```yaml
+detectors:
+  - name: internal-platform
+    labels:
+      - key: platform.company.com/managed-by
+        value: platform-controller
+    owner_name: Internal Platform
+    owner_type: custom
+```
+
+Rules:
+
+1. Built-in detectors run first (priorities 1-7 above).
+2. Custom detectors run next, in file order (first match wins).
+3. If the config file is missing, behavior is unchanged.
+4. If the config file is invalid, cub-scout prints a warning and continues with built-ins only.
+
+---
+
 ## Precedence: Multiple Signals Present
 
 When a resource has multiple ownership signals, cub-scout uses **first-match wins**
@@ -181,8 +212,10 @@ based on the priority order above.
 |-----------------|--------|--------|
 | Flux + Helm labels | **Flux** | Flux checked before Helm (priority 1 vs 3) |
 | ArgoCD + Helm labels | **ArgoCD** | ArgoCD checked before Helm (priority 2 vs 3) |
-| Helm + OwnerRef | **Helm** | Helm checked before K8s native (priority 3 vs 8) |
-| Crossplane claim + OwnerRef | **Crossplane** | Crossplane checked before K8s native (priority 7 vs 8) |
+| Helm + OwnerRef | **Helm** | Helm checked before K8s native (priority 3 vs 9) |
+| Crossplane claim + OwnerRef | **Crossplane** | Crossplane checked before K8s native (priority 7 vs 9) |
+| Flux + matching custom detector | **Flux** | Built-ins run before custom detectors |
+| Two matching custom detectors | **First custom detector** | Custom detectors are evaluated in file order |
 | Only OwnerRef | **Kubernetes** | Only signal present |
 
 ### Flux HelmRelease Special Case
@@ -273,3 +306,4 @@ This enables debugging when ownership appears incorrect.
 - [How To: Understand Ownership Detection](../howto/ownership-detection.md) - User guide
 - [Reference: Commands](commands.md) - CLI usage
 - Source: `pkg/agent/ownership.go`
+- Custom detector loader: `pkg/agent/ownership_custom.go`
