@@ -181,6 +181,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Connected-mode durability: persist normalized summary artifacts for later query/trend views.
+	persistConnectedScanSummary(result, scanNamespace)
+
 	// Handle Kyverno-only mode where Kyverno is not installed
 	if scanKyvernoOnly && result.Kyverno == nil && !runState {
 		if scanJSON || scanNormalizedJSON {
