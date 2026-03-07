@@ -77,6 +77,65 @@ func TestBuildAuditEntriesFromChangeSets_FiltersAndSorts(t *testing.T) {
 	}
 }
 
+func TestBuildAuditEntriesFromChangeSets_ExcludesSyntheticByDefault(t *testing.T) {
+	cutoff := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	raw := `[
+	  {
+	    "Slug": "CS-REAL-1",
+	    "CreatedAt": "2026-03-06T10:00:00Z",
+	    "Description": "break-glass accept: real",
+	    "CreatedBy": "sre",
+	    "Labels": {"break-glass":"true"}
+	  },
+	  {
+	    "Slug": "CS-DEMO-1",
+	    "CreatedAt": "2026-03-06T11:00:00Z",
+	    "Description": "break-glass accept: demo seed",
+	    "CreatedBy": "demo-bot",
+	    "Labels": {"break-glass":"true", "synthetic":"true"}
+	  }
+	]`
+
+	got, err := buildAuditEntriesFromChangeSets(raw, "", cutoff)
+	if err != nil {
+		t.Fatalf("buildAuditEntriesFromChangeSets() error = %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("entry count = %d, want 1", len(got))
+	}
+	if got[0].ChangeSet != "CS-REAL-1" {
+		t.Fatalf("changeset = %q, want CS-REAL-1", got[0].ChangeSet)
+	}
+}
+
+func TestBuildAuditEntriesFromChangeSetsWithOptions_IncludesSynthetic(t *testing.T) {
+	cutoff := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	raw := `[
+	  {
+	    "Slug": "CS-REAL-1",
+	    "CreatedAt": "2026-03-06T10:00:00Z",
+	    "Description": "break-glass accept: real",
+	    "CreatedBy": "sre",
+	    "Labels": {"break-glass":"true"}
+	  },
+	  {
+	    "Slug": "CS-DEMO-1",
+	    "CreatedAt": "2026-03-06T11:00:00Z",
+	    "Description": "break-glass accept: demo seed",
+	    "CreatedBy": "demo-bot",
+	    "Labels": {"break-glass":"true", "source":"cub-scout-demo-seed"}
+	  }
+	]`
+
+	got, err := buildAuditEntriesFromChangeSetsWithOptions(raw, "", cutoff, true)
+	if err != nil {
+		t.Fatalf("buildAuditEntriesFromChangeSetsWithOptions() error = %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("entry count = %d, want 2", len(got))
+	}
+}
+
 func TestRenderAuditASCII_Empty(t *testing.T) {
 	out := renderAuditASCII(auditListResult{Since: "7d", Namespace: "prod"})
 	if !strings.Contains(out, "No break-glass decisions") {
@@ -154,12 +213,15 @@ func withAuditListFlagsForTest() func() {
 	prevFormat := auditListFormat
 	prevNamespace := auditListNamespace
 	prevSince := auditListSince
+	prevIncludeSynthetic := auditListIncludeSynthetic
 	auditListFormat = "ascii"
 	auditListNamespace = ""
 	auditListSince = "7d"
+	auditListIncludeSynthetic = false
 	return func() {
 		auditListFormat = prevFormat
 		auditListNamespace = prevNamespace
 		auditListSince = prevSince
+		auditListIncludeSynthetic = prevIncludeSynthetic
 	}
 }
