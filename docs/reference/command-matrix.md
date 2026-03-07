@@ -28,6 +28,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `import` | Import workloads into ConfigHub |
 | `import-argocd` | Import an ArgoCD Application into ConfigHub |
 | `import-cluster-aggregator` | Aggregate imports from multiple clusters (GUI) |
+| `impact` | Connected blast-radius preview for one unit |
 | `map` | Interactive map of resources and ownership |
 | `parse-repo` | Parse a GitOps repository structure |
 | `patterns` | Pattern detection engine |
@@ -163,6 +164,15 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--threshold` | Duration threshold for stuck (default: 5m) |
 | `--json` | Output as JSON |
 | `--verbose` | Show detailed output |
+
+---
+
+## `impact` Options
+
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format (`ascii`, `json`, `md`) |
+| `--json` | Output as JSON |
 
 ---
 
