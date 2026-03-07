@@ -10,6 +10,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 |---------|---------|--------------|
 | `map` | Interactive cluster explorer (TUI) | v0.5 |
 | `map list` | List resources by ownership | v0.5 |
+| `map meaning` | Experimental meaning-first grouped browse | v1.7 |
 | `map status` | One-line cluster health check | v0.5 |
 | `map orphans` | Find resources without GitOps owner | v0.5 |
 | `map issues` | Show resources with problems | v0.5 |
@@ -190,6 +191,35 @@ or `CUB_SCOUT_RESOURCE_CONFIG` (see `docs/howto/extending.md`).
 
 ---
 
+## map meaning
+
+Experimental meaning-first browse groups with deterministic comparative labels.
+
+```bash
+cub-scout map meaning [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Filter by namespace |
+| `--owner` | Filter by owner |
+| `--kind` | Filter by kind |
+| `--max-groups` | Limit number of groups (default: `12`) |
+| `--max-members` | Limit members per group (default: `10`) |
+| `--format` | Output format: `ascii`, `json` (default: ascii) |
+
+### Examples
+
+```bash
+cub-scout map meaning
+cub-scout map meaning --namespace prod --owner Flux
+cub-scout map meaning --format json
+```
+
+---
+
 ## quickstart
 
 Guided first-run walkthrough across map, doctor, explain, ownership, and risk signals.
@@ -252,7 +282,7 @@ cub-scout map orphans [flags]
 ```
 
 Shows:
-- Resources where `owner=Native` (not managed by Flux, ArgoCD, Helm, or ConfigHub)
+- Resources where `owner=Native` (not managed by Flux, ArgoCD, Helm, ConfigHub, Crossplane, or kro)
 - ArgoCD `Application` resources with explicit `ApplicationSet` lineage that points to a missing generator
 
 ### Examples
@@ -514,7 +544,7 @@ cub-scout map activity [flags]
 | Flag | Description |
 |------|-------------|
 | `--namespace` | Filter by namespace |
-| `--owner` | Filter by owner (`Flux`, `ArgoCD`, `Helm`) |
+| `--owner` | Filter by owner (`Flux`, `ArgoCD`, `Helm`, `Crossplane`, `kro`, `ConfigHub`, `Native`) |
 | `--since` | Time filter (for example `24h`, `7d`) |
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
 
@@ -557,11 +587,11 @@ cub-scout map previews --format json
 
 ## trace
 
-Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, or standalone Helm**.
+Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, standalone Helm, and platform composition lineage (Crossplane/kro)**.
 
 Owner detection for `trace` uses the same deterministic precedence as `map list`.
-After owner detection, `trace` resolves with an owner-specific chain resolver (Flux, ArgoCD, or Helm).
-When a resource matches a custom ownership detector, `trace` prints the configured owner name and explains that chain resolution is currently limited to Flux/ArgoCD/Helm.
+After owner detection, `trace` resolves with an owner-specific chain resolver (Flux, ArgoCD, Helm, Crossplane, kro).
+When a resource matches a custom ownership detector, `trace` prints the configured owner name and explains that chain resolution is currently limited to built-in owner resolvers.
 For detailed rules, see `docs/reference/ownership-precedence.md` and `docs/howto/trace-ownership.md`.
 
 ```bash

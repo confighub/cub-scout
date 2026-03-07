@@ -73,6 +73,8 @@ func DisplayOwner(owner string) string {
 		return "Terraform"
 	case "crossplane":
 		return "Crossplane"
+	case "kro":
+		return "kro"
 	case "confighub":
 		return "ConfigHub"
 	case "k8s", "native", "unknown", "":

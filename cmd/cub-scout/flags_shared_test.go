@@ -90,6 +90,7 @@ func TestValidateOwner(t *testing.T) {
 		{"valid Helm", "Helm", false},
 		{"valid ConfigHub", "ConfigHub", false},
 		{"valid Crossplane", "Crossplane", false},
+		{"valid kro lowercase", "kro", false},
 		{"valid Terraform", "Terraform", false},
 		{"valid Native", "Native", false},
 		{"invalid", "InvalidOwner", true},
@@ -116,6 +117,7 @@ func TestNormalizeOwner(t *testing.T) {
 		{"canonical", "Flux", "Flux"},
 		{"lowercase", "flux", "Flux"},
 		{"mixed case argocd", "ARGOCD", "ArgoCD"},
+		{"kro", "KRO", "kro"},
 		{"unknown", "Unknown", "Unknown"},
 	}
 

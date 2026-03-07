@@ -1476,12 +1476,14 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 		fmt.Printf("\n")
 	}
 
-	// If this looks Crossplane-managed, show XR-first lineage (Managed → XR → optional Claim).
+	// If this looks platform-composition managed, show resolver lineage.
 	// This does not alter ownership detection; it only surfaces what the resolver can infer
 	// from already-fetched objects.
 	if len(result.Objects) > 0 {
 		if lineage, ok := agent.ResolveCrossplaneLineage(result.Objects[0], result.Objects); ok {
 			fmt.Print(renderCrossplaneLineageHuman(lineage))
+		} else if lineage, ok := agent.ResolveKroLineage(result.Objects[0], result.Objects); ok {
+			fmt.Print(renderKroLineageHuman(lineage))
 		}
 	}
 
@@ -1498,6 +1500,8 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 	case "helm":
 		ownerColor = colorYellow
 	case "confighub":
+		ownerColor = colorBlue
+	case "kro":
 		ownerColor = colorBlue
 	case "native":
 		ownerColor = colorRed

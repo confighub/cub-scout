@@ -702,6 +702,8 @@ func normalizeOwnerFromBundle(owner string) string {
 		return "Terraform"
 	case "crossplane":
 		return "Crossplane"
+	case "kro":
+		return "kro"
 	default:
 		return strings.TrimSpace(owner)
 	}

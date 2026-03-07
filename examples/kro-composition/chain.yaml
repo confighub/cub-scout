@@ -1,0 +1,43 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: webapp-stack
+---
+apiVersion: apps.kro.run/v1alpha1
+kind: WebApp
+metadata:
+  name: checkout
+  namespace: app
+  ownerReferences:
+    - apiVersion: kro.run/v1alpha1
+      kind: ResourceGraphDefinition
+      name: webapp-stack
+spec:
+  image: ghcr.io/example/checkout:v1.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-api
+  namespace: app
+  labels:
+    app: checkout
+  ownerReferences:
+    - apiVersion: apps.kro.run/v1alpha1
+      kind: WebApp
+      name: checkout
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/example/checkout:v1.0.0
+          ports:
+            - containerPort: 8080

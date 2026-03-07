@@ -9,12 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func TestCompleteOwnersIncludesCrossplaneAndTerraform(t *testing.T) {
+func TestCompleteOwnersIncludesCrossplaneTerraformAndKro(t *testing.T) {
 	cmd := &cobra.Command{}
 	owners, _ := completeOwners(cmd, nil, "")
 
 	foundTerraform := false
 	foundCrossplane := false
+	foundKro := false
 	for _, o := range owners {
 		if o == "Terraform" {
 			foundTerraform = true
@@ -22,12 +23,18 @@ func TestCompleteOwnersIncludesCrossplaneAndTerraform(t *testing.T) {
 		if o == "Crossplane" {
 			foundCrossplane = true
 		}
+		if o == "kro" {
+			foundKro = true
+		}
 	}
 	if !foundTerraform {
 		t.Fatalf("expected Terraform in owner completions, got: %v", owners)
 	}
 	if !foundCrossplane {
 		t.Fatalf("expected Crossplane in owner completions, got: %v", owners)
+	}
+	if !foundKro {
+		t.Fatalf("expected kro in owner completions, got: %v", owners)
 	}
 }
 
@@ -65,13 +72,13 @@ func TestFilterPrefix(t *testing.T) {
 		prefix string
 		want   int // expected count
 	}{
-		{"", 4},      // no filter, all items
-		{"F", 1},     // matches Flux
-		{"f", 1},     // case-insensitive, matches Flux
-		{"ar", 1},    // matches ArgoCD
-		{"H", 1},     // matches Helm
-		{"Na", 1},    // matches Native
-		{"xyz", 0},   // no match
+		{"", 4},    // no filter, all items
+		{"F", 1},   // matches Flux
+		{"f", 1},   // case-insensitive, matches Flux
+		{"ar", 1},  // matches ArgoCD
+		{"H", 1},   // matches Helm
+		{"Na", 1},  // matches Native
+		{"xyz", 0}, // no match
 	}
 
 	for _, tt := range tests {
@@ -90,11 +97,11 @@ func TestCompleteKindsIncludesFluxAndArgoTypes(t *testing.T) {
 	kinds, _ := completeKinds(cmd, nil, "")
 
 	expected := []string{
-		"Kustomization",  // Flux
-		"HelmRelease",    // Flux
-		"GitRepository",  // Flux
-		"Application",    // ArgoCD
-		"Deployment",     // Core K8s
+		"Kustomization", // Flux
+		"HelmRelease",   // Flux
+		"GitRepository", // Flux
+		"Application",   // ArgoCD
+		"Deployment",    // Core K8s
 	}
 
 	for _, want := range expected {

@@ -41,7 +41,7 @@ type ReverseTraceResult struct {
 	GitOpsChain []ChainLink `json:"gitOpsChain,omitempty"`
 
 	// Owner indicates the detected owner type
-	Owner string `json:"owner"` // "flux", "argo", "helm", "confighub", "native"
+	Owner string `json:"owner"` // "flux", "argo", "helm", "confighub", "kro", "native"
 
 	// OwnerDetails contains additional ownership info
 	OwnerDetails *Ownership `json:"ownerDetails,omitempty"`
@@ -172,6 +172,8 @@ func (r *ReverseTracer) Trace(ctx context.Context, kind, name, namespace string)
 		result.Owner = "confighub"
 	case OwnerTerraform:
 		result.Owner = "terraform"
+	case OwnerKro:
+		result.Owner = "kro"
 	default:
 		result.Owner = "native"
 		// Populate orphan metadata for native resources

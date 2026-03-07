@@ -58,7 +58,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] ConfigHub summary storage and Slack integration for drift/sync notifications — graduated to #209, #210
 - [ ] Connected import flows (`cub-scout connected import bundle/git/cluster`)
 - [x] Intent vs render vs observed three-way comparison — graduated to #213
-- [ ] Hook compatibility verifier
+- [x] Hook compatibility verifier — resolved #315
 - [ ] Import wizard with auto-detection (`--wizard` flag, from `gitops-repo-structures.md`)
 - [ ] Snapshot enrichment with ConfigHub intent/history metadata (from `state-and-snapshots.md`)
 
@@ -612,7 +612,7 @@ This milestone delivers the "aha moment" for connected mode: what ConfigHub know
 
 ## v1.7 — Platform Scale
 
-**Status:** Planned
+**Status:** Released (2026-03-07)
 **Theme:** *Composition tools, fleet infrastructure, and extensibility*
 
 ### Platform Composition
@@ -655,8 +655,9 @@ This milestone delivers the "aha moment" for connected mode: what ConfigHub know
 * v1.1.0 released (2026-02-25) — connected foundation, scan provider boundary, docs alignment
 * v1.2.0 released (2026-02-26) — cub-scan file integration, Argo hierarchy lineage, quality fixes
 * v1.3.0 released (2026-03-04) — determinism hardening + release hygiene
+* v1.7.0 released (2026-03-07) — platform composition (Crossplane + kro), meaning-first grouping experiments, extensibility/fleet slices
 
-### Forward Roadmap
+### Recent Milestones
 
 | Milestone | Theme | Key Deliverables |
 |-----------|-------|-----------------|
@@ -664,7 +665,7 @@ This milestone delivers the "aha moment" for connected mode: what ConfigHub know
 | **v1.4** | Discover & Connect | `doctor`, `explain`, kubectl plugin, Homebrew, MCP gateway, quickstart wizard |
 | **v1.5** | AI-Native Ops | Context-pack v2, safe ask-mode, evidence capture, AI tool integration examples |
 | **v1.6** | Connected Value | WET/LIVE/DRY comparison, change history, impact preview, fleet outliers, audit trail |
-| **v1.7** | Platform Scale | kro, summary storage, Slack digests, custom ownership detectors, webhook streaming |
+| **v1.7** | Platform Scale | kro, summary storage, Slack digests, custom ownership detectors, webhook streaming, meaning-first grouping experiments |
 
 ### Strategic Positioning
 

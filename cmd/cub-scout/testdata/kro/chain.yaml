@@ -1,0 +1,24 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: webapp-stack
+---
+apiVersion: apps.kro.run/v1alpha1
+kind: WebApp
+metadata:
+  name: checkout
+  namespace: app
+  ownerReferences:
+    - apiVersion: kro.run/v1alpha1
+      kind: ResourceGraphDefinition
+      name: webapp-stack
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-api
+  namespace: app
+  ownerReferences:
+    - apiVersion: apps.kro.run/v1alpha1
+      kind: WebApp
+      name: checkout
