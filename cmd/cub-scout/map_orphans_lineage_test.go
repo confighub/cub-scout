@@ -48,6 +48,14 @@ func TestIsMapOrphanCandidate(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "kro managed resource is not orphan",
+			in: MapEntry{
+				Kind:  "Deployment",
+				Owner: "kro",
+			},
+			want: false,
+		},
 	}
 
 	for _, tc := range tests {

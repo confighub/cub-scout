@@ -465,6 +465,112 @@ func TestDetectOwnership_Crossplane(t *testing.T) {
 	}
 }
 
+func TestDetectOwnership_Kro(t *testing.T) {
+	tests := []struct {
+		name        string
+		apiVersion  string
+		kind        string
+		labels      map[string]string
+		annotations map[string]string
+		owners      []metav1.OwnerReference
+		wantType    string
+		wantSubType string
+		wantName    string
+	}{
+		{
+			name:        "kro instance via API group",
+			apiVersion:  "apps.kro.run/v1alpha1",
+			kind:        "WebApp",
+			wantType:    OwnerKro,
+			wantSubType: "instance",
+			wantName:    "test-resource",
+		},
+		{
+			name:        "kro definition via API group",
+			apiVersion:  "kro.run/v1alpha1",
+			kind:        "ResourceGraphDefinition",
+			wantType:    OwnerKro,
+			wantSubType: "definition",
+			wantName:    "test-resource",
+		},
+		{
+			name: "kro metadata via label",
+			labels: map[string]string{
+				"kro.run/resource-graph-definition": "webapp-stack",
+			},
+			wantType:    OwnerKro,
+			wantSubType: "instance",
+			wantName:    "webapp-stack",
+		},
+		{
+			name: "kro metadata via annotation",
+			annotations: map[string]string{
+				"kro.run/rgd": "payment-stack",
+			},
+			wantType:    OwnerKro,
+			wantSubType: "instance",
+			wantName:    "payment-stack",
+		},
+		{
+			name: "kro owner reference to instance",
+			owners: []metav1.OwnerReference{
+				{
+					APIVersion: "apps.kro.run/v1alpha1",
+					Kind:       "WebApp",
+					Name:       "checkout-prod",
+				},
+			},
+			wantType:    OwnerKro,
+			wantSubType: "instance",
+			wantName:    "checkout-prod",
+		},
+		{
+			name: "kro owner reference to definition",
+			owners: []metav1.OwnerReference{
+				{
+					APIVersion: "kro.run/v1alpha1",
+					Kind:       "ResourceGraphDefinition",
+					Name:       "webapp-stack",
+				},
+			},
+			wantType:    OwnerKro,
+			wantSubType: "definition",
+			wantName:    "webapp-stack",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var resource *unstructured.Unstructured
+			if len(tt.owners) > 0 {
+				resource = newTestResourceWithOwners("test-ns", "test-resource", tt.owners)
+				resource.SetLabels(tt.labels)
+				resource.SetAnnotations(tt.annotations)
+			} else {
+				resource = newTestResource("test-ns", "test-resource", tt.labels, tt.annotations)
+			}
+			if tt.apiVersion != "" {
+				resource.SetAPIVersion(tt.apiVersion)
+			}
+			if tt.kind != "" {
+				resource.SetKind(tt.kind)
+			}
+
+			ownership := DetectOwnership(resource)
+
+			if ownership.Type != tt.wantType {
+				t.Errorf("Type = %q, want %q", ownership.Type, tt.wantType)
+			}
+			if ownership.SubType != tt.wantSubType {
+				t.Errorf("SubType = %q, want %q", ownership.SubType, tt.wantSubType)
+			}
+			if ownership.Name != tt.wantName {
+				t.Errorf("Name = %q, want %q", ownership.Name, tt.wantName)
+			}
+		})
+	}
+}
+
 func TestDetectOwnership_CrossplaneSystem(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -767,6 +873,32 @@ func TestDetectOwnership_Priority(t *testing.T) {
 			t.Errorf("Type = %q, want %q (Crossplane should take precedence)", ownership.Type, OwnerCrossplane)
 		}
 	})
+
+	t.Run("Flux takes precedence over kro", func(t *testing.T) {
+		resource := newTestResource("test-ns", "test", map[string]string{
+			"kustomize.toolkit.fluxcd.io/name": "my-app",
+			"kro.run/rgd":                      "webapp-stack",
+		}, nil)
+		ownership := DetectOwnership(resource)
+
+		if ownership.Type != OwnerFlux {
+			t.Errorf("Type = %q, want %q (Flux should take precedence)", ownership.Type, OwnerFlux)
+		}
+	})
+
+	t.Run("kro takes precedence over K8s ownerRef", func(t *testing.T) {
+		resource := newTestResource("test-ns", "test", map[string]string{
+			"kro.run/resource-graph-definition": "webapp-stack",
+		}, nil)
+		resource.SetOwnerReferences([]metav1.OwnerReference{
+			{Kind: "ReplicaSet", Name: "some-rs"},
+		})
+		ownership := DetectOwnership(resource)
+
+		if ownership.Type != OwnerKro {
+			t.Errorf("Type = %q, want %q (kro should take precedence)", ownership.Type, OwnerKro)
+		}
+	})
 }
 
 // Benchmark tests for ownership detection
@@ -777,7 +909,7 @@ func TestDetectOwnership_Priority(t *testing.T) {
 func TestDetectOwnership_BreakGlass(t *testing.T) {
 	t.Run("Flux-managed payment-api", func(t *testing.T) {
 		resource := newTestResource("break-glass-demo", "payment-api", map[string]string{
-			"app":                                  "payment-api",
+			"app":                                   "payment-api",
 			"kustomize.toolkit.fluxcd.io/name":      "payment-api",
 			"kustomize.toolkit.fluxcd.io/namespace": "break-glass-demo",
 		}, map[string]string{
@@ -807,7 +939,7 @@ func TestDetectOwnership_BreakGlass(t *testing.T) {
 			"app": "hotfix-cache",
 			// NO flux/argo/helm/terraform/confighub labels
 		}, map[string]string{
-			"break-glass/incident":  "INC-4521",
+			"break-glass/incident":   "INC-4521",
 			"break-glass/applied-by": "admin",
 			"break-glass/applied-at": "2026-01-14T14:23:00Z",
 			"break-glass/reason":     "Emergency cache fix for payment processing failures",
@@ -823,7 +955,7 @@ func TestDetectOwnership_BreakGlass(t *testing.T) {
 		resource := newTestResource("break-glass-demo", "hotfix-cache-config", map[string]string{
 			"app": "hotfix-cache",
 		}, map[string]string{
-			"break-glass/incident":  "INC-4521",
+			"break-glass/incident":   "INC-4521",
 			"break-glass/applied-by": "admin",
 		})
 		ownership := DetectOwnership(resource)
@@ -841,8 +973,8 @@ func TestDetectOwnership_BreakGlass(t *testing.T) {
 			"team":        "platform",
 			"environment": "production",
 		}, map[string]string{
-			"break-glass/incident":  "INC-9999",
-			"break-glass/applied-by": "oncall",
+			"break-glass/incident":                             "INC-9999",
+			"break-glass/applied-by":                           "oncall",
 			"kubectl.kubernetes.io/last-applied-configuration": "{}",
 		})
 		ownership := DetectOwnership(resource)

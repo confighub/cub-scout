@@ -148,7 +148,7 @@ cub-scout tree ownership
 # Git structure: detected repo layout
 cub-scout tree git
 
-# Crossplane: XR → composed resources
+# Platform composition: Crossplane XR / kro instance → composed resources
 cub-scout tree composition
 
 # Interactive dashboard with all views
@@ -635,6 +635,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | **ArgoCD** | `argocd.argoproj.io/instance` label, `app.kubernetes.io/instance` fallback, or `argocd.argoproj.io/tracking-id` annotation |
 | **Helm** | `app.kubernetes.io/managed-by: Helm` (standalone, not Flux-managed) |
 | **Crossplane** | `crossplane.io/claim-name` label or `*.crossplane.io` owner refs *(experimental)* |
+| **kro** | `kro.run/*` labels/annotations, kro owner refs, or API group containing `kro.run` *(experimental)* |
 | **ConfigHub** | `confighub.com/UnitSlug` label |
 | **Native** | None of the above (kubectl-applied) |
 

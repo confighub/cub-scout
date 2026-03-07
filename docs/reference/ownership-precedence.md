@@ -23,9 +23,10 @@ cub-scout checks for ownership signals in the following order. The **first match
 | 5 | **ConfigHub** | Label or annotation: `confighub.com/UnitSlug` |
 | 6 | **Crossplane (system)** | API group: `pkg.crossplane.io` or `apiextensions.crossplane.io` |
 | 7 | **Crossplane (managed)** | Labels: `crossplane.io/claim-name`, `crossplane.io/composite`, or ownerRef to Crossplane resource |
-| 8 | **Custom (config file)** | `~/.cub-scout/detectors.yaml` (or `$CUB_SCOUT_OWNERSHIP_DETECTORS`) detectors, first matching detector wins |
-| 9 | **Kubernetes (native)** | OwnerReferences present (controller preferred) |
-| 10 | **Unknown** | No ownership signals detected |
+| 8 | **kro** | Labels/annotations: `kro.run/*`, kro ownerRef, or API group containing `kro.run` |
+| 9 | **Custom (config file)** | `~/.cub-scout/detectors.yaml` (or `$CUB_SCOUT_OWNERSHIP_DETECTORS`) detectors, first matching detector wins |
+| 10 | **Kubernetes (native)** | OwnerReferences present (controller preferred) |
+| 11 | **Unknown** | No ownership signals detected |
 
 ---
 
@@ -138,6 +139,20 @@ Known system kinds: `providerrevision`, `configurationrevision`, `functionrevisi
 
 ---
 
+### kro
+
+**Confidence: High/Medium**
+
+| Signal Type | Key/Condition | SubType |
+|-------------|---------------|---------|
+| Label | `kro.run/*` | instance |
+| Annotation | `kro.run/*` | instance |
+| OwnerReference | APIVersion contains `kro.run` + non-`ResourceGraphDefinition` kind | instance |
+| OwnerReference | APIVersion contains `kro.run` + `ResourceGraphDefinition` kind | definition |
+| API Group | Group contains `kro.run` | instance/definition (by kind) |
+
+---
+
 ### Kubernetes (Native)
 
 **Confidence: Medium**
@@ -213,7 +228,7 @@ based on the priority order above.
 | Flux + Helm labels | **Flux** | Flux checked before Helm (priority 1 vs 3) |
 | ArgoCD + Helm labels | **ArgoCD** | ArgoCD checked before Helm (priority 2 vs 3) |
 | Helm + OwnerRef | **Helm** | Helm checked before K8s native (priority 3 vs 9) |
-| Crossplane claim + OwnerRef | **Crossplane** | Crossplane checked before K8s native (priority 7 vs 9) |
+| Crossplane claim + OwnerRef | **Crossplane** | Crossplane checked before K8s native (priority 7 vs 10) |
 | Flux + matching custom detector | **Flux** | Built-ins run before custom detectors |
 | Two matching custom detectors | **First custom detector** | Custom detectors are evaluated in file order |
 | Only OwnerRef | **Kubernetes** | Only signal present |

@@ -126,6 +126,7 @@ Valid values for `--owner` and query `owner=`:
 | `Helm` | Managed by Helm |
 | `Terraform` | Managed by Terraform |
 | `Crossplane` | Managed by Crossplane |
+| `kro` | Managed by kro |
 | `ConfigHub` | Managed by ConfigHub |
 | `Native` | Not managed by any GitOps tool |
 

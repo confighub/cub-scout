@@ -42,6 +42,7 @@ Map checks labels on each resource to determine ownership:
 | **Helm** | Managed-by label | `app.kubernetes.io/managed-by: Helm` |
 | **Terraform** | Terraform metadata | `app.terraform.io/run-id` annotation OR `app.terraform.io/managed` label |
 | **Crossplane** | Crossplane labels/ownerRefs | `crossplane.io/*` labels or Crossplane owner references |
+| **kro** | kro metadata/ownerRefs | `kro.run/*` labels/annotations, kro owner references, or API group containing `kro.run` |
 | **ConfigHub** | Unit slug | `confighub.com/UnitSlug` |
 | **Custom** | Configured detector rules | `~/.cub-scout/detectors.yaml` / `$CUB_SCOUT_OWNERSHIP_DETECTORS` |
 | **Native** | Nothing detected | No GitOps ownership labels |

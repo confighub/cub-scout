@@ -208,6 +208,8 @@ func TestDisplayOwner(t *testing.T) {
 		{"Terraform", "Terraform"},
 		{"crossplane", "Crossplane"},
 		{"Crossplane", "Crossplane"},
+		{"kro", "kro"},
+		{"KRO", "kro"},
 		{"confighub", "ConfigHub"},
 		{"ConfigHub", "ConfigHub"},
 		{"k8s", "Native"},

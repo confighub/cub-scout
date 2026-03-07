@@ -38,6 +38,9 @@ cub-scout doctor
 # Interactive exploration
 cub-scout map
 
+# Experimental meaning-first grouping
+cub-scout map meaning
+
 # Or run a demo
 cub-scout demo quick
 ```
@@ -71,6 +74,7 @@ The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against re
 | Example | Pattern | Shows |
 |---------|---------|-------|
 | [graph-export/](graph-export/) | **Topology sharing** | Export graph data as JSON/DOT/SVG/HTML for docs, Slack, and presentations |
+| [kro-composition/](kro-composition/) | **Platform composition** | kro ownership detection + `trace`/`tree composition` lineage |
 
 ### AI Gateway Example
 
@@ -178,6 +182,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [orphans/](orphans/) | **Working** | Realistic orphan resources | Orphan detection demo |
 | [drift/](drift/) | **Working** | Drift detection examples | Learning drift detection |
 | [lifecycle-hazards/](lifecycle-hazards/) | **Working** | Helm hooks under ArgoCD | Learning lifecycle hazards |
+| [kro-composition/](kro-composition/) | **Working** | kro composition lineage fixture | Validating kro ownership + platform tree/trace |
 | [demos/](demos/) | **Test Fixtures** | YAML with GitOps labels + nginx:alpine | Learning ownership detection |
 | [impressive-demo/](impressive-demo/) | **Test Fixtures** | Conference demo with risk issue scenarios | Presentations, videos |
 | [scripts/](scripts/) | **Integration Code** | k9s, Slack, CI/CD scripts | Adding to your workflow |

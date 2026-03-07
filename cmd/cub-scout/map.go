@@ -260,7 +260,7 @@ Examples:
   # Filter by namespace and kind
   cub-scout map list --namespace default --kind Deployment
 
-  # Filter by owner (Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native)
+  # Filter by owner (Flux, ArgoCD, Helm, Terraform, Crossplane, kro, ConfigHub, Native)
   cub-scout map list --owner ConfigHub
 
   # Find unhealthy/failing resources
@@ -334,7 +334,7 @@ var mapWorkloadsCmd = &cobra.Command{
 	Short: "List workloads grouped by owner",
 	Long: `List canonical workloads (Deployments, StatefulSets) grouped by owner.
 
-Owners: Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native`,
+Owners: Flux, ArgoCD, Helm, Terraform, Crossplane, kro, ConfigHub, Native`,
 	RunE: runMapWorkloads,
 }
 
@@ -356,7 +356,7 @@ var mapSprawlCmd = &cobra.Command{
 
 Shows:
 - GitOps coverage percentage
-- Breakdown by owner (Flux, ArgoCD, Helm, ConfigHub, Native)
+- Breakdown by owner (Flux, ArgoCD, Helm, ConfigHub, Crossplane, kro, Native)
 - Native workloads that should be added to GitOps`,
 	RunE: runMapSprawl,
 }
@@ -419,7 +419,7 @@ Orphaned resources are those without detected GitOps or platform ownership:
 - Created by operators/controllers not tracked by GitOps
 - Legacy resources from before GitOps adoption
 
-Note: Resources managed by Crossplane or Terraform controllers are not considered orphans.
+Note: Resources managed by Crossplane, kro, or Terraform controllers are not considered orphans.
 
 By default, system namespaces are filtered out to reduce noise:
   kube-system, kube-public, kube-node-lease, flux-system, argocd,
@@ -612,7 +612,7 @@ func init() {
 	// List-specific flags
 	mapListCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapListCmd.Flags().StringVar(&mapKind, "kind", "", "Filter by resource kind")
-	mapListCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, Terraform, Crossplane, ConfigHub, Native)")
+	mapListCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, Terraform, Crossplane, kro, ConfigHub, Native)")
 	mapListCmd.Flags().StringVarP(&mapQuery, "query", "q", "", "Query expression (e.g., 'kind=Deployment AND owner!=Native')")
 	mapListCmd.Flags().StringVar(&mapSince, "since", "", "Show resources changed since duration (e.g., 1h, 24h, 7d)")
 	mapListCmd.Flags().BoolVar(&mapCount, "count", false, "Output count only (no list)")
@@ -637,11 +637,11 @@ func init() {
 
 	// CronJobs/jobs/action/activity/previews flags
 	mapCronjobsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
-	mapCronjobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)")
+	mapCronjobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Crossplane, kro, Native)")
 	mapCronjobsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
 	mapJobsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
-	mapJobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)")
+	mapJobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Crossplane, kro, Native)")
 	mapJobsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
 	mapActionsCmd.Flags().StringVarP(&mapNamespace, "namespace", "n", "", "Namespace of the target resource")

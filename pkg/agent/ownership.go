@@ -17,6 +17,7 @@ const (
 	OwnerTerraform  = "terraform"
 	OwnerConfigHub  = "confighub"
 	OwnerCrossplane = "crossplane"
+	OwnerKro        = "kro"
 	OwnerCustom     = "custom"
 	OwnerKubernetes = "k8s"
 	OwnerUnknown    = "unknown"
@@ -59,6 +60,11 @@ func DetectOwnership(resource *unstructured.Unstructured) Ownership {
 
 	// Check for Crossplane ownership
 	if ownership := detectCrossplaneOwnership(labels, annotations, resource); ownership.Type != "" {
+		return ownership
+	}
+
+	// Check for kro ownership
+	if ownership := detectKroOwnership(labels, annotations, resource); ownership.Type != "" {
 		return ownership
 	}
 
@@ -343,6 +349,90 @@ func detectCrossplaneOwnership(labels, annotations map[string]string, resource *
 	}
 
 	return Ownership{}
+}
+
+func detectKroOwnership(labels, annotations map[string]string, resource *unstructured.Unstructured) Ownership {
+	// Prefer explicit kro metadata when present.
+	for key, value := range labels {
+		if !strings.HasPrefix(key, "kro.run/") {
+			continue
+		}
+		if value == "" {
+			continue
+		}
+		return Ownership{
+			Type:       OwnerKro,
+			SubType:    "instance",
+			Name:       value,
+			Namespace:  resource.GetNamespace(),
+			Source:     "label:" + key,
+			Confidence: "high",
+		}
+	}
+	for key, value := range annotations {
+		if !strings.HasPrefix(key, "kro.run/") {
+			continue
+		}
+		if value == "" {
+			continue
+		}
+		return Ownership{
+			Type:       OwnerKro,
+			SubType:    "instance",
+			Name:       value,
+			Namespace:  resource.GetNamespace(),
+			Source:     "annotation:" + key,
+			Confidence: "high",
+		}
+	}
+
+	// Owner references are the primary generated-resource linkage in kro.
+	for _, owner := range resource.GetOwnerReferences() {
+		if !isKroAPIVersion(owner.APIVersion) {
+			continue
+		}
+		subType := strings.ToLower(owner.Kind)
+		if strings.EqualFold(owner.Kind, "ResourceGraphDefinition") {
+			subType = "definition"
+		} else {
+			subType = "instance"
+		}
+		return Ownership{
+			Type:       OwnerKro,
+			SubType:    subType,
+			Name:       owner.Name,
+			Namespace:  resource.GetNamespace(),
+			Source:     "ownerRef:" + owner.APIVersion,
+			Confidence: "high",
+		}
+	}
+
+	// kro definitions/instances can also be identified by API group.
+	apiVersion := resource.GetAPIVersion()
+	if isKroAPIVersion(apiVersion) {
+		subType := "instance"
+		if strings.EqualFold(resource.GetKind(), "ResourceGraphDefinition") {
+			subType = "definition"
+		}
+		return Ownership{
+			Type:       OwnerKro,
+			SubType:    subType,
+			Name:       resource.GetName(),
+			Namespace:  resource.GetNamespace(),
+			Source:     "apiGroup:" + strings.SplitN(apiVersion, "/", 2)[0],
+			Confidence: "medium",
+		}
+	}
+
+	return Ownership{}
+}
+
+func isKroAPIVersion(apiVersion string) bool {
+	if apiVersion == "" {
+		return false
+	}
+	group := strings.SplitN(apiVersion, "/", 2)[0]
+	return strings.Contains(group, "kro.run")
 }
 
 func detectK8sOwnership(resource *unstructured.Unstructured) Ownership {

@@ -41,7 +41,7 @@ cub-scout tree provides different perspectives on your infrastructure:
   CLUSTER VIEWS (what the scout sees):
     runtime     Deployment -> ReplicaSet -> Pod trees (default)
     ownership   Resources grouped by GitOps owner (Flux, ArgoCD, Helm)
-    composition Crossplane XR -> composed resources (managed by Crossplane)
+    composition Platform composition trees (Crossplane + kro)
     workloads   Same as 'cub-scout map workloads' (alias)
 
   GIT VIEWS:
@@ -60,7 +60,7 @@ Examples:
   # Show resources by GitOps owner
   cub-scout tree ownership
 
-  # Show Crossplane composition trees (XR -> composed resources)
+  # Show platform composition trees (Crossplane + kro)
   cub-scout tree composition
 
   # Show Git repository structure

@@ -20,13 +20,16 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-// CrossplaneCompositionTree groups composed resources by XR (Composite).
-// It is intentionally presentation-only: it uses the merged lineage resolver.
+// CrossplaneCompositionTree groups composed resources by composition root.
+// For Crossplane: XR -> managed (+ optional claim).
+// For kro: instance -> managed (+ optional definition).
+// It is intentionally presentation-only: it uses merged lineage resolvers.
 
 type CrossplaneCompositionTree struct {
-	XR      agent.CrossplaneLineageNode   `json:"xr"`
-	Claim   *agent.CrossplaneLineageNode  `json:"claim,omitempty"`
-	Managed []agent.CrossplaneLineageNode `json:"managed"`
+	Platform string                        `json:"platform,omitempty"`
+	XR       agent.CrossplaneLineageNode   `json:"xr"`
+	Claim    *agent.CrossplaneLineageNode  `json:"claim,omitempty"`
+	Managed  []agent.CrossplaneLineageNode `json:"managed"`
 }
 
 func runTreeComposition(ctx context.Context) error {
@@ -97,7 +100,7 @@ func listAllObjectsForComposition(ctx context.Context, dynClient dynamic.Interfa
 
 	var objs []*unstructured.Unstructured
 
-	// First attempt: use dynamic client for a curated set of known Crossplane GVRs.
+	// First attempt: use dynamic client for a curated set of known composition GVRs.
 	// This keeps output useful even if kubectl is restricted.
 	known := []schema.GroupVersionResource{
 		{Group: "pkg.crossplane.io", Version: "v1", Resource: "providers"},
@@ -106,6 +109,7 @@ func listAllObjectsForComposition(ctx context.Context, dynClient dynamic.Interfa
 		{Group: "pkg.crossplane.io", Version: "v1", Resource: "configurationrevisions"},
 		{Group: "apiextensions.crossplane.io", Version: "v1", Resource: "compositions"},
 		{Group: "apiextensions.crossplane.io", Version: "v1", Resource: "compositeresourcedefinitions"},
+		{Group: "kro.run", Version: "v1alpha1", Resource: "resourcegraphdefinitions"},
 	}
 	for _, gvr := range known {
 		list, err := dynClient.Resource(gvr).List(ctx, metav1.ListOptions{})
@@ -141,7 +145,7 @@ func listAllObjectsForComposition(ctx context.Context, dynClient dynamic.Interfa
 	return objs, warnings
 }
 
-// buildCompositionIndex groups resources by XR using the lineage resolver.
+// buildCompositionIndex groups resources by composition root using platform lineage resolvers.
 // Uses a pre-built index for O(n) instead of O(n²) complexity.
 func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*CrossplaneCompositionTree {
 	byXR := make(map[string]*CrossplaneCompositionTree)
@@ -150,47 +154,85 @@ func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*Crossp
 	idx := agent.NewUnstructuredIndex(objs)
 
 	for _, obj := range objs {
-		lineage, ok := agent.ResolveCrossplaneLineageWithIndex(obj, idx)
-		if !ok || lineage == nil {
+		if lineage, ok := agent.ResolveCrossplaneLineageWithIndex(obj, idx); ok && lineage != nil {
+			// Skip resources where the XR could not be identified (partial lineage with unknown XR).
+			// This avoids creating spurious groups for XRs that have claim labels but no parent XR.
+			if lineage.Composite.Ref.Name == "" {
+				continue
+			}
+
+			xrKey := "crossplane::" + lineage.Composite.Ref.String()
+			if xrKey == "crossplane::" {
+				xrKey = "crossplane::" + lineage.Composite.Ref.Name
+			}
+			if xrKey == "crossplane::" {
+				continue
+			}
+
+			node := byXR[xrKey]
+			if node == nil {
+				node = &CrossplaneCompositionTree{
+					Platform: "crossplane",
+					XR:       lineage.Composite,
+				}
+				if lineage.Claim != nil {
+					node.Claim = lineage.Claim
+				}
+				byXR[xrKey] = node
+			}
+
+			// Prefer a present XR/Claim if we see one later.
+			if lineage.Composite.Present && !node.XR.Present {
+				node.XR = lineage.Composite
+			}
+			if lineage.Claim != nil {
+				if node.Claim == nil || (lineage.Claim.Present && !node.Claim.Present) {
+					node.Claim = lineage.Claim
+				}
+			}
+
+			// Don't add the XR itself as managed.
+			if lineage.Managed.Ref.Name != "" && lineage.Managed.Ref.Name != lineage.Composite.Ref.Name {
+				node.Managed = append(node.Managed, lineage.Managed)
+			}
 			continue
 		}
 
-		// Skip resources where the XR could not be identified (partial lineage with unknown XR).
-		// This avoids creating spurious groups for XRs that have claim labels but no parent XR.
-		if lineage.Composite.Ref.Name == "" {
+		lineage, ok := agent.ResolveKroLineageWithIndex(obj, idx)
+		if !ok || lineage == nil || lineage.Instance.Ref.Name == "" {
 			continue
 		}
 
-		xrKey := lineage.Composite.Ref.String()
-		if xrKey == "" {
-			xrKey = lineage.Composite.Ref.Name
+		xrKey := "kro::" + lineage.Instance.Ref.String()
+		if xrKey == "kro::" {
+			xrKey = "kro::" + lineage.Instance.Ref.Name
 		}
-		if xrKey == "" {
-			continue
-		}
-
 		node := byXR[xrKey]
 		if node == nil {
-			node = &CrossplaneCompositionTree{XR: lineage.Composite}
-			if lineage.Claim != nil {
-				node.Claim = lineage.Claim
+			node = &CrossplaneCompositionTree{
+				Platform: "kro",
+				XR:       toCrossplaneLineageNode(lineage.Instance),
+			}
+			if lineage.Definition != nil {
+				def := toCrossplaneLineageNode(*lineage.Definition)
+				node.Claim = &def
 			}
 			byXR[xrKey] = node
 		}
 
-		// Prefer a present XR/Claim if we see one later.
-		if lineage.Composite.Present && !node.XR.Present {
-			node.XR = lineage.Composite
+		if lineage.Instance.Present && !node.XR.Present {
+			node.XR = toCrossplaneLineageNode(lineage.Instance)
 		}
-		if lineage.Claim != nil {
-			if node.Claim == nil || (lineage.Claim.Present && !node.Claim.Present) {
-				node.Claim = lineage.Claim
+		if lineage.Definition != nil {
+			def := toCrossplaneLineageNode(*lineage.Definition)
+			if node.Claim == nil || (def.Present && !node.Claim.Present) {
+				node.Claim = &def
 			}
 		}
 
-		// Don't add the XR itself as managed.
-		if lineage.Managed.Ref.Name != "" && lineage.Managed.Ref.Name != lineage.Composite.Ref.Name {
-			node.Managed = append(node.Managed, lineage.Managed)
+		managed := toCrossplaneLineageNode(lineage.Managed)
+		if managed.Ref.Name != "" && managed.Ref.Name != lineage.Instance.Ref.Name {
+			node.Managed = append(node.Managed, managed)
 		}
 	}
 
@@ -204,8 +246,15 @@ func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*Crossp
 	return byXR
 }
 
+func toCrossplaneLineageNode(node agent.KroLineageNode) agent.CrossplaneLineageNode {
+	return agent.CrossplaneLineageNode{
+		Ref:     node.Ref,
+		Present: node.Present,
+	}
+}
+
 func printCompositionTreeHuman(byXR map[string]*CrossplaneCompositionTree) {
-	fmt.Printf("%sCrossplane Composition Tree%s\n", colorBold, colorReset)
+	fmt.Printf("%sPlatform Composition Tree%s\n", colorBold, colorReset)
 	fmt.Println(strings.Repeat("─", 60))
 
 	xrKeys := make([]string, 0, len(byXR))
@@ -220,7 +269,12 @@ func printCompositionTreeHuman(byXR map[string]*CrossplaneCompositionTree) {
 			continue
 		}
 
-		// XR line
+		platform := node.Platform
+		if platform == "" {
+			platform = "crossplane"
+		}
+
+		// XR/instance line
 		xrLabel := node.XR.Ref.String()
 		if xrLabel == "" {
 			xrLabel = xrKey
@@ -228,15 +282,19 @@ func printCompositionTreeHuman(byXR map[string]*CrossplaneCompositionTree) {
 		if !node.XR.Present {
 			xrLabel += fmt.Sprintf(" %s(partial lineage)%s", colorDim, colorReset)
 		}
-		fmt.Printf("%s%s%s\n", colorCyan, xrLabel, colorReset)
+		fmt.Printf("%s[%s]%s %s%s%s\n", colorCyan, platform, colorReset, colorCyan, xrLabel, colorReset)
 
-		// Optional claim
+		// Optional parent (crossplane claim / kro definition)
 		if node.Claim != nil {
 			claimLabel := node.Claim.Ref.String()
 			if !node.Claim.Present {
 				claimLabel += fmt.Sprintf(" %s(partial lineage)%s", colorDim, colorReset)
 			}
-			fmt.Printf("  ├── claim: %s\n", claimLabel)
+			label := "claim"
+			if platform == "kro" {
+				label = "definition"
+			}
+			fmt.Printf("  ├── %s: %s\n", label, claimLabel)
 		}
 
 		// Managed resources

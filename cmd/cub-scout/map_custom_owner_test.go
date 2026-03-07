@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -76,6 +77,36 @@ detectors:
 	}
 	if managedBy != "Pulumi" {
 		t.Fatalf("managedBy = %q, want %q", managedBy, "Pulumi")
+	}
+}
+
+func TestProcessResource_KroOwnershipDisplay(t *testing.T) {
+	obj := &unstructured.Unstructured{}
+	obj.SetAPIVersion("apps/v1")
+	obj.SetKind("Deployment")
+	obj.SetNamespace("default")
+	obj.SetName("checkout-api")
+	obj.SetOwnerReferences([]metav1.OwnerReference{
+		{
+			APIVersion: "apps.kro.run/v1alpha1",
+			Kind:       "WebApp",
+			Name:       "checkout",
+		},
+	})
+
+	gvr := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	entries := processResourceWithLookup(obj, gvr, "local", nil, map[string]int{}, mapApplicationSetLookup{
+		byNamespacedName: map[string]int{},
+		byName:           map[string]int{},
+	})
+	if len(entries) != 1 {
+		t.Fatalf("entries len = %d, want 1", len(entries))
+	}
+	if entries[0].Owner != "kro" {
+		t.Fatalf("entry owner = %q, want %q", entries[0].Owner, "kro")
+	}
+	if got := entries[0].OwnerDetails["subType"]; got != "instance" {
+		t.Fatalf("ownerDetails.subType = %q, want %q", got, "instance")
 	}
 }
 

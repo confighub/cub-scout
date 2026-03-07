@@ -86,6 +86,7 @@ Each entry represents a Kubernetes resource with ownership metadata:
 | `terraform` | Managed by Terraform | `app.terraform.io/*` annotations |
 | `confighub` | Managed by ConfigHub | `confighub.com/UnitSlug` label |
 | `crossplane` | Managed by Crossplane | `crossplane.io/*` labels or XR owner references |
+| `kro` | Managed by kro | `kro.run/*` labels/annotations, kro owner references, or API group containing `kro.run` |
 | `k8s` | Kubernetes native | OwnerReferences only (no GitOps tool) |
 | `unknown` | No ownership detected | Fallback |
 
@@ -100,6 +101,8 @@ Each entry represents a Kubernetes resource with ownership metadata:
 | `crossplane` | `claim` | Created from a Crossplane Claim |
 | `crossplane` | `composite` | Created from a Composite Resource (XR) |
 | `crossplane` | `managed-resource` | Managed resource in a Composition |
+| `kro` | `instance` | Managed by a kro instance CR |
+| `kro` | `definition` | ResourceGraphDefinition metadata/object |
 
 ## Detection Priority
 
@@ -111,8 +114,9 @@ When a resource has multiple ownership markers, detection follows this order:
 4. **Terraform**
 5. **ConfigHub**
 6. **Crossplane**
-7. **Kubernetes native** (`k8s`)
-8. **Unknown** (fallback)
+7. **kro**
+8. **Kubernetes native** (`k8s`)
+9. **Unknown** (fallback)
 
 > **Note:** ConfigHub labels may coexist with Flux/Argo labels. In standalone mode, the GitOps deployer takes precedence. In connected mode, both `owner` and `deployer` fields are populated.
 

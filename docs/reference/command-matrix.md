@@ -72,6 +72,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `map` (default) | Interactive TUI | - | Local cluster explorer |
 | `map --hub` | ConfigHub hierarchy TUI | `H` | Requires ConfigHub auth/context |
 | `map list` | Plain text resource list | - | Scriptable output |
+| `map meaning` | Experimental meaning-first grouped browse | - | Deterministic hybrid semantic + structural grouping |
 | `map status` | One-line health check | `s` | CI-friendly status summary |
 | `map workloads` | Workloads by owner | `w` | Ownership-focused view |
 | `map deployers` | Deployers (Deployments) | `p` | Deployer slice |
@@ -110,7 +111,9 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--count` | Output count only | `map list` |
 | `--names-only` | Output names only | `map list` |
 | `--stale-after` | Preview staleness threshold | `map previews` |
-| `--format` | Output format (`ascii`, `json`, `md`) | `map list`, `map hooks`, `map cronjobs`, `map jobs`, `map actions`, `map activity`, `map previews` |
+| `--max-groups` | Maximum groups shown | `map meaning` |
+| `--max-members` | Maximum members per group | `map meaning` |
+| `--format` | Output format (`ascii`, `json`, `md`) | `map list`, `map meaning`, `map hooks`, `map cronjobs`, `map jobs`, `map actions`, `map activity`, `map previews` |
 
 ---
 

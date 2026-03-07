@@ -58,7 +58,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] ConfigHub summary storage and Slack integration for drift/sync notifications — graduated to #209, #210
 - [ ] Connected import flows (`cub-scout connected import bundle/git/cluster`)
 - [x] Intent vs render vs observed three-way comparison — graduated to #213
-- [ ] Hook compatibility verifier
+- [x] Hook compatibility verifier — resolved #315
 - [ ] Import wizard with auto-detection (`--wizard` flag, from `gitops-repo-structures.md`)
 - [ ] Snapshot enrichment with ConfigHub intent/history metadata (from `state-and-snapshots.md`)
 

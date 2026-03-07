@@ -14,10 +14,11 @@ import (
 // The same struct is used by CLI commands and TUI initialization.
 //
 // CLI flags map directly to these fields:
-//   --owner     → Owner
-//   --namespace → Namespace
-//   --depth     → Depth
-//   --kind      → Kind
+//
+//	--owner     → Owner
+//	--namespace → Namespace
+//	--depth     → Depth
+//	--kind      → Kind
 //
 // This ensures identical behavior and defaults across interfaces.
 type ViewOptions struct {
@@ -41,7 +42,7 @@ var sharedViewOpts ViewOptions
 // Use this for any command that supports filtering by owner, namespace, depth, or kind.
 func AddSharedViewFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&sharedViewOpts.Owner, "owner", "",
-		"Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)")
+		"Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Crossplane, kro, Native)")
 	cmd.Flags().StringVar(&sharedViewOpts.Namespace, "namespace", "",
 		"Filter by namespace")
 	cmd.Flags().IntVar(&sharedViewOpts.Depth, "depth", 0,
@@ -93,6 +94,7 @@ var ValidOwners = []string{
 	"Helm",
 	"ConfigHub",
 	"Crossplane",
+	"kro",
 	"Terraform",
 	"Native",
 }
