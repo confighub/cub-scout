@@ -37,6 +37,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `health` | Scout-style health check | v0.5 |
 | `status` | Show connection status and cluster info | v1.0 |
 | `history` | Show connected change history from ConfigHub ChangeSets | v1.4 |
+| `audit list` | Show connected break-glass accept/reject audit trail | v1.6 |
 | `connect` | Quickly configure kube context from server URL or kubeconfig | v1.0 |
 | `setup` | Set up shell completions | v0.19 |
 | `mcp serve` | Serve read-only MCP tools over stdio | v1.4 |
@@ -747,7 +748,10 @@ cub-scout import [flags]
 | `--json` | Output proposal JSON (implies dry-run) |
 | `--no-log` | Disable local import log file |
 | `-w, --wizard` | Launch interactive import wizard |
+| `--connect` | After import, start worker and set targets |
+| `--no-connect` | Do not auto-start worker/targets after import |
 | `--from-bundle` | Import proposal/apply from a debug bundle directory (offline path, no cluster discovery) |
+| `--audit-reason` | Record break-glass decision reason in connected audit history (max 512 chars) |
 
 ### Canonical Migration Path
 
@@ -763,6 +767,9 @@ cub-scout import -n payments-prod --dry-run
 # Execute namespace import
 cub-scout import -n payments-prod
 
+# Execute import with explicit break-glass audit reason
+cub-scout import -n payments-prod --audit-reason "approved by sre lead for Q1 migration"
+
 # Non-interactive import
 cub-scout import -n payments-prod -y
 
@@ -777,6 +784,9 @@ cub-scout import --from-bundle ./debug-bundle --dry-run --json
 - `evidence.source`: `cluster` or `bundle`
 - `evidence.bundlePath`: set when source is `bundle`
 - `workloads[].connected`: true when the workload is already linked by `confighub.com/UnitSlug` or when a proposed unit slug already exists in the target App Space.
+
+Connected audit note:
+- `--audit-reason` writes a break-glass ChangeSet entry so `cub-scout audit list` can show who/when/why/what.
 
 ---
 
@@ -946,6 +956,44 @@ cub-scout history deploy/my-app --since 2w --format md
 - Requires ConfigHub authentication (`cub auth login`).
 - Uses read-only ChangeSet queries under the hood.
 - If no history is found, output clearly notes the resource may not be imported yet.
+
+---
+
+## audit list
+
+Show connected break-glass accept/reject decisions from ConfigHub ChangeSets.
+
+```bash
+cub-scout audit list [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Optional namespace scope |
+| `--since` | Lookback window (examples: `24h`, `7d`, `2w`) |
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `--json` | Output as JSON (shorthand for `--format json`) |
+
+### Examples
+
+```bash
+# Show recent break-glass decisions
+cub-scout audit list
+
+# Filter by namespace and window
+cub-scout audit list -n prod --since 7d
+
+# Export machine-readable output
+cub-scout audit list --format json
+```
+
+### Connected Mode Notes
+
+- Requires ConfigHub authentication (`cub auth login`).
+- Uses read-only ChangeSet queries filtered to break-glass records.
+- If no records are found, output reports: `No break-glass decisions recorded for this scope`.
 
 ---
 

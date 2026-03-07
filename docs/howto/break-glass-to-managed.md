@@ -109,8 +109,12 @@ The break-glass change was correct and should be permanent.
 # Preview what would be imported
 ./cub-scout import -n <namespace> --dry-run
 
-# Import the resource to ConfigHub
-./cub-scout import deploy/<name> -n <namespace>
+# Import into ConfigHub and record decision reason
+./cub-scout import -n <namespace> \
+  --audit-reason "approved by sre lead for Q1 migration"
+
+# Review break-glass decision history
+./cub-scout audit list -n <namespace> --since 7d
 ```
 
 This creates a ConfigHub Unit, publishes an OCI artifact, and Flux/ArgoCD reconciles from ConfigHub. The resource is now versioned and repeatable.
