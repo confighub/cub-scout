@@ -65,7 +65,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 ### Extension & Integration Ideas (`howto/extending.md`)
 
 - [x] Webhook event streaming (entry/drift/finding events) — graduated to #234
-- [ ] Output plugin architecture (Kafka, custom destinations)
+- [x] Output plugin architecture (file sink foundation; Kafka/custom destinations follow-up) — graduated to #308
 - [x] Config-based custom ownership detectors (YAML, no Go required) — graduated to #233
 - [ ] Config-based CRD watching (YAML status extraction)
 
