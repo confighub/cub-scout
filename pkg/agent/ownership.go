@@ -391,11 +391,9 @@ func detectKroOwnership(labels, annotations map[string]string, resource *unstruc
 		if !isKroAPIVersion(owner.APIVersion) {
 			continue
 		}
-		subType := strings.ToLower(owner.Kind)
+		subType := "instance"
 		if strings.EqualFold(owner.Kind, "ResourceGraphDefinition") {
 			subType = "definition"
-		} else {
-			subType = "instance"
 		}
 		return Ownership{
 			Type:       OwnerKro,
