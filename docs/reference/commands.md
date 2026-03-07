@@ -677,6 +677,8 @@ cub-scout watch --webhook <url> [flags]
 cub-scout watch --webhook https://hooks.example.com/cub-scout --interval 30s
 ```
 
+See [`examples/watch-webhook/`](../../examples/watch-webhook/) for a local receiver and end-to-end walkthrough.
+
 ---
 
 ## scan
