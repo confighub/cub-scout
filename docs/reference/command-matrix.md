@@ -15,7 +15,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `apply` | Apply a proposal from JSON (GUI) |
 | `bundle` | Work with debug bundles |
 | `catalog` | Manage bundle catalogs |
-| `combined` | Show Git repo structure + cluster workloads aligned |
+| `combined` (`compare`) | Show Git repo + cluster alignment, or resource LIVE snapshot mode |
 | `completion` | Generate shell completion script |
 | `connect` | Quickly configure kube context from server URL or kubeconfig |
 | `debug` | Guided GitOps debugging wizard |
@@ -234,10 +234,14 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--git-path-compare` | Right-side local Git repository path for Git↔Git compare |
 | `-n, --namespace` | Namespace to scan |
 | `--bundle` | Debug bundle directory as offline cluster snapshot |
+| `--format` | Resource compare format (`ascii`, `json`, `md`) |
 | `--suggest` | Generate Hub/App Space proposal |
 | `--apply` | Create App Space and Units |
 | `--dry-run` | Show without making changes |
 | `--json` | Output as JSON |
+
+Resource compare mode uses one positional argument:
+- `cub-scout compare <kind/name> -n <namespace> --format ascii|json|md`
 
 ---
 
