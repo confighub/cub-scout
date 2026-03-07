@@ -23,6 +23,7 @@ var (
 	combinedGitPathCompare string
 	combinedNamespace      string
 	combinedBundle         string
+	combinedFormat         string
 	combinedJSON           bool
 	combinedSuggest        bool
 	combinedApply          bool
@@ -70,6 +71,12 @@ Use --suggest to generate a full App model proposal.
 Use --apply to create the App and Deployments in ConfigHub.
 
 Examples:
+  # Compare one live resource (resource mode)
+  cub-scout compare deploy/my-app -n prod --format ascii
+
+  # Compare one live resource with JSON output
+  cub-scout compare deploy/my-app -n prod --format json
+
   # Combine Git repo with current cluster
   cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo
 
@@ -104,6 +111,7 @@ func init() {
 	combinedCmd.Flags().StringVar(&combinedGitPathCompare, "git-path-compare", "", "Right-side local Git repository path for Git↔Git compare")
 	combinedCmd.Flags().StringVarP(&combinedNamespace, "namespace", "n", "", "Namespace to scan in cluster")
 	combinedCmd.Flags().StringVar(&combinedBundle, "bundle", "", "Debug bundle directory to use as cluster snapshot (offline)")
+	combinedCmd.Flags().StringVar(&combinedFormat, "format", "ascii", "Output format for resource compare mode: ascii, json, md")
 	combinedCmd.Flags().BoolVar(&combinedJSON, "json", false, "Output as JSON")
 	combinedCmd.Flags().BoolVar(&combinedSuggest, "suggest", false, "Generate App model proposal")
 	combinedCmd.Flags().BoolVar(&combinedApply, "apply", false, "Create App and Deployments in ConfigHub")
@@ -113,6 +121,10 @@ func init() {
 }
 
 func runCombined(cmd *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		return runCombinedResourceCompare(cmd, args)
+	}
+
 	result := &CombinedResult{}
 
 	// Parse left-side Git repo (primary).

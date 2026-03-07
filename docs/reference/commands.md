@@ -30,7 +30,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
 | `tree` | Hierarchical resource views | v0.5 |
 | `import` | Import workloads into ConfigHub | v1.0 |
-| `combined` | Compare Git and cluster/bundle structures | v1.0 |
+| `combined` (`compare`) | Compare Git and cluster/bundle structures, or show LIVE snapshot for one resource | v1.0 |
 | `discover` | Scout-style workload discovery | v0.5 |
 | `health` | Scout-style health check | v0.5 |
 | `status` | Show connection status and cluster info | v1.0 |
@@ -726,6 +726,8 @@ cub-scout import --from-bundle ./debug-bundle --dry-run --json
 
 Show alignment across Git, live cluster, bundle snapshots, and Git↔Git compare.
 
+Alias: `compare`
+
 ```bash
 cub-scout combined [flags]
 ```
@@ -740,6 +742,7 @@ cub-scout combined [flags]
 | `--git-path-compare` | Right-side local Git repository path for Git↔Git compare |
 | `-n, --namespace` | Namespace to scan from live cluster |
 | `--bundle` | Use debug bundle directory as offline cluster snapshot |
+| `--format` | Resource compare output format: `ascii`, `json`, `md` |
 | `--suggest` | Generate App model proposal |
 | `--apply` | Apply proposal to ConfigHub |
 | `--dry-run` | Preview apply behavior without making changes |
@@ -748,6 +751,10 @@ cub-scout combined [flags]
 ### Examples
 
 ```bash
+# Resource compare mode (LIVE snapshot + connected upsell/degradation notes)
+cub-scout compare deploy/checkout -n prod --format ascii
+cub-scout compare deploy/checkout -n prod --format json
+
 # Git ↔ live cluster compare
 cub-scout combined --git-path ./repo --namespace payments --json
 

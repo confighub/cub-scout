@@ -161,6 +161,7 @@ type combinedFlagState struct {
 	gitPathCompare string
 	namespace      string
 	bundle         string
+	format         string
 	json           bool
 	suggest        bool
 	apply          bool
@@ -175,6 +176,7 @@ func setCombinedFlagState(next combinedFlagState) func() {
 		gitPathCompare: combinedGitPathCompare,
 		namespace:      combinedNamespace,
 		bundle:         combinedBundle,
+		format:         combinedFormat,
 		json:           combinedJSON,
 		suggest:        combinedSuggest,
 		apply:          combinedApply,
@@ -187,6 +189,7 @@ func setCombinedFlagState(next combinedFlagState) func() {
 	combinedGitPathCompare = next.gitPathCompare
 	combinedNamespace = next.namespace
 	combinedBundle = next.bundle
+	combinedFormat = next.format
 	combinedJSON = next.json
 	combinedSuggest = next.suggest
 	combinedApply = next.apply
@@ -199,6 +202,7 @@ func setCombinedFlagState(next combinedFlagState) func() {
 		combinedGitPathCompare = prev.gitPathCompare
 		combinedNamespace = prev.namespace
 		combinedBundle = prev.bundle
+		combinedFormat = prev.format
 		combinedJSON = prev.json
 		combinedSuggest = prev.suggest
 		combinedApply = prev.apply
