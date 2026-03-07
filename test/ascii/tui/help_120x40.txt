@@ -14,6 +14,7 @@ VIEWS
   u  sUspended (paused/forgotten resources)
   b  Bypass (factory bypass detection)
   x  Sprawl (config sprawl analysis)
+  h  History timeline (connected ChangeSets)
   D  Dependencies (upstream/downstream)
   G  Git sources (forward trace)
   4  Cluster Data (all data sources TUI reads)

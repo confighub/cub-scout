@@ -9,6 +9,7 @@ Complete reference for all interactive TUI views.
 | `s` | Status | Health dashboard |
 | `w` | Workloads | Resources by owner |
 | `p` | Pipelines | GitOps deployers |
+| `h` | History | Connected ChangeSet timeline |
 | `d` | Drift | Out-of-sync resources |
 | `o` | Orphans | Native resources |
 | `c` | Crashes | Failing workloads |
@@ -124,6 +125,17 @@ See: `docs/reference/pipeline-source-resolution.md`
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## History View (`h`)
+
+**Purpose:** Show connected change history for the currently selected workload.
+
+**Content:**
+- ChangeSet timeline entries from ConfigHub
+- Timestamp, actor, and summary details when available
+- Clear fallback messaging when connected history is unavailable
 
 ---
 

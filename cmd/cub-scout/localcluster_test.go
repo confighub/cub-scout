@@ -268,6 +268,69 @@ func TestLocalClusterSprawl(t *testing.T) {
 	}
 }
 
+// TestLocalClusterHistory tests 'h' key for history timeline view.
+func TestLocalClusterHistory(t *testing.T) {
+	m := testLocalModel()
+
+	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
+	time.Sleep(50 * time.Millisecond)
+
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
+	time.Sleep(50 * time.Millisecond)
+
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	finalModel := tm.FinalModel(t, teatest.WithFinalTimeout(2*time.Second))
+
+	fm := finalModel.(LocalClusterModel)
+	if !fm.panelMode || fm.panelView != viewHistory {
+		t.Errorf("expected history view, got panelMode=%v view=%v", fm.panelMode, fm.panelView)
+	}
+}
+
+func TestLocalClusterRunHistoryPanel_UsesFixture(t *testing.T) {
+	m := testLocalModel()
+	m.cursor = 0 // deployment/nginx in default namespace
+
+	fixturePath := filepath.Join(t.TempDir(), "history.json")
+	fixtureJSON := `[
+	  {
+	    "Slug": "CS-TEST-1",
+	    "CreatedAt": "2030-03-05T18:40:00Z",
+	    "Description": "replicas: 2 -> 3",
+	    "CreatedBy": {"Slug":"release-bot"}
+	  }
+	]`
+	if err := os.WriteFile(fixturePath, []byte(fixtureJSON), 0o644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	t.Setenv("CUB_SCOUT_TEST_HISTORY_JSON", fixturePath)
+
+	cmd := m.runHistoryPanel()
+	if cmd == nil {
+		t.Fatal("expected history panel command")
+	}
+	msg := cmd()
+	loaded, ok := msg.(localHistoryLoadedMsg)
+	if !ok {
+		t.Fatalf("expected localHistoryLoadedMsg, got %T", msg)
+	}
+	if loaded.err != nil {
+		t.Fatalf("history panel load error: %v", loaded.err)
+	}
+	if loaded.result.Resource != "deployment/nginx" {
+		t.Fatalf("result resource = %q, want deployment/nginx", loaded.result.Resource)
+	}
+	if loaded.result.Namespace != "default" {
+		t.Fatalf("result namespace = %q, want default", loaded.result.Namespace)
+	}
+	if len(loaded.result.Entries) != 1 {
+		t.Fatalf("entries = %d, want 1", len(loaded.result.Entries))
+	}
+	if loaded.result.Entries[0].ChangeSet != "CS-TEST-1" {
+		t.Fatalf("changeset = %q, want CS-TEST-1", loaded.result.Entries[0].ChangeSet)
+	}
+}
+
 // TestLocalClusterApps tests 'a' key for apps view.
 func TestLocalClusterApps(t *testing.T) {
 	m := testLocalModel()

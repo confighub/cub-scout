@@ -35,7 +35,7 @@ cub-scout map
 │                            │                                                 │
 └────────────────────────────┴─────────────────────────────────────────────────┘
 
-Keys: [s]tatus [w]orkloads [o]rphans [4]deep-dive  [↑↓] navigate  [T]race  [q]uit
+Keys: [s]tatus [w]orkloads [o]rphans [h]istory [4]deep-dive  [↑↓] navigate  [T]race  [q]uit
 ```
 
 ---

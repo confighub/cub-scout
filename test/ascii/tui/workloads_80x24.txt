@@ -17,4 +17,4 @@
 │                                      │ │                                      │
 │                                      │ │                                      │
 ╰──────────────────────────────────────╯ ╰──────────────────────────────────────╯
-ns: All (8) | []/[]ns [w]ork [p]ipe [d]rift [o]rph | Tab:focus Esc:close [H]ub [?] [q]
+ns: All (8) | []/[]ns [w]ork [p]ipe [h]ist [d]rift [o]rph | Tab:focus Esc:close [H]ub [?] [q]
