@@ -185,6 +185,9 @@ In default ASCII mode, `map list` includes a `TRY NEXT` section with contextual 
 
 Machine-readable formats (`--format json` and `--format md`) do not include these hints.
 
+Custom CRDs can be appended to this inventory using `~/.cub-scout/resources.yaml`
+or `CUB_SCOUT_RESOURCE_CONFIG` (see `docs/howto/extending.md`).
+
 ---
 
 ## quickstart
@@ -689,6 +692,8 @@ cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
 ```
 
 See [`examples/watch-webhook/`](../../examples/watch-webhook/) for a local receiver and end-to-end walkthrough.
+Custom CRDs in `~/.cub-scout/resources.yaml` (or `CUB_SCOUT_RESOURCE_CONFIG`)
+are included in watch resource discovery.
 
 ---
 

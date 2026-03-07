@@ -21,7 +21,6 @@ import (
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -255,19 +254,7 @@ func collectWatchEntries(ctx context.Context, dynClient dynamic.Interface, names
 		clusterName = "default"
 	}
 
-	resources := []schema.GroupVersionResource{
-		{Group: "apps", Version: "v1", Resource: "deployments"},
-		{Group: "apps", Version: "v1", Resource: "statefulsets"},
-		{Group: "apps", Version: "v1", Resource: "daemonsets"},
-		{Group: "", Version: "v1", Resource: "services"},
-		{Group: "", Version: "v1", Resource: "configmaps"},
-		{Group: "", Version: "v1", Resource: "secrets"},
-		{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"},
-		{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"},
-		{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"},
-		{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"},
-		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"},
-	}
+	resources := collectWatchResourceList()
 
 	appSetLookup := loadMapApplicationSetLookup(ctx, dynClient, namespace)
 

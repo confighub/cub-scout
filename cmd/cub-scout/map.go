@@ -737,22 +737,8 @@ func runMapListFromCluster(ctx context.Context) error {
 	byOwner := map[string]int{} // populated during collection; recomputed after filtering for summary correctness
 	appSetLookup := loadMapApplicationSetLookup(ctx, dynClient, mapNamespace)
 
-	// Resource types to scan
-	resources := []schema.GroupVersionResource{
-		{Group: "apps", Version: "v1", Resource: "deployments"},
-		{Group: "apps", Version: "v1", Resource: "statefulsets"},
-		{Group: "apps", Version: "v1", Resource: "daemonsets"},
-		{Group: "", Version: "v1", Resource: "services"},
-		{Group: "", Version: "v1", Resource: "configmaps"},
-		{Group: "", Version: "v1", Resource: "secrets"},
-		{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"},
-		// Flux resources
-		{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"},
-		{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"},
-		{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"},
-		// Argo resources
-		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"},
-	}
+	// Resource types to scan (defaults + optional custom CRD config)
+	resources := collectMapResourceList()
 
 	var startList time.Time
 	if debug {
