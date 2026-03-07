@@ -65,7 +65,7 @@ func TestSmoke_CLIHelp(t *testing.T) {
 			name:         "watch help",
 			args:         []string{"watch", "--help"},
 			wantExitCode: 0,
-			wantContains: []string{"watch", "--webhook", "Usage:"},
+			wantContains: []string{"watch", "--webhook", "--output-file", "Usage:"},
 		},
 		{
 			name:         "quickstart help",

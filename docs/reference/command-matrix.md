@@ -41,7 +41,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `status` | Show connection status and cluster info |
 | `summary` | Query persisted connected summary snapshots |
 | `trace` | Trace any resource to its Git source |
-| `watch` | Stream observation events to webhook |
+| `watch` | Stream observation events to webhook/file sinks |
 | `tree` | Show hierarchical views of resources |
 | `version` | Print version information |
 
@@ -249,13 +249,16 @@ Connected storage defaults:
 
 | Option | Description |
 |--------|-------------|
-| `--webhook` | Webhook URL for event delivery (required) |
+| `--webhook` | Webhook URL for event delivery |
+| `--output-file` | Append JSONL events to local file |
 | `--interval` | Polling interval (`20s` default) |
 | `-n, --namespace` | Namespace filter |
 | `--owner` | Owner display-name filter |
 | `--severity` | Finding severity filter (`critical,warning,info`) |
 | `--once` | Run one collection cycle and exit |
 | `--max-queued-events` | Buffer size while webhook is unavailable |
+
+At least one destination is required: `--webhook` and/or `--output-file`.
 
 Event types: `resource.discovered`, `ownership.changed`, `drift.detected`, `scan.finding`.
 

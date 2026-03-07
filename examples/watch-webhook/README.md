@@ -53,6 +53,14 @@ cat /tmp/cub-scout-watch-events.jsonl
 
 Stop with `Ctrl+C`.
 
+## File Sink (No Webhook)
+
+Write events directly to local JSONL:
+
+```bash
+./cub-scout watch --output-file /tmp/cub-scout-watch-events.jsonl --once
+```
+
 ## Sample Event
 
 ```json

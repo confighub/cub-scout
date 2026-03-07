@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sort"
 	"strings"
 	"syscall"
@@ -26,6 +27,7 @@ import (
 
 var (
 	watchWebhookURL      string
+	watchOutputFile      string
 	watchInterval        time.Duration
 	watchNamespace       string
 	watchOwner           string
@@ -69,6 +71,44 @@ type watchState struct {
 	findings    map[string]watchFinding
 }
 
+type watchEventSink interface {
+	Name() string
+	Retryable() bool
+	Write(ctx context.Context, event watchEvent) error
+}
+
+type watchWebhookSink struct {
+	url string
+}
+
+func (s *watchWebhookSink) Name() string    { return "webhook" }
+func (s *watchWebhookSink) Retryable() bool { return true }
+func (s *watchWebhookSink) Write(ctx context.Context, event watchEvent) error {
+	return watchPostEvent(ctx, s.url, event)
+}
+
+type watchFileSink struct {
+	path string
+	file *os.File
+}
+
+func (s *watchFileSink) Name() string    { return "file" }
+func (s *watchFileSink) Retryable() bool { return false }
+
+func (s *watchFileSink) Write(ctx context.Context, event watchEvent) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	body, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("marshal event: %w", err)
+	}
+	if _, err := s.file.Write(append(body, '\n')); err != nil {
+		return fmt.Errorf("write %q: %w", s.path, err)
+	}
+	return nil
+}
+
 var (
 	watchBuildConfig   = buildConfig
 	watchCollectState  = collectWatchState
@@ -80,8 +120,8 @@ var (
 
 var watchCmd = &cobra.Command{
 	Use:   "watch",
-	Short: "Stream observation events to a webhook",
-	Long: `Watch cluster observation changes and stream JSON events to a webhook.
+	Short: "Stream observation events to webhook/file sinks",
+	Long: `Watch cluster observation changes and stream JSON events to configured sinks.
 
 Event types:
   - resource.discovered
@@ -95,6 +135,7 @@ Event types:
 func init() {
 	rootCmd.AddCommand(watchCmd)
 	watchCmd.Flags().StringVar(&watchWebhookURL, "webhook", "", "Webhook URL to receive events")
+	watchCmd.Flags().StringVar(&watchOutputFile, "output-file", "", "Append JSONL events to a local file path")
 	watchCmd.Flags().DurationVar(&watchInterval, "interval", 20*time.Second, "Polling interval (for example 20s, 1m)")
 	watchCmd.Flags().StringVarP(&watchNamespace, "namespace", "n", "", "Filter events to a namespace")
 	watchCmd.Flags().StringVar(&watchOwner, "owner", "", "Filter events by owner display name (for example Flux, ArgoCD, Internal Platform)")
@@ -105,8 +146,9 @@ func init() {
 
 func runWatch(cmd *cobra.Command, args []string) error {
 	webhookURL := strings.TrimSpace(watchWebhookURL)
-	if webhookURL == "" {
-		return fmt.Errorf("missing --webhook URL")
+	outputFile := strings.TrimSpace(watchOutputFile)
+	if webhookURL == "" && outputFile == "" {
+		return fmt.Errorf("missing destination: provide either --webhook or --output-file")
 	}
 	if watchInterval <= 0 {
 		return fmt.Errorf("--interval must be > 0")
@@ -114,6 +156,11 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	if watchMaxQueuedEvents <= 0 {
 		return fmt.Errorf("--max-queued-events must be > 0")
 	}
+	sinks, cleanup, err := buildWatchSinks(webhookURL, outputFile)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	severityFilter := parseWatchSeverityFilter(watchSeverity)
 	ownerFilter := strings.TrimSpace(watchOwner)
@@ -142,7 +189,7 @@ func runWatch(cmd *cobra.Command, args []string) error {
 		}
 		events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
 		queue = appendWatchQueue(queue, events, watchMaxQueuedEvents)
-		_, err = flushWatchQueue(ctx, webhookURL, queue)
+		_, err = flushWatchQueue(ctx, sinks, queue)
 		return err
 	}
 
@@ -168,11 +215,11 @@ func runWatch(cmd *cobra.Command, args []string) error {
 			}
 			events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
 			queue = appendWatchQueue(queue, events, watchMaxQueuedEvents)
-			remaining, err := flushWatchQueue(ctx, webhookURL, queue)
+			remaining, err := flushWatchQueue(ctx, sinks, queue)
 			queue = remaining
 			prevState = curr
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: webhook delivery failed (buffered %d events): %v\n", len(queue), err)
+				fmt.Fprintf(os.Stderr, "Warning: event delivery failed (buffered %d events): %v\n", len(queue), err)
 				continue
 			}
 		}
@@ -471,10 +518,56 @@ func appendWatchQueue(queue, events []watchEvent, maxQueued int) []watchEvent {
 	return append([]watchEvent(nil), queue[len(queue)-maxQueued:]...)
 }
 
-func flushWatchQueue(ctx context.Context, webhookURL string, queue []watchEvent) ([]watchEvent, error) {
+func buildWatchSinks(webhookURL, outputFile string) ([]watchEventSink, func(), error) {
+	sinks := make([]watchEventSink, 0, 2)
+	cleanup := func() {}
+
+	if webhookURL != "" {
+		sinks = append(sinks, &watchWebhookSink{url: webhookURL})
+	}
+	if outputFile != "" {
+		sink, err := newWatchFileSink(outputFile)
+		if err != nil {
+			return nil, cleanup, err
+		}
+		sinks = append(sinks, sink)
+		cleanup = func() {
+			_ = sink.file.Close()
+		}
+	}
+	if len(sinks) == 0 {
+		return nil, cleanup, fmt.Errorf("missing destination: provide either --webhook or --output-file")
+	}
+	return sinks, cleanup, nil
+}
+
+func newWatchFileSink(outputFile string) (*watchFileSink, error) {
+	path := strings.TrimSpace(outputFile)
+	if path == "" {
+		return nil, fmt.Errorf("invalid --output-file: empty path")
+	}
+	dir := filepath.Dir(path)
+	if dir != "." && dir != "" {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, fmt.Errorf("create output directory %q: %w", dir, err)
+		}
+	}
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("open output file %q: %w", path, err)
+	}
+	return &watchFileSink{path: path, file: file}, nil
+}
+
+func flushWatchQueue(ctx context.Context, sinks []watchEventSink, queue []watchEvent) ([]watchEvent, error) {
 	for i, event := range queue {
-		if err := watchPostEvent(ctx, webhookURL, event); err != nil {
-			return append([]watchEvent(nil), queue[i:]...), err
+		for _, sink := range sinks {
+			if err := sink.Write(ctx, event); err != nil {
+				if sink.Retryable() {
+					return append([]watchEvent(nil), queue[i:]...), fmt.Errorf("%s sink: %w", sink.Name(), err)
+				}
+				return queue[:0], fmt.Errorf("%s sink: %w", sink.Name(), err)
+			}
 		}
 	}
 	return queue[:0], nil
