@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	auditListNamespace string
-	auditListFormat    string
-	auditListSince     string
+	auditListNamespace        string
+	auditListFormat           string
+	auditListSince            string
+	auditListIncludeSynthetic bool
 )
 
 var auditCmd = &cobra.Command{
@@ -49,16 +50,18 @@ func init() {
 	auditListCmd.Flags().StringVarP(&auditListNamespace, "namespace", "n", "", "Namespace scope (optional)")
 	auditListCmd.Flags().StringVar(&auditListFormat, "format", "ascii", "Output format: ascii, json, md")
 	auditListCmd.Flags().StringVar(&auditListSince, "since", "7d", "Lookback window (examples: 24h, 7d, 2w)")
+	auditListCmd.Flags().BoolVar(&auditListIncludeSynthetic, "include-synthetic", false, "Include synthetic/demo seeded ChangeSets")
 	auditListCmd.Flags().Bool("json", false, "Output as JSON (shorthand for --format json)")
 }
 
 var errAuditDisconnected = errors.New("audit requires ConfigHub connection. Run: cub auth login")
 
 type auditListQuery struct {
-	Namespace string
-	Since     string
-	Window    time.Duration
-	Now       time.Time
+	Namespace        string
+	Since            string
+	Window           time.Duration
+	Now              time.Time
+	IncludeSynthetic bool
 }
 
 type auditEntry struct {
@@ -102,10 +105,11 @@ func runAuditList(cmd *cobra.Command, args []string) error {
 	}
 
 	query := auditListQuery{
-		Namespace: strings.TrimSpace(auditListNamespace),
-		Since:     strings.TrimSpace(auditListSince),
-		Window:    window,
-		Now:       auditNowFn().UTC(),
+		Namespace:        strings.TrimSpace(auditListNamespace),
+		Since:            strings.TrimSpace(auditListSince),
+		Window:           window,
+		Now:              auditNowFn().UTC(),
+		IncludeSynthetic: auditListIncludeSynthetic,
 	}
 
 	entries, err := resolveAuditEntries(cmd.Context(), query)
@@ -139,7 +143,7 @@ func resolveAuditEntries(ctx context.Context, q auditListQuery) ([]auditEntry, e
 		if err != nil {
 			return nil, fmt.Errorf("read audit fixture %q: %w", fixture, err)
 		}
-		entries, err := buildAuditEntriesFromChangeSets(string(raw), q.Namespace, q.Now.Add(-q.Window))
+		entries, err := buildAuditEntriesFromChangeSetsWithOptions(string(raw), q.Namespace, q.Now.Add(-q.Window), q.IncludeSynthetic)
 		if err != nil {
 			return nil, fmt.Errorf("parse audit fixture %q: %w", fixture, err)
 		}
@@ -174,10 +178,14 @@ func fetchAuditEntries(ctx context.Context, q auditListQuery) ([]auditEntry, err
 		return nil, fmt.Errorf("fetch break-glass audit history: %w", err)
 	}
 
-	return buildAuditEntriesFromChangeSets(raw, q.Namespace, q.Now.Add(-q.Window))
+	return buildAuditEntriesFromChangeSetsWithOptions(raw, q.Namespace, q.Now.Add(-q.Window), q.IncludeSynthetic)
 }
 
 func buildAuditEntriesFromChangeSets(raw, namespace string, cutoff time.Time) ([]auditEntry, error) {
+	return buildAuditEntriesFromChangeSetsWithOptions(raw, namespace, cutoff, false)
+}
+
+func buildAuditEntriesFromChangeSetsWithOptions(raw, namespace string, cutoff time.Time, includeSynthetic bool) ([]auditEntry, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" || raw == "null" {
 		return nil, nil
@@ -192,6 +200,9 @@ func buildAuditEntriesFromChangeSets(raw, namespace string, cutoff time.Time) ([
 	items := historyExtractItems(payload)
 	entries := make([]auditEntry, 0, len(items))
 	for _, item := range items {
+		if !includeSynthetic && isSyntheticChangeSet(item) {
+			continue
+		}
 		ts, ok := historyExtractTime(item, "CreatedAt", "createdAt", "Timestamp", "timestamp", "UpdatedAt", "updatedAt")
 		if !ok {
 			continue

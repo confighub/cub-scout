@@ -223,6 +223,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `-n, --namespace` | Namespace scope (optional) |
 | `--since` | Lookback window (`24h`, `7d`, `2w`) |
 | `--format` | Output format (`ascii`, `json`, `md`) |
+| `--include-synthetic` | Include synthetic/demo seeded ChangeSets |
 | `--json` | Output as JSON |
 
 ---

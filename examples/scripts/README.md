@@ -52,6 +52,7 @@ Safety contract:
   - `demo=true`
   - `synthetic=true`
   - `source=cub-scout-demo-seed`
+- `cub-scout history` / `cub-scout audit list` exclude these by default; use `--include-synthetic` to view them.
 - Never run against production spaces.
 
 ## k9s Plugin

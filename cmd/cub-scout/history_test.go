@@ -98,6 +98,63 @@ func TestBuildHistoryEntriesFromChangeSets_FiltersAndSorts(t *testing.T) {
 	}
 }
 
+func TestBuildHistoryEntriesFromChangeSets_ExcludesSyntheticByDefault(t *testing.T) {
+	cutoff := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	raw := `[
+	  {
+	    "Slug": "CS-REAL-1",
+	    "CreatedAt": "2026-03-06T10:00:00Z",
+	    "Description": "real rollout",
+	    "CreatedBy": "release-bot"
+	  },
+	  {
+	    "Slug": "CS-DEMO-1",
+	    "CreatedAt": "2026-03-06T11:00:00Z",
+	    "Description": "demo seed",
+	    "CreatedBy": "demo-bot",
+	    "Labels": {"synthetic":"true", "source":"cub-scout-demo-seed"}
+	  }
+	]`
+
+	got, err := buildHistoryEntriesFromChangeSets(raw, cutoff)
+	if err != nil {
+		t.Fatalf("buildHistoryEntriesFromChangeSets() error = %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("entry count = %d, want 1", len(got))
+	}
+	if got[0].ChangeSet != "CS-REAL-1" {
+		t.Fatalf("changeset = %q, want CS-REAL-1", got[0].ChangeSet)
+	}
+}
+
+func TestBuildHistoryEntriesFromChangeSetsWithOptions_IncludesSynthetic(t *testing.T) {
+	cutoff := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	raw := `[
+	  {
+	    "Slug": "CS-REAL-1",
+	    "CreatedAt": "2026-03-06T10:00:00Z",
+	    "Description": "real rollout",
+	    "CreatedBy": "release-bot"
+	  },
+	  {
+	    "Slug": "CS-DEMO-1",
+	    "CreatedAt": "2026-03-06T11:00:00Z",
+	    "Description": "demo seed",
+	    "CreatedBy": "demo-bot",
+	    "Labels": {"demo":"true"}
+	  }
+	]`
+
+	got, err := buildHistoryEntriesFromChangeSetsWithOptions(raw, cutoff, true)
+	if err != nil {
+		t.Fatalf("buildHistoryEntriesFromChangeSetsWithOptions() error = %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("entry count = %d, want 2", len(got))
+	}
+}
+
 func TestRenderHistoryASCII_Empty(t *testing.T) {
 	out := renderHistoryASCII(historyResult{
 		Resource:  "deploy/my-app",
@@ -184,13 +241,16 @@ func withHistoryFlagsForTest() func() {
 	prevFormat := historyFormat
 	prevNamespace := historyNamespace
 	prevSince := historySince
+	prevIncludeSynthetic := historyIncludeSynthetic
 	historyFormat = "ascii"
 	historyNamespace = ""
 	historySince = "7d"
+	historyIncludeSynthetic = false
 	return func() {
 		historyFormat = prevFormat
 		historyNamespace = prevNamespace
 		historySince = prevSince
+		historyIncludeSynthetic = prevIncludeSynthetic
 	}
 }
 

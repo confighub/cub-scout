@@ -1134,6 +1134,7 @@ cub-scout history <resource> [flags]
 | `-n, --namespace` | Optional namespace scope |
 | `--since` | Lookback window (examples: `24h`, `7d`, `2w`) |
 | `--format` | Output format: `ascii`, `json`, `md` |
+| `--include-synthetic` | Include synthetic/demo seeded ChangeSets |
 
 ### Examples
 
@@ -1146,12 +1147,16 @@ cub-scout history deploy/my-app -n prod --since 24h --format json
 
 # Markdown timeline for tickets/PRs
 cub-scout history deploy/my-app --since 2w --format md
+
+# Include synthetic/demo seeded records when needed
+cub-scout history deploy/my-app -n prod --include-synthetic
 ```
 
 ### Connected Mode Notes
 
 - Requires ConfigHub authentication (`cub auth login`).
 - Uses read-only ChangeSet queries under the hood.
+- Synthetic/demo seeded ChangeSets are excluded by default; use `--include-synthetic` to include them.
 - If no history is found, output clearly notes the resource may not be imported yet.
 
 ---
@@ -1171,6 +1176,7 @@ cub-scout audit list [flags]
 | `-n, --namespace` | Optional namespace scope |
 | `--since` | Lookback window (examples: `24h`, `7d`, `2w`) |
 | `--format` | Output format: `ascii`, `json`, `md` |
+| `--include-synthetic` | Include synthetic/demo seeded ChangeSets |
 | `--json` | Output as JSON (shorthand for `--format json`) |
 
 ### Examples
@@ -1184,12 +1190,16 @@ cub-scout audit list -n prod --since 7d
 
 # Export machine-readable output
 cub-scout audit list --format json
+
+# Include synthetic/demo seeded break-glass entries
+cub-scout audit list --include-synthetic
 ```
 
 ### Connected Mode Notes
 
 - Requires ConfigHub authentication (`cub auth login`).
 - Uses read-only ChangeSet queries filtered to break-glass records.
+- Synthetic/demo seeded ChangeSets are excluded by default; use `--include-synthetic` to include them.
 - If no records are found, output reports: `No break-glass decisions recorded for this scope`.
 
 ---

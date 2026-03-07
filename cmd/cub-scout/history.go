@@ -21,9 +21,10 @@ import (
 )
 
 var (
-	historyNamespace string
-	historyFormat    string
-	historySince     string
+	historyNamespace        string
+	historyFormat           string
+	historySince            string
+	historyIncludeSynthetic bool
 )
 
 var historyCmd = &cobra.Command{
@@ -45,16 +46,18 @@ func init() {
 	historyCmd.Flags().StringVarP(&historyNamespace, "namespace", "n", "", "Namespace scope (optional)")
 	historyCmd.Flags().StringVar(&historyFormat, "format", "ascii", "Output format: ascii, json, md")
 	historyCmd.Flags().StringVar(&historySince, "since", "7d", "Lookback window (examples: 24h, 7d, 2w)")
+	historyCmd.Flags().BoolVar(&historyIncludeSynthetic, "include-synthetic", false, "Include synthetic/demo seeded ChangeSets")
 }
 
 var errHistoryDisconnected = errors.New("history requires ConfigHub connection. Run: cub auth login")
 
 type historyQuery struct {
-	Resource  string
-	Namespace string
-	Since     string
-	Window    time.Duration
-	Now       time.Time
+	Resource         string
+	Namespace        string
+	Since            string
+	Window           time.Duration
+	Now              time.Time
+	IncludeSynthetic bool
 }
 
 type historyEntry struct {
@@ -90,11 +93,12 @@ func runHistory(cmd *cobra.Command, args []string) error {
 	}
 
 	query := historyQuery{
-		Resource:  strings.TrimSpace(args[0]),
-		Namespace: strings.TrimSpace(historyNamespace),
-		Since:     strings.TrimSpace(historySince),
-		Window:    window,
-		Now:       historyNowFn().UTC(),
+		Resource:         strings.TrimSpace(args[0]),
+		Namespace:        strings.TrimSpace(historyNamespace),
+		Since:            strings.TrimSpace(historySince),
+		Window:           window,
+		Now:              historyNowFn().UTC(),
+		IncludeSynthetic: historyIncludeSynthetic,
 	}
 
 	entries, err := resolveHistoryEntries(cmd.Context(), query)
@@ -129,7 +133,7 @@ func resolveHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry,
 		if err != nil {
 			return nil, fmt.Errorf("read history fixture %q: %w", fixture, err)
 		}
-		entries, err := buildHistoryEntriesFromChangeSets(string(raw), q.Now.Add(-q.Window))
+		entries, err := buildHistoryEntriesFromChangeSetsWithOptions(string(raw), q.Now.Add(-q.Window), q.IncludeSynthetic)
 		if err != nil {
 			return nil, fmt.Errorf("parse history fixture %q: %w", fixture, err)
 		}
@@ -201,7 +205,7 @@ func fetchHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry, e
 	}
 
 	cutoff := q.Now.Add(-q.Window)
-	entries, err := buildHistoryEntriesFromChangeSets(raw, cutoff)
+	entries, err := buildHistoryEntriesFromChangeSetsWithOptions(raw, cutoff, q.IncludeSynthetic)
 	if err != nil {
 		return nil, err
 	}
@@ -235,6 +239,10 @@ func runHistoryCubCommandImpl(ctx context.Context, args []string) (string, error
 }
 
 func buildHistoryEntriesFromChangeSets(raw string, cutoff time.Time) ([]historyEntry, error) {
+	return buildHistoryEntriesFromChangeSetsWithOptions(raw, cutoff, false)
+}
+
+func buildHistoryEntriesFromChangeSetsWithOptions(raw string, cutoff time.Time, includeSynthetic bool) ([]historyEntry, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" || raw == "null" {
 		return nil, nil
@@ -248,6 +256,9 @@ func buildHistoryEntriesFromChangeSets(raw string, cutoff time.Time) ([]historyE
 	items := historyExtractItems(payload)
 	entries := make([]historyEntry, 0, len(items))
 	for _, item := range items {
+		if !includeSynthetic && isSyntheticChangeSet(item) {
+			continue
+		}
 		ts, ok := historyExtractTime(item, "CreatedAt", "createdAt", "Timestamp", "timestamp", "UpdatedAt", "updatedAt")
 		if !ok {
 			continue
