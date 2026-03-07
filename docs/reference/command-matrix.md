@@ -242,6 +242,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 
 Resource compare mode uses one positional argument:
 - `cub-scout compare <kind/name> -n <namespace> --format ascii|json|md`
+- Linked resources show DRY/WET/LIVE sections; unlinked resources degrade to LIVE-only with notes.
 
 ---
 

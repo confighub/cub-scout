@@ -80,8 +80,74 @@ func TestBuildCompareResourceResult_Connected(t *testing.T) {
 	if !result.Connected {
 		t.Fatal("expected result.Connected=true")
 	}
-	if !strings.Contains(strings.Join(result.Notes, "\n"), "Connected mode detected") {
-		t.Fatalf("expected connected-mode note in %v", result.Notes)
+	if !strings.Contains(strings.Join(result.Notes, "\n"), "not linked to a ConfigHub unit") {
+		t.Fatalf("expected linked-unit note in %v", result.Notes)
+	}
+}
+
+func TestBuildCompareResourceResult_Connected_LoadsDryWetWhenLinked(t *testing.T) {
+	restoreLive := loadCompareLiveSnapshotFn
+	loadCompareLiveSnapshotFn = func(ctx context.Context, kind, name, namespace string) (compareSideSummary, error) {
+		return compareSideSummary{
+			Source:     "cluster",
+			APIVersion: "apps/v1",
+			Kind:       kind,
+			Name:       name,
+			Namespace:  namespace,
+			UnitSlug:   "checkout-api",
+			SpaceName:  "payments-prod",
+		}, nil
+	}
+	defer func() { loadCompareLiveSnapshotFn = restoreLive }()
+
+	restoreConnected := compareConnectedFn
+	compareConnectedFn = func() bool { return true }
+	defer func() { compareConnectedFn = restoreConnected }()
+
+	restoreDryWet := loadCompareDryWetSnapshotFn
+	called := false
+	loadCompareDryWetSnapshotFn = func(ctx context.Context, unitSlug, space string, target compareResourceRef) (compareDryWetResult, error) {
+		called = true
+		if unitSlug != "checkout-api" {
+			t.Fatalf("unitSlug = %q, want checkout-api", unitSlug)
+		}
+		if space != "payments-prod" {
+			t.Fatalf("space = %q, want payments-prod", space)
+		}
+		if target.Kind != "Deployment" || target.Name != "api" || target.Namespace != "prod" {
+			t.Fatalf("unexpected target: %+v", target)
+		}
+		return compareDryWetResult{
+			Dry: &compareSideSummary{
+				Source:     "dry",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       "api",
+				Namespace:  "prod",
+			},
+			Wet: &compareSideSummary{
+				Source:     "wet",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       "api",
+				Namespace:  "prod",
+			},
+		}, nil
+	}
+	defer func() { loadCompareDryWetSnapshotFn = restoreDryWet }()
+
+	result, err := buildCompareResourceResult(context.Background(), "deployment/api", "prod")
+	if err != nil {
+		t.Fatalf("buildCompareResourceResult: %v", err)
+	}
+	if !called {
+		t.Fatal("expected DRY/WET loader to be called")
+	}
+	if result.Mode != "dry-wet-live" {
+		t.Fatalf("result.Mode = %q, want dry-wet-live", result.Mode)
+	}
+	if result.Dry == nil || result.Wet == nil {
+		t.Fatalf("expected dry+wet snapshots, got dry=%v wet=%v", result.Dry != nil, result.Wet != nil)
 	}
 }
 
@@ -124,6 +190,12 @@ func TestRunCombined_ResourceCompareJSONOutput(t *testing.T) {
 	compareConnectedFn = func() bool { return false }
 	defer func() { compareConnectedFn = restoreConnected }()
 
+	restoreDryWet := loadCompareDryWetSnapshotFn
+	loadCompareDryWetSnapshotFn = func(ctx context.Context, unitSlug, space string, target compareResourceRef) (compareDryWetResult, error) {
+		return compareDryWetResult{}, nil
+	}
+	defer func() { loadCompareDryWetSnapshotFn = restoreDryWet }()
+
 	out := captureStdout(t, func() {
 		if err := runCombined(&cobra.Command{}, []string{"deploy/api"}); err != nil {
 			t.Fatalf("runCombined: %v", err)
@@ -139,5 +211,57 @@ func TestRunCombined_ResourceCompareJSONOutput(t *testing.T) {
 	}
 	if payload.Live.Namespace != "prod" {
 		t.Fatalf("payload.Live.Namespace = %q, want prod", payload.Live.Namespace)
+	}
+}
+
+func TestDecodeCompareUnitDataFromGetJSON(t *testing.T) {
+	raw := `{"Unit":{"Data":"YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGFwaQogIG5hbWVzcGFjZTogcHJvZAo="}}`
+	got, err := decodeCompareUnitDataFromGetJSON(raw)
+	if err != nil {
+		t.Fatalf("decodeCompareUnitDataFromGetJSON: %v", err)
+	}
+	if !strings.Contains(got, "kind: Deployment") {
+		t.Fatalf("decoded data missing expected manifest: %q", got)
+	}
+}
+
+func TestExtractCompareSummaryFromManifestYAML(t *testing.T) {
+	manifest := `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/acme/api:v2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: prod
+`
+
+	got, err := extractCompareSummaryFromManifestYAML("wet", manifest, compareResourceRef{
+		Kind:      "Deployment",
+		Name:      "api",
+		Namespace: "prod",
+	})
+	if err != nil {
+		t.Fatalf("extractCompareSummaryFromManifestYAML: %v", err)
+	}
+	if got == nil {
+		t.Fatal("expected summary")
+	}
+	if got.Replicas == nil || *got.Replicas != 3 {
+		t.Fatalf("replicas = %#v, want 3", got.Replicas)
+	}
+	if len(got.Images) != 1 || got.Images[0] != "ghcr.io/acme/api:v2" {
+		t.Fatalf("images = %#v", got.Images)
 	}
 }
