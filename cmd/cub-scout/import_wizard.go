@@ -1706,7 +1706,7 @@ func (m ImportWizardModel) applyNextUnitCmd(unitIndex int) tea.Cmd {
 			labels = append(labels, fmt.Sprintf("%s=%s", k, v))
 		}
 
-		if err := createUnitWithManifestSimple(m.proposal.AppSpace, unit.Slug, labels, manifest); err != nil {
+		if err := createUnitWithManifestSimple(m.proposal.AppSpace, unit, labels, manifest, nil); err != nil {
 			return wizardApplyProgressMsg{unitSlug: unit.Slug, success: false, err: err.Error()}
 		}
 

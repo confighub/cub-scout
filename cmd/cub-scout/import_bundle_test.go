@@ -506,28 +506,30 @@ func TestLinkUnitWorkloadsToCluster(t *testing.T) {
 }
 
 type importFlagState struct {
-	namespace  string
-	dryRun     bool
-	yes        bool
-	json       bool
-	noLog      bool
-	wizard     bool
-	connect    bool
-	noConnect  bool
-	fromBundle string
+	namespace   string
+	dryRun      bool
+	yes         bool
+	json        bool
+	noLog       bool
+	wizard      bool
+	connect     bool
+	noConnect   bool
+	fromBundle  string
+	auditReason string
 }
 
 func setImportFlagState(next importFlagState) func() {
 	prev := importFlagState{
-		namespace:  importNamespace,
-		dryRun:     importDryRun,
-		yes:        importYes,
-		json:       importJSON,
-		noLog:      importNoLog,
-		wizard:     importWizard,
-		connect:    importConnect,
-		noConnect:  importNoConnect,
-		fromBundle: importFromBundle,
+		namespace:   importNamespace,
+		dryRun:      importDryRun,
+		yes:         importYes,
+		json:        importJSON,
+		noLog:       importNoLog,
+		wizard:      importWizard,
+		connect:     importConnect,
+		noConnect:   importNoConnect,
+		fromBundle:  importFromBundle,
+		auditReason: importAuditReason,
 	}
 
 	importNamespace = next.namespace
@@ -539,6 +541,7 @@ func setImportFlagState(next importFlagState) func() {
 	importConnect = next.connect
 	importNoConnect = next.noConnect
 	importFromBundle = next.fromBundle
+	importAuditReason = next.auditReason
 
 	return func() {
 		importNamespace = prev.namespace
@@ -550,6 +553,7 @@ func setImportFlagState(next importFlagState) func() {
 		importConnect = prev.connect
 		importNoConnect = prev.noConnect
 		importFromBundle = prev.fromBundle
+		importAuditReason = prev.auditReason
 	}
 }
 

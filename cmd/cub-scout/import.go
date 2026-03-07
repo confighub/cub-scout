@@ -25,15 +25,16 @@ import (
 )
 
 var (
-	importNamespace  string
-	importDryRun     bool
-	importYes        bool
-	importJSON       bool
-	importNoLog      bool
-	importWizard     bool
-	importConnect    bool
-	importNoConnect  bool
-	importFromBundle string
+	importNamespace   string
+	importDryRun      bool
+	importYes         bool
+	importJSON        bool
+	importNoLog       bool
+	importWizard      bool
+	importConnect     bool
+	importNoConnect   bool
+	importFromBundle  string
+	importAuditReason string
 )
 
 var listUnitSlugsForSpace = fetchUnitSlugsForSpace
@@ -52,6 +53,11 @@ type gitOpsDelegationResult struct {
 	FluxDelegated bool
 	ArgoReason    string
 	FluxReason    string
+}
+
+type importAuditContext struct {
+	ChangeSetSlug string
+	Reason        string
 }
 
 func (r gitOpsDelegationResult) AnyDelegated() bool {
@@ -192,6 +198,7 @@ func init() {
 	importCmd.Flags().BoolVar(&importConnect, "connect", false, "After import, start worker and set targets")
 	importCmd.Flags().BoolVar(&importNoConnect, "no-connect", false, "Do not start worker/targets after import")
 	importCmd.Flags().StringVar(&importFromBundle, "from-bundle", "", "Import from a debug bundle directory instead of live cluster discovery")
+	importCmd.Flags().StringVar(&importAuditReason, "audit-reason", "", "Record break-glass decision reason in connected audit history (max 512 chars)")
 
 	rootCmd.AddCommand(importCmd)
 }
@@ -212,6 +219,10 @@ func runImport(cmd *cobra.Command, args []string) error {
 	// JSON mode = dry-run (never change anything when outputting JSON)
 	if importJSON {
 		importDryRun = true
+	}
+
+	if _, err := normalizeImportAuditReason(importAuditReason); err != nil {
+		return err
 	}
 
 	// Bundle import path bypasses live cluster discovery.
@@ -385,7 +396,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 		proposalToApply = SuggestFullProposal(nil, scoutWorkloads, proposal.AppSpace)
 	}
 
-	return applyImportWithLogger(proposalToApply, scoutWorkloads, logger, shouldConnect)
+	return applyImportWithLogger(proposalToApply, scoutWorkloads, logger, shouldConnect, importAuditReason)
 }
 
 func runImportFromBundle(bundlePath string) error {
@@ -431,7 +442,7 @@ func runImportFromBundle(bundlePath string) error {
 		fmt.Println("\nTip: add --connect to start worker/targets now and avoid detached units.")
 	}
 
-	return applyImportWithLogger(proposal, workloads, nil, shouldConnect)
+	return applyImportWithLogger(proposal, workloads, nil, shouldConnect, importAuditReason)
 }
 
 // resolveImportConnectionMode determines whether import should auto-connect workers/targets
@@ -447,6 +458,115 @@ func resolveImportConnectionMode(importYes, importConnect, importNoConnect bool)
 
 	showConnectHint := importYes && !importConnect && !importNoConnect
 	return shouldConnect, showConnectHint
+}
+
+func normalizeImportAuditReason(raw string) (string, error) {
+	reason := strings.Join(strings.Fields(strings.TrimSpace(raw)), " ")
+	if reason == "" {
+		return "", nil
+	}
+	if len([]rune(reason)) > 512 {
+		return "", fmt.Errorf("--audit-reason exceeds 512 characters")
+	}
+	return reason, nil
+}
+
+func createImportAuditContext(proposal *FullProposal, workloads []WorkloadInfo, reason string, logger *ImportLogger) (*importAuditContext, error) {
+	if proposal == nil || strings.TrimSpace(proposal.AppSpace) == "" {
+		return nil, fmt.Errorf("cannot create break-glass audit context without app space")
+	}
+
+	changeSetSlug := fmt.Sprintf("break-glass-%s", time.Now().UTC().Format("20060102-150405"))
+	description := buildBreakGlassChangesetDescription(reason, workloads)
+
+	args := []string{
+		"changeset", "create",
+		"--space", proposal.AppSpace,
+		changeSetSlug,
+		"--description", description,
+		"--label", "break-glass=true",
+		"--label", "source=cub-scout-import",
+		"--label", "workflow=break-glass",
+		"--allow-exists",
+		"--quiet",
+	}
+
+	namespaces := collectBreakGlassNamespaces(workloads)
+	if len(namespaces) == 1 {
+		args = append(args, "--label", fmt.Sprintf("namespace=%s", namespaces[0]))
+	}
+
+	cmd := exec.Command("cub", args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		msg := strings.TrimSpace(string(output))
+		if msg == "" {
+			msg = err.Error()
+		}
+		return nil, fmt.Errorf("create break-glass audit changeset: %s", msg)
+	}
+
+	fmt.Printf("Audit: recorded break-glass decision in changeset %s\n", changeSetSlug)
+	if logger != nil {
+		logger.Log("Audit changeset created: %s (%s)", changeSetSlug, description)
+	}
+
+	return &importAuditContext{
+		ChangeSetSlug: changeSetSlug,
+		Reason:        reason,
+	}, nil
+}
+
+func collectBreakGlassNamespaces(workloads []WorkloadInfo) []string {
+	set := make(map[string]struct{})
+	for _, workload := range workloads {
+		ns := strings.TrimSpace(workload.Namespace)
+		if ns == "" {
+			continue
+		}
+		set[ns] = struct{}{}
+	}
+	namespaces := make([]string, 0, len(set))
+	for ns := range set {
+		namespaces = append(namespaces, ns)
+	}
+	sort.Strings(namespaces)
+	return namespaces
+}
+
+func buildBreakGlassChangesetDescription(reason string, workloads []WorkloadInfo) string {
+	namespaces := collectBreakGlassNamespaces(workloads)
+	scope := "all namespaces"
+	if len(namespaces) > 0 {
+		scope = strings.Join(namespaces, ",")
+	}
+
+	text := fmt.Sprintf(
+		"break-glass decision: accept unmanaged resources via cub-scout import; namespaces=%s; workloads=%d; reason=%s",
+		scope,
+		len(workloads),
+		reason,
+	)
+	if len([]rune(text)) > 512 {
+		runes := []rune(text)
+		text = string(runes[:509]) + "..."
+	}
+	return text
+}
+
+func buildBreakGlassChangeDescription(reason string, unit UnitProposal) string {
+	workloadCount := len(unit.Workloads)
+	text := fmt.Sprintf(
+		"break-glass accept: unit=%s workloads=%d reason=%s",
+		strings.TrimSpace(unit.Slug),
+		workloadCount,
+		reason,
+	)
+	if len([]rune(text)) > 512 {
+		runes := []rune(text)
+		text = string(runes[:509]) + "..."
+	}
+	return text
 }
 
 func buildImportFromBundlePreview(bundlePath string) (*FullProposal, []WorkloadInfo, []string, error) {
@@ -1251,7 +1371,14 @@ func runGitOpsImportForNamespaces(space, k8sTarget, rendererTarget string, names
 	return nil
 }
 
-func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger, shouldConnect bool) error {
+func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger, shouldConnect bool, auditReason string) error {
+	normalizedReason, err := normalizeImportAuditReason(auditReason)
+	if err != nil {
+		return err
+	}
+
+	var auditCtx *importAuditContext
+
 	// Index workloads
 	workloadIndex := make(map[string]WorkloadInfo)
 	for _, w := range workloads {
@@ -1284,6 +1411,13 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 		fmt.Println("(exists)")
 		if logger != nil {
 			logger.Log("App already exists: %s", proposal.AppSpace)
+		}
+	}
+
+	if normalizedReason != "" {
+		auditCtx, err = createImportAuditContext(proposal, workloads, normalizedReason, logger)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -1328,7 +1462,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 			labels = append(labels, fmt.Sprintf("%s=%s", k, v))
 		}
 
-		if err := createUnitWithManifestSimple(proposal.AppSpace, unit.Slug, labels, manifest); err != nil {
+		if err := createUnitWithManifestSimple(proposal.AppSpace, unit, labels, manifest, auditCtx); err != nil {
 			fmt.Printf("✗ (%v)\n", err)
 			if logger != nil {
 				logger.Log("  FAILED: create deployment: %v", err)
@@ -1461,8 +1595,15 @@ func stripServerSideFields(yamlData []byte) ([]byte, error) {
 	return []byte(strings.Join(result, "\n")), nil
 }
 
-func createUnitWithManifestSimple(space, slug string, labels []string, manifest []byte) error {
+func createUnitWithManifestSimple(space string, unit UnitProposal, labels []string, manifest []byte, auditCtx *importAuditContext) error {
+	slug := strings.TrimSpace(unit.Slug)
 	args := []string{"unit", "create", "--space", space}
+	if auditCtx != nil && strings.TrimSpace(auditCtx.ChangeSetSlug) != "" {
+		args = append(args, "--changeset", auditCtx.ChangeSetSlug)
+		if changeDesc := buildBreakGlassChangeDescription(auditCtx.Reason, unit); changeDesc != "" {
+			args = append(args, "--change-desc", changeDesc)
+		}
+	}
 	for _, l := range labels {
 		args = append(args, "--label", l)
 	}

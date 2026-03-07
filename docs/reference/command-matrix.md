@@ -12,6 +12,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | Command | Description |
 |---------|-------------|
 | `app-space` | Manage App Spaces |
+| `audit` | Break-glass audit trail tools |
 | `apply` | Apply a proposal from JSON (GUI) |
 | `bundle` | Work with debug bundles |
 | `catalog` | Manage bundle catalogs |
@@ -206,6 +207,21 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--json` | Output as JSON |
 | `-y, --yes` | Skip confirmation |
 | `--no-log` | Disable logging to file |
+| `--connect` | After import, start worker and set targets |
+| `--no-connect` | Do not start worker/targets after import |
+| `--from-bundle` | Import from a debug bundle directory |
+| `--audit-reason` | Break-glass decision reason (connected audit trail) |
+
+---
+
+## `audit list` Options
+
+| Option | Description |
+|--------|-------------|
+| `-n, --namespace` | Namespace scope (optional) |
+| `--since` | Lookback window (`24h`, `7d`, `2w`) |
+| `--format` | Output format (`ascii`, `json`, `md`) |
+| `--json` | Output as JSON |
 
 ---
 
