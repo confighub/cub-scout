@@ -23,6 +23,12 @@ cub-scout summary list --since 24h
 
 # JSON for automation
 cub-scout summary list --since 24h --json
+
+# Build/post Slack digest (webhook required)
+cub-scout summary slack --webhook-url https://hooks.slack.com/services/... --since 24h
+
+# Preview Slack payload only
+cub-scout summary slack --dry-run --since 24h
 ```
 
 ## Storage Contract
@@ -31,3 +37,12 @@ cub-scout summary list --since 24h --json
 - Index dimensions: `cluster`, `scope.namespace`, `timestamp`, `type`
 - Default retention: 30 days
 - Retention override: `CUB_SCOUT_SUMMARY_RETENTION_DAYS`
+
+## End-to-End Demo Script
+
+```bash
+./examples/connected-summary-storage/slack-demo.sh
+```
+
+The script posts only when `CUB_SCOUT_SLACK_WEBHOOK_URL` is set, and always prints
+the generated payload in dry-run mode first.

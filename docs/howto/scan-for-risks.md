@@ -114,6 +114,7 @@ Connected trend query example:
 
 ```bash
 ./cub-scout summary list --since 7d --type scan --format md
+./cub-scout summary slack --since 24h --webhook-url https://hooks.slack.com/services/...
 ```
 
 ## Next Steps

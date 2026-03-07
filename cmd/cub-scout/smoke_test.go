@@ -104,6 +104,12 @@ func TestSmoke_CLIHelp(t *testing.T) {
 			wantContains: []string{"summary list", "--since", "Usage:"},
 		},
 		{
+			name:         "summary slack help",
+			args:         []string{"summary", "slack", "--help"},
+			wantExitCode: 0,
+			wantContains: []string{"summary slack", "--webhook-url", "Usage:"},
+		},
+		{
 			name:         "debug help",
 			args:         []string{"debug", "--help"},
 			wantExitCode: 0,
