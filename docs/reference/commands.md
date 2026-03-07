@@ -25,6 +25,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `quickstart` | Guided first-run walkthrough | v1.4 |
 | `doctor` | One-command cluster health summary | v1.4 |
 | `explain` | Plain-English ownership and lineage for one resource | v1.4 |
+| `impact` | Connected blast-radius preview for one unit | v1.6 |
 | `trace` | Show GitOps ownership chain | v0.5 |
 | `scan` | Scan for misconfigurations | v0.5 |
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
@@ -249,6 +250,33 @@ cub-scout map orphans
 cub-scout map orphans -n default
 cub-scout map orphans --json
 ```
+
+---
+
+## impact
+
+Preview connected blast radius for a ConfigHub unit.
+
+```bash
+cub-scout impact <unit> [flags]
+```
+
+Requires ConfigHub authentication.
+
+### Examples
+
+```bash
+cub-scout impact unit/shared-db-config
+cub-scout impact shared-db-config --format md
+cub-scout impact shared-db-config --json
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `--json` | Output as JSON (shorthand for `--format json`) |
 
 ---
 
