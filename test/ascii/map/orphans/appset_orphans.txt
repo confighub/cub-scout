@@ -7,16 +7,15 @@ Also includes Argo Applications with explicit links to missing ApplicationSets.
 
 Note: System namespaces hidden by default. Use --include-system to show all.
 
-NAMESPACE  KIND        NAME          OWNER
-default    ConfigMap   debug-config  Native
-temp-test  Deployment  debug-nginx   Native
+NAMESPACE  KIND       NAME          OWNER
+default    ConfigMap  debug-config  Native
 
-Total: 2 resources
-By Owner: Native(2)
+Total: 1 resources
+By Owner: Native(1)
 
 TRY NEXT:
-  - Found 2 unmanaged resources: cub-scout map orphans
-  - Explain one resource end-to-end: cub-scout explain deployment/debug-nginx -n temp-test
+  - Found 1 unmanaged resources: cub-scout map orphans
+  - Explain one resource end-to-end: cub-scout explain configmap/debug-config -n default
   - Get a one-command health summary: cub-scout doctor
 
 NEXT STEPS:

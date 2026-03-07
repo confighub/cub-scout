@@ -2518,6 +2518,14 @@ func (s *StateScanner) ScanDanglingResources(ctx context.Context) (*DanglingResu
 	result.Findings = append(result.Findings, secretFindings...)
 	result.Summary.Secrets = len(secretFindings)
 
+	// Scan for ArgoCD ApplicationSet generator-link orphan scenarios.
+	appSetLinkFindings := s.scanDanglingArgoApplicationSetLinks(ctx)
+	result.Findings = append(result.Findings, appSetLinkFindings...)
+
+	// Scan for ApplicationSets with explicit generator error conditions.
+	brokenGeneratorFindings := s.scanBrokenApplicationSetGenerators(ctx)
+	result.Findings = append(result.Findings, brokenGeneratorFindings...)
+
 	result.Summary.Total = len(result.Findings)
 
 	return result, nil
@@ -3165,6 +3173,214 @@ func (s *StateScanner) scanDanglingSecrets(ctx context.Context) []DanglingFindin
 	}
 
 	return findings
+}
+
+func (s *StateScanner) scanDanglingArgoApplicationSetLinks(ctx context.Context) []DanglingFinding {
+	var findings []DanglingFinding
+
+	appList, err := safeListResource(ctx, s.client, schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "applications",
+	})
+	if err != nil {
+		return findings
+	}
+
+	appSetByNamespacedName, appSetByName, ok := s.listApplicationSetLookup(ctx)
+	if !ok {
+		return findings
+	}
+
+	for _, app := range appList.Items {
+		generatedBy, confidence := resolveGeneratedByApplicationSetFromStateApp(&app)
+		linkStatus := classifyStateApplicationSetLink(
+			app.GetNamespace(),
+			generatedBy,
+			confidence,
+			appSetByNamespacedName,
+			appSetByName,
+		)
+		if linkStatus != "orphan" {
+			continue
+		}
+
+		findings = append(findings, DanglingFinding{
+			CCVEID:      "CCVE-2025-0693",
+			Category:    "ORPHAN",
+			Severity:    "warning",
+			Kind:        "Application",
+			Name:        app.GetName(),
+			Namespace:   app.GetNamespace(),
+			TargetKind:  "ApplicationSet",
+			TargetName:  generatedBy,
+			Message:     fmt.Sprintf("Application has explicit ApplicationSet link, but %q does not exist", generatedBy),
+			Remediation: "Restore the missing ApplicationSet or detach/delete the orphaned Application",
+			Command:     fmt.Sprintf("kubectl get applicationsets.argoproj.io %s -n %s", generatedBy, app.GetNamespace()),
+		})
+	}
+
+	return findings
+}
+
+func (s *StateScanner) scanBrokenApplicationSetGenerators(ctx context.Context) []DanglingFinding {
+	var findings []DanglingFinding
+
+	appSetList, err := safeListResource(ctx, s.client, schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "applicationsets",
+	})
+	if err != nil {
+		return findings
+	}
+
+	for _, appSet := range appSetList.Items {
+		conditions, found, _ := unstructured.NestedSlice(appSet.Object, "status", "conditions")
+		if !found || len(conditions) == 0 {
+			continue
+		}
+
+		for _, c := range conditions {
+			cond, ok := c.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			condType := stateScannerString(cond["type"])
+			condStatus := stateScannerString(cond["status"])
+			if !strings.EqualFold(condType, "ErrorOccurred") || !strings.EqualFold(condStatus, "True") {
+				continue
+			}
+
+			reason := stateScannerString(cond["reason"])
+			message := stateScannerString(cond["message"])
+			detail := reason
+			if detail == "" {
+				detail = "unknown"
+			}
+			if message != "" {
+				detail = detail + " - " + message
+			}
+
+			findings = append(findings, DanglingFinding{
+				CCVEID:      "CCVE-2025-0694",
+				Category:    "ORPHAN",
+				Severity:    "warning",
+				Kind:        "ApplicationSet",
+				Name:        appSet.GetName(),
+				Namespace:   appSet.GetNamespace(),
+				TargetKind:  "Generator",
+				TargetName:  reason,
+				Message:     fmt.Sprintf("ApplicationSet condition ErrorOccurred=True: %s", detail),
+				Remediation: "Inspect generator references (Git/cluster/list) and fix missing inputs",
+				Command:     fmt.Sprintf("kubectl describe applicationset %s -n %s", appSet.GetName(), appSet.GetNamespace()),
+			})
+			break
+		}
+	}
+
+	return findings
+}
+
+func (s *StateScanner) listApplicationSetLookup(ctx context.Context) (map[string]struct{}, map[string]struct{}, bool) {
+	appSetList, err := safeListResource(ctx, s.client, schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "applicationsets",
+	})
+	if err != nil {
+		return nil, nil, false
+	}
+
+	byNamespacedName := make(map[string]struct{}, len(appSetList.Items))
+	byName := make(map[string]struct{}, len(appSetList.Items))
+	for _, appSet := range appSetList.Items {
+		key := appSet.GetNamespace() + "/" + appSet.GetName()
+		byNamespacedName[key] = struct{}{}
+		byName[appSet.GetName()] = struct{}{}
+	}
+	return byNamespacedName, byName, true
+}
+
+func resolveGeneratedByApplicationSetFromStateApp(app *unstructured.Unstructured) (string, string) {
+	if app == nil {
+		return "", ""
+	}
+
+	for _, ownerRef := range app.GetOwnerReferences() {
+		if strings.EqualFold(ownerRef.Kind, "ApplicationSet") {
+			name := strings.TrimSpace(ownerRef.Name)
+			if name != "" {
+				return name, "explicit"
+			}
+		}
+	}
+
+	labels := app.GetLabels()
+	if labels != nil {
+		if name := strings.TrimSpace(labels["argocd.argoproj.io/application-set-name"]); name != "" {
+			return name, "inferred"
+		}
+	}
+
+	annotations := app.GetAnnotations()
+	if annotations != nil {
+		if name := strings.TrimSpace(annotations["argocd.argoproj.io/application-set-name"]); name != "" {
+			return name, "inferred"
+		}
+		if name := strings.TrimSpace(annotations["cub-scout.io/generated-by-applicationset"]); name != "" {
+			return name, "inferred"
+		}
+	}
+
+	return "", ""
+}
+
+func classifyStateApplicationSetLink(
+	appNamespace, generatedByAppSet, appSetConfidence string,
+	appSetByNamespacedName map[string]struct{},
+	appSetByName map[string]struct{},
+) string {
+	generatedByAppSet = strings.TrimSpace(generatedByAppSet)
+	if generatedByAppSet == "" {
+		return ""
+	}
+
+	if _, ok := appSetByNamespacedName[appNamespace+"/"+generatedByAppSet]; ok {
+		return "resolved"
+	}
+	if _, ok := appSetByName[generatedByAppSet]; ok {
+		return "resolved"
+	}
+	if appSetConfidence == "explicit" {
+		return "orphan"
+	}
+	return "unknown"
+}
+
+func stateScannerString(raw interface{}) string {
+	if raw == nil {
+		return ""
+	}
+	value, ok := raw.(string)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(value)
+}
+
+func safeListResource(
+	ctx context.Context,
+	client dynamic.Interface,
+	gvr schema.GroupVersionResource,
+) (list *unstructured.UnstructuredList, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("list %s: %v", gvr.Resource, recovered)
+			list = nil
+		}
+	}()
+	return client.Resource(gvr).List(ctx, v1.ListOptions{})
 }
 
 // checkContainerSecretRefs checks containers for envFrom and env secretKeyRef references

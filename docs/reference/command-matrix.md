@@ -75,7 +75,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `map actions <kind/name>` | Action previews (runbook) | - | No mutation; preview only |
 | `map activity` | Unified activity timeline | - | Flux/Argo/Helm/Event signals |
 | `map previews` | Preview env detection | - | PR/Forgejo/Gitea heuristics |
-| `map orphans` | Unmanaged resources | `o` | Native/orphan focus |
+| `map orphans` | Unmanaged + explicit AppSet-link orphans | `o` | Native/orphan focus |
 | `map crashes` | Failing pods/deployments | `c` | Crash/failure focus |
 | `map issues` | Resources with problems | `i` | Consolidated problems |
 | `map drift` | Desired vs actual state | `d` | Drift-focused slice |
@@ -156,7 +156,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--state` | State scan only (stuck reconciliations) |
 | `--kyverno` | Kyverno scan only (PolicyReports) |
 | `--timing-bombs` | Expiring certs, quota limits |
-| `--dangling` | Dangling/orphan resources |
+| `--dangling` | Dangling/orphan resources (includes Argo ApplicationSet-link checks) |
 | `--include-unresolved` | Include Trivy/Kyverno findings |
 | `--file` | YAML file to scan (static analysis) |
 | `--list` | List all KPOL policies |

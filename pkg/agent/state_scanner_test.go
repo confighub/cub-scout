@@ -1890,3 +1890,93 @@ func TestDanglingResources_NoFindings(t *testing.T) {
 	assert.Empty(t, result.Findings, "should have no findings when no dangling resources exist")
 	assert.Equal(t, 0, result.Summary.Total, "summary total should be 0")
 }
+
+func TestDanglingArgoApplication_OrphanedApplicationSetLink(t *testing.T) {
+	app := &unstructured.Unstructured{}
+	app.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "argoproj.io",
+		Version: "v1alpha1",
+		Kind:    "Application",
+	})
+	app.SetNamespace("argocd")
+	app.SetName("payments-dev")
+	app.SetOwnerReferences([]metav1.OwnerReference{
+		{
+			APIVersion: "argoproj.io/v1alpha1",
+			Kind:       "ApplicationSet",
+			Name:       "missing-generator",
+		},
+	})
+
+	client := createFakeClient(app)
+	scanner := NewStateScannerWithClient(client)
+
+	result, err := scanner.ScanDanglingResources(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	var found *DanglingFinding
+	for i := range result.Findings {
+		f := &result.Findings[i]
+		if f.Kind == "Application" && f.TargetKind == "ApplicationSet" {
+			found = f
+			break
+		}
+	}
+	if found == nil {
+		t.Fatalf("expected orphaned ApplicationSet link finding, got %#v", result.Findings)
+	}
+	assert.Equal(t, "missing-generator", found.TargetName)
+	assert.Equal(t, "argocd", found.Namespace)
+	assert.Contains(t, found.Message, "does not exist")
+}
+
+func TestDanglingApplicationSet_BrokenGeneratorCondition(t *testing.T) {
+	appSet := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "ApplicationSet",
+			"metadata": map[string]interface{}{
+				"name":      "broken-set",
+				"namespace": "argocd",
+			},
+			"status": map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":    "ErrorOccurred",
+						"status":  "True",
+						"reason":  "ApplicationGenerationFromParamsError",
+						"message": "generator git repo not found",
+					},
+				},
+			},
+		},
+	}
+	appSet.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "argoproj.io",
+		Version: "v1alpha1",
+		Kind:    "ApplicationSet",
+	})
+
+	client := createFakeClient(appSet)
+	scanner := NewStateScannerWithClient(client)
+
+	result, err := scanner.ScanDanglingResources(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	var found *DanglingFinding
+	for i := range result.Findings {
+		f := &result.Findings[i]
+		if f.Kind == "ApplicationSet" && f.Name == "broken-set" {
+			found = f
+			break
+		}
+	}
+	if found == nil {
+		t.Fatalf("expected broken ApplicationSet generator finding, got %#v", result.Findings)
+	}
+	assert.Equal(t, "argocd", found.Namespace)
+	assert.Contains(t, found.Message, "ErrorOccurred")
+	assert.Contains(t, found.Message, "ApplicationGenerationFromParamsError")
+}

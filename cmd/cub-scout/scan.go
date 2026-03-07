@@ -67,7 +67,7 @@ Examples:
   # Include unresolved findings from Trivy/Kyverno
   cub-scout scan --include-unresolved
 
-  # Scan for dangling/orphan resources (HPA, Service, Ingress, NetworkPolicy)
+  # Scan for dangling/orphan resources (HPA, Service, Ingress, NetworkPolicy, Argo ApplicationSet links)
   cub-scout scan --dangling
 
   # Output as JSON
@@ -99,7 +99,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanKyvernoOnly, "kyverno", false, "Kyverno scan only (PolicyReports)")
 	scanCmd.Flags().BoolVar(&scanTimingBombs, "timing-bombs", false, "Scan for timing bombs (expiring certs, quota limits)")
 	scanCmd.Flags().BoolVar(&scanIncludeUnresolved, "include-unresolved", false, "Include unresolved findings from Trivy/Kyverno")
-	scanCmd.Flags().BoolVar(&scanDangling, "dangling", false, "Scan for dangling/orphan resources (HPA, Service, Ingress, NetworkPolicy)")
+	scanCmd.Flags().BoolVar(&scanDangling, "dangling", false, "Scan for dangling/orphan resources (HPA, Service, Ingress, NetworkPolicy, Argo ApplicationSet links)")
 	scanCmd.Flags().BoolVar(&scanLifecycleHazards, "lifecycle-hazards", false, "Scan for GitOps lifecycle hazards (Helm hooks under ArgoCD)")
 	scanCmd.Flags().StringVar(&scanThreshold, "threshold", "5m", "Duration threshold for stuck detection (e.g., 30s, 2m, 5m)")
 	scanCmd.Flags().StringVar(&scanFile, "file", "", "YAML file to scan (static analysis, no cluster required)")
