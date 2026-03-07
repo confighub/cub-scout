@@ -171,8 +171,8 @@ func Normalize(s string) string {
 	elapsedRegex := regexp.MustCompile(`\d+[dhms]\s*\d*[dhms]?`)
 	s = elapsedRegex.ReplaceAllString(s, "<ELAPSED>")
 
-	// Normalize temp paths
-	tempPathRegex := regexp.MustCompile(`(/tmp|/var/folders)/[^\s"']+`)
+	// Normalize temp paths, including macOS /private symlink prefixes.
+	tempPathRegex := regexp.MustCompile(`(/private)?(/tmp|/var/folders)/[^\s"']+`)
 	s = tempPathRegex.ReplaceAllString(s, "<TEMP_PATH>")
 
 	// Normalize UUIDs

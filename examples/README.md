@@ -80,6 +80,7 @@ The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against re
 | [ai-integration/](ai-integration/) | **Per-tool AI integrations** | Reproducible Claude/Cursor/Copilot MCP + CLI examples (offline fixtures) |
 | [connect-and-compare/](connect-and-compare/) | **Connected value story** | 60-second fixture demo: doctor -> connect -> compare -> history |
 | [connected-summary-storage/](connected-summary-storage/) | **Connected trend snapshots** | Persist/query scan + gitops summary history (`summary list`) |
+| [watch-webhook/](watch-webhook/) | **Webhook stream receiver** | Local receiver + walkthrough for `cub-scout watch --webhook` |
 
 **Using AI tools?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI reason about cluster state and hit the wall that ConfigHub removes.
 
@@ -168,6 +169,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [new-user-puzzle-quest/](new-user-puzzle-quest/) | **Working** | Quest-style new-user walkthrough (AI-assisted) | Guided capability/discovery/import validation |
 | [connect-and-compare/](connect-and-compare/) | **Working** | 60-second connected-mode fixture flow | Standalone->connected value narrative for demos/recordings |
 | [connected-summary-storage/](connected-summary-storage/) | **Working** | Connected summary persistence + query workflow | Trend/history snapshots for scan + gitops status |
+| [watch-webhook/](watch-webhook/) | **Working** | Local webhook receiver and watch walkthrough | Validating event stream integrations and filters |
 | [workflows/](workflows/) | **Working** | Artifact + fleet demos (CI → local, env comparison) | CI/CD integration, sharing bundles, comparing environments |
 | [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
 | [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |

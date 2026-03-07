@@ -264,6 +264,11 @@ func normalizeScanForGolden(s string, fixturePath string) string {
 
 	s = normalizeScanOutput(s)
 
+	// If generic temp-path normalization happened first, keep scan-file contract
+	// stable by forcing the file field placeholder.
+	s = strings.ReplaceAll(s, "File: <TEMP_PATH>", "File: <FILE>")
+	s = strings.ReplaceAll(s, "File: /private<TEMP_PATH>", "File: <FILE>")
+
 	// After normalization, the path might have $HOME prefix - replace that too
 	// Pattern: $HOME/anything/testdata/inputs/filename -> <FILE>
 	filePathRegex := regexp.MustCompile(`\$HOME[^\s]+/testdata/inputs/[^\s]+`)

@@ -41,6 +41,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `status` | Show connection status and cluster info |
 | `summary` | Query persisted connected summary snapshots |
 | `trace` | Trace any resource to its Git source |
+| `watch` | Stream observation events to webhook |
 | `tree` | Show hierarchical views of resources |
 | `version` | Print version information |
 
@@ -243,6 +244,20 @@ Connected storage defaults:
 - Overrides: `CUB_SCOUT_SUMMARY_DIR`, `CUB_SCOUT_SUMMARY_RETENTION_DAYS`
 
 ---
+
+## `watch` Options
+
+| Option | Description |
+|--------|-------------|
+| `--webhook` | Webhook URL for event delivery (required) |
+| `--interval` | Polling interval (`20s` default) |
+| `-n, --namespace` | Namespace filter |
+| `--owner` | Owner display-name filter |
+| `--severity` | Finding severity filter (`critical,warning,info`) |
+| `--once` | Run one collection cycle and exit |
+| `--max-queued-events` | Buffer size while webhook is unavailable |
+
+Event types: `resource.discovered`, `ownership.changed`, `drift.detected`, `scan.finding`.
 
 ## `summary slack` Options
 
