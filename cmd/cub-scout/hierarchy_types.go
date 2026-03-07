@@ -477,7 +477,7 @@ type Model struct {
 	// Maps view mode (M to open)
 	mapsMode bool // Three Maps view active
 
-	// Panel view mode (P to open) - WET↔LIVE side-by-side
+	// Panel view mode (P to open) - DRY↔WET↔LIVE side-by-side
 	panelMode        bool                  // Panel view active
 	panelWorkloads   []MapEntry            // Cluster workloads (LIVE)
 	panelLoading     bool                  // Loading cluster data

@@ -52,7 +52,7 @@ Help:        ? (help)  q (quit)
 | `4` | Cluster Data | All data sources TUI reads from cluster |
 | `5` / `A` | App Hierarchy | Inferred ConfigHub model |
 | `B` | Hub/AppSpace | Group spaces into Hub (platform) vs AppSpaces (Hub mode) |
-| `P` | Panel | WET↔LIVE side-by-side (Hub mode) |
+| `P` | Panel | DRY↔WET↔LIVE side-by-side (Hub mode) |
 | `g` | Suggest | Recommend Units from cluster (Hub mode) |
 
 ---
