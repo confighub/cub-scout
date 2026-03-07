@@ -1,0 +1,16 @@
+{
+  "formatVersion": "v1",
+  "cubScoutVersion": "v1.7.0-test",
+  "createdAt": "2026-03-07T00:00:00Z",
+  "target": {
+    "kind": "Bucket",
+    "name": "db-storage"
+  },
+  "contents": {
+    "hasSession": false,
+    "hasDrift": false,
+    "hasEvents": false,
+    "hasLogs": false,
+    "hasAttribution": true
+  }
+}

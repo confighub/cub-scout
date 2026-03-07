@@ -77,7 +77,7 @@ func runDebug(cmd *cobra.Command, args []string) error {
 
 	// TEST HOOK: Load debug session from JSON file for testing
 	if debugJSON := os.Getenv("CUB_SCOUT_TEST_DEBUG_JSON"); debugJSON != "" {
-		return loadAndRenderDebugFromJSON(debugJSON)
+		return loadAndRenderDebugFromJSON(ctx, debugJSON)
 	}
 
 	// If resource provided, run non-interactive analysis
@@ -213,8 +213,10 @@ func normalizeDebugKind(kind string) string {
 	}
 }
 
-// loadAndRenderDebugFromJSON loads a debug session from JSON for testing
-func loadAndRenderDebugFromJSON(path string) error {
+// loadAndRenderDebugFromJSON loads a debug session from JSON for testing.
+// It still applies --save-bundle behavior so fixture-driven execution matches
+// non-test code paths.
+func loadAndRenderDebugFromJSON(ctx context.Context, path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read debug JSON: %w", err)
@@ -223,6 +225,13 @@ func loadAndRenderDebugFromJSON(path string) error {
 	var session DebugSession
 	if err := json.Unmarshal(data, &session); err != nil {
 		return fmt.Errorf("failed to parse debug JSON: %w", err)
+	}
+
+	// Preserve --save-bundle behavior in test-hook mode.
+	if debugSaveBundleDir != "" {
+		if err := saveDebugBundle(ctx, nil, &session, debugSaveBundleDir); err != nil {
+			return fmt.Errorf("failed to save bundle: %w", err)
+		}
 	}
 
 	// Render based on format
