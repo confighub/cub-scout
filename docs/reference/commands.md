@@ -33,6 +33,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `tree` | Hierarchical resource views | v0.5 |
 | `import` | Import workloads into ConfigHub | v1.0 |
 | `combined` (`compare`) | Compare Git and cluster/bundle structures, or show LIVE snapshot for one resource | v1.0 |
+| `compare three-way` | Connected intent/render/observed comparison for resource/namespace/cluster scopes | v1.6 |
 | `discover` | Scout-style workload discovery | v0.5 |
 | `health` | Scout-style health check | v0.5 |
 | `status` | Show connection status and cluster info | v1.0 |
@@ -837,6 +838,38 @@ Resource compare mode behavior:
 - If the live resource is linked to ConfigHub (`confighub.com/UnitSlug`), output includes DRY/WET/LIVE sections.
 - When DRY/WET/LIVE values differ, output includes a mismatch highlight section (`Diff Highlights` in ASCII, `Mismatches` table in Markdown/JSON).
 - If not linked (or not connected), output degrades to LIVE-only with explicit notes.
+
+### compare three-way
+
+Connected three-way comparison command for selected scopes.
+
+```bash
+cub-scout compare three-way --scope <scope> [flags]
+```
+
+Supported scopes:
+- `<kind/name>` or `resource:<kind/name>` (single resource)
+- `namespace/<ns>` (all workloads in namespace)
+- `cluster` (all discovered namespaces/workloads)
+
+Flags:
+- `--scope` (required)
+- `-n, --namespace` (resource scope namespace override)
+- `--format ascii|json|md`
+- `--json` (shorthand for `--format json`)
+
+Examples:
+
+```bash
+# Resource scope
+cub-scout compare three-way --scope deploy/payment-api -n prod
+
+# Namespace scope
+cub-scout compare three-way --scope namespace/prod --format json
+
+# Cluster scope
+cub-scout compare three-way --scope cluster --format md
+```
 
 ---
 

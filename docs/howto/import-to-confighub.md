@@ -98,6 +98,9 @@ cub-scout import -n <namespace> --yes --connect
 cub unit list --space <suggested-space>
 cub-scout map workloads
 cub-scout tree ownership
+
+# Connected three-way check (intent vs render vs observed)
+cub-scout compare three-way --scope namespace/<namespace> --format ascii
 ```
 
 Success criteria:
