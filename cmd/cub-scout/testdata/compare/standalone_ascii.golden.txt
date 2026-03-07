@@ -1,0 +1,15 @@
+Compare Resource: Deployment/checkout (namespace: prod)
+Mode: live-only
+Connection: standalone
+
+LIVE (cluster)
+  apiVersion: apps/v1
+  kind: Deployment
+  name: checkout
+  namespace: prod
+  replicas: 3
+  images:
+    - ghcr.io/acme/checkout:v3
+
+Notes:
+  - Connect to ConfigHub to unlock DRY/WET/LIVE expected-state comparison.

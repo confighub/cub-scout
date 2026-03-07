@@ -1,0 +1,37 @@
+Compare Resource: Deployment/checkout (namespace: prod)
+Mode: dry-wet-live
+Connection: connected
+
+DRY (unit intent)
+  apiVersion: apps/v1
+  kind: Deployment
+  name: checkout
+  namespace: prod
+  replicas: 1
+  images:
+    - ghcr.io/acme/checkout:v1
+
+WET (rendered target)
+  apiVersion: apps/v1
+  kind: Deployment
+  name: checkout
+  namespace: prod
+  replicas: 2
+  images:
+    - ghcr.io/acme/checkout:v2
+
+LIVE (cluster)
+  apiVersion: apps/v1
+  kind: Deployment
+  name: checkout
+  namespace: prod
+  replicas: 3
+  images:
+    - ghcr.io/acme/checkout:v3
+
+Diff Highlights
+  - replicas: DRY=1 | WET=2 | LIVE=3
+  - images: DRY=ghcr.io/acme/checkout:v1 | WET=ghcr.io/acme/checkout:v2 | LIVE=ghcr.io/acme/checkout:v3
+
+Notes:
+  - Connected DRY/WET snapshots loaded for linked unit checkout.

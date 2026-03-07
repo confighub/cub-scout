@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -273,6 +275,83 @@ metadata:
 	}
 	if len(got.Images) != 1 || got.Images[0] != "ghcr.io/acme/api:v2" {
 		t.Fatalf("images = %#v", got.Images)
+	}
+}
+
+func TestLoadCompareDryWetSnapshots(t *testing.T) {
+	restoreRun := runCompareCubCommand
+	runCompareCubCommand = func(ctx context.Context, args []string) (string, error) {
+		if reflect.DeepEqual(args, compareUnitGetArgs("checkout", "payments-prod")) {
+			return `{"Unit":{"Data":"YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGFwaQogIG5hbWVzcGFjZTogcHJvZApzcGVjOgogIHJlcGxpY2FzOiAxCiAgdGVtcGxhdGU6CiAgICBzcGVjOgogICAgICBjb250YWluZXJzOgogICAgICAgIC0gbmFtZTogYXBpCiAgICAgICAgICBpbWFnZTogZ2hjci5pby9hY21lL2FwaTp2MQo="}}`, nil
+		}
+		if reflect.DeepEqual(args, compareUnitLivedataArgs("checkout", "payments-prod")) {
+			return `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/acme/api:v2
+`, nil
+		}
+		return "", fmt.Errorf("unexpected args: %v", args)
+	}
+	defer func() { runCompareCubCommand = restoreRun }()
+
+	got, err := loadCompareDryWetSnapshots(context.Background(), "checkout", "payments-prod", compareResourceRef{
+		Kind:      "Deployment",
+		Name:      "api",
+		Namespace: "prod",
+	})
+	if err != nil {
+		t.Fatalf("loadCompareDryWetSnapshots: %v", err)
+	}
+	if got.Dry == nil || got.Wet == nil {
+		t.Fatalf("expected dry+wet summaries, got dry=%v wet=%v", got.Dry != nil, got.Wet != nil)
+	}
+	if got.Dry.Replicas == nil || *got.Dry.Replicas != 1 {
+		t.Fatalf("dry replicas = %#v, want 1", got.Dry.Replicas)
+	}
+	if got.Wet.Replicas == nil || *got.Wet.Replicas != 2 {
+		t.Fatalf("wet replicas = %#v, want 2", got.Wet.Replicas)
+	}
+}
+
+func TestLoadCompareDryWetSnapshots_WetLookupFailure(t *testing.T) {
+	restoreRun := runCompareCubCommand
+	runCompareCubCommand = func(ctx context.Context, args []string) (string, error) {
+		if reflect.DeepEqual(args, compareUnitGetArgs("checkout", "payments-prod")) {
+			return `{"Unit":{"Data":"YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGFwaQogIG5hbWVzcGFjZTogcHJvZAo="}}`, nil
+		}
+		if reflect.DeepEqual(args, compareUnitLivedataArgs("checkout", "payments-prod")) {
+			return "", fmt.Errorf("permission denied")
+		}
+		return "", fmt.Errorf("unexpected args: %v", args)
+	}
+	defer func() { runCompareCubCommand = restoreRun }()
+
+	got, err := loadCompareDryWetSnapshots(context.Background(), "checkout", "payments-prod", compareResourceRef{
+		Kind:      "Deployment",
+		Name:      "api",
+		Namespace: "prod",
+	})
+	if err != nil {
+		t.Fatalf("loadCompareDryWetSnapshots: %v", err)
+	}
+	if got.Dry == nil {
+		t.Fatal("expected DRY summary when WET lookup fails")
+	}
+	if got.Wet != nil {
+		t.Fatal("expected WET summary to be nil on lookup failure")
+	}
+	if len(got.Notes) == 0 || !strings.Contains(got.Notes[0], "WET lookup failed") {
+		t.Fatalf("expected wet lookup failure note, got %#v", got.Notes)
 	}
 }
 

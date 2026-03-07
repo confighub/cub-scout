@@ -1,0 +1,56 @@
+{
+  "resource": "Deployment/checkout",
+  "namespace": "prod",
+  "mode": "dry-wet-live",
+  "connected": true,
+  "dry": {
+    "source": "dry",
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "name": "checkout",
+    "namespace": "prod",
+    "replicas": 1,
+    "images": [
+      "ghcr.io/acme/checkout:v1"
+    ]
+  },
+  "wet": {
+    "source": "wet",
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "name": "checkout",
+    "namespace": "prod",
+    "replicas": 2,
+    "images": [
+      "ghcr.io/acme/checkout:v2"
+    ]
+  },
+  "live": {
+    "source": "cluster",
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "name": "checkout",
+    "namespace": "prod",
+    "replicas": 3,
+    "images": [
+      "ghcr.io/acme/checkout:v3"
+    ]
+  },
+  "mismatches": [
+    {
+      "field": "replicas",
+      "dry": "1",
+      "wet": "2",
+      "live": "3"
+    },
+    {
+      "field": "images",
+      "dry": "ghcr.io/acme/checkout:v1",
+      "wet": "ghcr.io/acme/checkout:v2",
+      "live": "ghcr.io/acme/checkout:v3"
+    }
+  ],
+  "notes": [
+    "Connected DRY/WET snapshots loaded for linked unit checkout."
+  ]
+}
