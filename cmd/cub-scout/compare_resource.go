@@ -41,14 +41,22 @@ type compareSideSummary struct {
 }
 
 type compareResourceResult struct {
-	Resource  string              `json:"resource"`
-	Namespace string              `json:"namespace,omitempty"`
-	Mode      string              `json:"mode"`
-	Connected bool                `json:"connected"`
-	Dry       *compareSideSummary `json:"dry,omitempty"`
-	Wet       *compareSideSummary `json:"wet,omitempty"`
-	Live      compareSideSummary  `json:"live"`
-	Notes     []string            `json:"notes,omitempty"`
+	Resource   string                 `json:"resource"`
+	Namespace  string                 `json:"namespace,omitempty"`
+	Mode       string                 `json:"mode"`
+	Connected  bool                   `json:"connected"`
+	Dry        *compareSideSummary    `json:"dry,omitempty"`
+	Wet        *compareSideSummary    `json:"wet,omitempty"`
+	Live       compareSideSummary     `json:"live"`
+	Mismatches []compareFieldMismatch `json:"mismatches,omitempty"`
+	Notes      []string               `json:"notes,omitempty"`
+}
+
+type compareFieldMismatch struct {
+	Field string `json:"field"`
+	Dry   string `json:"dry"`
+	Wet   string `json:"wet"`
+	Live  string `json:"live"`
 }
 
 type compareResourceRef struct {
@@ -173,7 +181,7 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 				if dryWet.Wet == nil {
 					notes = append(notes, "WET snapshot unavailable for linked unit.")
 				}
-				return compareResourceResult{
+				return finalizeCompareResourceResult(compareResourceResult{
 					Resource:  kind + "/" + name,
 					Namespace: ns,
 					Mode:      mode,
@@ -182,21 +190,21 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 					Wet:       dryWet.Wet,
 					Live:      live,
 					Notes:     notes,
-				}, nil
+				}), nil
 			}
 		}
 	} else {
 		notes = append(notes, "Connect to ConfigHub to unlock DRY/WET/LIVE expected-state comparison.")
 	}
 
-	return compareResourceResult{
+	return finalizeCompareResourceResult(compareResourceResult{
 		Resource:  kind + "/" + name,
 		Namespace: ns,
 		Mode:      mode,
 		Connected: connected,
 		Live:      live,
 		Notes:     notes,
-	}, nil
+	}), nil
 }
 
 func isCompareConnected() bool {
@@ -529,6 +537,104 @@ func extractCompareImages(obj map[string]interface{}) []string {
 	return images
 }
 
+func finalizeCompareResourceResult(result compareResourceResult) compareResourceResult {
+	result.Mismatches = detectCompareFieldMismatches(result.Dry, result.Wet, result.Live)
+	return result
+}
+
+func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSideSummary) []compareFieldMismatch {
+	type compareFieldDescriptor struct {
+		Name    string
+		Extract func(*compareSideSummary) string
+	}
+	fields := []compareFieldDescriptor{
+		{
+			Name: "apiVersion",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil {
+					return ""
+				}
+				return strings.TrimSpace(side.APIVersion)
+			},
+		},
+		{
+			Name: "kind",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil {
+					return ""
+				}
+				return strings.TrimSpace(side.Kind)
+			},
+		},
+		{
+			Name: "namespace",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil {
+					return ""
+				}
+				return strings.TrimSpace(side.Namespace)
+			},
+		},
+		{
+			Name: "replicas",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil || side.Replicas == nil {
+					return ""
+				}
+				return fmt.Sprintf("%d", *side.Replicas)
+			},
+		},
+		{
+			Name: "images",
+			Extract: func(side *compareSideSummary) string {
+				if side == nil || len(side.Images) == 0 {
+					return ""
+				}
+				return strings.Join(side.Images, ", ")
+			},
+		},
+	}
+
+	out := make([]compareFieldMismatch, 0, len(fields))
+	for _, field := range fields {
+		dryValue := field.Extract(dry)
+		wetValue := field.Extract(wet)
+		liveValue := field.Extract(&live)
+		if !compareFieldHasDivergence(dryValue, wetValue, liveValue) {
+			continue
+		}
+		out = append(out, compareFieldMismatch{
+			Field: field.Name,
+			Dry:   displayCompareFieldValue(dryValue),
+			Wet:   displayCompareFieldValue(wetValue),
+			Live:  displayCompareFieldValue(liveValue),
+		})
+	}
+	return out
+}
+
+func compareFieldHasDivergence(values ...string) bool {
+	unique := make(map[string]struct{}, len(values))
+	nonEmpty := 0
+	for _, raw := range values {
+		value := strings.TrimSpace(raw)
+		if value == "" {
+			continue
+		}
+		nonEmpty++
+		unique[value] = struct{}{}
+	}
+	return nonEmpty >= 2 && len(unique) >= 2
+}
+
+func displayCompareFieldValue(raw string) string {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return "-"
+	}
+	return value
+}
+
 func renderCompareResourceASCII(result compareResourceResult) string {
 	var b strings.Builder
 
@@ -551,6 +657,13 @@ func renderCompareResourceASCII(result compareResourceResult) string {
 		renderCompareASCIISection(&b, "WET (rendered target)", *result.Wet)
 	}
 	renderCompareASCIISection(&b, "LIVE (cluster)", result.Live)
+	if len(result.Mismatches) > 0 {
+		b.WriteString("\nDiff Highlights\n")
+		for _, mismatch := range result.Mismatches {
+			b.WriteString(fmt.Sprintf("  - %s: DRY=%s | WET=%s | LIVE=%s\n",
+				mismatch.Field, mismatch.Dry, mismatch.Wet, mismatch.Live))
+		}
+	}
 
 	if len(result.Notes) > 0 {
 		b.WriteString("\nNotes:\n")
@@ -584,6 +697,20 @@ func renderCompareResourceMarkdown(result compareResourceResult) string {
 		renderCompareMarkdownSection(&b, "WET (rendered target)", *result.Wet)
 	}
 	renderCompareMarkdownSection(&b, "LIVE (cluster)", result.Live)
+	if len(result.Mismatches) > 0 {
+		b.WriteString("\n### Mismatches\n\n")
+		b.WriteString("| Field | DRY | WET | LIVE |\n")
+		b.WriteString("|---|---|---|---|\n")
+		for _, mismatch := range result.Mismatches {
+			b.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n",
+				mismatch.Field,
+				mdCompareFieldValue(mismatch.Dry),
+				mdCompareFieldValue(mismatch.Wet),
+				mdCompareFieldValue(mismatch.Live),
+			))
+		}
+		b.WriteString("\n")
+	}
 
 	if len(result.Notes) > 0 {
 		b.WriteString("\n### Notes\n\n")
@@ -648,4 +775,12 @@ func mdValueOrDash(raw string) string {
 		return value
 	}
 	return "`" + value + "`"
+}
+
+func mdCompareFieldValue(raw string) string {
+	value := displayCompareFieldValue(raw)
+	if value == "-" {
+		return value
+	}
+	return "`" + strings.ReplaceAll(value, "`", "\\`") + "`"
 }

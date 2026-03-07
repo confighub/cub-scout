@@ -767,6 +767,7 @@ cub-scout combined --git-path ./repo-a --git-path-compare ./repo-b --json
 
 Resource compare mode behavior:
 - If the live resource is linked to ConfigHub (`confighub.com/UnitSlug`), output includes DRY/WET/LIVE sections.
+- When DRY/WET/LIVE values differ, output includes a mismatch highlight section (`Diff Highlights` in ASCII, `Mismatches` table in Markdown/JSON).
 - If not linked (or not connected), output degrades to LIVE-only with explicit notes.
 
 ---

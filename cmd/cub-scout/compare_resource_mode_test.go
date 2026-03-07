@@ -88,6 +88,7 @@ func TestBuildCompareResourceResult_Connected(t *testing.T) {
 func TestBuildCompareResourceResult_Connected_LoadsDryWetWhenLinked(t *testing.T) {
 	restoreLive := loadCompareLiveSnapshotFn
 	loadCompareLiveSnapshotFn = func(ctx context.Context, kind, name, namespace string) (compareSideSummary, error) {
+		replicas := int64(3)
 		return compareSideSummary{
 			Source:     "cluster",
 			APIVersion: "apps/v1",
@@ -96,6 +97,8 @@ func TestBuildCompareResourceResult_Connected_LoadsDryWetWhenLinked(t *testing.T
 			Namespace:  namespace,
 			UnitSlug:   "checkout-api",
 			SpaceName:  "payments-prod",
+			Replicas:   &replicas,
+			Images:     []string{"ghcr.io/acme/api:v3"},
 		}, nil
 	}
 	defer func() { loadCompareLiveSnapshotFn = restoreLive }()
@@ -124,6 +127,8 @@ func TestBuildCompareResourceResult_Connected_LoadsDryWetWhenLinked(t *testing.T
 				Kind:       "Deployment",
 				Name:       "api",
 				Namespace:  "prod",
+				Replicas:   int64Ptr(1),
+				Images:     []string{"ghcr.io/acme/api:v1"},
 			},
 			Wet: &compareSideSummary{
 				Source:     "wet",
@@ -131,6 +136,8 @@ func TestBuildCompareResourceResult_Connected_LoadsDryWetWhenLinked(t *testing.T
 				Kind:       "Deployment",
 				Name:       "api",
 				Namespace:  "prod",
+				Replicas:   int64Ptr(2),
+				Images:     []string{"ghcr.io/acme/api:v2"},
 			},
 		}, nil
 	}
@@ -148,6 +155,9 @@ func TestBuildCompareResourceResult_Connected_LoadsDryWetWhenLinked(t *testing.T
 	}
 	if result.Dry == nil || result.Wet == nil {
 		t.Fatalf("expected dry+wet snapshots, got dry=%v wet=%v", result.Dry != nil, result.Wet != nil)
+	}
+	if len(result.Mismatches) < 2 {
+		t.Fatalf("expected mismatch highlights, got %#v", result.Mismatches)
 	}
 }
 
@@ -264,4 +274,76 @@ metadata:
 	if len(got.Images) != 1 || got.Images[0] != "ghcr.io/acme/api:v2" {
 		t.Fatalf("images = %#v", got.Images)
 	}
+}
+
+func TestRenderCompareResourceASCII_MismatchHighlights(t *testing.T) {
+	result := compareResourceResult{
+		Resource:  "Deployment/api",
+		Namespace: "prod",
+		Mode:      "dry-wet-live",
+		Connected: true,
+		Dry: &compareSideSummary{
+			Replicas: int64Ptr(1),
+			Images:   []string{"ghcr.io/acme/api:v1"},
+		},
+		Wet: &compareSideSummary{
+			Replicas: int64Ptr(2),
+			Images:   []string{"ghcr.io/acme/api:v2"},
+		},
+		Live: compareSideSummary{
+			Replicas: int64Ptr(3),
+			Images:   []string{"ghcr.io/acme/api:v3"},
+		},
+		Mismatches: []compareFieldMismatch{
+			{
+				Field: "replicas",
+				Dry:   "1",
+				Wet:   "2",
+				Live:  "3",
+			},
+			{
+				Field: "images",
+				Dry:   "ghcr.io/acme/api:v1",
+				Wet:   "ghcr.io/acme/api:v2",
+				Live:  "ghcr.io/acme/api:v3",
+			},
+		},
+	}
+
+	out := renderCompareResourceASCII(result)
+	if !strings.Contains(out, "Diff Highlights") {
+		t.Fatalf("expected diff highlights section in output:\n%s", out)
+	}
+	if !strings.Contains(out, "replicas: DRY=1 | WET=2 | LIVE=3") {
+		t.Fatalf("expected replicas mismatch in output:\n%s", out)
+	}
+}
+
+func TestRenderCompareResourceMarkdown_MismatchHighlights(t *testing.T) {
+	result := compareResourceResult{
+		Resource:  "Deployment/api",
+		Namespace: "prod",
+		Mode:      "dry-wet-live",
+		Connected: true,
+		Mismatches: []compareFieldMismatch{
+			{
+				Field: "images",
+				Dry:   "ghcr.io/acme/api:v1",
+				Wet:   "ghcr.io/acme/api:v2",
+				Live:  "ghcr.io/acme/api:v3",
+			},
+		},
+	}
+
+	out := renderCompareResourceMarkdown(result)
+	if !strings.Contains(out, "### Mismatches") {
+		t.Fatalf("expected mismatches section in output:\n%s", out)
+	}
+	if !strings.Contains(out, "| images | `ghcr.io/acme/api:v1` | `ghcr.io/acme/api:v2` | `ghcr.io/acme/api:v3` |") {
+		t.Fatalf("expected images mismatch row in output:\n%s", out)
+	}
+}
+
+func int64Ptr(v int64) *int64 {
+	return &v
 }
