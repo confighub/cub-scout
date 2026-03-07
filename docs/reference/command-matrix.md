@@ -281,6 +281,16 @@ Resource compare mode uses one positional argument:
 - Linked resources show DRY/WET/LIVE sections; unlinked resources degrade to LIVE-only with notes.
 - Linked resource output includes mismatch highlights across DRY/WET/LIVE when values diverge.
 
+Three-way compare subcommand:
+- `cub-scout compare three-way --scope <kind/name> -n <namespace>`
+- `cub-scout compare three-way --scope namespace/<ns> --format json`
+- `cub-scout compare three-way --scope cluster --format md`
+
+Supported `--scope` values:
+- `<kind/name>` or `resource:<kind/name>`
+- `namespace/<ns>`
+- `cluster`
+
 ---
 
 ## `app-space` Subcommands

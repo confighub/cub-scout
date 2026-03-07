@@ -50,6 +50,12 @@ func TestSmoke_CLIHelp(t *testing.T) {
 			wantContains: []string{"list", "Usage:"},
 		},
 		{
+			name:         "compare three-way help",
+			args:         []string{"compare", "three-way", "--help"},
+			wantExitCode: 0,
+			wantContains: []string{"three-way", "--scope", "Usage:"},
+		},
+		{
 			name:         "scan help",
 			args:         []string{"scan", "--help"},
 			wantExitCode: 0,
