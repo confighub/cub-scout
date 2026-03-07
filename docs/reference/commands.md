@@ -165,6 +165,9 @@ cub-scout map list -n production
 # Filter by owner
 cub-scout map list -q "owner=Flux"
 
+# Filter by custom owner name from detectors.yaml
+cub-scout map list -q "owner=Internal Platform"
+
 # Filter by multiple criteria
 cub-scout map list -q "owner!=Native AND kind=Deployment"
 
@@ -554,6 +557,7 @@ Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, 
 
 Owner detection for `trace` uses the same deterministic precedence as `map list`.
 After owner detection, `trace` resolves with an owner-specific chain resolver (Flux, ArgoCD, or Helm).
+When a resource matches a custom ownership detector, `trace` prints the configured owner name and explains that chain resolution is currently limited to Flux/ArgoCD/Helm.
 For detailed rules, see `docs/reference/ownership-precedence.md` and `docs/howto/trace-ownership.md`.
 
 ```bash

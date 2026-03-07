@@ -26,6 +26,7 @@ In mixed environments with multiple GitOps tools:
 | Flux | Flux source + Kustomization/HelmRelease chain |
 | ArgoCD | Argo Application/ApplicationSet/App-of-Apps chain |
 | Helm (standalone) | Helm release metadata from cluster secrets |
+| Custom detector owner | Emits custom owner name with an unsupported-chain warning |
 | Native/Unknown | Kubernetes ownerRef chain + orphan metadata |
 
 This means Argo traces are resolved from Argo resources directly (not by reusing Flux semantics).

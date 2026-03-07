@@ -60,6 +60,7 @@ Worked examples showing how cub-scout discovers workloads and proposes ConfigHub
 | [combined-git-live/](combined-git-live/) | **Flux** (Banko) | Git repo + cluster alignment |
 | [fleet-import/](fleet-import/) | **Multi-cluster** | Aggregating imports from 2 clusters into a unified proposal |
 | [demo-data-adt/](demo-data-adt/) | **App-Deployment-Target** | Multi-app × multi-env with version skew detection |
+| [custom-ownership-detectors/](custom-ownership-detectors/) | **Extensibility** | YAML ownership detectors (`~/.cub-scout/detectors.yaml`) with map/trace/explain parity |
 | [ai-agent-quest/](ai-agent-quest/) | **AI + K8s** | Give your AI agent cluster vision — standalone observation + ConfigHub intelligence |
 | [new-user-puzzle-quest/](new-user-puzzle-quest/) | **Hands-on learning** | Step-by-step quest for first-time operators |
 
@@ -163,6 +164,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 | [combined-git-live/](combined-git-live/) | **Working** | Git + cluster alignment (Flux/Banko pattern) | Learning combined discovery, Git drift detection |
 | [fleet-import/](fleet-import/) | **Working** | Multi-cluster fleet aggregation | Learning fleet import, cross-cluster proposals |
 | [demo-data-adt/](demo-data-adt/) | **Working** | App-Deployment-Target model (multi-app × multi-env) | Learning ADT model, version skew, scan |
+| [custom-ownership-detectors/](custom-ownership-detectors/) | **Working** | Config-driven custom ownership detection | Extending ownership classification with YAML |
 | [new-user-puzzle-quest/](new-user-puzzle-quest/) | **Working** | Quest-style new-user walkthrough (AI-assisted) | Guided capability/discovery/import validation |
 | [connect-and-compare/](connect-and-compare/) | **Working** | 60-second connected-mode fixture flow | Standalone->connected value narrative for demos/recordings |
 | [connected-summary-storage/](connected-summary-storage/) | **Working** | Connected summary persistence + query workflow | Trend/history snapshots for scan + gitops status |

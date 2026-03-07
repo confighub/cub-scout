@@ -17,6 +17,7 @@ const (
 	OwnerTerraform  = "terraform"
 	OwnerConfigHub  = "confighub"
 	OwnerCrossplane = "crossplane"
+	OwnerCustom     = "custom"
 	OwnerKubernetes = "k8s"
 	OwnerUnknown    = "unknown"
 )
@@ -58,6 +59,12 @@ func DetectOwnership(resource *unstructured.Unstructured) Ownership {
 
 	// Check for Crossplane ownership
 	if ownership := detectCrossplaneOwnership(labels, annotations, resource); ownership.Type != "" {
+		return ownership
+	}
+
+	// Check for custom configured ownership detectors.
+	// Built-ins intentionally run first to preserve contract precedence.
+	if ownership := detectCustomOwnership(labels, annotations); ownership.Type != "" {
 		return ownership
 	}
 

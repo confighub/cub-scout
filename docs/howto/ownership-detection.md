@@ -40,7 +40,10 @@ Map checks labels on each resource to determine ownership:
 | **Flux** | Toolkit labels | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` |
 | **ArgoCD** | Argo label or tracking-id | `argocd.argoproj.io/instance` label OR `argocd.argoproj.io/tracking-id` annotation |
 | **Helm** | Managed-by label | `app.kubernetes.io/managed-by: Helm` |
+| **Terraform** | Terraform metadata | `app.terraform.io/run-id` annotation OR `app.terraform.io/managed` label |
+| **Crossplane** | Crossplane labels/ownerRefs | `crossplane.io/*` labels or Crossplane owner references |
 | **ConfigHub** | Unit slug | `confighub.com/UnitSlug` |
+| **Custom** | Configured detector rules | `~/.cub-scout/detectors.yaml` / `$CUB_SCOUT_OWNERSHIP_DETECTORS` |
 | **Native** | Nothing detected | No GitOps ownership labels |
 
 ### Flux Detection
@@ -97,6 +100,30 @@ If no GitOps labels are found, the resource is marked as **Native**. This usuall
 - Someone ran `kubectl apply` directly
 - A controller created the resource
 - Labels were removed
+
+### Custom Detector Configuration
+
+You can extend ownership detection without writing Go code.
+
+Create `~/.cub-scout/detectors.yaml`:
+
+```yaml
+detectors:
+  - name: internal-platform
+    labels:
+      - key: platform.company.com/managed-by
+        value: platform-controller
+    owner_name: Internal Platform
+    owner_type: custom
+```
+
+Rules:
+
+1. Built-in detectors run first.
+2. Custom detectors run in file order.
+3. First matching custom detector wins.
+
+If config is invalid, cub-scout warns and falls back to built-ins.
 
 ## Filter by Owner
 

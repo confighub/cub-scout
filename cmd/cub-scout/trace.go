@@ -302,6 +302,9 @@ func runTrace(cmd *cobra.Command, args []string) error {
 			}
 		}
 
+	case agent.OwnerCustom:
+		result = buildCustomOwnerUnsupportedTraceResult(kind, name, traceNamespace, ownership)
+
 	default:
 		// Try Flux first, then Argo, then report not managed
 		fluxTracer := agent.NewFluxTracer()
@@ -1630,11 +1633,46 @@ func runTraceDiff(ctx context.Context, kind, name, namespace string) error {
 	case agent.OwnerHelm:
 		return runHelmDiff(ctx, name, namespace)
 	default:
-		fmt.Printf("%s⚠ Resource is not managed by GitOps (owner: %s)%s\n", colorYellow, ownership.Type, colorReset)
+		fmt.Printf("%s⚠ Resource is not managed by GitOps (owner: %s)%s\n", colorYellow, ownershipLabel(ownership), colorReset)
 		fmt.Printf("%s  Cannot show diff for unmanaged resources.%s\n", colorDim, colorReset)
 		fmt.Printf("%s  Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
 		fmt.Printf("\n")
 		return nil
+	}
+}
+
+func ownershipLabel(ownership *agent.Ownership) string {
+	if ownership == nil {
+		return "unknown"
+	}
+	if ownership.Type == agent.OwnerCustom {
+		if name := strings.TrimSpace(ownership.Name); name != "" {
+			return name
+		}
+		return "custom"
+	}
+	if ownership.Type == "" {
+		return "unknown"
+	}
+	return ownership.Type
+}
+
+func buildCustomOwnerUnsupportedTraceResult(kind, name, namespace string, ownership *agent.Ownership) *agent.TraceResult {
+	ownerName := ownershipLabel(ownership)
+	if ownerName == "" || ownerName == "unknown" {
+		ownerName = "Custom"
+	}
+
+	return &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      kind,
+			Name:      name,
+			Namespace: namespace,
+		},
+		FullyManaged: false,
+		Tool:         "",
+		Error:        fmt.Sprintf("custom owner detected: %s (trace chain unavailable for custom owners)", ownerName),
+		TracedAt:     time.Now(),
 	}
 }
 

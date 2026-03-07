@@ -1,0 +1,13 @@
+detectors:
+  - name: internal-platform
+    labels:
+      - key: platform.company.com/managed-by
+        value: platform-controller
+    owner_name: Internal Platform
+    owner_type: custom
+
+  - name: pulumi
+    annotations:
+      - key: pulumi.com/stack
+    owner_name: Pulumi
+    owner_type: custom

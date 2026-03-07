@@ -240,7 +240,11 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 	}
 
 	if result.Error != "" {
-		summary.Owner = "Unknown - no recognized ownership labels found"
+		if customOwner := customOwnerFromTraceError(result.Error); customOwner != "" {
+			summary.Owner = customOwner
+		} else {
+			summary.Owner = "Unknown - no recognized ownership labels found"
+		}
 		if summary.Health == "Unknown" {
 			summary.Health = "Unavailable"
 		}
@@ -283,6 +287,19 @@ func explainOwner(tool string) string {
 	default:
 		return "Unknown"
 	}
+}
+
+func customOwnerFromTraceError(traceErr string) string {
+	const prefix = "custom owner detected:"
+	msg := strings.TrimSpace(traceErr)
+	if !strings.HasPrefix(strings.ToLower(msg), prefix) {
+		return ""
+	}
+	owner := strings.TrimSpace(msg[len(prefix):])
+	if idx := strings.Index(owner, "("); idx > 0 {
+		owner = strings.TrimSpace(owner[:idx])
+	}
+	return owner
 }
 
 func explainSource(chain []agent.ChainLink) string {
