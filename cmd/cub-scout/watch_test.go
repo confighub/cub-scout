@@ -5,9 +5,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -135,29 +139,198 @@ func TestAppendWatchQueue_DropsOldest(t *testing.T) {
 	}
 }
 
-func TestFlushWatchQueue_PartialFailureKeepsRemaining(t *testing.T) {
+func TestRunWatch_RequiresDestination(t *testing.T) {
 	restore := overrideWatchDeps(t)
 	defer restore()
 
-	calls := 0
-	watchPostEvent = func(ctx context.Context, webhookURL string, event watchEvent) error {
-		calls++
-		if calls == 2 {
-			return errors.New("boom")
-		}
-		return nil
+	watchWebhookURL = ""
+	watchOutputFile = ""
+	watchInterval = 1 * time.Second
+	watchMaxQueuedEvents = 100
+	watchCmd.SetContext(context.Background())
+
+	err := runWatch(watchCmd, nil)
+	if err == nil {
+		t.Fatal("expected destination validation error, got nil")
+	}
+	if !strings.Contains(err.Error(), "either --webhook or --output-file") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestBuildWatchSinks_FileOnly(t *testing.T) {
+	outputPath := filepath.Join(t.TempDir(), "events.jsonl")
+	sinks, cleanup, err := buildWatchSinks("", outputPath)
+	if err != nil {
+		t.Fatalf("buildWatchSinks() error = %v", err)
+	}
+	defer cleanup()
+
+	if len(sinks) != 1 {
+		t.Fatalf("sink count = %d, want 1", len(sinks))
 	}
 
+	event := watchEvent{
+		Type:      "scan.finding",
+		Timestamp: time.Date(2026, 3, 7, 18, 0, 0, 0, time.UTC),
+		Resource:  watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"},
+	}
+
+	if err := sinks[0].Write(context.Background(), event); err != nil {
+		t.Fatalf("sink write failed: %v", err)
+	}
+
+	raw, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("read output file: %v", err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
+	if len(lines) != 1 {
+		t.Fatalf("line count = %d, want 1", len(lines))
+	}
+
+	var decoded watchEvent
+	if err := json.Unmarshal([]byte(lines[0]), &decoded); err != nil {
+		t.Fatalf("decode event json: %v", err)
+	}
+	if decoded.Type != "scan.finding" {
+		t.Fatalf("decoded type = %q, want scan.finding", decoded.Type)
+	}
+}
+
+func TestBuildWatchSinks_WebhookAndFile(t *testing.T) {
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&calls, 1)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	oldClient := watchDefaultClient
+	watchDefaultClient = srv.Client()
+	defer func() { watchDefaultClient = oldClient }()
+
+	outputPath := filepath.Join(t.TempDir(), "events.jsonl")
+	sinks, cleanup, err := buildWatchSinks(srv.URL, outputPath)
+	if err != nil {
+		t.Fatalf("buildWatchSinks() error = %v", err)
+	}
+	defer cleanup()
+
+	if len(sinks) != 2 {
+		t.Fatalf("sink count = %d, want 2", len(sinks))
+	}
+
+	queue := []watchEvent{
+		{
+			Type:      "resource.discovered",
+			Timestamp: time.Date(2026, 3, 7, 18, 5, 0, 0, time.UTC),
+			Resource:  watchEventResource{Kind: "Service", Name: "api", Namespace: "prod"},
+		},
+	}
+	remaining, err := flushWatchQueue(context.Background(), sinks, queue)
+	if err != nil {
+		t.Fatalf("flushWatchQueue() error = %v", err)
+	}
+	if len(remaining) != 0 {
+		t.Fatalf("remaining len = %d, want 0", len(remaining))
+	}
+	if got := atomic.LoadInt32(&calls); got != 1 {
+		t.Fatalf("webhook calls = %d, want 1", got)
+	}
+
+	raw, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("read output file: %v", err)
+	}
+	if !strings.Contains(string(raw), "\"resource.discovered\"") {
+		t.Fatalf("expected event JSON in output file, got %q", string(raw))
+	}
+}
+
+func TestFlushWatchQueue_WithFileSink(t *testing.T) {
+	outputPath := filepath.Join(t.TempDir(), "events.jsonl")
+	sinks, cleanup, err := buildWatchSinks("", outputPath)
+	if err != nil {
+		t.Fatalf("buildWatchSinks() error = %v", err)
+	}
+	defer cleanup()
+
+	queue := []watchEvent{
+		{
+			Type:      "resource.discovered",
+			Timestamp: time.Date(2026, 3, 7, 18, 10, 0, 0, time.UTC),
+			Resource:  watchEventResource{Kind: "Service", Name: "api", Namespace: "prod"},
+		},
+		{
+			Type:      "scan.finding",
+			Timestamp: time.Date(2026, 3, 7, 18, 10, 30, 0, time.UTC),
+			Resource:  watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+	}
+
+	remaining, err := flushWatchQueue(context.Background(), sinks, queue)
+	if err != nil {
+		t.Fatalf("flushWatchQueue() error = %v", err)
+	}
+	if len(remaining) != 0 {
+		t.Fatalf("remaining len = %d, want 0", len(remaining))
+	}
+
+	raw, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("read output file: %v", err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("line count = %d, want 2", len(lines))
+	}
+}
+
+type testWatchSink struct {
+	calls     int
+	failAt    int
+	retryable bool
+}
+
+func (s *testWatchSink) Name() string { return "test" }
+func (s *testWatchSink) Retryable() bool {
+	return s.retryable
+}
+
+func (s *testWatchSink) Write(ctx context.Context, event watchEvent) error {
+	s.calls++
+	if s.failAt > 0 && s.calls == s.failAt {
+		return errors.New("boom")
+	}
+	return nil
+}
+
+func TestFlushWatchQueue_PartialFailureKeepsRemaining(t *testing.T) {
+	sink := &testWatchSink{failAt: 2, retryable: true}
 	queue := []watchEvent{{Type: "e1"}, {Type: "e2"}, {Type: "e3"}}
-	remaining, err := flushWatchQueue(context.Background(), "https://hooks.example.com/cub-scout", queue)
+	remaining, err := flushWatchQueue(context.Background(), []watchEventSink{sink}, queue)
 	if err == nil {
 		t.Fatal("expected flush error, got nil")
 	}
-	if calls != 2 {
-		t.Fatalf("post call count = %d, want 2", calls)
+	if sink.calls != 2 {
+		t.Fatalf("sink call count = %d, want 2", sink.calls)
 	}
 	if len(remaining) != 2 || remaining[0].Type != "e2" || remaining[1].Type != "e3" {
 		t.Fatalf("unexpected remaining queue: %#v", remaining)
+	}
+}
+
+func TestFlushWatchQueue_NonRetryableFailureDropsQueue(t *testing.T) {
+	sink := &testWatchSink{failAt: 1, retryable: false}
+	queue := []watchEvent{{Type: "e1"}, {Type: "e2"}}
+
+	remaining, err := flushWatchQueue(context.Background(), []watchEventSink{sink}, queue)
+	if err == nil {
+		t.Fatal("expected flush error, got nil")
+	}
+	if len(remaining) != 0 {
+		t.Fatalf("remaining len = %d, want 0", len(remaining))
 	}
 }
 
@@ -234,6 +407,7 @@ func TestRunWatch_OncePostsEvents(t *testing.T) {
 	}
 
 	watchWebhookURL = "https://hooks.example.com/cub-scout"
+	watchOutputFile = ""
 	watchInterval = 1 * time.Second
 	watchNamespace = "prod"
 	watchOwner = ""

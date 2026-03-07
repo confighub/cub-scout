@@ -28,7 +28,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `impact` | Connected blast-radius preview for one unit | v1.6 |
 | `fleet outliers` | Connected cluster-drift outlier report | v1.6 |
 | `trace` | Show GitOps ownership chain | v0.5 |
-| `watch --webhook <url>` | Stream observation events to a webhook | v1.7 |
+| `watch --webhook <url>` | Stream observation events to webhook/file sinks | v1.7 |
 | `scan` | Scan for misconfigurations | v0.5 |
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
 | `tree` | Hierarchical resource views | v0.5 |
@@ -637,17 +637,20 @@ See `docs/howto/trace-context-troubleshooting.md` for the full flow.
 
 ## watch
 
-Stream observation events to a webhook.
+Stream observation events to webhook/file sinks.
 
 ```bash
-cub-scout watch --webhook <url> [flags]
+cub-scout watch [--webhook <url>] [--output-file <path>] [flags]
 ```
+
+At least one destination is required: `--webhook` and/or `--output-file`.
 
 ### Flags
 
 | Flag | Description |
 |------|-------------|
 | `--webhook` | Webhook URL to receive events |
+| `--output-file` | Append JSONL events to a local file |
 | `--interval` | Polling interval (default: `20s`) |
 | `-n, --namespace` | Namespace filter |
 | `--owner` | Owner display-name filter |
@@ -679,6 +682,10 @@ cub-scout watch --webhook <url> [flags]
 
 ```bash
 cub-scout watch --webhook https://hooks.example.com/cub-scout --interval 30s
+```
+
+```bash
+cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
 ```
 
 See [`examples/watch-webhook/`](../../examples/watch-webhook/) for a local receiver and end-to-end walkthrough.
