@@ -239,6 +239,9 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	// Build summary
 	summary := buildGitOpsSummary(ctx, dynClient, backendInfo)
 
+	// Connected-mode durability: persist sync/drift summary snapshot for query/trend workflows.
+	persistConnectedGitOpsSummary(summary, gitopsNamespace)
+
 	// Output
 	if gitopsJSON {
 		return outputGitOpsStatusJSON(summary)

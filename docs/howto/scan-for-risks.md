@@ -110,6 +110,12 @@ The catalog spans categories such as:
 | Trend/history across environments | no | yes |
 | Shared governance context | no | yes |
 
+Connected trend query example:
+
+```bash
+./cub-scout summary list --since 7d --type scan --format md
+```
+
 ## Next Steps
 
 - Run demos: `./cub-scout demo --help`

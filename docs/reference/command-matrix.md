@@ -39,6 +39,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `setup` | Set up shell completions and configuration |
 | `snapshot` | Dump cluster state as GSF JSON |
 | `status` | Show connection status and cluster info |
+| `summary` | Query persisted connected summary snapshots |
 | `trace` | Trace any resource to its Git source |
 | `tree` | Show hierarchical views of resources |
 | `version` | Print version information |
@@ -222,6 +223,24 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--since` | Lookback window (`24h`, `7d`, `2w`) |
 | `--format` | Output format (`ascii`, `json`, `md`) |
 | `--json` | Output as JSON |
+
+---
+
+## `summary list` Options
+
+| Option | Description |
+|--------|-------------|
+| `--since` | Lookback window (`24h`, `7d`, `2w`) |
+| `--type` | Summary type filter (`scan`, `gitops-status`) |
+| `--cluster` | Cluster/context filter |
+| `-n, --namespace` | Namespace filter |
+| `--format` | Output format (`ascii`, `json`, `md`) |
+| `--json` | Output as JSON |
+
+Connected storage defaults:
+- Schema: `connected.summary.v1`
+- Retention: 30 days
+- Overrides: `CUB_SCOUT_SUMMARY_DIR`, `CUB_SCOUT_SUMMARY_RETENTION_DAYS`
 
 ---
 
