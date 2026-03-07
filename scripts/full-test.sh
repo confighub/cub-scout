@@ -52,7 +52,8 @@ pass "Build succeeded"
 
 # 2) Unit tests
 info "Running unit tests..."
-go test ./... || fail "Unit tests failed"
+GO_TEST_PARALLELISM="${GO_TEST_PARALLELISM:-4}"
+go test -p "$GO_TEST_PARALLELISM" ./... || fail "Unit tests failed"
 pass "Unit tests passed"
 
 # 3) Race detection
@@ -65,13 +66,13 @@ info "Running determinism tests..."
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-# Create a test bundle using fixtures
-export CUB_SCOUT_TEST_TARGET_OBJECT="$ROOT_DIR/test/fixtures/crossplane/managed_with_composite_label.json"
+# Use a fixture bundle that includes attribution.json
+ATTR_BUNDLE_FIXTURE="$ROOT_DIR/test/fixtures/attribution/bundle-with-attribution"
 
 # Test attribution graph determinism
 info "  Testing attribution graph determinism..."
 for i in 1 2 3; do
-  ./cub-scout bundle replay "$ROOT_DIR/test/fixtures/crossplane/managed_with_composite_label.json" \
+  ./cub-scout bundle replay "$ATTR_BUNDLE_FIXTURE" \
     --section attribution --format json > "$TMPDIR/attr-$i.json" || fail "Attribution replay failed (run $i)"
 done
 

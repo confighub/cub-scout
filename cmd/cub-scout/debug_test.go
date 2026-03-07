@@ -4,7 +4,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -300,5 +302,59 @@ func TestSaveDebugBundle_WithAttribution(t *testing.T) {
 	}
 	if len(graph.Edges) != 1 {
 		t.Errorf("Edges count = %d, want 1", len(graph.Edges))
+	}
+}
+
+func TestLoadAndRenderDebugFromJSON_SaveBundle(t *testing.T) {
+	tmpDir := t.TempDir()
+	fixturePath := filepath.Join(tmpDir, "debug.json")
+	session := DebugSession{
+		Target: ResourceRef{
+			Kind:      "Deployment",
+			Name:      "api-server",
+			Namespace: "production",
+		},
+		StartedAt:   time.Date(2026, 3, 7, 12, 0, 0, 0, time.UTC),
+		CompletedAt: time.Date(2026, 3, 7, 12, 1, 0, 0, time.UTC),
+	}
+	data, err := json.Marshal(session)
+	if err != nil {
+		t.Fatalf("Marshal failed: %v", err)
+	}
+	if err := os.WriteFile(fixturePath, data, 0644); err != nil {
+		t.Fatalf("Write fixture failed: %v", err)
+	}
+
+	oldFormat := debugFormat
+	oldSaveDir := debugSaveBundleDir
+	oldStdout := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("Pipe failed: %v", err)
+	}
+	defer func() {
+		debugFormat = oldFormat
+		debugSaveBundleDir = oldSaveDir
+		os.Stdout = oldStdout
+		_ = r.Close()
+	}()
+
+	debugFormat = "json"
+	debugSaveBundleDir = filepath.Join(tmpDir, "bundles")
+	os.Stdout = w
+
+	err = loadAndRenderDebugFromJSON(context.Background(), fixturePath)
+	_ = w.Close()
+	_, _ = io.Copy(io.Discard, r)
+	if err != nil {
+		t.Fatalf("loadAndRenderDebugFromJSON failed: %v", err)
+	}
+
+	bundleDir := filepath.Join(debugSaveBundleDir, generateBundleDirName(session.Target))
+	if _, err := os.Stat(filepath.Join(bundleDir, "metadata.json")); err != nil {
+		t.Fatalf("expected metadata.json in saved bundle: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(bundleDir, "session.json")); err != nil {
+		t.Fatalf("expected session.json in saved bundle: %v", err)
 	}
 }
