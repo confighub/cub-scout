@@ -1,9 +1,9 @@
 {
   "_comment": [
-    "MCP server configuration for cub-scout (PLANNED - NOT YET AVAILABLE).",
+    "MCP server configuration for cub-scout (AVAILABLE).",
     "",
-    "STATUS: The 'cub-scout mcp serve' command is planned for v1.4.",
-    "This config file is provided for future use.",
+    "STATUS: 'cub-scout mcp serve' is shipped.",
+    "Use this config directly with clients that support MCP stdio.",
     "",
     "CURRENT APPROACH: Use direct CLI execution instead:",
     "- Claude Code: runs ./cub-scout commands directly",
@@ -14,7 +14,7 @@
   ],
   "mcpServers": {
     "cub-scout": {
-      "_status": "PLANNED - requires cub-scout v1.4+",
+      "_status": "AVAILABLE",
       "command": "cub-scout",
       "args": ["mcp", "serve"],
       "env": {

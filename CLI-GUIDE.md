@@ -2,6 +2,10 @@
 
 Complete reference for all commands, options, TUI keys, and expected outputs.
 
+Need a fast alphabetical index first?
+- [Complete CLI Reference (A-Z)](docs/reference/cli-reference.md)
+- [Start Here by user goal](docs/getting-started/start-here.md)
+
 ---
 
 ## Top-Level Commands

@@ -18,6 +18,11 @@ All examples, demos, and integration code in one place.
 
 **Learning cub-scout hands-on?** Try the [Puzzle Quest](new-user-puzzle-quest/) — a guided walkthrough from zero to full cluster discovery.
 
+**Need quick command lookup?**
+- [Complete CLI Reference (A-Z)](../docs/reference/cli-reference.md)
+- [Command Reference](../docs/reference/commands.md)
+- [Start Here by user goal](../docs/getting-started/start-here.md)
+
 ## Quick Start
 
 ```bash
@@ -44,6 +49,15 @@ cub-scout map meaning
 # Or run a demo
 cub-scout demo quick
 ```
+
+## Most Valuable Demos First
+
+| Goal | Run This First | What It Proves |
+|------|----------------|----------------|
+| Learn core workflow quickly | [new-user-puzzle-quest/](new-user-puzzle-quest/) | `quickstart`, `doctor`, `map`, `trace`, `scan`, `import --dry-run` |
+| Show connected value in <60s | [connect-and-compare/](connect-and-compare/) | `doctor` + `compare three-way` + `history` narrative |
+| Enable AI tooling safely | [mcp-gateway/](mcp-gateway/) + [ai-integration/](ai-integration/) | `mcp serve`, fixture-driven AI session patterns |
+| Operate platform-scale slices | [kro-composition/](kro-composition/) + [connected-summary-storage/](connected-summary-storage/) + [watch-webhook/](watch-webhook/) | composition lineage, summary trend/digest, webhook event streaming |
 
 ---
 
