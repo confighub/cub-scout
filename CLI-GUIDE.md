@@ -16,23 +16,31 @@ The table below reflects the current `cub-scout --help` output.
 |---------|-------------|
 | `app-space` | Manage App Spaces |
 | `apply` | Apply a proposal from JSON (GUI) |
+| `audit` | Break-glass audit trail tools |
 | `bundle` | Work with debug bundles |
 | `catalog` | Manage bundle catalogs |
 | `combined` | Show Git repo structure + cluster workloads aligned |
 | `completion` | Generate shell completion script |
 | `connect` | Quickly configure kube context from server URL or kubeconfig |
+| `context-pack` | Export deterministic AI context JSON bundle |
 | `debug` | Guided GitOps debugging wizard |
 | `demo` | Run interactive demos |
 | `discover` | Discover resources (alias for `map workloads`) |
+| `doctor` | One-command actionable health summary |
 | `drift` | Detect drift between desired and live state |
+| `explain` | Plain-English ownership and lineage for one resource |
+| `fleet` | Fleet-level connected insights |
 | `gitops` | GitOps status and diagnostics |
 | `graph` | Resource graph operations |
 | `health` | Check issues (alias for `map issues`) |
+| `help` | Help for any command path |
 | `history` | Show connected change history from ConfigHub ChangeSets |
+| `impact` | Preview connected blast radius for one unit |
 | `import` | Import workloads into ConfigHub |
 | `import-argocd` | Import an ArgoCD Application into ConfigHub |
 | `import-cluster-aggregator` | Aggregate imports from multiple clusters (GUI) |
 | `map` | Interactive map of resources and ownership |
+| `mcp` | Model Context Protocol gateway (`mcp serve`) |
 | `parse-repo` | Parse a GitOps repository structure |
 | `patterns` | Pattern detection engine |
 | `quickstart` | Guided first-run tour across doctor, explain, ownership, and scan |
@@ -41,9 +49,11 @@ The table below reflects the current `cub-scout --help` output.
 | `setup` | Set up shell completions and configuration |
 | `snapshot` | Dump cluster state as GSF JSON |
 | `status` | Show connection status and cluster info |
+| `summary` | Query/publish connected summary digests |
 | `trace` | Trace any resource to its Git source |
 | `tree` | Show hierarchical views of resources |
 | `version` | Print version information |
+| `watch` | Stream observation events to webhook/file sinks |
 
 ---
 
@@ -91,6 +101,43 @@ The table below reflects the current `cub-scout --help` output.
 - No cluster connectivity: wizard prints fallback guidance for example bundle mode.
 - Empty cluster: doctor/ownership steps still run and explain no representative workload.
 - No connected context: connected-mode preview step is skipped.
+
+---
+
+## `doctor` — One-Command Health Summary
+
+**What it does:** Produces a compact actionable summary of ownership, health, risk, and drift in one report.
+
+```bash
+./cub-scout doctor
+./cub-scout doctor --namespace production
+./cub-scout doctor --format json
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format: `ascii`, `json` |
+| `-n, --namespace` | Namespace scope |
+| `--top` | Number of top issues to include (default: 3) |
+
+---
+
+## `explain` — Plain-English Ownership and Lineage
+
+**What it does:** Explains ownership and source lineage for one resource in text, JSON, or Markdown.
+
+```bash
+./cub-scout explain deploy/my-app -n prod
+./cub-scout explain deployment/my-app -n prod --format json
+./cub-scout explain deployment/my-app -n prod --format md
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format: `text`, `json`, `md` |
+| `-n, --namespace` | Namespace of target resource |
 
 ---
 
@@ -347,6 +394,77 @@ Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● brid
 **Graceful behavior:**
 - Not connected: `history requires ConfigHub connection. Run: cub auth login`
 - No matching history: clear message that the resource may not be imported yet
+
+---
+
+## `impact` — Connected Blast Radius Preview
+
+**What it does:** Shows dependency impact for a ConfigHub unit before proposed changes.
+
+```bash
+./cub-scout impact unit/shared-db-config
+./cub-scout impact shared-db-config --format md
+./cub-scout impact shared-db-config --json
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `--json` | Shorthand for `--format json` |
+
+---
+
+## `fleet` — Connected Fleet Insights
+
+Use `fleet outliers` to identify clusters that diverge from fleet norms.
+
+```bash
+./cub-scout fleet outliers
+./cub-scout fleet outliers --format md
+./cub-scout fleet outliers --json
+```
+
+---
+
+## `audit` — Break-Glass Audit Trail
+
+Use `audit list` to review connected accept/reject decisions from ChangeSets.
+
+```bash
+./cub-scout audit list
+./cub-scout audit list -n prod --since 7d
+./cub-scout audit list --format md
+./cub-scout audit list --json
+```
+
+**Options (`audit list`):**
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `--json` | Shorthand for `--format json` |
+| `-n, --namespace` | Optional namespace scope |
+| `--since` | Lookback window (default: `7d`) |
+| `--include-synthetic` | Include demo-seeded synthetic ChangeSets |
+
+---
+
+## `summary` — Connected Summary Storage
+
+Summary storage keeps connected scan/sync/risk snapshots for trend and digest workflows.
+
+```bash
+./cub-scout summary list --since 24h
+./cub-scout summary list --cluster kind-dev --namespace prod --json
+./cub-scout summary slack --dry-run --since 24h
+./cub-scout summary slack --webhook-url https://hooks.slack.com/services/... --since 7d
+```
+
+**Subcommands:**
+| Command | Description |
+|---------|-------------|
+| `list` | Query persisted summary records |
+| `slack` | Build and post Slack digest from stored records |
 
 ---
 
@@ -1357,6 +1475,36 @@ Helm Hook Ambiguity (1)
 
 ---
 
+## `watch` — Event Streaming
+
+Streams observation events to webhook and/or local JSONL sink.
+
+```bash
+./cub-scout watch --once
+./cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
+./cub-scout watch --webhook https://hooks.example.com/cub-scout --interval 30s
+```
+
+**Event types:**
+- `resource.discovered`
+- `ownership.changed`
+- `drift.detected`
+- `scan.finding`
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--interval` | Polling interval (default: `20s`) |
+| `--max-queued-events` | Buffer limit when webhook is unavailable (default: `1000`) |
+| `-n, --namespace` | Filter by namespace |
+| `--once` | Run one collection cycle and exit |
+| `--output-file` | Append JSONL events to local file |
+| `--owner` | Filter by owner display name |
+| `--severity` | Filter finding/drift severity (`critical,warning,info`) |
+| `--webhook` | Webhook URL sink |
+
+---
+
 ## `snapshot` — Export State as JSON (GSF)
 
 Exports cluster state in GitOps State Format (GSF) — a JSON format for third-party tool integration.
@@ -1732,6 +1880,27 @@ Read-only MCP gateway that exposes cub-scout observation tools over stdio.
 
 ---
 
+## `context-pack` — AI Handoff Evidence Bundle
+
+Exports a compact, model-agnostic JSON evidence pack for AI handoffs.
+
+```bash
+./cub-scout context-pack --format json
+./cub-scout context-pack --namespace prod --top-risks 8 --trace-seeds 8
+./cub-scout context-pack --max-bytes 32768
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format (`json`) |
+| `--max-bytes` | Maximum payload size (default: 16384) |
+| `-n, --namespace` | Namespace scope |
+| `--top-risks` | Number of risk issues included (default: 5) |
+| `--trace-seeds` | Number of trace seed resources included (default: 5) |
+
+---
+
 ## `patterns` — Pattern Detection (v0.7)
 
 Pattern detection engine for analyzing resource graphs.
@@ -1873,10 +2042,11 @@ done
 
 ---
 
-## `version` / `completion` / `setup`
+## `version` / `completion` / `setup` / `help`
 
 ```bash
 ./cub-scout version
+./cub-scout help map
 ./cub-scout completion bash > /etc/bash_completion.d/cub-scout
 ./cub-scout completion zsh > "${fpath[1]}/_cub-scout"
 ./cub-scout setup

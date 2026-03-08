@@ -58,6 +58,9 @@ jobs:
       - name: Check read-only policy
         run: ./scripts/check-readonly.sh
 
+      - name: Check CLI guide parity
+        run: ./scripts/check-cli-guide-parity.sh
+
       - name: Run unit tests
         run: go test ./... -v -covermode=atomic -coverprofile=coverage.out
 
