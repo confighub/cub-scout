@@ -9,6 +9,7 @@ breaking changes will be avoided within the same contract version.
 **Output model:** JSON is the canonical contract. ASCII/Markdown output is a rendering of the same fields.
 
 Human-friendly JSON contract index: [json-contracts.md](json-contracts.md)
+Alphabetical command index: [cli-reference.md](cli-reference.md)
 
 ---
 

@@ -8,19 +8,53 @@ Please send feedback by [opening an issue](https://github.com/confighub/cub-scou
 
 ---
 
-## Getting Value Fast
+## Fast Path (2 Minutes)
 
 ```bash
 brew install confighub/tap/cub-scout
 cub-scout quickstart             # Guided first-run tour of your current cluster
+cub-scout doctor                 # One-command health summary
+cub-scout explain deploy/app -n ns
 cub-scout map                    # Interactive TUI — explore your cluster
 cub-scout map list --json | jq   # JSON output — pipe to your tools
-cub-scout tree ownership         # See resources grouped by GitOps owner
-cub-scout trace deploy/app -n ns # Trace any resource to its Git source
-cub-scout scan                   # Find misconfigurations (46 patterns)
-cub-scout import --dry-run -n ns # Preview ConfigHub import (connected)
-kubectl cub-scout map status     # Same command surface via kubectl plugin
 ```
+
+### Pick Your Goal
+
+**Standalone value now**
+
+```bash
+cub-scout quickstart --yes
+cub-scout doctor
+cub-scout trace deploy/app -n ns
+cub-scout scan
+```
+
+**Connected value now**
+
+```bash
+cub auth login
+cub-scout compare three-way --scope namespace/prod
+cub-scout history deploy/app -n prod
+cub-scout impact shared-db-config
+```
+
+**AI and automation**
+
+```bash
+cub-scout mcp serve
+cub-scout context-pack --format json --max-bytes 16384
+cub-scout summary list --since 24h --json
+cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
+```
+
+### Find Commands Fast
+
+- [Start Here by user goal](docs/getting-started/start-here.md)
+- [Complete CLI Reference (A-Z)](docs/reference/cli-reference.md)
+- [Command Reference (examples + usage)](docs/reference/commands.md)
+- [CLI Contract Reference (stable schema/flags)](docs/reference/cli-contract.md)
+- [Examples Index](examples/README.md)
 
 ## Install Channels
 
@@ -111,7 +145,7 @@ Need contract docs for automation?
 
 cub-scout works fully offline. Connected mode is optional.
 
-> **Release scope:** v1.0 focuses on standalone use cases — cluster exploration, ownership detection, tracing, and scanning with no external dependencies. The 1.x series will progressively add connected use cases for [ConfigHub](https://confighub.com) (import, fleet queries, history, and policy context).
+> **Release scope:** v1.0 established the standalone contract surface. The v1.x line now also ships connected use cases for [ConfigHub](https://confighub.com) including import, history/audit, comparison, fleet insight, and summary workflows.
 
 | Feature | Standalone | Connected |
 |---------|:----------:|:---------:|

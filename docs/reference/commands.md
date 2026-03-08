@@ -1,7 +1,8 @@
 # Command Reference
 
-Curated reference for common cub-scout commands with usage examples.
+Curated reference for high-value cub-scout commands with usage examples.
 
+For the **complete alphabetical command index**, see [Complete CLI Reference (A-Z)](cli-reference.md).
 For the **exhaustive stable surface** (all contracted commands, flags, exit codes, and output schemas), see [CLI Contract Reference](cli-contract.md).
 
 ## Overview

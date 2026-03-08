@@ -236,165 +236,105 @@ watcher.RegisterResource(watcher.ResourceConfig{
 
 ---
 
-## 4. Webhooks (Planned)
+## 4. Webhooks (Available)
 
-> **Not Yet Implemented:** This feature is planned for a future release.
+Receive read-only observation events from `cub-scout` using `watch`.
 
-Receive real-time events from the Agent.
+### Command Surface
 
-### Configuration
-
-```yaml
-# config/webhooks.yaml
-webhooks:
-  - name: slack-alerts
-    url: https://hooks.slack.com/services/xxx
-    events:
-      - finding.created
-      - finding.resolved
-    filter:
-      severity: [critical, warning]
-
-  - name: custom-system
-    url: https://my-system.internal/webhook
-    events:
-      - entry.created
-      - entry.updated
-      - entry.deleted
-      - drift.detected
-      - drift.resolved
-    headers:
-      Authorization: Bearer ${WEBHOOK_TOKEN}
-    retry:
-      maxAttempts: 3
-      backoffSeconds: [1, 5, 30]
+```bash
+cub-scout watch --webhook <url> [flags]
 ```
+
+At least one destination is required:
+- `--webhook <url>`
+- and/or `--output-file <path>`
 
 ### Event Types
 
-| Event | Payload |
-|-------|---------|
-| `entry.created` | GSFEntry |
-| `entry.updated` | GSFEntry (before/after) |
-| `entry.deleted` | GSFEntry |
-| `drift.detected` | GSFEntry with drift |
-| `drift.resolved` | GSFEntry |
-| `finding.created` | GSFFinding |
-| `finding.resolved` | GSFFinding |
-| `relation.created` | GSFRelation |
-| `relation.deleted` | GSFRelation |
+| Event Type | Description |
+|------------|-------------|
+| `resource.discovered` | New or changed resource discovered |
+| `ownership.changed` | Ownership classification changed |
+| `drift.detected` | Drift signal detected |
+| `scan.finding` | Risk/issue finding emitted |
 
-### Webhook Payload
+### Event Payload (JSON)
 
 ```json
 {
-  "event": "finding.created",
-  "timestamp": "2025-01-02T18:30:00Z",
-  "cluster": "prod-east",
-  "data": {
-    "id": "RISK-2025-0027",
-    "severity": "critical",
-    "resource": "prod-east/monitoring/ConfigMap/grafana-sidecar",
-    "message": "Namespace whitespace in sidecar config"
+  "type": "scan.finding",
+  "timestamp": "2026-03-07T17:00:00Z",
+  "resource": {
+    "kind": "Deployment",
+    "name": "api",
+    "namespace": "prod"
+  },
+  "owner": {
+    "type": "Flux",
+    "name": "frontend-app"
+  },
+  "severity": "warning",
+  "details": {
+    "category": "STATE",
+    "message": "out of sync"
   }
 }
 ```
 
-### Using Webhooks
+### Usage Examples
 
-When implemented, webhooks will be configured via a YAML file.
+```bash
+# One deterministic collection cycle
+cub-scout watch --webhook http://127.0.0.1:8787/events --once
+
+# Continuous stream with filters
+cub-scout watch --webhook https://hooks.example.com/cub-scout --interval 30s --namespace prod --severity warning,critical
+
+# File sink only (JSONL)
+cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
+```
+
+See `docs/reference/commands.md` (`watch`) and `examples/watch-webhook/`.
 
 ---
 
-## 5. Output Plugins (Planned)
+## 5. Output Destinations (Current + Future)
 
-> **Not Yet Implemented:** This feature is planned for a future release.
+Current output and sink options are command-specific and deterministic.
 
-Send GSF output to custom destinations.
+### Available Today
 
-### Built-in Outputs
+| Surface | Output/Sink | Command |
+|---------|-------------|---------|
+| Core command output | `ascii`, `json`, `md` | Most commands (`--format`) |
+| Watch stream to webhook | HTTP POST events | `cub-scout watch --webhook ...` |
+| Watch stream to file | JSONL file sink | `cub-scout watch --output-file ...` |
+| Connected summary digest | Slack webhook | `cub-scout summary slack --webhook-url ...` |
 
-| Output | Flag | Description |
-|--------|------|-------------|
-| stdout | `--output=json` | JSON to stdout |
-| stdout | `--output=jsonl` | JSON Lines to stdout |
-| ConfigHub | `--output=confighub` | Stream to ConfigHub API |
-| File | `--output=file:./out.json` | Write to file |
-| Prometheus | `--metrics` | Expose /metrics endpoint |
+### Notes
 
-### Custom Output Plugin
+- `cub-scout` remains read-only for cluster state.
+- Connected workflows may write summary records to configured local summary storage.
+- File sink and webhook routing are available now; broader pluggable sink architecture remains follow-up work.
 
-```go
-// pkg/output/plugin.go
-
-type OutputPlugin interface {
-    Name() string
-    Init(config map[string]interface{}) error
-    Write(snapshot *GSFSnapshot) error
-    WriteEvent(event *GSFEvent) error
-    Close() error
-}
-```
-
-### Example: Kafka Output
-
-```go
-type KafkaOutput struct {
-    producer *kafka.Producer
-    topic    string
-}
-
-func (k *KafkaOutput) Name() string {
-    return "kafka"
-}
-
-func (k *KafkaOutput) Init(config map[string]interface{}) error {
-    k.topic = config["topic"].(string)
-    // Initialize Kafka producer
-    return nil
-}
-
-func (k *KafkaOutput) Write(snapshot *GSFSnapshot) error {
-    data, _ := json.Marshal(snapshot)
-    return k.producer.Produce(&kafka.Message{
-        TopicPartition: kafka.TopicPartition{Topic: &k.topic},
-        Value:          data,
-    }, nil)
-}
-```
-
-### Using Custom Output
-
-When implemented, custom output plugins will be configured via command-line flags.
+See `docs/reference/commands.md` (`watch`, `summary list`, `summary slack`) and `examples/connected-summary-storage/`.
 
 ---
 
-## 6. GraphQL API (Planned)
+## 6. GraphQL API (Future)
 
-A GraphQL API for flexible queries is planned:
+`cub-scout` does not currently expose a GraphQL server.
 
-```graphql
-query {
-  entries(
-    cluster: "prod-east"
-    owner: { type: "flux" }
-    status: DEGRADED
-  ) {
-    id
-    name
-    owner { type ref }
-    drift { detected fields { path desired live } }
-    relations { to { id } type }
-  }
+For automation today, use deterministic JSON from existing command surfaces:
 
-  findings(severity: [CRITICAL, WARNING]) {
-    id
-    severity
-    resource { id name namespace }
-    remediation
-  }
-}
+```bash
+cub-scout map list --json
+cub-scout trace deploy/api -n prod --format json
+cub-scout scan --json
 ```
+
+Then filter/transform with your normal tooling (`jq`, scripts, pipelines).
 
 ---
 

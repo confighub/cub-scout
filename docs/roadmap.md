@@ -328,9 +328,9 @@ See details:
 
 ---
 
-# What Is Left on the Roadmap
+# v1.x Roadmap Track
 
-Everything below is **new work**.
+Sections below include both shipped and future v1.x work.
 Nothing here represents unfinished 0.x promises.
 
 ---
@@ -522,7 +522,7 @@ Delivered:
 
 ## v1.4 — Discover & Connect
 
-**Status:** Planned
+**Status:** Released (delivered in v1.x line)
 **Theme:** *New user onboarding, immediate cluster value, and AI observation gateway*
 
 This milestone focuses on making cub-scout immediately useful to new users and positioning it as the read-only agentic observation layer for AI tools.
@@ -555,7 +555,7 @@ This milestone focuses on making cub-scout immediately useful to new users and p
 
 ## v1.5 — AI-Native Ops
 
-**Status:** Planned
+**Status:** Released (delivered in v1.x line)
 **Theme:** *AI tooling platform for Kubernetes and GitOps observation*
 
 ### MCP Architecture
@@ -584,7 +584,7 @@ while ConfigHub provides the durable backend and full MCP server capabilities.
 
 ## v1.6 — Connected Value
 
-**Status:** Planned
+**Status:** Released (delivered in v1.x line)
 **Theme:** *ConfigHub-powered insights that clusters cannot provide alone*
 
 This milestone delivers the "aha moment" for connected mode: what ConfigHub knows that your cluster API cannot tell you.

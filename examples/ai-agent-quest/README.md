@@ -40,8 +40,8 @@ understand your cluster."
 | Cursor, Windsurf | Shell execution of `./cub-scout` commands |
 | Any CLI-capable agent | Shell execution of `./cub-scout` commands |
 
-> **Note:** MCP gateway (`cub-scout mcp serve`) is planned for v1.4.
-> Until then, all AI tools connect via direct CLI execution, which works great.
+> **Note:** MCP gateway is available now via `cub-scout mcp serve`.
+> Direct CLI execution still works and remains the simplest default path.
 
 ### Execution Modes
 
