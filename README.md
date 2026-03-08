@@ -2,7 +2,7 @@
 
 **Offline-first. Deterministic. Cluster read-only.**
 
-cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It works standalone (no network required) or connected to [ConfigHub](https://confighub.com) for additional features. Outputs are deterministic and safe for automation.
+cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It works standalone (no network required) or connected to [ConfigHub](https://confighub.com) for additional features. Outputs are deterministic and safe for automation.  If this is your first visit, there an overview in the README below, and plenty of docs and examples, or try the [CLI GUIDE](CLI-GUIDE.md) to get a feeling of the areas we cover.
 
 Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues) or joining [Discord](https://discord-auth.confighub.net/discord/join) via ConfigHub signup.
 
