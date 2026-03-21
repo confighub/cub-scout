@@ -32,7 +32,9 @@ This file documents the safest stable inspection paths for
   - the expected Flux sources and deployers are present
   - connected readiness is checked when the live worker pid file is present
   - `cub-scout` status and ownership surfaces produce output
-- note: `./verify.sh` is a Slice 1 contract; it does not include `cub-scout scan`
+  - `cub-scout scan --state --json` yields a summary during verification
+  - scan evidence is reported either as findings-present or no-findings-observed
+  - scan evidence here stays separate from ConfigHub import/render proof
 
 ### `flux --context kind-flux-import-demo get all -A`
 
@@ -61,6 +63,19 @@ This file documents the safest stable inspection paths for
 - proves:
   - how live resources are grouped into Flux ownership chains
   - whether infrastructure and application paths are visible separately
+
+### `../../cub-scout scan --state --json`
+
+- mutates: no
+- output shape: JSON object
+- proves:
+  - scan summary data is available during `./verify.sh`
+  - Flux scan evidence can be surfaced as either a concrete finding or an explicit
+    no-findings contract
+  - runtime and controller findings remain separate from ConfigHub import/render proof
+- expected anchors:
+  - `.state.summary`
+  - `.state.findings` or `.state.runtimeFindings`
 
 ## Connected Contracts
 
@@ -98,5 +113,7 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
 
 Connected readiness does not, by itself, prove scan/finding evidence.
 
-Post-import `cub-scout scan` evidence is explicitly out of scope for this Slice 1
-contract.
+Scan/finding evidence does not, by itself, prove ConfigHub import/render success.
+
+This Flux Slice 2 contract includes scan/finding evidence in `./verify.sh`,
+with an explicit findings-or-no-findings boundary.

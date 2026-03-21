@@ -59,7 +59,7 @@ When you are done:
 - `./setup.sh --explain` and `./setup.sh --explain-json` are read-only
 - `./setup.sh` delegates to `./demo.sh --keep`
 - `./setup.sh --with-worker` delegates to `./demo.sh --keep --live`
-- `./verify.sh` is read-only and checks three evidence surfaces
+- `./verify.sh` is read-only and checks three evidence surfaces plus `cub-scout scan`
 - `./cleanup.sh` deletes the local kind cluster and stops the detached discovery worker if present
 - `./cleanup.sh` does not remove ConfigHub units or synthetic ChangeSets
 
@@ -84,6 +84,7 @@ cub-scout side:
 ```bash
 ../../cub-scout gitops status
 ../../cub-scout tree ownership
+../../cub-scout scan --state --json
 ```
 
 Use the evidence like this:
@@ -97,9 +98,13 @@ reconciliation. Compare all three surfaces when runtime truth matters.
 
 ## Current Boundary
 
-This Slice 1 path does **not** yet prove post-import scan/finding evidence.
+This Flux Slice 2 path includes `cub-scout scan` evidence in `./verify.sh`.
 
-`cub-scout scan` is still a follow-on slice, not part of `./verify.sh` yet.
+Important:
+
+- scan/finding evidence is still separate from ConfigHub import/render proof
+- `./verify.sh` may report either concrete findings or `scan_contract=no-findings-observed`
+- live kept-alive Flux verification should still be rerun after any fixture drift
 
 ## Related Files
 

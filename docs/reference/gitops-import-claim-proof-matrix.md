@@ -35,7 +35,7 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
 |---|---|---|---|---|---|---|---|
 | Published doc: [GitOps Import](https://docs.confighub.com/get-started/examples/gitops-import/) | GUI-first / official docs | Argo GitOps import into ConfigHub with worker-driven discovery/import; `cub gitops discover` and `cub gitops import` shown as CLI equivalents | Partial | Partial | No | No | Strong on import narrative, GUI-first, not a local AI-first walkthrough |
 | [`examples/argo-import-confighub-demo/README.md`](../../examples/argo-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Three-path Argo story: `cub gitops import`, `cub-scout import-argocd`, `cub-scout import` | Yes, when `--with-worker` is used | Yes, when `--with-worker` is used | Yes, as cluster and cub-scout evidence | Yes | Slice 2 landed for Argo: `verify.sh` now includes `cub-scout scan` summary plus sample finding without collapsing it into import/render proof |
-| [`examples/flux-import-confighub-demo/README.md`](../../examples/flux-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Flux import plus D2 ownership/discovery story: `cub gitops import`, `cub-scout import`, `tree`, `trace` | Yes, when `--with-worker` is used | Yes, when `--with-worker` is used | No | Yes | Slice 1 landed: local AI-first wrapper path added around existing five-act demo |
+| [`examples/flux-import-confighub-demo/README.md`](../../examples/flux-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Flux import plus D2 ownership/discovery story: `cub gitops import`, `cub-scout import`, `tree`, `trace` | Yes, when `--with-worker` is used | Yes, when `--with-worker` is used | Partial | Yes | Slice 2 contract added for Flux: `verify.sh` now includes `cub-scout scan` summary with findings-or-no-findings reporting, but this matrix still counts it as partial until a live kept-alive Flux run is captured |
 | [`docs/howto/import-to-confighub.md`](../../docs/howto/import-to-confighub.md) | Canonical how-to | Canonical import path; `cub-scout import` may delegate Argo/Flux to `cub gitops import` | Implied | Implied | No | No | Strong migration framing, but not a demo proof path |
 | [`docs/howto/import-from-live.md`](../../docs/howto/import-from-live.md) | Canonical how-to | Cluster-first import; Argo/Flux workloads may delegate to `cub gitops import` when targets exist | Implied | Implied | No | No | Useful for discovery framing, not evidence-rich after import |
 
@@ -52,6 +52,8 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
 - The demos explicitly separate cluster, ConfigHub, and cub-scout evidence.
 - The Argo AI-first verify path now includes real `cub-scout scan` evidence with
   summary output and a sample finding.
+- The Flux AI-first verify path now includes a `cub-scout scan` contract with
+  explicit findings-or-no-findings reporting.
 
 ### What is still only partial or implied
 
@@ -61,21 +63,21 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
   proof harnesses.
 - The demos still rely on `demo.sh` as the narrated human walkthrough, with
   `setup.sh` and `verify.sh` layered alongside it rather than replacing it.
+- The Flux scan contract has unit coverage, but this matrix does not yet count it
+  as fully proved until a live kept-alive Flux run is captured.
 
 ### What is not yet proved
 
-- Flux does not yet prove post-import `cub-scout scan` as part of the main
-  scripted verification path.
 - The how-to docs and published doc do not yet expose the same scan/finding
   proof path as the local Argo demo.
-- There is no explicit "no finding" contract yet for fixtures that scan cleanly.
+- The how-to docs and published doc do not yet expose an explicit no-finding
+  contract for fixtures that scan cleanly.
 
 ## Recommended Next Slice
 
-Start with Flux for the next post-import scan/finding path:
+Finish the Flux proof path, then widen docs parity:
 
-1. run `cub-scout scan` against the existing kept-alive Flux demo cluster
-2. record what it produces with current fixtures
-3. if it is empty, decide whether Flux gets a deterministic finding fixture or an explicit no-finding contract
-4. extend the Flux `verify.sh` and `contracts.md` honestly
-5. only then widen the story across the how-to docs and published doc
+1. run `cub-scout scan` against a kept-alive Flux demo cluster and record the real output
+2. decide whether Flux should keep the no-findings contract or tighten to a deterministic finding
+3. update this matrix from Partial to Yes only after that live run
+4. then widen the story across the how-to docs and published doc

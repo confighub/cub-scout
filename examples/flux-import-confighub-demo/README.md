@@ -56,8 +56,9 @@ Clean up explicitly when you are done:
 ```
 
 Important boundary: `./verify.sh` checks cluster, ConfigHub, and `cub-scout`
-evidence surfaces, but it does **not** yet prove post-import `cub-scout scan`
-findings. That remains a follow-on slice.
+evidence surfaces and now includes a `cub-scout scan` summary. That scan
+evidence stays separate from proving ConfigHub import/render success, and the
+script may report either concrete findings or an explicit no-findings contract.
 
 ## Human Demo Quick Start
 
@@ -544,6 +545,19 @@ The brownfield HelmRelease references a HelmRepository (`jetstack`) that
 doesn't exist in the cluster. The trace shows this failure, which is
 expected behavior -- it demonstrates graceful degradation on missing chain
 links.
+
+**`./verify.sh` shows `scan_contract=no-findings-observed`**
+That is an explicit scan contract, not a failure. It means `cub-scout scan`
+returned summary data for the kept-alive cluster but no current findings.
+
+Inspect the raw scan output with:
+
+```bash
+./cub-scout scan --state --json
+```
+
+If the demo is expected to show a deterministic finding and does not, treat
+that as fixture drift before changing the docs to overclaim a finding path.
 
 ## Repeatable Import Check
 

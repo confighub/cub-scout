@@ -209,9 +209,33 @@ if [[ "$1" == "tree" && "$2" == "ownership" ]]; then
   echo "Ownership Hierarchy"
   exit 0
 fi
+if [[ "$1" == "scan" && "$2" == "--state" && "$3" == "--json" ]]; then
+  cat "$MOCK_SCAN_JSON"
+  exit 0
+fi
 echo "unexpected cub-scout args: $*" >&2
 exit 2
 `)
+
+	scanJSON := filepath.Join(tmpDir, "scan.json")
+	mustWriteFluxDemo(t, scanJSON, `{
+	  "state": {
+	    "findings": [
+	      {
+	        "ccveId": "CCVE-2025-0169",
+	        "namespace": "flux-system",
+	        "kind": "Kustomization",
+	        "name": "apps"
+	      }
+	    ],
+	    "runtimeFindings": [],
+	    "summary": {
+	      "applicationStuck": 0,
+	      "runtimeFailures": 0,
+	      "total": 1
+	    }
+	  }
+	}`)
 
 	cmd := exec.Command("bash", scriptPath)
 	cmd.Env = append(os.Environ(),
@@ -219,6 +243,7 @@ exit 2
 		"MOCK_WORKER_JSON="+workerJSON,
 		"MOCK_TARGET_JSON="+targetJSON,
 		"MOCK_IMPORT_JSON="+importJSON,
+		"MOCK_SCAN_JSON="+scanJSON,
 		"CUB_SCOUT_BIN="+filepath.Join(mockBinDir, "cub-scout"),
 		"PATH="+mockBinDir+string(os.PathListSeparator)+os.Getenv("PATH"),
 	)
@@ -235,8 +260,133 @@ exit 2
 		"PASS connected demo readiness",
 		"Checking cub-scout gitops status",
 		"Checking cub-scout tree ownership",
+		"Checking cub-scout scan evidence",
+		"scan_contract=findings-present",
+		"scan_sample=CCVE-2025-0169 flux-system/Kustomization/apps",
 		"Verification completed.",
 		"three evidence surfaces",
+	} {
+		if !strings.Contains(output, needle) {
+			t.Fatalf("verify output missing %q:\n%s", needle, output)
+		}
+	}
+}
+
+func TestFluxImportVerifyScript_ReportsNoFindingsContract(t *testing.T) {
+	scriptPath := filepath.Join("..", "..", "examples", "flux-import-confighub-demo", "verify.sh")
+	if _, err := os.Stat(scriptPath); err != nil {
+		t.Fatalf("verify script missing: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	mockBinDir := filepath.Join(tmpDir, "bin")
+	if err := os.MkdirAll(mockBinDir, 0o755); err != nil {
+		t.Fatalf("mkdir mock bin: %v", err)
+	}
+
+	writeExecutableFluxDemo(t, filepath.Join(mockBinDir, "kubectl"), `#!/usr/bin/env bash
+set -euo pipefail
+case "$*" in
+  *"get nodes"*)
+    exit 0
+    ;;
+  *"get namespace flux-system"*)
+    exit 0
+    ;;
+  *"get gitrepositories,kustomizations,helmreleases -A"*)
+    echo "NAMESPACE NAME"
+    exit 0
+    ;;
+  *"get gitrepository/podinfo -n flux-system"*)
+    exit 0
+    ;;
+  *"get gitrepository/platform-config -n flux-system"*)
+    exit 0
+    ;;
+  *"get kustomization/podinfo -n flux-system"*)
+    exit 0
+    ;;
+  *"get kustomization/infrastructure -n flux-system"*)
+    exit 0
+    ;;
+  *"get kustomization/apps -n flux-system"*)
+    exit 0
+    ;;
+  *"get kustomization/payment-api -n flux-system"*)
+    exit 0
+    ;;
+  *"get kustomization/frontend -n flux-system"*)
+    exit 0
+    ;;
+  *"get helmrelease/cert-manager -n cert-manager"*)
+    exit 0
+    ;;
+  *"get helmrelease/monitoring -n monitoring"*)
+    exit 0
+    ;;
+esac
+echo "unexpected kubectl args: $*" >&2
+exit 2
+`)
+
+	writeExecutableFluxDemo(t, filepath.Join(mockBinDir, "flux"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$*" == *"get all -A"* ]]; then
+  echo "NAME READY MESSAGE"
+  exit 0
+fi
+echo "unexpected flux args: $*" >&2
+exit 2
+`)
+
+	writeExecutableFluxDemo(t, filepath.Join(mockBinDir, "cub-scout"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "gitops" && "$2" == "status" ]]; then
+  echo "GITOPS STATUS"
+  exit 0
+fi
+if [[ "$1" == "tree" && "$2" == "ownership" ]]; then
+  echo "Ownership Hierarchy"
+  exit 0
+fi
+if [[ "$1" == "scan" && "$2" == "--state" && "$3" == "--json" ]]; then
+  cat "$MOCK_SCAN_JSON"
+  exit 0
+fi
+echo "unexpected cub-scout args: $*" >&2
+exit 2
+`)
+
+	scanJSON := filepath.Join(tmpDir, "scan-empty.json")
+	mustWriteFluxDemo(t, scanJSON, `{
+	  "state": {
+	    "findings": [],
+	    "runtimeFindings": [],
+	    "summary": {
+	      "applicationStuck": 0,
+	      "runtimeFailures": 0,
+	      "total": 0
+	    }
+	  }
+	}`)
+
+	cmd := exec.Command("bash", scriptPath)
+	cmd.Env = append(os.Environ(),
+		"TMPDIR="+tmpDir,
+		"MOCK_SCAN_JSON="+scanJSON,
+		"CUB_SCOUT_BIN="+filepath.Join(mockBinDir, "cub-scout"),
+		"PATH="+mockBinDir+string(os.PathListSeparator)+os.Getenv("PATH"),
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("verify.sh failed unexpectedly:\n%s", string(out))
+	}
+
+	output := string(out)
+	for _, needle := range []string{
+		"Checking cub-scout scan evidence",
+		"scan_contract=no-findings-observed",
+		"Verification completed.",
 	} {
 		if !strings.Contains(output, needle) {
 			t.Fatalf("verify output missing %q:\n%s", needle, output)
