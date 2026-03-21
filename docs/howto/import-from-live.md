@@ -82,6 +82,19 @@ Typical path:
 
 See [Import to ConfigHub](import-to-confighub.md) for the full migration path, or [Migration Playbook](migration-playbook.md) for the comprehensive guide.
 
+If you want a scriptable proof path after import rather than a generic flow,
+use the local AI-first demos:
+
+- [ArgoCD Import Demo](../../examples/argo-import-confighub-demo/) uses
+  `./setup.sh` and `./verify.sh` to prove cluster, ConfigHub, and cub-scout
+  surfaces, and currently yields a sample scan finding.
+- [Flux Import Demo](../../examples/flux-import-confighub-demo/) uses the same
+  `./setup.sh` and `./verify.sh` structure, and currently proves a clean-scan
+  boundary with `scan_contract=no-findings-observed`.
+
+These are proof harnesses for the bundled demo environments, not a promise that
+every live cluster will show the same scan outcome.
+
 ## Worked Example
 
 See [examples/import-from-live/](../../examples/import-from-live/) for a complete worked example with fixture manifests and expected JSON output.

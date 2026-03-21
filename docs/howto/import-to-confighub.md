@@ -108,6 +108,20 @@ Success criteria:
 - workload ownership context is still coherent
 - no unexpected resource drift
 
+If you need a repeatable proof harness rather than a generic checklist, use the
+local AI-first demos:
+
+- [ArgoCD Import Demo](../../examples/argo-import-confighub-demo/) with
+  `./setup.sh` then `./verify.sh` proves cluster, ConfigHub, and cub-scout
+  surfaces and currently shows a sample `cub-scout scan` finding.
+- [Flux Import Demo](../../examples/flux-import-confighub-demo/) with
+  `./setup.sh` then `./verify.sh` proves the same three surfaces and currently
+  shows an explicit `scan_contract=no-findings-observed` boundary on clean scan
+  output.
+
+Those demo proof paths are environment-specific examples. Do not generalize a
+single demo scan outcome into a universal import success criterion.
+
 ### 5. Keep Existing Deployer During Validation
 
 Do not immediately remove Argo/Helm control. First validate that ConfigHub state is correct.
