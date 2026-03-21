@@ -25,6 +25,7 @@ Notes:
   - Cluster evidence is always checked.
   - ConfigHub evidence is checked when the live worker pid file is present.
   - cub-scout evidence is checked from the repo-root cub-scout binary when available.
+  - Scan evidence summarizes current cub-scout findings without claiming ConfigHub import success.
 USAGE
 }
 
@@ -137,6 +138,86 @@ if [[ -z "${map_output//[[:space:]]/}" ]]; then
 fi
 printf '%s\n' "$map_output"
 
+echo "==> Checking cub-scout scan evidence"
+command -v python3 >/dev/null 2>&1 || fail "python3 is required to summarize cub-scout scan JSON"
+
+scan_json_file="$(mktemp)"
+"$CUB_SCOUT" scan --state --json >"$scan_json_file" || {
+    rm -f "$scan_json_file"
+    fail "cub-scout scan --state --json failed"
+}
+
+scan_report="$(python3 - "$scan_json_file" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as handle:
+    payload = json.load(handle)
+
+state = payload.get("state") or {}
+findings = state.get("findings") or []
+runtime_findings = state.get("runtimeFindings") or []
+summary = state.get("summary") or {}
+sample = findings[0] if findings else runtime_findings[0] if runtime_findings else {}
+
+sample_parts = []
+ccve_id = sample.get("ccveId")
+if ccve_id:
+    sample_parts.append(str(ccve_id))
+
+sample_ref_parts = [sample.get("namespace"), sample.get("kind"), sample.get("name")]
+sample_ref = "/".join(str(part) for part in sample_ref_parts if part)
+if sample_ref:
+    sample_parts.append(sample_ref)
+
+rows = [
+    ("scan_findings", len(findings)),
+    ("scan_runtime_findings", len(runtime_findings)),
+    ("scan_summary_application_stuck", summary.get("applicationStuck", 0)),
+    ("scan_summary_runtime_failures", summary.get("runtimeFailures", 0)),
+    ("scan_summary_total", summary.get("total", 0)),
+    ("scan_sample", " ".join(sample_parts)),
+]
+
+for key, value in rows:
+    print(f"{key}\t{value}")
+PY
+)"
+rm -f "$scan_json_file"
+
+scan_findings=0
+scan_runtime_findings=0
+scan_summary_application_stuck=0
+scan_summary_runtime_failures=0
+scan_summary_total=0
+scan_sample=""
+
+while IFS=$'\t' read -r key value; do
+    case "$key" in
+        scan_findings) scan_findings="$value" ;;
+        scan_runtime_findings) scan_runtime_findings="$value" ;;
+        scan_summary_application_stuck) scan_summary_application_stuck="$value" ;;
+        scan_summary_runtime_failures) scan_summary_runtime_failures="$value" ;;
+        scan_summary_total) scan_summary_total="$value" ;;
+        scan_sample) scan_sample="$value" ;;
+    esac
+done <<<"$scan_report"
+
+if (( scan_findings == 0 && scan_runtime_findings == 0 )); then
+    fail "cub-scout scan produced no findings or runtimeFindings for the current Argo demo cluster"
+fi
+
+printf 'scan_findings=%s\n' "$scan_findings"
+printf 'scan_runtime_findings=%s\n' "$scan_runtime_findings"
+printf 'scan_summary_application_stuck=%s\n' "$scan_summary_application_stuck"
+printf 'scan_summary_runtime_failures=%s\n' "$scan_summary_runtime_failures"
+printf 'scan_summary_total=%s\n' "$scan_summary_total"
+if [[ -n "$scan_sample" ]]; then
+    printf 'scan_sample=%s\n' "$scan_sample"
+fi
+
 echo "Verification completed."
 echo "This verifies three evidence surfaces: cluster, ConfigHub, and cub-scout."
-echo "Post-import scan/finding evidence is not part of this verify contract yet."
+echo "Scan/finding evidence is included here as cluster and cub-scout evidence."
+echo "It does not, by itself, prove ConfigHub import/render success."

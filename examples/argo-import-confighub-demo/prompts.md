@@ -49,7 +49,7 @@ If I want ConfigHub import too, switch to:
 Keep `demo.sh` as the narrated human path, but use `setup.sh`/`verify.sh` as the
 AI-first path.
 
-## 3. Verify The Import
+## 3. Verify The Import And Scan
 
 After the example is running, verify:
 
@@ -61,11 +61,15 @@ After the example is running, verify:
 - imported units are listable if connected mode was used
 - connected readiness is checked without overclaiming live reconciliation
 - `cub-scout` status and ownership views are shown separately from ConfigHub
+ - `cub-scout scan` output is shown with a summary and one sample finding
 
 Separate cluster evidence, ConfigHub evidence, and cub-scout evidence in the
 final summary.
 
-## 4. Call Out The Current Gap
+Do not treat scan/finding evidence as proof that ConfigHub import/render
+succeeded.
+
+## 4. Call Out The Remaining Gap
 
 Evaluate this example honestly.
 
@@ -75,4 +79,6 @@ Say whether post-import `cub-scout scan` evidence is:
 - only explorable manually
 - or still missing from the scripted story
 
-Do not imply that scan/finding evidence is part of `./verify.sh` if it is not.
+For this Argo example, note that `./verify.sh` now includes scan/finding
+evidence. Then call out what is still missing elsewhere or still separate from
+import/render proof.

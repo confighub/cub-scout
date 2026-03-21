@@ -56,8 +56,9 @@ Clean up explicitly when you are done:
 ```
 
 Important boundary: `./verify.sh` checks cluster, ConfigHub, and `cub-scout`
-evidence surfaces, but it does **not** yet prove post-import `cub-scout scan`
-findings. That remains a follow-on slice.
+evidence surfaces and now includes a `cub-scout scan` summary plus a sample
+finding. That scan evidence is still separate from proving ConfigHub
+import/render success.
 
 ## Human Demo Quick Start
 
@@ -632,6 +633,19 @@ The discovery worker runs locally and connects to ConfigHub. The renderer
 worker runs in-cluster and also connects to ConfigHub. Both need network
 access to your ConfigHub instance. Check firewall rules and
 `CONFIGHUB_URL` reachability from inside the kind cluster.
+
+**`./verify.sh` fails because scan returned no findings**
+This Argo demo currently expects at least one `cub-scout scan` finding or
+runtime finding from the brownfield fixtures. If the cluster is unexpectedly
+clean, inspect:
+
+```bash
+./cub-scout scan --state --json
+kubectl --context kind-argo-import-demo get pods -A
+```
+
+Treat that as a demo drift signal and update the scan contract before changing
+the docs to claim scan evidence.
 
 ## Repeatable Import Check
 

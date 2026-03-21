@@ -32,7 +32,9 @@ This file documents the safest stable inspection paths for
   - the expected ArgoCD Applications are present
   - connected readiness is checked when the live worker pid file is present
   - `cub-scout` status and ownership surfaces produce output
-- note: `./verify.sh` is a Slice 1 contract; it does not include `cub-scout scan`
+  - `cub-scout scan --state --json` yields at least one finding or runtime finding
+  - a scan summary and sample finding can be surfaced without overclaiming import success
+  - note: scan evidence here is cluster and cub-scout evidence, not ConfigHub import/render proof
 
 ### `kubectl --context kind-argo-import-demo get applications -n argocd`
 
@@ -56,6 +58,18 @@ This file documents the safest stable inspection paths for
 - proves:
   - how live resources are classified by ownership
   - whether a workload appears Argo-managed, Helm-managed, or Native
+
+### `../../cub-scout scan --state --json`
+
+- mutates: no
+- output shape: JSON object
+- proves:
+  - the current Argo demo fixtures surface at least one `findings` or `runtimeFindings` entry
+  - scan summaries can be reported in a stable way during `./verify.sh`
+  - runtime failures stay distinct from ConfigHub import/render evidence
+- expected anchors:
+  - `.state.summary`
+  - `.state.findings` or `.state.runtimeFindings`
 
 ## Connected Contracts
 
@@ -93,5 +107,8 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
 
 Connected readiness does not, by itself, prove scan/finding evidence.
 
-Post-import `cub-scout scan` evidence is explicitly out of scope for this Slice 1
-contract.
+Scan/finding evidence does not, by itself, prove ConfigHub import/render success.
+
+This Argo Slice 2 contract now includes scan/finding evidence in `./verify.sh`,
+but that evidence remains separate from connected readiness and import/render
+proof.

@@ -60,7 +60,7 @@ When you are done:
 - `./setup.sh --explain` and `./setup.sh --explain-json` are read-only
 - `./setup.sh` delegates to `./demo.sh --keep`
 - `./setup.sh --with-worker` delegates to `./demo.sh --keep --live`
-- `./verify.sh` is read-only and checks three evidence surfaces
+- `./verify.sh` is read-only and checks three evidence surfaces plus `cub-scout scan`
 - `./cleanup.sh` deletes the local kind cluster and stops the detached discovery worker if present
 - `./cleanup.sh` does not remove ConfigHub units or synthetic ChangeSets
 
@@ -85,6 +85,7 @@ cub-scout side:
 ```bash
 ../../cub-scout gitops status
 ../../cub-scout map list
+../../cub-scout scan --state --json
 ```
 
 Use the evidence like this:
@@ -98,9 +99,13 @@ reconciliation. Compare all three surfaces when runtime truth matters.
 
 ## Current Boundary
 
-This Slice 1 path does **not** yet prove post-import scan/finding evidence.
+This Argo Slice 2 path now includes `cub-scout scan` evidence in `./verify.sh`.
 
-`cub-scout scan` is still a follow-on slice, not part of `./verify.sh` yet.
+Important:
+
+- scan/finding evidence is still separate from ConfigHub import/render proof
+- the current scripted scan evidence is local to the Argo demo
+- parity across Flux, the how-to docs, and the published doc is still a follow-on slice
 
 ## Related Files
 

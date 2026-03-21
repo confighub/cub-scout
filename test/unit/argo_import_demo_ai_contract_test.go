@@ -189,9 +189,33 @@ if [[ "$1" == "map" && "$2" == "list" ]]; then
   echo "NAMESPACE KIND NAME OWNER"
   exit 0
 fi
+if [[ "$1" == "scan" && "$2" == "--state" && "$3" == "--json" ]]; then
+  cat "$MOCK_SCAN_JSON"
+  exit 0
+fi
 echo "unexpected cub-scout args: $*" >&2
 exit 2
 `)
+
+	scanJSON := filepath.Join(tmpDir, "scan.json")
+	mustWriteArgoDemo(t, scanJSON, `{
+	  "state": {
+	    "findings": [],
+	    "runtimeFindings": [
+	      {
+	        "ccveId": "CCVE-2025-0690",
+	        "namespace": "myapp-dev",
+	        "kind": "Pod",
+	        "name": "api-12345"
+	      }
+	    ],
+	    "summary": {
+	      "applicationStuck": 0,
+	      "runtimeFailures": 1,
+	      "total": 0
+	    }
+	  }
+	}`)
 
 	cmd := exec.Command("bash", scriptPath)
 	cmd.Env = append(os.Environ(),
@@ -199,6 +223,7 @@ exit 2
 		"MOCK_WORKER_JSON="+workerJSON,
 		"MOCK_TARGET_JSON="+targetJSON,
 		"MOCK_IMPORT_JSON="+importJSON,
+		"MOCK_SCAN_JSON="+scanJSON,
 		"CUB_SCOUT_BIN="+filepath.Join(mockBinDir, "cub-scout"),
 		"PATH="+mockBinDir+string(os.PathListSeparator)+os.Getenv("PATH"),
 	)
@@ -214,12 +239,110 @@ exit 2
 		"PASS connected demo readiness",
 		"Checking cub-scout gitops status",
 		"Checking cub-scout map list",
+		"Checking cub-scout scan evidence",
+		"scan_runtime_findings=1",
+		"scan_sample=CCVE-2025-0690 myapp-dev/Pod/api-12345",
 		"Verification completed.",
 		"three evidence surfaces",
 	} {
 		if !strings.Contains(output, needle) {
 			t.Fatalf("verify output missing %q:\n%s", needle, output)
 		}
+	}
+}
+
+func TestArgoImportVerifyScript_FailsWhenScanEvidenceIsEmpty(t *testing.T) {
+	scriptPath := filepath.Join("..", "..", "examples", "argo-import-confighub-demo", "verify.sh")
+	if _, err := os.Stat(scriptPath); err != nil {
+		t.Fatalf("verify script missing: %v", err)
+	}
+
+	tmpDir := t.TempDir()
+	mockBinDir := filepath.Join(tmpDir, "bin")
+	if err := os.MkdirAll(mockBinDir, 0o755); err != nil {
+		t.Fatalf("mkdir mock bin: %v", err)
+	}
+
+	writeExecutableArgoDemo(t, filepath.Join(mockBinDir, "kubectl"), `#!/usr/bin/env bash
+set -euo pipefail
+case "$*" in
+  *"get nodes"*)
+    exit 0
+    ;;
+  *"get namespace argocd"*)
+    exit 0
+    ;;
+  *"get application helm-guestbook -n argocd"*)
+    exit 0
+    ;;
+  *"get application kustomize-guestbook -n argocd"*)
+    exit 0
+    ;;
+  *"get application myapp-dev -n argocd"*)
+    exit 0
+    ;;
+  *"get application myapp-staging -n argocd"*)
+    exit 0
+    ;;
+  *"get application myapp-prod -n argocd"*)
+    exit 0
+    ;;
+  *"get applications -n argocd"*)
+    echo "NAME                 SYNCED"
+    echo "helm-guestbook       True"
+    exit 0
+    ;;
+esac
+echo "unexpected kubectl args: $*" >&2
+exit 2
+`)
+
+	writeExecutableArgoDemo(t, filepath.Join(mockBinDir, "cub-scout"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "gitops" && "$2" == "status" ]]; then
+  echo "GITOPS STATUS"
+  exit 0
+fi
+if [[ "$1" == "map" && "$2" == "list" ]]; then
+  echo "NAMESPACE KIND NAME OWNER"
+  exit 0
+fi
+if [[ "$1" == "scan" && "$2" == "--state" && "$3" == "--json" ]]; then
+  cat "$MOCK_SCAN_JSON"
+  exit 0
+fi
+echo "unexpected cub-scout args: $*" >&2
+exit 2
+`)
+
+	scanJSON := filepath.Join(tmpDir, "scan-empty.json")
+	mustWriteArgoDemo(t, scanJSON, `{
+	  "state": {
+	    "findings": [],
+	    "runtimeFindings": [],
+	    "summary": {
+	      "applicationStuck": 0,
+	      "runtimeFailures": 0,
+	      "total": 0
+	    }
+	  }
+	}`)
+
+	cmd := exec.Command("bash", scriptPath)
+	cmd.Env = append(os.Environ(),
+		"TMPDIR="+tmpDir,
+		"MOCK_SCAN_JSON="+scanJSON,
+		"CUB_SCOUT_BIN="+filepath.Join(mockBinDir, "cub-scout"),
+		"PATH="+mockBinDir+string(os.PathListSeparator)+os.Getenv("PATH"),
+	)
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("verify.sh unexpectedly succeeded:\n%s", string(out))
+	}
+
+	output := string(out)
+	if !strings.Contains(output, "cub-scout scan produced no findings or runtimeFindings") {
+		t.Fatalf("verify output missing empty scan failure:\n%s", output)
 	}
 }
 
