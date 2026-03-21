@@ -7,7 +7,59 @@ against a kind cluster with real ArgoCD to show how they complement each other.
 while the cub-scout tools provide quick discovery and catch resources outside
 ArgoCD's scope.
 
-## Quick Start
+## AI-First Files
+
+This example now has a local AI-first path alongside the narrated `demo.sh` path:
+
+- [`AI_START_HERE.md`](./AI_START_HERE.md)
+- [`prompts.md`](./prompts.md)
+- [`contracts.md`](./contracts.md)
+- `./setup.sh`
+- `./verify.sh`
+- `./cleanup.sh`
+
+Use those files if you want the incubator-style structure without rewriting the
+existing five-act demo.
+
+## Read-Only First
+
+Preview the AI-first path before you mutate anything:
+
+```bash
+./setup.sh --explain
+./setup.sh --explain-json
+```
+
+These commands do not create a cluster and do not create ConfigHub state.
+
+## AI-First Quick Start
+
+Cluster plus walkthrough, while keeping the cluster running for verification:
+
+```bash
+./setup.sh
+./verify.sh
+```
+
+Cluster plus connected import path:
+
+```bash
+cub auth login
+./setup.sh --with-worker
+./verify.sh
+```
+
+Clean up explicitly when you are done:
+
+```bash
+./cleanup.sh
+```
+
+Important boundary: `./verify.sh` checks cluster, ConfigHub, and `cub-scout`
+evidence surfaces, but it does **not** yet prove post-import `cub-scout scan`
+findings. That remains a follow-on slice.
+
+## Human Demo Quick Start
 
 ```bash
 # Observe only (no ConfigHub changes, ~5 min)
