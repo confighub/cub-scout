@@ -92,15 +92,6 @@ func TestArgoImportVerifyScript_SucceedsWithMockedEvidenceSurfaces(t *testing.T)
 		t.Fatalf("mkdir mock bin: %v", err)
 	}
 
-	workerDir := filepath.Join(tmpDir, "cub-scout-demo-workers")
-	if err := os.MkdirAll(workerDir, 0o755); err != nil {
-		t.Fatalf("mkdir worker dir: %v", err)
-	}
-	pidFile := filepath.Join(workerDir, "argo-import-demo-discovery-worker.pid")
-	if err := os.WriteFile(pidFile, []byte("12345\n"), 0o644); err != nil {
-		t.Fatalf("write pid file: %v", err)
-	}
-
 	workerJSON := filepath.Join(tmpDir, "workers.json")
 	targetJSON := filepath.Join(tmpDir, "targets.json")
 	unitJSON := filepath.Join(tmpDir, "units.json")
@@ -156,6 +147,10 @@ exit 2
 set -euo pipefail
 if [[ "$1" == "auth" && "$2" == "get-token" ]]; then
   echo "token"
+  exit 0
+fi
+if [[ "$1" == "space" && "$2" == "get" && "$*" == *"--json"* ]]; then
+  echo '{"Space":{"Slug":"argo-import-demo"}}'
   exit 0
 fi
 if [[ "$1" == "worker" && "$2" == "list" && "$*" == *"--json"* ]]; then
@@ -245,6 +240,7 @@ exit 2
 	output := string(out)
 	for _, needle := range []string{
 		"Checking cluster connectivity",
+		"ConfigHub space found without local worker pid file",
 		"Checking ConfigHub evidence",
 		"PASS connected demo readiness",
 		"Checking cub-scout gitops status",
@@ -304,6 +300,18 @@ case "$*" in
     ;;
 esac
 echo "unexpected kubectl args: $*" >&2
+exit 2
+`)
+
+	writeExecutableArgoDemo(t, filepath.Join(mockBinDir, "cub"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "auth" && "$2" == "get-token" ]]; then
+  exit 1
+fi
+if [[ "$1" == "space" && "$2" == "get" ]]; then
+  exit 1
+fi
+echo "unexpected cub args: $*" >&2
 exit 2
 `)
 

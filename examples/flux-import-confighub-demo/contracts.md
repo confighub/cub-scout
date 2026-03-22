@@ -30,7 +30,8 @@ This file documents the safest stable inspection paths for
   - the kind cluster is reachable
   - the `flux-system` namespace exists
   - the expected Flux sources and deployers are present
-  - connected readiness is checked when the live worker pid file is present
+  - connected readiness is checked when the live demo space exists, even if the
+    local worker pid file is missing
   - `cub-scout` status and ownership surfaces produce output
   - `cub-scout scan --state --json` yields a summary during verification
   - scan evidence is reported either as findings-present or no-findings-observed

@@ -331,18 +331,22 @@ if $LIVE; then
     # Get ArgoCD auth token
     step "Getting ArgoCD auth token..."
     ARGOCD_ADMIN_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
-    ARGOCD_TOKEN_MAX_ATTEMPTS=60
+    ARGOCD_TOKEN_MAX_ATTEMPTS=18
+    ARGOCD_TOKEN_PORT_FORWARD_SETTLE_SECONDS=8
     ARGOCD_TOKEN_RETRY_SECONDS=2
     ARGOCD_TOKEN_PORT_FORWARD_LOG="$(mktemp)"
     note "Retrying the HTTPS session endpoint while argocd-server becomes reachable"
 
     ARGOCD_TOKEN=""
+    LAST_ARGOCD_SERVER_STATE=""
     for i in $(seq 1 "$ARGOCD_TOKEN_MAX_ATTEMPTS"); do
+        LAST_ARGOCD_SERVER_STATE="$(kubectl -n argocd get pod -l app.kubernetes.io/name=argocd-server \
+            -o jsonpath='{range .items[0]}{.metadata.name} phase={.status.phase} ready={.status.containerStatuses[0].ready} restarts={.status.containerStatuses[0].restartCount}{end}' 2>/dev/null || true)"
         kubectl -n argocd port-forward svc/argocd-server 8888:443 >"$ARGOCD_TOKEN_PORT_FORWARD_LOG" 2>&1 &
         PORT_FORWARD_PID=$!
-        sleep 2
+        sleep "$ARGOCD_TOKEN_PORT_FORWARD_SETTLE_SECONDS"
 
-        RESPONSE=$(curl -sk -H "Content-Type: application/json" "https://localhost:8888/api/v1/session" \
+        RESPONSE=$(curl -sk --max-time 5 -H "Content-Type: application/json" "https://localhost:8888/api/v1/session" \
             -d "{\"username\":\"admin\",\"password\":\"${ARGOCD_ADMIN_PASSWORD}\"}" 2>/dev/null || true)
         if [ -n "$RESPONSE" ]; then
             ARGOCD_TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))" 2>/dev/null || true)
@@ -371,6 +375,9 @@ if $LIVE; then
         warn "Could not get ArgoCD token after ${ARGOCD_TOKEN_MAX_ATTEMPTS} attempts - skipping cub gitops import"
         if [[ -n "$LAST_PORT_FORWARD_STATUS" ]]; then
             note "Last port-forward status: $LAST_PORT_FORWARD_STATUS"
+        fi
+        if [[ -n "$LAST_ARGOCD_SERVER_STATE" ]]; then
+            note "Last argocd-server state: $LAST_ARGOCD_SERVER_STATE"
         fi
         warn "The demo still shows Acts 1-3"
     else

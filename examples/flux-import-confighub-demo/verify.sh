@@ -23,7 +23,8 @@ Options:
 
 Notes:
   - Cluster evidence is always checked.
-  - ConfigHub evidence is checked when the live worker pid file is present.
+  - ConfigHub evidence is checked when the live demo space exists, even if the
+    local worker pid file is missing.
   - cub-scout evidence is checked from the repo-root cub-scout binary when available.
   - Scan evidence summarizes current cub-scout findings and reports an explicit
     no-findings contract when the cluster scans cleanly.
@@ -112,10 +113,28 @@ command -v flux >/dev/null 2>&1 || fail "flux CLI not found"
 flux --context "$KUBE_CONTEXT" get all -A >/dev/null 2>&1 || fail "flux get all -A failed"
 flux --context "$KUBE_CONTEXT" get all -A
 
-if [[ -f "$DISCOVERY_WORKER_PID_FILE" ]]; then
+config_hub_evidence_available=false
+config_hub_space_present=false
+
+if command -v cub >/dev/null 2>&1; then
+    if cub auth get-token >/dev/null 2>&1; then
+        if cub space get "$SPACE" --json >/dev/null 2>&1; then
+            config_hub_space_present=true
+            config_hub_evidence_available=true
+        fi
+    elif [[ -f "$DISCOVERY_WORKER_PID_FILE" ]]; then
+        fail "cub auth is required while connected worker pid file exists"
+    fi
+elif [[ -f "$DISCOVERY_WORKER_PID_FILE" ]]; then
+    fail "cub CLI not found while connected worker pid file exists"
+fi
+
+if [[ "$config_hub_space_present" == "true" && ! -f "$DISCOVERY_WORKER_PID_FILE" ]]; then
+    echo "==> ConfigHub space found without local worker pid file"
+fi
+
+if [[ "$config_hub_evidence_available" == "true" ]]; then
     echo "==> Checking ConfigHub evidence"
-    command -v cub >/dev/null 2>&1 || fail "cub CLI not found while connected worker pid file exists"
-    cub auth get-token >/dev/null 2>&1 || fail "cub auth is required while connected worker pid file exists"
 
     echo "==> Listing ConfigHub targets"
     cub target list --space "$SPACE" || fail "failed to list targets for space '$SPACE'"
@@ -130,7 +149,12 @@ if [[ -f "$DISCOVERY_WORKER_PID_FILE" ]]; then
     echo "==> Checking connected readiness"
     bash "$VERIFY_CONNECTED_SCRIPT" --space "$SPACE" --renderer "$RENDERER_TOKEN"
 else
-    echo "==> Connected worker pid file not present"
+    if [[ -f "$DISCOVERY_WORKER_PID_FILE" ]]; then
+        echo "==> Connected worker pid file present but ConfigHub space '$SPACE' is not available"
+    else
+        echo "==> Connected worker pid file not present"
+        echo "==> ConfigHub space '$SPACE' not present"
+    fi
     echo "Skipping ConfigHub evidence and connected readiness checks"
 fi
 

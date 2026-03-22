@@ -84,7 +84,7 @@ func TestArgoImportDemoScript_UsesHTTPSForArgoCDSessionToken(t *testing.T) {
 
 	required := []string{
 		"port-forward svc/argocd-server 8888:443",
-		"curl -sk -H \"Content-Type: application/json\" \"https://localhost:8888/api/v1/session\"",
+		"curl -sk --max-time 5 -H \"Content-Type: application/json\" \"https://localhost:8888/api/v1/session\"",
 	}
 	for _, needle := range required {
 		if !strings.Contains(script, needle) {
@@ -106,12 +106,16 @@ func TestArgoImportDemoScript_RetriesTokenPortForwardUntilServerIsReachable(t *t
 	script := string(content)
 
 	required := []string{
-		`ARGOCD_TOKEN_MAX_ATTEMPTS=60`,
+		`ARGOCD_TOKEN_MAX_ATTEMPTS=18`,
+		`ARGOCD_TOKEN_PORT_FORWARD_SETTLE_SECONDS=8`,
 		`for i in $(seq 1 "$ARGOCD_TOKEN_MAX_ATTEMPTS")`,
+		`LAST_ARGOCD_SERVER_STATE="$(kubectl -n argocd get pod -l app.kubernetes.io/name=argocd-server`,
 		`port-forward svc/argocd-server 8888:443 >"$ARGOCD_TOKEN_PORT_FORWARD_LOG" 2>&1 &`,
+		`curl -sk --max-time 5 -H "Content-Type: application/json" "https://localhost:8888/api/v1/session"`,
 		`printf "."`,
 		`sleep "$ARGOCD_TOKEN_RETRY_SECONDS"`,
 		`Could not get ArgoCD token after ${ARGOCD_TOKEN_MAX_ATTEMPTS} attempts`,
+		`Last argocd-server state: $LAST_ARGOCD_SERVER_STATE`,
 	}
 	for _, needle := range required {
 		if !strings.Contains(script, needle) {

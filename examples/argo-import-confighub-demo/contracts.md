@@ -30,7 +30,8 @@ This file documents the safest stable inspection paths for
   - the kind cluster is reachable
   - the `argocd` namespace exists
   - the expected ArgoCD Applications are present
-  - connected readiness is checked when the live worker pid file is present
+  - connected readiness is checked when the live demo space exists, even if the
+    local worker pid file is missing
   - `cub-scout` status and ownership surfaces produce output
   - `cub-scout scan --state --json` yields at least one finding or runtime finding
   - a scan summary and sample finding can be surfaced without overclaiming import success
