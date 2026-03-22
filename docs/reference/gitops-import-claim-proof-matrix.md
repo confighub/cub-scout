@@ -31,6 +31,27 @@ Use these surfaces consistently:
 
 Import/render evidence does not, by itself, prove live workload reconciliation.
 
+## Command vs Watch Boundary
+
+Use two explicit AI interaction modes:
+
+- `command`
+  write intended config or command intent into ConfigHub and let the live
+  delivery path execute it
+- `watch`
+  inspect runtime state and status from live systems directly
+
+Authority boundary:
+
+- ConfigHub is authoritative for intended config, imported config, and command
+  intent
+- live systems are authoritative for runtime state and status
+
+This matters because an AI assistant should not work around a broken apply path
+by pulling config from ConfigHub and applying it directly. If the command path
+is broken, fix the command path; use watch mode to understand live status while
+doing so.
+
 ## Matrix
 
 | Surface | Audience | Import story claimed | Connected readiness proved | Import/render evidence proved | Post-import scan/finding evidence proved | AI-first structure | Notes |
@@ -109,6 +130,10 @@ Close the remaining proof gap before broadening claims:
 - Treat controller auth as its own readiness phase. In Argo, a cluster can
   exist, workloads can exist, and `cub-scout` can inspect state while the
   ArgoCD session endpoint is still not usable for `cub gitops import`.
+- Keep `command` and `watch` separate. ConfigHub should hold intended config
+  and command intent; cluster/controller APIs should supply the authoritative
+  runtime truth. When those get blurred, AI agents start bypassing the product
+  model instead of exposing the real bug.
 - Avoid proof paths that depend on ephemeral local breadcrumbs. The worker PID
   file is useful for cleanup, but it should not be the only way a verifier
   discovers whether ConfigHub evidence is available.

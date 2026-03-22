@@ -126,6 +126,27 @@ The near-term product wedge is:
 
 `GitHub + Argo/Flux + AI/CLI + ConfigHub`
 
+## Command vs Watch
+
+For AI-first GitOps work, keep the interaction model explicit:
+
+- `command` mode:
+  write intended config or command intent into ConfigHub, then let the live
+  delivery path act on it
+- `watch` mode:
+  observe runtime state and status from the live systems directly
+  (`kubectl`, ArgoCD, Flux, controller APIs)
+
+Authority boundary:
+
+- ConfigHub is authoritative for intended config, imported config, and command
+  intent
+- live systems are authoritative for runtime state and status
+
+Do not teach Claude/Codex to work around a broken apply path by pulling config
+from ConfigHub and applying it directly. If ConfigHub apply/refusal is broken,
+that is a bug to fix in the command path, not a reason to bypass the model.
+
 For this wedge, `cub-scout` should help prove:
 
 1. existing GitOps-managed WET config can be imported from GitHub and/or observed from the cluster
@@ -144,11 +165,14 @@ Use direct cluster evidence and connected views side by side when runtime truth 
    three-surface evidence boundaries. Runnable by Claude/Codex with minimal guessing.
 2. Additive to Argo/Flux, not a replacement
    `cub-scout` explains, imports, compares, and proves. It does not need to be the runtime authority.
-3. App/Deployment/Target as the primary mental model
+3. Command vs watch must stay explicit
+   ConfigHub is for intended config and command intent. Runtime state/status
+   comes from live systems and is authoritative there.
+4. App/Deployment/Target as the primary mental model
    Space/Unit remains the current storage/API vocabulary, but not the front-door explanation.
-4. Trustworthy evidence over optimistic status
+5. Trustworthy evidence over optimistic status
    If ConfigHub/runtime status is uncertain, say so and show cluster/controller evidence.
-5. Import must pay off immediately
+6. Import must pay off immediately
    If a demo only shows import success and not value after import, it will feel academic.
 
 ## Roadmap and milestone alignment

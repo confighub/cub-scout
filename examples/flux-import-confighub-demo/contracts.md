@@ -105,6 +105,26 @@ This file documents the safest stable inspection paths for
 - output shape: terminal table view
 - proves: ConfigHub has imported units visible in the target space
 
+## Command vs Watch
+
+This example should be read in two modes:
+
+- `command`
+  `cub gitops discover`, `cub gitops import`, and other ConfigHub mutations
+  write intended config or command intent into ConfigHub
+- `watch`
+  `kubectl`, Flux APIs, `cub-scout gitops status`, and `cub-scout scan`
+  observe runtime state and status from the live systems
+
+Authority boundary:
+
+- ConfigHub is authoritative for intended config and command intent
+- live systems are authoritative for runtime state and status
+
+Do not bypass a broken ConfigHub apply/import path by pulling config from
+ConfigHub and applying it directly. Use watch-mode evidence to diagnose the
+live problem instead.
+
 ## Evidence Boundary
 
 This example can prove three different kinds of evidence:
