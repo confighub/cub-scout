@@ -1,7 +1,7 @@
 # GitOps Import Claim-vs-Proof Matrix
 
 Status snapshot taken from the repo, published docs, and targeted live demo
-checks on 2026-03-21.
+checks on 2026-03-22.
 
 This matrix is intentionally conservative. It records what each surface appears
 to claim, what it actually proves today, and what still needs a follow-on slice.
@@ -35,8 +35,8 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
 | Surface | Audience | Import story claimed | Connected readiness proved | Import/render evidence proved | Post-import scan/finding evidence proved | AI-first structure | Notes |
 |---|---|---|---|---|---|---|---|
 | Published doc: [GitOps Import](https://docs.confighub.com/get-started/examples/gitops-import/) | GUI-first / official docs | Argo GitOps import into ConfigHub with worker-driven discovery/import; `cub gitops discover` and `cub gitops import` shown as CLI equivalents | Partial | Partial | No | No | Strong on import narrative, GUI-first, not a local AI-first walkthrough |
-| [`examples/argo-import-confighub-demo/README.md`](../../examples/argo-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Three-path Argo story: `cub gitops import`, `cub-scout import-argocd`, `cub-scout import` | Yes, when `--with-worker` is used | Yes, when `--with-worker` is used | Yes, as cluster and cub-scout evidence | Yes | Slice 2 landed for Argo: `verify.sh` now includes `cub-scout scan` summary plus sample finding without collapsing it into import/render proof |
-| [`examples/flux-import-confighub-demo/README.md`](../../examples/flux-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Flux import plus D2 ownership/discovery story: `cub gitops import`, `cub-scout import`, `tree`, `trace` | Yes, when `--with-worker` is used | Yes, when `--with-worker` is used | Yes, as cluster and cub-scout evidence | Yes | Slice 2 is now live-proved for Flux: `verify.sh` includes `cub-scout scan` summary and a kept-alive live run on 2026-03-21 returned `scan_contract=no-findings-observed` |
+| [`examples/argo-import-confighub-demo/README.md`](../../examples/argo-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Three-path Argo story: `cub gitops import`, `cub-scout import-argocd`, `cub-scout import` | Partial | Partial | Yes, as cluster and cub-scout evidence | Yes | Rechecked live on 2026-03-22: the Argo harness now reaches `cub gitops discover`/`import`, but `verify-connected-demo.sh` still ends at `connected_workloads=0`, and the Arnie fixture Applications degrade in the renderer because their Git sources are not fetchable |
+| [`examples/flux-import-confighub-demo/README.md`](../../examples/flux-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Flux import plus D2 ownership/discovery story: `cub gitops import`, `cub-scout import`, `tree`, `trace` | Partial | Partial | Yes, as cluster and cub-scout evidence | Yes | Live checks show workers, targets, units, and scan output, but connected readiness still bottoms out at `connected_workloads=0`; treat the exact scan outcome as environment-specific rather than assuming a clean-scan contract |
 | [`docs/howto/import-to-confighub.md`](../../docs/howto/import-to-confighub.md) | Canonical how-to | Canonical import path; `cub-scout import` may delegate Argo/Flux to `cub gitops import` | Implied | Implied | No | No | Strong migration framing, and now points readers at the local AI-first proof harnesses, but is not itself a demo proof path |
 | [`docs/howto/import-from-live.md`](../../docs/howto/import-from-live.md) | Canonical how-to | Cluster-first import; Argo/Flux workloads may delegate to `cub gitops import` when targets exist | Implied | Implied | No | No | Useful for discovery framing; now points to the AI-first demos for proof, but is not evidence-rich by itself |
 
@@ -55,13 +55,19 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
   summary output and a sample finding.
 - The Flux AI-first verify path now includes a `cub-scout scan` contract with
   explicit findings-or-no-findings reporting.
-- The Flux AI-first verify path has now been live-checked on a kept-alive
-  cluster and returned `scan_contract=no-findings-observed`.
+- The live demo checks now show where the remaining proof gap is: both demos
+  can produce workers, targets, units, and scan evidence while still failing
+  the connected-readiness threshold.
 
 ### What is still only partial or implied
 
 - The published doc is still GUI-first and does not share the local AI-first
   structure.
+- Both local demos still fail the strongest connected-readiness proof in live
+  checks: `verify-connected-demo.sh` ended at `connected_workloads=0`.
+- The Argo demo now reaches live import, but the Arnie fixture Applications are
+  still degraded in the render path because the renderer cannot fetch their
+  non-real Git sources.
 - The two import how-tos now point readers at the local proof harness examples,
   but they still do not function as proof harnesses themselves.
 - The demos still rely on `demo.sh` as the narrated human walkthrough, with
@@ -69,17 +75,18 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
 
 ### What is not yet proved
 
-- The published doc does not yet expose the same scan/finding proof paths as the
-  local Argo and Flux demos.
-- The published doc does not yet expose the explicit no-finding contract used by
-  the live-checked Flux demo.
+- A kept-alive Argo or Flux run that satisfies the connected-readiness
+  threshold in `verify-connected-demo.sh`.
+- The published doc does not yet expose the same scan/finding proof paths as
+  the local Argo and Flux demos.
+- The published doc does not yet expose the current demo drift explicitly:
+  import/render evidence can exist without a passing connected-readiness proof.
 
 ## Recommended Next Slice
 
-Decide what should change in the published doc while keeping the current local
-docs honest:
+Close the remaining proof gap before broadening claims:
 
-1. decide whether the published doc should stay GUI-first or link out to the AI-first local proof harnesses
-2. keep the evidence model explicit: cluster, ConfigHub, and cub-scout remain separate
-3. preserve the difference between a sample finding contract (Argo) and a no-findings contract (Flux)
-4. avoid collapsing scan evidence into import/render proof when updating external docs
+1. keep the Argo HTTPS token fix and provider-type target selection fix landed in the demos
+2. decide whether the connected-readiness threshold or the demo fixtures need to change, because both Argo and Flux currently end at `connected_workloads=0`
+3. decide whether the Argo demo should filter out the non-renderable Arnie fixture Applications or keep them as an explicit degraded-render case
+4. only after that, update the published doc and local how-tos to describe the final proved path

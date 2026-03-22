@@ -116,8 +116,8 @@ local AI-first demos:
   surfaces and currently shows a sample `cub-scout scan` finding.
 - [Flux Import Demo](../../examples/flux-import-confighub-demo/) with
   `./setup.sh` then `./verify.sh` proves the same three surfaces and currently
-  shows an explicit `scan_contract=no-findings-observed` boundary on clean scan
-  output.
+  reports scan evidence using the same three-surface model; the exact scan
+  outcome is environment-specific.
 
 Those demo proof paths are environment-specific examples. Do not generalize a
 single demo scan outcome into a universal import success criterion.

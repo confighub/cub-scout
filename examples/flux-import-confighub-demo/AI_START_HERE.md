@@ -90,7 +90,7 @@ cub-scout side:
 Use the evidence like this:
 
 - `flux` and `kubectl` prove raw cluster/controller facts
-- `cub` proves imported state and connected readiness facts
+- `cub` proves imported state and reports connected-readiness status
 - `cub-scout` proves live ownership and GitOps context facts
 
 Important: import/render evidence is not the same thing as proving live workload
@@ -103,7 +103,8 @@ This Flux Slice 2 path includes `cub-scout scan` evidence in `./verify.sh`.
 Important:
 
 - scan/finding evidence is still separate from ConfigHub import/render proof
-- `./verify.sh` may report either concrete findings or `scan_contract=no-findings-observed`
+- `./verify.sh` reports scan evidence; current runs may show findings or a
+  no-findings contract depending on fixture and controller state
 - live kept-alive Flux verification should still be rerun after any fixture drift
 
 ## Related Files

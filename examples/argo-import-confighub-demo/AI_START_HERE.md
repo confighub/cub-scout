@@ -91,7 +91,7 @@ cub-scout side:
 Use the evidence like this:
 
 - `kubectl` proves raw cluster facts
-- `cub` proves imported state and connected readiness facts
+- `cub` proves imported state and reports connected-readiness status
 - `cub-scout` proves live ownership and GitOps context facts
 
 Important: import/render evidence is not the same thing as proving live workload

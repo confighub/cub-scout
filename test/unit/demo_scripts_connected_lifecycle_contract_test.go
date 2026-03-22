@@ -50,3 +50,29 @@ func TestArgoFluxDemoScripts_ExposeSeedHistoryFlag(t *testing.T) {
 		}
 	}
 }
+
+func TestArgoFluxDemoScripts_SelectTargetsByProviderType(t *testing.T) {
+	expected := map[string][]string{
+		filepath.Join("..", "..", "examples", "argo-import-confighub-demo", "demo.sh"): {
+			`$3=="Kubernetes"`,
+			`$3=="ArgoCDRenderer"`,
+		},
+		filepath.Join("..", "..", "examples", "flux-import-confighub-demo", "demo.sh"): {
+			`$3=="Kubernetes"`,
+			`$3=="FluxRenderer"`,
+		},
+	}
+
+	for path, needles := range expected {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		script := string(content)
+		for _, needle := range needles {
+			if !strings.Contains(script, needle) {
+				t.Fatalf("%s must select targets by provider type, missing %q", path, needle)
+			}
+		}
+	}
+}

@@ -73,3 +73,26 @@ func TestArgoImportDemoScript_WaitsForSyncedHealthyGuestbookApps(t *testing.T) {
 		}
 	}
 }
+
+func TestArgoImportDemoScript_UsesHTTPSForArgoCDSessionToken(t *testing.T) {
+	scriptPath := filepath.Join("..", "..", "examples", "argo-import-confighub-demo", "demo.sh")
+	content, err := os.ReadFile(scriptPath)
+	if err != nil {
+		t.Fatalf("read script: %v", err)
+	}
+	script := string(content)
+
+	required := []string{
+		"port-forward svc/argocd-server 8888:443",
+		"curl -sk -H \"Content-Type: application/json\" \"https://localhost:8888/api/v1/session\"",
+	}
+	for _, needle := range required {
+		if !strings.Contains(script, needle) {
+			t.Fatalf("expected ArgoCD token flow to include %q", needle)
+		}
+	}
+
+	if strings.Contains(script, "\"http://localhost:8888/api/v1/session\"") {
+		t.Fatalf("ArgoCD token flow still uses plain HTTP session endpoint")
+	}
+}

@@ -332,13 +332,13 @@ if $LIVE; then
     step "Getting ArgoCD auth token..."
     ARGOCD_ADMIN_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
-    kubectl -n argocd port-forward svc/argocd-server 8888:80 &
+    kubectl -n argocd port-forward svc/argocd-server 8888:443 &
     PORT_FORWARD_PID=$!
     sleep 3
 
     ARGOCD_TOKEN=""
     for i in $(seq 1 15); do
-        RESPONSE=$(curl -s -H "Content-Type: application/json" "http://localhost:8888/api/v1/session" \
+        RESPONSE=$(curl -sk -H "Content-Type: application/json" "https://localhost:8888/api/v1/session" \
             -d "{\"username\":\"admin\",\"password\":\"${ARGOCD_ADMIN_PASSWORD}\"}" 2>/dev/null || true)
         if [ -n "$RESPONSE" ]; then
             ARGOCD_TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))" 2>/dev/null || true)
@@ -423,7 +423,8 @@ if $LIVE; then
         TARGETS_READY=false
         for i in $(seq 1 60); do
             TARGET_OUTPUT=$(cub target list --space "$SPACE" 2>/dev/null || true)
-            if echo "$TARGET_OUTPUT" | grep -q "kubernetes" && echo "$TARGET_OUTPUT" | grep -q "argocdrenderer"; then
+            if echo "$TARGET_OUTPUT" | awk '$3=="Kubernetes" {found=1} END {exit found ? 0 : 1}' \
+                && echo "$TARGET_OUTPUT" | awk '$3=="ArgoCDRenderer" {found=1} END {exit found ? 0 : 1}'; then
                 TARGETS_READY=true
                 break
             fi
@@ -440,8 +441,9 @@ if $LIVE; then
         fi
 
         # Extract target slugs
-        K8S_TARGET=$(cub target list --space "$SPACE" 2>/dev/null | grep "kubernetes" | head -1 | awk '{print $1}')
-        RENDERER_TARGET=$(cub target list --space "$SPACE" 2>/dev/null | grep "argocdrenderer" | head -1 | awk '{print $1}')
+        TARGET_OUTPUT=$(cub target list --space "$SPACE" 2>/dev/null || true)
+        K8S_TARGET=$(echo "$TARGET_OUTPUT" | awk '$3=="Kubernetes" {print $1; exit}' || true)
+        RENDERER_TARGET=$(echo "$TARGET_OUTPUT" | awk '$3=="ArgoCDRenderer" {print $1; exit}' || true)
 
         if [[ -n "$K8S_TARGET" ]] && [[ -n "$RENDERER_TARGET" ]]; then
             step "cub gitops discover  (finding ArgoCD Applications)"

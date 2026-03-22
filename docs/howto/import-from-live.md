@@ -89,8 +89,8 @@ use the local AI-first demos:
   `./setup.sh` and `./verify.sh` to prove cluster, ConfigHub, and cub-scout
   surfaces, and currently yields a sample scan finding.
 - [Flux Import Demo](../../examples/flux-import-confighub-demo/) uses the same
-  `./setup.sh` and `./verify.sh` structure, and currently proves a clean-scan
-  boundary with `scan_contract=no-findings-observed`.
+  `./setup.sh` and `./verify.sh` structure, and reports scan evidence without
+  assuming a fixed findings/no-findings outcome.
 
 These are proof harnesses for the bundled demo environments, not a promise that
 every live cluster will show the same scan outcome.

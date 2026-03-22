@@ -377,7 +377,8 @@ if $LIVE; then
     TARGETS_READY=false
     for i in $(seq 1 60); do
         TARGET_OUTPUT=$(cub target list --space "$SPACE" 2>/dev/null || true)
-        if echo "$TARGET_OUTPUT" | grep -q "kubernetes" && echo "$TARGET_OUTPUT" | grep -q "fluxrenderer"; then
+        if echo "$TARGET_OUTPUT" | awk '$3=="Kubernetes" {found=1} END {exit found ? 0 : 1}' \
+            && echo "$TARGET_OUTPUT" | awk '$3=="FluxRenderer" {found=1} END {exit found ? 0 : 1}'; then
             TARGETS_READY=true
             break
         fi
@@ -397,8 +398,8 @@ if $LIVE; then
 
     # Extract target slugs
     TARGET_OUTPUT=$(cub target list --space "$SPACE" 2>/dev/null || true)
-    K8S_TARGET=$(echo "$TARGET_OUTPUT" | awk '/kubernetes/ {print $1; exit}' || true)
-    RENDERER_TARGET=$(echo "$TARGET_OUTPUT" | awk '/fluxrenderer/ {print $1; exit}' || true)
+    K8S_TARGET=$(echo "$TARGET_OUTPUT" | awk '$3=="Kubernetes" {print $1; exit}' || true)
+    RENDERER_TARGET=$(echo "$TARGET_OUTPUT" | awk '$3=="FluxRenderer" {print $1; exit}' || true)
 
     if [[ -n "$K8S_TARGET" ]]; then
         step "cub gitops discover  (finding Flux Kustomizations)"
