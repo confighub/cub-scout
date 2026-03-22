@@ -435,10 +435,22 @@ if $LIVE; then
             -n confighub-worker \
             --image-pull-policy IfNotPresent \
             -e "CONFIGHUB_URL=$RENDERER_CONFIGHUB_URL" \
-            -e "ARGOCD_SERVER=argocd-server.argocd.svc.cluster.local" \
+            -e "ARGOCD_SERVER=https://argocd-server.argocd.svc.cluster.local" \
             -e "ARGOCD_AUTH_TOKEN=$ARGOCD_TOKEN" \
             -e "ARGOCD_INSECURE=true" \
             argocd-renderer > "$WORKER_MANIFEST"
+
+        RENDERER_IMAGE="$(grep -m1 'image:' "$WORKER_MANIFEST" | awk '{print $2}' || true)"
+        if [[ -n "$RENDERER_IMAGE" ]]; then
+            step "Preloading renderer image into kind..."
+            if ! docker image inspect "$RENDERER_IMAGE" >/dev/null 2>&1; then
+                note "Pulling renderer image: $RENDERER_IMAGE"
+                docker pull "$RENDERER_IMAGE" >/dev/null 2>&1 || warn "Renderer image pull failed; cluster will pull directly"
+            fi
+            if docker image inspect "$RENDERER_IMAGE" >/dev/null 2>&1; then
+                kind load docker-image --name "$CLUSTER_NAME" "$RENDERER_IMAGE" >/dev/null 2>&1 || warn "Renderer image preload failed"
+            fi
+        fi
 
         kubectl create namespace confighub-worker 2>/dev/null || true
         kubectl apply -f "$WORKER_MANIFEST"

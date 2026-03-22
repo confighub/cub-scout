@@ -36,7 +36,7 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
 | Surface | Audience | Import story claimed | Connected readiness proved | Import/render evidence proved | Post-import scan/finding evidence proved | AI-first structure | Notes |
 |---|---|---|---|---|---|---|---|
 | Published doc: [GitOps Import](https://docs.confighub.com/get-started/examples/gitops-import/) | GUI-first / official docs | Argo GitOps import into ConfigHub with worker-driven discovery/import; `cub gitops discover` and `cub gitops import` shown as CLI equivalents | Partial | Partial | No | No | Strong on import narrative, GUI-first, not a local AI-first walkthrough |
-| [`examples/argo-import-confighub-demo/README.md`](../../examples/argo-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Three-path Argo story: `cub gitops import`, `cub-scout import-argocd`, `cub-scout import` | Partial | Partial | Yes, as cluster and cub-scout evidence | Yes | Rechecked live on 2026-03-22: the Argo harness reaches `cub gitops discover`/`import`; connected readiness now gates on worker-backed targets plus dry/wet units, while the scout connected-workload preview is bounded and may skip on timeout in the `argocd` namespace; the Arnie fixture Applications still degrade in the renderer because their Git sources are not fetchable |
+| [`examples/argo-import-confighub-demo/README.md`](../../examples/argo-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Three-path Argo story: `cub gitops import`, `cub-scout import-argocd`, `cub-scout import` | Partial | Partial | Yes, as cluster and cub-scout evidence | Yes | Rechecked live on 2026-03-22: once the renderer image is locally available and the renderer points at the HTTPS ArgoCD service endpoint, the Argo harness can reach `PASS connected demo readiness` with 5 dry and 5 wet units; the scout connected-workload preview remains a bounded secondary signal, and dry units can still degrade while the renderer times out fetching manifests for some Applications |
 | [`examples/flux-import-confighub-demo/README.md`](../../examples/flux-import-confighub-demo/README.md) + local AI-first files | CLI-first / local demo | Flux import plus D2 ownership/discovery story: `cub gitops import`, `cub-scout import`, `tree`, `trace` | Partial | Partial | Yes, as cluster and cub-scout evidence | Yes | Live checks show workers, targets, units, and scan output; connected readiness now treats the scout connected-workload preview as a bounded secondary signal instead of a hard gate, and exact scan outcomes remain environment-specific |
 | [`docs/howto/import-to-confighub.md`](../../docs/howto/import-to-confighub.md) | Canonical how-to | Canonical import path; `cub-scout import` may delegate Argo/Flux to `cub gitops import` | Implied | Implied | No | No | Strong migration framing, and now points readers at the local AI-first proof harnesses, but is not itself a demo proof path |
 | [`docs/howto/import-from-live.md`](../../docs/howto/import-from-live.md) | Canonical how-to | Cluster-first import; Argo/Flux workloads may delegate to `cub gitops import` when targets exist | Implied | Implied | No | No | Useful for discovery framing; now points to the AI-first demos for proof, but is not evidence-rich by itself |
@@ -56,6 +56,9 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
   summary output and a sample finding.
 - The Flux AI-first verify path now includes a `cub-scout scan` contract with
   explicit findings-or-no-findings reporting.
+- A live Argo run now reaches `PASS connected demo readiness` once the
+  renderer image is available to kind and the renderer uses the HTTPS ArgoCD
+  service endpoint.
 - The live demo checks now show where the remaining proof gap is: both demos
   can produce workers, targets, units, and scan evidence, while the scout
   connected-workload preview can still stall or diverge from the imported demo
@@ -69,8 +72,8 @@ Import/render evidence does not, by itself, prove live workload reconciliation.
   especially around `argocd`, so it is now bounded and treated as a secondary
   signal rather than the primary connected-readiness gate.
 - The Argo demo now reaches live import, but the Arnie fixture Applications are
-  still degraded in the render path because the renderer cannot fetch their
-  non-real Git sources.
+  still degraded in the render path because the renderer can time out fetching
+  manifests, especially for the non-real Arnie Git sources.
 - The two import how-tos now point readers at the local proof harness examples,
   but they still do not function as proof harnesses themselves.
 - The demos still rely on `demo.sh` as the narrated human walkthrough, with
@@ -117,3 +120,6 @@ Close the remaining proof gap before broadening claims:
   pseudo-TTY-backed detached launch, while plain `nohup` and `--daemon`
   paths could connect once and then disappear before the proof harness saw a
   stable `Ready` worker.
+- Make image availability explicit in local clusters. Preloading the pinned
+  renderer image into kind turned an opaque `ContainerCreating` stall into a
+  reproducible path and surfaced the next real blocker in the renderer logic.

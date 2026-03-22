@@ -127,3 +127,40 @@ func TestArgoImportDemoScript_RetriesTokenPortForwardUntilServerIsReachable(t *t
 		}
 	}
 }
+
+func TestArgoImportDemoScript_PassesHTTPSArgoServerToRenderer(t *testing.T) {
+	scriptPath := filepath.Join("..", "..", "examples", "argo-import-confighub-demo", "demo.sh")
+	content, err := os.ReadFile(scriptPath)
+	if err != nil {
+		t.Fatalf("read script: %v", err)
+	}
+	script := string(content)
+
+	required := `-e "ARGOCD_SERVER=https://argocd-server.argocd.svc.cluster.local" \`
+	if !strings.Contains(script, required) {
+		t.Fatalf("expected renderer install to pass HTTPS ArgoCD service endpoint")
+	}
+	if strings.Contains(script, `-e "ARGOCD_SERVER=argocd-server.argocd.svc.cluster.local" \`) {
+		t.Fatalf("renderer install still passes ArgoCD service endpoint without HTTPS scheme")
+	}
+}
+
+func TestArgoImportDemoScript_PreloadsRendererImageIntoKind(t *testing.T) {
+	scriptPath := filepath.Join("..", "..", "examples", "argo-import-confighub-demo", "demo.sh")
+	content, err := os.ReadFile(scriptPath)
+	if err != nil {
+		t.Fatalf("read script: %v", err)
+	}
+	script := string(content)
+
+	required := []string{
+		`RENDERER_IMAGE="$(grep -m1 'image:' "$WORKER_MANIFEST" | awk '{print $2}' || true)"`,
+		`docker pull "$RENDERER_IMAGE" >/dev/null 2>&1 || warn "Renderer image pull failed; cluster will pull directly"`,
+		`kind load docker-image --name "$CLUSTER_NAME" "$RENDERER_IMAGE" >/dev/null 2>&1 || warn "Renderer image preload failed"`,
+	}
+	for _, needle := range required {
+		if !strings.Contains(script, needle) {
+			t.Fatalf("expected renderer preload flow to include %q", needle)
+		}
+	}
+}
