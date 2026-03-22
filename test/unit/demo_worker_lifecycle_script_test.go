@@ -30,6 +30,22 @@ if [[ "$1" == "worker" && "$2" == "run" ]]; then
 fi
 exit 0
 `)
+	writeExecutableLifecycle(t, filepath.Join(mockBinDir, "script"), `#!/usr/bin/env bash
+set -euo pipefail
+echo "script $*" >> "$MOCK_CALLS_LOG"
+if [[ "$1" == "-q" && "$2" == "-c" ]]; then
+  shift 2
+  cmd="$1"
+  shift
+  exec bash -lc "$cmd"
+fi
+if [[ "$1" == "-q" && "$2" == "/dev/null" ]]; then
+  shift 2
+  exec "$@"
+fi
+echo "unsupported script args: $*" >&2
+exit 1
+`)
 
 	start := exec.Command("bash", scriptPath,
 		"start",
@@ -75,6 +91,11 @@ exit 0
 	if !strings.Contains(log, "worker create --space demo-space discovery-worker") {
 		t.Fatalf("expected worker create call, got:\n%s", log)
 	}
+	hasBSDScriptCall := strings.Contains(log, "script -q /dev/null cub worker run --space demo-space -t Kubernetes discovery-worker")
+	hasLinuxScriptCall := strings.Contains(log, "script -q -c cub worker run --space demo-space -t Kubernetes discovery-worker  /dev/null")
+	if !hasBSDScriptCall && !hasLinuxScriptCall {
+		t.Fatalf("expected script-backed worker run call, got:\n%s", log)
+	}
 	if !strings.Contains(log, "worker run --space demo-space -t Kubernetes discovery-worker") {
 		t.Fatalf("expected worker run call, got:\n%s", log)
 	}
@@ -97,6 +118,21 @@ if [[ "$1" == "worker" && "$2" == "run" ]]; then
   exit 0
 fi
 exit 0
+`)
+	writeExecutableLifecycle(t, filepath.Join(mockBinDir, "script"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "-q" && "$2" == "-c" ]]; then
+  shift 2
+  cmd="$1"
+  shift
+  exec bash -lc "$cmd"
+fi
+if [[ "$1" == "-q" && "$2" == "/dev/null" ]]; then
+  shift 2
+  exec "$@"
+fi
+echo "unsupported script args: $*" >&2
+exit 1
 `)
 
 	start := exec.Command("bash", scriptPath,

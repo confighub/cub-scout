@@ -112,3 +112,8 @@ Close the remaining proof gap before broadening claims:
 - Show progress during long waits. Sequential `kubectl wait` calls and
   controller-auth retries are much easier for humans and agents to reason
   about when each bounded wait has visible progress and a named purpose.
+- Prefer PTY-backed detached workers over blind backgrounding. In live Argo
+  checks, `cub worker run` stayed healthy in the foreground and in a
+  pseudo-TTY-backed detached launch, while plain `nohup` and `--daemon`
+  paths could connect once and then disappear before the proof harness saw a
+  stable `Ready` worker.

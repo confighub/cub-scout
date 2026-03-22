@@ -74,7 +74,7 @@ func TestArgoImportDemoScript_WaitsForSyncedHealthyGuestbookApps(t *testing.T) {
 	}
 }
 
-func TestArgoImportDemoScript_UsesHTTPSForArgoCDSessionToken(t *testing.T) {
+func TestArgoImportDemoScript_UsesKubernetesProxyForArgoCDSessionToken(t *testing.T) {
 	scriptPath := filepath.Join("..", "..", "examples", "argo-import-confighub-demo", "demo.sh")
 	content, err := os.ReadFile(scriptPath)
 	if err != nil {
@@ -83,8 +83,9 @@ func TestArgoImportDemoScript_UsesHTTPSForArgoCDSessionToken(t *testing.T) {
 	script := string(content)
 
 	required := []string{
-		"port-forward svc/argocd-server 8888:443",
-		"curl -sk --max-time 5 -H \"Content-Type: application/json\" \"https://localhost:8888/api/v1/session\"",
+		`kubectl proxy --port "$ARGOCD_PROXY_PORT"`,
+		`ARGOCD_SESSION_PROXY_URL="http://127.0.0.1:${ARGOCD_PROXY_PORT}/api/v1/namespaces/argocd/services/https:argocd-server:https/proxy/api/v1/session"`,
+		`curl -sS --max-time 5 -H "Content-Type: application/json" "$ARGOCD_SESSION_PROXY_URL"`,
 	}
 	for _, needle := range required {
 		if !strings.Contains(script, needle) {
@@ -92,8 +93,8 @@ func TestArgoImportDemoScript_UsesHTTPSForArgoCDSessionToken(t *testing.T) {
 		}
 	}
 
-	if strings.Contains(script, "\"http://localhost:8888/api/v1/session\"") {
-		t.Fatalf("ArgoCD token flow still uses plain HTTP session endpoint")
+	if strings.Contains(script, "port-forward svc/argocd-server 8888:443") {
+		t.Fatalf("ArgoCD token flow still relies on service port-forward")
 	}
 }
 
@@ -106,16 +107,19 @@ func TestArgoImportDemoScript_RetriesTokenPortForwardUntilServerIsReachable(t *t
 	script := string(content)
 
 	required := []string{
-		`ARGOCD_TOKEN_MAX_ATTEMPTS=18`,
-		`ARGOCD_TOKEN_PORT_FORWARD_SETTLE_SECONDS=8`,
+		`ARGOCD_TOKEN_MAX_ATTEMPTS=30`,
+		`ARGOCD_PROXY_PORT=8001`,
 		`for i in $(seq 1 "$ARGOCD_TOKEN_MAX_ATTEMPTS")`,
 		`LAST_ARGOCD_SERVER_STATE="$(kubectl -n argocd get pod -l app.kubernetes.io/name=argocd-server`,
-		`port-forward svc/argocd-server 8888:443 >"$ARGOCD_TOKEN_PORT_FORWARD_LOG" 2>&1 &`,
-		`curl -sk --max-time 5 -H "Content-Type: application/json" "https://localhost:8888/api/v1/session"`,
+		`LAST_ARGOCD_SESSION_STATUS="$(printf '%s' "$RESPONSE"`,
+		`kubectl proxy --port "$ARGOCD_PROXY_PORT" >"$ARGOCD_PROXY_LOG" 2>&1 &`,
+		`curl -sS --max-time 5 -H "Content-Type: application/json" "$ARGOCD_SESSION_PROXY_URL"`,
 		`printf "."`,
 		`sleep "$ARGOCD_TOKEN_RETRY_SECONDS"`,
 		`Could not get ArgoCD token after ${ARGOCD_TOKEN_MAX_ATTEMPTS} attempts`,
+		`Last proxy status: $LAST_PROXY_STATUS`,
 		`Last argocd-server state: $LAST_ARGOCD_SERVER_STATE`,
+		`Last session response: $LAST_ARGOCD_SESSION_STATUS`,
 	}
 	for _, needle := range required {
 		if !strings.Contains(script, needle) {

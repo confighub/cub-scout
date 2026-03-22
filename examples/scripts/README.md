@@ -18,6 +18,10 @@ Fail-fast checks for `--live` demo runs (workers, targets, connected workloads):
 
 Manage detached discovery workers for long-running `--live --keep` demos:
 
+The helper prefers a pseudo-TTY-backed launch (`script ... cub worker run ...`)
+when available because live GitOps demos proved more stable that way than plain
+shell backgrounding.
+
 ```bash
 # Start detached discovery worker
 ./demo-worker-lifecycle.sh start \

@@ -331,30 +331,30 @@ if $LIVE; then
     # Get ArgoCD auth token
     step "Getting ArgoCD auth token..."
     ARGOCD_ADMIN_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
-    ARGOCD_TOKEN_MAX_ATTEMPTS=18
-    ARGOCD_TOKEN_PORT_FORWARD_SETTLE_SECONDS=8
-    ARGOCD_TOKEN_RETRY_SECONDS=2
-    ARGOCD_TOKEN_PORT_FORWARD_LOG="$(mktemp)"
-    note "Retrying the HTTPS session endpoint while argocd-server becomes reachable"
+    ARGOCD_TOKEN_MAX_ATTEMPTS=30
+    ARGOCD_TOKEN_RETRY_SECONDS=4
+    ARGOCD_PROXY_PORT=8001
+    ARGOCD_PROXY_LOG="$(mktemp)"
+    ARGOCD_SESSION_PROXY_URL="http://127.0.0.1:${ARGOCD_PROXY_PORT}/api/v1/namespaces/argocd/services/https:argocd-server:https/proxy/api/v1/session"
+    note "Retrying the ArgoCD session endpoint through the Kubernetes service proxy"
+
+    kubectl proxy --port "$ARGOCD_PROXY_PORT" >"$ARGOCD_PROXY_LOG" 2>&1 &
+    ARGOCD_PROXY_PID=$!
+    sleep 2
 
     ARGOCD_TOKEN=""
     LAST_ARGOCD_SERVER_STATE=""
+    LAST_ARGOCD_SESSION_STATUS=""
     for i in $(seq 1 "$ARGOCD_TOKEN_MAX_ATTEMPTS"); do
         LAST_ARGOCD_SERVER_STATE="$(kubectl -n argocd get pod -l app.kubernetes.io/name=argocd-server \
             -o jsonpath='{range .items[0]}{.metadata.name} phase={.status.phase} ready={.status.containerStatuses[0].ready} restarts={.status.containerStatuses[0].restartCount}{end}' 2>/dev/null || true)"
-        kubectl -n argocd port-forward svc/argocd-server 8888:443 >"$ARGOCD_TOKEN_PORT_FORWARD_LOG" 2>&1 &
-        PORT_FORWARD_PID=$!
-        sleep "$ARGOCD_TOKEN_PORT_FORWARD_SETTLE_SECONDS"
 
-        RESPONSE=$(curl -sk --max-time 5 -H "Content-Type: application/json" "https://localhost:8888/api/v1/session" \
+        RESPONSE=$(curl -sS --max-time 5 -H "Content-Type: application/json" "$ARGOCD_SESSION_PROXY_URL" \
             -d "{\"username\":\"admin\",\"password\":\"${ARGOCD_ADMIN_PASSWORD}\"}" 2>/dev/null || true)
+        LAST_ARGOCD_SESSION_STATUS="$(printf '%s' "$RESPONSE" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-200)"
         if [ -n "$RESPONSE" ]; then
             ARGOCD_TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))" 2>/dev/null || true)
         fi
-
-        kill "$PORT_FORWARD_PID" 2>/dev/null || true
-        wait "$PORT_FORWARD_PID" 2>/dev/null || true
-        PORT_FORWARD_PID=""
 
         if [ -n "$ARGOCD_TOKEN" ]; then
             break
@@ -365,19 +365,25 @@ if $LIVE; then
     done
     echo ""
 
-    LAST_PORT_FORWARD_STATUS=""
-    if [[ -s "$ARGOCD_TOKEN_PORT_FORWARD_LOG" ]]; then
-        LAST_PORT_FORWARD_STATUS=$(tail -n 3 "$ARGOCD_TOKEN_PORT_FORWARD_LOG" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')
+    kill "$ARGOCD_PROXY_PID" 2>/dev/null || true
+    wait "$ARGOCD_PROXY_PID" 2>/dev/null || true
+
+    LAST_PROXY_STATUS=""
+    if [[ -s "$ARGOCD_PROXY_LOG" ]]; then
+        LAST_PROXY_STATUS=$(tail -n 3 "$ARGOCD_PROXY_LOG" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')
     fi
-    rm -f "$ARGOCD_TOKEN_PORT_FORWARD_LOG"
+    rm -f "$ARGOCD_PROXY_LOG"
 
     if [ -z "$ARGOCD_TOKEN" ]; then
         warn "Could not get ArgoCD token after ${ARGOCD_TOKEN_MAX_ATTEMPTS} attempts - skipping cub gitops import"
-        if [[ -n "$LAST_PORT_FORWARD_STATUS" ]]; then
-            note "Last port-forward status: $LAST_PORT_FORWARD_STATUS"
+        if [[ -n "$LAST_PROXY_STATUS" ]]; then
+            note "Last proxy status: $LAST_PROXY_STATUS"
         fi
         if [[ -n "$LAST_ARGOCD_SERVER_STATE" ]]; then
             note "Last argocd-server state: $LAST_ARGOCD_SERVER_STATE"
+        fi
+        if [[ -n "$LAST_ARGOCD_SESSION_STATUS" ]]; then
+            note "Last session response: $LAST_ARGOCD_SESSION_STATUS"
         fi
         warn "The demo still shows Acts 1-3"
     else
