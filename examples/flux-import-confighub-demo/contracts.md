@@ -85,9 +85,11 @@ This file documents the safest stable inspection paths for
 - output shape: plain text PASS/FAIL summary
 - proves:
   - at least one ready worker exists
-  - at least one Kubernetes target exists
-  - at least one renderer target exists
-  - at least one connected workload appears in `cub-scout import --dry-run --json`
+  - at least one ready Kubernetes-backed target exists
+  - at least one ready renderer target exists
+  - at least one imported dry unit and one imported wet unit exist in the demo space
+  - `cub-scout import --dry-run --json` connected workload counts are only used as a gate
+    when the scout proposal App Space matches the demo space
 
 ### `cub target list --space flux-import-demo`
 

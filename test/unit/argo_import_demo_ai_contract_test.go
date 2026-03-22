@@ -103,12 +103,17 @@ func TestArgoImportVerifyScript_SucceedsWithMockedEvidenceSurfaces(t *testing.T)
 
 	workerJSON := filepath.Join(tmpDir, "workers.json")
 	targetJSON := filepath.Join(tmpDir, "targets.json")
+	unitJSON := filepath.Join(tmpDir, "units.json")
 	importJSON := filepath.Join(tmpDir, "import.json")
 
 	mustWriteArgoDemo(t, workerJSON, `[{"Condition":"Ready","Name":"demo-worker","Cluster":"kind-argo-import-demo"}]`)
 	mustWriteArgoDemo(t, targetJSON, `[
-	  {"Target":{"Slug":"demo-kubernetes","ProviderType":"Kubernetes","ToolchainType":"Kubernetes"}},
-	  {"Target":{"Slug":"demo-argocdrenderer","ProviderType":"Renderer","ToolchainType":"argocdrenderer"}}
+	  {"BridgeWorker":{"Slug":"demo-worker"},"Target":{"Slug":"demo-kubernetes","ProviderType":"Kubernetes","ToolchainType":"Kubernetes"}},
+	  {"BridgeWorker":{"Slug":"demo-worker"},"Target":{"Slug":"demo-argocdrenderer","ProviderType":"Renderer","ToolchainType":"argocdrenderer"}}
+	]`)
+	mustWriteArgoDemo(t, unitJSON, `[
+	  {"Unit":{"Slug":"demo-app-dry"}},
+	  {"Unit":{"Slug":"demo-app-wet"}}
 	]`)
 	mustWriteArgoDemo(t, importJSON, `{"workloads":[{"name":"api","connected":true},{"name":"worker","connected":true}]}`)
 
@@ -167,8 +172,12 @@ if [[ "$1" == "target" && "$2" == "list" ]]; then
   exit 0
 fi
 if [[ "$1" == "unit" && "$2" == "list" ]]; then
-  echo "helm-guestbook"
-  echo "helm-guestbook-rendered"
+  if [[ "$*" == *"--json"* ]]; then
+    cat "$MOCK_UNIT_JSON"
+  else
+    echo "helm-guestbook"
+    echo "helm-guestbook-rendered"
+  fi
   exit 0
 fi
 echo "unexpected cub args: $*" >&2
@@ -222,6 +231,7 @@ exit 2
 		"TMPDIR="+tmpDir,
 		"MOCK_WORKER_JSON="+workerJSON,
 		"MOCK_TARGET_JSON="+targetJSON,
+		"MOCK_UNIT_JSON="+unitJSON,
 		"MOCK_IMPORT_JSON="+importJSON,
 		"MOCK_SCAN_JSON="+scanJSON,
 		"CUB_SCOUT_BIN="+filepath.Join(mockBinDir, "cub-scout"),

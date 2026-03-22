@@ -103,12 +103,17 @@ func TestFluxImportVerifyScript_SucceedsWithMockedEvidenceSurfaces(t *testing.T)
 
 	workerJSON := filepath.Join(tmpDir, "workers.json")
 	targetJSON := filepath.Join(tmpDir, "targets.json")
+	unitJSON := filepath.Join(tmpDir, "units.json")
 	importJSON := filepath.Join(tmpDir, "import.json")
 
 	mustWriteFluxDemo(t, workerJSON, `[{"Condition":"Ready","Name":"demo-worker","Cluster":"kind-flux-import-demo"}]`)
 	mustWriteFluxDemo(t, targetJSON, `[
-	  {"Target":{"Slug":"demo-kubernetes","ProviderType":"Kubernetes","ToolchainType":"Kubernetes"}},
-	  {"Target":{"Slug":"demo-fluxrenderer","ProviderType":"Renderer","ToolchainType":"fluxrenderer"}}
+	  {"BridgeWorker":{"Slug":"demo-worker"},"Target":{"Slug":"demo-kubernetes","ProviderType":"Kubernetes","ToolchainType":"Kubernetes"}},
+	  {"BridgeWorker":{"Slug":"demo-worker"},"Target":{"Slug":"demo-fluxrenderer","ProviderType":"Renderer","ToolchainType":"fluxrenderer"}}
+	]`)
+	mustWriteFluxDemo(t, unitJSON, `[
+	  {"Unit":{"Slug":"demo-app-dry"}},
+	  {"Unit":{"Slug":"demo-app-wet"}}
 	]`)
 	mustWriteFluxDemo(t, importJSON, `{"workloads":[{"name":"podinfo","connected":true},{"name":"frontend","connected":true}]}`)
 
@@ -187,8 +192,12 @@ if [[ "$1" == "target" && "$2" == "list" ]]; then
   exit 0
 fi
 if [[ "$1" == "unit" && "$2" == "list" ]]; then
-  echo "podinfo"
-  echo "podinfo-rendered"
+  if [[ "$*" == *"--json"* ]]; then
+    cat "$MOCK_UNIT_JSON"
+  else
+    echo "podinfo"
+    echo "podinfo-rendered"
+  fi
   exit 0
 fi
 echo "unexpected cub args: $*" >&2
@@ -242,6 +251,7 @@ exit 2
 		"TMPDIR="+tmpDir,
 		"MOCK_WORKER_JSON="+workerJSON,
 		"MOCK_TARGET_JSON="+targetJSON,
+		"MOCK_UNIT_JSON="+unitJSON,
 		"MOCK_IMPORT_JSON="+importJSON,
 		"MOCK_SCAN_JSON="+scanJSON,
 		"CUB_SCOUT_BIN="+filepath.Join(mockBinDir, "cub-scout"),

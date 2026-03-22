@@ -59,7 +59,7 @@ After the example is running, verify:
 - the brownfield `myapp-*` Applications are present
 - worker targets exist if connected mode was used
 - imported units are listable if connected mode was used
-- connected readiness is checked without overclaiming live reconciliation
+- connected readiness is checked from ready targets plus dry/wet unit evidence without overclaiming live reconciliation
 - `cub-scout` status and ownership views are shown separately from ConfigHub
  - `cub-scout scan` output is shown with a summary and one sample finding
 
