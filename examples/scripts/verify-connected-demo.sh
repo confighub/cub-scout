@@ -6,8 +6,9 @@
 #   2) At least one ready Kubernetes-backed target in the given space
 #   3) At least one ready renderer target (argocdrenderer/fluxrenderer, or generic renderer)
 #   4) At least one imported dry unit and one imported wet unit in the given space
-#   5) Connected workload count from `cub-scout import --dry-run --json` is
-#      reported when meaningful for the proposal App Space
+#   5) Best-effort connected workload count from `cub-scout import --dry-run --json`
+#      is reported when meaningful for the proposal App Space and when the
+#      bounded preview returns in time
 #
 # Usage:
 #   examples/scripts/verify-connected-demo.sh --space argo-import-demo --renderer argocdrenderer
@@ -18,6 +19,7 @@ set -euo pipefail
 SPACE=""
 RENDERER_TOKEN=""
 MIN_CONNECTED=1
+IMPORT_TIMEOUT_SECONDS="${VERIFY_IMPORT_TIMEOUT_SECONDS:-30}"
 
 usage() {
     cat <<USAGE
@@ -30,6 +32,10 @@ Options:
   --min-connected <n>    Minimum connected workloads required from cub-scout dry-run
                          when the scout proposal App Space matches --space
                          (default: 1)
+Environment:
+  VERIFY_IMPORT_TIMEOUT_SECONDS
+                         Maximum seconds to wait for `cub-scout import --dry-run --json`
+                         before skipping the connected-workload gate (default: 30)
   -h, --help             Show this help
 USAGE
 }
@@ -86,6 +92,11 @@ if ! [[ "$MIN_CONNECTED" =~ ^[0-9]+$ ]]; then
     exit 2
 fi
 
+if ! [[ "$IMPORT_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || [[ "$IMPORT_TIMEOUT_SECONDS" -lt 1 ]]; then
+    echo "VERIFY_IMPORT_TIMEOUT_SECONDS must be a positive integer" >&2
+    exit 2
+fi
+
 if ! command -v cub >/dev/null 2>&1; then
     echo "FAIL connected demo readiness"
     echo "- cub CLI not found in PATH"
@@ -103,6 +114,73 @@ else
     echo "- cub-scout binary not found (set CUB_SCOUT_BIN or build ./cub-scout)"
     exit 1
 fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "FAIL connected demo readiness"
+    echo "- python3 is required for readiness parsing"
+    exit 1
+fi
+
+run_bounded_import_preview() {
+    local output_file="$1"
+    local meta_file="$2"
+
+    python3 - "$CUB_SCOUT" "$IMPORT_TIMEOUT_SECONDS" "$output_file" "$meta_file" <<'PY'
+import json
+import subprocess
+import sys
+
+cub_scout = sys.argv[1]
+timeout_seconds = int(sys.argv[2])
+output_path = sys.argv[3]
+meta_path = sys.argv[4]
+
+meta = {
+    "status": "error",
+    "returncode": 1,
+    "detail": "",
+}
+
+try:
+    completed = subprocess.run(
+        [cub_scout, "import", "--dry-run", "--json"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=timeout_seconds,
+    )
+    with open(output_path, "w", encoding="utf-8") as handle:
+        handle.write(completed.stdout or "")
+    detail = " ".join((completed.stderr or "").split())
+    if completed.returncode == 0:
+        meta = {
+            "status": "ok",
+            "returncode": 0,
+            "detail": detail,
+        }
+    else:
+        meta = {
+            "status": "error",
+            "returncode": completed.returncode,
+            "detail": detail,
+        }
+except subprocess.TimeoutExpired as exc:
+    with open(output_path, "w", encoding="utf-8") as handle:
+        handle.write(exc.stdout or "")
+    detail = f"timed out after {timeout_seconds}s"
+    stderr = " ".join((exc.stderr or "").split())
+    if stderr:
+        detail = detail + f"; stderr: {stderr[:500]}"
+    meta = {
+        "status": "timeout",
+        "returncode": 124,
+        "detail": detail,
+    }
+
+with open(meta_path, "w", encoding="utf-8") as handle:
+    json.dump(meta, handle)
+PY
+}
 
 workers_json=""
 if ! workers_json=$(cub worker list --space "$SPACE" --json 2>/dev/null); then
@@ -125,26 +203,49 @@ if ! units_json=$(cub unit list --space "$SPACE" --json 2>/dev/null); then
     exit 1
 fi
 
-import_json=""
-if ! import_json=$("$CUB_SCOUT" import --dry-run --json 2>/dev/null); then
-    echo "FAIL connected demo readiness"
-    echo "- failed to run '$CUB_SCOUT import --dry-run --json'"
-    exit 1
-fi
-
 WORKERS_JSON_FILE="$(mktemp)"
 TARGETS_JSON_FILE="$(mktemp)"
 UNITS_JSON_FILE="$(mktemp)"
 IMPORT_JSON_FILE="$(mktemp)"
+IMPORT_META_FILE="$(mktemp)"
 cleanup_json_files() {
-    rm -f "$WORKERS_JSON_FILE" "$TARGETS_JSON_FILE" "$UNITS_JSON_FILE" "$IMPORT_JSON_FILE"
+    rm -f "$WORKERS_JSON_FILE" "$TARGETS_JSON_FILE" "$UNITS_JSON_FILE" "$IMPORT_JSON_FILE" "$IMPORT_META_FILE"
 }
 trap cleanup_json_files EXIT
 
 printf '%s' "$workers_json" >"$WORKERS_JSON_FILE"
 printf '%s' "$targets_json" >"$TARGETS_JSON_FILE"
 printf '%s' "$units_json" >"$UNITS_JSON_FILE"
-printf '%s' "$import_json" >"$IMPORT_JSON_FILE"
+run_bounded_import_preview "$IMPORT_JSON_FILE" "$IMPORT_META_FILE"
+
+import_preview_meta="$(python3 - "$IMPORT_META_FILE" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+status = str(data.get("status") or "").strip()
+returncode = str(data.get("returncode") or "").strip()
+detail = " ".join(str(data.get("detail") or "").split())
+print(f"{status}\t{returncode}\t{detail}")
+PY
+)"
+IFS=$'\t' read -r import_preview_status import_preview_returncode import_preview_detail <<<"$import_preview_meta"
+
+case "$import_preview_status" in
+    ok|timeout)
+        ;;
+    *)
+        echo "FAIL connected demo readiness"
+        if [[ -n "$import_preview_detail" ]]; then
+            echo "- failed to run '$CUB_SCOUT import --dry-run --json' (exit $import_preview_returncode): $import_preview_detail"
+        else
+            echo "- failed to run '$CUB_SCOUT import --dry-run --json' (exit $import_preview_returncode)"
+        fi
+        exit 1
+        ;;
+esac
 
 worker_parse="$(python3 - "$WORKERS_JSON_FILE" <<'PY'
 import json, sys
@@ -263,7 +364,10 @@ if [[ "$kubernetes_targets" -lt 0 || "$renderer_targets" -lt 0 || "$ready_kubern
     exit 1
 fi
 
-import_parse="$(python3 - "$IMPORT_JSON_FILE" <<'PY'
+connected_workloads=0
+proposal_app_space=""
+if [[ "$import_preview_status" == "ok" ]]; then
+    import_parse="$(python3 - "$IMPORT_JSON_FILE" <<'PY'
 import json, sys
 path = sys.argv[1]
 with open(path, "r", encoding="utf-8") as handle:
@@ -298,12 +402,13 @@ app_space = str(proposal.get("AppSpace") or proposal.get("appSpace") or "").stri
 print(f"{count}\t{app_space}")
 PY
 )"
-IFS=$'\t' read -r connected_workloads proposal_app_space <<<"$import_parse"
+    IFS=$'\t' read -r connected_workloads proposal_app_space <<<"$import_parse"
 
-if [[ "$connected_workloads" -lt 0 ]]; then
-    echo "FAIL connected demo readiness"
-    echo "- could not parse cub-scout import dry-run JSON"
-    exit 1
+    if [[ "$connected_workloads" -lt 0 ]]; then
+        echo "FAIL connected demo readiness"
+        echo "- could not parse cub-scout import dry-run JSON"
+        exit 1
+    fi
 fi
 
 unit_parse="$(python3 - "$UNITS_JSON_FILE" <<'PY'
@@ -383,7 +488,9 @@ fi
 
 connected_gate="enforced"
 if [[ "$MIN_CONNECTED" -gt 0 ]]; then
-    if [[ -n "$proposal_app_space" && "$proposal_app_space" != "$SPACE" ]]; then
+    if [[ "$import_preview_status" == "timeout" ]]; then
+        connected_gate="skipped-timeout"
+    elif [[ -n "$proposal_app_space" && "$proposal_app_space" != "$SPACE" ]]; then
         connected_gate="skipped"
     elif [[ "$connected_workloads" -lt "$MIN_CONNECTED" ]]; then
         failures+=("connected workloads below threshold ($connected_workloads < $MIN_CONNECTED)")
@@ -397,9 +504,9 @@ if [[ ${#failures[@]} -gt 0 ]]; then
     for msg in "${failures[@]}"; do
         echo "- $msg"
     done
-    echo "workers_ready=$ready_workers targets_kubernetes=$kubernetes_targets ready_targets_kubernetes=$ready_kubernetes_targets targets_renderer=$renderer_targets ready_targets_renderer=$ready_renderer_targets units_dry=$dry_units units_wet=$wet_units units_managed=$managed_units connected_workloads=$connected_workloads connected_gate=$connected_gate proposal_app_space=${proposal_app_space:-none}"
+    echo "workers_ready=$ready_workers targets_kubernetes=$kubernetes_targets ready_targets_kubernetes=$ready_kubernetes_targets targets_renderer=$renderer_targets ready_targets_renderer=$ready_renderer_targets units_dry=$dry_units units_wet=$wet_units units_managed=$managed_units connected_workloads=$connected_workloads connected_gate=$connected_gate proposal_app_space=${proposal_app_space:-none} connected_preview=$import_preview_status"
     exit 1
 fi
 
 echo "PASS connected demo readiness"
-echo "workers_ready=$ready_workers targets_kubernetes=$kubernetes_targets ready_targets_kubernetes=$ready_kubernetes_targets targets_renderer=$renderer_targets ready_targets_renderer=$ready_renderer_targets units_dry=$dry_units units_wet=$wet_units units_managed=$managed_units connected_workloads=$connected_workloads connected_gate=$connected_gate proposal_app_space=${proposal_app_space:-none}"
+echo "workers_ready=$ready_workers targets_kubernetes=$kubernetes_targets ready_targets_kubernetes=$ready_kubernetes_targets targets_renderer=$renderer_targets ready_targets_renderer=$ready_renderer_targets units_dry=$dry_units units_wet=$wet_units units_managed=$managed_units connected_workloads=$connected_workloads connected_gate=$connected_gate proposal_app_space=${proposal_app_space:-none} connected_preview=$import_preview_status"

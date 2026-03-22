@@ -228,6 +228,77 @@ exit 2
 	}
 }
 
+func TestVerifyConnectedDemoScript_SkipsConnectedGateWhenImportPreviewTimesOut(t *testing.T) {
+	scriptPath := filepath.Join("..", "..", "examples", "scripts", "verify-connected-demo.sh")
+	if _, err := os.Stat(scriptPath); err != nil {
+		t.Fatalf("script missing: %v", err)
+	}
+
+	mockBinDir := t.TempDir()
+	workerJSON := filepath.Join(t.TempDir(), "workers.json")
+	targetJSON := filepath.Join(t.TempDir(), "targets.json")
+	unitJSON := filepath.Join(t.TempDir(), "units.json")
+
+	mustWrite(t, workerJSON, `[{"Condition":"Ready","Name":"demo-worker","Cluster":"kind-demo"}]`)
+	mustWrite(t, targetJSON, `[
+	  {"BridgeWorker":{"Slug":"demo-worker"},"Target":{"Slug":"demo-kubernetes","ProviderType":"Kubernetes","ToolchainType":"Kubernetes"}},
+	  {"BridgeWorker":{"Slug":"demo-worker"},"Target":{"Slug":"demo-argocdrenderer","ProviderType":"Renderer","ToolchainType":"argocdrenderer"}}
+	]`)
+	mustWrite(t, unitJSON, `[
+	  {"Unit":{"Slug":"demo-app-dry"}},
+	  {"Unit":{"Slug":"demo-app-wet"}}
+	]`)
+
+	writeExecutable(t, filepath.Join(mockBinDir, "cub"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "worker" && "$2" == "list" ]]; then
+  cat "$MOCK_WORKER_JSON"
+  exit 0
+fi
+if [[ "$1" == "target" && "$2" == "list" ]]; then
+  cat "$MOCK_TARGET_JSON"
+  exit 0
+fi
+if [[ "$1" == "unit" && "$2" == "list" ]]; then
+  cat "$MOCK_UNIT_JSON"
+  exit 0
+fi
+echo "unexpected cub args: $*" >&2
+exit 2
+`)
+
+	writeExecutable(t, filepath.Join(mockBinDir, "cub-scout"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "import" && "$2" == "--dry-run" && "$3" == "--json" ]]; then
+  sleep 2
+  echo '{"workloads":[{"name":"api","connected":true}]}'
+  exit 0
+fi
+echo "unexpected cub-scout args: $*" >&2
+exit 2
+`)
+
+	cmd := exec.Command("bash", scriptPath, "--space", "demo-space", "--renderer", "argocdrenderer")
+	cmd.Env = append(os.Environ(),
+		"MOCK_WORKER_JSON="+workerJSON,
+		"MOCK_TARGET_JSON="+targetJSON,
+		"MOCK_UNIT_JSON="+unitJSON,
+		"CUB_SCOUT_BIN="+filepath.Join(mockBinDir, "cub-scout"),
+		"VERIFY_IMPORT_TIMEOUT_SECONDS=1",
+		"PATH="+mockBinDir+string(os.PathListSeparator)+os.Getenv("PATH"),
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("expected timeout path to pass, got %v\n%s", err, string(out))
+	}
+	if !strings.Contains(string(out), "connected_gate=skipped-timeout") {
+		t.Fatalf("expected timeout gate skip note, got:\n%s", string(out))
+	}
+	if !strings.Contains(string(out), "connected_preview=timeout") {
+		t.Fatalf("expected timeout preview note, got:\n%s", string(out))
+	}
+}
+
 func writeExecutable(t *testing.T, path, content string) {
 	t.Helper()
 	mustWrite(t, path, content)

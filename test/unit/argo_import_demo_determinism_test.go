@@ -96,3 +96,26 @@ func TestArgoImportDemoScript_UsesHTTPSForArgoCDSessionToken(t *testing.T) {
 		t.Fatalf("ArgoCD token flow still uses plain HTTP session endpoint")
 	}
 }
+
+func TestArgoImportDemoScript_RetriesTokenPortForwardUntilServerIsReachable(t *testing.T) {
+	scriptPath := filepath.Join("..", "..", "examples", "argo-import-confighub-demo", "demo.sh")
+	content, err := os.ReadFile(scriptPath)
+	if err != nil {
+		t.Fatalf("read script: %v", err)
+	}
+	script := string(content)
+
+	required := []string{
+		`ARGOCD_TOKEN_MAX_ATTEMPTS=60`,
+		`for i in $(seq 1 "$ARGOCD_TOKEN_MAX_ATTEMPTS")`,
+		`port-forward svc/argocd-server 8888:443 >"$ARGOCD_TOKEN_PORT_FORWARD_LOG" 2>&1 &`,
+		`printf "."`,
+		`sleep "$ARGOCD_TOKEN_RETRY_SECONDS"`,
+		`Could not get ArgoCD token after ${ARGOCD_TOKEN_MAX_ATTEMPTS} attempts`,
+	}
+	for _, needle := range required {
+		if !strings.Contains(script, needle) {
+			t.Fatalf("expected retrying token flow to include %q", needle)
+		}
+	}
+}

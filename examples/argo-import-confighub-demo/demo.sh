@@ -331,30 +331,47 @@ if $LIVE; then
     # Get ArgoCD auth token
     step "Getting ArgoCD auth token..."
     ARGOCD_ADMIN_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
-
-    kubectl -n argocd port-forward svc/argocd-server 8888:443 &
-    PORT_FORWARD_PID=$!
-    sleep 3
+    ARGOCD_TOKEN_MAX_ATTEMPTS=60
+    ARGOCD_TOKEN_RETRY_SECONDS=2
+    ARGOCD_TOKEN_PORT_FORWARD_LOG="$(mktemp)"
+    note "Retrying the HTTPS session endpoint while argocd-server becomes reachable"
 
     ARGOCD_TOKEN=""
-    for i in $(seq 1 15); do
+    for i in $(seq 1 "$ARGOCD_TOKEN_MAX_ATTEMPTS"); do
+        kubectl -n argocd port-forward svc/argocd-server 8888:443 >"$ARGOCD_TOKEN_PORT_FORWARD_LOG" 2>&1 &
+        PORT_FORWARD_PID=$!
+        sleep 2
+
         RESPONSE=$(curl -sk -H "Content-Type: application/json" "https://localhost:8888/api/v1/session" \
             -d "{\"username\":\"admin\",\"password\":\"${ARGOCD_ADMIN_PASSWORD}\"}" 2>/dev/null || true)
         if [ -n "$RESPONSE" ]; then
             ARGOCD_TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))" 2>/dev/null || true)
-            if [ -n "$ARGOCD_TOKEN" ]; then
-                break
-            fi
         fi
-        sleep 2
-    done
 
-    kill "$PORT_FORWARD_PID" 2>/dev/null || true
-    wait "$PORT_FORWARD_PID" 2>/dev/null || true
-    PORT_FORWARD_PID=""
+        kill "$PORT_FORWARD_PID" 2>/dev/null || true
+        wait "$PORT_FORWARD_PID" 2>/dev/null || true
+        PORT_FORWARD_PID=""
+
+        if [ -n "$ARGOCD_TOKEN" ]; then
+            break
+        fi
+
+        printf "."
+        sleep "$ARGOCD_TOKEN_RETRY_SECONDS"
+    done
+    echo ""
+
+    LAST_PORT_FORWARD_STATUS=""
+    if [[ -s "$ARGOCD_TOKEN_PORT_FORWARD_LOG" ]]; then
+        LAST_PORT_FORWARD_STATUS=$(tail -n 3 "$ARGOCD_TOKEN_PORT_FORWARD_LOG" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')
+    fi
+    rm -f "$ARGOCD_TOKEN_PORT_FORWARD_LOG"
 
     if [ -z "$ARGOCD_TOKEN" ]; then
-        warn "Could not get ArgoCD token - skipping cub gitops import"
+        warn "Could not get ArgoCD token after ${ARGOCD_TOKEN_MAX_ATTEMPTS} attempts - skipping cub gitops import"
+        if [[ -n "$LAST_PORT_FORWARD_STATUS" ]]; then
+            note "Last port-forward status: $LAST_PORT_FORWARD_STATUS"
+        fi
         warn "The demo still shows Acts 1-3"
     else
         step "ArgoCD auth token obtained"

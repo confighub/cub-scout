@@ -81,7 +81,9 @@ script may report either concrete findings or an explicit no-findings contract.
 
 ## Connected Readiness Check
 
-After a `--live` run, verify the demo has active workers/targets and connected workloads:
+After a `--live` run, verify the demo has active workers/targets and imported
+dry/wet units. The helper also reports `cub-scout import --dry-run --json`
+connected workloads when that bounded preview returns in time:
 
 ```bash
 ../scripts/verify-connected-demo.sh --space flux-import-demo --renderer fluxrenderer
