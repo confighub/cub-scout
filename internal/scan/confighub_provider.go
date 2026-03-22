@@ -36,6 +36,26 @@ type ConfighubScanProvider struct {
 	legacyScanClusterFn func(context.Context, ClusterScanOpts) (*CombinedResult, error)
 }
 
+const (
+	legacyCatalogHomeDir      = ".confighub"
+	bundleCurrentSubdir       = "pattern-bundles/current"
+	defaultCatalogFile        = "risk-catalog-v1.json"
+	defaultCatalogPath        = "dist/risk-catalog-v1.json"
+	defaultBundleManifest     = "bundle-manifest-v1.json"
+	defaultBundleManifestPath = "dist/bundle-manifest-v1.json"
+	siblingPatternsRepoName   = "confighub-patterns"
+	bundleAssetRiskCatalog    = "risk-catalog"
+)
+
+type bundleManifest struct {
+	Files []bundleManifestFile `json:"files"`
+}
+
+type bundleManifestFile struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
 // NewConfighubScanProvider creates a ConfighubScanProvider that probes for the
 // confighub-scan binary. If unavailable, all methods silently delegate to the
 // LegacyProvider.
@@ -173,7 +193,11 @@ func (p *ConfighubScanProvider) resolveBinary() string {
 }
 
 // resolveCatalogPath returns the risk-catalog path, or "" if none found.
-// Resolution: CUB_SCAN_CATALOG env > ~/.confighub/risk-catalog-v1.json
+// Resolution:
+//  1. CUB_SCAN_CATALOG env
+//  2. active bundle cache or bundle-manifest lookup
+//  3. sibling confighub-patterns checkout
+//  4. legacy ~/.confighub/risk-catalog-v1.json compatibility path
 func resolveCatalogPath() string {
 	if env := os.Getenv("CUB_SCAN_CATALOG"); env != "" {
 		if _, err := os.Stat(env); err == nil {
@@ -181,15 +205,144 @@ func resolveCatalogPath() string {
 		}
 	}
 
-	home, err := os.UserHomeDir()
-	if err == nil {
-		candidate := filepath.Join(home, ".confighub", "risk-catalog-v1.json")
-		if _, err := os.Stat(candidate); err == nil {
+	for _, candidate := range catalogCandidates() {
+		if fileExists(candidate) {
 			return candidate
 		}
 	}
 
+	if _, resolved := resolveCatalogFromManifest(); resolved != "" {
+		return resolved
+	}
+
 	return ""
+}
+
+func catalogCandidates() []string {
+	seen := map[string]bool{}
+	out := []string{}
+	add := func(candidate string) {
+		if strings.TrimSpace(candidate) == "" {
+			return
+		}
+		clean := filepath.Clean(candidate)
+		if seen[clean] {
+			return
+		}
+		seen[clean] = true
+		out = append(out, clean)
+	}
+
+	home, err := os.UserHomeDir()
+	if err == nil {
+		add(filepath.Join(home, legacyCatalogHomeDir, bundleCurrentSubdir, defaultCatalogFile))
+		add(filepath.Join(home, legacyCatalogHomeDir, defaultCatalogFile))
+	}
+	add(filepath.Join("..", siblingPatternsRepoName, defaultCatalogPath))
+	add(defaultCatalogFile)
+	if exe, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(exe)
+		add(filepath.Join(exeDir, defaultCatalogFile))
+		add(filepath.Join(exeDir, "..", defaultCatalogFile))
+		add(filepath.Join(exeDir, "..", "share", "confighub-scan", defaultCatalogFile))
+	}
+	return out
+}
+
+func bundleManifestCandidates() []string {
+	seen := map[string]bool{}
+	out := []string{}
+	add := func(candidate string) {
+		if strings.TrimSpace(candidate) == "" {
+			return
+		}
+		clean := filepath.Clean(candidate)
+		if seen[clean] {
+			return
+		}
+		seen[clean] = true
+		out = append(out, clean)
+	}
+
+	add(defaultBundleManifestPath)
+	add(defaultBundleManifest)
+	add(filepath.Join("..", siblingPatternsRepoName, defaultBundleManifestPath))
+	if home, err := os.UserHomeDir(); err == nil {
+		add(filepath.Join(home, legacyCatalogHomeDir, bundleCurrentSubdir, defaultBundleManifest))
+	}
+	if exe, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(exe)
+		add(filepath.Join(exeDir, defaultBundleManifest))
+		add(filepath.Join(exeDir, "..", defaultBundleManifest))
+		add(filepath.Join(exeDir, "..", "share", "confighub-scan", defaultBundleManifest))
+	}
+	return out
+}
+
+func resolveCatalogFromManifest() (string, string) {
+	for _, manifestPath := range bundleManifestCandidates() {
+		if !fileExists(manifestPath) {
+			continue
+		}
+		if resolved := resolveManifestAsset(manifestPath, bundleAssetRiskCatalog); resolved != "" {
+			return manifestPath, resolved
+		}
+	}
+	return "", ""
+}
+
+func resolveManifestAsset(manifestPath, assetName string) string {
+	raw, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return ""
+	}
+	var manifest bundleManifest
+	if err := json.Unmarshal(raw, &manifest); err != nil {
+		return ""
+	}
+	for _, entry := range manifest.Files {
+		if strings.TrimSpace(entry.Name) != assetName || strings.TrimSpace(entry.Path) == "" {
+			continue
+		}
+		for _, candidate := range manifestAssetCandidates(manifestPath, entry.Path) {
+			if fileExists(candidate) {
+				return candidate
+			}
+		}
+	}
+	return ""
+}
+
+func manifestAssetCandidates(manifestPath, entryPath string) []string {
+	manifestDir := filepath.Dir(manifestPath)
+	baseDir := manifestDir
+	if filepath.Base(manifestDir) == "dist" {
+		baseDir = filepath.Dir(manifestDir)
+	}
+
+	seen := map[string]bool{}
+	out := []string{}
+	add := func(candidate string) {
+		if strings.TrimSpace(candidate) == "" {
+			return
+		}
+		clean := filepath.Clean(candidate)
+		if seen[clean] {
+			return
+		}
+		seen[clean] = true
+		out = append(out, clean)
+	}
+
+	add(filepath.Join(baseDir, entryPath))
+	add(filepath.Join(manifestDir, entryPath))
+	add(filepath.Join(manifestDir, filepath.Base(entryPath)))
+	return out
+}
+
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
 }
 
 // invokeCubScan executes the cub-scan binary and parses its JSON output.
