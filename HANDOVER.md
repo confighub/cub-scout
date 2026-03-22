@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-03-21
+Last updated: 2026-03-22
 
 ## Current repo state
 
@@ -9,6 +9,55 @@ Last updated: 2026-03-21
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
 - Latest relevant issue filed in this session: `#329`
 - Note: local worktree currently has untracked `.claude/` and `LIVE`; treat them as user-owned and do not modify them unless explicitly asked
+
+## Related confighub state (local only)
+
+There is verified follow-on work in the sibling repo
+`/Users/alexis/Public/github-repos/confighub` on local branch
+`codex/gitops-import-ai-first-help`.
+
+Commit stack on top of `confighub` `main`:
+- `2860e4324` `docs: clarify gitops import help for AI-first workflows`
+- `5ed17109a` `worker: separate apply completion from live watch`
+- `adea772bc` `test: fail fast when internal test db is unavailable`
+- `bb1dfae81` `test: seed apply revision in bridge controller test`
+- `48af804dd` `test: seed bridge worker secrets in test helpers`
+
+What that branch changes:
+- `ApplySynced` completes the apply command
+- live readiness/status continues via watch-driven updates
+- CLI wording reflects the command vs watch boundary
+- internal test harnesses fail fast when the test DB is unavailable
+
+Local verification completed on 2026-03-22:
+- `cd internal && go test ./views -count=1 -timeout=120s`
+- `cd internal && go test ./storage -count=1 -timeout=120s`
+- `cd public/core && go test ./worker/lib -count=1`
+- `cd public/bridge-impl && go test ./kubernetes ./argocd -count=1`
+- `cd public/cmd/cub && go test . -count=1`
+
+Local-only handoff artifacts exist on disk:
+- `/tmp/confighub-gitops-import-ai-first.bundle`
+- `/tmp/confighub-gitops-import-ai-first-HANDOFF.md`
+- `/tmp/confighub-gitops-import-ai-first-PR.md`
+- `/tmp/confighub-gitops-import-ai-first-RELEASE_NOTE.md`
+- `/tmp/confighub-gitops-patches-v2/`
+
+These are for local transfer only unless the user explicitly asks otherwise.
+
+## External publication boundary
+
+Do not publish work externally without explicit user approval.
+
+That includes:
+- pushing to `confighubai/confighub`
+- opening PRs or issue comments there
+- creating public or secret gists for the work
+- posting branch status externally
+
+For `confighub`, keep the work local unless the user explicitly asks for an
+external write. If handoff is needed, prefer local bundle/patch files and note
+their paths in this repo.
 
 ## Immediate TODOs
 
