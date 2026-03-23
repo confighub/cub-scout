@@ -403,6 +403,60 @@ func TestResolveCatalogPath_EnvMissing(t *testing.T) {
 	}
 }
 
+func TestResolveCatalogPath_FromBundleManifest(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	currentDir := filepath.Join(tmpDir, legacyCatalogHomeDir, bundleCurrentSubdir)
+	if err := os.MkdirAll(filepath.Join(currentDir, "dist"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	catalogPath := filepath.Join(currentDir, "dist", defaultCatalogFile)
+	if err := os.WriteFile(catalogPath, []byte("[]"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	manifestPath := filepath.Join(currentDir, defaultBundleManifest)
+	if err := os.WriteFile(manifestPath, []byte(`{"files":[{"name":"risk-catalog","path":"dist/risk-catalog-v1.json"}]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	got := resolveCatalogPath()
+	if filepath.Clean(got) != filepath.Clean(catalogPath) {
+		t.Fatalf("resolveCatalogPath() = %q, want %q", got, catalogPath)
+	}
+}
+
+func TestResolveCatalogPath_FromSiblingPatternsRepo(t *testing.T) {
+	root := t.TempDir()
+	cubScoutRepo := filepath.Join(root, "cub-scout")
+	patternsRepo := filepath.Join(root, siblingPatternsRepoName)
+	if err := os.MkdirAll(cubScoutRepo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(patternsRepo, "dist"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	catalogPath := filepath.Join(patternsRepo, "dist", defaultCatalogFile)
+	if err := os.WriteFile(catalogPath, []byte("[]"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(cubScoutRepo); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+
+	got := resolveCatalogPath()
+	want := filepath.Join("..", siblingPatternsRepoName, defaultCatalogPath)
+	if filepath.Clean(got) != filepath.Clean(want) {
+		t.Fatalf("resolveCatalogPath() = %q, want %q", got, want)
+	}
+}
+
 func TestLoadRiskCatalog(t *testing.T) {
 	tmpDir := t.TempDir()
 	catalogPath := filepath.Join(tmpDir, "risk-catalog-v1.json")
