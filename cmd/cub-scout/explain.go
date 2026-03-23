@@ -121,6 +121,12 @@ func traceForExplain(ctx context.Context, kind, name, namespace string) (*agent.
 		ownership = &agent.Ownership{Type: agent.OwnerUnknown}
 	}
 
+	// Custom owners don't have GitOps trace chains — return immediately
+	// with the custom owner information so buildExplainSummary can extract it.
+	if ownership.Type == agent.OwnerCustom {
+		return buildCustomOwnerUnsupportedTraceResult(kind, name, namespace, ownership), nil
+	}
+
 	tracers := buildExplainTracerCandidates(ownership.Type)
 	if len(tracers) == 0 {
 		return nil, fmt.Errorf("no available tracer candidates for owner type %q", ownership.Type)

@@ -219,8 +219,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	// Detect ownership to choose the right tracer
 	ownership, err := detectResourceOwnership(ctx, kind, name, traceNamespace)
 	if err != nil {
-		// Ownership detection failed, try Flux tracer as default
-		ownership = &agent.Ownership{Type: agent.OwnerFlux}
+		return fmt.Errorf("ownership detection failed for %s/%s in %s: %w", kind, name, traceNamespace, err)
 	}
 
 	switch ownership.Type {
@@ -801,6 +800,10 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
 	case "Secret":
 		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
+	case "Job":
+		return schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+	case "CronJob":
+		return schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"}
 	case "Ingress":
 		return schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
 	case "Kustomization":
