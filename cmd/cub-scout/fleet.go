@@ -210,7 +210,7 @@ func runFleet(cmd *cobra.Command, args []string) error {
 // buildFleetProposal creates a unified proposal from fleet data
 func buildFleetProposal(fleet *FleetResult) *FullProposal {
 	proposal := &FullProposal{
-		AppSpace: "fleet-team",
+		App: "fleet-team",
 		Units:    []UnitProposal{},
 	}
 

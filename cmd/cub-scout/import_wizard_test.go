@@ -103,7 +103,7 @@ func testWorkloads() []WorkloadItem {
 // testProposal returns a mock FullProposal
 func testProposal() *FullProposal {
 	return &FullProposal{
-		AppSpace: "my-team",
+		App: "my-team",
 		Deployer: "ArgoCD",
 		Units: []UnitProposal{
 			{

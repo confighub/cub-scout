@@ -25,7 +25,7 @@ Connected mode adds context and lifecycle correlation; standalone remains fully 
 
 ### Connected
 
-- Hierarchy context (Org -> Hub -> AppSpace -> Unit + labels)
+- Hierarchy context (Org -> App -> Deployment -> Unit + labels)
 - WET <-> LIVE panel semantics
 - Import/adoption and break-glass accept/reject workflows
 - Causality surfaces for "what should be" vs "what is"
@@ -41,7 +41,7 @@ Connected mode adds context and lifecycle correlation; standalone remains fully 
 
 Hierarchy path:
 
-`Org -> Hub -> AppSpace -> Unit -> Labels`
+`Org -> App -> Deployment -> Unit -> Labels`
 
 Rules:
 

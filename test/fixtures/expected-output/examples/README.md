@@ -48,7 +48,7 @@ When connected to ConfigHub, you see additional context:
 ┌─ CONFIGHUB ────────────────────────────────────────────────────────────┐
 │  Org: ConfigHub                                                        │
 │  └─ Hub: user@example.com                                          │
-│     └─ AppSpace: example-jesper-argocd-team                            │
+│     └─ App: example-jesper-argocd-team                            │
 │        └─ Unit: example-jesper-argocd ✓                                │
 │           ├─ Status: Ready                                             │
 │           └─ Target: dev-kubernetes-yaml-kind-atk                      │

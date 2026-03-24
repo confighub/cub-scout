@@ -64,7 +64,7 @@
     }
   ],
   "suggestion": {
-    "appSpace": "banko-team",
+    "app": "banko-team",
     "units": [
       {
         "slug": "payment-api-prod",

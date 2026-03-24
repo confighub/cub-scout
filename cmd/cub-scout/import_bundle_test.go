@@ -67,7 +67,7 @@ func TestBuildImportFromBundlePreview_BasicContract(t *testing.T) {
 	if proposal == nil {
 		t.Fatal("proposal is nil")
 	}
-	if proposal.AppSpace == "" {
+	if proposal.App == "" {
 		t.Error("proposal.appSpace is empty")
 	}
 	if len(proposal.Units) == 0 {
@@ -221,7 +221,7 @@ func TestRunImport_FromBundleJSONContract(t *testing.T) {
 	if result.Workloads[0].Owner != "Flux" {
 		t.Fatalf("owner = %q, want Flux", result.Workloads[0].Owner)
 	}
-	if result.Proposal == nil || result.Proposal.AppSpace == "" {
+	if result.Proposal == nil || result.Proposal.App == "" {
 		t.Fatalf("proposal missing or empty: %+v", result.Proposal)
 	}
 	if result.Evidence.Source != "bundle" {
@@ -310,7 +310,7 @@ func TestOutputProposalJSON_ClusterEvidenceSource(t *testing.T) {
 	defer restore()
 
 	proposal := &FullProposal{
-		AppSpace: "test-space",
+		App: "test-space",
 		Units: []UnitProposal{
 			{
 				Slug:    "test-unit",
@@ -360,7 +360,7 @@ func TestOutputProposalJSON_ConnectedFallbackFromExistingUnits(t *testing.T) {
 	}()
 
 	proposal := &FullProposal{
-		AppSpace: "orders-team",
+		App: "orders-team",
 		Units: []UnitProposal{
 			{
 				Slug:      "orders-api",

@@ -284,7 +284,7 @@ func runImportSuggestGolden(t *testing.T, name string, workloads []WorkloadInfo)
 	t.Helper()
 
 	// Run the suggestion engine
-	suggestion := SuggestHubAppSpaceStructure(workloads, "")
+	suggestion := SuggestAppStructure(workloads, "")
 
 	// Build input summary for context
 	nsSet := make(map[string]bool)
@@ -323,7 +323,7 @@ func runImportSuggestGolden(t *testing.T, name string, workloads []WorkloadInfo)
 			Owners:        ownerCounts,
 		},
 		Suggestion: suggestGoldenSuggestion{
-			AppSpace: suggestion.AppSpace,
+			AppSpace: suggestion.App,
 			Units:    units,
 		},
 	}

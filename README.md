@@ -451,7 +451,7 @@ Ownership: Flux 60% │ ArgoCD 26% │ Helm 10% │ Native 4%
 cub-scout tree suggest
 ```
 
-**Suggested Organization** — Hub/AppSpace recommendation:
+**Suggested Organization** — App recommendation:
 
 ```
 HUB/APPSPACE SUGGESTION
@@ -460,7 +460,7 @@ HUB/APPSPACE SUGGESTION
 Detected pattern: D2 (Control Plane style)
   └── clusters/prod, clusters/staging structure
 
-Suggested Hub/AppSpace organization
+Suggested App organization
 (Space maps to App, Unit maps to App component in the new model;
 see docs/reference/glossary.md for the full mapping):
 
@@ -612,7 +612,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | `cub-scout connect ... --map` | Quick connect to a cluster API and launch the TUI |
 | `cub-scout discover` | Find workloads by owner (scout-style alias) |
 | `cub-scout tree` | Hierarchical views (runtime, git, config) |
-| `cub-scout tree suggest` | Suggested Hub/AppSpace organization |
+| `cub-scout tree suggest` | Suggested App organization |
 | `cub-scout trace deploy/x -n y` | Full ownership chain to Git source |
 | `cub-scout trace deploy/x -n y --history` | Deployment history (who deployed what, when) |
 | `cub-scout health` | Check for issues (scout-style alias) |
@@ -641,7 +641,7 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 | `cub-scout tree git` | Git source structure (repos, paths) |
 | `cub-scout tree patterns` | Detected GitOps patterns (D2, Arnie, etc.) |
 | `cub-scout tree config --space X` | ConfigHub Unit relationships (wraps `cub unit tree`) |
-| `cub-scout tree suggest` | Recommended Hub/AppSpace structure |
+| `cub-scout tree suggest` | Recommended App structure |
 
 ---
 

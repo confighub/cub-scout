@@ -387,7 +387,7 @@ if [[ $CURRENT_IDX -ge 6 ]]; then
         skip_test "Connected mode" "ConfigHub not authenticated (run: cub auth login)"
     else
         subsection "ConfigHub Connection"
-        run_test "app-space list" "./cub-scout app-space list | head -10"
+        run_test "app list" "./cub-scout app list | head -10"
 
         subsection "Import Preview"
         run_test "import dry-run" "./cub-scout import -n boutique --dry-run"
@@ -409,7 +409,7 @@ if [[ $CURRENT_IDX -ge 6 ]]; then
             # Verify space was created
             run_test "verify space" "cub space list --json | python3 -c 'import sys,json; spaces=[s[\"Slug\"] for s in json.load(sys.stdin)]; print(\"Spaces:\", spaces[:5])'"
             # Cleanup the space (find it from the dry-run output)
-            CREATED_SPACE=$(./cub-scout import -n "$E2E_NS" --dry-run --json 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin)["suggestion"]["appSpace"])' 2>/dev/null)
+            CREATED_SPACE=$(./cub-scout import -n "$E2E_NS" --dry-run --json 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin)["suggestion"]["app"])' 2>/dev/null)
             if [[ -n "$CREATED_SPACE" ]]; then
                 run_test "cleanup space" "cub space delete $CREATED_SPACE --recursive"
             fi

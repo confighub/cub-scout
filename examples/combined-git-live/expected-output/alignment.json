@@ -157,7 +157,7 @@
       { "name": "payment-worker", "gitPath": "apps/payment-worker/base", "source": "git" },
       { "name": "notifications-service", "gitPath": "apps/notifications-service/base", "source": "git" }
     ],
-    "appSpace": "banko-team",
+    "app": "banko-team",
     "deployer": "Flux",
     "reconciliation": [
       { "match": { "variant": "prod" }, "drift": "revert", "approval": "required" },

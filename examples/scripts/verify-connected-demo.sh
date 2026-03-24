@@ -365,7 +365,7 @@ if [[ "$kubernetes_targets" -lt 0 || "$renderer_targets" -lt 0 || "$ready_kubern
 fi
 
 connected_workloads=0
-proposal_app_space=""
+proposal_app_name=""
 if [[ "$import_preview_status" == "ok" ]]; then
     import_parse="$(python3 - "$IMPORT_JSON_FILE" <<'PY'
 import json, sys
@@ -398,11 +398,11 @@ for w in workloads:
     if isinstance(value, str) and value.strip().lower() in {"true", "1", "yes"}:
         count += 1
 proposal = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
-app_space = str(proposal.get("AppSpace") or proposal.get("appSpace") or "").strip()
-print(f"{count}\t{app_space}")
+app_name = str(proposal.get("App") or proposal.get("app") or "").strip()
+print(f"{count}\t{app_name}")
 PY
 )"
-    IFS=$'\t' read -r connected_workloads proposal_app_space <<<"$import_parse"
+    IFS=$'\t' read -r connected_workloads proposal_app_name <<<"$import_parse"
 
     if [[ "$connected_workloads" -lt 0 ]]; then
         echo "FAIL connected demo readiness"
@@ -490,7 +490,7 @@ connected_gate="enforced"
 if [[ "$MIN_CONNECTED" -gt 0 ]]; then
     if [[ "$import_preview_status" == "timeout" ]]; then
         connected_gate="skipped-timeout"
-    elif [[ -n "$proposal_app_space" && "$proposal_app_space" != "$SPACE" ]]; then
+    elif [[ -n "$proposal_app_name" && "$proposal_app_name" != "$SPACE" ]]; then
         connected_gate="skipped"
     elif [[ "$connected_workloads" -lt "$MIN_CONNECTED" ]]; then
         failures+=("connected workloads below threshold ($connected_workloads < $MIN_CONNECTED)")
@@ -504,9 +504,9 @@ if [[ ${#failures[@]} -gt 0 ]]; then
     for msg in "${failures[@]}"; do
         echo "- $msg"
     done
-    echo "workers_ready=$ready_workers targets_kubernetes=$kubernetes_targets ready_targets_kubernetes=$ready_kubernetes_targets targets_renderer=$renderer_targets ready_targets_renderer=$ready_renderer_targets units_dry=$dry_units units_wet=$wet_units units_managed=$managed_units connected_workloads=$connected_workloads connected_gate=$connected_gate proposal_app_space=${proposal_app_space:-none} connected_preview=$import_preview_status"
+    echo "workers_ready=$ready_workers targets_kubernetes=$kubernetes_targets ready_targets_kubernetes=$ready_kubernetes_targets targets_renderer=$renderer_targets ready_targets_renderer=$ready_renderer_targets units_dry=$dry_units units_wet=$wet_units units_managed=$managed_units connected_workloads=$connected_workloads connected_gate=$connected_gate proposal_app_name=${proposal_app_name:-none} connected_preview=$import_preview_status"
     exit 1
 fi
 
 echo "PASS connected demo readiness"
-echo "workers_ready=$ready_workers targets_kubernetes=$kubernetes_targets ready_targets_kubernetes=$ready_kubernetes_targets targets_renderer=$renderer_targets ready_targets_renderer=$ready_renderer_targets units_dry=$dry_units units_wet=$wet_units units_managed=$managed_units connected_workloads=$connected_workloads connected_gate=$connected_gate proposal_app_space=${proposal_app_space:-none} connected_preview=$import_preview_status"
+echo "workers_ready=$ready_workers targets_kubernetes=$kubernetes_targets ready_targets_kubernetes=$ready_kubernetes_targets targets_renderer=$renderer_targets ready_targets_renderer=$ready_renderer_targets units_dry=$dry_units units_wet=$wet_units units_managed=$managed_units connected_workloads=$connected_workloads connected_gate=$connected_gate proposal_app_name=${proposal_app_name:-none} connected_preview=$import_preview_status"

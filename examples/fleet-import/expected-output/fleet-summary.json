@@ -56,7 +56,7 @@
           }
         ],
         "suggestion": {
-          "appSpace": "banko-team",
+          "app": "banko-team",
           "units": [
             { "slug": "payment-api-dev", "app": "payment-api", "variant": "dev", "workloads": ["payment-dev/payment-api"] },
             { "slug": "payment-worker-dev", "app": "payment-worker", "variant": "dev", "workloads": ["payment-dev/payment-worker"] },
@@ -133,7 +133,7 @@
           }
         ],
         "suggestion": {
-          "appSpace": "banko-team",
+          "app": "banko-team",
           "units": [
             { "slug": "payment-api-prod", "app": "payment-api", "variant": "prod", "workloads": ["payment-prod/payment-api"] },
             { "slug": "payment-worker-prod", "app": "payment-worker", "variant": "prod", "workloads": ["payment-prod/payment-worker"] },
@@ -160,7 +160,7 @@
     }
   },
   "proposal": {
-    "appSpace": "fleet-team",
+    "app": "fleet-team",
     "deployer": "Flux",
     "reconciliation": [
       { "match": { "variant": "prod" }, "drift": "revert", "approval": "required" },

@@ -98,7 +98,7 @@ Map shows the complete picture of how apps flow from source to production:
 │  3. UPGRADE (Paid)                                                     │
 │     → "Make a change" operations (import, apply, destroy)              │
 │     → AI-powered trace and actions                                     │
-│     → Platform team collaboration (Hub/AppSpace model)                 │
+│     → Platform team collaboration (App/Deployment/Target model)                 │
 │     → Enterprise features (audit, RBAC, compliance)                    │
 │     → VALUE: "I can operate at scale"                                  │
 └────────────────────────────────────────────────────────────────────────┘

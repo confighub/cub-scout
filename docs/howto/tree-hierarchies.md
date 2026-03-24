@@ -11,7 +11,7 @@ cub-scout tree
 # Resources grouped by owner
 cub-scout tree ownership
 
-# Suggested Hub/AppSpace organization
+# Suggested App organization
 cub-scout tree suggest
 ```
 
@@ -378,7 +378,7 @@ Use --edge clone to see inheritance instead.
 
 ### Suggested Organization
 
-Analyzes cluster workloads and suggests Hub/AppSpace organization.
+Analyzes cluster workloads and suggests App organization.
 
 ```bash
 cub-scout tree suggest

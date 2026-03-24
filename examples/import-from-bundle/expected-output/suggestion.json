@@ -7,7 +7,7 @@
     "api"
   ],
   "proposal": {
-    "appSpace": "api-team",
+    "app": "api-team",
     "units": [
       {
         "slug": "api",

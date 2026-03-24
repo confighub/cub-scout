@@ -115,7 +115,7 @@ func TestLogProposal(t *testing.T) {
 	}
 
 	proposal := &FullProposal{
-		AppSpace: "my-team",
+		App: "my-team",
 		Units: []UnitProposal{
 			{
 				Slug:      "nginx-prod",

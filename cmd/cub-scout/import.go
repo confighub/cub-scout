@@ -120,7 +120,7 @@ type WorkloadJSON struct {
 
 // SuggestionJSON is the JSON representation of the import suggestion
 type SuggestionJSON struct {
-	AppSpace string     `json:"appSpace"`
+	App string     `json:"app"`
 	Units    []UnitJSON `json:"units"`
 }
 
@@ -366,11 +366,11 @@ func runImport(cmd *cobra.Command, args []string) error {
 	// Step 5: Apply
 	if logger != nil {
 		logger.Section("APPLYING")
-		logger.Log("Creating App: %s", proposal.AppSpace)
+		logger.Log("Creating App: %s", proposal.App)
 	}
 
 	// Try delegating Argo/Flux workloads to cub gitops import first.
-	delegation, err := attemptGitOpsDelegation(proposal.AppSpace, allWorkloads, logger)
+	delegation, err := attemptGitOpsDelegation(proposal.App, allWorkloads, logger)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: GitOps delegation failed, falling back to scout import: %v\n", err)
 		if logger != nil {
@@ -387,13 +387,13 @@ func runImport(cmd *cobra.Command, args []string) error {
 	if len(scoutWorkloads) == 0 && delegation.AnyDelegated() {
 		fmt.Println()
 		fmt.Println("No Helm/Native leftovers to snapshot-import.")
-		fmt.Printf("GitOps-managed workloads imported via cub gitops import into App '%s'.\n", proposal.AppSpace)
-		return printSpaceSummary(proposal.AppSpace)
+		fmt.Printf("GitOps-managed workloads imported via cub gitops import into App '%s'.\n", proposal.App)
+		return printSpaceSummary(proposal.App)
 	}
 
 	proposalToApply := proposal
 	if len(scoutWorkloads) != len(allWorkloads) {
-		proposalToApply = SuggestFullProposal(nil, scoutWorkloads, proposal.AppSpace)
+		proposalToApply = SuggestFullProposal(nil, scoutWorkloads, proposal.App)
 	}
 
 	return applyImportWithLogger(proposalToApply, scoutWorkloads, logger, shouldConnect, importAuditReason)
@@ -472,7 +472,7 @@ func normalizeImportAuditReason(raw string) (string, error) {
 }
 
 func createImportAuditContext(proposal *FullProposal, workloads []WorkloadInfo, reason string, logger *ImportLogger) (*importAuditContext, error) {
-	if proposal == nil || strings.TrimSpace(proposal.AppSpace) == "" {
+	if proposal == nil || strings.TrimSpace(proposal.App) == "" {
 		return nil, fmt.Errorf("cannot create break-glass audit context without app space")
 	}
 
@@ -481,7 +481,7 @@ func createImportAuditContext(proposal *FullProposal, workloads []WorkloadInfo, 
 
 	args := []string{
 		"changeset", "create",
-		"--space", proposal.AppSpace,
+		"--space", proposal.App,
 		changeSetSlug,
 		"--description", description,
 		"--label", "break-glass=true",
@@ -1120,7 +1120,7 @@ func printDiscovery(namespaces []string, workloads []WorkloadInfo, proposal *Ful
 	fmt.Println("┌─────────────────────────────────────────────────────────────┐")
 	fmt.Println("│ WILL CREATE                                                 │")
 	fmt.Println("└─────────────────────────────────────────────────────────────┘")
-	fmt.Printf("  App: %s\n\n", proposal.AppSpace)
+	fmt.Printf("  App: %s\n\n", proposal.App)
 
 	for _, unit := range proposal.Units {
 		labels := []string{}
@@ -1195,7 +1195,7 @@ func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *Imp
 	}
 
 	// Ensure space exists so target lookups and gitops commands can run.
-	if _, err := CreateAppSpaceWithResult(space, true, nil); err != nil {
+	if _, err := CreateAppWithResult(space, true, nil); err != nil {
 		msg := fmt.Sprintf("cannot ensure app space: %v", err)
 		if needArgo {
 			result.ArgoReason = msg
@@ -1394,8 +1394,8 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 	fmt.Println()
 
 	// Create App
-	fmt.Printf("Creating App: %s... ", proposal.AppSpace)
-	result, err := CreateAppSpaceWithResult(proposal.AppSpace, true, nil)
+	fmt.Printf("Creating App: %s... ", proposal.App)
+	result, err := CreateAppWithResult(proposal.App, true, nil)
 	if err != nil {
 		fmt.Println(SymError)
 		if logger != nil {
@@ -1407,12 +1407,12 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 	if result.Created {
 		fmt.Println(SymOK)
 		if logger != nil {
-			logger.Log("Created App: %s", proposal.AppSpace)
+			logger.Log("Created App: %s", proposal.App)
 		}
 	} else {
 		fmt.Println("(exists)")
 		if logger != nil {
-			logger.Log("App already exists: %s", proposal.AppSpace)
+			logger.Log("App already exists: %s", proposal.App)
 		}
 	}
 
@@ -1464,7 +1464,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 			labels = append(labels, fmt.Sprintf("%s=%s", k, v))
 		}
 
-		if err := createUnitWithManifestSimple(proposal.AppSpace, unit, labels, manifest, auditCtx); err != nil {
+		if err := createUnitWithManifestSimple(proposal.App, unit, labels, manifest, auditCtx); err != nil {
 			fmt.Printf("✗ (%v)\n", err)
 			if logger != nil {
 				logger.Log("  FAILED: create deployment: %v", err)
@@ -1513,7 +1513,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 		return nil
 	}
 
-	return printSpaceSummary(proposal.AppSpace)
+	return printSpaceSummary(proposal.App)
 }
 
 func fetchManifest(kind, namespace, name string) ([]byte, error) {
@@ -1651,7 +1651,7 @@ func confirm() bool {
 func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) error {
 	if logger != nil {
 		logger.Section("STARTING WORKER")
-		logger.Log("Space: %s", proposal.AppSpace)
+		logger.Log("Space: %s", proposal.App)
 	}
 
 	// Get current kubectl context for target matching
@@ -1662,11 +1662,11 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 	}
 	kubeContext := strings.TrimSpace(string(ctxOut))
 
-	fmt.Printf("Starting worker for App '%s'...\n", proposal.AppSpace)
+	fmt.Printf("Starting worker for App '%s'...\n", proposal.App)
 
 	// Start worker in background with output to devnull.
 	// Command exits while worker keeps running.
-	workerCmd := exec.Command("cub", "worker", "run", "dev", "--space", proposal.AppSpace)
+	workerCmd := exec.Command("cub", "worker", "run", "dev", "--space", proposal.App)
 	devNull, _ := os.Open(os.DevNull)
 	workerCmd.Stdout = devNull
 	workerCmd.Stderr = devNull
@@ -1691,7 +1691,7 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 		fmt.Print(".")
 
 		// Check if target exists
-		checkCmd := exec.Command("cub", "target", "list", "--space", proposal.AppSpace, "-o", "json")
+		checkCmd := exec.Command("cub", "target", "list", "--space", proposal.App, "-o", "json")
 		out, err := checkCmd.Output()
 		if err != nil {
 			continue
@@ -1707,7 +1707,7 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 
 	if targetSlug == "" {
 		fmt.Println("⚠ Targets not ready yet. Set target manually:")
-		fmt.Printf("  cub unit set-target <unit> <target> --space %s\n", proposal.AppSpace)
+		fmt.Printf("  cub unit set-target <unit> <target> --space %s\n", proposal.App)
 	} else {
 		// Set target on all units
 		fmt.Printf("Setting target '%s' on deployments...\n", targetSlug)
@@ -1716,7 +1716,7 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 		}
 
 		for _, unit := range proposal.Units {
-			setCmd := exec.Command("cub", "unit", "set-target", unit.Slug, targetSlug, "--space", proposal.AppSpace)
+			setCmd := exec.Command("cub", "unit", "set-target", unit.Slug, targetSlug, "--space", proposal.App)
 			if err := setCmd.Run(); err != nil {
 				fmt.Printf("  ⚠ %s: failed to set target\n", unit.Slug)
 				if logger != nil {
@@ -1731,7 +1731,7 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 		}
 	}
 
-	if err := printSpaceSummary(proposal.AppSpace); err != nil {
+	if err := printSpaceSummary(proposal.App); err != nil {
 		return err
 	}
 
@@ -1874,7 +1874,7 @@ func outputProposalJSON(proposal *FullProposal, workloads []WorkloadInfo, namesp
 }
 
 func resolveConnectedWorkloadsFromProposal(proposal *FullProposal, workloads []WorkloadInfo) []WorkloadInfo {
-	if proposal == nil || strings.TrimSpace(proposal.AppSpace) == "" || len(proposal.Units) == 0 || len(workloads) == 0 {
+	if proposal == nil || strings.TrimSpace(proposal.App) == "" || len(proposal.Units) == 0 || len(workloads) == 0 {
 		return workloads
 	}
 
@@ -1889,7 +1889,7 @@ func resolveConnectedWorkloadsFromProposal(proposal *FullProposal, workloads []W
 		return workloads
 	}
 
-	existingUnitSlugs, err := listUnitSlugsForSpace(proposal.AppSpace)
+	existingUnitSlugs, err := listUnitSlugsForSpace(proposal.App)
 	if err != nil || len(existingUnitSlugs) == 0 {
 		return workloads
 	}

@@ -56,7 +56,7 @@ type SuggestedOrg struct {
 
 type SuggestedHub struct {
 	Name      string           `json:"name"`
-	AppSpaces []SuggestedSpace `json:"appSpaces"`
+	Apps []SuggestedSpace `json:"apps"`
 }
 
 type SuggestedSpace struct {
@@ -576,7 +576,7 @@ func suggestOrganization(result *PatternsResult) SuggestedOrg {
 				hubMap["platform"] = &SuggestedHub{Name: "platform"}
 			}
 			for _, app := range r.Apps {
-				hubMap["platform"].AppSpaces = append(hubMap["platform"].AppSpaces, SuggestedSpace{
+				hubMap["platform"].Apps = append(hubMap["platform"].Apps, SuggestedSpace{
 					Name:      app,
 					Workloads: []string{app},
 					Env:       "shared",
@@ -592,7 +592,7 @@ func suggestOrganization(result *PatternsResult) SuggestedOrg {
 			hubMap[hubName] = &SuggestedHub{Name: hubName}
 		}
 		for _, ns := range team.Namespaces {
-			hubMap[hubName].AppSpaces = append(hubMap[hubName].AppSpaces, SuggestedSpace{
+			hubMap[hubName].Apps = append(hubMap[hubName].Apps, SuggestedSpace{
 				Name:      ns,
 				Workloads: []string{fmt.Sprintf("%d workloads", team.Workloads/len(team.Namespaces))},
 				Env:       inferEnv(ns),
@@ -606,7 +606,7 @@ func suggestOrganization(result *PatternsResult) SuggestedOrg {
 		if hubMap[hubName] == nil && len(chain.Environments) > 2 {
 			hubMap[hubName] = &SuggestedHub{Name: hubName}
 			for ns := range chain.Environments {
-				hubMap[hubName].AppSpaces = append(hubMap[hubName].AppSpaces, SuggestedSpace{
+				hubMap[hubName].Apps = append(hubMap[hubName].Apps, SuggestedSpace{
 					Name:      fmt.Sprintf("%s-%s", chain.AppName, inferEnv(ns)),
 					Workloads: []string{fmt.Sprintf("%s/%s", ns, chain.AppName)},
 					Env:       inferEnv(ns),
@@ -788,7 +788,7 @@ func printPatterns(r *PatternsResult) {
 
 	for _, hub := range r.Suggested.Hubs {
 		fmt.Printf("\n├── Hub: %s\n", hub.Name)
-		for _, space := range hub.AppSpaces {
+		for _, space := range hub.Apps {
 			fmt.Printf("│   └── App: %s [%s]\n", space.Name, space.Env)
 		}
 	}

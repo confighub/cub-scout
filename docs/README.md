@@ -97,7 +97,7 @@ New to cub-scout? Start here:
 |-------|-----------|
 | Import docs crosswalk | [reference/import-docs-crosswalk.md](reference/import-docs-crosswalk.md) |
 | Connected tiers + views guide | [reference/connected-tiers-and-views-product-guide.md](reference/connected-tiers-and-views-product-guide.md) |
-| App model examples | [reference/hub-appspace-examples.md](reference/hub-appspace-examples.md) |
+| App model examples | [reference/app-model-examples.md](reference/app-model-examples.md) |
 | Rendered Manifest + Argo guide | [reference/rendered-manifest-and-argo-product-guide.md](reference/rendered-manifest-and-argo-product-guide.md) |
 | Stored in Git vs ConfigHub | [reference/stored-in-git-vs-confighub.md](reference/stored-in-git-vs-confighub.md) |
 | Resolver pattern | [reference/resolver-pattern.md](reference/resolver-pattern.md) |

@@ -134,7 +134,7 @@ Common enterprise challenges and solutions:
 | Multi-tool chaos | Check each dashboard | Single view across all deployers |
 | Can't query fleet | Manual per-cluster scripts | `cub-scout map list -q "..."` |
 | Hotfix → Git hell | Drift accumulates | `cub drift accept` reconciles |
-| No ownership boundaries | Tribal knowledge | Hub = platform, AppSpace = team |
+| No ownership boundaries | Tribal knowledge | Hub = platform, App = team |
 
 ---
 

@@ -1,5 +1,5 @@
 {
-  "appSpace": "myapp-team",
+  "app": "myapp-team",
   "units": [
     {
       "slug": "api-dev",

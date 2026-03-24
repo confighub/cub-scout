@@ -1255,7 +1255,7 @@ func (m *ImportWizardModel) selectEditMenuItem() (tea.Model, tea.Cmd) {
 		}
 	case 1: // Rename app space
 		m.editMode = editModeRenameSpace
-		m.editInput = m.proposal.AppSpace
+		m.editInput = m.proposal.App
 	case 2: // Merge with another unit
 		if len(m.proposal.Units) > 1 {
 			m.editMode = editModeMergeSelect
@@ -1294,7 +1294,7 @@ func (m *ImportWizardModel) confirmTextEdit() (tea.Model, tea.Cmd) {
 		}
 	case editModeRenameSpace:
 		if m.editInput != "" {
-			m.proposal.AppSpace = sanitizeSlug(m.editInput)
+			m.proposal.App = sanitizeSlug(m.editInput)
 		}
 	case editModeAddLabel:
 		// Format: key=value
@@ -1542,7 +1542,7 @@ func (m ImportWizardModel) generateProposal() tea.Msg {
 // - Native workloads are grouped by app label
 func (m ImportWizardModel) generateSmartProposal(workloads []WorkloadInfo) *FullProposal {
 	proposal := &FullProposal{
-		AppSpace: inferAppSpace(workloads, ""),
+		App: inferApp(workloads, ""),
 	}
 
 	// Group workloads by their "unit key":
@@ -1620,7 +1620,7 @@ func (m ImportWizardModel) generateSmartProposal(workloads []WorkloadInfo) *Full
 				unit.Tier = tier
 				unit.Labels["tier"] = tier
 			}
-			if team := extractTeam(w, proposal.AppSpace); team != "" {
+			if team := extractTeam(w, proposal.App); team != "" {
 				if _, exists := unit.Labels["team"]; !exists {
 					unit.Labels["team"] = team
 				}
@@ -1657,7 +1657,7 @@ func (m ImportWizardModel) startApplyCmd() tea.Cmd {
 		}
 
 		// Create App first
-		_, err := CreateAppSpaceWithResult(m.proposal.AppSpace, true, nil)
+		_, err := CreateAppWithResult(m.proposal.App, true, nil)
 		if err != nil {
 			return wizardErrMsg{err: fmt.Errorf("create space: %w", err)}
 		}
@@ -1706,7 +1706,7 @@ func (m ImportWizardModel) applyNextUnitCmd(unitIndex int) tea.Cmd {
 			labels = append(labels, fmt.Sprintf("%s=%s", k, v))
 		}
 
-		if err := createUnitWithManifestSimple(m.proposal.AppSpace, unit, labels, manifest, nil); err != nil {
+		if err := createUnitWithManifestSimple(m.proposal.App, unit, labels, manifest, nil); err != nil {
 			return wizardApplyProgressMsg{unitSlug: unit.Slug, success: false, err: err.Error()}
 		}
 
@@ -1722,8 +1722,8 @@ func (m ImportWizardModel) startWorkerCmd() tea.Cmd {
 		}
 
 		// Use app space name as worker name
-		workerName := m.proposal.AppSpace + "-worker"
-		space := m.proposal.AppSpace
+		workerName := m.proposal.App + "-worker"
+		space := m.proposal.App
 
 		// Start worker in background
 		cmd := exec.Command("cub", "worker", "run", workerName, "--space", space)
@@ -1810,7 +1810,7 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 	os.RemoveAll(testDebugDir)
 	os.MkdirAll(testDebugDir, 0755)
 	appendTestDebug("=== TEST STARTED ===")
-	appendTestDebug(fmt.Sprintf("Space: %s, Unit: %s, Annotation: %s", m.proposal.AppSpace, m.testUnitSlug, m.testAnnotation))
+	appendTestDebug(fmt.Sprintf("Space: %s, Unit: %s, Annotation: %s", m.proposal.App, m.testUnitSlug, m.testAnnotation))
 
 	if m.proposal == nil || m.testUnitSlug == "" {
 		appendTestDebug("ERROR: no unit to test")
@@ -1826,7 +1826,7 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 
 	// Step 1: Get unit JSON
 	appendTestDebug("Step 1: Getting unit JSON...")
-	getCmd := exec.Command("cub", "unit", "get", "--space", m.proposal.AppSpace, m.testUnitSlug, "--json")
+	getCmd := exec.Command("cub", "unit", "get", "--space", m.proposal.App, m.testUnitSlug, "--json")
 	unitJSON, err := getCmd.CombinedOutput()
 	writeTestDebug("01-unit-get.json", unitJSON)
 	appendTestDebug(fmt.Sprintf("Unit get result: %d bytes, err=%v", len(unitJSON), err))
@@ -1916,7 +1916,7 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 
 	// Step 5: Update unit
 	appendTestDebug("Step 5: Updating unit with modified YAML...")
-	updateCmd := exec.Command("cub", "unit", "update", "--space", m.proposal.AppSpace, m.testUnitSlug, "-", "--change-desc", "Import wizard test")
+	updateCmd := exec.Command("cub", "unit", "update", "--space", m.proposal.App, m.testUnitSlug, "-", "--change-desc", "Import wizard test")
 	updateCmd.Stdin = strings.NewReader(string(modifiedYAML))
 	updateOutput, err := updateCmd.CombinedOutput()
 	writeTestDebug("05-update-result.txt", updateOutput)
@@ -1957,7 +1957,7 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 	// First, check if the unit has a target. If not, find one and set it.
 	appendTestDebug("Checking if unit has target...")
 	checkCmd := exec.Command("cub", "unit", "get",
-		"--space", m.proposal.AppSpace,
+		"--space", m.proposal.App,
 		"--json",
 		m.testUnitSlug)
 	checkOutput, _ := checkCmd.CombinedOutput()
@@ -1977,7 +1977,7 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 		appendTestDebug("Unit has no target, finding one...")
 		// Find a Kubernetes target
 		targetCmd := exec.Command("cub", "target", "list",
-			"--space", m.proposal.AppSpace,
+			"--space", m.proposal.App,
 			"--json")
 		targetOutput, err := targetCmd.CombinedOutput()
 		writeTestDebug("07-target-list.json", targetOutput)
@@ -1995,7 +1995,7 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 		// Use jq to find Kubernetes target
 		jqCmd := exec.Command("sh", "-c",
 			fmt.Sprintf(`cub target list --space %s --json | jq -r '[.[] | select(.Target.ProviderType == "Kubernetes")] | .[0].Target.Slug // empty'`,
-				m.proposal.AppSpace))
+				m.proposal.App))
 		jqOutput, _ := jqCmd.CombinedOutput()
 		targetSlug := strings.TrimSpace(string(jqOutput))
 		appendTestDebug(fmt.Sprintf("Found target slug via jq: '%s'", targetSlug))
@@ -2013,7 +2013,7 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 		// Set the target on the unit
 		appendTestDebug(fmt.Sprintf("Setting target to: %s", targetSlug))
 		setTargetCmd := exec.Command("cub", "unit", "set-target",
-			"--space", m.proposal.AppSpace,
+			"--space", m.proposal.App,
 			m.testUnitSlug,
 			targetSlug)
 		setOutput, err := setTargetCmd.CombinedOutput()
@@ -2033,7 +2033,7 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 	// Apply the unit
 	appendTestDebug("Applying unit...")
 	cmd := exec.Command("cub", "unit", "apply",
-		"--space", m.proposal.AppSpace,
+		"--space", m.proposal.App,
 		"--wait",
 		m.testUnitSlug)
 
@@ -2075,7 +2075,7 @@ func (m ImportWizardModel) runTestWaitSync() tea.Msg {
 	// This indicates the worker has synced
 	appendTestDebug("Getting unit status...")
 	cmd := exec.Command("cub", "unit", "get",
-		"--space", m.proposal.AppSpace,
+		"--space", m.proposal.App,
 		"--json",
 		m.testUnitSlug)
 
@@ -2252,7 +2252,7 @@ func (m ImportWizardModel) runTestVerify() tea.Msg {
 			// Verify the annotation is still in the Unit (ConfigHub side worked)
 			appendTestDebug("Checking if annotation is in Unit data...")
 			unitCmd := exec.Command("cub", "unit", "get",
-				"--space", m.proposal.AppSpace,
+				"--space", m.proposal.App,
 				"--json",
 				m.testUnitSlug)
 			unitOutput, err := unitCmd.CombinedOutput()
@@ -2313,7 +2313,7 @@ func (m ImportWizardModel) checkSyncStatusCmd() tea.Cmd {
 	return func() tea.Msg {
 		// Check unit status
 		cmd := exec.Command("cub", "unit", "get",
-			"--space", m.proposal.AppSpace,
+			"--space", m.proposal.App,
 			"--json",
 			m.testUnitSlug)
 
@@ -2572,9 +2572,9 @@ func (m ImportWizardModel) renderProposalTree() string {
 	b.WriteString("\n\n")
 
 	// Tree root: App
-	appSpaceIcon := "📁"
-	appSpaceName := wizardSelectedStyle.Render(m.proposal.AppSpace)
-	b.WriteString(fmt.Sprintf("%s %s\n", appSpaceIcon, appSpaceName))
+	appIcon := "📁"
+	appName := wizardSelectedStyle.Render(m.proposal.App)
+	b.WriteString(fmt.Sprintf("%s %s\n", appIcon, appName))
 
 	numUnits := len(m.proposal.Units)
 	for i, unit := range m.proposal.Units {
@@ -2740,7 +2740,7 @@ func (m ImportWizardModel) renderEditOverlay() string {
 		b.WriteString(headerStyle.Render("Rename App"))
 		b.WriteString("\n\n")
 		b.WriteString("Current: ")
-		b.WriteString(m.proposal.AppSpace)
+		b.WriteString(m.proposal.App)
 		b.WriteString("\n\n")
 		b.WriteString("New name: ")
 		b.WriteString(wizardSelectedStyle.Render(m.editInput))
@@ -2827,7 +2827,7 @@ func (m ImportWizardModel) renderArchitectureDiagram() string {
 	b.WriteString(boxColor.Render("│") + "                           " + boxColor.Render("│") + "\n")
 
 	// App
-	spaceName := wizardTruncate(m.proposal.AppSpace, 18)
+	spaceName := wizardTruncate(m.proposal.App, 18)
 	b.WriteString(boxColor.Render("│") + "  " + spaceStyle.Render(spaceName) + strings.Repeat(" ", 25-len(spaceName)) + boxColor.Render("│") + "\n")
 
 	// Units (show up to 4)
@@ -2865,7 +2865,7 @@ func (m ImportWizardModel) renderArchitectureDiagram() string {
 	b.WriteString(boxColor.Render("              ▼") + "\n")
 
 	// Worker box
-	workerName := m.proposal.AppSpace + "-worker"
+	workerName := m.proposal.App + "-worker"
 	if len(workerName) > 17 {
 		workerName = workerName[:14] + "..."
 	}
@@ -2917,7 +2917,7 @@ func (m ImportWizardModel) renderApplyProgress() string {
 		b.WriteString(dimStyle.Render("This registers your workloads for management."))
 		b.WriteString("\n\n")
 
-		b.WriteString(fmt.Sprintf("Creating App: %s\n", m.proposal.AppSpace))
+		b.WriteString(fmt.Sprintf("Creating App: %s\n", m.proposal.App))
 		if m.applyProgress > 0 {
 			b.WriteString(wizardSuccessStyle.Render("  ✓ Created") + "\n")
 		}
@@ -2953,7 +2953,7 @@ func (m ImportWizardModel) renderApplyProgress() string {
 			}
 		}
 		b.WriteString(fmt.Sprintf("Created %d units in ", successCount))
-		b.WriteString(wizardSelectedStyle.Render(m.proposal.AppSpace) + "\n\n")
+		b.WriteString(wizardSelectedStyle.Render(m.proposal.App) + "\n\n")
 
 		// Next steps
 		b.WriteString(headerStyle.Render("Next Steps") + "\n\n")
@@ -2961,7 +2961,7 @@ func (m ImportWizardModel) renderApplyProgress() string {
 		if m.workerStarted {
 			b.WriteString(wizardSuccessStyle.Render("✓ Worker started") + "\n")
 			b.WriteString(fmt.Sprintf("  Name: %s\n", m.workerName))
-			b.WriteString(fmt.Sprintf("  Space: %s\n", m.proposal.AppSpace))
+			b.WriteString(fmt.Sprintf("  Space: %s\n", m.proposal.App))
 			b.WriteString("\n")
 
 			// Offer test option
@@ -2973,7 +2973,7 @@ func (m ImportWizardModel) renderApplyProgress() string {
 		} else {
 			b.WriteString("Start a worker to connect this cluster:\n\n")
 			b.WriteString(dimStyle.Render("  Press ") + wizardSelectedStyle.Render("w") + dimStyle.Render(" to start now, or run:") + "\n\n")
-			b.WriteString(fmt.Sprintf("  cub worker run %s-worker --space %s\n", m.proposal.AppSpace, m.proposal.AppSpace))
+			b.WriteString(fmt.Sprintf("  cub worker run %s-worker --space %s\n", m.proposal.App, m.proposal.App))
 			b.WriteString("\n")
 			b.WriteString(dimStyle.Render("The worker will:") + "\n")
 			b.WriteString("  • Connect to ConfigHub\n")
@@ -3004,7 +3004,7 @@ func (m ImportWizardModel) renderArgoCleanupList() string {
 			}
 		}
 		b.WriteString(fmt.Sprintf("Created %d units in ", successCount))
-		b.WriteString(wizardSelectedStyle.Render(m.proposal.AppSpace) + "\n")
+		b.WriteString(wizardSelectedStyle.Render(m.proposal.App) + "\n")
 		b.WriteString("ArgoCD Applications have been handled.\n\n")
 
 		// Next steps
@@ -3013,7 +3013,7 @@ func (m ImportWizardModel) renderArgoCleanupList() string {
 		if m.workerStarted {
 			b.WriteString(wizardSuccessStyle.Render("✓ Worker started") + "\n")
 			b.WriteString(fmt.Sprintf("  Name: %s\n", m.workerName))
-			b.WriteString(fmt.Sprintf("  Space: %s\n", m.proposal.AppSpace))
+			b.WriteString(fmt.Sprintf("  Space: %s\n", m.proposal.App))
 			b.WriteString("\n")
 
 			// Offer test option
@@ -3025,7 +3025,7 @@ func (m ImportWizardModel) renderArgoCleanupList() string {
 		} else {
 			b.WriteString("Start a worker to connect this cluster:\n\n")
 			b.WriteString(dimStyle.Render("  Press ") + wizardSelectedStyle.Render("w") + dimStyle.Render(" to start now, or run:") + "\n\n")
-			b.WriteString(fmt.Sprintf("  cub worker run %s-worker --space %s\n", m.proposal.AppSpace, m.proposal.AppSpace))
+			b.WriteString(fmt.Sprintf("  cub worker run %s-worker --space %s\n", m.proposal.App, m.proposal.App))
 			b.WriteString("\n")
 			b.WriteString(dimStyle.Render("The worker will:") + "\n")
 			b.WriteString("  • Connect to ConfigHub\n")
@@ -3292,7 +3292,7 @@ func (m ImportWizardModel) renderTestDetails() string {
 	b.WriteString(fmt.Sprintf("Unit:       %s\n", wizardSelectedStyle.Render(m.testUnitSlug)))
 	b.WriteString(fmt.Sprintf("Annotation: %s\n", dimStyle.Render("confighub.com/import-test")))
 	b.WriteString(fmt.Sprintf("Value:      %s\n", dimStyle.Render(m.testAnnotation)))
-	b.WriteString(fmt.Sprintf("Space:      %s\n", dimStyle.Render(m.proposal.AppSpace)))
+	b.WriteString(fmt.Sprintf("Space:      %s\n", dimStyle.Render(m.proposal.App)))
 	b.WriteString("\n")
 
 	// Phase details

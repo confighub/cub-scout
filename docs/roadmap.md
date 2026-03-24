@@ -399,7 +399,7 @@ Current canonical behavior and scope are defined by:
 
 * `docs/reference/connected-tiers-and-views-product-guide.md`
 * `docs/reference/gitops-repo-structures.md`
-* `docs/reference/hub-appspace-examples.md`
+* `docs/reference/app-model-examples.md`
 * `docs/reference/import-docs-crosswalk.md`
 
 Coverage currently represented in this roadmap:
