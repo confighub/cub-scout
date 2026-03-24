@@ -647,6 +647,10 @@ func supportsList(verbs v1.Verbs) bool {
 	return false
 }
 
+// cleanObjectForExport strips K8s internal bookkeeping fields but preserves
+// status. Status is runtime signal that 53 of 98 live-state scan rules depend
+// on (e.g. stuck reconciliations, unhealthy conditions, VPA recommendations).
+// Stripping it would silently disable those rules. See #330.
 func cleanObjectForExport(obj *unstructured.Unstructured) {
 	unstructured.RemoveNestedField(obj.Object, "metadata", "managedFields")
 	unstructured.RemoveNestedField(obj.Object, "metadata", "resourceVersion")
@@ -654,7 +658,7 @@ func cleanObjectForExport(obj *unstructured.Unstructured) {
 	unstructured.RemoveNestedField(obj.Object, "metadata", "generation")
 	unstructured.RemoveNestedField(obj.Object, "metadata", "creationTimestamp")
 	unstructured.RemoveNestedField(obj.Object, "metadata", "selfLink")
-	unstructured.RemoveNestedField(obj.Object, "status")
+	// status is intentionally preserved — live-state scan rules need it.
 }
 
 func persistRawFindingsV1(cs *cubScanResult) error {
