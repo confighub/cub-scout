@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestConfighubScanProvider_Name(t *testing.T) {
@@ -536,6 +537,67 @@ func TestConfighubScanProvider_ListPolicies_WithCatalog(t *testing.T) {
 	}
 	if entries[0].ID != "CCVE-2025-0001" {
 		t.Errorf("entries[0].ID = %q, want CCVE-2025-0001", entries[0].ID)
+	}
+}
+
+func TestCleanObjectForExport_PreservesStatus(t *testing.T) {
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":              "test",
+				"namespace":         "default",
+				"managedFields":     []interface{}{},
+				"resourceVersion":   "12345",
+				"uid":               "abc-123",
+				"generation":        int64(3),
+				"creationTimestamp":  "2026-01-01T00:00:00Z",
+				"selfLink":          "/apis/apps/v1/namespaces/default/deployments/test",
+				"labels":            map[string]interface{}{"app": "test"},
+			},
+			"spec": map[string]interface{}{
+				"replicas": int64(2),
+			},
+			"status": map[string]interface{}{
+				"readyReplicas":     int64(2),
+				"availableReplicas": int64(2),
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Available",
+						"status": "True",
+					},
+				},
+			},
+		},
+	}
+
+	cleanObjectForExport(obj)
+
+	// Status must be preserved (#330)
+	status, found, _ := unstructured.NestedMap(obj.Object, "status")
+	if !found {
+		t.Fatal("status was stripped — live-state scan rules need it (see #330)")
+	}
+	if status["readyReplicas"] != int64(2) {
+		t.Errorf("status.readyReplicas = %v, want 2", status["readyReplicas"])
+	}
+
+	// Bookkeeping fields must be stripped
+	if _, found, _ := unstructured.NestedFieldNoCopy(obj.Object, "metadata", "managedFields"); found {
+		t.Error("managedFields should be stripped")
+	}
+	if _, found, _ := unstructured.NestedFieldNoCopy(obj.Object, "metadata", "resourceVersion"); found {
+		t.Error("resourceVersion should be stripped")
+	}
+	if _, found, _ := unstructured.NestedFieldNoCopy(obj.Object, "metadata", "uid"); found {
+		t.Error("uid should be stripped")
+	}
+
+	// Meaningful fields must survive
+	labels, found, _ := unstructured.NestedStringMap(obj.Object, "metadata", "labels")
+	if !found || labels["app"] != "test" {
+		t.Error("labels should be preserved")
 	}
 }
 

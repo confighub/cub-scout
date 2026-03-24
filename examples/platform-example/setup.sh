@@ -1,6 +1,6 @@
 #!/bin/bash
 # Platform Example Setup Script
-# Deploys flux2-kustomize-helm-example + orphan resources for cub-scout demo
+# Deploys podinfo via Flux + orphan resources for cub-scout demo
 #
 # Usage: ./setup.sh [-y|--yes]
 #   -y, --yes    Skip confirmation prompts (for CI/automation)
@@ -44,7 +44,7 @@ echo "║           Platform Example Setup for cub-scout                ║"
 echo "║                                                               ║"
 echo "║  This will deploy:                                            ║"
 echo "║  • Flux GitOps controllers                                    ║"
-echo "║  • flux2-kustomize-helm-example (~28 resources)              ║"
+echo "║  • podinfo example workload (~6 resources)                   ║"
 echo "║  • Orphan resources for demo (~7 resources)                   ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
@@ -110,36 +110,40 @@ kubectl wait --for=condition=available --timeout=120s deployment/helm-controller
 echo -e "${GREEN}✓ Flux installed${NC}"
 echo ""
 
-# Step 2: Add the flux2-kustomize-helm-example source
-echo -e "${CYAN}Step 2: Adding flux2-kustomize-helm-example...${NC}"
+# Step 2: Add podinfo as a Flux-managed workload
+echo -e "${CYAN}Step 2: Adding podinfo workload via Flux...${NC}"
 
-# Create GitRepository pointing to the example repo
+# Create namespace for podinfo
+kubectl create namespace podinfo --dry-run=client -o yaml | kubectl apply -f -
+
+# Create GitRepository pointing to podinfo (stable, minimal, no ArtifactGenerator dependency)
 cat <<EOF | kubectl apply -f -
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
-  name: flux-system
+  name: podinfo
   namespace: flux-system
 spec:
   interval: 1m
-  url: https://github.com/fluxcd/flux2-kustomize-helm-example
+  url: https://github.com/stefanprodan/podinfo
   ref:
-    branch: main
+    semver: ">=6.0.0"
 EOF
 
-# Create Kustomization for the staging cluster config
+# Create Kustomization to deploy podinfo
 cat <<EOF | kubectl apply -f -
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: flux-system
+  name: podinfo
   namespace: flux-system
 spec:
   interval: 10m
+  targetNamespace: podinfo
   sourceRef:
     kind: GitRepository
-    name: flux-system
-  path: ./clusters/staging
+    name: podinfo
+  path: ./kustomize
   prune: true
   wait: true
   timeout: 5m
@@ -148,10 +152,10 @@ EOF
 echo "Waiting for Kustomization to reconcile (this may take a few minutes)..."
 sleep 10
 
-# Wait for the main kustomization
-kubectl wait --for=condition=ready --timeout=300s kustomization/flux-system -n flux-system || true
+# Wait for the podinfo kustomization
+kubectl wait --for=condition=ready --timeout=300s kustomization/podinfo -n flux-system || true
 
-echo -e "${GREEN}✓ flux2-kustomize-helm-example deployed${NC}"
+echo -e "${GREEN}✓ podinfo deployed via Flux${NC}"
 echo ""
 
 # Step 3: Deploy orphan resources

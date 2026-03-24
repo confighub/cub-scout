@@ -6,11 +6,11 @@
       "name": "api-server",
       "namespace": "api"
     },
-    "severity": "info",
+    "severity": "warning",
     "category": "image",
     "field": "spec.template.spec.containers[0].image",
     "expected": "api-server:v1.2.5",
-    "actual": "api-server:v1.2.5",
-    "message": "Image matches expected (release candidate)"
+    "actual": "api-server:v1.2.4",
+    "message": "Image drift: running v1.2.4 but Git specifies v1.2.5 (release candidate pending rollout)"
   }
 ]

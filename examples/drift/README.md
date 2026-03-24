@@ -2,13 +2,18 @@
 
 Detect when your live cluster state doesn't match what's in Git.
 
+> **Current scope (v0.14.3):** `cub-scout drift` currently compares `spec.replicas`
+> and container images only. The examples below illustrate the *target* drift model
+> (env vars, imagePullPolicy, resource requests/limits) which is not yet implemented.
+> See [#332](https://github.com/confighub/cub-scout/issues/332) for tracking.
+
 ## The Problem
 
 Someone runs `kubectl edit` or `kubectl set env` in production during an incident.
 The fix works, but nobody updates Git. ArgoCD still says "Synced" because it synced
 the *old* state successfully. Your cluster has silently drifted.
 
-**cub-scout compares desired manifests against live state:**
+**Target: cub-scout will compare desired manifests against live state:**
 
 ```
 desired.yaml (Git)          Live Cluster           Result

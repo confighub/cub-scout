@@ -73,16 +73,16 @@ func TestScanFile_NoFindings(t *testing.T) {
 }
 
 // TestScanFile_WithFindings verifies scan --file output when misconfigurations are detected.
-// Expected: severity-prefixed findings + summary + exit code 1.
-// Reference: cli-contract.md scan section - "Issues found or error".
+// Expected: severity-prefixed findings + summary + exit code 0.
+// Scan exits 0 for successful scans even with findings (use --fail-on for non-zero exit).
 // This test is fully offline - no cluster required.
 func TestScanFile_WithFindings(t *testing.T) {
 	fixturePath := fixtureAbsPath(t, "misconfigured-deployment.yaml")
 
 	result := golden.RunCubScout(t, "scan", "--file", fixturePath)
 
-	// Per cli-contract.md: exit code 1 for "Issues found"
-	golden.AssertExitCode(t, 1, result)
+	// Scan exits 0: findings present but no --fail-on threshold
+	golden.AssertExitCode(t, 0, result)
 
 	// Normalize output
 	normalized := normalizeScanOutput(result.Stdout + result.Stderr)
@@ -188,16 +188,16 @@ func TestScanFile_NoFindings_JSON(t *testing.T) {
 }
 
 // TestScanFile_WithFindings_JSON verifies scan --file --json output with findings.
-// Expected: JSON with findings array populated + exit code 1.
-// Reference: cli-contract.md scan JSON output section.
+// Expected: JSON with findings array populated + exit code 0.
+// Scan exits 0 for successful scans even with findings (use --fail-on for non-zero exit).
 // This test is fully offline - no cluster required.
 func TestScanFile_WithFindings_JSON(t *testing.T) {
 	fixturePath := fixtureAbsPath(t, "misconfigured-deployment.yaml")
 
 	result := golden.RunCubScout(t, "scan", "--file", fixturePath, "--json")
 
-	// Per cli-contract.md: exit code 1 for "Issues found"
-	golden.AssertExitCode(t, 1, result)
+	// Scan exits 0: findings present but no --fail-on threshold
+	golden.AssertExitCode(t, 0, result)
 
 	// Verify output is valid JSON
 	combined := result.Stdout + result.Stderr

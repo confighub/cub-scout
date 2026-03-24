@@ -3,10 +3,10 @@
 **A realistic GitOps environment for learning and demoing cub-scout.**
 
 This example combines:
-- **flux2-kustomize-helm-example** — Official Flux reference architecture (~28 resources)
+- **podinfo** — Flux-managed workload via GitRepository + Kustomization (~6 resources)
 - **Orphan resources** — Realistic "shadow IT" scenarios (~7 resources)
 
-Total: ~35 resources across multiple namespaces
+Total: ~13 resources across multiple namespaces
 
 ---
 
@@ -43,13 +43,12 @@ cub-scout trace deploy/podinfo -n podinfo  # Trace to Git source
 
 ## What Gets Deployed
 
-### From flux2-kustomize-helm-example
+### Flux-managed workloads
 
 | Namespace | Resources | Owner |
 |-----------|-----------|-------|
-| `flux-system` | Flux controllers, GitRepository, Kustomizations | Flux |
+| `flux-system` | Flux controllers, GitRepository, Kustomization | Flux |
 | `podinfo` | podinfo deployment, service, HPA | Flux (Kustomization) |
-| `kube-prometheus-stack` | Prometheus, Grafana, AlertManager | Flux (HelmRelease) |
 
 ### Orphan Resources (for demo)
 
@@ -138,7 +137,7 @@ cub-scout trace deploy/podinfo -n podinfo --diff
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     Git Repository                           │
-│  github.com/fluxcd/flux2-kustomize-helm-example             │
+│  github.com/stefanprodan/podinfo                            │
 └─────────────────────┬───────────────────────────────────────┘
                       │ Flux watches
                       ▼
@@ -149,17 +148,17 @@ cub-scout trace deploy/podinfo -n podinfo --diff
         │                         │
         ▼                         ▼
 ┌───────────────────┐    ┌────────────────────┐
-│  Kustomization    │    │   HelmRelease      │
-│  apps/podinfo     │    │   monitoring       │
-└───────┬───────────┘    └────────┬───────────┘
-        │                         │
-        ▼                         ▼
-┌───────────────────┐    ┌────────────────────┐
-│  podinfo NS       │    │  monitoring NS     │
-│  - Deployment     │    │  - Prometheus      │
-│  - Service        │    │  - Grafana         │
-│  - HPA            │    │  - AlertManager    │
-└───────────────────┘    └────────────────────┘
+│  Kustomization    │
+│  podinfo          │
+└───────┬───────────┘
+        │
+        ▼
+┌───────────────────┐
+│  podinfo NS       │
+│  - Deployment     │
+│  - Service        │
+│  - HPA            │
+└───────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
 │                    ORPHAN RESOURCES                          │
@@ -226,4 +225,4 @@ cub-scout map list
 
 - [docs/getting-started/scale-demo.md](../../docs/getting-started/scale-demo.md) - Scale testing guide
 - [docs/diagrams/](../../docs/diagrams/) - Visual explanations
-- [flux2-kustomize-helm-example](https://github.com/fluxcd/flux2-kustomize-helm-example) - Upstream repo
+- [podinfo](https://github.com/stefanprodan/podinfo) - Upstream workload repo

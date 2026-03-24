@@ -34,6 +34,7 @@ var (
 	scanFile              string
 	scanExplain           bool
 	scanNormalizedJSON    bool
+	scanFailOn            string
 )
 
 var scanCmd = &cobra.Command{
@@ -105,6 +106,7 @@ func init() {
 	scanCmd.Flags().StringVar(&scanFile, "file", "", "YAML file to scan (static analysis, no cluster required)")
 	scanCmd.Flags().BoolVar(&scanExplain, "explain", false, "Show explanatory content to help learn GitOps risk concepts")
 	scanCmd.Flags().BoolVar(&scanNormalizedJSON, "normalized-json", false, "Output normalized findings JSON (scan.normalized.v1 schema)")
+	scanCmd.Flags().StringVar(&scanFailOn, "fail-on", "", "Exit 1 when findings at or above threshold: info, warning, critical (default: no exit-on-findings)")
 }
 
 // CombinedScanResult is the legacy type name, preserved for compatibility
@@ -929,15 +931,67 @@ func runFileScan(ctx context.Context, provider scan.Provider, filename string) e
 		}
 	}
 
-	// Per cli-contract.md: exit code 1 for "Issues found or error"
-	hasFindings := combined.Static != nil && (len(combined.Static.Findings) > 0 || combined.Static.Error != "")
-	if combined.LifecycleHazards != nil {
-		hasFindings = hasFindings || combined.LifecycleHazards.Summary.Total > 0
-	}
-	if hasFindings {
+	// Exit code logic: exit 0 by default for successful scans (even with findings).
+	// Exit 1 only when --fail-on threshold is specified and findings meet it,
+	// or when a scan error occurred.
+	if combined.Static != nil && combined.Static.Error != "" {
 		os.Exit(1)
 	}
+	if scanFailOn != "" {
+		exitCode := computeScanExitCode(combined, scanFailOn)
+		if exitCode != 0 {
+			os.Exit(exitCode)
+		}
+	}
 	return nil
+}
+
+// computeScanExitCode determines the exit code based on findings and --fail-on.
+// Returns 0 for no findings or findings below threshold, 1 for findings at or
+// above threshold. Mirrors the drift command's --fail-on semantics.
+func computeScanExitCode(combined *scan.CombinedResult, failOn string) int {
+	if failOn == "" {
+		return 0
+	}
+
+	threshold := strings.ToLower(strings.TrimSpace(failOn))
+	thresholdRank := scanSeverityRank(threshold)
+	if thresholdRank < 0 {
+		return 0 // unrecognized threshold, don't fail
+	}
+
+	// Check static findings
+	if combined.Static != nil {
+		for _, f := range combined.Static.Findings {
+			sev := strings.ToLower(strings.TrimSpace(f.Severity))
+			if scanSeverityRank(sev) >= thresholdRank {
+				return 1
+			}
+		}
+	}
+
+	// Check lifecycle hazard findings
+	if combined.LifecycleHazards != nil && combined.LifecycleHazards.Summary.Total > 0 {
+		// Lifecycle hazards are always at least warning severity
+		if thresholdRank <= scanSeverityRank("warning") {
+			return 1
+		}
+	}
+
+	return 0
+}
+
+func scanSeverityRank(sev string) int {
+	switch sev {
+	case "info":
+		return 0
+	case "warning":
+		return 1
+	case "critical":
+		return 2
+	default:
+		return -1
+	}
 }
 
 // outputStaticScanHuman outputs static scan results in human-readable format

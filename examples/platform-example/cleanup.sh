@@ -58,7 +58,7 @@ fi
 # Confirm cleanup
 echo -e "${YELLOW}This will remove:${NC}"
 echo "  • Flux controllers and CRDs"
-echo "  • All resources from flux2-kustomize-helm-example"
+echo "  • All Flux-managed resources (podinfo)"
 echo "  • Orphan demo resources"
 echo ""
 if [[ "$ASSUME_YES" != "1" ]]; then

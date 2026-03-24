@@ -27,6 +27,12 @@ func ResolveConfig(explicit ProviderConfig) ProviderConfig {
 	}
 
 	if resolved.PolicyDBDir == "" {
+		if kyvernoAsset := ResolveBundleAsset(bundleAssetKyvernoCCVE); kyvernoAsset != "" {
+			resolved.PolicyDBDir = kyvernoAsset
+		}
+	}
+
+	if resolved.PolicyDBDir == "" {
 		resolved.PolicyDBDir = probeLegacyPolicyDBDir()
 	}
 

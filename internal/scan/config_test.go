@@ -88,6 +88,44 @@ func TestResolveConfig_EmptyWhenNothingFound(t *testing.T) {
 	}
 }
 
+func TestResolveConfig_BundleManifestKyvernoCCVE(t *testing.T) {
+	t.Setenv("CUB_SCOUT_KYVERNO_DB", "")
+
+	tmp := t.TempDir()
+	orig, _ := os.Getwd()
+	defer os.Chdir(orig)
+	os.Chdir(tmp)
+
+	// Create a bundle manifest that points to a kyverno-ccve-mappings asset
+	kyvernoDir := filepath.Join(tmp, "data", "kyverno")
+	if err := os.MkdirAll(kyvernoDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	// Write a dummy file so the asset path resolves
+	if err := os.WriteFile(filepath.Join(kyvernoDir, "placeholder"), []byte("ok"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	manifest := `{"files":[{"name":"kyverno-ccve-mappings","path":"data/kyverno"}]}`
+	if err := os.WriteFile(filepath.Join(tmp, defaultBundleManifest), []byte(manifest), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	got := ResolveConfig(ProviderConfig{})
+	if got.PolicyDBDir == "" {
+		t.Error("PolicyDBDir is empty, expected bundle-manifest to resolve kyverno-ccve-mappings")
+	}
+	// The resolved path may be relative (from cwd) or absolute depending on
+	// how the manifest candidate list is built. Accept either form.
+	// Use EvalSymlinks to normalize macOS /var → /private/var.
+	absResolved, _ := filepath.Abs(got.PolicyDBDir)
+	absResolved, _ = filepath.EvalSymlinks(absResolved)
+	want, _ := filepath.EvalSymlinks(filepath.Join(tmp, "data", "kyverno"))
+	if absResolved != want {
+		t.Errorf("PolicyDBDir resolves to %q, want %q", absResolved, want)
+	}
+}
+
 // --- SelectProvider tests ---
 
 func TestSelectProvider_DefaultReturnsLegacy(t *testing.T) {

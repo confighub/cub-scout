@@ -172,6 +172,7 @@ Real-world use cases:
 
 | File/Folder | Purpose |
 |-------------|---------|
+| [../HANDOVER.md](../HANDOVER.md) | Current handover for the next AI coder working on connected/AI-first surfaces |
 | [roadmap.md](roadmap.md) | Canonical roadmap and current execution scope |
 | [workflows/agent-milestone-plan.md](workflows/agent-milestone-plan.md) | Agent-based execution plan for remaining roadmap milestones |
 | [workflows/m1-task-cards.md](workflows/m1-task-cards.md) | Executable M1 task cards with proof-first and iterative verification gates |

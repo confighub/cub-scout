@@ -21,6 +21,8 @@ var defaultMapWatchResources = []schema.GroupVersionResource{
 	{Group: "apps", Version: "v1", Resource: "deployments"},
 	{Group: "apps", Version: "v1", Resource: "statefulsets"},
 	{Group: "apps", Version: "v1", Resource: "daemonsets"},
+	{Group: "batch", Version: "v1", Resource: "jobs"},
+	{Group: "batch", Version: "v1", Resource: "cronjobs"},
 	{Group: "", Version: "v1", Resource: "services"},
 	{Group: "", Version: "v1", Resource: "configmaps"},
 	{Group: "", Version: "v1", Resource: "secrets"},

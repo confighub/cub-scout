@@ -44,7 +44,11 @@ const (
 	defaultBundleManifest     = "bundle-manifest-v1.json"
 	defaultBundleManifestPath = "dist/bundle-manifest-v1.json"
 	siblingPatternsRepoName   = "confighub-patterns"
-	bundleAssetRiskCatalog    = "risk-catalog"
+	bundleAssetRiskCatalog        = "risk-catalog"
+	bundleAssetRiskFunctionLinks  = "risk-function-links"
+	bundleAssetKyvernoCCVE        = "kyverno-ccve-mappings"
+	bundleAssetTrivyCCVE          = "trivy-ccve-mappings"
+	bundleAssetCrossToolMapping   = "cross-tool-mapping"
 )
 
 type bundleManifest struct {
@@ -205,14 +209,14 @@ func resolveCatalogPath() string {
 		}
 	}
 
+	if _, resolved := resolveCatalogFromManifest(); resolved != "" {
+		return resolved
+	}
+
 	for _, candidate := range catalogCandidates() {
 		if fileExists(candidate) {
 			return candidate
 		}
-	}
-
-	if _, resolved := resolveCatalogFromManifest(); resolved != "" {
-		return resolved
 	}
 
 	return ""
@@ -313,6 +317,31 @@ func resolveManifestAsset(manifestPath, assetName string) string {
 	return ""
 }
 
+// resolveManifestAssetPath is like resolveManifestAsset but accepts both
+// file and directory paths. Used by ResolveBundleAsset for assets like
+// kyverno-ccve-mappings that point to directories.
+func resolveManifestAssetPath(manifestPath, assetName string) string {
+	raw, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return ""
+	}
+	var manifest bundleManifest
+	if err := json.Unmarshal(raw, &manifest); err != nil {
+		return ""
+	}
+	for _, entry := range manifest.Files {
+		if strings.TrimSpace(entry.Name) != assetName || strings.TrimSpace(entry.Path) == "" {
+			continue
+		}
+		for _, candidate := range manifestAssetCandidates(manifestPath, entry.Path) {
+			if pathExists(candidate) {
+				return candidate
+			}
+		}
+	}
+	return ""
+}
+
 func manifestAssetCandidates(manifestPath, entryPath string) []string {
 	manifestDir := filepath.Dir(manifestPath)
 	baseDir := manifestDir
@@ -340,9 +369,29 @@ func manifestAssetCandidates(manifestPath, entryPath string) []string {
 	return out
 }
 
+// ResolveBundleAsset resolves an asset by name from the first available
+// bundle-manifest-v1.json. Returns "" if no manifest or asset is found.
+// Unlike resolveCatalogFromManifest, this accepts both file and directory assets.
+func ResolveBundleAsset(assetName string) string {
+	for _, manifestPath := range bundleManifestCandidates() {
+		if !fileExists(manifestPath) {
+			continue
+		}
+		if resolved := resolveManifestAssetPath(manifestPath, assetName); resolved != "" {
+			return resolved
+		}
+	}
+	return ""
+}
+
 func fileExists(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && !info.IsDir()
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 // invokeCubScan executes the cub-scan binary and parses its JSON output.
@@ -598,6 +647,10 @@ func supportsList(verbs v1.Verbs) bool {
 	return false
 }
 
+// cleanObjectForExport strips K8s internal bookkeeping fields but preserves
+// status. Status is runtime signal that 53 of 98 live-state scan rules depend
+// on (e.g. stuck reconciliations, unhealthy conditions, VPA recommendations).
+// Stripping it would silently disable those rules. See #330.
 func cleanObjectForExport(obj *unstructured.Unstructured) {
 	unstructured.RemoveNestedField(obj.Object, "metadata", "managedFields")
 	unstructured.RemoveNestedField(obj.Object, "metadata", "resourceVersion")
@@ -605,7 +658,7 @@ func cleanObjectForExport(obj *unstructured.Unstructured) {
 	unstructured.RemoveNestedField(obj.Object, "metadata", "generation")
 	unstructured.RemoveNestedField(obj.Object, "metadata", "creationTimestamp")
 	unstructured.RemoveNestedField(obj.Object, "metadata", "selfLink")
-	unstructured.RemoveNestedField(obj.Object, "status")
+	// status is intentionally preserved — live-state scan rules need it.
 }
 
 func persistRawFindingsV1(cs *cubScanResult) error {

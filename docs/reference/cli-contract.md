@@ -484,6 +484,7 @@ cub-scout scan [flags]
 | `--list` | bool | false | List all KPOL policies |
 | `--verbose` | bool | false | Detailed output |
 | `--include-unresolved` | bool | false | Include Trivy/Kyverno unresolved |
+| `--fail-on` | string | - | Exit 1 when findings at or above threshold: info, warning, critical |
 
 ### Static File Scan (`--file`)
 
@@ -519,8 +520,12 @@ Summary: 0 critical, <N> warning, 0 info
 
 | Code | Meaning |
 |------|---------|
-| 0 | No misconfigurations found |
-| 1 | Misconfigurations found or error |
+| 0 | Scan completed successfully (default, even when findings are present) |
+| 1 | Error, or `--fail-on` threshold met |
+
+By default, scan exits 0 for a successful scan regardless of findings.
+Use `--fail-on <severity>` to exit 1 when findings at or above the threshold
+exist (values: `info`, `warning`, `critical`).
 
 ---
 

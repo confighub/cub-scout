@@ -225,7 +225,7 @@ if [[ $CURRENT_IDX -ge 2 ]]; then
         run_test "scan --json" "./cub-scout scan --json"
 
         subsection "Scan Provider Selection (v1.2)"
-        # scan --file exits 1 when findings exist (by design), so use clean fixture for provider tests
+        # scan --file exits 0 even with findings (use --fail-on for non-zero), so clean fixture isn't strictly needed
         run_test "scan --file (legacy override)" "CUB_SCOUT_SCAN_PROVIDER=legacy ./cub-scout scan --file test/golden/scan-file/testdata/inputs/clean-deployment.yaml --json > /dev/null"
         if command -v confighub-scan > /dev/null 2>&1 || command -v cub-scan > /dev/null 2>&1; then
             run_test "scan --file (cub-scan detected)" "./cub-scout scan --file test/golden/scan-file/testdata/inputs/clean-deployment.yaml --json > /dev/null"

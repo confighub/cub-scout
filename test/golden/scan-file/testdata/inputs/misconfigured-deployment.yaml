@@ -1,5 +1,5 @@
 # Misconfigured deployment with intentional issues for testing.
-# Used for testing scan --file with expected exit code 1.
+# Used for testing scan --file with findings (exit 0 by default, exit 1 with --fail-on).
 #
 # Known issues in this file:
 # 1. CCVE-2025-0244: Probe timeout (15s) exceeds period (10s) - warning
