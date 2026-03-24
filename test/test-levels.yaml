@@ -127,7 +127,7 @@ levels:
 
   # Level 6: Connected (< 20 minutes, needs ConfigHub)
   connected:
-    description: "ConfigHub connected mode - workers, targets, app-space"
+    description: "ConfigHub connected mode - workers, targets, app"
     requirements:
       cluster: true
       flux: true
@@ -137,11 +137,11 @@ levels:
       - cub auth test-login || cub auth login
       - ./test/preflight/worker-health
     tests:
-      - ./cub-scout app-space list
+      - ./cub-scout app list
       - ./cub-scout map --hub (TTY check)
       - ./cub-scout import -n boutique --dry-run
     assertions:
-      - "app-space list shows spaces"
+      - "app list shows spaces"
       - "No null values in output"
 
   # Level 7: Full proof (complete verification)

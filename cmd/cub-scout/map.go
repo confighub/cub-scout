@@ -1274,7 +1274,7 @@ var mapFleetCmd = &cobra.Command{
 	Short: "Show fleet view grouped by app and variant (App model)",
 	Long: `Display units across spaces grouped by app and variant labels.
 
-This view requires units imported with --model hub-appspace, which adds:
+This view requires units imported with --model app-deployment-target, which adds:
   - Labels.app: The application name
   - Labels.variant: The environment variant (dev, staging, prod)
 

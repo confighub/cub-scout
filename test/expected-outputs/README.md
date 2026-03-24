@@ -22,7 +22,7 @@ These expected outputs serve three functions:
 | `snapshot` | No | standalone |
 | `import` | No | connected |
 | `import-argocd` | No | connected |
-| `app-space` | No | connected |
+| `app` | No | connected |
 | `remedy` | No | standalone |
 | `combined` | No | standalone/connected |
 | `parse-repo` | No | standalone |

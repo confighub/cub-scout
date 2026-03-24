@@ -175,7 +175,7 @@ func TestVerifyConnectedDemoScript_SkipsConnectedGateWhenProposalSpaceDiffers(t 
 	  {"Unit":{"Slug":"demo-app-wet"}}
 	]`)
 	mustWrite(t, importJSON, `{
-	  "proposal":{"appSpace":"other-space"},
+	  "proposal":{"app":"other-space"},
 	  "workloads":[{"name":"api","connected":false}]
 	}`)
 
@@ -223,8 +223,8 @@ exit 2
 	if !strings.Contains(string(out), "connected_gate=skipped") {
 		t.Fatalf("expected connected gate skip note, got:\n%s", string(out))
 	}
-	if !strings.Contains(string(out), "proposal_app_space=other-space") {
-		t.Fatalf("expected proposal app space note, got:\n%s", string(out))
+	if !strings.Contains(string(out), "proposal_app_name=other-space") {
+		t.Fatalf("expected proposal app name note, got:\n%s", string(out))
 	}
 }
 

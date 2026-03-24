@@ -158,12 +158,12 @@ func runCombined(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if len(workloads) > 0 || clusterNamespace != "" {
-		suggestion := SuggestHubAppSpaceStructure(workloads, "")
+		suggestion := SuggestAppStructure(workloads, "")
 		suggestionJSON := convertToSuggestionJSON(&suggestion)
 
 		result.Cluster = &ImportResult{
 			Namespace:  clusterNamespace,
-			Model:      "hub-appspace",
+			Model:      "app-deployment-target",
 			Workloads:  convertToWorkloadJSON(workloads),
 			Suggestion: suggestionJSON,
 		}
@@ -553,7 +553,7 @@ func convertToWorkloadJSON(workloads []WorkloadInfo) []WorkloadJSON {
 	return result
 }
 
-func convertToSuggestionJSON(s *HubAppSpaceSuggestion) *SuggestionJSON {
+func convertToSuggestionJSON(s *AppModelSuggestion) *SuggestionJSON {
 	if s == nil {
 		return nil
 	}
@@ -571,7 +571,7 @@ func convertToSuggestionJSON(s *HubAppSpaceSuggestion) *SuggestionJSON {
 		})
 	}
 	return &SuggestionJSON{
-		AppSpace: s.AppSpace,
+		App: s.App,
 		Units:    units,
 	}
 }
@@ -595,9 +595,9 @@ func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool
 	}
 
 	// Step 1: Create App
-	fmt.Printf("  Creating App: %s\n", proposal.AppSpace)
+	fmt.Printf("  Creating App: %s\n", proposal.App)
 	if !dryRun {
-		if err := createAppSpaceForImport(proposal.AppSpace); err != nil {
+		if err := createAppForImport(proposal.App); err != nil {
 			return fmt.Errorf("create space: %w", err)
 		}
 		fmt.Printf("    ✓ Space created\n")
@@ -646,7 +646,7 @@ func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool
 				}
 
 				// Create unit in ConfigHub
-				if err := createUnitWithManifest(proposal.AppSpace, unit.Slug, labels, manifest); err != nil {
+				if err := createUnitWithManifest(proposal.App, unit.Slug, labels, manifest); err != nil {
 					fmt.Printf("      ⚠ failed to create: %v\n", err)
 					skipped++
 					continue
@@ -665,9 +665,9 @@ func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool
 	return nil
 }
 
-// createAppSpaceForImport creates an App for import using cub-scout app-space create
-func createAppSpaceForImport(name string) error {
-	result, err := CreateAppSpaceWithResult(name, true, nil)
+// createAppForImport creates an App for import using cub-scout app-space create
+func createAppForImport(name string) error {
+	result, err := CreateAppWithResult(name, true, nil)
 	if err != nil {
 		return err
 	}

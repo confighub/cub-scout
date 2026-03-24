@@ -32,7 +32,7 @@ go build ./cmd/cub-scout && go test ./...
 | **Integration** | 20% | `go test -tags=integration ./test/integration/...` | CLI commands work, JSON output valid |
 | **GitOps E2E** | 20% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
 | **Attribution Contract** | 20% | `go test ./pkg/agent/... -run Attribution` | Determinism, scoring, bundle replay (v0.16+) |
-| **Connected** | 20% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
+| **Connected** | 20% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app list |
 
 **Target: >90% score across all groups = FULLY PROVEN**
 
@@ -279,7 +279,7 @@ examples/                          # Phase 3: All examples
 | `snapshot` | - | - | - | - |
 | `import` | - | ✓ | - | ✓ |
 | `import-argocd` | - | - | - | - |
-| `app-space` | - | - | ✓ | - |
+| `app` | - | - | ✓ | - |
 | `remedy` | ✓ | - | - | - |
 | `combined` | - | - | - | - |
 | `parse-repo` | - | - | - | - |
@@ -458,7 +458,7 @@ The test suite is organized into 7 levels, from quick smoke tests to full connec
 | **gitops** | 5m | Yes | No | Flux + ArgoCD ownership, trace |
 | **demos** | 10m | Yes | No | Demo scripts run |
 | **examples** | 15m | Yes | No | Example apps deploy |
-| **connected** | 20m | Yes | Yes | Worker, import, app-space |
+| **connected** | 20m | Yes | Yes | Worker, import, app |
 | **full** | 30m | Yes | Yes | EVERYTHING |
 
 **Run with:** `./test/prove-it-works.sh --level=<level>`
@@ -535,7 +535,7 @@ GitOps E2E tests verify BOTH Flux and ArgoCD work correctly:
 
 # Must include:
 # - Units tree with workload expansion
-# - Namespace → AppSpace inference
+# - Namespace → App inference
 # - Ownership graph (which owner type manages each unit)
 # - Label analysis (app.kubernetes.io/* labels)
 # - ConfigHub mapping suggestions
@@ -563,7 +563,7 @@ cub worker list
 |------|------------------|
 | `cub auth` | User is logged in |
 | `cub worker run` | Worker starts and shows "Ready" |
-| `app-space list` | Can list spaces (should show 150+) |
+| `app list` | Can list spaces (should show 150+) |
 | `import --dry-run boutique` | Discovers workloads |
 | `import --dry-run online-boutique` | Discovers 12 microservices |
 | `import boutique` | Creates unit in ConfigHub |

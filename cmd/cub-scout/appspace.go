@@ -12,13 +12,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var appSpaceCmd = &cobra.Command{
-	Use:   "app-space",
+var appCmd = &cobra.Command{
+	Use:   "app",
 	Short: "Manage Apps",
 	Long:  `Create, list, and manage Apps in ConfigHub.`,
 }
 
-var appSpaceCreateCmd = &cobra.Command{
+var appCreateCmd = &cobra.Command{
 	Use:   "create <name>",
 	Short: "Create an App",
 	Long: `Create a new App in ConfigHub.
@@ -37,44 +37,44 @@ Examples:
   cub-scout app-space create payments-team --label team=payments --label owner=platform
 `,
 	Args: cobra.ExactArgs(1),
-	RunE: runAppSpaceCreate,
+	RunE: runAppCreate,
 }
 
-var appSpaceListCmd = &cobra.Command{
+var appListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Apps",
 	Long:  `List all Apps in the current organization.`,
-	RunE:  runAppSpaceList,
+	RunE:  runAppList,
 }
 
 var (
-	appSpaceSetContext bool
-	appSpaceLabels     []string
-	appSpaceJSON       bool
+	appSetContext bool
+	appLabels     []string
+	appJSON       bool
 )
 
 func init() {
-	appSpaceCreateCmd.Flags().BoolVar(&appSpaceSetContext, "set-context", false, "Set as current context after creation")
-	appSpaceCreateCmd.Flags().StringArrayVar(&appSpaceLabels, "label", nil, "Labels in key=value format (can be repeated)")
+	appCreateCmd.Flags().BoolVar(&appSetContext, "set-context", false, "Set as current context after creation")
+	appCreateCmd.Flags().StringArrayVar(&appLabels, "label", nil, "Labels in key=value format (can be repeated)")
 
-	appSpaceListCmd.Flags().BoolVar(&appSpaceJSON, "json", false, "Output as JSON")
+	appListCmd.Flags().BoolVar(&appJSON, "json", false, "Output as JSON")
 
-	appSpaceCmd.AddCommand(appSpaceCreateCmd)
-	appSpaceCmd.AddCommand(appSpaceListCmd)
-	rootCmd.AddCommand(appSpaceCmd)
+	appCmd.AddCommand(appCreateCmd)
+	appCmd.AddCommand(appListCmd)
+	rootCmd.AddCommand(appCmd)
 }
 
-func runAppSpaceCreate(cmd *cobra.Command, args []string) error {
+func runAppCreate(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
 	// Build cub command
 	cubArgs := []string{"space", "create", name}
 
-	if appSpaceSetContext {
+	if appSetContext {
 		cubArgs = append(cubArgs, "--set-context")
 	}
 
-	for _, label := range appSpaceLabels {
+	for _, label := range appLabels {
 		cubArgs = append(cubArgs, "--label", label)
 	}
 
@@ -89,10 +89,10 @@ func runAppSpaceCreate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runAppSpaceList(cmd *cobra.Command, args []string) error {
+func runAppList(cmd *cobra.Command, args []string) error {
 	cubArgs := []string{"space", "list"}
 
-	if appSpaceJSON {
+	if appJSON {
 		cubArgs = append(cubArgs, "--json")
 	}
 
@@ -103,16 +103,16 @@ func runAppSpaceList(cmd *cobra.Command, args []string) error {
 	return cubCmd.Run()
 }
 
-// AppSpaceResult represents the result of creating an App
-type AppSpaceResult struct {
+// AppResult represents the result of creating an App
+type AppResult struct {
 	Name    string `json:"name"`
 	Created bool   `json:"created"`
 	Error   string `json:"error,omitempty"`
 }
 
-// CreateAppSpaceWithResult creates an App and returns structured result
-func CreateAppSpaceWithResult(name string, setContext bool, labels []string) (*AppSpaceResult, error) {
-	result := &AppSpaceResult{Name: name}
+// CreateAppWithResult creates an App and returns structured result
+func CreateAppWithResult(name string, setContext bool, labels []string) (*AppResult, error) {
+	result := &AppResult{Name: name}
 
 	cubArgs := []string{"space", "create", name, "--json"}
 

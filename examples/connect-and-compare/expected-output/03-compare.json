@@ -4,7 +4,7 @@
   },
   "cluster": {
     "namespace": "api",
-    "model": "hub-appspace",
+    "model": "app-deployment-target",
     "workloads": [
       {
         "kind": "Deployment",
@@ -17,7 +17,7 @@
       }
     ],
     "suggestion": {
-      "appSpace": "api-team",
+      "app": "api-team",
       "units": [
         {
           "slug": "api",

@@ -894,8 +894,8 @@ func TestHierarchyDelete(t *testing.T) {
 	tm.WaitFinished(t, teatest.WithFinalTimeout(2*time.Second))
 }
 
-// TestHubSnapshotSaveLoad tests that Hub TUI state is saved and restored.
-func TestHubSnapshotSaveLoad(t *testing.T) {
+// TestAppSnapshotSaveLoad tests that Hub TUI state is saved and restored.
+func TestAppSnapshotSaveLoad(t *testing.T) {
 	// Use a temp directory for testing
 	tmpDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
@@ -917,7 +917,7 @@ func TestHubSnapshotSaveLoad(t *testing.T) {
 	m.nodes[0].Expanded = true
 
 	// Save snapshot
-	saveHubSnapshot(&m)
+	saveAppSnapshot(&m)
 
 	// Verify file was created
 	snapPath := filepath.Join(sessionsDir, "hub-snapshot.json")
@@ -926,7 +926,7 @@ func TestHubSnapshotSaveLoad(t *testing.T) {
 	}
 
 	// Load snapshot
-	snap := loadHubSnapshot()
+	snap := loadAppSnapshot()
 	if snap == nil {
 		t.Fatal("snapshot was not loaded")
 	}
@@ -946,8 +946,8 @@ func TestHubSnapshotSaveLoad(t *testing.T) {
 	}
 }
 
-// TestHubSnapshotExpiry tests that old snapshots are not loaded.
-func TestHubSnapshotExpiry(t *testing.T) {
+// TestAppSnapshotExpiry tests that old snapshots are not loaded.
+func TestAppSnapshotExpiry(t *testing.T) {
 	// Use a temp directory for testing
 	tmpDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
@@ -961,7 +961,7 @@ func TestHubSnapshotExpiry(t *testing.T) {
 	}
 
 	// Create an old snapshot (> 24 hours old)
-	oldSnap := HubSnapshot{
+	oldSnap := AppSnapshot{
 		Version:    hubSnapshotVersion,
 		UpdatedAt:  time.Now().Add(-25 * time.Hour), // 25 hours ago
 		Cursor:     5,
@@ -976,7 +976,7 @@ func TestHubSnapshotExpiry(t *testing.T) {
 	}
 
 	// Load should return nil for expired snapshot
-	snap := loadHubSnapshot()
+	snap := loadAppSnapshot()
 	if snap != nil {
 		t.Error("expected nil for expired snapshot, but got a snapshot")
 	}

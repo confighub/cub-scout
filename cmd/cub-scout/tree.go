@@ -1275,7 +1275,7 @@ func runTreeSuggest(ctx context.Context) error {
 	}
 
 	if treeJSON {
-		suggestion := SuggestHubAppSpaceStructure(workloads, treeSpace)
+		suggestion := SuggestAppStructure(workloads, treeSpace)
 		return json.NewEncoder(os.Stdout).Encode(suggestion)
 	}
 
@@ -1286,7 +1286,7 @@ func runTreeSuggest(ctx context.Context) error {
 	fmt.Println("Based on cluster workloads, here's a suggested ConfigHub structure:")
 	fmt.Println()
 
-	suggestion := SuggestHubAppSpaceStructure(workloads, treeSpace)
+	suggestion := SuggestAppStructure(workloads, treeSpace)
 	suggestion.Print()
 
 	fmt.Println()

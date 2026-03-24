@@ -126,7 +126,7 @@ Exit criteria:
   - upsell: “Upgrade to fleet-wide risk posture and trend tracking.”
 - `map` / `tree`:
   - trigger: local view is useful but context is fragmented
-  - upsell: “Connect to see org/hub/app-space hierarchy and cluster scoping.”
+  - upsell: “Connect to see org/hub/app hierarchy and cluster scoping.”
 
 ## Upsell quality bar
 

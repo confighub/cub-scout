@@ -146,7 +146,7 @@ func spaceExistsInList(t *testing.T, slug string) bool {
 //
 //	{
 //	  "namespaces": ["ns1"],
-//	  "proposal": { "appSpace": "...", "deployer": "...", "units": [...], ... },
+//	  "proposal": { "app": "...", "deployer": "...", "units": [...], ... },
 //	  "workloads": [{ "kind": "...", "name": "...", "owner": "...", ... }]
 //	}
 // =============================================================================
@@ -161,7 +161,7 @@ type importDryRunResult struct {
 
 // importProposal matches the "proposal" object in the JSON output.
 type importProposal struct {
-	AppSpace    string             `json:"appSpace"`
+	App         string             `json:"app"`
 	Deployer    string             `json:"deployer,omitempty"`
 	Units       []importUnit       `json:"units"`
 	ClusterOnly []importClusterApp `json:"clusterOnly,omitempty"`
@@ -259,9 +259,9 @@ func TestImportDryRunJSON(t *testing.T) {
 		t.Fatal("Expected 'proposal' to be present, got nil")
 	}
 
-	// Proposal must have appSpace
-	if result.Proposal.AppSpace == "" {
-		t.Error("Expected proposal.appSpace to be non-empty")
+	// Proposal must have app
+	if result.Proposal.App == "" {
+		t.Error("Expected proposal.app to be non-empty")
 	}
 
 	// Proposal must have units
@@ -269,8 +269,8 @@ func TestImportDryRunJSON(t *testing.T) {
 		t.Error("Expected at least one unit in proposal")
 	}
 
-	t.Logf("Dry-run result: %d workloads, appSpace=%s, %d units",
-		len(result.Workloads), result.Proposal.AppSpace, len(result.Proposal.Units))
+	t.Logf("Dry-run result: %d workloads, app=%s, %d units",
+		len(result.Workloads), result.Proposal.App, len(result.Proposal.Units))
 }
 
 // TestImportDryRunSuggestionContract verifies the JSON contract shape of the
@@ -324,12 +324,12 @@ func TestImportDryRunSuggestionContract(t *testing.T) {
 		}
 	}
 
-	// Contract: proposal has non-empty appSpace
+	// Contract: proposal has non-empty app
 	if result.Proposal == nil {
 		t.Fatal("proposal is nil")
 	}
-	if result.Proposal.AppSpace == "" {
-		t.Error("proposal.appSpace is empty")
+	if result.Proposal.App == "" {
+		t.Error("proposal.app is empty")
 	}
 
 	// Contract: each unit has slug and workloads
@@ -368,8 +368,8 @@ func TestImportFromBundleDryRunJSONConnectedContract(t *testing.T) {
 	if result.Evidence.BundlePath != bundlePath {
 		t.Fatalf("evidence.bundlePath = %q, want %q", result.Evidence.BundlePath, bundlePath)
 	}
-	if result.Proposal == nil || result.Proposal.AppSpace == "" {
-		t.Fatal("Expected non-empty proposal.appSpace for bundle import dry-run")
+	if result.Proposal == nil || result.Proposal.App == "" {
+		t.Fatal("Expected non-empty proposal.app for bundle import dry-run")
 	}
 	if len(result.Workloads) == 0 {
 		t.Fatal("Expected at least one workload from bundle import dry-run")
@@ -401,9 +401,9 @@ func TestImportFullRoundTrip(t *testing.T) {
 		t.Fatal("Dry-run returned nil proposal")
 	}
 
-	spaceName := dryResult.Proposal.AppSpace
+	spaceName := dryResult.Proposal.App
 	if spaceName == "" {
-		t.Fatal("Dry-run returned empty appSpace — cannot proceed with import")
+		t.Fatal("Dry-run returned empty app — cannot proceed with import")
 	}
 	t.Logf("Will create space: %s with %d units", spaceName, len(dryResult.Proposal.Units))
 
@@ -481,7 +481,7 @@ func TestImportIdempotent(t *testing.T) {
 	if dryResult.Proposal == nil {
 		t.Fatal("Dry-run returned nil proposal")
 	}
-	spaceName := dryResult.Proposal.AppSpace
+	spaceName := dryResult.Proposal.App
 
 	t.Cleanup(func() {
 		deleteTestSpace(t, spaceName)
@@ -550,7 +550,7 @@ func TestImportCleanup(t *testing.T) {
 	if dryResult.Proposal == nil {
 		t.Fatal("Dry-run returned nil proposal")
 	}
-	spaceName := dryResult.Proposal.AppSpace
+	spaceName := dryResult.Proposal.App
 
 	// Import (no deferred cleanup — we're testing manual cleanup)
 	importOutput := runCubAgentAllowFailures(t, "import", "-n", ns, "-y", "--no-log")

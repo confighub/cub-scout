@@ -221,7 +221,7 @@ func loadSuggestDataCmd() tea.Cmd {
 		}
 
 		// Generate suggestion using existing logic
-		suggestion := SuggestHubAppSpaceStructure(workloads, "")
+		suggestion := SuggestAppStructure(workloads, "")
 
 		return suggestDataLoadedMsg{
 			proposal: &suggestion,
@@ -1679,7 +1679,7 @@ func initialModelWithContext(appContext string) Model {
 		m.searchQuery = appContext // Pre-fill search with app name
 	} else {
 		// Restore from snapshot if available (only when no explicit context)
-		if snap := loadHubSnapshot(); snap != nil {
+		if snap := loadAppSnapshot(); snap != nil {
 			m.cursor = snap.Cursor
 			m.mapsMode = snap.MapsMode
 			m.pendingSnapshot = snap // Save for expanded paths restoration after data loads
@@ -1816,7 +1816,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.detailsPane.GotoBottom()
 				return m, nil
 			case "q":
-				saveHubSnapshot(&m)
+				saveAppSnapshot(&m)
 				return m, tea.Quit
 			case "tab":
 				m.detailsFocused = false
@@ -1933,7 +1933,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch {
 		case key.Matches(msg, m.keymap.Quit):
-			saveHubSnapshot(&m)
+			saveAppSnapshot(&m)
 			return m, tea.Quit
 
 		case key.Matches(msg, m.keymap.Up):
@@ -2137,11 +2137,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.suggestLoading = true
 			return m, loadSuggestDataCmd()
 
-		case key.Matches(msg, m.keymap.HubView):
+		case key.Matches(msg, m.keymap.AppView):
 			// Toggle App model view mode
-			m.hubViewMode = !m.hubViewMode
+			m.appViewMode = !m.appViewMode
 			m.rebuildFlatList()
-			if m.hubViewMode {
+			if m.appViewMode {
 				m.statusMsg = "App model view enabled"
 			} else {
 				m.statusMsg = "Standard view"
@@ -2151,13 +2151,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.LocalCluster):
 			// Switch to local cluster TUI
 			m.launchLocalCluster = true
-			saveHubSnapshot(&m)
+			saveAppSnapshot(&m)
 			return m, tea.Quit
 
 		case key.Matches(msg, m.keymap.Import):
 			// Launch the new import wizard (exits hierarchy, runs wizard, returns)
 			m.launchImportWizard = true
-			saveHubSnapshot(&m)
+			saveAppSnapshot(&m)
 			return m, tea.Quit
 
 		case key.Matches(msg, m.keymap.Create):
@@ -3871,7 +3871,7 @@ func (m Model) renderHelpOverlay() string {
 	b.WriteString("\n")
 	b.WriteString("  " + cmdStyle.Render("KubeCon") + "     " + descStyle.Render("Platform team + App teams"))
 	b.WriteString("\n")
-	b.WriteString("  " + descStyle.Render("See: docs/map/reference/hub-appspace-examples.md"))
+	b.WriteString("  " + descStyle.Render("See: docs/map/reference/app-model-examples.md"))
 	b.WriteString("\n\n")
 
 	b.WriteString(sectionStyle.Render("QUERY EXAMPLES") + " " + descStyle.Render("(type after :)"))
@@ -4174,7 +4174,7 @@ func (m Model) renderMapsView() string {
 		}
 	}
 
-	b.WriteString(fmt.Sprintf("  ├── %s\n", purpleStyle.Render("Hub (Platform)")))
+	b.WriteString(fmt.Sprintf("  ├── %s\n", purpleStyle.Render("Platform")))
 	if len(platformSpaces) > 0 {
 		for _, s := range platformSpaces {
 			b.WriteString(fmt.Sprintf("  │   └── %s\n", s))
@@ -4450,7 +4450,7 @@ func (m Model) renderSuggestView() string {
 	// Show suggestion
 	proposal := m.suggestProposal
 
-	b.WriteString(sectionStyle.Render("Suggested App: ") + nameStyle.Render(proposal.AppSpace))
+	b.WriteString(sectionStyle.Render("Suggested App: ") + nameStyle.Render(proposal.App))
 	b.WriteString("\n\n")
 
 	b.WriteString(sectionStyle.Render("Suggested Units:"))
@@ -5516,9 +5516,9 @@ func (m *Model) rebuildFlatList() {
 		}
 		m.flatList = append(m.flatList, node)
 		if node.Expanded {
-			if m.hubViewMode && node.Type == "org" {
+			if m.appViewMode && node.Type == "org" {
 				// App model view: group spaces
-				m.addHubAppSpaceView(node)
+				m.addAppView(node)
 			} else {
 				m.addChildrenToFlatList(node, 1)
 			}
@@ -5587,8 +5587,8 @@ func (m *Model) unitMatchesCurrentCluster(node *TreeNode) bool {
 	return matchesCluster(targetSlug, m.currentCluster)
 }
 
-// addHubAppSpaceView adds spaces grouped into Hub (platform) and Apps (apps)
-func (m *Model) addHubAppSpaceView(orgNode *TreeNode) {
+// addAppView adds spaces grouped into Platform and Apps
+func (m *Model) addAppView(orgNode *TreeNode) {
 	// Categorize spaces into Hub (platform) vs Apps
 	var hubSpaces, appSpaces []*TreeNode
 	for _, child := range orgNode.Children {
@@ -5611,7 +5611,7 @@ func (m *Model) addHubAppSpaceView(orgNode *TreeNode) {
 	if len(hubSpaces) > 0 {
 		hubGroup := &TreeNode{
 			ID:       orgNode.ID + "/hub",
-			Name:     "🏢 Hub (Platform)",
+			Name:     "🏢 Platform",
 			Type:     "hub_group",
 			Info:     fmt.Sprintf("(%d spaces)", len(hubSpaces)),
 			Parent:   orgNode,
@@ -6172,7 +6172,7 @@ func formatGroupPatternContext(node *TreeNode) string {
 	b.WriteString("\n")
 	b.WriteString("─────────────────────────────────────\n")
 	b.WriteString("Press B to toggle App model view\n")
-	b.WriteString("See: docs/map/reference/hub-appspace-examples.md\n")
+	b.WriteString("See: docs/map/reference/app-model-examples.md\n")
 
 	return b.String()
 }

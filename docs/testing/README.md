@@ -65,7 +65,7 @@ When using AI to write code, 100% test coverage is non-negotiable.
 | **Integration** | 20% | `go test -tags=integration ./test/integration/...` | CLI commands work, JSON output valid |
 | **GitOps E2E** | 20% | `./test/prove-it-works.sh --level=gitops` | Flux + ArgoCD ownership, trace, deep-dive |
 | **Attribution Contract** | 20% | `go test ./pkg/agent/... -run Attribution` | Determinism, scoring, bundle replay (v0.16+) |
-| **Connected** | 20% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app-space list |
+| **Connected** | 20% | `./test/prove-it-works.sh --level=connected` | ConfigHub worker, import, app list |
 
 **Target: >90% score across all groups = FULLY PROVEN**
 
@@ -155,7 +155,7 @@ The `prove-it-works.sh` script supports 7 levels:
 | **gitops** | 5m | Yes | No | Flux + ArgoCD ownership, trace |
 | **demos** | 10m | Yes | No | Demo scripts run |
 | **examples** | 15m | Yes | No | Example apps deploy |
-| **connected** | 20m | Yes | Yes | Worker, import, app-space |
+| **connected** | 20m | Yes | Yes | Worker, import, app |
 | **full** | 30m | Yes | Yes | EVERYTHING |
 
 ```bash
@@ -339,7 +339,7 @@ cub worker list
 |------|------------------|
 | `cub auth` | User is logged in |
 | `cub worker run` | Worker starts and shows "Ready" |
-| `app-space list` | Can list spaces |
+| `app list` | Can list spaces |
 | `import --dry-run` | Discovers workloads |
 | `import` | Creates unit in ConfigHub |
 | `map fleet` | Fleet view works |

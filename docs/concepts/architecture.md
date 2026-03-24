@@ -265,7 +265,7 @@ The Agent supports multiple output modes via 14 top-level commands and 17 map su
 | `snapshot` | Dump cluster state as GSF JSON | Standalone |
 | `import` | Import workloads into ConfigHub | Connected |
 | `import-argocd` | Import ArgoCD Application | Connected |
-| `app-space` | Manage App Spaces | Connected |
+| `app` | Manage Apps | Connected |
 | `remedy` | Execute risk remediation | Standalone |
 | `combined` | Git repo + cluster alignment | Standalone/Connected |
 | `parse-repo` | Parse GitOps repo structure | Standalone |

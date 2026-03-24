@@ -1,6 +1,6 @@
-# Hub/AppSpace View Examples
+# App View Examples
 
-Visual examples of the `B` key Hub/AppSpace grouping for common reference architectures.
+Visual examples of the `B` key App grouping for common reference architectures.
 
 ---
 
@@ -8,11 +8,11 @@ Visual examples of the `B` key Hub/AppSpace grouping for common reference archit
 
 Press `B` in Hub mode (`cub-scout map --hub`) to toggle between:
 - **Flat view**: Org → Spaces (alphabetical)
-- **Hub/AppSpace view**: Org → Hub (platform) → AppSpaces (teams)
+- **App view**: Org → Hub (platform) → Apps (teams)
 
 **Categorization rules:**
 - **Hub (Platform)**: `platform-*`, `infra-*`, `hub-*`, `shared-*`, `*-base`, `*-infra`
-- **AppSpaces**: Everything else (team workspaces)
+- **Apps**: Everything else (team workspaces)
 
 ---
 
@@ -34,7 +34,7 @@ confighub ▾
 └─ platform-prod                  7 targets
 ```
 
-### Hub/AppSpace View (press B)
+### App View (press B)
 
 ```
 confighub ▾
@@ -45,7 +45,7 @@ confighub ▾
 │  └─ platform-prod                       7 targets
 │     └─ Workers: prod-worker (Ready)
 │
-└─ AppSpaces                              6 spaces
+└─ Apps                              6 spaces
    ├─ appchat-dev                         4 units
    │  └─ chat-frontend, chat-backend, redis, postgres
    ├─ appchat-prod                        4 units
@@ -79,7 +79,7 @@ confighub ▾
 └─ fluffy-cub-traderx-prod-us
 ```
 
-### Hub/AppSpace View (press B)
+### App View (press B)
 
 ```
 confighub ▾
@@ -90,7 +90,7 @@ confighub ▾
 │  └─ fluffy-cub-traderx-infra           Shared infra
 │     └─ Units: ingress-controller, cert-manager, monitoring
 │
-└─ AppSpaces                              3 spaces
+└─ Apps                              3 spaces
    ├─ fluffy-cub-traderx-prod-asia       Asia production
    │  └─ Units: traderx (variant=prod, region=asia)
    ├─ fluffy-cub-traderx-prod-eu         EU production
@@ -101,7 +101,7 @@ confighub ▾
 
 **What this shows:**
 - Base and infra spaces are Hub (platform governance)
-- Regional prod spaces are AppSpaces (team deployments)
+- Regional prod spaces are Apps (team deployments)
 - Each region clones from `traderx-base`
 
 ---
@@ -122,7 +122,7 @@ confighub ▾
 └─ curious-cub-staging
 ```
 
-### Hub/AppSpace View (press B)
+### App View (press B)
 
 ```
 confighub ▾
@@ -133,7 +133,7 @@ confighub ▾
 │  └─ curious-cub-infra                  Shared infrastructure
 │     └─ Units: external-secrets, cert-manager, ingress-nginx
 │
-└─ AppSpaces                              4 spaces
+└─ Apps                              4 spaces
    ├─ curious-cub                        Default workspace
    ├─ curious-cub-dev                    Development
    │  └─ Units: curious-app (variant=dev)
@@ -145,7 +145,7 @@ confighub ▾
 
 **What this shows:**
 - `*-base` and `*-infra` → Hub (shared/governed)
-- `*-dev`, `*-staging`, `*-prod` → AppSpaces (environments as team workspaces)
+- `*-dev`, `*-staging`, `*-prod` → Apps (environments as team workspaces)
 - Units have `variant` labels for environment
 
 ---
@@ -163,7 +163,7 @@ confighub ▾
 └─ jesper-fluxcd
 ```
 
-### Hub/AppSpace View (press B)
+### App View (press B)
 
 ```
 confighub ▾
@@ -171,7 +171,7 @@ confighub ▾
 ├─ Hub (Platform)                         0 spaces
 │  └─ (none detected)
 │
-└─ AppSpaces                              3 spaces
+└─ Apps                              3 spaces
    ├─ example-jesper-argocd-team         ArgoCD example
    │  └─ Deployer: ArgoCD
    │  └─ Units: podinfo, nginx, redis
@@ -194,7 +194,7 @@ confighub ▾
 
 Real spaces: `acorn-bear-infra`, `acorn-bear-asia-prod`, `acorn-bear-eu-prod`, `acorn-bear-eu-staging`, `acorn-bear-us-staging`
 
-### Hub/AppSpace View (press B)
+### App View (press B)
 
 ```
 confighub ▾
@@ -203,7 +203,7 @@ confighub ▾
 │  └─ acorn-bear-infra                   Shared infrastructure
 │     └─ Units: cluster-autoscaler, external-dns, vault
 │
-└─ AppSpaces                              4 spaces
+└─ Apps                              4 spaces
    ├─ acorn-bear-asia-prod               Asia production
    │  └─ Units: (variant=prod, region=asia)
    ├─ acorn-bear-eu-prod                 EU production
@@ -216,7 +216,7 @@ confighub ▾
 
 **What this shows:**
 - `*-infra` → Hub (shared across all regions)
-- Regional spaces → AppSpaces (team workspaces per region/env)
+- Regional spaces → Apps (team workspaces per region/env)
 - Labels encode both variant AND region
 
 ---
@@ -301,7 +301,7 @@ cub unit list --where "Labels.app='curious-app'"
     └── app-2/v2.0.0/
 ```
 
-### Hub/AppSpace View (press B)
+### App View (press B)
 
 ```
 confighub ▾
@@ -312,7 +312,7 @@ confighub ▾
 │     ├─ Units: grafana (version=v2.1.0)
 │     └─ Units: ingress (version=v3.0.0)
 │
-└─ AppSpaces                              4 spaces
+└─ Apps                              4 spaces
    ├─ banko-apps                         Internal applications
    │  ├─ Units: app-1 (version=v1.0.0)
    │  └─ Units: app-2 (version=v2.0.0)
@@ -326,8 +326,8 @@ confighub ▾
 
 **What this shows:**
 - `platform/` directory → Hub (versioned shared components)
-- `apps/` directory → AppSpace (team-owned internal apps)
-- Each `clusters/{name}` → AppSpace (per-cluster deployments)
+- `apps/` directory → App (team-owned internal apps)
+- Each `clusters/{name}` → App (per-cluster deployments)
 - Version info preserved in labels: `version=v1.0.0`
 
 **Key patterns:**
@@ -364,7 +364,7 @@ confighub ▾
     └── us/
 ```
 
-### Hub/AppSpace View (press B)
+### App View (press B)
 
 ```
 confighub ▾
@@ -379,7 +379,7 @@ confighub ▾
 │     ├─ Units: variant-prod
 │     └─ Units: variant-non-prod
 │
-└─ AppSpaces                             11 spaces
+└─ Apps                             11 spaces
    ├─ integration-gpu                    Integration (GPU)
    │  └─ Units: app (variant=integration, gpu=true)
    ├─ integration-non-gpu                Integration (non-GPU)
@@ -405,7 +405,7 @@ confighub ▾
 **What this shows:**
 - `base/` → Hub (template for all envs)
 - `variants/` → Hub (shared mixins referenced by envs)
-- Each `envs/{name}` → AppSpace (one per environment)
+- Each `envs/{name}` → App (one per environment)
 - Labels encode: `variant`, `region`, `gpu` dimensions
 
 **Key patterns:**
@@ -436,11 +436,11 @@ confighub ▾
 
 ---
 
-## Summary: Pattern → Hub/AppSpace Mapping
+## Summary: Pattern → App Mapping
 
 These mappings are working defaults, not immutable doctrine. Domain-to-platform projection is an active collaboration area, and examples should evolve as real fleet patterns are validated.
 
-| Pattern | Hub Contains | AppSpaces Contain |
+| Pattern | Hub Contains | Apps Contain |
 |---------|--------------|-------------------|
 | **KubeCon Demo** | `platform-*` (workers, targets) | `app*-dev`, `app*-prod` (units) |
 | **TraderX** | `*-base`, `*-infra` | `*-prod-{region}` |
@@ -463,7 +463,7 @@ These examples show cub-scout's import discovery in action, with static fixtures
 
 ## See Also
 
-- [Hub/AppSpace Model](#hub-appspace-model) - Conceptual model
+- [App Model](#app-model-model) - Conceptual model
 - [Adoption Patterns](#adoption-patterns) - Banko/Arnie source details
 - [Import to ConfigHub](../howto/import-to-confighub.md) - Full migration path
 - [Import from Live](../howto/import-from-live.md) - Cluster-only import guide

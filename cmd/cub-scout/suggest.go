@@ -18,15 +18,15 @@ type ImportSuggestion struct {
 	Apps  []AppSuggestion
 }
 
-// HubAppSpaceSuggestion represents a suggested import structure (hub-appspace model)
-// In this model, one Space acts as the "App Space" containing all variants via labels
-type HubAppSpaceSuggestion struct {
-	AppSpace string            // The team's App Space (one per team, not per env)
-	Units    []HubAppSpaceUnit // Units with app/variant labels
+// AppModelSuggestion represents a suggested import structure (app-deployment-target model)
+// In this model, one App contains all variants/deployments via labels
+type AppModelSuggestion struct {
+	App   string         // The app name (one per team, not per env)
+	Units    []AppModelUnit // Units with app/variant labels
 }
 
-// HubAppSpaceUnit represents a unit in the Hub/App Space model
-type HubAppSpaceUnit struct {
+// AppModelUnit represents a unit in the App model
+type AppModelUnit struct {
 	Slug      string         // e.g., "payment-api-prod"
 	App       string         // app label value
 	Variant   string         // variant label value
@@ -418,9 +418,9 @@ func (s *ImportSuggestion) TotalWorkloads() int {
 	return count
 }
 
-// SuggestHubAppSpaceStructure analyzes workloads and suggests an App model structure
-// Key difference: One App contains ALL variants via labels (not one space per env)
-func SuggestHubAppSpaceStructure(workloads []WorkloadInfo, defaultSpace string) HubAppSpaceSuggestion {
+// SuggestAppStructure analyzes workloads and suggests an App/Deployment/Target structure
+// One App contains all variants via labels (not one space per env)
+func SuggestAppStructure(workloads []WorkloadInfo, defaultSpace string) AppModelSuggestion {
 	// Group workloads by inferred app and variant
 	type unitKey struct {
 		app, variant string
@@ -441,8 +441,8 @@ func SuggestHubAppSpaceStructure(workloads []WorkloadInfo, defaultSpace string) 
 	}
 
 	// Build suggestion
-	suggestion := HubAppSpaceSuggestion{
-		AppSpace: inferAppSpace(workloads, defaultSpace),
+	suggestion := AppModelSuggestion{
+		App: inferApp(workloads, defaultSpace),
 	}
 
 	// Sort keys for consistent output
@@ -466,7 +466,7 @@ func SuggestHubAppSpaceStructure(workloads []WorkloadInfo, defaultSpace string) 
 			slug = fmt.Sprintf("%s-%s", key.app, key.variant)
 		}
 
-		suggestion.Units = append(suggestion.Units, HubAppSpaceUnit{
+		suggestion.Units = append(suggestion.Units, AppModelUnit{
 			Slug:      sanitizeSlug(slug),
 			App:       key.app,
 			Variant:   key.variant,
@@ -477,9 +477,9 @@ func SuggestHubAppSpaceStructure(workloads []WorkloadInfo, defaultSpace string) 
 	return suggestion
 }
 
-// inferAppSpace suggests an App name (team workspace)
+// inferApp suggests an App name (team workspace)
 // In the App model, this is the team's workspace containing all their variants
-func inferAppSpace(workloads []WorkloadInfo, defaultSpace string) string {
+func inferApp(workloads []WorkloadInfo, defaultSpace string) string {
 	if defaultSpace != "" {
 		return defaultSpace
 	}
@@ -517,14 +517,14 @@ func inferAppSpace(workloads []WorkloadInfo, defaultSpace string) string {
 	return "imported-team"
 }
 
-// Print displays the Hub/App Space suggestion
-func (s *HubAppSpaceSuggestion) Print() {
+// Print displays the App/Deployment/Target suggestion
+func (s *AppModelSuggestion) Print() {
 	fmt.Printf("Suggested structure (App model):\n")
-	fmt.Printf("  App: %s\n", s.AppSpace)
+	fmt.Printf("  App: %s\n", s.App)
 	fmt.Println()
 
 	// Group by app for display
-	appUnits := make(map[string][]HubAppSpaceUnit)
+	appUnits := make(map[string][]AppModelUnit)
 	for _, u := range s.Units {
 		appUnits[u.App] = append(appUnits[u.App], u)
 	}
@@ -558,14 +558,14 @@ func (s *HubAppSpaceSuggestion) Print() {
 	}
 }
 
-// FullProposal represents the complete Hub/App Space mapping proposal
+// FullProposal represents the complete App/Deployment/Target mapping proposal
 // combining Git repo structure with cluster workloads
 type FullProposal struct {
 	// Hub-level items
 	HubBases []HubBaseProposal `json:"hubBases,omitempty"` // Templates from Git base/
 
-	// App Space level
-	AppSpace       string               `json:"appSpace"`
+	// App level
+	App            string               `json:"app"`
 	Deployer       string               `json:"deployer,omitempty"`       // Detected deployer (Flux, Argo, etc.)
 	Reconciliation []ReconciliationRule `json:"reconciliation,omitempty"` // Suggested rules by variant
 	Units          []UnitProposal       `json:"units"`
@@ -617,10 +617,10 @@ type ClusterOnlyApp struct {
 	Owner     string   `json:"owner"` // Native = orphan
 }
 
-// SuggestFullProposal combines Git facts + Cluster facts into a full Hub/App Space proposal
+// SuggestFullProposal combines Git facts + Cluster facts into a full App/Deployment/Target proposal
 func SuggestFullProposal(gitApps []gitops.AppDefinition, workloads []WorkloadInfo, defaultSpace string) *FullProposal {
 	proposal := &FullProposal{
-		AppSpace: inferAppSpace(workloads, defaultSpace),
+		App: inferApp(workloads, defaultSpace),
 	}
 
 	// Detect dominant deployer from workloads
@@ -714,8 +714,8 @@ func SuggestFullProposal(gitApps []gitops.AppDefinition, workloads []WorkloadInf
 						unit.Labels["tier"] = tier
 					}
 
-					// Extract team from labels or app space
-					if team := extractTeam(w, proposal.AppSpace); team != "" {
+					// Extract team from labels or app name
+					if team := extractTeam(w, proposal.App); team != "" {
 						unit.Labels["team"] = team
 					}
 				}
@@ -784,7 +784,7 @@ func SuggestFullProposal(gitApps []gitops.AppDefinition, workloads []WorkloadInf
 					unit.Tier = tier
 					unit.Labels["tier"] = tier
 				}
-				if team := extractTeam(w, proposal.AppSpace); team != "" {
+				if team := extractTeam(w, proposal.App); team != "" {
 					if _, exists := unit.Labels["team"]; !exists {
 						unit.Labels["team"] = team
 					}
@@ -845,7 +845,7 @@ func extractTier(w WorkloadInfo) string {
 }
 
 // extractTeam infers team from labels or namespace
-func extractTeam(w WorkloadInfo, appSpace string) string {
+func extractTeam(w WorkloadInfo, app string) string {
 	// Check labels
 	if team, ok := w.Labels["team"]; ok {
 		return team
@@ -853,9 +853,9 @@ func extractTeam(w WorkloadInfo, appSpace string) string {
 	if team, ok := w.Labels["app.kubernetes.io/part-of"]; ok {
 		return team
 	}
-	// Derive from App Space name (strip -team suffix)
-	if appSpace != "" {
-		return strings.TrimSuffix(appSpace, "-team")
+	// Derive from app name (strip -team suffix)
+	if app != "" {
+		return strings.TrimSuffix(app, "-team")
 	}
 	return ""
 }
@@ -905,8 +905,8 @@ func (p *FullProposal) Print() {
 		}
 	}
 
-	// App Space
-	fmt.Printf("\n  APP: %s\n", p.AppSpace)
+	// App
+	fmt.Printf("\n  APP: %s\n", p.App)
 
 	// Deployer
 	if p.Deployer != "" {

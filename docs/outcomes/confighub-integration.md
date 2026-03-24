@@ -99,7 +99,7 @@ cub unit get payment-api --all-spaces
 cub unit apply payment-api
 ```
 
-## The Hub/AppSpace Model
+## The App/Deployment/Target Model
 
 ConfigHub enables platform + app team collaboration:
 
@@ -277,7 +277,7 @@ cub-scout import
 
 ConfigHub integration provides:
 - **DRY → WET → Live visibility** across your entire fleet
-- **Hub/AppSpace model** for platform + app team collaboration
+- **App/Deployment/Target model** for platform + app team collaboration
 - **RM Pattern support** for better config transport
 - **Fleet-wide queries** to answer "what's running where"
 - **Complete audit trail** from source to deployment

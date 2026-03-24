@@ -59,7 +59,7 @@ func init() {
 // Can be a FullProposal directly or wrapped in CombinedResult/FleetResult
 type ApplyInput struct {
 	// Direct proposal
-	AppSpace       string               `json:"appSpace,omitempty"`
+	App            string               `json:"app,omitempty"`
 	Deployer       string               `json:"deployer,omitempty"`
 	Reconciliation []ReconciliationRule `json:"reconciliation,omitempty"`
 	Units          []UnitProposal       `json:"units,omitempty"`
@@ -125,17 +125,17 @@ func runApply(cmd *cobra.Command, args []string) error {
 	var proposal *FullProposal
 	if input.Proposal != nil {
 		proposal = input.Proposal
-	} else if input.AppSpace != "" {
+	} else if input.App != "" {
 		// Direct proposal format
 		proposal = &FullProposal{
-			AppSpace:       input.AppSpace,
+			App:       input.App,
 			Deployer:       input.Deployer,
 			Reconciliation: input.Reconciliation,
 			Units:          input.Units,
 			HubBases:       input.HubBases,
 		}
 	} else {
-		return fmt.Errorf("no proposal found in input (expected 'proposal' or 'appSpace' field)")
+		return fmt.Errorf("no proposal found in input (expected 'proposal' or 'app' field)")
 	}
 
 	if logger != nil {
@@ -162,12 +162,12 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 	}
 
 	// Step 1: Create App
-	fmt.Printf("  Creating App: %s\n", proposal.AppSpace)
+	fmt.Printf("  Creating App: %s\n", proposal.App)
 	if logger != nil {
-		logger.Log("Creating App: %s", proposal.AppSpace)
+		logger.Log("Creating App: %s", proposal.App)
 	}
 	if !dryRun {
-		if err := createAppSpaceForImport(proposal.AppSpace); err != nil {
+		if err := createAppForImport(proposal.App); err != nil {
 			if logger != nil {
 				logger.Log("FAILED: create space: %v", err)
 				logger.LogResult(0, 1, err)
@@ -246,7 +246,7 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 				manifest = []byte(fmt.Sprintf("# Placeholder for %s\n# Workloads: %v\n", unit.Slug, unit.Workloads))
 			}
 
-			if err := createUnitWithManifest(proposal.AppSpace, unit.Slug, labels, manifest); err != nil {
+			if err := createUnitWithManifest(proposal.App, unit.Slug, labels, manifest); err != nil {
 				fmt.Printf("      ⚠ failed to create: %v\n", err)
 				if logger != nil {
 					logger.Log("  FAILED: create deployment: %v", err)
@@ -280,4 +280,4 @@ func applyProposalFromJSONWithLogger(proposal *FullProposal, dryRun bool, logger
 
 // createUnitWithManifest is defined in combined.go
 // fetchWorkloadManifest is defined in combined.go
-// createAppSpaceForImport is defined in combined.go
+// createAppForImport is defined in combined.go

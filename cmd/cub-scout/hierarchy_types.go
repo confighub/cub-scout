@@ -489,14 +489,14 @@ type Model struct {
 	suggestMode     bool                   // Suggest view active
 	suggestLoading  bool                   // Loading cluster data
 	suggestError    error                  // Error fetching data
-	suggestProposal *HubAppSpaceSuggestion // Generated suggestion
+	suggestProposal *AppModelSuggestion // Generated suggestion
 	suggestCursor   int                    // Cursor for navigation
 
 	// Launch local cluster TUI flag (L to switch)
 	launchLocalCluster bool // Switch to local cluster TUI on exit
 
-	// Hub/AppSpace view mode (B to toggle)
-	hubViewMode bool // Group spaces into Hub (platform) vs AppSpaces (apps)
+	// App view mode (B to toggle)
+	appViewMode bool // Group spaces into Platform vs Apps
 
 	// Cluster filter mode (a to toggle)
 	showAllUnits   bool   // false = filter to current cluster, true = show all units
@@ -504,7 +504,7 @@ type Model struct {
 	contextName    string // Raw kubectl context name
 
 	// Pending snapshot for restoring expanded paths after data loads
-	pendingSnapshot *HubSnapshot
+	pendingSnapshot *AppSnapshot
 
 	// Optimistic UI state - tracks pending CRUD operations for immediate feedback
 	pendingActions []PendingAction
@@ -556,7 +556,7 @@ type keyMap struct {
 	Maps         key.Binding
 	Panel        key.Binding
 	Suggest      key.Binding
-	HubView      key.Binding
+	AppView      key.Binding
 }
 
 func defaultKeyMap() keyMap {
@@ -657,9 +657,9 @@ func defaultKeyMap() keyMap {
 			key.WithKeys("g"),
 			key.WithHelp("g", "suggest units"),
 		),
-		HubView: key.NewBinding(
+		AppView: key.NewBinding(
 			key.WithKeys("B"),
-			key.WithHelp("B", "hub/appspace view"),
+			key.WithHelp("B", "app view"),
 		),
 	}
 }
@@ -698,7 +698,7 @@ type panelDataLoadedMsg struct {
 }
 
 type suggestDataLoadedMsg struct {
-	proposal *HubAppSpaceSuggestion // Generated suggestion
+	proposal *AppModelSuggestion // Generated suggestion
 	err      error
 }
 
@@ -934,8 +934,8 @@ func (n TreeNode) Description() string {
 	return n.Info
 }
 
-// HubSnapshot represents saved Hub TUI state for resumption
-type HubSnapshot struct {
+// AppSnapshot represents saved App TUI state for resumption
+type AppSnapshot struct {
 	Version       string    `json:"version"`
 	UpdatedAt     time.Time `json:"updated_at"`
 	Cursor        int       `json:"cursor"`
@@ -947,18 +947,18 @@ type HubSnapshot struct {
 
 const hubSnapshotVersion = "1.0"
 
-func getHubSnapshotPath() string {
+func getAppSnapshotPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".confighub", "sessions", "hub-snapshot.json")
 }
 
-func loadHubSnapshot() *HubSnapshot {
-	path := getHubSnapshotPath()
+func loadAppSnapshot() *AppSnapshot {
+	path := getAppSnapshotPath()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil
 	}
-	var snap HubSnapshot
+	var snap AppSnapshot
 	if err := json.Unmarshal(data, &snap); err != nil {
 		return nil
 	}
@@ -969,7 +969,7 @@ func loadHubSnapshot() *HubSnapshot {
 	return &snap
 }
 
-func saveHubSnapshot(m *Model) {
+func saveAppSnapshot(m *Model) {
 	// Collect expanded node paths
 	var expandedPaths []string
 	var collectExpanded func(nodes []*TreeNode, path string)
@@ -984,7 +984,7 @@ func saveHubSnapshot(m *Model) {
 	}
 	collectExpanded(m.nodes, "")
 
-	snap := HubSnapshot{
+	snap := AppSnapshot{
 		Version:       hubSnapshotVersion,
 		UpdatedAt:     time.Now(),
 		Cursor:        m.cursor,
@@ -994,7 +994,7 @@ func saveHubSnapshot(m *Model) {
 		ExpandedPaths: expandedPaths,
 	}
 
-	path := getHubSnapshotPath()
+	path := getAppSnapshotPath()
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return
