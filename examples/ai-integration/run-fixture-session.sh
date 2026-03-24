@@ -52,15 +52,8 @@ CUB_SCOUT_TEST_HISTORY_JSON="$TESTDATA_DIR/history_changesets.json" \
 
 echo "Wrote $HISTORY_OUT"
 
-set +e
 "$BINARY" scan --file "$TESTDATA_DIR/misconfigured-deployment.yaml" --json > "$SCAN_OUT"
-scan_rc=$?
-set -e
-if [[ "$scan_rc" -ne 1 ]]; then
-    echo "Expected scan --file exit code 1 (findings), got $scan_rc" >&2
-    exit 1
-fi
-echo "Wrote $SCAN_OUT (expected exit code 1 due to findings)"
+echo "Wrote $SCAN_OUT (exit 0: scan succeeded, findings present but no --fail-on threshold)"
 
 CUB_SCOUT_TEST_MAP_ENTRIES_JSON="$TESTDATA_DIR/map_orphans.json" \
 "$BINARY" map orphans > "$ORPHANS_OUT"

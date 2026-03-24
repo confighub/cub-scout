@@ -40,8 +40,8 @@ func TestNormalizedJSON_FileScan(t *testing.T) {
 
 	result := golden.RunCubScout(t, "scan", "--file", fixturePath, "--normalized-json")
 
-	// Exit code 1 because findings exist
-	golden.AssertExitCode(t, 1, result)
+	// Exit code 0: scan succeeded (findings present but no --fail-on threshold)
+	golden.AssertExitCode(t, 0, result)
 
 	// Verify output is valid JSON with required schema fields
 	combined := result.Stdout + result.Stderr
