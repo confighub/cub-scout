@@ -31,14 +31,15 @@ lags behind dev after a deploy freeze.
 
 ## Labels
 
-All resources carry ConfigHub labels for multi-dimensional querying:
+All resources carry ConfigHub labels (prefixed `confighub.com/` on cluster
+resources) for multi-dimensional querying:
 
-| Label | Values | Use |
-|-------|--------|-----|
-| `App` | eshop, website | Group by application |
-| `AppOwner` | Product, Marketing | Group by team |
-| `TargetRole` | dev, prod | Filter by environment |
-| `TargetRegion` | us-east | Filter by region |
+| Cluster Label | ConfigHub Label | Values | Use |
+|---------------|-----------------|--------|-----|
+| `confighub.com/App` | `App` | eshop, website | Group by application |
+| `confighub.com/AppOwner` | `AppOwner` | Product, Marketing | Group by team |
+| `confighub.com/TargetRole` | `TargetRole` | dev, prod | Filter by environment |
+| `confighub.com/TargetRegion` | `TargetRegion` | us-east | Filter by region |
 
 ## Try It
 
@@ -72,21 +73,44 @@ kubectl apply -f examples/demo-data-adt/fixtures/prod-eshop.yaml
 ./cub-scout map list -n us-prod-website
 ```
 
-## Future: Fleet Queries (Connected Mode)
+## Connected Mode: Fleet Queries and Promotion
 
-When connected mode fleet queries are implemented, this example will
-demonstrate cross-environment queries:
+After importing into ConfigHub, use the SDK `cub` CLI for cross-environment
+queries and promotion workflows.
+
+> **Ownership:** `cub` commands come from the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`).
+> cub-scout discovers and explains; `cub` handles connected lifecycle.
+> See [Interface Boundaries](../../docs/WHY_CONNECTED_MODE.md#interface-boundaries-authoritative).
+
+### Cross-environment queries
 
 ```bash
-# All prod deployments (future)
-./cub-scout fleet query "Labels.TargetRole=prod"
+# All prod units
+cub unit list --space "*" --label "TargetRole=prod"
 
-# Version skew detection (future)
-./cub-scout fleet diff --app eshop --field image
+# All apps owned by Product team
+cub unit list --space "*" --label "AppOwner=Product"
 
-# All apps owned by Product team (future)
-./cub-scout fleet query "Labels.AppOwner=Product"
+# Version skew: compare dev vs prod for eshop
+cub unit get eshop-api --space dev-eshop --json | jq '.image'
+cub unit get eshop-api --space us-prod-eshop --json | jq '.image'
 ```
+
+### Promotion handoff
+
+```bash
+# Push a version upgrade from dev to prod
+cub unit push-upgrade eshop-api --from-space dev-eshop --to-space us-prod-eshop
+```
+
+### Label mapping: cluster vs ConfigHub
+
+| Cluster label (`confighub.com/...`) | ConfigHub entity label | Where it lives |
+|--------------------------------------|----------------------|----------------|
+| `confighub.com/App` | `App` | Unit label in ConfigHub |
+| `confighub.com/AppOwner` | `AppOwner` | Space or Unit label |
+| `confighub.com/TargetRole` | `TargetRole` | Target label |
+| `confighub.com/TargetRegion` | `TargetRegion` | Target label |
 
 ## Source
 
