@@ -2,6 +2,10 @@
 
 > **1.x Connected** — This guide requires a ConfigHub account.
 > For standalone features (no account needed), see [First Map](first-map.md).
+>
+> **Ownership:** Connected commands (`cub auth`, `cub unit`, `cub target`, `cub gitops`) come from
+> the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`). cub-scout owns discovery and
+> explanation. See [Interface Boundaries](../WHY_CONNECTED_MODE.md#interface-boundaries-authoritative).
 
 **Time:** 10 minutes
 **Goal:** Connect to ConfigHub, import one namespace, see what you unlock

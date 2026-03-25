@@ -2,10 +2,15 @@
 
 cub-scout is a single-cluster tool. For multi-cluster fleet queries, use ConfigHub directly.
 
+> **Ownership:** The `cub` CLI is part of the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`).
+> cub-scout owns discovery and explanation; `cub` owns connected lifecycle commands.
+> See [WHY_CONNECTED_MODE.md](../WHY_CONNECTED_MODE.md#interface-boundaries-authoritative) for the full boundary.
+
 ## Prerequisites
 
 ```bash
 # Install and authenticate ConfigHub CLI
+# See https://github.com/confighub/sdk for install options
 brew install confighub/tap/cub
 cub auth login
 ```

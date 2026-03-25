@@ -7,6 +7,9 @@ Covers assessment, planning, execution, validation, and rollback.
 > - [Import from Live](import-from-live.md) — How cub-scout discovers workloads
 > - [Import to ConfigHub](import-to-confighub.md) — The canonical 7-step import path
 > - [Glossary](../reference/glossary.md) — ConfigHub terminology
+>
+> **Ownership:** Connected `cub` commands come from the [ConfigHub SDK](https://github.com/confighub/sdk).
+> See [Interface Boundaries](../WHY_CONNECTED_MODE.md#interface-boundaries-authoritative) for the cub-scout/cub split.
 
 ---
 

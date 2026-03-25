@@ -1,5 +1,9 @@
 # Import from Live Cluster
 
+> **Ownership:** The `cub` CLI is part of the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`).
+> cub-scout owns discovery and explanation; `cub` owns connected lifecycle commands.
+> See [Interface Boundaries](../WHY_CONNECTED_MODE.md#interface-boundaries-authoritative).
+
 Discover workloads from a running cluster and propose or import an App structure for ConfigHub — without needing Git access.
 
 ## When to Use This
