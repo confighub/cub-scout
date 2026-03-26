@@ -1,183 +1,123 @@
 # cub-scout Documentation
 
-**Demystify GitOps. See what's really happening in your cluster.**
+**Read-only Kubernetes observer. See what's really happening in your cluster.**
 
 ---
 
-## Getting Started
+## Start Here
 
-New to cub-scout? Start here:
-
-| Step | Guide |
-|------|-------|
-| **1. Install** | [getting-started/install.md](getting-started/install.md) |
-| **2. First Map** | [getting-started/first-map.md](getting-started/first-map.md) |
-| **3. Understand GitOps** | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
-| **4. App + AI GitOps (Plain English)** | [reference/app-and-ai-gitops-plain-english.md](reference/app-and-ai-gitops-plain-english.md) |
-| **5. Scale Demo** | [getting-started/scale-demo.md](getting-started/scale-demo.md) |
+| Step | Guide | Time |
+|------|-------|------|
+| Install | [getting-started/install.md](getting-started/install.md) | 2 min |
+| First Map | [getting-started/first-map.md](getting-started/first-map.md) | 5 min |
+| CLI Guide | [CLI-GUIDE.md](../CLI-GUIDE.md) | reference |
 
 ---
 
-## Common Entry Points
+## Core Features (Standalone — No Account Needed)
 
-| I need... | Start here |
-|-----------|------------|
-| AI skill profile (Claude/Codex) | [ai/cub-scout-skill.md](ai/cub-scout-skill.md) |
-| JSON contract docs | [reference/json-contracts.md](reference/json-contracts.md) |
-| JSON vs ASCII semantics | [semantic-contract.md](semantic-contract.md) |
-| Full command/flag reference | [reference/commands.md](reference/commands.md) |
-| End-to-end CLI guide | [../CLI-GUIDE.md](../CLI-GUIDE.md) |
+### Discover
+
+| What | Command | Guide |
+|------|---------|-------|
+| See ownership (Flux, Argo, Helm, Native) | `cub-scout map list` | [howto/ownership-detection.md](howto/ownership-detection.md) |
+| Find orphan resources | `cub-scout map orphans` | [howto/find-orphans.md](howto/find-orphans.md) |
+| Trace provenance chains | `cub-scout trace deploy/NAME -n NS` | [howto/trace-ownership.md](howto/trace-ownership.md) |
+| Explain a resource | `cub-scout explain deploy/NAME -n NS` | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+
+### Inspect
+
+| What | Command | Guide |
+|------|---------|-------|
+| GitOps pipeline health | `cub-scout gitops status` | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| Scan for risks | `cub-scout scan --state` | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
+| Scan a manifest file | `cub-scout scan --file FILE` | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
+| Drift detection | `cub-scout drift deploy/NAME -n NS` | [howto/drift.md](howto/drift.md) |
+
+### Analyze
+
+| What | Command | Guide |
+|------|---------|-------|
+| Tree hierarchies | `cub-scout tree ownership` | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
+| Git repo patterns | `cub-scout patterns detect --git-root PATH` | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| Git + cluster alignment | `cub-scout combined --git-path PATH` | [combined-git-live example](../examples/combined-git-live/) |
+| Export resource graph | `cub-scout graph export` | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| Debug bundles | `cub-scout bundle inspect FILE` | [howto/debug-bundle.md](howto/debug-bundle.md) |
 
 ---
 
-## How-To Guides
+## Connected Mode (Requires ConfigHub Account)
 
-### v1.0 Standalone
+Connected mode adds: change history, fleet comparison, import/promotion workflows.
 
-| Task | Guide |
-|------|-------|
-| Find orphan resources | [howto/find-orphans.md](howto/find-orphans.md) |
-| Trace ownership chains | [howto/trace-ownership.md](howto/trace-ownership.md) |
-| Query resources | [howto/query-resources.md](howto/query-resources.md) |
-| Ownership detection | [howto/ownership-detection.md](howto/ownership-detection.md) |
-| Scan for risk issues | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
-| Tree hierarchies | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
-| Advanced queries | [howto/advanced-queries.md](howto/advanced-queries.md) |
-| Crossplane walkthrough | [howto/crossplane-walkthrough.md](howto/crossplane-walkthrough.md) |
-| Run demos | [howto/running-demos.md](howto/running-demos.md) |
-| Extending cub-scout | [howto/extending.md](howto/extending.md) |
+> **Ownership:** The `cub` CLI comes from the [ConfigHub SDK](https://github.com/confighub/sdk).
+> cub-scout discovers and explains; `cub` handles connected lifecycle.
 
-### 1.x Connected *(requires ConfigHub)*
+| Step | Guide | Time |
+|------|-------|------|
+| Why connect? | [concepts/why-connected-mode.md](concepts/why-connected-mode.md) | 5 min read |
+| First import | [getting-started/first-import.md](getting-started/first-import.md) | 10 min |
+| Canonical import path | [howto/import-to-confighub.md](howto/import-to-confighub.md) | reference |
+| Import from live cluster | [howto/import-from-live.md](howto/import-from-live.md) | reference |
+| Migration playbook | [howto/migration-playbook.md](howto/migration-playbook.md) | reference |
+| Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) | reference |
+| Break-glass to managed | [howto/break-glass-to-managed.md](howto/break-glass-to-managed.md) | reference |
 
-| Task | Guide |
-|------|-------|
-| Import to ConfigHub | [howto/import-to-confighub.md](howto/import-to-confighub.md) |
-| Import from live cluster | [howto/import-from-live.md](howto/import-from-live.md) |
-| ArgoCD import demo (3 tools) | [examples/argo-import-confighub-demo/](../examples/argo-import-confighub-demo/) |
-| Flux import demo (D2 pattern) | [examples/flux-import-confighub-demo/](../examples/flux-import-confighub-demo/) |
-| Migration playbook | [howto/migration-playbook.md](howto/migration-playbook.md) |
-| Fleet queries | [howto/fleet-queries.md](howto/fleet-queries.md) |
-| Using cub-scout from an AI tool | [howto/using-cub-scout-from-ai-tool.md](howto/using-cub-scout-from-ai-tool.md) |
-| Claude capability assistant | [howto/claude-capability-assistant.md](howto/claude-capability-assistant.md) |
-| AI ask-mode safety contract | [howto/ai-ask-mode-contract.md](howto/ai-ask-mode-contract.md) |
-| Context-pack v2 for AI handoffs | [howto/context-pack-v2.md](howto/context-pack-v2.md) |
+### Connected Demos (AI-First)
+
+| Demo | What it shows |
+|------|---------------|
+| [Argo import demo](../examples/argo-import-confighub-demo/) | Three Argo import lenses on one cluster |
+| [Flux import demo](../examples/flux-import-confighub-demo/) | Flux D2-pattern import with ConfigHub |
+
+---
+
+## AI Integration
+
+| Guide | For |
+|-------|-----|
+| [AI skill profile](ai/cub-scout-skill.md) | Claude/Codex operating profile |
+| [Using cub-scout from AI tools](howto/using-cub-scout-from-ai-tool.md) | Claude Code, Cursor, Copilot setup |
+| [Capability assistant playbook](howto/claude-capability-assistant.md) | "Can cub-scout do X?" workflow |
+| [Kubara + Argo debugging](howto/kubara-argo-debugging.md) | ApplicationSet platform debugging |
 
 ---
 
 ## Reference
 
-### v1.0 Standalone
-
-| Topic | Reference |
-|-------|-----------|
-| **JSON Contracts (Start Here)** | [reference/json-contracts.md](reference/json-contracts.md) |
-| **Semantic Contract (JSON vs ASCII)** | [semantic-contract.md](semantic-contract.md) |
-| **Commands** | [reference/commands.md](reference/commands.md) |
-| **Debug Bundles** | [debug-bundle.md](debug-bundle.md) |
-| **Drift Detection** | [drift.md](drift.md) |
-| **Ownership & Precedence** | [reference/ownership-precedence.md](reference/ownership-precedence.md) |
-| **Health & Failure States** | [reference/health-failure-states.md](reference/health-failure-states.md) |
-| **CLI Contract** | [reference/cli-contract.md](reference/cli-contract.md) |
-| Query syntax | [reference/query-syntax.md](reference/query-syntax.md) |
-| Query library | [reference/query-library.md](reference/query-library.md) |
-| GSF schema | [reference/gsf-schema.md](reference/gsf-schema.md) |
-| TUI views | [reference/views.md](reference/views.md) |
-| Keybindings | [reference/keybindings.md](reference/keybindings.md) |
-| GitOps patterns | [reference/gitops-patterns.md](reference/gitops-patterns.md) |
-| GitOps repo structures | [reference/gitops-repo-structures.md](reference/gitops-repo-structures.md) |
-| Map PRD | [reference/map-prd.md](reference/map-prd.md) |
+| Topic | Link |
+|-------|------|
+| Full CLI reference | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| JSON contracts | [reference/json-contracts.md](reference/json-contracts.md) |
+| Semantic contract (JSON vs ASCII) | [semantic-contract.md](semantic-contract.md) |
 | Command matrix | [reference/command-matrix.md](reference/command-matrix.md) |
+| CLI contract | [reference/cli-contract.md](reference/cli-contract.md) |
+| Ownership & precedence | [reference/ownership-precedence.md](reference/ownership-precedence.md) |
+| Health & failure states | [reference/health-failure-states.md](reference/health-failure-states.md) |
 | Glossary | [reference/glossary.md](reference/glossary.md) |
-| Testing guide | [reference/testing.md](reference/testing.md) |
-| CLI guide | [../CLI-GUIDE.md](../CLI-GUIDE.md) |
-
-### 1.x Connected *(requires ConfigHub)*
-
-| Topic | Reference |
-|-------|-----------|
-| Import docs crosswalk | [reference/import-docs-crosswalk.md](reference/import-docs-crosswalk.md) |
-| Connected tiers + views guide | [reference/connected-tiers-and-views-product-guide.md](reference/connected-tiers-and-views-product-guide.md) |
-| App model examples | [reference/app-model-examples.md](reference/app-model-examples.md) |
-| Rendered Manifest + Argo guide | [reference/rendered-manifest-and-argo-product-guide.md](reference/rendered-manifest-and-argo-product-guide.md) |
-| Stored in Git vs ConfigHub | [reference/stored-in-git-vs-confighub.md](reference/stored-in-git-vs-confighub.md) |
-| Resolver pattern | [reference/resolver-pattern.md](reference/resolver-pattern.md) |
-| GitOps checkpoint PRD (proposal) | [reference/gitops-checkpoint-prd.md](reference/gitops-checkpoint-prd.md) |
-| GitOps checkpoint schemas | [reference/gitops-checkpoint-schemas.md](reference/gitops-checkpoint-schemas.md) |
+| All examples | [reference/examples-overview.md](reference/examples-overview.md) |
+| Visual diagrams | [diagrams/README.md](diagrams/README.md) |
 
 ---
 
 ## Concepts
 
-Understand the "why":
-
-| Concept | Explanation |
-|---------|-------------|
-| Concepts index (start here) | [concepts/README.md](concepts/README.md) |
-| GitOps Overview | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
-| The Clobbering Problem | [concepts/clobbering-problem.md](concepts/clobbering-problem.md) |
+| Concept | Link |
+|---------|------|
+| GitOps overview | [concepts/gitops-overview.md](concepts/gitops-overview.md) |
 | Architecture | [concepts/architecture.md](concepts/architecture.md) |
-| Live Cluster Inference | [concepts/live-cluster-inference.md](concepts/live-cluster-inference.md) |
-| TUI vs GUI | [concepts/tui-vs-gui.md](concepts/tui-vs-gui.md) |
-| Alternatives | [concepts/alternatives.md](concepts/alternatives.md) |
+| The clobbering problem | [concepts/clobbering-problem.md](concepts/clobbering-problem.md) |
+| Mental model | [concepts/mental-model.md](concepts/mental-model.md) |
+| Why connected mode | [concepts/why-connected-mode.md](concepts/why-connected-mode.md) |
 
 ---
 
-## Visual Guides
+## Internal
 
-See [diagrams/](diagrams/) for visual explanations using [D2](https://d2lang.com):
-
-| Diagram | What it shows |
-|---------|---------------|
-| [Flux Architecture](diagrams/flux-architecture.svg) | How Flux GitOps works |
-| [Ownership Detection](diagrams/ownership-detection.svg) | How ownership is detected |
-| [Ownership Trace](diagrams/ownership-trace.svg) | What cub-scout reveals |
-| [Kustomize Overlays](diagrams/kustomize-overlays.svg) | Multi-environment pattern |
-| [Clobbering Problem](diagrams/clobbering-problem.svg) | Hidden layer dangers |
-| [Upgrade Tracing](diagrams/upgrade-tracing.svg) | Finding what changed |
-
-> **Note:** "D2 pattern" in `tree patterns` refers to a GitOps repository pattern (Flux CD "Control Plane" style), not the D2 diagram language.
-
-Diagram source/render index:
-- [diagrams/README.md](diagrams/README.md)
-
-Terminal screenshots and GIF capture scripts:
-- [images/README.md](images/README.md)
-
----
-
-## Examples
-
-| Example | What you'll learn |
-|---------|-------------------|
-| [platform-example](../examples/platform-example/) | Full GitOps environment with base/overlays pattern |
-| [flux-boutique](../examples/flux-boutique/) | Simple Flux demo |
-| [orphans](../examples/orphans/) | Detecting orphan resources |
-| [impressive-demo](../examples/impressive-demo/) | Comprehensive demo with risk scanning |
-
-See [reference/examples-overview.md](reference/examples-overview.md) for all examples.
-
----
-
-## Outcomes
-
-Real-world use cases:
-
-| Outcome | Description |
-|---------|-------------|
-| [Enterprise Case Studies](outcomes/enterprise-case-studies.md) | Real-world enterprise GitOps challenges |
-
----
-
-## Internal Docs
-
-| File/Folder | Purpose |
-|-------------|---------|
-| [../HANDOVER.md](../HANDOVER.md) | Current handover for the next AI coder working on connected/AI-first surfaces |
-| [roadmap.md](roadmap.md) | Canonical roadmap and current execution scope |
-| [workflows/agent-milestone-plan.md](workflows/agent-milestone-plan.md) | Agent-based execution plan for remaining roadmap milestones |
-| [workflows/m1-task-cards.md](workflows/m1-task-cards.md) | Executable M1 task cards with proof-first and iterative verification gates |
-| [releases/v1.0.0.md](releases/v1.0.0.md) | Latest release notes (v1.0.0) |
-| [releases/v0.20.0-slice-plan.md](releases/v0.20.0-slice-plan.md) | Historical implementation plan for shipped v0.20.0 slice |
-| [roadmap-rendered-manifest-and-argo.md](roadmap-rendered-manifest-and-argo.md) | Backlog split from RM/App-of-Apps planning docs |
-| [roadmap-connected-views-and-launch.md](roadmap-connected-views-and-launch.md) | Backlog split from view-tier/mockup/launch planning docs |
+| File | Purpose |
+|------|---------|
+| [HANDOVER.md](../HANDOVER.md) | AI coder handover document |
+| [roadmap.md](roadmap.md) | Canonical roadmap |
+| [RELEASE-PROCESS.md](RELEASE-PROCESS.md) | Release checklist |
+| [reference/testing.md](reference/testing.md) | Testing guide |
 | `archive/` | Historical documentation |
