@@ -4,7 +4,7 @@ cub-scout is a single-cluster tool. For multi-cluster fleet queries, use ConfigH
 
 > **Ownership:** The `cub` CLI is part of the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`).
 > cub-scout owns discovery and explanation; `cub` owns connected lifecycle commands.
-> See [WHY_CONNECTED_MODE.md](../WHY_CONNECTED_MODE.md#interface-boundaries-authoritative) for the full boundary.
+> See [WHY_CONNECTED_MODE.md](../concepts/why-connected-mode.md#interface-boundaries-authoritative) for the full boundary.
 
 ## Prerequisites
 

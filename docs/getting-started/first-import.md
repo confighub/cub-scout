@@ -5,7 +5,7 @@
 >
 > **Ownership:** Connected commands (`cub auth`, `cub unit`, `cub target`, `cub gitops`) come from
 > the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`). cub-scout owns discovery and
-> explanation. See [Interface Boundaries](../WHY_CONNECTED_MODE.md#interface-boundaries-authoritative).
+> explanation. See [Interface Boundaries](../concepts/why-connected-mode.md#interface-boundaries-authoritative).
 
 **Time:** 10 minutes
 **Goal:** Connect to ConfigHub, import one namespace, see what you unlock
@@ -173,7 +173,7 @@ Compare any two revisions to see exactly what changed and when.
 **Audit break-glass changes.** When someone hotfixes production outside the normal
 pipeline, ConfigHub tracks the accept/reject decision with who, what, and why.
 
-For the full story: [Why Connected Mode](../WHY_CONNECTED_MODE.md)
+For the full story: [Why Connected Mode](../concepts/why-connected-mode.md)
 
 ---
 

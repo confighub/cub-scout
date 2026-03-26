@@ -154,7 +154,7 @@ Terminal screenshots and GIF capture scripts:
 | [orphans](../examples/orphans/) | Detecting orphan resources |
 | [impressive-demo](../examples/impressive-demo/) | Comprehensive demo with risk scanning |
 
-See [EXAMPLES-OVERVIEW.md](EXAMPLES-OVERVIEW.md) for all examples.
+See [reference/examples-overview.md](reference/examples-overview.md) for all examples.
 
 ---
 

@@ -1,6 +1,7 @@
 # Why Connect cub-scout to ConfigHub
 
-> **Note:** This content has been integrated into the canonical roadmap at [`docs/roadmap.md`](roadmap.md) (v1.1+ Connected Mode section). This file is retained for historical reference but the roadmap is the authoritative source.
+> **Authoritative reference** for the standalone vs connected boundary and interface ownership split.
+> See also: [`docs/roadmap.md`](../roadmap.md) for the full roadmap context.
 
 ## TL;DR
 

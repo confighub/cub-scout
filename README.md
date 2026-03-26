@@ -161,7 +161,7 @@ cub-scout works fully offline. Connected mode is optional.
 
 **Standalone:** Works offline, no signup needed. Reads from your kubectl context.
 
-**Connected:** Run `cub auth login` for ConfigHub features. [Learn more](docs/WHY_CONNECTED_MODE.md)
+**Connected:** Run `cub auth login` for ConfigHub features. [Learn more](docs/concepts/why-connected-mode.md)
 Connected import writes inventory/state to ConfigHub, not cluster manifests.
 
 **Ready to connect?** See the [First Import guide](docs/getting-started/first-import.md) for a 10-minute walkthrough.

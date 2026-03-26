@@ -9,7 +9,7 @@ Covers assessment, planning, execution, validation, and rollback.
 > - [Glossary](../reference/glossary.md) — ConfigHub terminology
 >
 > **Ownership:** Connected `cub` commands come from the [ConfigHub SDK](https://github.com/confighub/sdk).
-> See [Interface Boundaries](../WHY_CONNECTED_MODE.md#interface-boundaries-authoritative) for the cub-scout/cub split.
+> See [Interface Boundaries](../concepts/why-connected-mode.md#interface-boundaries-authoritative) for the cub-scout/cub split.
 
 ---
 

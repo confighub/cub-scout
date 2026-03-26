@@ -2,7 +2,7 @@
 
 > **Ownership:** The `cub` CLI is part of the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`).
 > cub-scout owns discovery and explanation; `cub` owns connected lifecycle commands (`cub gitops import`, `cub auth`, etc.).
-> See [Interface Boundaries](../WHY_CONNECTED_MODE.md#interface-boundaries-authoritative).
+> See [Interface Boundaries](../concepts/why-connected-mode.md#interface-boundaries-authoritative).
 
 This is the canonical migration path for moving existing ArgoCD/Helm-managed workloads into ConfigHub.
 

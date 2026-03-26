@@ -64,7 +64,7 @@ Delivered:
 - Canonical migration guide from Argo/Helm to ConfigHub (#130)
 - Break-glass to managed flow documentation and guided testing
 - ASCII vs JSON model explainer
-- WHY_CONNECTED_MODE.md integrated into roadmap
+- concepts/why-connected-mode.md integrated into roadmap
 - Examples index consolidated
 - Duplicate CLI error output fixed
 

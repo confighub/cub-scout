@@ -97,7 +97,7 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
 
 - [ ] **Import more namespaces** — Follow the [Migration Playbook](../howto/migration-playbook.md)
 
-- [ ] **Learn why connected matters** — [WHY_CONNECTED_MODE.md](../WHY_CONNECTED_MODE.md)
+- [ ] **Learn why connected matters** — [WHY_CONNECTED_MODE.md](../concepts/why-connected-mode.md)
 
 ---
 

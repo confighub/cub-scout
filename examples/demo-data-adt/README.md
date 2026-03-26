@@ -80,7 +80,7 @@ queries and promotion workflows.
 
 > **Ownership:** `cub` commands come from the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`).
 > cub-scout discovers and explains; `cub` handles connected lifecycle.
-> See [Interface Boundaries](../../docs/WHY_CONNECTED_MODE.md#interface-boundaries-authoritative).
+> See [Interface Boundaries](../../docs/concepts/why-connected-mode.md#interface-boundaries-authoritative).
 
 ### Cross-environment queries
 

@@ -142,4 +142,4 @@ This makes cub-scout safe for:
 - [CLI Guide](../../CLI-GUIDE.md) — Full command reference
 - [Query Syntax](../reference/query-syntax.md) — Filtering resources
 - [Tree Hierarchies](../howto/tree-hierarchies.md) — Using tree views
-- [Why Connected Mode](../WHY_CONNECTED_MODE.md) — ConfigHub features
+- [Why Connected Mode](why-connected-mode.md) — ConfigHub features

@@ -138,6 +138,6 @@ kubectl delete namespace demo-flux demo-argo demo-native 2>/dev/null || true
 
 ## See Also
 
-- [Examples Overview](../EXAMPLES-OVERVIEW.md) - All examples and integrations
+- [Examples Overview](../../reference/examples-overview.md) - All examples and integrations
 - [CLI-GUIDE.md](../../CLI-GUIDE.md) - Complete CLI reference
 - [Testing Guide](../testing/README.md) - Testing documentation

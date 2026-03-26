@@ -7,7 +7,7 @@
 > This document **replaces and subsumes**:
 >
 > * `/ROADMAP.md`
-> * `/docs/NEXT-PLAN.md` (historical planning draft)
+> * `/docs/archive/NEXT-PLAN.md` (historical planning draft)
 > * `/SESSION.md` roadmap/status snapshots
 > * scattered milestone notes and implicit issue groupings
 >
@@ -85,10 +85,10 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] "Break-glass to managed" flow documentation and guided testing
 - [x] User-facing explainer for ASCII vs JSON model (canonical data vs presentation)
 
-### Documentation Gaps (`NEXT-PLAN.md`) — Complete
+### Documentation Gaps (`archive/NEXT-PLAN.md`) — Complete
 
 - [x] Unified examples index (consolidate EXAMPLES-OVERVIEW.md, examples/README.md, demos/README.md)
-- [x] Integrate WHY_CONNECTED_MODE.md content into roadmap v1.x section with concrete issues
+- [x] Integrate concepts/why-connected-mode.md content into roadmap v1.x section with concrete issues
 
 ### Patterns (`reference/patterns-contract.md`)
 

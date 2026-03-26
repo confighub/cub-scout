@@ -36,3 +36,5 @@ tmp/
 .cache/
 .confighub/
 test/regression/output/
+.claude/
+LIVE
