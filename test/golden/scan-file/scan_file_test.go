@@ -220,6 +220,66 @@ func TestScanFile_WithFindings_JSON(t *testing.T) {
 	assertGolden(t, "with-findings-json", goldenNormalized)
 }
 
+// TestScanFile_StatusDependentRule verifies that status-dependent scanner rules work.
+// This is a regression test for #348: status fields must be preserved in scan/export path.
+//
+// The test uses CCVE-2025-0184 "CRD has deprecated stored version" which requires
+// status.storedVersions to fire. If status is stripped during export, this pattern
+// would NOT fire and the test would fail.
+//
+// Expected: CCVE-2025-0184 finding + exit code 0.
+// This test is fully offline - no cluster required.
+func TestScanFile_StatusDependentRule(t *testing.T) {
+	fixturePath := fixtureAbsPath(t, "crd-deprecated-stored-version.yaml")
+
+	result := golden.RunCubScout(t, "scan", "--file", fixturePath, "--json")
+
+	// Scan exits 0: findings present but no --fail-on threshold
+	golden.AssertExitCode(t, 0, result)
+
+	// Verify output is valid JSON
+	combined := result.Stdout + result.Stderr
+	var output map[string]interface{}
+	if err := json.Unmarshal([]byte(combined), &output); err != nil {
+		t.Fatalf("output is not valid JSON: %v\n%s", err, combined)
+	}
+
+	// Verify static field has the status-dependent finding
+	static, ok := output["static"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected 'static' field in output:\n%s", combined)
+	}
+
+	findings, ok := static["findings"].([]interface{})
+	if !ok {
+		t.Fatalf("expected 'findings' array in static output:\n%s", combined)
+	}
+
+	// Look for CCVE-2025-0184 - the status-dependent rule
+	foundStatusRule := false
+	for _, f := range findings {
+		finding, ok := f.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if ccveID, ok := finding["ccve_id"].(string); ok && ccveID == "CCVE-2025-0184" {
+			foundStatusRule = true
+			break
+		}
+	}
+
+	if !foundStatusRule {
+		t.Errorf("expected CCVE-2025-0184 (CRD deprecated stored version) finding.\n"+
+			"This is a status-dependent rule that requires status.storedVersions to fire.\n"+
+			"If this test fails, status may be getting stripped from exported objects.\n"+
+			"See issue #348 for context.\n\nActual findings:\n%s", combined)
+	}
+
+	// Normalize for golden comparison
+	goldenNormalized := normalizeJSONForGolden(combined, fixturePath)
+	assertGolden(t, "status-dependent-rule-json", goldenNormalized)
+}
+
 // fixtureAbsPath returns the absolute path to a fixture file in testdata/inputs/.
 func fixtureAbsPath(t *testing.T, name string) string {
 	t.Helper()

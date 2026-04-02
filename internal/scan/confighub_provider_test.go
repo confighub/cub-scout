@@ -540,6 +540,16 @@ func TestConfighubScanProvider_ListPolicies_WithCatalog(t *testing.T) {
 	}
 }
 
+// TestCleanObjectForExport_PreservesStatus verifies that status is preserved during export.
+// This is a contract test for #330 and regression test for #348.
+//
+// 53 of 98 live-state scan rules depend on status fields (stuck reconciliations,
+// unhealthy conditions, VPA recommendations). If status is stripped, these rules
+// would silently fail to fire.
+//
+// See also: TestScanFile_StatusDependentRule in test/golden/scan-file/ for an
+// end-to-end test that verifies a status-dependent scanner rule (CCVE-2025-0184)
+// actually fires through the scan path.
 func TestCleanObjectForExport_PreservesStatus(t *testing.T) {
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{

@@ -1,0 +1,19 @@
+{
+  "static": {
+    "file": "\u003cFILE\u003e",
+    "findings": [
+      {
+        "category": "UPGRADE",
+        "ccve_id": "CCVE-2025-0184",
+        "kind": "CustomResourceDefinition",
+        "message": "CRD has deprecated version \"v1beta1\" in storedVersions - migration required",
+        "name": "CRD has deprecated stored version",
+        "remediation": "Run storage version migrator to convert all CRs to current version",
+        "resource_name": "widgets.example.com",
+        "severity": "critical"
+      }
+    ],
+    "resourceCount": 1,
+    "scannedAt": "\u003cTIMESTAMP\u003e"
+  }
+}
