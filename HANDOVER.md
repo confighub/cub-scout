@@ -35,8 +35,12 @@ Key deliverables now in place:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #342 | Bidirectional snapshot and conformance workflow | Future work |
-| #328 | Secrets in cub-scout | Separate concern |
+| #342 | Bidirectional snapshot and conformance workflow | Future product direction; out of scope for the completed March connected/docs slice |
+| #328 | Secrets in cub-scout | Separate feature track; out of scope for the completed March connected/docs slice |
+
+No immediate follow-on from the March connected/docs cluster remains open. Any
+next slice should now be chosen intentionally from `#342` or `#328`, rather
+than as unfinished cleanup from that earlier work.
 
 ## External publication boundary
 
