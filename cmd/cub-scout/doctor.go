@@ -367,32 +367,51 @@ func doctorSeverityRank(sev string) int {
 
 func renderDoctorASCII(summary DoctorSummary) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Cluster: %s (namespace: %s)\n", summary.Cluster, summary.Namespace)
-	fmt.Fprintf(&b, "Resources: %d total\n\n", summary.Resources.Total)
+	fmt.Fprintf(&b, "%s: %s (namespace: %s)\n", Bold("Cluster"), summary.Cluster, summary.Namespace)
+	fmt.Fprintf(&b, "%s: %d total\n\n", Bold("Resources"), summary.Resources.Total)
 
 	total := summary.Resources.Total
-	fmt.Fprintf(&b, "Ownership:\n")
-	fmt.Fprintf(&b, "  Flux: %d (%d%%)\n", summary.Ownership.Flux, doctorPercent(summary.Ownership.Flux, total))
-	fmt.Fprintf(&b, "  ArgoCD: %d (%d%%)\n", summary.Ownership.ArgoCD, doctorPercent(summary.Ownership.ArgoCD, total))
-	fmt.Fprintf(&b, "  Helm: %d (%d%%)\n", summary.Ownership.Helm, doctorPercent(summary.Ownership.Helm, total))
-	fmt.Fprintf(&b, "  Native: %d (%d%%)  <- %d unmanaged\n", summary.Ownership.Native, doctorPercent(summary.Ownership.Native, total), summary.Ownership.Unmanaged)
+	fmt.Fprintf(&b, "%s:\n", SectionHeader("Ownership"))
+	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("Flux"), summary.Ownership.Flux, doctorPercent(summary.Ownership.Flux, total))
+	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("ArgoCD"), summary.Ownership.ArgoCD, doctorPercent(summary.Ownership.ArgoCD, total))
+	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("Helm"), summary.Ownership.Helm, doctorPercent(summary.Ownership.Helm, total))
+	unmanagedText := fmt.Sprintf("%d unmanaged", summary.Ownership.Unmanaged)
+	if summary.Ownership.Unmanaged > 0 {
+		unmanagedText = Yellow(unmanagedText)
+	}
+	fmt.Fprintf(&b, "  %s: %d (%d%%)  <- %s\n", OwnerColor("Native"), summary.Ownership.Native, doctorPercent(summary.Ownership.Native, total), unmanagedText)
 	if summary.Ownership.Other > 0 {
 		fmt.Fprintf(&b, "  Other: %d (%d%%)\n", summary.Ownership.Other, doctorPercent(summary.Ownership.Other, total))
 	}
 	fmt.Fprintf(&b, "\n")
 
-	fmt.Fprintf(&b, "Health:\n")
-	fmt.Fprintf(&b, "  Healthy: %d\n", summary.Health.Healthy)
-	fmt.Fprintf(&b, "  Warning: %d\n", summary.Health.Warning)
-	fmt.Fprintf(&b, "  Error: %d\n\n", summary.Health.Error)
+	fmt.Fprintf(&b, "%s:\n", SectionHeader("Health"))
+	fmt.Fprintf(&b, "  %s: %d\n", Green("Healthy"), summary.Health.Healthy)
+	fmt.Fprintf(&b, "  %s: %d\n", Yellow("Warning"), summary.Health.Warning)
+	fmt.Fprintf(&b, "  %s: %d\n\n", Red("Error"), summary.Health.Error)
 
-	fmt.Fprintf(&b, "Risks: %d findings (%d CRITICAL, %d WARNING, %d INFO)\n",
-		summary.Risks.Total, summary.Risks.Critical, summary.Risks.Warning, summary.Risks.Info)
-	fmt.Fprintf(&b, "Drift: %d resources drifted from declared state\n\n", summary.Drift.Resources)
+	// Color severity counts in the risks line
+	criticalText := fmt.Sprintf("%d CRITICAL", summary.Risks.Critical)
+	warningText := fmt.Sprintf("%d WARNING", summary.Risks.Warning)
+	infoText := fmt.Sprintf("%d INFO", summary.Risks.Info)
+	if summary.Risks.Critical > 0 {
+		criticalText = BoldRed(criticalText)
+	}
+	if summary.Risks.Warning > 0 {
+		warningText = Yellow(warningText)
+	}
+	fmt.Fprintf(&b, "%s: %d findings (%s, %s, %s)\n",
+		SectionHeader("Risks"), summary.Risks.Total, criticalText, warningText, infoText)
 
-	fmt.Fprintf(&b, "Top Issues:\n")
+	driftText := fmt.Sprintf("%d resources drifted from declared state", summary.Drift.Resources)
+	if summary.Drift.Resources > 0 {
+		driftText = Yellow(driftText)
+	}
+	fmt.Fprintf(&b, "%s: %s\n\n", SectionHeader("Drift"), driftText)
+
+	fmt.Fprintf(&b, "%s:\n", SectionHeader("Top Issues"))
 	if len(summary.TopIssues) == 0 {
-		fmt.Fprintf(&b, "  (none)\n")
+		fmt.Fprintf(&b, "  %s\n", Dim("(none)"))
 	} else {
 		for i, issue := range summary.TopIssues {
 			ns := issue.Namespace
@@ -403,7 +422,8 @@ func renderDoctorASCII(summary DoctorSummary) string {
 			if msg == "" {
 				msg = "no details"
 			}
-			fmt.Fprintf(&b, "  %d. %s (ns: %s) - %s [%s]\n", i+1, issue.Resource, ns, msg, issue.Severity)
+			severityColored := SeverityColor(issue.Severity)
+			fmt.Fprintf(&b, "  %d. %s (ns: %s) - %s [%s]\n", i+1, issue.Resource, ns, msg, severityColored)
 		}
 	}
 

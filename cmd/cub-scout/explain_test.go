@@ -67,6 +67,9 @@ func TestBuildExplainSummary_FromTraceResult(t *testing.T) {
 }
 
 func TestRenderExplainText_ContainsPlainEnglishSections(t *testing.T) {
+	// Set NO_COLOR to get plain text output for string matching
+	t.Setenv("NO_COLOR", "1")
+
 	summary := ExplainSummary{
 		Resource:    "Deployment/payments-api",
 		Namespace:   "prod",
@@ -145,6 +148,9 @@ func TestBuildExplainSummary_UnknownOwnerUsesExplicitMessage(t *testing.T) {
 }
 
 func TestRenderExplainText_IncludesPartialTraceNotes(t *testing.T) {
+	// Set NO_COLOR to get plain text output for string matching
+	t.Setenv("NO_COLOR", "1")
+
 	summary := ExplainSummary{
 		Resource:    "Deployment/legacy-api",
 		Namespace:   "default",

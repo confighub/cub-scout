@@ -10,6 +10,9 @@ import (
 )
 
 func TestExplainText_GoldenByOwner(t *testing.T) {
+	// Set NO_COLOR to get plain text output for golden file comparison
+	t.Setenv("NO_COLOR", "1")
+
 	cases := []struct {
 		name   string
 		result *agent.TraceResult

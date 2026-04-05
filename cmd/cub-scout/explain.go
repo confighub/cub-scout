@@ -360,17 +360,17 @@ func explainDeploymentChain(chain []agent.ChainLink) string {
 
 func renderExplainText(summary ExplainSummary) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s in namespace %s:\n", summary.Resource, summary.Namespace)
-	fmt.Fprintf(&b, "  Owner: %s\n", summary.Owner)
-	fmt.Fprintf(&b, "  Source: %s\n", summary.Source)
-	fmt.Fprintf(&b, "  Deployed via: %s\n", summary.DeployedVia)
-	fmt.Fprintf(&b, "  Health: %s\n", summary.Health)
-	fmt.Fprintf(&b, "  Risks: %s\n", summary.Risks)
-	fmt.Fprintf(&b, "  Drift: %s\n", summary.Drift)
+	fmt.Fprintf(&b, "%s in namespace %s:\n", Bold(summary.Resource), summary.Namespace)
+	fmt.Fprintf(&b, "  %s %s\n", Dim("Owner:"), colorExplainOwner(summary.Owner))
+	fmt.Fprintf(&b, "  %s %s\n", Dim("Source:"), summary.Source)
+	fmt.Fprintf(&b, "  %s %s\n", Dim("Deployed via:"), summary.DeployedVia)
+	fmt.Fprintf(&b, "  %s %s\n", Dim("Health:"), StatusColor(summary.Health))
+	fmt.Fprintf(&b, "  %s %s\n", Dim("Risks:"), summary.Risks)
+	fmt.Fprintf(&b, "  %s %s\n", Dim("Drift:"), colorExplainDrift(summary.Drift))
 	if len(summary.Notes) > 0 {
-		fmt.Fprintf(&b, "  Notes:\n")
+		fmt.Fprintf(&b, "  %s\n", Dim("Notes:"))
 		for _, note := range summary.Notes {
-			fmt.Fprintf(&b, "    - %s\n", note)
+			fmt.Fprintf(&b, "    - %s\n", Yellow(note))
 		}
 	}
 	hints := explainTryNextHints(summary)
@@ -382,6 +382,38 @@ func renderExplainText(summary ExplainSummary) string {
 		b.WriteString(renderConfigHubSection(chHint))
 	}
 	return b.String()
+}
+
+// colorExplainOwner colors the owner field based on its content.
+func colorExplainOwner(owner string) string {
+	lower := strings.ToLower(strings.TrimSpace(owner))
+	switch {
+	case strings.HasPrefix(lower, "unknown"):
+		return Yellow(owner)
+	case strings.Contains(lower, "flux"):
+		return OwnerColor("Flux")
+	case strings.Contains(lower, "argo"):
+		return OwnerColor("ArgoCD")
+	case strings.Contains(lower, "helm"):
+		return OwnerColor("Helm")
+	case strings.Contains(lower, "confighub"):
+		return OwnerColor("ConfigHub")
+	default:
+		return owner
+	}
+}
+
+// colorExplainDrift colors drift status.
+func colorExplainDrift(drift string) string {
+	lower := strings.ToLower(strings.TrimSpace(drift))
+	switch {
+	case strings.Contains(lower, "detected"):
+		return Yellow(drift)
+	case strings.Contains(lower, "none"):
+		return Green(drift)
+	default:
+		return drift
+	}
 }
 
 func renderExplainMarkdown(summary ExplainSummary) string {

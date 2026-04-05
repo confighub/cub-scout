@@ -72,7 +72,7 @@ EXPECTED_DIR="$SCRIPT_DIR/expected-output"
 mkdir -p "$OUTPUT_DIR"
 
 echo "[1/4] Standalone snapshot: doctor"
-CUB_SCOUT_TEST_DOCTOR_INPUT_JSON="$DOCTOR_FIXTURE" "$CUB" doctor --format ascii > "$OUTPUT_DIR/01-doctor.txt"
+NO_COLOR=1 CUB_SCOUT_TEST_DOCTOR_INPUT_JSON="$DOCTOR_FIXTURE" "$CUB" doctor --format ascii > "$OUTPUT_DIR/01-doctor.txt"
 
 echo "[2/4] Connect step (operator action)"
 cat > "$OUTPUT_DIR/02-connect.txt" <<'STEP2'

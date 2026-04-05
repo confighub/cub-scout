@@ -71,6 +71,9 @@ func TestBuildDoctorSummary_TopIssuesRespectsLimitAndOrdering(t *testing.T) {
 }
 
 func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
+	// Set NO_COLOR to get plain text output for string matching
+	t.Setenv("NO_COLOR", "1")
+
 	summary := DoctorSummary{
 		Cluster:   "kind-dev",
 		Namespace: "all",
