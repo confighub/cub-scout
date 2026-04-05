@@ -37,15 +37,24 @@ Key deliverables now in place:
   - Three modes: `human` (default), `ai`, `paired`
   - Opt-in only: default behavior unchanged without flag
   - AI mode uses uppercase markers, bracket notation, `RECOMMENDED ACTIONS` heading
+- #342 bidirectional snapshot and conformance workflow (both slices)
+  - Conformance reporting for import proposals
+  - Curated import selection with include/exclude filtering
+- #328 secrets first slice (`2346598`)
+  - Secret evidence in `trace` output for workloads and Flux sources
+  - Status classification: present, missing, unreadable, unresolved
+  - RBAC-aware error detection (Forbidden vs NotFound)
+  - Safe metadata only (never exposes .data or .stringData)
 
 ## Open issues
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #342 | Bidirectional snapshot and conformance workflow | Future product direction |
-| #328 | Secrets in cub-scout | Separate feature track |
+| #328 | Secrets in cub-scout | First slice shipped (workloads + Flux); Crossplane/TUI remaining |
 
-The CLI polish cluster (#349, #350, #351, #352) is now complete.
+Recent closures:
+- #342 — Bidirectional snapshot and conformance workflow: both slices (conformance reporting + curated import selection) shipped
+- #349, #350, #351, #352 — CLI polish cluster complete
 
 Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
@@ -53,11 +62,17 @@ in that direction rather than flattening the current system.
 
 ## Suggested next milestones
 
-1. Milestone 1: return to larger feature tracks (`#328`, `#342`)
-   Secrets and bidirectional conformance remain important future directions.
+1. Milestone 1: complete #328 secrets track
+   First slice shipped: workload (Deployment, StatefulSet, DaemonSet, Pod) and Flux source
+   secret evidence is live in `trace` output. Remaining: Crossplane ProviderConfig wiring,
+   TUI integration, `map` findings integration.
 2. Milestone 2: expand presentation mode to other commands if needed
    The `--presentation` flag is currently on `doctor` and `explain` only.
    Expansion to other commands can be done incrementally as needed.
+3. Milestone 3: broader docs alignment (if needed)
+   The trace section in `docs/reference/commands.md` now documents `Secrets` output.
+   Crossplane support level is clarified as experimental. Further docs work may include
+   JSON contract schema updates for `SecretEvidenceResult`.
 
 ## External publication boundary
 
@@ -130,6 +145,12 @@ For the core connected demos, "AI-first" means:
 - `cmd/cub-scout/presentation.go` — mode types and helper functions
 - `cmd/cub-scout/doctor.go` — `--presentation` flag and rendering
 - `cmd/cub-scout/explain.go` — `--presentation` flag and rendering
+
+### Secret evidence implementation (#328 first slice)
+
+- `pkg/agent/secret_evidence.go` — core model and collector
+- `pkg/agent/secret_evidence_test.go` — unit tests
+- `cmd/cub-scout/trace.go` — wiring and ASCII output (lines ~349, ~1242-1298, ~2195-2250)
 
 ## Proof expectations
 

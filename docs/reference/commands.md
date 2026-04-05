@@ -588,10 +588,10 @@ cub-scout map previews --format json
 
 ## trace
 
-Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, standalone Helm, and platform composition lineage (Crossplane/kro)**.
+Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, and standalone Helm**. Platform composition lineage (Crossplane/kro) has experimental support.
 
 Owner detection for `trace` uses the same deterministic precedence as `map list`.
-After owner detection, `trace` resolves with an owner-specific chain resolver (Flux, ArgoCD, Helm, Crossplane, kro).
+After owner detection, `trace` resolves with an owner-specific chain resolver (Flux, ArgoCD, Helm).
 When a resource matches a custom ownership detector, `trace` prints the configured owner name and explains that chain resolution is currently limited to built-in owner resolvers.
 For detailed rules, see `docs/reference/ownership-precedence.md` and `docs/howto/trace-ownership.md`.
 
@@ -666,6 +666,44 @@ See `docs/howto/trace-context-troubleshooting.md` for the full flow.
 | Bucket | Flux |
 | Repository (Git/Helm) | ArgoCD |
 | Helm secrets | Standalone Helm |
+
+### Secret Evidence
+
+For workloads (Deployment, StatefulSet, DaemonSet, Pod) and Flux sources/deployers, `trace` includes a `Secrets` section showing referenced secrets and their status.
+
+**Supported resource kinds:**
+- Workloads: Deployment, StatefulSet, DaemonSet, Pod
+- Flux sources: GitRepository, HelmRepository, Bucket
+- Flux deployers: Kustomization, HelmRelease
+
+**Secret status values:**
+
+| Status | Meaning |
+|--------|---------|
+| `present` | Secret exists and is readable |
+| `missing` | Secret does not exist (NotFound) |
+| `unreadable` | Secret exists but RBAC denies read access (Forbidden) |
+| `unresolved` | Reference could not be resolved (e.g., optional secret) |
+
+**Reference types detected:**
+- `envFrom` — secretRef in envFrom
+- `env.valueFrom` — secretKeyRef in env variables
+- `volume` — secret volumes
+- `imagePullSecret` — image pull secrets
+- `secretRef` — Flux source/deployer secretRef
+- `decryption` — Flux decryption secretRef
+- `valuesFrom` — Flux HelmRelease valuesFrom
+
+**Example output (ASCII):**
+
+```
+SECRETS (3 total: 2 present, 1 missing)
+  db-credentials (envFrom)           present   Opaque
+  api-keys (env.valueFrom)           present   Opaque
+  missing-secret (volume)            missing   -
+```
+
+**Safety:** Secret evidence exposes only safe metadata (name, namespace, type, status). The `.data` and `.stringData` fields are never read or exposed.
 
 ---
 
