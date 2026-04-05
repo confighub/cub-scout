@@ -432,10 +432,10 @@ func TestSecretEvidenceCollector_ResolveStatus(t *testing.T) {
 			wantStatus:   SecretStatusMissing,
 		},
 		{
-			name:         "secret forbidden (RBAC)",
-			secretName:   "forbidden-secret",
-			forbidden:    true,
-			wantStatus:   SecretStatusUnreadable,
+			name:       "secret forbidden (RBAC)",
+			secretName: "forbidden-secret",
+			forbidden:  true,
+			wantStatus: SecretStatusUnreadable,
 		},
 	}
 
@@ -495,6 +495,70 @@ func TestSecretEvidenceCollector_ResolveStatus(t *testing.T) {
 				t.Error("expected StatusReason to be set for non-present status")
 			}
 		})
+	}
+}
+
+func TestSecretEvidenceCollector_CrossplaneSecretRefUsesOverrideNamespace(t *testing.T) {
+	scheme := runtime.NewScheme()
+	client := dynamicfake.NewSimpleDynamicClient(scheme)
+
+	secret := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Secret",
+			"metadata": map[string]interface{}{
+				"name":      "provider-creds",
+				"namespace": "default",
+			},
+			"type": "Opaque",
+		},
+	}
+	_, err := client.Resource(schema.GroupVersionResource{
+		Group:    "",
+		Version:  "v1",
+		Resource: "secrets",
+	}).Namespace("default").Create(context.Background(), secret, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test secret: %v", err)
+	}
+
+	providerConfig := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "aws.upbound.io/v1beta1",
+			"kind":       "ProviderConfig",
+			"metadata": map[string]interface{}{
+				"name": "aws-provider",
+			},
+			"spec": map[string]interface{}{
+				"credentials": map[string]interface{}{
+					"source": "Secret",
+					"secretRef": map[string]interface{}{
+						"name":      "provider-creds",
+						"namespace": "default",
+					},
+				},
+			},
+		},
+	}
+
+	collector := NewSecretEvidenceCollector(client)
+	result, err := collector.CollectFromResource(context.Background(), providerConfig)
+	if err != nil {
+		t.Fatalf("CollectFromResource() error = %v", err)
+	}
+	if len(result.Secrets) != 1 {
+		t.Fatalf("CollectFromResource() returned %d secrets, want 1", len(result.Secrets))
+	}
+
+	got := result.Secrets[0]
+	if got.Namespace != "default" {
+		t.Fatalf("secret namespace = %q, want %q", got.Namespace, "default")
+	}
+	if got.Status != SecretStatusPresent {
+		t.Fatalf("secret status = %q, want %q", got.Status, SecretStatusPresent)
+	}
+	if got.RefType != SecretRefTypeCrossplaneCredRef {
+		t.Fatalf("ref type = %q, want %q", got.RefType, SecretRefTypeCrossplaneCredRef)
 	}
 }
 

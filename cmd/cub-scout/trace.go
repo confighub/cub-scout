@@ -11,15 +11,19 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/confighub/cub-scout/pkg/agent"
@@ -304,6 +308,9 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	case agent.OwnerCustom:
 		result = buildCustomOwnerUnsupportedTraceResult(kind, name, traceNamespace, ownership)
 
+	case agent.OwnerCrossplane:
+		result = buildCrossplaneObservedTraceResult(kind, name, traceNamespace, ownership)
+
 	default:
 		// Try Flux first, then Argo, then report not managed
 		fluxTracer := agent.NewFluxTracer()
@@ -440,6 +447,149 @@ func fetchTraceResource(ctx context.Context, dynClient dynamic.Interface, kind, 
 		return nil, fmt.Errorf("unknown resource kind: %s", kind)
 	}
 	return dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
+}
+
+type traceResourceLocator struct {
+	GVR        schema.GroupVersionResource
+	Namespaced bool
+}
+
+func fetchProviderConfigResource(ctx context.Context, cfg *rest.Config, dynClient dynamic.Interface, name, namespace string) (*unstructured.Unstructured, error) {
+	locators, err := discoverProviderConfigLocators(cfg)
+	if err != nil {
+		return nil, err
+	}
+	if len(locators) == 0 {
+		return nil, fmt.Errorf("ProviderConfig CRD not found in API discovery")
+	}
+	return fetchResourceWithLocators(ctx, dynClient, "ProviderConfig", name, namespace, locators)
+}
+
+func discoverProviderConfigLocators(cfg *rest.Config) ([]traceResourceLocator, error) {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	resourceLists, err := discoveryClient.ServerPreferredResources()
+	if err != nil && !discovery.IsGroupDiscoveryFailedError(err) {
+		return nil, err
+	}
+
+	return providerConfigLocatorsFromAPIResourceLists(resourceLists), nil
+}
+
+func providerConfigLocatorsFromAPIResourceLists(resourceLists []*v1.APIResourceList) []traceResourceLocator {
+	locators := make([]traceResourceLocator, 0)
+	seen := make(map[string]struct{})
+
+	for _, resourceList := range resourceLists {
+		if resourceList == nil {
+			continue
+		}
+
+		gv, err := schema.ParseGroupVersion(strings.TrimSpace(resourceList.GroupVersion))
+		if err != nil {
+			continue
+		}
+		if !strings.HasSuffix(gv.Group, ".crossplane.io") && !strings.HasSuffix(gv.Group, ".upbound.io") {
+			continue
+		}
+
+		for _, resource := range resourceList.APIResources {
+			if resource.Kind != "ProviderConfig" || resource.Name != "providerconfigs" || strings.Contains(resource.Name, "/") {
+				continue
+			}
+
+			locator := traceResourceLocator{
+				GVR: schema.GroupVersionResource{
+					Group:    gv.Group,
+					Version:  gv.Version,
+					Resource: resource.Name,
+				},
+				Namespaced: resource.Namespaced,
+			}
+			key := fmt.Sprintf("%s|%t", locator.GVR.String(), locator.Namespaced)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			locators = append(locators, locator)
+		}
+	}
+
+	sort.Slice(locators, func(i, j int) bool {
+		if locators[i].Namespaced != locators[j].Namespaced {
+			return !locators[i].Namespaced
+		}
+		if locators[i].GVR.Group != locators[j].GVR.Group {
+			return locators[i].GVR.Group < locators[j].GVR.Group
+		}
+		if locators[i].GVR.Version != locators[j].GVR.Version {
+			return locators[i].GVR.Version < locators[j].GVR.Version
+		}
+		return locators[i].GVR.Resource < locators[j].GVR.Resource
+	})
+
+	return locators
+}
+
+func fetchResourceWithLocators(
+	ctx context.Context,
+	dynClient dynamic.Interface,
+	kind, name, namespace string,
+	locators []traceResourceLocator,
+) (*unstructured.Unstructured, error) {
+	var (
+		matches      []*unstructured.Unstructured
+		matchSources []traceResourceLocator
+		lastErr      error
+	)
+
+	for _, locator := range locators {
+		var resourceClient dynamic.ResourceInterface
+		if locator.Namespaced {
+			if strings.TrimSpace(namespace) == "" {
+				continue
+			}
+			resourceClient = dynClient.Resource(locator.GVR).Namespace(namespace)
+		} else {
+			resourceClient = dynClient.Resource(locator.GVR)
+		}
+
+		resource, err := resourceClient.Get(ctx, name, v1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+			lastErr = err
+			continue
+		}
+
+		matches = append(matches, resource)
+		matchSources = append(matchSources, locator)
+	}
+
+	switch len(matches) {
+	case 0:
+		if lastErr != nil {
+			return nil, lastErr
+		}
+		return nil, apierrors.NewNotFound(schema.GroupResource{Resource: strings.ToLower(kind)}, name)
+	case 1:
+		return matches[0], nil
+	default:
+		candidates := make([]string, 0, len(matchSources))
+		for _, locator := range matchSources {
+			scope := "cluster"
+			if locator.Namespaced {
+				scope = "namespace"
+			}
+			candidates = append(candidates, fmt.Sprintf("%s/%s (%s)", locator.GVR.Group, locator.GVR.Version, scope))
+		}
+		sort.Strings(candidates)
+		return nil, fmt.Errorf("ambiguous %s %q found in multiple API groups: %s", kind, name, strings.Join(candidates, ", "))
+	}
 }
 
 func isHelmManagedResource(resource *unstructured.Unstructured) bool {
@@ -705,6 +855,8 @@ func normalizeKind(kind string) string {
 		return "HelmRelease"
 	case "gitrepo", "gitrepository", "gitrepositories":
 		return "GitRepository"
+	case "providerconfig", "providerconfigs":
+		return "ProviderConfig"
 	case "app", "application", "applications":
 		return "Application"
 	default:
@@ -772,20 +924,32 @@ func detectResourceOwnership(ctx context.Context, kind, name, namespace string) 
 		return nil, err
 	}
 
-	// Map kind to GVR
-	gvr := kindToGVR(kind)
-	if gvr.Resource == "" {
-		return nil, fmt.Errorf("unknown resource kind: %s", kind)
+	var resource *unstructured.Unstructured
+	if kind == "ProviderConfig" {
+		resource, err = fetchProviderConfigResource(ctx, cfg, dynClient, name, namespace)
+	} else {
+		gvr := kindToGVR(kind)
+		if gvr.Resource == "" {
+			return nil, fmt.Errorf("unknown resource kind: %s", kind)
+		}
+		resource, err = dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	}
-
-	// Fetch the resource
-	resource, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	// Detect ownership
 	ownership := agent.DetectOwnership(resource)
+	if ownership.Type == agent.OwnerUnknown && isCrossplaneProviderConfig(resource) {
+		ownership = agent.Ownership{
+			Type:       agent.OwnerCrossplane,
+			SubType:    "providerconfig",
+			Name:       resource.GetName(),
+			Namespace:  resource.GetNamespace(),
+			Source:     "apiGroup:" + resource.GroupVersionKind().Group,
+			Confidence: "high",
+		}
+	}
 	return &ownership, nil
 }
 
@@ -1042,6 +1206,8 @@ func normalizeToolToOwner(tool string) string {
 		return "ArgoCD"
 	case "helm":
 		return "Helm"
+	case "crossplane":
+		return "Crossplane"
 	default:
 		return "Native"
 	}
@@ -1750,6 +1916,44 @@ func buildCustomOwnerUnsupportedTraceResult(kind, name, namespace string, owners
 	}
 }
 
+func buildCrossplaneObservedTraceResult(kind, name, namespace string, ownership *agent.Ownership) *agent.TraceResult {
+	objectNamespace := namespace
+	if kind == "ProviderConfig" {
+		objectNamespace = strings.TrimSpace(ownership.Namespace)
+	} else if trimmed := strings.TrimSpace(ownership.Namespace); trimmed != "" {
+		objectNamespace = trimmed
+	}
+
+	return &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      kind,
+			Name:      name,
+			Namespace: objectNamespace,
+		},
+		Chain: []agent.ChainLink{
+			{
+				Kind:      kind,
+				Name:      name,
+				Namespace: objectNamespace,
+				Ready:     true,
+				Status:    "Observed",
+			},
+		},
+		FullyManaged: false,
+		Tool:         "crossplane",
+		Error:        "Crossplane resource detected: GitOps trace chain unavailable; showing direct resource evidence only.",
+		TracedAt:     time.Now(),
+	}
+}
+
+func isCrossplaneProviderConfig(resource *unstructured.Unstructured) bool {
+	if resource == nil || resource.GetKind() != "ProviderConfig" {
+		return false
+	}
+	group := resource.GroupVersionKind().Group
+	return strings.HasSuffix(group, ".crossplane.io") || strings.HasSuffix(group, ".upbound.io")
+}
+
 // runFluxDiff runs flux diff for Kustomizations or HelmReleases
 func runFluxDiff(ctx context.Context, kind, name, namespace string, ownership *agent.Ownership) error {
 	// Check if flux CLI is available
@@ -2199,9 +2403,7 @@ func loadAndRenderTraceFromJSON(path string) error {
 // - Workloads: Deployment, StatefulSet, DaemonSet, Pod
 // - Flux sources: GitRepository, HelmRepository, Bucket
 // - Flux deployers: Kustomization, HelmRelease
-//
-// Not yet wired up (collector exists but trace doesn't reach it):
-// - Crossplane ProviderConfig (requires GVR mapping + cross-namespace resolution)
+// - Crossplane: ProviderConfig
 func collectSecretEvidence(ctx context.Context, kind, name, namespace string) *agent.SecretEvidenceResult {
 	// Only collect for supported kinds
 	supportedKinds := map[string]bool{
@@ -2214,7 +2416,7 @@ func collectSecretEvidence(ctx context.Context, kind, name, namespace string) *a
 		"Bucket":         true,
 		"Kustomization":  true,
 		"HelmRelease":    true,
-		// ProviderConfig intentionally omitted - requires cross-namespace secret resolution
+		"ProviderConfig": true,
 	}
 	if !supportedKinds[kind] {
 		return nil
@@ -2230,12 +2432,16 @@ func collectSecretEvidence(ctx context.Context, kind, name, namespace string) *a
 		return nil
 	}
 
-	gvr := kindToGVR(kind)
-	if gvr.Resource == "" {
-		return nil
+	var resource *unstructured.Unstructured
+	if kind == "ProviderConfig" {
+		resource, err = fetchProviderConfigResource(ctx, cfg, dynClient, name, namespace)
+	} else {
+		gvr := kindToGVR(kind)
+		if gvr.Resource == "" {
+			return nil
+		}
+		resource, err = dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	}
-
-	resource, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	if err != nil {
 		return nil
 	}

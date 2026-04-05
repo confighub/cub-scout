@@ -169,10 +169,11 @@ func (c *SecretEvidenceCollector) CollectFromResource(ctx context.Context, resou
 
 // secretReference is an internal struct for tracking extracted references.
 type secretReference struct {
-	name     string
-	refType  SecretRefType
-	refPath  string
-	optional bool
+	name      string
+	namespace string
+	refType   SecretRefType
+	refPath   string
+	optional  bool
 }
 
 // extractWorkloadSecretRefs extracts secret references from a workload spec.
@@ -524,14 +525,6 @@ func (c *SecretEvidenceCollector) extractFluxHelmReleaseSecretRefs(resource *uns
 }
 
 // extractCrossplaneSecretRefs extracts credential secret refs from Crossplane ProviderConfig.
-//
-// NOTE: This extractor exists but is not yet wired into the trace command because:
-// 1. ProviderConfig is not in collectSecretEvidence's supported kinds
-// 2. kindToGVR has no ProviderConfig mapping
-// 3. Crossplane secretRefs often specify cross-namespace references, which requires
-//    the secretReference struct to carry an override namespace (not yet implemented)
-//
-// This is foundation code for a future Crossplane slice.
 func (c *SecretEvidenceCollector) extractCrossplaneSecretRefs(resource *unstructured.Unstructured) []secretReference {
 	var refs []secretReference
 
@@ -541,15 +534,10 @@ func (c *SecretEvidenceCollector) extractCrossplaneSecretRefs(resource *unstruct
 		if name, ok := credSecretRef["name"].(string); ok && name != "" {
 			namespace, _ := credSecretRef["namespace"].(string)
 			ref := secretReference{
-				name:    name,
-				refType: SecretRefTypeCrossplaneCredRef,
-				refPath: "spec.credentials.secretRef",
-			}
-			// Crossplane secretRef may specify namespace explicitly
-			// TODO: When wiring up Crossplane support, add namespace field to secretReference
-			// and use it in resolveSecretRef instead of the traced resource's namespace
-			if namespace != "" {
-				ref.refPath = fmt.Sprintf("spec.credentials.secretRef (namespace: %s)", namespace)
+				name:      name,
+				namespace: strings.TrimSpace(namespace),
+				refType:   SecretRefTypeCrossplaneCredRef,
+				refPath:   "spec.credentials.secretRef",
 			}
 			refs = append(refs, ref)
 		}
@@ -561,26 +549,31 @@ func (c *SecretEvidenceCollector) extractCrossplaneSecretRefs(resource *unstruct
 // resolveSecretRef resolves a secret reference and returns evidence.
 func (c *SecretEvidenceCollector) resolveSecretRef(ctx context.Context, ref secretReference, namespace string) SecretEvidence {
 	evidence := SecretEvidence{
-		Name:     ref.name,
-		RefType:  ref.refType,
-		RefPath:  ref.refPath,
-		Optional: ref.optional,
+		Name:      ref.name,
+		RefType:   ref.refType,
+		RefPath:   ref.refPath,
+		Optional:  ref.optional,
+		Namespace: strings.TrimSpace(ref.namespace),
+	}
+
+	if evidence.Namespace == "" {
+		evidence.Namespace = strings.TrimSpace(namespace)
 	}
 
 	// Default namespace
-	if namespace == "" {
-		namespace = "default"
+	if evidence.Namespace == "" {
+		evidence.Namespace = "default"
 	}
-	evidence.Namespace = namespace
 
 	// Try to fetch the secret
+	secretNamespace := evidence.Namespace
 	secretGVR := schema.GroupVersionResource{
 		Group:    "",
 		Version:  "v1",
 		Resource: "secrets",
 	}
 
-	secret, err := c.client.Resource(secretGVR).Namespace(namespace).Get(ctx, ref.name, metav1.GetOptions{})
+	secret, err := c.client.Resource(secretGVR).Namespace(secretNamespace).Get(ctx, ref.name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			evidence.Status = SecretStatusMissing
