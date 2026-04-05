@@ -30,45 +30,32 @@ Key deliverables now in place:
   - `AI_START_HERE.md`, `prompts.md`, `contracts.md`, `verify.sh`
 - Status-dependent scanner rules work correctly (#348 regression test added)
 - App/Deployment/Target is the primary mental model across connected docs
-- Deterministic `TRY NEXT` hints are stronger and more contextual on `main` (`cec20f8`, `#349`)
-- `explain` can now suggest ConfigHub GUI deep-links when connected context provides a unit URL (`a5016ad`, `#350`)
+- Deterministic `TRY NEXT` hints are stronger and more contextual (`cec20f8`, `#349`)
+- `explain` suggests ConfigHub GUI deep-links when connected context provides a unit URL (`a5016ad`, `#350`)
+- CLI color output with `NO_COLOR` support for doctor and explain commands (`2768e0e`, `#351`)
 
 ## Open issues
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #349 | Improve next-step hints while keeping them deterministic and testable | Implemented on `main` in `cec20f8`; GitHub issue still open pending manual close. |
-| #350 | When connected, suggest relevant ConfigHub URLs as standard behavior | Implemented on `main` in `a5016ad`; GitHub issue still open pending manual close. |
-| #351 | Make CLI outputs more colorful (not just TUI) | Next likely CLI slice after `#349`/`#350` issue closure. Improve scanability without breaking `NO_COLOR` or ASCII/test contracts. |
 | #352 | Detect AI usage and frame responses accordingly | Needs reframing before coding. Prefer explicit, testable modes over brittle auto-detection. |
 | #342 | Bidirectional snapshot and conformance workflow | Future product direction; out of scope for the completed March connected/docs slice |
 | #328 | Secrets in cub-scout | Separate feature track; out of scope for the completed March connected/docs slice |
 
-No immediate follow-on from the March connected/docs cluster remains open. The
-next slice should now be chosen intentionally from the current open set. As of
-`a5016ad`, the code for `#349` and `#350` is already on `main`, so the next
-coding slice is most likely `#351` unless someone first wants to close out the
-tracking state on GitHub.
+The hint/color CLI polish cluster (#349, #350, #351) is now complete. The next
+slice should be chosen intentionally from #352 or the larger feature tracks.
 
 Important: the current deterministic hints are already good and should not be
-diminished. `#349` strengthened them on `main`; any follow-on hint work should
-keep moving in that direction rather than flattening the current system.
+diminished. `#349` strengthened them; any follow-on hint work should keep moving
+in that direction rather than flattening the current system.
 
 ## Suggested next milestones
 
-1. Milestone 1: close out landed hint work (`#349`, `#350`)
-   The code is already on `main` in `cec20f8` and `a5016ad`. The remaining work
-   is tracking hygiene: close the GitHub issues if the shipped behavior matches
-   expectations and capture any small follow-on notes separately.
-2. Milestone 2: CLI color polish (`#351`)
-   Improve scanability in normal CLI output without regressing `NO_COLOR`,
-   accessibility, or golden-test stability.
-3. Milestone 3: reframe AI-mode output explicitly (`#352`)
+1. Milestone 1: reframe AI-mode output explicitly (`#352`)
    If pursued, make this an explicit and testable mode choice rather than
-   brittle environment auto-detection.
-4. Milestone 4: return to larger feature tracks (`#328`, `#342`)
-   Secrets and bidirectional conformance remain important, but they are not the
-   best next incremental slice after the March cluster closure.
+   brittle environment auto-detection. Needs design discussion first.
+2. Milestone 2: return to larger feature tracks (`#328`, `#342`)
+   Secrets and bidirectional conformance remain important future directions.
 
 ## External publication boundary
 
@@ -136,11 +123,11 @@ For the core connected demos, "AI-first" means:
 - `docs/reference/commands.md`
 - `docs/reference/json-contracts.md`
 
-### Likely file hotspots for the next slice
+### Likely file hotspots for #352 (AI-mode output)
 
-- `cmd/cub-scout/navigation_hints.go`
-- `cmd/cub-scout/navigation_hints_test.go`
-- `pkg/hub/config.go`
+- `cmd/cub-scout/root.go` (flag handling)
+- `cmd/cub-scout/color.go` (output formatting)
+- Output rendering functions in doctor.go, explain.go, scan.go
 
 ## Proof expectations
 
