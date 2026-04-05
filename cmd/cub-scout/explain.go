@@ -76,23 +76,14 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ns := strings.TrimSpace(explainNamespace)
-	if ns == "" {
-		ns = "default"
-	}
-
-	traceResult, err := traceForExplain(cmd.Context(), kind, name, ns)
+	// Call the shared capability seam
+	summary, err := ObserveResourceContext(cmd.Context(), ObserveResourceContextRequest{
+		Kind:      kind,
+		Name:      name,
+		Namespace: explainNamespace,
+	})
 	if err != nil {
-		summary := buildExplainSummaryFromFailure(kind, name, ns, err)
-		return outputExplainSummary(summary, format, invCtx)
-	}
-
-	summary := buildExplainSummary(traceResult)
-	if summary.Resource == "" {
-		summary.Resource = fmt.Sprintf("%s/%s", kind, name)
-	}
-	if summary.Namespace == "" {
-		summary.Namespace = ns
+		return err
 	}
 
 	return outputExplainSummary(summary, format, invCtx)

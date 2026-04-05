@@ -127,24 +127,28 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--top must be >= 0")
 	}
 
-	namespaceLabel := "all"
-	if strings.TrimSpace(doctorNamespace) != "" {
-		namespaceLabel = doctorNamespace
+	// Call the shared capability seam
+	// Fixture path is passed explicitly rather than read inside the seam
+	fixturePath := os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON")
+	result, err := ObserveScopeSummary(cmd.Context(), ObserveScopeSummaryRequest{
+		Namespace:   doctorNamespace,
+		TopIssues:   doctorTopIssues,
+		FixturePath: fixturePath,
+	})
+	if err != nil {
+		// Only apply kube recovery hints for cluster-path errors, not fixture errors
+		if fixturePath == "" {
+			return withKubeRecoveryHint(err, "cub-scout doctor")
+		}
+		return err
 	}
 
-	var summary DoctorSummary
-
-	if fixturePath := os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON"); fixturePath != "" {
-		summary, err = runDoctorFromFixture(fixturePath, namespaceLabel)
-		if err != nil {
-			return err
-		}
-	} else {
-		summary, err = runDoctorFromCluster(cmd.Context(), namespaceLabel)
-		if err != nil {
-			return err
-		}
+	// Print any warnings from the seam (CLI-specific concern)
+	for _, w := range result.Warnings {
+		fmt.Fprintf(os.Stderr, "Note: %s\n", w)
 	}
+
+	summary := result.Summary
 
 	switch format {
 	case "json":
@@ -156,38 +160,6 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		fmt.Print(renderDoctorASCII(summary, invCtx.Mode(), invCtx.IsExplicit()))
 		return nil
 	}
-}
-
-func runDoctorFromFixture(path, namespaceLabel string) (DoctorSummary, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return DoctorSummary{}, fmt.Errorf("read doctor fixture: %w", err)
-	}
-	var in doctorFixtureInput
-	if err := json.Unmarshal(b, &in); err != nil {
-		return DoctorSummary{}, fmt.Errorf("parse doctor fixture: %w", err)
-	}
-	cluster := strings.TrimSpace(in.Cluster)
-	if cluster == "" {
-		cluster = getClusterName()
-	}
-	return buildDoctorSummary(in.Entries, in.Findings, cluster, namespaceLabel, doctorTopIssues), nil
-}
-
-func runDoctorFromCluster(ctx context.Context, namespaceLabel string) (DoctorSummary, error) {
-	entries, cluster, err := collectDoctorEntries(ctx, doctorNamespace)
-	if err != nil {
-		return DoctorSummary{}, withKubeRecoveryHint(err, "cub-scout doctor")
-	}
-
-	findings, err := collectDoctorFindings(ctx, doctorNamespace)
-	if err != nil {
-		// Degrade gracefully if scanning is unavailable.
-		fmt.Fprintf(os.Stderr, "Note: doctor risk scan unavailable: %v\n", err)
-		findings = nil
-	}
-
-	return buildDoctorSummary(entries, findings, cluster, namespaceLabel, doctorTopIssues), nil
 }
 
 func collectDoctorEntries(ctx context.Context, namespace string) ([]MapEntry, string, error) {

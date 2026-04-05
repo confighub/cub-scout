@@ -1,0 +1,138 @@
+// Copyright (C) ConfigHub, Inc.
+// SPDX-License-Identifier: MIT
+
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+)
+
+// ObserveScopeSummaryRequest is the request for observe.scope_summary capability.
+// This is the transport-agnostic input for scope summary operations.
+type ObserveScopeSummaryRequest struct {
+	// Namespace scope. Empty string means all namespaces.
+	Namespace string
+
+	// TopIssues is the number of top issues to include.
+	TopIssues int
+
+	// FixturePath, if non-empty, reads input from a fixture file instead of the cluster.
+	// This is for testing; callers should not set this in production.
+	FixturePath string
+}
+
+// ObserveScopeSummaryResult contains the summary and any warnings from the operation.
+type ObserveScopeSummaryResult struct {
+	Summary  DoctorSummary
+	Warnings []string
+}
+
+// ObserveScopeSummary returns a cluster/namespace scope summary.
+// This is the transport-agnostic seam for the doctor command.
+//
+// The function does not know about Cobra, stdout, presentation modes, or rendering.
+// It returns the canonical DoctorSummary model which callers can render as needed.
+// Any warnings (e.g., scan degradation) are returned in the result rather than
+// written to stderr, so callers can decide how to present them.
+func ObserveScopeSummary(ctx context.Context, req ObserveScopeSummaryRequest) (ObserveScopeSummaryResult, error) {
+	namespaceLabel := "all"
+	if strings.TrimSpace(req.Namespace) != "" {
+		namespaceLabel = req.Namespace
+	}
+
+	topN := req.TopIssues
+	if topN < 0 {
+		topN = 0
+	}
+
+	// Use fixture if explicitly provided
+	if req.FixturePath != "" {
+		summary, err := observeScopeSummaryFromFixture(req.FixturePath, namespaceLabel, topN)
+		return ObserveScopeSummaryResult{Summary: summary}, err
+	}
+
+	return observeScopeSummaryFromCluster(ctx, req.Namespace, namespaceLabel, topN)
+}
+
+func observeScopeSummaryFromFixture(path, namespaceLabel string, topN int) (DoctorSummary, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return DoctorSummary{}, fmt.Errorf("read doctor fixture: %w", err)
+	}
+	var in doctorFixtureInput
+	if err := json.Unmarshal(b, &in); err != nil {
+		return DoctorSummary{}, fmt.Errorf("parse doctor fixture: %w", err)
+	}
+	cluster := strings.TrimSpace(in.Cluster)
+	if cluster == "" {
+		cluster = getClusterName()
+	}
+	return buildDoctorSummary(in.Entries, in.Findings, cluster, namespaceLabel, topN), nil
+}
+
+func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLabel string, topN int) (ObserveScopeSummaryResult, error) {
+	var result ObserveScopeSummaryResult
+
+	entries, cluster, err := collectDoctorEntries(ctx, namespace)
+	if err != nil {
+		// Return raw error - let caller decide how to phrase recovery hints
+		return result, err
+	}
+
+	findings, err := collectDoctorFindings(ctx, namespace)
+	if err != nil {
+		// Degrade gracefully if scanning is unavailable.
+		// Return warning in result rather than writing to stderr.
+		result.Warnings = append(result.Warnings, fmt.Sprintf("risk scan unavailable: %v", err))
+		findings = nil
+	}
+
+	result.Summary = buildDoctorSummary(entries, findings, cluster, namespaceLabel, topN)
+	return result, nil
+}
+
+// ObserveResourceContextRequest is the request for observe.resource_context capability.
+// This is the transport-agnostic input for resource context operations.
+type ObserveResourceContextRequest struct {
+	// Kind is the resource kind (e.g., "Deployment", "Service").
+	Kind string
+
+	// Name is the resource name.
+	Name string
+
+	// Namespace is the resource namespace. Defaults to "default" if empty.
+	Namespace string
+}
+
+// ObserveResourceContext returns ownership and lineage context for a resource.
+// This is the transport-agnostic seam for the explain command.
+//
+// The function does not know about Cobra, stdout, presentation modes, or rendering.
+// It returns the canonical ExplainSummary model which callers can render as needed.
+func ObserveResourceContext(ctx context.Context, req ObserveResourceContextRequest) (ExplainSummary, error) {
+	kind := normalizeKind(req.Kind)
+	name := req.Name
+	ns := strings.TrimSpace(req.Namespace)
+	if ns == "" {
+		ns = "default"
+	}
+
+	traceResult, err := traceForExplain(ctx, kind, name, ns)
+	if err != nil {
+		return buildExplainSummaryFromFailure(kind, name, ns, err), nil
+	}
+
+	summary := buildExplainSummary(traceResult)
+	if summary.Resource == "" {
+		summary.Resource = fmt.Sprintf("%s/%s", kind, name)
+	}
+	if summary.Namespace == "" {
+		summary.Namespace = ns
+	}
+
+	return summary, nil
+}
