@@ -14,7 +14,7 @@ The table below reflects the current `cub-scout --help` output.
 
 | Command | Description |
 |---------|-------------|
-| `app-space` | Manage App Spaces |
+| `app` | Manage Apps |
 | `apply` | Apply a proposal from JSON (GUI) |
 | `audit` | Break-glass audit trail tools |
 | `bundle` | Work with debug bundles |
@@ -1661,11 +1661,11 @@ make test-import-delegation
 
 ---
 
-## `app-space` — Manage App Spaces
+## `app` — Manage Apps
 
 ```bash
-./cub-scout app-space list
-./cub-scout app-space create
+./cub-scout app list
+./cub-scout app create
 ```
 
 ---
