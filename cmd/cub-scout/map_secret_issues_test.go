@@ -287,6 +287,163 @@ func TestCollectSecretIssuesForResource_FluxKustomization(t *testing.T) {
 	}
 }
 
+func TestCollectSecretIssuesForResource_HelmRepository(t *testing.T) {
+	scheme := runtime.NewScheme()
+	client := dynamicfake.NewSimpleDynamicClient(scheme)
+
+	// Create a HelmRepository that references a secret for authentication
+	helmRepo := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "source.toolkit.fluxcd.io/v1",
+			"kind":       "HelmRepository",
+			"metadata": map[string]interface{}{
+				"name":      "private-charts",
+				"namespace": "flux-system",
+			},
+			"spec": map[string]interface{}{
+				"url": "https://charts.example.com",
+				"secretRef": map[string]interface{}{
+					"name": "helm-auth",
+				},
+			},
+		},
+	}
+
+	issues := collectSecretIssuesForResource(context.Background(), client, helmRepo)
+
+	if len(issues) != 1 {
+		t.Fatalf("collectSecretIssuesForResource() for HelmRepository returned %d issues, want 1", len(issues))
+	}
+
+	if issues[0].SecretName != "helm-auth" {
+		t.Errorf("issue.SecretName = %q, want %q", issues[0].SecretName, "helm-auth")
+	}
+}
+
+func TestCollectSecretIssuesForResource_Bucket(t *testing.T) {
+	scheme := runtime.NewScheme()
+	client := dynamicfake.NewSimpleDynamicClient(scheme)
+
+	// Create a Bucket that references a secret for S3 credentials
+	bucket := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "source.toolkit.fluxcd.io/v1beta2",
+			"kind":       "Bucket",
+			"metadata": map[string]interface{}{
+				"name":      "manifests",
+				"namespace": "flux-system",
+			},
+			"spec": map[string]interface{}{
+				"bucketName": "my-bucket",
+				"endpoint":   "s3.amazonaws.com",
+				"secretRef": map[string]interface{}{
+					"name": "s3-creds",
+				},
+			},
+		},
+	}
+
+	issues := collectSecretIssuesForResource(context.Background(), client, bucket)
+
+	if len(issues) != 1 {
+		t.Fatalf("collectSecretIssuesForResource() for Bucket returned %d issues, want 1", len(issues))
+	}
+
+	if issues[0].SecretName != "s3-creds" {
+		t.Errorf("issue.SecretName = %q, want %q", issues[0].SecretName, "s3-creds")
+	}
+}
+
+func TestCollectSecretIssuesForResource_OptionalMissingSecretSkipped(t *testing.T) {
+	scheme := runtime.NewScheme()
+	client := dynamicfake.NewSimpleDynamicClient(scheme)
+
+	// Create a deployment with an optional secret reference
+	deployment := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      "app",
+				"namespace": "default",
+			},
+			"spec": map[string]interface{}{
+				"template": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"containers": []interface{}{
+							map[string]interface{}{
+								"name": "app",
+								"envFrom": []interface{}{
+									map[string]interface{}{
+										"secretRef": map[string]interface{}{
+											"name":     "optional-config",
+											"optional": true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	issues := collectSecretIssuesForResource(context.Background(), client, deployment)
+
+	// Optional missing secrets should NOT generate issues
+	if len(issues) != 0 {
+		t.Fatalf("collectSecretIssuesForResource() returned %d issues for optional missing secret, want 0", len(issues))
+	}
+}
+
+func TestCollectSecretIssuesForResource_RequiredMissingSecretReported(t *testing.T) {
+	scheme := runtime.NewScheme()
+	client := dynamicfake.NewSimpleDynamicClient(scheme)
+
+	// Create a deployment with a required (non-optional) secret reference
+	deployment := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      "app",
+				"namespace": "default",
+			},
+			"spec": map[string]interface{}{
+				"template": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"containers": []interface{}{
+							map[string]interface{}{
+								"name": "app",
+								"envFrom": []interface{}{
+									map[string]interface{}{
+										"secretRef": map[string]interface{}{
+											"name": "required-config",
+											// optional: false is the default
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	issues := collectSecretIssuesForResource(context.Background(), client, deployment)
+
+	// Required missing secrets SHOULD generate issues
+	if len(issues) != 1 {
+		t.Fatalf("collectSecretIssuesForResource() returned %d issues for required missing secret, want 1", len(issues))
+	}
+
+	if issues[0].SecretName != "required-config" {
+		t.Errorf("issue.SecretName = %q, want %q", issues[0].SecretName, "required-config")
+	}
+}
+
 func TestSecretIssue_StatusTypes(t *testing.T) {
 	tests := []struct {
 		status string

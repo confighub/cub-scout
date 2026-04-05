@@ -8293,12 +8293,14 @@ func collectSecretIssuesForResource(ctx context.Context, dynClient dynamic.Inter
 
 	// Only collect for supported kinds
 	supportedKinds := map[string]bool{
-		"Deployment":    true,
-		"StatefulSet":   true,
-		"DaemonSet":     true,
-		"Kustomization": true,
-		"HelmRelease":   true,
-		"GitRepository": true,
+		"Deployment":     true,
+		"StatefulSet":    true,
+		"DaemonSet":      true,
+		"Kustomization":  true,
+		"HelmRelease":    true,
+		"GitRepository":  true,
+		"HelmRepository": true,
+		"Bucket":         true,
 	}
 	if !supportedKinds[kind] {
 		return nil
@@ -8316,6 +8318,11 @@ func collectSecretIssuesForResource(ctx context.Context, dynClient dynamic.Inter
 	for _, ev := range result.Secrets {
 		// Only report non-present statuses
 		if ev.Status == agent.SecretStatusPresent {
+			continue
+		}
+
+		// Skip optional secrets that are missing — they're expected to potentially not exist
+		if ev.Optional && ev.Status == agent.SecretStatusMissing {
 			continue
 		}
 
