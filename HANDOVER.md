@@ -40,10 +40,11 @@ Key deliverables now in place:
 - #342 bidirectional snapshot and conformance workflow (both slices)
   - Conformance reporting for import proposals
   - Curated import selection with include/exclude filtering
-- #328 secrets slices 1, 2 & 3 (`2346598`, `a6b5128`, `e527bdd`)
+- #328 secrets — complete (`2346598`, `a6b5128`, `e527bdd`, `53e4ca0`)
   - Slice 1: Secret evidence in `trace` for workloads and Flux sources
   - Slice 2: Crossplane ProviderConfig with cross-namespace resolution
   - Slice 3: Secret issues in `map issues` output
+  - Slice 4: TUI integration (secret panel in trace view)
   - Dynamic CRD discovery for any *.crossplane.io / *.upbound.io provider
   - Status classification: present, missing, unreadable, unresolved
   - RBAC-aware error detection (Forbidden vs NotFound)
@@ -53,15 +54,12 @@ Key deliverables now in place:
 
 ## Open issues
 
-| Issue | Title | Notes |
-|-------|-------|-------|
-| #328 | Secrets in cub-scout | Three slices shipped (trace + Crossplane + map issues); TUI remaining |
+No major issues currently open.
 
 Recent closures:
+- #328 — Secrets in cub-scout: all slices complete (trace + Crossplane + map issues + TUI)
 - #342 — Bidirectional snapshot and conformance workflow: both slices shipped
 - #349, #350, #351, #352 — CLI polish cluster complete
-- #328 slice 2 — Crossplane ProviderConfig wiring with cross-namespace resolution
-- #328 slice 3 — Secret issues in `map issues` output
 
 Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
@@ -69,15 +67,13 @@ in that direction rather than flattening the current system.
 
 ## Suggested next milestones
 
-1. Milestone 1: complete #328 secrets track
-   Three slices shipped: trace (workloads + Flux) + Crossplane ProviderConfig + map issues.
-   Remaining: TUI integration (secret panel in trace view).
-2. Milestone 2: expand presentation mode to other commands if needed
+1. Milestone 1: expand presentation mode to other commands if needed
    The `--presentation` flag is currently on `doctor` and `explain` only.
    Expansion to other commands can be done incrementally as needed.
-3. Milestone 3: v0.14 JSON converter update (optional)
+2. Milestone 2: v0.14 JSON converter update (optional)
    The legacy trace JSON converter path doesn't carry secret evidence yet.
    Low priority since `trace --format json` works correctly.
+3. Milestone 3: check roadmap.md for next priority items
 
 ## External publication boundary
 
@@ -151,7 +147,7 @@ For the core connected demos, "AI-first" means:
 - `cmd/cub-scout/doctor.go` — `--presentation` flag and rendering
 - `cmd/cub-scout/explain.go` — `--presentation` flag and rendering
 
-### Secret evidence implementation (#328 slices 1, 2 & 3)
+### Secret evidence implementation (#328 complete)
 
 - `pkg/agent/secret_evidence.go` — core model and collector
 - `pkg/agent/secret_evidence_test.go` — unit tests
@@ -159,6 +155,7 @@ For the core connected demos, "AI-first" means:
 - `cmd/cub-scout/trace_providerconfig_test.go` — ProviderConfig-specific tests
 - `cmd/cub-scout/map.go` — `map issues` secret collection and formatting
 - `cmd/cub-scout/map_secret_issues_test.go` — map issues secret tests
+- `cmd/cub-scout/localcluster.go` — TUI trace secret panel (renderTrace, runTrace)
 
 ## Proof expectations
 
