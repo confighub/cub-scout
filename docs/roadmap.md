@@ -717,8 +717,13 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * Styled summary with status breakdown (present/missing/unreadable)
 * Individual secret display with status indicators and reference types
 
+**Tracked follow-ons opened after v1.9:**
+* #357 — Git as a first-class source: read-only import preview from local Git path
+* #359 — extend `--presentation` to additional read-only commands
+* #360 — carry secret evidence through the legacy trace v0.14 JSON converter
+
 **Future (low priority):**
-* v0.14 JSON converter path for secret evidence
+* legacy v0.14 trace JSON converter path for secret evidence (#360)
 
 ---
 
