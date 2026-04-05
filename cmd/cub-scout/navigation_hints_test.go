@@ -159,6 +159,182 @@ func TestWithKubeRecoveryHint_AddsActionableCommands(t *testing.T) {
 	}
 }
 
+// Tests for the new Hint struct and rationale/priority system
+
+func TestHintRationale_IsDeterministic(t *testing.T) {
+	// Run the same hint generation multiple times and verify output is identical
+	entries := []MapEntry{
+		{Kind: "Deployment", Name: "api", Namespace: "prod", Owner: "Flux", Status: "Ready"},
+		{Kind: "Service", Name: "legacy", Namespace: "prod", Owner: "Native", Status: "Ready"},
+	}
+	byOwner := map[string]int{"Flux": 1, "Native": 1}
+
+	// Generate hints twice
+	hints1 := mapListTryNextHints(entries, byOwner, "prod")
+	hints2 := mapListTryNextHints(entries, byOwner, "prod")
+
+	if len(hints1) != len(hints2) {
+		t.Fatalf("hint count changed: %d vs %d", len(hints1), len(hints2))
+	}
+	for i := range hints1 {
+		if hints1[i] != hints2[i] {
+			t.Fatalf("hint %d changed:\n  first:  %q\n  second: %q", i, hints1[i], hints2[i])
+		}
+	}
+}
+
+func TestHintRationale_ContainsWhyText(t *testing.T) {
+	entries := []MapEntry{
+		{Kind: "Service", Name: "legacy", Namespace: "prod", Owner: "Native", Status: "Ready"},
+	}
+	byOwner := map[string]int{"Native": 1}
+
+	hints := mapListTryNextHints(entries, byOwner, "prod")
+
+	// The orphan hint should explain WHY it matters
+	found := false
+	for _, h := range hints {
+		if strings.Contains(h, "unmanaged") && strings.Contains(h, "GitOps ownership") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected rationale about GitOps ownership in hints:\n%v", hints)
+	}
+}
+
+func TestHintPriority_CriticalIssueComesFirst(t *testing.T) {
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 10},
+		Ownership: DoctorOwnershipSummary{Flux: 5, Native: 5, Unmanaged: 5},
+		TopIssues: []DoctorIssue{
+			{Severity: "CRITICAL", Resource: "Deployment/broken", Namespace: "prod", Message: "crash loop"},
+		},
+	}
+
+	hints := doctorTryNextHints(summary)
+
+	// First hint should be about the CRITICAL issue
+	if len(hints) == 0 {
+		t.Fatal("expected at least one hint")
+	}
+	if !strings.Contains(hints[0], "CRITICAL") {
+		t.Fatalf("expected CRITICAL issue hint first, got: %q", hints[0])
+	}
+}
+
+func TestHintPriority_HighUnmanagedCountBoostsPriority(t *testing.T) {
+	// When there are many unmanaged resources, that hint should be prioritized
+	entriesLow := []MapEntry{
+		{Kind: "Deployment", Name: "api", Namespace: "prod", Owner: "Flux", Status: "Ready"},
+	}
+	entriesHigh := make([]MapEntry, 15)
+	for i := 0; i < 15; i++ {
+		entriesHigh[i] = MapEntry{
+			Kind:      "ConfigMap",
+			Name:      fmt.Sprintf("cm-%d", i),
+			Namespace: "prod",
+			Owner:     "Native",
+			Status:    "Ready",
+		}
+	}
+
+	byOwnerLow := map[string]int{"Flux": 1, "Native": 1}
+	byOwnerHigh := map[string]int{"Native": 15}
+
+	hintsLow := mapListHints(entriesLow, byOwnerLow, "prod")
+	hintsHigh := mapListHints(entriesHigh, byOwnerHigh, "prod")
+
+	// Find orphan hint priority in both cases
+	var priorityLow, priorityHigh int
+	for _, h := range hintsLow {
+		if strings.Contains(h.Command, "orphans") {
+			priorityLow = h.Priority
+			break
+		}
+	}
+	for _, h := range hintsHigh {
+		if strings.Contains(h.Command, "orphans") {
+			priorityHigh = h.Priority
+			break
+		}
+	}
+
+	if priorityHigh <= priorityLow {
+		t.Fatalf("expected high unmanaged count to boost priority: low=%d, high=%d", priorityLow, priorityHigh)
+	}
+}
+
+func TestHintPriority_UnknownHealthBoostsTracePriority(t *testing.T) {
+	summaryHealthy := ExplainSummary{
+		Resource:  "Deployment/api",
+		Namespace: "prod",
+		Owner:     "Flux",
+		Health:    "Healthy",
+	}
+	summaryUnknown := ExplainSummary{
+		Resource:  "Deployment/api",
+		Namespace: "prod",
+		Owner:     "Flux",
+		Health:    "Unavailable",
+	}
+
+	hintsHealthy := explainHints(summaryHealthy)
+	hintsUnknown := explainHints(summaryUnknown)
+
+	// Find trace hint priority in both cases
+	var priorityHealthy, priorityUnknown int
+	for _, h := range hintsHealthy {
+		if strings.Contains(h.Command, "trace") {
+			priorityHealthy = h.Priority
+			break
+		}
+	}
+	for _, h := range hintsUnknown {
+		if strings.Contains(h.Command, "trace") {
+			priorityUnknown = h.Priority
+			break
+		}
+	}
+
+	if priorityUnknown <= priorityHealthy {
+		t.Fatalf("expected unknown health to boost trace priority: healthy=%d, unknown=%d", priorityHealthy, priorityUnknown)
+	}
+}
+
+func TestHintRationale_SingularVsPlural(t *testing.T) {
+	// Test that rationale uses correct grammar for 1 vs multiple resources
+	byOwner1 := map[string]int{"Native": 1}
+	byOwner5 := map[string]int{"Native": 5}
+
+	hints1 := mapListTryNextHints(nil, byOwner1, "prod")
+	hints5 := mapListTryNextHints(nil, byOwner5, "prod")
+
+	var rationale1, rationale5 string
+	for _, h := range hints1 {
+		if strings.Contains(h, "orphans") {
+			rationale1 = h
+			break
+		}
+	}
+	for _, h := range hints5 {
+		if strings.Contains(h, "orphans") {
+			rationale5 = h
+			break
+		}
+	}
+
+	if !strings.Contains(rationale1, "1 unmanaged resource") {
+		t.Fatalf("expected singular 'resource' for count=1, got: %q", rationale1)
+	}
+	if !strings.Contains(rationale5, "5 unmanaged resources") {
+		t.Fatalf("expected plural 'resources' for count=5, got: %q", rationale5)
+	}
+}
+
 func withMapListFlagsForNavigationTest() func() {
 	prevNamespace := mapNamespace
 	prevKind := mapKind

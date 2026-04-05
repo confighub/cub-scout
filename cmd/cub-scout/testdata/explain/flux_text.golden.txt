@@ -7,6 +7,6 @@ Deployment/payments-api in namespace prod:
   Drift: Unknown
 
 TRY NEXT:
-  - Follow the chain in detail: cub-scout trace deployment/payments-api -n prod --explain
-  - See all Flux-owned resources: cub-scout map list -n prod -q "owner=Flux"
-  - Check overall health: cub-scout doctor -n prod
+  - Trace the full Flux ownership chain from source to runtime: cub-scout trace deployment/payments-api -n prod --explain
+  - See all Flux-managed resources in this scope: cub-scout map list -n prod -q "owner=Flux"
+  - Get a broad health summary to contextualize this resource: cub-scout doctor -n prod

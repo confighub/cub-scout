@@ -9,6 +9,6 @@ Deployment/legacy-api in namespace default:
     - partial trace: no GitOps owner chain was discovered
 
 TRY NEXT:
-  - Find unmanaged resources: cub-scout map orphans -n default
-  - Find unhealthy resources: cub-scout map issues -n default
-  - Check overall health: cub-scout doctor -n default
+  - This resource has no recognized owner - find other unmanaged resources: cub-scout map orphans -n default
+  - Check for health issues that may indicate why ownership is unclear: cub-scout map issues -n default
+  - Get a broad health summary to contextualize this resource: cub-scout doctor -n default

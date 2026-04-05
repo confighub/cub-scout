@@ -2,8 +2,47 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
+
+// Hint represents a single navigation hint with rationale and priority.
+// Priority is used for ranking: higher values are more urgent/relevant.
+// Rationale explains why this hint is suggested (the "so what").
+type Hint struct {
+	Command   string // The copyable cub-scout command
+	Rationale string // Why this hint is suggested
+	Priority  int    // Higher = more urgent; used for sorting
+}
+
+// hintPriorityUrgent is for issues requiring immediate attention.
+const hintPriorityUrgent = 100
+
+// hintPriorityHigh is for important next steps.
+const hintPriorityHigh = 80
+
+// hintPriorityNormal is for standard exploration suggestions.
+const hintPriorityNormal = 50
+
+// hintPriorityLow is for general guidance.
+const hintPriorityLow = 20
+
+// sortHints sorts hints by priority (descending) for deterministic output.
+func sortHints(hints []Hint) {
+	sort.SliceStable(hints, func(i, j int) bool {
+		return hints[i].Priority > hints[j].Priority
+	})
+}
+
+// hintsToStrings converts Hint slice to legacy string format for rendering.
+// Format: "Rationale: command"
+func hintsToStrings(hints []Hint) []string {
+	result := make([]string, 0, len(hints))
+	for _, h := range hints {
+		result = append(result, h.Rationale+": "+h.Command)
+	}
+	return result
+}
 
 func withKubeRecoveryHint(err error, command string) error {
 	if err == nil {
@@ -17,75 +56,177 @@ func withKubeRecoveryHint(err error, command string) error {
 }
 
 func mapListTryNextHints(entries []MapEntry, byOwner map[string]int, namespace string) []string {
-	hints := make([]string, 0, 3)
+	hints := mapListHints(entries, byOwner, namespace)
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	return hintsToStrings(hints)
+}
+
+// mapListHints generates structured hints for map list output.
+func mapListHints(entries []MapEntry, byOwner map[string]int, namespace string) []Hint {
+	hints := make([]Hint, 0, 4)
 	nsFlag := commandNamespaceFlag(namespace)
 
-	if byOwner["Native"] > 0 {
-		hints = append(hints, fmt.Sprintf("Found %d unmanaged resources: cub-scout map orphans%s", byOwner["Native"], nsFlag))
+	nativeCount := byOwner["Native"]
+	if nativeCount > 0 {
+		// Unmanaged resources are a governance concern - prioritize based on count
+		priority := hintPriorityHigh
+		if nativeCount >= 10 {
+			priority = hintPriorityUrgent
+		}
+		rationale := fmt.Sprintf("Found %d unmanaged resource", nativeCount)
+		if nativeCount != 1 {
+			rationale += "s"
+		}
+		rationale += " - these lack GitOps ownership and may drift"
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout map orphans%s", nsFlag),
+			Rationale: rationale,
+			Priority:  priority,
+		})
 	}
 
 	if kind, name, ns, ok := pickExplainResource(entries); ok {
 		useNS := chooseNamespace(namespace, ns)
-		hints = append(hints, fmt.Sprintf("Explain one resource end-to-end: cub-scout explain %s/%s%s", strings.ToLower(kind), name, commandNamespaceFlag(useNS)))
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout explain %s/%s%s", strings.ToLower(kind), name, commandNamespaceFlag(useNS)),
+			Rationale: "Trace one resource end-to-end to see its full ownership chain",
+			Priority:  hintPriorityNormal,
+		})
 	}
 
-	hints = append(hints, fmt.Sprintf("Get a one-command health summary: cub-scout doctor%s", nsFlag))
+	hints = append(hints, Hint{
+		Command:   fmt.Sprintf("cub-scout doctor%s", nsFlag),
+		Rationale: "Get a one-command health summary across ownership, drift, and risks",
+		Priority:  hintPriorityLow,
+	})
 
-	if len(hints) > 3 {
-		hints = hints[:3]
-	}
 	return hints
 }
 
 func doctorTryNextHints(summary DoctorSummary) []string {
-	hints := make([]string, 0, 3)
+	hints := doctorHints(summary)
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	return hintsToStrings(hints)
+}
+
+// doctorHints generates structured hints for doctor output.
+func doctorHints(summary DoctorSummary) []Hint {
+	hints := make([]Hint, 0, 4)
 	nsFlag := commandNamespaceFlag(summary.Namespace)
 
-	if summary.Ownership.Unmanaged > 0 {
-		hints = append(hints, fmt.Sprintf("Review unmanaged resources: cub-scout map orphans%s", nsFlag))
-	}
-
+	// Top issue gets highest priority if critical
 	if len(summary.TopIssues) > 0 {
 		issue := summary.TopIssues[0]
 		if kind, name, ok := parseKindName(issue.Resource); ok {
 			useNS := chooseNamespace(summary.Namespace, issue.Namespace)
-			hints = append(hints, fmt.Sprintf("Explain your top issue: cub-scout explain %s/%s%s", strings.ToLower(kind), name, commandNamespaceFlag(useNS)))
+			priority := hintPriorityHigh
+			rationale := fmt.Sprintf("Investigate your top issue (%s)", issue.Severity)
+			if strings.EqualFold(issue.Severity, "CRITICAL") {
+				priority = hintPriorityUrgent
+				rationale = fmt.Sprintf("CRITICAL issue on %s - investigate immediately", issue.Resource)
+			} else if strings.EqualFold(issue.Severity, "HIGH") {
+				rationale = fmt.Sprintf("HIGH severity issue on %s - needs attention", issue.Resource)
+			}
+			hints = append(hints, Hint{
+				Command:   fmt.Sprintf("cub-scout explain %s/%s%s", strings.ToLower(kind), name, commandNamespaceFlag(useNS)),
+				Rationale: rationale,
+				Priority:  priority,
+			})
 		}
 	}
 
-	hints = append(hints, fmt.Sprintf("Run the guided path: cub-scout quickstart%s --yes", nsFlag))
-
-	if len(hints) > 3 {
-		hints = hints[:3]
+	if summary.Ownership.Unmanaged > 0 {
+		priority := hintPriorityHigh
+		if summary.Ownership.Unmanaged >= 10 {
+			priority = hintPriorityUrgent - 10 // Just below critical issues
+		}
+		rationale := fmt.Sprintf("%d resource", summary.Ownership.Unmanaged)
+		if summary.Ownership.Unmanaged != 1 {
+			rationale += "s"
+		}
+		rationale += " without GitOps ownership - review for governance gaps"
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout map orphans%s", nsFlag),
+			Rationale: rationale,
+			Priority:  priority,
+		})
 	}
+
+	hints = append(hints, Hint{
+		Command:   fmt.Sprintf("cub-scout quickstart%s --yes", nsFlag),
+		Rationale: "Run the guided walkthrough to explore your cluster step-by-step",
+		Priority:  hintPriorityLow,
+	})
+
 	return hints
 }
 
 func explainTryNextHints(summary ExplainSummary) []string {
-	hints := make([]string, 0, 3)
+	hints := explainHints(summary)
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	return hintsToStrings(hints)
+}
+
+// explainHints generates structured hints for explain output.
+func explainHints(summary ExplainSummary) []Hint {
+	hints := make([]Hint, 0, 4)
 	ns := strings.TrimSpace(summary.Namespace)
 	nsFlag := commandNamespaceFlag(ns)
 
 	owner := strings.TrimSpace(summary.Owner)
 	unknownOwner := strings.HasPrefix(strings.ToLower(owner), "unknown")
+	healthUnknown := strings.EqualFold(strings.TrimSpace(summary.Health), "unavailable") ||
+		strings.EqualFold(strings.TrimSpace(summary.Health), "unknown")
 
 	if unknownOwner {
-		hints = append(hints,
-			fmt.Sprintf("Find unmanaged resources: cub-scout map orphans%s", nsFlag),
-			fmt.Sprintf("Find unhealthy resources: cub-scout map issues%s", nsFlag),
-		)
+		// Unknown ownership is a governance concern - help find related issues
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout map orphans%s", nsFlag),
+			Rationale: "This resource has no recognized owner - find other unmanaged resources",
+			Priority:  hintPriorityHigh,
+		})
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout map issues%s", nsFlag),
+			Rationale: "Check for health issues that may indicate why ownership is unclear",
+			Priority:  hintPriorityNormal,
+		})
 	} else {
+		// Known owner - help explore the ownership chain
 		if kind, name, ok := parseKindName(summary.Resource); ok {
-			hints = append(hints, fmt.Sprintf("Follow the chain in detail: cub-scout trace %s/%s%s --explain", strings.ToLower(kind), name, nsFlag))
+			priority := hintPriorityHigh
+			rationale := fmt.Sprintf("Trace the full %s ownership chain from source to runtime", owner)
+			if healthUnknown {
+				priority = hintPriorityUrgent
+				rationale = "Health status unknown - trace the chain to find the root cause"
+			}
+			hints = append(hints, Hint{
+				Command:   fmt.Sprintf("cub-scout trace %s/%s%s --explain", strings.ToLower(kind), name, nsFlag),
+				Rationale: rationale,
+				Priority:  priority,
+			})
 		}
-		hints = append(hints, fmt.Sprintf("See all %s-owned resources: cub-scout map list%s -q \"owner=%s\"", owner, nsFlag, owner))
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout map list%s -q \"owner=%s\"", nsFlag, owner),
+			Rationale: fmt.Sprintf("See all %s-managed resources in this scope", owner),
+			Priority:  hintPriorityNormal,
+		})
 	}
 
-	hints = append(hints, fmt.Sprintf("Check overall health: cub-scout doctor%s", nsFlag))
+	hints = append(hints, Hint{
+		Command:   fmt.Sprintf("cub-scout doctor%s", nsFlag),
+		Rationale: "Get a broad health summary to contextualize this resource",
+		Priority:  hintPriorityLow,
+	})
 
-	if len(hints) > 3 {
-		hints = hints[:3]
-	}
 	return hints
 }
 

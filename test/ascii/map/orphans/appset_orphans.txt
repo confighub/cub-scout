@@ -14,9 +14,9 @@ Total: 1 resources
 By Owner: Native(1)
 
 TRY NEXT:
-  - Found 1 unmanaged resources: cub-scout map orphans
-  - Explain one resource end-to-end: cub-scout explain configmap/debug-config -n default
-  - Get a one-command health summary: cub-scout doctor
+  - Found 1 unmanaged resource - these lack GitOps ownership and may drift: cub-scout map orphans
+  - Trace one resource end-to-end to see its full ownership chain: cub-scout explain configmap/debug-config -n default
+  - Get a one-command health summary across ownership, drift, and risks: cub-scout doctor
 
 NEXT STEPS:
 → To import into ConfigHub: cub-scout import --wizard

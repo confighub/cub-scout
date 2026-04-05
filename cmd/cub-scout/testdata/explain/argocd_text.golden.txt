@@ -7,6 +7,6 @@ Deployment/frontend in namespace prod:
   Drift: Unknown
 
 TRY NEXT:
-  - Follow the chain in detail: cub-scout trace deployment/frontend -n prod --explain
-  - See all ArgoCD-owned resources: cub-scout map list -n prod -q "owner=ArgoCD"
-  - Check overall health: cub-scout doctor -n prod
+  - Trace the full ArgoCD ownership chain from source to runtime: cub-scout trace deployment/frontend -n prod --explain
+  - See all ArgoCD-managed resources in this scope: cub-scout map list -n prod -q "owner=ArgoCD"
+  - Get a broad health summary to contextualize this resource: cub-scout doctor -n prod
