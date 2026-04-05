@@ -516,6 +516,7 @@ type importFlagState struct {
 	noConnect   bool
 	fromBundle  string
 	auditReason string
+	resources   []string
 }
 
 func setImportFlagState(next importFlagState) func() {
@@ -530,6 +531,7 @@ func setImportFlagState(next importFlagState) func() {
 		noConnect:   importNoConnect,
 		fromBundle:  importFromBundle,
 		auditReason: importAuditReason,
+		resources:   importResources,
 	}
 
 	importNamespace = next.namespace
@@ -542,6 +544,7 @@ func setImportFlagState(next importFlagState) func() {
 	importNoConnect = next.noConnect
 	importFromBundle = next.fromBundle
 	importAuditReason = next.auditReason
+	importResources = next.resources
 
 	return func() {
 		importNamespace = prev.namespace
@@ -554,6 +557,7 @@ func setImportFlagState(next importFlagState) func() {
 		importNoConnect = prev.noConnect
 		importFromBundle = prev.fromBundle
 		importAuditReason = prev.auditReason
+		importResources = prev.resources
 	}
 }
 
@@ -612,5 +616,447 @@ func normalizeBundlePath(v interface{}) {
 		for _, item := range typed {
 			normalizeBundlePath(item)
 		}
+	}
+}
+
+// === Curated Selection Tests ===
+
+func TestParseImportResourceSelections_Valid(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		wantLen  int
+		wantKind string
+		wantName string
+	}{
+		{
+			name:     "deploy/name",
+			input:    []string{"deploy/api"},
+			wantLen:  1,
+			wantKind: "Deployment",
+			wantName: "api",
+		},
+		{
+			name:     "statefulset/name",
+			input:    []string{"statefulset/db"},
+			wantLen:  1,
+			wantKind: "StatefulSet",
+			wantName: "db",
+		},
+		{
+			name:     "daemonset/name",
+			input:    []string{"ds/monitor"},
+			wantLen:  1,
+			wantKind: "DaemonSet",
+			wantName: "monitor",
+		},
+		{
+			name:    "multiple resources",
+			input:   []string{"deploy/api", "statefulset/db"},
+			wantLen: 2,
+		},
+		{
+			name:     "case insensitive kind",
+			input:    []string{"DEPLOY/api"},
+			wantLen:  1,
+			wantKind: "Deployment",
+			wantName: "api",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseImportResourceSelections(tt.input)
+			if err != nil {
+				t.Fatalf("parseImportResourceSelections() error = %v", err)
+			}
+			if len(got) != tt.wantLen {
+				t.Fatalf("len(selections) = %d, want %d", len(got), tt.wantLen)
+			}
+			if tt.wantKind != "" && got[0].Kind != tt.wantKind {
+				t.Fatalf("kind = %q, want %q", got[0].Kind, tt.wantKind)
+			}
+			if tt.wantName != "" && got[0].Name != tt.wantName {
+				t.Fatalf("name = %q, want %q", got[0].Name, tt.wantName)
+			}
+		})
+	}
+}
+
+func TestParseImportResourceSelections_Dedupe(t *testing.T) {
+	input := []string{"deploy/api", "deploy/api", "DEPLOY/API"}
+	got, err := parseImportResourceSelections(input)
+	if err != nil {
+		t.Fatalf("parseImportResourceSelections() error = %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len(selections) = %d, want 1 (deduped)", len(got))
+	}
+}
+
+func TestParseImportResourceSelections_Invalid(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []string
+	}{
+		{name: "missing slash", input: []string{"deployapi"}},
+		{name: "empty name", input: []string{"deploy/"}},
+		{name: "invalid kind", input: []string{"pod/mypod"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := parseImportResourceSelections(tt.input)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+		})
+	}
+}
+
+func TestParseImportResourceSelections_EmptyInput(t *testing.T) {
+	got, err := parseImportResourceSelections(nil)
+	if err != nil {
+		t.Fatalf("parseImportResourceSelections(nil) error = %v", err)
+	}
+	if got != nil {
+		t.Fatalf("got %v, want nil", got)
+	}
+
+	got, err = parseImportResourceSelections([]string{})
+	if err != nil {
+		t.Fatalf("parseImportResourceSelections([]) error = %v", err)
+	}
+	if got != nil {
+		t.Fatalf("got %v, want nil", got)
+	}
+}
+
+func TestFilterWorkloadsBySelection_AllMatched(t *testing.T) {
+	workloads := []WorkloadInfo{
+		{Kind: "Deployment", Namespace: "payments", Name: "api", Owner: "Native"},
+		{Kind: "StatefulSet", Namespace: "payments", Name: "db", Owner: "Helm"},
+	}
+	selections := []importResourceSelection{
+		{Kind: "Deployment", Name: "api"},
+		{Kind: "StatefulSet", Name: "db"},
+	}
+
+	filtered, result := filterWorkloadsBySelection(workloads, selections, "payments")
+
+	if len(filtered) != 2 {
+		t.Fatalf("len(filtered) = %d, want 2", len(filtered))
+	}
+	if len(result.Included) != 2 {
+		t.Fatalf("len(included) = %d, want 2", len(result.Included))
+	}
+	if len(result.Missing) != 0 {
+		t.Fatalf("len(missing) = %d, want 0", len(result.Missing))
+	}
+	if len(result.Skipped) != 0 {
+		t.Fatalf("len(skipped) = %d, want 0", len(result.Skipped))
+	}
+}
+
+func TestFilterWorkloadsBySelection_PartialMatch(t *testing.T) {
+	workloads := []WorkloadInfo{
+		{Kind: "Deployment", Namespace: "payments", Name: "api", Owner: "Native"},
+		{Kind: "Deployment", Namespace: "payments", Name: "worker", Owner: "Native"},
+	}
+	selections := []importResourceSelection{
+		{Kind: "Deployment", Name: "api"},
+	}
+
+	filtered, result := filterWorkloadsBySelection(workloads, selections, "payments")
+
+	if len(filtered) != 1 {
+		t.Fatalf("len(filtered) = %d, want 1", len(filtered))
+	}
+	if filtered[0].Name != "api" {
+		t.Fatalf("filtered[0].name = %q, want api", filtered[0].Name)
+	}
+	if len(result.Included) != 1 {
+		t.Fatalf("len(included) = %d, want 1", len(result.Included))
+	}
+	if len(result.Skipped) != 1 {
+		t.Fatalf("len(skipped) = %d, want 1", len(result.Skipped))
+	}
+	if result.Skipped[0].Name != "worker" {
+		t.Fatalf("skipped[0].name = %q, want worker", result.Skipped[0].Name)
+	}
+}
+
+func TestFilterWorkloadsBySelection_MissingResource(t *testing.T) {
+	workloads := []WorkloadInfo{
+		{Kind: "Deployment", Namespace: "payments", Name: "api", Owner: "Native"},
+	}
+	selections := []importResourceSelection{
+		{Kind: "Deployment", Name: "api"},
+		{Kind: "StatefulSet", Name: "db"},
+	}
+
+	filtered, result := filterWorkloadsBySelection(workloads, selections, "payments")
+
+	if len(filtered) != 1 {
+		t.Fatalf("len(filtered) = %d, want 1", len(filtered))
+	}
+	if len(result.Missing) != 1 {
+		t.Fatalf("len(missing) = %d, want 1", len(result.Missing))
+	}
+	if result.Missing[0].Kind != "StatefulSet" || result.Missing[0].Name != "db" {
+		t.Fatalf("missing[0] = %+v, want StatefulSet/db", result.Missing[0])
+	}
+}
+
+func TestFilterWorkloadsBySelection_GitOpsUnsupported(t *testing.T) {
+	workloads := []WorkloadInfo{
+		{Kind: "Deployment", Namespace: "payments", Name: "api", Owner: "ArgoCD"},
+		{Kind: "Deployment", Namespace: "payments", Name: "worker", Owner: "Flux"},
+		{Kind: "StatefulSet", Namespace: "payments", Name: "db", Owner: "Helm"},
+	}
+	selections := []importResourceSelection{
+		{Kind: "Deployment", Name: "api"},
+		{Kind: "Deployment", Name: "worker"},
+		{Kind: "StatefulSet", Name: "db"},
+	}
+
+	filtered, result := filterWorkloadsBySelection(workloads, selections, "payments")
+
+	// Only the Helm workload should be included
+	if len(filtered) != 1 {
+		t.Fatalf("len(filtered) = %d, want 1", len(filtered))
+	}
+	if filtered[0].Name != "db" {
+		t.Fatalf("filtered[0].name = %q, want db", filtered[0].Name)
+	}
+
+	// ArgoCD and Flux should be unsupported
+	if len(result.Unsupported) != 2 {
+		t.Fatalf("len(unsupported) = %d, want 2", len(result.Unsupported))
+	}
+	for _, u := range result.Unsupported {
+		if !strings.Contains(u.Reason, "GitOps-managed") {
+			t.Fatalf("unsupported reason should mention GitOps-managed: %q", u.Reason)
+		}
+	}
+
+	if len(result.Included) != 1 {
+		t.Fatalf("len(included) = %d, want 1", len(result.Included))
+	}
+}
+
+func TestFilterWorkloadsBySelection_SelectedTracking(t *testing.T) {
+	workloads := []WorkloadInfo{
+		{Kind: "Deployment", Namespace: "payments", Name: "api", Owner: "Native"},
+	}
+	selections := []importResourceSelection{
+		{Kind: "Deployment", Name: "api"},
+		{Kind: "StatefulSet", Name: "db"},
+	}
+
+	_, result := filterWorkloadsBySelection(workloads, selections, "payments")
+
+	if len(result.Selected) != 2 {
+		t.Fatalf("len(selected) = %d, want 2", len(result.Selected))
+	}
+	if result.Selected[0] != "Deployment/api" {
+		t.Fatalf("selected[0] = %q, want Deployment/api", result.Selected[0])
+	}
+	if result.Selected[1] != "StatefulSet/db" {
+		t.Fatalf("selected[1] = %q, want StatefulSet/db", result.Selected[1])
+	}
+}
+
+func TestRunImport_ResourceRequiresNamespace(t *testing.T) {
+	restore := setImportFlagState(importFlagState{
+		namespace: "",
+		resources: []string{"deploy/api"},
+		noLog:     true,
+	})
+	defer restore()
+
+	err := runImport(nil, nil)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "--resource requires --namespace") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRunImport_ResourceWithBundleAllowed(t *testing.T) {
+	bundleDir := writeImportBundleFixture(t, &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "payments",
+			},
+		},
+		Session: &agent.DebugSessionData{
+			WorkloadHealth: &agent.WorkloadHealthSnapshot{
+				Kind:          "Deployment",
+				Name:          "api",
+				Namespace:     "payments",
+				Replicas:      2,
+				ReadyReplicas: 2,
+			},
+			OwnershipChain: &agent.OwnershipSnapshot{
+				Owner: "Native",
+			},
+		},
+	})
+
+	restore := setImportFlagState(importFlagState{
+		fromBundle: bundleDir,
+		resources:  []string{"deploy/api"},
+		json:       true,
+		noLog:      true,
+	})
+	defer restore()
+
+	output := captureStdout(t, func() {
+		if err := runImport(nil, nil); err != nil {
+			t.Fatalf("runImport() error = %v", err)
+		}
+	})
+
+	var result struct {
+		Selection *ImportSelectionResult `json:"selection"`
+	}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("parse JSON: %v\n%s", err, output)
+	}
+
+	if result.Selection == nil {
+		t.Fatal("selection is nil")
+	}
+	if len(result.Selection.Selected) != 1 {
+		t.Fatalf("len(selected) = %d, want 1", len(result.Selection.Selected))
+	}
+	if len(result.Selection.Included) != 1 {
+		t.Fatalf("len(included) = %d, want 1", len(result.Selection.Included))
+	}
+}
+
+func TestRunImport_CuratedSelectionJSONContract(t *testing.T) {
+	bundleDir := writeImportBundleFixture(t, &agent.DebugBundle{
+		Metadata: agent.BundleMetadata{
+			Target: agent.BundleTarget{
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "payments",
+			},
+		},
+		Session: &agent.DebugSessionData{
+			WorkloadHealth: &agent.WorkloadHealthSnapshot{
+				Kind:          "Deployment",
+				Name:          "api",
+				Namespace:     "payments",
+				Replicas:      2,
+				ReadyReplicas: 2,
+			},
+			OwnershipChain: &agent.OwnershipSnapshot{
+				Owner: "ArgoCD", // GitOps-managed to test unsupported
+			},
+		},
+	})
+
+	restore := setImportFlagState(importFlagState{
+		fromBundle: bundleDir,
+		resources:  []string{"deploy/api", "statefulset/missing"},
+		json:       true,
+		noLog:      true,
+	})
+	defer restore()
+
+	output := captureStdout(t, func() {
+		if err := runImport(nil, nil); err != nil {
+			t.Fatalf("runImport() error = %v", err)
+		}
+	})
+
+	var result struct {
+		Selection *ImportSelectionResult `json:"selection"`
+	}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("parse JSON: %v\n%s", err, output)
+	}
+
+	if result.Selection == nil {
+		t.Fatal("selection is nil")
+	}
+
+	// Selected should have both
+	if len(result.Selection.Selected) != 2 {
+		t.Fatalf("len(selected) = %d, want 2", len(result.Selection.Selected))
+	}
+
+	// ArgoCD workload should be unsupported
+	if len(result.Selection.Unsupported) != 1 {
+		t.Fatalf("len(unsupported) = %d, want 1", len(result.Selection.Unsupported))
+	}
+	if result.Selection.Unsupported[0].Name != "api" {
+		t.Fatalf("unsupported[0].name = %q, want api", result.Selection.Unsupported[0].Name)
+	}
+
+	// statefulset/missing should be missing
+	if len(result.Selection.Missing) != 1 {
+		t.Fatalf("len(missing) = %d, want 1", len(result.Selection.Missing))
+	}
+	if result.Selection.Missing[0].Name != "missing" {
+		t.Fatalf("missing[0].name = %q, want missing", result.Selection.Missing[0].Name)
+	}
+}
+
+func TestOutputCuratedSelectionJSON_Structure(t *testing.T) {
+	proposal := &FullProposal{
+		App: "test-space",
+		Units: []UnitProposal{
+			{Slug: "api-unit"},
+		},
+	}
+	workloads := []WorkloadInfo{
+		{Kind: "Deployment", Namespace: "payments", Name: "api", Owner: "Native"},
+	}
+	selection := &ImportSelectionResult{
+		Selected: []string{"Deployment/api"},
+		Included: []ImportSelectionEntry{
+			{Kind: "Deployment", Namespace: "payments", Name: "api"},
+		},
+	}
+
+	restore := setImportFlagState(importFlagState{noLog: true})
+	defer restore()
+
+	output := captureStdout(t, func() {
+		if err := outputCuratedSelectionJSON(proposal, workloads, []string{"payments"}, selection); err != nil {
+			t.Fatalf("outputCuratedSelectionJSON() error = %v", err)
+		}
+	})
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("parse JSON: %v\n%s", err, output)
+	}
+
+	// Check all expected fields exist
+	requiredFields := []string{"namespaces", "workloads", "proposal", "evidence", "selection"}
+	for _, field := range requiredFields {
+		if _, ok := result[field]; !ok {
+			t.Fatalf("missing required field %q in JSON output", field)
+		}
+	}
+
+	// Check selection structure
+	sel, ok := result["selection"].(map[string]interface{})
+	if !ok {
+		t.Fatal("selection is not an object")
+	}
+	if _, ok := sel["selected"]; !ok {
+		t.Fatal("selection.selected is missing")
+	}
+	if _, ok := sel["included"]; !ok {
+		t.Fatal("selection.included is missing")
 	}
 }

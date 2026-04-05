@@ -35,6 +35,7 @@ var (
 	importNoConnect   bool
 	importFromBundle  string
 	importAuditReason string
+	importResources   []string // --resource flag for curated selection
 )
 
 var listUnitSlugsForSpace = fetchUnitSlugsForSpace
@@ -137,6 +138,160 @@ type importEvidenceJSON struct {
 	BundlePath string `json:"bundlePath,omitempty"`
 }
 
+// ImportSelectionResult tracks the outcome of curated resource selection.
+type ImportSelectionResult struct {
+	// Selected is the list of resources explicitly requested via --resource.
+	Selected []string `json:"selected,omitempty"`
+
+	// Included is the list of resources that matched and will be imported.
+	Included []ImportSelectionEntry `json:"included,omitempty"`
+
+	// Skipped is the list of discovered resources that were not selected.
+	Skipped []ImportSelectionEntry `json:"skipped,omitempty"`
+
+	// Missing is the list of selected resources that were not found.
+	Missing []ImportSelectionEntry `json:"missing,omitempty"`
+
+	// Unsupported is the list of selected resources that cannot be cherry-picked
+	// (e.g., GitOps-managed workloads that require delegation).
+	Unsupported []ImportSelectionEntry `json:"unsupported,omitempty"`
+}
+
+// ImportSelectionEntry represents a single resource in the selection result.
+type ImportSelectionEntry struct {
+	Kind      string `json:"kind"`
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+	Reason    string `json:"reason,omitempty"`
+}
+
+// parseImportResourceSelections parses and validates --resource flag values.
+// Returns normalized resource refs as "Kind/name" pairs.
+func parseImportResourceSelections(rawSelections []string) ([]importResourceSelection, error) {
+	if len(rawSelections) == 0 {
+		return nil, nil
+	}
+
+	// Valid workload kinds for import (only these can be cherry-picked)
+	validImportKinds := map[string]bool{
+		"Deployment":  true,
+		"StatefulSet": true,
+		"DaemonSet":   true,
+	}
+
+	seen := make(map[string]bool)
+	selections := make([]importResourceSelection, 0, len(rawSelections))
+
+	for _, raw := range rawSelections {
+		kindRaw, name, err := parseResourceArg(raw)
+		if err != nil {
+			return nil, fmt.Errorf("invalid --resource %q: %w", raw, err)
+		}
+
+		// Validate name is not empty
+		if strings.TrimSpace(name) == "" {
+			return nil, fmt.Errorf("invalid --resource %q: name cannot be empty", raw)
+		}
+
+		kind := normalizeKind(kindRaw)
+
+		// Validate kind is a supported workload type
+		if !validImportKinds[kind] {
+			return nil, fmt.Errorf("invalid --resource %q: kind %q is not a supported workload type (valid: deploy, statefulset, daemonset)", raw, kindRaw)
+		}
+
+		key := strings.ToLower(kind + "/" + name)
+		if seen[key] {
+			continue // dedupe
+		}
+		seen[key] = true
+		selections = append(selections, importResourceSelection{
+			Kind: kind,
+			Name: name,
+		})
+	}
+
+	return selections, nil
+}
+
+type importResourceSelection struct {
+	Kind string
+	Name string
+}
+
+// filterWorkloadsBySelection filters discovered workloads based on explicit selection.
+// Returns filtered workloads and a selection result for reporting.
+func filterWorkloadsBySelection(workloads []WorkloadInfo, selections []importResourceSelection, namespace string) ([]WorkloadInfo, ImportSelectionResult) {
+	result := ImportSelectionResult{
+		Selected: make([]string, 0, len(selections)),
+	}
+
+	// Build selection lookup
+	selectionMap := make(map[string]bool)
+	for _, sel := range selections {
+		key := strings.ToLower(sel.Kind + "/" + sel.Name)
+		selectionMap[key] = true
+		result.Selected = append(result.Selected, sel.Kind+"/"+sel.Name)
+	}
+
+	// Track which selections were found
+	found := make(map[string]bool)
+	filtered := make([]WorkloadInfo, 0)
+
+	for _, w := range workloads {
+		key := strings.ToLower(normalizeKind(w.Kind) + "/" + w.Name)
+
+		if !selectionMap[key] {
+			// Not selected - mark as skipped
+			result.Skipped = append(result.Skipped, ImportSelectionEntry{
+				Kind:      w.Kind,
+				Namespace: w.Namespace,
+				Name:      w.Name,
+				Reason:    "not selected",
+			})
+			continue
+		}
+
+		found[key] = true
+
+		// Check if this workload can be cherry-picked
+		// GitOps-managed workloads (ArgoCD/Flux) require delegation which doesn't support
+		// cherry-picking in this slice. Mark as unsupported.
+		if w.Owner == "ArgoCD" || w.Owner == "Flux" {
+			result.Unsupported = append(result.Unsupported, ImportSelectionEntry{
+				Kind:      w.Kind,
+				Namespace: w.Namespace,
+				Name:      w.Name,
+				Reason:    fmt.Sprintf("GitOps-managed (%s) - selective import not supported; use full namespace import or import via 'cub gitops import'", w.Owner),
+			})
+			continue
+		}
+
+		// Include this workload
+		result.Included = append(result.Included, ImportSelectionEntry{
+			Kind:      w.Kind,
+			Namespace: w.Namespace,
+			Name:      w.Name,
+		})
+		filtered = append(filtered, w)
+	}
+
+	// Check for missing selections
+	for _, sel := range selections {
+		key := strings.ToLower(sel.Kind + "/" + sel.Name)
+		if !found[key] {
+			result.Missing = append(result.Missing, ImportSelectionEntry{
+				Kind:      sel.Kind,
+				Namespace: namespace,
+				Name:      sel.Name,
+				Reason:    "not found in namespace",
+			})
+		}
+	}
+
+	return filtered, result
+}
+
 var importCmd = &cobra.Command{
 	Use:   "import",
 	Short: "Import workloads into ConfigHub",
@@ -167,6 +322,12 @@ Examples:
   # Preview what would be created
   cub-scout import --dry-run
 
+  # Curated import: cherry-pick specific resources
+  cub-scout import -n payments --resource deploy/api --resource statefulset/db --dry-run
+
+  # Curated import with JSON output
+  cub-scout import -n payments --resource deploy/api --json
+
   # Skip confirmation (legacy: no auto-connect)
   cub-scout import -y
 
@@ -178,6 +339,9 @@ Examples:
 
   # Preview import proposal from an existing debug bundle
   cub-scout import --from-bundle ./debug-bundle --dry-run --json
+
+  # Curated import from bundle
+  cub-scout import --from-bundle ./debug-bundle --resource deploy/api --dry-run
 
   # Interactive TUI wizard (recommended)
   cub-scout import --wizard
@@ -199,6 +363,7 @@ func init() {
 	importCmd.Flags().BoolVar(&importNoConnect, "no-connect", false, "Do not start worker/targets after import")
 	importCmd.Flags().StringVar(&importFromBundle, "from-bundle", "", "Import from a debug bundle directory instead of live cluster discovery")
 	importCmd.Flags().StringVar(&importAuditReason, "audit-reason", "", "Record break-glass decision reason in connected audit history (max 512 chars)")
+	importCmd.Flags().StringArrayVar(&importResources, "resource", nil, "Select specific resources to import (repeatable, e.g., --resource deploy/api --resource statefulset/db)")
 
 	rootCmd.AddCommand(importCmd)
 }
@@ -213,7 +378,21 @@ func runImport(cmd *cobra.Command, args []string) error {
 		if importFromBundle != "" {
 			return fmt.Errorf("--wizard cannot be used with --from-bundle")
 		}
+		if len(importResources) > 0 {
+			return fmt.Errorf("--wizard cannot be used with --resource")
+		}
 		return RunImportWizard()
+	}
+
+	// Validate --resource flag usage
+	if len(importResources) > 0 && importNamespace == "" && importFromBundle == "" {
+		return fmt.Errorf("--resource requires --namespace (or --from-bundle) to scope the selection")
+	}
+
+	// Parse resource selections early to catch validation errors
+	resourceSelections, err := parseImportResourceSelections(importResources)
+	if err != nil {
+		return err
 	}
 
 	// JSON mode = dry-run (never change anything when outputting JSON)
@@ -227,7 +406,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Bundle import path bypasses live cluster discovery.
 	if importFromBundle != "" {
-		return runImportFromBundle(importFromBundle)
+		return runImportFromBundle(importFromBundle, resourceSelections)
 	}
 
 	// Initialize logger (unless disabled or JSON mode)
@@ -319,6 +498,43 @@ func runImport(cmd *cobra.Command, args []string) error {
 		logger.LogWorkloads(allWorkloads)
 	}
 
+	// Apply curated selection filtering if --resource was specified
+	var selectionResult *ImportSelectionResult
+	if len(resourceSelections) > 0 {
+		filtered, result := filterWorkloadsBySelection(allWorkloads, resourceSelections, importNamespace)
+		selectionResult = &result
+
+		if logger != nil {
+			logger.Log("Curated selection: %d selected, %d included, %d skipped, %d missing, %d unsupported",
+				len(result.Selected), len(result.Included), len(result.Skipped), len(result.Missing), len(result.Unsupported))
+		}
+
+		// Check for fatal selection issues
+		if len(result.Missing) > 0 || len(result.Unsupported) > 0 {
+			if importJSON {
+				return outputCuratedSelectionJSON(nil, allWorkloads, namespaces, selectionResult)
+			}
+			printCuratedSelectionSummary(selectionResult)
+			if len(result.Unsupported) > 0 {
+				return fmt.Errorf("cannot import: %d selected resource(s) are GitOps-managed and require full namespace import or 'cub gitops import'", len(result.Unsupported))
+			}
+			if len(result.Missing) > 0 {
+				return fmt.Errorf("cannot import: %d selected resource(s) not found in namespace %q", len(result.Missing), importNamespace)
+			}
+		}
+
+		if len(filtered) == 0 {
+			if importJSON {
+				return outputCuratedSelectionJSON(nil, allWorkloads, namespaces, selectionResult)
+			}
+			printCuratedSelectionSummary(selectionResult)
+			fmt.Println("No importable workloads after selection.")
+			return nil
+		}
+
+		allWorkloads = filtered
+	}
+
 	// Step 2: Generate suggestion
 	proposal := SuggestFullProposal(nil, allWorkloads, "")
 
@@ -329,10 +545,16 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// JSON output mode
 	if importJSON {
+		if selectionResult != nil {
+			return outputCuratedSelectionJSON(proposal, allWorkloads, namespaces, selectionResult)
+		}
 		return outputProposalJSON(proposal, allWorkloads, namespaces)
 	}
 
 	// Step 3: Show what we found and what we'll create
+	if selectionResult != nil {
+		printCuratedSelectionSummary(selectionResult)
+	}
 	printDiscovery(namespaces, allWorkloads, proposal)
 
 	if importDryRun {
@@ -399,7 +621,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 	return applyImportWithLogger(proposalToApply, scoutWorkloads, logger, shouldConnect, importAuditReason)
 }
 
-func runImportFromBundle(bundlePath string) error {
+func runImportFromBundle(bundlePath string, resourceSelections []importResourceSelection) error {
 	if importNamespace != "" {
 		return fmt.Errorf("--namespace cannot be used with --from-bundle")
 	}
@@ -417,10 +639,55 @@ func runImportFromBundle(bundlePath string) error {
 		return nil
 	}
 
+	// Apply curated selection filtering if --resource was specified
+	var selectionResult *ImportSelectionResult
+	if len(resourceSelections) > 0 {
+		// Derive namespace from workloads in bundle
+		bundleNamespace := ""
+		if len(workloads) > 0 {
+			bundleNamespace = workloads[0].Namespace
+		}
+
+		filtered, result := filterWorkloadsBySelection(workloads, resourceSelections, bundleNamespace)
+		selectionResult = &result
+
+		// Check for fatal selection issues
+		if len(result.Missing) > 0 || len(result.Unsupported) > 0 {
+			if importJSON {
+				return outputCuratedSelectionJSON(nil, workloads, namespaces, selectionResult)
+			}
+			printCuratedSelectionSummary(selectionResult)
+			if len(result.Unsupported) > 0 {
+				return fmt.Errorf("cannot import: %d selected resource(s) are GitOps-managed and require full namespace import or 'cub gitops import'", len(result.Unsupported))
+			}
+			if len(result.Missing) > 0 {
+				return fmt.Errorf("cannot import: %d selected resource(s) not found in bundle", len(result.Missing))
+			}
+		}
+
+		if len(filtered) == 0 {
+			if importJSON {
+				return outputCuratedSelectionJSON(nil, workloads, namespaces, selectionResult)
+			}
+			printCuratedSelectionSummary(selectionResult)
+			fmt.Println("No importable workloads after selection.")
+			return nil
+		}
+
+		workloads = filtered
+		proposal = SuggestFullProposal(nil, workloads, "")
+	}
+
 	if importJSON {
+		if selectionResult != nil {
+			return outputCuratedSelectionJSON(proposal, workloads, namespaces, selectionResult)
+		}
 		return outputProposalJSON(proposal, workloads, namespaces)
 	}
 
+	if selectionResult != nil {
+		printCuratedSelectionSummary(selectionResult)
+	}
 	printDiscovery(namespaces, workloads, proposal)
 
 	if importDryRun {
@@ -2042,6 +2309,81 @@ func buildImportEvidenceJSON() importEvidenceJSON {
 	return importEvidenceJSON{
 		Source: "cluster",
 	}
+}
+
+// printCuratedSelectionSummary prints a summary of curated resource selection for ASCII output.
+func printCuratedSelectionSummary(result *ImportSelectionResult) {
+	if result == nil || len(result.Selected) == 0 {
+		return
+	}
+
+	fmt.Println("┌─────────────────────────────────────────────────────────────┐")
+	fmt.Println("│ CURATED SELECTION                                           │")
+	fmt.Println("└─────────────────────────────────────────────────────────────┘")
+	fmt.Printf("  Selected: %d resource(s)\n", len(result.Selected))
+	for _, s := range result.Selected {
+		fmt.Printf("    • %s\n", s)
+	}
+	fmt.Println()
+
+	if len(result.Included) > 0 {
+		fmt.Printf("  %s Included (%d):\n", Green("✓"), len(result.Included))
+		for _, e := range result.Included {
+			fmt.Printf("    • %s/%s (%s)\n", e.Kind, e.Name, e.Namespace)
+		}
+	}
+
+	if len(result.Missing) > 0 {
+		fmt.Printf("  %s Missing (%d):\n", Red("✗"), len(result.Missing))
+		for _, e := range result.Missing {
+			fmt.Printf("    • %s/%s - %s\n", e.Kind, e.Name, e.Reason)
+		}
+	}
+
+	if len(result.Unsupported) > 0 {
+		fmt.Printf("  %s Unsupported (%d):\n", Yellow("!"), len(result.Unsupported))
+		for _, e := range result.Unsupported {
+			fmt.Printf("    • %s/%s (%s) - %s\n", e.Kind, e.Name, e.Namespace, e.Reason)
+		}
+	}
+
+	if len(result.Skipped) > 0 {
+		fmt.Printf("  %s Skipped (%d): not selected\n", Dim("○"), len(result.Skipped))
+	}
+
+	fmt.Println()
+}
+
+// outputCuratedSelectionJSON outputs the import proposal with selection result as JSON.
+func outputCuratedSelectionJSON(proposal *FullProposal, workloads []WorkloadInfo, namespaces []string, selection *ImportSelectionResult) error {
+	wJSON := make([]WorkloadJSON, 0, len(workloads))
+	for _, w := range workloads {
+		wJSON = append(wJSON, WorkloadJSON{
+			Kind:              w.Kind,
+			Namespace:         w.Namespace,
+			Name:              w.Name,
+			Owner:             w.Owner,
+			Connected:         w.UnitSlug != "",
+			UnitSlug:          w.UnitSlug,
+			Ready:             w.Ready,
+			Replicas:          w.Replicas,
+			KustomizationPath: w.KustomizationPath,
+			ApplicationPath:   w.ApplicationPath,
+			Labels:            w.Labels,
+		})
+	}
+
+	result := map[string]interface{}{
+		"namespaces": namespaces,
+		"workloads":  wJSON,
+		"proposal":   proposal,
+		"evidence":   buildImportEvidenceJSON(),
+		"selection":  selection,
+	}
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(result)
 }
 
 // createUnitWithConfig creates a unit with initial configuration from stdin
