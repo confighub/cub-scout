@@ -12,7 +12,7 @@
 1. LIVE resource inventory
 2. ownership and lineage
 3. health and risk signals
-4. trace and explain flows
+4. trace and explain surfaces
 5. JSON/MCP-friendly outputs
 
 ConfigHub already adds connected context that a single cluster cannot answer alone:
@@ -41,7 +41,7 @@ We need a product-level AI gateway that can unify read paths and governed action
 
 We should build a **separable AI ops gateway core, with MCP as one transport**.
 
-That core should expose **shared operational flows**, not product silos.
+That core should expose a **shared capability model**, not product silos.
 
 So the AI interface should not ask:
 
@@ -49,7 +49,7 @@ So the AI interface should not ask:
 2. "Am I talking to ConfigHub?"
 3. "Am I talking to the Flux plugin?"
 
-Instead it should ask for flows such as:
+Instead it should ask for capability types and staged workflows such as:
 
 1. resource context
 2. scope summary
@@ -60,7 +60,7 @@ Instead it should ask for flows such as:
 7. governed execution
 8. handoff/context pack
 
-Those flows are then enriched by plugins and providers behind the scenes.
+Those capabilities and workflows are then enriched by plugins and providers behind the scenes.
 
 ## 3. Product Principles
 
@@ -104,7 +104,7 @@ Implications:
 1. the AI gateway is a front door and routing layer, not the authority layer
 2. in connected mode, ConfigHub is where governed configuration becomes authoritative, queryable, and inspectable
 3. pluginization into `cub` should make front doors easier to compose, not blur the authority boundary
-4. extension plugins should enrich shared flows without creating competing sources of truth
+4. extension plugins should enrich shared capability types without creating competing sources of truth
 
 ### Trust Principle: no success claim without verification evidence
 
@@ -117,11 +117,11 @@ This means:
 3. AI-facing summaries should distinguish observed fact, connected state, and inference
 4. the product should avoid implying trustworthy apply or status semantics where verification evidence is weak
 
-### Extensibility Principle: extension plugins enrich shared flows
+### Extensibility Principle: extension plugins enrich shared capability types
 
 Extension plugins must not create isolated AI experiences.
 
-They should contribute to shared flows by registering:
+They should contribute to shared capability types by registering:
 
 1. evidence enrichers
 2. trace and lineage resolvers
@@ -150,7 +150,7 @@ Therefore:
 2. keep `cub-scout` aligned with its explorer role
 3. make future migration to `cub` plugin hosting straightforward
 4. allow MCP, CLI, and TUI to share one gateway core
-5. ensure extension plugins enrich shared flows instead of fragmenting them
+5. ensure extension plugins enrich shared capability types instead of fragmenting them
 
 ### Secondary Goals
 
@@ -194,11 +194,26 @@ Needs to:
 
 ## 7. Proposed Product Model
 
-### 7.1 Shared Flows
+### 7.1 Shared Capability Types
 
-The AI gateway should expose product-level flows such as:
+The AI gateway should expose product-level capability types such as:
 
-Explorer-aligned shared flows:
+Shared capability types are best understood as cross-surface capability names.
+
+They are not meant to force an immediate new user-facing command layer.
+
+They are a way to say:
+
+1. "this is the same underlying job" across AI, CLI, TUI, MCP, and future plugin hosts
+2. "these providers contribute evidence to the same capability" across LIVE, connected ConfigHub context, and extension-specific enrichers
+
+Near-term rule:
+
+1. shared capability types are architecture vocabulary first
+2. current commands remain the real user-facing contract
+3. `#352` does not require a full shared-capability extraction to ship
+
+Explorer-aligned shared capability types:
 
 1. `observe.resource_context`
 2. `observe.scope_summary`
@@ -212,20 +227,20 @@ Explorer-aligned shared flows:
 10. `handoff.investigation_card`
 11. `capabilities.list`
 
-Optional governed or delegated flows:
+Optional governed or delegated workflow capabilities:
 
 1. `action.execute_governed`
 
 These are example names, not a final API contract, but the principle is fixed:
 
-1. flows are user-meaningful
-2. flows can be enriched by multiple providers
-3. flows stay stable even if the underlying plugin mix changes
+1. capability names are user-meaningful
+2. capability types can be enriched by multiple providers
+3. capability types stay stable even if the underlying plugin mix changes
 
 Important boundary:
 
-1. inclusion in the gateway flow model does not imply `cub-scout` ownership
-2. `cub-scout` should focus on observe, explain, compare, preview, and handoff flows
+1. inclusion in the gateway capability model does not imply `cub-scout` ownership
+2. `cub-scout` should focus on observe, explain, compare, preview, and handoff capability types
 3. governed execution, if present, should normally be hosted by connected/provider-owned plugins under `cub` or equivalent hosts
 4. `#352` should not depend on governed execution work
 
@@ -354,7 +369,7 @@ The system should be structured as:
 
 The core is transport-agnostic and owns:
 
-1. request routing by shared flow
+1. request routing by shared capability type
 2. provider composition
 3. capability discovery
 4. provenance and confidence labeling
@@ -383,7 +398,7 @@ The adapter layer should stay thin.
 
 ### 8.4 Provider / Plugin Model
 
-Providers contribute to shared flows.
+Providers contribute evidence to shared capability types.
 
 Provider classes include:
 
@@ -419,7 +434,7 @@ The gateway core should operate on normalized objects such as:
 11. provenance descriptors
 12. confidence descriptors
 
-Every shared flow response should be explainable in terms of these normalized objects.
+Every shared capability response should be explainable in terms of these normalized objects.
 
 ## 10. UX Requirements
 
@@ -480,7 +495,12 @@ Rules:
 3. `paired` mode should optimize for human-plus-assistant workflows where the operator may read the output and then hand it to an AI tool
 4. JSON and MCP outputs should preserve the same schema and evidence model regardless of presentation mode
 5. text and markdown outputs may vary in headings, narrative framing, and follow-up hints
-6. invocation context and presentation style should be recorded separately in logs and audit trails
+6. presentation-mode changes must remain narrative-only and inherit the existing `ASCII = f(JSON) + g` semantic contract
+7. presentation mode must be opt-in and initially limited to a small set of read-only commands such as `doctor` and `explain`
+8. presentation mode must pass the existing leak-test standard from `docs/semantic-contract.md`
+9. headings, ordering, and framing must not introduce machine-relevant meaning absent from JSON
+10. if a presentation change implies machine-relevant behavior, that meaning must move into JSON rather than stay implicit in text
+11. invocation context and presentation style should be recorded separately in logs and audit trails
 
 ## 11. Packaging and Ownership Model
 
@@ -511,7 +531,7 @@ Target direction:
 1. `cub-scout` owns exploration and evidence normalization in its scope
 2. ConfigHub owns configuration authority, lifecycle state, and governance in its scope
 3. extension plugins own enrichment for their domains
-4. the gateway core owns shared flow composition and transport-independent orchestration
+4. the gateway core owns shared capability composition and transport-independent orchestration
 5. governed execution flows, if exposed, should be provider-owned or host-owned rather than assumed to belong to `cub-scout`
 
 ## 12. Functional Requirements
@@ -520,7 +540,7 @@ Target direction:
 
 The gateway must report:
 
-1. available flows
+1. available capability types and staged workflow capabilities
 2. required mode
 3. contributing providers
 4. whether execution is possible
@@ -529,7 +549,7 @@ The gateway must report:
 
 ### 12.2 Provider Composition
 
-For a given flow, the gateway must be able to:
+For a given capability request, the gateway must be able to:
 
 1. query one or more providers
 2. merge their evidence deterministically
@@ -538,7 +558,7 @@ For a given flow, the gateway must be able to:
 
 ### 12.3 Deterministic Read Paths
 
-Read flows should preserve `cub-scout` principles:
+Read-oriented capability types should preserve `cub-scout` principles:
 
 1. deterministic ordering where feasible
 2. explicit provenance
@@ -547,7 +567,7 @@ Read flows should preserve `cub-scout` principles:
 
 ### 12.4 Safe Action Paths
 
-Action-oriented flows must:
+Action-oriented capability types and workflows must:
 
 1. expose action previews
 2. prefer dry-run first
@@ -577,28 +597,36 @@ This metadata should not alter the underlying evidence model, but it is useful f
 
 ### 12.6 Current Surface Mapping
 
-To keep this architecture grounded in the current product, the first tracked issues should map today's commands to the proposed shared flows.
+To keep this architecture grounded in the current product, the first tracked issues should map today's commands to the proposed shared capability types.
+
+This mapping is mainly here to show cross-surface equivalence, not to rename today's commands.
+
+For simplicity, the main body keeps only the two current tracked anchors for `#352`.
+
+Broader cross-surface mappings can evolve later without making the first slice feel like a full normalization program.
+
+In other words:
+
+1. `doctor` is still `doctor`
+2. `explain` is still `explain`
+3. the shared capability name is the architecture label for the underlying capability those commands represent
 
 This table is a migration anchor, not a claim that:
 
 1. every current command must survive unchanged forever
-2. every shared flow is permanently locked to one CLI surface
+2. every shared capability type is permanently locked to one CLI surface
 3. the long-term plugin architecture cannot introduce better host surfaces later
 
-| Current surface | Proposed shared flow(s) | Notes |
+| Current surface | Proposed shared capability type(s) | Notes |
 |-----------------|-------------------------|-------|
 | `doctor` | `observe.scope_summary` | Best current anchor for cluster or namespace summary; primary `#352` surface |
 | `explain` | `observe.resource_context` | Best current anchor for resource context; primary `#352` surface |
-| `trace` | `observe.resource_context` | Supplies ownership and lineage evidence into resource context |
-| `graph explain` | `observe.resource_context`, `handoff.investigation_card` | Supplies relationship and graph evidence |
-| `map activity` | `timeline.scope`, `timeline.resource` | Timeline-oriented read flow over Flux, Argo, Helm, and Events |
-| `history` | `timeline.resource` | Connected ChangeSet history for one resource |
-| `summary list` | `observe.scope_summary`, `timeline.scope` | Connected persisted summary snapshots and recent scope state |
-| `map actions` | `action.preview` | Read-only action/runbook preview, not execution |
-| `context-pack` | `handoff.context_pack` | Deterministic AI handoff/export surface |
-| `quickstart` | composed workflow over `observe.scope_summary` and `observe.resource_context` | Useful workflow shell, but not necessarily a first-class shared flow itself |
 
-## 13. Example Shared Flows
+## 13. Example Shared Capability Types
+
+The first tracked slice only depends on the first two examples below.
+
+The later examples illustrate where the capability model could grow if broader gateway work is pursued.
 
 ### 13.1 `observe.resource_context`
 
@@ -658,7 +686,7 @@ Connected-mode enrichments should be separable so they can move into `cub` plugi
 
 ### 14.3 Do Not Let Plugin-Specific Semantics Leak Into Top-Level UX
 
-Plugin details may appear as evidence or provider labels, but the user-facing flow model should remain stable.
+Plugin details may appear as evidence or provider labels, but the user-facing capability model should remain stable.
 
 ## 15. Rollout Plan
 
@@ -681,7 +709,7 @@ Initial scope:
 What `#352` is not:
 
 1. not a commitment to finish gateway extraction first
-2. not a commitment to finalize every shared flow name up front
+2. not a commitment to finalize every shared capability name up front
 3. not a commitment to solve auto-detection, routing, or plugin-host propagation in the first slice
 4. not a reason to expand `cub-scout` into a control plane
 
@@ -696,26 +724,12 @@ Initial tracked sequence:
 
 1. `#352` - explicit `human|ai|paired` presentation modes for read-only `doctor` and `explain`
 2. `#354` - invocation-context model (`requested_mode`, `detected_context`, `effective_mode`) kept separate from output style
-3. `#353` - shared-flow seam for `doctor` and `explain` aligned to `observe.scope_summary` and `observe.resource_context`
+3. `#353` - shared-capability seam for `doctor` and `explain` aligned to `observe.scope_summary` and `observe.resource_context`
 4. `#349` - richer deterministic next-step hints built on the same read-only, testable UX principles
 5. `#350` - connected ConfigHub URL suggestions as standard handoff behavior
 6. `#214` - broader MCP/gateway evolution, still constrained by the explorer/read-only boundary on the `cub-scout` side
 
-### Phase 0: Model and Extraction
-
-1. define normalized gateway domain objects
-2. extract a reusable gateway core package
-3. define provider interfaces and shared flow contracts
-
-### Phase 1: Read-Only Gateway
-
-1. implement `observe.resource_context`
-2. implement `observe.scope_summary`
-3. implement `timeline.resource`
-4. add capability discovery
-5. ship MCP as adapter over the core
-
-### Phase 1A: Explicit Presentation Modes
+### Phase 0: Presentation-Mode MVP
 
 1. define `human`, `ai`, and `paired` presentation modes
 2. add `requested_mode`, `detected_context`, and `effective_mode` concepts to the gateway model
@@ -723,27 +737,41 @@ Initial tracked sequence:
 4. add a minimal CLI flag such as `--presentation` on a small number of read-only commands first
 5. defer auto-detection, prompting, and richer propagation to later phases
 
-### Phase 2: Connected Enrichment
+### Phase 1: Model and Extraction
+
+1. define normalized gateway domain objects
+2. extract a reusable gateway core package
+3. define provider interfaces and shared capability contracts
+
+### Phase 2: Read-Only Gateway
+
+1. implement `observe.resource_context`
+2. implement `observe.scope_summary`
+3. implement `timeline.resource`
+4. add capability discovery
+5. ship MCP as adapter over the core
+
+### Phase 3: Connected Enrichment
 
 1. add ConfigHub provider pack for connected read flows
-2. merge LIVE and connected context in shared flow responses
+2. merge LIVE and connected context in shared capability responses
 3. ensure graceful standalone degradation
 
-### Phase 3: Extension Enrichment
+### Phase 4: Extension Enrichment
 
 1. register Flux enrichers
 2. register Argo CD enrichers
 3. register Helm enrichers
 4. register Crossplane, kro, Kubara, and other enrichers
 
-### Phase 4: Safe Action Flows
+### Phase 5: Safe Action Workflows
 
 1. add `action.preview`
 2. add `action.dry_run`
 3. add governed execution handoff and receipts where ownership belongs outside `cub-scout`
 4. prefer connected/provider-hosted implementations, for example `cub` plugins or ConfigHub-backed hosts, over permanent `cub-scout` ownership
 
-### Phase 5: Host Flexibility
+### Phase 6: Host Flexibility
 
 1. enable the same gateway core to be hosted from `cub`
 2. reduce assumptions that MCP must be served from `cub-scout`
@@ -777,7 +805,7 @@ Implication for this PRD:
 
 1. domain-specific providers should know the resource model, documentation, and guardrails of their systems
 2. generic Kubernetes access alone is not enough for high-quality AI guidance in GitOps workflows
-3. extension plugins should enrich shared flows through domain knowledge, not just expose raw CRUD actions
+3. extension plugins should enrich shared capability types through domain knowledge, not just expose raw CRUD actions
 
 ### 17.2 Skills and Progressive Discovery Should Sit On Top of MCP
 
@@ -788,7 +816,7 @@ Implication for this PRD:
 1. MCP remains useful and stable
 2. skills, routing, and progressive capability discovery should sit above MCP
 3. the gateway should avoid creating a giant undifferentiated tool buffet
-4. stable shared flows are preferable to exposing every plugin capability as a first-class top-level concept
+4. stable shared capability types are preferable to exposing every plugin capability as a first-class top-level concept
 
 ### 17.3 Read-Only by Default and Delegated Authority Matter
 
@@ -811,9 +839,9 @@ The Flux MCP talk emphasized context anchoring, strong system guidance, and shar
 
 Implication for this PRD:
 
-1. the gateway should expose shared investigation objects and normalized flow inputs
+1. the gateway should expose shared investigation objects and normalized capability inputs
 2. provider composition should prefer explicit provenance over implicit tool wandering
-3. stable flow contracts are better than freeform prompt-only integration
+3. stable capability contracts are better than freeform prompt-only integration
 
 ### 17.5 AI Helps GitOps Adoption When It Reduces Friction
 
@@ -827,7 +855,7 @@ Implication for this PRD:
 
 ## 18. Open Questions
 
-1. which shared flow names should become the first stable contract surface?
+1. which shared capability names should become the first stable contract surface?
 2. which package should host the gateway core if the long-term owner is `cub` rather than `cub-scout`?
 3. how much provider-specific metadata should be surfaced before it starts leaking implementation details into UX?
 4. which governed action stages should remain outside `cub-scout` entirely even when preview flows are local?
@@ -889,16 +917,16 @@ Suggested package/interface shape:
 Each provider should implement a shared interface such as:
 
 ```go
-type FlowProvider interface {
+type CapabilityProvider interface {
     Name() string
     Capabilities(ctx context.Context) []Capability
-    Contribute(ctx context.Context, req FlowRequest) ([]Contribution, error)
+    Contribute(ctx context.Context, req CapabilityRequest) ([]Contribution, error)
 }
 ```
 
 Design note:
 
-1. providers contribute to shared flows
+1. providers contribute to shared capability types
 2. providers do not define the top-level user journey
 
 Supporting external materials:
@@ -921,17 +949,17 @@ Why it matters:
 
 Suggested package/interface shape:
 
-1. `pkg/aigateway/flows`
+1. `pkg/aigateway/capabilities`
 2. `pkg/aigateway/routing`
 3. `pkg/aigateway/instructions`
 4. `pkg/aigateway/transports/mcp`
 
 Suggested responsibility split:
 
-1. `flows` defines stable user-facing operations such as `observe.resource_context`
+1. `capabilities` defines stable user-facing capability types such as `observe.resource_context`
 2. `routing` selects contributing providers based on mode, scope, and installed plugins
 3. `instructions` emits concise server instructions and prompt fragments for workflow guidance
-4. `transports/mcp` exposes the selected flows over MCP without leaking the full internal provider graph
+4. `transports/mcp` exposes the selected capability types over MCP without leaking the full internal provider graph
 
 Supporting external materials:
 
@@ -1068,7 +1096,7 @@ Suggested top-level composition:
 ```go
 type Gateway struct {
     Registry ProviderRegistry
-    Router   FlowRouter
+    Router   CapabilityRouter
     Policy   ActionPolicy
 }
 ```
@@ -1095,7 +1123,7 @@ Why it matters:
 
 1. not everything should be flattened into tools
 2. prompts and resources can help preserve clarity and reduce context waste
-3. the gateway can expose stable context objects as resources while keeping operational flows as tools
+3. the gateway can expose stable context objects as resources while keeping capability operations as tools
 
 Suggested package/interface shape:
 
