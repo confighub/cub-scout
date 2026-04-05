@@ -678,7 +678,7 @@ The tracked design reference for this milestone is `docs/reference/ai-ops-gatewa
 
 ## v1.9 — Conformance & Secrets Evidence
 
-**Status:** In Progress
+**Status:** Released (2026-04-05)
 **Theme:** *Verifiable import workflows and secret dependency visibility*
 
 ### Conformance Workflows (#342) — Delivered
@@ -689,11 +689,11 @@ Bidirectional snapshot and conformance workflow enables verifiable import propos
 * `import --resource` — curated import selection with include/exclude filtering
 * Enables operators to verify import proposals match expectations before execution
 
-### Secret Evidence (#328) — Slices 1, 2 & 3 Delivered
+### Secret Evidence (#328) — Complete
 
 Secret evidence provides visibility into secret dependencies without exposing secret data:
 
-**Shipped (Slice 1):**
+**Slice 1 — CLI Trace:**
 * Secret evidence in `trace` for workloads (Deployment, StatefulSet, DaemonSet, Pod)
 * Secret evidence in `trace` for Flux sources (GitRepository, HelmRepository, Bucket)
 * Secret evidence in `trace` for Flux deployers (Kustomization, HelmRelease)
@@ -701,20 +701,24 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * RBAC-aware error detection (Forbidden → unreadable, NotFound → missing)
 * Safe metadata only — `.data` and `.stringData` are never read or exposed
 
-**Shipped (Slice 2):**
+**Slice 2 — Crossplane:**
 * Crossplane ProviderConfig secret evidence with cross-namespace resolution
 * Dynamic CRD discovery for any `*.crossplane.io` / `*.upbound.io` provider
 * Degraded trace output for Crossplane resources (single-node observed chain)
 
-**Shipped (Slice 3):**
+**Slice 3 — Map Issues:**
 * Secret issues in `map issues` output — missing/unreadable secrets across scope
 * Covers workloads, Flux deployers, and Flux sources
 * Deduplication for repeated references to the same secret
 * Actionable output format with resource, namespace, secret name, and ref type
 
-**Remaining (not shipped):**
-* TUI integration (secret panel in trace view)
-* v0.14 JSON converter path (low priority)
+**Slice 4 — TUI Integration:**
+* Secret panel in TUI trace view
+* Styled summary with status breakdown (present/missing/unreadable)
+* Individual secret display with status indicators and reference types
+
+**Future (low priority):**
+* v0.14 JSON converter path for secret evidence
 
 ---
 
@@ -737,7 +741,7 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * v1.3.0 released (2026-03-04) — determinism hardening + release hygiene
 * v1.7.0 released (2026-03-07) — platform composition (Crossplane + kro), meaning-first grouping experiments, extensibility/fleet slices
 * v1.8.0 released (2026-04-05) — AI gateway foundations, presentation modes, deterministic hints
-* v1.9.0 in progress — conformance workflows (#342 delivered), secret evidence (#328 first slice delivered)
+* v1.9.0 released (2026-04-05) — conformance workflows (#342), secret evidence (#328 complete)
 
 ### Recent Milestones
 
@@ -749,7 +753,7 @@ Secret evidence provides visibility into secret dependencies without exposing se
 | **v1.6** | Connected Value | WET/LIVE/DRY comparison, change history, impact preview, fleet outliers, audit trail |
 | **v1.7** | Platform Scale | kro, summary storage, Slack digests, custom ownership detectors, webhook streaming, meaning-first grouping experiments |
 | **v1.8** | AI Gateway Foundations | Presentation modes (`--presentation`), invocation-context model, shared-flow seams, deterministic hints |
-| **v1.9** | Conformance & Secrets | Conformance reporting (#342), curated import (#342), secret evidence in trace (#328) |
+| **v1.9** | Conformance & Secrets | Conformance reporting (#342), curated import (#342), secret evidence (#328 complete: CLI + Crossplane + map issues + TUI) |
 
 ### Strategic Positioning
 
