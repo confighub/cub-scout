@@ -1,7 +1,7 @@
 # AI Ops Gateway PRD (Proposal)
 
-**Status:** Tracked design reference  
-**Date:** 2026-04-05  
+**Status:** Tracked design reference
+**Date:** 2026-04-05
 **Audience:** Product, platform, and engineering teams shaping AI, MCP, and plugin architecture across `cub`, `cub-scout`, ConfigHub, and GitOps extensions
 **Tracking:** `docs/roadmap.md`, issues `#352`, `#353`, `#354`, `#349`, `#350`, `#214`
 
