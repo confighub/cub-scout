@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-04-02
+Last updated: 2026-04-05
 
 ## Current repo state
 
@@ -35,12 +35,41 @@ Key deliverables now in place:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
+| #349 | Improve next-step hints while keeping them deterministic and testable | Highest-value near-term CLI slice. Preserve the current hint quality and make it stronger, deeper, and more connected to the ConfigHub world. |
+| #350 | When connected, suggest relevant ConfigHub URLs as standard behavior | Natural follow-on to #349. Deterministic connected URL suggestions when the needed IDs/slugs are actually available. |
+| #351 | Make CLI outputs more colorful (not just TUI) | Later polish slice. Improve scanability without breaking `NO_COLOR` or ASCII/test contracts. |
+| #352 | Detect AI usage and frame responses accordingly | Needs reframing before coding. Prefer explicit, testable modes over brittle auto-detection. |
 | #342 | Bidirectional snapshot and conformance workflow | Future product direction; out of scope for the completed March connected/docs slice |
 | #328 | Secrets in cub-scout | Separate feature track; out of scope for the completed March connected/docs slice |
 
-No immediate follow-on from the March connected/docs cluster remains open. Any
-next slice should now be chosen intentionally from `#342` or `#328`, rather
-than as unfinished cleanup from that earlier work.
+No immediate follow-on from the March connected/docs cluster remains open. The
+next slice should now be chosen intentionally from the current open set, with
+`#349` the best default starting point and `#350` the strongest follow-on.
+
+Important: the current deterministic hints are already good and should not be
+diminished. The goal of `#349` is to make them stronger, deeper, and better
+connected to the rest of the ConfigHub world, not noisier, more generic, or
+less testable.
+
+## Suggested next milestones
+
+1. Milestone 1: strengthen deterministic `TRY NEXT` hints (`#349`)
+   Keep the existing hint behavior as the floor. Add rationale, better ranking,
+   and more context-aware choices for `doctor`, `map list`, and `explain`,
+   while preserving deterministic output and current ASCII/JSON contracts.
+2. Milestone 2: connected ConfigHub URL suggestions (`#350`)
+   Build on the stronger hint layer with deterministic GUI handoff suggestions
+   when connected and when the necessary IDs/slugs are available. This should
+   make the CLI/GUI bridge a product behavior instead of a demo-only trick.
+3. Milestone 3: CLI color polish (`#351`)
+   Improve scanability in normal CLI output without regressing `NO_COLOR`,
+   accessibility, or golden-test stability.
+4. Milestone 4: reframe AI-mode output explicitly (`#352`)
+   If pursued, make this an explicit and testable mode choice rather than
+   brittle environment auto-detection.
+5. Milestone 5: return to larger feature tracks (`#328`, `#342`)
+   Secrets and bidirectional conformance remain important, but they are not the
+   best next incremental slice after the March cluster closure.
 
 ## External publication boundary
 
@@ -107,6 +136,12 @@ For the core connected demos, "AI-first" means:
 - `docs/howto/using-cub-scout-from-ai-tool.md`
 - `docs/reference/commands.md`
 - `docs/reference/json-contracts.md`
+
+### Likely file hotspots for the next slice
+
+- `cmd/cub-scout/navigation_hints.go`
+- `cmd/cub-scout/navigation_hints_test.go`
+- `pkg/hub/config.go`
 
 ## Proof expectations
 
