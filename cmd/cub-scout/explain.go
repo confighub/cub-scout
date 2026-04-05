@@ -42,15 +42,16 @@ func init() {
 
 // ExplainSummary is the canonical model for explain output.
 type ExplainSummary struct {
-	Resource    string   `json:"resource"`
-	Namespace   string   `json:"namespace"`
-	Owner       string   `json:"owner"`
-	Source      string   `json:"source"`
-	DeployedVia string   `json:"deployedVia"`
-	Health      string   `json:"health"`
-	Risks       string   `json:"risks"`
-	Drift       string   `json:"drift"`
-	Notes       []string `json:"notes,omitempty"`
+	Resource     string   `json:"resource"`
+	Namespace    string   `json:"namespace"`
+	Owner        string   `json:"owner"`
+	Source       string   `json:"source"`
+	DeployedVia  string   `json:"deployedVia"`
+	Health       string   `json:"health"`
+	Risks        string   `json:"risks"`
+	Drift        string   `json:"drift"`
+	Notes        []string `json:"notes,omitempty"`
+	ConfigHubURL string   `json:"confighubUrl,omitempty"` // URL to view/manage in ConfigHub GUI (only when connected)
 }
 
 func runExplain(cmd *cobra.Command, args []string) error {
@@ -243,6 +244,10 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 		} else {
 			summary.Drift = "None detected"
 		}
+		// Include ConfigHub URL if available (for GUI handoff)
+		if result.ConfigHub.RemediationURL != "" {
+			summary.ConfigHubURL = result.ConfigHub.RemediationURL
+		}
 	}
 
 	if result.Error != "" {
@@ -372,6 +377,10 @@ func renderExplainText(summary ExplainSummary) string {
 	if len(hints) > 0 {
 		b.WriteString(renderTryNextSection(hints))
 	}
+	// Add ConfigHub GUI suggestion if available
+	if chHint := explainConfigHubHint(summary); chHint != nil {
+		b.WriteString(renderConfigHubSection(chHint))
+	}
 	return b.String()
 }
 
@@ -393,5 +402,10 @@ func renderExplainMarkdown(summary ExplainSummary) string {
 		}
 	}
 	b.WriteString(renderTryNextMarkdown(explainTryNextHints(summary)))
+	// Add ConfigHub link if available
+	if summary.ConfigHubURL != "" {
+		b.WriteString("\n### Open in ConfigHub\n\n")
+		b.WriteString(fmt.Sprintf("- [Review this unit in ConfigHub](%s)\n", summary.ConfigHubURL))
+	}
 	return b.String()
 }

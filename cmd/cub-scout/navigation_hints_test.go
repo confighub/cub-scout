@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -302,6 +303,177 @@ func TestHintPriority_UnknownHealthBoostsTracePriority(t *testing.T) {
 
 	if priorityUnknown <= priorityHealthy {
 		t.Fatalf("expected unknown health to boost trace priority: healthy=%d, unknown=%d", priorityHealthy, priorityUnknown)
+	}
+}
+
+// Tests for ConfigHub URL hints (#350)
+
+func TestExplainConfigHubHint_ReturnsHintWhenURLPresent(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:     "Deployment/api",
+		Namespace:    "prod",
+		Owner:        "Flux",
+		ConfigHubURL: "https://confighub.com/spaces/sp-123/units/payments-api",
+	}
+
+	hint := explainConfigHubHint(summary)
+
+	if hint == nil {
+		t.Fatal("expected ConfigHub hint when URL is present")
+	}
+	if hint.ConfigHubURL != summary.ConfigHubURL {
+		t.Fatalf("expected URL %q, got %q", summary.ConfigHubURL, hint.ConfigHubURL)
+	}
+	if hint.Rationale == "" {
+		t.Fatal("expected rationale to explain why GUI helps")
+	}
+}
+
+func TestExplainConfigHubHint_ReturnsNilWhenNoURL(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:  "Deployment/api",
+		Namespace: "prod",
+		Owner:     "Flux",
+		// No ConfigHubURL
+	}
+
+	hint := explainConfigHubHint(summary)
+
+	if hint != nil {
+		t.Fatalf("expected no ConfigHub hint when URL is absent, got: %+v", hint)
+	}
+}
+
+func TestRenderConfigHubSection_RendersWhenHintPresent(t *testing.T) {
+	hint := &Hint{
+		ConfigHubURL: "https://confighub.com/spaces/sp-123/units/my-unit",
+		Rationale:    "Review this unit for audit trail",
+	}
+
+	out := renderConfigHubSection(hint)
+
+	required := []string{
+		"OPEN IN CONFIGHUB:",
+		"Review this unit",
+		"https://confighub.com/spaces/sp-123/units/my-unit",
+	}
+	for _, s := range required {
+		if !strings.Contains(out, s) {
+			t.Fatalf("expected %q in output:\n%s", s, out)
+		}
+	}
+}
+
+func TestRenderConfigHubSection_EmptyWhenNoHint(t *testing.T) {
+	out := renderConfigHubSection(nil)
+	if out != "" {
+		t.Fatalf("expected empty output for nil hint, got: %q", out)
+	}
+
+	out = renderConfigHubSection(&Hint{ConfigHubURL: ""})
+	if out != "" {
+		t.Fatalf("expected empty output for empty URL, got: %q", out)
+	}
+}
+
+func TestRenderExplainText_IncludesConfigHubSection(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:     "Deployment/payments-api",
+		Namespace:    "prod",
+		Owner:        "Flux",
+		Source:       "https://github.com/acme/config",
+		DeployedVia:  "GitRepository -> Kustomization -> Deployment",
+		Health:       "Healthy",
+		Risks:        "0 findings",
+		Drift:        "None",
+		ConfigHubURL: "https://confighub.com/spaces/sp-abc/units/payments",
+	}
+
+	out := renderExplainText(summary)
+
+	// Should have TRY NEXT section
+	if !strings.Contains(out, "TRY NEXT:") {
+		t.Fatalf("expected TRY NEXT section in output:\n%s", out)
+	}
+	// Should have OPEN IN CONFIGHUB section
+	if !strings.Contains(out, "OPEN IN CONFIGHUB:") {
+		t.Fatalf("expected OPEN IN CONFIGHUB section in output:\n%s", out)
+	}
+	if !strings.Contains(out, "https://confighub.com/spaces/sp-abc/units/payments") {
+		t.Fatalf("expected ConfigHub URL in output:\n%s", out)
+	}
+}
+
+func TestRenderExplainText_NoConfigHubSectionWithoutURL(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/payments-api",
+		Namespace:   "prod",
+		Owner:       "Flux",
+		Source:      "https://github.com/acme/config",
+		DeployedVia: "GitRepository -> Kustomization -> Deployment",
+		Health:      "Healthy",
+		Risks:       "0 findings",
+		Drift:       "None",
+		// No ConfigHubURL
+	}
+
+	out := renderExplainText(summary)
+
+	// Should have TRY NEXT section
+	if !strings.Contains(out, "TRY NEXT:") {
+		t.Fatalf("expected TRY NEXT section in output:\n%s", out)
+	}
+	// Should NOT have OPEN IN CONFIGHUB section
+	if strings.Contains(out, "OPEN IN CONFIGHUB:") {
+		t.Fatalf("did not expect OPEN IN CONFIGHUB section when no URL:\n%s", out)
+	}
+}
+
+func TestExplainSummary_JSONOmitsEmptyConfigHubURL(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/api",
+		Namespace:   "prod",
+		Owner:       "Flux",
+		Source:      "https://github.com/example",
+		DeployedVia: "GitRepository -> Deployment",
+		Health:      "Healthy",
+		Risks:       "0 findings",
+		Drift:       "None",
+		// No ConfigHubURL - should be omitted from JSON
+	}
+
+	data, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	if strings.Contains(jsonStr, "confighubUrl") {
+		t.Fatalf("expected confighubUrl to be omitted when empty, got: %s", jsonStr)
+	}
+}
+
+func TestExplainSummary_JSONIncludesConfigHubURL(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:     "Deployment/api",
+		Namespace:    "prod",
+		Owner:        "Flux",
+		Source:       "https://github.com/example",
+		DeployedVia:  "GitRepository -> Deployment",
+		Health:       "Healthy",
+		Risks:        "0 findings",
+		Drift:        "None",
+		ConfigHubURL: "https://confighub.com/spaces/sp-123/units/my-unit",
+	}
+
+	data, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	if !strings.Contains(jsonStr, `"confighubUrl":"https://confighub.com/spaces/sp-123/units/my-unit"`) {
+		t.Fatalf("expected confighubUrl in JSON output, got: %s", jsonStr)
 	}
 }
 

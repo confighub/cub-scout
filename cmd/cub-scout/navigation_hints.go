@@ -10,9 +10,10 @@ import (
 // Priority is used for ranking: higher values are more urgent/relevant.
 // Rationale explains why this hint is suggested (the "so what").
 type Hint struct {
-	Command   string // The copyable cub-scout command
-	Rationale string // Why this hint is suggested
-	Priority  int    // Higher = more urgent; used for sorting
+	Command      string // The copyable cub-scout command
+	Rationale    string // Why this hint is suggested
+	Priority     int    // Higher = more urgent; used for sorting
+	ConfigHubURL string // Optional: URL to open in ConfigHub GUI (only when connected with valid context)
 }
 
 // hintPriorityUrgent is for issues requiring immediate attention.
@@ -176,6 +177,20 @@ func explainTryNextHints(summary ExplainSummary) []string {
 	return hintsToStrings(hints)
 }
 
+// explainConfigHubHint returns a ConfigHub URL hint if available.
+// Returns nil if no ConfigHub URL is available for this resource.
+func explainConfigHubHint(summary ExplainSummary) *Hint {
+	url := strings.TrimSpace(summary.ConfigHubURL)
+	if url == "" {
+		return nil
+	}
+	return &Hint{
+		ConfigHubURL: url,
+		Rationale:    "Review this unit in ConfigHub for audit trail and policy management",
+		Priority:     hintPriorityNormal,
+	}
+}
+
 // explainHints generates structured hints for explain output.
 func explainHints(summary ExplainSummary) []Hint {
 	hints := make([]Hint, 0, 4)
@@ -242,6 +257,22 @@ func renderTryNextSection(hints []string) string {
 		b.WriteString(hint)
 		b.WriteString("\n")
 	}
+	return b.String()
+}
+
+// renderConfigHubSection renders a ConfigHub GUI URL suggestion.
+// This is separate from TRY NEXT (which is for CLI commands).
+func renderConfigHubSection(hint *Hint) string {
+	if hint == nil || hint.ConfigHubURL == "" {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("\nOPEN IN CONFIGHUB:\n")
+	b.WriteString("  ")
+	b.WriteString(hint.Rationale)
+	b.WriteString("\n  -> ")
+	b.WriteString(hint.ConfigHubURL)
+	b.WriteString("\n")
 	return b.String()
 }
 
