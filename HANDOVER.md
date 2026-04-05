@@ -40,9 +40,10 @@ Key deliverables now in place:
 - #342 bidirectional snapshot and conformance workflow (both slices)
   - Conformance reporting for import proposals
   - Curated import selection with include/exclude filtering
-- #328 secrets slices 1 & 2 (`2346598`, `a6b5128`)
+- #328 secrets slices 1, 2 & 3 (`2346598`, `a6b5128`, current)
   - Slice 1: Secret evidence in `trace` for workloads and Flux sources
   - Slice 2: Crossplane ProviderConfig with cross-namespace resolution
+  - Slice 3: Secret issues in `map issues` output
   - Dynamic CRD discovery for any *.crossplane.io / *.upbound.io provider
   - Status classification: present, missing, unreadable, unresolved
   - RBAC-aware error detection (Forbidden vs NotFound)
@@ -52,12 +53,13 @@ Key deliverables now in place:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #328 | Secrets in cub-scout | Two slices shipped (workloads + Flux + Crossplane); TUI/map remaining |
+| #328 | Secrets in cub-scout | Three slices shipped (trace + Crossplane + map issues); TUI remaining |
 
 Recent closures:
 - #342 — Bidirectional snapshot and conformance workflow: both slices shipped
 - #349, #350, #351, #352 — CLI polish cluster complete
 - #328 slice 2 — Crossplane ProviderConfig wiring with cross-namespace resolution
+- #328 slice 3 — Secret issues in `map issues` output
 
 Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
@@ -66,9 +68,8 @@ in that direction rather than flattening the current system.
 ## Suggested next milestones
 
 1. Milestone 1: complete #328 secrets track
-   Two slices shipped: workloads + Flux + Crossplane ProviderConfig with cross-namespace
-   resolution. Remaining: TUI integration (secret panel in trace view), `map` findings
-   integration for missing/unreadable secrets.
+   Three slices shipped: trace (workloads + Flux) + Crossplane ProviderConfig + map issues.
+   Remaining: TUI integration (secret panel in trace view).
 2. Milestone 2: expand presentation mode to other commands if needed
    The `--presentation` flag is currently on `doctor` and `explain` only.
    Expansion to other commands can be done incrementally as needed.

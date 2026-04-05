@@ -689,9 +689,9 @@ Bidirectional snapshot and conformance workflow enables verifiable import propos
 * `import --resource` — curated import selection with include/exclude filtering
 * Enables operators to verify import proposals match expectations before execution
 
-### Secret Evidence (#328) — Slices 1 & 2 Delivered
+### Secret Evidence (#328) — Slices 1, 2 & 3 Delivered
 
-Secret evidence in `trace` output provides visibility into secret dependencies without exposing secret data:
+Secret evidence provides visibility into secret dependencies without exposing secret data:
 
 **Shipped (Slice 1):**
 * Secret evidence in `trace` for workloads (Deployment, StatefulSet, DaemonSet, Pod)
@@ -706,9 +706,14 @@ Secret evidence in `trace` output provides visibility into secret dependencies w
 * Dynamic CRD discovery for any `*.crossplane.io` / `*.upbound.io` provider
 * Degraded trace output for Crossplane resources (single-node observed chain)
 
+**Shipped (Slice 3):**
+* Secret issues in `map issues` output — missing/unreadable secrets across scope
+* Covers workloads, Flux deployers, and Flux sources
+* Deduplication for repeated references to the same secret
+* Actionable output format with resource, namespace, secret name, and ref type
+
 **Remaining (not shipped):**
 * TUI integration (secret panel in trace view)
-* `map` findings integration for missing/unreadable secrets
 * v0.14 JSON converter path (low priority)
 
 ---

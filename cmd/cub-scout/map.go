@@ -1768,9 +1768,10 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 	// Resolve namespace filter
 	nsFilter := mapNamespace
 
-	// Track deployer vs workload issues separately
+	// Track deployer vs workload vs secret issues separately
 	deployerIssues := []string{}
 	workloadIssues := []string{}
+	secretIssues := []SecretIssue{}
 
 	// Check deployers (Flux Kustomizations, Flux HelmReleases, ArgoCD Applications)
 	type deployerCheck struct {
@@ -1793,19 +1794,51 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			continue
 		}
-		for _, item := range list.Items {
+		for idx := range list.Items {
+			item := &list.Items[idx]
 			if dc.isArgo {
-				if !isArgoAppHealthy(&item) {
-					status := getArgoStatus(&item)
+				if !isArgoAppHealthy(item) {
+					status := getArgoStatus(item)
 					deployerIssues = append(deployerIssues, fmt.Sprintf("✗ %s/%s in %s: %s",
 						dc.kind, item.GetName(), item.GetNamespace(), status))
 				}
 			} else {
-				if !isResourceReady(&item) {
-					reason := getConditionReason(&item)
+				if !isResourceReady(item) {
+					reason := getConditionReason(item)
 					deployerIssues = append(deployerIssues, fmt.Sprintf("✗ %s/%s in %s: %s",
 						dc.kind, item.GetName(), item.GetNamespace(), reason))
 				}
+				// Collect secret issues for Flux deployers
+				if issues := collectSecretIssuesForResource(ctx, dynClient, item); len(issues) > 0 {
+					secretIssues = append(secretIssues, issues...)
+				}
+			}
+		}
+	}
+
+	// Also check Flux sources for secret issues (GitRepository, HelmRepository, Bucket)
+	sourceGVRs := []struct {
+		gvr  schema.GroupVersionResource
+		kind string
+	}{
+		{schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}, "GitRepository"},
+		{schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}, "HelmRepository"},
+		{schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "buckets"}, "Bucket"},
+	}
+	for _, sg := range sourceGVRs {
+		rc := dynClient.Resource(sg.gvr)
+		listFn := rc.List
+		if nsFilter != "" {
+			listFn = rc.Namespace(nsFilter).List
+		}
+		list, err := listFn(ctx, v1.ListOptions{})
+		if err != nil {
+			continue
+		}
+		for idx := range list.Items {
+			item := &list.Items[idx]
+			if issues := collectSecretIssuesForResource(ctx, dynClient, item); len(issues) > 0 {
+				secretIssues = append(secretIssues, issues...)
 			}
 		}
 	}
@@ -1820,9 +1853,13 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 			workloadIssues = append(workloadIssues, fmt.Sprintf("✗ %s/%s in %s: %d/%d ready",
 				workload.GetKind(), workload.GetName(), ns, available, desired))
 		}
+		// Collect secret issues for workloads
+		if issues := collectSecretIssuesForResource(ctx, dynClient, workload); len(issues) > 0 {
+			secretIssues = append(secretIssues, issues...)
+		}
 	})
 
-	totalIssues := len(deployerIssues) + len(workloadIssues)
+	totalIssues := len(deployerIssues) + len(workloadIssues) + len(secretIssues)
 
 	if totalIssues == 0 {
 		fmt.Println("✓ No issues found")
@@ -1833,7 +1870,7 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	fmt.Println("RESOURCES WITH ISSUES")
 	fmt.Println("════════════════════════════════════════════════════════════════════")
-	fmt.Println("Deployers and workloads with conditions != Ready.")
+	fmt.Println("Deployers, workloads, and secret references with problems.")
 	fmt.Println()
 
 	// Print deployer issues
@@ -1854,8 +1891,18 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 	}
 
+	// Print secret issues
+	if len(secretIssues) > 0 {
+		fmt.Printf("SECRETS (%d issues)\n", len(secretIssues))
+		for _, issue := range secretIssues {
+			fmt.Println(formatSecretIssue(issue))
+		}
+		fmt.Println()
+	}
+
 	// Summary
-	fmt.Printf("%d total issues (%d deployers, %d workloads)\n", totalIssues, len(deployerIssues), len(workloadIssues))
+	fmt.Printf("%d total issues (%d deployers, %d workloads, %d secrets)\n",
+		totalIssues, len(deployerIssues), len(workloadIssues), len(secretIssues))
 
 	// Next steps
 	fmt.Println()
@@ -8226,4 +8273,102 @@ func truncatePodName(name string) string {
 		return "..." + strings.Join(parts[len(parts)-4:], "-")
 	}
 	return name
+}
+
+// SecretIssue represents a secret reference problem for map issues output.
+type SecretIssue struct {
+	Resource   string // e.g., "Deployment/nginx"
+	Namespace  string
+	SecretName string
+	SecretNS   string // namespace where secret should exist
+	RefType    string // e.g., "envFrom.secretRef"
+	Status     string // "missing", "unreadable", "unresolved"
+	Reason     string // optional additional context
+}
+
+// collectSecretIssuesForResource collects secret issues from a resource.
+// Returns nil if the resource kind is not supported or has no issues.
+func collectSecretIssuesForResource(ctx context.Context, dynClient dynamic.Interface, resource *unstructured.Unstructured) []SecretIssue {
+	kind := resource.GetKind()
+
+	// Only collect for supported kinds
+	supportedKinds := map[string]bool{
+		"Deployment":    true,
+		"StatefulSet":   true,
+		"DaemonSet":     true,
+		"Kustomization": true,
+		"HelmRelease":   true,
+		"GitRepository": true,
+	}
+	if !supportedKinds[kind] {
+		return nil
+	}
+
+	collector := agent.NewSecretEvidenceCollector(dynClient)
+	result, err := collector.CollectFromResource(ctx, resource)
+	if err != nil || result == nil {
+		return nil
+	}
+
+	var issues []SecretIssue
+	seen := make(map[string]bool) // dedupe: "namespace/secretName"
+
+	for _, ev := range result.Secrets {
+		// Only report non-present statuses
+		if ev.Status == agent.SecretStatusPresent {
+			continue
+		}
+
+		// Dedupe by secret name + namespace
+		key := fmt.Sprintf("%s/%s", ev.Namespace, ev.Name)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+
+		issue := SecretIssue{
+			Resource:   fmt.Sprintf("%s/%s", kind, resource.GetName()),
+			Namespace:  resource.GetNamespace(),
+			SecretName: ev.Name,
+			SecretNS:   ev.Namespace,
+			RefType:    string(ev.RefType),
+			Status:     string(ev.Status),
+			Reason:     ev.StatusReason,
+		}
+		issues = append(issues, issue)
+	}
+
+	return issues
+}
+
+// formatSecretIssue formats a secret issue for display.
+func formatSecretIssue(issue SecretIssue) string {
+	// Format: ✗ Deployment/nginx in prod: missing secret "db-creds" (envFrom.secretRef)
+	statusSymbol := "?"
+	switch issue.Status {
+	case "missing":
+		statusSymbol = "missing"
+	case "unreadable":
+		statusSymbol = "unreadable (RBAC)"
+	case "unresolved":
+		statusSymbol = "unresolved"
+	}
+
+	ns := issue.Namespace
+	if ns == "" {
+		ns = issue.SecretNS
+	}
+
+	secretRef := issue.SecretName
+	if issue.SecretNS != "" && issue.SecretNS != ns {
+		secretRef = fmt.Sprintf("%s/%s", issue.SecretNS, issue.SecretName)
+	}
+
+	refType := issue.RefType
+	if refType == "" {
+		refType = "secretRef"
+	}
+
+	return fmt.Sprintf("✗ %s in %s: %s secret %q (%s)",
+		issue.Resource, ns, statusSymbol, secretRef, refType)
 }
