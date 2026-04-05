@@ -117,14 +117,10 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid --format %q (valid: ascii, json)", doctorFormat)
 	}
 
-	// Parse presentation mode (only affects ASCII output)
-	mode := DefaultPresentationMode
-	if doctorPresentation != "" {
-		var err error
-		mode, err = ParsePresentationMode(doctorPresentation)
-		if err != nil {
-			return err
-		}
+	// Build invocation context with presentation mode resolution
+	invCtx, err := NewInvocationContext(doctorPresentation, TransportCLI)
+	if err != nil {
+		return err
 	}
 
 	if doctorTopIssues < 0 {
@@ -136,10 +132,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		namespaceLabel = doctorNamespace
 	}
 
-	var (
-		summary DoctorSummary
-		err     error
-	)
+	var summary DoctorSummary
 
 	if fixturePath := os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON"); fixturePath != "" {
 		summary, err = runDoctorFromFixture(fixturePath, namespaceLabel)
@@ -159,9 +152,8 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		enc.SetIndent("", "  ")
 		return enc.Encode(summary)
 	default:
-		// Only apply presentation framing when explicitly requested
-		explicitMode := doctorPresentation != ""
-		fmt.Print(renderDoctorASCII(summary, mode, explicitMode))
+		// Use invocation context for presentation mode resolution
+		fmt.Print(renderDoctorASCII(summary, invCtx.Mode(), invCtx.IsExplicit()))
 		return nil
 	}
 }

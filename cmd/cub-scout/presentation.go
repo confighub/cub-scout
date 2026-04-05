@@ -15,8 +15,15 @@ import (
 type PresentationMode string
 
 const (
-	// PresentationHuman is the default mode optimized for direct operator reading.
+	// PresentationLegacy represents the no-flag render path.
+	// This is the actual effective mode when --presentation is not provided.
+	// Uses original/legacy formatting without presentation-specific framing.
+	// Distinct from PresentationHuman which applies explicit human-mode framing.
+	PresentationLegacy PresentationMode = "legacy"
+
+	// PresentationHuman is optimized for direct operator reading.
 	// Uses standard headings, full explanatory text, and operator-oriented framing.
+	// Only applied when --presentation=human is explicitly requested.
 	PresentationHuman PresentationMode = "human"
 
 	// PresentationAI is optimized for AI assistant consumption.
@@ -30,18 +37,22 @@ const (
 	PresentationPaired PresentationMode = "paired"
 )
 
-// DefaultPresentationMode is the default when no mode is specified.
-const DefaultPresentationMode = PresentationHuman
+// DefaultPresentationMode is the effective mode when no --presentation flag is provided.
+// This is PresentationLegacy, not PresentationHuman, to accurately reflect that
+// no explicit presentation framing is applied in the default case.
+const DefaultPresentationMode = PresentationLegacy
 
 // ValidPresentationModes lists all valid presentation mode values.
 var ValidPresentationModes = []PresentationMode{PresentationHuman, PresentationAI, PresentationPaired}
 
 // ParsePresentationMode parses a string into a PresentationMode.
 // Returns an error if the value is not valid.
+// Note: "legacy" is not a valid user input - it is an internal state
+// representing "no --presentation flag provided".
 func ParsePresentationMode(s string) (PresentationMode, error) {
 	lower := strings.ToLower(strings.TrimSpace(s))
 	switch lower {
-	case "human", "":
+	case "human":
 		return PresentationHuman, nil
 	case "ai":
 		return PresentationAI, nil

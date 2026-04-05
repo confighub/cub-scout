@@ -65,14 +65,10 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid --format %q (valid: text, json, md)", explainFormat)
 	}
 
-	// Parse presentation mode (only affects text/md output)
-	mode := DefaultPresentationMode
-	if explainPresentation != "" {
-		var err error
-		mode, err = ParsePresentationMode(explainPresentation)
-		if err != nil {
-			return err
-		}
+	// Build invocation context with presentation mode resolution
+	invCtx, err := NewInvocationContext(explainPresentation, TransportCLI)
+	if err != nil {
+		return err
 	}
 
 	kind, name, err := parseExplainArgs(args)
@@ -85,13 +81,10 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		ns = "default"
 	}
 
-	// Track whether presentation mode was explicitly requested
-	explicitMode := explainPresentation != ""
-
 	traceResult, err := traceForExplain(cmd.Context(), kind, name, ns)
 	if err != nil {
 		summary := buildExplainSummaryFromFailure(kind, name, ns, err)
-		return outputExplainSummary(summary, format, mode, explicitMode)
+		return outputExplainSummary(summary, format, invCtx)
 	}
 
 	summary := buildExplainSummary(traceResult)
@@ -102,20 +95,20 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		summary.Namespace = ns
 	}
 
-	return outputExplainSummary(summary, format, mode, explicitMode)
+	return outputExplainSummary(summary, format, invCtx)
 }
 
-func outputExplainSummary(summary ExplainSummary, format string, mode PresentationMode, explicitMode bool) error {
+func outputExplainSummary(summary ExplainSummary, format string, invCtx InvocationContext) error {
 	switch format {
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(summary)
 	case "md":
-		fmt.Print(renderExplainMarkdown(summary, mode, explicitMode))
+		fmt.Print(renderExplainMarkdown(summary, invCtx.Mode(), invCtx.IsExplicit()))
 		return nil
 	default:
-		fmt.Print(renderExplainText(summary, mode, explicitMode))
+		fmt.Print(renderExplainText(summary, invCtx.Mode(), invCtx.IsExplicit()))
 		return nil
 	}
 }

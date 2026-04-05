@@ -20,8 +20,9 @@ func TestParsePresentationMode(t *testing.T) {
 		{"AI", PresentationAI, false},
 		{"paired", PresentationPaired, false},
 		{"PAIRED", PresentationPaired, false},
-		{"", PresentationHuman, false}, // empty defaults to human
 		{"  human  ", PresentationHuman, false},
+		{"", "", true},        // empty is an error - handled by InvocationContext
+		{"legacy", "", true},  // legacy is not user-requestable
 		{"invalid", "", true},
 		{"machine", "", true},
 	}
@@ -51,6 +52,7 @@ func TestPresentationModeString(t *testing.T) {
 		mode     PresentationMode
 		expected string
 	}{
+		{PresentationLegacy, "legacy"},
 		{PresentationHuman, "human"},
 		{PresentationAI, "ai"},
 		{PresentationPaired, "paired"},
@@ -155,7 +157,9 @@ func TestTryNextHeading(t *testing.T) {
 }
 
 func TestDefaultPresentationMode(t *testing.T) {
-	if DefaultPresentationMode != PresentationHuman {
-		t.Errorf("DefaultPresentationMode = %q, want %q", DefaultPresentationMode, PresentationHuman)
+	// DefaultPresentationMode is PresentationLegacy, representing the no-flag path
+	// This is distinct from PresentationHuman which requires explicit --presentation=human
+	if DefaultPresentationMode != PresentationLegacy {
+		t.Errorf("DefaultPresentationMode = %q, want %q", DefaultPresentationMode, PresentationLegacy)
 	}
 }
