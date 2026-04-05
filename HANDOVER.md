@@ -40,7 +40,7 @@ Key deliverables now in place:
 - #342 bidirectional snapshot and conformance workflow (both slices)
   - Conformance reporting for import proposals
   - Curated import selection with include/exclude filtering
-- #328 secrets slices 1, 2 & 3 (`2346598`, `a6b5128`, current)
+- #328 secrets slices 1, 2 & 3 (`2346598`, `a6b5128`, `e527bdd`)
   - Slice 1: Secret evidence in `trace` for workloads and Flux sources
   - Slice 2: Crossplane ProviderConfig with cross-namespace resolution
   - Slice 3: Secret issues in `map issues` output
@@ -48,6 +48,8 @@ Key deliverables now in place:
   - Status classification: present, missing, unreadable, unresolved
   - RBAC-aware error detection (Forbidden vs NotFound)
   - Safe metadata only (never exposes .data or .stringData)
+  - HelmRepository and Bucket coverage for Flux source secrets
+  - Optional secrets correctly excluded from issues
 
 ## Open issues
 
@@ -149,12 +151,14 @@ For the core connected demos, "AI-first" means:
 - `cmd/cub-scout/doctor.go` — `--presentation` flag and rendering
 - `cmd/cub-scout/explain.go` — `--presentation` flag and rendering
 
-### Secret evidence implementation (#328 slices 1 & 2)
+### Secret evidence implementation (#328 slices 1, 2 & 3)
 
 - `pkg/agent/secret_evidence.go` — core model and collector
 - `pkg/agent/secret_evidence_test.go` — unit tests
 - `cmd/cub-scout/trace.go` — wiring, Crossplane discovery, ASCII output
 - `cmd/cub-scout/trace_providerconfig_test.go` — ProviderConfig-specific tests
+- `cmd/cub-scout/map.go` — `map issues` secret collection and formatting
+- `cmd/cub-scout/map_secret_issues_test.go` — map issues secret tests
 
 ## Proof expectations
 
