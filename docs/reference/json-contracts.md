@@ -43,6 +43,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Evidence export | [evidence-export-v1.md](evidence-export-v1.md) | `evidence-export.v1` |
 | General CLI JSON behavior | [cli-contract.md](cli-contract.md) + [commands.md](commands.md) | Command-specific |
 | GitOps checkpoint proposal schemas | [gitops-checkpoint-schemas.md](gitops-checkpoint-schemas.md) | `change-intent.v1`, `execution-report.v1`, `change-interaction-card.v1`, `decision-receipt.v1`, `execution-receipt.v1`, `outcome-receipt.v1` |
+| Trace secret evidence | This doc (below) | Embedded in `trace` JSON |
 
 ## Tree / Map / Trace / Drift JSON Today
 
@@ -63,6 +64,110 @@ Useful golden directories:
 - `test/golden/trace/`
 - `test/golden/map-status/`
 - `test/golden/bundle-summarize/`
+
+## Trace Secret Evidence Contract
+
+When `trace` is run on a supported resource kind, the JSON output includes a `secrets` field containing secret evidence metadata. This is safe metadata only — secret data (`.data`, `.stringData`) is never read or exposed.
+
+### Supported Resource Kinds
+
+- Workloads: `Deployment`, `StatefulSet`, `DaemonSet`, `Pod`
+- Flux sources: `GitRepository`, `HelmRepository`, `Bucket`
+- Flux deployers: `Kustomization`, `HelmRelease`
+
+### SecretEvidenceResult Schema
+
+```json
+{
+  "secrets": {
+    "resource": {
+      "kind": "Deployment",
+      "name": "my-app",
+      "namespace": "prod"
+    },
+    "secrets": [
+      {
+        "name": "db-credentials",
+        "namespace": "prod",
+        "refType": "envFrom.secretRef",
+        "refPath": "containers[0].envFrom[0]",
+        "status": "present",
+        "secretType": "Opaque",
+        "createdAt": "2026-03-15T10:30:00Z",
+        "optional": false
+      },
+      {
+        "name": "missing-secret",
+        "namespace": "prod",
+        "refType": "volume.secret",
+        "status": "missing",
+        "statusReason": "secret not found"
+      }
+    ],
+    "summary": {
+      "total": 2,
+      "present": 1,
+      "missing": 1,
+      "unreadable": 0,
+      "unresolved": 0
+    }
+  }
+}
+```
+
+### Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `secrets.resource` | `ResourceRef` | The resource these secrets belong to |
+| `secrets.secrets[]` | `SecretEvidence[]` | List of secret references and their evidence |
+| `secrets.summary` | `SecretEvidenceSummary` | Counts by status |
+
+### SecretEvidence Fields
+
+| Field | Type | Presence | Description |
+|-------|------|----------|-------------|
+| `name` | string | Always | Secret name |
+| `namespace` | string | Always | Secret namespace |
+| `refType` | string | Always | How the secret is referenced (see below) |
+| `refPath` | string | Optional | Specific path where reference was found |
+| `status` | string | Always | Resolution status: `present`, `missing`, `unreadable`, `unresolved` |
+| `statusReason` | string | Optional | Additional context for status |
+| `secretType` | string | When present | Kubernetes secret type (e.g., `Opaque`, `kubernetes.io/tls`) |
+| `createdAt` | timestamp | When present | Secret creation time |
+| `owner` | Ownership | When present | Detected ownership of the secret |
+| `optional` | boolean | Optional | Whether the reference is marked optional |
+
+### Reference Types (`refType`)
+
+| Value | Description |
+|-------|-------------|
+| `envFrom.secretRef` | secretRef in envFrom |
+| `env.valueFrom.secretKeyRef` | secretKeyRef in env variables |
+| `volume.secret` | Secret volume |
+| `volume.projected.secret` | Projected secret volume |
+| `imagePullSecrets` | Image pull secrets |
+| `serviceAccount.imagePullSecrets` | ServiceAccount image pull secrets |
+| `spec.secretRef` | Flux source/deployer secretRef |
+| `spec.credentials.secretRef` | Crossplane credential secretRef (not yet wired) |
+
+### Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `present` | Secret exists and is readable |
+| `missing` | Secret does not exist (NotFound) |
+| `unreadable` | Secret exists but RBAC denies read access (Forbidden) |
+| `unresolved` | Reference could not be resolved |
+
+### Safety Guarantee
+
+Secret evidence exposes only safe metadata. The following are **never** read or exposed:
+- `.data` fields
+- `.stringData` fields
+- Actual secret values
+
+Source: `pkg/agent/secret_evidence.go`
 
 ## Historical Note
 

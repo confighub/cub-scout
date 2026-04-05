@@ -641,7 +641,7 @@ This milestone delivers the "aha moment" for connected mode: what ConfigHub know
 
 ## v1.8 — AI Gateway Foundations
 
-**Status:** Planned
+**Status:** Released (2026-04-05)
 **Theme:** *Explicit AI/human presentation, shared read-only seams, and plugin-ready gateway evolution*
 
 This milestone turns the AI ops gateway direction into tracked execution scope without collapsing too much into one `cub-scout` add-on.
@@ -655,16 +655,17 @@ The rule for this milestone is:
 
 The tracked design reference for this milestone is `docs/reference/ai-ops-gateway-prd.md`.
 
-### Phase A — Presentation MVP
+### Phase A — Presentation MVP (Delivered)
 
 * #352 — explicit `human|ai|paired` presentation modes for read-only `doctor` and `explain`
+* #351 — CLI color output with `NO_COLOR` support
 
-### Phase B — Stable Internal Seams
+### Phase B — Stable Internal Seams (Delivered)
 
 * #354 — invocation-context model: `requested_mode`, `detected_context`, `effective_mode`, `transport`
 * #353 — align `doctor`/`explain` with shared-flow seams without changing current contracts
 
-### Phase C — Deterministic Follow-Ons
+### Phase C — Deterministic Follow-Ons (Delivered)
 
 * #349 — improve deterministic next-step hints while keeping them testable
 * #350 — suggest connected ConfigHub URLs as standard handoff behavior
@@ -672,6 +673,39 @@ The tracked design reference for this milestone is `docs/reference/ai-ops-gatewa
 ### Longer-Range Gateway Evolution
 
 * #214 — MCP gateway direction remains valid, but future work should keep MCP as a transport and avoid assuming all gateway logic permanently lives inside `cub-scout`
+
+---
+
+## v1.9 — Conformance & Secrets Evidence
+
+**Status:** In Progress
+**Theme:** *Verifiable import workflows and secret dependency visibility*
+
+### Conformance Workflows (#342) — Delivered
+
+Bidirectional snapshot and conformance workflow enables verifiable import proposals:
+
+* `compare three-way --fail-on` — conformance reporting with exit codes for CI gates
+* `import --resource` — curated import selection with include/exclude filtering
+* Enables operators to verify import proposals match expectations before execution
+
+### Secret Evidence (#328) — First Slice Delivered
+
+Secret evidence in `trace` output provides visibility into secret dependencies without exposing secret data:
+
+**Shipped:**
+* Secret evidence in `trace` for workloads (Deployment, StatefulSet, DaemonSet, Pod)
+* Secret evidence in `trace` for Flux sources (GitRepository, HelmRepository, Bucket)
+* Secret evidence in `trace` for Flux deployers (Kustomization, HelmRelease)
+* Status classification: `present`, `missing`, `unreadable`, `unresolved`
+* RBAC-aware error detection (Forbidden → unreadable, NotFound → missing)
+* Safe metadata only — `.data` and `.stringData` are never read or exposed
+
+**Remaining (not shipped):**
+* Crossplane ProviderConfig secret reference wiring
+* TUI integration (secret panel in trace view)
+* `map` findings integration for missing/unreadable secrets
+* Broader controller coverage beyond Flux
 
 ---
 
@@ -693,6 +727,8 @@ The tracked design reference for this milestone is `docs/reference/ai-ops-gatewa
 * v1.2.0 released (2026-02-26) — cub-scan file integration, Argo hierarchy lineage, quality fixes
 * v1.3.0 released (2026-03-04) — determinism hardening + release hygiene
 * v1.7.0 released (2026-03-07) — platform composition (Crossplane + kro), meaning-first grouping experiments, extensibility/fleet slices
+* v1.8.0 released (2026-04-05) — AI gateway foundations, presentation modes, deterministic hints
+* v1.9.0 in progress — conformance workflows (#342 delivered), secret evidence (#328 first slice delivered)
 
 ### Recent Milestones
 
@@ -703,7 +739,8 @@ The tracked design reference for this milestone is `docs/reference/ai-ops-gatewa
 | **v1.5** | AI-Native Ops | Context-pack v2, safe ask-mode, evidence capture, AI tool integration examples |
 | **v1.6** | Connected Value | WET/LIVE/DRY comparison, change history, impact preview, fleet outliers, audit trail |
 | **v1.7** | Platform Scale | kro, summary storage, Slack digests, custom ownership detectors, webhook streaming, meaning-first grouping experiments |
-| **v1.8** | AI Gateway Foundations | Presentation MVP, invocation-context model, shared-flow seams, deterministic follow-ons |
+| **v1.8** | AI Gateway Foundations | Presentation modes (`--presentation`), invocation-context model, shared-flow seams, deterministic hints |
+| **v1.9** | Conformance & Secrets | Conformance reporting (#342), curated import (#342), secret evidence in trace (#328) |
 
 ### Strategic Positioning
 
