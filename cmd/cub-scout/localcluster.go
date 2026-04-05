@@ -181,12 +181,13 @@ type LocalClusterModel struct {
 	selectedGitOps *GitOpsResource // Currently selected GitOps resource
 
 	// Trace mode
-	traceMode    bool        // In trace picker mode
-	traceCursor  int         // Cursor in trace picker
-	traceItems   []TraceItem // Items available to trace
-	traceOutput  string      // Output from trace command
-	traceLoading bool        // Is trace running
-	traceError   error       // Trace error if any
+	traceMode    bool                        // In trace picker mode
+	traceCursor  int                         // Cursor in trace picker
+	traceItems   []TraceItem                 // Items available to trace
+	traceOutput  string                      // Output from trace command
+	traceLoading bool                        // Is trace running
+	traceError   error                       // Trace error if any
+	traceSecrets *agent.SecretEvidenceResult // Secret evidence for traced resource
 
 	// Scan mode
 	scanMode       bool           // In scan result mode
@@ -431,8 +432,9 @@ type connectionStatusMsg struct {
 }
 
 type traceResultMsg struct {
-	output string
-	err    error
+	output  string
+	err     error
+	secrets *agent.SecretEvidenceResult
 }
 
 type scanResultMsg struct {
@@ -1124,6 +1126,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.traceLoading = false
 		m.traceOutput = msg.output
 		m.traceError = msg.err
+		m.traceSecrets = msg.secrets
 		return m, nil
 
 	case scanResultMsg:
@@ -1361,6 +1364,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Viewing trace result - any key returns to picker or closes
 				m.traceOutput = ""
 				m.traceError = nil
+				m.traceSecrets = nil
 				// Go back to picker if there are items, else close
 				if len(m.traceItems) > 0 {
 					return m, nil
@@ -5455,6 +5459,7 @@ func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 	return func() tea.Msg {
 		var output string
 		var err error
+		var secrets *agent.SecretEvidenceResult
 
 		switch item.Owner {
 		case "Flux":
@@ -5504,7 +5509,86 @@ func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 			output = fmt.Sprintf("No GitOps owner found for %s/%s\n\nThis resource is not managed by Flux or ArgoCD.", item.Namespace, item.Name)
 		}
 
-		return traceResultMsg{output: output, err: err}
+		// Collect secret evidence for workloads and Flux deployers/sources
+		secrets = collectTraceSecretEvidence(item)
+
+		return traceResultMsg{output: output, err: err, secrets: secrets}
+	}
+}
+
+// collectTraceSecretEvidence collects secret evidence for a traced resource.
+// Returns nil if the resource doesn't support secret evidence or on error.
+func collectTraceSecretEvidence(item TraceItem) *agent.SecretEvidenceResult {
+	// Only collect for supported kinds
+	supportedKinds := map[string]bool{
+		"Deployment":     true,
+		"StatefulSet":    true,
+		"DaemonSet":      true,
+		"Kustomization":  true,
+		"HelmRelease":    true,
+		"GitRepository":  true,
+		"HelmRepository": true,
+		"Bucket":         true,
+	}
+	if !supportedKinds[item.Kind] {
+		return nil
+	}
+
+	// Build kubernetes config
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil
+	}
+
+	// Determine GVR for the resource
+	gvr := getTraceResourceGVR(item.Kind)
+	if gvr.Resource == "" {
+		return nil
+	}
+
+	// Fetch the resource
+	ctx := context.Background()
+	resource, err := dynClient.Resource(gvr).Namespace(item.Namespace).Get(ctx, item.Name, v1.GetOptions{})
+	if err != nil {
+		return nil
+	}
+
+	// Collect secret evidence
+	collector := agent.NewSecretEvidenceCollector(dynClient)
+	result, err := collector.CollectFromResource(ctx, resource)
+	if err != nil {
+		return nil
+	}
+
+	return result
+}
+
+// getTraceResourceGVR returns the GVR for a given kind used in trace.
+func getTraceResourceGVR(kind string) schema.GroupVersionResource {
+	switch kind {
+	case "Deployment":
+		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	case "StatefulSet":
+		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "statefulsets"}
+	case "DaemonSet":
+		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "daemonsets"}
+	case "Kustomization":
+		return schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}
+	case "HelmRelease":
+		return schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}
+	case "GitRepository":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}
+	case "HelmRepository":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}
+	case "Bucket":
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "buckets"}
+	default:
+		return schema.GroupVersionResource{}
 	}
 }
 
@@ -5783,7 +5867,60 @@ func (m LocalClusterModel) renderTrace() string {
 	// Show trace result if available
 	if m.traceOutput != "" {
 		b.WriteString(m.traceOutput)
-		b.WriteString("\n\n" + lcDimStyle.Render("Press any key to continue") + "\n")
+
+		// Show secret evidence if present
+		if m.traceSecrets != nil && m.traceSecrets.Summary.Total > 0 {
+			b.WriteString("\n")
+			b.WriteString(lcSectionStyle.Render("SECRET EVIDENCE"))
+			b.WriteString("\n")
+			b.WriteString(lcDimStyle.Render("─────────────────────────────────────────────────────────────────"))
+			b.WriteString("\n")
+
+			// Summary line
+			summaryParts := []string{}
+			if m.traceSecrets.Summary.Present > 0 {
+				summaryParts = append(summaryParts, lcOkStyle.Render(fmt.Sprintf("%d present", m.traceSecrets.Summary.Present)))
+			}
+			if m.traceSecrets.Summary.Missing > 0 {
+				summaryParts = append(summaryParts, lcErrStyle.Render(fmt.Sprintf("%d missing", m.traceSecrets.Summary.Missing)))
+			}
+			if m.traceSecrets.Summary.Unreadable > 0 {
+				summaryParts = append(summaryParts, lcWarnStyle.Render(fmt.Sprintf("%d unreadable", m.traceSecrets.Summary.Unreadable)))
+			}
+			if m.traceSecrets.Summary.Unresolved > 0 {
+				summaryParts = append(summaryParts, lcDimStyle.Render(fmt.Sprintf("%d unresolved", m.traceSecrets.Summary.Unresolved)))
+			}
+			b.WriteString(fmt.Sprintf("  %d secrets referenced: %s\n\n", m.traceSecrets.Summary.Total, strings.Join(summaryParts, ", ")))
+
+			// Individual secrets
+			for _, sec := range m.traceSecrets.Secrets {
+				var statusIcon, statusStyle string
+				switch sec.Status {
+				case agent.SecretStatusPresent:
+					statusIcon = lcOkStyle.Render("✓")
+					statusStyle = lcOkStyle.Render(string(sec.Status))
+				case agent.SecretStatusMissing:
+					statusIcon = lcErrStyle.Render("✗")
+					statusStyle = lcErrStyle.Render(string(sec.Status))
+				case agent.SecretStatusUnreadable:
+					statusIcon = lcWarnStyle.Render("⚠")
+					statusStyle = lcWarnStyle.Render(string(sec.Status) + " (RBAC)")
+				default:
+					statusIcon = lcDimStyle.Render("?")
+					statusStyle = lcDimStyle.Render(string(sec.Status))
+				}
+
+				secretDisplay := sec.Name
+				if sec.Namespace != "" && sec.Namespace != m.traceSecrets.Resource.Namespace {
+					secretDisplay = sec.Namespace + "/" + sec.Name
+				}
+
+				b.WriteString(fmt.Sprintf("  %s %s %s\n", statusIcon, lcNameStyle.Render(secretDisplay), statusStyle))
+				b.WriteString(fmt.Sprintf("    %s\n", lcDimStyle.Render(string(sec.RefType))))
+			}
+		}
+
+		b.WriteString("\n" + lcDimStyle.Render("Press any key to continue") + "\n")
 		return b.String()
 	}
 
