@@ -81,7 +81,7 @@ func TestRenderExplainText_ContainsPlainEnglishSections(t *testing.T) {
 		Drift:       "None detected",
 	}
 
-	out := renderExplainText(summary)
+	out := renderExplainText(summary, DefaultPresentationMode, false)
 
 	required := []string{
 		"Deployment/payments-api in namespace prod:",
@@ -111,7 +111,7 @@ func TestRenderExplainMarkdown_ContainsHeadingsAndFields(t *testing.T) {
 		Drift:       "None detected",
 	}
 
-	out := renderExplainMarkdown(summary)
+	out := renderExplainMarkdown(summary, DefaultPresentationMode, false)
 
 	required := []string{
 		"## Explain",
@@ -165,7 +165,7 @@ func TestRenderExplainText_IncludesPartialTraceNotes(t *testing.T) {
 		},
 	}
 
-	out := renderExplainText(summary)
+	out := renderExplainText(summary, DefaultPresentationMode, false)
 	if !strings.Contains(out, "Notes:") {
 		t.Fatalf("expected Notes section in explain text:\\n%s", out)
 	}
@@ -187,5 +187,160 @@ func TestExplainOwner_Custom(t *testing.T) {
 	summary := buildExplainSummary(result)
 	if summary.Owner != "Internal Platform" {
 		t.Fatalf("owner = %q, want %q", summary.Owner, "Internal Platform")
+	}
+}
+
+func TestRenderExplainText_PresentationModes(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/payments-api",
+		Namespace:   "prod",
+		Owner:       "Flux",
+		Source:      "https://github.com/acme/platform-config.git",
+		DeployedVia: "GitRepository/platform-config -> Kustomization/payments -> Deployment/payments-api",
+		Health:      "Healthy",
+		Risks:       "0 findings",
+		Drift:       "None detected",
+	}
+
+	tests := []struct {
+		mode     PresentationMode
+		expected []string
+		excluded []string
+	}{
+		{
+			mode: PresentationHuman,
+			expected: []string{
+				"Deployment/payments-api in namespace prod:",
+				"Owner:",
+				"Source:",
+				"TRY NEXT:",
+			},
+			excluded: []string{
+				"[resource:",
+				"OWNER:",
+				"RECOMMENDED ACTIONS:",
+			},
+		},
+		{
+			mode: PresentationAI,
+			expected: []string{
+				"[resource: Deployment/payments-api namespace: prod]",
+				"OWNER:",
+				"SOURCE:",
+				"HEALTH:",
+				"RECOMMENDED ACTIONS:",
+			},
+			excluded: []string{
+				"Deployment/payments-api in namespace prod:",
+				"TRY NEXT:",
+			},
+		},
+		{
+			mode: PresentationPaired,
+			expected: []string{
+				"Deployment/payments-api in namespace prod:",
+				"Owner:",
+				"TRY NEXT:",
+			},
+			excluded: []string{
+				"[resource:",
+				"OWNER:",
+				"RECOMMENDED ACTIONS:",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(string(tc.mode), func(t *testing.T) {
+			// explicitMode=true since we're testing explicit presentation modes
+			out := renderExplainText(summary, tc.mode, true)
+
+			for _, s := range tc.expected {
+				if !strings.Contains(out, s) {
+					t.Errorf("expected %q in %s mode output:\n%s", s, tc.mode, out)
+				}
+			}
+			for _, s := range tc.excluded {
+				if strings.Contains(out, s) {
+					t.Errorf("did not expect %q in %s mode output:\n%s", s, tc.mode, out)
+				}
+			}
+		})
+	}
+}
+
+func TestRenderExplainMarkdown_PresentationModes(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/payments-api",
+		Namespace:   "prod",
+		Owner:       "Flux",
+		Source:      "https://github.com/acme/platform-config.git",
+		DeployedVia: "GitRepository/platform-config -> Kustomization/payments -> Deployment/payments-api",
+		Health:      "Healthy",
+		Risks:       "0 findings",
+		Drift:       "None detected",
+	}
+
+	tests := []struct {
+		mode     PresentationMode
+		expected []string
+		excluded []string
+	}{
+		{
+			mode: PresentationHuman,
+			expected: []string{
+				"## Explain",
+				"- **Resource:** `Deployment/payments-api`",
+				"### Try Next",
+			},
+			excluded: []string{
+				"## RESOURCE CONTEXT",
+				"[resource:",
+				"### RECOMMENDED ACTIONS",
+			},
+		},
+		{
+			mode: PresentationAI,
+			expected: []string{
+				"## RESOURCE CONTEXT",
+				"[resource: Deployment/payments-api namespace: prod]",
+				"### RECOMMENDED ACTIONS",
+				"[end resource context]",
+			},
+			excluded: []string{
+				"## Explain\n",
+				"### Try Next",
+			},
+		},
+		{
+			mode: PresentationPaired,
+			expected: []string{
+				"## Explain",
+				"### Try Next",
+			},
+			excluded: []string{
+				"## RESOURCE CONTEXT",
+				"[resource:",
+				"### RECOMMENDED ACTIONS",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(string(tc.mode), func(t *testing.T) {
+			// explicitMode=true since we're testing explicit presentation modes
+			out := renderExplainMarkdown(summary, tc.mode, true)
+
+			for _, s := range tc.expected {
+				if !strings.Contains(out, s) {
+					t.Errorf("expected %q in %s mode output:\n%s", s, tc.mode, out)
+				}
+			}
+			for _, s := range tc.excluded {
+				if strings.Contains(out, s) {
+					t.Errorf("did not expect %q in %s mode output:\n%s", s, tc.mode, out)
+				}
+			}
+		})
 	}
 }

@@ -246,12 +246,19 @@ func explainHints(summary ExplainSummary) []Hint {
 }
 
 func renderTryNextSection(hints []string) string {
+	return renderTryNextSectionWithMode(hints, DefaultPresentationMode)
+}
+
+// renderTryNextSectionWithMode renders the TRY NEXT section with mode-specific framing.
+func renderTryNextSectionWithMode(hints []string, mode PresentationMode) string {
 	if len(hints) == 0 {
 		return ""
 	}
 
 	var b strings.Builder
-	b.WriteString("\nTRY NEXT:\n")
+	b.WriteString("\n")
+	b.WriteString(TryNextHeading(mode))
+	b.WriteString("\n")
 	for _, hint := range hints {
 		b.WriteString("  - ")
 		b.WriteString(hint)
@@ -277,12 +284,22 @@ func renderConfigHubSection(hint *Hint) string {
 }
 
 func renderTryNextMarkdown(hints []string) string {
+	return renderTryNextMarkdownWithMode(hints, DefaultPresentationMode)
+}
+
+// renderTryNextMarkdownWithMode renders the TRY NEXT section in markdown with mode-specific framing.
+func renderTryNextMarkdownWithMode(hints []string, mode PresentationMode) string {
 	if len(hints) == 0 {
 		return ""
 	}
 
 	var b strings.Builder
-	b.WriteString("\n### Try Next\n\n")
+	switch mode {
+	case PresentationAI:
+		b.WriteString("\n### RECOMMENDED ACTIONS\n\n")
+	default:
+		b.WriteString("\n### Try Next\n\n")
+	}
 	for _, hint := range hints {
 		b.WriteString("- `")
 		b.WriteString(extractCommand(hint))

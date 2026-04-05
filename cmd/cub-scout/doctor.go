@@ -20,9 +20,10 @@ import (
 )
 
 var (
-	doctorFormat    string
-	doctorNamespace string
-	doctorTopIssues int
+	doctorFormat       string
+	doctorNamespace    string
+	doctorTopIssues    int
+	doctorPresentation string
 )
 
 var doctorCmd = &cobra.Command{
@@ -45,6 +46,7 @@ func init() {
 	doctorCmd.Flags().StringVarP(&doctorNamespace, "namespace", "n", "", "Namespace scope (default: all namespaces)")
 	doctorCmd.Flags().StringVar(&doctorFormat, "format", "ascii", "Output format: ascii, json")
 	doctorCmd.Flags().IntVar(&doctorTopIssues, "top", 3, "Number of top issues to include")
+	doctorCmd.Flags().StringVar(&doctorPresentation, "presentation", "", PresentationModeHelp())
 }
 
 // DoctorSummary is the canonical model behind both ASCII and JSON output.
@@ -115,6 +117,16 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid --format %q (valid: ascii, json)", doctorFormat)
 	}
 
+	// Parse presentation mode (only affects ASCII output)
+	mode := DefaultPresentationMode
+	if doctorPresentation != "" {
+		var err error
+		mode, err = ParsePresentationMode(doctorPresentation)
+		if err != nil {
+			return err
+		}
+	}
+
 	if doctorTopIssues < 0 {
 		return fmt.Errorf("--top must be >= 0")
 	}
@@ -147,7 +159,9 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		enc.SetIndent("", "  ")
 		return enc.Encode(summary)
 	default:
-		fmt.Print(renderDoctorASCII(summary))
+		// Only apply presentation framing when explicitly requested
+		explicitMode := doctorPresentation != ""
+		fmt.Print(renderDoctorASCII(summary, mode, explicitMode))
 		return nil
 	}
 }
@@ -365,13 +379,39 @@ func doctorSeverityRank(sev string) int {
 	}
 }
 
-func renderDoctorASCII(summary DoctorSummary) string {
+func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMode bool) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s: %s (namespace: %s)\n", Bold("Cluster"), summary.Cluster, summary.Namespace)
-	fmt.Fprintf(&b, "%s: %d total\n\n", Bold("Resources"), summary.Resources.Total)
+
+	// Helper to render section label based on whether presentation mode was explicit
+	sectionLabel := func(label string) string {
+		if explicitMode {
+			return SectionLabel(mode, label)
+		}
+		return SectionHeader(label) + ":"
+	}
+
+	// Only apply presentation framing when explicitly requested
+	if explicitMode {
+		// Heading - varies by presentation mode
+		heading := DoctorHeading(mode)
+		if mode == PresentationAI {
+			fmt.Fprintf(&b, "%s\n", heading)
+		} else {
+			fmt.Fprintf(&b, "%s\n", Bold(heading))
+		}
+
+		// Intro - varies by presentation mode
+		intro := DoctorIntro(mode, summary.Cluster, summary.Namespace)
+		fmt.Fprintf(&b, "%s\n", intro)
+		fmt.Fprintf(&b, "%s %d total\n\n", SectionLabel(mode, "Resources"), summary.Resources.Total)
+	} else {
+		// Legacy format - no heading, just cluster line
+		fmt.Fprintf(&b, "%s: %s (namespace: %s)\n", Bold("Cluster"), summary.Cluster, summary.Namespace)
+		fmt.Fprintf(&b, "%s: %d total\n\n", Bold("Resources"), summary.Resources.Total)
+	}
 
 	total := summary.Resources.Total
-	fmt.Fprintf(&b, "%s:\n", SectionHeader("Ownership"))
+	fmt.Fprintf(&b, "%s\n", sectionLabel("Ownership"))
 	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("Flux"), summary.Ownership.Flux, doctorPercent(summary.Ownership.Flux, total))
 	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("ArgoCD"), summary.Ownership.ArgoCD, doctorPercent(summary.Ownership.ArgoCD, total))
 	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("Helm"), summary.Ownership.Helm, doctorPercent(summary.Ownership.Helm, total))
@@ -385,7 +425,7 @@ func renderDoctorASCII(summary DoctorSummary) string {
 	}
 	fmt.Fprintf(&b, "\n")
 
-	fmt.Fprintf(&b, "%s:\n", SectionHeader("Health"))
+	fmt.Fprintf(&b, "%s\n", sectionLabel("Health"))
 	fmt.Fprintf(&b, "  %s: %d\n", Green("Healthy"), summary.Health.Healthy)
 	fmt.Fprintf(&b, "  %s: %d\n", Yellow("Warning"), summary.Health.Warning)
 	fmt.Fprintf(&b, "  %s: %d\n\n", Red("Error"), summary.Health.Error)
@@ -400,16 +440,16 @@ func renderDoctorASCII(summary DoctorSummary) string {
 	if summary.Risks.Warning > 0 {
 		warningText = Yellow(warningText)
 	}
-	fmt.Fprintf(&b, "%s: %d findings (%s, %s, %s)\n",
-		SectionHeader("Risks"), summary.Risks.Total, criticalText, warningText, infoText)
+	fmt.Fprintf(&b, "%s %d findings (%s, %s, %s)\n",
+		sectionLabel("Risks"), summary.Risks.Total, criticalText, warningText, infoText)
 
 	driftText := fmt.Sprintf("%d resources drifted from declared state", summary.Drift.Resources)
 	if summary.Drift.Resources > 0 {
 		driftText = Yellow(driftText)
 	}
-	fmt.Fprintf(&b, "%s: %s\n\n", SectionHeader("Drift"), driftText)
+	fmt.Fprintf(&b, "%s %s\n\n", sectionLabel("Drift"), driftText)
 
-	fmt.Fprintf(&b, "%s:\n", SectionHeader("Top Issues"))
+	fmt.Fprintf(&b, "%s\n", sectionLabel("Top Issues"))
 	if len(summary.TopIssues) == 0 {
 		fmt.Fprintf(&b, "  %s\n", Dim("(none)"))
 	} else {
@@ -427,9 +467,21 @@ func renderDoctorASCII(summary DoctorSummary) string {
 		}
 	}
 
+	// Outro - only for explicit AI mode
+	if explicitMode {
+		outro := DoctorOutro(mode)
+		if outro != "" {
+			fmt.Fprintf(&b, "\n%s\n", outro)
+		}
+	}
+
 	hints := doctorTryNextHints(summary)
 	if len(hints) > 0 {
-		b.WriteString(renderTryNextSection(hints))
+		if explicitMode {
+			b.WriteString(renderTryNextSectionWithMode(hints, mode))
+		} else {
+			b.WriteString(renderTryNextSection(hints))
+		}
 	}
 
 	return b.String()
