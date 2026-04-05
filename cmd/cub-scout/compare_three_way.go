@@ -38,13 +38,24 @@ type threeWayResourceEntry struct {
 	Causes   []string              `json:"causes,omitempty"`
 }
 
+// ConformanceResult contains the pass/fail conformance summary.
+// The Pass field is computed based on the --fail-on threshold if set,
+// ensuring JSON, text output, and exit code all tell the same story.
+type ConformanceResult struct {
+	Pass        bool   `json:"pass"`
+	Threshold   string `json:"threshold,omitempty"` // --fail-on value if set, empty for pure reporting
+	MaxSeverity string `json:"maxSeverity"`         // highest severity found (ok, info, warning)
+	Violations  int    `json:"violations"`          // count of resources with non-ok severity
+}
+
 type threeWaySummary struct {
-	TotalResources      int            `json:"totalResources"`
-	ConnectedResources  int            `json:"connectedResources"`
-	DryWetLiveResources int            `json:"dryWetLiveResources"`
-	MismatchedResources int            `json:"mismatchedResources"`
-	SeverityCounts      map[string]int `json:"severityCounts"`
-	CauseBuckets        map[string]int `json:"causeBuckets"`
+	TotalResources      int               `json:"totalResources"`
+	ConnectedResources  int               `json:"connectedResources"`
+	DryWetLiveResources int               `json:"dryWetLiveResources"`
+	MismatchedResources int               `json:"mismatchedResources"`
+	SeverityCounts      map[string]int    `json:"severityCounts"`
+	CauseBuckets        map[string]int    `json:"causeBuckets"`
+	Conformance         ConformanceResult `json:"conformance"`
 }
 
 type threeWayReport struct {
@@ -53,10 +64,23 @@ type threeWayReport struct {
 	Resources []threeWayResourceEntry `json:"resources"`
 }
 
+// Exit codes for compare three-way command (CI contract)
+const (
+	// ConformanceExitOK indicates no failure triggered
+	ConformanceExitOK = 0
+
+	// ConformanceExitError indicates operational error (bad args, cluster access, etc.)
+	ConformanceExitError = 1
+
+	// ConformanceExitFailure indicates conformance violations met the --fail-on threshold
+	ConformanceExitFailure = 2
+)
+
 var (
 	compareThreeWayScopeRaw string
 	compareThreeWayFormat   string
 	compareThreeWayJSON     bool
+	compareThreeWayFailOn   string
 
 	buildThreeWayResourceResultFn = buildCompareResourceResult
 	discoverThreeWayNamespacesFn  = discoverNamespacesWithWorkloads
@@ -77,7 +101,19 @@ Supported scopes:
 Examples:
   cub-scout compare three-way --scope deploy/payment-api -n prod
   cub-scout compare three-way --scope namespace/prod --format json
-  cub-scout compare three-way --scope cluster --format md`,
+  cub-scout compare three-way --scope cluster --format md
+
+  # CI/automation: fail if mismatches found
+  cub-scout compare three-way --scope namespace/prod --fail-on warning
+
+Exit codes:
+  0  No failure triggered (or no --fail-on specified)
+  1  Operational error (bad arguments, cluster access failure, etc.)
+  2  Conformance violations met the --fail-on severity threshold
+
+CI/Automation note:
+  Exit status is determined solely by JSON facts (severity field) and the
+  --fail-on flag. ASCII output does not affect CI behavior.`,
 	RunE: runCompareThreeWay,
 }
 
@@ -88,12 +124,21 @@ func init() {
 	compareThreeWayCmd.Flags().StringVarP(&combinedNamespace, "namespace", "n", "", "Namespace override for resource scope")
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayFormat, "format", "ascii", "Output format: ascii, json, md")
 	compareThreeWayCmd.Flags().BoolVar(&compareThreeWayJSON, "json", false, "Output as JSON (shorthand for --format json)")
+	compareThreeWayCmd.Flags().StringVar(&compareThreeWayFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning)")
 }
 
 func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 	scope, err := parseThreeWayScope(compareThreeWayScopeRaw)
 	if err != nil {
 		return err
+	}
+
+	// Validate --fail-on if provided
+	if compareThreeWayFailOn != "" {
+		if !isValidConformanceSeverity(compareThreeWayFailOn) {
+			fmt.Fprintf(os.Stderr, "Error: invalid --fail-on value %q (valid: info, warning)\n", compareThreeWayFailOn)
+			os.Exit(ConformanceExitError)
+		}
 	}
 
 	format := strings.ToLower(strings.TrimSpace(compareThreeWayFormat))
@@ -107,7 +152,7 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid --format %q (valid: ascii, json, md)", compareThreeWayFormat)
 	}
 
-	report, err := buildThreeWayReport(cmd.Context(), scope)
+	report, err := buildThreeWayReport(cmd.Context(), scope, compareThreeWayFailOn)
 	if err != nil {
 		return err
 	}
@@ -116,14 +161,22 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		return enc.Encode(report)
+		if err := enc.Encode(report); err != nil {
+			return err
+		}
 	case "md":
 		fmt.Print(renderThreeWayMarkdown(report))
-		return nil
 	default:
 		fmt.Print(renderThreeWayASCII(report))
-		return nil
 	}
+
+	// Check exit condition based on --fail-on (JSON facts only)
+	exitCode := computeConformanceExitCode(report, compareThreeWayFailOn)
+	if exitCode != ConformanceExitOK {
+		os.Exit(exitCode)
+	}
+
+	return nil
 }
 
 func parseThreeWayScope(raw string) (threeWayScope, error) {
@@ -164,7 +217,7 @@ func parseThreeWayScope(raw string) (threeWayScope, error) {
 	}
 }
 
-func buildThreeWayReport(ctx context.Context, scope threeWayScope) (threeWayReport, error) {
+func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThreshold string) (threeWayReport, error) {
 	targets, err := collectThreeWayTargets(scope)
 	if err != nil {
 		return threeWayReport{}, err
@@ -217,6 +270,26 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope) (threeWayRepo
 		right := strings.ToLower(entries[j].Result.Namespace + "/" + entries[j].Result.Resource)
 		return left < right
 	})
+
+	// Compute conformance result
+	// Violations count resources with non-ok severity (warning or info issues)
+	violations := summary.SeverityCounts["warning"] + summary.SeverityCounts["info"]
+	maxSeverity := getMaxConformanceSeverity(summary.SeverityCounts)
+
+	// Pass is determined by the threshold policy:
+	// - No threshold: pure reporting mode, always pass=true
+	// - With threshold: pass=true only if max severity doesn't meet threshold
+	pass := true
+	if failOnThreshold != "" && conformanceSeverityMeetsThreshold(maxSeverity, failOnThreshold) {
+		pass = false
+	}
+
+	summary.Conformance = ConformanceResult{
+		Pass:        pass,
+		Threshold:   failOnThreshold,
+		MaxSeverity: maxSeverity,
+		Violations:  violations,
+	}
 
 	return threeWayReport{
 		Scope:     scope.String(),
@@ -335,6 +408,27 @@ func renderThreeWayASCII(report threeWayReport) string {
 		report.Summary.MismatchedResources,
 	))
 
+	// Show conformance status
+	// Only show PASS/FAIL verdict when a threshold is set; otherwise show issue count
+	if report.Summary.Conformance.Threshold != "" {
+		conformanceStatus := Green("PASS")
+		if !report.Summary.Conformance.Pass {
+			conformanceStatus = Red("FAIL")
+		}
+		b.WriteString(fmt.Sprintf("Conformance: %s (threshold: %s, max: %s, %d issues)\n",
+			conformanceStatus,
+			report.Summary.Conformance.Threshold,
+			report.Summary.Conformance.MaxSeverity,
+			report.Summary.Conformance.Violations,
+		))
+	} else {
+		// Pure reporting mode - no verdict, just facts
+		b.WriteString(fmt.Sprintf("Issues: %d (max severity: %s)\n",
+			report.Summary.Conformance.Violations,
+			report.Summary.Conformance.MaxSeverity,
+		))
+	}
+
 	if len(report.Resources) == 0 {
 		b.WriteString("No resources matched this scope\n")
 		return b.String()
@@ -364,7 +458,28 @@ func renderThreeWayMarkdown(report threeWayReport) string {
 	b.WriteString(fmt.Sprintf("- Resources: `%d`\n", report.Summary.TotalResources))
 	b.WriteString(fmt.Sprintf("- Connected: `%d`\n", report.Summary.ConnectedResources))
 	b.WriteString(fmt.Sprintf("- DRY/WET/LIVE: `%d`\n", report.Summary.DryWetLiveResources))
-	b.WriteString(fmt.Sprintf("- Mismatched: `%d`\n\n", report.Summary.MismatchedResources))
+	b.WriteString(fmt.Sprintf("- Mismatched: `%d`\n", report.Summary.MismatchedResources))
+
+	// Show conformance status
+	// Only show PASS/FAIL verdict when a threshold is set; otherwise show issue count
+	if report.Summary.Conformance.Threshold != "" {
+		conformanceStatus := "PASS"
+		if !report.Summary.Conformance.Pass {
+			conformanceStatus = "FAIL"
+		}
+		b.WriteString(fmt.Sprintf("- Conformance: **%s** (threshold: `%s`, max: `%s`, %d issues)\n\n",
+			conformanceStatus,
+			report.Summary.Conformance.Threshold,
+			report.Summary.Conformance.MaxSeverity,
+			report.Summary.Conformance.Violations,
+		))
+	} else {
+		// Pure reporting mode - no verdict, just facts
+		b.WriteString(fmt.Sprintf("- Issues: `%d` (max severity: `%s`)\n\n",
+			report.Summary.Conformance.Violations,
+			report.Summary.Conformance.MaxSeverity,
+		))
+	}
 
 	if len(report.Resources) == 0 {
 		b.WriteString("No resources matched this scope.\n")
@@ -399,4 +514,57 @@ func (scope threeWayScope) String() string {
 	default:
 		return scope.ScopeValue
 	}
+}
+
+// isValidConformanceSeverity checks if a severity level string is valid for conformance.
+func isValidConformanceSeverity(level string) bool {
+	switch level {
+	case "info", "warning":
+		return true
+	}
+	return false
+}
+
+// computeConformanceExitCode determines the exit code based on severity counts and --fail-on.
+// This uses JSON facts (severity field) only - ASCII output does not affect this.
+// Contract: Leak Test compliance - exit behavior depends only on structural facts.
+func computeConformanceExitCode(report threeWayReport, failOn string) int {
+	// No --fail-on specified = pure reporting mode, always exit 0
+	if failOn == "" {
+		return ConformanceExitOK
+	}
+
+	// Get max severity from severity counts
+	maxSeverity := getMaxConformanceSeverity(report.Summary.SeverityCounts)
+
+	// Compare max severity against threshold
+	if conformanceSeverityMeetsThreshold(maxSeverity, failOn) {
+		return ConformanceExitFailure
+	}
+
+	return ConformanceExitOK
+}
+
+// getMaxConformanceSeverity returns the highest severity from severity counts.
+// Severity ranking: warning > info > ok
+func getMaxConformanceSeverity(counts map[string]int) string {
+	if counts["warning"] > 0 {
+		return "warning"
+	}
+	if counts["info"] > 0 {
+		return "info"
+	}
+	return "ok"
+}
+
+// conformanceSeverityMeetsThreshold returns true if maxSeverity >= threshold.
+func conformanceSeverityMeetsThreshold(maxSeverity, threshold string) bool {
+	rankMap := map[string]int{
+		"warning": 2,
+		"info":    1,
+		"ok":      0,
+	}
+	thresholdRank := rankMap[threshold]
+	maxRank := rankMap[maxSeverity]
+	return maxRank >= thresholdRank
 }

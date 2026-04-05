@@ -100,7 +100,7 @@ func TestBuildThreeWayReport_NamespaceScope(t *testing.T) {
 	}
 	defer func() { buildThreeWayResourceResultFn = prevBuilder }()
 
-	report, err := buildThreeWayReport(context.Background(), threeWayScope{ScopeType: threeWayScopeNamespace, ScopeValue: "prod"})
+	report, err := buildThreeWayReport(context.Background(), threeWayScope{ScopeType: threeWayScopeNamespace, ScopeValue: "prod"}, "")
 	if err != nil {
 		t.Fatalf("buildThreeWayReport() error = %v", err)
 	}
@@ -171,20 +171,312 @@ type threeWayFlagState struct {
 	scope  string
 	format string
 	json   bool
+	failOn string
 }
 
 func setThreeWayFlagState(state threeWayFlagState) func() {
 	prevScope := compareThreeWayScopeRaw
 	prevFormat := compareThreeWayFormat
 	prevJSON := compareThreeWayJSON
+	prevFailOn := compareThreeWayFailOn
 
 	compareThreeWayScopeRaw = state.scope
 	compareThreeWayFormat = state.format
 	compareThreeWayJSON = state.json
+	compareThreeWayFailOn = state.failOn
 
 	return func() {
 		compareThreeWayScopeRaw = prevScope
 		compareThreeWayFormat = prevFormat
 		compareThreeWayJSON = prevJSON
+		compareThreeWayFailOn = prevFailOn
+	}
+}
+
+func TestIsValidConformanceSeverity(t *testing.T) {
+	tests := []struct {
+		level string
+		want  bool
+	}{
+		{"info", true},
+		{"warning", true},
+		{"critical", false}, // not valid for conformance (only info and warning)
+		{"", false},
+		{"high", false},
+	}
+
+	for _, tt := range tests {
+		got := isValidConformanceSeverity(tt.level)
+		if got != tt.want {
+			t.Errorf("isValidConformanceSeverity(%q) = %v, want %v", tt.level, got, tt.want)
+		}
+	}
+}
+
+func TestComputeConformanceExitCode(t *testing.T) {
+	tests := []struct {
+		name     string
+		counts   map[string]int
+		failOn   string
+		wantCode int
+	}{
+		{
+			name:     "no fail-on specified",
+			counts:   map[string]int{"warning": 1},
+			failOn:   "",
+			wantCode: ConformanceExitOK,
+		},
+		{
+			name:     "no violations with fail-on warning",
+			counts:   map[string]int{"ok": 5},
+			failOn:   "warning",
+			wantCode: ConformanceExitOK,
+		},
+		{
+			name:     "warning violations with fail-on warning",
+			counts:   map[string]int{"warning": 1, "ok": 4},
+			failOn:   "warning",
+			wantCode: ConformanceExitFailure,
+		},
+		{
+			name:     "info violations with fail-on warning",
+			counts:   map[string]int{"info": 2, "ok": 3},
+			failOn:   "warning",
+			wantCode: ConformanceExitOK,
+		},
+		{
+			name:     "info violations with fail-on info",
+			counts:   map[string]int{"info": 2, "ok": 3},
+			failOn:   "info",
+			wantCode: ConformanceExitFailure,
+		},
+		{
+			name:     "warning violations with fail-on info",
+			counts:   map[string]int{"warning": 1},
+			failOn:   "info",
+			wantCode: ConformanceExitFailure,
+		},
+		{
+			name:     "empty counts with fail-on warning",
+			counts:   map[string]int{},
+			failOn:   "warning",
+			wantCode: ConformanceExitOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			report := threeWayReport{
+				Summary: threeWaySummary{
+					SeverityCounts: tt.counts,
+				},
+			}
+			got := computeConformanceExitCode(report, tt.failOn)
+			if got != tt.wantCode {
+				t.Errorf("computeConformanceExitCode() = %d, want %d", got, tt.wantCode)
+			}
+		})
+	}
+}
+
+func TestGetMaxConformanceSeverity(t *testing.T) {
+	tests := []struct {
+		counts map[string]int
+		want   string
+	}{
+		{map[string]int{"warning": 1, "info": 2, "ok": 3}, "warning"},
+		{map[string]int{"info": 2, "ok": 3}, "info"},
+		{map[string]int{"ok": 5}, "ok"},
+		{map[string]int{}, "ok"},
+	}
+
+	for _, tt := range tests {
+		got := getMaxConformanceSeverity(tt.counts)
+		if got != tt.want {
+			t.Errorf("getMaxConformanceSeverity(%v) = %q, want %q", tt.counts, got, tt.want)
+		}
+	}
+}
+
+func TestConformanceSeverityMeetsThreshold(t *testing.T) {
+	tests := []struct {
+		maxSeverity string
+		threshold   string
+		want        bool
+	}{
+		{"warning", "warning", true},
+		{"warning", "info", true},
+		{"info", "warning", false},
+		{"info", "info", true},
+		{"ok", "info", false},
+		{"ok", "warning", false},
+	}
+
+	for _, tt := range tests {
+		got := conformanceSeverityMeetsThreshold(tt.maxSeverity, tt.threshold)
+		if got != tt.want {
+			t.Errorf("conformanceSeverityMeetsThreshold(%q, %q) = %v, want %v",
+				tt.maxSeverity, tt.threshold, got, tt.want)
+		}
+	}
+}
+
+func TestBuildThreeWayReport_ConformanceResult(t *testing.T) {
+	prevDiscoverWorkloads := discoverThreeWayWorkloadsFn
+	discoverThreeWayWorkloadsFn = func(namespace string) ([]WorkloadInfo, error) {
+		return []WorkloadInfo{
+			{Kind: "Deployment", Namespace: "prod", Name: "api"},
+			{Kind: "Deployment", Namespace: "prod", Name: "worker"},
+		}, nil
+	}
+	defer func() { discoverThreeWayWorkloadsFn = prevDiscoverWorkloads }()
+
+	prevBuilder := buildThreeWayResourceResultFn
+	buildThreeWayResourceResultFn = func(ctx context.Context, resourceArg, namespace string) (compareResourceResult, error) {
+		switch resourceArg {
+		case "Deployment/api":
+			return compareResourceResult{
+				Resource:   "Deployment/api",
+				Namespace:  "prod",
+				Mode:       "dry-wet-live",
+				Connected:  true,
+				Mismatches: []compareFieldMismatch{{Field: "replicas"}},
+			}, nil
+		default:
+			return compareResourceResult{
+				Resource:  resourceArg,
+				Namespace: "prod",
+				Mode:      "dry-wet-live",
+				Connected: true,
+			}, nil
+		}
+	}
+	defer func() { buildThreeWayResourceResultFn = prevBuilder }()
+
+	// With --fail-on warning, one mismatch (warning) should cause pass=false
+	report, err := buildThreeWayReport(context.Background(), threeWayScope{ScopeType: threeWayScopeNamespace, ScopeValue: "prod"}, "warning")
+	if err != nil {
+		t.Fatalf("buildThreeWayReport() error = %v", err)
+	}
+
+	// One resource has mismatches (warning severity), threshold is warning -> fail
+	if report.Summary.Conformance.Pass {
+		t.Error("Conformance.Pass = true, want false (warning meets warning threshold)")
+	}
+	if report.Summary.Conformance.Violations != 1 {
+		t.Errorf("Conformance.Violations = %d, want 1", report.Summary.Conformance.Violations)
+	}
+	if report.Summary.Conformance.MaxSeverity != "warning" {
+		t.Errorf("Conformance.MaxSeverity = %q, want %q", report.Summary.Conformance.MaxSeverity, "warning")
+	}
+	if report.Summary.Conformance.Threshold != "warning" {
+		t.Errorf("Conformance.Threshold = %q, want %q", report.Summary.Conformance.Threshold, "warning")
+	}
+}
+
+func TestBuildThreeWayReport_ConformancePass(t *testing.T) {
+	prevDiscoverWorkloads := discoverThreeWayWorkloadsFn
+	discoverThreeWayWorkloadsFn = func(namespace string) ([]WorkloadInfo, error) {
+		return []WorkloadInfo{
+			{Kind: "Deployment", Namespace: "prod", Name: "api"},
+		}, nil
+	}
+	defer func() { discoverThreeWayWorkloadsFn = prevDiscoverWorkloads }()
+
+	prevBuilder := buildThreeWayResourceResultFn
+	buildThreeWayResourceResultFn = func(ctx context.Context, resourceArg, namespace string) (compareResourceResult, error) {
+		return compareResourceResult{
+			Resource:  resourceArg,
+			Namespace: "prod",
+			Mode:      "dry-wet-live",
+			Connected: true,
+			// No mismatches, no notes = ok severity
+		}, nil
+	}
+	defer func() { buildThreeWayResourceResultFn = prevBuilder }()
+
+	// With --fail-on warning, no issues should pass
+	report, err := buildThreeWayReport(context.Background(), threeWayScope{ScopeType: threeWayScopeNamespace, ScopeValue: "prod"}, "warning")
+	if err != nil {
+		t.Fatalf("buildThreeWayReport() error = %v", err)
+	}
+
+	if !report.Summary.Conformance.Pass {
+		t.Error("Conformance.Pass = false, want true (no violations)")
+	}
+	if report.Summary.Conformance.Violations != 0 {
+		t.Errorf("Conformance.Violations = %d, want 0", report.Summary.Conformance.Violations)
+	}
+	if report.Summary.Conformance.MaxSeverity != "ok" {
+		t.Errorf("Conformance.MaxSeverity = %q, want %q", report.Summary.Conformance.MaxSeverity, "ok")
+	}
+}
+
+func TestBuildThreeWayReport_ConformanceNoThreshold(t *testing.T) {
+	prevDiscoverWorkloads := discoverThreeWayWorkloadsFn
+	discoverThreeWayWorkloadsFn = func(namespace string) ([]WorkloadInfo, error) {
+		return []WorkloadInfo{
+			{Kind: "Deployment", Namespace: "prod", Name: "api"},
+		}, nil
+	}
+	defer func() { discoverThreeWayWorkloadsFn = prevDiscoverWorkloads }()
+
+	prevBuilder := buildThreeWayResourceResultFn
+	buildThreeWayResourceResultFn = func(ctx context.Context, resourceArg, namespace string) (compareResourceResult, error) {
+		return compareResourceResult{
+			Resource:   resourceArg,
+			Namespace:  "prod",
+			Mode:       "dry-wet-live",
+			Connected:  true,
+			Mismatches: []compareFieldMismatch{{Field: "replicas"}}, // Has issues
+		}, nil
+	}
+	defer func() { buildThreeWayResourceResultFn = prevBuilder }()
+
+	// Without --fail-on (pure reporting mode), pass is always true
+	report, err := buildThreeWayReport(context.Background(), threeWayScope{ScopeType: threeWayScopeNamespace, ScopeValue: "prod"}, "")
+	if err != nil {
+		t.Fatalf("buildThreeWayReport() error = %v", err)
+	}
+
+	// Even with violations, pass=true in pure reporting mode (no threshold)
+	if !report.Summary.Conformance.Pass {
+		t.Error("Conformance.Pass = false, want true (pure reporting mode)")
+	}
+	if report.Summary.Conformance.Violations != 1 {
+		t.Errorf("Conformance.Violations = %d, want 1", report.Summary.Conformance.Violations)
+	}
+	if report.Summary.Conformance.Threshold != "" {
+		t.Errorf("Conformance.Threshold = %q, want empty", report.Summary.Conformance.Threshold)
+	}
+}
+
+// TestExitCodeIndependentOfFormat_Conformance verifies the Leak Test:
+// exit status must depend only on JSON facts, not ASCII rendering.
+func TestExitCodeIndependentOfFormat_Conformance(t *testing.T) {
+	// Create a report with violations
+	report := threeWayReport{
+		Summary: threeWaySummary{
+			SeverityCounts: map[string]int{"warning": 1, "ok": 2},
+		},
+	}
+
+	failOn := "warning"
+
+	// The exit code computation is format-independent
+	exitCode := computeConformanceExitCode(report, failOn)
+	expectedExit := ConformanceExitFailure
+
+	if exitCode != expectedExit {
+		t.Errorf("exit code = %d, want %d", exitCode, expectedExit)
+	}
+
+	// Rendering functions should not affect exit code
+	_ = renderThreeWayASCII(report)
+	_ = renderThreeWayMarkdown(report)
+
+	// Exit code should still be the same
+	if computeConformanceExitCode(report, failOn) != expectedExit {
+		t.Error("exit code changed after rendering")
 	}
 }
