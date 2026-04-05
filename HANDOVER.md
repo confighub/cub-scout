@@ -40,8 +40,10 @@ Key deliverables now in place:
 - #342 bidirectional snapshot and conformance workflow (both slices)
   - Conformance reporting for import proposals
   - Curated import selection with include/exclude filtering
-- #328 secrets first slice (`2346598`)
-  - Secret evidence in `trace` output for workloads and Flux sources
+- #328 secrets slices 1 & 2 (`2346598`, `a6b5128`)
+  - Slice 1: Secret evidence in `trace` for workloads and Flux sources
+  - Slice 2: Crossplane ProviderConfig with cross-namespace resolution
+  - Dynamic CRD discovery for any *.crossplane.io / *.upbound.io provider
   - Status classification: present, missing, unreadable, unresolved
   - RBAC-aware error detection (Forbidden vs NotFound)
   - Safe metadata only (never exposes .data or .stringData)
@@ -50,11 +52,12 @@ Key deliverables now in place:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #328 | Secrets in cub-scout | First slice shipped (workloads + Flux); Crossplane/TUI remaining |
+| #328 | Secrets in cub-scout | Two slices shipped (workloads + Flux + Crossplane); TUI/map remaining |
 
 Recent closures:
-- #342 — Bidirectional snapshot and conformance workflow: both slices (conformance reporting + curated import selection) shipped
+- #342 — Bidirectional snapshot and conformance workflow: both slices shipped
 - #349, #350, #351, #352 — CLI polish cluster complete
+- #328 slice 2 — Crossplane ProviderConfig wiring with cross-namespace resolution
 
 Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
@@ -63,16 +66,15 @@ in that direction rather than flattening the current system.
 ## Suggested next milestones
 
 1. Milestone 1: complete #328 secrets track
-   First slice shipped: workload (Deployment, StatefulSet, DaemonSet, Pod) and Flux source
-   secret evidence is live in `trace` output. Remaining: Crossplane ProviderConfig wiring,
-   TUI integration, `map` findings integration.
+   Two slices shipped: workloads + Flux + Crossplane ProviderConfig with cross-namespace
+   resolution. Remaining: TUI integration (secret panel in trace view), `map` findings
+   integration for missing/unreadable secrets.
 2. Milestone 2: expand presentation mode to other commands if needed
    The `--presentation` flag is currently on `doctor` and `explain` only.
    Expansion to other commands can be done incrementally as needed.
-3. Milestone 3: broader docs alignment (if needed)
-   The trace section in `docs/reference/commands.md` now documents `Secrets` output.
-   Crossplane support level is clarified as experimental. Further docs work may include
-   JSON contract schema updates for `SecretEvidenceResult`.
+3. Milestone 3: v0.14 JSON converter update (optional)
+   The legacy trace JSON converter path doesn't carry secret evidence yet.
+   Low priority since `trace --format json` works correctly.
 
 ## External publication boundary
 
@@ -146,11 +148,12 @@ For the core connected demos, "AI-first" means:
 - `cmd/cub-scout/doctor.go` — `--presentation` flag and rendering
 - `cmd/cub-scout/explain.go` — `--presentation` flag and rendering
 
-### Secret evidence implementation (#328 first slice)
+### Secret evidence implementation (#328 slices 1 & 2)
 
 - `pkg/agent/secret_evidence.go` — core model and collector
 - `pkg/agent/secret_evidence_test.go` — unit tests
-- `cmd/cub-scout/trace.go` — wiring and ASCII output (lines ~349, ~1242-1298, ~2195-2250)
+- `cmd/cub-scout/trace.go` — wiring, Crossplane discovery, ASCII output
+- `cmd/cub-scout/trace_providerconfig_test.go` — ProviderConfig-specific tests
 
 ## Proof expectations
 
