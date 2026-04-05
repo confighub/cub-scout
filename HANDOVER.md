@@ -30,44 +30,43 @@ Key deliverables now in place:
   - `AI_START_HERE.md`, `prompts.md`, `contracts.md`, `verify.sh`
 - Status-dependent scanner rules work correctly (#348 regression test added)
 - App/Deployment/Target is the primary mental model across connected docs
+- Deterministic `TRY NEXT` hints are stronger and more contextual on `main` (`cec20f8`, `#349`)
+- `explain` can now suggest ConfigHub GUI deep-links when connected context provides a unit URL (`a5016ad`, `#350`)
 
 ## Open issues
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #349 | Improve next-step hints while keeping them deterministic and testable | Highest-value near-term CLI slice. Preserve the current hint quality and make it stronger, deeper, and more connected to the ConfigHub world. |
-| #350 | When connected, suggest relevant ConfigHub URLs as standard behavior | Natural follow-on to #349. Deterministic connected URL suggestions when the needed IDs/slugs are actually available. |
-| #351 | Make CLI outputs more colorful (not just TUI) | Later polish slice. Improve scanability without breaking `NO_COLOR` or ASCII/test contracts. |
+| #349 | Improve next-step hints while keeping them deterministic and testable | Implemented on `main` in `cec20f8`; GitHub issue still open pending manual close. |
+| #350 | When connected, suggest relevant ConfigHub URLs as standard behavior | Implemented on `main` in `a5016ad`; GitHub issue still open pending manual close. |
+| #351 | Make CLI outputs more colorful (not just TUI) | Next likely CLI slice after `#349`/`#350` issue closure. Improve scanability without breaking `NO_COLOR` or ASCII/test contracts. |
 | #352 | Detect AI usage and frame responses accordingly | Needs reframing before coding. Prefer explicit, testable modes over brittle auto-detection. |
 | #342 | Bidirectional snapshot and conformance workflow | Future product direction; out of scope for the completed March connected/docs slice |
 | #328 | Secrets in cub-scout | Separate feature track; out of scope for the completed March connected/docs slice |
 
 No immediate follow-on from the March connected/docs cluster remains open. The
-next slice should now be chosen intentionally from the current open set, with
-`#349` the best default starting point and `#350` the strongest follow-on.
+next slice should now be chosen intentionally from the current open set. As of
+`a5016ad`, the code for `#349` and `#350` is already on `main`, so the next
+coding slice is most likely `#351` unless someone first wants to close out the
+tracking state on GitHub.
 
 Important: the current deterministic hints are already good and should not be
-diminished. The goal of `#349` is to make them stronger, deeper, and better
-connected to the rest of the ConfigHub world, not noisier, more generic, or
-less testable.
+diminished. `#349` strengthened them on `main`; any follow-on hint work should
+keep moving in that direction rather than flattening the current system.
 
 ## Suggested next milestones
 
-1. Milestone 1: strengthen deterministic `TRY NEXT` hints (`#349`)
-   Keep the existing hint behavior as the floor. Add rationale, better ranking,
-   and more context-aware choices for `doctor`, `map list`, and `explain`,
-   while preserving deterministic output and current ASCII/JSON contracts.
-2. Milestone 2: connected ConfigHub URL suggestions (`#350`)
-   Build on the stronger hint layer with deterministic GUI handoff suggestions
-   when connected and when the necessary IDs/slugs are available. This should
-   make the CLI/GUI bridge a product behavior instead of a demo-only trick.
-3. Milestone 3: CLI color polish (`#351`)
+1. Milestone 1: close out landed hint work (`#349`, `#350`)
+   The code is already on `main` in `cec20f8` and `a5016ad`. The remaining work
+   is tracking hygiene: close the GitHub issues if the shipped behavior matches
+   expectations and capture any small follow-on notes separately.
+2. Milestone 2: CLI color polish (`#351`)
    Improve scanability in normal CLI output without regressing `NO_COLOR`,
    accessibility, or golden-test stability.
-4. Milestone 4: reframe AI-mode output explicitly (`#352`)
+3. Milestone 3: reframe AI-mode output explicitly (`#352`)
    If pursued, make this an explicit and testable mode choice rather than
    brittle environment auto-detection.
-5. Milestone 5: return to larger feature tracks (`#328`, `#342`)
+4. Milestone 4: return to larger feature tracks (`#328`, `#342`)
    Secrets and bidirectional conformance remain important, but they are not the
    best next incremental slice after the March cluster closure.
 
