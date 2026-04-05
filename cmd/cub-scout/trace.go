@@ -345,6 +345,12 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Collect secret evidence for workloads and Flux resources
+	secretEvidence := collectSecretEvidence(ctx, kind, name, traceNamespace)
+	if secretEvidence != nil && secretEvidence.Summary.Total > 0 {
+		result.Secrets = secretEvidence
+	}
+
 	artifacts := buildUnknownTraceArtifacts(result)
 	if traceArtifacts {
 		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifacts(ctx, result))
@@ -1230,6 +1236,67 @@ func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.Tra
 		fmt.Printf("\n")
 		fmt.Printf("%s  💡 These resources are managed by different tools.%s\n", colorDim, colorReset)
 		fmt.Printf("%s     Changes to one tool won't automatically update the other.%s\n", colorDim, colorReset)
+	}
+
+	// Show secret evidence if present
+	if result.Secrets != nil && result.Secrets.Summary.Total > 0 {
+		fmt.Printf("\n")
+		if result.Secrets.HasIssues() {
+			fmt.Printf("%s%s⚠ Secret evidence:%s\n", colorBold, colorYellow, colorReset)
+		} else {
+			fmt.Printf("%s%s✓ Secret evidence:%s\n", colorBold, colorGreen, colorReset)
+		}
+
+		for _, s := range result.Secrets.Secrets {
+			var statusIcon, statusColor string
+			switch s.Status {
+			case agent.SecretStatusPresent:
+				statusIcon = SymOK
+				statusColor = colorGreen
+			case agent.SecretStatusMissing:
+				statusIcon = SymError
+				statusColor = colorRed
+			case agent.SecretStatusUnreadable:
+				statusIcon = "🔒"
+				statusColor = colorYellow
+			default:
+				statusIcon = "?"
+				statusColor = colorYellow
+			}
+
+			optionalTag := ""
+			if s.Optional {
+				optionalTag = fmt.Sprintf(" %s(optional)%s", colorDim, colorReset)
+			}
+
+			fmt.Printf("  %s%s%s %sSecret/%s%s %s[%s]%s%s\n",
+				statusColor, statusIcon, colorReset,
+				colorWhite, s.Name, colorReset,
+				statusColor, s.Status, colorReset,
+				optionalTag)
+
+			fmt.Printf("      %sreferenced via: %s%s\n", colorDim, s.RefType, colorReset)
+
+			if s.Status == agent.SecretStatusPresent && s.SecretType != "" {
+				fmt.Printf("      %stype: %s%s\n", colorDim, s.SecretType, colorReset)
+			}
+			if s.Owner != nil && s.Owner.Name != "" {
+				fmt.Printf("      %smanaged by: %s (%s)%s\n", colorDim, s.Owner.Name, s.Owner.Type, colorReset)
+			}
+			if s.StatusReason != "" && s.Status != agent.SecretStatusPresent {
+				fmt.Printf("      %s%s%s\n", colorRed, s.StatusReason, colorReset)
+			}
+		}
+
+		// Summary line
+		fmt.Printf("\n")
+		fmt.Printf("  %s%d secrets (%d present, %d missing, %d unreadable)%s\n",
+			colorDim,
+			result.Secrets.Summary.Total,
+			result.Secrets.Summary.Present,
+			result.Secrets.Summary.Missing,
+			result.Secrets.Summary.Unreadable,
+			colorReset)
 	}
 
 	// Show history if requested and available
@@ -2123,4 +2190,61 @@ func loadAndRenderTraceFromJSON(path string) error {
 	default:
 		return outputTraceHuman(&result, artifacts)
 	}
+}
+
+// collectSecretEvidence fetches a resource and collects secret evidence from it.
+// Returns nil if the resource doesn't support secret evidence collection.
+//
+// Supported kinds (v0.15):
+// - Workloads: Deployment, StatefulSet, DaemonSet, Pod
+// - Flux sources: GitRepository, HelmRepository, Bucket
+// - Flux deployers: Kustomization, HelmRelease
+//
+// Not yet wired up (collector exists but trace doesn't reach it):
+// - Crossplane ProviderConfig (requires GVR mapping + cross-namespace resolution)
+func collectSecretEvidence(ctx context.Context, kind, name, namespace string) *agent.SecretEvidenceResult {
+	// Only collect for supported kinds
+	supportedKinds := map[string]bool{
+		"Deployment":     true,
+		"StatefulSet":    true,
+		"DaemonSet":      true,
+		"Pod":            true,
+		"GitRepository":  true,
+		"HelmRepository": true,
+		"Bucket":         true,
+		"Kustomization":  true,
+		"HelmRelease":    true,
+		// ProviderConfig intentionally omitted - requires cross-namespace secret resolution
+	}
+	if !supportedKinds[kind] {
+		return nil
+	}
+
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil
+	}
+
+	gvr := kindToGVR(kind)
+	if gvr.Resource == "" {
+		return nil
+	}
+
+	resource, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
+	if err != nil {
+		return nil
+	}
+
+	collector := agent.NewSecretEvidenceCollector(dynClient)
+	result, err := collector.CollectFromResource(ctx, resource)
+	if err != nil {
+		return nil
+	}
+
+	return result
 }

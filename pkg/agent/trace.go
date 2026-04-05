@@ -53,6 +53,11 @@ type TraceResult struct {
 	// LineageConfidence indicates how the parent/appset relationship was detected.
 	// "explicit" = ownerReference, "inferred" = label/annotation match.
 	LineageConfidence string `json:"lineageConfidence,omitempty"`
+
+	// Secrets contains evidence about secrets referenced by the traced resource.
+	// Only populated for workloads (Deployment, StatefulSet, DaemonSet, Pod) and
+	// Flux sources/deployers. Does NOT expose secret data, only safe metadata.
+	Secrets *SecretEvidenceResult `json:"secrets,omitempty"`
 }
 
 // CrossReference represents a reference to a resource with a different owner
