@@ -28,6 +28,70 @@ const hintPriorityNormal = 50
 // hintPriorityLow is for general guidance.
 const hintPriorityLow = 20
 
+// hintPrioritySuppressed is for hints that should be included but ranked very low.
+const hintPrioritySuppressed = 5
+
+// HintMode represents the context in which hints are generated.
+// Different modes adjust hint ranking to be more relevant for the audience.
+type HintMode string
+
+const (
+	// HintModeDefault uses safe defaults with beginner-friendly hints included.
+	HintModeDefault HintMode = "default"
+
+	// HintModeBeginner emphasizes onboarding and exploration hints.
+	HintModeBeginner HintMode = "beginner"
+
+	// HintModeOperator is for experienced users - suppresses beginner hints,
+	// emphasizes actionable operational next steps.
+	HintModeOperator HintMode = "operator"
+
+	// HintModeDemo is for demos and presentations - suppresses noisy hints,
+	// emphasizes clear next steps that showcase capabilities.
+	HintModeDemo HintMode = "demo"
+)
+
+// HintContext provides context for hint generation.
+// This allows hints to be ranked differently based on the audience/situation.
+type HintContext struct {
+	Mode HintMode
+}
+
+// DefaultHintContext returns a HintContext with default settings.
+func DefaultHintContext() HintContext {
+	return HintContext{Mode: HintModeDefault}
+}
+
+// ParseHintMode parses a string into a HintMode.
+// Returns an error if the string is not a valid mode.
+func ParseHintMode(s string) (HintMode, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "", "default":
+		return HintModeDefault, nil
+	case "beginner":
+		return HintModeBeginner, nil
+	case "operator":
+		return HintModeOperator, nil
+	default:
+		return HintModeDefault, fmt.Errorf("invalid hint mode %q (valid: default, beginner, operator)", s)
+	}
+}
+
+// HintModeHelp returns help text for the --hint-mode flag.
+func HintModeHelp() string {
+	return "Hint ranking mode: default, beginner (emphasizes tutorials), operator (actionable hints)"
+}
+
+// isBeginnerMode returns true if quickstart-style hints should be prominent.
+func (c HintContext) isBeginnerMode() bool {
+	return c.Mode == HintModeDefault || c.Mode == HintModeBeginner
+}
+
+// isOperatorMode returns true if the context is operator or demo (non-beginner).
+func (c HintContext) isOperatorMode() bool {
+	return c.Mode == HintModeOperator || c.Mode == HintModeDemo
+}
+
 // sortHints sorts hints by priority (descending) for deterministic output.
 func sortHints(hints []Hint) {
 	sort.SliceStable(hints, func(i, j int) bool {
@@ -108,7 +172,12 @@ func mapListHints(entries []MapEntry, byOwner map[string]int, namespace string) 
 }
 
 func doctorTryNextHints(summary DoctorSummary) []string {
-	hints := doctorHints(summary)
+	return doctorTryNextHintsWithContext(summary, DefaultHintContext())
+}
+
+// doctorTryNextHintsWithContext generates hints with explicit context control.
+func doctorTryNextHintsWithContext(summary DoctorSummary, ctx HintContext) []string {
+	hints := doctorHintsWithContext(summary, ctx)
 	sortHints(hints)
 	if len(hints) > 3 {
 		hints = hints[:3]
@@ -118,7 +187,15 @@ func doctorTryNextHints(summary DoctorSummary) []string {
 
 // doctorHints generates structured hints for doctor output.
 func doctorHints(summary DoctorSummary) []Hint {
-	hints := make([]Hint, 0, 4)
+	return doctorHintsWithContext(summary, DefaultHintContext())
+}
+
+// doctorHintsWithContext generates structured hints with explicit context control.
+// The context affects hint ranking:
+// - Beginner/default: quickstart is prominent, general exploration hints included
+// - Operator/demo: quickstart is suppressed, actionable hints prioritized
+func doctorHintsWithContext(summary DoctorSummary, ctx HintContext) []Hint {
+	hints := make([]Hint, 0, 5)
 	nsFlag := commandNamespaceFlag(summary.Namespace)
 
 	// Top issue gets highest priority if critical
@@ -142,6 +219,7 @@ func doctorHints(summary DoctorSummary) []Hint {
 		}
 	}
 
+	// Unmanaged resources hint
 	if summary.Ownership.Unmanaged > 0 {
 		priority := hintPriorityHigh
 		if summary.Ownership.Unmanaged >= 10 {
@@ -159,17 +237,51 @@ func doctorHints(summary DoctorSummary) []Hint {
 		})
 	}
 
+	// Import hint for native-heavy clusters (operator/demo contexts or high unmanaged count)
+	// This helps operators see how to bring unmanaged resources under GitOps control.
+	if summary.Ownership.Unmanaged > 0 {
+		unmanagedRatio := float64(summary.Ownership.Unmanaged) / float64(max(summary.Resources.Total, 1))
+		isNativeHeavy := summary.Ownership.Unmanaged >= 5 || unmanagedRatio > 0.3
+
+		if isNativeHeavy {
+			priority := hintPriorityNormal
+			// Boost priority in operator mode or when the cluster is mostly unmanaged
+			if ctx.isOperatorMode() || unmanagedRatio > 0.5 {
+				priority = hintPriorityHigh - 5
+			}
+			hints = append(hints, Hint{
+				Command:   fmt.Sprintf("cub-scout import --dry-run%s", nsFlag),
+				Rationale: "Preview how to bring unmanaged resources under GitOps control",
+				Priority:  priority,
+			})
+		}
+	}
+
+	// Quickstart hint - priority depends on context
+	quickstartPriority := hintPriorityLow
+	if ctx.isOperatorMode() {
+		// Suppress quickstart in operator/demo mode - experienced users don't need the walkthrough
+		quickstartPriority = hintPrioritySuppressed
+	} else if ctx.Mode == HintModeBeginner {
+		// Boost in explicit beginner mode
+		quickstartPriority = hintPriorityNormal
+	}
 	hints = append(hints, Hint{
 		Command:   fmt.Sprintf("cub-scout quickstart%s --yes", nsFlag),
 		Rationale: "Run the guided walkthrough to explore your cluster step-by-step",
-		Priority:  hintPriorityLow,
+		Priority:  quickstartPriority,
 	})
 
 	return hints
 }
 
 func explainTryNextHints(summary ExplainSummary) []string {
-	hints := explainHints(summary)
+	return explainTryNextHintsWithContext(summary, DefaultHintContext())
+}
+
+// explainTryNextHintsWithContext generates hints with explicit context control.
+func explainTryNextHintsWithContext(summary ExplainSummary, ctx HintContext) []string {
+	hints := explainHintsWithContext(summary, ctx)
 	sortHints(hints)
 	if len(hints) > 3 {
 		hints = hints[:3]
@@ -193,7 +305,12 @@ func explainConfigHubHint(summary ExplainSummary) *Hint {
 
 // explainHints generates structured hints for explain output.
 func explainHints(summary ExplainSummary) []Hint {
-	hints := make([]Hint, 0, 4)
+	return explainHintsWithContext(summary, DefaultHintContext())
+}
+
+// explainHintsWithContext generates structured hints with explicit context control.
+func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
+	hints := make([]Hint, 0, 5)
 	ns := strings.TrimSpace(summary.Namespace)
 	nsFlag := commandNamespaceFlag(ns)
 
@@ -214,6 +331,15 @@ func explainHints(summary ExplainSummary) []Hint {
 			Rationale: "Check for health issues that may indicate why ownership is unclear",
 			Priority:  hintPriorityNormal,
 		})
+
+		// In operator mode, suggest import for unknown-owner resources
+		if ctx.isOperatorMode() {
+			hints = append(hints, Hint{
+				Command:   fmt.Sprintf("cub-scout import --dry-run%s", nsFlag),
+				Rationale: "Preview how to bring this resource under GitOps control",
+				Priority:  hintPriorityNormal - 5,
+			})
+		}
 	} else {
 		// Known owner - help explore the ownership chain
 		if kind, name, ok := parseKindName(summary.Resource); ok {
@@ -236,10 +362,15 @@ func explainHints(summary ExplainSummary) []Hint {
 		})
 	}
 
+	// Doctor hint - lower priority in operator mode since they likely already ran it
+	doctorPriority := hintPriorityLow
+	if ctx.isOperatorMode() {
+		doctorPriority = hintPrioritySuppressed
+	}
 	hints = append(hints, Hint{
 		Command:   fmt.Sprintf("cub-scout doctor%s", nsFlag),
 		Rationale: "Get a broad health summary to contextualize this resource",
-		Priority:  hintPriorityLow,
+		Priority:  doctorPriority,
 	})
 
 	return hints

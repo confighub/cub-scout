@@ -85,7 +85,7 @@ func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
 		TopIssues: []DoctorIssue{{Severity: "CRITICAL", Resource: "Deployment/api", Namespace: "prod", Message: "missing limits"}},
 	}
 
-	out := renderDoctorASCII(summary, DefaultPresentationMode, false)
+	out := renderDoctorASCII(summary, DefaultPresentationMode, false, DefaultHintContext())
 
 	required := []string{
 		"Cluster: kind-dev (namespace: all)",
@@ -167,7 +167,8 @@ func TestRenderDoctorASCII_PresentationModes(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(string(tc.mode), func(t *testing.T) {
 			// explicitMode=true since we're testing explicit presentation modes
-			out := renderDoctorASCII(summary, tc.mode, true)
+			// Hint context is independent of presentation mode
+			out := renderDoctorASCII(summary, tc.mode, true, DefaultHintContext())
 
 			for _, s := range tc.expected {
 				if !strings.Contains(out, s) {

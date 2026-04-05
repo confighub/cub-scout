@@ -66,17 +66,19 @@ func TestRenderMapListFromEntries_NoHintsInJSON(t *testing.T) {
 }
 
 func TestRenderDoctorASCII_AddsTryNextHints(t *testing.T) {
+	// Use a cluster with few unmanaged resources (below native-heavy threshold)
+	// so quickstart appears in top 3 hints
 	summary := DoctorSummary{
 		Cluster:   "kind-dev",
 		Namespace: "prod",
-		Resources: DoctorResourceSummary{Total: 5},
-		Ownership: DoctorOwnershipSummary{Flux: 2, Native: 3, Unmanaged: 3},
+		Resources: DoctorResourceSummary{Total: 10},
+		Ownership: DoctorOwnershipSummary{Flux: 6, ArgoCD: 2, Native: 2, Unmanaged: 2},
 		TopIssues: []DoctorIssue{
 			{Severity: "CRITICAL", Resource: "Deployment/payments-api", Namespace: "prod", Message: "missing limits"},
 		},
 	}
 
-	out := renderDoctorASCII(summary, DefaultPresentationMode, false)
+	out := renderDoctorASCII(summary, DefaultPresentationMode, false, DefaultHintContext())
 
 	required := []string{
 		"TRY NEXT:",
@@ -103,7 +105,7 @@ func TestRenderExplainText_AddsTryNextHints(t *testing.T) {
 		Drift:       "None",
 	}
 
-	out := renderExplainText(summary, DefaultPresentationMode, false)
+	out := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
 
 	required := []string{
 		"TRY NEXT:",
@@ -130,7 +132,7 @@ func TestRenderExplainMarkdown_AddsTryNextSection(t *testing.T) {
 		Drift:       "Unknown",
 	}
 
-	out := renderExplainMarkdown(summary, DefaultPresentationMode, false)
+	out := renderExplainMarkdown(summary, DefaultPresentationMode, false, DefaultHintContext())
 
 	required := []string{
 		"### Try Next",
@@ -389,7 +391,7 @@ func TestRenderExplainText_IncludesConfigHubSection(t *testing.T) {
 		ConfigHubURL: "https://confighub.com/spaces/sp-abc/units/payments",
 	}
 
-	out := renderExplainText(summary, DefaultPresentationMode, false)
+	out := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
 
 	// Should have TRY NEXT section
 	if !strings.Contains(out, "TRY NEXT:") {
@@ -417,7 +419,7 @@ func TestRenderExplainText_NoConfigHubSectionWithoutURL(t *testing.T) {
 		// No ConfigHubURL
 	}
 
-	out := renderExplainText(summary, DefaultPresentationMode, false)
+	out := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
 
 	// Should have TRY NEXT section
 	if !strings.Contains(out, "TRY NEXT:") {
@@ -504,6 +506,338 @@ func TestHintRationale_SingularVsPlural(t *testing.T) {
 	}
 	if !strings.Contains(rationale5, "5 unmanaged resources") {
 		t.Fatalf("expected plural 'resources' for count=5, got: %q", rationale5)
+	}
+}
+
+// Tests for HintContext and mode-aware ranking (#349)
+
+func TestHintContext_DefaultMode(t *testing.T) {
+	ctx := DefaultHintContext()
+	if ctx.Mode != HintModeDefault {
+		t.Fatalf("expected default mode, got %q", ctx.Mode)
+	}
+	if !ctx.isBeginnerMode() {
+		t.Fatal("default mode should be considered beginner mode")
+	}
+	if ctx.isOperatorMode() {
+		t.Fatal("default mode should not be considered operator mode")
+	}
+}
+
+func TestHintContext_ModeClassification(t *testing.T) {
+	tests := []struct {
+		mode       HintMode
+		isBeginner bool
+		isOperator bool
+	}{
+		{HintModeDefault, true, false},
+		{HintModeBeginner, true, false},
+		{HintModeOperator, false, true},
+		{HintModeDemo, false, true},
+	}
+
+	for _, tc := range tests {
+		ctx := HintContext{Mode: tc.mode}
+		if ctx.isBeginnerMode() != tc.isBeginner {
+			t.Errorf("mode %q: isBeginnerMode()=%v, want %v", tc.mode, ctx.isBeginnerMode(), tc.isBeginner)
+		}
+		if ctx.isOperatorMode() != tc.isOperator {
+			t.Errorf("mode %q: isOperatorMode()=%v, want %v", tc.mode, ctx.isOperatorMode(), tc.isOperator)
+		}
+	}
+}
+
+func TestDoctorHints_QuickstartSuppressedInOperatorMode(t *testing.T) {
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 10},
+		Ownership: DoctorOwnershipSummary{Flux: 5, ArgoCD: 3, Native: 2, Unmanaged: 2},
+	}
+
+	// In default mode, quickstart should have low but not suppressed priority
+	defaultCtx := HintContext{Mode: HintModeDefault}
+	defaultHints := doctorHintsWithContext(summary, defaultCtx)
+
+	var quickstartPriorityDefault int
+	for _, h := range defaultHints {
+		if strings.Contains(h.Command, "quickstart") {
+			quickstartPriorityDefault = h.Priority
+			break
+		}
+	}
+
+	// In operator mode, quickstart should be suppressed
+	operatorCtx := HintContext{Mode: HintModeOperator}
+	operatorHints := doctorHintsWithContext(summary, operatorCtx)
+
+	var quickstartPriorityOperator int
+	for _, h := range operatorHints {
+		if strings.Contains(h.Command, "quickstart") {
+			quickstartPriorityOperator = h.Priority
+			break
+		}
+	}
+
+	if quickstartPriorityOperator >= quickstartPriorityDefault {
+		t.Fatalf("quickstart priority should be lower in operator mode: default=%d, operator=%d",
+			quickstartPriorityDefault, quickstartPriorityOperator)
+	}
+	if quickstartPriorityOperator != hintPrioritySuppressed {
+		t.Fatalf("quickstart priority in operator mode should be suppressed (%d), got %d",
+			hintPrioritySuppressed, quickstartPriorityOperator)
+	}
+}
+
+func TestDoctorHints_QuickstartBoostedInBeginnerMode(t *testing.T) {
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 5},
+		Ownership: DoctorOwnershipSummary{Flux: 3, Native: 2, Unmanaged: 2},
+	}
+
+	// In beginner mode, quickstart should be boosted
+	beginnerCtx := HintContext{Mode: HintModeBeginner}
+	beginnerHints := doctorHintsWithContext(summary, beginnerCtx)
+
+	var quickstartPriorityBeginner int
+	for _, h := range beginnerHints {
+		if strings.Contains(h.Command, "quickstart") {
+			quickstartPriorityBeginner = h.Priority
+			break
+		}
+	}
+
+	// In default mode, quickstart should have lower priority
+	defaultCtx := HintContext{Mode: HintModeDefault}
+	defaultHints := doctorHintsWithContext(summary, defaultCtx)
+
+	var quickstartPriorityDefault int
+	for _, h := range defaultHints {
+		if strings.Contains(h.Command, "quickstart") {
+			quickstartPriorityDefault = h.Priority
+			break
+		}
+	}
+
+	if quickstartPriorityBeginner <= quickstartPriorityDefault {
+		t.Fatalf("quickstart priority should be higher in beginner mode: beginner=%d, default=%d",
+			quickstartPriorityBeginner, quickstartPriorityDefault)
+	}
+	if quickstartPriorityBeginner != hintPriorityNormal {
+		t.Fatalf("quickstart priority in beginner mode should be normal (%d), got %d",
+			hintPriorityNormal, quickstartPriorityBeginner)
+	}
+}
+
+func TestDoctorHints_ImportHintForNativeHeavyCluster(t *testing.T) {
+	// A cluster with many unmanaged resources should get an import hint
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 10},
+		Ownership: DoctorOwnershipSummary{Flux: 2, Native: 8, Unmanaged: 8},
+	}
+
+	hints := doctorHintsWithContext(summary, DefaultHintContext())
+
+	var hasImportHint bool
+	for _, h := range hints {
+		if strings.Contains(h.Command, "import --dry-run") {
+			hasImportHint = true
+			break
+		}
+	}
+
+	if !hasImportHint {
+		t.Fatal("expected import --dry-run hint for native-heavy cluster")
+	}
+}
+
+func TestDoctorHints_NoImportHintForWellManagedCluster(t *testing.T) {
+	// A cluster with few unmanaged resources should not get an import hint
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 20},
+		Ownership: DoctorOwnershipSummary{Flux: 15, ArgoCD: 3, Native: 2, Unmanaged: 2},
+	}
+
+	hints := doctorHintsWithContext(summary, DefaultHintContext())
+
+	for _, h := range hints {
+		if strings.Contains(h.Command, "import --dry-run") {
+			t.Fatalf("did not expect import hint for well-managed cluster, got: %q", h.Command)
+		}
+	}
+}
+
+func TestDoctorHints_ImportHintBoostedInOperatorMode(t *testing.T) {
+	// When native-heavy and in operator mode, import hint should be boosted.
+	// Use a ratio between 0.3 and 0.5 so only operator mode triggers boost.
+	// 5 unmanaged out of 12 = 41.6%, which is > 0.3 (native-heavy) but <= 0.5 (no auto-boost)
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 12},
+		Ownership: DoctorOwnershipSummary{Flux: 7, Native: 5, Unmanaged: 5},
+	}
+
+	defaultHints := doctorHintsWithContext(summary, HintContext{Mode: HintModeDefault})
+	operatorHints := doctorHintsWithContext(summary, HintContext{Mode: HintModeOperator})
+
+	var importPriorityDefault, importPriorityOperator int
+	for _, h := range defaultHints {
+		if strings.Contains(h.Command, "import --dry-run") {
+			importPriorityDefault = h.Priority
+			break
+		}
+	}
+	for _, h := range operatorHints {
+		if strings.Contains(h.Command, "import --dry-run") {
+			importPriorityOperator = h.Priority
+			break
+		}
+	}
+
+	if importPriorityOperator <= importPriorityDefault {
+		t.Fatalf("import hint priority should be higher in operator mode: default=%d, operator=%d",
+			importPriorityDefault, importPriorityOperator)
+	}
+}
+
+func TestExplainHints_DoctorSuppressedInOperatorMode(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:  "Deployment/api",
+		Namespace: "prod",
+		Owner:     "Flux",
+		Health:    "Healthy",
+	}
+
+	defaultHints := explainHintsWithContext(summary, HintContext{Mode: HintModeDefault})
+	operatorHints := explainHintsWithContext(summary, HintContext{Mode: HintModeOperator})
+
+	var doctorPriorityDefault, doctorPriorityOperator int
+	for _, h := range defaultHints {
+		if strings.Contains(h.Command, "doctor") {
+			doctorPriorityDefault = h.Priority
+			break
+		}
+	}
+	for _, h := range operatorHints {
+		if strings.Contains(h.Command, "doctor") {
+			doctorPriorityOperator = h.Priority
+			break
+		}
+	}
+
+	if doctorPriorityOperator >= doctorPriorityDefault {
+		t.Fatalf("doctor hint priority should be lower in operator mode: default=%d, operator=%d",
+			doctorPriorityDefault, doctorPriorityOperator)
+	}
+	if doctorPriorityOperator != hintPrioritySuppressed {
+		t.Fatalf("doctor priority in operator mode should be suppressed (%d), got %d",
+			hintPrioritySuppressed, doctorPriorityOperator)
+	}
+}
+
+func TestExplainHints_ImportHintInOperatorModeForUnknownOwner(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:  "Deployment/legacy-app",
+		Namespace: "prod",
+		Owner:     "Unknown - no recognized ownership labels found",
+		Health:    "Healthy",
+	}
+
+	// In operator mode, should suggest import for unknown-owner resources
+	operatorHints := explainHintsWithContext(summary, HintContext{Mode: HintModeOperator})
+
+	var hasImportHint bool
+	for _, h := range operatorHints {
+		if strings.Contains(h.Command, "import --dry-run") {
+			hasImportHint = true
+			break
+		}
+	}
+
+	if !hasImportHint {
+		t.Fatal("expected import --dry-run hint for unknown-owner resource in operator mode")
+	}
+
+	// In default mode, should NOT suggest import
+	defaultHints := explainHintsWithContext(summary, HintContext{Mode: HintModeDefault})
+
+	for _, h := range defaultHints {
+		if strings.Contains(h.Command, "import --dry-run") {
+			t.Fatalf("did not expect import hint for unknown-owner resource in default mode, got: %q", h.Command)
+		}
+	}
+}
+
+func TestParseHintMode(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected HintMode
+		wantErr  bool
+	}{
+		{"", HintModeDefault, false},
+		{"default", HintModeDefault, false},
+		{"DEFAULT", HintModeDefault, false},
+		{"beginner", HintModeBeginner, false},
+		{"Beginner", HintModeBeginner, false},
+		{"operator", HintModeOperator, false},
+		{"OPERATOR", HintModeOperator, false},
+		{"demo", HintModeDefault, true},  // demo not exposed via flag (no distinct behavior yet)
+		{"invalid", HintModeDefault, true},
+		{"foo", HintModeDefault, true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			mode, err := ParseHintMode(tc.input)
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("expected error for input %q", tc.input)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("unexpected error for input %q: %v", tc.input, err)
+				return
+			}
+			if mode != tc.expected {
+				t.Errorf("ParseHintMode(%q) = %q, want %q", tc.input, mode, tc.expected)
+			}
+		})
+	}
+}
+
+func TestHintContext_DeterministicAcrossModes(t *testing.T) {
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 10},
+		Ownership: DoctorOwnershipSummary{Flux: 5, Native: 5, Unmanaged: 5},
+		TopIssues: []DoctorIssue{
+			{Severity: "WARNING", Resource: "Deployment/api", Namespace: "prod", Message: "no limits"},
+		},
+	}
+
+	// Run multiple times with same context - should be identical
+	for _, mode := range []HintMode{HintModeDefault, HintModeBeginner, HintModeOperator, HintModeDemo} {
+		ctx := HintContext{Mode: mode}
+		hints1 := doctorTryNextHintsWithContext(summary, ctx)
+		hints2 := doctorTryNextHintsWithContext(summary, ctx)
+
+		if len(hints1) != len(hints2) {
+			t.Fatalf("mode %q: hint count changed: %d vs %d", mode, len(hints1), len(hints2))
+		}
+		for i := range hints1 {
+			if hints1[i] != hints2[i] {
+				t.Fatalf("mode %q: hint %d changed:\n  first:  %q\n  second: %q", mode, i, hints1[i], hints2[i])
+			}
+		}
 	}
 }
 

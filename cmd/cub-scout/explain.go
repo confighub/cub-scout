@@ -19,6 +19,7 @@ var (
 	explainNamespace    string
 	explainFormat       string
 	explainPresentation string
+	explainHintMode     string
 )
 
 var explainCmd = &cobra.Command{
@@ -40,6 +41,7 @@ func init() {
 	explainCmd.Flags().StringVarP(&explainNamespace, "namespace", "n", "", "Namespace of the resource")
 	explainCmd.Flags().StringVar(&explainFormat, "format", "text", "Output format: text, json, md")
 	explainCmd.Flags().StringVar(&explainPresentation, "presentation", "", PresentationModeHelp())
+	explainCmd.Flags().StringVar(&explainHintMode, "hint-mode", "", HintModeHelp())
 }
 
 // ExplainSummary is the canonical model for explain output.
@@ -71,6 +73,13 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Parse hint mode (separate from presentation mode)
+	hintMode, err := ParseHintMode(explainHintMode)
+	if err != nil {
+		return err
+	}
+	hintCtx := HintContext{Mode: hintMode}
+
 	kind, name, err := parseExplainArgs(args)
 	if err != nil {
 		return err
@@ -86,20 +95,20 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return outputExplainSummary(summary, format, invCtx)
+	return outputExplainSummary(summary, format, invCtx, hintCtx)
 }
 
-func outputExplainSummary(summary ExplainSummary, format string, invCtx InvocationContext) error {
+func outputExplainSummary(summary ExplainSummary, format string, invCtx InvocationContext, hintCtx HintContext) error {
 	switch format {
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(summary)
 	case "md":
-		fmt.Print(renderExplainMarkdown(summary, invCtx.Mode(), invCtx.IsExplicit()))
+		fmt.Print(renderExplainMarkdown(summary, invCtx.Mode(), invCtx.IsExplicit(), hintCtx))
 		return nil
 	default:
-		fmt.Print(renderExplainText(summary, invCtx.Mode(), invCtx.IsExplicit()))
+		fmt.Print(renderExplainText(summary, invCtx.Mode(), invCtx.IsExplicit(), hintCtx))
 		return nil
 	}
 }
@@ -357,7 +366,7 @@ func explainDeploymentChain(chain []agent.ChainLink) string {
 	return strings.Join(parts, " -> ")
 }
 
-func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMode bool) string {
+func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMode bool, hintCtx HintContext) string {
 	var b strings.Builder
 
 	// Helper for legacy vs explicit mode label formatting
@@ -398,7 +407,7 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 		}
 	}
 
-	hints := explainTryNextHints(summary)
+	hints := explainTryNextHintsWithContext(summary, hintCtx)
 	if len(hints) > 0 {
 		if explicitMode {
 			b.WriteString(renderTryNextSectionWithMode(hints, mode))
@@ -445,7 +454,7 @@ func colorExplainDrift(drift string) string {
 	}
 }
 
-func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explicitMode bool) string {
+func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explicitMode bool, hintCtx HintContext) string {
 	var b strings.Builder
 
 	// Heading - only use presentation-specific format when explicitly requested
@@ -473,9 +482,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	}
 
 	if explicitMode {
-		b.WriteString(renderTryNextMarkdownWithMode(explainTryNextHints(summary), mode))
+		b.WriteString(renderTryNextMarkdownWithMode(explainTryNextHintsWithContext(summary, hintCtx), mode))
 	} else {
-		b.WriteString(renderTryNextMarkdown(explainTryNextHints(summary)))
+		b.WriteString(renderTryNextMarkdown(explainTryNextHintsWithContext(summary, hintCtx)))
 	}
 	// Add ConfigHub link if available
 	if summary.ConfigHubURL != "" {

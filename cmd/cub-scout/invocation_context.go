@@ -140,6 +140,7 @@ func (c InvocationContext) Mode() PresentationMode {
 	return c.EffectiveMode
 }
 
+
 // detectContextFromEnvironment performs minimal advisory detection.
 // This is intentionally conservative - returns DetectedUnknown unless
 // there is a clear local signal.

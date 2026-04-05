@@ -68,7 +68,7 @@ func TestExplainText_GoldenByOwner(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			summary := buildExplainSummary(tc.result)
-			actual := renderExplainText(summary, DefaultPresentationMode, false)
+			actual := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
 			assertExplainGolden(t, tc.golden, actual)
 		})
 	}
@@ -86,7 +86,7 @@ func TestExplainMarkdown_Golden(t *testing.T) {
 	}
 
 	summary := buildExplainSummary(result)
-	actual := renderExplainMarkdown(summary, DefaultPresentationMode, false)
+	actual := renderExplainMarkdown(summary, DefaultPresentationMode, false, DefaultHintContext())
 	assertExplainGolden(t, "flux_md.golden.md", actual)
 }
 

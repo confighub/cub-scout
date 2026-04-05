@@ -81,7 +81,7 @@ func TestRenderExplainText_ContainsPlainEnglishSections(t *testing.T) {
 		Drift:       "None detected",
 	}
 
-	out := renderExplainText(summary, DefaultPresentationMode, false)
+	out := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
 
 	required := []string{
 		"Deployment/payments-api in namespace prod:",
@@ -111,7 +111,7 @@ func TestRenderExplainMarkdown_ContainsHeadingsAndFields(t *testing.T) {
 		Drift:       "None detected",
 	}
 
-	out := renderExplainMarkdown(summary, DefaultPresentationMode, false)
+	out := renderExplainMarkdown(summary, DefaultPresentationMode, false, DefaultHintContext())
 
 	required := []string{
 		"## Explain",
@@ -165,7 +165,7 @@ func TestRenderExplainText_IncludesPartialTraceNotes(t *testing.T) {
 		},
 	}
 
-	out := renderExplainText(summary, DefaultPresentationMode, false)
+	out := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
 	if !strings.Contains(out, "Notes:") {
 		t.Fatalf("expected Notes section in explain text:\\n%s", out)
 	}
@@ -253,7 +253,8 @@ func TestRenderExplainText_PresentationModes(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(string(tc.mode), func(t *testing.T) {
 			// explicitMode=true since we're testing explicit presentation modes
-			out := renderExplainText(summary, tc.mode, true)
+			// Hint context is independent of presentation mode
+			out := renderExplainText(summary, tc.mode, true, DefaultHintContext())
 
 			for _, s := range tc.expected {
 				if !strings.Contains(out, s) {
@@ -329,7 +330,8 @@ func TestRenderExplainMarkdown_PresentationModes(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(string(tc.mode), func(t *testing.T) {
 			// explicitMode=true since we're testing explicit presentation modes
-			out := renderExplainMarkdown(summary, tc.mode, true)
+			// Hint context is independent of presentation mode
+			out := renderExplainMarkdown(summary, tc.mode, true, DefaultHintContext())
 
 			for _, s := range tc.expected {
 				if !strings.Contains(out, s) {

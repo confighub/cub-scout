@@ -24,6 +24,7 @@ var (
 	doctorNamespace    string
 	doctorTopIssues    int
 	doctorPresentation string
+	doctorHintMode     string
 )
 
 var doctorCmd = &cobra.Command{
@@ -47,6 +48,7 @@ func init() {
 	doctorCmd.Flags().StringVar(&doctorFormat, "format", "ascii", "Output format: ascii, json")
 	doctorCmd.Flags().IntVar(&doctorTopIssues, "top", 3, "Number of top issues to include")
 	doctorCmd.Flags().StringVar(&doctorPresentation, "presentation", "", PresentationModeHelp())
+	doctorCmd.Flags().StringVar(&doctorHintMode, "hint-mode", "", HintModeHelp())
 }
 
 // DoctorSummary is the canonical model behind both ASCII and JSON output.
@@ -123,6 +125,13 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Parse hint mode (separate from presentation mode)
+	hintMode, err := ParseHintMode(doctorHintMode)
+	if err != nil {
+		return err
+	}
+	hintCtx := HintContext{Mode: hintMode}
+
 	if doctorTopIssues < 0 {
 		return fmt.Errorf("--top must be >= 0")
 	}
@@ -156,8 +165,8 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		enc.SetIndent("", "  ")
 		return enc.Encode(summary)
 	default:
-		// Use invocation context for presentation mode resolution
-		fmt.Print(renderDoctorASCII(summary, invCtx.Mode(), invCtx.IsExplicit()))
+		// Use invocation context for presentation mode, hint context for recommendations
+		fmt.Print(renderDoctorASCII(summary, invCtx.Mode(), invCtx.IsExplicit(), hintCtx))
 		return nil
 	}
 }
@@ -343,7 +352,7 @@ func doctorSeverityRank(sev string) int {
 	}
 }
 
-func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMode bool) string {
+func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMode bool, hintCtx HintContext) string {
 	var b strings.Builder
 
 	// Helper to render section label based on whether presentation mode was explicit
@@ -439,7 +448,7 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 		}
 	}
 
-	hints := doctorTryNextHints(summary)
+	hints := doctorTryNextHintsWithContext(summary, hintCtx)
 	if len(hints) > 0 {
 		if explicitMode {
 			b.WriteString(renderTryNextSectionWithMode(hints, mode))
