@@ -32,6 +32,39 @@ When this flow works well, the AI assistant should:
 4. Use `--dry-run` before any write action.
 5. If capability is missing, offer to file a GitHub issue with evidence.
 
+## Presentation Modes
+
+For AI-assisted use, prefer an explicit presentation-mode model instead of trying to infer too much from the host environment.
+
+Presentation mode is separate from:
+
+- whether you are in standalone or connected operation
+- whether the current installation has paid or governed features available
+
+Recommended modes:
+
+- `human` for direct operator reading
+- `ai` for AI-oriented summaries and handoffs
+- `paired` for human-plus-assistant workflows
+
+Important rules:
+
+- explicit mode selection should win over auto-detection
+- any host detection should be advisory only
+- JSON and MCP outputs should stay structurally stable across presentation modes
+- text and markdown outputs can adapt more for readability and handoff quality
+
+Useful concepts:
+
+- `requested_mode`: what the caller explicitly asked for
+- `detected_context`: what the environment appears to be
+- `effective_mode`: the mode actually used after applying defaults
+
+Keep these separate from:
+
+- `entitlement_tier`: what commercial/hosted features may be unlocked
+- `capability_mode`: what the system can actually do in this invocation
+
 ## Prerequisites
 
 ### Local tools
@@ -91,6 +124,7 @@ Use when:
 Why this is foundational:
 - All capabilities should remain available via CLI commands/scripts.
 - AI layers should orchestrate CLI, not replace it.
+- Presentation style should be selectable explicitly rather than inferred implicitly.
 
 Recommended commands to keep in every flow:
 
@@ -98,6 +132,13 @@ Recommended commands to keep in every flow:
 ./cub-scout --help
 ./cub-scout <command> --help
 ./cub-scout import --dry-run -n <namespace>
+```
+
+When presentation-mode support is added, prefer explicit flags such as:
+
+```bash
+./cub-scout doctor --presentation ai
+./cub-scout explain deploy/api -n prod --presentation paired
 ```
 
 ### 3) Slack Front Door (Team recommendation)
@@ -158,6 +199,17 @@ Expected interaction:
 ```text
 Import this into ConfigHub? [y/N]
 ```
+
+## Recommended Rollout For AI Presentation Support
+
+For product and implementation work, treat presentation mode as a separate concern from evidence collection.
+
+Recommended sequence:
+
+1. define explicit presentation modes first
+2. add a small read-only CLI slice on commands like `doctor` and `explain`
+3. keep JSON and MCP contracts unchanged
+4. add advisory detection and richer propagation only later if needed
 
 ## If It Is Not Possible Yet
 

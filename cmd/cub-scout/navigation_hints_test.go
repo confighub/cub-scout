@@ -76,7 +76,7 @@ func TestRenderDoctorASCII_AddsTryNextHints(t *testing.T) {
 		},
 	}
 
-	out := renderDoctorASCII(summary)
+	out := renderDoctorASCII(summary, DefaultPresentationMode, false)
 
 	required := []string{
 		"TRY NEXT:",
@@ -103,7 +103,7 @@ func TestRenderExplainText_AddsTryNextHints(t *testing.T) {
 		Drift:       "None",
 	}
 
-	out := renderExplainText(summary)
+	out := renderExplainText(summary, DefaultPresentationMode, false)
 
 	required := []string{
 		"TRY NEXT:",
@@ -130,7 +130,7 @@ func TestRenderExplainMarkdown_AddsTryNextSection(t *testing.T) {
 		Drift:       "Unknown",
 	}
 
-	out := renderExplainMarkdown(summary)
+	out := renderExplainMarkdown(summary, DefaultPresentationMode, false)
 
 	required := []string{
 		"### Try Next",
@@ -389,7 +389,7 @@ func TestRenderExplainText_IncludesConfigHubSection(t *testing.T) {
 		ConfigHubURL: "https://confighub.com/spaces/sp-abc/units/payments",
 	}
 
-	out := renderExplainText(summary)
+	out := renderExplainText(summary, DefaultPresentationMode, false)
 
 	// Should have TRY NEXT section
 	if !strings.Contains(out, "TRY NEXT:") {
@@ -417,7 +417,7 @@ func TestRenderExplainText_NoConfigHubSectionWithoutURL(t *testing.T) {
 		// No ConfigHubURL
 	}
 
-	out := renderExplainText(summary)
+	out := renderExplainText(summary, DefaultPresentationMode, false)
 
 	// Should have TRY NEXT section
 	if !strings.Contains(out, "TRY NEXT:") {

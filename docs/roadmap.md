@@ -117,6 +117,7 @@ Semantic contracts, determinism guarantees, and the ASCII = f(JSON) + g model ar
 | `docs/roadmap-connected-views-and-launch.md` | Planning only (non-authoritative) | Workstream backlog for connected views and launch narrative |
 | `docs/roadmap-1x-connected-upsell.md` | Draft for review (non-authoritative) | Candidate sequencing for 1.x connected packaging/upsell |
 | `docs/releases/v0.20.0-slice-plan.md` | Delivered historical plan (non-authoritative) | Scoped implementation plan used for shipped v0.20.0 slice |
+| `docs/reference/ai-ops-gateway-prd.md` | Tracked design reference | AI gateway, presentation modes, plugin-first packaging, and explorer-vs-provider boundaries |
 
 Graduation rule: move an item from these files into this roadmap (or a release plan) before treating it as committed execution scope.
 
@@ -638,6 +639,42 @@ This milestone delivers the "aha moment" for connected mode: what ConfigHub know
 
 ---
 
+## v1.8 — AI Gateway Foundations
+
+**Status:** Planned
+**Theme:** *Explicit AI/human presentation, shared read-only seams, and plugin-ready gateway evolution*
+
+This milestone turns the AI ops gateway direction into tracked execution scope without collapsing too much into one `cub-scout` add-on.
+
+The rule for this milestone is:
+
+* `cub-scout` remains an explorer and evidence surface
+* presentation changes are narrative-only and must preserve the existing semantic contract
+* connected/governed execution stays outside `cub-scout` ownership even when the long-term gateway model includes delegated execution flows
+* the implementation should keep future `cub` plugin hosting straightforward
+
+The tracked design reference for this milestone is `docs/reference/ai-ops-gateway-prd.md`.
+
+### Phase A — Presentation MVP
+
+* #352 — explicit `human|ai|paired` presentation modes for read-only `doctor` and `explain`
+
+### Phase B — Stable Internal Seams
+
+* #354 — invocation-context model: `requested_mode`, `detected_context`, `effective_mode`, `transport`
+* #353 — align `doctor`/`explain` with shared-flow seams without changing current contracts
+
+### Phase C — Deterministic Follow-Ons
+
+* #349 — improve deterministic next-step hints while keeping them testable
+* #350 — suggest connected ConfigHub URLs as standard handoff behavior
+
+### Longer-Range Gateway Evolution
+
+* #214 — MCP gateway direction remains valid, but future work should keep MCP as a transport and avoid assuming all gateway logic permanently lives inside `cub-scout`
+
+---
+
 ## Guiding Principles (Still True)
 
 * **Explainability first**
@@ -666,6 +703,7 @@ This milestone delivers the "aha moment" for connected mode: what ConfigHub know
 | **v1.5** | AI-Native Ops | Context-pack v2, safe ask-mode, evidence capture, AI tool integration examples |
 | **v1.6** | Connected Value | WET/LIVE/DRY comparison, change history, impact preview, fleet outliers, audit trail |
 | **v1.7** | Platform Scale | kro, summary storage, Slack digests, custom ownership detectors, webhook streaming, meaning-first grouping experiments |
+| **v1.8** | AI Gateway Foundations | Presentation MVP, invocation-context model, shared-flow seams, deterministic follow-ons |
 
 ### Strategic Positioning
 

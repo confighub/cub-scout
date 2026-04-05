@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	explainNamespace string
-	explainFormat    string
+	explainNamespace    string
+	explainFormat       string
+	explainPresentation string
 )
 
 var explainCmd = &cobra.Command{
@@ -38,6 +39,7 @@ func init() {
 	rootCmd.AddCommand(explainCmd)
 	explainCmd.Flags().StringVarP(&explainNamespace, "namespace", "n", "", "Namespace of the resource")
 	explainCmd.Flags().StringVar(&explainFormat, "format", "text", "Output format: text, json, md")
+	explainCmd.Flags().StringVar(&explainPresentation, "presentation", "", PresentationModeHelp())
 }
 
 // ExplainSummary is the canonical model for explain output.
@@ -63,6 +65,16 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid --format %q (valid: text, json, md)", explainFormat)
 	}
 
+	// Parse presentation mode (only affects text/md output)
+	mode := DefaultPresentationMode
+	if explainPresentation != "" {
+		var err error
+		mode, err = ParsePresentationMode(explainPresentation)
+		if err != nil {
+			return err
+		}
+	}
+
 	kind, name, err := parseExplainArgs(args)
 	if err != nil {
 		return err
@@ -73,10 +85,13 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		ns = "default"
 	}
 
+	// Track whether presentation mode was explicitly requested
+	explicitMode := explainPresentation != ""
+
 	traceResult, err := traceForExplain(cmd.Context(), kind, name, ns)
 	if err != nil {
 		summary := buildExplainSummaryFromFailure(kind, name, ns, err)
-		return outputExplainSummary(summary, format)
+		return outputExplainSummary(summary, format, mode, explicitMode)
 	}
 
 	summary := buildExplainSummary(traceResult)
@@ -87,20 +102,20 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		summary.Namespace = ns
 	}
 
-	return outputExplainSummary(summary, format)
+	return outputExplainSummary(summary, format, mode, explicitMode)
 }
 
-func outputExplainSummary(summary ExplainSummary, format string) error {
+func outputExplainSummary(summary ExplainSummary, format string, mode PresentationMode, explicitMode bool) error {
 	switch format {
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(summary)
 	case "md":
-		fmt.Print(renderExplainMarkdown(summary))
+		fmt.Print(renderExplainMarkdown(summary, mode, explicitMode))
 		return nil
 	default:
-		fmt.Print(renderExplainText(summary))
+		fmt.Print(renderExplainText(summary, mode, explicitMode))
 		return nil
 	}
 }
@@ -358,24 +373,54 @@ func explainDeploymentChain(chain []agent.ChainLink) string {
 	return strings.Join(parts, " -> ")
 }
 
-func renderExplainText(summary ExplainSummary) string {
+func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMode bool) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s in namespace %s:\n", Bold(summary.Resource), summary.Namespace)
-	fmt.Fprintf(&b, "  %s %s\n", Dim("Owner:"), colorExplainOwner(summary.Owner))
-	fmt.Fprintf(&b, "  %s %s\n", Dim("Source:"), summary.Source)
-	fmt.Fprintf(&b, "  %s %s\n", Dim("Deployed via:"), summary.DeployedVia)
-	fmt.Fprintf(&b, "  %s %s\n", Dim("Health:"), StatusColor(summary.Health))
-	fmt.Fprintf(&b, "  %s %s\n", Dim("Risks:"), summary.Risks)
-	fmt.Fprintf(&b, "  %s %s\n", Dim("Drift:"), colorExplainDrift(summary.Drift))
+
+	// Helper for legacy vs explicit mode label formatting
+	label := func(text string) string {
+		if explicitMode {
+			return SectionLabel(mode, text)
+		}
+		return Dim(text + ":")
+	}
+
+	// Heading - only use presentation-specific format when explicitly requested
+	if explicitMode {
+		heading := ExplainHeading(mode, summary.Resource, summary.Namespace)
+		fmt.Fprintf(&b, "%s\n", heading)
+	} else {
+		// Legacy format
+		fmt.Fprintf(&b, "%s in namespace %s:\n", Bold(summary.Resource), summary.Namespace)
+	}
+
+	fmt.Fprintf(&b, "  %s %s\n", label("Owner"), colorExplainOwner(summary.Owner))
+	fmt.Fprintf(&b, "  %s %s\n", label("Source"), summary.Source)
+	fmt.Fprintf(&b, "  %s %s\n", label("Deployed via"), summary.DeployedVia)
+	fmt.Fprintf(&b, "  %s %s\n", label("Health"), StatusColor(summary.Health))
+	fmt.Fprintf(&b, "  %s %s\n", label("Risks"), summary.Risks)
+	fmt.Fprintf(&b, "  %s %s\n", label("Drift"), colorExplainDrift(summary.Drift))
 	if len(summary.Notes) > 0 {
-		fmt.Fprintf(&b, "  %s\n", Dim("Notes:"))
+		fmt.Fprintf(&b, "  %s\n", label("Notes"))
 		for _, note := range summary.Notes {
 			fmt.Fprintf(&b, "    - %s\n", Yellow(note))
 		}
 	}
+
+	// Outro - only for explicit AI mode
+	if explicitMode {
+		outro := ExplainOutro(mode)
+		if outro != "" {
+			fmt.Fprintf(&b, "\n%s\n", outro)
+		}
+	}
+
 	hints := explainTryNextHints(summary)
 	if len(hints) > 0 {
-		b.WriteString(renderTryNextSection(hints))
+		if explicitMode {
+			b.WriteString(renderTryNextSectionWithMode(hints, mode))
+		} else {
+			b.WriteString(renderTryNextSection(hints))
+		}
 	}
 	// Add ConfigHub GUI suggestion if available
 	if chHint := explainConfigHubHint(summary); chHint != nil {
@@ -416,11 +461,20 @@ func colorExplainDrift(drift string) string {
 	}
 }
 
-func renderExplainMarkdown(summary ExplainSummary) string {
+func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explicitMode bool) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "## Explain\n\n")
-	fmt.Fprintf(&b, "- **Resource:** `%s`\n", summary.Resource)
-	fmt.Fprintf(&b, "- **Namespace:** `%s`\n", summary.Namespace)
+
+	// Heading - only use presentation-specific format when explicitly requested
+	if explicitMode && mode == PresentationAI {
+		fmt.Fprintf(&b, "## RESOURCE CONTEXT\n\n")
+		fmt.Fprintf(&b, "[resource: %s namespace: %s]\n\n", summary.Resource, summary.Namespace)
+	} else {
+		// Legacy/human/paired format
+		fmt.Fprintf(&b, "## Explain\n\n")
+		fmt.Fprintf(&b, "- **Resource:** `%s`\n", summary.Resource)
+		fmt.Fprintf(&b, "- **Namespace:** `%s`\n", summary.Namespace)
+	}
+
 	fmt.Fprintf(&b, "- **Owner:** %s\n", summary.Owner)
 	fmt.Fprintf(&b, "- **Source:** %s\n", summary.Source)
 	fmt.Fprintf(&b, "- **Deployed via:** %s\n", summary.DeployedVia)
@@ -433,11 +487,21 @@ func renderExplainMarkdown(summary ExplainSummary) string {
 			fmt.Fprintf(&b, "  - %s\n", note)
 		}
 	}
-	b.WriteString(renderTryNextMarkdown(explainTryNextHints(summary)))
+
+	if explicitMode {
+		b.WriteString(renderTryNextMarkdownWithMode(explainTryNextHints(summary), mode))
+	} else {
+		b.WriteString(renderTryNextMarkdown(explainTryNextHints(summary)))
+	}
 	// Add ConfigHub link if available
 	if summary.ConfigHubURL != "" {
 		b.WriteString("\n### Open in ConfigHub\n\n")
 		b.WriteString(fmt.Sprintf("- [Review this unit in ConfigHub](%s)\n", summary.ConfigHubURL))
+	}
+
+	// Outro for explicit AI mode - at the true end after all content
+	if explicitMode && mode == PresentationAI {
+		b.WriteString("\n[end resource context]\n")
 	}
 	return b.String()
 }

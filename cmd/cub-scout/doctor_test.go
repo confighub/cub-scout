@@ -85,7 +85,7 @@ func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
 		TopIssues: []DoctorIssue{{Severity: "CRITICAL", Resource: "Deployment/api", Namespace: "prod", Message: "missing limits"}},
 	}
 
-	out := renderDoctorASCII(summary)
+	out := renderDoctorASCII(summary, DefaultPresentationMode, false)
 
 	required := []string{
 		"Cluster: kind-dev (namespace: all)",
@@ -100,5 +100,85 @@ func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
 		if !strings.Contains(out, s) {
 			t.Fatalf("expected %q in output:\n%s", s, out)
 		}
+	}
+}
+
+func TestRenderDoctorASCII_PresentationModes(t *testing.T) {
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 10},
+		Ownership: DoctorOwnershipSummary{Flux: 5, Native: 5, Unmanaged: 5},
+		Health:    DoctorHealthSummary{Healthy: 8, Warning: 1, Error: 1},
+		Risks:     DoctorRiskSummary{Total: 2, Critical: 1, Warning: 1},
+		Drift:     DoctorDriftSummary{Resources: 1},
+	}
+
+	tests := []struct {
+		mode     PresentationMode
+		expected []string
+		excluded []string
+	}{
+		{
+			mode: PresentationHuman,
+			expected: []string{
+				"Cluster Health Summary",
+				"Cluster: kind-dev (namespace: prod)",
+				"TRY NEXT:",
+			},
+			excluded: []string{
+				"CLUSTER HEALTH SUMMARY",
+				"[scope:",
+				"RECOMMENDED ACTIONS:",
+			},
+		},
+		{
+			mode: PresentationAI,
+			expected: []string{
+				"CLUSTER HEALTH SUMMARY",
+				"[scope: cluster=kind-dev namespace=prod]",
+				"OWNERSHIP:",
+				"HEALTH:",
+				"RISKS:",
+				"DRIFT:",
+				"RECOMMENDED ACTIONS:",
+			},
+			excluded: []string{
+				"Cluster Health Summary\n", // human heading (newline to avoid matching AI uppercase)
+				"Cluster: kind-dev",        // human intro
+				"TRY NEXT:",
+			},
+		},
+		{
+			mode: PresentationPaired,
+			expected: []string{
+				"Cluster Health Summary",
+				"Cluster: kind-dev (namespace: prod)",
+				"TRY NEXT:",
+			},
+			excluded: []string{
+				"CLUSTER HEALTH SUMMARY",
+				"[scope:",
+				"RECOMMENDED ACTIONS:",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(string(tc.mode), func(t *testing.T) {
+			// explicitMode=true since we're testing explicit presentation modes
+			out := renderDoctorASCII(summary, tc.mode, true)
+
+			for _, s := range tc.expected {
+				if !strings.Contains(out, s) {
+					t.Errorf("expected %q in %s mode output:\n%s", s, tc.mode, out)
+				}
+			}
+			for _, s := range tc.excluded {
+				if strings.Contains(out, s) {
+					t.Errorf("did not expect %q in %s mode output:\n%s", s, tc.mode, out)
+				}
+			}
+		})
 	}
 }
