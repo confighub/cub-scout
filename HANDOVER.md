@@ -33,17 +33,19 @@ Key deliverables now in place:
 - Deterministic `TRY NEXT` hints are stronger and more contextual (`cec20f8`, `#349`)
 - `explain` suggests ConfigHub GUI deep-links when connected context provides a unit URL (`a5016ad`, `#350`)
 - CLI color output with `NO_COLOR` support for doctor and explain commands (`2768e0e`, `#351`)
+- Explicit `--presentation` flag for doctor and explain commands (`a5a5e59`, `#352`)
+  - Three modes: `human` (default), `ai`, `paired`
+  - Opt-in only: default behavior unchanged without flag
+  - AI mode uses uppercase markers, bracket notation, `RECOMMENDED ACTIONS` heading
 
 ## Open issues
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #352 | Detect AI usage and frame responses accordingly | Needs reframing before coding. Prefer explicit, testable modes over brittle auto-detection. |
-| #342 | Bidirectional snapshot and conformance workflow | Future product direction; out of scope for the completed March connected/docs slice |
-| #328 | Secrets in cub-scout | Separate feature track; out of scope for the completed March connected/docs slice |
+| #342 | Bidirectional snapshot and conformance workflow | Future product direction |
+| #328 | Secrets in cub-scout | Separate feature track |
 
-The hint/color CLI polish cluster (#349, #350, #351) is now complete. The next
-slice should be chosen intentionally from #352 or the larger feature tracks.
+The CLI polish cluster (#349, #350, #351, #352) is now complete.
 
 Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
@@ -51,11 +53,11 @@ in that direction rather than flattening the current system.
 
 ## Suggested next milestones
 
-1. Milestone 1: reframe AI-mode output explicitly (`#352`)
-   If pursued, make this an explicit and testable mode choice rather than
-   brittle environment auto-detection. Needs design discussion first.
-2. Milestone 2: return to larger feature tracks (`#328`, `#342`)
+1. Milestone 1: return to larger feature tracks (`#328`, `#342`)
    Secrets and bidirectional conformance remain important future directions.
+2. Milestone 2: expand presentation mode to other commands if needed
+   The `--presentation` flag is currently on `doctor` and `explain` only.
+   Expansion to other commands can be done incrementally as needed.
 
 ## External publication boundary
 
@@ -123,11 +125,11 @@ For the core connected demos, "AI-first" means:
 - `docs/reference/commands.md`
 - `docs/reference/json-contracts.md`
 
-### Likely file hotspots for #352 (AI-mode output)
+### Presentation mode implementation (#352 complete)
 
-- `cmd/cub-scout/root.go` (flag handling)
-- `cmd/cub-scout/color.go` (output formatting)
-- Output rendering functions in doctor.go, explain.go, scan.go
+- `cmd/cub-scout/presentation.go` — mode types and helper functions
+- `cmd/cub-scout/doctor.go` — `--presentation` flag and rendering
+- `cmd/cub-scout/explain.go` — `--presentation` flag and rendering
 
 ## Proof expectations
 
