@@ -58,9 +58,11 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #357 | Git as a first-class source: add read-only import preview from local Git path | In progress |
+| #357 | Git as a first-class source: add read-only import preview from local Git path | Initial slice complete (see below) |
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
+| #363 | Enhance Git parser to support ArgoCD ApplicationSet git generators | Follow-on from #357 |
+| #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Future enhancement |
 
 Recent closures:
 - #356, #358, #361 — Docs/example sync cluster complete (Apr 6)
@@ -72,13 +74,112 @@ Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
 in that direction rather than flattening the current system.
 
+## Git Import Architecture (Critical Context for #357 follow-ons)
+
+This section documents the relationship between different import tools across
+multiple repos. Understanding this is essential for continuing #357 work.
+
+### The Three Import Surfaces
+
+1. **`cub gitops import`** (confighub/sdk - `cmd/cub/gitops_import.go`)
+   - Discovers ArgoCD/Flux resources **from live K8s cluster** (not Git directly)
+   - Uses render targets to get manifests (ArgoCD API or Flux renderer)
+   - Creates ConfigHub units: -dry (renderer), -crds, -wet (rendered output)
+   - Requires: running ArgoCD/Flux controller, K8s target, render target
+
+2. **`cub gitops discover`** (confighub/sdk - `cmd/cub/gitops_discover.go`)
+   - Finds ArgoCD Applications, Flux HelmReleases/Kustomizations in cluster
+   - Prerequisite step for `cub gitops import`
+   - Query: `import.include_custom = true AND kind IN ('Application','HelmRelease','Kustomization')`
+
+3. **`cub-scout import --git-path`** (this repo - `cmd/cub-scout/import.go`)
+   - Parses Git repo structure **locally** without cluster
+   - Shows what SHOULD be deployed (Git source of truth)
+   - Enables Git↔cluster comparison for verification
+   - Initial implementation: uses `gitops.ParseRepo()` for Flux-style patterns
+
+### The Full ConfigHub Loop (from Slack discussion)
+
+```
+Git repo → ArgoCD syncs to cluster
+        → cub gitops discover (finds ArgoCD apps)
+        → cub gitops import (renders via ArgoCD API)
+        → ConfigHub units created
+        → Edit in ConfigHub
+        → Apply back via Argo+OCI
+```
+
+Sample repo demonstrating this: `jesperfj/gitops-argocd`
+
+### Rendering Implementations (confighub/sdk - bridge-impl/)
+
+**ArgoCD Renderer** (`argocd-renderer/renderer.go`):
+- Calls ArgoCD API to render Applications to manifests
+- Requires running ArgoCD controller in cluster
+- Creates/updates Application, waits for sync, fetches rendered manifests
+
+**Flux Renderer** (`flux-renderer/`):
+- `kustomize.go`: Fetches artifact URL, runs `kustomize build` locally
+- `helm.go`: Loads chart from URL, uses Helm template engine locally
+- Can render without cluster controller (just needs artifact URLs)
+
+### Current Gap: ArgoCD ApplicationSet Git Generators
+
+The initial #357 implementation uses `gitops.ParseRepo()` which supports
+Flux-style patterns (`apps/base/`, `apps/staging/`). However, ArgoCD repos
+often use **ApplicationSets with git generators**:
+
+```yaml
+# applicationsets/apps.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/org/repo
+        directories:
+          - path: apps/*    # ← This pattern defines what apps exist
+```
+
+**What exists in cub-scout:**
+- `pkg/gitops/parser.go`: Has `ApplicationSetDef` type with `TargetApps` field
+- `internal/patterns/pattern_git_aware.go`: `extractGeneratorTypes()` gets type names
+
+**What's missing:**
+- Extracting `directories[].path` patterns from git generators
+- Scanning matching directories in repo
+- Populating `TargetApps` with discovered apps
+
+This gap means `cub-scout import --git-path` on `jesperfj/gitops-argocd` would
+not find the apps defined by the ApplicationSet.
+
+### Files Across Repos
+
+| Repo | File | Purpose |
+|------|------|---------|
+| cub-scout | `cmd/cub-scout/import.go` | `--git-path` flag, Git preview flow |
+| cub-scout | `cmd/cub-scout/import_git_test.go` | Git import tests |
+| cub-scout | `pkg/gitops/parser.go` | `ParseRepo()`, needs ApplicationSet enhancement |
+| confighub/sdk | `cmd/cub/gitops_import.go` | Import from K8s cluster |
+| confighub/sdk | `cmd/cub/gitops_discover.go` | Discover GitOps resources in cluster |
+| confighub/sdk | `bridge-impl/argocd-renderer/` | ArgoCD manifest rendering |
+| confighub/sdk | `bridge-impl/flux-renderer/` | Flux manifest rendering (kustomize, helm) |
+
+### Decision: Comparison is Automatic
+
+When both Git and cluster sources are provided, comparison happens automatically:
+- `import --git-path ./repo` → Git-only preview
+- `import --git-path ./repo -n prod` → Git↔cluster comparison
+- `import --git-path ./repo --from-bundle ./bundle` → Git↔bundle comparison
+
+No separate `--compare` flag needed.
+
 ## Suggested next milestones
 
-1. Milestone 1: #357 — Git as a first-class source (in progress)
-   Add read-only import preview from local Git path:
-   `cub-scout import --git-path ./repo --dry-run [--json]`.
-   Must align with existing `cub gitops import` tooling in confighub/sdk.
-   Enables Git↔cluster comparison for correctness verification.
+1. Milestone 1: #357 — Git as a first-class source
+   - Initial slice COMPLETE: `--git-path` flag added, Git-only preview and comparison work
+   - Follow-on #363: Enhance parser for ArgoCD ApplicationSet git generators
+   - Follow-on #364: Investigate rendering integration (future)
 2. Milestone 2: docs/example sync cluster (#356, #358, #361) — COMPLETE
 3. Milestone 3: polish/compat follow-ons (#359, #360)
    Extend `--presentation` incrementally to other read-only commands if useful,
@@ -165,6 +266,12 @@ For the core connected demos, "AI-first" means:
 - `cmd/cub-scout/map.go` — `map issues` secret collection and formatting
 - `cmd/cub-scout/map_secret_issues_test.go` — map issues secret tests
 - `cmd/cub-scout/localcluster.go` — TUI trace secret panel (renderTrace, runTrace)
+
+### Git import implementation (#357 initial slice complete)
+
+- `cmd/cub-scout/import.go` — `--git-path` flag, `runImportFromGit()`, `buildImportFromGitPreview()`
+- `cmd/cub-scout/import_git_test.go` — Git path tests, evidence JSON tests
+- `pkg/gitops/parser.go` — `ParseRepo()` (needs enhancement for ApplicationSet git generators)
 
 ## Proof expectations
 
