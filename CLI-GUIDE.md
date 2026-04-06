@@ -111,6 +111,8 @@ The table below reflects the current `cub-scout --help` output.
 ```bash
 ./cub-scout doctor
 ./cub-scout doctor --namespace production
+./cub-scout doctor --presentation ai
+./cub-scout doctor --hint-mode operator
 ./cub-scout doctor --format json
 ```
 
@@ -120,6 +122,8 @@ The table below reflects the current `cub-scout --help` output.
 | `--format` | Output format: `ascii`, `json` |
 | `-n, --namespace` | Namespace scope |
 | `--top` | Number of top issues to include (default: 3) |
+| `--presentation` | Narrative framing for ASCII output: `human`, `ai`, `paired` (omit the flag to keep the legacy/default render path) |
+| `--hint-mode` | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator` |
 
 ---
 
@@ -130,6 +134,8 @@ The table below reflects the current `cub-scout --help` output.
 ```bash
 ./cub-scout explain deploy/my-app -n prod
 ./cub-scout explain deployment/my-app -n prod --format json
+./cub-scout explain deployment/my-app -n prod --presentation ai
+./cub-scout explain deployment/my-app -n prod --hint-mode operator
 ./cub-scout explain deployment/my-app -n prod --format md
 ```
 
@@ -138,6 +144,8 @@ The table below reflects the current `cub-scout --help` output.
 |--------|-------------|
 | `--format` | Output format: `text`, `json`, `md` |
 | `-n, --namespace` | Namespace of target resource |
+| `--presentation` | Narrative framing for text/Markdown output: `human`, `ai`, `paired` (omit the flag to keep the legacy/default render path) |
+| `--hint-mode` | Recommendation ranking for next-step hints: `default`, `beginner`, `operator` |
 
 ---
 

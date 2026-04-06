@@ -680,6 +680,7 @@ The tracked design reference for this milestone is `docs/reference/ai-ops-gatewa
 
 **Status:** Released (2026-04-05)
 **Theme:** *Verifiable import workflows and secret dependency visibility*
+**Release notes:** [docs/releases/v1.9.0.md](releases/v1.9.0.md)
 
 ### Conformance Workflows (#342) — Delivered
 
@@ -746,7 +747,7 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * v1.3.0 released (2026-03-04) — determinism hardening + release hygiene
 * v1.7.0 released (2026-03-07) — platform composition (Crossplane + kro), meaning-first grouping experiments, extensibility/fleet slices
 * v1.8.0 released (2026-04-05) — AI gateway foundations, presentation modes, deterministic hints
-* v1.9.0 released (2026-04-05) — conformance workflows (#342), secret evidence (#328 complete)
+* v1.9.0 released (2026-04-05) — conformance workflows (#342), secret evidence (#328 complete); see [release notes](releases/v1.9.0.md)
 
 ### Recent Milestones
 

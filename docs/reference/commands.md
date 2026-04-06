@@ -252,8 +252,20 @@ cub-scout doctor [flags]
 ```bash
 cub-scout doctor
 cub-scout doctor -n production
+cub-scout doctor --presentation ai
+cub-scout doctor --hint-mode operator
 cub-scout doctor --format json
 ```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--format` | Output format: `ascii`, `json` |
+| `-n, --namespace` | Namespace scope (default: all namespaces) |
+| `--top` | Number of top issues to include (default: `3`) |
+| `--presentation` | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omit the flag to keep the legacy/default render path. JSON is unchanged. |
+| `--hint-mode` | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
 
 ---
 
@@ -269,8 +281,19 @@ cub-scout explain <kind/name> [flags]
 
 ```bash
 cub-scout explain deploy/payments-api -n prod
+cub-scout explain deploy/payments-api -n prod --presentation ai
+cub-scout explain deploy/payments-api -n prod --hint-mode operator
 cub-scout explain deployment/payments-api -n prod --format md
 ```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--format` | Output format: `text`, `json`, `md` |
+| `-n, --namespace` | Namespace of target resource |
+| `--presentation` | Narrative framing for text/Markdown output: `human`, `ai`, `paired`. Omit the flag to keep the legacy/default render path. JSON is unchanged. |
+| `--hint-mode` | Recommendation ranking for next-step hints: `default`, `beginner`, `operator`. JSON is unchanged. |
 
 ---
 
