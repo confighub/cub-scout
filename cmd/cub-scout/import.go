@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/gitops"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -36,6 +37,7 @@ var (
 	importFromBundle  string
 	importAuditReason string
 	importResources   []string // --resource flag for curated selection
+	importGitPath     string   // --git-path flag for Git repo preview
 )
 
 var listUnitSlugsForSpace = fetchUnitSlugsForSpace
@@ -134,8 +136,10 @@ type UnitJSON struct {
 }
 
 type importEvidenceJSON struct {
-	Source     string `json:"source"`
-	BundlePath string `json:"bundlePath,omitempty"`
+	Source        string `json:"source"`
+	BundlePath    string `json:"bundlePath,omitempty"`
+	GitPath       string `json:"gitPath,omitempty"`
+	ClusterSource string `json:"clusterSource,omitempty"` // For comparison: "cluster" or "bundle"
 }
 
 // ImportSelectionResult tracks the outcome of curated resource selection.
@@ -364,6 +368,7 @@ func init() {
 	importCmd.Flags().StringVar(&importFromBundle, "from-bundle", "", "Import from a debug bundle directory instead of live cluster discovery")
 	importCmd.Flags().StringVar(&importAuditReason, "audit-reason", "", "Record break-glass decision reason in connected audit history (max 512 chars)")
 	importCmd.Flags().StringArrayVar(&importResources, "resource", nil, "Select specific resources to import (repeatable, e.g., --resource deploy/api --resource statefulset/db)")
+	importCmd.Flags().StringVar(&importGitPath, "git-path", "", "Local Git repository path for import preview (dry-run only)")
 
 	rootCmd.AddCommand(importCmd)
 }
@@ -378,10 +383,22 @@ func runImport(cmd *cobra.Command, args []string) error {
 		if importFromBundle != "" {
 			return fmt.Errorf("--wizard cannot be used with --from-bundle")
 		}
+		if importGitPath != "" {
+			return fmt.Errorf("--wizard cannot be used with --git-path")
+		}
 		if len(importResources) > 0 {
 			return fmt.Errorf("--wizard cannot be used with --resource")
 		}
 		return RunImportWizard()
+	}
+
+	// Git path validation
+	if importGitPath != "" {
+		if importConnect {
+			return fmt.Errorf("--connect cannot be used with --git-path (Git preview is read-only)")
+		}
+		// Git path forces dry-run behavior
+		importDryRun = true
 	}
 
 	// Validate --resource flag usage
@@ -402,6 +419,11 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	if _, err := normalizeImportAuditReason(importAuditReason); err != nil {
 		return err
+	}
+
+	// Git path import/comparison flow (checked before bundle to allow git+bundle comparison)
+	if importGitPath != "" {
+		return runImportFromGit(importGitPath)
 	}
 
 	// Bundle import path bypasses live cluster discovery.
@@ -712,6 +734,60 @@ func runImportFromBundle(bundlePath string, resourceSelections []importResourceS
 	return applyImportWithLogger(proposal, workloads, nil, shouldConnect, importAuditReason)
 }
 
+// runImportFromGit handles import preview from a local Git repository.
+// It can optionally compare against cluster workloads (via --namespace) or bundle workloads (via --from-bundle).
+func runImportFromGit(gitPath string) error {
+	// Collect cluster workloads if namespace is specified (for comparison)
+	var clusterWorkloads []WorkloadInfo
+	var comparisonSource string
+
+	if importNamespace != "" {
+		// Git + cluster comparison
+		workloads, err := discoverWorkloads(importNamespace)
+		if err != nil {
+			return fmt.Errorf("discover cluster workloads in %q: %w", importNamespace, err)
+		}
+		clusterWorkloads = workloads
+		comparisonSource = "cluster"
+	} else if importFromBundle != "" {
+		// Git + bundle comparison
+		_, workloads, _, err := buildImportFromBundlePreview(importFromBundle)
+		if err != nil {
+			return err
+		}
+		clusterWorkloads = workloads
+		comparisonSource = "bundle"
+	}
+
+	// Parse Git repository and build proposal
+	proposal, gitApps, err := buildImportFromGitPreview(gitPath, clusterWorkloads)
+	if err != nil {
+		return err
+	}
+
+	if proposal == nil || len(proposal.Units) == 0 {
+		if importJSON {
+			return outputGitEmptyJSON(gitPath)
+		}
+		fmt.Printf("No apps found in Git repository %q.\n", gitPath)
+		return nil
+	}
+
+	// Output results
+	if importJSON {
+		return outputGitProposalJSON(proposal, gitApps, gitPath, comparisonSource)
+	}
+
+	// ASCII output
+	printGitPreview(proposal, gitApps, gitPath, comparisonSource)
+
+	fmt.Println("\n(Git preview mode - read-only, no changes made)")
+	if comparisonSource != "" {
+		fmt.Printf("Comparison source: %s\n", comparisonSource)
+	}
+	return nil
+}
+
 // resolveImportConnectionMode determines whether import should auto-connect workers/targets
 // and whether a non-interactive hint should be shown.
 func resolveImportConnectionMode(importYes, importConnect, importNoConnect bool) (bool, bool) {
@@ -852,6 +928,22 @@ func buildImportFromBundlePreview(bundlePath string) (*FullProposal, []WorkloadI
 	namespaces := collectNamespacesFromWorkloads(workloads, bundle.Metadata.Target.Namespace)
 	proposal := SuggestFullProposal(nil, workloads, "")
 	return proposal, workloads, namespaces, nil
+}
+
+// buildImportFromGitPreview parses a local Git repository and builds an import preview.
+// If clusterWorkloads is provided, it builds a comparison proposal showing alignment.
+func buildImportFromGitPreview(gitPath string, clusterWorkloads []WorkloadInfo) (*FullProposal, []gitops.AppDefinition, error) {
+	repo, err := gitops.ParseRepo(gitPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parse Git repository %q: %w", gitPath, err)
+	}
+
+	if len(repo.Apps) == 0 {
+		return nil, nil, fmt.Errorf("no apps found in Git repository %q (expected apps/base/ or similar structure)", gitPath)
+	}
+
+	proposal := SuggestFullProposal(repo.Apps, clusterWorkloads, "")
+	return proposal, repo.Apps, nil
 }
 
 func workloadFromBundle(bundle *agent.DebugBundle) (WorkloadInfo, error) {
@@ -2300,10 +2392,35 @@ func canonicalWorkloadRef(ref string) string {
 }
 
 func buildImportEvidenceJSON() importEvidenceJSON {
-	if strings.TrimSpace(importFromBundle) != "" {
+	gitPath := strings.TrimSpace(importGitPath)
+	bundlePath := strings.TrimSpace(importFromBundle)
+
+	// Git path scenarios
+	if gitPath != "" {
+		evidence := importEvidenceJSON{
+			GitPath: gitPath,
+		}
+		if bundlePath != "" {
+			// Git + bundle comparison
+			evidence.Source = "comparison"
+			evidence.ClusterSource = "bundle"
+			evidence.BundlePath = bundlePath
+		} else if importNamespace != "" {
+			// Git + cluster comparison
+			evidence.Source = "comparison"
+			evidence.ClusterSource = "cluster"
+		} else {
+			// Git-only preview
+			evidence.Source = "git"
+		}
+		return evidence
+	}
+
+	// Existing bundle and cluster paths
+	if bundlePath != "" {
 		return importEvidenceJSON{
 			Source:     "bundle",
-			BundlePath: importFromBundle,
+			BundlePath: bundlePath,
 		}
 	}
 	return importEvidenceJSON{
@@ -2545,4 +2662,119 @@ func ensureSpace(space string) error {
 		}
 	}
 	return nil
+}
+
+// GitAppJSON represents a Git-discovered app in JSON output.
+type GitAppJSON struct {
+	Name     string           `json:"name"`
+	BasePath string           `json:"basePath,omitempty"`
+	Variants []GitVariantJSON `json:"variants,omitempty"`
+}
+
+// GitVariantJSON represents a variant of a Git app.
+type GitVariantJSON struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
+// outputGitEmptyJSON outputs an empty result for Git preview mode.
+func outputGitEmptyJSON(gitPath string) error {
+	result := map[string]interface{}{
+		"gitApps":  []GitAppJSON{},
+		"proposal": nil,
+		"evidence": buildImportEvidenceJSON(),
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(result)
+}
+
+// outputGitProposalJSON outputs the Git preview result as JSON.
+func outputGitProposalJSON(proposal *FullProposal, gitApps []gitops.AppDefinition, gitPath, comparisonSource string) error {
+	// Convert Git apps to JSON format
+	appsJSON := make([]GitAppJSON, 0, len(gitApps))
+	for _, app := range gitApps {
+		appJSON := GitAppJSON{
+			Name:     app.Name,
+			BasePath: app.BasePath,
+		}
+		for _, v := range app.Variants {
+			appJSON.Variants = append(appJSON.Variants, GitVariantJSON{
+				Name: v.Name,
+				Path: v.Path,
+			})
+		}
+		appsJSON = append(appsJSON, appJSON)
+	}
+
+	result := map[string]interface{}{
+		"gitApps":  appsJSON,
+		"proposal": proposal,
+		"evidence": buildImportEvidenceJSON(),
+	}
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(result)
+}
+
+// printGitPreview prints the Git preview in ASCII format.
+func printGitPreview(proposal *FullProposal, gitApps []gitops.AppDefinition, gitPath, comparisonSource string) {
+	fmt.Println("┌─────────────────────────────────────────────────────────────┐")
+	fmt.Println("│ GIT APPS                                                    │")
+	fmt.Println("└─────────────────────────────────────────────────────────────┘")
+	fmt.Printf("  Source: %s\n\n", gitPath)
+
+	for _, app := range gitApps {
+		fmt.Printf("  %s", app.Name)
+		if app.BasePath != "" {
+			fmt.Printf(" (%s)", app.BasePath)
+		}
+		fmt.Println()
+		for _, v := range app.Variants {
+			fmt.Printf("    - %s: %s\n", v.Name, v.Path)
+		}
+	}
+
+	if proposal != nil && len(proposal.Units) > 0 {
+		fmt.Println()
+		if comparisonSource != "" {
+			fmt.Println("┌─────────────────────────────────────────────────────────────┐")
+			fmt.Println("│ COMPARISON                                                  │")
+			fmt.Println("└─────────────────────────────────────────────────────────────┘")
+			fmt.Printf("  Git ↔ %s alignment:\n\n", comparisonSource)
+		} else {
+			fmt.Println("┌─────────────────────────────────────────────────────────────┐")
+			fmt.Println("│ PROPOSAL                                                    │")
+			fmt.Println("└─────────────────────────────────────────────────────────────┘")
+		}
+
+		if proposal.App != "" {
+			fmt.Printf("  App: %s\n\n", proposal.App)
+		}
+
+		for _, unit := range proposal.Units {
+			statusIcon := "•"
+			switch unit.Status {
+			case "aligned":
+				statusIcon = "✓"
+			case "git-only":
+				statusIcon = "○"
+			case "cluster-only":
+				statusIcon = "●"
+			}
+			fmt.Printf("  %s %s [%s]\n", statusIcon, unit.Slug, unit.Status)
+			if unit.GitPath != "" {
+				fmt.Printf("      git: %s\n", unit.GitPath)
+			}
+			if len(unit.Workloads) > 0 {
+				fmt.Printf("      workloads: %s\n", strings.Join(unit.Workloads, ", "))
+			}
+		}
+
+		if comparisonSource != "" {
+			fmt.Println()
+			fmt.Println("  Legend: ✓ aligned  ○ git-only  ● cluster-only")
+		}
+	}
 }
