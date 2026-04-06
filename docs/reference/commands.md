@@ -352,19 +352,55 @@ cub-scout fleet outliers --json
 
 ## map issues
 
-Show resources with problems (not Ready).
+Show resources with problems — unhealthy conditions and missing/unreadable secrets.
 
 ```bash
 cub-scout map issues [flags]
 ```
 
-Shows resources with unhealthy conditions.
+Shows:
+- Resources with unhealthy conditions (not Ready)
+- Secret issues: missing or unreadable secrets referenced by workloads and Flux resources
+
+### Secret Issues
+
+`map issues` detects secret problems across your scope:
+
+**Supported resource kinds:**
+- Workloads: Deployment, StatefulSet, DaemonSet
+- Flux deployers: Kustomization, HelmRelease
+- Flux sources: GitRepository, HelmRepository, Bucket
+
+**Secret issue types:**
+
+| Status | Meaning |
+|--------|---------|
+| `missing` | Secret does not exist (NotFound) |
+| `unreadable` | Secret exists but RBAC denies read access (Forbidden) |
+
+**Note:** Optional secrets (marked `optional: true` in the manifest) are excluded from issues — they are expected to potentially not exist.
 
 ### Examples
 
 ```bash
+# Show all issues including secret problems
 cub-scout map issues
+
+# Scope to a namespace
 cub-scout map issues -n production
+```
+
+### Example Output
+
+```
+ISSUES
+  Deployment/api-server in prod: not Ready (0/3 replicas)
+  StatefulSet/redis in cache: not Ready (1/3 replicas)
+
+SECRET ISSUES
+  ✗ Deployment/api-server in prod: missing secret "db-credentials" (envFrom.secretRef)
+  ✗ HelmRelease/monitoring in flux-system: missing secret "grafana-admin" (spec.valuesFrom)
+  ✗ GitRepository/private-repo in flux-system: unreadable (RBAC) secret "git-credentials" (spec.secretRef)
 ```
 
 ---
@@ -685,22 +721,31 @@ For workloads (Deployment, StatefulSet, DaemonSet, Pod) and Flux sources/deploye
 | `unreadable` | Secret exists but RBAC denies read access (Forbidden) |
 | `unresolved` | Reference could not be resolved (e.g., optional secret) |
 
-**Reference types detected:**
-- `envFrom` — secretRef in envFrom
-- `env.valueFrom` — secretKeyRef in env variables
-- `volume` — secret volumes
-- `imagePullSecret` — image pull secrets
-- `secretRef` — Flux source/deployer secretRef
-- `decryption` — Flux decryption secretRef
-- `valuesFrom` — Flux HelmRelease valuesFrom
+**Reference types (`refType`):**
+
+| Value | Description |
+|-------|-------------|
+| `envFrom.secretRef` | secretRef in envFrom |
+| `env.valueFrom.secretKeyRef` | secretKeyRef in env variables |
+| `volume.secret` | Secret volume |
+| `volume.projected.secret` | Projected secret volume |
+| `imagePullSecrets` | Image pull secrets |
+| `spec.secretRef` | Flux source/deployer secretRef (also for decryption, valuesFrom) |
+| `spec.credentials.secretRef` | Crossplane ProviderConfig credential secretRef |
 
 **Example output (ASCII):**
 
 ```
-SECRETS (3 total: 2 present, 1 missing)
-  db-credentials (envFrom)           present   Opaque
-  api-keys (env.valueFrom)           present   Opaque
-  missing-secret (volume)            missing   -
+✓ Secret evidence:
+  ✓ Secret/db-credentials [present]
+      referenced via: envFrom.secretRef
+      type: Opaque
+  ✓ Secret/api-keys [present]
+      referenced via: env.valueFrom.secretKeyRef
+      type: Opaque
+  ✗ Secret/missing-secret [missing]
+      referenced via: volume.secret
+      secret not found
 ```
 
 **Safety:** Secret evidence exposes only safe metadata (name, namespace, type, status). The `.data` and `.stringData` fields are never read or exposed.

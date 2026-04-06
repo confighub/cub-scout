@@ -149,7 +149,7 @@ When `trace` is run on a supported resource kind, the JSON output includes a `se
 | `imagePullSecrets` | Image pull secrets |
 | `serviceAccount.imagePullSecrets` | ServiceAccount image pull secrets |
 | `spec.secretRef` | Flux source/deployer secretRef |
-| `spec.credentials.secretRef` | Crossplane credential secretRef (not yet wired) |
+| `spec.credentials.secretRef` | Crossplane ProviderConfig credential secretRef |
 
 ### Status Values
 
