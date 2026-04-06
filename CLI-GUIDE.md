@@ -1093,11 +1093,31 @@ Lists pods in CrashLoopBackOff, Error, ImagePullBackOff.
 
 ```bash
 ./cub-scout map issues
+./cub-scout map issues -n production
 ```
 
-**Aliases:** `map problems`
+**Aliases:** `map problems`, `health`
 
-Shows resources with conditions != Ready.
+Shows resources with unhealthy conditions plus secret issues (missing/unreadable secrets).
+
+**Example output:**
+```
+ISSUES
+  Deployment/api-server in prod: not Ready (0/3 replicas)
+  StatefulSet/redis in cache: not Ready (1/3 replicas)
+
+SECRET ISSUES
+  ✗ Deployment/api-server in prod: missing secret "db-credentials" (envFrom.secretRef)
+  ✗ HelmRelease/monitoring in flux-system: missing secret "grafana-admin" (spec.valuesFrom)
+  ✗ GitRepository/private-repo in flux-system: unreadable (RBAC) secret "git-creds" (spec.secretRef)
+```
+
+**Secret issue coverage:**
+- Workloads: Deployment, StatefulSet, DaemonSet
+- Flux deployers: Kustomization, HelmRelease
+- Flux sources: GitRepository, HelmRepository, Bucket
+
+**Note:** Optional secrets (marked `optional: true`) are excluded from issues.
 
 ---
 
@@ -1394,6 +1414,37 @@ History data sources per tool:
 - **Helm**: Release secrets (`sh.helm.release.v1.<name>.v<N>`)
 
 **Supported sources:** GitRepository, OCIRepository, HelmRepository, Bucket (Flux), plus standalone Helm releases.
+
+**Secret evidence:**
+
+For workloads and Flux resources, trace includes a secret evidence section showing referenced secrets and their status:
+
+```bash
+./cub-scout trace deploy/api-server -n prod
+```
+
+```
+TRACE: Deployment/api-server in prod
+  ...chain output...
+
+✓ Secret evidence:
+  ✓ Secret/db-credentials [present]
+      referenced via: envFrom.secretRef
+      type: Opaque
+  ✓ Secret/api-keys [present]
+      referenced via: env.valueFrom.secretKeyRef
+      type: Opaque
+  ✗ Secret/missing-config [missing]
+      referenced via: volume.secret
+      secret not found
+```
+
+Secret statuses:
+- `present` — secret exists and is readable
+- `missing` — secret does not exist (NotFound)
+- `unreadable` — secret exists but RBAC denies read (Forbidden)
+
+**Safety:** Only metadata is shown — `.data` and `.stringData` are never read or exposed.
 
 ---
 
@@ -2109,7 +2160,7 @@ Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● brid
 | Key | Action | Description |
 |-----|--------|-------------|
 | `Q` | Saved Queries | Filter with saved queries |
-| `T` | Trace | Trace ownership chain |
+| `T` | Trace | Trace ownership chain (includes secret evidence panel) |
 | `S` | Scan | Scan for risk issues |
 | `e` / `E` | Export Graph | In `M` (Maps) view, export graph as HTML / SVG |
 | `I` | Import | Import wizard |
@@ -2265,6 +2316,65 @@ echo $?  # 5 if critical drift, 0 otherwise
 # CI pipeline usage
 ./cub-scout bundle replay ./bundle --fail-on warning || exit 1
 ```
+
+---
+
+## Troubleshooting
+
+### Secret Issues
+
+When `trace` or `map issues` reports secret problems, use these steps to diagnose:
+
+**Missing secrets (`status: missing`)**
+
+The referenced secret does not exist in the cluster.
+
+```bash
+# Verify the secret exists
+kubectl get secret db-credentials -n prod
+
+# Check if it's in a different namespace
+kubectl get secrets --all-namespaces | grep db-credentials
+
+# For Crossplane ProviderConfig, check the credential namespace
+kubectl get providerconfig.aws.upbound.io my-provider -o jsonpath='{.spec.credentials.secretRef}'
+```
+
+**Unreadable secrets (`status: unreadable`)**
+
+The secret exists but RBAC denies read access.
+
+```bash
+# Check your current permissions
+kubectl auth can-i get secrets -n prod
+
+# Check the specific secret
+kubectl auth can-i get secrets/db-credentials -n prod
+
+# List your roles in the namespace
+kubectl get rolebindings,clusterrolebindings -o wide | grep $(kubectl config current-context)
+```
+
+Common causes:
+- Running with a restricted ServiceAccount
+- Namespace-scoped roles missing secret read permissions
+- Secret in a different namespace than expected
+
+**Unresolved references (`status: unresolved`)**
+
+The secret reference could not be fully resolved (e.g., missing namespace context).
+
+```bash
+# Check the resource spec for the secretRef
+kubectl get deployment api-server -n prod -o yaml | grep -A5 secretRef
+
+# For Flux sources, check the secretRef namespace
+kubectl get gitrepository my-repo -n flux-system -o yaml | grep -A3 secretRef
+```
+
+**Optional secrets**
+
+Secrets marked as `optional: true` in the pod spec are excluded from issue reports by design. They appear in `trace` output but not in `map issues`.
 
 ---
 
