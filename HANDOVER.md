@@ -58,13 +58,14 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #357 | Git as a first-class source: add read-only import preview from local Git path | Initial slice complete (see below) |
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
-| #363 | Enhance Git parser to support ArgoCD ApplicationSet git generators | Follow-on from #357 |
-| #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Future enhancement |
+| #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
+| #363 | Enhance Git parser to support ArgoCD ApplicationSet git generators | Active continuation of the Git import track after #357 |
+| #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Active continuation of the Git import track after #357 |
 
 Recent closures:
+- #357 — Git as a first-class source: initial local `--git-path` preview slice complete
 - #356, #358, #361 — Docs/example sync cluster complete (Apr 6)
 - #328 — Secrets in cub-scout: all slices complete (trace + Crossplane + map issues + TUI)
 - #342 — Bidirectional snapshot and conformance workflow: both slices shipped
@@ -74,10 +75,11 @@ Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
 in that direction rather than flattening the current system.
 
-## Git Import Architecture (Critical Context for #357 follow-ons)
+## Git Import Architecture (Critical Context for #363 / #364)
 
 This section documents the relationship between different import tools across
-multiple repos. Understanding this is essential for continuing #357 work.
+multiple repos. Understanding both `cub-scout import` and the broader `cub`
+CLI import/rendering path is essential for continuing the Git import track.
 
 ### The Three Import Surfaces
 
@@ -125,7 +127,7 @@ Sample repo demonstrating this: `jesperfj/gitops-argocd`
 
 ### Current Gap: ArgoCD ApplicationSet Git Generators
 
-The initial #357 implementation uses `gitops.ParseRepo()` which supports
+The closed #357 initial slice uses `gitops.ParseRepo()` which supports
 Flux-style patterns (`apps/base/`, `apps/staging/`). However, ArgoCD repos
 often use **ApplicationSets with git generators**:
 
@@ -176,10 +178,10 @@ No separate `--compare` flag needed.
 
 ## Suggested next milestones
 
-1. Milestone 1: #357 — Git as a first-class source
-   - Initial slice COMPLETE: `--git-path` flag added, Git-only preview and comparison work
-   - Follow-on #363: Enhance parser for ArgoCD ApplicationSet git generators
-   - Follow-on #364: Investigate rendering integration (future)
+1. Milestone 1: Continue the Git import track via #363 and #364
+   - #357 is CLOSED as the initial local `--git-path` preview slice
+   - #363: Enhance parser for ArgoCD ApplicationSet git generators
+   - #364: Investigate rendering integration between `cub-scout import` and `cub gitops import`
 2. Milestone 2: docs/example sync cluster (#356, #358, #361) — COMPLETE
 3. Milestone 3: polish/compat follow-ons (#359, #360)
    Extend `--presentation` incrementally to other read-only commands if useful,
