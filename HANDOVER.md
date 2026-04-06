@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-04-05
+Last updated: 2026-04-06
 
 ## Current repo state
 
@@ -58,14 +58,12 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #357 | Git as a first-class source: add read-only import preview from local Git path | Recommended next milestone |
-| #356 | Docs review: secret evidence across CLI, TUI, and map issues | Docs sync follow-on |
-| #358 | Demo alignment: showcase secret evidence in AI-first examples | Example/demo follow-on |
-| #361 | Update CLI-GUIDE.md with secret evidence examples | Guide sync follow-on |
+| #357 | Git as a first-class source: add read-only import preview from local Git path | In progress |
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
 
 Recent closures:
+- #356, #358, #361 — Docs/example sync cluster complete (Apr 6)
 - #328 — Secrets in cub-scout: all slices complete (trace + Crossplane + map issues + TUI)
 - #342 — Bidirectional snapshot and conformance workflow: both slices shipped
 - #349, #350, #351, #352 — CLI polish cluster complete
@@ -76,14 +74,12 @@ in that direction rather than flattening the current system.
 
 ## Suggested next milestones
 
-1. Milestone 1: #357 — Git as a first-class source
-   Start with a read-only import preview from local Git path:
+1. Milestone 1: #357 — Git as a first-class source (in progress)
+   Add read-only import preview from local Git path:
    `cub-scout import --git-path ./repo --dry-run [--json]`.
-   This is the strongest next wedge because it opens a genuinely new source path
-   rather than only polishing already-shipped surfaces.
-2. Milestone 2: docs/example sync cluster (#356, #358, #361)
-   Secret evidence is fully shipped now; these issues keep docs, AI-first demos,
-   and the CLI guide aligned with the repo's current behavior.
+   Must align with existing `cub gitops import` tooling in confighub/sdk.
+   Enables Git↔cluster comparison for correctness verification.
+2. Milestone 2: docs/example sync cluster (#356, #358, #361) — COMPLETE
 3. Milestone 3: polish/compat follow-ons (#359, #360)
    Extend `--presentation` incrementally to other read-only commands if useful,
    and optionally close the legacy v0.14 trace JSON converter gap.
