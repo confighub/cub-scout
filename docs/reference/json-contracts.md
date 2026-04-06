@@ -74,6 +74,7 @@ When `trace` is run on a supported resource kind, the JSON output includes a `se
 - Workloads: `Deployment`, `StatefulSet`, `DaemonSet`, `Pod`
 - Flux sources: `GitRepository`, `HelmRepository`, `Bucket`
 - Flux deployers: `Kustomization`, `HelmRelease`
+- Crossplane: `ProviderConfig`
 
 ### SecretEvidenceResult Schema
 

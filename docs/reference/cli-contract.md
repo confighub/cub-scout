@@ -47,6 +47,8 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | `cub-scout map actions` | Read-only action/runbook previews | v0.20 |
 | `cub-scout map activity` | Unified operational timeline | v0.20 |
 | `cub-scout map previews` | Preview environment detection heuristics | v0.20 |
+| `cub-scout doctor` | Single-command cluster health summary | v1.4 |
+| `cub-scout explain` | Plain-English ownership and lineage for one resource | v1.4 |
 | `cub-scout trace` | Trace resource to Git source | v0.5 |
 | `cub-scout scan` | Scan for risk issues and issues | v0.5 |
 | `cub-scout scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
@@ -67,6 +69,60 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | `cub-scout status` | Show connection status and cluster info | v1.0 |
 | `cub-scout history` | Connected change timeline from ConfigHub ChangeSets | v1.4 |
 | `cub-scout mcp serve` | Serve read-only MCP observation tools over stdio | v1.4 |
+
+---
+
+## cub-scout doctor
+
+Single-command cluster health summary.
+
+```bash
+cub-scout doctor [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-n, --namespace` | string | all | Namespace scope |
+| `--format` | string | ascii | Output format: `ascii`, `json` |
+| `--top` | int | 3 | Number of top issues to include |
+| `--presentation` | string | legacy/default render path | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
+| `--hint-mode` | string | default | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
+
+### Stable Output Rules
+
+- JSON is the canonical contract for `doctor`.
+- `--presentation` affects ASCII framing only.
+- `--hint-mode` affects recommendation ranking only.
+- Omitting `--presentation` preserves the legacy/default text render path.
+
+---
+
+## cub-scout explain
+
+Plain-English ownership and lineage for a single resource.
+
+```bash
+cub-scout explain <kind/name> [flags]
+cub-scout explain <kind> <name> [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-n, --namespace` | string | - | Namespace of target resource |
+| `--format` | string | text | Output format: `text`, `json`, `md` |
+| `--presentation` | string | legacy/default render path | Narrative framing for text/Markdown output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
+| `--hint-mode` | string | default | Recommendation ranking for next-step hints: `default`, `beginner`, `operator`. JSON is unchanged. |
+
+### Stable Output Rules
+
+- JSON is the canonical contract for `explain`.
+- `--presentation` affects text and Markdown framing only.
+- `--hint-mode` affects next-step recommendation ranking only.
+- Omitting `--presentation` preserves the legacy/default text/Markdown render path.
 
 ---
 

@@ -70,7 +70,7 @@ func (m PresentationMode) String() string {
 
 // PresentationModeHelp returns help text for the --presentation flag.
 func PresentationModeHelp() string {
-	return "Presentation mode: human (default), ai (concise for AI assistants), paired (human+AI workflow)"
+	return "Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path"
 }
 
 // --- Section heading helpers ---
