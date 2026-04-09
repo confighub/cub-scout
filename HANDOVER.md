@@ -68,6 +68,14 @@ Recent closures:
   - Extracts `directories[].path` patterns from git generators
   - Supports matrix generators with nested git generators
   - Exclude pattern support (paths starting with `!`)
+  - Path-centric model for unique identification (handles duplicate basenames)
+  - Full-path slugs in import proposals (`apps-team-a-api` vs `services-team-a-api`)
+
+Investigation status:
+- #364 — Render integration investigation (Apr 9)
+  - Finding: Keep tools separate (`cub-scout` for structure, `cub gitops` for rendering)
+  - Recommendation: Add optional "render-readiness" metadata (renderableType, kustomizePath)
+  - See issue comment for detailed findings
   - Populates `TargetApps` with discovered apps
   - Integration test verifies end-to-end import pathway
 - #366 — Three-way disagreement surfacing for connected mode (Apr 9)
@@ -96,12 +104,16 @@ Also important: the Apr 9 Argo truth-and-guidance track is now complete:
 - `#367` (closed) — phase-aware hints for Argo incidents/verification/closeout
 - `#366` (closed) — three-way disagreement surfacing in connected mode
 
-The remaining active track is Git import continuation: `#364`
+The Git import track is now investigated (see #364 comment):
+- #363 complete: parser supports ApplicationSet git generators with path-centric model
+- #364 investigated: recommendation is to keep tools separate, optionally add render-readiness metadata
 
-The recommended next slice is `#364` because:
-- #363 is now complete (parser supports ApplicationSet git generators)
-- Next step is investigating rendering integration between `cub-scout import` and `cub gitops import`
-- Would enable manifest preview for Git-sourced imports
+Recommended next steps (optional enhancements):
+1. Add `RenderableType` detection to parser (infer from kustomization.yaml vs Chart.yaml)
+2. Add `KustomizePath` to JSON output for kustomize apps
+3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
+
+Lower-priority follow-ons remain: #359, #360, #362
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
