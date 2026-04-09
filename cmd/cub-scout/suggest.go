@@ -355,23 +355,19 @@ func sanitizeSlug(s string) string {
 }
 
 // deriveUniqueAppIdentifier creates a unique app identifier from name and path
-// For duplicate basenames (e.g., apps/team-a/api and services/team-b/api),
-// combines the parent directory with the app name to disambiguate.
+// For duplicate basenames, uses enough path components to create a unique identifier.
+// e.g., "apps/team-a/api" -> "apps-team-a-api"
 func deriveUniqueAppIdentifier(name, basePath string) string {
 	if basePath == "" {
 		return name
 	}
 
-	// Split the path into components
-	parts := strings.Split(filepath.ToSlash(basePath), "/")
-	if len(parts) < 2 {
-		return name
-	}
-
-	// Use parent directory + name for disambiguation
-	// e.g., "apps/team-a/api" -> "team-a-api"
-	parent := parts[len(parts)-2]
-	return fmt.Sprintf("%s-%s", parent, name)
+	// Use the full path converted to a slug-friendly format
+	// This guarantees uniqueness since paths are unique
+	// e.g., "apps/team-a/api" -> "apps-team-a-api"
+	// e.g., "services/team-a/api" -> "services-team-a-api"
+	pathSlug := strings.ReplaceAll(filepath.ToSlash(basePath), "/", "-")
+	return pathSlug
 }
 
 // longestCommonPrefix finds the longest common prefix of strings

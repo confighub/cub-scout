@@ -326,6 +326,7 @@ func TestBuildImportFromGitPreview_DuplicateBasenames(t *testing.T) {
 	}
 
 	// Create ApplicationSet with multiple patterns that match same-named directories
+	// Including case where parent directory is ALSO the same (team-a in both apps/ and services/)
 	appSetContent := `apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -336,18 +337,19 @@ spec:
         repoURL: https://github.com/org/repo
         directories:
           - path: apps/team-a/*
-          - path: services/team-b/*
+          - path: services/team-a/*
 `
 	if err := os.WriteFile(filepath.Join(appSetDir, "multi-team.yaml"), []byte(appSetContent), 0o644); err != nil {
 		t.Fatalf("failed to write applicationset: %v", err)
 	}
 
-	// Create directories with duplicate basenames
+	// Create directories with duplicate basenames AND duplicate parent names
+	// This tests that we need more than just parent + name for disambiguation
 	dirs := []string{
 		filepath.Join(tmpDir, "apps", "team-a", "api"),
 		filepath.Join(tmpDir, "apps", "team-a", "web"),
-		filepath.Join(tmpDir, "services", "team-b", "api"),
-		filepath.Join(tmpDir, "services", "team-b", "worker"),
+		filepath.Join(tmpDir, "services", "team-a", "api"),    // Same parent "team-a", same name "api"
+		filepath.Join(tmpDir, "services", "team-a", "worker"),
 	}
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -387,7 +389,7 @@ spec:
 	slugs := make(map[string]bool)
 	for _, unit := range proposal.Units {
 		if slugs[unit.Slug] {
-			t.Errorf("duplicate slug in proposal: %q", unit.Slug)
+			t.Errorf("duplicate slug in proposal: %q (gitPath: %s)", unit.Slug, unit.GitPath)
 		}
 		slugs[unit.Slug] = true
 	}
@@ -397,17 +399,21 @@ spec:
 		t.Errorf("expected 4 units in proposal, got %d", len(proposal.Units))
 	}
 
-	// Verify both "api" units have different slugs
-	apiSlugs := []string{}
+	// Verify both "api" units have different slugs using full path
+	// apps/team-a/api -> apps-team-a-api
+	// services/team-a/api -> services-team-a-api
+	expectedSlugs := map[string]bool{
+		"apps-team-a-api":      false,
+		"services-team-a-api":  false,
+	}
 	for _, unit := range proposal.Units {
-		if unit.App == "team-a-api" || unit.App == "team-b-api" {
-			apiSlugs = append(apiSlugs, unit.Slug)
+		if _, ok := expectedSlugs[unit.Slug]; ok {
+			expectedSlugs[unit.Slug] = true
 		}
 	}
-	if len(apiSlugs) != 2 {
-		t.Errorf("expected 2 disambiguated api units, got %d", len(apiSlugs))
-	}
-	if len(apiSlugs) == 2 && apiSlugs[0] == apiSlugs[1] {
-		t.Errorf("api unit slugs should be different, both are %q", apiSlugs[0])
+	for slug, found := range expectedSlugs {
+		if !found {
+			t.Errorf("expected to find unit with slug %q", slug)
+		}
 	}
 }
