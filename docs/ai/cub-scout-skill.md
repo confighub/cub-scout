@@ -2,6 +2,7 @@
 
 Use this file as the single source of truth for AI-assisted cub-scout usage.
 
+If your AI tool supports repo-local skills, load `skills/cub-scout/SKILL.md` after `AI-README-FIRST.md`.
 If your AI tool supports loading workspace files as instructions, load `AI-README-FIRST.md` first, then this file.
 If it does not, copy the prompt in the `Canonical Prompt` section.
 

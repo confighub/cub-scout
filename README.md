@@ -56,6 +56,12 @@ cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
 - [CLI Contract Reference (stable schema/flags)](docs/reference/cli-contract.md)
 - [Examples Index](examples/README.md)
 
+### AI First-Read
+
+For Claude, Codex, and other AI agents:
+- start with [AI-README-FIRST.md](AI-README-FIRST.md)
+- if repo-local skills are supported, then load [skills/cub-scout/SKILL.md](skills/cub-scout/SKILL.md)
+
 ## Install Channels
 
 ```bash

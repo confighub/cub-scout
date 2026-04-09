@@ -2,6 +2,8 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
+If your AI host supports repo-local skills, load [skills/cub-scout/SKILL.md](skills/cub-scout/SKILL.md) after this file.
+
 If you are starting work in this repo, read files in this order:
 
 1. `AI-README-FIRST.md`
