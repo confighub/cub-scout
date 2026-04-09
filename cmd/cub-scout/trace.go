@@ -1062,11 +1062,50 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string,
 	// Build summary
 	summary := buildTraceSummary(result, chain, artifacts)
 
-	return mapsvc.TraceOutput{
+	output := mapsvc.TraceOutput{
 		Command: "trace",
 		Target:  target,
 		Chain:   chain,
 		Summary: summary,
+	}
+
+	// Add secret evidence if present
+	if result.Secrets != nil && len(result.Secrets.Secrets) > 0 {
+		output.Secrets = convertSecretEvidence(result.Secrets)
+	}
+
+	return output
+}
+
+// convertSecretEvidence converts agent.SecretEvidenceResult to mapsvc.TraceSecrets.
+func convertSecretEvidence(evidence *agent.SecretEvidenceResult) *mapsvc.TraceSecrets {
+	if evidence == nil {
+		return nil
+	}
+
+	secrets := make([]mapsvc.TraceSecretEvidence, len(evidence.Secrets))
+	for i, s := range evidence.Secrets {
+		secrets[i] = mapsvc.TraceSecretEvidence{
+			Name:         s.Name,
+			Namespace:    s.Namespace,
+			RefType:      string(s.RefType),
+			RefPath:      s.RefPath,
+			Status:       string(s.Status),
+			StatusReason: s.StatusReason,
+			SecretType:   s.SecretType,
+			Optional:     s.Optional,
+		}
+	}
+
+	return &mapsvc.TraceSecrets{
+		Secrets: secrets,
+		Summary: mapsvc.TraceSecretSummary{
+			Total:      evidence.Summary.Total,
+			Present:    evidence.Summary.Present,
+			Missing:    evidence.Summary.Missing,
+			Unreadable: evidence.Summary.Unreadable,
+			Unresolved: evidence.Summary.Unresolved,
+		},
 	}
 }
 

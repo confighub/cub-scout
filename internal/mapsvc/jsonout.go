@@ -334,10 +334,11 @@ func normalizeKind(kind string) string {
 
 // TraceOutput is the v0.14 JSON schema for `trace <resource>`.
 type TraceOutput struct {
-	Command string       `json:"command"`
-	Target  ResourceID   `json:"target"`
-	Chain   []ChainNode  `json:"chain"`
-	Summary TraceSummary `json:"summary"`
+	Command string        `json:"command"`
+	Target  ResourceID    `json:"target"`
+	Chain   []ChainNode   `json:"chain"`
+	Summary TraceSummary  `json:"summary"`
+	Secrets *TraceSecrets `json:"secrets,omitempty"` // Secret evidence (v0.14.1+)
 }
 
 // ChainNode represents a single node in the trace chain.
@@ -382,6 +383,34 @@ type TraceArtifactRef struct {
 	Digest         string `json:"digest"`
 	LastUpdateTime string `json:"lastUpdateTime"`
 	SourceKind     string `json:"sourceKind"`
+}
+
+// TraceSecrets represents secret evidence in the v0.14 trace schema.
+// Only safe metadata is included; secret data is never exposed.
+type TraceSecrets struct {
+	Secrets []TraceSecretEvidence `json:"secrets"`
+	Summary TraceSecretSummary    `json:"summary"`
+}
+
+// TraceSecretEvidence represents a single secret reference and its resolution status.
+type TraceSecretEvidence struct {
+	Name         string `json:"name"`
+	Namespace    string `json:"namespace"`
+	RefType      string `json:"refType"`               // e.g., "envFrom.secretRef", "volume.secret"
+	RefPath      string `json:"refPath,omitempty"`     // e.g., "containers[app].envFrom[0].secretRef"
+	Status       string `json:"status"`                // "present", "missing", "unreadable", "unresolved"
+	StatusReason string `json:"statusReason,omitempty"`
+	SecretType   string `json:"secretType,omitempty"` // e.g., "Opaque", "kubernetes.io/tls"
+	Optional     bool   `json:"optional,omitempty"`
+}
+
+// TraceSecretSummary provides counts by status.
+type TraceSecretSummary struct {
+	Total      int `json:"total"`
+	Present    int `json:"present"`
+	Missing    int `json:"missing"`
+	Unreadable int `json:"unreadable"`
+	Unresolved int `json:"unresolved"`
 }
 
 // ChainRole constants for trace chain nodes.
