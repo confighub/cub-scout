@@ -61,10 +61,15 @@ Current tracked follow-ons:
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
 | #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
-| #363 | Enhance Git parser to support ArgoCD ApplicationSet git generators | Active continuation of the Git import track after #357 |
 | #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Active continuation of the Git import track after #357 |
 
 Recent closures:
+- #363 — Enhanced Git parser for ArgoCD ApplicationSet git generators (Apr 9)
+  - Extracts `directories[].path` patterns from git generators
+  - Supports matrix generators with nested git generators
+  - Exclude pattern support (paths starting with `!`)
+  - Populates `TargetApps` with discovered apps
+  - Integration test verifies end-to-end import pathway
 - #366 — Three-way disagreement surfacing for connected mode (Apr 9)
   - `explain` shows THREE-WAY STATUS section when ConfigHub/Argo/cluster disagree
   - Patterns: change-in-progress, sync-stale, rollout-pending, multi-change
@@ -91,12 +96,12 @@ Also important: the Apr 9 Argo truth-and-guidance track is now complete:
 - `#367` (closed) — phase-aware hints for Argo incidents/verification/closeout
 - `#366` (closed) — three-way disagreement surfacing in connected mode
 
-The remaining active track is Git import continuation: `#363`, `#364`
+The remaining active track is Git import continuation: `#364`
 
-The recommended next slice is `#363` because:
-- It enhances the parser for ArgoCD ApplicationSet git generators
-- Unblocks fuller `--git-path` support for ArgoCD repos
-- `#364` depends on understanding how rendering integration would work
+The recommended next slice is `#364` because:
+- #363 is now complete (parser supports ApplicationSet git generators)
+- Next step is investigating rendering integration between `cub-scout import` and `cub gitops import`
+- Would enable manifest preview for Git-sourced imports
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
@@ -148,11 +153,9 @@ Sample repo demonstrating this: `jesperfj/gitops-argocd`
 - `helm.go`: Loads chart from URL, uses Helm template engine locally
 - Can render without cluster controller (just needs artifact URLs)
 
-### Current Gap: ArgoCD ApplicationSet Git Generators
+### ArgoCD ApplicationSet Git Generator Support (Complete)
 
-The closed #357 initial slice uses `gitops.ParseRepo()` which supports
-Flux-style patterns (`apps/base/`, `apps/staging/`). However, ArgoCD repos
-often use **ApplicationSets with git generators**:
+The parser now fully supports ArgoCD ApplicationSets with git generators:
 
 ```yaml
 # applicationsets/apps.yaml
@@ -163,20 +166,20 @@ spec:
     - git:
         repoURL: https://github.com/org/repo
         directories:
-          - path: apps/*    # ← This pattern defines what apps exist
+          - path: apps/*
+          - path: "!apps/excluded"  # Exclude patterns supported
 ```
 
-**What exists in cub-scout:**
-- `pkg/gitops/parser.go`: Has `ApplicationSetDef` type with `TargetApps` field
-- `internal/patterns/pattern_git_aware.go`: `extractGeneratorTypes()` gets type names
+**Implementation in cub-scout (commit `a63922a`, #363):**
+- `pkg/gitops/parser.go`:
+  - `extractGitGeneratorPatternsWithExcludes()` extracts include/exclude patterns
+  - `extractMatrixGitPatternsWithExcludes()` handles nested git generators in matrix
+  - `scanGitGeneratorPatternsWithExcludes()` scans directories matching patterns
+  - `findAppBasePath()` locates app base paths for discovered apps
+- `cmd/cub-scout/import_git_test.go`: End-to-end ApplicationSet integration test
 
-**What's missing:**
-- Extracting `directories[].path` patterns from git generators
-- Scanning matching directories in repo
-- Populating `TargetApps` with discovered apps
-
-This gap means `cub-scout import --git-path` on `jesperfj/gitops-argocd` would
-not find the apps defined by the ApplicationSet.
+`cub-scout import --git-path` now correctly discovers apps from ApplicationSet
+git generators like those in `jesperfj/gitops-argocd`.
 
 ### Files Across Repos
 
@@ -184,7 +187,7 @@ not find the apps defined by the ApplicationSet.
 |------|------|---------|
 | cub-scout | `cmd/cub-scout/import.go` | `--git-path` flag, Git preview flow |
 | cub-scout | `cmd/cub-scout/import_git_test.go` | Git import tests |
-| cub-scout | `pkg/gitops/parser.go` | `ParseRepo()`, needs ApplicationSet enhancement |
+| cub-scout | `pkg/gitops/parser.go` | `ParseRepo()` with ApplicationSet git generator support |
 | confighub/sdk | `cmd/cub/gitops_import.go` | Import from K8s cluster |
 | confighub/sdk | `cmd/cub/gitops_discover.go` | Discover GitOps resources in cluster |
 | confighub/sdk | `bridge-impl/argocd-renderer/` | ArgoCD manifest rendering |
