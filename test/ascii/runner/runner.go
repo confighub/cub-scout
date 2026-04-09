@@ -17,10 +17,13 @@ import (
 // Run executes the cub-scout binary with args and returns stdout.
 // It uses `go run ./cmd/cub-scout` so no pre-built binary is needed.
 // The workDir should be the repo root.
+//
+// The 90-second timeout allows for compilation overhead when the Go build
+// cache is cold or when many tests are running in parallel. See #362.
 func Run(t *testing.T, workDir string, args ...string) string {
 	t.Helper()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", append([]string{"run", "./cmd/cub-scout"}, args...)...)
@@ -50,10 +53,13 @@ func Run(t *testing.T, workDir string, args ...string) string {
 }
 
 // RunWithEnv executes cub-scout with additional environment variables.
+//
+// The 90-second timeout allows for compilation overhead when the Go build
+// cache is cold or when many tests are running in parallel. See #362.
 func RunWithEnv(t *testing.T, workDir string, env map[string]string, args ...string) string {
 	t.Helper()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", append([]string{"run", "./cmd/cub-scout"}, args...)...)
