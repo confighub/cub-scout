@@ -61,13 +61,15 @@ Current tracked follow-ons:
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
 | #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
-| #365 | `explain` shows `Unknown owner` for ArgoCD ApplicationSet-managed resources | Highest-leverage correctness fix; should be the next implementation slice |
-| #366 | Connected mode: surface three-way disagreement between ConfigHub, Argo, and cluster state | Important connected evidence follow-on after ownership truth is fixed |
-| #367 | Phase-aware next-step hints for Argo-managed incidents and closeout | Strong AI+human workflow follow-on after ownership/context work |
+| #366 | Connected mode: surface three-way disagreement between ConfigHub, Argo, and cluster state | Important connected evidence follow-on |
+| #367 | Phase-aware next-step hints for Argo-managed incidents and closeout | Highest-leverage next slice; builds on #365 ownership truth |
 | #363 | Enhance Git parser to support ArgoCD ApplicationSet git generators | Active continuation of the Git import track after #357 |
 | #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Active continuation of the Git import track after #357 |
 
 Recent closures:
+- #365 — `explain` ownership for ArgoCD ApplicationSet-managed resources (Apr 9)
+  - Two commits: ownership-preserving fallback + negative mismatch candidate filtering
+  - `explain` now correctly reports ArgoCD for tracking-id annotated resources
 - #357 — Git as a first-class source: initial local `--git-path` preview slice complete
 - #356, #358, #361 — Docs/example sync cluster complete (Apr 6)
 - #328 — Secrets in cub-scout: all slices complete (trace + Crossplane + map issues + TUI)
@@ -78,13 +80,14 @@ Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
 in that direction rather than flattening the current system.
 
-Also important: the new Apr 9 issues split into two distinct tracks:
-- Argo/AI/operator truth-and-guidance: `#365`, `#366`, `#367`
+Also important: the Apr 9 issues split into two distinct tracks:
+- Argo/AI/operator truth-and-guidance: `#365` (closed), `#366`, `#367`
 - Git import continuation: `#363`, `#364`
 
-The recommended next slice is `#365` because it fixes a direct correctness gap in
-the `doctor` -> `explain` drill-down path and improves both human and AI
-operator trust immediately.
+The recommended next slice is `#367` because:
+- `#365` just restored ownership truth in `explain` (closed Apr 9)
+- `#367` builds directly on that truth with better next-step guidance for Argo incident/closeout flows
+- It's narrower and easier to ship cleanly than the broader connected-state surface in `#366`
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
@@ -189,13 +192,13 @@ No separate `--compare` flag needed.
 
 ## Suggested next milestones
 
-1. Milestone 1: #365 — fix `explain` ownership for ArgoCD ApplicationSet-managed resources
-   - `doctor` already recognizes these resources as Argo-managed
-   - `explain` currently loses that ownership truth on individual resources
-   - this is the highest-leverage next slice for operator trust and AI guidance
-2. Milestone 2: #367 and then #366
-   - `#367`: phase-aware next-step hints for Argo-managed incident and closeout flows
-   - `#366`: connected three-way disagreement surface across ConfigHub, Argo/Flux, and cluster state
+1. Milestone 1: #367 — phase-aware next-step hints for Argo-managed incidents and closeout
+   - Builds directly on the #365 ownership truth fix (now closed)
+   - Narrower and easier to ship than #366
+   - High leverage for AI+human Argo debugging workflows
+2. Milestone 2: #366 — connected three-way disagreement surface
+   - Surface disagreement between ConfigHub, Argo/Flux, and cluster state
+   - Important for connected mode evidence, but broader scope than #367
 3. Milestone 3: Continue the Git import track via #363 and #364
    - #357 is CLOSED as the initial local `--git-path` preview slice
    - #363: enhance parser for ArgoCD ApplicationSet git generators
