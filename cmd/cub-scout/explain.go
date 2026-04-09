@@ -176,6 +176,15 @@ func traceForExplain(ctx context.Context, kind, name, namespace string) (*agent.
 	if candidate != nil {
 		return candidate, nil
 	}
+
+	// If ownership was detected but tracers failed, return a partial result
+	// with the ownership information preserved. This allows explain to show
+	// "ArgoCD" instead of "Unknown" for ApplicationSet-managed resources
+	// where the ArgoTracer can't complete a full trace chain.
+	if ownership != nil && ownership.Type != agent.OwnerUnknown {
+		return buildOwnershipOnlyTraceResult(kind, name, namespace, ownership, lastErr), nil
+	}
+
 	if lastErr != nil {
 		return nil, lastErr
 	}
@@ -261,7 +270,10 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 	if result.Error != "" {
 		if customOwner := customOwnerFromTraceError(result.Error); customOwner != "" {
 			summary.Owner = customOwner
-		} else {
+		} else if summary.Owner == "Unknown" {
+			// Only set "Unknown - no recognized..." if no ownership was detected.
+			// If ownership was detected (e.g., ArgoCD via tracking-id), preserve it
+			// even when the full trace chain couldn't be completed.
 			summary.Owner = "Unknown - no recognized ownership labels found"
 		}
 		if summary.Health == "Unknown" {
@@ -293,6 +305,47 @@ func buildExplainSummaryFromFailure(kind, name, namespace string, err error) Exp
 		Drift:       "Unknown",
 		Notes:       []string{note},
 	}
+}
+
+// buildOwnershipOnlyTraceResult creates a partial TraceResult when ownership
+// was detected (e.g., via ArgoCD tracking-id) but the tracer couldn't complete
+// a full chain trace. This preserves the ownership information so explain
+// can show "ArgoCD Application X" instead of "Unknown".
+func buildOwnershipOnlyTraceResult(kind, name, namespace string, ownership *agent.Ownership, traceErr error) *agent.TraceResult {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      kind,
+			Name:      name,
+			Namespace: namespace,
+		},
+		FullyManaged: false,
+	}
+
+	// Map ownership type to tool name
+	switch ownership.Type {
+	case agent.OwnerArgo:
+		result.Tool = "argocd"
+	case agent.OwnerFlux:
+		result.Tool = "flux"
+	case agent.OwnerHelm:
+		result.Tool = "helm"
+	default:
+		result.Tool = ownership.Type
+	}
+
+	// Build an informative error message that includes the ownership context
+	errParts := []string{"ownership detected via " + ownership.Source}
+	if ownership.Name != "" {
+		errParts = append(errParts, fmt.Sprintf("owner: %s", ownership.Name))
+	}
+	if traceErr != nil {
+		errParts = append(errParts, fmt.Sprintf("trace incomplete: %s", traceErr.Error()))
+	} else {
+		errParts = append(errParts, "full trace chain unavailable")
+	}
+	result.Error = strings.Join(errParts, "; ")
+
+	return result
 }
 
 func explainOwner(tool string) string {

@@ -270,6 +270,134 @@ func TestRenderExplainText_PresentationModes(t *testing.T) {
 	}
 }
 
+// TestBuildExplainSummary_ArgoOwnershipPreserved tests the fix for #365:
+// when ownership is detected via ArgoCD tracking-id but the tracer fails,
+// the Owner should still show "ArgoCD" not "Unknown".
+func TestBuildExplainSummary_ArgoOwnershipPreserved(t *testing.T) {
+	// This simulates the case where:
+	// 1. detectResourceOwnership found ArgoCD via tracking-id annotation
+	// 2. ArgoTracer couldn't complete a full chain (it returns error for non-Application resources)
+	// 3. buildOwnershipOnlyTraceResult created a partial result with Tool="argocd"
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "frontend",
+			Namespace: "cubbychat",
+		},
+		Tool:  "argocd",
+		Error: "ownership detected via annotation:argocd.argoproj.io/tracking-id; owner: cubbychat; full trace chain unavailable",
+	}
+
+	summary := buildExplainSummary(result)
+
+	// The key assertion: Owner should be "ArgoCD", not "Unknown"
+	if summary.Owner != "ArgoCD" {
+		t.Fatalf("owner = %q, want ArgoCD (ownership should be preserved when detected)", summary.Owner)
+	}
+
+	// Verify other expected fields for partial traces
+	if summary.DeployedVia != "partial trace only" {
+		t.Fatalf("deployedVia = %q, want 'partial trace only' for incomplete traces", summary.DeployedVia)
+	}
+	if len(summary.Notes) == 0 || !strings.Contains(summary.Notes[0], "partial trace") {
+		t.Fatalf("expected partial trace note, got notes: %v", summary.Notes)
+	}
+}
+
+// TestBuildOwnershipOnlyTraceResult verifies the helper that creates
+// partial trace results when ownership is detected but tracer fails.
+func TestBuildOwnershipOnlyTraceResult(t *testing.T) {
+	tests := []struct {
+		name          string
+		ownership     *agent.Ownership
+		traceErr      error
+		expectedTool  string
+		expectedOwner string // what explainOwner(result.Tool) should return
+	}{
+		{
+			name: "ArgoCD via tracking-id",
+			ownership: &agent.Ownership{
+				Type:   agent.OwnerArgo,
+				Name:   "cubbychat",
+				Source: "annotation:argocd.argoproj.io/tracking-id",
+			},
+			traceErr:      nil,
+			expectedTool:  "argocd",
+			expectedOwner: "ArgoCD",
+		},
+		{
+			name: "Flux via kustomization label",
+			ownership: &agent.Ownership{
+				Type:   agent.OwnerFlux,
+				Name:   "apps",
+				Source: "label:kustomize.toolkit.fluxcd.io/name",
+			},
+			traceErr:      nil,
+			expectedTool:  "flux",
+			expectedOwner: "Flux",
+		},
+		{
+			name: "Helm via managed-by label",
+			ownership: &agent.Ownership{
+				Type:   agent.OwnerHelm,
+				Name:   "my-release",
+				Source: "label:app.kubernetes.io/managed-by=Helm",
+			},
+			traceErr:      nil,
+			expectedTool:  "helm",
+			expectedOwner: "Helm",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := buildOwnershipOnlyTraceResult("Deployment", "frontend", "prod", tc.ownership, tc.traceErr)
+
+			if result.Tool != tc.expectedTool {
+				t.Errorf("tool = %q, want %q", result.Tool, tc.expectedTool)
+			}
+
+			// Verify the summary built from this result preserves ownership
+			summary := buildExplainSummary(result)
+			if summary.Owner != tc.expectedOwner {
+				t.Errorf("owner = %q, want %q", summary.Owner, tc.expectedOwner)
+			}
+
+			// Error should contain the ownership source
+			if !strings.Contains(result.Error, tc.ownership.Source) {
+				t.Errorf("error should contain ownership source %q, got: %s", tc.ownership.Source, result.Error)
+			}
+
+			// Error should contain the owner name when available
+			if tc.ownership.Name != "" && !strings.Contains(result.Error, tc.ownership.Name) {
+				t.Errorf("error should contain owner name %q, got: %s", tc.ownership.Name, result.Error)
+			}
+		})
+	}
+}
+
+// TestBuildExplainSummary_UnknownOwnerStillUnknown verifies that truly unknown
+// resources still show "Unknown - no recognized ownership labels found".
+func TestBuildExplainSummary_UnknownOwnerStillUnknown(t *testing.T) {
+	// This is the case where no ownership was detected at all
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "legacy-api",
+			Namespace: "default",
+		},
+		Tool:  "", // No tool detected
+		Error: "resource not managed by any detected GitOps tool",
+	}
+
+	summary := buildExplainSummary(result)
+
+	// Should still show Unknown with the explicit message
+	if summary.Owner != "Unknown - no recognized ownership labels found" {
+		t.Fatalf("owner = %q, want explicit unknown-owner message for truly unknown resources", summary.Owner)
+	}
+}
+
 func TestRenderExplainMarkdown_PresentationModes(t *testing.T) {
 	summary := ExplainSummary{
 		Resource:    "Deployment/payments-api",
