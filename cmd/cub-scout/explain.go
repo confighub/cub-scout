@@ -164,23 +164,39 @@ func traceForExplain(ctx context.Context, kind, name, namespace string) (*agent.
 			result.Object.Name = name
 			result.Object.Namespace = namespace
 		}
-		candidate = result
+
+		// Successful trace with chain - return immediately
 		if len(result.Chain) > 0 {
 			return result, nil
 		}
+
+		// Successful trace without error - return immediately
 		if strings.TrimSpace(result.Error) == "" {
 			return result, nil
 		}
+
+		// Result has an error but no chain. Check if this is a "negative mismatch":
+		// a tracer saying "not managed by me" when we already know the owner is different.
+		// Don't let these override a known ownership signal.
+		if isNegativeMismatchCandidate(result, ownership) {
+			// Skip this candidate - it's a tracer saying "not mine" when we
+			// know the resource belongs to a different tool
+			continue
+		}
+
+		// Accept this partial result as candidate
+		candidate = result
 	}
 
+	// If we have a same-tool partial (or unknown ownership), use it
 	if candidate != nil {
 		return candidate, nil
 	}
 
-	// If ownership was detected but tracers failed, return a partial result
-	// with the ownership information preserved. This allows explain to show
-	// "ArgoCD" instead of "Unknown" for ApplicationSet-managed resources
-	// where the ArgoTracer can't complete a full trace chain.
+	// If ownership was detected but tracers failed or only returned negative mismatches,
+	// return a partial result with the ownership information preserved. This allows
+	// explain to show "ArgoCD" instead of "Unknown" for ApplicationSet-managed
+	// resources where the ArgoTracer can't complete a full trace chain.
 	if ownership != nil && ownership.Type != agent.OwnerUnknown {
 		return buildOwnershipOnlyTraceResult(kind, name, namespace, ownership, lastErr), nil
 	}
@@ -189,6 +205,67 @@ func traceForExplain(ctx context.Context, kind, name, namespace string) (*agent.
 		return nil, lastErr
 	}
 	return nil, fmt.Errorf("unable to trace resource via available tracers")
+}
+
+// isNegativeMismatchCandidate returns true if the trace result is a "negative mismatch":
+// a tracer reporting "resource not managed by me" when we already detected that
+// the resource is owned by a *different* tool.
+//
+// For example, if ownership detection found ArgoCD (via tracking-id), and FluxTracer
+// returns "resource not managed by Flux", that's a negative mismatch we should skip
+// rather than accept as the final answer.
+func isNegativeMismatchCandidate(result *agent.TraceResult, ownership *agent.Ownership) bool {
+	// If ownership is unknown, we can't determine mismatch
+	if ownership == nil || ownership.Type == agent.OwnerUnknown {
+		return false
+	}
+
+	// If result has no error, it's not a negative result
+	errMsg := strings.TrimSpace(result.Error)
+	if errMsg == "" {
+		return false
+	}
+
+	// Check if the result's tool matches the detected ownership
+	resultTool := strings.ToLower(strings.TrimSpace(result.Tool))
+	ownerTool := ownerTypeToToolName(ownership.Type)
+
+	// If tools match, this is a same-tool partial - not a mismatch
+	if resultTool == ownerTool {
+		return false
+	}
+
+	// Check for "not managed" patterns that indicate a negative result
+	errLower := strings.ToLower(errMsg)
+	negativePatterns := []string{
+		"not managed",
+		"no flux object found",
+		"object not managed",
+		"no helm release found",
+		"not found managing",
+	}
+
+	for _, pattern := range negativePatterns {
+		if strings.Contains(errLower, pattern) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ownerTypeToToolName converts an ownership type constant to its tool name.
+func ownerTypeToToolName(ownerType string) string {
+	switch ownerType {
+	case agent.OwnerArgo:
+		return "argocd"
+	case agent.OwnerFlux:
+		return "flux"
+	case agent.OwnerHelm:
+		return "helm"
+	default:
+		return ownerType
+	}
 }
 
 func buildExplainTracerCandidates(ownerType string) []agent.Tracer {
