@@ -179,7 +179,9 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
 				}
-				if top := argInt(arguments, "top"); top > 0 {
+				if top, present, err := argIntOpt(arguments, "top", false); err != nil {
+					return nil, err
+				} else if present {
 					args = append(args, "--top", fmt.Sprintf("%d", top))
 				}
 				return args, nil
@@ -569,6 +571,35 @@ func argInt(arguments map[string]interface{}, key string) int {
 		return int(v)
 	}
 	return 0
+}
+
+// argIntOpt returns an integer argument with presence and validation.
+// Returns (value, true, nil) if key is present with a valid integer.
+// Returns (0, false, nil) if key is absent or nil.
+// Returns (0, true, error) if key is present but invalid (wrong type or negative when not allowed).
+func argIntOpt(arguments map[string]interface{}, key string, allowNegative bool) (int, bool, error) {
+	raw, ok := arguments[key]
+	if !ok || raw == nil {
+		return 0, false, nil
+	}
+	var value int
+	switch v := raw.(type) {
+	case float64:
+		if v != float64(int(v)) {
+			return 0, true, fmt.Errorf("%s must be a whole number", key)
+		}
+		value = int(v)
+	case int:
+		value = v
+	case int64:
+		value = int(v)
+	default:
+		return 0, true, fmt.Errorf("%s must be an integer", key)
+	}
+	if !allowNegative && value < 0 {
+		return 0, true, fmt.Errorf("%s must be non-negative", key)
+	}
+	return value, true, nil
 }
 
 func runMCPToolCommand(ctx context.Context, args []string) (string, error) {

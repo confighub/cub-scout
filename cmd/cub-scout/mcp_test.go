@@ -339,6 +339,149 @@ func TestMCPGatewayHandleRequest_ToolsCallDoctorWithAllParams(t *testing.T) {
 	}
 }
 
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithTopZero(t *testing.T) {
+	var gotArgs []string
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		gotArgs = append([]string(nil), args...)
+		return `{"cluster":"minikube","namespace":"all"}`, nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`16`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"top":0}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+
+	// top=0 should be passed through as --top 0 (valid CLI case)
+	wantArgs := []string{"doctor", "--format", "json", "--top", "0"}
+	if !reflect.DeepEqual(gotArgs, wantArgs) {
+		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithNegativeTop(t *testing.T) {
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		t.Fatal("runner should not be called for validation error")
+		return "", nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`17`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"top":-1}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	var result struct {
+		IsError bool `json:"isError"`
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if !result.IsError {
+		t.Fatal("result.isError = false, want true")
+	}
+	if len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, "non-negative") {
+		t.Fatalf("error should mention non-negative, got: %+v", result.Content)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithStringTop(t *testing.T) {
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		t.Fatal("runner should not be called for validation error")
+		return "", nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`18`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"top":"5"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	var result struct {
+		IsError bool `json:"isError"`
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if !result.IsError {
+		t.Fatal("result.isError = false, want true")
+	}
+	if len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, "integer") {
+		t.Fatalf("error should mention integer, got: %+v", result.Content)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithFractionalTop(t *testing.T) {
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		t.Fatal("runner should not be called for validation error")
+		return "", nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`19`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"top":1.5}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	var result struct {
+		IsError bool `json:"isError"`
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if !result.IsError {
+		t.Fatal("result.isError = false, want true")
+	}
+	if len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, "whole number") {
+		t.Fatalf("error should mention whole number, got: %+v", result.Content)
+	}
+}
+
 func TestArgInt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -358,6 +501,52 @@ func TestArgInt(t *testing.T) {
 			got := argInt(tc.args, tc.key)
 			if got != tc.want {
 				t.Errorf("argInt() = %d, want %d", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestArgIntOpt(t *testing.T) {
+	tests := []struct {
+		name          string
+		args          map[string]interface{}
+		key           string
+		allowNegative bool
+		wantVal       int
+		wantPresent   bool
+		wantErr       bool
+		errContains   string
+	}{
+		{"float64", map[string]interface{}{"top": float64(5)}, "top", false, 5, true, false, ""},
+		{"int", map[string]interface{}{"top": 3}, "top", false, 3, true, false, ""},
+		{"zero", map[string]interface{}{"top": float64(0)}, "top", false, 0, true, false, ""},
+		{"missing", map[string]interface{}{}, "top", false, 0, false, false, ""},
+		{"nil", map[string]interface{}{"top": nil}, "top", false, 0, false, false, ""},
+		{"string", map[string]interface{}{"top": "5"}, "top", false, 0, true, true, "integer"},
+		{"fractional", map[string]interface{}{"top": float64(1.5)}, "top", false, 0, true, true, "whole number"},
+		{"negative_rejected", map[string]interface{}{"top": float64(-1)}, "top", false, 0, true, true, "non-negative"},
+		{"negative_allowed", map[string]interface{}{"top": float64(-1)}, "top", true, -1, true, false, ""},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gotVal, gotPresent, gotErr := argIntOpt(tc.args, tc.key, tc.allowNegative)
+			if gotPresent != tc.wantPresent {
+				t.Errorf("argIntOpt() present = %v, want %v", gotPresent, tc.wantPresent)
+			}
+			if tc.wantErr {
+				if gotErr == nil {
+					t.Errorf("argIntOpt() error = nil, want error containing %q", tc.errContains)
+				} else if !strings.Contains(gotErr.Error(), tc.errContains) {
+					t.Errorf("argIntOpt() error = %q, want containing %q", gotErr.Error(), tc.errContains)
+				}
+			} else {
+				if gotErr != nil {
+					t.Errorf("argIntOpt() error = %v, want nil", gotErr)
+				}
+				if gotVal != tc.wantVal {
+					t.Errorf("argIntOpt() = %d, want %d", gotVal, tc.wantVal)
+				}
 			}
 		})
 	}
