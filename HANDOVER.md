@@ -64,6 +64,12 @@ Current tracked follow-ons:
 | #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Active continuation of the Git import track after #357 |
 
 Recent closures:
+- #371 — Three-way agreement/convergence summary (Apr 9)
+  - New `AgreementSummary` in `compare three-way` output
+  - States: agreed, converging, diverged, partial
+  - Derived deterministically from per-resource patterns
+  - Shows "Agreement: ✓ AGREED - All 5 resources agree" in ASCII
+  - JSON: `summary.agreement.{state,summary,reasons,sources}`
 - #363 — Enhanced Git parser for ArgoCD ApplicationSet git generators (Apr 9)
   - Extracts `directories[].path` patterns from git generators
   - Supports matrix generators with nested git generators
