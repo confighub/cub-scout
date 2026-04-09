@@ -19,7 +19,7 @@ func TestNewMCPGateway_ToolsIncludeStandaloneSet(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	want := []string{"explain", "map", "scan", "trace"}
+	want := []string{"doctor", "explain", "map", "scan", "trace"}
 	if !reflect.DeepEqual(names, want) {
 		t.Fatalf("tool names = %v, want %v", names, want)
 	}
@@ -38,6 +38,7 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 		"confighub_changesets",
 		"confighub_unit_get",
 		"confighub_units",
+		"doctor",
 		"explain",
 		"map",
 		"scan",
@@ -70,8 +71,8 @@ func TestMCPGatewayHandleRequest_ToolsList(t *testing.T) {
 	if err := marshalInto(resp.Result, &result); err != nil {
 		t.Fatalf("decode result: %v", err)
 	}
-	if len(result.Tools) != 4 {
-		t.Fatalf("tool count = %d, want 4", len(result.Tools))
+	if len(result.Tools) != 5 {
+		t.Fatalf("tool count = %d, want 5", len(result.Tools))
 	}
 }
 
@@ -223,6 +224,142 @@ func TestMCPFrameRoundTrip(t *testing.T) {
 	}
 	if string(got) != string(payload) {
 		t.Fatalf("payload mismatch\ngot=%s\nwant=%s", string(got), string(payload))
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctor(t *testing.T) {
+	var gotArgs []string
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		gotArgs = append([]string(nil), args...)
+		return `{"cluster":"minikube","namespace":"all"}`, nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`12`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+
+	wantArgs := []string{"doctor", "--format", "json"}
+	if !reflect.DeepEqual(gotArgs, wantArgs) {
+		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithNamespace(t *testing.T) {
+	var gotArgs []string
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		gotArgs = append([]string(nil), args...)
+		return `{"cluster":"minikube","namespace":"prod"}`, nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`13`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"namespace":"prod"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+
+	wantArgs := []string{"doctor", "--format", "json", "-n", "prod"}
+	if !reflect.DeepEqual(gotArgs, wantArgs) {
+		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithTop(t *testing.T) {
+	var gotArgs []string
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		gotArgs = append([]string(nil), args...)
+		return `{"cluster":"minikube","namespace":"all"}`, nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`14`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"top":5}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+
+	wantArgs := []string{"doctor", "--format", "json", "--top", "5"}
+	if !reflect.DeepEqual(gotArgs, wantArgs) {
+		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithAllParams(t *testing.T) {
+	var gotArgs []string
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		gotArgs = append([]string(nil), args...)
+		return `{"cluster":"minikube","namespace":"staging"}`, nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`15`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"namespace":"staging","top":10}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+
+	wantArgs := []string{"doctor", "--format", "json", "-n", "staging", "--top", "10"}
+	if !reflect.DeepEqual(gotArgs, wantArgs) {
+		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
+	}
+}
+
+func TestArgInt(t *testing.T) {
+	tests := []struct {
+		name string
+		args map[string]interface{}
+		key  string
+		want int
+	}{
+		{"float64", map[string]interface{}{"top": float64(5)}, "top", 5},
+		{"int", map[string]interface{}{"top": 3}, "top", 3},
+		{"missing", map[string]interface{}{}, "top", 0},
+		{"nil", map[string]interface{}{"top": nil}, "top", 0},
+		{"string", map[string]interface{}{"top": "5"}, "top", 0},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := argInt(tc.args, tc.key)
+			if got != tc.want {
+				t.Errorf("argInt() = %d, want %d", got, tc.want)
+			}
+		})
 	}
 }
 

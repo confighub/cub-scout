@@ -39,6 +39,7 @@ var mcpServeCmd = &cobra.Command{
 	Long: `Serve a read-only Model Context Protocol (MCP) gateway over stdio.
 
 Supported tools in standalone mode:
+  - doctor
   - map
   - trace
   - scan
@@ -154,6 +155,36 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 	}
 
 	tools := map[string]mcpTool{
+		"doctor": {
+			Descriptor: mcpToolDescriptor{
+				Name:        "doctor",
+				Description: "Compact cluster health summary with ownership, risks, drift, and recommended next steps (doctor --format json). Start here for troubleshooting.",
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"namespace": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional namespace scope (default: all namespaces).",
+						},
+						"top": map[string]interface{}{
+							"type":        "integer",
+							"description": "Number of top issues to include (default: 3).",
+						},
+					},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				args := []string{"doctor", "--format", "json"}
+				if ns := argString(arguments, "namespace"); ns != "" {
+					args = append(args, "-n", ns)
+				}
+				if top := argInt(arguments, "top"); top > 0 {
+					args = append(args, "--top", fmt.Sprintf("%d", top))
+				}
+				return args, nil
+			},
+		},
 		"map": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "map",
@@ -521,6 +552,23 @@ func argString(arguments map[string]interface{}, key string) string {
 		return ""
 	}
 	return strings.TrimSpace(value)
+}
+
+func argInt(arguments map[string]interface{}, key string) int {
+	raw, ok := arguments[key]
+	if !ok || raw == nil {
+		return 0
+	}
+	// JSON numbers are decoded as float64
+	switch v := raw.(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	case int64:
+		return int(v)
+	}
+	return 0
 }
 
 func runMCPToolCommand(ctx context.Context, args []string) (string, error) {
