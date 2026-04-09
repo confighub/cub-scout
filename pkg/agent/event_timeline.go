@@ -368,3 +368,167 @@ func GetEventSuggestion(reason string) string {
 	}
 	return ""
 }
+
+// ResourceEvent is a compact event model for bounded display in explain/trace.
+// This is simpler than TimelineEvent and optimized for troubleshooting output.
+type ResourceEvent struct {
+	Type      string     `json:"type"`              // Normal or Warning
+	Reason    string     `json:"reason"`            // e.g., Pulled, BackOff, FailedScheduling
+	Message   string     `json:"message"`           // Human-readable message
+	Count     int32      `json:"count,omitempty"`   // Number of occurrences
+	Age       string     `json:"age"`               // Human-readable age (e.g., "5m", "2h")
+	LastSeen  *time.Time `json:"lastSeen"`          // Last occurrence timestamp
+	Severity  string     `json:"severity"`          // info, warning, error
+	Source    string     `json:"source,omitempty"`  // Component that generated the event
+	FirstSeen *time.Time `json:"firstSeen"`         // First occurrence timestamp
+}
+
+// ResourceEventSummary summarizes events for a resource.
+type ResourceEventSummary struct {
+	Events       []ResourceEvent `json:"events"`
+	TotalCount   int             `json:"totalCount"`   // Total events found
+	WarningCount int             `json:"warningCount"` // Number of warning events
+	ErrorCount   int             `json:"errorCount"`   // Number of error-severity events
+}
+
+// FetchRecentEvents fetches bounded recent events for a resource.
+// It prioritizes Warning events over Normal, then sorts by most recent.
+// maxEvents limits the number of events returned (default 5 if <= 0).
+func (f *EventTimelineFetcher) FetchRecentEvents(ctx context.Context, namespace, kind, name string, maxEvents int) (*ResourceEventSummary, error) {
+	if maxEvents <= 0 {
+		maxEvents = 5
+	}
+
+	summary := &ResourceEventSummary{
+		Events: make([]ResourceEvent, 0),
+	}
+
+	if f.clientset == nil {
+		return summary, nil
+	}
+
+	// Use field selector to filter events for this specific resource
+	fieldSelector := fmt.Sprintf("involvedObject.name=%s,involvedObject.kind=%s", name, kind)
+	events, err := f.clientset.CoreV1().Events(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fieldSelector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list events: %w", err)
+	}
+
+	summary.TotalCount = len(events.Items)
+
+	// Convert to ResourceEvent and count warnings/errors
+	resourceEvents := make([]ResourceEvent, 0, len(events.Items))
+	for _, event := range events.Items {
+		severity := getSeverity(event.Type, event.Reason)
+		if event.Type == "Warning" {
+			summary.WarningCount++
+		}
+		if severity == "error" {
+			summary.ErrorCount++
+		}
+
+		var firstTime, lastTime *time.Time
+		if !event.FirstTimestamp.IsZero() {
+			t := event.FirstTimestamp.Time
+			firstTime = &t
+		}
+		if !event.LastTimestamp.IsZero() {
+			t := event.LastTimestamp.Time
+			lastTime = &t
+		}
+
+		// For new-style events, use eventTime if timestamps are zero
+		if firstTime == nil && !event.EventTime.IsZero() {
+			t := event.EventTime.Time
+			firstTime = &t
+			lastTime = &t
+		}
+
+		re := ResourceEvent{
+			Type:      event.Type,
+			Reason:    event.Reason,
+			Message:   truncateEventMessage(event.Message, 200),
+			Count:     event.Count,
+			Severity:  severity,
+			Source:    event.Source.Component,
+			FirstSeen: firstTime,
+			LastSeen:  lastTime,
+		}
+
+		// Calculate age string
+		if lastTime != nil {
+			re.Age = formatAge(time.Since(*lastTime))
+		}
+
+		resourceEvents = append(resourceEvents, re)
+	}
+
+	// Sort: warnings/errors first, then by most recent
+	sort.Slice(resourceEvents, func(i, j int) bool {
+		// Prioritize by severity (error > warning > info)
+		si, sj := severityRank(resourceEvents[i].Severity), severityRank(resourceEvents[j].Severity)
+		if si != sj {
+			return si > sj
+		}
+		// Then by most recent
+		ti := getResourceEventTime(resourceEvents[i])
+		tj := getResourceEventTime(resourceEvents[j])
+		return ti.After(tj)
+	})
+
+	// Limit to maxEvents
+	if len(resourceEvents) > maxEvents {
+		resourceEvents = resourceEvents[:maxEvents]
+	}
+
+	summary.Events = resourceEvents
+	return summary, nil
+}
+
+// severityRank returns a numeric rank for sorting (higher = more severe)
+func severityRank(severity string) int {
+	switch severity {
+	case "error":
+		return 2
+	case "warning":
+		return 1
+	default:
+		return 0
+	}
+}
+
+// getResourceEventTime returns the most relevant time for a ResourceEvent
+func getResourceEventTime(e ResourceEvent) time.Time {
+	if e.LastSeen != nil {
+		return *e.LastSeen
+	}
+	if e.FirstSeen != nil {
+		return *e.FirstSeen
+	}
+	return time.Time{}
+}
+
+// truncateEventMessage truncates a message to maxLen characters
+func truncateEventMessage(msg string, maxLen int) string {
+	msg = strings.TrimSpace(msg)
+	if len(msg) <= maxLen {
+		return msg
+	}
+	return msg[:maxLen-3] + "..."
+}
+
+// formatAge formats a duration as a human-readable age string
+func formatAge(d time.Duration) string {
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	if d < time.Hour {
+		return fmt.Sprintf("%dm", int(d.Minutes()))
+	}
+	if d < 24*time.Hour {
+		return fmt.Sprintf("%dh", int(d.Hours()))
+	}
+	return fmt.Sprintf("%dd", int(d.Hours()/24))
+}

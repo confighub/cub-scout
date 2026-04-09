@@ -44,6 +44,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | General CLI JSON behavior | [cli-contract.md](cli-contract.md) + [commands.md](commands.md) | Command-specific |
 | GitOps checkpoint proposal schemas | [gitops-checkpoint-schemas.md](gitops-checkpoint-schemas.md) | `change-intent.v1`, `execution-report.v1`, `change-interaction-card.v1`, `decision-receipt.v1`, `execution-receipt.v1`, `outcome-receipt.v1` |
 | Trace secret evidence | This doc (below) | Embedded in `trace` JSON |
+| Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 
@@ -240,6 +241,87 @@ When `compare three-way --format json` is used, the JSON output includes `summar
 | `total` | int | Total resources in scope |
 
 Source: `cmd/cub-scout/three_way.go`, `cmd/cub-scout/compare_three_way.go`
+
+## Trace and Explain Recent Events Contract
+
+As of v1.10, `trace` and `explain` commands include recent Kubernetes events for the target resource. Events are bounded (top 5), prioritized by severity (warnings/errors first), and contain safe metadata only.
+
+### TraceEvents Schema (trace --format json)
+
+```json
+{
+  "events": {
+    "events": [
+      {
+        "type": "Warning",
+        "reason": "BackOff",
+        "message": "Back-off restarting failed container",
+        "count": 3,
+        "age": "5m",
+        "severity": "warning",
+        "source": "kubelet",
+        "firstSeen": "2026-04-09T10:00:00Z",
+        "lastSeen": "2026-04-09T10:05:00Z"
+      }
+    ],
+    "totalCount": 10,
+    "warningCount": 3,
+    "errorCount": 1
+  }
+}
+```
+
+### ExplainSummary Events Schema (explain --format json)
+
+```json
+{
+  "events": {
+    "events": [...],
+    "totalCount": 10,
+    "warningCount": 3,
+    "errorCount": 1
+  }
+}
+```
+
+### Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `events.events[]` | TraceEvent[] | Bounded list of recent events (max 5) |
+| `events.totalCount` | int | Total events found for the resource |
+| `events.warningCount` | int | Number of Warning-type events |
+| `events.errorCount` | int | Number of error-severity events |
+
+### TraceEvent Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | Event type: `Normal` or `Warning` |
+| `reason` | string | Event reason (e.g., `Pulled`, `BackOff`, `FailedScheduling`) |
+| `message` | string | Human-readable message (truncated to 200 chars) |
+| `count` | int | Number of occurrences |
+| `age` | string | Human-readable age (e.g., `5m`, `2h`, `3d`) |
+| `severity` | string | Derived severity: `info`, `warning`, or `error` |
+| `source` | string | Component that generated the event |
+| `firstSeen` | string | RFC3339 timestamp of first occurrence |
+| `lastSeen` | string | RFC3339 timestamp of last occurrence |
+
+### Severity Mapping
+
+| Severity | Condition |
+|----------|-----------|
+| `error` | Warning events with reasons: `CrashLoopBackOff`, `FailedScheduling`, `ImagePullBackOff`, `BackOff`, `FailedMount`, `FailedAttachVolume`, `ErrImagePull`, `Failed`, `FailedCreate`, `FailedKillPod` |
+| `warning` | Other Warning-type events |
+| `info` | Normal events |
+
+### Sort Order
+
+Events are sorted by:
+1. Severity (error > warning > info)
+2. Most recent first (by lastSeen timestamp)
+
+Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 
 ## Historical Note
 

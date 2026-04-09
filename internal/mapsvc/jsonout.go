@@ -339,6 +339,7 @@ type TraceOutput struct {
 	Chain   []ChainNode   `json:"chain"`
 	Summary TraceSummary  `json:"summary"`
 	Secrets *TraceSecrets `json:"secrets,omitempty"` // Secret evidence (v0.14.1+)
+	Events  *TraceEvents  `json:"events,omitempty"`  // Recent K8s events (v1.10+)
 }
 
 // ChainNode represents a single node in the trace chain.
@@ -421,6 +422,28 @@ type TraceSecretSummary struct {
 	Missing    int `json:"missing"`
 	Unreadable int `json:"unreadable"`
 	Unresolved int `json:"unresolved"`
+}
+
+// TraceEvents represents recent Kubernetes events in the v1.10 trace schema.
+// Events are bounded (top 5) and prioritized by severity (warnings/errors first).
+type TraceEvents struct {
+	Events       []TraceEvent `json:"events"`
+	TotalCount   int          `json:"totalCount"`   // Total events found
+	WarningCount int          `json:"warningCount"` // Number of warning events
+	ErrorCount   int          `json:"errorCount"`   // Number of error-severity events
+}
+
+// TraceEvent represents a single Kubernetes event.
+type TraceEvent struct {
+	Type      string `json:"type"`              // Normal or Warning
+	Reason    string `json:"reason"`            // e.g., Pulled, BackOff, FailedScheduling
+	Message   string `json:"message"`           // Human-readable message
+	Count     int32  `json:"count,omitempty"`   // Number of occurrences
+	Age       string `json:"age"`               // Human-readable age (e.g., "5m", "2h")
+	Severity  string `json:"severity"`          // info, warning, error
+	Source    string `json:"source,omitempty"`  // Component that generated the event
+	FirstSeen string `json:"firstSeen,omitempty"` // RFC3339 timestamp
+	LastSeen  string `json:"lastSeen,omitempty"`  // RFC3339 timestamp
 }
 
 // ChainRole constants for trace chain nodes.

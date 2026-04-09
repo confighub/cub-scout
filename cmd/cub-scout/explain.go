@@ -57,6 +57,10 @@ type ExplainSummary struct {
 	Notes        []string `json:"notes,omitempty"`
 	ConfigHubURL string   `json:"confighubUrl,omitempty"` // URL to view/manage in ConfigHub GUI (only when connected)
 
+	// Events contains recent Kubernetes events for the resource.
+	// Prioritizes Warning/error events, bounded to top 5.
+	Events *agent.ResourceEventSummary `json:"events,omitempty"`
+
 	// ThreeWay contains the three-way disagreement status (ConfigHub vs controller vs cluster).
 	// Only populated in connected mode when disagreement is detected.
 	ThreeWay *ThreeWayDisagreement `json:"threeWay,omitempty"`
@@ -553,6 +557,11 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 		b.WriteString(formatThreeWaySection(summary.ThreeWay))
 	}
 
+	// Recent events section
+	if summary.Events != nil && len(summary.Events.Events) > 0 {
+		b.WriteString(renderEventsSection(summary.Events, mode, explicitMode))
+	}
+
 	// Outro - only for explicit AI mode
 	if explicitMode {
 		outro := ExplainOutro(mode)
@@ -640,6 +649,11 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 		b.WriteString(formatThreeWayMarkdown(summary.ThreeWay))
 	}
 
+	// Recent events section
+	if summary.Events != nil && len(summary.Events.Events) > 0 {
+		b.WriteString(renderEventsMarkdown(summary.Events, mode, explicitMode))
+	}
+
 	if explicitMode {
 		b.WriteString(renderTryNextMarkdownWithMode(explainTryNextHintsWithContext(summary, hintCtx), mode))
 	} else {
@@ -655,5 +669,94 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	if explicitMode && mode == PresentationAI {
 		b.WriteString("\n[end resource context]\n")
 	}
+	return b.String()
+}
+
+// renderEventsSection renders the events section for text output.
+func renderEventsSection(events *agent.ResourceEventSummary, mode PresentationMode, explicitMode bool) string {
+	var b strings.Builder
+
+	// Section heading
+	if explicitMode && mode == PresentationAI {
+		fmt.Fprintf(&b, "\nRECENT EVENTS:\n")
+	} else {
+		fmt.Fprintf(&b, "\n%sRecent Events:%s\n", Bold(""), "")
+	}
+
+	// Summary line
+	if events.WarningCount > 0 || events.ErrorCount > 0 {
+		fmt.Fprintf(&b, "  %s%d warning(s), %d error(s) of %d total%s\n",
+			Yellow(""), events.WarningCount, events.ErrorCount, events.TotalCount, "")
+	}
+
+	// Event list
+	for _, ev := range events.Events {
+		icon := "•"
+		color := ""
+		reset := ""
+		switch ev.Severity {
+		case "error":
+			icon = SymError
+			color = Red("")
+		case "warning":
+			icon = "⚠"
+			color = Yellow("")
+		default:
+			icon = "○"
+			color = Dim("")
+		}
+
+		// Format: icon Age Reason: Message (xCount)
+		countStr := ""
+		if ev.Count > 1 {
+			countStr = fmt.Sprintf(" (x%d)", ev.Count)
+		}
+
+		fmt.Fprintf(&b, "  %s%s%s %s %s: %s%s%s\n",
+			color, icon, reset,
+			ev.Age,
+			ev.Reason,
+			ev.Message,
+			countStr,
+			reset,
+		)
+	}
+
+	return b.String()
+}
+
+// renderEventsMarkdown renders the events section for markdown output.
+func renderEventsMarkdown(events *agent.ResourceEventSummary, mode PresentationMode, explicitMode bool) string {
+	var b strings.Builder
+
+	// Section heading
+	if explicitMode && mode == PresentationAI {
+		fmt.Fprintf(&b, "\n### RECENT EVENTS\n\n")
+	} else {
+		fmt.Fprintf(&b, "\n### Recent Events\n\n")
+	}
+
+	// Summary line
+	if events.WarningCount > 0 || events.ErrorCount > 0 {
+		fmt.Fprintf(&b, "**%d warning(s), %d error(s)** of %d total\n\n",
+			events.WarningCount, events.ErrorCount, events.TotalCount)
+	}
+
+	// Event table
+	fmt.Fprintf(&b, "| Age | Type | Reason | Message |\n")
+	fmt.Fprintf(&b, "|-----|------|--------|--------|\n")
+	for _, ev := range events.Events {
+		msg := ev.Message
+		if len(msg) > 60 {
+			msg = msg[:57] + "..."
+		}
+		countStr := ""
+		if ev.Count > 1 {
+			countStr = fmt.Sprintf(" (x%d)", ev.Count)
+		}
+		fmt.Fprintf(&b, "| %s | %s | %s | %s%s |\n",
+			ev.Age, ev.Type, ev.Reason, msg, countStr)
+	}
+
 	return b.String()
 }

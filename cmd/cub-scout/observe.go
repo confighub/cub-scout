@@ -9,6 +9,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/confighub/cub-scout/pkg/agent"
+	"k8s.io/client-go/kubernetes"
 )
 
 // ObserveScopeSummaryRequest is the request for observe.scope_summary capability.
@@ -134,6 +137,12 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 		summary.Namespace = ns
 	}
 
+	// Fetch recent events for the resource
+	events, eventsErr := fetchResourceEvents(ctx, ns, kind, name)
+	if eventsErr == nil && events != nil && len(events.Events) > 0 {
+		summary.Events = events
+	}
+
 	// Check for three-way disagreement in connected mode.
 	// Note: failure details (sync status) would need to be fetched separately
 	// from the deployer resource - for now we pass nil and rely on DRY/WET/LIVE comparison.
@@ -143,4 +152,21 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 	}
 
 	return summary, nil
+}
+
+// fetchResourceEvents fetches recent events for a resource.
+// Returns nil if cluster is unavailable or events cannot be fetched.
+func fetchResourceEvents(ctx context.Context, namespace, kind, name string) (*agent.ResourceEventSummary, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	fetcher := agent.NewEventTimelineFetcher(clientset)
+	return fetcher.FetchRecentEvents(ctx, namespace, kind, name, 5)
 }

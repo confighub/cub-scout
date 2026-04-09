@@ -19,7 +19,7 @@ better first stop for GitOps troubleshooting, even for Argo-managed resources.
 | Resource tree | Visual tree per Application with health bubbles | `trace` and `graph export` show ownership lineage |
 | Live vs desired diff | Side-by-side manifest diff | `compare three-way` (connected, Git/CH/cluster) |
 | Health checks | Argo custom health assessments | `scan` (46 config patterns) + `doctor` (cluster summary) |
-| K8s events | Inline per resource | Not surfaced |
+| K8s events | Inline per resource | Recent events in `explain` and `trace` (v1.10+) |
 | Pod logs | Inline | Out of scope (read-only metadata) |
 | Sync history | Full history with rollback | Not available |
 | App grouping | ApplicationSets, app-of-apps | Flat — no Argo Application grouping |
@@ -55,7 +55,7 @@ cub-scout needs to close these gaps:
 | Gap | Why | Issue |
 |-----|-----|-------|
 | Sync status detail | Operators need the actual error, not just "out of sync" | TBD |
-| K8s events per resource | Events are the first thing operators check after status | TBD |
+| ~~K8s events per resource~~ | ~~Events are the first thing operators check after status~~ | ✅ v1.10 |
 | Resource conditions | `status.conditions` are critical for diagnosis — currently stripped (#348) | #348 |
 | Application-level grouping | Argo users think in Applications, not flat resource lists | TBD |
 

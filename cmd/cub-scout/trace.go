@@ -366,6 +366,12 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		result.Secrets = secretEvidence
 	}
 
+	// Collect recent events for the traced resource
+	events, eventsErr := fetchResourceEvents(ctx, traceNamespace, kind, name)
+	if eventsErr == nil && events != nil && len(events.Events) > 0 {
+		result.Events = events
+	}
+
 	artifacts := buildUnknownTraceArtifacts(result)
 	if traceArtifacts {
 		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifacts(ctx, result))
@@ -1082,6 +1088,11 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string,
 		output.Secrets = convertSecretEvidence(result.Secrets)
 	}
 
+	// Add events if present
+	if result.Events != nil && len(result.Events.Events) > 0 {
+		output.Events = convertResourceEvents(result.Events)
+	}
+
 	return output
 }
 
@@ -1129,6 +1140,40 @@ func convertSecretEvidence(evidence *agent.SecretEvidenceResult) *mapsvc.TraceSe
 			Unreadable: evidence.Summary.Unreadable,
 			Unresolved: evidence.Summary.Unresolved,
 		},
+	}
+}
+
+// convertResourceEvents converts agent.ResourceEventSummary to mapsvc.TraceEvents.
+func convertResourceEvents(events *agent.ResourceEventSummary) *mapsvc.TraceEvents {
+	if events == nil {
+		return nil
+	}
+
+	traceEvents := make([]mapsvc.TraceEvent, len(events.Events))
+	for i, ev := range events.Events {
+		te := mapsvc.TraceEvent{
+			Type:     ev.Type,
+			Reason:   ev.Reason,
+			Message:  ev.Message,
+			Count:    ev.Count,
+			Age:      ev.Age,
+			Severity: ev.Severity,
+			Source:   ev.Source,
+		}
+		if ev.FirstSeen != nil {
+			te.FirstSeen = ev.FirstSeen.Format(time.RFC3339)
+		}
+		if ev.LastSeen != nil {
+			te.LastSeen = ev.LastSeen.Format(time.RFC3339)
+		}
+		traceEvents[i] = te
+	}
+
+	return &mapsvc.TraceEvents{
+		Events:       traceEvents,
+		TotalCount:   events.TotalCount,
+		WarningCount: events.WarningCount,
+		ErrorCount:   events.ErrorCount,
 	}
 }
 
@@ -1553,6 +1598,53 @@ func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.Tra
 			result.Secrets.Summary.Missing,
 			result.Secrets.Summary.Unreadable,
 			colorReset)
+	}
+
+	// Show recent events if present
+	if result.Events != nil && len(result.Events.Events) > 0 {
+		fmt.Printf("\n")
+		if result.Events.WarningCount > 0 || result.Events.ErrorCount > 0 {
+			fmt.Printf("%s%s⚠ Recent events:%s\n", colorBold, colorYellow, colorReset)
+		} else {
+			fmt.Printf("%s%sRecent events:%s\n", colorBold, colorWhite, colorReset)
+		}
+
+		for _, ev := range result.Events.Events {
+			var icon, iconColor string
+			switch ev.Severity {
+			case "error":
+				icon = SymError
+				iconColor = colorRed
+			case "warning":
+				icon = "⚠"
+				iconColor = colorYellow
+			default:
+				icon = "○"
+				iconColor = colorDim
+			}
+
+			countStr := ""
+			if ev.Count > 1 {
+				countStr = fmt.Sprintf(" (x%d)", ev.Count)
+			}
+
+			fmt.Printf("  %s%s%s %s%s%s %s: %s%s\n",
+				iconColor, icon, colorReset,
+				colorDim, ev.Age, colorReset,
+				ev.Reason,
+				ev.Message,
+				countStr,
+			)
+		}
+
+		// Summary line
+		if result.Events.TotalCount > len(result.Events.Events) {
+			fmt.Printf("\n  %s%d of %d events shown (warnings/errors prioritized)%s\n",
+				colorDim,
+				len(result.Events.Events),
+				result.Events.TotalCount,
+				colorReset)
+		}
 	}
 
 	// Show history if requested and available

@@ -58,6 +58,10 @@ type TraceResult struct {
 	// Only populated for workloads (Deployment, StatefulSet, DaemonSet, Pod) and
 	// Flux sources/deployers. Does NOT expose secret data, only safe metadata.
 	Secrets *SecretEvidenceResult `json:"secrets,omitempty"`
+
+	// Events contains recent Kubernetes events for the traced resource.
+	// Prioritizes Warning/error events, bounded to top 5.
+	Events *ResourceEventSummary `json:"events,omitempty"`
 }
 
 // CrossReference represents a reference to a resource with a different owner
