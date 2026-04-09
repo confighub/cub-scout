@@ -394,14 +394,24 @@ type TraceSecrets struct {
 
 // TraceSecretEvidence represents a single secret reference and its resolution status.
 type TraceSecretEvidence struct {
-	Name         string `json:"name"`
-	Namespace    string `json:"namespace"`
-	RefType      string `json:"refType"`               // e.g., "envFrom.secretRef", "volume.secret"
-	RefPath      string `json:"refPath,omitempty"`     // e.g., "containers[app].envFrom[0].secretRef"
-	Status       string `json:"status"`                // "present", "missing", "unreadable", "unresolved"
-	StatusReason string `json:"statusReason,omitempty"`
-	SecretType   string `json:"secretType,omitempty"` // e.g., "Opaque", "kubernetes.io/tls"
-	Optional     bool   `json:"optional,omitempty"`
+	Name         string              `json:"name"`
+	Namespace    string              `json:"namespace"`
+	RefType      string              `json:"refType"`               // e.g., "envFrom.secretRef", "volume.secret"
+	RefPath      string              `json:"refPath,omitempty"`     // e.g., "containers[app].envFrom[0].secretRef"
+	Status       string              `json:"status"`                // "present", "missing", "unreadable", "unresolved"
+	StatusReason string              `json:"statusReason,omitempty"`
+	SecretType   string              `json:"secretType,omitempty"`   // e.g., "Opaque", "kubernetes.io/tls" (when present)
+	CreatedAt    string              `json:"createdAt,omitempty"`    // RFC3339 timestamp (when present)
+	Owner        *TraceSecretOwner   `json:"owner,omitempty"`        // Detected ownership (when present)
+	Optional     bool                `json:"optional,omitempty"`
+}
+
+// TraceSecretOwner represents detected ownership of a secret.
+type TraceSecretOwner struct {
+	Type      string `json:"type"`                // e.g., "flux", "argocd", "helm", "confighub"
+	SubType   string `json:"subType,omitempty"`   // e.g., "kustomization", "helmrelease"
+	Name      string `json:"name,omitempty"`      // Owner resource name
+	Namespace string `json:"namespace,omitempty"` // Owner resource namespace
 }
 
 // TraceSecretSummary provides counts by status.

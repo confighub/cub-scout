@@ -1085,7 +1085,7 @@ func convertSecretEvidence(evidence *agent.SecretEvidenceResult) *mapsvc.TraceSe
 
 	secrets := make([]mapsvc.TraceSecretEvidence, len(evidence.Secrets))
 	for i, s := range evidence.Secrets {
-		secrets[i] = mapsvc.TraceSecretEvidence{
+		se := mapsvc.TraceSecretEvidence{
 			Name:         s.Name,
 			Namespace:    s.Namespace,
 			RefType:      string(s.RefType),
@@ -1095,6 +1095,21 @@ func convertSecretEvidence(evidence *agent.SecretEvidenceResult) *mapsvc.TraceSe
 			SecretType:   s.SecretType,
 			Optional:     s.Optional,
 		}
+
+		// Carry safe metadata when present
+		if s.CreatedAt != nil {
+			se.CreatedAt = s.CreatedAt.Format(time.RFC3339)
+		}
+		if s.Owner != nil {
+			se.Owner = &mapsvc.TraceSecretOwner{
+				Type:      s.Owner.Type,
+				SubType:   s.Owner.SubType,
+				Name:      s.Owner.Name,
+				Namespace: s.Owner.Namespace,
+			}
+		}
+
+		secrets[i] = se
 	}
 
 	return &mapsvc.TraceSecrets{

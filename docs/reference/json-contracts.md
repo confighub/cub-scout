@@ -103,6 +103,12 @@ When `trace` is run on a supported resource kind, the JSON output includes a `se
         "status": "present",
         "secretType": "Opaque",
         "createdAt": "2026-03-15T10:30:00Z",
+        "owner": {
+          "type": "flux",
+          "subType": "kustomization",
+          "name": "app-secrets",
+          "namespace": "flux-system"
+        },
         "optional": false
       },
       {
@@ -124,11 +130,13 @@ When `trace` is run on a supported resource kind, the JSON output includes a `se
 }
 ```
 
+**Note:** In the v0.14 trace JSON schema, the `secrets.resource` field is omitted because the trace's top-level `target` field already identifies the resource. See [v0.14-json-schema.md](../archive/v0.14-json-schema.md) for the trace-specific schema.
+
 ### Field Reference
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `secrets.resource` | `ResourceRef` | The resource these secrets belong to |
+| `secrets.resource` | `ResourceRef` | The resource these secrets belong to (omitted in v0.14 trace) |
 | `secrets.secrets[]` | `SecretEvidence[]` | List of secret references and their evidence |
 | `secrets.summary` | `SecretEvidenceSummary` | Counts by status |
 
