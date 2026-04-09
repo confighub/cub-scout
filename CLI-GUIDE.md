@@ -1959,10 +1959,17 @@ Read-only MCP gateway that exposes cub-scout observation tools over stdio.
 ```
 
 **Served tools (standalone):**
+- `doctor` → `doctor --format json`
 - `map` → `map list --json`
 - `trace` → `trace --format json`
 - `scan` → `scan --json`
 - `explain` → `explain --format json`
+
+**Why `doctor` is first:** it is the quickest workflow-oriented troubleshooting entrypoint for AI clients, not just another CRUD-style resource query.
+
+**Doctor parameters (MCP):**
+- `namespace` (optional)
+- `top` (optional integer)
 
 **Additional tools (connected mode):**
 - `confighub_changesets` → `cub changeset list --json`

@@ -155,6 +155,36 @@ cub-scout compare three-way --scope <scope> [flags]
 
 ---
 
+## cub-scout mcp serve
+
+Read-only MCP gateway over stdio.
+
+```bash
+cub-scout mcp serve
+```
+
+### Stable Behavior
+
+- The MCP gateway remains read-only.
+- Standalone tool set includes:
+  - `doctor`
+  - `explain`
+  - `map`
+  - `scan`
+  - `trace`
+- Connected mode may add read-only ConfigHub query tools.
+- MCP tool responses are backed by the existing CLI JSON surfaces rather than a separate hand-built fact model.
+
+### Stable `doctor` MCP Surface
+
+- Tool name: `doctor`
+- Parameters:
+  - `namespace` (optional string)
+  - `top` (optional integer)
+- Backed by `cub-scout doctor --format json`
+
+---
+
 ## cub-scout map
 
 ### Interactive Mode (default)

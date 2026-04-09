@@ -229,9 +229,9 @@ No separate `--compare` flag needed.
 
 ## Suggested next milestones
 
-1. Milestone 1: workflow-first machine surfaces (#370, #369)
+1. Milestone 1: workflow-first machine surfaces (#370)
    - `#370`: structured action-typed hints in JSON and MCP
-   - `#369`: expose `doctor` / `observe.scope_summary` as a first-class MCP tool
+   - builds directly on the shipped `doctor` MCP surface from `#369`
 2. Milestone 2: broader GitOps troubleshooting wedge (#368)
    - make `cub-scout` the first stop before the Argo CD GUI
    - likely builds on the new three-way + hinting work rather than replacing it

@@ -1405,10 +1405,27 @@ cub-scout mcp serve
 
 #### Notes
 
-- Standalone tools: `map`, `trace`, `scan`, `explain` (via existing cub-scout JSON surfaces).
+- Standalone tools: `doctor`, `explain`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
+- `doctor` is intentionally first: it is the natural first troubleshooting command for AI and MCP clients.
 - Connected tools (when authenticated to ConfigHub): `confighub_changesets`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - Protocol transport is stdio with `Content-Length` framed JSON-RPC messages.
+
+#### Tool Parameters
+
+- `doctor`
+  - `namespace` (optional)
+  - `top` (optional integer)
+- `explain`
+  - `resource` (required)
+  - `namespace` (optional)
+- `map`
+  - `namespace` (optional)
+- `scan`
+  - `namespace` (optional)
+- `trace`
+  - `resource` (required)
+  - `namespace` (optional)
 
 #### Example
 

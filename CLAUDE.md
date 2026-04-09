@@ -78,8 +78,9 @@ Use [HANDOVER.md](HANDOVER.md) as the latest execution snapshot.
 As of the current handover:
 - the Argo truth-and-guidance track is closed (`#365`, `#366`, `#367`)
 - the Git import parser track is complete through ApplicationSet generator support (`#363`)
+- `#369` is shipped: `doctor` is now the first standalone MCP troubleshooting tool
 - `#364` is investigated, not a mandate to merge `cub-scout` with `cub gitops import`
-- the highest-leverage open queue is now `#370`, `#369`, then `#368`
+- the highest-leverage open queue is now `#370`, then `#368`
 
 ## Directory Structure
 

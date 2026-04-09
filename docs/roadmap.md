@@ -722,7 +722,7 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * #357 — initial local Git import preview slice shipped and closed
 * #363 — ApplicationSet git-generator parsing shipped and closed
 * #364 — render-integration investigation documented; keep `cub-scout` preview separate from `cub gitops import`, optionally add render-readiness metadata later
-* #369 — expose `doctor` / `observe.scope_summary` as a first-class MCP tool
+* #369 — first-class MCP `doctor` tool shipped and closed
 * #370 — add structured action-typed next-step hints to JSON and MCP outputs
 * #368 — broader “beat Argo CD GUI” troubleshooting wedge
 * #359 — extend `--presentation` to additional read-only commands

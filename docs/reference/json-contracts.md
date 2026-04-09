@@ -45,6 +45,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | GitOps checkpoint proposal schemas | [gitops-checkpoint-schemas.md](gitops-checkpoint-schemas.md) | `change-intent.v1`, `execution-report.v1`, `change-interaction-card.v1`, `decision-receipt.v1`, `execution-receipt.v1`, `outcome-receipt.v1` |
 | Trace secret evidence | This doc (below) | Embedded in `trace` JSON |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
+| MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 
 ## Tree / Map / Trace / Drift JSON Today
 
@@ -65,6 +66,12 @@ Useful golden directories:
 - `test/golden/trace/`
 - `test/golden/map-status/`
 - `test/golden/bundle-summarize/`
+
+For MCP, the current rule is:
+
+1. tool arguments map to an existing CLI JSON command
+2. the tool returns that JSON payload as text content
+3. the wrapped CLI surface remains the contract source of truth
 
 ## Trace Secret Evidence Contract
 

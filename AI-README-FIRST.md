@@ -68,6 +68,10 @@ As of 2026-04-09, these areas are fully or materially shipped:
   - connected DRY/WET/LIVE comparison
   - `--fail-on` conformance exit codes
   - agreement/convergence summary in CLI + JSON
+- MCP gateway
+  - `mcp serve` exposes `doctor` as the first standalone troubleshooting tool
+  - standalone tool set: `doctor`, `explain`, `map`, `scan`, `trace`
+  - connected mode adds read-only ConfigHub query tools
 - Secrets track
   - trace secret evidence
   - Crossplane `ProviderConfig` secret evidence
@@ -83,7 +87,6 @@ As of 2026-04-09, these areas are fully or materially shipped:
 Verify live state before acting, but the current open follow-ons are:
 
 - `#370` structured action-typed next-step hints in JSON and MCP outputs
-- `#369` first-class MCP tool for `doctor` / `observe.scope_summary`
 - `#368` broader “beat Argo CD GUI” troubleshooting umbrella
 - `#364` investigated render-integration follow-on
 - `#359`, `#360`, `#362` lower-priority polish / compat / test stability
