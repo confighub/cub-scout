@@ -58,14 +58,23 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #370 | Structured next-step hints for JSON + MCP | Highest-leverage AI/MCP follow-on, builds on #369 |
-| #368 | Beat Argo CD GUI as the first stop for troubleshooting | Broader umbrella, likely after #370 |
-| #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Investigated already; only resume for explicit render-readiness follow-on |
-| #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
-| #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
+| #368 | Beat Argo CD GUI as the first stop for troubleshooting | Broader umbrella, likely next major wedge |
+| #359 | Extend `--presentation` to additional read-only commands | Useful polish |
 | #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
 
 Recent closures:
+- #370 — Structured action-typed next-step hints for JSON + MCP (Apr 9)
+  - Added `nextSteps` field to doctor and explain JSON output
+  - Each hint has actionType (read-only, mutating, waiting, human-decision), reason, nextCommand/nextSurface
+  - MCP clients get structured hints for AI-driven workflows
+- #360 — Carry secret evidence through v0.14 trace JSON converter (Apr 9)
+  - v0.14 trace JSON now includes `secrets` field with full safe metadata
+  - Fields: name, namespace, refType, refPath, status, secretType, createdAt, owner
+  - Safe metadata only — no secret data exposed
+- #364 — Render integration investigation (Apr 9)
+  - Finding: Keep tools separate (`cub-scout` for structure, `cub gitops` for rendering)
+  - `cub-scout import --git-path` for local preview, `cub gitops import` for actual rendering
+  - Optional future enhancements: RenderableType detection, KustomizePath metadata
 - #369 — Expose doctor as first-class MCP tool (Apr 9)
   - Added `doctor` to MCP gateway standalone tool set
   - Parameters: namespace (optional), top (optional integer)
@@ -85,7 +94,7 @@ Recent closures:
   - Full-path slugs in import proposals (`apps-team-a-api` vs `services-team-a-api`)
 
 Investigation status:
-- #364 — Render integration investigation (Apr 9)
+- #364 — Render integration investigation (Apr 9) — **CLOSED**
   - Finding: Keep tools separate (`cub-scout` for structure, `cub gitops` for rendering)
   - Recommendation: Add optional "render-readiness" metadata (renderableType, kustomizePath)
   - See issue comment for detailed findings
@@ -124,7 +133,7 @@ Recommended next steps (optional enhancements):
 2. Add `KustomizePath` to JSON output for kustomize apps
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
-Lower-priority follow-ons remain: #359, #360, #362
+Lower-priority follow-ons remain: #359, #362
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
@@ -229,15 +238,12 @@ No separate `--compare` flag needed.
 
 ## Suggested next milestones
 
-1. Milestone 1: workflow-first machine surfaces (#370)
-   - `#370`: structured action-typed hints in JSON and MCP
-   - builds directly on the shipped `doctor` MCP surface from `#369`
-2. Milestone 2: broader GitOps troubleshooting wedge (#368)
+1. Milestone 1: broader GitOps troubleshooting wedge (#368)
    - make `cub-scout` the first stop before the Argo CD GUI
-   - likely builds on the new three-way + hinting work rather than replacing it
-3. Milestone 3: optional Git import polish / compat
-   - `#364`: render-readiness metadata only if explicitly resumed
-   - `#359`, `#360`, `#362`: presentation polish, legacy JSON gap, test stability
+   - builds on the shipped three-way + hinting + MCP work
+2. Milestone 2: presentation polish and stability
+   - `#359`: extend `--presentation` to additional read-only commands
+   - `#362`: stabilize intermittent test kill
 
 ## External publication boundary
 

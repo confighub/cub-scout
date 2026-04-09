@@ -721,16 +721,13 @@ Secret evidence provides visibility into secret dependencies without exposing se
 **Post-v1.9 follow-on queue:**
 * #357 — initial local Git import preview slice shipped and closed
 * #363 — ApplicationSet git-generator parsing shipped and closed
-* #364 — render-integration investigation documented; keep `cub-scout` preview separate from `cub gitops import`, optionally add render-readiness metadata later
+* #364 — render-integration investigation complete and closed; keep `cub-scout` preview separate from `cub gitops import`
 * #369 — first-class MCP `doctor` tool shipped and closed
-* #370 — add structured action-typed next-step hints to JSON and MCP outputs
-* #368 — broader “beat Argo CD GUI” troubleshooting wedge
+* #370 — structured action-typed next-step hints shipped and closed (nextSteps in doctor/explain JSON)
+* #360 — v0.14 trace secret evidence shipped and closed (full safe metadata: createdAt, owner)
+* #368 — broader "beat Argo CD GUI" troubleshooting wedge (next major slice)
 * #359 — extend `--presentation` to additional read-only commands
-* #360 — carry secret evidence through the legacy trace v0.14 JSON converter
 * #362 — stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii`
-
-**Future (low priority):**
-* legacy v0.14 trace JSON converter path for secret evidence (#360)
 
 ---
 
