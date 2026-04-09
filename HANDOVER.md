@@ -61,11 +61,14 @@ Current tracked follow-ons:
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
 | #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
-| #366 | Connected mode: surface three-way disagreement between ConfigHub, Argo, and cluster state | Important connected evidence follow-on |
 | #363 | Enhance Git parser to support ArgoCD ApplicationSet git generators | Active continuation of the Git import track after #357 |
 | #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Active continuation of the Git import track after #357 |
 
 Recent closures:
+- #366 — Three-way disagreement surfacing for connected mode (Apr 9)
+  - `explain` shows THREE-WAY STATUS section when ConfigHub/Argo/cluster disagree
+  - Patterns: change-in-progress, sync-stale, rollout-pending, multi-change
+  - `doctor` hints to run `compare three-way` for full conformance check
 - #367 — Phase-aware next-step hints for Argo-managed resources (Apr 9)
   - Three phases: incident (investigate), verify (confirm), closeout (read-only)
   - Phase detection is deterministic from ExplainSummary facts (health, drift, risks)
@@ -83,15 +86,17 @@ Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
 in that direction rather than flattening the current system.
 
-Also important: the Apr 9 issues split into two distinct tracks:
-- Argo/AI/operator truth-and-guidance: `#365` (closed), `#366`, `#367` (closed)
-- Git import continuation: `#363`, `#364`
+Also important: the Apr 9 Argo truth-and-guidance track is now complete:
+- `#365` (closed) — ownership truth for ApplicationSet-managed resources
+- `#367` (closed) — phase-aware hints for Argo incidents/verification/closeout
+- `#366` (closed) — three-way disagreement surfacing in connected mode
 
-The recommended next slice is `#366` because:
-- `#365` restored ownership truth in `explain` (closed Apr 9)
-- `#367` added phase-aware hints building on that truth (closed Apr 9)
-- `#366` continues the Argo truth track with three-way disagreement surfaces
-- The Git import track (`#363`, `#364`) is valuable but less urgent
+The remaining active track is Git import continuation: `#363`, `#364`
+
+The recommended next slice is `#363` because:
+- It enhances the parser for ArgoCD ApplicationSet git generators
+- Unblocks fuller `--git-path` support for ArgoCD repos
+- `#364` depends on understanding how rendering integration would work
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
@@ -196,15 +201,11 @@ No separate `--compare` flag needed.
 
 ## Suggested next milestones
 
-1. Milestone 1: #366 — connected three-way disagreement surface
-   - Surface disagreement between ConfigHub, Argo/Flux, and cluster state
-   - Builds on #365 (ownership truth) and #367 (phase-aware hints) — both now closed
-   - Important for connected mode evidence, makes disagreement visible
-2. Milestone 2: Continue the Git import track via #363 and #364
+1. Milestone 1: Continue the Git import track via #363 and #364
    - #357 is CLOSED as the initial local `--git-path` preview slice
    - #363: enhance parser for ArgoCD ApplicationSet git generators
    - #364: investigate rendering integration between `cub-scout import` and `cub gitops import`
-3. Milestone 3: polish/compat follow-ons (#359, #360, #362)
+2. Milestone 2: polish/compat follow-ons (#359, #360, #362)
    Extend `--presentation` incrementally to other read-only commands if useful,
    close the legacy v0.14 trace JSON converter gap when worth it, and stabilize
    the `context-pack` test kill path.
