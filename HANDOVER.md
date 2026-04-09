@@ -58,9 +58,13 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #368 | Beat Argo CD GUI as the first stop for troubleshooting | Broader umbrella, likely next major wedge |
+| (none) | No open issues | All tracked issues closed |
 
 Recent closures:
+- #368 — Beat Argo CD GUI as first stop for troubleshooting (Apr 9) — v1.10 wedge
+  - Added recent K8s events to `explain` and `trace` commands
+  - Bounded (top 5), prioritized (errors/warnings first), readable age format
+  - JSON contract: `events` field with events[], totalCount, warningCount, errorCount
 - #362 — Stabilize intermittent TestContextPack_FormatJSON kill (Apr 9)
   - Root cause: 30-second timeout was too tight for `go run ./cmd/cub-scout`
   - Fix: increased test runner timeout to 90 seconds
@@ -139,7 +143,7 @@ Recommended next steps (optional enhancements):
 2. Add `KustomizePath` to JSON output for kustomize apps
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
-Lower-priority follow-ons: none remaining from this track
+Open issues: none — all tracked issues now closed
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
@@ -244,9 +248,15 @@ No separate `--compare` flag needed.
 
 ## Suggested next milestones
 
-1. Milestone 1: broader GitOps troubleshooting wedge (#368)
-   - make `cub-scout` the first stop before the Argo CD GUI
-   - builds on the shipped three-way + hinting + MCP work
+1. v1.10 shipped: Events wedge for #368 complete
+   - Recent K8s events in `explain` and `trace`
+   - Closes the main P0 gap in cub-scout vs Argo GUI comparison
+
+2. Future directions (no open issues):
+   - Sync status detail for deeper reconciliation visibility
+   - Resource conditions surfacing (#348 follow-on)
+   - Application-level grouping
+   - Standalone desired-vs-live diff
 
 ## External publication boundary
 

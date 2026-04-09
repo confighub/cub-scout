@@ -727,7 +727,7 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * #360 — v0.14 trace secret evidence shipped and closed (full safe metadata: createdAt, owner)
 * #359 — extend `--presentation` to trace command shipped and closed (ai/human/paired modes)
 * #362 — test runner timeout fix shipped and closed (30s→90s)
-* #368 — broader "beat Argo CD GUI" troubleshooting wedge (next major slice)
+* #368 — recent K8s events in explain/trace shipped and closed (v1.10 wedge)
 
 ---
 
