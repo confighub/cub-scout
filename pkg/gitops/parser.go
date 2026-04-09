@@ -930,10 +930,50 @@ func parseApplicationSets(repoPath string) (*RepoStructure, error) {
 		})
 	}
 
+	// Populate Apps from discovered ApplicationSet targets
+	seenApps := make(map[string]bool)
+	for _, appSet := range result.ApplicationSets {
+		for _, appName := range appSet.TargetApps {
+			if seenApps[appName] {
+				continue
+			}
+			seenApps[appName] = true
+
+			// Try to find the app's base path
+			basePath := findAppBasePath(repoPath, appName)
+			result.Apps = append(result.Apps, AppDefinition{
+				Name:     appName,
+				BasePath: basePath,
+			})
+		}
+	}
+
 	return result, nil
 }
 
-// parseApplicationSet parses an ApplicationSet YAML
+// findAppBasePath attempts to find the base path for an app discovered via ApplicationSet
+func findAppBasePath(repoPath, appName string) string {
+	// Common patterns for app locations
+	searchPatterns := []string{
+		filepath.Join("apps", appName),
+		filepath.Join("apps", "base", appName),
+		filepath.Join("applications", appName),
+		filepath.Join("workloads", appName),
+		appName,
+	}
+
+	for _, pattern := range searchPatterns {
+		fullPath := filepath.Join(repoPath, pattern)
+		if dirExists(fullPath) {
+			return pattern
+		}
+	}
+
+	// Return empty if not found - the app was discovered but path is unknown
+	return ""
+}
+
+// parseApplicationSet parses an ApplicationSet YAML and extracts git generator patterns
 func parseApplicationSet(path, repoPath string) *ApplicationSetDef {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -959,21 +999,297 @@ func parseApplicationSet(path, repoPath string) *ApplicationSetDef {
 		return nil
 	}
 
-	// Determine generator type
+	// Determine generator type and extract git generator patterns
 	generator := "unknown"
-	if len(appSet.Spec.Generators) > 0 {
-		for k := range appSet.Spec.Generators[0] {
-			generator = k
-			break
+	var allPatterns gitGeneratorPatterns
+
+	for _, gen := range appSet.Spec.Generators {
+		for k, v := range gen {
+			if generator == "unknown" {
+				generator = k
+			}
+
+			// Extract git generator directory patterns
+			if k == "git" {
+				patterns := extractGitGeneratorPatternsWithExcludes(v)
+				allPatterns.Include = append(allPatterns.Include, patterns.Include...)
+				allPatterns.Exclude = append(allPatterns.Exclude, patterns.Exclude...)
+			}
+
+			// Handle matrix generators that may contain git generators
+			if k == "matrix" {
+				patterns := extractMatrixGitPatternsWithExcludes(v)
+				allPatterns.Include = append(allPatterns.Include, patterns.Include...)
+				allPatterns.Exclude = append(allPatterns.Exclude, patterns.Exclude...)
+			}
 		}
 	}
 
 	relPath, _ := filepath.Rel(repoPath, path)
-	return &ApplicationSetDef{
+	result := &ApplicationSetDef{
 		Name:      appSet.Metadata.Name,
 		Path:      relPath,
 		Generator: generator,
 	}
+
+	// Scan directories matching git generator patterns
+	if len(allPatterns.Include) > 0 {
+		result.TargetApps = scanGitGeneratorPatternsWithExcludes(repoPath, allPatterns)
+	}
+
+	return result
+}
+
+// gitGeneratorPatterns holds include and exclude patterns from a git generator
+type gitGeneratorPatterns struct {
+	Include []string
+	Exclude []string
+}
+
+// extractGitGeneratorPatterns extracts directory patterns from a git generator
+func extractGitGeneratorPatterns(gitGen interface{}) []string {
+	patterns := extractGitGeneratorPatternsWithExcludes(gitGen)
+	return patterns.Include
+}
+
+// extractGitGeneratorPatternsWithExcludes extracts both include and exclude patterns
+func extractGitGeneratorPatternsWithExcludes(gitGen interface{}) gitGeneratorPatterns {
+	var patterns gitGeneratorPatterns
+
+	gitMap, ok := gitGen.(map[string]interface{})
+	if !ok {
+		return patterns
+	}
+
+	// Extract directories[].path patterns
+	dirs, ok := gitMap["directories"]
+	if !ok {
+		return patterns
+	}
+
+	dirSlice, ok := dirs.([]interface{})
+	if !ok {
+		return patterns
+	}
+
+	for _, d := range dirSlice {
+		dirMap, ok := d.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		if pathVal, ok := dirMap["path"]; ok {
+			if pathStr, ok := pathVal.(string); ok {
+				if strings.HasPrefix(pathStr, "!") {
+					// Exclude pattern - remove the ! prefix
+					patterns.Exclude = append(patterns.Exclude, strings.TrimPrefix(pathStr, "!"))
+				} else {
+					patterns.Include = append(patterns.Include, pathStr)
+				}
+			}
+		}
+	}
+
+	return patterns
+}
+
+// extractMatrixGitPatterns extracts git patterns from matrix generators
+func extractMatrixGitPatterns(matrixGen interface{}) []string {
+	patterns := extractMatrixGitPatternsWithExcludes(matrixGen)
+	return patterns.Include
+}
+
+// extractMatrixGitPatternsWithExcludes extracts git patterns from matrix generators including excludes
+func extractMatrixGitPatternsWithExcludes(matrixGen interface{}) gitGeneratorPatterns {
+	var patterns gitGeneratorPatterns
+
+	matrixMap, ok := matrixGen.(map[string]interface{})
+	if !ok {
+		return patterns
+	}
+
+	// Matrix generators have a "generators" array
+	generators, ok := matrixMap["generators"]
+	if !ok {
+		return patterns
+	}
+
+	genSlice, ok := generators.([]interface{})
+	if !ok {
+		return patterns
+	}
+
+	for _, g := range genSlice {
+		genMap, ok := g.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Look for git generator within matrix
+		if gitGen, ok := genMap["git"]; ok {
+			gitPatterns := extractGitGeneratorPatternsWithExcludes(gitGen)
+			patterns.Include = append(patterns.Include, gitPatterns.Include...)
+			patterns.Exclude = append(patterns.Exclude, gitPatterns.Exclude...)
+		}
+	}
+
+	return patterns
+}
+
+// scanGitGeneratorPatterns scans the repo for directories matching git generator patterns
+func scanGitGeneratorPatterns(repoPath string, patterns []string) []string {
+	return scanGitGeneratorPatternsWithExcludes(repoPath, gitGeneratorPatterns{Include: patterns})
+}
+
+// scanGitGeneratorPatternsWithExcludes scans the repo for directories matching git generator patterns
+// while filtering out directories that match exclude patterns
+func scanGitGeneratorPatternsWithExcludes(repoPath string, patterns gitGeneratorPatterns) []string {
+	var apps []string
+	seen := make(map[string]bool)
+
+	for _, pattern := range patterns.Include {
+		// Convert git generator pattern to filesystem glob
+		// Git generator uses: apps/*, apps/**, clusters/*/apps/*
+		// filepath.Glob doesn't support **, so we handle it specially
+
+		if strings.Contains(pattern, "**") {
+			// For ** patterns, we need to walk directories
+			apps = append(apps, scanRecursivePatternWithExcludes(repoPath, pattern, patterns.Exclude, seen)...)
+		} else {
+			// Standard glob
+			fullPattern := filepath.Join(repoPath, pattern)
+			matches, err := filepath.Glob(fullPattern)
+			if err != nil {
+				continue
+			}
+
+			for _, match := range matches {
+				info, err := os.Stat(match)
+				if err != nil || !info.IsDir() {
+					continue
+				}
+
+				// Get relative path for exclude matching
+				relPath, err := filepath.Rel(repoPath, match)
+				if err != nil {
+					continue
+				}
+
+				// Check if this path matches any exclude pattern
+				if matchesExcludePattern(relPath, patterns.Exclude) {
+					continue
+				}
+
+				appName := filepath.Base(match)
+				if !seen[appName] {
+					seen[appName] = true
+					apps = append(apps, appName)
+				}
+			}
+		}
+	}
+
+	return apps
+}
+
+// matchesExcludePattern checks if a path matches any exclude pattern
+func matchesExcludePattern(relPath string, excludes []string) bool {
+	for _, exclude := range excludes {
+		// Exact match
+		if relPath == exclude {
+			return true
+		}
+
+		// Glob match (handle patterns like apps/excluded/*)
+		if matched, _ := filepath.Match(exclude, relPath); matched {
+			return true
+		}
+
+		// Check if the path starts with the exclude pattern (for directory exclusions)
+		if strings.HasPrefix(relPath, exclude+"/") || strings.HasPrefix(relPath+"/", exclude+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// scanRecursivePatternWithExcludes handles ** patterns while respecting excludes
+func scanRecursivePatternWithExcludes(repoPath, pattern string, excludes []string, seen map[string]bool) []string {
+	var apps []string
+
+	// Split pattern at **
+	parts := strings.SplitN(pattern, "**", 2)
+	if len(parts) != 2 {
+		return apps
+	}
+
+	baseDir := filepath.Join(repoPath, strings.TrimSuffix(parts[0], "/"))
+	suffix := strings.TrimPrefix(parts[1], "/")
+
+	if !dirExists(baseDir) {
+		return apps
+	}
+
+	filepath.WalkDir(baseDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil || !d.IsDir() {
+			return nil
+		}
+
+		// Skip hidden directories
+		if strings.HasPrefix(d.Name(), ".") {
+			return filepath.SkipDir
+		}
+
+		// Get relative path for exclude matching
+		relPath, err := filepath.Rel(repoPath, path)
+		if err != nil {
+			return nil
+		}
+
+		// Check if this path matches any exclude pattern
+		if matchesExcludePattern(relPath, excludes) {
+			return filepath.SkipDir
+		}
+
+		// If there's a suffix pattern, check if this directory matches
+		if suffix != "" {
+			// For patterns like **/kustomize, check if the dir name matches
+			if !matchSuffix(path, repoPath, suffix) {
+				return nil
+			}
+		}
+
+		appName := d.Name()
+		if !seen[appName] && appName != filepath.Base(baseDir) {
+			seen[appName] = true
+			apps = append(apps, appName)
+		}
+
+		return nil
+	})
+
+	return apps
+}
+
+// matchSuffix checks if a path matches the suffix pattern
+func matchSuffix(path, repoPath, suffix string) bool {
+	relPath, err := filepath.Rel(repoPath, path)
+	if err != nil {
+		return false
+	}
+
+	// Simple suffix matching - check if the path ends with the pattern
+	if strings.HasSuffix(relPath, suffix) {
+		return true
+	}
+
+	// Check if it's a wildcard match
+	if strings.Contains(suffix, "*") {
+		matched, _ := filepath.Match(suffix, filepath.Base(path))
+		return matched
+	}
+
+	return false
 }
 
 // parseHelmUmbrella parses a Helm umbrella chart

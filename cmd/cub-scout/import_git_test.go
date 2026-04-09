@@ -234,3 +234,83 @@ func TestImportEvidenceJSON_GitBundleComparison(t *testing.T) {
 		t.Errorf("evidence.BundlePath = %q, want /path/to/bundle", evidence.BundlePath)
 	}
 }
+
+func TestBuildImportFromGitPreview_ApplicationSet(t *testing.T) {
+	// Create a temporary Git repo with ApplicationSet structure
+	tmpDir := t.TempDir()
+
+	// Create ApplicationSet directory
+	appSetDir := filepath.Join(tmpDir, "applicationsets")
+	if err := os.MkdirAll(appSetDir, 0o755); err != nil {
+		t.Fatalf("failed to create applicationsets dir: %v", err)
+	}
+
+	// Create ApplicationSet with git generator
+	appSetContent := `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/org/repo
+        directories:
+          - path: apps/*
+          - path: "!apps/excluded"
+`
+	if err := os.WriteFile(filepath.Join(appSetDir, "apps.yaml"), []byte(appSetContent), 0o644); err != nil {
+		t.Fatalf("failed to write applicationset: %v", err)
+	}
+
+	// Create app directories that match the pattern
+	for _, app := range []string{"frontend", "backend", "api"} {
+		appDir := filepath.Join(tmpDir, "apps", app)
+		if err := os.MkdirAll(appDir, 0o755); err != nil {
+			t.Fatalf("failed to create app dir %s: %v", app, err)
+		}
+	}
+
+	// Create excluded app (should not appear due to exclude pattern)
+	excludedDir := filepath.Join(tmpDir, "apps", "excluded")
+	if err := os.MkdirAll(excludedDir, 0o755); err != nil {
+		t.Fatalf("failed to create excluded dir: %v", err)
+	}
+
+	// Test Git-only preview
+	proposal, gitApps, err := buildImportFromGitPreview(tmpDir, nil)
+	if err != nil {
+		t.Fatalf("buildImportFromGitPreview() error = %v", err)
+	}
+
+	// Should find 3 apps (frontend, backend, api) - not excluded
+	if len(gitApps) != 3 {
+		t.Errorf("expected 3 apps from ApplicationSet git generator, got %d: %v", len(gitApps), func() []string {
+			names := make([]string, len(gitApps))
+			for i, a := range gitApps {
+				names[i] = a.Name
+			}
+			return names
+		}())
+	}
+
+	// Verify specific apps were found
+	foundApps := make(map[string]bool)
+	for _, app := range gitApps {
+		foundApps[app.Name] = true
+	}
+
+	for _, expected := range []string{"frontend", "backend", "api"} {
+		if !foundApps[expected] {
+			t.Errorf("expected to find app %q in Git apps", expected)
+		}
+	}
+
+	// Excluded app should not be found
+	if foundApps["excluded"] {
+		t.Error("excluded app should not be found (exclude pattern should filter it out)")
+	}
+
+	if proposal == nil {
+		t.Fatal("proposal is nil")
+	}
+}
