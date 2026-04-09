@@ -59,10 +59,14 @@ Current tracked follow-ons:
 | Issue | Title | Notes |
 |-------|-------|-------|
 | #368 | Beat Argo CD GUI as the first stop for troubleshooting | Broader umbrella, likely next major wedge |
-| #359 | Extend `--presentation` to additional read-only commands | Useful polish |
 | #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
 
 Recent closures:
+- #359 — Extend `--presentation` to additional read-only commands (Apr 9)
+  - Added `--presentation=ai|human|paired` to trace command
+  - AI mode: bracket notation, uppercase markers, `[end trace]` outro
+  - Human/Paired mode: title-case headings, owner info, ownership chain heading
+  - Legacy (no flag): preserves original formatting
 - #370 — Structured action-typed next-step hints for JSON + MCP (Apr 9)
   - Added `nextSteps` field to doctor and explain JSON output
   - Each hint has actionType (read-only, mutating, waiting, human-decision), reason, nextCommand/nextSurface
@@ -133,7 +137,7 @@ Recommended next steps (optional enhancements):
 2. Add `KustomizePath` to JSON output for kustomize apps
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
-Lower-priority follow-ons remain: #359, #362
+Lower-priority follow-on: #362
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
@@ -241,8 +245,7 @@ No separate `--compare` flag needed.
 1. Milestone 1: broader GitOps troubleshooting wedge (#368)
    - make `cub-scout` the first stop before the Argo CD GUI
    - builds on the shipped three-way + hinting + MCP work
-2. Milestone 2: presentation polish and stability
-   - `#359`: extend `--presentation` to additional read-only commands
+2. Milestone 2: test stability
    - `#362`: stabilize intermittent test kill
 
 ## External publication boundary
@@ -311,11 +314,12 @@ For the core connected demos, "AI-first" means:
 - `docs/reference/commands.md`
 - `docs/reference/json-contracts.md`
 
-### Presentation mode implementation (#352 complete)
+### Presentation mode implementation (#352, #359 complete)
 
-- `cmd/cub-scout/presentation.go` — mode types and helper functions
+- `cmd/cub-scout/presentation.go` — mode types and helper functions (including Trace*)
 - `cmd/cub-scout/doctor.go` — `--presentation` flag and rendering
 - `cmd/cub-scout/explain.go` — `--presentation` flag and rendering
+- `cmd/cub-scout/trace.go` — `--presentation` flag and mode-aware output
 
 ### Secret evidence implementation (#328 complete)
 
