@@ -76,8 +76,6 @@ Investigation status:
   - Finding: Keep tools separate (`cub-scout` for structure, `cub gitops` for rendering)
   - Recommendation: Add optional "render-readiness" metadata (renderableType, kustomizePath)
   - See issue comment for detailed findings
-  - Populates `TargetApps` with discovered apps
-  - Integration test verifies end-to-end import pathway
 - #366 — Three-way disagreement surfacing for connected mode (Apr 9)
   - `explain` shows THREE-WAY STATUS section when ConfigHub/Argo/cluster disagree
   - Patterns: change-in-progress, sync-stale, rollout-pending, multi-change
