@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-04-06
+Last updated: 2026-04-09
 
 ## Current repo state
 
@@ -61,6 +61,9 @@ Current tracked follow-ons:
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
 | #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
+| #365 | `explain` shows `Unknown owner` for ArgoCD ApplicationSet-managed resources | Highest-leverage correctness fix; should be the next implementation slice |
+| #366 | Connected mode: surface three-way disagreement between ConfigHub, Argo, and cluster state | Important connected evidence follow-on after ownership truth is fixed |
+| #367 | Phase-aware next-step hints for Argo-managed incidents and closeout | Strong AI+human workflow follow-on after ownership/context work |
 | #363 | Enhance Git parser to support ArgoCD ApplicationSet git generators | Active continuation of the Git import track after #357 |
 | #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Active continuation of the Git import track after #357 |
 
@@ -74,6 +77,14 @@ Recent closures:
 Important: the current deterministic hints are already good and should not be
 diminished. `#349` strengthened them; any follow-on hint work should keep moving
 in that direction rather than flattening the current system.
+
+Also important: the new Apr 9 issues split into two distinct tracks:
+- Argo/AI/operator truth-and-guidance: `#365`, `#366`, `#367`
+- Git import continuation: `#363`, `#364`
+
+The recommended next slice is `#365` because it fixes a direct correctness gap in
+the `doctor` -> `explain` drill-down path and improves both human and AI
+operator trust immediately.
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
@@ -178,14 +189,21 @@ No separate `--compare` flag needed.
 
 ## Suggested next milestones
 
-1. Milestone 1: Continue the Git import track via #363 and #364
+1. Milestone 1: #365 — fix `explain` ownership for ArgoCD ApplicationSet-managed resources
+   - `doctor` already recognizes these resources as Argo-managed
+   - `explain` currently loses that ownership truth on individual resources
+   - this is the highest-leverage next slice for operator trust and AI guidance
+2. Milestone 2: #367 and then #366
+   - `#367`: phase-aware next-step hints for Argo-managed incident and closeout flows
+   - `#366`: connected three-way disagreement surface across ConfigHub, Argo/Flux, and cluster state
+3. Milestone 3: Continue the Git import track via #363 and #364
    - #357 is CLOSED as the initial local `--git-path` preview slice
-   - #363: Enhance parser for ArgoCD ApplicationSet git generators
-   - #364: Investigate rendering integration between `cub-scout import` and `cub gitops import`
-2. Milestone 2: docs/example sync cluster (#356, #358, #361) — COMPLETE
-3. Milestone 3: polish/compat follow-ons (#359, #360)
+   - #363: enhance parser for ArgoCD ApplicationSet git generators
+   - #364: investigate rendering integration between `cub-scout import` and `cub gitops import`
+4. Milestone 4: polish/compat follow-ons (#359, #360, #362)
    Extend `--presentation` incrementally to other read-only commands if useful,
-   and optionally close the legacy v0.14 trace JSON converter gap.
+   close the legacy v0.14 trace JSON converter gap when worth it, and stabilize
+   the `context-pack` test kill path.
 
 ## External publication boundary
 
