@@ -134,5 +134,13 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 		summary.Namespace = ns
 	}
 
+	// Check for three-way disagreement in connected mode.
+	// Note: failure details (sync status) would need to be fetched separately
+	// from the deployer resource - for now we pass nil and rely on DRY/WET/LIVE comparison.
+	threeWay, err := buildThreeWayDisagreement(ctx, kind, name, ns, nil)
+	if err == nil && threeWay != nil && threeWay.IsDisagreement() {
+		summary.ThreeWay = threeWay
+	}
+
 	return summary, nil
 }

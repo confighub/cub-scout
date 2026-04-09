@@ -121,3 +121,113 @@ func assertExplainGolden(t *testing.T, goldenFile string, actual string) {
 		t.Fatalf("golden mismatch for %s\n--- expected ---\n%s\n--- actual ---\n%s", goldenFile, string(expected), actual)
 	}
 }
+
+func TestExplainText_WithThreeWayDisagreement(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+
+	summary := ExplainSummary{
+		Resource:    "Deployment/api",
+		Namespace:   "prod",
+		Owner:       "ArgoCD",
+		Source:      "https://github.com/acme/apps.git",
+		DeployedVia: "Application/api-app -> Deployment/api",
+		Health:      "Healthy",
+		Risks:       "Not assessed",
+		Drift:       "None detected",
+		ThreeWay: &ThreeWayDisagreement{
+			Resource:        "Deployment/api",
+			Namespace:       "prod",
+			Pattern:         PatternChangeInProgress,
+			Meaning:         "ConfigHub change is being applied. Controller is syncing - wait for completion.",
+			ConfigHubState:  "image=nginx:1.26",
+			ControllerState: "OutOfSync, Progressing",
+			ClusterState:    "image=nginx:1.25",
+			FieldMismatches: []ThreeWayFieldMismatch{
+				{Field: "images", ConfigHub: "nginx:1.26", Cluster: "nginx:1.25"},
+			},
+		},
+	}
+
+	output := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
+
+	// Should include three-way status section
+	checks := []string{
+		"THREE-WAY STATUS",
+		"Change in progress",
+		"ConfigHub:",
+		"Controller:",
+		"Cluster:",
+		"images",
+		"wait for completion",
+	}
+
+	for _, check := range checks {
+		if !containsSubstring(output, check) {
+			t.Errorf("expected output to contain %q\nGot: %s", check, output)
+		}
+	}
+}
+
+func TestExplainMarkdown_WithThreeWayDisagreement(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/api",
+		Namespace:   "prod",
+		Owner:       "ArgoCD",
+		Source:      "https://github.com/acme/apps.git",
+		DeployedVia: "Application/api-app -> Deployment/api",
+		Health:      "Healthy",
+		Risks:       "Not assessed",
+		Drift:       "None detected",
+		ThreeWay: &ThreeWayDisagreement{
+			Resource:        "Deployment/api",
+			Namespace:       "prod",
+			Pattern:         PatternSyncStale,
+			Meaning:         "ConfigHub and cluster disagree but controller reports synced.",
+			ConfigHubState:  "image=nginx:1.26",
+			ControllerState: "Synced, Healthy",
+			ClusterState:    "image=nginx:1.25",
+		},
+	}
+
+	output := renderExplainMarkdown(summary, DefaultPresentationMode, false, DefaultHintContext())
+
+	// Should include three-way status section in markdown format
+	checks := []string{
+		"### Three-Way Status",
+		"Sync/state mismatch",
+		"**ConfigHub:**",
+		"**Cluster:**",
+	}
+
+	for _, check := range checks {
+		if !containsSubstring(output, check) {
+			t.Errorf("expected markdown to contain %q\nGot: %s", check, output)
+		}
+	}
+}
+
+func TestExplainText_NoThreeWayWhenAgreed(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+
+	summary := ExplainSummary{
+		Resource:    "Deployment/api",
+		Namespace:   "prod",
+		Owner:       "ArgoCD",
+		Source:      "https://github.com/acme/apps.git",
+		DeployedVia: "Application/api-app -> Deployment/api",
+		Health:      "Healthy",
+		Risks:       "Not assessed",
+		Drift:       "None detected",
+		ThreeWay: &ThreeWayDisagreement{
+			Pattern: PatternAgreed, // Not a disagreement
+			Meaning: "All layers agree.",
+		},
+	}
+
+	output := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
+
+	// Should NOT include three-way status section when agreed
+	if containsSubstring(output, "THREE-WAY STATUS") {
+		t.Errorf("expected no THREE-WAY STATUS section when pattern is Agreed\nGot: %s", output)
+	}
+}

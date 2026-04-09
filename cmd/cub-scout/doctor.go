@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/internal/scan"
+	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -53,14 +54,22 @@ func init() {
 
 // DoctorSummary is the canonical model behind both ASCII and JSON output.
 type DoctorSummary struct {
-	Cluster   string                 `json:"cluster"`
-	Namespace string                 `json:"namespace"`
-	Resources DoctorResourceSummary  `json:"resources"`
-	Ownership DoctorOwnershipSummary `json:"ownership"`
-	Health    DoctorHealthSummary    `json:"health"`
-	Risks     DoctorRiskSummary      `json:"risks"`
-	Drift     DoctorDriftSummary     `json:"drift"`
-	TopIssues []DoctorIssue          `json:"topIssues,omitempty"`
+	Cluster   string                  `json:"cluster"`
+	Namespace string                  `json:"namespace"`
+	Resources DoctorResourceSummary   `json:"resources"`
+	Ownership DoctorOwnershipSummary  `json:"ownership"`
+	Health    DoctorHealthSummary     `json:"health"`
+	Risks     DoctorRiskSummary       `json:"risks"`
+	Drift     DoctorDriftSummary      `json:"drift"`
+	ThreeWay  *DoctorThreeWaySummary  `json:"threeWay,omitempty"`
+	TopIssues []DoctorIssue           `json:"topIssues,omitempty"`
+}
+
+// DoctorThreeWaySummary indicates three-way comparison status.
+// In connected mode, this surfaces whether ConfigHub/Argo/cluster agree.
+type DoctorThreeWaySummary struct {
+	Available bool   `json:"available"`          // True if connected mode is available
+	Hint      string `json:"hint,omitempty"`     // Suggested command for full comparison
 }
 
 // DoctorResourceSummary contains resource inventory totals.
@@ -336,6 +345,21 @@ func buildDoctorSummary(entries []MapEntry, findings []scan.NormalizedFinding, c
 	}
 	summary.TopIssues = issues[:topN]
 
+	// Check for connected mode to surface three-way comparison capability
+	client := hub.NewClient()
+	if err := client.RequireConnected(); err == nil {
+		nsFlag := ""
+		if namespace != "" && namespace != "all" {
+			nsFlag = fmt.Sprintf(" --scope namespace/%s", namespace)
+		} else {
+			nsFlag = " --scope cluster"
+		}
+		summary.ThreeWay = &DoctorThreeWaySummary{
+			Available: true,
+			Hint:      fmt.Sprintf("cub-scout compare three-way%s", nsFlag),
+		}
+	}
+
 	return summary
 }
 
@@ -421,6 +445,12 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 		driftText = Yellow(driftText)
 	}
 	fmt.Fprintf(&b, "%s %s\n\n", sectionLabel("Drift"), driftText)
+
+	// Three-way status (connected mode only)
+	if summary.ThreeWay != nil && summary.ThreeWay.Available {
+		fmt.Fprintf(&b, "%s ConfigHub connected - run %s for full comparison\n\n",
+			sectionLabel("Three-Way"), Cyan(summary.ThreeWay.Hint))
+	}
 
 	fmt.Fprintf(&b, "%s\n", sectionLabel("Top Issues"))
 	if len(summary.TopIssues) == 0 {

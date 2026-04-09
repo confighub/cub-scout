@@ -56,6 +56,10 @@ type ExplainSummary struct {
 	Drift        string   `json:"drift"`
 	Notes        []string `json:"notes,omitempty"`
 	ConfigHubURL string   `json:"confighubUrl,omitempty"` // URL to view/manage in ConfigHub GUI (only when connected)
+
+	// ThreeWay contains the three-way disagreement status (ConfigHub vs controller vs cluster).
+	// Only populated in connected mode when disagreement is detected.
+	ThreeWay *ThreeWayDisagreement `json:"threeWay,omitempty"`
 }
 
 func runExplain(cmd *cobra.Command, args []string) error {
@@ -529,6 +533,11 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 		}
 	}
 
+	// Three-way disagreement section (connected mode only)
+	if summary.ThreeWay != nil && summary.ThreeWay.IsDisagreement() {
+		b.WriteString(formatThreeWaySection(summary.ThreeWay))
+	}
+
 	// Outro - only for explicit AI mode
 	if explicitMode {
 		outro := ExplainOutro(mode)
@@ -609,6 +618,11 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 		for _, note := range summary.Notes {
 			fmt.Fprintf(&b, "  - %s\n", note)
 		}
+	}
+
+	// Three-way disagreement section (connected mode only)
+	if summary.ThreeWay != nil && summary.ThreeWay.IsDisagreement() {
+		b.WriteString(formatThreeWayMarkdown(summary.ThreeWay))
 	}
 
 	if explicitMode {
