@@ -58,15 +58,19 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #370 | Structured next-step hints for JSON + MCP | Highest-leverage AI/MCP follow-on |
-| #369 | Expose `doctor` / `observe.scope_summary` as first-class MCP tool | Workflow-first MCP surface |
-| #368 | Beat Argo CD GUI as the first stop for troubleshooting | Broader umbrella, likely after #370/#369 |
+| #370 | Structured next-step hints for JSON + MCP | Highest-leverage AI/MCP follow-on, builds on #369 |
+| #368 | Beat Argo CD GUI as the first stop for troubleshooting | Broader umbrella, likely after #370 |
 | #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Investigated already; only resume for explicit render-readiness follow-on |
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
 | #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
 
 Recent closures:
+- #369 — Expose doctor as first-class MCP tool (Apr 9)
+  - Added `doctor` to MCP gateway standalone tool set
+  - Parameters: namespace (optional), top (optional integer)
+  - First in tool list, matching its role as first troubleshooting command
+  - Wraps `cub-scout doctor --format json`
 - #371 — Three-way agreement/convergence summary (Apr 9)
   - New `AgreementSummary` in `compare three-way` output
   - States: agreed, converging, diverged, partial
