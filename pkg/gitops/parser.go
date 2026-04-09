@@ -68,8 +68,8 @@ type ApplicationSetDef struct {
 	Name           string            `json:"name"`
 	Path           string            `json:"path"`
 	Generator      string            `json:"generator"`                  // list, cluster, git, matrix, etc.
-	TargetApps     []string          `json:"targetApps,omitempty"`       // App names it generates
-	TargetAppPaths map[string]string `json:"targetAppPaths,omitempty"`   // Map of app name -> actual path
+	TargetApps     []string          `json:"targetApps,omitempty"`       // App paths (unique identifiers)
+	TargetAppNames map[string]string `json:"targetAppNames,omitempty"`   // Map of path -> app name (for display)
 }
 
 // HelmChartDefinition represents a Helm chart
@@ -932,30 +932,26 @@ func parseApplicationSets(repoPath string) (*RepoStructure, error) {
 	}
 
 	// Populate Apps from discovered ApplicationSet targets
-	// Use actual matched paths from TargetAppPaths instead of guessing
+	// TargetApps now contains paths as unique identifiers
 	seenPaths := make(map[string]bool)
 	for _, appSet := range result.ApplicationSets {
-		for _, appName := range appSet.TargetApps {
-			// Get the actual path from TargetAppPaths
-			basePath := appSet.TargetAppPaths[appName]
-			if basePath == "" {
-				// Fallback to guessing if path not found (shouldn't happen for git generators)
-				basePath = findAppBasePath(repoPath, appName)
-			}
-
-			// Use path as the unique key to handle apps with same name in different directories
-			pathKey := basePath
-			if pathKey == "" {
-				pathKey = appName // fallback to name if no path
-			}
-			if seenPaths[pathKey] {
+		for _, appPath := range appSet.TargetApps {
+			// Skip duplicates (same path from different ApplicationSets)
+			if seenPaths[appPath] {
 				continue
 			}
-			seenPaths[pathKey] = true
+			seenPaths[appPath] = true
+
+			// Get the display name from TargetAppNames
+			appName := appSet.TargetAppNames[appPath]
+			if appName == "" {
+				// Fallback to basename if name not found
+				appName = filepath.Base(appPath)
+			}
 
 			result.Apps = append(result.Apps, AppDefinition{
 				Name:     appName,
-				BasePath: basePath,
+				BasePath: appPath,
 			})
 		}
 	}
@@ -1042,15 +1038,17 @@ func parseApplicationSet(path, repoPath string) *ApplicationSetDef {
 		Name:           appSet.Metadata.Name,
 		Path:           relPath,
 		Generator:      generator,
-		TargetAppPaths: make(map[string]string),
+		TargetAppNames: make(map[string]string),
 	}
 
 	// Scan directories matching git generator patterns
 	if len(allPatterns.Include) > 0 {
 		discovered := scanGitGeneratorPatternsWithExcludesFullPaths(repoPath, allPatterns)
 		for _, app := range discovered {
-			result.TargetApps = append(result.TargetApps, app.Name)
-			result.TargetAppPaths[app.Name] = app.Path
+			// Store path as the unique identifier in TargetApps
+			result.TargetApps = append(result.TargetApps, app.Path)
+			// Map path -> name for display purposes
+			result.TargetAppNames[app.Path] = app.Name
 		}
 	}
 

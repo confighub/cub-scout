@@ -245,44 +245,52 @@ spec:
 	}
 
 	// Should have discovered 3 apps (excluding the excluded one)
+	// TargetApps now contains paths as unique identifiers
 	if len(appSet.TargetApps) != 3 {
 		t.Errorf("expected 3 target apps, got %d: %v", len(appSet.TargetApps), appSet.TargetApps)
 	}
 
-	// Verify specific apps were found
-	foundApps := make(map[string]bool)
-	for _, app := range appSet.TargetApps {
-		foundApps[app] = true
+	// Verify specific app paths were found
+	foundPaths := make(map[string]bool)
+	for _, appPath := range appSet.TargetApps {
+		foundPaths[appPath] = true
 	}
 
-	for _, expected := range []string{"frontend", "backend", "api"} {
-		if !foundApps[expected] {
-			t.Errorf("expected to find app %q in TargetApps", expected)
+	expectedPaths := []string{
+		filepath.Join("apps", "frontend"),
+		filepath.Join("apps", "backend"),
+		filepath.Join("apps", "api"),
+	}
+	for _, expected := range expectedPaths {
+		if !foundPaths[expected] {
+			t.Errorf("expected to find path %q in TargetApps", expected)
 		}
 	}
 
-	// Excluded app should not be found
-	if foundApps["excluded"] {
-		t.Error("excluded app should not be found")
+	// Excluded app path should not be found
+	excludedPath := filepath.Join("apps", "excluded")
+	if foundPaths[excludedPath] {
+		t.Error("excluded app path should not be found")
 	}
 
-	// Verify TargetAppPaths contains the actual paths
-	if appSet.TargetAppPaths == nil {
-		t.Error("expected TargetAppPaths to be populated")
+	// Verify TargetAppNames maps path -> name
+	if appSet.TargetAppNames == nil {
+		t.Error("expected TargetAppNames to be populated")
 	} else {
-		for _, expected := range []string{"frontend", "backend", "api"} {
-			path, ok := appSet.TargetAppPaths[expected]
+		for _, path := range expectedPaths {
+			expectedName := filepath.Base(path)
+			name, ok := appSet.TargetAppNames[path]
 			if !ok {
-				t.Errorf("expected TargetAppPaths to contain %q", expected)
-			} else if path != filepath.Join("apps", expected) {
-				t.Errorf("TargetAppPaths[%q] = %q, want %q", expected, path, filepath.Join("apps", expected))
+				t.Errorf("expected TargetAppNames to contain path %q", path)
+			} else if name != expectedName {
+				t.Errorf("TargetAppNames[%q] = %q, want %q", path, name, expectedName)
 			}
 		}
 	}
 
 	// Apps should also be populated in result.Apps with correct BasePath
-	if len(result.Apps) == 0 {
-		t.Error("expected Apps to be populated from ApplicationSet targets")
+	if len(result.Apps) != 3 {
+		t.Errorf("expected 3 Apps, got %d", len(result.Apps))
 	} else {
 		for _, app := range result.Apps {
 			expectedPath := filepath.Join("apps", app.Name)
@@ -347,19 +355,127 @@ spec:
 	}
 
 	// Should have discovered workloads from nested git generator
+	// TargetApps now contains paths as unique identifiers
 	if len(appSet.TargetApps) != 2 {
 		t.Errorf("expected 2 target apps from matrix git generator, got %d: %v", len(appSet.TargetApps), appSet.TargetApps)
 	}
 
-	foundApps := make(map[string]bool)
-	for _, app := range appSet.TargetApps {
-		foundApps[app] = true
+	foundPaths := make(map[string]bool)
+	for _, path := range appSet.TargetApps {
+		foundPaths[path] = true
 	}
 
-	for _, expected := range []string{"service-a", "service-b"} {
-		if !foundApps[expected] {
-			t.Errorf("expected to find workload %q in TargetApps", expected)
+	expectedPaths := []string{
+		filepath.Join("workloads", "service-a"),
+		filepath.Join("workloads", "service-b"),
+	}
+	for _, expected := range expectedPaths {
+		if !foundPaths[expected] {
+			t.Errorf("expected to find workload path %q in TargetApps", expected)
 		}
+	}
+}
+
+func TestParseApplicationSetWithDuplicateBasenames(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create ApplicationSet with multiple patterns that could match same-named directories
+	appSetDir := filepath.Join(tmpDir, "applicationsets")
+	if err := os.MkdirAll(appSetDir, 0o755); err != nil {
+		t.Fatalf("failed to create applicationsets dir: %v", err)
+	}
+
+	appSetContent := `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: multi-team
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/org/repo
+        directories:
+          - path: apps/team-a/*
+          - path: services/team-b/*
+`
+	appSetPath := filepath.Join(appSetDir, "multi-team.yaml")
+	if err := os.WriteFile(appSetPath, []byte(appSetContent), 0o644); err != nil {
+		t.Fatalf("failed to write applicationset: %v", err)
+	}
+
+	// Create directories with duplicate basenames in different paths
+	// Both team-a and team-b have an "api" app
+	dirs := []string{
+		filepath.Join(tmpDir, "apps", "team-a", "api"),
+		filepath.Join(tmpDir, "apps", "team-a", "web"),
+		filepath.Join(tmpDir, "services", "team-b", "api"),
+		filepath.Join(tmpDir, "services", "team-b", "worker"),
+	}
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("failed to create dir %s: %v", dir, err)
+		}
+	}
+
+	result, err := ParseRepo(tmpDir)
+	if err != nil {
+		t.Fatalf("failed to parse repo: %v", err)
+	}
+
+	if len(result.ApplicationSets) != 1 {
+		t.Fatalf("expected 1 ApplicationSet, got %d", len(result.ApplicationSets))
+	}
+
+	appSet := result.ApplicationSets[0]
+
+	// Should have discovered 4 apps (2 from each pattern)
+	// Even though both have "api", they should be treated as separate apps
+	if len(appSet.TargetApps) != 4 {
+		t.Errorf("expected 4 target apps, got %d: %v", len(appSet.TargetApps), appSet.TargetApps)
+	}
+
+	// All 4 paths should be in TargetApps
+	expectedPaths := []string{
+		filepath.Join("apps", "team-a", "api"),
+		filepath.Join("apps", "team-a", "web"),
+		filepath.Join("services", "team-b", "api"),
+		filepath.Join("services", "team-b", "worker"),
+	}
+
+	foundPaths := make(map[string]bool)
+	for _, path := range appSet.TargetApps {
+		foundPaths[path] = true
+	}
+
+	for _, expected := range expectedPaths {
+		if !foundPaths[expected] {
+			t.Errorf("expected TargetApps to contain path %q", expected)
+		}
+	}
+
+	// All 4 apps should be in result.Apps with correct paths
+	if len(result.Apps) != 4 {
+		t.Errorf("expected 4 Apps, got %d", len(result.Apps))
+	}
+
+	// Check that both "api" apps are present with different paths
+	apiCount := 0
+	apiPaths := make(map[string]bool)
+	for _, app := range result.Apps {
+		if app.Name == "api" {
+			apiCount++
+			apiPaths[app.BasePath] = true
+		}
+	}
+
+	if apiCount != 2 {
+		t.Errorf("expected 2 apps named 'api', got %d", apiCount)
+	}
+
+	if !apiPaths[filepath.Join("apps", "team-a", "api")] {
+		t.Error("expected to find api app at apps/team-a/api")
+	}
+	if !apiPaths[filepath.Join("services", "team-b", "api")] {
+		t.Error("expected to find api app at services/team-b/api")
 	}
 }
 
@@ -532,22 +648,35 @@ spec:
 	appSet := result.ApplicationSets[0]
 
 	// Should have discovered 2 apps (dev, prod)
+	// TargetApps now contains paths as unique identifiers
 	if len(appSet.TargetApps) != 2 {
 		t.Errorf("expected 2 target apps, got %d: %v", len(appSet.TargetApps), appSet.TargetApps)
 	}
 
-	// Verify TargetAppPaths contains the full nested paths
+	// Expected paths for each app
 	expectedPaths := map[string]string{
 		"dev":  filepath.Join("examples", "apptique-examples", "argo-applicationset", "envs", "dev"),
 		"prod": filepath.Join("examples", "apptique-examples", "argo-applicationset", "envs", "prod"),
 	}
 
+	// Verify TargetApps contains the full paths
+	foundPaths := make(map[string]bool)
+	for _, path := range appSet.TargetApps {
+		foundPaths[path] = true
+	}
 	for name, expectedPath := range expectedPaths {
-		actualPath, ok := appSet.TargetAppPaths[name]
+		if !foundPaths[expectedPath] {
+			t.Errorf("expected TargetApps to contain path for %q: %q", name, expectedPath)
+		}
+	}
+
+	// Verify TargetAppNames maps path -> name
+	for name, path := range expectedPaths {
+		actualName, ok := appSet.TargetAppNames[path]
 		if !ok {
-			t.Errorf("expected TargetAppPaths to contain %q", name)
-		} else if actualPath != expectedPath {
-			t.Errorf("TargetAppPaths[%q] = %q, want %q", name, actualPath, expectedPath)
+			t.Errorf("expected TargetAppNames to contain path %q", path)
+		} else if actualName != name {
+			t.Errorf("TargetAppNames[%q] = %q, want %q", path, actualName, name)
 		}
 	}
 
