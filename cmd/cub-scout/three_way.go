@@ -68,6 +68,39 @@ type ThreeWayFieldMismatch struct {
 	Cluster   string `json:"cluster"`
 }
 
+// AgreementState represents the overall convergence state across multiple resources.
+type AgreementState string
+
+const (
+	// StateAgreed means all resources are aligned across all three layers.
+	StateAgreed AgreementState = "agreed"
+
+	// StateConverging means changes are in progress but expected to converge.
+	StateConverging AgreementState = "converging"
+
+	// StateDiverged means there are stale or unexplained disagreements.
+	StateDiverged AgreementState = "diverged"
+
+	// StatePartial means evidence is incomplete (disconnected or unlinked resources).
+	StatePartial AgreementState = "partial"
+)
+
+// AgreementSummary provides a high-level convergence assessment across a scope.
+type AgreementSummary struct {
+	State   AgreementState `json:"state"`
+	Summary string         `json:"summary"`
+	Reasons []string       `json:"reasons,omitempty"`
+	Sources SourceCoverage `json:"sources"`
+}
+
+// SourceCoverage tracks which layers have usable evidence.
+type SourceCoverage struct {
+	ConfigHub int `json:"confighub"` // Resources with DRY/WET evidence
+	Deployer  int `json:"deployer"`  // Resources with controller evidence
+	Cluster   int `json:"cluster"`   // Resources with LIVE evidence
+	Total     int `json:"total"`     // Total resources in scope
+}
+
 // IsDisagreement returns true if the pattern indicates a disagreement.
 func (d ThreeWayDisagreement) IsDisagreement() bool {
 	return d.Pattern != PatternAgreed &&
@@ -368,5 +401,117 @@ func patternToLabel(p ThreeWayPattern) string {
 		return "Not linked to ConfigHub unit"
 	default:
 		return "Unknown state"
+	}
+}
+
+// deriveAgreementSummary computes the overall agreement state from per-resource patterns.
+// This is the single source of truth for convergence assessment.
+func deriveAgreementSummary(patternCounts map[ThreeWayPattern]int, sources SourceCoverage) AgreementSummary {
+	total := sources.Total
+	if total == 0 {
+		return AgreementSummary{
+			State:   StatePartial,
+			Summary: "No resources in scope",
+			Sources: sources,
+		}
+	}
+
+	// Count by category
+	agreed := patternCounts[PatternAgreed]
+	converging := patternCounts[PatternChangeInProgress] + patternCounts[PatternRolloutPending]
+	diverged := patternCounts[PatternSyncStale] + patternCounts[PatternMultiChange] + patternCounts[PatternUnknown]
+	partial := patternCounts[PatternDisconnected] + patternCounts[PatternUnlinked]
+
+	var reasons []string
+
+	// Determine overall state (priority: partial > diverged > converging > agreed)
+	var state AgreementState
+	var summary string
+
+	switch {
+	case partial > 0 && partial >= total/2:
+		// Majority missing evidence
+		state = StatePartial
+		summary = fmt.Sprintf("%d/%d resources have incomplete evidence", partial, total)
+		if patternCounts[PatternDisconnected] > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d disconnected from ConfigHub", patternCounts[PatternDisconnected]))
+		}
+		if patternCounts[PatternUnlinked] > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d not linked to ConfigHub units", patternCounts[PatternUnlinked]))
+		}
+
+	case diverged > 0:
+		// Any true divergence takes priority
+		state = StateDiverged
+		summary = fmt.Sprintf("%d/%d resources diverged", diverged, total)
+		if patternCounts[PatternSyncStale] > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d have stale sync (controller claims synced but cluster differs)", patternCounts[PatternSyncStale]))
+		}
+		if patternCounts[PatternMultiChange] > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d have multiple disagreements", patternCounts[PatternMultiChange]))
+		}
+		if patternCounts[PatternUnknown] > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d have unknown divergence", patternCounts[PatternUnknown]))
+		}
+
+	case converging > 0:
+		// Changes in progress
+		state = StateConverging
+		summary = fmt.Sprintf("%d/%d resources converging", converging, total)
+		if patternCounts[PatternChangeInProgress] > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d changes in progress (controller syncing)", patternCounts[PatternChangeInProgress]))
+		}
+		if patternCounts[PatternRolloutPending] > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d rollouts pending (applied, awaiting cluster)", patternCounts[PatternRolloutPending]))
+		}
+
+	default:
+		// All agreed
+		state = StateAgreed
+		summary = fmt.Sprintf("All %d resources agree", agreed)
+	}
+
+	// Add partial info as secondary reason if not the primary state
+	if state != StatePartial && partial > 0 {
+		reasons = append(reasons, fmt.Sprintf("%d resources have incomplete evidence", partial))
+	}
+
+	return AgreementSummary{
+		State:   state,
+		Summary: summary,
+		Reasons: reasons,
+		Sources: sources,
+	}
+}
+
+// stateToIcon returns a compact icon for the agreement state.
+func stateToIcon(s AgreementState) string {
+	switch s {
+	case StateAgreed:
+		return "\u2713" // ✓
+	case StateConverging:
+		return "\u2192" // →
+	case StateDiverged:
+		return "\u2717" // ✗
+	case StatePartial:
+		return "?"
+	default:
+		return "?"
+	}
+}
+
+// stateToLabel returns a human-readable label for the agreement state.
+func stateToLabel(s AgreementState) string {
+	switch s {
+	case StateAgreed:
+		return "AGREED"
+	case StateConverging:
+		return "CONVERGING"
+	case StateDiverged:
+		return "DIVERGED"
+	case StatePartial:
+		return "PARTIAL"
+	default:
+		return "UNKNOWN"
 	}
 }

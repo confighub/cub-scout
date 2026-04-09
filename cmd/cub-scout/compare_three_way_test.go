@@ -152,6 +152,13 @@ func TestRunCompareThreeWay_JSON(t *testing.T) {
 	if len(payload.Resources) != 1 {
 		t.Fatalf("resource count = %d, want 1", len(payload.Resources))
 	}
+	// Verify agreement summary is present in JSON output
+	if payload.Summary.Agreement.State == "" {
+		t.Error("expected agreement.state in JSON output")
+	}
+	if payload.Summary.Agreement.Summary == "" {
+		t.Error("expected agreement.summary in JSON output")
+	}
 }
 
 func TestRunCompareThreeWay_UnsupportedScope(t *testing.T) {
@@ -478,5 +485,92 @@ func TestExitCodeIndependentOfFormat_Conformance(t *testing.T) {
 	// Exit code should still be the same
 	if computeConformanceExitCode(report, failOn) != expectedExit {
 		t.Error("exit code changed after rendering")
+	}
+}
+
+func TestRenderThreeWayASCII_IncludesAgreementSummary(t *testing.T) {
+	report := threeWayReport{
+		Scope: "namespace/prod",
+		Summary: threeWaySummary{
+			TotalResources:     3,
+			ConnectedResources: 3,
+			SeverityCounts:     map[string]int{"ok": 3},
+			Agreement: AgreementSummary{
+				State:   StateAgreed,
+				Summary: "All 3 resources agree",
+				Sources: SourceCoverage{Total: 3, ConfigHub: 3, Deployer: 3, Cluster: 3},
+			},
+		},
+	}
+
+	output := renderThreeWayASCII(report)
+
+	// Should contain agreement line
+	if !strings.Contains(output, "Agreement:") {
+		t.Error("expected Agreement: line in ASCII output")
+	}
+	if !strings.Contains(output, "AGREED") {
+		t.Error("expected AGREED label in ASCII output")
+	}
+	if !strings.Contains(output, "All 3 resources agree") {
+		t.Error("expected agreement summary in ASCII output")
+	}
+}
+
+func TestRenderThreeWayASCII_ConvergingState(t *testing.T) {
+	report := threeWayReport{
+		Scope: "namespace/prod",
+		Summary: threeWaySummary{
+			TotalResources:     3,
+			ConnectedResources: 3,
+			SeverityCounts:     map[string]int{"warning": 1, "ok": 2},
+			Agreement: AgreementSummary{
+				State:   StateConverging,
+				Summary: "1/3 resources converging",
+				Reasons: []string{"1 changes in progress (controller syncing)"},
+				Sources: SourceCoverage{Total: 3, ConfigHub: 3, Deployer: 3, Cluster: 3},
+			},
+		},
+	}
+
+	output := renderThreeWayASCII(report)
+
+	if !strings.Contains(output, "CONVERGING") {
+		t.Error("expected CONVERGING label in ASCII output")
+	}
+	if !strings.Contains(output, "1/3 resources converging") {
+		t.Error("expected convergence summary in ASCII output")
+	}
+	if !strings.Contains(output, "changes in progress") {
+		t.Error("expected reason in ASCII output")
+	}
+}
+
+func TestRenderThreeWayMarkdown_IncludesAgreementSummary(t *testing.T) {
+	report := threeWayReport{
+		Scope: "namespace/prod",
+		Summary: threeWaySummary{
+			TotalResources:     2,
+			ConnectedResources: 2,
+			SeverityCounts:     map[string]int{"warning": 1, "ok": 1},
+			Agreement: AgreementSummary{
+				State:   StateDiverged,
+				Summary: "1/2 resources diverged",
+				Reasons: []string{"1 have stale sync (controller claims synced but cluster differs)"},
+				Sources: SourceCoverage{Total: 2, ConfigHub: 2, Deployer: 2, Cluster: 2},
+			},
+		},
+	}
+
+	output := renderThreeWayMarkdown(report)
+
+	if !strings.Contains(output, "Agreement:") {
+		t.Error("expected Agreement: line in markdown output")
+	}
+	if !strings.Contains(output, "**DIVERGED**") {
+		t.Error("expected **DIVERGED** in markdown output")
+	}
+	if !strings.Contains(output, "1/2 resources diverged") {
+		t.Error("expected divergence summary in markdown output")
 	}
 }

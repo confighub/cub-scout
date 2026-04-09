@@ -36,6 +36,7 @@ type threeWayResourceEntry struct {
 	Result   compareResourceResult `json:"result"`
 	Severity string                `json:"severity"`
 	Causes   []string              `json:"causes,omitempty"`
+	Pattern  ThreeWayPattern       `json:"pattern"`
 }
 
 // ConformanceResult contains the pass/fail conformance summary.
@@ -56,6 +57,7 @@ type threeWaySummary struct {
 	SeverityCounts      map[string]int    `json:"severityCounts"`
 	CauseBuckets        map[string]int    `json:"causeBuckets"`
 	Conformance         ConformanceResult `json:"conformance"`
+	Agreement           AgreementSummary  `json:"agreement"`
 }
 
 type threeWayReport struct {
@@ -229,6 +231,10 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 		CauseBuckets:   map[string]int{},
 	}
 
+	// Track pattern counts for agreement summary
+	patternCounts := make(map[ThreeWayPattern]int)
+	sources := SourceCoverage{Total: len(targets)}
+
 	for _, target := range targets {
 		result, err := buildThreeWayResourceResultFn(ctx, target.ResourceArg, target.Namespace)
 		if err != nil {
@@ -242,10 +248,25 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 		}
 
 		severity, causes := classifyThreeWayResult(result)
+
+		// Classify pattern for agreement summary
+		pattern := classifyResourcePattern(result)
+		patternCounts[pattern]++
+
+		// Track source coverage
+		if result.Dry != nil || result.Wet != nil {
+			sources.ConfigHub++
+		}
+		if result.Connected {
+			sources.Deployer++ // Connected implies deployer evidence available
+		}
+		sources.Cluster++ // We always have LIVE if we're checking the resource
+
 		entry := threeWayResourceEntry{
 			Result:   result,
 			Severity: severity,
 			Causes:   causes,
+			Pattern:  pattern,
 		}
 		entries = append(entries, entry)
 
@@ -291,11 +312,52 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 		Violations:  violations,
 	}
 
+	// Derive agreement summary from patterns
+	summary.Agreement = deriveAgreementSummary(patternCounts, sources)
+
 	return threeWayReport{
 		Scope:     scope.String(),
 		Summary:   summary,
 		Resources: entries,
 	}, nil
+}
+
+// classifyResourcePattern determines the three-way pattern for a resource.
+// This reuses the logic from classifyThreeWayPattern but without sync/health status.
+func classifyResourcePattern(result compareResourceResult) ThreeWayPattern {
+	// Not connected = disconnected
+	if !result.Connected {
+		return PatternDisconnected
+	}
+
+	// No DRY/WET = unlinked
+	if result.Dry == nil && result.Wet == nil {
+		return PatternUnlinked
+	}
+
+	// No mismatches = agreed
+	if len(result.Mismatches) == 0 {
+		return PatternAgreed
+	}
+
+	// Check mismatch patterns
+	hasWetLive := hasWetLiveMismatch(result.Mismatches)
+	hasDryWet := hasDryWetMismatch(result.Mismatches)
+
+	if hasWetLive {
+		// ConfigHub differs from cluster - could be change-in-progress or sync-stale
+		// Without sync status, we conservatively classify as change-in-progress
+		// since that's the common case
+		return PatternChangeInProgress
+	}
+
+	if hasDryWet {
+		// DRY differs from WET - rollout pending
+		return PatternRolloutPending
+	}
+
+	// Multiple mismatches across layers
+	return PatternMultiChange
 }
 
 func collectThreeWayTargets(scope threeWayScope) ([]threeWayTarget, error) {
@@ -408,6 +470,26 @@ func renderThreeWayASCII(report threeWayReport) string {
 		report.Summary.MismatchedResources,
 	))
 
+	// Show agreement summary - the primary convergence indicator
+	agreement := report.Summary.Agreement
+	agreementIcon := stateToIcon(agreement.State)
+	agreementLabel := stateToLabel(agreement.State)
+	switch agreement.State {
+	case StateAgreed:
+		b.WriteString(fmt.Sprintf("Agreement: %s %s - %s\n", Green(agreementIcon), Green(agreementLabel), agreement.Summary))
+	case StateConverging:
+		b.WriteString(fmt.Sprintf("Agreement: %s %s - %s\n", Yellow(agreementIcon), Yellow(agreementLabel), agreement.Summary))
+	case StateDiverged:
+		b.WriteString(fmt.Sprintf("Agreement: %s %s - %s\n", Red(agreementIcon), Red(agreementLabel), agreement.Summary))
+	case StatePartial:
+		b.WriteString(fmt.Sprintf("Agreement: %s %s - %s\n", Yellow(agreementIcon), Yellow(agreementLabel), agreement.Summary))
+	default:
+		b.WriteString(fmt.Sprintf("Agreement: %s %s - %s\n", agreementIcon, agreementLabel, agreement.Summary))
+	}
+	for _, reason := range agreement.Reasons {
+		b.WriteString(fmt.Sprintf("  -> %s\n", reason))
+	}
+
 	// Show conformance status
 	// Only show PASS/FAIL verdict when a threshold is set; otherwise show issue count
 	if report.Summary.Conformance.Threshold != "" {
@@ -459,6 +541,16 @@ func renderThreeWayMarkdown(report threeWayReport) string {
 	b.WriteString(fmt.Sprintf("- Connected: `%d`\n", report.Summary.ConnectedResources))
 	b.WriteString(fmt.Sprintf("- DRY/WET/LIVE: `%d`\n", report.Summary.DryWetLiveResources))
 	b.WriteString(fmt.Sprintf("- Mismatched: `%d`\n", report.Summary.MismatchedResources))
+
+	// Show agreement summary - the primary convergence indicator
+	agreement := report.Summary.Agreement
+	agreementLabel := stateToLabel(agreement.State)
+	b.WriteString(fmt.Sprintf("- Agreement: **%s** - %s\n", agreementLabel, agreement.Summary))
+	if len(agreement.Reasons) > 0 {
+		for _, reason := range agreement.Reasons {
+			b.WriteString(fmt.Sprintf("  - %s\n", reason))
+		}
+	}
 
 	// Show conformance status
 	// Only show PASS/FAIL verdict when a threshold is set; otherwise show issue count

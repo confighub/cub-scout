@@ -337,6 +337,265 @@ func TestExtractFieldMismatches(t *testing.T) {
 	}
 }
 
+// Agreement Summary Tests
+
+func TestDeriveAgreementSummary_AllAgreed(t *testing.T) {
+	patternCounts := map[ThreeWayPattern]int{
+		PatternAgreed: 5,
+	}
+	sources := SourceCoverage{Total: 5, ConfigHub: 5, Deployer: 5, Cluster: 5}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	if summary.State != StateAgreed {
+		t.Errorf("expected StateAgreed, got %q", summary.State)
+	}
+	if !containsSubstring(summary.Summary, "5") {
+		t.Errorf("expected summary to mention count, got %q", summary.Summary)
+	}
+	if len(summary.Reasons) != 0 {
+		t.Errorf("expected no reasons for agreed state, got %v", summary.Reasons)
+	}
+}
+
+func TestDeriveAgreementSummary_Converging(t *testing.T) {
+	patternCounts := map[ThreeWayPattern]int{
+		PatternAgreed:           3,
+		PatternChangeInProgress: 2,
+	}
+	sources := SourceCoverage{Total: 5, ConfigHub: 5, Deployer: 5, Cluster: 5}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	if summary.State != StateConverging {
+		t.Errorf("expected StateConverging, got %q", summary.State)
+	}
+	if !containsSubstring(summary.Summary, "converging") {
+		t.Errorf("expected summary to mention converging, got %q", summary.Summary)
+	}
+	if len(summary.Reasons) == 0 {
+		t.Error("expected reasons for converging state")
+	}
+}
+
+func TestDeriveAgreementSummary_ConvergingWithRollout(t *testing.T) {
+	patternCounts := map[ThreeWayPattern]int{
+		PatternAgreed:         2,
+		PatternRolloutPending: 1,
+	}
+	sources := SourceCoverage{Total: 3, ConfigHub: 3, Deployer: 3, Cluster: 3}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	if summary.State != StateConverging {
+		t.Errorf("expected StateConverging, got %q", summary.State)
+	}
+}
+
+func TestDeriveAgreementSummary_Diverged(t *testing.T) {
+	patternCounts := map[ThreeWayPattern]int{
+		PatternAgreed:    3,
+		PatternSyncStale: 2,
+	}
+	sources := SourceCoverage{Total: 5, ConfigHub: 5, Deployer: 5, Cluster: 5}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	if summary.State != StateDiverged {
+		t.Errorf("expected StateDiverged, got %q", summary.State)
+	}
+	if !containsSubstring(summary.Summary, "diverged") {
+		t.Errorf("expected summary to mention diverged, got %q", summary.Summary)
+	}
+}
+
+func TestDeriveAgreementSummary_DivergedMultiChange(t *testing.T) {
+	patternCounts := map[ThreeWayPattern]int{
+		PatternMultiChange: 1,
+	}
+	sources := SourceCoverage{Total: 1, ConfigHub: 1, Deployer: 1, Cluster: 1}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	if summary.State != StateDiverged {
+		t.Errorf("expected StateDiverged, got %q", summary.State)
+	}
+}
+
+func TestDeriveAgreementSummary_Partial(t *testing.T) {
+	patternCounts := map[ThreeWayPattern]int{
+		PatternDisconnected: 3,
+		PatternUnlinked:     2,
+	}
+	sources := SourceCoverage{Total: 5, ConfigHub: 0, Deployer: 0, Cluster: 5}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	if summary.State != StatePartial {
+		t.Errorf("expected StatePartial, got %q", summary.State)
+	}
+	if len(summary.Reasons) == 0 {
+		t.Error("expected reasons for partial state")
+	}
+}
+
+func TestDeriveAgreementSummary_PartialMinority(t *testing.T) {
+	// When partial is minority, should still report the dominant state
+	patternCounts := map[ThreeWayPattern]int{
+		PatternAgreed:    8,
+		PatternUnlinked:  2, // Less than half
+	}
+	sources := SourceCoverage{Total: 10, ConfigHub: 8, Deployer: 8, Cluster: 10}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	// Should be agreed (partial is minority)
+	if summary.State != StateAgreed {
+		t.Errorf("expected StateAgreed (partial is minority), got %q", summary.State)
+	}
+	// But should mention partial in reasons
+	hasPartialReason := false
+	for _, r := range summary.Reasons {
+		if containsSubstring(r, "incomplete") {
+			hasPartialReason = true
+			break
+		}
+	}
+	if !hasPartialReason {
+		t.Error("expected partial reason to be mentioned even when not primary state")
+	}
+}
+
+func TestDeriveAgreementSummary_Empty(t *testing.T) {
+	patternCounts := map[ThreeWayPattern]int{}
+	sources := SourceCoverage{Total: 0}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	if summary.State != StatePartial {
+		t.Errorf("expected StatePartial for empty scope, got %q", summary.State)
+	}
+}
+
+func TestDeriveAgreementSummary_DivergenceTakesPriority(t *testing.T) {
+	// When both converging and diverged patterns exist, diverged takes priority
+	patternCounts := map[ThreeWayPattern]int{
+		PatternChangeInProgress: 2,
+		PatternSyncStale:        1,
+	}
+	sources := SourceCoverage{Total: 3, ConfigHub: 3, Deployer: 3, Cluster: 3}
+
+	summary := deriveAgreementSummary(patternCounts, sources)
+
+	if summary.State != StateDiverged {
+		t.Errorf("expected StateDiverged (takes priority over converging), got %q", summary.State)
+	}
+}
+
+func TestStateToIcon(t *testing.T) {
+	tests := []struct {
+		state AgreementState
+		want  string
+	}{
+		{StateAgreed, "\u2713"},     // ✓
+		{StateConverging, "\u2192"}, // →
+		{StateDiverged, "\u2717"},   // ✗
+		{StatePartial, "?"},
+	}
+
+	for _, tc := range tests {
+		if got := stateToIcon(tc.state); got != tc.want {
+			t.Errorf("stateToIcon(%q) = %q, want %q", tc.state, got, tc.want)
+		}
+	}
+}
+
+func TestStateToLabel(t *testing.T) {
+	tests := []struct {
+		state AgreementState
+		want  string
+	}{
+		{StateAgreed, "AGREED"},
+		{StateConverging, "CONVERGING"},
+		{StateDiverged, "DIVERGED"},
+		{StatePartial, "PARTIAL"},
+	}
+
+	for _, tc := range tests {
+		if got := stateToLabel(tc.state); got != tc.want {
+			t.Errorf("stateToLabel(%q) = %q, want %q", tc.state, got, tc.want)
+		}
+	}
+}
+
+func TestClassifyResourcePattern(t *testing.T) {
+	tests := []struct {
+		name    string
+		result  compareResourceResult
+		want    ThreeWayPattern
+	}{
+		{
+			name: "disconnected",
+			result: compareResourceResult{
+				Connected: false,
+			},
+			want: PatternDisconnected,
+		},
+		{
+			name: "unlinked",
+			result: compareResourceResult{
+				Connected: true,
+				Dry:       nil,
+				Wet:       nil,
+			},
+			want: PatternUnlinked,
+		},
+		{
+			name: "agreed",
+			result: compareResourceResult{
+				Connected:  true,
+				Dry:        &compareSideSummary{},
+				Mismatches: []compareFieldMismatch{},
+			},
+			want: PatternAgreed,
+		},
+		{
+			name: "change-in-progress",
+			result: compareResourceResult{
+				Connected: true,
+				Wet:       &compareSideSummary{Images: []string{"nginx:1.26"}},
+				Live:      compareSideSummary{Images: []string{"nginx:1.25"}},
+				Mismatches: []compareFieldMismatch{
+					{Field: "images", Wet: "nginx:1.26", Live: "nginx:1.25"},
+				},
+			},
+			want: PatternChangeInProgress,
+		},
+		{
+			name: "rollout-pending",
+			result: compareResourceResult{
+				Connected: true,
+				Dry:       &compareSideSummary{Images: []string{"nginx:1.27"}},
+				Wet:       &compareSideSummary{Images: []string{"nginx:1.26"}},
+				Live:      compareSideSummary{Images: []string{"nginx:1.26"}},
+				Mismatches: []compareFieldMismatch{
+					{Field: "images", Dry: "nginx:1.27", Wet: "nginx:1.26", Live: "nginx:1.26"},
+				},
+			},
+			want: PatternRolloutPending,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := classifyResourcePattern(tc.result)
+			if got != tc.want {
+				t.Errorf("classifyResourcePattern() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 // Helper functions
 
 func ptrInt64(v int64) *int64 {
