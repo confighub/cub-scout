@@ -65,10 +65,11 @@ type ArgoAppDefinition struct {
 
 // ApplicationSetDef represents an ApplicationSet generator
 type ApplicationSetDef struct {
-	Name       string   `json:"name"`
-	Path       string   `json:"path"`
-	Generator  string   `json:"generator"`            // list, cluster, git, matrix, etc.
-	TargetApps []string `json:"targetApps,omitempty"` // Apps it generates
+	Name           string            `json:"name"`
+	Path           string            `json:"path"`
+	Generator      string            `json:"generator"`                  // list, cluster, git, matrix, etc.
+	TargetApps     []string          `json:"targetApps,omitempty"`       // App names it generates
+	TargetAppPaths map[string]string `json:"targetAppPaths,omitempty"`   // Map of app name -> actual path
 }
 
 // HelmChartDefinition represents a Helm chart
@@ -931,16 +932,27 @@ func parseApplicationSets(repoPath string) (*RepoStructure, error) {
 	}
 
 	// Populate Apps from discovered ApplicationSet targets
-	seenApps := make(map[string]bool)
+	// Use actual matched paths from TargetAppPaths instead of guessing
+	seenPaths := make(map[string]bool)
 	for _, appSet := range result.ApplicationSets {
 		for _, appName := range appSet.TargetApps {
-			if seenApps[appName] {
+			// Get the actual path from TargetAppPaths
+			basePath := appSet.TargetAppPaths[appName]
+			if basePath == "" {
+				// Fallback to guessing if path not found (shouldn't happen for git generators)
+				basePath = findAppBasePath(repoPath, appName)
+			}
+
+			// Use path as the unique key to handle apps with same name in different directories
+			pathKey := basePath
+			if pathKey == "" {
+				pathKey = appName // fallback to name if no path
+			}
+			if seenPaths[pathKey] {
 				continue
 			}
-			seenApps[appName] = true
+			seenPaths[pathKey] = true
 
-			// Try to find the app's base path
-			basePath := findAppBasePath(repoPath, appName)
 			result.Apps = append(result.Apps, AppDefinition{
 				Name:     appName,
 				BasePath: basePath,
@@ -1027,14 +1039,19 @@ func parseApplicationSet(path, repoPath string) *ApplicationSetDef {
 
 	relPath, _ := filepath.Rel(repoPath, path)
 	result := &ApplicationSetDef{
-		Name:      appSet.Metadata.Name,
-		Path:      relPath,
-		Generator: generator,
+		Name:           appSet.Metadata.Name,
+		Path:           relPath,
+		Generator:      generator,
+		TargetAppPaths: make(map[string]string),
 	}
 
 	// Scan directories matching git generator patterns
 	if len(allPatterns.Include) > 0 {
-		result.TargetApps = scanGitGeneratorPatternsWithExcludes(repoPath, allPatterns)
+		discovered := scanGitGeneratorPatternsWithExcludesFullPaths(repoPath, allPatterns)
+		for _, app := range discovered {
+			result.TargetApps = append(result.TargetApps, app.Name)
+			result.TargetAppPaths[app.Name] = app.Path
+		}
 	}
 
 	return result
@@ -1044,6 +1061,12 @@ func parseApplicationSet(path, repoPath string) *ApplicationSetDef {
 type gitGeneratorPatterns struct {
 	Include []string
 	Exclude []string
+}
+
+// discoveredApp represents an app discovered via git generator scanning
+type discoveredApp struct {
+	Name string // basename of the directory
+	Path string // relative path from repo root
 }
 
 // extractGitGeneratorPatterns extracts directory patterns from a git generator
@@ -1138,13 +1161,29 @@ func extractMatrixGitPatternsWithExcludes(matrixGen interface{}) gitGeneratorPat
 
 // scanGitGeneratorPatterns scans the repo for directories matching git generator patterns
 func scanGitGeneratorPatterns(repoPath string, patterns []string) []string {
-	return scanGitGeneratorPatternsWithExcludes(repoPath, gitGeneratorPatterns{Include: patterns})
+	discovered := scanGitGeneratorPatternsWithExcludesFullPaths(repoPath, gitGeneratorPatterns{Include: patterns})
+	names := make([]string, len(discovered))
+	for i, d := range discovered {
+		names[i] = d.Name
+	}
+	return names
 }
 
 // scanGitGeneratorPatternsWithExcludes scans the repo for directories matching git generator patterns
-// while filtering out directories that match exclude patterns
+// while filtering out directories that match exclude patterns. Returns only app names for backward compatibility.
 func scanGitGeneratorPatternsWithExcludes(repoPath string, patterns gitGeneratorPatterns) []string {
-	var apps []string
+	discovered := scanGitGeneratorPatternsWithExcludesFullPaths(repoPath, patterns)
+	names := make([]string, len(discovered))
+	for i, d := range discovered {
+		names[i] = d.Name
+	}
+	return names
+}
+
+// scanGitGeneratorPatternsWithExcludesFullPaths scans the repo for directories matching git generator patterns
+// while filtering out directories that match exclude patterns. Returns full path information.
+func scanGitGeneratorPatternsWithExcludesFullPaths(repoPath string, patterns gitGeneratorPatterns) []discoveredApp {
+	var apps []discoveredApp
 	seen := make(map[string]bool)
 
 	for _, pattern := range patterns.Include {
@@ -1154,7 +1193,7 @@ func scanGitGeneratorPatternsWithExcludes(repoPath string, patterns gitGenerator
 
 		if strings.Contains(pattern, "**") {
 			// For ** patterns, we need to walk directories
-			apps = append(apps, scanRecursivePatternWithExcludes(repoPath, pattern, patterns.Exclude, seen)...)
+			apps = append(apps, scanRecursivePatternWithExcludesFullPaths(repoPath, pattern, patterns.Exclude, seen)...)
 		} else {
 			// Standard glob
 			fullPattern := filepath.Join(repoPath, pattern)
@@ -1180,10 +1219,14 @@ func scanGitGeneratorPatternsWithExcludes(repoPath string, patterns gitGenerator
 					continue
 				}
 
-				appName := filepath.Base(match)
-				if !seen[appName] {
-					seen[appName] = true
-					apps = append(apps, appName)
+				// Use relPath as the unique key to avoid collisions between
+				// apps with the same name in different directories
+				if !seen[relPath] {
+					seen[relPath] = true
+					apps = append(apps, discoveredApp{
+						Name: filepath.Base(match),
+						Path: relPath,
+					})
 				}
 			}
 		}
@@ -1213,9 +1256,9 @@ func matchesExcludePattern(relPath string, excludes []string) bool {
 	return false
 }
 
-// scanRecursivePatternWithExcludes handles ** patterns while respecting excludes
-func scanRecursivePatternWithExcludes(repoPath, pattern string, excludes []string, seen map[string]bool) []string {
-	var apps []string
+// scanRecursivePatternWithExcludesFullPaths handles ** patterns while respecting excludes, returning full path info
+func scanRecursivePatternWithExcludesFullPaths(repoPath, pattern string, excludes []string, seen map[string]bool) []discoveredApp {
+	var apps []discoveredApp
 
 	// Split pattern at **
 	parts := strings.SplitN(pattern, "**", 2)
@@ -1259,10 +1302,14 @@ func scanRecursivePatternWithExcludes(repoPath, pattern string, excludes []strin
 			}
 		}
 
-		appName := d.Name()
-		if !seen[appName] && appName != filepath.Base(baseDir) {
-			seen[appName] = true
-			apps = append(apps, appName)
+		// Use relPath as the unique key to avoid collisions between
+		// apps with the same name in different directories
+		if !seen[relPath] && relPath != strings.TrimSuffix(parts[0], "/") {
+			seen[relPath] = true
+			apps = append(apps, discoveredApp{
+				Name: d.Name(),
+				Path: relPath,
+			})
 		}
 
 		return nil

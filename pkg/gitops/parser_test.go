@@ -261,16 +261,35 @@ spec:
 		}
 	}
 
-	// Excluded app should not be found (exclude patterns start with !)
-	// Note: Current implementation doesn't enforce excludes in glob, but the pattern is skipped
+	// Excluded app should not be found
 	if foundApps["excluded"] {
-		// This is acceptable for now - exclude enforcement could be added later
-		t.Logf("note: excluded app was found - exclude pattern enforcement not implemented")
+		t.Error("excluded app should not be found")
 	}
 
-	// Apps should also be populated in result.Apps
+	// Verify TargetAppPaths contains the actual paths
+	if appSet.TargetAppPaths == nil {
+		t.Error("expected TargetAppPaths to be populated")
+	} else {
+		for _, expected := range []string{"frontend", "backend", "api"} {
+			path, ok := appSet.TargetAppPaths[expected]
+			if !ok {
+				t.Errorf("expected TargetAppPaths to contain %q", expected)
+			} else if path != filepath.Join("apps", expected) {
+				t.Errorf("TargetAppPaths[%q] = %q, want %q", expected, path, filepath.Join("apps", expected))
+			}
+		}
+	}
+
+	// Apps should also be populated in result.Apps with correct BasePath
 	if len(result.Apps) == 0 {
 		t.Error("expected Apps to be populated from ApplicationSet targets")
+	} else {
+		for _, app := range result.Apps {
+			expectedPath := filepath.Join("apps", app.Name)
+			if app.BasePath != expectedPath {
+				t.Errorf("App %q BasePath = %q, want %q", app.Name, app.BasePath, expectedPath)
+			}
+		}
 	}
 }
 
@@ -459,5 +478,92 @@ func TestScanGitGeneratorPatterns(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestParseApplicationSetWithNestedPaths(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a deeply nested ApplicationSet structure like examples/apptique-examples/argo-applicationset
+	appSetDir := filepath.Join(tmpDir, "examples", "apptique-examples", "argo-applicationset")
+	if err := os.MkdirAll(appSetDir, 0o755); err != nil {
+		t.Fatalf("failed to create nested appset dir: %v", err)
+	}
+
+	// Create ApplicationSet that targets envs/*
+	appSetContent := `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apptique
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/org/repo
+        directories:
+          - path: examples/apptique-examples/argo-applicationset/envs/*
+`
+	appSetPath := filepath.Join(appSetDir, "applicationset.yaml")
+	if err := os.WriteFile(appSetPath, []byte(appSetContent), 0o644); err != nil {
+		t.Fatalf("failed to write applicationset: %v", err)
+	}
+
+	// Create env directories that match the pattern
+	envsDir := filepath.Join(appSetDir, "envs")
+	for _, env := range []string{"dev", "prod"} {
+		envDir := filepath.Join(envsDir, env)
+		if err := os.MkdirAll(envDir, 0o755); err != nil {
+			t.Fatalf("failed to create env dir %s: %v", env, err)
+		}
+	}
+
+	result, err := ParseRepo(tmpDir)
+	if err != nil {
+		t.Fatalf("failed to parse repo: %v", err)
+	}
+
+	if result.Type != RepoTypeApplicationSet {
+		t.Fatalf("expected repo type %q, got %q", RepoTypeApplicationSet, result.Type)
+	}
+
+	if len(result.ApplicationSets) != 1 {
+		t.Fatalf("expected 1 ApplicationSet, got %d", len(result.ApplicationSets))
+	}
+
+	appSet := result.ApplicationSets[0]
+
+	// Should have discovered 2 apps (dev, prod)
+	if len(appSet.TargetApps) != 2 {
+		t.Errorf("expected 2 target apps, got %d: %v", len(appSet.TargetApps), appSet.TargetApps)
+	}
+
+	// Verify TargetAppPaths contains the full nested paths
+	expectedPaths := map[string]string{
+		"dev":  filepath.Join("examples", "apptique-examples", "argo-applicationset", "envs", "dev"),
+		"prod": filepath.Join("examples", "apptique-examples", "argo-applicationset", "envs", "prod"),
+	}
+
+	for name, expectedPath := range expectedPaths {
+		actualPath, ok := appSet.TargetAppPaths[name]
+		if !ok {
+			t.Errorf("expected TargetAppPaths to contain %q", name)
+		} else if actualPath != expectedPath {
+			t.Errorf("TargetAppPaths[%q] = %q, want %q", name, actualPath, expectedPath)
+		}
+	}
+
+	// Verify Apps have correct BasePath
+	if len(result.Apps) != 2 {
+		t.Errorf("expected 2 Apps, got %d", len(result.Apps))
+	}
+
+	for _, app := range result.Apps {
+		expectedPath, ok := expectedPaths[app.Name]
+		if !ok {
+			t.Errorf("unexpected app %q", app.Name)
+			continue
+		}
+		if app.BasePath != expectedPath {
+			t.Errorf("App %q BasePath = %q, want %q", app.Name, app.BasePath, expectedPath)
+		}
 	}
 }
