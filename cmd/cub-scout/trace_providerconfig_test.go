@@ -129,8 +129,9 @@ func TestOutputTraceHuman_CrossplaneObservedTraceResultShowsSecretEvidence(t *te
 		},
 	}
 
+	invCtx, _ := NewInvocationContext("", TransportCLI)
 	out := captureStdout(t, func() {
-		if err := outputTraceHuman(result, nil); err != nil {
+		if err := outputTraceHuman(result, nil, invCtx); err != nil {
 			t.Fatalf("outputTraceHuman() error = %v", err)
 		}
 	})

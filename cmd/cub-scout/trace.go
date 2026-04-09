@@ -30,16 +30,17 @@ import (
 )
 
 var (
-	traceNamespace string
-	traceJSON      bool   // deprecated: use --format json
-	traceFormat    string // output format: ascii, json
-	traceApp       string // For direct Argo app tracing
-	traceReverse   bool   // Reverse trace - walk ownerReferences up
-	traceDiff      bool   // Show diff between live and desired state
-	traceExplain   bool   // Show explanatory content for learning
-	traceHistory   bool   // Show deployment history
-	traceLimit     int    // Limit number of history entries
-	traceArtifacts bool   // Include source artifact provenance in output
+	traceNamespace    string
+	traceJSON         bool   // deprecated: use --format json
+	traceFormat       string // output format: ascii, json
+	traceApp          string // For direct Argo app tracing
+	traceReverse      bool   // Reverse trace - walk ownerReferences up
+	traceDiff         bool   // Show diff between live and desired state
+	traceExplain      bool   // Show explanatory content for learning
+	traceHistory      bool   // Show deployment history
+	traceLimit        int    // Limit number of history entries
+	traceArtifacts    bool   // Include source artifact provenance in output
+	tracePresentation string // Presentation mode: human, ai, paired
 )
 
 // ANSI color codes for colorful output
@@ -131,6 +132,7 @@ func init() {
 	traceCmd.Flags().BoolVar(&traceHistory, "history", false, "Show deployment history (who deployed what, when)")
 	traceCmd.Flags().IntVar(&traceLimit, "limit", 10, "Limit number of history entries (default: 10)")
 	traceCmd.Flags().BoolVar(&traceArtifacts, "artifacts", false, "Include source artifact provenance (url/revision/digest/update time)")
+	traceCmd.Flags().StringVar(&tracePresentation, "presentation", "", PresentationModeHelp())
 
 	// Mark --json as deprecated
 	_ = traceCmd.Flags().MarkDeprecated("json", "use --format json instead")
@@ -139,10 +141,16 @@ func init() {
 func runTrace(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
+	// Build invocation context with presentation mode resolution
+	invCtx, err := NewInvocationContext(tracePresentation, TransportCLI)
+	if err != nil {
+		return err
+	}
+
 	// TEST HOOK: Load trace data from JSON file to bypass cluster access in tests.
 	// In production this env var is never set, so real tracing is always used.
 	if traceJSONFile := os.Getenv("CUB_SCOUT_TEST_TRACE_JSON"); traceJSONFile != "" {
-		return loadAndRenderTraceFromJSON(traceJSONFile)
+		return loadAndRenderTraceFromJSON(traceJSONFile, invCtx)
 	}
 
 	// Parse resource reference
@@ -215,9 +223,9 @@ func runTrace(cmd *cobra.Command, args []string) error {
 			return outputTraceJSONv014(appResult, kind, name, traceNamespace, artifacts)
 		}
 		if effectiveFormat == "md" {
-			return outputTraceMarkdown(appResult, artifacts)
+			return outputTraceMarkdown(appResult, artifacts, invCtx)
 		}
-		return outputTraceHuman(appResult, artifacts)
+		return outputTraceHuman(appResult, artifacts, invCtx)
 	}
 
 	// Detect ownership to choose the right tracer
@@ -368,9 +376,9 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	case "json":
 		return outputTraceJSONv014(result, kind, name, traceNamespace, artifacts)
 	case "md":
-		return outputTraceMarkdown(result, artifacts)
+		return outputTraceMarkdown(result, artifacts, invCtx)
 	default:
-		return outputTraceHuman(result, artifacts)
+		return outputTraceHuman(result, artifacts, invCtx)
 	}
 }
 
@@ -1268,10 +1276,27 @@ func normalizeToolToOwner(tool string) string {
 }
 
 // outputTraceHuman outputs the trace result in human-readable format with colors
-func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.TraceArtifactRef) error {
-	// Header
+func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.TraceArtifactRef, invCtx InvocationContext) error {
+	mode := invCtx.Mode()
+	explicitMode := invCtx.IsExplicit()
+
+	// Header - varies by presentation mode
 	fmt.Printf("\n")
-	fmt.Printf("%s%sTRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
+	if explicitMode {
+		heading := TraceHeading(mode, result.Object.String())
+		if mode == PresentationAI {
+			fmt.Printf("%s\n", heading)
+		} else {
+			fmt.Printf("%s%s%s\n", colorBold, heading, colorReset)
+		}
+		// Intro - shows ownership tool for AI mode
+		if intro := TraceIntro(mode, result.Tool); intro != "" {
+			fmt.Printf("%s\n", intro)
+		}
+	} else {
+		// Legacy format
+		fmt.Printf("%s%sTRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
+	}
 	fmt.Printf("\n")
 
 	// Explanatory content when --explain is used
@@ -1300,6 +1325,17 @@ func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.Tra
 	if result.Error != "" {
 		// Degraded mode: still render available chain, but make missing context explicit.
 		fmt.Printf("  %s[warning] %s%s\n\n", colorYellow, result.Error, colorReset)
+	}
+
+	// Chain heading for explicit presentation modes
+	if explicitMode {
+		if heading := TraceChainHeading(mode); heading != "" {
+			if mode == PresentationAI {
+				fmt.Printf("%s\n", heading)
+			} else {
+				fmt.Printf("%s%s%s\n", colorBold, heading, colorReset)
+			}
+		}
 	}
 
 	// Print chain
@@ -1577,13 +1613,22 @@ func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.Tra
 		fmt.Printf("→ Visual guide:            docs/diagrams/ownership-detection.svg\n")
 	}
 
+	// Outro - only for explicit AI mode
+	if explicitMode {
+		if outro := TraceOutro(mode); outro != "" {
+			fmt.Printf("\n%s\n", outro)
+		}
+	}
+
 	fmt.Printf("\n")
 
 	return nil
 }
 
 // outputTraceMarkdown outputs the trace in markdown format (thin wrapper over ASCII, no colors).
-func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.TraceArtifactRef) error {
+// The invCtx parameter is accepted for API consistency but markdown output doesn't vary by presentation mode.
+func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.TraceArtifactRef, invCtx InvocationContext) error {
+	_ = invCtx // Markdown output is uniform across presentation modes
 	// Markdown header
 	fmt.Printf("## Trace: %s\n\n", result.Object.String())
 	fmt.Println("```")
@@ -2412,7 +2457,7 @@ func runHelmDiff(ctx context.Context, name, namespace string) error {
 
 // loadAndRenderTraceFromJSON loads trace data from a JSON file and renders it.
 // This is used for golden testing to bypass cluster access.
-func loadAndRenderTraceFromJSON(path string) error {
+func loadAndRenderTraceFromJSON(path string, invCtx InvocationContext) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read trace JSON: %w", err)
@@ -2444,9 +2489,9 @@ func loadAndRenderTraceFromJSON(path string) error {
 	case "json":
 		return outputTraceJSONv014(&result, result.Object.Kind, result.Object.Name, result.Object.Namespace, artifacts)
 	case "md":
-		return outputTraceMarkdown(&result, artifacts)
+		return outputTraceMarkdown(&result, artifacts, invCtx)
 	default:
-		return outputTraceHuman(&result, artifacts)
+		return outputTraceHuman(&result, artifacts, invCtx)
 	}
 }
 

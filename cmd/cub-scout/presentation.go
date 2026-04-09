@@ -162,3 +162,72 @@ func TryNextHeading(mode PresentationMode) string {
 		return "TRY NEXT:"
 	}
 }
+
+// --- Trace presentation helpers ---
+
+// TraceHeading returns the appropriate heading for trace output.
+func TraceHeading(mode PresentationMode, resource string) string {
+	switch mode {
+	case PresentationAI:
+		return fmt.Sprintf("[TRACE: %s]", resource)
+	case PresentationHuman, PresentationPaired:
+		return fmt.Sprintf("Trace: %s", resource)
+	default:
+		// Legacy mode - uses uppercase
+		return fmt.Sprintf("TRACE: %s", resource)
+	}
+}
+
+// TraceIntro returns an optional intro line for trace output.
+func TraceIntro(mode PresentationMode, tool string) string {
+	switch mode {
+	case PresentationAI:
+		if tool != "" {
+			return fmt.Sprintf("[owner: %s]", tool)
+		}
+		return "[owner: unknown]"
+	case PresentationHuman, PresentationPaired:
+		if tool != "" {
+			return fmt.Sprintf("Owner: %s", tool)
+		}
+		return ""
+	default:
+		// Legacy mode - no intro line
+		return ""
+	}
+}
+
+// TraceOutro returns an optional outro/handoff line for trace output.
+func TraceOutro(mode PresentationMode) string {
+	switch mode {
+	case PresentationAI:
+		return "[end trace]"
+	default:
+		return ""
+	}
+}
+
+// TraceChainHeading returns the chain section heading.
+func TraceChainHeading(mode PresentationMode) string {
+	switch mode {
+	case PresentationAI:
+		return "OWNERSHIP CHAIN:"
+	case PresentationHuman, PresentationPaired:
+		return "Ownership Chain:"
+	default:
+		// Legacy mode - no explicit chain heading
+		return ""
+	}
+}
+
+// TraceSecretsHeading returns the secrets section heading.
+func TraceSecretsHeading(mode PresentationMode) string {
+	switch mode {
+	case PresentationAI:
+		return "SECRET REFERENCES:"
+	case PresentationPaired:
+		return "Secret References:"
+	default:
+		return "Secret References:"
+	}
+}

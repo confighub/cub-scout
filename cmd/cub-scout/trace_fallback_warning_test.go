@@ -26,8 +26,10 @@ func TestOutputTraceHuman_ShowsDegradedWarningWhenChainExists(t *testing.T) {
 		},
 	}
 
+	// Use legacy (no explicit presentation mode) for backward compatibility
+	invCtx, _ := NewInvocationContext("", TransportCLI)
 	out := captureStdout(t, func() {
-		if err := outputTraceHuman(result, nil); err != nil {
+		if err := outputTraceHuman(result, nil, invCtx); err != nil {
 			t.Fatalf("outputTraceHuman() error = %v", err)
 		}
 	})
@@ -53,8 +55,9 @@ func TestOutputTraceMarkdown_ShowsDegradedWarningWhenChainExists(t *testing.T) {
 		},
 	}
 
+	invCtx, _ := NewInvocationContext("", TransportCLI)
 	out := captureStdout(t, func() {
-		if err := outputTraceMarkdown(result, nil); err != nil {
+		if err := outputTraceMarkdown(result, nil, invCtx); err != nil {
 			t.Fatalf("outputTraceMarkdown() error = %v", err)
 		}
 	})
