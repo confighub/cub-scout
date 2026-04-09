@@ -1011,15 +1011,26 @@ func TestIsArgoOwned(t *testing.T) {
 		owner string
 		want  bool
 	}{
+		// Actual ArgoCD display values
 		{"ArgoCD", true},
 		{"argocd", true},
-		{"Argo", true},
-		{"argo", true},
+		{"Argo CD", true},
+		{"argo-cd", true},
+
+		// Other GitOps tools
 		{"Flux", false},
 		{"Helm", false},
+
+		// Unknown/empty
 		{"Unknown", false},
 		{"Unknown - no recognized ownership labels found", false},
 		{"", false},
+
+		// Custom owners containing "argo" should NOT match (#367 edge case)
+		{"Argo Platform", false},
+		{"argo-rollouts", false},
+		{"My Argo Tool", false},
+		{"argoworkflows", false},
 	}
 
 	for _, tc := range tests {

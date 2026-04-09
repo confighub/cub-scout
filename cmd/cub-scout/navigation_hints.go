@@ -162,9 +162,12 @@ func deriveResourcePhase(summary ExplainSummary) ResourcePhase {
 }
 
 // isArgoOwned returns true if the owner string indicates ArgoCD management.
+// Uses exact matches for known ArgoCD display values to avoid misclassifying
+// custom owners that happen to contain "argo" (e.g., "Argo Platform", "argo-rollouts").
 func isArgoOwned(owner string) bool {
 	o := strings.ToLower(strings.TrimSpace(owner))
-	return o == "argocd" || o == "argo" || strings.Contains(o, "argo")
+	// Match only the actual ArgoCD display values used by ownership detection
+	return o == "argocd" || o == "argo cd" || o == "argo-cd"
 }
 
 // sortHints sorts hints by priority (descending) for deterministic output.
