@@ -877,3 +877,364 @@ func withMapListFlagsForNavigationTest() func() {
 		mapExplain = prevExplain
 	}
 }
+
+// Tests for phase-aware Argo hints (#367)
+
+func TestDeriveResourcePhase_Incident(t *testing.T) {
+	tests := []struct {
+		name    string
+		summary ExplainSummary
+	}{
+		{
+			name: "unhealthy status",
+			summary: ExplainSummary{
+				Owner:  "ArgoCD",
+				Health: "Unhealthy",
+				Drift:  "None detected",
+				Risks:  "0 findings",
+			},
+		},
+		{
+			name: "unavailable status",
+			summary: ExplainSummary{
+				Owner:  "ArgoCD",
+				Health: "Unavailable",
+				Drift:  "None detected",
+				Risks:  "0 findings",
+			},
+		},
+		{
+			name: "drift detected",
+			summary: ExplainSummary{
+				Owner:  "ArgoCD",
+				Health: "Healthy",
+				Drift:  "Detected by ConfigHub",
+				Risks:  "0 findings",
+			},
+		},
+		{
+			name: "critical risks",
+			summary: ExplainSummary{
+				Owner:  "ArgoCD",
+				Health: "Healthy",
+				Drift:  "None detected",
+				Risks:  "1 CRITICAL",
+			},
+		},
+		{
+			name: "degraded health",
+			summary: ExplainSummary{
+				Owner:  "ArgoCD",
+				Health: "Synced / Degraded",
+				Drift:  "None detected",
+				Risks:  "0 findings",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			phase := deriveResourcePhase(tc.summary)
+			if phase != PhaseIncident {
+				t.Errorf("expected PhaseIncident, got %q", phase)
+			}
+		})
+	}
+}
+
+func TestDeriveResourcePhase_Closeout(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/frontend",
+		Namespace:   "prod",
+		Owner:       "ArgoCD",
+		Health:      "Healthy",
+		Drift:       "None detected",
+		Risks:       "0 findings",
+		DeployedVia: "Application/cubbychat -> Deployment/frontend",
+	}
+
+	phase := deriveResourcePhase(summary)
+	if phase != PhaseCloseout {
+		t.Errorf("expected PhaseCloseout, got %q", phase)
+	}
+}
+
+func TestDeriveResourcePhase_Verify(t *testing.T) {
+	tests := []struct {
+		name    string
+		summary ExplainSummary
+	}{
+		{
+			name: "healthy but unknown drift",
+			summary: ExplainSummary{
+				Owner:       "ArgoCD",
+				Health:      "Healthy",
+				Drift:       "Unknown",
+				Risks:       "0 findings",
+				DeployedVia: "Application/app -> Deployment/api",
+			},
+		},
+		{
+			name: "healthy with warnings",
+			summary: ExplainSummary{
+				Owner:       "ArgoCD",
+				Health:      "Healthy",
+				Drift:       "None detected",
+				Risks:       "2 WARNING",
+				DeployedVia: "Application/app -> Deployment/api",
+			},
+		},
+		{
+			name: "healthy but partial trace",
+			summary: ExplainSummary{
+				Owner:       "ArgoCD",
+				Health:      "Healthy",
+				Drift:       "None detected",
+				Risks:       "0 findings",
+				DeployedVia: "partial trace only",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			phase := deriveResourcePhase(tc.summary)
+			if phase != PhaseVerify {
+				t.Errorf("expected PhaseVerify, got %q", phase)
+			}
+		})
+	}
+}
+
+func TestIsArgoOwned(t *testing.T) {
+	tests := []struct {
+		owner string
+		want  bool
+	}{
+		{"ArgoCD", true},
+		{"argocd", true},
+		{"Argo", true},
+		{"argo", true},
+		{"Flux", false},
+		{"Helm", false},
+		{"Unknown", false},
+		{"Unknown - no recognized ownership labels found", false},
+		{"", false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.owner, func(t *testing.T) {
+			got := isArgoOwned(tc.owner)
+			if got != tc.want {
+				t.Errorf("isArgoOwned(%q) = %v, want %v", tc.owner, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestExplainArgoPhaseHints_Incident(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:  "Deployment/frontend",
+		Namespace: "cubbychat",
+		Owner:     "ArgoCD",
+		Health:    "Unhealthy",
+		Drift:     "Detected by ConfigHub",
+		Risks:     "1 CRITICAL",
+	}
+
+	hints := explainHintsWithContext(summary, DefaultHintContext())
+
+	// Should have investigation-oriented hints
+	var hasTrace, hasIssues, hasGitopsStatus bool
+	for _, h := range hints {
+		if strings.Contains(h.Command, "trace") && strings.Contains(h.Rationale, "Investigate") {
+			hasTrace = true
+		}
+		if strings.Contains(h.Command, "map issues") {
+			hasIssues = true
+		}
+		if strings.Contains(h.Command, "gitops status") && strings.Contains(h.Rationale, "reverted") {
+			hasGitopsStatus = true
+		}
+	}
+
+	if !hasTrace {
+		t.Error("expected trace hint with 'Investigate' rationale for incident phase")
+	}
+	if !hasIssues {
+		t.Error("expected 'map issues' hint for incident phase")
+	}
+	if !hasGitopsStatus {
+		t.Error("expected 'gitops status' hint warning about kubectl reversion")
+	}
+}
+
+func TestExplainArgoPhaseHints_Closeout(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/frontend",
+		Namespace:   "cubbychat",
+		Owner:       "ArgoCD",
+		Health:      "Healthy",
+		Drift:       "None detected",
+		Risks:       "0 findings",
+		DeployedVia: "Application/cubbychat -> Deployment/frontend",
+	}
+
+	hints := explainHintsWithContext(summary, DefaultHintContext())
+
+	// Should have closeout-oriented hints
+	var hasCloseoutGitops, hasHistory, hasReadOnly bool
+	for _, h := range hints {
+		if strings.Contains(h.Command, "gitops status") && strings.Contains(h.Rationale, "Closeout") {
+			hasCloseoutGitops = true
+		}
+		if strings.Contains(h.Command, "--history") {
+			hasHistory = true
+		}
+		if strings.Contains(h.Rationale, "read-only") {
+			hasReadOnly = true
+		}
+	}
+
+	if !hasCloseoutGitops {
+		t.Error("expected 'gitops status' hint with 'Closeout' rationale")
+	}
+	if !hasHistory {
+		t.Error("expected '--history' hint for audit trail in closeout phase")
+	}
+	if !hasReadOnly {
+		t.Error("expected at least one hint marked as 'read-only' in closeout phase")
+	}
+}
+
+func TestExplainArgoPhaseHints_Verify(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/frontend",
+		Namespace:   "cubbychat",
+		Owner:       "ArgoCD",
+		Health:      "Healthy",
+		Drift:       "Unknown",
+		Risks:       "1 WARNING",
+		DeployedVia: "Application/cubbychat -> Deployment/frontend",
+	}
+
+	hints := explainHintsWithContext(summary, DefaultHintContext())
+
+	// Should have verification-oriented hints
+	var hasVerifyTrace, hasConfirmGitops bool
+	for _, h := range hints {
+		if strings.Contains(h.Command, "trace") && strings.Contains(h.Rationale, "Verify") {
+			hasVerifyTrace = true
+		}
+		if strings.Contains(h.Command, "gitops status") && strings.Contains(h.Rationale, "Confirm") {
+			hasConfirmGitops = true
+		}
+	}
+
+	if !hasVerifyTrace {
+		t.Error("expected trace hint with 'Verify' rationale")
+	}
+	if !hasConfirmGitops {
+		t.Error("expected 'gitops status' hint with 'Confirm' rationale")
+	}
+}
+
+func TestExplainFluxOwner_NoPhaseHints(t *testing.T) {
+	// Flux-owned resources should NOT get Argo phase-aware hints
+	summary := ExplainSummary{
+		Resource:    "Deployment/api",
+		Namespace:   "prod",
+		Owner:       "Flux",
+		Health:      "Unhealthy",
+		Drift:       "Detected",
+		Risks:       "1 CRITICAL",
+		DeployedVia: "GitRepository -> Kustomization -> Deployment",
+	}
+
+	hints := explainHintsWithContext(summary, DefaultHintContext())
+
+	// Should NOT have Argo-specific hints
+	for _, h := range hints {
+		if strings.Contains(h.Rationale, "Investigate:") ||
+			strings.Contains(h.Rationale, "Closeout:") ||
+			strings.Contains(h.Rationale, "Verify:") {
+			t.Errorf("Flux owner should not get Argo phase hints, got: %q", h.Rationale)
+		}
+		if strings.Contains(h.Rationale, "Argo-managed") ||
+			strings.Contains(h.Rationale, "kubectl changes will be reverted") {
+			t.Errorf("Flux owner should not get Argo-specific rationale, got: %q", h.Rationale)
+		}
+	}
+
+	// Should still have standard trace hint
+	var hasTrace bool
+	for _, h := range hints {
+		if strings.Contains(h.Command, "trace") {
+			hasTrace = true
+			break
+		}
+	}
+	if !hasTrace {
+		t.Error("Flux owner should still get trace hint")
+	}
+}
+
+func TestExplainArgoPhaseHints_Deterministic(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/frontend",
+		Namespace:   "cubbychat",
+		Owner:       "ArgoCD",
+		Health:      "Unhealthy",
+		Drift:       "Detected by ConfigHub",
+		Risks:       "1 CRITICAL",
+		DeployedVia: "partial trace only",
+	}
+
+	// Run multiple times - should be identical
+	hints1 := explainTryNextHintsWithContext(summary, DefaultHintContext())
+	hints2 := explainTryNextHintsWithContext(summary, DefaultHintContext())
+
+	if len(hints1) != len(hints2) {
+		t.Fatalf("hint count changed: %d vs %d", len(hints1), len(hints2))
+	}
+	for i := range hints1 {
+		if hints1[i] != hints2[i] {
+			t.Fatalf("hint %d changed:\n  first:  %q\n  second: %q", i, hints1[i], hints2[i])
+		}
+	}
+}
+
+func TestExplainArgoPhaseHints_NoInvalidCommands(t *testing.T) {
+	// Verify we're not suggesting commands that don't exist
+	validCommands := []string{
+		"cub-scout trace",
+		"cub-scout map",
+		"cub-scout doctor",
+		"cub-scout gitops status",
+		"cub-scout import",
+		"cub-scout quickstart",
+		"cub-scout explain",
+	}
+
+	summaries := []ExplainSummary{
+		{Resource: "Deployment/api", Namespace: "prod", Owner: "ArgoCD", Health: "Unhealthy"},
+		{Resource: "Deployment/api", Namespace: "prod", Owner: "ArgoCD", Health: "Healthy", Drift: "None detected", DeployedVia: "App -> Deploy"},
+		{Resource: "Deployment/api", Namespace: "prod", Owner: "ArgoCD", Health: "Healthy", Drift: "Unknown"},
+	}
+
+	for _, summary := range summaries {
+		hints := explainHintsWithContext(summary, DefaultHintContext())
+		for _, h := range hints {
+			valid := false
+			for _, prefix := range validCommands {
+				if strings.HasPrefix(h.Command, prefix) {
+					valid = true
+					break
+				}
+			}
+			if !valid {
+				t.Errorf("invalid command suggested: %q", h.Command)
+			}
+		}
+	}
+}

@@ -57,6 +57,27 @@ type HintContext struct {
 	Mode HintMode
 }
 
+// ResourcePhase represents the inferred operational phase of a resource.
+// This is derived from deterministic signals in ExplainSummary.
+type ResourcePhase string
+
+const (
+	// PhaseIncident indicates an active issue requiring investigation.
+	// Triggered by: unhealthy status, detected drift, or critical risks.
+	PhaseIncident ResourcePhase = "incident"
+
+	// PhaseVerify indicates the resource needs confirmation of health.
+	// Triggered by: healthy status but unknown drift or warnings present.
+	PhaseVerify ResourcePhase = "verify"
+
+	// PhaseCloseout indicates the resource is healthy and converged.
+	// Triggered by: healthy status, no drift, no high/critical risks.
+	PhaseCloseout ResourcePhase = "closeout"
+
+	// PhaseDefault is used when phase cannot be determined.
+	PhaseDefault ResourcePhase = "default"
+)
+
 // DefaultHintContext returns a HintContext with default settings.
 func DefaultHintContext() HintContext {
 	return HintContext{Mode: HintModeDefault}
@@ -90,6 +111,60 @@ func (c HintContext) isBeginnerMode() bool {
 // isOperatorMode returns true if the context is operator or demo (non-beginner).
 func (c HintContext) isOperatorMode() bool {
 	return c.Mode == HintModeOperator || c.Mode == HintModeDemo
+}
+
+// deriveResourcePhase infers the operational phase from ExplainSummary facts.
+// This is entirely deterministic: same inputs always produce same phase.
+func deriveResourcePhase(summary ExplainSummary) ResourcePhase {
+	health := strings.ToLower(strings.TrimSpace(summary.Health))
+	drift := strings.ToLower(strings.TrimSpace(summary.Drift))
+	risks := strings.ToLower(strings.TrimSpace(summary.Risks))
+	deployedVia := strings.ToLower(strings.TrimSpace(summary.DeployedVia))
+
+	// Check for incident indicators
+	isUnhealthy := health == "unhealthy" || health == "unavailable" || health == "unknown" ||
+		strings.Contains(health, "degraded") || strings.Contains(health, "error") ||
+		strings.Contains(health, "failed") || strings.Contains(health, "crash")
+	hasDrift := strings.Contains(drift, "detected") && !strings.Contains(drift, "none")
+	hasCriticalRisks := strings.Contains(risks, "critical")
+	hasHighRisks := strings.Contains(risks, "high")
+	isPartialTrace := strings.Contains(deployedVia, "partial")
+
+	// Incident phase: active issue requiring investigation
+	if isUnhealthy || hasDrift || hasCriticalRisks {
+		return PhaseIncident
+	}
+
+	// Check for healthy indicators
+	isHealthy := health == "healthy" || strings.Contains(health, "ready") ||
+		strings.Contains(health, "synced")
+	noDrift := drift == "none detected" || drift == "none"
+	noHighRisks := !hasCriticalRisks && !hasHighRisks
+	hasWarnings := strings.Contains(risks, "warning")
+	noWarnings := !hasWarnings
+	hasFullTrace := !isPartialTrace && deployedVia != "unknown"
+
+	// Closeout phase: everything looks good (no warnings either)
+	if isHealthy && noDrift && noHighRisks && noWarnings && hasFullTrace {
+		return PhaseCloseout
+	}
+
+	// Verify phase: healthy but needs confirmation
+	if isHealthy {
+		// Unknown drift, warnings present, or partial trace
+		driftUnknown := drift == "unknown" || drift == ""
+		if driftUnknown || hasWarnings || isPartialTrace {
+			return PhaseVerify
+		}
+	}
+
+	return PhaseDefault
+}
+
+// isArgoOwned returns true if the owner string indicates ArgoCD management.
+func isArgoOwned(owner string) bool {
+	o := strings.ToLower(strings.TrimSpace(owner))
+	return o == "argocd" || o == "argo" || strings.Contains(o, "argo")
 }
 
 // sortHints sorts hints by priority (descending) for deterministic output.
@@ -309,6 +384,7 @@ func explainHints(summary ExplainSummary) []Hint {
 }
 
 // explainHintsWithContext generates structured hints with explicit context control.
+// For Argo-managed resources, hints are phase-aware based on health/drift/risk signals.
 func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
 	hints := make([]Hint, 0, 5)
 	ns := strings.TrimSpace(summary.Namespace)
@@ -316,8 +392,6 @@ func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
 
 	owner := strings.TrimSpace(summary.Owner)
 	unknownOwner := strings.HasPrefix(strings.ToLower(owner), "unknown")
-	healthUnknown := strings.EqualFold(strings.TrimSpace(summary.Health), "unavailable") ||
-		strings.EqualFold(strings.TrimSpace(summary.Health), "unknown")
 
 	if unknownOwner {
 		// Unknown ownership is a governance concern - help find related issues
@@ -340,26 +414,12 @@ func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
 				Priority:  hintPriorityNormal - 5,
 			})
 		}
+	} else if isArgoOwned(owner) {
+		// Argo-managed resource: use phase-aware hints
+		hints = append(hints, explainArgoPhaseHints(summary, ctx)...)
 	} else {
-		// Known owner - help explore the ownership chain
-		if kind, name, ok := parseKindName(summary.Resource); ok {
-			priority := hintPriorityHigh
-			rationale := fmt.Sprintf("Trace the full %s ownership chain from source to runtime", owner)
-			if healthUnknown {
-				priority = hintPriorityUrgent
-				rationale = "Health status unknown - trace the chain to find the root cause"
-			}
-			hints = append(hints, Hint{
-				Command:   fmt.Sprintf("cub-scout trace %s/%s%s --explain", strings.ToLower(kind), name, nsFlag),
-				Rationale: rationale,
-				Priority:  priority,
-			})
-		}
-		hints = append(hints, Hint{
-			Command:   fmt.Sprintf("cub-scout map list%s -q \"owner=%s\"", nsFlag, owner),
-			Rationale: fmt.Sprintf("See all %s-managed resources in this scope", owner),
-			Priority:  hintPriorityNormal,
-		})
+		// Other known owner (Flux, Helm) - use standard ownership chain hints
+		hints = append(hints, explainKnownOwnerHints(summary, ctx)...)
 	}
 
 	// Doctor hint - lower priority in operator mode since they likely already ran it
@@ -371,6 +431,120 @@ func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
 		Command:   fmt.Sprintf("cub-scout doctor%s", nsFlag),
 		Rationale: "Get a broad health summary to contextualize this resource",
 		Priority:  doctorPriority,
+	})
+
+	return hints
+}
+
+// explainArgoPhaseHints generates phase-aware hints for Argo-managed resources.
+// The phase is derived from health, drift, and risk signals in the summary.
+func explainArgoPhaseHints(summary ExplainSummary, ctx HintContext) []Hint {
+	hints := make([]Hint, 0, 4)
+	ns := strings.TrimSpace(summary.Namespace)
+	nsFlag := commandNamespaceFlag(ns)
+	owner := strings.TrimSpace(summary.Owner)
+	phase := deriveResourcePhase(summary)
+
+	kind, name, hasResource := parseKindName(summary.Resource)
+
+	switch phase {
+	case PhaseIncident:
+		// Active issue - prioritize investigation commands
+		if hasResource {
+			hints = append(hints, Hint{
+				Command:   fmt.Sprintf("cub-scout trace %s/%s%s --explain", strings.ToLower(kind), name, nsFlag),
+				Rationale: "Investigate: trace the Argo ownership chain to find the root cause",
+				Priority:  hintPriorityUrgent,
+			})
+		}
+		// Suggest checking issues across the namespace
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout map issues%s", nsFlag),
+			Rationale: "See all health issues in this scope to understand the blast radius",
+			Priority:  hintPriorityHigh,
+		})
+		// Remind that kubectl changes will be reverted
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout gitops status%s", nsFlag),
+			Rationale: "This resource is Argo-managed; direct kubectl changes will be reverted - check GitOps pipeline status",
+			Priority:  hintPriorityHigh - 5,
+		})
+
+	case PhaseVerify:
+		// Resource looks OK but needs confirmation
+		if hasResource {
+			hints = append(hints, Hint{
+				Command:   fmt.Sprintf("cub-scout trace %s/%s%s --explain", strings.ToLower(kind), name, nsFlag),
+				Rationale: "Verify: confirm the Argo sync chain is complete and healthy",
+				Priority:  hintPriorityHigh,
+			})
+		}
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout gitops status%s", nsFlag),
+			Rationale: "Confirm GitOps pipeline is synced before closing out",
+			Priority:  hintPriorityHigh - 5,
+		})
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout map list%s -q \"owner=%s\"", nsFlag, owner),
+			Rationale: fmt.Sprintf("Check other %s resources to confirm no remaining issues", owner),
+			Priority:  hintPriorityNormal,
+		})
+
+	case PhaseCloseout:
+		// Everything looks good - suggest read-only verification
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout gitops status%s", nsFlag),
+			Rationale: "Closeout: GitOps and cluster agree - confirm no further action needed (read-only)",
+			Priority:  hintPriorityHigh,
+		})
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout map list%s -q \"owner=%s\"", nsFlag, owner),
+			Rationale: fmt.Sprintf("Review all %s resources to confirm convergence (read-only)", owner),
+			Priority:  hintPriorityNormal,
+		})
+		if hasResource {
+			hints = append(hints, Hint{
+				Command:   fmt.Sprintf("cub-scout trace %s/%s%s --history", strings.ToLower(kind), name, nsFlag),
+				Rationale: "Show deployment history for audit trail (read-only)",
+				Priority:  hintPriorityNormal - 5,
+			})
+		}
+
+	default:
+		// Default Argo hints (same as before)
+		hints = append(hints, explainKnownOwnerHints(summary, ctx)...)
+	}
+
+	return hints
+}
+
+// explainKnownOwnerHints generates standard hints for known (non-Argo) owners.
+func explainKnownOwnerHints(summary ExplainSummary, ctx HintContext) []Hint {
+	hints := make([]Hint, 0, 2)
+	ns := strings.TrimSpace(summary.Namespace)
+	nsFlag := commandNamespaceFlag(ns)
+	owner := strings.TrimSpace(summary.Owner)
+
+	healthUnknown := strings.EqualFold(strings.TrimSpace(summary.Health), "unavailable") ||
+		strings.EqualFold(strings.TrimSpace(summary.Health), "unknown")
+
+	if kind, name, ok := parseKindName(summary.Resource); ok {
+		priority := hintPriorityHigh
+		rationale := fmt.Sprintf("Trace the full %s ownership chain from source to runtime", owner)
+		if healthUnknown {
+			priority = hintPriorityUrgent
+			rationale = "Health status unknown - trace the chain to find the root cause"
+		}
+		hints = append(hints, Hint{
+			Command:   fmt.Sprintf("cub-scout trace %s/%s%s --explain", strings.ToLower(kind), name, nsFlag),
+			Rationale: rationale,
+			Priority:  priority,
+		})
+	}
+	hints = append(hints, Hint{
+		Command:   fmt.Sprintf("cub-scout map list%s -q \"owner=%s\"", nsFlag, owner),
+		Rationale: fmt.Sprintf("See all %s-managed resources in this scope", owner),
+		Priority:  hintPriorityNormal,
 	})
 
 	return hints
