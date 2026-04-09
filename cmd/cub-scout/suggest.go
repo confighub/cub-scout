@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -353,6 +354,26 @@ func sanitizeSlug(s string) string {
 	return s
 }
 
+// deriveUniqueAppIdentifier creates a unique app identifier from name and path
+// For duplicate basenames (e.g., apps/team-a/api and services/team-b/api),
+// combines the parent directory with the app name to disambiguate.
+func deriveUniqueAppIdentifier(name, basePath string) string {
+	if basePath == "" {
+		return name
+	}
+
+	// Split the path into components
+	parts := strings.Split(filepath.ToSlash(basePath), "/")
+	if len(parts) < 2 {
+		return name
+	}
+
+	// Use parent directory + name for disambiguation
+	// e.g., "apps/team-a/api" -> "team-a-api"
+	parent := parts[len(parts)-2]
+	return fmt.Sprintf("%s-%s", parent, name)
+}
+
 // longestCommonPrefix finds the longest common prefix of strings
 func longestCommonPrefix(strs []string) string {
 	if len(strs) == 0 {
@@ -667,20 +688,32 @@ func SuggestFullProposal(gitApps []gitops.AppDefinition, workloads []WorkloadInf
 	// Track variants found for reconciliation rules
 	variantsFound := make(map[string]bool)
 
+	// Detect duplicate app names that need path-based disambiguation
+	appNameCounts := make(map[string]int)
+	for _, gitApp := range gitApps {
+		appNameCounts[gitApp.Name]++
+	}
+
 	// Process Git apps - second pass to create units
 	for _, gitApp := range gitApps {
+		// Derive a unique app identifier: use path-based slug if name is duplicated
+		appIdentifier := gitApp.Name
+		if appNameCounts[gitApp.Name] > 1 && gitApp.BasePath != "" {
+			appIdentifier = deriveUniqueAppIdentifier(gitApp.Name, gitApp.BasePath)
+		}
+
 		// Process variants -> Units
 		for _, variant := range gitApp.Variants {
-			slug := gitApp.Name
+			slug := appIdentifier
 			variantName := normalizeVariant(variant.Name)
 			if variantName != "default" && variantName != "" {
-				slug = fmt.Sprintf("%s-%s", gitApp.Name, variantName)
+				slug = fmt.Sprintf("%s-%s", appIdentifier, variantName)
 			}
 			variantsFound[variantName] = true
 
 			unit := UnitProposal{
 				Slug:    sanitizeSlug(slug),
-				App:     gitApp.Name,
+				App:     appIdentifier,
 				Variant: variantName,
 				GitPath: variant.Path,
 				Labels:  make(map[string]string),
@@ -692,7 +725,7 @@ func SuggestFullProposal(gitApps []gitops.AppDefinition, workloads []WorkloadInf
 			}
 
 			// Build labels map
-			unit.Labels["app"] = gitApp.Name
+			unit.Labels["app"] = appIdentifier
 			unit.Labels["variant"] = variantName
 
 			// Check if deployed in cluster and extract additional labels
@@ -729,11 +762,11 @@ func SuggestFullProposal(gitApps []gitops.AppDefinition, workloads []WorkloadInf
 		// If no variants, create default unit
 		if len(gitApp.Variants) == 0 {
 			unit := UnitProposal{
-				Slug:    sanitizeSlug(gitApp.Name),
-				App:     gitApp.Name,
+				Slug:    sanitizeSlug(appIdentifier),
+				App:     appIdentifier,
 				Variant: "default",
 				GitPath: gitApp.BasePath,
-				Labels:  map[string]string{"app": gitApp.Name, "variant": "default"},
+				Labels:  map[string]string{"app": appIdentifier, "variant": "default"},
 			}
 			if hubBaseNames[gitApp.Name] {
 				unit.Upstream = gitApp.Name

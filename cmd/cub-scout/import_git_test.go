@@ -314,3 +314,100 @@ spec:
 		t.Fatal("proposal is nil")
 	}
 }
+
+func TestBuildImportFromGitPreview_DuplicateBasenames(t *testing.T) {
+	// Create a temporary Git repo with ApplicationSet that has duplicate basenames
+	tmpDir := t.TempDir()
+
+	// Create ApplicationSet directory
+	appSetDir := filepath.Join(tmpDir, "applicationsets")
+	if err := os.MkdirAll(appSetDir, 0o755); err != nil {
+		t.Fatalf("failed to create applicationsets dir: %v", err)
+	}
+
+	// Create ApplicationSet with multiple patterns that match same-named directories
+	appSetContent := `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: multi-team
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/org/repo
+        directories:
+          - path: apps/team-a/*
+          - path: services/team-b/*
+`
+	if err := os.WriteFile(filepath.Join(appSetDir, "multi-team.yaml"), []byte(appSetContent), 0o644); err != nil {
+		t.Fatalf("failed to write applicationset: %v", err)
+	}
+
+	// Create directories with duplicate basenames
+	dirs := []string{
+		filepath.Join(tmpDir, "apps", "team-a", "api"),
+		filepath.Join(tmpDir, "apps", "team-a", "web"),
+		filepath.Join(tmpDir, "services", "team-b", "api"),
+		filepath.Join(tmpDir, "services", "team-b", "worker"),
+	}
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("failed to create dir %s: %v", dir, err)
+		}
+	}
+
+	// Test Git-only preview
+	proposal, gitApps, err := buildImportFromGitPreview(tmpDir, nil)
+	if err != nil {
+		t.Fatalf("buildImportFromGitPreview() error = %v", err)
+	}
+
+	// Should have 4 apps
+	if len(gitApps) != 4 {
+		t.Errorf("expected 4 apps, got %d", len(gitApps))
+	}
+
+	// Count apps named "api" - should have 2 with different paths
+	apiCount := 0
+	apiPaths := make(map[string]bool)
+	for _, app := range gitApps {
+		if app.Name == "api" {
+			apiCount++
+			apiPaths[app.BasePath] = true
+		}
+	}
+	if apiCount != 2 {
+		t.Errorf("expected 2 apps named 'api', got %d", apiCount)
+	}
+
+	if proposal == nil {
+		t.Fatal("proposal is nil")
+	}
+
+	// Check that proposal units have unique slugs
+	slugs := make(map[string]bool)
+	for _, unit := range proposal.Units {
+		if slugs[unit.Slug] {
+			t.Errorf("duplicate slug in proposal: %q", unit.Slug)
+		}
+		slugs[unit.Slug] = true
+	}
+
+	// Should have 4 unique units
+	if len(proposal.Units) != 4 {
+		t.Errorf("expected 4 units in proposal, got %d", len(proposal.Units))
+	}
+
+	// Verify both "api" units have different slugs
+	apiSlugs := []string{}
+	for _, unit := range proposal.Units {
+		if unit.App == "team-a-api" || unit.App == "team-b-api" {
+			apiSlugs = append(apiSlugs, unit.Slug)
+		}
+	}
+	if len(apiSlugs) != 2 {
+		t.Errorf("expected 2 disambiguated api units, got %d", len(apiSlugs))
+	}
+	if len(apiSlugs) == 2 && apiSlugs[0] == apiSlugs[1] {
+		t.Errorf("api unit slugs should be different, both are %q", apiSlugs[0])
+	}
+}
