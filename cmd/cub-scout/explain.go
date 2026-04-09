@@ -60,6 +60,9 @@ type ExplainSummary struct {
 	// ThreeWay contains the three-way disagreement status (ConfigHub vs controller vs cluster).
 	// Only populated in connected mode when disagreement is detected.
 	ThreeWay *ThreeWayDisagreement `json:"threeWay,omitempty"`
+
+	// NextSteps contains structured action-typed hints for AI/MCP clients.
+	NextSteps []StructuredHint `json:"nextSteps,omitempty"`
 }
 
 func runExplain(cmd *cobra.Command, args []string) error {
@@ -105,6 +108,18 @@ func runExplain(cmd *cobra.Command, args []string) error {
 func outputExplainSummary(summary ExplainSummary, format string, invCtx InvocationContext, hintCtx HintContext) error {
 	switch format {
 	case "json":
+		// Populate structured hints for JSON output (reuses existing hint logic)
+		hints := explainHintsWithContext(summary, hintCtx)
+		// Include ConfigHub hint if present (backs the visible "OPEN IN CONFIGHUB" section)
+		if chHint := explainConfigHubHint(summary); chHint != nil {
+			hints = append(hints, *chHint)
+		}
+		sortHints(hints)
+		if len(hints) > 3 {
+			hints = hints[:3]
+		}
+		summary.NextSteps = HintsToStructured(hints)
+
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(summary)

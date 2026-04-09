@@ -6,14 +6,73 @@ import (
 	"strings"
 )
 
+// ActionType classifies what kind of action a hint suggests.
+// This helps AI agents and MCP clients distinguish read-only investigation
+// from actions that require human approval or mutation.
+type ActionType string
+
+const (
+	// ActionReadOnly is for hints that only read/observe (no side effects).
+	// Most cub-scout commands fall into this category.
+	ActionReadOnly ActionType = "read-only"
+
+	// ActionMutating is for hints that would modify cluster or config state.
+	// cub-scout itself is read-only, but hints might suggest external commands.
+	ActionMutating ActionType = "mutating"
+
+	// ActionWaiting is for hints that suggest waiting for convergence.
+	// Example: "wait for Argo sync to complete"
+	ActionWaiting ActionType = "waiting"
+
+	// ActionHumanDecision is for hints that require human judgment.
+	// Example: "decide whether to adopt this unmanaged resource"
+	ActionHumanDecision ActionType = "human-decision"
+)
+
 // Hint represents a single navigation hint with rationale and priority.
 // Priority is used for ranking: higher values are more urgent/relevant.
 // Rationale explains why this hint is suggested (the "so what").
 type Hint struct {
-	Command      string // The copyable cub-scout command
-	Rationale    string // Why this hint is suggested
-	Priority     int    // Higher = more urgent; used for sorting
-	ConfigHubURL string // Optional: URL to open in ConfigHub GUI (only when connected with valid context)
+	Command      string     // The copyable cub-scout command
+	Rationale    string     // Why this hint is suggested
+	Priority     int        // Higher = more urgent; used for sorting
+	ConfigHubURL string     // Optional: URL to open in ConfigHub GUI (only when connected with valid context)
+	ActionType   ActionType // Classification for AI/MCP clients (default: read-only)
+	Blocker      string     // Optional: machine-readable blocker key when a path is blocked
+}
+
+// StructuredHint is the JSON-serializable form of a hint for machine consumption.
+// This is the contract for JSON output and MCP tool responses.
+type StructuredHint struct {
+	ActionType  ActionType `json:"actionType"`            // read-only, mutating, waiting, human-decision
+	Reason      string     `json:"reason"`                // Short plain-English reason
+	NextCommand string     `json:"nextCommand,omitempty"` // Exact command when applicable
+	NextSurface string     `json:"nextSurface,omitempty"` // Optional URL or surface hint
+	Blocker     string     `json:"blocker,omitempty"`     // Optional machine-readable blocker key
+}
+
+// ToStructured converts a Hint to its JSON-serializable form.
+func (h Hint) ToStructured() StructuredHint {
+	actionType := h.ActionType
+	if actionType == "" {
+		actionType = ActionReadOnly // Default for cub-scout (read-only tool)
+	}
+	return StructuredHint{
+		ActionType:  actionType,
+		Reason:      h.Rationale,
+		NextCommand: h.Command,
+		NextSurface: h.ConfigHubURL,
+		Blocker:     h.Blocker,
+	}
+}
+
+// HintsToStructured converts a slice of Hints to StructuredHints.
+func HintsToStructured(hints []Hint) []StructuredHint {
+	result := make([]StructuredHint, len(hints))
+	for i, h := range hints {
+		result[i] = h.ToStructured()
+	}
+	return result
 }
 
 // hintPriorityUrgent is for issues requiring immediate attention.

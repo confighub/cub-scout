@@ -1249,3 +1249,288 @@ func TestExplainArgoPhaseHints_NoInvalidCommands(t *testing.T) {
 		}
 	}
 }
+
+// Tests for structured hints (#370)
+
+func TestHintToStructured_DefaultsToReadOnly(t *testing.T) {
+	hint := Hint{
+		Command:   "cub-scout doctor -n prod",
+		Rationale: "Get cluster health summary",
+		Priority:  hintPriorityHigh,
+	}
+
+	structured := hint.ToStructured()
+
+	if structured.ActionType != ActionReadOnly {
+		t.Errorf("expected ActionType=%q, got %q", ActionReadOnly, structured.ActionType)
+	}
+	if structured.Reason != hint.Rationale {
+		t.Errorf("expected Reason=%q, got %q", hint.Rationale, structured.Reason)
+	}
+	if structured.NextCommand != hint.Command {
+		t.Errorf("expected NextCommand=%q, got %q", hint.Command, structured.NextCommand)
+	}
+}
+
+func TestHintToStructured_PreservesExplicitActionType(t *testing.T) {
+	hint := Hint{
+		Command:    "argocd sync myapp",
+		Rationale:  "Sync to apply changes",
+		Priority:   hintPriorityHigh,
+		ActionType: ActionMutating,
+	}
+
+	structured := hint.ToStructured()
+
+	if structured.ActionType != ActionMutating {
+		t.Errorf("expected ActionType=%q, got %q", ActionMutating, structured.ActionType)
+	}
+}
+
+func TestHintToStructured_IncludesConfigHubURL(t *testing.T) {
+	hint := Hint{
+		Command:      "cub-scout explain deploy/api -n prod",
+		Rationale:    "View resource details",
+		Priority:     hintPriorityNormal,
+		ConfigHubURL: "https://confighub.com/spaces/sp-123/units/api",
+	}
+
+	structured := hint.ToStructured()
+
+	if structured.NextSurface != hint.ConfigHubURL {
+		t.Errorf("expected NextSurface=%q, got %q", hint.ConfigHubURL, structured.NextSurface)
+	}
+}
+
+func TestHintToStructured_IncludesBlocker(t *testing.T) {
+	hint := Hint{
+		Command:   "cub-scout trace deploy/api -n prod",
+		Rationale: "Trace blocked by missing permissions",
+		Priority:  hintPriorityHigh,
+		Blocker:   "rbac-forbidden",
+	}
+
+	structured := hint.ToStructured()
+
+	if structured.Blocker != hint.Blocker {
+		t.Errorf("expected Blocker=%q, got %q", hint.Blocker, structured.Blocker)
+	}
+}
+
+func TestHintsToStructured_ConvertsSlice(t *testing.T) {
+	hints := []Hint{
+		{Command: "cub-scout doctor", Rationale: "Health check", Priority: hintPriorityHigh},
+		{Command: "cub-scout map list", Rationale: "List resources", Priority: hintPriorityNormal},
+	}
+
+	structured := HintsToStructured(hints)
+
+	if len(structured) != 2 {
+		t.Fatalf("expected 2 structured hints, got %d", len(structured))
+	}
+	if structured[0].NextCommand != "cub-scout doctor" {
+		t.Errorf("first hint command mismatch: %q", structured[0].NextCommand)
+	}
+	if structured[1].NextCommand != "cub-scout map list" {
+		t.Errorf("second hint command mismatch: %q", structured[1].NextCommand)
+	}
+}
+
+func TestStructuredHint_JSONSerialization(t *testing.T) {
+	hint := StructuredHint{
+		ActionType:  ActionReadOnly,
+		Reason:      "Investigate unhealthy resource",
+		NextCommand: "cub-scout trace deploy/api -n prod",
+		NextSurface: "https://confighub.com/units/api",
+	}
+
+	data, err := json.Marshal(hint)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	required := []string{
+		`"actionType":"read-only"`,
+		`"reason":"Investigate unhealthy resource"`,
+		`"nextCommand":"cub-scout trace deploy/api -n prod"`,
+		`"nextSurface":"https://confighub.com/units/api"`,
+	}
+	for _, s := range required {
+		if !strings.Contains(jsonStr, s) {
+			t.Errorf("expected %q in JSON, got: %s", s, jsonStr)
+		}
+	}
+}
+
+func TestStructuredHint_JSONOmitsEmptyFields(t *testing.T) {
+	hint := StructuredHint{
+		ActionType:  ActionReadOnly,
+		Reason:      "Health check",
+		NextCommand: "cub-scout doctor",
+		// NextSurface and Blocker are empty
+	}
+
+	data, err := json.Marshal(hint)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	if strings.Contains(jsonStr, "nextSurface") {
+		t.Errorf("expected nextSurface to be omitted when empty, got: %s", jsonStr)
+	}
+	if strings.Contains(jsonStr, "blocker") {
+		t.Errorf("expected blocker to be omitted when empty, got: %s", jsonStr)
+	}
+}
+
+func TestDoctorSummary_JSONIncludesNextSteps(t *testing.T) {
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 10},
+		Ownership: DoctorOwnershipSummary{Flux: 5, Native: 5, Unmanaged: 5},
+		TopIssues: []DoctorIssue{
+			{Severity: "CRITICAL", Resource: "Deployment/api", Namespace: "prod", Message: "crash loop"},
+		},
+	}
+
+	// Populate NextSteps using the same logic as the JSON encoder
+	hints := doctorHintsWithContext(summary, DefaultHintContext())
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	summary.NextSteps = HintsToStructured(hints)
+
+	data, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	// Should have nextSteps array
+	if !strings.Contains(jsonStr, `"nextSteps"`) {
+		t.Fatalf("expected nextSteps in JSON, got: %s", jsonStr)
+	}
+	// Should have actionType field
+	if !strings.Contains(jsonStr, `"actionType"`) {
+		t.Fatalf("expected actionType in nextSteps, got: %s", jsonStr)
+	}
+	// Should have reason field
+	if !strings.Contains(jsonStr, `"reason"`) {
+		t.Fatalf("expected reason in nextSteps, got: %s", jsonStr)
+	}
+	// Should have nextCommand field
+	if !strings.Contains(jsonStr, `"nextCommand"`) {
+		t.Fatalf("expected nextCommand in nextSteps, got: %s", jsonStr)
+	}
+}
+
+func TestExplainSummary_JSONIncludesNextSteps(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/api",
+		Namespace:   "prod",
+		Owner:       "ArgoCD",
+		Source:      "https://github.com/acme/config",
+		DeployedVia: "Application/myapp -> Deployment/api",
+		Health:      "Unhealthy",
+		Risks:       "1 CRITICAL",
+		Drift:       "Detected",
+	}
+
+	// Populate NextSteps using the same logic as the JSON encoder
+	hints := explainHintsWithContext(summary, DefaultHintContext())
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	summary.NextSteps = HintsToStructured(hints)
+
+	data, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	// Should have nextSteps array
+	if !strings.Contains(jsonStr, `"nextSteps"`) {
+		t.Fatalf("expected nextSteps in JSON, got: %s", jsonStr)
+	}
+	// Should have actionType: read-only
+	if !strings.Contains(jsonStr, `"actionType":"read-only"`) {
+		t.Fatalf("expected actionType:read-only in nextSteps, got: %s", jsonStr)
+	}
+}
+
+func TestExplainSummary_JSONIncludesConfigHubInNextSteps(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:     "Deployment/api",
+		Namespace:    "prod",
+		Owner:        "Flux",
+		Source:       "https://github.com/acme/config",
+		DeployedVia:  "GitRepository -> Kustomization -> Deployment",
+		Health:       "Healthy",
+		Risks:        "0 findings",
+		Drift:        "None",
+		ConfigHubURL: "https://confighub.com/spaces/sp-123/units/api",
+	}
+
+	// Simulate the JSON encoding path from outputExplainSummary
+	hints := explainHintsWithContext(summary, DefaultHintContext())
+	if chHint := explainConfigHubHint(summary); chHint != nil {
+		hints = append(hints, *chHint)
+	}
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	summary.NextSteps = HintsToStructured(hints)
+
+	data, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	// Should have the ConfigHub URL in nextSurface
+	if !strings.Contains(jsonStr, `"nextSurface":"https://confighub.com/spaces/sp-123/units/api"`) {
+		t.Fatalf("expected ConfigHub URL in nextSurface, got: %s", jsonStr)
+	}
+}
+
+func TestStructuredHints_DeterministicOrdering(t *testing.T) {
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 10},
+		Ownership: DoctorOwnershipSummary{Flux: 5, Native: 5, Unmanaged: 5},
+		TopIssues: []DoctorIssue{
+			{Severity: "CRITICAL", Resource: "Deployment/api", Namespace: "prod", Message: "crash loop"},
+		},
+	}
+
+	// Generate structured hints multiple times
+	var results [][]StructuredHint
+	for i := 0; i < 5; i++ {
+		hints := doctorHintsWithContext(summary, DefaultHintContext())
+		sortHints(hints)
+		if len(hints) > 3 {
+			hints = hints[:3]
+		}
+		results = append(results, HintsToStructured(hints))
+	}
+
+	// All results should be identical
+	for i := 1; i < len(results); i++ {
+		if len(results[0]) != len(results[i]) {
+			t.Fatalf("hint count varies: run 0 has %d, run %d has %d", len(results[0]), i, len(results[i]))
+		}
+		for j := range results[0] {
+			if results[0][j].NextCommand != results[i][j].NextCommand {
+				t.Fatalf("hint %d command varies: %q vs %q", j, results[0][j].NextCommand, results[i][j].NextCommand)
+			}
+		}
+	}
+}

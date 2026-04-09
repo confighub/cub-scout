@@ -63,6 +63,7 @@ type DoctorSummary struct {
 	Drift     DoctorDriftSummary      `json:"drift"`
 	ThreeWay  *DoctorThreeWaySummary  `json:"threeWay,omitempty"`
 	TopIssues []DoctorIssue           `json:"topIssues,omitempty"`
+	NextSteps []StructuredHint        `json:"nextSteps,omitempty"` // Structured action-typed hints for AI/MCP
 }
 
 // DoctorThreeWaySummary indicates three-way comparison status.
@@ -170,6 +171,14 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 
 	switch format {
 	case "json":
+		// Populate structured hints for JSON output (reuses existing hint logic)
+		hints := doctorHintsWithContext(summary, hintCtx)
+		sortHints(hints)
+		if len(hints) > 3 {
+			hints = hints[:3]
+		}
+		summary.NextSteps = HintsToStructured(hints)
+
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(summary)
