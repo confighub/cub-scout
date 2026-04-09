@@ -59,9 +59,11 @@ Current tracked follow-ons:
 | Issue | Title | Notes |
 |-------|-------|-------|
 | #368 | Beat Argo CD GUI as the first stop for troubleshooting | Broader umbrella, likely next major wedge |
-| #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
 
 Recent closures:
+- #362 — Stabilize intermittent TestContextPack_FormatJSON kill (Apr 9)
+  - Root cause: 30-second timeout was too tight for `go run ./cmd/cub-scout`
+  - Fix: increased test runner timeout to 90 seconds
 - #359 — Extend `--presentation` to additional read-only commands (Apr 9)
   - Added `--presentation=ai|human|paired` to trace command
   - AI mode: bracket notation, uppercase markers, `[end trace]` outro
@@ -137,7 +139,7 @@ Recommended next steps (optional enhancements):
 2. Add `KustomizePath` to JSON output for kustomize apps
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
-Lower-priority follow-on: #362
+Lower-priority follow-ons: none remaining from this track
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 
@@ -245,8 +247,6 @@ No separate `--compare` flag needed.
 1. Milestone 1: broader GitOps troubleshooting wedge (#368)
    - make `cub-scout` the first stop before the Argo CD GUI
    - builds on the shipped three-way + hinting + MCP work
-2. Milestone 2: test stability
-   - `#362`: stabilize intermittent test kill
 
 ## External publication boundary
 

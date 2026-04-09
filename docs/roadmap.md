@@ -726,8 +726,8 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * #370 — structured action-typed next-step hints shipped and closed (nextSteps in doctor/explain JSON)
 * #360 — v0.14 trace secret evidence shipped and closed (full safe metadata: createdAt, owner)
 * #359 — extend `--presentation` to trace command shipped and closed (ai/human/paired modes)
+* #362 — test runner timeout fix shipped and closed (30s→90s)
 * #368 — broader "beat Argo CD GUI" troubleshooting wedge (next major slice)
-* #362 — stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii`
 
 ---
 
