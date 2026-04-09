@@ -7,7 +7,7 @@ Last updated: 2026-04-09
 - Branch: `main`
 - Canonical roadmap: `docs/roadmap.md`
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
-- Note: local worktree currently has untracked `.claude/` and `LIVE`; treat them as user-owned and do not modify them unless explicitly asked
+- First repo-specific AI entrypoint: `AI-README-FIRST.md`
 
 ## Recent completions
 
@@ -34,8 +34,8 @@ Key deliverables now in place:
 - `explain` suggests ConfigHub GUI deep-links when connected context provides a unit URL (`a5016ad`, `#350`)
 - CLI color output with `NO_COLOR` support for doctor and explain commands (`2768e0e`, `#351`)
 - Explicit `--presentation` flag for doctor and explain commands (`a5a5e59`, `#352`)
-  - Three modes: `human` (default), `ai`, `paired`
-  - Opt-in only: default behavior unchanged without flag
+  - Three modes: `human`, `ai`, `paired`
+  - Opt-in only: omit the flag to keep the legacy/default render path
   - AI mode uses uppercase markers, bracket notation, `RECOMMENDED ACTIONS` heading
 - #342 bidirectional snapshot and conformance workflow (both slices)
   - Conformance reporting for import proposals
@@ -58,10 +58,13 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
+| #370 | Structured next-step hints for JSON + MCP | Highest-leverage AI/MCP follow-on |
+| #369 | Expose `doctor` / `observe.scope_summary` as first-class MCP tool | Workflow-first MCP surface |
+| #368 | Beat Argo CD GUI as the first stop for troubleshooting | Broader umbrella, likely after #370/#369 |
+| #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Investigated already; only resume for explicit render-readiness follow-on |
 | #359 | Extend `--presentation` to additional read-only commands | Useful polish, lower priority |
 | #360 | Carry secret evidence through the legacy trace v0.14 JSON converter | Low-priority contract cleanup |
 | #362 | Stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii` | Test-stability follow-on from v1.9 release verification |
-| #364 | Investigate integration with `cub gitops import` rendering for manifest preview | Active continuation of the Git import track after #357 |
 
 Recent closures:
 - #371 — Three-way agreement/convergence summary (Apr 9)
@@ -186,13 +189,15 @@ spec:
           - path: "!apps/excluded"  # Exclude patterns supported
 ```
 
-**Implementation in cub-scout (commit `a63922a`, #363):**
+**Implementation in cub-scout (#363 complete):**
 - `pkg/gitops/parser.go`:
   - `extractGitGeneratorPatternsWithExcludes()` extracts include/exclude patterns
   - `extractMatrixGitPatternsWithExcludes()` handles nested git generators in matrix
-  - `scanGitGeneratorPatternsWithExcludes()` scans directories matching patterns
-  - `findAppBasePath()` locates app base paths for discovered apps
-- `cmd/cub-scout/import_git_test.go`: End-to-end ApplicationSet integration test
+  - full-path scanning preserves matched relative paths instead of guessing
+  - path-centric target tracking preserves duplicate basenames safely
+- `cmd/cub-scout/import.go` / `suggest.go`:
+  - import proposals use path-derived unique slugs for duplicate-basename apps
+- `cmd/cub-scout/import_git_test.go`: End-to-end ApplicationSet integration tests
 
 `cub-scout import --git-path` now correctly discovers apps from ApplicationSet
 git generators like those in `jesperfj/gitops-argocd`.
@@ -220,14 +225,15 @@ No separate `--compare` flag needed.
 
 ## Suggested next milestones
 
-1. Milestone 1: Continue the Git import track via #363 and #364
-   - #357 is CLOSED as the initial local `--git-path` preview slice
-   - #363: enhance parser for ArgoCD ApplicationSet git generators
-   - #364: investigate rendering integration between `cub-scout import` and `cub gitops import`
-2. Milestone 2: polish/compat follow-ons (#359, #360, #362)
-   Extend `--presentation` incrementally to other read-only commands if useful,
-   close the legacy v0.14 trace JSON converter gap when worth it, and stabilize
-   the `context-pack` test kill path.
+1. Milestone 1: workflow-first machine surfaces (#370, #369)
+   - `#370`: structured action-typed hints in JSON and MCP
+   - `#369`: expose `doctor` / `observe.scope_summary` as a first-class MCP tool
+2. Milestone 2: broader GitOps troubleshooting wedge (#368)
+   - make `cub-scout` the first stop before the Argo CD GUI
+   - likely builds on the new three-way + hinting work rather than replacing it
+3. Milestone 3: optional Git import polish / compat
+   - `#364`: render-readiness metadata only if explicitly resumed
+   - `#359`, `#360`, `#362`: presentation polish, legacy JSON gap, test stability
 
 ## External publication boundary
 
@@ -315,7 +321,7 @@ For the core connected demos, "AI-first" means:
 
 - `cmd/cub-scout/import.go` — `--git-path` flag, `runImportFromGit()`, `buildImportFromGitPreview()`
 - `cmd/cub-scout/import_git_test.go` — Git path tests, evidence JSON tests
-- `pkg/gitops/parser.go` — `ParseRepo()` (needs enhancement for ApplicationSet git generators)
+- `pkg/gitops/parser.go` — `ParseRepo()` with ApplicationSet git-generator + path-centric discovery support
 
 ## Proof expectations
 
@@ -337,12 +343,13 @@ And if example/demo behavior changes:
 ## Quick start for the next coder
 
 1. Read `CLAUDE.md` for build/run/test commands
-2. Read `docs/roadmap.md` for strategic context
-3. Check open issues: `gh issue list --state open`
-4. Inspect AI-first examples:
+2. Read `AI-README-FIRST.md` for tool boundaries and current queue
+3. Read `docs/roadmap.md` for strategic context
+4. Check open issues: `gh issue list --state open`
+5. Inspect AI-first examples:
    - `examples/argo-import-confighub-demo/`
    - `examples/flux-import-confighub-demo/`
-5. Choose one small slice and keep it proof-first
+6. Choose one small slice and keep it proof-first
 
 ## One-sentence strategy anchor
 

@@ -718,10 +718,16 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * Styled summary with status breakdown (present/missing/unreadable)
 * Individual secret display with status indicators and reference types
 
-**Tracked follow-ons opened after v1.9:**
-* #357 — Git as a first-class source: read-only import preview from local Git path
+**Post-v1.9 follow-on queue:**
+* #357 — initial local Git import preview slice shipped and closed
+* #363 — ApplicationSet git-generator parsing shipped and closed
+* #364 — render-integration investigation documented; keep `cub-scout` preview separate from `cub gitops import`, optionally add render-readiness metadata later
+* #369 — expose `doctor` / `observe.scope_summary` as a first-class MCP tool
+* #370 — add structured action-typed next-step hints to JSON and MCP outputs
+* #368 — broader “beat Argo CD GUI” troubleshooting wedge
 * #359 — extend `--presentation` to additional read-only commands
 * #360 — carry secret evidence through the legacy trace v0.14 JSON converter
+* #362 — stabilize intermittent `TestContextPack_FormatJSON` kill in `test/ascii`
 
 **Future (low priority):**
 * legacy v0.14 trace JSON converter path for secret evidence (#360)

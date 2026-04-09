@@ -1629,6 +1629,7 @@ See [docs/reference/gsf-schema.md](docs/reference/gsf-schema.md) for full schema
 ```bash
 ./cub-scout import -n production
 ./cub-scout import -n production --dry-run
+./cub-scout import --git-path ./repo --dry-run --json
 ./cub-scout import --yes --connect
 ./cub-scout import --wizard
 ```
@@ -1644,6 +1645,7 @@ the App Space, `import` delegates those workloads to `cub gitops discover` +
 | `-w, --wizard` | Launch interactive TUI wizard |
 | `--dry-run` | Preview without making changes |
 | `--json` | Output as JSON |
+| `--git-path` | Preview/import from a local GitOps repo path |
 | `-y, --yes` | Skip confirmation |
 | `--connect` | Start worker and set targets after import |
 | `--no-connect` | Skip worker/target setup after import |
@@ -1656,6 +1658,11 @@ make test-import-delegation
 # or:
 ./scripts/test-import-delegation.sh
 ```
+
+**Git preview notes:**
+- `import --git-path` is local structure/import preview, not manifest rendering
+- parser support includes ArgoCD `ApplicationSet` git generators, matrix-contained git generators, exclude patterns, and duplicate-basename-safe proposal slugs
+- controller-faithful rendering remains the `cub gitops discover` + `cub gitops import` path
 
 ---
 
@@ -1701,6 +1708,36 @@ make test-import-delegation
 | `--apply` | Create App Space and Units |
 | `--dry-run` | Show without making changes |
 | `--json` | Output as JSON |
+
+---
+
+## `compare three-way` — Connected DRY / WET / LIVE Agreement
+
+```bash
+./cub-scout compare three-way --scope deploy/payment-api -n prod
+./cub-scout compare three-way --scope namespace/prod --format json
+./cub-scout compare three-way --scope cluster --format md
+./cub-scout compare three-way --scope namespace/prod --fail-on warning
+```
+
+**What it does:** Compares ConfigHub intent/rendered state against observed cluster state for one resource, a namespace, or the whole cluster in connected mode.
+
+**Agreement summary:**
+- `agreed` — all compared resources align
+- `converging` — changes are in progress
+- `diverged` — stale or unexplained disagreement exists
+- `partial` — evidence is incomplete
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--scope` | Resource, `namespace/<ns>`, or `cluster` |
+| `-n, --namespace` | Namespace override for resource scope |
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `--json` | Shorthand for `--format json` |
+| `--fail-on` | Exit non-zero if max severity meets threshold: `info`, `warning` |
+
+**JSON note:** `summary.agreement` includes `state`, `summary`, `reasons`, and `sources`.
 
 ---
 

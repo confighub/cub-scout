@@ -958,6 +958,7 @@ cub-scout import [flags]
 | `--connect` | After import, start worker and set targets |
 | `--no-connect` | Do not auto-start worker/targets after import |
 | `--from-bundle` | Import proposal/apply from a debug bundle directory (offline path, no cluster discovery) |
+| `--git-path` | Preview/import from a local GitOps repository path |
 | `--audit-reason` | Record break-glass decision reason in connected audit history (max 512 chars) |
 
 ### Canonical Migration Path
@@ -985,12 +986,21 @@ cub-scout import -n payments-prod --json
 
 # Proposal JSON from a debug bundle (offline)
 cub-scout import --from-bundle ./debug-bundle --dry-run --json
+
+# Proposal JSON from a local GitOps repo
+cub-scout import --git-path ./repo --dry-run --json
 ```
 
 `import --json` output includes an `evidence` block:
-- `evidence.source`: `cluster` or `bundle`
+- `evidence.source`: `cluster`, `bundle`, or `git`
 - `evidence.bundlePath`: set when source is `bundle`
+- `evidence.gitPath`: set when source is `git`
 - `workloads[].connected`: true when the workload is already linked by `confighub.com/UnitSlug` or when a proposed unit slug already exists in the target App Space.
+
+`import --git-path` notes:
+- this is a local structure/import-preview flow, not a manifest renderer
+- parser support includes ArgoCD `ApplicationSet` git generators, matrix-contained git generators, exclude patterns, and duplicate-basename-safe proposal slugs
+- if you need controller-faithful rendering/import, that remains the `cub gitops discover` + `cub gitops import` path
 
 Connected audit note:
 - `--audit-reason` writes a break-glass ChangeSet entry so `cub-scout audit list` can show who/when/why/what.
@@ -1063,6 +1073,7 @@ Flags:
 - `-n, --namespace` (resource scope namespace override)
 - `--format ascii|json|md`
 - `--json` (shorthand for `--format json`)
+- `--fail-on info|warning`
 
 Examples:
 
@@ -1075,7 +1086,16 @@ cub-scout compare three-way --scope namespace/prod --format json
 
 # Cluster scope
 cub-scout compare three-way --scope cluster --format md
+
+# CI / automation
+cub-scout compare three-way --scope namespace/prod --fail-on warning
 ```
+
+Output notes:
+- ASCII and Markdown now include an explicit agreement/convergence line
+- JSON includes `summary.agreement.{state,summary,reasons,sources}`
+- agreement states are `agreed`, `converging`, `diverged`, and `partial`
+- conformance exit codes still depend only on JSON facts + `--fail-on`
 
 ---
 

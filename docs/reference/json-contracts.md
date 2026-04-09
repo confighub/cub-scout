@@ -44,6 +44,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | General CLI JSON behavior | [cli-contract.md](cli-contract.md) + [commands.md](commands.md) | Command-specific |
 | GitOps checkpoint proposal schemas | [gitops-checkpoint-schemas.md](gitops-checkpoint-schemas.md) | `change-intent.v1`, `execution-report.v1`, `change-interaction-card.v1`, `decision-receipt.v1`, `execution-receipt.v1`, `outcome-receipt.v1` |
 | Trace secret evidence | This doc (below) | Embedded in `trace` JSON |
+| Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 
 ## Tree / Map / Trace / Drift JSON Today
 
@@ -169,6 +170,61 @@ Secret evidence exposes only safe metadata. The following are **never** read or 
 - Actual secret values
 
 Source: `pkg/agent/secret_evidence.go`
+
+## Compare Three-Way Agreement Contract
+
+When `compare three-way --format json` is used, the JSON output includes `summary.agreement` as the compact convergence/coverage summary for the selected scope.
+
+### AgreementSummary Schema
+
+```json
+{
+  "summary": {
+    "agreement": {
+      "state": "converging",
+      "summary": "2/5 resources converging",
+      "reasons": [
+        "2 changes in progress (controller syncing)"
+      ],
+      "sources": {
+        "confighub": 5,
+        "deployer": 5,
+        "cluster": 5,
+        "total": 5
+      }
+    }
+  }
+}
+```
+
+### Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `summary.agreement.state` | string | Overall agreement state |
+| `summary.agreement.summary` | string | Compact human-readable summary of the scope |
+| `summary.agreement.reasons[]` | string[] | Deterministic supporting reasons |
+| `summary.agreement.sources` | `SourceCoverage` | Evidence coverage counts used to derive the summary |
+
+### Agreement States
+
+| Value | Meaning |
+|-------|---------|
+| `agreed` | All compared resources align across the available layers |
+| `converging` | Changes are in progress and expected to settle |
+| `diverged` | Stale or unexplained disagreement exists |
+| `partial` | Evidence is incomplete for a meaningful full-agreement claim |
+
+### SourceCoverage Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `confighub` | int | Resources with ConfigHub-side DRY/WET evidence |
+| `deployer` | int | Resources counted by the current comparison flow as deployer-side coverage |
+| `cluster` | int | Resources with observed LIVE evidence |
+| `total` | int | Total resources in scope |
+
+Source: `cmd/cub-scout/three_way.go`, `cmd/cub-scout/compare_three_way.go`
 
 ## Historical Note
 

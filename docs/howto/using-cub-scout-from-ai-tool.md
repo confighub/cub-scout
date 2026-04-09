@@ -8,16 +8,40 @@ Use this guide when you want an AI assistant (Claude/Codex/other) to answer:
 
 ## Step 0: Load the Skill
 
+For coding/review sessions inside this repo, load:
+- [../../AI-README-FIRST.md](../../AI-README-FIRST.md)
+
 Canonical skill file:
 - [../ai/cub-scout-skill.md](../ai/cub-scout-skill.md)
 
 At session start, ask your AI:
 
 ```text
-Load and follow docs/ai/cub-scout-skill.md as your operating profile for this session.
+First read AI-README-FIRST.md, then load and follow docs/ai/cub-scout-skill.md as your operating profile for this session.
 ```
 
 If your AI tool cannot load local files, copy the `Canonical Prompt` from that skill file.
+
+## Related Tool Abilities
+
+Use these boundaries consistently:
+
+- `cub-scout`
+  - read-only cluster/GitOps observation
+  - connected comparison such as `compare three-way`
+  - local Git structure preview via `import --git-path`
+- `cub`
+  - ConfigHub intended-state workflows
+  - `cub gitops discover`
+  - `cub gitops import`
+- `confighub/sdk`
+  - renderer implementation detail behind `cub`
+  - not an automatic capability of `cub-scout`
+
+Important:
+- `cub-scout import --git-path` previews repo structure and import proposals
+- `cub gitops import` renders/imports discovered GitOps resources from cluster targets
+- do not blur these into one imaginary command surface
 
 ## What to Expect
 
@@ -27,6 +51,7 @@ When this flow works well, the AI assistant should:
    - `Standalone cub-scout`
    - `Connected cub-scout + ConfigHub`
    - `ConfigHub/cub workflow`
+   - or `Git preview vs render/import boundary`
 2. Verify commands and flags before claiming capability.
 3. Run read-only discovery first.
 4. Use `--dry-run` before any write action.
@@ -175,11 +200,12 @@ Paste at the start of an AI session if needed:
 ```text
 You are my cub-scout + ConfigHub capability assistant.
 For each request:
-1) Classify as standalone, connected, or ConfigHub workflow.
-2) Verify commands/flags from help before claiming support.
+1) Classify as standalone, connected, ConfigHub/cub workflow, or Git preview vs render/import boundary.
+2) Verify relevant cub-scout and cub help before claiming support.
 3) Provide shortest safe command path (dry-run first).
-4) If unsupported, explain gap clearly and offer to file a GitHub issue.
-5) Use command output as evidence; do not guess.
+4) Distinguish cub-scout local Git preview from cub gitops import rendering.
+5) If unsupported, explain gap clearly and offer to file a GitHub issue.
+6) Use command output as evidence; do not guess.
 ```
 
 ## Example: "Can I import this cluster now?"

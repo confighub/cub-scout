@@ -2,6 +2,27 @@
 
 Read-only Kubernetes observer. Detects ownership (Flux, ArgoCD, Helm, Crossplane, ConfigHub, Native).
 
+## Read First
+
+For a fresh coding session in this repo, read these in order:
+
+1. [AI-README-FIRST.md](AI-README-FIRST.md)
+2. [HANDOVER.md](HANDOVER.md)
+3. [docs/reference/commands.md](docs/reference/commands.md)
+4. [docs/reference/cli-contract.md](docs/reference/cli-contract.md)
+5. [docs/reference/json-contracts.md](docs/reference/json-contracts.md)
+
+## Related Abilities
+
+- `cub-scout`: read-only cluster/GitOps observation, connected comparison, import preview, MCP serving
+- `cub`: ConfigHub CLI for intended-state workflows, spaces/units/targets, `cub gitops discover/import`
+- `confighub/sdk`: renderer/bridge implementation detail used by `cub`
+
+Important boundary:
+- `cub-scout import --git-path` is a local structure/import-preview flow
+- `cub gitops import` is cluster discovery + render-target based
+- do not claim that `cub-scout` can do SDK renderer work unless current code/help exposes it
+
 ## Build & Run
 
 ```bash
@@ -23,6 +44,7 @@ go build ./cmd/cub-scout
 
 For demo flow "Can I do X with cub-scout or ConfigHub?":
 
+- Start from [AI-README-FIRST.md](AI-README-FIRST.md) for current tool boundaries and issue queue.
 - Start from shared skill profile: [docs/ai/cub-scout-skill.md](docs/ai/cub-scout-skill.md)
 - Use [docs/howto/claude-capability-assistant.md](docs/howto/claude-capability-assistant.md) as the operating playbook.
 - If a request is not currently supported, file using:
@@ -48,6 +70,16 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 6. **Graceful degradation** — works without cluster, ConfigHub, or internet
 7. **Test everything** — `go test ./...` must pass
 8. **CLI/TUI parity** — CLI and TUI are two renderings of one model. Every feature must have both a CLI command (with `--format ascii|json|md`) and a TUI equivalent. CLI is not a second-class citizen.
+
+## Current Milestone Reality
+
+Use [HANDOVER.md](HANDOVER.md) as the latest execution snapshot.
+
+As of the current handover:
+- the Argo truth-and-guidance track is closed (`#365`, `#366`, `#367`)
+- the Git import parser track is complete through ApplicationSet generator support (`#363`)
+- `#364` is investigated, not a mandate to merge `cub-scout` with `cub gitops import`
+- the highest-leverage open queue is now `#370`, `#369`, then `#368`
 
 ## Directory Structure
 
@@ -128,6 +160,9 @@ An issue is complete only when:
 ---
 
 ## cub-scout v0.5 Delivery Addendum
+
+Historical note: the remainder of this file preserves older delivery-phase rules.
+Current execution priority and milestone state live in [AI-README-FIRST.md](AI-README-FIRST.md) and [HANDOVER.md](HANDOVER.md).
 
 This addendum defines how the principles in this document are applied during the
 **v0.5 delivery phase**.

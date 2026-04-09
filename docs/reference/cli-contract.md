@@ -68,6 +68,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | `cub-scout connect` | Configure kube context from server URL or kubeconfig import | v1.0 |
 | `cub-scout status` | Show connection status and cluster info | v1.0 |
 | `cub-scout history` | Connected change timeline from ConfigHub ChangeSets | v1.4 |
+| `cub-scout compare three-way` | Connected DRY/WET/LIVE comparison with conformance and agreement summary | v1.6 |
 | `cub-scout mcp serve` | Serve read-only MCP observation tools over stdio | v1.4 |
 
 ---
@@ -123,6 +124,34 @@ cub-scout explain <kind> <name> [flags]
 - `--presentation` affects text and Markdown framing only.
 - `--hint-mode` affects next-step recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text/Markdown render path.
+
+---
+
+## cub-scout compare three-way
+
+Connected DRY/WET/LIVE comparison for a resource, namespace, or cluster scope.
+
+```bash
+cub-scout compare three-way --scope <scope> [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--scope` | string | required | `<kind/name>`, `resource:<kind/name>`, `namespace/<ns>`, or `cluster` |
+| `-n, --namespace` | string | - | Namespace override for resource scope |
+| `--format` | string | ascii | Output format: `ascii`, `json`, `md` |
+| `--json` | bool | false | Shorthand for `--format json` |
+| `--fail-on` | string | - | Exit non-zero when max severity meets `info` or `warning` |
+
+### Stable Output Rules
+
+- JSON is the canonical contract for `compare three-way`.
+- JSON includes `summary.conformance` and `summary.agreement`.
+- `summary.agreement.state` is one of `agreed`, `converging`, `diverged`, `partial`.
+- `summary.agreement.summary`, `summary.agreement.reasons[]`, and `summary.agreement.sources` are additive facts, not presentation-only text.
+- Exit behavior depends only on JSON facts plus `--fail-on`, not ASCII/Markdown formatting.
 
 ---
 
