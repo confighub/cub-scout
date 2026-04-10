@@ -22,10 +22,8 @@ import (
 
 var patternsCmd = &cobra.Command{
 	Use:   "patterns",
-	Short: "Pattern detection engine (v0.7)",
+	Short: "Pattern detection engine",
 	Long: `Pattern detection engine for analyzing resource graphs.
-
-This is a v0.7 contract surface. It does not modify any v0.5 or v0.6 contracts.
 
 Patterns are deterministic checks that analyze the resource graph and report
 findings. Each pattern has a unique ID, description, and detection logic.

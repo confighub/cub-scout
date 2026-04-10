@@ -21,6 +21,8 @@ Start here when the task is about:
 4. `docs/reference/cli-contract.md`
 5. `docs/reference/json-contracts.md`
 
+If the user is asking you to *use* cub-scout against a real cluster (not work on the repo), load `docs/ai/cub-scout-tasks.md` instead — that file is task-oriented with concrete command flows for operator scenarios.
+
 ## Product value in one breath
 
 `cub-scout` is the read-only Kubernetes and GitOps observer that helps operators and AI agents understand what is broken, who owns it, where it came from, and what to do next without starting from the Argo UI or mutating the cluster.

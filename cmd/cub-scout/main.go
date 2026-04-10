@@ -32,14 +32,15 @@ Offline-first, deterministic, read-only cluster explorer for Kubernetes and GitO
 
 POPULAR COMMANDS
   quickstart       Guided first-run tour across doctor/explain/ownership/scan
+  doctor           One-command cluster health summary
+  explain          Plain-English ownership and lineage for one resource
   map              Interactive TUI dashboard — explore cluster visually
   map list         List resources with ownership (scriptable, supports --json)
   tree             Hierarchical views: runtime, ownership, git, composition
   trace            Trace any resource to its Git source
-  watch            Stream observation events to webhook
   scan             Find misconfigurations (46 patterns)
-  import           Preview/import workloads to ConfigHub (connected mode)
   gitops status    GitOps pipeline health check
+  import           Preview/import workloads to ConfigHub (connected mode)
 
 CHOOSE YOUR INTERFACE
   TUI:   cub-scout map                       Interactive exploration

@@ -2,7 +2,9 @@
 
 **Offline-first. Deterministic. Cluster read-only.**
 
-cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It works standalone (no network required) or connected to [ConfigHub](https://confighub.com) for additional features. Outputs are deterministic and safe for automation.  If this is your first visit, there an overview in the README below, and plenty of docs and examples, or try the [CLI GUIDE](CLI-GUIDE.md) to get a feeling of the areas we cover.
+cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It works standalone (no network required) or connected to [ConfigHub](https://confighub.com) for additional features. Outputs are deterministic and safe for automation.
+
+**New here?** Start with the [Fast Path](#fast-path-2-minutes) below, or jump to the [CLI Guide](CLI-GUIDE.md) for the full command reference.
 
 Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues) or joining [Discord](https://discord-auth.confighub.net/discord/join) via ConfigHub signup.
 
@@ -204,17 +206,6 @@ cub-scout map
 - Press `?` for all shortcuts
 
 ---
-
-## Quickstart (2 minutes)
-
-1. **Install:** `brew install confighub/tap/cub-scout`
-2. **Optional kubectl plugin alias:** `cp "$(command -v cub-scout)" /usr/local/bin/kubectl-cub_scout`
-3. **Verify plugin mode:** `kubectl cub-scout version`
-4. **Prerequisites:** kubectl access to a cluster (`kubectl get pods` works)
-5. **Run guided tour:** `cub-scout quickstart`
-6. **Then launch map:** `cub-scout map`
-7. **Press `?`** for keyboard shortcuts
-8. **Try:** `cub-scout trace deploy/<name> -n <namespace>` on any deployment
 
 ## kubectl Plugin Mode
 
@@ -725,33 +716,16 @@ cub-scout map
 
 ---
 
-## Install
-
-### Homebrew (macOS/Linux)
-
-```bash
-brew install confighub/tap/cub-scout
-```
-
-### From Source
+## Build From Source
 
 ```bash
 git clone https://github.com/confighub/cub-scout.git
 cd cub-scout
 go build ./cmd/cub-scout
 ./cub-scout version
-
-# Repeatable connected-import delegation check
-make test-import-delegation
 ```
 
-### Docker
-
-```bash
-docker run --rm --network=host \
-  -v ~/.kube:/home/nonroot/.kube \
-  ghcr.io/confighub/cub-scout map list
-```
+For installation channels (Homebrew, Go, Docker, krew), see [Install Channels](#install-channels) above.
 
 ---
 
@@ -787,29 +761,9 @@ cub-scout uses **deterministic label detection** — no AI, no magic:
 
 ---
 
-## Connecting cub-scout ConfigHub
+## Connecting cub-scout to ConfigHub
 
-cub-scout is an open-source cluster explorer designed to work with existing Kubernetes clusters as a standalone (read-only) tool. For additional features, connect to [ConfigHub](https://confighub.com).
-
-| Feature | Standalone | Connected |
-|---------|:----------:|:---------:|
-| `map` — Interactive TUI | ✓ | ✓ |
-| `trace` — Ownership chains | ✓ | ✓ |
-| `tree` — Hierarchy views | ✓ | ✓ |
-| `scan` — Risk patterns | ✓ | ✓ |
-| `gitops status` — Pipeline health | ✓ | ✓ |
-| `discover` / `health` | ✓ | ✓ |
-| `snapshot` — Export state (GSF) | ✓ | ✓ |
-| `import` — Send to ConfigHub | — | ✓ |
-| `fleet` — Multi-cluster queries | — | ✓ |
-| `history` — ChangeSet timeline | — | ✓ |
-| DRY↔WET↔LIVE compare | — | ✓ |
-| Revision history | — | ✓ |
-| Team collaboration | — | ✓ |
-
-**Standalone:** No signup, works forever. Cluster read-only exploration features.
-
-**Connected:** Run `cub auth login` to link to ConfigHub for import/fleet features. Import writes ConfigHub state only, not cluster manifests.
+See [Standalone vs Connected](#standalone-vs-connected) above for the feature comparison.
 
 ### How to Connect
 

@@ -14,10 +14,8 @@ import (
 
 var graphCmd = &cobra.Command{
 	Use:   "graph",
-	Short: "Resource graph operations (v0.6)",
+	Short: "Resource graph operations",
 	Long: `Resource graph operations for exploring cluster relationships.
-
-This is a v0.6 contract surface. It does not modify any v0.5 contracts.
 
 Available subcommands:
   export    Export the resource graph as JSON, DOT, SVG, or HTML`,
