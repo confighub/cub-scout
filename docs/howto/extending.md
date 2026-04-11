@@ -350,5 +350,5 @@ Submit your plugin via PR to be listed.
 ## See Also
 
 - [Architecture](../concepts/architecture.md) — GSF protocol and API contracts
-- [CLI Guide](../../CLI-GUIDE.md) — CLI reference and configuration
+- [CLI Guide](../../CLI-GUIDE.md) — Workflow-first CLI tour
 - [Scan for risk issues](scan-for-risks.md) — Risk detection and remediation

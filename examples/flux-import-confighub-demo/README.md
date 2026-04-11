@@ -573,4 +573,4 @@ make test-import-delegation
 
 - [`examples/d2-control-plane/`](../d2-control-plane/) - D2 pattern fixture with full documentation
 - [`examples/argo-import-confighub-demo/`](../argo-import-confighub-demo/) - Equivalent demo for ArgoCD
-- [CLI-GUIDE.md](../../CLI-GUIDE.md) - Complete CLI reference
+- [CLI-GUIDE.md](../../CLI-GUIDE.md) - Workflow-first CLI guide

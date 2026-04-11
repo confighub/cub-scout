@@ -32,7 +32,8 @@ For each user question, Claude should run this checklist:
    - `./cub-scout <command> --help`
 3. Verify behavior against docs:
    - `README.md`
-   - `CLI-GUIDE.md`
+   - `docs/reference/commands.md`
+   - `docs/reference/cli-contract.md`
    - `docs/howto/import-*.md`
 4. Return one of:
    - `Supported now`

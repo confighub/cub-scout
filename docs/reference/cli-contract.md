@@ -1059,6 +1059,6 @@ cub-scout history <resource> [flags]
 
 ## Related Documentation
 
-- [CLI Guide](../../CLI-GUIDE.md) - Full CLI reference with examples
-- [Reference: Commands](commands.md) - Command matrix
+- [CLI Guide](../../CLI-GUIDE.md) - Workflow-first CLI tour
+- [Reference: Commands](commands.md) - Detailed command usage and examples
 - [Reference: Query Syntax](query-syntax.md) - Query language details

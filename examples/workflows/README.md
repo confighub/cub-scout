@@ -113,5 +113,5 @@ go build ./cmd/cub-scout
 
 ## See Also
 
-- [CLI-GUIDE.md](../../CLI-GUIDE.md) — `bundle` and `catalog` command reference
+- [docs/reference/commands.md](../../docs/reference/commands.md) — `bundle` and `catalog` command usage
 - [Platform Example](../platform-example/) — Learning environment for cluster exploration

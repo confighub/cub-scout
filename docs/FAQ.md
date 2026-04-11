@@ -326,6 +326,6 @@ Check that:
 ## See Also
 
 - [README.md](../README.md) - Project overview
-- [CLI-GUIDE.md](../CLI-GUIDE.md) - Complete command reference
+- [docs/reference/commands.md](reference/commands.md) - Command usage and examples
 - [getting-started/first-map.md](getting-started/first-map.md) - Quick start guide
 - [concepts/alternatives.md](concepts/alternatives.md) - Tool comparison

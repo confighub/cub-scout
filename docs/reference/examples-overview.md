@@ -13,7 +13,7 @@ All examples, demos, integrations, and scripts are documented in one place:
 | All examples and demos | [`examples/README.md`](../examples/README.md) |
 | Demo walkthroughs | [`examples/demos/README.md`](../examples/demos/README.md) |
 | Run a demo | `./cub-scout demo list` |
-| Full CLI reference | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| CLI workflow guide | [CLI-GUIDE.md](../CLI-GUIDE.md) |
 | Fleet query examples | [howto/fleet-queries.md](howto/fleet-queries.md) |
 | Conference demo | [examples/impressive-demo/](../examples/impressive-demo/) |
 

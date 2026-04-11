@@ -139,7 +139,7 @@ This makes cub-scout safe for:
 
 ## Learn More
 
-- [CLI Guide](../../CLI-GUIDE.md) — Full command reference
+- [CLI Guide](../../CLI-GUIDE.md) — Workflow-first CLI tour
 - [Query Syntax](../reference/query-syntax.md) — Filtering resources
 - [Tree Hierarchies](../howto/tree-hierarchies.md) — Using tree views
 - [Why Connected Mode](why-connected-mode.md) — ConfigHub features

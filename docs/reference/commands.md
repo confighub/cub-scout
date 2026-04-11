@@ -25,6 +25,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `map activity` | Unified activity timeline from Flux/Argo/Helm/events | v0.20 |
 | `map previews` | Detect PR preview environments | v0.20 |
 | `quickstart` | Guided first-run walkthrough | v1.4 |
+| `quickstart demo` | Fixture-backed demo runner | v1.0 |
 | `doctor` | One-command cluster health summary | v1.4 |
 | `explain` | Plain-English ownership and lineage for one resource | v1.4 |
 | `impact` | Connected blast-radius preview for one unit | v1.6 |
@@ -34,18 +35,29 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `scan` | Scan for misconfigurations | v0.5 |
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
 | `tree` | Hierarchical resource views | v0.5 |
+| `compare drift` | Compare desired manifests to live cluster state | v0.14.3 |
 | `import` | Import workloads into ConfigHub | v1.0 |
-| `combined` (`compare`) | Compare Git and cluster/bundle structures, or show LIVE snapshot for one resource | v1.0 |
+| `import apply` | Apply an App model proposal JSON | v1.0 |
+| `import argocd` | Import a single ArgoCD Application into ConfigHub | v1.0 |
+| `import cluster-aggregator` | Aggregate multiple import proposals into a fleet view | v1.0 |
+| `import parse-repo` | Parse GitOps repository structure for import preview | v1.0 |
+| `compare` (alias: `combined`) | Compare Git and cluster/bundle structures, or show LIVE snapshot for one resource | v1.0 |
 | `compare three-way` | Connected intent/render/observed comparison for resource/namespace/cluster scopes | v1.6 |
+| `context-pack` | Export deterministic AI context JSON bundle | v1.8 |
+| `debug` | Guided GitOps debugging wizard | v0.14.2 |
 | `discover` | Scout-style workload discovery | v0.5 |
 | `health` | Scout-style health check | v0.5 |
+| `app` | Manage ConfigHub Apps | v1.0 |
+| `remedy` | Execute remediation for auto-fixable risk findings | v0.20 |
+| `snapshot` | Export cluster state as GSF JSON | v0.20 |
 | `status` | Show connection status and cluster info | v1.0 |
 | `history` | Show connected change history from ConfigHub ChangeSets | v1.4 |
 | `audit list` | Show connected break-glass accept/reject audit trail | v1.6 |
 | `summary list` | Query persisted connected drift/sync/risk snapshots | v1.7 |
 | `summary slack` | Publish connected summary digest to Slack webhook | v1.7 |
-| `connect` | Quickly configure kube context from server URL or kubeconfig | v1.0 |
-| `setup` | Set up shell completions | v0.19 |
+| `setup` | Set up shell completions and quick cluster connect helpers | v0.19 |
+| `setup completion` | Generate shell completion script | v0.19 |
+| `setup connect` | Quickly configure kube context from server URL or kubeconfig | v1.0 |
 | `mcp serve` | Serve read-only MCP tools over stdio | v1.4 |
 | `graph export` | Export resource graph as JSON/DOT/SVG/HTML | v0.6 |
 | `graph explain` | Explain a resource's graph relationships | v0.6 |
@@ -59,7 +71,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `bundle timeline` | Time-series view across catalog | v0.15 |
 | `catalog list` | List bundles in a catalog | v0.15 |
 | `gitops status` | Show GitOps pipeline health | v0.14.1 |
-| `completion` | Generate shell completion script | v0.19 |
+| `version` | Print version/build information | v0.5 |
 
 For JSON contract navigation, start with [JSON Contracts and Output Model](json-contracts.md).
 
@@ -236,6 +248,33 @@ cub-scout quickstart
 cub-scout quickstart --yes
 cub-scout quickstart -n production --yes
 ```
+
+---
+
+## quickstart demo
+
+Run fixture-backed demos that show cub-scout features without needing to invent your own scenario first.
+
+```bash
+cub-scout quickstart demo [name] [flags]
+```
+
+### Examples
+
+```bash
+cub-scout quickstart demo list
+cub-scout quickstart demo quick
+cub-scout quickstart demo ccve
+cub-scout quickstart demo scenario bigbank-incident
+cub-scout quickstart demo quick --cleanup
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--cleanup` | Remove demo resources |
+| `--no-pods` | Apply without running pods for a faster demo cycle |
 
 ---
 
@@ -1007,11 +1046,120 @@ Connected audit note:
 
 ---
 
-## combined
+## import apply
+
+Apply an App model proposal to create resources in ConfigHub.
+
+```bash
+cub-scout import apply [proposal.json] [flags]
+```
+
+### Examples
+
+```bash
+cub-scout import --json > proposal.json
+cub-scout import apply proposal.json
+cub-scout import apply proposal.json --dry-run
+cub-scout import cluster-aggregator cluster-*.json --suggest --json | cub-scout import apply -
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Preview what would be created without making changes |
+| `--no-log` | Disable local apply logging |
+
+---
+
+## import argocd
+
+Import a single ArgoCD Application's managed resources into ConfigHub.
+
+```bash
+cub-scout import argocd [application-name] [flags]
+```
+
+### Examples
+
+```bash
+cub-scout import argocd --list
+cub-scout import argocd guestbook --dry-run
+cub-scout import argocd guestbook --show-yaml
+cub-scout import argocd guestbook --disable-sync
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--list` | List available ArgoCD Applications |
+| `--dry-run` | Preview without importing |
+| `--show-yaml` | Show YAML that would be imported (implies dry-run) |
+| `--disable-sync` | Disable ArgoCD auto-sync after import |
+| `--delete-app` | Delete the ArgoCD Application after import |
+| `--space` | ConfigHub space override |
+
+---
+
+## import cluster-aggregator
+
+Aggregate multiple import proposal JSON files into a single fleet view or suggestion.
+
+```bash
+cub-scout import cluster-aggregator [files...] [flags]
+```
+
+### Examples
+
+```bash
+cub-scout import cluster-aggregator cluster1.json cluster2.json
+cub-scout import cluster-aggregator cluster1.json cluster2.json --suggest
+cub-scout import cluster-aggregator cluster-*.json --suggest --json | cub-scout import apply -
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Output as JSON |
+| `--suggest` | Generate a unified App model proposal |
+
+---
+
+## import parse-repo
+
+Parse a GitOps repository and show its structure for import-preview workflows.
+
+```bash
+cub-scout import parse-repo [flags]
+```
+
+### Examples
+
+```bash
+cub-scout import parse-repo --url https://github.com/fluxcd/flux2-kustomize-helm-example
+cub-scout import parse-repo --path ./my-gitops-repo
+cub-scout import parse-repo --path ./my-gitops-repo --json
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--path` | Local Git repository path |
+| `--url` | Remote Git repository URL to clone and parse |
+| `--json` | Output as JSON |
+
+---
+
+## compare
 
 Show alignment across Git, live cluster, bundle snapshots, and Git↔Git compare.
 
-Alias: `compare`
+Canonical path: `compare`
+
+Hidden top-level alias retained for one release: `combined`
 
 ```bash
 cub-scout combined [flags]
@@ -1099,6 +1247,34 @@ Output notes:
 
 ---
 
+## compare drift
+
+Detect differences between desired manifests and live cluster state.
+
+```bash
+cub-scout compare drift --file <path> [flags]
+```
+
+### Examples
+
+```bash
+cub-scout compare drift --file manifests/deployment.yaml
+cub-scout compare drift --file manifests/ -n production
+cub-scout compare drift --file manifests/ --format json
+cub-scout compare drift --file manifests/ --fail-on warning
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--file` | YAML file or directory containing desired state |
+| `-n, --namespace` | Namespace to compare |
+| `--format` | Output format: `ascii`, `json` |
+| `--fail-on` | Exit non-zero when max severity meets the threshold |
+
+---
+
 ## discover
 
 Scout-style workload discovery (alias for `map workloads`).
@@ -1122,6 +1298,8 @@ cub-scout health [flags]
 ## connect
 
 Quickly create or import a kubeconfig context for Cub Scout.
+
+Deprecated top-level alias retained for one release. Prefer `cub-scout setup connect`.
 
 ```bash
 cub-scout connect [server-url] [flags]
@@ -1391,6 +1569,43 @@ cub-scout setup --dry-run
 
 ---
 
+## setup connect
+
+Canonical path for quick kubeconfig setup and optional immediate launch into the TUI.
+
+```bash
+cub-scout setup connect [server-url] [flags]
+```
+
+### Examples
+
+```bash
+cub-scout setup connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod
+cub-scout setup connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
+```
+
+See [`connect`](#connect) for the full flag set while the hidden top-level alias remains available for one release.
+
+---
+
+## setup completion
+
+Generate shell completion scripts from the canonical `setup` command family.
+
+```bash
+cub-scout setup completion [bash|zsh|fish|powershell]
+```
+
+### Examples
+
+```bash
+cub-scout setup completion bash
+cub-scout setup completion zsh
+cub-scout setup completion fish
+```
+
+---
+
 ## mcp
 
 Read-only MCP gateway for AI agent tooling.
@@ -1436,6 +1651,18 @@ cub-scout mcp serve
 # Run as MCP server process (stdio)
 cub-scout mcp serve
 ```
+
+---
+
+## context-pack
+
+Export a bounded AI handoff bundle as deterministic JSON.
+
+```bash
+cub-scout context-pack [flags]
+```
+
+For the full v2 contract and usage guidance, see [docs/howto/context-pack-v2.md](../howto/context-pack-v2.md).
 
 ---
 
@@ -1796,6 +2023,114 @@ NEXT STEPS
   "healthyCount": 0,
   "failedCount": 1
 }
+```
+
+---
+
+## debug
+
+Guided GitOps debugging wizard for diagnosing pipeline or workload issues.
+
+```bash
+cub-scout debug [resource] [flags]
+```
+
+### Examples
+
+```bash
+cub-scout debug
+cub-scout debug deployment/api-server -n production
+cub-scout debug deployment/api-server -n production --format json
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `-n, --namespace` | Namespace of the target resource |
+| `--non-interactive` | Run without interactive prompts when a resource is provided |
+| `--save-bundle` | Save a debug bundle to a directory |
+
+---
+
+## remedy
+
+Execute automated remediation for detected auto-fixable risk findings.
+
+```bash
+cub-scout remedy [RISK-ID] [flags]
+```
+
+### Examples
+
+```bash
+cub-scout remedy CCVE-2025-0687 --dry-run -n production
+cub-scout remedy --all --dry-run -n production
+cub-scout remedy --list
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--all` | Fix all auto-fixable issues |
+| `--dry-run` | Show what would change without applying it |
+| `--list` | List auto-fixable risk issues |
+| `-n, --namespace` | Namespace scope |
+| `--json` | Output as JSON |
+
+---
+
+## snapshot
+
+Export current cluster state as GitOps State Format (GSF) JSON.
+
+```bash
+cub-scout snapshot [flags]
+```
+
+### Examples
+
+```bash
+cub-scout snapshot
+cub-scout snapshot -o state.json
+cub-scout snapshot --namespace prod
+cub-scout snapshot --relations
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Namespace filter |
+| `-k, --kind` | Kind filter |
+| `-o, --output` | Output file path |
+| `--relations` | Include resource relations |
+
+---
+
+## app
+
+Manage ConfigHub Apps from cub-scout's connected surface.
+
+```bash
+cub-scout app [command]
+```
+
+### Available Subcommands
+
+- `app create`
+- `app list`
+
+---
+
+## version
+
+Print version information for the local cub-scout binary.
+
+```bash
+cub-scout version
 ```
 
 ---

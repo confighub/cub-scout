@@ -472,7 +472,7 @@ For a more restrictive policy, see [manifests/agent-minimal-rbac.yaml](../manife
 
 ## See Also
 
-- [CLI Guide](../../CLI-GUIDE.md) — Complete CLI reference (14 commands, 17 subcommands, 17 views)
+- [CLI Guide](../../CLI-GUIDE.md) — Workflow-first CLI tour
 - [Command Matrix](../reference/command-matrix.md) — Full command/option matrix
 - [GSF Schema](../reference/gsf-schema.md) — GitOps State Format JSON schema
 - [Scan for risk issues](../howto/scan-for-risks.md) — Risk detection and remediation (46 patterns)

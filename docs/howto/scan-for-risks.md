@@ -120,5 +120,5 @@ Connected trend query example:
 ## Next Steps
 
 - Run demos: `./cub-scout demo --help`
-- Explore command details: `./CLI-GUIDE.md`
+- Explore command details: `docs/reference/commands.md`
 - Review testing coverage: `docs/testing/README.md`

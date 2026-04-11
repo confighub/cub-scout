@@ -685,5 +685,5 @@ Delegation requires targets in the same App Space:
 ## Related
 
 - [`examples/import-from-live/`](../import-from-live/) - Simpler demo with just `cub-scout import`
-- [CLI-GUIDE.md](../../CLI-GUIDE.md) - Complete CLI reference
+- [CLI-GUIDE.md](../../CLI-GUIDE.md) - Workflow-first CLI guide
 - [#201](https://github.com/confighub/cub-scout/issues/201) - Design: connected-mode upgrade path

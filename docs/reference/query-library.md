@@ -166,5 +166,5 @@ cub-scout map list -q gitops
 
 ## See Also
 
-- [Commands Reference](commands.md) — Full CLI reference
+- [Commands Reference](commands.md) — Detailed command usage and examples
 - [Views Reference](views.md) — TUI views and keybindings

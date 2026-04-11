@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-04-09
+Last updated: 2026-04-11
 
 ## Current repo state
 
@@ -8,6 +8,12 @@ Last updated: 2026-04-09
 - Canonical roadmap: `docs/roadmap.md`
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
 - First repo-specific AI entrypoint: `AI-README-FIRST.md`
+- Canonical CLI doc layout:
+  - `README.md` = overview + Fast Path
+  - `CLI-GUIDE.md` = workflow-first guide
+  - `docs/reference/cli-reference.md` = A-Z command catalog
+  - `docs/reference/commands.md` = detailed usage and examples
+  - `docs/reference/cli-contract.md` = stable flags, exit codes, and schemas
 
 ## Recent completions
 
@@ -170,9 +176,14 @@ Recommended next steps (optional enhancements):
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
 Open issues:
-- #374 — Consolidate four overlapping CLI reference docs
 - #373 — Consolidate three import commands under a single `import` parent
 - #372 — Trim README from 866 to ~350 lines and consolidate structure
+
+Recent closure:
+- #374 — Consolidate overlapping CLI reference docs (Apr 11)
+  - Recast `CLI-GUIDE.md` as a workflow-first guide instead of a second command encyclopedia
+  - Updated `cli-reference.md` to match the current post-#375 command tree
+  - Added `scripts/check-cli-docs/main.go` to verify canonical links and prevent README command tables from drifting back
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 

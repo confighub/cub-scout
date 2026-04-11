@@ -299,7 +299,7 @@ The expected JSON output is at `expected-output/suggestion.json`.
 
 | Doc | What It Covers |
 |-----|----------------|
-| [CLI-GUIDE.md](../../CLI-GUIDE.md) | Full `import` command reference |
+| [docs/reference/commands.md](../../docs/reference/commands.md#import) | `import` command usage and examples |
 | [docs/howto/import-to-confighub.md](../../docs/howto/import-to-confighub.md) | Canonical import path (Argo/Helm to ConfigHub) |
 | [Argo App-of-Apps example](../apptique-examples/argo-app-of-apps/) | ArgoCD hierarchy detection |
 | [Flux Monorepo example](../apptique-examples/flux-monorepo/) | Flux ownership detection |

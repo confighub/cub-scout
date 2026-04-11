@@ -106,4 +106,4 @@ Ownership Distribution:
 ## See Also
 
 - [docs/getting-started/scale-demo.md](../../docs/getting-started/scale-demo.md) - Full scale demo guide
-- [CLI-GUIDE.md](../../CLI-GUIDE.md) - Command reference
+- [docs/reference/commands.md](../../docs/reference/commands.md) - Command usage and examples

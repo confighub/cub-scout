@@ -56,7 +56,9 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 | File | Purpose |
 |------|---------|
 | [README.md](README.md) | Project overview, install, quick start |
-| [CLI-GUIDE.md](CLI-GUIDE.md) | Complete CLI reference with examples |
+| [CLI-GUIDE.md](CLI-GUIDE.md) | Workflow-first CLI guide |
+| [docs/reference/cli-reference.md](docs/reference/cli-reference.md) | Complete command catalog (A-Z) |
+| [docs/reference/commands.md](docs/reference/commands.md) | Detailed command usage and examples |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
 | [docs/semantic-contract.md](docs/semantic-contract.md) | ASCII vs JSON meaning contract (R1-R6) |
 

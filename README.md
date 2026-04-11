@@ -4,7 +4,7 @@
 
 cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It works standalone (no network required) or connected to [ConfigHub](https://confighub.com) for additional features. Outputs are deterministic and safe for automation.
 
-**New here?** Start with the [Fast Path](#fast-path-2-minutes) below, or jump to the [CLI Guide](CLI-GUIDE.md) for the full command reference.
+**New here?** Start with the [Fast Path](#fast-path-2-minutes) below, then use the [CLI Guide](CLI-GUIDE.md) for a workflow-first tour and the reference docs for exact command details.
 
 Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues) or joining [Discord](https://discord-auth.confighub.net/discord/join) via ConfigHub signup.
 
@@ -97,10 +97,10 @@ Use this when you want "just connect and go" with minimal setup.
 
 ```bash
 # Option A: import an existing kubeconfig context (includes auth from that kubeconfig)
-cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
+cub-scout setup connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
 
 # Option B: connect directly to API endpoint with token
-cub-scout connect https://api.ske-vcl-pro.2b093a9fd9.s.ske.eu01.onstackit.cloud \
+cub-scout setup connect https://api.ske-vcl-pro.2b093a9fd9.s.ske.eu01.onstackit.cloud \
   --token "$K8S_BEARER_TOKEN" \
   --context ske-vcl-pro \
   --map
@@ -579,17 +579,14 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 
 ### Scan Variants
 
-| Command | What It Detects |
-|---------|------------------|
-| `cub-scout scan` | Full scan (state + Kyverno findings) |
-| `cub-scout scan --state` | Stuck reconciliations plus pod runtime failures (ImagePullBackOff, CrashLoopBackOff, Pending, Evicted) |
-| `cub-scout scan --kyverno` | Kyverno PolicyReport violations |
-| `cub-scout scan --lifecycle-hazards` | Helm hooks that conflict with ArgoCD lifecycle behavior |
-| `cub-scout scan --timing-bombs` | Expiring certs and quota/resource timing risks |
-| `cub-scout scan --dangling` | Orphan HPA/Service/Ingress/NetworkPolicy resources |
-| `cub-scout scan --file manifest.yaml` | Static YAML analysis (no cluster required) |
-| `cub-scout scan --json` | JSON output for CI/CD pipelines |
-| `cub-scout scan --normalized-json` | Normalized JSON (`scan.normalized.v1`) for downstream tooling |
+The fastest way to go deeper is:
+- `cub-scout scan` for the full cluster scan
+- `cub-scout scan --state` for stuck reconciliations and runtime failures
+- `cub-scout scan --kyverno` for PolicyReport violations
+- `cub-scout scan --lifecycle-hazards` for Helm/Argo lifecycle conflicts
+- `cub-scout scan --file manifest.yaml` for offline YAML analysis
+
+For the full scan surface, see [Command Reference](docs/reference/commands.md#scan).
 
 **Want deeper scanning?** See [confighub-scan](https://github.com/confighubai/confighub-scan) for:
 
@@ -603,42 +600,21 @@ Scanned: 47 resources │ Patterns: 46 active (4,500+ reference)
 
 ## Quick Commands
 
-| Command | What You Get |
-|---------|--------------|
-| `cub-scout map` | Interactive TUI - press `?` for help |
-| `cub-scout connect ... --map` | Quick connect to a cluster API and launch the TUI |
-| `cub-scout discover` | Find workloads by owner (scout-style alias) |
-| `cub-scout tree` | Hierarchical views (runtime, git, config) |
-| `cub-scout tree suggest` | Suggested App organization |
-| `cub-scout trace deploy/x -n y` | Full ownership chain to Git source |
-| `cub-scout trace deploy/x -n y --history` | Deployment history (who deployed what, when) |
-| `cub-scout health` | Check for issues (scout-style alias) |
-| `cub-scout scan` | Configuration risk patterns (46 patterns) |
-| `cub-scout scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD |
-| `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) |
-| `cub-scout gitops status` | GitOps pipeline health and failure diagnosis |
-| `cub-scout history deploy/x -n y --since 7d` | Connected ChangeSet timeline for one resource |
-| `cub-scout snapshot --relations` | Export state with dependency graph (GSF format) |
-| `cub-scout bundle summarize` | Generate summary for Jira, PRs, or Slack |
+If you already know what you want, jump straight to the canonical docs:
+- [Complete CLI Reference (A-Z)](docs/reference/cli-reference.md)
+- [Command Reference (examples + usage)](docs/reference/commands.md)
+- [CLI Contract Reference (stable schema/flags)](docs/reference/cli-contract.md)
+- [JSON Contracts and Output Model](docs/reference/json-contracts.md)
 
-### Bundle Summaries (Export to External Systems)
+Helpful entrypoints:
+- `cub-scout map` for the interactive TUI
+- `cub-scout trace deploy/x -n y` for ownership and source lineage
+- `cub-scout gitops status` for deployer/source health
+- `cub-scout history deploy/x -n y --since 7d` for connected change history
+- `cub-scout snapshot --relations` for GSF export with relationships
+- `cub-scout bundle summarize ./bundle --format ticket|pr|slack` for handoff exports
 
-| Command | Output |
-|---------|--------|
-| `cub-scout bundle summarize ./bundle --format ticket` | Markdown for Jira/ServiceNow |
-| `cub-scout bundle summarize ./bundle --format pr` | Markdown for PR descriptions |
-| `cub-scout bundle summarize ./bundle --format slack` | Slack Block Kit JSON |
-
-### Tree Views
-
-| View | Shows |
-|------|-------|
-| `cub-scout tree runtime` | Deployment → ReplicaSet → Pod hierarchies |
-| `cub-scout tree ownership` | Resources grouped by GitOps owner |
-| `cub-scout tree git` | Git source structure (repos, paths) |
-| `cub-scout tree patterns` | Detected GitOps patterns (D2, Arnie, etc.) |
-| `cub-scout tree config --space X` | ConfigHub Unit relationships (wraps `cub unit tree`) |
-| `cub-scout tree suggest` | Recommended App structure |
+For tree views, see [Command Reference](docs/reference/commands.md#tree).
 
 ---
 
@@ -826,7 +802,10 @@ Connected │ Cluster: prod-east │ Context: eks-prod-east │ Worker: ● brid
 
 | Doc | Content |
 |-----|---------|
-| [CLI-GUIDE.md](CLI-GUIDE.md) | Complete command reference |
+| [docs/reference/cli-reference.md](docs/reference/cli-reference.md) | Complete command catalog (A-Z) |
+| [docs/reference/commands.md](docs/reference/commands.md) | Detailed command usage and examples |
+| [docs/reference/cli-contract.md](docs/reference/cli-contract.md) | Stable flags, exit codes, and schemas |
+| [CLI-GUIDE.md](CLI-GUIDE.md) | Workflow-first CLI guide |
 | [docs/FAQ.md](docs/FAQ.md) | Common questions & troubleshooting |
 | [docs/getting-started/checklist.md](docs/getting-started/checklist.md) | New user checklist |
 | [docs/testing/README.md](docs/testing/README.md) | Testing guide & how to write tests |

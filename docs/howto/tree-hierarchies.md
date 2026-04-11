@@ -487,4 +487,4 @@ Use `cub-scout tree` to understand your cluster, then `cub unit tree` to see cro
 
 - [Fleet Queries](fleet-queries.md) - Multi-cluster queries with ConfigHub
 - [Import to ConfigHub](import-to-confighub.md) - Import workloads
-- [CLI Reference](../../CLI-GUIDE.md) - Full command reference
+- [Command Reference](../reference/commands.md) - Command usage and examples

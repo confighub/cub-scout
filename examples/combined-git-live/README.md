@@ -194,4 +194,4 @@ jq -r '.alignment | group_by(.status) | map({status: .[0].status, count: length}
 
 - [Flux Monorepo Pattern](../apptique-examples/flux-monorepo/) -- Single-app Flux example
 - [Fleet Import](../fleet-import/) -- Aggregating imports from multiple clusters
-- [CLI-GUIDE.md](../../CLI-GUIDE.md) -- Full CLI reference
+- [CLI-GUIDE.md](../../CLI-GUIDE.md) -- Workflow-first CLI guide

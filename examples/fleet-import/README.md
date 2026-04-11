@@ -174,4 +174,4 @@ done
 ## See Also
 
 - [Combined Git + Live](../combined-git-live/) -- Aligning Git intent with cluster state
-- [CLI-GUIDE.md](../../CLI-GUIDE.md) -- Full CLI reference
+- [CLI-GUIDE.md](../../CLI-GUIDE.md) -- Workflow-first CLI guide

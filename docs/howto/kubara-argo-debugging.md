@@ -149,5 +149,5 @@ with Argo reconciliation.
 
 - [Argo App-of-Apps example](../../examples/apptique-examples/argo-app-of-apps/) — ApplicationSet hierarchy detection
 - [Platform Example](../../examples/platform-example/) — Live Flux+orphans demo
-- [CLI Guide](../../CLI-GUIDE.md) — Full command reference
+- [Command Reference](../reference/commands.md) — Command usage and examples
 - [Fleet Queries](fleet-queries.md) — Cross-environment queries with ConfigHub

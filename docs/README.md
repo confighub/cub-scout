@@ -10,7 +10,7 @@
 |------|-------|------|
 | Install | [getting-started/install.md](getting-started/install.md) | 2 min |
 | First Map | [getting-started/first-map.md](getting-started/first-map.md) | 5 min |
-| CLI Guide | [CLI-GUIDE.md](../CLI-GUIDE.md) | reference |
+| CLI workflow guide | [CLI-GUIDE.md](../CLI-GUIDE.md) | reference |
 
 ---
 
@@ -23,13 +23,13 @@
 | See ownership (Flux, Argo, Helm, Native) | `cub-scout map list` | [howto/ownership-detection.md](howto/ownership-detection.md) |
 | Find orphan resources | `cub-scout map orphans` | [howto/find-orphans.md](howto/find-orphans.md) |
 | Trace provenance chains | `cub-scout trace deploy/NAME -n NS` | [howto/trace-ownership.md](howto/trace-ownership.md) |
-| Explain a resource | `cub-scout explain deploy/NAME -n NS` | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| Explain a resource | `cub-scout explain deploy/NAME -n NS` | [reference/commands.md](reference/commands.md#explain) |
 
 ### Inspect
 
 | What | Command | Guide |
 |------|---------|-------|
-| GitOps pipeline health | `cub-scout gitops status` | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| GitOps pipeline health | `cub-scout gitops status` | [reference/commands.md#gitops-v014](reference/commands.md#gitops-v014) |
 | Scan for risks | `cub-scout scan --state` | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Scan a manifest file | `cub-scout scan --file FILE` | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Drift detection | `cub-scout drift deploy/NAME -n NS` | [howto/drift.md](howto/drift.md) |
@@ -39,9 +39,9 @@
 | What | Command | Guide |
 |------|---------|-------|
 | Tree hierarchies | `cub-scout tree ownership` | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
-| Git repo patterns | `cub-scout patterns detect --git-root PATH` | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| Git repo patterns | `cub-scout patterns detect --git-root PATH` | [reference/commands.md#patterns-v07](reference/commands.md#patterns-v07) |
 | Git + cluster alignment | `cub-scout combined --git-path PATH` | [combined-git-live example](../examples/combined-git-live/) |
-| Export resource graph | `cub-scout graph export` | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| Export resource graph | `cub-scout graph export` | [reference/commands.md#graph-v06](reference/commands.md#graph-v06) |
 | Debug bundles | `cub-scout bundle inspect FILE` | [howto/debug-bundle.md](howto/debug-bundle.md) |
 
 ---
@@ -87,7 +87,9 @@ Connected mode adds: change history, fleet comparison, import/promotion workflow
 
 | Topic | Link |
 |-------|------|
-| Full CLI reference | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| CLI workflow guide | [CLI-GUIDE.md](../CLI-GUIDE.md) |
+| Complete CLI reference (A-Z) | [reference/cli-reference.md](reference/cli-reference.md) |
+| Command usage examples | [reference/commands.md](reference/commands.md) |
 | JSON contracts | [reference/json-contracts.md](reference/json-contracts.md) |
 | Semantic contract (JSON vs ASCII) | [semantic-contract.md](semantic-contract.md) |
 | Command matrix | [reference/command-matrix.md](reference/command-matrix.md) |

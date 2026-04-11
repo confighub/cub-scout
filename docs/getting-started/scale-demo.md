@@ -211,7 +211,7 @@ kind delete cluster --name flux-scale-demo
 
 ## Next Steps
 
-- [CLI-GUIDE.md](../../CLI-GUIDE.md) - Complete command reference
+- [CLI-GUIDE.md](../../CLI-GUIDE.md) - Workflow-first CLI guide
 - [examples/](../../examples/) - More demo scenarios
 - [confighub.com](https://confighub.com) - Connect for multi-cluster visibility
 
