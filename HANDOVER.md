@@ -64,6 +64,20 @@ Current tracked follow-ons:
 
 - none at the moment
 
+## Next milestone
+
+The next major milestone is now the `cub scout` plugin switchover for `v2.0.0`.
+
+Canonical planning doc:
+
+- `docs/releases/v2.0.0-plugin-plan.md`
+
+Core direction:
+
+- `cub scout` becomes the preferred invocation
+- `cub scout mcp serve` becomes the preferred explorer/investigation gateway
+- `cub` remains the authority and governed-execution host
+
 ### CLI migration table (`#375`)
 
 | Old top-level | New canonical path | Compatibility |

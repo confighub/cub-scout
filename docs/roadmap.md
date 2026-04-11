@@ -116,6 +116,7 @@ Semantic contracts, determinism guarantees, and the ASCII = f(JSON) + g model ar
 | `docs/roadmap-rendered-manifest-and-argo.md` | Planning only (non-authoritative) | Workstream backlog for rendered-manifest + Argo hierarchy |
 | `docs/roadmap-connected-views-and-launch.md` | Planning only (non-authoritative) | Workstream backlog for connected views and launch narrative |
 | `docs/roadmap-1x-connected-upsell.md` | Draft for review (non-authoritative) | Candidate sequencing for 1.x connected packaging/upsell |
+| `docs/releases/v2.0.0-plugin-plan.md` | Active milestone plan (non-authoritative) | Plugin switchover plan for `cub scout`, MCP positioning, and milestones to 2.0 |
 | `docs/releases/v0.20.0-slice-plan.md` | Delivered historical plan (non-authoritative) | Scoped implementation plan used for shipped v0.20.0 slice |
 | `docs/reference/ai-ops-gateway-prd.md` | Tracked design reference | AI gateway, presentation modes, plugin-first packaging, and explorer-vs-provider boundaries |
 
