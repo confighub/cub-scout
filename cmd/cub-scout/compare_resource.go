@@ -71,12 +71,18 @@ type compareDryWetResult struct {
 	Notes []string
 }
 
+type compareConfigHubLink struct {
+	UnitSlug  string
+	SpaceName string
+}
+
 var (
-	loadCompareLiveSnapshotFn   = loadCompareLiveSnapshot
-	loadCompareDryWetSnapshotFn = loadCompareDryWetSnapshots
-	compareConnectedFn          = isCompareConnected
-	compareDefaultSpaceFn       = detectCompareSpace
-	runCompareCubCommand        = runCompareCubCommandImpl
+	loadCompareLiveSnapshotFn     = loadCompareLiveSnapshot
+	loadCompareDryWetSnapshotFn   = loadCompareDryWetSnapshots
+	resolveCompareConfigHubLinkFn = resolveCompareConfigHubLink
+	compareConnectedFn            = isCompareConnected
+	compareDefaultSpaceFn         = detectCompareSpace
+	runCompareCubCommand          = runCompareCubCommandImpl
 )
 
 func runCombinedResourceCompare(cmd *cobra.Command, args []string) error {
@@ -476,7 +482,23 @@ func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) 
 		return compareSideSummary{}, err
 	}
 
-	return summarizeCompareLiveObject(obj), nil
+	summary := summarizeCompareLiveObject(obj)
+	if summary.UnitSlug != "" {
+		return summary, nil
+	}
+
+	link, err := resolveCompareConfigHubLinkFn(ctx, dynClient, obj)
+	if err != nil {
+		return summary, nil
+	}
+	if summary.UnitSlug == "" {
+		summary.UnitSlug = strings.TrimSpace(link.UnitSlug)
+	}
+	if summary.SpaceName == "" {
+		summary.SpaceName = strings.TrimSpace(link.SpaceName)
+	}
+
+	return summary, nil
 }
 
 func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSummary {
@@ -509,6 +531,67 @@ func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSumma
 		out.Replicas = &replicas
 	}
 	return out
+}
+
+func resolveCompareConfigHubLink(ctx context.Context, dynClient dynamic.Interface, obj *unstructured.Unstructured) (compareConfigHubLink, error) {
+	if dynClient == nil || obj == nil {
+		return compareConfigHubLink{}, nil
+	}
+
+	appName := strings.TrimSpace(argoApplicationNameFromResource(obj))
+	if appName == "" {
+		return compareConfigHubLink{}, nil
+	}
+
+	appGVR := kindToGVR("Application")
+	if appGVR.Resource == "" {
+		return compareConfigHubLink{}, nil
+	}
+
+	appObj, err := dynClient.Resource(appGVR).Namespace("argocd").Get(ctx, appName, v1.GetOptions{})
+	if err != nil {
+		return compareConfigHubLink{}, err
+	}
+
+	annotations := appObj.GetAnnotations()
+	link := compareConfigHubLink{
+		UnitSlug: strings.TrimSpace(annotations["confighub.com/UnitSlug"]),
+	}
+
+	repoURL, _, _ := unstructured.NestedString(appObj.Object, "spec", "source", "repoURL")
+	repoSpace, repoUnit := parseCompareConfigHubUnitRepoURL(repoURL)
+	if link.UnitSlug == "" {
+		link.UnitSlug = repoUnit
+	}
+	link.SpaceName = repoSpace
+
+	return link, nil
+}
+
+func parseCompareConfigHubUnitRepoURL(raw string) (spaceName, unitSlug string) {
+	raw = strings.TrimSpace(raw)
+	if !strings.HasPrefix(raw, "oci://") {
+		return "", ""
+	}
+
+	remainder := strings.TrimPrefix(raw, "oci://")
+	parts := strings.SplitN(remainder, "/", 2)
+	if len(parts) != 2 {
+		return "", ""
+	}
+
+	repository := strings.TrimSpace(parts[1])
+	if !strings.HasPrefix(repository, "unit/") {
+		return "", ""
+	}
+
+	repository = strings.TrimPrefix(repository, "unit/")
+	repoParts := strings.SplitN(repository, "/", 2)
+	if len(repoParts) != 2 {
+		return "", ""
+	}
+
+	return strings.TrimSpace(repoParts[0]), strings.TrimSpace(repoParts[1])
 }
 
 func extractCompareImages(obj map[string]interface{}) []string {

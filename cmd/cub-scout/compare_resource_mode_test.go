@@ -9,6 +9,9 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 )
 
 func TestBuildCompareResourceResult_Standalone(t *testing.T) {
@@ -275,6 +278,70 @@ metadata:
 	}
 	if len(got.Images) != 1 || got.Images[0] != "ghcr.io/acme/api:v2" {
 		t.Fatalf("images = %#v", got.Images)
+	}
+}
+
+func TestResolveCompareConfigHubLink_FromArgoApplication(t *testing.T) {
+	scheme := runtime.NewScheme()
+	dynClient := dynamicfake.NewSimpleDynamicClient(scheme,
+		&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "argoproj.io/v1alpha1",
+				"kind":       "Application",
+				"metadata": map[string]interface{}{
+					"name":      "demo-roundtrip-cubbychat-wet",
+					"namespace": "argocd",
+					"annotations": map[string]interface{}{
+						"confighub.com/UnitSlug": "cubbychat-wet",
+					},
+				},
+				"spec": map[string]interface{}{
+					"source": map[string]interface{}{
+						"repoURL": "oci://oci.hub.confighub.com:443/unit/demo-roundtrip/cubbychat-wet",
+					},
+				},
+			},
+		},
+	)
+
+	resource := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      "frontend",
+				"namespace": "default",
+				"annotations": map[string]interface{}{
+					"argocd.argoproj.io/tracking-id": "demo-roundtrip-cubbychat-wet:apps/Deployment:default/frontend",
+				},
+			},
+		},
+	}
+
+	link, err := resolveCompareConfigHubLink(context.Background(), dynClient, resource)
+	if err != nil {
+		t.Fatalf("resolveCompareConfigHubLink() error = %v", err)
+	}
+	if link.UnitSlug != "cubbychat-wet" {
+		t.Fatalf("UnitSlug = %q, want cubbychat-wet", link.UnitSlug)
+	}
+	if link.SpaceName != "demo-roundtrip" {
+		t.Fatalf("SpaceName = %q, want demo-roundtrip", link.SpaceName)
+	}
+}
+
+func TestParseCompareConfigHubUnitRepoURL(t *testing.T) {
+	space, unit := parseCompareConfigHubUnitRepoURL("oci://oci.hub.confighub.com:443/unit/demo-roundtrip/cubbychat-wet")
+	if space != "demo-roundtrip" {
+		t.Fatalf("space = %q, want demo-roundtrip", space)
+	}
+	if unit != "cubbychat-wet" {
+		t.Fatalf("unit = %q, want cubbychat-wet", unit)
+	}
+
+	space, unit = parseCompareConfigHubUnitRepoURL("oci://oci.hub.confighub.com:443/target/demo-roundtrip/argocd-worker")
+	if space != "" || unit != "" {
+		t.Fatalf("unexpected parse for target repoURL: space=%q unit=%q", space, unit)
 	}
 }
 

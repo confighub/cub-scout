@@ -1,6 +1,8 @@
 package hub
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -246,5 +248,55 @@ func TestHasConnectivity_TelemetryDisabled(t *testing.T) {
 
 	if hasConnectivity() {
 		t.Error("hasConnectivity() should return false when telemetry disabled")
+	}
+}
+
+func TestHasConnectivity_HTTP405StillCountsAsConnectivity(t *testing.T) {
+	origHome := os.Getenv("HOME")
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	defer func() { os.Setenv("HOME", origHome) }()
+
+	t.Setenv("CUB_SCOUT_OFFLINE", "")
+	t.Setenv("CUB_SCOUT_TELEMETRY", "")
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}))
+	defer server.Close()
+
+	origEndpoint := configHubHealthEndpoint
+	configHubHealthEndpoint = server.URL
+	defer func() { configHubHealthEndpoint = origEndpoint }()
+
+	if !hasConnectivity() {
+		t.Fatal("hasConnectivity() = false, want true when ConfigHub is reachable but returns 405")
+	}
+}
+
+func TestCurrentMode_ConnectedWhenEndpointReachableWithNon2xxStatus(t *testing.T) {
+	origHome := os.Getenv("HOME")
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	defer func() { os.Setenv("HOME", origHome) }()
+
+	t.Setenv("CUB_SCOUT_OFFLINE", "")
+	t.Setenv("CUB_SCOUT_TELEMETRY", "")
+
+	if err := SaveAuth(&Auth{Token: "valid-token"}); err != nil {
+		t.Fatal(err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}))
+	defer server.Close()
+
+	origEndpoint := configHubHealthEndpoint
+	configHubHealthEndpoint = server.URL
+	defer func() { configHubHealthEndpoint = origEndpoint }()
+
+	if mode := CurrentMode(); mode != Connected {
+		t.Fatalf("CurrentMode() = %v, want Connected when endpoint is reachable and auth is present", mode)
 	}
 }

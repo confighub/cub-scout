@@ -16,6 +16,13 @@ const (
 	ConnectivityTimeout = 2 * time.Second
 )
 
+var (
+	configHubHealthEndpoint = ConfigHubHealthEndpoint
+	configHubHeadRequest    = func(client *http.Client, endpoint string) (*http.Response, error) {
+		return client.Head(endpoint)
+	}
+)
+
 // Mode represents the current operating mode of cub-scout.
 type Mode int
 
@@ -123,12 +130,13 @@ func hasConnectivity() bool {
 		Timeout: ConnectivityTimeout,
 	}
 
-	resp, err := client.Head(ConfigHubHealthEndpoint)
+	resp, err := configHubHeadRequest(client, configHubHealthEndpoint)
 	if err != nil {
 		return false
 	}
 	defer resp.Body.Close()
 
-	// Any 2xx or 3xx response indicates connectivity
-	return resp.StatusCode < 400
+	// This is a reachability check, not a readiness check.
+	// Any HTTP response proves we can reach ConfigHub.
+	return true
 }
