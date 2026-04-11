@@ -158,7 +158,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"doctor": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "doctor",
-				Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Returns ownership, health, risks, drift, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
+					Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Also use when the user asks which cub-scout troubleshooting tool to start with, or whether cub-scout is the right first read-only step instead of raw kubectl or the Argo UI. Returns ownership, health, risks, drift, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -190,7 +190,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"map": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "map",
-				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?' and broad inventory questions. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
+					Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?' and broad inventory questions, especially when the user wants more meaning than raw `kubectl get` output. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -269,7 +269,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"explain": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "explain",
-				Description: "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). Use AFTER doctor or map once the user has narrowed to a specific resource. DO NOT load for broad cluster inventory or health; use doctor first.",
+					Description: "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). Use AFTER doctor or map once the user has narrowed to a specific resource, especially when the user wants more computed meaning than raw `kubectl describe`. DO NOT load for broad cluster inventory or health; use doctor first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -335,7 +335,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_units"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_units",
-				Description: "Connected-only ConfigHub unit and fleet inventory (cub unit list --json). Use when the user asks about governed units, intended state, or which ConfigHub unit corresponds to something already identified. DO NOT load for raw cluster inventory or bare 'what's running?'; use map or doctor first.",
+					Description: "Connected-only ConfigHub unit and fleet inventory (cub unit list --json). Use when the user asks about governed units, intended state, or which ConfigHub unit corresponds to something already identified. Load after doctor, map, explain, or trace has established the cluster-side object you care about. DO NOT load for raw cluster inventory or bare 'what's running?'; use map or doctor first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -373,7 +373,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_unit_get"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_unit_get",
-				Description: "Connected-only exact ConfigHub unit details (cub unit get --json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting; use explain or trace first.",
+					Description: "Connected-only exact ConfigHub unit details (cub unit get --json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting or governed-vs-live comparison; use explain, trace, or CLI compare flows first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{

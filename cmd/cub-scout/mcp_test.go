@@ -84,15 +84,15 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		name     string
 		contains []string
 	}{
-		{name: "doctor", contains: []string{"FIRST standalone tool", "Use before explain, trace, or scan"}},
-		{name: "map", contains: []string{"what's running in this cluster", "use doctor first"}},
-		{name: "scan", contains: []string{"Use AFTER doctor", "DO NOT load first"}},
-		{name: "explain", contains: []string{"Use AFTER doctor or map", "DO NOT load for broad cluster inventory or health"}},
-		{name: "trace", contains: []string{"Use AFTER explain", "DO NOT load for broad cluster status"}},
-		{name: "confighub_changesets", contains: []string{"Connected-only", "DO NOT load for current cluster health or ownership"}},
-		{name: "confighub_units", contains: []string{"Connected-only", "use map or doctor first"}},
-		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "use confighub_units first"}},
-	}
+			{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "Use before explain, trace, or scan"}},
+			{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
+			{name: "scan", contains: []string{"Use AFTER doctor", "DO NOT load first"}},
+			{name: "explain", contains: []string{"Use AFTER doctor or map", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
+			{name: "trace", contains: []string{"Use AFTER explain", "DO NOT load for broad cluster status"}},
+			{name: "confighub_changesets", contains: []string{"Connected-only", "DO NOT load for current cluster health or ownership"}},
+			{name: "confighub_units", contains: []string{"Connected-only", "Load after doctor, map, explain, or trace", "use map or doctor first"}},
+			{name: "confighub_unit_get", contains: []string{"Load ONLY after", "use confighub_units first", "DO NOT load for bare cluster troubleshooting or governed-vs-live comparison"}},
+		}
 
 	for _, tc := range cases {
 		tool, ok := tools[tc.name]
