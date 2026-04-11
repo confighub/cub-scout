@@ -85,7 +85,7 @@ Flux (4 resources)
                     →  apptique-prod   →    overlays/prod/      →   frontend (2r)
 
 → Trace the full chain: cub-scout trace deploy/frontend -n apptique-dev
-→ Parse repo offline:   cub-scout parse-repo --path flux-monorepo/
+→ Parse repo offline:   cub-scout import parse-repo --path flux-monorepo/
 ```
 
 ## What It Demonstrates
@@ -95,7 +95,7 @@ Flux (4 resources)
 | Flux ownership detected via labels | `kustomize.toolkit.fluxcd.io/*` labels work |
 | Trace from Deployment → Kustomization → GitRepository | Full provenance chain |
 | Dev and prod as separate Kustomizations | Environment isolation visible |
-| Base/overlay structure detected by `parse-repo` | Repo skeleton recognition |
+| Base/overlay structure detected by `import parse-repo` | Repo skeleton recognition |
 
 ## Quick Start
 
@@ -138,7 +138,7 @@ cub-scout uses these to detect Flux ownership and trace back to the Kustomizatio
 
 ```bash
 # Parse without a cluster
-./cub-scout parse-repo --path examples/apptique-examples/flux-monorepo
+./cub-scout import parse-repo --path examples/apptique-examples/flux-monorepo
 
 # Expected: detects flux-tenant-mono skeleton, base/overlay structure
 ```

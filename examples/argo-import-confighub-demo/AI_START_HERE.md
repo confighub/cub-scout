@@ -10,7 +10,7 @@ This example is for the current GitHub + ArgoCD + AI/CLI + ConfigHub wedge.
 It shows three different Argo-shaped import lenses on one cluster:
 
 - `cub gitops import` for rendered dry/wet import into ConfigHub
-- `cub-scout import-argocd` for per-Application detail
+- `cub-scout import argocd` for per-Application detail
 - `cub-scout import` for broad ownership discovery, including Helm and Native
 
 ## Read-Only First

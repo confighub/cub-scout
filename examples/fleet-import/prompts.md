@@ -14,7 +14,7 @@ Explain:
 Then run only:
 
 ```bash
-../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json --json
+../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json --json
 ```
 
 ## 2. Safe Walkthrough
@@ -32,10 +32,10 @@ Use this path:
 
 ```bash
 # Summary only
-../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json
+../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json
 
 # With proposal
-../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json --suggest
+../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json --suggest
 ```
 
 ## 3. Verify The Fleet View
@@ -48,7 +48,7 @@ After the aggregator runs, verify:
 - JSON output matches expected fixture
 
 ```bash
-diff <(../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json --suggest --json | jq -S .) \
+diff <(../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json --suggest --json | jq -S .) \
      <(jq -S . expected-output/fleet-summary.json)
 ```
 

@@ -1,6 +1,6 @@
 # Fleet Import: Multi-Cluster Aggregation
 
-This example shows `cub-scout import-cluster-aggregator` merging import data from
+This example shows `cub-scout import cluster-aggregator` merging import data from
 two clusters into a unified App proposal.
 
 ## The Scenario
@@ -35,7 +35,7 @@ The prod cluster has one extra workload (`cache-warmer`) that doesn't exist in d
 ## 2. Here's the Fleet View
 
 ```bash
-./cub-scout import-cluster-aggregator \
+./cub-scout import cluster-aggregator \
   examples/fleet-import/cluster-dev.json \
   examples/fleet-import/cluster-prod.json
 ```
@@ -66,7 +66,7 @@ Three apps run on both clusters. One (`cache-warmer`) runs only on prod.
 Add `--suggest` to generate a single App structure that spans both clusters:
 
 ```bash
-./cub-scout import-cluster-aggregator \
+./cub-scout import cluster-aggregator \
   examples/fleet-import/cluster-dev.json \
   examples/fleet-import/cluster-prod.json \
   --suggest
@@ -133,24 +133,24 @@ instance lives: `cluster-prod.json:payment-prod/payment-api` means the
 
 ```bash
 # Plain text summary
-./cub-scout import-cluster-aggregator \
+./cub-scout import cluster-aggregator \
   examples/fleet-import/cluster-dev.json \
   examples/fleet-import/cluster-prod.json
 
 # With unified proposal
-./cub-scout import-cluster-aggregator \
+./cub-scout import cluster-aggregator \
   examples/fleet-import/cluster-dev.json \
   examples/fleet-import/cluster-prod.json \
   --suggest
 
 # JSON output for scripting
-./cub-scout import-cluster-aggregator \
+./cub-scout import cluster-aggregator \
   examples/fleet-import/cluster-dev.json \
   examples/fleet-import/cluster-prod.json \
   --suggest --json
 
 # Pipe to jq to see which apps run on multiple clusters
-./cub-scout import-cluster-aggregator \
+./cub-scout import cluster-aggregator \
   examples/fleet-import/cluster-dev.json \
   examples/fleet-import/cluster-prod.json \
   --json | jq '.summary.byApp | to_entries[] | select(.value | length > 1)'
@@ -168,7 +168,7 @@ for ctx in dev-cluster prod-cluster; do
 done
 
 # Step 2: Aggregate into fleet view
-./cub-scout import-cluster-aggregator dev-cluster.json prod-cluster.json --suggest --json
+./cub-scout import cluster-aggregator dev-cluster.json prod-cluster.json --suggest --json
 ```
 
 ## See Also

@@ -275,7 +275,7 @@ contrast between real-reconciled and label-only fixtures.
 
 ### Act 3: The Flux View (trace + patterns)
 
-There's no `import-flux` command (unlike ArgoCD which has `import-argocd`).
+There's no `import-flux` command (unlike ArgoCD which has `import argocd`).
 Instead, Act 3 shows Flux-specific cub-scout capabilities:
 
 | Command | What it shows |

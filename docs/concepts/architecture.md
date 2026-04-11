@@ -91,7 +91,7 @@ GSF is valuable because it enables things that weren't possible when every tool 
 
 ## Core Principles
 
-1. **Read-only by default** — Core scanning uses only `get`, `list`, `watch`. Exception: `import-argocd` can modify ArgoCD Applications when explicitly requested.
+1. **Read-only by default** — Core scanning uses only `get`, `list`, `watch`. Exception: `import argocd` can modify ArgoCD Applications when explicitly requested.
 2. **Protocol-first** — GSF is the contract. Tools build on it.
 3. **Standalone-capable** — Works without ConfigHub connection.
 4. **Deletable** — No state stored. Remove anytime.
@@ -264,11 +264,11 @@ The Agent supports multiple output modes via 14 top-level commands and 17 map su
 | `scan` | Scan for risk issues (46 patterns) | Standalone |
 | `snapshot` | Dump cluster state as GSF JSON | Standalone |
 | `import` | Import workloads into ConfigHub | Connected |
-| `import-argocd` | Import ArgoCD Application | Connected |
+| `import argocd` | Import ArgoCD Application | Connected |
 | `app` | Manage Apps | Connected |
 | `remedy` | Execute risk remediation | Standalone |
 | `combined` | Git repo + cluster alignment | Standalone/Connected |
-| `parse-repo` | Parse GitOps repo structure | Standalone |
+| `import parse-repo` | Parse GitOps repo structure | Standalone |
 | `demo` | Run interactive demos | Standalone |
 | `version` | Print version | Standalone |
 | `completion` | Generate shell completions | Standalone |

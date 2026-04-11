@@ -1,7 +1,7 @@
 # ArgoCD Import to ConfigHub Demo
 
 Three import paths into ConfigHub. Same cluster. Different depths. This demo
-runs `cub gitops import`, `cub-scout import-argocd`, and `cub-scout import`
+runs `cub gitops import`, `cub-scout import argocd`, and `cub-scout import`
 against a kind cluster with real ArgoCD to show how they complement each other.
 `cub gitops import` is the production path (rendered pipeline with auto-updates),
 while the cub-scout tools provide quick discovery and catch resources outside
@@ -304,27 +304,27 @@ WILL CREATE
 Notice that `import --dry-run` groups resources across namespaces into logical
 units. Redis appears here but won't appear in Act 3.
 
-### Act 3: The Application Importer (import-argocd)
+### Act 3: The Application Importer (`import argocd`)
 
 Runs the per-Application importer:
 
 | Command | What it shows |
 |---------|--------------|
-| `import-argocd --list` | All 5 ArgoCD Applications |
-| `import-argocd helm-guestbook --dry-run` | Real synced app with managed resources |
-| `import-argocd myapp-dev --dry-run` | Arnie app (labels only, not synced) |
+| `import argocd --list` | All 5 ArgoCD Applications |
+| `import argocd helm-guestbook --dry-run` | Real synced app with managed resources |
+| `import argocd myapp-dev --dry-run` | Arnie app (labels only, not synced) |
 
-**What to look for:** import-argocd sees all 5 Applications. Watch what
+**What to look for:** `import argocd` sees all 5 Applications. Watch what
 happens with helm-guestbook vs myapp-dev: helm-guestbook has real managed
 resources that ArgoCD synced; myapp-dev has resources with ArgoCD labels
 but ArgoCD shows them as OutOfSync because it didn't actually sync them.
 
-**Key insight:** import-argocd extracts per-Application metadata -- Git
+**Key insight:** `import argocd` extracts per-Application metadata -- Git
 source path, sync status, health, and path-derived labels. This is richer
 than the flat workload view from `cub-scout import`, but it *only sees
 ArgoCD Applications*. Redis and debug-config are invisible.
 
-You should see `import-argocd --list` output like:
+You should see `import argocd --list` output like:
 
 ```
 ArgoCD Applications in namespace 'argocd'
@@ -385,7 +385,7 @@ Import Summary
 
 Notice the differences: helm-guestbook is Synced with Healthy resources;
 myapp-dev is Unknown sync with Progressing resources. Also notice that
-import-argocd extracted `variant=dev` from the Git path `envs/dev` --
+`import argocd` extracted `variant=dev` from the Git path `envs/dev` --
 a label that `cub-scout import` wouldn't know about.
 
 Redis and debug-config don't appear anywhere in Act 3 output.
@@ -463,7 +463,7 @@ The demo prints a summary table. You should see:
 === Act 5: Management and Discovery ===
 
                      MANAGEMENT                    DISCOVERY
-                     cub gitops     import-argocd  cub-scout
+                     cub gitops     import argocd  cub-scout
                      import         (per-app)      import
 ---------------------------------------------------------------
 helm-guestbook          Y              Y              Y
@@ -485,7 +485,7 @@ The key takeaways:
 
 - **Management** (left side): `cub gitops import` manages ArgoCD Applications
   as a live pipeline -- rendered manifests, auto-updating units, dry/wet pairs.
-  `import-argocd` is the lightweight alternative when you don't need a pipeline.
+  `import argocd` is the lightweight alternative when you don't need a pipeline.
 - **Discovery** (right side): `cub-scout import` finds everything on the cluster
   regardless of ownership type. It's the only tool that sees Helm and Native
   resources.
@@ -509,7 +509,7 @@ The key takeaways:
 
 | Scenario | Command |
 |----------|---------|
-| "Import a specific ArgoCD Application (quick)" | `cub-scout import-argocd <name>` |
+| "Import a specific ArgoCD Application (quick)" | `cub-scout import argocd <name>` |
 | "What's running on my cluster?" | `cub-scout map list` |
 | "Import everything, including Helm and Native" | `cub-scout import` (review + confirm once) |
 | "Non-interactive broad import + immediate connect" | `cub-scout import --yes --connect` |
@@ -528,7 +528,7 @@ Do you have ArgoCD or Flux Applications?
   NO, or just exploring -->
     cub-scout import    (broad discovery, all workload types)
     or:
-    cub-scout import-argocd <name>  (quick per-app import, no pipeline needed)
+    cub-scout import argocd <name>  (quick per-app import, no pipeline needed)
 ```
 
 ---
@@ -567,7 +567,7 @@ Do you have ArgoCD or Flux Applications?
 - Strength: the only tool that produces controller-rendered manifests and
   keeps them current as Git changes
 
-**cub-scout import-argocd** (application-level) -- per-app detail
+**cub-scout import argocd** (application-level) -- per-app detail
 - Reads: ArgoCD Application CRs + their managed resources
 - Extracts: Git source path, sync/health status, path-derived labels
 - Creates: per-Application ConfigHub units (static snapshot)
@@ -598,7 +598,7 @@ With `--keep`, the cluster stays running for interactive exploration:
 ./cub-scout trace deploy/api -n myapp-prod
 
 # Show YAML for an ArgoCD Application
-./cub-scout import-argocd helm-guestbook --show-yaml
+./cub-scout import argocd helm-guestbook --show-yaml
 
 # GitOps health dashboard
 ./cub-scout gitops status
@@ -609,7 +609,7 @@ With `--keep`, the cluster stays running for interactive exploration:
 Please share quick feedback on these:
 
 1. Was the flow from ArgoCD Application -> rendered manifests -> ConfigHub dry/wet units clear?
-2. Which output was most useful: `map`, `gitops status`, `import-argocd`, or `cub gitops import` results?
+2. Which output was most useful: `map`, `gitops status`, `import argocd`, or `cub gitops import` results?
 3. Did any app/team/variant label mapping look wrong or confusing?
 4. Where did setup friction appear most: auth, workers, targets, or import?
 5. After this demo, does ConfigHub operational control-plane path make sense? If not, what feels unclear or missing?

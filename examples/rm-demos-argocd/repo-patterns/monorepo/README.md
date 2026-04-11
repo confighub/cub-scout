@@ -48,7 +48,7 @@ platform-configs/
 
 ```bash
 # Parse the repo structure offline
-$ ./cub-scout parse-repo --path ./platform-configs
+$ ./cub-scout import parse-repo --path ./platform-configs
 
   Detected: monorepo (kustomize overlays)
   Skeleton: flux-tenant-mono

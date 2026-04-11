@@ -7,7 +7,7 @@ Codex, Claude, Cursor, or another AI assistant.
 
 This example shows multi-cluster aggregation: merging per-cluster import
 JSON from two clusters (dev + prod) into a unified fleet view and App
-proposal using `cub-scout import-cluster-aggregator`.
+proposal using `cub-scout import cluster-aggregator`.
 
 This example is deterministic and does not require a live cluster.
 All data comes from pre-generated JSON fixtures.
@@ -21,18 +21,18 @@ or ConfigHub.
 cd examples/fleet-import
 
 # Fleet summary
-../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json
+../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json
 
 # With unified App proposal
-../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json --suggest
+../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json --suggest
 
 # JSON output for scripting
-../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json --suggest --json
+../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json --suggest --json
 ```
 
 ## Important Boundaries
 
-- `import-cluster-aggregator` merges existing JSON — it never connects to clusters
+- `import cluster-aggregator` merges existing JSON — it never connects to clusters
 - No commands in this example write to ConfigHub or modify cluster state
 - The `--suggest` flag produces a proposal, not an action
 - Reconciliation rules in the proposal are suggested defaults, not applied policy
@@ -48,7 +48,7 @@ After running the aggregator:
 - JSON output matches `expected-output/fleet-summary.json`
 
 ```bash
-diff <(../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json --suggest --json | jq -S .) \
+diff <(../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json --suggest --json | jq -S .) \
      <(jq -S . expected-output/fleet-summary.json)
 ```
 

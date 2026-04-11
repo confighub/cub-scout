@@ -4,7 +4,7 @@ This file documents the stable inspection paths for `fleet-import`.
 
 ## Read-Only Contracts
 
-### `../../cub-scout import-cluster-aggregator cluster-dev.json cluster-prod.json`
+### `../../cub-scout import cluster-aggregator cluster-dev.json cluster-prod.json`
 
 - mutates: no
 - output shape: ASCII fleet summary
@@ -13,7 +13,7 @@ This file documents the stable inspection paths for `fleet-import`.
   - apps are grouped across clusters by component name
   - ownership counts are accurate (Flux, Helm, Native)
 
-### `../../cub-scout import-cluster-aggregator ... --suggest`
+### `../../cub-scout import cluster-aggregator ... --suggest`
 
 - mutates: no
 - output shape: ASCII fleet summary + App proposal
@@ -23,7 +23,7 @@ This file documents the stable inspection paths for `fleet-import`.
   - reconciliation rules are suggested per-variant defaults
 - notes: reconciliation rules are suggestions, not applied policy
 
-### `../../cub-scout import-cluster-aggregator ... --suggest --json`
+### `../../cub-scout import cluster-aggregator ... --suggest --json`
 
 - mutates: no
 - output shape: JSON object

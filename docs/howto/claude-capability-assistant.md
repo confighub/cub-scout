@@ -45,7 +45,7 @@ For each user question, Claude should run this checklist:
 Use this conversation loop in demos:
 
 1. User: "Can I import Argo workloads into ConfigHub from this cluster?"
-2. Claude: Verifies `import`, `import-argocd`, and connected prerequisites.
+2. Claude: Verifies `import`, `import argocd`, and connected prerequisites.
 3. User: "Do it."
 4. Claude: Runs `--dry-run` first, then guided real import.
 5. User: "Can it also auto-create Git patches/upgrades?"

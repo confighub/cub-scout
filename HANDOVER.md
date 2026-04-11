@@ -176,10 +176,13 @@ Recommended next steps (optional enhancements):
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
 Open issues:
-- #373 — Consolidate three import commands under a single `import` parent
 - #372 — Trim README from 866 to ~350 lines and consolidate structure
 
 Recent closure:
+- #373 — Consolidate import commands under `import` (Apr 11)
+  - `import argocd`, `import cluster-aggregator`, and `import parse-repo` are the canonical command paths
+  - Hidden deprecated aliases remain available for one release: `import-argocd`, `import-cluster-aggregator`, and `parse-repo`
+  - Active examples and docs now point at the canonical subcommand paths
 - #374 — Consolidate overlapping CLI reference docs (Apr 11)
   - Recast `CLI-GUIDE.md` as a workflow-first guide instead of a second command encyclopedia
   - Updated `cli-reference.md` to match the current post-#375 command tree

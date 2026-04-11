@@ -286,28 +286,28 @@ note "cub-scout found: ArgoCD workloads + Helm redis + Native debug-config"
 note "It groups by ownership labels, not by what the controller actually synced"
 
 # ============================================================
-# ACT 3 - THE APPLICATION IMPORTER: import-argocd
+# ACT 3 - THE APPLICATION IMPORTER: import argocd
 # ============================================================
-banner "Act 3: The Application Importer (import-argocd)"
-note "import-argocd reads ArgoCD Application CRs specifically"
+banner "Act 3: The Application Importer (import argocd)"
+note "import argocd reads ArgoCD Application CRs specifically"
 echo ""
 
-step "cub-scout import-argocd --list  (all ArgoCD Applications)"
+step "cub-scout import argocd --list  (all ArgoCD Applications)"
 echo ""
-"$CUB" import-argocd --list 2>/dev/null || true
-echo ""
-
-step "cub-scout import-argocd helm-guestbook --dry-run  (real synced app)"
-echo ""
-"$CUB" import-argocd helm-guestbook --dry-run 2>/dev/null || warn "helm-guestbook not ready yet"
+"$CUB" import argocd --list 2>/dev/null || true
 echo ""
 
-step "cub-scout import-argocd myapp-dev --dry-run  (Arnie app - labels only)"
+step "cub-scout import argocd helm-guestbook --dry-run  (real synced app)"
 echo ""
-"$CUB" import-argocd myapp-dev --dry-run 2>/dev/null || warn "myapp-dev not accessible"
+"$CUB" import argocd helm-guestbook --dry-run 2>/dev/null || warn "helm-guestbook not ready yet"
 echo ""
 
-note "import-argocd sees 5 Applications. helm-guestbook has real managed"
+step "cub-scout import argocd myapp-dev --dry-run  (Arnie app - labels only)"
+echo ""
+"$CUB" import argocd myapp-dev --dry-run 2>/dev/null || warn "myapp-dev not accessible"
+echo ""
+
+note "import argocd sees 5 Applications. helm-guestbook has real managed"
 note "resources; myapp-dev has resources but ArgoCD didn't create them."
 note "Redis and debug-config are invisible to this tool."
 
@@ -557,7 +557,7 @@ banner "Act 5: Management and Discovery"
 echo ""
 cat <<'TABLE'
                      MANAGEMENT                    DISCOVERY
-                     cub gitops     import-argocd  cub-scout
+                     cub gitops     import argocd  cub-scout
                      import         (per-app)      import
 ---------------------------------------------------------------
 helm-guestbook          Y              Y              Y
@@ -580,8 +580,8 @@ echo -e "${BOLD}Management:${NC} cub gitops import"
 echo "  Rendered pipeline with auto-updating dry/wet unit pairs."
 echo "  Use for ArgoCD/Flux apps you want to manage continuously."
 echo ""
-echo -e "${BOLD}Discovery:${NC} cub-scout import + import-argocd"
-echo "  Broad cluster inventory (import) or quick per-app detail (import-argocd)."
+echo -e "${BOLD}Discovery:${NC} cub-scout import + import argocd"
+echo "  Broad cluster inventory (import) or quick per-app detail (import argocd)."
 echo "  Use to find everything, including Helm/Native resources outside ArgoCD."
 echo ""
 echo -e "${BOLD}Together:${NC} cub gitops import for ArgoCD apps, then cub-scout import for the rest."
@@ -598,8 +598,8 @@ if $KEEP; then
     echo "  Explore:"
     echo "    $CUB map                              # Interactive TUI"
     echo "    $CUB import --dry-run                 # Workload import proposal"
-    echo "    $CUB import-argocd --list             # List ArgoCD Applications"
-    echo "    $CUB import-argocd helm-guestbook --show-yaml  # Show rendered YAML"
+    echo "    $CUB import argocd --list             # List ArgoCD Applications"
+    echo "    $CUB import argocd helm-guestbook --show-yaml  # Show rendered YAML"
     echo "    $CUB gitops status                    # GitOps health dashboard"
     echo "    $CUB trace deploy/api -n myapp-prod   # Trace ownership chain"
     echo ""

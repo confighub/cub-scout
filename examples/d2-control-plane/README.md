@@ -129,7 +129,7 @@ flux get kustomizations --watch
 ./cub-scout scan --file examples/d2-control-plane/control-plane.yaml
 
 # Parse the repo structure
-./cub-scout parse-repo --path examples/d2-control-plane
+./cub-scout import parse-repo --path examples/d2-control-plane
 ```
 
 ## Pattern Variants

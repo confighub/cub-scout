@@ -177,7 +177,7 @@ Expected output for each example is in `test/fixtures/expected-output/examples/`
 
 | File/Folder | Type | What | Use When |
 |-------------|------|------|----------|
-| [argo-import-confighub-demo/](argo-import-confighub-demo/) | **Working** | Three import tools on real ArgoCD cluster | Comparing cub gitops / import-argocd / import |
+| [argo-import-confighub-demo/](argo-import-confighub-demo/) | **Working** | Three import tools on real ArgoCD cluster | Comparing cub gitops / import argocd / import |
 | [flux-import-confighub-demo/](flux-import-confighub-demo/) | **Working** | Management + discovery on real Flux cluster | Flux D2 pattern, tree/trace, cub gitops import |
 | [import-from-live/](import-from-live/) | **Working** | Cluster-only import (ArgoCD/Arnie pattern) | Learning import discovery, no Git needed |
 | [combined-git-live/](combined-git-live/) | **Working** | Git + cluster alignment (Flux/Banko pattern) | Learning combined discovery, Git drift detection |

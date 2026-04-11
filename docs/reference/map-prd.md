@@ -71,11 +71,11 @@ Modern Kubernetes clusters have resources deployed by multiple tools:
 | `health` | Check cluster health (alias for `map issues`) | Standalone |
 | `snapshot` | Dump cluster state as JSON | Standalone |
 | `import` | Import workloads into ConfigHub | Connected |
-| `import-argocd` | Import ArgoCD Application | Connected |
+| `import argocd` | Import ArgoCD Application | Connected |
 | `app-space` | Manage App Spaces | Connected |
 | `remedy` | Execute risk remediation | Standalone |
 | `combined` | Git repo + cluster alignment | Standalone/Connected |
-| `parse-repo` | Parse GitOps repo structure | Standalone |
+| `import parse-repo` | Parse GitOps repo structure | Standalone |
 | `demo` | Run interactive demos | Standalone |
 | `version` | Print version | Standalone |
 | `completion` | Generate shell completions | Standalone |

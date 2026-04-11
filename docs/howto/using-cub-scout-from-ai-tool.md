@@ -137,7 +137,7 @@ Why this is first:
 
 Typical flow:
 1. Ask: "Can I import this Argo cluster into ConfigHub?"
-2. AI verifies `import`/`import-argocd` help and connection status.
+2. AI verifies `import` / `import argocd` help and connection status.
 3. AI runs `./cub-scout import --dry-run ...`.
 4. AI asks for confirmation before real import.
 5. If blocked, AI proposes and files issue with evidence.

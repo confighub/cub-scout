@@ -13,26 +13,26 @@ Complete reference of all commands, options, TUI keys, and availability.
 |---------|-------------|
 | `app-space` | Manage App Spaces |
 | `audit` | Break-glass audit trail tools |
-| `apply` | Apply a proposal from JSON (GUI) |
+| `import apply` | Apply a proposal from JSON (GUI) |
 | `bundle` | Work with debug bundles |
 | `catalog` | Manage bundle catalogs |
 | `combined` (`compare`) | Show Git repo + cluster alignment, or resource LIVE snapshot mode |
-| `completion` | Generate shell completion script |
-| `connect` | Quickly configure kube context from server URL or kubeconfig |
+| `setup completion` | Generate shell completion script |
+| `setup connect` | Quickly configure kube context from server URL or kubeconfig |
 | `debug` | Guided GitOps debugging wizard |
-| `demo` | Run interactive demos |
+| `quickstart demo` | Run interactive demos |
 | `discover` | Discover resources (alias for `map workloads`) |
-| `drift` | Detect drift between desired and live state |
+| `compare drift` | Detect drift between desired and live state |
 | `fleet` | Fleet-level connected insights |
 | `gitops` | GitOps status and diagnostics |
 | `graph` | Resource graph operations |
 | `health` | Check cluster issues (alias for `map issues`) |
 | `import` | Import workloads into ConfigHub |
-| `import-argocd` | Import an ArgoCD Application into ConfigHub |
-| `import-cluster-aggregator` | Aggregate imports from multiple clusters (GUI) |
+| `import argocd` | Import an ArgoCD Application into ConfigHub |
+| `import cluster-aggregator` | Aggregate imports from multiple clusters (GUI) |
 | `impact` | Connected blast-radius preview for one unit |
 | `map` | Interactive map of resources and ownership |
-| `parse-repo` | Parse a GitOps repository structure |
+| `import parse-repo` | Parse a GitOps repository structure |
 | `patterns` | Pattern detection engine |
 | `remedy` | Execute remediation for risk findings |
 | `scan` | Scan for risk issues and stuck states |
@@ -291,7 +291,7 @@ Digest content contract:
 
 ---
 
-## `import-argocd` Options
+## `import argocd` Options
 
 | Option | Description |
 |--------|-------------|
