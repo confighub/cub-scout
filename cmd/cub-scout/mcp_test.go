@@ -76,6 +76,38 @@ func TestMCPGatewayHandleRequest_ToolsList(t *testing.T) {
 	}
 }
 
+func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
+	gateway := newMCPGatewayWithMode(nil, nil, true)
+	tools := gateway.tools
+
+	cases := []struct {
+		name     string
+		contains []string
+	}{
+		{name: "doctor", contains: []string{"FIRST standalone tool", "Use before explain, trace, or scan"}},
+		{name: "map", contains: []string{"what's running in this cluster", "use doctor first"}},
+		{name: "scan", contains: []string{"Use AFTER doctor", "DO NOT load first"}},
+		{name: "explain", contains: []string{"Use AFTER doctor or map", "DO NOT load for broad cluster inventory or health"}},
+		{name: "trace", contains: []string{"Use AFTER explain", "DO NOT load for broad cluster status"}},
+		{name: "confighub_changesets", contains: []string{"Connected-only", "DO NOT load for current cluster health or ownership"}},
+		{name: "confighub_units", contains: []string{"Connected-only", "use map or doctor first"}},
+		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "use confighub_units first"}},
+	}
+
+	for _, tc := range cases {
+		tool, ok := tools[tc.name]
+		if !ok {
+			t.Fatalf("tool %q not found", tc.name)
+		}
+		desc := tool.Descriptor.Description
+		for _, want := range tc.contains {
+			if !strings.Contains(desc, want) {
+				t.Errorf("%s description missing %q\nfull description: %s", tc.name, want, desc)
+			}
+		}
+	}
+}
+
 func TestMCPGatewayHandleRequest_ToolsCallTrace(t *testing.T) {
 	var gotArgs []string
 	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {

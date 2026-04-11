@@ -158,7 +158,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"doctor": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "doctor",
-				Description: "Compact cluster health summary with ownership, risks, drift, and recommended next steps (doctor --format json). Start here for troubleshooting.",
+				Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Returns ownership, health, risks, drift, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -190,7 +190,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"map": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "map",
-				Description: "List resources with ownership classification (map list --json).",
+				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?' and broad inventory questions. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -213,7 +213,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"scan": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "scan",
-				Description: "Run configuration and runtime scan findings (scan --json).",
+				Description: "Standalone configuration and runtime findings (scan --json). Use AFTER doctor when the user wants detailed risk or misconfiguration findings, not a broad health summary. DO NOT load first for bare 'what's wrong?' if doctor has not run yet.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -236,7 +236,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"trace": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "trace",
-				Description: "Trace ownership chain for one resource (trace --format json).",
+				Description: "Exact ownership and source chain for one resource (trace --format json). Use AFTER explain when the user asks where a resource came from, which source or deployer owns it end-to-end, or what GitOps chain produced it. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor or explain first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -269,7 +269,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"explain": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "explain",
-				Description: "Plain-English ownership and lineage summary (explain --format json).",
+				Description: "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). Use AFTER doctor or map once the user has narrowed to a specific resource. DO NOT load for broad cluster inventory or health; use doctor first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -304,7 +304,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_changesets",
-				Description: "Connected-mode ChangeSet history from ConfigHub (cub changeset list --json).",
+				Description: "Connected-only governed ChangeSet history from ConfigHub (cub changeset list --json). Use when the user asks what changed, who changed it, or what receipt proves a governed write. DO NOT load for current cluster health or ownership; use doctor, explain, or trace first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -335,7 +335,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_units"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_units",
-				Description: "Connected-mode fleet/unit context from ConfigHub (cub unit list --json).",
+				Description: "Connected-only ConfigHub unit and fleet inventory (cub unit list --json). Use when the user asks about governed units, intended state, or which ConfigHub unit corresponds to something already identified. DO NOT load for raw cluster inventory or bare 'what's running?'; use map or doctor first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -373,7 +373,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_unit_get"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_unit_get",
-				Description: "Connected-mode unit details from ConfigHub (cub unit get --json).",
+				Description: "Connected-only exact ConfigHub unit details (cub unit get --json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting; use explain or trace first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
