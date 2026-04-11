@@ -62,11 +62,7 @@ Key deliverables now in place:
 
 Current tracked follow-ons:
 
-| Issue | Title | Notes |
-|-------|-------|-------|
-| #374 | Consolidate four overlapping CLI reference docs | Docs consolidation after the v1.10 release push |
-| #373 | Consolidate three import commands under a single `import` parent | CLI structure cleanup for import flows |
-| #372 | Trim README from 866 to ~350 lines and consolidate structure | Top-level onboarding/docs cleanup |
+- none at the moment
 
 ### CLI migration table (`#375`)
 
@@ -85,6 +81,18 @@ Current tracked follow-ons:
 | `demo` | `quickstart demo` | Hidden deprecated alias kept for one release |
 
 Recent closures:
+- #372 — Trim and restructure README (Apr 11)
+  - Rewrote `README.md` from 845 lines down to 293 lines
+  - Kept one signature trace example and moved deeper command detail to the canonical reference docs
+  - Tightened the top-down flow to overview -> install -> fast path -> interfaces -> docs map
+- #373 — Consolidate import commands under `import` (Apr 11)
+  - `import argocd`, `import cluster-aggregator`, and `import parse-repo` are the canonical command paths
+  - Hidden deprecated aliases remain available for one release: `import-argocd`, `import-cluster-aggregator`, and `parse-repo`
+  - Active examples and docs now point at the canonical subcommand paths
+- #374 — Consolidate overlapping CLI reference docs (Apr 11)
+  - Recast `CLI-GUIDE.md` as a workflow-first guide instead of a second command encyclopedia
+  - Updated `cli-reference.md` to match the current post-#375 command tree
+  - Added `scripts/check-cli-docs/main.go` to verify canonical links and prevent README command tables from drifting back
 - #375 — Reduce top-level command sprawl (Apr 11)
   - Reduced visible top-level command count to 29 while keeping legacy entrypoints as hidden deprecated aliases
   - Canonicalized `compare` as the primary name with `combined` kept as an alias
@@ -174,23 +182,6 @@ Recommended next steps (optional enhancements):
 1. Add `RenderableType` detection to parser (infer from kustomization.yaml vs Chart.yaml)
 2. Add `KustomizePath` to JSON output for kustomize apps
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
-
-Open issues:
-- none at the moment
-
-Recent closure:
-- #372 — Trim and restructure README (Apr 11)
-  - Rewrote `README.md` from 845 lines down to 293 lines
-  - Kept one signature trace example and moved deeper command detail to the canonical reference docs
-  - Tightened the top-down flow to overview -> install -> fast path -> interfaces -> docs map
-- #373 — Consolidate import commands under `import` (Apr 11)
-  - `import argocd`, `import cluster-aggregator`, and `import parse-repo` are the canonical command paths
-  - Hidden deprecated aliases remain available for one release: `import-argocd`, `import-cluster-aggregator`, and `parse-repo`
-  - Active examples and docs now point at the canonical subcommand paths
-- #374 — Consolidate overlapping CLI reference docs (Apr 11)
-  - Recast `CLI-GUIDE.md` as a workflow-first guide instead of a second command encyclopedia
-  - Updated `cli-reference.md` to match the current post-#375 command tree
-  - Added `scripts/check-cli-docs/main.go` to verify canonical links and prevent README command tables from drifting back
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 

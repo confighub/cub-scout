@@ -728,6 +728,43 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * #359 — extend `--presentation` to trace command shipped and closed (ai/human/paired modes)
 * #362 — test runner timeout fix shipped and closed (30s→90s)
 * #368 — recent K8s events in explain/trace shipped and closed (v1.10 wedge)
+* #372 — README trimmed and restructured shipped and closed
+* #373 — canonical import subcommand migration shipped and closed
+* #374 — CLI reference doc consolidation shipped and closed
+* #375 — top-level command sprawl reduction shipped and closed
+* #376 — duplicate skill file reconciliation shipped and closed
+* #377 — MCP cold-test/tool-description hardening + `compare_three_way` tool shipped and closed
+
+---
+
+## v1.10 — Troubleshooting Flow Tightening
+
+**Status:** Released (2026-04-09)
+**Theme:** *Stay in cub-scout longer during incident response and verification*
+**Release notes:** [docs/releases/v1.10.0.md](releases/v1.10.0.md)
+
+Delivered:
+
+* #368 — recent K8s events in `explain` and `trace`
+* #359 — `--presentation` extended to `trace`
+* #362 — `TestContextPack_FormatJSON` stability fix
+
+---
+
+## v1.11 — AI Routing and Surface Cleanup
+
+**Status:** Released (2026-04-11)
+**Theme:** *Make cub-scout easier to choose, easier to route, and easier for AI to use correctly*
+**Release notes:** [docs/releases/v1.11.0.md](releases/v1.11.0.md)
+
+Delivered:
+
+* #375 — reduce top-level command sprawl
+* #377 — improve MCP tool descriptions and add connected `compare_three_way`
+* #376 — reconcile duplicate cub-scout skill files
+* #374 — consolidate overlapping CLI reference docs
+* #373 — canonicalize import subcommand paths
+* #372 — trim and restructure `README.md`
 
 ---
 
@@ -751,6 +788,8 @@ Secret evidence provides visibility into secret dependencies without exposing se
 * v1.7.0 released (2026-03-07) — platform composition (Crossplane + kro), meaning-first grouping experiments, extensibility/fleet slices
 * v1.8.0 released (2026-04-05) — AI gateway foundations, presentation modes, deterministic hints
 * v1.9.0 released (2026-04-05) — conformance workflows (#342), secret evidence (#328 complete); see [release notes](releases/v1.9.0.md)
+* v1.10.0 released (2026-04-09) — troubleshooting flow tightening via recent events, trace presentation, and test stabilization; see [release notes](releases/v1.10.0.md)
+* v1.11.0 released (2026-04-11) — AI routing and surface cleanup via command consolidation, MCP gateway hardening, and docs cleanup; see [release notes](releases/v1.11.0.md)
 
 ### Recent Milestones
 
@@ -763,6 +802,8 @@ Secret evidence provides visibility into secret dependencies without exposing se
 | **v1.7** | Platform Scale | kro, summary storage, Slack digests, custom ownership detectors, webhook streaming, meaning-first grouping experiments |
 | **v1.8** | AI Gateway Foundations | Presentation modes (`--presentation`), invocation-context model, shared-flow seams, deterministic hints |
 | **v1.9** | Conformance & Secrets | Conformance reporting (#342), curated import (#342), secret evidence (#328 complete: CLI + Crossplane + map issues + TUI) |
+| **v1.10** | Troubleshooting Flow | Recent K8s events in `explain`/`trace`, `trace --presentation`, test stability hardening |
+| **v1.11** | AI Routing & Surface Cleanup | Command-tree cleanup, MCP `compare_three_way`, skill consolidation, canonical CLI/docs structure |
 
 ### Strategic Positioning
 

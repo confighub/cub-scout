@@ -153,6 +153,39 @@ Press `?` inside the TUI for shortcuts and panel navigation.
 
 ![cub-scout map dashboard](docs/images/map-dashboard.png)
 
+### Scan Variants
+
+`scan` is the fastest way to audit a cluster or manifest set for known risk patterns.
+The built-in scanner covers **46 patterns**, and the broader
+[confighub-scan](https://github.com/confighubai/confighub-scan) catalog tracks
+**3,513 risk patterns** for deeper policy and detection work.
+
+Common entrypoints:
+
+- `cub-scout scan --state`
+- `cub-scout scan --kyverno`
+- `cub-scout scan --lifecycle-hazards`
+- `cub-scout scan --timing-bombs`
+- `cub-scout scan --dangling`
+- `cub-scout scan --file manifest.yaml`
+- `cub-scout scan --json`
+- `cub-scout scan --normalized-json`
+
+```bash
+cub-scout scan --state
+cub-scout scan --kyverno
+cub-scout scan --lifecycle-hazards
+cub-scout scan --timing-bombs
+cub-scout scan --dangling
+cub-scout scan --file manifest.yaml
+cub-scout scan --json
+cub-scout scan --normalized-json
+```
+
+For detailed scanner behavior and output shape, use
+[docs/reference/commands.md#scan](docs/reference/commands.md#scan) and
+[docs/reference/json-contracts.md](docs/reference/json-contracts.md).
+
 ---
 
 ## Standalone vs Connected
