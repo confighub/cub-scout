@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -305,6 +306,111 @@ func TestBuildExplainSummary_ArgoOwnershipPreserved(t *testing.T) {
 	}
 }
 
+func TestProjectArgoApplicationTraceToResource(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      "Application",
+			Name:      "demo-roundtrip-cubbychat-wet",
+			Namespace: "argocd",
+		},
+		Tool: "argocd",
+		Chain: []agent.ChainLink{
+			{Kind: "OCIRepository", Name: "demo-roundtrip/cubbychat-wet", URL: "oci://oci.hub.confighub.com/unit/demo-roundtrip/cubbychat-wet", Revision: "latest"},
+			{Kind: "Application", Name: "demo-roundtrip-cubbychat-wet", Namespace: "argocd", Status: "Synced / Healthy", Ready: true},
+			{Kind: "Service", Name: "frontend", Namespace: "default", Status: "Synced", Ready: true},
+			{Kind: "Deployment", Name: "frontend", Namespace: "default", Status: "Synced / Healthy", Ready: true},
+		},
+	}
+
+	projected := projectArgoApplicationTraceToResource(result, "Deployment", "frontend", "default")
+	if projected == nil {
+		t.Fatal("projected result is nil")
+	}
+	if projected.Object.Kind != "Deployment" || projected.Object.Name != "frontend" || projected.Object.Namespace != "default" {
+		t.Fatalf("projected object = %+v, want Deployment/frontend default", projected.Object)
+	}
+	if len(projected.Chain) != 3 {
+		t.Fatalf("projected chain len = %d, want 3", len(projected.Chain))
+	}
+	if projected.Chain[0].Kind != "OCIRepository" {
+		t.Fatalf("chain[0].Kind = %q, want OCIRepository", projected.Chain[0].Kind)
+	}
+	if projected.Chain[1].Kind != "Application" {
+		t.Fatalf("chain[1].Kind = %q, want Application", projected.Chain[1].Kind)
+	}
+	if projected.Chain[2].Kind != "Deployment" || projected.Chain[2].Name != "frontend" {
+		t.Fatalf("chain[2] = %+v, want Deployment/frontend", projected.Chain[2])
+	}
+}
+
+func TestTraceOwnedArgoResourceForExplain_UsesApplicationTrace(t *testing.T) {
+	ownership := &agent.Ownership{
+		Type:   agent.OwnerArgo,
+		Name:   "demo-roundtrip-cubbychat-wet",
+		Source: "annotation:argocd.argoproj.io/tracking-id",
+	}
+
+	called := false
+	result, err, attempted := traceOwnedArgoResourceForExplain(
+		context.Background(),
+		"Deployment",
+		"frontend",
+		"default",
+		ownership,
+		func(ctx context.Context, appName string) (*agent.TraceResult, error) {
+			called = true
+			if appName != "demo-roundtrip-cubbychat-wet" {
+				t.Fatalf("appName = %q, want demo-roundtrip-cubbychat-wet", appName)
+			}
+			return &agent.TraceResult{
+				Object: agent.ResourceRef{
+					Kind:      "Application",
+					Name:      appName,
+					Namespace: "argocd",
+				},
+				Tool:  "argocd",
+				Error: "ArgoCD CLI unavailable - showing kubectl-based Application trace only. Run 'argocd login <server>' for full CLI-backed trace context.",
+				Chain: []agent.ChainLink{
+					{Kind: "OCIRepository", Name: "demo-roundtrip/cubbychat-wet", URL: "oci://oci.hub.confighub.com:443/unit/demo-roundtrip/cubbychat-wet", Path: ".", Revision: "latest"},
+					{Kind: "Application", Name: appName, Namespace: "argocd", Status: "Synced / Healthy", Ready: true},
+					{Kind: "Deployment", Name: "frontend", Namespace: "default", Status: "Synced", Ready: true},
+				},
+			}, nil
+		},
+	)
+	if !attempted {
+		t.Fatal("attempted = false, want true")
+	}
+	if !called {
+		t.Fatal("expected app trace function to be called")
+	}
+	if err != nil {
+		t.Fatalf("err = %v, want nil", err)
+	}
+	if result == nil {
+		t.Fatal("result is nil")
+	}
+	if result.Object.Kind != "Deployment" || result.Object.Name != "frontend" {
+		t.Fatalf("result.Object = %+v, want Deployment/frontend", result.Object)
+	}
+	summary := buildExplainSummary(result)
+	if summary.Owner != "ArgoCD" {
+		t.Fatalf("summary.Owner = %q, want ArgoCD", summary.Owner)
+	}
+	if summary.Source == "unknown" {
+		t.Fatalf("summary.Source = %q, want concrete source from Argo application trace", summary.Source)
+	}
+	if !strings.Contains(summary.DeployedVia, "Application/demo-roundtrip-cubbychat-wet") || !strings.Contains(summary.DeployedVia, "Deployment/frontend") {
+		t.Fatalf("summary.DeployedVia = %q, want projected Application -> Deployment chain", summary.DeployedVia)
+	}
+	if !strings.Contains(summary.Health, "Synced") {
+		t.Fatalf("summary.Health = %q, want Synced", summary.Health)
+	}
+	if len(summary.Notes) == 0 || !strings.Contains(summary.Notes[0], "ArgoCD CLI unavailable") {
+		t.Fatalf("summary.Notes = %v, want degraded Argo trace note", summary.Notes)
+	}
+}
+
 // TestBuildOwnershipOnlyTraceResult verifies the helper that creates
 // partial trace results when ownership is detected but tracer fails.
 func TestBuildOwnershipOnlyTraceResult(t *testing.T) {
@@ -403,10 +509,10 @@ func TestBuildExplainSummary_UnknownOwnerStillUnknown(t *testing.T) {
 // returns a "not managed by me" result for a resource owned by a different tool.
 func TestIsNegativeMismatchCandidate(t *testing.T) {
 	tests := []struct {
-		name       string
-		result     *agent.TraceResult
-		ownership  *agent.Ownership
-		wantMatch  bool
+		name      string
+		result    *agent.TraceResult
+		ownership *agent.Ownership
+		wantMatch bool
 	}{
 		{
 			name: "Flux says 'not managed' for ArgoCD-owned resource",
@@ -533,11 +639,11 @@ func TestOwnerTypeToToolName(t *testing.T) {
 // logic extracted from traceForExplain for testability.
 func TestTracerSelectionWithNegativeMismatches(t *testing.T) {
 	tests := []struct {
-		name           string
-		ownership      *agent.Ownership
-		tracerResults  []tracerTestResult // simulates tracer outputs in order
-		wantTool       string
-		wantHasChain   bool
+		name          string
+		ownership     *agent.Ownership
+		tracerResults []tracerTestResult // simulates tracer outputs in order
+		wantTool      string
+		wantHasChain  bool
 	}{
 		{
 			name: "ArgoCD ownership + Argo error + Flux/Helm negative partials -> ArgoCD",
