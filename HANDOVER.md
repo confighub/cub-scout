@@ -176,9 +176,13 @@ Recommended next steps (optional enhancements):
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
 Open issues:
-- #372 — Trim README from 866 to ~350 lines and consolidate structure
+- none at the moment
 
 Recent closure:
+- #372 — Trim and restructure README (Apr 11)
+  - Rewrote `README.md` from 845 lines down to 293 lines
+  - Kept one signature trace example and moved deeper command detail to the canonical reference docs
+  - Tightened the top-down flow to overview -> install -> fast path -> interfaces -> docs map
 - #373 — Consolidate import commands under `import` (Apr 11)
   - `import argocd`, `import cluster-aggregator`, and `import parse-repo` are the canonical command paths
   - Hidden deprecated aliases remain available for one release: `import-argocd`, `import-cluster-aggregator`, and `parse-repo`
