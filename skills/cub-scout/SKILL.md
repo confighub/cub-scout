@@ -21,6 +21,10 @@ Start here when the task is about:
 4. `docs/reference/cli-contract.md`
 5. `docs/reference/json-contracts.md`
 
+For capability-triage and demo conversations such as "can cub-scout do X?" or
+"should I use cub-scout or kubectl here?", also read
+`references/capability-assistant.md`.
+
 If the user is asking you to *use* cub-scout against a real cluster (not work on the repo), load `docs/ai/cub-scout-tasks.md` instead — that file is task-oriented with concrete command flows for operator scenarios.
 
 ## Product value in one breath
@@ -58,13 +62,12 @@ If the user is asking you to *use* cub-scout against a real cluster (not work on
 - MCP standalone tools with `doctor` as the first troubleshooting tool
 - Git preview with ApplicationSet git-generator support
 
-## Open queue bias
+## Queue source
 
-Check GitHub and handover first, but current priority is:
+Do not rely on this file for current milestone state.
 
-1. `#370` structured action-typed hints in JSON and MCP
-2. `#368` broader troubleshooting wedge versus Argo GUI
-3. lower-priority polish / compat (`#359`, `#360`, `#362`)
+Use `HANDOVER.md` plus live GitHub issues for the active queue so the skill does
+not become a second source of truth.
 
 ## Verification rule
 

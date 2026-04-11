@@ -76,7 +76,7 @@ Connected mode adds: change history, fleet comparison, import/promotion workflow
 
 | Guide | For |
 |-------|-----|
-| [AI skill profile](ai/cub-scout-skill.md) | Claude/Codex operating profile |
+| [AI skill bundle](../skills/cub-scout/SKILL.md) | Canonical Claude/Codex operating profile |
 | [Using cub-scout from AI tools](howto/using-cub-scout-from-ai-tool.md) | Claude Code, Cursor, Copilot setup |
 | [Capability assistant playbook](howto/claude-capability-assistant.md) | "Can cub-scout do X?" workflow |
 | [Kubara + Argo debugging](howto/kubara-argo-debugging.md) | ApplicationSet platform debugging |

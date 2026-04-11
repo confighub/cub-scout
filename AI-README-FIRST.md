@@ -14,7 +14,7 @@ If you are starting work in this repo, read files in this order:
 6. `docs/reference/json-contracts.md`
 
 Use these for different AI scenarios:
-- `docs/ai/cub-scout-skill.md` — capability-assistant profile (answering "can cub-scout do X?")
+- `skills/cub-scout/references/capability-assistant.md` — capability-assistant profile (answering "can cub-scout do X?")
 - `docs/ai/cub-scout-tasks.md` — task skill for *using* cub-scout to investigate a real cluster
 - `docs/howto/using-cub-scout-from-ai-tool.md` — demo/operator flows
 

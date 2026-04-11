@@ -3,7 +3,7 @@
 > **Audience:** AI agents (Claude, Codex, etc.) helping a human operator
 > investigate, troubleshoot, or understand a Kubernetes cluster.
 >
-> **Difference from `cub-scout-skill.md`:** That doc is about working *on*
+> **Difference from `skills/cub-scout/SKILL.md`:** That doc is about working *on*
 > the cub-scout repo. This doc is about *using* cub-scout to answer real
 > operator questions.
 

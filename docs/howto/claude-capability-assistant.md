@@ -3,7 +3,7 @@
 For interface selection and broader expectations (Claude session vs CLI vs Slack), see:
 [using-cub-scout-from-ai-tool.md](using-cub-scout-from-ai-tool.md).
 For the shared Claude/Codex skill profile, see:
-[../ai/cub-scout-skill.md](../ai/cub-scout-skill.md).
+[../../skills/cub-scout/SKILL.md](../../skills/cub-scout/SKILL.md).
 
 Use this guide when you want Claude to answer:
 
@@ -16,14 +16,7 @@ Use this guide when you want Claude to answer:
 Paste this into Claude at session start:
 
 ```text
-You are my cub-scout + ConfigHub capability assistant.
-For every request:
-1) Decide if this is possible now with cub-scout standalone, cub-scout connected mode, or ConfigHub.
-2) Explain the shortest path with exact commands.
-3) If impossible or partial, state the current gap clearly.
-4) Ask me whether to file a GitHub issue for the gap.
-5) If I say yes, draft the issue body with evidence from command output.
-Never guess command behavior; prefer command help and docs evidence.
+First read AI-README-FIRST.md, then load and follow skills/cub-scout/SKILL.md. For capability-triage or demo requests, also load skills/cub-scout/references/capability-assistant.md.
 ```
 
 ## 2) Capability Triage Flow

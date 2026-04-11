@@ -12,15 +12,18 @@ For coding/review sessions inside this repo, load:
 - [../../AI-README-FIRST.md](../../AI-README-FIRST.md)
 
 Canonical skill file:
-- [../ai/cub-scout-skill.md](../ai/cub-scout-skill.md)
+- [../../skills/cub-scout/SKILL.md](../../skills/cub-scout/SKILL.md)
+
+Long-form capability-assistant reference:
+- [../../skills/cub-scout/references/capability-assistant.md](../../skills/cub-scout/references/capability-assistant.md)
 
 At session start, ask your AI:
 
 ```text
-First read AI-README-FIRST.md, then load and follow docs/ai/cub-scout-skill.md as your operating profile for this session.
+First read AI-README-FIRST.md, then load and follow skills/cub-scout/SKILL.md. For capability-triage or demo requests, also load skills/cub-scout/references/capability-assistant.md.
 ```
 
-If your AI tool cannot load local files, copy the `Canonical Prompt` from that skill file.
+If your AI tool cannot load local files, copy the session prompt from the capability-assistant reference file.
 
 ## Related Tool Abilities
 
@@ -193,7 +196,7 @@ Best model:
 ## Canonical AI Prompt
 
 Source of truth:
-- [../ai/cub-scout-skill.md](../ai/cub-scout-skill.md) (`Canonical Prompt` section)
+- [../../skills/cub-scout/references/capability-assistant.md](../../skills/cub-scout/references/capability-assistant.md)
 
 Paste at the start of an AI session if needed:
 

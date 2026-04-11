@@ -45,7 +45,7 @@ go build ./cmd/cub-scout
 For demo flow "Can I do X with cub-scout or ConfigHub?":
 
 - Start from [AI-README-FIRST.md](AI-README-FIRST.md) for current tool boundaries and issue queue.
-- Start from shared skill profile: [docs/ai/cub-scout-skill.md](docs/ai/cub-scout-skill.md)
+- Start from shared skill profile: [skills/cub-scout/SKILL.md](skills/cub-scout/SKILL.md)
 - Use [docs/howto/claude-capability-assistant.md](docs/howto/claude-capability-assistant.md) as the operating playbook.
 - If a request is not currently supported, file using:
   - `./scripts/create-ai-capability-issue.sh ...`
