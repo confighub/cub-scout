@@ -58,9 +58,16 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| (none) | No open issues | All tracked issues closed |
+| #375 | Reduce top-level command sprawl | Product/UX cleanup of the command surface |
+| #374 | Consolidate four overlapping CLI reference docs | Docs consolidation after the v1.10 release push |
+| #373 | Consolidate three import commands under a single `import` parent | CLI structure cleanup for import flows |
+| #372 | Trim README from 866 to ~350 lines and consolidate structure | Top-level onboarding/docs cleanup |
 
 Recent closures:
+- #377 — Audit `cub-scout mcp serve` tool descriptions against the cold-test sharpening lessons (Apr 11)
+  - Sharpened MCP tool descriptions around first-tool identity, chain boundaries, and fallbacks
+  - Added connected `compare_three_way` MCP tool as a thin read-only wrapper over `cub-scout compare three-way --format json`
+  - Cold-test gap for “compare governed state to live state” is now covered by the MCP surface itself
 - #368 — Beat Argo CD GUI as first stop for troubleshooting (Apr 9) — v1.10 wedge
   - Added recent K8s events to `explain` and `trace` commands
   - Bounded (top 5), prioritized (errors/warnings first), readable age format
@@ -143,7 +150,11 @@ Recommended next steps (optional enhancements):
 2. Add `KustomizePath` to JSON output for kustomize apps
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
-Open issues: none — all tracked issues now closed
+Open issues:
+- #375 — Reduce top-level command sprawl (47 commands today)
+- #374 — Consolidate four overlapping CLI reference docs
+- #373 — Consolidate three import commands under a single `import` parent
+- #372 — Trim README from 866 to ~350 lines and consolidate structure
 
 ## Git Import Architecture (Critical Context for #363 / #364)
 

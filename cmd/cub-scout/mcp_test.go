@@ -35,6 +35,7 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 	}
 
 	want := []string{
+		"compare_three_way",
 		"confighub_changesets",
 		"confighub_unit_get",
 		"confighub_units",
@@ -84,15 +85,16 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		name     string
 		contains []string
 	}{
-			{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "Use before explain, trace, or scan"}},
-			{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
-			{name: "scan", contains: []string{"Use AFTER doctor", "DO NOT load first"}},
-			{name: "explain", contains: []string{"Use AFTER doctor or map", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
-			{name: "trace", contains: []string{"Use AFTER explain", "DO NOT load for broad cluster status"}},
-			{name: "confighub_changesets", contains: []string{"Connected-only", "DO NOT load for current cluster health or ownership"}},
-			{name: "confighub_units", contains: []string{"Connected-only", "Load after doctor, map, explain, or trace", "use map or doctor first"}},
-			{name: "confighub_unit_get", contains: []string{"Load ONLY after", "use confighub_units first", "DO NOT load for bare cluster troubleshooting or governed-vs-live comparison"}},
-		}
+		{name: "compare_three_way", contains: []string{"governed state agrees with live state", "Load after doctor, explain, or trace", "use doctor first"}},
+		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "Use before explain, trace, or scan"}},
+		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
+		{name: "scan", contains: []string{"Use AFTER doctor", "DO NOT load first"}},
+		{name: "explain", contains: []string{"Use AFTER doctor or map", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
+		{name: "trace", contains: []string{"Use AFTER explain", "DO NOT load for broad cluster status"}},
+		{name: "confighub_changesets", contains: []string{"Connected-only", "DO NOT load for current cluster health or ownership"}},
+		{name: "confighub_units", contains: []string{"Connected-only", "Load after doctor, map, explain, or trace", "use map or doctor first"}},
+		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "use confighub_units first", "DO NOT load for bare cluster troubleshooting or governed-vs-live comparison"}},
+	}
 
 	for _, tc := range cases {
 		tool, ok := tools[tc.name]
@@ -240,6 +242,91 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedChangesets(t *testing.T) {
 	wantConnected := []string{"changeset", "list", "--json", "--space", "platform", "--where", "Slug LIKE 'release-%'"}
 	if !reflect.DeepEqual(gotConnectedArgs, wantConnected) {
 		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantConnected)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallCompareThreeWay(t *testing.T) {
+	var gotStandaloneArgs []string
+	var gotConnectedArgs []string
+
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			gotStandaloneArgs = append([]string(nil), args...)
+			return `{"agreement":{"state":"agreed"}}`, nil
+		},
+		func(ctx context.Context, args []string) (string, error) {
+			gotConnectedArgs = append([]string(nil), args...)
+			return `{"connected":true}`, nil
+		},
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`11.5`),
+		Method:  "tools/call",
+		Params: json.RawMessage(`{
+			"name":"compare_three_way",
+			"arguments":{"scope":"deploy/api","namespace":"payments"}
+		}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	if len(gotConnectedArgs) != 0 {
+		t.Fatalf("connected runner should not be used, got args %v", gotConnectedArgs)
+	}
+	wantStandalone := []string{"compare", "three-way", "--format", "json", "--scope", "deploy/api", "-n", "payments"}
+	if !reflect.DeepEqual(gotStandaloneArgs, wantStandalone) {
+		t.Fatalf("standalone args = %v, want %v", gotStandaloneArgs, wantStandalone)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallCompareThreeWayValidationError(t *testing.T) {
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			t.Fatal("runner should not be called for validation error")
+			return "", nil
+		},
+		nil,
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`11.6`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"compare_three_way","arguments":{}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	var result struct {
+		IsError bool `json:"isError"`
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if !result.IsError {
+		t.Fatal("result.isError = false, want true")
+	}
+	if len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, "scope") {
+		t.Fatalf("unexpected error text: %+v", result.Content)
 	}
 }
 

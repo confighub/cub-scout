@@ -172,7 +172,7 @@ cub-scout mcp serve
   - `map`
   - `scan`
   - `trace`
-- Connected mode may add read-only ConfigHub query tools.
+- Connected mode adds read-only connected comparison plus ConfigHub query tools.
 - MCP tool responses are backed by the existing CLI JSON surfaces rather than a separate hand-built fact model.
 
 ### Stable `doctor` MCP Surface
@@ -182,6 +182,15 @@ cub-scout mcp serve
   - `namespace` (optional string)
   - `top` (optional integer)
 - Backed by `cub-scout doctor --format json`
+
+### Stable `compare_three_way` MCP Surface
+
+- Tool name: `compare_three_way`
+- Availability: connected mode only
+- Parameters:
+  - `scope` (required string)
+  - `namespace` (optional string)
+- Backed by `cub-scout compare three-way --format json`
 
 ---
 
