@@ -7,12 +7,14 @@ Run cub-scout as a read-only MCP server over stdio:
 ```
 
 This exposes these standalone tools:
+- `doctor`
 - `map`
 - `trace`
 - `scan`
 - `explain`
 
 When connected to ConfigHub (`cub auth login`), it additionally exposes:
+- `compare_three_way`
 - `confighub_changesets`
 - `confighub_units`
 - `confighub_unit_get`
@@ -21,10 +23,12 @@ When connected to ConfigHub (`cub auth login`), it additionally exposes:
 
 The gateway reuses existing CLI JSON command outputs:
 
+- `doctor` -> `doctor --format json`
 - `map` -> `map list --json`
 - `trace` -> `trace --format json`
 - `scan` -> `scan --json`
 - `explain` -> `explain --format json`
+- `compare_three_way` -> `compare three-way --format json`
 - `confighub_changesets` -> `cub changeset list --json`
 - `confighub_units` -> `cub unit list --json`
 - `confighub_unit_get` -> `cub unit get --json`

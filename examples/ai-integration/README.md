@@ -48,6 +48,13 @@ Use a custom output directory:
 - [Cursor](cursor/README.md)
 - [GitHub Copilot](copilot/README.md)
 
+## Cold-Test Harness
+
+For repeatable shell-vs-MCP evaluation, use:
+
+- [AI Gateway Cold-Test Prompts](ai-gateway-cold-test-prompts.md)
+- [AI Gateway Value Test](../../docs/reference/ai-gateway-value-test.md)
+
 ## Failed Run -> Issue Draft
 
 When an AI-assisted session fails or is partial, capture an issue-ready draft:
