@@ -15,14 +15,14 @@ import (
 
 var applyCmd = &cobra.Command{
 	Use:   "apply [proposal.json]",
-	Short: "Apply a proposal from JSON (GUI)",
+	Short: "Apply a proposal from JSON",
 	Long: `Apply an App model proposal to create resources in ConfigHub.
 
-This is the GUI companion to "cub-scout import".
+This is the proposal-application companion to "cub-scout import".
 
 Workflow:
   TUI (interactive): cub-scout import
-  GUI (from JSON):   cub-scout import --json | cub-scout apply -
+  JSON pipeline:     cub-scout import --json | cub-scout import apply -
 
 The proposal can come from:
 - A JSON file (from "cub-scout import --json")
@@ -32,16 +32,24 @@ Examples:
   # Single cluster: generate, edit, apply
   cub-scout import --json > proposal.json
   # (GUI displays, user edits)
-  cub-scout apply proposal.json
+  cub-scout import apply proposal.json
 
   # Fleet: multiple clusters → unified proposal → apply
-  cub-scout fleet cluster*.json --suggest --json | cub-scout apply -
+  cub-scout import cluster-aggregator cluster*.json --suggest --json | cub-scout import apply -
 
   # Dry-run to preview
-  cub-scout apply proposal.json --dry-run
+  cub-scout import apply proposal.json --dry-run
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runApply,
+}
+
+var importApplyCmd = &cobra.Command{
+	Use:   "apply [proposal.json]",
+	Short: "Apply a proposal from JSON",
+	Long:  applyCmd.Long,
+	Args:  cobra.MaximumNArgs(1),
+	RunE:  runApply,
 }
 
 var (
@@ -50,9 +58,17 @@ var (
 )
 
 func init() {
-	applyCmd.Flags().BoolVar(&applyDryRun, "dry-run", false, "Preview what would be created without making changes")
-	applyCmd.Flags().BoolVar(&applyNoLog, "no-log", false, "Disable logging to file")
+	addApplyFlags(applyCmd)
+	addApplyFlags(importApplyCmd)
+	applyCmd.Hidden = true
+	applyCmd.Deprecated = "use 'cub-scout import apply' instead"
+	importCmd.AddCommand(importApplyCmd)
 	rootCmd.AddCommand(applyCmd)
+}
+
+func addApplyFlags(cmd *cobra.Command) {
+	cmd.Flags().BoolVar(&applyDryRun, "dry-run", false, "Preview what would be created without making changes")
+	cmd.Flags().BoolVar(&applyNoLog, "no-log", false, "Disable logging to file")
 }
 
 // ApplyInput represents the JSON input for apply
@@ -128,7 +144,7 @@ func runApply(cmd *cobra.Command, args []string) error {
 	} else if input.App != "" {
 		// Direct proposal format
 		proposal = &FullProposal{
-			App:       input.App,
+			App:            input.App,
 			Deployer:       input.Deployer,
 			Reconciliation: input.Reconciliation,
 			Units:          input.Units,

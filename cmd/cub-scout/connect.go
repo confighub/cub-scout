@@ -49,44 +49,60 @@ You can connect in two ways:
 
 Examples:
   # Direct connect with bearer token
-  cub-scout connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod --map
+  cub-scout setup connect https://api.example.com:6443 --token "$K8S_BEARER_TOKEN" --context prod --map
 
   # Direct connect with client cert auth
-  cub-scout connect api.example.com:6443 \
+  cub-scout setup connect api.example.com:6443 \
     --client-cert ~/.kube/client.crt \
     --client-key ~/.kube/client.key \
     --context prod
 
   # Import an existing context from shared kubeconfig and launch map immediately
-  cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
+  cub-scout setup connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --map
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runConnect,
 }
 
+var setupConnectCmd = &cobra.Command{
+	Use:   "connect [server-url]",
+	Short: "Connect to a Kubernetes cluster and start exploring",
+	Long:  connectCmd.Long,
+	Args:  cobra.MaximumNArgs(1),
+	RunE:  runConnect,
+}
+
 func init() {
-	connectCmd.Flags().StringVar(&connectServer, "server", "", "Kubernetes API server URL (https://host:6443). If omitted, first argument is used.")
-	connectCmd.Flags().StringVar(&connectToken, "token", "", "Bearer token for authentication (or set K8S_BEARER_TOKEN)")
-	connectCmd.Flags().StringVar(&connectUsername, "username", "", "Username for basic auth")
-	connectCmd.Flags().StringVar(&connectPassword, "password", "", "Password for basic auth")
-	connectCmd.Flags().StringVar(&connectClientCert, "client-cert", "", "Client certificate file path for TLS auth")
-	connectCmd.Flags().StringVar(&connectClientKey, "client-key", "", "Client key file path for TLS auth")
-	connectCmd.Flags().StringVar(&connectContextName, "context", "", "Context name to create (default: derived from server/selected context)")
-	connectCmd.Flags().StringVar(&connectClusterName, "cluster", "", "Cluster entry name (default: <context>-cluster)")
-	connectCmd.Flags().StringVar(&connectUserName, "user", "", "User entry name (default: <context>-user)")
-	connectCmd.Flags().StringVarP(&connectNamespace, "namespace", "n", "default", "Default namespace for the context")
-	connectCmd.Flags().StringVar(&connectCAFile, "ca-file", "", "Certificate authority file path")
-	connectCmd.Flags().BoolVar(&connectInsecure, "insecure", false, "Skip TLS verification")
-	connectCmd.Flags().StringVar(&connectSourceKubeconfig, "from-kubeconfig", "", "Import context from this kubeconfig file")
-	connectCmd.Flags().StringVar(&connectSourceContext, "from-context", "", "Context name inside --from-kubeconfig to import")
-	connectCmd.Flags().StringVar(&connectKubeconfigPath, "kubeconfig", "", "Destination kubeconfig path (default: first KUBECONFIG entry or ~/.kube/config)")
-	connectCmd.Flags().BoolVar(&connectSkipVerify, "skip-verify", false, "Skip Kubernetes API connectivity check")
-	connectCmd.Flags().BoolVar(&connectLaunchMap, "map", false, "Launch cub-scout map immediately after connect")
-	connectCmd.Flags().BoolVar(&connectLaunchMap, "go", false, "Deprecated alias for --map")
-	_ = connectCmd.Flags().MarkHidden("go")
-	_ = connectCmd.Flags().MarkDeprecated("go", "use --map")
+	addConnectFlags(connectCmd)
+	addConnectFlags(setupConnectCmd)
+	connectCmd.Hidden = true
+	connectCmd.Deprecated = "use 'cub-scout setup connect' instead"
 
 	rootCmd.AddCommand(connectCmd)
+	setupCmd.AddCommand(setupConnectCmd)
+}
+
+func addConnectFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&connectServer, "server", "", "Kubernetes API server URL (https://host:6443). If omitted, first argument is used.")
+	cmd.Flags().StringVar(&connectToken, "token", "", "Bearer token for authentication (or set K8S_BEARER_TOKEN)")
+	cmd.Flags().StringVar(&connectUsername, "username", "", "Username for basic auth")
+	cmd.Flags().StringVar(&connectPassword, "password", "", "Password for basic auth")
+	cmd.Flags().StringVar(&connectClientCert, "client-cert", "", "Client certificate file path for TLS auth")
+	cmd.Flags().StringVar(&connectClientKey, "client-key", "", "Client key file path for TLS auth")
+	cmd.Flags().StringVar(&connectContextName, "context", "", "Context name to create (default: derived from server/selected context)")
+	cmd.Flags().StringVar(&connectClusterName, "cluster", "", "Cluster entry name (default: <context>-cluster)")
+	cmd.Flags().StringVar(&connectUserName, "user", "", "User entry name (default: <context>-user)")
+	cmd.Flags().StringVarP(&connectNamespace, "namespace", "n", "default", "Default namespace for the context")
+	cmd.Flags().StringVar(&connectCAFile, "ca-file", "", "Certificate authority file path")
+	cmd.Flags().BoolVar(&connectInsecure, "insecure", false, "Skip TLS verification")
+	cmd.Flags().StringVar(&connectSourceKubeconfig, "from-kubeconfig", "", "Import context from this kubeconfig file")
+	cmd.Flags().StringVar(&connectSourceContext, "from-context", "", "Context name inside --from-kubeconfig to import")
+	cmd.Flags().StringVar(&connectKubeconfigPath, "kubeconfig", "", "Destination kubeconfig path (default: first KUBECONFIG entry or ~/.kube/config)")
+	cmd.Flags().BoolVar(&connectSkipVerify, "skip-verify", false, "Skip Kubernetes API connectivity check")
+	cmd.Flags().BoolVar(&connectLaunchMap, "map", false, "Launch cub-scout map immediately after connect")
+	cmd.Flags().BoolVar(&connectLaunchMap, "go", false, "Deprecated alias for --map")
+	_ = cmd.Flags().MarkHidden("go")
+	_ = cmd.Flags().MarkDeprecated("go", "use --map")
 }
 
 func runConnect(cmd *cobra.Command, args []string) error {

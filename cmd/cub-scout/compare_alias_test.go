@@ -5,20 +5,20 @@ import (
 	"testing"
 )
 
-func TestCompareAliasRegisteredOnCombined(t *testing.T) {
+func TestCombinedAliasRegisteredOnCompare(t *testing.T) {
 	if combinedCmd == nil {
 		t.Fatal("combinedCmd is nil")
 	}
 
 	found := false
 	for _, alias := range combinedCmd.Aliases {
-		if alias == "compare" {
+		if alias == "combined" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Fatal("expected combined command to expose \"compare\" alias")
+		t.Fatal("expected compare command to expose \"combined\" alias")
 	}
 }
 
@@ -30,7 +30,20 @@ func TestCompareAliasHelp(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(out, "combined") {
-		t.Fatalf("expected compare help output to route through combined command, got:\n%s", out)
+	if !strings.Contains(out, "compare") {
+		t.Fatalf("expected compare help output to mention compare command, got:\n%s", out)
+	}
+}
+
+func TestCombinedLegacyAliasHelp(t *testing.T) {
+	out := captureStdout(t, func() {
+		rootCmd.SetArgs([]string{"combined", "--help"})
+		if err := rootCmd.Execute(); err != nil {
+			t.Fatalf("combined --help returned error: %v", err)
+		}
+	})
+
+	if !strings.Contains(out, "compare") {
+		t.Fatalf("expected combined help output to route through compare command, got:\n%s", out)
 	}
 }

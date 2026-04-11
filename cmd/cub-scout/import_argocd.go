@@ -112,41 +112,57 @@ the actual workload resources.
 
 Examples:
   # List available ArgoCD Applications
-  cub-scout import-argocd --list
+  cub-scout import argocd --list
 
   # Import a specific ArgoCD Application
-  cub-scout import-argocd guestbook
+  cub-scout import argocd guestbook
 
   # Preview what would be imported (dry-run)
-  cub-scout import-argocd guestbook --dry-run
+  cub-scout import argocd guestbook --dry-run
 
   # Show YAML content that would be imported
-  cub-scout import-argocd guestbook --show-yaml
+  cub-scout import argocd guestbook --show-yaml
 
   # Import and disable ArgoCD auto-sync (keep App for reference)
-  cub-scout import-argocd guestbook --disable-sync
+  cub-scout import argocd guestbook --disable-sync
 
   # Import and delete the ArgoCD Application (hand off to ConfigHub)
-  cub-scout import-argocd guestbook --delete-app
+  cub-scout import argocd guestbook --delete-app
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runImportArgoCD,
 }
 
+var importArgoSubCmd = &cobra.Command{
+	Use:   "argocd [application-name]",
+	Short: "Import an ArgoCD Application into ConfigHub",
+	Long:  importArgoCmd.Long,
+	Args:  cobra.MaximumNArgs(1),
+	RunE:  runImportArgoCD,
+}
+
 func init() {
-	importArgoCmd.Flags().StringVar(&argoImportNamespace, "argocd-namespace", "argocd", "Namespace where ArgoCD is installed")
-	importArgoCmd.Flags().StringVar(&argoImportSpace, "space", "", "ConfigHub space to import into (auto-inferred if not specified)")
-	importArgoCmd.Flags().BoolVar(&argoImportDryRun, "dry-run", false, "Preview what would be imported without making changes")
-	importArgoCmd.Flags().BoolVar(&argoImportShowYAML, "show-yaml", false, "Show YAML content that would be imported (implies --dry-run)")
-	importArgoCmd.Flags().BoolVar(&argoImportRaw, "raw", false, "Keep raw YAML with all runtime fields (default: clean)")
-	importArgoCmd.Flags().BoolVar(&argoImportList, "list", false, "List available ArgoCD Applications")
-	importArgoCmd.Flags().BoolVarP(&argoImportYes, "yes", "y", false, "Skip confirmation prompts")
-	importArgoCmd.Flags().BoolVar(&argoImportDisableSync, "disable-sync", false, "Disable auto-sync on the ArgoCD Application after import")
-	importArgoCmd.Flags().BoolVar(&argoImportDeleteApp, "delete-app", false, "Delete the ArgoCD Application after import (keeps resources)")
-	importArgoCmd.Flags().BoolVar(&argoImportTestUpdate, "test-update", false, "Test ConfigHub pipeline by adding an annotation to verify it can update resources")
-	importArgoCmd.Flags().BoolVar(&argoImportTestRollout, "test-rollout", false, "Test ConfigHub pipeline by triggering a rollout restart")
+	addImportArgoFlags(importArgoCmd)
+	addImportArgoFlags(importArgoSubCmd)
+	importArgoCmd.Hidden = true
+	importArgoCmd.Deprecated = "use 'cub-scout import argocd' instead"
+	importCmd.AddCommand(importArgoSubCmd)
 
 	rootCmd.AddCommand(importArgoCmd)
+}
+
+func addImportArgoFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&argoImportNamespace, "argocd-namespace", "argocd", "Namespace where ArgoCD is installed")
+	cmd.Flags().StringVar(&argoImportSpace, "space", "", "ConfigHub space to import into (auto-inferred if not specified)")
+	cmd.Flags().BoolVar(&argoImportDryRun, "dry-run", false, "Preview what would be imported without making changes")
+	cmd.Flags().BoolVar(&argoImportShowYAML, "show-yaml", false, "Show YAML content that would be imported (implies --dry-run)")
+	cmd.Flags().BoolVar(&argoImportRaw, "raw", false, "Keep raw YAML with all runtime fields (default: clean)")
+	cmd.Flags().BoolVar(&argoImportList, "list", false, "List available ArgoCD Applications")
+	cmd.Flags().BoolVarP(&argoImportYes, "yes", "y", false, "Skip confirmation prompts")
+	cmd.Flags().BoolVar(&argoImportDisableSync, "disable-sync", false, "Disable auto-sync on the ArgoCD Application after import")
+	cmd.Flags().BoolVar(&argoImportDeleteApp, "delete-app", false, "Delete the ArgoCD Application after import (keeps resources)")
+	cmd.Flags().BoolVar(&argoImportTestUpdate, "test-update", false, "Test ConfigHub pipeline by adding an annotation to verify it can update resources")
+	cmd.Flags().BoolVar(&argoImportTestRollout, "test-rollout", false, "Test ConfigHub pipeline by triggering a rollout restart")
 }
 
 func runImportArgoCD(cmd *cobra.Command, args []string) error {
@@ -307,7 +323,7 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 		fmt.Printf("⚠ App of Apps detected - this Application manages other Applications,\n")
 		fmt.Printf("  not workload resources. Import the child Applications instead:\n")
 		for _, child := range childApps {
-			fmt.Printf("  → cub-scout import-argocd %s\n", child)
+			fmt.Printf("  → cub-scout import argocd %s\n", child)
 		}
 		fmt.Println()
 		fmt.Println("No unit will be created for the App of Apps parent.")
@@ -1046,7 +1062,7 @@ func listArgoApplicationsCmd(ctx context.Context, client dynamic.Interface, name
 
 	fmt.Println()
 	fmt.Println("To import an application:")
-	fmt.Println("  cub-scout import-argocd <application-name> --dry-run")
+	fmt.Println("  cub-scout import argocd <application-name> --dry-run")
 
 	return nil
 }

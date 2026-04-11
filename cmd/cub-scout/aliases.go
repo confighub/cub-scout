@@ -56,6 +56,10 @@ See also:
 }
 
 func init() {
+	discoverCmd.Hidden = true
+	discoverCmd.Deprecated = "use 'cub-scout map workloads' instead"
+	healthCmd.Hidden = true
+	healthCmd.Deprecated = "use 'cub-scout map issues' instead"
 	rootCmd.AddCommand(discoverCmd)
 	rootCmd.AddCommand(healthCmd)
 }

@@ -33,23 +33,38 @@ Supports multiple architecture patterns:
 
 Examples:
   # Parse a remote repo
-  cub-scout parse-repo --url https://github.com/fluxcd/flux2-kustomize-helm-example
+  cub-scout import parse-repo --url https://github.com/fluxcd/flux2-kustomize-helm-example
 
   # Parse a local directory
-  cub-scout parse-repo --path ./my-gitops-repo
+  cub-scout import parse-repo --path ./my-gitops-repo
 
   # JSON output
-  cub-scout parse-repo --url https://github.com/org/repo --json
+  cub-scout import parse-repo --url https://github.com/org/repo --json
 `,
 	RunE: runParseRepo,
 }
 
+var importParseRepoCmd = &cobra.Command{
+	Use:   "parse-repo",
+	Short: "Parse a GitOps repository structure",
+	Long:  parseRepoCmd.Long,
+	RunE:  runParseRepo,
+}
+
 func init() {
-	parseRepoCmd.Flags().StringVar(&parseRepoURL, "url", "", "Git repository URL to clone and parse")
-	parseRepoCmd.Flags().StringVar(&parseRepoPath, "path", "", "Local path to parse")
-	parseRepoCmd.Flags().BoolVar(&parseRepoJSON, "json", false, "Output as JSON")
+	addParseRepoFlags(parseRepoCmd)
+	addParseRepoFlags(importParseRepoCmd)
+	parseRepoCmd.Hidden = true
+	parseRepoCmd.Deprecated = "use 'cub-scout import parse-repo' instead"
+	importCmd.AddCommand(importParseRepoCmd)
 
 	rootCmd.AddCommand(parseRepoCmd)
+}
+
+func addParseRepoFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&parseRepoURL, "url", "", "Git repository URL to clone and parse")
+	cmd.Flags().StringVar(&parseRepoPath, "path", "", "Local path to parse")
+	cmd.Flags().BoolVar(&parseRepoJSON, "json", false, "Output as JSON")
 }
 
 func runParseRepo(cmd *cobra.Command, args []string) error {

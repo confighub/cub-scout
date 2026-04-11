@@ -31,6 +31,8 @@ Examples:
 	RunE: runSetup,
 }
 
+var setupCompletionCmd = newCompletionCommand("completion [bash|zsh|fish|powershell]", "Generate shell completion script")
+
 var (
 	setupShell  string
 	setupDryRun bool
@@ -39,6 +41,7 @@ var (
 func init() {
 	setupCmd.Flags().StringVar(&setupShell, "shell", "", "Shell to configure (bash, zsh, fish). Auto-detects if not specified.")
 	setupCmd.Flags().BoolVar(&setupDryRun, "dry-run", false, "Show what would be done without making changes")
+	setupCmd.AddCommand(setupCompletionCmd)
 	rootCmd.AddCommand(setupCmd)
 }
 

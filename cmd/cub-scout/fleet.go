@@ -36,14 +36,14 @@ type FleetSummary struct {
 
 var fleetCmd = &cobra.Command{
 	Use:   "import-cluster-aggregator",
-	Short: "Aggregate imports from multiple clusters (GUI)",
+	Short: "Aggregate imports from multiple clusters",
 	Long: `Aggregate import data from multiple clusters into a fleet view.
 
-This is the GUI/multi-cluster companion to "cub-scout import".
+This is the multi-cluster companion to "cub-scout import".
 
 Workflow:
-  TUI (1 cluster):  cub-scout import
-  GUI (N clusters): cub-scout import --json → import-cluster-aggregator → apply
+  TUI (1 cluster):   cub-scout import
+  Multi-cluster:     cub-scout import --json → import cluster-aggregator → import apply
 
 Input can be:
 - Multiple JSON files from "cub-scout import --json"
@@ -55,15 +55,22 @@ Examples:
     kubectl config use-context $ctx
     cub-scout import --json > ${ctx}.json
   done
-  cub-scout import-cluster-aggregator cluster-*.json --suggest --json | cub-scout apply -
+  cub-scout import cluster-aggregator cluster-*.json --suggest --json | cub-scout import apply -
 
   # Generate unified proposal
-  cub-scout import-cluster-aggregator cluster1.json cluster2.json --suggest
+  cub-scout import cluster-aggregator cluster1.json cluster2.json --suggest
 
   # Just aggregate (no proposal)
-  cub-scout import-cluster-aggregator cluster1.json cluster2.json cluster3.json
+  cub-scout import cluster-aggregator cluster1.json cluster2.json cluster3.json
 `,
 	RunE: runFleet,
+}
+
+var importClusterAggregatorCmd = &cobra.Command{
+	Use:   "cluster-aggregator",
+	Short: "Aggregate imports from multiple clusters",
+	Long:  fleetCmd.Long,
+	RunE:  runFleet,
 }
 
 var (
@@ -72,9 +79,17 @@ var (
 )
 
 func init() {
-	fleetCmd.Flags().BoolVar(&fleetJSON, "json", false, "Output as JSON")
-	fleetCmd.Flags().BoolVar(&fleetSuggest, "suggest", false, "Generate unified App model proposal")
+	addFleetFlags(fleetCmd)
+	addFleetFlags(importClusterAggregatorCmd)
+	fleetCmd.Hidden = true
+	fleetCmd.Deprecated = "use 'cub-scout import cluster-aggregator' instead"
+	importCmd.AddCommand(importClusterAggregatorCmd)
 	rootCmd.AddCommand(fleetCmd)
+}
+
+func addFleetFlags(cmd *cobra.Command) {
+	cmd.Flags().BoolVar(&fleetJSON, "json", false, "Output as JSON")
+	cmd.Flags().BoolVar(&fleetSuggest, "suggest", false, "Generate unified App model proposal")
 }
 
 // parseFleetInput handles both raw ImportResult and CombinedResult formats
@@ -210,8 +225,8 @@ func runFleet(cmd *cobra.Command, args []string) error {
 // buildFleetProposal creates a unified proposal from fleet data
 func buildFleetProposal(fleet *FleetResult) *FullProposal {
 	proposal := &FullProposal{
-		App: "fleet-team",
-		Units:    []UnitProposal{},
+		App:   "fleet-team",
+		Units: []UnitProposal{},
 	}
 
 	// Track deployers across clusters

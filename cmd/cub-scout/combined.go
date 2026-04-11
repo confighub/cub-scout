@@ -58,8 +58,8 @@ type GitCompareEntry struct {
 }
 
 var combinedCmd = &cobra.Command{
-	Use:   "combined",
-	Short: "Show Git repo structure + Cluster workloads aligned",
+	Use:   "compare",
+	Short: "Compare Git repo structure + cluster workloads",
 	Long: `Parse a Git repo and scan a cluster, showing alignment between them.
 
 This helps you understand:
@@ -78,32 +78,32 @@ Examples:
   cub-scout compare deploy/my-app -n prod --format json
 
   # Combine Git repo with current cluster
-  cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo
+  cub-scout compare --git-url https://github.com/org/gitops-repo --namespace demo
 
   # Generate App model proposal
-  cub-scout combined --git-url https://github.com/org/gitops-repo --namespace demo --suggest
+  cub-scout compare --git-url https://github.com/org/gitops-repo --namespace demo --suggest
 
   # Preview what would be created (dry-run)
-  cub-scout combined --namespace demo --suggest --apply --dry-run
+  cub-scout compare --namespace demo --suggest --apply --dry-run
 
   # Apply: create App and Deployments in ConfigHub
-  cub-scout combined --namespace demo --suggest --apply
+  cub-scout compare --namespace demo --suggest --apply
 
   # Use local Git repo with JSON output
-  cub-scout combined --git-path ./my-repo --namespace demo --suggest --json
+  cub-scout compare --git-path ./my-repo --namespace demo --suggest --json
 
   # Offline Git ↔ cluster compare from a debug bundle
-  cub-scout combined --git-path ./my-repo --bundle ./debug-bundle --json
+  cub-scout compare --git-path ./my-repo --bundle ./debug-bundle --json
 
   # Git ↔ Git compare (left vs right repo)
-  cub-scout combined --git-path ./repo-a --git-path-compare ./repo-b --json
+  cub-scout compare --git-path ./repo-a --git-path-compare ./repo-b --json
 `,
 	RunE: runCombined,
 }
 
 func init() {
-	// compare is the user-facing name for intent-vs-observed workflows.
-	combinedCmd.Aliases = []string{"compare"}
+	// combined remains a backward-compatible alias for one release.
+	combinedCmd.Aliases = []string{"combined"}
 
 	combinedCmd.Flags().StringVar(&combinedGitURL, "git-url", "", "Git repository URL to parse")
 	combinedCmd.Flags().StringVar(&combinedGitPath, "git-path", "", "Local path to Git repository")
@@ -571,8 +571,8 @@ func convertToSuggestionJSON(s *AppModelSuggestion) *SuggestionJSON {
 		})
 	}
 	return &SuggestionJSON{
-		App: s.App,
-		Units:    units,
+		App:   s.App,
+		Units: units,
 	}
 }
 

@@ -12,13 +12,13 @@ import (
 func TestCompareThreeWayCommandRegistered(t *testing.T) {
 	var compare *cobra.Command
 	for _, cmd := range rootCmd.Commands() {
-		if cmd.Name() == "combined" {
+		if cmd.Name() == "compare" {
 			compare = cmd
 			break
 		}
 	}
 	if compare == nil {
-		t.Fatal("combined command not found")
+		t.Fatal("compare command not found")
 	}
 
 	found := false

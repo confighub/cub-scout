@@ -49,19 +49,19 @@ v0.14.3 supports:
 
 Examples:
   # Compare a YAML file against the cluster
-  cub-scout drift --file manifests/deployment.yaml
+  cub-scout compare drift --file manifests/deployment.yaml
 
   # Compare with namespace filter
-  cub-scout drift --file manifests/ -n production
+  cub-scout compare drift --file manifests/ -n production
 
   # Output as JSON (for CI/automation)
-  cub-scout drift --file manifests/deployment.yaml --format json
+  cub-scout compare drift --file manifests/deployment.yaml --format json
 
   # Fail CI if any warning or critical drift found
-  cub-scout drift --file manifests/ --fail-on warning
+  cub-scout compare drift --file manifests/ --fail-on warning
 
   # Fail CI only on critical drift
-  cub-scout drift --file manifests/ --fail-on critical
+  cub-scout compare drift --file manifests/ --fail-on critical
 
 Output formats:
   ascii  Human-readable output (default)
@@ -79,15 +79,28 @@ CI/Automation note:
 	RunE: runDrift,
 }
 
+var compareDriftCmd = &cobra.Command{
+	Use:   "drift",
+	Short: "Detect drift between desired and live state",
+	Long:  driftCmd.Long,
+	RunE:  runDrift,
+}
+
 func init() {
+	addDriftFlags(driftCmd)
+	addDriftFlags(compareDriftCmd)
+	driftCmd.Hidden = true
+	driftCmd.Deprecated = "use 'cub-scout compare drift' instead"
 	rootCmd.AddCommand(driftCmd)
+	combinedCmd.AddCommand(compareDriftCmd)
+}
 
-	driftCmd.Flags().StringVar(&driftFile, "file", "", "YAML file or directory containing desired state (required)")
-	driftCmd.Flags().StringVarP(&driftNamespace, "namespace", "n", "", "Namespace to compare (default: all namespaces)")
-	driftCmd.Flags().StringVar(&driftFormat, "format", "ascii", "Output format: ascii, json")
-	driftCmd.Flags().StringVar(&driftFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning, critical)")
-
-	if err := driftCmd.MarkFlagRequired("file"); err != nil {
+func addDriftFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&driftFile, "file", "", "YAML file or directory containing desired state (required)")
+	cmd.Flags().StringVarP(&driftNamespace, "namespace", "n", "", "Namespace to compare (default: all namespaces)")
+	cmd.Flags().StringVar(&driftFormat, "format", "ascii", "Output format: ascii, json")
+	cmd.Flags().StringVar(&driftFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning, critical)")
+	if err := cmd.MarkFlagRequired("file"); err != nil {
 		panic(err)
 	}
 }

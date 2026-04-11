@@ -109,15 +109,23 @@ var demoCmd = &cobra.Command{
 	Long: `Run interactive demos to showcase cub-scout features.
 
 Examples:
-  cub-scout demo list             # List available demos
-  cub-scout demo quick              # Quick demo (~30 sec)
-  cub-scout demo ccve               # Risk issue detection demo (~2 min)
-  cub-scout demo query              # Query language demo
-  cub-scout demo scenario bigbank-incident   # Narrative scenario
+  cub-scout quickstart demo list                   # List available demos
+  cub-scout quickstart demo quick                  # Quick demo (~30 sec)
+  cub-scout quickstart demo ccve                   # Risk issue detection demo (~2 min)
+  cub-scout quickstart demo query                  # Query language demo
+  cub-scout quickstart demo scenario bigbank-incident   # Narrative scenario
 
-  cub-scout demo quick --cleanup    # Remove demo resources`,
+  cub-scout quickstart demo quick --cleanup        # Remove demo resources`,
 	Args: cobra.MaximumNArgs(2),
 	RunE: runDemo,
+}
+
+var quickstartDemoCmd = &cobra.Command{
+	Use:   "demo [name]",
+	Short: "Run interactive demos",
+	Long:  demoCmd.Long,
+	Args:  cobra.MaximumNArgs(2),
+	RunE:  runDemo,
 }
 
 var demoListCmd = &cobra.Command{
@@ -127,6 +135,12 @@ var demoListCmd = &cobra.Command{
 		listDemos()
 		return nil
 	},
+}
+
+var quickstartDemoListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List available demos",
+	RunE:  demoListCmd.RunE,
 }
 
 var demoScenarioCmd = &cobra.Command{
@@ -151,14 +165,30 @@ Available scenarios:
 	},
 }
 
+var quickstartDemoScenarioCmd = &cobra.Command{
+	Use:   "scenario [name]",
+	Short: "Run a narrative scenario demo",
+	Long:  demoScenarioCmd.Long,
+	Args:  cobra.ExactArgs(1),
+	RunE:  demoScenarioCmd.RunE,
+}
+
 func init() {
+	demoCmd.Hidden = true
+	demoCmd.Deprecated = "use 'cub-scout quickstart demo' instead"
 	rootCmd.AddCommand(demoCmd)
 	demoCmd.AddCommand(demoListCmd)
 	demoCmd.AddCommand(demoScenarioCmd)
+	quickstartCmd.AddCommand(quickstartDemoCmd)
+	quickstartDemoCmd.AddCommand(quickstartDemoListCmd)
+	quickstartDemoCmd.AddCommand(quickstartDemoScenarioCmd)
 
 	demoCmd.Flags().BoolVar(&demoNoPods, "no-pods", false, "Apply without running pods (faster)")
 	demoCmd.Flags().BoolVar(&demoCleanup, "cleanup", false, "Remove demo resources")
 	demoScenarioCmd.Flags().BoolVar(&demoCleanup, "cleanup", false, "Remove scenario resources")
+	quickstartDemoCmd.Flags().BoolVar(&demoNoPods, "no-pods", false, "Apply without running pods (faster)")
+	quickstartDemoCmd.Flags().BoolVar(&demoCleanup, "cleanup", false, "Remove demo resources")
+	quickstartDemoScenarioCmd.Flags().BoolVar(&demoCleanup, "cleanup", false, "Remove scenario resources")
 }
 
 func canonicalDemoName(name string) string {

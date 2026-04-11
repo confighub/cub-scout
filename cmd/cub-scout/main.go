@@ -36,6 +36,7 @@ POPULAR COMMANDS
   explain          Plain-English ownership and lineage for one resource
   map              Interactive TUI dashboard — explore cluster visually
   map list         List resources with ownership (scriptable, supports --json)
+  compare          Compare live resources or connected DRY/WET/LIVE agreement
   tree             Hierarchical views: runtime, ownership, git, composition
   trace            Trace any resource to its Git source
   scan             Find misconfigurations (46 patterns)
@@ -89,10 +90,17 @@ func init() {
 		},
 	})
 
-	// Add completion command
-	rootCmd.AddCommand(&cobra.Command{
-		Use:   "completion [bash|zsh|fish|powershell]",
-		Short: "Generate shell completion script",
+	rootCompletionCmd.Hidden = true
+	rootCompletionCmd.Deprecated = "use 'cub-scout setup completion' instead"
+	rootCmd.AddCommand(rootCompletionCmd)
+}
+
+var rootCompletionCmd = newCompletionCommand("completion [bash|zsh|fish|powershell]", "Generate shell completion script")
+
+func newCompletionCommand(use, short string) *cobra.Command {
+	return &cobra.Command{
+		Use:   use,
+		Short: short,
 		Long: `Generate shell completion script for cub-scout.
 
 Bash:
@@ -116,21 +124,23 @@ PowerShell:
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 		Args:                  cobra.ExactArgs(1),
 		DisableFlagsInUseLine: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			switch args[0] {
-			case "bash":
-				return cmd.Root().GenBashCompletion(os.Stdout)
-			case "zsh":
-				return cmd.Root().GenZshCompletion(os.Stdout)
-			case "fish":
-				return cmd.Root().GenFishCompletion(os.Stdout, true)
-			case "powershell":
-				return cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
-			default:
-				return fmt.Errorf("unsupported shell: %s", args[0])
-			}
-		},
-	})
+		RunE:                  runCompletionCommand,
+	}
+}
+
+func runCompletionCommand(cmd *cobra.Command, args []string) error {
+	switch args[0] {
+	case "bash":
+		return cmd.Root().GenBashCompletion(os.Stdout)
+	case "zsh":
+		return cmd.Root().GenZshCompletion(os.Stdout)
+	case "fish":
+		return cmd.Root().GenFishCompletion(os.Stdout, true)
+	case "powershell":
+		return cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+	default:
+		return fmt.Errorf("unsupported shell: %s", args[0])
+	}
 }
 
 // buildConfig builds a Kubernetes client config

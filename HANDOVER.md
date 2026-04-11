@@ -58,12 +58,31 @@ Current tracked follow-ons:
 
 | Issue | Title | Notes |
 |-------|-------|-------|
-| #375 | Reduce top-level command sprawl | Product/UX cleanup of the command surface |
 | #374 | Consolidate four overlapping CLI reference docs | Docs consolidation after the v1.10 release push |
 | #373 | Consolidate three import commands under a single `import` parent | CLI structure cleanup for import flows |
 | #372 | Trim README from 866 to ~350 lines and consolidate structure | Top-level onboarding/docs cleanup |
 
+### CLI migration table (`#375`)
+
+| Old top-level | New canonical path | Compatibility |
+|-------|-------|-------|
+| `discover` | `map workloads` | Hidden deprecated alias kept for one release |
+| `health` | `map issues` | Hidden deprecated alias kept for one release |
+| `combined` | `compare` | Alias kept; `compare` is the primary name |
+| `connect` | `setup connect` | Hidden deprecated alias kept for one release |
+| `completion` | `setup completion` | Hidden deprecated alias kept for one release |
+| `apply` | `import apply` | Hidden deprecated alias kept for one release |
+| `parse-repo` | `import parse-repo` | Hidden deprecated alias kept for one release |
+| `import-argocd` | `import argocd` | Hidden deprecated alias kept for one release |
+| `import-cluster-aggregator` | `import cluster-aggregator` | Hidden deprecated alias kept for one release |
+| `drift` | `compare drift` | Hidden deprecated alias kept for one release |
+| `demo` | `quickstart demo` | Hidden deprecated alias kept for one release |
+
 Recent closures:
+- #375 — Reduce top-level command sprawl (Apr 11)
+  - Reduced visible top-level command count to 29 while keeping legacy entrypoints as hidden deprecated aliases
+  - Canonicalized `compare` as the primary name with `combined` kept as an alias
+  - Reparented commands under `setup`, `import`, `compare`, and `quickstart`
 - #377 — Audit `cub-scout mcp serve` tool descriptions against the cold-test sharpening lessons (Apr 11)
   - Sharpened MCP tool descriptions around first-tool identity, chain boundaries, and fallbacks
   - Added connected `compare_three_way` MCP tool as a thin read-only wrapper over `cub-scout compare three-way --format json`
@@ -151,7 +170,6 @@ Recommended next steps (optional enhancements):
 3. Document combined workflow (`cub-scout` scouts, `cub gitops` renders)
 
 Open issues:
-- #375 — Reduce top-level command sprawl (47 commands today)
 - #374 — Consolidate four overlapping CLI reference docs
 - #373 — Consolidate three import commands under a single `import` parent
 - #372 — Trim README from 866 to ~350 lines and consolidate structure
