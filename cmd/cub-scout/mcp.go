@@ -214,7 +214,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"scan": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "scan",
-				Description: "Standalone configuration and runtime findings (scan --json). Use AFTER doctor when the user wants detailed risk or misconfiguration findings, not a broad health summary. DO NOT load first for bare 'what's wrong?' if doctor has not run yet.",
+				Description: "Standalone live-cluster configuration and runtime findings (scan --json). Use AFTER doctor when the user wants detailed risk or misconfiguration findings in the cluster or namespace right now, or an awareness scan of live state, not a broad health summary. DO NOT load first for bare 'what's wrong?' if doctor has not run yet. DO NOT use this as a governed promotion or revision-safety gate.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -237,7 +237,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"trace": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "trace",
-				Description: "Exact ownership and source chain for one resource (trace --format json). Use AFTER explain when the user asks where a resource came from, which source or deployer owns it end-to-end, or what GitOps chain produced it. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor or explain first.",
+				Description: "Exact ownership and source chain for one resource (trace --format json). Use AFTER doctor or explain once the user has narrowed to one resource and wants to know where it came from, which source or deployer owns it end-to-end, or what GitOps chain produced it. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor first, then explain if the resource is still unclear.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -337,7 +337,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_changesets",
-				Description: "Connected-only governed ChangeSet history from ConfigHub (cub changeset list --json). Use when the user asks what changed, who changed it, or what receipt proves a governed write. DO NOT load for current cluster health or ownership; use doctor, explain, or trace first.",
+				Description: "Connected-only governed ChangeSet history and receipts from ConfigHub (cub changeset list --json). Use when the user asks what governed write changed a known unit or space, who changed it, or what receipt proves a governed write. Load after trace or confighub_units has identified the governed object or scope you care about. DO NOT load for current cluster health or ownership, or when the governed object is still unknown; use doctor, explain, trace, or confighub_units first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -368,7 +368,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_units"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_units",
-				Description: "Connected-only ConfigHub unit and fleet inventory (cub unit list --json). Use when the user asks about governed units, intended state, or which ConfigHub unit corresponds to something already identified. Load after doctor, map, explain, or trace has established the cluster-side object you care about. DO NOT load for raw cluster inventory or bare 'what's running?'; use map or doctor first.",
+				Description: "Connected-only ConfigHub unit and fleet inventory / cluster-to-ConfigHub lookup (cub unit list --json). Use when the user asks which ConfigHub unit corresponds to something already identified, or wants governed unit inventory before drilling into one unit. Load after doctor, map, explain, or trace has established the cluster-side object you care about. DO NOT load for raw cluster inventory or exact unit facts; use map or doctor first, then confighub_unit_get once the unit is known.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -406,7 +406,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_unit_get"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_unit_get",
-				Description: "Connected-only exact ConfigHub unit details (cub unit get --json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting or governed-vs-live comparison; use explain, trace, or CLI compare flows first.",
+				Description: "Connected-only exact ConfigHub unit details and applied/live revision facts (cub unit get --json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. Use this for 'show me the intended state, last applied revision, or live revision for unit X.' If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting or governed-vs-live comparison; use explain, trace, or compare_three_way first.",
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{

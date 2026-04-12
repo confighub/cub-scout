@@ -88,12 +88,12 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "compare_three_way", contains: []string{"governed state agrees with live state", "Load after doctor, explain, or trace", "use doctor first"}},
 		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "Use before explain, trace, or scan"}},
 		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
-		{name: "scan", contains: []string{"Use AFTER doctor", "DO NOT load first"}},
+		{name: "scan", contains: []string{"Use AFTER doctor", "awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"}},
 		{name: "explain", contains: []string{"Use AFTER doctor or map", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
-		{name: "trace", contains: []string{"Use AFTER explain", "DO NOT load for broad cluster status"}},
-		{name: "confighub_changesets", contains: []string{"Connected-only", "DO NOT load for current cluster health or ownership"}},
-		{name: "confighub_units", contains: []string{"Connected-only", "Load after doctor, map, explain, or trace", "use map or doctor first"}},
-		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "use confighub_units first", "DO NOT load for bare cluster troubleshooting or governed-vs-live comparison"}},
+		{name: "trace", contains: []string{"Use AFTER doctor or explain", "then explain if the resource is still unclear", "DO NOT load for broad cluster status"}},
+		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "Load after trace or confighub_units"}},
+		{name: "confighub_units", contains: []string{"Connected-only", "cluster-to-ConfigHub lookup", "Load after doctor, map, explain, or trace", "then confighub_unit_get once the unit is known"}},
+		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "last applied revision, or live revision", "use confighub_units first", "compare_three_way first"}},
 	}
 
 	for _, tc := range cases {
@@ -105,6 +105,51 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		for _, want := range tc.contains {
 			if !strings.Contains(desc, want) {
 				t.Errorf("%s description missing %q\nfull description: %s", tc.name, want, desc)
+			}
+		}
+	}
+}
+
+func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing.T) {
+	gateway := newMCPGatewayWithMode(nil, nil, true)
+	tools := gateway.tools
+
+	cases := []struct {
+		tool     string
+		intent   string
+		contains []string
+	}{
+		{
+			tool:     "scan",
+			intent:   "Is this revision safe to promote?",
+			contains: []string{"awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"},
+		},
+		{
+			tool:     "confighub_changesets",
+			intent:   "What governed write changed this known unit?",
+			contains: []string{"what governed write changed a known unit or space", "Load after trace or confighub_units"},
+		},
+		{
+			tool:     "confighub_units",
+			intent:   "Which ConfigHub unit corresponds to deployment/api?",
+			contains: []string{"cluster-to-ConfigHub lookup", "corresponds to something already identified"},
+		},
+		{
+			tool:     "confighub_unit_get",
+			intent:   "Show me the last applied revision for unit payments-api.",
+			contains: []string{"last applied revision, or live revision for unit X", "compare_three_way first"},
+		},
+	}
+
+	for _, tc := range cases {
+		tool, ok := tools[tc.tool]
+		if !ok {
+			t.Fatalf("tool %q not found", tc.tool)
+		}
+		desc := tool.Descriptor.Description
+		for _, want := range tc.contains {
+			if !strings.Contains(desc, want) {
+				t.Errorf("%s representative intent %q missing %q\nfull description: %s", tc.tool, tc.intent, want, desc)
 			}
 		}
 	}

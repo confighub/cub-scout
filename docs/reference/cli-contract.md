@@ -175,6 +175,13 @@ cub-scout mcp serve
 - Connected mode adds read-only connected comparison plus ConfigHub query tools.
 - MCP tool responses are backed by the existing CLI JSON surfaces rather than a separate hand-built fact model.
 
+### Tool Routing Notes
+
+- `doctor` is the first standalone troubleshooting tool.
+- `scan` is an awareness scan of live cluster state, not a governed promotion or revision-safety gate.
+- `confighub_units` is the discovery/lookup step for "which ConfigHub unit is this?", while `confighub_unit_get` is the exact detail step once a unit is already known.
+- `compare_three_way` is the connected convergence proof tool after scope discovery, not the first troubleshooting move.
+
 ### Stable `doctor` MCP Surface
 
 - Tool name: `doctor`
