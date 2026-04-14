@@ -209,6 +209,22 @@ func TestRunHistory_JSONOutput(t *testing.T) {
 	}
 	defer func() { fetchHistoryEntriesFn = prevFetch }()
 
+	prevNav := resolveHistoryNavigationFn
+	resolveHistoryNavigationFn = func(ctx context.Context, q historyQuery) historyNavigation {
+		return historyNavigation{
+			ConfigHubURL:          "https://confighub.com/units/sp-123/u-123",
+			ConfigHubRevisionsURL: "https://confighub.com/units/sp-123/u-123?tab=2",
+			NextSteps: []StructuredHint{
+				{
+					ActionType:  ActionReadOnly,
+					Reason:      "Review revision drift before treating this history as converged.",
+					NextSurface: "https://confighub.com/units/sp-123/u-123?tab=2",
+				},
+			},
+		}
+	}
+	defer func() { resolveHistoryNavigationFn = prevNav }()
+
 	historyFormat = "json"
 	historySince = "7d"
 	historyNamespace = "prod"
@@ -232,8 +248,61 @@ func TestRunHistory_JSONOutput(t *testing.T) {
 	if payload.Namespace != "prod" {
 		t.Fatalf("namespace = %q, want prod", payload.Namespace)
 	}
+	if payload.ConfigHubURL != "https://confighub.com/units/sp-123/u-123" {
+		t.Fatalf("confighubUrl = %q, want exact unit url", payload.ConfigHubURL)
+	}
+	if payload.ConfigHubRevisionsURL != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("confighubRevisionsUrl = %q, want exact revisions url", payload.ConfigHubRevisionsURL)
+	}
 	if len(payload.Entries) != 1 || payload.Entries[0].ChangeSet != "CS-4821" {
 		t.Fatalf("unexpected entries: %+v", payload.Entries)
+	}
+	if len(payload.NextSteps) != 1 {
+		t.Fatalf("nextSteps count = %d, want 1", len(payload.NextSteps))
+	}
+	if payload.NextSteps[0].NextSurface != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("next surface = %q, want exact revisions url", payload.NextSteps[0].NextSurface)
+	}
+}
+
+func TestBuildHistoryNavigation_UsesChangeSetAndUnitTrustSurface(t *testing.T) {
+	raw := `[
+	  {
+	    "Space": {"Slug":"payments","SpaceID":"sp-123"},
+	    "Unit": {
+	      "Slug":"payments-api",
+	      "UnitID":"u-123",
+	      "HeadRevisionNum":9,
+	      "LiveRevisionNum":7
+	    },
+	    "ChangeSet": {"Slug":"release-42","ID":"cs-123"},
+	    "CreatedAt": "2026-03-03T14:22:00Z",
+	    "Description": "image: v1.4.2 -> v1.4.3",
+	    "CreatedBy": {"Slug":"ci-bot"}
+	  }
+	]`
+
+	nav := buildHistoryNavigation(raw)
+	if nav.ConfigHubURL != "https://confighub.com/units/sp-123/u-123" {
+		t.Fatalf("confighubUrl = %q, want exact unit url", nav.ConfigHubURL)
+	}
+	if nav.ConfigHubRevisionsURL != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("confighubRevisionsUrl = %q, want exact revisions url", nav.ConfigHubRevisionsURL)
+	}
+	if len(nav.NextSteps) < 3 {
+		t.Fatalf("nextSteps count = %d, want at least 3", len(nav.NextSteps))
+	}
+	if nav.NextSteps[0].NextCommand != "cub changeset get release-42 --json --space payments" {
+		t.Fatalf("first next command = %q, want exact changeset get command", nav.NextSteps[0].NextCommand)
+	}
+	if nav.NextSteps[1].NextSurface != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("second next surface = %q, want exact revisions url", nav.NextSteps[1].NextSurface)
+	}
+	if !strings.Contains(nav.NextSteps[1].Reason, "Head revision 9 is ahead of live revision 7") {
+		t.Fatalf("second next reason = %q, want revision-drift rationale", nav.NextSteps[1].Reason)
+	}
+	if nav.NextSteps[2].NextSurface != "https://confighub.com/units/sp-123/u-123" {
+		t.Fatalf("third next surface = %q, want exact unit url", nav.NextSteps[2].NextSurface)
 	}
 }
 

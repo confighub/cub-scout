@@ -68,10 +68,19 @@ type historyEntry struct {
 }
 
 type historyResult struct {
-	Resource  string         `json:"resource"`
-	Namespace string         `json:"namespace,omitempty"`
-	Since     string         `json:"since"`
-	Entries   []historyEntry `json:"entries"`
+	Resource              string           `json:"resource"`
+	Namespace             string           `json:"namespace,omitempty"`
+	Since                 string           `json:"since"`
+	ConfigHubURL          string           `json:"confighubUrl,omitempty"`
+	ConfigHubRevisionsURL string           `json:"confighubRevisionsUrl,omitempty"`
+	Entries               []historyEntry   `json:"entries"`
+	NextSteps             []StructuredHint `json:"nextSteps,omitempty"`
+}
+
+type historyNavigation struct {
+	ConfigHubURL          string
+	ConfigHubRevisionsURL string
+	NextSteps             []StructuredHint
 }
 
 var (
@@ -79,6 +88,7 @@ var (
 	fetchHistoryEntriesFn     = fetchHistoryEntries
 	historyNowFn              = time.Now
 	runHistoryCubCommand      = runHistoryCubCommandImpl
+	resolveHistoryNavigationFn = resolveHistoryNavigation
 )
 
 func runHistory(cmd *cobra.Command, args []string) error {
@@ -111,6 +121,11 @@ func runHistory(cmd *cobra.Command, args []string) error {
 		Namespace: query.Namespace,
 		Since:     query.Since,
 		Entries:   entries,
+	}
+	if nav := resolveHistoryNavigationFn(cmd.Context(), query); len(nav.NextSteps) > 0 || nav.ConfigHubURL != "" || nav.ConfigHubRevisionsURL != "" {
+		result.ConfigHubURL = nav.ConfigHubURL
+		result.ConfigHubRevisionsURL = nav.ConfigHubRevisionsURL
+		result.NextSteps = nav.NextSteps
 	}
 
 	switch format {
@@ -189,16 +204,7 @@ func parseHistorySince(raw string) (time.Duration, error) {
 }
 
 func fetchHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry, error) {
-	contains := q.Resource
-	if q.Namespace != "" {
-		contains = q.Namespace + " " + q.Resource
-	}
-
-	args := []string{"changeset", "list", "--json", "--contains", contains}
-	if space := detectHistorySpace(ctx); space != "" {
-		args = append(args, "--space", space)
-	}
-
+	args := historyChangeSetListArgs(ctx, q)
 	raw, err := runHistoryCubCommand(ctx, args)
 	if err != nil {
 		return nil, fmt.Errorf("fetch changeset history: %w", err)
@@ -210,6 +216,102 @@ func fetchHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry, e
 		return nil, err
 	}
 	return entries, nil
+}
+
+func resolveHistoryNavigation(ctx context.Context, q historyQuery) historyNavigation {
+	raw, ok := loadHistoryRawPayload(ctx, q)
+	if !ok {
+		return historyNavigation{}
+	}
+	return buildHistoryNavigation(raw)
+}
+
+func loadHistoryRawPayload(ctx context.Context, q historyQuery) (string, bool) {
+	if fixture := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")); fixture != "" {
+		raw, err := os.ReadFile(fixture)
+		if err != nil {
+			return "", false
+		}
+		return strings.TrimSpace(string(raw)), true
+	}
+
+	if err := requireHistoryConnectedFn(); err != nil {
+		return "", false
+	}
+
+	raw, err := runHistoryCubCommand(ctx, historyChangeSetListArgs(ctx, q))
+	if err != nil {
+		return "", false
+	}
+	return raw, true
+}
+
+func historyChangeSetListArgs(ctx context.Context, q historyQuery) []string {
+	contains := q.Resource
+	if q.Namespace != "" {
+		contains = q.Namespace + " " + q.Resource
+	}
+
+	args := []string{"changeset", "list", "--json", "--contains", contains}
+	if space := detectHistorySpace(ctx); space != "" {
+		args = append(args, "--space", space)
+	}
+	return args
+}
+
+func buildHistoryNavigation(raw string) historyNavigation {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || raw == "null" {
+		return historyNavigation{}
+	}
+
+	var payload interface{}
+	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
+		return historyNavigation{}
+	}
+
+	changeSetRef, hasChangeSet := mcpExtractChangeSetRef(payload)
+	unitRef, hasUnit := mcpExtractUnitRef(payload)
+	unitState, _ := mcpExtractUnitRevisionState(payload)
+
+	detailURL := ""
+	revisionsURL := ""
+	if hasUnit {
+		detailURL = mcpUnitDetailURL(unitRef)
+		revisionsURL = mcpUnitRevisionsURL(unitRef)
+	}
+
+	hints := make([]Hint, 0, 3)
+	if hasChangeSet {
+		hints = append(hints, Hint{
+			Command:    mcpChangeSetGetCommand(changeSetRef),
+			Rationale:  "Inspect the first returned ChangeSet to review the exact governed receipt and approval details.",
+			Priority:   hintPriorityHigh,
+			ActionType: ActionReadOnly,
+		})
+	}
+	if revisionHint := mcpUnitRevisionHint(unitState, revisionsURL, false); revisionHint != nil {
+		hints = append(hints, *revisionHint)
+	}
+	if detailURL != "" {
+		hints = append(hints, Hint{
+			Rationale:    "Open the linked ConfigHub unit to anchor this history in exact current state.",
+			ConfigHubURL: detailURL,
+			Priority:     hintPriorityNormal,
+			ActionType:   ActionReadOnly,
+		})
+	}
+
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+
+	return historyNavigation{
+		ConfigHubURL:          detailURL,
+		ConfigHubRevisionsURL: revisionsURL,
+		NextSteps:             HintsToStructured(hints),
+	}
 }
 
 func detectHistorySpace(ctx context.Context) string {
