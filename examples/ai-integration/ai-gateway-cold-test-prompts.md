@@ -1,11 +1,11 @@
 # AI Gateway Cold-Test Prompts
 
-Use this prompt set to compare shell-first operation versus MCP-enabled operation for `cub-scout`.
+Use this prompt set to compare shell-first operation versus MCP-enabled operation for `cub scout`.
 
 Run the exact same prompts in two fresh sessions:
 
 1. shell-first
-2. MCP-enabled (`cub-scout mcp serve`)
+2. MCP-enabled (`cub scout mcp serve`; local repo command: `./cub-scout mcp serve`)
 
 Score the results using:
 
@@ -29,7 +29,7 @@ These prompts should work in standalone mode with cluster access.
 | "What's running in the `prod` namespace?" | `map` | `map list --json` |
 | "Who owns `deployment/frontend` in `prod`?" | `explain` | `explain --format json` |
 | "Where did `deployment/frontend` in `prod` come from?" | `trace` | `trace --format json` |
-| "Should I use cub-scout or kubectl here?" | `doctor` | `doctor` plus a tool-choice explanation grounded in cub-scout facts |
+| "Should I use cub scout or kubectl here?" | `doctor` | `doctor` plus a tool-choice explanation grounded in cub scout facts |
 
 ## Connected Set
 

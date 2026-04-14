@@ -1,15 +1,15 @@
-# cub-scout Task Skill (For AI Agents Using cub-scout)
+# cub scout Task Skill (For AI Agents Using cub scout)
 
 > **Audience:** AI agents (Claude, Codex, etc.) helping a human operator
 > investigate, troubleshoot, or understand a Kubernetes cluster.
 >
 > **Difference from `skills/cub-scout/SKILL.md`:** That doc is about working *on*
-> the cub-scout repo. This doc is about *using* cub-scout to answer real
+> the cub-scout repo. This doc is about *using* cub scout to answer real
 > operator questions.
 
 ## Core mental model
 
-`cub-scout` is a **read-only Kubernetes and GitOps observer**. It answers four
+`cub scout` is the preferred documented form of the **read-only Kubernetes and GitOps observer**. In this repo, local commands still use `./cub-scout ...`. It answers four
 questions faster than `kubectl` + GitOps GUIs:
 
 1. **What is here?** — what resources exist, grouped by owner
@@ -17,7 +17,7 @@ questions faster than `kubectl` + GitOps GUIs:
 3. **Where did it come from?** — Git source, controller chain
 4. **What is broken?** — health, scan findings, secret references, events
 
-cub-scout never writes to the cluster. It uses `Get`, `List`, `Watch` only.
+`cub scout` never writes to the cluster. It uses `Get`, `List`, `Watch` only.
 
 ## Task → command map
 
@@ -85,7 +85,7 @@ suggesting cleanup — some Native resources are intentional (e.g.,
 ./cub-scout map list --json | jq 'group_by(.owner) | map({owner: .[0].owner, count: length})'
 ```
 
-This is cub-scout's biggest advantage over single-controller GUIs (Argo CD UI,
+This is cub scout's biggest advantage over single-controller GUIs (Argo CD UI,
 Flux CLI): one view of *all* GitOps controllers at once.
 
 ### Task: Cross-controller dependency check
@@ -97,7 +97,7 @@ When a resource managed by Argo depends on a CRD installed by Helm:
 ./cub-scout graph export --format json             # Full resource graph
 ```
 
-Only cub-scout sees across controller boundaries. The Argo UI cannot show
+Only cub scout sees across controller boundaries. The Argo UI cannot show
 "this Application depends on a CRD installed by Helm".
 
 ### Task: Connected mode (ConfigHub) — drift and history
@@ -198,7 +198,7 @@ a stable contract.
 
 ## MCP mode
 
-`cub-scout` exposes a Model Context Protocol gateway:
+`cub scout` exposes a Model Context Protocol gateway:
 
 ```bash
 ./cub-scout mcp serve

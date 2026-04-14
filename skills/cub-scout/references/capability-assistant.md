@@ -2,8 +2,8 @@
 
 Use this reference with the canonical skill when the user is asking:
 
-- "Can cub-scout do X?"
-- "Should I use cub-scout or kubectl here?"
+- "Can cub scout do X?"
+- "Should I use cub scout or kubectl here?"
 - "Show me the exact supported path."
 - "If this is missing, file a GitHub issue with evidence."
 
@@ -32,17 +32,17 @@ First read AI-README-FIRST.md, then load and follow skills/cub-scout/SKILL.md. F
 3. Prefer read-only inspection first.
 4. Use `--dry-run` before any write path.
 5. Distinguish:
-   - standalone `cub-scout`
-   - connected `cub-scout` + ConfigHub
+   - standalone `cub scout`
+   - connected `cub scout` + ConfigHub
    - ConfigHub / `cub` workflows
    - Git preview versus render/import boundaries
 6. Use command output and docs evidence; do not guess.
 
 ## Tool boundary reminders
 
-- `cub-scout import --git-path` is a local structure/import-preview path
+- `cub scout import --git-path` is a local structure/import-preview path
 - `cub gitops import` is a target + render-target workflow
-- `confighub/sdk` renderers are implementation detail for `cub`, not an implied `cub-scout` feature
+- `confighub/sdk` renderers are implementation detail for `cub`, not an implied `cub scout` feature
 
 ## Response format
 

@@ -7,8 +7,8 @@ description: Use when working in the cub-scout repo or when answering what cub-s
 
 Start here when the task is about:
 
-- what `cub-scout` does today
-- how `cub-scout` differs from `cub`
+- what `cub scout` does today
+- how `cub scout` differs from `cub`
 - whether a workflow is standalone, connected, or ConfigHub/cub
 - AI/MCP usage of `doctor`, `explain`, `trace`, `map`, `scan`
 - Git preview versus render/import boundaries
@@ -21,19 +21,19 @@ Start here when the task is about:
 4. `docs/reference/cli-contract.md`
 5. `docs/reference/json-contracts.md`
 
-For capability-triage and demo conversations such as "can cub-scout do X?" or
-"should I use cub-scout or kubectl here?", also read
+For capability-triage and demo conversations such as "can cub scout do X?" or
+"should I use cub scout or kubectl here?", also read
 `references/capability-assistant.md`.
 
 If the user is asking you to *use* cub-scout against a real cluster (not work on the repo), load `docs/ai/cub-scout-tasks.md` instead — that file is task-oriented with concrete command flows for operator scenarios.
 
 ## Product value in one breath
 
-`cub-scout` is the read-only Kubernetes and GitOps observer that helps operators and AI agents understand what is broken, who owns it, where it came from, and what to do next without starting from the Argo UI or mutating the cluster.
+`cub scout` is the preferred documented form for the read-only Kubernetes and GitOps observer. In this repo, use `./cub-scout ...` for exact local commands.
 
 ## Tool boundaries
 
-### Use `cub-scout` for
+### Use `cub scout` for
 
 - `doctor`, `explain`, `trace`, `map`, `scan`
 - connected comparison such as `compare three-way`
@@ -49,9 +49,9 @@ If the user is asking you to *use* cub-scout against a real cluster (not work on
 
 ### Do not blur these
 
-- `cub-scout import --git-path` is a local structure/import-preview flow
+- `cub scout import --git-path` is a local structure/import-preview flow
 - `cub gitops import` is target + render-target based
-- SDK renderers are implementation detail for `cub`, not an implied `cub-scout` feature
+- SDK renderers are implementation detail for `cub`, not an implied `cub scout` feature
 
 ## High-signal shipped capabilities
 

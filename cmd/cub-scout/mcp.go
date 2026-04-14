@@ -630,21 +630,18 @@ func buildMCPUnitsStructuredContent(payload interface{}) interface{} {
 
 	detailURL := mcpUnitDetailURL(ref)
 	revisionsURL := mcpUnitRevisionsURL(ref)
-	hints := []Hint{{
+	state, _ := mcpExtractUnitRevisionState(payload)
+	hints := make([]Hint, 0, 3)
+	if revisionHint := mcpUnitRevisionHint(state, revisionsURL, false); revisionHint != nil {
+		hints = append(hints, *revisionHint)
+	}
+	hints = append(hints, Hint{
 		Command:      mcpUnitGetCommand(ref),
 		Rationale:    "Inspect the first returned ConfigHub unit to get exact revision and live-state facts.",
 		ConfigHubURL: detailURL,
 		Priority:     hintPriorityHigh,
 		ActionType:   ActionReadOnly,
-	}}
-	if revisionsURL != "" {
-		hints = append(hints, Hint{
-			Rationale:    "Open revision history if you need the audit trail and compare-ready review surface for this unit.",
-			ConfigHubURL: revisionsURL,
-			Priority:     hintPriorityNormal,
-			ActionType:   ActionReadOnly,
-		})
-	}
+	})
 	sortHints(hints)
 	wrapped["nextSteps"] = HintsToStructured(hints)
 	if detailURL != "" {
@@ -665,20 +662,16 @@ func buildMCPUnitGetStructuredContent(payload interface{}) interface{} {
 
 	detailURL := mcpUnitDetailURL(ref)
 	revisionsURL := mcpUnitRevisionsURL(ref)
-	hints := make([]Hint, 0, 2)
+	state, _ := mcpExtractUnitRevisionState(payload)
+	hints := make([]Hint, 0, 3)
+	if revisionHint := mcpUnitRevisionHint(state, revisionsURL, true); revisionHint != nil {
+		hints = append(hints, *revisionHint)
+	}
 	if detailURL != "" {
 		hints = append(hints, Hint{
 			Rationale:    "Open the exact ConfigHub unit to review current facts and trust surfaces.",
 			ConfigHubURL: detailURL,
-			Priority:     hintPriorityHigh,
-			ActionType:   ActionReadOnly,
-		})
-	}
-	if revisionsURL != "" {
-		hints = append(hints, Hint{
-			Rationale:    "Open revision history to inspect the approval trail and compare revisions in the GUI.",
-			ConfigHubURL: revisionsURL,
-			Priority:     hintPriorityHigh,
+			Priority:     hintPriorityNormal,
 			ActionType:   ActionReadOnly,
 		})
 	}
@@ -717,6 +710,15 @@ type mcpUnitRef struct {
 	SpaceID   string
 }
 
+type mcpUnitRevisionState struct {
+	HeadRevision        int
+	LiveRevision        int
+	LastAppliedRevision int
+	HasHeadRevision     bool
+	HasLiveRevision     bool
+	HasLastApplied      bool
+}
+
 type mcpChangeSetRef struct {
 	ChangeSetSlug string
 	ChangeSetID   string
@@ -731,6 +733,16 @@ func mcpExtractUnitRef(payload interface{}) (mcpUnitRef, bool) {
 		}
 	}
 	return mcpUnitRef{}, false
+}
+
+func mcpExtractUnitRevisionState(payload interface{}) (mcpUnitRevisionState, bool) {
+	for _, item := range historyExtractItems(payload) {
+		state := mcpUnitRevisionStateFromItem(item)
+		if state.HasHeadRevision || state.HasLiveRevision || state.HasLastApplied {
+			return state, true
+		}
+	}
+	return mcpUnitRevisionState{}, false
 }
 
 func mcpUnitRefFromItem(item map[string]interface{}) mcpUnitRef {
@@ -768,6 +780,46 @@ func mcpUnitRefFromItem(item map[string]interface{}) mcpUnitRef {
 		ref.SpaceID = mcpFirstString(item, "SpaceID", "spaceId")
 	}
 	return ref
+}
+
+func mcpUnitRevisionStateFromItem(item map[string]interface{}) mcpUnitRevisionState {
+	unitObj := mcpNestedMap(item, "Unit", "unit")
+	if unitObj == nil {
+		unitObj = item
+	}
+
+	state := mcpUnitRevisionState{}
+	if value, ok := mcpFirstInt(unitObj, "HeadRevisionNum", "headRevisionNum"); ok {
+		state.HeadRevision = value
+		state.HasHeadRevision = true
+	}
+	if value, ok := mcpFirstInt(unitObj, "LiveRevisionNum", "liveRevisionNum"); ok {
+		state.LiveRevision = value
+		state.HasLiveRevision = true
+	}
+	if value, ok := mcpFirstInt(unitObj, "LastAppliedRevisionNum", "lastAppliedRevisionNum"); ok {
+		state.LastAppliedRevision = value
+		state.HasLastApplied = true
+	}
+	if !state.HasHeadRevision {
+		if value, ok := mcpFirstInt(item, "HeadRevisionNum", "headRevisionNum"); ok {
+			state.HeadRevision = value
+			state.HasHeadRevision = true
+		}
+	}
+	if !state.HasLiveRevision {
+		if value, ok := mcpFirstInt(item, "LiveRevisionNum", "liveRevisionNum"); ok {
+			state.LiveRevision = value
+			state.HasLiveRevision = true
+		}
+	}
+	if !state.HasLastApplied {
+		if value, ok := mcpFirstInt(item, "LastAppliedRevisionNum", "lastAppliedRevisionNum"); ok {
+			state.LastAppliedRevision = value
+			state.HasLastApplied = true
+		}
+	}
+	return state
 }
 
 func mcpExtractChangeSetRef(payload interface{}) (mcpChangeSetRef, bool) {
@@ -833,6 +885,32 @@ func mcpFirstString(item map[string]interface{}, keys ...string) string {
 	return ""
 }
 
+func mcpFirstInt(item map[string]interface{}, keys ...string) (int, bool) {
+	for _, key := range keys {
+		raw, ok := item[key]
+		if !ok || raw == nil {
+			continue
+		}
+		switch value := raw.(type) {
+		case float64:
+			return int(value), true
+		case int:
+			return value, true
+		case int64:
+			return int(value), true
+		case string:
+			value = strings.TrimSpace(value)
+			if value == "" {
+				continue
+			}
+			if parsed, err := strconv.Atoi(value); err == nil {
+				return parsed, true
+			}
+		}
+	}
+	return 0, false
+}
+
 func mcpUnitGetCommand(ref mcpUnitRef) string {
 	target := strings.TrimSpace(ref.UnitSlug)
 	if target == "" {
@@ -869,6 +947,49 @@ func mcpUnitDetailURL(ref mcpUnitRef) string {
 
 func mcpUnitRevisionsURL(ref mcpUnitRef) string {
 	return configHubUnitRevisionsURL(ref.SpaceID, ref.UnitID)
+}
+
+func mcpUnitRevisionHint(state mcpUnitRevisionState, revisionsURL string, exact bool) *Hint {
+	if revisionsURL == "" {
+		return nil
+	}
+	switch {
+	case state.HasHeadRevision && state.HasLiveRevision && state.HeadRevision > state.LiveRevision:
+		return &Hint{
+			Rationale:    fmt.Sprintf("Head revision %d is ahead of live revision %d; review revision history now before treating this unit as converged.", state.HeadRevision, state.LiveRevision),
+			ConfigHubURL: revisionsURL,
+			Priority:     hintPriorityHigh,
+			ActionType:   ActionReadOnly,
+		}
+	case state.HasHeadRevision && state.HasLastApplied && state.HeadRevision > state.LastAppliedRevision:
+		return &Hint{
+			Rationale:    fmt.Sprintf("Head revision %d is ahead of last applied revision %d; review revision history now to understand what is still pending.", state.HeadRevision, state.LastAppliedRevision),
+			ConfigHubURL: revisionsURL,
+			Priority:     hintPriorityHigh,
+			ActionType:   ActionReadOnly,
+		}
+	case state.HasHeadRevision && state.HasLiveRevision && state.HeadRevision == state.LiveRevision:
+		return &Hint{
+			Rationale:    fmt.Sprintf("Head and live revisions both point at %d; open revision history if you need the approval trail or compare view.", state.HeadRevision),
+			ConfigHubURL: revisionsURL,
+			Priority:     hintPriorityNormal,
+			ActionType:   ActionReadOnly,
+		}
+	case exact:
+		return &Hint{
+			Rationale:    "Open revision history to inspect the approval trail and compare revisions in the GUI.",
+			ConfigHubURL: revisionsURL,
+			Priority:     hintPriorityHigh,
+			ActionType:   ActionReadOnly,
+		}
+	default:
+		return &Hint{
+			Rationale:    "Open revision history if you need the audit trail and compare-ready review surface for this unit.",
+			ConfigHubURL: revisionsURL,
+			Priority:     hintPriorityNormal,
+			ActionType:   ActionReadOnly,
+		}
+	}
 }
 
 func mcpToolError(msg string) map[string]interface{} {

@@ -1,4 +1,4 @@
-# cub-scout AI Skill
+# cub scout AI Skill
 
 Moved to the canonical skill bundle:
 

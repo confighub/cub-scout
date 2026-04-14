@@ -2,7 +2,7 @@
 
 ## 1. Configure MCP
 
-Use [`mcp.json`](mcp.json) as your Claude Code MCP server definition.
+Use [`mcp.json`](mcp.json) as your Claude Code MCP server definition for `cub scout`.
 
 Key command:
 
@@ -20,7 +20,7 @@ Key command:
 ## 3. Prompt Template
 
 ```text
-Use cub-scout to diagnose deployment/checkout from the latest fixture outputs.
+Use cub scout to diagnose deployment/checkout from the latest fixture outputs.
 Show trace evidence, then summarize likely operator actions.
 ```
 

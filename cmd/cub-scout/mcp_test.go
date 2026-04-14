@@ -718,7 +718,7 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitsIncludesTrustSurface(t *
 			return `{"standalone":true}`, nil
 		},
 		func(ctx context.Context, args []string) (string, error) {
-			return `[{"Space":{"Slug":"prod","SpaceID":"sp-123"},"Unit":{"Slug":"payments-api","UnitID":"u-123"}}]`, nil
+			return `[{"Space":{"Slug":"prod","SpaceID":"sp-123"},"Unit":{"Slug":"payments-api","UnitID":"u-123","HeadRevisionNum":9,"LiveRevisionNum":7}}]`, nil
 		},
 		true,
 	)
@@ -758,8 +758,11 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitsIncludesTrustSurface(t *
 	if len(result.StructuredContent.NextSteps) == 0 {
 		t.Fatal("expected nextSteps in structuredContent")
 	}
-	if got := result.StructuredContent.NextSteps[0].NextCommand; got != "cub unit get payments-api --json --space prod" {
-		t.Fatalf("next command = %q, want exact unit get command", got)
+	if got := result.StructuredContent.NextSteps[0].NextSurface; got != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("first next surface = %q, want revisions url", got)
+	}
+	if got := result.StructuredContent.NextSteps[1].NextCommand; got != "cub unit get payments-api --json --space prod" {
+		t.Fatalf("second next command = %q, want exact unit get command", got)
 	}
 }
 
@@ -769,7 +772,7 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitGetIncludesTrustSurface(t
 			return `{"standalone":true}`, nil
 		},
 		func(ctx context.Context, args []string) (string, error) {
-			return `{"Space":{"Slug":"prod","SpaceID":"sp-123"},"Unit":{"Slug":"payments-api","UnitID":"u-123"}}`, nil
+			return `{"Space":{"Slug":"prod","SpaceID":"sp-123"},"Unit":{"Slug":"payments-api","UnitID":"u-123","HeadRevisionNum":9,"LiveRevisionNum":7,"LastAppliedRevisionNum":8}}`, nil
 		},
 		true,
 	)
@@ -809,11 +812,14 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitGetIncludesTrustSurface(t
 	if len(result.StructuredContent.NextSteps) == 0 {
 		t.Fatal("expected nextSteps in structuredContent")
 	}
-	if got := result.StructuredContent.NextSteps[0].NextSurface; got != "https://confighub.com/units/sp-123/u-123" {
-		t.Fatalf("next surface = %q, want unit url", got)
+	if got := result.StructuredContent.NextSteps[0].NextSurface; got != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("first next surface = %q, want revisions url", got)
 	}
-	if got := result.StructuredContent.NextSteps[1].NextSurface; got != "https://confighub.com/units/sp-123/u-123?tab=2" {
-		t.Fatalf("second next surface = %q, want revisions url", got)
+	if !strings.Contains(result.StructuredContent.NextSteps[0].Reason, "Head revision 9 is ahead of live revision 7") {
+		t.Fatalf("first reason = %q, want revision-drift rationale", result.StructuredContent.NextSteps[0].Reason)
+	}
+	if got := result.StructuredContent.NextSteps[1].NextSurface; got != "https://confighub.com/units/sp-123/u-123" {
+		t.Fatalf("second next surface = %q, want unit url", got)
 	}
 }
 

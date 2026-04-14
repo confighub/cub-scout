@@ -1,4 +1,4 @@
-# Claude Code Walkthrough: Debug Kubernetes with cub-scout
+# Claude Code Walkthrough: Debug Kubernetes with cub scout
 
 ## Goal
 
@@ -26,5 +26,6 @@ go build ./cmd/cub-scout
 ## Why This Is Useful
 
 - CLI mode and MCP mode both use the same `cub-scout` command contract.
+- In user-facing prose, prefer `cub scout`; local repo commands remain `./cub-scout ...`.
 - Every step is deterministic and replayable from local fixtures.
 - You can move from demo mode to live-cluster mode by removing fixture env vars.

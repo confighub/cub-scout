@@ -2,7 +2,7 @@
 
 ## MCP Config
 
-Use [`mcp.json`](mcp.json) as the cub-scout MCP server definition for Copilot-enabled tooling.
+Use [`mcp.json`](mcp.json) as the `cub scout` MCP server definition for Copilot-enabled tooling.
 
 ## Reproducible Demo
 
@@ -13,7 +13,7 @@ Use [`mcp.json`](mcp.json) as the cub-scout MCP server definition for Copilot-en
 Suggested prompt:
 
 ```text
-Using cub-scout fixture outputs, answer:
+Using cub scout fixture outputs, answer:
 1) what is broken,
 2) what changed in the last 24h,
 3) what is unmanaged,

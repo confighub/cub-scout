@@ -2,6 +2,9 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
+Preferred wording in AI/product prose: `cub scout`.
+When showing exact local repo commands in this repo, use `./cub-scout ...`.
+
 If your AI host supports repo-local skills, load [skills/cub-scout/SKILL.md](skills/cub-scout/SKILL.md) after this file.
 
 If you are starting work in this repo, read files in this order:
@@ -14,15 +17,16 @@ If you are starting work in this repo, read files in this order:
 6. `docs/reference/json-contracts.md`
 
 Use these for different AI scenarios:
-- `skills/cub-scout/references/capability-assistant.md` — capability-assistant profile (answering "can cub-scout do X?")
-- `docs/ai/cub-scout-tasks.md` — task skill for *using* cub-scout to investigate a real cluster
+- `skills/cub-scout/references/capability-assistant.md` — capability-assistant profile (answering "can cub scout do X?")
+- `docs/ai/cub-scout-tasks.md` — task skill for *using* cub scout to investigate a real cluster
 - `docs/howto/using-cub-scout-from-ai-tool.md` — demo/operator flows
 
 ## Tool Boundaries
 
-### `cub-scout`
+### `cub scout` / `cub-scout`
 
-`cub-scout` is the read-only Kubernetes and GitOps observer.
+`cub scout` is the preferred documented form for the read-only Kubernetes and GitOps observer.
+In this repo, local command examples still use `./cub-scout ...`.
 
 Use it for:
 - `doctor`, `explain`, `trace`, `map`, `scan`
@@ -31,7 +35,7 @@ Use it for:
 - MCP serving via `mcp serve`
 
 Important:
-- `cub-scout` is cluster read-only by default
+- `cub scout` is cluster read-only by default
 - connected imports write inventory/state to ConfigHub, not cluster manifests
 - `import --git-path` is a structure/import-preview path, not a manifest renderer
 
@@ -56,7 +60,7 @@ Important:
 
 The SDK contains renderer and bridge implementation details used by `cub`.
 
-Do not claim that `cub-scout` can do SDK/renderer work locally unless the current repo code and CLI help actually expose that path.
+Do not claim that `cub scout` can do SDK/renderer work locally unless the current repo code and CLI help actually expose that path.
 
 ## Current High-Signal Shipped Capabilities
 
@@ -102,7 +106,7 @@ Verify live state before acting, but the current open follow-ons are:
 2. Verify current behavior from local help before claiming support.
 3. Prefer `./cub-scout` in local repo workflows.
 4. Keep cluster read-only behavior separate from ConfigHub writes.
-5. Treat `cub-scout` and `cub gitops import` as complementary, not interchangeable.
+5. Treat `cub scout` and `cub gitops import` as complementary, not interchangeable.
 6. Preserve deterministic facts over optimistic guidance.
 
 ## Quick Reality Checks

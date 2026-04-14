@@ -1,4 +1,4 @@
-# Claude Capability Assistant for cub-scout + ConfigHub
+# Claude Capability Assistant for cub scout + ConfigHub
 
 For interface selection and broader expectations (Claude session vs CLI vs Slack), see:
 [using-cub-scout-from-ai-tool.md](using-cub-scout-from-ai-tool.md).
@@ -7,7 +7,7 @@ For the shared Claude/Codex skill profile, see:
 
 Use this guide when you want Claude to answer:
 
-- "Can I do X with cub-scout or ConfigHub?"
+- "Can I do X with cub scout or ConfigHub?"
 - "Show me exactly how."
 - "If not possible, file a feature request."
 
@@ -24,8 +24,8 @@ First read AI-README-FIRST.md, then load and follow skills/cub-scout/SKILL.md. F
 For each user question, Claude should run this checklist:
 
 1. Identify scope:
-   - Standalone (`cub-scout` only)
-   - Connected (`cub auth login` + `cub-scout import/fleet`)
+   - Standalone (`cub scout` only)
+   - Connected (`cub auth login` + `cub scout import/fleet`)
    - ConfigHub (`cub` workflows, spaces, units, workers)
 2. Verify command/flag existence:
    - `./cub-scout --help`

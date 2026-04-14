@@ -2,7 +2,7 @@
 
 ## MCP Config
 
-Use [`mcp.json`](mcp.json) as the Cursor MCP entry for cub-scout.
+Use [`mcp.json`](mcp.json) as the Cursor MCP entry for `cub scout`.
 
 ## Reproducible Demo
 

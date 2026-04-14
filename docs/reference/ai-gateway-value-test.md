@@ -1,6 +1,6 @@
 # AI Gateway Value Test
 
-This document defines how to judge whether `cub-scout`'s MCP gateway and AI-facing routing surfaces add real value.
+This document defines how to judge whether `cub scout`'s MCP gateway and AI-facing routing surfaces add real value.
 
 The bar is not "an AI can call tools."
 
@@ -15,7 +15,7 @@ The bar is:
 
 ### MCP gateway
 
-`cub-scout mcp serve` exposes read-only tools with stable names, parameters, and JSON outputs.
+`cub scout mcp serve` is the preferred documented form for the MCP gateway. In local repo command examples, `./cub-scout mcp serve` remains the exact command.
 
 Its main value is:
 
@@ -27,7 +27,7 @@ Its main value is:
 
 This is the higher-level "which tool, in what order, for what reason?" layer.
 
-In `cub-scout` today it is spread across:
+In `cub scout` today it is spread across:
 
 1. MCP tool descriptions
 2. structured next-step hints
@@ -42,7 +42,7 @@ Its main value is:
 
 ## Main User Scenarios
 
-These are the highest-value scenarios for `cub-scout`'s MCP and AI gateway surfaces.
+These are the highest-value scenarios for `cub scout`'s MCP and AI gateway surfaces.
 
 ### 1. Cold-start troubleshooting
 
@@ -50,7 +50,7 @@ User asks:
 
 - "what's wrong?"
 - "what's broken in prod?"
-- "should I start with cub-scout or kubectl?"
+- "should I start with cub scout or kubectl?"
 - "kubectl cannot reach the cluster after restart; is the cluster broken or is my access broken?"
 
 Expected first move:
@@ -243,7 +243,7 @@ The model, repo state, cluster/context, and prompt text should stay the same.
 2. Run the prompt set in shell-first mode.
 3. Score each prompt using the rubric below.
 4. Start a second fresh AI session.
-5. Run the same prompt set with `cub-scout mcp serve` enabled.
+5. Run the same prompt set with `cub scout mcp serve` enabled (local repo command: `./cub-scout mcp serve`).
 6. Score again.
 7. Compare the two runs.
 

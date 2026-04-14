@@ -1,6 +1,6 @@
 # AI Tool Integration Examples
 
-Reproducible AI integration examples for `cub-scout` with no live cluster required.
+Reproducible AI integration examples for `cub scout` with no live cluster required.
 
 This package documents CLI and MCP usage for:
 - Claude Code

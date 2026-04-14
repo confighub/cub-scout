@@ -1,8 +1,8 @@
-# Using cub-scout from an AI Tool
+# Using cub scout from an AI Tool
 
 Use this guide when you want an AI assistant (Claude/Codex/other) to answer:
 
-- "Can I do X with cub-scout or ConfigHub?"
+- "Can I do X with cub scout or ConfigHub?"
 - "Show me exactly how to do it."
 - "If this is not possible, file a feature request."
 
@@ -29,7 +29,7 @@ If your AI tool cannot load local files, copy the session prompt from the capabi
 
 Use these boundaries consistently:
 
-- `cub-scout`
+- `cub scout` (preferred documented form; local repo commands use `./cub-scout`)
   - read-only cluster/GitOps observation
   - connected comparison such as `compare three-way`
   - local Git structure preview via `import --git-path`
@@ -39,10 +39,10 @@ Use these boundaries consistently:
   - `cub gitops import`
 - `confighub/sdk`
   - renderer implementation detail behind `cub`
-  - not an automatic capability of `cub-scout`
+  - not an automatic capability of `cub scout`
 
 Important:
-- `cub-scout import --git-path` previews repo structure and import proposals
+- `cub scout import --git-path` previews repo structure and import proposals
 - `cub gitops import` renders/imports discovered GitOps resources from cluster targets
 - do not blur these into one imaginary command surface
 
@@ -51,8 +51,8 @@ Important:
 When this flow works well, the AI assistant should:
 
 1. Classify your ask as:
-   - `Standalone cub-scout`
-   - `Connected cub-scout + ConfigHub`
+   - `Standalone cub scout`
+   - `Connected cub scout + ConfigHub`
    - `ConfigHub/cub workflow`
    - or `Git preview vs render/import boundary`
 2. Verify commands and flags before claiming capability.
@@ -117,7 +117,7 @@ If not connected, AI should stop and ask you to authenticate first.
 
 ## Safety Model (Important)
 
-- `cub-scout` is cluster read-only by default.
+- `cub scout` is cluster read-only by default.
 - Connected import writes inventory/state to ConfigHub.
 - Connected import does not mutate Kubernetes manifests in your cluster.
 - AI should start with preview commands (`--dry-run`) before prompting to proceed.
@@ -201,7 +201,7 @@ Source of truth:
 Paste at the start of an AI session if needed:
 
 ```text
-You are my cub-scout + ConfigHub capability assistant.
+You are my cub scout + ConfigHub capability assistant.
 For each request:
 1) Classify as standalone, connected, ConfigHub/cub workflow, or Git preview vs render/import boundary.
 2) Verify relevant cub-scout and cub help before claiming support.
