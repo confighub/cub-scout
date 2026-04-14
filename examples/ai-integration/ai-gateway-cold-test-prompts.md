@@ -25,6 +25,7 @@ These prompts should work in standalone mode with cluster access.
 | Prompt | Expected first tool | Proof surface |
 |---|---|---|
 | "What's wrong with cubbychat in prod?" | `doctor` | `doctor` JSON or a justified chain into `explain` |
+| "kubectl cannot reach the cluster after restart. Is the cluster broken or is my access broken?" | `doctor` | `doctor` JSON or a justified chain into access diagnosis |
 | "What's running in the `prod` namespace?" | `map` | `map list --json` |
 | "Who owns `deployment/frontend` in `prod`?" | `explain` | `explain --format json` |
 | "Where did `deployment/frontend` in `prod` come from?" | `trace` | `trace --format json` |
@@ -38,7 +39,9 @@ These prompts require connected mode.
 |---|---|---|
 | "Compare governed state to live state for `deployment/frontend` in `prod`." | `compare_three_way` | `compare three-way --format json` |
 | "Do ConfigHub, the deployer, and the cluster agree for `deployment/frontend` in `prod`?" | `compare_three_way` | `summary.agreement` |
+| "Would you sign off on this change for `deployment/frontend` in `prod`?" | `compare_three_way` | `compare three-way --format json` plus convergence/sign-off evidence |
 | "Which ConfigHub unit corresponds to `deployment/frontend` in `prod`?" | `confighub_units` after scope is known | `cub unit list --json` |
+| "What is the first useful ConfigHub object I should open for `deployment/frontend` in `prod`?" | `confighub_units` after scope is known | `cub unit list --json` |
 | "Show me the exact governed unit details once you find the unit for `deployment/frontend`." | `confighub_unit_get` after unit slug is known | `cub unit get --json` |
 | "What changed recently for this governed unit?" | `confighub_changesets` | `cub changeset list --json` |
 
@@ -50,6 +53,7 @@ Use these when you want to test chaining quality, not just first-tool attraction
 |---|---|
 | "Figure out what is wrong with `frontend` and tell me where I should look next." | `doctor` -> `explain` |
 | "I know `frontend` is Argo-managed. Show me where it came from and whether it has converged." | `trace` -> `compare_three_way` |
+| "Tell me whether this is sign-off-ready and show me the first useful governed object to inspect." | `compare_three_way` -> `confighub_units` |
 | "Find the governed unit for `frontend` and show me the latest governed receipt." | `explain` or `trace` -> `confighub_units` -> `confighub_changesets` |
 
 ## Score Sheet Template

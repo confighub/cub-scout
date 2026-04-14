@@ -59,7 +59,7 @@ If the user is asking you to *use* cub-scout against a real cluster (not work on
 - truthful Argo ownership and phase-aware hints
 - connected `compare three-way` with conformance + agreement summary
 - secret evidence across trace, Crossplane, map issues, and TUI trace
-- MCP standalone tools with `doctor` as the first troubleshooting tool
+- MCP standalone tools with `doctor` as the first troubleshooting tool, including cluster-access uncertainty such as wrong context, stale kubeconfig, or API reachability
 - Git preview with ApplicationSet git-generator support
 
 ## Queue source

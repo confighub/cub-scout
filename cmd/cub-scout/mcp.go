@@ -52,7 +52,11 @@ Additional tools in connected mode (when authenticated to ConfigHub):
   - confighub_unit_get
 
 Standalone tools are sourced from existing cub-scout CLI JSON output.
-Connected tools are sourced from read-only cub CLI queries.`,
+Connected tools are sourced from read-only cub CLI queries.
+
+Doctor is the first troubleshooting and tool-choice entrypoint.
+Connected tools add governed lookup, receipts, and convergence facts once scope
+is known.`,
 	RunE: runMCPServe,
 }
 
@@ -66,7 +70,12 @@ type mcpToolRunner func(ctx context.Context, args []string) (string, error)
 type mcpToolDescriptor struct {
 	Name        string                 `json:"name"`
 	Description string                 `json:"description"`
+	Annotations *mcpToolAnnotations    `json:"annotations,omitempty"`
 	InputSchema map[string]interface{} `json:"inputSchema"`
+}
+
+type mcpToolAnnotations struct {
+	ReadOnlyHint bool `json:"readOnlyHint,omitempty"`
 }
 
 type mcpTool struct {
@@ -155,11 +164,14 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		connectedRunner = runMCPConnectedToolCommand
 	}
 
+	readOnly := &mcpToolAnnotations{ReadOnlyHint: true}
+
 	tools := map[string]mcpTool{
 		"doctor": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "doctor",
-				Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Also use when the user asks which cub-scout troubleshooting tool to start with, or whether cub-scout is the right first read-only step instead of raw kubectl or the Argo UI. Returns ownership, health, risks, drift, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
+				Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Also use when the user asks which cub-scout troubleshooting tool to start with, whether cub-scout is the right first read-only step instead of raw kubectl or the Argo UI, or when local access to the cluster may itself be the problem (wrong context, stale kubeconfig, API unreachable). Returns ownership, health, risks, drift, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -192,6 +204,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			Descriptor: mcpToolDescriptor{
 				Name:        "map",
 				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?' and broad inventory questions, especially when the user wants more meaning than raw `kubectl get` output. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -215,6 +228,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			Descriptor: mcpToolDescriptor{
 				Name:        "scan",
 				Description: "Standalone live-cluster configuration and runtime findings (scan --json). Use AFTER doctor when the user wants detailed risk or misconfiguration findings in the cluster or namespace right now, or an awareness scan of live state, not a broad health summary. DO NOT load first for bare 'what's wrong?' if doctor has not run yet. DO NOT use this as a governed promotion or revision-safety gate.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -238,6 +252,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			Descriptor: mcpToolDescriptor{
 				Name:        "trace",
 				Description: "Exact ownership and source chain for one resource (trace --format json). Use AFTER doctor or explain once the user has narrowed to one resource and wants to know where it came from, which source or deployer owns it end-to-end, or what GitOps chain produced it. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor first, then explain if the resource is still unclear.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -271,6 +286,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			Descriptor: mcpToolDescriptor{
 				Name:        "explain",
 				Description: "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). Use AFTER doctor or map once the user has narrowed to a specific resource, especially when the user wants more computed meaning than raw `kubectl describe`. DO NOT load for broad cluster inventory or health; use doctor first.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -305,7 +321,8 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["compare_three_way"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "compare_three_way",
-				Description: "Connected-only DRY/WET/LIVE comparison for governed intent vs rendered deployer state vs live cluster state (compare three-way --format json). Use when the user asks whether governed state agrees with live state, whether ConfigHub, the deployer, and the cluster converge, or to compare governed state to live state for one resource, namespace, or the full cluster. Load after doctor, explain, or trace has identified the scope you care about. DO NOT load for first-pass troubleshooting when the scope is still unknown; use doctor first.",
+				Description: "Connected-only DRY/WET/LIVE comparison for governed intent vs rendered deployer state vs live cluster state (compare three-way --format json). Use when the user asks whether governed state agrees with live state, whether ConfigHub, the deployer, and the cluster converge, whether a change is sign-off-ready, or to compare governed state to live state for one resource, namespace, or the full cluster. Load after doctor, explain, or trace has identified the scope you care about. DO NOT load for first-pass troubleshooting when the scope is still unknown; use doctor first.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -337,7 +354,8 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_changesets",
-				Description: "Connected-only governed ChangeSet history and receipts from ConfigHub (cub changeset list --json). Use when the user asks what governed write changed a known unit or space, who changed it, or what receipt proves a governed write. Load after trace or confighub_units has identified the governed object or scope you care about. DO NOT load for current cluster health or ownership, or when the governed object is still unknown; use doctor, explain, trace, or confighub_units first.",
+				Description: "Connected-only governed ChangeSet history and receipts from ConfigHub (cub changeset list --json). Use when the user asks what governed write changed a known unit or space, who changed it, what receipt proves a governed write, or what approval trail sits behind the change. Load after trace or confighub_units has identified the governed object or scope you care about. DO NOT load for current cluster health or ownership, or when the governed object is still unknown; use doctor, explain, trace, or confighub_units first.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -368,7 +386,8 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_units"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_units",
-				Description: "Connected-only ConfigHub unit and fleet inventory / cluster-to-ConfigHub lookup (cub unit list --json). Use when the user asks which ConfigHub unit corresponds to something already identified, or wants governed unit inventory before drilling into one unit. Load after doctor, map, explain, or trace has established the cluster-side object you care about. DO NOT load for raw cluster inventory or exact unit facts; use map or doctor first, then confighub_unit_get once the unit is known.",
+				Description: "Connected-only ConfigHub unit and fleet inventory / cluster-to-ConfigHub lookup (cub unit list --json). Use when the user asks which ConfigHub unit corresponds to something already identified, wants governed unit inventory before drilling into one unit, or needs the first useful ConfigHub object to inspect after cluster-side discovery. Load after doctor, map, explain, or trace has established the cluster-side object you care about. DO NOT load for raw cluster inventory or exact unit facts; use map or doctor first, then confighub_unit_get once the unit is known.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -406,7 +425,8 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_unit_get"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_unit_get",
-				Description: "Connected-only exact ConfigHub unit details and applied/live revision facts (cub unit get --json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. Use this for 'show me the intended state, last applied revision, or live revision for unit X.' If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting or governed-vs-live comparison; use explain, trace, or compare_three_way first.",
+				Description: "Connected-only exact ConfigHub unit details and applied/live revision facts (cub unit get --json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. Use this for 'show me the intended state, last applied revision, or live revision for unit X,' or when you need exact unit facts before opening the GUI or other trust surfaces. If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting or governed-vs-live comparison; use explain, trace, or compare_three_way first.",
+				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{

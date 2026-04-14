@@ -74,7 +74,7 @@ As of 2026-04-09, these areas are fully or materially shipped:
   - `--fail-on` conformance exit codes
   - agreement/convergence summary in CLI + JSON
 - MCP gateway
-  - `mcp serve` exposes `doctor` as the first standalone troubleshooting tool
+  - `mcp serve` exposes `doctor` as the first standalone troubleshooting tool, including when the problem might be local access uncertainty such as wrong context, stale kubeconfig, or API reachability
   - standalone tool set: `doctor`, `explain`, `map`, `scan`, `trace`
   - connected mode adds read-only ConfigHub query tools
 - Secrets track

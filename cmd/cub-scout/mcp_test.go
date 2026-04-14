@@ -67,13 +67,23 @@ func TestMCPGatewayHandleRequest_ToolsList(t *testing.T) {
 	}
 
 	var result struct {
-		Tools []mcpToolDescriptor `json:"tools"`
+		Tools []struct {
+			Name        string `json:"name"`
+			Annotations struct {
+				ReadOnlyHint bool `json:"readOnlyHint"`
+			} `json:"annotations"`
+		} `json:"tools"`
 	}
 	if err := marshalInto(resp.Result, &result); err != nil {
 		t.Fatalf("decode result: %v", err)
 	}
 	if len(result.Tools) != 5 {
 		t.Fatalf("tool count = %d, want 5", len(result.Tools))
+	}
+	for _, tool := range result.Tools {
+		if !tool.Annotations.ReadOnlyHint {
+			t.Fatalf("tool %q readOnlyHint = false, want true", tool.Name)
+		}
 	}
 }
 
@@ -86,14 +96,14 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		contains []string
 	}{
 		{name: "compare_three_way", contains: []string{"governed state agrees with live state", "Load after doctor, explain, or trace", "use doctor first"}},
-		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "Use before explain, trace, or scan"}},
+		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "Use before explain, trace, or scan"}},
 		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
 		{name: "scan", contains: []string{"Use AFTER doctor", "awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"}},
 		{name: "explain", contains: []string{"Use AFTER doctor or map", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
 		{name: "trace", contains: []string{"Use AFTER doctor or explain", "then explain if the resource is still unclear", "DO NOT load for broad cluster status"}},
-		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "Load after trace or confighub_units"}},
-		{name: "confighub_units", contains: []string{"Connected-only", "cluster-to-ConfigHub lookup", "Load after doctor, map, explain, or trace", "then confighub_unit_get once the unit is known"}},
-		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "last applied revision, or live revision", "use confighub_units first", "compare_three_way first"}},
+		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"}},
+		{name: "confighub_units", contains: []string{"Connected-only", "cluster-to-ConfigHub lookup", "first useful ConfigHub object", "Load after doctor, map, explain, or trace", "then confighub_unit_get once the unit is known"}},
+		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "last applied revision, or live revision", "before opening the GUI", "use confighub_units first", "compare_three_way first"}},
 	}
 
 	for _, tc := range cases {
@@ -120,24 +130,34 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 		contains []string
 	}{
 		{
+			tool:     "doctor",
+			intent:   "kubectl cannot reach the cluster after restart.",
+			contains: []string{"stale kubeconfig", "API unreachable"},
+		},
+		{
 			tool:     "scan",
 			intent:   "Is this revision safe to promote?",
 			contains: []string{"awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"},
 		},
 		{
+			tool:     "compare_three_way",
+			intent:   "Would you sign off on this change?",
+			contains: []string{"sign-off-ready", "governed state agrees with live state"},
+		},
+		{
 			tool:     "confighub_changesets",
 			intent:   "What governed write changed this known unit?",
-			contains: []string{"what governed write changed a known unit or space", "Load after trace or confighub_units"},
+			contains: []string{"what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"},
 		},
 		{
 			tool:     "confighub_units",
 			intent:   "Which ConfigHub unit corresponds to deployment/api?",
-			contains: []string{"cluster-to-ConfigHub lookup", "corresponds to something already identified"},
+			contains: []string{"cluster-to-ConfigHub lookup", "corresponds to something already identified", "first useful ConfigHub object"},
 		},
 		{
 			tool:     "confighub_unit_get",
 			intent:   "Show me the last applied revision for unit payments-api.",
-			contains: []string{"last applied revision, or live revision for unit X", "compare_three_way first"},
+			contains: []string{"last applied revision, or live revision for unit X", "before opening the GUI", "compare_three_way first"},
 		},
 	}
 
@@ -151,6 +171,24 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 			if !strings.Contains(desc, want) {
 				t.Errorf("%s representative intent %q missing %q\nfull description: %s", tc.tool, tc.intent, want, desc)
 			}
+		}
+	}
+}
+
+func TestNewMCPGateway_ToolsListMarksToolsReadOnly(t *testing.T) {
+	gateway := newMCPGatewayWithMode(nil, nil, true)
+	tools := gateway.toolsForList()
+
+	if len(tools) == 0 {
+		t.Fatal("expected tools in list")
+	}
+
+	for _, tool := range tools {
+		if tool.Annotations == nil {
+			t.Fatalf("tool %q missing annotations", tool.Name)
+		}
+		if !tool.Annotations.ReadOnlyHint {
+			t.Fatalf("tool %q readOnlyHint = false, want true", tool.Name)
 		}
 	}
 }

@@ -177,10 +177,11 @@ cub-scout mcp serve
 
 ### Tool Routing Notes
 
-- `doctor` is the first standalone troubleshooting tool.
+- `doctor` is the first standalone troubleshooting tool, including when the real problem may be local access uncertainty such as wrong context, stale kubeconfig, or API reachability.
 - `scan` is an awareness scan of live cluster state, not a governed promotion or revision-safety gate.
 - `confighub_units` is the discovery/lookup step for "which ConfigHub unit is this?", while `confighub_unit_get` is the exact detail step once a unit is already known.
 - `compare_three_way` is the connected convergence proof tool after scope discovery, not the first troubleshooting move.
+- All MCP tool descriptors advertise `annotations.readOnlyHint=true`.
 
 ### Stable `doctor` MCP Surface
 

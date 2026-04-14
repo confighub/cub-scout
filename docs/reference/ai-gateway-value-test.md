@@ -51,6 +51,7 @@ User asks:
 - "what's wrong?"
 - "what's broken in prod?"
 - "should I start with cub-scout or kubectl?"
+- "kubectl cannot reach the cluster after restart; is the cluster broken or is my access broken?"
 
 Expected first move:
 
@@ -116,6 +117,7 @@ User asks:
 
 - "compare governed state to live state"
 - "do ConfigHub, the deployer, and the cluster agree?"
+- "would you sign off on this change?"
 
 Expected first move:
 
@@ -132,6 +134,7 @@ User asks:
 
 - "which ConfigHub unit corresponds to this resource?"
 - "show me the governed unit details"
+- "what is the first useful ConfigHub object I should open for this resource?"
 
 Expected first moves:
 
@@ -285,9 +288,12 @@ Likely causes:
 
 ## Current Read (April 2026)
 
-As of the `#377` closeout:
+As of the post-`#377` follow-up:
 
 1. `doctor` is the first troubleshooting and tool-choice entrypoint
-2. `map`, `explain`, and `trace` have sharper chain boundaries
-3. connected `compare_three_way` now covers the governed-vs-live intent directly
-4. the biggest remaining AI value work is not basic attraction, but broader CLI/docs cleanup and continued workflow simplification
+2. local-access uncertainty such as wrong context, stale kubeconfig, or API reachability is now explicitly part of the `doctor` routing story
+3. `map`, `explain`, and `trace` have sharper chain boundaries
+4. connected `compare_three_way` now covers both governed-vs-live convergence and sign-off-readiness intent directly
+5. connected lookup tools now say more clearly when to find the first useful ConfigHub object and when to open exact unit facts
+6. MCP tools now advertise `annotations.readOnlyHint=true`, making the read-only trust boundary machine-visible as well as human-described
+7. the biggest remaining AI value work is not basic attraction, but broader CLI/docs cleanup and continued workflow simplification
