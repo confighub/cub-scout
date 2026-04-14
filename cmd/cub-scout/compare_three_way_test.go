@@ -132,6 +132,15 @@ func TestRunCompareThreeWay_JSON(t *testing.T) {
 			Namespace: "prod",
 			Mode:      "dry-wet-live",
 			Connected: true,
+			Live: compareSideSummary{
+				Source:    "cluster",
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+				UnitSlug:  "payments-api",
+				SpaceName: "payments",
+				SpaceID:   "sp-123",
+			},
 		}, nil
 	}
 	defer func() { buildThreeWayResourceResultFn = prevBuilder }()
@@ -158,6 +167,15 @@ func TestRunCompareThreeWay_JSON(t *testing.T) {
 	}
 	if payload.Summary.Agreement.Summary == "" {
 		t.Error("expected agreement.summary in JSON output")
+	}
+	if payload.ConfigHubURL != "https://confighub.com/spaces/sp-123/units/payments-api" {
+		t.Fatalf("confighubUrl = %q, want exact unit url", payload.ConfigHubURL)
+	}
+	if len(payload.NextSteps) == 0 {
+		t.Fatal("expected nextSteps in JSON output")
+	}
+	if payload.NextSteps[0].ActionType == "" {
+		t.Fatal("expected structured next step actionType")
 	}
 }
 

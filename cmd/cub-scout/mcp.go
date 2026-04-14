@@ -563,7 +563,7 @@ func (g *mcpGateway) callTool(ctx context.Context, paramsRaw json.RawMessage) ma
 		return mcpToolError(err.Error())
 	}
 
-	return map[string]interface{}{
+	result := map[string]interface{}{
 		"isError": false,
 		"content": []map[string]string{
 			{
@@ -572,6 +572,263 @@ func (g *mcpGateway) callTool(ctx context.Context, paramsRaw json.RawMessage) ma
 			},
 		},
 	}
+	if structured := buildMCPStructuredContent(params.Name, output); structured != nil {
+		result["structuredContent"] = structured
+	}
+	return result
+}
+
+func buildMCPStructuredContent(toolName, output string) interface{} {
+	trimmed := strings.TrimSpace(output)
+	if trimmed == "" {
+		return nil
+	}
+
+	var payload interface{}
+	if err := json.Unmarshal([]byte(trimmed), &payload); err != nil {
+		return nil
+	}
+
+	switch toolName {
+	case "compare_three_way":
+		return mcpWrapStructuredData(payload)
+	case "confighub_units":
+		return buildMCPUnitsStructuredContent(payload)
+	case "confighub_unit_get":
+		return buildMCPUnitGetStructuredContent(payload)
+	case "confighub_changesets":
+		return buildMCPChangesetsStructuredContent(payload)
+	default:
+		return nil
+	}
+}
+
+func mcpWrapStructuredData(payload interface{}) map[string]interface{} {
+	wrapped := map[string]interface{}{
+		"data": payload,
+	}
+	if obj, ok := payload.(map[string]interface{}); ok {
+		if nextSteps, ok := obj["nextSteps"]; ok {
+			wrapped["nextSteps"] = nextSteps
+		}
+		if url, ok := obj["confighubUrl"]; ok {
+			wrapped["confighubUrl"] = url
+		}
+	}
+	return wrapped
+}
+
+func buildMCPUnitsStructuredContent(payload interface{}) interface{} {
+	wrapped := mcpWrapStructuredData(payload)
+	ref, ok := mcpExtractUnitRef(payload)
+	if !ok {
+		return wrapped
+	}
+
+	hints := []Hint{{
+		Command:      mcpUnitGetCommand(ref),
+		Rationale:    "Inspect the first returned ConfigHub unit to get exact revision and live-state facts.",
+		ConfigHubURL: configHubUnitURL(ref.SpaceID, ref.UnitSlug),
+		Priority:     hintPriorityHigh,
+		ActionType:   ActionReadOnly,
+	}}
+	sortHints(hints)
+	wrapped["nextSteps"] = HintsToStructured(hints)
+	if url := configHubUnitURL(ref.SpaceID, ref.UnitSlug); url != "" {
+		wrapped["confighubUrl"] = url
+	}
+	return wrapped
+}
+
+func buildMCPUnitGetStructuredContent(payload interface{}) interface{} {
+	wrapped := mcpWrapStructuredData(payload)
+	ref, ok := mcpExtractUnitRef(payload)
+	if !ok {
+		return wrapped
+	}
+
+	url := configHubUnitURL(ref.SpaceID, ref.UnitSlug)
+	hints := []Hint{{
+		Rationale:    "Open the exact ConfigHub unit to review revision history, diff views, and sign-off surfaces.",
+		ConfigHubURL: url,
+		Priority:     hintPriorityHigh,
+		ActionType:   ActionReadOnly,
+	}}
+	wrapped["nextSteps"] = HintsToStructured(hints)
+	if url != "" {
+		wrapped["confighubUrl"] = url
+	}
+	return wrapped
+}
+
+func buildMCPChangesetsStructuredContent(payload interface{}) interface{} {
+	wrapped := mcpWrapStructuredData(payload)
+	ref, ok := mcpExtractChangeSetRef(payload)
+	if !ok {
+		return wrapped
+	}
+
+	hints := []Hint{{
+		Command:    mcpChangeSetGetCommand(ref),
+		Rationale:  "Inspect the first returned ChangeSet to review the exact governed receipt and approval details.",
+		Priority:   hintPriorityHigh,
+		ActionType: ActionReadOnly,
+	}}
+	wrapped["nextSteps"] = HintsToStructured(hints)
+	return wrapped
+}
+
+type mcpUnitRef struct {
+	UnitSlug  string
+	UnitID    string
+	SpaceSlug string
+	SpaceID   string
+}
+
+type mcpChangeSetRef struct {
+	ChangeSetSlug string
+	ChangeSetID   string
+	SpaceSlug     string
+}
+
+func mcpExtractUnitRef(payload interface{}) (mcpUnitRef, bool) {
+	for _, item := range historyExtractItems(payload) {
+		ref := mcpUnitRefFromItem(item)
+		if ref.UnitSlug != "" || ref.UnitID != "" {
+			return ref, true
+		}
+	}
+	return mcpUnitRef{}, false
+}
+
+func mcpUnitRefFromItem(item map[string]interface{}) mcpUnitRef {
+	unitObj := mcpNestedMap(item, "Unit", "unit")
+	if unitObj == nil {
+		unitObj = item
+	}
+	spaceObj := mcpNestedMap(item, "Space", "space")
+	if spaceObj == nil {
+		spaceObj = mcpNestedMap(unitObj, "Space", "space")
+	}
+
+	ref := mcpUnitRef{
+		UnitSlug:  mcpFirstString(unitObj, "Slug", "slug", "Name", "name"),
+		UnitID:    mcpFirstString(unitObj, "UnitID", "unitId", "ID", "id"),
+		SpaceSlug: mcpFirstString(spaceObj, "Slug", "slug", "Name", "name"),
+		SpaceID:   mcpFirstString(spaceObj, "SpaceID", "spaceId", "ID", "id"),
+	}
+	if ref.UnitSlug == "" {
+		ref.UnitSlug = mcpFirstString(item, "Slug", "slug", "Name", "name")
+	}
+	if ref.UnitID == "" {
+		ref.UnitID = mcpFirstString(item, "UnitID", "unitId", "ID", "id")
+	}
+	if ref.SpaceSlug == "" {
+		ref.SpaceSlug = mcpFirstString(unitObj, "SpaceSlug", "spaceSlug", "SpaceName", "spaceName")
+	}
+	if ref.SpaceSlug == "" {
+		ref.SpaceSlug = mcpFirstString(item, "SpaceSlug", "spaceSlug", "SpaceName", "spaceName")
+	}
+	if ref.SpaceID == "" {
+		ref.SpaceID = mcpFirstString(unitObj, "SpaceID", "spaceId")
+	}
+	if ref.SpaceID == "" {
+		ref.SpaceID = mcpFirstString(item, "SpaceID", "spaceId")
+	}
+	return ref
+}
+
+func mcpExtractChangeSetRef(payload interface{}) (mcpChangeSetRef, bool) {
+	for _, item := range historyExtractItems(payload) {
+		ref := mcpChangeSetRefFromItem(item)
+		if ref.ChangeSetSlug != "" || ref.ChangeSetID != "" {
+			return ref, true
+		}
+	}
+	return mcpChangeSetRef{}, false
+}
+
+func mcpChangeSetRefFromItem(item map[string]interface{}) mcpChangeSetRef {
+	changeSetObj := mcpNestedMap(item, "ChangeSet", "changeSet", "changeset")
+	if changeSetObj == nil {
+		changeSetObj = item
+	}
+	spaceObj := mcpNestedMap(item, "Space", "space")
+
+	ref := mcpChangeSetRef{
+		ChangeSetSlug: mcpFirstString(changeSetObj, "Slug", "slug", "Name", "name"),
+		ChangeSetID:   mcpFirstString(changeSetObj, "ChangeSetID", "changeSetId", "ID", "id"),
+		SpaceSlug:     mcpFirstString(spaceObj, "Slug", "slug", "Name", "name"),
+	}
+	if ref.ChangeSetSlug == "" {
+		ref.ChangeSetSlug = mcpFirstString(item, "Slug", "slug", "Name", "name")
+	}
+	if ref.ChangeSetID == "" {
+		ref.ChangeSetID = mcpFirstString(item, "ChangeSetID", "changeSetId", "ID", "id")
+	}
+	if ref.SpaceSlug == "" {
+		ref.SpaceSlug = mcpFirstString(item, "SpaceSlug", "spaceSlug", "SpaceName", "spaceName")
+	}
+	return ref
+}
+
+func mcpNestedMap(item map[string]interface{}, keys ...string) map[string]interface{} {
+	for _, key := range keys {
+		raw, ok := item[key]
+		if !ok || raw == nil {
+			continue
+		}
+		if nested, ok := raw.(map[string]interface{}); ok {
+			return nested
+		}
+	}
+	return nil
+}
+
+func mcpFirstString(item map[string]interface{}, keys ...string) string {
+	for _, key := range keys {
+		raw, ok := item[key]
+		if !ok || raw == nil {
+			continue
+		}
+		if value, ok := raw.(string); ok {
+			value = strings.TrimSpace(value)
+			if value != "" {
+				return value
+			}
+		}
+	}
+	return ""
+}
+
+func mcpUnitGetCommand(ref mcpUnitRef) string {
+	target := strings.TrimSpace(ref.UnitSlug)
+	if target == "" {
+		target = strings.TrimSpace(ref.UnitID)
+	}
+	if target == "" {
+		return ""
+	}
+	args := []string{"cub", "unit", "get", target, "--json"}
+	if ref.SpaceSlug != "" {
+		args = append(args, "--space", ref.SpaceSlug)
+	}
+	return strings.Join(args, " ")
+}
+
+func mcpChangeSetGetCommand(ref mcpChangeSetRef) string {
+	target := strings.TrimSpace(ref.ChangeSetSlug)
+	if target == "" {
+		target = strings.TrimSpace(ref.ChangeSetID)
+	}
+	if target == "" {
+		return ""
+	}
+	args := []string{"cub", "changeset", "get", target, "--json"}
+	if ref.SpaceSlug != "" {
+		args = append(args, "--space", ref.SpaceSlug)
+	}
+	return strings.Join(args, " ")
 }
 
 func mcpToolError(msg string) map[string]interface{} {

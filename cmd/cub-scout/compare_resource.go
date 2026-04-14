@@ -32,6 +32,7 @@ type compareSideSummary struct {
 	Namespace       string   `json:"namespace,omitempty"`
 	UnitSlug        string   `json:"unitSlug,omitempty"`
 	SpaceName       string   `json:"spaceName,omitempty"`
+	SpaceID         string   `json:"spaceId,omitempty"`
 	Generation      int64    `json:"generation,omitempty"`
 	ResourceVersion string   `json:"resourceVersion,omitempty"`
 	Replicas        *int64   `json:"replicas,omitempty"`
@@ -74,6 +75,7 @@ type compareDryWetResult struct {
 type compareConfigHubLink struct {
 	UnitSlug  string
 	SpaceName string
+	SpaceID   string
 }
 
 var (
@@ -497,6 +499,9 @@ func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) 
 	if summary.SpaceName == "" {
 		summary.SpaceName = strings.TrimSpace(link.SpaceName)
 	}
+	if summary.SpaceID == "" {
+		summary.SpaceID = strings.TrimSpace(link.SpaceID)
+	}
 
 	return summary, nil
 }
@@ -512,6 +517,10 @@ func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSumma
 	if spaceName == "" {
 		spaceName = strings.TrimSpace(labels["confighub.com/SpaceName"])
 	}
+	spaceID := strings.TrimSpace(annotations["confighub.com/SpaceID"])
+	if spaceID == "" {
+		spaceID = strings.TrimSpace(labels["confighub.com/SpaceID"])
+	}
 
 	out := compareSideSummary{
 		Source:          "cluster",
@@ -521,6 +530,7 @@ func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSumma
 		Namespace:       obj.GetNamespace(),
 		UnitSlug:        unitSlug,
 		SpaceName:       spaceName,
+		SpaceID:         spaceID,
 		Generation:      obj.GetGeneration(),
 		ResourceVersion: obj.GetResourceVersion(),
 		LabelCount:      len(labels),
@@ -554,8 +564,16 @@ func resolveCompareConfigHubLink(ctx context.Context, dynClient dynamic.Interfac
 	}
 
 	annotations := appObj.GetAnnotations()
+	labels := appObj.GetLabels()
 	link := compareConfigHubLink{
 		UnitSlug: strings.TrimSpace(annotations["confighub.com/UnitSlug"]),
+		SpaceID:  strings.TrimSpace(annotations["confighub.com/SpaceID"]),
+	}
+	if link.UnitSlug == "" {
+		link.UnitSlug = strings.TrimSpace(labels["confighub.com/UnitSlug"])
+	}
+	if link.SpaceID == "" {
+		link.SpaceID = strings.TrimSpace(labels["confighub.com/SpaceID"])
 	}
 
 	repoURL, _, _ := unstructured.NestedString(appObj.Object, "spec", "source", "repoURL")

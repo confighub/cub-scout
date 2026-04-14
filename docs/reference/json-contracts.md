@@ -47,6 +47,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
+| MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
 
 ## Tree / Map / Trace / Drift JSON Today
 
@@ -73,6 +74,7 @@ For MCP, the current rule is:
 1. tool arguments map to an existing CLI JSON command
 2. the tool returns that JSON payload as text content
 3. the wrapped CLI surface remains the contract source of truth
+4. selected connected tools may add `structuredContent` with parsed data plus read-only trust guidance
 
 ## Trace Secret Evidence Contract
 
@@ -195,6 +197,7 @@ When `compare three-way --format json` is used, the JSON output includes `summar
 
 ```json
 {
+  "confighubUrl": "https://confighub.com/spaces/sp-123/units/payments-api",
   "summary": {
     "agreement": {
       "state": "converging",
@@ -209,7 +212,14 @@ When `compare three-way --format json` is used, the JSON output includes `summar
         "total": 5
       }
     }
-  }
+  },
+  "nextSteps": [
+    {
+      "actionType": "waiting",
+      "reason": "Re-run the three-way comparison after controller convergence to confirm this scope has settled.",
+      "nextCommand": "cub-scout compare three-way --scope namespace/prod --format json"
+    }
+  ]
 }
 ```
 
@@ -221,6 +231,8 @@ When `compare three-way --format json` is used, the JSON output includes `summar
 | `summary.agreement.summary` | string | Compact human-readable summary of the scope |
 | `summary.agreement.reasons[]` | string[] | Deterministic supporting reasons |
 | `summary.agreement.sources` | `SourceCoverage` | Evidence coverage counts used to derive the summary |
+| `confighubUrl` | string | Exact ConfigHub unit URL when a representative connected unit can be identified |
+| `nextSteps[]` | `StructuredHint[]` | Deterministic read-only follow-up guidance for trust review or convergence re-checks |
 
 ### Agreement States
 
@@ -241,6 +253,51 @@ When `compare three-way --format json` is used, the JSON output includes `summar
 | `total` | int | Total resources in scope |
 
 Source: `cmd/cub-scout/three_way.go`, `cmd/cub-scout/compare_three_way.go`
+
+## MCP Structured Content Contract
+
+When MCP tools return JSON-backed data, the gateway keeps the raw JSON string in `content[0].text`.
+For the highest-value connected/read-only surfaces, it may also add `structuredContent`.
+
+### Current Additive MCP Rule
+
+- `compare_three_way` returns parsed CLI JSON under `structuredContent.data`
+- `compare_three_way` may mirror `confighubUrl` and `nextSteps` from the CLI JSON at the top level of `structuredContent`
+- `confighub_units`, `confighub_unit_get`, and `confighub_changesets` may add:
+  - `structuredContent.data`
+  - `structuredContent.nextSteps`
+  - `structuredContent.confighubUrl` when an exact unit URL is known
+
+### Example MCP Result Shape
+
+```json
+{
+  "isError": false,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"summary\":{\"agreement\":{\"state\":\"agreed\"}}}"
+    }
+  ],
+  "structuredContent": {
+    "data": {
+      "summary": {
+        "agreement": {
+          "state": "agreed"
+        }
+      }
+    },
+    "confighubUrl": "https://confighub.com/spaces/sp-123/units/payments-api",
+    "nextSteps": [
+      {
+        "actionType": "human-decision",
+        "reason": "Agreement is proven for this scope; open the governed unit to review the audit trail before sign-off.",
+        "nextSurface": "https://confighub.com/spaces/sp-123/units/payments-api"
+      }
+    ]
+  }
+}
+```
 
 ## Trace and Explain Recent Events Contract
 

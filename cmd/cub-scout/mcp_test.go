@@ -296,7 +296,7 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedChangesets(t *testing.T) {
 		},
 		func(ctx context.Context, args []string) (string, error) {
 			gotConnectedArgs = append([]string(nil), args...)
-			return `{"connected":true}`, nil
+			return `[{"Space":{"Slug":"platform"},"ChangeSet":{"Slug":"release-42","ID":"cs-123"}}]`, nil
 		},
 		true,
 	)
@@ -325,6 +325,22 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedChangesets(t *testing.T) {
 	wantConnected := []string{"changeset", "list", "--json", "--space", "platform", "--where", "Slug LIKE 'release-%'"}
 	if !reflect.DeepEqual(gotConnectedArgs, wantConnected) {
 		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantConnected)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			Data      interface{}      `json:"data"`
+			NextSteps []StructuredHint `json:"nextSteps"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if len(result.StructuredContent.NextSteps) == 0 {
+		t.Fatal("expected nextSteps in structuredContent")
+	}
+	if got := result.StructuredContent.NextSteps[0].NextCommand; !strings.Contains(got, "cub changeset get") {
+		t.Fatalf("next command = %q, want changeset get command", got)
 	}
 }
 
@@ -368,6 +384,18 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareThreeWay(t *testing.T) {
 	wantStandalone := []string{"compare", "three-way", "--format", "json", "--scope", "deploy/api", "-n", "payments"}
 	if !reflect.DeepEqual(gotStandaloneArgs, wantStandalone) {
 		t.Fatalf("standalone args = %v, want %v", gotStandaloneArgs, wantStandalone)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			Data map[string]interface{} `json:"data"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if _, ok := result.StructuredContent.Data["agreement"]; !ok {
+		t.Fatalf("expected structuredContent.data to include parsed compare JSON, got %+v", result.StructuredContent.Data)
 	}
 }
 
@@ -681,6 +709,100 @@ func TestMCPGatewayHandleRequest_ToolsCallDoctorWithFractionalTop(t *testing.T) 
 	}
 	if len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, "whole number") {
 		t.Fatalf("error should mention whole number, got: %+v", result.Content)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitsIncludesTrustSurface(t *testing.T) {
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			return `{"standalone":true}`, nil
+		},
+		func(ctx context.Context, args []string) (string, error) {
+			return `[{"Space":{"Slug":"prod","SpaceID":"sp-123"},"Unit":{"Slug":"payments-api","UnitID":"u-123"}}]`, nil
+		},
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`20`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"confighub_units","arguments":{"space":"prod"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			Data         interface{}      `json:"data"`
+			ConfigHubURL string           `json:"confighubUrl"`
+			NextSteps    []StructuredHint `json:"nextSteps"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if result.StructuredContent.ConfigHubURL != "https://confighub.com/spaces/sp-123/units/payments-api" {
+		t.Fatalf("confighubUrl = %q, want exact unit url", result.StructuredContent.ConfigHubURL)
+	}
+	if len(result.StructuredContent.NextSteps) == 0 {
+		t.Fatal("expected nextSteps in structuredContent")
+	}
+	if got := result.StructuredContent.NextSteps[0].NextCommand; got != "cub unit get payments-api --json --space prod" {
+		t.Fatalf("next command = %q, want exact unit get command", got)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitGetIncludesTrustSurface(t *testing.T) {
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			return `{"standalone":true}`, nil
+		},
+		func(ctx context.Context, args []string) (string, error) {
+			return `{"Space":{"Slug":"prod","SpaceID":"sp-123"},"Unit":{"Slug":"payments-api","UnitID":"u-123"}}`, nil
+		},
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`21`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"confighub_unit_get","arguments":{"unit":"payments-api","space":"prod"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			Data         interface{}      `json:"data"`
+			ConfigHubURL string           `json:"confighubUrl"`
+			NextSteps    []StructuredHint `json:"nextSteps"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if result.StructuredContent.ConfigHubURL != "https://confighub.com/spaces/sp-123/units/payments-api" {
+		t.Fatalf("confighubUrl = %q, want exact unit url", result.StructuredContent.ConfigHubURL)
+	}
+	if len(result.StructuredContent.NextSteps) == 0 {
+		t.Fatal("expected nextSteps in structuredContent")
+	}
+	if got := result.StructuredContent.NextSteps[0].NextSurface; got != "https://confighub.com/spaces/sp-123/units/payments-api" {
+		t.Fatalf("next surface = %q, want unit url", got)
 	}
 }
 

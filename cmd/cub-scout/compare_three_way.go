@@ -61,9 +61,11 @@ type threeWaySummary struct {
 }
 
 type threeWayReport struct {
-	Scope     string                  `json:"scope"`
-	Summary   threeWaySummary         `json:"summary"`
-	Resources []threeWayResourceEntry `json:"resources"`
+	Scope        string                  `json:"scope"`
+	ConfigHubURL string                  `json:"confighubUrl,omitempty"`
+	Summary      threeWaySummary         `json:"summary"`
+	Resources    []threeWayResourceEntry `json:"resources"`
+	NextSteps    []StructuredHint        `json:"nextSteps,omitempty"`
 }
 
 // Exit codes for compare three-way command (CI contract)
@@ -315,11 +317,212 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 	// Derive agreement summary from patterns
 	summary.Agreement = deriveAgreementSummary(patternCounts, sources)
 
-	return threeWayReport{
+	report := threeWayReport{
 		Scope:     scope.String(),
 		Summary:   summary,
 		Resources: entries,
-	}, nil
+	}
+	report.ConfigHubURL, report.NextSteps = buildThreeWayNavigation(report)
+	return report, nil
+}
+
+func buildThreeWayNavigation(report threeWayReport) (string, []StructuredHint) {
+	entry := selectThreeWayTrustEntry(report.Resources)
+	reportURL := compareResourceConfigHubURL(entry.Result)
+
+	hints := make([]Hint, 0, 3)
+	repeatCommand := compareThreeWayRepeatCommand(report.Scope, entry)
+	explainCommand := compareThreeWayExplainCommand(entry)
+	unitCommand := compareThreeWayUnitGetCommand(entry.Result)
+
+	switch report.Summary.Agreement.State {
+	case StateAgreed:
+		if reportURL != "" {
+			hints = append(hints, Hint{
+				Rationale:    "Agreement is proven for this scope; open the governed unit to review the audit trail before sign-off.",
+				ConfigHubURL: reportURL,
+				Priority:     hintPriorityHigh,
+				ActionType:   ActionHumanDecision,
+			})
+		}
+		if unitCommand != "" {
+			hints = append(hints, Hint{
+				Command:    unitCommand,
+				Rationale:  "Inspect the linked ConfigHub unit for exact revision and live-state facts behind this agreement.",
+				Priority:   hintPriorityNormal,
+				ActionType: ActionReadOnly,
+			})
+		}
+	case StateConverging:
+		if repeatCommand != "" {
+			hints = append(hints, Hint{
+				Command:    repeatCommand,
+				Rationale:  "Re-run the three-way comparison after controller convergence to confirm this scope has settled.",
+				Priority:   hintPriorityHigh,
+				ActionType: ActionWaiting,
+			})
+		}
+		if unitCommand != "" || reportURL != "" {
+			hints = append(hints, Hint{
+				Command:      unitCommand,
+				Rationale:    "Inspect the linked ConfigHub unit while the controller is still converging.",
+				ConfigHubURL: reportURL,
+				Priority:     hintPriorityNormal,
+				ActionType:   ActionReadOnly,
+			})
+		}
+	case StateDiverged:
+		if unitCommand != "" || reportURL != "" {
+			hints = append(hints, Hint{
+				Command:      unitCommand,
+				Rationale:    "Inspect the linked ConfigHub unit to see which governed object sits behind the divergence.",
+				ConfigHubURL: reportURL,
+				Priority:     hintPriorityHigh,
+				ActionType:   ActionReadOnly,
+			})
+		}
+		if explainCommand != "" {
+			hints = append(hints, Hint{
+				Command:    explainCommand,
+				Rationale:  "Explain the representative resource to separate controller drift from governed-intent disagreement.",
+				Priority:   hintPriorityNormal,
+				ActionType: ActionReadOnly,
+			})
+		}
+	case StatePartial:
+		if explainCommand != "" {
+			hints = append(hints, Hint{
+				Command:    explainCommand,
+				Rationale:  "Explain the representative resource to understand what evidence is still missing for a full agreement claim.",
+				Priority:   hintPriorityHigh,
+				ActionType: ActionReadOnly,
+			})
+		}
+		if unitCommand != "" || reportURL != "" {
+			hints = append(hints, Hint{
+				Command:      unitCommand,
+				Rationale:    "Open the first useful governed unit to anchor the partial view in exact ConfigHub context.",
+				ConfigHubURL: reportURL,
+				Priority:     hintPriorityNormal,
+				ActionType:   ActionReadOnly,
+			})
+		}
+	default:
+		if repeatCommand != "" {
+			hints = append(hints, Hint{
+				Command:    repeatCommand,
+				Rationale:  "Re-run the three-way comparison to refresh convergence facts for this scope.",
+				Priority:   hintPriorityNormal,
+				ActionType: ActionReadOnly,
+			})
+		}
+	}
+
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	return reportURL, HintsToStructured(hints)
+}
+
+func selectThreeWayTrustEntry(entries []threeWayResourceEntry) threeWayResourceEntry {
+	bestIndex := -1
+	bestScore := -1
+	for i, entry := range entries {
+		score := 0
+		if compareResourceConfigHubURL(entry.Result) != "" {
+			score += 100
+		}
+		if compareThreeWayUnitGetCommand(entry.Result) != "" {
+			score += 60
+		}
+		if len(entry.Result.Mismatches) > 0 {
+			score += 30
+		}
+		if entry.Result.Connected {
+			score += 20
+		}
+		switch entry.Severity {
+		case "warning":
+			score += 10
+		case "info":
+			score += 5
+		}
+		if bestIndex == -1 || score > bestScore {
+			bestIndex = i
+			bestScore = score
+		}
+	}
+	if bestIndex == -1 {
+		return threeWayResourceEntry{}
+	}
+	return entries[bestIndex]
+}
+
+func compareThreeWayRepeatCommand(scope string, entry threeWayResourceEntry) string {
+	scope = strings.TrimSpace(scope)
+	if scope == "" {
+		return ""
+	}
+	args := []string{"cub-scout", "compare", "three-way", "--scope", scope, "--format", "json"}
+	if scope != "cluster" && !strings.HasPrefix(strings.ToLower(scope), "namespace/") {
+		ns := strings.TrimSpace(entry.Result.Namespace)
+		if ns != "" {
+			args = append(args, "-n", ns)
+		}
+	}
+	return strings.Join(args, " ")
+}
+
+func compareThreeWayExplainCommand(entry threeWayResourceEntry) string {
+	resource := strings.TrimSpace(entry.Result.Resource)
+	if resource == "" {
+		return ""
+	}
+	args := []string{"cub-scout", "explain", resource}
+	if ns := strings.TrimSpace(entry.Result.Namespace); ns != "" {
+		args = append(args, "-n", ns)
+	}
+	args = append(args, "--format", "json")
+	return strings.Join(args, " ")
+}
+
+func compareThreeWayUnitGetCommand(result compareResourceResult) string {
+	unitSlug, spaceName, _ := compareResourceUnitIdentity(result)
+	if unitSlug == "" {
+		return ""
+	}
+	args := []string{"cub", "unit", "get", unitSlug, "--json"}
+	if spaceName != "" {
+		args = append(args, "--space", spaceName)
+	}
+	return strings.Join(args, " ")
+}
+
+func compareResourceConfigHubURL(result compareResourceResult) string {
+	unitSlug, _, spaceID := compareResourceUnitIdentity(result)
+	return configHubUnitURL(spaceID, unitSlug)
+}
+
+func compareResourceUnitIdentity(result compareResourceResult) (unitSlug, spaceName, spaceID string) {
+	for _, side := range []*compareSideSummary{&result.Live, result.Wet, result.Dry} {
+		if side == nil {
+			continue
+		}
+		if unitSlug == "" {
+			unitSlug = strings.TrimSpace(side.UnitSlug)
+		}
+		if spaceName == "" {
+			spaceName = strings.TrimSpace(side.SpaceName)
+		}
+		if spaceID == "" {
+			spaceID = strings.TrimSpace(side.SpaceID)
+		}
+		if unitSlug != "" && spaceName != "" && spaceID != "" {
+			break
+		}
+	}
+	return unitSlug, spaceName, spaceID
 }
 
 // classifyResourcePattern determines the three-way pattern for a resource.
