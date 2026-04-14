@@ -34,6 +34,9 @@ type compareSideSummary struct {
 	UnitID          string   `json:"unitId,omitempty"`
 	SpaceName       string   `json:"spaceName,omitempty"`
 	SpaceID         string   `json:"spaceId,omitempty"`
+	HeadRevisionNum int      `json:"headRevisionNum,omitempty"`
+	LiveRevisionNum int      `json:"liveRevisionNum,omitempty"`
+	LastAppliedRev  int      `json:"lastAppliedRevisionNum,omitempty"`
 	Generation      int64    `json:"generation,omitempty"`
 	ResourceVersion string   `json:"resourceVersion,omitempty"`
 	Replicas        *int64   `json:"replicas,omitempty"`
@@ -77,6 +80,16 @@ type compareConfigHubLink struct {
 	UnitSlug  string
 	SpaceName string
 	SpaceID   string
+}
+
+type compareUnitMetadata struct {
+	UnitSlug            string
+	UnitID              string
+	SpaceName           string
+	SpaceID             string
+	HeadRevisionNum     int
+	LiveRevisionNum     int
+	LastAppliedRevision int
 }
 
 var (
@@ -240,6 +253,7 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 	if err != nil {
 		return compareDryWetResult{}, fmt.Errorf("cub unit get: %w", err)
 	}
+	unitMeta, _ := decodeCompareUnitMetadataFromGetJSON(dryRaw)
 
 	dryYAML, err := decodeCompareUnitDataFromGetJSON(dryRaw)
 	if err != nil {
@@ -275,6 +289,8 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 	if wetSummary != nil && wetSummary.SpaceName == "" {
 		wetSummary.SpaceName = space
 	}
+	applyCompareUnitMetadata(drySummary, unitMeta)
+	applyCompareUnitMetadata(wetSummary, unitMeta)
 	return compareDryWetResult{
 		Dry:   drySummary,
 		Wet:   wetSummary,
@@ -338,6 +354,73 @@ func decodeCompareUnitDataFromGetJSON(raw string) (string, error) {
 		}
 	}
 	return strings.TrimSpace(string(decoded)), nil
+}
+
+func decodeCompareUnitMetadataFromGetJSON(raw string) (compareUnitMetadata, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return compareUnitMetadata{}, fmt.Errorf("empty unit get output")
+	}
+
+	var payload struct {
+		Space struct {
+			Slug    string `json:"Slug"`
+			SpaceID string `json:"SpaceID"`
+		} `json:"Space"`
+		Unit struct {
+			Slug                   string `json:"Slug"`
+			UnitID                 string `json:"UnitID"`
+			SpaceID                string `json:"SpaceID"`
+			HeadRevisionNum        int    `json:"HeadRevisionNum"`
+			LiveRevisionNum        int    `json:"LiveRevisionNum"`
+			LastAppliedRevisionNum int    `json:"LastAppliedRevisionNum"`
+		} `json:"Unit"`
+	}
+	if err := json.Unmarshal([]byte(trimmed), &payload); err != nil {
+		return compareUnitMetadata{}, fmt.Errorf("parse unit get json: %w", err)
+	}
+
+	spaceID := strings.TrimSpace(payload.Space.SpaceID)
+	if spaceID == "" {
+		spaceID = strings.TrimSpace(payload.Unit.SpaceID)
+	}
+
+	return compareUnitMetadata{
+		UnitSlug:            strings.TrimSpace(payload.Unit.Slug),
+		UnitID:              strings.TrimSpace(payload.Unit.UnitID),
+		SpaceName:           strings.TrimSpace(payload.Space.Slug),
+		SpaceID:             spaceID,
+		HeadRevisionNum:     payload.Unit.HeadRevisionNum,
+		LiveRevisionNum:     payload.Unit.LiveRevisionNum,
+		LastAppliedRevision: payload.Unit.LastAppliedRevisionNum,
+	}, nil
+}
+
+func applyCompareUnitMetadata(summary *compareSideSummary, meta compareUnitMetadata) {
+	if summary == nil {
+		return
+	}
+	if summary.UnitSlug == "" {
+		summary.UnitSlug = meta.UnitSlug
+	}
+	if summary.UnitID == "" {
+		summary.UnitID = meta.UnitID
+	}
+	if summary.SpaceName == "" {
+		summary.SpaceName = meta.SpaceName
+	}
+	if summary.SpaceID == "" {
+		summary.SpaceID = meta.SpaceID
+	}
+	if summary.HeadRevisionNum == 0 && meta.HeadRevisionNum > 0 {
+		summary.HeadRevisionNum = meta.HeadRevisionNum
+	}
+	if summary.LiveRevisionNum == 0 && meta.LiveRevisionNum > 0 {
+		summary.LiveRevisionNum = meta.LiveRevisionNum
+	}
+	if summary.LastAppliedRev == 0 && meta.LastAppliedRevision > 0 {
+		summary.LastAppliedRev = meta.LastAppliedRevision
+	}
 }
 
 func findCompareUnitDataBase64(payload interface{}) string {

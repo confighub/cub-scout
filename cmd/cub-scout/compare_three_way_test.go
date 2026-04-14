@@ -132,6 +132,15 @@ func TestRunCompareThreeWay_JSON(t *testing.T) {
 			Namespace: "prod",
 			Mode:      "dry-wet-live",
 			Connected: true,
+			Dry: &compareSideSummary{
+				Source:          "confighub",
+				UnitSlug:        "payments-api",
+				UnitID:          "u-123",
+				SpaceName:       "payments",
+				SpaceID:         "sp-123",
+				HeadRevisionNum: 9,
+				LiveRevisionNum: 9,
+			},
 			Live: compareSideSummary{
 				Source:    "cluster",
 				Kind:      "Deployment",
@@ -178,8 +187,47 @@ func TestRunCompareThreeWay_JSON(t *testing.T) {
 	if len(payload.NextSteps) == 0 {
 		t.Fatal("expected nextSteps in JSON output")
 	}
-	if payload.NextSteps[0].ActionType == "" {
-		t.Fatal("expected structured next step actionType")
+	if payload.NextSteps[0].NextSurface != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("first next surface = %q, want exact revisions url", payload.NextSteps[0].NextSurface)
+	}
+	if !strings.Contains(payload.NextSteps[0].Reason, "Head and live revisions both point at 9") {
+		t.Fatalf("first next reason = %q, want aligned revision rationale", payload.NextSteps[0].Reason)
+	}
+}
+
+func TestBuildThreeWayNavigation_PrioritizesRevisionDriftHint(t *testing.T) {
+	report := threeWayReport{
+		Scope: "namespace/prod",
+		Summary: threeWaySummary{
+			Agreement: AgreementSummary{State: StateConverging},
+		},
+		Resources: []threeWayResourceEntry{{
+			Result: compareResourceResult{
+				Resource:  "Deployment/api",
+				Namespace: "prod",
+				Connected: true,
+				Dry: &compareSideSummary{
+					UnitSlug:        "payments-api",
+					UnitID:          "u-123",
+					SpaceName:       "payments",
+					SpaceID:         "sp-123",
+					HeadRevisionNum: 9,
+					LiveRevisionNum: 7,
+				},
+			},
+			Severity: "warning",
+		}},
+	}
+
+	_, _, nextSteps := buildThreeWayNavigation(report)
+	if len(nextSteps) < 2 {
+		t.Fatalf("expected at least 2 next steps, got %d", len(nextSteps))
+	}
+	if nextSteps[1].NextSurface != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("second next surface = %q, want exact revisions url", nextSteps[1].NextSurface)
+	}
+	if !strings.Contains(nextSteps[1].Reason, "Head revision 9 is ahead of live revision 7") {
+		t.Fatalf("second next reason = %q, want revision drift rationale", nextSteps[1].Reason)
 	}
 }
 

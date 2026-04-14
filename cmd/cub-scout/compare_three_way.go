@@ -331,6 +331,7 @@ func buildThreeWayNavigation(report threeWayReport) (string, string, []Structure
 	entry := selectThreeWayTrustEntry(report.Resources)
 	reportURL := compareResourceConfigHubURL(entry.Result)
 	revisionsURL := compareResourceRevisionsURL(entry.Result)
+	revisionHint := compareThreeWayRevisionHint(entry.Result, revisionsURL, report.Summary.Agreement.State)
 
 	hints := make([]Hint, 0, 3)
 	repeatCommand := compareThreeWayRepeatCommand(report.Scope, entry)
@@ -339,7 +340,9 @@ func buildThreeWayNavigation(report threeWayReport) (string, string, []Structure
 
 	switch report.Summary.Agreement.State {
 	case StateAgreed:
-		if revisionsURL != "" {
+		if revisionHint != nil {
+			hints = append(hints, *revisionHint)
+		} else if revisionsURL != "" {
 			hints = append(hints, Hint{
 				Rationale:    "Open revision history to review the governed audit trail and compare revisions before sign-off.",
 				ConfigHubURL: revisionsURL,
@@ -372,7 +375,9 @@ func buildThreeWayNavigation(report threeWayReport) (string, string, []Structure
 				ActionType: ActionWaiting,
 			})
 		}
-		if revisionsURL != "" {
+		if revisionHint != nil {
+			hints = append(hints, *revisionHint)
+		} else if revisionsURL != "" {
 			hints = append(hints, Hint{
 				Rationale:    "Open revision history while the controller is still converging to review the pending governed path.",
 				ConfigHubURL: revisionsURL,
@@ -390,6 +395,9 @@ func buildThreeWayNavigation(report threeWayReport) (string, string, []Structure
 			})
 		}
 	case StateDiverged:
+		if revisionHint != nil {
+			hints = append(hints, *revisionHint)
+		}
 		if unitCommand != "" || reportURL != "" {
 			hints = append(hints, Hint{
 				Command:      unitCommand,
@@ -408,6 +416,9 @@ func buildThreeWayNavigation(report threeWayReport) (string, string, []Structure
 			})
 		}
 	case StatePartial:
+		if revisionHint != nil {
+			hints = append(hints, *revisionHint)
+		}
 		if explainCommand != "" {
 			hints = append(hints, Hint{
 				Command:    explainCommand,
@@ -426,6 +437,9 @@ func buildThreeWayNavigation(report threeWayReport) (string, string, []Structure
 			})
 		}
 	default:
+		if revisionHint != nil {
+			hints = append(hints, *revisionHint)
+		}
 		if repeatCommand != "" {
 			hints = append(hints, Hint{
 				Command:    repeatCommand,
@@ -441,6 +455,45 @@ func buildThreeWayNavigation(report threeWayReport) (string, string, []Structure
 		hints = hints[:3]
 	}
 	return reportURL, revisionsURL, HintsToStructured(hints)
+}
+
+func compareResourceRevisionState(result compareResourceResult) mcpUnitRevisionState {
+	state := mcpUnitRevisionState{}
+	for _, side := range []*compareSideSummary{&result.Live, result.Wet, result.Dry} {
+		if side == nil {
+			continue
+		}
+		if !state.HasHeadRevision && side.HeadRevisionNum > 0 {
+			state.HeadRevision = side.HeadRevisionNum
+			state.HasHeadRevision = true
+		}
+		if !state.HasLiveRevision && side.LiveRevisionNum > 0 {
+			state.LiveRevision = side.LiveRevisionNum
+			state.HasLiveRevision = true
+		}
+		if !state.HasLastApplied && side.LastAppliedRev > 0 {
+			state.LastAppliedRevision = side.LastAppliedRev
+			state.HasLastApplied = true
+		}
+		if state.HasHeadRevision && state.HasLiveRevision && state.HasLastApplied {
+			break
+		}
+	}
+	return state
+}
+
+func compareThreeWayRevisionHint(result compareResourceResult, revisionsURL string, state AgreementState) *Hint {
+	revisionState := compareResourceRevisionState(result)
+	hint := mcpUnitRevisionHint(revisionState, revisionsURL, false)
+	if hint == nil {
+		return nil
+	}
+	cloned := *hint
+	if state == StateAgreed && revisionState.HasHeadRevision && revisionState.HasLiveRevision && revisionState.HeadRevision == revisionState.LiveRevision {
+		cloned.Priority = hintPriorityHigh
+		cloned.ActionType = ActionHumanDecision
+	}
+	return &cloned
 }
 
 func selectThreeWayTrustEntry(entries []threeWayResourceEntry) threeWayResourceEntry {

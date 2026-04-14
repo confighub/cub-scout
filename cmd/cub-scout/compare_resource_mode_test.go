@@ -349,7 +349,7 @@ func TestLoadCompareDryWetSnapshots(t *testing.T) {
 	restoreRun := runCompareCubCommand
 	runCompareCubCommand = func(ctx context.Context, args []string) (string, error) {
 		if reflect.DeepEqual(args, compareUnitGetArgs("checkout", "payments-prod")) {
-			return `{"Unit":{"Data":"YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGFwaQogIG5hbWVzcGFjZTogcHJvZApzcGVjOgogIHJlcGxpY2FzOiAxCiAgdGVtcGxhdGU6CiAgICBzcGVjOgogICAgICBjb250YWluZXJzOgogICAgICAgIC0gbmFtZTogYXBpCiAgICAgICAgICBpbWFnZTogZ2hjci5pby9hY21lL2FwaTp2MQo="}}`, nil
+			return `{"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Unit":{"Slug":"checkout","UnitID":"u-123","HeadRevisionNum":9,"LiveRevisionNum":7,"LastAppliedRevisionNum":8,"Data":"YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGFwaQogIG5hbWVzcGFjZTogcHJvZApzcGVjOgogIHJlcGxpY2FzOiAxCiAgdGVtcGxhdGU6CiAgICBzcGVjOgogICAgICBjb250YWluZXJzOgogICAgICAgIC0gbmFtZTogYXBpCiAgICAgICAgICBpbWFnZTogZ2hjci5pby9hY21lL2FwaTp2MQo="}}`, nil
 		}
 		if reflect.DeepEqual(args, compareUnitLivedataArgs("checkout", "payments-prod")) {
 			return `
@@ -387,6 +387,12 @@ spec:
 	}
 	if got.Wet.Replicas == nil || *got.Wet.Replicas != 2 {
 		t.Fatalf("wet replicas = %#v, want 2", got.Wet.Replicas)
+	}
+	if got.Dry.HeadRevisionNum != 9 || got.Dry.LiveRevisionNum != 7 || got.Dry.LastAppliedRev != 8 {
+		t.Fatalf("dry revision facts = head:%d live:%d applied:%d, want 9/7/8", got.Dry.HeadRevisionNum, got.Dry.LiveRevisionNum, got.Dry.LastAppliedRev)
+	}
+	if got.Wet.UnitID != "u-123" || got.Wet.SpaceID != "sp-123" {
+		t.Fatalf("wet unit identity = unit:%q space:%q, want u-123/sp-123", got.Wet.UnitID, got.Wet.SpaceID)
 	}
 }
 
