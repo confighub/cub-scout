@@ -25,24 +25,24 @@ import (
 )
 
 type compareSideSummary struct {
-	Source          string   `json:"source"`
-	APIVersion      string   `json:"apiVersion,omitempty"`
-	Kind            string   `json:"kind,omitempty"`
-	Name            string   `json:"name,omitempty"`
-	Namespace       string   `json:"namespace,omitempty"`
-	UnitSlug        string   `json:"unitSlug,omitempty"`
-	UnitID          string   `json:"unitId,omitempty"`
-	SpaceName       string   `json:"spaceName,omitempty"`
-	SpaceID         string   `json:"spaceId,omitempty"`
-	HeadRevisionNum int      `json:"headRevisionNum,omitempty"`
-	LiveRevisionNum int      `json:"liveRevisionNum,omitempty"`
-	LastAppliedRev  int      `json:"lastAppliedRevisionNum,omitempty"`
-	Generation      int64    `json:"generation,omitempty"`
-	ResourceVersion string   `json:"resourceVersion,omitempty"`
-	Replicas        *int64   `json:"replicas,omitempty"`
-	Images          []string `json:"images,omitempty"`
-	LabelCount      int      `json:"labelCount,omitempty"`
-	AnnotationCount int      `json:"annotationCount,omitempty"`
+	Source                 string   `json:"source"`
+	APIVersion             string   `json:"apiVersion,omitempty"`
+	Kind                   string   `json:"kind,omitempty"`
+	Name                   string   `json:"name,omitempty"`
+	Namespace              string   `json:"namespace,omitempty"`
+	UnitSlug               string   `json:"unitSlug,omitempty"`
+	UnitID                 string   `json:"unitId,omitempty"`
+	SpaceName              string   `json:"spaceName,omitempty"`
+	SpaceID                string   `json:"spaceId,omitempty"`
+	HeadRevisionNum        int      `json:"headRevisionNum,omitempty"`
+	LiveRevisionNum        int      `json:"liveRevisionNum,omitempty"`
+	LastAppliedRevisionNum int      `json:"lastAppliedRevisionNum,omitempty"`
+	Generation             int64    `json:"generation,omitempty"`
+	ResourceVersion        string   `json:"resourceVersion,omitempty"`
+	Replicas               *int64   `json:"replicas,omitempty"`
+	Images                 []string `json:"images,omitempty"`
+	LabelCount             int      `json:"labelCount,omitempty"`
+	AnnotationCount        int      `json:"annotationCount,omitempty"`
 }
 
 type compareResourceResult struct {
@@ -253,6 +253,8 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 	if err != nil {
 		return compareDryWetResult{}, fmt.Errorf("cub unit get: %w", err)
 	}
+	// Best-effort only: trust hints should degrade gracefully if the unit-get
+	// envelope changes, while DRY/WET extraction still remains authoritative.
 	unitMeta, _ := decodeCompareUnitMetadataFromGetJSON(dryRaw)
 
 	dryYAML, err := decodeCompareUnitDataFromGetJSON(dryRaw)
@@ -418,8 +420,8 @@ func applyCompareUnitMetadata(summary *compareSideSummary, meta compareUnitMetad
 	if summary.LiveRevisionNum == 0 && meta.LiveRevisionNum > 0 {
 		summary.LiveRevisionNum = meta.LiveRevisionNum
 	}
-	if summary.LastAppliedRev == 0 && meta.LastAppliedRevision > 0 {
-		summary.LastAppliedRev = meta.LastAppliedRevision
+	if summary.LastAppliedRevisionNum == 0 && meta.LastAppliedRevision > 0 {
+		summary.LastAppliedRevisionNum = meta.LastAppliedRevision
 	}
 }
 

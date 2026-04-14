@@ -471,8 +471,8 @@ func compareResourceRevisionState(result compareResourceResult) mcpUnitRevisionS
 			state.LiveRevision = side.LiveRevisionNum
 			state.HasLiveRevision = true
 		}
-		if !state.HasLastApplied && side.LastAppliedRev > 0 {
-			state.LastAppliedRevision = side.LastAppliedRev
+		if !state.HasLastApplied && side.LastAppliedRevisionNum > 0 {
+			state.LastAppliedRevision = side.LastAppliedRevisionNum
 			state.HasLastApplied = true
 		}
 		if state.HasHeadRevision && state.HasLiveRevision && state.HasLastApplied {

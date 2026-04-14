@@ -388,8 +388,8 @@ spec:
 	if got.Wet.Replicas == nil || *got.Wet.Replicas != 2 {
 		t.Fatalf("wet replicas = %#v, want 2", got.Wet.Replicas)
 	}
-	if got.Dry.HeadRevisionNum != 9 || got.Dry.LiveRevisionNum != 7 || got.Dry.LastAppliedRev != 8 {
-		t.Fatalf("dry revision facts = head:%d live:%d applied:%d, want 9/7/8", got.Dry.HeadRevisionNum, got.Dry.LiveRevisionNum, got.Dry.LastAppliedRev)
+	if got.Dry.HeadRevisionNum != 9 || got.Dry.LiveRevisionNum != 7 || got.Dry.LastAppliedRevisionNum != 8 {
+		t.Fatalf("dry revision facts = head:%d live:%d applied:%d, want 9/7/8", got.Dry.HeadRevisionNum, got.Dry.LiveRevisionNum, got.Dry.LastAppliedRevisionNum)
 	}
 	if got.Wet.UnitID != "u-123" || got.Wet.SpaceID != "sp-123" {
 		t.Fatalf("wet unit identity = unit:%q space:%q, want u-123/sp-123", got.Wet.UnitID, got.Wet.SpaceID)

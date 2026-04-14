@@ -36,8 +36,8 @@ Every tagged release automatically produces:
 
 2. **Create and push tag**
    ```bash
-   git tag -a v0.X.Y -m "v0.X.Y - <release summary>"
-   git push origin v0.X.Y
+   git tag -a vX.Y.Z -m "vX.Y.Z - <release summary>"
+   git push origin vX.Y.Z
    ```
 
 3. **Verify release**
@@ -68,15 +68,15 @@ If a release needs to be re-cut (e.g., CI fix):
 
 1. **Delete the broken tag**
    ```bash
-   git tag -d v0.X.Y
-   git push origin :refs/tags/v0.X.Y
+   git tag -d vX.Y.Z
+   git push origin :refs/tags/vX.Y.Z
    ```
 
 2. **Fix the issue and re-tag**
    ```bash
    # Make fixes, commit, push
-   git tag -a v0.X.Y -m "v0.X.Y - <release summary>"
-   git push origin v0.X.Y
+   git tag -a vX.Y.Z -m "vX.Y.Z - <release summary>"
+   git push origin vX.Y.Z
    ```
 
 3. **Verify Homebrew updates**
@@ -91,11 +91,20 @@ with the new SHA256 checksums automatically.
 - [ ] All tests pass (`go test ./...`)
 - [ ] Golden tests are current (no `-update` needed)
 - [ ] docs/roadmap.md reflects current version status
+- [ ] Release notes exist at `docs/releases/vX.Y.Z.md`
 - [ ] Version tag follows semver (vX.Y.Z)
 - [ ] Release notes describe changes clearly
 - [ ] After release: verify GitHub artifacts exist
 - [ ] After release: verify `brew info confighub/tap/cub-scout` shows new version
 - [ ] Prepare krew manifest from `dist/krew/cub-scout.yaml` with release checksums
+
+## 1.x vs 2.0
+
+Until plugin packaging lands:
+
+- `1.x` releases continue to ship under the standalone `cub-scout` tag line
+- `v2.0.0` is reserved for the actual `cub scout` plugin switchover
+- do not use a `2.0.0` tag just because the boundary story is documented
 
 ## Troubleshooting
 

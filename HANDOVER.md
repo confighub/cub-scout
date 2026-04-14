@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-04-11
+Last updated: 2026-04-14
 
 ## Current repo state
 
@@ -63,6 +63,24 @@ Key deliverables now in place:
 Current tracked follow-ons:
 
 - none at the moment
+
+## Current checkpoint
+
+`go test ./...` is green again as of 2026-04-14.
+
+The practical state heading into the `cub scout` plugin switchover is:
+
+- M0 decision lock: done
+- M2 trust/proof polish: materially advanced
+- M3 AI/MCP gateway readiness: materially advanced
+- M1 plugin packaging: still not started, and still the real `v2.0.0` blocker
+- M4 migration/install docs: still partial
+
+Recent connected trust-surface work now covers:
+- canonical ConfigHub unit/revisions URLs in compare/trace/explain/history/MCP
+- revision-aware hints that tell AI/operators when to review revision history before sign-off
+- connected `history` JSON trust guidance
+- release-gate cleanup that brought the full test suite back to green
 
 ## Next milestone
 

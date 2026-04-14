@@ -769,6 +769,35 @@ Delivered:
 
 ---
 
+## v1.12 — Trustworthy Proof Surfaces
+
+**Status:** Released (2026-04-11)
+**Theme:** *Tighten governed proof where connected and Argo-managed workflows were still under-expressive*
+**Release notes:** [docs/releases/v1.12.0.md](releases/v1.12.0.md)
+
+Delivered:
+
+* reconnect governed resources in `compare three-way`
+* make `explain` materially more authoritative for Argo-managed workloads
+* reduce silent under-connection in the governed proof path
+
+---
+
+## v1.13 — Connected Trust Surfaces and Release Hygiene
+
+**Status:** Released (2026-04-14)
+**Theme:** *Make connected proof paths easier to verify, easier for AI to route, and boringly green in CI again*
+**Release notes:** [docs/releases/v1.13.0.md](releases/v1.13.0.md)
+
+Delivered:
+
+* canonical ConfigHub unit and revision-history trust URLs across `compare`, `trace`, `explain`, MCP, and `history`
+* revision-aware read-only hints that say when to review revision history before treating a unit as converged
+* connected `history` JSON trust guidance (`confighubUrl`, `confighubRevisionsUrl`, `nextSteps`)
+* release-gate cleanup: README/install parity, fixture/script drift fixes, and `go test ./...` back to green
+
+---
+
 ## Guiding Principles (Still True)
 
 * **Explainability first**
@@ -791,6 +820,8 @@ Delivered:
 * v1.9.0 released (2026-04-05) — conformance workflows (#342), secret evidence (#328 complete); see [release notes](releases/v1.9.0.md)
 * v1.10.0 released (2026-04-09) — troubleshooting flow tightening via recent events, trace presentation, and test stabilization; see [release notes](releases/v1.10.0.md)
 * v1.11.0 released (2026-04-11) — AI routing and surface cleanup via command consolidation, MCP gateway hardening, and docs cleanup; see [release notes](releases/v1.11.0.md)
+* v1.12.0 released (2026-04-11) — governed proof tightening for `compare three-way` and Argo-aware `explain`; see [release notes](releases/v1.12.0.md)
+* v1.13.0 released (2026-04-14) — connected trust URLs, revision-aware hints, history trust guidance, and release hygiene; see [release notes](releases/v1.13.0.md)
 
 ### Recent Milestones
 
@@ -805,6 +836,8 @@ Delivered:
 | **v1.9** | Conformance & Secrets | Conformance reporting (#342), curated import (#342), secret evidence (#328 complete: CLI + Crossplane + map issues + TUI) |
 | **v1.10** | Troubleshooting Flow | Recent K8s events in `explain`/`trace`, `trace --presentation`, test stability hardening |
 | **v1.11** | AI Routing & Surface Cleanup | Command-tree cleanup, MCP `compare_three_way`, skill consolidation, canonical CLI/docs structure |
+| **v1.12** | Trustworthy Proof | Governed reconnect in `compare three-way`, stronger Argo-aware `explain` proof surfaces |
+| **v1.13** | Connected Trust Surfaces | Canonical ConfigHub URLs, revision-aware hints, `history` trust guidance, release gate cleanup |
 
 ### Strategic Positioning
 

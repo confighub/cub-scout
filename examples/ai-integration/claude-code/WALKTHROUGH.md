@@ -19,7 +19,7 @@ go build ./cmd/cub-scout
 4. Ask Claude: "What changed since yesterday?"
 5. Claude uses `sample-output/02-change-history.txt` to summarize the two latest ChangeSets.
 6. Ask Claude: "Is this safe to deploy?"
-7. Claude inspects `sample-output/03-scan-safety.json` and highlights finding `CCVE-2025-0244`.
+7. Claude inspects `sample-output/03-scan-safety.json` and highlights finding `CCVE-2025-3733`.
 8. Ask Claude: "Show unmanaged resources."
 9. Claude reviews `sample-output/04-unmanaged-resources.txt` and flags native resources for ownership cleanup.
 

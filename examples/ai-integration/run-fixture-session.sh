@@ -63,7 +63,7 @@ echo "Wrote $ORPHANS_OUT"
 # Quick assertions so demo failures are obvious.
 grep -q "OutOfSync" "$TRACE_OUT"
 grep -q "Change History" "$HISTORY_OUT"
-grep -q "CCVE-2025-0244" "$SCAN_OUT"
+grep -q "CCVE-2025-3733" "$SCAN_OUT"
 grep -q "debug-nginx" "$ORPHANS_OUT"
 
 echo "Fixture session completed successfully"

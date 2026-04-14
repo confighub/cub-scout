@@ -58,6 +58,9 @@ curl -sL https://github.com/confighub/cub-scout/releases/latest
 
 # Container
 docker run ghcr.io/confighub/cub-scout:latest version
+
+# kubectl krew
+kubectl krew install cub-scout
 ```
 
 If you want the `kubectl` plugin wrapper too:
