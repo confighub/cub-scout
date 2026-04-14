@@ -68,6 +68,38 @@ func TestBuildExplainSummary_FromTraceResult(t *testing.T) {
 	}
 }
 
+func TestBuildExplainSummary_ConfigHubURLsAndRevisionFacts(t *testing.T) {
+	result := &agent.TraceResult{
+		Tool: "argocd",
+		Object: agent.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "payments-api",
+			Namespace: "prod",
+		},
+		ConfigHub: &agent.TraceConfigHub{
+			UnitSlug:        "payments-api",
+			UnitID:          "u-123",
+			SpaceID:         "sp-123",
+			RevisionNum:     "8",
+			LiveRevisionNum: "9",
+			UnitURL:         "https://confighub.com/units/sp-123/u-123",
+			RevisionsURL:    "https://confighub.com/units/sp-123/u-123?tab=2",
+			RemediationURL:  "https://confighub.com/units/sp-123/u-123",
+		},
+	}
+
+	summary := buildExplainSummary(result)
+	if summary.ConfigHubURL != "https://confighub.com/units/sp-123/u-123" {
+		t.Fatalf("ConfigHubURL = %q, want canonical unit url", summary.ConfigHubURL)
+	}
+	if summary.ConfigHubRevisionsURL != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("ConfigHubRevisionsURL = %q, want canonical revisions url", summary.ConfigHubRevisionsURL)
+	}
+	if summary.ConfigHubRevisionNum != "8" || summary.ConfigHubLiveRevisionNum != "9" {
+		t.Fatalf("revision facts = %q/%q, want 8/9", summary.ConfigHubRevisionNum, summary.ConfigHubLiveRevisionNum)
+	}
+}
+
 func TestRenderExplainText_ContainsPlainEnglishSections(t *testing.T) {
 	// Set NO_COLOR to get plain text output for string matching
 	t.Setenv("NO_COLOR", "1")

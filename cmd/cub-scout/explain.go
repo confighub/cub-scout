@@ -46,16 +46,19 @@ func init() {
 
 // ExplainSummary is the canonical model for explain output.
 type ExplainSummary struct {
-	Resource     string   `json:"resource"`
-	Namespace    string   `json:"namespace"`
-	Owner        string   `json:"owner"`
-	Source       string   `json:"source"`
-	DeployedVia  string   `json:"deployedVia"`
-	Health       string   `json:"health"`
-	Risks        string   `json:"risks"`
-	Drift        string   `json:"drift"`
-	Notes        []string `json:"notes,omitempty"`
-	ConfigHubURL string   `json:"confighubUrl,omitempty"` // URL to view/manage in ConfigHub GUI (only when connected)
+	Resource                 string   `json:"resource"`
+	Namespace                string   `json:"namespace"`
+	Owner                    string   `json:"owner"`
+	Source                   string   `json:"source"`
+	DeployedVia              string   `json:"deployedVia"`
+	Health                   string   `json:"health"`
+	Risks                    string   `json:"risks"`
+	Drift                    string   `json:"drift"`
+	Notes                    []string `json:"notes,omitempty"`
+	ConfigHubURL             string   `json:"confighubUrl,omitempty"`             // Canonical unit detail URL in ConfigHub GUI (only when connected)
+	ConfigHubRevisionsURL    string   `json:"confighubRevisionsUrl,omitempty"`    // Canonical unit revisions URL in ConfigHub GUI (only when connected)
+	ConfigHubRevisionNum     string   `json:"configHubRevisionNum,omitempty"`     // Deployed ConfigHub revision when known
+	ConfigHubLiveRevisionNum string   `json:"configHubLiveRevisionNum,omitempty"` // Latest/live ConfigHub revision when known
 
 	// Events contains recent Kubernetes events for the resource.
 	// Prioritizes Warning/error events, bounded to top 5.
@@ -464,10 +467,14 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 		} else {
 			summary.Drift = "None detected"
 		}
-		// Include ConfigHub URL if available (for GUI handoff)
-		if result.ConfigHub.RemediationURL != "" {
+		if result.ConfigHub.UnitURL != "" {
+			summary.ConfigHubURL = result.ConfigHub.UnitURL
+		} else if result.ConfigHub.RemediationURL != "" {
 			summary.ConfigHubURL = result.ConfigHub.RemediationURL
 		}
+		summary.ConfigHubRevisionsURL = result.ConfigHub.RevisionsURL
+		summary.ConfigHubRevisionNum = strings.TrimSpace(result.ConfigHub.RevisionNum)
+		summary.ConfigHubLiveRevisionNum = strings.TrimSpace(result.ConfigHub.LiveRevisionNum)
 	}
 
 	if strings.TrimSpace(result.GeneratedByApplicationSet) != "" {
@@ -782,6 +789,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	if summary.ConfigHubURL != "" {
 		b.WriteString("\n### Open in ConfigHub\n\n")
 		b.WriteString(fmt.Sprintf("- [Review this unit in ConfigHub](%s)\n", summary.ConfigHubURL))
+		if summary.ConfigHubRevisionsURL != "" {
+			b.WriteString(fmt.Sprintf("- [Review revision history in ConfigHub](%s)\n", summary.ConfigHubRevisionsURL))
+		}
 	}
 
 	// Outro for explicit AI mode - at the true end after all content

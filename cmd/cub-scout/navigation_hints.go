@@ -440,6 +440,27 @@ func explainConfigHubHint(summary ExplainSummary) *Hint {
 	}
 }
 
+func explainConfigHubRevisionsHint(summary ExplainSummary) *Hint {
+	url := strings.TrimSpace(summary.ConfigHubRevisionsURL)
+	if url == "" {
+		return nil
+	}
+
+	deployed := strings.TrimSpace(summary.ConfigHubRevisionNum)
+	live := strings.TrimSpace(summary.ConfigHubLiveRevisionNum)
+	hint := &Hint{
+		ConfigHubURL: url,
+		Rationale:    "Review ConfigHub revision history for the approval trail and compare view",
+		Priority:     hintPriorityNormal,
+		ActionType:   ActionReadOnly,
+	}
+	if deployed != "" && live != "" && deployed != live {
+		hint.Rationale = fmt.Sprintf("ConfigHub revision %s differs from live revision %s; review revision history now before treating this resource as converged", deployed, live)
+		hint.Priority = hintPriorityHigh
+	}
+	return hint
+}
+
 // explainHints generates structured hints for explain output.
 func explainHints(summary ExplainSummary) []Hint {
 	return explainHintsWithContext(summary, DefaultHintContext())
@@ -482,6 +503,10 @@ func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
 	} else {
 		// Other known owner (Flux, Helm) - use standard ownership chain hints
 		hints = append(hints, explainKnownOwnerHints(summary, ctx)...)
+	}
+
+	if revHint := explainConfigHubRevisionsHint(summary); revHint != nil {
+		hints = append(hints, *revHint)
 	}
 
 	// Doctor hint - lower priority in operator mode since they likely already ran it

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 // TraceResult represents the full ownership chain for a resource
@@ -109,6 +111,9 @@ type TraceConfigHub struct {
 	// UnitSlug is the ConfigHub unit that owns this resource
 	UnitSlug string `json:"unitSlug,omitempty"`
 
+	// UnitID is the stable ConfigHub unit ID when the resource exposes it
+	UnitID string `json:"unitId,omitempty"`
+
 	// SpaceID is the ConfigHub space ID
 	SpaceID string `json:"spaceId,omitempty"`
 
@@ -127,7 +132,13 @@ type TraceConfigHub struct {
 	// DriftDetected indicates if ConfigHub detected drift
 	DriftDetected bool `json:"driftDetected,omitempty"`
 
-	// RemediationURL is the URL to remediate issues in ConfigHub
+	// UnitURL is the canonical ConfigHub unit detail URL when exact unit identity is known
+	UnitURL string `json:"unitUrl,omitempty"`
+
+	// RevisionsURL is the canonical ConfigHub unit revisions URL when exact unit identity is known
+	RevisionsURL string `json:"revisionsUrl,omitempty"`
+
+	// RemediationURL is a compatibility alias for the canonical unit detail URL
 	RemediationURL string `json:"remediationUrl,omitempty"`
 }
 
@@ -291,7 +302,14 @@ func (r *TraceResult) EnrichWithConfigHub(labels, annotations map[string]string)
 	}
 
 	// Extract other ConfigHub metadata
+	if v := annotations["confighub.com/UnitID"]; v != "" {
+		ch.UnitID = v
+	} else if v := labels["confighub.com/UnitID"]; v != "" {
+		ch.UnitID = v
+	}
 	if v := annotations["confighub.com/SpaceID"]; v != "" {
+		ch.SpaceID = v
+	} else if v := labels["confighub.com/SpaceID"]; v != "" {
 		ch.SpaceID = v
 	}
 	if v := labels["confighub.com/SpaceName"]; v != "" {
@@ -304,20 +322,44 @@ func (r *TraceResult) EnrichWithConfigHub(labels, annotations map[string]string)
 	}
 	if v := annotations["confighub.com/RevisionNum"]; v != "" {
 		ch.RevisionNum = v
+	} else if v := labels["confighub.com/RevisionNum"]; v != "" {
+		ch.RevisionNum = v
 	}
 	if v := annotations["confighub.com/LiveRevisionNum"]; v != "" {
+		ch.LiveRevisionNum = v
+	} else if v := labels["confighub.com/LiveRevisionNum"]; v != "" {
 		ch.LiveRevisionNum = v
 	}
 	if annotations["confighub.com/DriftDetected"] == "true" {
 		ch.DriftDetected = true
 	}
 
-	// Build remediation URL if we have enough info
-	if ch.SpaceID != "" && ch.UnitSlug != "" {
-		ch.RemediationURL = fmt.Sprintf("https://confighub.com/spaces/%s/units/%s", ch.SpaceID, ch.UnitSlug)
+	// Build canonical URLs if we have enough exact identity
+	if ch.SpaceID != "" && ch.UnitID != "" {
+		ch.UnitURL = traceConfigHubUnitDetailURL(ch.SpaceID, ch.UnitID)
+		ch.RevisionsURL = traceConfigHubUnitRevisionsURL(ch.SpaceID, ch.UnitID)
+		ch.RemediationURL = ch.UnitURL
 	}
 
 	r.ConfigHub = ch
+}
+
+func traceConfigHubUnitDetailURL(spaceID, unitID string) string {
+	spaceID = strings.TrimSpace(spaceID)
+	unitID = strings.TrimSpace(unitID)
+	if spaceID == "" || unitID == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s/units/%s/%s", strings.TrimRight(hub.WebBaseURL, "/"), spaceID, unitID)
+}
+
+func traceConfigHubUnitRevisionsURL(spaceID, unitID string) string {
+	spaceID = strings.TrimSpace(spaceID)
+	unitID = strings.TrimSpace(unitID)
+	if spaceID == "" || unitID == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s/units/%s/%s?tab=2", strings.TrimRight(hub.WebBaseURL, "/"), spaceID, unitID)
 }
 
 // FormatConfigHubContextError detects ConfigHub connectivity/auth errors and

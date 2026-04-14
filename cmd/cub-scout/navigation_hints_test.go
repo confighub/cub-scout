@@ -331,6 +331,29 @@ func TestExplainConfigHubHint_ReturnsHintWhenURLPresent(t *testing.T) {
 	}
 }
 
+func TestExplainConfigHubRevisionsHint_ReturnsDriftAwareHint(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:                 "Deployment/api",
+		Namespace:                "prod",
+		Owner:                    "Flux",
+		ConfigHubRevisionsURL:    "https://confighub.com/units/sp-123/u-123?tab=2",
+		ConfigHubRevisionNum:     "8",
+		ConfigHubLiveRevisionNum: "9",
+	}
+
+	hint := explainConfigHubRevisionsHint(summary)
+
+	if hint == nil {
+		t.Fatal("expected revisions hint when URL is present")
+	}
+	if hint.ConfigHubURL != summary.ConfigHubRevisionsURL {
+		t.Fatalf("expected URL %q, got %q", summary.ConfigHubRevisionsURL, hint.ConfigHubURL)
+	}
+	if !strings.Contains(hint.Rationale, "ConfigHub revision 8 differs from live revision 9") {
+		t.Fatalf("unexpected rationale: %q", hint.Rationale)
+	}
+}
+
 func TestExplainConfigHubHint_ReturnsNilWhenNoURL(t *testing.T) {
 	summary := ExplainSummary{
 		Resource:  "Deployment/api",
@@ -476,6 +499,30 @@ func TestExplainSummary_JSONIncludesConfigHubURL(t *testing.T) {
 	jsonStr := string(data)
 	if !strings.Contains(jsonStr, `"confighubUrl":"https://confighub.com/spaces/sp-123/units/my-unit"`) {
 		t.Fatalf("expected confighubUrl in JSON output, got: %s", jsonStr)
+	}
+}
+
+func TestExplainSummary_JSONIncludesConfigHubRevisionsURL(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:              "Deployment/api",
+		Namespace:             "prod",
+		Owner:                 "Flux",
+		Source:                "https://github.com/example",
+		DeployedVia:           "GitRepository -> Deployment",
+		Health:                "Healthy",
+		Risks:                 "0 findings",
+		Drift:                 "None",
+		ConfigHubRevisionsURL: "https://confighub.com/units/sp-123/u-123?tab=2",
+	}
+
+	data, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	if !strings.Contains(jsonStr, `"confighubRevisionsUrl":"https://confighub.com/units/sp-123/u-123?tab=2"`) {
+		t.Fatalf("expected confighubRevisionsUrl in JSON output, got: %s", jsonStr)
 	}
 }
 
@@ -788,7 +835,7 @@ func TestParseHintMode(t *testing.T) {
 		{"Beginner", HintModeBeginner, false},
 		{"operator", HintModeOperator, false},
 		{"OPERATOR", HintModeOperator, false},
-		{"demo", HintModeDefault, true},  // demo not exposed via flag (no distinct behavior yet)
+		{"demo", HintModeDefault, true}, // demo not exposed via flag (no distinct behavior yet)
 		{"invalid", HintModeDefault, true},
 		{"foo", HintModeDefault, true},
 	}

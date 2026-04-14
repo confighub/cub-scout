@@ -415,27 +415,43 @@ func TestTraceResultHistoryJSON(t *testing.T) {
 
 func TestEnrichWithConfigHub(t *testing.T) {
 	tests := []struct {
-		name        string
-		labels      map[string]string
-		annotations map[string]string
-		wantUnit    string
-		wantSpace   string
-		wantDrift   bool
+		name             string
+		labels           map[string]string
+		annotations      map[string]string
+		wantUnit         string
+		wantUnitID       string
+		wantSpace        string
+		wantDrift        bool
+		wantUnitURL      string
+		wantRevisionsURL string
 	}{
 		{
-			name:        "ConfigHub managed via labels",
-			labels:      map[string]string{"confighub.com/UnitSlug": "payment-api", "confighub.com/SpaceName": "production"},
-			annotations: map[string]string{"confighub.com/SpaceID": "space_123"},
-			wantUnit:    "payment-api",
-			wantSpace:   "production",
+			name:   "ConfigHub managed via labels",
+			labels: map[string]string{"confighub.com/UnitSlug": "payment-api", "confighub.com/SpaceName": "production"},
+			annotations: map[string]string{
+				"confighub.com/SpaceID": "space_123",
+			},
+			wantUnit:  "payment-api",
+			wantSpace: "production",
 		},
 		{
-			name:        "ConfigHub managed via annotations",
-			labels:      map[string]string{},
-			annotations: map[string]string{"confighub.com/UnitSlug": "worker", "confighub.com/SpaceName": "staging", "confighub.com/DriftDetected": "true"},
-			wantUnit:    "worker",
-			wantSpace:   "staging",
-			wantDrift:   true,
+			name:   "ConfigHub managed via annotations with exact unit identity",
+			labels: map[string]string{},
+			annotations: map[string]string{
+				"confighub.com/UnitSlug":        "worker",
+				"confighub.com/UnitID":          "unit_456",
+				"confighub.com/SpaceName":       "staging",
+				"confighub.com/SpaceID":         "space_456",
+				"confighub.com/RevisionNum":     "8",
+				"confighub.com/LiveRevisionNum": "9",
+				"confighub.com/DriftDetected":   "true",
+			},
+			wantUnit:         "worker",
+			wantUnitID:       "unit_456",
+			wantSpace:        "staging",
+			wantDrift:        true,
+			wantUnitURL:      "https://confighub.com/units/space_456/unit_456",
+			wantRevisionsURL: "https://confighub.com/units/space_456/unit_456?tab=2",
 		},
 		{
 			name:        "Not ConfigHub managed",
@@ -464,11 +480,23 @@ func TestEnrichWithConfigHub(t *testing.T) {
 			if result.ConfigHub.UnitSlug != tt.wantUnit {
 				t.Errorf("UnitSlug = %q, want %q", result.ConfigHub.UnitSlug, tt.wantUnit)
 			}
+			if result.ConfigHub.UnitID != tt.wantUnitID {
+				t.Errorf("UnitID = %q, want %q", result.ConfigHub.UnitID, tt.wantUnitID)
+			}
 			if result.ConfigHub.SpaceName != tt.wantSpace {
 				t.Errorf("SpaceName = %q, want %q", result.ConfigHub.SpaceName, tt.wantSpace)
 			}
 			if result.ConfigHub.DriftDetected != tt.wantDrift {
 				t.Errorf("DriftDetected = %v, want %v", result.ConfigHub.DriftDetected, tt.wantDrift)
+			}
+			if result.ConfigHub.UnitURL != tt.wantUnitURL {
+				t.Errorf("UnitURL = %q, want %q", result.ConfigHub.UnitURL, tt.wantUnitURL)
+			}
+			if result.ConfigHub.RevisionsURL != tt.wantRevisionsURL {
+				t.Errorf("RevisionsURL = %q, want %q", result.ConfigHub.RevisionsURL, tt.wantRevisionsURL)
+			}
+			if result.ConfigHub.RemediationURL != tt.wantUnitURL {
+				t.Errorf("RemediationURL = %q, want %q", result.ConfigHub.RemediationURL, tt.wantUnitURL)
 			}
 		})
 	}
