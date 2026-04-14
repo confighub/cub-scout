@@ -61,11 +61,12 @@ type threeWaySummary struct {
 }
 
 type threeWayReport struct {
-	Scope        string                  `json:"scope"`
-	ConfigHubURL string                  `json:"confighubUrl,omitempty"`
-	Summary      threeWaySummary         `json:"summary"`
-	Resources    []threeWayResourceEntry `json:"resources"`
-	NextSteps    []StructuredHint        `json:"nextSteps,omitempty"`
+	Scope                 string                  `json:"scope"`
+	ConfigHubURL          string                  `json:"confighubUrl,omitempty"`
+	ConfigHubRevisionsURL string                  `json:"confighubRevisionsUrl,omitempty"`
+	Summary               threeWaySummary         `json:"summary"`
+	Resources             []threeWayResourceEntry `json:"resources"`
+	NextSteps             []StructuredHint        `json:"nextSteps,omitempty"`
 }
 
 // Exit codes for compare three-way command (CI contract)
@@ -322,13 +323,14 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 		Summary:   summary,
 		Resources: entries,
 	}
-	report.ConfigHubURL, report.NextSteps = buildThreeWayNavigation(report)
+	report.ConfigHubURL, report.ConfigHubRevisionsURL, report.NextSteps = buildThreeWayNavigation(report)
 	return report, nil
 }
 
-func buildThreeWayNavigation(report threeWayReport) (string, []StructuredHint) {
+func buildThreeWayNavigation(report threeWayReport) (string, string, []StructuredHint) {
 	entry := selectThreeWayTrustEntry(report.Resources)
 	reportURL := compareResourceConfigHubURL(entry.Result)
+	revisionsURL := compareResourceRevisionsURL(entry.Result)
 
 	hints := make([]Hint, 0, 3)
 	repeatCommand := compareThreeWayRepeatCommand(report.Scope, entry)
@@ -337,6 +339,14 @@ func buildThreeWayNavigation(report threeWayReport) (string, []StructuredHint) {
 
 	switch report.Summary.Agreement.State {
 	case StateAgreed:
+		if revisionsURL != "" {
+			hints = append(hints, Hint{
+				Rationale:    "Open revision history to review the governed audit trail and compare revisions before sign-off.",
+				ConfigHubURL: revisionsURL,
+				Priority:     hintPriorityHigh,
+				ActionType:   ActionHumanDecision,
+			})
+		}
 		if reportURL != "" {
 			hints = append(hints, Hint{
 				Rationale:    "Agreement is proven for this scope; open the governed unit to review the audit trail before sign-off.",
@@ -360,6 +370,14 @@ func buildThreeWayNavigation(report threeWayReport) (string, []StructuredHint) {
 				Rationale:  "Re-run the three-way comparison after controller convergence to confirm this scope has settled.",
 				Priority:   hintPriorityHigh,
 				ActionType: ActionWaiting,
+			})
+		}
+		if revisionsURL != "" {
+			hints = append(hints, Hint{
+				Rationale:    "Open revision history while the controller is still converging to review the pending governed path.",
+				ConfigHubURL: revisionsURL,
+				Priority:     hintPriorityNormal,
+				ActionType:   ActionReadOnly,
 			})
 		}
 		if unitCommand != "" || reportURL != "" {
@@ -422,7 +440,7 @@ func buildThreeWayNavigation(report threeWayReport) (string, []StructuredHint) {
 	if len(hints) > 3 {
 		hints = hints[:3]
 	}
-	return reportURL, HintsToStructured(hints)
+	return reportURL, revisionsURL, HintsToStructured(hints)
 }
 
 func selectThreeWayTrustEntry(entries []threeWayResourceEntry) threeWayResourceEntry {
@@ -488,7 +506,7 @@ func compareThreeWayExplainCommand(entry threeWayResourceEntry) string {
 }
 
 func compareThreeWayUnitGetCommand(result compareResourceResult) string {
-	unitSlug, spaceName, _ := compareResourceUnitIdentity(result)
+	unitSlug, _, spaceName, _ := compareResourceUnitIdentity(result)
 	if unitSlug == "" {
 		return ""
 	}
@@ -500,11 +518,16 @@ func compareThreeWayUnitGetCommand(result compareResourceResult) string {
 }
 
 func compareResourceConfigHubURL(result compareResourceResult) string {
-	unitSlug, _, spaceID := compareResourceUnitIdentity(result)
-	return configHubUnitURL(spaceID, unitSlug)
+	_, unitID, _, spaceID := compareResourceUnitIdentity(result)
+	return configHubUnitDetailURL(spaceID, unitID)
 }
 
-func compareResourceUnitIdentity(result compareResourceResult) (unitSlug, spaceName, spaceID string) {
+func compareResourceRevisionsURL(result compareResourceResult) string {
+	_, unitID, _, spaceID := compareResourceUnitIdentity(result)
+	return configHubUnitRevisionsURL(spaceID, unitID)
+}
+
+func compareResourceUnitIdentity(result compareResourceResult) (unitSlug, unitID, spaceName, spaceID string) {
 	for _, side := range []*compareSideSummary{&result.Live, result.Wet, result.Dry} {
 		if side == nil {
 			continue
@@ -512,17 +535,20 @@ func compareResourceUnitIdentity(result compareResourceResult) (unitSlug, spaceN
 		if unitSlug == "" {
 			unitSlug = strings.TrimSpace(side.UnitSlug)
 		}
+		if unitID == "" {
+			unitID = strings.TrimSpace(side.UnitID)
+		}
 		if spaceName == "" {
 			spaceName = strings.TrimSpace(side.SpaceName)
 		}
 		if spaceID == "" {
 			spaceID = strings.TrimSpace(side.SpaceID)
 		}
-		if unitSlug != "" && spaceName != "" && spaceID != "" {
+		if unitSlug != "" && unitID != "" && spaceName != "" && spaceID != "" {
 			break
 		}
 	}
-	return unitSlug, spaceName, spaceID
+	return unitSlug, unitID, spaceName, spaceID
 }
 
 // classifyResourcePattern determines the three-way pattern for a resource.

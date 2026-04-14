@@ -740,16 +740,20 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitsIncludesTrustSurface(t *
 
 	var result struct {
 		StructuredContent struct {
-			Data         interface{}      `json:"data"`
-			ConfigHubURL string           `json:"confighubUrl"`
-			NextSteps    []StructuredHint `json:"nextSteps"`
+			Data                  interface{}      `json:"data"`
+			ConfigHubURL          string           `json:"confighubUrl"`
+			ConfigHubRevisionsURL string           `json:"confighubRevisionsUrl"`
+			NextSteps             []StructuredHint `json:"nextSteps"`
 		} `json:"structuredContent"`
 	}
 	if err := marshalInto(resp.Result, &result); err != nil {
 		t.Fatalf("decode result: %v", err)
 	}
-	if result.StructuredContent.ConfigHubURL != "https://confighub.com/spaces/sp-123/units/payments-api" {
+	if result.StructuredContent.ConfigHubURL != "https://confighub.com/units/sp-123/u-123" {
 		t.Fatalf("confighubUrl = %q, want exact unit url", result.StructuredContent.ConfigHubURL)
+	}
+	if result.StructuredContent.ConfigHubRevisionsURL != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("confighubRevisionsUrl = %q, want exact revisions url", result.StructuredContent.ConfigHubRevisionsURL)
 	}
 	if len(result.StructuredContent.NextSteps) == 0 {
 		t.Fatal("expected nextSteps in structuredContent")
@@ -787,22 +791,29 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitGetIncludesTrustSurface(t
 
 	var result struct {
 		StructuredContent struct {
-			Data         interface{}      `json:"data"`
-			ConfigHubURL string           `json:"confighubUrl"`
-			NextSteps    []StructuredHint `json:"nextSteps"`
+			Data                  interface{}      `json:"data"`
+			ConfigHubURL          string           `json:"confighubUrl"`
+			ConfigHubRevisionsURL string           `json:"confighubRevisionsUrl"`
+			NextSteps             []StructuredHint `json:"nextSteps"`
 		} `json:"structuredContent"`
 	}
 	if err := marshalInto(resp.Result, &result); err != nil {
 		t.Fatalf("decode result: %v", err)
 	}
-	if result.StructuredContent.ConfigHubURL != "https://confighub.com/spaces/sp-123/units/payments-api" {
+	if result.StructuredContent.ConfigHubURL != "https://confighub.com/units/sp-123/u-123" {
 		t.Fatalf("confighubUrl = %q, want exact unit url", result.StructuredContent.ConfigHubURL)
+	}
+	if result.StructuredContent.ConfigHubRevisionsURL != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("confighubRevisionsUrl = %q, want exact revisions url", result.StructuredContent.ConfigHubRevisionsURL)
 	}
 	if len(result.StructuredContent.NextSteps) == 0 {
 		t.Fatal("expected nextSteps in structuredContent")
 	}
-	if got := result.StructuredContent.NextSteps[0].NextSurface; got != "https://confighub.com/spaces/sp-123/units/payments-api" {
+	if got := result.StructuredContent.NextSteps[0].NextSurface; got != "https://confighub.com/units/sp-123/u-123" {
 		t.Fatalf("next surface = %q, want unit url", got)
+	}
+	if got := result.StructuredContent.NextSteps[1].NextSurface; got != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("second next surface = %q, want revisions url", got)
 	}
 }
 

@@ -138,6 +138,7 @@ func TestRunCompareThreeWay_JSON(t *testing.T) {
 				Name:      "api",
 				Namespace: "prod",
 				UnitSlug:  "payments-api",
+				UnitID:    "u-123",
 				SpaceName: "payments",
 				SpaceID:   "sp-123",
 			},
@@ -168,8 +169,11 @@ func TestRunCompareThreeWay_JSON(t *testing.T) {
 	if payload.Summary.Agreement.Summary == "" {
 		t.Error("expected agreement.summary in JSON output")
 	}
-	if payload.ConfigHubURL != "https://confighub.com/spaces/sp-123/units/payments-api" {
+	if payload.ConfigHubURL != "https://confighub.com/units/sp-123/u-123" {
 		t.Fatalf("confighubUrl = %q, want exact unit url", payload.ConfigHubURL)
+	}
+	if payload.ConfigHubRevisionsURL != "https://confighub.com/units/sp-123/u-123?tab=2" {
+		t.Fatalf("confighubRevisionsUrl = %q, want exact revisions url", payload.ConfigHubRevisionsURL)
 	}
 	if len(payload.NextSteps) == 0 {
 		t.Fatal("expected nextSteps in JSON output")

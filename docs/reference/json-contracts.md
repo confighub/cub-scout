@@ -197,7 +197,8 @@ When `compare three-way --format json` is used, the JSON output includes `summar
 
 ```json
 {
-  "confighubUrl": "https://confighub.com/spaces/sp-123/units/payments-api",
+  "confighubUrl": "https://confighub.com/units/sp-123/u-123",
+  "confighubRevisionsUrl": "https://confighub.com/units/sp-123/u-123?tab=2",
   "summary": {
     "agreement": {
       "state": "converging",
@@ -231,7 +232,8 @@ When `compare three-way --format json` is used, the JSON output includes `summar
 | `summary.agreement.summary` | string | Compact human-readable summary of the scope |
 | `summary.agreement.reasons[]` | string[] | Deterministic supporting reasons |
 | `summary.agreement.sources` | `SourceCoverage` | Evidence coverage counts used to derive the summary |
-| `confighubUrl` | string | Exact ConfigHub unit URL when a representative connected unit can be identified |
+| `confighubUrl` | string | Exact ConfigHub unit detail URL when a representative connected unit ID is known |
+| `confighubRevisionsUrl` | string | Exact ConfigHub unit revisions tab URL when a representative connected unit ID is known |
 | `nextSteps[]` | `StructuredHint[]` | Deterministic read-only follow-up guidance for trust review or convergence re-checks |
 
 ### Agreement States
@@ -262,11 +264,12 @@ For the highest-value connected/read-only surfaces, it may also add `structuredC
 ### Current Additive MCP Rule
 
 - `compare_three_way` returns parsed CLI JSON under `structuredContent.data`
-- `compare_three_way` may mirror `confighubUrl` and `nextSteps` from the CLI JSON at the top level of `structuredContent`
+- `compare_three_way` may mirror `confighubUrl`, `confighubRevisionsUrl`, and `nextSteps` from the CLI JSON at the top level of `structuredContent`
 - `confighub_units`, `confighub_unit_get`, and `confighub_changesets` may add:
   - `structuredContent.data`
   - `structuredContent.nextSteps`
-  - `structuredContent.confighubUrl` when an exact unit URL is known
+  - `structuredContent.confighubUrl` when an exact unit detail URL is known
+  - `structuredContent.confighubRevisionsUrl` when an exact unit revisions URL is known
 
 ### Example MCP Result Shape
 
@@ -287,12 +290,13 @@ For the highest-value connected/read-only surfaces, it may also add `structuredC
         }
       }
     },
-    "confighubUrl": "https://confighub.com/spaces/sp-123/units/payments-api",
+    "confighubUrl": "https://confighub.com/units/sp-123/u-123",
+    "confighubRevisionsUrl": "https://confighub.com/units/sp-123/u-123?tab=2",
     "nextSteps": [
       {
         "actionType": "human-decision",
         "reason": "Agreement is proven for this scope; open the governed unit to review the audit trail before sign-off.",
-        "nextSurface": "https://confighub.com/spaces/sp-123/units/payments-api"
+        "nextSurface": "https://confighub.com/units/sp-123/u-123"
       }
     ]
   }

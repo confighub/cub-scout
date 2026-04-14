@@ -614,6 +614,9 @@ func mcpWrapStructuredData(payload interface{}) map[string]interface{} {
 		if url, ok := obj["confighubUrl"]; ok {
 			wrapped["confighubUrl"] = url
 		}
+		if url, ok := obj["confighubRevisionsUrl"]; ok {
+			wrapped["confighubRevisionsUrl"] = url
+		}
 	}
 	return wrapped
 }
@@ -625,17 +628,30 @@ func buildMCPUnitsStructuredContent(payload interface{}) interface{} {
 		return wrapped
 	}
 
+	detailURL := mcpUnitDetailURL(ref)
+	revisionsURL := mcpUnitRevisionsURL(ref)
 	hints := []Hint{{
 		Command:      mcpUnitGetCommand(ref),
 		Rationale:    "Inspect the first returned ConfigHub unit to get exact revision and live-state facts.",
-		ConfigHubURL: configHubUnitURL(ref.SpaceID, ref.UnitSlug),
+		ConfigHubURL: detailURL,
 		Priority:     hintPriorityHigh,
 		ActionType:   ActionReadOnly,
 	}}
+	if revisionsURL != "" {
+		hints = append(hints, Hint{
+			Rationale:    "Open revision history if you need the audit trail and compare-ready review surface for this unit.",
+			ConfigHubURL: revisionsURL,
+			Priority:     hintPriorityNormal,
+			ActionType:   ActionReadOnly,
+		})
+	}
 	sortHints(hints)
 	wrapped["nextSteps"] = HintsToStructured(hints)
-	if url := configHubUnitURL(ref.SpaceID, ref.UnitSlug); url != "" {
-		wrapped["confighubUrl"] = url
+	if detailURL != "" {
+		wrapped["confighubUrl"] = detailURL
+	}
+	if revisionsURL != "" {
+		wrapped["confighubRevisionsUrl"] = revisionsURL
 	}
 	return wrapped
 }
@@ -647,16 +663,32 @@ func buildMCPUnitGetStructuredContent(payload interface{}) interface{} {
 		return wrapped
 	}
 
-	url := configHubUnitURL(ref.SpaceID, ref.UnitSlug)
-	hints := []Hint{{
-		Rationale:    "Open the exact ConfigHub unit to review revision history, diff views, and sign-off surfaces.",
-		ConfigHubURL: url,
-		Priority:     hintPriorityHigh,
-		ActionType:   ActionReadOnly,
-	}}
+	detailURL := mcpUnitDetailURL(ref)
+	revisionsURL := mcpUnitRevisionsURL(ref)
+	hints := make([]Hint, 0, 2)
+	if detailURL != "" {
+		hints = append(hints, Hint{
+			Rationale:    "Open the exact ConfigHub unit to review current facts and trust surfaces.",
+			ConfigHubURL: detailURL,
+			Priority:     hintPriorityHigh,
+			ActionType:   ActionReadOnly,
+		})
+	}
+	if revisionsURL != "" {
+		hints = append(hints, Hint{
+			Rationale:    "Open revision history to inspect the approval trail and compare revisions in the GUI.",
+			ConfigHubURL: revisionsURL,
+			Priority:     hintPriorityHigh,
+			ActionType:   ActionReadOnly,
+		})
+	}
+	sortHints(hints)
 	wrapped["nextSteps"] = HintsToStructured(hints)
-	if url != "" {
-		wrapped["confighubUrl"] = url
+	if detailURL != "" {
+		wrapped["confighubUrl"] = detailURL
+	}
+	if revisionsURL != "" {
+		wrapped["confighubRevisionsUrl"] = revisionsURL
 	}
 	return wrapped
 }
@@ -829,6 +861,14 @@ func mcpChangeSetGetCommand(ref mcpChangeSetRef) string {
 		args = append(args, "--space", ref.SpaceSlug)
 	}
 	return strings.Join(args, " ")
+}
+
+func mcpUnitDetailURL(ref mcpUnitRef) string {
+	return configHubUnitDetailURL(ref.SpaceID, ref.UnitID)
+}
+
+func mcpUnitRevisionsURL(ref mcpUnitRef) string {
+	return configHubUnitRevisionsURL(ref.SpaceID, ref.UnitID)
 }
 
 func mcpToolError(msg string) map[string]interface{} {

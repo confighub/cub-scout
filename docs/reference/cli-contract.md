@@ -151,7 +151,8 @@ cub-scout compare three-way --scope <scope> [flags]
 - JSON includes `summary.conformance` and `summary.agreement`.
 - `summary.agreement.state` is one of `agreed`, `converging`, `diverged`, `partial`.
 - `summary.agreement.summary`, `summary.agreement.reasons[]`, and `summary.agreement.sources` are additive facts, not presentation-only text.
-- `confighubUrl` may be present when a representative connected unit can be identified for the scope.
+- `confighubUrl` may be present when a representative connected unit ID is known for the scope.
+- `confighubRevisionsUrl` may be present when the exact unit revisions tab is known for the scope.
 - `nextSteps[]` may be present with deterministic read-only follow-up guidance for trust review or convergence re-checks.
 - Exit behavior depends only on JSON facts plus `--fail-on`, not ASCII/Markdown formatting.
 
@@ -176,7 +177,7 @@ cub-scout mcp serve
   - `trace`
 - Connected mode adds read-only connected comparison plus ConfigHub query tools.
 - MCP tool responses are backed by the existing CLI JSON surfaces rather than a separate hand-built fact model.
-- MCP keeps the wrapped JSON string in `content[0].text`; for selected connected surfaces it may also add additive `structuredContent` with parsed data, `nextSteps`, and `confighubUrl`.
+- MCP keeps the wrapped JSON string in `content[0].text`; for selected connected surfaces it may also add additive `structuredContent` with parsed data, `nextSteps`, `confighubUrl`, and `confighubRevisionsUrl`.
 
 ### Tool Routing Notes
 

@@ -31,6 +31,7 @@ type compareSideSummary struct {
 	Name            string   `json:"name,omitempty"`
 	Namespace       string   `json:"namespace,omitempty"`
 	UnitSlug        string   `json:"unitSlug,omitempty"`
+	UnitID          string   `json:"unitId,omitempty"`
 	SpaceName       string   `json:"spaceName,omitempty"`
 	SpaceID         string   `json:"spaceId,omitempty"`
 	Generation      int64    `json:"generation,omitempty"`
@@ -513,6 +514,10 @@ func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSumma
 	if unitSlug == "" {
 		unitSlug = strings.TrimSpace(annotations["confighub.com/UnitSlug"])
 	}
+	unitID := strings.TrimSpace(annotations["confighub.com/UnitID"])
+	if unitID == "" {
+		unitID = strings.TrimSpace(labels["confighub.com/UnitID"])
+	}
 	spaceName := strings.TrimSpace(annotations["confighub.com/SpaceName"])
 	if spaceName == "" {
 		spaceName = strings.TrimSpace(labels["confighub.com/SpaceName"])
@@ -529,6 +534,7 @@ func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSumma
 		Name:            obj.GetName(),
 		Namespace:       obj.GetNamespace(),
 		UnitSlug:        unitSlug,
+		UnitID:          unitID,
 		SpaceName:       spaceName,
 		SpaceID:         spaceID,
 		Generation:      obj.GetGeneration(),
