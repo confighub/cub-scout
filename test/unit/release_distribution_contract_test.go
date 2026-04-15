@@ -18,9 +18,10 @@ type goreleaserConfig struct {
 		Goarch []string `yaml:"goarch"`
 	} `yaml:"builds"`
 	Archives []struct {
-		ID              string `yaml:"id"`
-		Formats         []string
-		FormatOverrides []struct {
+		ID                        string `yaml:"id"`
+		AllowDifferentBinaryCount bool   `yaml:"allow_different_binary_count"`
+		Formats                   []string
+		FormatOverrides           []struct {
 			Goos    string   `yaml:"goos"`
 			Format  string   `yaml:"format"`
 			Formats []string `yaml:"formats"`
@@ -81,7 +82,11 @@ func TestGoReleaser_DistributionTargets(t *testing.T) {
 	}
 
 	hasWindowsZip := false
+	hasMixedBinaryArchiveAllowance := false
 	for _, arc := range cfg.Archives {
+		if arc.ID == "default" && arc.AllowDifferentBinaryCount {
+			hasMixedBinaryArchiveAllowance = true
+		}
 		for _, override := range arc.FormatOverrides {
 			formats := override.Formats
 			if override.Format != "" {
@@ -94,6 +99,9 @@ func TestGoReleaser_DistributionTargets(t *testing.T) {
 	}
 	if !hasWindowsZip {
 		t.Fatal("expected windows archive zip format override")
+	}
+	if !hasMixedBinaryArchiveAllowance {
+		t.Fatal("expected default archive to allow different binary counts across platforms")
 	}
 
 	if len(cfg.Brews) == 0 {
