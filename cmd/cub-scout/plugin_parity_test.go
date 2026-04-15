@@ -65,6 +65,14 @@ func TestPluginParity_StandaloneMatchesPlugin(t *testing.T) {
 	cases := []struct {
 		name string
 		args []string
+		// extraEnv is appended to the minimal env used by runForParity.
+		// Use this to force code paths that depend on environment state
+		// (e.g. CUB_SCOUT_OFFLINE for the offline-mode error path).
+		extraEnv []string
+		// expectNonZeroExit is true when the case deliberately exercises
+		// an error path. The parity test then compares the combined
+		// stdout+stderr output instead of asserting a zero exit code.
+		expectNonZeroExit bool
 	}{
 		{name: "version", args: []string{"version"}},
 		{name: "top_help", args: []string{"--help"}},
@@ -75,20 +83,54 @@ func TestPluginParity_StandaloneMatchesPlugin(t *testing.T) {
 		{name: "scan_help", args: []string{"scan", "--help"}},
 		{name: "compare_three_way_help", args: []string{"compare", "three-way", "--help"}},
 		{name: "mcp_serve_help", args: []string{"mcp", "serve", "--help"}},
+		// Connected-command help: these commands require ConfigHub auth
+		// at runtime but their --help output is pure cobra rendering and
+		// must be identical across invocation forms. Adding them here
+		// catches any plugin-mode template or command-path bug that
+		// specifically affects connected subtrees.
+		{name: "history_help", args: []string{"history", "--help"}},
+		{name: "fleet_help", args: []string{"fleet", "--help"}},
+		{name: "import_help", args: []string{"import", "--help"}},
+		{name: "gitops_help", args: []string{"gitops", "--help"}},
 		// Offline deterministic JSON output. scan --file does not touch a
 		// cluster and emits a scannedAt timestamp that is normalized below.
 		{name: "scan_file_json", args: []string{"scan", "--file", scanFixture, "--json"}},
+		// Offline-mode error path for a connected command: forcing
+		// CUB_SCOUT_OFFLINE=true should produce a deterministic
+		// "requires ConfigHub connection" error with a non-zero exit code
+		// in BOTH invocation forms. This is the first end-to-end parity
+		// check that exercises a connected-subtree code path without
+		// requiring a real cub binary or a real ConfigHub backend.
+		{
+			name:              "history_offline_error",
+			args:              []string{"history", "deploy/parity-test-resource", "-n", "parity-test", "--format", "json"},
+			extraEnv:          []string{"CUB_SCOUT_OFFLINE=true"},
+			expectNonZeroExit: true,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			standalone, err := runForParity(standaloneBin, tc.args, false /* pluginMode */)
-			if err != nil {
-				t.Fatalf("standalone run failed: %v\n%s", err, standalone)
-			}
-			plugin, err := runForParity(pluginBin, tc.args, true /* pluginMode */)
-			if err != nil {
-				t.Fatalf("plugin run failed: %v\n%s", err, plugin)
+			standalone, standaloneErr := runForParityWithEnv(standaloneBin, tc.args, false /* pluginMode */, tc.extraEnv)
+			plugin, pluginErr := runForParityWithEnv(pluginBin, tc.args, true /* pluginMode */, tc.extraEnv)
+
+			if !tc.expectNonZeroExit {
+				if standaloneErr != nil {
+					t.Fatalf("standalone run failed: %v\n%s", standaloneErr, standalone)
+				}
+				if pluginErr != nil {
+					t.Fatalf("plugin run failed: %v\n%s", pluginErr, plugin)
+				}
+			} else {
+				// Both forms must fail. If one succeeds or they fail with
+				// different exit statuses that is itself a parity bug.
+				if (standaloneErr == nil) != (pluginErr == nil) {
+					t.Fatalf("exit status parity drift: standaloneErr=%v pluginErr=%v\n--- standalone ---\n%s\n--- plugin ---\n%s",
+						standaloneErr, pluginErr, standalone, plugin)
+				}
+				if standaloneErr == nil {
+					t.Fatalf("case %q was marked expectNonZeroExit but both forms succeeded", tc.name)
+				}
 			}
 
 			wantStandalone := normalizeForParity(standalone, false)
@@ -109,6 +151,14 @@ func TestPluginParity_StandaloneMatchesPlugin(t *testing.T) {
 // so neither the parent test process nor user state can leak into the child.
 // In plugin mode CUB_PLUGIN=1 is set to match how the cub host execs plugins.
 func runForParity(binPath string, args []string, pluginMode bool) (string, error) {
+	return runForParityWithEnv(binPath, args, pluginMode, nil)
+}
+
+// runForParityWithEnv is runForParity plus an extraEnv slice that gets
+// appended to the minimal environment before execution. Used by cases that
+// need to force specific runtime behavior (e.g. CUB_SCOUT_OFFLINE=true to
+// exercise the offline-mode error path of a connected command).
+func runForParityWithEnv(binPath string, args []string, pluginMode bool, extraEnv []string) (string, error) {
 	cmd := exec.Command(binPath, args...)
 	env := []string{
 		"HOME=" + filepath.Dir(binPath), // throwaway HOME
@@ -119,6 +169,7 @@ func runForParity(binPath string, args []string, pluginMode bool) (string, error
 	if pluginMode {
 		env = append(env, "CUB_PLUGIN=1")
 	}
+	env = append(env, extraEnv...)
 	cmd.Env = env
 
 	out, err := cmd.CombinedOutput()
