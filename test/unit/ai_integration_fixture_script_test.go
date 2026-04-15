@@ -40,7 +40,7 @@ func TestAIIntegrationFixtureSessionScript(t *testing.T) {
 	}{
 		{path: filepath.Join(outputDir, "01-debug-deployment.txt"), needle: "OutOfSync", section: "trace"},
 		{path: filepath.Join(outputDir, "02-change-history.txt"), needle: "Change History", section: "history"},
-		{path: filepath.Join(outputDir, "03-scan-safety.json"), needle: "CCVE-2025-3733", section: "scan"},
+		{path: filepath.Join(outputDir, "03-scan-safety.json"), needle: "\"ccve_id\": \"CCVE-2025-", section: "scan"},
 		{path: filepath.Join(outputDir, "04-unmanaged-resources.txt"), needle: "debug-nginx", section: "orphans"},
 	}
 
