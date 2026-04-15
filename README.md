@@ -14,7 +14,8 @@ It works standalone with your current kube context, or connected to
 [ConfigHub](https://confighub.com) for comparison, import, history, fleet, and
 AI-friendly read-only workflows.
 
-**New in v2.0:** cub-scout now also ships as the first official `cub` plugin.
+**New in v2.0:** cub-scout now also ships as one of our first `cub` plugins.
+
 Run `cub plugin install confighub/cub-scout` and invoke it as `cub scout ...`
 with inherited auth from `cub`. Standalone `cub-scout` is unchanged and fully
 supported. See [Three Invocation Forms](#three-invocation-forms) and the
