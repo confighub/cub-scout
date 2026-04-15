@@ -1,9 +1,10 @@
-# cub-scout -- explore and map GitOps clusters
+# cub-scout -- explore and map GitOps clusters!  
 
-**Offline-first. Deterministic. Cluster read-only.**
+**Offline-first. Deterministic. Cluster read-only. Cub plugin option.**
 
-cub-scout is an open-source cluster explorer for Kubernetes and GitOps. It helps
-you answer:
+cub-scout is an open-source cluster explorer for Kubernetes and GitOps. 
+
+It helps you answer:
 - what owns this resource?
 - where did it come from?
 - what is broken right now?
