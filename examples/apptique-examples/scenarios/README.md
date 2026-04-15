@@ -177,4 +177,4 @@ These scenarios use **namespaces to simulate clusters**. In a real fleet:
 
 - [../README.md](../README.md) — Apptique examples overview
 - [../../rm-demos-argocd/](../../rm-demos-argocd/) — Simulation demos (sales presentations)
-- [../../../docs/planning/RENDERED-MANIFEST-PATTERN.md](../../../docs/planning/RENDERED-MANIFEST-PATTERN.md) — Full RM pattern documentation
+- [../../../docs/reference/gitops-repo-structures.md](../../../docs/reference/gitops-repo-structures.md) — GitOps repo pattern reference

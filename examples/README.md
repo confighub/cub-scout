@@ -1,459 +1,126 @@
 # cub-scout Examples
 
-All examples, demos, and integration code in one place.
+This directory is the examples catalog for `cub-scout`.
 
-> **This is the canonical examples index.** `docs/EXAMPLES-OVERVIEW.md` redirects here.
+Use these examples when you want one of three things:
 
-## Status Legend
+- read-only cluster troubleshooting
+- GitOps ownership and lineage visibility
+- connected import or comparison with ConfigHub
 
-| Status | Meaning |
-|--------|---------|
-| **Working** | Tested code that runs on your cluster |
-| **Mockup** | UI designs/mockups for discussion |
-| **Proposal** | Architecture proposals, not yet implemented |
+Do not start by reading the whole directory. Pick one path that matches the
+question you have right now.
 
-## Start Here
+## Start With One Path
 
-**Using an AI assistant?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI agent reason about a live Kubernetes cluster using cub-scout as its observation layer. Works with Claude Code, Copilot, or any CLI-capable AI. No account required for the standalone stages.
+| Goal | Start here | Why this is the right first path |
+|---|---|---|
+| Learn the core workflow from zero | [`new-user-puzzle-quest`](./new-user-puzzle-quest/) | guided first run through `quickstart`, `doctor`, `map`, `trace`, and import preview |
+| Show an AI assistant what `cub-scout` adds | [`ai-agent-quest`](./ai-agent-quest/) | clean story for giving an AI read-only cluster eyes before connected ConfigHub steps |
+| Show connected value in under a minute | [`connect-and-compare`](./connect-and-compare/) | deterministic fixture path for doctor, connect, compare, and history |
+| Import from a real cluster into ConfigHub | [`import-from-live`](./import-from-live/) | the simplest brownfield cluster-first story |
+| Compare a Git repo with live cluster state | [`combined-git-live`](./combined-git-live/) | good when the repo and cluster already both exist |
+| Prove Argo or Flux import on a real kind cluster | [`argo-import-confighub-demo`](./argo-import-confighub-demo/) or [`flux-import-confighub-demo`](./flux-import-confighub-demo/) | full demo paths with real controllers and ConfigHub import |
 
-**Learning cub-scout hands-on?** Try the [Puzzle Quest](new-user-puzzle-quest/) — a guided walkthrough from zero to full cluster discovery.
+If you are unsure, start with `new-user-puzzle-quest` for learning or
+`connect-and-compare` for a fast deterministic demo.
 
-**Need quick command lookup?**
-- [Complete CLI Reference (A-Z)](../docs/reference/cli-reference.md)
-- [Command Reference](../docs/reference/commands.md)
-- [Start Here by user goal](../docs/getting-started/start-here.md)
+## Quick Commands
 
-## Quick Start
+From the repo root:
 
 ```bash
-# Install
-brew install confighub/tap/cub-scout
-
-# Or build from source
-git clone https://github.com/confighub/cub-scout.git
-cd cub-scout
 go build ./cmd/cub-scout
 
-# First run (guided)
-cub-scout quickstart --yes
-
-# One-command cluster summary
-cub-scout doctor
-
-# Interactive exploration
-cub-scout map
-
-# Experimental meaning-first grouping
-cub-scout map meaning
-
-# Or run a demo
-cub-scout demo quick
+./cub-scout quickstart
+./cub-scout doctor
+./cub-scout map
+./cub-scout import --dry-run -n default
 ```
 
-## Most Valuable Demos First
-
-| Goal | Run This First | What It Proves |
-|------|----------------|----------------|
-| Learn core workflow quickly | [new-user-puzzle-quest/](new-user-puzzle-quest/) | `quickstart`, `doctor`, `map`, `trace`, `scan`, `import --dry-run` |
-| Show connected value in <60s | [connect-and-compare/](connect-and-compare/) | `doctor` + `compare three-way` + `history` narrative |
-| Enable AI tooling safely | [mcp-gateway/](mcp-gateway/) + [ai-integration/](ai-integration/) | `mcp serve`, fixture-driven AI session patterns |
-| Operate platform-scale slices | [kro-composition/](kro-composition/) + [connected-summary-storage/](connected-summary-storage/) + [watch-webhook/](watch-webhook/) | composition lineage, summary trend/digest, webhook event streaming |
-
----
-
-## Real-World Examples
-
-Clone and deploy these repos to see the agent in action with real GitOps setups.
-
-### Import & Discovery Examples (NEW)
-
-Worked examples showing how cub-scout discovers workloads and proposes ConfigHub App structures:
-
-| Example | Pattern | Shows |
-|---------|---------|-------|
-| [argo-import-confighub-demo/](argo-import-confighub-demo/) | **ArgoCD → ConfigHub** | Three import tools compared on real ArgoCD cluster (kind) |
-| [flux-import-confighub-demo/](flux-import-confighub-demo/) | **Flux → ConfigHub** | Management + discovery on real Flux cluster with D2 pattern (kind) |
-| [import-from-live/](import-from-live/) | **ArgoCD** (Arnie) | Cluster-only discovery — no Git required |
-| [combined-git-live/](combined-git-live/) | **Flux** (Banko) | Git repo + cluster alignment |
-| [fleet-import/](fleet-import/) | **Multi-cluster** | Aggregating imports from 2 clusters into a unified proposal |
-| [demo-data-adt/](demo-data-adt/) | **App-Deployment-Target** | Multi-app × multi-env with version skew detection |
-| [custom-ownership-detectors/](custom-ownership-detectors/) | **Extensibility** | YAML ownership detectors (`~/.cub-scout/detectors.yaml`) with map/trace/explain parity |
-| [ai-agent-quest/](ai-agent-quest/) | **AI + K8s** | Give your AI agent cluster vision — standalone observation + ConfigHub intelligence |
-| [new-user-puzzle-quest/](new-user-puzzle-quest/) | **Hands-on learning** | Step-by-step quest for first-time operators |
-
-The `argo-import-confighub-demo` and `flux-import-confighub-demo` run against real kind clusters. The others use static fixtures (no live cluster needed) and include expected JSON output for validation.
-
-### Visualization Example
-
-| Example | Pattern | Shows |
-|---------|---------|-------|
-| [graph-export/](graph-export/) | **Topology sharing** | Export graph data as JSON/DOT/SVG/HTML for docs, Slack, and presentations |
-| [kro-composition/](kro-composition/) | **Platform composition** | kro ownership detection + `trace`/`tree composition` lineage |
-
-### AI Gateway Example
-
-| Example | Pattern | Shows |
-|---------|---------|-------|
-| [mcp-gateway/](mcp-gateway/) | **MCP stdio server** | Serve read-only `map`/`trace`/`scan`/`explain` tools to AI clients |
-| [ai-integration/](ai-integration/) | **Per-tool AI integrations** | Reproducible Claude/Cursor/Copilot MCP + CLI examples (offline fixtures) |
-| [connect-and-compare/](connect-and-compare/) | **Connected value story** | 60-second fixture demo: doctor -> connect -> compare -> history |
-| [connected-summary-storage/](connected-summary-storage/) | **Connected trend snapshots** | Persist/query scan + gitops summary history (`summary list`) |
-| [watch-webhook/](watch-webhook/) | **Webhook stream receiver** | Local receiver + walkthrough for `cub-scout watch --webhook` |
-
-**Using AI tools?** Start with [Giving Your AI Eyes](ai-agent-quest/) — watch your AI reason about cluster state and hit the wall that ConfigHub removes.
-
-**Learning hands-on?** Try the [Puzzle Quest](new-user-puzzle-quest/) — a guided walkthrough from zero to full cluster discovery and ConfigHub import.
-
-### Apptique Examples
-
-Multiple GitOps patterns using Google's Online Boutique app — **included in this repo**:
-
-| Pattern | Tool | Shows |
-|---------|------|-------|
-| [apptique-examples/flux-monorepo](apptique-examples/flux-monorepo/) | **Flux** | Monorepo with Kustomize overlays |
-| [apptique-examples/argo-applicationset](apptique-examples/argo-applicationset/) | **Argo CD** | ApplicationSet with directory generator |
-| [apptique-examples/argo-app-of-apps](apptique-examples/argo-app-of-apps/) | **Argo CD** | Parent Application managing children |
-
-```bash
-# Deploy Flux pattern
-kubectl apply -f examples/apptique-examples/flux-monorepo/infrastructure/gitrepository.yaml
-kubectl apply -f examples/apptique-examples/flux-monorepo/clusters/dev/kustomization.yaml
-
-# Deploy Argo ApplicationSet
-kubectl apply -f examples/apptique-examples/argo-applicationset/bootstrap/applicationset.yaml
-
-# Verify ownership detection
-cub-scout map workloads | grep apptique
-```
-
-### Platform Example (Recommended for Learning)
-
-A complete GitOps learning environment with ~35 resources — **included in this repo**:
-
-| Component | What It Shows |
-|-----------|---------------|
-| Flux Controllers | Source, Kustomize, Helm controllers |
-| Kustomizations | Base + overlay pattern (podinfo) |
-| HelmReleases | Prometheus stack via GitOps |
-| Orphan Resources | Debug leftovers, manual hotfixes |
-
-```bash
-cd examples/platform-example
-./setup.sh                                    # Deploy to kind cluster
-cub-scout map                                 # Explore with TUI
-cub-scout map orphans                         # Find shadow IT
-cub-scout trace deploy/podinfo -n podinfo     # Trace to Git source
-./cleanup.sh                                  # Clean up
-```
-
-See [platform-example/README.md](platform-example/README.md) for learning journeys and the clobbering demo.
-
-### External Examples (GitHub)
-
-| Example | Repo | Shows |
-|---------|------|-------|
-| **ArgoCD Setup** | [confighubai/examples-internal/argocd](https://github.com/confighubai/examples-internal/tree/main/argocd) | Argo CD Applications, failing deployers |
-| **FluxCD Setup** | [confighubai/examples-internal/fluxcd](https://github.com/confighubai/examples-internal/tree/main/fluxcd) | Flux Kustomizations, HelmReleases |
-| **Global App** | [confighub/examples/global-app](https://github.com/confighub/examples/tree/main/global-app) | ConfigHub multi-region deployment |
-| **Helm Platform** | [confighub/examples/helm-platform-components](https://github.com/confighub/examples/tree/main/helm-platform-components) | Helm ownership detection |
-| **VM Fleet** | [confighub/examples/vm-fleet](https://github.com/confighub/examples/tree/main/vm-fleet) | Non-Kubernetes fleet management |
-| **Flux Bridge** | [confighubai/flux-bridge](https://github.com/confighubai/flux-bridge) | Flux-to-ConfigHub integration |
-
-### Try an example
-
-```bash
-# Deploy an example and explore with cub-scout
-kubectl apply -f examples/flux-boutique/boutique.yaml
-cub-scout map                    # Interactive TUI
-cub-scout map workloads          # List by owner
-cub-scout trace deploy/frontend -n boutique  # Trace ownership
-```
-
-Expected output for each example is in `test/fixtures/expected-output/examples/`.
-
----
-
-## What's Here
-
-| File/Folder | Type | What | Use When |
-|-------------|------|------|----------|
-| [argo-import-confighub-demo/](argo-import-confighub-demo/) | **Working** | Three import tools on real ArgoCD cluster | Comparing cub gitops / import argocd / import |
-| [flux-import-confighub-demo/](flux-import-confighub-demo/) | **Working** | Management + discovery on real Flux cluster | Flux D2 pattern, tree/trace, cub gitops import |
-| [import-from-live/](import-from-live/) | **Working** | Cluster-only import (ArgoCD/Arnie pattern) | Learning import discovery, no Git needed |
-| [combined-git-live/](combined-git-live/) | **Working** | Git + cluster alignment (Flux/Banko pattern) | Learning combined discovery, Git drift detection |
-| [fleet-import/](fleet-import/) | **Working** | Multi-cluster fleet aggregation | Learning fleet import, cross-cluster proposals |
-| [demo-data-adt/](demo-data-adt/) | **Working** | App-Deployment-Target model (multi-app × multi-env) | Learning ADT model, version skew, scan |
-| [custom-ownership-detectors/](custom-ownership-detectors/) | **Working** | Config-driven custom ownership detection | Extending ownership classification with YAML |
-| [new-user-puzzle-quest/](new-user-puzzle-quest/) | **Working** | Quest-style new-user walkthrough (AI-assisted) | Guided capability/discovery/import validation |
-| [connect-and-compare/](connect-and-compare/) | **Working** | 60-second connected-mode fixture flow | Standalone->connected value narrative for demos/recordings |
-| [connected-summary-storage/](connected-summary-storage/) | **Working** | Connected summary persistence + query workflow | Trend/history snapshots for scan + gitops status |
-| [watch-webhook/](watch-webhook/) | **Working** | Local webhook receiver and watch walkthrough | Validating event stream integrations and filters |
-| [workflows/](workflows/) | **Working** | Artifact + fleet demos (CI → local, env comparison) | CI/CD integration, sharing bundles, comparing environments |
-| [apptique-examples/](apptique-examples/) | **Working** | Real GitOps patterns (Flux, Argo) | Learning GitOps ownership |
-| [platform-example/](platform-example/) | **Working** | Full Flux learning environment (~35 resources) | Learning GitOps + orphan detection |
-| [d2-control-plane/](d2-control-plane/) | **Working** | [Control Plane](https://controlplane.io) Flux ref arch (infra + apps) | Pattern detection, layer separation |
-| [flux-boutique/](flux-boutique/) | **Working** | 5-service Flux demo | TUI view showcase, trace demo |
-| [orphans/](orphans/) | **Working** | Realistic orphan resources | Orphan detection demo |
-| [drift/](drift/) | **Working** | Drift detection examples | Learning drift detection |
-| [lifecycle-hazards/](lifecycle-hazards/) | **Working** | Helm hooks under ArgoCD | Learning lifecycle hazards |
-| [kro-composition/](kro-composition/) | **Working** | kro composition lineage fixture | Validating kro ownership + platform tree/trace |
-| [demos/](demos/) | **Test Fixtures** | YAML with GitOps labels + nginx:alpine | Learning ownership detection |
-| [impressive-demo/](impressive-demo/) | **Test Fixtures** | Conference demo with risk issue scenarios | Presentations, videos |
-| [scripts/](scripts/) | **Integration Code** | k9s, Slack, CI/CD scripts | Adding to your workflow |
-| [integrations/](integrations/) | **Plugins** | ArgoCD extension, Flux operator | Building on the agent |
-| [rm-demos-argocd/](rm-demos-argocd/) | **Simulation** | Rendered Manifest simulations | Sales presentations |
-| [demo-data/](demo-data/) | **Working** | App-Deployment-Target model (6 apps × 2 targets) | ConfigHub labels, version skew, bridge patterns |
-| [app-config-rtmsg/](app-config-rtmsg/) | **Concept Demo** | Non-K8s config management TUI | Understanding Hub/Space model |
-
-> **Note:** For **real GitOps applications** you can deploy, see [Real-World Examples](#real-world-examples) below.
-> The demos in this folder are test fixtures that demonstrate the agent's detection capabilities.
-
----
-
-## Concept Demos (Future Features)
-
-These demos show **future ConfigHub capabilities** that are not yet implemented. They're for presentations, sales, and understanding the vision — not for running against real clusters.
-
-> **⚠️ Important:** Concept demos print simulated output or show TUI mockups. They do NOT connect to real clusters or ConfigHub. Use [Test Fixtures](#demos-test-fixtures) or [Real-World Examples](#real-world-examples) for actual functionality.
-
-| Demo | Type | Status | Shows |
-|------|------|--------|-------|
-| [rm-demos-argocd/](rm-demos-argocd/) | **Simulation** | Future feature | Rendered Manifest pattern — fleet-wide queries, drift detection, bulk patching |
-| [app-config-rtmsg/](app-config-rtmsg/) | **TUI Mockup** | Future feature | Non-K8s config management — DynamoDB/Consul style with Hub/Space model |
-
-### Rendered Manifest Demos (rm-demos-argocd)
-
-Simulation scripts showing what ConfigHub WILL do when Rendered Manifest features are implemented:
-
-```bash
-./examples/rm-demos-argocd/scenarios/monday-panic/demo.sh    # Find problem across 47 clusters
-./examples/rm-demos-argocd/scenarios/2am-kubectl/demo.sh     # Catch and fix drift
-./examples/rm-demos-argocd/scenarios/security-patch/demo.sh  # Patch 847 services in one command
-```
-
-**These print simulated output** — they don't connect to clusters. Use for storytelling: "I literally did this last week. It took me 2 hours."
-
-### App Config Demo (app-config-rtmsg)
-
-TUI mockup showing how ConfigHub can manage non-Kubernetes configuration (based on real architecture from a messaging platform):
-
-```bash
-./examples/app-config-rtmsg/demo.sh    # TUI mockup with terminal colors
-```
-
-**Key concepts demonstrated:**
-- **Hub** — Catalog of config templates + constraints
-- **Spaces** — Team boundaries + customer self-serve
-- **Units** — Config entities with labels, inheritance
-- **Queries** — Cross-cutting visibility ("all production configs")
-
-**This is a mockup** — it shows what the UI will look like, not working code. See [app-config-rtmsg/README.md](app-config-rtmsg/README.md) for details.
-
----
-
-## Demos (Test Fixtures)
-
-> **Important:** Demos are **test fixtures**, not real applications. They create Kubernetes
-> resources with the correct GitOps labels (Flux, Argo, Helm, ConfigHub) to demonstrate
-> ownership detection, but they run `nginx:alpine` as a placeholder — not actual app code.
-
-**What demos are for:**
-- Learning how the agent detects ownership
-- Demonstrating the map/scan tools
-- Presentations and videos
-
-**What demos are NOT:**
-- Production-ready applications
-- Examples of how to structure real GitOps repos
-
-```bash
-cub-scout demo list              # List all demos
-cub-scout demo quick             # 30-second demo
-cub-scout demo ccve              # RISK-2025-0027 detection
-cub-scout demo query             # Query language walkthrough
-cub-scout demo scenario break-glass # Emergency kubectl workflow
-cub-scout demo <name> --cleanup  # Remove demo resources
-```
-
-| Demo | Time | Shows |
-|------|------|-------|
-| `quick` | ~30 sec | Ownership detection, map dashboard |
-| `ccve` | ~2 min | RISK-2025-0027 (BIGBANK Grafana bug) |
-| `query` | ~1 min | Filter by owner, namespace, and cluster |
-| `scenario bigbank-incident` | ~3 min | BIGBANK outage walkthrough |
-| `scenario break-glass` | ~2 min | Emergency kubectl and follow-up decisions |
-
-See [demos/README.md](demos/README.md) for detailed walkthroughs.
-
-### Converting Demos to Real Apps
-
-To turn a demo fixture into a real application:
-
-1. **Replace the placeholder image:**
-   ```yaml
-   # Demo uses:
-   image: nginx:alpine
-
-   # Replace with your real app:
-   image: your-registry/your-app:v1.0.0
-   ```
-
-2. **Add your actual configuration:**
-   ```yaml
-   # Demo has minimal config for ownership labels
-   # Add your real env vars, volumes, secrets, etc.
-   env:
-     - name: DATABASE_URL
-       valueFrom:
-         secretKeyRef:
-           name: db-credentials
-           key: url
-   ```
-
-3. **Move to a GitOps repo:** The demo YAML is applied directly with `kubectl`. For real GitOps:
-   - **Flux:** Add to a Kustomization source directory
-   - **Argo CD:** Create an Application pointing to your repo
-   - **Helm:** Convert to a Helm chart with values files
-
-4. **Keep the ownership labels** — these are what the agent uses:
-   ```yaml
-   # Flux ownership (keep these)
-   labels:
-     kustomize.toolkit.fluxcd.io/name: my-app
-     kustomize.toolkit.fluxcd.io/namespace: flux-system
-
-   # Or Argo ownership
-   labels:
-     app.kubernetes.io/instance: my-app
-     argocd.argoproj.io/instance: my-app
-   ```
-
-**For real GitOps examples,** see the [Real-World Examples](#real-world-examples) section — these are actual repos you can clone and deploy.
-
----
-
-## Scripts
-
-Copy-paste scripts for common integrations.
-
-| Script | What It Does |
-|--------|--------------|
-| [k9s plugin](scripts/README.md#k9s-plugin) | Add map/scan commands to k9s |
-| [Slack alerting](scripts/README.md#slack-alerting) | Alert on drift/risk issues |
-| [GitHub Actions](scripts/README.md#github-actions) | CI/CD gate for risk issues |
-| [Prometheus metrics](scripts/README.md#prometheus-metrics) | Export metrics |
-| [Image audit](scripts/README.md#image-audit) | Find all image versions |
-| [Find orphans](scripts/README.md#find-orphans) | Find unmanaged resources |
-
-See [scripts/README.md](scripts/README.md) for usage.
-
----
-
-## Integrations
-
-Third-party tool integrations with working code.
-
-| Integration | Type | Status |
-|-------------|------|--------|
-| [argocd-extension/](integrations/argocd-extension/) | UI Extension | Working |
-| [flux-operator/](integrations/flux-operator/) | Metrics Exporter | Working |
-| [flux9s/](integrations/flux9s/) | TUI Enhancement | Proposal |
-
-See [integrations/README.md](integrations/README.md) for architecture.
-
----
-
-## Fleet Queries
-
-Questions the agent answers in seconds. See [docs/howto/fleet-queries.md](../docs/howto/fleet-queries.md) for complete examples.
-
-```bash
-# Interactive demo
-./examples/demos/fleet-queries-demo.sh
-
-# Live queries against cluster
-cub-scout demo query
-```
-
-### "What's running and who owns it?"
-
-```bash
-$ cub-scout map workloads
-
-STATUS  NAMESPACE        NAME              OWNER      MANAGED-BY            IMAGE
-────────────────────────────────────────────────────────────────────────────────────
-✓     demo-payments    payment-api       ConfigHub  payment-api-prod      api:2.4.1
-✓     atk-flux-basic   podinfo           Flux       podinfo               podinfo:6.5.0
-✓     demo-orders      postgresql        Helm       orders-db             postgres:15
-✓     argocd           argocd-server     Native     -                     argocd:v3.2.3
-```
-
-### "Which clusters are behind?"
-
-```bash
-$ cub-scout map fleet   # With ConfigHub auth
-
-ConfigHub Fleet View
-  order-processor
-  ├── variant: prod
-  │   └── ✓ cluster-east @ rev 89
-  │   └── ✓ cluster-west @ rev 89
-  │   └── ⚠ cluster-eu @ rev 87    ← behind!
-```
-
-### "What config bugs exist?"
-
-```bash
-$ cub-scout scan
-
-CONFIG CVE SCAN
-════════════════════════════════════════════════════════════════════
-CRITICAL (1)
-[RISK-2025-0027] demo-monitoring/grafana    ← BIGBANK 4-hour outage bug
-════════════════════════════════════════════════════════════════════
-```
-
-### "What's broken right now?"
-
-```bash
-$ cub-scout map issues
-
-✗ HelmRelease/redis-cache in flux-system: SourceNotReady
-⏸ Kustomization/monitoring-stack in flux-system: suspended
-✗ Deployment/order-processor in demo-orders: 0/2 ready
-```
-
----
-
-## JSON Output
-
-All commands support `--json` for tooling:
-
-```bash
-$ cub-scout map --json | jq '.workloads[] | select(.owner == "ConfigHub")'
-
-{
-  "name": "payment-api",
-  "namespace": "demo-payments",
-  "owner": "ConfigHub",
-  "confighub": {
-    "unit": "payment-api-prod",
-    "space": "payments-prod",
-    "revision": "127"
-  }
-}
-```
-
----
-
-## See Also
-
-| Doc | What's in it |
-|-----|--------------|
-| [docs/reference/commands.md](../docs/reference/commands.md) | Command reference with common examples |
-| [docs/reference/command-matrix.md](../docs/reference/command-matrix.md) | Full command/option matrix |
-| [docs/howto/import-to-confighub.md](../docs/howto/import-to-confighub.md) | Import workloads into ConfigHub |
-| [README.md](../README.md) | Project overview |
-| [docs/concepts/architecture.md](../docs/concepts/architecture.md) | How it works, GSF protocol |
-| [docs/howto/scan-for-risks.md](../docs/howto/scan-for-risks.md) | risk issue scanning (46 patterns) |
-| [test/README.md](../test/README.md) | Testing documentation |
+`cub-scout` is standalone by default. Log in with `cub auth login` only when
+you want connected ConfigHub features such as import, compare, history, or
+summary storage.
+
+## Run Order That Repeats Well
+
+For the smoothest first run:
+
+1. Start with a fixture-backed or quest example.
+2. Prove the read-only CLI flow locally.
+3. Only then move to connected ConfigHub examples.
+4. Only then move to real-cluster controller demos.
+
+That order avoids burning time on cluster or auth setup before the operator
+understands the core ownership model.
+
+## Example Families
+
+### First-run and learning paths
+
+- [`new-user-puzzle-quest`](./new-user-puzzle-quest/)
+- [`ai-agent-quest`](./ai-agent-quest/)
+- [`connect-and-compare`](./connect-and-compare/)
+
+### Connected import and brownfield discovery
+
+- [`import-from-live`](./import-from-live/)
+- [`combined-git-live`](./combined-git-live/)
+- [`argo-import-confighub-demo`](./argo-import-confighub-demo/)
+- [`flux-import-confighub-demo`](./flux-import-confighub-demo/)
+- [`fleet-import`](./fleet-import/)
+- [`import-from-bundle`](./import-from-bundle/)
+
+### GitOps pattern fixtures and ownership demos
+
+- [`apptique-examples`](./apptique-examples/)
+- [`platform-example`](./platform-example/)
+- [`d2-control-plane`](./d2-control-plane/)
+- [`flux-boutique`](./flux-boutique/)
+- [`kro-composition`](./kro-composition/)
+- [`custom-ownership-detectors`](./custom-ownership-detectors/)
+- [`orphans`](./orphans/)
+- [`drift`](./drift/)
+- [`lifecycle-hazards`](./lifecycle-hazards/)
+- [`demo-data`](./demo-data/)
+- [`demo-data-adt`](./demo-data-adt/)
+
+### AI, integrations, and automation surfaces
+
+- [`ai-integration`](./ai-integration/)
+- [`mcp-gateway`](./mcp-gateway/)
+- [`watch-webhook`](./watch-webhook/)
+- [`connected-summary-storage`](./connected-summary-storage/)
+- [`graph-export`](./graph-export/)
+- [`workflows`](./workflows/)
+
+### Demo fixtures and concept material
+
+- [`demos`](./demos/) — fast ownership and risk demos
+- [`impressive-demo`](./impressive-demo/) — presentation-oriented incident demo
+- [`rm-demos-argocd`](./rm-demos-argocd/) — simulation/storytelling, not live
+- [`app-config-rtmsg`](./app-config-rtmsg/) — concept mockup, not a runnable
+  cluster example
+
+## What To Use For Which Question
+
+- "What is broken right now on this cluster?" Start with `doctor`, then use
+  `new-user-puzzle-quest` or `ai-agent-quest`.
+- "Who owns this resource and where did it come from?" Start with
+  `platform-example`, `flux-boutique`, or `apptique-examples`.
+- "Can we import what we already run into ConfigHub?" Start with
+  `import-from-live`, then move to the Argo or Flux demo that matches your
+  controller.
+- "Can an AI tool use cub-scout safely?" Start with `ai-agent-quest`,
+  `ai-integration`, or `mcp-gateway`.
+- "Can I show a deterministic demo without a live cluster?" Start with
+  `connect-and-compare` or `demos`.
+
+## Pointers Outside This Directory
+
+- [Getting started](../docs/getting-started/start-here.md)
+- [Command reference](../docs/reference/commands.md)
+- [CLI reference](../docs/reference/cli-reference.md)
+
+Those docs explain the CLI. This directory is for choosing the right concrete
+example and running it without getting lost.

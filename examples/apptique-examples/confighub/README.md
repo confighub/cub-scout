@@ -178,6 +178,6 @@ The apptique examples map directly to the **Hub-and-Spoke** enterprise pattern. 
 
 ## See Also
 
-- [docs/map/reference/gitops-repo-structures.md](../../../docs/map/reference/gitops-repo-structures.md) — GitOps repo patterns
+- [docs/reference/gitops-repo-structures.md](../../../docs/reference/gitops-repo-structures.md) — GitOps repo patterns
 - [docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md](../../../docs/archive/IMPORT-GIT-REFERENCE-ARCHITECTURES.md) — Pattern → ConfigHub mapping (archived)
 - [docs/outcomes/enterprise-case-studies.md](../../../docs/outcomes/enterprise-case-studies.md) — Enterprise case studies
