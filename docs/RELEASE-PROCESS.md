@@ -23,6 +23,7 @@ Every tagged release automatically produces:
 
 4. **Krew Manifest Template**
    - Source template: `dist/krew/cub-scout.yaml`
+   - GoReleaser outputs release artifacts into `.goreleaser-dist/` so `release --clean` does not delete the tracked `dist/` source templates
    - Update `spec.version`, `uri`, and `sha256` values per release before submitting to krew-index
 
 ## How to Release

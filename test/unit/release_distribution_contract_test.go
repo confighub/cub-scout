@@ -11,6 +11,7 @@ import (
 )
 
 type goreleaserConfig struct {
+	Dist string `yaml:"dist"`
 	Builds []struct {
 		ID     string   `yaml:"id"`
 		Goos   []string `yaml:"goos"`
@@ -43,6 +44,10 @@ func TestGoReleaser_DistributionTargets(t *testing.T) {
 	var cfg goreleaserConfig
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		t.Fatalf("parse goreleaser config: %v", err)
+	}
+
+	if cfg.Dist != ".goreleaser-dist" {
+		t.Fatalf("goreleaser dist dir = %q, want %q to avoid tracked dist/ collisions", cfg.Dist, ".goreleaser-dist")
 	}
 
 	requiredBuilds := map[string]bool{
