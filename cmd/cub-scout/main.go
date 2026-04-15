@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 var (
@@ -74,6 +76,15 @@ Environment Variables:
 }
 
 func main() {
+	// When running as a `cub` plugin (invoked via `cub scout ...`), the host
+	// cub process sets CUB_PLUGIN=1 and exec's this binary. Switch the root
+	// command Use string so help text renders `cub scout` instead of the
+	// plugin binary's filesystem name (which will be "main" under
+	// $CUB_CONFIG/plugins/scout/main).
+	if hub.IsPluginMode() {
+		rootCmd.Use = "cub scout"
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

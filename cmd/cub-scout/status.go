@@ -276,6 +276,14 @@ func getWorkerForCluster(space, clusterName string) *WorkerInfo {
 // validateAuthToken checks if the current ConfigHub auth token is valid
 // Returns true if token is valid, false if expired or invalid
 func validateAuthToken() bool {
+	// When running as a `cub` plugin (CUB_PLUGIN=1), the host has already
+	// passed a valid token through CUB_TOKEN. Honor it directly instead of
+	// re-executing `cub` — that would recurse through the plugin host and
+	// slow down every doctor/explain/trace invocation.
+	if hub.IsPluginMode() {
+		return hub.PluginToken() != ""
+	}
+
 	// Use cub auth get-token which will fail if token is expired
 	// This is a lightweight check that doesn't make a network request
 	// if the token is expired (it checks expiry locally)

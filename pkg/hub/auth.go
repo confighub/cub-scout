@@ -18,7 +18,14 @@ type Auth struct {
 }
 
 // IsAuthenticated returns true if user is logged in to ConfigHub.
+//
+// When running as a `cub` plugin (CUB_PLUGIN=1), this also honours CUB_TOKEN
+// from the environment, since the host cub process already owns the active
+// credential and has passed it through.
 func IsAuthenticated() bool {
+	if IsPluginMode() && PluginToken() != "" {
+		return true
+	}
 	auth, err := LoadAuth()
 	if err != nil {
 		return false
@@ -84,7 +91,15 @@ func authConfigPath() string {
 // Returns false if cub is not installed or has no valid token.
 // Note: this calls exec.Command so it is NOT suitable for hot paths.
 // Use IsAuthenticated() for fast local-file-only checks.
+//
+// When running as a `cub` plugin (CUB_PLUGIN=1), this reads CUB_TOKEN from
+// the environment rather than shelling out to `cub auth get-token`, since
+// the host cub process has already provided the token and a recursive exec
+// would be both slower and harder to reason about.
 func CubCLIAuthenticated() bool {
+	if IsPluginMode() {
+		return PluginToken() != ""
+	}
 	out, err := exec.Command("cub", "auth", "get-token").Output()
 	if err != nil {
 		return false

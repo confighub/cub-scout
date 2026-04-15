@@ -42,12 +42,49 @@ builds:
       - -s -w
       - -X main.BuildTag={{.Version}}
       - -X main.BuildDate={{.Date}}
+  # Plugin build: same cub-scout source, compiled a second time under the
+  # binary name `main` so the archive satisfies the `cub plugin install`
+  # contract. cub extracts the release tar.gz into its plugin directory
+  # and chmods `<plugin-dir>/main` to 0755 — so we must ship a file called
+  # `main` at the archive root. See sdk/cmd/cub/plugin_install.go and
+  # sdk/cmd/cub/plugin_exec.go for the authoritative contract.
+  - id: cub-scout-plugin
+    main: ./cmd/cub-scout
+    binary: main
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.BuildTag={{.Version}}
+      - -X main.BuildDate={{.Date}}
 
 archives:
+  # Default archive: one asset per OS+arch that serves every distribution
+  # path at once.
+  #
+  #   * direct download / Homebrew: users run `cub-scout` from the archive
+  #   * krew: users run `kubectl cub-scout` (via the kubectl-cub-scout build)
+  #   * `cub plugin install confighub/cub-scout`: cub's asset matcher picks
+  #     this tar.gz and extracts it into $CUB_CONFIG/plugins/scout/, where
+  #     the `main` binary from the cub-scout-plugin build becomes the
+  #     plugin entry point. Shipping `cub-scout` and `main` in the same
+  #     archive means cub's asset ordering cannot pick a plugin-unfriendly
+  #     asset.
+  #
+  # Windows is served by the default archive only. `cub-scout-plugin` does
+  # not build for windows because the cub plugin exec path uses syscall.Exec
+  # which does not exist on windows.
   - id: default
     ids:
       - cub-scout
       - kubectl-cub-scout
+      - cub-scout-plugin
     formats:
       - tar.gz
     format_overrides:
