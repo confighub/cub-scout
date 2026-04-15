@@ -1,6 +1,6 @@
 # Install `cub scout` as a `cub` Plugin
 
-> **Status:** Draft install guide for the `v2.0.0` plugin form.
+> **Status:** Install guide for the `v2.0.0` plugin form. In-binary plugin support (auth inheritance, cobra help/command-path adjustments, release-gate parity test) has landed on `main`. The step that produces a plugin-compatible release archive is configured in `.goreleaser.yaml` and ships with the first release cut from `main` after `v1.13.x`.
 > The `cub plugin install` mechanism requires `cub` with plugin support and a `cub-scout` release that ships a plugin-compatible archive.
 > If you only want standalone `cub-scout`, see the top-level [README](../../README.md) instead.
 >
