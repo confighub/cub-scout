@@ -11,6 +11,89 @@ import (
 	"testing"
 )
 
+// TestPreferInvocationForm_StandaloneIsNoop verifies that in standalone
+// mode (CUB_PLUGIN unset) the rewrite helper returns the input unchanged,
+// preserving the legacy `cub-scout ...` form for hint output.
+func TestPreferInvocationForm_StandaloneIsNoop(t *testing.T) {
+	t.Setenv("CUB_PLUGIN", "")
+	cases := []string{
+		"cub-scout doctor",
+		"cub-scout explain deploy/foo -n bar",
+		"cub-scout",
+		"",
+		"kubectl get pods",
+		"cub unit list",
+	}
+	for _, in := range cases {
+		if got := preferInvocationForm(in); got != in {
+			t.Errorf("preferInvocationForm(%q) = %q, want unchanged input in standalone mode", in, got)
+		}
+	}
+}
+
+// TestPreferInvocationForm_PluginRewritesPrefix verifies that the rewrite
+// helper only touches the exact `cub-scout` token at the start of a
+// command string. Substrings, URLs, and arbitrary content that happens to
+// contain the word must be preserved.
+func TestPreferInvocationForm_PluginRewritesPrefix(t *testing.T) {
+	t.Setenv("CUB_PLUGIN", "1")
+
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{name: "doctor", in: "cub-scout doctor", want: "cub scout doctor"},
+		{name: "explain_with_args", in: "cub-scout explain deploy/foo -n bar", want: "cub scout explain deploy/foo -n bar"},
+		{name: "bare_binary_name", in: "cub-scout", want: "cub scout"},
+		{name: "empty", in: "", want: ""},
+		{name: "unrelated_command", in: "kubectl get pods", want: "kubectl get pods"},
+		{name: "cub_without_scout", in: "cub unit list", want: "cub unit list"},
+		// Must not mangle a URL that happens to contain "cub-scout".
+		{name: "url_with_cub_scout", in: "https://github.com/confighub/cub-scout/releases", want: "https://github.com/confighub/cub-scout/releases"},
+		// Must not mangle mid-string occurrences.
+		{name: "mid_string_mention", in: "see cub-scout docs for details", want: "see cub-scout docs for details"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := preferInvocationForm(tc.in); got != tc.want {
+				t.Errorf("preferInvocationForm(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestHintToStructured_PluginModeRewritesCommand proves the JSON/MCP hint
+// boundary applies the plugin-mode invocation rewrite. This is the field
+// that appears in `nextSteps[].nextCommand` in every JSON output path.
+func TestHintToStructured_PluginModeRewritesCommand(t *testing.T) {
+	t.Setenv("CUB_PLUGIN", "1")
+	h := Hint{
+		Command:   "cub-scout doctor -n prod",
+		Rationale: "first check",
+	}
+	got := h.ToStructured()
+	if got.NextCommand != "cub scout doctor -n prod" {
+		t.Errorf("NextCommand = %q, want %q", got.NextCommand, "cub scout doctor -n prod")
+	}
+}
+
+// TestHintToStructured_StandaloneLeavesCommandAlone locks in that the
+// standalone form keeps emitting the legacy `cub-scout ...` strings so
+// existing tests and users are unaffected.
+func TestHintToStructured_StandaloneLeavesCommandAlone(t *testing.T) {
+	t.Setenv("CUB_PLUGIN", "")
+	h := Hint{
+		Command:   "cub-scout doctor -n prod",
+		Rationale: "first check",
+	}
+	got := h.ToStructured()
+	if got.NextCommand != "cub-scout doctor -n prod" {
+		t.Errorf("NextCommand = %q, want %q", got.NextCommand, "cub-scout doctor -n prod")
+	}
+}
+
 // TestPluginMode_UseStringFlip exercises the built cub-scout binary with and
 // without CUB_PLUGIN=1 and confirms the cobra "Usage:" line reflects the
 // preferred invocation in each mode.

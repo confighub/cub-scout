@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 // ActionType classifies what kind of action a hint suggests.
@@ -52,6 +54,11 @@ type StructuredHint struct {
 }
 
 // ToStructured converts a Hint to its JSON-serializable form.
+//
+// When running as a cub plugin (CUB_PLUGIN=1), the NextCommand field is
+// rewritten so any cub-scout prefix becomes the preferred `cub scout`
+// invocation form. This keeps hints in nextSteps / MCP structuredContent
+// output consistent with how the user actually invoked the tool.
 func (h Hint) ToStructured() StructuredHint {
 	actionType := h.ActionType
 	if actionType == "" {
@@ -60,7 +67,7 @@ func (h Hint) ToStructured() StructuredHint {
 	return StructuredHint{
 		ActionType:  actionType,
 		Reason:      h.Rationale,
-		NextCommand: h.Command,
+		NextCommand: preferInvocationForm(h.Command),
 		NextSurface: h.ConfigHubURL,
 		Blocker:     h.Blocker,
 	}
@@ -238,12 +245,45 @@ func sortHints(hints []Hint) {
 
 // hintsToStrings converts Hint slice to legacy string format for rendering.
 // Format: "Rationale: command"
+//
+// When running as a cub plugin, the embedded command is rewritten to the
+// preferred `cub scout` invocation form so ASCII TRY NEXT output matches
+// how the user actually invoked the tool.
 func hintsToStrings(hints []Hint) []string {
 	result := make([]string, 0, len(hints))
 	for _, h := range hints {
-		result = append(result, h.Rationale+": "+h.Command)
+		result = append(result, h.Rationale+": "+preferInvocationForm(h.Command))
 	}
 	return result
+}
+
+// preferInvocationForm rewrites any `cub-scout ` prefix inside the given
+// command string to `cub scout ` when the binary is running as a cub plugin.
+// In standalone form the string is returned unchanged.
+//
+// This is the single boundary point where hint content adapts to the
+// invocation form the user chose; every hint renderer funnels through
+// hintsToStrings (ASCII) or ToStructured (JSON, MCP), so this one helper
+// covers the full hint surface. Non-hint strings (error recovery messages,
+// landing-page copy, baked-in Long descriptions) are not rewritten yet —
+// those remain standalone-flavored for now because standalone is still
+// the documented primary form during the v2.x transition window.
+func preferInvocationForm(cmd string) string {
+	if !hub.IsPluginMode() {
+		return cmd
+	}
+	if cmd == "" {
+		return cmd
+	}
+	// Exact-prefix rewrite to avoid mangling strings that happen to
+	// contain "cub-scout" as a substring (e.g. URLs or unit slugs).
+	if strings.HasPrefix(cmd, "cub-scout ") {
+		return "cub scout " + strings.TrimPrefix(cmd, "cub-scout ")
+	}
+	if cmd == "cub-scout" {
+		return "cub scout"
+	}
+	return cmd
 }
 
 func withKubeRecoveryHint(err error, command string) error {
