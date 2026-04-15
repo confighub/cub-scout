@@ -5,6 +5,11 @@ version: 2
 
 project_name: cub-scout
 
+# Keep GoReleaser outputs out of the repo-tracked `dist/` tree. This repo
+# stores source templates and bundled scan artifacts under `dist/`, while
+# GoReleaser's `release --clean` expects to own its output directory.
+dist: .goreleaser-dist
+
 before:
   hooks:
     - go mod tidy
