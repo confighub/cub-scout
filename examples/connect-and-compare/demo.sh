@@ -69,10 +69,14 @@ GIT_FIXTURE="$REPO_ROOT/examples/combined-git-live/git-repo"
 BUNDLE_FIXTURE="$REPO_ROOT/examples/workflows/fleet-demo/bundles/dev"
 EXPECTED_DIR="$SCRIPT_DIR/expected-output"
 
+# This demo is fixture-first and should not change shape based on ambient
+# ConfigHub auth or connectivity on the machine running it.
+FIXTURE_ENV=(CUB_SCOUT_OFFLINE=true)
+
 mkdir -p "$OUTPUT_DIR"
 
 echo "[1/4] Standalone snapshot: doctor"
-NO_COLOR=1 CUB_SCOUT_TEST_DOCTOR_INPUT_JSON="$DOCTOR_FIXTURE" "$CUB" doctor --format ascii > "$OUTPUT_DIR/01-doctor.txt"
+env "${FIXTURE_ENV[@]}" NO_COLOR=1 CUB_SCOUT_TEST_DOCTOR_INPUT_JSON="$DOCTOR_FIXTURE" "$CUB" doctor --format ascii > "$OUTPUT_DIR/01-doctor.txt"
 
 echo "[2/4] Connect step (operator action)"
 cat > "$OUTPUT_DIR/02-connect.txt" <<'STEP2'
@@ -81,10 +85,10 @@ Connected mode established (fixture replay path for demo).
 STEP2
 
 echo "[3/4] Compare step: Git intent vs bundle snapshot"
-"$CUB" compare --git-path "$GIT_FIXTURE" --bundle "$BUNDLE_FIXTURE" --json > "$OUTPUT_DIR/03-compare.json"
+env "${FIXTURE_ENV[@]}" "$CUB" compare --git-path "$GIT_FIXTURE" --bundle "$BUNDLE_FIXTURE" --json > "$OUTPUT_DIR/03-compare.json"
 
 echo "[4/4] History step: ConfigHub ChangeSet timeline"
-CUB_SCOUT_TEST_HISTORY_JSON="$HISTORY_FIXTURE" "$CUB" history deploy/checkout -n prod --since 3650d --format ascii > "$OUTPUT_DIR/04-history.txt"
+env "${FIXTURE_ENV[@]}" CUB_SCOUT_TEST_HISTORY_JSON="$HISTORY_FIXTURE" "$CUB" history deploy/checkout -n prod --since 3650d --format ascii > "$OUTPUT_DIR/04-history.txt"
 
 if [[ "$VERIFY" == "true" ]]; then
     diff -u "$EXPECTED_DIR/01-doctor.txt" "$OUTPUT_DIR/01-doctor.txt"

@@ -15,8 +15,6 @@ Health:
 Risks: 3 findings (1 CRITICAL, 1 WARNING, 1 INFO)
 Drift: 2 resources drifted from declared state
 
-Three-Way: ConfigHub connected - run cub-scout compare three-way --scope cluster for full comparison
-
 Top Issues:
   1. Deployment/checkout (ns: prod) - image tag drifted from approved release [CRITICAL]
   2. Deployment/worker (ns: prod) - resource limits are missing [WARNING]
