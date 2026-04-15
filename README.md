@@ -13,6 +13,12 @@ It works standalone with your current kube context, or connected to
 [ConfigHub](https://confighub.com) for comparison, import, history, fleet, and
 AI-friendly read-only workflows.
 
+**New in v2.0:** cub-scout now also ships as the first official `cub` plugin.
+Run `cub plugin install confighub/cub-scout` and invoke it as `cub scout ...`
+with inherited auth from `cub`. Standalone `cub-scout` is unchanged and fully
+supported. See [Three Invocation Forms](#three-invocation-forms) and the
+[migration guide](docs/releases/v2.0.0-migration-guide.md).
+
 **New here?** Start with the [Fast Path](#fast-path-2-minutes), then use:
 - [CLI Guide](CLI-GUIDE.md) for the workflow-first tour
 - [docs/reference/cli-reference.md](docs/reference/cli-reference.md) for the full command catalog
@@ -27,12 +33,25 @@ or joining [Discord](https://discord-auth.confighub.net/discord/join) via Config
 ## Fast Path (2 Minutes)
 
 ```bash
+# Standalone: works with any kube context, no signup
 brew install confighub/tap/cub-scout
 cub-scout quickstart
 cub-scout doctor
 cub-scout explain deploy/app -n ns
 cub-scout trace deploy/app -n ns
 cub-scout map
+```
+
+Or, if you already use `cub`:
+
+```bash
+# Plugin form: inherits cub's auth and context
+cub plugin install confighub/cub-scout
+cub scout quickstart
+cub scout doctor
+cub scout explain deploy/app -n ns
+cub scout trace deploy/app -n ns
+cub scout map
 ```
 
 What you get in the first two minutes:
@@ -47,6 +66,10 @@ What you get in the first two minutes:
 ## Install
 
 ```bash
+# cub plugin (preferred for ConfigHub users — one install, shared auth)
+cub plugin install confighub/cub-scout
+cub scout version
+
 # Homebrew
 brew install confighub/tap/cub-scout
 
@@ -70,9 +93,66 @@ make build-kubectl-plugin
 kubectl cub-scout map list --json
 ```
 
+See [docs/howto/plugin-install.md](docs/howto/plugin-install.md) for pinned
+version install, direct-URL install, offline install, and plugin-mode
+troubleshooting.
+
+---
+
+## Three Invocation Forms
+
+The same binary, three ways to run it. Pick whichever fits your environment.
+Commands, flags, JSON contracts, exit codes, and MCP tool names are identical
+across forms — only the invocation prefix differs. Feature parity is enforced
+by a release-gate test (`TestPluginParity_StandaloneMatchesPlugin`).
+
+### 1. Standalone — "if you can kubectl, you can cub-scout"
+
+No ConfigHub signup required. Reads from your current kube context.
+
+```bash
+brew install confighub/tap/cub-scout
+cub-scout doctor
+cub-scout explain deploy/api -n prod
+cub-scout trace deploy/api -n prod
+```
+
+### 2. Connected — ConfigHub-backed comparison, history, import
+
+Adds governed read paths once you've authenticated once with `cub`.
+
+```bash
+cub auth login
+cub-scout compare three-way --scope namespace/prod
+cub-scout history deploy/api -n prod
+cub-scout import --dry-run -n prod
+```
+
+### 3. Plugin mode (new in v2.0) — `cub scout ...`
+
+Install once, inherit `cub`'s auth automatically, and use the preferred `cub
+scout ...` invocation form. Recommended for AI tooling because the MCP tool
+descriptions and hint output explicitly route through `cub scout ...`.
+
+```bash
+cub plugin install confighub/cub-scout
+cub scout doctor
+cub scout compare three-way --scope cluster
+cub scout mcp serve
+```
+
+Under the hood, `cub` exec's the plugin binary with `CUB_PLUGIN=1`,
+`CUB_TOKEN`, and `CUB_CONTEXT` set. The plugin form inherits auth without a
+separate login step and never recursively shells out to `cub auth get-token`.
+
 ---
 
 ## Choose Your Goal
+
+Each example below uses standalone form (`cub-scout ...`). If you installed
+the plugin (`cub plugin install confighub/cub-scout`), substitute `cub scout`
+for `cub-scout` in any command — behavior is identical and the MCP/JSON
+outputs are byte-for-byte equivalent under the release-gate parity test.
 
 ### Standalone Value Now
 
@@ -99,20 +179,24 @@ cub-scout import --dry-run -n prod
 ```
 
 Use this path when you want ConfigHub-backed history, comparison, import, and
-fleet workflows.
+fleet workflows. In plugin form, `cub auth login` is all you need — the
+plugin inherits the token automatically, no separate cub-scout auth step.
 
 ### AI And Automation
 
 ```bash
-cub-scout mcp serve
-cub-scout doctor --format json
-cub-scout explain deploy/api -n prod --format json
-cub-scout compare three-way --scope namespace/prod --format json
-cub-scout context-pack --format json --max-bytes 16384
+cub scout mcp serve                                 # or: cub-scout mcp serve
+cub scout doctor --format json
+cub scout explain deploy/api -n prod --format json
+cub scout compare three-way --scope namespace/prod --format json
+cub scout context-pack --format json --max-bytes 16384
 ```
 
-Use this path when you want stable read-only JSON or an MCP gateway for Claude,
-Codex, or other agent tooling.
+Use this path when you want stable read-only JSON or an MCP gateway for
+Claude, Codex, or other agent tooling. The plugin form is preferred here
+because MCP tool descriptions, structured `nextSteps` hints, and canonical
+trust URLs all render the `cub scout ...` invocation form so downstream
+agents see a consistent command shape.
 
 ---
 
@@ -193,7 +277,10 @@ For detailed scanner behavior and output shape, use
 
 ## Standalone vs Connected
 
-cub-scout works fully offline. Connected mode is optional.
+cub-scout works fully offline. Connected mode is optional. The capability
+axis is orthogonal to the [invocation form](#three-invocation-forms) — every
+feature below works identically whether you run `cub-scout ...` standalone
+or `cub scout ...` through the plugin.
 
 | Capability | Standalone | Connected |
 |------------|:----------:|:---------:|
@@ -211,7 +298,9 @@ cub-scout works fully offline. Connected mode is optional.
 **Standalone:** Works from your current kube context with no signup required.
 
 **Connected:** Run `cub auth login` to enable ConfigHub-backed comparison,
-history, import, and fleet features.
+history, import, and fleet features. In plugin form (`cub scout ...`), the
+token from `cub auth login` is inherited automatically; in standalone form
+(`cub-scout ...`), it is picked up via the `cub` CLI's local token store.
 
 Connected import writes ConfigHub records, not cluster manifests.
 
