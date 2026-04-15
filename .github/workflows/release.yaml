@@ -46,3 +46,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          # Pin the tag explicitly so GoReleaser's git-describe fallback cannot
+          # pick the wrong tag when two tags point at the same commit (e.g. a
+          # v2.0.0 stable tag created at the same SHA as v2.0.0-rc5). Without
+          # this, GoReleaser re-released rc5 assets and failed with
+          # 422 "already_exists" during asset upload.
+          GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
