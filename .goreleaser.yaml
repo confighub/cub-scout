@@ -90,6 +90,10 @@ archives:
       - cub-scout
       - kubectl-cub-scout
       - cub-scout-plugin
+    # Windows intentionally ships without the plugin-form `main` binary because
+    # cub's plugin exec path relies on syscall.Exec, which is not available on
+    # windows. Linux and darwin archives include one extra binary as a result.
+    allow_different_binary_count: true
     formats:
       - tar.gz
     format_overrides:
