@@ -630,8 +630,8 @@ These are reference copies — the patterns above are adapted from this source.
 
 ## See Also
 
-- [examples/README.md](../README.md) — All examples overview
-- [docs/EXAMPLES-OVERVIEW.md](../../docs/EXAMPLES-OVERVIEW.md) — Central examples reference
-- [rm-demos-argocd/](../rm-demos-argocd/) — Simulation demos (sales presentations)
-- [docs/planning/RENDERED-MANIFEST-PATTERN.md](../../docs/planning/RENDERED-MANIFEST-PATTERN.md) — Full RM pattern documentation
-- [PLAN-APPTIQUE-EXAMPLES.md](../../docs/planning/sessions/PLAN-APPTIQUE-EXAMPLES.md) — Implementation plan
+- [../README.md](../README.md) — All examples overview
+- [./scenarios/README.md](./scenarios/README.md) — Rendered-manifest-style scenario demos
+- [./confighub/README.md](./confighub/README.md) — Pattern-to-ConfigHub mapping for these layouts
+- [../rm-demos-argocd/](../rm-demos-argocd/) — Simulation demos for storytelling
+- [../../docs/reference/gitops-repo-structures.md](../../docs/reference/gitops-repo-structures.md) — GitOps repo pattern reference

@@ -321,7 +321,7 @@ App Space: payments-team
 
 **Organization is structural, not configurational.** No YAML permissions to manage.
 
-See [How Map Design Helps Enterprise Questions](how-maps-design-helps-artem-25-questions-iits.md) for detailed analysis of community objections and responses.
+See [How Map Design Helps Enterprise Questions](../../docs/archive/from-confighub-agent/2026-02-09/reference/how-maps-design-helps-artem-25-questions-iits.md) for detailed analysis of community objections and responses.
 
 ---
 
@@ -922,9 +922,9 @@ The BIGBANK incident: One misplaced space in a Grafana config file caused a **3-
 
 ## Related Use Cases
 
-- [Modern CI/CD Problems](use-case-modern-cicd.md) — How ConfigHub addresses the 8 anti-patterns from "Stop Using CI/CD Like It's 2019"
-- [How Map Design Helps Enterprise Questions](how-maps-design-helps-artem-25-questions-iits.md) — Responses to community objections
-- [Functions, Actions, Triggers Model](functions-actions-model.md) — Technical model for automation
+- [Enterprise case studies](../../docs/outcomes/enterprise-case-studies.md) — customer-shaped GitOps problems and outcomes
+- [How Map Design Helps Enterprise Questions](../../docs/archive/from-confighub-agent/2026-02-09/reference/how-maps-design-helps-artem-25-questions-iits.md) — responses to community objections
+- [ConfigHub integration outcomes](../../docs/outcomes/confighub-integration.md) — how connected workflows extend read-only observation
 
 ---
 

@@ -125,4 +125,4 @@ kubectl delete namespace apptique-drift
 ## See Also
 
 - [../README.md](../README.md) — All scenarios overview
-- [../../../docs/planning/RENDERED-MANIFEST-PATTERN.md](../../../docs/planning/RENDERED-MANIFEST-PATTERN.md) — RM pattern documentation
+- [../../../../docs/reference/gitops-repo-structures.md](../../../../docs/reference/gitops-repo-structures.md) — GitOps repo pattern reference
