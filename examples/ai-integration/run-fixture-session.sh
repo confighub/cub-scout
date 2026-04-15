@@ -42,20 +42,24 @@ HISTORY_OUT="$OUTPUT_DIR/02-change-history.txt"
 SCAN_OUT="$OUTPUT_DIR/03-scan-safety.json"
 ORPHANS_OUT="$OUTPUT_DIR/04-unmanaged-resources.txt"
 
-CUB_SCOUT_TEST_TRACE_JSON="$TESTDATA_DIR/trace_argo_source_signals.json" \
+# Fixture replay must stay deterministic even when the caller happens to be
+# logged in to ConfigHub locally.
+FIXTURE_ENV=(CUB_SCOUT_OFFLINE=true)
+
+env "${FIXTURE_ENV[@]}" CUB_SCOUT_TEST_TRACE_JSON="$TESTDATA_DIR/trace_argo_source_signals.json" \
 "$BINARY" trace deployment/checkout -n checkout > "$TRACE_OUT"
 
 echo "Wrote $TRACE_OUT"
 
-CUB_SCOUT_TEST_HISTORY_JSON="$TESTDATA_DIR/history_changesets.json" \
+env "${FIXTURE_ENV[@]}" CUB_SCOUT_TEST_HISTORY_JSON="$TESTDATA_DIR/history_changesets.json" \
 "$BINARY" history deployment/checkout -n checkout --since 24h > "$HISTORY_OUT"
 
 echo "Wrote $HISTORY_OUT"
 
-"$BINARY" scan --file "$TESTDATA_DIR/misconfigured-deployment.yaml" --json > "$SCAN_OUT"
+env "${FIXTURE_ENV[@]}" "$BINARY" scan --file "$TESTDATA_DIR/misconfigured-deployment.yaml" --json > "$SCAN_OUT"
 echo "Wrote $SCAN_OUT (exit 0: scan succeeded, findings present but no --fail-on threshold)"
 
-CUB_SCOUT_TEST_MAP_ENTRIES_JSON="$TESTDATA_DIR/map_orphans.json" \
+env "${FIXTURE_ENV[@]}" CUB_SCOUT_TEST_MAP_ENTRIES_JSON="$TESTDATA_DIR/map_orphans.json" \
 "$BINARY" map orphans > "$ORPHANS_OUT"
 
 echo "Wrote $ORPHANS_OUT"
