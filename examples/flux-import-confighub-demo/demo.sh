@@ -117,7 +117,7 @@ if $LIVE; then
     elif [[ -n "${CONFIGHUB_URL:-}" ]]; then
         CONFIGHUB_SERVER_URL="$CONFIGHUB_URL"
     else
-        CONFIGHUB_SERVER_URL=$(cub info 2>/dev/null | grep "Server URL:" | awk '{print $NF}')
+        CONFIGHUB_SERVER_URL=$(cub context get --json 2>/dev/null | jq -r '.coordinate.serverURL // empty')
     fi
     if [[ -z "$CONFIGHUB_SERVER_URL" ]]; then
         fail "Could not determine ConfigHub URL. Set CONFIGHUB_URL or use --confighub-url=<url>"

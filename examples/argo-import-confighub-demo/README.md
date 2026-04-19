@@ -114,7 +114,7 @@ connected state is preserved for extended sessions.
 For `--live` mode, authenticate first: `cub auth login`
 
 You can also pass `--confighub-url=<url>` to override the ConfigHub server URL
-(useful for local dev). By default, the demo reads the URL from `cub info`.
+(useful for local dev). By default, the demo reads the URL from `cub context get --json`.
 
 ---
 
