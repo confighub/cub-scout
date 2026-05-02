@@ -118,21 +118,46 @@ If you want cub-scout to trace all the way back to `kubara init`:
 
 ## Connected Mode: Fleet Handoff
 
+The commands above are the **diagnostic path** — read-only inspection
+of an existing Kubara/Argo install. For the **production onboarding
+path** (registering a Kubara workload as a ConfigHub Component and
+repointing Argo from Git to ConfigHub OCI), see
+[Onboard Existing](onboard-existing.md). The diagnostic commands here
+remain useful afterward for trace, drift, and explain.
+
+### Discovery-only (no controller changes)
+
 After inspecting standalone, import into ConfigHub for fleet-level queries:
 
 ```bash
-# Discover and propose App structure
+# Discover and propose Component structure
 ./cub-scout import --dry-run -n myapp-prod
 
 # Import (creates ConfigHub state, does not change cluster)
 ./cub-scout import -n myapp-prod
 
 # Then use cub CLI for fleet queries
-cub unit list --space "*" --label "App=myapp"
+cub space list -l Component=myapp
 ```
 
+### Onboarding (Pattern 1 takeover)
+
+When you want Argo to reconcile from ConfigHub OCI instead of Git:
+
+```bash
+# Dry-run: shows the render diff and the proposed Component/Variant/Target
+./cub-scout onboard --controller argo -n myapp-prod --dry-run
+
+# Take over (controller source repoint)
+./cub-scout onboard --controller argo -n myapp-prod
+```
+
+> **Status:** `cub-scout onboard` is planned, not shipping yet — see
+> [docs/specs/pattern-1-takeover-v1.md](../specs/pattern-1-takeover-v1.md)
+> and [docs/roadmap.md](../roadmap.md).
+
 > **Ownership:** `cub` commands come from the [ConfigHub SDK](https://github.com/confighub/sdk).
-> cub-scout discovers; `cub` handles connected lifecycle.
+> cub-scout discovers and orchestrates; `cub` handles connected lifecycle.
 
 ## Positioning
 
@@ -147,6 +172,8 @@ with Argo reconciliation.
 
 ## See Also
 
+- [Onboard Existing](onboard-existing.md) — Pattern 1 takeover (Argo → ConfigHub OCI)
+- [Import to ConfigHub](import-to-confighub.md) — Discovery-only import
 - [Argo App-of-Apps example](../../examples/apptique-examples/argo-app-of-apps/) — ApplicationSet hierarchy detection
 - [Platform Example](../../examples/platform-example/) — Live Flux+orphans demo
 - [Command Reference](../reference/commands.md) — Command usage and examples

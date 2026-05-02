@@ -2,6 +2,11 @@
 
 Quick reference for ConfigHub terminology.
 
+The model is **Component → Variant → Target**, with **Connection** for
+typed cross-Component dependencies. This glossary uses that vocabulary
+throughout. The older Hub/AppSpace and App/Deployment terms are kept at
+the bottom for historical reference.
+
 ---
 
 ## The Model
@@ -12,55 +17,109 @@ Top-level container. Everything belongs to an Org.
 
 ```
 Org: acme-corp
-└── (Hubs, Spaces, Users)
+└── (Components, Variants, Users, Targets)
 ```
 
-### Platform Hub
+### Component
 
-> **Transitioning:** The Hub/AppSpace model is being replaced by App/Deployment/Target.
-> See [ConfigHub Model](#confighub-model-app-centric) below for the new language.
-> The current API still uses these concepts.
-
-Governance layer that constrains what teams can do. Owns base templates.
+A logical piece of software — the thing your team thinks of as "a
+service." Components are the family. They are the API-level VariantSet.
 
 ```
-Org: acme-corp
-└── Platform Hub: platform-team
-    ├── Base Catalog (templates)
-    ├── Policies (what's allowed)
-    └── Spaces (team workspaces)
+Component: payment-service
+├── Base Variant: payment-service-base   (placeholders, non-deployable)
+├── Deployable Variant: payment-service-prod  (bound to prod-east-cluster)
+└── Deployable Variant: payment-service-staging (bound to staging-cluster)
 ```
 
-### Space (formerly App Space)
-
-Team workspace. One deployer (Argo OR Flux), one team. Contains Units.
-In the new model, a Space maps to where an App's Deployments live.
-
-```
-Space: payments-team
-├── Deployer: ArgoCD
-└── Units: payment-api, order-svc, redis
-```
-
-**Space ≠ Environment.** Environments are labels (`variant=prod`), not separate spaces.
-
-### Unit
-
-Single deployable workload component with labels. In the new model, a Unit
-maps to a component of an App.
-
-```
-Unit: payment-api
-├── Labels: app=payment-api, variant=prod, region=us-east
-├── Source: apps/payment-api/overlays/prod
-└── Target: prod-east-cluster
-```
+A Component has one or more Variants and is identified by
+`Labels.Component=<name>` on the Spaces that hold its Variants.
 
 ### Variant
 
-Label indicating environment or configuration flavor: `variant=prod`, `variant=staging`, `variant=canary`.
+A member of a Component family. A Variant is a Space with
+`Labels.Variant=<value>`. Two flavours:
 
-**Not a folder.** Git paths like `overlays/prod` map to `variant=prod` label on the Unit.
+- **Base Variant** — non-deployable, placeholder-bearing. The canonical
+  render that other Variants derive from.
+- **Deployable Variant** — bound to a Target, placeholders resolved.
+  This is what actually deploys.
+
+```
+Variant: payment-service-prod
+├── Labels.Component: payment-service
+├── Labels.Variant: prod
+├── Target: prod-east-cluster
+└── Units: payment-api, order-svc, redis
+```
+
+### Base Variant
+
+Variant with no Target attached. Typically contains placeholders. Used
+as the source for Deployable Variants. Promotion flows clone a Base
+into a new Deployable Variant and adapt it for a specific environment.
+
+> **Implementation note:** Today the system distinguishes Base vs
+> Deployable by *presence of a Target*: no Target = Base. There has
+> been discussion of making the distinction more explicit on the API.
+> The model itself does not change either way.
+
+### Deployable Variant
+
+Variant with a Target attached. May still contain placeholders if it
+was just cloned and not yet adapted — in that state, a
+`vet-placeholders` trigger usually blocks apply. Once placeholders are
+replaced, the apply gate clears.
+
+### Adapting a Variant
+
+The process of taking a freshly cloned Deployable Variant and
+substituting environment-specific values for the placeholders inherited
+from the Base. Adapting is currently a manual or scripted step
+(`cub` from a shell, often AI-assisted). A first-class "vending machine"
+flow for adapting is an open product question, not yet solved.
+
+### AI Variant
+
+A Deployable Variant whose delta or operation is AI-assisted. AI Variants
+are downstream of onboarding and are not produced by the import flow.
+
+### Target
+
+A Kubernetes cluster managed by ConfigHub. Deployable Variants bind to
+Targets. Targets connect through a Bridge Worker.
+
+```
+Component → Variant → Target ──▶ Bridge Worker ──▶ Cluster
+```
+
+### Connection
+
+A typed contract describing what a Component needs and provides
+(Secrets, ConfigMaps, ServiceAccounts, secret stores, image-pull
+secrets, etc.).
+
+In v1 of the import / onboard flow, Connections are produced as drafts
+populated from cub-scout's discovery (GSF relations and trace results).
+Each draft entry is marked `needsTyping: true` until the Connection v1
+spec lands. Typed Connections are downstream of v1 onboarding.
+
+### Unit
+
+The Kubernetes-resource-level primitive. Each Unit is one deployable
+manifest (Deployment, StatefulSet, Service, etc.). Units live inside a
+Variant.
+
+### Org / Space (API primitives)
+
+Spaces are still the underlying API primitive that holds Units. After
+the doctrine update, a Space carries `Labels.Component` and
+`Labels.Variant` so that Component- and Variant-scoped queries work:
+
+```bash
+cub space list -l Component=payment-service
+cub space list -l Component=payment-service,Variant=prod
+```
 
 ---
 
@@ -74,8 +133,8 @@ Label indicating environment or configuration flavor: `variant=prod`, `variant=s
 
 ### DRY vs WET
 
-- **DRY** (Don't Repeat Yourself): Git stores templates, overlays, variables
-- **WET** (Write Everything Twice): ConfigHub stores rendered, resolved config
+- **DRY** (Don't Repeat Yourself): Git stores templates, overlays, variables.
+- **WET** (Write Everything Twice): ConfigHub stores rendered, resolved config.
 
 **WET is operational truth** — what you see in ConfigHub is what deploys.
 
@@ -97,7 +156,8 @@ Who manages a Kubernetes resource:
 
 ### Orphan
 
-Resource with no GitOps owner. Created via `kubectl apply` or direct API call. Not tracked by Git.
+Resource with no GitOps owner. Created via `kubectl apply` or direct
+API call. Not tracked by Git.
 
 ---
 
@@ -105,52 +165,76 @@ Resource with no GitOps owner. Created via `kubectl apply` or direct API call. N
 
 ### Source
 
-Git repository registered with ConfigHub. Contains pattern metadata (app-of-apps, applicationset, mono-repo, etc.).
+Git repository (or OCI registry, post-onboarding) registered with
+ConfigHub. Contains pattern metadata (app-of-apps, ApplicationSet,
+mono-repo, etc.).
 
 ### Deployer
 
-Tool that syncs Git to cluster: Flux CD or Argo CD.
+Tool that syncs source to cluster: Flux CD or Argo CD.
 
-**One Space = One Deployer.** Can't mix Flux and Argo in the same Space.
+**One Variant = one Deployer.** Don't mix Flux and Argo controllers
+for the same Variant.
 
-### Target
+### Worker / Bridge Worker
 
-Kubernetes cluster managed by ConfigHub. Connected via Worker.
+Connector between ConfigHub and external systems (Kubernetes, ArgoCD,
+Flux). Bridge Workers handle the actual deployment — ConfigHub
+orchestrates, the controller applies.
 
-### Worker
+### OCI Transport
 
-Bridge between ConfigHub and cluster. Runs locally, connects outbound to ConfigHub API.
+ConfigHub's default transport for rendered manifests:
 
 ```
-Hub ──▶ Worker ──▶ Target (cluster)
+ConfigHub renders → OCI artifact → Flux/Argo pulls from OCI → cluster
 ```
+
+After [Pattern 1 takeover](../howto/onboard-existing.md), the
+controller's source is ConfigHub OCI rather than Git directly.
+
+cub-scout does not interact with OCI. It discovers workloads from the
+cluster end of this pipeline.
 
 ---
 
-## Import Concepts
+## Import & Onboarding Concepts
 
 ### LIVE Import
 
-Discover workloads from running cluster. TUI capability.
+Discover workloads from a running cluster. Read-only. Produces a
+proposed Component / Variant / Target structure.
 
 ```bash
-./cub-scout import -n payment-prod
-# Scans cluster, detects ownership, suggests App structure
+./cub-scout import -n payment-prod --dry-run
+# Scans cluster, detects ownership, suggests Component structure
 ```
 
 ### GIT Import
 
-Parse Git repo structure for base templates, overlays, variants. GUI capability.
-Git import is the default source; live import is first-class when Git is unavailable.
+Parse Git repo structure for base templates, overlays, variants.
+GUI-driven. Git import is the default source; live import is
+first-class when Git is unavailable.
 
-### Base Template
+### Onboard (Pattern 1 Takeover)
 
-Template in the platform catalog. Created from `base/` folders in Git. Never deployed directly.
+Discovers an existing Argo Application or Flux Kustomization, registers
+it as a Component / Variant in ConfigHub, publishes OCI, and repoints
+the controller's source from Git to ConfigHub OCI.
 
+```bash
+./cub-scout onboard --controller argo -n payment-prod --dry-run
 ```
-apps/payment-api/base/  →  Base template in catalog
-apps/payment-api/overlays/prod/  →  App component (references base)
-```
+
+See [Onboard Existing](../howto/onboard-existing.md). The command is
+specified in [Pattern 1 Takeover Spec](../specs/pattern-1-takeover-v1.md);
+final shipping name TBD.
+
+### Render Diff
+
+Comparison between the controller's current Git render and the
+predicted ConfigHub OCI render. Used at takeover to verify
+byte-equivalence (or to surface and accept a cosmetic diff).
 
 ---
 
@@ -184,76 +268,48 @@ Format: `RISK-2025-XXXX`
 
 ---
 
-## ConfigHub Model (App-Centric)
-
-ConfigHub is moving to app-centric language. The invariant is unchanged:
-nothing implicit ever deploys, nothing observed silently overwrites intent.
-
-### Operating Boundary
+## Operating Boundary
 
 | System | Role |
 |--------|------|
-| **ConfigHub** | Stores/publishes explicit intended state + provenance |
-| **Flux/Argo** | Reconcile runtime (ConfigHub does not replace your deployer) |
-| **cub-scout** | Reports reality and drift (read-only observer) |
+| **ConfigHub** | Stores/publishes explicit intended state + provenance. Source-of-record post-onboarding. |
+| **Flux/Argo** | Reconcile runtime. ConfigHub does not replace your deployer. |
+| **cub-scout** | Reports reality and drift. Read-only observer. Drives onboarding via `cub`, does not mutate the cluster directly. |
 
-### App
+The invariant: nothing implicit ever deploys, nothing observed silently
+overwrites intent.
 
-A logical application — the thing your team thinks of as "a service." Contains
-components (api, worker, database) owned by one team.
+---
 
-```
-App: payment-service
-├── Components: api, worker, redis
-└── Deployments: dev, staging, prod
-```
+## Historical / Replaced Terms
 
-### Deployment
+The terms below are kept for orientation — older docs and existing CLI
+output may still use them. New work uses Component / Variant / Target.
 
-An App deployed to a specific Target (App × environment). What you get when you
-deploy an App to production, staging, etc.
+### Hub / AppSpace (historical)
 
-### Target
+The original platform-hub-and-app-space model. Replaced by Org +
+Component + Variant.
 
-A Kubernetes cluster managed by ConfigHub. Connected via a Bridge Worker.
+### App / Deployment (historical)
 
-### OCI Transport
+Intermediate vocabulary. App → Component, Deployment → Deployable
+Variant. The CLI still has Space/Unit primitives underneath, but the
+user-visible model is Component/Variant.
 
-ConfigHub's default transport for rendered manifests. The pipeline is:
+### App's "base template" (historical)
 
-```
-Git → ConfigHub renders → OCI artifact → Flux/Argo pulls from OCI → cluster
-```
-
-cub-scout does not interact with OCI directly. It discovers workloads from the
-cluster end of this pipeline.
-
-### Bridge Worker
-
-Connector between ConfigHub and external systems (Kubernetes, ArgoCD, Flux).
-Bridge workers handle the actual deployment — ConfigHub orchestrates, Flux/Argo
-apply.
-
-### Temporary API Mapping
-
-While APIs evolve, the new concepts map to current CLI commands:
-
-| New Concept | Current CLI | Notes |
-|-------------|-------------|-------|
-| App | Space | A Space holds one App's Deployments |
-| App component | Unit | A Unit is a deployable component |
-| Deployment | Space + Units + Target | Junction of App × environment |
-| Target | Target | Unchanged |
-
-The `cub` CLI still uses `cub unit list`, `cub space delete`, etc. Read the
-output through the App/Deployment lens.
+Replaced by Base Variant. Same concept, first-class name.
 
 ---
 
 ## See Also
 
 - [Migration Playbook](../howto/migration-playbook.md) — Comprehensive migration guide
-- [Import to ConfigHub](../howto/import-to-confighub.md) — Import architecture
-- [Import from Live](../howto/import-from-live.md) — Cluster-only import (no Git required)
-- [Hub/AppSpace Examples](hub-appspace-examples.md) — Mapping pattern examples
-- [Scan for risk issues](../howto/scan-for-risks.md) — risk scanning guide
+- [Import to ConfigHub](../howto/import-to-confighub.md) — Discovery and register
+- [Onboard Existing](../howto/onboard-existing.md) — Pattern 1 takeover
+- [Import from Live](../howto/import-from-live.md) — Cluster-only import
+- [Vocabulary Alignment Spec](../specs/vocabulary-alignment-v1.md) — How cub-scout's output is moving to this vocabulary
+- [Pattern 1 Takeover Spec](../specs/pattern-1-takeover-v1.md)
+- [App Model Examples](app-model-examples.md) — Historical App/Deployment mapping pattern examples
+- [Scan for risk issues](../howto/scan-for-risks.md)
