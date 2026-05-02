@@ -276,6 +276,125 @@ review surface.
 
 ---
 
+## Next steps
+
+The shape of v1 onboarding is legible enough that engineering can start
+scoping. Two short conversations stand between the agreement-ready
+version (what is now on disk) and the implementation-ready version.
+
+### Blocking conversations (≤ 30 min each)
+
+1. **Byte-equivalence decision (Brian + Jesper).** Resolves Q-BYTEEQ-1
+   and Q-BYTEEQ-2 in `pattern-1-takeover-v1.md`. The honest position
+   the spec proposes is "byte-equivalent in the common case, cosmetic
+   diff with explicit operator acceptance otherwise, hard fail on
+   semantic difference." Confirm or push back. Track 2 is gated on
+   this.
+
+2. **Final command name (Brian).** Resolves Q-NAMING-1. The spec uses
+   `cub-scout onboard` as a working name. Alternatives: `attach`,
+   `adopt`, `import --takeover`. The choice does not affect any other
+   decision; just pick one before code lands.
+
+Once those two land, the rest of the queue can move:
+
+### What unblocks immediately
+
+- **Track 1 — vocabulary alignment.** Can start the moment Q-BASE-1's
+  shape is confirmed (Brian). The renames are mechanical and the spec
+  lists the file-by-file edits. Coordinated in a single PR per Risk 3.
+- **Track 5 — sweep the remaining App/Deployment vocabulary.** The
+  files that need a follow-up pass: `docs/howto/migration-playbook.md`,
+  `docs/howto/import-from-live.md`, `docs/reference/app-model-examples.md`,
+  `docs/reference/json-contracts.md` (dual-emit deprecation runway),
+  the wizard prompts in `cmd/cub-scout/import_wizard.go`, and the
+  golden test files in `cmd/cub-scout/import_*_test.go`.
+
+### What waits on the blocking conversations
+
+- **Track 2 — OCI publish + controller repoint.** Needs the
+  byte-equivalence answer before code design. Also needs a `cub`-side
+  subcommand that performs the controller source repoint (Q-CUB-CMD-1)
+  — a ConfigHub-side ask, not a cub-scout one.
+- **Track 4 — worked examples.** Scripts can't run until Tracks 1 and
+  2 produce a binary. The READMEs at
+  `examples/onboard-existing-argocd/` and `examples/onboard-existing-flux/`
+  outline what they will demonstrate.
+
+### What waits on a separate spec landing
+
+- **Track 3 — Connection draft from import.** Sequences after the
+  Connection v1 spec lands. Until then, ships as a plain "discovered
+  dependencies" list with `needsTyping: true`, no Connection
+  semantics claimed.
+
+### What is intentionally out of scope here
+
+- **Adaptation (clone-then-replace-placeholders flow).** Jesper has
+  flagged this as the next product gap and as something he and Brian
+  have been discussing. It is a sibling problem to import, not a
+  subset of it. Lives on a separate track they own. The cub-scout
+  glossary defines "Adapting a Variant" as user-facing vocabulary,
+  but this plan does not absorb the work.
+- **Pattern 2** (write-through-Git) and **Pattern 3** (suspend and
+  assume direct write authority) — both v2.
+- **Helm-only customers**, **multi-cluster federated import**, and
+  **Crossplane / kro as primary onboarding targets** — all v2.
+
+### Open questions, by owner
+
+| Question | Owner | Spec |
+|----------|-------|------|
+| Q-URL-1: Component / Variant / Base Variant URL paths in Promotions UI | Brian | vocabulary |
+| Q-LABELS-1: per-Variant Space labels vs a parent Component Space | Jesper | vocabulary |
+| Q-CONN-1: does Connection v1 spec land first | Alexis | vocabulary |
+| Q-MIGRATION-1: deprecation runway length (2 vs 3 minor releases) | Brian | vocabulary |
+| Q-BASE-1: emit a Base Variant for every Component | Brian | vocabulary |
+| Q-BYTEEQ-1: ConfigHub OCI render byte-equivalence with controller | Jesper | takeover |
+| Q-BYTEEQ-2: accept-and-reconcile escape hatch vs ship-gate | Brian + Jesper | takeover |
+| Q-NAMING-1: final command name (`onboard` / `attach` / `adopt`) | Brian | takeover |
+| Q-CUB-CMD-1: which `cub` subcommand performs the source repoint | Brian + ConfigHub side | takeover |
+| Q-ROLLBACK-1: `--rollback` flag vs separate `offboard` command | Brian | takeover |
+| Q-APPSET-1: ApplicationSet warn-only vs refuse for v1 | Jesper | takeover |
+| Q-OCI-AUTH-1: OCI pull auth provisioning at takeover | Jesper | takeover |
+| Q-AUDIT-1: `onboard-proof.json` as new format vs audit-log extension | Brian | takeover |
+
+### Product-gap candidates surfaced (not filed)
+
+These came up during the spec writing. They are ConfigHub-side asks,
+not cub-scout work. Engineering decides whether to file upstream.
+
+- **PG-1** Component-, Variant-, and Base-Variant-detail URL paths in
+  the Promotions UI need to be canonical so cub-scout's trust URLs
+  can target them.
+- **PG-2** A `cub` subcommand that performs the controller source
+  repoint (Argo `spec.source` / Flux `spec.sourceRef`). No first-class
+  command exists today.
+- **PG-3** ConfigHub OCI render byte-equivalence with Argo / Flux
+  render, or a stable cosmetic-difference contract that cub-scout can
+  compute against.
+- **PG-4** ConfigHub cluster-access read path (kubeconfig from the
+  platform). Verification flows in this plan rely on it.
+- **PG-5** ApplicationSet generator takeover (rewriting parent
+  generators to emit OCI-sourced children). v2 ConfigHub capability.
+- **PG-6** Flux `HelmRepository` migration to OCI for customers using
+  non-OCI Helm sources. Out of v1 cub-scout scope; a ConfigHub-side
+  migration helper would unblock those customers.
+- **PG-7** "Adapting" a freshly cloned Deployable Variant — replacing
+  placeholders inherited from a Base, clearing the `vet-placeholders`
+  apply gate — is currently manual / scripted. Becomes load-bearing
+  once customers start cloning imported Variants to new environments.
+  Owned by the separate adaptation track.
+
+### Smallest next step
+
+The byte-equivalence conversation between Brian and Jesper. Everything
+else either runs in parallel with that conversation or sequences after
+it. Until that decision lands, Track 2 is unbuildable; once it lands,
+the rest of v1 has a clear path.
+
+---
+
 *This is the planning input that drives the two specifications in this
 directory: `vocabulary-alignment-v1.md` and `pattern-1-takeover-v1.md`,
 together with the documentation rewrites in `docs/howto/`.*
