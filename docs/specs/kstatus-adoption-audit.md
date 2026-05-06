@@ -1,6 +1,6 @@
-# kstatus adoption — audit + issue draft
+# kstatus adoption — audit
 
-**Status:** Audit and issue text. Not filed. Not implemented.
+**Status:** Filed as [#394](https://github.com/confighub/cub-scout/issues/394). Not implemented.
 **Background:** Inspired by [ahmetb/kubectl-tree](https://github.com/ahmetb/kubectl-tree)'s
 use of `sigs.k8s.io/cli-utils/pkg/kstatus/status` for deterministic
 status derivation. See discussion thread on the import session
@@ -252,13 +252,6 @@ risk register.
 
 ## Status of this document
 
-This is research + an issue draft, not a filed issue. To file:
-
-```bash
-gh issue create \
-  --title "Adopt sigs.k8s.io/cli-utils/pkg/kstatus for status derivation" \
-  --body-file docs/specs/kstatus-adoption-audit.md  # or extract just the Issue draft section
-```
-
-Filing requires explicit operator go-ahead per the working agreement
-on this branch.
+Filed as [#394](https://github.com/confighub/cub-scout/issues/394) on
+2026-05-06. This document remains the long-form audit; the issue body
+is the short-form summary derived from it.
