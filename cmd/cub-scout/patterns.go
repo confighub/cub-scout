@@ -93,6 +93,12 @@ func init() {
 
 func runMapPatterns(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
+	if ctx == nil {
+		// Defensive: any caller that bypasses Cobra's Execute path (e.g. an
+		// internal dispatcher) would otherwise feed a nil context into
+		// client-go and panic inside klog.FromContext (#390).
+		ctx = context.Background()
+	}
 
 	cfg, err := buildConfig()
 	if err != nil {
