@@ -362,11 +362,6 @@ func doctorTryNextHintsWithContext(summary DoctorSummary, ctx HintContext) []str
 	return hintsToStrings(hints)
 }
 
-// doctorHints generates structured hints for doctor output.
-func doctorHints(summary DoctorSummary) []Hint {
-	return doctorHintsWithContext(summary, DefaultHintContext())
-}
-
 // doctorHintsWithContext generates structured hints with explicit context control.
 // The context affects hint ranking:
 // - Beginner/default: quickstart is prominent, general exploration hints included
@@ -450,10 +445,6 @@ func doctorHintsWithContext(summary DoctorSummary, ctx HintContext) []Hint {
 	})
 
 	return hints
-}
-
-func explainTryNextHints(summary ExplainSummary) []string {
-	return explainTryNextHintsWithContext(summary, DefaultHintContext())
 }
 
 // explainTryNextHintsWithContext generates hints with explicit context control.
