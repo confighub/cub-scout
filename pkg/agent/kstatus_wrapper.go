@@ -30,6 +30,47 @@ import (
 	"sigs.k8s.io/cli-utils/pkg/kstatus/status"
 )
 
+// IsResourceReadyOrUnknown is the kstatus-backed replacement for the
+// custom `isReadyOrUnknown` helper that lived in pkg/agent/state_scanner.go.
+// Second slice of the #394 migration — covers the four call sites
+// (findSilentFailures × 2, findTimingBombs × 2) that filter Flux
+// HelmRelease / Kustomization resources before silent-failure / timing-
+// bomb detection.
+//
+// Returns true when kstatus considers item to be either Current
+// (definitely ready) or Unknown (no Ready signal — common on freshly-
+// created CRs before the controller stamps a condition). Returns false
+// for InProgress, Failed, Terminating, and NotFound.
+//
+// Behaviour delta vs. the prior helper, which only inspected the Ready
+// condition:
+//
+//   - Stalled=True now returns false (was true). Intended improvement:
+//     if Flux already reports Stalled, the silent-failure and timing-
+//     bomb detectors should not also probe — we already know the
+//     resource is broken, so additional probing is redundant.
+//   - No conditions returns true (kstatus reports UnknownStatus under
+//     the conditions-reader fallback). Matches the old helper.
+//   - Ready=True / Ready=Unknown / Ready=False classify the same way
+//     the old helper classified them.
+//
+// Accepts a value (not a pointer) to match the existing call-site
+// signature in state_scanner.go.
+func IsResourceReadyOrUnknown(item unstructured.Unstructured) bool {
+	res, err := status.Compute(&item)
+	if err != nil || res == nil {
+		// Could not classify — be lenient, matching the prior helper's
+		// "no conditions = treat as unknown" semantics.
+		return true
+	}
+	switch res.Status {
+	case status.CurrentStatus, status.UnknownStatus:
+		return true
+	default:
+		return false
+	}
+}
+
 // IsDeploymentReady returns true when kstatus considers d to be at its
 // desired state (CurrentStatus). Any other state returns false.
 func IsDeploymentReady(d *appsv1.Deployment) bool {

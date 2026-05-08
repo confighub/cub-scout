@@ -1422,26 +1422,19 @@ func (s *StateScanner) scanKustomizationSilentFailures(ctx context.Context, warn
 	return findings
 }
 
-// isReadyOrUnknown checks if a resource appears healthy (Ready=True or Unknown)
+// isReadyOrUnknown checks if a resource appears healthy. Delegates to
+// IsResourceReadyOrUnknown (kstatus-backed) per the #394 migration's
+// second slice. Kept as a receiver method so the four call sites do not
+// have to change — the receiver carries no state used here, but the
+// method shape is the existing call-site contract.
+//
+// Behaviour delta from the prior implementation: a Stalled=True
+// resource now returns false instead of true, which intentionally
+// excludes it from silent-failure and timing-bomb detection (we already
+// know it is broken, so probing is redundant). See the doc comment on
+// IsResourceReadyOrUnknown for the full classification table.
 func (s *StateScanner) isReadyOrUnknown(item unstructured.Unstructured) bool {
-	conditions, found, _ := unstructured.NestedSlice(item.Object, "status", "conditions")
-	if !found {
-		return true // No conditions = assume unknown
-	}
-
-	for _, cond := range conditions {
-		condMap, ok := cond.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		condType, _ := condMap["type"].(string)
-		status, _ := condMap["status"].(string)
-
-		if condType == "Ready" {
-			return status == "True" || status == "Unknown"
-		}
-	}
-	return true
+	return IsResourceReadyOrUnknown(item)
 }
 
 // checkResourceExists checks if a ConfigMap or Secret exists
