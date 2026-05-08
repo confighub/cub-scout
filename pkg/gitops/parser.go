@@ -959,28 +959,6 @@ func parseApplicationSets(repoPath string) (*RepoStructure, error) {
 	return result, nil
 }
 
-// findAppBasePath attempts to find the base path for an app discovered via ApplicationSet
-func findAppBasePath(repoPath, appName string) string {
-	// Common patterns for app locations
-	searchPatterns := []string{
-		filepath.Join("apps", appName),
-		filepath.Join("apps", "base", appName),
-		filepath.Join("applications", appName),
-		filepath.Join("workloads", appName),
-		appName,
-	}
-
-	for _, pattern := range searchPatterns {
-		fullPath := filepath.Join(repoPath, pattern)
-		if dirExists(fullPath) {
-			return pattern
-		}
-	}
-
-	// Return empty if not found - the app was discovered but path is unknown
-	return ""
-}
-
 // parseApplicationSet parses an ApplicationSet YAML and extracts git generator patterns
 func parseApplicationSet(path, repoPath string) *ApplicationSetDef {
 	data, err := os.ReadFile(path)
@@ -1114,12 +1092,6 @@ func extractGitGeneratorPatternsWithExcludes(gitGen interface{}) gitGeneratorPat
 	return patterns
 }
 
-// extractMatrixGitPatterns extracts git patterns from matrix generators
-func extractMatrixGitPatterns(matrixGen interface{}) []string {
-	patterns := extractMatrixGitPatternsWithExcludes(matrixGen)
-	return patterns.Include
-}
-
 // extractMatrixGitPatternsWithExcludes extracts git patterns from matrix generators including excludes
 func extractMatrixGitPatternsWithExcludes(matrixGen interface{}) gitGeneratorPatterns {
 	var patterns gitGeneratorPatterns
@@ -1160,17 +1132,6 @@ func extractMatrixGitPatternsWithExcludes(matrixGen interface{}) gitGeneratorPat
 // scanGitGeneratorPatterns scans the repo for directories matching git generator patterns
 func scanGitGeneratorPatterns(repoPath string, patterns []string) []string {
 	discovered := scanGitGeneratorPatternsWithExcludesFullPaths(repoPath, gitGeneratorPatterns{Include: patterns})
-	names := make([]string, len(discovered))
-	for i, d := range discovered {
-		names[i] = d.Name
-	}
-	return names
-}
-
-// scanGitGeneratorPatternsWithExcludes scans the repo for directories matching git generator patterns
-// while filtering out directories that match exclude patterns. Returns only app names for backward compatibility.
-func scanGitGeneratorPatternsWithExcludes(repoPath string, patterns gitGeneratorPatterns) []string {
-	discovered := scanGitGeneratorPatternsWithExcludesFullPaths(repoPath, patterns)
 	names := make([]string, len(discovered))
 	for i, d := range discovered {
 		names[i] = d.Name

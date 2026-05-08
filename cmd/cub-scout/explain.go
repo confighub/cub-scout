@@ -820,8 +820,7 @@ func renderEventsSection(events *agent.ResourceEventSummary, mode PresentationMo
 
 	// Event list
 	for _, ev := range events.Events {
-		icon := "•"
-		color := ""
+		var icon, color string
 		reset := ""
 		switch ev.Severity {
 		case "error":
