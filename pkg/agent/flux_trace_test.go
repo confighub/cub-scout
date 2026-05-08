@@ -150,6 +150,15 @@ func TestFluxTracerIsReadyStatus(t *testing.T) {
 		{"Fetched revision main@sha1:abc123", true},
 		{"Health check passed", true},
 
+		// #387: a healthy GitRepository's Status is rendered as
+		// "Last reconciled at <timestamp>". The previous classifier matched
+		// none of the positive keywords and defaulted to false, producing
+		// "✗ Chain broken" for healthy resources. "reconciled" (past tense)
+		// is now a positive indicator distinct from the negative
+		// "reconciling" (in-flight, present tense) below.
+		{"Last reconciled at 2026-04-15 12:15:16 +0100 BST", true},
+		{"Reconciled", true},
+
 		// Negative cases
 		{"kustomize build failed", false},
 		{"Reconciliation failed", false},
@@ -159,6 +168,9 @@ func TestFluxTracerIsReadyStatus(t *testing.T) {
 		{"Suspended", false},
 
 		// Ambiguous - defaults to false
+		// #387 discriminator: "reconciling" (in-flight) must remain false even
+		// after "reconciled" was added as a positive indicator. They differ in
+		// their final letters and are not substrings of each other.
 		{"Reconciling", false},
 		{"Pending", false},
 	}
