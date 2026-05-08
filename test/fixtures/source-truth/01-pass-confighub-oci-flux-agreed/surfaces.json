@@ -1,0 +1,20 @@
+{
+  "confighub": {
+    "space": "demo",
+    "unit": "rag-server",
+    "revision": "47",
+    "url": "https://hub.confighub.com/units/sp-demo/u-rag-server"
+  },
+  "controller": {
+    "kind": "Flux",
+    "source": "oci://oci.confighub.com/demo/rag-server",
+    "revision_or_digest": "sha256:abc123def456",
+    "health": "Ready"
+  },
+  "runtime": {
+    "resource": "Deployment/rag-server in demo",
+    "field": "spec.template.spec.containers[0].image",
+    "value": "oci.confighub.com/demo/rag-server@sha256:abc123def456",
+    "health": "Current"
+  }
+}

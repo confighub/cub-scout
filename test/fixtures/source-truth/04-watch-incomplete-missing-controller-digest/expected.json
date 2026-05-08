@@ -1,0 +1,28 @@
+{
+  "declared_strategy": "ConfigHub -> OCI -> Flux -> Kubernetes",
+  "status": "WATCH",
+  "source_truth": "INCOMPLETE",
+  "outlier": "unknown",
+  "surfaces": {
+    "confighub": {
+      "space": "demo",
+      "unit": "rag-server",
+      "revision": "47"
+    },
+    "controller": {
+      "kind": "Flux",
+      "source": "oci://oci.confighub.com/demo/rag-server",
+      "health": "Ready"
+    },
+    "runtime": {
+      "resource": "Deployment/rag-server in demo",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "oci.confighub.com/demo/rag-server@sha256:abc123",
+      "health": "Current"
+    }
+  },
+  "proof_gaps": [
+    "controller.revision_or_digest"
+  ],
+  "safe_next_action": "Read-only diagnostic: confirm the missing fields (controller.revision_or_digest) before acceptance."
+}

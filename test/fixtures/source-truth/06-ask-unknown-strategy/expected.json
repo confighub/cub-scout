@@ -1,0 +1,11 @@
+{
+  "declared_strategy": "",
+  "status": "ASK",
+  "source_truth": "UNKNOWN",
+  "outlier": "unknown",
+  "surfaces": {},
+  "proof_gaps": [
+    "declared_strategy"
+  ],
+  "safe_next_action": "Declare a delivery strategy with --strategy and re-run; cub-scout does not infer the strategy."
+}

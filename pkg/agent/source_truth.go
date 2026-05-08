@@ -33,6 +33,8 @@
 package agent
 
 import (
+	"encoding/json"
+	"io"
 	"strings"
 )
 
@@ -240,4 +242,21 @@ type CollectionError struct {
 
 func (e *CollectionError) Error() string {
 	return e.Surface + ": " + e.Reason
+}
+
+// EncodeEvidence writes ev as the canonical wire-format JSON to w. The
+// CLI command and the producer fixture suite both use this so the bytes
+// they assert against and the bytes Pilot consumes are guaranteed to
+// match.
+//
+// HTML escaping is disabled so the human-readable `>` character in
+// `declared_strategy` (e.g. "ConfigHub -> OCI -> Flux -> Kubernetes")
+// stays a literal `>` instead of `>`. Pilot decodes either form
+// identically — this is purely a presentation choice that improves
+// reviewability of fixture files and CLI output.
+func EncodeEvidence(w io.Writer, ev SourceTruthEvidence) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	return enc.Encode(ev)
 }

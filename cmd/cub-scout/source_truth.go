@@ -143,13 +143,12 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 	return emitEvidence(ev)
 }
 
-// emitEvidence prints the JSON contract to stdout. v0.1 is JSON-only.
-// Indented for readability — CI / fixture diffs benefit from stable
-// indentation.
+// emitEvidence prints the JSON contract to stdout. Delegates to
+// agent.EncodeEvidence so the bytes the CLI emits and the bytes the
+// producer fixture suite asserts against (#395) are guaranteed
+// identical.
 func emitEvidence(ev agent.SourceTruthEvidence) error {
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	return enc.Encode(ev)
+	return agent.EncodeEvidence(os.Stdout, ev)
 }
 
 // runtimeWorkload is a thin sum type over the typed apps/v1 workloads
