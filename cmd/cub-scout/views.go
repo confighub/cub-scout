@@ -32,6 +32,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -43,17 +44,22 @@ import (
 var (
 	viewsResolveFormat string
 	viewsResolveSpace  string
+	viewsOpenPrintOnly bool
 )
 
 var viewsCmd = &cobra.Command{
 	Use:   "views",
-	Short: "Work with ConfigHub Views (read-only, v0.1)",
+	Short: "Work with ConfigHub Views (read-only)",
 	Long: `Work with ConfigHub Views — saved filter+projection specs operators curate
 in the View Explorer (https://hub.confighub.com/x/view-explorer).
 
-v0.1 ships the URL-as-positional convention and a resolver subcommand.
-Future PRs wire --view onto map list, compare three-way, and the TUI
-Hub view (see #391 scope items).`,
+Subcommands:
+  resolve <uuid-or-url>   fetch the View as structured JSON
+  open    <uuid-or-url>   open the View Explorer URL in the browser
+
+The remaining #391 scope items (--view flag on map list / compare three-way,
+View column projection in TUI Hub view, reality overlay composing View
+columns with #393 source-truth verdicts) land as dedicated follow-up PRs.`,
 }
 
 var viewsResolveCmd = &cobra.Command{
@@ -81,8 +87,10 @@ Requires connected mode (cub auth login or CONFIGHUB_API_KEY).`,
 func init() {
 	rootCmd.AddCommand(viewsCmd)
 	viewsCmd.AddCommand(viewsResolveCmd)
+	viewsCmd.AddCommand(viewsOpenCmd)
 	viewsResolveCmd.Flags().StringVar(&viewsResolveFormat, "format", "json", "Output format. v0.1 supports: json")
 	viewsResolveCmd.Flags().StringVar(&viewsResolveSpace, "space", "*", "Space to search. Defaults to org-wide ('*') so a UUID alone is sufficient")
+	viewsOpenCmd.Flags().BoolVar(&viewsOpenPrintOnly, "print", false, "Print the View Explorer URL to stdout instead of opening the browser (useful for scripts and headless environments)")
 }
 
 // ResolvedView is the JSON contract `views resolve` emits. Future
@@ -152,3 +160,114 @@ func emitResolvedView(rv ResolvedView) error {
 	enc.SetIndent("", "  ")
 	return enc.Encode(rv)
 }
+
+// viewsOpenCmd implements #391 scope item #4 — the GUI ↔ CLI handoff
+// helper. Operators paste a URL into cub-scout for read-only
+// observation; this command reverses the trip when they want the
+// authoring view in the browser.
+//
+// `cub-scout views open <uuid-or-url>` opens the canonical View
+// Explorer URL for the reference. URLs that already point at View
+// Explorer round-trip; UUIDs are constructed against `hub.WebBaseURL`
+// (the same base configHubUnitDetailURL uses, so on-prem deployments
+// resolve correctly).
+//
+// Connected mode is NOT required to print or open a URL — the URL
+// itself is local construction. Auth only matters once the operator
+// reaches the View Explorer page in the browser.
+var viewsOpenCmd = &cobra.Command{
+	Use:   "open <uuid-or-url>",
+	Short: "Open the View Explorer URL for a View reference in the browser",
+	Long: `Open the canonical View Explorer URL for a View reference in your
+default browser. Closes the GUI <-> CLI loop:
+
+  - paste a URL into ` + "`" + `cub-scout views resolve` + "`" + ` to read its bundle
+  - run ` + "`" + `cub-scout views open` + "`" + ` to switch back to the authoring GUI
+
+Accepts the same input shapes ` + "`" + `views resolve` + "`" + ` does — bare UUID or a
+View Explorer URL — so the same identifier round-trips between
+commands without copy-paste edits.
+
+Connected mode is NOT required to construct or open a URL. Auth only
+matters once the browser reaches View Explorer.
+
+Use ` + "`" + `--print` + "`" + ` to emit the URL to stdout instead of opening the
+browser. Useful in headless environments and as the right-hand side
+of a pipe.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runViewsOpen,
+}
+
+func runViewsOpen(cmd *cobra.Command, args []string) error {
+	ref, err := agent.ParseViewRef(args[0])
+	if err != nil {
+		return fmt.Errorf("parse view reference: %w", err)
+	}
+
+	// Construct the canonical View Explorer URL. If the operator passed
+	// a URL we already have a verified form, but we re-build from the
+	// canonical base + UUID so an on-prem hostname overrides whatever
+	// hostname the input URL had — `--space` and host preferences are
+	// set in cub-scout's hub config, not in pasted URLs.
+	url := viewExplorerURL(ref.UUID)
+
+	if viewsOpenPrintOnly {
+		fmt.Println(url)
+		return nil
+	}
+
+	if err := openInBrowser(url); err != nil {
+		// Fall back to printing the URL so the operator can copy it
+		// manually — better than failing silently in headless or
+		// permission-restricted environments.
+		fmt.Fprintf(os.Stderr, "Could not open browser (%v).\nView Explorer URL: %s\n", err, url)
+		return err
+	}
+	return nil
+}
+
+// viewExplorerURL builds the canonical View Explorer URL for a View
+// UUID. Anchored at `hub.HubBaseURL` because View Explorer lives on
+// the product UI host (e.g. https://hub.confighub.com/x/view-explorer)
+// rather than the marketing site (`hub.WebBaseURL`,
+// https://confighub.com). On-prem deployments are expected to override
+// HubBaseURL via the existing config mechanism, so this URL builder
+// follows the same convention as other product-UI deep-links in
+// cub-scout.
+func viewExplorerURL(uuid string) string {
+	base := strings.TrimRight(hub.HubBaseURL, "/")
+	return fmt.Sprintf("%s/x/view-explorer?view=%s", base, uuid)
+}
+
+// openInBrowser opens url in the operator's default browser. Uses the
+// platform-appropriate command and refuses to spawn anything else if
+// the URL fails our parser pre-check.
+//
+// Security: the URL is built from `hub.WebBaseURL` and a parsed UUID,
+// neither of which can carry shell metacharacters past the parser. We
+// still pass url as a single argv slot (not via a shell) to be belt
+// and suspenders.
+func openInBrowser(url string) error {
+	var (
+		cmd  string
+		args []string
+	)
+	switch runtimeGOOS() {
+	case "darwin":
+		cmd = "open"
+		args = []string{url}
+	case "windows":
+		cmd = "rundll32"
+		args = []string{"url.dll,FileProtocolHandler", url}
+	default:
+		cmd = "xdg-open"
+		args = []string{url}
+	}
+	return exec.Command(cmd, args...).Start()
+}
+
+// runtimeGOOS is split out so the test can inject a fake value without
+// the build-tags dance, and to avoid a hard import cycle if tests need
+// to swap behaviour. Default delegates to runtime.GOOS.
+var runtimeGOOS = func() string { return runtime.GOOS }
+

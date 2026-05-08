@@ -2270,10 +2270,40 @@ downstream commands can opt in to them without the parser growing flags.
 
 Connected mode (`cub auth login` or `CONFIGHUB_API_KEY` set).
 
-### v0.1 limitations
+### views open
 
-- Resolver only — no command integration. `--view` flags on `compare three-way` / `map list` / TUI Hub view land in dedicated follow-up PRs (see #391 scope items).
-- No reality overlay. Once #393's source-truth contract is widely consumed, follow-up work composes the View's column projection with `compare source-truth` verdicts (#391 scope item #3).
+Open the canonical View Explorer URL for a View reference in the
+operator's default browser. Closes the GUI ↔ CLI loop:
+
+- paste a URL into `cub-scout views resolve` to read its bundle
+- run `cub-scout views open` to switch back to the authoring GUI
+
+```bash
+cub-scout views open 806aac53-236c-446d-8ad6-91d6daf6810e
+cub-scout views open "https://hub.confighub.com/x/view-explorer?view=806aac53-236c-446d-8ad6-91d6daf6810e"
+```
+
+Same input shapes as `views resolve` — bare UUID or View Explorer URL.
+The output URL is anchored at the configured `hub.HubBaseURL`, so
+on-prem deployments resolve to their own host regardless of which
+hostname the input URL carried (the operator's local config wins).
+
+#### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--print` | Print the URL to stdout instead of opening the browser. Useful in headless environments and pipes. |
+
+#### Requirements
+
+Connected mode is **not** required — the URL itself is local
+construction. Auth only matters once the browser reaches View Explorer.
+
+### v0.1 scope items still pending
+
+- `--view <uuid-or-url>` filter on `compare three-way` / `map list` (scope item #1) — multi-hop CLI resolution, separate PR.
+- View column projection in TUI Hub view (scope item #2).
+- Reality overlay composing View columns with #393 source-truth verdicts (scope item #3) — unblocked now that the contract is in main.
 
 ---
 
