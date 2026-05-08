@@ -6,6 +6,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/cli-utils/pkg/kstatus/status"
 )
@@ -202,5 +203,83 @@ func TestWorkloadStatus_DistinguishesInProgressFromFailed(t *testing.T) {
 	}
 	if s, _ := WorkloadStatus(stalled, "Deployment"); s != status.FailedStatus {
 		t.Fatalf("stalled deployment: want Failed, got %s", s)
+	}
+}
+
+// IsResourceReadyOrUnknown — the second slice of the #394 migration.
+// Covers the behaviour table the helper documents; specifically locks in
+// the Stalled=True delta vs. the prior receiver-method implementation.
+
+func unstructuredFlux(kind string, conditions []map[string]interface{}) unstructured.Unstructured {
+	obj := map[string]interface{}{
+		"apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+		"kind":       kind,
+		"metadata": map[string]interface{}{
+			"name":      "demo",
+			"namespace": "flux-system",
+		},
+		"status": map[string]interface{}{},
+	}
+	if conditions != nil {
+		// unstructured.NestedSlice expects []interface{}.
+		condSlice := make([]interface{}, len(conditions))
+		for i, c := range conditions {
+			condSlice[i] = c
+		}
+		obj["status"].(map[string]interface{})["conditions"] = condSlice
+	}
+	return unstructured.Unstructured{Object: obj}
+}
+
+func TestIsResourceReadyOrUnknown(t *testing.T) {
+	cases := []struct {
+		name string
+		obj  unstructured.Unstructured
+		want bool
+	}{
+		{
+			name: "no conditions → true (lenient, matches old helper)",
+			obj:  unstructuredFlux("Kustomization", nil),
+			want: true,
+		},
+		{
+			name: "Ready=True → true",
+			obj: unstructuredFlux("Kustomization", []map[string]interface{}{
+				{"type": "Ready", "status": "True", "reason": "ReconciliationSucceeded"},
+			}),
+			want: true,
+		},
+		{
+			name: "Ready=False → false",
+			obj: unstructuredFlux("HelmRelease", []map[string]interface{}{
+				{"type": "Ready", "status": "False", "reason": "InstallFailed"},
+			}),
+			want: false,
+		},
+		{
+			name: "Stalled=True (Ready unset) → false (#394 delta — was true under old helper)",
+			// Old helper only inspected Ready; with no Ready it returned
+			// true. kstatus reads Stalled and reports Failed → false.
+			obj: unstructuredFlux("HelmRelease", []map[string]interface{}{
+				{"type": "Stalled", "status": "True", "reason": "RetriesExhausted"},
+			}),
+			want: false,
+		},
+		{
+			name: "Stalled=True with Ready=True → false (Stalled wins under kstatus)",
+			obj: unstructuredFlux("HelmRelease", []map[string]interface{}{
+				{"type": "Ready", "status": "True", "reason": "ReconciliationSucceeded"},
+				{"type": "Stalled", "status": "True", "reason": "RetriesExhausted"},
+			}),
+			want: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := IsResourceReadyOrUnknown(tc.obj); got != tc.want {
+				t.Errorf("IsResourceReadyOrUnknown = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
