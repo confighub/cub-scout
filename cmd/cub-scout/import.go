@@ -1195,7 +1195,18 @@ func discoverWorkloads(namespace string) ([]WorkloadInfo, error) {
 		dynClient = nil // Non-fatal
 	}
 
-	ctx := context.Background()
+	return discoverWorkloadsFrom(context.Background(), clientset, dynClient, namespace)
+}
+
+// discoverWorkloadsFrom is the testable core of discoverWorkloads. The
+// outer function builds clients from kubeconfig; this one accepts
+// pre-built (or fake) clients so the readiness-classification slice can
+// be exercised by `kfake.NewSimpleClientset` without touching a real
+// cluster. Coverage gap tracked in #396.
+//
+// Accepts kubernetes.Interface (not *kubernetes.Clientset) so the fake
+// client satisfies the contract.
+func discoverWorkloadsFrom(ctx context.Context, clientset kubernetes.Interface, dynClient dynamic.Interface, namespace string) ([]WorkloadInfo, error) {
 	var workloads []WorkloadInfo
 
 	// Deployments
