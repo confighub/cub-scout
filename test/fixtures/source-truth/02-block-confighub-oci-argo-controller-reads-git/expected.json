@@ -1,0 +1,27 @@
+{
+  "declared_strategy": "ConfigHub -> OCI -> Argo -> Kubernetes",
+  "status": "BLOCK",
+  "source_truth": "MISMATCH",
+  "outlier": "controller",
+  "surfaces": {
+    "confighub": {
+      "space": "demo",
+      "unit": "rag-server",
+      "revision": "47",
+      "url": "https://hub.confighub.com/units/sp-demo/u-rag-server"
+    },
+    "controller": {
+      "kind": "Argo",
+      "source": "https://github.com/example/rag-deploy",
+      "revision_or_digest": "abc123def456",
+      "health": "Synced/Healthy"
+    },
+    "runtime": {
+      "resource": "Deployment/rag-server in demo",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "ghcr.io/example/rag:1.2.3",
+      "health": "Current"
+    }
+  },
+  "safe_next_action": "Read-only diagnostic: strategy \"ConfigHub -> OCI -> Argo -> Kubernetes\" expects controller source to be ConfigHub OCI, but observed Git source \"https://github.com/example/rag-deploy\""
+}
