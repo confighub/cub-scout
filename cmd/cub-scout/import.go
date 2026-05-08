@@ -1204,14 +1204,18 @@ func discoverWorkloads(namespace string) ([]WorkloadInfo, error) {
 		return nil, fmt.Errorf("list deployments: %w", err)
 	}
 
-	for _, d := range deployments.Items {
+	for i := range deployments.Items {
+		d := &deployments.Items[i]
 		owner, gitopsRef := detectOwnerAndRef(d.Labels, d.Annotations)
 		w := WorkloadInfo{
-			Kind:        "Deployment",
-			Namespace:   d.Namespace,
-			Name:        d.Name,
-			Replicas:    *d.Spec.Replicas,
-			Ready:       d.Status.ReadyReplicas == *d.Spec.Replicas,
+			Kind:      "Deployment",
+			Namespace: d.Namespace,
+			Name:      d.Name,
+			Replicas:  *d.Spec.Replicas,
+			// #394: kstatus matches what operators see in Argo CD / Flux. A
+			// Stalled or generation-lagging Deployment now reports Ready=false
+			// instead of slipping through the prior ReadyReplicas==Spec check.
+			Ready:       agent.IsDeploymentReady(d),
 			Owner:       owner,
 			Labels:      d.Labels,
 			Annotations: d.Annotations,
@@ -1242,14 +1246,16 @@ func discoverWorkloads(namespace string) ([]WorkloadInfo, error) {
 		return nil, fmt.Errorf("list statefulsets: %w", err)
 	}
 
-	for _, s := range statefulsets.Items {
+	for i := range statefulsets.Items {
+		s := &statefulsets.Items[i]
 		owner, gitopsRef := detectOwnerAndRef(s.Labels, s.Annotations)
 		w := WorkloadInfo{
-			Kind:        "StatefulSet",
-			Namespace:   s.Namespace,
-			Name:        s.Name,
-			Replicas:    *s.Spec.Replicas,
-			Ready:       s.Status.ReadyReplicas == *s.Spec.Replicas,
+			Kind:      "StatefulSet",
+			Namespace: s.Namespace,
+			Name:      s.Name,
+			Replicas:  *s.Spec.Replicas,
+			// #394: kstatus alignment — see Deployment site above.
+			Ready:       agent.IsStatefulSetReady(s),
 			Owner:       owner,
 			Labels:      s.Labels,
 			Annotations: s.Annotations,
@@ -1280,14 +1286,16 @@ func discoverWorkloads(namespace string) ([]WorkloadInfo, error) {
 		return nil, fmt.Errorf("list daemonsets: %w", err)
 	}
 
-	for _, d := range daemonsets.Items {
+	for i := range daemonsets.Items {
+		d := &daemonsets.Items[i]
 		owner, gitopsRef := detectOwnerAndRef(d.Labels, d.Annotations)
 		w := WorkloadInfo{
-			Kind:        "DaemonSet",
-			Namespace:   d.Namespace,
-			Name:        d.Name,
-			Replicas:    d.Status.DesiredNumberScheduled,
-			Ready:       d.Status.NumberReady == d.Status.DesiredNumberScheduled,
+			Kind:      "DaemonSet",
+			Namespace: d.Namespace,
+			Name:      d.Name,
+			Replicas:  d.Status.DesiredNumberScheduled,
+			// #394: kstatus alignment — see Deployment site above.
+			Ready:       agent.IsDaemonSetReady(d),
 			Owner:       owner,
 			Labels:      d.Labels,
 			Annotations: d.Annotations,

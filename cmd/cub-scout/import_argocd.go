@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -742,7 +743,8 @@ func getManagedResources(ctx context.Context, clientset *kubernetes.Clientset, d
 	// Get Deployments - list all and filter by ArgoCD ownership
 	deployments, err := clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{})
 	if err == nil {
-		for _, d := range deployments.Items {
+		for i := range deployments.Items {
+			d := &deployments.Items[i]
 			if !isArgoManagedResource(d.Labels, d.Annotations, appName) {
 				continue
 			}
@@ -750,8 +752,11 @@ func getManagedResources(ctx context.Context, clientset *kubernetes.Clientset, d
 			d.APIVersion = "apps/v1"
 			d.Kind = "Deployment"
 			yamlBytes, _ := yaml.Marshal(d)
+			// #394: kstatus alignment — what Argo CD itself reports.
+			// A Stalled or generation-lagging Deployment now reports
+			// Progressing instead of Healthy.
 			health := "Progressing"
-			if d.Status.ReadyReplicas == *d.Spec.Replicas {
+			if agent.IsDeploymentReady(d) {
 				health = "Healthy"
 			}
 			resources = append(resources, ManagedResource{
@@ -768,15 +773,17 @@ func getManagedResources(ctx context.Context, clientset *kubernetes.Clientset, d
 	// Get StatefulSets
 	statefulsets, err := clientset.AppsV1().StatefulSets(namespace).List(ctx, metav1.ListOptions{})
 	if err == nil {
-		for _, s := range statefulsets.Items {
+		for i := range statefulsets.Items {
+			s := &statefulsets.Items[i]
 			if !isArgoManagedResource(s.Labels, s.Annotations, appName) {
 				continue
 			}
 			s.APIVersion = "apps/v1"
 			s.Kind = "StatefulSet"
 			yamlBytes, _ := yaml.Marshal(s)
+			// #394: kstatus alignment — see Deployment site above.
 			health := "Progressing"
-			if s.Status.ReadyReplicas == *s.Spec.Replicas {
+			if agent.IsStatefulSetReady(s) {
 				health = "Healthy"
 			}
 			resources = append(resources, ManagedResource{
@@ -880,15 +887,17 @@ func getManagedResources(ctx context.Context, clientset *kubernetes.Clientset, d
 	// Get DaemonSets
 	daemonsets, err := clientset.AppsV1().DaemonSets(namespace).List(ctx, metav1.ListOptions{})
 	if err == nil {
-		for _, d := range daemonsets.Items {
+		for i := range daemonsets.Items {
+			d := &daemonsets.Items[i]
 			if !isArgoManagedResource(d.Labels, d.Annotations, appName) {
 				continue
 			}
 			d.APIVersion = "apps/v1"
 			d.Kind = "DaemonSet"
 			yamlBytes, _ := yaml.Marshal(d)
+			// #394: kstatus alignment — see Deployment site above.
 			health := "Progressing"
-			if d.Status.NumberReady == d.Status.DesiredNumberScheduled {
+			if agent.IsDaemonSetReady(d) {
 				health = "Healthy"
 			}
 			resources = append(resources, ManagedResource{
