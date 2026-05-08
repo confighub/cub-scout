@@ -64,8 +64,26 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-As of 2026-04-09, these areas are fully or materially shipped:
+As of 2026-05-08, these areas are fully or materially shipped:
 
+- **Source-truth contract** (`#393`, council-prescribed)
+  - `compare source-truth <kind>/<name> -n <ns> --strategy <s>` emits the structured JSON Pilot's acceptance kernel consumes
+  - 4 strategies: `confighub-oci-argo`, `confighub-oci-flux`, `git-argo`, `git-flux`
+  - Strategy-relative correctness + missing-proof rule enforced in tests, not just intent
+  - 6-fixture producer suite with byte-equal goldens at `test/fixtures/source-truth/`
+- **Architectural triad locked**
+  - cub-scout = read-only evidence provider
+  - Pilot = acceptance judge
+  - ConfigHub = authority and workflow engine
+  - cub-scout never mutates, repairs, approves, or infers authority
+- **kstatus migration complete** (`#394`)
+  - All readiness derivation flows through `sigs.k8s.io/cli-utils/pkg/kstatus`
+  - Same library Argo CD and Flux use upstream — operator expectations match
+  - Stalled / generation-lagging workloads correctly report `Ready=false`
+- **Views resolver v0.1** (`#391`)
+  - `cub-scout views resolve <uuid-or-url>` — accepts both bare UUIDs and View Explorer URLs
+  - URL-as-positional convention for ConfigHub primitives — paste from browser address bar
+  - On-prem ConfigHub deployments work (host not pinned)
 - `doctor` / `explain`
   - `--presentation human|ai|paired`
   - `--hint-mode default|beginner|operator`
@@ -93,12 +111,12 @@ As of 2026-04-09, these areas are fully or materially shipped:
 
 ## Current Open Queue
 
-Verify live state before acting, but the current open follow-ons are:
+Verify live state before acting, but the current open follow-ons are (2026-05-08):
 
-- `#370` structured action-typed next-step hints in JSON and MCP outputs
-- `#368` broader “beat Argo CD GUI” troubleshooting umbrella
-- `#364` investigated render-integration follow-on
-- `#359`, `#360`, `#362` lower-priority polish / compat / test stability
+- `#391` — Views integration follow-ups (v0.1 foundation landed; `--view` flag on commands, projection, reality overlay, browser handoff still open)
+- `#392` — Initiatives compliance overlay; **deferred** until ConfigHub side exposes Initiative as an addressable backend primitive. Design doc at `docs/howto/initiatives-integration-when-ready.md` is ready to consume the day the prerequisite lands.
+- `confighubai/confighub#4356` — cross-repo dependency for the ArgoCDOCI Helm-source shape symptom classifier in `compare source-truth`.
+- `confighub-ai-demo#264` — Pilot consumer-side fixtures (paired with cub-scout #395 producer fixtures).
 
 ## Non-Negotiables
 

@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-04-14
+Last updated: 2026-05-08
 
 ## Current repo state
 
@@ -14,6 +14,39 @@ Last updated: 2026-04-14
   - `docs/reference/cli-reference.md` = A-Z command catalog
   - `docs/reference/commands.md` = detailed usage and examples
   - `docs/reference/cli-contract.md` = stable flags, exit codes, and schemas
+
+## May 2026 completions — council source-truth track
+
+The council (April 2026) prescribed the **truth-floor → source-truth contract → fixtures** sequence. The full sequence is now in main:
+
+| PR | Issue(s) | Subject |
+|----|----------|---------|
+| [#397](https://github.com/confighub/cub-scout/pull/397) | #387, #390, narrow #394 | Truth-floor: Flux false-pessimism fix, tree-patterns nil panic, kstatus narrow slice |
+| [#398](https://github.com/confighub/cub-scout/pull/398) | #384 | Pre-existing main lint debt cleanup (5 dead funcs + 1 ineffassign) |
+| [#399](https://github.com/confighub/cub-scout/pull/399) | — | Parity script reads canonical CLI reference (post-#374 doc move) |
+| [#400](https://github.com/confighub/cub-scout/pull/400) | #393 | Source-truth evidence contract v0.1 (`compare source-truth`) |
+| [#401](https://github.com/confighub/cub-scout/pull/401) | #396 | Direct integration coverage for `discoverWorkloads` / `getManagedResources` |
+| [#402](https://github.com/confighub/cub-scout/pull/402) | #394 (rest) | kstatus migration complete (state_scanner.go) |
+| [#403](https://github.com/confighub/cub-scout/pull/403) | #391 v0.1 | Views resolver with URL-as-positional convention (`views resolve`) |
+| [#404](https://github.com/confighub/cub-scout/pull/404) | #395 v0.1 | Source-truth producer fixture suite (6 fixtures, byte-equal goldens) |
+
+### Architectural triad locked in code (not just intent)
+
+- **cub-scout** = read-only evidence provider for source truth
+- **Pilot** = acceptance judge (lives in `confighubai/confighub-ai-demo`)
+- **ConfigHub** = authority and workflow engine
+
+cub-scout never mutates, repairs, approves, or infers authority. The source-truth contract enforces this surface in code.
+
+### Strict rules locked in tests
+
+- **Strategy-relative correctness.** Identical observations get opposite verdicts under different declared strategies. Argo reading Git is `PASS` under `git-argo` and `BLOCK` (controller outlier) under `confighub-oci-argo`. Locked by `TestDerive_StrategyMismatch_ControllerOutlier` + `TestDerive_VanillaGitOps_PASS`.
+- **Missing proof never produces PASS.** Any blank source/digest/runtime field forces at least `WATCH` / `INCOMPLETE`. Locked by `TestDerive_NeverPASS_OnAnyMissingProof` sweep.
+- **Connected-mode gate.** `compare source-truth` and `views resolve` refuse to run without `cub` auth — both contracts are meaningless without the ConfigHub surface.
+
+### Pre-existing main CI breakage (cleared)
+
+Discovered while landing the truth-floor: main CI had been red since 2026-04-19, broken by two pre-existing issues unrelated to this work — `#384` lint debt and a parity-script path drift introduced by the `#374` doc consolidation. Both fixed in `#398` / `#399` so subsequent PRs inherit a green baseline.
 
 ## Recent completions
 
@@ -60,13 +93,20 @@ Key deliverables now in place:
 
 ## Open issues
 
-Current tracked follow-ons:
+Current tracked follow-ons (verified 2026-05-08):
 
-- none at the moment
+- **#391 (v0.1 landed)** — Views integration follow-up scope. v0.1 ships the URL-as-positional convention via `views resolve`; the four scope items remaining are tracked in the issue:
+  1. `--view <uuid-or-url>` filter on `map list` / `compare three-way`
+  2. View column projection in TUI Hub view
+  3. Reality overlay composing View columns with #393 verdicts
+  4. Browser handoff helper (`o`-key / `views open`)
+- **#392** — Initiatives compliance overlay. **Still deferred.** Re-checked 2026-05-08: ConfigHub side has no `internal/models/initiative.go`, no `/api/initiative` route, no `cub initiative` subcommand. Recent ConfigHub UI commits (e.g. confighub#4244) expanded the UI but did not promote Initiative to a backend primitive. Design doc at [`docs/howto/initiatives-integration-when-ready.md`](docs/howto/initiatives-integration-when-ready.md) holds the integration spec until the prerequisite ships.
+- **confighubai/confighub#4356** — cross-repo dependency. ArgoCDOCI Helm-source shape uses full unit OCI URL instead of parent repo. Once fixed upstream, cub-scout adds a symptom classifier into `compare source-truth` so Pilot's BLOCK verdict gets explicit upstream linkage.
+- **confighub-ai-demo#264** — Pilot consumer-side fixtures pairing with cub-scout #395. Driven from the AI demo repo.
 
 ## Current checkpoint
 
-`go test ./...` is green again as of 2026-04-14.
+`go test ./...` is green as of 2026-05-08 with all 37 packages passing. `golangci-lint run` (v1.64.8, matching CI) is clean. Main CI is green.
 
 The practical state heading into the `cub scout` plugin switchover is:
 
