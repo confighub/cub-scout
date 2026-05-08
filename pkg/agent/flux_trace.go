@@ -255,6 +255,10 @@ func (f *FluxTracer) isReadyStatus(status string) bool {
 
 	// Positive indicators
 	// "managed by" indicates the resource is under GitOps control - a success state
+	// "reconciled" (past tense) indicates a successful reconciliation; this is
+	// distinct from the negative-indicator "reconciling" (present, in-flight)
+	// checked above. The order of the two checks matters because "reconciled"
+	// is a substring of "reconciling" (#387).
 	if strings.Contains(status, "applied") ||
 		strings.Contains(status, "succeeded") ||
 		strings.Contains(status, "ready") ||
@@ -263,6 +267,7 @@ func (f *FluxTracer) isReadyStatus(status string) bool {
 		strings.Contains(status, "artifact is") ||
 		strings.Contains(status, "managed by") ||
 		strings.Contains(status, "fetched") ||
+		strings.Contains(status, "reconciled") ||
 		strings.Contains(status, "health check passed") {
 		return true
 	}
