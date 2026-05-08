@@ -2216,6 +2216,67 @@ cub-scout app [command]
 
 ---
 
+## views
+
+Work with ConfigHub Views — saved filter+projection specs operators
+curate in the View Explorer. v0.1 (#391) ships the URL-as-positional
+convention and a resolver subcommand.
+
+### views resolve
+
+Resolve a View reference and emit structured JSON.
+
+```bash
+cub-scout views resolve <uuid-or-url> [--space <slug>] [--format json]
+```
+
+Accepts either form:
+
+```bash
+cub-scout views resolve 806aac53-236c-446d-8ad6-91d6daf6810e
+cub-scout views resolve "https://hub.confighub.com/x/view-explorer?view=806aac53-236c-446d-8ad6-91d6daf6810e"
+```
+
+The URL form is the canonical share-link operators copy from the View
+Explorer address bar — pasting it into `cub-scout` is the cheapest
+GUI → CLI bridge across the ConfigHub stack.
+
+### Output
+
+JSON (only format in v0.1):
+
+```json
+{
+  "uuid": "...",
+  "source_form": "url" | "uuid",
+  "original_url": "...",
+  "extras": { "group": ["prod"] },
+  "space": "...",
+  "view": { ... cub view get JSON ... }
+}
+```
+
+`extras` round-trips View Explorer query parameters (`group`, etc.) so
+downstream commands can opt in to them without the parser growing flags.
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--space` | Space to search. Default `*` (org-wide) so a UUID alone is sufficient |
+| `--format` | Output format. v0.1: `json` |
+
+### Requirements
+
+Connected mode (`cub auth login` or `CONFIGHUB_API_KEY` set).
+
+### v0.1 limitations
+
+- Resolver only — no command integration. `--view` flags on `compare three-way` / `map list` / TUI Hub view land in dedicated follow-up PRs (see #391 scope items).
+- No reality overlay. Once #393's source-truth contract is widely consumed, follow-up work composes the View's column projection with `compare source-truth` verdicts (#391 scope item #3).
+
+---
+
 ## version
 
 Print version information for the local cub-scout binary.

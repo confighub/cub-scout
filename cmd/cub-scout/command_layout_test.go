@@ -16,8 +16,12 @@ func TestRootCommandLayout_VisibleTopLevelCount(t *testing.T) {
 		count++
 	}
 
-	if count > 30 {
-		t.Fatalf("visible top-level command count = %d, want <= 30", count)
+	// Cap is a soft governance signal. Bumped 30 -> 31 in #391 to admit
+	// `views` as a real new top-level capability (View Explorer
+	// integration per the council verdict on #393). Deliberate; do not
+	// bump again without a paired discussion.
+	if count > 31 {
+		t.Fatalf("visible top-level command count = %d, want <= 31", count)
 	}
 }
 
