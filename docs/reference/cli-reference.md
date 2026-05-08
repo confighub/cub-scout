@@ -58,6 +58,7 @@ Source of truth:
 |------------|---------|------|------|
 | `audit list` | Break-glass accept/reject audit trail | [Command Reference](commands.md#audit-list) | [Connect and compare](../../examples/connect-and-compare/) |
 | `compare drift` | Desired vs live drift detection | [Command Reference](commands.md#compare-drift) | [Drift examples](../../examples/drift/) |
+| `compare source-truth` | Read-only source-truth evidence for Pilot acceptance (#393) | [Command Reference](commands.md#compare-source-truth) | - |
 | `compare three-way` | Connected DRY/WET/LIVE comparison | [Command Reference](commands.md#compare-three-way) | [Connect and compare](../../examples/connect-and-compare/) |
 | `fleet outliers` | Cluster divergence report | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
 | `gitops status` | GitOps pipeline health | [Command Reference](commands.md#gitops-v014) | [Connected summary storage](../../examples/connected-summary-storage/) |

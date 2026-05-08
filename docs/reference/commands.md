@@ -1247,6 +1247,96 @@ Output notes:
 
 ---
 
+## compare source-truth
+
+Read-only source-truth evidence for a single workload (#393, v0.1).
+
+`compare source-truth` emits the structured JSON contract Pilot's acceptance
+kernel consumes. It joins three surfaces — ConfigHub intent, GitOps controller
+observation, and Kubernetes runtime — and produces a strategy-relative verdict.
+cub-scout is the *evidence provider*; Pilot is the acceptance judge. The
+command never mutates, repairs, approves, or infers authority.
+
+```bash
+cub-scout compare source-truth <kind>/<name> -n <namespace> --strategy <name>
+```
+
+### Strategies
+
+`--strategy` is required input. cub-scout never infers the delivery path.
+
+| Strategy | Delivery path |
+|----------|---------------|
+| `confighub-oci-argo` | ConfigHub → OCI → Argo CD → Kubernetes |
+| `confighub-oci-flux` | ConfigHub → OCI → Flux → Kubernetes |
+| `git-argo` | Git → Argo CD → Kubernetes |
+| `git-flux` | Git → Flux → Kubernetes |
+
+### Output contract
+
+Output is JSON only in v0.1. Field shape mirrors the council verdict on #393:
+
+| Field | Meaning |
+|-------|---------|
+| `declared_strategy` | Human-readable strategy (e.g. `ConfigHub -> OCI -> Flux -> Kubernetes`) |
+| `status` | Evidence verdict: `PASS`, `WATCH`, `BLOCK`, `ASK` |
+| `source_truth` | Cross-surface agreement: `AGREED`, `MISMATCH`, `INCOMPLETE`, `BLOCKED`, `UNKNOWN` |
+| `outlier` | Diverging surface: `confighub`, `controller`, `runtime`, `import_render`, `unknown` |
+| `surfaces.confighub` | Space, unit, head revision, ConfigHub URL |
+| `surfaces.controller` | Argo/Flux observation: source, revision/digest, health |
+| `surfaces.runtime` | Live K8s observation: image field + value, kstatus health |
+| `proof_gaps[]` | Stable string keys for missing fields |
+| `safe_next_action` | Read-only diagnostic suggesting how to confirm |
+
+### Strict rules
+
+The decision logic enforces two council rules in code, not by intent:
+
+1. **Strategy-relative correctness.** Identical observations get opposite
+   verdicts under different strategies. Argo reading directly from Git is
+   `PASS` under `git-argo` and `BLOCK` (controller outlier) under
+   `confighub-oci-argo`.
+2. **Missing proof never produces PASS.** Any blank source/digest/runtime
+   value forces at least `WATCH` / `INCOMPLETE`.
+
+### Examples
+
+```bash
+# Healthy ConfigHub-OCI-Flux pipeline
+cub-scout compare source-truth deploy/rag-server -n demo \
+  --strategy confighub-oci-flux
+
+# Vanilla GitOps with Argo
+cub scout compare source-truth Deployment rag-server -n demo --strategy git-argo
+```
+
+### Requirements
+
+- Connected mode (`cub auth login` or `CONFIGHUB_API_KEY` set)
+- Argo CD CLI on PATH for `*-argo` strategies; Flux CLI for `*-flux`
+- Reachable kubeconfig pointing at the cluster running the workload
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Namespace of the resource (required for namespaced kinds) |
+| `--strategy` | Declared delivery path (required) |
+| `--format` | Output format. v0.1: `json` |
+
+### Limitations
+
+v0.1 ships the JSON contract shape, the strategy-relative correctness rule,
+and the strict missing-proof rule. Cross-surface revision *equality* (does
+the OCI digest the controller pulled match the digest the runtime is
+running?) is deferred to v0.2 — see #395 for the producer fixture suite
+that drives the equality work.
+
+Supported runtime kinds in v0.1: `Deployment`, `StatefulSet`, `DaemonSet`.
+Other kinds emit a `BLOCK` with the reason naming the unsupported kind.
+
+---
+
 ## compare drift
 
 Detect differences between desired manifests and live cluster state.
