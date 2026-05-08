@@ -737,7 +737,11 @@ func isArgoManagedResource(labels, annotations map[string]string, appName string
 }
 
 // getManagedResources finds all resources in the destination namespace that are managed by the Application
-func getManagedResources(ctx context.Context, clientset *kubernetes.Clientset, dynamicClient dynamic.Interface, appName, namespace string) ([]ManagedResource, error) {
+// getManagedResources fetches the live K8s objects an ArgoCD Application
+// manages. Accepts kubernetes.Interface (not *kubernetes.Clientset) so
+// `kfake.NewSimpleClientset` satisfies the signature for unit tests
+// (#396).
+func getManagedResources(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, appName, namespace string) ([]ManagedResource, error) {
 	var resources []ManagedResource
 
 	// Get Deployments - list all and filter by ArgoCD ownership
