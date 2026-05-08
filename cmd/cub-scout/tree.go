@@ -114,7 +114,7 @@ func runTree(cmd *cobra.Command, args []string) error {
 	case "git":
 		return runTreeGit(ctx)
 	case "patterns":
-		return runTreePatterns()
+		return runTreePatterns(ctx)
 	case "config":
 		return runTreeConfig()
 	case "suggest":
@@ -1132,8 +1132,13 @@ func resolveParentApplicationWithConfidence(app *unstructured.Unstructured) (str
 	return "", ""
 }
 
-func runTreePatterns() error {
-	// Run the patterns command
+func runTreePatterns(ctx context.Context) error {
+	// `cub-scout tree patterns` reaches `runMapPatterns` directly without going
+	// through Cobra's Execute path, so `mapPatternsCmd.Context()` would be nil
+	// and any client-go call would panic in klog.FromContext (#390). Seed the
+	// command's context here so the downstream code path is identical to the
+	// `cub-scout map patterns` invocation.
+	mapPatternsCmd.SetContext(ctx)
 	return runMapPatterns(mapPatternsCmd, []string{})
 }
 
