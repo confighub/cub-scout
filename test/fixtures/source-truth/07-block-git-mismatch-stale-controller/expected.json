@@ -1,8 +1,8 @@
 {
   "declared_strategy": "Git -> Argo -> Kubernetes",
-  "status": "PASS",
-  "source_truth": "AGREED",
-  "outlier": "unknown",
+  "status": "BLOCK",
+  "source_truth": "MISMATCH",
+  "outlier": "controller",
   "surfaces": {
     "confighub": {
       "space": "demo",
@@ -18,8 +18,9 @@
     "runtime": {
       "resource": "Deployment/rag-server in demo",
       "field": "spec.template.spec.containers[0].image",
-      "value": "ghcr.io/example/rag:v1.2.3-abc123de",
+      "value": "ghcr.io/example/rag:v1.2.4-def456ab",
       "health": "Current"
     }
-  }
+  },
+  "safe_next_action": "Read-only diagnostic: cross-surface revision equality failed; the controller surface diverges. Confirm which commit each surface observed before acceptance."
 }

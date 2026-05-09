@@ -1,0 +1,29 @@
+{
+  "declared_strategy": "Git -> Flux -> Kubernetes",
+  "status": "WATCH",
+  "source_truth": "INCOMPLETE",
+  "outlier": "unknown",
+  "surfaces": {
+    "confighub": {
+      "space": "demo",
+      "unit": "rag-server",
+      "revision": "47"
+    },
+    "controller": {
+      "kind": "Flux",
+      "source": "https://github.com/example/rag-deploy",
+      "revision_or_digest": "main@sha1:abc123def456",
+      "health": "Ready"
+    },
+    "runtime": {
+      "resource": "Deployment/rag-server in demo",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "ghcr.io/example/rag:1.2.3",
+      "health": "Current"
+    }
+  },
+  "proof_gaps": [
+    "runtime.commit_sha_anchor"
+  ],
+  "safe_next_action": "Read-only diagnostic: confirm the missing fields (runtime.commit_sha_anchor) before acceptance."
+}

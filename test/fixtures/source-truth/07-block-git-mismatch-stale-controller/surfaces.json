@@ -13,7 +13,7 @@
   "runtime": {
     "resource": "Deployment/rag-server in demo",
     "field": "spec.template.spec.containers[0].image",
-    "value": "ghcr.io/example/rag:v1.2.3-abc123de",
+    "value": "ghcr.io/example/rag:v1.2.4-def456ab",
     "health": "Current"
   }
 }

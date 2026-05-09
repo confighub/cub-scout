@@ -19,16 +19,18 @@ test/fixtures/source-truth/
 │   └── expected.json   exact byte-equal SourceTruthEvidence output
 ```
 
-## What this v0.1 covers (6 fixtures)
+## What this covers (8 fixtures)
 
 | # | Strategy | Verdict | Council case |
 |---|---|---|---|
 | 01 | `confighub-oci-flux` | `PASS` / `AGREED` | happy path |
 | 02 | `confighub-oci-argo` | `BLOCK` / `MISMATCH` outlier=controller | strategy violation (Argo reads Git under OCI strategy) — the council's primary trap |
-| 03 | `git-argo` | `PASS` / `AGREED` | strategy-relativity proof — same observation as 02 but correct under vanilla GitOps |
+| 03 | `git-argo` | `PASS` / `AGREED` | strategy-relativity + v0.2 git-SHA equality (image tag carries the SHA the controller observed) |
 | 04 | `confighub-oci-flux` | `WATCH` / `INCOMPLETE` | strict missing-proof rule (no controller revision/digest) |
 | 05 | `confighub-oci-flux` | `BLOCK` / `BLOCKED` | fetch failure (ConfigHub surface absent) |
 | 06 | (empty) | `ASK` / `UNKNOWN` | empty strategy short-circuits to ASK |
+| 07 | `git-argo` | `BLOCK` / `MISMATCH` outlier=controller | **v0.2** cross-surface mismatch — controller and runtime image tag carry different SHAs |
+| 08 | `git-flux` | `WATCH` / `INCOMPLETE` proof_gap=`runtime.commit_sha_anchor` | **v0.2** runtime image has a semver tag with no SHA segment — equality unverifiable |
 
 ## Adding a fixture
 
