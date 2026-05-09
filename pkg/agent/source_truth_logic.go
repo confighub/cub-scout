@@ -7,14 +7,22 @@
 // produces the verdict.
 //
 // v0.1 scope: presence-based gap detection plus the strategy-relative
-// correctness check. Cross-surface revision *equality* (does the OCI
-// digest the controller pulled match the digest the runtime is running?)
-// is intentionally deferred to v0.2 — heterogeneous version identifiers
-// (ConfigHub revision number vs. Git SHA vs. OCI digest vs. image tag)
-// require normalisation work that the producer fixture suite (#395) will
-// drive. v0.1 emits MISMATCH only when the strategy contract itself is
-// violated, plus WATCH when a soft proof gap is present. Pilot can layer
-// stricter equality on top once the contract shape is stable.
+// correctness check.
+//
+// v0.2 scope (this version, #409): cross-surface revision equality for
+// the git-* strategies. When the controller and runtime both expose a
+// commit-SHA-shaped anchor, Derive asserts equality and emits MISMATCH
+// (with controller as the outlier) when the anchors disagree. If the
+// runtime image carries no SHA-bearing tag, that's a soft proof gap
+// ("runtime.commit_sha_anchor") — incomplete, not PASS.
+//
+// Still deferred: OCI-strategy equality. ConfigHub does not yet expose
+// a rendered digest per unit revision (verified 2026-05-09), so under
+// confighub-oci-* strategies cub-scout cannot honestly assert that the
+// controller pulled *the* ConfigHub-rendered artifact (only that *some*
+// digest matches end-to-end). Equality for OCI strategies will land in
+// a follow-up once the ConfigHub-side field exists; until then, OCI
+// strategies retain v0.1 behaviour (presence-based gap detection only).
 
 package agent
 
@@ -79,8 +87,31 @@ func Derive(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces) SourceTr
 		return ev
 	}
 
-	// Cross-surface equality: deferred to v0.2 (see file header). v0.1
-	// only flags soft mismatches via the proof_gap mechanism.
+	// Cross-surface equality (v0.2, git-* strategies only). OCI-strategy
+	// equality is deferred until ConfigHub exposes a rendered digest per
+	// unit revision — see file header.
+	agreement := compareRevisions(strategy, surfaces)
+
+	if !agreement.Agreed && !agreement.Incomplete {
+		// Concrete mismatch detected: controller and runtime both have
+		// SHA-shaped anchors and they disagree.
+		ev.Status = StatusBLOCK
+		ev.SourceTruth = VerdictMISMATCH
+		ev.Outlier = agreement.Outlier
+		ev.SafeNextAction = fmt.Sprintf(
+			"Read-only diagnostic: cross-surface revision equality failed; the %s surface diverges. Confirm which commit each surface observed before acceptance.",
+			agreement.Outlier,
+		)
+		return ev
+	}
+
+	if agreement.Incomplete && len(agreement.ProofGaps) > 0 {
+		// Soft equality gap (e.g. runtime image has no SHA-bearing tag):
+		// add to the gap list so the WATCH/INCOMPLETE branch below picks
+		// it up. Order: existing presence gaps first, then equality gaps.
+		gaps = append(gaps, agreement.ProofGaps...)
+		ev.ProofGaps = gaps
+	}
 
 	// Verdict synthesis based on proof gaps.
 	if len(gaps) > 0 {
@@ -200,6 +231,181 @@ func isGitURL(s string) bool {
 		return true
 	}
 	return false
+}
+
+// revisionAgreement is the result of cross-surface revision equality.
+// Three states: Agreed (anchors present and equal), Mismatch (anchors
+// present and disagree — Outlier names the divergent surface), and
+// Incomplete (an anchor isn't extractable — ProofGaps explains why).
+type revisionAgreement struct {
+	Agreed     bool
+	Outlier    SourceTruthOutlier
+	Incomplete bool
+	ProofGaps  []string
+}
+
+// compareRevisions performs strategy-aware cross-surface revision
+// equality. v0.2 implements git-* strategies; OCI strategies retain
+// v0.1's presence-based behaviour pending the ConfigHub-side rendered-
+// digest field.
+func compareRevisions(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces) revisionAgreement {
+	switch strategy {
+	case StrategyGitArgo, StrategyGitFlux:
+		return compareGitRevisions(surfaces)
+	case StrategyConfigHubOCIArgo, StrategyConfigHubOCIFlux:
+		// Deferred: OCI equality requires the controller-observed digest
+		// to be matched against the ConfigHub-rendered digest. ConfigHub
+		// does not expose a rendered digest per unit revision today.
+		// File header explains the cross-repo dependency. v0.2 returns
+		// Agreed=true here so existing OCI fixtures retain their v0.1
+		// behaviour; the follow-up PR will tighten this.
+		return revisionAgreement{Agreed: true}
+	}
+	// Unknown / future strategies: don't block.
+	return revisionAgreement{Agreed: true}
+}
+
+// compareGitRevisions performs controller↔runtime Git-SHA equality for
+// vanilla GitOps strategies. ConfigHub is opaque under git-* (Git is the
+// source of truth), so this function does not consult the ConfigHub
+// surface at all.
+//
+// Anchors:
+//   - Controller: Chain[0].Revision parsed by the existing tracers.
+//     Common shapes: bare hex SHA ("abc123def456"), "sha1:" prefix
+//     (Flux), or branch@sha1:hex form. normalizeGitSHA handles all of
+//     these.
+//   - Runtime: a SHA-shaped substring inside the container image tag
+//     (e.g. "ghcr.io/x/y:abc123de" or "ghcr.io/x/y:1.2.3-abc123de").
+//     extractGitSHAFromImage tries the whole tag first, then segments.
+//
+// If either anchor is missing, the result is Incomplete with a stable
+// proof-gap key. If both are present and prefix-compatible, Agreed.
+// If both are present and disagree, controller is named the outlier
+// (the most common explanation for a mismatch is that the controller
+// observed a different commit than the one that got built into the
+// runtime image; absent a third anchor cub-scout cannot tell whether
+// the controller is stale or the image is stale, so it surfaces the
+// mismatch and lets Pilot escalate).
+func compareGitRevisions(s SourceTruthSurfaces) revisionAgreement {
+	if s.Controller == nil || s.Runtime == nil {
+		return revisionAgreement{Incomplete: true}
+	}
+
+	ctrlSHA := normalizeGitSHA(s.Controller.RevisionOrDigest)
+	if ctrlSHA == "" {
+		// Already covered by collectProofGaps as
+		// "controller.revision_or_digest" if blank, or as "non-hex"
+		// here when the controller emitted something Derive can't
+		// recognise as a SHA. Distinguish the two via different keys
+		// so Pilot can separate "controller emitted nothing" from
+		// "controller emitted something we can't read".
+		if strings.TrimSpace(s.Controller.RevisionOrDigest) == "" {
+			return revisionAgreement{Incomplete: true}
+		}
+		return revisionAgreement{
+			Incomplete: true,
+			ProofGaps:  []string{"controller.commit_sha_unrecognised"},
+		}
+	}
+
+	runtimeSHA := extractGitSHAFromImage(s.Runtime.Value)
+	if runtimeSHA == "" {
+		return revisionAgreement{
+			Incomplete: true,
+			ProofGaps:  []string{"runtime.commit_sha_anchor"},
+		}
+	}
+
+	if shaMatches(ctrlSHA, runtimeSHA) {
+		return revisionAgreement{Agreed: true}
+	}
+
+	return revisionAgreement{
+		Agreed:  false,
+		Outlier: OutlierController,
+	}
+}
+
+// normalizeGitSHA returns a lowercase hex prefix of s if s looks like a
+// Git SHA (raw hex, "sha1:hex", or "branch@sha1:hex"). Returns "" when
+// no SHA can be extracted. Minimum hex length is 7 (Git's standard
+// short-SHA cutoff).
+func normalizeGitSHA(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if s == "" {
+		return ""
+	}
+	// Flux frequently emits "branch@sha1:hex"; take the part after "@".
+	if at := strings.Index(s, "@"); at >= 0 && at+1 < len(s) {
+		s = s[at+1:]
+	}
+	// Strip "sha1:" prefix if present.
+	s = strings.TrimPrefix(s, "sha1:")
+	// Take the leading hex run.
+	end := 0
+	for end < len(s) {
+		c := s[end]
+		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') {
+			end++
+			continue
+		}
+		break
+	}
+	if end < 7 {
+		return ""
+	}
+	return s[:end]
+}
+
+// extractGitSHAFromImage looks for a Git SHA embedded in a container
+// image reference. Strips any OCI digest suffix (@sha256:...), splits
+// the tag on common separators (-_./), and returns the first segment
+// that looks like a Git SHA. Returns "" if no anchor is found.
+func extractGitSHAFromImage(image string) string {
+	image = strings.TrimSpace(image)
+	if image == "" {
+		return ""
+	}
+	// Strip @sha256:... suffix — that's an OCI digest, not a git SHA.
+	if at := strings.LastIndex(image, "@"); at >= 0 {
+		image = image[:at]
+	}
+	colon := strings.LastIndex(image, ":")
+	if colon < 0 || colon == len(image)-1 {
+		return ""
+	}
+	tag := image[colon+1:]
+
+	// Direct: tag is itself a hex SHA.
+	if sha := normalizeGitSHA(tag); sha != "" {
+		return sha
+	}
+
+	// Split by common separators and try each segment.
+	segments := strings.FieldsFunc(tag, func(r rune) bool {
+		return r == '-' || r == '_' || r == '.' || r == '+'
+	})
+	for _, seg := range segments {
+		if sha := normalizeGitSHA(seg); sha != "" {
+			return sha
+		}
+	}
+	return ""
+}
+
+// shaMatches checks if two SHAs are prefix-compatible. Controllers
+// emit full or 12-char SHAs; image tags often carry 7-9 char prefixes.
+// We accept prefix equality in either direction, which is correct
+// because Git itself uses unique-prefix matching for short SHAs.
+func shaMatches(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	if len(a) > len(b) {
+		a, b = b, a
+	}
+	return strings.HasPrefix(b, a)
 }
 
 // blockedSafeNextAction renders a stable, read-only diagnostic when one

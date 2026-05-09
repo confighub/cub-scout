@@ -1262,7 +1262,7 @@ Output notes:
 
 ## compare source-truth
 
-Read-only source-truth evidence for a single workload (#393, v0.1).
+Read-only source-truth evidence for a single workload (#393 v0.1, #409 v0.2).
 
 `compare source-truth` emits the structured JSON contract Pilot's acceptance
 kernel consumes. It joins three surfaces — ConfigHub intent, GitOps controller
@@ -1303,7 +1303,7 @@ Output is JSON only in v0.1. Field shape mirrors the council verdict on #393:
 
 ### Strict rules
 
-The decision logic enforces two council rules in code, not by intent:
+The decision logic enforces three council rules in code, not by intent:
 
 1. **Strategy-relative correctness.** Identical observations get opposite
    verdicts under different strategies. Argo reading directly from Git is
@@ -1311,6 +1311,14 @@ The decision logic enforces two council rules in code, not by intent:
    `confighub-oci-argo`.
 2. **Missing proof never produces PASS.** Any blank source/digest/runtime
    value forces at least `WATCH` / `INCOMPLETE`.
+3. **Cross-surface revision equality** *(v0.2, git-* strategies)*. Under
+   `git-argo` / `git-flux`, when the controller emits a Git SHA and the
+   runtime image carries a SHA-bearing tag (e.g. `app:v1.2.3-abc123de`),
+   the two anchors must match. Mismatch produces `BLOCK` / `MISMATCH` with
+   `outlier=controller`. If the runtime image has no SHA-bearing segment,
+   that's a soft proof gap (`runtime.commit_sha_anchor`) — `WATCH`, never
+   silent `PASS`. OCI strategies retain v0.1 behaviour pending the
+   ConfigHub-side rendered-digest field.
 
 ### Examples
 
@@ -1339,14 +1347,19 @@ cub scout compare source-truth Deployment rag-server -n demo --strategy git-argo
 
 ### Limitations
 
-v0.1 ships the JSON contract shape, the strategy-relative correctness rule,
-and the strict missing-proof rule. Cross-surface revision *equality* (does
-the OCI digest the controller pulled match the digest the runtime is
-running?) is deferred to v0.2 — see #395 for the producer fixture suite
-that drives the equality work.
+v0.2 (#409) ships cross-surface revision equality for the **git-* strategies
+only**. Equality for `confighub-oci-*` strategies is still deferred: ConfigHub
+does not yet expose a rendered OCI digest per unit revision, so cub-scout
+cannot honestly assert that the controller pulled *the* ConfigHub-rendered
+artifact. OCI strategies retain v0.1 behaviour (presence-based gap detection
+plus strategy-relative correctness) until the ConfigHub-side field exists.
 
-Supported runtime kinds in v0.1: `Deployment`, `StatefulSet`, `DaemonSet`.
-Other kinds emit a `BLOCK` with the reason naming the unsupported kind.
+Other known v0.2 gaps:
+- **Multi-source Argo Applications** (`spec.sources[]`, plural): only the
+  first source is parsed. Multi-source apps will be flagged with an
+  explicit proof gap in a follow-up.
+- Runtime kinds in v0.2: `Deployment`, `StatefulSet`, `DaemonSet`. Other
+  kinds emit a `BLOCK` with the reason naming the unsupported kind.
 
 ---
 

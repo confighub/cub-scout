@@ -5,15 +5,15 @@
     "revision": "47"
   },
   "controller": {
-    "kind": "Argo",
+    "kind": "Flux",
     "source": "https://github.com/example/rag-deploy",
-    "revision_or_digest": "abc123def456",
-    "health": "Synced/Healthy"
+    "revision_or_digest": "main@sha1:abc123def456",
+    "health": "Ready"
   },
   "runtime": {
     "resource": "Deployment/rag-server in demo",
     "field": "spec.template.spec.containers[0].image",
-    "value": "ghcr.io/example/rag:v1.2.3-abc123de",
+    "value": "ghcr.io/example/rag:1.2.3",
     "health": "Current"
   }
 }
