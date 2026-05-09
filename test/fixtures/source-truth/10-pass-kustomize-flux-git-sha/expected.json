@@ -1,0 +1,25 @@
+{
+  "declared_strategy": "Kustomize -> Flux -> Kubernetes",
+  "status": "PASS",
+  "source_truth": "AGREED",
+  "outlier": "unknown",
+  "surfaces": {
+    "confighub": {
+      "space": "demo",
+      "unit": "rag-server",
+      "revision": "47"
+    },
+    "controller": {
+      "kind": "Flux",
+      "source": "https://github.com/example/rag-deploy",
+      "revision_or_digest": "main@sha1:abc123def456",
+      "health": "Ready"
+    },
+    "runtime": {
+      "resource": "Deployment/rag-server in demo",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "ghcr.io/example/rag:v1.2.3-abc123de",
+      "health": "Current"
+    }
+  }
+}

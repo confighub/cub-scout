@@ -1,0 +1,29 @@
+{
+  "declared_strategy": "Helm -> Flux -> Kubernetes",
+  "status": "WATCH",
+  "source_truth": "INCOMPLETE",
+  "outlier": "unknown",
+  "surfaces": {
+    "confighub": {
+      "space": "demo",
+      "unit": "redis",
+      "revision": "12"
+    },
+    "controller": {
+      "kind": "Flux",
+      "source": "https://charts.bitnami.com/bitnami",
+      "revision_or_digest": "17.0.0",
+      "health": "Ready"
+    },
+    "runtime": {
+      "resource": "Deployment/redis in demo",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "docker.io/bitnami/redis:7.0.0",
+      "health": "Current"
+    }
+  },
+  "proof_gaps": [
+    "runtime.helm_chart_anchor"
+  ],
+  "safe_next_action": "Read-only diagnostic: confirm the missing fields (runtime.helm_chart_anchor) before acceptance."
+}

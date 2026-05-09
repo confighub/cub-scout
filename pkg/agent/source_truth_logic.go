@@ -9,20 +9,25 @@
 // v0.1 scope: presence-based gap detection plus the strategy-relative
 // correctness check.
 //
-// v0.2 scope (this version, #409): cross-surface revision equality for
-// the git-* strategies. When the controller and runtime both expose a
-// commit-SHA-shaped anchor, Derive asserts equality and emits MISMATCH
-// (with controller as the outlier) when the anchors disagree. If the
-// runtime image carries no SHA-bearing tag, that's a soft proof gap
-// ("runtime.commit_sha_anchor") — incomplete, not PASS.
+// v0.2 scope (#409): cross-surface revision equality for git-* and
+// kustomize-flux strategies (Git SHA anchor) and oci-* non-ConfigHub
+// strategies (OCI digest anchor). When the controller and runtime both
+// expose the strategy's canonical anchor, Derive asserts equality and
+// emits MISMATCH (with controller as the outlier) when they disagree.
+// Missing anchors surface as soft proof gaps — incomplete, not PASS.
 //
-// Still deferred: OCI-strategy equality. ConfigHub does not yet expose
-// a rendered digest per unit revision (verified 2026-05-09), so under
-// confighub-oci-* strategies cub-scout cannot honestly assert that the
-// controller pulled *the* ConfigHub-rendered artifact (only that *some*
-// digest matches end-to-end). Equality for OCI strategies will land in
-// a follow-up once the ConfigHub-side field exists; until then, OCI
-// strategies retain v0.1 behaviour (presence-based gap detection only).
+// Phase 2 (#409 enum expansion): added helm-flux, helm-argo,
+// kustomize-flux, oci-flux, oci-argo. Helm strategies emit
+// "runtime.helm_chart_anchor" until the runtime extractor is wired
+// (Helm chart version is already readable from `helm.sh/chart` labels
+// via pkg/agent/ownership.go but not yet plumbed into RuntimeSurface).
+//
+// Still deferred: confighub-oci-* equality. ConfigHub does not yet
+// expose a rendered digest per unit revision (verified 2026-05-09), so
+// cub-scout cannot honestly assert that the controller pulled *the*
+// ConfigHub-rendered artifact (only that *some* digest matches end-to-
+// end). Equality for confighub-oci-* will land once the ConfigHub-side
+// field exists.
 
 package agent
 
@@ -245,9 +250,19 @@ type revisionAgreement struct {
 }
 
 // compareRevisions performs strategy-aware cross-surface revision
-// equality. v0.2 implements git-* strategies; OCI strategies retain
-// v0.1's presence-based behaviour pending the ConfigHub-side rendered-
-// digest field.
+// equality. Strategy dispatch:
+//
+//   - git-* and kustomize-flux: Git-SHA controller↔runtime equality
+//     (kustomize-flux uses the same anchor — the Git commit SHA flows
+//     through Flux's Kustomization unchanged)
+//   - oci-* (non-ConfigHub): OCI digest controller↔runtime equality
+//   - confighub-oci-*: deferred (ConfigHub-side rendered digest field
+//     does not exist yet — see file header)
+//   - helm-*: emit "runtime.helm_chart_anchor" proof gap. Helm runtime
+//     anchor is the chart-version label (`helm.sh/chart`) and is
+//     extractable from ownership.go, but RuntimeSurface does not yet
+//     carry it. Wired as future work; until then helm-* is honestly
+//     INCOMPLETE.
 func compareRevisions(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces) revisionAgreement {
 	// Multi-source is strategy-agnostic. If the controller declares more
 	// than one source and cub-scout only parsed the first, equality
@@ -262,8 +277,15 @@ func compareRevisions(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces
 	}
 
 	switch strategy {
-	case StrategyGitArgo, StrategyGitFlux:
+	case StrategyGitArgo, StrategyGitFlux, StrategyKustomizeFlux:
 		return compareGitRevisions(surfaces)
+	case StrategyOCIArgo, StrategyOCIFlux:
+		return compareOCIRevisions(surfaces)
+	case StrategyHelmArgo, StrategyHelmFlux:
+		return revisionAgreement{
+			Incomplete: true,
+			ProofGaps:  []string{"runtime.helm_chart_anchor"},
+		}
 	case StrategyConfigHubOCIArgo, StrategyConfigHubOCIFlux:
 		// Deferred: OCI equality requires the controller-observed digest
 		// to be matched against the ConfigHub-rendered digest. ConfigHub
@@ -275,6 +297,100 @@ func compareRevisions(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces
 	}
 	// Unknown / future strategies: don't block.
 	return revisionAgreement{Agreed: true}
+}
+
+// compareOCIRevisions performs controller↔runtime OCI digest equality
+// for the non-ConfigHub OCI strategies (oci-flux, oci-argo). Anchors:
+//
+//   - Controller: Chain[0].Revision in `sha256:hex` form (Flux
+//     OCIRepository) or in `<tag>@sha256:hex` form (some Argo
+//     emissions). normalizeOCIDigest accepts both.
+//   - Runtime: the `@sha256:hex` suffix on the container image
+//     reference. extractOCIDigestFromImage returns the canonical
+//     `sha256:hex` form.
+//
+// If the controller emits a tag-only revision (no `sha256:` prefix or
+// embedded digest), equality is unverifiable — proof gap
+// "controller.oci_digest". Same for tag-only runtime images
+// ("runtime.oci_digest"). Direct hex compare on the digest portion.
+func compareOCIRevisions(s SourceTruthSurfaces) revisionAgreement {
+	if s.Controller == nil || s.Runtime == nil {
+		return revisionAgreement{Incomplete: true}
+	}
+
+	ctrlDigest := normalizeOCIDigest(s.Controller.RevisionOrDigest)
+	if ctrlDigest == "" {
+		if strings.TrimSpace(s.Controller.RevisionOrDigest) == "" {
+			return revisionAgreement{Incomplete: true}
+		}
+		return revisionAgreement{
+			Incomplete: true,
+			ProofGaps:  []string{"controller.oci_digest"},
+		}
+	}
+
+	runtimeDigest := extractOCIDigestFromImage(s.Runtime.Value)
+	if runtimeDigest == "" {
+		return revisionAgreement{
+			Incomplete: true,
+			ProofGaps:  []string{"runtime.oci_digest"},
+		}
+	}
+
+	if ctrlDigest == runtimeDigest {
+		return revisionAgreement{Agreed: true}
+	}
+
+	return revisionAgreement{
+		Agreed:  false,
+		Outlier: OutlierController,
+	}
+}
+
+// normalizeOCIDigest extracts a canonical "sha256:hex" digest from an
+// arbitrary controller revision string. Accepts:
+//
+//   - "sha256:abc123..."        — direct
+//   - "main@sha256:abc123..."   — tag@digest form
+//   - "v1.0.0@sha256:abc123..." — same
+//
+// Returns "" if no sha256-shaped digest is found. Hex must be at least
+// 7 chars for the parser to consider it a valid digest.
+func normalizeOCIDigest(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if s == "" {
+		return ""
+	}
+	// Tag@digest form: take the part after "@".
+	if at := strings.Index(s, "@"); at >= 0 && at+1 < len(s) {
+		s = s[at+1:]
+	}
+	if !strings.HasPrefix(s, "sha256:") {
+		return ""
+	}
+	hex := s[len("sha256:"):]
+	if len(hex) < 7 {
+		return ""
+	}
+	for _, c := range hex {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+			return ""
+		}
+	}
+	return s
+}
+
+// extractOCIDigestFromImage pulls the @sha256:hex suffix from a
+// container image reference. Returns "" if the image carries no
+// digest suffix (tag-only images are a runtime proof gap under
+// OCI strategies).
+func extractOCIDigestFromImage(image string) string {
+	image = strings.TrimSpace(image)
+	at := strings.LastIndex(image, "@")
+	if at < 0 {
+		return ""
+	}
+	return normalizeOCIDigest(image[at+1:])
 }
 
 // compareGitRevisions performs controller↔runtime Git-SHA equality for

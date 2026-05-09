@@ -1,0 +1,26 @@
+{
+  "declared_strategy": "OCI -> Argo -> Kubernetes",
+  "status": "BLOCK",
+  "source_truth": "MISMATCH",
+  "outlier": "controller",
+  "surfaces": {
+    "confighub": {
+      "space": "demo",
+      "unit": "rag-server",
+      "revision": "47"
+    },
+    "controller": {
+      "kind": "Argo",
+      "source": "oci://ghcr.io/example/rag-server",
+      "revision_or_digest": "sha256:abc123def456abc123",
+      "health": "Synced/Healthy"
+    },
+    "runtime": {
+      "resource": "Deployment/rag-server in demo",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "ghcr.io/example/rag-server@sha256:def456abc123def456",
+      "health": "Current"
+    }
+  },
+  "safe_next_action": "Read-only diagnostic: cross-surface revision equality failed; the controller surface diverges. Confirm which commit each surface observed before acceptance."
+}
