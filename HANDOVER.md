@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-05-08
+Last updated: 2026-05-09
 
 ## Current repo state
 
@@ -14,6 +14,22 @@ Last updated: 2026-05-08
   - `docs/reference/cli-reference.md` = A-Z command catalog
   - `docs/reference/commands.md` = detailed usage and examples
   - `docs/reference/cli-contract.md` = stable flags, exit codes, and schemas
+
+## May 2026 completions — session 2026-05-09
+
+| PR | Issue(s) | Subject |
+|----|----------|---------|
+| [#414](https://github.com/confighub/cub-scout/pull/414) | #408, #391 scope #1 | `--view` flag on `compare three-way`; `cubRunner` subprocess-injection seam; 7 new tests |
+| [#411](https://github.com/confighub/cub-scout/pull/411) | #388 | Flake fix: startup grace `0.2s → 1s` in demo-worker lifecycle script |
+| [#412](https://github.com/confighub/cub-scout/pull/412) | #385 | GitHub Actions Node 24 bump (checkout v6, setup-go v6, upload-artifact v7, download-artifact v8, golangci-lint v9, docker/login v4, goreleaser v7) |
+| [#413](https://github.com/confighub/cub-scout/pull/413) | #389 | GoReleaser `brews:` → `homebrew_casks:` deprecation migration |
+
+### Key design decisions locked in #414
+
+- **Testability seam**: `viewCubRunner cubRunner` func var in `views.go` replaces all direct `exec.Command("cub", ...)` calls. Tests inject a fake runner returning prefab JSON; production delegates to the real binary. This seam also covers `views resolve` and any future `cub`-shelling code in the views layer.
+- **`report.Scope` for views**: always `view/<uuid>` regardless of whether the input was a UUID or URL. Stable, compact, discriminable from `resource:`, `namespace/`, `cluster`.
+- **Mutual exclusion**: `--scope` and `--view` produce a clear error if both are passed. `--view` requires connected mode; error message mirrors `views resolve`.
+- **Triad audit finding**: `cmd/cub-scout/remedy.go` contains a genuine architectural triad violation — the `remedy` command describes itself as "executing remediation" and "fixing issues". Flagged for cleanup; a task chip has been filed.
 
 ## May 2026 completions — council source-truth track
 
@@ -93,20 +109,20 @@ Key deliverables now in place:
 
 ## Open issues
 
-Current tracked follow-ons (verified 2026-05-08):
+Current tracked follow-ons (verified 2026-05-09):
 
-- **#391 (v0.1 landed)** — Views integration follow-up scope. v0.1 ships the URL-as-positional convention via `views resolve`; the four scope items remaining are tracked in the issue:
-  1. `--view <uuid-or-url>` filter on `map list` / `compare three-way`
+- **#391 (two scopes remain)** — Views integration. Scope #1 (`--view` on `compare three-way`) shipped in #414. Remaining:
   2. View column projection in TUI Hub view
-  3. Reality overlay composing View columns with #393 verdicts
-  4. Browser handoff helper (`o`-key / `views open`)
-- **#392** — Initiatives compliance overlay. **Still deferred.** Re-checked 2026-05-08: ConfigHub side has no `internal/models/initiative.go`, no `/api/initiative` route, no `cub initiative` subcommand. Recent ConfigHub UI commits (e.g. confighub#4244) expanded the UI but did not promote Initiative to a backend primitive. Design doc at [`docs/howto/initiatives-integration-when-ready.md`](docs/howto/initiatives-integration-when-ready.md) holds the integration spec until the prerequisite ships.
-- **confighubai/confighub#4356** — cross-repo dependency. ArgoCDOCI Helm-source shape uses full unit OCI URL instead of parent repo. Once fixed upstream, cub-scout adds a symptom classifier into `compare source-truth` so Pilot's BLOCK verdict gets explicit upstream linkage.
-- **confighub-ai-demo#264** — Pilot consumer-side fixtures pairing with cub-scout #395. Driven from the AI demo repo.
+  3. Reality overlay composing View columns with #393 source-truth verdicts (depends on scope #1 — now unblocked)
+- **#409** — source-truth v0.2 cross-surface revision equality. Design pre-baked in the issue body, plus a [strategy-shape comment](https://github.com/confighub/cub-scout/issues/409#issuecomment-4411862418) with the full per-strategy data shape table, runtime-anchor extractability per strategy (notably: Helm runtime anchor is **already extractable** via `helm.sh/chart` labels in `pkg/agent/ownership.go`), the multi-source Argo gap, and a concrete Phase 1/2/3 implementation plan. Phase 1 = existing four strategies; Phase 2 = enum expansion (`helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`); Phase 3 = multi-source Argo. Verify ConfigHub-side rendered-digest exposure before starting Phase 1. `confighubai/confighub#4356` interacts with `confighub-oci-argo` equality.
+- **#410** — Triad-compliance audit (HIGH severity). Discussion ticket framing the architectural decision on `cmd/cub-scout/remedy.go`, which actually executes cluster mutations via `kubectl apply`/`delete` (real triad violation, not just a wording issue). Three options: remove / rename to analysis-only / hide execution behind a flag. Decision needed before code change. Lower-severity findings on `import apply` wording and a contributor-side hint-command lint rule are in the same issue.
+- **#392** — Initiatives compliance overlay. **Still deferred.** ConfigHub side has no backend primitive yet. Design doc at [`docs/howto/initiatives-integration-when-ready.md`](docs/howto/initiatives-integration-when-ready.md) holds the integration spec.
+- **confighubai/confighub#4356** — cross-repo dependency for ArgoCDOCI Helm-source shape. Blocks accurate `confighub-oci-argo` symptom classification in `compare source-truth`.
+- **confighub-ai-demo#264** — Pilot consumer-side fixtures pairing with cub-scout #395 + future #409 fixtures.
 
 ## Current checkpoint
 
-`go test ./...` is green as of 2026-05-08 with all 37 packages passing. `golangci-lint run` (v1.64.8, matching CI) is clean. Main CI is green.
+`go test ./...` is green as of 2026-05-09 with all 37 packages passing. Main CI is green. GitHub Actions workflows now run on Node 24 (PRs #412, #413).
 
 The practical state heading into the `cub scout` plugin switchover is:
 

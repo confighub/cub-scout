@@ -80,10 +80,13 @@ As of 2026-05-08, these areas are fully or materially shipped:
   - All readiness derivation flows through `sigs.k8s.io/cli-utils/pkg/kstatus`
   - Same library Argo CD and Flux use upstream — operator expectations match
   - Stalled / generation-lagging workloads correctly report `Ready=false`
-- **Views resolver v0.1** (`#391`)
+- **Views integration** (`#391`)
   - `cub-scout views resolve <uuid-or-url>` — accepts both bare UUIDs and View Explorer URLs
+  - `cub-scout views open <uuid-or-url>` — browser handoff helper
+  - `cub-scout compare three-way --view <uuid-or-url>` — scope a three-way comparison to the cluster resources whose ConfigHub units match a View's filter (#408, shipped 2026-05-09)
   - URL-as-positional convention for ConfigHub primitives — paste from browser address bar
   - On-prem ConfigHub deployments work (host not pinned)
+  - `cubRunner` subprocess-injection seam in `views.go` — all future `cub`-shelling code in the views layer should use `viewCubRunner` for testability
 - `doctor` / `explain`
   - `--presentation human|ai|paired`
   - `--hint-mode default|beginner|operator`
@@ -111,12 +114,14 @@ As of 2026-05-08, these areas are fully or materially shipped:
 
 ## Current Open Queue
 
-Verify live state before acting, but the current open follow-ons are (2026-05-08):
+Verify live state before acting, but the current open follow-ons are (2026-05-09):
 
-- `#391` — Views integration follow-ups (v0.1 foundation landed; `--view` flag on commands, projection, reality overlay, browser handoff still open)
+- `#391` — Views integration. Scope #1 (`--view` on `compare three-way`) shipped in #414. Remaining: scope #2 (View column projection in TUI Hub view), scope #3 (reality overlay composing View columns with source-truth verdicts — now unblocked).
+- `#409` — source-truth v0.2 cross-surface revision equality. Design pre-baked, plus a [strategy-shape comment](https://github.com/confighub/cub-scout/issues/409#issuecomment-4411862418) with phased Phase 1/2/3 plan. Phase 1 = four existing strategies; Phase 2 = enum expansion; Phase 3 = multi-source Argo. Prerequisite to verify: does `cub unit get -o json` expose the rendered digest per unit revision?
+- `#410` — Triad-compliance audit (HIGH). Real violation: `cmd/cub-scout/remedy.go` actually executes `kubectl apply`/`delete` via `executor.Execute`. Discussion ticket — decide remove / rename / hide-behind-flag before code change.
 - `#392` — Initiatives compliance overlay; **deferred** until ConfigHub side exposes Initiative as an addressable backend primitive. Design doc at `docs/howto/initiatives-integration-when-ready.md` is ready to consume the day the prerequisite lands.
 - `confighubai/confighub#4356` — cross-repo dependency for the ArgoCDOCI Helm-source shape symptom classifier in `compare source-truth`.
-- `confighub-ai-demo#264` — Pilot consumer-side fixtures (paired with cub-scout #395 producer fixtures).
+- `confighub-ai-demo#264` — Pilot consumer-side fixtures (paired with cub-scout #395 + future #409 fixtures).
 
 ## Non-Negotiables
 
