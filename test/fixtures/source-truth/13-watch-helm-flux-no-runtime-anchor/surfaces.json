@@ -1,0 +1,19 @@
+{
+  "confighub": {
+    "space": "demo",
+    "unit": "redis",
+    "revision": "12"
+  },
+  "controller": {
+    "kind": "Flux",
+    "source": "https://charts.bitnami.com/bitnami",
+    "revision_or_digest": "17.0.0",
+    "health": "Ready"
+  },
+  "runtime": {
+    "resource": "Deployment/redis in demo",
+    "field": "spec.template.spec.containers[0].image",
+    "value": "docker.io/bitnami/redis:7.0.0",
+    "health": "Current"
+  }
+}

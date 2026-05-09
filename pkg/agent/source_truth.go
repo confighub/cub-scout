@@ -57,17 +57,49 @@ const (
 
 	// StrategyGitFlux: vanilla GitOps with Flux.
 	StrategyGitFlux SourceTruthStrategy = "git-flux"
+
+	// StrategyHelmArgo: Argo CD pulls a Helm chart from a chart registry
+	// and applies to Kubernetes. Source-of-truth anchor is the chart
+	// version. ConfigHub is not in the chain.
+	StrategyHelmArgo SourceTruthStrategy = "helm-argo"
+
+	// StrategyHelmFlux: Flux pulls a Helm chart via HelmRepository or
+	// HelmChart and applies to Kubernetes. Same anchor shape as
+	// helm-argo.
+	StrategyHelmFlux SourceTruthStrategy = "helm-flux"
+
+	// StrategyKustomizeFlux: Flux Kustomization built from a Git source.
+	// Source-of-truth anchor is the Git commit SHA — equality semantics
+	// match git-flux but the controller-source shape is a GitRepository
+	// + a Kustomization overlay.
+	StrategyKustomizeFlux SourceTruthStrategy = "kustomize-flux"
+
+	// StrategyOCIArgo: Argo CD pulls an OCI artifact from a non-ConfigHub
+	// registry. Source-of-truth anchor is the OCI digest. Distinct from
+	// confighub-oci-argo in that ConfigHub is not in the chain — equality
+	// is controller↔runtime only.
+	StrategyOCIArgo SourceTruthStrategy = "oci-argo"
+
+	// StrategyOCIFlux: Flux OCIRepository pointed at a non-ConfigHub
+	// registry. Same anchor shape as oci-argo.
+	StrategyOCIFlux SourceTruthStrategy = "oci-flux"
 )
 
-// AllStrategies is the closed enum of strategies v0.1 understands. Adding
-// a strategy requires updating expectsConfigHubOCISource and the human
-// rendering below.
+// AllStrategies is the closed enum of strategies cub-scout understands.
+// Adding a strategy requires updating expectsConfigHubOCISource,
+// ExpectsArgoController, the Human rendering, and compareRevisions
+// dispatch.
 func AllStrategies() []SourceTruthStrategy {
 	return []SourceTruthStrategy{
 		StrategyConfigHubOCIArgo,
 		StrategyConfigHubOCIFlux,
 		StrategyGitArgo,
 		StrategyGitFlux,
+		StrategyHelmArgo,
+		StrategyHelmFlux,
+		StrategyKustomizeFlux,
+		StrategyOCIArgo,
+		StrategyOCIFlux,
 	}
 }
 
@@ -102,6 +134,16 @@ func (s SourceTruthStrategy) Human() string {
 		return "Git -> Argo -> Kubernetes"
 	case StrategyGitFlux:
 		return "Git -> Flux -> Kubernetes"
+	case StrategyHelmArgo:
+		return "Helm -> Argo -> Kubernetes"
+	case StrategyHelmFlux:
+		return "Helm -> Flux -> Kubernetes"
+	case StrategyKustomizeFlux:
+		return "Kustomize -> Flux -> Kubernetes"
+	case StrategyOCIArgo:
+		return "OCI -> Argo -> Kubernetes"
+	case StrategyOCIFlux:
+		return "OCI -> Flux -> Kubernetes"
 	default:
 		return string(s)
 	}
@@ -109,7 +151,9 @@ func (s SourceTruthStrategy) Human() string {
 
 // expectsConfigHubOCISource reports whether the strategy requires the
 // controller surface to be reading from a ConfigHub-rendered OCI artifact
-// (vs. directly from Git).
+// (vs. directly from Git). The non-ConfigHub OCI strategies (oci-flux,
+// oci-argo) intentionally return false — they accept any OCI registry,
+// not just ConfigHub.
 func (s SourceTruthStrategy) expectsConfigHubOCISource() bool {
 	return s == StrategyConfigHubOCIArgo || s == StrategyConfigHubOCIFlux
 }
@@ -120,7 +164,11 @@ func (s SourceTruthStrategy) expectsConfigHubOCISource() bool {
 // because that would mask the controller-kind mismatch the contract is
 // supposed to surface.
 func (s SourceTruthStrategy) ExpectsArgoController() bool {
-	return s == StrategyConfigHubOCIArgo || s == StrategyGitArgo
+	switch s {
+	case StrategyConfigHubOCIArgo, StrategyGitArgo, StrategyHelmArgo, StrategyOCIArgo:
+		return true
+	}
+	return false
 }
 
 // SourceTruthStatus is cub-scout's evidence-quality verdict. Pilot layers

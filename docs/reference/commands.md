@@ -1278,12 +1278,17 @@ cub-scout compare source-truth <kind>/<name> -n <namespace> --strategy <name>
 
 `--strategy` is required input. cub-scout never infers the delivery path.
 
-| Strategy | Delivery path |
-|----------|---------------|
-| `confighub-oci-argo` | ConfigHub → OCI → Argo CD → Kubernetes |
-| `confighub-oci-flux` | ConfigHub → OCI → Flux → Kubernetes |
-| `git-argo` | Git → Argo CD → Kubernetes |
-| `git-flux` | Git → Flux → Kubernetes |
+| Strategy | Delivery path | Equality anchor |
+|----------|---------------|-----------------|
+| `confighub-oci-argo` | ConfigHub → OCI → Argo CD → Kubernetes | OCI digest *(deferred)* |
+| `confighub-oci-flux` | ConfigHub → OCI → Flux → Kubernetes | OCI digest *(deferred)* |
+| `git-argo` | Git → Argo CD → Kubernetes | Git commit SHA |
+| `git-flux` | Git → Flux → Kubernetes | Git commit SHA |
+| `helm-argo` | Helm → Argo CD → Kubernetes | Chart version *(runtime extractor pending)* |
+| `helm-flux` | Helm → Flux → Kubernetes | Chart version *(runtime extractor pending)* |
+| `kustomize-flux` | Kustomize over Git → Flux → Kubernetes | Git commit SHA |
+| `oci-argo` | OCI (non-ConfigHub) → Argo CD → Kubernetes | OCI digest |
+| `oci-flux` | OCI (non-ConfigHub) → Flux → Kubernetes | OCI digest |
 
 ### Output contract
 
@@ -1347,14 +1352,19 @@ cub scout compare source-truth Deployment rag-server -n demo --strategy git-argo
 
 ### Limitations
 
-v0.2 (#409) ships cross-surface revision equality for the **git-* strategies
-only**. Equality for `confighub-oci-*` strategies is still deferred: ConfigHub
-does not yet expose a rendered OCI digest per unit revision, so cub-scout
-cannot honestly assert that the controller pulled *the* ConfigHub-rendered
-artifact. OCI strategies retain v0.1 behaviour (presence-based gap detection
-plus strategy-relative correctness) until the ConfigHub-side field exists.
+v0.2 (#409) ships cross-surface revision equality for git-*, kustomize-flux,
+and oci-* (non-ConfigHub) strategies. Equality for `confighub-oci-*` is still
+deferred: ConfigHub does not yet expose a rendered OCI digest per unit
+revision, so cub-scout cannot honestly assert that the controller pulled *the*
+ConfigHub-rendered artifact. The `confighub-oci-*` strategies retain v0.1
+behaviour (presence-based gap detection plus strategy-relative correctness)
+until the ConfigHub-side field exists.
 
 Other known v0.2 gaps:
+- **Helm strategies** (`helm-flux`, `helm-argo`): the chart-version anchor
+  is read from the runtime via `helm.sh/chart` labels, but the extractor
+  isn't wired into `RuntimeSurface` yet. Until then, helm-* strategies emit
+  `proof_gaps: ["runtime.helm_chart_anchor"]` and never PASS.
 - **Multi-source Argo Applications** (`spec.sources[]`, plural): only the
   first source is parsed. Detected and surfaced via
   `proof_gaps: ["controller.multi_source"]` (#409 Phase 3) — the verdict

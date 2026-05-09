@@ -19,7 +19,7 @@ test/fixtures/source-truth/
 │   └── expected.json   exact byte-equal SourceTruthEvidence output
 ```
 
-## What this covers (9 fixtures)
+## What this covers (13 fixtures)
 
 | # | Strategy | Verdict | Council case |
 |---|---|---|---|
@@ -32,6 +32,10 @@ test/fixtures/source-truth/
 | 07 | `git-argo` | `BLOCK` / `MISMATCH` outlier=controller | **v0.2** cross-surface mismatch — controller and runtime image tag carry different SHAs |
 | 08 | `git-flux` | `WATCH` / `INCOMPLETE` proof_gap=`runtime.commit_sha_anchor` | **v0.2** runtime image has a semver tag with no SHA segment — equality unverifiable |
 | 09 | `git-argo` | `WATCH` / `INCOMPLETE` proof_gap=`controller.multi_source` | **v0.2 Phase 3** Argo Application has multiple sources; equality across un-parsed sources is unverifiable regardless of strategy |
+| 10 | `kustomize-flux` | `PASS` / `AGREED` | **Phase 2** kustomize-flux dispatches to git-SHA equality (Kustomize overlay over Git source) |
+| 11 | `oci-flux` | `PASS` / `AGREED` | **Phase 2** non-ConfigHub OCI digest equality — controller `sha256:` matches runtime `@sha256:` |
+| 12 | `oci-argo` | `BLOCK` / `MISMATCH` outlier=controller | **Phase 2** non-ConfigHub OCI digest mismatch |
+| 13 | `helm-flux` | `WATCH` / `INCOMPLETE` proof_gap=`runtime.helm_chart_anchor` | **Phase 2** helm runtime extractor not yet wired (`helm.sh/chart` label visible to ownership.go but not yet in RuntimeSurface) |
 
 ## Adding a fixture
 

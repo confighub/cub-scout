@@ -1,0 +1,19 @@
+{
+  "confighub": {
+    "space": "demo",
+    "unit": "rag-server",
+    "revision": "47"
+  },
+  "controller": {
+    "kind": "Flux",
+    "source": "oci://ghcr.io/example/rag-server",
+    "revision_or_digest": "sha256:abc123def456abc123",
+    "health": "Ready"
+  },
+  "runtime": {
+    "resource": "Deployment/rag-server in demo",
+    "field": "spec.template.spec.containers[0].image",
+    "value": "ghcr.io/example/rag-server@sha256:abc123def456abc123",
+    "health": "Current"
+  }
+}
