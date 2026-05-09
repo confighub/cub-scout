@@ -120,10 +120,7 @@ changelog:
       - '^test:'
       - '^ci:'
 
-# Note: brews and dockers use deprecated syntax but still work
-# Will be updated when GoReleaser v2 stabilizes new API
-
-brews:
+homebrew_casks:
   - name: cub-scout
     repository:
       owner: confighub
@@ -132,12 +129,9 @@ brews:
     homepage: "https://confighub.com"
     description: "Explore and map GitOps in your clusters"
     license: "MIT"
-    install: |
-      bin.install "cub-scout"
-      bin.install "kubectl-cub_scout"
-    test: |
-      system "#{bin}/cub-scout", "version"
-      system "#{bin}/kubectl-cub_scout", "version"
+    binaries:
+      - cub-scout
+      - kubectl-cub_scout
 
 dockers:
   - image_templates:
