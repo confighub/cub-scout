@@ -42,7 +42,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `import cluster-aggregator` | Aggregate multiple import proposals into a fleet view | v1.0 |
 | `import parse-repo` | Parse GitOps repository structure for import preview | v1.0 |
 | `compare` (alias: `combined`) | Compare Git and cluster/bundle structures, or show LIVE snapshot for one resource | v1.0 |
-| `compare three-way` | Connected intent/render/observed comparison for resource/namespace/cluster scopes | v1.6 |
+| `compare three-way` | Connected intent/render/observed comparison for resource/namespace/cluster/view scopes | v1.6 |
 | `context-pack` | Export deterministic AI context JSON bundle | v1.8 |
 | `debug` | Guided GitOps debugging wizard | v0.14.2 |
 | `discover` | Scout-style workload discovery | v0.5 |
@@ -1209,15 +1209,23 @@ Connected three-way comparison command for selected scopes.
 
 ```bash
 cub-scout compare three-way --scope <scope> [flags]
+cub-scout compare three-way --view <uuid-or-url> [flags]
 ```
 
-Supported scopes:
+Scoping options (mutually exclusive):
+
+**`--scope`** — explicit scope string:
 - `<kind/name>` or `resource:<kind/name>` (single resource)
 - `namespace/<ns>` (all workloads in namespace)
 - `cluster` (all discovered namespaces/workloads)
 
+**`--view <uuid-or-url>`** — constrain to the cluster resources whose
+ConfigHub units match a saved View's filter. Accepts a bare UUID or a View
+Explorer URL (paste from the browser address bar). Requires connected mode.
+`report.scope` is set to `view/<uuid>` in JSON output.
+
 Flags:
-- `--scope` (required)
+- `--scope` / `--view` (one required; mutually exclusive)
 - `-n, --namespace` (resource scope namespace override)
 - `--format ascii|json|md`
 - `--json` (shorthand for `--format json`)
@@ -1235,6 +1243,10 @@ cub-scout compare three-way --scope namespace/prod --format json
 # Cluster scope
 cub-scout compare three-way --scope cluster --format md
 
+# View-scoped: compare only resources selected by a saved View
+cub-scout compare three-way --view 806aac53-236c-446d-8ad6-91d6daf6810e
+cub-scout compare three-way --view 'https://hub.confighub.com/x/view-explorer?view=806aac53-...'
+
 # CI / automation
 cub-scout compare three-way --scope namespace/prod --fail-on warning
 ```
@@ -1244,6 +1256,7 @@ Output notes:
 - JSON includes `summary.agreement.{state,summary,reasons,sources}`
 - agreement states are `agreed`, `converging`, `diverged`, and `partial`
 - conformance exit codes still depend only on JSON facts + `--fail-on`
+- `--view` resolution chain: `cub view get` → extract `Filter.Where` → `cub unit list --where` → label-match cluster workloads
 
 ---
 
@@ -2301,7 +2314,6 @@ construction. Auth only matters once the browser reaches View Explorer.
 
 ### v0.1 scope items still pending
 
-- `--view <uuid-or-url>` filter on `compare three-way` / `map list` (scope item #1) — multi-hop CLI resolution, separate PR.
 - View column projection in TUI Hub view (scope item #2).
 - Reality overlay composing View columns with #393 source-truth verdicts (scope item #3) — unblocked now that the contract is in main.
 
