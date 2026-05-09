@@ -139,12 +139,23 @@ func runViewsResolve(cmd *cobra.Command, args []string) error {
 	return emitResolvedView(out)
 }
 
+// cubRunner is the function signature for shelling out to `cub`. The
+// package-level var viewCubRunner holds the production implementation;
+// tests inject a fake to avoid real subprocess calls.
+type cubRunner func(ctx context.Context, args ...string) ([]byte, error)
+
+// viewCubRunner is the seam used by fetchView and listUnitSlugsForFilter.
+// Tests replace it with a function that returns prefab JSON, giving full
+// coverage of the multi-hop resolution path without a real `cub` binary.
+var viewCubRunner cubRunner = func(ctx context.Context, args ...string) ([]byte, error) {
+	return exec.CommandContext(ctx, "cub", args...).Output()
+}
+
 // fetchView shells out to `cub view get` to fetch the View JSON. The
 // `--space "*"` default makes a UUID alone sufficient (org-wide
 // search); narrower callers can pass --space <slug>.
 func fetchView(ctx context.Context, uuid, space string) (map[string]interface{}, error) {
-	args := []string{"view", "get", uuid, "--space", space, "--json"}
-	out, err := exec.CommandContext(ctx, "cub", args...).Output()
+	out, err := viewCubRunner(ctx, "view", "get", uuid, "--space", space, "--json")
 	if err != nil {
 		return nil, fmt.Errorf("cub view get failed: %w", err)
 	}
@@ -153,6 +164,45 @@ func fetchView(ctx context.Context, uuid, space string) (map[string]interface{},
 		return nil, fmt.Errorf("parse cub output: %w", err)
 	}
 	return raw, nil
+}
+
+// extractWhereClause reads the Filter.Where string from a `cub view get`
+// JSON blob. Returns an empty string (not an error) if the view has no
+// Where clause so callers can decide whether to block or skip.
+func extractWhereClause(view map[string]interface{}) (string, error) {
+	filter, ok := view["Filter"]
+	if !ok {
+		return "", nil
+	}
+	filterMap, ok := filter.(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("view Filter is not an object")
+	}
+	where, _ := filterMap["Where"].(string)
+	return where, nil
+}
+
+// listUnitSlugsForFilter runs `cub unit list --where '<clause>'` and
+// returns the matching unit slugs. Uses viewCubRunner so tests can inject
+// prefab JSON without a live ConfigHub instance.
+func listUnitSlugsForFilter(ctx context.Context, whereClause, space string) ([]string, error) {
+	out, err := viewCubRunner(ctx, "unit", "list", "--space", space, "--where", whereClause, "-o", "json")
+	if err != nil {
+		return nil, fmt.Errorf("cub unit list: %w", err)
+	}
+	var units []struct {
+		Slug string `json:"slug"`
+	}
+	if err := json.Unmarshal(out, &units); err != nil {
+		return nil, fmt.Errorf("parse unit list: %w", err)
+	}
+	slugs := make([]string, 0, len(units))
+	for _, u := range units {
+		if u.Slug != "" {
+			slugs = append(slugs, u.Slug)
+		}
+	}
+	return slugs, nil
 }
 
 func emitResolvedView(rv ResolvedView) error {

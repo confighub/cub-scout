@@ -12,6 +12,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 type threeWayScopeType string
@@ -20,6 +23,7 @@ const (
 	threeWayScopeResource  threeWayScopeType = "resource"
 	threeWayScopeNamespace threeWayScopeType = "namespace"
 	threeWayScopeCluster   threeWayScopeType = "cluster"
+	threeWayScopeView      threeWayScopeType = "view"
 )
 
 type threeWayScope struct {
@@ -83,6 +87,7 @@ const (
 
 var (
 	compareThreeWayScopeRaw string
+	compareThreeWayView     string
 	compareThreeWayFormat   string
 	compareThreeWayJSON     bool
 	compareThreeWayFailOn   string
@@ -97,16 +102,26 @@ var compareThreeWayCmd = &cobra.Command{
 	Short: "Compare intent vs rendered vs observed state",
 	Long: `Connected three-way comparison (DRY/WET/LIVE) for a selected scope.
 
-Supported scopes:
+Supported scopes (--scope):
   deploy/my-app            (resource)
   resource:deploy/my-app   (resource)
   namespace/prod           (namespace)
   cluster                  (all namespaces)
 
+View-scoped comparison (--view):
+  Constrain the comparison to live cluster resources whose ConfigHub units
+  are selected by a View's filter. Accepts a bare UUID or a View Explorer
+  URL (paste from the browser address bar). --scope and --view are mutually
+  exclusive. Requires connected mode.
+
 Examples:
   cub-scout compare three-way --scope deploy/payment-api -n prod
   cub-scout compare three-way --scope namespace/prod --format json
   cub-scout compare three-way --scope cluster --format md
+
+  # View-scoped: compare only resources selected by a saved View
+  cub-scout compare three-way --view 806aac53-236c-446d-8ad6-91d6daf6810e
+  cub-scout compare three-way --view 'https://hub.confighub.com/x/view-explorer?view=806aac53-...'
 
   # CI/automation: fail if mismatches found
   cub-scout compare three-way --scope namespace/prod --fail-on warning
@@ -126,6 +141,7 @@ func init() {
 	combinedCmd.AddCommand(compareThreeWayCmd)
 
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayScopeRaw, "scope", "", "Scope: <kind/name>, resource:<kind/name>, namespace/<ns>, or cluster")
+	compareThreeWayCmd.Flags().StringVar(&compareThreeWayView, "view", "", "View UUID or View Explorer URL; mutually exclusive with --scope (requires connected mode)")
 	compareThreeWayCmd.Flags().StringVarP(&combinedNamespace, "namespace", "n", "", "Namespace override for resource scope")
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayFormat, "format", "ascii", "Output format: ascii, json, md")
 	compareThreeWayCmd.Flags().BoolVar(&compareThreeWayJSON, "json", false, "Output as JSON (shorthand for --format json)")
@@ -133,9 +149,22 @@ func init() {
 }
 
 func runCompareThreeWay(cmd *cobra.Command, args []string) error {
-	scope, err := parseThreeWayScope(compareThreeWayScopeRaw)
-	if err != nil {
-		return err
+	if compareThreeWayScopeRaw != "" && compareThreeWayView != "" {
+		return fmt.Errorf("--scope and --view are mutually exclusive")
+	}
+
+	var scope threeWayScope
+	if compareThreeWayView != "" {
+		if hub.QuickMode() != hub.Connected {
+			return fmt.Errorf("--view requires ConfigHub authentication (run `cub auth login` or set CONFIGHUB_API_KEY)")
+		}
+		scope = threeWayScope{ScopeType: threeWayScopeView, ScopeValue: compareThreeWayView}
+	} else {
+		var err error
+		scope, err = parseThreeWayScope(compareThreeWayScopeRaw)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Validate --fail-on if provided
@@ -187,7 +216,7 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 func parseThreeWayScope(raw string) (threeWayScope, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" {
-		return threeWayScope{}, fmt.Errorf("--scope is required")
+		return threeWayScope{}, fmt.Errorf("one of --scope or --view is required")
 	}
 
 	lower := strings.ToLower(value)
@@ -223,7 +252,7 @@ func parseThreeWayScope(raw string) (threeWayScope, error) {
 }
 
 func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThreshold string) (threeWayReport, error) {
-	targets, err := collectThreeWayTargets(scope)
+	targets, err := collectThreeWayTargets(ctx, scope)
 	if err != nil {
 		return threeWayReport{}, err
 	}
@@ -642,7 +671,7 @@ func classifyResourcePattern(result compareResourceResult) ThreeWayPattern {
 	return PatternMultiChange
 }
 
-func collectThreeWayTargets(scope threeWayScope) ([]threeWayTarget, error) {
+func collectThreeWayTargets(ctx context.Context, scope threeWayScope) ([]threeWayTarget, error) {
 	switch scope.ScopeType {
 	case threeWayScopeResource:
 		kindRaw, name, err := parseResourceArg(scope.ScopeValue)
@@ -676,9 +705,88 @@ func collectThreeWayTargets(scope threeWayScope) ([]threeWayTarget, error) {
 			targets = append(targets, workloadsToThreeWayTargets(workloads, ns)...)
 		}
 		return targets, nil
+	case threeWayScopeView:
+		return collectThreeWayTargetsForView(ctx, scope.ScopeValue)
 	default:
 		return nil, fmt.Errorf("unsupported scope type %q", scope.ScopeType)
 	}
+}
+
+// collectThreeWayTargetsForView resolves a View reference to a set of
+// threeWayTargets. The resolution chain is:
+//
+//  1. Parse the view ref (UUID or View Explorer URL).
+//  2. Fetch the View via `cub view get` to extract Filter.Where.
+//  3. Run `cub unit list --where '<clause>'` to get matching unit slugs.
+//  4. Discover all cluster namespaces, then filter workloads whose
+//     UnitSlug matches one of the slugs from step 3.
+//
+// All subprocess calls go through viewCubRunner so tests can inject
+// fake JSON without a live ConfigHub or cluster.
+func collectThreeWayTargetsForView(ctx context.Context, viewRef string) ([]threeWayTarget, error) {
+	ref, err := agent.ParseViewRef(viewRef)
+	if err != nil {
+		return nil, fmt.Errorf("parse view reference: %w", err)
+	}
+
+	viewData, err := fetchView(ctx, ref.UUID, "*")
+	if err != nil {
+		return nil, fmt.Errorf("fetch view %s: %w", ref.UUID, err)
+	}
+
+	whereClause, err := extractWhereClause(viewData)
+	if err != nil {
+		return nil, fmt.Errorf("extract filter from view: %w", err)
+	}
+	if whereClause == "" {
+		return nil, fmt.Errorf("view %s has no Where filter — cannot scope comparison", ref.UUID)
+	}
+
+	unitSlugs, err := listUnitSlugsForFilter(ctx, whereClause, "*")
+	if err != nil {
+		return nil, fmt.Errorf("list units for view filter: %w", err)
+	}
+	if len(unitSlugs) == 0 {
+		return nil, fmt.Errorf("view filter matched no units (check the filter clause or space scope)")
+	}
+
+	slugSet := make(map[string]struct{}, len(unitSlugs))
+	for _, s := range unitSlugs {
+		slugSet[s] = struct{}{}
+	}
+
+	namespaces, err := discoverThreeWayNamespacesFn()
+	if err != nil {
+		return nil, fmt.Errorf("discover namespaces: %w", err)
+	}
+	sort.Strings(namespaces)
+
+	var targets []threeWayTarget
+	for _, ns := range namespaces {
+		workloads, err := discoverThreeWayWorkloadsFn(ns)
+		if err != nil {
+			return nil, err
+		}
+		for _, w := range workloads {
+			if _, ok := slugSet[w.UnitSlug]; !ok {
+				continue
+			}
+			kind := normalizeKind(w.Kind)
+			name := strings.TrimSpace(w.Name)
+			if kind == "" || name == "" {
+				continue
+			}
+			wsNs := strings.TrimSpace(w.Namespace)
+			if wsNs == "" {
+				wsNs = ns
+			}
+			targets = append(targets, threeWayTarget{
+				ResourceArg: kind + "/" + name,
+				Namespace:   wsNs,
+			})
+		}
+	}
+	return targets, nil
 }
 
 func workloadsToThreeWayTargets(workloads []WorkloadInfo, namespace string) []threeWayTarget {
@@ -885,6 +993,14 @@ func (scope threeWayScope) String() string {
 		return scope.ScopeValue
 	case threeWayScopeNamespace:
 		return "namespace/" + scope.ScopeValue
+	case threeWayScopeView:
+		// Prefer "view/<uuid>" regardless of whether the original input was a
+		// UUID or a URL, so output consumers get a stable, compact identifier.
+		ref, err := agent.ParseViewRef(scope.ScopeValue)
+		if err != nil {
+			return "view/" + scope.ScopeValue
+		}
+		return "view/" + ref.UUID
 	default:
 		return scope.ScopeValue
 	}
