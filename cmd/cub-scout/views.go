@@ -30,6 +30,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"runtime"
@@ -42,9 +43,12 @@ import (
 )
 
 var (
-	viewsResolveFormat string
-	viewsResolveSpace  string
-	viewsOpenPrintOnly bool
+	viewsResolveFormat       string
+	viewsResolveSpace        string
+	viewsOpenPrintOnly       bool
+	viewsProjectFormat       string
+	viewsProjectSpace        string
+	viewsProjectWithReality  bool
 )
 
 var viewsCmd = &cobra.Command{
@@ -88,9 +92,13 @@ func init() {
 	rootCmd.AddCommand(viewsCmd)
 	viewsCmd.AddCommand(viewsResolveCmd)
 	viewsCmd.AddCommand(viewsOpenCmd)
+	viewsCmd.AddCommand(viewsProjectCmd)
 	viewsResolveCmd.Flags().StringVar(&viewsResolveFormat, "format", "json", "Output format. v0.1 supports: json")
 	viewsResolveCmd.Flags().StringVar(&viewsResolveSpace, "space", "*", "Space to search. Defaults to org-wide ('*') so a UUID alone is sufficient")
 	viewsOpenCmd.Flags().BoolVar(&viewsOpenPrintOnly, "print", false, "Print the View Explorer URL to stdout instead of opening the browser (useful for scripts and headless environments)")
+	viewsProjectCmd.Flags().StringVar(&viewsProjectFormat, "format", "table", "Output format: table, json")
+	viewsProjectCmd.Flags().StringVar(&viewsProjectSpace, "space", "*", "Space to search. Defaults to org-wide ('*')")
+	viewsProjectCmd.Flags().BoolVar(&viewsProjectWithReality, "with-reality", false, "Append synthetic columns (Applied?, LiveStatus) computed from the live cluster (#391 scope #3)")
 }
 
 // ResolvedView is the JSON contract `views resolve` emits. Future
@@ -203,6 +211,166 @@ func listUnitSlugsForFilter(ctx context.Context, whereClause, space string) ([]s
 		}
 	}
 	return slugs, nil
+}
+
+// listUnitsForFilter is the projection-shaped sibling of
+// listUnitSlugsForFilter: it returns each matching unit's full
+// metadata blob (as `cub unit list -o json` emits it), so View column
+// evaluators can read attribute fields directly. Used by `views
+// project`. Same testability seam.
+func listUnitsForFilter(ctx context.Context, whereClause, space string) ([]map[string]interface{}, error) {
+	out, err := viewCubRunner(ctx, "unit", "list", "--space", space, "--where", whereClause, "-o", "json")
+	if err != nil {
+		return nil, fmt.Errorf("cub unit list: %w", err)
+	}
+	var units []map[string]interface{}
+	if err := json.Unmarshal(out, &units); err != nil {
+		return nil, fmt.Errorf("parse unit list: %w", err)
+	}
+	return units, nil
+}
+
+// extractColumnsSpec reads the View's Columns array out of the raw
+// `cub view get` JSON. Each Column has a Name + a ColumnSource
+// describing how to evaluate (MetadataAttribute / MetadataExpression /
+// DataPath / DataExpression). Returns nil + nil error when the View
+// has no columns — `views project` falls back to a default set in
+// that case.
+func extractColumnsSpec(view map[string]interface{}) ([]ViewColumnSpec, error) {
+	cols, ok := view["Columns"]
+	if !ok {
+		return nil, nil
+	}
+	arr, ok := cols.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("view Columns is not an array")
+	}
+	out := make([]ViewColumnSpec, 0, len(arr))
+	for _, item := range arr {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		col := ViewColumnSpec{
+			Name:       readStringField(m, "Name"),
+			ColumnType: readStringField(m, "ColumnType"),
+			DataType:   readStringField(m, "DataType"),
+		}
+		if src, ok := m["ColumnSource"].(map[string]interface{}); ok {
+			col.MetadataAttribute = readStringField(src, "MetadataAttribute")
+			col.MetadataExpression = readStringField(src, "MetadataExpression")
+			col.DataExpression = readStringField(src, "DataExpression")
+			// DataPath is itself an object (AttributeSelector); we
+			// stash the rendered path string for placeholder display
+			// until JSONPath evaluation lands.
+			if dp, ok := src["DataPath"].(map[string]interface{}); ok {
+				col.DataPath = readStringField(dp, "Path")
+			}
+		}
+		out = append(out, col)
+	}
+	return out, nil
+}
+
+func readStringField(m map[string]interface{}, key string) string {
+	v, _ := m[key].(string)
+	return strings.TrimSpace(v)
+}
+
+// ViewColumnSpec is the cub-scout-side flattening of ConfigHub's
+// Column + ColumnSource. v0.1 of `views project` evaluates only
+// MetadataAttribute (direct field reference); the other three forms
+// are surfaced as placeholders so the column header still appears
+// in output and operators can see the evaluator gap.
+type ViewColumnSpec struct {
+	Name               string `json:"name"`
+	ColumnType         string `json:"columnType,omitempty"`
+	DataType           string `json:"dataType,omitempty"`
+	MetadataAttribute  string `json:"metadataAttribute,omitempty"`
+	MetadataExpression string `json:"metadataExpression,omitempty"`
+	DataPath           string `json:"dataPath,omitempty"`
+	DataExpression     string `json:"dataExpression,omitempty"`
+}
+
+// evalKind classifies the column's evaluator. v0.1 supports
+// "metadata_attribute"; the other three are placeholder.
+func (c ViewColumnSpec) evalKind() string {
+	switch {
+	case c.MetadataAttribute != "":
+		return "metadata_attribute"
+	case c.MetadataExpression != "":
+		return "metadata_expression"
+	case c.DataPath != "":
+		return "data_path"
+	case c.DataExpression != "":
+		return "data_expression"
+	default:
+		return "unknown"
+	}
+}
+
+// evalCell evaluates the column against a single unit's JSON. Returns
+// the rendered string and a bool indicating whether the evaluator was
+// supported (false → placeholder was emitted).
+//
+// MetadataAttribute lookup is case-tolerant on the leading character
+// because ConfigHub serialises some fields PascalCase ("Slug") and
+// others camelCase ("slug"); `cub unit list -o json` emits the latter
+// style for the keys we care about, but we accept both so authoring-
+// side specs round-trip cleanly.
+func (c ViewColumnSpec) evalCell(unit map[string]interface{}) (string, bool) {
+	switch c.evalKind() {
+	case "metadata_attribute":
+		key := c.MetadataAttribute
+		if v, ok := unit[key]; ok {
+			return formatCellValue(v), true
+		}
+		// Try lowercase first letter (Slug → slug etc.).
+		if len(key) > 0 {
+			lc := strings.ToLower(key[:1]) + key[1:]
+			if v, ok := unit[lc]; ok {
+				return formatCellValue(v), true
+			}
+		}
+		return "", true // attribute not present on this unit; empty cell, still a supported eval
+	case "metadata_expression":
+		return "<cel: not yet supported>", false
+	case "data_path":
+		return "<jsonpath: not yet supported>", false
+	case "data_expression":
+		return "<cel: not yet supported>", false
+	}
+	return "", false
+}
+
+// formatCellValue renders an arbitrary JSON-decoded value as a string
+// suitable for table or JSON output. Maps and slices are JSON-encoded
+// inline so they can fit a single cell.
+func formatCellValue(v interface{}) string {
+	switch typed := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return typed
+	case bool:
+		if typed {
+			return "true"
+		}
+		return "false"
+	case float64:
+		// JSON numbers decode as float64. Print integers without a
+		// decimal point for readability.
+		if typed == float64(int64(typed)) {
+			return fmt.Sprintf("%d", int64(typed))
+		}
+		return fmt.Sprintf("%g", typed)
+	default:
+		b, err := json.Marshal(typed)
+		if err != nil {
+			return fmt.Sprintf("%v", typed)
+		}
+		return string(b)
+	}
 }
 
 func emitResolvedView(rv ResolvedView) error {
@@ -321,3 +489,318 @@ func openInBrowser(url string) error {
 // to swap behaviour. Default delegates to runtime.GOOS.
 var runtimeGOOS = func() string { return runtime.GOOS }
 
+
+// viewsProjectCmd implements #391 scope #2 — render the Views
+// projection (filter + columns) as a table or JSON. v0.1 of this
+// subcommand evaluates MetadataAttribute columns directly against the
+// unit metadata `cub unit list` returns; CEL (MetadataExpression /
+// DataExpression) and JSONPath (DataPath) evaluators are placeholders
+// pending the dependency decision documented in the issue.
+//
+// `Columns` is the Views portable projection spec — defining columns
+// in ConfigHub once and rendering them anywhere is precisely the
+// "single source of truth, multiple surfaces" pattern the View
+// primitive is for.
+//
+// Output JSON has shape:
+//   { "view": "<uuid>", "columns": [<spec>], "rows": [{<col>: <value>}] }
+//
+// Connected mode is REQUIRED — the projection is meaningless without
+// `cub` access to the View definition and the matching units.
+var viewsProjectCmd = &cobra.Command{
+	Use:   "project <uuid-or-url>",
+	Short: "Render the View as a projected table",
+	Long: `Resolve the View, list its matching units, and render the
+Views columns as a table (or JSON).
+
+Accepts either form:
+
+  cub-scout views project 806aac53-236c-446d-8ad6-91d6daf6810e
+  cub-scout views project https://hub.confighub.com/x/view-explorer?view=806aac53-...
+
+Output formats:
+
+  --format table   ASCII table with one row per matching unit (default)
+  --format json    Structured JSON with the column spec + the rows
+
+v0.1 evaluates only MetadataAttribute columns directly. MetadataExpression /
+DataExpression (CEL) and DataPath (JSONPath) columns render placeholder
+text in the cell so the column header is preserved; full evaluator
+support is a follow-up dependency decision.
+
+Requires connected mode (cub auth login or CONFIGHUB_API_KEY).`,
+	Args: cobra.ExactArgs(1),
+	RunE: runViewsProject,
+}
+
+// projectionRow is one rendered row in `views project` output. Keys
+// are the View column names; values are the rendered cell strings.
+// Map ordering is intentional — the JSON output preserves insertion
+// order via the parallel `columns` slice in ProjectedView.
+type projectionRow map[string]string
+
+// ProjectedView is the JSON-shaped output of `views project --format json`.
+type ProjectedView struct {
+	UUID    string           `json:"view"`
+	Space   string           `json:"space"`
+	Columns []ViewColumnSpec `json:"columns"`
+	Rows    []projectionRow  `json:"rows"`
+}
+
+// buildProjectedView is the pure (no-stdout, no-connected-mode-gate)
+// projection builder. runViewsProject wraps this for CLI use; tests
+// call this directly so they can assert on the structured output
+// without a stdout dance.
+func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, withReality bool) (ProjectedView, error) {
+	view, err := fetchView(ctx, ref.UUID, space)
+	if err != nil {
+		return ProjectedView{}, fmt.Errorf("fetch view: %w", err)
+	}
+
+	whereClause, err := extractWhereClause(view)
+	if err != nil {
+		return ProjectedView{}, fmt.Errorf("extract filter from view: %w", err)
+	}
+	if whereClause == "" {
+		return ProjectedView{}, fmt.Errorf("view %s has no Where filter — cannot project", ref.UUID)
+	}
+
+	columns, err := extractColumnsSpec(view)
+	if err != nil {
+		return ProjectedView{}, fmt.Errorf("extract columns from view: %w", err)
+	}
+	if len(columns) == 0 {
+		// Fallback: minimal default projection so the command always
+		// produces something useful for Views that omit Columns.
+		columns = []ViewColumnSpec{{Name: "Slug", MetadataAttribute: "slug"}}
+	}
+
+	units, err := listUnitsForFilter(ctx, whereClause, space)
+	if err != nil {
+		return ProjectedView{}, fmt.Errorf("list units for view filter: %w", err)
+	}
+
+	// #391 scope #3 (reality overlay): when withReality is set, build a
+	// slug→workload index of the live cluster and append synthetic columns
+	// (Applied?, LiveStatus) the web View Explorer cannot show. The View
+	// supplies the schema; cub-scout joins in cluster truth.
+	var workloadIndex map[string]WorkloadInfo
+	if withReality {
+		idx, err := buildWorkloadIndexFn()
+		if err != nil {
+			return ProjectedView{}, fmt.Errorf("build workload index for reality overlay: %w", err)
+		}
+		workloadIndex = idx
+		columns = append(columns, realityColumns()...)
+	}
+
+	rows := make([]projectionRow, 0, len(units))
+	for _, u := range units {
+		row := make(projectionRow, len(columns))
+		for _, col := range columns {
+			if isRealityColumn(col.Name) {
+				continue // synthetic — filled below if reality is enabled
+			}
+			cell, _ := col.evalCell(u)
+			row[col.Name] = cell
+		}
+		if workloadIndex != nil {
+			slug := readStringField(u, "slug")
+			applied, status := computeRealityCells(slug, workloadIndex)
+			row["Applied?"] = applied
+			row["LiveStatus"] = status
+		}
+		rows = append(rows, row)
+	}
+
+	return ProjectedView{
+		UUID:    ref.UUID,
+		Space:   space,
+		Columns: columns,
+		Rows:    rows,
+	}, nil
+}
+
+func runViewsProject(cmd *cobra.Command, args []string) error {
+	format := strings.ToLower(strings.TrimSpace(viewsProjectFormat))
+	if format == "" {
+		format = "table"
+	}
+	if format != "table" && format != "json" {
+		return fmt.Errorf("invalid --format %q (valid: table, json)", viewsProjectFormat)
+	}
+
+	ref, err := agent.ParseViewRef(args[0])
+	if err != nil {
+		return fmt.Errorf("parse view reference: %w", err)
+	}
+
+	if hub.QuickMode() != hub.Connected {
+		return fmt.Errorf("views project requires ConfigHub authentication (run `cub auth login` or set CONFIGHUB_API_KEY)")
+	}
+
+	pv, err := buildProjectedView(cmd.Context(), ref, viewsProjectSpace, viewsProjectWithReality)
+	if err != nil {
+		return err
+	}
+
+	switch format {
+	case "json":
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		enc.SetEscapeHTML(false)
+		return enc.Encode(pv)
+	default:
+		return renderProjectionTable(os.Stdout, pv)
+	}
+}
+
+// renderProjectionTable writes the projected View as a fixed-width
+// ASCII table. Columns are sized to fit the widest cell (header or
+// any row value), capped at 64 chars to keep wide JSON-encoded values
+// from blowing out the terminal.
+func renderProjectionTable(w io.Writer, pv ProjectedView) error {
+	if len(pv.Columns) == 0 {
+		fmt.Fprintf(w, "view %s: no columns to project\n", pv.UUID)
+		return nil
+	}
+
+	widths := make([]int, len(pv.Columns))
+	for i, c := range pv.Columns {
+		widths[i] = len(c.Name)
+	}
+	for _, row := range pv.Rows {
+		for i, c := range pv.Columns {
+			if l := len(row[c.Name]); l > widths[i] {
+				widths[i] = l
+			}
+		}
+	}
+	for i, w := range widths {
+		if w > 64 {
+			widths[i] = 64
+		}
+	}
+
+	// Header
+	for i, c := range pv.Columns {
+		if i > 0 {
+			fmt.Fprint(w, "  ")
+		}
+		fmt.Fprintf(w, "%-*s", widths[i], truncateCell(c.Name, widths[i]))
+	}
+	fmt.Fprintln(w)
+	// Separator
+	for i, width := range widths {
+		if i > 0 {
+			fmt.Fprint(w, "  ")
+		}
+		fmt.Fprint(w, strings.Repeat("-", width))
+	}
+	fmt.Fprintln(w)
+	// Rows
+	for _, row := range pv.Rows {
+		for i, c := range pv.Columns {
+			if i > 0 {
+				fmt.Fprint(w, "  ")
+			}
+			fmt.Fprintf(w, "%-*s", widths[i], truncateCell(row[c.Name], widths[i]))
+		}
+		fmt.Fprintln(w)
+	}
+	if len(pv.Rows) == 0 {
+		fmt.Fprintln(w, "(no matching units)")
+	}
+	return nil
+}
+
+func truncateCell(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	if max < 4 {
+		return s[:max]
+	}
+	return s[:max-3] + "..."
+}
+
+// realityColumns returns the synthetic column specs appended to a
+// `views project` projection when --with-reality is set. Names match
+// the issue's framing (#391 scope #3).
+//
+// v0.1 of the overlay ships Applied? and LiveStatus only. Drift and
+// Orphan? are deferred — see the file header in views.go for the
+// scope rationale.
+func realityColumns() []ViewColumnSpec {
+	return []ViewColumnSpec{
+		{Name: "Applied?"},
+		{Name: "LiveStatus"},
+	}
+}
+
+// isRealityColumn reports whether a column name is one of the
+// synthetic reality columns. Used in row rendering to skip the
+// MetadataAttribute eval path for these columns (they're filled
+// from the workload index, not the unit JSON).
+func isRealityColumn(name string) bool {
+	return name == "Applied?" || name == "LiveStatus"
+}
+
+// buildWorkloadIndexFn is the testability seam for the reality
+// overlay. Production walks the cluster via the existing helpers;
+// tests inject a prefab map.
+var buildWorkloadIndexFn = buildWorkloadIndexFromCluster
+
+// buildWorkloadIndexFromCluster discovers all namespaces with
+// workloads, lists each namespace's workloads, and returns the
+// slug→workload index. Workloads without a UnitSlug label are
+// excluded — they're not joinable to the View's unit set.
+//
+// Single-cluster scope is the assumed mode (cub-scout's default).
+// Multi-cluster overlays are not in scope; the index reflects only
+// the current kubeconfig context.
+func buildWorkloadIndexFromCluster() (map[string]WorkloadInfo, error) {
+	namespaces, err := discoverNamespacesWithWorkloads()
+	if err != nil {
+		return nil, fmt.Errorf("discover namespaces: %w", err)
+	}
+	index := make(map[string]WorkloadInfo)
+	for _, ns := range namespaces {
+		workloads, err := discoverWorkloads(ns)
+		if err != nil {
+			return nil, fmt.Errorf("discover workloads in %s: %w", ns, err)
+		}
+		for _, w := range workloads {
+			if w.UnitSlug == "" {
+				continue
+			}
+			// First wins: if the same slug appears in multiple
+			// namespaces (split-deploy or migration mid-flight), the
+			// first one parsed is good enough for v0.1. Multi-target
+			// rendering can be a follow-up.
+			if _, exists := index[w.UnitSlug]; !exists {
+				index[w.UnitSlug] = w
+			}
+		}
+	}
+	return index, nil
+}
+
+// computeRealityCells returns the rendered Applied? and LiveStatus
+// strings for a single unit. When the unit has no matching live
+// workload, both cells reflect the "not applied" state honestly
+// rather than emitting empty strings — silent absence reads as a
+// bug, explicit "no" reads as a fact.
+func computeRealityCells(slug string, index map[string]WorkloadInfo) (applied, status string) {
+	if slug == "" {
+		return "?", "(no slug)"
+	}
+	w, ok := index[slug]
+	if !ok {
+		return "no", "(not applied)"
+	}
+	if w.Ready {
+		return "yes", "Ready"
+	}
+	return "yes", "NotReady"
+}
