@@ -326,6 +326,7 @@ func controllerSurfaceFromArgo(ctx context.Context, kind, name, namespace string
 		Source:           strings.TrimSpace(firstNonEmpty(root.URL, root.Kind)),
 		RevisionOrDigest: strings.TrimSpace(root.Revision),
 		Health:           controllerHealthLabel(root.Ready, root.Status),
+		MultiSource:      res.MultiSource,
 	}
 }
 

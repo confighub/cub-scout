@@ -19,7 +19,7 @@ test/fixtures/source-truth/
 │   └── expected.json   exact byte-equal SourceTruthEvidence output
 ```
 
-## What this covers (8 fixtures)
+## What this covers (9 fixtures)
 
 | # | Strategy | Verdict | Council case |
 |---|---|---|---|
@@ -31,6 +31,7 @@ test/fixtures/source-truth/
 | 06 | (empty) | `ASK` / `UNKNOWN` | empty strategy short-circuits to ASK |
 | 07 | `git-argo` | `BLOCK` / `MISMATCH` outlier=controller | **v0.2** cross-surface mismatch — controller and runtime image tag carry different SHAs |
 | 08 | `git-flux` | `WATCH` / `INCOMPLETE` proof_gap=`runtime.commit_sha_anchor` | **v0.2** runtime image has a semver tag with no SHA segment — equality unverifiable |
+| 09 | `git-argo` | `WATCH` / `INCOMPLETE` proof_gap=`controller.multi_source` | **v0.2 Phase 3** Argo Application has multiple sources; equality across un-parsed sources is unverifiable regardless of strategy |
 
 ## Adding a fixture
 

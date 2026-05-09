@@ -56,6 +56,12 @@ type TraceResult struct {
 	// "explicit" = ownerReference, "inferred" = label/annotation match.
 	LineageConfidence string `json:"lineageConfidence,omitempty"`
 
+	// MultiSource is true when the controller declares multiple sources (e.g.
+	// Argo CD's spec.sources[] with len > 1). cub-scout only parses the first
+	// source today; downstream consumers (#409 Phase 3) treat this as an
+	// equality proof gap.
+	MultiSource bool `json:"multiSource,omitempty"`
+
 	// Secrets contains evidence about secrets referenced by the traced resource.
 	// Only populated for workloads (Deployment, StatefulSet, DaemonSet, Pod) and
 	// Flux sources/deployers. Does NOT expose secret data, only safe metadata.

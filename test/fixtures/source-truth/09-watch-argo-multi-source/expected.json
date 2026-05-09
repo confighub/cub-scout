@@ -1,0 +1,30 @@
+{
+  "declared_strategy": "Git -> Argo -> Kubernetes",
+  "status": "WATCH",
+  "source_truth": "INCOMPLETE",
+  "outlier": "unknown",
+  "surfaces": {
+    "confighub": {
+      "space": "demo",
+      "unit": "rag-server",
+      "revision": "47"
+    },
+    "controller": {
+      "kind": "Argo",
+      "source": "https://github.com/example/rag-deploy",
+      "revision_or_digest": "abc123def456",
+      "health": "Synced/Healthy",
+      "multi_source": true
+    },
+    "runtime": {
+      "resource": "Deployment/rag-server in demo",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "ghcr.io/example/rag:v1.2.3-abc123de",
+      "health": "Current"
+    }
+  },
+  "proof_gaps": [
+    "controller.multi_source"
+  ],
+  "safe_next_action": "Read-only diagnostic: confirm the missing fields (controller.multi_source) before acceptance."
+}

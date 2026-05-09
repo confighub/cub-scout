@@ -1356,8 +1356,10 @@ plus strategy-relative correctness) until the ConfigHub-side field exists.
 
 Other known v0.2 gaps:
 - **Multi-source Argo Applications** (`spec.sources[]`, plural): only the
-  first source is parsed. Multi-source apps will be flagged with an
-  explicit proof gap in a follow-up.
+  first source is parsed. Detected and surfaced via
+  `proof_gaps: ["controller.multi_source"]` (#409 Phase 3) — the verdict
+  is always `WATCH` / `INCOMPLETE` regardless of strategy, because
+  equality across un-parsed sources is unverifiable.
 - Runtime kinds in v0.2: `Deployment`, `StatefulSet`, `DaemonSet`. Other
   kinds emit a `BLOCK` with the reason naming the unsupported kind.
 

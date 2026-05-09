@@ -199,6 +199,17 @@ type argoOwnerRef struct {
 	Controller *bool  `json:"controller,omitempty"`
 }
 
+// argoSource is one entry in spec.source (singular) or spec.sources (plural).
+// Argo CD ≥ v2.6 supports multi-source Applications via spec.sources[]; older
+// apps use spec.source. Both shapes are parsed into argoSource so the rest of
+// the tracer is shape-agnostic.
+type argoSource struct {
+	RepoURL        string `json:"repoURL"`
+	Path           string `json:"path"`
+	TargetRevision string `json:"targetRevision"`
+	Chart          string `json:"chart"`
+}
+
 // argoApp represents the structure of argocd app get output
 type argoApp struct {
 	Metadata struct {
@@ -209,12 +220,8 @@ type argoApp struct {
 		OwnerReferences []argoOwnerRef    `json:"ownerReferences,omitempty"`
 	} `json:"metadata"`
 	Spec struct {
-		Source struct {
-			RepoURL        string `json:"repoURL"`
-			Path           string `json:"path"`
-			TargetRevision string `json:"targetRevision"`
-			Chart          string `json:"chart"`
-		} `json:"source"`
+		Source  argoSource   `json:"source"`
+		Sources []argoSource `json:"sources,omitempty"`
 		Destination struct {
 			Server    string `json:"server"`
 			Namespace string `json:"namespace"`
@@ -260,6 +267,17 @@ func (a *ArgoTracer) parseAppOutput(data []byte, appName, namespace string) (*Tr
 		return nil, fmt.Errorf("parse argocd output: %w", err)
 	}
 
+	// Argo CD ≥ v2.6 supports spec.sources[] (plural). For single-source apps
+	// expressed as a one-element array, copy Sources[0] into Source so the rest
+	// of the parser is shape-agnostic. For multi-source apps (len > 1) we still
+	// pick the first source for the chain link, but flag the result so #409's
+	// equality logic emits an explicit "controller.multi_source" proof gap —
+	// cub-scout cannot honestly assert equality across sources it didn't parse.
+	if app.Spec.Source.RepoURL == "" && len(app.Spec.Sources) > 0 {
+		app.Spec.Source = app.Spec.Sources[0]
+	}
+	multiSource := len(app.Spec.Sources) > 1
+
 	result := &TraceResult{
 		Object: ResourceRef{
 			Kind:      "Application",
@@ -270,6 +288,7 @@ func (a *ArgoTracer) parseAppOutput(data []byte, appName, namespace string) (*Tr
 		FullyManaged: true,
 		Tool:         "argocd",
 		TracedAt:     time.Now(),
+		MultiSource:  multiSource,
 	}
 
 	sourceSync := strings.TrimSpace(app.Status.Sync.Status)
