@@ -117,8 +117,8 @@ As of 2026-05-08, these areas are fully or materially shipped:
 Verify live state before acting, but the current open follow-ons are (2026-05-09):
 
 - `#391` — Views integration. Scope #1 (`--view` on `compare three-way`) shipped in #414. Remaining: scope #2 (View column projection in TUI Hub view), scope #3 (reality overlay composing View columns with source-truth verdicts — now unblocked).
-- `#409` — source-truth v0.2 cross-surface revision equality. Design pre-baked. Prerequisite to verify: does `cub unit get -o json` expose the rendered digest per unit revision? If not, file cross-repo before implementing.
-- **Triad violation in `remedy.go`** — `cmd/cub-scout/remedy.go` uses "execute remediation" / "fix" verbs. Genuine architectural violation; needs deletion or defanging.
+- `#409` — source-truth v0.2 cross-surface revision equality. Design pre-baked, plus a [strategy-shape comment](https://github.com/confighub/cub-scout/issues/409#issuecomment-4411862418) with phased Phase 1/2/3 plan. Phase 1 = four existing strategies; Phase 2 = enum expansion; Phase 3 = multi-source Argo. Prerequisite to verify: does `cub unit get -o json` expose the rendered digest per unit revision?
+- `#410` — Triad-compliance audit (HIGH). Real violation: `cmd/cub-scout/remedy.go` actually executes `kubectl apply`/`delete` via `executor.Execute`. Discussion ticket — decide remove / rename / hide-behind-flag before code change.
 - `#392` — Initiatives compliance overlay; **deferred** until ConfigHub side exposes Initiative as an addressable backend primitive. Design doc at `docs/howto/initiatives-integration-when-ready.md` is ready to consume the day the prerequisite lands.
 - `confighubai/confighub#4356` — cross-repo dependency for the ArgoCDOCI Helm-source shape symptom classifier in `compare source-truth`.
 - `confighub-ai-demo#264` — Pilot consumer-side fixtures (paired with cub-scout #395 + future #409 fixtures).
