@@ -45,6 +45,14 @@ func buildMCPStructuredContent(toolName, output string) interface{} {
 	switch toolName {
 	case "compare_three_way":
 		return mcpWrapStructuredData(payload)
+	case "compare_source_truth":
+		// Source-truth's JSON already carries the architectural triad's
+		// fields (declared_strategy, status, source_truth, outlier,
+		// surfaces, proof_gaps, safe_next_action) at the top level. Wrap
+		// the payload under `data` so MCP consumers see it via the same
+		// envelope shape as compare_three_way; downstream agents can
+		// read evidence directly without re-parsing the text content.
+		return mcpWrapStructuredData(payload)
 	case "confighub_units":
 		return buildMCPUnitsStructuredContent(payload)
 	case "confighub_unit_get":

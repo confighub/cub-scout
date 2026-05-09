@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -35,6 +36,7 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 	}
 
 	want := []string{
+		"compare_source_truth",
 		"compare_three_way",
 		"confighub_changesets",
 		"confighub_unit_get",
@@ -96,6 +98,7 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		contains []string
 	}{
 		{name: "compare_three_way", contains: []string{"governed state agrees with live state", "Load after doctor, explain, or trace", "use doctor first"}},
+		{name: "compare_source_truth", contains: []string{"EVIDENCE", "single workload", "REQUIRED input", "never inferred", "DO NOT use this tool to approve, repair, or accept", "Load after doctor, explain, or compare_three_way", "use doctor first"}},
 		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "Use before explain, trace, or scan"}},
 		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
 		{name: "scan", contains: []string{"Use AFTER doctor", "awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"}},
@@ -396,6 +399,152 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareThreeWay(t *testing.T) {
 	}
 	if _, ok := result.StructuredContent.Data["agreement"]; !ok {
 		t.Fatalf("expected structuredContent.data to include parsed compare JSON, got %+v", result.StructuredContent.Data)
+	}
+}
+
+// TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth proves the
+// new connected-mode tool registration. The args BuildArgs produces
+// must match cub-scout's CLI surface byte-for-byte (so the MCP-driven
+// invocation and a hand-typed CLI invocation produce identical
+// output), and the structuredContent envelope must wrap the source-
+// truth JSON under `data` so agents can read evidence directly without
+// re-parsing the text content.
+func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
+	var gotStandaloneArgs []string
+
+	// Synthetic source-truth payload that mirrors the contract types in
+	// pkg/agent/source_truth.go. Field names must match exactly, since
+	// the structuredContent wrapper just hands the parsed JSON back.
+	const syntheticPayload = `{
+		"declared_strategy": "ConfigHub -> OCI -> Flux -> Kubernetes",
+		"status": "PASS",
+		"source_truth": "AGREED",
+		"outlier": "unknown",
+		"surfaces": {
+			"confighub":  {"space":"demo","unit":"rag-server","revision":"47"},
+			"controller": {"kind":"Flux","source":"oci://oci.confighub.com/demo/rag-server","revision_or_digest":"sha256:abc","health":"Ready"},
+			"runtime":    {"resource":"Deployment/rag-server in demo","field":"spec.template.spec.containers[0].image","value":"oci.confighub.com/demo/rag-server@sha256:abc","health":"Current"}
+		}
+	}`
+
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			gotStandaloneArgs = append([]string(nil), args...)
+			return syntheticPayload, nil
+		},
+		nil,
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`12.1`),
+		Method:  "tools/call",
+		Params: json.RawMessage(`{
+			"name":"compare_source_truth",
+			"arguments":{
+				"target":"Deployment/rag-server",
+				"namespace":"demo",
+				"strategy":"confighub-oci-flux"
+			}
+		}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	wantStandalone := []string{
+		"compare", "source-truth", "Deployment/rag-server",
+		"-n", "demo",
+		"--strategy", "confighub-oci-flux",
+		"--format", "json",
+	}
+	if !reflect.DeepEqual(gotStandaloneArgs, wantStandalone) {
+		t.Fatalf("standalone args = %v, want %v", gotStandaloneArgs, wantStandalone)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			Data map[string]interface{} `json:"data"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+
+	// Source-truth's contract fields must round-trip through the
+	// structuredContent envelope under `data`. Spot-check the three
+	// council-anchored fields plus the strategy-rendered string.
+	for _, want := range []string{"declared_strategy", "status", "source_truth", "outlier", "surfaces"} {
+		if _, ok := result.StructuredContent.Data[want]; !ok {
+			gotKeys := make([]string, 0, len(result.StructuredContent.Data))
+			for k := range result.StructuredContent.Data {
+				gotKeys = append(gotKeys, k)
+			}
+			sort.Strings(gotKeys)
+			t.Errorf("structuredContent.data missing field %q (got keys: %v)", want, gotKeys)
+		}
+	}
+	if got := result.StructuredContent.Data["status"]; got != "PASS" {
+		t.Errorf("status field = %v, want PASS", got)
+	}
+}
+
+// TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruthValidationError
+// exercises the BuildArgs validation path — every required argument
+// (target, namespace, strategy) must produce a clear error before the
+// runner is ever called. Mirrors the compare_three_way validation
+// test below.
+func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruthValidationError(t *testing.T) {
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			t.Fatal("runner should not be called for validation error")
+			return "", nil
+		},
+		nil,
+		true,
+	)
+
+	cases := []struct {
+		name string
+		args string
+	}{
+		{name: "missing all", args: `{}`},
+		{name: "missing namespace+strategy", args: `{"target":"Deployment/x"}`},
+		{name: "missing strategy", args: `{"target":"Deployment/x","namespace":"demo"}`},
+		{name: "missing target", args: `{"namespace":"demo","strategy":"confighub-oci-flux"}`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := mcpRequest{
+				JSONRPC: "2.0",
+				ID:      json.RawMessage(`12.2`),
+				Method:  "tools/call",
+				Params:  json.RawMessage(`{"name":"compare_source_truth","arguments":` + tc.args + `}`),
+			}
+			resp := gateway.handleRequest(context.Background(), req)
+			if resp == nil {
+				t.Fatal("response is nil")
+			}
+			// Validation errors come back through the result envelope
+			// as isError=true, not as JSON-RPC errors — the gateway
+			// uses mcpToolError for tool-level failures.
+			var result struct {
+				IsError bool `json:"isError"`
+			}
+			if err := marshalInto(resp.Result, &result); err != nil {
+				t.Fatalf("decode result: %v", err)
+			}
+			if !result.IsError {
+				t.Fatalf("expected isError=true for %s, got %+v", tc.name, resp.Result)
+			}
+		})
 	}
 }
 

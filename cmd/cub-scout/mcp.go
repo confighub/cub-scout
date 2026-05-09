@@ -351,6 +351,57 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				return args, nil
 			},
 		}
+		tools["compare_source_truth"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name: "compare_source_truth",
+				// The description is deliberate about the architectural triad:
+				// this tool emits *evidence*, not an acceptance verdict. Pilot
+				// (or any agent) layers acceptance on top. Wording must never
+				// imply that the tool can approve, repair, or mutate.
+				Description: "Connected-only read-only source-truth EVIDENCE document for a single workload (compare source-truth --format json). Joins ConfigHub intent, the GitOps controller's observed source/revision/digest, and the live runtime into one structured verdict relative to a declared delivery strategy. Use when the user asks 'is this workload's source of truth consistent end-to-end?' or 'where is the disagreement between ConfigHub, the controller, and the cluster?'. Strategy is REQUIRED input — never inferred — and the contract refuses to emit PASS when any source/digest/runtime field is missing. Load after doctor, explain, or compare_three_way has identified the workload you care about. DO NOT use this tool to approve, repair, or accept anything; it produces evidence only, and acceptance is a Pilot/operator decision. DO NOT load for first-pass cluster troubleshooting; use doctor first.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"target": map[string]interface{}{
+							"type":        "string",
+							"description": "Workload reference in `kind/name` form (e.g. `Deployment/rag-server`). Supported kinds in v0.1: Deployment, StatefulSet, DaemonSet.",
+						},
+						"namespace": map[string]interface{}{
+							"type":        "string",
+							"description": "Required Kubernetes namespace of the workload.",
+						},
+						"strategy": map[string]interface{}{
+							"type":        "string",
+							"description": "Declared delivery path. Required, never inferred. One of: confighub-oci-argo, confighub-oci-flux, git-argo, git-flux.",
+							"enum":        []string{"confighub-oci-argo", "confighub-oci-flux", "git-argo", "git-flux"},
+						},
+					},
+					"required":             []string{"target", "namespace", "strategy"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				target := argString(arguments, "target")
+				if target == "" {
+					return nil, fmt.Errorf("missing required argument: target")
+				}
+				namespace := argString(arguments, "namespace")
+				if namespace == "" {
+					return nil, fmt.Errorf("missing required argument: namespace")
+				}
+				strategy := argString(arguments, "strategy")
+				if strategy == "" {
+					return nil, fmt.Errorf("missing required argument: strategy")
+				}
+				return []string{
+					"compare", "source-truth", target,
+					"-n", namespace,
+					"--strategy", strategy,
+					"--format", "json",
+				}, nil
+			},
+		}
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_changesets",
