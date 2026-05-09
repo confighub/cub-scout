@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 // fakeProjectionRunner builds a viewCubRunner that maps argument-substring
@@ -235,6 +237,183 @@ func TestListUnitsForFilter_ParsesUnitMetadata(t *testing.T) {
 	if labels["env"] != "prod" {
 		t.Errorf("units[0].labels.env = %v, want prod", labels["env"])
 	}
+}
+
+// installFakeWorkloadIndex swaps the buildWorkloadIndexFn seam for the
+// test duration so reality-overlay tests don't need a real cluster
+// (#391 scope #3).
+func installFakeWorkloadIndex(t *testing.T, index map[string]WorkloadInfo) {
+	t.Helper()
+	orig := buildWorkloadIndexFn
+	buildWorkloadIndexFn = func() (map[string]WorkloadInfo, error) {
+		return index, nil
+	}
+	t.Cleanup(func() { buildWorkloadIndexFn = orig })
+}
+
+// fakeViewWithColumns builds a minimal `cub view get` JSON blob with
+// both Filter.Where and Columns populated.
+func fakeViewWithColumns(uuid, whereClause string, columns []map[string]interface{}) string {
+	cols := make([]interface{}, len(columns))
+	for i, c := range columns {
+		cols[i] = c
+	}
+	view := map[string]interface{}{
+		"UUID": uuid,
+		"Filter": map[string]interface{}{
+			"Where": whereClause,
+		},
+		"Columns": cols,
+	}
+	b, _ := json.Marshal(view)
+	return string(b)
+}
+
+// fakeUnitListJSONFromMaps returns a `cub unit list -o json` blob
+// from arbitrary metadata maps. (Distinct from the slug-only helper
+// in compare_three_way_view_test.go.)
+func fakeUnitListJSONFromMaps(units []map[string]interface{}) string {
+	b, _ := json.Marshal(units)
+	return string(b)
+}
+
+// TestComputeRealityCells covers the four states of the synthetic
+// columns: applied + Ready, applied + NotReady, not applied, no slug.
+func TestComputeRealityCells(t *testing.T) {
+	index := map[string]WorkloadInfo{
+		"payment-api":  {UnitSlug: "payment-api", Ready: true, Kind: "Deployment", Name: "payment-api"},
+		"checkout-svc": {UnitSlug: "checkout-svc", Ready: false, Kind: "Deployment", Name: "checkout-svc"},
+	}
+
+	cases := []struct {
+		slug        string
+		wantApplied string
+		wantStatus  string
+	}{
+		{"payment-api", "yes", "Ready"},
+		{"checkout-svc", "yes", "NotReady"},
+		{"orphan-unit", "no", "(not applied)"},
+		{"", "?", "(no slug)"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.slug, func(t *testing.T) {
+			gotApplied, gotStatus := computeRealityCells(tc.slug, index)
+			if gotApplied != tc.wantApplied {
+				t.Errorf("Applied? for %q = %q, want %q", tc.slug, gotApplied, tc.wantApplied)
+			}
+			if gotStatus != tc.wantStatus {
+				t.Errorf("LiveStatus for %q = %q, want %q", tc.slug, gotStatus, tc.wantStatus)
+			}
+		})
+	}
+}
+
+// TestBuildProjectedView_WithReality exercises the full overlay
+// flow: fetch view, list units, build workload index, append
+// synthetic columns. Uses both fake seams (cubRunner + workload
+// index).
+func TestBuildProjectedView_WithReality(t *testing.T) {
+	const viewUUID = "806aac53-236c-446d-8ad6-91d6daf6810e"
+	const whereClause = "metadata.labels.team = 'payments'"
+
+	fakeProjectionRunner(t, map[string]string{
+		"view get " + viewUUID: fakeViewWithColumns(viewUUID, whereClause, []map[string]interface{}{
+			{
+				"Name": "Slug",
+				"ColumnSource": map[string]interface{}{
+					"MetadataAttribute": "slug",
+				},
+			},
+		}),
+		"unit list": fakeUnitListJSONFromMaps([]map[string]interface{}{
+			{"slug": "payment-api"},
+			{"slug": "checkout-svc"},
+			{"slug": "future-unit"}, // declared in ConfigHub, not yet applied
+		}),
+	})
+
+	installFakeWorkloadIndex(t, map[string]WorkloadInfo{
+		"payment-api":  {UnitSlug: "payment-api", Ready: true},
+		"checkout-svc": {UnitSlug: "checkout-svc", Ready: false},
+		// future-unit intentionally absent — overlay marks unapplied
+	})
+
+	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", true)
+	if err != nil {
+		t.Fatalf("buildProjectedView failed: %v", err)
+	}
+
+	// Columns should include the synthetic reality columns at the end.
+	gotColNames := make([]string, len(pv.Columns))
+	for i, c := range pv.Columns {
+		gotColNames[i] = c.Name
+	}
+	want := []string{"Slug", "Applied?", "LiveStatus"}
+	for i, w := range want {
+		if i >= len(gotColNames) || gotColNames[i] != w {
+			t.Errorf("columns = %v, want prefix %v", gotColNames, want)
+			break
+		}
+	}
+
+	if len(pv.Rows) != 3 {
+		t.Fatalf("expected 3 rows, got %d", len(pv.Rows))
+	}
+	bySlug := map[string]projectionRow{}
+	for _, r := range pv.Rows {
+		bySlug[r["Slug"]] = r
+	}
+	if bySlug["payment-api"]["Applied?"] != "yes" || bySlug["payment-api"]["LiveStatus"] != "Ready" {
+		t.Errorf("payment-api row = %v", bySlug["payment-api"])
+	}
+	if bySlug["checkout-svc"]["Applied?"] != "yes" || bySlug["checkout-svc"]["LiveStatus"] != "NotReady" {
+		t.Errorf("checkout-svc row = %v", bySlug["checkout-svc"])
+	}
+	if bySlug["future-unit"]["Applied?"] != "no" || bySlug["future-unit"]["LiveStatus"] != "(not applied)" {
+		t.Errorf("future-unit row = %v", bySlug["future-unit"])
+	}
+}
+
+// TestBuildProjectedView_WithoutReality verifies the default does
+// NOT call the workload-index helper and does NOT add synthetic
+// columns. Locks in the opt-in behaviour.
+func TestBuildProjectedView_WithoutReality(t *testing.T) {
+	const viewUUID = "806aac53-236c-446d-8ad6-91d6daf6810e"
+	fakeProjectionRunner(t, map[string]string{
+		"view get " + viewUUID: fakeViewWithColumns(viewUUID, "metadata.labels.x = 'y'", []map[string]interface{}{
+			{"Name": "Slug", "ColumnSource": map[string]interface{}{"MetadataAttribute": "slug"}},
+		}),
+		"unit list": fakeUnitListJSONFromMaps([]map[string]interface{}{
+			{"slug": "payment-api"},
+		}),
+	})
+
+	called := false
+	orig := buildWorkloadIndexFn
+	buildWorkloadIndexFn = func() (map[string]WorkloadInfo, error) {
+		called = true
+		return nil, nil
+	}
+	t.Cleanup(func() { buildWorkloadIndexFn = orig })
+
+	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", false)
+	if err != nil {
+		t.Fatalf("buildProjectedView failed: %v", err)
+	}
+	if called {
+		t.Error("buildWorkloadIndexFn was called even without --with-reality")
+	}
+	for _, c := range pv.Columns {
+		if isRealityColumn(c.Name) {
+			t.Errorf("synthetic column %q present without --with-reality", c.Name)
+		}
+	}
+}
+
+// mockViewRef is a small helper to construct an agent.ViewRef value
+// for tests (the real one is built by ParseViewRef on user input).
+func mockViewRef(uuid string) *agent.ViewRef {
+	return &agent.ViewRef{UUID: uuid, SourceForm: agent.ViewRefUUID}
 }
 
 // TestProjectedViewJSON_RoundTrip locks in the JSON contract shape so

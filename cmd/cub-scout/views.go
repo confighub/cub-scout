@@ -43,11 +43,12 @@ import (
 )
 
 var (
-	viewsResolveFormat string
-	viewsResolveSpace  string
-	viewsOpenPrintOnly bool
-	viewsProjectFormat string
-	viewsProjectSpace  string
+	viewsResolveFormat       string
+	viewsResolveSpace        string
+	viewsOpenPrintOnly       bool
+	viewsProjectFormat       string
+	viewsProjectSpace        string
+	viewsProjectWithReality  bool
 )
 
 var viewsCmd = &cobra.Command{
@@ -97,6 +98,7 @@ func init() {
 	viewsOpenCmd.Flags().BoolVar(&viewsOpenPrintOnly, "print", false, "Print the View Explorer URL to stdout instead of opening the browser (useful for scripts and headless environments)")
 	viewsProjectCmd.Flags().StringVar(&viewsProjectFormat, "format", "table", "Output format: table, json")
 	viewsProjectCmd.Flags().StringVar(&viewsProjectSpace, "space", "*", "Space to search. Defaults to org-wide ('*')")
+	viewsProjectCmd.Flags().BoolVar(&viewsProjectWithReality, "with-reality", false, "Append synthetic columns (Applied?, LiveStatus) computed from the live cluster (#391 scope #3)")
 }
 
 // ResolvedView is the JSON contract `views resolve` emits. Future
@@ -545,6 +547,80 @@ type ProjectedView struct {
 	Rows    []projectionRow  `json:"rows"`
 }
 
+// buildProjectedView is the pure (no-stdout, no-connected-mode-gate)
+// projection builder. runViewsProject wraps this for CLI use; tests
+// call this directly so they can assert on the structured output
+// without a stdout dance.
+func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, withReality bool) (ProjectedView, error) {
+	view, err := fetchView(ctx, ref.UUID, space)
+	if err != nil {
+		return ProjectedView{}, fmt.Errorf("fetch view: %w", err)
+	}
+
+	whereClause, err := extractWhereClause(view)
+	if err != nil {
+		return ProjectedView{}, fmt.Errorf("extract filter from view: %w", err)
+	}
+	if whereClause == "" {
+		return ProjectedView{}, fmt.Errorf("view %s has no Where filter — cannot project", ref.UUID)
+	}
+
+	columns, err := extractColumnsSpec(view)
+	if err != nil {
+		return ProjectedView{}, fmt.Errorf("extract columns from view: %w", err)
+	}
+	if len(columns) == 0 {
+		// Fallback: minimal default projection so the command always
+		// produces something useful for Views that omit Columns.
+		columns = []ViewColumnSpec{{Name: "Slug", MetadataAttribute: "slug"}}
+	}
+
+	units, err := listUnitsForFilter(ctx, whereClause, space)
+	if err != nil {
+		return ProjectedView{}, fmt.Errorf("list units for view filter: %w", err)
+	}
+
+	// #391 scope #3 (reality overlay): when withReality is set, build a
+	// slug→workload index of the live cluster and append synthetic columns
+	// (Applied?, LiveStatus) the web View Explorer cannot show. The View
+	// supplies the schema; cub-scout joins in cluster truth.
+	var workloadIndex map[string]WorkloadInfo
+	if withReality {
+		idx, err := buildWorkloadIndexFn()
+		if err != nil {
+			return ProjectedView{}, fmt.Errorf("build workload index for reality overlay: %w", err)
+		}
+		workloadIndex = idx
+		columns = append(columns, realityColumns()...)
+	}
+
+	rows := make([]projectionRow, 0, len(units))
+	for _, u := range units {
+		row := make(projectionRow, len(columns))
+		for _, col := range columns {
+			if isRealityColumn(col.Name) {
+				continue // synthetic — filled below if reality is enabled
+			}
+			cell, _ := col.evalCell(u)
+			row[col.Name] = cell
+		}
+		if workloadIndex != nil {
+			slug := readStringField(u, "slug")
+			applied, status := computeRealityCells(slug, workloadIndex)
+			row["Applied?"] = applied
+			row["LiveStatus"] = status
+		}
+		rows = append(rows, row)
+	}
+
+	return ProjectedView{
+		UUID:    ref.UUID,
+		Space:   space,
+		Columns: columns,
+		Rows:    rows,
+	}, nil
+}
+
 func runViewsProject(cmd *cobra.Command, args []string) error {
 	format := strings.ToLower(strings.TrimSpace(viewsProjectFormat))
 	if format == "" {
@@ -563,49 +639,9 @@ func runViewsProject(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("views project requires ConfigHub authentication (run `cub auth login` or set CONFIGHUB_API_KEY)")
 	}
 
-	view, err := fetchView(cmd.Context(), ref.UUID, viewsProjectSpace)
+	pv, err := buildProjectedView(cmd.Context(), ref, viewsProjectSpace, viewsProjectWithReality)
 	if err != nil {
-		return fmt.Errorf("fetch view: %w", err)
-	}
-
-	whereClause, err := extractWhereClause(view)
-	if err != nil {
-		return fmt.Errorf("extract filter from view: %w", err)
-	}
-	if whereClause == "" {
-		return fmt.Errorf("view %s has no Where filter — cannot project", ref.UUID)
-	}
-
-	columns, err := extractColumnsSpec(view)
-	if err != nil {
-		return fmt.Errorf("extract columns from view: %w", err)
-	}
-	if len(columns) == 0 {
-		// Fallback: minimal default projection so the command always
-		// produces something useful for Views that omit Columns.
-		columns = []ViewColumnSpec{{Name: "Slug", MetadataAttribute: "slug"}}
-	}
-
-	units, err := listUnitsForFilter(cmd.Context(), whereClause, viewsProjectSpace)
-	if err != nil {
-		return fmt.Errorf("list units for view filter: %w", err)
-	}
-
-	rows := make([]projectionRow, 0, len(units))
-	for _, u := range units {
-		row := make(projectionRow, len(columns))
-		for _, col := range columns {
-			cell, _ := col.evalCell(u)
-			row[col.Name] = cell
-		}
-		rows = append(rows, row)
-	}
-
-	pv := ProjectedView{
-		UUID:    ref.UUID,
-		Space:   viewsProjectSpace,
-		Columns: columns,
-		Rows:    rows,
+		return err
 	}
 
 	switch format {
@@ -686,4 +722,85 @@ func truncateCell(s string, max int) string {
 		return s[:max]
 	}
 	return s[:max-3] + "..."
+}
+
+// realityColumns returns the synthetic column specs appended to a
+// `views project` projection when --with-reality is set. Names match
+// the issue's framing (#391 scope #3).
+//
+// v0.1 of the overlay ships Applied? and LiveStatus only. Drift and
+// Orphan? are deferred — see the file header in views.go for the
+// scope rationale.
+func realityColumns() []ViewColumnSpec {
+	return []ViewColumnSpec{
+		{Name: "Applied?"},
+		{Name: "LiveStatus"},
+	}
+}
+
+// isRealityColumn reports whether a column name is one of the
+// synthetic reality columns. Used in row rendering to skip the
+// MetadataAttribute eval path for these columns (they're filled
+// from the workload index, not the unit JSON).
+func isRealityColumn(name string) bool {
+	return name == "Applied?" || name == "LiveStatus"
+}
+
+// buildWorkloadIndexFn is the testability seam for the reality
+// overlay. Production walks the cluster via the existing helpers;
+// tests inject a prefab map.
+var buildWorkloadIndexFn = buildWorkloadIndexFromCluster
+
+// buildWorkloadIndexFromCluster discovers all namespaces with
+// workloads, lists each namespace's workloads, and returns the
+// slug→workload index. Workloads without a UnitSlug label are
+// excluded — they're not joinable to the View's unit set.
+//
+// Single-cluster scope is the assumed mode (cub-scout's default).
+// Multi-cluster overlays are not in scope; the index reflects only
+// the current kubeconfig context.
+func buildWorkloadIndexFromCluster() (map[string]WorkloadInfo, error) {
+	namespaces, err := discoverNamespacesWithWorkloads()
+	if err != nil {
+		return nil, fmt.Errorf("discover namespaces: %w", err)
+	}
+	index := make(map[string]WorkloadInfo)
+	for _, ns := range namespaces {
+		workloads, err := discoverWorkloads(ns)
+		if err != nil {
+			return nil, fmt.Errorf("discover workloads in %s: %w", ns, err)
+		}
+		for _, w := range workloads {
+			if w.UnitSlug == "" {
+				continue
+			}
+			// First wins: if the same slug appears in multiple
+			// namespaces (split-deploy or migration mid-flight), the
+			// first one parsed is good enough for v0.1. Multi-target
+			// rendering can be a follow-up.
+			if _, exists := index[w.UnitSlug]; !exists {
+				index[w.UnitSlug] = w
+			}
+		}
+	}
+	return index, nil
+}
+
+// computeRealityCells returns the rendered Applied? and LiveStatus
+// strings for a single unit. When the unit has no matching live
+// workload, both cells reflect the "not applied" state honestly
+// rather than emitting empty strings — silent absence reads as a
+// bug, explicit "no" reads as a fact.
+func computeRealityCells(slug string, index map[string]WorkloadInfo) (applied, status string) {
+	if slug == "" {
+		return "?", "(no slug)"
+	}
+	w, ok := index[slug]
+	if !ok {
+		return "no", "(not applied)"
+	}
+	if w.Ready {
+		return "yes", "Ready"
+	}
+	return "yes", "NotReady"
 }
