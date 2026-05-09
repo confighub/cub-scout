@@ -296,6 +296,73 @@ func TestArgoTracerParseAppOutputError(t *testing.T) {
 	}
 }
 
+// TestArgoTracer_MultiSource covers Argo CD ≥ v2.6 spec.sources[]
+// detection (#409 Phase 3). Single-source apps use spec.source; new-form
+// single-source apps use a one-element spec.sources[]; multi-source apps
+// have len > 1. Only the last form should set MultiSource=true.
+func TestArgoTracer_MultiSource(t *testing.T) {
+	tracer := &ArgoTracer{}
+
+	cases := []struct {
+		name           string
+		json           string
+		wantMultiSrc   bool
+		wantSourceURL  string
+	}{
+		{
+			name: "legacy single-source via spec.source",
+			json: `{
+				"metadata": {"name": "a", "namespace": "argocd"},
+				"spec": {"source": {"repoURL": "https://github.com/x/y", "targetRevision": "abc"}, "destination": {}},
+				"status": {"sync": {}, "health": {}}
+			}`,
+			wantMultiSrc:  false,
+			wantSourceURL: "https://github.com/x/y",
+		},
+		{
+			name: "single-source new form: spec.sources[] with one entry",
+			json: `{
+				"metadata": {"name": "a", "namespace": "argocd"},
+				"spec": {"sources": [{"repoURL": "https://github.com/x/y", "targetRevision": "abc"}], "destination": {}},
+				"status": {"sync": {}, "health": {}}
+			}`,
+			wantMultiSrc:  false,
+			wantSourceURL: "https://github.com/x/y",
+		},
+		{
+			name: "multi-source: spec.sources[] with two entries",
+			json: `{
+				"metadata": {"name": "a", "namespace": "argocd"},
+				"spec": {"sources": [
+					{"repoURL": "https://github.com/x/y", "targetRevision": "abc"},
+					{"repoURL": "https://charts.example.com", "chart": "redis", "targetRevision": "17.0.0"}
+				], "destination": {}},
+				"status": {"sync": {}, "health": {}}
+			}`,
+			wantMultiSrc:  true,
+			wantSourceURL: "https://github.com/x/y",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := tracer.parseAppOutput([]byte(tc.json), "a", "argocd")
+			if err != nil {
+				t.Fatalf("parseAppOutput error: %v", err)
+			}
+			if res.MultiSource != tc.wantMultiSrc {
+				t.Errorf("MultiSource = %v, want %v", res.MultiSource, tc.wantMultiSrc)
+			}
+			if len(res.Chain) == 0 {
+				t.Fatal("chain is empty")
+			}
+			if res.Chain[0].URL != tc.wantSourceURL {
+				t.Errorf("Chain[0].URL = %q, want %q", res.Chain[0].URL, tc.wantSourceURL)
+			}
+		})
+	}
+}
+
 func TestArgoTrace_SourceSyncSignals_OutOfSync(t *testing.T) {
 	tracer := NewArgoTracer()
 

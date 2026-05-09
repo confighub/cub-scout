@@ -27,9 +27,9 @@ type goreleaserConfig struct {
 			Formats []string `yaml:"formats"`
 		} `yaml:"format_overrides"`
 	} `yaml:"archives"`
-	Brews []struct {
+	HomebrewCasks []struct {
 		Name string `yaml:"name"`
-	} `yaml:"brews"`
+	} `yaml:"homebrew_casks"`
 	Dockers []struct {
 		ImageTemplates []string `yaml:"image_templates"`
 	} `yaml:"dockers"`
@@ -104,8 +104,8 @@ func TestGoReleaser_DistributionTargets(t *testing.T) {
 		t.Fatal("expected default archive to allow different binary counts across platforms")
 	}
 
-	if len(cfg.Brews) == 0 {
-		t.Fatal("expected at least one Homebrew config in goreleaser")
+	if len(cfg.HomebrewCasks) == 0 {
+		t.Fatal("expected at least one homebrew_casks entry in goreleaser (post-#389 / #413 migration)")
 	}
 	if len(cfg.Dockers) == 0 {
 		t.Fatal("expected at least one Docker image config in goreleaser")

@@ -249,6 +249,18 @@ type revisionAgreement struct {
 // v0.1's presence-based behaviour pending the ConfigHub-side rendered-
 // digest field.
 func compareRevisions(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces) revisionAgreement {
+	// Multi-source is strategy-agnostic. If the controller declares more
+	// than one source and cub-scout only parsed the first, equality
+	// across the un-parsed sources is fundamentally unverifiable —
+	// regardless of strategy, regardless of whether the parsed source
+	// matches the runtime. Surface as an explicit proof gap.
+	if surfaces.Controller != nil && surfaces.Controller.MultiSource {
+		return revisionAgreement{
+			Incomplete: true,
+			ProofGaps:  []string{"controller.multi_source"},
+		}
+	}
+
 	switch strategy {
 	case StrategyGitArgo, StrategyGitFlux:
 		return compareGitRevisions(surfaces)

@@ -200,6 +200,14 @@ type ControllerSurface struct {
 	Source           string `json:"source,omitempty"`            // observed source URL/identifier
 	RevisionOrDigest string `json:"revision_or_digest,omitempty"` // SHA, digest, tag the controller observed
 	Health           string `json:"health,omitempty"`            // human label: "Ready", "Reconciling", etc.
+
+	// MultiSource is true when the controller observes multiple sources
+	// (Argo CD's spec.sources[] with len > 1). cub-scout parses the first
+	// source for the rest of the surface; equality across sources beyond
+	// index 0 is unverifiable, so Derive emits an explicit
+	// "controller.multi_source" proof gap. Strategy-agnostic — the gap
+	// applies under any declared strategy.
+	MultiSource bool `json:"multi_source,omitempty"`
 }
 
 // RuntimeSurface is what cub-scout reads from the live cluster.

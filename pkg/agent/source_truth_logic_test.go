@@ -336,6 +336,49 @@ func TestDerive_GitMismatch_ControllerOutlier(t *testing.T) {
 	}
 }
 
+// TestDerive_MultiSourceArgo_IncompleteRegardlessOfStrategy locks in the
+// Phase 3 rule: when the controller surface flags MultiSource=true,
+// equality is unverifiable beyond the parsed source. Derive must emit
+// the proof gap and downgrade to WATCH/INCOMPLETE under any strategy —
+// even when the parsed source's anchor would otherwise have produced
+// a clean PASS.
+func TestDerive_MultiSourceArgo_IncompleteRegardlessOfStrategy(t *testing.T) {
+	strategies := []SourceTruthStrategy{
+		StrategyGitArgo,
+		StrategyGitFlux,
+		StrategyConfigHubOCIArgo,
+		StrategyConfigHubOCIFlux,
+	}
+
+	for _, strategy := range strategies {
+		t.Run(string(strategy), func(t *testing.T) {
+			ev := Derive(strategy, SourceTruthSurfaces{
+				ConfigHub: &ConfigHubSurface{Space: "demo", Unit: "rag-server", Revision: "47"},
+				Controller: &ControllerSurface{
+					Kind:             "Argo",
+					Source:           "oci://oci.confighub.com/demo/rag-server",
+					RevisionOrDigest: "abc123def456",
+					Health:           "Synced/Healthy",
+					MultiSource:      true,
+				},
+				Runtime: &RuntimeSurface{
+					Resource: "Deployment/rag-server in demo",
+					Field:    "spec.template.spec.containers[0].image",
+					Value:    "ghcr.io/example/rag:v1.2.3-abc123de",
+					Health:   "Current",
+				},
+			})
+
+			if ev.Status == StatusPASS {
+				t.Fatalf("status = PASS with multi_source=true under strategy %s — equality across un-parsed sources cannot be PASS", strategy)
+			}
+			if !containsString(ev.ProofGaps, "controller.multi_source") {
+				t.Errorf("proof_gaps = %v, want to contain controller.multi_source", ev.ProofGaps)
+			}
+		})
+	}
+}
+
 // TestNormalizeGitSHA_AcceptsCommonShapes locks in the parser's
 // tolerance for the shapes the existing tracers emit.
 func TestNormalizeGitSHA_AcceptsCommonShapes(t *testing.T) {
