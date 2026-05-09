@@ -234,7 +234,12 @@ start_worker() {
 
     echo "$worker_pid" >"$PID_FILE"
 
-    sleep 0.2
+    # Give the subprocess enough time to reach its own sleep/run loop before we
+    # check liveness.  0.2 s was too short on cold CI runners (GitHub Actions)
+    # where fork + exec latency can exceed the grace window, causing a false
+    # "worker process exited early" failure.  1 s is still fast enough for
+    # interactive demos while being robust on slow runners.  Tracked: #388.
+    sleep 1
     if ! kill -0 "$worker_pid" 2>/dev/null; then
         rm -f "$PID_FILE"
         echo "worker process exited early (see log: $LOG_FILE)" >&2
