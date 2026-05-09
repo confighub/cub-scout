@@ -48,7 +48,7 @@ Source of truth:
 | `trace` | Trace ownership and source chain | [Command Reference](commands.md#trace) | [kro composition](../../examples/kro-composition/) |
 | `tree` | Runtime, ownership, git, and composition hierarchies | [Command Reference](commands.md#tree) | [kro composition](../../examples/kro-composition/) |
 | `version` | Print version/build information | [Command Reference](commands.md#version) | - |
-| `views` | Resolve ConfigHub View references (#391, v0.1) | [Command Reference](commands.md#views) | - |
+| `views` | Resolve, open, and project ConfigHub Views (#391) | [Command Reference](commands.md#views) | - |
 | `watch` | Stream observation events to webhook/file sinks | [Command Reference](commands.md#watch) | [Watch webhook](../../examples/watch-webhook/) |
 
 ---

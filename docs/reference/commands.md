@@ -2337,10 +2337,64 @@ hostname the input URL carried (the operator's local config wins).
 Connected mode is **not** required — the URL itself is local
 construction. Auth only matters once the browser reaches View Explorer.
 
+### views project
+
+Render a View as a projected table. Resolves the View, lists its
+matching units, and evaluates the View's `Columns` spec against each
+unit's metadata. Closes the loop on #391 scope #2 (View-as-projection).
+
+```bash
+cub-scout views project <uuid-or-url> [flags]
+```
+
+Same input shapes as `views resolve` — bare UUID or View Explorer URL.
+
+#### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--format table\|json` | Output format (default: `table`). |
+| `--space` | Space to search. Defaults to org-wide (`*`) so a UUID alone is sufficient. |
+
+#### Output
+
+`--format table` produces a fixed-width ASCII table — one row per unit,
+column headers from the View's `Columns` spec.
+
+`--format json` produces:
+
+```json
+{
+  "view": "<uuid>",
+  "space": "<space>",
+  "columns": [<column-spec>],
+  "rows": [{"<column-name>": "<value>", ...}]
+}
+```
+
+#### Evaluator support (v0.1)
+
+ConfigHub's `Column.ColumnSource` has four evaluator forms.
+v0.1 of `views project` evaluates the first directly:
+
+| ColumnSource form | v0.1 behaviour |
+|-------------------|----------------|
+| `MetadataAttribute` | Direct field lookup against unit metadata. Camel/Pascal-case fallback so spec strings like `"Slug"` and `"slug"` both resolve. |
+| `MetadataExpression` (CEL) | Renders `<cel: not yet supported>` placeholder. CEL evaluator is a follow-up dep decision. |
+| `DataPath` (JSONPath) | Renders `<jsonpath: not yet supported>` placeholder. |
+| `DataExpression` (CEL) | Renders `<cel: not yet supported>` placeholder. |
+
+The placeholder approach preserves column headers and ordering so
+operators see the evaluator gap rather than getting silent empty
+cells.
+
+Requires connected mode (`cub auth login` or `CONFIGHUB_API_KEY`).
+
 ### v0.1 scope items still pending
 
-- View column projection in TUI Hub view (scope item #2).
-- Reality overlay composing View columns with #393 source-truth verdicts (scope item #3) — unblocked now that the contract is in main.
+- TUI Hub view integration of View column projection (extends `views project` into the interactive `H` view).
+- Reality overlay composing View columns with #393 source-truth verdicts (scope item #3) — sits on top of `views project`.
+- CEL + JSONPath evaluators for `MetadataExpression`, `DataPath`, `DataExpression` columns.
 
 ---
 
