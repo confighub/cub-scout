@@ -1,24 +1,53 @@
-# cub-scout -- explore and map GitOps clusters!  
+# cub-scout — explore and map GitOps clusters
 
-**Offline-first. Deterministic. Cluster read-only. Cub plugin option.**
+**Read-only. Deterministic. Offline-capable. Optional `cub` plugin.**
 
-cub-scout is an open-source cluster explorer for Kubernetes and GitOps. 
+cub-scout is an open-source observer for Kubernetes and GitOps.
+**It observes and explains; it never decides.** It diagnoses, explains,
+traces, maps, and scans Kubernetes resources and their GitOps origins — but
+never modifies cluster state and never makes authority calls about what
+*should* be true. It is safe to run against production.
 
 It helps you answer:
-- what owns this resource?
-- where did it come from?
-- what is broken right now?
-- how does governed state compare to live state?
+- what owns this resource, really?
+- where did it come from in Git?
+- what is broken right now, and what should I do next?
+- how does **intended** (governed) state compare to **live** (cluster) state?
 
 It works standalone with your current kube context, or connected to
-[ConfigHub](https://confighub.com) for comparison, import, history, fleet, and
-AI-friendly read-only workflows.
+[ConfigHub](https://confighub.com) for governed comparison, change history,
+import, fleet queries, and AI-friendly read-only workflows.
 
-**New in v2.0:** cub-scout now also ships as one of our first `cub` plugins.
+### Who reaches for cub-scout?
 
-Run `cub plugin install confighub/cub-scout` and invoke it as `cub scout ...`
-with inherited auth from `cub`. Standalone `cub-scout` is unchanged and fully
-supported. See [Three Invocation Forms](#three-invocation-forms) and the
+- **SREs and on-call** — when a workload is unhealthy and you need to know
+  *why* and *who owns it* in seconds, not by clicking through Argo or Flux UIs.
+- **Platform engineers** — when you inherit a cluster and need a
+  trustworthy ownership map across Flux, ArgoCD, Helm, Crossplane, ConfigHub,
+  and naked YAML.
+- **AI agents and automation** — when you need stable, deterministic JSON or
+  a Model Context Protocol (MCP) gateway for read-only cluster facts.
+
+### `cub-scout` vs `cub`: the boundary
+
+cub-scout and [`cub`](https://confighub.com) are designed to be complementary,
+not interchangeable:
+
+| | `cub-scout` | `cub` |
+|---|---|---|
+| Role | **Observe and explain** | **Act and govern** |
+| Cluster state | Read-only | Read + reconcile via workers |
+| ConfigHub state | Read-only queries | Authoring, import, promotion |
+| Best for | Diagnosis, ownership, drift, audit, AI tools | Intended-state authoring, GitOps pipelines |
+
+cub-scout is the **read-only witness**. ConfigHub (driven by `cub`) is the
+**authority**. The two ship as separate binaries and never overlap on writes.
+
+**New in v2.0:** cub-scout also ships as one of our first `cub` plugins. Run
+`cub plugin install confighub/cub-scout` and invoke it as `cub scout ...`
+with inherited auth from `cub` — same binary, same JSON, same MCP tools.
+Standalone `cub-scout` is unchanged and fully supported. See
+[Three Invocation Forms](#three-invocation-forms) and the
 [migration guide](docs/releases/v2.0.0-migration-guide.md).
 
 **New here?** Start with the [Fast Path](#fast-path-2-minutes), then use:
@@ -29,6 +58,24 @@ supported. See [Three Invocation Forms](#three-invocation-forms) and the
 
 Please send feedback by [opening an issue](https://github.com/confighub/cub-scout/issues)
 or joining [Discord](https://discord-auth.confighub.net/discord/join) via ConfigHub signup.
+
+---
+
+## What cub-scout does, at a glance
+
+| Capability | Command | What you get |
+|---|---|---|
+| **Diagnose** cluster health | `doctor` | One-screen summary of ownership, health, drift, and risk, with concrete next steps. |
+| **Explain** any resource | `explain` | Plain-English ownership and lineage for one resource — auto-detects Flux, ArgoCD, Helm, Crossplane, or native. |
+| **Trace** workloads to Git | `trace` | The full ownership chain from a Kubernetes object back to its Git source, ApplicationSet, or OCI registry. |
+| **Map** the cluster interactively | `map` | TUI for browsing ownership, health, and dependencies across a cluster. |
+| **Scan** for risk | `scan` | Audits live clusters or manifest files against 46 built-in risk patterns (and 3,513 in the [confighub-scan](https://github.com/confighubai/confighub-scan) catalog). |
+| **Compare** intent vs reality | `compare three-way` | DRY (intended) vs WET (rendered) vs LIVE (cluster) — shows drift no live API can. *Connected only.* |
+| **Serve** as an AI gateway | `mcp serve` | Read-only Model Context Protocol (MCP) server over stdio for Claude, Codex, and other agents. |
+
+All commands emit deterministic JSON via `--format json` for scripts and
+agents. Same input, same output — no AI/ML inference inside the core
+ownership logic.
 
 ---
 
@@ -132,9 +179,19 @@ cub-scout import --dry-run -n prod
 
 ### 3. Plugin mode (new in v2.0) — `cub scout ...`
 
-Install once, inherit `cub`'s auth automatically, and use the preferred `cub
-scout ...` invocation form. Recommended for AI tooling because the MCP tool
-descriptions and hint output explicitly route through `cub scout ...`.
+A **`cub` plugin** is an installable extension to the `cub` CLI that lets you
+invoke another tool as a `cub` subcommand. cub-scout was the first tool we
+shipped this way: after `cub plugin install confighub/cub-scout`, the plugin
+form `cub scout ...` runs the same binary as standalone `cub-scout ...` but
+inherits `cub`'s authentication, context, and ConfigHub session
+automatically — no separate login step.
+
+Use plugin form when:
+- you already have `cub` installed and authenticated
+- you want a single auth surface instead of two
+- you want to invoke cub-scout from AI tools — MCP tool descriptions,
+  structured `nextSteps` hints, and trust URLs all canonicalize to
+  `cub scout ...` so downstream agents see one consistent command shape
 
 ```bash
 cub plugin install confighub/cub-scout
@@ -146,6 +203,10 @@ cub scout mcp serve
 Under the hood, `cub` exec's the plugin binary with `CUB_PLUGIN=1`,
 `CUB_TOKEN`, and `CUB_CONTEXT` set. The plugin form inherits auth without a
 separate login step and never recursively shells out to `cub auth get-token`.
+
+**Same binary, same JSON, same MCP tools.** Standalone and plugin forms are
+held to byte-equivalence by the `TestPluginParity_StandaloneMatchesPlugin`
+release-gate test.
 
 ---
 
@@ -279,10 +340,31 @@ For detailed scanner behavior and output shape, use
 
 ## Standalone vs Connected
 
-cub-scout works fully offline. Connected mode is optional. The capability
-axis is orthogonal to the [invocation form](#three-invocation-forms) — every
-feature below works identically whether you run `cub-scout ...` standalone
-or `cub scout ...` through the plugin.
+cub-scout works fully offline. Connected mode is optional but unlocks the
+questions a live cluster alone cannot answer.
+
+**Standalone (no signup):** Works from your current kube context. You get
+ownership detection, ownership tracing, health diagnosis, drift hints,
+risk scanning, JSON, and an MCP gateway — everything you need to triage
+*right now* on the cluster in front of you.
+
+**Connected (`cub auth login`):** Adds the historical and cross-cluster
+context that the Kubernetes API does not have. Specifically:
+
+- **DRY vs WET vs LIVE** — compare what ConfigHub *intended* to deploy
+  (DRY), what the renderer *produced* (WET), and what is actually
+  *running* (LIVE). Catches drift the live cluster can't tell you about.
+- **Change history** — ask "when did this change, who changed it, and
+  why?" against ConfigHub's governed timeline, not just `kubectl events`.
+- **Fleet queries** — answer "is this version running everywhere it
+  should?" across many clusters at once.
+- **Import preview** — propose how a live workload should be modeled in
+  ConfigHub before writing anything.
+
+The capability axis is orthogonal to the [invocation form](#three-invocation-forms):
+every row below works identically in `cub-scout ...` standalone and `cub
+scout ...` plugin form. Parity is enforced by a release-gate test
+(`TestPluginParity_StandaloneMatchesPlugin`).
 
 | Capability | Standalone | Connected |
 |------------|:----------:|:---------:|
@@ -291,20 +373,18 @@ or `cub scout ...` through the plugin.
 | Trace to Git source | ✓ | ✓ |
 | Scan for risk issues | ✓ | ✓ |
 | Deterministic JSON output | ✓ | ✓ |
-| MCP gateway | ✓ | ✓ |
-| Import workloads into ConfigHub | — | ✓ |
-| Connected change history | — | ✓ |
+| Model Context Protocol (MCP) gateway | ✓ | ✓ |
 | DRY vs WET vs LIVE comparison | — | ✓ |
+| Connected change history | — | ✓ |
 | Fleet-level queries | — | ✓ |
+| Import workloads into ConfigHub | — | ✓ |
 
-**Standalone:** Works from your current kube context with no signup required.
+In plugin form (`cub scout ...`) the token from `cub auth login` is inherited
+automatically. In standalone form (`cub-scout ...`) it is picked up from
+`cub`'s local token store.
 
-**Connected:** Run `cub auth login` to enable ConfigHub-backed comparison,
-history, import, and fleet features. In plugin form (`cub scout ...`), the
-token from `cub auth login` is inherited automatically; in standalone form
-(`cub-scout ...`), it is picked up via the `cub` CLI's local token store.
-
-Connected import writes ConfigHub records, not cluster manifests.
+**Important:** connected import writes ConfigHub records, not cluster
+manifests. cub-scout never modifies the cluster.
 
 ---
 
@@ -331,14 +411,19 @@ If you prefer CLI-only, omit `--map`.
 ## Why People Reach For It
 
 GitOps stacks are powerful, but the day-two questions are still painful:
-- a Deployment exists, but what actually owns it?
-- Argo or Flux says "synced", but is the cluster converged?
-- which events explain the failure right now?
-- is this resource governed, orphaned, or manually changed?
 
-cub-scout gives you those answers through one read-only observation layer
-instead of making you stitch them together by hand with `kubectl`, controller
-CRDs, labels, and UI tabs.
+- A Deployment exists — but what actually owns it?
+- Argo or Flux says "Synced" — but is the cluster actually converged?
+- Which events explain *this* failure, right now?
+- Is this resource governed, orphaned, or manually changed?
+- Did someone hot-patch prod, or did the renderer produce this?
+
+cub-scout answers these through **one read-only observation layer** instead
+of making you stitch them together by hand with `kubectl`, controller CRDs,
+labels, annotations, and UI tabs across Argo, Flux, and Helm.
+
+It is built to be the tool you can keep running on a cluster you don't fully
+trust yet — including production.
 
 ---
 
@@ -350,14 +435,14 @@ For Claude, Codex, and other AI agents:
 - for AI tool setup, see [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md)
 
 What `cub-scout mcp serve` is:
-- a read-only MCP server over stdio
-- backed by the existing CLI JSON surfaces
-- strongest as a troubleshooting and exploration layer
+- a read-only **Model Context Protocol (MCP)** server over stdio
+- backed by the existing CLI JSON surfaces — same answers, agent-shaped
+- strongest as a troubleshooting and exploration layer for AI agents
 
 What it is not:
-- not a Kubernetes write tool
-- not a multi-gateway router
-- not the full ConfigHub authority layer
+- not a Kubernetes write tool — every tool call goes through the read-only CLI
+- not a multi-gateway router — it speaks one protocol, MCP
+- not the ConfigHub authority layer — that role belongs to `cub`
 
 ---
 
@@ -393,11 +478,23 @@ go build ./cmd/cub-scout
 
 ## Principles
 
-- **Read-only by default**: cluster observation uses `Get`, `List`, and `Watch`
-- **Deterministic**: same inputs, same outputs; no AI/ML inside core ownership logic
-- **Parse, don't guess**: ownership comes from real labels, annotations, owner refs, and controller facts
-- **Complement GitOps**: cub-scout helps you understand Flux, ArgoCD, Helm, and ConfigHub state; it does not try to replace them
-- **Graceful degradation**: works without ConfigHub, without internet, and many flows work without a live cluster
+- **Read-only, by design** — cluster observation uses only `Get`, `List`, and
+  `Watch`. cub-scout has no `apply`, no `delete`, no admission webhook, no
+  cluster-mutating code path. Run it against production without an
+  approval ticket.
+- **Deterministic** — same inputs, same outputs. No AI/ML inference inside the
+  core ownership logic. Ownership decisions are reproducible and explainable.
+- **Parse, don't guess** — ownership comes from real labels, annotations,
+  owner references, and controller facts. We refuse to invent provenance.
+- **Complement GitOps, don't replace it** — cub-scout helps you understand
+  Flux, ArgoCD, Helm, Crossplane, and ConfigHub state. It is not another
+  reconciler.
+- **Graceful degradation** — works without ConfigHub, without internet, and
+  many flows work without a live cluster (debug bundles, manifest scans,
+  Git-path import preview).
+- **Evidence, not authority** — cub-scout is the read-only **witness**.
+  ConfigHub (driven by `cub`) is the **authority** for intended state. The two
+  never overlap on writes.
 
 For more on the security and operating model, see [SECURITY.md](SECURITY.md).
 

@@ -1,6 +1,6 @@
 ---
 name: cub-scout
-description: Use when working in the cub-scout repo or when answering what cub-scout can do versus ConfigHub/cub. Covers cub-scout's read-only observation role, connected comparison workflows, MCP surfaces, Git preview boundaries, and how to verify current command truth before claiming capability.
+description: Use when working in the cub-scout repo or when answering what cub-scout can do versus ConfigHub/cub. Covers cub-scout's read-only observation role, connected comparison workflows, Model Context Protocol (MCP) surfaces, Git preview boundaries, and how to verify current command truth before claiming capability.
 ---
 
 # cub-scout
@@ -10,7 +10,7 @@ Start here when the task is about:
 - what `cub scout` does today
 - how `cub scout` differs from `cub`
 - whether a workflow is standalone, connected, or ConfigHub/cub
-- AI/MCP usage of `doctor`, `explain`, `trace`, `map`, `scan`
+- AI / Model Context Protocol (MCP) usage of `doctor`, `explain`, `trace`, `map`, `scan`
 - Git preview versus render/import boundaries
 
 ## Read first
@@ -29,7 +29,14 @@ If the user is asking you to *use* cub-scout against a real cluster (not work on
 
 ## Product value in one breath
 
-`cub scout` is the preferred documented form for the read-only Kubernetes and GitOps observer. In this repo, use `./cub-scout ...` for exact local commands.
+**cub scout observes and explains; it never decides.** It is the read-only
+Kubernetes and GitOps observer — it surfaces evidence about ownership,
+health, and drift, but it never mutates the cluster and never makes
+authority calls about what *should* be true. ConfigHub (driven by `cub`) is
+the authority; cub-scout is the witness.
+
+`cub scout` is the preferred documented form. In this repo, use
+`./cub-scout ...` for exact local commands.
 
 ## Tool boundaries
 
@@ -37,7 +44,7 @@ If the user is asking you to *use* cub-scout against a real cluster (not work on
 
 - `doctor`, `explain`, `trace`, `map`, `scan`
 - connected comparison such as `compare three-way`
-- MCP serving through `mcp serve`
+- Model Context Protocol (MCP) serving through `mcp serve`
 - local Git structure preview through `import --git-path` and `parse-repo`
 
 ### Use `cub` for
