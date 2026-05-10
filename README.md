@@ -472,12 +472,12 @@ go build ./cmd/cub-scout
 
 ## Principles
 
-- **Read-only by default** — observation, comparison, tracing, scanning, and
-  MCP all use only `Get`, `List`, and `Watch`. The one mutating command,
-  `remedy`, defaults to `--dry-run=true` and only applies fixes when you
-  explicitly pass `--dry-run=false` against a chosen risk finding. The
-  default `cub-scout doctor / explain / trace / map / scan / mcp serve`
-  flow is safe to run against production without an approval ticket.
+- **Read-only, by design** — cluster observation uses only `Get`, `List`, and
+  `Watch`. cub-scout has no `apply`, no `delete`, no admission webhook, no
+  cluster-mutating code path. Even `suggest-remedy` is read-only — it
+  describes a fix that *would* resolve a finding; it does not run it. Apply
+  via ConfigHub or kubectl, governed. Run cub-scout against production
+  without an approval ticket.
 - **Deterministic** — same inputs, same outputs. No AI/ML inference inside the
   core ownership logic. Ownership decisions are reproducible and explainable.
 - **Parse, don't guess** — ownership comes from real labels, annotations,

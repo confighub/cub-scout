@@ -7,26 +7,26 @@ import (
 	"strings"
 )
 
-// DeleteResourceExecutor handles delete_resource remedy type
-// Executes kubectl delete commands with safety checks
-type DeleteResourceExecutor struct {
+// DeleteResourceSuggester describes a delete_resource remedy as a structured
+// suggestion. It does not delete anything.
+type DeleteResourceSuggester struct {
 	kubectl string
 }
 
-// NewDeleteResourceExecutor creates a new delete resource executor
-func NewDeleteResourceExecutor() *DeleteResourceExecutor {
-	return &DeleteResourceExecutor{
+// NewDeleteResourceSuggester creates a new delete-resource suggester.
+func NewDeleteResourceSuggester() *DeleteResourceSuggester {
+	return &DeleteResourceSuggester{
 		kubectl: "kubectl",
 	}
 }
 
-// Type returns DeleteResource
-func (e *DeleteResourceExecutor) Type() RemedyType {
+// Type returns DeleteResource.
+func (s *DeleteResourceSuggester) Type() RemedyType {
 	return DeleteResource
 }
 
-// CanExecute checks if we can delete
-func (e *DeleteResourceExecutor) CanExecute(f *Finding) bool {
+// CanSuggest reports whether this suggester can describe the finding.
+func (s *DeleteResourceSuggester) CanSuggest(f *Finding) bool {
 	for _, cmd := range f.Commands {
 		if strings.Contains(strings.ToLower(cmd), "kubectl delete") {
 			return true
@@ -35,114 +35,49 @@ func (e *DeleteResourceExecutor) CanExecute(f *Finding) bool {
 	return false
 }
 
-// DryRun shows what would be deleted
-func (e *DeleteResourceExecutor) DryRun(ctx context.Context, f *Finding) (*RemedyPlan, error) {
-	plan := &RemedyPlan{
+// Suggest describes the deletion that would resolve the finding without
+// performing it. Reading the current YAML via `kubectl get` is permitted
+// because it is read-only.
+func (s *DeleteResourceSuggester) Suggest(ctx context.Context, f *Finding) (*SuggestedRemedy, error) {
+	suggestion := &SuggestedRemedy{
 		Finding:    f,
-		Reversible: false, // Deletes are NOT reversible!
+		Reversible: false, // Deletes are NOT reversible if applied.
 		RiskLevel:  RiskHigh,
 	}
 
 	for _, cmd := range f.Commands {
 		if strings.Contains(strings.ToLower(cmd), "kubectl delete") {
-			// Get resource YAML before deletion (for backup)
-			backup, _ := e.getResourceYAML(ctx, f.Resource)
+			// Capture pre-delete YAML so a downstream applier can build a
+			// rollback command if it chooses to apply.
+			backup, _ := s.getResourceYAML(ctx, f.Resource)
 
-			plan.Actions = append(plan.Actions, PlannedAction{
-				Description: "DELETE resource (irreversible!)",
-				Command:     e.addNamespace(cmd, f.Namespace),
+			suggestion.Actions = append(suggestion.Actions, SuggestedAction{
+				Description: "DELETE resource (irreversible if applied)",
+				Command:     s.addNamespace(cmd, f.Namespace),
 				DiffBefore:  backup,
-				DiffAfter:   "[resource will be deleted]",
+				DiffAfter:   "[resource would be deleted]",
 			})
 		}
 	}
 
-	if len(plan.Actions) == 0 {
+	if len(suggestion.Actions) == 0 {
 		return nil, fmt.Errorf("no delete commands found for %s", f.CCVE)
 	}
 
-	return plan, nil
+	return suggestion, nil
 }
 
-// Execute deletes the resources
-func (e *DeleteResourceExecutor) Execute(ctx context.Context, f *Finding, opts *ExecuteOptions) (*RemedyResult, error) {
-	result := &RemedyResult{Success: true}
-
-	// Backup resource first (for potential manual restore)
-	backup, err := e.getResourceYAML(ctx, f.Resource)
-	if err == nil && backup != "" {
-		result.RollbackCmd = fmt.Sprintf("kubectl apply -f - <<'EOF'\n%sEOF", backup)
-	}
-
-	for _, cmd := range f.Commands {
-		if !strings.Contains(strings.ToLower(cmd), "kubectl delete") {
-			continue
-		}
-
-		execCmd := e.addNamespace(cmd, f.Namespace)
-
-		// Add --dry-run for dry-run mode
-		if opts.DryRun {
-			execCmd = execCmd + " --dry-run=client"
-		}
-
-		// Always add --wait=false to avoid hanging on finalizers
-		if !strings.Contains(execCmd, "--wait") {
-			execCmd = execCmd + " --wait=false"
-		}
-
-		// Set timeout
-		execCtx := ctx
-		if opts.Timeout > 0 {
-			var cancel context.CancelFunc
-			execCtx, cancel = context.WithTimeout(ctx, opts.Timeout)
-			defer cancel()
-		}
-
-		out, err := exec.CommandContext(execCtx, "sh", "-c", execCmd).CombinedOutput()
-
-		actionResult := ActionResult{
-			Action: PlannedAction{
-				Command:     cmd,
-				Description: "Delete resource",
-			},
-			Output:  string(out),
-			Success: err == nil,
-		}
-
-		if err != nil {
-			actionResult.Error = err.Error()
-			result.Success = false
-		}
-
-		result.Actions = append(result.Actions, actionResult)
-
-		if !result.Success && !opts.Force {
-			break
-		}
-	}
-
-	if result.Success {
-		result.Message = fmt.Sprintf("Successfully deleted %d resources", len(result.Actions))
-	} else {
-		result.Message = "Delete failed"
-	}
-
-	return result, nil
-}
-
-// addNamespace adds -n flag if not present
-func (e *DeleteResourceExecutor) addNamespace(cmd, namespace string) string {
+func (s *DeleteResourceSuggester) addNamespace(cmd, namespace string) string {
 	if namespace != "" && !strings.Contains(cmd, " -n ") && !strings.Contains(cmd, " --namespace") {
 		return cmd + " -n " + namespace
 	}
 	return cmd
 }
 
-// getResourceYAML gets the current YAML for backup
-func (e *DeleteResourceExecutor) getResourceYAML(ctx context.Context, ref ResourceRef) (string, error) {
-	cmd := fmt.Sprintf("kubectl get %s %s -o yaml",
-		strings.ToLower(ref.Kind), ref.Name)
+// getResourceYAML reads the resource via `kubectl get`. Read-only.
+func (s *DeleteResourceSuggester) getResourceYAML(ctx context.Context, ref ResourceRef) (string, error) {
+	cmd := fmt.Sprintf("%s get %s %s -o yaml",
+		s.kubectl, strings.ToLower(ref.Kind), ref.Name)
 	if ref.Namespace != "" {
 		cmd += " -n " + ref.Namespace
 	}

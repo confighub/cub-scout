@@ -34,7 +34,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `map` | Interactive map of resources and ownership |
 | `import parse-repo` | Parse a GitOps repository structure |
 | `patterns` | Pattern detection engine |
-| `remedy` | Execute remediation for risk findings |
+| `suggest-remedy` (alias `remedy`) | Describe a suggested remediation for a risk finding (read-only) |
 | `scan` | Scan for risk issues and stuck states |
 | `setup` | Set up shell completions and configuration |
 | `snapshot` | Dump cluster state as GSF JSON |
@@ -309,20 +309,21 @@ Digest content contract:
 
 ---
 
-## `remedy` Options
+## `suggest-remedy` Options
+
+(`remedy` is accepted as an alias for backwards compatibility.)
 
 | Option | Description |
 |--------|-------------|
-| `-n, --namespace` | Namespace to operate in |
-| `--all` | Fix all auto-fixable issues |
-| `--dry-run` | Show what would be changed (default: true) |
-| `--force` | Skip confirmation for high-risk actions |
-| `--file` | YAML file to scan and fix |
-| `--list` | List auto-fixable risk issues |
-| `--json` | Output as JSON |
-| `--audit` | Log actions to audit file (default: true) |
-| `--audit-file` | Audit log file path |
-| `--timeout` | Timeout for each action (default: 30s) |
+| `-n, --namespace` | Namespace scope |
+| `--all` | Describe suggestions for all auto-suggestable findings |
+| `--file` | YAML file to scan for findings |
+| `--list` | List auto-suggestable risk-issue categories |
+| `--json` | Output as JSON (the load-bearing contract for downstream tools) |
+
+The previous `--dry-run`, `--force`, `--audit`, `--audit-file`, and
+`--timeout` flags have been removed; cub-scout no longer has a
+non-dry-run path. See [#428](https://github.com/confighub/cub-scout/issues/428).
 
 ---
 

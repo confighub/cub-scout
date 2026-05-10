@@ -19,23 +19,34 @@ cub-scout uses only these Kubernetes API operations:
 - `Update` / `Patch` — cub-scout cannot modify resources
 - `Delete` — cub-scout cannot remove resources
 
-### The One Exception: `remedy`
+This holds for every command, including `suggest-remedy` (formerly `remedy`).
+See [Suggested Remedies are Read-Only](#suggested-remedies-are-read-only).
 
-The `cub-scout remedy` subcommand is the **only** exception. It can apply fixes for detected configuration issues.
+### Suggested Remedies are Read-Only
 
-**Safeguards:**
-1. `remedy` always shows the exact changes before applying
-2. `remedy` requires explicit `--apply` flag (dry-run by default)
-3. `remedy` prompts for confirmation before each change
-4. `remedy` logs all actions to a file
+`cub-scout suggest-remedy` describes the patch that *would* resolve a risk
+finding — but cub-scout never applies it. The output records the kubectl
+command, the current state, and the expected change. A separate tool
+(ConfigHub Pilot, an operator, or your CI pipeline) is responsible for any
+apply, governed by ConfigHub's normal authority path.
 
 ```bash
-# Dry-run (default) - shows what would change
-cub-scout remedy RISK-2025-0027
+# Show the suggested fix for a specific finding
+cub-scout suggest-remedy CCVE-2025-0687 -n production
 
-# Apply changes (requires explicit flag + confirmation)
-cub-scout remedy RISK-2025-0027 --apply
+# Describe suggestions for all auto-suggestable findings
+cub-scout suggest-remedy --all -n production --json
 ```
+
+The legacy `remedy` verb is still accepted as an alias for backwards
+compatibility. It is no longer a mutating command; the previous
+`--dry-run`, `--force`, `--audit`, and `--audit-file` flags have been
+removed.
+
+This change is the result of [#410](https://github.com/confighub/cub-scout/issues/410)
+(triad-compliance audit) and [#428](https://github.com/confighub/cub-scout/issues/428)
+(implementation). cub-scout is the read-only **witness**; ConfigHub
+(driven by `cub`) is the **authority** that owns mutation.
 
 ### RBAC Requirements
 
@@ -52,20 +63,10 @@ rules:
     verbs: ["get", "list", "watch"]
 ```
 
-For the `remedy` command (optional), you'd need:
-
-```yaml
-  - apiGroups: [""]
-    resources: ["configmaps", "secrets"]
-    verbs: ["get", "list", "watch", "update", "patch"]
-  # Add other resources as needed for specific remedies
-```
-
-### Audit Trail
-
-- All `remedy` actions are logged to `~/.cub-scout/remedy.log`
-- Dry-run output can be captured: `cub-scout remedy RISK-X --dry-run > plan.yaml`
-- The `remedy` command prints a summary of changes after completion
+No write verbs are required — not for `suggest-remedy`, not for any
+command. If you previously granted cub-scout `update` / `patch` /
+`delete` permissions for the legacy `remedy` execution path, you can
+revoke them.
 
 ## Vulnerability Reporting
 

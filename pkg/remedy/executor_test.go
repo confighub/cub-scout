@@ -8,25 +8,22 @@ import (
 func TestRegistry(t *testing.T) {
 	reg := NewRegistry()
 
-	// Register executors
-	reg.Register(NewConfigFixExecutor())
-	reg.Register(NewTriggerActionExecutor())
-	reg.Register(NewDeleteResourceExecutor())
-	reg.Register(NewRestartExecutor())
+	reg.Register(NewConfigFixSuggester())
+	reg.Register(NewTriggerActionSuggester())
+	reg.Register(NewDeleteResourceSuggester())
+	reg.Register(NewRestartSuggester())
 
-	// Test Types() returns all registered
 	types := reg.Types()
 	if len(types) != 4 {
 		t.Errorf("expected 4 types, got %d", len(types))
 	}
 
-	// Test Get()
-	exec, ok := reg.Get(ConfigFix)
+	s, ok := reg.Get(ConfigFix)
 	if !ok {
-		t.Error("expected to find ConfigFix executor")
+		t.Error("expected to find ConfigFix suggester")
 	}
-	if exec.Type() != ConfigFix {
-		t.Errorf("expected ConfigFix, got %s", exec.Type())
+	if s.Type() != ConfigFix {
+		t.Errorf("expected ConfigFix, got %s", s.Type())
 	}
 }
 
@@ -60,8 +57,8 @@ func TestIsAutoFixable(t *testing.T) {
 	}
 }
 
-func TestConfigFixExecutor_CanExecute(t *testing.T) {
-	exec := NewConfigFixExecutor()
+func TestConfigFixSuggester_CanSuggest(t *testing.T) {
+	s := NewConfigFixSuggester()
 
 	tests := []struct {
 		name     string
@@ -83,16 +80,16 @@ func TestConfigFixExecutor_CanExecute(t *testing.T) {
 				CCVE:     "CCVE-2025-TEST",
 				Commands: tc.commands,
 			}
-			result := exec.CanExecute(finding)
+			result := s.CanSuggest(finding)
 			if result != tc.expected {
-				t.Errorf("CanExecute() = %v, expected %v", result, tc.expected)
+				t.Errorf("CanSuggest() = %v, expected %v", result, tc.expected)
 			}
 		})
 	}
 }
 
-func TestTriggerActionExecutor_CanExecute(t *testing.T) {
-	exec := NewTriggerActionExecutor()
+func TestTriggerActionSuggester_CanSuggest(t *testing.T) {
+	s := NewTriggerActionSuggester()
 
 	tests := []struct {
 		name     string
@@ -112,16 +109,16 @@ func TestTriggerActionExecutor_CanExecute(t *testing.T) {
 				CCVE:     "CCVE-2025-TEST",
 				Commands: tc.commands,
 			}
-			result := exec.CanExecute(finding)
+			result := s.CanSuggest(finding)
 			if result != tc.expected {
-				t.Errorf("CanExecute() = %v, expected %v", result, tc.expected)
+				t.Errorf("CanSuggest() = %v, expected %v", result, tc.expected)
 			}
 		})
 	}
 }
 
-func TestDeleteResourceExecutor_CanExecute(t *testing.T) {
-	exec := NewDeleteResourceExecutor()
+func TestDeleteResourceSuggester_CanSuggest(t *testing.T) {
+	s := NewDeleteResourceSuggester()
 
 	tests := []struct {
 		name     string
@@ -139,16 +136,16 @@ func TestDeleteResourceExecutor_CanExecute(t *testing.T) {
 				CCVE:     "CCVE-2025-TEST",
 				Commands: tc.commands,
 			}
-			result := exec.CanExecute(finding)
+			result := s.CanSuggest(finding)
 			if result != tc.expected {
-				t.Errorf("CanExecute() = %v, expected %v", result, tc.expected)
+				t.Errorf("CanSuggest() = %v, expected %v", result, tc.expected)
 			}
 		})
 	}
 }
 
-func TestRestartExecutor_CanExecute(t *testing.T) {
-	exec := NewRestartExecutor()
+func TestRestartSuggester_CanSuggest(t *testing.T) {
+	s := NewRestartSuggester()
 
 	tests := []struct {
 		name     string
@@ -171,16 +168,16 @@ func TestRestartExecutor_CanExecute(t *testing.T) {
 				Commands: tc.commands,
 				Resource: ResourceRef{Kind: tc.kind},
 			}
-			result := exec.CanExecute(finding)
+			result := s.CanSuggest(finding)
 			if result != tc.expected {
-				t.Errorf("CanExecute() = %v, expected %v", result, tc.expected)
+				t.Errorf("CanSuggest() = %v, expected %v", result, tc.expected)
 			}
 		})
 	}
 }
 
-func TestDryRun_ConfigFix(t *testing.T) {
-	exec := NewConfigFixExecutor()
+func TestSuggest_ConfigFix(t *testing.T) {
+	s := NewConfigFixSuggester()
 	ctx := context.Background()
 
 	finding := &Finding{
@@ -193,26 +190,26 @@ func TestDryRun_ConfigFix(t *testing.T) {
 		},
 	}
 
-	plan, err := exec.DryRun(ctx, finding)
+	suggestion, err := s.Suggest(ctx, finding)
 	if err != nil {
-		t.Fatalf("DryRun() error = %v", err)
+		t.Fatalf("Suggest() error = %v", err)
 	}
 
-	if plan.RiskLevel != RiskLow {
-		t.Errorf("expected RiskLow, got %s", plan.RiskLevel)
+	if suggestion.RiskLevel != RiskLow {
+		t.Errorf("expected RiskLow, got %s", suggestion.RiskLevel)
 	}
 
-	if !plan.Reversible {
+	if !suggestion.Reversible {
 		t.Error("expected config_fix to be reversible")
 	}
 
-	if len(plan.Actions) != 1 {
-		t.Errorf("expected 1 action, got %d", len(plan.Actions))
+	if len(suggestion.Actions) != 1 {
+		t.Errorf("expected 1 action, got %d", len(suggestion.Actions))
 	}
 }
 
-func TestDryRun_DeleteResource(t *testing.T) {
-	exec := NewDeleteResourceExecutor()
+func TestSuggest_DeleteResource(t *testing.T) {
+	s := NewDeleteResourceSuggester()
 	ctx := context.Background()
 
 	finding := &Finding{
@@ -225,17 +222,17 @@ func TestDryRun_DeleteResource(t *testing.T) {
 		},
 	}
 
-	plan, err := exec.DryRun(ctx, finding)
+	suggestion, err := s.Suggest(ctx, finding)
 	if err != nil {
-		t.Fatalf("DryRun() error = %v", err)
+		t.Fatalf("Suggest() error = %v", err)
 	}
 
-	if plan.RiskLevel != RiskHigh {
-		t.Errorf("expected RiskHigh, got %s", plan.RiskLevel)
+	if suggestion.RiskLevel != RiskHigh {
+		t.Errorf("expected RiskHigh, got %s", suggestion.RiskLevel)
 	}
 
-	if plan.Reversible {
-		t.Error("expected delete_resource to NOT be reversible")
+	if suggestion.Reversible {
+		t.Error("expected delete_resource suggestion to be marked NOT reversible")
 	}
 }
 

@@ -1,9 +1,15 @@
-// Package remedy provides automated remediation for CCVE findings.
+// Package remedy generates suggested-patch evidence for risk findings.
+//
+// cub-scout never applies a remedy. The Suggest method returns a structured
+// description of *what a fix would look like*, including the kubectl command
+// that would carry it out — but cub-scout does not run that command. Pilot,
+// ConfigHub, an operator, or another tool is responsible for any apply.
+//
+// See issues #410 and #428 for the architectural decision behind this split.
 package remedy
 
 import (
 	"context"
-	"time"
 )
 
 // RemedyType matches CCVE remedy.type field
@@ -21,30 +27,35 @@ const (
 	ConfigChange    RemedyType = "config_change"
 )
 
-// AutoFixableTypes are remedy types that can be fully automated
+// AutoFixableTypes are remedy types for which an automated fix can be
+// described. cub-scout only describes them; a downstream tool decides
+// whether and how to apply.
 var AutoFixableTypes = []RemedyType{
 	ConfigFix,
 	TriggerAction,
 	Restart,
-	DeleteResource, // Needs confirmation but is automatable
+	DeleteResource,
 }
 
-// Executor executes a remedy for a CCVE finding
-type Executor interface {
-	// Type returns the remedy type this executor handles
+// Suggester produces a suggested-patch description for a risk finding.
+//
+// Implementations must be read-only: no kubectl apply, no kubectl delete,
+// no exec of mutating shell commands. Reading current resource state for
+// the purpose of describing a diff is allowed.
+type Suggester interface {
+	// Type returns the remedy type this suggester handles.
 	Type() RemedyType
 
-	// CanExecute checks if this executor can handle the finding
-	CanExecute(finding *Finding) bool
+	// CanSuggest reports whether this suggester can describe a fix for the
+	// given finding.
+	CanSuggest(finding *Finding) bool
 
-	// DryRun shows what would be changed without applying
-	DryRun(ctx context.Context, finding *Finding) (*RemedyPlan, error)
-
-	// Execute applies the remedy
-	Execute(ctx context.Context, finding *Finding, opts *ExecuteOptions) (*RemedyResult, error)
+	// Suggest produces a structured description of the fix that would
+	// resolve the finding. It MUST NOT mutate cluster state.
+	Suggest(ctx context.Context, finding *Finding) (*SuggestedRemedy, error)
 }
 
-// Finding represents a detected CCVE issue
+// Finding represents a detected risk issue
 type Finding struct {
 	CCVE       string            // e.g., "CCVE-2025-0687"
 	Resource   ResourceRef       // What resource has the issue
@@ -71,15 +82,19 @@ func (r ResourceRef) String() string {
 	return r.Kind + "/" + r.Name
 }
 
-// RemedyPlan describes what the executor will do
-type RemedyPlan struct {
+// SuggestedRemedy is a structured description of a fix that *would*
+// resolve a risk finding. It is read-only evidence — cub-scout produces
+// it; cub-scout does not apply it.
+type SuggestedRemedy struct {
 	Finding    *Finding
-	Actions    []PlannedAction
+	Actions    []SuggestedAction
 	Reversible bool
 	RiskLevel  RiskLevel
 }
 
-// RiskLevel indicates how dangerous an action is
+// RiskLevel indicates how dangerous applying the suggestion would be.
+// cub-scout exposes this as evidence; the decision to act on it belongs
+// to the caller.
 type RiskLevel string
 
 const (
@@ -88,44 +103,12 @@ const (
 	RiskHigh   RiskLevel = "high"
 )
 
-// PlannedAction is one step in the remedy
-type PlannedAction struct {
+// SuggestedAction is one step of a suggested remedy. The Command field
+// records the kubectl invocation that *would* perform the step — cub-scout
+// does not execute it.
+type SuggestedAction struct {
 	Description string // Human-readable description
-	Command     string // kubectl command to execute
-	DiffBefore  string // Current state (YAML)
-	DiffAfter   string // Expected state after (YAML or description)
-}
-
-// ExecuteOptions controls execution behavior
-type ExecuteOptions struct {
-	DryRun   bool          // Show what would be done without doing it
-	Force    bool          // Skip confirmation prompts
-	Timeout  time.Duration // Max time for execution
-	Rollback bool          // Create rollback point before execution
-}
-
-// DefaultExecuteOptions returns sensible defaults
-func DefaultExecuteOptions() *ExecuteOptions {
-	return &ExecuteOptions{
-		DryRun:   true, // Safe by default
-		Force:    false,
-		Timeout:  30 * time.Second,
-		Rollback: true,
-	}
-}
-
-// RemedyResult is the outcome of execution
-type RemedyResult struct {
-	Success     bool
-	Message     string
-	Actions     []ActionResult
-	RollbackCmd string // Command to undo if needed
-}
-
-// ActionResult is the outcome of a single action
-type ActionResult struct {
-	Action  PlannedAction
-	Success bool
-	Output  string
-	Error   string
+	Command     string // kubectl command that would carry out the step
+	DiffBefore  string // Current state (YAML), if observable
+	DiffAfter   string // Expected state after, if computable ahead of apply
 }
