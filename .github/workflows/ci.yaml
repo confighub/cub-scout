@@ -47,7 +47,11 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          # Pinned to v1.64.8 (the last v1.x release) because golangci-lint v2.x
+          # requires migrating .golangci.yml to a new schema. Migration is tracked
+          # as follow-up; see #410 / #428 sister discussions for context. When the
+          # config is migrated, bump this back to `version: latest`.
+          version: v1.64.8
 
       - name: Run govulncheck
         continue-on-error: true  # Informational for now - stdlib vulns need Go upgrade
