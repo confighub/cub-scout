@@ -43,12 +43,10 @@ not interchangeable:
 cub-scout is the **read-only witness**. ConfigHub (driven by `cub`) is the
 **authority**. The two ship as separate binaries and never overlap on writes.
 
-**New in v2.0:** cub-scout also ships as one of our first `cub` plugins. Run
-`cub plugin install confighub/cub-scout` and invoke it as `cub scout ...`
-with inherited auth from `cub` — same binary, same JSON, same MCP tools.
-Standalone `cub-scout` is unchanged and fully supported. See
-[Three Invocation Forms](#three-invocation-forms) and the
-[migration guide](docs/releases/v2.0.0-migration-guide.md).
+> **New in v2.0:** cub-scout also runs as a `cub` plugin (`cub scout ...`)
+> with inherited auth. Standalone `cub-scout` is unchanged. See
+> [How To Run It](#how-to-run-it) and the
+> [migration guide](docs/releases/v2.0.0-migration-guide.md).
 
 **New here?** Start with the [Fast Path](#fast-path-2-minutes), then use:
 - [CLI Guide](CLI-GUIDE.md) for the workflow-first tour
@@ -69,8 +67,8 @@ or joining [Discord](https://discord-auth.confighub.net/discord/join) via Config
 | **Explain** any resource | `explain` | Plain-English ownership and lineage for one resource — auto-detects Flux, ArgoCD, Helm, Crossplane, or native. |
 | **Trace** workloads to Git | `trace` | The full ownership chain from a Kubernetes object back to its Git source, ApplicationSet, or OCI registry. |
 | **Map** the cluster interactively | `map` | TUI for browsing ownership, health, and dependencies across a cluster. |
-| **Scan** for risk | `scan` | Audits live clusters or manifest files against 46 built-in risk patterns (and 3,513 in the [confighub-scan](https://github.com/confighubai/confighub-scan) catalog). |
-| **Compare** intent vs reality | `compare three-way` | DRY (intended) vs WET (rendered) vs LIVE (cluster) — shows drift no live API can. *Connected only.* |
+| **Scan** for risk | `scan` | Audits live clusters or manifest files against 46 built-in risk patterns. Optionally delegates to the separate [confighub-scan](https://github.com/confighubai/confighub-scan) tool for its broader catalog. |
+| **Compare** intent vs reality | `compare three-way` | Three-way diff between **DRY** (what ConfigHub *intends* to deploy), **WET** (what the renderer *produced*), and **LIVE** (what is *running* in the cluster). Surfaces drift the Kubernetes API alone cannot. *Connected only.* |
 | **Serve** as an AI gateway | `mcp serve` | Read-only Model Context Protocol (MCP) server over stdio for Claude, Codex, and other agents. |
 
 All commands emit deterministic JSON via `--format json` for scripts and
@@ -81,33 +79,29 @@ ownership logic.
 
 ## Fast Path (2 Minutes)
 
+**No ConfigHub signup required.** cub-scout reads from your current kube
+context and works fully offline.
+
 ```bash
-# Standalone: works with any kube context, no signup
+# Install (Homebrew — see Install section below for other options)
 brew install confighub/tap/cub-scout
-cub-scout quickstart
-cub-scout doctor
-cub-scout explain deploy/app -n ns
-cub-scout trace deploy/app -n ns
-cub-scout map
+
+# Triage flow: doctor → explain → trace
+cub-scout doctor                                  # cluster health summary
+cub-scout explain deploy/frontend -n boutique     # who owns this resource?
+cub-scout trace   deploy/frontend -n boutique     # where did it come from?
+cub-scout map                                     # interactive TUI
 ```
 
-Or, if you already use `cub`:
-
-```bash
-# Plugin form: inherits cub's auth and context
-cub plugin install confighub/cub-scout
-cub scout quickstart
-cub scout doctor
-cub scout explain deploy/app -n ns
-cub scout trace deploy/app -n ns
-cub scout map
-```
+If `cub-scout: command not found` but you have `cub` installed, try
+`cub scout doctor` instead — see [How To Run It](#how-to-run-it) for the
+plugin form.
 
 What you get in the first two minutes:
-- ownership detection across Flux, ArgoCD, Helm, ConfigHub, and native resources
+- ownership detection across Flux, ArgoCD, Helm, Crossplane, ConfigHub, and native resources
 - one-command health summary with next steps
-- trace from workload to Git source
-- recent Kubernetes events in `explain` and `trace`
+- trace from workload to Git source (Application, ApplicationSet, GitRepository, OCI registry)
+- recent Kubernetes events surfaced in `explain` and `trace`
 - deterministic JSON for scripts, AI agents, and MCP clients
 
 ---
@@ -148,12 +142,11 @@ troubleshooting.
 
 ---
 
-## Three Invocation Forms
+## How To Run It
 
-The same binary, three ways to run it. Pick whichever fits your environment.
-Commands, flags, JSON contracts, exit codes, and MCP tool names are identical
-across forms — only the invocation prefix differs. Feature parity is enforced
-by a release-gate test (`TestPluginParity_StandaloneMatchesPlugin`).
+Same binary, three ways to invoke it. Commands, flags, JSON, exit codes, and
+MCP tool names are identical across all three; only the invocation prefix
+differs.
 
 ### 1. Standalone — "if you can kubectl, you can cub-scout"
 
@@ -168,7 +161,9 @@ cub-scout trace deploy/api -n prod
 
 ### 2. Connected — ConfigHub-backed comparison, history, import
 
-Adds governed read paths once you've authenticated once with `cub`.
+Adds governed read paths once you've authenticated with `cub`. cub-scout
+still never modifies the cluster — `import` writes records into ConfigHub,
+not manifests into your cluster.
 
 ```bash
 cub auth login
@@ -187,11 +182,12 @@ inherits `cub`'s authentication, context, and ConfigHub session
 automatically — no separate login step.
 
 Use plugin form when:
-- you already have `cub` installed and authenticated
-- you want a single auth surface instead of two
-- you want to invoke cub-scout from AI tools — MCP tool descriptions,
-  structured `nextSteps` hints, and trust URLs all canonicalize to
-  `cub scout ...` so downstream agents see one consistent command shape
+- you already have `cub` installed and authenticated (one auth surface)
+- you are invoking cub-scout from AI tools (MCP tool descriptions and `nextSteps`
+  hints render `cub scout ...`, so agent output stays consistent)
+
+Otherwise, standalone form is the path of least resistance: `brew install`
+and you're done.
 
 ```bash
 cub plugin install confighub/cub-scout
@@ -204,9 +200,8 @@ Under the hood, `cub` exec's the plugin binary with `CUB_PLUGIN=1`,
 `CUB_TOKEN`, and `CUB_CONTEXT` set. The plugin form inherits auth without a
 separate login step and never recursively shells out to `cub auth get-token`.
 
-**Same binary, same JSON, same MCP tools.** Standalone and plugin forms are
-held to byte-equivalence by the `TestPluginParity_StandaloneMatchesPlugin`
-release-gate test.
+Standalone and plugin forms are held to byte-equivalence by a release-gate
+test (`TestPluginParity_StandaloneMatchesPlugin`).
 
 ---
 
@@ -214,8 +209,7 @@ release-gate test.
 
 Each example below uses standalone form (`cub-scout ...`). If you installed
 the plugin (`cub plugin install confighub/cub-scout`), substitute `cub scout`
-for `cub-scout` in any command — behavior is identical and the MCP/JSON
-outputs are byte-for-byte equivalent under the release-gate parity test.
+for `cub-scout` in any command — behavior is identical.
 
 ### Standalone Value Now
 
@@ -361,7 +355,7 @@ context that the Kubernetes API does not have. Specifically:
 - **Import preview** — propose how a live workload should be modeled in
   ConfigHub before writing anything.
 
-The capability axis is orthogonal to the [invocation form](#three-invocation-forms):
+The capability axis is orthogonal to the [invocation form](#how-to-run-it):
 every row below works identically in `cub-scout ...` standalone and `cub
 scout ...` plugin form. Parity is enforced by a release-gate test
 (`TestPluginParity_StandaloneMatchesPlugin`).
@@ -478,10 +472,12 @@ go build ./cmd/cub-scout
 
 ## Principles
 
-- **Read-only, by design** — cluster observation uses only `Get`, `List`, and
-  `Watch`. cub-scout has no `apply`, no `delete`, no admission webhook, no
-  cluster-mutating code path. Run it against production without an
-  approval ticket.
+- **Read-only by default** — observation, comparison, tracing, scanning, and
+  MCP all use only `Get`, `List`, and `Watch`. The one mutating command,
+  `remedy`, defaults to `--dry-run=true` and only applies fixes when you
+  explicitly pass `--dry-run=false` against a chosen risk finding. The
+  default `cub-scout doctor / explain / trace / map / scan / mcp serve`
+  flow is safe to run against production without an approval ticket.
 - **Deterministic** — same inputs, same outputs. No AI/ML inference inside the
   core ownership logic. Ownership decisions are reproducible and explainable.
 - **Parse, don't guess** — ownership comes from real labels, annotations,
