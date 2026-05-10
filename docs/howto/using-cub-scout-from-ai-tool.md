@@ -79,7 +79,7 @@ Important rules:
 
 - explicit mode selection should win over auto-detection
 - any host detection should be advisory only
-- JSON and MCP outputs should stay structurally stable across presentation modes
+- JSON and MCP (Model Context Protocol) outputs should stay structurally stable across presentation modes
 - text and markdown outputs can adapt more for readability and handoff quality
 
 Useful concepts:

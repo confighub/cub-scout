@@ -25,14 +25,19 @@ Use these for different AI scenarios:
 
 ### `cub scout` / `cub-scout`
 
-`cub scout` is the preferred documented form for the read-only Kubernetes and GitOps observer.
-In this repo, local command examples still use `./cub-scout ...`.
+**`cub scout` observes and explains; it never decides.** It is the
+read-only Kubernetes and GitOps observer — it surfaces evidence, never
+mutates the cluster, and never makes authority calls about what *should* be
+true.
+
+`cub scout` is the preferred documented form. In this repo, local command
+examples still use `./cub-scout ...`.
 
 Use it for:
 - `doctor`, `explain`, `trace`, `map`, `scan`
 - connected comparison such as `compare three-way`
 - local Git structure discovery with `import --git-path` and `parse-repo`
-- MCP serving via `mcp serve`
+- Model Context Protocol (MCP) serving via `mcp serve`
 
 Important:
 - `cub scout` is cluster read-only by default
@@ -98,7 +103,7 @@ As of 2026-05-08, these areas are fully or materially shipped:
   - connected DRY/WET/LIVE comparison
   - `--fail-on` conformance exit codes
   - agreement/convergence summary in CLI + JSON
-- MCP gateway
+- MCP (Model Context Protocol) gateway
   - `mcp serve` exposes `doctor` as the first standalone troubleshooting tool, including when the problem might be local access uncertainty such as wrong context, stale kubeconfig, or API reachability
   - standalone tool set: `doctor`, `explain`, `map`, `scan`, `trace`
   - connected mode adds read-only ConfigHub query tools

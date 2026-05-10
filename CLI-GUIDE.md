@@ -1,7 +1,11 @@
 # cub-scout CLI Guide
 
-Workflow-first guide for learning how to use cub-scout without turning this file
-into a second command encyclopedia.
+**cub-scout observes and explains; it never decides.** It is the read-only
+Kubernetes and GitOps observer — every command in this guide reads cluster
+or ConfigHub state and explains it, but nothing here mutates the cluster.
+
+Workflow-first guide for learning how to use cub-scout without turning this
+file into a second command encyclopedia.
 
 Need a specific command or flag?
 - [Complete CLI Reference (A-Z)](docs/reference/cli-reference.md)
@@ -113,7 +117,9 @@ If you need more on import:
 
 ## AI And Automation
 
-cub-scout is designed to expose read-only cluster facts to automation and AI agents.
+cub-scout is designed to expose read-only cluster facts to automation and AI
+agents. The primary AI gateway is a Model Context Protocol (MCP) server that
+exposes the same read-only commands you use from the CLI.
 
 High-value entrypoints:
 
@@ -126,7 +132,7 @@ cub-scout compare three-way --scope namespace/prod --format json
 ```
 
 Use:
-- `mcp serve` when you want a read-only MCP server over stdio
+- `mcp serve` when you want a read-only MCP (Model Context Protocol) server over stdio
 - `context-pack` when you want a bounded AI handoff bundle
 - JSON outputs when you want stable machine-readable facts
 
@@ -143,7 +149,7 @@ For AI-specific operating guidance:
 |-----------|----------|------------|
 | TUI | Interactive exploration and keyboard-driven debugging | `cub-scout map` |
 | CLI | One-off commands, shell use, pipelines | `cub-scout doctor`, `cub-scout explain`, `cub-scout trace` |
-| JSON | Automation, AI, MCP-backed workflows | `--format json` or `--json` |
+| JSON | Automation, AI, Model Context Protocol (MCP) workflows | `--format json` or `--json` |
 
 Good rule of thumb:
 - start with `doctor` if you do not know where to begin
