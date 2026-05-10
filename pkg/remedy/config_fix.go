@@ -7,147 +7,69 @@ import (
 	"strings"
 )
 
-// ConfigFixExecutor handles config_fix remedy type
-// Executes kubectl apply/patch commands
-type ConfigFixExecutor struct {
+// ConfigFixSuggester describes a config_fix remedy as a structured patch
+// suggestion. It does not apply the patch.
+type ConfigFixSuggester struct {
 	kubectl string
 }
 
-// NewConfigFixExecutor creates a new config fix executor
-func NewConfigFixExecutor() *ConfigFixExecutor {
-	return &ConfigFixExecutor{
+// NewConfigFixSuggester creates a new config-fix suggester.
+func NewConfigFixSuggester() *ConfigFixSuggester {
+	return &ConfigFixSuggester{
 		kubectl: "kubectl",
 	}
 }
 
-// Type returns ConfigFix
-func (e *ConfigFixExecutor) Type() RemedyType {
+// Type returns ConfigFix.
+func (s *ConfigFixSuggester) Type() RemedyType {
 	return ConfigFix
 }
 
-// CanExecute checks if we can fix this finding
-func (e *ConfigFixExecutor) CanExecute(f *Finding) bool {
-	// Can execute if we have kubectl commands
+// CanSuggest reports whether this suggester can describe the finding.
+func (s *ConfigFixSuggester) CanSuggest(f *Finding) bool {
 	for _, cmd := range f.Commands {
-		if e.isConfigCommand(cmd) {
+		if s.isConfigCommand(cmd) {
 			return true
 		}
 	}
 	return false
 }
 
-// DryRun shows what would be changed
-func (e *ConfigFixExecutor) DryRun(ctx context.Context, f *Finding) (*RemedyPlan, error) {
-	plan := &RemedyPlan{
+// Suggest describes the fix that would resolve the finding without applying
+// it. Reading current cluster state via `kubectl get` is permitted because
+// it is read-only; no kubectl apply / patch is invoked.
+func (s *ConfigFixSuggester) Suggest(ctx context.Context, f *Finding) (*SuggestedRemedy, error) {
+	suggestion := &SuggestedRemedy{
 		Finding:    f,
 		Reversible: true,
 		RiskLevel:  RiskLow,
 	}
 
-	// Get current state
-	current, err := e.getCurrentState(ctx, f.Resource)
+	// Capture current state for the diff (read-only).
+	current, err := s.getCurrentState(ctx, f.Resource)
 	if err != nil {
-		// Resource might not exist yet, that's ok for apply
 		current = "[resource not found]"
 	}
 
-	// Build planned actions
 	for _, cmd := range f.Commands {
-		if e.isConfigCommand(cmd) {
-			// Add namespace if not present
-			execCmd := e.addNamespace(cmd, f.Namespace)
-
-			plan.Actions = append(plan.Actions, PlannedAction{
-				Description: e.describeCommand(cmd),
-				Command:     execCmd,
+		if s.isConfigCommand(cmd) {
+			suggestion.Actions = append(suggestion.Actions, SuggestedAction{
+				Description: s.describeCommand(cmd),
+				Command:     s.addNamespace(cmd, f.Namespace),
 				DiffBefore:  current,
-				DiffAfter:   "[computed at execution time]",
+				DiffAfter:   "[computed at apply time by the executing tool]",
 			})
 		}
 	}
 
-	if len(plan.Actions) == 0 {
-		return nil, fmt.Errorf("no executable commands found for %s", f.CCVE)
+	if len(suggestion.Actions) == 0 {
+		return nil, fmt.Errorf("no describable commands found for %s", f.CCVE)
 	}
 
-	return plan, nil
+	return suggestion, nil
 }
 
-// Execute applies the remedy
-func (e *ConfigFixExecutor) Execute(ctx context.Context, f *Finding, opts *ExecuteOptions) (*RemedyResult, error) {
-	result := &RemedyResult{
-		Success: true,
-	}
-
-	// Capture current state for rollback
-	if opts.Rollback {
-		current, err := e.getCurrentState(ctx, f.Resource)
-		if err == nil && current != "" {
-			result.RollbackCmd = fmt.Sprintf("kubectl apply -f - <<'EOF'\n%sEOF", current)
-		}
-	}
-
-	for _, cmd := range f.Commands {
-		if !e.isConfigCommand(cmd) {
-			continue
-		}
-
-		// Build execution command
-		execCmd := e.addNamespace(cmd, f.Namespace)
-
-		// Add dry-run flag if requested
-		if opts.DryRun {
-			if strings.Contains(execCmd, "apply") {
-				execCmd = execCmd + " --dry-run=client"
-			} else if strings.Contains(execCmd, "patch") {
-				execCmd = execCmd + " --dry-run=client"
-			}
-		}
-
-		// Set timeout context
-		execCtx := ctx
-		if opts.Timeout > 0 {
-			var cancel context.CancelFunc
-			execCtx, cancel = context.WithTimeout(ctx, opts.Timeout)
-			defer cancel()
-		}
-
-		// Execute
-		out, err := exec.CommandContext(execCtx, "sh", "-c", execCmd).CombinedOutput()
-
-		actionResult := ActionResult{
-			Action: PlannedAction{
-				Command:     cmd,
-				Description: e.describeCommand(cmd),
-			},
-			Output:  string(out),
-			Success: err == nil,
-		}
-
-		if err != nil {
-			actionResult.Error = err.Error()
-			result.Success = false
-		}
-
-		result.Actions = append(result.Actions, actionResult)
-
-		// Stop on first failure unless Force is set
-		if !result.Success && !opts.Force {
-			break
-		}
-	}
-
-	if result.Success {
-		result.Message = fmt.Sprintf("Successfully applied %d config fixes", len(result.Actions))
-	} else {
-		result.Message = "Config fix failed"
-	}
-
-	return result, nil
-}
-
-// isConfigCommand checks if this is a kubectl apply/patch/annotate/label command
-func (e *ConfigFixExecutor) isConfigCommand(cmd string) bool {
+func (s *ConfigFixSuggester) isConfigCommand(cmd string) bool {
 	cmd = strings.ToLower(cmd)
 	return strings.Contains(cmd, "kubectl apply") ||
 		strings.Contains(cmd, "kubectl patch") ||
@@ -155,16 +77,14 @@ func (e *ConfigFixExecutor) isConfigCommand(cmd string) bool {
 		strings.Contains(cmd, "kubectl label")
 }
 
-// addNamespace adds -n flag if namespace is set and not already present
-func (e *ConfigFixExecutor) addNamespace(cmd, namespace string) string {
+func (s *ConfigFixSuggester) addNamespace(cmd, namespace string) string {
 	if namespace != "" && !strings.Contains(cmd, " -n ") && !strings.Contains(cmd, " --namespace") {
 		return cmd + " -n " + namespace
 	}
 	return cmd
 }
 
-// describeCommand returns a human-readable description
-func (e *ConfigFixExecutor) describeCommand(cmd string) string {
+func (s *ConfigFixSuggester) describeCommand(cmd string) string {
 	cmd = strings.ToLower(cmd)
 	if strings.Contains(cmd, "kubectl apply") {
 		return "Apply configuration change"
@@ -181,10 +101,11 @@ func (e *ConfigFixExecutor) describeCommand(cmd string) string {
 	return "Execute kubectl command"
 }
 
-// getCurrentState gets the current YAML of a resource
-func (e *ConfigFixExecutor) getCurrentState(ctx context.Context, ref ResourceRef) (string, error) {
-	cmd := fmt.Sprintf("kubectl get %s %s -o yaml",
-		strings.ToLower(ref.Kind), ref.Name)
+// getCurrentState reads the resource via `kubectl get`. This is read-only
+// and is the only shell-out the suggester performs.
+func (s *ConfigFixSuggester) getCurrentState(ctx context.Context, ref ResourceRef) (string, error) {
+	cmd := fmt.Sprintf("%s get %s %s -o yaml",
+		s.kubectl, strings.ToLower(ref.Kind), ref.Name)
 	if ref.Namespace != "" {
 		cmd += " -n " + ref.Namespace
 	}

@@ -73,7 +73,7 @@ Modern Kubernetes clusters have resources deployed by multiple tools:
 | `import` | Import workloads into ConfigHub | Connected |
 | `import argocd` | Import ArgoCD Application | Connected |
 | `app-space` | Manage App Spaces | Connected |
-| `remedy` | Execute risk remediation | Standalone |
+| `suggest-remedy` (alias `remedy`) | Describe suggested remediation (read-only) | Standalone |
 | `combined` | Git repo + cluster alignment | Standalone/Connected |
 | `import parse-repo` | Parse GitOps repo structure | Standalone |
 | `demo` | Run interactive demos | Standalone |

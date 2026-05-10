@@ -1413,17 +1413,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			switch msg.String() {
 			case "f":
-				// Auto-fix: run remedy --dry-run first
+				// Show the suggested remedy as JSON. cub-scout never applies.
 				if len(m.scanFindings) > 0 {
 					m.scanLoading = true
-					return m, m.runRemedyDryRun()
-				}
-				return m, nil
-			case "F":
-				// Force fix: run remedy without dry-run (needs confirmation)
-				if len(m.scanFindings) > 0 {
-					m.scanLoading = true
-					return m, m.runRemedyApply()
+					return m, m.runRemedySuggest()
 				}
 				return m, nil
 			default:
@@ -5689,8 +5682,10 @@ func (m LocalClusterModel) runGraphExport(format string) tea.Cmd {
 	}
 }
 
-// runRemedyDryRun runs the remedy command in dry-run mode
-func (m LocalClusterModel) runRemedyDryRun() tea.Cmd {
+// runRemedySuggest shells out to `cub-scout suggest-remedy --all` to render
+// the suggested patches for the current findings. cub-scout never applies;
+// this view is read-only evidence.
+func (m LocalClusterModel) runRemedySuggest() tea.Cmd {
 	return func() tea.Msg {
 		// Collect risk issue IDs from findings
 		var ccveIDs []string
@@ -5704,23 +5699,24 @@ func (m LocalClusterModel) runRemedyDryRun() tea.Cmd {
 
 		if len(ccveIDs) == 0 {
 			return scanResultMsg{
-				output: "No findings to fix",
+				output: "No findings to suggest remedies for",
 				err:    nil,
 			}
 		}
 
-		// Run remedy --all --dry-run to show what would be fixed
-		cmd := exec.Command("./cub-scout", "remedy", "--all", "--dry-run")
+		cmd := exec.Command("./cub-scout", "suggest-remedy", "--all")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			cmd = exec.Command("cub-scout", "remedy", "--all", "--dry-run")
+			cmd = exec.Command("cub-scout", "suggest-remedy", "--all")
 			out, err = cmd.CombinedOutput()
 		}
 
 		output := string(out)
 		if err == nil {
-			output = "DRY RUN - Preview of changes:\n" + lcDimStyle.Render("─────────────────────────────────────────────────────────────────") + "\n" + output
-			output += "\n" + lcWarnStyle.Render("Press [F] to apply these fixes, or any other key to cancel")
+			output = "SUGGESTED REMEDIES (cub-scout never applies):\n" +
+				lcDimStyle.Render("─────────────────────────────────────────────────────────────────") + "\n" +
+				output +
+				"\n" + lcDimStyle.Render("Apply via ConfigHub or kubectl, governed. Any key to return.")
 		}
 
 		return scanResultMsg{
@@ -5728,31 +5724,6 @@ func (m LocalClusterModel) runRemedyDryRun() tea.Cmd {
 			err:        err,
 			findings:   m.scanFindings,
 			categories: m.scanCategories,
-		}
-	}
-}
-
-// runRemedyApply runs the remedy command to actually apply fixes
-func (m LocalClusterModel) runRemedyApply() tea.Cmd {
-	return func() tea.Msg {
-		// Run remedy --all (without dry-run) to apply fixes
-		cmd := exec.Command("./cub-scout", "remedy", "--all", "--dry-run=false", "--force")
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			cmd = exec.Command("cub-scout", "remedy", "--all", "--dry-run=false", "--force")
-			out, err = cmd.CombinedOutput()
-		}
-
-		output := string(out)
-		if err == nil {
-			output = lcOkStyle.Render("REMEDIATION APPLIED") + "\n" + lcDimStyle.Render("─────────────────────────────────────────────────────────────────") + "\n" + output
-		}
-
-		return scanResultMsg{
-			output:     output,
-			err:        err,
-			findings:   nil, // Clear findings after apply
-			categories: nil,
 		}
 	}
 }
@@ -6112,7 +6083,7 @@ func (m LocalClusterModel) renderScan() string {
 		b.WriteString(lcOkStyle.Render("✓ No configuration issues found") + "\n")
 	}
 
-	b.WriteString("\n" + lcDimStyle.Render("[f] preview fix (dry-run) · [F] apply fix · any other key to return") + "\n")
+	b.WriteString("\n" + lcDimStyle.Render("[f] show suggested remedy as JSON · any other key to return") + "\n")
 
 	return b.String()
 }

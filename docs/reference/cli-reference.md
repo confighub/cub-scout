@@ -39,7 +39,7 @@ Source of truth:
 | `mcp` | Read-only MCP gateway | [Command Reference](commands.md#mcp) | [MCP gateway](../../examples/mcp-gateway/) |
 | `patterns` | Pattern detection engine | [Command Reference](commands.md#patterns-v07) | [Patterns fixtures](../../test/fixtures/patterns/) |
 | `quickstart` | Guided first-run tour | [Command Reference](commands.md#quickstart) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
-| `remedy` | Execute remediation for auto-fixable findings | [Command Reference](commands.md#remedy) | [Running demos](../howto/running-demos.md) |
+| `suggest-remedy` | Describe a suggested remediation for a risk finding (read-only). Legacy `remedy` is accepted as an alias. | [Command Reference](commands.md#suggest-remedy) | [Running demos](../howto/running-demos.md) |
 | `scan` | Risk and stuck-state scanning | [Command Reference](commands.md#scan) | [Lifecycle hazards](../../examples/lifecycle-hazards/) |
 | `setup` | Shell setup and quick cluster connect helpers | [Command Reference](commands.md#setup) | - |
 | `snapshot` | Dump cluster state as GSF JSON | [Command Reference](commands.md#snapshot) | [AI integration](../../examples/ai-integration/) |

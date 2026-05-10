@@ -3,139 +3,63 @@ package remedy
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
-// TriggerActionExecutor handles trigger_action remedy type
-// Executes kubectl rollout restart, scale, etc.
-type TriggerActionExecutor struct {
+// TriggerActionSuggester describes a trigger_action remedy as a structured
+// suggestion (rollout restart, scale, etc.). It does not perform the action.
+type TriggerActionSuggester struct {
 	kubectl string
 }
 
-// NewTriggerActionExecutor creates a new trigger action executor
-func NewTriggerActionExecutor() *TriggerActionExecutor {
-	return &TriggerActionExecutor{
+// NewTriggerActionSuggester creates a new trigger-action suggester.
+func NewTriggerActionSuggester() *TriggerActionSuggester {
+	return &TriggerActionSuggester{
 		kubectl: "kubectl",
 	}
 }
 
-// Type returns TriggerAction
-func (e *TriggerActionExecutor) Type() RemedyType {
+// Type returns TriggerAction.
+func (s *TriggerActionSuggester) Type() RemedyType {
 	return TriggerAction
 }
 
-// CanExecute checks if we can execute this finding
-func (e *TriggerActionExecutor) CanExecute(f *Finding) bool {
+// CanSuggest reports whether this suggester can describe the finding.
+func (s *TriggerActionSuggester) CanSuggest(f *Finding) bool {
 	for _, cmd := range f.Commands {
-		if e.isActionCommand(cmd) {
+		if s.isActionCommand(cmd) {
 			return true
 		}
 	}
 	return false
 }
 
-// DryRun shows what would be done
-func (e *TriggerActionExecutor) DryRun(ctx context.Context, f *Finding) (*RemedyPlan, error) {
-	plan := &RemedyPlan{
+// Suggest describes the action that would resolve the finding without
+// performing it.
+func (s *TriggerActionSuggester) Suggest(_ context.Context, f *Finding) (*SuggestedRemedy, error) {
+	suggestion := &SuggestedRemedy{
 		Finding:    f,
 		Reversible: true,
 		RiskLevel:  RiskMedium,
 	}
 
 	for _, cmd := range f.Commands {
-		if e.isActionCommand(cmd) {
-			execCmd := e.addNamespace(cmd, f.Namespace)
-			plan.Actions = append(plan.Actions, PlannedAction{
-				Description: e.describeAction(cmd),
-				Command:     execCmd,
+		if s.isActionCommand(cmd) {
+			suggestion.Actions = append(suggestion.Actions, SuggestedAction{
+				Description: s.describeAction(cmd),
+				Command:     s.addNamespace(cmd, f.Namespace),
 			})
 		}
 	}
 
-	if len(plan.Actions) == 0 {
-		return nil, fmt.Errorf("no executable actions found for %s", f.CCVE)
+	if len(suggestion.Actions) == 0 {
+		return nil, fmt.Errorf("no describable actions found for %s", f.CCVE)
 	}
 
-	return plan, nil
+	return suggestion, nil
 }
 
-// Execute runs the action commands
-func (e *TriggerActionExecutor) Execute(ctx context.Context, f *Finding, opts *ExecuteOptions) (*RemedyResult, error) {
-	result := &RemedyResult{Success: true}
-
-	for _, cmd := range f.Commands {
-		if !e.isActionCommand(cmd) {
-			continue
-		}
-
-		execCmd := e.addNamespace(cmd, f.Namespace)
-
-		// Note: rollout restart doesn't support --dry-run
-		// We just skip execution in dry-run mode
-		if opts.DryRun {
-			result.Actions = append(result.Actions, ActionResult{
-				Action: PlannedAction{
-					Command:     execCmd,
-					Description: e.describeAction(cmd),
-				},
-				Output:  "[dry-run: would execute]",
-				Success: true,
-			})
-			continue
-		}
-
-		// Set timeout context
-		execCtx := ctx
-		if opts.Timeout > 0 {
-			var cancel context.CancelFunc
-			execCtx, cancel = context.WithTimeout(ctx, opts.Timeout)
-			defer cancel()
-		}
-
-		out, err := exec.CommandContext(execCtx, "sh", "-c", execCmd).CombinedOutput()
-
-		actionResult := ActionResult{
-			Action: PlannedAction{
-				Command:     cmd,
-				Description: e.describeAction(cmd),
-			},
-			Output:  string(out),
-			Success: err == nil,
-		}
-
-		if err != nil {
-			actionResult.Error = err.Error()
-			result.Success = false
-		}
-
-		result.Actions = append(result.Actions, actionResult)
-
-		if !result.Success && !opts.Force {
-			break
-		}
-	}
-
-	// Generate rollback command if applicable
-	if len(f.Commands) > 0 && strings.Contains(f.Commands[0], "rollout restart") {
-		result.RollbackCmd = fmt.Sprintf("kubectl rollout undo %s/%s",
-			strings.ToLower(f.Resource.Kind), f.Resource.Name)
-		if f.Namespace != "" {
-			result.RollbackCmd += " -n " + f.Namespace
-		}
-	}
-
-	if result.Success {
-		result.Message = fmt.Sprintf("Successfully triggered %d actions", len(result.Actions))
-	} else {
-		result.Message = "Action trigger failed"
-	}
-
-	return result, nil
-}
-
-// isActionCommand checks if this is a rollout/scale command
-func (e *TriggerActionExecutor) isActionCommand(cmd string) bool {
+func (s *TriggerActionSuggester) isActionCommand(cmd string) bool {
 	cmd = strings.ToLower(cmd)
 	return strings.Contains(cmd, "rollout restart") ||
 		strings.Contains(cmd, "rollout undo") ||
@@ -143,16 +67,14 @@ func (e *TriggerActionExecutor) isActionCommand(cmd string) bool {
 		strings.Contains(cmd, "rollout status")
 }
 
-// addNamespace adds -n flag if not present
-func (e *TriggerActionExecutor) addNamespace(cmd, namespace string) string {
+func (s *TriggerActionSuggester) addNamespace(cmd, namespace string) string {
 	if namespace != "" && !strings.Contains(cmd, " -n ") && !strings.Contains(cmd, " --namespace") {
 		return cmd + " -n " + namespace
 	}
 	return cmd
 }
 
-// describeAction returns human-readable description
-func (e *TriggerActionExecutor) describeAction(cmd string) string {
+func (s *TriggerActionSuggester) describeAction(cmd string) string {
 	cmd = strings.ToLower(cmd)
 	if strings.Contains(cmd, "rollout restart") {
 		return "Restart pods with rolling update"

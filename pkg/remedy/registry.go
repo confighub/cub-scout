@@ -5,64 +5,66 @@ import (
 	"sync"
 )
 
-// Registry holds all available executors
+// Registry holds all available suggesters.
 type Registry struct {
-	mu        sync.RWMutex
-	executors map[RemedyType]Executor
+	mu         sync.RWMutex
+	suggesters map[RemedyType]Suggester
 }
 
-// NewRegistry creates a new executor registry
+// NewRegistry creates a new suggester registry.
 func NewRegistry() *Registry {
 	return &Registry{
-		executors: make(map[RemedyType]Executor),
+		suggesters: make(map[RemedyType]Suggester),
 	}
 }
 
-// Register adds an executor to the registry
-func (r *Registry) Register(e Executor) {
+// Register adds a suggester to the registry.
+func (r *Registry) Register(s Suggester) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.executors[e.Type()] = e
+	r.suggesters[s.Type()] = s
 }
 
-// Get returns an executor by type
-func (r *Registry) Get(t RemedyType) (Executor, bool) {
+// Get returns a suggester by type.
+func (r *Registry) Get(t RemedyType) (Suggester, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	e, ok := r.executors[t]
-	return e, ok
+	s, ok := r.suggesters[t]
+	return s, ok
 }
 
-// ExecutorFor returns the executor that can handle a finding
-func (r *Registry) ExecutorFor(finding *Finding) (Executor, error) {
+// SuggesterFor returns the suggester that can describe a fix for a finding.
+func (r *Registry) SuggesterFor(finding *Finding) (Suggester, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	e, ok := r.executors[finding.RemedyType]
+	s, ok := r.suggesters[finding.RemedyType]
 	if !ok {
-		return nil, fmt.Errorf("no executor registered for type %s", finding.RemedyType)
+		return nil, fmt.Errorf("no suggester registered for type %s", finding.RemedyType)
 	}
 
-	if !e.CanExecute(finding) {
-		return nil, fmt.Errorf("executor for %s cannot handle this finding", finding.RemedyType)
+	if !s.CanSuggest(finding) {
+		return nil, fmt.Errorf("suggester for %s cannot describe this finding", finding.RemedyType)
 	}
 
-	return e, nil
+	return s, nil
 }
 
-// Types returns all registered remedy types
+// Types returns all registered remedy types.
 func (r *Registry) Types() []RemedyType {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	types := make([]RemedyType, 0, len(r.executors))
-	for t := range r.executors {
+	types := make([]RemedyType, 0, len(r.suggesters))
+	for t := range r.suggesters {
 		types = append(types, t)
 	}
 	return types
 }
 
-// IsAutoFixable checks if a remedy type can be fully automated
+// IsAutoFixable reports whether a remedy type can be fully described as a
+// single auto-suggestable fix. (cub-scout never applies the fix; this only
+// gates whether a structured suggestion is producible.)
 func IsAutoFixable(t RemedyType) bool {
 	for _, autoType := range AutoFixableTypes {
 		if t == autoType {
@@ -72,12 +74,12 @@ func IsAutoFixable(t RemedyType) bool {
 	return false
 }
 
-// DefaultRegistry creates a registry with all standard executors
+// DefaultRegistry creates a registry with all standard suggesters.
 func DefaultRegistry() *Registry {
 	r := NewRegistry()
-	r.Register(NewConfigFixExecutor())
-	r.Register(NewTriggerActionExecutor())
-	r.Register(NewDeleteResourceExecutor())
-	r.Register(NewRestartExecutor())
+	r.Register(NewConfigFixSuggester())
+	r.Register(NewTriggerActionSuggester())
+	r.Register(NewDeleteResourceSuggester())
+	r.Register(NewRestartSuggester())
 	return r
 }

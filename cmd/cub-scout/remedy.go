@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -20,167 +19,148 @@ import (
 	"github.com/confighub/cub-scout/pkg/remedy"
 )
 
+// suggest-remedy is the read-only successor to the previous `remedy` command.
+//
+// cub-scout never applies a fix. This command describes a structured
+// suggested patch that *would* resolve a risk finding — caller (Pilot,
+// ConfigHub, an operator) decides whether and how to apply it.
+//
+// History: the original `remedy` command both produced the suggestion AND
+// applied it via `kubectl apply / patch / delete`. That violated the
+// triad-locked contract that cub-scout is read-only evidence. See #410
+// (decision) and #428 (this implementation).
+
 var (
-	remedyDryRun    bool
-	remedyNamespace string
-	remedyForce     bool
-	remedyAll       bool
-	remedyJSON      bool
-	remedyFile      string
-	remedyList      bool
-	remedyTimeout   string
-	remedyAudit     bool
-	remedyAuditFile string
+	suggestNamespace string
+	suggestAll       bool
+	suggestJSON      bool
+	suggestFile      string
+	suggestList      bool
 )
 
-var remedyCmd = &cobra.Command{
-	Use:   "remedy [RISK-ID]",
-	Short: "Execute remediation for risk issue findings",
-	Long: `Execute automated remediation for detected risk issues.
+var suggestRemedyCmd = &cobra.Command{
+	Use:     "suggest-remedy [RISK-ID]",
+	Aliases: []string{"remedy"},
+	Short:   "Describe a suggested remediation for a risk finding (read-only)",
+	Long: `Describe how a risk finding would be remediated, without applying anything.
 
-The remedy command can:
-1. Fix a specific risk issue finding by ID
-2. Fix all auto-fixable findings in a namespace
-3. Show what would be fixed (dry-run mode)
+cub-scout never modifies cluster state. suggest-remedy emits a structured
+description of the patch that would resolve a finding — the kubectl command
+that would carry it out, the current state, and the expected change. It is
+up to a downstream tool (ConfigHub Pilot, an operator, or your CI pipeline)
+to decide whether and how to apply that suggestion.
 
 Examples:
-  # Show what would be fixed (always run first!)
-  cub-scout remedy CCVE-2025-0687 --dry-run -n production
+  # Describe the suggested fix for a specific finding
+  cub-scout suggest-remedy CCVE-2025-0687 -n production
 
-  # Fix a specific risk issue
-  cub-scout remedy CCVE-2025-0687 -n production
+  # Describe suggestions for all auto-fixable findings in a namespace
+  cub-scout suggest-remedy --all -n production
 
-  # Fix all auto-fixable issues in namespace (dry-run)
-  cub-scout remedy --all --dry-run -n production
+  # Scan a manifest file and report suggestions
+  cub-scout suggest-remedy --file manifest.yaml
 
-  # Force fix without confirmation
-  cub-scout remedy CCVE-2025-0687 -n production --force
+  # JSON output (the load-bearing contract for downstream tools)
+  cub-scout suggest-remedy --all -n production --json
 
-  # Scan file and fix issues
-  cub-scout remedy --file manifest.yaml --dry-run
+  # List the auto-fixable risk-issue catalogue
+  cub-scout suggest-remedy --list
 
-  # List auto-fixable risk issues
-  cub-scout remedy --list
+Auto-fixable remedy types (cub-scout can produce a structured suggestion):
+  - config_fix       (kubectl apply / patch)
+  - trigger_action   (rollout restart, scale)
+  - delete_resource  (kubectl delete)
+  - restart          (pod / deployment restart)
 
-Supported remedy types (auto-fixable):
-  - config_fix:      786 issues - kubectl apply/patch
-  - trigger_action:  169 issues - rollout restart, scale
-  - delete_resource: 348 issues - delete orphaned resources (needs --force)
-  - restart:          70 issues - restart pods
-
-Total auto-fixable: 1,373 risk issues (40%)
+The legacy ` + "`remedy`" + ` verb is still accepted as an alias. The
+` + "`--dry-run`, `--force`, `--audit`, and `--audit-file`" + ` flags have
+been removed because cub-scout no longer has a non-dry-run path.
 `,
-	RunE: runRemedy,
+	RunE: runSuggestRemedy,
 }
 
 func init() {
-	rootCmd.AddCommand(remedyCmd)
+	rootCmd.AddCommand(suggestRemedyCmd)
 
-	remedyCmd.Flags().BoolVar(&remedyDryRun, "dry-run", true, "Show what would be changed (default: true)")
-	remedyCmd.Flags().StringVarP(&remedyNamespace, "namespace", "n", "", "Namespace to operate in")
-	remedyCmd.Flags().BoolVar(&remedyForce, "force", false, "Skip confirmation for high-risk actions")
-	remedyCmd.Flags().BoolVar(&remedyAll, "all", false, "Fix all auto-fixable issues")
-	remedyCmd.Flags().BoolVar(&remedyJSON, "json", false, "Output as JSON")
-	remedyCmd.Flags().StringVar(&remedyFile, "file", "", "YAML file to scan and fix")
-	remedyCmd.Flags().BoolVar(&remedyList, "list", false, "List auto-fixable risk issues")
-	remedyCmd.Flags().StringVar(&remedyTimeout, "timeout", "30s", "Timeout for each action")
-	remedyCmd.Flags().BoolVar(&remedyAudit, "audit", true, "Log actions to audit file")
-	remedyCmd.Flags().StringVar(&remedyAuditFile, "audit-file", "remedy-audit.log", "Audit log file path")
+	suggestRemedyCmd.Flags().StringVarP(&suggestNamespace, "namespace", "n", "", "Namespace to operate in")
+	suggestRemedyCmd.Flags().BoolVar(&suggestAll, "all", false, "Describe suggestions for all auto-fixable findings")
+	suggestRemedyCmd.Flags().BoolVar(&suggestJSON, "json", false, "Output as JSON")
+	suggestRemedyCmd.Flags().StringVar(&suggestFile, "file", "", "YAML file to scan for findings")
+	suggestRemedyCmd.Flags().BoolVar(&suggestList, "list", false, "List auto-fixable risk-issue categories")
 }
 
-// RemedyOutput is the JSON output structure
-type RemedyOutput struct {
-	DryRun   bool               `json:"dryRun"`
-	Findings []RemedyFindingOut `json:"findings"`
-	Summary  RemedySummary      `json:"summary"`
+// SuggestRemedyOutput is the top-level JSON contract.
+type SuggestRemedyOutput struct {
+	Suggestions []SuggestedFindingOut `json:"suggestions"`
+	Summary     SuggestSummary        `json:"summary"`
 }
 
-type RemedyFindingOut struct {
-	CCVE       string            `json:"ccve"`
-	Resource   string            `json:"resource"`
-	Namespace  string            `json:"namespace,omitempty"`
-	RemedyType string            `json:"remedyType"`
-	RiskLevel  string            `json:"riskLevel"`
-	Reversible bool              `json:"reversible"`
-	Actions    []RemedyActionOut `json:"actions"`
-	Result     *RemedyResultOut  `json:"result,omitempty"`
+// SuggestedFindingOut is one suggested-remedy entry in the JSON contract.
+type SuggestedFindingOut struct {
+	CCVE       string               `json:"ccve"`
+	Resource   string               `json:"resource"`
+	Namespace  string               `json:"namespace,omitempty"`
+	RemedyType string               `json:"remedyType"`
+	RiskLevel  string               `json:"riskLevel"`
+	Reversible bool                 `json:"reversible"`
+	Actions    []SuggestedActionOut `json:"actions"`
 }
 
-type RemedyActionOut struct {
+// SuggestedActionOut describes one step of a suggested remedy.
+type SuggestedActionOut struct {
 	Description string `json:"description"`
 	Command     string `json:"command"`
 }
 
-type RemedyResultOut struct {
-	Success     bool   `json:"success"`
-	Message     string `json:"message"`
-	RollbackCmd string `json:"rollbackCmd,omitempty"`
+// SuggestSummary aggregates counts. cub-scout never applies, so there are
+// no fixed/failed counts — only describable vs not.
+type SuggestSummary struct {
+	Total       int `json:"total"`
+	Describable int `json:"describable"`
+	Skipped     int `json:"skipped"`
 }
 
-type RemedySummary struct {
-	Total   int `json:"total"`
-	Fixed   int `json:"fixed"`
-	Skipped int `json:"skipped"`
-	Failed  int `json:"failed"`
-}
-
-func runRemedy(cmd *cobra.Command, args []string) error {
+func runSuggestRemedy(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
-	// Parse timeout
-	timeout, err := time.ParseDuration(remedyTimeout)
-	if err != nil {
-		return fmt.Errorf("invalid timeout: %w", err)
-	}
-
-	// List mode
-	if remedyList {
+	if suggestList {
 		return listAutoFixableCCVEs()
 	}
 
-	// Build registry
 	reg := remedy.DefaultRegistry()
 
-	// File mode - static analysis
-	if remedyFile != "" {
-		return runRemedyFile(ctx, reg, remedyFile, timeout)
+	if suggestFile != "" {
+		return runSuggestFile(ctx, reg, suggestFile)
 	}
 
-	// Require namespace for cluster operations
-	if remedyNamespace == "" && !remedyAll {
+	if suggestNamespace == "" && !suggestAll {
 		return fmt.Errorf("namespace required (-n) or use --all for all namespaces")
 	}
 
-	// All mode - scan and fix all
-	if remedyAll {
-		return runRemedyAll(ctx, reg, timeout)
+	if suggestAll {
+		return runSuggestAll(ctx, reg)
 	}
 
-	// Single risk issue mode
 	if len(args) < 1 {
 		return fmt.Errorf("risk issue ID required (e.g., CCVE-2025-0687) or use --all")
 	}
 
-	ccveID := args[0]
-	return runRemedySingle(ctx, reg, ccveID, timeout)
+	return runSuggestSingle(ctx, reg, args[0])
 }
 
-func runRemedySingle(ctx context.Context, reg *remedy.Registry, ccveID string, timeout time.Duration) error {
-	// Load risk issue definition
+func runSuggestSingle(ctx context.Context, reg *remedy.Registry, ccveID string) error {
 	ccve, err := loadCCVE(ccveID)
 	if err != nil {
 		return fmt.Errorf("load risk issue %s: %w", ccveID, err)
 	}
 
-	// Check if auto-fixable
 	if !remedy.IsAutoFixable(remedy.RemedyType(ccve.RemedyType)) {
-		return fmt.Errorf("risk issue %s has remedy type %q which is not auto-fixable", ccveID, ccve.RemedyType)
+		return fmt.Errorf("risk issue %s has remedy type %q which is not auto-suggestable", ccveID, ccve.RemedyType)
 	}
 
-	// Create finding from risk issue
 	finding := &remedy.Finding{
 		CCVE:       ccveID,
-		Namespace:  remedyNamespace,
+		Namespace:  suggestNamespace,
 		RemedyType: remedy.RemedyType(ccve.RemedyType),
 		Commands:   ccve.Commands,
 		Steps:      ccve.Steps,
@@ -189,94 +169,48 @@ func runRemedySingle(ctx context.Context, reg *remedy.Registry, ccveID string, t
 		},
 	}
 
-	// Validate finding before proceeding
 	if err := validateFinding(ctx, finding); err != nil {
 		return fmt.Errorf("validation failed: %w", err)
 	}
 
-	// Get executor
-	executor, err := reg.ExecutorFor(finding)
+	suggester, err := reg.SuggesterFor(finding)
 	if err != nil {
-		return fmt.Errorf("no executor: %w", err)
+		return fmt.Errorf("no suggester: %w", err)
 	}
 
-	// Run dry-run
-	plan, err := executor.DryRun(ctx, finding)
+	suggestion, err := suggester.Suggest(ctx, finding)
 	if err != nil {
-		return fmt.Errorf("plan failed: %w", err)
+		return fmt.Errorf("describe suggestion: %w", err)
 	}
 
-	// Output plan
-	if remedyJSON {
-		return outputRemedyPlanJSON(plan, nil)
+	if suggestJSON {
+		return outputSuggestionJSON(suggestion)
 	}
 
-	printRemedyPlan(plan)
-
-	// Stop if dry-run
-	if remedyDryRun {
-		logRemedyAction(finding, nil, true)
-		fmt.Printf("\n%s[dry-run] No changes made. Remove --dry-run to apply.%s\n\n", colorYellow, colorReset)
-		return nil
-	}
-
-	// Confirm high-risk actions
-	if plan.RiskLevel == remedy.RiskHigh && !remedyForce {
-		fmt.Printf("\n%s⚠ HIGH RISK: This action is irreversible!%s\n", colorRed, colorReset)
-		if !confirmRemedy("Continue?") {
-			fmt.Println("Cancelled")
-			return nil
-		}
-	}
-
-	// Execute
-	opts := &remedy.ExecuteOptions{
-		DryRun:  false,
-		Force:   remedyForce,
-		Timeout: timeout,
-	}
-
-	result, err := executor.Execute(ctx, finding, opts)
-	if err != nil {
-		logRemedyAction(finding, nil, false)
-		return fmt.Errorf("execute failed: %w", err)
-	}
-
-	// Log the action
-	logRemedyAction(finding, result, false)
-
-	// Output result
-	if remedyJSON {
-		return outputRemedyPlanJSON(plan, result)
-	}
-
-	printRemedyResult(result)
+	printSuggestion(suggestion)
+	fmt.Printf("\n%scub-scout produces evidence only. Apply via ConfigHub or kubectl, governed.%s\n\n",
+		colorDim, colorReset)
 	return nil
 }
 
-func runRemedyAll(ctx context.Context, reg *remedy.Registry, timeout time.Duration) error {
-	// Build k8s config
+func runSuggestAll(ctx context.Context, reg *remedy.Registry) error {
 	cfg, err := buildConfig()
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes config: %w", err)
 	}
 
-	// Run static scan on cluster
 	stateScanner, err := agent.NewStateScanner(cfg)
 	if err != nil {
 		return fmt.Errorf("create scanner: %w", err)
 	}
 
-	// Scan for dangling resources
 	danglingResult, err := stateScanner.ScanDanglingResources(ctx)
 	if err != nil {
 		return fmt.Errorf("scan failed: %w", err)
 	}
 
-	// Convert to findings
 	var findings []*remedy.Finding
 	for _, d := range danglingResult.Findings {
-		// Only include delete_resource type for dangling findings
 		findings = append(findings, &remedy.Finding{
 			CCVE:       d.CCVEID,
 			Namespace:  d.Namespace,
@@ -291,95 +225,61 @@ func runRemedyAll(ctx context.Context, reg *remedy.Registry, timeout time.Durati
 	}
 
 	if len(findings) == 0 {
-		fmt.Printf("\n%s✓ No auto-fixable issues found%s\n\n", colorGreen, colorReset)
+		fmt.Printf("\n%s✓ No auto-suggestable findings%s\n\n", colorGreen, colorReset)
 		return nil
 	}
 
-	// Process findings
-	output := &RemedyOutput{
-		DryRun: remedyDryRun,
-	}
+	output := &SuggestRemedyOutput{}
 
 	for _, finding := range findings {
-		if remedyNamespace != "" && finding.Namespace != remedyNamespace {
+		if suggestNamespace != "" && finding.Namespace != suggestNamespace {
 			continue
 		}
 
-		executor, err := reg.ExecutorFor(finding)
+		suggester, err := reg.SuggesterFor(finding)
 		if err != nil {
 			output.Summary.Skipped++
 			continue
 		}
 
-		plan, err := executor.DryRun(ctx, finding)
+		suggestion, err := suggester.Suggest(ctx, finding)
 		if err != nil {
 			output.Summary.Skipped++
 			continue
 		}
 
-		findingOut := RemedyFindingOut{
+		entry := SuggestedFindingOut{
 			CCVE:       finding.CCVE,
 			Resource:   finding.Resource.String(),
 			Namespace:  finding.Namespace,
 			RemedyType: string(finding.RemedyType),
-			RiskLevel:  string(plan.RiskLevel),
-			Reversible: plan.Reversible,
+			RiskLevel:  string(suggestion.RiskLevel),
+			Reversible: suggestion.Reversible,
 		}
 
-		for _, action := range plan.Actions {
-			findingOut.Actions = append(findingOut.Actions, RemedyActionOut{
+		for _, action := range suggestion.Actions {
+			entry.Actions = append(entry.Actions, SuggestedActionOut{
 				Description: action.Description,
 				Command:     action.Command,
 			})
 		}
 
-		if !remedyDryRun {
-			// Skip high-risk without force
-			if plan.RiskLevel == remedy.RiskHigh && !remedyForce {
-				output.Summary.Skipped++
-				continue
-			}
-
-			opts := &remedy.ExecuteOptions{
-				DryRun:  false,
-				Force:   remedyForce,
-				Timeout: timeout,
-			}
-
-			result, err := executor.Execute(ctx, finding, opts)
-			if err != nil || !result.Success {
-				output.Summary.Failed++
-				findingOut.Result = &RemedyResultOut{
-					Success: false,
-					Message: err.Error(),
-				}
-			} else {
-				output.Summary.Fixed++
-				findingOut.Result = &RemedyResultOut{
-					Success:     true,
-					Message:     result.Message,
-					RollbackCmd: result.RollbackCmd,
-				}
-			}
-		}
-
-		output.Findings = append(output.Findings, findingOut)
+		output.Suggestions = append(output.Suggestions, entry)
 		output.Summary.Total++
+		output.Summary.Describable++
 	}
 
-	if remedyJSON {
+	if suggestJSON {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(output)
 	}
 
-	// Human output
-	printRemedyAllSummary(output)
+	printSuggestSummary(output)
 	return nil
 }
 
-func runRemedyFile(ctx context.Context, reg *remedy.Registry, file string, timeout time.Duration) error {
-	// Run static scan
+func runSuggestFile(ctx context.Context, _ *remedy.Registry, file string) error {
 	ccveDir := findCCVEDir()
 	scanner, err := agent.NewStaticScanner(ccveDir)
 	if err != nil {
@@ -398,21 +298,20 @@ func runRemedyFile(ctx context.Context, reg *remedy.Registry, file string, timeo
 	fmt.Printf("\n%s%sFOUND %d ISSUES%s\n", colorBold, colorYellow, len(result.Findings), colorReset)
 	fmt.Printf("%sFile: %s%s\n\n", colorDim, file, colorReset)
 
-	autoFixable := 0
+	autoSuggestable := 0
 	for _, f := range result.Findings {
-		// Load CCVE to get remedy type
 		ccve, err := loadCCVE(f.CCVEID)
 		if err != nil {
 			continue
 		}
 		if remedy.IsAutoFixable(remedy.RemedyType(ccve.RemedyType)) {
-			autoFixable++
+			autoSuggestable++
 		}
 	}
 
-	fmt.Printf("  Total findings:  %d\n", len(result.Findings))
-	fmt.Printf("  Auto-fixable:    %d\n", autoFixable)
-	fmt.Printf("\n%sRun 'cub-scout remedy RISK-ID --file %s' to fix specific issues%s\n\n",
+	fmt.Printf("  Total findings:    %d\n", len(result.Findings))
+	fmt.Printf("  Auto-suggestable:  %d\n", autoSuggestable)
+	fmt.Printf("\n%sRun 'cub-scout suggest-remedy RISK-ID --file %s' for a specific suggestion%s\n\n",
 		colorDim, file, colorReset)
 
 	return nil
@@ -424,7 +323,6 @@ func listAutoFixableCCVEs() error {
 		return fmt.Errorf("risk issue database not found")
 	}
 
-	// Count by remedy type
 	counts := map[string]int{
 		"config_fix":      0,
 		"trigger_action":  0,
@@ -439,7 +337,6 @@ func listAutoFixableCCVEs() error {
 			continue
 		}
 
-		// Parse with raw map to get nested remedy.type
 		var raw map[string]interface{}
 		if err := yaml.Unmarshal(data, &raw); err != nil {
 			continue
@@ -457,18 +354,19 @@ func listAutoFixableCCVEs() error {
 		}
 	}
 
-	fmt.Printf("\n%s%sAUTO-FIXABLE RISK ISSUES%s\n\n", colorBold, colorCyan, colorReset)
+	fmt.Printf("\n%s%sAUTO-SUGGESTABLE RISK ISSUES%s\n\n", colorBold, colorCyan, colorReset)
 	fmt.Printf("%-18s %6s %s\n", "REMEDY TYPE", "COUNT", "DESCRIPTION")
 	fmt.Printf("%-18s %6s %s\n", "-----------", "-----", "-----------")
 	fmt.Printf("%-18s %6d %s\n", "config_fix", counts["config_fix"], "kubectl apply/patch")
-	fmt.Printf("%-18s %6d %s\n", "delete_resource", counts["delete_resource"], "kubectl delete (needs --force)")
+	fmt.Printf("%-18s %6d %s\n", "delete_resource", counts["delete_resource"], "kubectl delete")
 	fmt.Printf("%-18s %6d %s\n", "trigger_action", counts["trigger_action"], "rollout restart/scale")
 	fmt.Printf("%-18s %6d %s\n", "restart", counts["restart"], "pod/deployment restart")
 	fmt.Printf("%-18s %6s %s\n", "-----------", "-----", "-----------")
 
 	total := counts["config_fix"] + counts["trigger_action"] + counts["delete_resource"] + counts["restart"]
 	fmt.Printf("%-18s %6d\n", "TOTAL", total)
-	fmt.Printf("\n%sRun 'cub-scout remedy --all --dry-run -n <namespace>' to find fixable issues%s\n\n",
+	fmt.Printf("\n%scub-scout describes these patches; ConfigHub Pilot or kubectl applies, governed.%s\n", colorDim, colorReset)
+	fmt.Printf("%sRun 'cub-scout suggest-remedy --all -n <namespace>' for findings in a namespace.%s\n\n",
 		colorDim, colorReset)
 
 	return nil
@@ -498,7 +396,6 @@ func loadCCVE(id string) (*CCVEDefinition, error) {
 		return nil, fmt.Errorf("read %s: %w", id, err)
 	}
 
-	// Parse YAML with nested structure
 	var raw map[string]interface{}
 	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf("parse %s: %w", id, err)
@@ -511,19 +408,16 @@ func loadCCVE(id string) (*CCVEDefinition, error) {
 		Severity: getString(raw, "severity"),
 	}
 
-	// Extract detection.resources[0] as Kind
 	if detection, ok := raw["detection"].(map[string]interface{}); ok {
 		if resources, ok := detection["resources"].([]interface{}); ok && len(resources) > 0 {
 			ccve.Kind = fmt.Sprintf("%v", resources[0])
 		}
 	}
 
-	// Extract remedy.type
-	if remedy, ok := raw["remedy"].(map[string]interface{}); ok {
-		ccve.RemedyType = getString(remedy, "type")
+	if remedyBlock, ok := raw["remedy"].(map[string]interface{}); ok {
+		ccve.RemedyType = getString(remedyBlock, "type")
 	}
 
-	// Extract remediation.commands and steps
 	if remediation, ok := raw["remediation"].(map[string]interface{}); ok {
 		if cmds, ok := remediation["commands"].([]interface{}); ok {
 			for _, cmd := range cmds {
@@ -548,7 +442,6 @@ func getString(m map[string]interface{}, key string) string {
 }
 
 func findCCVEDir() string {
-	// Try relative to executable
 	exe, err := os.Executable()
 	if err == nil {
 		dir := filepath.Join(filepath.Dir(exe), "..", "cve", "ccve")
@@ -557,7 +450,6 @@ func findCCVEDir() string {
 		}
 	}
 
-	// Try relative to current directory
 	cwd, err := os.Getwd()
 	if err == nil {
 		dir := filepath.Join(cwd, "cve", "ccve")
@@ -569,62 +461,31 @@ func findCCVEDir() string {
 	return ""
 }
 
-func printRemedyPlan(plan *remedy.RemedyPlan) {
-	fmt.Printf("\n%s%s=== REMEDY PLAN ===%s\n", colorBold, colorCyan, colorReset)
-	fmt.Printf("CCVE:       %s\n", plan.Finding.CCVE)
-	fmt.Printf("Resource:   %s\n", plan.Finding.Resource.String())
+func printSuggestion(s *remedy.SuggestedRemedy) {
+	fmt.Printf("\n%s%s=== SUGGESTED REMEDY ===%s\n", colorBold, colorCyan, colorReset)
+	fmt.Printf("CCVE:       %s\n", s.Finding.CCVE)
+	fmt.Printf("Resource:   %s\n", s.Finding.Resource.String())
 
 	riskColor := colorGreen
-	if plan.RiskLevel == remedy.RiskMedium {
+	if s.RiskLevel == remedy.RiskMedium {
 		riskColor = colorYellow
-	} else if plan.RiskLevel == remedy.RiskHigh {
+	} else if s.RiskLevel == remedy.RiskHigh {
 		riskColor = colorRed
 	}
-	fmt.Printf("Risk Level: %s%s%s\n", riskColor, plan.RiskLevel, colorReset)
-	fmt.Printf("Reversible: %v\n", plan.Reversible)
+	fmt.Printf("Risk Level: %s%s%s\n", riskColor, s.RiskLevel, colorReset)
+	fmt.Printf("Reversible: %v\n", s.Reversible)
 
-	fmt.Printf("\n%sActions:%s\n", colorBold, colorReset)
-	for i, action := range plan.Actions {
+	fmt.Printf("\n%sSuggested actions (cub-scout will not run these):%s\n", colorBold, colorReset)
+	for i, action := range s.Actions {
 		fmt.Printf("  %d. %s\n", i+1, action.Description)
 		fmt.Printf("     %s$ %s%s\n", colorDim, action.Command, colorReset)
 	}
 }
 
-func printRemedyResult(result *remedy.RemedyResult) {
-	fmt.Printf("\n%s%s=== RESULT ===%s\n", colorBold, colorCyan, colorReset)
+func printSuggestSummary(output *SuggestRemedyOutput) {
+	fmt.Printf("\n%s%s=== SUGGESTED REMEDIES ===%s\n\n", colorBold, colorCyan, colorReset)
 
-	if result.Success {
-		fmt.Printf("%s✓ %s%s\n", colorGreen, result.Message, colorReset)
-	} else {
-		fmt.Printf("%s✗ %s%s\n", colorRed, result.Message, colorReset)
-	}
-
-	for _, action := range result.Actions {
-		if action.Success {
-			fmt.Printf("  %s✓%s %s\n", colorGreen, colorReset, action.Action.Description)
-		} else {
-			fmt.Printf("  %s✗%s %s: %s\n", colorRed, colorReset, action.Action.Description, action.Error)
-		}
-		if action.Output != "" && strings.TrimSpace(action.Output) != "" {
-			fmt.Printf("    %s%s%s\n", colorDim, strings.TrimSpace(action.Output), colorReset)
-		}
-	}
-
-	if result.RollbackCmd != "" {
-		fmt.Printf("\n%sRollback command:%s\n", colorDim, colorReset)
-		fmt.Printf("  %s\n", result.RollbackCmd)
-	}
-	fmt.Println()
-}
-
-func printRemedyAllSummary(output *RemedyOutput) {
-	fmt.Printf("\n%s%s=== REMEDY SUMMARY ===%s\n\n", colorBold, colorCyan, colorReset)
-
-	if output.DryRun {
-		fmt.Printf("%s[dry-run mode]%s\n\n", colorYellow, colorReset)
-	}
-
-	for _, f := range output.Findings {
+	for _, f := range output.Suggestions {
 		riskColor := colorGreen
 		if f.RiskLevel == "medium" {
 			riskColor = colorYellow
@@ -636,49 +497,31 @@ func printRemedyAllSummary(output *RemedyOutput) {
 		for _, action := range f.Actions {
 			fmt.Printf("  %s→%s %s\n", colorDim, colorReset, action.Description)
 		}
-
-		if f.Result != nil {
-			if f.Result.Success {
-				fmt.Printf("  %s✓ Fixed%s\n", colorGreen, colorReset)
-			} else {
-				fmt.Printf("  %s✗ Failed: %s%s\n", colorRed, f.Result.Message, colorReset)
-			}
-		}
 		fmt.Println()
 	}
 
-	fmt.Printf("Total:   %d\n", output.Summary.Total)
-	if !output.DryRun {
-		fmt.Printf("Fixed:   %s%d%s\n", colorGreen, output.Summary.Fixed, colorReset)
-		fmt.Printf("Skipped: %d\n", output.Summary.Skipped)
-		fmt.Printf("Failed:  %s%d%s\n", colorRed, output.Summary.Failed, colorReset)
-	}
-	fmt.Println()
+	fmt.Printf("Total:        %d\n", output.Summary.Total)
+	fmt.Printf("Describable:  %d\n", output.Summary.Describable)
+	fmt.Printf("Skipped:      %d\n", output.Summary.Skipped)
+	fmt.Printf("\n%scub-scout produces evidence only. Apply via ConfigHub or kubectl, governed.%s\n\n",
+		colorDim, colorReset)
 }
 
-func outputRemedyPlanJSON(plan *remedy.RemedyPlan, result *remedy.RemedyResult) error {
-	output := RemedyFindingOut{
-		CCVE:       plan.Finding.CCVE,
-		Resource:   plan.Finding.Resource.String(),
-		Namespace:  plan.Finding.Namespace,
-		RemedyType: string(plan.Finding.RemedyType),
-		RiskLevel:  string(plan.RiskLevel),
-		Reversible: plan.Reversible,
+func outputSuggestionJSON(s *remedy.SuggestedRemedy) error {
+	output := SuggestedFindingOut{
+		CCVE:       s.Finding.CCVE,
+		Resource:   s.Finding.Resource.String(),
+		Namespace:  s.Finding.Namespace,
+		RemedyType: string(s.Finding.RemedyType),
+		RiskLevel:  string(s.RiskLevel),
+		Reversible: s.Reversible,
 	}
 
-	for _, action := range plan.Actions {
-		output.Actions = append(output.Actions, RemedyActionOut{
+	for _, action := range s.Actions {
+		output.Actions = append(output.Actions, SuggestedActionOut{
 			Description: action.Description,
 			Command:     action.Command,
 		})
-	}
-
-	if result != nil {
-		output.Result = &RemedyResultOut{
-			Success:     result.Success,
-			Message:     result.Message,
-			RollbackCmd: result.RollbackCmd,
-		}
 	}
 
 	enc := json.NewEncoder(os.Stdout)
@@ -686,28 +529,21 @@ func outputRemedyPlanJSON(plan *remedy.RemedyPlan, result *remedy.RemedyResult) 
 	return enc.Encode(output)
 }
 
-func confirmRemedy(prompt string) bool {
-	fmt.Printf("%s [y/N]: ", prompt)
-	var response string
-	fmt.Scanln(&response)
-	return strings.ToLower(response) == "y"
-}
-
-// validateFinding performs pre-execution safety checks
+// validateFinding performs read-only safety checks before describing a
+// suggestion: confirm the CCVE exists, the namespace exists, and the
+// resource exists. Each check shells out to `kubectl get`, which is
+// read-only.
 func validateFinding(ctx context.Context, f *remedy.Finding) error {
-	// Check CCVE exists
 	if _, err := loadCCVE(f.CCVE); err != nil {
 		return fmt.Errorf("unknown CCVE: %s", f.CCVE)
 	}
 
-	// Check namespace exists (if specified)
 	if f.Namespace != "" {
 		if err := checkNamespaceExists(ctx, f.Namespace); err != nil {
 			return err
 		}
 	}
 
-	// Check resource exists (if specified)
 	if f.Resource.Name != "" {
 		if err := checkResourceExists(ctx, f.Resource, f.Namespace); err != nil {
 			return fmt.Errorf("resource not found: %v", err)
@@ -717,7 +553,6 @@ func validateFinding(ctx context.Context, f *remedy.Finding) error {
 	return nil
 }
 
-// checkNamespaceExists verifies the namespace exists in the cluster
 func checkNamespaceExists(ctx context.Context, namespace string) error {
 	cmd := fmt.Sprintf("kubectl get namespace %s -o name 2>/dev/null", namespace)
 	out, err := execCommand(ctx, cmd)
@@ -727,10 +562,9 @@ func checkNamespaceExists(ctx context.Context, namespace string) error {
 	return nil
 }
 
-// checkResourceExists verifies the resource exists in the cluster
 func checkResourceExists(ctx context.Context, ref remedy.ResourceRef, namespace string) error {
 	if ref.Kind == "" || ref.Name == "" {
-		return nil // Skip check if resource not fully specified
+		return nil
 	}
 
 	cmd := fmt.Sprintf("kubectl get %s %s", strings.ToLower(ref.Kind), ref.Name)
@@ -746,48 +580,7 @@ func checkResourceExists(ctx context.Context, ref remedy.ResourceRef, namespace 
 	return nil
 }
 
-// execCommand runs a shell command and returns output
 func execCommand(ctx context.Context, cmd string) (string, error) {
 	out, err := exec.CommandContext(ctx, "sh", "-c", cmd).CombinedOutput()
 	return string(out), err
-}
-
-// logRemedyAction logs remedy actions to the audit file
-func logRemedyAction(finding *remedy.Finding, result *remedy.RemedyResult, dryRun bool) {
-	if !remedyAudit {
-		return
-	}
-
-	status := "SUCCESS"
-	if result != nil && !result.Success {
-		status = "FAILED"
-	}
-	if dryRun {
-		status = "DRY-RUN"
-	}
-
-	logLine := fmt.Sprintf("[%s] %s CCVE=%s Namespace=%s Resource=%s/%s Message=%q\n",
-		time.Now().Format(time.RFC3339),
-		status,
-		finding.CCVE,
-		finding.Namespace,
-		finding.Resource.Kind,
-		finding.Resource.Name,
-		getMessage(result),
-	)
-
-	f, err := os.OpenFile(remedyAuditFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not write to audit log: %v\n", err)
-		return
-	}
-	defer f.Close()
-	f.WriteString(logLine)
-}
-
-func getMessage(result *remedy.RemedyResult) string {
-	if result == nil {
-		return "planned"
-	}
-	return result.Message
 }

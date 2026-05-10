@@ -2183,31 +2183,53 @@ cub-scout debug deployment/api-server -n production --format json
 
 ---
 
-## remedy
+## suggest-remedy
 
-Execute automated remediation for detected auto-fixable risk findings.
+Describe a suggested remediation for a risk finding. Read-only — cub-scout
+emits the patch that *would* resolve the finding (kubectl command, current
+state, expected change), but does not apply it. A downstream tool
+(ConfigHub Pilot, an operator, or your CI pipeline) decides whether and
+how to apply.
+
+The legacy `remedy` verb is accepted as an alias for backwards
+compatibility.
 
 ```bash
-cub-scout remedy [RISK-ID] [flags]
+cub-scout suggest-remedy [RISK-ID] [flags]
+cub-scout remedy        [RISK-ID] [flags]   # alias
 ```
 
 ### Examples
 
 ```bash
-cub-scout remedy CCVE-2025-0687 --dry-run -n production
-cub-scout remedy --all --dry-run -n production
-cub-scout remedy --list
+cub-scout suggest-remedy CCVE-2025-0687 -n production
+cub-scout suggest-remedy --all -n production
+cub-scout suggest-remedy --all -n production --json   # contract for downstream tools
+cub-scout suggest-remedy --file manifest.yaml
+cub-scout suggest-remedy --list
 ```
 
 ### Flags
 
 | Flag | Description |
 |------|-------------|
-| `--all` | Fix all auto-fixable issues |
-| `--dry-run` | Show what would change without applying it |
-| `--list` | List auto-fixable risk issues |
+| `--all` | Describe suggestions for all auto-suggestable findings |
+| `--file` | Scan a YAML file for findings |
+| `--list` | List auto-suggestable risk-issue categories |
 | `-n, --namespace` | Namespace scope |
-| `--json` | Output as JSON |
+| `--json` | Output as JSON (the load-bearing contract for downstream tools) |
+
+### Removed flags
+
+The previous `remedy` command had `--dry-run`, `--force`, `--audit`, and
+`--audit-file` flags. They have been removed because cub-scout no longer
+has a non-dry-run path: every invocation is read-only. Scripts that pass
+these flags will see "unknown flag" errors — that is intentional, so the
+behavior change is visible.
+
+See [#410](https://github.com/confighub/cub-scout/issues/410) and
+[#428](https://github.com/confighub/cub-scout/issues/428) for the
+architectural decision.
 
 ---
 

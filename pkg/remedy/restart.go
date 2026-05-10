@@ -3,169 +3,80 @@ package remedy
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
-// RestartExecutor handles restart remedy type
-// Similar to TriggerAction but specifically for restarts
-type RestartExecutor struct {
+// RestartSuggester describes a restart remedy as a structured suggestion.
+// It does not restart anything.
+type RestartSuggester struct {
 	kubectl string
 }
 
-// NewRestartExecutor creates a new restart executor
-func NewRestartExecutor() *RestartExecutor {
-	return &RestartExecutor{
+// NewRestartSuggester creates a new restart suggester.
+func NewRestartSuggester() *RestartSuggester {
+	return &RestartSuggester{
 		kubectl: "kubectl",
 	}
 }
 
-// Type returns Restart
-func (e *RestartExecutor) Type() RemedyType {
+// Type returns Restart.
+func (s *RestartSuggester) Type() RemedyType {
 	return Restart
 }
 
-// CanExecute checks if we can restart
-func (e *RestartExecutor) CanExecute(f *Finding) bool {
-	// Can execute if commands mention restart, or resource is a workload
+// CanSuggest reports whether this suggester can describe the finding.
+func (s *RestartSuggester) CanSuggest(f *Finding) bool {
 	for _, cmd := range f.Commands {
-		if e.isRestartCommand(cmd) {
+		if s.isRestartCommand(cmd) {
 			return true
 		}
 	}
-	// Also can execute for Deployment/StatefulSet/DaemonSet if no specific command
 	return isWorkload(f.Resource.Kind)
 }
 
-// DryRun shows what would be restarted
-func (e *RestartExecutor) DryRun(ctx context.Context, f *Finding) (*RemedyPlan, error) {
-	plan := &RemedyPlan{
+// Suggest describes the restart that would resolve the finding without
+// performing it.
+func (s *RestartSuggester) Suggest(_ context.Context, f *Finding) (*SuggestedRemedy, error) {
+	suggestion := &SuggestedRemedy{
 		Finding:    f,
-		Reversible: true, // Can rollback restart
+		Reversible: true, // A rollout restart can be undone via `kubectl rollout undo`.
 		RiskLevel:  RiskMedium,
 	}
 
-	// Use explicit commands if available
 	for _, cmd := range f.Commands {
-		if e.isRestartCommand(cmd) {
-			plan.Actions = append(plan.Actions, PlannedAction{
+		if s.isRestartCommand(cmd) {
+			suggestion.Actions = append(suggestion.Actions, SuggestedAction{
 				Description: "Restart workload",
-				Command:     e.addNamespace(cmd, f.Namespace),
+				Command:     s.addNamespace(cmd, f.Namespace),
 			})
 		}
 	}
 
-	// If no commands, generate rollout restart for workloads
-	if len(plan.Actions) == 0 && isWorkload(f.Resource.Kind) {
+	if len(suggestion.Actions) == 0 && isWorkload(f.Resource.Kind) {
 		cmd := fmt.Sprintf("kubectl rollout restart %s/%s",
 			strings.ToLower(f.Resource.Kind), f.Resource.Name)
-		plan.Actions = append(plan.Actions, PlannedAction{
+		suggestion.Actions = append(suggestion.Actions, SuggestedAction{
 			Description: fmt.Sprintf("Restart %s", f.Resource.Kind),
-			Command:     e.addNamespace(cmd, f.Namespace),
+			Command:     s.addNamespace(cmd, f.Namespace),
 		})
 	}
 
-	if len(plan.Actions) == 0 {
-		return nil, fmt.Errorf("no restart actions available for %s", f.CCVE)
+	if len(suggestion.Actions) == 0 {
+		return nil, fmt.Errorf("no restart actions describable for %s", f.CCVE)
 	}
 
-	return plan, nil
+	return suggestion, nil
 }
 
-// Execute restarts the workload
-func (e *RestartExecutor) Execute(ctx context.Context, f *Finding, opts *ExecuteOptions) (*RemedyResult, error) {
-	result := &RemedyResult{Success: true}
-
-	// Generate rollback command
-	if isWorkload(f.Resource.Kind) {
-		result.RollbackCmd = fmt.Sprintf("kubectl rollout undo %s/%s",
-			strings.ToLower(f.Resource.Kind), f.Resource.Name)
-		if f.Namespace != "" {
-			result.RollbackCmd += " -n " + f.Namespace
-		}
-	}
-
-	// Build list of commands to execute
-	var commands []string
-	for _, cmd := range f.Commands {
-		if e.isRestartCommand(cmd) {
-			commands = append(commands, cmd)
-		}
-	}
-
-	// If no explicit commands, generate rollout restart
-	if len(commands) == 0 && isWorkload(f.Resource.Kind) {
-		commands = append(commands, fmt.Sprintf("kubectl rollout restart %s/%s",
-			strings.ToLower(f.Resource.Kind), f.Resource.Name))
-	}
-
-	for _, cmd := range commands {
-		execCmd := e.addNamespace(cmd, f.Namespace)
-
-		// Dry-run just reports what would happen
-		if opts.DryRun {
-			result.Actions = append(result.Actions, ActionResult{
-				Action: PlannedAction{
-					Command:     execCmd,
-					Description: "Restart workload",
-				},
-				Output:  "[dry-run: would restart]",
-				Success: true,
-			})
-			continue
-		}
-
-		// Set timeout
-		execCtx := ctx
-		if opts.Timeout > 0 {
-			var cancel context.CancelFunc
-			execCtx, cancel = context.WithTimeout(ctx, opts.Timeout)
-			defer cancel()
-		}
-
-		out, err := exec.CommandContext(execCtx, "sh", "-c", execCmd).CombinedOutput()
-
-		actionResult := ActionResult{
-			Action: PlannedAction{
-				Command:     cmd,
-				Description: "Restart workload",
-			},
-			Output:  string(out),
-			Success: err == nil,
-		}
-
-		if err != nil {
-			actionResult.Error = err.Error()
-			result.Success = false
-		}
-
-		result.Actions = append(result.Actions, actionResult)
-
-		if !result.Success && !opts.Force {
-			break
-		}
-	}
-
-	if result.Success {
-		result.Message = "Successfully restarted workload"
-	} else {
-		result.Message = "Restart failed"
-	}
-
-	return result, nil
-}
-
-// isRestartCommand checks if this is a restart-related command
-func (e *RestartExecutor) isRestartCommand(cmd string) bool {
+func (s *RestartSuggester) isRestartCommand(cmd string) bool {
 	cmd = strings.ToLower(cmd)
 	return strings.Contains(cmd, "rollout restart") ||
-		strings.Contains(cmd, "delete pod") || // Deleting pod triggers restart
+		strings.Contains(cmd, "delete pod") ||
 		strings.Contains(cmd, "kill") ||
 		strings.Contains(cmd, "restart")
 }
 
-// addNamespace adds -n flag if not present
-func (e *RestartExecutor) addNamespace(cmd, namespace string) string {
+func (s *RestartSuggester) addNamespace(cmd, namespace string) string {
 	if namespace != "" && !strings.Contains(cmd, " -n ") && !strings.Contains(cmd, " --namespace") {
 		return cmd + " -n " + namespace
 	}
