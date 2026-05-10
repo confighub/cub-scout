@@ -45,12 +45,13 @@ jobs:
         run: go build ./cmd/cub-scout
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        # Pinned to action @v6 paired with golangci-lint v1.64.8 because the
+        # repo's .golangci.yml is still v1 schema. golangci-lint-action @v7+
+        # only supports golangci-lint v2.x, which requires a config-schema
+        # migration. When .golangci.yml is migrated, bump both back to the
+        # current major.
+        uses: golangci/golangci-lint-action@v6
         with:
-          # Pinned to v1.64.8 (the last v1.x release) because golangci-lint v2.x
-          # requires migrating .golangci.yml to a new schema. Migration is tracked
-          # as follow-up; see #410 / #428 sister discussions for context. When the
-          # config is migrated, bump this back to `version: latest`.
           version: v1.64.8
 
       - name: Run govulncheck
