@@ -13,6 +13,7 @@ If you only read 3 docs, read these in order:
 Then go deeper with:
 
 - [architecture.md](architecture.md) — Internal model and contract framing
+- [grafana-integration.md](grafana-integration.md) — Proposed Grafana collector/data source path using existing cub-scout outputs
 - [state-and-snapshots.md](state-and-snapshots.md) — Session vs shareable state
 - [tui-vs-gui.md](tui-vs-gui.md) — Scope boundaries between cub-scout and ConfigHub
 - [clobbering-problem.md](clobbering-problem.md) — Why GitOps layering causes silent overrides
@@ -23,6 +24,7 @@ Then go deeper with:
 `Status` meaning:
 - `Current (Primary)` = recommended first-stop conceptual docs
 - `Current (Deep Dive)` = accurate but more specialized context
+- `Proposed (Design Note)` = future-looking guidance that captures a bounded design direction without committing to implementation
 
 | Doc | Status | Last Reviewed |
 |-----|--------|---------------|
@@ -30,6 +32,7 @@ Then go deeper with:
 | [gitops-overview.md](gitops-overview.md) | Current (Primary) | 2026-02-12 |
 | [live-cluster-inference.md](live-cluster-inference.md) | Current (Primary) | 2026-02-12 |
 | [architecture.md](architecture.md) | Current (Deep Dive) | 2026-02-12 |
+| [grafana-integration.md](grafana-integration.md) | Proposed (Design Note) | 2026-05-17 |
 | [state-and-snapshots.md](state-and-snapshots.md) | Current (Deep Dive) | 2026-02-12 |
 | [tui-vs-gui.md](tui-vs-gui.md) | Current (Deep Dive) | 2026-02-12 |
 | [clobbering-problem.md](clobbering-problem.md) | Current (Deep Dive) | 2026-02-12 |
