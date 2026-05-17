@@ -123,31 +123,22 @@ func loadFleetOutlierUnits() ([]fleetUnitSnapshot, error) {
 		return nil, errFleetOutliersNotConnected
 	}
 
-	var unitList []struct {
-		Unit struct {
-			Slug            string `json:"Slug"`
-			HeadRevisionNum int    `json:"HeadRevisionNum"`
-			TargetSlug      string `json:"TargetSlug"`
-		} `json:"Unit"`
-		Space struct {
-			Slug string `json:"Slug"`
-		} `json:"Space"`
-	}
-	if err := json.Unmarshal(out, &unitList); err != nil {
+	unitList, err := parseCubUnitListJSON(out)
+	if err != nil {
 		return nil, fmt.Errorf("parse unit list: %w", err)
 	}
 
 	units := make([]fleetUnitSnapshot, 0, len(unitList))
 	for _, item := range unitList {
-		cluster := strings.TrimSpace(item.Unit.TargetSlug)
+		cluster := strings.TrimSpace(item.TargetSlug)
 		if cluster == "" {
 			continue
 		}
 		units = append(units, fleetUnitSnapshot{
-			UnitSlug: strings.TrimSpace(item.Unit.Slug),
+			UnitSlug: strings.TrimSpace(item.UnitSlug),
 			Cluster:  cluster,
-			Revision: item.Unit.HeadRevisionNum,
-			Space:    strings.TrimSpace(item.Space.Slug),
+			Revision: item.HeadRevisionNum,
+			Space:    strings.TrimSpace(item.SpaceSlug),
 		})
 	}
 	return units, nil

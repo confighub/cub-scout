@@ -196,8 +196,8 @@ func getStatusCubContext() (*statusCubContext, string, error) {
 		return nil, "", err
 	}
 
-	var ctx statusCubContext
-	if err := json.Unmarshal(out, &ctx); err != nil {
+	ctx, err := parseCubContextJSON(out)
+	if err != nil {
 		return nil, "", err
 	}
 
@@ -210,7 +210,7 @@ func getStatusCubContext() (*statusCubContext, string, error) {
 
 	// If context has a name, we're connected
 	if ctx.Name != "" {
-		return &ctx, email, nil
+		return ctx, email, nil
 	}
 
 	return nil, "", fmt.Errorf("no context found")
@@ -247,8 +247,8 @@ func getWorkerForCluster(space, clusterName string) *WorkerInfo {
 		return nil
 	}
 
-	var workers []WorkerListItem
-	if err := json.Unmarshal(out, &workers); err != nil {
+	workers, err := parseCubWorkerListJSON(out)
+	if err != nil {
 		return nil
 	}
 

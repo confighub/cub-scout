@@ -1513,50 +1513,21 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 		return nil, fmt.Errorf("failed to fetch units from ConfigHub: %w\n\n  Check that 'cub' CLI is installed and you're authenticated: cub auth login", err)
 	}
 
-	// The cub CLI returns nested structure: [{Space: {}, Unit: {}, UnitStatus: {}}, ...]
-	var response []map[string]interface{}
-	if err := json.Unmarshal(output, &response); err != nil {
+	unitList, err := parseCubUnitListJSON(output)
+	if err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	var units []FleetUnit
-	for _, item := range response {
-		// Extract from nested Unit object
-		unitObj, ok := item["Unit"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-		spaceObj, _ := item["Space"].(map[string]interface{})
-		statusObj, _ := item["UnitStatus"].(map[string]interface{})
-
-		slug := ""
-		spaceSlug := ""
-		headRev := 0
-		liveRev := 0
+	for _, item := range unitList {
+		slug := item.UnitSlug
+		spaceSlug := item.SpaceSlug
+		headRev := item.HeadRevisionNum
+		liveRev := item.LiveRevisionNum
 		status := ""
-		target := ""
-
-		if s, ok := unitObj["Slug"].(string); ok {
-			slug = s
-		}
-		if spaceObj != nil {
-			if s, ok := spaceObj["Slug"].(string); ok {
-				spaceSlug = s
-			}
-		}
-		if r, ok := unitObj["HeadRevisionNum"].(float64); ok {
-			headRev = int(r)
-		}
-		if r, ok := unitObj["LiveRevisionNum"].(float64); ok {
-			liveRev = int(r)
-		}
-		if statusObj != nil {
-			if s, ok := statusObj["Status"].(string); ok {
-				status = s
-			}
-		}
-		if t, ok := unitObj["Target"].(string); ok {
-			target = t
+		target := item.TargetSlug
+		if statusObj := mcpNestedMap(item.Raw, "UnitStatus", "unitStatus"); statusObj != nil {
+			status = mcpFirstString(statusObj, "Status", "status", "Condition", "condition")
 		}
 
 		// Labels aren't in list output, need to fetch each unit
@@ -1604,18 +1575,24 @@ func fetchUnitLabels(space, slug string) (map[string]string, error) {
 		return nil, err
 	}
 
-	var response map[string]interface{}
-	if err := json.Unmarshal(output, &response); err != nil {
+	payload, err := parseCubJSONPayload(output)
+	if err != nil {
 		return nil, err
 	}
 
 	labels := make(map[string]string)
-	if unitObj, ok := response["Unit"].(map[string]interface{}); ok {
-		if l, ok := unitObj["Labels"].(map[string]interface{}); ok {
-			for k, v := range l {
-				if vs, ok := v.(string); ok {
-					labels[k] = vs
-				}
+	items := cubExtractItems(payload)
+	if len(items) == 0 {
+		return labels, nil
+	}
+	unitObj := mcpNestedMap(items[0], "Unit", "unit")
+	if unitObj == nil {
+		unitObj = items[0]
+	}
+	if l := mcpNestedMap(unitObj, "Labels", "labels"); l != nil {
+		for k, v := range l {
+			if vs, ok := v.(string); ok {
+				labels[k] = vs
 			}
 		}
 	}
@@ -4796,12 +4773,8 @@ func fetchConfigHubUnits() (*cubUnitCache, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ConfigHub authentication required.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
 	}
-	var ctx struct {
-		Settings struct {
-			DefaultSpace string `json:"defaultSpace"`
-		} `json:"settings"`
-	}
-	if err := json.Unmarshal(ctxOut, &ctx); err != nil {
+	ctx, err := parseCubContextJSON(ctxOut)
+	if err != nil {
 		return nil, err
 	}
 	space := ctx.Settings.DefaultSpace
@@ -4816,18 +4789,8 @@ func fetchConfigHubUnits() (*cubUnitCache, error) {
 		return nil, fmt.Errorf("failed to list units: %w", err)
 	}
 
-	// Parse units (cub CLI returns [{Unit: {...}, Space: {...}}])
-	var unitList []struct {
-		Unit struct {
-			Slug            string `json:"Slug"`
-			HeadRevisionNum int    `json:"HeadRevisionNum"`
-			TargetSlug      string `json:"TargetSlug"`
-		} `json:"Unit"`
-		Space struct {
-			Slug string `json:"Slug"`
-		} `json:"Space"`
-	}
-	if err := json.Unmarshal(listOut, &unitList); err != nil {
+	unitList, err := parseCubUnitListJSON(listOut)
+	if err != nil {
 		return nil, fmt.Errorf("failed to parse units: %w", err)
 	}
 
@@ -4838,11 +4801,11 @@ func fetchConfigHubUnits() (*cubUnitCache, error) {
 	}
 
 	for _, u := range unitList {
-		cache.units[u.Unit.Slug] = &cubUnitInfo{
-			Slug:            u.Unit.Slug,
-			HeadRevisionNum: u.Unit.HeadRevisionNum,
-			TargetSlug:      u.Unit.TargetSlug,
-			Space:           u.Space.Slug,
+		cache.units[u.UnitSlug] = &cubUnitInfo{
+			Slug:            u.UnitSlug,
+			HeadRevisionNum: u.HeadRevisionNum,
+			TargetSlug:      u.TargetSlug,
+			Space:           u.SpaceSlug,
 		}
 	}
 

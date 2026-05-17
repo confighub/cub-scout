@@ -84,10 +84,10 @@ type historyNavigation struct {
 }
 
 var (
-	requireHistoryConnectedFn = requireHistoryConnected
-	fetchHistoryEntriesFn     = fetchHistoryEntries
-	historyNowFn              = time.Now
-	runHistoryCubCommand      = runHistoryCubCommandImpl
+	requireHistoryConnectedFn  = requireHistoryConnected
+	fetchHistoryEntriesFn      = fetchHistoryEntries
+	historyNowFn               = time.Now
+	runHistoryCubCommand       = runHistoryCubCommandImpl
 	resolveHistoryNavigationFn = resolveHistoryNavigation
 )
 
@@ -400,19 +400,7 @@ func buildHistoryEntriesFromChangeSetsWithOptions(raw string, cutoff time.Time, 
 }
 
 func historyExtractItems(payload interface{}) []map[string]interface{} {
-	switch typed := payload.(type) {
-	case []interface{}:
-		return historyArrayToObjects(typed)
-	case map[string]interface{}:
-		for _, key := range []string{"items", "data", "results", "changesets", "ChangeSets"} {
-			if arr, ok := typed[key].([]interface{}); ok {
-				return historyArrayToObjects(arr)
-			}
-		}
-		return []map[string]interface{}{typed}
-	default:
-		return nil
-	}
+	return cubExtractItems(payload)
 }
 
 func historyArrayToObjects(arr []interface{}) []map[string]interface{} {

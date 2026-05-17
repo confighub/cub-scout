@@ -123,8 +123,8 @@ type WorkloadJSON struct {
 
 // SuggestionJSON is the JSON representation of the import suggestion
 type SuggestionJSON struct {
-	App string     `json:"app"`
-	Units    []UnitJSON `json:"units"`
+	App   string     `json:"app"`
+	Units []UnitJSON `json:"units"`
 }
 
 // UnitJSON is the JSON representation of a suggested unit
@@ -1630,28 +1630,7 @@ func loadCubTargets(space string) ([]cubTargetRef, error) {
 	if err != nil {
 		return nil, err
 	}
-	var raw []struct {
-		Target struct {
-			Slug         string `json:"Slug"`
-			ProviderType string `json:"ProviderType"`
-			Toolchain    string `json:"ToolchainType"`
-		} `json:"Target"`
-	}
-	if err := json.Unmarshal(out, &raw); err != nil {
-		return nil, err
-	}
-	targets := make([]cubTargetRef, 0, len(raw))
-	for _, t := range raw {
-		if t.Target.Slug == "" {
-			continue
-		}
-		targets = append(targets, cubTargetRef{
-			Slug:         t.Target.Slug,
-			ProviderType: t.Target.ProviderType,
-			Toolchain:    t.Target.Toolchain,
-		})
-	}
-	return targets, nil
+	return parseCubTargetListJSON(out)
 }
 
 func selectGitOpsTargets(targets []cubTargetRef) (k8sTarget, argoRenderer, fluxRenderer string) {

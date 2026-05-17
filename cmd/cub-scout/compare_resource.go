@@ -364,37 +364,26 @@ func decodeCompareUnitMetadataFromGetJSON(raw string) (compareUnitMetadata, erro
 		return compareUnitMetadata{}, fmt.Errorf("empty unit get output")
 	}
 
-	var payload struct {
-		Space struct {
-			Slug    string `json:"Slug"`
-			SpaceID string `json:"SpaceID"`
-		} `json:"Space"`
-		Unit struct {
-			Slug                   string `json:"Slug"`
-			UnitID                 string `json:"UnitID"`
-			SpaceID                string `json:"SpaceID"`
-			HeadRevisionNum        int    `json:"HeadRevisionNum"`
-			LiveRevisionNum        int    `json:"LiveRevisionNum"`
-			LastAppliedRevisionNum int    `json:"LastAppliedRevisionNum"`
-		} `json:"Unit"`
-	}
+	var payload interface{}
 	if err := json.Unmarshal([]byte(trimmed), &payload); err != nil {
 		return compareUnitMetadata{}, fmt.Errorf("parse unit get json: %w", err)
 	}
-
-	spaceID := strings.TrimSpace(payload.Space.SpaceID)
-	if spaceID == "" {
-		spaceID = strings.TrimSpace(payload.Unit.SpaceID)
+	items := cubExtractItems(payload)
+	if len(items) == 0 {
+		return compareUnitMetadata{}, fmt.Errorf("unit get output missing object payload")
 	}
 
+	ref := mcpUnitRefFromItem(items[0])
+	state, _ := mcpExtractUnitRevisionState(items[0])
+
 	return compareUnitMetadata{
-		UnitSlug:            strings.TrimSpace(payload.Unit.Slug),
-		UnitID:              strings.TrimSpace(payload.Unit.UnitID),
-		SpaceName:           strings.TrimSpace(payload.Space.Slug),
-		SpaceID:             spaceID,
-		HeadRevisionNum:     payload.Unit.HeadRevisionNum,
-		LiveRevisionNum:     payload.Unit.LiveRevisionNum,
-		LastAppliedRevision: payload.Unit.LastAppliedRevisionNum,
+		UnitSlug:            ref.UnitSlug,
+		UnitID:              ref.UnitID,
+		SpaceName:           ref.SpaceSlug,
+		SpaceID:             ref.SpaceID,
+		HeadRevisionNum:     state.HeadRevision,
+		LiveRevisionNum:     state.LiveRevision,
+		LastAppliedRevision: state.LastAppliedRevision,
 	}, nil
 }
 
