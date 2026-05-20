@@ -57,6 +57,7 @@ Summary: 3 findings │ 2 warning │ 1 critical │ 3 affected objects
 | [env-var-drift/](env-var-drift/) | `LOG_LEVEL` changed | Warning | Running with wrong config |
 | [image-policy-drift/](image-policy-drift/) | `imagePullPolicy` changed | Warning | Silently running stale images |
 | [resource-drift/](resource-drift/) | `requests.cpu` exceeds limits | Critical | Next pod restart will fail |
+| [mutation-cause-attribution/](mutation-cause-attribution/) | Cause classification | n/a | Distinguish controller-drift vs `kubectl edit` |
 
 ## Quick Start
 

@@ -256,6 +256,66 @@ When `compare three-way --format json` is used, the JSON output includes `summar
 
 Source: `cmd/cub-scout/three_way.go`, `cmd/cub-scout/compare_three_way.go`
 
+## Field Mutation Attribution Contract
+
+When `compare three-way` and `explain` are run in connected mode (and the live cluster is reachable), each field mismatch is annotated with a `cause` classifying the mutation source — controller drift vs manual edit — derived from K8s `metadata.managedFields` co-signaled with the resource owner detected from labels and annotations. This is the first stage of the attribution layer; see `pkg/agent/field_ownership.go`.
+
+### compareFieldMismatch additions (compare three-way / compare three-way per-resource)
+
+```json
+{
+  "mismatches": [
+    {
+      "field": "replicas",
+      "dry": "3",
+      "wet": "3",
+      "live": "1",
+      "cause": "manual-edit",
+      "managerHint": "kubectl-edit"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `cause` | string enum | `controller-drift`, `manual-edit`, or `unknown`. Omitted when classification yields no signal. |
+| `managerHint` | string | Representative manager string from `metadata.managedFields` for transparency. Omitted when no manager string was identified. |
+
+At A1, `cause` and `managerHint` are resource-level and therefore the same for every mismatch on one resource. A1.5 will refine to per-field-path resolution.
+
+### Cause values
+
+| Value | Meaning |
+|-------|---------|
+| `controller-drift` | The resource's expected GitOps/orchestration controller (per `pkg/agent/ownership.go`) is reconciling fields. A mismatch with desired state is likely transient. |
+| `manual-edit` | A `kubectl-*` or other interactive tool has written fields. Includes the mixed case where both a controller and an interactive tool have managed fields. |
+| `unknown` | The cause cannot be confidently determined — `managedFields` missing/empty, or only unrecognized manager strings present. Omitted from JSON output. |
+
+### ExplainSummary additions (explain --format json)
+
+```json
+{
+  "resource": "Deployment/api",
+  "namespace": "prod",
+  "owner": "ArgoCD",
+  "drift": "Detected by ConfigHub",
+  "mutationCause": "manual-edit",
+  "mutationManager": "kubectl-edit"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `mutationCause` | string enum | Same enum as `cause` above. Best-effort; omitted on fetch failure or when no signal is present. |
+| `mutationManager` | string | Representative manager string for transparency. |
+
+### Verified manager strings
+
+The classifier matches against a verified enumeration of upstream field-manager strings — sources documented in `pkg/agent/manager_strings.go`. Strings not in the enumeration fall through to `unknown` rather than being guessed. Recognized sources include Argo CD, Flux (kustomize / helm / source controllers), Helm direct, Crossplane (composite / composed / claim / MRD / reference resolver), kro (applyset / applyset-parent / labeller), and `kubectl-*` interactive paths.
+
+Source: `pkg/agent/manager_strings.go`, `pkg/agent/field_ownership.go`
+
 ## MCP Structured Content Contract
 
 When MCP tools return JSON-backed data, the gateway keeps the raw JSON string in `content[0].text`.

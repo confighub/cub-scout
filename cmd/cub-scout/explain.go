@@ -70,6 +70,16 @@ type ExplainSummary struct {
 
 	// NextSteps contains structured action-typed hints for AI/MCP clients.
 	NextSteps []StructuredHint `json:"nextSteps,omitempty"`
+
+	// MutationCause classifies the source of recent field mutations on the
+	// live resource (controller-drift / manual-edit / unknown), derived from
+	// metadata.managedFields with the detected owner as co-signal. See
+	// pkg/agent.AttributeFieldMutation.
+	MutationCause agent.FieldMutationCause `json:"mutationCause,omitempty"`
+
+	// MutationManager is a representative manager string for transparency
+	// (see pkg/agent.FieldMutationAttribution.ManagerHint).
+	MutationManager string `json:"mutationManager,omitempty"`
 }
 
 type explainTraceApplicationFunc func(ctx context.Context, appName string) (*agent.TraceResult, error)
@@ -671,6 +681,13 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 	fmt.Fprintf(&b, "  %s %s\n", label("Health"), StatusColor(summary.Health))
 	fmt.Fprintf(&b, "  %s %s\n", label("Risks"), summary.Risks)
 	fmt.Fprintf(&b, "  %s %s\n", label("Drift"), colorExplainDrift(summary.Drift))
+	if summary.MutationCause != "" {
+		mutationLine := string(summary.MutationCause)
+		if summary.MutationManager != "" {
+			mutationLine += fmt.Sprintf(" (manager: %s)", summary.MutationManager)
+		}
+		fmt.Fprintf(&b, "  %s %s\n", label("Mutation cause"), colorExplainMutationCause(summary.MutationCause, mutationLine))
+	}
 	if len(summary.Notes) > 0 {
 		fmt.Fprintf(&b, "  %s\n", label("Notes"))
 		for _, note := range summary.Notes {
@@ -743,6 +760,20 @@ func colorExplainDrift(drift string) string {
 	}
 }
 
+// colorExplainMutationCause colors the mutation cause line. Manual edits are
+// the actionable case, so they get amber emphasis; controller drift is
+// expected steady-state coloring.
+func colorExplainMutationCause(cause agent.FieldMutationCause, text string) string {
+	switch cause {
+	case agent.CauseManualEdit:
+		return Yellow(text)
+	case agent.CauseControllerDrift:
+		return text
+	default:
+		return text
+	}
+}
+
 func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explicitMode bool, hintCtx HintContext) string {
 	var b strings.Builder
 
@@ -763,6 +794,13 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	fmt.Fprintf(&b, "- **Health:** %s\n", summary.Health)
 	fmt.Fprintf(&b, "- **Risks:** %s\n", summary.Risks)
 	fmt.Fprintf(&b, "- **Drift:** %s\n", summary.Drift)
+	if summary.MutationCause != "" {
+		mutationLine := fmt.Sprintf("`%s`", summary.MutationCause)
+		if summary.MutationManager != "" {
+			mutationLine += fmt.Sprintf(" (manager: `%s`)", summary.MutationManager)
+		}
+		fmt.Fprintf(&b, "- **Mutation cause:** %s\n", mutationLine)
+	}
 	if len(summary.Notes) > 0 {
 		fmt.Fprintf(&b, "- **Notes:**\n")
 		for _, note := range summary.Notes {

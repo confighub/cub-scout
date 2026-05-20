@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,6 +44,11 @@ type compareSideSummary struct {
 	Images                 []string `json:"images,omitempty"`
 	LabelCount             int      `json:"labelCount,omitempty"`
 	AnnotationCount        int      `json:"annotationCount,omitempty"`
+
+	// Attribution carries the mutation-source classification computed from
+	// metadata.managedFields. Only populated on the live side (Source == "cluster");
+	// dry/wet sides do not have managedFields data.
+	Attribution *agent.FieldMutationAttribution `json:"attribution,omitempty"`
 }
 
 type compareResourceResult struct {
@@ -62,6 +68,16 @@ type compareFieldMismatch struct {
 	Dry   string `json:"dry"`
 	Wet   string `json:"wet"`
 	Live  string `json:"live"`
+
+	// Cause classifies the mutation source for this field mismatch. At A1
+	// the same value is set for every mismatch on a resource (resource-level
+	// classification from managedFields + ownership co-signal). A1.5 will
+	// refine to per-field-path resolution.
+	Cause agent.FieldMutationCause `json:"cause,omitempty"`
+
+	// ManagerHint is a representative manager string for transparency — see
+	// agent.FieldMutationAttribution.ManagerHint.
+	ManagerHint string `json:"managerHint,omitempty"`
 }
 
 type compareResourceRef struct {
@@ -620,6 +636,14 @@ func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSumma
 	if replicas, ok, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas"); ok {
 		out.Replicas = &replicas
 	}
+
+	// Compute mutation-source attribution from metadata.managedFields, using
+	// the owner detected from labels/annotations as the co-signal. See
+	// pkg/agent/field_ownership.go.
+	owner := agent.DetectOwnership(obj)
+	attribution := agent.AttributeFieldMutation(obj, owner)
+	out.Attribution = &attribution
+
 	return out
 }
 
@@ -784,12 +808,17 @@ func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSide
 		if !compareFieldHasDivergence(dryValue, wetValue, liveValue) {
 			continue
 		}
-		out = append(out, compareFieldMismatch{
+		mismatch := compareFieldMismatch{
 			Field: field.Name,
 			Dry:   displayCompareFieldValue(dryValue),
 			Wet:   displayCompareFieldValue(wetValue),
 			Live:  displayCompareFieldValue(liveValue),
-		})
+		}
+		if live.Attribution != nil {
+			mismatch.Cause = live.Attribution.Cause
+			mismatch.ManagerHint = live.Attribution.ManagerHint
+		}
+		out = append(out, mismatch)
 	}
 	return out
 }
@@ -839,6 +868,13 @@ func renderCompareResourceASCII(result compareResourceResult) string {
 	}
 	renderCompareASCIISection(&b, "LIVE (cluster)", result.Live)
 	if len(result.Mismatches) > 0 {
+		if attr := result.Live.Attribution; attr != nil && attr.Cause != "" {
+			b.WriteString(fmt.Sprintf("\nDrift cause: %s", attr.Cause))
+			if attr.ManagerHint != "" {
+				b.WriteString(fmt.Sprintf(" (manager: %s)", attr.ManagerHint))
+			}
+			b.WriteString("\n")
+		}
 		b.WriteString("\nDiff Highlights\n")
 		for _, mismatch := range result.Mismatches {
 			b.WriteString(fmt.Sprintf("  - %s: DRY=%s | WET=%s | LIVE=%s\n",
@@ -880,6 +916,13 @@ func renderCompareResourceMarkdown(result compareResourceResult) string {
 	renderCompareMarkdownSection(&b, "LIVE (cluster)", result.Live)
 	if len(result.Mismatches) > 0 {
 		b.WriteString("\n### Mismatches\n\n")
+		if attr := result.Live.Attribution; attr != nil && attr.Cause != "" {
+			b.WriteString(fmt.Sprintf("Drift cause: `%s`", attr.Cause))
+			if attr.ManagerHint != "" {
+				b.WriteString(fmt.Sprintf(" (manager: `%s`)", attr.ManagerHint))
+			}
+			b.WriteString("\n\n")
+		}
 		b.WriteString("| Field | DRY | WET | LIVE |\n")
 		b.WriteString("|---|---|---|---|\n")
 		for _, mismatch := range result.Mismatches {

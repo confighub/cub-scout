@@ -913,6 +913,13 @@ func renderThreeWayASCII(report threeWayReport) string {
 			entry.Severity,
 			len(entry.Result.Mismatches),
 		))
+		if attr := entry.Result.Live.Attribution; attr != nil && attr.Cause != "" && len(entry.Result.Mismatches) > 0 {
+			driftLine := fmt.Sprintf("  drift-cause: %s", attr.Cause)
+			if attr.ManagerHint != "" {
+				driftLine += fmt.Sprintf(" (manager: %s)", attr.ManagerHint)
+			}
+			b.WriteString(driftLine + "\n")
+		}
 		if len(entry.Causes) > 0 {
 			b.WriteString("  causes: " + strings.Join(entry.Causes, ", ") + "\n")
 		}
