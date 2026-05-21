@@ -223,10 +223,9 @@ func TestComputeStatementFingerprint_DeletesFingerprintKey_NotZeroes(t *testing.
 		t.Fatalf("unmarshal: %v", err)
 	}
 	pred := generic["predicate"].(map[string]interface{})
-	if _, present := pred["fingerprint"]; !present {
-		// The struct has no omitempty, so Go emits "fingerprint":"" here.
-		// The test still proves correctness if we delete it ourselves.
-	}
+	// The struct has no omitempty, so Go emits "fingerprint":"" here.
+	// Deleting the key is what production code does; we mirror that step
+	// to derive the expected digest.
 	delete(pred, "fingerprint")
 	canon, err := CanonicalJSON(generic)
 	if err != nil {
