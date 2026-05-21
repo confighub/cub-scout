@@ -44,7 +44,7 @@ Implicit intents the skill should catch:
 
 ## Tool boundary
 
-- **Allowed (read-only):** all `cub-scout *` / `cub scout *` Observe verbs, `kubectl get/describe/logs`, `kubectl version`, `kubectl config current-context/view`.
+- **Allowed (read-only):** the nine specific Observe verbs — `cub-scout doctor`, `cub-scout map`, `cub-scout trace`, `cub-scout tree`, `cub-scout scan`, `cub-scout graph`, `cub-scout snapshot`, `cub-scout watch`, `cub-scout status` (in all three invocation forms: `cub-scout`, `./cub-scout`, `cub scout`). Plus `kubectl get/describe/logs`, `kubectl version`, `kubectl config current-context/view`. **Never** the broad `cub-scout *` wildcard — that would grant `demo` (kubectl-applies), `import apply` (writes to ConfigHub), and `compare --suggest --apply` (writes to ConfigHub).
 - **Not allowed:** `kubectl apply/edit/patch/delete/scale/rollout/exec`, `kubectl debug` (privileged debug pods), any `cub * create/update/delete`.
 - **Boundary with [`scout-diagnose`](../scout-diagnose/SKILL.md):** Observe shows *what* is there; Diagnose interprets *why* it looks the way it does and recommends *next steps*. The two often chain: Observe to map, then Diagnose to interpret.
 

@@ -1,6 +1,6 @@
 # Reference: Kubernetes managedFields
 
-The data substrate cub-scout's [scout-attribute](../scout-attribute/SKILL.md) skill reads to classify field mutations. This reference covers what's in `metadata.managedFields`, how cub-scout consumes it, and the edge cases that produce `omissions[]` entries.
+The data substrate cub-scout's [scout-attribute](../scout-attribute/SKILL.md) skill reads to classify field mutations. This reference covers what's in `metadata.managedFields`, how cub-scout consumes it, and the edge cases that today's attribution output expresses via `cause: "unknown"` + field omission (and future receipts will surface as structured `omissions[]` entries — see § "What happens when evidence is missing").
 
 ## What managedFields is
 
@@ -99,7 +99,7 @@ The `no-manual-edits-since <timestamp>` predicate planned for `scout-verify` car
 
 `internal/scan/confighub_provider.go` and `pkg/query/drift.go` in cub-scout itself strip managedFields *for diff purposes* (it's noise in field comparisons). The attribution layer reads managedFields *before* the strip; the existing strip paths are unchanged.
 
-Some external controllers and admission webhooks also strip managedFields — most commonly old controllers that pre-date GA. cub-scout records the strip as an `omissions[]` entry.
+Some external controllers and admission webhooks also strip managedFields — most commonly old controllers that pre-date GA. In today's attribution output, cub-scout records the strip via `cause: "unknown"` with `managerHint` omitted; future receipts (#446) will additionally surface this as a structured `omissions[]` entry.
 
 ### Server-side apply vs Update operations
 

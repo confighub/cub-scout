@@ -37,7 +37,7 @@ Receipts and other artifacts produced by cub-scout always work in the lowest ava
 
 ## Tool boundary
 
-- **Allowed (read-only):** `cub-scout *`, `cub scout *`, `kubectl get/describe/logs`, `argocd app get`, `flux get`, `cub * get`, `cub * list`, `cub link list`, `cub unit get`.
+- **Allowed (read-only):** the specific cub-scout verbs your skill teaches (e.g., `cub-scout doctor`, `cub-scout compare three-way`, `cub-scout explain` — enumerate them; **never** the broad `cub-scout *` wildcard, which would grant `demo` / `import apply` / `compare --suggest --apply`), `kubectl get/describe/logs`, `argocd app get`, `flux get`, `cub * get`, `cub * list`, `cub link list`, `cub unit get`.
 - **Not allowed (mutating):** `kubectl apply/edit/patch/delete`, `argocd app sync` (as a mutation), `flux reconcile --with-source`, `helm install/upgrade`, `cub * delete/update/create`, any `--dry-run=false` carve-out, any path that writes to the cluster or ConfigHub.
 - **Boundary with `cub` (the ConfigHub CLI):** cub-scout observes; `cub` authors and governs. If the user wants to *change* state, hand off to `cub` skills in [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) — never edit through cub-scout.
 
