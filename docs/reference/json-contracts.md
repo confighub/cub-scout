@@ -689,12 +689,19 @@ reason string.
 ### Auto-Detection Priority
 
 When `--predicate` is not passed, cub-scout picks one based on detected
-ownership:
+ownership AND the resolvability of the git anchor:
 
-1. `OwnerArgo` / `OwnerFlux` / `OwnerConfigHub` → `applied-matches-spec`
-2. Otherwise → `""` (no predicate) + `OmissionAutoDetectedPredicate`,
-   producing an INCONCLUSIVE receipt that explicitly records why the
-   default could not be determined.
+1. `OwnerArgo` / `OwnerFlux` / `OwnerConfigHub` **with** a resolved git
+   anchor (`evidence.gitSource` non-nil) → `applied-matches-spec`
+2. Same owners **without** a resolved git anchor → `""` (no predicate) +
+   `OmissionAutoDetectedPredicate` — the predicate evaluator could only
+   emit INCONCLUSIVE anyway, so we record the *missing default* rather
+   than masking the auto-detect-declined-here case as a different
+   omission.
+3. Other owners → `""` + `OmissionAutoDetectedPredicate`.
+
+The result is always an INCONCLUSIVE receipt when auto-detect declines;
+the omission entry names exactly which signal was missing.
 
 ### Omissions
 
@@ -725,14 +732,25 @@ Receipts emit artifacts; they never mutate. Two static guards enforce this:
 ### Fingerprint Scope
 
 The fingerprint covers the **full Statement** (`_type` + `subject` +
-`predicateType` + `predicate`) minus only the `predicate.fingerprint`
-field itself. Hashing predicate-only would leave `subject`,
-`predicateType`, and the in-toto envelope unprotected — the
-full-Statement scope closes that.
+`predicateType` + `predicate`) with only the `predicate.fingerprint`
+field **removed from the JSON shape** (not zeroed in place). Hashing
+predicate-only would leave `subject`, `predicateType`, and the in-toto
+envelope unprotected; the full-Statement scope closes that. Zeroing the
+field in place would leave a `"fingerprint":""` key in the canonical
+bytes, which a third-party verifier following the contract prose would
+compute differently — so the implementation parses to a generic map and
+deletes the key before canonicalization.
 
 Algorithm: SHA-256 over RFC 8785 JSON Canonicalization Scheme of the
-Statement with `predicate.fingerprint` removed. The resulting digest is
-written back as `predicate.fingerprint = "sha256:<hex>"`.
+Statement with the `predicate.fingerprint` key removed. The
+canonicalizer is `github.com/gowebpki/jcs`, the reference Go
+implementation of RFC 8785. The resulting digest is written back as
+`predicate.fingerprint = "sha256:<hex>"`.
+
+The implementation is conformance-tested against RFC 8785 reference
+vectors (`TestCanonicalJSON_RFC8785_ReferenceVectors`) and tamper-
+tested against subject, subject digest, predicateType, verdict,
+omissions, and `_type` mutations.
 
 `VerifyStatementFingerprint(stmt)` recomputes and compares; tamper
 detection on any field except `predicate.fingerprint` will fail

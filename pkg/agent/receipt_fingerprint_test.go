@@ -4,6 +4,9 @@
 package agent
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -186,5 +189,72 @@ func TestStampFingerprint_NilStatement(t *testing.T) {
 	err := StampFingerprint(nil)
 	if err == nil {
 		t.Error("StampFingerprint(nil) must error")
+	}
+}
+
+// TestComputeStatementFingerprint_DeletesFingerprintKey_NotZeroes proves
+// the Codex round-4 fix: the canonical input to SHA-256 has the
+// `predicate.fingerprint` key REMOVED, not just set to "". An external
+// verifier following the documented contract would otherwise compute a
+// different digest than the emitter.
+//
+// The check is direct: independently compute the expected digest by
+// marshaling, parsing to a map, deleting the key, canonicalizing with
+// the same CanonicalJSON, and SHA-256-ing — then compare to the
+// production path's output. Any divergence (e.g., emitter writes
+// "fingerprint":"" into the bytes it hashes) breaks the test.
+func TestComputeStatementFingerprint_DeletesFingerprintKey_NotZeroes(t *testing.T) {
+	stmt := makeTestStatement()
+
+	got, err := ComputeStatementFingerprint(stmt)
+	if err != nil {
+		t.Fatalf("ComputeStatementFingerprint: %v", err)
+	}
+
+	// Re-derive the expected digest by hand: marshal, parse, delete the
+	// key from the predicate object, canonicalize, hash. This must match
+	// what ComputeStatementFingerprint produced.
+	raw, err := json.Marshal(stmt)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var generic map[string]interface{}
+	if err := json.Unmarshal(raw, &generic); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	pred := generic["predicate"].(map[string]interface{})
+	if _, present := pred["fingerprint"]; !present {
+		// The struct has no omitempty, so Go emits "fingerprint":"" here.
+		// The test still proves correctness if we delete it ourselves.
+	}
+	delete(pred, "fingerprint")
+	canon, err := CanonicalJSON(generic)
+	if err != nil {
+		t.Fatalf("CanonicalJSON: %v", err)
+	}
+	sum := sha256.Sum256(canon)
+	want := "sha256:" + hex.EncodeToString(sum[:])
+
+	if got != want {
+		t.Errorf("emitter hashed something other than canonical-without-fingerprint-key:\n  got:  %s\n  want: %s", got, want)
+	}
+
+	// Sanity check: also verify that hashing with the key PRESENT (but
+	// empty) would produce a DIFFERENT digest. If this side also matched,
+	// the test would be vacuous — proving the delete vs zero distinction
+	// actually changes the bytes.
+	if err := json.Unmarshal(raw, &generic); err != nil {
+		t.Fatalf("unmarshal v2: %v", err)
+	}
+	pred = generic["predicate"].(map[string]interface{})
+	pred["fingerprint"] = "" // present but empty — the OLD broken shape
+	canonWithEmptyKey, err := CanonicalJSON(generic)
+	if err != nil {
+		t.Fatalf("CanonicalJSON v2: %v", err)
+	}
+	sumWithEmptyKey := sha256.Sum256(canonWithEmptyKey)
+	oldShapeHash := "sha256:" + hex.EncodeToString(sumWithEmptyKey[:])
+	if oldShapeHash == got {
+		t.Error("expected delete-key and empty-key digests to differ; if they were equal the test would not be meaningfully proving the fix")
 	}
 }

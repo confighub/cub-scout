@@ -201,21 +201,40 @@ func pathsEquivalent(a, b string) bool {
 // (#446 round 2) so multiple-owner resources resolve deterministically.
 //
 // Priority:
-//   1. Argo or Flux owner with a resolvable git anchor → applied-matches-spec
-//   2. (Connected + --strategy provided → source-truth-pass) — v1 batch 2
-//   3. (--since provided → no-manual-edits-since) — v1 batch 2
-//   4. Otherwise → "" with an omission entry; the caller treats the
-//      result as INCONCLUSIVE.
+//  1. Argo/Flux/ConfigHub owner WITH a resolvable git anchor →
+//     applied-matches-spec. The "resolvable" condition checks that
+//     in.Evidence.GitSource is non-nil so we don't speculate a default
+//     predicate we know can't run.
+//  2. (Connected + --strategy provided → source-truth-pass) — v1 batch 2
+//  3. (--since provided → no-manual-edits-since) — v1 batch 2
+//  4. Otherwise → "" with an OmissionAutoDetectedPredicate entry.
+//
+// Codex #446 round-4 fix: the previous version returned applied-matches-
+// spec for any Argo/Flux/ConfigHub owner without checking whether the
+// anchor was actually resolvable. That made the predicate evaluator
+// emit OmissionGitSourceAnchor rather than the documented
+// OmissionAutoDetectedPredicate when the auto-detect should have
+// declined to pick a default at all. The conditioned version below
+// matches the locked priority order's omission semantics.
 //
 // Returns the chosen predicate name (or "" for no auto-detect) plus an
 // omission entry to record when the auto-detect failed.
 func AutoDetectPredicate(in PredicateInput, owner Ownership) (PredicateName, *Omission) {
 	switch owner.Type {
 	case OwnerArgo, OwnerFlux, OwnerConfigHub:
-		// Controller-owned resources are the applied-matches-spec
-		// target. The evaluator itself handles the case where the
-		// anchor isn't resolvable (emits INCONCLUSIVE + omission).
-		return PredicateAppliedMatchesSpec, nil
+		// Controller-owned resources can run applied-matches-spec WHEN
+		// a git anchor was resolved. Otherwise the predicate cannot
+		// evaluate honestly and auto-detect must decline.
+		if in.Evidence.GitSource != nil {
+			return PredicateAppliedMatchesSpec, nil
+		}
+		return "", &Omission{
+			Missing: OmissionAutoDetectedPredicate,
+			Reason: fmt.Sprintf(
+				"owner %q would map to applied-matches-spec but no git anchor was resolved for this resource; pass --predicate or wire up the tracer (argocd / flux CLI) so cub-scout can find the spec",
+				owner.Type),
+			Severity: "info",
+		}
 	default:
 		return "", &Omission{
 			Missing:  OmissionAutoDetectedPredicate,
@@ -267,6 +286,28 @@ func FilterNextSteps(steps []ReceiptNextStep) ([]ReceiptNextStep, []Omission) {
 // isMutatingCommand returns true if cmd contains any of the well-known
 // mutating verbs. Pattern-matched on substrings because nextCommand may
 // be a partial command, a flag-only string, or a full shell line.
+//
+// The list is expanded over the original (Codex #446 round-4 fix) to
+// cover every common cluster-mutating verb a future evaluator could
+// suggest. Read-only verbs (get, list, describe, watch, top, logs,
+// events, version, config view, port-forward) are not on the list.
+//
+// Notes on tricky entries:
+//   - "sync " has a trailing space so "synced" (a status word) doesn't
+//     match.
+//   - "set " has a trailing space so "settings" / "set-context" /
+//     "setattr" don't false-positive. `kubectl set image / env / resources`
+//     all match the leading "set ".
+//   - "helm install" / "helm upgrade" are listed as fragments rather
+//     than bare "install" / "upgrade" because the bare verbs collide
+//     with informational phrases ("upgrade path"); the helm-prefixed
+//     forms are the mutating ones.
+//   - "argocd app sync" is caught by "sync ".
+//   - "argocd cluster add" is caught by "cluster add".
+//   - "flux create" / "flux delete" / "flux suspend" / "flux resume"
+//     are caught by "create" / "delete" / "suspend " / "resume ".
+//   - "exec" and "debug" can mutate via in-container side effects; the
+//     receipt invariant rejects them defensively.
 func isMutatingCommand(cmd string) bool {
 	if cmd == "" {
 		return false
@@ -277,13 +318,32 @@ func isMutatingCommand(cmd string) bool {
 		"edit",
 		"patch",
 		"delete",
-		"sync ", // "argocd app sync" — guard the trailing space so "synced" is safe
+		"sync ",
 		"create",
 		"update",
 		"replace",
 		"scale",
 		"rollout",
 		"reconcile",
+		"annotate",
+		"label ",
+		"set ",
+		"exec",
+		"debug",
+		"helm install",
+		"helm upgrade",
+		"helm uninstall",
+		"helm rollback",
+		"cluster add",
+		"suspend ",
+		"resume ",
+		"taint",
+		"drain",
+		"cordon",
+		"uncordon",
+		"evict",
+		"port-forward", // strictly read-write — opens a writable channel
+		"cp ",          // kubectl cp writes to / from the pod
 	}
 	for _, frag := range mutatingFragments {
 		if strings.Contains(lower, frag) {

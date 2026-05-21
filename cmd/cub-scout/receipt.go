@@ -112,9 +112,16 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 
 	// 2. Build the evidence body from existing cub-scout helpers. All
 	// read-only.
+	//
+	// Note (Codex #446 round-4 fix): we use CollectGitSourceAnchorForOwner
+	// so the Argo tracer is invoked against the resolved Application
+	// rather than the workload kind. CollectGitSourceAnchor's non-
+	// owner-aware path would call ArgoTracer.Trace(kind=Deployment),
+	// which the tracer rejects, leaving gitSource=nil for every
+	// Argo-owned Deployment receipt.
 	owner := agent.DetectOwnership(live)
 	attribution := agent.AttributeFieldMutation(live, owner)
-	gitSource := agent.CollectGitSourceAnchor(ctx, live)
+	gitSource := agent.CollectGitSourceAnchorForOwner(ctx, live, owner)
 
 	evidence := agent.Evidence{
 		Attribution: &attribution,

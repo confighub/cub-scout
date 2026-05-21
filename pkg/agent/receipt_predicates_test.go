@@ -248,35 +248,155 @@ func TestFilterNextSteps_SyncedNotFalseFlagged(t *testing.T) {
 	}
 }
 
+// TestFilterNextSteps_ExpandedVerbList exercises the Codex #446 round-4
+// expansion: kubectl annotate / label / set / exec / debug / helm
+// install / helm upgrade / port-forward / drain etc. must all be
+// caught. The earlier list missed these so a future predicate evaluator
+// could have slipped a mutating step past the filter.
+func TestFilterNextSteps_ExpandedVerbList(t *testing.T) {
+	mutating := []string{
+		"kubectl annotate ns prod owner=team-a",
+		"kubectl label deploy api version=v2",
+		"kubectl set image deploy/api api=foo:v2",
+		"kubectl set env deploy/api FOO=bar",
+		"kubectl set resources deploy/api --limits=cpu=200m",
+		"kubectl exec -it pod/api -- /bin/sh",
+		"kubectl debug node/node-1 -it",
+		"helm install foo ./chart",
+		"helm upgrade foo ./chart",
+		"helm uninstall foo",
+		"helm rollback foo 1",
+		"flux suspend kustomization apps",
+		"flux resume kustomization apps",
+		"argocd cluster add prod-cluster",
+		"kubectl taint nodes node-1 key=value:NoSchedule",
+		"kubectl drain node-1",
+		"kubectl cordon node-1",
+		"kubectl uncordon node-1",
+		"kubectl port-forward svc/api 8080:80",
+		"kubectl cp file.txt pod/api:/tmp/file.txt",
+	}
+	for _, cmd := range mutating {
+		in := []ReceiptNextStep{
+			{ActionType: "read-only", Reason: "x", NextCommand: cmd},
+		}
+		out, _ := FilterNextSteps(in)
+		if len(out) != 0 {
+			t.Errorf("FilterNextSteps must drop mutating command %q; got %d survivors", cmd, len(out))
+		}
+	}
+}
+
+// Read-only commands must continue to pass through.
+func TestFilterNextSteps_ReadOnlyCommandsPassThrough(t *testing.T) {
+	allowed := []string{
+		"kubectl get deploy api",
+		"kubectl describe pod/api",
+		"kubectl logs deploy/api",
+		"kubectl top pod",
+		"kubectl events --for=deploy/api",
+		"kubectl version",
+		"kubectl config view",
+		"kubectl get --show-managed-fields deploy/api",
+		"argocd app get foo",
+		"flux get kustomization apps",
+		"cub-scout explain deploy/api",
+		"cub-scout trace deploy/api",
+		"helm history release-x", // history is read-only
+		"helm get values release-x",
+		"helm list",
+	}
+	for _, cmd := range allowed {
+		in := []ReceiptNextStep{
+			{ActionType: "read-only", Reason: "x", NextCommand: cmd},
+		}
+		out, om := FilterNextSteps(in)
+		if len(out) != 1 {
+			t.Errorf("FilterNextSteps must pass through read-only command %q; got %d survivors", cmd, len(out))
+		}
+		if len(om) != 0 {
+			t.Errorf("read-only command %q must not produce omissions; got %d", cmd, len(om))
+		}
+	}
+}
+
 // --- AutoDetectPredicate ----------------------------------------------
 
-func TestAutoDetectPredicate_Argo_AppliedMatchesSpec(t *testing.T) {
+// resolvedAnchorInput returns a PredicateInput with a non-nil GitSource
+// so AutoDetectPredicate's resolvability check is satisfied.
+func resolvedAnchorInput() PredicateInput {
+	return PredicateInput{
+		Evidence: Evidence{GitSource: &GitSourceAnchor{
+			RepoURL:  "https://github.com/org/repo",
+			Revision: "abc123",
+			Path:     "apps/prod",
+		}},
+	}
+}
+
+func TestAutoDetectPredicate_Argo_WithResolvedAnchor_AppliedMatchesSpec(t *testing.T) {
+	name, om := AutoDetectPredicate(resolvedAnchorInput(), Ownership{Type: OwnerArgo})
+	if name != PredicateAppliedMatchesSpec {
+		t.Errorf("Argo owner with resolved anchor must auto-detect applied-matches-spec; got %q", name)
+	}
+	if om != nil {
+		t.Errorf("Argo owner with resolved anchor must not produce an omission; got %+v", om)
+	}
+}
+
+func TestAutoDetectPredicate_Flux_WithResolvedAnchor_AppliedMatchesSpec(t *testing.T) {
+	name, om := AutoDetectPredicate(resolvedAnchorInput(), Ownership{Type: OwnerFlux})
+	if name != PredicateAppliedMatchesSpec {
+		t.Errorf("Flux owner with resolved anchor must auto-detect applied-matches-spec; got %q", name)
+	}
+	if om != nil {
+		t.Errorf("Flux owner with resolved anchor must not produce an omission; got %+v", om)
+	}
+}
+
+func TestAutoDetectPredicate_ConfigHub_WithResolvedAnchor_AppliedMatchesSpec(t *testing.T) {
+	name, om := AutoDetectPredicate(resolvedAnchorInput(), Ownership{Type: OwnerConfigHub})
+	if name != PredicateAppliedMatchesSpec {
+		t.Errorf("ConfigHub owner with resolved anchor must auto-detect applied-matches-spec; got %q", name)
+	}
+	if om != nil {
+		t.Errorf("ConfigHub owner with resolved anchor must not produce an omission; got %+v", om)
+	}
+}
+
+// TestAutoDetectPredicate_Argo_NoAnchor_DeclinesWithAutoDetectedOmission
+// is the Codex #446 round-4 fix: a controller-owned resource with no
+// resolvable git anchor must NOT default to applied-matches-spec — the
+// predicate evaluator could only emit INCONCLUSIVE + a different
+// omission (git-source-anchor), drifting from the locked priority
+// order's omission semantics. Auto-detect declines instead.
+func TestAutoDetectPredicate_Argo_NoAnchor_DeclinesWithAutoDetectedOmission(t *testing.T) {
 	name, om := AutoDetectPredicate(PredicateInput{}, Ownership{Type: OwnerArgo})
-	if name != PredicateAppliedMatchesSpec {
-		t.Errorf("Argo owner must auto-detect applied-matches-spec; got %q", name)
+	if name != "" {
+		t.Errorf("Argo owner with no resolved anchor must not auto-detect a predicate; got %q", name)
 	}
-	if om != nil {
-		t.Errorf("Argo owner must not produce an omission; got %+v", om)
+	if om == nil || om.Missing != OmissionAutoDetectedPredicate {
+		t.Errorf("Argo owner with no resolved anchor must produce OmissionAutoDetectedPredicate; got %+v", om)
 	}
 }
 
-func TestAutoDetectPredicate_Flux_AppliedMatchesSpec(t *testing.T) {
+func TestAutoDetectPredicate_Flux_NoAnchor_DeclinesWithAutoDetectedOmission(t *testing.T) {
 	name, om := AutoDetectPredicate(PredicateInput{}, Ownership{Type: OwnerFlux})
-	if name != PredicateAppliedMatchesSpec {
-		t.Errorf("Flux owner must auto-detect applied-matches-spec; got %q", name)
+	if name != "" {
+		t.Errorf("Flux owner with no resolved anchor must not auto-detect; got %q", name)
 	}
-	if om != nil {
-		t.Errorf("Flux owner must not produce an omission; got %+v", om)
+	if om == nil || om.Missing != OmissionAutoDetectedPredicate {
+		t.Errorf("Flux owner with no resolved anchor must produce OmissionAutoDetectedPredicate; got %+v", om)
 	}
 }
 
-func TestAutoDetectPredicate_ConfigHub_AppliedMatchesSpec(t *testing.T) {
+func TestAutoDetectPredicate_ConfigHub_NoAnchor_DeclinesWithAutoDetectedOmission(t *testing.T) {
 	name, om := AutoDetectPredicate(PredicateInput{}, Ownership{Type: OwnerConfigHub})
-	if name != PredicateAppliedMatchesSpec {
-		t.Errorf("ConfigHub owner must auto-detect applied-matches-spec; got %q", name)
+	if name != "" {
+		t.Errorf("ConfigHub owner with no resolved anchor must not auto-detect; got %q", name)
 	}
-	if om != nil {
-		t.Errorf("ConfigHub owner must not produce an omission; got %+v", om)
+	if om == nil || om.Missing != OmissionAutoDetectedPredicate {
+		t.Errorf("ConfigHub owner with no resolved anchor must produce OmissionAutoDetectedPredicate; got %+v", om)
 	}
 }
 

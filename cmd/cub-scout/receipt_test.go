@@ -78,10 +78,11 @@ func resetReceiptFlags(t *testing.T) {
 }
 
 func TestReceiptVerify_ASCII_AutoDetectInconclusive(t *testing.T) {
-	// Argo-owned deployment with no git anchor resolver wired in tests →
-	// applied-matches-spec auto-detected, but evidence.gitSource is nil
-	// (no Argo CLI installed in the test environment), so verdict is
-	// INCONCLUSIVE.
+	// Argo-owned deployment in standalone test environment: no Argo CLI
+	// installed so CollectGitSourceAnchorForOwner returns nil. After the
+	// Codex #446 round-4 fix, AutoDetectPredicate declines (no resolved
+	// anchor → no default predicate, OmissionAutoDetectedPredicate). The
+	// receipt is INCONCLUSIVE with an empty predicateName.
 	resetReceiptFlags(t)
 	withFakeReceiptLoader(t, makeReceiptArgoLive())
 
@@ -94,10 +95,10 @@ func TestReceiptVerify_ASCII_AutoDetectInconclusive(t *testing.T) {
 
 	// ASCII rendering structural checks (one-screen review format).
 	for _, want := range []string{
-		"Receipt: applied-matches-spec",
-		"Verdict: ",
+		"Verdict: INCONCLUSIVE",
 		"Scope:   Deployment/api in prod",
 		"By:      cub-scout",
+		"auto-detected-predicate",
 		"Fingerprint: ",
 	} {
 		if !strings.Contains(out, want) {
