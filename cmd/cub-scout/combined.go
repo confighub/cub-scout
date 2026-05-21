@@ -116,6 +116,7 @@ func init() {
 	combinedCmd.Flags().BoolVar(&combinedSuggest, "suggest", false, "Generate App model proposal")
 	combinedCmd.Flags().BoolVar(&combinedApply, "apply", false, "Create App and Deployments in ConfigHub")
 	combinedCmd.Flags().BoolVar(&combinedDryRun, "dry-run", false, "Show what would be created without making changes")
+	combinedCmd.Flags().StringVar(&compareSourcePath, "source-path", "", "Local git checkout to back-resolve gitSource.file:line for each field mismatch (stage B; raw YAML only)")
 
 	rootCmd.AddCommand(combinedCmd)
 }

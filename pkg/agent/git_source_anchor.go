@@ -36,9 +36,15 @@ type GitSourceAnchor struct {
 	// Application this is spec.source.path.
 	Path string `json:"path,omitempty"`
 
-	// Line is the line number within the manifest file where the field was
-	// set. Reserved for stage B (rendering-aware back-resolution); always
-	// zero in A2.
+	// File is the relative path (within Path) of the specific manifest file
+	// that defines the resource. Populated by stage B back-resolution when
+	// a local checkout is provided via --git-source-path. Empty otherwise.
+	File string `json:"file,omitempty"`
+
+	// Line is the line number within File where the field was set.
+	// Populated by stage B back-resolution. Zero when File is empty or
+	// when the field path could not be resolved to a single line (e.g.,
+	// rendered Helm/Kustomize output).
 	Line int `json:"line,omitempty"`
 }
 
@@ -50,6 +56,7 @@ func (g *GitSourceAnchor) IsEmpty() bool {
 	return strings.TrimSpace(g.RepoURL) == "" &&
 		strings.TrimSpace(g.Revision) == "" &&
 		strings.TrimSpace(g.Path) == "" &&
+		strings.TrimSpace(g.File) == "" &&
 		g.Line == 0
 }
 
