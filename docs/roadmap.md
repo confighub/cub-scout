@@ -69,6 +69,20 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] Config-based custom ownership detectors (YAML, no Go required) — graduated to #233
 - [x] Config-based CRD watching (YAML resource registration for map/watch; status extraction fields reserved) — graduated to #311
 
+### Verify / Receipt Capability (`cub-scout receipt`, 8th verb group)
+
+cub-scout's evidence is point-in-time and ephemeral today. A receipt is the missing durable, fingerprinted, replayable artifact bundling subject + predicate + verdict + evidence + timestamp, so Pilot / CI/CD / audit / postmortem consumers can attach evidence to a decision and later prove the inputs were what they claim to be. Receipts are an envelope around existing evidence (`compareResourceResult`, `compareSourceTruthResult`, attribution, `gitSource`, `bindingSource`) — not new evidence.
+
+- [ ] v1 foundation — `pkg/agent/receipt.go` types, canonical-JSON, SHA-256 fingerprint, `cub-scout receipt verify` command + ASCII renderer + tests + JSON contract docs — tracked in #446 batch 1
+- [ ] v1 predicates — `applied-matches-spec` (batch 1), `source-truth-pass`, `no-manual-edits-since` (batch 2) — tracked in #446 batches 1–2
+- [ ] v1 management UX — `receipt show` / `validate` / `list` subcommands — tracked in #446 batch 3
+- [ ] `scout-verify` skill added as 8th verb-group skill in #442
+- [ ] v2 deferrals — signing (Sigstore / cosign / ed25519), external sinks (file / s3 / confighub), composition (multi-subject / aggregate receipts), additional predicates (`no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed`)
+
+Read-only-triad invariant: receipts emit artifacts, never mutate. Consumers (Pilot, CI/CD, audit log, ConfigHub via separate `cub` upload) decide what to persist. Predicates with missing inputs return `INCONCLUSIVE` rather than `FAILED` — same `parse, don't guess` rule that governs the attribution layer.
+
+R&D companion: a separate research pass against existing receipt / attestation patterns (Sigstore, SLSA provenance, in-toto, Argo CD signed-image policies, Flux SOPS, Kyverno verifyImages, Pilot verdict shapes) informs v2 signing + composition design without altering v1 scope.
+
 ### AI Agent Skills (`skills/`, modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills))
 
 Coverage gap: cub-scout ships one umbrella `SKILL.md` while `cub` has 23+ scenario-grouped skills in the reference repo. AI agents picking the right cub-scout verb (`doctor` / `map` / `trace` / `compare three-way` / `compare source-truth` / `explain` / `import …` / `views …` / `mcp serve` / …) have to navigate every verb through one router, diluting triggering accuracy. The attribution layer (#435) added a whole evidence surface with no dedicated skill rules.
