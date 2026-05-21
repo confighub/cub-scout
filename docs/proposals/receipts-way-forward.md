@@ -72,7 +72,7 @@ cub-scout's receipt is the **Runtime-layer artifact**. Upstream tooling composes
     "evidence": {
       "compareThreeWay": "...",
       "attribution": {"cause": "controller-drift", "managerHint": "argocd-application-controller", "gitSource": "...", "bindingSource": null},
-      "sourceTruth": {"strategy": "git-argo", "status": "PASS", "verdict": "PASS"}
+      "sourceTruth": {"strategy": "git-argo", "status": "PASS", "verdict": "AGREED"}
     },
     "omissions": [],
     "inputAttestations": [],
@@ -126,7 +126,23 @@ Receipt-level (always one of):
 | `BLOCK` | Evidence contradicts the claim |
 | `INCONCLUSIVE` | Evidence is missing or unavailable (`source-truth` returned `INCOMPLETE`, `managedFields` stripped, ConfigHub offline in standalone mode) |
 
-**Source-truth status and verdict are preserved verbatim inside `evidence.sourceTruth`** — the receipt-level verdict is cub-scout's distilled answer; the embedded `evidence.sourceTruth.{status, verdict}` carry the native four-state source-truth fidelity (`PASS|WATCH|ASK|BLOCK` for status, `PASS|INCOMPLETE|...` for verdict). ASK at the source-truth layer maps to WATCH at the receipt layer.
+**Source-truth's native `status` and `verdict` are preserved verbatim inside `evidence.sourceTruth`** — the receipt-level verdict is cub-scout's distilled answer; the embedded `evidence.sourceTruth.{status, verdict}` carry source-truth's own enums:
+
+- `status` (`SourceTruthStatus`): `PASS | WATCH | BLOCK | ASK`
+- `verdict` (`SourceTruthVerdict`): `AGREED | MISMATCH | INCOMPLETE | BLOCKED | UNKNOWN`
+
+The two enums are independent in source-truth: `verdict` is the cross-surface agreement signal; `status` is cub-scout's evidence-quality answer Pilot layers acceptance on top of. The receipt's distilled verdict maps:
+
+| Source-truth signal | Receipt verdict |
+|---|---|
+| `status: PASS` AND `verdict: AGREED` | PASS |
+| `status: WATCH` | WATCH |
+| `status: ASK` (any verdict) | WATCH |
+| `verdict: INCOMPLETE` or `verdict: BLOCKED` (any status) | INCONCLUSIVE |
+| `verdict: MISMATCH` AND `status: BLOCK` | BLOCK |
+| `verdict: UNKNOWN` (any status) | INCONCLUSIVE |
+
+The mapping table is documented in the JSON contract for downstream consumers.
 
 ### Auto-detection priority order
 
@@ -352,6 +368,6 @@ Separate issue once v1 is in production. Designed but not implemented per the v2
 ## What I'd do next
 
 1. **Open PR for batch 1:** `pkg/agent/receipt.go` foundation + canonical-JSON (RFC 8785) + fingerprint scope + Statement v1 with dual subjects + `applied-matches-spec` predicate + auto-detection priority + read-only-triad guards + tests + first example + json-contracts.md update.
-2. **File the four spin-off issues** so v1 scope stays honest.
+2. **Spin-off issues #448–#451 are already filed** so v1 scope stays honest.
 
 The R&D pass and external review are both complete. The design is locked. One PR away from `cub-scout receipt verify` being a real command.
