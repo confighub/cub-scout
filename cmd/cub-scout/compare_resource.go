@@ -56,6 +56,14 @@ type compareSideSummary struct {
 	// mismatch detector to give per-field cause/managerHint, falling back to
 	// Attribution above when a field doesn't map to a known path.
 	AttributionByPath map[string]agent.FieldMutationAttribution `json:"attributionByPath,omitempty"`
+
+	// GitSource is the source-control anchor (repo URL, revision, path) the
+	// GitOps controller is reconciling from. Resolved at A2 via the existing
+	// Argo / Flux tracers; nil when no GitOps owner is detected, when tracer
+	// CLIs are unavailable, or when the chain root carries no useful data.
+	// Stage B will refine to per-field anchors (file path + line) via
+	// rendering-aware back-resolution.
+	GitSource *agent.GitSourceAnchor `json:"gitSource,omitempty"`
 }
 
 type compareResourceResult struct {
@@ -85,6 +93,11 @@ type compareFieldMismatch struct {
 	// ManagerHint is a representative manager string for transparency — see
 	// agent.FieldMutationAttribution.ManagerHint.
 	ManagerHint string `json:"managerHint,omitempty"`
+
+	// GitSource is the source-control anchor (repo URL, revision, path) for
+	// this field's value, copied from the resource-level GitSource at A2.
+	// Per-field anchors (different paths/lines per field) are stage B.
+	GitSource *agent.GitSourceAnchor `json:"gitSource,omitempty"`
 }
 
 type compareResourceRef struct {
@@ -583,6 +596,9 @@ func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) 
 	}
 
 	summary := summarizeCompareLiveObject(obj)
+	if anchor := agent.CollectGitSourceAnchor(ctx, obj); anchor != nil {
+		summary.GitSource = anchor
+	}
 	if summary.UnitSlug != "" {
 		return summary, nil
 	}
@@ -836,9 +852,42 @@ func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSide
 			mismatch.Cause = live.Attribution.Cause
 			mismatch.ManagerHint = live.Attribution.ManagerHint
 		}
+		// Carry the resource-level git source onto every field mismatch (A2).
+		// Per-field anchors are stage B.
+		if live.GitSource != nil {
+			mismatch.GitSource = live.GitSource
+		}
 		out = append(out, mismatch)
 	}
 	return out
+}
+
+func renderGitSourceASCII(gs *agent.GitSourceAnchor) string {
+	parts := make([]string, 0, 3)
+	if gs.RepoURL != "" {
+		parts = append(parts, gs.RepoURL)
+	}
+	if gs.Revision != "" {
+		parts = append(parts, "@"+gs.Revision)
+	}
+	if gs.Path != "" {
+		parts = append(parts, "path="+gs.Path)
+	}
+	return strings.Join(parts, " ")
+}
+
+func renderGitSourceMarkdown(gs *agent.GitSourceAnchor) string {
+	parts := make([]string, 0, 3)
+	if gs.RepoURL != "" {
+		parts = append(parts, "`"+gs.RepoURL+"`")
+	}
+	if gs.Revision != "" {
+		parts = append(parts, "@`"+gs.Revision+"`")
+	}
+	if gs.Path != "" {
+		parts = append(parts, "path=`"+gs.Path+"`")
+	}
+	return strings.Join(parts, " ")
 }
 
 // compareFieldToPath maps a compareFieldMismatch.Field name to the canonical
@@ -920,6 +969,10 @@ func renderCompareResourceASCII(result compareResourceResult) string {
 			}
 			b.WriteString("\n")
 		}
+		if gs := result.Live.GitSource; gs != nil && !gs.IsEmpty() {
+			b.WriteString(fmt.Sprintf("Git source: %s", renderGitSourceASCII(gs)))
+			b.WriteString("\n")
+		}
 		b.WriteString("\nDiff Highlights\n")
 		for _, mismatch := range result.Mismatches {
 			b.WriteString(fmt.Sprintf("  - %s: DRY=%s | WET=%s | LIVE=%s\n",
@@ -967,6 +1020,9 @@ func renderCompareResourceMarkdown(result compareResourceResult) string {
 				b.WriteString(fmt.Sprintf(" (manager: `%s`)", attr.ManagerHint))
 			}
 			b.WriteString("\n\n")
+		}
+		if gs := result.Live.GitSource; gs != nil && !gs.IsEmpty() {
+			b.WriteString(fmt.Sprintf("Git source: %s\n\n", renderGitSourceMarkdown(gs)))
 		}
 		b.WriteString("| Field | DRY | WET | LIVE |\n")
 		b.WriteString("|---|---|---|---|\n")

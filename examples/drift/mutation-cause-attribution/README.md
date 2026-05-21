@@ -101,9 +101,33 @@ The per-path map is exposed in `compare three-way` JSON output as `live.attribut
 
 Fields not yet mapped to canonical paths inherit the resource-level conclusion. A future expansion (A1.x or later) will introduce richer mappings for complex multi-path fields like container images.
 
+## Git Source Anchor (A2)
+
+When the resource is GitOps-managed (Argo CD or Flux, including ConfigHub-delivered-via-GitOps), `compare three-way` pairs the mutation cause with a **git source anchor** showing where the field's desired value came from in source control:
+
+```json
+"gitSource": {
+  "repoUrl": "https://github.com/org/platform-config",
+  "revision": "abc123def456",
+  "path": "apps/prod/payments"
+}
+```
+
+In ASCII output this renders as a `Git source:` line above the diff highlights:
+
+```
+Drift cause: manual-edit (manager: kubectl-edit)
+Git source: https://github.com/org/platform-config @abc123def456 path=apps/prod/payments
+
+Diff Highlights
+  - replicas: DRY=3 | WET=3 | LIVE=1
+```
+
+The anchor is resource-level at A2 — every field mismatch carries the same `gitSource`. **Line numbers and per-field file resolution** (mapping a specific field back to the line in `apps/prod/payments/deployment.yaml` where it's set) require rendering-aware back-resolution and are part of stage B.
+
 ## References
 
 - Parent issue: [confighub/cub-scout#435](https://github.com/confighub/cub-scout/issues/435) — Attribution layer
 - A1: [confighub/cub-scout#436](https://github.com/confighub/cub-scout/issues/436) — managedFields classification
-- Implementation: `pkg/agent/manager_strings.go`, `pkg/agent/field_ownership.go`
+- Implementation: `pkg/agent/manager_strings.go`, `pkg/agent/field_ownership.go`, `pkg/agent/field_ownership_paths.go`, `pkg/agent/git_source_anchor.go`
 - JSON contract: `docs/reference/json-contracts.md` § Field Mutation Attribution Contract

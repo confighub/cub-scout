@@ -316,7 +316,47 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
 
 The classifier matches against a verified enumeration of upstream field-manager strings — sources documented in `pkg/agent/manager_strings.go`. Strings not in the enumeration fall through to `unknown` rather than being guessed. Recognized sources include Argo CD, Flux (kustomize / helm / source controllers), Helm direct, Crossplane (composite / composed / claim / MRD / reference resolver), kro (applyset / applyset-parent / labeller), and `kubectl-*` interactive paths.
 
-Source: `pkg/agent/manager_strings.go`, `pkg/agent/field_ownership.go`
+### Git source anchor (A2)
+
+When `compare three-way` runs against a resource managed by Argo CD or Flux (including ConfigHub-delivered-via-GitOps), the resource-level git source anchor is collected via the existing tracers (`pkg/agent/argo_trace.go`, `pkg/agent/flux_trace.go`) and surfaced on both the live side and each field mismatch.
+
+```json
+{
+  "live": {
+    "gitSource": {
+      "repoUrl": "https://github.com/org/platform-config",
+      "revision": "abc123def456",
+      "path": "apps/prod/payments"
+    }
+  },
+  "mismatches": [
+    {
+      "field": "replicas",
+      "dry": "3",
+      "wet": "3",
+      "live": "1",
+      "cause": "manual-edit",
+      "managerHint": "kubectl-edit",
+      "gitSource": {
+        "repoUrl": "https://github.com/org/platform-config",
+        "revision": "abc123def456",
+        "path": "apps/prod/payments"
+      }
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `gitSource.repoUrl` | string | Source repository URL (`spec.url` for Flux GitRepository / `spec.source.repoURL` for Argo Application). |
+| `gitSource.revision` | string | Observed commit SHA, tag, or OCI digest. |
+| `gitSource.path` | string | Subdirectory within the repo (`spec.path` for Flux Kustomization / `spec.source.path` for Argo). |
+| `gitSource.line` | int | Reserved for stage B (rendering-aware back-resolution); always `0` at A2. |
+
+At A2 the anchor is resource-level — every field mismatch carries the same anchor. Stage B (Helm/Kustomize back-resolution) will refine to per-field anchors with file path + line resolution. Best-effort: omitted when no GitOps owner is detected, when the tracer CLI is unavailable, or when the chain root carries no useful data.
+
+Source: `pkg/agent/manager_strings.go`, `pkg/agent/field_ownership.go`, `pkg/agent/git_source_anchor.go`
 
 ## MCP Structured Content Contract
 
