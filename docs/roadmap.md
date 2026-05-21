@@ -77,15 +77,21 @@ cub-scout produces the **Runtime-layer (layer 3)** receipt in a four-layer proof
 
 Full design: [`docs/proposals/receipts-way-forward.md`](proposals/receipts-way-forward.md).
 
-- [ ] v1 foundation — `pkg/agent/receipt.go` types, canonical-JSON, SHA-256 fingerprint, in-toto Statement v1 envelope (forward-compat for v2 signing), `cub-scout receipt verify` command + ASCII renderer + tests + JSON contract docs — tracked in #446 batch 1
-- [ ] v1 predicates — `applied-matches-spec` (batch 1), `source-truth-pass`, `no-manual-edits-since` (batch 2) — tracked in #446 batches 1–2
-- [ ] v1 management UX — `receipt show` / `validate` / `list` subcommands — tracked in #446 batch 3
+**v1 scope (post external review): single-resource verify + show + validate only.** Batch / aggregate / chained / watch-driven receipts are explicit v2 work tracked separately.
+
+- [ ] v1 foundation — `pkg/agent/receipt.go` types, **RFC 8785 canonical-JSON**, SHA-256 fingerprint over the **full Statement minus `predicate.fingerprint`**, in-toto Statement v1 envelope with **dual subjects** (`k8s-live://` + `confighub-unit://`), auto-detection priority order, `cub-scout receipt verify` command + ASCII renderer + tests + JSON contract docs — tracked in #446 batch 1
+- [ ] v1 predicates — `applied-matches-spec` (batch 1), `source-truth-pass` (explicit `--strategy` required), `no-manual-edits-since` (batch 2) — tracked in #446 batches 1–2
+- [ ] v1 management UX — `receipt show` / `validate` / `list` subcommands; local-directory storage (`$XDG_DATA_HOME/cub-scout/receipts/`) — tracked in #446 batch 3
 - [ ] `scout-verify` skill added as 8th verb-group skill in #442
-- [ ] v2 deferrals — DSSE signing (cosign keyless + ed25519 fallback), OCI 1.1 referrers sink, composition via `inputAttestations[]` digest chains, additional predicates (`no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed`)
+- [ ] v2 deferrals — DSSE signing wrapped in **Sigstore Bundle v0.3** (cosign keyless + ed25519 fallback), OCI 1.1 referrers sink (designed graph-ingestible for GUAC), composition via `inputAttestations[]` digest chains, additional predicates (`no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed`)
 
-Read-only-triad invariant: receipts emit artifacts, never mutate. Receipts are **immutable** — updates produce new receipts with new fingerprints; old ones never change. The standalone-mode contract holds: cub-scout receipts work without ConfigHub auth, with missing connected-mode evidence recorded as structured `omissions[]` rather than silent failure.
+Read-only-triad invariant: receipts emit artifacts, never mutate. `nextSteps[]` rejects `actionType=mutating` entries at receipt-emit time. The `receipt` package exposes only `Get` / `List` / `Watch` cluster operations — enforced by `TestReceiptPackageReadOnlyClient`. PolicyReport CRD emission is explicitly out of scope (writes cluster state); spin off as a separate external adapter.
 
-R&D companion: research pass against existing receipt / attestation patterns (in-toto Statement v1, SLSA Verification Summary Attestation, Sigstore / cosign / Fulcio / Rekor, OCI 1.1 referrers, Kyverno verifyImages + PolicyReport, Tekton Chains, GitHub artifact attestations) — synthesized in `docs/proposals/receipts-way-forward.md`. v2 adopts in-toto Statement v1 + DSSE + cosign without inventing new wire formats.
+Standalone-mode contract: cub-scout receipts work without ConfigHub auth. Missing connected-mode evidence (no `confighub-unit://` subject, no `bindingSource`, no `confighubUrl`) is recorded as structured `omissions[]` entries, never as silent failure.
+
+Locked design decisions (post external review): predicate URI = `https://cub-scout.dev/receipt/v1`; subject digest = dual subjects with documented field pruning; VSA interop = keep PASS/WATCH/BLOCK/INCONCLUSIVE pure (no verdict distortion).
+
+R&D companion: research pass against existing receipt / attestation patterns synthesized in `docs/proposals/receipts-way-forward.md` — in-toto Statement v1, SLSA VSA, Sigstore Bundle v0.3, RFC 8785 JCS, OCI 1.1 referrers, GUAC, CycloneDX Attestations, Kyverno PolicyReport, Tekton Chains, GitHub artifact attestations, Falco / Tracee (for `no-manual-edits-since` field-manager-evidence caveat).
 
 ### AI Agent Skills (`skills/`, modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills))
 
