@@ -2438,6 +2438,70 @@ Requires connected mode (`cub auth login` or `CONFIGHUB_API_KEY`).
 
 ---
 
+## receipt
+
+Create and verify typed, fingerprinted, immutable evidence receipts (`#446`).
+Receipts wrap cub-scout's existing field-level evidence (compareThreeWay,
+attribution, sourceTruth, gitSource) into a verifiable in-toto Statement v1
+envelope. CI/CD gates, audit trails, postmortems, and acceptance-judge
+tooling can attach a receipt to a decision and later prove the inputs
+were what they claim to be.
+
+v1 ships fingerprint-only (SHA-256 over RFC 8785 canonical JSON of the
+full Statement minus only `predicate.fingerprint`). v2 adds DSSE signing
+wrapped in Sigstore Bundle v0.3 — purely additive, no envelope change.
+
+### receipt verify
+
+```bash
+cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
+```
+
+| Flag | Description |
+|------|-------------|
+| `-n, --namespace` | Namespace of the resource (required for namespaced kinds) |
+| `--predicate` | Predicate to evaluate. v1 batch 1 supports `applied-matches-spec`. Empty triggers auto-detect from owner. |
+| `--at-commit` | Override the spec anchor revision (Git SHA). When empty, the controller-resolved anchor is used as both the spec and the evidence. |
+| `--format` | Output format: `ascii` (default, one-screen human summary) or `json` (canonical in-toto Statement v1 envelope) |
+| `--out` | Write the receipt to this file path. Always JSON regardless of `--format` — disk is the long-lived artifact. |
+
+Examples:
+
+```bash
+# Standalone-mode verification — works without ConfigHub auth.
+cub-scout receipt verify deploy/api -n prod
+
+# Pin to an explicit revision (e.g., the SHA in a release ticket).
+cub-scout receipt verify deploy/api -n prod --at-commit abc123def456
+
+# Write the canonical JSON form to disk for audit attachment.
+cub-scout receipt verify deploy/api -n prod --format json --out api.receipt.json
+```
+
+### Verdicts
+
+| Verdict | Meaning |
+|---------|---------|
+| `PASS` | Evidence supports the claim |
+| `WATCH` | Evidence is ambiguous; situation needs monitoring |
+| `BLOCK` | Evidence contradicts the claim |
+| `INCONCLUSIVE` | Evidence is missing or unavailable; always carries one or more `omissions[]` entries |
+
+### Read-Only Triad Lock
+
+Receipts emit artifacts; they never mutate. Static guards
+(`TestReceiptPackageReadOnlyClient`) and runtime filters
+(`FilterNextSteps`) reject mutating K8s client calls and mutating
+nextStep hints at build time and emit time respectively.
+
+See also:
+
+- Contract: [`json-contracts.md`](json-contracts.md) § Receipt Contract
+- Example: [`examples/receipts/`](../../examples/receipts/)
+- Locked design: [`docs/proposals/receipts-way-forward.md`](../proposals/receipts-way-forward.md)
+
+---
+
 ## version
 
 Print version information for the local cub-scout binary.
