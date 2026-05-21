@@ -392,7 +392,65 @@ When `compare three-way` (or `compare` per-resource) runs in connected mode agai
 | `whereResource` | string | Filter selecting which upstream resources are eligible for propagation. |
 | `bindingsCount` | int | Number of explicit binding expressions on the link. The per-field expansion of `Bindings` is C2. |
 
-Best-effort: omitted when no live unit is known, when `cub link list` fails, or when the result is empty. C2 will extend this with per-field binding attribution on each `compareFieldMismatch`.
+Best-effort: omitted when no live unit is known, when `cub link list` fails, or when the result is empty.
+
+### Field-level binding source (C2)
+
+When an incoming binding's `downstreamPath` matches a `compareFieldMismatch`'s canonical path, the mismatch is annotated with a `bindingSource` pointing at the specific Link + binding that supplies the value. This answers the variant-management punch-line question: "this field's value came from upstream unit X at path Y via link Z."
+
+```json
+{
+  "mismatches": [
+    {
+      "field": "replicas",
+      "dry": "3",
+      "wet": "3",
+      "live": "1",
+      "cause": "manual-edit",
+      "managerHint": "kubectl-edit",
+      "bindingSource": {
+        "linkId": "01HFK...A1",
+        "linkSlug": "replicas-from-scale",
+        "upstreamUnitId": "01HFK...XY",
+        "upstreamPath": ".spec.scale.value",
+        "transformExpr": "to_int"
+      }
+    }
+  ],
+  "incomingBindings": [
+    {
+      "linkId": "01HFK...A1",
+      "slug": "replicas-from-scale",
+      "updateType": "NeedsProvides",
+      "toUnitId": "01HFK...XY",
+      "bindingsCount": 1,
+      "bindings": [
+        {"downstreamPath": ".spec.replicas", "upstreamPath": ".spec.scale.value", "transformExpr": "to_int"}
+      ]
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `bindingSource.linkId` | string | Link entity ID. |
+| `bindingSource.linkSlug` | string | Link slug (useful for `cub link get`). |
+| `bindingSource.upstreamUnitId` | string | Producer unit ID supplying the value. |
+| `bindingSource.upstreamPath` | string | Canonical path within the upstream unit. |
+| `bindingSource.transformExpr` | string | Optional transform expression (Go template, CEL, etc.). |
+
+In ASCII output, the binding source renders as an indented annotation under the field's diff line:
+
+```
+Diff Highlights
+  - replicas: DRY=3 | WET=3 | LIVE=1
+      <- bound from unit:01HFK...XY path:.spec.scale.value via link:replicas-from-scale
+```
+
+Best-effort: omitted when the field name has no canonical-path mapping (e.g., `images` which spans containers) or when no incoming binding's `downstreamPath` matches.
+
+`incomingBindings[].bindings` carries the same per-field expansion at the resource level — `BindingsCount` (C1) remains the raw count even when expansion produces an empty list (unrecognized binding JSON shape).
 
 Source: `cmd/cub-scout/compare_bindings.go`
 
