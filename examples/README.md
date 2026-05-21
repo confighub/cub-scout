@@ -81,6 +81,7 @@ understands the core ownership model.
 - [`custom-ownership-detectors`](./custom-ownership-detectors/)
 - [`orphans`](./orphans/)
 - [`drift`](./drift/)
+- [`receipts`](./receipts/) — typed, fingerprinted evidence artifacts (#446)
 - [`lifecycle-hazards`](./lifecycle-hazards/)
 - [`demo-data`](./demo-data/)
 - [`demo-data-adt`](./demo-data-adt/)

@@ -18,10 +18,13 @@ func TestRootCommandLayout_VisibleTopLevelCount(t *testing.T) {
 
 	// Cap is a soft governance signal. Bumped 30 -> 31 in #391 to admit
 	// `views` as a real new top-level capability (View Explorer
-	// integration per the council verdict on #393). Deliberate; do not
-	// bump again without a paired discussion.
-	if count > 31 {
-		t.Fatalf("visible top-level command count = %d, want <= 31", count)
+	// integration per the council verdict on #393). Bumped 31 -> 32 in
+	// #446 batch 1 to admit `receipt` as the 8th verb group (typed,
+	// fingerprinted evidence artifacts; see docs/proposals/
+	// receipts-way-forward.md). Deliberate; do not bump again without a
+	// paired discussion.
+	if count > 32 {
+		t.Fatalf("visible top-level command count = %d, want <= 32", count)
 	}
 }
 

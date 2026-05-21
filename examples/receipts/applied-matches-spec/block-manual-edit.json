@@ -1,0 +1,65 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "k8s-live://apps/v1/Deployment/prod/api",
+      "digest": {
+        "sha256": "595f08ae073d5a9df5fab2deb16e1c151c4d0a20484c3f91891cd657e2a63dda"
+      }
+    }
+  ],
+  "predicateType": "https://cub-scout.dev/receipt/v1",
+  "predicate": {
+    "version": "v1",
+    "claim": "applied matches spec at apps/prod/api",
+    "scope": {
+      "kind": "Deployment",
+      "name": "api",
+      "namespace": "prod",
+      "cluster": "prod-use2"
+    },
+    "verifier": {
+      "tool": "cub-scout",
+      "version": "v0.99.0-receipt-batch-1"
+    },
+    "verifiedAt": "2026-05-21T10:30:00Z",
+    "predicateName": "applied-matches-spec",
+    "spec": {
+      "anchor": {
+        "type": "git",
+        "repoUrl": "https://github.com/org/platform-config",
+        "revision": "abc123def456abc123def456abc123def456abcd",
+        "path": "apps/prod/api"
+      }
+    },
+    "verdict": "BLOCK",
+    "evidence": {
+      "attribution": {
+        "cause": "manual-edit",
+        "managerHint": "kubectl-edit"
+      },
+      "gitSource": {
+        "repoUrl": "https://github.com/org/platform-config",
+        "revision": "abc123def456abc123def456abc123def456abcd",
+        "path": "apps/prod/api"
+      }
+    },
+    "omissions": [
+      {
+        "missing": "confighub-unit-subject",
+        "reason": "standalone-mode build; no ConfigHub auth available to fetch unit subject",
+        "severity": "info"
+      }
+    ],
+    "inputAttestations": [],
+    "nextSteps": [
+      {
+        "actionType": "read-only",
+        "reason": "live state was last written by a kubectl-* tool; the GitOps loop was bypassed since the controller's last apply",
+        "nextCommand": "kubectl get --show-managed-fields",
+        "nextSurface": "kubectl"
+      }
+    ],
+    "fingerprint": "sha256:0c66ea853c6d124020d33aa7fdfaf48ac0d24aabe8536a8fb1995bd6362f98b0"
+  }
+}
