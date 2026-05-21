@@ -2,7 +2,7 @@
 name: scout-diagnose
 description: 'Use when the user wants cub-scout to INTERPRET what it sees and suggest a next step — the Diagnose verb group. Natural phrasing: "explain this Deployment", "why is this broken?", "what should I do about this?", "is this drift or just slow sync?", "what does this error mean?", "is there a known pattern for this?", "is my GitOps pipeline healthy?", "what events are firing on this Pod?", "give me a suggested remedy for this finding". Load whenever intent is explain / why / what-does-it-mean / what-should-I-do / interpret / diagnose / recommend / suggest-fix over a Kubernetes cluster or a scan finding. Do NOT load for: pure cluster inventory (use scout-observe), comparing intended vs running state at the field level (use scout-compare), field-level provenance (use scout-attribute), or actually applying a fix (cub-scout never mutates — route to cub or kubectl with the user driving).'
 phase: verify
-allowed-tools: Bash(./cub-scout *) Bash(cub-scout *) Bash(cub scout *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl logs *) Bash(kubectl get events *) Bash(argocd app get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout debug *) Bash(cub-scout debug *) Bash(cub scout debug *) Bash(./cub-scout suggest-remedy *) Bash(cub-scout suggest-remedy *) Bash(cub scout suggest-remedy *) Bash(./cub-scout patterns *) Bash(cub-scout patterns *) Bash(cub scout patterns *) Bash(./cub-scout gitops status *) Bash(cub-scout gitops status *) Bash(cub scout gitops status *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl logs *) Bash(kubectl get events *) Bash(argocd app get *) Bash(flux get *)
 ---
 
 # scout-diagnose
@@ -71,28 +71,38 @@ All five verbs emit `--format json` for agents.
 
 User: *"deploy/api in prod is CrashLooping. What's going on?"*
 
+### Standalone mode (cluster only)
+
 ```bash
 $ cub-scout explain deploy/api -n prod --hint-mode operator
 Deployment/api in prod:
   Owner:        Argo CD (Application: payments-api, source: https://github.com/org/repo @ apps/prod/api)
   Source:       Git
-  Deployed via: argocd-application-controller
+  Deployed via: argocd-controller
   Health:       Degraded (1/3 replicas Ready)
   Risks:        CrashLoopBackOff on container "api" (3 restarts in last 5m)
-  Drift:        None detected
+  Drift:        Not checked (standalone mode)
   Notes:
     - Recent events: Warning BackOff (3x, 5m) kubectl: Back-off restarting failed container
-
-THREE-WAY STATUS (connected)
-  ConfigHub revision 42 → controller revision 42 → cluster revision 42 (agreed)
-  Conclusion: not a drift problem. Investigate the workload itself.
 
 Try next (read-only):
   → cub-scout patterns detect --resource Deployment/api -n prod
   → kubectl logs -n prod deploy/api --previous --tail=100
 ```
 
-The user can now follow the structured hints — both read-only — without ever needing to apply, edit, or sync.
+The user can follow the structured hints — both read-only — without ever needing to apply, edit, or sync.
+
+### Connected mode adds three-way disagreement detail
+
+When `cub auth login` is set up, the same `explain` command also includes a `THREE-WAY STATUS` block:
+
+```text
+THREE-WAY STATUS (connected)
+  ConfigHub revision 42 → controller revision 42 → cluster revision 42 (agreed)
+  Conclusion: not a drift problem. Investigate the workload itself.
+```
+
+This disambiguates "is this CrashLoop a workload bug, or is the controller still rolling out an old revision?" — connected mode tells you the revisions agree, so the failure is in the workload, not the GitOps loop.
 
 For agents:
 

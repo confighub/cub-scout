@@ -9,7 +9,7 @@ Every K8s resource (since v1.18 GA) carries a `metadata.managedFields` array. Ea
 ```yaml
 metadata:
   managedFields:
-  - manager: argocd-application-controller
+  - manager: argocd-controller
     operation: Apply
     apiVersion: apps/v1
     time: "2026-05-21T13:30:00Z"
@@ -69,25 +69,29 @@ This matters when, say, Argo owns `.spec.template.spec.containers` but someone e
 
 List-key selectors (`k:{"name":"api"}`) are partially supported — cub-scout reads them but does not yet expose them in the canonical-path map. Fields like `containers[name="api"].image` fall back to the resource-level rollup for now.
 
-## What gets recorded as omissions
+## What happens when evidence is missing
 
-The attribution layer surfaces gaps explicitly. Each of these produces an `omissions[]` entry rather than a silent classification:
+Two horizons here — be precise about which you're reading.
 
-| Condition | Omission entry |
+**Today (in the attribution layer JSON contract on `compareFieldMismatch` and `explain`):**
+
+| Condition | Today's output |
 |---|---|
-| `metadata.managedFields` array is empty | `{"missing": "managedFields", "reason": "no field-ownership data on resource"}` |
-| `managedFields` was stripped before the cluster read (rare; happens with some mutating admission webhooks) | `{"missing": "managedFields", "reason": "stripped by upstream"}` |
-| `fieldsV1` is present but undecodable (corrupt / new encoding) | `{"missing": "fieldsV1-decode", "reason": "FieldsV1 schema unrecognized"}` |
-| Field path doesn't have a canonical-path mapping yet (e.g., container images) | `{"missing": "canonical-path", "field": "...", "reason": "no canonical-path map entry"}` |
-| The expected owner is `OwnerUnknown` (no recognizable labels) | `{"missing": "expected-owner", "reason": "no GitOps controller labels"}` |
+| `metadata.managedFields` array is empty or missing | `cause: "unknown"`; `managerHint` omitted |
+| `fieldsV1` is present but undecodable | per-field attribution falls back to resource-level rollup |
+| Field path doesn't have a canonical-path mapping (e.g., container images spanning list items) | per-field result inherits resource-level rollup |
+| The expected owner is `OwnerUnknown` (no recognizable labels) | `cause: "unknown"`; the cause classifier refuses to guess |
+| No connected-mode evidence available (standalone mode) | `bindingSource` field is simply omitted from the JSON (zero value via `omitempty`) |
 
-The principle: a `PASS` with non-empty `omissions[]` is valid; a `PASS` with `omissions: []` asserts comprehensive coverage. The schema forces the distinction.
+The principle is the same as the receipt layer: **never guess**. The current JSON contract uses `cause: "unknown"` plus field omission to express "we don't know"; the contract is documented in [`docs/reference/json-contracts.md`](../../docs/reference/json-contracts.md) § "Field Mutation Attribution Contract".
+
+**Future (when receipts ship in #446 batch 1):** `cub-scout receipt verify` will surface these gaps as structured `omissions[]` array entries on the receipt envelope, with shape `{missing: <field/source>, reason: <human-readable>, severity?: info|warning}`. The schema there forces the distinction between *"all checks passed"* and *"the checks we ran passed, but we didn't run all of them"* — see [`docs/proposals/receipts-way-forward.md`](../../docs/proposals/receipts-way-forward.md) § "Omissions". Until receipts ship, the attribution layer expresses gaps via `cause: unknown` + field omission.
 
 ## Edge cases and caveats
 
 ### managedFields is field-manager evidence, not complete mutation-history proof
 
-A field with `manager: argocd-application-controller` was *most recently* written by Argo CD. It may have been edited by `kubectl-edit` an hour earlier and overwritten by Argo since — that history is *not* in managedFields. For full mutation history, cross-reference the cluster audit log (out of cub-scout's scope).
+A field with `manager: argocd-controller` was *most recently* written by Argo CD. It may have been edited by `kubectl-edit` an hour earlier and overwritten by Argo since — that history is *not* in managedFields. For full mutation history, cross-reference the cluster audit log (out of cub-scout's scope).
 
 The `no-manual-edits-since <timestamp>` predicate planned for `scout-verify` carries this caveat in its description; receipts produced by that predicate include the limitation in their `omissions[]` entries.
 
@@ -121,7 +125,7 @@ Writes to `/status` carry `subresource: status` and a separate manager (typicall
 
 When a receipt is emitted (forthcoming, #446), the `evidence.attribution` block carries:
 
-- The full deduplicated list of manager strings seen on the resource (`managers: ["argocd-application-controller", "kubectl-edit"]`)
+- The full deduplicated list of manager strings seen on the resource (`managers: ["argocd-controller", "kubectl-edit"]`)
 - The classified `cause` + representative `managerHint`
 - Per-canonical-path attribution where available
 

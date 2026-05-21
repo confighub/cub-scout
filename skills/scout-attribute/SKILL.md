@@ -2,7 +2,7 @@
 name: scout-attribute
 description: 'Use when the user wants to understand WHERE a specific field value came from on a running Kubernetes resource — which controller, which git file, or which ConfigHub Link binding produced it. Natural phrasing: "why is replicas: 1 in prod?", "did someone kubectl edit this?", "is Argo still reconciling or has the GitOps loop been bypassed?", "what git commit set this image tag?", "which upstream unit feeds this field?", "where does this value come from?", "show me the provenance of this Deployment", "is this controller-drift or manual-edit?". Load whenever attribution / provenance / lineage / git-blame-for-runtime / who-changed-this intent appears, especially on `compare` and `explain` output. Do NOT load for: pure ownership classification at the resource level (use scout-observe — that gives Owner=Argo/Flux/etc., not per-field), source-truth strategy verdicts (use scout-compare), or live-cluster mutation (cub-scout cannot mutate — that is `cub` or `kubectl` with user driving).'
 phase: verify
-allowed-tools: Bash(./cub-scout *) Bash(cub-scout *) Bash(cub scout *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub link list *) Bash(cub link get *) Bash(cub unit get *) Bash(cub unit list *)
+allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub link list *) Bash(cub link get *) Bash(cub unit get *) Bash(cub unit list *)
 ---
 
 # scout-attribute
@@ -41,7 +41,7 @@ Implicit intents:
 - **Standalone with local checkout (cluster + `--source-path <dir>`):** Stage B back-resolution adds `gitSource.file` + `gitSource.line` for raw-YAML manifests (#440).
 - **Connected (cluster + `cub auth login`):** adds `incomingBindings[]` (the ConfigHub Links influencing this unit) and per-field `bindingSource` (which upstream unit + path feeds each field).
 
-The attribution layer **always emits something honest** — if managedFields was stripped, `cause: unknown`. If ConfigHub is unavailable, `bindingSource: null`. Missing evidence renders as `omissions[]`, never as silent failure.
+The attribution layer **always emits something honest** — if managedFields was stripped, `cause: unknown` and `managerHint` is omitted. If ConfigHub is unavailable in standalone mode, `bindingSource` is omitted from the JSON. The current JSON contract expresses missing evidence via `cause: unknown` + field omission; structured `omissions[]` entries are a forthcoming receipt-layer surface (in #446 batch 1, not today's attribution output). See [`references/kubernetes-managedfields.md`](../references/kubernetes-managedfields.md) § "What happens when evidence is missing" for the today-vs-future distinction.
 
 ## Tool boundary
 
@@ -55,7 +55,7 @@ Attribution evidence is **not its own verb** — it's *enrichment* on the output
 | Field | Means | Source |
 |---|---|---|
 | `cause` | One of `controller-drift`, `manual-edit`, `unknown`. The classifier's verdict for *who* last wrote this field. | `metadata.managedFields` + owner co-signal |
-| `managerHint` | Representative manager string (e.g., `argocd-application-controller`, `kubectl-edit`) for transparency | `metadata.managedFields[].manager` |
+| `managerHint` | Representative manager string (e.g., `argocd-controller`, `kubectl-edit`) for transparency | `metadata.managedFields[].manager` |
 | `gitSource` | `{repoUrl, revision, path, file?, line?}` — where the field's desired value lives in git | Controller spec (Argo Application / Flux GitRepository) + optional `--source-path` back-resolution (#440) |
 | `bindingSource` | `{linkId, linkSlug, upstreamUnitId, upstreamPath, transformExpr}` — the ConfigHub Link that supplies this field's value | `cub link list` for the owning unit |
 | `incomingBindings[]` | All Links whose downstream is this resource's unit | `cub link list --where "FromUnitID = ..."` |
@@ -78,7 +78,24 @@ See [`references/verified-manager-strings.md`](../references/verified-manager-st
 
 ## Worked examples
 
-### A: classifying a divergence as controller-drift vs manual-edit
+### A: standalone attribution with file:line
+
+The primary v1 path. No ConfigHub auth required.
+
+```bash
+$ cub-scout compare three-way Deployment/api -n prod --source-path /home/me/platform-config
+Drift cause: controller-drift (manager: argocd-controller)
+Git source: https://github.com/org/platform-config @abc123 path=apps/prod/api file=deployment.yaml:9
+
+Diff Highlights
+  - replicas: DRY=3 | WET=3 | LIVE=1
+```
+
+Standalone — no ConfigHub. Argo is the controller; the `gitSource.file:line` points at the exact line in the local checkout where `replicas` is set. Stage B (#440) — raw YAML only; Helm/Kustomize templated sources fall back to resource-level `gitSource` (no `file:line`).
+
+Without `--source-path`, the resource-level `gitSource` still applies — `repoUrl`, `revision`, `path` from the controller's spec.
+
+### B: classifying divergence as controller-drift vs manual-edit *(connected enrichment)*
 
 ```bash
 $ cub-scout compare three-way Deployment/api -n prod
@@ -99,7 +116,7 @@ Diff Highlights
       <- bound from unit:01HFK...XY path:.spec.scale.value via link:replicas-from-scale
 ```
 
-The `Drift cause: manual-edit` line is decisive: the controller (Argo) is *not* the writer; someone ran `kubectl edit`. The `bound from` line tells the user the upstream ConfigHub unit + path that *should* be feeding `replicas`.
+The `Drift cause: manual-edit` line is decisive: the controller (Argo) is *not* the writer; someone ran `kubectl edit`. The `bound from` line tells the user the upstream ConfigHub unit + path that *should* be feeding `replicas` — that's the C2 connected enrichment on top of standalone's cause + gitSource.
 
 Next read-only step (don't apply!): inspect the manual-edit history.
 
@@ -112,19 +129,6 @@ $ kubectl get deploy/api -n prod -o yaml --show-managed-fields | grep -A 3 "mana
 ```
 
 So `replicas` was overwritten by `kubectl edit` at 13:42 UTC. The user can now decide: port back to ConfigHub (governed) or revert (also governed). The skill does not act.
-
-### B: standalone attribution with file:line
-
-```bash
-$ cub-scout compare three-way Deployment/api -n prod --source-path /home/me/platform-config
-Drift cause: controller-drift (manager: argocd-application-controller)
-Git source: https://github.com/org/platform-config @abc123 path=apps/prod/api file=deployment.yaml:9
-
-Diff Highlights
-  - replicas: DRY=3 | WET=3 | LIVE=1
-```
-
-Standalone — no ConfigHub. Argo is the controller; the `gitSource.file:line` points at the exact line in the local checkout where `replicas` is set. Stage B (#440) — raw YAML only; Helm/Kustomize templated sources fall back to resource-level `gitSource` (no file:line).
 
 ### C: per-field binding (connected, C2)
 

@@ -10,7 +10,7 @@ When a manager string from this section matches **and** the resource's labels/an
 
 | Manager string | Source | Match | Upstream citation |
 |---|---|---|---|
-| `argocd-application-controller` | Argo CD application controller (SSA, default since v2.6) | exact | [`util/argo/managedfields/managedfields.go` in argo-cd](https://github.com/argoproj/argo-cd) |
+| `argocd-controller` | Argo CD application controller (SSA, default since v2.6) | exact | [`util/argo/managedfields/managedfields.go` in argo-cd](https://github.com/argoproj/argo-cd) |
 | `kubectl-client-side-apply` (Argo CSA migration only) | Argo CD CSA migration default — **ambiguous**, disambiguated by `argocd.argoproj.io/tracking-id` co-signal | exact + co-signal | [Argo CD CSA→SSA migration docs](https://argo-cd.readthedocs.io/en/stable/operator-manual/server-side-apply/) |
 | `kustomize-controller` | Flux kustomize-controller | exact | [fluxcd/kustomize-controller](https://github.com/fluxcd/kustomize-controller) `controllerName` constant |
 | `helm-controller` | Flux helm-controller | exact | [fluxcd/helm-controller](https://github.com/fluxcd/helm-controller) `controllerName` constant |

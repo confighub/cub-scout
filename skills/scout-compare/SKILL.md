@@ -2,7 +2,7 @@
 name: scout-compare
 description: 'Use when the user wants to compare INTENDED vs ACTUAL Kubernetes state — the Compare verb group of cub-scout. Natural phrasing: "did this release land?", "does the cluster match Git?", "is there drift?", "compare DRY / WET / LIVE for this unit", "what does ConfigHub say should be running here?", "give me a source-truth verdict for this resource", "did Argo apply what was in the commit?", "compare this manifest to live state". Load whenever intent is compare / drift / sync-status / verify-matching / DRY-WET-LIVE / source-truth / has-this-landed. Do NOT load for: a list of what is running (use scout-observe), interpreting why something is wrong (use scout-diagnose), per-field provenance (use scout-attribute), or actually applying / syncing (cub-scout never mutates — route to cub, argocd, flux, or kubectl with the user driving).'
 phase: verify
-allowed-tools: Bash(./cub-scout *) Bash(cub-scout *) Bash(cub scout *) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link list *) Bash(argocd app get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link list *) Bash(argocd app get *) Bash(flux get *)
 ---
 
 # scout-compare
@@ -72,42 +72,9 @@ All four verbs emit `--format json` for agents and the MCP gateway.
 
 ## Worked examples
 
-### A: did Argo land commit abc123?
+### A: file vs live drift, standalone
 
-```bash
-$ cub-scout compare three-way --scope namespace/prod --fail-on warning
-Three-Way Compare:
-  Scope: namespace/prod
-  Resources: 12  Connected: 12  DRY/WET/LIVE: 12  Mismatched: 0
-  Agreement: ✓ AGREED — All 12 resources agree
-  Conformance: PASS (threshold: warning, max: info, 0 issues)
-
-exit 0
-```
-
-CI pipeline can gate on `exit 0`. Mismatch produces exit 2 + a structured `compareFieldMismatch[]` array with per-field `cause` and `managerHint` from the attribution layer (#435).
-
-### B: strategy-relative verdict for Pilot
-
-```bash
-$ cub-scout compare source-truth Deployment/api -n prod --strategy git-argo --format json
-{
-  "subject": {"kind": "Deployment", "name": "api", "namespace": "prod"},
-  "strategy": "git-argo",
-  "status": "PASS",
-  "verdict": "AGREED",
-  "evidence": {
-    "git": {"repoUrl": "https://github.com/org/repo", "revision": "abc123"},
-    "controller": {"argocd": {"lastSync": "abc123", "sync": "Synced"}},
-    "cluster": {"resourceVersion": "1234567"}
-  },
-  "omissions": []
-}
-```
-
-Pilot's acceptance kernel consumes this JSON directly. The strategy must be declared explicitly — `compare source-truth` does not auto-detect the strategy (Pilot needs the operator's stated assumption, not cub-scout's guess).
-
-### C: file vs live drift, standalone
+The primary v1 path. No ConfigHub auth required.
 
 ```bash
 $ cub-scout compare drift --file desired.yaml -n prod
@@ -125,7 +92,41 @@ Drift Report
 Summary: 1 finding
 ```
 
-Works without `cub auth login`. Pair with [`scout-attribute`](../scout-attribute/SKILL.md) when you want to know *who* changed `LOG_LEVEL` (controller? human? agent?).
+Pair with [`scout-attribute`](../scout-attribute/SKILL.md) when you want to know *who* changed `LOG_LEVEL` (controller? human? agent?). cub-scout reads `metadata.managedFields` on the live object to produce that classification — works without ConfigHub.
+
+### B: did Argo land commit abc123? *(connected enrichment)*
+
+```bash
+$ cub-scout compare three-way --scope namespace/prod --fail-on warning
+Three-Way Compare:
+  Scope: namespace/prod
+  Resources: 12  Connected: 12  DRY/WET/LIVE: 12  Mismatched: 0
+  Agreement: ✓ AGREED — All 12 resources agree
+  Conformance: PASS (threshold: warning, max: info, 0 issues)
+
+exit 0
+```
+
+CI pipeline can gate on `exit 0`. Mismatch produces exit 2 + a structured `compareFieldMismatch[]` array with per-field `cause` and `managerHint` from the attribution layer (#435). Requires `cub auth login` — adds the DRY (ConfigHub-intended) layer that the standalone case doesn't have.
+
+### C: strategy-relative verdict for Pilot *(connected, strategy-declared)*
+
+```bash
+$ cub-scout compare source-truth Deployment/api -n prod --strategy git-argo --format json
+{
+  "subject": {"kind": "Deployment", "name": "api", "namespace": "prod"},
+  "strategy": "git-argo",
+  "status": "PASS",
+  "verdict": "AGREED",
+  "evidence": {
+    "git": {"repoUrl": "https://github.com/org/repo", "revision": "abc123"},
+    "controller": {"argocd": {"lastSync": "abc123", "sync": "Synced"}},
+    "cluster": {"resourceVersion": "1234567"}
+  }
+}
+```
+
+Pilot's acceptance kernel consumes this JSON directly. The strategy must be declared explicitly — `compare source-truth` does not auto-detect the strategy (Pilot needs the operator's stated assumption, not cub-scout's guess).
 
 ## Output evidence
 

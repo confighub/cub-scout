@@ -28,9 +28,9 @@
     "replicas": 1,
     "attribution": {
       "cause": "controller-drift",
-      "managerHint": "argocd-application-controller",
+      "managerHint": "argocd-controller",
       "managers": [
-        "argocd-application-controller"
+        "argocd-controller"
       ]
     }
   },
@@ -41,7 +41,7 @@
       "wet": "3",
       "live": "1",
       "cause": "controller-drift",
-      "managerHint": "argocd-application-controller"
+      "managerHint": "argocd-controller"
     }
   ]
 }
