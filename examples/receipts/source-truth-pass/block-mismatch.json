@@ -1,0 +1,72 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "k8s-live://apps/v1/Deployment/prod/api",
+      "digest": {
+        "sha256": "595f08ae073d5a9df5fab2deb16e1c151c4d0a20484c3f91891cd657e2a63dda"
+      }
+    }
+  ],
+  "predicateType": "https://cub-scout.dev/receipt/v1",
+  "predicate": {
+    "version": "v1",
+    "claim": "source-truth PASS under strategy \"git-argo\" for Deployment/api in prod",
+    "scope": {
+      "kind": "Deployment",
+      "name": "api",
+      "namespace": "prod",
+      "cluster": "prod-use2"
+    },
+    "verifier": {
+      "tool": "cub-scout",
+      "version": "v0.99.0-receipt-batch-1"
+    },
+    "verifiedAt": "2026-05-21T10:30:00Z",
+    "predicateName": "source-truth-pass",
+    "verdict": "BLOCK",
+    "evidence": {
+      "sourceTruth": {
+        "declared_strategy": "Git -\u003e Argo -\u003e Kubernetes",
+        "status": "BLOCK",
+        "source_truth": "MISMATCH",
+        "outlier": "controller",
+        "surfaces": {
+          "confighub": {
+            "space": "payments",
+            "unit": "api",
+            "revision": "42"
+          },
+          "controller": {
+            "kind": "Argo",
+            "source": "https://github.com/org/platform-config",
+            "revision_or_digest": "feedfacefeedfacefeedfacefeedfacefeedface"
+          },
+          "runtime": {
+            "resource": "Deployment/api in prod",
+            "field": "spec.template.spec.containers[0].image",
+            "value": "ghcr.io/org/api:v2.3.0",
+            "health": "Ready"
+          }
+        }
+      }
+    },
+    "omissions": [
+      {
+        "missing": "confighub-unit-subject",
+        "reason": "standalone-mode build; no ConfigHub auth available to fetch unit subject",
+        "severity": "info"
+      }
+    ],
+    "inputAttestations": [],
+    "nextSteps": [
+      {
+        "actionType": "read-only",
+        "reason": "source-truth BLOCK; a hard rule failed (strategy mismatch, controller-source resolution failure, etc.) — investigate before acceptance",
+        "nextCommand": "cub-scout compare source-truth --strategy git-argo",
+        "nextSurface": "cub-scout"
+      }
+    ],
+    "fingerprint": "sha256:cf0e510a4e50b08e57431cd5e107f7ca5f184f66d4dd9e8dd582fa848d3ec859"
+  }
+}

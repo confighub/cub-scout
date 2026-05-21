@@ -6,6 +6,9 @@ package agent
 import (
 	"fmt"
 	"strings"
+	"time"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // PredicateName is the canonical name of a receipt predicate.
@@ -61,6 +64,22 @@ type PredicateInput struct {
 	// evidence is genuinely missing" from "we never had it because
 	// standalone mode".
 	Connected bool
+
+	// Strategy is the explicit source-truth strategy the caller passed
+	// (via --strategy). Required for source-truth-pass; cub-scout never
+	// infers a strategy. Empty means "not provided".
+	Strategy string
+
+	// Since is the cutoff timestamp for the no-manual-edits-since
+	// predicate. A zero value means "not provided" — the predicate then
+	// emits INCONCLUSIVE + OmissionSinceMissing.
+	Since time.Time
+
+	// Live carries the resource the no-manual-edits-since predicate
+	// walks for managedFields entries. Other predicates ignore this
+	// field. Receipts are built from the same Live the orchestrator
+	// already fetched; passing it down avoids a re-read.
+	Live *unstructured.Unstructured
 }
 
 // EvaluateAppliedMatchesSpec runs the `applied-matches-spec` predicate.
@@ -220,14 +239,31 @@ func pathsEquivalent(a, b string) bool {
 // Returns the chosen predicate name (or "" for no auto-detect) plus an
 // omission entry to record when the auto-detect failed.
 func AutoDetectPredicate(in PredicateInput, owner Ownership) (PredicateName, *Omission) {
+	// Priority 1: Argo/Flux/ConfigHub + resolvable anchor → applied-matches-spec.
 	switch owner.Type {
 	case OwnerArgo, OwnerFlux, OwnerConfigHub:
-		// Controller-owned resources can run applied-matches-spec WHEN
-		// a git anchor was resolved. Otherwise the predicate cannot
-		// evaluate honestly and auto-detect must decline.
 		if in.Evidence.GitSource != nil {
 			return PredicateAppliedMatchesSpec, nil
 		}
+	}
+
+	// Priority 2: --strategy provided → source-truth-pass. The predicate
+	// itself enforces the connected-mode gate; auto-detect only needs to
+	// see the strategy signal.
+	if strings.TrimSpace(in.Strategy) != "" {
+		return PredicateSourceTruthPass, nil
+	}
+
+	// Priority 3: --since provided → no-manual-edits-since.
+	if !in.Since.IsZero() {
+		return PredicateNoManualEditsSince, nil
+	}
+
+	// Owner-specific decline reason takes precedence when the owner is one
+	// of the controller types but no anchor resolved — that's a more
+	// actionable hint than the generic "no signal" message.
+	switch owner.Type {
+	case OwnerArgo, OwnerFlux, OwnerConfigHub:
 		return "", &Omission{
 			Missing: OmissionAutoDetectedPredicate,
 			Reason: fmt.Sprintf(
@@ -238,10 +274,266 @@ func AutoDetectPredicate(in PredicateInput, owner Ownership) (PredicateName, *Om
 	default:
 		return "", &Omission{
 			Missing:  OmissionAutoDetectedPredicate,
-			Reason:   fmt.Sprintf("no signal for default predicate (detected owner %q has no v1 default predicate); pass --predicate", owner.Type),
+			Reason:   fmt.Sprintf("no signal for default predicate (detected owner %q has no v1 default predicate); pass --predicate, --strategy, or --since", owner.Type),
 			Severity: "info",
 		}
 	}
+}
+
+// EvaluateSourceTruthPass runs the `source-truth-pass` predicate.
+//
+// Semantics:
+//   - No --strategy passed → INCONCLUSIVE + OmissionStrategyMissing.
+//     cub-scout never infers a delivery strategy; that's the operator's
+//     declared input (`compare source-truth` enforces the same rule).
+//   - No source-truth evidence in the body → INCONCLUSIVE +
+//     OmissionSourceTruthEvidence. The orchestrator should have run
+//     `Derive` and attached the SourceTruthEvidence; if it didn't, the
+//     receipt cannot claim anything about source truth.
+//   - Strategy mismatch between caller and evidence → BLOCK +
+//     OmissionStrategyMismatch. Don't silently honor the caller's strategy
+//     over what the evidence claims to be under.
+//   - Map Status to ReceiptVerdict:
+//     PASS  → VerdictPASS
+//     WATCH → VerdictWATCH
+//     BLOCK → VerdictBLOCK
+//     ASK   → VerdictINCONCLUSIVE (with the evidence's proof_gaps mirrored
+//             into omissions[])
+//
+// Proof gaps in the source-truth evidence are mirrored into the receipt's
+// omissions[] under OmissionSourceTruthComplete so a consumer reading
+// only the receipt knows what the underlying source-truth derivation
+// flagged.
+func EvaluateSourceTruthPass(in PredicateInput) PredicateResult {
+	res := PredicateResult{
+		Omissions: []Omission{},
+		NextSteps: []ReceiptNextStep{},
+	}
+
+	declared := strings.TrimSpace(in.Strategy)
+	if declared == "" {
+		res.Verdict = VerdictINCONCLUSIVE
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionStrategyMissing,
+			Reason:   "source-truth-pass requires --strategy; cub-scout does not infer the delivery strategy",
+			Severity: "warning",
+		})
+		return res
+	}
+
+	if in.Evidence.SourceTruth == nil {
+		res.Verdict = VerdictINCONCLUSIVE
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionSourceTruthEvidence,
+			Reason:   fmt.Sprintf("no source-truth evidence body attached; run `cub-scout compare source-truth --strategy %s` and feed the result back into the receipt orchestrator", declared),
+			Severity: "warning",
+		})
+		return res
+	}
+
+	// Compare declared strategy with the strategy already captured in the
+	// evidence body. The evidence stores the Human-rendered form
+	// ("Git -> Argo -> Kubernetes"), so we normalize through ParseStrategy
+	// when comparing — accept either the machine name ("git-argo") or the
+	// Human form.
+	evStrategy := in.Evidence.SourceTruth.DeclaredStrategy
+	if !strategyAgrees(declared, evStrategy) {
+		res.Verdict = VerdictBLOCK
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionStrategyMismatch,
+			Reason:   fmt.Sprintf("receipt was asked to verify under strategy %q but source-truth evidence carries %q", declared, evStrategy),
+			Severity: "warning",
+		})
+		res.NextSteps = append(res.NextSteps, ReceiptNextStep{
+			ActionType:  "read-only",
+			Reason:      "rerun the source-truth derivation with the same strategy you want the receipt to claim; do not paper over the disagreement",
+			NextCommand: "cub-scout compare source-truth --strategy " + declared,
+			NextSurface: "cub-scout",
+		})
+		return res
+	}
+
+	// Mirror proof gaps into omissions[] regardless of status.
+	for _, gap := range in.Evidence.SourceTruth.ProofGaps {
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionSourceTruthComplete,
+			Reason:   "source-truth proof gap: " + gap,
+			Severity: "info",
+		})
+	}
+
+	switch in.Evidence.SourceTruth.Status {
+	case StatusPASS:
+		res.Verdict = VerdictPASS
+		res.NextSteps = append(res.NextSteps, ReceiptNextStep{
+			ActionType:  "read-only",
+			Reason:      "source-truth PASS under the declared strategy; all three surfaces agree under the strategy-implied authority",
+			NextCommand: "cub-scout explain " + in.Scope.Kind + "/" + in.Scope.Name + " -n " + in.Scope.Namespace,
+			NextSurface: "cub-scout",
+		})
+	case StatusWATCH:
+		res.Verdict = VerdictWATCH
+		res.NextSteps = append(res.NextSteps, ReceiptNextStep{
+			ActionType:  "read-only",
+			Reason:      "source-truth WATCH; soft proof gap or signal warrants confirmation before acceptance",
+			NextCommand: "cub-scout compare source-truth --strategy " + declared,
+			NextSurface: "cub-scout",
+		})
+	case StatusBLOCK:
+		res.Verdict = VerdictBLOCK
+		res.NextSteps = append(res.NextSteps, ReceiptNextStep{
+			ActionType:  "read-only",
+			Reason:      "source-truth BLOCK; a hard rule failed (strategy mismatch, controller-source resolution failure, etc.) — investigate before acceptance",
+			NextCommand: "cub-scout compare source-truth --strategy " + declared,
+			NextSurface: "cub-scout",
+		})
+	case StatusASK:
+		res.Verdict = VerdictINCONCLUSIVE
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionSourceTruthComplete,
+			Reason:   "source-truth ASK; cub-scout cannot classify deterministically — the evidence's proof_gaps explain what's missing",
+			Severity: "warning",
+		})
+	default:
+		res.Verdict = VerdictINCONCLUSIVE
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionSourceTruthComplete,
+			Reason:   fmt.Sprintf("unrecognized source-truth status %q; cub-scout enumerates PASS / WATCH / BLOCK / ASK", string(in.Evidence.SourceTruth.Status)),
+			Severity: "warning",
+		})
+	}
+	return res
+}
+
+// strategyAgrees returns true if declared (caller's CLI form like
+// "git-argo") names the same strategy as evidence (the Human form like
+// "Git -> Argo -> Kubernetes" recorded by Derive). Either side may be
+// empty after trim.
+func strategyAgrees(declared, evStrategy string) bool {
+	declared = strings.TrimSpace(declared)
+	evStrategy = strings.TrimSpace(evStrategy)
+	if declared == "" || evStrategy == "" {
+		return false
+	}
+	// Same machine form.
+	if declared == evStrategy {
+		return true
+	}
+	// Caller passed the machine form; evidence has the Human form.
+	if parsed, ok := ParseStrategy(declared); ok {
+		if parsed.Human() == evStrategy {
+			return true
+		}
+	}
+	return false
+}
+
+// EvaluateNoManualEditsSince runs the `no-manual-edits-since` predicate.
+//
+// Semantics:
+//   - No --since cutoff → INCONCLUSIVE + OmissionSinceMissing.
+//   - No live object on the input → INCONCLUSIVE + OmissionManagedFields
+//     (defensive — orchestrator should always pass Live).
+//   - No managedFields entries on the object → INCONCLUSIVE +
+//     OmissionManagedFields. Old K8s, stripped admission webhook, etc.
+//   - Any managedFields entry from an interactive manager (kubectl-*)
+//     with Time > since → BLOCK.
+//   - Any managedFields entry from an interactive manager with no Time
+//     → INCONCLUSIVE + OmissionManagedFieldsTime. We cannot place it on
+//     the timeline so we cannot honestly claim "no manual edits since T".
+//   - Otherwise → PASS.
+//
+// Important caveat (from the receipts-way-forward.md design): K8s
+// managedFields evidence is best-effort. If an admission webhook strips
+// the entries, or the resource is migrated across K8s versions, the
+// predicate degrades to INCONCLUSIVE rather than producing false PASS.
+// `parse, don't guess`.
+func EvaluateNoManualEditsSince(in PredicateInput) PredicateResult {
+	res := PredicateResult{
+		Omissions: []Omission{},
+		NextSteps: []ReceiptNextStep{},
+	}
+
+	if in.Since.IsZero() {
+		res.Verdict = VerdictINCONCLUSIVE
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionSinceMissing,
+			Reason:   "no-manual-edits-since requires --since <RFC3339 timestamp>; cub-scout does not invent a cutoff",
+			Severity: "warning",
+		})
+		return res
+	}
+
+	if in.Live == nil {
+		res.Verdict = VerdictINCONCLUSIVE
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionManagedFields,
+			Reason:   "no live object passed to no-manual-edits-since; cub-scout cannot read managedFields without the resource",
+			Severity: "warning",
+		})
+		return res
+	}
+
+	entries := in.Live.GetManagedFields()
+	if len(entries) == 0 {
+		res.Verdict = VerdictINCONCLUSIVE
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionManagedFields,
+			Reason:   "live resource has no managedFields entries; no-manual-edits-since cannot establish a baseline without them",
+			Severity: "warning",
+		})
+		return res
+	}
+
+	// Walk entries. Treat any interactive manager with Time > since as a
+	// late manual edit (BLOCK). Treat any interactive manager with nil
+	// Time as a timestamp gap (INCONCLUSIVE).
+	var (
+		violatingManagers []string
+		nilTimeManagers   []string
+	)
+	for _, e := range entries {
+		if !IsInteractiveManager(e.Manager) {
+			continue
+		}
+		if e.Time == nil {
+			nilTimeManagers = append(nilTimeManagers, e.Manager)
+			continue
+		}
+		if e.Time.Time.After(in.Since) {
+			violatingManagers = append(violatingManagers, fmt.Sprintf("%s@%s", e.Manager, e.Time.Time.UTC().Format(time.RFC3339)))
+		}
+	}
+
+	if len(violatingManagers) > 0 {
+		res.Verdict = VerdictBLOCK
+		res.NextSteps = append(res.NextSteps, ReceiptNextStep{
+			ActionType:  "read-only",
+			Reason:      fmt.Sprintf("interactive writer wrote managedFields after the cutoff (%s): %s — investigate the unplanned edit before any apply", in.Since.UTC().Format(time.RFC3339), strings.Join(violatingManagers, ", ")),
+			NextCommand: "kubectl get --show-managed-fields",
+			NextSurface: "kubectl",
+		})
+		return res
+	}
+
+	if len(nilTimeManagers) > 0 {
+		res.Verdict = VerdictINCONCLUSIVE
+		res.Omissions = append(res.Omissions, Omission{
+			Missing:  OmissionManagedFieldsTime,
+			Reason:   fmt.Sprintf("interactive managedFields entries have nil Time; cannot place them on the timeline: %s", strings.Join(nilTimeManagers, ", ")),
+			Severity: "warning",
+		})
+		return res
+	}
+
+	res.Verdict = VerdictPASS
+	res.NextSteps = append(res.NextSteps, ReceiptNextStep{
+		ActionType:  "read-only",
+		Reason:      fmt.Sprintf("no interactive writer touched managedFields after %s", in.Since.UTC().Format(time.RFC3339)),
+		NextCommand: "cub-scout explain " + in.Scope.Kind + "/" + in.Scope.Name + " -n " + in.Scope.Namespace,
+		NextSurface: "cub-scout",
+	})
+	return res
 }
 
 // FilterNextSteps drops any nextSteps with mutating actionType or

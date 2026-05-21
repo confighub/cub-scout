@@ -1,0 +1,47 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "k8s-live://apps/v1/Deployment/prod/api",
+      "digest": {
+        "sha256": "595f08ae073d5a9df5fab2deb16e1c151c4d0a20484c3f91891cd657e2a63dda"
+      }
+    }
+  ],
+  "predicateType": "https://cub-scout.dev/receipt/v1",
+  "predicate": {
+    "version": "v1",
+    "claim": "no manual edits to Deployment/api in prod since 2026-05-22T00:00:00Z",
+    "scope": {
+      "kind": "Deployment",
+      "name": "api",
+      "namespace": "prod",
+      "cluster": "prod-use2"
+    },
+    "verifier": {
+      "tool": "cub-scout",
+      "version": "v0.99.0-receipt-batch-1"
+    },
+    "verifiedAt": "2026-05-21T10:30:00Z",
+    "predicateName": "no-manual-edits-since",
+    "verdict": "PASS",
+    "evidence": {},
+    "omissions": [
+      {
+        "missing": "confighub-unit-subject",
+        "reason": "standalone-mode build; no ConfigHub auth available to fetch unit subject",
+        "severity": "info"
+      }
+    ],
+    "inputAttestations": [],
+    "nextSteps": [
+      {
+        "actionType": "read-only",
+        "reason": "no interactive writer touched managedFields after 2026-05-22T00:00:00Z",
+        "nextCommand": "cub-scout explain Deployment/api -n prod",
+        "nextSurface": "cub-scout"
+      }
+    ],
+    "fingerprint": "sha256:07ff1d0c34d17c4ac4140ce913cab45140e4f694535a743bc193da9add589eeb"
+  }
+}

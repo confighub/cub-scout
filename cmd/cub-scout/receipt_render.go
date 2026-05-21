@@ -87,6 +87,22 @@ func renderReceiptASCII(stmt agent.Statement) string {
 		}
 	}
 
+	// Source-truth evidence (when present — only the source-truth-pass
+	// path attaches this surface).
+	if pred.Evidence.SourceTruth != nil {
+		st := pred.Evidence.SourceTruth
+		b.WriteString("\nEvidence (source-truth)\n")
+		fmt.Fprintf(&b, "  strategy:    %s\n", st.DeclaredStrategy)
+		fmt.Fprintf(&b, "  status:      %s\n", st.Status)
+		fmt.Fprintf(&b, "  verdict:     %s\n", st.SourceTruth)
+		if st.Outlier != "" {
+			fmt.Fprintf(&b, "  outlier:     %s\n", st.Outlier)
+		}
+		if len(st.ProofGaps) > 0 {
+			fmt.Fprintf(&b, "  proof_gaps:  %s\n", strings.Join(st.ProofGaps, ", "))
+		}
+	}
+
 	// Omissions are critical — they convert silent PASS into honest PASS.
 	if len(pred.Omissions) > 0 {
 		b.WriteString("\nOmissions (deliberate non-claims)\n")

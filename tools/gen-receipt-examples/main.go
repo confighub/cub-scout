@@ -1,10 +1,11 @@
 // Copyright (C) ConfigHub, Inc.
 // SPDX-License-Identifier: MIT
 
-// gen-receipt-examples emits the four canonical example receipts under
-// examples/receipts/applied-matches-spec/. Run from the repo root:
+// gen-receipt-examples emits the canonical example receipts under
+// examples/receipts/. Run from the repo root pointing at the receipts
+// root (the generator writes one subdirectory per predicate):
 //
-//	go run ./tools/gen-receipt-examples examples/receipts/applied-matches-spec
+//	go run ./tools/gen-receipt-examples examples/receipts
 //
 // The generator is deterministic: same input data + same VerifiedAt → same
 // fingerprint. CI re-runs it and diffs against the committed files (see
@@ -19,6 +20,7 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -135,9 +137,79 @@ func inconclusiveNoAnchor() agent.BuildReceiptInput {
 	return in
 }
 
+// --- batch 2: source-truth-pass examples ----------------------------
+
+func sourceTruthPassInput() agent.BuildReceiptInput {
+	in := baseInput()
+	in.PredicateName = agent.PredicateSourceTruthPass
+	in.Spec = nil // source-truth-pass doesn't use a spec anchor
+	in.Strategy = string(agent.StrategyGitArgo)
+	in.Evidence = agent.Evidence{
+		SourceTruth: &agent.SourceTruthEvidence{
+			DeclaredStrategy: agent.StrategyGitArgo.Human(),
+			Status:           agent.StatusPASS,
+			SourceTruth:      agent.VerdictAGREED,
+			Outlier:          agent.OutlierUnknown,
+			Surfaces: agent.SourceTruthSurfaces{
+				ConfigHub:  &agent.ConfigHubSurface{Space: "payments", Unit: "api", Revision: "42"},
+				Controller: &agent.ControllerSurface{Kind: "Argo", Source: "https://github.com/org/platform-config", RevisionOrDigest: "abc123def456abc123def456abc123def456abcd"},
+				Runtime:    &agent.RuntimeSurface{Resource: "Deployment/api in prod", Field: "spec.template.spec.containers[0].image", Value: "ghcr.io/org/api:v2.3.0", Health: "Ready"},
+			},
+		},
+	}
+	return in
+}
+
+func sourceTruthBlockMismatch() agent.BuildReceiptInput {
+	in := sourceTruthPassInput()
+	in.Evidence.SourceTruth.Status = agent.StatusBLOCK
+	in.Evidence.SourceTruth.SourceTruth = agent.VerdictMISMATCH
+	in.Evidence.SourceTruth.Outlier = agent.OutlierController
+	in.Evidence.SourceTruth.Surfaces.Controller.RevisionOrDigest = "feedfacefeedfacefeedfacefeedfacefeedface"
+	return in
+}
+
+// --- batch 2: no-manual-edits-since examples ------------------------
+
+func noManualEditsSincePass() agent.BuildReceiptInput {
+	cutoff := time.Date(2026, 5, 22, 0, 0, 0, 0, time.UTC)
+	before := metav1.NewTime(time.Date(2026, 5, 21, 12, 0, 0, 0, time.UTC))
+
+	in := baseInput()
+	in.PredicateName = agent.PredicateNoManualEditsSince
+	in.Spec = nil
+	in.Strategy = ""
+	in.Since = cutoff
+	in.Evidence = agent.Evidence{}
+
+	// Live carries the managedFields the predicate walks. The base Live
+	// is a bare Deployment; rebuild with a single Argo controller entry
+	// dated before the cutoff so the predicate emits PASS.
+	live := makeArgoLive()
+	live.SetManagedFields([]metav1.ManagedFieldsEntry{
+		{Manager: "argocd-controller", Operation: metav1.ManagedFieldsOperationApply, Time: &before},
+	})
+	in.Live = live
+	return in
+}
+
+func noManualEditsSinceBlock() agent.BuildReceiptInput {
+	after := metav1.NewTime(time.Date(2026, 5, 22, 12, 0, 0, 0, time.UTC))
+
+	in := noManualEditsSincePass()
+	live := makeArgoLive()
+	live.SetManagedFields([]metav1.ManagedFieldsEntry{
+		{Manager: "argocd-controller", Operation: metav1.ManagedFieldsOperationApply, Time: &after},
+		{Manager: "kubectl-edit", Operation: metav1.ManagedFieldsOperationUpdate, Time: &after},
+	})
+	in.Live = live
+	return in
+}
+
 type example struct {
-	name string
-	in   agent.BuildReceiptInput
+	predicateDir string // subdirectory under outDir, e.g. "applied-matches-spec"
+	name         string // filename within that subdirectory
+	in           agent.BuildReceiptInput
 }
 
 func main() {
@@ -152,24 +224,36 @@ func main() {
 	}
 
 	examples := []example{
-		{"pass-controller-drift.json", passCase()},
-		{"block-manual-edit.json", blockManualEdit()},
-		{"block-anchor-mismatch.json", blockAnchorMismatch()},
-		{"inconclusive-no-anchor.json", inconclusiveNoAnchor()},
+		// applied-matches-spec (batch 1).
+		{"applied-matches-spec", "pass-controller-drift.json", passCase()},
+		{"applied-matches-spec", "block-manual-edit.json", blockManualEdit()},
+		{"applied-matches-spec", "block-anchor-mismatch.json", blockAnchorMismatch()},
+		{"applied-matches-spec", "inconclusive-no-anchor.json", inconclusiveNoAnchor()},
+		// source-truth-pass (batch 2).
+		{"source-truth-pass", "pass-agreed.json", sourceTruthPassInput()},
+		{"source-truth-pass", "block-mismatch.json", sourceTruthBlockMismatch()},
+		// no-manual-edits-since (batch 2).
+		{"no-manual-edits-since", "pass-controller-only.json", noManualEditsSincePass()},
+		{"no-manual-edits-since", "block-kubectl-edit.json", noManualEditsSinceBlock()},
 	}
 
 	for _, ex := range examples {
 		stmt, err := agent.BuildReceipt(ex.in)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "build %s: %v\n", ex.name, err)
+			fmt.Fprintf(os.Stderr, "build %s/%s: %v\n", ex.predicateDir, ex.name, err)
 			os.Exit(1)
 		}
 		buf, err := json.MarshalIndent(stmt, "", "  ")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "marshal %s: %v\n", ex.name, err)
+			fmt.Fprintf(os.Stderr, "marshal %s/%s: %v\n", ex.predicateDir, ex.name, err)
 			os.Exit(1)
 		}
-		path := filepath.Join(outDir, ex.name)
+		predicateDir := filepath.Join(outDir, ex.predicateDir)
+		if err := os.MkdirAll(predicateDir, 0o755); err != nil {
+			fmt.Fprintf(os.Stderr, "mkdir %s: %v\n", predicateDir, err)
+			os.Exit(1)
+		}
+		path := filepath.Join(predicateDir, ex.name)
 		if err := os.WriteFile(path, append(buf, '\n'), 0o644); err != nil {
 			fmt.Fprintf(os.Stderr, "write %s: %v\n", path, err)
 			os.Exit(1)

@@ -5,6 +5,7 @@ package agent
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -66,6 +67,17 @@ type BuildReceiptInput struct {
 	// VerifiedAt is the timestamp. If zero, BuildReceipt uses
 	// time.Now().UTC().
 	VerifiedAt time.Time
+
+	// Strategy is the source-truth strategy the caller declared (via
+	// --strategy). Required for source-truth-pass; signals auto-detect
+	// to pick source-truth-pass when no Argo/Flux/ConfigHub anchor
+	// resolved. cub-scout never infers a strategy.
+	Strategy string
+
+	// Since is the cutoff timestamp for no-manual-edits-since (via
+	// --since). Zero means "not provided"; the predicate then declines
+	// with OmissionSinceMissing.
+	Since time.Time
 }
 
 // BuildReceipt orchestrates: build subjects → resolve predicate →
@@ -117,13 +129,20 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 	}
 
 	// 2. Resolve the predicate. Caller-provided wins; otherwise auto-
-	// detect from owner. Empty after auto-detect → INCONCLUSIVE.
+	// detect from owner + signals (--strategy, --since). Empty after
+	// auto-detect → INCONCLUSIVE.
+	predicateInput := PredicateInput{
+		Scope:     in.Scope,
+		Evidence:  in.Evidence,
+		Spec:      in.Spec,
+		Connected: in.Connected,
+		Strategy:  in.Strategy,
+		Since:     in.Since,
+		Live:      in.Live,
+	}
 	predName := in.PredicateName
 	if predName == "" {
-		detected, detectedOmission := AutoDetectPredicate(
-			PredicateInput{Scope: in.Scope, Evidence: in.Evidence, Spec: in.Spec, Connected: in.Connected},
-			in.Owner,
-		)
+		detected, detectedOmission := AutoDetectPredicate(predicateInput, in.Owner)
 		predName = detected
 		if detectedOmission != nil {
 			omissions = append(omissions, *detectedOmission)
@@ -134,12 +153,11 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 	var result PredicateResult
 	switch predName {
 	case PredicateAppliedMatchesSpec:
-		result = EvaluateAppliedMatchesSpec(PredicateInput{
-			Scope:     in.Scope,
-			Evidence:  in.Evidence,
-			Spec:      in.Spec,
-			Connected: in.Connected,
-		})
+		result = EvaluateAppliedMatchesSpec(predicateInput)
+	case PredicateSourceTruthPass:
+		result = EvaluateSourceTruthPass(predicateInput)
+	case PredicateNoManualEditsSince:
+		result = EvaluateNoManualEditsSince(predicateInput)
 	case "":
 		// Auto-detect failed. The omission entry was already appended
 		// above; the predicate evaluation produces INCONCLUSIVE.
@@ -149,7 +167,7 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 			NextSteps: []ReceiptNextStep{},
 		}
 	default:
-		return Statement{}, fmt.Errorf("build-receipt: predicate %q not implemented in v1 batch 1 (planned in batch 2)", predName)
+		return Statement{}, fmt.Errorf("build-receipt: unknown predicate %q (cub-scout v1 implements %v)", predName, AllPredicates())
 	}
 
 	// 4. Filter nextSteps (defense in depth — predicate evaluators must
@@ -161,7 +179,7 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 	// 5. Derive a default claim if the caller didn't provide one.
 	claim := in.Claim
 	if claim == "" {
-		claim = deriveDefaultClaim(predName, in.Scope, in.Spec)
+		claim = deriveDefaultClaim(predName, in.Scope, in.Spec, in.Strategy, in.Since)
 	}
 
 	// 6. Set timestamp.
@@ -204,13 +222,23 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 
 // deriveDefaultClaim builds a human-readable claim from the predicate
 // and scope when the caller doesn't provide one.
-func deriveDefaultClaim(name PredicateName, scope Scope, spec *SpecAnchor) string {
+func deriveDefaultClaim(name PredicateName, scope Scope, spec *SpecAnchor, strategy string, since time.Time) string {
 	switch name {
 	case PredicateAppliedMatchesSpec:
 		if spec != nil && spec.Anchor.Path != "" {
 			return fmt.Sprintf("applied matches spec at %s", spec.Anchor.Path)
 		}
 		return fmt.Sprintf("applied matches spec for %s/%s in %s", scope.Kind, scope.Name, scope.Namespace)
+	case PredicateSourceTruthPass:
+		if strings.TrimSpace(strategy) != "" {
+			return fmt.Sprintf("source-truth PASS under strategy %q for %s/%s in %s", strategy, scope.Kind, scope.Name, scope.Namespace)
+		}
+		return fmt.Sprintf("source-truth PASS for %s/%s in %s", scope.Kind, scope.Name, scope.Namespace)
+	case PredicateNoManualEditsSince:
+		if !since.IsZero() {
+			return fmt.Sprintf("no manual edits to %s/%s in %s since %s", scope.Kind, scope.Name, scope.Namespace, since.UTC().Format(time.RFC3339))
+		}
+		return fmt.Sprintf("no manual edits to %s/%s in %s", scope.Kind, scope.Name, scope.Namespace)
 	case "":
 		return fmt.Sprintf("no predicate could be auto-detected for %s/%s in %s", scope.Kind, scope.Name, scope.Namespace)
 	default:

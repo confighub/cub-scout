@@ -243,10 +243,38 @@ type ReceiptNextStep struct {
 // Common omission Missing values, exposed as constants so callers and
 // tests can reference them by name rather than free string.
 const (
-	OmissionConfigHubUnitSubject = "confighub-unit-subject"
-	OmissionManagedFields        = "managedFields"
-	OmissionGitSourceAnchor      = "git-source-anchor"
-	OmissionSourceTruthComplete  = "source-truth-complete"
+	OmissionConfigHubUnitSubject  = "confighub-unit-subject"
+	OmissionManagedFields         = "managedFields"
+	OmissionGitSourceAnchor       = "git-source-anchor"
+	OmissionSourceTruthComplete   = "source-truth-complete"
 	OmissionAutoDetectedPredicate = "auto-detected-predicate"
-	OmissionFieldCoverage        = "field-coverage"
+	OmissionFieldCoverage         = "field-coverage"
+
+	// OmissionStrategyMissing is recorded by the source-truth-pass
+	// predicate when no --strategy was passed. cub-scout never infers a
+	// strategy — the receipt either records the declared strategy or
+	// declines to claim.
+	OmissionStrategyMissing = "strategy"
+
+	// OmissionStrategyMismatch is recorded when the receipt was asked to
+	// verify under a strategy that disagrees with what the source-truth
+	// evidence in the live cluster actually carries.
+	OmissionStrategyMismatch = "strategy-mismatch"
+
+	// OmissionSourceTruthEvidence is recorded by the source-truth-pass
+	// predicate when the evidence body has no source-truth surface to
+	// evaluate.
+	OmissionSourceTruthEvidence = "source-truth-evidence"
+
+	// OmissionSinceMissing is recorded by the no-manual-edits-since
+	// predicate when no --since cutoff was passed. cub-scout will not
+	// invent a cutoff.
+	OmissionSinceMissing = "since"
+
+	// OmissionManagedFieldsTime is recorded by the no-manual-edits-since
+	// predicate when a managedFields entry has no Time stamp. Old K8s
+	// versions or replayed objects can have entries with nil Time;
+	// cub-scout cannot claim "no manual edits since T" if it cannot place
+	// each entry on the timeline.
+	OmissionManagedFieldsTime = "managedFields-time"
 )
