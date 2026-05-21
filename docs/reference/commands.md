@@ -2460,19 +2460,47 @@ cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
 | Flag | Description |
 |------|-------------|
 | `-n, --namespace` | Namespace of the resource (required for namespaced kinds) |
-| `--predicate` | Predicate to evaluate. v1 batch 1 supports `applied-matches-spec`. Empty triggers auto-detect from owner. |
-| `--at-commit` | Override the spec anchor revision (Git SHA). When empty, the controller-resolved anchor is used as both the spec and the evidence. |
+| `--predicate` | Predicate to evaluate. v1 supports `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. Empty triggers auto-detect from owner + signals. |
+| `--at-commit` | Override the spec anchor revision (Git SHA) for `applied-matches-spec`. When empty, the controller-resolved anchor is used as both the spec and the evidence. |
+| `--strategy` | Source-truth strategy for `source-truth-pass` (e.g. `git-argo`, `confighub-oci-flux`, `helm-argo`). cub-scout does not infer the strategy. |
+| `--since` | RFC 3339 cutoff timestamp for `no-manual-edits-since` (e.g. `2026-05-22T00:00:00Z`). |
 | `--format` | Output format: `ascii` (default, one-screen human summary) or `json` (canonical in-toto Statement v1 envelope) |
 | `--out` | Write the receipt to this file path. Always JSON regardless of `--format` — disk is the long-lived artifact. |
+
+v1 predicates:
+
+| Predicate | Required | What it claims |
+|-----------|----------|----------------|
+| `applied-matches-spec` | Argo / Flux / ConfigHub owner + controller-resolved git anchor | LIVE matches the controller-resolved git anchor |
+| `source-truth-pass` | `--strategy <name>` + connected-mode ConfigHub auth | `compare source-truth` under the declared strategy returns PASS (mirrors Status into receipt Verdict) |
+| `no-manual-edits-since` | `--since <RFC3339 timestamp>` | No interactive (`kubectl-*`) writer touched `managedFields` after the cutoff |
+
+Auto-detection priority (when `--predicate` is not passed):
+
+1. Argo / Flux / ConfigHub owner WITH a resolvable git anchor → `applied-matches-spec`
+2. `--strategy` provided → `source-truth-pass`
+3. `--since` provided → `no-manual-edits-since`
+4. Otherwise → INCONCLUSIVE + `auto-detected-predicate` omission
+
+The CLI also rejects contradictory pairs upfront: `--predicate
+source-truth-pass` without `--strategy`, or `--predicate
+no-manual-edits-since` without `--since`, return an error rather than
+silently demoting to INCONCLUSIVE.
 
 Examples:
 
 ```bash
-# Standalone-mode verification — works without ConfigHub auth.
+# applied-matches-spec — standalone-mode verification (no ConfigHub auth required).
 cub-scout receipt verify deploy/api -n prod
 
-# Pin to an explicit revision (e.g., the SHA in a release ticket).
+# applied-matches-spec — pin to an explicit revision (e.g., the SHA in a release ticket).
 cub-scout receipt verify deploy/api -n prod --at-commit abc123def456
+
+# source-truth-pass — declared strategy, connected mode.
+cub-scout receipt verify deploy/api -n prod --strategy git-argo
+
+# no-manual-edits-since — cutoff at midnight UTC today.
+cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
 
 # Write the canonical JSON form to disk for audit attachment.
 cub-scout receipt verify deploy/api -n prod --format json --out api.receipt.json

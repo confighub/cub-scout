@@ -678,30 +678,38 @@ reason string.
 | `BLOCK` | Evidence contradicts the claim |
 | `INCONCLUSIVE` | Evidence is missing or unavailable; always carries one or more `omissions[]` entries explaining what's missing |
 
-### v1 Batch 1 Predicates
+### v1 Predicates
 
-| Predicate | Verdict Logic |
-|-----------|---------------|
-| `applied-matches-spec` | `Spec missing` or `GitSource missing` → INCONCLUSIVE + `OmissionGitSourceAnchor`. `Anchor mismatch (repoUrl/revision/path)` → BLOCK. `Cause = manual-edit` → BLOCK. `Cause = controller-drift` → PASS. `Cause = unknown` or unrecognized → INCONCLUSIVE + `OmissionManagedFields`. |
-
-`source-truth-pass` and `no-manual-edits-since` land in batch 2.
+| Predicate | Required signals | Verdict Logic |
+|-----------|------------------|---------------|
+| `applied-matches-spec` | Controller-resolved `gitSource` on the resource | `Spec missing` or `GitSource missing` → INCONCLUSIVE + `OmissionGitSourceAnchor`. `Anchor mismatch (repoUrl/revision/path)` → BLOCK. `Cause = manual-edit` → BLOCK. `Cause = controller-drift` → PASS. `Cause = unknown` or unrecognized → INCONCLUSIVE + `OmissionManagedFields`. |
+| `source-truth-pass` | `--strategy` (one of nine) + connected-mode ConfigHub auth | `--strategy` empty → INCONCLUSIVE + `OmissionStrategyMissing`. No source-truth evidence body → INCONCLUSIVE + `OmissionSourceTruthEvidence`. Strategy mismatch between caller and evidence → BLOCK + `OmissionStrategyMismatch`. Otherwise: Status PASS → PASS, WATCH → WATCH, BLOCK → BLOCK, ASK → INCONCLUSIVE. Source-truth `proof_gaps[]` are mirrored into `omissions[]` under `source-truth-complete` regardless of verdict. |
+| `no-manual-edits-since` | `--since <RFC3339>` cutoff | `--since` zero → INCONCLUSIVE + `OmissionSinceMissing`. Live nil or no managedFields → INCONCLUSIVE + `OmissionManagedFields`. Any interactive (`kubectl-*`) manager with `Time > since` → BLOCK. Any interactive manager with nil `Time` → INCONCLUSIVE + `OmissionManagedFieldsTime`. Otherwise → PASS. |
 
 ### Auto-Detection Priority
 
-When `--predicate` is not passed, cub-scout picks one based on detected
-ownership AND the resolvability of the git anchor:
+When `--predicate` is not passed, cub-scout picks one from these signals
+in priority order:
 
 1. `OwnerArgo` / `OwnerFlux` / `OwnerConfigHub` **with** a resolved git
    anchor (`evidence.gitSource` non-nil) → `applied-matches-spec`
-2. Same owners **without** a resolved git anchor → `""` (no predicate) +
-   `OmissionAutoDetectedPredicate` — the predicate evaluator could only
-   emit INCONCLUSIVE anyway, so we record the *missing default* rather
-   than masking the auto-detect-declined-here case as a different
-   omission.
-3. Other owners → `""` + `OmissionAutoDetectedPredicate`.
+2. `--strategy` provided → `source-truth-pass`
+3. `--since` provided → `no-manual-edits-since`
+4. Same owners **without** a resolved git anchor, no other signals → `""`
+   (no predicate) + `OmissionAutoDetectedPredicate` — the predicate
+   evaluator could only emit INCONCLUSIVE anyway, so we record the
+   *missing default* rather than masking the auto-detect-declined-here
+   case as a different omission.
+5. Other owners with no signals → `""` + `OmissionAutoDetectedPredicate`.
 
 The result is always an INCONCLUSIVE receipt when auto-detect declines;
 the omission entry names exactly which signal was missing.
+
+Explicit `--predicate` always wins over auto-detect. The CLI also
+rejects contradictory pairs upfront: `--predicate source-truth-pass`
+without `--strategy` errors, and `--predicate no-manual-edits-since`
+without `--since` errors — silently demoting either to INCONCLUSIVE
+would hide the operator's intent from the receipt.
 
 ### Omissions
 
@@ -711,11 +719,17 @@ Each entry explicitly converts a silent PASS into an honest PASS:
 | Omission `missing` | Meaning |
 |--------------------|---------|
 | `confighub-unit-subject` | No ConfigHub unit subject available (standalone mode, or connected mode but no linkage) |
-| `managedFields` | Attribution layer returned `cause:unknown` or an unrecognized cause |
+| `managedFields` | Attribution layer returned `cause:unknown`, or no-manual-edits-since saw no entries on the live object |
+| `managedFields-time` | An interactive `managedFields` entry has nil `Time`; no-manual-edits-since cannot place it on the timeline |
 | `git-source-anchor` | No spec anchor or no controller-resolved git anchor |
-| `auto-detected-predicate` | Owner has no v1 default predicate; `--predicate` must be passed |
+| `auto-detected-predicate` | No signal supported a default predicate; pass `--predicate`, `--strategy`, or `--since` |
+| `strategy` | source-truth-pass invoked without `--strategy`; cub-scout does not infer delivery strategy |
+| `strategy-mismatch` | The receipt's declared strategy disagrees with the strategy recorded in the source-truth evidence body |
+| `source-truth-evidence` | source-truth-pass invoked but no source-truth evidence body was attached |
+| `source-truth-complete` | A proof gap from `compare source-truth` (e.g. `runtime.helm_chart_anchor`); mirrored into `omissions[]` regardless of receipt verdict |
+| `since` | no-manual-edits-since invoked without `--since`; cub-scout does not invent a cutoff |
 | `next-step-allowed-action` | A nextStep with mutating `actionType` was dropped at receipt-emit time |
-| `next-step-allowed-command` | A nextStep with mutating `nextCommand` (apply/edit/patch/delete/sync/create/update/replace/scale/rollout/reconcile) was dropped |
+| `next-step-allowed-command` | A nextStep with mutating `nextCommand` (apply/edit/patch/delete/sync/create/update/replace/scale/rollout/reconcile/annotate/label/set/exec/debug/`helm install`/`helm upgrade`) was dropped |
 
 ### Read-Only Triad Lock
 

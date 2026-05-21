@@ -14,14 +14,15 @@ import (
 )
 
 // TestReceiptExamplesAreFresh re-runs the gen-receipt-examples tool and
-// compares its output to the committed files under
-// examples/receipts/applied-matches-spec. Drift fails the build — the
-// example receipts are a contract surface, not loose docs.
+// compares its output to the committed files under examples/receipts/.
+// Drift fails the build — the example receipts are a contract surface,
+// not loose docs. Both batch 1 (applied-matches-spec) and batch 2
+// (source-truth-pass, no-manual-edits-since) subdirectories are covered.
 //
 // To regenerate after an intentional change to the generator or to a
 // pkg/agent type that changes the wire format:
 //
-//	go run ./tools/gen-receipt-examples examples/receipts/applied-matches-spec
+//	go run ./tools/gen-receipt-examples examples/receipts
 func TestReceiptExamplesAreFresh(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("go run via exec is awkward on Windows; the linux/macos CI matrix catches drift")
@@ -37,65 +38,78 @@ func TestReceiptExamplesAreFresh(t *testing.T) {
 		t.Fatalf("regenerate examples: %v\noutput:\n%s", err, out)
 	}
 
-	committedDir := filepath.Join(repoRoot, "examples", "receipts", "applied-matches-spec")
-	committedEntries, err := os.ReadDir(committedDir)
-	if err != nil {
-		t.Fatalf("read committed dir %s: %v", committedDir, err)
+	// Each receipt-predicate subdirectory under examples/receipts/ is a
+	// contract surface. The generator writes the same layout into the
+	// tmp dir; walk both and diff.
+	predicateDirs := []string{
+		"applied-matches-spec",
+		"source-truth-pass",
+		"no-manual-edits-since",
 	}
 
-	var committedJSON []string
-	for _, e := range committedEntries {
-		if strings.HasSuffix(e.Name(), ".json") {
-			committedJSON = append(committedJSON, e.Name())
-		}
-	}
-	if len(committedJSON) == 0 {
-		t.Fatalf("no .json files in %s; the example directory must contain receipts", committedDir)
-	}
+	for _, predicateDir := range predicateDirs {
+		committedDir := filepath.Join(repoRoot, "examples", "receipts", predicateDir)
+		regenDir := filepath.Join(tmp, predicateDir)
 
-	regenEntries, err := os.ReadDir(tmp)
-	if err != nil {
-		t.Fatalf("read tmp output dir: %v", err)
-	}
-	regenSet := map[string]bool{}
-	for _, e := range regenEntries {
-		if strings.HasSuffix(e.Name(), ".json") {
-			regenSet[e.Name()] = true
-		}
-	}
-
-	// Same set of files (no rename / addition / deletion drift).
-	for _, name := range committedJSON {
-		if !regenSet[name] {
-			t.Errorf("committed file %q is no longer produced by the generator; regenerate or update the generator", name)
-		}
-	}
-	for name := range regenSet {
-		found := false
-		for _, c := range committedJSON {
-			if c == name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("generator produces %q but it is not committed; run `go run ./tools/gen-receipt-examples examples/receipts/applied-matches-spec`", name)
-		}
-	}
-
-	// Byte-for-byte content match.
-	for _, name := range committedJSON {
-		got, err := os.ReadFile(filepath.Join(tmp, name))
+		committedEntries, err := os.ReadDir(committedDir)
 		if err != nil {
-			continue // file-set mismatch already reported above
-		}
-		want, err := os.ReadFile(filepath.Join(committedDir, name))
-		if err != nil {
-			t.Errorf("read committed %s: %v", name, err)
+			t.Errorf("read committed dir %s: %v", committedDir, err)
 			continue
 		}
-		if !bytes.Equal(got, want) {
-			t.Errorf("committed %s differs from generator output; run `go run ./tools/gen-receipt-examples examples/receipts/applied-matches-spec`", name)
+		var committedJSON []string
+		for _, e := range committedEntries {
+			if strings.HasSuffix(e.Name(), ".json") {
+				committedJSON = append(committedJSON, e.Name())
+			}
+		}
+		if len(committedJSON) == 0 {
+			t.Errorf("no .json files in %s; the example directory must contain receipts", committedDir)
+			continue
+		}
+
+		regenEntries, err := os.ReadDir(regenDir)
+		if err != nil {
+			t.Errorf("read regen dir %s: %v", regenDir, err)
+			continue
+		}
+		regenSet := map[string]bool{}
+		for _, e := range regenEntries {
+			if strings.HasSuffix(e.Name(), ".json") {
+				regenSet[e.Name()] = true
+			}
+		}
+
+		for _, name := range committedJSON {
+			if !regenSet[name] {
+				t.Errorf("[%s] committed file %q is no longer produced by the generator; regenerate or update the generator", predicateDir, name)
+			}
+		}
+		for name := range regenSet {
+			found := false
+			for _, c := range committedJSON {
+				if c == name {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("[%s] generator produces %q but it is not committed; run `go run ./tools/gen-receipt-examples examples/receipts`", predicateDir, name)
+			}
+		}
+
+		for _, name := range committedJSON {
+			got, err := os.ReadFile(filepath.Join(regenDir, name))
+			if err != nil {
+				continue
+			}
+			want, err := os.ReadFile(filepath.Join(committedDir, name))
+			if err != nil {
+				t.Errorf("read committed %s/%s: %v", predicateDir, name, err)
+				continue
+			}
+			if !bytes.Equal(got, want) {
+				t.Errorf("committed %s/%s differs from generator output; run `go run ./tools/gen-receipt-examples examples/receipts`", predicateDir, name)
+			}
 		}
 	}
 }

@@ -303,16 +303,20 @@ func TestBuildReceipt_NilLive_Errors(t *testing.T) {
 	}
 }
 
-func TestBuildReceipt_UnimplementedPredicate_Errors(t *testing.T) {
+func TestBuildReceipt_UnknownPredicate_Errors(t *testing.T) {
+	// After #446 batch 2 implemented source-truth-pass and
+	// no-manual-edits-since, the unknown-predicate path is reached only
+	// for genuinely-unrecognized names. The error message must enumerate
+	// the implemented predicates so the operator knows what's valid.
 	in := makeReceiptInput(func(in *BuildReceiptInput) {
-		in.PredicateName = PredicateSourceTruthPass // batch 2 work, not implemented
+		in.PredicateName = PredicateName("not-a-real-predicate")
 	})
 	_, err := BuildReceipt(in)
 	if err == nil {
-		t.Error("BuildReceipt with unimplemented predicate must error")
+		t.Fatal("BuildReceipt with unknown predicate must error")
 	}
-	if !strings.Contains(err.Error(), "not implemented") {
-		t.Errorf("error must explain unimplementation; got %v", err)
+	if !strings.Contains(err.Error(), "unknown predicate") {
+		t.Errorf("error must explain unknown-predicate; got %v", err)
 	}
 }
 
