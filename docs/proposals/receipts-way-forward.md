@@ -282,8 +282,8 @@ Documented now so v1 doesn't preclude v2. Tracked separately to keep v1 scope ho
 |---|---|---|
 | Signing | DSSE envelope around Statement v1 wrapped in **Sigstore Bundle v0.3**. Cosign keyless (Fulcio + Rekor) default for CI; ed25519 key-based fallback for airgap. | follow-on issue |
 | Sinks | `--sink oci://` (OCI 1.1 referrers-compatible). `--sink file://` is the v1 default. PolicyReport sink is explicitly NOT cub-scout's; see spin-off list. | follow-on issue |
-| Composition | Chain receipts via `subject.digest` references in `inputAttestations[]`. Aggregate receipts (whole-namespace, multi-resource, fleet) are Statements over synthetic aggregate digests. **Designed to be graph-ingestible (GUAC, etc.) from day 1.** | aggregate-receipts spin-off issue |
-| Watch-driven receipts | `cub-scout watch --emit-receipt-on <event-types>` streaming receipt emission | watch-extension spin-off issue |
+| Composition | Chain receipts via `subject.digest` references in `inputAttestations[]`. Aggregate receipts (whole-namespace, multi-resource, fleet) are Statements over synthetic aggregate digests. **Designed to be graph-ingestible (GUAC, etc.) from day 1.** | #448 |
+| Watch-driven receipts | `cub-scout watch --emit-receipt-on <event-types>` streaming receipt emission | #449 |
 | Additional predicates | `no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed` | v2 issue |
 | CI exit semantics | `--fail-on RECEIPT_VERDICT` extending the existing `--fail-on info|warning` pattern from `compare three-way` | v1.x small follow-on |
 
@@ -315,10 +315,10 @@ Tracked so v1 stays narrow:
 
 | Topic | Form |
 |---|---|
-| Aggregate / chained receipts (`--scope`, comma-list, `inputAttestations[]` composition) | Separate v2 issue |
-| `cub-scout watch --emit-receipt-on` streaming receipt emission | Watch-extension issue |
-| `--fail-on RECEIPT_VERDICT` exit-semantics extension | Small v1.x follow-on |
-| Source-truth help-text drift (still names 4 strategies; enum has 9 after #418) | Tiny separate PR |
+| Aggregate / chained receipts (`--scope`, comma-list, `inputAttestations[]` composition) | #448 |
+| `cub-scout watch --emit-receipt-on` streaming receipt emission | #449 |
+| Source-truth help-text drift (4→9 strategies) | #450 |
+| `--fail-on RECEIPT_VERDICT` exit-semantics extension | #451 |
 | PolicyReport / Kyverno integration | External adapter project (not cub-scout) |
 
 ## Cross-references

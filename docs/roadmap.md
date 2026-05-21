@@ -93,6 +93,8 @@ Locked design decisions (post external review): predicate URI = `https://cub-sco
 
 R&D companion: research pass against existing receipt / attestation patterns synthesized in `docs/proposals/receipts-way-forward.md` — in-toto Statement v1, SLSA VSA, Sigstore Bundle v0.3, RFC 8785 JCS, OCI 1.1 referrers, GUAC, CycloneDX Attestations, Kyverno PolicyReport, Tekton Chains, GitHub artifact attestations, Falco / Tracee (for `no-manual-edits-since` field-manager-evidence caveat).
 
+Spin-off issues (so v1 stays narrow): #448 aggregate / chained receipts, #449 watch --emit-receipt-on, #450 source-truth help-text drift, #451 --fail-on RECEIPT_VERDICT exit semantics. PolicyReport / Kyverno integration is an external adapter project, not cub-scout's job.
+
 ### AI Agent Skills (`skills/`, modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills))
 
 Coverage gap: cub-scout ships one umbrella `SKILL.md` while `cub` has 23+ scenario-grouped skills in the reference repo. AI agents picking the right cub-scout verb (`doctor` / `map` / `trace` / `compare three-way` / `compare source-truth` / `explain` / `import …` / `views …` / `mcp serve` / …) have to navigate every verb through one router, diluting triggering accuracy. The attribution layer (#435) added a whole evidence surface with no dedicated skill rules.
