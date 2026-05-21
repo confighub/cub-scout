@@ -24,7 +24,7 @@ Kubernetes records *who last wrote each field* in `metadata.managedFields`. cub-
 ```
 metadata:
   managedFields:
-  - manager: argocd-application-controller   ← Argo CD writing
+  - manager: argocd-controller   ← Argo CD writing
     operation: Apply
   - manager: kubectl-edit                    ← Someone editing manually
     operation: Update
@@ -45,14 +45,14 @@ See [`controller-drift.json`](controller-drift.json) for the annotated `compare 
 
 ```json
 "cause": "controller-drift",
-"managerHint": "argocd-application-controller"
+"managerHint": "argocd-controller"
 ```
 
 In `explain`:
 
 ```
   Drift          Detected by ConfigHub
-  Mutation cause controller-drift (manager: argocd-application-controller)
+  Mutation cause controller-drift (manager: argocd-controller)
 ```
 
 **Next step:** wait for reconciliation; re-run `compare three-way` after a sync.

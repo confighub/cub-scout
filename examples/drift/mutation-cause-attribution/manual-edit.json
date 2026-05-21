@@ -30,7 +30,7 @@
       "cause": "manual-edit",
       "managerHint": "kubectl-edit",
       "managers": [
-        "argocd-application-controller",
+        "argocd-controller",
         "kubectl-edit"
       ]
     }

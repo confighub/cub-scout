@@ -1,30 +1,46 @@
 ---
 name: cub-scout
-description: Use when working in the cub-scout repo or when answering what cub-scout can do versus ConfigHub/cub. Covers cub-scout's read-only observation role, connected comparison workflows, attribution layer (mutation cause + git source + ConfigHub binding source), Model Context Protocol (MCP) surfaces, Git preview boundaries, and how to verify current command truth before claiming capability.
+description: Use when working in the cub-scout repo or when answering capability-assistant questions ("can cub-scout do X?", "should I use cub-scout or kubectl here?", "how does cub-scout differ from cub?"). This is the umbrella router — it points you at the verb-grouped scenario skills under `skills/scout-*/` and the workflow / observer / reference skills planned for batches 2–5. For a specific verb-group task (observe / diagnose / compare / attribute / ingest / govern / integrate / verify) load the corresponding `scout-*` skill directly.
+phase: cross-cutting
+allowed-tools: Bash(./cub-scout --help) Bash(./cub-scout * --help) Bash(cub-scout --help) Bash(cub-scout * --help) Bash(cub scout --help) Bash(cub scout * --help)
 ---
 
-# cub-scout
+# cub-scout (umbrella router)
 
-Start here when the task is about:
+This skill is the cross-cutting entry point. It picks the right verb-grouped skill for a user's question and explains the cub-scout / `cub` boundary. For specific tasks, load the scenario skill directly.
 
-- what `cub scout` does today
-- how `cub scout` differs from `cub`
-- whether a workflow is standalone, connected, or ConfigHub/cub
-- AI / Model Context Protocol (MCP) usage of `doctor`, `explain`, `trace`, `map`, `scan`
-- attribution evidence on field mismatches (`cause`, `managerHint`, `gitSource`, `bindingSource`)
-- Git preview versus render/import boundaries
+## When to use
 
-## Read first
+- "Can cub-scout do X?" / "what can cub-scout observe / diagnose / compare?"
+- "How does cub-scout differ from cub / kubectl / Argo / Flux?"
+- "Should I use cub-scout or [other tool] for this?"
+- Anything in this repo where the verb group isn't obvious from the prompt
+- General capability-assistant or demo conversations
 
-1. `AI-README-FIRST.md`
-2. `HANDOVER.md`
-3. `docs/reference/commands.md`
-4. `docs/reference/cli-contract.md`
-5. `docs/reference/json-contracts.md`
+## Do not load for
 
-For capability-triage and demo conversations such as "can cub scout do X?" or "should I use cub scout or kubectl here?", also read `references/capability-assistant.md`.
+- A specific verb-grouped task — load the corresponding `scout-*` skill directly:
+  - [`scout-observe`](../scout-observe/SKILL.md) — see what's running
+  - [`scout-diagnose`](../scout-diagnose/SKILL.md) — interpret + recommend
+  - [`scout-compare`](../scout-compare/SKILL.md) — intended vs actual
+  - [`scout-attribute`](../scout-attribute/SKILL.md) — provenance of field values
+- ConfigHub authoring or any mutating workflow — load [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) skills (`cub-mutate`, `cub-apply`, etc.)
+- Live cluster mutation — cub-scout never mutates; route to `kubectl` (user driven) or a `cub` skill
 
-If the user is asking you to *use* cub-scout against a real cluster (not work on the repo), load `docs/ai/cub-scout-tasks.md` instead — that file is task-oriented with concrete command flows for operator scenarios.
+## Capability map (verb groups → skills)
+
+| Group | Skill | Status |
+|---|---|---|
+| Observe | [`scout-observe`](../scout-observe/SKILL.md) | shipped (batch 1) |
+| Diagnose | [`scout-diagnose`](../scout-diagnose/SKILL.md) | shipped (batch 1) |
+| Compare | [`scout-compare`](../scout-compare/SKILL.md) | shipped (batch 1) |
+| Attribute | [`scout-attribute`](../scout-attribute/SKILL.md) | shipped (batch 1) |
+| Ingest | `scout-ingest` | planned (#442 batch 2) |
+| Govern | `scout-govern` | planned (#442 batch 2) |
+| Integrate | `scout-mcp` | planned (#442 batch 2) |
+| Verify | `scout-verify` | planned (after #446 batch 1 ships the receipt foundation) |
+
+See [`skills/README.md`](../README.md) for the full plan including controller observer skills (`observe-argocd`, `observe-flux`, `observe-helm`, `observe-crossplane`, `observe-kro`), workflow scenario skills (`triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, etc.), and shared references.
 
 ## Product value in one breath
 
@@ -32,63 +48,49 @@ If the user is asking you to *use* cub-scout against a real cluster (not work on
 
 `cub scout` is the preferred documented form. In this repo, use `./cub-scout ...` for exact local commands.
 
-## Capability groups (the verb map)
-
-cub-scout commands fall into seven groups; see `README.md` § Capability Map for the full per-command table. The lens:
-
-- **Observe** — `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `status` (cluster only)
-- **Diagnose** — `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status` (cluster only)
-- **Compare** — `compare`, `compare drift` (standalone); `compare three-way`, `compare source-truth` (connected)
-- **Attribute** — `cause`/`managerHint`/`gitSource`/`bindingSource` surfacing on `compare` + `explain` output (mix of standalone + connected)
-- **Ingest** — `import --git-path` (preview); `import argocd`, `import cluster-aggregator`, `import apply`, `app` (connected)
-- **Govern** — `history`, `impact`, `fleet outliers`, `summary`, `views`, `audit`, `bundle`, `catalog` (connected)
-- **Integrate** — `setup`, `quickstart`, `mcp serve`, `context-pack`, `version`
-
-Standalone vs connected is preserved per-command — never blur the two.
-
 ## Tool boundaries
 
 ### Use `cub scout` for
 
-- Observe: `doctor`, `explain`, `trace`, `map`, `scan`
-- Diagnose: `explain`, `patterns`, `suggest-remedy`
-- Compare: `compare three-way`, `compare source-truth`, `compare drift`
-- Attribute: read provenance fields on the JSON output of `compare` and `explain`
-- Model Context Protocol (MCP) serving through `mcp serve`
-- Local Git structure preview through `import --git-path` and `import parse-repo`
+- **Observe** — `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `status`
+- **Diagnose** — `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status`
+- **Compare** — `compare drift`, `compare three-way`, `compare source-truth`, `compare <kind>/<name>`
+- **Attribute** — read `cause` / `managerHint` / `gitSource` / `bindingSource` on `compare` and `explain` JSON
+- **Ingest** (preview) — `import --git-path`, `import parse-repo`
+- **Integrate** — `mcp serve`, `context-pack`
 
 ### Use `cub` for
 
 - ConfigHub intended-state workflows
 - spaces, units, targets, workers
-- `cub gitops discover`
-- `cub gitops import`
+- `cub gitops discover` / `cub gitops import`
 - `cub link list / get` (the data feed for cub-scout's connected attribution layer)
+- Any mutation — `cub` is the writer side of the triad
 
 ### Do not blur these
 
-- `cub scout import --git-path` is a local structure/import-preview flow
-- `cub gitops import` is target + render-target based
-- SDK renderers are implementation detail for `cub`, not an implied `cub scout` feature
-- Attribution evidence on `compare`/`explain` JSON is read-only enrichment — never implies a write
+- `cub-scout import --git-path` is a local structure / import-preview flow — it does *not* render manifests or upload to ConfigHub
+- `cub gitops import` is target + render-target based — it does both
+- SDK renderers are an implementation detail for `cub`, not an implied cub-scout feature
+- Attribution evidence on `compare` / `explain` JSON is read-only enrichment — never implies a write
 
 ## High-signal shipped capabilities
 
-- **Attribution layer** (`#435`): `cause` + `managerHint` (managedFields-based controller-drift vs manual-edit), `gitSource{repoUrl, revision, path, file, line}` (Argo/Flux tracer + opt-in `--source-path` for raw-YAML back-resolution), `incomingBindings[]` + `bindingSource` (connected, via `cub link list`). Documented in `docs/reference/json-contracts.md` § Field Mutation Attribution Contract.
-- **Source-truth contract** (`#393`, `#418`): `compare source-truth` with Phase 1 + Phase 2 strategies (9 total: `confighub-oci-argo`, `confighub-oci-flux`, `git-argo`, `git-flux`, `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`).
-- **Views integration** (`#391`): `views resolve`, `views open`, `views project --with-reality`, `compare three-way --view`.
-- **`doctor` / `explain`**: `--presentation` and `--hint-mode` for AI-friendly output.
-- **Argo truth-and-guidance**: truthful ownership for ApplicationSet-managed resources, three-way disagreement, phase-aware hints.
-- **`compare three-way`**: connected DRY/WET/LIVE, `--fail-on` conformance exit codes, agreement summary, `--source-path` opt-in for stage-B back-resolution.
-- **MCP gateway** (`mcp serve`): `doctor` as the first standalone troubleshooting tool, including for local access uncertainty (wrong context, stale kubeconfig, API reachability).
-- **Secret evidence** across trace, Crossplane, `map issues`, and TUI.
-- **Git preview** with ApplicationSet git-generator support.
+- **Attribution layer** (#435 — A1+A1.5+A2 in #437, C1 in #438, C2 in #439, stage B in #440): `cause` + `managerHint` + `gitSource{repoUrl,revision,path,file,line}` + `bindingSource` on every field mismatch. See [`scout-attribute`](../scout-attribute/SKILL.md).
+- **Source-truth contract** (#393 + #418): `compare source-truth` with Phase 1 + Phase 2 strategies (9 total).
+- **Views integration** (#391): `views resolve`, `views open`, `views project --with-reality`, `compare three-way --view`.
+- **`doctor` / `explain`** with `--presentation` and `--hint-mode`.
+- **MCP gateway** (`mcp serve`): standalone + connected tool sets.
+- **Stage B back-resolution** (#440): `compare three-way --source-path <local-checkout>` populates `gitSource.file:line` for raw YAML manifests.
 
-## Queue source
+## Read first (for capability-assistant work)
 
-Do not rely on this file for current milestone state.
-
-Use `HANDOVER.md` plus live GitHub issues for the active queue so the skill does not become a second source of truth.
+1. [`AI-README-FIRST.md`](../../AI-README-FIRST.md) — cold-start guide, current shipped capabilities, current open queue
+2. [`HANDOVER.md`](../../HANDOVER.md) — latest execution snapshot
+3. [`README.md`](../../README.md) § "Capability Map" — the seven verb groups
+4. [`docs/reference/commands.md`](../../docs/reference/commands.md) — exact command surface
+5. [`docs/reference/json-contracts.md`](../../docs/reference/json-contracts.md) — JSON shapes
+6. `references/capability-assistant.md` (in this directory) — the original capability-assistant profile, kept for back-compatibility
 
 ## Verification rule
 
@@ -116,9 +118,19 @@ cub link --help
 cub link list --help
 ```
 
-## Safety rule
+## Safety rule (read-only triad lock — #410 / #428)
 
 - `cub-scout` is cluster read-only by default
-- connected import writes inventory/state to ConfigHub, not cluster manifests
+- connected import writes inventory / state to ConfigHub, **not** cluster manifests
 - prefer preview or dry-run paths first
 - attribution evidence is enrichment, never mutation
+- `suggest-remedy` describes a fix; it does not apply it (the executor was removed in #428)
+
+## Authoring guidance for new skills
+
+When adding skills under `skills/`, follow:
+
+- [`skills/SKILL_TEMPLATE.md`](../SKILL_TEMPLATE.md) — the canonical template (cub-scout, read-only variant)
+- The read-only-triad invariant — no mutating patterns in `allowed-tools`, ever
+- Standalone-first worked examples; connected-mode is the enrichment
+- CI-tool-neutral wording — no GitHub Actions / GitLab CI / Jenkins-specific syntax committed

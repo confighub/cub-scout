@@ -71,7 +71,7 @@ cub-scout's receipt is the **Runtime-layer artifact**. Upstream tooling composes
     "verdict": "PASS",
     "evidence": {
       "compareThreeWay": "...",
-      "attribution": {"cause": "controller-drift", "managerHint": "argocd-application-controller", "gitSource": "...", "bindingSource": null},
+      "attribution": {"cause": "controller-drift", "managerHint": "argocd-controller", "gitSource": "...", "bindingSource": null},
       "sourceTruth": {"strategy": "git-argo", "status": "PASS", "verdict": "AGREED"}
     },
     "omissions": [],
@@ -214,7 +214,7 @@ v1 ships **single-resource verify + show + validate** only. Batch / aggregate / 
 ```bash
 $ cub-scout receipt verify deploy/api -n prod
 PASS  applied-matches-spec   from git@org/platform-config:apps/prod/api/deployment.yaml@abc123
-      controller: argocd-application-controller   no manual-edits since 14:30 UTC
+      controller: argocd-controller   no manual-edits since 14:30 UTC
       receipt: ./receipts/2026-05-21T14:31:00Z-rcpt_01HFK7Z3J.json
 ```
 
@@ -235,7 +235,7 @@ PASS  rcpt_01HFK8M
 
 ```bash
 $ cub-scout receipt verify deploy/api -n prod --claim "replicas=5 from intent rev=plan_4f8e"
-PASS   spec.replicas: LIVE=5   cause: controller-drift (argocd-application-controller)
+PASS   spec.replicas: LIVE=5   cause: controller-drift (argocd-controller)
       receipt: ./receipts/2026-05-21T14:33:00Z-rcpt_01HFK8Q.json
 ```
 
