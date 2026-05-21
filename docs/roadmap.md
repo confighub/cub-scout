@@ -69,6 +69,32 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] Config-based custom ownership detectors (YAML, no Go required) — graduated to #233
 - [x] Config-based CRD watching (YAML resource registration for map/watch; status extraction fields reserved) — graduated to #311
 
+### Verify / Receipt Capability (`cub-scout receipt`, 8th verb group)
+
+cub-scout's evidence is point-in-time and ephemeral today. A **receipt** is the missing **historical, immutable record** of "what cub-scout observed at time T" — a typed, fingerprinted artifact wrapping the existing evidence (`compareResourceResult`, `compareSourceTruthResult`, attribution, `gitSource`, `bindingSource`) into a verifiable claim that consumers (CI/CD, audit, postmortem, acceptance-judge tooling) can attach to a decision and later prove the inputs were what they claim to be. Receipts are an envelope, not new evidence.
+
+cub-scout produces the **Runtime-layer (layer 3)** receipt in a four-layer proof model (governance-of-mutation / controller delivery / runtime fact / GUI proof). Layer 3 is cub-scout's territory; the other three layers belong to other tools that compose with cub-scout's output via `inputAttestations[]` digest references. The governance-of-mutation layer (layer 1) currently has no dedicated tool in the ConfigHub stack — concept is in design, out of scope for this issue.
+
+Full design: [`docs/proposals/receipts-way-forward.md`](proposals/receipts-way-forward.md).
+
+**v1 scope (post external review): single-resource verify + show + validate only.** Batch / aggregate / chained / watch-driven receipts are explicit v2 work tracked separately.
+
+- [ ] v1 foundation — `pkg/agent/receipt.go` types, **RFC 8785 canonical-JSON**, SHA-256 fingerprint over the **full Statement minus `predicate.fingerprint`**, in-toto Statement v1 envelope with **dual subjects** (`k8s-live://` + `confighub-unit://`), auto-detection priority order, `cub-scout receipt verify` command + ASCII renderer + tests + JSON contract docs — tracked in #446 batch 1
+- [ ] v1 predicates — `applied-matches-spec` (batch 1), `source-truth-pass` (explicit `--strategy` required), `no-manual-edits-since` (batch 2) — tracked in #446 batches 1–2
+- [ ] v1 management UX — `receipt show` / `validate` / `list` subcommands; local-directory storage (`$XDG_DATA_HOME/cub-scout/receipts/`) — tracked in #446 batch 3
+- [ ] `scout-verify` skill added as 8th verb-group skill in #442
+- [ ] v2 deferrals — DSSE signing wrapped in **Sigstore Bundle v0.3** (cosign keyless + ed25519 fallback), OCI 1.1 referrers sink (designed graph-ingestible for GUAC), composition via `inputAttestations[]` digest chains, additional predicates (`no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed`)
+
+Read-only-triad invariant: receipts emit artifacts, never mutate. `nextSteps[]` rejects `actionType=mutating` entries at receipt-emit time. The `receipt` package exposes only `Get` / `List` / `Watch` cluster operations — enforced by `TestReceiptPackageReadOnlyClient`. PolicyReport CRD emission is explicitly out of scope (writes cluster state); spin off as a separate external adapter.
+
+Standalone-mode contract: cub-scout receipts work without ConfigHub auth. Missing connected-mode evidence (no `confighub-unit://` subject, no `bindingSource`, no `confighubUrl`) is recorded as structured `omissions[]` entries, never as silent failure.
+
+Locked design decisions (post external review): predicate URI = `https://cub-scout.dev/receipt/v1`; subject digest = dual subjects with documented field pruning; VSA interop = keep PASS/WATCH/BLOCK/INCONCLUSIVE pure (no verdict distortion).
+
+R&D companion: research pass against existing receipt / attestation patterns synthesized in `docs/proposals/receipts-way-forward.md` — in-toto Statement v1, SLSA VSA, Sigstore Bundle v0.3, RFC 8785 JCS, OCI 1.1 referrers, GUAC, CycloneDX Attestations, Kyverno PolicyReport, Tekton Chains, GitHub artifact attestations, Falco / Tracee (for `no-manual-edits-since` field-manager-evidence caveat).
+
+Spin-off issues (so v1 stays narrow): #448 aggregate / chained receipts, #449 watch --emit-receipt-on, #450 source-truth help-text drift, #451 --fail-on RECEIPT_VERDICT exit semantics. PolicyReport / Kyverno integration is an external adapter project, not cub-scout's job.
+
 ### AI Agent Skills (`skills/`, modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills))
 
 Coverage gap: cub-scout ships one umbrella `SKILL.md` while `cub` has 23+ scenario-grouped skills in the reference repo. AI agents picking the right cub-scout verb (`doctor` / `map` / `trace` / `compare three-way` / `compare source-truth` / `explain` / `import …` / `views …` / `mcp serve` / …) have to navigate every verb through one router, diluting triggering accuracy. The attribution layer (#435) added a whole evidence surface with no dedicated skill rules.
