@@ -45,7 +45,7 @@ var (
 
 var sourceTruthCmd = &cobra.Command{
 	Use:   "source-truth <kind>/<name> | <kind> <name>",
-	Short: "Read-only source-truth evidence for a single workload (v0.1)",
+	Short: "Read-only source-truth evidence for a single workload",
 	Long: `source-truth emits read-only evidence about a single workload's intended,
 controller-observed, and runtime state. Output is the structured JSON
 contract Pilot's acceptance kernel consumes (#393).
@@ -54,20 +54,38 @@ cub-scout is the *evidence provider*; Pilot is the acceptance judge.
 This command never mutates, repairs, approves, or infers authority.
 
 Strategy is required input — cub-scout never infers the delivery path.
-v0.1 strategies:
+Strategies (Phase 1 + Phase 2 per #418):
 
-  confighub-oci-argo   ConfigHub -> OCI -> Argo CD -> Kubernetes
-  confighub-oci-flux   ConfigHub -> OCI -> Flux    -> Kubernetes
-  git-argo             Git      -> Argo CD -> Kubernetes
-  git-flux             Git      -> Flux    -> Kubernetes
+  confighub-oci-argo   ConfigHub -> OCI -> Argo CD          -> Kubernetes (unit revision anchor)
+  confighub-oci-flux   ConfigHub -> OCI -> Flux             -> Kubernetes (unit revision anchor)
+  git-argo             Git       -> Argo CD                 -> Kubernetes (Git SHA anchor)
+  git-flux             Git       -> Flux                    -> Kubernetes (Git SHA anchor)
+  helm-argo            Helm chart -> Argo CD                -> Kubernetes (chart version anchor)
+  helm-flux            Helm chart -> Flux HelmRelease       -> Kubernetes (chart version anchor)
+  kustomize-flux       Git source -> Flux Kustomization     -> Kubernetes (Git SHA + overlay)
+  oci-argo             OCI (non-ConfigHub) -> Argo CD       -> Kubernetes (OCI digest anchor)
+  oci-flux             OCI (non-ConfigHub) -> Flux OCIRepo  -> Kubernetes (OCI digest anchor)
 
 Examples:
   cub-scout compare source-truth deploy/rag-server -n demo --strategy confighub-oci-flux
   cub scout compare source-truth Deployment rag-server -n demo --strategy git-argo
+  cub-scout compare source-truth statefulset/db -n prod --strategy helm-flux
 
-v0.1 supports Deployment, StatefulSet, DaemonSet. Other kinds emit ASK.`,
+Supports Deployment, StatefulSet, DaemonSet. Other kinds emit ASK.`,
 	Args: cobra.RangeArgs(1, 2),
 	RunE: runSourceTruth,
+}
+
+// sourceTruthStrategyFlagHelp builds the --strategy flag help string from the
+// canonical enum in pkg/agent so help text never drifts from code. Adding a
+// new strategy to agent.AllStrategies() automatically extends the help.
+func sourceTruthStrategyFlagHelp() string {
+	all := agent.AllStrategies()
+	values := make([]string, 0, len(all))
+	for _, s := range all {
+		values = append(values, string(s))
+	}
+	return fmt.Sprintf("Declared delivery path. Required. One of: %s", strings.Join(values, ", "))
 }
 
 func init() {
@@ -75,8 +93,8 @@ func init() {
 	// way comparison" framing. Keeps the top-level command surface lean.
 	combinedCmd.AddCommand(sourceTruthCmd)
 	sourceTruthCmd.Flags().StringVarP(&sourceTruthNamespace, "namespace", "n", "", "Namespace of the resource (required for namespaced kinds)")
-	sourceTruthCmd.Flags().StringVar(&sourceTruthStrategy, "strategy", "", "Declared delivery path. Required. One of: confighub-oci-argo, confighub-oci-flux, git-argo, git-flux")
-	sourceTruthCmd.Flags().StringVar(&sourceTruthFormat, "format", "json", "Output format. v0.1 supports: json")
+	sourceTruthCmd.Flags().StringVar(&sourceTruthStrategy, "strategy", "", sourceTruthStrategyFlagHelp())
+	sourceTruthCmd.Flags().StringVar(&sourceTruthFormat, "format", "json", "Output format: json")
 }
 
 func runSourceTruth(cmd *cobra.Command, args []string) error {
