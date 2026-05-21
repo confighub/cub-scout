@@ -53,6 +53,48 @@ When `--predicate` is not passed, cub-scout picks one from these signals:
 ./cub-scout receipt verify deploy/api -n prod --format json --out api.receipt.json
 ```
 
+## Reading Receipts Back
+
+Once a receipt is on disk, three subcommands let you work with it
+without re-running the verification:
+
+```bash
+# Render a receipt (no fingerprint check).
+./cub-scout receipt show ./api.receipt.json
+
+# Verify fingerprint integrity. Exit 0 = OK, 1 = mismatch, 2 = I/O error.
+./cub-scout receipt validate ./api.receipt.json
+
+# List receipts in the local store.
+./cub-scout receipt list
+./cub-scout receipt list --format json | jq '.[] | select(.verdict == "BLOCK")'
+```
+
+## Local Receipt Store
+
+`receipt verify --save` writes the receipt to a flat directory:
+
+| Override | Default |
+|----------|---------|
+| `--save-dir <path>` on the verify command | (priority chain below) |
+| `--dir <path>` on `receipt list` | (priority chain below) |
+| `$CUB_SCOUT_RECEIPTS_DIR` env var | (priority chain below) |
+| `$XDG_DATA_HOME/cub-scout/receipts` | (priority chain below) |
+| `$HOME/.local/share/cub-scout/receipts` | (default) |
+
+Filenames are canonical and sortable:
+
+```
+<verifiedAt>__<predicate>__<kind>-<name>__<short-fingerprint>.receipt.json
+
+2026-05-22T10-30-00Z__applied-matches-spec__Deployment-api__a1b2c3d4e5f6.receipt.json
+```
+
+Files are immutable — `SaveStatement` refuses to overwrite an existing
+filename. A re-verify at the same instant produces the same canonical
+name → the on-disk artifact is unchanged and `--save` reports "already
+saved" to stderr.
+
 ## Read-Only Triad Lock
 
 Receipts emit artifacts; they never mutate. Static guards in

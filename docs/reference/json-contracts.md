@@ -781,6 +781,63 @@ verification.
 `--format`. The on-disk artifact is the long-lived evidence; ASCII is for
 human review.
 
+### Receipt Management Surface (`show` / `validate` / `list`)
+
+cub-scout ships three read-side subcommands that operate on receipt
+artifacts produced earlier:
+
+| Subcommand | Purpose | Exit code |
+|------------|---------|-----------|
+| `receipt show <path>` | Render an on-disk receipt as ASCII or JSON. Does NOT verify fingerprint. | 0 on success |
+| `receipt validate <path>` | Recompute fingerprint and compare against stamped value. | 0 OK, 1 mismatch, 2 I/O |
+| `receipt list [--dir <path>]` | Walk the store directory; one row per receipt. | 0 (partial list on parse failure with warning) |
+
+#### Storage Convention
+
+The receipt store is a flat directory of `*.receipt.json` files keyed
+by a deterministic sortable name:
+
+```
+<verifiedAt-rfc3339-safe>__<predicateName>__<kind>-<name>__<short-fingerprint>.receipt.json
+```
+
+`verifiedAt-rfc3339-safe` replaces `:` with `-` (POSIX-portable);
+`short-fingerprint` is the first 12 hex chars after the `sha256:`
+prefix. The shape makes `ls` chronological and `ls | grep <predicate>`
+useful.
+
+Default store directory, resolved in priority order:
+
+1. `--save-dir <path>` (on `receipt verify`) or `--dir <path>` (on `receipt list`)
+2. `$CUB_SCOUT_RECEIPTS_DIR` env var
+3. `$XDG_DATA_HOME/cub-scout/receipts`
+4. `$HOME/.local/share/cub-scout/receipts`
+
+`receipt verify --save` writes into the store. The store is
+**immutable**: `SaveStatement` refuses to overwrite an existing
+filename. A re-verify at the same instant on the same scope with the
+same fingerprint produces the same name → "already saved" warning on
+stderr, exit 0, the on-disk artifact unchanged.
+
+#### `ReceiptListEntry` JSON Shape
+
+`receipt list --format json` emits a sorted `ReceiptListEntry[]`:
+
+```json
+[
+  {
+    "path": "/home/user/.local/share/cub-scout/receipts/2026-05-22T10-30-00Z__applied-matches-spec__Deployment-api__a1b2c3d4e5f6.receipt.json",
+    "verifiedAt": "2026-05-22T10:30:00Z",
+    "predicateName": "applied-matches-spec",
+    "scope": { "kind": "Deployment", "name": "api", "namespace": "prod" },
+    "verdict": "PASS",
+    "fingerprint": "sha256:a1b2c3d4e5f6..."
+  }
+]
+```
+
+Sort order: `verifiedAt` descending (newest first).
+
 Source: `pkg/agent/receipt*.go`, `cmd/cub-scout/receipt*.go`. See
 `docs/proposals/receipts-way-forward.md` for the full design synthesis and
 the Codex review rounds that locked the wire format.

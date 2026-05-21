@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -28,6 +29,8 @@ var (
 	receiptSince     string
 	receiptFormat    string
 	receiptOut       string
+	receiptSave      bool
+	receiptSaveDir   string
 )
 
 // Function-variable seam for tests. Production reads from the cluster via
@@ -101,6 +104,8 @@ func init() {
 	receiptVerifyCmd.Flags().StringVar(&receiptSince, "since", "", "RFC 3339 cutoff for no-manual-edits-since (e.g. 2026-05-22T00:00:00Z).")
 	receiptVerifyCmd.Flags().StringVar(&receiptFormat, "format", "ascii", "Output format: ascii | json")
 	receiptVerifyCmd.Flags().StringVar(&receiptOut, "out", "", "Write the receipt to this file path (also printed to stdout in the chosen format)")
+	receiptVerifyCmd.Flags().BoolVar(&receiptSave, "save", false, "Save the receipt to the local store ($CUB_SCOUT_RECEIPTS_DIR or $XDG_DATA_HOME/cub-scout/receipts) for later cub-scout receipt list / show / validate")
+	receiptVerifyCmd.Flags().StringVar(&receiptSaveDir, "save-dir", "", "Override the store directory used when --save is set")
 }
 
 func runReceiptVerify(cmd *cobra.Command, args []string) error {
@@ -255,6 +260,33 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 		}
 		if writeErr := os.WriteFile(receiptOut, append(jsonBytes, '\n'), 0o644); writeErr != nil {
 			return fmt.Errorf("write receipt to %s: %w", receiptOut, writeErr)
+		}
+	}
+
+	if receiptSave {
+		// Save into the local store. Resolve dir from --save-dir or the
+		// default (XDG / HOME). agent.SaveStatement is immutable —
+		// duplicate filenames produce ErrExist. We catch that and emit
+		// an informational message so a repeated verify on the same
+		// resource at the same instant doesn't fail the command; the
+		// receipt is already on disk and identical by construction.
+		dir := strings.TrimSpace(receiptSaveDir)
+		if dir == "" {
+			resolved, dErr := agent.DefaultStoreDir()
+			if dErr != nil {
+				return fmt.Errorf("resolve receipt store: %w", dErr)
+			}
+			dir = resolved
+		}
+		savedPath, sErr := agent.SaveStatement(stmt, dir)
+		if sErr != nil {
+			if errors.Is(sErr, os.ErrExist) {
+				fmt.Fprintf(cmd.ErrOrStderr(), "already saved: %s\n", savedPath)
+			} else {
+				return fmt.Errorf("save receipt: %w", sErr)
+			}
+		} else {
+			fmt.Fprintf(cmd.ErrOrStderr(), "saved: %s\n", savedPath)
 		}
 	}
 

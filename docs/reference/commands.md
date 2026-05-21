@@ -2515,6 +2515,86 @@ cub-scout receipt verify deploy/api -n prod --format json --out api.receipt.json
 | `BLOCK` | Evidence contradicts the claim |
 | `INCONCLUSIVE` | Evidence is missing or unavailable; always carries one or more `omissions[]` entries |
 
+### receipt show
+
+```bash
+cub-scout receipt show <path> [--format ascii|json]
+```
+
+Render an on-disk receipt artifact. ASCII (default) renders the
+one-screen human summary; JSON re-emits the canonical in-toto Statement
+v1 envelope verbatim. `show` does NOT verify the fingerprint — that's
+`receipt validate`'s job — so it works on tampered receipts for
+forensic inspection.
+
+### receipt validate
+
+```bash
+cub-scout receipt validate <path> [--format ascii|json]
+```
+
+Recompute the fingerprint of an on-disk receipt and compare against
+the stamped value. Catches any tampering with `_type`, `subject`,
+`predicateType`, or any predicate field other than `fingerprint`.
+
+Exit codes:
+
+- `0` — fingerprint matches
+- `1` — fingerprint mismatch (tampering or corruption)
+- `2` — I/O or parse error
+
+JSON output emits `{ "path": "…", "fingerprint": "…", "valid": true|false, "error": "…" }`
+for CI consumption.
+
+### receipt list
+
+```bash
+cub-scout receipt list [--dir <path>] [--format ascii|json]
+```
+
+List receipts stored locally. The store is resolved in priority order:
+
+1. `--dir <path>` (explicit override)
+2. `$CUB_SCOUT_RECEIPTS_DIR`
+3. `$XDG_DATA_HOME/cub-scout/receipts`
+4. `$HOME/.local/share/cub-scout/receipts`
+
+Receipts are written to the store when you pass `--save` to `receipt
+verify`. Files are flat JSON, named
+`<verifiedAt>__<predicate>__<kind>-<name>__<short-fingerprint>.receipt.json`
+so a normal `ls` yields chronological order.
+
+ASCII output is a five-column fixed-width table (verdict / predicate /
+scope / verifiedAt / filename). JSON emits the `ReceiptListEntry[]`
+shape — same content, machine-readable — sorted by `verifiedAt`
+descending.
+
+### Saving receipts to the local store
+
+`receipt verify --save` writes the receipt to the resolved store
+directory under its canonical filename. Useful for casual local
+accumulation; CI/scripts that need a specific path should keep using
+`--out <path>` instead.
+
+```bash
+# Save into the default store.
+cub-scout receipt verify deploy/api -n prod --save
+
+# Save into an explicit directory.
+cub-scout receipt verify deploy/api -n prod --save --save-dir ./ci-receipts/
+
+# Use the env var to set the default for a whole session.
+export CUB_SCOUT_RECEIPTS_DIR=./ci-receipts/
+cub-scout receipt verify deploy/api -n prod --save
+cub-scout receipt list
+```
+
+The store is immutable: `SaveStatement` refuses to overwrite an
+existing file. A repeated verify on the same resource at the same
+instant produces the same canonical filename → `--save` emits "already
+saved" to stderr and exits 0; the receipt on disk is identical by
+construction.
+
 ### Read-Only Triad Lock
 
 Receipts emit artifacts; they never mutate. Static guards
