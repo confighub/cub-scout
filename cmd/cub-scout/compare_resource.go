@@ -105,6 +105,12 @@ type compareFieldMismatch struct {
 	// this field's value, copied from the resource-level GitSource at A2.
 	// Per-field anchors (different paths/lines per field) are stage B.
 	GitSource *agent.GitSourceAnchor `json:"gitSource,omitempty"`
+
+	// BindingSource identifies the ConfigHub Link binding that produces
+	// this field's value (C2 of the attribution layer). Set when the field
+	// name maps to a known canonical path and an incoming binding's
+	// downstream path matches.
+	BindingSource *FieldBindingSource `json:"bindingSource,omitempty"`
 }
 
 type compareResourceRef struct {
@@ -784,6 +790,9 @@ func finalizeCompareResourceResult(result compareResourceResult) compareResource
 // finalizeCompareResourceResultWithBindings is finalizeCompareResourceResult
 // plus C1 binding enrichment. Called from buildCompareResourceResult where
 // ctx is available; falls through cleanly when the live unit is unknown.
+// C2: after IncomingBindings is populated, walks each mismatch and attaches
+// the matching FieldBindingSource when the field maps to a known canonical
+// path.
 func finalizeCompareResourceResultWithBindings(ctx context.Context, result compareResourceResult) compareResourceResult {
 	result = finalizeCompareResourceResult(result)
 	if !result.Connected {
@@ -793,8 +802,22 @@ func finalizeCompareResourceResultWithBindings(ctx context.Context, result compa
 	if unitID == "" {
 		return result
 	}
-	if bindings := collectIncomingBindings(ctx, unitID, result.Live.SpaceName); len(bindings) > 0 {
-		result.IncomingBindings = bindings
+	bindings := collectIncomingBindings(ctx, unitID, result.Live.SpaceName)
+	if len(bindings) == 0 {
+		return result
+	}
+	result.IncomingBindings = bindings
+
+	// C2: walk mismatches and attach FieldBindingSource for fields whose
+	// canonical paths match an incoming binding's downstream path.
+	for i := range result.Mismatches {
+		path, ok := compareFieldToPath[result.Mismatches[i].Field]
+		if !ok {
+			continue
+		}
+		if src := LookupFieldBindingSource(path, bindings); src != nil {
+			result.Mismatches[i].BindingSource = src
+		}
 	}
 	return result
 }
@@ -1002,6 +1025,22 @@ func renderCompareResourceASCII(result compareResourceResult) string {
 		for _, mismatch := range result.Mismatches {
 			b.WriteString(fmt.Sprintf("  - %s: DRY=%s | WET=%s | LIVE=%s\n",
 				mismatch.Field, mismatch.Dry, mismatch.Wet, mismatch.Live))
+			if bs := mismatch.BindingSource; bs != nil {
+				bindLine := "      <- bound from"
+				if bs.UpstreamUnitID != "" {
+					bindLine += fmt.Sprintf(" unit:%s", bs.UpstreamUnitID)
+				}
+				if bs.UpstreamPath != "" {
+					bindLine += fmt.Sprintf(" path:%s", bs.UpstreamPath)
+				}
+				if bs.LinkSlug != "" {
+					bindLine += fmt.Sprintf(" via link:%s", bs.LinkSlug)
+				}
+				if bs.TransformExpr != "" {
+					bindLine += fmt.Sprintf(" transform:%s", bs.TransformExpr)
+				}
+				b.WriteString(bindLine + "\n")
+			}
 		}
 	}
 

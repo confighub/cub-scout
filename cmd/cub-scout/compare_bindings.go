@@ -49,9 +49,57 @@ type IncomingBinding struct {
 	WhereResource string `json:"whereResource,omitempty"`
 
 	// BindingsCount is the number of explicit binding expressions on the
-	// link (extracted from Link.Bindings). The detailed per-field
-	// breakdown is C2 territory.
+	// link (extracted from Link.Bindings). See Bindings below for the
+	// per-field breakdown when expanded.
 	BindingsCount int `json:"bindingsCount,omitempty"`
+
+	// Bindings is the per-field expansion of Link.Bindings — C2 of the
+	// attribution layer. Each entry pairs a downstream path on this unit
+	// with the upstream path on the producer unit that feeds it. Best-
+	// effort: parsed from the JSON shape ConfigHub returns; unknown shapes
+	// fall back to an empty list while BindingsCount still reflects the
+	// raw count.
+	Bindings []FieldBinding `json:"bindings,omitempty"`
+}
+
+// FieldBinding captures one entry from a Link's Bindings list — the
+// extraction of a value from an upstream unit's path into a downstream unit's
+// path. Optional TransformExpr captures any Go template / CEL expression
+// applied between source and target.
+type FieldBinding struct {
+	// DownstreamPath is the canonical field-path within the downstream unit
+	// where the bound value lands (e.g., ".spec.replicas").
+	DownstreamPath string `json:"downstreamPath,omitempty"`
+
+	// UpstreamPath is the canonical field-path within the upstream unit
+	// that supplies the value.
+	UpstreamPath string `json:"upstreamPath,omitempty"`
+
+	// TransformExpr is the optional transform expression (Go template, CEL,
+	// or similar) applied between source and target.
+	TransformExpr string `json:"transformExpr,omitempty"`
+}
+
+// FieldBindingSource references the specific Link + binding entry that
+// produced a given field mismatch's value. Surfaced on compareFieldMismatch
+// when the field name maps to a known canonical path and a matching binding
+// is found in IncomingBindings.
+type FieldBindingSource struct {
+	// LinkID is the unique identifier of the Link entity.
+	LinkID string `json:"linkId,omitempty"`
+
+	// LinkSlug is the Link's URL-safe identifier.
+	LinkSlug string `json:"linkSlug,omitempty"`
+
+	// UpstreamUnitID is the producer unit feeding this field.
+	UpstreamUnitID string `json:"upstreamUnitId,omitempty"`
+
+	// UpstreamPath is the path within the upstream unit that supplies
+	// the value.
+	UpstreamPath string `json:"upstreamPath,omitempty"`
+
+	// TransformExpr is the optional transform applied (Go template, CEL).
+	TransformExpr string `json:"transformExpr,omitempty"`
 }
 
 // linkRunner is the abstraction over `cub link` shell invocations used by the
@@ -122,9 +170,105 @@ func parseLinkListJSON(raw []byte) []IncomingBinding {
 			WhereResource: strings.TrimSpace(r.WhereResource),
 		}
 		entry.BindingsCount = countBindings(r.Bindings)
+		entry.Bindings = expandBindings(r.Bindings)
 		out = append(out, entry)
 	}
 	return out
+}
+
+// expandBindings parses Link.Bindings into structured FieldBinding entries.
+// ConfigHub's Bindings field shape is evolving; this function handles two
+// common JSON layouts and falls back to nil on unrecognized shapes:
+//
+//   1. Array of objects: [{downstreamPath, upstreamPath, transformExpr}]
+//   2. Object keyed by downstream path: {".spec.x": {upstreamPath, ...}}
+//
+// Unknown shapes return nil — BindingsCount still reflects the raw count so
+// callers can detect "bindings exist but we couldn't expand them."
+func expandBindings(raw json.RawMessage) []FieldBinding {
+	if len(raw) == 0 {
+		return nil
+	}
+
+	// Shape 1: array of objects.
+	type bindingObj struct {
+		DownstreamPath string `json:"downstreamPath"`
+		UpstreamPath   string `json:"upstreamPath"`
+		TransformExpr  string `json:"transformExpr"`
+		// Some schemas use Target/Source naming. Captured as fallback.
+		Target    string `json:"target"`
+		Source    string `json:"source"`
+		Transform string `json:"transform"`
+	}
+	var asArray []bindingObj
+	if err := json.Unmarshal(raw, &asArray); err == nil && len(asArray) > 0 {
+		out := make([]FieldBinding, 0, len(asArray))
+		for _, b := range asArray {
+			fb := FieldBinding{
+				DownstreamPath: firstNonEmptyBindingStr(b.DownstreamPath, b.Target),
+				UpstreamPath:   firstNonEmptyBindingStr(b.UpstreamPath, b.Source),
+				TransformExpr:  firstNonEmptyBindingStr(b.TransformExpr, b.Transform),
+			}
+			if fb.DownstreamPath != "" || fb.UpstreamPath != "" || fb.TransformExpr != "" {
+				out = append(out, fb)
+			}
+		}
+		if len(out) > 0 {
+			return out
+		}
+	}
+
+	// Shape 2: object keyed by downstream path.
+	var asObject map[string]bindingObj
+	if err := json.Unmarshal(raw, &asObject); err == nil && len(asObject) > 0 {
+		out := make([]FieldBinding, 0, len(asObject))
+		for downstream, b := range asObject {
+			fb := FieldBinding{
+				DownstreamPath: downstream,
+				UpstreamPath:   firstNonEmptyBindingStr(b.UpstreamPath, b.Source),
+				TransformExpr:  firstNonEmptyBindingStr(b.TransformExpr, b.Transform),
+			}
+			out = append(out, fb)
+		}
+		return out
+	}
+
+	return nil
+}
+
+func firstNonEmptyBindingStr(values ...string) string {
+	for _, v := range values {
+		if s := strings.TrimSpace(v); s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
+// LookupFieldBindingSource searches incomingBindings for a binding whose
+// DownstreamPath matches the given canonical path. Returns the first match
+// (deterministic by IncomingBindings iteration order). The caller is
+// expected to map a compareFieldMismatch.Field name to its canonical path
+// before calling (see compareFieldToPath).
+func LookupFieldBindingSource(downstreamPath string, incomingBindings []IncomingBinding) *FieldBindingSource {
+	downstreamPath = strings.TrimSpace(downstreamPath)
+	if downstreamPath == "" || len(incomingBindings) == 0 {
+		return nil
+	}
+	for _, link := range incomingBindings {
+		for _, b := range link.Bindings {
+			if b.DownstreamPath == downstreamPath {
+				return &FieldBindingSource{
+					LinkID:         link.LinkID,
+					LinkSlug:       link.Slug,
+					UpstreamUnitID: link.ToUnitID,
+					UpstreamPath:   b.UpstreamPath,
+					TransformExpr:  b.TransformExpr,
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // countBindings returns the number of binding entries on a Link without
