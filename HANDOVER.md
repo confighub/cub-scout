@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-05-09
+Last updated: 2026-05-21
 
 ## Current repo state
 
@@ -14,6 +14,27 @@ Last updated: 2026-05-09
   - `docs/reference/cli-reference.md` = A-Z command catalog
   - `docs/reference/commands.md` = detailed usage and examples
   - `docs/reference/cli-contract.md` = stable flags, exit codes, and schemas
+
+## May 2026 completions — session 2026-05-21 (attribution layer)
+
+The full attribution layer (`#435`) shipped in four squash-merged PRs. Every `compareFieldMismatch` now carries `cause`, `managerHint`, `gitSource`, and (when connected) `bindingSource` — answering "which controller, or which human, last touched this field, what's it sourced from in git, and which ConfigHub Link supplies it?" all in one read-only evidence record.
+
+| PR | Stages | Subject |
+|----|--------|---------|
+| [#437](https://github.com/confighub/cub-scout/pull/437) | A1 + A1.5 + A2 | `managedFields` classifier (`controller-drift` / `manual-edit` / `unknown`) co-signaled with detected owner; verified manager-string enumeration (Argo CD / Flux kustomize+helm+source / Helm direct / Crossplane composite+composed+claim+MRD+refs / kro applyset+parent+labeller / `kubectl-*`); per-field-path resolution via `FieldsV1` decoding (`sigs.k8s.io/structured-merge-diff/v4/fieldpath`); resource-level git anchor (`repoUrl` / `revision` / `path`) via existing Argo/Flux tracers. |
+| [#438](https://github.com/confighub/cub-scout/pull/438) | C1 | Incoming-binding introspection via `cub link list -o json`; `compareLinkRunner` injection seam; `IncomingBinding` + ASCII/Markdown rendering. |
+| [#439](https://github.com/confighub/cub-scout/pull/439) | C2 | Per-field `bindingSource` on each mismatch; `expandBindings` handles array + object Bindings JSON shapes plus `target/source/transform` aliases; ASCII renders `<- bound from unit:... path:... via link:...` under the diff line. |
+| [#440](https://github.com/confighub/cub-scout/pull/440) | Stage B | Raw-YAML `gitSource.file:line` back-resolution via opt-in `--source-path <local-checkout>`; `BackResolveGitSource` walks YAML/YML files with `gopkg.in/yaml.v3` line tracking, matches by `kind`/`name`/`namespace`, navigates dotted canonical paths. Helm/Kustomize templating explicitly deferred. |
+
+### Key design decisions locked in this track
+
+- **Verified manager-string enumeration, not guessed**: every string in `pkg/agent/manager_strings.go` has an upstream citation. Unknown strings fall through to `unknown` rather than misclassifying — same `parse, don't guess` rule used by ownership detection.
+- **Owner co-signal disambiguates kubectl-client-side-apply**: Argo CD's CSA migration default and `kubectl apply --client-side` write the same manager string. The classifier reads `pkg/agent/ownership.go` first so Argo-owned resources resolve as `controller-drift` while non-Argo resources resolve as `manual-edit`.
+- **Crossplane composed children use prefix match**: `apiextensions.crossplane.io/composed-<hash>` varies per XR. Match is `strings.HasPrefix`, not exact.
+- **Per-field rollup degrades cleanly to resource-level**: when `FieldsV1` is missing (older K8s or stripped), classification is resource-level (A1). When present, per-field (A1.5). Fields like `images` that span multiple container list items intentionally fall back to resource-level pending list-key selector support.
+- **`cub link list` runner seam**: `compareLinkRunner` function variable lets tests inject prefab JSON, matching the `viewCubRunner` pattern in `views.go` (#414).
+- **A2 anchor and B file:line are decoupled**: A2 surfaces `repoUrl`/`revision`/`path` automatically (tracer-driven). Stage B `file:line` is opt-in via `--source-path` to avoid surprising filesystem walks on the standard `compare three-way` run.
+- **Doc + example land with the code**: `docs/reference/json-contracts.md` § Field Mutation Attribution Contract carries the full contract; `examples/drift/mutation-cause-attribution/` carries the operator-facing narrative with `controller-drift.json` + `manual-edit.json` fixtures.
 
 ## May 2026 completions — session 2026-05-09
 
@@ -109,20 +130,25 @@ Key deliverables now in place:
 
 ## Open issues
 
-Current tracked follow-ons (verified 2026-05-09):
+Current tracked follow-ons (verified 2026-05-21):
 
-- **#391 (two scopes remain)** — Views integration. Scope #1 (`--view` on `compare three-way`) shipped in #414. Remaining:
-  2. View column projection in TUI Hub view
-  3. Reality overlay composing View columns with #393 source-truth verdicts (depends on scope #1 — now unblocked)
-- **#409** — source-truth v0.2 cross-surface revision equality. Design pre-baked in the issue body, plus a [strategy-shape comment](https://github.com/confighub/cub-scout/issues/409#issuecomment-4411862418) with the full per-strategy data shape table, runtime-anchor extractability per strategy (notably: Helm runtime anchor is **already extractable** via `helm.sh/chart` labels in `pkg/agent/ownership.go`), the multi-source Argo gap, and a concrete Phase 1/2/3 implementation plan. Phase 1 = existing four strategies; Phase 2 = enum expansion (`helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`); Phase 3 = multi-source Argo. Verify ConfigHub-side rendered-digest exposure before starting Phase 1. `confighubai/confighub#4356` interacts with `confighub-oci-argo` equality.
-- **#410 / #428** — Triad-compliance audit (HIGH severity). **Resolved with option (b)** in #428: cub-scout keeps the scan + catalogue + suggested-patch JSON; the executor that applied patches has been deleted. Command renamed `suggest-remedy` (legacy `remedy` is an alias). The previous `--dry-run`, `--force`, `--audit`, `--audit-file` flags were removed; cub-scout no longer has a non-dry-run path. Lower-severity findings on `import apply` wording and a hint-command lint rule remain open in #410.
+- **`#435` attribution-layer next-up (no separate issues yet, tracked in `README.md` § What's coming next):**
+  - Helm / Kustomize back-resolution to extend stage B's `gitSource.file:line` from raw YAML to templated sources
+  - List-key selectors in `compareFieldToPath` (e.g., `.spec.template.spec.containers[name="api"].image`) so per-field classification covers container images and other list-keyed fields
+  - Standalone `--source-path` as a DRY source for `compare three-way` — would let raw-YAML repos run the same three-way view without ConfigHub
+  - `import --git-path --output-dir` to emit proposed unit YAMLs to disk for PR review (one bundle, two workflows — disk PR + Installer `--merge-external-source`)
+  - Hierarchy-aware ingest preserving ApplicationSet / app-of-apps / Flux Kustomization composition in import proposals
+  - Additional manager-string writers (Tekton, Argo Workflows, Cluster API, OIDC-based CD)
+- **#391** — Views integration. Scopes #1 (`--view` on `compare three-way`, `#414`) and #2 (TUI Hub View column projection, `#419`/`#420`) shipped. Scope #3 (reality overlay composing View columns with `#393` source-truth verdicts) is the active follow-on.
+- **#409** — source-truth v0.2 cross-surface revision equality. Phase 1 (existing four strategies) shipped; Phase 2 (enum expansion to `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`) shipped in `#418`. Phase 3 (multi-source Argo) remains.
+- **#410 / #428** — Triad-compliance audit. Major item resolved: cub-scout is categorically read-only (`suggest-remedy` describes but never applies). Lower-severity findings on `import apply` wording and a hint-command lint rule remain open in #410.
 - **#392** — Initiatives compliance overlay. **Still deferred.** ConfigHub side has no backend primitive yet. Design doc at [`docs/howto/initiatives-integration-when-ready.md`](docs/howto/initiatives-integration-when-ready.md) holds the integration spec.
 - **confighubai/confighub#4356** — cross-repo dependency for ArgoCDOCI Helm-source shape. Blocks accurate `confighub-oci-argo` symptom classification in `compare source-truth`.
 - **confighub-ai-demo#264** — Pilot consumer-side fixtures pairing with cub-scout #395 + future #409 fixtures.
 
 ## Current checkpoint
 
-`go test ./...` is green as of 2026-05-09 with all 37 packages passing. Main CI is green. GitHub Actions workflows now run on Node 24 (PRs #412, #413).
+`go test ./...` is green as of 2026-05-21 across every package touched by the attribution-layer work. The only failure on a clean main checkout is the pre-existing `test/unit/demo_worker_lifecycle_script_test.go` — unrelated to attribution work, fails on a `git stash`-clean tree too. Main CI is green. GitHub Actions workflows now run on Node 24 (PRs #412, #413).
 
 The practical state heading into the `cub scout` plugin switchover is:
 

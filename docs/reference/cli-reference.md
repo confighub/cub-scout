@@ -23,7 +23,7 @@ Source of truth:
 | `audit` | Break-glass audit trail tools | [Command Reference](commands.md#audit-list) | [Connect and compare](../../examples/connect-and-compare/) |
 | `bundle` | Inspect, replay, diff, and summarize debug bundles | [Command Reference](commands.md#bundle-inspect-v015) | [Artifact workflows](../../examples/workflows/) |
 | `catalog` | Manage bundle catalogs | [Command Reference](commands.md#catalog-list-v015) | [Artifact workflows](../../examples/workflows/) |
-| `compare` | Compare Git, bundle, live, or connected intent/render/live state | [Command Reference](commands.md#compare) | [Connect and compare](../../examples/connect-and-compare/) |
+| `compare` | Compare Git, bundle, live, or connected intent/render/live state; in connected mode each field mismatch carries attribution evidence (`cause`, `managerHint`, `gitSource`, `bindingSource`) | [Command Reference](commands.md#compare) | [Connect and compare](../../examples/connect-and-compare/) |
 | `context-pack` | Export deterministic AI context JSON | [How-to](../howto/context-pack-v2.md) | [AI integration](../../examples/ai-integration/) |
 | `debug` | Guided GitOps debugging wizard | [Command Reference](commands.md#debug) | [Platform example](../../examples/platform-example/) |
 | `doctor` | One-command cluster health summary | [Command Reference](commands.md#doctor) | [Connect and compare](../../examples/connect-and-compare/) |
@@ -60,7 +60,7 @@ Source of truth:
 | `audit list` | Break-glass accept/reject audit trail | [Command Reference](commands.md#audit-list) | [Connect and compare](../../examples/connect-and-compare/) |
 | `compare drift` | Desired vs live drift detection | [Command Reference](commands.md#compare-drift) | [Drift examples](../../examples/drift/) |
 | `compare source-truth` | Read-only source-truth evidence for Pilot acceptance (#393) | [Command Reference](commands.md#compare-source-truth) | - |
-| `compare three-way` | Connected DRY/WET/LIVE comparison | [Command Reference](commands.md#compare-three-way) | [Connect and compare](../../examples/connect-and-compare/) |
+| `compare three-way` | Connected DRY/WET/LIVE comparison; `--source-path <local-checkout>` opts into stage-B `gitSource.file:line` back-resolution for raw-YAML sources | [Command Reference](commands.md#compare-three-way) | [Connect and compare](../../examples/connect-and-compare/) |
 | `fleet outliers` | Cluster divergence report | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
 | `gitops status` | GitOps pipeline health | [Command Reference](commands.md#gitops-v014) | [Connected summary storage](../../examples/connected-summary-storage/) |
 | `import apply` | Apply an import proposal JSON | [Command Reference](commands.md#import-apply) | [Import from live](../../examples/import-from-live/) |
