@@ -144,6 +144,130 @@ Without `omissions`, a receipt that says PASS could mean *"all checks passed"* o
 
 Receipts emit artifacts. They do not mutate the cluster, ConfigHub, or any external store. The consumer (Pilot, CI/CD, audit log, governance ledger via separate upload) decides what to persist. No new authority gradient is created.
 
+## Simplicity bar — what using receipts feels like
+
+**The simplest command is the most useful one.** cub-scout should pick the predicate, spec anchor, and verdict thresholds for the user based on labels and annotations already on the resource. The user types the obvious command; cub-scout figures the rest out.
+
+### Scenario A: verifying stages of a GitOps delivery
+
+**1. One-resource, post-deploy: "did this reach prod?"**
+
+```bash
+$ cub-scout receipt verify deploy/api -n prod
+PASS  applied-matches-spec   from git@org/platform-config:apps/prod/api/deployment.yaml@abc123
+      controller: argocd-application-controller   no manual-edits since 14:30 UTC
+      receipt: ./receipts/2026-05-21T14:31:00Z-rcpt_01HFK7Z3J.json
+```
+
+No flags. cub-scout reads the `argocd.argoproj.io/tracking-id` annotation, resolves the source repo + revision from the Argo Application, picks `applied-matches-spec` as the natural predicate, runs `compare three-way`, and emits the receipt.
+
+**2. Whole namespace: "did the release land everywhere?"**
+
+```bash
+$ cub-scout receipt verify --scope namespace/prod
+12/12 PASS   2026-05-21T14:32:00Z-batch_01HFK7Z4M.json
+```
+
+One aggregate receipt with 12 `inputAttestations[]` entries, one per workload. Drill down with `cub-scout receipt show <id>`.
+
+**3. Tied to a specific commit (post-merge CI gate):**
+
+```bash
+$ cub-scout receipt verify deploy/api -n prod --at-commit abc123 --fail-on WATCH
+PASS   exit 0
+```
+
+`--at-commit` swaps the auto-detected source anchor for an explicit one. `--fail-on` makes it a CI gate — exit 0 on PASS, exit 2 on WATCH/BLOCK. Drop this into a GitHub Actions step and the receipt becomes the gate's artifact.
+
+**4. Multi-stage delivery: chain receipts as the release progresses:**
+
+```bash
+# Stage 1: post-merge — did Argo see it?
+$ cub-scout receipt verify deploy/api -n prod --predicate apply-completed
+PASS   argocd: last-synced rev=abc123  matches
+
+# Stage 2: post-sync — does cluster match Git?
+$ cub-scout receipt verify deploy/api -n prod
+PASS   applied-matches-spec   argocd-application-controller reconciling
+
+# Stage 3: post-cooldown — has anyone bypassed?
+$ cub-scout receipt verify deploy/api -n prod --predicate no-manual-edits-since 14:30Z
+PASS   no manual-edit cause in managedFields since 2026-05-21T14:30:00Z
+```
+
+Three commands, three receipts, one chain — each pointing at the prior via `inputAttestations[]`. The chain *is* the delivery audit trail.
+
+### Scenario B: verifying an AI-led agentic change
+
+**1. Agent verifies its own claim:**
+
+```bash
+# Agent says: "I just scaled deploy/api to 5 replicas"
+$ cub-scout receipt verify deploy/api -n prod --claim "replicas=5 from intent rev=plan_4f8e"
+PASS   spec.replicas: LIVE=5   cause: controller-drift (argocd-application-controller)
+      receipt: ./receipts/2026-05-21T14:33:00Z-rcpt_01HFK8Q.json
+```
+
+The agent attaches its own claim string; cub-scout verifies the runtime state matches and emits the receipt. The agent hands the receipt to the operator (or to upstream acceptance-judge tooling) as proof.
+
+**2. Agent proves "nothing else changed":**
+
+```bash
+# Agent ran its operation at $START_TIME
+$ cub-scout receipt verify deploy/api -n prod --predicate no-manual-edits-since $START_TIME
+PASS   no manual-edit cause in managedFields since 2026-05-21T14:30:00Z
+      omissions: []   (full managedFields available; full coverage)
+```
+
+The agent's defensive receipt: "during my operation window, no human bypassed me." If the operator later asks "was there a kubectl edit while the agent was running?", the receipt answers definitively.
+
+**3. Watch-driven verification (couples with `pilot-watch-alert-response` skill from #444):**
+
+```bash
+# Upstream acceptance tooling subscribes to cub-scout watch; each event triggers a verify
+$ cub-scout watch -n prod --emit-receipt-on=update,delete --format jsonl > acceptance.jsonl
+{"event":"update","resource":"deploy/api","receipt":"rcpt_01HFK8R...","verdict":"PASS"}
+{"event":"update","resource":"deploy/worker","receipt":"rcpt_01HFK8S...","verdict":"WATCH","omissions":["sourceTruth=INCOMPLETE"]}
+```
+
+One streaming command. Every cluster mutation produces a receipt the upstream layer reads and decides on. No round-trip; no asking cub-scout twice.
+
+**4. Multi-resource batch: agent did several things, prove they all landed:**
+
+```bash
+# Agent's plan touched 3 resources
+$ cub-scout receipt verify deploy/api,deploy/worker,configmap/api-config -n prod
+3/3 PASS   2026-05-21T14:34:00Z-batch_01HFK8T.json
+      api:         applied-matches-spec
+      worker:      applied-matches-spec
+      api-config:  applied-matches-spec
+```
+
+One command, three sub-receipts, one aggregate receipt. The agent hands the aggregate ID to the operator; the chain is verifiable end to end.
+
+**5. Agent-friendly JSON-first output (MCP / programmatic):**
+
+```bash
+$ cub-scout receipt verify deploy/api -n prod --format json | jq '.predicate.verdict'
+"PASS"
+```
+
+For agents, `--format json` is the agent contract. Upstream acceptance tooling consumes the structured receipt directly; no ASCII parsing needed. Same `--format json` cub-scout already supports across every other command.
+
+### What makes each of these simple
+
+| Move | Why it matters |
+|---|---|
+| **No predicate flag in the common case.** cub-scout reads the ownership labels and picks the right one. | One-command UX. The user doesn't learn the predicate menu unless they want to. |
+| **No anchor flag in the common case.** Source repo + revision come from the Argo/Flux spec automatically. | The user doesn't need to know which git path the controller is reading. |
+| **Concise default output.** Verdict + 1-line summary + receipt path. Full JSON via `--format json`. | Humans can read it; agents can parse it. |
+| **`--fail-on WATCH` makes it a CI gate.** Same shape as `compare three-way`'s existing `--fail-on`. | Receipts plug into existing CI patterns without new vocabulary. |
+| **Watch-driven receipts via `--emit-receipt-on=…`.** One streaming command, one receipt per event. | Acceptance tooling doesn't need to poll; the event *is* the receipt trigger. |
+| **Batch by comma-separated list or `--scope`.** Aggregate receipt with `inputAttestations[]` per resource. | One round trip for "did all three of my changes land?" — agent-friendly. |
+| **Always emits a receipt.** Even on `INCONCLUSIVE` — the gap is recorded in `omissions[]`, never silenced. | Operators and upstream acceptance always have an artifact to reference; "I couldn't tell" is itself proof. |
+
+These examples define the **UX acceptance bar for v1**. If batch 1 ships and a user has to type more than one command + one resource reference for the common case, the implementation has missed the bar.
+
 ## What cub-scout receipts are NOT
 
 Boundaries that lock the scope:
