@@ -86,11 +86,20 @@ The classifier uses the resource owner (detected by labels and annotations like 
 - Argo-owned resource + `kubectl-client-side-apply` → `controller-drift` (Argo CSA migration)
 - Native resource + `kubectl-client-side-apply` → `manual-edit` (`kubectl apply`)
 
-## What This Doesn't Tell You (Yet)
+## Per-Field-Path Attribution (A1.5)
 
-At A1, the classification is **resource-level** — the same `cause` is reported for every field mismatch on one resource. If only one field was edited by hand and the rest are controller-managed, A1 still surfaces the resource-level conclusion (mixed → `manual-edit`).
+When the live resource's `metadata.managedFields` includes decodable `FieldsV1` data, the classifier resolves the cause **per individual field path** — not just at the resource level.
 
-Per-field-path resolution (decoding `FieldsV1` to attribute each field to its specific writer) is the next stage, A1.5.
+This matters when, for example, Argo CD owns `.spec.template.spec.containers` but someone edited `.spec.replicas`:
+
+| Field | Cause | Manager hint |
+|-------|-------|--------------|
+| `.spec.replicas` | `manual-edit` | `kubectl-edit` |
+| `.spec.template.spec.containers` | `controller-drift` | `argocd-controller` |
+
+The per-path map is exposed in `compare three-way` JSON output as `live.attributionByPath`, keyed by canonical field-path strings (e.g., `.spec.replicas`). Each `compareFieldMismatch.cause` picks up the per-path classification when the field name maps to a known path, falling back to the resource-level rollup otherwise (e.g., for `images` which spans multiple container list items).
+
+Fields not yet mapped to canonical paths inherit the resource-level conclusion. A future expansion (A1.x or later) will introduce richer mappings for complex multi-path fields like container images.
 
 ## References
 

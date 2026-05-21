@@ -45,10 +45,17 @@ type compareSideSummary struct {
 	LabelCount             int      `json:"labelCount,omitempty"`
 	AnnotationCount        int      `json:"annotationCount,omitempty"`
 
-	// Attribution carries the mutation-source classification computed from
-	// metadata.managedFields. Only populated on the live side (Source == "cluster");
-	// dry/wet sides do not have managedFields data.
+	// Attribution carries the resource-level mutation-source classification
+	// computed from metadata.managedFields. Only populated on the live side
+	// (Source == "cluster"); dry/wet sides do not have managedFields data.
 	Attribution *agent.FieldMutationAttribution `json:"attribution,omitempty"`
+
+	// AttributionByPath carries per-field-path mutation-source classification
+	// keyed by canonical field-path strings (e.g., ".spec.replicas"). Populated
+	// when managedFields entries include decodable FieldsV1 data. Used by the
+	// mismatch detector to give per-field cause/managerHint, falling back to
+	// Attribution above when a field doesn't map to a known path.
+	AttributionByPath map[string]agent.FieldMutationAttribution `json:"attributionByPath,omitempty"`
 }
 
 type compareResourceResult struct {
@@ -639,10 +646,14 @@ func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSumma
 
 	// Compute mutation-source attribution from metadata.managedFields, using
 	// the owner detected from labels/annotations as the co-signal. See
-	// pkg/agent/field_ownership.go.
+	// pkg/agent/field_ownership.go. AttributeFieldsByManagedFields also
+	// returns per-field-path classifications when FieldsV1 data is present.
 	owner := agent.DetectOwnership(obj)
-	attribution := agent.AttributeFieldMutation(obj, owner)
-	out.Attribution = &attribution
+	resourceAttr, byPath := agent.AttributeFieldsByManagedFields(obj, owner)
+	out.Attribution = &resourceAttr
+	if len(byPath) > 0 {
+		out.AttributionByPath = byPath
+	}
 
 	return out
 }
@@ -814,13 +825,47 @@ func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSide
 			Wet:   displayCompareFieldValue(wetValue),
 			Live:  displayCompareFieldValue(liveValue),
 		}
-		if live.Attribution != nil {
+		// Prefer per-field-path attribution (A1.5); fall back to the
+		// resource-level rollup (A1) when no per-path entry is available
+		// (e.g., for fields like "images" that don't map to a single path,
+		// or when FieldsV1 data is missing from managedFields).
+		if attr, ok := lookupFieldAttribution(field.Name, live); ok {
+			mismatch.Cause = attr.Cause
+			mismatch.ManagerHint = attr.ManagerHint
+		} else if live.Attribution != nil {
 			mismatch.Cause = live.Attribution.Cause
 			mismatch.ManagerHint = live.Attribution.ManagerHint
 		}
 		out = append(out, mismatch)
 	}
 	return out
+}
+
+// compareFieldToPath maps a compareFieldMismatch.Field name to the canonical
+// metadata.managedFields path string used by sigs.k8s.io/structured-merge-diff/v4
+// fieldpath.Path.String. Fields without a single canonical path (e.g., "images"
+// which spreads across container list items) are intentionally absent from
+// this map and fall back to resource-level attribution.
+var compareFieldToPath = map[string]string{
+	"apiVersion": ".apiVersion",
+	"kind":       ".kind",
+	"namespace":  ".metadata.namespace",
+	"replicas":   ".spec.replicas",
+}
+
+func lookupFieldAttribution(fieldName string, live compareSideSummary) (agent.FieldMutationAttribution, bool) {
+	if len(live.AttributionByPath) == 0 {
+		return agent.FieldMutationAttribution{}, false
+	}
+	path, ok := compareFieldToPath[fieldName]
+	if !ok {
+		return agent.FieldMutationAttribution{}, false
+	}
+	attr, ok := live.AttributionByPath[path]
+	if !ok || attr.Cause == "" {
+		return agent.FieldMutationAttribution{}, false
+	}
+	return attr, true
 }
 
 func compareFieldHasDivergence(values ...string) bool {
