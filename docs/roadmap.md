@@ -71,17 +71,21 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 ### Verify / Receipt Capability (`cub-scout receipt`, 8th verb group)
 
-cub-scout's evidence is point-in-time and ephemeral today. A receipt is the missing durable, fingerprinted, replayable artifact bundling subject + predicate + verdict + evidence + timestamp, so Pilot / CI/CD / audit / postmortem consumers can attach evidence to a decision and later prove the inputs were what they claim to be. Receipts are an envelope around existing evidence (`compareResourceResult`, `compareSourceTruthResult`, attribution, `gitSource`, `bindingSource`) — not new evidence.
+cub-scout's evidence is point-in-time and ephemeral today. A **receipt** is the missing **historical, immutable record** of "what cub-scout observed at time T" — a typed, fingerprinted artifact wrapping the existing evidence (`compareResourceResult`, `compareSourceTruthResult`, attribution, `gitSource`, `bindingSource`) into a verifiable claim that consumers (CI/CD, audit, postmortem, acceptance-judge tooling) can attach to a decision and later prove the inputs were what they claim to be. Receipts are an envelope, not new evidence.
 
-- [ ] v1 foundation — `pkg/agent/receipt.go` types, canonical-JSON, SHA-256 fingerprint, `cub-scout receipt verify` command + ASCII renderer + tests + JSON contract docs — tracked in #446 batch 1
+cub-scout produces the **Runtime-layer (layer 3)** receipt in a four-layer proof model (governance-of-mutation / controller delivery / runtime fact / GUI proof). Layer 3 is cub-scout's territory; the other three layers belong to other tools that compose with cub-scout's output via `inputAttestations[]` digest references. The governance-of-mutation layer (layer 1) currently has no dedicated tool in the ConfigHub stack — concept is in design, out of scope for this issue.
+
+Full design: [`docs/proposals/receipts-way-forward.md`](proposals/receipts-way-forward.md).
+
+- [ ] v1 foundation — `pkg/agent/receipt.go` types, canonical-JSON, SHA-256 fingerprint, in-toto Statement v1 envelope (forward-compat for v2 signing), `cub-scout receipt verify` command + ASCII renderer + tests + JSON contract docs — tracked in #446 batch 1
 - [ ] v1 predicates — `applied-matches-spec` (batch 1), `source-truth-pass`, `no-manual-edits-since` (batch 2) — tracked in #446 batches 1–2
 - [ ] v1 management UX — `receipt show` / `validate` / `list` subcommands — tracked in #446 batch 3
 - [ ] `scout-verify` skill added as 8th verb-group skill in #442
-- [ ] v2 deferrals — signing (Sigstore / cosign / ed25519), external sinks (file / s3 / confighub), composition (multi-subject / aggregate receipts), additional predicates (`no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed`)
+- [ ] v2 deferrals — DSSE signing (cosign keyless + ed25519 fallback), OCI 1.1 referrers sink, composition via `inputAttestations[]` digest chains, additional predicates (`no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed`)
 
-Read-only-triad invariant: receipts emit artifacts, never mutate. Consumers (Pilot, CI/CD, audit log, ConfigHub via separate `cub` upload) decide what to persist. Predicates with missing inputs return `INCONCLUSIVE` rather than `FAILED` — same `parse, don't guess` rule that governs the attribution layer.
+Read-only-triad invariant: receipts emit artifacts, never mutate. Receipts are **immutable** — updates produce new receipts with new fingerprints; old ones never change. The standalone-mode contract holds: cub-scout receipts work without ConfigHub auth, with missing connected-mode evidence recorded as structured `omissions[]` rather than silent failure.
 
-R&D companion: a separate research pass against existing receipt / attestation patterns (Sigstore, SLSA provenance, in-toto, Argo CD signed-image policies, Flux SOPS, Kyverno verifyImages, Pilot verdict shapes) informs v2 signing + composition design without altering v1 scope.
+R&D companion: research pass against existing receipt / attestation patterns (in-toto Statement v1, SLSA Verification Summary Attestation, Sigstore / cosign / Fulcio / Rekor, OCI 1.1 referrers, Kyverno verifyImages + PolicyReport, Tekton Chains, GitHub artifact attestations) — synthesized in `docs/proposals/receipts-way-forward.md`. v2 adopts in-toto Statement v1 + DSSE + cosign without inventing new wire formats.
 
 ### AI Agent Skills (`skills/`, modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills))
 
