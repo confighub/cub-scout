@@ -354,7 +354,21 @@ When `compare three-way` runs against a resource managed by Argo CD or Flux (inc
 | `gitSource.path` | string | Subdirectory within the repo (`spec.path` for Flux Kustomization / `spec.source.path` for Argo). |
 | `gitSource.line` | int | Reserved for stage B (rendering-aware back-resolution); always `0` at A2. |
 
-At A2 the anchor is resource-level — every field mismatch carries the same anchor. Stage B (Helm/Kustomize back-resolution) will refine to per-field anchors with file path + line resolution. Best-effort: omitted when no GitOps owner is detected, when the tracer CLI is unavailable, or when the chain root carries no useful data.
+At A2 the anchor is resource-level — every field mismatch carries the same anchor. Stage B refines to per-field anchors with file path + line resolution when `--source-path <local-checkout>` is passed: cub-scout walks YAML manifests under `<local-checkout>/<gitSource.path>`, finds the document matching the resource's kind/name/namespace, and records the line where the field's canonical path (e.g., `.spec.replicas`) is set.
+
+```json
+"gitSource": {
+  "repoUrl": "https://github.com/org/platform-config",
+  "revision": "abc123def456",
+  "path": "apps/prod/payments",
+  "file": "deployment.yaml",
+  "line": 9
+}
+```
+
+Stage B handles **raw YAML** manifests only — Helm/Kustomize template back-resolution requires rendering-aware mapping that is out of scope. For Helm/Kustomize sources, `file` and `line` remain empty while the resource-level anchor (`repoUrl`, `revision`, `path`) is still populated.
+
+Best-effort: omitted when no GitOps owner is detected, when the tracer CLI is unavailable, when no `--source-path` is provided, or when the chain root carries no useful data.
 
 Source: `pkg/agent/manager_strings.go`, `pkg/agent/field_ownership.go`, `pkg/agent/git_source_anchor.go`
 

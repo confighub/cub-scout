@@ -22,6 +22,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+	"path/filepath"
 	"sigs.k8s.io/yaml"
 )
 
@@ -149,6 +150,11 @@ var (
 	compareDefaultSpaceFn         = detectCompareSpace
 	runCompareCubCommand          = runCompareCubCommandImpl
 )
+
+// compareSourcePath holds the value of --source-path (stage B back-resolution).
+// Read by detectCompareFieldMismatches when populating per-mismatch
+// gitSource.file:line. Empty means no back-resolution is attempted.
+var compareSourcePath string
 
 func runCombinedResourceCompare(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
@@ -901,17 +907,56 @@ func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSide
 			mismatch.ManagerHint = live.Attribution.ManagerHint
 		}
 		// Carry the resource-level git source onto every field mismatch (A2).
-		// Per-field anchors are stage B.
+		// At stage B, attempt to back-resolve a per-field File:Line when a
+		// local source checkout is provided via --source-path. A successful
+		// back-resolution clones the GitSource and sets the new File:Line
+		// so the resource-level anchor is preserved while each mismatch
+		// carries its own per-field provenance.
 		if live.GitSource != nil {
 			mismatch.GitSource = live.GitSource
+			if strings.TrimSpace(compareSourcePath) != "" {
+				if anchor := backResolveFieldGitSource(live, field.Name); anchor != nil {
+					mismatch.GitSource = anchor
+				}
+			}
 		}
 		out = append(out, mismatch)
 	}
 	return out
 }
 
+// backResolveFieldGitSource clones live.GitSource and populates File/Line
+// for the given field name when:
+//   - compareSourcePath is set
+//   - the field name has a canonical-path mapping (compareFieldToPath)
+//   - agent.BackResolveGitSource finds a matching document and field
+//
+// Returns nil when any precondition fails, so callers can fall back to the
+// shared resource-level pointer.
+func backResolveFieldGitSource(live compareSideSummary, fieldName string) *agent.GitSourceAnchor {
+	if strings.TrimSpace(compareSourcePath) == "" || live.GitSource == nil {
+		return nil
+	}
+	canonicalPath, ok := compareFieldToPath[fieldName]
+	if !ok {
+		return nil
+	}
+	root := strings.TrimSpace(compareSourcePath)
+	if subdir := strings.TrimSpace(live.GitSource.Path); subdir != "" {
+		root = filepath.Join(root, subdir)
+	}
+	hit, ok := agent.BackResolveGitSource(root, live.Kind, live.Name, live.Namespace, canonicalPath)
+	if !ok {
+		return nil
+	}
+	clone := *live.GitSource
+	clone.File = hit.File
+	clone.Line = hit.Line
+	return &clone
+}
+
 func renderGitSourceASCII(gs *agent.GitSourceAnchor) string {
-	parts := make([]string, 0, 3)
+	parts := make([]string, 0, 5)
 	if gs.RepoURL != "" {
 		parts = append(parts, gs.RepoURL)
 	}
@@ -921,11 +966,18 @@ func renderGitSourceASCII(gs *agent.GitSourceAnchor) string {
 	if gs.Path != "" {
 		parts = append(parts, "path="+gs.Path)
 	}
+	if gs.File != "" {
+		fileRef := "file=" + gs.File
+		if gs.Line > 0 {
+			fileRef = fmt.Sprintf("file=%s:%d", gs.File, gs.Line)
+		}
+		parts = append(parts, fileRef)
+	}
 	return strings.Join(parts, " ")
 }
 
 func renderGitSourceMarkdown(gs *agent.GitSourceAnchor) string {
-	parts := make([]string, 0, 3)
+	parts := make([]string, 0, 5)
 	if gs.RepoURL != "" {
 		parts = append(parts, "`"+gs.RepoURL+"`")
 	}
@@ -934,6 +986,13 @@ func renderGitSourceMarkdown(gs *agent.GitSourceAnchor) string {
 	}
 	if gs.Path != "" {
 		parts = append(parts, "path=`"+gs.Path+"`")
+	}
+	if gs.File != "" {
+		fileRef := "file=`" + gs.File + "`"
+		if gs.Line > 0 {
+			fileRef = fmt.Sprintf("file=`%s:%d`", gs.File, gs.Line)
+		}
+		parts = append(parts, fileRef)
 	}
 	return strings.Join(parts, " ")
 }

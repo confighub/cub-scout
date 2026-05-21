@@ -146,6 +146,7 @@ func init() {
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayFormat, "format", "ascii", "Output format: ascii, json, md")
 	compareThreeWayCmd.Flags().BoolVar(&compareThreeWayJSON, "json", false, "Output as JSON (shorthand for --format json)")
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning)")
+	compareThreeWayCmd.Flags().StringVar(&compareSourcePath, "source-path", "", "Local git checkout to back-resolve gitSource.file:line for each field mismatch (stage B; raw YAML only)")
 }
 
 func runCompareThreeWay(cmd *cobra.Command, args []string) error {
