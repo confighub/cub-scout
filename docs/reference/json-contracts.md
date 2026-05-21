@@ -358,6 +358,44 @@ At A2 the anchor is resource-level — every field mismatch carries the same anc
 
 Source: `pkg/agent/manager_strings.go`, `pkg/agent/field_ownership.go`, `pkg/agent/git_source_anchor.go`
 
+### Incoming bindings (C1)
+
+When `compare three-way` (or `compare` per-resource) runs in connected mode against a resource whose live unit slug is known, cub-scout queries `cub link list` for incoming Links (where `FromUnitID = <this-unit-id>`) and surfaces them under `incomingBindings`. Each entry describes one ConfigHub Link influencing this unit's config data — the variant-management directed graph as read-only evidence.
+
+```json
+{
+  "incomingBindings": [
+    {
+      "linkId": "01HFK...A1",
+      "slug": "image-from-app",
+      "displayName": "Image From App",
+      "updateType": "NeedsProvides",
+      "toUnitId": "01HFK...XY",
+      "toSpaceId": "01HFK...SP",
+      "autoUpdate": true,
+      "whereResource": "kind=Deployment",
+      "bindingsCount": 3
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `linkId` | string | Unique identifier for the Link entity. |
+| `slug` | string | URL-safe identifier (useful for `cub link get <slug>` follow-up). |
+| `displayName` | string | Human-friendly name when set. |
+| `updateType` | string | Operation kind: `NeedsProvides`, `UpgradeUnits`, `MergeUnits`, `Insert`, `Upsert` (and future `Transform`). |
+| `toUnitId` | string | Upstream (producer) unit ID. |
+| `toSpaceId` | string | Upstream unit's space ID. |
+| `autoUpdate` | bool | True when the link auto-propagates upstream changes downstream. |
+| `whereResource` | string | Filter selecting which upstream resources are eligible for propagation. |
+| `bindingsCount` | int | Number of explicit binding expressions on the link. The per-field expansion of `Bindings` is C2. |
+
+Best-effort: omitted when no live unit is known, when `cub link list` fails, or when the result is empty. C2 will extend this with per-field binding attribution on each `compareFieldMismatch`.
+
+Source: `cmd/cub-scout/compare_bindings.go`
+
 ## MCP Structured Content Contract
 
 When MCP tools return JSON-backed data, the gateway keeps the raw JSON string in `content[0].text`.

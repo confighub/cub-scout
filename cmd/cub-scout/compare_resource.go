@@ -76,6 +76,13 @@ type compareResourceResult struct {
 	Live       compareSideSummary     `json:"live"`
 	Mismatches []compareFieldMismatch `json:"mismatches,omitempty"`
 	Notes      []string               `json:"notes,omitempty"`
+
+	// IncomingBindings lists ConfigHub Links whose downstream (consumer) unit
+	// is this resource's unit — i.e., where its config data is influenced
+	// from. Populated only in connected mode when the live unit slug is
+	// known and the `cub link list` call succeeds (C1 of the attribution
+	// layer, issue #435). Per-field binding attribution is C2.
+	IncomingBindings []IncomingBinding `json:"incomingBindings,omitempty"`
 }
 
 type compareFieldMismatch struct {
@@ -239,7 +246,7 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 				if dryWet.Wet == nil {
 					notes = append(notes, "WET snapshot unavailable for linked unit.")
 				}
-				return finalizeCompareResourceResult(compareResourceResult{
+				return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
 					Resource:  kind + "/" + name,
 					Namespace: ns,
 					Mode:      mode,
@@ -255,7 +262,7 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 		notes = append(notes, "Connect to ConfigHub to unlock DRY/WET/LIVE expected-state comparison.")
 	}
 
-	return finalizeCompareResourceResult(compareResourceResult{
+	return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
 		Resource:  kind + "/" + name,
 		Namespace: ns,
 		Mode:      mode,
@@ -774,6 +781,24 @@ func finalizeCompareResourceResult(result compareResourceResult) compareResource
 	return result
 }
 
+// finalizeCompareResourceResultWithBindings is finalizeCompareResourceResult
+// plus C1 binding enrichment. Called from buildCompareResourceResult where
+// ctx is available; falls through cleanly when the live unit is unknown.
+func finalizeCompareResourceResultWithBindings(ctx context.Context, result compareResourceResult) compareResourceResult {
+	result = finalizeCompareResourceResult(result)
+	if !result.Connected {
+		return result
+	}
+	unitID := strings.TrimSpace(result.Live.UnitID)
+	if unitID == "" {
+		return result
+	}
+	if bindings := collectIncomingBindings(ctx, unitID, result.Live.SpaceName); len(bindings) > 0 {
+		result.IncomingBindings = bindings
+	}
+	return result
+}
+
 func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSideSummary) []compareFieldMismatch {
 	type compareFieldDescriptor struct {
 		Name    string
@@ -980,6 +1005,8 @@ func renderCompareResourceASCII(result compareResourceResult) string {
 		}
 	}
 
+	renderIncomingBindingsASCII(&b, result.IncomingBindings)
+
 	if len(result.Notes) > 0 {
 		b.WriteString("\nNotes:\n")
 		for _, note := range result.Notes {
@@ -1036,6 +1063,8 @@ func renderCompareResourceMarkdown(result compareResourceResult) string {
 		}
 		b.WriteString("\n")
 	}
+
+	renderIncomingBindingsMarkdown(&b, result.IncomingBindings)
 
 	if len(result.Notes) > 0 {
 		b.WriteString("\n### Notes\n\n")
