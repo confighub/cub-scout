@@ -1,0 +1,56 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "k8s-live://apps/v1/Deployment/prod/api",
+      "digest": {
+        "sha256": "595f08ae073d5a9df5fab2deb16e1c151c4d0a20484c3f91891cd657e2a63dda"
+      }
+    }
+  ],
+  "predicateType": "https://cub-scout.dev/receipt/v1",
+  "predicate": {
+    "version": "v1",
+    "claim": "applied matches spec at apps/prod/api",
+    "scope": {
+      "kind": "Deployment",
+      "name": "api",
+      "namespace": "prod",
+      "cluster": "prod-use2"
+    },
+    "verifier": {
+      "tool": "cub-scout",
+      "version": "v0.99.0-receipt-batch-1"
+    },
+    "verifiedAt": "2026-05-21T10:30:00Z",
+    "predicateName": "applied-matches-spec",
+    "spec": {
+      "anchor": {
+        "type": "git",
+        "repoUrl": "https://github.com/org/platform-config",
+        "revision": "abc123def456abc123def456abc123def456abcd",
+        "path": "apps/prod/api"
+      }
+    },
+    "verdict": "INCONCLUSIVE",
+    "evidence": {
+      "attribution": {
+        "cause": "unknown"
+      }
+    },
+    "omissions": [
+      {
+        "missing": "confighub-unit-subject",
+        "reason": "standalone-mode build; no ConfigHub auth available to fetch unit subject",
+        "severity": "info"
+      },
+      {
+        "missing": "git-source-anchor",
+        "reason": "no controller-resolved git anchor on the resource; applied-matches-spec PASS requires a resolvable spec anchor",
+        "severity": "warning"
+      }
+    ],
+    "inputAttestations": [],
+    "fingerprint": "sha256:cf60dc2fa82ed67c13ffacab94e04795c00be6504da93c573040991f12f258fb"
+  }
+}

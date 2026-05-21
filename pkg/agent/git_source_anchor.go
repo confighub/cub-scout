@@ -74,53 +74,117 @@ func (g *GitSourceAnchor) IsEmpty() bool {
 // Best-effort by design: A2 is an enrichment of evidence, not a hard
 // dependency. Callers should treat nil as "no anchor available" rather
 // than an error condition.
+//
+// Implementation note (Codex #446 round-4 fix): the per-controller
+// helpers below pass the *owner* (Argo Application / Flux Kustomization
+// or HelmRelease) to the tracer, not the workload itself. The Argo
+// tracer rejects non-Application kinds; calling it with a Deployment
+// fails with `gitSource=nil` for the entire receipt UX. The trace must
+// be owner-aware, which is exactly what TraceByOwnership on each tracer
+// already implements.
 func CollectGitSourceAnchor(ctx context.Context, obj *unstructured.Unstructured) *GitSourceAnchor {
 	if obj == nil {
 		return nil
 	}
 	owner := DetectOwnership(obj)
+	return CollectGitSourceAnchorForOwner(ctx, obj, owner)
+}
+
+// CollectGitSourceAnchorForOwner is the owner-aware variant used by
+// callers (like the receipt command) that have already detected
+// ownership and want to avoid re-running detection. The tracing branch
+// matches the existing CollectGitSourceAnchor behavior: Argo first for
+// Argo/ConfigHub, Flux fallback for ConfigHub-via-Flux, Flux for Flux.
+func CollectGitSourceAnchorForOwner(ctx context.Context, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
+	if obj == nil {
+		return nil
+	}
 	switch owner.Type {
 	case OwnerArgo, OwnerConfigHub:
 		// ConfigHub-managed resources are delivered by Argo (preferred) or
 		// Flux. Try Argo first; fall through to Flux if the Argo tracer
 		// finds nothing. Treating ConfigHub-via-Flux as a fallback keeps
 		// the common case (ConfigHub-via-Argo) on the fast path.
-		if anchor := collectArgoGitSource(ctx, obj); anchor != nil {
+		if anchor := collectArgoGitSource(ctx, obj, owner); anchor != nil {
 			return anchor
 		}
 		if owner.Type == OwnerConfigHub {
-			return collectFluxGitSource(ctx, obj)
+			return collectFluxGitSource(ctx, obj, owner)
 		}
 		return nil
 	case OwnerFlux:
-		return collectFluxGitSource(ctx, obj)
+		return collectFluxGitSource(ctx, obj, owner)
 	default:
 		return nil
 	}
 }
 
-func collectArgoGitSource(ctx context.Context, obj *unstructured.Unstructured) *GitSourceAnchor {
+func collectArgoGitSource(ctx context.Context, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
 	tr := NewArgoTracer()
 	if !tr.Available() {
 		return nil
 	}
-	res, err := tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
+	res, err := traceArgoForOwner(ctx, tr, obj, owner)
 	if err != nil || res == nil || len(res.Chain) == 0 {
 		return nil
 	}
 	return anchorFromChainRoot(res.Chain[0])
 }
 
-func collectFluxGitSource(ctx context.Context, obj *unstructured.Unstructured) *GitSourceAnchor {
+// traceArgoForOwner dispatches to the right Argo tracer entry point
+// based on what's being traced:
+//
+//   - The Application itself → Trace(kind=Application, ...) — works directly
+//   - A workload owned by an Argo Application → TraceApplication(owner.Name) —
+//     uses the Application name resolved from the workload's labels/
+//     annotations (Codex #446 round-4 fix)
+//   - ConfigHub-managed resources delivered via Argo → same as above
+func traceArgoForOwner(ctx context.Context, tr *ArgoTracer, obj *unstructured.Unstructured, owner Ownership) (*TraceResult, error) {
+	if obj.GetKind() == "Application" {
+		return tr.Trace(ctx, "Application", obj.GetName(), obj.GetNamespace())
+	}
+	// Owner name carries the Argo Application name when the workload was
+	// detected as Argo-owned. For ConfigHub-via-Argo, the same applies —
+	// the ownership detection resolves the upstream Application from
+	// labels/annotations. Standalone-mode Trace would otherwise reject the
+	// non-Application kind.
+	if owner.Name != "" {
+		return tr.TraceApplication(ctx, owner.Name)
+	}
+	// Last resort — let the tracer error tell the caller why we couldn't
+	// resolve the anchor (so they can decide whether to surface the
+	// failure or just record an INCONCLUSIVE receipt).
+	return tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
+}
+
+func collectFluxGitSource(ctx context.Context, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
 	tr := NewFluxTracer()
 	if !tr.Available() {
 		return nil
 	}
-	res, err := tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
+	res, err := traceFluxForOwner(ctx, tr, obj, owner)
 	if err != nil || res == nil || len(res.Chain) == 0 {
 		return nil
 	}
 	return anchorFromChainRoot(res.Chain[0])
+}
+
+// traceFluxForOwner dispatches Flux tracing similarly. Flux's Trace
+// accepts Kustomization / HelmRelease kinds directly, but a workload
+// owned by one must trace via the owner's name + kind. Falls back to
+// the tracer's own Trace(kind, name, ns) for tracer-internal types
+// (HelmRelease, Kustomization) when invoked on those directly.
+func traceFluxForOwner(ctx context.Context, tr *FluxTracer, obj *unstructured.Unstructured, owner Ownership) (*TraceResult, error) {
+	if obj.GetKind() == "Kustomization" || obj.GetKind() == "HelmRelease" {
+		return tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
+	}
+	// For workloads owned by a Flux Kustomization / HelmRelease, use the
+	// owner-aware tracer that already knows the right kind from the
+	// ownership subType.
+	if owner.Type == OwnerFlux && owner.Name != "" {
+		return tr.TraceByOwnership(ctx, owner)
+	}
+	return tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
 }
 
 func anchorFromChainRoot(root ChainLink) *GitSourceAnchor {

@@ -596,6 +596,181 @@ Events are sorted by:
 
 Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 
+## Receipt Contract (`cub-scout receipt verify`)
+
+The receipt surface emits typed, fingerprinted, immutable evidence artifacts
+wrapping cub-scout's existing field-level evidence (compareThreeWay,
+attribution, sourceTruth, gitSource) into a verifiable record. v1 ships
+fingerprint-only (SHA-256 over RFC 8785 canonical JSON of the full in-toto
+Statement v1 envelope minus only `predicate.fingerprint`). v2 will add DSSE
+signing wrapped in Sigstore Bundle v0.3 — purely additive, no envelope change.
+
+Receipts are **historical, immutable records** of past events. Updates produce
+new receipts, never mutate old ones. cub-scout never mutates the cluster or
+ConfigHub.
+
+### Wire Format
+
+The wire format is the **in-toto Statement v1 envelope** (`_type =
+"https://in-toto.io/Statement/v1"`) wrapping the cub-scout predicate URI
+`https://cub-scout.dev/receipt/v1`.
+
+```json
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "k8s-live://apps/v1/Deployment/prod/api",
+      "digest": { "sha256": "..." }
+    }
+  ],
+  "predicateType": "https://cub-scout.dev/receipt/v1",
+  "predicate": {
+    "version": "v1",
+    "claim": "applied matches spec at apps/prod/api",
+    "scope": { "kind": "Deployment", "name": "api", "namespace": "prod" },
+    "verifier": { "tool": "cub-scout", "version": "v2.3.0" },
+    "verifiedAt": "2026-05-21T10:30:00Z",
+    "predicateName": "applied-matches-spec",
+    "spec": {
+      "anchor": {
+        "type": "git",
+        "repoUrl": "https://github.com/org/repo",
+        "revision": "abc123",
+        "path": "apps/prod/api"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": { "attribution": { ... }, "gitSource": { ... } },
+    "omissions": [],
+    "inputAttestations": [],
+    "nextSteps": [
+      {
+        "actionType": "read-only",
+        "reason": "controller is reconciling; spec anchor matches the resolved git source",
+        "nextCommand": "cub-scout explain",
+        "nextSurface": "cub-scout"
+      }
+    ],
+    "fingerprint": "sha256:..."
+  }
+}
+```
+
+### Subjects
+
+| Scheme | When Emitted | Digest Body |
+|--------|--------------|-------------|
+| `k8s-live://<apiVersion>/<kind>/<namespace>/<name>` | Always | SHA-256 over canonical JSON of the live object with dynamic fields pruned (`status`, `metadata.managedFields`, `metadata.resourceVersion`, `metadata.generation`, `metadata.uid`, `metadata.creationTimestamp`) |
+| `confighub-unit://<slug>@rev=<n>` | Connected mode + ConfigHub-linked resource | SHA-256 over the unit canonical body returned by ConfigHub |
+
+Standalone-mode receipts emit only the `k8s-live://` subject and record an
+`OmissionConfigHubUnitSubject` entry in `predicate.omissions`. Connected
+mode with no ConfigHub linkage records the same omission with a different
+reason string.
+
+### Verdicts
+
+| Verdict | Meaning |
+|---------|---------|
+| `PASS` | Evidence supports the claim |
+| `WATCH` | Evidence is ambiguous; situation needs monitoring |
+| `BLOCK` | Evidence contradicts the claim |
+| `INCONCLUSIVE` | Evidence is missing or unavailable; always carries one or more `omissions[]` entries explaining what's missing |
+
+### v1 Batch 1 Predicates
+
+| Predicate | Verdict Logic |
+|-----------|---------------|
+| `applied-matches-spec` | `Spec missing` or `GitSource missing` → INCONCLUSIVE + `OmissionGitSourceAnchor`. `Anchor mismatch (repoUrl/revision/path)` → BLOCK. `Cause = manual-edit` → BLOCK. `Cause = controller-drift` → PASS. `Cause = unknown` or unrecognized → INCONCLUSIVE + `OmissionManagedFields`. |
+
+`source-truth-pass` and `no-manual-edits-since` land in batch 2.
+
+### Auto-Detection Priority
+
+When `--predicate` is not passed, cub-scout picks one based on detected
+ownership AND the resolvability of the git anchor:
+
+1. `OwnerArgo` / `OwnerFlux` / `OwnerConfigHub` **with** a resolved git
+   anchor (`evidence.gitSource` non-nil) → `applied-matches-spec`
+2. Same owners **without** a resolved git anchor → `""` (no predicate) +
+   `OmissionAutoDetectedPredicate` — the predicate evaluator could only
+   emit INCONCLUSIVE anyway, so we record the *missing default* rather
+   than masking the auto-detect-declined-here case as a different
+   omission.
+3. Other owners → `""` + `OmissionAutoDetectedPredicate`.
+
+The result is always an INCONCLUSIVE receipt when auto-detect declines;
+the omission entry names exactly which signal was missing.
+
+### Omissions
+
+Every receipt carries a required `omissions[]` array (possibly empty).
+Each entry explicitly converts a silent PASS into an honest PASS:
+
+| Omission `missing` | Meaning |
+|--------------------|---------|
+| `confighub-unit-subject` | No ConfigHub unit subject available (standalone mode, or connected mode but no linkage) |
+| `managedFields` | Attribution layer returned `cause:unknown` or an unrecognized cause |
+| `git-source-anchor` | No spec anchor or no controller-resolved git anchor |
+| `auto-detected-predicate` | Owner has no v1 default predicate; `--predicate` must be passed |
+| `next-step-allowed-action` | A nextStep with mutating `actionType` was dropped at receipt-emit time |
+| `next-step-allowed-command` | A nextStep with mutating `nextCommand` (apply/edit/patch/delete/sync/create/update/replace/scale/rollout/reconcile) was dropped |
+
+### Read-Only Triad Lock
+
+Receipts emit artifacts; they never mutate. Two static guards enforce this:
+
+1. `TestReceiptPackageReadOnlyClient` (in `cmd/cub-scout/`) scans all
+   `receipt*.go` sources and fails the build if any forbidden mutating
+   K8s client method appears (`.Create(`, `.Update(`, `.UpdateStatus(`,
+   `.Patch(`, `.Apply(`, `.ApplyStatus(`, `.Delete(`, `.DeleteCollection(`).
+2. `FilterNextSteps` in `pkg/agent/receipt_predicates.go` is called on
+   every receipt before fingerprint stamping, and drops any nextStep
+   with a mutating `actionType` or `nextCommand`. Defense in depth.
+
+### Fingerprint Scope
+
+The fingerprint covers the **full Statement** (`_type` + `subject` +
+`predicateType` + `predicate`) with only the `predicate.fingerprint`
+field **removed from the JSON shape** (not zeroed in place). Hashing
+predicate-only would leave `subject`, `predicateType`, and the in-toto
+envelope unprotected; the full-Statement scope closes that. Zeroing the
+field in place would leave a `"fingerprint":""` key in the canonical
+bytes, which a third-party verifier following the contract prose would
+compute differently — so the implementation parses to a generic map and
+deletes the key before canonicalization.
+
+Algorithm: SHA-256 over RFC 8785 JSON Canonicalization Scheme of the
+Statement with the `predicate.fingerprint` key removed. The
+canonicalizer is `github.com/gowebpki/jcs`, the reference Go
+implementation of RFC 8785. The resulting digest is written back as
+`predicate.fingerprint = "sha256:<hex>"`.
+
+The implementation is conformance-tested against RFC 8785 reference
+vectors (`TestCanonicalJSON_RFC8785_ReferenceVectors`) and tamper-
+tested against subject, subject digest, predicateType, verdict,
+omissions, and `_type` mutations.
+
+`VerifyStatementFingerprint(stmt)` recomputes and compares; tamper
+detection on any field except `predicate.fingerprint` will fail
+verification.
+
+### Output Formats
+
+| `--format` | Behavior |
+|------------|----------|
+| `ascii` (default) | Concise one-screen human-readable summary (see `renderReceiptASCII` in `cmd/cub-scout/receipt_render.go`) |
+| `json` | Full in-toto Statement v1 JSON envelope; the canonical machine-readable form |
+
+`--out <path>` always writes the **JSON form** to disk regardless of console
+`--format`. The on-disk artifact is the long-lived evidence; ASCII is for
+human review.
+
+Source: `pkg/agent/receipt*.go`, `cmd/cub-scout/receipt*.go`. See
+`docs/proposals/receipts-way-forward.md` for the full design synthesis and
+the Codex review rounds that locked the wire format.
+
 ## Historical Note
 
 `v0.14-json-schema.md` is preserved for historical reference. It should not be treated as the canonical contract for current releases.

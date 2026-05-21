@@ -1,0 +1,65 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "k8s-live://apps/v1/Deployment/prod/api",
+      "digest": {
+        "sha256": "595f08ae073d5a9df5fab2deb16e1c151c4d0a20484c3f91891cd657e2a63dda"
+      }
+    }
+  ],
+  "predicateType": "https://cub-scout.dev/receipt/v1",
+  "predicate": {
+    "version": "v1",
+    "claim": "applied matches spec at apps/prod/api",
+    "scope": {
+      "kind": "Deployment",
+      "name": "api",
+      "namespace": "prod",
+      "cluster": "prod-use2"
+    },
+    "verifier": {
+      "tool": "cub-scout",
+      "version": "v0.99.0-receipt-batch-1"
+    },
+    "verifiedAt": "2026-05-21T10:30:00Z",
+    "predicateName": "applied-matches-spec",
+    "spec": {
+      "anchor": {
+        "type": "git",
+        "repoUrl": "https://github.com/org/platform-config",
+        "revision": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        "path": "apps/prod/api"
+      }
+    },
+    "verdict": "BLOCK",
+    "evidence": {
+      "attribution": {
+        "cause": "controller-drift",
+        "managerHint": "argocd-controller"
+      },
+      "gitSource": {
+        "repoUrl": "https://github.com/org/platform-config",
+        "revision": "abc123def456abc123def456abc123def456abcd",
+        "path": "apps/prod/api"
+      }
+    },
+    "omissions": [
+      {
+        "missing": "confighub-unit-subject",
+        "reason": "standalone-mode build; no ConfigHub auth available to fetch unit subject",
+        "severity": "info"
+      }
+    ],
+    "inputAttestations": [],
+    "nextSteps": [
+      {
+        "actionType": "read-only",
+        "reason": "controller is tracking https://github.com/org/platform-config@abc123def456abc123def456abc123def456abcd; spec anchor is https://github.com/org/platform-config@deadbeefdeadbeefdeadbeefdeadbeefdeadbeef — investigate the divergence before any apply",
+        "nextCommand": "cub-scout trace",
+        "nextSurface": "cub-scout"
+      }
+    ],
+    "fingerprint": "sha256:bd1564957765f48d03839177028aee4ebebf624e523b477c4a58c567ce0e4afe"
+  }
+}
