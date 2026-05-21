@@ -81,6 +81,22 @@ Coverage gap: cub-scout ships one umbrella `SKILL.md` while `cub` has 23+ scenar
 
 Read-only-triad invariant: every cub-scout skill's `allowed-tools` line stays inside #410/#428. No `apply`/`edit`/`patch`/`delete`/`mutate` patterns anywhere. Skills for `cub` (mutation-capable) belong in [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills), not here.
 
+### Pilot–cub-scout Integration Skills (`skills/pilot-*`)
+
+Consumer-side complement to the AI Agent Skills above: these are scenario skills covering how **Pilot** (the architectural-triad acceptance judge) reads cub-scout's read-only evidence and produces verdicts that gate CD, fleet conformance, drift response, promotion, rollback, compliance, release verification, and event-driven flows. The 9th skill (`pilot-watch-alert-response`) makes `cub-scout watch` the real-time channel into Pilot; implementing it may surface follow-on feature requests against `cub-scout watch` itself (attribution-cause-flip events, source-truth verdict change events, Pilot-shaped event format).
+
+- [ ] `pilot-cd-gate` — pre-deploy gate consuming `compare source-truth` per-strategy verdict — tracked in #444 batch A
+- [ ] `pilot-fleet-conformance` — multi-cluster audit via `compare three-way --scope cluster` + `fleet outliers` — tracked in #444 batch A
+- [ ] `pilot-patch-and-drift` — manual edit + drift attribution → revert / quarantine / accept-as-canonical — tracked in #444 batch A
+- [ ] `pilot-watch-alert-response` — real-time event-driven response over `cub-scout watch` + on-demand call-back into `explain` / `compare three-way` for context — tracked in #444 batch A
+- [ ] `pilot-incident-evidence` — postmortem evidence package from `trace` + `explain` + attribution + events + `bundle` — tracked in #444 batch A
+- [ ] `pilot-rollback-decision` — when and which revision to roll back to — tracked in #444 batch B
+- [ ] `pilot-promotion-gate` — variant A → variant B promotion safety via per-variant three-way + `bindingSource` — tracked in #444 batch B
+- [ ] `pilot-compliance-audit` — periodic policy conformance via scope-wide source-truth + `scan` findings — tracked in #444 batch B
+- [ ] `pilot-release-verification` — post-deploy validation via three-way + `bindingSource` + `history` since deploy — tracked in #444 batch B
+
+Same read-only-triad invariant applies: every `pilot-*` skill's `allowed-tools` stays in the read set. Pilot itself may mutate (via `cub` / Argo / Flux / whatever), but the cub-scout skill surface stays witness-shaped.
+
 ### Scale and Testing
 
 - [x] Production-scale E2E testing (500+ resources, mixed ownership, deep hierarchies) — resolved by #155, #156
