@@ -69,6 +69,18 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] Config-based custom ownership detectors (YAML, no Go required) — graduated to #233
 - [x] Config-based CRD watching (YAML resource registration for map/watch; status extraction fields reserved) — graduated to #311
 
+### AI Agent Skills (`skills/`, modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills))
+
+Coverage gap: cub-scout ships one umbrella `SKILL.md` while `cub` has 23+ scenario-grouped skills in the reference repo. AI agents picking the right cub-scout verb (`doctor` / `map` / `trace` / `compare three-way` / `compare source-truth` / `explain` / `import …` / `views …` / `mcp serve` / …) have to navigate every verb through one router, diluting triggering accuracy. The attribution layer (#435) added a whole evidence surface with no dedicated skill rules.
+
+- [ ] Scaffolding — `SKILL_TEMPLATE.md`, top-level `skills/README.md` router, read-only-triad allowed-tools convention — tracked in #442 batch 1
+- [ ] Verb-grouped scenario skills (7) — `scout-observe` / `scout-diagnose` / `scout-compare` / `scout-attribute` / `scout-ingest` / `scout-govern` / `scout-mcp` — tracked in #442 batches 1–2
+- [ ] Controller observer skills (7) — `observe-argocd` / `observe-flux` / `observe-helm` / `observe-crossplane` / `observe-kro` / `observe-confighub-managed` / `observe-native` — tracked in #442 batch 3
+- [ ] Workflow / scenario skills (8) — `triage-unhealthy-workload` / `investigate-drift` / `audit-fleet-conformance` / `prepare-for-confighub` / `migrate-from-kubectl` / `ai-agent-readonly-context` / `operator-incident-evidence` / `confighub-source-truth` — tracked in #442 batch 4
+- [ ] Shared references (9) — `kubernetes-managedfields` / `verified-manager-strings` / `source-truth-strategies` / `standalone-vs-connected` / `read-only-triad` / `plugin-vs-standalone` / `argocd-applicationset` / `flux-source-types` / `mcp-tool-catalog` — tracked in #442 batches 1, 5
+
+Read-only-triad invariant: every cub-scout skill's `allowed-tools` line stays inside #410/#428. No `apply`/`edit`/`patch`/`delete`/`mutate` patterns anywhere. Skills for `cub` (mutation-capable) belong in [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills), not here.
+
 ### Scale and Testing
 
 - [x] Production-scale E2E testing (500+ resources, mixed ownership, deep hierarchies) — resolved by #155, #156
