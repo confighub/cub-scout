@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,6 +44,26 @@ type compareSideSummary struct {
 	Images                 []string `json:"images,omitempty"`
 	LabelCount             int      `json:"labelCount,omitempty"`
 	AnnotationCount        int      `json:"annotationCount,omitempty"`
+
+	// Attribution carries the resource-level mutation-source classification
+	// computed from metadata.managedFields. Only populated on the live side
+	// (Source == "cluster"); dry/wet sides do not have managedFields data.
+	Attribution *agent.FieldMutationAttribution `json:"attribution,omitempty"`
+
+	// AttributionByPath carries per-field-path mutation-source classification
+	// keyed by canonical field-path strings (e.g., ".spec.replicas"). Populated
+	// when managedFields entries include decodable FieldsV1 data. Used by the
+	// mismatch detector to give per-field cause/managerHint, falling back to
+	// Attribution above when a field doesn't map to a known path.
+	AttributionByPath map[string]agent.FieldMutationAttribution `json:"attributionByPath,omitempty"`
+
+	// GitSource is the source-control anchor (repo URL, revision, path) the
+	// GitOps controller is reconciling from. Resolved at A2 via the existing
+	// Argo / Flux tracers; nil when no GitOps owner is detected, when tracer
+	// CLIs are unavailable, or when the chain root carries no useful data.
+	// Stage B will refine to per-field anchors (file path + line) via
+	// rendering-aware back-resolution.
+	GitSource *agent.GitSourceAnchor `json:"gitSource,omitempty"`
 }
 
 type compareResourceResult struct {
@@ -62,6 +83,21 @@ type compareFieldMismatch struct {
 	Dry   string `json:"dry"`
 	Wet   string `json:"wet"`
 	Live  string `json:"live"`
+
+	// Cause classifies the mutation source for this field mismatch. At A1
+	// the same value is set for every mismatch on a resource (resource-level
+	// classification from managedFields + ownership co-signal). A1.5 will
+	// refine to per-field-path resolution.
+	Cause agent.FieldMutationCause `json:"cause,omitempty"`
+
+	// ManagerHint is a representative manager string for transparency — see
+	// agent.FieldMutationAttribution.ManagerHint.
+	ManagerHint string `json:"managerHint,omitempty"`
+
+	// GitSource is the source-control anchor (repo URL, revision, path) for
+	// this field's value, copied from the resource-level GitSource at A2.
+	// Per-field anchors (different paths/lines per field) are stage B.
+	GitSource *agent.GitSourceAnchor `json:"gitSource,omitempty"`
 }
 
 type compareResourceRef struct {
@@ -560,6 +596,9 @@ func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) 
 	}
 
 	summary := summarizeCompareLiveObject(obj)
+	if anchor := agent.CollectGitSourceAnchor(ctx, obj); anchor != nil {
+		summary.GitSource = anchor
+	}
 	if summary.UnitSlug != "" {
 		return summary, nil
 	}
@@ -620,6 +659,18 @@ func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSumma
 	if replicas, ok, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas"); ok {
 		out.Replicas = &replicas
 	}
+
+	// Compute mutation-source attribution from metadata.managedFields, using
+	// the owner detected from labels/annotations as the co-signal. See
+	// pkg/agent/field_ownership.go. AttributeFieldsByManagedFields also
+	// returns per-field-path classifications when FieldsV1 data is present.
+	owner := agent.DetectOwnership(obj)
+	resourceAttr, byPath := agent.AttributeFieldsByManagedFields(obj, owner)
+	out.Attribution = &resourceAttr
+	if len(byPath) > 0 {
+		out.AttributionByPath = byPath
+	}
+
 	return out
 }
 
@@ -784,14 +835,86 @@ func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSide
 		if !compareFieldHasDivergence(dryValue, wetValue, liveValue) {
 			continue
 		}
-		out = append(out, compareFieldMismatch{
+		mismatch := compareFieldMismatch{
 			Field: field.Name,
 			Dry:   displayCompareFieldValue(dryValue),
 			Wet:   displayCompareFieldValue(wetValue),
 			Live:  displayCompareFieldValue(liveValue),
-		})
+		}
+		// Prefer per-field-path attribution (A1.5); fall back to the
+		// resource-level rollup (A1) when no per-path entry is available
+		// (e.g., for fields like "images" that don't map to a single path,
+		// or when FieldsV1 data is missing from managedFields).
+		if attr, ok := lookupFieldAttribution(field.Name, live); ok {
+			mismatch.Cause = attr.Cause
+			mismatch.ManagerHint = attr.ManagerHint
+		} else if live.Attribution != nil {
+			mismatch.Cause = live.Attribution.Cause
+			mismatch.ManagerHint = live.Attribution.ManagerHint
+		}
+		// Carry the resource-level git source onto every field mismatch (A2).
+		// Per-field anchors are stage B.
+		if live.GitSource != nil {
+			mismatch.GitSource = live.GitSource
+		}
+		out = append(out, mismatch)
 	}
 	return out
+}
+
+func renderGitSourceASCII(gs *agent.GitSourceAnchor) string {
+	parts := make([]string, 0, 3)
+	if gs.RepoURL != "" {
+		parts = append(parts, gs.RepoURL)
+	}
+	if gs.Revision != "" {
+		parts = append(parts, "@"+gs.Revision)
+	}
+	if gs.Path != "" {
+		parts = append(parts, "path="+gs.Path)
+	}
+	return strings.Join(parts, " ")
+}
+
+func renderGitSourceMarkdown(gs *agent.GitSourceAnchor) string {
+	parts := make([]string, 0, 3)
+	if gs.RepoURL != "" {
+		parts = append(parts, "`"+gs.RepoURL+"`")
+	}
+	if gs.Revision != "" {
+		parts = append(parts, "@`"+gs.Revision+"`")
+	}
+	if gs.Path != "" {
+		parts = append(parts, "path=`"+gs.Path+"`")
+	}
+	return strings.Join(parts, " ")
+}
+
+// compareFieldToPath maps a compareFieldMismatch.Field name to the canonical
+// metadata.managedFields path string used by sigs.k8s.io/structured-merge-diff/v4
+// fieldpath.Path.String. Fields without a single canonical path (e.g., "images"
+// which spreads across container list items) are intentionally absent from
+// this map and fall back to resource-level attribution.
+var compareFieldToPath = map[string]string{
+	"apiVersion": ".apiVersion",
+	"kind":       ".kind",
+	"namespace":  ".metadata.namespace",
+	"replicas":   ".spec.replicas",
+}
+
+func lookupFieldAttribution(fieldName string, live compareSideSummary) (agent.FieldMutationAttribution, bool) {
+	if len(live.AttributionByPath) == 0 {
+		return agent.FieldMutationAttribution{}, false
+	}
+	path, ok := compareFieldToPath[fieldName]
+	if !ok {
+		return agent.FieldMutationAttribution{}, false
+	}
+	attr, ok := live.AttributionByPath[path]
+	if !ok || attr.Cause == "" {
+		return agent.FieldMutationAttribution{}, false
+	}
+	return attr, true
 }
 
 func compareFieldHasDivergence(values ...string) bool {
@@ -839,6 +962,17 @@ func renderCompareResourceASCII(result compareResourceResult) string {
 	}
 	renderCompareASCIISection(&b, "LIVE (cluster)", result.Live)
 	if len(result.Mismatches) > 0 {
+		if attr := result.Live.Attribution; attr != nil && attr.Cause != "" {
+			b.WriteString(fmt.Sprintf("\nDrift cause: %s", attr.Cause))
+			if attr.ManagerHint != "" {
+				b.WriteString(fmt.Sprintf(" (manager: %s)", attr.ManagerHint))
+			}
+			b.WriteString("\n")
+		}
+		if gs := result.Live.GitSource; gs != nil && !gs.IsEmpty() {
+			b.WriteString(fmt.Sprintf("Git source: %s", renderGitSourceASCII(gs)))
+			b.WriteString("\n")
+		}
 		b.WriteString("\nDiff Highlights\n")
 		for _, mismatch := range result.Mismatches {
 			b.WriteString(fmt.Sprintf("  - %s: DRY=%s | WET=%s | LIVE=%s\n",
@@ -880,6 +1014,16 @@ func renderCompareResourceMarkdown(result compareResourceResult) string {
 	renderCompareMarkdownSection(&b, "LIVE (cluster)", result.Live)
 	if len(result.Mismatches) > 0 {
 		b.WriteString("\n### Mismatches\n\n")
+		if attr := result.Live.Attribution; attr != nil && attr.Cause != "" {
+			b.WriteString(fmt.Sprintf("Drift cause: `%s`", attr.Cause))
+			if attr.ManagerHint != "" {
+				b.WriteString(fmt.Sprintf(" (manager: `%s`)", attr.ManagerHint))
+			}
+			b.WriteString("\n\n")
+		}
+		if gs := result.Live.GitSource; gs != nil && !gs.IsEmpty() {
+			b.WriteString(fmt.Sprintf("Git source: %s\n\n", renderGitSourceMarkdown(gs)))
+		}
 		b.WriteString("| Field | DRY | WET | LIVE |\n")
 		b.WriteString("|---|---|---|---|\n")
 		for _, mismatch := range result.Mismatches {

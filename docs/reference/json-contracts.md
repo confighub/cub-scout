@@ -256,6 +256,108 @@ When `compare three-way --format json` is used, the JSON output includes `summar
 
 Source: `cmd/cub-scout/three_way.go`, `cmd/cub-scout/compare_three_way.go`
 
+## Field Mutation Attribution Contract
+
+When `compare three-way` and `explain` are run in connected mode (and the live cluster is reachable), each field mismatch is annotated with a `cause` classifying the mutation source — controller drift vs manual edit — derived from K8s `metadata.managedFields` co-signaled with the resource owner detected from labels and annotations. This is the first stage of the attribution layer; see `pkg/agent/field_ownership.go`.
+
+### compareFieldMismatch additions (compare three-way / compare three-way per-resource)
+
+```json
+{
+  "mismatches": [
+    {
+      "field": "replicas",
+      "dry": "3",
+      "wet": "3",
+      "live": "1",
+      "cause": "manual-edit",
+      "managerHint": "kubectl-edit"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `cause` | string enum | `controller-drift`, `manual-edit`, or `unknown`. Omitted when classification yields no signal. |
+| `managerHint` | string | Representative manager string from `metadata.managedFields` for transparency. Omitted when no manager string was identified. |
+
+When the live K8s resource has decodable `FieldsV1` data in `metadata.managedFields`, `cause` and `managerHint` are resolved **per-field-path** (A1.5) — each field mismatch gets the classification specific to its path. When `FieldsV1` is absent or the field name doesn't map to a single canonical path (e.g., `images` which spans container list items), the classifier falls back to the resource-level rollup (A1).
+
+The per-field-path map is also exposed under `live.attributionByPath`, keyed by canonical path strings as rendered by `sigs.k8s.io/structured-merge-diff/v4/fieldpath.Path.String` (for example `.spec.replicas` or `.spec.template.spec.containers[name="api"].image`).
+
+### Cause values
+
+| Value | Meaning |
+|-------|---------|
+| `controller-drift` | The resource's expected GitOps/orchestration controller (per `pkg/agent/ownership.go`) is reconciling fields. A mismatch with desired state is likely transient. |
+| `manual-edit` | A `kubectl-*` or other interactive tool has written fields. Includes the mixed case where both a controller and an interactive tool have managed fields. |
+| `unknown` | The cause cannot be confidently determined — `managedFields` missing/empty, or only unrecognized manager strings present. Omitted from JSON output. |
+
+### ExplainSummary additions (explain --format json)
+
+```json
+{
+  "resource": "Deployment/api",
+  "namespace": "prod",
+  "owner": "ArgoCD",
+  "drift": "Detected by ConfigHub",
+  "mutationCause": "manual-edit",
+  "mutationManager": "kubectl-edit"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `mutationCause` | string enum | Same enum as `cause` above. Best-effort; omitted on fetch failure or when no signal is present. |
+| `mutationManager` | string | Representative manager string for transparency. |
+
+### Verified manager strings
+
+The classifier matches against a verified enumeration of upstream field-manager strings — sources documented in `pkg/agent/manager_strings.go`. Strings not in the enumeration fall through to `unknown` rather than being guessed. Recognized sources include Argo CD, Flux (kustomize / helm / source controllers), Helm direct, Crossplane (composite / composed / claim / MRD / reference resolver), kro (applyset / applyset-parent / labeller), and `kubectl-*` interactive paths.
+
+### Git source anchor (A2)
+
+When `compare three-way` runs against a resource managed by Argo CD or Flux (including ConfigHub-delivered-via-GitOps), the resource-level git source anchor is collected via the existing tracers (`pkg/agent/argo_trace.go`, `pkg/agent/flux_trace.go`) and surfaced on both the live side and each field mismatch.
+
+```json
+{
+  "live": {
+    "gitSource": {
+      "repoUrl": "https://github.com/org/platform-config",
+      "revision": "abc123def456",
+      "path": "apps/prod/payments"
+    }
+  },
+  "mismatches": [
+    {
+      "field": "replicas",
+      "dry": "3",
+      "wet": "3",
+      "live": "1",
+      "cause": "manual-edit",
+      "managerHint": "kubectl-edit",
+      "gitSource": {
+        "repoUrl": "https://github.com/org/platform-config",
+        "revision": "abc123def456",
+        "path": "apps/prod/payments"
+      }
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `gitSource.repoUrl` | string | Source repository URL (`spec.url` for Flux GitRepository / `spec.source.repoURL` for Argo Application). |
+| `gitSource.revision` | string | Observed commit SHA, tag, or OCI digest. |
+| `gitSource.path` | string | Subdirectory within the repo (`spec.path` for Flux Kustomization / `spec.source.path` for Argo). |
+| `gitSource.line` | int | Reserved for stage B (rendering-aware back-resolution); always `0` at A2. |
+
+At A2 the anchor is resource-level — every field mismatch carries the same anchor. Stage B (Helm/Kustomize back-resolution) will refine to per-field anchors with file path + line resolution. Best-effort: omitted when no GitOps owner is detected, when the tracer CLI is unavailable, or when the chain root carries no useful data.
+
+Source: `pkg/agent/manager_strings.go`, `pkg/agent/field_ownership.go`, `pkg/agent/git_source_anchor.go`
+
 ## MCP Structured Content Contract
 
 When MCP tools return JSON-backed data, the gateway keeps the raw JSON string in `content[0].text`.

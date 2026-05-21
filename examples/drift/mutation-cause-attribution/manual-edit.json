@@ -1,0 +1,48 @@
+{
+  "resource": "Deployment/api",
+  "namespace": "prod",
+  "mode": "dry-wet-live",
+  "connected": true,
+  "dry": {
+    "source": "confighub-dry",
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "name": "api",
+    "namespace": "prod",
+    "replicas": 3
+  },
+  "wet": {
+    "source": "confighub-wet",
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "name": "api",
+    "namespace": "prod",
+    "replicas": 3
+  },
+  "live": {
+    "source": "cluster",
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "name": "api",
+    "namespace": "prod",
+    "replicas": 1,
+    "attribution": {
+      "cause": "manual-edit",
+      "managerHint": "kubectl-edit",
+      "managers": [
+        "argocd-application-controller",
+        "kubectl-edit"
+      ]
+    }
+  },
+  "mismatches": [
+    {
+      "field": "replicas",
+      "dry": "3",
+      "wet": "3",
+      "live": "1",
+      "cause": "manual-edit",
+      "managerHint": "kubectl-edit"
+    }
+  ]
+}

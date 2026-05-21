@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -151,7 +153,45 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 		summary.ThreeWay = threeWay
 	}
 
+	// Attribute the cause of any recent field mutations from metadata.managedFields.
+	// Best-effort — silently skipped on fetch failure, so explain still works
+	// without cluster access. Per the parse-don't-guess rule, missing or
+	// unrecognized signals yield CauseUnknown rather than misclassification.
+	if attr, ok := fetchResourceAttribution(ctx, ns, kind, name); ok && attr.Cause != "" {
+		summary.MutationCause = attr.Cause
+		summary.MutationManager = attr.ManagerHint
+	}
+
 	return summary, nil
+}
+
+// fetchResourceAttribution loads the live resource and computes mutation-source
+// attribution from metadata.managedFields. Returns false on any fetch or
+// classification failure — attribution is purely additive evidence and must
+// not block explain output.
+func fetchResourceAttribution(ctx context.Context, namespace, kind, name string) (agent.FieldMutationAttribution, bool) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return agent.FieldMutationAttribution{}, false
+	}
+
+	gvr := kindToGVR(kind)
+	if gvr.Resource == "" {
+		return agent.FieldMutationAttribution{}, false
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return agent.FieldMutationAttribution{}, false
+	}
+
+	obj, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
+	if err != nil {
+		return agent.FieldMutationAttribution{}, false
+	}
+
+	owner := agent.DetectOwnership(obj)
+	return agent.AttributeFieldMutation(obj, owner), true
 }
 
 // fetchResourceEvents fetches recent events for a resource.
