@@ -256,16 +256,39 @@ Resolved in priority order:
 
 The store is **immutable**: re-running verify on the same resource at the same instant with the same fingerprint produces the same canonical filename → "already saved" warning and exit 0. The on-disk artifact never changes.
 
-## v2 (deferred)
+## v2 surface (CI / agent shaped)
 
-Currently NOT in cub-scout, tracked in #448 / #449:
+Three v2 extensions layer on top of the v1 envelope without changing the wire format:
+
+- **`--fail-on <verdict-list>` on `receipt verify`** (`#451`) — exit non-zero (code 2) when the verdict matches. Accepts `WATCH`, `BLOCK`, `INCONCLUSIVE` (comma-separated) or the sugar `any-non-pass`. The receipt is still printed / saved / written to `--out` — the gate fires AFTER the artifact is durable.
+- **`--input-attestation <path>` chained receipts** (`#448` chained half) — repeatable; each referenced receipt is loaded + fingerprint-verified + attached to the new receipt's `inputAttestations[]`. Tampered references refused at chain-construction time. The downstream fingerprint covers the field by construction.
+- **`cub-scout watch --emit-receipt-on <event-types>`** (`#449`) — attaches a receipt to each matching event payload inline (JSONL or webhook). v1 of the flag builds receipts for `drift.detected` and `ownership.changed` (highest signal); other event types pass through silently. Failures are non-fatal.
+
+```bash
+# CI gate
+./cub-scout receipt verify deploy/api -n prod --fail-on any-non-pass
+
+# Chain a per-resource receipt with an upstream "release gate passed" one
+./cub-scout receipt verify deploy/api -n prod \
+  --input-attestation ./release-gate.receipt.json \
+  --save
+
+# Streaming acceptance: each drift event becomes a fingerprinted receipt
+./cub-scout watch -n prod \
+  --output-file ./acceptance.jsonl \
+  --emit-receipt-on drift.detected,ownership.changed
+```
+
+## v2 still deferred
+
+Not yet in cub-scout:
 
 - DSSE signing wrapped in **Sigstore Bundle v0.3** (cosign keyless + ed25519 fallback) — purely additive on the existing envelope
-- Aggregate / chained receipts via `inputAttestations[]` digest references
-- `cub-scout watch --emit-receipt-on <event>` for event-driven receipt generation
-- `--fail-on RECEIPT_VERDICT` exit code for CI gates that gate on verdict
+- Aggregate-with-discovery half of `#448` — `cub-scout receipt verify --scope namespace/<ns>` that emits N per-resource receipts + 1 aggregate via `synthetic-aggregate://` subject + max-severity verdict synthesis
+- Backpressure / batching for high-frequency `--emit-receipt-on` events (Codex round-1 open question on `#449`)
+- `resource.discovered` / `scan.finding` event-type support for `--emit-receipt-on` (would flood on first poll; deferred pending the backpressure design)
 
-v1 ships fingerprint-only and is honest about it — the contract is in `docs/reference/json-contracts.md` § Receipt Contract.
+v1 ships fingerprint-only and v2 is honest about what's not yet there — the contract is in `docs/reference/json-contracts.md` § Receipt Contract.
 
 ## References
 

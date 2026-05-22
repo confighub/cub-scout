@@ -1,0 +1,247 @@
+// Copyright (C) ConfigHub, Inc.
+// SPDX-License-Identifier: MIT
+
+package main
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/confighub/cub-scout/pkg/agent"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
+)
+
+// watch_receipt.go — receipt emission on watch events (#449).
+//
+// `--emit-receipt-on <event-types>` accepts a comma-separated list of
+// watch event type names. When buildWatchEvents produces an event of a
+// matching type, attachReceiptsIfRequested loads the live resource and
+// runs an in-process BuildReceipt to attach the in-toto Statement to
+// the event payload. Failures are logged and non-fatal: the underlying
+// watch event still emits with receipt=null.
+//
+// Predicate mapping (#449 v1, locked):
+//
+//	drift.detected     → applied-matches-spec
+//	ownership.changed  → applied-matches-spec
+//	scan.finding       → skipped (would flood on initial finding burst)
+//	resource.discovered → skipped (every first-poll discovery would emit)
+//
+// The skipped event types still accept the flag (so `--emit-receipt-on all`
+// is a valid sugar) but produce nil receipts with no error — the watch
+// stream is unchanged.
+
+// watchEventTypeAll is the sugar value for `--emit-receipt-on` that
+// covers every known watch event type. New event types added to
+// buildWatchEvents automatically participate.
+const watchEventTypeAll = "all"
+
+// watchKnownEventTypes is the closed list of event types
+// buildWatchEvents emits. Used to validate the --emit-receipt-on flag
+// upfront so CI gates don't silently accept typos.
+var watchKnownEventTypes = []string{
+	"resource.discovered",
+	"ownership.changed",
+	"drift.detected",
+	"scan.finding",
+}
+
+// watchEventTypesWithReceiptSupport names the subset of event types for
+// which #449 v1 actually builds a receipt. The flag accepts other
+// types for forward-compat, but receipt-build is a no-op for them in
+// v1 — the rationale lives in watch_receipt.go's package doc.
+var watchEventTypesWithReceiptSupport = map[string]bool{
+	"drift.detected":    true,
+	"ownership.changed": true,
+}
+
+// parseWatchEmitReceiptOn parses the --emit-receipt-on flag value into
+// the set of event types that should trigger receipt emission. Empty
+// input returns nil (feature disabled).
+//
+// Accepts:
+//   - "" — feature disabled, returns nil set
+//   - "all" — every entry in watchKnownEventTypes
+//   - comma-separated subset of watchKnownEventTypes
+//
+// Unknown event types are rejected upfront. Same rationale as
+// parseReceiptFailOn: CI gates shouldn't silently accept typos.
+func parseWatchEmitReceiptOn(raw string) (map[string]bool, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return nil, nil
+	}
+	if strings.EqualFold(trimmed, watchEventTypeAll) {
+		out := make(map[string]bool, len(watchKnownEventTypes))
+		for _, t := range watchKnownEventTypes {
+			out[t] = true
+		}
+		return out, nil
+	}
+
+	known := map[string]bool{}
+	for _, t := range watchKnownEventTypes {
+		known[t] = true
+	}
+
+	out := map[string]bool{}
+	for _, part := range strings.Split(raw, ",") {
+		t := strings.TrimSpace(part)
+		if t == "" {
+			continue
+		}
+		if !known[t] {
+			return nil, fmt.Errorf(
+				"--emit-receipt-on %q: unknown event type %q (valid: %s, or the sugar 'all')",
+				raw, t, strings.Join(watchKnownEventTypes, ", "),
+			)
+		}
+		out[t] = true
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("--emit-receipt-on %q resolved to empty event-type set", raw)
+	}
+	return out, nil
+}
+
+// attachReceiptsIfRequested walks events and, for each one whose type
+// is in `emitOn` AND whose type has receipt-build support
+// (watchEventTypesWithReceiptSupport), builds a receipt and attaches
+// it to event.Receipt. The receipt-build call goes through the same
+// loadReceiptLiveFn seam tests already swap; production hits the
+// dynamic client.
+//
+// Failures are logged to stderr (`warnFn`) and non-fatal — the
+// underlying event still emits with Receipt=nil.
+func attachReceiptsIfRequested(
+	ctx context.Context,
+	events []watchEvent,
+	emitOn map[string]bool,
+	dynClient dynamic.Interface,
+	connected bool,
+	warnFn func(format string, args ...interface{}),
+) []watchEvent {
+	if len(emitOn) == 0 || len(events) == 0 {
+		return events
+	}
+	for i := range events {
+		if !emitOn[events[i].Type] {
+			continue
+		}
+		if !watchEventTypesWithReceiptSupport[events[i].Type] {
+			// Caller asked us to consider this event type, but v1
+			// support is narrow; skip with no warning (the doc on
+			// --emit-receipt-on tells the user this is expected).
+			continue
+		}
+		stmt, err := watchBuildReceiptForEventFn(ctx, events[i], dynClient, connected)
+		if err != nil {
+			if warnFn != nil {
+				warnFn("receipt build for %s/%s in %s (%s) failed: %v",
+					events[i].Resource.Kind, events[i].Resource.Name, events[i].Resource.Namespace,
+					events[i].Type, err)
+			}
+			continue
+		}
+		events[i].Receipt = stmt
+	}
+	return events
+}
+
+// watchBuildReceiptForEventFn is the function-variable seam tests swap
+// to inject prefab receipts. Production wires it to
+// watchBuildReceiptForEvent below.
+var watchBuildReceiptForEventFn = watchBuildReceiptForEvent
+
+// watchBuildReceiptForEvent loads the live resource named by the event
+// and runs an in-process BuildReceipt with the applied-matches-spec
+// predicate auto-detected from owner. Reuses the same evidence-
+// collection helpers `cub-scout receipt verify` uses
+// (DetectOwnership, AttributeFieldMutation, CollectGitSourceAnchorForOwner).
+//
+// Returns a Statement pointer (so the JSON shape is `receipt: { ... }`
+// or `receipt: null`, never an empty object).
+func watchBuildReceiptForEvent(
+	ctx context.Context,
+	event watchEvent,
+	dynClient dynamic.Interface,
+	connected bool,
+) (*agent.Statement, error) {
+	kind := strings.TrimSpace(event.Resource.Kind)
+	name := strings.TrimSpace(event.Resource.Name)
+	namespace := strings.TrimSpace(event.Resource.Namespace)
+	if kind == "" || name == "" {
+		return nil, fmt.Errorf("event missing kind/name: %+v", event.Resource)
+	}
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	live, err := loadLiveForWatchReceiptFn(ctx, dynClient, kind, name, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("load live %s/%s in %s: %w", kind, name, namespace, err)
+	}
+
+	owner := agent.DetectOwnership(live)
+	attribution := agent.AttributeFieldMutation(live, owner)
+	gitSource := agent.CollectGitSourceAnchorForOwner(ctx, live, owner)
+
+	evidence := agent.Evidence{
+		Attribution: &attribution,
+		GitSource:   gitSource,
+	}
+
+	var spec *agent.SpecAnchor
+	if gitSource != nil {
+		spec = &agent.SpecAnchor{
+			Anchor: agent.SpecAnchorBody{
+				Type:     "git",
+				RepoURL:  gitSource.RepoURL,
+				Revision: gitSource.Revision,
+				Path:     gitSource.Path,
+			},
+		}
+	}
+
+	stmt, err := agent.BuildReceipt(agent.BuildReceiptInput{
+		Live: live,
+		Scope: agent.Scope{
+			Kind:      kind,
+			Name:      name,
+			Namespace: namespace,
+		},
+		Owner:     owner,
+		Spec:      spec,
+		Evidence:  evidence,
+		Connected: connected,
+		Verifier: agent.Verifier{
+			Tool:    "cub-scout",
+			Version: BuildTag,
+		},
+		VerifiedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("build receipt: %w", err)
+	}
+	return &stmt, nil
+}
+
+// loadLiveForWatchReceipt fetches the live K8s object via the dynamic
+// client. Tests can override via the loadLiveForWatchReceiptFn seam.
+var loadLiveForWatchReceiptFn = loadLiveForWatchReceipt
+
+func loadLiveForWatchReceipt(
+	ctx context.Context,
+	dynClient dynamic.Interface,
+	kind, name, namespace string,
+) (*unstructured.Unstructured, error) {
+	gvr := kindToGVR(kind)
+	if gvr.Resource == "" {
+		return nil, fmt.Errorf("unsupported kind %q", kind)
+	}
+	return dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
+}

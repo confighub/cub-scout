@@ -836,6 +836,7 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 | `--severity` | Finding severity filter (`critical,warning,info`) |
 | `--once` | Run one collection cycle and exit |
 | `--max-queued-events` | Max buffered events while webhook is unreachable |
+| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to (`drift.detected`, `ownership.changed`, or sugar `all`). Receipt-build failures are non-fatal: the watch event still emits with `receipt: null` and a stderr warning. (#449 v1: only `drift.detected` and `ownership.changed` actually build a receipt; other types pass through silently.) |
 
 ### Event Types
 
@@ -2466,6 +2467,8 @@ cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
 | `--since` | RFC 3339 cutoff timestamp for `no-manual-edits-since` (e.g. `2026-05-22T00:00:00Z`). |
 | `--format` | Output format: `ascii` (default, one-screen human summary) or `json` (canonical in-toto Statement v1 envelope) |
 | `--out` | Write the receipt to this file path. Always JSON regardless of `--format` — disk is the long-lived artifact. **Overwrites existing files** (this is the non-immutable, ad-hoc-path contract). Paths under the resolved receipt store are **rejected** — use `--save` for store writes (which are immutable; see below). |
+| `--fail-on` | (v2 `#451`) Exit non-zero (code 2) when the receipt verdict matches. Accepts a comma-separated list of verdicts (`WATCH`, `BLOCK`, `INCONCLUSIVE`) or the sugar `any-non-pass` (= `WATCH,BLOCK,INCONCLUSIVE`). The receipt is still printed / saved / written to `--out` regardless of exit code. `--fail-on PASS` is rejected upfront. |
+| `--input-attestation` | (v2 `#448`) Path to a prior receipt to reference via `predicate.inputAttestations[]` (repeatable for chains). Each referenced receipt's fingerprint is verified at chain-construction time; tampered receipts are refused. The new receipt's fingerprint covers the `inputAttestations[]` field by construction. |
 
 v1 predicates:
 

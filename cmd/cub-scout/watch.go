@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -33,6 +34,7 @@ var (
 	watchSeverity        string
 	watchOnce            bool
 	watchMaxQueuedEvents int
+	watchEmitReceiptOn   string
 )
 
 type watchEvent struct {
@@ -42,6 +44,24 @@ type watchEvent struct {
 	Owner     *watchEventOwner       `json:"owner,omitempty"`
 	Severity  string                 `json:"severity,omitempty"`
 	Details   map[string]interface{} `json:"details,omitempty"`
+
+	// Receipt is the in-toto Statement v1 envelope (a cub-scout receipt)
+	// built when `--emit-receipt-on` is enabled and this event's type
+	// matches. Nil otherwise. Inlined into the event payload so JSONL
+	// sinks emit one line per event regardless of whether the event
+	// carries a receipt; webhook sinks see the same structured shape.
+	//
+	// Receipt-build failures are NOT fatal to event emission — the
+	// underlying watch event is still emitted with Receipt=nil and a
+	// warning is written to stderr. This keeps the watch loop robust
+	// against transient cluster-read hiccups.
+	//
+	// #449 v1: only `drift.detected` and `ownership.changed` event
+	// types are supported in the predicate-mapping; other event types
+	// (`resource.discovered`, `scan.finding`) accept the flag but
+	// receipt-build is skipped to avoid flooding on first-poll
+	// discovery. Future iterations can broaden the mapping.
+	Receipt *agent.Statement `json:"receipt,omitempty"`
 }
 
 type watchEventResource struct {
@@ -141,6 +161,7 @@ func init() {
 	watchCmd.Flags().StringVar(&watchSeverity, "severity", "", "Filter finding/drift events by severity (comma-separated: critical,warning,info)")
 	watchCmd.Flags().BoolVar(&watchOnce, "once", false, "Run one collection cycle and exit")
 	watchCmd.Flags().IntVar(&watchMaxQueuedEvents, "max-queued-events", 1000, "Maximum buffered events when webhook is unavailable")
+	watchCmd.Flags().StringVar(&watchEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a cub-scout receipt to (e.g. 'drift.detected,ownership.changed' or 'all' for all four). Receipt-build failures are non-fatal — the underlying event still emits with receipt=null and a stderr warning. #449 v1 builds receipts only for 'drift.detected' and 'ownership.changed' to avoid flooding on first-poll discovery; other event types pass through silently.")
 }
 
 func runWatch(cmd *cobra.Command, args []string) error {
@@ -154,6 +175,13 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	}
 	if watchMaxQueuedEvents <= 0 {
 		return fmt.Errorf("--max-queued-events must be > 0")
+	}
+
+	// Parse --emit-receipt-on upfront so a bad value fails before the
+	// long-running watch loop starts. Empty input disables the feature.
+	emitReceiptOn, err := parseWatchEmitReceiptOn(watchEmitReceiptOn)
+	if err != nil {
+		return err
 	}
 	sinks, cleanup, err := buildWatchSinks(webhookURL, outputFile)
 	if err != nil {
@@ -181,12 +209,21 @@ func runWatch(cmd *cobra.Command, args []string) error {
 		queue     []watchEvent
 	)
 
+	// connected mode is read once at watch start; it's stable for the
+	// duration of the watch loop. Used by the receipt-emission path to
+	// decide whether to include a confighub-unit:// subject.
+	connected := hub.NewClient().RequireConnected() == nil
+	warnFn := func(format string, args ...interface{}) {
+		fmt.Fprintf(os.Stderr, "Warning: "+format+"\n", args...)
+	}
+
 	if watchOnce {
 		curr, err := watchCollectState(ctx, dynClient, watchNamespace)
 		if err != nil {
 			return err
 		}
 		events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
+		events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
 		queue = appendWatchQueue(queue, events, watchMaxQueuedEvents)
 		_, err = flushWatchQueue(ctx, sinks, queue)
 		return err
@@ -213,6 +250,7 @@ func runWatch(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
+			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
 			queue = appendWatchQueue(queue, events, watchMaxQueuedEvents)
 			remaining, err := flushWatchQueue(ctx, sinks, queue)
 			queue = remaining

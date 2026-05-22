@@ -23,15 +23,17 @@ import (
 
 // receipt flags
 var (
-	receiptNamespace string
-	receiptPredicate string
-	receiptAtCommit  string
-	receiptStrategy  string
-	receiptSince     string
-	receiptFormat    string
-	receiptOut       string
-	receiptSave      bool
-	receiptSaveDir   string
+	receiptNamespace         string
+	receiptPredicate         string
+	receiptAtCommit          string
+	receiptStrategy          string
+	receiptSince             string
+	receiptFormat            string
+	receiptOut               string
+	receiptSave              bool
+	receiptSaveDir           string
+	receiptFailOn            string
+	receiptInputAttestations []string
 )
 
 // Function-variable seam for tests. Production reads from the cluster via
@@ -107,6 +109,8 @@ func init() {
 	receiptVerifyCmd.Flags().StringVar(&receiptOut, "out", "", "Write the receipt to this file path (also printed to stdout in the chosen format)")
 	receiptVerifyCmd.Flags().BoolVar(&receiptSave, "save", false, "Save the receipt to the local store ($CUB_SCOUT_RECEIPTS_DIR or $XDG_DATA_HOME/cub-scout/receipts) for later cub-scout receipt list / show / validate")
 	receiptVerifyCmd.Flags().StringVar(&receiptSaveDir, "save-dir", "", "Override the store directory used when --save is set")
+	receiptVerifyCmd.Flags().StringVar(&receiptFailOn, "fail-on", "", "Exit non-zero (code 2) when the receipt verdict matches. Accepts a comma-separated list of verdicts (WATCH, BLOCK, INCONCLUSIVE) or the sugar 'any-non-pass' (= WATCH,BLOCK,INCONCLUSIVE). The receipt is still printed / saved / written to --out regardless of exit code.")
+	receiptVerifyCmd.Flags().StringArrayVar(&receiptInputAttestations, "input-attestation", nil, "Path to a prior receipt to reference via inputAttestations[] (repeatable). Each referenced receipt's fingerprint is verified at chain-construction time; tampered receipts are refused. The new receipt's fingerprint covers the inputAttestations[] field by construction.")
 }
 
 func runReceiptVerify(cmd *cobra.Command, args []string) error {
@@ -212,6 +216,20 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	// 4. Detect connected mode (for the second subject + omission logic).
 	connected := hub.NewClient().RequireConnected() == nil
 
+	// 4b. Build the inputAttestations[] from --input-attestation
+	// (repeatable). Each path is loaded + fingerprint-verified before
+	// being chained — a tampered referenced receipt fails the chain
+	// construction upfront rather than silently propagating bad
+	// evidence. See pkg/agent/receipt_inputattestations.go.
+	var inputAttestations []agent.AttestationRef
+	if len(receiptInputAttestations) > 0 {
+		refs, refErr := agent.BuildAttestationRefsFromPaths(receiptInputAttestations, nil)
+		if refErr != nil {
+			return fmt.Errorf("build input-attestations: %w", refErr)
+		}
+		inputAttestations = refs
+	}
+
 	// 5. Build the receipt.
 	stmt, err := agent.BuildReceipt(agent.BuildReceiptInput{
 		Live: live,
@@ -220,13 +238,14 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 			Name:      name,
 			Namespace: ns,
 		},
-		Owner:         owner,
-		PredicateName: predicateExplicit,
-		Spec:          spec,
-		Evidence:      evidence,
-		Connected:     connected,
-		Strategy:      strings.TrimSpace(receiptStrategy),
-		Since:         since,
+		Owner:             owner,
+		PredicateName:     predicateExplicit,
+		Spec:              spec,
+		Evidence:          evidence,
+		Connected:         connected,
+		Strategy:          strings.TrimSpace(receiptStrategy),
+		Since:             since,
+		InputAttestations: inputAttestations,
 		Verifier: agent.Verifier{
 			Tool:    "cub-scout",
 			Version: BuildTag,
@@ -318,7 +337,76 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// --fail-on: exit code 2 if the receipt verdict matches one of the
+	// listed verdicts (or the 'any-non-pass' sugar). This is the
+	// CI-gate hook; the receipt has ALREADY been printed / saved /
+	// written to --out above, so a failing gate still leaves the
+	// audit artifact in place. The exitCodeError wrapping (per
+	// cmd/cub-scout/exit_code.go + main.go's errors.As dispatcher)
+	// drives the actual os.Exit(2).
+	if failOn := strings.TrimSpace(receiptFailOn); failOn != "" {
+		failSet, parseErr := parseReceiptFailOn(failOn)
+		if parseErr != nil {
+			return parseErr
+		}
+		if failSet[stmt.Predicate.Verdict] {
+			return newExitCodeError(
+				fmt.Errorf(
+					"receipt verdict %q matches --fail-on %q",
+					stmt.Predicate.Verdict, failOn,
+				),
+				2,
+			)
+		}
+	}
+
 	return nil
+}
+
+// parseReceiptFailOn parses the --fail-on flag value into the set of
+// verdicts that should trigger exit code 2. Accepts:
+//
+//   - "any-non-pass" — sugar for WATCH,BLOCK,INCONCLUSIVE
+//   - comma-separated list of WATCH / BLOCK / INCONCLUSIVE (case-insensitive)
+//
+// PASS is not a valid --fail-on value (gating on success doesn't make
+// sense). The function rejects unknown verdicts upfront with a clear
+// error rather than silently accepting them — this is a CI gate, the
+// CI shouldn't see a typo become a "never fires" gate.
+func parseReceiptFailOn(raw string) (map[agent.ReceiptVerdict]bool, error) {
+	out := map[agent.ReceiptVerdict]bool{}
+	lower := strings.ToLower(strings.TrimSpace(raw))
+	if lower == "any-non-pass" {
+		out[agent.VerdictWATCH] = true
+		out[agent.VerdictBLOCK] = true
+		out[agent.VerdictINCONCLUSIVE] = true
+		return out, nil
+	}
+
+	for _, part := range strings.Split(raw, ",") {
+		v := strings.ToUpper(strings.TrimSpace(part))
+		if v == "" {
+			continue
+		}
+		switch agent.ReceiptVerdict(v) {
+		case agent.VerdictWATCH, agent.VerdictBLOCK, agent.VerdictINCONCLUSIVE:
+			out[agent.ReceiptVerdict(v)] = true
+		case agent.VerdictPASS:
+			return nil, fmt.Errorf(
+				"--fail-on PASS is not allowed (gating on a passing receipt is a no-op; if you want every receipt to fail, that's a workflow bug)",
+			)
+		default:
+			return nil, fmt.Errorf(
+				"--fail-on %q: unknown verdict %q (valid: WATCH, BLOCK, INCONCLUSIVE, or the sugar 'any-non-pass')",
+				raw, v,
+			)
+		}
+	}
+
+	if len(out) == 0 {
+		return nil, fmt.Errorf("--fail-on %q resolved to empty verdict set", raw)
+	}
+	return out, nil
 }
 
 // loadReceiptLive fetches the live K8s object via the dynamic client. The

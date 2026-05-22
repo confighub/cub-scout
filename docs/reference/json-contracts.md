@@ -838,7 +838,112 @@ stderr, exit 0, the on-disk artifact unchanged.
 
 Sort order: `verifiedAt` descending (newest first).
 
-Source: `pkg/agent/receipt*.go`, `cmd/cub-scout/receipt*.go`. See
+### v2 Extensions
+
+The v1 envelope locks `inputAttestations[]`, the verdict enum, and the
+receipt store. v2 layers three CI/agent-shaped extensions on top
+without changing the wire format.
+
+#### `--fail-on <verdict-list>` on `cub-scout receipt verify` (`#451`)
+
+Exit non-zero (code 2) when the receipt's verdict matches one of the
+listed values. The receipt is still printed / saved / written to
+`--out` — the gate fires AFTER the artifact is durable.
+
+Accepted values:
+
+- `WATCH`, `BLOCK`, `INCONCLUSIVE` — exact match (comma-separated for multiple)
+- `any-non-pass` — sugar for `WATCH,BLOCK,INCONCLUSIVE`
+- `PASS` — rejected upfront (gating on a passing receipt is a no-op; treated as a workflow bug)
+
+Exit codes:
+
+| Exit | Meaning |
+|------|---------|
+| `0` | Verdict is PASS, or verdict not in the fail-on set |
+| `2` | Verdict matches the fail-on set (CI gate fired) |
+| `1` | Operational error (bad flag value, cluster unreachable, etc.) — same as everything else |
+
+Implementation: `cmd/cub-scout/receipt.go` `parseReceiptFailOn` +
+`exitCodeError` from `cmd/cub-scout/exit_code.go`.
+
+#### `--input-attestation <path>` chained receipts (`#448` chained half)
+
+A new receipt can reference prior receipts via `predicate.inputAttestations[]`
+for chain / DAG semantics. Each `--input-attestation <path>` flag
+(repeatable) loads a prior receipt, recomputes its fingerprint, and
+attaches an `AttestationRef` to the new receipt's `inputAttestations[]`.
+
+```json
+"inputAttestations": [
+  {
+    "uri": "cub-scout-receipt://abc123def456",
+    "digest": {
+      "sha256": "abc123def456abc123def456abc123def456abc123def456abc123def456abcd"
+    }
+  }
+]
+```
+
+URI scheme: `cub-scout-receipt://<short-fingerprint>` where the short
+form is the first 12 hex chars after the `sha256:` prefix. The full
+SHA-256 is in the `digest.sha256` field — that's what's cryptographically
+meaningful; the URI is a readable label.
+
+**Integrity check at chain-construction time:** `BuildAttestationRef`
+calls `VerifyStatementFingerprint` on the referenced receipt and
+**refuses** to chain a tampered receipt. The downstream receipt's
+fingerprint covers the `inputAttestations[]` field by construction, so
+tampering an upstream digest invalidates the downstream fingerprint too.
+
+The aggregate-with-discovery half of `#448` (`--scope namespace/<ns>`
+emits N per-resource receipts + 1 aggregate via
+`synthetic-aggregate://` subject) is a separate follow-up PR; this v2
+ships only the explicit-construction half (`--input-attestation`).
+
+Implementation: `pkg/agent/receipt_inputattestations.go`
+(`BuildAttestationRef`, `BuildAttestationRefsFromPaths`,
+`AttestationURIScheme`); `cmd/cub-scout/receipt.go` flag plumbing.
+
+#### `watch --emit-receipt-on <event-types>` (`#449`)
+
+`cub-scout watch` accepts a new flag that attaches a receipt to each
+matching event payload inline. The watch event shape gains an optional
+`receipt` field carrying the full in-toto Statement.
+
+Event-type set (v1 of this flag):
+
+| Event type | Receipt-build? | Notes |
+|------------|---------------|-------|
+| `drift.detected` | Yes — `applied-matches-spec` auto-detected | Highest signal: drift event already implies a verdict question |
+| `ownership.changed` | Yes — `applied-matches-spec` auto-detected | Owner shifts often indicate a delivery-chain change worth attesting |
+| `resource.discovered` | No (passes through silently) | Would flood on first poll; deferred to future iterations |
+| `scan.finding` | No (passes through silently) | Would flood on initial scan burst; deferred |
+| `all` | Sugar — accepts every known event type, but the build set is the supported subset above |
+
+The flag is **lenient on type, strict on receipt-build**: unsupported event
+types pass through without a warning (so `--emit-receipt-on all` is
+forward-compatible as new event types land). Build failures on
+supported types emit a stderr warning and continue — the underlying
+watch event still emits with `receipt: null`.
+
+Sample JSONL line with a receipt:
+
+```json
+{"type":"drift.detected","timestamp":"2026-05-22T10:30:00Z","resource":{"kind":"Deployment","name":"api","namespace":"prod"},"owner":{"type":"argo","name":"payments-api"},"severity":"warning","details":{"category":"DRIFT"},"receipt":{"_type":"https://in-toto.io/Statement/v1","subject":[...],"predicateType":"https://cub-scout.dev/receipt/v1","predicate":{...}}}
+```
+
+Implementation: `cmd/cub-scout/watch.go` (flag init + per-event
+attachment loop) + `cmd/cub-scout/watch_receipt.go` (the
+`parseWatchEmitReceiptOn` / `attachReceiptsIfRequested` /
+`watchBuildReceiptForEvent` helpers).
+
+Backpressure / batching for high-frequency events is deferred — the
+issue's open question 3 is a v2-of-this-feature concern, not a v1
+gate.
+
+Source: `pkg/agent/receipt*.go`, `cmd/cub-scout/receipt*.go`,
+`cmd/cub-scout/watch*.go`. See
 `docs/proposals/receipts-way-forward.md` for the full design synthesis and
 the Codex review rounds that locked the wire format.
 

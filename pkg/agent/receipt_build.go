@@ -78,6 +78,23 @@ type BuildReceiptInput struct {
 	// --since). Zero means "not provided"; the predicate then declines
 	// with OmissionSinceMissing.
 	Since time.Time
+
+	// InputAttestations references prior receipts by digest, forming a
+	// chain or DAG of evidence artifacts (#448). v1 always emitted [];
+	// v2 lets callers attach explicit references via --input-attestation
+	// (the CLI path) or programmatically (the agent-API path).
+	//
+	// Construction primitives live in receipt_inputattestations.go:
+	// BuildAttestationRef (single Statement → AttestationRef) and
+	// BuildAttestationRefsFromPaths (file paths → loaded statements →
+	// refs). The construction step verifies each referenced receipt's
+	// fingerprint before chaining.
+	//
+	// BuildReceipt always emits an explicit JSON array — empty when no
+	// refs are attached, non-empty when they are. The full Statement's
+	// canonical JSON (and therefore its fingerprint) covers this field
+	// by construction.
+	InputAttestations []AttestationRef
 }
 
 // BuildReceipt orchestrates: build subjects → resolve predicate →
@@ -189,6 +206,16 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 	}
 
 	// 7. Build the predicate body.
+	//
+	// InputAttestations: forwarded from BuildReceiptInput verbatim
+	// (defaults to an empty slice when the caller didn't attach any).
+	// Always serialize as a JSON array, never null — the receipt
+	// contract guarantees consumers can iterate the field without a
+	// nil-check. v2 #448 wires non-empty values through this path.
+	inputAttestations := in.InputAttestations
+	if inputAttestations == nil {
+		inputAttestations = []AttestationRef{}
+	}
 	pred := Predicate{
 		Version:           PredicateVersion,
 		Claim:             claim,
@@ -200,7 +227,7 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 		Verdict:           result.Verdict,
 		Evidence:          in.Evidence,
 		Omissions:         omissions,
-		InputAttestations: []AttestationRef{}, // v1 emits []
+		InputAttestations: inputAttestations,
 		NextSteps:         filteredSteps,
 	}
 
