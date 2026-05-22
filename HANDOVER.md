@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-05-21
+Last updated: 2026-05-22 — refreshed to drop stale v2.0.0-plugin-switchover framing (v2.0.0 shipped long ago — current release is v2.2.1), and to record the receipts (`#446`) and skills (`#442`) work merged this session.
 
 ## Current repo state
 
@@ -14,6 +14,50 @@ Last updated: 2026-05-21
   - `docs/reference/cli-reference.md` = A-Z command catalog
   - `docs/reference/commands.md` = detailed usage and examples
   - `docs/reference/cli-contract.md` = stable flags, exit codes, and schemas
+
+## May 2026 completions — session 2026-05-22 (receipts v1 + AI-agent skills)
+
+Two major issue trees closed this session: `#446` (Verify / Receipt capability) v1 and `#442` (Comprehensive skills coverage). Both arrived in their full scope plus a Codex round-5 review fix-up.
+
+### `#446` Receipts v1 — complete
+
+Typed, fingerprinted, immutable evidence artifacts wrapping cub-scout's existing field-level evidence into a verifiable record. Wire format is the in-toto Statement v1 envelope wrapping `https://cub-scout.dev/receipt/v1`. Fingerprint is SHA-256 over RFC 8785 canonical JSON of the full Statement minus only `predicate.fingerprint` (delete-the-key, not zero-it; per Codex round-4 + round-5).
+
+| PR | Subject |
+|----|---------|
+| [#454](https://github.com/confighub/cub-scout/pull/454) | Foundation — types, canonical JSON via `gowebpki/jcs`, fingerprint, dual subjects (`k8s-live://` + `confighub-unit://`), `applied-matches-spec` predicate, ASCII renderer, `verify` subcommand, 4 example receipts |
+| [#455](https://github.com/confighub/cub-scout/pull/455) | Predicates batch 2 — `source-truth-pass` + `no-manual-edits-since`; `--strategy` / `--since` flags; `collectSourceTruthForReceiptFn` seam; 4 more example receipts |
+| [#456](https://github.com/confighub/cub-scout/pull/456) | Management UX — `receipt show / validate / list`; local store at `$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`; `--save` flag |
+| [#461](https://github.com/confighub/cub-scout/pull/461) | Codex round-5 fix-up — ASK → WATCH (locked design); `O_EXCL` atomic save + `--out` rejects store paths; exit codes 0/1/2 via `errors.As`; mutating-wildcard scrub in 4 skills; public repo-path leak scrub |
+
+Read-only-triad guards: `TestReceiptPackageReadOnlyClient` static-greps receipt source files for any mutating K8s client method; `FilterNextSteps` drops 18 mutating-verb fragments at emit time. `#446` parent issue closed.
+
+### `#442` AI-agent skill catalog — complete
+
+Modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) for `cub`. Five PRs total; ~35 skill files plus 9 references:
+
+| PR | Subject |
+|----|---------|
+| [#452](https://github.com/confighub/cub-scout/pull/452) | Batch 1 — scaffolding (`SKILL_TEMPLATE.md`, router, umbrella) + 4 verb-group skills (Observe/Diagnose/Compare/Attribute) + 2 references |
+| [#457](https://github.com/confighub/cub-scout/pull/457) | Batch 2 — 4 more verb-group skills (Ingest/Govern/Integrate/Verify) |
+| [#458](https://github.com/confighub/cub-scout/pull/458) | Batch 3 — 7 controller-observer skills (argocd/flux/helm/crossplane/kro/confighub-managed/native), each verified against `pkg/agent/ownership.go` + `pkg/agent/manager_strings.go` |
+| [#459](https://github.com/confighub/cub-scout/pull/459) | Batch 4 — 8 workflow scenario skills (triage / drift / fleet / adopt / migrate / agent-context / incident / source-truth) |
+| [#460](https://github.com/confighub/cub-scout/pull/460) | Batch 5 — 7 remaining shared references; closes `#442` |
+
+### Key design decisions locked this session
+
+- **Receipts are evidence, never recommendations to mutate.** `FilterNextSteps` rejects `actionType=mutating` + a long list of mutating-command fragments at emit time. Documented in `references/read-only-triad.md`.
+- **Receipt store is immutable by construction.** `SaveStatement` uses `O_EXCL` atomic create; the on-disk filename is canonical (`<verifiedAt>__<predicate>__<kind>-<name>__<short-fingerprint>.receipt.json`); duplicate saves return `os.ErrExist` and never overwrite. `--out` refuses to write under the resolved store path.
+- **Fingerprint covers the full Statement.** Not just the predicate body — `_type`, `subject`, `predicateType`, and every predicate field other than `fingerprint` itself are in scope. Hashing predicate-only would leave the envelope unprotected.
+- **ASK → WATCH (not INCONCLUSIVE).** Per the locked synthesis in `docs/proposals/receipts-way-forward.md`; INCONCLUSIVE is reserved for receipts that themselves can't be built (missing strategy, missing evidence body), not for cases where the source-truth surface couldn't classify.
+- **Skill `allowed-tools` enumerate read-only verbs only.** No broad `Bash(cub-scout *)` / `Bash(./cub-scout *)` wildcards anywhere — those would silently grant `demo`, `import apply`, `compare --suggest --apply`, all mutating. Verified clean across all ~35 skill files (Codex round-5 caught 4 leaks, all fixed).
+
+### Open follow-ons from this session
+
+- **`#446` v2** (no separate issues for the umbrella; tracked by 3 spin-offs): `#448` chained / aggregate receipts via `inputAttestations[]`; `#449` `cub-scout watch --emit-receipt-on`; `#451` `--fail-on RECEIPT_VERDICT` exit semantics
+- **MCP enum drift** — `compare_source_truth` MCP schema lists 4 strategies; CLI supports 9 (Phase 2 from `#418`). One-file fix in `cmd/cub-scout/mcp.go`.
+- **Codex P3** — source-truth receipt precedence tests (`StatusBLOCK + VerdictBLOCKED`, `StatusWATCH + VerdictINCOMPLETE`). Not blocking; nice-to-have.
+- **`#444` Pilot–cub-scout integration skills** — 9 scenarios across batch A (5) + batch B (4). Consumes the receipts + source-truth surface from the Pilot side.
 
 ## May 2026 completions — session 2026-05-21 (attribution layer)
 
@@ -70,7 +114,7 @@ The council (April 2026) prescribed the **truth-floor → source-truth contract 
 ### Architectural triad locked in code (not just intent)
 
 - **cub-scout** = read-only evidence provider for source truth
-- **Pilot** = acceptance judge (lives in `confighubai/confighub-ai-demo`)
+- **Pilot** = acceptance judge (separate consumer of cub-scout's surfaces)
 - **ConfigHub** = authority and workflow engine
 
 cub-scout never mutates, repairs, approves, or infers authority. The source-truth contract enforces this surface in code.
@@ -130,53 +174,61 @@ Key deliverables now in place:
 
 ## Open issues
 
-Current tracked follow-ons (verified 2026-05-21):
+Current tracked follow-ons (verified 2026-05-22):
 
-- **`#435` attribution-layer next-up (no separate issues yet, tracked in `README.md` § What's coming next):**
-  - Helm / Kustomize back-resolution to extend stage B's `gitSource.file:line` from raw YAML to templated sources
-  - List-key selectors in `compareFieldToPath` (e.g., `.spec.template.spec.containers[name="api"].image`) so per-field classification covers container images and other list-keyed fields
-  - Standalone `--source-path` as a DRY source for `compare three-way` — would let raw-YAML repos run the same three-way view without ConfigHub
-  - `import --git-path --output-dir` to emit proposed unit YAMLs to disk for PR review (one bundle, two workflows — disk PR + Installer `--merge-external-source`)
-  - Hierarchy-aware ingest preserving ApplicationSet / app-of-apps / Flux Kustomization composition in import proposals
-  - Additional manager-string writers (Tekton, Argo Workflows, Cluster API, OIDC-based CD)
-- **#391** — Views integration. Scopes #1 (`--view` on `compare three-way`, `#414`) and #2 (TUI Hub View column projection, `#419`/`#420`) shipped. Scope #3 (reality overlay composing View columns with `#393` source-truth verdicts) is the active follow-on.
-- **#409** — source-truth v0.2 cross-surface revision equality. Phase 1 (existing four strategies) shipped; Phase 2 (enum expansion to `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`) shipped in `#418`. Phase 3 (multi-source Argo) remains.
-- **#410 / #428** — Triad-compliance audit. Major item resolved: cub-scout is categorically read-only (`suggest-remedy` describes but never applies). Lower-severity findings on `import apply` wording and a hint-command lint rule remain open in #410.
-- **#392** — Initiatives compliance overlay. **Still deferred.** ConfigHub side has no backend primitive yet. Design doc at [`docs/howto/initiatives-integration-when-ready.md`](docs/howto/initiatives-integration-when-ready.md) holds the integration spec.
-- **confighubai/confighub#4356** — cross-repo dependency for ArgoCDOCI Helm-source shape. Blocks accurate `confighub-oci-argo` symptom classification in `compare source-truth`.
-- **confighub-ai-demo#264** — Pilot consumer-side fixtures pairing with cub-scout #395 + future #409 fixtures.
+- **`#448`** — Receipts v2: aggregate / chained receipts via `inputAttestations[]` composition. v1 envelope already emits `inputAttestations: []`; v2 wires the cross-receipt digest semantics.
+- **`#449`** — `cub-scout watch --emit-receipt-on <event-type>`: event-driven receipt emission so receipts can land in real time. Becomes the real-time channel into Pilot.
+- **`#451`** — `--fail-on RECEIPT_VERDICT` exit semantics extension for CI gates (read a verdict, exit accordingly).
+- **`#444`** — Pilot–cub-scout integration skills: 9 scenarios (CD gate / fleet conformance / patch+drift / rollback / promotion / incident evidence / compliance / release verification / watch alert). Consumes the receipts + source-truth surface from the Pilot side.
+- **`#432`** — Grafana collector / data-source path using existing cub-scout outputs.
+- **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).
+- **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up).
+- **`#421`** — Views project: CEL + JSONPath column evaluators.
+- **`#391`** — Views integration. Scope #1 (`--view` on `compare three-way`, `#414`) and scope #3 (reality overlay composing View columns with `#393` source-truth verdicts, `#420`) shipped. Scope #2 (TUI Hub View column projection) is the open follow-on (tracked under `#422`).
+- **`#409`** Phase 3 — source-truth multi-source Argo (`spec.sources[]` len > 1). Phases 1 + 2 shipped (9 strategies total via `#393` + `#418`).
+- **`#410 / #428`** — Triad-compliance audit. Major item resolved: cub-scout is categorically read-only. Lower-severity follow-ons on `import apply` wording remain; the hint-command lint rule continues in `#386`.
+- **`#392`** — Initiatives compliance overlay. **Still deferred.** ConfigHub side has no backend primitive yet. Design doc at [`docs/howto/initiatives-integration-when-ready.md`](docs/howto/initiatives-integration-when-ready.md) holds the integration spec.
+- **`#386`** — `preferInvocationForm` lint extension to catch non-hint legacy invocation-form leaks in strings.
+
+### Attribution-layer next-up (tracked in `README.md` § What's coming next, no separate issues yet)
+
+- Helm / Kustomize back-resolution to extend stage B's `gitSource.file:line` from raw YAML to templated sources
+- List-key selectors in `compareFieldToPath` (e.g., `.spec.template.spec.containers[name="api"].image`)
+- Standalone `--source-path` as a DRY source for `compare three-way`
+- `import --git-path --output-dir` polish (disk-PR proposal flow)
+- Hierarchy-aware ingest (ApplicationSet / app-of-apps / Flux Kustomization composition)
+- Additional manager-string writers (Tekton, Argo Workflows, Cluster API, OIDC-based CD)
+
+### Cross-repo dependencies
+
+- **`confighub/confighub#4356`** — ArgoCDOCI Helm-source shape symptom classifier. Blocks accurate `confighub-oci-argo` classification in `compare source-truth`.
+- Pilot consumer-side fixtures pairing with cub-scout's source-truth + receipts surfaces (tracked in a separate non-public repo; cub-scout's surface contract is the canonical reference for downstream consumers).
 
 ## Current checkpoint
 
-`go test ./...` is green as of 2026-05-21 across every package touched by the attribution-layer work. The only failure on a clean main checkout is the pre-existing `test/unit/demo_worker_lifecycle_script_test.go` — unrelated to attribution work, fails on a `git stash`-clean tree too. Main CI is green. GitHub Actions workflows now run on Node 24 (PRs #412, #413).
+Current release tag: **`v2.2.1`**. The v2.0.0 plugin switchover (`cub scout` as the preferred invocation, MCP gateway as the AI front door) shipped in `v2.0.0` and is now historical — `docs/releases/v2.0.0-plugin-plan.md` is preserved as a historical artifact, not an active milestone.
 
-The practical state heading into the `cub scout` plugin switchover is:
+`go test ./...` is green as of 2026-05-22 across every package touched by the receipts + skills work. The only failure on a clean local checkout is the pre-existing `test/unit/demo_worker_lifecycle_script_test.go` — environmental flake; main CI is green for it.
 
-- M0 decision lock: done
-- M2 trust/proof polish: materially advanced
-- M3 AI/MCP gateway readiness: materially advanced
-- M1 plugin packaging: still not started, and still the real `v2.0.0` blocker
-- M4 migration/install docs: still partial
+Recent shipped capability surface (sessions 2026-05-21 and 2026-05-22):
 
-Recent connected trust-surface work now covers:
-- canonical ConfigHub unit/revisions URLs in compare/trace/explain/history/MCP
-- revision-aware hints that tell AI/operators when to review revision history before sign-off
-- connected `history` JSON trust guidance
-- release-gate cleanup that brought the full test suite back to green
+- Attribution layer end-to-end (`cause` / `managerHint` / `gitSource` / `bindingSource` per field; stage B file:line back-resolution)
+- Source-truth contract Phase 1 + 2 (9 strategies)
+- Architectural triad locked in code (read-only-triad invariant)
+- Receipts v1 — typed, fingerprinted, immutable evidence artifacts (3 predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`)
+- AI-agent skill catalog (~35 skill files + 9 references) modeled on `confighub/confighub-skills`
+- MCP gateway with closed read-only tool catalog (5 standalone + 5 connected tools)
+- `--presentation human|ai|paired` on `doctor` / `explain` / `trace`
 
 ## Next milestone
 
-The next major milestone is now the `cub scout` plugin switchover for `v2.0.0`.
+There is **no single "next milestone"** the way v2.0.0 was. The codebase is in steady-state with three credible directions, in roughly descending leverage:
 
-Canonical planning doc:
+1. **Receipts v2 + small follow-ons** — `#448` chained receipts via `inputAttestations[]`, `#449` `watch --emit-receipt-on` for real-time emission, `#451` `--fail-on RECEIPT_VERDICT` for CI gating. Plus the small Codex round-5 follow-ups: MCP `compare_source_truth` strategy-enum drift (4 vs 9), source-truth receipt precedence tests.
+2. **Pilot–cub-scout integration skills** (`#444`) — 9 consumer-side skill scenarios (CD gate / fleet conformance / patch+drift / rollback / promotion / incident evidence / compliance / release verification / watch alert). Closes the trust-triad loop on the consumer side.
+3. **Views project tail** — `#391` scope #2 TUI Hub View column projection (`#422`); `#421` CEL+JSONPath column evaluators. Scopes #1 and #3 already shipped (`#414` and `#420` respectively). Smaller surface than receipts/skills but a real follow-on for the Views work.
 
-- `docs/releases/v2.0.0-plugin-plan.md`
-
-Core direction:
-
-- `cub scout` becomes the preferred invocation
-- `cub scout mcp serve` becomes the preferred explorer/investigation gateway
-- `cub` remains the authority and governed-execution host
+Other open issues with lower urgency: `#432` Grafana collector, `#427` watch kstatus migration, `#392` ConfigHub Initiatives (deferred until backend primitive), `#386` `preferInvocationForm` lint extension.
 
 ### CLI migration table (`#375`)
 
@@ -322,7 +374,7 @@ CLI import/rendering path is essential for continuing the Git import track.
    - Enables Git↔cluster comparison for verification
    - Initial implementation: uses `gitops.ParseRepo()` for Flux-style patterns
 
-### The Full ConfigHub Loop (from Slack discussion)
+### The Full ConfigHub Loop
 
 ```
 Git repo → ArgoCD syncs to cluster
@@ -415,8 +467,8 @@ No separate `--compare` flag needed.
 Do not publish work externally without explicit user approval.
 
 That includes:
-- pushing to `confighubai/confighub`
-- opening PRs or issue comments there
+- pushing to any non-public ConfigHub repository
+- opening PRs or issue comments in non-public repositories
 - creating public or secret gists for the work
 - posting branch status externally
 
