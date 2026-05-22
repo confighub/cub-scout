@@ -243,6 +243,66 @@ func TestReceiptVerify_FailOn_BadValue_NoExit2(t *testing.T) {
 	})
 }
 
+// TestReceiptVerify_FailOn_BadValue_NoSideEffects verifies the Codex
+// round-6 P2 fix: an invalid --fail-on value rejects the command
+// BEFORE any side effect (stdout print, --out write, --save to store).
+// The prior order parsed --fail-on after artifact emission, which left
+// a footgun in CI: a typo would error out (correctly with exit 1) but
+// the artifact had already been printed and persisted with the wrong
+// gate semantics.
+func TestReceiptVerify_FailOn_BadValue_NoSideEffects(t *testing.T) {
+	resetReceiptFlags(t)
+	resetReceiptBatch3Flags(t)
+	resetReceiptBatch2Flags(t)
+	resetReceiptFailOnFlag(t)
+	withFakeReceiptLoader(t, makeReceiptArgoLive())
+
+	saveDir := t.TempDir()
+	outDir := t.TempDir() // separate from saveDir so neither read pollutes the other
+	outPath := outDir + "/should-not-be-written.receipt.json"
+	receiptSave = true
+	receiptSaveDir = saveDir
+
+	rootCmd.SetArgs([]string{
+		"receipt", "verify", "deploy/api",
+		"-n", "prod",
+		"--format", "json",
+		"--out", outPath,
+		"--fail-on", "GARBAGE-VALUE",
+	})
+
+	out := captureStdout(t, func() {
+		err := rootCmd.Execute()
+		if err == nil {
+			t.Fatal("bad --fail-on must reject upfront")
+		}
+		var ec interface{ ExitCode() int }
+		if errors.As(err, &ec) {
+			t.Errorf("bad --fail-on must NOT wrap exitCodeError; got ExitCode=%d", ec.ExitCode())
+		}
+	})
+
+	// stdout must be empty — the receipt was never printed.
+	if strings.Contains(out, "\"_type\":") {
+		t.Errorf("expected NO receipt on stdout when --fail-on is invalid; got:\n%s", out)
+	}
+
+	// --out file must not exist — the receipt was never written.
+	if _, err := os.Stat(outPath); err == nil {
+		t.Errorf("--out file %q must NOT be written when --fail-on is invalid", outPath)
+	}
+
+	// --save store must be empty — the receipt was never persisted.
+	entries, err := os.ReadDir(saveDir)
+	if err == nil {
+		for _, e := range entries {
+			if strings.HasSuffix(e.Name(), ".receipt.json") {
+				t.Errorf("save store must be empty when --fail-on is invalid; found %s", e.Name())
+			}
+		}
+	}
+}
+
 // TestReceiptVerify_FailOn_PreservesArtifact verifies that --fail-on
 // triggering exit 2 still produces the receipt as stdout + --save +
 // --out output. The artifact is a postmortem requirement; the gate

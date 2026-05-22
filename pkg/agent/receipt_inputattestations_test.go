@@ -74,15 +74,16 @@ func TestBuildAttestationRef_HappyPath(t *testing.T) {
 		t.Fatalf("BuildAttestationRef: %v", err)
 	}
 
-	if !strings.HasPrefix(ref.URI, AttestationURIScheme) {
-		t.Errorf("URI must start with %q; got %q", AttestationURIScheme, ref.URI)
+	raw := ref.Ref()
+	if !strings.HasPrefix(raw.URI, AttestationURIScheme) {
+		t.Errorf("URI must start with %q; got %q", AttestationURIScheme, raw.URI)
 	}
 	hex := strings.TrimPrefix(stmt.Predicate.Fingerprint, "sha256:")
-	if !strings.HasSuffix(ref.URI, hex[:12]) {
-		t.Errorf("URI must end with the 12-char short fingerprint %q; got %q", hex[:12], ref.URI)
+	if !strings.HasSuffix(raw.URI, hex[:12]) {
+		t.Errorf("URI must end with the 12-char short fingerprint %q; got %q", hex[:12], raw.URI)
 	}
-	if ref.Digest["sha256"] != hex {
-		t.Errorf("Digest sha256 must equal full hex %q; got %q", hex, ref.Digest["sha256"])
+	if raw.Digest["sha256"] != hex {
+		t.Errorf("Digest sha256 must equal full hex %q; got %q", hex, raw.Digest["sha256"])
 	}
 }
 
@@ -158,8 +159,8 @@ func TestBuildAttestationRefsFromPaths_HappyPath(t *testing.T) {
 	if len(refs) != 2 {
 		t.Fatalf("expected 2 refs; got %d", len(refs))
 	}
-	if refs[0].Digest["sha256"] == refs[1].Digest["sha256"] {
-		t.Errorf("two different statements must produce different digests; both = %q", refs[0].Digest["sha256"])
+	if refs[0].Ref().Digest["sha256"] == refs[1].Ref().Digest["sha256"] {
+		t.Errorf("two different statements must produce different digests; both = %q", refs[0].Ref().Digest["sha256"])
 	}
 }
 
@@ -218,7 +219,7 @@ func TestBuildReceipt_InputAttestationsAttached(t *testing.T) {
 		Scope:             Scope{Kind: "Deployment", Name: "worker", Namespace: "prod"},
 		Owner:             Ownership{Type: OwnerUnknown},
 		PredicateName:     "",
-		InputAttestations: []AttestationRef{upstreamRef},
+		InputAttestations: []VerifiedAttestationRef{upstreamRef},
 		Verifier:          Verifier{Tool: "cub-scout", Version: "v0.0.0-test"},
 		VerifiedAt:        time.Date(2026, 5, 22, 11, 0, 0, 0, time.UTC),
 	})
@@ -228,9 +229,9 @@ func TestBuildReceipt_InputAttestationsAttached(t *testing.T) {
 	if len(downstream.Predicate.InputAttestations) != 1 {
 		t.Fatalf("downstream should reference 1 attestation; got %d", len(downstream.Predicate.InputAttestations))
 	}
-	if downstream.Predicate.InputAttestations[0].Digest["sha256"] != upstreamRef.Digest["sha256"] {
+	if downstream.Predicate.InputAttestations[0].Digest["sha256"] != upstreamRef.Ref().Digest["sha256"] {
 		t.Errorf("downstream attestation digest must match upstream; got %q vs %q",
-			downstream.Predicate.InputAttestations[0].Digest["sha256"], upstreamRef.Digest["sha256"])
+			downstream.Predicate.InputAttestations[0].Digest["sha256"], upstreamRef.Ref().Digest["sha256"])
 	}
 
 	// The downstream's fingerprint MUST cover the inputAttestations[]
@@ -244,6 +245,42 @@ func TestBuildReceipt_InputAttestationsAttached(t *testing.T) {
 	}
 	if recomputed == downstream.Predicate.Fingerprint {
 		t.Error("stripping inputAttestations[] must change the recomputed fingerprint; the field is supposed to be covered")
+	}
+}
+
+// TestBuildReceipt_RejectsZeroValueVerifiedAttestationRef is the
+// regression for the #463 / Codex round-6 P1 #463-B fix: programmatic
+// callers who skip BuildAttestationRef and construct a zero-value
+// VerifiedAttestationRef (the only thing they CAN do from outside the
+// package, since the inner field is unexported) must be rejected at
+// the BuildReceipt boundary. A silent acceptance would let a hostile
+// caller forge an empty input-attestation entry into the chain.
+//
+// The zero value is the entire forgeable surface: external packages
+// cannot mint a non-zero VerifiedAttestationRef without going through
+// BuildAttestationRef (the inner `ref` field is unexported, so even
+// reflection-via-package-export can't reach it without unsafe).
+func TestBuildReceipt_RejectsZeroValueVerifiedAttestationRef(t *testing.T) {
+	live := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata":   map[string]interface{}{"name": "api", "namespace": "prod"},
+		},
+	}
+	_, err := BuildReceipt(BuildReceiptInput{
+		Live:              live,
+		Scope:             Scope{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		Owner:             Ownership{Type: OwnerUnknown},
+		InputAttestations: []VerifiedAttestationRef{{}}, // forged zero value
+		Verifier:          Verifier{Tool: "cub-scout", Version: "v0.0.0-test"},
+		VerifiedAt:        time.Date(2026, 5, 22, 11, 0, 0, 0, time.UTC),
+	})
+	if err == nil {
+		t.Fatal("zero-value VerifiedAttestationRef must be rejected; the only way to obtain a non-zero one is via BuildAttestationRef (which verifies fingerprint)")
+	}
+	if !strings.Contains(err.Error(), "zero-value VerifiedAttestationRef") {
+		t.Errorf("error must name the API-boundary check; got %v", err)
 	}
 }
 

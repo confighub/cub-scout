@@ -84,17 +84,25 @@ type BuildReceiptInput struct {
 	// v2 lets callers attach explicit references via --input-attestation
 	// (the CLI path) or programmatically (the agent-API path).
 	//
+	// The field type is `[]VerifiedAttestationRef` rather than the raw
+	// `[]AttestationRef` wire shape: external callers cannot construct a
+	// VerifiedAttestationRef directly (the type's only field is
+	// unexported), so they MUST go through BuildAttestationRef or
+	// BuildAttestationRefsFromPaths — both of which verify the source
+	// Statement's fingerprint before returning. This enforces the
+	// chained-receipt trust property at the API boundary, not just on
+	// the CLI path (#463 / Codex round-6 P1 #463-B).
+	//
 	// Construction primitives live in receipt_inputattestations.go:
-	// BuildAttestationRef (single Statement → AttestationRef) and
+	// BuildAttestationRef (single Statement → VerifiedAttestationRef) and
 	// BuildAttestationRefsFromPaths (file paths → loaded statements →
-	// refs). The construction step verifies each referenced receipt's
-	// fingerprint before chaining.
+	// verified refs).
 	//
 	// BuildReceipt always emits an explicit JSON array — empty when no
 	// refs are attached, non-empty when they are. The full Statement's
 	// canonical JSON (and therefore its fingerprint) covers this field
 	// by construction.
-	InputAttestations []AttestationRef
+	InputAttestations []VerifiedAttestationRef
 }
 
 // BuildReceipt orchestrates: build subjects → resolve predicate →
@@ -207,14 +215,23 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 
 	// 7. Build the predicate body.
 	//
-	// InputAttestations: forwarded from BuildReceiptInput verbatim
-	// (defaults to an empty slice when the caller didn't attach any).
+	// InputAttestations: unwrap each VerifiedAttestationRef into its
+	// underlying AttestationRef for the wire shape. Reject zero-valued
+	// wrappers at the API boundary — the only way to obtain a non-zero
+	// VerifiedAttestationRef is via BuildAttestationRef (which verifies
+	// the source Statement's fingerprint), so a zero value is a forgery
+	// attempt and must not enter the chain. See #463 / Codex round-6
+	// P1 #463-B.
+	//
 	// Always serialize as a JSON array, never null — the receipt
 	// contract guarantees consumers can iterate the field without a
 	// nil-check. v2 #448 wires non-empty values through this path.
-	inputAttestations := in.InputAttestations
-	if inputAttestations == nil {
-		inputAttestations = []AttestationRef{}
+	inputAttestations := make([]AttestationRef, 0, len(in.InputAttestations))
+	for i, v := range in.InputAttestations {
+		if v.IsZero() {
+			return Statement{}, fmt.Errorf("build-receipt: inputAttestations[%d] is a zero-value VerifiedAttestationRef; construct via BuildAttestationRef or BuildAttestationRefsFromPaths so the source receipt's fingerprint is verified before chaining", i)
+		}
+		inputAttestations = append(inputAttestations, v.Ref())
 	}
 	pred := Predicate{
 		Version:           PredicateVersion,

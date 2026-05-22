@@ -46,6 +46,19 @@ import (
 // time (i.e., when reading an aggregate receipt, walk every input
 // attestation and confirm the digests match). That's a separate
 // helper; this file is only about construction.
+//
+// API-boundary enforcement (#463 / Codex round-6 P1 #463-B)
+// ---------------------------------------------------------
+//
+// `VerifiedAttestationRef` is a typed wrapper around `AttestationRef`
+// with only unexported fields. External callers cannot construct one
+// directly — they MUST go through `BuildAttestationRef` or
+// `BuildAttestationRefsFromPaths`, both of which verify the source
+// Statement's fingerprint before producing a wrapper. BuildReceipt
+// accepts `[]VerifiedAttestationRef` and rejects zero-valued wrappers
+// at the boundary, so a programmatic caller cannot forge a raw ref and
+// bypass the verify step. The wire shape (Predicate.InputAttestations
+// is still []AttestationRef) is unchanged.
 
 // AttestationURIScheme is the URI prefix this package uses for
 // receipt-to-receipt references. Format:
@@ -56,10 +69,50 @@ import (
 // prefix. Symmetric with `DeriveFilename`.
 const AttestationURIScheme = "cub-scout-receipt://"
 
-// BuildAttestationRef turns a loaded Statement into an AttestationRef
-// suitable for the `inputAttestations[]` field of another receipt.
+// VerifiedAttestationRef wraps an AttestationRef whose source Statement
+// was verified at construction time. Only `BuildAttestationRef` and
+// `BuildAttestationRefsFromPaths` produce values of this type; both
+// recompute and verify the source Statement's fingerprint before
+// returning. The zero value is invalid and `BuildReceipt` rejects it.
 //
-// The returned AttestationRef carries:
+// This type enforces the chained-receipt trust property at the API
+// boundary: a programmatic caller of `BuildReceipt` CANNOT construct a
+// raw `AttestationRef`, hand-pick a digest, and have BuildReceipt
+// accept it. The only path into the chain is through the verify-and-
+// wrap helpers below. See #463 / Codex round-6 P1 #463-B for the
+// rationale.
+//
+// The wire shape is unchanged: BuildReceipt unwraps each
+// VerifiedAttestationRef back to a plain AttestationRef when it
+// populates Predicate.InputAttestations, so the serialized receipt
+// looks exactly the same as the v1 spec.
+type VerifiedAttestationRef struct {
+	// ref is the plain AttestationRef that will be serialized. It is
+	// unexported so external packages cannot populate it — they must
+	// call BuildAttestationRef (which sets it after a verify step).
+	ref AttestationRef
+}
+
+// Ref returns the underlying AttestationRef. Provided for inspection
+// and debugging; the typical caller passes the wrapper directly to
+// BuildReceipt and never needs this.
+func (v VerifiedAttestationRef) Ref() AttestationRef {
+	return v.ref
+}
+
+// IsZero reports whether the wrapper is the zero value (the only way
+// external code could obtain a VerifiedAttestationRef without going
+// through BuildAttestationRef). BuildReceipt calls this to reject
+// forged wrappers at the API boundary.
+func (v VerifiedAttestationRef) IsZero() bool {
+	return v.ref.URI == "" || v.ref.Digest["sha256"] == ""
+}
+
+// BuildAttestationRef turns a loaded Statement into a
+// VerifiedAttestationRef suitable for the `InputAttestations` field of
+// BuildReceiptInput.
+//
+// The wrapped AttestationRef carries:
 //   - URI: cub-scout-receipt://<short-fingerprint>
 //   - Digest: { "sha256": "<full hex without sha256: prefix>" }
 //
@@ -74,17 +127,17 @@ const AttestationURIScheme = "cub-scout-receipt://"
 //   - stmt.Predicate.Fingerprint is malformed (no sha256: prefix)
 //   - VerifyStatementFingerprint fails (the in-memory Statement does
 //     not match its stamped fingerprint)
-func BuildAttestationRef(stmt Statement) (AttestationRef, error) {
+func BuildAttestationRef(stmt Statement) (VerifiedAttestationRef, error) {
 	fp := strings.TrimSpace(stmt.Predicate.Fingerprint)
 	if fp == "" {
-		return AttestationRef{}, fmt.Errorf("build-attestation-ref: statement has empty fingerprint; cannot chain an unstamped receipt")
+		return VerifiedAttestationRef{}, fmt.Errorf("build-attestation-ref: statement has empty fingerprint; cannot chain an unstamped receipt")
 	}
 	if !strings.HasPrefix(fp, "sha256:") {
-		return AttestationRef{}, fmt.Errorf("build-attestation-ref: malformed fingerprint %q (expected sha256:<hex>)", fp)
+		return VerifiedAttestationRef{}, fmt.Errorf("build-attestation-ref: malformed fingerprint %q (expected sha256:<hex>)", fp)
 	}
 	hex := strings.TrimPrefix(fp, "sha256:")
 	if len(hex) < 12 {
-		return AttestationRef{}, fmt.Errorf("build-attestation-ref: fingerprint hex %q is shorter than 12 chars", hex)
+		return VerifiedAttestationRef{}, fmt.Errorf("build-attestation-ref: fingerprint hex %q is shorter than 12 chars", hex)
 	}
 
 	// Verify the referenced receipt's integrity before chaining it.
@@ -92,30 +145,32 @@ func BuildAttestationRef(stmt Statement) (AttestationRef, error) {
 	// trust property — the consumer of an aggregate / chained receipt
 	// expects every reference to be a real attestation, not a forgery.
 	if err := VerifyStatementFingerprint(stmt); err != nil {
-		return AttestationRef{}, fmt.Errorf("build-attestation-ref: refusing to chain a receipt whose fingerprint doesn't verify: %w", err)
+		return VerifiedAttestationRef{}, fmt.Errorf("build-attestation-ref: refusing to chain a receipt whose fingerprint doesn't verify: %w", err)
 	}
 
-	return AttestationRef{
-		URI: AttestationURIScheme + hex[:12],
-		Digest: map[string]string{
-			"sha256": hex,
+	return VerifiedAttestationRef{
+		ref: AttestationRef{
+			URI: AttestationURIScheme + hex[:12],
+			Digest: map[string]string{
+				"sha256": hex,
+			},
 		},
 	}, nil
 }
 
 // BuildAttestationRefsFromPaths is a convenience helper for the CLI
 // path: take a list of receipt file paths, load each, build the
-// AttestationRef, and return the slice. Errors at any step short-
-// circuit — there is no "partial chain" semantics (chaining is an
-// integrity claim; partial is not the right shape).
+// VerifiedAttestationRef, and return the slice. Errors at any step
+// short-circuit — there is no "partial chain" semantics (chaining is
+// an integrity claim; partial is not the right shape).
 //
 // The loader is injected as `loadFn` so tests can swap in a fake
 // without touching the filesystem.
-func BuildAttestationRefsFromPaths(paths []string, loadFn func(path string) (Statement, error)) ([]AttestationRef, error) {
+func BuildAttestationRefsFromPaths(paths []string, loadFn func(path string) (Statement, error)) ([]VerifiedAttestationRef, error) {
 	if loadFn == nil {
 		loadFn = LoadStatement
 	}
-	out := make([]AttestationRef, 0, len(paths))
+	out := make([]VerifiedAttestationRef, 0, len(paths))
 	for _, p := range paths {
 		stmt, err := loadFn(p)
 		if err != nil {

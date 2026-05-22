@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -22,7 +23,9 @@ import (
 // matching type, attachReceiptsIfRequested loads the live resource and
 // runs an in-process BuildReceipt to attach the in-toto Statement to
 // the event payload. Failures are logged and non-fatal: the underlying
-// watch event still emits with receipt=null.
+// watch event still emits, with the `receipt` key omitted from the
+// JSON (omitempty; see watchEvent.Receipt in watch.go for the wire
+// shape rationale).
 //
 // Predicate mapping (#449 v1, locked):
 //
@@ -108,6 +111,86 @@ func parseWatchEmitReceiptOn(raw string) (map[string]bool, error) {
 	return out, nil
 }
 
+// Rate-limit knobs for makeReceiptWarnFn. Exported as package-level
+// vars so tests can shrink them; production keeps the defaults.
+//
+// Defaults (Codex round-6 P2, #463):
+//   - first 10 warnings emit verbatim — operator sees the failure mode
+//   - after that, suppress; every 100 suppressed warnings emit a
+//     single summary line ("suppressed N since last summary")
+//
+// The intent is: the operator sees enough of the first burst to debug,
+// but a long-running watch hitting a transient cluster-read issue on
+// every poll doesn't fill stderr indefinitely.
+var (
+	watchReceiptWarnFirstN       = 10
+	watchReceiptWarnSummaryEvery = 100
+)
+
+// makeReceiptWarnFn wraps `base` with rate-limit behavior for
+// receipt-build failures. The first `firstN` warnings pass through
+// verbatim; after that the wrapper counts suppressed warnings and
+// emits a single summary line every `summaryEvery` calls.
+//
+// The counters live on the closure, so the wrapper is stateful and
+// persists across poll cycles. The watch loop constructs ONE wrapper
+// at startup and reuses it for the duration.
+//
+// A `firstN` or `summaryEvery` of <= 0 disables the rate limit
+// entirely (every call passes through).
+func makeReceiptWarnFn(base func(format string, args ...interface{}), firstN, summaryEvery int) func(format string, args ...interface{}) {
+	if base == nil {
+		return func(string, ...interface{}) {}
+	}
+	if firstN <= 0 || summaryEvery <= 0 {
+		return base
+	}
+	var count, sinceLastSummary int
+	return func(format string, args ...interface{}) {
+		count++
+		if count <= firstN {
+			base(format, args...)
+			return
+		}
+		sinceLastSummary++
+		if sinceLastSummary >= summaryEvery {
+			base(
+				"receipt-build warnings: suppressed %d additional warnings since the last summary (rate-limited to first %d + summary every %d; raise --emit-receipt-on supported set or check cluster connectivity if this is unexpected)",
+				sinceLastSummary, firstN, summaryEvery,
+			)
+			sinceLastSummary = 0
+		}
+	}
+}
+
+// unsupportedEmitReceiptTypes returns the (sorted) subset of `emitOn`
+// event types that are NOT in watchEventTypesWithReceiptSupport. The
+// watch loop calls this once at startup to emit a one-time warning so
+// users who ask for, say, `scan.finding` don't silently get no
+// receipts. Empty result = every requested type is supported.
+func unsupportedEmitReceiptTypes(emitOn map[string]bool) []string {
+	var out []string
+	for t := range emitOn {
+		if !watchEventTypesWithReceiptSupport[t] {
+			out = append(out, t)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// supportedEmitReceiptTypesSorted returns the supported event types in
+// stable alphabetical order. Used by the startup-warning message so
+// the listed set is deterministic across runs.
+func supportedEmitReceiptTypesSorted() []string {
+	out := make([]string, 0, len(watchEventTypesWithReceiptSupport))
+	for t := range watchEventTypesWithReceiptSupport {
+		out = append(out, t)
+	}
+	sort.Strings(out)
+	return out
+}
+
 // attachReceiptsIfRequested walks events and, for each one whose type
 // is in `emitOn` AND whose type has receipt-build support
 // (watchEventTypesWithReceiptSupport), builds a receipt and attaches
@@ -163,8 +246,10 @@ var watchBuildReceiptForEventFn = watchBuildReceiptForEvent
 // collection helpers `cub-scout receipt verify` uses
 // (DetectOwnership, AttributeFieldMutation, CollectGitSourceAnchorForOwner).
 //
-// Returns a Statement pointer (so the JSON shape is `receipt: { ... }`
-// or `receipt: null`, never an empty object).
+// Returns a Statement pointer; combined with `omitempty` on
+// watchEvent.Receipt, the wire shape is either `receipt: { ... }` (key
+// present, full Statement) or the receipt key omitted entirely (never
+// `receipt: null` and never an empty object).
 func watchBuildReceiptForEvent(
 	ctx context.Context,
 	event watchEvent,

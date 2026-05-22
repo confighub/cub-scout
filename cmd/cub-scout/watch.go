@@ -51,10 +51,18 @@ type watchEvent struct {
 	// sinks emit one line per event regardless of whether the event
 	// carries a receipt; webhook sinks see the same structured shape.
 	//
+	// Wire shape: `omitempty`. When Receipt is nil, the JSON `receipt`
+	// key is OMITTED entirely (not emitted as `"receipt": null`).
+	// Consumers should check key presence rather than null-ness:
+	//
+	//	if "receipt" in event:           # idiomatic
+	//	    process(event["receipt"])
+	//	# NOT: if event["receipt"] is not None
+	//
 	// Receipt-build failures are NOT fatal to event emission — the
-	// underlying watch event is still emitted with Receipt=nil and a
-	// warning is written to stderr. This keeps the watch loop robust
-	// against transient cluster-read hiccups.
+	// underlying watch event is still emitted (with the receipt key
+	// absent) and a warning is written to stderr. This keeps the watch
+	// loop robust against transient cluster-read hiccups.
 	//
 	// #449 v1: only `drift.detected` and `ownership.changed` event
 	// types are supported in the predicate-mapping; other event types
@@ -183,6 +191,28 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Codex round-6 P2 fix (#463): emit a one-time startup warning when
+	// --emit-receipt-on includes event types that the v1 mapping does
+	// NOT actually build receipts for. The flag is "lenient on type,
+	// strict on receipt-build" (so `all` is forward-compatible), but a
+	// user who asks for `scan.finding` thinking they'll get receipts
+	// gets silent skipping. The warning makes that expectation gap
+	// visible up front rather than as a "why aren't my receipts firing"
+	// debug session later.
+	if len(emitReceiptOn) > 0 {
+		unsupported := unsupportedEmitReceiptTypes(emitReceiptOn)
+		if len(unsupported) > 0 {
+			fmt.Fprintf(os.Stderr,
+				"Warning: --emit-receipt-on includes event types that don't yet build a receipt (#449 v1): %s. "+
+					"The flag accepts these for forward-compat (so `--emit-receipt-on all` keeps working as new types land), "+
+					"but receipt-build is skipped for them. Supported in v1: %s.\n",
+				strings.Join(unsupported, ", "),
+				strings.Join(supportedEmitReceiptTypesSorted(), ", "),
+			)
+		}
+	}
+
 	sinks, cleanup, err := buildWatchSinks(webhookURL, outputFile)
 	if err != nil {
 		return err
@@ -213,9 +243,15 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	// duration of the watch loop. Used by the receipt-emission path to
 	// decide whether to include a confighub-unit:// subject.
 	connected := hub.NewClient().RequireConnected() == nil
-	warnFn := func(format string, args ...interface{}) {
+	baseWarnFn := func(format string, args ...interface{}) {
 		fmt.Fprintf(os.Stderr, "Warning: "+format+"\n", args...)
 	}
+	// Codex round-6 P2 (#463): rate-limit receipt-build warnings. A
+	// long-running watch with transient cluster-read failures (e.g.,
+	// an API-server hiccup hitting every poll) would otherwise spam
+	// stderr indefinitely. First N pass through; after that, periodic
+	// summary.
+	warnFn := makeReceiptWarnFn(baseWarnFn, watchReceiptWarnFirstN, watchReceiptWarnSummaryEvery)
 
 	if watchOnce {
 		curr, err := watchCollectState(ctx, dynClient, watchNamespace)

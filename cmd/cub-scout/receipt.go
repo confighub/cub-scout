@@ -60,9 +60,11 @@ Receipts are HISTORICAL, IMMUTABLE records of past events. Updates produce
 new receipts, never mutate old ones. cub-scout never mutates the cluster
 or ConfigHub.
 
-v1 ships fingerprint-only (SHA-256 over RFC 8785 canonical JSON of the full
-in-toto Statement v1 envelope minus only predicate.fingerprint). v2 will
-add DSSE signing wrapped in Sigstore Bundle v0.3.`,
+Current shipping releases use fingerprint-only integrity (SHA-256 over RFC 8785
+canonical JSON of the full in-toto Statement v1 envelope minus only
+predicate.fingerprint). Cryptographic signing (e.g., DSSE wrapped in a Sigstore
+Bundle, or a comparable scheme) is a future hardening direction — purely
+additive to the wire format, no envelope change required.`,
 }
 
 var receiptVerifyCmd = &cobra.Command{
@@ -139,6 +141,27 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	}
 	if predicateExplicit == agent.PredicateNoManualEditsSince && since.IsZero() {
 		return fmt.Errorf("--predicate no-manual-edits-since requires --since <RFC3339 timestamp>")
+	}
+
+	// Parse --fail-on UPFRONT so a typo or invalid value rejects the
+	// command before any side effect (stdout print, --out write, --save
+	// to store). The fail-on check itself fires later (after the
+	// receipt is built and the artifact is persisted), but the parse
+	// must not let the artifact escape on a misconfigured gate.
+	//
+	// Codex round-6 P2 fix (#463): the prior order let an invalid
+	// --fail-on value print the receipt, write --out, and save before
+	// returning the parse error — which is a CI footgun (the gate
+	// "fires" with the wrong exit code because the typo error wraps to
+	// 1, not 2, and the artifact is already on disk).
+	var failOnSet map[agent.ReceiptVerdict]bool
+	failOnRaw := strings.TrimSpace(receiptFailOn)
+	if failOnRaw != "" {
+		parsed, parseErr := parseReceiptFailOn(failOnRaw)
+		if parseErr != nil {
+			return parseErr
+		}
+		failOnSet = parsed
 	}
 
 	kindRaw, name, ok := parseKindName(args[0])
@@ -220,8 +243,10 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	// (repeatable). Each path is loaded + fingerprint-verified before
 	// being chained — a tampered referenced receipt fails the chain
 	// construction upfront rather than silently propagating bad
-	// evidence. See pkg/agent/receipt_inputattestations.go.
-	var inputAttestations []agent.AttestationRef
+	// evidence. The returned wrappers are the API-boundary-checked type
+	// (`VerifiedAttestationRef`); BuildReceipt unwraps them when it
+	// populates the wire shape. See pkg/agent/receipt_inputattestations.go.
+	var inputAttestations []agent.VerifiedAttestationRef
 	if len(receiptInputAttestations) > 0 {
 		refs, refErr := agent.BuildAttestationRefsFromPaths(receiptInputAttestations, nil)
 		if refErr != nil {
@@ -344,20 +369,18 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	// audit artifact in place. The exitCodeError wrapping (per
 	// cmd/cub-scout/exit_code.go + main.go's errors.As dispatcher)
 	// drives the actual os.Exit(2).
-	if failOn := strings.TrimSpace(receiptFailOn); failOn != "" {
-		failSet, parseErr := parseReceiptFailOn(failOn)
-		if parseErr != nil {
-			return parseErr
-		}
-		if failSet[stmt.Predicate.Verdict] {
-			return newExitCodeError(
-				fmt.Errorf(
-					"receipt verdict %q matches --fail-on %q",
-					stmt.Predicate.Verdict, failOn,
-				),
-				2,
-			)
-		}
+	//
+	// The fail-on set was parsed upfront (above) so an invalid value
+	// could never produce side effects. This block only consults the
+	// already-validated set.
+	if failOnSet != nil && failOnSet[stmt.Predicate.Verdict] {
+		return newExitCodeError(
+			fmt.Errorf(
+				"receipt verdict %q matches --fail-on %q",
+				stmt.Predicate.Verdict, failOnRaw,
+			),
+			2,
+		)
 	}
 
 	return nil

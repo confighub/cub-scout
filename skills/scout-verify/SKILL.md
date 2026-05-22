@@ -279,16 +279,16 @@ Three v2 extensions layer on top of the v1 envelope without changing the wire fo
   --emit-receipt-on drift.detected,ownership.changed
 ```
 
-## v2 still deferred
+## Not yet in cub-scout
 
-Not yet in cub-scout:
+Future directions worth flagging — none of these are implemented today:
 
-- DSSE signing wrapped in **Sigstore Bundle v0.3** (cosign keyless + ed25519 fallback) — purely additive on the existing envelope
+- Cryptographic signing as a hardening layer on top of fingerprint-only — DSSE wrapped in a Sigstore Bundle (cosign keyless + ed25519 fallback) is one candidate design; the wire format is intentionally additive-friendly so signatures can land without an envelope change
 - Aggregate-with-discovery half of `#448` — `cub-scout receipt verify --scope namespace/<ns>` that emits N per-resource receipts + 1 aggregate via `synthetic-aggregate://` subject + max-severity verdict synthesis
 - Backpressure / batching for high-frequency `--emit-receipt-on` events (Codex round-1 open question on `#449`)
 - `resource.discovered` / `scan.finding` event-type support for `--emit-receipt-on` (would flood on first poll; deferred pending the backpressure design)
 
-v1 ships fingerprint-only and v2 is honest about what's not yet there — the contract is in `docs/reference/json-contracts.md` § Receipt Contract.
+Shipping releases use fingerprint-only integrity; future hardening is honest about what's not yet there — the contract is in `docs/reference/json-contracts.md` § Receipt Contract.
 
 ## References
 

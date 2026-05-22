@@ -600,10 +600,12 @@ Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 
 The receipt surface emits typed, fingerprinted, immutable evidence artifacts
 wrapping cub-scout's existing field-level evidence (compareThreeWay,
-attribution, sourceTruth, gitSource) into a verifiable record. v1 ships
-fingerprint-only (SHA-256 over RFC 8785 canonical JSON of the full in-toto
-Statement v1 envelope minus only `predicate.fingerprint`). v2 will add DSSE
-signing wrapped in Sigstore Bundle v0.3 — purely additive, no envelope change.
+attribution, sourceTruth, gitSource) into a verifiable record. Current
+shipping releases use fingerprint-only integrity (SHA-256 over RFC 8785
+canonical JSON of the full in-toto Statement v1 envelope minus only
+`predicate.fingerprint`). Cryptographic signing (e.g., DSSE wrapped in a
+Sigstore Bundle, or a comparable scheme) is a future hardening direction —
+purely additive to the wire format, no envelope change required.
 
 Receipts are **historical, immutable records** of past events. Updates produce
 new receipts, never mutate old ones. cub-scout never mutates the cluster or
@@ -925,7 +927,18 @@ The flag is **lenient on type, strict on receipt-build**: unsupported event
 types pass through without a warning (so `--emit-receipt-on all` is
 forward-compatible as new event types land). Build failures on
 supported types emit a stderr warning and continue — the underlying
-watch event still emits with `receipt: null`.
+watch event still emits, but with the `receipt` key **omitted** from
+the JSON (the field uses `omitempty`; consumers should check for key
+presence rather than null-ness):
+
+```python
+# correct
+if "receipt" in event:
+    process(event["receipt"])
+
+# incorrect — `event["receipt"]` raises KeyError when receipt-build
+# was skipped or failed
+```
 
 Sample JSONL line with a receipt:
 

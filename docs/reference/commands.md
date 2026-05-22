@@ -836,7 +836,7 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 | `--severity` | Finding severity filter (`critical,warning,info`) |
 | `--once` | Run one collection cycle and exit |
 | `--max-queued-events` | Max buffered events while webhook is unreachable |
-| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to (`drift.detected`, `ownership.changed`, or sugar `all`). Receipt-build failures are non-fatal: the watch event still emits with `receipt: null` and a stderr warning. (#449 v1: only `drift.detected` and `ownership.changed` actually build a receipt; other types pass through silently.) |
+| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to (`drift.detected`, `ownership.changed`, or sugar `all`). Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. (#449 v1: only `drift.detected` and `ownership.changed` actually build a receipt; other types pass through silently.) |
 
 ### Event Types
 
@@ -2448,9 +2448,11 @@ envelope. CI/CD gates, audit trails, postmortems, and acceptance-judge
 tooling can attach a receipt to a decision and later prove the inputs
 were what they claim to be.
 
-v1 ships fingerprint-only (SHA-256 over RFC 8785 canonical JSON of the
-full Statement minus only `predicate.fingerprint`). v2 adds DSSE signing
-wrapped in Sigstore Bundle v0.3 — purely additive, no envelope change.
+Current shipping releases use fingerprint-only integrity (SHA-256 over
+RFC 8785 canonical JSON of the full Statement minus only
+`predicate.fingerprint`). Cryptographic signing (e.g., DSSE wrapped in a
+Sigstore Bundle, or a comparable scheme) is a future hardening direction —
+purely additive to the wire format, no envelope change required.
 
 ### receipt verify
 
