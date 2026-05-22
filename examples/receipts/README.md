@@ -133,25 +133,41 @@ canonical JSON includes the field).
 
 URI scheme: `cub-scout-receipt://<12-char-short-fingerprint>` with the
 full SHA-256 in the `digest` field. Symmetric with the local store's
-canonical filename.
+canonical filename. Worked example: [`./chained/`](./chained/).
 
-### Real-time emission: `watch --emit-receipt-on <event-types>`
+### Aggregate receipts: `--scope namespace/<ns>` (shipped in `#469`)
 
 ```bash
-# Each drift event becomes a fingerprinted receipt in the JSONL stream.
-./cub-scout watch -n prod \
-  --output-file ./acceptance.jsonl \
-  --emit-receipt-on drift.detected,ownership.changed
+# Auto-discover workloads in a namespace; emit N per-resource receipts
+# + 1 aggregate over them.
+./cub-scout receipt verify --scope namespace/prod --strategy git-argo --save
+
+# Or pass an explicit comma-list batch.
+./cub-scout receipt verify deploy/api,deploy/worker,statefulset/db \
+  -n prod --strategy git-argo --save
 ```
 
-v1 of this flag builds receipts for `drift.detected` and
-`ownership.changed`. Other event types (`resource.discovered`,
-`scan.finding`) are accepted for forward-compat but pass through
-silently (a startup warning lists them). Receipt-build failures are
-non-fatal — the underlying event still emits but the JSON `receipt`
-key is omitted (omitempty; consumers should check key presence, not
-null-ness). Rate-limited stderr warnings keep a long-running watch
-from spamming on transient cluster-read failures.
+The aggregate's subject is `synthetic-aggregate://sha256/<id>` (deterministically derived from input digests). Its verdict is synthesized via `--aggregate-policy` (default: `max-severity` — `BLOCK > INCONCLUSIVE > WATCH > PASS`). `--fail-on` applies to the aggregate verdict. Worked example: [`./aggregate/`](./aggregate/).
+
+### Real-time emission: `watch --emit-receipt-on <event-types>` (full set + backpressure shipped in `#470`)
+
+```bash
+# Each matching event becomes a fingerprinted receipt in the JSONL stream.
+./cub-scout watch -n prod \
+  --output-file ./acceptance.jsonl \
+  --emit-receipt-on all \
+  --emit-receipt-batch-cap 10
+```
+
+As of `#470` all four known event types build receipts:
+`drift.detected`, `ownership.changed`, `resource.discovered`,
+`scan.finding`. The per-poll backpressure cap
+(`--emit-receipt-batch-cap`) bounds receipt-build cost on first-poll
+bursts: the first N events get receipts; the rest emit with the
+`receipt` key omitted plus a stderr summary. Receipt-build failures
+are non-fatal — the underlying event still emits but the JSON
+`receipt` key is omitted (omitempty; consumers should check key
+presence, not null-ness). Worked example: [`./watch-emit/`](./watch-emit/).
 
 ## Read-Only Triad Lock
 
