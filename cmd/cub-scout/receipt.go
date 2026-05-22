@@ -36,6 +36,37 @@ var (
 	receiptInputAttestations []string
 )
 
+// runReceiptVerifyDispatch is the shared entry point for the receipt
+// verify command. It branches between the single-resource flow
+// (existing runReceiptVerify) and the aggregate-with-discovery flow
+// (#448, runReceiptVerifyScoped in receipt_aggregate.go) based on
+// whether --scope is set or the positional argument is comma-shaped.
+func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
+	// Detect aggregate mode by inspecting --scope OR the positional.
+	scopeFlag := strings.TrimSpace(receiptScope)
+	positional := ""
+	if len(args) > 0 {
+		positional = strings.TrimSpace(args[0])
+	}
+
+	if scopeFlag != "" || strings.Contains(positional, ",") {
+		spec, refs, isAgg, err := parseAggregateScope(scopeFlag, positional, receiptNamespace)
+		if err != nil {
+			return err
+		}
+		if isAgg {
+			return runReceiptVerifyScoped(cmd, spec, refs)
+		}
+	}
+
+	// Fall back to the single-resource flow. Requires exactly one
+	// positional.
+	if len(args) != 1 {
+		return fmt.Errorf("receipt verify requires either a single <kind>/<name> positional, a comma-list positional, or --scope namespace/<ns>")
+	}
+	return runReceiptVerify(cmd, args)
+}
+
 // Function-variable seam for tests. Production reads from the cluster via
 // the dynamic client; tests swap with a fake returning prefab objects.
 var loadReceiptLiveFn = loadReceiptLive
@@ -94,8 +125,8 @@ Examples:
   cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
   cub-scout receipt verify deploy/api -n prod --predicate applied-matches-spec --format json --out api.receipt.json
 `,
-	Args: cobra.ExactArgs(1),
-	RunE: runReceiptVerify,
+	Args: cobra.MaximumNArgs(1),
+	RunE: runReceiptVerifyDispatch,
 }
 
 func init() {
@@ -113,6 +144,16 @@ func init() {
 	receiptVerifyCmd.Flags().StringVar(&receiptSaveDir, "save-dir", "", "Override the store directory used when --save is set")
 	receiptVerifyCmd.Flags().StringVar(&receiptFailOn, "fail-on", "", "Exit non-zero (code 2) when the receipt verdict matches. Accepts a comma-separated list of verdicts (WATCH, BLOCK, INCONCLUSIVE) or the sugar 'any-non-pass' (= WATCH,BLOCK,INCONCLUSIVE). The receipt is still printed / saved / written to --out regardless of exit code.")
 	receiptVerifyCmd.Flags().StringArrayVar(&receiptInputAttestations, "input-attestation", nil, "Path to a prior receipt to reference via inputAttestations[] (repeatable). Each referenced receipt's fingerprint is verified at chain-construction time; tampered receipts are refused. The new receipt's fingerprint covers the inputAttestations[] field by construction.")
+	receiptVerifyCmd.Flags().StringVar(&receiptScope, "scope", "", "Aggregate-receipt scope (#448). Accepts 'namespace/<ns>' to auto-discover workloads (Deployment / StatefulSet / DaemonSet / CronJob / Job). For a comma-list batch, pass the resources directly in the positional, e.g. 'deploy/api,deploy/worker'. When set, the command emits N per-resource receipts (JSONL) followed by 1 aggregate receipt; --fail-on applies to the aggregate verdict.")
+	receiptVerifyCmd.Flags().StringVar(&receiptAggregatePolicy, "aggregate-policy", "", "Verdict-synthesis policy for the aggregate receipt (#448). v1 supports only 'max-severity' (the default; BLOCK > INCONCLUSIVE > WATCH > PASS).")
+
+	// Wire the production connected-mode detector for the aggregate
+	// flow. (Lives in receipt_aggregate.go as a function-variable seam
+	// so tests can swap to a fixed standalone/connected value without
+	// importing the hub package.)
+	detectConnectedForReceipt = func() bool {
+		return hub.NewClient().RequireConnected() == nil
+	}
 }
 
 func runReceiptVerify(cmd *cobra.Command, args []string) error {

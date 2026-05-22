@@ -898,14 +898,85 @@ calls `VerifyStatementFingerprint` on the referenced receipt and
 fingerprint covers the `inputAttestations[]` field by construction, so
 tampering an upstream digest invalidates the downstream fingerprint too.
 
-The aggregate-with-discovery half of `#448` (`--scope namespace/<ns>`
-emits N per-resource receipts + 1 aggregate via
-`synthetic-aggregate://` subject) is a separate follow-up PR; this v2
-ships only the explicit-construction half (`--input-attestation`).
-
 Implementation: `pkg/agent/receipt_inputattestations.go`
 (`BuildAttestationRef`, `BuildAttestationRefsFromPaths`,
 `AttestationURIScheme`); `cmd/cub-scout/receipt.go` flag plumbing.
+
+#### `--scope` aggregate-with-discovery (`#448` aggregate half)
+
+The aggregate-with-discovery half of `#448` adds two CLI shapes that
+produce **one aggregate receipt** over **N per-resource receipts**:
+
+```bash
+# Namespace auto-discovery: walk Deployment / StatefulSet / DaemonSet /
+# CronJob / Job in the namespace, build a per-resource receipt for
+# each, then build the aggregate over them.
+cub-scout receipt verify --scope namespace/<ns> --strategy <s> --save
+
+# Comma-list batch: explicit set of resources (kinds normalized per
+# the single-resource positional rules).
+cub-scout receipt verify <kind>/<name>,<kind>/<name>,... -n <ns> --strategy <s>
+```
+
+In both shapes, the CLI emits N per-resource receipts to stdout as
+JSONL lines, followed by 1 aggregate receipt as pretty-printed JSON.
+`--fail-on` applies to the **aggregate** verdict.
+
+Aggregate receipt wire shape:
+
+```json
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "synthetic-aggregate://sha256/1a2b3c4d5e6f7890",
+      "digest": {"sha256": "1a2b3c4d5e6f7890..."}
+    }
+  ],
+  "predicateType": "https://cub-scout.dev/receipt/v1",
+  "predicate": {
+    "version": "v1",
+    "predicateName": "aggregate-verdict",
+    "verdict": "BLOCK",
+    "claim": "aggregate verdict BLOCK over 12 receipt(s) in namespace prod (policy=max-severity)",
+    "scope": {"kind": "namespace", "namespace": "prod"},
+    "evidence": {},
+    "omissions": [
+      {
+        "missing": "aggregate-partial-coverage",
+        "reason": "2 of 12 input attestation(s) carried verdict INCONCLUSIVE; aggregate verdict may not reflect full coverage",
+        "severity": "warning"
+      }
+    ],
+    "inputAttestations": [
+      {"uri": "cub-scout-receipt://abc123def456", "digest": {"sha256": "abc123def456..."}},
+      {"uri": "cub-scout-receipt://9e7d12fa11b2", "digest": {"sha256": "9e7d12fa11b2..."}}
+    ],
+    "nextSteps": [],
+    "verifier": {"tool": "cub-scout", "version": "v2.2.1"},
+    "verifiedAt": "2026-05-22T22:00:00Z",
+    "fingerprint": "sha256:..."
+  }
+}
+```
+
+Key shape rules (verified against `pkg/agent/receipt_aggregate.go`):
+
+- **Subject scheme:** `synthetic-aggregate://sha256/<aggregate-id>` where `<aggregate-id>` is the first 16 hex chars of the SHA-256 over the deterministically-sorted concatenation of input sha256 digest hex (one per line). The full SHA-256 lives in `subject[0].digest.sha256`. Reordering the inputs produces the **same** subject (the aggregate is a set, not a list).
+- **`predicateName`:** the literal string `"aggregate-verdict"` (distinct from the per-resource predicate names `applied-matches-spec` / `source-truth-pass` / `no-manual-edits-since`).
+- **Verdict synthesis:** the default policy is **max-severity** (`BLOCK > INCONCLUSIVE > WATCH > PASS`). `--aggregate-policy max-severity` is explicit; future policies (`majority`, weighted) are wired through the same flag.
+- **`omissions[]`:** any input attestation with verdict `INCONCLUSIVE` triggers an `aggregate-partial-coverage` omission entry so the consumer knows the aggregate verdict may not reflect full coverage. Per-resource verify failures (load errors, marshal errors) also surface here when discovery couldn't reach a resource.
+- **`inputAttestations[]`:** one entry per per-resource receipt successfully verified. Each entry's fingerprint is **verified at chain-construction time** via the same `VerifiedAttestationRef` typed wrapper the single-resource chained path uses (per `#463` Codex round-6 P1 fix; `pkg/agent/receipt_aggregate.go:BuildAggregateReceipt` rejects zero-value wrappers).
+- **Fingerprint coverage:** the aggregate's `fingerprint` covers every field including `inputAttestations[]`. Tampering with the input set (adding, removing, or reordering) invalidates the recomputed fingerprint.
+
+Per-resource receipt failures during discovery are **non-fatal**: the aggregate is composed from the successful subset, with an `aggregate-partial-coverage` omission entry recording the failure count.
+
+Implementation: `pkg/agent/receipt_aggregate.go`
+(`BuildSyntheticAggregateSubject`, `BuildAggregateReceipt`,
+`MaxSeverityPolicy`, `PredicateAggregateVerdict`);
+`cmd/cub-scout/receipt_aggregate.go`
+(`runReceiptVerifyScoped`, `discoverNamespaceWorkloads`,
+`parseAggregateScope`).
 
 #### `watch --emit-receipt-on <event-types>` (`#449`)
 
