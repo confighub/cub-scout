@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-05-22 — refreshed to drop stale v2.0.0-plugin-switchover framing (v2.0.0 shipped long ago — current release is v2.2.1), and to record the receipts (`#446`) and skills (`#442`) work merged this session.
+Last updated: 2026-05-22 (afternoon refresh) — captures the post-#462 work: receipts v2 surface (`--fail-on` + chained receipts + `watch --emit-receipt-on`) in #463, Codex round-6 P1/P2 fixes squashed into the same merge, and the docs-visibility pass in #464 that surfaced the Verify verb group in the top-level navigation. Three PRs landed on `main` after the morning #462 refresh: `b518b44` (#462) → `f5fcad9` (#463) → `5c686bd` (#464). Earlier in the day: receipts v1 (`#446`) and skills (`#442`).
 
 ## Current repo state
 
@@ -52,12 +52,58 @@ Modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub
 - **ASK → WATCH (not INCONCLUSIVE).** Per the locked synthesis in `docs/proposals/receipts-way-forward.md`; INCONCLUSIVE is reserved for receipts that themselves can't be built (missing strategy, missing evidence body), not for cases where the source-truth surface couldn't classify.
 - **Skill `allowed-tools` enumerate read-only verbs only.** No broad `Bash(cub-scout *)` / `Bash(./cub-scout *)` wildcards anywhere — those would silently grant `demo`, `import apply`, `compare --suggest --apply`, all mutating. Verified clean across all ~35 skill files (Codex round-5 caught 4 leaks, all fixed).
 
-### Open follow-ons from this session
+### Open follow-ons from this session (now resolved or progressed)
 
-- **`#446` v2** (no separate issues for the umbrella; tracked by 3 spin-offs): `#448` chained / aggregate receipts via `inputAttestations[]`; `#449` `cub-scout watch --emit-receipt-on`; `#451` `--fail-on RECEIPT_VERDICT` exit semantics
-- **MCP enum drift** — `compare_source_truth` MCP schema lists 4 strategies; CLI supports 9 (Phase 2 from `#418`). One-file fix in `cmd/cub-scout/mcp.go`.
-- **Codex P3** — source-truth receipt precedence tests (`StatusBLOCK + VerdictBLOCKED`, `StatusWATCH + VerdictINCOMPLETE`). Not blocking; nice-to-have.
-- **`#444` Pilot–cub-scout integration skills** — 9 scenarios across batch A (5) + batch B (4). Consumes the receipts + source-truth surface from the Pilot side.
+Most of these moved in the afternoon session below; this list is preserved for traceability:
+
+- ~~**`#446` v2 spin-offs**~~ — `#451` closed via #463 (fully shipped); `#448` and `#449` progressed in #463 (chained half + v1 watch surface shipped; aggregate-with-discovery and backpressure remain).
+- ~~**MCP enum drift**~~ — still open (one-file fix in `cmd/cub-scout/mcp.go`). Did not land this session.
+- ~~**Codex P3**~~ — source-truth receipt precedence tests still open; not blocking.
+- **`#444` Pilot–cub-scout integration skills** — still open; the consumer-side scenarios remain the highest-leverage track after receipts.
+
+## May 2026 completions — session 2026-05-22 (afternoon: receipts v2 + Codex round-6 + docs visibility)
+
+Three PRs landed on top of the morning #462 refresh, in deliberate merge order: docs-drift (#462) → code (#463) → docs-visibility (#464). The afternoon arc closes the receipts capability end-to-end and fills the top-of-funnel docs gap that #462 itself surfaced.
+
+| PR | Subject |
+|----|---------|
+| [#462](https://github.com/confighub/cub-scout/pull/462) | Docs-drift refresh — HANDOVER + AI-README-FIRST + v2.0.0-plugin-plan updated to v2.2.1 reality; capability map gained receipts + skills; "blocker" framing scrubbed (v2.0.0 shipped long ago). Codex round-6 P1/P2 followups: `confighubai/confighub-ai-demo` scrubbed (confidentiality boundary); Views #419/#420 scope-citation drift corrected (scope #3 shipped via #420, not scope #2). |
+| [#463](https://github.com/confighub/cub-scout/pull/463) | Receipts v2 surface — three additive extensions on the v1 envelope: `receipt verify --fail-on <verdict>` (`#451`), `--input-attestation <path>` for chained receipts via `inputAttestations[]` (the explicit half of `#448`), and `watch --emit-receipt-on <event-types>` (v1 of `#449`). 33 new tests; wire format unchanged. Codex round-6 P1/P2 fixes squashed in (commit `56d9123` on the branch): read-only guard now scans `watch_receipt.go` via substring glob + expected-paths assertion; `VerifiedAttestationRef` typed wrapper enforces fingerprint verification at the `BuildReceipt` API boundary (programmatic callers can't bypass the verify step); `--fail-on` parses upfront so a bad value can't leak stdout/--out/--save; `omitempty` on `watchEvent.Receipt` reconciled with docs; startup warning when `--emit-receipt-on` includes unsupported types; rate-limited stderr warnings (first 10 + summary every 100); stale "v2 adds DSSE" wording softened across `receipt.go`, `json-contracts.md`, `commands.md`, `scout-verify/SKILL.md`. |
+| [#464](https://github.com/confighub/cub-scout/pull/464) | Docs visibility — the Verify verb group was invisible in the top-level navigation (README capability map had 7 groups, not 8; cli-reference had only the top-level `receipt` row, no subcommands; cli-contract had no receipt section; examples/receipts had no v2 surface section). Surfaced in 6 files including a full GitHub Actions / GitLab CI / Jenkins CI-gate walkthrough at `examples/receipts/ci-gate/README.md`. Closes the docs gap noted in the #451 closing comment. |
+
+### Codex round-6 review — outcome
+
+External Codex review of #462 + #463 returned 3 P1s and 5 P2s. All landed in the same merge cycle:
+
+| Finding | Status |
+|---|---|
+| P1 #463-A: read-only guard `TestReceiptPackageReadOnlyClient` didn't scan `watch_receipt.go` | Fixed — substring glob + `expectedPaths` allow-set asserts every receipt-shaped file is scanned |
+| P1 #463-B: `BuildReceiptInput.InputAttestations []AttestationRef` allowed programmatic forgery (bypass of `BuildAttestationRef`'s verify step) | Fixed — typed wrapper `VerifiedAttestationRef` with unexported field; only constructible via `BuildAttestationRef(s)`; BuildReceipt rejects zero-valued wrappers |
+| P1 #462: `confighubai/confighub-ai-demo` + "Slack discussion" provenance leaked into public docs | Fixed — scrubbed; generic "tracked in a separate non-public repo" pointer |
+| P2 #463: `--fail-on` parsed after stdout/`--out`/`--save` (CI footgun on bad value) | Fixed — parses upfront in `runReceiptVerify` |
+| P2 #463: docs said `receipt: null` but `omitempty` actually omits the key entirely | Fixed — keep `omitempty`, update docs + doc-comments to "key omitted; check key presence" |
+| P2 #463: silent skip for `--emit-receipt-on` event types that don't yet build a receipt (`resource.discovered`/`scan.finding`) | Fixed — one-time startup stderr warning lists them at watch start |
+| P2 #463: unbounded watch receipt-build warnings could spam stderr on transient cluster-read failures | Fixed — `makeReceiptWarnFn` rate limiter: first 10 verbatim, then summary every 100 |
+| P2 #463: stale "v2 adds DSSE signing wrapped in Sigstore Bundle v0.3" wording presented future signing as inevitable | Fixed — softened to "future hardening direction" across `receipt.go`, `json-contracts.md`, `commands.md`, `scout-verify/SKILL.md`, `examples/receipts/README.md`, `docs/roadmap.md` |
+| P2 #462: Views #419/#420 scope-citation drift (claimed #419/#420 shipped scope #2; reality: #419 closed unmerged, #420 merged scope #3) | Fixed — #420 → scope #3 shipped; #419 removed from references; scope #2 (open) tracked under #422 |
+
+### Key design decisions locked this session (afternoon)
+
+- **Typed wrapper for chained-receipt API boundary.** `VerifiedAttestationRef` is a struct with one unexported field (`ref AttestationRef`). External packages cannot construct a non-zero value without calling `BuildAttestationRef` (which verifies the source Statement's fingerprint). The zero value is the entire forgeable surface, and `BuildReceipt` rejects it explicitly. Wire format is unchanged — `Predicate.InputAttestations` stays `[]AttestationRef` for the JSON shape; `BuildReceipt` unwraps internally.
+- **`--fail-on PASS` rejected upfront.** Gating on a passing receipt is a workflow bug, not a feature. The CLI errors with exit 1 (operational), not 2 (gate fired). Documented in `cli-contract.md`.
+- **Artifact preservation on `--fail-on` exit 2 is intentional and load-bearing.** The receipt is printed to stdout / written to `--out` / saved to `--save` BEFORE the gate evaluates. CI gets both the failure code AND the durable evidence artifact. Codex round-6 P2 tightened this: a bad `--fail-on` value rejects upfront BEFORE any side effect, so there's no path where a misconfigured gate leaks an artifact.
+- **`omitempty` on `watchEvent.Receipt` over `null` in the wire format.** Consumers must check for key presence (`"receipt" in event`), not null-ness. The doc comments now state this explicitly with an idiomatic Python example.
+- **Watch `--emit-receipt-on` is lenient on type, strict on receipt-build.** Unsupported types pass through silently (so `--emit-receipt-on all` is forward-compat as new event types land), BUT a startup warning lists the unsupported subset so users don't silently get less than they asked for.
+- **Receipt-build warnings rate-limited, not unbounded.** First 10 pass through; afterwards a periodic summary fires every 100 suppressions. Counters live on the closure across poll cycles. Disable with knob = 0.
+- **Read-only triad guard tightened.** The static-grep static guard now uses a substring glob (`strings.Contains(name, "receipt")`) rather than a prefix glob (`strings.HasPrefix`), and asserts an explicit allow-set of receipt-shaped basenames. A future receipt file with a non-prefix basename (e.g., `aggregate_receipt.go`) is covered automatically; a rename that silently drops a file is a loud test failure.
+- **Docs visibility is its own deliverable.** Receipts shipped across five PRs; the docs followed in the same PRs but only on per-feature surfaces (`json-contracts.md` § Receipt Contract, `commands.md` § receipt, per-predicate `examples/receipts/<predicate>/`). The top-of-funnel surfaces (README capability map, cli-reference A-Z, cli-contract exit codes, examples/receipts top-level README, roadmap) never got a refresh until #464.
+
+### Open follow-ons from this afternoon session
+
+- **`#448` aggregate-with-discovery half** — `cub-scout receipt verify --scope namespace/<ns>` auto-discovery + `synthetic-aggregate://` subject + max-severity verdict synthesis. Issue stays open.
+- **`#449` backpressure / batching** — high-frequency event handling + `resource.discovered` / `scan.finding` support gated on the backpressure design. Issue stays open.
+- **MCP `compare_source_truth` enum drift** — still open (one-file fix in `cmd/cub-scout/mcp.go`).
+- **Codex round-5 P3** — source-truth receipt precedence tests still open; not blocking.
 
 ## May 2026 completions — session 2026-05-21 (attribution layer)
 
@@ -174,12 +220,14 @@ Key deliverables now in place:
 
 ## Open issues
 
-Current tracked follow-ons (verified 2026-05-22):
+Current tracked follow-ons (verified 2026-05-22 afternoon; reflects post-#463/#464 state):
 
-- **`#448`** — Receipts v2: aggregate / chained receipts via `inputAttestations[]` composition. v1 envelope already emits `inputAttestations: []`; v2 wires the cross-receipt digest semantics.
-- **`#449`** — `cub-scout watch --emit-receipt-on <event-type>`: event-driven receipt emission so receipts can land in real time. Becomes the real-time channel into Pilot.
-- **`#451`** — `--fail-on RECEIPT_VERDICT` exit semantics extension for CI gates (read a verdict, exit accordingly).
-- **`#444`** — Pilot–cub-scout integration skills: 9 scenarios (CD gate / fleet conformance / patch+drift / rollback / promotion / incident evidence / compliance / release verification / watch alert). Consumes the receipts + source-truth surface from the Pilot side.
+- **`#448`** — Receipts v2: aggregate / chained receipts. **Chained half (explicit `--input-attestation` construction) shipped in #463.** Open scope: aggregate-with-discovery half — `cub-scout receipt verify --scope namespace/<ns>` auto-discovery + `synthetic-aggregate://` subject construction + max-severity verdict synthesis.
+- **`#449`** — `cub-scout watch --emit-receipt-on <event-types>`: **v1 shipped in #463** for `drift.detected` + `ownership.changed` with `applied-matches-spec` auto-detected; receipt-build failures non-fatal; startup warning + rate-limited stderr warnings (Codex round-6 P2). Open scope: backpressure / batching for high-frequency events + `resource.discovered` / `scan.finding` support gated on the backpressure design.
+- ~~**`#451`**~~ — `--fail-on RECEIPT_VERDICT` exit semantics. **Closed via #463** (fully shipped; Codex round-6 P2 tightened upfront parsing so a bad value can't leak artifacts).
+- **`#444`** — Pilot–cub-scout integration skills: 9 scenarios (CD gate / fleet conformance / patch+drift / rollback / promotion / incident evidence / compliance / release verification / watch alert). Consumes the receipts + source-truth surface from the Pilot side. **Highest-leverage open work now that receipts is done.**
+- **MCP `compare_source_truth` strategy-enum drift** — MCP schema lists 4 strategies; CLI supports 9 (Phase 2 from `#418` shipped before this session). One-file fix in `cmd/cub-scout/mcp.go`. Tracked informally; no separate issue.
+- **Codex round-5 P3** — source-truth receipt precedence tests (`StatusBLOCK + VerdictBLOCKED`, `StatusWATCH + VerdictINCOMPLETE`). Nice-to-have, not blocking.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout outputs.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).
 - **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up).
@@ -208,14 +256,16 @@ Current tracked follow-ons (verified 2026-05-22):
 
 Current release tag: **`v2.2.1`**. The v2.0.0 plugin switchover (`cub scout` as the preferred invocation, MCP gateway as the AI front door) shipped in `v2.0.0` and is now historical — `docs/releases/v2.0.0-plugin-plan.md` is preserved as a historical artifact, not an active milestone.
 
-`go test ./...` is green as of 2026-05-22 across every package touched by the receipts + skills work. The only failure on a clean local checkout is the pre-existing `test/unit/demo_worker_lifecycle_script_test.go` — environmental flake; main CI is green for it.
+`main` HEAD at handover time: `5c686bd` (`docs: surface the Verify verb group across top-level navigation`, #464). Three PRs landed after the morning #462 refresh: `b518b44` → `f5fcad9` → `5c686bd` (#462 → #463 → #464). Zero open PRs.
 
-Recent shipped capability surface (sessions 2026-05-21 and 2026-05-22):
+`go test ./...` is green as of 2026-05-22 across every package touched by the receipts + skills + docs work. The only failure on a clean local checkout is the pre-existing `test/unit/demo_worker_lifecycle_script_test.go` (TestDemoWorkerLifecycleScript_StartStop + TestDemoWorkerLifecycleScript_CleanupKeepDoesNotStop) — environmental flake reproducible on unmodified `main`; main CI is green for it.
+
+Recent shipped capability surface (sessions 2026-05-21 + 2026-05-22 morning + 2026-05-22 afternoon):
 
 - Attribution layer end-to-end (`cause` / `managerHint` / `gitSource` / `bindingSource` per field; stage B file:line back-resolution)
 - Source-truth contract Phase 1 + 2 (9 strategies)
 - Architectural triad locked in code (read-only-triad invariant)
-- Receipts v1 — typed, fingerprinted, immutable evidence artifacts (3 predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`)
+- **Receipts v1 + v2 — typed, fingerprinted, immutable evidence artifacts.** 3 predicates (`applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`); store + management UX (`receipt show / validate / list`); CI-gate exit semantics (`--fail-on`); chained receipts via `--input-attestation` with API-boundary verification (`VerifiedAttestationRef`); real-time emission via `watch --emit-receipt-on`. Read-only triad guards at three layers (`scripts/check-readonly.sh` CI grep + `TestReceiptPackageReadOnlyClient` static grep + `FilterNextSteps` runtime filter). Surfaced in top-level docs via #464.
 - AI-agent skill catalog (~35 skill files + 9 references) modeled on `confighub/confighub-skills`
 - MCP gateway with closed read-only tool catalog (5 standalone + 5 connected tools)
 - `--presentation human|ai|paired` on `doctor` / `explain` / `trace`
@@ -224,11 +274,13 @@ Recent shipped capability surface (sessions 2026-05-21 and 2026-05-22):
 
 There is **no single "next milestone"** the way v2.0.0 was. The codebase is in steady-state with three credible directions, in roughly descending leverage:
 
-1. **Receipts v2 + small follow-ons** — `#448` chained receipts via `inputAttestations[]`, `#449` `watch --emit-receipt-on` for real-time emission, `#451` `--fail-on RECEIPT_VERDICT` for CI gating. Plus the small Codex round-5 follow-ups: MCP `compare_source_truth` strategy-enum drift (4 vs 9), source-truth receipt precedence tests.
-2. **Pilot–cub-scout integration skills** (`#444`) — 9 consumer-side skill scenarios (CD gate / fleet conformance / patch+drift / rollback / promotion / incident evidence / compliance / release verification / watch alert). Closes the trust-triad loop on the consumer side.
+1. **Pilot–cub-scout integration skills** (`#444`) — 9 consumer-side skill scenarios (CD gate / fleet conformance / patch+drift / rollback / promotion / incident evidence / compliance / release verification / watch alert). Closes the trust-triad loop on the consumer side now that the producer-side receipts surface is complete. **Highest-leverage open track.**
+2. **Receipts v2 deferred halves** — `#448` aggregate-with-discovery (`--scope namespace/<ns>` auto-discovery + `synthetic-aggregate://` subject + max-severity verdict synthesis); `#449` backpressure / batching for high-frequency `--emit-receipt-on` events (plus the `resource.discovered` / `scan.finding` support gated on it). Plus the small Codex round-5 follow-ups: MCP `compare_source_truth` strategy-enum drift (4 vs 9), source-truth receipt precedence tests.
 3. **Views project tail** — `#391` scope #2 TUI Hub View column projection (`#422`); `#421` CEL+JSONPath column evaluators. Scopes #1 and #3 already shipped (`#414` and `#420` respectively). Smaller surface than receipts/skills but a real follow-on for the Views work.
 
 Other open issues with lower urgency: `#432` Grafana collector, `#427` watch kstatus migration, `#392` ConfigHub Initiatives (deferred until backend primitive), `#386` `preferInvocationForm` lint extension.
+
+Re-ordered vs. the morning #462 version: receipts v2 dropped from #1 to #2 because the substantive surface shipped in #463; `#444` Pilot skills moved up to #1 because it's now the highest-leverage open track.
 
 ### CLI migration table (`#375`)
 
