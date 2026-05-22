@@ -37,18 +37,18 @@ One skill per controller cub-scout detects. Each documents the specific labels /
 - [`observe-confighub-managed/`](observe-confighub-managed/SKILL.md) — UnitSlug label, delivered-via-Argo vs delivered-via-Flux, ConfigHub-priority detection
 - [`observe-native/`](observe-native/SKILL.md) — OwnerType=k8s (OwnerReferences chain) vs OwnerType=unknown (terminal fallthrough), orphan detection
 
-### Workflow scenario skills *(planned, #442 batch 4)*
+### Workflow scenario skills
 
-Each covers a real operator / agent workflow that spans multiple verbs.
+Each covers a real operator / agent workflow that spans multiple verbs. Compose verb-group skills (Observe / Diagnose / Compare / Attribute / Ingest / Govern / Integrate / Verify) into a single situation-shaped loop.
 
-- `triage-unhealthy-workload/` — doctor → explain → trace under time pressure
-- `investigate-drift/` — compare three-way + attribution (controller-drift vs manual-edit)
-- `audit-fleet-conformance/` — compare three-way `--view` + source-truth across scope
-- `prepare-for-confighub/` — import --git-path preview + propose units before connecting
-- `migrate-from-kubectl/` — find manual edits via attribution, plan revert / port
-- `ai-agent-readonly-context/` — mcp serve + context-pack patterns for Claude / Codex / agents
-- `operator-incident-evidence/` — gather evidence for incident postmortem without mutating
-- `confighub-source-truth/` — `compare source-truth` strategy verdicts for upstream acceptance
+- [`triage-unhealthy-workload/`](triage-unhealthy-workload/SKILL.md) — doctor → explain → trace under pager-time pressure; the 30-second loop
+- [`investigate-drift/`](investigate-drift/SKILL.md) — compare three-way + attribution (controller-drift vs manual-edit), per-field cause classification
+- [`audit-fleet-conformance/`](audit-fleet-conformance/SKILL.md) — compare three-way `--view` + source-truth + fleet outliers + optional receipt persistence
+- [`prepare-for-confighub/`](prepare-for-confighub/SKILL.md) — import --git-path preview + disk-PR proposal flow before ever invoking `import apply`
+- [`migrate-from-kubectl/`](migrate-from-kubectl/SKILL.md) — find manual edits via attribution, risk-rank with scan, plan per-resource revert/port/accept, capture baseline receipts
+- [`ai-agent-readonly-context/`](ai-agent-readonly-context/SKILL.md) — MCP gateway + context-pack + `--presentation ai` for Claude / Codex / Cursor / Continue integration with the read-only invariant
+- [`operator-incident-evidence/`](operator-incident-evidence/SKILL.md) — postmortem evidence package: trace + compare + bundle + history + audit + fingerprinted receipts
+- [`confighub-source-truth/`](confighub-source-truth/SKILL.md) — strategy-typed `compare source-truth` verdicts (one of 9 strategies; cub-scout never infers); Pilot-acceptance-shaped output
 
 ### Shared references
 
@@ -79,10 +79,11 @@ All skills under `skills/` follow the read-only-triad invariant. Concretely:
 
 ## Status
 
-**Batch 3 shipped (`#442` batch 3)**: the seven controller-observer skills are in — `observe-argocd` / `observe-flux` / `observe-helm` / `observe-crossplane` / `observe-kro` / `observe-confighub-managed` / `observe-native`. Every controller cub-scout detects now has a dedicated skill documenting its labels, manager strings, and edge cases, verified against the Go enumeration in `pkg/agent/ownership.go` + `pkg/agent/manager_strings.go`.
+**Batch 4 shipped (`#442` batch 4)**: the eight workflow scenario skills are in — `triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, `prepare-for-confighub`, `migrate-from-kubectl`, `ai-agent-readonly-context`, `operator-incident-evidence`, `confighub-source-truth`. Each composes verb-group skills + controller-observer skills + references into a single situation-shaped loop with worked examples.
 
 **Earlier:**
+- Batch 3 landed the seven controller-observer skills (argocd / flux / helm / crossplane / kro / confighub-managed / native), verified against the Go enumeration
 - Batch 2 landed the remaining four verb-grouped scenario skills (Ingest / Govern / Integrate / Verify, with `scout-verify` consuming the receipt capability shipped in `#446`)
 - Batch 1 landed the scaffolding plus the first four scenario skills (Observe / Diagnose / Compare / Attribute) and two references (managedFields, verified-manager-strings)
 
-**Remaining work:** batch 4 (workflow scenario skills — triage / investigate-drift / audit-fleet-conformance / etc.) and batch 5 (the remaining 7 shared references). See [`docs/roadmap.md`](../docs/roadmap.md) § "AI Agent Skills" for the full plan.
+**Remaining work:** batch 5 — the remaining 7 shared references (`source-truth-strategies`, `standalone-vs-connected`, `read-only-triad`, `plugin-vs-standalone`, `argocd-applicationset`, `flux-source-types`, `mcp-tool-catalog`). See [`docs/roadmap.md`](../docs/roadmap.md) § "AI Agent Skills" for the full plan.
