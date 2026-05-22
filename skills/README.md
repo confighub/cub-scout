@@ -50,9 +50,11 @@ Each covers a real operator / agent workflow that spans multiple verbs. Compose 
 - [`operator-incident-evidence/`](operator-incident-evidence/SKILL.md) — postmortem evidence package: trace + compare + bundle + history + audit + fingerprinted receipts
 - [`confighub-source-truth/`](confighub-source-truth/SKILL.md) — strategy-typed `compare source-truth` verdicts (one of 9 strategies; cub-scout never infers); Pilot-acceptance-shaped output
 
-### Pilot–cub-scout integration scenarios (`#444` batch A)
+### Pilot–cub-scout integration scenarios (`#444`)
 
 The consumer-side complement to the verb-grouped + workflow skills above. Same cub-scout verbs, framed around **Pilot** (the acceptance judge) reading cub-scout's evidence and rendering verdicts that downstream consumers (CI/CD, dashboards, audit tickets, postmortems) act on. cub-scout produces evidence with documented `omissions[]`; Pilot decides. Pilot mutates via `cub` / Argo / Flux / kubectl — never via cub-scout.
+
+Batch A (CD / observability / event-driven; 5 scenarios — shipped in `#466` + Codex round-7 cleanup in `#467`):
 
 - [`pilot-cd-gate/`](pilot-cd-gate/SKILL.md) — pre-deploy gate in a CD pipeline; consumes `compare source-truth --strategy <s>` (+ optional `receipt verify --fail-on any-non-pass`); renders PASS / WATCH / ASK / BLOCK on the release
 - [`pilot-fleet-conformance/`](pilot-fleet-conformance/SKILL.md) — fleet-wide conformance verdict (View / namespace / cluster scope) composing `compare three-way --view` + per-resource `compare source-truth` + `fleet outliers`; judge-driven counterpart to `audit-fleet-conformance`
@@ -60,7 +62,12 @@ The consumer-side complement to the verb-grouped + workflow skills above. Same c
 - [`pilot-watch-alert-response/`](pilot-watch-alert-response/SKILL.md) — real-time event-driven response; consumes the `cub-scout watch` event stream with inline receipts via `--emit-receipt-on` (shipped in `#463`); the only event-driven skill in the pilot-* batch
 - [`pilot-incident-evidence/`](pilot-incident-evidence/SKILL.md) — incident close-out evidence pack with **chained receipts** (`--input-attestation` from `#463`) for multi-stage incidents; judge-driven counterpart to `operator-incident-evidence`
 
-Batch B (4 governance-shaped scenarios: `pilot-rollback-decision`, `pilot-promotion-gate`, `pilot-compliance-audit`, `pilot-release-verification`) is tracked as the remaining `#444` follow-on.
+Batch B (governance-shaped; 4 scenarios):
+
+- [`pilot-rollback-decision/`](pilot-rollback-decision/SKILL.md) — choose the rollback target SHA + render a safety verdict; consumes `history` + `impact` + per-candidate `receipt verify --at-commit <sha>`; chains candidate receipts into a chosen-target receipt
+- [`pilot-promotion-gate/`](pilot-promotion-gate/SKILL.md) — cross-variant promotion-safety verdict (staging → prod; canary 5% → 50%; blue → green; cell-A → cell-B); consumes `compare three-way` per variant + `bindingSource` graph diff; chains variant-A receipt into the promotion-target receipt
+- [`pilot-compliance-audit/`](pilot-compliance-audit/SKILL.md) — periodic policy-conformance report (quarterly / monthly) with fingerprinted evidence inventory; consumes scope-wide `compare source-truth` + `scan` + `audit list`; compliance-vocabulary translation layer over receipt verdicts
+- [`pilot-release-verification/`](pilot-release-verification/SKILL.md) — post-deploy validation gate (companion to `pilot-cd-gate`'s pre-deploy half); consumes `compare three-way` + `history --since <deploy-time>` + `receipt verify --at-commit <release-sha>`; `summary.agreement` field drives the convergence signal
 
 ### Shared references
 
@@ -109,4 +116,11 @@ That's **~33 skill files** plus 9 references — the full scope from `#442`.
 - [`#459`](https://github.com/confighub/cub-scout/pull/459) — batch 4 workflow scenario skills
 - batch 5 — this PR (closes `#442`)
 
-**`#444` batch A shipped** ([`#466`](https://github.com/confighub/cub-scout/pull/466)): 5 Pilot–cub-scout integration scenario skills (consumer-side complement to the `#442` set) — `pilot-cd-gate`, `pilot-fleet-conformance`, `pilot-patch-and-drift`, `pilot-watch-alert-response`, `pilot-incident-evidence`. Each frames the same cub-scout verbs from Pilot's perspective (acceptance judge reading evidence, rendering verdicts), with worked CLI examples + verdict-mapping tables. The watch-alert-response skill consumes the v2 `--emit-receipt-on` surface (shipped in `#463`); the incident-evidence skill consumes the v2 chained-receipts surface (`--input-attestation`, also `#463`). Codex round-7 P1/P2 follow-ups (broad `compare *` allowed-tools, source-truth JSON shape drift, strategy-enum gap, etc.) landed shortly after in a follow-up PR. **Batch B (4 governance-shaped scenarios: `pilot-rollback-decision`, `pilot-promotion-gate`, `pilot-compliance-audit`, `pilot-release-verification`) is the remaining `#444` work.**
+**`#444` complete**: 9 Pilot–cub-scout integration scenario skills shipped across two batches. Each frames the same cub-scout verbs from Pilot's perspective (acceptance judge reading evidence, rendering verdicts), with worked CLI examples + verdict-mapping tables. The watch-alert-response skill consumes the v2 `--emit-receipt-on` surface (shipped in `#463`); the incident-evidence + rollback-decision + promotion-gate skills consume the v2 chained-receipts surface (`--input-attestation`, also `#463`).
+
+PRs:
+- [`#466`](https://github.com/confighub/cub-scout/pull/466) — batch A (5 scenarios: CD / observability / event-driven)
+- [`#467`](https://github.com/confighub/cub-scout/pull/467) — batch A Codex round-7 fixes (enumerated `compare *` allowed-tools; snake_case source-truth JSON shape; strategy enum corrected; etc.)
+- batch B (this PR) — 4 governance scenarios: rollback-decision / promotion-gate / compliance-audit / release-verification
+
+Codex round-7 learnings applied upfront in batch B: enumerated `compare three-way / compare drift / compare source-truth` allowed-tools (no broad `compare *`); snake_case source-truth fields (`declared_strategy` / `source_truth` / `proof_gaps`); no invented Pilot CLI surfaces; abstract mutation paths; receipt verdicts only PASS/WATCH/BLOCK/INCONCLUSIVE (ASK is source-truth `status`, maps to receipt `WATCH` when wrapped).
