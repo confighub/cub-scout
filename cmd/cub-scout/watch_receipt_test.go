@@ -65,20 +65,9 @@ func TestParseWatchEmitReceiptOn_RejectsUnknown(t *testing.T) {
 // --- unsupportedEmitReceiptTypes startup-warning helper -------------
 
 func TestUnsupportedEmitReceiptTypes_AllSupported(t *testing.T) {
-	emitOn := map[string]bool{
-		"drift.detected":    true,
-		"ownership.changed": true,
-	}
-	got := unsupportedEmitReceiptTypes(emitOn)
-	if len(got) != 0 {
-		t.Errorf("all-supported emit set must return empty unsupported list; got %v", got)
-	}
-}
-
-func TestUnsupportedEmitReceiptTypes_SomeUnsupported(t *testing.T) {
-	// `all` includes resource.discovered + scan.finding which v1 does
-	// not build receipts for. Codex round-6 P2: surface this gap up
-	// front so the user isn't surprised later.
+	// As of #449, all four known event types are supported. The
+	// startup-warning helper returns empty when every requested type
+	// has receipt-build support.
 	emitOn := map[string]bool{
 		"drift.detected":      true,
 		"ownership.changed":   true,
@@ -86,23 +75,27 @@ func TestUnsupportedEmitReceiptTypes_SomeUnsupported(t *testing.T) {
 		"scan.finding":        true,
 	}
 	got := unsupportedEmitReceiptTypes(emitOn)
-	wantSet := map[string]bool{
-		"resource.discovered": true,
-		"scan.finding":        true,
+	if len(got) != 0 {
+		t.Errorf("all-supported emit set must return empty unsupported list; got %v", got)
 	}
-	if len(got) != len(wantSet) {
-		t.Fatalf("expected %d unsupported types; got %d (%v)", len(wantSet), len(got), got)
+}
+
+func TestUnsupportedEmitReceiptTypes_ForwardCompatSyntheticType(t *testing.T) {
+	// The helper is kept as a forward-compat safety net: if a future
+	// event type is added without receipt-build support, the warning
+	// fires automatically. Simulate that by adding a synthetic type to
+	// the emit-on set that doesn't exist in
+	// watchEventTypesWithReceiptSupport.
+	emitOn := map[string]bool{
+		"drift.detected":            true,
+		"hypothetical.future.event": true, // not in watchEventTypesWithReceiptSupport
 	}
-	for _, t2 := range got {
-		if !wantSet[t2] {
-			t.Errorf("unexpected unsupported type %q", t2)
-		}
+	got := unsupportedEmitReceiptTypes(emitOn)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 unsupported type; got %d (%v)", len(got), got)
 	}
-	// Output must be sorted for stable warning text across runs.
-	for i := 1; i < len(got); i++ {
-		if got[i-1] >= got[i] {
-			t.Errorf("unsupportedEmitReceiptTypes must return sorted output; got %v", got)
-		}
+	if got[0] != "hypothetical.future.event" {
+		t.Errorf("expected the synthetic type to be flagged; got %v", got)
 	}
 }
 
@@ -249,9 +242,11 @@ func TestAttachReceiptsIfRequested_DriftDetectedGetsReceipt(t *testing.T) {
 }
 
 func TestAttachReceiptsIfRequested_UnsupportedEventTypeSkipsSilently(t *testing.T) {
-	// scan.finding is in the emitOn set but NOT in
-	// watchEventTypesWithReceiptSupport — should pass through silently
-	// (no warning, no receipt).
+	// An event type that's NOT in watchEventTypesWithReceiptSupport
+	// passes through silently (no warning, no receipt). As of #449 all
+	// four known event types are supported, so this test uses a
+	// synthetic forward-compat type that doesn't exist in the map.
+	// Mirrors the startup-warning forward-compat behaviour.
 	var warnings []string
 	warnFn := func(format string, args ...interface{}) {
 		warnings = append(warnings, format)
@@ -264,12 +259,12 @@ func TestAttachReceiptsIfRequested_UnsupportedEventTypeSkipsSilently(t *testing.
 	defer func() { watchBuildReceiptForEventFn = prev }()
 
 	events := []watchEvent{
-		{Type: "scan.finding", Resource: watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"}},
+		{Type: "hypothetical.future.event", Resource: watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"}},
 	}
-	emitOn := map[string]bool{"scan.finding": true}
+	emitOn := map[string]bool{"hypothetical.future.event": true}
 	out := attachReceiptsIfRequested(context.Background(), events, emitOn, nil, false, warnFn)
 	if out[0].Receipt != nil {
-		t.Error("scan.finding should not get a receipt in #449 v1")
+		t.Error("synthetic-future event should not get a receipt")
 	}
 	if len(warnings) != 0 {
 		t.Errorf("unsupported event type should pass through silently; got warnings: %v", warnings)
@@ -309,6 +304,207 @@ func TestAttachReceiptsIfRequested_BuildFailureNonFatal(t *testing.T) {
 type simulatedErr struct{ msg string }
 
 func (e *simulatedErr) Error() string { return e.msg }
+
+// --- #449: per-poll backpressure cap + new event types ---------------
+
+// withWatchReceiptBatchCap temporarily replaces the package-level cap
+// for the test's duration. The cap is a package variable (mutated by
+// the --emit-receipt-batch-cap flag at startup), so tests can swap it
+// directly.
+func withWatchReceiptBatchCap(t *testing.T, cap int) {
+	t.Helper()
+	prev := watchReceiptBatchCap
+	watchReceiptBatchCap = cap
+	t.Cleanup(func() { watchReceiptBatchCap = prev })
+}
+
+// TestAttachReceiptsIfRequested_ResourceDiscoveredGetsReceipt is the
+// #449 expansion: resource.discovered events now build receipts (cap
+// permitting). Previously they passed through silently.
+func TestAttachReceiptsIfRequested_ResourceDiscoveredGetsReceipt(t *testing.T) {
+	stmt := &agent.Statement{
+		Type:          agent.StatementType,
+		PredicateType: agent.PredicateTypeReceiptV1,
+		Predicate:     agent.Predicate{Version: agent.PredicateVersion, Verdict: agent.VerdictPASS},
+	}
+	prev := watchBuildReceiptForEventFn
+	watchBuildReceiptForEventFn = func(_ context.Context, _ watchEvent, _ dynamic.Interface, _ bool) (*agent.Statement, error) {
+		return stmt, nil
+	}
+	defer func() { watchBuildReceiptForEventFn = prev }()
+	withWatchReceiptBatchCap(t, 10)
+
+	events := []watchEvent{
+		{Type: "resource.discovered", Resource: watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"}},
+	}
+	emitOn := map[string]bool{"resource.discovered": true}
+	out := attachReceiptsIfRequested(context.Background(), events, emitOn, nil, false, nil)
+	if out[0].Receipt == nil {
+		t.Fatalf("resource.discovered should get a receipt in #449; got nil")
+	}
+}
+
+// TestAttachReceiptsIfRequested_ScanFindingGetsReceipt is the #449
+// expansion: scan.finding events now build receipts.
+func TestAttachReceiptsIfRequested_ScanFindingGetsReceipt(t *testing.T) {
+	stmt := &agent.Statement{
+		Type:          agent.StatementType,
+		PredicateType: agent.PredicateTypeReceiptV1,
+		Predicate:     agent.Predicate{Version: agent.PredicateVersion, Verdict: agent.VerdictWATCH},
+	}
+	prev := watchBuildReceiptForEventFn
+	watchBuildReceiptForEventFn = func(_ context.Context, _ watchEvent, _ dynamic.Interface, _ bool) (*agent.Statement, error) {
+		return stmt, nil
+	}
+	defer func() { watchBuildReceiptForEventFn = prev }()
+	withWatchReceiptBatchCap(t, 10)
+
+	events := []watchEvent{
+		{Type: "scan.finding", Resource: watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"}},
+	}
+	emitOn := map[string]bool{"scan.finding": true}
+	out := attachReceiptsIfRequested(context.Background(), events, emitOn, nil, false, nil)
+	if out[0].Receipt == nil {
+		t.Fatalf("scan.finding should get a receipt in #449; got nil")
+	}
+}
+
+// TestAttachReceiptsIfRequested_BackpressureCap is the load-bearing
+// #449 regression: when a single poll produces more receipt-eligible
+// events than the cap, the first N get receipts and the rest are
+// skipped with the receipt key omitted plus a stderr summary line.
+func TestAttachReceiptsIfRequested_BackpressureCap(t *testing.T) {
+	stmt := &agent.Statement{
+		Type:          agent.StatementType,
+		PredicateType: agent.PredicateTypeReceiptV1,
+		Predicate:     agent.Predicate{Version: agent.PredicateVersion, Verdict: agent.VerdictPASS},
+	}
+	buildCalls := 0
+	prev := watchBuildReceiptForEventFn
+	watchBuildReceiptForEventFn = func(_ context.Context, _ watchEvent, _ dynamic.Interface, _ bool) (*agent.Statement, error) {
+		buildCalls++
+		return stmt, nil
+	}
+	defer func() { watchBuildReceiptForEventFn = prev }()
+
+	// Cap = 3; feed 7 eligible events. Expect 3 receipts attached and
+	// 4 skipped, with exactly one summary warning fired.
+	withWatchReceiptBatchCap(t, 3)
+	var warnings []string
+	warnFn := func(format string, args ...interface{}) {
+		warnings = append(warnings, fmt.Sprintf(format, args...))
+	}
+
+	events := make([]watchEvent, 7)
+	for i := range events {
+		events[i] = watchEvent{
+			Type:     "drift.detected",
+			Resource: watchEventResource{Kind: "Deployment", Name: fmt.Sprintf("api-%d", i), Namespace: "prod"},
+		}
+	}
+	emitOn := map[string]bool{"drift.detected": true}
+	out := attachReceiptsIfRequested(context.Background(), events, emitOn, nil, false, warnFn)
+
+	if buildCalls != 3 {
+		t.Errorf("expected exactly 3 receipt builds (cap); got %d", buildCalls)
+	}
+	attached := 0
+	for _, ev := range out {
+		if ev.Receipt != nil {
+			attached++
+		}
+	}
+	if attached != 3 {
+		t.Errorf("expected 3 attached receipts; got %d", attached)
+	}
+	if len(warnings) != 1 {
+		t.Fatalf("expected exactly one backpressure summary; got %d (%v)", len(warnings), warnings)
+	}
+	if !strings.Contains(warnings[0], "backpressure") {
+		t.Errorf("summary should mention backpressure; got %q", warnings[0])
+	}
+	if !strings.Contains(warnings[0], "suppressed receipt-build for 4") {
+		t.Errorf("summary should report 4 suppressed; got %q", warnings[0])
+	}
+}
+
+// TestAttachReceiptsIfRequested_BackpressureCapZero disables receipt-
+// build entirely. With --emit-receipt-batch-cap 0, the cap kicks in
+// on the very first eligible event; no receipts are built.
+func TestAttachReceiptsIfRequested_BackpressureCapZero(t *testing.T) {
+	buildCalls := 0
+	prev := watchBuildReceiptForEventFn
+	watchBuildReceiptForEventFn = func(_ context.Context, _ watchEvent, _ dynamic.Interface, _ bool) (*agent.Statement, error) {
+		buildCalls++
+		return &agent.Statement{}, nil
+	}
+	defer func() { watchBuildReceiptForEventFn = prev }()
+	withWatchReceiptBatchCap(t, 0)
+
+	var warnings []string
+	warnFn := func(format string, args ...interface{}) {
+		warnings = append(warnings, fmt.Sprintf(format, args...))
+	}
+
+	events := []watchEvent{
+		{Type: "drift.detected", Resource: watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"}},
+		{Type: "ownership.changed", Resource: watchEventResource{Kind: "Deployment", Name: "worker", Namespace: "prod"}},
+	}
+	emitOn := map[string]bool{"drift.detected": true, "ownership.changed": true}
+	out := attachReceiptsIfRequested(context.Background(), events, emitOn, nil, false, warnFn)
+
+	if buildCalls != 0 {
+		t.Errorf("cap=0 must suppress all receipt builds; got %d", buildCalls)
+	}
+	for _, ev := range out {
+		if ev.Receipt != nil {
+			t.Errorf("cap=0 must leave Receipt=nil; got %+v", ev.Receipt)
+		}
+	}
+	if len(warnings) != 1 {
+		t.Errorf("expected exactly one backpressure summary at cap=0; got %d", len(warnings))
+	}
+}
+
+// TestAttachReceiptsIfRequested_BackpressureCapNoTrigger confirms the
+// cap doesn't fire when the receipt-eligible count is at or below the
+// cap (no spurious warnings).
+func TestAttachReceiptsIfRequested_BackpressureCapNoTrigger(t *testing.T) {
+	stmt := &agent.Statement{Predicate: agent.Predicate{Verdict: agent.VerdictPASS}}
+	prev := watchBuildReceiptForEventFn
+	watchBuildReceiptForEventFn = func(_ context.Context, _ watchEvent, _ dynamic.Interface, _ bool) (*agent.Statement, error) {
+		return stmt, nil
+	}
+	defer func() { watchBuildReceiptForEventFn = prev }()
+	withWatchReceiptBatchCap(t, 5)
+
+	var warnings []string
+	warnFn := func(format string, args ...interface{}) {
+		warnings = append(warnings, fmt.Sprintf(format, args...))
+	}
+
+	// 3 eligible events; cap is 5 — no suppression should fire.
+	events := []watchEvent{
+		{Type: "drift.detected", Resource: watchEventResource{Kind: "Deployment", Name: "a", Namespace: "p"}},
+		{Type: "drift.detected", Resource: watchEventResource{Kind: "Deployment", Name: "b", Namespace: "p"}},
+		{Type: "drift.detected", Resource: watchEventResource{Kind: "Deployment", Name: "c", Namespace: "p"}},
+	}
+	emitOn := map[string]bool{"drift.detected": true}
+	out := attachReceiptsIfRequested(context.Background(), events, emitOn, nil, false, warnFn)
+
+	attached := 0
+	for _, ev := range out {
+		if ev.Receipt != nil {
+			attached++
+		}
+	}
+	if attached != 3 {
+		t.Errorf("under cap, all 3 events should get receipts; got %d", attached)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("under-cap polls should fire no backpressure warning; got %v", warnings)
+	}
+}
 
 // --- watchBuildReceiptForEvent end-to-end ----------------------------
 

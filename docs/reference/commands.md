@@ -836,7 +836,8 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 | `--severity` | Finding severity filter (`critical,warning,info`) |
 | `--once` | Run one collection cycle and exit |
 | `--max-queued-events` | Max buffered events while webhook is unreachable |
-| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to (`drift.detected`, `ownership.changed`, or sugar `all`). Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. (#449 v1: only `drift.detected` and `ownership.changed` actually build a receipt; other types pass through silently.) |
+| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to. As of `#449` all four known types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. Per-poll backpressure controlled by `--emit-receipt-batch-cap`. |
+| `--emit-receipt-batch-cap` | Per-poll cap on receipt-build attempts (`#449` backpressure). When a single poll produces more receipt-eligible events than the cap, the first N get receipts attached and the rest emit with the receipt key omitted plus a single stderr summary line. Set to 0 to disable receipt-build entirely while keeping the flag explicit; set to a large value (e.g. 1000) to effectively disable the cap. Default 10. |
 
 ### Event Types
 

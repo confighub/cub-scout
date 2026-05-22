@@ -26,15 +26,16 @@ import (
 )
 
 var (
-	watchWebhookURL      string
-	watchOutputFile      string
-	watchInterval        time.Duration
-	watchNamespace       string
-	watchOwner           string
-	watchSeverity        string
-	watchOnce            bool
-	watchMaxQueuedEvents int
-	watchEmitReceiptOn   string
+	watchWebhookURL          string
+	watchOutputFile          string
+	watchInterval            time.Duration
+	watchNamespace           string
+	watchOwner               string
+	watchSeverity            string
+	watchOnce                bool
+	watchMaxQueuedEvents     int
+	watchEmitReceiptOn       string
+	watchEmitReceiptBatchCap int
 )
 
 type watchEvent struct {
@@ -169,7 +170,8 @@ func init() {
 	watchCmd.Flags().StringVar(&watchSeverity, "severity", "", "Filter finding/drift events by severity (comma-separated: critical,warning,info)")
 	watchCmd.Flags().BoolVar(&watchOnce, "once", false, "Run one collection cycle and exit")
 	watchCmd.Flags().IntVar(&watchMaxQueuedEvents, "max-queued-events", 1000, "Maximum buffered events when webhook is unavailable")
-	watchCmd.Flags().StringVar(&watchEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a cub-scout receipt to (e.g. 'drift.detected,ownership.changed' or 'all' for all four). Receipt-build failures are non-fatal — the underlying event still emits with receipt=null and a stderr warning. #449 v1 builds receipts only for 'drift.detected' and 'ownership.changed' to avoid flooding on first-poll discovery; other event types pass through silently.")
+	watchCmd.Flags().StringVar(&watchEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a cub-scout receipt to (e.g. 'drift.detected,ownership.changed' or 'all' for all four). Receipt-build failures are non-fatal — the underlying event still emits but the receipt key is omitted (omitempty) and a stderr warning fires. All four known event types build receipts in v2 (#449): drift.detected, ownership.changed, resource.discovered, scan.finding. Per-poll cap controlled by --emit-receipt-batch-cap.")
+	watchCmd.Flags().IntVar(&watchEmitReceiptBatchCap, "emit-receipt-batch-cap", 10, "Per-poll cap on receipt-build attempts (#449 backpressure). When a single poll produces more receipt-eligible events than the cap, the first N get receipts attached and the rest emit with the receipt key omitted plus a single stderr summary line. Set to 0 to disable receipt-build entirely while keeping the flag explicit; set to a large value (e.g. 1000) to effectively disable the cap. Default 10.")
 }
 
 func runWatch(cmd *cobra.Command, args []string) error {
@@ -192,21 +194,27 @@ func runWatch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Apply the per-poll backpressure cap (#449). 0 disables receipt-
+	// build entirely while keeping the --emit-receipt-on flag explicit;
+	// >0 is the cap.
+	if watchEmitReceiptBatchCap < 0 {
+		return fmt.Errorf("--emit-receipt-batch-cap must be >= 0 (got %d)", watchEmitReceiptBatchCap)
+	}
+	watchReceiptBatchCap = watchEmitReceiptBatchCap
+
 	// Codex round-6 P2 fix (#463): emit a one-time startup warning when
-	// --emit-receipt-on includes event types that the v1 mapping does
-	// NOT actually build receipts for. The flag is "lenient on type,
-	// strict on receipt-build" (so `all` is forward-compatible), but a
-	// user who asks for `scan.finding` thinking they'll get receipts
-	// gets silent skipping. The warning makes that expectation gap
-	// visible up front rather than as a "why aren't my receipts firing"
-	// debug session later.
+	// --emit-receipt-on includes event types that the mapping does NOT
+	// build receipts for. As of #449 all four known event types are
+	// supported; this block is retained for forward-compat — if a
+	// future event type is added without receipt-build support, the
+	// warning fires automatically.
 	if len(emitReceiptOn) > 0 {
 		unsupported := unsupportedEmitReceiptTypes(emitReceiptOn)
 		if len(unsupported) > 0 {
 			fmt.Fprintf(os.Stderr,
-				"Warning: --emit-receipt-on includes event types that don't yet build a receipt (#449 v1): %s. "+
+				"Warning: --emit-receipt-on includes event types that don't yet build a receipt: %s. "+
 					"The flag accepts these for forward-compat (so `--emit-receipt-on all` keeps working as new types land), "+
-					"but receipt-build is skipped for them. Supported in v1: %s.\n",
+					"but receipt-build is skipped for them. Currently supported: %s.\n",
 				strings.Join(unsupported, ", "),
 				strings.Join(supportedEmitReceiptTypesSorted(), ", "),
 			)

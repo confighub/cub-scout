@@ -54,12 +54,29 @@ var watchKnownEventTypes = []string{
 }
 
 // watchEventTypesWithReceiptSupport names the subset of event types for
-// which #449 v1 actually builds a receipt. The flag accepts other
-// types for forward-compat, but receipt-build is a no-op for them in
-// v1 — the rationale lives in watch_receipt.go's package doc.
+// which `--emit-receipt-on` actually builds a receipt. v1 of the flag
+// (#463) shipped with `drift.detected` and `ownership.changed`; the
+// #449 follow-up adds `resource.discovered` and `scan.finding` once
+// the per-poll backpressure cap (watchReceiptBatchCap below) makes
+// them safe on first-poll bursts.
+//
+// Per-event-type predicate mapping:
+//
+//	drift.detected      → applied-matches-spec (auto-detected from owner)
+//	ownership.changed   → applied-matches-spec
+//	resource.discovered → applied-matches-spec (the discovery moment captures the live state at first observation)
+//	scan.finding        → applied-matches-spec (the receipt records the resource state at finding time; the finding itself lives on the event's details)
+//
+// All four use auto-detect → applied-matches-spec via BuildReceipt's
+// existing AutoDetectPredicate flow. Source-truth-pass requires a
+// caller-declared --strategy that the watch loop doesn't take; no-
+// manual-edits-since requires a --since cutoff that's likewise out
+// of scope for event-driven emission.
 var watchEventTypesWithReceiptSupport = map[string]bool{
-	"drift.detected":    true,
-	"ownership.changed": true,
+	"drift.detected":      true,
+	"ownership.changed":   true,
+	"resource.discovered": true,
+	"scan.finding":        true,
 }
 
 // parseWatchEmitReceiptOn parses the --emit-receipt-on flag value into
@@ -191,6 +208,32 @@ func supportedEmitReceiptTypesSorted() []string {
 	return out
 }
 
+// watchReceiptBatchCap is the per-poll cap on receipt-build attempts
+// (#449 backpressure). When a single poll produces more than this many
+// receipt-eligible events (the intersection of emitOn and
+// watchEventTypesWithReceiptSupport), the cap kicks in:
+//
+//   - The first `cap` events get their receipt built and attached.
+//   - The remaining events still emit (the watch stream is preserved
+//     — backpressure is about receipt-build cost, not event drop) but
+//     their `receipt` key is omitted (omitempty).
+//   - A single stderr warning per poll summarizes the suppression
+//     ("backpressure: suppressed receipt-build for X events of N
+//     eligible; raise --emit-receipt-batch-cap if expected").
+//
+// This pattern parallels the rate-limited warnings in makeReceiptWarnFn:
+// the first N pass through; the rest is summarized. It's per-poll
+// rather than across-poll because event-discovery bursts are typically
+// transient (first-poll resource.discovered flood, initial scan.finding
+// burst) and once the catch-up window passes, subsequent polls see
+// normal volumes.
+//
+// Default cap = 10. Set to 0 via --emit-receipt-batch-cap to disable
+// receipt-build entirely (matches --emit-receipt-on being unset for
+// suppression behaviour while keeping the flag explicit). Set to a
+// large value (e.g., 1000) to effectively disable the cap.
+var watchReceiptBatchCap = 10
+
 // attachReceiptsIfRequested walks events and, for each one whose type
 // is in `emitOn` AND whose type has receipt-build support
 // (watchEventTypesWithReceiptSupport), builds a receipt and attaches
@@ -198,8 +241,15 @@ func supportedEmitReceiptTypesSorted() []string {
 // loadReceiptLiveFn seam tests already swap; production hits the
 // dynamic client.
 //
+// Per-poll backpressure cap (#449): when the receipt-eligible event
+// count exceeds watchReceiptBatchCap, the first `cap` get their
+// receipts built; the rest are skipped (receipt key omitted per
+// omitempty) and a single stderr summary fires. The cap is per-call
+// (one watch poll = one call), so a long-running watch with quiet
+// polls between bursts doesn't accumulate suppression state.
+//
 // Failures are logged to stderr (`warnFn`) and non-fatal — the
-// underlying event still emits with Receipt=nil.
+// underlying event still emits with the receipt key omitted.
 func attachReceiptsIfRequested(
 	ctx context.Context,
 	events []watchEvent,
@@ -211,14 +261,36 @@ func attachReceiptsIfRequested(
 	if len(emitOn) == 0 || len(events) == 0 {
 		return events
 	}
+
+	// First pass: count the receipt-eligible events so the cap warning
+	// can report the suppression accurately.
+	eligibleCount := 0
+	for _, ev := range events {
+		if emitOn[ev.Type] && watchEventTypesWithReceiptSupport[ev.Type] {
+			eligibleCount++
+		}
+	}
+
+	cap := watchReceiptBatchCap
+	if cap < 0 {
+		cap = 0
+	}
+
+	built := 0
+	suppressed := 0
 	for i := range events {
 		if !emitOn[events[i].Type] {
 			continue
 		}
 		if !watchEventTypesWithReceiptSupport[events[i].Type] {
-			// Caller asked us to consider this event type, but v1
-			// support is narrow; skip with no warning (the doc on
-			// --emit-receipt-on tells the user this is expected).
+			// Caller asked us to consider this event type, but it's
+			// not in the supported set (closed enumeration). Skip
+			// with no warning; the startup-time warning already lists
+			// unsupported types.
+			continue
+		}
+		if built >= cap {
+			suppressed++
 			continue
 		}
 		stmt, err := watchBuildReceiptForEventFn(ctx, events[i], dynClient, connected)
@@ -231,7 +303,16 @@ func attachReceiptsIfRequested(
 			continue
 		}
 		events[i].Receipt = stmt
+		built++
 	}
+
+	if suppressed > 0 && warnFn != nil {
+		warnFn(
+			"backpressure: suppressed receipt-build for %d event(s) of %d eligible (cap=%d); raise --emit-receipt-batch-cap to enable, or set 0 to disable entirely",
+			suppressed, eligibleCount, cap,
+		)
+	}
+
 	return events
 }
 
