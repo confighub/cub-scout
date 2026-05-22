@@ -20,10 +20,10 @@ One skill per cub-scout verb group. The skill knows which commands belong to its
 | [`scout-diagnose/`](scout-diagnose/SKILL.md) | Diagnose | `explain` / `debug` / `suggest-remedy` / `patterns` / `gitops status` |
 | [`scout-compare/`](scout-compare/SKILL.md) | Compare | `compare` / `compare drift` / `compare three-way` / `compare source-truth` |
 | [`scout-attribute/`](scout-attribute/SKILL.md) | Attribute | `cause` / `managerHint` / `gitSource` / `bindingSource` on `compare` + `explain` JSON |
-| `scout-ingest/` *(planned, #442 batch 2)* | Ingest | `import --git-path` / `import argocd` / `import cluster-aggregator` / `import apply` / `app` |
-| `scout-govern/` *(planned, #442 batch 2)* | Govern | `history` / `impact` / `fleet` / `summary` / `views` / `audit` / `bundle` / `catalog` |
-| `scout-mcp/` *(planned, #442 batch 2)* | Integrate | `mcp serve` / `context-pack` (AI gateway) |
-| `scout-verify/` *(planned once #446 batch 1 lands)* | Verify | `cub-scout receipt verify / show / validate / list` |
+| [`scout-ingest/`](scout-ingest/SKILL.md) | Ingest | `import --git-path` / `import argocd` / `import cluster-aggregator` / `import parse-repo` / `app` (preview-only — `import apply` is intentionally out of band) |
+| [`scout-govern/`](scout-govern/SKILL.md) | Govern | `history` / `impact` / `fleet` / `summary` / `views` / `audit` / `bundle` / `catalog` |
+| [`scout-mcp/`](scout-mcp/SKILL.md) | Integrate | `mcp serve` / `context-pack` (AI gateway) |
+| [`scout-verify/`](scout-verify/SKILL.md) | Verify | `cub-scout receipt verify / show / validate / list` (typed, fingerprinted evidence — `#446` v1 complete) |
 
 ### Controller observer skills *(planned, #442 batch 3)*
 
@@ -79,4 +79,8 @@ All skills under `skills/` follow the read-only-triad invariant. Concretely:
 
 ## Status
 
-This batch (#442 batch 1) lands the scaffolding plus the first four verb-grouped scenario skills (Observe / Diagnose / Compare / Attribute) and two references (managedFields, verified-manager-strings). Batches 2–5 add the remaining verb groups, controller observer skills, workflow scenarios, and references. See [`docs/roadmap.md`](../docs/roadmap.md) § "AI Agent Skills" for the full plan.
+**Batch 2 shipped (`#442` batch 2)**: the remaining four verb-grouped scenario skills are in — Ingest / Govern / Integrate (`scout-mcp`) / Verify (`scout-verify`, consuming the receipt capability shipped in `#446`). All eight verb-group skills now have full coverage.
+
+**Earlier:** batch 1 landed the scaffolding plus the first four scenario skills (Observe / Diagnose / Compare / Attribute) and two references (managedFields, verified-manager-strings).
+
+**Remaining work:** batch 3 (controller observer skills — argocd / flux / helm / crossplane / kro / confighub-managed / native), batch 4 (workflow scenario skills — triage / investigate-drift / audit-fleet-conformance / etc.), and batch 5 (the remaining shared references). See [`docs/roadmap.md`](../docs/roadmap.md) § "AI Agent Skills" for the full plan.
