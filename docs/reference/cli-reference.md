@@ -74,6 +74,10 @@ Source of truth:
 | `map orphans` | Unmanaged/orphan resources | [Command Reference](commands.md#map-orphans) | [Orphans](../../examples/orphans/) |
 | `mcp serve` | Read-only MCP server over stdio | [Command Reference](commands.md#mcp) | [MCP gateway](../../examples/mcp-gateway/) |
 | `quickstart demo` | Run fixture-backed demos | [Command Reference](commands.md#quickstart-demo) | [Demos index](../../examples/demos/) |
+| `receipt list` | Walk the local receipt store ($CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME → $HOME/.local/share); JSON / ASCII output, sortable | [Command Reference](commands.md#receipt-list) | [Receipts](../../examples/receipts/) |
+| `receipt show` | Render a saved receipt (ASCII / JSON). Does NOT verify the fingerprint — works on tampered receipts for forensic inspection | [Command Reference](commands.md#receipt-show) | [Receipts](../../examples/receipts/) |
+| `receipt validate` | Recompute the receipt fingerprint and compare. Exit 0 OK / 1 mismatch / 2 I/O | [Command Reference](commands.md#receipt-validate) | [Receipts](../../examples/receipts/) |
+| `receipt verify` | Build a typed, fingerprinted receipt asserting a predicate (applied-matches-spec / source-truth-pass / no-manual-edits-since). `--fail-on <verdict>` for CI gating (exit 2); `--input-attestation <path>` for chained receipts; `--save` to persist to the immutable local store | [Command Reference](commands.md#receipt-verify) | [Receipts](../../examples/receipts/) |
 | `setup completion` | Generate shell completion script | [Command Reference](commands.md#setup-completion) | - |
 | `setup connect` | Import or create a kubeconfig context | [Command Reference](commands.md#setup-connect) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
 | `summary list` | Query persisted summary records | [Command Reference](commands.md#summary-list) | [Connected summary storage](../../examples/connected-summary-storage/) |
