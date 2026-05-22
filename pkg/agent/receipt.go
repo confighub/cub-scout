@@ -41,6 +41,22 @@ const (
 	// subject. Names look like "confighub-unit://payments-api@rev=42".
 	// Standalone-mode receipts omit this subject with an omissions[] entry.
 	SubjectSchemeConfigHubUnit = "confighub-unit://"
+
+	// SubjectSchemeSyntheticAggregate is the URI scheme for the aggregate-
+	// receipt subject (#448). The aggregate receipt is a Statement over a
+	// synthetic subject computed deterministically from the SHA-256
+	// digests of its input attestations (the per-resource receipts the
+	// aggregate composes). Names look like
+	//   synthetic-aggregate://sha256/<aggregate-id>
+	// where <aggregate-id> is the first 16 hex chars of the digest, and
+	// the full SHA-256 lives in the subject's digest map.
+	//
+	// The aggregate receipt's verdict is synthesized deterministically
+	// over the input verdicts (max-severity by default; #448's
+	// `--aggregate-policy` flag may add alternative synthesis rules in
+	// future). See `BuildSyntheticAggregateSubject` in
+	// `pkg/agent/receipt_aggregate.go`.
+	SubjectSchemeSyntheticAggregate = "synthetic-aggregate://"
 )
 
 // Statement is the in-toto Statement v1 envelope wrapping a cub-scout
@@ -249,6 +265,14 @@ const (
 	OmissionSourceTruthComplete   = "source-truth-complete"
 	OmissionAutoDetectedPredicate = "auto-detected-predicate"
 	OmissionFieldCoverage         = "field-coverage"
+
+	// OmissionAggregatePartialCoverage is recorded by aggregate-verdict
+	// receipts (#448) when one or more input attestations carried an
+	// INCONCLUSIVE verdict. The aggregate verdict still synthesizes
+	// (max-severity by default), but the consumer should know it may
+	// not reflect full coverage — at least one underlying per-resource
+	// receipt itself couldn't be built.
+	OmissionAggregatePartialCoverage = "aggregate-partial-coverage"
 
 	// OmissionStrategyMissing is recorded by the source-truth-pass
 	// predicate when no --strategy was passed. cub-scout never infers a
