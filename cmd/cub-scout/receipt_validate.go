@@ -58,14 +58,20 @@ type receiptValidateResult struct {
 func runReceiptValidate(cmd *cobra.Command, args []string) error {
 	format := strings.ToLower(strings.TrimSpace(receiptValidateFormat))
 	if format != "ascii" && format != "json" {
+		// Invalid flag value is a usage error, not an I/O / mismatch
+		// case. Falls through to the default cobra error → exit 1.
 		return fmt.Errorf("invalid --format %q (valid: ascii, json)", receiptValidateFormat)
 	}
 
 	path := args[0]
 	stmt, err := agent.LoadStatement(path)
 	if err != nil {
-		// I/O or parse error: exit code 2 path.
-		return fmt.Errorf("load receipt %s: %w", path, err)
+		// I/O or parse error → exit code 2 (per docs). main.go's
+		// exitCodeError dispatch picks this up via errors.As.
+		return newExitCodeError(
+			fmt.Errorf("load receipt %s: %w", path, err),
+			2,
+		)
 	}
 
 	vErr := agent.VerifyStatementFingerprint(stmt)
@@ -94,10 +100,11 @@ func runReceiptValidate(cmd *cobra.Command, args []string) error {
 	}
 
 	if vErr != nil {
-		// Exit code 1 path. RunE returning non-nil makes cobra exit
-		// non-zero; we wrap a stable sentinel-like error so future
-		// tests can match on it.
-		return fmt.Errorf("receipt fingerprint mismatch")
+		// Fingerprint mismatch → exit code 1 (per docs).
+		return newExitCodeError(
+			fmt.Errorf("receipt fingerprint mismatch"),
+			1,
+		)
 	}
 	return nil
 }

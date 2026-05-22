@@ -109,7 +109,7 @@ $ cub-scout map list -n boutique --format json | jq '[.[] | {name, owner, source
 ## Output evidence
 
 - **Primary artifact:** ASCII or JSON output from the chosen verb.
-- **MCP gateway:** all nine Observe verbs are exposed as MCP tools via `cub-scout mcp serve` (standalone tools — see [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md) once that reference ships).
+- **MCP gateway:** the standalone Observe tools (`doctor`, `map`, `scan`, `trace`, `explain`) are exposed as MCP tools via `cub-scout mcp serve`. See [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md) for the full per-tool catalog (5 standalone + 5 connected, verified against `cmd/cub-scout/mcp.go`). Note: not every CLI verb is an MCP tool — e.g., `tree`, `graph`, `snapshot`, `watch`, `status` are CLI-only.
 - **`nextSteps[]`** structured hints (where supported): every entry has `actionType: read-only` — mutating actionType is rejected at every cub-scout emit point.
 
 ## References

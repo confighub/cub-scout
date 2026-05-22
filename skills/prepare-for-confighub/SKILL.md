@@ -2,7 +2,7 @@
 name: prepare-for-confighub
 description: 'Use when the user is ADOPTING ConfigHub — they have existing K8s + GitOps state (a git repo of manifests, live Argo ApplicationSets, an existing cluster, a Flux Kustomization tree) and want to PREVIEW what a ConfigHub import would look like before committing. Natural phrasing: "preview what would land in ConfigHub if I imported this repo", "show me the proposed units before I apply", "I want to adopt ConfigHub for this app", "what would ConfigHub see in our argocd setup?", "scaffold ConfigHub units from this git repo", "disk-PR my ConfigHub import proposal". Composes `cub-scout import --git-path` + `import argocd` + `import cluster-aggregator` + `import parse-repo` + `app` for the **preview-only** flow. Do NOT load for: actually applying the proposal (that''s `cub-scout import apply`, user-driven), live conformance audits (use audit-fleet-conformance), or comparing live to ConfigHub once units exist (use scout-compare). The whole skill is read-only and refuses to invoke `import apply`.'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout import --git-path *) Bash(cub-scout import --git-path *) Bash(cub scout import --git-path *) Bash(./cub-scout import parse-repo *) Bash(cub-scout import parse-repo *) Bash(cub scout import parse-repo *) Bash(./cub-scout import argocd *) Bash(cub-scout import argocd *) Bash(cub scout import argocd *) Bash(./cub-scout import cluster-aggregator *) Bash(cub-scout import cluster-aggregator *) Bash(cub scout import cluster-aggregator *) Bash(./cub-scout app *) Bash(cub-scout app *) Bash(cub scout app *) Bash(./cub-scout map workloads *) Bash(cub-scout map workloads *) Bash(cub scout map workloads *) Bash(./cub-scout scan *) Bash(cub-scout scan *) Bash(cub scout scan *) Bash(./cub-scout status) Bash(cub-scout status) Bash(cub scout status) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit list *) Bash(cub gitops discover *) Bash(argocd app get *) Bash(argocd appset get *) Bash(argocd appset list *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout import --git-path *) Bash(cub-scout import --git-path *) Bash(cub scout import --git-path *) Bash(./cub-scout import parse-repo *) Bash(cub-scout import parse-repo *) Bash(cub scout import parse-repo *) Bash(./cub-scout import cluster-aggregator *) Bash(cub-scout import cluster-aggregator *) Bash(cub scout import cluster-aggregator *) Bash(./cub-scout app list *) Bash(cub-scout app list *) Bash(cub scout app list *) Bash(./cub-scout app list) Bash(cub-scout app list) Bash(cub scout app list) Bash(./cub-scout map workloads *) Bash(cub-scout map workloads *) Bash(cub scout map workloads *) Bash(./cub-scout scan *) Bash(cub-scout scan *) Bash(cub scout scan *) Bash(./cub-scout status) Bash(cub-scout status) Bash(cub scout status) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit list *) Bash(cub gitops discover *) Bash(argocd app get *) Bash(argocd appset get *) Bash(argocd appset list *) Bash(flux get *)
 ---
 
 # prepare-for-confighub
@@ -171,8 +171,17 @@ They solve different problems. cub-scout is for **adoption** (first-time ingest)
 
 ## Tool boundary
 
-- **Allowed (preview):** all four import verbs in their non-`apply` form; `app` (read-only manipulations); `map workloads` for inventory cross-reference; `scan` for risk classification before adoption; `cub * get/list` for connected-mode context.
-- **Not allowed:** `cub-scout import apply` (writes ConfigHub units); `cub * create/update/delete`; `cub gitops import` (different tool, write-capable); `kubectl apply/edit/patch/delete`. The skill is preview-only by construction.
+- **Allowed (agent-callable preview):**
+  - `cub-scout import --git-path *` — preview-only by construction (`--git-path` forces `--dry-run` in `cmd/cub-scout/import.go`)
+  - `cub-scout import parse-repo *` — pure parser
+  - `cub-scout import cluster-aggregator *` — emits proposal as JSON
+  - `cub-scout app list *` — read-only ConfigHub App inventory
+  - `map workloads`, `scan`, `status`; `cub * get/list`, `cub unit list`, `cub gitops discover`; `argocd app get`, `argocd appset get/list`, `flux get`
+- **Not allowed (user-driven only):**
+  - `cub-scout import apply *` — writes ConfigHub units
+  - `cub-scout import argocd *` — without `--dry-run` it creates units, can disable Argo auto-sync, can delete the Argo Application (`cmd/cub-scout/import_argocd.go:465-488`). The wildcard cannot enforce `--dry-run`, so the verb is out of allowed-tools entirely; recommend the user run `cub-scout import argocd <app> --dry-run` themselves and feed the proposal to the agent for review.
+  - `cub-scout app create *` — `app list` is the read-only form in allowed-tools
+  - `cub * create/update/delete`, `cub gitops import` (different tool), `kubectl apply/edit/patch/delete`
 
 ## References
 

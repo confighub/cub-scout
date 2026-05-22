@@ -54,7 +54,7 @@ Implicit intents:
 | "Compare a manifest file to the cluster" | `cub-scout compare drift --file <yaml>` | File-vs-live drift. Works standalone, no ConfigHub. |
 | "Compare this resource end-to-end" | `cub-scout compare <kind>/<name> -n <ns>` | Single-resource compare. Connected: full DRY/WET/LIVE. Standalone: LIVE only with notes. |
 | "Compare a scope" | `cub-scout compare three-way --scope namespace/<ns>` | Multi-resource DRY/WET/LIVE with agreement summary. Requires connected mode for DRY/WET. Supports `--scope`, `--view <uuid-or-url>`, `--source-path <local-checkout>` (stage B back-resolution), `--fail-on`. |
-| "Strategy-relative verdict" | `cub-scout compare source-truth <kind>/<name> -n <ns> --strategy <s>` | One of 9 strategies (`confighub-oci-argo`, `confighub-oci-flux`, `git-argo`, `git-flux`, `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`). Returns PASS / WATCH / BLOCK / INCONCLUSIVE-class result Pilot's acceptance kernel consumes. |
+| "Strategy-relative verdict" | `cub-scout compare source-truth <kind>/<name> -n <ns> --strategy <s>` | One of 9 strategies (`confighub-oci-argo`, `confighub-oci-flux`, `git-argo`, `git-flux`, `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`). Returns a structured pair `status` ∈ {PASS, WATCH, BLOCK, ASK} + `source_truth` ∈ {AGREED, MISMATCH, INCOMPLETE, BLOCKED, UNKNOWN}. Pilot's acceptance kernel consumes both axes. |
 
 All four verbs emit `--format json` for agents and the MCP gateway.
 
@@ -67,7 +67,7 @@ All four verbs emit `--format json` for agents and the MCP gateway.
    - Local git checkout → `compare three-way --source-path <dir>` (stage B back-resolution, #440)
 2. **Pick the scope.** Single resource (`<kind>/<name> -n <ns>`), namespace (`--scope namespace/<ns>`), view (`--view <uuid-or-url>`), or cluster (`--scope cluster`).
 3. **Invoke.** Use `--format json` if the output is going to an agent or CI; ASCII otherwise.
-4. **Read the verdict + evidence.** Verdict is one of PASS / WATCH / BLOCK / INCONCLUSIVE (source-truth) or per-field diffs (three-way / drift). Each `compareFieldMismatch` carries attribution evidence (`cause`, `managerHint`, `gitSource`, `bindingSource`) — see [`scout-attribute`](../scout-attribute/SKILL.md) for how to read those.
+4. **Read the verdict + evidence.** For `compare source-truth`: the structured pair `status` ∈ {PASS, WATCH, BLOCK, ASK} + `source_truth` ∈ {AGREED, MISMATCH, INCOMPLETE, BLOCKED, UNKNOWN}. For `compare three-way` / `compare drift`: per-field diffs with attribution evidence (`cause`, `managerHint`, `gitSource`, `bindingSource`) — see [`scout-attribute`](../scout-attribute/SKILL.md) for how to read those. `INCONCLUSIVE` is the receipt-level verdict — it shows up only when these results are wrapped into a `cub-scout receipt verify` artifact, not in raw `compare source-truth` output.
 5. **Hand off.** If the verdict is `WATCH` or `BLOCK` and the user wants to *fix* it, refuse to mutate and route them: drift produced by `kubectl edit` (per `cause: manual-edit`) typically goes to the original-author path (commit the change back); drift produced by a controller (`cause: controller-drift`) typically resolves on its own — wait or re-run.
 
 ## Worked examples
@@ -130,7 +130,12 @@ Pilot's acceptance kernel consumes this JSON directly. The strategy must be decl
 
 ## Output evidence
 
-- **Verdict:** PASS / WATCH / BLOCK (compare three-way agreement); PASS / WATCH / BLOCK / INCONCLUSIVE-class (compare source-truth).
+- **`compare three-way` agreement:** `summary.agreement.state` ∈ {`agreed`, `converging`, `diverged`, `partial`}; the canonical "did the cluster end up matching ConfigHub intent?" rollup.
+- **`compare source-truth` (two separate enums):**
+  - `status` ∈ {`PASS`, `WATCH`, `BLOCK`, `ASK`} — cub-scout's evidence-quality verdict
+  - `source_truth` ∈ {`AGREED`, `MISMATCH`, `INCOMPLETE`, `BLOCKED`, `UNKNOWN`} — cross-surface agreement under the declared strategy
+  - Status and verdict are **separate axes** — a verdict can be `MISMATCH` while status is `BLOCK` (strategy violation) OR `WATCH` (soft mismatch with proof gaps). See [`references/source-truth-strategies.md`](../references/source-truth-strategies.md) for the full status×verdict matrix.
+- **Receipt-level verdict** (only when wrapped via `cub-scout receipt verify --strategy <s>`): `PASS` / `WATCH` / `BLOCK` / `INCONCLUSIVE`. `INCONCLUSIVE` is the receipt-only fourth state; it does NOT appear in raw `compare source-truth` output.
 - **Per-field mismatches** (`compareFieldMismatch[]`) with attribution: `cause`, `managerHint`, `gitSource`, `bindingSource`.
 - **Agreement summary** (three-way): `summary.agreement.state` ∈ {`agreed`, `converging`, `diverged`, `partial`}.
 - **CI exit code:** `--fail-on info|warning` produces exit 2 on violations.

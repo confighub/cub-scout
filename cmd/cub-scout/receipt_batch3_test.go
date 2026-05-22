@@ -354,3 +354,70 @@ func TestReceiptVerify_Save_DefaultStoreHonorsEnv(t *testing.T) {
 		t.Errorf("CUB_SCOUT_RECEIPTS_DIR must be honored by --save; got entries: %v", entries)
 	}
 }
+
+// TestReceiptVerify_OutRejectedUnderStore is the Codex round-5 fix for
+// the --out / immutability bypass. A caller who points --out at a path
+// inside the resolved receipt store could otherwise stomp on an existing
+// canonical receipt (--out's contract is overwrite-on-each-call). The
+// CLI now refuses --out paths under the store directory and tells the
+// caller to use --save instead.
+func TestReceiptVerify_OutRejectedUnderStore(t *testing.T) {
+	resetReceiptBatch3Flags(t)
+	resetReceiptFlags(t)
+	withFakeReceiptLoader(t, makeReceiptArgoLive())
+
+	// Point the resolved store at a tempdir, then try to --out into it.
+	storeDir := t.TempDir()
+	t.Setenv("CUB_SCOUT_RECEIPTS_DIR", storeDir)
+
+	outInsideStore := filepath.Join(storeDir, "ad-hoc.receipt.json")
+	rootCmd.SetArgs([]string{
+		"receipt", "verify", "deploy/api",
+		"-n", "prod",
+		"--format", "json",
+		"--out", outInsideStore,
+	})
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatal("expected error when --out is under the resolved store dir")
+	}
+	if !strings.Contains(err.Error(), "refusing to write --out") {
+		t.Errorf("error must explain the store-collision refusal; got %v", err)
+	}
+	// File must NOT exist — the rejection is upfront, no partial write.
+	if _, statErr := os.Stat(outInsideStore); !os.IsNotExist(statErr) {
+		t.Errorf("--out file must not be created when rejection fires; stat err=%v", statErr)
+	}
+}
+
+// TestReceiptVerify_OutAllowedOutsideStore confirms the rejection only
+// fires for paths INSIDE the store. Ad-hoc --out paths elsewhere on
+// disk continue to work (the documented contract for --out).
+func TestReceiptVerify_OutAllowedOutsideStore(t *testing.T) {
+	resetReceiptBatch3Flags(t)
+	resetReceiptFlags(t)
+	withFakeReceiptLoader(t, makeReceiptArgoLive())
+
+	storeDir := t.TempDir()
+	t.Setenv("CUB_SCOUT_RECEIPTS_DIR", storeDir)
+
+	// --out path is in a SEPARATE tempdir, not under the store.
+	outDir := t.TempDir()
+	outPath := filepath.Join(outDir, "ad-hoc.receipt.json")
+
+	captureStdout(t, func() {
+		rootCmd.SetArgs([]string{
+			"receipt", "verify", "deploy/api",
+			"-n", "prod",
+			"--format", "json",
+			"--out", outPath,
+		})
+		if err := rootCmd.Execute(); err != nil {
+			t.Fatalf("receipt verify --out should succeed outside store: %v", err)
+		}
+	})
+
+	if _, statErr := os.Stat(outPath); statErr != nil {
+		t.Errorf("expected --out file to exist at %s; got %v", outPath, statErr)
+	}
+}
