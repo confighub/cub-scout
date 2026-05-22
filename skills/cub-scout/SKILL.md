@@ -46,6 +46,20 @@ This skill is the cross-cutting entry point. It picks the right verb-grouped ski
 
 See [`skills/README.md`](../README.md) for the full plan including controller observer skills (`observe-argocd`, `observe-flux`, `observe-helm`, `observe-crossplane`, `observe-kro`), workflow scenario skills (`triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, etc.), and shared references.
 
+### Pilot–cub-scout integration scenarios (`#444` batch A)
+
+The consumer-side complement: same cub-scout verbs framed around **Pilot** (the acceptance judge) rendering verdicts from cub-scout's evidence. Load one of these instead of a `scout-*` skill when the user's prompt is shaped as "Pilot, decide ..." or "render the verdict ...".
+
+| Scenario | Skill | Pilot consumes | Pilot decides |
+|---|---|---|---|
+| Pre-deploy CD gate | [`pilot-cd-gate`](../pilot-cd-gate/SKILL.md) | `compare source-truth --strategy <s>` + optional `receipt verify --fail-on any-non-pass` | PASS / WATCH / ASK / BLOCK on the release |
+| Fleet-wide conformance | [`pilot-fleet-conformance`](../pilot-fleet-conformance/SKILL.md) | `compare three-way --view` + per-resource source-truth + `fleet outliers` | Fleet verdict + per-resource breakdown |
+| Drift classification | [`pilot-patch-and-drift`](../pilot-patch-and-drift/SKILL.md) | attribution evidence (`cause` / `managerHint` / `gitSource` / `bindingSource`) | revert / quarantine / accept-as-canonical / ASK |
+| Real-time watch response | [`pilot-watch-alert-response`](../pilot-watch-alert-response/SKILL.md) | `cub-scout watch` event stream with `--emit-receipt-on` inline receipts (v2 #463) | Per-event PASS / WATCH / ASK / BLOCK |
+| Incident close-out | [`pilot-incident-evidence`](../pilot-incident-evidence/SKILL.md) | trace + explain + compare + bundle + history + audit + chained receipts (`--input-attestation`, v2 #463) | Incident verdict + immutable evidence pack |
+
+Batch B (governance-shaped: `pilot-rollback-decision`, `pilot-promotion-gate`, `pilot-compliance-audit`, `pilot-release-verification`) is the open `#444` follow-on.
+
 ## Product value in one breath
 
 **cub scout observes and explains; it never decides.** It is the read-only Kubernetes and GitOps observer — it surfaces evidence about ownership, health, drift, and provenance, but it never mutates the cluster and never makes authority calls about what *should* be true. ConfigHub (driven by `cub`) is the authority; cub-scout is the witness.

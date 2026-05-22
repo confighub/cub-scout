@@ -50,6 +50,18 @@ Each covers a real operator / agent workflow that spans multiple verbs. Compose 
 - [`operator-incident-evidence/`](operator-incident-evidence/SKILL.md) — postmortem evidence package: trace + compare + bundle + history + audit + fingerprinted receipts
 - [`confighub-source-truth/`](confighub-source-truth/SKILL.md) — strategy-typed `compare source-truth` verdicts (one of 9 strategies; cub-scout never infers); Pilot-acceptance-shaped output
 
+### Pilot–cub-scout integration scenarios (`#444` batch A)
+
+The consumer-side complement to the verb-grouped + workflow skills above. Same cub-scout verbs, framed around **Pilot** (the acceptance judge) reading cub-scout's evidence and rendering verdicts that downstream consumers (CI/CD, dashboards, audit tickets, postmortems) act on. cub-scout produces evidence with documented `omissions[]`; Pilot decides. Pilot mutates via `cub` / Argo / Flux / kubectl — never via cub-scout.
+
+- [`pilot-cd-gate/`](pilot-cd-gate/SKILL.md) — pre-deploy gate in a CD pipeline; consumes `compare source-truth --strategy <s>` (+ optional `receipt verify --fail-on any-non-pass`); renders PASS / WATCH / ASK / BLOCK on the release
+- [`pilot-fleet-conformance/`](pilot-fleet-conformance/SKILL.md) — fleet-wide conformance verdict (View / namespace / cluster scope) composing `compare three-way --view` + per-resource `compare source-truth` + `fleet outliers`; judge-driven counterpart to `audit-fleet-conformance`
+- [`pilot-patch-and-drift/`](pilot-patch-and-drift/SKILL.md) — drift-classification + revert / quarantine / accept-as-canonical / ASK decision; consumes attribution layer (`cause` / `managerHint` / `gitSource` / `bindingSource`); judge-driven counterpart to `investigate-drift`
+- [`pilot-watch-alert-response/`](pilot-watch-alert-response/SKILL.md) — real-time event-driven response; consumes the `cub-scout watch` event stream with inline receipts via `--emit-receipt-on` (shipped in `#463`); the only event-driven skill in the pilot-* batch
+- [`pilot-incident-evidence/`](pilot-incident-evidence/SKILL.md) — incident close-out evidence pack with **chained receipts** (`--input-attestation` from `#463`) for multi-stage incidents; judge-driven counterpart to `operator-incident-evidence`
+
+Batch B (4 governance-shaped scenarios: `pilot-rollback-decision`, `pilot-promotion-gate`, `pilot-compliance-audit`, `pilot-release-verification`) is tracked as the remaining `#444` follow-on.
+
 ### Shared references
 
 | Reference | Purpose |
@@ -96,3 +108,5 @@ That's **~33 skill files** plus 9 references — the full scope from `#442`.
 - [`#458`](https://github.com/confighub/cub-scout/pull/458) — batch 3 controller-observer skills
 - [`#459`](https://github.com/confighub/cub-scout/pull/459) — batch 4 workflow scenario skills
 - batch 5 — this PR (closes `#442`)
+
+**`#444` batch A in progress**: 5 Pilot–cub-scout integration scenario skills (consumer-side complement to the `#442` set) — `pilot-cd-gate`, `pilot-fleet-conformance`, `pilot-patch-and-drift`, `pilot-watch-alert-response`, `pilot-incident-evidence`. Each frames the same cub-scout verbs from Pilot's perspective (acceptance judge reading evidence, rendering verdicts), with worked CLI examples + verdict-mapping tables. The watch-alert-response skill consumes the v2 `--emit-receipt-on` surface (shipped in `#463`); the incident-evidence skill consumes the v2 chained-receipts surface (`--input-attestation`, also `#463`). Batch B (4 governance-shaped scenarios) is the remaining `#444` work.
