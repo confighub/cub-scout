@@ -978,29 +978,41 @@ Implementation: `pkg/agent/receipt_aggregate.go`
 (`runReceiptVerifyScoped`, `discoverNamespaceWorkloads`,
 `parseAggregateScope`).
 
-#### `watch --emit-receipt-on <event-types>` (`#449`)
+#### `watch --emit-receipt-on <event-types>` + `--emit-receipt-batch-cap` (`#449`)
 
 `cub-scout watch` accepts a new flag that attaches a receipt to each
 matching event payload inline. The watch event shape gains an optional
 `receipt` field carrying the full in-toto Statement.
 
-Event-type set (v1 of this flag):
+Event-type set (current; all four supported as of #449):
 
 | Event type | Receipt-build? | Notes |
 |------------|---------------|-------|
 | `drift.detected` | Yes — `applied-matches-spec` auto-detected | Highest signal: drift event already implies a verdict question |
 | `ownership.changed` | Yes — `applied-matches-spec` auto-detected | Owner shifts often indicate a delivery-chain change worth attesting |
-| `resource.discovered` | No (passes through silently) | Would flood on first poll; deferred to future iterations |
-| `scan.finding` | No (passes through silently) | Would flood on initial scan burst; deferred |
-| `all` | Sugar — accepts every known event type, but the build set is the supported subset above |
+| `resource.discovered` | Yes — `applied-matches-spec` auto-detected | The discovery moment captures the live state at first observation; backpressure-gated via `--emit-receipt-batch-cap` |
+| `scan.finding` | Yes — `applied-matches-spec` auto-detected | The receipt records the resource state at finding time; the finding detail lives on the event's `details` field; backpressure-gated |
+| `all` | Sugar — accepts every known event type |
+
+**Backpressure (`--emit-receipt-batch-cap N`, default 10):** when a
+single poll produces more receipt-eligible events than the cap, the
+first N get receipts built; the remaining events still emit but with
+the `receipt` key **omitted** (omitempty) and a single stderr summary
+line ("backpressure: suppressed receipt-build for X events of N
+eligible"). The cap is per-poll (one watch poll = one call), so a
+long-running watch with quiet polls between bursts doesn't accumulate
+suppression state. Set to 0 to disable receipt-build entirely while
+keeping the flag explicit; set to a large value (e.g. 1000) to
+effectively disable the cap.
 
 The flag is **lenient on type, strict on receipt-build**: unsupported event
 types pass through without a warning (so `--emit-receipt-on all` is
-forward-compatible as new event types land). Build failures on
-supported types emit a stderr warning and continue — the underlying
-watch event still emits, but with the `receipt` key **omitted** from
-the JSON (the field uses `omitempty`; consumers should check for key
-presence rather than null-ness):
+forward-compatible as new event types land — if a future type lands
+without receipt-build support, the startup warning fires automatically).
+Build failures on supported types emit a stderr warning and continue —
+the underlying watch event still emits, but with the `receipt` key
+**omitted** from the JSON (the field uses `omitempty`; consumers should
+check for key presence rather than null-ness):
 
 ```python
 # correct
