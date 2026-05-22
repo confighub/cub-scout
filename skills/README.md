@@ -25,17 +25,17 @@ One skill per cub-scout verb group. The skill knows which commands belong to its
 | [`scout-mcp/`](scout-mcp/SKILL.md) | Integrate | `mcp serve` / `context-pack` (AI gateway) |
 | [`scout-verify/`](scout-verify/SKILL.md) | Verify | `cub-scout receipt verify / show / validate / list` (typed, fingerprinted evidence — `#446` v1 complete) |
 
-### Controller observer skills *(planned, #442 batch 3)*
+### Controller observer skills
 
-One skill per controller cub-scout detects. Each documents the specific labels / annotations / manager strings the controller writes, the ownership classification cub-scout produces, and the edge cases.
+One skill per controller cub-scout detects. Each documents the specific labels / annotations / manager strings the controller writes, the ownership classification cub-scout produces, and the edge cases. Verified against `pkg/agent/ownership.go` and `pkg/agent/manager_strings.go` — the constants are the single source of truth.
 
-- `observe-argocd/` — Applications, ApplicationSets, tracking-id annotation, CSA migration default
-- `observe-flux/` — GitRepository / HelmRelease / Kustomization / OCIRepository / Bucket / source-controller
-- `observe-helm/` — direct Helm vs Flux-helm-controller vs Argo-helm-renderer (managed-by + chart label disambiguation)
-- `observe-crossplane/` — XR / composed / claim / MRD / provider managed-resources, ProviderConfig secrets
-- `observe-kro/` — applyset / parent / labeller
-- `observe-confighub-managed/` — UnitSlug label, delivered-via-Argo vs delivered-via-Flux
-- `observe-native/` — no controller, OwnerReferences only, orphan detection
+- [`observe-argocd/`](observe-argocd/SKILL.md) — Applications, ApplicationSets, tracking-id annotation, CSA migration default
+- [`observe-flux/`](observe-flux/SKILL.md) — GitRepository / HelmRelease / Kustomization / OCIRepository / Bucket / source-controller
+- [`observe-helm/`](observe-helm/SKILL.md) — direct Helm vs Flux-helm-controller vs Argo-helm-renderer (managed-by + chart label disambiguation matrix)
+- [`observe-crossplane/`](observe-crossplane/SKILL.md) — XR / composed / claim / MRD / provider managed-resources, ProviderConfig secrets, control-plane subset
+- [`observe-kro/`](observe-kro/SKILL.md) — applyset / parent / labeller, kro.run API group
+- [`observe-confighub-managed/`](observe-confighub-managed/SKILL.md) — UnitSlug label, delivered-via-Argo vs delivered-via-Flux, ConfigHub-priority detection
+- [`observe-native/`](observe-native/SKILL.md) — OwnerType=k8s (OwnerReferences chain) vs OwnerType=unknown (terminal fallthrough), orphan detection
 
 ### Workflow scenario skills *(planned, #442 batch 4)*
 
@@ -79,8 +79,10 @@ All skills under `skills/` follow the read-only-triad invariant. Concretely:
 
 ## Status
 
-**Batch 2 shipped (`#442` batch 2)**: the remaining four verb-grouped scenario skills are in — Ingest / Govern / Integrate (`scout-mcp`) / Verify (`scout-verify`, consuming the receipt capability shipped in `#446`). All eight verb-group skills now have full coverage.
+**Batch 3 shipped (`#442` batch 3)**: the seven controller-observer skills are in — `observe-argocd` / `observe-flux` / `observe-helm` / `observe-crossplane` / `observe-kro` / `observe-confighub-managed` / `observe-native`. Every controller cub-scout detects now has a dedicated skill documenting its labels, manager strings, and edge cases, verified against the Go enumeration in `pkg/agent/ownership.go` + `pkg/agent/manager_strings.go`.
 
-**Earlier:** batch 1 landed the scaffolding plus the first four scenario skills (Observe / Diagnose / Compare / Attribute) and two references (managedFields, verified-manager-strings).
+**Earlier:**
+- Batch 2 landed the remaining four verb-grouped scenario skills (Ingest / Govern / Integrate / Verify, with `scout-verify` consuming the receipt capability shipped in `#446`)
+- Batch 1 landed the scaffolding plus the first four scenario skills (Observe / Diagnose / Compare / Attribute) and two references (managedFields, verified-manager-strings)
 
-**Remaining work:** batch 3 (controller observer skills — argocd / flux / helm / crossplane / kro / confighub-managed / native), batch 4 (workflow scenario skills — triage / investigate-drift / audit-fleet-conformance / etc.), and batch 5 (the remaining shared references). See [`docs/roadmap.md`](../docs/roadmap.md) § "AI Agent Skills" for the full plan.
+**Remaining work:** batch 4 (workflow scenario skills — triage / investigate-drift / audit-fleet-conformance / etc.) and batch 5 (the remaining 7 shared references). See [`docs/roadmap.md`](../docs/roadmap.md) § "AI Agent Skills" for the full plan.
