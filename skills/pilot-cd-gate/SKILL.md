@@ -54,8 +54,8 @@ Implicit intents:
         │
         │  ──────────────────────────────────────────────────────────
         │  status:       PASS | WATCH | BLOCK | ASK
-        │  sourceTruth:  AGREED | MISMATCH | INCOMPLETE | BLOCKED | UNKNOWN
-        │  proofGaps:    [] (or list of structured missing-evidence entries)
+        │  source_truth: AGREED | MISMATCH | INCOMPLETE | BLOCKED | UNKNOWN
+        │  proof_gaps:   [] (string array of free-form missing-evidence entries)
         │  attribution:  cause, managerHint, gitSource per field
         │  ──────────────────────────────────────────────────────────
         │
@@ -83,17 +83,17 @@ cub-scout **never infers** the source-truth strategy. Pilot's gate must declare 
 
 | Strategy | What it asserts |
 |----------|-----------------|
-| `git-argo`        | Argo CD application reading from a Git source; cluster matches the git tree |
-| `git-flux`        | Flux reading from a Git source; cluster matches the git tree |
-| `git-helm`        | Helm release from a Git-hosted chart; cluster matches the rendered chart |
-| `oci-argo`        | Argo CD reading from an OCI registry; cluster matches the OCI image |
-| `oci-flux`        | Flux reading from an OCI registry; cluster matches the OCI image |
-| `oci-helm`        | Helm chart published to OCI; cluster matches the rendered chart |
-| `kustomize-flux`  | Flux Kustomization; cluster matches the rendered kustomize tree |
-| `helm-flux`       | Flux HelmRelease; cluster matches the rendered chart |
+| `git-argo`           | Argo CD application reading from a Git source; cluster matches the git tree |
+| `git-flux`           | Flux reading from a Git source; cluster matches the git tree |
+| `helm-argo`          | Argo CD reading from a Helm chart source; cluster matches the rendered chart |
+| `helm-flux`          | Flux HelmRelease; cluster matches the rendered chart |
+| `kustomize-flux`     | Flux Kustomization; cluster matches the rendered kustomize tree |
+| `oci-argo`           | Argo CD reading from an OCI registry; cluster matches the OCI image |
+| `oci-flux`           | Flux reading from an OCI registry; cluster matches the OCI image |
 | `confighub-oci-argo` | ConfigHub authoring + OCI publish + Argo CD apply; cluster matches the unit revision via OCI |
+| `confighub-oci-flux` | ConfigHub authoring + OCI publish + Flux apply; cluster matches the unit revision via OCI |
 
-See [`source-truth-strategies`](../references/source-truth-strategies.md) for the full reference. If the user can't name a strategy, the gate is premature — Pilot should ask before evaluating.
+This is the closed enum from `pkg/agent/source_truth.go`. Unknown values are rejected upfront. See [`source-truth-strategies`](../references/source-truth-strategies.md) for the full reference. If the user can't name a strategy, the gate is premature — Pilot should ask before evaluating.
 
 ## Two-tier evidence: `compare source-truth` vs. `receipt verify`
 
@@ -101,7 +101,7 @@ Pilot has two tiers of evidence available, and the choice is a quality / durabil
 
 | Tier | Verb | Output | When to use |
 |------|------|--------|-------------|
-| **Live evidence** | `cub-scout compare source-truth <kind>/<name> -n <ns> --strategy <s> --format json` | Ephemeral JSON the pipeline reads once | Most gate decisions. Pilot reads `status` + `sourceTruth` + `proofGaps`, renders a verdict, and the JSON is discarded after the decision. |
+| **Live evidence** | `cub-scout compare source-truth <kind>/<name> -n <ns> --strategy <s> --format json` | Ephemeral JSON the pipeline reads once | Most gate decisions. Pilot reads `status` + `source_truth` + `proof_gaps` + `safe_next_action`, renders a verdict, and the JSON is discarded after the decision. |
 | **Typed evidence** | `cub-scout receipt verify <kind>/<name> -n <ns> --strategy <s> --save --out release.receipt.json --fail-on any-non-pass` | Persistent in-toto Statement v1 envelope with SHA-256 fingerprint | When the release record needs an immutable receipt attached (audit, compliance, postmortem). `--fail-on any-non-pass` doubles as the exit-2 CI gate. |
 
 The receipt path is **preferred for production gates** because:
@@ -113,14 +113,14 @@ The receipt path is **preferred for production gates** because:
 
 ## Verdict mapping (cub-scout status → Pilot verdict)
 
-The source-truth contract has **two** enums:
+The source-truth contract has **two** enums (snake_case in JSON, per `pkg/agent/source_truth.go:280-287`):
 
 - **`status`** — evidence-quality verdict: `PASS` / `WATCH` / `BLOCK` / `ASK`
-- **`sourceTruth`** — cross-surface agreement: `AGREED` / `MISMATCH` / `INCOMPLETE` / `BLOCKED` / `UNKNOWN`
+- **`source_truth`** — cross-surface agreement: `AGREED` / `MISMATCH` / `INCOMPLETE` / `BLOCKED` / `UNKNOWN`
 
-Pilot's gate verdict typically tracks `status`, with `sourceTruth` available for drill-down:
+Pilot's gate verdict typically tracks `status`, with `source_truth` available for drill-down:
 
-| cub-scout `status` | cub-scout `sourceTruth` (typical) | Pilot gate verdict | Pipeline action |
+| cub-scout `status` | cub-scout `source_truth` (typical) | Pilot gate verdict | Pipeline action |
 |--------------------|-----------------------------------|--------------------|-----------------|
 | PASS  | AGREED      | **PASS** | continue |
 | WATCH | INCOMPLETE  | **WATCH** | continue but attach receipt; alert release channel |
@@ -143,30 +143,36 @@ $ cub-scout compare source-truth deploy/payments-api -n prod \
 
 ```json
 {
-  "scope": "resource:Deployment/payments-api/prod",
-  "strategy": "git-argo",
+  "declared_strategy": "git-argo",
   "status": "WATCH",
-  "sourceTruth": "INCOMPLETE",
-  "proofGaps": [
-    {
-      "missing": "git-source-anchor",
-      "reason": "argocd CLI not installed; tracer fell back to label-only ownership",
-      "severity": "warning"
+  "source_truth": "INCOMPLETE",
+  "outlier": "none",
+  "surfaces": {
+    "confighub": null,
+    "controller": {
+      "kind": "Argo",
+      "source": "https://github.com/org/payments",
+      "revision_or_digest": "abc123",
+      "health": "Synced"
+    },
+    "runtime": {
+      "resource": "Deployment/payments-api in prod",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "ghcr.io/org/payments-api:v1.4.2",
+      "health": "Current"
     }
+  },
+  "proof_gaps": [
+    "git-source-anchor unresolved: argocd CLI not installed; tracer fell back to label-only ownership"
   ],
-  "attribution": {
-    "Deployment/payments-api": {
-      "cause": "controller-drift",
-      "managerHint": "argocd-controller"
-    }
-  }
+  "safe_next_action": "install argocd CLI in the pipeline container and re-run, or accept WATCH if policy allows"
 }
 ```
 
 Pilot reads this:
 - `status: WATCH` → not a hard PASS; gate fires WATCH (continue but flag).
-- `proofGaps[0].missing: git-source-anchor` → the operator can fix this by installing argocd CLI in the pipeline container.
-- `attribution.cause: controller-drift` → no manual-edit signal; Argo is in control.
+- `proof_gaps[0]` (a free-form string entry) → the operator can fix the missing git-source-anchor by installing argocd CLI in the pipeline container.
+- `surfaces.controller.health: Synced` → Argo is in control; no manual-edit signal at this layer.
 
 Pilot's CD pipeline policy says WATCH is non-blocking but must attach a receipt to the release ticket. So Pilot escalates the call to:
 
@@ -201,16 +207,18 @@ Pilot's CD gate runs in two flavors:
 | **Standalone** (cluster only, no ConfigHub auth) | `receipt verify --predicate applied-matches-spec`, `receipt verify --predicate no-manual-edits-since` | Limited — cannot use `source-truth-pass`. Useful for non-ConfigHub-managed deployments. |
 | **Connected** (cluster + `cub auth login`) | All of the above + `receipt verify --strategy <s>` (source-truth-pass), `compare source-truth`, `compare three-way`, `confighub-unit://` subject in receipt | Full surface. Recommended for production gates. |
 
-A standalone gate is still valuable but produces an INCOMPLETE receipt (missing `confighub-unit://` subject) with a documented `OmissionConfigHubUnitSubject` entry. Pilot can still consume it, but the verdict ceiling is WATCH (the receipt is honest about what's missing).
+A standalone gate is still valuable. The receipt **omits** the `confighub-unit://` subject and records a documented `OmissionConfigHubUnitSubject` entry — that's structural honesty about what's missing, not a verdict downgrade. The verdict itself follows the predicate's normal rules: `applied-matches-spec` can still PASS in standalone mode when the controller-resolved git anchor and attribution are sufficient (per `pkg/agent/receipt_predicates.go:106-110`). Pilot may layer its own conservative policy on top (e.g., "treat standalone receipts as WATCH even on PASS verdicts") — that's a Pilot-side choice, not a cub-scout-imposed ceiling.
 
 Run `cub-scout status` in the pipeline preamble to confirm the mode; if standalone and the gate requires a strategy, Pilot's policy should escalate to ASK rather than proceed.
 
 ## CI integration shapes
 
 ```yaml
-# GitHub Actions — Pilot calls cub-scout, Pilot decides
+# GitHub Actions shape — cub-scout produces evidence; Pilot's policy
+# engine (whatever it is in your stack) reads it and renders a verdict.
+# cub-scout side is the read-only piece; the verdict-rendering step is
+# tool-neutral.
 - name: cub-scout evidence
-  id: evidence
   run: |
     cub-scout compare source-truth deploy/payments-api -n prod \
       --strategy git-argo \
@@ -218,9 +226,11 @@ Run `cub-scout status` in the pipeline preamble to confirm the mode; if standalo
 - name: Pilot verdict
   id: verdict
   run: |
-    # Pilot's policy engine consumes evidence.json
-    verdict=$(pilot decide --evidence ./evidence.json --release ${{ env.RELEASE }})
-    echo "verdict=$verdict" >> $GITHUB_OUTPUT
+    # Pilot consumes evidence.json and writes one of PASS / WATCH / ASK / BLOCK.
+    # The exact mechanism (CLI / library / HTTP call) is Pilot-side; cub-scout
+    # only produces the evidence file. Substitute your acceptance kernel here.
+    pilot_verdict=$(./scripts/pilot-decide evidence.json)
+    echo "verdict=$pilot_verdict" >> $GITHUB_OUTPUT
 - name: Halt on BLOCK or ASK
   if: steps.verdict.outputs.verdict == 'BLOCK' || steps.verdict.outputs.verdict == 'ASK'
   run: exit 1

@@ -152,11 +152,11 @@ $ cub-scout compare three-way --view payments-prod-conformance --format json \
 $ for r in $(cub-scout views project --view payments-prod-conformance --format json \
               | jq -r '.[] | "\(.kind)/\(.name) -n \(.namespace)"'); do
     cub-scout compare source-truth $r --strategy git-argo --format json \
-      | jq '{resource: "'"$r"'", status: .status, sourceTruth: .sourceTruth}'
+      | jq '{resource: "'"$r"'", status: .status, source_truth: .source_truth, proof_gaps: .proof_gaps}'
   done
 ```
 
-Each per-resource output has `status` (PASS/WATCH/BLOCK/ASK) + `sourceTruth` (AGREED/MISMATCH/INCOMPLETE/BLOCKED/UNKNOWN). Pilot collects these into the synthesis matrix.
+Each per-resource output has `status` (PASS/WATCH/BLOCK/ASK) + `source_truth` (AGREED/MISMATCH/INCOMPLETE/BLOCKED/UNKNOWN) + `proof_gaps[]` (a string array of free-form missing-evidence entries) + `safe_next_action` (a free-form human-readable next step). Pilot collects these into the synthesis matrix. Field names are snake_case per `pkg/agent/source_truth.go:280-287`.
 
 ### Step 4 — persist fleet evidence as receipts (audit-quality)
 
@@ -221,9 +221,9 @@ Pilot's verdict surface to the compliance dashboard:
     "outliers": 2
   },
   "blockers": [
-    "Deployment/payments-api in prod-use1 (sourceTruth=MISMATCH)",
-    "Deployment/payments-worker in prod-use1 (sourceTruth=MISMATCH)",
-    "Deployment/payments-db in prod-euw1 (sourceTruth=MISMATCH)"
+    "Deployment/payments-api in prod-use1 (source_truth=MISMATCH)",
+    "Deployment/payments-worker in prod-use1 (source_truth=MISMATCH)",
+    "Deployment/payments-db in prod-euw1 (source_truth=MISMATCH)"
   ],
   "evidence_path": "/path/to/audit/receipts/2026-05-22/",
   "next_step": "investigate the 3 BLOCK resources via pilot-patch-and-drift"
