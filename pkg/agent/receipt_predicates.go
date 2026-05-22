@@ -293,12 +293,18 @@ func AutoDetectPredicate(in PredicateInput, owner Ownership) (PredicateName, *Om
 //   - Strategy mismatch between caller and evidence → BLOCK +
 //     OmissionStrategyMismatch. Don't silently honor the caller's strategy
 //     over what the evidence claims to be under.
-//   - Map Status to ReceiptVerdict:
+//   - Map Status to ReceiptVerdict (per the locked synthesis in
+//     docs/proposals/receipts-way-forward.md):
 //     PASS  → VerdictPASS
 //     WATCH → VerdictWATCH
 //     BLOCK → VerdictBLOCK
-//     ASK   → VerdictINCONCLUSIVE (with the evidence's proof_gaps mirrored
-//             into omissions[])
+//     ASK   → VerdictWATCH (source-truth ASK means cub-scout couldn't
+//             classify; the receipt records WATCH with the evidence's
+//             proof_gaps mirrored into omissions[] so the consumer
+//             knows what's missing. INCONCLUSIVE is reserved for
+//             cases where the receipt itself can't be evaluated, not
+//             for cases where the underlying source-truth surface
+//             just couldn't classify.)
 //
 // Proof gaps in the source-truth evidence are mirrored into the receipt's
 // omissions[] under OmissionSourceTruthComplete so a consumer reading
@@ -388,7 +394,13 @@ func EvaluateSourceTruthPass(in PredicateInput) PredicateResult {
 			NextSurface: "cub-scout",
 		})
 	case StatusASK:
-		res.Verdict = VerdictINCONCLUSIVE
+		// Per docs/proposals/receipts-way-forward.md: source-truth ASK
+		// maps to WATCH (not INCONCLUSIVE). The receipt CAN be evaluated
+		// — the underlying source-truth surface just couldn't classify
+		// deterministically. WATCH says "soft signal; the consumer must
+		// look at the proof_gaps[] to decide". INCONCLUSIVE is reserved
+		// for receipts that themselves can't be built.
+		res.Verdict = VerdictWATCH
 		res.Omissions = append(res.Omissions, Omission{
 			Missing:  OmissionSourceTruthComplete,
 			Reason:   "source-truth ASK; cub-scout cannot classify deterministically — the evidence's proof_gaps explain what's missing",

@@ -2465,7 +2465,7 @@ cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
 | `--strategy` | Source-truth strategy for `source-truth-pass` (e.g. `git-argo`, `confighub-oci-flux`, `helm-argo`). cub-scout does not infer the strategy. |
 | `--since` | RFC 3339 cutoff timestamp for `no-manual-edits-since` (e.g. `2026-05-22T00:00:00Z`). |
 | `--format` | Output format: `ascii` (default, one-screen human summary) or `json` (canonical in-toto Statement v1 envelope) |
-| `--out` | Write the receipt to this file path. Always JSON regardless of `--format` — disk is the long-lived artifact. |
+| `--out` | Write the receipt to this file path. Always JSON regardless of `--format` — disk is the long-lived artifact. **Overwrites existing files** (this is the non-immutable, ad-hoc-path contract). Paths under the resolved receipt store are **rejected** — use `--save` for store writes (which are immutable; see below). |
 
 v1 predicates:
 

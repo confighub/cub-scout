@@ -93,7 +93,14 @@ $ for d in $(cub-scout map workloads --namespace payments --format json | jq -r 
   done
 ```
 
-Each output is a one-line verdict per resource. Group by status (PASS / WATCH / BLOCK / ASK / INCONCLUSIVE) to produce the audit matrix. The `INCOMPLETE` verdict on a `source_truth` field is recoverable (missing proof gaps); the `MISMATCH` verdict is not.
+Each output is a one-line verdict per resource. The source-truth contract has two separate enums:
+
+- **`status`** (the four-valued evidence-quality verdict): `PASS` / `WATCH` / `BLOCK` / `ASK`
+- **`source_truth`** (the five-valued cross-surface agreement): `AGREED` / `MISMATCH` / `INCOMPLETE` / `BLOCKED` / `UNKNOWN`
+
+`INCONCLUSIVE` is the **receipt-level** verdict for receipts that themselves can't be evaluated; it does NOT appear in `compare source-truth`'s own status enum. When you wrap the source-truth result in a `cub-scout receipt verify --strategy <s>` receipt, ASK status maps to receipt WATCH (per the locked synthesis in `docs/proposals/receipts-way-forward.md`).
+
+Group the audit matrix by `status`: PASS / WATCH / BLOCK / ASK. `INCOMPLETE` on `source_truth` is recoverable (missing proof gaps); `MISMATCH` is not.
 
 ### Step 4 — cross-cluster outliers (true fleet scope)
 

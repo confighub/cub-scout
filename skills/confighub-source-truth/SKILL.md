@@ -226,7 +226,7 @@ Proof gaps are **not failures**. They're explicit non-claims (the same pattern a
 
 ## Pilot integration
 
-cub-scout's source-truth contract is the canonical input for **Pilot** (the architectural-triad acceptance judge in `confighubai/confighub-ai-demo`). Pilot reads source-truth evidence + receipts and produces verdicts that gate CD / promotion / rollback / compliance.
+cub-scout's source-truth contract is the canonical input for **Pilot**, the architectural-triad acceptance judge tracked alongside cub-scout in `#444`. Pilot reads source-truth evidence + receipts and produces verdicts that gate CD / promotion / rollback / compliance.
 
 - cub-scout = evidence (this skill produces it)
 - ConfigHub = authority (where the unit / Link / target lives)

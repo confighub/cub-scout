@@ -117,7 +117,14 @@ func TestEvaluateSourceTruthPass_StatusBLOCK_VerdictBLOCK(t *testing.T) {
 	}
 }
 
-func TestEvaluateSourceTruthPass_StatusASK_VerdictINCONCLUSIVE(t *testing.T) {
+func TestEvaluateSourceTruthPass_StatusASK_VerdictWATCH(t *testing.T) {
+	// Per the locked synthesis (docs/proposals/receipts-way-forward.md),
+	// source-truth ASK maps to receipt WATCH — not INCONCLUSIVE. The
+	// receipt CAN be evaluated; the underlying source-truth surface just
+	// couldn't classify. WATCH says "soft signal; consumer must look at
+	// proof_gaps[]". INCONCLUSIVE is reserved for receipts that
+	// themselves can't be built (missing strategy, missing evidence
+	// body, etc.).
 	res := EvaluateSourceTruthPass(PredicateInput{
 		Scope:    Scope{Kind: "Deployment", Name: "api", Namespace: "prod"},
 		Strategy: "git-argo",
@@ -129,8 +136,13 @@ func TestEvaluateSourceTruthPass_StatusASK_VerdictINCONCLUSIVE(t *testing.T) {
 			},
 		},
 	})
-	if res.Verdict != VerdictINCONCLUSIVE {
-		t.Errorf("ASK status must map to VerdictINCONCLUSIVE; got %q", res.Verdict)
+	if res.Verdict != VerdictWATCH {
+		t.Errorf("ASK status must map to VerdictWATCH per locked design; got %q", res.Verdict)
+	}
+	// The proof-gap-style omission must still be recorded so the
+	// consumer knows WHY this is WATCH rather than PASS.
+	if !hasOmission(res.Omissions, OmissionSourceTruthComplete) {
+		t.Errorf("ASK status must record OmissionSourceTruthComplete for the consumer to read proof_gaps; got %v", res.Omissions)
 	}
 }
 

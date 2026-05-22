@@ -4,10 +4,13 @@
 package agent
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -163,6 +166,85 @@ func TestSaveStatement_RefusesToOverwrite(t *testing.T) {
 	}
 	if !errors.Is(err, os.ErrExist) {
 		t.Errorf("expected os.ErrExist sentinel; got %v", err)
+	}
+}
+
+// TestSaveStatement_OriginalContentPreservedOnCollision is the Codex
+// round-5 immutability invariant: a second SaveStatement on the same
+// canonical filename MUST leave the original file content untouched.
+// The pre-fix code used Stat-then-WriteFile which had a TOCTOU race;
+// the fixed code uses O_EXCL atomic create.
+func TestSaveStatement_OriginalContentPreservedOnCollision(t *testing.T) {
+	dir := t.TempDir()
+	stmt := makeStubStatement("2026-05-22T10:30:00Z", "applied-matches-spec", "Deployment", "api", "sha256:0123456789ab0123")
+
+	path, err := SaveStatement(stmt, dir)
+	if err != nil {
+		t.Fatalf("first save: %v", err)
+	}
+	originalBytes, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read original: %v", err)
+	}
+
+	// Mutate the stmt — different claim, but the SAME canonical filename
+	// (because VerifiedAt + predicate + scope + fingerprint are
+	// unchanged). The second save must refuse AND must not stomp on the
+	// original content.
+	stmt.Predicate.Claim = "tampered claim"
+	_, err = SaveStatement(stmt, dir)
+	if err == nil {
+		t.Fatal("expected ErrExist on collision")
+	}
+	if !errors.Is(err, os.ErrExist) {
+		t.Errorf("expected os.ErrExist; got %v", err)
+	}
+
+	afterBytes, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read after collision: %v", err)
+	}
+	if !bytes.Equal(originalBytes, afterBytes) {
+		t.Errorf("ON-DISK CONTENT CHANGED across a collision-rejected save — immutability invariant broken.\nbefore: %s\nafter:  %s",
+			string(originalBytes), string(afterBytes))
+	}
+}
+
+// TestSaveStatement_ConcurrentSavesOneWinner exercises the O_EXCL
+// atomic-create path. Without it (Stat-then-WriteFile), both goroutines
+// could pass the Stat check and both could WriteFile, with the second
+// stomping the first. With O_EXCL, exactly one goroutine creates the
+// file; the other gets ErrExist.
+func TestSaveStatement_ConcurrentSavesOneWinner(t *testing.T) {
+	dir := t.TempDir()
+	stmt := makeStubStatement("2026-05-22T10:30:00Z", "applied-matches-spec", "Deployment", "api", "sha256:0123456789ab0123")
+
+	const N = 8
+	var (
+		wg       sync.WaitGroup
+		successC int32
+		existC   int32
+	)
+	wg.Add(N)
+	for i := 0; i < N; i++ {
+		go func() {
+			defer wg.Done()
+			_, err := SaveStatement(stmt, dir)
+			if err == nil {
+				atomic.AddInt32(&successC, 1)
+			} else if errors.Is(err, os.ErrExist) {
+				atomic.AddInt32(&existC, 1)
+			} else {
+				t.Errorf("unexpected error: %v", err)
+			}
+		}()
+	}
+	wg.Wait()
+	if successC != 1 {
+		t.Errorf("expected exactly 1 winner among %d concurrent SaveStatement calls; got %d successes + %d ErrExist", N, successC, existC)
+	}
+	if successC+existC != N {
+		t.Errorf("expected all %d concurrent SaveStatements to either win or ErrExist; got %d successes + %d ErrExist", N, successC, existC)
 	}
 }
 

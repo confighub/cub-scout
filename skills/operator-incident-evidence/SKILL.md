@@ -187,7 +187,7 @@ $ for r in ./incident-2026-05-22-payments/receipts/*.receipt.json; do
 - [`scout-govern`](../scout-govern/SKILL.md) — bundle / history / audit / impact
 - [`triage-unhealthy-workload`](../triage-unhealthy-workload/SKILL.md) — the during-incident counterpart
 - [`investigate-drift`](../investigate-drift/SKILL.md) — for the per-resource attribution dimension
-- Bundle format: [`docs/bundle-diff.md`](../../docs/bundle-diff.md), [`docs/bundle-timeline.md`](../../docs/bundle-timeline.md)
+- Bundle format: [`docs/howto/bundle-diff.md`](../../docs/howto/bundle-diff.md), [`docs/howto/bundle-timeline.md`](../../docs/howto/bundle-timeline.md)
 - Receipt contract: [`docs/reference/json-contracts.md`](../../docs/reference/json-contracts.md) § Receipt Contract
 - Secret evidence on trace: `#328`, `#360`
 

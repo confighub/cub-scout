@@ -5,6 +5,7 @@ package agent
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -132,6 +133,13 @@ func DeriveFilename(stmt Statement) string {
 // re-writing serves no purpose and a different fingerprint at the same
 // filename is impossible (the fingerprint is part of the filename).
 //
+// Atomicity: the create-and-write uses os.OpenFile with O_CREATE|O_EXCL|
+// O_WRONLY, so the check-vs-create is a single syscall. Two concurrent
+// SaveStatement calls for the same canonical filename can't both succeed
+// — exactly one creates the file, the other races and gets ErrExist.
+// The earlier Stat-then-WriteFile shape (pre-Codex-round-5 fix) was
+// vulnerable to TOCTOU.
+//
 // Returns the absolute path written.
 func SaveStatement(stmt Statement, dir string) (string, error) {
 	if dir == "" {
@@ -143,15 +151,31 @@ func SaveStatement(stmt Statement, dir string) (string, error) {
 	filename := DeriveFilename(stmt)
 	path := filepath.Join(dir, filename)
 
-	if _, err := os.Stat(path); err == nil {
-		return path, fmt.Errorf("save-receipt: %s: %w", path, os.ErrExist)
-	}
-
 	buf, err := json.MarshalIndent(stmt, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("save-receipt: marshal: %w", err)
 	}
-	if err := os.WriteFile(path, append(buf, '\n'), 0o644); err != nil {
+
+	// Atomic exclusive create. O_EXCL ensures the file did not previously
+	// exist; if it did, the OS returns the platform-specific EEXIST which
+	// os.IsExist recognizes and which wraps as os.ErrExist for callers
+	// using errors.Is.
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+	if err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return path, fmt.Errorf("save-receipt: %s: %w", path, os.ErrExist)
+		}
+		return "", fmt.Errorf("save-receipt: open %s: %w", path, err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(append(buf, '\n')); err != nil {
+		// Clean up partial write on error — the file existed before
+		// this call returned, so leaving it around would defeat
+		// O_EXCL on a retry. Best-effort; if Remove fails the next
+		// SaveStatement on the same canonical name will see ErrExist
+		// on a corrupted file, which is loud rather than silent.
+		_ = os.Remove(path)
 		return "", fmt.Errorf("save-receipt: write %s: %w", path, err)
 	}
 	return path, nil

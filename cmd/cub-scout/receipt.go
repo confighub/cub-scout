@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -251,15 +252,42 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 
 	// 7. Print to stdout AND optionally write to file.
 	fmt.Println(string(out))
-	if strings.TrimSpace(receiptOut) != "" {
+	if outPath := strings.TrimSpace(receiptOut); outPath != "" {
+		// --out is the explicit-path path: the caller picks the filename
+		// and gets exactly one write. It is NOT immutable — re-running
+		// the same `verify --out foo.json` overwrites foo.json. That's
+		// the documented contract for --out.
+		//
+		// Codex round 5: reject --out paths under the resolved store
+		// directory so the immutable-store invariant can't be bypassed.
+		// Concretely: a caller who points --out at
+		// $XDG_DATA_HOME/cub-scout/receipts/foo.json could otherwise
+		// stomp on an existing canonical receipt and the store's "files
+		// never change once written" property would be broken.
+		storeDir, sdErr := agent.DefaultStoreDir()
+		if sdErr == nil {
+			absOut, aErr := filepath.Abs(outPath)
+			absStore, asErr := filepath.Abs(storeDir)
+			if aErr == nil && asErr == nil {
+				if rel, rErr := filepath.Rel(absStore, absOut); rErr == nil &&
+					!strings.HasPrefix(rel, "..") && !filepath.IsAbs(rel) {
+					return fmt.Errorf(
+						"refusing to write --out to %q because it is under the receipt store %q; "+
+							"use --save (immutable canonical store path) for store writes, or pick a path outside the store for ad-hoc --out files",
+						absOut, absStore,
+					)
+				}
+			}
+		}
+
 		// Always write the JSON form to disk regardless of console format
 		// — disk is the long-lived artifact; ASCII is for humans.
 		jsonBytes, mErr := json.MarshalIndent(stmt, "", "  ")
 		if mErr != nil {
 			return fmt.Errorf("marshal receipt for --out: %w", mErr)
 		}
-		if writeErr := os.WriteFile(receiptOut, append(jsonBytes, '\n'), 0o644); writeErr != nil {
-			return fmt.Errorf("write receipt to %s: %w", receiptOut, writeErr)
+		if writeErr := os.WriteFile(outPath, append(jsonBytes, '\n'), 0o644); writeErr != nil {
+			return fmt.Errorf("write receipt to %s: %w", outPath, writeErr)
 		}
 	}
 

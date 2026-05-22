@@ -155,8 +155,8 @@ If a user is reading impact output and asks "should I promote?", route them to P
 ## References
 
 - Command reference: [`docs/reference/commands.md`](../../docs/reference/commands.md) § history, § impact, § fleet, § summary, § views, § audit, § bundle, § catalog
-- Bundle format: [`docs/bundle-diff.md`](../../docs/bundle-diff.md), [`docs/bundle-timeline.md`](../../docs/bundle-timeline.md)
-- Catalog format: [`docs/catalog.md`](../../docs/catalog.md)
+- Bundle format: [`docs/howto/bundle-diff.md`](../../docs/howto/bundle-diff.md), [`docs/howto/bundle-timeline.md`](../../docs/howto/bundle-timeline.md)
+- Catalog format: [`docs/howto/catalog.md`](../../docs/howto/catalog.md)
 - Views: [`docs/reference/json-contracts.md`](../../docs/reference/json-contracts.md), `cub-scout/#391`
 - Read-only triad: `cub-scout/#410`, `cub-scout/#428`
 

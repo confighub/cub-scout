@@ -14,7 +14,7 @@ cub-scout's read-only invariant is **code-enforced**, not convention. This doc e
 |---|---|---|---|
 | Evidence provider | `cub-scout` (`cub scout` plugin) | Reads cluster + controllers + ConfigHub; produces typed structured evidence (attribution, source-truth, receipts, etc.) | Apply, patch, edit, delete cluster state. Create / update / delete ConfigHub units. Decide whether evidence is "approved" or "acceptable". |
 | Authority | `cub` (the ConfigHub CLI) | Authors intended state in ConfigHub (units, spaces, targets, links). Applies units to clusters. Manages governance workflows. | Read the cluster to produce evidence about it — that's cub-scout's job. |
-| Judge | Pilot (in `confighubai/confighub-ai-demo`) | Consumes cub-scout's source-truth evidence + receipts; produces acceptance verdicts that gate CD / promotion / rollback. Acts on the verdict via its own connectors. | Generate evidence — Pilot is a consumer, not a producer. |
+| Judge | Pilot (tracked in `#444`) | Consumes cub-scout's source-truth evidence + receipts; produces acceptance verdicts that gate CD / promotion / rollback. Acts on the verdict via its own connectors. | Generate evidence — Pilot is a consumer, not a producer. |
 
 The separation is **structural**: each tool owns one phase of the loop. Combining them in one CLI would conflate provenance, authority, and acceptance — and conflating any two collapses the trust model. The triad keeps them honest.
 
@@ -145,4 +145,4 @@ Every skill in this repo, implicitly — the read-only invariant is the contract
 - Architectural-triad work: `#410` (audit), `#428` (suggest-remedy refactor + executor deletion)
 - Receipt invariant: `#446` (parent), `docs/proposals/receipts-way-forward.md` § "read-only-triad lock"
 - Skill-level allowed-tools convention: [`SKILL_TEMPLATE.md`](../SKILL_TEMPLATE.md)
-- Related projects: `confighubai/confighub-ai-demo` (Pilot — the judge side); [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) (cub authoring skills — the authority side)
+- Related projects: Pilot (the judge side; integration tracked in `#444`); [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) (cub authoring skills — the authority side)
