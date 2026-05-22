@@ -114,7 +114,7 @@ The council (April 2026) prescribed the **truth-floor → source-truth contract 
 ### Architectural triad locked in code (not just intent)
 
 - **cub-scout** = read-only evidence provider for source truth
-- **Pilot** = acceptance judge (lives in `confighubai/confighub-ai-demo`)
+- **Pilot** = acceptance judge (separate consumer of cub-scout's surfaces)
 - **ConfigHub** = authority and workflow engine
 
 cub-scout never mutates, repairs, approves, or infers authority. The source-truth contract enforces this surface in code.
@@ -184,7 +184,7 @@ Current tracked follow-ons (verified 2026-05-22):
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).
 - **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up).
 - **`#421`** — Views project: CEL + JSONPath column evaluators.
-- **`#391`** — Views integration. Scopes #1 (`--view` on `compare three-way`, `#414`) and #2 (TUI Hub View column projection, `#419`/`#420`) shipped. Scope #3 (reality overlay composing View columns with `#393` source-truth verdicts) is the active follow-on.
+- **`#391`** — Views integration. Scope #1 (`--view` on `compare three-way`, `#414`) and scope #3 (reality overlay composing View columns with `#393` source-truth verdicts, `#420`) shipped. Scope #2 (TUI Hub View column projection) is the open follow-on (tracked under `#422`).
 - **`#409`** Phase 3 — source-truth multi-source Argo (`spec.sources[]` len > 1). Phases 1 + 2 shipped (9 strategies total via `#393` + `#418`).
 - **`#410 / #428`** — Triad-compliance audit. Major item resolved: cub-scout is categorically read-only. Lower-severity follow-ons on `import apply` wording remain; the hint-command lint rule continues in `#386`.
 - **`#392`** — Initiatives compliance overlay. **Still deferred.** ConfigHub side has no backend primitive yet. Design doc at [`docs/howto/initiatives-integration-when-ready.md`](docs/howto/initiatives-integration-when-ready.md) holds the integration spec.
@@ -202,7 +202,7 @@ Current tracked follow-ons (verified 2026-05-22):
 ### Cross-repo dependencies
 
 - **`confighub/confighub#4356`** — ArgoCDOCI Helm-source shape symptom classifier. Blocks accurate `confighub-oci-argo` classification in `compare source-truth`.
-- **`confighubai/confighub-ai-demo#264`** — Pilot consumer-side fixtures pairing with cub-scout's source-truth + receipts surfaces.
+- Pilot consumer-side fixtures pairing with cub-scout's source-truth + receipts surfaces (tracked in a separate non-public repo; cub-scout's surface contract is the canonical reference for downstream consumers).
 
 ## Current checkpoint
 
@@ -226,7 +226,7 @@ There is **no single "next milestone"** the way v2.0.0 was. The codebase is in s
 
 1. **Receipts v2 + small follow-ons** — `#448` chained receipts via `inputAttestations[]`, `#449` `watch --emit-receipt-on` for real-time emission, `#451` `--fail-on RECEIPT_VERDICT` for CI gating. Plus the small Codex round-5 follow-ups: MCP `compare_source_truth` strategy-enum drift (4 vs 9), source-truth receipt precedence tests.
 2. **Pilot–cub-scout integration skills** (`#444`) — 9 consumer-side skill scenarios (CD gate / fleet conformance / patch+drift / rollback / promotion / incident evidence / compliance / release verification / watch alert). Closes the trust-triad loop on the consumer side.
-3. **Views project tail** — `#391` scope #3 reality overlay; `#421` CEL+JSONPath column evaluators; `#422` TUI Hub View integration. Smaller surface than receipts/skills but a real follow-on for the Views work.
+3. **Views project tail** — `#391` scope #2 TUI Hub View column projection (`#422`); `#421` CEL+JSONPath column evaluators. Scopes #1 and #3 already shipped (`#414` and `#420` respectively). Smaller surface than receipts/skills but a real follow-on for the Views work.
 
 Other open issues with lower urgency: `#432` Grafana collector, `#427` watch kstatus migration, `#392` ConfigHub Initiatives (deferred until backend primitive), `#386` `preferInvocationForm` lint extension.
 
@@ -374,7 +374,7 @@ CLI import/rendering path is essential for continuing the Git import track.
    - Enables Git↔cluster comparison for verification
    - Initial implementation: uses `gitops.ParseRepo()` for Flux-style patterns
 
-### The Full ConfigHub Loop (from Slack discussion)
+### The Full ConfigHub Loop
 
 ```
 Git repo → ArgoCD syncs to cluster
@@ -467,8 +467,8 @@ No separate `--compare` flag needed.
 Do not publish work externally without explicit user approval.
 
 That includes:
-- pushing to `confighubai/confighub`
-- opening PRs or issue comments there
+- pushing to any non-public ConfigHub repository
+- opening PRs or issue comments in non-public repositories
 - creating public or secret gists for the work
 - posting branch status externally
 

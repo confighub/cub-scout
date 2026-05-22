@@ -166,9 +166,8 @@ Verify live state before acting. As of 2026-05-22 the open follow-ons are:
 
 - **`#432`** — Grafana collector / data-source path using existing cub-scout outputs.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design).
-- **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up).
+- **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up). Scopes #1 (`#414`) and #3 (`#420`) already shipped.
 - **`#421`** — Views project: CEL + JSONPath column evaluators.
-- **`#391` scope #3** — reality overlay composing View columns with source-truth verdicts.
 - **`#409` Phase 3** — source-truth multi-source Argo (`spec.sources[]` len > 1). Phases 1 + 2 shipped (9 strategies).
 - **`#392`** — Initiatives compliance overlay; **deferred** until ConfigHub exposes Initiative as a backend primitive. Design doc at `docs/howto/initiatives-integration-when-ready.md`.
 - **`#386`** — `preferInvocationForm` lint extension to non-hint legacy string leaks.
@@ -185,7 +184,7 @@ Verify live state before acting. As of 2026-05-22 the open follow-ons are:
 ### Cross-repo dependencies
 
 - `confighub/confighub#4356` — ArgoCDOCI Helm-source shape symptom classifier.
-- `confighubai/confighub-ai-demo#264` — Pilot consumer-side fixtures.
+- Pilot consumer-side fixtures (tracked in a separate non-public repo).
 
 ## Non-Negotiables
 
