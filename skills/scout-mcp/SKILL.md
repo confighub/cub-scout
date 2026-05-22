@@ -133,10 +133,10 @@ The pack is **deterministic** — same cluster state + same cub-scout version �
 When the agent is connected (`cub auth status` returns OK), `mcp serve` additionally registers:
 
 - `compare_three_way` — DRY/WET/LIVE comparison
-- `compare_source_truth` — strategy-typed verdict
-- `history` — ChangeSet timeline
-- `impact` — blast-radius
-- `views_resolve` — Hub View resolution
+- `compare_source_truth` — strategy-typed verdict (requires `target` + `namespace` + `strategy`)
+- `confighub_changesets` — governed ChangeSet history from ConfigHub
+- `confighub_units` — ConfigHub unit + fleet inventory
+- `confighub_unit_get` — exact ConfigHub unit details + applied/live revision
 
 These are the typical Pilot acceptance-kernel inputs. The agent composes them; cub-scout produces evidence; Pilot decides.
 
@@ -167,25 +167,22 @@ The snapshot is the *evidence base* a downstream LLM reasons over. It is NOT a r
 
 The closed list of MCP tools cub-scout registers. The set is verified by `cmd/cub-scout/mcp_test.go` against the connected/standalone modes.
 
-| Tool name | Mode | Verb |
+| Tool name | Mode | Wraps |
 |---|---|---|
-| `doctor` | standalone | `cub-scout doctor` |
-| `explain` | standalone | `cub-scout explain` |
-| `map_workloads` | standalone | `cub-scout map workloads` |
-| `map_status` | standalone | `cub-scout map status` |
-| `trace` | standalone | `cub-scout trace` |
-| `scan` | standalone | `cub-scout scan` |
-| `compare_drift` | standalone | `cub-scout compare drift` |
-| `gitops_status` | standalone | `cub-scout gitops status` |
-| `patterns_detect` | standalone | `cub-scout patterns detect` |
-| `compare_three_way` | connected | `cub-scout compare three-way` |
-| `compare_source_truth` | connected | `cub-scout compare source-truth` |
-| `history` | connected | `cub-scout history` |
-| `impact` | connected | `cub-scout impact` |
-| `fleet_outliers` | connected | `cub-scout fleet outliers` |
-| `views_resolve` | connected | `cub-scout views resolve` |
+| `doctor` | standalone | `cub-scout doctor --format json` |
+| `map` | standalone | `cub-scout map list --json` |
+| `scan` | standalone | `cub-scout scan --json` |
+| `trace` | standalone | `cub-scout trace <resource> --format json` |
+| `explain` | standalone | `cub-scout explain <resource> --format json` |
+| `compare_three_way` | connected | `cub-scout compare three-way --format json` |
+| `compare_source_truth` | connected | `cub-scout compare source-truth <target> -n <ns> --strategy <s> --format json` |
+| `confighub_changesets` | connected | `cub changeset list --json` (calls `cub`, not cub-scout) |
+| `confighub_units` | connected | `cub unit list --json` (calls `cub`) |
+| `confighub_unit_get` | connected | `cub unit get --json <unit>` (calls `cub`) |
 
-The catalog is intentionally narrow: every tool is read-only, every tool has a stable JSON contract, every tool is exercised by an MCP integration test.
+5 standalone + 5 connected = **10 tools total**. The catalog is intentionally narrow: every tool is read-only, every tool has a stable JSON contract, every tool is exercised by an MCP integration test.
+
+For the full reference (per-tool parameters, return shape, when-to-load semantics, deferred verbs not in the catalog), see [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md).
 
 ## References
 
