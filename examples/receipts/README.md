@@ -8,9 +8,12 @@ were what they claim to be.
 
 Wire format: **in-toto Statement v1** envelope (`_type =
 "https://in-toto.io/Statement/v1"`) wrapping a cub-scout predicate URI
-`https://cub-scout.dev/receipt/v1`. v1 ships fingerprint-only; v2 adds
-DSSE signing wrapped in Sigstore Bundle v0.3 (purely additive — no
-envelope change).
+`https://cub-scout.dev/receipt/v1`. Current shipping releases use
+fingerprint-only integrity (SHA-256 over RFC 8785 canonical JSON of
+the full Statement minus only `predicate.fingerprint`). Cryptographic
+signing (e.g., DSSE wrapped in a Sigstore Bundle, or a comparable
+scheme) is a future hardening direction — purely additive to the
+envelope, no wire change required.
 
 ## v1 Predicates
 
@@ -94,6 +97,61 @@ Files are immutable — `SaveStatement` refuses to overwrite an existing
 filename. A re-verify at the same instant produces the same canonical
 name → the on-disk artifact is unchanged and `--save` reports "already
 saved" to stderr.
+
+## v2 Surface (CI / agent shaped)
+
+Three additive extensions on top of the v1 envelope. The wire format is
+unchanged; these are caller-facing UX additions.
+
+### CI gating: `--fail-on RECEIPT_VERDICT`
+
+```bash
+# Exit 2 if the receipt verdict matches; artifact preserved either way.
+./cub-scout receipt verify deploy/api -n prod \
+  --strategy git-argo \
+  --fail-on any-non-pass \
+  --save
+```
+
+Accepts `WATCH` / `BLOCK` / `INCONCLUSIVE` (comma-separated) or the
+sugar `any-non-pass`. PASS is rejected upfront — gating on a passing
+receipt is a workflow bug, not a feature. Worked example:
+[`./ci-gate/`](./ci-gate/).
+
+### Chained receipts: `--input-attestation <path>`
+
+```bash
+# Build a downstream receipt referencing an upstream one.
+./cub-scout receipt verify deploy/worker -n prod \
+  --input-attestation ./api.receipt.json
+```
+
+Each referenced receipt's fingerprint is verified at chain construction
+time — tampered receipts are refused. The downstream receipt's
+fingerprint covers `inputAttestations[]` by construction (RFC 8785
+canonical JSON includes the field).
+
+URI scheme: `cub-scout-receipt://<12-char-short-fingerprint>` with the
+full SHA-256 in the `digest` field. Symmetric with the local store's
+canonical filename.
+
+### Real-time emission: `watch --emit-receipt-on <event-types>`
+
+```bash
+# Each drift event becomes a fingerprinted receipt in the JSONL stream.
+./cub-scout watch -n prod \
+  --output-file ./acceptance.jsonl \
+  --emit-receipt-on drift.detected,ownership.changed
+```
+
+v1 of this flag builds receipts for `drift.detected` and
+`ownership.changed`. Other event types (`resource.discovered`,
+`scan.finding`) are accepted for forward-compat but pass through
+silently (a startup warning lists them). Receipt-build failures are
+non-fatal — the underlying event still emits but the JSON `receipt`
+key is omitted (omitempty; consumers should check key presence, not
+null-ness). Rate-limited stderr warnings keep a long-running watch
+from spamming on transient cluster-read failures.
 
 ## Read-Only Triad Lock
 

@@ -1058,6 +1058,149 @@ cub-scout history <resource> [flags]
 
 ---
 
+## cub-scout receipt (v2.2)
+
+Typed, fingerprinted, immutable evidence artifacts (#446). Wire format is the in-toto Statement v1 envelope wrapping `https://cub-scout.dev/receipt/v1`. SHA-256 fingerprint over RFC 8785 canonical JSON of the full Statement minus only `predicate.fingerprint`.
+
+```bash
+cub-scout receipt <verb> [args] [flags]
+```
+
+### Verbs
+
+| Verb | Purpose |
+|------|---------|
+| `verify` | Build a receipt asserting a predicate about a live resource |
+| `show` | Render a saved receipt (ASCII / JSON); does NOT verify the fingerprint |
+| `validate` | Recompute and compare the receipt's fingerprint |
+| `list` | Walk the local store |
+
+### cub-scout receipt verify
+
+```bash
+cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
+```
+
+#### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-n, --namespace` | string | `default` | Namespace |
+| `--predicate` | string | auto-detect | One of `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since` |
+| `--strategy` | string | empty | Required when `--predicate source-truth-pass`; one of 9 strategies |
+| `--since` | string | empty | Required when `--predicate no-manual-edits-since`; RFC 3339 timestamp |
+| `--at-commit` | string | empty | Override the spec anchor revision (forensic-snapshot mode) |
+| `--format` | string | `ascii` | Output format: `ascii`, `json` |
+| `--out` | string | empty | Write the receipt to a file path (always JSON) |
+| `--save` | bool | false | Persist the receipt to the local immutable store |
+| `--save-dir` | string | XDG default | Override the store directory |
+| `--input-attestation` | string array | empty | Reference a prior receipt by path (repeatable). Each is fingerprint-verified before chaining; tampered receipts are refused |
+| `--fail-on` | string | empty | Comma-separated verdicts that trigger exit 2: `WATCH`, `BLOCK`, `INCONCLUSIVE`, or sugar `any-non-pass` |
+
+#### Predicate auto-detection (when `--predicate` is empty)
+
+| Owner + signals | Auto-detected predicate |
+|-----------------|-------------------------|
+| Argo / Flux / ConfigHub owner + resolved git anchor | `applied-matches-spec` |
+| `--strategy <name>` provided | `source-truth-pass` |
+| `--since <RFC3339>` provided | `no-manual-edits-since` |
+| Otherwise | INCONCLUSIVE with `OmissionAutoDetectedPredicate` |
+
+cub-scout NEVER infers a strategy or a cutoff. Pass `--strategy` / `--since` explicitly or the corresponding predicate is unavailable.
+
+#### Verdicts
+
+Every receipt carries exactly one of:
+
+| Verdict | Meaning |
+|---------|---------|
+| `PASS` | Evidence supports the claim |
+| `WATCH` | Evidence is ambiguous; situation needs monitoring |
+| `BLOCK` | Evidence contradicts the claim |
+| `INCONCLUSIVE` | Evidence missing or unavailable; always carries one or more `omissions[]` entries |
+
+INCONCLUSIVE is NOT failure — it's an honest "I don't have enough to claim PASS." Pilot and similar acceptance kernels treat it as `ASK` (need human or richer evidence).
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Receipt built successfully; verdict did NOT match `--fail-on` (or `--fail-on` not set) |
+| 1 | Operational error (cluster unreachable, bad subject, invalid flag value, marshal failure) |
+| 2 | Receipt built successfully; verdict matched `--fail-on` (CI gate fired) |
+
+Exit-code rules:
+
+- **`--fail-on` parses upfront.** An invalid value (e.g., `--fail-on GARBAGE`) rejects the command before any side effect — no stdout, no `--out` write, no `--save` to the store. Exit code is 1 (operational, not gate).
+- **`--fail-on PASS` is rejected.** Gating on a passing receipt is a workflow bug; the CLI errors upfront with exit 1.
+- **Artifact preservation on fail.** When a gate fires (exit 2), the receipt is already printed to stdout / written to `--out` / saved to `--save` BEFORE the gate evaluates. CI gets both the failure code and the durable evidence.
+
+```bash
+cub-scout receipt verify deploy/api -n prod \
+  --strategy git-argo \
+  --fail-on any-non-pass \
+  --save
+# exit 0 if PASS, exit 2 if WATCH/BLOCK/INCONCLUSIVE
+# receipt is in the store either way
+```
+
+### cub-scout receipt show
+
+```bash
+cub-scout receipt show <path> [--format ascii|json]
+```
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Receipt rendered successfully |
+| 1 | File missing, parse error, or render error |
+
+`receipt show` does NOT verify the fingerprint — it works on tampered receipts so forensic inspection is possible.
+
+### cub-scout receipt validate
+
+```bash
+cub-scout receipt validate <path> [--format ascii|json]
+```
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Fingerprint matches the stamped value |
+| 1 | Fingerprint MISMATCH (the receipt has been tampered with or corrupted) |
+| 2 | I/O error (file missing, unreadable) |
+
+The exit-code split between 1 (tamper) and 2 (I/O) lets CI distinguish "this artifact is corrupted" from "the artifact never reached us."
+
+### cub-scout receipt list
+
+```bash
+cub-scout receipt list [--dir <path>] [--format ascii|json] [--sort newest|oldest]
+```
+
+#### Store Resolution Order
+
+1. `--dir <path>` (explicit override)
+2. `$CUB_SCOUT_RECEIPTS_DIR`
+3. `$XDG_DATA_HOME/cub-scout/receipts`
+4. `$HOME/.local/share/cub-scout/receipts`
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Listing complete (zero entries is still 0) |
+| 1 | Store unreadable |
+
+### cub-scout watch --emit-receipt-on (v2.2)
+
+`watch --emit-receipt-on <event-types>` attaches a receipt to each matching watch event payload inline. v1 of this flag builds receipts for `drift.detected` and `ownership.changed`; other event types are accepted for forward-compat but pass through silently (a startup warning lists them). Receipt-build failures are non-fatal — the event still emits but the JSON `receipt` key is omitted (consumers should check key presence, not null-ness). See [JSON Contracts § Receipt Contract](json-contracts.md) for the wire shape.
+
+---
+
 ## Environment Variables (v1.0)
 
 | Variable | Default | Description |
@@ -1066,6 +1209,7 @@ cub-scout history <resource> [flags]
 | `KUBECONFIG` | `~/.kube/config` | Path to kubeconfig |
 | `CUB_SCOUT_OFFLINE` | unset | Set to `true` to force offline mode |
 | `CUB_SCOUT_TELEMETRY` | unset | Set to `false` to disable telemetry |
+| `CUB_SCOUT_RECEIPTS_DIR` | XDG default | Override the receipt store directory |
 
 ---
 

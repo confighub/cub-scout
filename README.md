@@ -33,7 +33,7 @@ cub-scout is the **read-only witness**. ConfigHub (driven by `cub`) is the **aut
 
 ## Capability Map
 
-cub-scout's commands fall into seven groups. Each command's **Inputs** column tells you exactly what it needs — cluster only (standalone), cluster + a local git checkout (standalone + `--source-path` / `--git-path`), or cluster + ConfigHub auth (connected).
+cub-scout's commands fall into eight groups. Each command's **Inputs** column tells you exactly what it needs — cluster only (standalone), cluster + a local git checkout (standalone + `--source-path` / `--git-path`), or cluster + ConfigHub auth (connected).
 
 ### Observe — see what's running
 
@@ -69,6 +69,22 @@ cub-scout's commands fall into seven groups. Each command's **Inputs** column te
 | `compare source-truth` | Strategy-relative `PASS` / `WATCH` / `ASK` / `BLOCK` evidence Pilot consumes (#393) | cluster + ConfigHub |
 
 Today, `compare three-way` and `compare source-truth` require ConfigHub. A standalone "git as DRY" mode is in the [next-up](#whats-coming-next) list.
+
+### Verify — typed, fingerprinted, immutable evidence artifacts
+
+cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `compare` produces an ephemeral live picture, `receipt verify` wraps the same evidence into an in-toto Statement v1 envelope that CI/CD gates, audit trails, postmortems, and acceptance-judge tooling can attach to a decision and later prove the inputs were what they claim to be.
+
+| Command | What you get | Inputs |
+|---|---|---|
+| `receipt verify <kind>/<name>` | Build a typed, fingerprinted receipt asserting a predicate. Predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. Verdicts: PASS / WATCH / BLOCK / INCONCLUSIVE. | cluster (+ ConfigHub for `source-truth-pass`) |
+| `receipt verify --fail-on <verdict>` | Same, plus CI-gate exit semantics: exit 2 when the receipt's verdict matches the listed set (`WATCH` / `BLOCK` / `INCONCLUSIVE` / `any-non-pass`). Artifact is preserved on fail. | cluster |
+| `receipt verify --input-attestation <path>` | Chain receipts: reference a prior receipt via `inputAttestations[]`. Each referenced receipt's fingerprint is verified before chaining; tampered receipts are refused. | cluster + prior receipt file |
+| `receipt show <path>` | Render a saved receipt (ASCII or JSON). Does NOT verify the fingerprint — works on tampered receipts for forensic inspection. | receipt file |
+| `receipt validate <path>` | Recompute and compare the receipt's fingerprint. Exit 0 OK / 1 mismatch / 2 I/O. | receipt file |
+| `receipt list` | Walk the local store (`$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`) sortable, newest first. | local store |
+| `watch --emit-receipt-on <event-types>` | Real-time receipt emission: each matching watch event (`drift.detected`, `ownership.changed`) carries a receipt inline. Forward-compatible with future event types. | cluster |
+
+Wire format: in-toto Statement v1 (`_type = "https://in-toto.io/Statement/v1"`) wrapping `https://cub-scout.dev/receipt/v1`. SHA-256 fingerprint over RFC 8785 canonical JSON of the full Statement minus only `predicate.fingerprint`. Read-only by construction — receipts emit artifacts, never mutate.
 
 ### Attribute — where each value came from
 
@@ -292,6 +308,7 @@ Honest gaps in the current capability map, with the leverage on filling them:
 | Import and migration path | [docs/howto/import-to-confighub.md](docs/howto/import-to-confighub.md) |
 | AI tool integration | [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md) |
 | Examples and demos | [examples/README.md](examples/README.md) |
+| Receipts (typed evidence artifacts) | [examples/receipts/README.md](examples/receipts/README.md) + [docs/reference/json-contracts.md § Receipt Contract](docs/reference/json-contracts.md) |
 | Security model | [SECURITY.md](SECURITY.md) |
 
 ---
