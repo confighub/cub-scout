@@ -56,13 +56,13 @@ Each covers a real operator / agent workflow that spans multiple verbs. Compose 
 |---|---|
 | [`references/kubernetes-managedfields.md`](references/kubernetes-managedfields.md) | The data substrate for attribution — what `metadata.managedFields` carries, how cub-scout reads it, what's lost in older clusters |
 | [`references/verified-manager-strings.md`](references/verified-manager-strings.md) | The enumeration of known field-manager strings (Argo / Flux / Helm / Crossplane / kro / kubectl) with upstream citations |
-| `references/source-truth-strategies.md` *(planned, batch 5)* | The 9 source-truth strategies (post-#418) — when to use which |
-| `references/standalone-vs-connected.md` *(planned, batch 5)* | The mode axis — what works without ConfigHub, what unlocks with `cub auth login` |
-| `references/read-only-triad.md` *(planned, batch 5)* | cub-scout / Pilot / ConfigHub role separation (#410 / #428) |
-| `references/plugin-vs-standalone.md` *(planned, batch 5)* | `cub-scout` vs `cub scout` invocation parity |
-| `references/argocd-applicationset.md` *(planned, batch 5)* | ApplicationSet-managed resource handling |
-| `references/flux-source-types.md` *(planned, batch 5)* | GitRepository / HelmRepository / OCIRepository / Bucket |
-| `references/mcp-tool-catalog.md` *(planned, batch 5)* | Every MCP tool, parameters, return shape |
+| [`references/source-truth-strategies.md`](references/source-truth-strategies.md) | The 9 source-truth strategies (post-#418) — when to use which, the four-status / five-verdict contract, proof-gap catalog |
+| [`references/standalone-vs-connected.md`](references/standalone-vs-connected.md) | The mode axis — what works without ConfigHub, what unlocks with `cub auth login`, the graceful-degradation rule |
+| [`references/read-only-triad.md`](references/read-only-triad.md) | cub-scout / ConfigHub / Pilot role separation (#410 / #428); three-layer code-enforced invariant |
+| [`references/plugin-vs-standalone.md`](references/plugin-vs-standalone.md) | `cub scout` (plugin) vs `cub-scout` (standalone binary) invocation parity; v2.0.0 switchover plan |
+| [`references/argocd-applicationset.md`](references/argocd-applicationset.md) | ApplicationSet generators (git directories, list, clusters, matrix, merge); full-path slugs; exclude patterns |
+| [`references/flux-source-types.md`](references/flux-source-types.md) | GitRepository / HelmRepository / OCIRepository / Bucket / HelmChart; the two-stage delivery chain; source-truth anchors |
+| [`references/mcp-tool-catalog.md`](references/mcp-tool-catalog.md) | Complete MCP tool catalog — 5 standalone + 5 connected, per-tool parameters and return shape |
 
 ### Umbrella router
 
@@ -79,11 +79,20 @@ All skills under `skills/` follow the read-only-triad invariant. Concretely:
 
 ## Status
 
-**Batch 4 shipped (`#442` batch 4)**: the eight workflow scenario skills are in — `triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, `prepare-for-confighub`, `migrate-from-kubectl`, `ai-agent-readonly-context`, `operator-incident-evidence`, `confighub-source-truth`. Each composes verb-group skills + controller-observer skills + references into a single situation-shaped loop with worked examples.
+**`#442` complete (`batch 5` shipped)**: the seven remaining shared references are in — `source-truth-strategies`, `standalone-vs-connected`, `read-only-triad`, `plugin-vs-standalone`, `argocd-applicationset`, `flux-source-types`, `mcp-tool-catalog`. Together with the 2 from batch 1, all 9 references are now available.
 
-**Earlier:**
-- Batch 3 landed the seven controller-observer skills (argocd / flux / helm / crossplane / kro / confighub-managed / native), verified against the Go enumeration
-- Batch 2 landed the remaining four verb-grouped scenario skills (Ingest / Govern / Integrate / Verify, with `scout-verify` consuming the receipt capability shipped in `#446`)
-- Batch 1 landed the scaffolding plus the first four scenario skills (Observe / Diagnose / Compare / Attribute) and two references (managedFields, verified-manager-strings)
+**Final tally:**
+- **Scaffolding + 1 router + 1 umbrella** — `SKILL_TEMPLATE.md`, `skills/README.md`, `skills/cub-scout/SKILL.md`
+- **Verb-group scenario skills (8)** — Observe, Diagnose, Compare, Attribute (batch 1) + Ingest, Govern, Integrate, Verify (batch 2)
+- **Controller-observer skills (7)** — argocd, flux, helm, crossplane, kro, confighub-managed, native (batch 3)
+- **Workflow scenario skills (8)** — triage-unhealthy-workload, investigate-drift, audit-fleet-conformance, prepare-for-confighub, migrate-from-kubectl, ai-agent-readonly-context, operator-incident-evidence, confighub-source-truth (batch 4)
+- **Shared references (9)** — kubernetes-managedfields, verified-manager-strings (batch 1) + source-truth-strategies, standalone-vs-connected, read-only-triad, plugin-vs-standalone, argocd-applicationset, flux-source-types, mcp-tool-catalog (batch 5)
 
-**Remaining work:** batch 5 — the remaining 7 shared references (`source-truth-strategies`, `standalone-vs-connected`, `read-only-triad`, `plugin-vs-standalone`, `argocd-applicationset`, `flux-source-types`, `mcp-tool-catalog`). See [`docs/roadmap.md`](../docs/roadmap.md) § "AI Agent Skills" for the full plan.
+That's **~33 skill files** plus 9 references — the full scope from `#442`.
+
+**Five PRs shipped this set:**
+- [`#452`](https://github.com/confighub/cub-scout/pull/452) — batch 1 scaffolding + 4 verb-group skills + 2 references
+- [`#457`](https://github.com/confighub/cub-scout/pull/457) — batch 2 remaining 4 verb-group skills
+- [`#458`](https://github.com/confighub/cub-scout/pull/458) — batch 3 controller-observer skills
+- [`#459`](https://github.com/confighub/cub-scout/pull/459) — batch 4 workflow scenario skills
+- batch 5 — this PR (closes `#442`)

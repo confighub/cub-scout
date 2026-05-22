@@ -81,25 +81,21 @@ Implicit intents:
 
 The agent host calls `tools/list` to discover tools and `tools/call` to invoke them. cub-scout's `mcp_test.go` covers the exact catalog:
 
-**Standalone-mode tools** (always available):
-- `doctor` — cluster-level diagnostic
-- `explain` — per-resource ownership + provenance
-- `map_workloads` / `map_status` — inventory + status overview
-- `trace` — ownership chain walking
-- `scan` — risk classification
-- `compare_drift` — file/bundle-vs-live drift
-- `gitops_status` — GitOps controller health overview
-- `patterns_detect` — pattern detection rules
+**Standalone-mode tools** (5, always available):
+- `doctor` — cluster-level diagnostic with structured nextSteps
+- `map` — resource inventory with ownership classification
+- `scan` — risk + misconfiguration findings
+- `trace` — ownership + source chain (one resource)
+- `explain` — plain-English per-resource report
 
-**Connected-mode tools** (added when `cub auth status` succeeds):
-- `compare_three_way` — DRY/WET/LIVE
-- `compare_source_truth` — strategy-typed verdict
-- `history` — ChangeSet timeline
-- `impact` — blast-radius preview
-- `fleet_outliers` — multi-cluster outlier matrix
-- `views_resolve` — Hub View resolution
+**Connected-mode tools** (5, added when `cub auth status` succeeds):
+- `compare_three_way` — DRY/WET/LIVE with rolled-up agreement
+- `compare_source_truth` — strategy-typed verdict (target + namespace + strategy required)
+- `confighub_changesets` — governed ChangeSet history from ConfigHub
+- `confighub_units` — ConfigHub unit + fleet inventory
+- `confighub_unit_get` — exact ConfigHub unit details + applied/live revision
 
-Use `cub-scout mcp serve --list-tools` to dump the registered catalog without starting the server — useful for agent registration debugging.
+Use `cub-scout mcp serve --list-tools` to dump the registered catalog without starting the server — useful for agent registration debugging. See [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md) for per-tool parameters, return shape, and the list of verbs intentionally NOT in the catalog.
 
 ### Pattern 2 — context-pack (deterministic snapshot)
 
