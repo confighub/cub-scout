@@ -836,6 +836,7 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 | `--severity` | Finding severity filter (`critical,warning,info`) |
 | `--once` | Run one collection cycle and exit |
 | `--max-queued-events` | Max buffered events while webhook is unreachable |
+| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to (`drift.detected`, `ownership.changed`, or sugar `all`). Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. (#449 v1: only `drift.detected` and `ownership.changed` actually build a receipt; other types pass through silently.) |
 
 ### Event Types
 
@@ -2447,9 +2448,11 @@ envelope. CI/CD gates, audit trails, postmortems, and acceptance-judge
 tooling can attach a receipt to a decision and later prove the inputs
 were what they claim to be.
 
-v1 ships fingerprint-only (SHA-256 over RFC 8785 canonical JSON of the
-full Statement minus only `predicate.fingerprint`). v2 adds DSSE signing
-wrapped in Sigstore Bundle v0.3 — purely additive, no envelope change.
+Current shipping releases use fingerprint-only integrity (SHA-256 over
+RFC 8785 canonical JSON of the full Statement minus only
+`predicate.fingerprint`). Cryptographic signing (e.g., DSSE wrapped in a
+Sigstore Bundle, or a comparable scheme) is a future hardening direction —
+purely additive to the wire format, no envelope change required.
 
 ### receipt verify
 
@@ -2466,6 +2469,8 @@ cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
 | `--since` | RFC 3339 cutoff timestamp for `no-manual-edits-since` (e.g. `2026-05-22T00:00:00Z`). |
 | `--format` | Output format: `ascii` (default, one-screen human summary) or `json` (canonical in-toto Statement v1 envelope) |
 | `--out` | Write the receipt to this file path. Always JSON regardless of `--format` — disk is the long-lived artifact. **Overwrites existing files** (this is the non-immutable, ad-hoc-path contract). Paths under the resolved receipt store are **rejected** — use `--save` for store writes (which are immutable; see below). |
+| `--fail-on` | (v2 `#451`) Exit non-zero (code 2) when the receipt verdict matches. Accepts a comma-separated list of verdicts (`WATCH`, `BLOCK`, `INCONCLUSIVE`) or the sugar `any-non-pass` (= `WATCH,BLOCK,INCONCLUSIVE`). The receipt is still printed / saved / written to `--out` regardless of exit code. `--fail-on PASS` is rejected upfront. |
+| `--input-attestation` | (v2 `#448`) Path to a prior receipt to reference via `predicate.inputAttestations[]` (repeatable for chains). Each referenced receipt's fingerprint is verified at chain-construction time; tampered receipts are refused. The new receipt's fingerprint covers the `inputAttestations[]` field by construction. |
 
 v1 predicates:
 
