@@ -79,11 +79,13 @@ Full design: [`docs/proposals/receipts-way-forward.md`](proposals/receipts-way-f
 
 **v1 scope (post external review): single-resource verify + show + validate only.** Batch / aggregate / chained / watch-driven receipts are explicit v2 work tracked separately.
 
-- [ ] v1 foundation — `pkg/agent/receipt.go` types, **RFC 8785 canonical-JSON**, SHA-256 fingerprint over the **full Statement minus `predicate.fingerprint`**, in-toto Statement v1 envelope with **dual subjects** (`k8s-live://` + `confighub-unit://`), auto-detection priority order, `cub-scout receipt verify` command + ASCII renderer + tests + JSON contract docs — tracked in #446 batch 1
-- [ ] v1 predicates — `applied-matches-spec` (batch 1), `source-truth-pass` (explicit `--strategy` required), `no-manual-edits-since` (batch 2) — tracked in #446 batches 1–2
-- [ ] v1 management UX — `receipt show` / `validate` / `list` subcommands; local-directory storage (`$XDG_DATA_HOME/cub-scout/receipts/`) — tracked in #446 batch 3
-- [ ] `scout-verify` skill added as 8th verb-group skill in #442
-- [ ] v2 deferrals — DSSE signing wrapped in **Sigstore Bundle v0.3** (cosign keyless + ed25519 fallback), OCI 1.1 referrers sink (designed graph-ingestible for GUAC), composition via `inputAttestations[]` digest chains, additional predicates (`no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed`)
+- [x] v1 foundation — `pkg/agent/receipt.go` types, **RFC 8785 canonical-JSON** (via `gowebpki/jcs`, post Codex round-4 review), SHA-256 fingerprint over the **full Statement minus `predicate.fingerprint`** (delete-key, not zero-value), in-toto Statement v1 envelope with **dual subjects** (`k8s-live://` + `confighub-unit://`), auto-detection priority order, `cub-scout receipt verify` command + ASCII renderer + tests + JSON contract docs — shipped in #446 batch 1 (PR #454)
+- [x] v1 predicates — `applied-matches-spec` (batch 1, #454), `source-truth-pass` (explicit `--strategy` required, batch 2 #455), `no-manual-edits-since` (batch 2 #455)
+- [x] v1 management UX — `receipt show` / `validate` / `list` subcommands; local-directory storage (`$XDG_DATA_HOME/cub-scout/receipts/`) with immutable canonical filenames; `--save` flag on `receipt verify` — shipped in #446 batch 3 (PR #456)
+- [x] `scout-verify` skill added as 8th verb-group skill in #442 batch 2
+- [ ] v2 deferrals — DSSE signing wrapped in **Sigstore Bundle v0.3** (cosign keyless + ed25519 fallback), OCI 1.1 referrers sink (designed graph-ingestible for GUAC), composition via `inputAttestations[]` digest chains, additional predicates (`no-drift`, `controller-reconciling`, `binding-matches`, `apply-completed`) — tracked in #448
+
+**`#446` v1 status: complete and merged on `main` (#454 + #455 + #456).** The capability is documented in `docs/reference/json-contracts.md` § Receipt Contract and `docs/reference/commands.md` § receipt, with 8 canonical examples under `examples/receipts/` and a full test suite (17 store + 25 predicate + 26 CLI integration + read-only-triad guards). Parent issue closed.
 
 Read-only-triad invariant: receipts emit artifacts, never mutate. `nextSteps[]` rejects `actionType=mutating` entries at receipt-emit time. The `receipt` package exposes only `Get` / `List` / `Watch` cluster operations — enforced by `TestReceiptPackageReadOnlyClient`. PolicyReport CRD emission is explicitly out of scope (writes cluster state); spin off as a separate external adapter.
 
@@ -99,11 +101,11 @@ Spin-off issues (so v1 stays narrow): #448 aggregate / chained receipts, #449 wa
 
 Coverage gap: cub-scout ships one umbrella `SKILL.md` while `cub` has 23+ scenario-grouped skills in the reference repo. AI agents picking the right cub-scout verb (`doctor` / `map` / `trace` / `compare three-way` / `compare source-truth` / `explain` / `import …` / `views …` / `mcp serve` / …) have to navigate every verb through one router, diluting triggering accuracy. The attribution layer (#435) added a whole evidence surface with no dedicated skill rules.
 
-- [ ] Scaffolding — `SKILL_TEMPLATE.md`, top-level `skills/README.md` router, read-only-triad allowed-tools convention — tracked in #442 batch 1
-- [ ] Verb-grouped scenario skills (7) — `scout-observe` / `scout-diagnose` / `scout-compare` / `scout-attribute` / `scout-ingest` / `scout-govern` / `scout-mcp` — tracked in #442 batches 1–2
+- [x] Scaffolding — `SKILL_TEMPLATE.md`, top-level `skills/README.md` router, read-only-triad allowed-tools convention — shipped in #442 batch 1 (PR #452)
+- [x] Verb-grouped scenario skills (8) — `scout-observe` / `scout-diagnose` / `scout-compare` / `scout-attribute` (batch 1) + `scout-ingest` / `scout-govern` / `scout-mcp` / `scout-verify` (batch 2). All eight verb groups now covered with their own scenario skill.
 - [ ] Controller observer skills (7) — `observe-argocd` / `observe-flux` / `observe-helm` / `observe-crossplane` / `observe-kro` / `observe-confighub-managed` / `observe-native` — tracked in #442 batch 3
 - [ ] Workflow / scenario skills (8) — `triage-unhealthy-workload` / `investigate-drift` / `audit-fleet-conformance` / `prepare-for-confighub` / `migrate-from-kubectl` / `ai-agent-readonly-context` / `operator-incident-evidence` / `confighub-source-truth` — tracked in #442 batch 4
-- [ ] Shared references (9) — `kubernetes-managedfields` / `verified-manager-strings` / `source-truth-strategies` / `standalone-vs-connected` / `read-only-triad` / `plugin-vs-standalone` / `argocd-applicationset` / `flux-source-types` / `mcp-tool-catalog` — tracked in #442 batches 1, 5
+- [x] Shared references (2 of 9) — `kubernetes-managedfields` / `verified-manager-strings` (shipped in batch 1). Remaining 7 (`source-truth-strategies` / `standalone-vs-connected` / `read-only-triad` / `plugin-vs-standalone` / `argocd-applicationset` / `flux-source-types` / `mcp-tool-catalog`) tracked in #442 batch 5
 
 Read-only-triad invariant: every cub-scout skill's `allowed-tools` line stays inside #410/#428. No `apply`/`edit`/`patch`/`delete`/`mutate` patterns anywhere. Skills for `cub` (mutation-capable) belong in [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills), not here.
 

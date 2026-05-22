@@ -24,6 +24,10 @@ This skill is the cross-cutting entry point. It picks the right verb-grouped ski
   - [`scout-diagnose`](../scout-diagnose/SKILL.md) — interpret + recommend
   - [`scout-compare`](../scout-compare/SKILL.md) — intended vs actual
   - [`scout-attribute`](../scout-attribute/SKILL.md) — provenance of field values
+  - [`scout-ingest`](../scout-ingest/SKILL.md) — preview import into ConfigHub
+  - [`scout-govern`](../scout-govern/SKILL.md) — connected governance signals
+  - [`scout-mcp`](../scout-mcp/SKILL.md) — MCP gateway + context-pack
+  - [`scout-verify`](../scout-verify/SKILL.md) — typed, fingerprinted evidence receipts
 - ConfigHub authoring or any mutating workflow — load [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) skills (`cub-mutate`, `cub-apply`, etc.)
 - Live cluster mutation — cub-scout never mutates; route to `kubectl` (user driven) or a `cub` skill
 
@@ -35,10 +39,10 @@ This skill is the cross-cutting entry point. It picks the right verb-grouped ski
 | Diagnose | [`scout-diagnose`](../scout-diagnose/SKILL.md) | shipped (batch 1) |
 | Compare | [`scout-compare`](../scout-compare/SKILL.md) | shipped (batch 1) |
 | Attribute | [`scout-attribute`](../scout-attribute/SKILL.md) | shipped (batch 1) |
-| Ingest | `scout-ingest` | planned (#442 batch 2) |
-| Govern | `scout-govern` | planned (#442 batch 2) |
-| Integrate | `scout-mcp` | planned (#442 batch 2) |
-| Verify | `scout-verify` | planned (after #446 batch 1 ships the receipt foundation) |
+| Ingest | [`scout-ingest`](../scout-ingest/SKILL.md) | shipped (batch 2) |
+| Govern | [`scout-govern`](../scout-govern/SKILL.md) | shipped (batch 2) |
+| Integrate | [`scout-mcp`](../scout-mcp/SKILL.md) | shipped (batch 2) |
+| Verify | [`scout-verify`](../scout-verify/SKILL.md) | shipped (batch 2, consuming the `#446` receipt capability) |
 
 See [`skills/README.md`](../README.md) for the full plan including controller observer skills (`observe-argocd`, `observe-flux`, `observe-helm`, `observe-crossplane`, `observe-kro`), workflow scenario skills (`triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, etc.), and shared references.
 
@@ -56,8 +60,10 @@ See [`skills/README.md`](../README.md) for the full plan including controller ob
 - **Diagnose** — `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status`
 - **Compare** — `compare drift`, `compare three-way`, `compare source-truth`, `compare <kind>/<name>`
 - **Attribute** — read `cause` / `managerHint` / `gitSource` / `bindingSource` on `compare` and `explain` JSON
-- **Ingest** (preview) — `import --git-path`, `import parse-repo`
+- **Ingest** (preview) — `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`
+- **Govern** (connected) — `history`, `impact`, `fleet outliers`, `summary`, `views resolve`, `audit list`, `bundle inspect/diff/timeline`, `catalog list`
 - **Integrate** — `mcp serve`, `context-pack`
+- **Verify** — `receipt verify / show / validate / list` (typed, fingerprinted evidence; `#446` v1 complete)
 
 ### Use `cub` for
 
@@ -82,6 +88,7 @@ See [`skills/README.md`](../README.md) for the full plan including controller ob
 - **`doctor` / `explain`** with `--presentation` and `--hint-mode`.
 - **MCP gateway** (`mcp serve`): standalone + connected tool sets.
 - **Stage B back-resolution** (#440): `compare three-way --source-path <local-checkout>` populates `gitSource.file:line` for raw YAML manifests.
+- **Receipt capability** (#446 — v1 complete; #454 + #455 + #456): typed, fingerprinted, immutable evidence artifacts wrapping cub-scout evidence into an in-toto Statement v1 envelope. Three predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. `verify` / `show` / `validate` / `list` + local store with immutable canonical filenames. See [`scout-verify`](../scout-verify/SKILL.md).
 
 ## Read first (for capability-assistant work)
 
