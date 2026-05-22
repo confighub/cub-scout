@@ -46,9 +46,9 @@ This skill is the cross-cutting entry point. It picks the right verb-grouped ski
 
 See [`skills/README.md`](../README.md) for the full plan including controller observer skills (`observe-argocd`, `observe-flux`, `observe-helm`, `observe-crossplane`, `observe-kro`), workflow scenario skills (`triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, etc.), and shared references.
 
-### Pilot–cub-scout integration scenarios (`#444` batch A)
+### Pilot–cub-scout integration scenarios (`#444`)
 
-The consumer-side complement: same cub-scout verbs framed around **Pilot** (the acceptance judge) rendering verdicts from cub-scout's evidence. Load one of these instead of a `scout-*` skill when the user's prompt is shaped as "Pilot, decide ..." or "render the verdict ...".
+The consumer-side complement: same cub-scout verbs framed around **Pilot** (the acceptance judge) rendering verdicts from cub-scout's evidence. Load one of these instead of a `scout-*` skill when the user's prompt is shaped as "Pilot, decide ..." or "render the verdict ...". `#444` is complete: 9 scenarios shipped across batches A and B.
 
 | Scenario | Skill | Pilot consumes | Pilot decides |
 |---|---|---|---|
@@ -57,8 +57,10 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 | Drift classification | [`pilot-patch-and-drift`](../pilot-patch-and-drift/SKILL.md) | attribution evidence (`cause` / `managerHint` / `gitSource` / `bindingSource`) | revert / quarantine / accept-as-canonical / ASK |
 | Real-time watch response | [`pilot-watch-alert-response`](../pilot-watch-alert-response/SKILL.md) | `cub-scout watch` event stream with `--emit-receipt-on` inline receipts (v2 #463) | Per-event PASS / WATCH / ASK / BLOCK |
 | Incident close-out | [`pilot-incident-evidence`](../pilot-incident-evidence/SKILL.md) | trace + explain + compare + bundle + history + audit + chained receipts (`--input-attestation`, v2 #463) | Incident verdict + immutable evidence pack |
-
-Batch B (governance-shaped: `pilot-rollback-decision`, `pilot-promotion-gate`, `pilot-compliance-audit`, `pilot-release-verification`) is the open `#444` follow-on.
+| Rollback decision | [`pilot-rollback-decision`](../pilot-rollback-decision/SKILL.md) | `history` + `impact` + per-candidate `receipt verify --at-commit <sha>` chained into chosen-target receipt | Rollback target SHA + safety verdict |
+| Promotion gate | [`pilot-promotion-gate`](../pilot-promotion-gate/SKILL.md) | `compare three-way` per variant + `bindingSource` graph diff + chained variant-A receipt | Cross-variant PASS / WATCH / ASK / BLOCK with diff reasons |
+| Compliance audit | [`pilot-compliance-audit`](../pilot-compliance-audit/SKILL.md) | scope-wide source-truth + `scan` + `audit list` + per-resource saved receipts | Compliance report (Compliant / with-caveats / Non-compliant / Insufficient-evidence) + fingerprinted evidence inventory |
+| Release verification | [`pilot-release-verification`](../pilot-release-verification/SKILL.md) | `compare three-way` + `history --since <deploy-time>` + `receipt verify --at-commit <release-sha>`; `summary.agreement` drives convergence signal | Post-deploy PASS / WATCH (wait) / BLOCK / ASK |
 
 ## Product value in one breath
 
