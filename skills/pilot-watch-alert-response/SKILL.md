@@ -2,7 +2,7 @@
 name: pilot-watch-alert-response
 description: 'Use when Pilot is RESPONDING TO REAL-TIME CLUSTER EVENTS surfaced by `cub-scout watch`. Natural phrasings: "Pilot subscribes to the watch stream", "render verdicts on each drift event as they fire", "real-time acceptance kernel for cluster changes", "Pilot, decide on this drift.detected event", "what does Pilot say about the ownership.changed alert", "stream PASS/WATCH/ASK/BLOCK per event from cub-scout watch". Pilot consumes the `cub-scout watch` event stream (webhook or file sink, optionally with inline receipts via `--emit-receipt-on`) and renders a verdict per event, calling back into cub-scout (`explain`, `compare three-way`, `trace`) for context when needed. This is the ONLY event-driven skill in the pilot-* batch — others are query-driven. Do NOT load for: a single-resource pre-deploy gate (use pilot-cd-gate), a periodic fleet roll-up (use pilot-fleet-conformance), a drift-classification deep-dive (use pilot-patch-and-drift), a postmortem evidence pack (use pilot-incident-evidence), or any mutating action.'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout watch *) Bash(cub-scout watch *) Bash(cub scout watch *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout compare *) Bash(cub-scout compare *) Bash(cub scout compare *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify *) Bash(cub scout receipt verify *) Bash(./cub-scout receipt show *) Bash(cub-scout receipt show *) Bash(cub scout receipt show *) Bash(./cub-scout receipt validate *) Bash(cub-scout receipt validate *) Bash(cub scout receipt validate *) Bash(./cub-scout receipt list *) Bash(cub-scout receipt list *) Bash(cub scout receipt list *) Bash(./cub-scout doctor *) Bash(cub-scout doctor *) Bash(cub scout doctor *) Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub link list *) Bash(cub unit get *) Bash(argocd app get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout watch *) Bash(cub-scout watch *) Bash(cub scout watch *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify *) Bash(cub scout receipt verify *) Bash(./cub-scout receipt show *) Bash(cub-scout receipt show *) Bash(cub scout receipt show *) Bash(./cub-scout receipt validate *) Bash(cub-scout receipt validate *) Bash(cub scout receipt validate *) Bash(./cub-scout receipt list *) Bash(cub-scout receipt list *) Bash(cub scout receipt list *) Bash(./cub-scout doctor *) Bash(cub-scout doctor *) Bash(cub scout doctor *) Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub link list *) Bash(cub unit get *) Bash(argocd app get *) Bash(flux get *)
 
 ---
 
@@ -136,7 +136,7 @@ A `drift.detected` event with an attached receipt (one JSONL line, pretty-printe
     ],
     "predicateType": "https://cub-scout.dev/receipt/v1",
     "predicate": {
-      "version": "1",
+      "version": "v1",
       "predicateName": "applied-matches-spec",
       "verdict": "BLOCK",
       "claim": "applied matches spec at apps/prod/payments-api",
@@ -147,7 +147,14 @@ A `drift.detected` event with an attached receipt (one JSONL line, pretty-printe
       },
       "omissions": [],
       "inputAttestations": [],
-      "nextSteps": [],
+      "nextSteps": [
+        {
+          "actionType": "read-only",
+          "reason": "live state was last written by a kubectl-* tool; the GitOps loop was bypassed since the controller's last apply",
+          "nextCommand": "kubectl get --show-managed-fields",
+          "nextSurface": "kubectl"
+        }
+      ],
       "verifier": {"tool": "cub-scout", "version": "v2.2.1"},
       "verifiedAt": "2026-05-22T11:00:00Z",
       "fingerprint": "sha256:1a2b3c..."
@@ -156,7 +163,12 @@ A `drift.detected` event with an attached receipt (one JSONL line, pretty-printe
 }
 ```
 
-Pilot reads `receipt.predicate.verdict` directly: `BLOCK` → halt; `WATCH` → alert; `PASS` → log + continue; `INCONCLUSIVE` → ASK.
+Notes on the wire shape (verified against `pkg/agent/receipt.go`):
+- `predicate.version` is the literal string `"v1"` (`PredicateVersion`), not `"1"`.
+- The `nextSteps` array is populated for the manual-edit BLOCK branch — `EvaluateAppliedMatchesSpec` appends one `read-only` next step pointing at `kubectl get --show-managed-fields`. (`nextSteps` uses `omitempty` so other branches that produce zero next steps omit the key entirely.)
+- `omissions: []` and `inputAttestations: []` are explicit arrays (never null). The full receipt's fingerprint covers both.
+
+Pilot reads `receipt.predicate.verdict` directly: `BLOCK` → halt; `WATCH` → alert; `PASS` → log + continue; `INCONCLUSIVE` → ASK. Receipt verdicts are restricted to those four — `ASK` is a source-truth `status` value (and maps to receipt `WATCH` when wrapped, per `pkg/agent/receipt_predicates.go:396-407`), not a receipt verdict.
 
 ## Step-by-step
 
@@ -171,7 +183,7 @@ $ cub-scout status
 $ cub-scout watch --help | grep -A 3 '\-\-emit-receipt-on'
 ```
 
-If standalone (no ConfigHub auth), the receipts in the stream will have an `OmissionConfigHubUnitSubject` entry — Pilot can still consume but the verdict ceiling is WATCH for receipts that need the connected subject.
+If standalone (no ConfigHub auth), the receipts in the stream omit the `confighub-unit://` subject and record an `OmissionConfigHubUnitSubject` entry — structural honesty about what's missing, not a verdict downgrade. The verdict follows the predicate's normal rules; `applied-matches-spec` can still PASS in standalone mode. Pilot's policy may choose to treat standalone receipts more conservatively, but that's Pilot-side; cub-scout doesn't impose a ceiling.
 
 ### Step 2 — start the watch stream
 
@@ -239,7 +251,7 @@ $ cub-scout receipt validate event-receipt.json
 - **Warnings are rate-limited** (Codex round-6 P2 fix in #463): the first 10 receipt-build warnings pass through verbatim; afterwards, a summary line fires every 100 suppressed warnings. A long-running watch with transient cluster-read failures won't spam stderr.
 - **Unsupported event types pass through silently**: `resource.discovered` and `scan.finding` accept the flag (so `--emit-receipt-on all` works) but cub-scout skips receipt-build for them in v1. A startup warning lists them.
 - **Backpressure is not yet handled** (open in `#449`): if events fire faster than the consumer drains, the watch can queue up to `--max-queued-events` and then drops oldest. ApplicationSet expansion is the canonical "events fire fast" scenario.
-- **Connected vs standalone**: receipts attached to events include the `confighub-unit://` subject only when connected. Standalone-mode receipts carry an `OmissionConfigHubUnitSubject` entry — Pilot should treat verdict ceiling as WATCH for those (the receipt is honest about what's missing).
+- **Connected vs standalone**: receipts attached to events include the `confighub-unit://` subject only when connected. Standalone-mode receipts omit it and carry an `OmissionConfigHubUnitSubject` entry — that's structural honesty about missing evidence. The verdict itself follows the predicate's normal rules (PASS is possible in standalone mode). Pilot may apply its own conservative policy; cub-scout doesn't impose a ceiling.
 
 ## Worked example: drift event triggers Pilot
 

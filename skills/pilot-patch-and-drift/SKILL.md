@@ -2,7 +2,7 @@
 name: pilot-patch-and-drift
 description: 'Use when Pilot is CLASSIFYING DRIFT and DECIDING WHAT TO DO ABOUT IT after a divergence between intended state and live state is detected. Natural phrasings: "Pilot, classify this drift", "is this manual edit or controller drift?", "should Pilot revert this patch?", "quarantine or accept-as-canonical?", "what does cub-scout say about who touched this field?", "render a drift verdict for the audit". Pilot consumes cub-scout''s attribution evidence (`cause: manual-edit` / `controller-drift` / `unknown` + `managerHint` + `gitSource` + `bindingSource`) and decides revert / quarantine / accept-as-canonical / ASK-human. The decision shape matches the attribution layer''s evidence shape — cub-scout produces deterministic classification; Pilot picks the policy action. Do NOT load for: a single-resource pre-deploy gate (use pilot-cd-gate), a real-time event response (use pilot-watch-alert-response), a fleet roll-up (use pilot-fleet-conformance), or any mutating action. Pilot mutates via `cub` / Argo / kubectl — never via cub-scout.'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout compare *) Bash(cub-scout compare *) Bash(cub scout compare *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout history *) Bash(cub-scout history *) Bash(cub scout history *) Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify *) Bash(cub scout receipt verify *) Bash(./cub-scout receipt show *) Bash(cub-scout receipt show *) Bash(cub scout receipt show *) Bash(./cub-scout receipt validate *) Bash(cub-scout receipt validate *) Bash(cub scout receipt validate *) Bash(./cub-scout receipt list *) Bash(cub-scout receipt list *) Bash(cub scout receipt list *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub * get) Bash(cub * list) Bash(cub link list *) Bash(cub unit get *) Bash(argocd app get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout history *) Bash(cub-scout history *) Bash(cub scout history *) Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify *) Bash(cub scout receipt verify *) Bash(./cub-scout receipt show *) Bash(cub-scout receipt show *) Bash(cub scout receipt show *) Bash(./cub-scout receipt validate *) Bash(cub-scout receipt validate *) Bash(cub scout receipt validate *) Bash(./cub-scout receipt list *) Bash(cub-scout receipt list *) Bash(cub scout receipt list *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub * get) Bash(cub * list) Bash(cub link list *) Bash(cub unit get *) Bash(argocd app get *) Bash(flux get *)
 
 ---
 
@@ -83,24 +83,28 @@ Implicit intents:
         ▼
    downstream consumer reads the action
         │  ACCEPT             → no-op
-        │  REVERT             → trigger `argocd app sync` / `flux reconcile` / `cub unit update`
+        │  REVERT             → route to Pilot's REVERT path (controller sync or
+        │                       intent re-apply; mutation lives outside cub-scout)
         │  QUARANTINE         → tag the resource, alert the owner
-        │  ACCEPT-AS-CANONICAL → update intent (Git PR / `cub unit update`)
+        │  ACCEPT-AS-CANONICAL → route to Pilot's intent-update path (Git PR / ConfigHub
+        │                       unit update; mutation lives outside cub-scout)
         │  ASK                → page a human
         └────────────────────────────────────────────────────
 ```
 
-## The five `cause` outcomes
+## Five Pilot policy cases over three `cause` values + owner context
 
-cub-scout's attribution layer produces one of five `cause` values per field. Pilot's policy maps each to an action:
+cub-scout's attribution layer produces one of **three** `cause` values per field (per `pkg/agent/field_ownership.go:10-30`): `controller-drift`, `manual-edit`, `unknown`. Pilot's policy decision is shaped by the (cause, owner, managerHint) triple — so the same `cause` can map to different actions depending on whether the resource has a controller owner and whether the writer's manager string is in the verified enumeration:
 
-| `cause` | Meaning | Typical Pilot action |
-|---------|---------|----------------------|
-| `controller-drift` | The detected owner's controller wrote the field. The drift is the controller doing its job (e.g., HPA scaled replicas; the controller will re-converge). | **ACCEPT** — no action; the controller is reconciling. |
-| `manual-edit` (Argo/Flux/ConfigHub owner) | A `kubectl-*` writer touched the field on a controller-owned resource. This is a real divergence — the controller will fight the manual edit on next sync. | **INVESTIGATE** — read the gitSource / bindingSource; usually **REVERT** (let the controller win) or **QUARANTINE** if the manual edit was an emergency fix. |
-| `manual-edit` (no controller owner) | A `kubectl-*` writer on an unmanaged resource. There's no controller to fight back. | **ACCEPT-AS-CANONICAL** (update intent to match) or **QUARANTINE** if the resource shouldn't be unmanaged. |
-| `controller-drift` (verified manager unknown / wrong) | A controller wrote it, but the manager string isn't in the verified enumeration (or is from a different controller than the detected owner — Argo wrote on a Flux-owned resource). | **ASK** — possible controller-on-controller conflict; cub-scout doesn't guess which is canonical. |
-| `unknown` | `managedFields` is missing or the field-path resolution failed. | **ASK** — Pilot doesn't have enough evidence. |
+| `cause` | Owner / manager context | Typical Pilot action |
+|---------|-------------------------|----------------------|
+| `controller-drift` | Detected owner's controller wrote the field; managerHint is in the verified enumeration. The drift is the controller doing its job (HPA scaled replicas, etc.). | **ACCEPT** — no action; the controller is reconciling. |
+| `manual-edit` | Argo / Flux / ConfigHub / kro / Crossplane owner; `kubectl-*` writer touched the field. The controller will fight the manual edit on next sync. | **INVESTIGATE** — read the gitSource / bindingSource; usually **REVERT** (let the controller win) or **QUARANTINE** if the manual edit was an emergency fix. |
+| `manual-edit` | No controller owner (unmanaged resource); `kubectl-*` writer. There's no controller to fight back. | **ACCEPT-AS-CANONICAL** (update intent to match) or **QUARANTINE** if the resource shouldn't be unmanaged. |
+| `controller-drift` | A controller wrote it, but the managerHint is **not** in the verified enumeration, OR it's from a different controller than the detected owner (e.g., Argo wrote on a Flux-owned resource). | **ASK** — possible controller-on-controller conflict; cub-scout doesn't guess which is canonical. |
+| `unknown` | `managedFields` is missing (older K8s, stripped) or the field-path resolution failed. | **ASK** — Pilot doesn't have enough evidence. |
+
+The five rows above are Pilot policy cases, not five distinct `cause` values from cub-scout. cub-scout's `cause` is the three-valued enum; the owner / manager / verified-or-not context disambiguates within the `manual-edit` and `controller-drift` cases. See [`verified-manager-strings`](../references/verified-manager-strings.md) for the canonical enumeration.
 
 The verified manager-string enumeration ([`verified-manager-strings`](../references/verified-manager-strings.md)) covers Argo CD, Flux (kustomize/helm/source controllers), Helm direct, Crossplane (composite/composed/claim/MRD/refs), kro (applyset/parent/labeller), and `kubectl-*`. Strings not in the enumeration return `unknown` rather than misclassifying — same `parse, don't guess` rule used by ownership detection.
 
@@ -204,17 +208,17 @@ The receipt records what cub-scout observed at this moment + the verdict (BLOCK 
 
 ### Step 6 — invoke the action (Pilot's surface, not cub-scout's)
 
-Pilot's mutation choices, by action:
+Pilot's mutation choices, by action (mutation implementation lives outside cub-scout — concrete CLI surfaces are intentionally abstracted here):
 
 | Action | Pilot's mutation path |
 |--------|----------------------|
 | ACCEPT | none (no-op) |
-| REVERT | `argocd app sync <app>` (Argo); `flux reconcile kustomization <ks>` (Flux); `cub unit apply <unit>` (ConfigHub) |
-| QUARANTINE | label/annotate the resource (out-of-scope for cub-scout); page the owner |
-| ACCEPT-AS-CANONICAL | Open a Git PR amending the intended state; `cub unit update <unit>` to update ConfigHub intent |
-| ASK | escalate to the on-call human |
+| REVERT | Pilot's REVERT path — controller sync or intent re-apply, depending on which controller owns the resource. Implementation lives in Pilot / `cub` / Argo / Flux; this skill does not name a specific CLI. |
+| QUARANTINE | Label/annotate the resource (out-of-scope for cub-scout); page the owner. |
+| ACCEPT-AS-CANONICAL | Pilot's intent-update path — typically a Git PR amending intent, or a ConfigHub unit update. Implementation lives outside cub-scout. |
+| ASK | Escalate to the on-call human. |
 
-cub-scout participates **only in evidence**. The mutation paths above are all out-of-scope for this skill.
+cub-scout participates **only in evidence**. The mutation paths above are all out-of-scope for this skill, and their concrete CLI surfaces (controller sync verbs, ConfigHub unit update verbs) are deliberately not enumerated here to keep cub-scout's read-only boundary loud.
 
 ## Worked example
 
@@ -253,7 +257,7 @@ Pilot's verdict:
 - **Action**: INVESTIGATE
 - **Recommendation**: Likely an emergency hotfix (suffix `-hotfix` is a strong hint). Verify with on-call:
   - If intentional → open Git PR amending `apps/prod/payments-api/deployment.yaml:42` to `v1.4.3-hotfix` and merge; Argo will sync.
-  - If accidental → trigger `argocd app sync payments-api --prune` to let Argo revert.
+  - If accidental → route to Pilot's REVERT path (a controller-sync verb in Pilot's stack); cub-scout doesn't perform the sync itself.
 
 Pilot's downstream system records the verdict + the cub-scout evidence ID + a link to the on-call ticket.
 
