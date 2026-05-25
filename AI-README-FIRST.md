@@ -88,24 +88,28 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Current release: **v2.2.1**. As of 2026-05-22, these areas are fully or materially shipped:
+Current release: **v2.2.1** (next: **v2.3.0** — release-notes draft at `docs/releases/v2.3.0.md`; everything below was shipped after `v2.2.1`'s tag). As of 2026-05-25, these areas are fully or materially shipped:
 
-- **Receipts v1** (`#446` — closed; PRs `#454` + `#455` + `#456` + Codex round-5 `#461`)
+- **Receipts v1 + v2 — feature complete** (`#446` closed; v1 in `#454`+`#455`+`#456`+`#461`; v2 surface in `#463`+`#469`+`#470` covering `#451`+`#448`+`#449`)
   - Typed, fingerprinted, immutable evidence artifacts wrapping the existing attribution + source-truth + gitSource evidence
   - In-toto Statement v1 envelope wrapping `https://cub-scout.dev/receipt/v1`; SHA-256 over RFC 8785 canonical JSON via `gowebpki/jcs`; dual subjects (`k8s-live://` + `confighub-unit://` when connected)
-  - Three v1 predicates: `applied-matches-spec` (Argo/Flux/ConfigHub anchor matches LIVE), `source-truth-pass` (with explicit `--strategy`), `no-manual-edits-since` (with explicit `--since` RFC 3339 cutoff)
+  - Three v1 predicates: `applied-matches-spec`, `source-truth-pass` (with explicit `--strategy`), `no-manual-edits-since` (with explicit `--since`); plus the v2 `aggregate-verdict` synthesized predicate
   - Four verdicts: PASS / WATCH / BLOCK / INCONCLUSIVE
+  - **v2 CI-gate**: `receipt verify --fail-on <verdict>` (WATCH / BLOCK / INCONCLUSIVE / `any-non-pass`); PASS rejected upfront; artifact preserved on gate-fire; upfront parse so bad value can't leak side effects (Codex round-6 P2 fix)
+  - **v2 chained**: `receipt verify --input-attestation <path>` (repeatable). Each upstream receipt's fingerprint verified at chain-construction time; tampered receipts refused. API-boundary verify enforced via `VerifiedAttestationRef` typed wrapper (Codex round-6 P1 fix)
+  - **v2 aggregate-with-discovery**: `receipt verify --scope namespace/<ns>` auto-discovers Deployment/StatefulSet/DaemonSet/CronJob/Job + builds N per-resource receipts + 1 aggregate over them. Comma-list batch (`deploy/a,deploy/b`) also accepted. Subject is `synthetic-aggregate://sha256/<id>` (order-independent over inputs). `--aggregate-policy max-severity` is default; verdict synthesized as `BLOCK > INCONCLUSIVE > WATCH > PASS`. `--fail-on` applies to the aggregate verdict
+  - **v2 real-time emission**: `watch --emit-receipt-on <event-types>` — all 4 event types build receipts (`drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding`); per-poll backpressure via `--emit-receipt-batch-cap N` (default 10); receipt-build failures non-fatal (event still emits with `receipt` key omitted via omitempty); rate-limited stderr warnings (first 10 + summary every 100)
   - CLI: `receipt verify / show / validate / list`; `--save` writes to immutable local store at `$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`
   - Store immutability: `O_EXCL` atomic create; `--out` rejects paths under the store; receipt validate exit codes 0/1/2 via `errors.As` dispatch
-  - Read-only-triad guards: `TestReceiptPackageReadOnlyClient` static-greps for mutating K8s client methods; `FilterNextSteps` drops mutating actionType / nextCommand at emit
-  - Documented in `docs/reference/json-contracts.md` § Receipt Contract; examples at `examples/receipts/`
-- **AI-agent skill catalog** (`#442` — closed; 5 PRs `#452` + `#457` + `#458` + `#459` + `#460`)
-  - ~35 skill files + 9 references modeled on `confighub/confighub-skills` for `cub`
+  - Read-only-triad guards: `TestReceiptPackageReadOnlyClient` static-greps every `*receipt*.go` source file for mutating K8s client methods (Codex round-6 P1 substring glob); `FilterNextSteps` drops mutating actionType / nextCommand at emit
+  - Documented in `docs/reference/json-contracts.md` § Receipt Contract (+ "v2 Extensions"); `docs/reference/commands.md` § receipt verify; `docs/reference/cli-contract.md` § receipt; new task-shaped tutorial at `docs/howto/receipts-end-to-end.md`; 4 worked examples at `examples/receipts/{ci-gate,chained,aggregate,watch-emit}/`
+- **AI-agent skill catalog — 42 skill files** (`#442` closed; PRs `#452`+`#457`+`#458`+`#459`+`#460`; plus `#444` Pilot consumer side closed in `#466`+`#467`+`#468`)
   - 8 verb-group skills (`scout-observe`, `scout-diagnose`, `scout-compare`, `scout-attribute`, `scout-ingest`, `scout-govern`, `scout-mcp`, `scout-verify`)
-  - 7 controller-observer skills (`observe-argocd`, `observe-flux`, `observe-helm`, `observe-crossplane`, `observe-kro`, `observe-confighub-managed`, `observe-native`) — each verified against `pkg/agent/ownership.go` + `pkg/agent/manager_strings.go`
+  - 7 controller-observer skills (`observe-argocd`, `observe-flux`, `observe-helm`, `observe-crossplane`, `observe-kro`, `observe-confighub-managed`, `observe-native`)
   - 8 workflow scenario skills (`triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, `prepare-for-confighub`, `migrate-from-kubectl`, `ai-agent-readonly-context`, `operator-incident-evidence`, `confighub-source-truth`)
-  - 9 shared references (`kubernetes-managedfields`, `verified-manager-strings`, `source-truth-strategies`, `standalone-vs-connected`, `read-only-triad`, `plugin-vs-standalone`, `argocd-applicationset`, `flux-source-types`, `mcp-tool-catalog`)
-  - Every skill's `allowed-tools` enumerates read-only verbs only — no broad wildcards
+  - **9 Pilot–cub-scout integration scenarios** (consumer-side complement): `pilot-cd-gate`, `pilot-fleet-conformance`, `pilot-patch-and-drift`, `pilot-watch-alert-response`, `pilot-incident-evidence` (batch A, `#466`+`#467`); `pilot-rollback-decision`, `pilot-promotion-gate`, `pilot-compliance-audit`, `pilot-release-verification` (batch B, `#468`)
+  - 9 shared references + umbrella router
+  - Every skill's `allowed-tools` enumerates read-only subcommands — no broad `Bash(cub-scout *)` wildcards, no broad `Bash(./cub-scout compare *)` (would have allowed legacy `compare --suggest --apply` mutation; caught by Codex round-7 P1)
 - **Attribution layer** (`#435` — A1, A1.5, A2, B, C1, C2; all stages shipped)
   - `cause` + `managerHint` on every field mismatch — classifies controller-drift vs manual-edit via K8s `managedFields` co-signaled with detected owner
   - Verified manager-string enumeration (`pkg/agent/manager_strings.go`) covers Argo CD, Flux (kustomize/helm/source), Helm direct, Crossplane (composite/composed/claim/MRD/refs), kro (applyset/parent/labeller), `kubectl-*` — strings not in the enumeration return `unknown`
@@ -148,21 +152,19 @@ Current release: **v2.2.1**. As of 2026-05-22, these areas are fully or material
 
 ## Current Open Queue
 
-Verify live state before acting. As of 2026-05-22 the open follow-ons are:
+Verify live state before acting. As of 2026-05-25 the receipts arc and Pilot consumer arc both closed end-to-end. Remaining open follow-ons:
 
-### Receipts v2 + small follow-ons
+### Recently closed (this session's arc)
 
-- **`#448`** — Aggregate / chained receipts via `inputAttestations[]` composition. v1 envelope already emits `inputAttestations: []`; v2 wires the cross-receipt digest semantics.
-- **`#449`** — `cub-scout watch --emit-receipt-on <event-type>`: event-driven receipt emission so receipts can land in real time. Becomes the real-time channel into Pilot.
-- **`#451`** — `--fail-on RECEIPT_VERDICT` exit semantics extension for CI gating.
+- ~~**`#446`**~~ (parent), ~~**`#444`**~~, ~~**`#448`**~~, ~~**`#449`**~~, ~~**`#451`**~~ — all closed; see HANDOVER.md § "May 2026 completions — session 2026-05-25" for the PR-by-PR breakdown
+- Next step: **tag `v2.3.0`** (release notes draft at `docs/releases/v2.3.0.md`)
+
+### Untracked v2 follow-ups (no separate issue)
+
 - **MCP `compare_source_truth` strategy-enum drift** — schema enum lists 4 strategies (Phase 1); CLI supports 9 (Phase 2). One-file fix in `cmd/cub-scout/mcp.go`.
 - **Codex round-5 P3** — source-truth receipt precedence tests (`StatusBLOCK + VerdictBLOCKED`, `StatusWATCH + VerdictINCOMPLETE`). Not blocking; nice-to-have.
 
-### Pilot integration
-
-- **`#444`** — Pilot–cub-scout integration skills: 9 consumer-side scenarios (CD gate / fleet conformance / patch+drift / rollback / promotion / incident evidence / compliance / release verification / watch alert). Closes the trust-triad loop on the consumer side.
-
-### Adjacent open issues
+### Open tracked issues
 
 - **`#432`** — Grafana collector / data-source path using existing cub-scout outputs.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design).
