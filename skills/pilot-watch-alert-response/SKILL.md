@@ -325,8 +325,8 @@ Filing these is a non-goal of this skill; surfacing them during real-deployment 
 
 ## Constraints
 
-- Receipts on `resource.discovered` and `scan.finding` events are **not** built in v1 of `--emit-receipt-on`. Both fire on initial poll bursts and would flood without backpressure. Pilot's policy should treat those events as low-signal until v2 expands the set.
+- As of `v2.3.0` (PR #470), all four known event types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding`. The per-poll cap `--emit-receipt-batch-cap N` (default 10) bounds first-poll bursts that would otherwise flood — the first N events get receipts and the rest emit with the `receipt` key omitted plus a single stderr summary line.
 - The `receipt` key uses `omitempty` — consumers MUST check key presence, not null-ness. `event["receipt"]` raising `KeyError` is the correct empty signal; `if event["receipt"] is None` is the wrong pattern.
 - The wire format is the **in-toto Statement v1 envelope** wrapping `https://cub-scout.dev/receipt/v1`. Pilot's receipt parser should be schema-aware to handle future envelope additions (e.g., signing layer).
-- `--emit-receipt-on` requires the v2.2+ cub-scout binary (the flag shipped in `#463`). Older binaries don't have the flag and the watch event payload won't include a `receipt` field.
-- Backpressure / batching is **deferred** — high-throughput environments should expect events to queue (`--max-queued-events`) and drop on overflow. Filing follow-on issues for batched emit shapes is a real outcome of this skill's authoring; this skill itself doesn't implement them.
+- `--emit-receipt-on` requires the v2.2+ cub-scout binary (the flag shipped in `#463`); the per-poll cap requires v2.3+ (`#470`). Older binaries don't have the flag and the watch event payload won't include a `receipt` field.
+- **Per-poll backpressure semantics**: the cap resets every call to `attachReceiptsIfRequested` (one watch poll = one call), so a long-running watch with quiet polls between bursts doesn't accumulate suppression state. `--emit-receipt-batch-cap 0` disables receipt-build entirely while keeping the flag explicit; large values (e.g., 1000) effectively disable the cap. See [`docs/reference/watch-events.md`](../../docs/reference/watch-events.md) for the full specification.

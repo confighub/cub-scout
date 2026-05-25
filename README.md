@@ -82,7 +82,7 @@ cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `c
 | `receipt show <path>` | Render a saved receipt (ASCII or JSON). Does NOT verify the fingerprint — works on tampered receipts for forensic inspection. | receipt file |
 | `receipt validate <path>` | Recompute and compare the receipt's fingerprint. Exit 0 OK / 1 mismatch / 2 I/O. | receipt file |
 | `receipt list` | Walk the local store (`$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`) sortable, newest first. | local store |
-| `watch --emit-receipt-on <event-types>` | Real-time receipt emission: each matching watch event (`drift.detected`, `ownership.changed`) carries a receipt inline. Forward-compatible with future event types. | cluster |
+| `watch --emit-receipt-on <event-types>` | Real-time receipt emission: each matching watch event carries a receipt inline. All four known event types build receipts (`drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding`); per-poll backpressure controlled by `--emit-receipt-batch-cap` (default 10). | cluster |
 
 Wire format: in-toto Statement v1 (`_type = "https://in-toto.io/Statement/v1"`) wrapping `https://cub-scout.dev/receipt/v1`. SHA-256 fingerprint over RFC 8785 canonical JSON of the full Statement minus only `predicate.fingerprint`. Read-only by construction — receipts emit artifacts, never mutate.
 
@@ -287,7 +287,7 @@ For Claude, Codex, and other AI agents:
 Honest gaps in the current capability map, with the leverage on filling them:
 
 - **Standalone `compare three-way --git-path` / `--source-path` as DRY source** — would let raw-YAML repos run the same three-way view without ConfigHub. Stage B back-resolution (#440) already lays the parsing groundwork.
-- **`compare source-truth` strategy expansion** — [#409](https://github.com/confighub/cub-scout/issues/409) Phase 2 adds `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`; Phase 3 adds multi-source Argo. Moves the strategy count from 4 to 9.
+- **`compare source-truth` Phase 3 (multi-source Argo)** — [#409](https://github.com/confighub/cub-scout/issues/409) Phase 1 (4 strategies) and Phase 2 (5 more strategies: `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`) already shipped (9 strategies total). Phase 3 — multi-source Argo `spec.sources[]` len > 1 — is the remaining open scope.
 - **`import --git-path --output-dir`** — emit proposed unit YAMLs to disk for PR review, then upload via Installer's `--merge-external-source` once connected. One bundle, two workflows.
 - **Hierarchy-aware ingest** — preserve ApplicationSet / app-of-apps / Flux Kustomization composition in import proposals so imported ConfigHub state is navigable, not flat.
 - **Helm / Kustomize back-resolution** — extends stage B (#440) from raw YAML to templated sources for per-field `file:line` provenance.
@@ -309,6 +309,8 @@ Honest gaps in the current capability map, with the leverage on filling them:
 | AI tool integration | [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md) |
 | Examples and demos | [examples/README.md](examples/README.md) |
 | Receipts (typed evidence artifacts) | [examples/receipts/README.md](examples/receipts/README.md) + [docs/reference/json-contracts.md § Receipt Contract](docs/reference/json-contracts.md) |
+| Receipts end-to-end how-to (pre-deploy gate → audit chain → namespace aggregate → real-time emission) | [docs/howto/receipts-end-to-end.md](docs/howto/receipts-end-to-end.md) |
+| Watch event types + inline receipts + backpressure | [docs/reference/watch-events.md](docs/reference/watch-events.md) |
 | Security model | [SECURITY.md](SECURITY.md) |
 
 ---

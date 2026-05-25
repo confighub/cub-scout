@@ -8,7 +8,7 @@ If your AI host supports repo-local skills, load these alongside `AI-README-FIRS
 
 ## Skill map
 
-Skills are grouped along the **seven verb groups** from [`README.md`](../README.md#capability-map), plus controller-specific observer skills, workflow scenario skills, and shared references.
+Skills are grouped along the **eight verb groups** from [`README.md`](../README.md#capability-map) (Observe / Diagnose / Compare / Attribute / Ingest / Govern / Integrate / Verify), plus controller-specific observer skills, workflow scenario skills, Pilot consumer scenarios, and shared references.
 
 ### Verb-grouped scenario skills
 
@@ -23,7 +23,7 @@ One skill per cub-scout verb group. The skill knows which commands belong to its
 | [`scout-ingest/`](scout-ingest/SKILL.md) | Ingest | `import --git-path` / `import argocd` / `import cluster-aggregator` / `import parse-repo` / `app` (preview-only — `import apply` is intentionally out of band) |
 | [`scout-govern/`](scout-govern/SKILL.md) | Govern | `history` / `impact` / `fleet` / `summary` / `views` / `audit` / `bundle` / `catalog` |
 | [`scout-mcp/`](scout-mcp/SKILL.md) | Integrate | `mcp serve` / `context-pack` (AI gateway) |
-| [`scout-verify/`](scout-verify/SKILL.md) | Verify | `cub-scout receipt verify / show / validate / list` (typed, fingerprinted evidence — `#446` v1 complete) |
+| [`scout-verify/`](scout-verify/SKILL.md) | Verify | `cub-scout receipt verify / show / validate / list` + `watch --emit-receipt-on` (typed, fingerprinted evidence — `#446` v1 + v2 feature-complete: `--fail-on`, `--input-attestation` chained, `--scope` aggregate-with-discovery, real-time emission) |
 
 ### Controller observer skills
 
@@ -121,6 +121,16 @@ That's **~33 skill files** plus 9 references — the full scope from `#442`.
 PRs:
 - [`#466`](https://github.com/confighub/cub-scout/pull/466) — batch A (5 scenarios: CD / observability / event-driven)
 - [`#467`](https://github.com/confighub/cub-scout/pull/467) — batch A Codex round-7 fixes (enumerated `compare *` allowed-tools; snake_case source-truth JSON shape; strategy enum corrected; etc.)
-- batch B (this PR) — 4 governance scenarios: rollback-decision / promotion-gate / compliance-audit / release-verification
+- [`#468`](https://github.com/confighub/cub-scout/pull/468) — batch B (4 governance scenarios: rollback-decision / promotion-gate / compliance-audit / release-verification) — **closed `#444`**
 
 Codex round-7 learnings applied upfront in batch B: enumerated `compare three-way / compare drift / compare source-truth` allowed-tools (no broad `compare *`); snake_case source-truth fields (`declared_strategy` / `source_truth` / `proof_gaps`); no invented Pilot CLI surfaces; abstract mutation paths; receipt verdicts only PASS/WATCH/BLOCK/INCONCLUSIVE (ASK is source-truth `status`, maps to receipt `WATCH` when wrapped).
+
+## Related receipts work (sibling closures)
+
+The receipts capability the `pilot-*` skills consume reached feature-complete state alongside `#444`:
+
+- ~~`#448`~~ closed — chained half via `#463`, aggregate half via `#469` (`--scope namespace/<ns>` + `synthetic-aggregate://` subject + max-severity verdict synthesis)
+- ~~`#449`~~ closed — v1 (drift.detected + ownership.changed) in `#463`; full 4-event-type set + per-poll `--emit-receipt-batch-cap` backpressure in `#470`
+- ~~`#451`~~ closed via `#463` — `receipt verify --fail-on <verdict>` exit semantics
+
+The `scout-verify` skill (verb-group) and the `pilot-*` skills (consumer-side) cover the operator-side and judge-side of this surface respectively. End-to-end tutorial at [`docs/howto/receipts-end-to-end.md`](../docs/howto/receipts-end-to-end.md); dedicated watch event reference at [`docs/reference/watch-events.md`](../docs/reference/watch-events.md).
