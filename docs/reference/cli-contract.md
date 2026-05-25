@@ -1195,9 +1195,9 @@ cub-scout receipt list [--dir <path>] [--format ascii|json] [--sort newest|oldes
 | 0 | Listing complete (zero entries is still 0) |
 | 1 | Store unreadable |
 
-### cub-scout watch --emit-receipt-on (v2.2)
+### cub-scout watch --emit-receipt-on (v2.3)
 
-`watch --emit-receipt-on <event-types>` attaches a receipt to each matching watch event payload inline. v1 of this flag builds receipts for `drift.detected` and `ownership.changed`; other event types are accepted for forward-compat but pass through silently (a startup warning lists them). Receipt-build failures are non-fatal — the event still emits but the JSON `receipt` key is omitted (consumers should check key presence, not null-ness). See [JSON Contracts § Receipt Contract](json-contracts.md) for the wire shape.
+`watch --emit-receipt-on <event-types>` attaches a receipt to each matching watch event payload inline. As of `v2.3.0` all four known event types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). Per-poll backpressure is controlled by `--emit-receipt-batch-cap N` (default 10) — when a single poll exceeds the cap, the first N events get receipts and the rest emit with the `receipt` key omitted plus a single stderr summary line. Receipt-build failures are non-fatal — the event still emits but the JSON `receipt` key is omitted (consumers should check key presence, not null-ness). See [`watch-events.md`](watch-events.md) for the dedicated event-type reference and [JSON Contracts § Receipt Contract](json-contracts.md) for the wire shape.
 
 ---
 

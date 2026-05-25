@@ -8,7 +8,7 @@ If your AI host supports repo-local skills, load these alongside `AI-README-FIRS
 
 ## Skill map
 
-Skills are grouped along the **seven verb groups** from [`README.md`](../README.md#capability-map), plus controller-specific observer skills, workflow scenario skills, and shared references.
+Skills are grouped along the **eight verb groups** from [`README.md`](../README.md#capability-map) (Observe / Diagnose / Compare / Attribute / Ingest / Govern / Integrate / Verify), plus controller-specific observer skills, workflow scenario skills, Pilot consumer scenarios, and shared references.
 
 ### Verb-grouped scenario skills
 
@@ -23,7 +23,7 @@ One skill per cub-scout verb group. The skill knows which commands belong to its
 | [`scout-ingest/`](scout-ingest/SKILL.md) | Ingest | `import --git-path` / `import argocd` / `import cluster-aggregator` / `import parse-repo` / `app` (preview-only — `import apply` is intentionally out of band) |
 | [`scout-govern/`](scout-govern/SKILL.md) | Govern | `history` / `impact` / `fleet` / `summary` / `views` / `audit` / `bundle` / `catalog` |
 | [`scout-mcp/`](scout-mcp/SKILL.md) | Integrate | `mcp serve` / `context-pack` (AI gateway) |
-| [`scout-verify/`](scout-verify/SKILL.md) | Verify | `cub-scout receipt verify / show / validate / list` (typed, fingerprinted evidence — `#446` v1 complete) |
+| [`scout-verify/`](scout-verify/SKILL.md) | Verify | `cub-scout receipt verify / show / validate / list` + `watch --emit-receipt-on` (typed, fingerprinted evidence — `#446` v1 + v2 feature-complete: `--fail-on`, `--input-attestation` chained, `--scope` aggregate-with-discovery, real-time emission) |
 
 ### Controller observer skills
 

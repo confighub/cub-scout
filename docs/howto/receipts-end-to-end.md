@@ -91,9 +91,14 @@ Each `--input-attestation` is **verified at chain-construction time**:
 - Empty / malformed fingerprint → error
 - Recomputed fingerprint doesn't match the stamped value → error ("refusing to chain a receipt whose fingerprint doesn't verify")
 
-The downstream receipt's fingerprint covers `inputAttestations[]` by construction. Tampering with `stage1-pre.receipt.json` after the fact invalidates `stage2-at.receipt.json`'s recomputed fingerprint, which in turn invalidates `stage3-post.receipt.json`'s.
+The downstream receipt's `inputAttestations[]` stores each upstream's SHA-256 **digest reference**, and the downstream fingerprint covers that reference. What this guarantees:
 
-The verify-on-construction property is enforced via a typed wrapper at the API boundary: programmatic callers (not just the CLI) cannot bypass the verify step.
+- **At chain construction time** (when the downstream is being built), the upstream's recomputed fingerprint is checked against its stamped value; if they don't match, chain construction errors out and no downstream is produced.
+- **After construction**, the downstream's fingerprint is stable: it covers the digest *string* in `inputAttestations[]`, not the upstream's file bytes. Tampering with `stage1-pre.receipt.json` after the fact does NOT automatically invalidate `stage2-at.receipt.json`'s recomputed fingerprint — the digest reference in stage2 is unchanged.
+
+What detects post-hoc upstream tampering: a verifier walking the chain must **re-load each upstream and re-verify its fingerprint independently**, then compare to the digest stored in the downstream's `inputAttestations[]`. cub-scout ships `receipt validate` for the single-receipt verify step; chain-level walk-and-verify tooling is a downstream-consumer concern (the Pilot consumer skills sketch this — see [`pilot-incident-evidence`](../../skills/pilot-incident-evidence/SKILL.md)).
+
+The construction-time verify property is enforced via the `VerifiedAttestationRef` typed wrapper at the API boundary: programmatic callers (not just the CLI) cannot bypass the verify step when building a chain.
 
 ### Reading the chain timeline
 

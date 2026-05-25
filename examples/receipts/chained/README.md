@@ -1,6 +1,6 @@
 # Receipt Example: Chained Receipts with `--input-attestation`
 
-This example walks through using `cub-scout receipt verify --input-attestation` to compose **multi-stage delivery chains** as a tamper-evident DAG of receipts. Each stage's receipt references the prior stage's receipt by digest; tampering with any upstream invalidates every downstream fingerprint.
+This example walks through using `cub-scout receipt verify --input-attestation` to compose **multi-stage delivery chains** as a tamper-evident DAG of receipts. Each stage's receipt references the prior stage by digest. At chain-construction time, each upstream's fingerprint is verified against its stamped value — a tampered upstream is refused. After construction, post-hoc upstream tampering is detected only when a verifier walks the chain and re-validates each upstream's fingerprint independently; the downstream's own fingerprint covers the digest *reference*, not the upstream's bytes.
 
 Issue: [`#448`](https://github.com/confighub/cub-scout/issues/448).
 Parent capability: [`#446`](https://github.com/confighub/cub-scout/issues/446).

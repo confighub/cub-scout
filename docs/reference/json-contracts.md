@@ -962,12 +962,12 @@ Aggregate receipt wire shape:
 
 Key shape rules (verified against `pkg/agent/receipt_aggregate.go`):
 
-- **Subject scheme:** `synthetic-aggregate://sha256/<aggregate-id>` where `<aggregate-id>` is the first 16 hex chars of the SHA-256 over the deterministically-sorted concatenation of input sha256 digest hex (one per line). The full SHA-256 lives in `subject[0].digest.sha256`. Reordering the inputs produces the **same** subject (the aggregate is a set, not a list).
+- **Subject scheme:** `synthetic-aggregate://sha256/<aggregate-id>` where `<aggregate-id>` is the first 16 hex chars of the SHA-256 over the deterministically-sorted concatenation of input sha256 digest hex (one per line). The full SHA-256 lives in `subject[0].digest.sha256`. Reordering the inputs produces the **same subject digest** — the subject is set-shaped.
 - **`predicateName`:** the literal string `"aggregate-verdict"` (distinct from the per-resource predicate names `applied-matches-spec` / `source-truth-pass` / `no-manual-edits-since`).
 - **Verdict synthesis:** the default policy is **max-severity** (`BLOCK > INCONCLUSIVE > WATCH > PASS`). `--aggregate-policy max-severity` is explicit; future policies (`majority`, weighted) are wired through the same flag.
 - **`omissions[]`:** any input attestation with verdict `INCONCLUSIVE` triggers an `aggregate-partial-coverage` omission entry so the consumer knows the aggregate verdict may not reflect full coverage. Per-resource verify failures (load errors, marshal errors) also surface here when discovery couldn't reach a resource.
-- **`inputAttestations[]`:** one entry per per-resource receipt successfully verified. Each entry's fingerprint is **verified at chain-construction time** via the same `VerifiedAttestationRef` typed wrapper the single-resource chained path uses (per `#463` Codex round-6 P1 fix; `pkg/agent/receipt_aggregate.go:BuildAggregateReceipt` rejects zero-value wrappers).
-- **Fingerprint coverage:** the aggregate's `fingerprint` covers every field including `inputAttestations[]`. Tampering with the input set (adding, removing, or reordering) invalidates the recomputed fingerprint.
+- **`inputAttestations[]`:** one entry per per-resource receipt successfully verified, **emitted in caller order**. Each entry's fingerprint is **verified at chain-construction time** via the same `VerifiedAttestationRef` typed wrapper the single-resource chained path uses (per `#463` Codex round-6 P1 fix; `pkg/agent/receipt_aggregate.go:BuildAggregateReceipt` rejects zero-value wrappers).
+- **Fingerprint coverage:** the aggregate's `fingerprint` covers every field including `inputAttestations[]`. Tampering with the input set (adding, removing, or reordering the entries) invalidates the recomputed fingerprint. Note that the **subject digest** is set-shaped (sorted-input concatenation; reordering is a no-op on the subject) but the **receipt-level fingerprint** is list-shaped (covers the wire-order array). A v2.3.1+ correctness pass may sort `inputAttestations[]` before stamping so the receipt-level fingerprint also becomes set-shaped; in v2.3.0 only the subject is order-independent.
 
 Per-resource receipt failures during discovery are **non-fatal**: the aggregate is composed from the successful subset, with an `aggregate-partial-coverage` omission entry recording the failure count.
 
@@ -1032,11 +1032,15 @@ Sample JSONL line with a receipt:
 Implementation: `cmd/cub-scout/watch.go` (flag init + per-event
 attachment loop) + `cmd/cub-scout/watch_receipt.go` (the
 `parseWatchEmitReceiptOn` / `attachReceiptsIfRequested` /
-`watchBuildReceiptForEvent` helpers).
+`watchBuildReceiptForEvent` helpers + `watchReceiptBatchCap`).
 
-Backpressure / batching for high-frequency events is deferred — the
-issue's open question 3 is a v2-of-this-feature concern, not a v1
-gate.
+Per-poll backpressure ships in `v2.3.0` via `--emit-receipt-batch-cap N`
+(default 10). When a single poll produces more receipt-eligible events
+than the cap, the first N get receipts; the rest emit with the
+`receipt` key omitted plus a single stderr summary line per poll. The
+cap is per-poll (not across-poll), so quiet polls between bursts don't
+accumulate suppression state. See [`docs/reference/watch-events.md`](watch-events.md)
+for the dedicated event-type reference.
 
 Source: `pkg/agent/receipt*.go`, `cmd/cub-scout/receipt*.go`,
 `cmd/cub-scout/watch*.go`. See
