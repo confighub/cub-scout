@@ -39,7 +39,7 @@ Shipped in: [`#463`](https://github.com/confighub/cub-scout/pull/463) (chained h
       → the chain holds; the delivery story is tamper-evident
 ```
 
-Each stage's receipt includes `predicate.inputAttestations[]` referencing the prior stage by SHA-256 digest. The downstream fingerprint covers `inputAttestations[]` by construction — tampering with `stage1-pre.receipt.json` after the fact invalidates `stage2-at.receipt.json`'s recomputed fingerprint, which in turn invalidates `stage3-post.receipt.json`'s.
+Each stage's receipt includes `predicate.inputAttestations[]` referencing the prior stage by SHA-256 digest. **At chain-construction time**, each upstream's fingerprint is verified — a tampered upstream is refused (see "Tampered-upstream behavior" below). **After construction**, post-hoc tampering of `stage1-pre.receipt.json` does NOT automatically invalidate downstream fingerprints — the downstream covers the digest *reference* in `inputAttestations[]`, not the upstream's file bytes. Post-hoc tampering is detected only by a verifier that walks the chain and independently re-validates each upstream's fingerprint (e.g., running `cub-scout receipt validate` on each stage and comparing each upstream's recomputed digest against the digest stored in the next stage's `inputAttestations[]`).
 
 ## Chain integrity property
 
@@ -182,7 +182,7 @@ Chained `inputAttestations[]` entries look like this in the receipt's predicate:
 - **`uri`** uses the `cub-scout-receipt://<short-fingerprint>` scheme; the short fingerprint is the first 12 hex chars of the upstream's SHA-256 digest for readability
 - **`digest.sha256`** carries the full 64-hex SHA-256 — that's what's actually cryptographically meaningful
 
-The chain is a **set**, not a list: the order of `inputAttestations[]` entries is canonicalized by RFC 8785 sort order when computing the downstream fingerprint, so reordering doesn't change the chain identity.
+For a chain with a single upstream (the typical multi-stage delivery case), order doesn't matter. For the aggregate-receipt path with multiple inputs, see [`../aggregate/`](../aggregate/) and the note on `docs/reference/json-contracts.md` § "Key shape rules": the synthetic-aggregate subject is set-shaped (digests are sorted before the subject hash), but the receipt-level fingerprint covers `inputAttestations[]` in wire order. Reordering the wire array therefore changes the receipt fingerprint even though the subject digest is unchanged.
 
 ## See also
 
