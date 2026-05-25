@@ -292,6 +292,7 @@ Shipping releases use fingerprint-only integrity; future hardening is honest abo
 
 ## References
 
+- Terminology: [`docs/concepts/receipts-and-proofs.md`](../../docs/concepts/receipts-and-proofs.md) — what "receipt" and "proof" mean, vs log / journal / record / ledger / provenance
 - Contract: [`docs/reference/json-contracts.md`](../../docs/reference/json-contracts.md) § Receipt Contract
 - Locked design: [`docs/proposals/receipts-way-forward.md`](../../docs/proposals/receipts-way-forward.md)
 - Examples: [`examples/receipts/`](../../examples/receipts/) — 8 canonical receipts across the three predicates, generated deterministically by `tools/gen-receipt-examples`

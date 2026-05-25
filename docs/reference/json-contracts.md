@@ -598,6 +598,8 @@ Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 
 ## Receipt Contract (`cub-scout receipt verify`)
 
+For the *vocabulary* — what "receipt" and "proof" mean in cub-scout, and how they relate to log / journal / record / ledger / provenance — see [docs/concepts/receipts-and-proofs.md](../concepts/receipts-and-proofs.md). This section documents the *wire format* of the artifact itself.
+
 The receipt surface emits typed, fingerprinted, immutable evidence artifacts
 wrapping cub-scout's existing field-level evidence (compareThreeWay,
 attribution, sourceTruth, gitSource) into a verifiable record. Current

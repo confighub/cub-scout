@@ -2,6 +2,8 @@
 
 cub-scout receipts are typed, fingerprinted, immutable evidence artifacts. This how-to walks through the **operational lifecycle** of a receipt in a real CD pipeline — from pre-deploy gate, through chained multi-stage delivery, through namespace-wide audit, through real-time event-driven emission.
 
+If you're new to the terminology — what does "receipt" mean here exactly, vs. "proof" / "log" / "ledger" / "provenance"? — start with [docs/concepts/receipts-and-proofs.md](../concepts/receipts-and-proofs.md). This how-to is operational; the concept doc is the vocabulary.
+
 For reference material, see:
 - [JSON Contracts § Receipt Contract](../reference/json-contracts.md)
 - [Command Reference § receipt verify](../reference/commands.md)

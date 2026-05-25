@@ -309,6 +309,7 @@ Honest gaps in the current capability map, with the leverage on filling them:
 | AI tool integration | [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md) |
 | Examples and demos | [examples/README.md](examples/README.md) |
 | Receipts (typed evidence artifacts) | [examples/receipts/README.md](examples/receipts/README.md) + [docs/reference/json-contracts.md § Receipt Contract](docs/reference/json-contracts.md) |
+| Receipt and proof terminology (vs log / journal / record / ledger / provenance) | [docs/concepts/receipts-and-proofs.md](docs/concepts/receipts-and-proofs.md) |
 | Receipts end-to-end how-to (pre-deploy gate → audit chain → namespace aggregate → real-time emission) | [docs/howto/receipts-end-to-end.md](docs/howto/receipts-end-to-end.md) |
 | Watch event types + inline receipts + backpressure | [docs/reference/watch-events.md](docs/reference/watch-events.md) |
 | Security model | [SECURITY.md](SECURITY.md) |
