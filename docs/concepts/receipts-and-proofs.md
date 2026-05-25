@@ -6,7 +6,7 @@
 
 ## TL;DR
 
-> A **receipt** is a stamped, hand-offable record of one verification — an in-toto Statement v1 envelope around a verdict and its evidence, fingerprinted via SHA-256 over RFC 8785 canonical JSON. The **proof** is that fingerprint: any third party can recompute it over the receipt's canonical bytes and confirm nothing has been edited since the receipt was stamped. A receipt without proof is a claim; a receipt with proof is evidence.
+> A **receipt** is a stamped, hand-offable record of one verification: an in-toto Statement v1 envelope around a verdict, evidence, omissions, and optional upstream receipt references. Its **proof** is the verifiable integrity property created by the fingerprint: SHA-256 over RFC 8785 canonical JSON of the full Statement, with only `predicate.fingerprint` removed before hashing. Any third party can recompute that fingerprint to confirm the receipt has not been edited since it was stamped. That is tamper-evidence, not producer authentication or formal proof of truth. A receipt without proof is a claim; a receipt with proof is evidence.
 
 The rest of this doc unpacks each term, places them inside the broader vocabulary they sit alongside (log, journal, record, ledger, provenance), and notes where the boundaries blur honestly.
 
@@ -22,7 +22,7 @@ The rest of this doc unpacks each term, places them inside the broader vocabular
 
 A **receipt** in cub-scout is a stamped, hand-offable record of a single verification — *who ran what check, on what subject, at what time, with what verdict and what supporting evidence.*
 
-Structurally it is an [in-toto Statement v1](https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md) envelope wrapping a predicate (verdict + evidence + optional pointers to upstream receipts). It is fingerprinted via SHA-256 over [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785) canonical JSON, so any third party can recompute the fingerprint and detect tampering. Receipts are optionally chainable: the predicate carries `inputAttestations[]` referencing upstream receipts by digest.
+Structurally it is an [in-toto Statement v1](https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md) envelope wrapping a predicate (verdict + evidence + optional pointers to upstream receipts). It is fingerprinted via SHA-256 over [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785) canonical JSON of the full Statement, with only `predicate.fingerprint` removed before hashing. That scope covers `_type`, `subject`, `predicateType`, and every predicate field except the fingerprint itself. Receipts are optionally chainable: the predicate carries `inputAttestations[]` referencing upstream receipts by digest.
 
 What lifts a receipt above a plain record:
 
@@ -41,11 +41,11 @@ The wire format is documented in [docs/reference/json-contracts.md § Receipt Co
 
 ## Proof
 
-A **proof** in cub-scout is *the verifiable property of a receipt, not a separate artifact.*
+A **proof** in cub-scout is *the verifiable integrity property of a receipt, not a separate artifact and not the fingerprint value by itself.*
 
-The proof is: you can recompute the fingerprint over the canonical JSON of the predicate, and if it matches the stamped value, the receipt has not been tampered with. For chained receipts the proof extends — you walk the chain, independently re-validate each upstream's fingerprint, and confirm the DAG is intact.
+The proof is: you can remove `predicate.fingerprint`, recompute the fingerprint over the canonical JSON of the full Statement, and compare it with the stamped value. If it matches, the receipt's envelope, subject, verdict, evidence, omissions, and upstream references have not been edited since the receipt was stamped. For chained receipts the proof extends by walking the chain: independently re-validate each upstream receipt's fingerprint, then compare each upstream digest to the downstream `inputAttestations[]` reference.
 
-cub-scout uses "proof" in the sense of **tamper-evidence of the attestation** — not in the strong sense of formal verification or zero-knowledge cryptography. The fingerprint shows that the receipt has not been edited since it was stamped; it does not, by itself, prove the underlying claim is *true* — it proves the issuer's claim has not been altered.
+cub-scout uses "proof" in the sense of **tamper-evidence of the attestation** — not in the strong sense of formal verification, zero-knowledge cryptography, or signature-backed producer identity. The fingerprint shows that the receipt has not been edited since it was stamped; it does not, by itself, prove the underlying claim is *true* or prove who controlled the binary that emitted it. It proves the stamped claim has not been altered.
 
 Useful framing:
 
@@ -69,7 +69,7 @@ cub-scout receipt validate path/to/receipt.json
 | Term | Focus | cub-scout analog | Surface |
 |---|---|---|---|
 | **Log** | Time and sequence — an append-only chronological stream of events | Watch event stream | `cub-scout watch` |
-| **Journal** | The first, unaltered record of a transaction with full raw detail | Per-field diff trace | `cub-scout trace deploy/x -n y` |
+| **Journal** | The first, unaltered record of a transaction with full raw detail | Field-level comparison / attribution output | `cub-scout compare three-way --scope deploy/x -n y --format json` |
 | **Record** | A complete, structured unit of data about a single entity or event | A single in-toto Statement (one receipt file) | `cub-scout receipt verify --save` |
 | **Ledger** | A master system-of-record that aggregates and categorizes — current state, not raw history | Aggregate receipt over a scope | `cub-scout receipt verify --scope namespace/<ns>` |
 | **Provenance** | Verifiable origin and chain of custody across the lifecycle | Chained-receipt DAG | `cub-scout receipt verify --input-attestation <upstream>` |
@@ -78,7 +78,7 @@ The receipt sits at the **record** layer of this vocabulary, with attestation se
 
 - The **chain** (provenance) is built *from* receipts; each link inherits the receipt's proof property.
 - The **aggregate** (ledger) is built *from* receipts; the synthesized verdict inherits the proof property of the receipts it summarizes.
-- The **log** and **journal** sit *below* the receipt: lower-resolution surfaces that are not stamped by default. A watch event can be promoted to a receipt via `watch --emit-receipt-on`.
+- The **log** and **journal** sit *below* the receipt: lower-level surfaces that are not stamped by default. A watch event can be promoted to a receipt via `watch --emit-receipt-on`; comparison evidence can be wrapped by `receipt verify`.
 
 ---
 
@@ -104,23 +104,24 @@ You verify a deploy. cub-scout produces, at increasing resolution:
 
 ```
 1. watch event              → log entry        (time + event type + subject)
-2. trace --format json      → journal entry    (per-field intent vs observed, raw)
+2. compare three-way --format json
+                             → journal entry    (per-field intended vs observed, raw)
 3. receipt verify           → record + proof   (in-toto Statement, fingerprint stamped)
 4. --input-attestation prev → provenance link  (this receipt references prior by digest)
 5. --scope namespace/prod   → ledger row       (synthesized aggregate over the scope)
 ```
 
-The proof property is what lets you hand 3-5 to a third party — an auditor, a paranoid reviewer, an AI agent running a year later — and have them independently confirm: this verdict was produced by this binary, on this subject, at this time, and nothing has been edited since. They do not have to trust your storage; they recompute the fingerprint, and the answer is the same or it is not.
+The proof property is what lets you hand 3-5 to a third party — an auditor, a paranoid reviewer, an AI agent running a year later — and have them independently confirm: this receipt says this verifier/version produced this verdict, for this subject, at this time, with this evidence, and none of those fields have been edited since stamping. They do not have to trust your storage; they recompute the fingerprint, and the answer is the same or it is not. They still do not get producer authentication from the fingerprint alone; that would require a signing layer.
 
 ---
 
 ## Short answer for a slide
 
 - **Receipt** = a stamped, hand-offable record of one verification, in a standard envelope (in-toto v1).
-- **Proof** = the verifiable property of a receipt: recompute the fingerprint, compare to the stamped value.
+- **Proof** = the verifiable integrity property of a receipt: remove `predicate.fingerprint`, recompute the full-Statement fingerprint, compare to the stamped value.
 - **Chain** = receipts linked by digest → provenance.
 - **Aggregate** = receipts synthesized by policy → ledger.
-- **Log / journal** = lower-resolution surfaces (watch events / trace output); receipts are what get stamped at gates.
+- **Log / journal** = lower-level surfaces (watch events / comparison output); receipts are what get stamped at gates.
 
 ---
 

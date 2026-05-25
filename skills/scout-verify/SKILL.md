@@ -1,15 +1,15 @@
 ---
 name: scout-verify
-description: 'Use when the user wants a TYPED, FINGERPRINTED, IMMUTABLE evidence artifact about a Kubernetes resource — the Verify verb group of cub-scout (the receipt capability shipped in #446). Natural phrasing: "produce a receipt that this is in compliance", "give me an attestation that the cluster matches Git", "I need a verifiable record for the audit trail", "build a receipt verifying no manual edits since deploy", "verify deploy/api against source-truth and save the artifact", "validate this receipt is authentic", "show me what receipts we have", "is this receipt tampered with?", "attach evidence to my CI gate". Load whenever intent is receipt / attestation / evidence-artifact / signed-evidence / verified-record / audit-trail / postmortem-evidence / acceptance-judge-input. Do NOT load for: a live comparison without a persisted artifact (use scout-compare), interpreting a single field''s provenance (use scout-attribute), or actually applying a fix (cub-scout never mutates — route to cub / argocd / kubectl with the user driving).'
+description: 'Use when the user wants a TYPED, FINGERPRINTED, IMMUTABLE evidence artifact about a Kubernetes resource — the Verify verb group of cub-scout (the receipt capability shipped in #446). Natural phrasing: "produce a receipt that this is in compliance", "give me an attestation that the cluster matches Git", "I need a verifiable record for the audit trail", "build a receipt verifying no manual edits since deploy", "verify deploy/api against source-truth and save the artifact", "validate this receipt has not been tampered with", "show me what receipts we have", "is this receipt tampered with?", "attach evidence to my CI gate". Load whenever intent is receipt / attestation / evidence-artifact / tamper-evident-record / verified-record / audit-trail / postmortem-evidence / acceptance-judge-input. Do NOT load for: a live comparison without a persisted artifact (use scout-compare), interpreting a single field''s provenance (use scout-attribute), or actually applying a fix (cub-scout never mutates — route to cub / argocd / kubectl with the user driving).'
 phase: verify
 allowed-tools: Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify *) Bash(cub scout receipt verify *) Bash(./cub-scout receipt show *) Bash(cub-scout receipt show *) Bash(cub scout receipt show *) Bash(./cub-scout receipt validate *) Bash(cub-scout receipt validate *) Bash(cub scout receipt validate *) Bash(./cub-scout receipt list *) Bash(cub-scout receipt list *) Bash(cub scout receipt list *) Bash(./cub-scout receipt list) Bash(cub-scout receipt list) Bash(cub scout receipt list) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub * get) Bash(cub * list) Bash(cub link list *) Bash(cub unit get *) Bash(argocd app get *) Bash(flux get *)
 ---
 
 # scout-verify
 
-The Verify verb group of cub-scout. Produces typed, fingerprinted, immutable evidence artifacts — **receipts** — wrapping cub-scout's existing field-level evidence into a verifiable record CI/CD gates, audit trails, postmortems, and acceptance-judge tooling can attach to a decision and later prove the inputs were what they claim to be.
+The Verify verb group of cub-scout. Produces typed, fingerprinted, immutable evidence artifacts — **receipts** — wrapping cub-scout's existing field-level evidence into a verifiable record CI/CD gates, audit trails, postmortems, and acceptance-judge tooling can attach to a decision and later re-check for tampering.
 
-> A **receipt** is a stamped, hand-offable record of one verification — an in-toto Statement v1 envelope around a verdict and its evidence, fingerprinted via SHA-256 over RFC 8785 canonical JSON. The **proof** is that fingerprint: any third party can recompute it over the receipt's canonical bytes and confirm nothing has been edited since the receipt was stamped. A receipt without proof is a claim; a receipt with proof is evidence.
+> A **receipt** is a stamped, hand-offable record of one verification: an in-toto Statement v1 envelope around a verdict, evidence, omissions, and optional upstream receipt references. Its **proof** is the verifiable integrity property created by the fingerprint: SHA-256 over RFC 8785 canonical JSON of the full Statement, with only `predicate.fingerprint` removed before hashing. Any third party can recompute that fingerprint to confirm the receipt has not been edited since it was stamped. That is tamper-evidence, not producer authentication or formal proof of truth. A receipt without proof is a claim; a receipt with proof is evidence.
 
 Receipts are HISTORICAL records. Updates produce new receipts; old ones never mutate.
 
@@ -22,7 +22,7 @@ Explicit phrasings:
 - "I need an evidence artifact for the audit trail"
 - "Build a receipt verifying no manual edits since the freeze started"
 - "Verify deploy/api against source-truth and save the artifact"
-- "Validate this receipt is authentic / hasn't been tampered with"
+- "Validate this receipt has not been tampered with"
 - "List the receipts I've generated locally"
 - "Show me yesterday's receipts where the verdict was BLOCK"
 - "Attach typed evidence to my CI gate / promotion gate / release ticket"
@@ -31,7 +31,7 @@ Implicit intents:
 
 - The user wants **persistence** of an evidence snapshot, not just an ephemeral comparison
 - The user is gating CI / promotion / acceptance on a verdict
-- The user needs to **prove later** that the inputs were what they claim to be (forensic / audit / postmortem)
+- The user needs to **show later** exactly what evidence was attached to a decision, with tamper-evidence (forensic / audit / postmortem)
 - The user is integrating with Pilot or a similar acceptance kernel that consumes receipt-shaped evidence
 - The user wants a tamper-evident artifact, not a log line
 
@@ -60,7 +60,7 @@ Implicit intents:
 |---|---|---|
 | "Produce a receipt about this resource" | `cub-scout receipt verify <kind>/<name> -n <ns>` | Auto-detects the predicate from owner + signals. Defaults to applied-matches-spec for Argo/Flux/ConfigHub-owned resources with a resolved git anchor. |
 | "Render a saved receipt" | `cub-scout receipt show <path>` | ASCII or JSON. Does NOT verify the fingerprint — works on tampered receipts for forensic inspection. |
-| "Is this receipt authentic?" | `cub-scout receipt validate <path>` | Recomputes the fingerprint and compares. Exit 0 OK / 1 mismatch / 2 I/O. JSON output for CI. |
+| "Has this receipt been tampered with?" | `cub-scout receipt validate <path>` | Recomputes the fingerprint and compares. Exit 0 OK / 1 mismatch / 2 I/O. JSON output for CI. |
 | "What receipts do I have locally?" | `cub-scout receipt list` | Walks `$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`. Sortable, newest first. |
 
 ## The predicates

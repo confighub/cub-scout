@@ -72,7 +72,7 @@ Today, `compare three-way` and `compare source-truth` require ConfigHub. A stand
 
 ### Verify — typed, fingerprinted, immutable evidence artifacts
 
-cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `compare` produces an ephemeral live picture, `receipt verify` wraps the same evidence into an in-toto Statement v1 envelope that CI/CD gates, audit trails, postmortems, and acceptance-judge tooling can attach to a decision and later prove the inputs were what they claim to be.
+cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `compare` produces an ephemeral live picture, `receipt verify` wraps the same evidence into an in-toto Statement v1 envelope that CI/CD gates, audit trails, postmortems, and acceptance-judge tooling can attach to a decision and later re-check for tampering.
 
 | Command | What you get | Inputs |
 |---|---|---|
