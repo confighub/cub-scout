@@ -72,7 +72,7 @@ Today, `compare three-way` and `compare source-truth` require ConfigHub. A stand
 
 ### Verify — typed, fingerprinted, immutable evidence artifacts
 
-cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `compare` produces an ephemeral live picture, `receipt verify` wraps the same evidence into an in-toto Statement v1 envelope that CI/CD gates, audit trails, postmortems, and acceptance-judge tooling can attach to a decision and later prove the inputs were what they claim to be.
+cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `compare` produces an ephemeral live picture, `receipt verify` wraps the same evidence into an in-toto Statement v1 envelope that CI/CD gates, audit trails, postmortems, and acceptance-judge tooling can attach to a decision and later re-check for tampering.
 
 | Command | What you get | Inputs |
 |---|---|---|
@@ -309,6 +309,7 @@ Honest gaps in the current capability map, with the leverage on filling them:
 | AI tool integration | [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md) |
 | Examples and demos | [examples/README.md](examples/README.md) |
 | Receipts (typed evidence artifacts) | [examples/receipts/README.md](examples/receipts/README.md) + [docs/reference/json-contracts.md § Receipt Contract](docs/reference/json-contracts.md) |
+| Receipt and proof terminology (vs log / journal / record / ledger / provenance) | [docs/concepts/receipts-and-proofs.md](docs/concepts/receipts-and-proofs.md) |
 | Receipts end-to-end how-to (pre-deploy gate → audit chain → namespace aggregate → real-time emission) | [docs/howto/receipts-end-to-end.md](docs/howto/receipts-end-to-end.md) |
 | Watch event types + inline receipts + backpressure | [docs/reference/watch-events.md](docs/reference/watch-events.md) |
 | Security model | [SECURITY.md](SECURITY.md) |

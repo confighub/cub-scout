@@ -2446,8 +2446,7 @@ Create and verify typed, fingerprinted, immutable evidence receipts (`#446`).
 Receipts wrap cub-scout's existing field-level evidence (compareThreeWay,
 attribution, sourceTruth, gitSource) into a verifiable in-toto Statement v1
 envelope. CI/CD gates, audit trails, postmortems, and acceptance-judge
-tooling can attach a receipt to a decision and later prove the inputs
-were what they claim to be.
+tooling can attach a receipt to a decision and later re-check for tampering.
 
 Current shipping releases use fingerprint-only integrity (SHA-256 over
 RFC 8785 canonical JSON of the full Statement minus only

@@ -17,6 +17,7 @@ Then go deeper with:
 - [tui-vs-gui.md](tui-vs-gui.md) — Scope boundaries between cub-scout and ConfigHub
 - [clobbering-problem.md](clobbering-problem.md) — Why GitOps layering causes silent overrides
 - [alternatives.md](alternatives.md) — Where cub-scout fits vs adjacent tools
+- [receipts-and-proofs.md](receipts-and-proofs.md) — What "receipt" and "proof" mean, vs log / journal / record / ledger / provenance
 
 ## Doc Status
 
@@ -34,6 +35,7 @@ Then go deeper with:
 | [tui-vs-gui.md](tui-vs-gui.md) | Current (Deep Dive) | 2026-02-12 |
 | [clobbering-problem.md](clobbering-problem.md) | Current (Deep Dive) | 2026-02-12 |
 | [alternatives.md](alternatives.md) | Current (Deep Dive) | 2026-02-12 |
+| [receipts-and-proofs.md](receipts-and-proofs.md) | Current (Deep Dive) | 2026-05-25 |
 
 ## Notes
 
