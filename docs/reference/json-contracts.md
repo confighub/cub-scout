@@ -598,6 +598,8 @@ Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 
 ## Receipt Contract (`cub-scout receipt verify`)
 
+> A **receipt** is a stamped, hand-offable record of one verification — an in-toto Statement v1 envelope around a verdict and its evidence, fingerprinted via SHA-256 over RFC 8785 canonical JSON. The **proof** is that fingerprint: any third party can recompute it over the receipt's canonical bytes and confirm nothing has been edited since the receipt was stamped. A receipt without proof is a claim; a receipt with proof is evidence.
+
 For the *vocabulary* — what "receipt" and "proof" mean in cub-scout, and how they relate to log / journal / record / ledger / provenance — see [docs/concepts/receipts-and-proofs.md](../concepts/receipts-and-proofs.md). This section documents the *wire format* of the artifact itself.
 
 The receipt surface emits typed, fingerprinted, immutable evidence artifacts

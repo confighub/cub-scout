@@ -9,6 +9,8 @@ allowed-tools: Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify 
 
 The Verify verb group of cub-scout. Produces typed, fingerprinted, immutable evidence artifacts — **receipts** — wrapping cub-scout's existing field-level evidence into a verifiable record CI/CD gates, audit trails, postmortems, and acceptance-judge tooling can attach to a decision and later prove the inputs were what they claim to be.
 
+> A **receipt** is a stamped, hand-offable record of one verification — an in-toto Statement v1 envelope around a verdict and its evidence, fingerprinted via SHA-256 over RFC 8785 canonical JSON. The **proof** is that fingerprint: any third party can recompute it over the receipt's canonical bytes and confirm nothing has been edited since the receipt was stamped. A receipt without proof is a claim; a receipt with proof is evidence.
+
 Receipts are HISTORICAL records. Updates produce new receipts; old ones never mutate.
 
 ## When to use

@@ -4,9 +4,17 @@
 > Last reviewed: 2026-05-25
 > Concepts index: [README.md](README.md)
 
-"Receipt" and "proof" are loaded words. cub-scout uses both, and it's worth being precise about which sense we mean — both for users picking the right tool and for integrators choosing the right vocabulary in their own docs.
+## TL;DR
 
-This doc defines the two terms, places them inside the broader vocabulary they sit alongside (log, journal, record, ledger, provenance), and notes where the boundaries blur honestly.
+> A **receipt** is a stamped, hand-offable record of one verification — an in-toto Statement v1 envelope around a verdict and its evidence, fingerprinted via SHA-256 over RFC 8785 canonical JSON. The **proof** is that fingerprint: any third party can recompute it over the receipt's canonical bytes and confirm nothing has been edited since the receipt was stamped. A receipt without proof is a claim; a receipt with proof is evidence.
+
+The rest of this doc unpacks each term, places them inside the broader vocabulary they sit alongside (log, journal, record, ledger, provenance), and notes where the boundaries blur honestly.
+
+---
+
+## Why this matters
+
+"Receipt" and "proof" are loaded words. cub-scout uses both, and it's worth being precise about which sense we mean — both for users picking the right tool and for integrators choosing the right vocabulary in their own docs.
 
 ---
 
