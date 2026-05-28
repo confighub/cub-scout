@@ -12,6 +12,10 @@ installer proves:   package/spec -> rendered objects -> ConfigHub Units/OCI
 cub-scout proves:   rendered objects are present and matching in the live cluster
 ```
 
+This is a general pattern for any chart/release that `helm-expt` can render
+and compare. Redis is the first worked value set, not the shape of the whole
+example.
+
 ## Why This Exists
 
 cub-scout already answers useful runtime questions:
@@ -38,7 +42,10 @@ cluster.
 
 ## Render-Side Proof
 
-In `confighub/helm-expt`, the Redis proof already has render-side checks:
+Start in `confighub/helm-expt`. For the chart/release under test, run the
+matching render/equivalence/package checks from that repository.
+
+For the current Redis worked case:
 
 ```bash
 npm run redis:compare
@@ -55,30 +62,46 @@ As of May 28, 2026, those checks verified:
 - Redis proof/package/use-more-now receipts
 - 20 top-chart local kind observation receipts
 
+For another chart, replace the Redis scripts and paths with that chart's
+equivalent `helm-expt` recipe and run directory.
+
 ## Runtime Setup
 
-After rendering and applying/syncing a Redis variant, point cub-scout at the
-same live cluster and the exact rendered object file that was applied.
+After rendering and applying/syncing a chart variant, point cub-scout at the
+same live cluster and the exact rendered object file or directory that was
+applied.
 
-Build cub-scout from this repository, then set paths for the `helm-expt`
-checkout you are inspecting:
+Build cub-scout from this repository, then set the values for the run you are
+inspecting:
 
 ```bash
 go build ./cmd/cub-scout
 
 HELM_EXPT=/path/to/helm-expt
+NS=example-namespace
+WORKLOAD=deployment/example
+MANIFESTS=/path/to/rendered/release-objects.yaml
+RUN_DIR=/path/to/run-output
+DELIVERY_STRATEGY=confighub-oci-argo
+mkdir -p "$RUN_DIR"
+```
+
+Redis worked values:
+
+```bash
+HELM_EXPT=/path/to/helm-expt
 NS=redis
 WORKLOAD=statefulset/redis-master
 MANIFESTS="$HELM_EXPT/recipes/bitnami/redis/25.5.3/revisions/default/r001/rendered/release-objects.yaml"
 RUN_DIR="$HELM_EXPT/runs/redis-local-kind/latest"
+DELIVERY_STRATEGY=confighub-oci-argo
 mkdir -p "$RUN_DIR"
 ```
 
 If the install intentionally separates Secrets or requires target facts, verify
-the applied manifest set, not an abstract chart source. For Redis default, the
-installer separates one Secret; for `reuse-existing-secret`, the target Secret
-is external. Include support-object YAML in `--file` only when that object is
-part of the install contract you want cub-scout to verify.
+the applied manifest set, not an abstract chart source. Include support-object
+YAML in `--file` only when that object is part of the install contract you want
+cub-scout to verify.
 
 ## Runtime Verification Menu
 
@@ -109,7 +132,7 @@ Optional connected ConfigHub checks:
 | Question | Command |
 |----------|---------|
 | Do ConfigHub intent, rendered state, and live state agree? | `./cub-scout compare three-way --scope namespace/"$NS" --format json --fail-on warning` |
-| Does the declared ConfigHub delivery strategy pass? | `./cub-scout compare source-truth "$WORKLOAD" -n "$NS" --strategy confighub-oci-argo` |
+| Does the declared ConfigHub delivery strategy pass? | `./cub-scout compare source-truth "$WORKLOAD" -n "$NS" --strategy "$DELIVERY_STRATEGY"` |
 
 Useful supporting artifacts:
 
@@ -168,11 +191,13 @@ extra live resources exist outside that desired identity set.
 For a `cub install` work directory, use the same shape:
 
 ```bash
+INSTALL_WORKDIR=/tmp/chart-run
+
 ./cub-scout receipt verify \
-  --file /tmp/redis-default/out/manifests \
-  --scope namespace/redis \
+  --file "$INSTALL_WORKDIR/out/manifests" \
+  --scope namespace/"$NS" \
   --format json \
-  --out /tmp/redis-default/install.object-set.receipt.json \
+  --out "$INSTALL_WORKDIR/install.object-set.receipt.json" \
   --fail-on any-non-pass
 ```
 
@@ -182,19 +207,19 @@ The strongest story is a sequence of independent receipts:
 
 ```text
 1. Helm equivalence proof
-   npm run redis:compare
+   helm-expt compare/verify command for this chart variant
 
 2. Installer package proof
-   npm run redis:verify-package
+   helm-expt package verification for this chart variant
 
 3. ConfigHub upload / OCI proof
-   runs/redis-confighub/latest/upload-oci-receipt.yaml
+   run-specific upload or OCI receipt, when that path is used
 
 4. Live cluster object-set proof
-   cub-scout receipt verify --file ... --scope namespace/redis
+   cub-scout receipt verify --file ... --scope namespace/<namespace>
 
 5. Optional workload/source-truth proof
-   cub-scout receipt verify "$WORKLOAD" -n "$NS" --strategy confighub-oci-argo
+   cub-scout receipt verify "$WORKLOAD" -n "$NS" --strategy "$DELIVERY_STRATEGY"
 ```
 
 Today, `--input-attestation` chains prior cub-scout receipts whose fingerprints
