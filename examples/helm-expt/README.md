@@ -12,6 +12,81 @@ installer proves:   package/spec -> rendered objects -> ConfigHub Units/OCI
 cub-scout proves:   rendered objects are present and matching in the live cluster
 ```
 
+## INTRO
+
+cub-scout can say useful runtime things:
+
+- `doctor` / `map status`: are workloads healthy?
+- `gitops status` / `trace --artifacts`: did the delivery controller converge?
+- `compare drift`: do workload fields differ?
+- `compare source-truth`: do ConfigHub / controller / runtime agree under a
+  declared strategy?
+
+The missing piece was an install-level runtime receipt:
+
+```text
+I expected this rendered object set.
+I observed the live cluster.
+Every desired object and authored field matched.
+Here is the fingerprinted receipt.
+```
+
+That is the piece `helm-expt` needs to show Helm and ConfigHub+installer can be
+equivalent not only at render time, but also after the objects land in a real
+cluster.
+
+Core live-cluster checks:
+
+| Question | Command |
+|----------|---------|
+| Is the namespace broadly healthy? | `./cub-scout map status --namespace "$NS" --json` |
+| What should an operator look at first? | `./cub-scout doctor --namespace "$NS" --format json` |
+| Which objects exist, and who owns them? | `./cub-scout map list --namespace "$NS" --format json` |
+| Which GitOps deployers are present? | `./cub-scout map deployers --json` |
+| Did the delivery controller converge? | `./cub-scout gitops status -n "$NS" --json` |
+| What changed recently? | `./cub-scout map activity --namespace "$NS" --since 1h --format json` |
+| Are there obvious broken workloads or deployers? | `./cub-scout map issues --namespace "$NS" --json` |
+| How is ownership grouped? | `./cub-scout tree ownership --namespace "$NS" --format md` |
+| What is this workload, in plain language? | `./cub-scout explain "$WORKLOAD" -n "$NS" --format md` |
+| Where did this workload come from? | `./cub-scout trace "$WORKLOAD" -n "$NS" --artifacts --format json` |
+| Is the rendered YAML risky before apply? | `./cub-scout scan --file "$MANIFESTS" --json` |
+| Are runtime reconcilers stuck? | `./cub-scout scan -n "$NS" --state --json` |
+| Did key authored fields drift? | `./cub-scout compare drift --file "$MANIFESTS" -n "$NS" --format json --fail-on warning` |
+| Do ConfigHub intent, rendered state, and live state agree? | `./cub-scout compare three-way --scope namespace/"$NS" --format json --fail-on warning` |
+| Does the declared ConfigHub delivery strategy pass? | `./cub-scout compare source-truth "$WORKLOAD" -n "$NS" --strategy confighub-oci-argo` |
+
+Useful supporting artifacts:
+
+```bash
+mkdir -p "$RUN_DIR"
+
+./cub-scout graph export -n "$NS" \
+  --format html \
+  -o "$RUN_DIR/cub-scout-graph.html"
+
+./cub-scout snapshot -n "$NS" \
+  --relations \
+  -o "$RUN_DIR/cub-scout-snapshot.json"
+
+./cub-scout context-pack -n "$NS" \
+  --format json > "$RUN_DIR/cub-scout-context-pack.json"
+
+./cub-scout patterns detect -n "$NS" \
+  --json > "$RUN_DIR/cub-scout-patterns.json"
+```
+
+Then close the loop with the install/object-set receipt:
+
+```bash
+./cub-scout receipt verify \
+  --file "$MANIFESTS" \
+  --scope namespace/"$NS" \
+  --format json \
+  --out "$RUN_DIR/cub-scout-object-set.receipt.json" \
+  --fail-on any-non-pass
+```
+
+
 Use `receipt verify --file`, not a new `verify install receipt` verb. The
 receipt command family is already the artifact surface; `verify` builds a new
 receipt, and `--file` selects the install/object-set predicate.
@@ -109,56 +184,7 @@ MANIFESTS=recipes/bitnami/redis/25.5.3/revisions/default/r001/rendered/release-o
 RUN_DIR=runs/redis-local-kind/latest
 ```
 
-Core live-cluster checks:
 
-| Question | Command |
-|----------|---------|
-| Is the namespace broadly healthy? | `./cub-scout map status --namespace "$NS" --json` |
-| What should an operator look at first? | `./cub-scout doctor --namespace "$NS" --format json` |
-| Which objects exist, and who owns them? | `./cub-scout map list --namespace "$NS" --format json` |
-| Which GitOps deployers are present? | `./cub-scout map deployers --json` |
-| Did the delivery controller converge? | `./cub-scout gitops status -n "$NS" --json` |
-| What changed recently? | `./cub-scout map activity --namespace "$NS" --since 1h --format json` |
-| Are there obvious broken workloads or deployers? | `./cub-scout map issues --namespace "$NS" --json` |
-| How is ownership grouped? | `./cub-scout tree ownership --namespace "$NS" --format md` |
-| What is this workload, in plain language? | `./cub-scout explain "$WORKLOAD" -n "$NS" --format md` |
-| Where did this workload come from? | `./cub-scout trace "$WORKLOAD" -n "$NS" --artifacts --format json` |
-| Is the rendered YAML risky before apply? | `./cub-scout scan --file "$MANIFESTS" --json` |
-| Are runtime reconcilers stuck? | `./cub-scout scan -n "$NS" --state --json` |
-| Did key authored fields drift? | `./cub-scout compare drift --file "$MANIFESTS" -n "$NS" --format json --fail-on warning` |
-| Do ConfigHub intent, rendered state, and live state agree? | `./cub-scout compare three-way --scope namespace/"$NS" --format json --fail-on warning` |
-| Does the declared ConfigHub delivery strategy pass? | `./cub-scout compare source-truth "$WORKLOAD" -n "$NS" --strategy confighub-oci-argo` |
-
-Useful supporting artifacts:
-
-```bash
-mkdir -p "$RUN_DIR"
-
-./cub-scout graph export -n "$NS" \
-  --format html \
-  -o "$RUN_DIR/cub-scout-graph.html"
-
-./cub-scout snapshot -n "$NS" \
-  --relations \
-  -o "$RUN_DIR/cub-scout-snapshot.json"
-
-./cub-scout context-pack -n "$NS" \
-  --format json > "$RUN_DIR/cub-scout-context-pack.json"
-
-./cub-scout patterns detect -n "$NS" \
-  --json > "$RUN_DIR/cub-scout-patterns.json"
-```
-
-Then close the loop with the install/object-set receipt:
-
-```bash
-./cub-scout receipt verify \
-  --file "$MANIFESTS" \
-  --scope namespace/"$NS" \
-  --format json \
-  --out "$RUN_DIR/cub-scout-object-set.receipt.json" \
-  --fail-on any-non-pass
-```
 
 ## Full Proof Chain
 
@@ -186,25 +212,3 @@ can be verified by cub-scout. Keep `helm-expt` receipts adjacent in the run
 directory until those upstream receipts are emitted or bridged as cub-scout /
 in-toto Statement receipts.
 
-## Why This Matters
-
-Before this receipt, cub-scout could say useful runtime things:
-
-- `doctor` / `map status`: are workloads healthy?
-- `gitops status` / `trace --artifacts`: did the delivery controller converge?
-- `compare drift`: do workload fields differ?
-- `compare source-truth`: do ConfigHub / controller / runtime agree under a
-  declared strategy?
-
-The missing piece was an install-level runtime receipt:
-
-```text
-I expected this rendered object set.
-I observed the live cluster.
-Every desired object and authored field matched.
-Here is the fingerprinted receipt.
-```
-
-That is the piece `helm-expt` needs to show Helm and ConfigHub+installer can be
-equivalent not only at render time, but also after the objects land in a real
-cluster.
