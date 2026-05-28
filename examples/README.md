@@ -20,6 +20,7 @@ question you have right now.
 | Show connected value in under a minute | [`connect-and-compare`](./connect-and-compare/) | deterministic fixture path for doctor, connect, compare, and history |
 | Import from a real cluster into ConfigHub | [`import-from-live`](./import-from-live/) | the simplest brownfield cluster-first story |
 | Compare a Git repo with live cluster state | [`combined-git-live`](./combined-git-live/) | good when the repo and cluster already both exist |
+| Prove Helm and ConfigHub installer equivalence | [`helm-expt`](./helm-expt/) | worked runbook for render equivalence plus live-cluster verification |
 | Prove Argo or Flux import on a real kind cluster | [`argo-import-confighub-demo`](./argo-import-confighub-demo/) or [`flux-import-confighub-demo`](./flux-import-confighub-demo/) | full demo paths with real controllers and ConfigHub import |
 
 If you are unsure, start with `new-user-puzzle-quest` for learning or
@@ -81,6 +82,7 @@ understands the core ownership model.
 - [`custom-ownership-detectors`](./custom-ownership-detectors/)
 - [`orphans`](./orphans/)
 - [`drift`](./drift/)
+- [`helm-expt`](./helm-expt/) — Helm vs ConfigHub+installer equivalence and live verification
 - [`receipts`](./receipts/) — typed, fingerprinted evidence artifacts (#446)
 - [`lifecycle-hazards`](./lifecycle-hazards/)
 - [`demo-data`](./demo-data/)

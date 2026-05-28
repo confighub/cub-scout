@@ -669,11 +669,14 @@ The wire format is the **in-toto Statement v1 envelope** (`_type =
 |--------|--------------|-------------|
 | `k8s-live://<apiVersion>/<kind>/<namespace>/<name>` | Always | SHA-256 over canonical JSON of the live object with dynamic fields pruned (`status`, `metadata.managedFields`, `metadata.resourceVersion`, `metadata.generation`, `metadata.uid`, `metadata.creationTimestamp`) |
 | `confighub-unit://<slug>@rev=<n>` | Connected mode + ConfigHub-linked resource | SHA-256 over the unit canonical body returned by ConfigHub |
+| `rendered-object-set://sha256/<id>` | `object-set-matches` receipts | SHA-256 over the canonical desired rendered object set after dynamic fields are pruned |
+| `k8s-live-object-set://namespace/<ns>` or `k8s-live-object-set://cluster` | `object-set-matches` receipts | SHA-256 over the canonical live projection for the desired object identities |
 
-Standalone-mode receipts emit only the `k8s-live://` subject and record an
-`OmissionConfigHubUnitSubject` entry in `predicate.omissions`. Connected
-mode with no ConfigHub linkage records the same omission with a different
-reason string.
+Standalone-mode single-resource receipts emit only the `k8s-live://`
+subject and record an `OmissionConfigHubUnitSubject` entry in
+`predicate.omissions`. Connected mode with no ConfigHub linkage records
+the same omission with a different reason string. Object-set receipts use
+the rendered/live object-set subject pair instead.
 
 ### Verdicts
 
@@ -691,6 +694,55 @@ reason string.
 | `applied-matches-spec` | Controller-resolved `gitSource` on the resource | `Spec missing` or `GitSource missing` → INCONCLUSIVE + `OmissionGitSourceAnchor`. `Anchor mismatch (repoUrl/revision/path)` → BLOCK. `Cause = manual-edit` → BLOCK. `Cause = controller-drift` → PASS. `Cause = unknown` or unrecognized → INCONCLUSIVE + `OmissionManagedFields`. |
 | `source-truth-pass` | `--strategy` (one of nine) + connected-mode ConfigHub auth | `--strategy` empty → INCONCLUSIVE + `OmissionStrategyMissing`. No source-truth evidence body → INCONCLUSIVE + `OmissionSourceTruthEvidence`. Strategy mismatch between caller and evidence → BLOCK + `OmissionStrategyMismatch`. Otherwise: Status PASS → PASS, WATCH → WATCH, BLOCK → BLOCK, **ASK → WATCH** (per the locked synthesis; receipt-level INCONCLUSIVE is reserved for receipts that themselves can't be built — not for cases where the underlying source-truth derivation just couldn't classify). Source-truth `proof_gaps[]` are mirrored into `omissions[]` under `source-truth-complete` regardless of verdict. |
 | `no-manual-edits-since` | `--since <RFC3339>` cutoff | `--since` zero → INCONCLUSIVE + `OmissionSinceMissing`. Live nil or no managedFields → INCONCLUSIVE + `OmissionManagedFields`. Any interactive (`kubectl-*`) manager with `Time > since` → BLOCK. Any interactive manager with nil `Time` → INCONCLUSIVE + `OmissionManagedFieldsTime`. Otherwise → PASS. |
+| `object-set-matches` | `--file <manifest.yaml\|dir>` + live cluster access | PASS when every desired object identity is present live and every authored field still matches. BLOCK when any desired object is missing or any authored field differs. INCONCLUSIVE when an API mapping or live read could not be checked. Kubernetes server-added map fields and `status` are outside the claim. |
+
+#### `object-set-matches` evidence
+
+`object-set-matches` records its details under
+`predicate.evidence.objectSet`:
+
+```json
+{
+  "desiredSource": {
+    "type": "directory",
+    "ref": "out/manifests",
+    "digest": "sha256-of-input-files",
+    "objectCount": 14
+  },
+  "scope": {"kind": "namespace", "namespace": "redis"},
+  "matchMode": "authored-fields",
+  "desiredDigest": "sha256-of-normalized-rendered-set",
+  "liveDigest": "sha256-of-live-projection",
+  "summary": {
+    "desired": 14,
+    "matched": 14,
+    "missing": 0,
+    "mismatched": 0,
+    "inconclusive": 0
+  },
+  "objects": [
+    {
+      "id": {
+        "apiVersion": "apps/v1",
+        "kind": "StatefulSet",
+        "namespace": "redis",
+        "name": "redis-master"
+      },
+      "status": "matched",
+      "desiredDigest": "sha256...",
+      "liveDigest": "sha256..."
+    }
+  ]
+}
+```
+
+`matchMode: authored-fields` means cub-scout projects live objects onto
+the desired manifest shape before comparing. Every field present in the
+rendered YAML must match. Server-added map fields are ignored, but list
+length changes are considered material. This catches missing objects,
+changed images, changed replicas, changed RBAC rules, changed Service
+ports, injected list items, and similar install drift without failing on
+normal Kubernetes defaulting.
 
 ### Auto-Detection Priority
 
@@ -717,6 +769,9 @@ without `--strategy` errors, and `--predicate no-manual-edits-since`
 without `--since` errors — silently demoting either to INCONCLUSIVE
 would hide the operator's intent from the receipt.
 
+`--file <path>` is a separate install/object-set mode: it selects
+`object-set-matches` and does not accept a positional resource subject.
+
 ### Omissions
 
 Every receipt carries a required `omissions[]` array (possibly empty).
@@ -734,6 +789,8 @@ Each entry explicitly converts a silent PASS into an honest PASS:
 | `source-truth-evidence` | source-truth-pass invoked but no source-truth evidence body was attached |
 | `source-truth-complete` | A proof gap from `compare source-truth` (e.g. `runtime.helm_chart_anchor`); mirrored into `omissions[]` regardless of receipt verdict |
 | `since` | no-manual-edits-since invoked without `--since`; cub-scout does not invent a cutoff |
+| `object-set-coverage` | One or more desired objects in an `object-set-matches` receipt could not be checked because API mapping or live lookup was inconclusive |
+| `extra-live-object-coverage` | `object-set-matches` verified desired object identities and authored fields, but did not prove that no extra live resources exist outside the desired set |
 | `next-step-allowed-action` | A nextStep with mutating `actionType` was dropped at receipt-emit time |
 | `next-step-allowed-command` | A nextStep with mutating `nextCommand` (apply/edit/patch/delete/sync/create/update/replace/scale/rollout/reconcile/annotate/label/set/exec/debug/`helm install`/`helm upgrade`) was dropped |
 

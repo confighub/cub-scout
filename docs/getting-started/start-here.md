@@ -1,6 +1,8 @@
 # Start Here
 
-Fast routing guide for new and returning `cub-scout` users.
+Fast routing guide for new and returning `cub-scout` users. Start with a live
+cluster: cub-scout is most useful when it can read the current Kubernetes
+context and explain what is running before you think about repos or imports.
 
 If you just want the command index, use:
 - [Complete CLI Reference (A-Z)](../reference/cli-reference.md)
@@ -67,7 +69,31 @@ Then:
 
 ---
 
-## 4) Platform-Scale Features (v1.7 line)
+## 4) Adopt Existing Config (Second Step)
+
+Use this after you have observed the live cluster and want to preview how
+existing workloads would map into ConfigHub.
+
+```bash
+cub-scout import --dry-run -n <namespace>
+cub-scout import --json
+```
+
+Advanced repo preview, only when the repository itself is the object under review:
+
+```bash
+cub-scout import --git-path ./repo --dry-run --json
+cub-scout import parse-repo --path ./repo --json
+```
+
+Then:
+- [Import from Live Cluster](../howto/import-from-live.md)
+- [Canonical Import Path](../howto/import-to-confighub.md)
+- [Migration Playbook](../howto/migration-playbook.md)
+
+---
+
+## 5) Platform-Scale Features (v1.7 line)
 
 Run:
 
@@ -84,4 +110,3 @@ Then:
 - [Connected Summary Storage Example](../../examples/connected-summary-storage/)
 - [Watch Webhook Example](../../examples/watch-webhook/)
 - [Extending cub-scout](../howto/extending.md)
-

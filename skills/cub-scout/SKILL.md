@@ -1,6 +1,6 @@
 ---
 name: cub-scout
-description: Use when working in the cub-scout repo or when answering capability-assistant questions ("can cub-scout do X?", "should I use cub-scout or kubectl here?", "how does cub-scout differ from cub?"). This is the umbrella router — it points you at the verb-grouped scenario skills under `skills/scout-*/` and the workflow / observer / reference skills planned for batches 2–5. For a specific verb-group task (observe / diagnose / compare / attribute / ingest / govern / integrate / verify) load the corresponding `scout-*` skill directly.
+description: Use when working in the cub-scout repo or when answering capability-assistant questions ("can cub-scout do X?", "should I use cub-scout or kubectl here?", "how does cub-scout differ from cub?"). This is the umbrella router — it points you at the verb-grouped scenario skills under `skills/scout-*/` and the workflow / observer / reference skills planned for batches 2–5. For a specific verb-group task (observe / diagnose / compare / attribute / adopt existing config / govern / integrate / verify) load the corresponding `scout-*` skill directly.
 phase: cross-cutting
 allowed-tools: Bash(./cub-scout --help) Bash(./cub-scout * --help) Bash(cub-scout --help) Bash(cub-scout * --help) Bash(cub scout --help) Bash(cub scout * --help)
 ---
@@ -24,7 +24,7 @@ This skill is the cross-cutting entry point. It picks the right verb-grouped ski
   - [`scout-diagnose`](../scout-diagnose/SKILL.md) — interpret + recommend
   - [`scout-compare`](../scout-compare/SKILL.md) — intended vs actual
   - [`scout-attribute`](../scout-attribute/SKILL.md) — provenance of field values
-  - [`scout-ingest`](../scout-ingest/SKILL.md) — preview import into ConfigHub
+  - [`scout-ingest`](../scout-ingest/SKILL.md) — adopt existing config into ConfigHub with preview first
   - [`scout-govern`](../scout-govern/SKILL.md) — connected governance signals
   - [`scout-mcp`](../scout-mcp/SKILL.md) — MCP gateway + context-pack
   - [`scout-verify`](../scout-verify/SKILL.md) — typed, fingerprinted evidence receipts
@@ -39,8 +39,8 @@ This skill is the cross-cutting entry point. It picks the right verb-grouped ski
 | Diagnose | [`scout-diagnose`](../scout-diagnose/SKILL.md) | shipped (batch 1) |
 | Compare | [`scout-compare`](../scout-compare/SKILL.md) | shipped (batch 1) |
 | Attribute | [`scout-attribute`](../scout-attribute/SKILL.md) | shipped (batch 1) |
-| Ingest | [`scout-ingest`](../scout-ingest/SKILL.md) | shipped (batch 2) |
 | Govern | [`scout-govern`](../scout-govern/SKILL.md) | shipped (batch 2) |
+| Adopt Existing Config | [`scout-ingest`](../scout-ingest/SKILL.md) | shipped (batch 2) |
 | Integrate | [`scout-mcp`](../scout-mcp/SKILL.md) | shipped (batch 2) |
 | Verify | [`scout-verify`](../scout-verify/SKILL.md) | shipped (batch 2, consuming the `#446` receipt capability) |
 
@@ -76,7 +76,7 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 - **Diagnose** — `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status`
 - **Compare** — `compare drift`, `compare three-way`, `compare source-truth`, `compare <kind>/<name>`
 - **Attribute** — read `cause` / `managerHint` / `gitSource` / `bindingSource` on `compare` and `explain` JSON
-- **Ingest** (preview) — `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`
+- **Adopt Existing Config** (preview first) — `import --dry-run`, `import --from-bundle`, `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`
 - **Govern** (connected) — `history`, `impact`, `fleet outliers`, `summary`, `views resolve`, `audit list`, `bundle inspect/diff/timeline`, `catalog list`
 - **Integrate** — `mcp serve`, `context-pack`
 - **Verify** — `receipt verify / show / validate / list` (typed, fingerprinted evidence; `#446` v1 complete)
@@ -110,7 +110,7 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 
 1. [`AI-README-FIRST.md`](../../AI-README-FIRST.md) — cold-start guide, current shipped capabilities, current open queue
 2. [`HANDOVER.md`](../../HANDOVER.md) — latest execution snapshot
-3. [`README.md`](../../README.md) § "Capability Map" — the seven verb groups
+3. [`README.md`](../../README.md) § "Capability Map" — the eight verb groups
 4. [`docs/reference/commands.md`](../../docs/reference/commands.md) — exact command surface
 5. [`docs/reference/json-contracts.md`](../../docs/reference/json-contracts.md) — JSON shapes
 6. `references/capability-assistant.md` (in this directory) — the original capability-assistant profile, kept for back-compatibility

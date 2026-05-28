@@ -8,7 +8,7 @@ If your AI host supports repo-local skills, load these alongside `AI-README-FIRS
 
 ## Skill map
 
-Skills are grouped along the **eight verb groups** from [`README.md`](../README.md#capability-map) (Observe / Diagnose / Compare / Attribute / Ingest / Govern / Integrate / Verify), plus controller-specific observer skills, workflow scenario skills, Pilot consumer scenarios, and shared references.
+Skills are grouped along the **eight verb groups** from [`README.md`](../README.md#capability-map) (Observe / Diagnose / Compare / Attribute / Govern / Adopt Existing Config / Integrate / Verify), plus controller-specific observer skills, workflow scenario skills, Pilot consumer scenarios, and shared references.
 
 ### Verb-grouped scenario skills
 
@@ -20,8 +20,8 @@ One skill per cub-scout verb group. The skill knows which commands belong to its
 | [`scout-diagnose/`](scout-diagnose/SKILL.md) | Diagnose | `explain` / `debug` / `suggest-remedy` / `patterns` / `gitops status` |
 | [`scout-compare/`](scout-compare/SKILL.md) | Compare | `compare` / `compare drift` / `compare three-way` / `compare source-truth` |
 | [`scout-attribute/`](scout-attribute/SKILL.md) | Attribute | `cause` / `managerHint` / `gitSource` / `bindingSource` on `compare` + `explain` JSON |
-| [`scout-ingest/`](scout-ingest/SKILL.md) | Ingest | `import --git-path` / `import argocd` / `import cluster-aggregator` / `import parse-repo` / `app` (preview-only — `import apply` is intentionally out of band) |
 | [`scout-govern/`](scout-govern/SKILL.md) | Govern | `history` / `impact` / `fleet` / `summary` / `views` / `audit` / `bundle` / `catalog` |
+| [`scout-ingest/`](scout-ingest/SKILL.md) | Adopt Existing Config | `import --dry-run` / `import --from-bundle` / `import --git-path` / `import argocd` / `import cluster-aggregator` / `import parse-repo` / `app` (preview-first — `import apply` is intentionally out of band) |
 | [`scout-mcp/`](scout-mcp/SKILL.md) | Integrate | `mcp serve` / `context-pack` (AI gateway) |
 | [`scout-verify/`](scout-verify/SKILL.md) | Verify | `cub-scout receipt verify / show / validate / list` + `watch --emit-receipt-on` (typed, fingerprinted evidence — `#446` v1 + v2 feature-complete: `--fail-on`, `--input-attestation` chained, `--scope` aggregate-with-discovery, real-time emission) |
 
@@ -39,12 +39,12 @@ One skill per controller cub-scout detects. Each documents the specific labels /
 
 ### Workflow scenario skills
 
-Each covers a real operator / agent workflow that spans multiple verbs. Compose verb-group skills (Observe / Diagnose / Compare / Attribute / Ingest / Govern / Integrate / Verify) into a single situation-shaped loop.
+Each covers a real operator / agent workflow that spans multiple verbs. Compose verb-group skills (Observe / Diagnose / Compare / Attribute / Govern / Adopt Existing Config / Integrate / Verify) into a single situation-shaped loop.
 
 - [`triage-unhealthy-workload/`](triage-unhealthy-workload/SKILL.md) — doctor → explain → trace under pager-time pressure; the 30-second loop
 - [`investigate-drift/`](investigate-drift/SKILL.md) — compare three-way + attribution (controller-drift vs manual-edit), per-field cause classification
 - [`audit-fleet-conformance/`](audit-fleet-conformance/SKILL.md) — compare three-way `--view` + source-truth + fleet outliers + optional receipt persistence
-- [`prepare-for-confighub/`](prepare-for-confighub/SKILL.md) — import --git-path preview + disk-PR proposal flow before ever invoking `import apply`
+- [`prepare-for-confighub/`](prepare-for-confighub/SKILL.md) — live-cluster import preview + optional repo preview before ever invoking `import apply`
 - [`migrate-from-kubectl/`](migrate-from-kubectl/SKILL.md) — find manual edits via attribution, risk-rank with scan, plan per-resource revert/port/accept, capture baseline receipts
 - [`ai-agent-readonly-context/`](ai-agent-readonly-context/SKILL.md) — MCP gateway + context-pack + `--presentation ai` for Claude / Codex / Cursor / Continue integration with the read-only invariant
 - [`operator-incident-evidence/`](operator-incident-evidence/SKILL.md) — postmortem evidence package: trace + compare + bundle + history + audit + fingerprinted receipts
@@ -102,7 +102,7 @@ All skills under `skills/` follow the read-only-triad invariant. Concretely:
 
 **Final tally:**
 - **Scaffolding + 1 router + 1 umbrella** — `SKILL_TEMPLATE.md`, `skills/README.md`, `skills/cub-scout/SKILL.md`
-- **Verb-group scenario skills (8)** — Observe, Diagnose, Compare, Attribute (batch 1) + Ingest, Govern, Integrate, Verify (batch 2)
+- **Verb-group scenario skills (8)** — Observe, Diagnose, Compare, Attribute (batch 1) + Adopt Existing Config, Govern, Integrate, Verify (batch 2)
 - **Controller-observer skills (7)** — argocd, flux, helm, crossplane, kro, confighub-managed, native (batch 3)
 - **Workflow scenario skills (8)** — triage-unhealthy-workload, investigate-drift, audit-fleet-conformance, prepare-for-confighub, migrate-from-kubectl, ai-agent-readonly-context, operator-incident-evidence, confighub-source-truth (batch 4)
 - **Shared references (9)** — kubernetes-managedfields, verified-manager-strings (batch 1) + source-truth-strategies, standalone-vs-connected, read-only-triad, plugin-vs-standalone, argocd-applicationset, flux-source-types, mcp-tool-catalog (batch 5)

@@ -1079,6 +1079,7 @@ cub-scout receipt <verb> [args] [flags]
 
 ```bash
 cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
+cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flags]
 ```
 
 #### Flags
@@ -1086,7 +1087,8 @@ cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-n, --namespace` | string | `default` | Namespace |
-| `--predicate` | string | auto-detect | One of `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since` |
+| `--predicate` | string | auto-detect | One of `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`, `object-set-matches` |
+| `--file` | string | empty | Rendered YAML file or directory for `object-set-matches`; this mode does not accept a positional subject |
 | `--strategy` | string | empty | Required when `--predicate source-truth-pass`; one of 9 strategies |
 | `--since` | string | empty | Required when `--predicate no-manual-edits-since`; RFC 3339 timestamp |
 | `--at-commit` | string | empty | Override the spec anchor revision (forensic-snapshot mode) |
@@ -1096,6 +1098,7 @@ cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
 | `--save-dir` | string | XDG default | Override the store directory |
 | `--input-attestation` | string array | empty | Reference a prior receipt by path (repeatable). Each is fingerprint-verified before chaining; tampered receipts are refused |
 | `--fail-on` | string | empty | Comma-separated verdicts that trigger exit 2: `WATCH`, `BLOCK`, `INCONCLUSIVE`, or sugar `any-non-pass` |
+| `--scope` | string | empty | Aggregate scope when no `--file`; object-set scope (`namespace/<ns>` or `cluster`) when `--file` is set |
 
 #### Predicate auto-detection (when `--predicate` is empty)
 
@@ -1104,6 +1107,7 @@ cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
 | Argo / Flux / ConfigHub owner + resolved git anchor | `applied-matches-spec` |
 | `--strategy <name>` provided | `source-truth-pass` |
 | `--since <RFC3339>` provided | `no-manual-edits-since` |
+| `--file <path>` provided | `object-set-matches` |
 | Otherwise | INCONCLUSIVE with `OmissionAutoDetectedPredicate` |
 
 cub-scout NEVER infers a strategy or a cutoff. Pass `--strategy` / `--since` explicitly or the corresponding predicate is unavailable.
@@ -1142,6 +1146,14 @@ cub-scout receipt verify deploy/api -n prod \
   --save
 # exit 0 if PASS, exit 2 if WATCH/BLOCK/INCONCLUSIVE
 # receipt is in the store either way
+
+cub-scout receipt verify \
+  --file out/manifests \
+  --scope namespace/redis \
+  --fail-on any-non-pass \
+  --out install.object-set.receipt.json
+# object-set PASS only when every desired rendered object is present
+# and every authored field still matches live
 ```
 
 ### cub-scout receipt show

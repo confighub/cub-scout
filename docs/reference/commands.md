@@ -977,7 +977,9 @@ For JSON contract details and schema ownership by surface, see [JSON Contracts a
 
 ## import
 
-Import workloads into ConfigHub.
+Preview or import existing workloads into ConfigHub. Most users should start
+from the live cluster with `--dry-run`; repo parsing is an advanced adoption
+path for reviewing an existing manifest repository.
 
 > **Terminology:** The CLI currently uses Space/Unit commands. These map to App/Deployment
 > in the new model. See [Glossary](glossary.md#confighub-model-app-centric).
@@ -999,10 +1001,10 @@ cub-scout import [flags]
 | `--connect` | After import, start worker and set targets |
 | `--no-connect` | Do not auto-start worker/targets after import |
 | `--from-bundle` | Import proposal/apply from a debug bundle directory (offline path, no cluster discovery) |
-| `--git-path` | Preview/import from a local GitOps repository path |
+| `--git-path` | Advanced: preview from a local GitOps repository path (dry-run only; not a renderer) |
 | `--audit-reason` | Record break-glass decision reason in connected audit history (max 512 chars) |
 
-### Canonical Migration Path
+### Canonical Adoption Path
 
 Use the canonical Argo/Helm migration flow:
 `docs/howto/import-to-confighub.md`
@@ -1028,7 +1030,7 @@ cub-scout import -n payments-prod --json
 # Proposal JSON from a debug bundle (offline)
 cub-scout import --from-bundle ./debug-bundle --dry-run --json
 
-# Proposal JSON from a local GitOps repo
+# Advanced: proposal JSON from a local GitOps repo
 cub-scout import --git-path ./repo --dry-run --json
 ```
 
@@ -1039,7 +1041,8 @@ cub-scout import --git-path ./repo --dry-run --json
 - `workloads[].connected`: true when the workload is already linked by `confighub.com/UnitSlug` or when a proposed unit slug already exists in the target App Space.
 
 `import --git-path` notes:
-- this is a local structure/import-preview flow, not a manifest renderer
+- this is a local structure/import-preview flow, not a first-run troubleshooting path
+- it is not a manifest renderer and does not upload anything by itself
 - parser support includes ArgoCD `ApplicationSet` git generators, matrix-contained git generators, exclude patterns, and duplicate-basename-safe proposal slugs
 - if you need controller-faithful rendering/import, that remains the `cub gitops discover` + `cub gitops import` path
 
@@ -2458,12 +2461,14 @@ purely additive to the wire format, no envelope change required.
 
 ```bash
 cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
+cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flags]
 ```
 
 | Flag | Description |
 |------|-------------|
 | `-n, --namespace` | Namespace of the resource (required for namespaced kinds) |
-| `--predicate` | Predicate to evaluate. v1 supports `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. Empty triggers auto-detect from owner + signals. |
+| `--predicate` | Predicate to evaluate. v1 supports `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`, `object-set-matches`. Empty triggers auto-detect from owner + signals; `--file` selects `object-set-matches`. |
+| `--file` | YAML file or directory containing rendered desired objects for an install/object-set receipt. This mode does not take a positional subject. Use `--scope namespace/<ns>`, `--scope cluster`, or `-n <ns>` to tell cub-scout how to resolve namespaced objects that omit `metadata.namespace`. |
 | `--at-commit` | Override the spec anchor revision (Git SHA) for `applied-matches-spec`. When empty, the controller-resolved anchor is used as both the spec and the evidence. |
 | `--strategy` | Source-truth strategy for `source-truth-pass` (e.g. `git-argo`, `confighub-oci-flux`, `helm-argo`). cub-scout does not infer the strategy. |
 | `--since` | RFC 3339 cutoff timestamp for `no-manual-edits-since` (e.g. `2026-05-22T00:00:00Z`). |
@@ -2471,7 +2476,7 @@ cub-scout receipt verify <kind>/<name> -n <namespace> [flags]
 | `--out` | Write the receipt to this file path. Always JSON regardless of `--format` — disk is the long-lived artifact. **Overwrites existing files** (this is the non-immutable, ad-hoc-path contract). Paths under the resolved receipt store are **rejected** — use `--save` for store writes (which are immutable; see below). |
 | `--fail-on` | (v2 `#451`) Exit non-zero (code 2) when the receipt verdict matches. Accepts a comma-separated list of verdicts (`WATCH`, `BLOCK`, `INCONCLUSIVE`) or the sugar `any-non-pass` (= `WATCH,BLOCK,INCONCLUSIVE`). The receipt is still printed / saved / written to `--out` regardless of exit code. `--fail-on PASS` is rejected upfront. |
 | `--input-attestation` | (v2 `#448` chained half) Path to a prior receipt to reference via `predicate.inputAttestations[]` (repeatable for chains). Each referenced receipt's fingerprint is verified at chain-construction time; tampered receipts are refused. The new receipt's fingerprint covers the `inputAttestations[]` field by construction. |
-| `--scope` | (v2 `#448` aggregate half) Aggregate-receipt scope. Accepts `namespace/<ns>` to auto-discover workloads (Deployment / StatefulSet / DaemonSet / CronJob / Job). For a comma-list batch, pass the resources directly in the positional, e.g. `deploy/api,deploy/worker`. When set, the command emits N per-resource receipts (JSONL) followed by 1 aggregate receipt (pretty-printed JSON); `--fail-on` applies to the aggregate verdict. Per-resource verify failures during discovery are non-fatal — the aggregate is composed from the successful subset with an `aggregate-partial-coverage` omission entry. |
+| `--scope` | Scope selector. Without `--file`, this is the aggregate-receipt scope: `namespace/<ns>` auto-discovers workloads, or a comma-list positional provides the batch. With `--file`, this scopes the rendered install object set: `namespace/<ns>` or `cluster`. |
 | `--aggregate-policy` | (v2 `#448`) Verdict-synthesis policy for the aggregate receipt. v1 supports only `max-severity` (the default; `BLOCK > INCONCLUSIVE > WATCH > PASS`). Future policies (`majority`, weighted) wire through the same flag. |
 
 v1 predicates:
@@ -2481,6 +2486,7 @@ v1 predicates:
 | `applied-matches-spec` | Argo / Flux / ConfigHub owner + controller-resolved git anchor | LIVE matches the controller-resolved git anchor |
 | `source-truth-pass` | `--strategy <name>` + connected-mode ConfigHub auth | `compare source-truth` under the declared strategy returns PASS (mirrors Status into receipt Verdict) |
 | `no-manual-edits-since` | `--since <RFC3339 timestamp>` | No interactive (`kubectl-*`) writer touched `managedFields` after the cutoff |
+| `object-set-matches` | `--file <manifest.yaml|dir>` + cluster access | Every desired object identity from the rendered YAML is present live and every authored field still matches. Kubernetes server-added map fields and status are outside the claim; missing objects or changed authored fields produce BLOCK. |
 
 Auto-detection priority (when `--predicate` is not passed):
 
@@ -2511,6 +2517,13 @@ cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
 
 # Write the canonical JSON form to disk for audit attachment.
 cub-scout receipt verify deploy/api -n prod --format json --out api.receipt.json
+
+# object-set-matches — prove rendered install objects landed live.
+cub-scout receipt verify \
+  --file out/manifests \
+  --scope namespace/redis \
+  --format json \
+  --out install.object-set.receipt.json
 ```
 
 ### Verdicts

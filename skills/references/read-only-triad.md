@@ -108,8 +108,8 @@ The output's `actionType` field is part of the `nextSteps[]` contract — same a
 `cub-scout import apply` writes to **ConfigHub**, not to the cluster. It's the one cub-scout verb that mutates anything — and it mutates the ConfigHub side. The architectural-triad audit found this is acceptable because:
 
 1. ConfigHub is the authority side; writing to it is congruent with cub-scout being the evidence provider for the cluster side
-2. The mutation is **user-driven** — `import apply` is explicitly outside every skill's `allowed-tools` line; agents call only `import --git-path --output-dir` (preview-only)
-3. The preview flow recommends a disk-PR workflow ([`prepare-for-confighub`](../prepare-for-confighub/SKILL.md)) — the proposal lives in git, gets reviewed there, and only post-merge does anyone run `import apply`
+2. The mutation is **user-driven** — `import apply` is explicitly outside every skill's `allowed-tools` line; agents call only preview paths such as `import --dry-run`, `import --from-bundle`, and `import --git-path`
+3. The preview flow recommends saving a deterministic proposal for review ([`prepare-for-confighub`](../prepare-for-confighub/SKILL.md)) — the proposal is reviewed first, and only after approval does anyone run `import apply`
 
 Lower-severity findings in `#410` (e.g., `import apply` wording in some user-facing strings) remain open as follow-ups. The high-severity finding (`remedy` executing mutations) is resolved.
 

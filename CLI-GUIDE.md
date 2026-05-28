@@ -5,7 +5,9 @@ Kubernetes and GitOps observer — every command in this guide reads cluster
 or ConfigHub state and explains it, but nothing here mutates the cluster.
 
 Workflow-first guide for learning how to use cub-scout without turning this
-file into a second command encyclopedia.
+file into a second command encyclopedia. The default story starts from a live
+cluster: observe what is running, diagnose one resource or namespace, then add
+connected comparison or adoption flows when you need them.
 
 Need a specific command or flag?
 - [Complete CLI Reference (A-Z)](docs/reference/cli-reference.md)
@@ -84,7 +86,7 @@ See [docs/reference/commands.md](docs/reference/commands.md) for the detailed ex
 
 ## Connected Workflows
 
-Connected mode adds ConfigHub-backed comparison, history, import, and fleet workflows.
+Connected mode adds ConfigHub-backed comparison, history, adoption/import, and fleet workflows. Treat it as enrichment on top of the live-cluster loop, not a different starting point.
 
 Typical connected flow:
 
@@ -96,20 +98,26 @@ cub-scout history deploy/api -n prod
 cub-scout impact payments-api
 ```
 
-Import and migration flow:
+Adoption and migration flow, after you have inspected the live cluster:
 
 ```bash
 cub-scout import --dry-run -n prod
 cub-scout import --json
-cub-scout import parse-repo --path ./repo
 cub-scout import apply proposal.json --dry-run
+```
+
+Advanced repo preview, when an existing manifest repository is the thing you are reviewing:
+
+```bash
+cub-scout import --git-path ./repo --dry-run --json
+cub-scout import parse-repo --path ./repo --json
 ```
 
 Important boundary:
 - `cub-scout` is the read-first explorer and import-preview tool.
 - `cub` remains the intended-state authority and renderer/import lifecycle tool.
 
-If you need more on import:
+If you need more on adoption/import:
 - [docs/howto/import-to-confighub.md](docs/howto/import-to-confighub.md)
 - [docs/reference/commands.md#import](docs/reference/commands.md#import)
 

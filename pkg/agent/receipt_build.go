@@ -56,8 +56,8 @@ type BuildReceiptInput struct {
 	// the optional confighub-unit:// subject. Required when Connected
 	// is true and the resource is ConfigHub-linked; absence in that
 	// case produces an OmissionConfigHubUnitSubject entry.
-	ConfigHubUnitSlug    string
-	ConfigHubUnitRev     int
+	ConfigHubUnitSlug      string
+	ConfigHubUnitRev       int
 	ConfigHubUnitCanonical []byte
 
 	// Verifier identifies the tool building the receipt. The CLI
@@ -183,6 +183,8 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 		result = EvaluateSourceTruthPass(predicateInput)
 	case PredicateNoManualEditsSince:
 		result = EvaluateNoManualEditsSince(predicateInput)
+	case PredicateObjectSetMatches:
+		return Statement{}, fmt.Errorf("build-receipt: predicate %q requires object-set evidence; use BuildObjectSetReceipt or `cub-scout receipt verify --file <manifests>`", predName)
 	case "":
 		// Auto-detect failed. The omission entry was already appended
 		// above; the predicate evaluation produces INCONCLUSIVE.
@@ -283,6 +285,11 @@ func deriveDefaultClaim(name PredicateName, scope Scope, spec *SpecAnchor, strat
 			return fmt.Sprintf("no manual edits to %s/%s in %s since %s", scope.Kind, scope.Name, scope.Namespace, since.UTC().Format(time.RFC3339))
 		}
 		return fmt.Sprintf("no manual edits to %s/%s in %s", scope.Kind, scope.Name, scope.Namespace)
+	case PredicateObjectSetMatches:
+		if scope.Namespace != "" {
+			return fmt.Sprintf("live object set matches rendered manifests in %s", scope.Namespace)
+		}
+		return "live object set matches rendered manifests"
 	case "":
 		return fmt.Sprintf("no predicate could be auto-detected for %s/%s in %s", scope.Kind, scope.Name, scope.Namespace)
 	default:

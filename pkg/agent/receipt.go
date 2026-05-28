@@ -57,6 +57,19 @@ const (
 	// future). See `BuildSyntheticAggregateSubject` in
 	// `pkg/agent/receipt_aggregate.go`.
 	SubjectSchemeSyntheticAggregate = "synthetic-aggregate://"
+
+	// SubjectSchemeRenderedObjectSet identifies the desired rendered
+	// manifest set that an object-set receipt evaluated. Names look like
+	//   rendered-object-set://sha256/<short-digest>
+	// with the full SHA-256 in the subject digest map.
+	SubjectSchemeRenderedObjectSet = "rendered-object-set://"
+
+	// SubjectSchemeK8sLiveObjectSet identifies the live projection of
+	// the Kubernetes objects cub-scout observed for an object-set
+	// receipt. Names look like
+	//   k8s-live-object-set://namespace/redis
+	// or k8s-live-object-set://cluster.
+	SubjectSchemeK8sLiveObjectSet = "k8s-live-object-set://"
 )
 
 // Statement is the in-toto Statement v1 envelope wrapping a cub-scout
@@ -218,6 +231,7 @@ type Evidence struct {
 	Attribution     *FieldMutationAttribution `json:"attribution,omitempty"`
 	SourceTruth     *SourceTruthEvidence      `json:"sourceTruth,omitempty"`
 	GitSource       *GitSourceAnchor          `json:"gitSource,omitempty"`
+	ObjectSet       *ObjectSetEvidence        `json:"objectSet,omitempty"`
 }
 
 // Omission is one structured gap the receipt does not claim. The
@@ -301,4 +315,15 @@ const (
 	// cub-scout cannot claim "no manual edits since T" if it cannot place
 	// each entry on the timeline.
 	OmissionManagedFieldsTime = "managedFields-time"
+
+	// OmissionExtraLiveObjectCoverage is recorded by object-set receipts
+	// when cub-scout verified every desired object from the rendered
+	// manifest set but did not enumerate unexpected live resources that
+	// are outside the desired object identity set.
+	OmissionExtraLiveObjectCoverage = "extra-live-object-coverage"
+
+	// OmissionObjectSetCoverage is recorded by object-set receipts when
+	// one or more desired objects could not be checked because the API
+	// mapping or live read was inconclusive.
+	OmissionObjectSetCoverage = "object-set-coverage"
 )

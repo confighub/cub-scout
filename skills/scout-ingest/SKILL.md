@@ -1,13 +1,13 @@
 ---
 name: scout-ingest
-description: 'Use when the user wants to MOVE existing Kubernetes / GitOps workload structure INTO ConfigHub — the Ingest verb group of cub-scout. Natural phrasing: "import this Argo Application set", "bring my Flux Kustomizations into ConfigHub", "discover workloads in this cluster and propose ConfigHub units", "preview what would land in ConfigHub if I imported this repo", "parse my git repo as a ConfigHub import bundle", "import a cluster aggregator", "show me the import proposal before I apply", "what would --git-path produce for this repo?". Load whenever intent is import / ingest / preview / propose / parse-repo / discovery / aggregator / bring-into-confighub / what-would-confighub-see. Do NOT load for: comparing live state to ConfigHub (use scout-compare), inventory of what is currently running (use scout-observe), the actual write to ConfigHub via `cub gitops import` (that is `cub`, not cub-scout — route to cub skills). Important: `cub-scout import apply` IS the mutating write into ConfigHub — this skill teaches the read-only preview path and explicitly refuses to invoke `import apply` itself.'
+description: 'Use when the user wants to ADOPT existing Kubernetes / GitOps workload structure into ConfigHub after observing the live cluster — the adoption/import verb group of cub-scout. Natural phrasing: "discover workloads in this cluster and propose ConfigHub units", "show me the import proposal before I apply", "import this Argo Application set", "bring my Flux Kustomizations into ConfigHub", "preview what would land in ConfigHub if I imported this repo", "parse my git repo as a ConfigHub import bundle", "import a cluster aggregator", "what would --git-path produce for this repo?". Load whenever intent is adopt / import / ingest / preview / propose / parse-repo / discovery / aggregator / bring-into-confighub / what-would-confighub-see. Do NOT load for: basic live-cluster inventory (use scout-observe), troubleshooting (use scout-diagnose), comparing live state to ConfigHub (use scout-compare), or the actual write to ConfigHub via `cub gitops import` (that is `cub`, not cub-scout — route to cub skills). Important: `cub-scout import apply` IS the mutating write into ConfigHub — this skill teaches the read-only preview path and explicitly refuses to invoke `import apply` itself.'
 phase: verify
-allowed-tools: Bash(./cub-scout import --git-path *) Bash(cub-scout import --git-path *) Bash(cub scout import --git-path *) Bash(./cub-scout import parse-repo *) Bash(cub-scout import parse-repo *) Bash(cub scout import parse-repo *) Bash(./cub-scout import cluster-aggregator *) Bash(cub-scout import cluster-aggregator *) Bash(cub scout import cluster-aggregator *) Bash(./cub-scout app list *) Bash(cub-scout app list *) Bash(cub scout app list *) Bash(./cub-scout app list) Bash(cub-scout app list) Bash(cub scout app list) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit list *) Bash(cub gitops discover *) Bash(argocd app get *) Bash(argocd appset get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout import --dry-run *) Bash(cub-scout import --dry-run *) Bash(cub scout import --dry-run *) Bash(./cub-scout import --git-path *) Bash(cub-scout import --git-path *) Bash(cub scout import --git-path *) Bash(./cub-scout import parse-repo *) Bash(cub-scout import parse-repo *) Bash(cub scout import parse-repo *) Bash(./cub-scout import cluster-aggregator *) Bash(cub-scout import cluster-aggregator *) Bash(cub scout import cluster-aggregator *) Bash(./cub-scout app list *) Bash(cub-scout app list *) Bash(cub scout app list *) Bash(./cub-scout app list) Bash(cub-scout app list) Bash(cub scout app list) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit list *) Bash(cub gitops discover *) Bash(argocd app get *) Bash(argocd appset get *) Bash(flux get *)
 ---
 
 # scout-ingest
 
-The Ingest verb group of cub-scout. Reads cluster + git-repo + controller structure and **proposes** the corresponding ConfigHub unit/space/target tree. Every Ingest verb is **preview-by-default**; the actual write into ConfigHub uses `import apply` and is intentionally NOT in this skill's allowed-tools.
+The adoption/import verb group of cub-scout. Start from the live cluster when possible, then use repo parsing only when the repository itself is under review. These commands read cluster, bundle, git-repo, and controller structure and **propose** the corresponding ConfigHub unit/space/target tree. The actual write into ConfigHub uses `import apply` and is intentionally NOT in this skill's allowed-tools.
 
 ## When to use
 
@@ -25,7 +25,7 @@ Explicit phrasings:
 
 Implicit intents:
 
-- The user has *existing* GitOps state (cluster, Argo ApplicationSets, Flux Kustomizations, raw git repo) and wants ConfigHub adoption
+- The user has *existing* GitOps state (live cluster, Argo ApplicationSets, Flux Kustomizations, debug bundle, raw git repo) and wants ConfigHub adoption
 - The user is gating on review-before-apply (PR-flow, dry-run mindset)
 - The user is migrating off a different tool and wants ConfigHub to mirror current state
 - The user is exploring "what would ConfigHub see here" without committing
@@ -39,13 +39,14 @@ Implicit intents:
 
 ## Standalone vs connected
 
-- **Standalone (cluster only):** `import argocd` and `import cluster-aggregator` read controller state from the cluster + (optionally) the controller CLI; they produce a proposal document. No ConfigHub auth needed for the preview itself.
-- **Standalone (git only):** `import --git-path <repo>` and `import parse-repo <repo>` read a local git checkout and produce a proposal. No cluster, no ConfigHub.
+- **Standalone (cluster only):** `import --dry-run` reads live workloads and produces a proposal document. No ConfigHub auth needed for the preview itself.
+- **Standalone (git only, advanced):** `import --git-path <repo>` and `import parse-repo <repo>` read a local git checkout and produce a proposal. No cluster, no ConfigHub.
 - **Connected (cluster + `cub auth login`):** the proposal is rendered against the connected ConfigHub instance (existing spaces, naming conflicts, etc. are surfaced) and `import apply` (mutating; not in this skill) becomes available to write the proposal.
 
 ## Tool boundary
 
 - **Allowed (read-only, agent-callable):**
+  - `cub-scout import --dry-run *` — live-cluster preview flow; no ConfigHub write
   - `cub-scout import --git-path *` — local-only flow; the `--git-path` flag forces `--dry-run` in `cmd/cub-scout/import.go`, so this is preview-only by construction
   - `cub-scout import parse-repo *` — pure parser; read-only
   - `cub-scout import cluster-aggregator *` — emits the proposal as JSON / YAML; `import apply` is the separate mutating verb
@@ -63,7 +64,8 @@ Implicit intents:
 
 | Question | Verb | Notes |
 |---|---|---|
-| "Preview ConfigHub units from a local git repo" | `cub-scout import --git-path <repo>` | Walks the repo, classifies kustomize / helm / raw manifests, emits a proposal. Use `--output-dir <path>` to land proposed unit YAMLs on disk for PR review. |
+| "Preview ConfigHub units from a live namespace" | `cub-scout import --dry-run -n <namespace> --json` | First adoption path. Reads live workloads, ownership, and labels; emits a proposal without writing. |
+| "Preview ConfigHub units from a local git repo" | `cub-scout import --git-path <repo> --dry-run --json` | Advanced path. Walks the repo, classifies kustomize / helm / raw manifests, emits a proposal. Does not upload or render. |
 | "Parse the repo structure deterministically" | `cub-scout import parse-repo <repo>` | Lower-level parser. Extracts ApplicationSet generator directories, helm chart paths, kustomization roots. Used as a primitive by other verbs. |
 | "Import existing Argo Applications / ApplicationSets" | `cub-scout import argocd --space <s>` | Reads Argo state from the cluster and proposes one ConfigHub unit per Application. ApplicationSet generators (git directories, lists, clusters) preserved as hierarchy. |
 | "Import via a cluster aggregator" | `cub-scout import cluster-aggregator --space <s>` | Multi-cluster bundle-based import. Aggregates per-cluster snapshots into a single ConfigHub proposal. |
@@ -72,17 +74,17 @@ Implicit intents:
 ## The loop
 
 1. **Identify the source of truth.** Where does the structure come from? A local git checkout? Argo on the cluster? An aggregator snapshot? This determines the verb (see menu above).
-2. **Run the preview verb.** Default to `--format json` if the proposal is going into a script or a PR-bot; ASCII if the user is reading it.
+2. **Run the preview verb.** Default to `--json` if the proposal is going into a script or a PR-bot; ASCII if the user is reading it.
 3. **Read the proposal.** Each proposed unit has a slug, a space, a path (for ApplicationSet generator origin), and a confidence signal. Naming conflicts with existing ConfigHub state are flagged (connected mode).
-4. **Optionally land a disk PR.** `import --git-path --output-dir <path>` writes the proposed unit YAMLs to disk so the user can open a PR for review without ever touching ConfigHub.
-5. **Hand off the mutation.** If the user approves the proposal, they run `cub-scout import apply --space <s>` themselves. The skill **does not** invoke it. The mutation is the user's decision, not the agent's.
+4. **Persist the preview if review is needed.** Save the JSON proposal (`cub-scout import ... --json > proposal.json`) so people can review the structure before any write.
+5. **Hand off the mutation.** If the user approves the proposal, they run `cub-scout import apply <proposal.json>` themselves. The skill **does not** invoke it. The mutation is the user's decision, not the agent's.
 
 ## Worked examples
 
 ### A: preview a local git repo (standalone, no cluster, no ConfigHub)
 
 ```bash
-$ cub-scout import --git-path ./platform-config --format json
+$ cub-scout import --git-path ./platform-config --dry-run --json
 {
   "units": [
     {
@@ -108,22 +110,22 @@ $ cub-scout import --git-path ./platform-config --format json
 ### B: preview Argo Application import (connected mode)
 
 ```bash
-$ cub-scout import argocd --space payments --format json
+$ cub-scout import argocd guestbook --space payments --dry-run
 $ # proposal has one unit per Argo Application,
 $ # with ApplicationSet origin preserved as hierarchy
 ```
 
-### C: write a disk-PR proposal (standalone, no ConfigHub)
+### C: save a reviewable proposal (standalone, no ConfigHub)
 
 ```bash
-$ cub-scout import --git-path ./platform-config --output-dir ./proposed-units
+$ cub-scout import --git-path ./platform-config --dry-run --json > proposal.json
 $ git checkout -b adopt-confighub
-$ git add proposed-units/
-$ git commit -m "propose ConfigHub units for platform-config"
-$ # ...PR review happens in git, not in ConfigHub
+$ git add proposal.json
+$ git commit -m "preview ConfigHub units for platform-config"
+$ # ...proposal review happens in git, not in ConfigHub
 ```
 
-This is the **safest** workflow: the proposal lives in git, gets reviewed, and only after merge does someone run `cub-scout import apply` to write the units to ConfigHub.
+This keeps the proposal reviewable without touching ConfigHub. A future `import --git-path --output-dir` flow is tracked separately for emitting proposed unit YAMLs directly.
 
 ## Output evidence
 
@@ -151,7 +153,7 @@ cub-scout's `import` verbs are **structure-and-preview** focused:
 - Renders the discovered state against the render-target's renderer
 - Writes the rendered output to ConfigHub
 
-The two paths solve different problems. cub-scout's import is for **adoption** (existing state → ConfigHub for the first time); `cub gitops import` is for **on-going ingest** (cluster state → ConfigHub via a configured render pipeline). Don't claim they overlap.
+The two paths solve different problems. cub-scout's import is for **adoption** (existing state → ConfigHub for the first time); `cub gitops import` is for **ongoing import** (cluster state → ConfigHub via a configured render pipeline). Don't claim they overlap.
 
 ## References
 
@@ -164,6 +166,6 @@ The two paths solve different problems. cub-scout's import is for **adoption** (
 
 ## Constraints
 
-- Receipts are NOT this skill's surface — [`scout-verify`](../scout-verify/SKILL.md) handles typed evidence about a *single resource*. Ingest is about *structural adoption*; the output is a proposal document, not an evidence artifact.
+- Receipts are NOT this skill's surface — [`scout-verify`](../scout-verify/SKILL.md) handles typed evidence about a *single resource*. Adoption/import is about *structural adoption*; the output is a proposal document, not an evidence artifact.
 - `import apply` is intentionally not in the allowed-tools. If a downstream agent is wired to apply automatically, that's an agent-policy decision; this skill says "preview, never apply."
 - For deeply-nested Helm or templated paths, the parser produces lower-confidence proposals — surface those explicitly, never silently drop them.

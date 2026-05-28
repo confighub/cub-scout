@@ -61,19 +61,23 @@ func withFakeReceiptLoader(t *testing.T, obj *unstructured.Unstructured) {
 func resetReceiptFlags(t *testing.T) {
 	t.Helper()
 	prev := struct {
-		ns, pred, at, fmt, out string
-	}{receiptNamespace, receiptPredicate, receiptAtCommit, receiptFormat, receiptOut}
+		ns, pred, at, fmt, out, file, scope string
+	}{receiptNamespace, receiptPredicate, receiptAtCommit, receiptFormat, receiptOut, receiptObjectSetFile, receiptScope}
 	receiptNamespace = ""
 	receiptPredicate = ""
 	receiptAtCommit = ""
 	receiptFormat = "ascii"
 	receiptOut = ""
+	receiptObjectSetFile = ""
+	receiptScope = ""
 	t.Cleanup(func() {
 		receiptNamespace = prev.ns
 		receiptPredicate = prev.pred
 		receiptAtCommit = prev.at
 		receiptFormat = prev.fmt
 		receiptOut = prev.out
+		receiptObjectSetFile = prev.file
+		receiptScope = prev.scope
 	})
 }
 

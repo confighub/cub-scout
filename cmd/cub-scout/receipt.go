@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -47,6 +46,10 @@ func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
 	positional := ""
 	if len(args) > 0 {
 		positional = strings.TrimSpace(args[0])
+	}
+
+	if strings.TrimSpace(receiptObjectSetFile) != "" {
+		return runReceiptVerifyObjectSet(cmd, args)
 	}
 
 	if scopeFlag != "" || strings.Contains(positional, ",") {
@@ -108,8 +111,11 @@ v1 predicates:
   applied-matches-spec    LIVE matches the controller-resolved git anchor
   source-truth-pass       compare source-truth returned PASS under --strategy
   no-manual-edits-since   no kubectl-* writer touched managedFields after --since
+  object-set-matches      rendered manifest objects are present live and authored fields match
 
-Subject is a positional argument in the form <kind>/<name>.
+Subject is usually a positional argument in the form <kind>/<name>.
+For install/object-set receipts, pass --file <manifest.yaml|dir> and scope
+with --scope namespace/<ns>, --scope cluster, or -n <ns>.
 
 Predicate auto-detection priority (when --predicate is not passed):
   1. Argo / Flux / ConfigHub-via-GitOps owner WITH a resolvable git anchor
@@ -124,6 +130,7 @@ Examples:
   cub-scout receipt verify deploy/api -n prod --strategy git-argo
   cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
   cub-scout receipt verify deploy/api -n prod --predicate applied-matches-spec --format json --out api.receipt.json
+  cub-scout receipt verify --file out/manifests --scope namespace/redis --format json --out install.receipt.json
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runReceiptVerifyDispatch,
@@ -134,7 +141,8 @@ func init() {
 	receiptCmd.AddCommand(receiptVerifyCmd)
 
 	receiptVerifyCmd.Flags().StringVarP(&receiptNamespace, "namespace", "n", "", "Namespace of the resource (required for namespaced kinds)")
-	receiptVerifyCmd.Flags().StringVar(&receiptPredicate, "predicate", "", "Predicate to evaluate (default: auto-detect). v1 supports applied-matches-spec, source-truth-pass, no-manual-edits-since.")
+	receiptVerifyCmd.Flags().StringVar(&receiptPredicate, "predicate", "", "Predicate to evaluate (default: auto-detect). v1 supports applied-matches-spec, source-truth-pass, no-manual-edits-since, object-set-matches.")
+	receiptVerifyCmd.Flags().StringVar(&receiptObjectSetFile, "file", "", "YAML file or directory containing rendered desired objects for object-set-matches install receipts.")
 	receiptVerifyCmd.Flags().StringVar(&receiptAtCommit, "at-commit", "", "Override the spec anchor revision (Git SHA). When empty, the controller-resolved anchor is used as both the spec and the evidence.")
 	receiptVerifyCmd.Flags().StringVar(&receiptStrategy, "strategy", "", "Source-truth strategy for source-truth-pass (e.g. git-argo). cub-scout does not infer the strategy.")
 	receiptVerifyCmd.Flags().StringVar(&receiptSince, "since", "", "RFC 3339 cutoff for no-manual-edits-since (e.g. 2026-05-22T00:00:00Z).")
@@ -144,7 +152,7 @@ func init() {
 	receiptVerifyCmd.Flags().StringVar(&receiptSaveDir, "save-dir", "", "Override the store directory used when --save is set")
 	receiptVerifyCmd.Flags().StringVar(&receiptFailOn, "fail-on", "", "Exit non-zero (code 2) when the receipt verdict matches. Accepts a comma-separated list of verdicts (WATCH, BLOCK, INCONCLUSIVE) or the sugar 'any-non-pass' (= WATCH,BLOCK,INCONCLUSIVE). The receipt is still printed / saved / written to --out regardless of exit code.")
 	receiptVerifyCmd.Flags().StringArrayVar(&receiptInputAttestations, "input-attestation", nil, "Path to a prior receipt to reference via inputAttestations[] (repeatable). Each referenced receipt's fingerprint is verified at chain-construction time; tampered receipts are refused. The new receipt's fingerprint covers the inputAttestations[] field by construction.")
-	receiptVerifyCmd.Flags().StringVar(&receiptScope, "scope", "", "Aggregate-receipt scope (#448). Accepts 'namespace/<ns>' to auto-discover workloads (Deployment / StatefulSet / DaemonSet / CronJob / Job). For a comma-list batch, pass the resources directly in the positional, e.g. 'deploy/api,deploy/worker'. When set, the command emits N per-resource receipts (JSONL) followed by 1 aggregate receipt; --fail-on applies to the aggregate verdict.")
+	receiptVerifyCmd.Flags().StringVar(&receiptScope, "scope", "", "Scope selector. Without --file: aggregate-receipt scope (#448), accepting 'namespace/<ns>' or a comma-list positional. With --file: object-set scope, accepting 'namespace/<ns>' or 'cluster'.")
 	receiptVerifyCmd.Flags().StringVar(&receiptAggregatePolicy, "aggregate-policy", "", "Verdict-synthesis policy for the aggregate receipt (#448). v1 supports only 'max-severity' (the default; BLOCK > INCONCLUSIVE > WATCH > PASS).")
 
 	// Wire the production connected-mode detector for the aggregate
@@ -338,41 +346,14 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	// 7. Print to stdout AND optionally write to file.
 	fmt.Println(string(out))
 	if outPath := strings.TrimSpace(receiptOut); outPath != "" {
-		// --out is the explicit-path path: the caller picks the filename
-		// and gets exactly one write. It is NOT immutable — re-running
-		// the same `verify --out foo.json` overwrites foo.json. That's
-		// the documented contract for --out.
-		//
-		// Codex round 5: reject --out paths under the resolved store
-		// directory so the immutable-store invariant can't be bypassed.
-		// Concretely: a caller who points --out at
-		// $XDG_DATA_HOME/cub-scout/receipts/foo.json could otherwise
-		// stomp on an existing canonical receipt and the store's "files
-		// never change once written" property would be broken.
-		storeDir, sdErr := agent.DefaultStoreDir()
-		if sdErr == nil {
-			absOut, aErr := filepath.Abs(outPath)
-			absStore, asErr := filepath.Abs(storeDir)
-			if aErr == nil && asErr == nil {
-				if rel, rErr := filepath.Rel(absStore, absOut); rErr == nil &&
-					!strings.HasPrefix(rel, "..") && !filepath.IsAbs(rel) {
-					return fmt.Errorf(
-						"refusing to write --out to %q because it is under the receipt store %q; "+
-							"use --save (immutable canonical store path) for store writes, or pick a path outside the store for ad-hoc --out files",
-						absOut, absStore,
-					)
-				}
-			}
-		}
-
 		// Always write the JSON form to disk regardless of console format
 		// — disk is the long-lived artifact; ASCII is for humans.
 		jsonBytes, mErr := json.MarshalIndent(stmt, "", "  ")
 		if mErr != nil {
 			return fmt.Errorf("marshal receipt for --out: %w", mErr)
 		}
-		if writeErr := os.WriteFile(outPath, append(jsonBytes, '\n'), 0o644); writeErr != nil {
-			return fmt.Errorf("write receipt to %s: %w", outPath, writeErr)
+		if writeErr := writeReceiptOutFile(outPath, jsonBytes); writeErr != nil {
+			return writeErr
 		}
 	}
 

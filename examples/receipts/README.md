@@ -22,10 +22,12 @@ envelope, no wire change required.
 | [`applied-matches-spec`](./applied-matches-spec/) | Argo / Flux / ConfigHub owner + controller-resolved git anchor, optional `--at-commit` | LIVE matches the controller-resolved git anchor (PASS on controller-drift cause, BLOCK on manual-edit / anchor mismatch, INCONCLUSIVE on missing anchor) |
 | [`source-truth-pass`](./source-truth-pass/) | Explicit `--strategy <name>` (one of 9 strategies), connected-mode ConfigHub auth | Mirrors `compare source-truth` Status → Verdict (PASS / WATCH / BLOCK / INCONCLUSIVE). Strategy mismatch between caller and evidence → BLOCK + `OmissionStrategyMismatch`. |
 | [`no-manual-edits-since`](./no-manual-edits-since/) | `--since <RFC3339 timestamp>` cutoff | PASS when no interactive (`kubectl-*`) writer touched `metadata.managedFields` after the cutoff; BLOCK on any late interactive write; INCONCLUSIVE on missing managedFields or nil-Time entries. |
+| `object-set-matches` | `--file <manifest.yaml\|dir>` + `--scope namespace/<ns>` | PASS when every desired object in rendered YAML is present live and every authored field still matches. Missing objects or changed authored fields BLOCK. |
 
-Each subdirectory ships canonical example receipts produced
+The predicate fixture subdirectories ship canonical example receipts produced
 deterministically by [`tools/gen-receipt-examples`](../../tools/gen-receipt-examples/)
-and validated by `TestReceiptExamplesAreFresh`.
+and validated by `TestReceiptExamplesAreFresh`. For a full install
+verification runbook, see [`examples/helm-expt`](../helm-expt/).
 
 ## Auto-Detection Priority
 
@@ -51,6 +53,13 @@ When `--predicate` is not passed, cub-scout picks one from these signals:
 
 # no-manual-edits-since — cutoff before today.
 ./cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
+
+# object-set-matches — verify rendered install objects after apply/sync.
+./cub-scout receipt verify \
+  --file out/manifests \
+  --scope namespace/redis \
+  --format json \
+  --out install.object-set.receipt.json
 
 # Write the canonical JSON form to disk for audit attachment.
 ./cub-scout receipt verify deploy/api -n prod --format json --out api.receipt.json

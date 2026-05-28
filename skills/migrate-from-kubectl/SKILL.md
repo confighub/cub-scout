@@ -1,6 +1,6 @@
 ---
 name: migrate-from-kubectl
-description: 'Use when the user is MIGRATING from ad-hoc `kubectl apply` toward GitOps (Argo / Flux / ConfigHub) — and needs to find the manual edits, decide what to do with each (revert / port to git / accept as canonical), and plan the transition. Natural phrasing: "find all the manual edits in this cluster", "we have years of kubectl-apply, help us move to GitOps", "which resources have been hand-edited?", "audit drift caused by humans not controllers", "port my cluster state to git", "show me everything kubectl-* has touched". Composes attribution layer (`cause: manual-edit`) + `map orphans` (resources without a controller owner) + `scan` (risk classification) + `import --git-path --output-dir` (scaffold the git side). Read-only throughout — the migration itself is user-driven. Do NOT load for: real-time triage (use triage-unhealthy-workload), single-resource drift question (use investigate-drift), a fleet conformance audit (use audit-fleet-conformance), or any mutating action.'
+description: 'Use when the user is MIGRATING from ad-hoc `kubectl apply` toward GitOps (Argo / Flux / ConfigHub) — and needs to find the manual edits, decide what to do with each (revert / port to git / accept as canonical), and plan the transition. Natural phrasing: "find all the manual edits in this cluster", "we have years of kubectl-apply, help us move to GitOps", "which resources have been hand-edited?", "audit drift caused by humans not controllers", "port my cluster state to git", "show me everything kubectl-* has touched". Composes attribution layer (`cause: manual-edit`) + `map orphans` (resources without a controller owner) + `scan` (risk classification) + `snapshot` / `import --git-path` preview once a repo skeleton exists. Read-only throughout — the migration itself is user-driven. Do NOT load for: real-time triage (use triage-unhealthy-workload), single-resource drift question (use investigate-drift), a fleet conformance audit (use audit-fleet-conformance), or any mutating action.'
 phase: cross-cutting
 allowed-tools: Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(./cub-scout map orphans *) Bash(cub-scout map orphans *) Bash(cub scout map orphans *) Bash(./cub-scout scan *) Bash(cub-scout scan *) Bash(cub scout scan *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout import --git-path *) Bash(cub-scout import --git-path *) Bash(cub scout import --git-path *) Bash(./cub-scout snapshot *) Bash(cub-scout snapshot *) Bash(cub scout snapshot *) Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify *) Bash(cub scout receipt verify *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *)
 ---
@@ -9,7 +9,7 @@ allowed-tools: Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map 
 
 The legacy-cluster migration loop. A cluster has accumulated `kubectl apply -f` over years; the team wants to adopt GitOps (Argo / Flux / ConfigHub). Step 1 of that migration is **finding what's been hand-touched** and deciding per-resource: revert, port to git, or accept as canonical.
 
-This skill composes the attribution layer (`cause: manual-edit`), `map orphans`, `scan`, and `import --git-path --output-dir` for the scaffold side. Read-only throughout — the actual migration is user-driven.
+This skill composes the attribution layer (`cause: manual-edit`), `map orphans`, `scan`, and `snapshot` / `import --git-path` preview once a repo skeleton exists. Read-only throughout — the actual migration is user-driven.
 
 ## When to use
 
@@ -44,7 +44,7 @@ Implicit intents:
 2. **Classify.** For each non-GitOps resource, read `managedFields` for the **last writer**. If a `kubectl-*` writer wrote it, this is a `manual-edit` candidate.
 3. **Risk-rank.** `scan` produces severity-ranked findings. Use it to prioritize: high-severity / production-namespace resources first.
 4. **Per-resource decision.** For each `manual-edit` resource, decide: revert (let a future controller reconcile), port to git (commit current state + plan controller adoption), or accept as canonical (and *then* port).
-5. **Scaffold the git side.** Once decisions are made, snapshot the cluster (`snapshot` → GSF JSON) or `import --git-path --output-dir` (after creating a git layout). The output goes into a new repo that Argo / Flux / ConfigHub will eventually own.
+5. **Scaffold the git side.** Once decisions are made, snapshot the cluster (`snapshot` → GSF JSON). If you have already created a git layout, use `import --git-path --dry-run --json` to preview what ConfigHub would infer from it.
 6. **Persist baseline receipts.** `receipt verify <kind>/<name> --since <migration-start-time>` per resource — captures the **pre-migration baseline** as fingerprinted evidence. Useful when the migration is contested ("did we really revert that?").
 
 ## Step-by-step
@@ -123,7 +123,7 @@ For workloads adopting Argo / Flux / ConfigHub:
 $ cub-scout snapshot -n payments --format gsf > snapshot-payments.json
 
 # Or, if you already have a repo skeleton, preview what ConfigHub would propose
-$ cub-scout import --git-path ./proposed-repo --output-dir ./units
+$ cub-scout import --git-path ./proposed-repo --dry-run --json > proposed-units.json
 ```
 
 See [`prepare-for-confighub`](../prepare-for-confighub/SKILL.md) for the import-preview flow once you have the repo skeleton.

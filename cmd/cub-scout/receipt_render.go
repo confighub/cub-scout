@@ -103,6 +103,30 @@ func renderReceiptASCII(stmt agent.Statement) string {
 		}
 	}
 
+	if pred.Evidence.ObjectSet != nil {
+		oset := pred.Evidence.ObjectSet
+		b.WriteString("\nEvidence (object set)\n")
+		fmt.Fprintf(&b, "  source:      %s %s\n", oset.DesiredSource.Type, oset.DesiredSource.Ref)
+		fmt.Fprintf(&b, "  matchMode:   %s\n", oset.MatchMode)
+		fmt.Fprintf(&b, "  desired:     %d\n", oset.Summary.Desired)
+		fmt.Fprintf(&b, "  matched:     %d\n", oset.Summary.Matched)
+		fmt.Fprintf(&b, "  missing:     %d\n", oset.Summary.Missing)
+		fmt.Fprintf(&b, "  mismatched:  %d\n", oset.Summary.Mismatched)
+		fmt.Fprintf(&b, "  inconclusive:%d\n", oset.Summary.Inconclusive)
+		for _, obj := range oset.Objects {
+			if obj.Status == agent.ObjectSetObjectMatched {
+				continue
+			}
+			fmt.Fprintf(&b, "  - %s: %s\n", obj.ID.String(), obj.Status)
+			if obj.Error != "" {
+				fmt.Fprintf(&b, "      error: %s\n", obj.Error)
+			}
+			for _, diff := range obj.Differences {
+				fmt.Fprintf(&b, "      diff: %s (%s)\n", diff.Path, diff.Reason)
+			}
+		}
+	}
+
 	// Omissions are critical — they convert silent PASS into honest PASS.
 	if len(pred.Omissions) > 0 {
 		b.WriteString("\nOmissions (deliberate non-claims)\n")

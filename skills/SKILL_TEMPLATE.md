@@ -45,7 +45,7 @@ Receipts and other artifacts produced by cub-scout always work in the lowest ava
 
 Numbered imperative steps. Explain **why** each step matters, not just what. Keep the loop small and named. Most cub-scout skill loops look like:
 
-1. **Identify intent** — translate the user's question into the right verb group (Observe / Diagnose / Compare / Attribute / Ingest / Govern / Integrate / Verify).
+1. **Identify intent** — translate the user's question into the right verb group (Observe / Diagnose / Compare / Attribute / Govern / Adopt Existing Config / Integrate / Verify).
 2. **Pick the verb** — within the group, pick the most specific command.
 3. **Invoke** — run with `--format json` for agent contexts, ASCII for humans.
 4. **Interpret** — read the structured evidence (verdict / cause / omissions / next steps).

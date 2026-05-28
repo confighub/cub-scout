@@ -29,6 +29,12 @@ const (
 	// entries exist in managedFields after the given timestamp. v1
 	// predicate (lands in #446 batch 2).
 	PredicateNoManualEditsSince PredicateName = "no-manual-edits-since"
+
+	// PredicateObjectSetMatches verifies that the live cluster contains
+	// the rendered manifest object set and that every authored field in
+	// that set still matches live. Kubernetes server defaults and
+	// controller-populated status are deliberately outside this claim.
+	PredicateObjectSetMatches PredicateName = "object-set-matches"
 )
 
 // AllPredicates returns the list of v1 predicate names cub-scout knows
@@ -39,6 +45,7 @@ func AllPredicates() []PredicateName {
 		PredicateAppliedMatchesSpec,
 		PredicateSourceTruthPass,
 		PredicateNoManualEditsSince,
+		PredicateObjectSetMatches,
 	}
 }
 
@@ -299,12 +306,12 @@ func AutoDetectPredicate(in PredicateInput, owner Ownership) (PredicateName, *Om
 //     WATCH → VerdictWATCH
 //     BLOCK → VerdictBLOCK
 //     ASK   → VerdictWATCH (source-truth ASK means cub-scout couldn't
-//             classify; the receipt records WATCH with the evidence's
-//             proof_gaps mirrored into omissions[] so the consumer
-//             knows what's missing. INCONCLUSIVE is reserved for
-//             cases where the receipt itself can't be evaluated, not
-//             for cases where the underlying source-truth surface
-//             just couldn't classify.)
+//     classify; the receipt records WATCH with the evidence's
+//     proof_gaps mirrored into omissions[] so the consumer
+//     knows what's missing. INCONCLUSIVE is reserved for
+//     cases where the receipt itself can't be evaluated, not
+//     for cases where the underlying source-truth surface
+//     just couldn't classify.)
 //
 // Proof gaps in the source-truth evidence are mirrored into the receipt's
 // omissions[] under OmissionSourceTruthComplete so a consumer reading

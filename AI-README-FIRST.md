@@ -23,7 +23,7 @@ Use these for different AI scenarios:
 
 ## Capability Map at a Glance
 
-cub-scout commands fall into eight groups. Each group's **inputs** column tells you whether a command needs only a cluster (standalone), needs a local git checkout, or needs ConfigHub auth (connected). See [README.md § Capability Map](README.md#capability-map) for the full per-command table — this section is the navigation aid.
+cub-scout commands fall into eight groups. The main use case starts from a live cluster: observe what is running, diagnose one target, then add connected comparison/governance when needed. Repo parsing is an adoption/source-enrichment path, not the first mental model. Each group's **inputs** column tells you whether a command needs only a cluster (standalone), needs ConfigHub auth (connected), or needs a local git checkout. See [README.md § Capability Map](README.md#capability-map) for the full per-command table — this section is the navigation aid.
 
 | Group | What it answers | Notable commands |
 |---|---|---|
@@ -31,8 +31,8 @@ cub-scout commands fall into eight groups. Each group's **inputs** column tells 
 | **Diagnose** | What's wrong, what to do next | `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status` |
 | **Compare** | Intended vs actual | `compare`, `compare drift`, `compare three-way`, `compare source-truth` |
 | **Attribute** | Where each field's value came from | per-field `cause`/`managerHint`/`gitSource`/`bindingSource` on `compare` + `explain` |
-| **Ingest** | How to bring config into ConfigHub | `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`, `import apply`, `app` |
 | **Govern** | Connected history, fleet, views | `history`, `impact`, `fleet outliers`, `summary`, `views`, `audit`, `bundle`, `catalog` |
+| **Adopt Existing Config** | How to preview/import current cluster or repo structure into ConfigHub | `import --dry-run`, `import --from-bundle`, `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`, `import apply`, `app` |
 | **Integrate** | Setup + AI gateway | `setup`, `quickstart`, `mcp serve`, `context-pack`, `version` |
 | **Verify** | Typed, fingerprinted evidence artifacts | `receipt verify`, `receipt show`, `receipt validate`, `receipt list` |
 
@@ -51,7 +51,8 @@ Use it for:
 - Diagnose: `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status`
 - Compare: `compare three-way`, `compare source-truth`, `compare drift`, `compare` (resource mode)
 - Attribute (read-only enrichment surfacing on `compare` + `explain` JSON)
-- Local Git structure discovery with `import --git-path` and `import parse-repo`
+- Adoption preview from live cluster or bundle with `import --dry-run` / `import --from-bundle`
+- Advanced local Git structure discovery with `import --git-path` and `import parse-repo`
 - Govern (connected): `history`, `impact`, `fleet outliers`, `summary`, `views resolve`, `audit list`, `bundle inspect/diff/timeline`, `catalog list`
 - Verify: `receipt verify / show / validate / list` (typed, fingerprinted evidence — v1 complete)
 - Model Context Protocol (MCP) serving via `mcp serve`
@@ -179,8 +180,8 @@ Verify live state before acting. As of 2026-05-25 the receipts arc and Pilot con
 - Helm / Kustomize back-resolution to populate `gitSource.file:line` for templated sources
 - List-key selectors (e.g., `[name="api"]` for container images) in `compareFieldToPath`
 - Standalone `--source-path` as DRY source for `compare three-way`
-- `import --git-path --output-dir` polish (disk-PR proposal flow)
-- Hierarchy-aware ingest (preserve ApplicationSet / app-of-apps / Flux composition)
+- `import --git-path --output-dir` polish (reviewable proposal output)
+- Hierarchy-aware adoption/import (preserve ApplicationSet / app-of-apps / Flux composition)
 - Additional manager-string writers (Tekton, Argo Workflows, Cluster API, OIDC-based CD)
 
 ### Cross-repo dependencies

@@ -2,7 +2,9 @@
 
 **Read-only. Deterministic. Offline-capable. Optional `cub` plugin.**
 
-cub-scout is an open-source observer for Kubernetes and GitOps. It diagnoses, explains, traces, maps, scans, **compares** intended vs running state, and **attributes** every field back to its source — but it never modifies cluster state and never makes authority calls about what *should* be true. Safe to run against production.
+cub-scout is an open-source observer for live Kubernetes clusters and GitOps. Point it at your current kube context and it reads what Kubernetes, Argo CD, Flux, Helm, Crossplane, kro, and ConfigHub already know: what is running, who owns it, where it came from, what is unhealthy, and what to check next.
+
+It diagnoses, explains, traces, maps, scans, **compares** intended vs running state, and **attributes** every field back to its source — but it never modifies cluster state and never makes authority calls about what *should* be true. Safe to run against production.
 
 It helps you answer:
 - what owns this resource, really?
@@ -10,7 +12,7 @@ It helps you answer:
 - what's broken right now, and what should I do next?
 - how does **intended** (governed) state compare to **live** (cluster) state?
 
-It works **standalone** with your current kube context, or **connected** to [ConfigHub](https://confighub.com) for governed comparison, history, import, fleet queries, and AI-friendly read-only workflows.
+The main path starts from a **live cluster**. It works **standalone** with your current kube context, or **connected** to [ConfigHub](https://confighub.com) for governed comparison, history, import, fleet queries, and AI-friendly read-only workflows. Local repo and manifest inputs are available later for adoption, import-preview, and source-file enrichment, but they are not the first mental model.
 
 ### Who reaches for cub-scout?
 
@@ -33,7 +35,9 @@ cub-scout is the **read-only witness**. ConfigHub (driven by `cub`) is the **aut
 
 ## Capability Map
 
-cub-scout's commands fall into eight groups. Each command's **Inputs** column tells you exactly what it needs — cluster only (standalone), cluster + a local git checkout (standalone + `--source-path` / `--git-path`), or cluster + ConfigHub auth (connected).
+cub-scout's commands fall into eight groups. Read them as a live-cluster journey first: **observe** what is running, **diagnose** one thing, **compare** live state to governed intent when connected, then use adoption/import paths only when you are ready to bring existing config into ConfigHub.
+
+Each command's **Inputs** column tells you exactly what it needs — cluster only (standalone), cluster + ConfigHub auth (connected), bundle/file inputs, or a local git checkout for advanced adoption and source-enrichment flows.
 
 ### Observe — see what's running
 
@@ -76,7 +80,8 @@ cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `c
 
 | Command | What you get | Inputs |
 |---|---|---|
-| `receipt verify <kind>/<name>` | Build a typed, fingerprinted receipt asserting a predicate. Predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. Verdicts: PASS / WATCH / BLOCK / INCONCLUSIVE. | cluster (+ ConfigHub for `source-truth-pass`) |
+| `receipt verify <kind>/<name>` | Build a typed, fingerprinted receipt asserting a resource predicate. Predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. Verdicts: PASS / WATCH / BLOCK / INCONCLUSIVE. | cluster (+ ConfigHub for `source-truth-pass`) |
+| `receipt verify --file <path> --scope namespace/<ns>` | Build an install/object-set receipt (`object-set-matches`) proving every desired object in rendered YAML is present live and every authored field still matches. Server defaults are allowed; missing or changed desired fields BLOCK. | cluster + rendered YAML |
 | `receipt verify --fail-on <verdict>` | Same, plus CI-gate exit semantics: exit 2 when the receipt's verdict matches the listed set (`WATCH` / `BLOCK` / `INCONCLUSIVE` / `any-non-pass`). Artifact is preserved on fail. | cluster |
 | `receipt verify --input-attestation <path>` | Chain receipts: reference a prior receipt via `inputAttestations[]`. Each referenced receipt's fingerprint is verified before chaining; tampered receipts are refused. | cluster + prior receipt file |
 | `receipt show <path>` | Render a saved receipt (ASCII or JSON). Does NOT verify the fingerprint — works on tampered receipts for forensic inspection. | receipt file |
@@ -100,19 +105,6 @@ cub-scout's **attribution layer** (#435) annotates every field mismatch with pro
 
 The verified manager-string enumeration covers Argo CD, Flux (kustomize / helm / source controllers), Helm direct, Crossplane (composite / composed / claim / MRD / refs), kro (applyset / parent / labeller), and `kubectl-*` interactive paths — strings not in the enumeration fall through to `unknown` rather than being guessed.
 
-### Ingest — import config into ConfigHub
-
-| Command | What you get | Inputs |
-|---|---|---|
-| `import --git-path` | Local Git-structure preview, no upload | git checkout |
-| `import parse-repo` | Repo structure JSON for downstream tools | git checkout |
-| `import argocd` | Import one ArgoCD Application's units | cluster + ConfigHub |
-| `import cluster-aggregator` | Aggregate import proposals across many controllers | cluster + ConfigHub |
-| `import apply` | Apply an import proposal JSON to ConfigHub | ConfigHub |
-| `app` | Manage ConfigHub Apps | ConfigHub |
-
-Today standalone `import --git-path` is preview-only. A `--output-dir` mode that emits proposed unit YAMLs to disk for review/PR/upload is in the [next-up](#whats-coming-next) list.
-
 ### Govern — connected fleet and history
 
 | Command | What you get | Inputs |
@@ -124,6 +116,23 @@ Today standalone `import --git-path` is preview-only. A `--output-dir` mode that
 | `views` (`resolve` / `open` / `project`) | Resolve, open, and project ConfigHub Views (#391) | ConfigHub |
 | `audit list` | Break-glass accept/reject audit trail | ConfigHub |
 | `bundle` / `catalog` | Inspect, replay, diff, and summarize debug bundles + manage catalogs | bundle artifact |
+
+### Adopt Existing Config — preview imports after observing live state
+
+Use this when you are bringing an existing cluster, Argo/Flux setup, debug bundle, or manifest repo toward ConfigHub. This is an adoption path, not the first-run troubleshooting path.
+
+| Command | What you get | Inputs |
+|---|---|---|
+| `import --dry-run` | Live-cluster ConfigHub adoption proposal | cluster |
+| `import --from-bundle` | Offline adoption proposal from captured bundle facts | bundle artifact |
+| `import --git-path` | Advanced local Git-structure preview, no upload or render | git checkout |
+| `import parse-repo` | Lower-level repo structure JSON for downstream tools | git checkout or remote URL |
+| `import argocd` | Proposal/import for one Argo CD Application's units | cluster + ConfigHub |
+| `import cluster-aggregator` | Aggregate import proposals across many clusters/controllers | cluster/bundle proposal files |
+| `import apply` | Apply an import proposal JSON to ConfigHub | ConfigHub |
+| `app` | Manage ConfigHub Apps | ConfigHub |
+
+Today standalone `import --git-path` is preview-only. A `--output-dir` mode that emits proposed unit YAMLs to disk for review/PR/upload is in the [next-up](#whats-coming-next) list.
 
 ### Integrate — AI, setup, and infrastructure
 
@@ -210,9 +219,11 @@ cub-scout works fully offline. Connected mode is optional but unlocks the questi
 - **Per-field binding source** — answer "this field's value came from upstream unit X at path Y via link Z."
 - **Change history** — `kubectl events` only goes so far; `history` walks the ConfigHub governed timeline.
 - **Fleet queries** — "is this version running everywhere it should?" across many clusters.
-- **Import preview** — propose how a live workload should be modeled in ConfigHub before writing anything.
+- **Live-cluster adoption preview** — propose how current workloads should be modeled in ConfigHub before writing anything.
 
 **Important:** connected import writes ConfigHub records, not cluster manifests. cub-scout never modifies the cluster.
+
+Local repository parsing (`import --git-path`, `import parse-repo`) is a second-order adoption path: use it when a manifest repo is the thing you are reviewing or when you need source structure to enrich the live-cluster story.
 
 ---
 
@@ -289,7 +300,7 @@ Honest gaps in the current capability map, with the leverage on filling them:
 - **Standalone `compare three-way --git-path` / `--source-path` as DRY source** — would let raw-YAML repos run the same three-way view without ConfigHub. Stage B back-resolution (#440) already lays the parsing groundwork.
 - **`compare source-truth` Phase 3 (multi-source Argo)** — [#409](https://github.com/confighub/cub-scout/issues/409) Phase 1 (4 strategies) and Phase 2 (5 more strategies: `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`) already shipped (9 strategies total). Phase 3 — multi-source Argo `spec.sources[]` len > 1 — is the remaining open scope.
 - **`import --git-path --output-dir`** — emit proposed unit YAMLs to disk for PR review, then upload via Installer's `--merge-external-source` once connected. One bundle, two workflows.
-- **Hierarchy-aware ingest** — preserve ApplicationSet / app-of-apps / Flux Kustomization composition in import proposals so imported ConfigHub state is navigable, not flat.
+- **Hierarchy-aware adoption/import** — preserve ApplicationSet / app-of-apps / Flux Kustomization composition in import proposals so imported ConfigHub state is navigable, not flat.
 - **Helm / Kustomize back-resolution** — extends stage B (#440) from raw YAML to templated sources for per-field `file:line` provenance.
 - **Additional manager-string writers** — Tekton, Argo Workflows, Cluster API, OIDC-based CD systems — gated on whether the variant-management story demands them.
 

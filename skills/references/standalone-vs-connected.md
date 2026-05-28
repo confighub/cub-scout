@@ -44,7 +44,7 @@ Every cub-scout verb that operates on cluster state alone — the read-only Kube
 | Diagnose | `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status` |
 | Compare | `compare drift --file <yaml>`, `compare three-way --source-path <local-checkout>` (stage B back-resolution); the resource-mode `compare` works but DRY layer is absent |
 | Attribute | The full `cause` / `managerHint` / `gitSource` evidence on `compare` + `explain` JSON works — `bindingSource` requires connected mode |
-| Ingest | `import --git-path` + `import argocd` + `import cluster-aggregator` + `import parse-repo` (preview-only) |
+| Adopt Existing Config | `import --dry-run` + `import --from-bundle` + `import --git-path` + `import argocd` + `import cluster-aggregator` + `import parse-repo` (preview-first) |
 | Govern | `bundle`, `catalog` against on-disk artifacts only |
 | Integrate | `mcp serve` (standalone tool set), `context-pack` |
 | Verify | `receipt verify --predicate applied-matches-spec` / `--predicate no-manual-edits-since`; `receipt show / validate / list` |

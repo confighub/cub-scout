@@ -4,7 +4,7 @@
 > cub-scout owns discovery and explanation; `cub` owns connected lifecycle commands (`cub gitops import`, `cub auth`, etc.).
 > See [Interface Boundaries](../concepts/why-connected-mode.md#interface-boundaries-authoritative).
 
-This is the canonical migration path for moving existing ArgoCD/Helm-managed workloads into ConfigHub.
+This is the canonical migration path for moving existing ArgoCD/Helm-managed workloads into ConfigHub. It starts from the live cluster because that is the source operators need to trust first: what is running, who owns it, and whether the current shape is safe to adopt.
 
 For a comprehensive guide with assessment, planning, validation checklists, and rollback procedures, see the [Migration Playbook](migration-playbook.md).
 
@@ -21,7 +21,7 @@ The import process involves three roles with distinct responsibilities:
 
 cub-scout is read-only in discovery mode (`--dry-run`). Non-dry-run import creates ConfigHub state and may delegate Argo/Flux workloads to `cub gitops import` when matching targets exist.
 
-For cluster-only discovery (no Git required), see [Import from Live](import-from-live.md).
+For cluster-only discovery (no Git required), see [Import from Live](import-from-live.md). Local repository parsing is useful later, when the manifest repo itself is under review, but it is not required for the normal live-cluster adoption path.
 
 For bundle-based import previews (no cluster discovery), see [Import from Bundle Example](../../examples/import-from-bundle/).
 

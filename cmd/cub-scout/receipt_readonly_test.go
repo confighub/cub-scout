@@ -71,7 +71,7 @@ func TestReceiptPackageReadOnlyClient(t *testing.T) {
 	// cmd/cub-scout/ so . is cmd/cub-scout/ and ../../pkg/agent/ is the
 	// agent package.
 	roots := []string{
-		".",          // cmd/cub-scout
+		".", // cmd/cub-scout
 		"../../pkg/agent",
 	}
 
@@ -82,20 +82,22 @@ func TestReceiptPackageReadOnlyClient(t *testing.T) {
 	// present in tree but skipped, or listed here but missing from
 	// tree) fails the test. Keeps the glob honest as new files land.
 	expectedPaths := map[string]bool{
-		"cmd/cub-scout/receipt.go":           false,
-		"cmd/cub-scout/receipt_render.go":    false,
-		"cmd/cub-scout/receipt_show.go":      false,
-		"cmd/cub-scout/receipt_validate.go":  false,
-		"cmd/cub-scout/receipt_list.go":      false,
-		"cmd/cub-scout/watch_receipt.go":     false,
-		"pkg/agent/receipt.go":                       false,
-		"pkg/agent/receipt_build.go":                 false,
-		"pkg/agent/receipt_canonicaljson.go":         false,
-		"pkg/agent/receipt_fingerprint.go":           false,
-		"pkg/agent/receipt_inputattestations.go":     false,
-		"pkg/agent/receipt_predicates.go":            false,
-		"pkg/agent/receipt_store.go":                 false,
-		"pkg/agent/receipt_subject.go":               false,
+		"cmd/cub-scout/receipt.go":               false,
+		"cmd/cub-scout/receipt_render.go":        false,
+		"cmd/cub-scout/receipt_object_set.go":    false,
+		"cmd/cub-scout/receipt_show.go":          false,
+		"cmd/cub-scout/receipt_validate.go":      false,
+		"cmd/cub-scout/receipt_list.go":          false,
+		"cmd/cub-scout/watch_receipt.go":         false,
+		"pkg/agent/receipt.go":                   false,
+		"pkg/agent/receipt_build.go":             false,
+		"pkg/agent/receipt_canonicaljson.go":     false,
+		"pkg/agent/receipt_fingerprint.go":       false,
+		"pkg/agent/receipt_inputattestations.go": false,
+		"pkg/agent/receipt_object_set.go":        false,
+		"pkg/agent/receipt_predicates.go":        false,
+		"pkg/agent/receipt_store.go":             false,
+		"pkg/agent/receipt_subject.go":           false,
 	}
 	rootDisplay := map[string]string{
 		".":               "cmd/cub-scout",
