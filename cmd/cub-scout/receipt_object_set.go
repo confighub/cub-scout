@@ -35,6 +35,8 @@ var receiptObjectSetFile string
 
 var loadObjectSetLiveObjectsFn = loadObjectSetLiveObjects
 
+var loadObjectSetExtrasFn = loadObjectSetExtras
+
 func runReceiptVerifyObjectSet(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return fmt.Errorf("--file object-set receipt mode does not accept a positional subject; scope the install with --scope namespace/<ns> or -n <ns>")
@@ -80,6 +82,15 @@ func runReceiptVerifyObjectSet(cmd *cobra.Command, args []string) error {
 	evidence, err := agent.BuildObjectSetEvidence(source, scope, observed)
 	if err != nil {
 		return err
+	}
+
+	if receiptNoExtras {
+		extras, exErr := loadObjectSetExtrasFn(cmd.Context(), desired, scope, defaultNamespace)
+		if exErr != nil {
+			return fmt.Errorf("closed-world check: %w", exErr)
+		}
+		evidence.ExtraChecked = true
+		evidence.ExtraObjects = extras
 	}
 
 	var inputAttestations []agent.VerifiedAttestationRef
@@ -397,4 +408,96 @@ func writeReceiptOutFile(outPath string, jsonBytes []byte) error {
 		return fmt.Errorf("write receipt to %s: %w", outPath, writeErr)
 	}
 	return nil
+}
+
+// loadObjectSetExtras enumerates live objects of each rendered (namespaced)
+// kind in the scope namespace and returns those not in the desired set — the
+// closed-world check behind --no-extras (#480). It skips owner-referenced
+// children (ReplicaSets, EndpointSlices, controller-owned Pods, …) and a small
+// set of auto-created system objects so the result is "extra things a human or
+// another tool added", not controller noise. Cluster-scoped sets return no
+// extras in v1.
+func loadObjectSetExtras(ctx context.Context, desired []*unstructured.Unstructured, scope agent.ObjectSetScope, defaultNamespace string) ([]agent.ObjectSetObjectID, error) {
+	ns := strings.TrimSpace(scope.Namespace)
+	if ns == "" {
+		ns = strings.TrimSpace(defaultNamespace)
+	}
+	if ns == "" {
+		return nil, nil // closed-world is namespace-scoped in v1
+	}
+
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build kubernetes config: %w", err)
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("build dynamic client: %w", err)
+	}
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("build discovery client: %w", err)
+	}
+	groupResources, err := restmapper.GetAPIGroupResources(discoveryClient)
+	if err != nil {
+		return nil, fmt.Errorf("discover API resources: %w", err)
+	}
+	mapper := restmapper.NewDiscoveryRESTMapper(groupResources)
+
+	desiredKeys := map[string]bool{}
+	gvrs := map[schema.GroupVersionResource]bool{}
+	for _, obj := range desired {
+		o := obj.DeepCopy()
+		mapping, mErr := objectSetRESTMapping(mapper, o)
+		if mErr != nil || mapping.Scope.Name() != meta.RESTScopeNameNamespace {
+			continue
+		}
+		on := strings.TrimSpace(o.GetNamespace())
+		if on == "" {
+			on = ns
+		}
+		o.SetNamespace(on)
+		desiredKeys[agent.NewObjectSetObjectID(o).Key()] = true
+		gvrs[mapping.Resource] = true
+	}
+
+	var extras []agent.ObjectSetObjectID
+	for gvr := range gvrs {
+		list, lErr := dynClient.Resource(gvr).Namespace(ns).List(ctx, metav1.ListOptions{})
+		if lErr != nil {
+			continue // a kind we cannot list; skip rather than fail the whole check
+		}
+		for i := range list.Items {
+			item := list.Items[i]
+			id := agent.NewObjectSetObjectID(&item)
+			if desiredKeys[id.Key()] {
+				continue
+			}
+			if len(item.GetOwnerReferences()) > 0 {
+				continue // controller-created child
+			}
+			if isClosedWorldSystemObject(&item) {
+				continue
+			}
+			extras = append(extras, id)
+		}
+	}
+	sort.Slice(extras, func(i, j int) bool { return extras[i].Key() < extras[j].Key() })
+	return extras, nil
+}
+
+// isClosedWorldSystemObject filters auto-created namespace objects that are
+// not "extras a human added": the kube-root-ca.crt ConfigMap, the default
+// ServiceAccount, and service-account-token Secrets.
+func isClosedWorldSystemObject(obj *unstructured.Unstructured) bool {
+	switch obj.GetKind() {
+	case "ConfigMap":
+		return obj.GetName() == "kube-root-ca.crt"
+	case "ServiceAccount":
+		return obj.GetName() == "default"
+	case "Secret":
+		typ, _, _ := unstructured.NestedString(obj.Object, "type")
+		return typ == "kubernetes.io/service-account-token"
+	}
+	return false
 }

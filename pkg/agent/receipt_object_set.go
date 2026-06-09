@@ -49,6 +49,13 @@ type ObjectSetEvidence struct {
 	LiveDigest    string                   `json:"liveDigest"`
 	Summary       ObjectSetSummary         `json:"summary"`
 	Objects       []ObjectSetObjectSummary `json:"objects"`
+
+	// ExtraChecked is true when the closed-world check ran (--no-extras).
+	// When true, the extra-live-object-coverage omission is dropped and
+	// ExtraObjects lists any live objects of the rendered kinds in scope
+	// that are not in the desired set.
+	ExtraChecked bool                `json:"extraChecked,omitempty"`
+	ExtraObjects []ObjectSetObjectID `json:"extraObjects,omitempty"`
 }
 
 type ObjectSetSummary struct {
@@ -134,14 +141,28 @@ func BuildObjectSetReceipt(in BuildObjectSetReceiptInput) (Statement, error) {
 		verdict = VerdictBLOCK
 	} else if in.Evidence.Summary.Inconclusive > 0 {
 		verdict = VerdictINCONCLUSIVE
+	} else if in.Evidence.ExtraChecked && len(in.Evidence.ExtraObjects) > 0 {
+		// Closed-world check ran and found live objects of the rendered
+		// kinds that are not in the desired set: downgrade a clean PASS to
+		// WATCH — the install is present + matching, but not exclusive.
+		verdict = VerdictWATCH
 	}
 
-	omissions := []Omission{
-		{
+	omissions := []Omission{}
+	if in.Evidence.ExtraChecked {
+		if len(in.Evidence.ExtraObjects) > 0 {
+			omissions = append(omissions, Omission{
+				Missing:  OmissionExtraLiveObjects,
+				Reason:   fmt.Sprintf("closed-world check found %d live object(s) of the rendered kinds in scope that are not in the desired set; see extraObjects", len(in.Evidence.ExtraObjects)),
+				Severity: "warning",
+			})
+		}
+	} else {
+		omissions = append(omissions, Omission{
 			Missing:  OmissionExtraLiveObjectCoverage,
 			Reason:   "object-set-matches verifies desired object identities and authored fields from the rendered manifests; it does not prove that no extra live objects exist outside that desired set",
 			Severity: "info",
-		},
+		})
 	}
 	if in.Evidence.Summary.Inconclusive > 0 {
 		omissions = append(omissions, Omission{
@@ -158,6 +179,13 @@ func BuildObjectSetReceipt(in BuildObjectSetReceiptInput) (Statement, error) {
 			ActionType:  "read-only",
 			Reason:      "every desired rendered object was present and all authored fields matched live",
 			NextCommand: "cub-scout doctor",
+			NextSurface: "cub-scout",
+		})
+	case VerdictWATCH:
+		nextSteps = append(nextSteps, ReceiptNextStep{
+			ActionType:  "read-only",
+			Reason:      fmt.Sprintf("every desired object matched, but %d unexpected live object(s) of the rendered kinds were found in scope; review extraObjects before treating the install as exclusive", len(in.Evidence.ExtraObjects)),
+			NextCommand: "cub-scout map list",
 			NextSurface: "cub-scout",
 		})
 	case VerdictBLOCK:

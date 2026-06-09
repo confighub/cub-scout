@@ -128,6 +128,9 @@ func renderReceiptASCII(stmt agent.Statement) string {
 				fmt.Fprintf(&b, "      diff: %s (%s)\n", diff.Path, diff.Reason)
 			}
 		}
+		for _, id := range oset.ExtraObjects {
+			fmt.Fprintf(&b, "  + extra (not in desired set): %s\n", id.String())
+		}
 	}
 
 	if pred.Evidence.Workloads != nil {
