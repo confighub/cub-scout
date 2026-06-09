@@ -45,11 +45,15 @@ To run against your current context instead of a new kind cluster:
 
 ## What to expect
 
-- `receipt object-set-matches` → **PASS**, exit 0
-- pod → **CreateContainerConfigError**, Ready=False
-- `verify.sh` gap table → "false green (PASS but unusable)?: yes"
+`verify.sh` prints a scorecard for the same install:
 
-That contrast is the point. The gaps map to issue drafts in
+- `object-set-matches` → **PASS** (present + match) — a false green on its own
+- `prerequisites-met` (#477) → **BLOCK** — the required Secret is absent (pre-flight)
+- `workloads-converged` (#476) → **BLOCK** — the pod is in `CreateContainerConfigError` (runtime)
+- receipt freshness/TTL (#478) → **ABSENT** — still open
+
+The two BLOCKs catching the same F3 install from both ends is the point. The full
+set maps to
 [`docs/proposals/helm-expt-driven-gaps.md`](../../docs/proposals/helm-expt-driven-gaps.md).
 
 ## Important boundaries

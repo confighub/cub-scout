@@ -33,7 +33,9 @@ subject as "the authored-field projection of live", not "everything that is live
 
 ## What would make the claim complete
 
-See [`docs/proposals/helm-expt-driven-gaps.md`](../../docs/proposals/helm-expt-driven-gaps.md):
-a `workloads-converged` predicate (readiness), a `prerequisites-met` predicate
-(target facts), observation freshness (`observedAt` + `expiresAt`), and an
-optional closed-world check.
+`workloads-converged` (#476, readiness) and `prerequisites-met` (#477, target
+facts) now ship and `verify.sh` runs them — `object-set-matches` PASS plus those
+two BLOCKs is the honest picture of this install. Still open in
+[`docs/proposals/helm-expt-driven-gaps.md`](../../docs/proposals/helm-expt-driven-gaps.md):
+observation freshness (`observedAt` + `expiresAt`, #478) and an optional
+closed-world check.
