@@ -1,0 +1,15 @@
+# Declared "target facts" for the demo install — the cluster-state dependencies
+# this install needs before it can work. Consumed by:
+#   cub-scout receipt verify --prerequisites prerequisites.yaml --predicate prerequisites-met
+#
+# app-db-secret is intentionally NOT created by setup.sh (it is the unmet
+# prerequisite from helm-expt finding F3), so prerequisites-met BLOCKs on it.
+requiredNamespaces:
+  - helm-expt-demo
+requiredStorageClasses:
+  - standard
+requiredSecrets:
+  - name: app-db-secret
+    namespace: helm-expt-demo
+    keys:
+      - password

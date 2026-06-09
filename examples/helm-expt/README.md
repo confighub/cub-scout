@@ -25,13 +25,17 @@ end-to-end with no helm-expt checkout, use the bundled scripts and fixture:
 ```bash
 cd examples/helm-expt
 ./setup.sh     # ephemeral kind cluster + fixtures/release-objects.yaml
-./verify.sh    # builds the receipt, then contrasts it with cluster reality
+./verify.sh    # runs object-set-matches + prerequisites-met + workloads-converged
 ./cleanup.sh   # tears the cluster down
 ```
 
-The fixture intentionally reproduces helm-expt finding **F3**: the receipt comes
-back `PASS` while the workload sits in `CreateContainerConfigError`. That gap, and
-the issue drafts that would close it, are documented in
+`verify.sh` runs all three install-receipt predicates against the same install and
+prints a scorecard. The fixture reproduces helm-expt finding **F3**, so
+`object-set-matches` is `PASS` (present + match) — a false green on its own — while
+`prerequisites-met` (#477) BLOCKs pre-flight (the required Secret is absent) and
+`workloads-converged` (#476) BLOCKs at runtime (the pod is in
+`CreateContainerConfigError`). The remaining gap, receipt freshness (#478), and the
+full set are in
 [`docs/proposals/helm-expt-driven-gaps.md`](../../docs/proposals/helm-expt-driven-gaps.md).
 Start with [AI_START_HERE.md](./AI_START_HERE.md). The scripts never touch a
 helm-expt checkout.
