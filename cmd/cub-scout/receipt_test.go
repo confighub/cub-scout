@@ -62,7 +62,8 @@ func resetReceiptFlags(t *testing.T) {
 	t.Helper()
 	prev := struct {
 		ns, pred, at, fmt, out, file, scope, grace, prereq, ttl string
-	}{receiptNamespace, receiptPredicate, receiptAtCommit, receiptFormat, receiptOut, receiptObjectSetFile, receiptScope, receiptGraceWindow, receiptPrerequisitesFile, receiptTTL}
+		noExtras                                                bool
+	}{receiptNamespace, receiptPredicate, receiptAtCommit, receiptFormat, receiptOut, receiptObjectSetFile, receiptScope, receiptGraceWindow, receiptPrerequisitesFile, receiptTTL, receiptNoExtras}
 	receiptNamespace = ""
 	receiptPredicate = ""
 	receiptAtCommit = ""
@@ -73,6 +74,7 @@ func resetReceiptFlags(t *testing.T) {
 	receiptGraceWindow = ""
 	receiptPrerequisitesFile = ""
 	receiptTTL = ""
+	receiptNoExtras = false
 	t.Cleanup(func() {
 		receiptNamespace = prev.ns
 		receiptPredicate = prev.pred
@@ -84,6 +86,7 @@ func resetReceiptFlags(t *testing.T) {
 		receiptGraceWindow = prev.grace
 		receiptPrerequisitesFile = prev.prereq
 		receiptTTL = prev.ttl
+		receiptNoExtras = prev.noExtras
 	})
 }
 

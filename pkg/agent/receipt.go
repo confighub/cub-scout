@@ -346,6 +346,11 @@ const (
 	// are outside the desired object identity set.
 	OmissionExtraLiveObjectCoverage = "extra-live-object-coverage"
 
+	// OmissionExtraLiveObjects is recorded by object-set receipts run with
+	// the closed-world check (--no-extras) when live objects of the
+	// rendered kinds exist in scope but are not in the desired set.
+	OmissionExtraLiveObjects = "extra-live-objects"
+
 	// OmissionObjectSetCoverage is recorded by object-set receipts when
 	// one or more desired objects could not be checked because the API
 	// mapping or live read was inconclusive.

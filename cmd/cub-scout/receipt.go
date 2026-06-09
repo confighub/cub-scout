@@ -38,6 +38,7 @@ var (
 	receiptTTL               string
 	receiptTTLDur            time.Duration
 	receiptReferenceEvidence []string
+	receiptNoExtras          bool
 )
 
 // runReceiptVerifyDispatch is the shared entry point for the receipt
@@ -171,6 +172,7 @@ func init() {
 	receiptVerifyCmd.Flags().StringVar(&receiptGraceWindow, "grace-window", "", "For --predicate workloads-converged: how long a workload may stay InProgress before it counts as failed (BLOCK) rather than progressing (WATCH), e.g. 5m. Empty means no deadline (InProgress is WATCH).")
 	receiptVerifyCmd.Flags().StringVar(&receiptPrerequisitesFile, "prerequisites", "", "YAML/JSON file declaring required cluster facts (requiredCRDs, requiredSecrets, requiredNamespaces, requiredStorageClasses, requiredIngressClasses) for a prerequisites-met receipt.")
 	receiptVerifyCmd.Flags().StringVar(&receiptTTL, "ttl", "", "Observation-freshness boundary, e.g. 1h. When set, the receipt records an immutable freshness{observedAt,expiresAt,ttl} so a consumer can tell a fresh receipt from a stale one. Empty means the receipt makes no freshness claim.")
+	receiptVerifyCmd.Flags().BoolVar(&receiptNoExtras, "no-extras", false, "For --predicate object-set-matches: also run the closed-world check — flag live objects of the rendered kinds in scope that are not in the desired set (resolves the extra-live-object-coverage omission). Extras downgrade a clean PASS to WATCH. Skips owner-referenced children and system objects.")
 	receiptVerifyCmd.Flags().StringVar(&receiptAtCommit, "at-commit", "", "Override the spec anchor revision (Git SHA). When empty, the controller-resolved anchor is used as both the spec and the evidence.")
 	receiptVerifyCmd.Flags().StringVar(&receiptStrategy, "strategy", "", "Source-truth strategy for source-truth-pass (e.g. git-argo). cub-scout does not infer the strategy.")
 	receiptVerifyCmd.Flags().StringVar(&receiptSince, "since", "", "RFC 3339 cutoff for no-manual-edits-since (e.g. 2026-05-22T00:00:00Z).")
