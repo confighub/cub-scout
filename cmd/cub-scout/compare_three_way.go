@@ -91,6 +91,7 @@ var (
 	compareThreeWayFormat   string
 	compareThreeWayJSON     bool
 	compareThreeWayFailOn   string
+	compareThreeWayDryFrom  string
 
 	buildThreeWayResourceResultFn = buildCompareResourceResult
 	discoverThreeWayNamespacesFn  = discoverNamespacesWithWorkloads
@@ -147,11 +148,27 @@ func init() {
 	compareThreeWayCmd.Flags().BoolVar(&compareThreeWayJSON, "json", false, "Output as JSON (shorthand for --format json)")
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning)")
 	compareThreeWayCmd.Flags().StringVar(&compareSourcePath, "source-path", "", "Local git checkout to back-resolve gitSource.file:line for each field mismatch (stage B; raw YAML only)")
+	compareThreeWayCmd.Flags().StringVar(&compareThreeWayDryFrom, "dry-from", "", "Standalone DRY source: a rendered YAML file or directory (e.g. a git checkout) used as the intended (DRY) state instead of ConfigHub. Compares DRY vs LIVE with no connected mode (#479).")
 }
 
 func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 	if compareThreeWayScopeRaw != "" && compareThreeWayView != "" {
 		return fmt.Errorf("--scope and --view are mutually exclusive")
+	}
+
+	// Standalone git/file-as-DRY (#479): load the DRY side from a local
+	// rendered file/dir, so the three-way runs without ConfigHub. Loaded once
+	// here (not per resource) and consumed by buildCompareResourceResult.
+	if dryFrom := strings.TrimSpace(compareThreeWayDryFrom); dryFrom != "" {
+		if compareThreeWayView != "" {
+			return fmt.Errorf("--dry-from and --view are mutually exclusive (--view requires connected mode)")
+		}
+		summaries, err := loadCompareDryFromPathFn(dryFrom)
+		if err != nil {
+			return fmt.Errorf("load --dry-from %s: %w", dryFrom, err)
+		}
+		compareThreeWayDrySummaries = summaries
+		defer func() { compareThreeWayDrySummaries = nil }()
 	}
 
 	var scope threeWayScope
@@ -637,8 +654,10 @@ func compareResourceUnitIdentity(result compareResourceResult) (unitSlug, unitID
 // classifyResourcePattern determines the three-way pattern for a resource.
 // This reuses the logic from classifyThreeWayPattern but without sync/health status.
 func classifyResourcePattern(result compareResourceResult) ThreeWayPattern {
-	// Not connected = disconnected
-	if !result.Connected {
+	// Not connected AND no local DRY source = disconnected. A standalone
+	// --dry-from run (#479) is not connected but carries DRY evidence, so it
+	// must not be labeled disconnected.
+	if !result.Connected && result.Dry == nil {
 		return PatternDisconnected
 	}
 
