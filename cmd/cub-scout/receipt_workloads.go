@@ -100,6 +100,9 @@ func runReceiptVerifyWorkloadsConverged(cmd *cobra.Command, args []string) error
 	if err != nil {
 		return fmt.Errorf("build workloads-converged receipt: %w", err)
 	}
+	if err := agent.ApplyFreshness(&stmt, receiptTTLDur); err != nil {
+		return fmt.Errorf("apply freshness: %w", err)
+	}
 
 	var out []byte
 	switch format {

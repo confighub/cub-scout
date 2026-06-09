@@ -35,6 +35,9 @@ func renderReceiptASCII(stmt agent.Statement) string {
 
 	// Verifier + timestamp.
 	fmt.Fprintf(&b, "  By:      %s %s at %s\n", pred.Verifier.Tool, pred.Verifier.Version, pred.VerifiedAt)
+	if pred.Freshness != nil {
+		fmt.Fprintf(&b, "  Fresh:   observed %s, expires %s (ttl %s)\n", pred.Freshness.ObservedAt, pred.Freshness.ExpiresAt, pred.Freshness.TTL)
+	}
 
 	// Spec anchor (when present).
 	if pred.Spec != nil {

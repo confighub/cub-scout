@@ -35,7 +35,8 @@ subject as "the authored-field projection of live", not "everything that is live
 
 `workloads-converged` (#476, readiness) and `prerequisites-met` (#477, target
 facts) now ship and `verify.sh` runs them — `object-set-matches` PASS plus those
-two BLOCKs is the honest picture of this install. Still open in
+two BLOCKs is the honest picture of this install. Observation freshness
+(`observedAt` + `expiresAt`, #478) now ships too — pass `--ttl` to stamp it, as
+`verify.sh` does. Still open in
 [`docs/proposals/helm-expt-driven-gaps.md`](../../docs/proposals/helm-expt-driven-gaps.md):
-observation freshness (`observedAt` + `expiresAt`, #478) and an optional
-closed-world check.
+the optional closed-world check.

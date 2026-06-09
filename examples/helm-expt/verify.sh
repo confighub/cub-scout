@@ -63,7 +63,7 @@ LAST_VERDICT=""; LAST_RC=0
 run_predicate() {
     local label="$1"; shift
     set +e
-    "$CUB_SCOUT" receipt verify "$@" --scope "namespace/$NS" --format json \
+    "$CUB_SCOUT" receipt verify "$@" --scope "namespace/$NS" --format json --ttl 1h \
         --out "$RUN_DIR/$label.receipt.json" --fail-on any-non-pass \
         >"$RUN_DIR/$label.stdout.json" 2>"$RUN_DIR/$label.stderr.txt"
     LAST_RC=$?
@@ -105,7 +105,7 @@ printf -- '---------------------------------------+-----------------------------
 printf '%-38s | %s\n' "object-set-matches (present+match)"  "$OS_VERDICT  <- green alone = false green"
 printf '%-38s | %s\n' "prerequisites-met (#477, pre-flight)" "$PQ_VERDICT  <- target fact: Secret absent"
 printf '%-38s | %s\n' "workloads-converged (#476, runtime)"  "$WL_VERDICT  <- pod CreateContainerConfigError"
-printf '%-38s | %s\n' "receipt freshness/TTL (#478, open)"   "$([[ "$HAS_FRESHNESS" -gt 0 ]] && echo present || echo ABSENT)"
+printf '%-38s | %s\n' "receipt freshness/TTL (#478)"         "$([[ "$HAS_FRESHNESS" -gt 0 ]] && echo "present (ttl 1h)" || echo ABSENT)"
 
 # ---------------------------------------------------------------------------
 rule "verdict for this example"
@@ -118,8 +118,9 @@ The two install-receipt predicates now catch it from both ends, on the SAME inst
   * prerequisites-met  (#477) BLOCKs pre-flight  — the required Secret is absent.
   * workloads-converged (#476) BLOCKs at runtime — the pod is in CreateContainerConfigError.
 
-Still open: receipt observation freshness (#478) — observedAt + expiresAt so a
-workerless consumer can tell a fresh green from a stale one.
+The three install-receipt predicates plus receipt freshness (#478, via --ttl:
+observedAt + expiresAt) now ship — so a workerless consumer can tell a fresh
+green from a stale one.
 
 Receipts saved under: ${RUN_DIR/#$REPO_ROOT\//}
 EOF

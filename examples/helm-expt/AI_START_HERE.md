@@ -50,7 +50,7 @@ To run against your current context instead of a new kind cluster:
 - `object-set-matches` → **PASS** (present + match) — a false green on its own
 - `prerequisites-met` (#477) → **BLOCK** — the required Secret is absent (pre-flight)
 - `workloads-converged` (#476) → **BLOCK** — the pod is in `CreateContainerConfigError` (runtime)
-- receipt freshness/TTL (#478) → **ABSENT** — still open
+- receipt freshness/TTL (#478) → **present** — `verify.sh` passes `--ttl 1h`, so each receipt carries an immutable `observedAt`+`expiresAt`
 
 The two BLOCKs catching the same F3 install from both ends is the point. The full
 set maps to

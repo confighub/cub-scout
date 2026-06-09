@@ -243,21 +243,21 @@ var gvrCronJobV1 = schema.GroupVersionResource{Group: "batch", Version: "v1", Re
 // `--scope namespace/<ns>` OR a comma-list positional triggers it.
 //
 // Steps:
-//   1. Parse the scope spec (already done by the caller, here for
-//      explicitness via re-parse).
-//   2. Resolve the resource list (discovery for namespace mode; the
-//      comma-list is already a resolved set).
-//   3. For each resource, run the same verify logic the single-resource
-//      flow uses (build live, build evidence, build per-resource
-//      receipt). The receipts go through the existing BuildReceipt
-//      machinery — same predicate auto-detection, same flag semantics.
-//      Each per-resource receipt is optionally persisted to the store
-//      if --save is set.
-//   4. Build the aggregate receipt over the per-resource receipts via
-//      pkg/agent.BuildAggregateReceipt with the configured policy
-//      (default: max-severity).
-//   5. Emit the per-resource receipts (JSONL stream) followed by the
-//      aggregate receipt; --fail-on applies to the aggregate verdict.
+//  1. Parse the scope spec (already done by the caller, here for
+//     explicitness via re-parse).
+//  2. Resolve the resource list (discovery for namespace mode; the
+//     comma-list is already a resolved set).
+//  3. For each resource, run the same verify logic the single-resource
+//     flow uses (build live, build evidence, build per-resource
+//     receipt). The receipts go through the existing BuildReceipt
+//     machinery — same predicate auto-detection, same flag semantics.
+//     Each per-resource receipt is optionally persisted to the store
+//     if --save is set.
+//  4. Build the aggregate receipt over the per-resource receipts via
+//     pkg/agent.BuildAggregateReceipt with the configured policy
+//     (default: max-severity).
+//  5. Emit the per-resource receipts (JSONL stream) followed by the
+//     aggregate receipt; --fail-on applies to the aggregate verdict.
 //
 // The function is intentionally separate from runReceiptVerify (the
 // single-resource flow) — both paths share helpers but the aggregate
@@ -344,6 +344,13 @@ func runReceiptVerifyScoped(
 			continue
 		}
 
+		// Stamp freshness (#478) before emit/save/chain so the persisted
+		// and chained per-resource receipts carry the same boundary.
+		if frErr := agent.ApplyFreshness(&stmt, receiptTTLDur); frErr != nil {
+			perResourceFailures = append(perResourceFailures, fmt.Sprintf("%s/%s in %s: apply freshness: %v", r.Kind, r.Name, r.Namespace, frErr))
+			continue
+		}
+
 		// Emit the per-resource receipt to stdout (JSONL line for
 		// machine consumption; aggregate flow always emits JSON
 		// regardless of --format for the per-resource set).
@@ -403,6 +410,9 @@ func runReceiptVerifyScoped(
 	})
 	if aggErr != nil {
 		return fmt.Errorf("build aggregate receipt: %w", aggErr)
+	}
+	if frErr := agent.ApplyFreshness(&aggregateStmt, receiptTTLDur); frErr != nil {
+		return fmt.Errorf("apply freshness to aggregate: %w", frErr)
 	}
 
 	// Emit the aggregate receipt (always JSON; ASCII rendering for

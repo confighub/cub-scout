@@ -34,8 +34,8 @@ prints a scorecard. The fixture reproduces helm-expt finding **F3**, so
 `object-set-matches` is `PASS` (present + match) — a false green on its own — while
 `prerequisites-met` (#477) BLOCKs pre-flight (the required Secret is absent) and
 `workloads-converged` (#476) BLOCKs at runtime (the pod is in
-`CreateContainerConfigError`). The remaining gap, receipt freshness (#478), and the
-full set are in
+`CreateContainerConfigError`); `--ttl` stamps receipt freshness (#478). The
+remaining gaps and the full set are in
 [`docs/proposals/helm-expt-driven-gaps.md`](../../docs/proposals/helm-expt-driven-gaps.md).
 Start with [AI_START_HERE.md](./AI_START_HERE.md). The scripts never touch a
 helm-expt checkout.
