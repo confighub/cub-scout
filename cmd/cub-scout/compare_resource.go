@@ -1034,6 +1034,13 @@ func renderGitSourceASCII(gs *agent.GitSourceAnchor) string {
 		}
 		parts = append(parts, fileRef)
 	}
+	if gs.SourceType != "" {
+		marker := "source=" + gs.SourceType
+		if gs.Resolution != "" {
+			marker += " (" + gs.Resolution + ")"
+		}
+		parts = append(parts, marker)
+	}
 	return strings.Join(parts, " ")
 }
 
@@ -1054,6 +1061,13 @@ func renderGitSourceMarkdown(gs *agent.GitSourceAnchor) string {
 			fileRef = fmt.Sprintf("file=`%s:%d`", gs.File, gs.Line)
 		}
 		parts = append(parts, fileRef)
+	}
+	if gs.SourceType != "" {
+		marker := "source=`" + gs.SourceType + "`"
+		if gs.Resolution != "" {
+			marker += " (" + gs.Resolution + ")"
+		}
+		parts = append(parts, marker)
 	}
 	return strings.Join(parts, " ")
 }

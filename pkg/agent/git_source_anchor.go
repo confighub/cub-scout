@@ -46,6 +46,20 @@ type GitSourceAnchor struct {
 	// when the field path could not be resolved to a single line (e.g.,
 	// rendered Helm/Kustomize output).
 	Line int `json:"line,omitempty"`
+
+	// SourceType classifies the manifest source as "helm" or "kustomize" for
+	// TEMPLATED sources. Empty (treated as raw YAML) otherwise. Templated
+	// sources cannot be back-resolved to a single source file:line without a
+	// render-time source map (#481). Set only for templated sources, so raw
+	// anchors are byte-identical to before.
+	SourceType string `json:"sourceType,omitempty"`
+
+	// Resolution records how File/Line provenance was resolved. For templated
+	// sources it is "templated-source-not-resolved" — an explicit honesty
+	// marker that file:line is not recoverable from rendered output (rather
+	// than silently emitting a bare anchor). Empty for raw sources (where
+	// File/Line carry the answer when back-resolution succeeds). (#481)
+	Resolution string `json:"resolution,omitempty"`
 }
 
 // IsEmpty reports whether the anchor carries no useful information.
@@ -128,7 +142,7 @@ func collectArgoGitSource(ctx context.Context, obj *unstructured.Unstructured, o
 	if err != nil || res == nil || len(res.Chain) == 0 {
 		return nil
 	}
-	return anchorFromChainRoot(res.Chain[0])
+	return anchorWithTemplatedSource(res.Chain)
 }
 
 // traceArgoForOwner dispatches to the right Argo tracer entry point
@@ -166,7 +180,7 @@ func collectFluxGitSource(ctx context.Context, obj *unstructured.Unstructured, o
 	if err != nil || res == nil || len(res.Chain) == 0 {
 		return nil
 	}
-	return anchorFromChainRoot(res.Chain[0])
+	return anchorWithTemplatedSource(res.Chain)
 }
 
 // traceFluxForOwner dispatches Flux tracing similarly. Flux's Trace
@@ -195,6 +209,46 @@ func anchorFromChainRoot(root ChainLink) *GitSourceAnchor {
 	}
 	if anchor.IsEmpty() {
 		return nil
+	}
+	return anchor
+}
+
+// GitSourceAnchor.SourceType / Resolution values (#481).
+const (
+	GitSourceTypeHelm      = "helm"
+	GitSourceTypeKustomize = "kustomize"
+
+	// GitSourceTemplatedNotResolved is the honesty marker for Helm/Kustomize
+	// sources: their rendered output cannot be back-resolved to a single
+	// source file:line without a render-time source map.
+	GitSourceTemplatedNotResolved = "templated-source-not-resolved"
+)
+
+// classifyTemplatedSource scans an ownership chain for a Helm or Kustomize
+// link and returns the (sourceType, resolution) honesty marker. The whole
+// chain is scanned, not just the root, because the templated link (HelmChart /
+// HelmRelease / Kustomization) is often a non-root link while the root is the
+// underlying GitRepository/OCIRepository. Returns ("","") for plain raw YAML.
+func classifyTemplatedSource(chain []ChainLink) (string, string) {
+	for _, link := range chain {
+		if strings.Contains(link.Kind, "Helm") {
+			return GitSourceTypeHelm, GitSourceTemplatedNotResolved
+		}
+	}
+	for _, link := range chain {
+		if link.Kind == "Kustomization" {
+			return GitSourceTypeKustomize, GitSourceTemplatedNotResolved
+		}
+	}
+	return "", ""
+}
+
+// anchorWithTemplatedSource builds the root anchor and stamps the templated
+// honesty marker (#481) by scanning the chain.
+func anchorWithTemplatedSource(chain []ChainLink) *GitSourceAnchor {
+	anchor := anchorFromChainRoot(chain[0])
+	if anchor != nil {
+		anchor.SourceType, anchor.Resolution = classifyTemplatedSource(chain)
 	}
 	return anchor
 }
