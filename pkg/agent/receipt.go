@@ -76,6 +76,17 @@ const (
 	// like k8s-live-workloads://namespace/redis or
 	// k8s-live-workloads://cluster.
 	SubjectSchemeK8sLiveWorkloads = "k8s-live-workloads://"
+
+	// SubjectSchemeDeclaredPrerequisites identifies the declared set of
+	// required cluster facts a prerequisites-met receipt evaluated. Names
+	// look like declared-prerequisites://sha256/<short-digest>.
+	SubjectSchemeDeclaredPrerequisites = "declared-prerequisites://"
+
+	// SubjectSchemeK8sLivePrerequisites identifies the live cluster the
+	// prerequisites were checked against. Names look like
+	// k8s-live-prerequisites://namespace/redis or
+	// k8s-live-prerequisites://cluster.
+	SubjectSchemeK8sLivePrerequisites = "k8s-live-prerequisites://"
 )
 
 // Statement is the in-toto Statement v1 envelope wrapping a cub-scout
@@ -239,6 +250,7 @@ type Evidence struct {
 	GitSource       *GitSourceAnchor            `json:"gitSource,omitempty"`
 	ObjectSet       *ObjectSetEvidence          `json:"objectSet,omitempty"`
 	Workloads       *WorkloadsConvergedEvidence `json:"workloads,omitempty"`
+	Prerequisites   *PrerequisitesEvidence      `json:"prerequisites,omitempty"`
 }
 
 // Omission is one structured gap the receipt does not claim. The
@@ -343,4 +355,14 @@ const (
 	// converged receipts when one or more desired workloads could not be
 	// classified because the live read or API mapping was inconclusive.
 	OmissionWorkloadConvergenceCoverage = "workload-convergence-coverage"
+
+	// OmissionPrerequisitesSnapshot is recorded by prerequisites-met
+	// receipts to mark that the facts were checked at verifiedAt; the
+	// receipt does not prove they remain present afterward.
+	OmissionPrerequisitesSnapshot = "prerequisites-snapshot"
+
+	// OmissionPrerequisitesCoverage is recorded by prerequisites-met
+	// receipts when one or more declared facts could not be checked
+	// because the live read failed.
+	OmissionPrerequisitesCoverage = "prerequisites-coverage"
 )

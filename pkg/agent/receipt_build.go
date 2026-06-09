@@ -187,6 +187,8 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 		return Statement{}, fmt.Errorf("build-receipt: predicate %q requires object-set evidence; use BuildObjectSetReceipt or `cub-scout receipt verify --file <manifests>`", predName)
 	case PredicateWorkloadsConverged:
 		return Statement{}, fmt.Errorf("build-receipt: predicate %q requires workload evidence; use BuildWorkloadsConvergedReceipt or `cub-scout receipt verify --file <manifests> --predicate workloads-converged`", predName)
+	case PredicatePrerequisitesMet:
+		return Statement{}, fmt.Errorf("build-receipt: predicate %q requires declared prerequisites; use BuildPrerequisitesReceipt or `cub-scout receipt verify --prerequisites <file>`", predName)
 	case "":
 		// Auto-detect failed. The omission entry was already appended
 		// above; the predicate evaluation produces INCONCLUSIVE.
