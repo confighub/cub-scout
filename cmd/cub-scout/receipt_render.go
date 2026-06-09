@@ -159,6 +159,30 @@ func renderReceiptASCII(stmt agent.Statement) string {
 		}
 	}
 
+	if pred.Evidence.Prerequisites != nil {
+		p := pred.Evidence.Prerequisites
+		b.WriteString("\nEvidence (prerequisites)\n")
+		fmt.Fprintf(&b, "  source:      %s %s\n", p.Source.Type, p.Source.Ref)
+		fmt.Fprintf(&b, "  required:    %d\n", p.Summary.Required)
+		fmt.Fprintf(&b, "  present:     %d\n", p.Summary.Present)
+		fmt.Fprintf(&b, "  missing:     %d\n", p.Summary.Missing)
+		fmt.Fprintf(&b, "  inconclusive:%d\n", p.Summary.Inconclusive)
+		for _, f := range p.Facts {
+			if f.Status == agent.PrerequisitePresent {
+				continue
+			}
+			fmt.Fprintf(&b, "  - %s %s", f.Kind, f.Name)
+			if f.Namespace != "" {
+				fmt.Fprintf(&b, " (ns %s)", f.Namespace)
+			}
+			fmt.Fprintf(&b, ": %s", f.Status)
+			if f.Detail != "" {
+				fmt.Fprintf(&b, " — %s", f.Detail)
+			}
+			b.WriteString("\n")
+		}
+	}
+
 	// Omissions are critical — they convert silent PASS into honest PASS.
 	if len(pred.Omissions) > 0 {
 		b.WriteString("\nOmissions (deliberate non-claims)\n")

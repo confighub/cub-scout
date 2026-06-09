@@ -44,6 +44,15 @@ const (
 	// this predicate reads status. It is --file-routed and evaluated by
 	// BuildWorkloadsConvergedReceipt, not the BuildReceipt switch.
 	PredicateWorkloadsConverged PredicateName = "workloads-converged"
+
+	// PredicatePrerequisitesMet verifies that a declared set of required
+	// cluster-state facts (CRDs established, Secrets present with the named
+	// keys, StorageClasses / IngressClasses / namespaces existing) are
+	// present live before an install is applied. cub-scout consumes the
+	// declared list (the "target facts"); it does not infer prerequisites
+	// from a chart. --prerequisites-routed; evaluated by
+	// BuildPrerequisitesReceipt, not the BuildReceipt switch.
+	PredicatePrerequisitesMet PredicateName = "prerequisites-met"
 )
 
 // AllPredicates returns the list of v1 predicate names cub-scout knows
@@ -56,6 +65,7 @@ func AllPredicates() []PredicateName {
 		PredicateNoManualEditsSince,
 		PredicateObjectSetMatches,
 		PredicateWorkloadsConverged,
+		PredicatePrerequisitesMet,
 	}
 }
 
