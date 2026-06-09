@@ -129,6 +129,11 @@ type Predicate struct {
 	// VerifiedAt is the ISO 8601 timestamp of receipt creation.
 	VerifiedAt string `json:"verifiedAt"`
 
+	// Freshness is the optional, immutable observation-freshness boundary
+	// (#478). Present only when the caller passed a TTL (e.g. --ttl). When
+	// absent, the receipt makes no freshness claim. See receipt_freshness.go.
+	Freshness *Freshness `json:"freshness,omitempty"`
+
 	// PredicateName is the predicate evaluated (e.g.,
 	// "applied-matches-spec"). See AllPredicates() in
 	// receipt_predicates.go for the v1 list.

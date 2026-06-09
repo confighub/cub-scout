@@ -122,6 +122,9 @@ func runReceiptVerifyPrerequisites(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("build prerequisites receipt: %w", err)
 	}
+	if err := agent.ApplyFreshness(&stmt, receiptTTLDur); err != nil {
+		return fmt.Errorf("apply freshness: %w", err)
+	}
 
 	var out []byte
 	switch format {

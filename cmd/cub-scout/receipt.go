@@ -35,6 +35,8 @@ var (
 	receiptInputAttestations []string
 	receiptGraceWindow       string
 	receiptPrerequisitesFile string
+	receiptTTL               string
+	receiptTTLDur            time.Duration
 )
 
 // runReceiptVerifyDispatch is the shared entry point for the receipt
@@ -43,6 +45,14 @@ var (
 // (#448, runReceiptVerifyScoped in receipt_aggregate.go) based on
 // whether --scope is set or the positional argument is comma-shaped.
 func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
+	// Parse --ttl UPFRONT (before any routing or side effect) so a bad value
+	// rejects cleanly; every receipt path reads receiptTTLDur.
+	ttl, ttlErr := parseReceiptTTL()
+	if ttlErr != nil {
+		return ttlErr
+	}
+	receiptTTLDur = ttl
+
 	// Detect aggregate mode by inspecting --scope OR the positional.
 	scopeFlag := strings.TrimSpace(receiptScope)
 	positional := ""
@@ -158,6 +168,7 @@ func init() {
 	receiptVerifyCmd.Flags().StringVar(&receiptObjectSetFile, "file", "", "YAML file or directory containing rendered desired objects for object-set-matches / workloads-converged install receipts.")
 	receiptVerifyCmd.Flags().StringVar(&receiptGraceWindow, "grace-window", "", "For --predicate workloads-converged: how long a workload may stay InProgress before it counts as failed (BLOCK) rather than progressing (WATCH), e.g. 5m. Empty means no deadline (InProgress is WATCH).")
 	receiptVerifyCmd.Flags().StringVar(&receiptPrerequisitesFile, "prerequisites", "", "YAML/JSON file declaring required cluster facts (requiredCRDs, requiredSecrets, requiredNamespaces, requiredStorageClasses, requiredIngressClasses) for a prerequisites-met receipt.")
+	receiptVerifyCmd.Flags().StringVar(&receiptTTL, "ttl", "", "Observation-freshness boundary, e.g. 1h. When set, the receipt records an immutable freshness{observedAt,expiresAt,ttl} so a consumer can tell a fresh receipt from a stale one. Empty means the receipt makes no freshness claim.")
 	receiptVerifyCmd.Flags().StringVar(&receiptAtCommit, "at-commit", "", "Override the spec anchor revision (Git SHA). When empty, the controller-resolved anchor is used as both the spec and the evidence.")
 	receiptVerifyCmd.Flags().StringVar(&receiptStrategy, "strategy", "", "Source-truth strategy for source-truth-pass (e.g. git-argo). cub-scout does not infer the strategy.")
 	receiptVerifyCmd.Flags().StringVar(&receiptSince, "since", "", "RFC 3339 cutoff for no-manual-edits-since (e.g. 2026-05-22T00:00:00Z).")
@@ -345,6 +356,11 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("build receipt: %w", err)
 	}
 
+	// 5b. Stamp observation freshness (#478) when --ttl was passed.
+	if err := agent.ApplyFreshness(&stmt, receiptTTLDur); err != nil {
+		return fmt.Errorf("apply freshness: %w", err)
+	}
+
 	// 6. Serialize to bytes.
 	var out []byte
 	switch format {
@@ -467,6 +483,23 @@ func parseReceiptFailOn(raw string) (map[agent.ReceiptVerdict]bool, error) {
 		return nil, fmt.Errorf("--fail-on %q resolved to empty verdict set", raw)
 	}
 	return out, nil
+}
+
+// parseReceiptTTL parses the --ttl flag into a duration. Empty means "no
+// freshness boundary" (0). Negative or unparseable values are rejected.
+func parseReceiptTTL() (time.Duration, error) {
+	raw := strings.TrimSpace(receiptTTL)
+	if raw == "" {
+		return 0, nil
+	}
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		return 0, fmt.Errorf("invalid --ttl %q (expected a Go duration like 1h or 30m): %w", raw, err)
+	}
+	if d < 0 {
+		return 0, fmt.Errorf("invalid --ttl %q (must not be negative)", raw)
+	}
+	return d, nil
 }
 
 // loadReceiptLive fetches the live K8s object via the dynamic client. The
