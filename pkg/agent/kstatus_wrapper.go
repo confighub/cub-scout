@@ -109,6 +109,22 @@ func WorkloadStatus(obj runtime.Object, kind string) (status.Status, string) {
 	return res.Status, res.Message
 }
 
+// WorkloadConvergence returns the kstatus verdict and message for any
+// unstructured object. Unlike WorkloadStatus it does not re-seed the GVK
+// (the object already carries it) and accepts any kind kstatus classifies —
+// Deployment, StatefulSet, DaemonSet, Job, PersistentVolumeClaim, Pod.
+// Returns UnknownStatus when the object is nil or cannot be classified.
+func WorkloadConvergence(u *unstructured.Unstructured) (status.Status, string) {
+	if u == nil {
+		return status.UnknownStatus, ""
+	}
+	res, err := status.Compute(u)
+	if err != nil || res == nil {
+		return status.UnknownStatus, ""
+	}
+	return res.Status, res.Message
+}
+
 // computeStatus is the shared helper. Returns UnknownStatus on any error.
 func computeStatus(obj runtime.Object, apiVersion, kind string) status.Status {
 	u, err := toUnstructured(obj, apiVersion, kind)

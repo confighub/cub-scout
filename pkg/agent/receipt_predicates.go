@@ -35,6 +35,15 @@ const (
 	// that set still matches live. Kubernetes server defaults and
 	// controller-populated status are deliberately outside this claim.
 	PredicateObjectSetMatches PredicateName = "object-set-matches"
+
+	// PredicateWorkloadsConverged verifies that every desired workload in
+	// the rendered manifest set reached a ready/converged runtime state
+	// (Deployments/StatefulSets/DaemonSets rolled out, Jobs Succeeded,
+	// PVCs Bound, pods not wedged in CreateContainerConfigError /
+	// CrashLoopBackOff / ImagePullBackOff). Unlike object-set-matches,
+	// this predicate reads status. It is --file-routed and evaluated by
+	// BuildWorkloadsConvergedReceipt, not the BuildReceipt switch.
+	PredicateWorkloadsConverged PredicateName = "workloads-converged"
 )
 
 // AllPredicates returns the list of v1 predicate names cub-scout knows
@@ -46,6 +55,7 @@ func AllPredicates() []PredicateName {
 		PredicateSourceTruthPass,
 		PredicateNoManualEditsSince,
 		PredicateObjectSetMatches,
+		PredicateWorkloadsConverged,
 	}
 }
 

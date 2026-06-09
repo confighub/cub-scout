@@ -127,6 +127,38 @@ func renderReceiptASCII(stmt agent.Statement) string {
 		}
 	}
 
+	if pred.Evidence.Workloads != nil {
+		w := pred.Evidence.Workloads
+		b.WriteString("\nEvidence (workloads converged)\n")
+		fmt.Fprintf(&b, "  source:      %s %s\n", w.DesiredSource.Type, w.DesiredSource.Ref)
+		if w.GraceWindow != "" {
+			fmt.Fprintf(&b, "  graceWindow: %s\n", w.GraceWindow)
+		}
+		fmt.Fprintf(&b, "  observedAt:  %s\n", w.ObservedAt)
+		fmt.Fprintf(&b, "  desired:     %d\n", w.Summary.Desired)
+		fmt.Fprintf(&b, "  converged:   %d\n", w.Summary.Converged)
+		fmt.Fprintf(&b, "  progressing: %d\n", w.Summary.Progressing)
+		fmt.Fprintf(&b, "  failed:      %d\n", w.Summary.Failed)
+		fmt.Fprintf(&b, "  missing:     %d\n", w.Summary.Missing)
+		fmt.Fprintf(&b, "  inconclusive:%d\n", w.Summary.Inconclusive)
+		for _, obj := range w.Workloads {
+			if obj.Status == agent.WorkloadConvergedConverged {
+				continue
+			}
+			fmt.Fprintf(&b, "  - %s: %s", obj.ID.String(), obj.Status)
+			if obj.KstatusStatus != "" {
+				fmt.Fprintf(&b, " (kstatus: %s)", obj.KstatusStatus)
+			}
+			b.WriteString("\n")
+			if obj.Error != "" {
+				fmt.Fprintf(&b, "      error: %s\n", obj.Error)
+			}
+			for _, pr := range obj.PodReasons {
+				fmt.Fprintf(&b, "      pod %s: %s\n", pr.Pod, pr.Reason)
+			}
+		}
+	}
+
 	// Omissions are critical — they convert silent PASS into honest PASS.
 	if len(pred.Omissions) > 0 {
 		b.WriteString("\nOmissions (deliberate non-claims)\n")
