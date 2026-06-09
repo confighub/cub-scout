@@ -16,6 +16,26 @@ This is a general pattern for any chart/release that `helm-expt` can render
 and compare. Redis is the first worked value set, not the shape of the whole
 example.
 
+## Runnable Demo (Self-Contained)
+
+The rest of this page is the full integration narrative against a real
+helm-expt render. If you just want to run the `object-set-matches` path
+end-to-end with no helm-expt checkout, use the bundled scripts and fixture:
+
+```bash
+cd examples/helm-expt
+./setup.sh     # ephemeral kind cluster + fixtures/release-objects.yaml
+./verify.sh    # builds the receipt, then contrasts it with cluster reality
+./cleanup.sh   # tears the cluster down
+```
+
+The fixture intentionally reproduces helm-expt finding **F3**: the receipt comes
+back `PASS` while the workload sits in `CreateContainerConfigError`. That gap, and
+the issue drafts that would close it, are documented in
+[`docs/proposals/helm-expt-driven-gaps.md`](../../docs/proposals/helm-expt-driven-gaps.md).
+Start with [AI_START_HERE.md](./AI_START_HERE.md). The scripts never touch a
+helm-expt checkout.
+
 ## Why This Exists
 
 cub-scout already answers useful runtime questions:

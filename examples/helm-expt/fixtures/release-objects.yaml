@@ -1,0 +1,76 @@
+# Rendered object set fixture for the cub-scout <-> helm-expt example.
+#
+# This is a SELF-CONTAINED stand-in for a helm-expt "rendered/release-objects.yaml".
+# It does not require a helm-expt checkout. It deliberately reproduces helm-expt
+# finding F3 (helm-expt tests/findings.md): a workload that depends on a Secret
+# which is NOT part of the shipped object set ("separated secret" / unmet
+# prerequisite).
+#
+# When this exact file is applied and then verified:
+#   - every authored field of every object below is present and matches live,
+#     so `receipt verify --file ... object-set-matches` returns PASS;
+#   - but the Deployment's pod is stuck in CreateContainerConfigError because
+#     `app-db-secret` does not exist.
+#
+# That PASS-while-broken is the "silent false green" the example exists to expose.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-config
+  namespace: helm-expt-demo
+  labels:
+    app.kubernetes.io/name: web
+    app.kubernetes.io/managed-by: helm-expt-example
+data:
+  GREETING: "hello from the helm-expt object-set demo"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: helm-expt-demo
+  labels:
+    app.kubernetes.io/name: web
+    app.kubernetes.io/managed-by: helm-expt-example
+spec:
+  selector:
+    app.kubernetes.io/name: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: helm-expt-demo
+  labels:
+    app.kubernetes.io/name: web
+    app.kubernetes.io/managed-by: helm-expt-example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: web
+    spec:
+      containers:
+        - name: web
+          image: busybox:1.36
+          command: ["sh", "-c", "echo \"$GREETING\"; sleep 3600"]
+          envFrom:
+            - configMapRef:
+                name: web-config
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  # app-db-secret is intentionally NOT shipped in this object set.
+                  # This is the unmet prerequisite that object-set-matches cannot see.
+                  name: app-db-secret
+                  key: password
+                  optional: false
