@@ -4,7 +4,10 @@
 package agent
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -179,6 +182,63 @@ func BuildAttestationRefsFromPaths(paths []string, loadFn func(path string) (Sta
 		ref, err := BuildAttestationRef(stmt)
 		if err != nil {
 			return nil, fmt.Errorf("build input-attestation from %s: %w", p, err)
+		}
+		out = append(out, ref)
+	}
+	return out, nil
+}
+
+// ExternalEvidenceURIScheme is the URI prefix for references to EXTERNAL
+// (non-cub-scout) evidence artifacts chained by content digest (#482). Format:
+//
+//	external-evidence://sha256/<short-digest>
+//
+// The distinct scheme is the whole point: a consumer reading
+// inputAttestations[] can tell a fingerprint-verified cub-scout receipt
+// (cub-scout-receipt://) apart from a digest-asserted external artifact
+// (external-evidence://). External refs carry a WEAKER trust basis — cub-scout
+// vouches only that the referenced bytes hashed to this SHA-256, not that the
+// artifact is a valid cub-scout receipt. This is what lets an upstream
+// producer's artifact (e.g. helm-expt's installer-package receipt) enter a
+// cub-scout receipt's chain without cub-scout having to understand its format.
+const ExternalEvidenceURIScheme = "external-evidence://"
+
+// BuildExternalAttestationRef references an external evidence artifact by the
+// SHA-256 of its raw bytes. Unlike BuildAttestationRef there is no cub-scout
+// fingerprint to verify — the trust basis is the content digest, recorded
+// under the external-evidence:// scheme (see ExternalEvidenceURIScheme).
+func BuildExternalAttestationRef(content []byte) (VerifiedAttestationRef, error) {
+	if len(content) == 0 {
+		return VerifiedAttestationRef{}, fmt.Errorf("build-external-attestation-ref: empty content; cannot reference an empty artifact")
+	}
+	sum := sha256.Sum256(content)
+	hexDigest := hex.EncodeToString(sum[:])
+	return VerifiedAttestationRef{
+		ref: AttestationRef{
+			URI: ExternalEvidenceURIScheme + "sha256/" + hexDigest[:12],
+			Digest: map[string]string{
+				"sha256": hexDigest,
+			},
+		},
+	}, nil
+}
+
+// BuildExternalAttestationRefsFromPaths reads each path and builds an external
+// (digest-asserted) attestation ref. The reader is injectable for tests.
+// Errors short-circuit — there is no partial-chain semantics.
+func BuildExternalAttestationRefsFromPaths(paths []string, readFn func(path string) ([]byte, error)) ([]VerifiedAttestationRef, error) {
+	if readFn == nil {
+		readFn = os.ReadFile
+	}
+	out := make([]VerifiedAttestationRef, 0, len(paths))
+	for _, p := range paths {
+		content, err := readFn(p)
+		if err != nil {
+			return nil, fmt.Errorf("read reference-evidence %s: %w", p, err)
+		}
+		ref, err := BuildExternalAttestationRef(content)
+		if err != nil {
+			return nil, fmt.Errorf("build reference-evidence from %s: %w", p, err)
 		}
 		out = append(out, ref)
 	}

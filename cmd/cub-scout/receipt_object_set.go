@@ -82,13 +82,9 @@ func runReceiptVerifyObjectSet(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var inputAttestations []agent.VerifiedAttestationRef
-	if len(receiptInputAttestations) > 0 {
-		refs, refErr := agent.BuildAttestationRefsFromPaths(receiptInputAttestations, nil)
-		if refErr != nil {
-			return fmt.Errorf("build input-attestations: %w", refErr)
-		}
-		inputAttestations = refs
+	inputAttestations, iaErr := collectReceiptInputAttestations()
+	if iaErr != nil {
+		return iaErr
 	}
 
 	stmt, err := agent.BuildObjectSetReceipt(agent.BuildObjectSetReceiptInput{

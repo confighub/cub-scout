@@ -37,6 +37,7 @@ var (
 	receiptPrerequisitesFile string
 	receiptTTL               string
 	receiptTTLDur            time.Duration
+	receiptReferenceEvidence []string
 )
 
 // runReceiptVerifyDispatch is the shared entry point for the receipt
@@ -154,6 +155,7 @@ Examples:
   cub-scout receipt verify --file out/manifests --scope namespace/redis --format json --out install.receipt.json
   cub-scout receipt verify --file out/manifests --scope namespace/redis --predicate workloads-converged --fail-on any-non-pass
   cub-scout receipt verify --prerequisites prereqs.yaml --scope namespace/redis --fail-on any-non-pass
+  cub-scout receipt verify --file out/manifests --scope namespace/redis --reference-evidence upstream-package.receipt.json
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runReceiptVerifyDispatch,
@@ -178,6 +180,7 @@ func init() {
 	receiptVerifyCmd.Flags().StringVar(&receiptSaveDir, "save-dir", "", "Override the store directory used when --save is set")
 	receiptVerifyCmd.Flags().StringVar(&receiptFailOn, "fail-on", "", "Exit non-zero (code 2) when the receipt verdict matches. Accepts a comma-separated list of verdicts (WATCH, BLOCK, INCONCLUSIVE) or the sugar 'any-non-pass' (= WATCH,BLOCK,INCONCLUSIVE). The receipt is still printed / saved / written to --out regardless of exit code.")
 	receiptVerifyCmd.Flags().StringArrayVar(&receiptInputAttestations, "input-attestation", nil, "Path to a prior receipt to reference via inputAttestations[] (repeatable). Each referenced receipt's fingerprint is verified at chain-construction time; tampered receipts are refused. The new receipt's fingerprint covers the inputAttestations[] field by construction.")
+	receiptVerifyCmd.Flags().StringArrayVar(&receiptReferenceEvidence, "reference-evidence", nil, "Path to an EXTERNAL (non-cub-scout) evidence artifact to reference via inputAttestations[] by content digest (repeatable). Recorded under the external-evidence:// scheme with digest-asserted (not fingerprint-verified) trust — lets an upstream producer's artifact (e.g. a render/package receipt) enter the chain without cub-scout understanding its format (#482).")
 	receiptVerifyCmd.Flags().StringVar(&receiptScope, "scope", "", "Scope selector. Without --file: aggregate-receipt scope (#448), accepting 'namespace/<ns>' or a comma-list positional. With --file: object-set scope, accepting 'namespace/<ns>' or 'cluster'.")
 	receiptVerifyCmd.Flags().StringVar(&receiptAggregatePolicy, "aggregate-policy", "", "Verdict-synthesis policy for the aggregate receipt (#448). v1 supports only 'max-severity' (the default; BLOCK > INCONCLUSIVE > WATCH > PASS).")
 
@@ -321,13 +324,9 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	// evidence. The returned wrappers are the API-boundary-checked type
 	// (`VerifiedAttestationRef`); BuildReceipt unwraps them when it
 	// populates the wire shape. See pkg/agent/receipt_inputattestations.go.
-	var inputAttestations []agent.VerifiedAttestationRef
-	if len(receiptInputAttestations) > 0 {
-		refs, refErr := agent.BuildAttestationRefsFromPaths(receiptInputAttestations, nil)
-		if refErr != nil {
-			return fmt.Errorf("build input-attestations: %w", refErr)
-		}
-		inputAttestations = refs
+	inputAttestations, iaErr := collectReceiptInputAttestations()
+	if iaErr != nil {
+		return iaErr
 	}
 
 	// 5. Build the receipt.
@@ -500,6 +499,29 @@ func parseReceiptTTL() (time.Duration, error) {
 		return 0, fmt.Errorf("invalid --ttl %q (must not be negative)", raw)
 	}
 	return d, nil
+}
+
+// collectReceiptInputAttestations builds the combined inputAttestations[] from
+// both --input-attestation (cub-scout receipts, fingerprint-verified) and
+// --reference-evidence (external artifacts, digest-asserted, #482). The two
+// reference kinds share the field but are distinguished by URI scheme.
+func collectReceiptInputAttestations() ([]agent.VerifiedAttestationRef, error) {
+	var refs []agent.VerifiedAttestationRef
+	if len(receiptInputAttestations) > 0 {
+		r, err := agent.BuildAttestationRefsFromPaths(receiptInputAttestations, nil)
+		if err != nil {
+			return nil, fmt.Errorf("build input-attestations: %w", err)
+		}
+		refs = append(refs, r...)
+	}
+	if len(receiptReferenceEvidence) > 0 {
+		r, err := agent.BuildExternalAttestationRefsFromPaths(receiptReferenceEvidence, nil)
+		if err != nil {
+			return nil, fmt.Errorf("build reference-evidence: %w", err)
+		}
+		refs = append(refs, r...)
+	}
+	return refs, nil
 }
 
 // loadReceiptLive fetches the live K8s object via the dynamic client. The
