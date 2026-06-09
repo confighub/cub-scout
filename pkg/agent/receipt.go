@@ -70,6 +70,12 @@ const (
 	//   k8s-live-object-set://namespace/redis
 	// or k8s-live-object-set://cluster.
 	SubjectSchemeK8sLiveObjectSet = "k8s-live-object-set://"
+
+	// SubjectSchemeK8sLiveWorkloads identifies the live workload set a
+	// workloads-converged receipt evaluated readiness over. Names look
+	// like k8s-live-workloads://namespace/redis or
+	// k8s-live-workloads://cluster.
+	SubjectSchemeK8sLiveWorkloads = "k8s-live-workloads://"
 )
 
 // Statement is the in-toto Statement v1 envelope wrapping a cub-scout
@@ -227,11 +233,12 @@ const (
 // pkg/agent layer (the structured compareResourceResult lives in
 // cmd/cub-scout) so it's an interface{}; the CLI populates it.
 type Evidence struct {
-	CompareThreeWay interface{}               `json:"compareThreeWay,omitempty"`
-	Attribution     *FieldMutationAttribution `json:"attribution,omitempty"`
-	SourceTruth     *SourceTruthEvidence      `json:"sourceTruth,omitempty"`
-	GitSource       *GitSourceAnchor          `json:"gitSource,omitempty"`
-	ObjectSet       *ObjectSetEvidence        `json:"objectSet,omitempty"`
+	CompareThreeWay interface{}                 `json:"compareThreeWay,omitempty"`
+	Attribution     *FieldMutationAttribution   `json:"attribution,omitempty"`
+	SourceTruth     *SourceTruthEvidence        `json:"sourceTruth,omitempty"`
+	GitSource       *GitSourceAnchor            `json:"gitSource,omitempty"`
+	ObjectSet       *ObjectSetEvidence          `json:"objectSet,omitempty"`
+	Workloads       *WorkloadsConvergedEvidence `json:"workloads,omitempty"`
 }
 
 // Omission is one structured gap the receipt does not claim. The
@@ -326,4 +333,14 @@ const (
 	// one or more desired objects could not be checked because the API
 	// mapping or live read was inconclusive.
 	OmissionObjectSetCoverage = "object-set-coverage"
+
+	// OmissionWorkloadConvergence is recorded by workloads-converged
+	// receipts to mark that readiness was observed at verifiedAt; the
+	// receipt does not prove the workloads stay converged afterward.
+	OmissionWorkloadConvergence = "workload-convergence-snapshot"
+
+	// OmissionWorkloadConvergenceCoverage is recorded by workloads-
+	// converged receipts when one or more desired workloads could not be
+	// classified because the live read or API mapping was inconclusive.
+	OmissionWorkloadConvergenceCoverage = "workload-convergence-coverage"
 )

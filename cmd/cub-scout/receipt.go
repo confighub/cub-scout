@@ -33,6 +33,7 @@ var (
 	receiptSaveDir           string
 	receiptFailOn            string
 	receiptInputAttestations []string
+	receiptGraceWindow       string
 )
 
 // runReceiptVerifyDispatch is the shared entry point for the receipt
@@ -49,6 +50,9 @@ func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
 	}
 
 	if strings.TrimSpace(receiptObjectSetFile) != "" {
+		if agent.PredicateName(strings.TrimSpace(receiptPredicate)) == agent.PredicateWorkloadsConverged {
+			return runReceiptVerifyWorkloadsConverged(cmd, args)
+		}
 		return runReceiptVerifyObjectSet(cmd, args)
 	}
 
@@ -112,6 +116,7 @@ v1 predicates:
   source-truth-pass       compare source-truth returned PASS under --strategy
   no-manual-edits-since   no kubectl-* writer touched managedFields after --since
   object-set-matches      rendered manifest objects are present live and authored fields match
+  workloads-converged     desired workloads reached a ready/converged runtime state (reads status)
 
 Subject is usually a positional argument in the form <kind>/<name>.
 For install/object-set receipts, pass --file <manifest.yaml|dir> and scope
@@ -131,6 +136,7 @@ Examples:
   cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
   cub-scout receipt verify deploy/api -n prod --predicate applied-matches-spec --format json --out api.receipt.json
   cub-scout receipt verify --file out/manifests --scope namespace/redis --format json --out install.receipt.json
+  cub-scout receipt verify --file out/manifests --scope namespace/redis --predicate workloads-converged --fail-on any-non-pass
 `,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runReceiptVerifyDispatch,
@@ -141,8 +147,9 @@ func init() {
 	receiptCmd.AddCommand(receiptVerifyCmd)
 
 	receiptVerifyCmd.Flags().StringVarP(&receiptNamespace, "namespace", "n", "", "Namespace of the resource (required for namespaced kinds)")
-	receiptVerifyCmd.Flags().StringVar(&receiptPredicate, "predicate", "", "Predicate to evaluate (default: auto-detect). v1 supports applied-matches-spec, source-truth-pass, no-manual-edits-since, object-set-matches.")
-	receiptVerifyCmd.Flags().StringVar(&receiptObjectSetFile, "file", "", "YAML file or directory containing rendered desired objects for object-set-matches install receipts.")
+	receiptVerifyCmd.Flags().StringVar(&receiptPredicate, "predicate", "", "Predicate to evaluate (default: auto-detect). v1 supports applied-matches-spec, source-truth-pass, no-manual-edits-since, object-set-matches, workloads-converged.")
+	receiptVerifyCmd.Flags().StringVar(&receiptObjectSetFile, "file", "", "YAML file or directory containing rendered desired objects for object-set-matches / workloads-converged install receipts.")
+	receiptVerifyCmd.Flags().StringVar(&receiptGraceWindow, "grace-window", "", "For --predicate workloads-converged: how long a workload may stay InProgress before it counts as failed (BLOCK) rather than progressing (WATCH), e.g. 5m. Empty means no deadline (InProgress is WATCH).")
 	receiptVerifyCmd.Flags().StringVar(&receiptAtCommit, "at-commit", "", "Override the spec anchor revision (Git SHA). When empty, the controller-resolved anchor is used as both the spec and the evidence.")
 	receiptVerifyCmd.Flags().StringVar(&receiptStrategy, "strategy", "", "Source-truth strategy for source-truth-pass (e.g. git-argo). cub-scout does not infer the strategy.")
 	receiptVerifyCmd.Flags().StringVar(&receiptSince, "since", "", "RFC 3339 cutoff for no-manual-edits-since (e.g. 2026-05-22T00:00:00Z).")
