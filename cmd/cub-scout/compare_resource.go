@@ -149,7 +149,14 @@ var (
 	compareConnectedFn            = isCompareConnected
 	compareDefaultSpaceFn         = detectCompareSpace
 	runCompareCubCommand          = runCompareCubCommandImpl
+	loadCompareDryFromPathFn      = loadCompareDryFromPath
 )
+
+// compareThreeWayDrySummaries holds the DRY-side summaries loaded from a local
+// --dry-from file/dir (standalone git/file-as-DRY mode, #479). Non-nil only
+// while a `compare three-way --dry-from` run is in flight; buildCompareResourceResult
+// sources DRY from here instead of ConfigHub when set.
+var compareThreeWayDrySummaries []*compareSideSummary
 
 // compareSourcePath holds the value of --source-path (stage B back-resolution).
 // Read by detectCompareFieldMismatches when populating per-mismatch
@@ -226,6 +233,30 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 	}
 	if strings.TrimSpace(live.Source) == "" {
 		live.Source = "cluster"
+	}
+
+	// Standalone git/file-as-DRY (#479): when a --dry-from source is loaded,
+	// source the DRY side from it instead of ConfigHub and compare DRY vs LIVE.
+	// WET is unavailable without a deployer/ConfigHub, so it stays nil — the
+	// mismatch detector skips empty sides, so this is a clean DRY-vs-LIVE diff.
+	if compareThreeWayDrySummaries != nil {
+		dry := matchCompareDryFromSummaries(compareThreeWayDrySummaries, kind, name, ns)
+		notes := make([]string, 0, 1)
+		mode := "live-only"
+		if dry != nil {
+			mode = "dry-live"
+		} else {
+			notes = append(notes, fmt.Sprintf("No DRY manifest for %s/%s in %s found in the --dry-from source.", kind, name, ns))
+		}
+		return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
+			Resource:  kind + "/" + name,
+			Namespace: ns,
+			Mode:      mode,
+			Connected: false,
+			Dry:       dry,
+			Live:      live,
+			Notes:     notes,
+		}), nil
 	}
 
 	connected := compareConnectedFn()
@@ -591,6 +622,36 @@ func matchesCompareSummaryTarget(summary *compareSideSummary, target compareReso
 	docNamespace := strings.TrimSpace(summary.Namespace)
 	targetNamespace := strings.TrimSpace(target.Namespace)
 	return docNamespace == "" || strings.EqualFold(docNamespace, targetNamespace)
+}
+
+// loadCompareDryFromPath loads DRY-side summaries from a local rendered YAML
+// file or directory (#479, standalone git/file-as-DRY). It reuses the
+// object-set loader so a directory (e.g. a git checkout), multi-doc YAML, and
+// kind:List are all handled, then summarizes each object into the same
+// compareSideSummary shape the ConfigHub DRY path produces — so the downstream
+// three-way comparison is identical regardless of where DRY came from.
+func loadCompareDryFromPath(path string) ([]*compareSideSummary, error) {
+	objs, _, err := loadObjectSetDesiredManifests(path)
+	if err != nil {
+		return nil, err
+	}
+	summaries := make([]*compareSideSummary, 0, len(objs))
+	for _, obj := range objs {
+		summaries = append(summaries, summarizeCompareManifestObject("dry", obj.Object))
+	}
+	return summaries, nil
+}
+
+// matchCompareDryFromSummaries finds the DRY summary for a target resource,
+// using the same Kind+Name(+Namespace) matching as the ConfigHub DRY path.
+func matchCompareDryFromSummaries(summaries []*compareSideSummary, kind, name, ns string) *compareSideSummary {
+	target := compareResourceRef{Kind: kind, Name: name, Namespace: ns}
+	for _, s := range summaries {
+		if matchesCompareSummaryTarget(s, target) {
+			return s
+		}
+	}
+	return nil
 }
 
 func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) (compareSideSummary, error) {
