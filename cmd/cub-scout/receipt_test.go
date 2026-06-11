@@ -64,6 +64,8 @@ func resetReceiptFlags(t *testing.T) {
 		ns, pred, at, fmt, out, file, scope, grace, prereq, ttl string
 		noExtras                                                bool
 	}{receiptNamespace, receiptPredicate, receiptAtCommit, receiptFormat, receiptOut, receiptObjectSetFile, receiptScope, receiptGraceWindow, receiptPrerequisitesFile, receiptTTL, receiptNoExtras}
+	prevIA, prevRE, prevNorm := receiptInputAttestations, receiptReferenceEvidence, receiptNormalizationProf
+	receiptInputAttestations, receiptReferenceEvidence, receiptNormalizationProf = nil, nil, ""
 	receiptNamespace = ""
 	receiptPredicate = ""
 	receiptAtCommit = ""
@@ -87,6 +89,7 @@ func resetReceiptFlags(t *testing.T) {
 		receiptPrerequisitesFile = prev.prereq
 		receiptTTL = prev.ttl
 		receiptNoExtras = prev.noExtras
+		receiptInputAttestations, receiptReferenceEvidence, receiptNormalizationProf = prevIA, prevRE, prevNorm
 	})
 }
 
