@@ -50,6 +50,13 @@ type ObjectSetEvidence struct {
 	Summary       ObjectSetSummary         `json:"summary"`
 	Objects       []ObjectSetObjectSummary `json:"objects"`
 
+	// NormalizationProfile names the server-normalization profile applied
+	// symmetrically to the desired and live objects before projection and
+	// digesting (e.g. k8s-zero-defaults/v1). Empty means raw comparison.
+	// Recording it on the receipt makes the normalization assumption part
+	// of the claim instead of a hidden transform. (#492-chain)
+	NormalizationProfile string `json:"normalizationProfile,omitempty"`
+
 	// ExtraChecked is true when the closed-world check ran (--no-extras).
 	// When true, the extra-live-object-coverage omission is dropped and
 	// ExtraObjects lists any live objects of the rendered kinds in scope

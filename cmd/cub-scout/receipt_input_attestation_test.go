@@ -59,7 +59,10 @@ func TestReceiptVerify_InputAttestation_AttachesRefs(t *testing.T) {
 	resetReceiptBatch2Flags(t)
 	resetReceiptInputAttestationFlag(t)
 	withFakeReceiptLoader(t, makeReceiptArgoLive())
-	receiptInputAttestations = []string{pathA, pathB}
+	// The paths are passed via --input-attestation below. Do not also pre-set
+	// receiptInputAttestations here: pflag's StringArray keeps a sticky
+	// `changed` bit, so once any earlier test has passed the flag, cobra
+	// APPENDS to the pre-set instead of replacing it.
 
 	out := captureStdout(t, func() {
 		rootCmd.SetArgs([]string{

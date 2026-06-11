@@ -79,10 +79,16 @@ func runReceiptVerifyObjectSet(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	profile := strings.TrimSpace(receiptNormalizationProf)
+	observed, err = agent.NormalizeObservedObjects(profile, observed)
+	if err != nil {
+		return err
+	}
 	evidence, err := agent.BuildObjectSetEvidence(source, scope, observed)
 	if err != nil {
 		return err
 	}
+	evidence.NormalizationProfile = profile
 
 	if receiptNoExtras {
 		extras, exErr := loadObjectSetExtrasFn(cmd.Context(), desired, scope, defaultNamespace)
