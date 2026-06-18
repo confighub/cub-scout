@@ -164,3 +164,21 @@ questions in §9.
 - Flux helm-controller drift issue (historical announcement/limitations): https://github.com/fluxcd/helm-controller/issues/643
 - cub-scout v2.5.0: `confighub/cub-scout` source (`cmd/cub-scout/compare_three_way.go`, `compare_resource.go`, `receipt_object_set.go`); proposal `confighub/cub-scout#496`.
 - helm-expt schema/spec: `confighub/helm-expt#992` (ObjectSetDiffReceipt), value-source-map, fleet.yaml.
+
+## 11. Empirical addendum — `lookup` template-vs-install (2026-06-18, kind)
+
+Live test of the load-bearing claim `[C11]`/`[C12]`. Chart template:
+`secret-found: "{{ if (lookup "v1" "Secret" "default" "preexisting") }}true{{ else }}false{{ end }}"`,
+with the `preexisting` Secret created in the cluster first.
+
+| Path | Result |
+|---|---|
+| `helm template` (Argo's render path — no cluster connect) | `secret-found: "false"` (lookup empty) |
+| `helm install` (the Helm action Flux `helm-controller` invokes) | `secret-found = true` (lookup resolved) |
+
+- **Confirms `[C11]`** (Argo `helm template` → `lookup` empty) → confidence **H, empirical**.
+- **Confirms the Helm semantic under `[C12]`** (real install → `lookup` resolves).
+- **Does NOT yet** run a full Flux **HelmRelease** under `helm-controller`, so it
+  does not rule out helm-controller-specific sandboxing of `lookup`. That remains
+  the **M→H** step. Friction: supplying a `lookup` chart via a cluster-reachable
+  source (in-kind OCI registry, or push to ghcr). Plan tracked before promotion.
