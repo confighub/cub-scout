@@ -1,96 +1,143 @@
 # cub-scout vs Argo CD GUI for GitOps Troubleshooting
 
-> Status: Living document. Last updated: 2026-04-09.
+> Status: Living document. Last updated: 2026-06-19 (reflects v2.5.0).
 
 ## Overview
 
 Argo CD ships a purpose-built GUI for managing ArgoCD Applications.
-cub-scout is a cluster-wide observer that works across all GitOps controllers.
+cub-scout is a cluster-wide, read-only observer that works across all GitOps
+controllers — and, for Argo-managed resources specifically, answers questions
+the Argo GUI structurally cannot.
 
-Today they are complementary. The goal is for cub-scout to become the
-better first stop for GitOps troubleshooting, even for Argo-managed resources.
+The two are complementary. Argo's GUI is the authority for *acting* on Argo
+Applications (sync, rollback, parameter overrides). cub-scout is the better
+first stop for *diagnosing* what diverged, who caused it, and whether you can
+prove the live state still matches the source of truth.
+
+## The one-line difference
+
+Argo answers **"did I apply what Git said?"**
+cub-scout answers **"does the live state still match the source of truth, who
+changed it if not, and can I prove it?"**
 
 ## Current comparison
 
 | Capability | Argo CD GUI | cub-scout today |
 |-----------|------------|-----------------|
-| Scope | ArgoCD resources only | All controllers: Argo, Flux, Helm, Terraform, Crossplane, native |
-| Sync status | Detailed: phase, message, retry count | Basic reconciliation state via `gitops status` |
-| Resource tree | Visual tree per Application with health bubbles | `trace` and `graph export` show ownership lineage |
-| Live vs desired diff | Side-by-side manifest diff | `compare three-way` (connected, Git/CH/cluster) |
+| Scope | ArgoCD resources only | All controllers: Argo, Flux, Helm, Terraform, Crossplane, kro, native |
+| Sync status | Detailed: phase, message, retry count | Reconciliation state + `operationState` message via `trace` / `gitops status` |
+| Per-field change cause | Not modeled — OutOfSync is cause-blind | `manual-edit` vs `controller-drift` vs `unknown`, from `managedFields` |
+| Source-of-truth verdict | "Synced" = applied target revision | `compare source-truth` → PASS / WATCH / BLOCK / ASK across 9 strategies |
+| Tamper-evident evidence | Sync history lives inside Argo | `receipt verify` → fingerprinted in-toto Statement v1, portable |
+| Resource tree | Visual tree per Application with health bubbles | `trace` / `graph export` ownership lineage; `map` ApplicationSet grouping |
+| Live vs desired diff | Side-by-side manifest diff | `compare drift --file` (standalone) + `compare three-way` (connected) |
 | Health checks | Argo custom health assessments | `scan` (46 config patterns) + `doctor` (cluster summary) |
-| K8s events | Inline per resource | Recent events in `explain` and `trace` (v1.10+) |
+| Resource conditions | Inline per resource | `status.conditions` surfaced in `trace` / failure details |
+| K8s events | Inline per resource | Recent events in `explain` and `trace` |
+| Secret references | Shows sync errors from missing secrets | `trace` secret evidence (refs + presence, never secret data) |
 | Pod logs | Inline | Out of scope (read-only metadata) |
 | Sync history | Full history with rollback | Not available |
-| App grouping | ApplicationSets, app-of-apps | Flat — no Argo Application grouping |
-| Secret references | Shows sync errors from missing secrets | Planned (#328) |
+| Works when Argo server is down | No — needs Argo API/repo-server | Yes — reads Applications via kubectl |
 | Offline | Requires Argo server | Fully offline, just kubectl context |
 | Cross-controller | Blind to non-Argo resources | Sees everything |
-| Automation | API + `argocd` CLI | `--format json` on every command |
+| Automation | API + `argocd` CLI | `--format json` on every command + MCP gateway |
 | Access requirements | Argo RBAC + port-forward/ingress | kubectl context only |
-
-## Where Argo CD GUI wins today
-
-1. **Sync error detail** — exact error messages, retry history, parameter overrides
-2. **Live vs desired diff** — purpose-built manifest comparison
-3. **Pod-level debugging** — logs, events, exec
-4. **Application topology** — visual resource tree per Application
-5. **Rollback** — one-click revert to previous sync
 
 ## Where cub-scout wins today
 
-1. **Cluster-wide visibility** — "what else is here?" across all controllers
-2. **Ownership clarity** — "is this Argo or Helm?" answered immediately
-3. **Offline/disconnected** — no server dependency
-4. **Config scanning** — finds issues Argo doesn't look for
-5. **Automation-first** — JSON output for every command
+These are the differentiators that are **structurally out of reach for Argo**,
+not just things cub-scout also happens to do:
 
-## Gaps to close
+1. **Who changed a field — human vs controller.** Argo's diff shows you *that*
+   a field differs from Git; it cannot tell you *who* moved it. cub-scout reads
+   `managedFields` and attributes each divergent field to `manual-edit` (a
+   `kubectl-*` writer), `controller-drift` (the controller itself), or
+   `unknown`. This turns a noisy OutOfSync into "a human patched prod outside
+   Git" vs "ignore it, Argo's mid-reconcile."
+   (`pkg/agent/field_ownership.go`)
 
-To beat the Argo GUI as the first stop for GitOps troubleshooting,
-cub-scout needs to close these gaps:
+2. **Diagnose the Argo app when Argo itself is down.** cub-scout reads the
+   `Application` object straight from the cluster via kubectl — target
+   revision, `reconciledAt`, owner chain, source — so it still works when the
+   Argo API server / repo-server / dex is unhealthy, which is exactly when you
+   need to debug. No Argo server, no port-forward, no Argo RBAC.
+   (`pkg/agent/argo_trace.go`, `traceApplicationViaKubectl`)
 
-### P0 — Must have
+3. **A verdict stricter than "Synced."** Argo's Synced means "I applied the
+   target revision" — it says nothing about a human editing on top afterward.
+   `compare source-truth --strategy git-argo` (and `oci-argo` / `helm-argo` /
+   `confighub-oci-argo`) returns PASS / WATCH / BLOCK / ASK accounting for
+   manual edits, missing evidence, and strategy mismatch.
+   (`pkg/agent/source_truth.go`)
 
-| Gap | Why | Issue |
-|-----|-----|-------|
-| Sync status detail | Operators need the actual error, not just "out of sync" | TBD |
-| ~~K8s events per resource~~ | ~~Events are the first thing operators check after status~~ | ✅ v1.10 |
-| Resource conditions | `status.conditions` are critical for diagnosis — currently stripped (#348) | #348 |
-| Application-level grouping | Argo users think in Applications, not flat resource lists | TBD |
+4. **"Has anyone touched this since the freeze?"** The `no-manual-edits-since`
+   receipt predicate reads `managedFields` timestamps to assert no interactive
+   writer touched the resource after a cutoff — a question Argo has no concept
+   of.
 
-### P1 — Strong differentiators
+5. **Tamper-evident, portable evidence.** Argo's sync history is meaningless
+   once you leave the Argo UI. `receipt verify` wraps the verdict + evidence
+   into a fingerprinted in-toto Statement you hand to a CI gate, an auditor, or
+   an AI agent a year later — and they recompute the fingerprint to confirm
+   nothing was edited.
 
-| Gap | Why | Issue |
-|-----|-----|-------|
-| Desired vs live diff (standalone) | Should not require connected mode to see drift | TBD |
-| Secret health (#328) | Missing secrets are a top Argo troubleshooting issue | #328 |
-| Cross-controller correlation | "This Argo app depends on a Helm-managed CRD" — only cub-scout can show this | TBD |
-| Guided troubleshooting flow | `cub-scout explain` should walk the operator from symptom to root cause | TBD |
+6. **Cluster-wide + cross-controller visibility.** "What else is here, and is
+   this Argo or Helm?" answered immediately — including an Argo-managed
+   Deployment depending on a CRD actually owned by Flux or a raw Helm release.
+   (Only matters in mixed-controller shops.)
 
-### P2 — Nice to have
+7. **Automation-first and offline.** Deterministic `--format json` on every
+   command plus a read-only MCP gateway, with no server dependency.
 
-| Gap | Why |
-|-----|-----|
-| Sync history timeline | Useful but Argo GUI will always have deeper Argo-specific history |
-| Rollback support | Out of scope for read-only tool; recommend `argocd` CLI instead |
+## Where Argo CD GUI still wins
 
-## Target state
+cub-scout is read-only and will not do these — hand back to the `argocd` CLI or
+GUI:
 
-A typical troubleshooting flow should be:
+1. **Full sync history + retry timeline** — cub-scout surfaces the current
+   `operationState` message, not the deep per-sync history.
+2. **Purpose-built visual manifest diff** — side-by-side rendered diff.
+3. **Pod-level debugging** — logs, exec.
+4. **Per-Application visual topology** — the health-bubble resource tree.
+5. **Rollback / sync / parameter overrides** — write operations, out of scope
+   for a read-only observer.
+
+## Gaps closed since the last revision
+
+The previous version of this doc (April 2026) listed these as gaps; they have
+since shipped:
+
+- ✅ **K8s events per resource** (v1.10) — `explain` / `trace`
+- ✅ **Resource conditions** — `status.conditions` in `trace` / failure details
+- ✅ **Secret health** — `trace` secret evidence (refs + presence)
+- ✅ **Sync error message** — `operationState.Message` surfaced in `trace`
+- ✅ **Application-level grouping** — ApplicationSet lookup in `map`
+- ✅ **Per-field drift cause + source-truth verdict + receipts** — the
+  attribution layer, `compare source-truth`, and the receipt surface did not
+  exist in April and are now the headline differentiators above.
+
+## Gaps still open
+
+| Gap | Why it matters | Status |
+|-----|----------------|--------|
+| Standalone three-way (git as DRY) | `compare three-way` still needs ConfigHub; `compare drift --file` covers the simpler file-vs-live case | Stage B back-resolution (#440) lays the groundwork |
+| Deep sync retry history | Argo will always own its own sync timeline | Out of scope — recommend Argo GUI |
+| Visual topology / rollback / logs | Write ops + rich visuals are Argo-GUI territory | Out of scope (read-only) |
+
+## Target troubleshooting flow
 
 ```
-cub-scout doctor                    # cluster-wide health: what's broken?
-cub-scout explain deploy/app -n ns  # why is this broken? (events, conditions, sync state, owner)
-cub-scout trace deploy/app -n ns    # where did this come from? (Git source, owner chain)
-cub-scout scan -n ns                # any config issues?
+cub-scout doctor                       # cluster-wide health: what's broken?
+cub-scout explain deploy/app -n ns     # why? (events, conditions, owner, sync state)
+cub-scout trace deploy/app -n ns       # where from? (Git source, owner chain, secrets)
+cub-scout compare source-truth ... \   # does live still match source of truth?
+  --strategy git-argo
+cub-scout receipt verify deploy/app \  # prove it — portable, tamper-evident
+  -n ns --strategy git-argo
 ```
 
-The operator should only need to switch to Argo GUI for:
-- Pod logs and exec (out of scope)
-- Argo-specific rollback (write operation)
-- Parameter override management (Argo-specific feature)
-
-Everything else — status, events, conditions, ownership, drift, config issues —
-should be answerable from cub-scout, faster and with broader context than the
-Argo GUI provides.
+Switch to the Argo GUI only for: pod logs/exec, Argo-specific rollback, and
+parameter-override management. Everything else — status, events, conditions,
+ownership, *who* caused drift, source-of-truth conformance, and verifiable
+evidence — is answerable from cub-scout, faster and with broader context than
+the Argo GUI provides.
