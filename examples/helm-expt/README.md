@@ -225,6 +225,43 @@ INSTALL_WORKDIR=/tmp/chart-run
   --fail-on any-non-pass
 ```
 
+## Set-level diff receipt (`object-set-diff`, #496)
+
+`object-set-matches` answers a boolean ("does the whole set match?") and
+`compare three-way` answers per resource. Neither emits a single **set-level
+delta receipt**. `compare object-set --dry-from` does: it diffs a rendered
+(desired) object set against live and emits an `object-set-diff` receipt
+aggregating per-object **authored-field deltas** (`changedObjects`), plus
+`removedObjects` and — with `--diff` — `addedObjects`.
+
+One receipt shape serves both day-1 and day-2, tool-agnostically (it reads the
+cluster + the `--dry-from` render, never the reconciler):
+
+```bash
+# drift (post-apply): does the current render still match live across the set?
+./cub-scout compare object-set \
+  --dry-from "$MANIFESTS" \
+  --scope namespace/"$NS" \
+  --format json \
+  --out "$RUN_DIR/object-set-diff.drift.receipt.json"
+
+# dry-run (pre-apply): what would a PROPOSED change (e.g. an image.digest bump)
+# touch across the set? A changed image -> BLOCK with one changedObject.
+./cub-scout compare object-set \
+  --dry-from "$RUN_DIR/release-objects.changed-image.yaml" \
+  --scope namespace/"$NS" \
+  --format json \
+  --fail-on any-non-pass
+```
+
+Verdict: **BLOCK** if any object has authored-field deltas; **WATCH** if only
+closure deltas (added/removed objects); **PASS** if none. The receipt is signed
+(fingerprint) and chain-walkable, like the other receipts. `verify.sh` runs both
+the drift and dry-run cases against this example's live fixture, reproducing the
+helm-expt#992 `image.digest` worked example offline. (Value-provenance per
+changed object is Issue B; a cross-fleet roll-up is Issue C — see
+[`docs/proposals/object-set-diff.md`](../../docs/proposals/object-set-diff.md).)
+
 ## Full Proof Chain
 
 The strongest story is a sequence of independent receipts:

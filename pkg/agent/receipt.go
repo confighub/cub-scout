@@ -254,6 +254,7 @@ type Evidence struct {
 	SourceTruth     *SourceTruthEvidence        `json:"sourceTruth,omitempty"`
 	GitSource       *GitSourceAnchor            `json:"gitSource,omitempty"`
 	ObjectSet       *ObjectSetEvidence          `json:"objectSet,omitempty"`
+	ObjectSetDiff   *ObjectSetDiffEvidence      `json:"objectSetDiff,omitempty"`
 	Workloads       *WorkloadsConvergedEvidence `json:"workloads,omitempty"`
 	Prerequisites   *PrerequisitesEvidence      `json:"prerequisites,omitempty"`
 }
@@ -355,6 +356,13 @@ const (
 	// one or more desired objects could not be checked because the API
 	// mapping or live read was inconclusive.
 	OmissionObjectSetCoverage = "object-set-coverage"
+
+	// OmissionObjectSetDiffClosure is recorded by object-set-diff receipts
+	// (#496, Issue A) when the closed-world diff (--diff) was not requested:
+	// the receipt reports authored-field deltas on the desired set but makes
+	// no claim about objects that exist live outside that set (addedObjects)
+	// or desired objects absent live (removedObjects).
+	OmissionObjectSetDiffClosure = "object-set-diff-closure"
 
 	// OmissionWorkloadConvergence is recorded by workloads-converged
 	// receipts to mark that readiness was observed at verifiedAt; the
