@@ -36,6 +36,17 @@ const (
 	// controller-populated status are deliberately outside this claim.
 	PredicateObjectSetMatches PredicateName = "object-set-matches"
 
+	// PredicateObjectSetDiff emits a set-level delta between a rendered
+	// (desired) object set and live cluster state: changedObjects (with
+	// per-object authored-field deltas), addedObjects, and removedObjects.
+	// Unlike object-set-matches (a boolean "does the set match?"), this
+	// predicate aggregates the per-resource field deltas into one signed,
+	// chain-walkable receipt that serves both dry-run ("what would this
+	// change touch?") and drift ("what differs now?"). It is --dry-from
+	// routed and evaluated by BuildObjectSetDiffReceipt, not the
+	// BuildReceipt switch.
+	PredicateObjectSetDiff PredicateName = "object-set-diff"
+
 	// PredicateWorkloadsConverged verifies that every desired workload in
 	// the rendered manifest set reached a ready/converged runtime state
 	// (Deployments/StatefulSets/DaemonSets rolled out, Jobs Succeeded,
