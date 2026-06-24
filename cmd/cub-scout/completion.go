@@ -102,17 +102,7 @@ func completeKinds(cmd *cobra.Command, args []string, toComplete string) ([]stri
 
 // completeOwners returns valid owner types for --owner flag
 func completeOwners(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	owners := []string{
-		"Flux",
-		"ArgoCD",
-		"Helm",
-		"Terraform",
-		"Crossplane",
-		"kro",
-		"ConfigHub",
-		"Native",
-	}
-	return filterPrefix(owners, toComplete), cobra.ShellCompDirectiveNoFileComp
+	return filterPrefix(ValidOwners, toComplete), cobra.ShellCompDirectiveNoFileComp
 }
 
 // filterPrefix filters strings by prefix (case-insensitive)

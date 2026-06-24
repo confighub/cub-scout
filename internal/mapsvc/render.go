@@ -79,9 +79,7 @@ func BuildOwnershipTreeLines(entries []Entry, opts OwnershipTreeOpts) []Ownershi
 		byOwner[e.Owner] = append(byOwner[e.Owner], e)
 	}
 
-	// Fixed owner order: Flux, ArgoCD, Helm, ConfigHub, Native
-	owners := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
-	for _, owner := range owners {
+	for _, owner := range CanonicalOwnerOrder {
 		ownerEntries := byOwner[owner]
 		if len(ownerEntries) == 0 {
 			continue

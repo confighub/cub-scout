@@ -24,7 +24,7 @@ changed it if not, and can I prove it?"**
 
 | Capability | Argo CD GUI | cub-scout today |
 |-----------|------------|-----------------|
-| Scope | ArgoCD resources only | All controllers: Argo, Flux, Helm, Terraform, Crossplane, kro, native |
+| Scope | ArgoCD resources only | All controllers: Argo, Flux, Sveltos, Modelplane, Helm, Terraform, Crossplane, kro, native |
 | Sync status | Detailed: phase, message, retry count | Reconciliation state + `operationState` message via `trace` / `gitops status` |
 | Per-field change cause | Not modeled — OutOfSync is cause-blind | `manual-edit` vs `controller-drift` vs `unknown`, from `managedFields` |
 | Source-of-truth verdict | "Synced" = applied target revision | `compare source-truth` → PASS / WATCH / BLOCK / ASK across 9 strategies |

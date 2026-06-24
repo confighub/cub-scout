@@ -7,7 +7,7 @@
 // docs/reference/ownership-precedence.md
 //
 // Tests cover:
-// - Individual owner types (Flux, ArgoCD, Helm, Terraform, ConfigHub, Crossplane, K8s)
+// - Individual owner types (Flux, ArgoCD, Sveltos, Modelplane, Helm, Terraform, ConfigHub, Crossplane, K8s)
 // - Precedence rules when multiple signals are present
 // - Unknown/ambiguous cases returning "unknown"
 // - Edge cases (empty values, malformed annotations)
@@ -350,6 +350,267 @@ func TestDetectOwnership_ConfigHub(t *testing.T) {
 			}
 			if ownership.Namespace != tt.wantNS {
 				t.Errorf("Namespace = %q, want %q", ownership.Namespace, tt.wantNS)
+			}
+		})
+	}
+}
+
+func TestDetectOwnership_Sveltos(t *testing.T) {
+	tests := []struct {
+		name           string
+		apiVersion     string
+		kind           string
+		labels         map[string]string
+		annotations    map[string]string
+		owners         []metav1.OwnerReference
+		wantType       string
+		wantSubType    string
+		wantName       string
+		wantSource     string
+		wantConfidence string
+	}{
+		{
+			name: "Sveltos deployed resource via owner annotations",
+			annotations: map[string]string{
+				"projectsveltos.io/owner-kind":          "ClusterProfile",
+				"projectsveltos.io/owner-name":          "config-to-production",
+				"projectsveltos.io/owner-tier":          "100",
+				"projectsveltos.io/reference-kind":      "ConfigMap",
+				"projectsveltos.io/reference-name":      "webster-production",
+				"projectsveltos.io/reference-namespace": "control-clusters-config",
+				"projectsveltos.io/reference-tier":      "100",
+			},
+			wantType:       OwnerSveltos,
+			wantSubType:    "clusterprofile",
+			wantName:       "config-to-production",
+			wantSource:     "annotation:projectsveltos.io/owner-kind/name",
+			wantConfidence: "high",
+		},
+		{
+			name: "Sveltos deployed resource annotation fallback",
+			annotations: map[string]string{
+				"projectsveltos.io/deployed-by-sveltos": "true",
+			},
+			wantType:       OwnerSveltos,
+			wantSubType:    "deployed-resource",
+			wantSource:     "annotation:projectsveltos.io/deployed-by-sveltos",
+			wantConfidence: "medium",
+		},
+		{
+			name:        "Sveltos ClusterProfile via API group",
+			apiVersion:  "config.projectsveltos.io/v1beta1",
+			kind:        "ClusterProfile",
+			wantType:    OwnerSveltos,
+			wantSubType: "clusterprofile",
+			wantName:    "test-resource",
+			wantSource:  "apiGroup:config.projectsveltos.io",
+		},
+		{
+			name:        "Sveltos EventSource via API group",
+			apiVersion:  "lib.projectsveltos.io/v1beta1",
+			kind:        "EventSource",
+			wantType:    OwnerSveltos,
+			wantSubType: "eventsource",
+			wantName:    "test-resource",
+			wantSource:  "apiGroup:lib.projectsveltos.io",
+		},
+		{
+			name: "Sveltos owner reference",
+			owners: []metav1.OwnerReference{
+				{
+					APIVersion: "config.projectsveltos.io/v1beta1",
+					Kind:       "ClusterSummary",
+					Name:       "production-summary",
+				},
+			},
+			wantType:       OwnerSveltos,
+			wantSubType:    "clustersummary",
+			wantName:       "production-summary",
+			wantSource:     "ownerRef:config.projectsveltos.io/v1beta1",
+			wantConfidence: "high",
+		},
+		{
+			name: "Sveltos annotations take precedence over Helm chart labels",
+			labels: map[string]string{
+				"app.kubernetes.io/managed-by": "Helm",
+				"app.kubernetes.io/instance":   "cert-manager",
+			},
+			annotations: map[string]string{
+				"projectsveltos.io/owner-kind": "Profile",
+				"projectsveltos.io/owner-name": "platform-addons",
+			},
+			wantType:    OwnerSveltos,
+			wantSubType: "profile",
+			wantName:    "platform-addons",
+			wantSource:  "annotation:projectsveltos.io/owner-kind/name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var resource *unstructured.Unstructured
+			if len(tt.owners) > 0 {
+				resource = newTestResourceWithOwners("test-ns", "test-resource", tt.owners)
+				resource.SetLabels(tt.labels)
+				resource.SetAnnotations(tt.annotations)
+			} else {
+				resource = newTestResource("test-ns", "test-resource", tt.labels, tt.annotations)
+			}
+			if tt.apiVersion != "" {
+				resource.SetAPIVersion(tt.apiVersion)
+			}
+			if tt.kind != "" {
+				resource.SetKind(tt.kind)
+			}
+
+			ownership := DetectOwnership(resource)
+
+			if ownership.Type != tt.wantType {
+				t.Errorf("Type = %q, want %q", ownership.Type, tt.wantType)
+			}
+			if ownership.SubType != tt.wantSubType {
+				t.Errorf("SubType = %q, want %q", ownership.SubType, tt.wantSubType)
+			}
+			if ownership.Name != tt.wantName {
+				t.Errorf("Name = %q, want %q", ownership.Name, tt.wantName)
+			}
+			if tt.wantSource != "" && ownership.Source != tt.wantSource {
+				t.Errorf("Source = %q, want %q", ownership.Source, tt.wantSource)
+			}
+			if tt.wantConfidence != "" && ownership.Confidence != tt.wantConfidence {
+				t.Errorf("Confidence = %q, want %q", ownership.Confidence, tt.wantConfidence)
+			}
+		})
+	}
+}
+
+func TestDetectOwnership_Modelplane(t *testing.T) {
+	tests := []struct {
+		name        string
+		apiVersion  string
+		kind        string
+		labels      map[string]string
+		annotations map[string]string
+		owners      []metav1.OwnerReference
+		wantType    string
+		wantSubType string
+		wantName    string
+		wantSource  string
+	}{
+		{
+			name:        "Modelplane authored resource via API group",
+			apiVersion:  "modelplane.ai/v1alpha1",
+			kind:        "ModelDeployment",
+			wantType:    OwnerModelplane,
+			wantSubType: "modeldeployment",
+			wantName:    "test-resource",
+			wantSource:  "apiGroup:modelplane.ai",
+		},
+		{
+			name:        "Modelplane infrastructure resource via API group",
+			apiVersion:  "infrastructure.modelplane.ai/v1alpha1",
+			kind:        "EKSCluster",
+			wantType:    OwnerModelplane,
+			wantSubType: "ekscluster",
+			wantName:    "test-resource",
+			wantSource:  "apiGroup:infrastructure.modelplane.ai",
+		},
+		{
+			name: "Modelplane replica label takes precedence over Crossplane composition label",
+			labels: map[string]string{
+				"modelplane.ai/deployment":                "qwen-demo",
+				"crossplane.io/composition-resource-name": "replica-0",
+				"app.kubernetes.io/managed-by":            "Helm",
+				"apiextensions.crossplane.io/composite":   "ignored",
+				"crossplane.io/composite":                 "x-qwen-demo",
+				"crossplane.io/claim-name":                "ignored-claim",
+				"crossplane.io/claim-namespace":           "default",
+			},
+			annotations: map[string]string{
+				"crossplane.io/composition-resource-name": "replica-0",
+			},
+			wantType:    OwnerModelplane,
+			wantSubType: "modeldeployment",
+			wantName:    "qwen-demo",
+			wantSource:  "label:modelplane.ai/deployment",
+		},
+		{
+			name: "Modelplane cache label",
+			labels: map[string]string{
+				"modelplane.ai/modelcache": "qwen-cache",
+			},
+			wantType:    OwnerModelplane,
+			wantSubType: "modelcache",
+			wantName:    "qwen-cache",
+			wantSource:  "label:modelplane.ai/modelcache",
+		},
+		{
+			name: "Modelplane release label takes precedence over Helm label",
+			labels: map[string]string{
+				"modelplane.ai/release":        "traefik",
+				"app.kubernetes.io/managed-by": "Helm",
+				"app.kubernetes.io/instance":   "traefik",
+				"app.kubernetes.io/name":       "traefik",
+				"app.kubernetes.io/part-of":    "modelplane",
+			},
+			wantType:    OwnerModelplane,
+			wantSubType: "release",
+			wantName:    "traefik",
+			wantSource:  "label:modelplane.ai/release",
+		},
+		{
+			name: "Modelplane owner reference",
+			owners: []metav1.OwnerReference{
+				{
+					APIVersion: "modelplane.ai/v1alpha1",
+					Kind:       "ModelReplica",
+					Name:       "qwen-demo-0",
+				},
+			},
+			wantType:    OwnerModelplane,
+			wantSubType: "modelreplica",
+			wantName:    "qwen-demo-0",
+			wantSource:  "ownerRef:modelplane.ai/v1alpha1",
+		},
+		{
+			name: "Broad Modelplane placement labels are not ownership by themselves",
+			labels: map[string]string{
+				"modelplane.ai/region": "us-east",
+			},
+			wantType: OwnerUnknown,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var resource *unstructured.Unstructured
+			if len(tt.owners) > 0 {
+				resource = newTestResourceWithOwners("test-ns", "test-resource", tt.owners)
+				resource.SetLabels(tt.labels)
+				resource.SetAnnotations(tt.annotations)
+			} else {
+				resource = newTestResource("test-ns", "test-resource", tt.labels, tt.annotations)
+			}
+			if tt.apiVersion != "" {
+				resource.SetAPIVersion(tt.apiVersion)
+			}
+			if tt.kind != "" {
+				resource.SetKind(tt.kind)
+			}
+
+			ownership := DetectOwnership(resource)
+
+			if ownership.Type != tt.wantType {
+				t.Errorf("Type = %q, want %q", ownership.Type, tt.wantType)
+			}
+			if tt.wantSubType != "" && ownership.SubType != tt.wantSubType {
+				t.Errorf("SubType = %q, want %q", ownership.SubType, tt.wantSubType)
+			}
+			if tt.wantName != "" && ownership.Name != tt.wantName {
+				t.Errorf("Name = %q, want %q", ownership.Name, tt.wantName)
+			}
+			if tt.wantSource != "" && ownership.Source != tt.wantSource {
+				t.Errorf("Source = %q, want %q", ownership.Source, tt.wantSource)
 			}
 		})
 	}

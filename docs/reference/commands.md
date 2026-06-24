@@ -17,12 +17,12 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `map issues` | Show resources with problems | v0.5 |
 | `map crashes` | Show crashing pods | v0.5 |
 | `map workloads` | List workloads by owner | v0.5 |
-| `map deployers` | List GitOps deployers (Flux, ArgoCD, core Deployments) | v0.5 |
+| `map deployers` | List controller deployers (Flux, ArgoCD, Sveltos, Modelplane, core Deployments) | v0.5 |
 | `map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
 | `map cronjobs` | List CronJobs with schedule/run state | v0.20 |
 | `map jobs` | List Jobs with CronJob linkage and run state | v0.20 |
 | `map actions` | Read-only operator action preview (runbook output) | v0.20 |
-| `map activity` | Unified activity timeline from Flux/Argo/Helm/events | v0.20 |
+| `map activity` | Unified activity timeline from Flux/Argo/Sveltos/Modelplane/Helm/events | v0.20 |
 | `map previews` | Detect PR preview environments | v0.20 |
 | `quickstart` | Guided first-run walkthrough | v1.4 |
 | `quickstart demo` | Fixture-backed demo runner | v1.0 |
@@ -70,7 +70,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `bundle diff` | Compare two bundles | v0.15 |
 | `bundle timeline` | Time-series view across catalog | v0.15 |
 | `catalog list` | List bundles in a catalog | v0.15 |
-| `gitops status` | Show GitOps pipeline health | v0.14.1 |
+| `gitops status` | Show GitOps/controller pipeline health | v0.14.1 |
 | `version` | Print version/build information | v0.5 |
 
 For JSON contract navigation, start with [JSON Contracts and Output Model](json-contracts.md).
@@ -115,7 +115,7 @@ In the pipelines view (`p`):
 - Flux `Kustomization`: source from `spec.sourceRef.name`
 - Flux `HelmRelease`: source from `spec.chart.spec.chart`
 - Argo CD `Application`: source from `spec.source.repoURL`
-- `unknown`: source field missing/unreadable
+- `unknown`: source/controller summary missing or unreadable
 
 See `docs/reference/pipeline-source-resolution.md` for details.
 
@@ -345,7 +345,7 @@ cub-scout map orphans [flags]
 ```
 
 Shows:
-- Resources where `owner=Native` (not managed by Flux, ArgoCD, Helm, ConfigHub, Crossplane, or kro)
+- Resources where `owner=Native` (not managed by Flux, ArgoCD, Sveltos, Modelplane, Helm, ConfigHub, Crossplane, or kro)
 - ArgoCD `Application` resources with explicit `ApplicationSet` lineage that points to a missing generator
 
 ### Examples
@@ -512,7 +512,7 @@ cub-scout map workloads [flags]
 
 ## map deployers
 
-List GitOps deployers.
+List controller deployers.
 
 ```bash
 cub-scout map deployers [flags]
@@ -522,6 +522,8 @@ Canonical deployer scope (v1.0):
 - Flux `Kustomization`
 - Flux `HelmRelease`
 - Argo CD `Application`
+- Sveltos `ClusterProfile`, `Profile`, `EventTrigger`, `ClusterHealthCheck`, `ClusterPromotion`
+- Modelplane `InferenceGateway`, `InferenceCluster`, `ModelDeployment`, `ModelService`, `ModelCache`, `ServingStack`, `EKSCluster`, `GKECluster`
 - Core Kubernetes `Deployment` (fallback where GitOps CRDs are absent)
 
 ---
@@ -632,7 +634,7 @@ cub-scout map actions cronjob/nightly-backup -n operations --format json
 
 ## map activity
 
-Show normalized activity from Flux, ArgoCD, Helm release history, and Kubernetes Events.
+Show normalized activity from Flux, ArgoCD, Sveltos, Modelplane, Helm release history, and Kubernetes Events.
 
 ```bash
 cub-scout map activity [flags]
@@ -643,7 +645,7 @@ cub-scout map activity [flags]
 | Flag | Description |
 |------|-------------|
 | `--namespace` | Filter by namespace |
-| `--owner` | Filter by owner (`Flux`, `ArgoCD`, `Helm`, `Crossplane`, `kro`, `ConfigHub`, `Native`) |
+| `--owner` | Filter by owner (`Flux`, `ArgoCD`, `Sveltos`, `Modelplane`, `Helm`, `Crossplane`, `kro`, `ConfigHub`, `Native`) |
 | `--since` | Time filter (for example `24h`, `7d`) |
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
 
@@ -652,6 +654,8 @@ cub-scout map activity [flags]
 ```bash
 cub-scout map activity
 cub-scout map activity --owner Flux --since 24h
+cub-scout map activity --owner Sveltos --since 24h
+cub-scout map activity --owner Modelplane --namespace inference
 cub-scout map activity --namespace prod --format json
 ```
 
@@ -686,11 +690,11 @@ cub-scout map previews --format json
 
 ## trace
 
-Show the full GitOps ownership chain for a resource. Works with **Flux, ArgoCD, and standalone Helm**. Platform composition lineage (Crossplane/kro) has experimental support.
+Show the full ownership chain for a resource. Flux, ArgoCD, and standalone Helm resolve source-oriented chains; Sveltos, Modelplane, and Crossplane resolve observed controller lineage from CRDs, annotations, labels, owner references, and status.
 
 Owner detection for `trace` uses the same deterministic precedence as `map list`.
-After owner detection, `trace` resolves with an owner-specific chain resolver (Flux, ArgoCD, Helm).
-When a resource matches a custom ownership detector, `trace` prints the configured owner name and explains that chain resolution is currently limited to built-in owner resolvers.
+After owner detection, `trace` resolves with an owner-specific chain resolver for Flux, ArgoCD, Sveltos, Modelplane, Helm, and Crossplane.
+When a resource matches a custom ownership detector without a built-in resolver, `trace` prints the configured owner name and explains that chain resolution is not available for that detector.
 For detailed rules, see `docs/reference/ownership-precedence.md` and `docs/howto/trace-ownership.md`.
 
 ```bash
@@ -721,6 +725,12 @@ cub-scout trace --app frontend
 
 # Trace standalone Helm release (not Flux-managed)
 cub-scout trace deployment/prometheus -n monitoring
+
+# Trace a Sveltos-deployed resource back to its Profile/ClusterProfile and reference object
+cub-scout trace deployment/webster -n production
+
+# Trace a Modelplane workload back to its model deployment/cache/service lineage
+cub-scout trace deployment/qwen-runtime -n inference
 
 # Reverse trace (from Pod up)
 cub-scout trace pod/nginx-abc123 -n prod --reverse
@@ -2082,13 +2092,13 @@ See [CLI Contract Reference](cli-contract.md) for full flag and output documenta
 
 ## gitops (v0.14)
 
-GitOps pipeline status and diagnostics.
+GitOps/controller pipeline status and diagnostics.
 
 > **v0.14 contract surface.** Provides visibility into delegated apply health.
 
 ### gitops status
 
-Show the health of GitOps deployers and sources.
+Show the health of GitOps/controller deployers and sources.
 
 ```bash
 cub-scout gitops status [flags]
@@ -2107,8 +2117,9 @@ cub-scout gitops status [flags]
 |---------|-----------|
 | `flux` | Kustomization or HelmRelease CRDs present |
 | `argocd` | Application CRD present |
+| `controllers` | Sveltos or Modelplane controller CRDs present without Flux/Argo CD |
 | `worker` | ConfigHub worker labels |
-| `none` | No GitOps backend detected |
+| `none` | No GitOps/controller backend detected |
 
 #### Failure Stages
 
@@ -2117,7 +2128,7 @@ cub-scout gitops status [flags]
 | `source` | OCI/Git/Helm fetch failed |
 | `build` | Kustomize/Helm rendering failed |
 | `apply` | Kubernetes apply failed |
-| `sync` | ArgoCD sync failed |
+| `sync` | Controller sync/reconcile failed |
 | `healthy` | All stages passed |
 
 #### Example Output
@@ -2467,8 +2478,13 @@ cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flag
 | Flag | Description |
 |------|-------------|
 | `-n, --namespace` | Namespace of the resource (required for namespaced kinds) |
-| `--predicate` | Predicate to evaluate. v1 supports `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`, `object-set-matches`. Empty triggers auto-detect from owner + signals; `--file` selects `object-set-matches`. |
-| `--file` | YAML file or directory containing rendered desired objects for an install/object-set receipt. This mode does not take a positional subject. Use `--scope namespace/<ns>`, `--scope cluster`, or `-n <ns>` to tell cub-scout how to resolve namespaced objects that omit `metadata.namespace`. |
+| `--predicate` | Predicate to evaluate. v1 supports `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`, `object-set-matches`, `workloads-converged`, `prerequisites-met`. Empty triggers auto-detect from owner + signals; `--file` selects `object-set-matches` unless `--predicate workloads-converged` is explicit. |
+| `--file` | YAML file or directory containing rendered desired objects for an install/object-set receipt. This mode does not take a positional subject. Use `--scope namespace/<ns>`, `--scope cluster`, or `-n <ns>` to tell cub-scout how to resolve namespaced objects that omit `metadata.namespace`. With `--predicate workloads-converged`, the same desired set is filtered to workload objects and checked against live runtime status. |
+| `--grace-window` | For `--predicate workloads-converged`: duration since the last current-generation progress signal before an `InProgress` workload counts as failed (`BLOCK`) rather than progressing (`WATCH`), e.g. `5m`. Empty means no deadline; `InProgress` remains `WATCH`. If status is stale (`status.observedGeneration < metadata.generation`), cub-scout reports `WATCH` rather than fabricating a timeout from object age. |
+| `--prerequisites` | YAML/JSON file declaring required cluster facts for a `prerequisites-met` receipt (`requiredCRDs`, `requiredSecrets`, `requiredNamespaces`, `requiredStorageClasses`, `requiredIngressClasses`). |
+| `--ttl` | Observation-freshness boundary, e.g. `1h`. When set, the receipt records immutable `freshness{observedAt,expiresAt,ttl}` fields so consumers can distinguish a fresh receipt from a stale one. |
+| `--no-extras` | For `--predicate object-set-matches`: also run the closed-world check and flag live objects of the rendered kinds in scope that are not in the desired set. Extras downgrade a clean `PASS` to `WATCH`. |
+| `--normalization-profile` | Named server-normalization profile applied symmetrically to desired and live objects before object-set comparison and digesting, e.g. `k8s-zero-defaults/v1`. |
 | `--at-commit` | Override the spec anchor revision (Git SHA) for `applied-matches-spec`. When empty, the controller-resolved anchor is used as both the spec and the evidence. |
 | `--strategy` | Source-truth strategy for `source-truth-pass` (e.g. `git-argo`, `confighub-oci-flux`, `helm-argo`). cub-scout does not infer the strategy. |
 | `--since` | RFC 3339 cutoff timestamp for `no-manual-edits-since` (e.g. `2026-05-22T00:00:00Z`). |
@@ -2476,6 +2492,7 @@ cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flag
 | `--out` | Write the receipt to this file path. Always JSON regardless of `--format` — disk is the long-lived artifact. **Overwrites existing files** (this is the non-immutable, ad-hoc-path contract). Paths under the resolved receipt store are **rejected** — use `--save` for store writes (which are immutable; see below). |
 | `--fail-on` | (v2 `#451`) Exit non-zero (code 2) when the receipt verdict matches. Accepts a comma-separated list of verdicts (`WATCH`, `BLOCK`, `INCONCLUSIVE`) or the sugar `any-non-pass` (= `WATCH,BLOCK,INCONCLUSIVE`). The receipt is still printed / saved / written to `--out` regardless of exit code. `--fail-on PASS` is rejected upfront. |
 | `--input-attestation` | (v2 `#448` chained half) Path to a prior receipt to reference via `predicate.inputAttestations[]` (repeatable for chains). Each referenced receipt's fingerprint is verified at chain-construction time; tampered receipts are refused. The new receipt's fingerprint covers the `inputAttestations[]` field by construction. |
+| `--reference-evidence` | Path to an external, non-cub-scout evidence artifact to reference via `inputAttestations[]` by content digest (repeatable). Recorded under the `external-evidence://` scheme with digest-asserted trust; the artifact is not fingerprint-verified as a cub-scout receipt. |
 | `--scope` | Scope selector. Without `--file`, this is the aggregate-receipt scope: `namespace/<ns>` auto-discovers workloads, or a comma-list positional provides the batch. With `--file`, this scopes the rendered install object set: `namespace/<ns>` or `cluster`. |
 | `--aggregate-policy` | (v2 `#448`) Verdict-synthesis policy for the aggregate receipt. v1 supports only `max-severity` (the default; `BLOCK > INCONCLUSIVE > WATCH > PASS`). Future policies (`majority`, weighted) wire through the same flag. |
 
@@ -2487,6 +2504,8 @@ v1 predicates:
 | `source-truth-pass` | `--strategy <name>` + connected-mode ConfigHub auth | `compare source-truth` under the declared strategy returns PASS (mirrors Status into receipt Verdict) |
 | `no-manual-edits-since` | `--since <RFC3339 timestamp>` | No interactive (`kubectl-*`) writer touched `managedFields` after the cutoff |
 | `object-set-matches` | `--file <manifest.yaml|dir>` + cluster access | Every desired object identity from the rendered YAML is present live and every authored field still matches. Kubernetes server-added map fields and status are outside the claim; missing objects or changed authored fields produce BLOCK. |
+| `workloads-converged` | `--file <manifest.yaml|dir>` + cluster access | Desired workload objects reached a ready/converged runtime state. Stale generation status and active rollout progress produce WATCH; terminal pod/container failures, missing workloads, or no progress beyond `--grace-window` produce BLOCK. |
+| `prerequisites-met` | `--prerequisites <yaml|json>` + cluster access | Declared pre-flight cluster facts such as CRDs, Secrets, namespaces, StorageClasses, and IngressClasses are present before accepting an install. |
 
 Auto-detection priority (when `--predicate` is not passed):
 
@@ -2524,6 +2543,20 @@ cub-scout receipt verify \
   --scope namespace/redis \
   --format json \
   --out install.object-set.receipt.json
+
+# workloads-converged — prove rendered workloads actually became usable.
+cub-scout receipt verify \
+  --file out/manifests \
+  --scope namespace/redis \
+  --predicate workloads-converged \
+  --grace-window 5m \
+  --fail-on any-non-pass
+
+# prerequisites-met — prove required cluster facts exist before apply.
+cub-scout receipt verify \
+  --prerequisites prereqs.yaml \
+  --scope namespace/redis \
+  --fail-on any-non-pass
 ```
 
 ### Verdicts

@@ -40,7 +40,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | `cub-scout map` | Interactive TUI dashboard | v0.5 |
 | `cub-scout map list` | List resources (scriptable) | v0.5 |
 | `cub-scout map status` | One-line health check | v0.5 |
-| `cub-scout map deployers` | List deployers (Flux/ArgoCD + core Deployments) | v0.5 |
+| `cub-scout map deployers` | List controller deployers (Flux/ArgoCD/Sveltos/Modelplane + core Deployments) | v0.5 |
 | `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
 | `cub-scout map cronjobs` | List CronJobs with schedule/run state | v0.20 |
 | `cub-scout map jobs` | List Jobs with CronJob linkage and status | v0.20 |
@@ -260,12 +260,14 @@ Valid values for `--owner` and query `owner=`:
 |-------|-------------|
 | `Flux` | Managed by Flux CD |
 | `ArgoCD` | Managed by Argo CD |
+| `Sveltos` | Managed by Sveltos |
+| `Modelplane` | Managed by Modelplane |
 | `Helm` | Managed by Helm |
 | `Terraform` | Managed by Terraform |
 | `Crossplane` | Managed by Crossplane |
 | `kro` | Managed by kro |
 | `ConfigHub` | Managed by ConfigHub |
-| `Native` | Not managed by any GitOps tool |
+| `Native` | Not managed by any known owner |
 
 ### Query Syntax
 
@@ -350,12 +352,14 @@ Canonical workload scope counted by `map status` (v1.0):
 
 ## cub-scout map deployers
 
-List deployers in the cluster.
+List controller deployers in the cluster.
 
 Canonical deployer scope (v1.0):
 - Flux `Kustomization`
 - Flux `HelmRelease`
 - Argo CD `Application`
+- Sveltos `ClusterProfile`, `Profile`, `EventTrigger`, `ClusterHealthCheck`, `ClusterPromotion`
+- Modelplane `InferenceGateway`, `InferenceCluster`, `ModelDeployment`, `ModelService`, `ModelCache`, `ServingStack`, `EKSCluster`, `GKECluster`
 - Core Kubernetes `Deployment` (fallback where GitOps CRDs are absent)
 
 ```bash
@@ -381,9 +385,10 @@ cub-scout map deployers [flags]
 **Stable JSON fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `kind` | string | Deployer kind (`Kustomization`, `HelmRelease`, `Application`, `Deployment`) |
+| `kind` | string | Deployer kind (`Kustomization`, `HelmRelease`, `Application`, Sveltos/Modelplane controller kinds, or `Deployment`) |
 | `name` | string | Deployer name |
 | `namespace` | string | Deployer namespace |
+| `owner` | string | Optional owner family for first-class controller CRDs (`Sveltos`, `Modelplane`) |
 | `status` | string | Status string (for example `Ready`, `Healthy`, `NotReady`, `Unhealthy`) |
 | `ready` | bool | Whether the deployer is healthy/ready |
 | `revision` | string | Revision string (or `-` if unavailable) |
@@ -457,10 +462,10 @@ Stable JSON fields per action:
 
 ## cub-scout map activity
 
-Show normalized activity from Flux/Argo/Helm/events, sorted descending by time.
+Show normalized activity from Flux/Argo/Sveltos/Modelplane/Helm/events, sorted descending by time.
 
 ```bash
-cub-scout map activity [--namespace <ns>] [--owner Flux|ArgoCD|Helm] [--since 24h] [--format ascii|json|md]
+cub-scout map activity [--namespace <ns>] [--owner Flux|ArgoCD|Sveltos|Modelplane|Helm|Crossplane|kro|ConfigHub|Native] [--since 24h] [--format ascii|json|md]
 ```
 
 Stable JSON fields per event:
@@ -734,7 +739,7 @@ Breaking changes require a new major version (v2.0+). We define breaking as:
 
 ## cub-scout gitops status (v0.14.1)
 
-Show GitOps pipeline health and failure details.
+Show GitOps/controller pipeline health and failure details.
 
 ```bash
 cub-scout gitops status [flags]
@@ -784,6 +789,8 @@ NEXT STEPS
   "failedCount": 1
 }
 ```
+
+When Sveltos or Modelplane controller resources are detected without Flux or Argo CD, `backend` is `controllers` and `transport` is `unknown`.
 
 ### Exit Codes
 
@@ -1087,8 +1094,13 @@ cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flag
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-n, --namespace` | string | `default` | Namespace |
-| `--predicate` | string | auto-detect | One of `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`, `object-set-matches` |
-| `--file` | string | empty | Rendered YAML file or directory for `object-set-matches`; this mode does not accept a positional subject |
+| `--predicate` | string | auto-detect | One of `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`, `object-set-matches`, `workloads-converged`, `prerequisites-met` |
+| `--file` | string | empty | Rendered YAML file or directory for `object-set-matches` / `workloads-converged`; this mode does not accept a positional subject |
+| `--grace-window` | string | empty | For `workloads-converged`: duration since the last current-generation progress signal before `InProgress` becomes `BLOCK`; empty means no deadline and `InProgress` stays `WATCH` |
+| `--prerequisites` | string | empty | YAML/JSON required-facts file for `prerequisites-met` |
+| `--ttl` | string | empty | Stamp immutable receipt freshness (`observedAt`, `expiresAt`, `ttl`) |
+| `--no-extras` | bool | false | For `object-set-matches`, also check for extra live objects of rendered kinds in scope |
+| `--normalization-profile` | string | empty | Apply a named server-normalization profile symmetrically before object-set comparison and digesting |
 | `--strategy` | string | empty | Required when `--predicate source-truth-pass`; one of 9 strategies |
 | `--since` | string | empty | Required when `--predicate no-manual-edits-since`; RFC 3339 timestamp |
 | `--at-commit` | string | empty | Override the spec anchor revision (forensic-snapshot mode) |
@@ -1097,6 +1109,7 @@ cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flag
 | `--save` | bool | false | Persist the receipt to the local immutable store |
 | `--save-dir` | string | XDG default | Override the store directory |
 | `--input-attestation` | string array | empty | Reference a prior receipt by path (repeatable). Each is fingerprint-verified before chaining; tampered receipts are refused |
+| `--reference-evidence` | string array | empty | Reference an external non-cub-scout evidence artifact by content digest (repeatable); recorded as digest-asserted input evidence |
 | `--fail-on` | string | empty | Comma-separated verdicts that trigger exit 2: `WATCH`, `BLOCK`, `INCONCLUSIVE`, or sugar `any-non-pass` |
 | `--scope` | string | empty | Aggregate scope when no `--file`; object-set scope (`namespace/<ns>` or `cluster`) when `--file` is set |
 
@@ -1111,6 +1124,10 @@ cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flag
 | Otherwise | INCONCLUSIVE with `OmissionAutoDetectedPredicate` |
 
 cub-scout NEVER infers a strategy or a cutoff. Pass `--strategy` / `--since` explicitly or the corresponding predicate is unavailable.
+
+`workloads-converged` and `prerequisites-met` are explicit install receipts:
+pass `--predicate workloads-converged` with `--file`, or pass
+`--prerequisites <path>` for `prerequisites-met`.
 
 #### Verdicts
 

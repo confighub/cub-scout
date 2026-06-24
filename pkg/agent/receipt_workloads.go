@@ -48,13 +48,17 @@ type WorkloadsConvergedSummary struct {
 }
 
 type WorkloadConvergedObjectSummary struct {
-	ID             ObjectSetObjectID   `json:"id"`
-	Status         string              `json:"status"`
-	KstatusStatus  string              `json:"kstatusStatus,omitempty"`
-	KstatusMessage string              `json:"kstatusMessage,omitempty"`
-	AgeSeconds     int64               `json:"ageSeconds,omitempty"`
-	PodReasons     []WorkloadPodReason `json:"podReasons,omitempty"`
-	Error          string              `json:"error,omitempty"`
+	ID                  ObjectSetObjectID   `json:"id"`
+	Status              string              `json:"status"`
+	KstatusStatus       string              `json:"kstatusStatus,omitempty"`
+	KstatusMessage      string              `json:"kstatusMessage,omitempty"`
+	Generation          int64               `json:"generation,omitempty"`
+	ObservedGeneration  int64               `json:"observedGeneration,omitempty"`
+	AgeSeconds          int64               `json:"ageSeconds,omitempty"`
+	ProgressAgeSeconds  int64               `json:"progressAgeSeconds,omitempty"`
+	ProgressClockSource string              `json:"progressClockSource,omitempty"`
+	PodReasons          []WorkloadPodReason `json:"podReasons,omitempty"`
+	Error               string              `json:"error,omitempty"`
 }
 
 // WorkloadPodReason is a pod-level failure reason surfaced for a not-ready
@@ -121,10 +125,21 @@ func BuildWorkloadsConvergedEvidence(source ObjectSetSource, scope ObjectSetScop
 			st, msg := WorkloadConvergence(obs.Live)
 			summary.KstatusStatus = st.String()
 			summary.KstatusMessage = msg
-			var age time.Duration
 			if a, ok := unstructuredAge(obs.Live, observedAt); ok {
-				age = a
 				summary.AgeSeconds = int64(a.Seconds())
+			}
+			progressAge, progressAgeKnown, progressSource, generation, observedGeneration := workloadProgressClock(obs.Live, observedAt)
+			if generation > 0 {
+				summary.Generation = generation
+			}
+			if observedGeneration > 0 {
+				summary.ObservedGeneration = observedGeneration
+			}
+			if progressSource != "" {
+				summary.ProgressClockSource = progressSource
+			}
+			if progressAgeKnown {
+				summary.ProgressAgeSeconds = int64(progressAge.Seconds())
 			}
 			for _, pod := range obs.Pods {
 				if _, container, _, reason, message, ok := podWaitingFailure(pod); ok {
@@ -136,7 +151,7 @@ func BuildWorkloadsConvergedEvidence(source ObjectSetSource, scope ObjectSetScop
 					})
 				}
 			}
-			summary.Status = classifyConvergence(st, summary.PodReasons, age, graceWindow)
+			summary.Status = classifyConvergence(st, summary.PodReasons, progressAge, progressAgeKnown, graceWindow)
 		}
 
 		summaries = append(summaries, summary)
@@ -193,7 +208,7 @@ func BuildWorkloadsConvergedEvidence(source ObjectSetSource, scope ObjectSetScop
 	}, nil
 }
 
-// classifyConvergence maps a kstatus result (plus pod reasons, object age,
+// classifyConvergence maps a kstatus result (plus pod reasons, progress age,
 // and the grace window) to a per-workload convergence status.
 //
 //   - A hard pod failure reason (CrashLoopBackOff / ImagePullBackOff /
@@ -202,8 +217,10 @@ func BuildWorkloadsConvergedEvidence(source ObjectSetSource, scope ObjectSetScop
 //   - kstatus Current -> converged; Failed/Terminating -> failed;
 //     NotFound -> missing; Unknown -> inconclusive.
 //   - kstatus InProgress is progressing while within the grace window, and
-//     failed once it ages past the window (a stuck rollout).
-func classifyConvergence(st status.Status, podReasons []WorkloadPodReason, age, grace time.Duration) string {
+//     failed once the best available progress clock passes the window (a
+//     stuck rollout). If no reliable progress clock is available, it remains
+//     progressing rather than fabricating a timeout.
+func classifyConvergence(st status.Status, podReasons []WorkloadPodReason, progressAge time.Duration, progressAgeKnown bool, grace time.Duration) string {
 	if len(podReasons) > 0 {
 		return WorkloadConvergedFailed
 	}
@@ -215,7 +232,7 @@ func classifyConvergence(st status.Status, podReasons []WorkloadPodReason, age, 
 	case status.NotFoundStatus:
 		return WorkloadConvergedMissing
 	case status.InProgressStatus:
-		if grace > 0 && age > grace {
+		if grace > 0 && progressAgeKnown && progressAge > grace {
 			return WorkloadConvergedFailed
 		}
 		return WorkloadConvergedProgressing
@@ -363,6 +380,97 @@ func BuildWorkloadsConvergedReceipt(in BuildWorkloadsConvergedReceiptInput) (Sta
 		return Statement{}, fmt.Errorf("workloads-converged receipt: stamp fingerprint: %w", err)
 	}
 	return stmt, nil
+}
+
+func workloadProgressClock(u *unstructured.Unstructured, now time.Time) (time.Duration, bool, string, int64, int64) {
+	if u == nil {
+		return 0, false, "", 0, 0
+	}
+	generation := u.GetGeneration()
+	observedGeneration, _, _ := unstructured.NestedInt64(u.Object, "status", "observedGeneration")
+	if generation > 0 && observedGeneration > 0 && observedGeneration < generation {
+		return 0, false, "status.observedGeneration<metadata.generation", generation, observedGeneration
+	}
+	if ts, source, ok := workloadProgressTimestamp(u); ok {
+		age := now.Sub(ts)
+		if age < 0 {
+			age = 0
+		}
+		return age, true, source, generation, observedGeneration
+	}
+	if age, ok := unstructuredAge(u, now); ok {
+		return age, true, "metadata.creationTimestamp", generation, observedGeneration
+	}
+	return 0, false, "", generation, observedGeneration
+}
+
+func workloadProgressTimestamp(u *unstructured.Unstructured) (time.Time, string, bool) {
+	conditions, found, err := unstructured.NestedSlice(u.Object, "status", "conditions")
+	if err != nil || !found {
+		return time.Time{}, "", false
+	}
+
+	if ts, source, ok := conditionTimestampByType(conditions, "Progressing"); ok {
+		return ts, source, true
+	}
+
+	var newest time.Time
+	var newestSource string
+	for _, raw := range conditions {
+		cond, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		ts, field, ok := conditionTimestamp(cond)
+		if !ok || (!newest.IsZero() && !ts.After(newest)) {
+			continue
+		}
+		newest = ts
+		typ, _ := cond["type"].(string)
+		if typ == "" {
+			newestSource = "status.conditions." + field
+		} else {
+			newestSource = "status.conditions[" + typ + "]." + field
+		}
+	}
+	if newest.IsZero() {
+		return time.Time{}, "", false
+	}
+	return newest, newestSource, true
+}
+
+func conditionTimestampByType(conditions []interface{}, wantType string) (time.Time, string, bool) {
+	for _, raw := range conditions {
+		cond, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		typ, _ := cond["type"].(string)
+		if typ != wantType {
+			continue
+		}
+		ts, field, ok := conditionTimestamp(cond)
+		if !ok {
+			return time.Time{}, "", false
+		}
+		return ts, "status.conditions[" + wantType + "]." + field, true
+	}
+	return time.Time{}, "", false
+}
+
+func conditionTimestamp(cond map[string]interface{}) (time.Time, string, bool) {
+	for _, field := range []string{"lastUpdateTime", "lastTransitionTime"} {
+		raw, ok := cond[field].(string)
+		if !ok || raw == "" {
+			continue
+		}
+		ts, err := time.Parse(time.RFC3339Nano, raw)
+		if err != nil {
+			continue
+		}
+		return ts, field, true
+	}
+	return time.Time{}, "", false
 }
 
 // BuildLiveWorkloadsSubject builds the live-workloads subject for a

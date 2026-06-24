@@ -24,6 +24,11 @@ When a manager string from this section matches **and** the resource's labels/an
 | `kro.run/applyset` | kro applyset controller (resource group) | exact | [kro-run/kro](https://github.com/kro-run/kro) applyset controller |
 | `kro.run/applyset-parent` | kro applyset parent reconciler | exact | kro applyset parent reconciler |
 | `kro.run/labeller` | kro labeller controller | exact | kro labeller controller |
+| `application/apply-patch` | Sveltos deployed policy apply writer | exact | [`projectsveltos/libsveltos` `lib/deployer.UpdateResource`](https://github.com/projectsveltos/libsveltos/tree/main/lib/deployer) |
+
+Modelplane is built on Crossplane. For Modelplane-owned composed resources,
+cub-scout treats the verified Crossplane manager strings above as expected
+controller writers when the resource also carries Modelplane ownership signals.
 
 ## Interactive tools (`kubectl` family)
 

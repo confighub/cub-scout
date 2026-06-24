@@ -97,7 +97,7 @@ Pipeline source semantics (TUI p view):
   - Flux Kustomization: spec.sourceRef.name
   - Flux HelmRelease:   spec.chart.spec.chart
   - Argo Application:   spec.source.repoURL
-  - unknown:            source field missing/unreadable
+  - unknown:            source/controller summary missing or unreadable
 `,
 	RunE: runMapTUI,
 }
@@ -260,7 +260,7 @@ Examples:
   # Filter by namespace and kind
   cub-scout map list --namespace default --kind Deployment
 
-  # Filter by owner (Flux, ArgoCD, Helm, Terraform, Crossplane, kro, ConfigHub, Native)
+  # Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, Native)
   cub-scout map list --owner ConfigHub
 
   # Find unhealthy/failing resources
@@ -277,8 +277,8 @@ Examples:
   # Query: Resources in production namespaces
   cub-scout map list -q "namespace=prod*"
 
-  # Query: Flux or Argo managed
-  cub-scout map list -q "owner=Flux OR owner=ArgoCD"
+  # Query: Controller-managed
+  cub-scout map list -q "owner=Flux OR owner=Sveltos OR owner=Modelplane"
 
   # Query: By label
   cub-scout map list -q "labels[app]=nginx"
@@ -319,12 +319,14 @@ Shows:
 
 var mapDeployersCmd = &cobra.Command{
 	Use:   "deployers",
-	Short: "List GitOps deployers (Flux, ArgoCD)",
-	Long: `List all GitOps deployers from Flux and ArgoCD.
+	Short: "List controller deployers",
+	Long: `List deployer/controller resources from Flux, ArgoCD, Sveltos, Modelplane, and core workloads.
 
 Shows:
   - Flux Kustomizations and HelmReleases
   - ArgoCD Applications
+  - Sveltos Profiles, ClusterProfiles, EventTriggers, ClusterHealthChecks, and ClusterPromotions
+  - Modelplane gateways, deployments, services, caches, clusters, and serving stacks
   - Sync status and health`,
 	RunE: runMapDeployers,
 }
@@ -334,7 +336,7 @@ var mapWorkloadsCmd = &cobra.Command{
 	Short: "List workloads grouped by owner",
 	Long: `List canonical workloads (Deployments, StatefulSets) grouped by owner.
 
-Owners: Flux, ArgoCD, Helm, Terraform, Crossplane, kro, ConfigHub, Native`,
+Owners: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, Native`,
 	RunE: runMapWorkloads,
 }
 
@@ -356,7 +358,7 @@ var mapSprawlCmd = &cobra.Command{
 
 Shows:
 - GitOps coverage percentage
-- Breakdown by owner (Flux, ArgoCD, Helm, ConfigHub, Crossplane, kro, Native)
+- Breakdown by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native)
 - Native workloads that should be added to GitOps`,
 	RunE: runMapSprawl,
 }
@@ -419,7 +421,7 @@ Orphaned resources are those without detected GitOps or platform ownership:
 - Created by operators/controllers not tracked by GitOps
 - Legacy resources from before GitOps adoption
 
-Note: Resources managed by Crossplane, kro, or Terraform controllers are not considered orphans.
+Note: Resources managed by Sveltos, Modelplane, Crossplane, kro, or Terraform controllers are not considered orphans.
 
 By default, system namespaces are filtered out to reduce noise:
   kube-system, kube-public, kube-node-lease, flux-system, argocd,
@@ -466,7 +468,7 @@ Shows:
 - Active jobs count
 - Last schedule time
 - Last run status (success/failed/running/unknown)
-- Ownership and lineage hints (Flux/Argo/Helm/Native)`,
+- Ownership and lineage hints (Flux/Argo/Sveltos/Modelplane/Helm/Native)`,
 	RunE: runMapCronJobs,
 }
 
@@ -499,12 +501,15 @@ Examples:
 
 var mapActivityCmd = &cobra.Command{
 	Use:   "activity",
-	Short: "Show recent GitOps/runtime activity timeline",
-	Long: `Show a normalized timeline of recent activity from Flux resources and Kubernetes events.
+	Short: "Show recent controller/runtime activity timeline",
+	Long: `Show a normalized timeline of recent activity from Flux, ArgoCD, Sveltos,
+Modelplane, Helm release metadata, and Kubernetes events.
 
 Examples:
   cub-scout map activity
   cub-scout map activity --owner Flux --since 24h
+  cub-scout map activity --owner Sveltos
+  cub-scout map activity --owner Modelplane
   cub-scout map activity --namespace prod --format json`,
 	RunE: runMapActivity,
 }
@@ -612,7 +617,7 @@ func init() {
 	// List-specific flags
 	mapListCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapListCmd.Flags().StringVar(&mapKind, "kind", "", "Filter by resource kind")
-	mapListCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, Terraform, Crossplane, kro, ConfigHub, Native)")
+	mapListCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, Native)")
 	mapListCmd.Flags().StringVarP(&mapQuery, "query", "q", "", "Query expression (e.g., 'kind=Deployment AND owner!=Native')")
 	mapListCmd.Flags().StringVar(&mapSince, "since", "", "Show resources changed since duration (e.g., 1h, 24h, 7d)")
 	mapListCmd.Flags().BoolVar(&mapCount, "count", false, "Output count only (no list)")
@@ -637,18 +642,18 @@ func init() {
 
 	// CronJobs/jobs/action/activity/previews flags
 	mapCronjobsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
-	mapCronjobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Crossplane, kro, Native)")
+	mapCronjobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native)")
 	mapCronjobsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
 	mapJobsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
-	mapJobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Crossplane, kro, Native)")
+	mapJobsCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native)")
 	mapJobsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
 	mapActionsCmd.Flags().StringVarP(&mapNamespace, "namespace", "n", "", "Namespace of the target resource")
 	mapActionsCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
 	mapActivityCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
-	mapActivityCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Helm)")
+	mapActivityCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native)")
 	mapActivityCmd.Flags().StringVar(&mapActivitySince, "since", "", "Show activity since duration (e.g., 1h, 24h, 7d)")
 	mapActivityCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
@@ -1096,7 +1101,7 @@ func processResourceWithLookup(
 		annotateMapApplicationSetLineage(&entry, unstr, appSetLookup)
 	}
 
-	// "Native" means no GitOps owner detected (not managed by Flux, Argo, Helm, or ConfigHub).
+	// "Native" means no known owner detected.
 	// These are resources deployed directly via kubectl, or system components like the GitOps
 	// controllers themselves. This is expected and correct - the insight is knowing WHAT is
 	// unmanaged, not that unmanaged resources exist.
@@ -1898,6 +1903,7 @@ type DeployerEntry struct {
 	Kind      string `json:"kind"`
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+	Owner     string `json:"owner,omitempty"`
 	Status    string `json:"status"`
 	Ready     bool   `json:"ready"`
 	Revision  string `json:"revision,omitempty"`
@@ -1985,6 +1991,26 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	for _, spec := range firstClassControllerResources() {
+		if !isControllerDeployerKind(spec.Kind) {
+			continue
+		}
+		list, err := listControllerResource(ctx, dynClient, spec, mapNamespace)
+		if err != nil {
+			continue
+		}
+		for i := range list.Items {
+			item := list.Items[i]
+			if item.GetKind() == "" {
+				item.SetKind(spec.Kind)
+			}
+			if item.GetAPIVersion() == "" {
+				item.SetAPIVersion(spec.GVR.GroupVersion().String())
+			}
+			deployers = append(deployers, deployerEntryFromControllerResource(&item, spec))
+		}
+	}
+
 	// Core Deployments (as deployers for clusters without GitOps)
 	if depList, err := dynClient.Resource(schema.GroupVersionResource{
 		Group: "apps", Version: "v1", Resource: "deployments",
@@ -2037,18 +2063,9 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 	fmt.Fprintln(w, "STATUS\tKIND\tNAME\tNAMESPACE\tREVISION\tRESOURCES")
 	fmt.Fprintln(w, "──────\t────\t────\t─────────\t────────\t─────────")
 
-	var ksCount, hrCount, appCount, depCount int
+	counts := map[string]int{}
 	for _, d := range deployers {
-		switch d.Kind {
-		case "Kustomization":
-			ksCount++
-		case "HelmRelease":
-			hrCount++
-		case "Application":
-			appCount++
-		case "Deployment":
-			depCount++
-		}
+		counts[d.Kind]++
 		statusIcon := SymOK
 		if !d.Ready {
 			statusIcon = SymError
@@ -2064,12 +2081,100 @@ func runMapDeployers(cmd *cobra.Command, args []string) error {
 	w.Flush()
 
 	// Summary
-	total := ksCount + hrCount + appCount + depCount
-	fmt.Printf("\n%d deployers: %d Kustomizations, %d HelmReleases, %d Applications, %d Deployments\n",
-		total, ksCount, hrCount, appCount, depCount)
-	fmt.Println("→ Visual guide: docs/diagrams/flux-architecture.svg")
+	fmt.Printf("\n%d deployers: %s\n", len(deployers), formatKindCounts(counts))
+	fmt.Println("→ Trace a deployer: ./cub-scout trace <kind>/<name> -n <namespace>")
 
 	return nil
+}
+
+func deployerEntryFromControllerResource(item *unstructured.Unstructured, spec controllerResourceSpec) DeployerEntry {
+	ready, status, reason, message := observedObjectStatus(item)
+	if reason != "" && status != "Ready" && status != "Observed" {
+		status = strings.TrimSpace(status + " (" + reason + ")")
+	}
+	if message != "" && status == "Observed" {
+		status = message
+	}
+	return DeployerEntry{
+		Kind:      spec.Kind,
+		Name:      item.GetName(),
+		Namespace: item.GetNamespace(),
+		Owner:     spec.Owner,
+		Status:    status,
+		Ready:     ready,
+		Revision:  controllerResourceRevision(item),
+		Resources: controllerResourceInventory(item, spec),
+	}
+}
+
+func controllerResourceRevision(item *unstructured.Unstructured) string {
+	for _, path := range [][]string{
+		{"status", "lastAppliedRevision"},
+		{"status", "lastAttemptedRevision"},
+		{"status", "observedGeneration"},
+	} {
+		if value, found, _ := unstructured.NestedString(item.Object, path...); found && value != "" {
+			return value
+		}
+		if value, found, _ := unstructured.NestedInt64(item.Object, path...); found && value > 0 {
+			if path[len(path)-1] == "observedGeneration" {
+				return fmt.Sprintf("gen-%d", value)
+			}
+			return strconv.FormatInt(value, 10)
+		}
+	}
+	if generation := item.GetGeneration(); generation > 0 {
+		return fmt.Sprintf("gen-%d", generation)
+	}
+	return ""
+}
+
+func controllerResourceInventory(item *unstructured.Unstructured, spec controllerResourceSpec) int {
+	switch spec.Owner {
+	case "Sveltos":
+		return sveltosControllerInventory(item)
+	case "Modelplane":
+		return modelplaneControllerInventory(item)
+	default:
+		return 0
+	}
+}
+
+func isControllerDeployerKind(kind string) bool {
+	switch kind {
+	case "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion",
+		"InferenceGateway", "InferenceCluster", "ModelDeployment", "ModelService", "ModelCache",
+		"EKSCluster", "GKECluster", "ServingStack":
+		return true
+	default:
+		return false
+	}
+}
+
+func formatKindCounts(counts map[string]int) string {
+	if len(counts) == 0 {
+		return "none"
+	}
+	kinds := make([]string, 0, len(counts))
+	for kind := range counts {
+		kinds = append(kinds, kind)
+	}
+	sort.Strings(kinds)
+	parts := make([]string, 0, len(kinds))
+	for _, kind := range kinds {
+		parts = append(parts, fmt.Sprintf("%d %s", counts[kind], pluralKind(kind, counts[kind])))
+	}
+	return strings.Join(parts, ", ")
+}
+
+func pluralKind(kind string, count int) string {
+	if count == 1 {
+		return kind
+	}
+	if strings.HasSuffix(kind, "s") {
+		return kind + "es"
+	}
+	return kind + "s"
 }
 
 // runMapWorkloads lists workloads by owner
@@ -2139,10 +2244,8 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		// Build owner breakdown in consistent order
-		owners := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
 		var parts []string
-		for _, owner := range owners {
+		for _, owner := range mapsvc.CanonicalOwnerOrder {
 			if count, ok := ownerCounts[owner]; ok && count > 0 {
 				parts = append(parts, fmt.Sprintf("%d %s", count, owner))
 			}
@@ -3129,7 +3232,7 @@ func runMapOrphans(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 		fmt.Println("ORPHAN RESOURCES")
 		fmt.Println("════════════════════════════════════════════════════════════════════")
-		fmt.Println("Resources not managed by GitOps (Flux, ArgoCD, Helm, ConfigHub).")
+		fmt.Println("Resources not managed by known owners (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub).")
 		fmt.Println("These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.")
 		fmt.Println("Also includes Argo Applications with explicit links to missing ApplicationSets.")
 		if !orphanIncludeSystem && mapNamespace == "" {
@@ -3870,6 +3973,8 @@ func collectActivity(ctx context.Context) ([]mapActivityRow, error) {
 	rows := make([]mapActivityRow, 0, 128)
 	rows = append(rows, collectFluxActivity(ctx, dynClient)...)
 	rows = append(rows, collectArgoActivity(ctx, dynClient)...)
+	rows = append(rows, collectSveltosActivity(ctx, dynClient)...)
+	rows = append(rows, collectModelplaneActivity(ctx, dynClient)...)
 	rows = append(rows, collectHelmReleaseActivity(ctx, dynClient)...)
 	rows = append(rows, collectEventActivity(ctx, dynClient)...)
 
@@ -4132,6 +4237,125 @@ func collectHelmReleaseActivity(ctx context.Context, dynClient dynamic.Interface
 		})
 	}
 	return rows
+}
+
+func collectSveltosActivity(ctx context.Context, dynClient dynamic.Interface) []mapActivityRow {
+	return collectFirstClassControllerActivity(ctx, dynClient, sveltosControllerResources(), "Sveltos")
+}
+
+func collectModelplaneActivity(ctx context.Context, dynClient dynamic.Interface) []mapActivityRow {
+	return collectFirstClassControllerActivity(ctx, dynClient, modelplaneControllerResources(), "Modelplane")
+}
+
+func collectFirstClassControllerActivity(ctx context.Context, dynClient dynamic.Interface, specs []controllerResourceSpec, owner string) []mapActivityRow {
+	rows := make([]mapActivityRow, 0, 64)
+	if mapOwner != "" && !strings.EqualFold(mapOwner, owner) {
+		return rows
+	}
+	for _, spec := range specs {
+		list, err := listControllerResource(ctx, dynClient, spec, mapNamespace)
+		if err != nil {
+			continue
+		}
+		for i := range list.Items {
+			obj := list.Items[i]
+			if obj.GetKind() == "" {
+				obj.SetKind(spec.Kind)
+			}
+			if rowsForObject := controllerConditionActivityRows(&obj, spec, owner); len(rowsForObject) > 0 {
+				rows = append(rows, rowsForObject...)
+				continue
+			}
+			ready, status, reason, message := observedObjectStatus(&obj)
+			result := "pending"
+			if ready {
+				result = "success"
+			} else if strings.Contains(strings.ToLower(status), "fail") || strings.Contains(strings.ToLower(reason), "fail") {
+				result = "failed"
+			}
+			rows = append(rows, mapActivityRow{
+				Time:              normalizeTimeString("", obj.GetCreationTimestamp().Time),
+				Source:            controllerActivitySource(owner, spec.Kind),
+				Resource:          formatControllerActivityResource(&obj),
+				Action:            firstNonEmpty(strings.ToLower(reason), strings.ToLower(status), "observed"),
+				Result:            result,
+				Message:           firstNonEmpty(message, status),
+				SuggestedNextStep: controllerActivityNextStep(owner, spec.Kind),
+				Owner:             owner,
+			})
+		}
+	}
+	return rows
+}
+
+func controllerConditionActivityRows(obj *unstructured.Unstructured, spec controllerResourceSpec, owner string) []mapActivityRow {
+	conditions, found, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
+	if !found || len(conditions) == 0 {
+		return nil
+	}
+	rows := make([]mapActivityRow, 0, len(conditions))
+	for _, c := range conditions {
+		cMap, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		conditionType := stringValue(cMap["type"])
+		conditionStatus := stringValue(cMap["status"])
+		reason := stringValue(cMap["reason"])
+		message := stringValue(cMap["message"])
+		transition := stringValue(cMap["lastTransitionTime"])
+		rows = append(rows, mapActivityRow{
+			Time:              normalizeTimeString(transition, obj.GetCreationTimestamp().Time),
+			Source:            controllerActivitySource(owner, spec.Kind),
+			Resource:          formatControllerActivityResource(obj),
+			Action:            firstNonEmpty(strings.ToLower(conditionType), "condition"),
+			Result:            classifyConditionResult(conditionStatus, reason, message),
+			Message:           firstNonEmpty(message, reason),
+			SuggestedNextStep: controllerActivityNextStep(owner, spec.Kind),
+			Owner:             owner,
+		})
+	}
+	return rows
+}
+
+func controllerActivitySource(owner, kind string) string {
+	return strings.ToLower(owner) + "." + strings.ToLower(kind)
+}
+
+func formatControllerActivityResource(obj *unstructured.Unstructured) string {
+	if obj.GetNamespace() == "" {
+		return fmt.Sprintf("%s/%s", obj.GetKind(), obj.GetName())
+	}
+	return fmt.Sprintf("%s/%s/%s", obj.GetKind(), obj.GetNamespace(), obj.GetName())
+}
+
+func controllerActivityNextStep(owner, kind string) string {
+	switch owner {
+	case "Sveltos":
+		switch kind {
+		case "ClusterProfile", "Profile":
+			return "Inspect matching, updating, updated, and failed clusters on the Sveltos profile status."
+		case "EventSource", "EventTrigger":
+			return "Inspect Sveltos event reports and matching resource selectors."
+		case "ClusterHealthCheck":
+			return "Inspect notification summaries and health check reports."
+		default:
+			return "Inspect Sveltos status and related reports for this resource."
+		}
+	case "Modelplane":
+		switch kind {
+		case "ModelDeployment":
+			return "Inspect ModelDeployment replicas and composed ModelReplica/ModelEndpoint resources."
+		case "ModelService":
+			return "Inspect routing conditions and selected ModelEndpoint backends."
+		case "ModelCache":
+			return "Inspect ModelCache phase and hydration status."
+		default:
+			return "Inspect Modelplane conditions and composed Crossplane resources."
+		}
+	default:
+		return suggestNextStepFromCondition("", "")
+	}
 }
 
 func collectEventActivity(ctx context.Context, dynClient dynamic.Interface) []mapActivityRow {
@@ -6366,7 +6590,7 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 		byOwner[w.owner] = append(byOwner[w.owner], w)
 	}
 
-	for _, owner := range []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"} {
+	for _, owner := range mapsvc.CanonicalOwnerOrder {
 		wls := byOwner[owner]
 		if len(wls) == 0 {
 			continue
@@ -7372,7 +7596,7 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 	type inferredUnit struct {
 		name        string
 		kind        string
-		owner       string // Flux, ArgoCD, Helm, ConfigHub
+		owner       string // Flux, ArgoCD, Sveltos, Modelplane, Helm, ConfigHub
 		namespace   string
 		sourceRepo  string
 		sourcePath  string
@@ -7679,8 +7903,18 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 			return "⚡"
 		case "ArgoCD":
 			return "🅰"
+		case "Sveltos":
+			return "✦"
+		case "Modelplane":
+			return "◆"
+		case "Crossplane":
+			return "✚"
+		case "kro":
+			return "◎"
 		case "Helm":
 			return "⎈"
+		case "Terraform":
+			return "▣"
 		case "ConfigHub":
 			return "📦"
 		default:

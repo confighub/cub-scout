@@ -16,7 +16,7 @@ cub-scout map list -q "FIELD=VALUE"
 
 | Field | Examples |
 |-------|----------|
-| `owner` | `Flux`, `ArgoCD`, `Helm`, `Native` |
+| `owner` | `Flux`, `ArgoCD`, `Sveltos`, `Modelplane`, `Crossplane`, `kro`, `Helm`, `Terraform`, `ConfigHub`, `Native` |
 | `namespace` | `default`, `flux-system`, `payments-*` |
 | `kind` | `Deployment`, `Service`, `ConfigMap` |
 | `status` | `Ready`, `Pending`, `Failed` |
@@ -41,10 +41,10 @@ cub-scout map list -q "FIELD=VALUE"
 cub-scout map list -q "owner=Flux AND status!=Ready"
 
 # OR
-cub-scout map list -q "owner=Flux OR owner=ArgoCD"
+cub-scout map list -q "owner=Flux OR owner=Sveltos"
 
 # Parentheses
-cub-scout map list -q "labels[env]=prod AND (owner=Flux OR owner=ArgoCD)"
+cub-scout map list -q "labels[env]=prod AND (owner=Flux OR owner=Modelplane)"
 ```
 
 ---
@@ -59,7 +59,7 @@ cub-scout map list -q "labels[env]=prod AND (owner=Flux OR owner=ArgoCD)"
 | Production only | `labels[env]=production` |
 | Find problems | `status!=Ready` |
 | Specific namespace | `namespace=payments-prod` |
-| Multi-tool | `owner=Flux OR owner=ArgoCD` |
+| Multi-tool | `owner=Flux OR owner=Sveltos OR owner=Modelplane` |
 | Combined | `owner=Flux AND status!=Ready` |
 
 ---

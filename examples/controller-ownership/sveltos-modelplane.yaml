@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webster
+  namespace: production
+  labels:
+    app.kubernetes.io/name: webster
+    app.kubernetes.io/instance: webster
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    projectsveltos.io/owner-kind: ClusterProfile
+    projectsveltos.io/owner-name: config-to-production
+    projectsveltos.io/owner-tier: "100"
+    projectsveltos.io/reference-kind: ConfigMap
+    projectsveltos.io/reference-name: webster-production
+    projectsveltos.io/reference-namespace: control-clusters-config
+    projectsveltos.io/reference-tier: "100"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: webster
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: webster
+    spec:
+      containers:
+        - name: webster
+          image: ghcr.io/example/webster:v1
+---
+apiVersion: lib.projectsveltos.io/v1beta1
+kind: ClusterHealthCheck
+metadata:
+  name: production-deployments
+spec: {}
+---
+apiVersion: modelplane.ai/v1alpha1
+kind: ModelEndpoint
+metadata:
+  name: qwen-demo-0
+  namespace: ml-team
+  labels:
+    modelplane.ai/deployment: qwen-demo
+    modelplane.ai/cluster: prod-us-east
+spec:
+  url: http://qwen-demo-0.ml-team.svc.cluster.local
+---
+apiVersion: helm.m.crossplane.io/v1beta1
+kind: Release
+metadata:
+  name: traefik
+  namespace: modelplane-system
+  labels:
+    modelplane.ai/release: traefik
+    app.kubernetes.io/managed-by: Helm
+spec: {}

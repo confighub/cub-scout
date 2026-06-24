@@ -88,10 +88,10 @@ cub-scout map list -q "status!=Ready"
 cub-scout map list -q "owner=Flux AND status!=Ready"
 
 # OR
-cub-scout map list -q "owner=Flux OR owner=ArgoCD"
+cub-scout map list -q "owner=Flux OR owner=Sveltos"
 
 # Parentheses
-cub-scout map list -q "labels[env]=prod AND (owner=Flux OR owner=ArgoCD)"
+cub-scout map list -q "labels[env]=prod AND (owner=Flux OR owner=Modelplane)"
 ```
 
 ---

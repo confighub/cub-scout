@@ -16,6 +16,8 @@ const (
 	OwnerHelm       = "helm"
 	OwnerTerraform  = "terraform"
 	OwnerConfigHub  = "confighub"
+	OwnerSveltos    = "sveltos"
+	OwnerModelplane = "modelplane"
 	OwnerCrossplane = "crossplane"
 	OwnerKro        = "kro"
 	OwnerCustom     = "custom"
@@ -35,6 +37,16 @@ func DetectOwnership(resource *unstructured.Unstructured) Ownership {
 
 	// Check for Argo CD ownership
 	if ownership := detectArgoOwnership(labels, annotations); ownership.Type != "" {
+		return ownership
+	}
+
+	// Check for Sveltos ownership before generic Helm/Crossplane markers.
+	if ownership := detectSveltosOwnership(labels, annotations, resource); ownership.Type != "" {
+		return ownership
+	}
+
+	// Check for Modelplane ownership before generic Helm/Crossplane markers.
+	if ownership := detectModelplaneOwnership(labels, annotations, resource); ownership.Type != "" {
 		return ownership
 	}
 
@@ -245,6 +257,112 @@ func detectConfigHubOwnership(labels, annotations map[string]string) Ownership {
 	return Ownership{}
 }
 
+func detectSveltosOwnership(labels, annotations map[string]string, resource *unstructured.Unstructured) Ownership {
+	if ownerKind, ownerName := annotations["projectsveltos.io/owner-kind"], annotations["projectsveltos.io/owner-name"]; ownerKind != "" && ownerName != "" {
+		return Ownership{
+			Type:       OwnerSveltos,
+			SubType:    strings.ToLower(ownerKind),
+			Name:       ownerName,
+			Source:     "annotation:projectsveltos.io/owner-kind/name",
+			Confidence: "high",
+		}
+	}
+
+	if deployedBy := annotations["projectsveltos.io/deployed-by-sveltos"]; deployedBy != "" && !strings.EqualFold(deployedBy, "false") {
+		return Ownership{
+			Type:       OwnerSveltos,
+			SubType:    "deployed-resource",
+			Namespace:  resource.GetNamespace(),
+			Source:     "annotation:projectsveltos.io/deployed-by-sveltos",
+			Confidence: "medium",
+		}
+	}
+
+	for _, owner := range resource.GetOwnerReferences() {
+		if !isSveltosAPIVersion(owner.APIVersion) {
+			continue
+		}
+		return Ownership{
+			Type:       OwnerSveltos,
+			SubType:    strings.ToLower(owner.Kind),
+			Name:       owner.Name,
+			Namespace:  resource.GetNamespace(),
+			Source:     "ownerRef:" + owner.APIVersion,
+			Confidence: "high",
+		}
+	}
+
+	if apiVersion := resource.GetAPIVersion(); isSveltosAPIVersion(apiVersion) {
+		return Ownership{
+			Type:       OwnerSveltos,
+			SubType:    strings.ToLower(resource.GetKind()),
+			Name:       resource.GetName(),
+			Namespace:  resource.GetNamespace(),
+			Source:     "apiGroup:" + apiGroupFromVersion(apiVersion),
+			Confidence: "high",
+		}
+	}
+
+	return Ownership{}
+}
+
+func detectModelplaneOwnership(labels, annotations map[string]string, resource *unstructured.Unstructured) Ownership {
+	_ = annotations
+
+	for _, signal := range []struct {
+		key        string
+		subType    string
+		confidence string
+	}{
+		{key: "modelplane.ai/deployment", subType: "modeldeployment", confidence: "high"},
+		{key: "modelplane.ai/modelcache", subType: "modelcache", confidence: "high"},
+		{key: "modelplane.ai/serving", subType: "modelreplica", confidence: "high"},
+		{key: "modelplane.ai/workload", subType: "workload", confidence: "medium"},
+		{key: "modelplane.ai/cluster", subType: "inferencecluster", confidence: "medium"},
+		{key: "modelplane.ai/release", subType: "release", confidence: "medium"},
+		{key: "modelplane.ai/resource", subType: "resource", confidence: "medium"},
+		{key: "modelplane.ai/usage-consumer", subType: "usage-consumer", confidence: "medium"},
+	} {
+		if value := labels[signal.key]; value != "" {
+			return Ownership{
+				Type:       OwnerModelplane,
+				SubType:    signal.subType,
+				Name:       value,
+				Namespace:  resource.GetNamespace(),
+				Source:     "label:" + signal.key,
+				Confidence: signal.confidence,
+			}
+		}
+	}
+
+	for _, owner := range resource.GetOwnerReferences() {
+		if !isModelplaneAPIVersion(owner.APIVersion) {
+			continue
+		}
+		return Ownership{
+			Type:       OwnerModelplane,
+			SubType:    strings.ToLower(owner.Kind),
+			Name:       owner.Name,
+			Namespace:  resource.GetNamespace(),
+			Source:     "ownerRef:" + owner.APIVersion,
+			Confidence: "high",
+		}
+	}
+
+	if apiVersion := resource.GetAPIVersion(); isModelplaneAPIVersion(apiVersion) {
+		return Ownership{
+			Type:       OwnerModelplane,
+			SubType:    strings.ToLower(resource.GetKind()),
+			Name:       resource.GetName(),
+			Namespace:  resource.GetNamespace(),
+			Source:     "apiGroup:" + apiGroupFromVersion(apiVersion),
+			Confidence: "high",
+		}
+	}
+
+	return Ownership{}
+}
+
 func detectCrossplaneSystemOwnership(resource *unstructured.Unstructured) Ownership {
 	apiVersion := resource.GetAPIVersion()
 	if apiVersion == "" {
@@ -431,6 +549,26 @@ func isKroAPIVersion(apiVersion string) bool {
 	}
 	group := strings.SplitN(apiVersion, "/", 2)[0]
 	return strings.Contains(group, "kro.run")
+}
+
+func isSveltosAPIVersion(apiVersion string) bool {
+	group := apiGroupFromVersion(apiVersion)
+	return group == "config.projectsveltos.io" ||
+		group == "lib.projectsveltos.io" ||
+		group == "extension.projectsveltos.io"
+}
+
+func isModelplaneAPIVersion(apiVersion string) bool {
+	group := apiGroupFromVersion(apiVersion)
+	return group == "modelplane.ai" || group == "infrastructure.modelplane.ai"
+}
+
+func apiGroupFromVersion(apiVersion string) string {
+	parts := strings.SplitN(apiVersion, "/", 2)
+	if len(parts) != 2 {
+		return ""
+	}
+	return parts[0]
 }
 
 func detectK8sOwnership(resource *unstructured.Unstructured) Ownership {

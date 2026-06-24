@@ -44,7 +44,7 @@ This skill is the cross-cutting entry point. It picks the right verb-grouped ski
 | Integrate | [`scout-mcp`](../scout-mcp/SKILL.md) | shipped (batch 2) |
 | Verify | [`scout-verify`](../scout-verify/SKILL.md) | shipped (batch 2, consuming the `#446` receipt capability) |
 
-See [`skills/README.md`](../README.md) for the full plan including controller observer skills (`observe-argocd`, `observe-flux`, `observe-helm`, `observe-crossplane`, `observe-kro`), workflow scenario skills (`triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, etc.), and shared references.
+See [`skills/README.md`](../README.md) for the full plan including controller observer skills (`observe-argocd`, `observe-flux`, `observe-sveltos`, `observe-modelplane`, `observe-helm`, `observe-crossplane`, `observe-kro`), workflow scenario skills (`triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, etc.), and shared references.
 
 ### Pilot–cub-scout integration scenarios (`#444`)
 

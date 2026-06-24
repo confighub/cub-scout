@@ -86,6 +86,11 @@ const ManagerKroApplysetParent = "kro.run/applyset-parent"
 // on instances. Source: kro-run/kro `FieldManagerForLabeler`.
 const ManagerKroLabeller = "kro.run/labeller"
 
+// ManagerSveltosApplyPatch is the field-manager used by Sveltos when applying
+// deployed policy resources. Source: projectsveltos/libsveltos
+// `lib/deployer.UpdateResource` PatchOptions FieldManager.
+const ManagerSveltosApplyPatch = "application/apply-patch"
+
 // --- Interactive (kubectl) manager strings ---
 
 // ManagerKubectlSSA is the field-manager used by `kubectl apply --server-side`.
@@ -176,6 +181,18 @@ func controllerManagersForOwner(ownerType, ownerSubType string) []managerMatcher
 			{pattern: ManagerKroApplyset},
 			{pattern: ManagerKroApplysetParent},
 			{pattern: ManagerKroLabeller},
+		}
+	case OwnerSveltos:
+		return []managerMatcher{
+			{pattern: ManagerSveltosApplyPatch},
+		}
+	case OwnerModelplane:
+		return []managerMatcher{
+			{pattern: ManagerCrossplaneComposite},
+			{pattern: ManagerCrossplaneComposedPrefix, isPrefix: true},
+			{pattern: ManagerCrossplaneClaim},
+			{pattern: ManagerCrossplaneMRD},
+			{pattern: ManagerCrossplaneRefResolver},
 		}
 	case OwnerConfigHub:
 		// ConfigHub units are delivered by Argo or Flux controllers; accept

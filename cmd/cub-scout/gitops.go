@@ -27,12 +27,12 @@ var (
 var gitopsCmd = &cobra.Command{
 	Use:   "gitops",
 	Short: "GitOps status and diagnostics",
-	Long: `GitOps status and diagnostics for Flux and Argo CD.
+	Long: `GitOps status and diagnostics for Flux, Argo CD, Sveltos, and Modelplane.
 
 Shows the health of your GitOps pipeline including:
-- Detected backend (Flux, Argo CD)
+- Detected backend/controller family (Flux, Argo CD, Sveltos, Modelplane)
 - Transport mode (OCI, Git, Helm)
-- Deployer status (Kustomization, HelmRelease, Application)
+- Deployer status (Kustomization, HelmRelease, Application, Sveltos and Modelplane controller resources)
 - Source status (OCIRepository, GitRepository)
 - Failure stage and reason when things go wrong
 
@@ -51,10 +51,10 @@ Examples:
 var gitopsStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show GitOps pipeline status",
-	Long: `Show the status of GitOps deployers and sources in the cluster.
+	Long: `Show the status of GitOps/controller deployers and sources in the cluster.
 
 This command helps diagnose delegated apply issues by showing:
-- Backend: Which GitOps tool is managing resources (Flux, Argo CD)
+- Backend: Which GitOps/controller family is managing resources (Flux, Argo CD, Sveltos, Modelplane)
 - Transport: How manifests are delivered (OCI, Git, Helm)
 - ConfigHub target: If resources are managed by ConfigHub
 - Failing stage: Where in the pipeline things are breaking (source, build, apply, sync)
@@ -110,6 +110,7 @@ type DeployerStatus struct {
 	Kind      string `json:"kind"`
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+	Owner     string `json:"owner,omitempty"`
 	Ready     bool   `json:"ready"`
 	Suspended bool   `json:"suspended,omitempty"`
 
@@ -333,7 +334,89 @@ func buildGitOpsSummary(ctx context.Context, client dynamic.Interface, info *age
 		summary.Deployers = append(summary.Deployers, status)
 	}
 
+	controllerDeployers := collectFirstClassControllerDeployers(ctx, client, gitopsNamespace)
+	if len(controllerDeployers) > 0 {
+		summary.Deployers = append(summary.Deployers, controllerDeployers...)
+		summary.HealthyCount = 0
+		summary.FailedCount = 0
+		for _, dep := range summary.Deployers {
+			if dep.IsHealthy() {
+				summary.HealthyCount++
+			} else {
+				summary.FailedCount++
+			}
+		}
+		if summary.Backend == "none" {
+			summary.Backend = "controllers"
+		}
+	}
+
 	return summary
+}
+
+func collectFirstClassControllerDeployers(ctx context.Context, client dynamic.Interface, namespace string) []DeployerStatus {
+	out := []DeployerStatus{}
+	for _, spec := range firstClassControllerResources() {
+		if !isControllerDeployerKind(spec.Kind) {
+			continue
+		}
+		list, err := listControllerResource(ctx, client, spec, namespace)
+		if err != nil {
+			continue
+		}
+		for i := range list.Items {
+			item := list.Items[i]
+			if item.GetKind() == "" {
+				item.SetKind(spec.Kind)
+			}
+			if item.GetAPIVersion() == "" {
+				item.SetAPIVersion(spec.GVR.GroupVersion().String())
+			}
+			out = append(out, controllerDeployerStatus(&item, spec))
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Kind != out[j].Kind {
+			return out[i].Kind < out[j].Kind
+		}
+		if out[i].Namespace != out[j].Namespace {
+			return out[i].Namespace < out[j].Namespace
+		}
+		return out[i].Name < out[j].Name
+	})
+	return out
+}
+
+func controllerDeployerStatus(item *unstructured.Unstructured, spec controllerResourceSpec) DeployerStatus {
+	ready, status, reason, message := observedObjectStatus(item)
+	stage := string(agent.StageHealthy)
+	if !ready {
+		stage = controllerFailureStage(status, reason)
+	}
+	return DeployerStatus{
+		Kind:      spec.Kind,
+		Name:      item.GetName(),
+		Namespace: item.GetNamespace(),
+		Owner:     spec.Owner,
+		Ready:     ready,
+		Stage:     stage,
+		Reason:    reason,
+		Message:   message,
+	}
+}
+
+func controllerFailureStage(status, reason string) string {
+	text := strings.ToLower(strings.TrimSpace(status + " " + reason))
+	switch {
+	case strings.Contains(text, "source"), strings.Contains(text, "reference"):
+		return string(agent.StageSource)
+	case strings.Contains(text, "build"), strings.Contains(text, "render"), strings.Contains(text, "template"):
+		return string(agent.StageBuild)
+	case strings.Contains(text, "apply"), strings.Contains(text, "failedcluster"):
+		return string(agent.StageApply)
+	default:
+		return string(agent.StageSync)
+	}
 }
 
 // fetchSourceResource fetches a source resource from the cluster
@@ -540,7 +623,7 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 		backendColor = colorCyan
 	case "argocd":
 		backendColor = colorPurple
-	case "worker":
+	case "worker", "controllers":
 		backendColor = colorBlue
 	case "none":
 		backendColor = colorDim
@@ -570,9 +653,9 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 	fmt.Printf("\n")
 
 	// Summary counts
-	if summary.Backend == "none" {
-		fmt.Printf("  %sNo GitOps backend detected in cluster.%s\n", colorYellow, colorReset)
-		fmt.Printf("  %sInstall Flux or Argo CD to enable GitOps.%s\n\n", colorDim, colorReset)
+	if summary.Backend == "none" && len(summary.Deployers) == 0 {
+		fmt.Printf("  %sNo GitOps/controller backend detected in cluster.%s\n", colorYellow, colorReset)
+		fmt.Printf("  %sInstall Flux, Argo CD, Sveltos, or Modelplane to enable controller status.%s\n\n", colorDim, colorReset)
 		return nil
 	}
 
@@ -618,8 +701,7 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 		// Find first failing deployer for trace suggestion
 		for _, dep := range summary.Deployers {
 			if !dep.IsHealthy() {
-				fmt.Printf("→ Trace failing resource:  cub-scout trace %s/%s -n %s\n",
-					strings.ToLower(dep.Kind), dep.Name, dep.Namespace)
+				fmt.Printf("→ Trace failing resource:  %s\n", gitopsTraceCommand(dep))
 				break
 			}
 		}
@@ -634,11 +716,19 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 			}
 		}
 
-		fmt.Printf("→ Scan for issues:         cub-scout scan --state\n")
+		fmt.Printf("→ Scan for issues:         ./cub-scout scan --state\n")
 		fmt.Printf("\n")
 	}
 
 	return nil
+}
+
+func gitopsTraceCommand(dep DeployerStatus) string {
+	cmd := fmt.Sprintf("./cub-scout trace %s/%s", strings.ToLower(dep.Kind), dep.Name)
+	if dep.Namespace != "" {
+		cmd += " -n " + dep.Namespace
+	}
+	return cmd
 }
 
 // outputSourceStatus outputs a single source status
@@ -712,6 +802,13 @@ func outputDeployerStatus(dep DeployerStatus) {
 		kindColor = colorPurple
 	} else if dep.Kind == "HelmRelease" {
 		kindColor = colorYellow
+	} else if spec, ok := controllerResourceByKind(dep.Kind); ok {
+		switch spec.Owner {
+		case "Sveltos":
+			kindColor = colorBlue
+		case "Modelplane":
+			kindColor = colorGreen
+		}
 	}
 
 	fmt.Printf("  %s%s%s %s%s%s/%s%s%s\n",
@@ -720,6 +817,9 @@ func outputDeployerStatus(dep DeployerStatus) {
 		colorBold, dep.Name, colorReset)
 
 	fmt.Printf("      %sNamespace:%s %s\n", colorDim, colorReset, dep.Namespace)
+	if dep.Owner != "" {
+		fmt.Printf("      %sOwner:%s %s\n", colorDim, colorReset, dep.Owner)
+	}
 
 	// Show stage for non-healthy deployers
 	if !dep.IsHealthy() {

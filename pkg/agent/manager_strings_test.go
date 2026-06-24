@@ -51,6 +51,16 @@ func TestIsControllerManagerFor(t *testing.T) {
 		{"kro labeller", ManagerKroLabeller, OwnerKro, "instance", true},
 		{"kro unrelated string", "kro.run/other", OwnerKro, "instance", false},
 
+		// Sveltos.
+		{"sveltos apply patch", ManagerSveltosApplyPatch, OwnerSveltos, "clusterprofile", true},
+		{"sveltos does not accept bare helm", ManagerHelm, OwnerSveltos, "clusterprofile", false},
+
+		// Modelplane is built on Crossplane composition, so Modelplane-owned
+		// composed resources accept the verified Crossplane manager strings.
+		{"modelplane composed prefix", ManagerCrossplaneComposedPrefix, OwnerModelplane, "modeldeployment", true},
+		{"modelplane composed with hash suffix", "apiextensions.crossplane.io/composed-modelplane123", OwnerModelplane, "modeldeployment", true},
+		{"modelplane does not accept sveltos", ManagerSveltosApplyPatch, OwnerModelplane, "modeldeployment", false},
+
 		// ConfigHub units are delivered by GitOps controllers; accept either's strings.
 		{"confighub via argo", ManagerArgoCD, OwnerConfigHub, "unit", true},
 		{"confighub via argo csa migration", ManagerKubectlCSA, OwnerConfigHub, "unit", true},
@@ -110,6 +120,7 @@ func TestIsInteractiveManager(t *testing.T) {
 		{"helm direct is not interactive", ManagerHelm, false},
 		{"crossplane composite is not interactive", ManagerCrossplaneComposite, false},
 		{"kro applyset is not interactive", ManagerKroApplyset, false},
+		{"sveltos apply patch is not interactive", ManagerSveltosApplyPatch, false},
 
 		// Edge cases.
 		{"empty manager", "", false},

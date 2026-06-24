@@ -1,6 +1,6 @@
 # cub-scout
 
-Read-only Kubernetes observer. Detects ownership (Flux, ArgoCD, Helm, Crossplane, ConfigHub, Native).
+Read-only Kubernetes observer. Detects ownership (Flux, ArgoCD, Sveltos, Modelplane, Helm, Crossplane, kro, ConfigHub, Native).
 
 ## Read First
 
@@ -68,7 +68,7 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 2. **Read-only by default** — never modifies cluster state
 3. **Deterministic** — same input = same output, no AI/ML
 4. **Parse, don't guess** — ownership from actual labels, not heuristics
-5. **Complement GitOps** — works alongside Flux, Argo, Helm
+5. **Complement GitOps** — works alongside Flux, Argo, Sveltos, Modelplane, Helm
 6. **Graceful degradation** — works without cluster, ConfigHub, or internet
 7. **Test everything** — `go test ./...` must pass
 8. **CLI/TUI parity** — CLI and TUI are two renderings of one model. Every feature must have both a CLI command (with `--format ascii|json|md`) and a TUI equivalent. CLI is not a second-class citizen.
@@ -98,9 +98,12 @@ As of the current handover:
 |-------|-----------|
 | Flux | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` labels |
 | ArgoCD | `argocd.argoproj.io/instance` label or tracking-id annotation |
+| Sveltos | `projectsveltos.io/owner-kind` + `projectsveltos.io/owner-name` annotations, Sveltos ownerRef, or Sveltos API group |
+| Modelplane | `modelplane.ai` / `infrastructure.modelplane.ai` API groups, Modelplane identity labels, or Modelplane ownerRef |
 | Helm | `app.kubernetes.io/managed-by: Helm` |
 | Terraform | `app.terraform.io/run-id` annotation or managed label |
 | Crossplane | `crossplane.io/claim-name` label *(experimental)* |
+| kro | `kro.run/*` labels/annotations, kro ownerRef, or kro API group |
 | ConfigHub | `confighub.com/UnitSlug` label |
 | Native | None of the above |
 

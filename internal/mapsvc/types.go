@@ -71,6 +71,10 @@ func DisplayOwner(owner string) string {
 		return "Helm"
 	case "terraform":
 		return "Terraform"
+	case "sveltos":
+		return "Sveltos"
+	case "modelplane":
+		return "Modelplane"
 	case "crossplane":
 		return "Crossplane"
 	case "kro":

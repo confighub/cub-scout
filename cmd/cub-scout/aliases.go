@@ -18,7 +18,7 @@ var discoverCmd = &cobra.Command{
 
 This is a scout-style alias for 'cub-scout map workloads'.
 Shows Deployments, StatefulSets, and DaemonSets grouped by owner
-(Flux, ArgoCD, Helm, ConfigHub, or Native).
+(Flux, ArgoCD, Sveltos, Modelplane, Helm, ConfigHub, or Native).
 
 Examples:
   cub-scout discover              # List all workloads by owner

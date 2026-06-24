@@ -42,7 +42,7 @@ type Resource struct {
 
 // Ownership describes who/what manages a resource
 type Ownership struct {
-	// Type of owner: flux, argo, helm, terraform, confighub, k8s, unknown
+	// Type of owner: flux, argo, helm, terraform, confighub, sveltos, modelplane, k8s, unknown
 	Type string `json:"type"`
 
 	// SubType provides more detail: kustomization, helmrelease, application, etc.

@@ -4,7 +4,6 @@ Resources: 5 total
 Ownership:
   Flux: 3 (60%)
   ArgoCD: 1 (20%)
-  Helm: 0 (0%)
   Native: 1 (20%)  <- 1 unmanaged
 
 Health:

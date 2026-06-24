@@ -27,7 +27,7 @@ var (
 	treeAll       bool
 	treeSpace     string // For ConfigHub tree
 	treeEdge      string // For ConfigHub tree (clone/link)
-	treeOwner     string // Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Native)
+	treeOwner     string // Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native)
 	treeDepth     int    // Limit tree depth (0 = unlimited)
 )
 
@@ -40,7 +40,7 @@ cub-scout tree provides different perspectives on your infrastructure:
 
   CLUSTER VIEWS (what the scout sees):
     runtime     Deployment -> ReplicaSet -> Pod trees (default)
-    ownership   Resources grouped by GitOps owner (Flux, ArgoCD, Helm)
+    ownership   Resources grouped by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm)
     composition Platform composition trees (Crossplane + kro)
     workloads   Same as 'cub-scout map workloads' (alias)
 
@@ -88,7 +88,7 @@ func init() {
 	treeCmd.Flags().BoolVarP(&treeAll, "all", "A", false, "Show all resources including system namespaces")
 	treeCmd.Flags().StringVar(&treeSpace, "space", "", "ConfigHub space for 'config' view (use '*' for all spaces)")
 	treeCmd.Flags().StringVar(&treeEdge, "edge", "clone", "Edge type for 'config' view: clone (inheritance) or link (dependencies)")
-	treeCmd.Flags().StringVar(&treeOwner, "owner", "", "Filter by owner: Flux, ArgoCD, Helm, ConfigHub, Native")
+	treeCmd.Flags().StringVar(&treeOwner, "owner", "", "Filter by owner: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native")
 	treeCmd.Flags().IntVar(&treeDepth, "depth", 0, "Limit tree depth (0 = unlimited)")
 
 	// Mark --json as deprecated
@@ -635,8 +635,18 @@ func ownerKindPrefix(owner string) string {
 		return "release"
 	case "ConfigHub":
 		return "unit"
+	case "Sveltos":
+		return "sveltos"
+	case "Modelplane":
+		return "modelplane"
+	case "Crossplane":
+		return "crossplane"
+	case "kro":
+		return "kro"
+	case "Terraform":
+		return "workspace"
 	default:
-		return ""
+		return "owner"
 	}
 }
 
@@ -1188,8 +1198,18 @@ func getOwnerColor(owner string) string {
 		return colorCyan
 	case "ArgoCD":
 		return colorPurple
+	case "Sveltos":
+		return colorCyan
+	case "Modelplane":
+		return colorGreen
+	case "Crossplane":
+		return colorGreen
+	case "kro":
+		return colorCyan
 	case "Helm":
 		return colorYellow
+	case "Terraform":
+		return colorPurple
 	case "ConfigHub":
 		return colorGreen
 	default:

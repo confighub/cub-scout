@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -53,6 +54,29 @@ func liveDeployment(name string, ready int64) *unstructured.Unstructured {
 			},
 		},
 	}}
+}
+
+func setCreationTimestamp(u *unstructured.Unstructured, ts time.Time) {
+	u.SetCreationTimestamp(metav1.NewTime(ts))
+}
+
+func setProgressConditionTime(u *unstructured.Unstructured, field string, ts time.Time) {
+	conditions, found, err := unstructured.NestedSlice(u.Object, "status", "conditions")
+	if err != nil || !found {
+		return
+	}
+	for i, raw := range conditions {
+		cond, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if typ, _ := cond["type"].(string); typ == "Progressing" {
+			cond[field] = ts.UTC().Format(time.RFC3339Nano)
+			conditions[i] = cond
+			_ = unstructured.SetNestedSlice(u.Object, conditions, "status", "conditions")
+			return
+		}
+	}
 }
 
 func waitingPod(name, reason string) *unstructured.Unstructured {
@@ -123,12 +147,76 @@ func TestWorkloadsConverged_WATCHWhileProgressingInGrace(t *testing.T) {
 
 func TestWorkloadsConverged_BLOCKWhenStuckPastGrace(t *testing.T) {
 	live := liveDeployment("web", 0)
-	_ = unstructured.SetNestedField(live.Object, "2020-01-01T00:00:00Z", "metadata", "creationTimestamp")
+	setCreationTimestamp(live, time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
 	stmt := buildWorkloadsReceipt(t, 1*time.Second, []WorkloadConvergedObservedObject{
 		{Desired: desiredDeployment("web"), Live: live},
 	})
 	if stmt.Predicate.Verdict != VerdictBLOCK {
 		t.Fatalf("verdict = %s, want BLOCK", stmt.Predicate.Verdict)
+	}
+}
+
+func TestWorkloadsConverged_WATCHWhenProgressIsFreshOnOldDeployment(t *testing.T) {
+	live := liveDeployment("web", 0)
+	setCreationTimestamp(live, time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
+	setProgressConditionTime(live, "lastUpdateTime", workloadsObservedAt.Add(-30*time.Second))
+
+	stmt := buildWorkloadsReceipt(t, time.Minute, []WorkloadConvergedObservedObject{
+		{Desired: desiredDeployment("web"), Live: live},
+	})
+	if stmt.Predicate.Verdict != VerdictWATCH {
+		t.Fatalf("verdict = %s, want WATCH", stmt.Predicate.Verdict)
+	}
+	w := stmt.Predicate.Evidence.Workloads.Workloads[0]
+	if w.ProgressClockSource != "status.conditions[Progressing].lastUpdateTime" {
+		t.Fatalf("progressClockSource = %q", w.ProgressClockSource)
+	}
+	if w.ProgressAgeSeconds <= 0 || w.ProgressAgeSeconds > 60 {
+		t.Fatalf("progressAgeSeconds = %d, want fresh progress within grace", w.ProgressAgeSeconds)
+	}
+}
+
+func TestWorkloadsConverged_UsesFractionalProgressTimestamp(t *testing.T) {
+	live := liveDeployment("web", 0)
+	setCreationTimestamp(live, time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
+	setProgressConditionTime(live, "lastUpdateTime", workloadsObservedAt.Add(-30*time.Second).Add(250*time.Millisecond))
+
+	stmt := buildWorkloadsReceipt(t, time.Minute, []WorkloadConvergedObservedObject{
+		{Desired: desiredDeployment("web"), Live: live},
+	})
+	if stmt.Predicate.Verdict != VerdictWATCH {
+		t.Fatalf("verdict = %s, want WATCH", stmt.Predicate.Verdict)
+	}
+	w := stmt.Predicate.Evidence.Workloads.Workloads[0]
+	if w.ProgressClockSource != "status.conditions[Progressing].lastUpdateTime" {
+		t.Fatalf("progressClockSource = %q", w.ProgressClockSource)
+	}
+	if w.ProgressAgeSeconds != 29 {
+		t.Fatalf("progressAgeSeconds = %d, want fractional timestamp truncated to 29 seconds", w.ProgressAgeSeconds)
+	}
+}
+
+func TestWorkloadsConverged_WATCHWhenObservedGenerationLagsOldObject(t *testing.T) {
+	live := liveDeployment("web", 1)
+	setCreationTimestamp(live, time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
+	_ = unstructured.SetNestedField(live.Object, int64(2), "metadata", "generation")
+	_ = unstructured.SetNestedField(live.Object, int64(1), "status", "observedGeneration")
+
+	stmt := buildWorkloadsReceipt(t, time.Second, []WorkloadConvergedObservedObject{
+		{Desired: desiredDeployment("web"), Live: live},
+	})
+	if stmt.Predicate.Verdict != VerdictWATCH {
+		t.Fatalf("verdict = %s, want WATCH", stmt.Predicate.Verdict)
+	}
+	w := stmt.Predicate.Evidence.Workloads.Workloads[0]
+	if w.Generation != 2 || w.ObservedGeneration != 1 {
+		t.Fatalf("generation evidence = %d/%d, want 2/1", w.Generation, w.ObservedGeneration)
+	}
+	if w.ProgressClockSource != "status.observedGeneration<metadata.generation" {
+		t.Fatalf("progressClockSource = %q", w.ProgressClockSource)
+	}
+	if w.ProgressAgeSeconds != 0 {
+		t.Fatalf("progressAgeSeconds = %d, want omitted/zero for stale status", w.ProgressAgeSeconds)
 	}
 }
 

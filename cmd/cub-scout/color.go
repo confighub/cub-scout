@@ -164,10 +164,16 @@ func OwnerColor(text string) string {
 		return Blue(text)
 	case "confighub":
 		return BoldBlue(text)
+	case "sveltos":
+		return BoldCyan(text)
+	case "modelplane":
+		return Green(text)
 	case "native":
 		return Yellow(text)
 	case "crossplane":
 		return Green(text)
+	case "kro":
+		return Cyan(text)
 	case "terraform":
 		return Purple(text)
 	default:

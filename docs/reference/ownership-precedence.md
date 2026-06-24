@@ -18,15 +18,17 @@ cub-scout checks for ownership signals in the following order. The **first match
 |----------|-------|------------------|
 | 1 | **Flux** | Labels: `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` |
 | 2 | **Argo CD** | Label: `argocd.argoproj.io/instance` or annotation: `argocd.argoproj.io/tracking-id` |
-| 3 | **Helm** | Label: `app.kubernetes.io/managed-by: Helm` or `helm.sh/chart` |
-| 4 | **Terraform** | Annotation: `app.terraform.io/run-id` or label: `app.terraform.io/managed` |
-| 5 | **ConfigHub** | Label or annotation: `confighub.com/UnitSlug` |
-| 6 | **Crossplane (system)** | API group: `pkg.crossplane.io` or `apiextensions.crossplane.io` |
-| 7 | **Crossplane (managed)** | Labels: `crossplane.io/claim-name`, `crossplane.io/composite`, or ownerRef to Crossplane resource |
-| 8 | **kro** | Labels/annotations: `kro.run/*`, kro ownerRef, or API group containing `kro.run` |
-| 9 | **Custom (config file)** | `~/.cub-scout/detectors.yaml` (or `$CUB_SCOUT_OWNERSHIP_DETECTORS`) detectors, first matching detector wins |
-| 10 | **Kubernetes (native)** | OwnerReferences present (controller preferred) |
-| 11 | **Unknown** | No ownership signals detected |
+| 3 | **Sveltos** | Annotations: `projectsveltos.io/owner-kind` + `projectsveltos.io/owner-name`, `projectsveltos.io/deployed-by-sveltos`, Sveltos ownerRef, or Sveltos API group |
+| 4 | **Modelplane** | API group `modelplane.ai` / `infrastructure.modelplane.ai`, selected `modelplane.ai/*` identity labels, or Modelplane ownerRef |
+| 5 | **Helm** | Label: `app.kubernetes.io/managed-by: Helm` or `helm.sh/chart` |
+| 6 | **Terraform** | Annotation: `app.terraform.io/run-id` or label: `app.terraform.io/managed` |
+| 7 | **ConfigHub** | Label or annotation: `confighub.com/UnitSlug` |
+| 8 | **Crossplane (system)** | API group: `pkg.crossplane.io` or `apiextensions.crossplane.io` |
+| 9 | **Crossplane (managed)** | Labels: `crossplane.io/claim-name`, `crossplane.io/composite`, or ownerRef to Crossplane resource |
+| 10 | **kro** | Labels/annotations: `kro.run/*`, kro ownerRef, or API group containing `kro.run` |
+| 11 | **Custom (config file)** | `~/.cub-scout/detectors.yaml` (or `$CUB_SCOUT_OWNERSHIP_DETECTORS`) detectors, first matching detector wins |
+| 12 | **Kubernetes (native)** | OwnerReferences present (controller preferred) |
+| 13 | **Unknown** | No ownership signals detected |
 
 ---
 
@@ -82,6 +84,62 @@ but the tracking-id annotation format can be malformed.
 1. Check for `app.kubernetes.io/managed-by: Helm`
 2. Fall back to `helm.sh/chart` label (legacy Helm 2 pattern)
 3. Release name extracted from `app.kubernetes.io/instance`
+
+---
+
+### Sveltos
+
+**Confidence: High/Medium**
+
+| Signal Type | Key/Condition | SubType | Confidence |
+|-------------|---------------|---------|------------|
+| Annotation pair | `projectsveltos.io/owner-kind` + `projectsveltos.io/owner-name` | lowercased owner kind (`clusterprofile`, `profile`) | High |
+| Annotation | `projectsveltos.io/deployed-by-sveltos` | `deployed-resource` | Medium |
+| OwnerReference | APIVersion group `config.projectsveltos.io`, `lib.projectsveltos.io`, or `extension.projectsveltos.io` | lowercased owner kind | High |
+| API Group | `config.projectsveltos.io`, `lib.projectsveltos.io`, or `extension.projectsveltos.io` | lowercased resource kind | High |
+
+**What cub-scout extracts:**
+- Owner name from `projectsveltos.io/owner-name`
+- Owner kind from `projectsveltos.io/owner-kind`
+- Sveltos control-plane resources such as `ClusterProfile`, `Profile`, `ClusterSummary`, `ClusterHealthCheck`, `HealthCheck`, and `EventSource` from their API group
+
+`projectsveltos.io/reference-kind`, `projectsveltos.io/reference-name`, and
+`projectsveltos.io/reference-namespace` explain the referenced ConfigMap/Secret
+that supplied the deployed policy. They are source context, not the owner itself.
+
+Sveltos notification and event constructs are classified as Sveltos resources
+when their own CRDs are observed. They are not treated as proof that an arbitrary
+workload was deployed by Sveltos unless the deployed-resource annotations or
+owner references are present.
+
+---
+
+### Modelplane
+
+**Confidence: High/Medium**
+
+| Signal Type | Key/Condition | SubType | Confidence |
+|-------------|---------------|---------|------------|
+| API Group | `modelplane.ai` | lowercased resource kind | High |
+| API Group | `infrastructure.modelplane.ai` | lowercased resource kind | High |
+| Label | `modelplane.ai/deployment` | `modeldeployment` | High |
+| Label | `modelplane.ai/modelcache` | `modelcache` | High |
+| Label | `modelplane.ai/serving` | `modelreplica` | High |
+| Label | `modelplane.ai/workload` | `workload` | Medium |
+| Label | `modelplane.ai/cluster` | `inferencecluster` | Medium |
+| Label | `modelplane.ai/release` | `release` | Medium |
+| Label | `modelplane.ai/resource` | `resource` | Medium |
+| Label | `modelplane.ai/usage-consumer` | `usage-consumer` | Medium |
+| OwnerReference | APIVersion group `modelplane.ai` or `infrastructure.modelplane.ai` | lowercased owner kind | High |
+
+Modelplane is built on Crossplane, so Modelplane-owned composed resources may
+carry Crossplane manager strings in `metadata.managedFields`. cub-scout treats
+those verified Crossplane manager strings as expected controller writers for
+Modelplane-owned resources.
+
+Broad selection and placement labels such as `modelplane.ai/region`,
+`modelplane.ai/gpu`, and `modelplane.ai/pool` are not ownership signals by
+themselves.
 
 ---
 
@@ -225,10 +283,12 @@ based on the priority order above.
 
 | Signals Present | Winner | Reason |
 |-----------------|--------|--------|
-| Flux + Helm labels | **Flux** | Flux checked before Helm (priority 1 vs 3) |
-| ArgoCD + Helm labels | **ArgoCD** | ArgoCD checked before Helm (priority 2 vs 3) |
-| Helm + OwnerRef | **Helm** | Helm checked before K8s native (priority 3 vs 9) |
-| Crossplane claim + OwnerRef | **Crossplane** | Crossplane checked before K8s native (priority 7 vs 10) |
+| Flux + Helm labels | **Flux** | Flux checked before Helm (priority 1 vs 5) |
+| ArgoCD + Helm labels | **ArgoCD** | ArgoCD checked before Helm (priority 2 vs 5) |
+| Sveltos owner annotations + Helm labels | **Sveltos** | Sveltos checked before Helm because the annotations identify the deploying Profile/ClusterProfile |
+| Modelplane identity labels + Crossplane labels | **Modelplane** | Modelplane checked before generic Crossplane because Modelplane is the higher-level platform owner |
+| Helm + OwnerRef | **Helm** | Helm checked before K8s native (priority 5 vs 12) |
+| Crossplane claim + OwnerRef | **Crossplane** | Crossplane checked before K8s native (priority 9 vs 12) |
 | Flux + matching custom detector | **Flux** | Built-ins run before custom detectors |
 | Two matching custom detectors | **First custom detector** | Custom detectors are evaluated in file order |
 | Only OwnerRef | **Kubernetes** | Only signal present |
@@ -254,6 +314,7 @@ detects based on labels/annotations as documented, but users should be aware:
 | `app.kubernetes.io/managed-by: Helm` | Can be set by non-Helm tools | Check for `helm.sh/chart` or Helm secret in namespace |
 | `app.kubernetes.io/instance` | Generic label, used by many tools | Only used as fallback, not primary signal |
 | `argocd.argoproj.io/tracking-id` | Annotation can be malformed | Parse failures return partial or unknown |
+| `modelplane.ai/cluster` | Identifies a Modelplane cluster relationship, but not the higher-level model by itself | Higher-confidence Modelplane labels and API groups win first |
 | OwnerReferences | Can point to deleted resources | Returns K8s native, not unknown |
 
 **cub-scout's stance:** When a signal is present, cub-scout reports it. It does not

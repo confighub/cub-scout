@@ -59,8 +59,8 @@ const (
 
 var traceCmd = &cobra.Command{
 	Use:   "trace <kind/name> or <kind> <name>",
-	Short: "Trace any resource to its Git source (Flux, ArgoCD, or Helm)",
-	Long: `Trace any resource back to its Git source - works with Flux, ArgoCD, or Helm.
+	Short: "Trace any resource to its controller/source evidence",
+	Long: `Trace any resource back to its controller/source evidence.
 
 You don't need to know which tool manages a resource. Just run trace and
 cub-scout auto-detects the owner and shows the full delivery chain.
@@ -69,9 +69,11 @@ Under the hood:
   - Flux resources: uses 'flux trace'
   - ArgoCD resources: uses 'argocd app get'
   - Helm resources: reads release metadata
+  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations
+  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status
 
 The value: In mixed environments with multiple GitOps tools, one command
-traces any resource without switching between flux/argocd/helm CLIs.
+traces any resource without switching between controller-specific CLIs.
 
 Examples:
   # Trace a deployment
@@ -96,13 +98,13 @@ Examples:
   cub-scout trace deployment/nginx -n demo --history
 
 The output shows:
-  - The full chain from GitRepository → Kustomization/HelmRelease → Resource
+  - The full chain from source/controller metadata → deployer/controller → resource
   - Status and revision at each level
   - Where in the chain something is broken (if applicable)
 
 Reverse trace (--reverse) walks ownerReferences to find:
   - The K8s ownership chain (Pod → ReplicaSet → Deployment)
-  - The GitOps owner (Flux, ArgoCD, Helm, or Native)
+  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)
 
 Diff mode (--diff) shows what would change if GitOps reconciled:
   - For Flux: runs 'flux diff kustomization' or 'flux diff helmrelease'
@@ -316,6 +318,28 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	case agent.OwnerCustom:
 		result = buildCustomOwnerUnsupportedTraceResult(kind, name, traceNamespace, ownership)
 
+	case agent.OwnerSveltos:
+		cfg, cfgErr := buildConfig()
+		if cfgErr != nil {
+			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
+		}
+		dynClient, dynErr := dynamic.NewForConfig(cfg)
+		if dynErr != nil {
+			return fmt.Errorf("failed to create dynamic client: %w", dynErr)
+		}
+		result = buildSveltosObservedTraceResult(ctx, dynClient, kind, name, traceNamespace, ownership)
+
+	case agent.OwnerModelplane:
+		cfg, cfgErr := buildConfig()
+		if cfgErr != nil {
+			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
+		}
+		dynClient, dynErr := dynamic.NewForConfig(cfg)
+		if dynErr != nil {
+			return fmt.Errorf("failed to create dynamic client: %w", dynErr)
+		}
+		result = buildModelplaneObservedTraceResult(ctx, dynClient, kind, name, traceNamespace, ownership)
+
 	case agent.OwnerCrossplane:
 		result = buildCrossplaneObservedTraceResult(kind, name, traceNamespace, ownership)
 
@@ -456,6 +480,9 @@ func tryHelmViaArgoFallback(
 }
 
 func fetchTraceResource(ctx context.Context, dynClient dynamic.Interface, kind, name, namespace string) (*unstructured.Unstructured, error) {
+	if spec, ok := controllerResourceByKind(kind); ok {
+		return getControllerResource(ctx, dynClient, spec, name, namespace)
+	}
 	gvr := kindToGVR(kind)
 	if gvr.Resource == "" {
 		return nil, fmt.Errorf("unknown resource kind: %s", kind)
@@ -848,6 +875,9 @@ func traceChainHasResource(chain []agent.ChainLink, kind, name, namespace string
 // normalizeKind normalizes resource kind names
 func normalizeKind(kind string) string {
 	kind = strings.ToLower(kind)
+	if normalized, ok := normalizeFirstClassControllerKind(kind); ok {
+		return normalized
+	}
 	switch kind {
 	case "deploy", "deployment", "deployments":
 		return "Deployment"
@@ -941,6 +971,8 @@ func detectResourceOwnership(ctx context.Context, kind, name, namespace string) 
 	var resource *unstructured.Unstructured
 	if kind == "ProviderConfig" {
 		resource, err = fetchProviderConfigResource(ctx, cfg, dynClient, name, namespace)
+	} else if spec, ok := controllerResourceByKind(kind); ok {
+		resource, err = getControllerResource(ctx, dynClient, spec, name, namespace)
 	} else {
 		gvr := kindToGVR(kind)
 		if gvr.Resource == "" {
@@ -1007,6 +1039,9 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 	case "Application":
 		return schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
 	default:
+		if spec, ok := controllerResourceByKind(kind); ok {
+			return spec.GVR
+		}
 		return schema.GroupVersionResource{}
 	}
 }
@@ -1313,8 +1348,18 @@ func normalizeToolToOwner(tool string) string {
 		return "ArgoCD"
 	case "helm":
 		return "Helm"
+	case "sveltos":
+		return "Sveltos"
+	case "modelplane":
+		return "Modelplane"
 	case "crossplane":
 		return "Crossplane"
+	case "kro":
+		return "kro"
+	case "terraform":
+		return "Terraform"
+	case "confighub":
+		return "ConfigHub"
 	default:
 		return "Native"
 	}
@@ -1404,15 +1449,15 @@ func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.Tra
 		// Kind color based on type
 		kindColor := colorWhite
 		switch link.Kind {
-		case "GitRepository", "OCIRepository", "HelmRepository", "Bucket", "Source":
+		case "GitRepository", "OCIRepository", "HelmRepository", "Bucket", "Source", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 			kindColor = colorPurple
 		case "ConfigHub OCI":
 			kindColor = colorBlue // ConfigHub gets blue
-		case "Kustomization", "HelmRelease", "HelmChart":
+		case "Kustomization", "HelmRelease", "HelmChart", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 			kindColor = colorCyan
 		case "Application":
 			kindColor = colorBlue
-		case "Deployment", "StatefulSet", "DaemonSet":
+		case "Deployment", "StatefulSet", "DaemonSet", "ModelReplica", "ModelEndpoint":
 			kindColor = colorGreen
 		case "Service", "ConfigMap", "Secret":
 			kindColor = colorYellow
@@ -2063,6 +2108,16 @@ func runTraceDiff(ctx context.Context, kind, name, namespace string) error {
 		return runArgoDiff(ctx, name, ownership)
 	case agent.OwnerHelm:
 		return runHelmDiff(ctx, name, namespace)
+	case agent.OwnerSveltos:
+		return runObservedControllerDiffNotice("Sveltos", kind, name, namespace, []string{
+			fmt.Sprintf("cub-scout trace %s/%s -n %s", strings.ToLower(kind), name, namespace),
+			"cub-scout map activity --owner Sveltos",
+		})
+	case agent.OwnerModelplane:
+		return runObservedControllerDiffNotice("Modelplane", kind, name, namespace, []string{
+			fmt.Sprintf("cub-scout trace %s/%s -n %s", strings.ToLower(kind), name, namespace),
+			"cub-scout map activity --owner Modelplane",
+		})
 	default:
 		fmt.Printf("%s⚠ Resource is not managed by GitOps (owner: %s)%s\n", colorYellow, ownershipLabel(ownership), colorReset)
 		fmt.Printf("%s  Cannot show diff for unmanaged resources.%s\n", colorDim, colorReset)
@@ -2070,6 +2125,21 @@ func runTraceDiff(ctx context.Context, kind, name, namespace string) error {
 		fmt.Printf("\n")
 		return nil
 	}
+}
+
+func runObservedControllerDiffNotice(owner, kind, name, namespace string, next []string) error {
+	fmt.Printf("%sObserved controller mode: %s%s\n", colorCyan, owner, colorReset)
+	fmt.Printf("%s  cub-scout can trace this controller's live ownership/provenance, but there is no %s-specific desired-state diff command wired here.%s\n", colorDim, owner, colorReset)
+	fmt.Printf("%s  Use trace/activity to inspect owner, references, status, and recent condition changes.%s\n\n", colorDim, colorReset)
+	for _, cmd := range next {
+		cmd = strings.ReplaceAll(cmd, " -n ", " --namespace ")
+		if strings.Contains(cmd, "--namespace ") && strings.HasSuffix(cmd, "--namespace ") {
+			cmd = strings.TrimSuffix(cmd, "--namespace ")
+		}
+		fmt.Printf("  %s%s%s\n", colorCyan, strings.TrimSpace(cmd), colorReset)
+	}
+	fmt.Printf("\n")
+	return nil
 }
 
 func ownershipLabel(ownership *agent.Ownership) string {
@@ -2135,6 +2205,517 @@ func buildCrossplaneObservedTraceResult(kind, name, namespace string, ownership 
 		Error:        "Crossplane resource detected: GitOps trace chain unavailable; showing direct resource evidence only.",
 		TracedAt:     time.Now(),
 	}
+}
+
+func buildSveltosObservedTraceResult(ctx context.Context, dynClient dynamic.Interface, kind, name, namespace string, ownership *agent.Ownership) *agent.TraceResult {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      kind,
+			Name:      name,
+			Namespace: namespace,
+		},
+		Tool:     "sveltos",
+		TracedAt: time.Now(),
+	}
+
+	resource, err := fetchTraceResource(ctx, dynClient, kind, name, namespace)
+	if err != nil {
+		result.Chain = append(result.Chain, unreadableChainLink(kind, name, namespace, err))
+		return result
+	}
+	result.Object = resourceRefFromObject(resource)
+	annotations := resource.GetAnnotations()
+
+	if ref := sveltosReferenceLink(annotations); ref != nil {
+		result.Chain = append(result.Chain, *ref)
+	}
+
+	ownerKind := strings.TrimSpace(annotations["projectsveltos.io/owner-kind"])
+	ownerName := strings.TrimSpace(annotations["projectsveltos.io/owner-name"])
+	if ownerKind == "" && ownership != nil && ownership.Type == agent.OwnerSveltos {
+		ownerKind = sveltosKindFromSubtype(ownership.SubType)
+		ownerName = strings.TrimSpace(ownership.Name)
+	}
+	if ownerKind != "" && ownerName != "" && !sameObject(resource, ownerKind, ownerName) {
+		result.Chain = append(result.Chain, sveltosOwnerLink(ctx, dynClient, ownerKind, ownerName, resource.GetNamespace()))
+	}
+
+	link := chainLinkFromObject(resource)
+	if ownerKind != "" && ownerName != "" {
+		link.Message = appendSentence(link.Message, fmt.Sprintf("Sveltos owner annotation points to %s/%s.", ownerKind, ownerName))
+	}
+	if refKind := strings.TrimSpace(annotations["projectsveltos.io/reference-kind"]); refKind != "" {
+		link.Message = appendSentence(link.Message, "Reference annotations explain which ConfigMap/Secret supplied the deployed manifest.")
+	}
+	result.Chain = append(result.Chain, link)
+	result.FullyManaged = ownerKind != "" && ownerName != ""
+	return result
+}
+
+func buildModelplaneObservedTraceResult(ctx context.Context, dynClient dynamic.Interface, kind, name, namespace string, ownership *agent.Ownership) *agent.TraceResult {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      kind,
+			Name:      name,
+			Namespace: namespace,
+		},
+		Tool:     "modelplane",
+		TracedAt: time.Now(),
+	}
+
+	resource, err := fetchTraceResource(ctx, dynClient, kind, name, namespace)
+	if err != nil {
+		result.Chain = append(result.Chain, unreadableChainLink(kind, name, namespace, err))
+		return result
+	}
+	result.Object = resourceRefFromObject(resource)
+
+	if parent := modelplaneParentLink(ctx, dynClient, resource, ownership); parent != nil {
+		result.Chain = append(result.Chain, *parent)
+	}
+
+	link := chainLinkFromObject(resource)
+	if children := modelplaneChildren(ctx, dynClient, resource); len(children) > 0 {
+		link.Children = children
+	}
+	link.Message = appendSentence(link.Message, modelplaneEvidenceMessage(resource, ownership))
+	result.Chain = append(result.Chain, link)
+	result.FullyManaged = ownership != nil && ownership.Type == agent.OwnerModelplane
+	return result
+}
+
+func unreadableChainLink(kind, name, namespace string, err error) agent.ChainLink {
+	return agent.ChainLink{
+		Kind:      kind,
+		Name:      name,
+		Namespace: namespace,
+		Ready:     false,
+		Status:    "Unreadable",
+		Message:   err.Error(),
+	}
+}
+
+func resourceRefFromObject(obj *unstructured.Unstructured) agent.ResourceRef {
+	if obj == nil {
+		return agent.ResourceRef{}
+	}
+	gv := obj.GroupVersionKind().GroupVersion()
+	return agent.ResourceRef{
+		Kind:      obj.GetKind(),
+		Name:      obj.GetName(),
+		Namespace: obj.GetNamespace(),
+		Group:     gv.Group,
+		Version:   gv.Version,
+	}
+}
+
+func chainLinkFromObject(obj *unstructured.Unstructured) agent.ChainLink {
+	ready, status, reason, message := observedObjectStatus(obj)
+	link := agent.ChainLink{
+		Kind:         obj.GetKind(),
+		Name:         obj.GetName(),
+		Namespace:    obj.GetNamespace(),
+		Ready:        ready,
+		Status:       status,
+		StatusReason: reason,
+		Message:      message,
+	}
+	if transition := observedLastTransitionTime(obj); transition != nil {
+		link.LastTransitionTime = transition
+	}
+	return link
+}
+
+func observedObjectStatus(obj *unstructured.Unstructured) (bool, string, string, string) {
+	if obj == nil {
+		return false, "Unknown", "", "resource not loaded"
+	}
+
+	if failed, found, _ := unstructured.NestedSlice(obj.Object, "status", "failedClusters"); found && len(failed) > 0 {
+		return false, "Failed", "FailedClusters", fmt.Sprintf("%d cluster(s) failed", len(failed))
+	}
+	if updating, found, _ := unstructured.NestedSlice(obj.Object, "status", "updatingClusters"); found && len(updating) > 0 {
+		return false, "Updating", "UpdatingClusters", fmt.Sprintf("%d cluster(s) updating", len(updating))
+	}
+	if updated, found, _ := unstructured.NestedSlice(obj.Object, "status", "updatedClusters"); found && len(updated) > 0 {
+		return true, "Ready", "UpdatedClusters", fmt.Sprintf("%d cluster(s) updated", len(updated))
+	}
+	if matching, found, _ := unstructured.NestedSlice(obj.Object, "status", "matchingClusters"); found && len(matching) > 0 {
+		return true, "Matched", "MatchingClusters", fmt.Sprintf("%d matching cluster(s)", len(matching))
+	}
+
+	if phase, found, _ := unstructured.NestedString(obj.Object, "status", "phase"); found && phase != "" {
+		switch strings.ToLower(phase) {
+		case "ready", "available", "succeeded", "bound":
+			return true, phase, "phase", ""
+		case "failed", "error":
+			return false, phase, "phase", ""
+		default:
+			return false, phase, "phase", ""
+		}
+	}
+
+	total, totalFound, _ := unstructured.NestedInt64(obj.Object, "status", "replicas", "total")
+	readyReplicas, readyFound, _ := unstructured.NestedInt64(obj.Object, "status", "replicas", "ready")
+	if totalFound || readyFound {
+		msg := fmt.Sprintf("%d/%d replicas ready", readyReplicas, total)
+		if total > 0 && readyReplicas >= total {
+			return true, "Ready", "ReplicasReady", msg
+		}
+		return false, "NotReady", "ReplicasReady", msg
+	}
+
+	if ready, status, reason, message, ok := statusFromConditions(obj); ok {
+		return ready, status, reason, message
+	}
+
+	return true, "Observed", "", ""
+}
+
+func statusFromConditions(obj *unstructured.Unstructured) (bool, string, string, string, bool) {
+	conditions, found, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
+	if !found || len(conditions) == 0 {
+		return false, "", "", "", false
+	}
+	preferred := []string{"Ready", "Synced", "Healthy", "ControllerReady", "RoutingReady", "ClusterReady", "BackendReady"}
+	for _, want := range preferred {
+		for _, raw := range conditions {
+			cond, ok := raw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if !strings.EqualFold(stringValue(cond["type"]), want) {
+				continue
+			}
+			status := stringValue(cond["status"])
+			reason := stringValue(cond["reason"])
+			message := stringValue(cond["message"])
+			return strings.EqualFold(status, "True"), conditionDisplayStatus(want, status), reason, message, true
+		}
+	}
+	for _, raw := range conditions {
+		cond, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		status := stringValue(cond["status"])
+		if strings.EqualFold(status, "False") {
+			condType := stringValue(cond["type"])
+			return false, conditionDisplayStatus(condType, status), stringValue(cond["reason"]), stringValue(cond["message"]), true
+		}
+	}
+	return true, "Observed", "conditions", fmt.Sprintf("%d condition(s) reported", len(conditions)), true
+}
+
+func conditionDisplayStatus(conditionType, status string) string {
+	if strings.EqualFold(status, "True") {
+		return "Ready"
+	}
+	if conditionType == "" {
+		return "NotReady"
+	}
+	return conditionType + "=" + status
+}
+
+func observedLastTransitionTime(obj *unstructured.Unstructured) *time.Time {
+	conditions, found, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
+	if !found {
+		return nil
+	}
+	for _, raw := range conditions {
+		cond, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		value := stringValue(cond["lastTransitionTime"])
+		if value == "" {
+			continue
+		}
+		if t, err := time.Parse(time.RFC3339, value); err == nil {
+			return &t
+		}
+	}
+	return nil
+}
+
+func sveltosReferenceLink(annotations map[string]string) *agent.ChainLink {
+	refKind := strings.TrimSpace(annotations["projectsveltos.io/reference-kind"])
+	refName := strings.TrimSpace(annotations["projectsveltos.io/reference-name"])
+	if refKind == "" || refName == "" {
+		return nil
+	}
+	refNS := strings.TrimSpace(annotations["projectsveltos.io/reference-namespace"])
+	refTier := strings.TrimSpace(annotations["projectsveltos.io/reference-tier"])
+	name := refKind + "/" + refName
+	if refNS != "" {
+		name = refKind + "/" + refNS + "/" + refName
+	}
+	msg := "Sveltos reference that supplied the manifest/template."
+	if refTier != "" {
+		msg = appendSentence(msg, "Reference tier "+refTier+".")
+	}
+	return &agent.ChainLink{
+		Kind:      "SveltosReference",
+		Name:      name,
+		Namespace: refNS,
+		Ready:     true,
+		Status:    "Referenced",
+		Message:   msg,
+	}
+}
+
+func sveltosOwnerLink(ctx context.Context, dynClient dynamic.Interface, ownerKind, ownerName, fallbackNamespace string) agent.ChainLink {
+	namespace := ""
+	if strings.EqualFold(ownerKind, "Profile") {
+		namespace = fallbackNamespace
+	}
+	if spec, ok := controllerResourceByKind(ownerKind); ok {
+		if obj, err := getControllerResource(ctx, dynClient, spec, ownerName, namespace); err == nil {
+			link := chainLinkFromObject(obj)
+			link.Message = appendSentence(link.Message, "Sveltos deployment owner.")
+			return link
+		} else if !apierrors.IsNotFound(err) {
+			return agent.ChainLink{
+				Kind:      ownerKind,
+				Name:      ownerName,
+				Namespace: namespace,
+				Ready:     false,
+				Status:    "Unreadable",
+				Message:   err.Error(),
+			}
+		}
+	}
+	return agent.ChainLink{
+		Kind:      ownerKind,
+		Name:      ownerName,
+		Namespace: namespace,
+		Ready:     true,
+		Status:    "Observed",
+		Message:   "Sveltos owner identified from projectsveltos.io/owner-kind and owner-name annotations.",
+	}
+}
+
+func sveltosKindFromSubtype(subType string) string {
+	switch strings.ToLower(strings.TrimSpace(subType)) {
+	case "clusterprofile":
+		return "ClusterProfile"
+	case "profile":
+		return "Profile"
+	case "eventsource":
+		return "EventSource"
+	case "eventtrigger":
+		return "EventTrigger"
+	case "clusterhealthcheck":
+		return "ClusterHealthCheck"
+	default:
+		return ""
+	}
+}
+
+func modelplaneParentLink(ctx context.Context, dynClient dynamic.Interface, resource *unstructured.Unstructured, ownership *agent.Ownership) *agent.ChainLink {
+	if resource == nil {
+		return nil
+	}
+	for _, ownerRef := range resource.GetOwnerReferences() {
+		if !strings.Contains(ownerRef.APIVersion, "modelplane.ai") {
+			continue
+		}
+		if sameObject(resource, ownerRef.Kind, ownerRef.Name) {
+			continue
+		}
+		if link := fetchModelplaneLink(ctx, dynClient, ownerRef.Kind, ownerRef.Name, resource.GetNamespace()); link != nil {
+			link.Message = appendSentence(link.Message, "Modelplane ownerReference.")
+			return link
+		}
+		return &agent.ChainLink{
+			Kind:      ownerRef.Kind,
+			Name:      ownerRef.Name,
+			Namespace: resource.GetNamespace(),
+			Ready:     true,
+			Status:    "Observed",
+			Message:   "Modelplane ownerReference present; owner object was not readable from this context.",
+		}
+	}
+
+	labels := resource.GetLabels()
+	candidates := []struct {
+		label string
+		kind  string
+	}{
+		{label: "modelplane.ai/deployment", kind: "ModelDeployment"},
+		{label: "modelplane.ai/modelcache", kind: "ModelCache"},
+		{label: "modelplane.ai/serving", kind: "ModelReplica"},
+		{label: "modelplane.ai/cluster", kind: "InferenceCluster"},
+	}
+	for _, candidate := range candidates {
+		value := strings.TrimSpace(labels[candidate.label])
+		if value == "" || sameObject(resource, candidate.kind, value) {
+			continue
+		}
+		if link := fetchModelplaneLink(ctx, dynClient, candidate.kind, value, resource.GetNamespace()); link != nil {
+			link.Message = appendSentence(link.Message, "Modelplane label "+candidate.label+" points here.")
+			return link
+		}
+		return &agent.ChainLink{
+			Kind:      candidate.kind,
+			Name:      value,
+			Namespace: resource.GetNamespace(),
+			Ready:     true,
+			Status:    "Observed",
+			Message:   "Modelplane label " + candidate.label + " points here; owner object was not readable from this context.",
+		}
+	}
+
+	if ownership != nil && ownership.Type == agent.OwnerModelplane {
+		kind := modelplaneKindFromSubtype(ownership.SubType)
+		if kind != "" && ownership.Name != "" && !sameObject(resource, kind, ownership.Name) {
+			if link := fetchModelplaneLink(ctx, dynClient, kind, ownership.Name, firstNonEmpty(ownership.Namespace, resource.GetNamespace())); link != nil {
+				link.Message = appendSentence(link.Message, "Modelplane ownership signal.")
+				return link
+			}
+		}
+	}
+	return nil
+}
+
+func fetchModelplaneLink(ctx context.Context, dynClient dynamic.Interface, kind, name, namespace string) *agent.ChainLink {
+	spec, ok := controllerResourceByKind(kind)
+	if !ok {
+		return nil
+	}
+	obj, err := getControllerResource(ctx, dynClient, spec, name, namespace)
+	if err != nil {
+		return nil
+	}
+	link := chainLinkFromObject(obj)
+	if children := modelplaneChildren(ctx, dynClient, obj); len(children) > 0 {
+		link.Children = children
+	}
+	return &link
+}
+
+func modelplaneChildren(ctx context.Context, dynClient dynamic.Interface, resource *unstructured.Unstructured) []agent.ResourceRef {
+	if resource == nil {
+		return nil
+	}
+	var out []agent.ResourceRef
+	ns := resource.GetNamespace()
+	name := resource.GetName()
+	switch resource.GetKind() {
+	case "ModelDeployment":
+		out = append(out, modelplaneChildrenByLabel(ctx, dynClient, "ModelReplica", ns, "modelplane.ai/deployment", name)...)
+		out = append(out, modelplaneChildrenByLabel(ctx, dynClient, "ModelEndpoint", ns, "modelplane.ai/deployment", name)...)
+	case "ModelCache":
+		out = append(out, modelplaneChildrenByLabel(ctx, dynClient, "ModelReplica", ns, "modelplane.ai/modelcache", name)...)
+	case "ModelService":
+		selector, _, _ := unstructured.NestedStringMap(resource.Object, "spec", "selector", "matchLabels")
+		if deployment := strings.TrimSpace(selector["modelplane.ai/deployment"]); deployment != "" {
+			out = append(out, modelplaneChildrenByLabel(ctx, dynClient, "ModelEndpoint", ns, "modelplane.ai/deployment", deployment)...)
+		}
+	case "InferenceCluster":
+		out = append(out, modelplaneChildrenByLabel(ctx, dynClient, "ModelReplica", ns, "modelplane.ai/cluster", name)...)
+	}
+	return out
+}
+
+func modelplaneChildrenByLabel(ctx context.Context, dynClient dynamic.Interface, kind, namespace, key, value string) []agent.ResourceRef {
+	spec, ok := controllerResourceByKind(kind)
+	if !ok {
+		return nil
+	}
+	list, err := listControllerResource(ctx, dynClient, spec, namespace)
+	if err != nil {
+		return nil
+	}
+	out := make([]agent.ResourceRef, 0, len(list.Items))
+	for i := range list.Items {
+		item := list.Items[i]
+		if item.GetLabels()[key] != value {
+			continue
+		}
+		out = append(out, resourceRefFromObject(&item))
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Kind != out[j].Kind {
+			return out[i].Kind < out[j].Kind
+		}
+		if out[i].Namespace != out[j].Namespace {
+			return out[i].Namespace < out[j].Namespace
+		}
+		return out[i].Name < out[j].Name
+	})
+	return out
+}
+
+func modelplaneEvidenceMessage(resource *unstructured.Unstructured, ownership *agent.Ownership) string {
+	if resource == nil {
+		return ""
+	}
+	if ownership != nil && ownership.Source != "" {
+		return "Ownership evidence: " + ownership.Source + "."
+	}
+	for key, value := range resource.GetLabels() {
+		if strings.HasPrefix(key, "modelplane.ai/") && value != "" {
+			return "Modelplane label " + key + " is present."
+		}
+	}
+	if group := resource.GroupVersionKind().Group; group == "modelplane.ai" || group == "infrastructure.modelplane.ai" {
+		return "Modelplane API resource."
+	}
+	return ""
+}
+
+func modelplaneKindFromSubtype(subType string) string {
+	switch strings.ToLower(strings.TrimSpace(subType)) {
+	case "modeldeployment":
+		return "ModelDeployment"
+	case "modelservice":
+		return "ModelService"
+	case "modelendpoint":
+		return "ModelEndpoint"
+	case "modelcache":
+		return "ModelCache"
+	case "modelreplica":
+		return "ModelReplica"
+	case "inferencecluster":
+		return "InferenceCluster"
+	case "inferenceclass":
+		return "InferenceClass"
+	case "inferencegateway":
+		return "InferenceGateway"
+	default:
+		return ""
+	}
+}
+
+func sameObject(obj *unstructured.Unstructured, kind, name string) bool {
+	if obj == nil {
+		return false
+	}
+	return strings.EqualFold(obj.GetKind(), kind) && obj.GetName() == name
+}
+
+func stringValue(v interface{}) string {
+	switch typed := v.(type) {
+	case string:
+		return typed
+	case fmt.Stringer:
+		return typed.String()
+	default:
+		return ""
+	}
+}
+
+func appendSentence(base, sentence string) string {
+	base = strings.TrimSpace(base)
+	sentence = strings.TrimSpace(sentence)
+	if sentence == "" {
+		return base
+	}
+	if base == "" {
+		return sentence
+	}
+	return strings.TrimRight(base, ".") + ". " + sentence
 }
 
 func isCrossplaneProviderConfig(resource *unstructured.Unstructured) bool {

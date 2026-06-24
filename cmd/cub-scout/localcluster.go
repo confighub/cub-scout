@@ -285,7 +285,7 @@ type TraceItem struct {
 	Kind      string // Deployment, StatefulSet, Kustomization, Application, etc.
 	Name      string
 	Namespace string
-	Owner     string // Flux, ArgoCD, Helm, Native
+	Owner     string // Flux, ArgoCD, Sveltos, Modelplane, Helm, Native
 }
 
 type localView int
@@ -635,6 +635,23 @@ func loadLocalClusterData() tea.Msg {
 		}
 	}
 
+	for _, spec := range firstClassControllerResources() {
+		l, err := listControllerResource(ctx, dynClient, spec, "")
+		if err != nil {
+			continue
+		}
+		for i := range l.Items {
+			item := l.Items[i]
+			if item.GetKind() == "" {
+				item.SetKind(spec.Kind)
+			}
+			if item.GetAPIVersion() == "" {
+				item.SetAPIVersion(spec.GVR.GroupVersion().String())
+			}
+			gitops = append(gitops, parseFirstClassControllerResource(&item, spec))
+		}
+	}
+
 	// Git Sources: GitRepository, OCIRepository, HelmRepository
 	var gitSources []GitSourceInfo
 
@@ -843,6 +860,124 @@ func parseArgoApplication(item *unstructured.Unstructured) GitOpsResource {
 		Source:    repoURL,
 		Path:      path,
 	}
+}
+
+func parseFirstClassControllerResource(item *unstructured.Unstructured, spec controllerResourceSpec) GitOpsResource {
+	status := detectStatus(item)
+	source := ""
+	path := ""
+	inventory := 0
+	switch spec.Owner {
+	case "Sveltos":
+		source = sveltosControllerSource(item)
+		inventory = sveltosControllerInventory(item)
+	case "Modelplane":
+		source = modelplaneControllerSource(item)
+		inventory = modelplaneControllerInventory(item)
+	}
+	return GitOpsResource{
+		Kind:           spec.Kind,
+		Name:           item.GetName(),
+		Namespace:      item.GetNamespace(),
+		Status:         status,
+		Source:         source,
+		Path:           path,
+		InventoryCount: inventory,
+		LastApplied:    firstConditionTransition(item),
+	}
+}
+
+func sveltosControllerSource(item *unstructured.Unstructured) string {
+	switch item.GetKind() {
+	case "ClusterProfile", "Profile":
+		mode, _, _ := unstructured.NestedString(item.Object, "spec", "syncMode")
+		return firstNonEmpty(mode, "profile")
+	case "EventSource":
+		selectors, _, _ := unstructured.NestedSlice(item.Object, "spec", "resourceSelectors")
+		return fmt.Sprintf("%d selector(s)", len(selectors))
+	case "EventTrigger":
+		return "event-driven deployment"
+	case "ClusterHealthCheck":
+		notifications, _, _ := unstructured.NestedSlice(item.Object, "spec", "notifications")
+		return fmt.Sprintf("%d notification(s)", len(notifications))
+	default:
+		return ""
+	}
+}
+
+func sveltosControllerInventory(item *unstructured.Unstructured) int {
+	total := 0
+	for _, path := range [][]string{
+		{"status", "matchingClusters"},
+		{"status", "updatedClusters"},
+		{"status", "updatingClusters"},
+		{"status", "failedClusters"},
+		{"status", "clusterProfileResources"},
+		{"status", "profileResources"},
+		{"status", "deployedGVKs"},
+		{"status", "featureSummaries"},
+	} {
+		values, found, _ := unstructured.NestedSlice(item.Object, path...)
+		if found {
+			total += len(values)
+		}
+	}
+	return total
+}
+
+func modelplaneControllerSource(item *unstructured.Unstructured) string {
+	switch item.GetKind() {
+	case "ModelDeployment":
+		replicas, _, _ := unstructured.NestedInt64(item.Object, "spec", "replicas")
+		if replicas > 0 {
+			return fmt.Sprintf("%d desired replica(s)", replicas)
+		}
+	case "ModelService":
+		selector, _, _ := unstructured.NestedStringMap(item.Object, "spec", "selector", "matchLabels")
+		if deployment := selector["modelplane.ai/deployment"]; deployment != "" {
+			return "deployment=" + deployment
+		}
+	case "ModelCache":
+		source, _, _ := unstructured.NestedString(item.Object, "spec", "source", "type")
+		return source
+	case "InferenceCluster":
+		provider, _, _ := unstructured.NestedString(item.Object, "spec", "provider")
+		return provider
+	}
+	return ""
+}
+
+func modelplaneControllerInventory(item *unstructured.Unstructured) int {
+	total, totalFound, _ := unstructured.NestedInt64(item.Object, "status", "replicas", "total")
+	if totalFound {
+		return int(total)
+	}
+	conditions, found, _ := unstructured.NestedSlice(item.Object, "status", "conditions")
+	if found {
+		return len(conditions)
+	}
+	return 0
+}
+
+func firstConditionTransition(item *unstructured.Unstructured) time.Time {
+	conditions, found, _ := unstructured.NestedSlice(item.Object, "status", "conditions")
+	if !found {
+		return time.Time{}
+	}
+	for _, raw := range conditions {
+		cond, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		value, _ := cond["lastTransitionTime"].(string)
+		if value == "" {
+			continue
+		}
+		if t, err := time.Parse(time.RFC3339, value); err == nil {
+			return t
+		}
+	}
+	return time.Time{}
 }
 
 func parseFluxGitRepository(item *unstructured.Unstructured) GitSourceInfo {
@@ -3096,8 +3231,8 @@ func (m LocalClusterModel) getPanelPipelines() string {
 	var b strings.Builder
 
 	if len(m.gitops) == 0 {
-		b.WriteString(lcDimStyle.Render("No GitOps pipelines found") + "\n\n")
-		b.WriteString(lcDimStyle.Render("Install Flux or ArgoCD to see pipelines") + "\n")
+		b.WriteString(lcDimStyle.Render("No controller pipelines found") + "\n\n")
+		b.WriteString(lcDimStyle.Render("Install Flux, ArgoCD, Sveltos, or Modelplane to see pipelines") + "\n")
 		return b.String()
 	}
 
@@ -3105,6 +3240,8 @@ func (m LocalClusterModel) getPanelPipelines() string {
 	kustomizations := []GitOpsResource{}
 	helmReleases := []GitOpsResource{}
 	argoApps := []GitOpsResource{}
+	sveltosResources := []GitOpsResource{}
+	modelplaneResources := []GitOpsResource{}
 
 	for _, g := range m.gitops {
 		switch g.Kind {
@@ -3114,6 +3251,15 @@ func (m LocalClusterModel) getPanelPipelines() string {
 			helmReleases = append(helmReleases, g)
 		case "Application":
 			argoApps = append(argoApps, g)
+		default:
+			if spec, ok := controllerResourceByKind(g.Kind); ok {
+				switch spec.Owner {
+				case "Sveltos":
+					sveltosResources = append(sveltosResources, g)
+				case "Modelplane":
+					modelplaneResources = append(modelplaneResources, g)
+				}
+			}
 		}
 	}
 
@@ -3151,6 +3297,22 @@ func (m LocalClusterModel) getPanelPipelines() string {
 	if len(argoApps) > 0 {
 		b.WriteString(lcPurpleStyle.Render("ARGOCD APPLICATIONS") + "\n")
 		for _, g := range argoApps {
+			renderPipelineFlow(&b, g)
+		}
+		b.WriteString("\n")
+	}
+
+	if len(sveltosResources) > 0 {
+		b.WriteString(lcCyanStyle.Render("SVELTOS CONTROLLERS") + "\n")
+		for _, g := range sveltosResources {
+			renderPipelineFlow(&b, g)
+		}
+		b.WriteString("\n")
+	}
+
+	if len(modelplaneResources) > 0 {
+		b.WriteString(lcNameStyle.Render("MODELPLANE CONTROLLERS") + "\n")
+		for _, g := range modelplaneResources {
 			renderPipelineFlow(&b, g)
 		}
 		b.WriteString("\n")
@@ -3335,10 +3497,9 @@ func renderPipelineFlow(b *strings.Builder, g GitOpsResource) {
 
 // displayPipelineSource returns the human-facing source value used in pipeline views.
 // Source resolution order by deployer kind:
-//  1. Flux Kustomization: spec.sourceRef.name
-//  2. Flux HelmRelease:   spec.chart.spec.chart
-//  3. Argo Application:   spec.source.repoURL
-//  4. Fallback:           "unknown" (missing/unreadable source field)
+//  1. Flux/Argo source fields
+//  2. Sveltos/Modelplane controller summaries
+//  3. Fallback: "unknown" (missing/unreadable source field)
 func displayPipelineSource(source string) string {
 	if strings.TrimSpace(source) == "" {
 		return "unknown"
@@ -3356,7 +3517,7 @@ func hasUnknownPipelineSource(gitops []GitOpsResource) bool {
 }
 
 func unknownPipelineSourceHelp() string {
-	return "unknown = source field missing/unreadable (spec.sourceRef/spec.source.repoURL/spec.chart)"
+	return "unknown = source/controller summary missing or unreadable"
 }
 
 func (m LocalClusterModel) getPanelDrift() string {
@@ -4735,8 +4896,18 @@ func (m LocalClusterModel) getPanelAppHierarchy() string {
 			return "⚡"
 		case "ArgoCD":
 			return "🅰"
+		case "Sveltos":
+			return "✦"
+		case "Modelplane":
+			return "◆"
+		case "Crossplane":
+			return "✚"
+		case "kro":
+			return "◎"
 		case "Helm":
 			return "⎈"
+		case "Terraform":
+			return "▣"
 		case "ConfigHub":
 			return "📦"
 		default:
@@ -5014,7 +5185,7 @@ func (m LocalClusterModel) getPanelAppHierarchy() string {
 
 	b.WriteString(fmt.Sprintf("Total Deployers: %d\n", len(m.gitops)))
 	b.WriteString(fmt.Sprintf("Total Workloads: %d\n", len(m.entries)))
-	for _, owner := range []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"} {
+	for _, owner := range mapsvc.CanonicalOwnerOrder {
 		if count, ok := ownerCounts[owner]; ok && count > 0 {
 			b.WriteString(fmt.Sprintf("  %s %s: %d\n", ownerIcon(owner), owner, count))
 		}
@@ -5420,9 +5591,9 @@ func (m LocalClusterModel) buildTraceItems() []TraceItem {
 		})
 	}
 
-	// Add workloads that are GitOps-managed
+	// Add workloads that have first-class trace support
 	for _, e := range m.entries {
-		if e.Owner == "Flux" || e.Owner == "ArgoCD" {
+		if traceOwnerSupportedInTUI(e.Owner) {
 			items = append(items, TraceItem{
 				Kind:      e.Kind,
 				Name:      e.Name,
@@ -5442,8 +5613,21 @@ func (m LocalClusterModel) getGitOpsOwner(kind string) string {
 		return "Flux"
 	case "Application":
 		return "ArgoCD"
+	case "ClusterProfile", "Profile", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "ClusterPromotion", "EventSource", "EventTrigger", "ClusterHealthCheck", "HealthCheckReport", "EventReport":
+		return "Sveltos"
+	case "InferenceGateway", "InferenceClass", "InferenceCluster", "ModelDeployment", "ModelService", "ModelEndpoint", "ModelCache", "ModelReplica", "EKSCluster", "GKECluster", "ServingStack":
+		return "Modelplane"
 	default:
 		return "Unknown"
+	}
+}
+
+func traceOwnerSupportedInTUI(owner string) bool {
+	switch owner {
+	case "Flux", "ArgoCD", "Helm", "Sveltos", "Modelplane", "Crossplane":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -5498,8 +5682,11 @@ func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 				output = fmt.Sprintf("ArgoCD trace for %s/%s\n\nTo trace this resource, find its parent Application in the argocd namespace.", item.Namespace, item.Name)
 			}
 
+		case "Sveltos", "Modelplane", "Crossplane", "Helm":
+			output, err = runCubScoutTraceForTUI(item)
+
 		default:
-			output = fmt.Sprintf("No GitOps owner found for %s/%s\n\nThis resource is not managed by Flux or ArgoCD.", item.Namespace, item.Name)
+			output = fmt.Sprintf("No first-class trace path found for %s/%s\n\nThis resource is not managed by a trace-supported owner.", item.Namespace, item.Name)
 		}
 
 		// Collect secret evidence for workloads and Flux deployers/sources
@@ -5507,6 +5694,27 @@ func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 
 		return traceResultMsg{output: output, err: err, secrets: secrets}
 	}
+}
+
+func runCubScoutTraceForTUI(item TraceItem) (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	ref := strings.ToLower(item.Kind) + "/" + item.Name
+	args := []string{"trace", ref, "--format", "ascii"}
+	if item.Namespace != "" {
+		args = append(args, "-n", item.Namespace)
+	}
+	cmd := exec.Command(exe, args...)
+	out, cmdErr := cmd.CombinedOutput()
+	if cmdErr != nil {
+		if len(out) == 0 {
+			return "", cmdErr
+		}
+		return string(out), cmdErr
+	}
+	return string(out), nil
 }
 
 // collectTraceSecretEvidence collects secret evidence for a traced resource.
@@ -5913,8 +6121,8 @@ func (m LocalClusterModel) renderTrace() string {
 
 	// Show trace picker
 	if len(m.traceItems) == 0 {
-		b.WriteString(lcDimStyle.Render("No GitOps resources found to trace") + "\n")
-		b.WriteString(lcDimStyle.Render("Install Flux or ArgoCD to use trace") + "\n")
+		b.WriteString(lcDimStyle.Render("No supported controller resources found to trace") + "\n")
+		b.WriteString(lcDimStyle.Render("Install Flux, ArgoCD, Sveltos, Modelplane, Helm, or Crossplane to use trace") + "\n")
 		b.WriteString("\n" + lcDimStyle.Render("Press Esc to return") + "\n")
 		return b.String()
 	}

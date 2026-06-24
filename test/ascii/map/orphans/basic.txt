@@ -1,7 +1,7 @@
 
 ORPHAN RESOURCES
 ════════════════════════════════════════════════════════════════════
-Resources not managed by GitOps (Flux, ArgoCD, Helm, ConfigHub).
+Resources not managed by known owners (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub).
 These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.
 Also includes Argo Applications with explicit links to missing ApplicationSets.
 

@@ -31,6 +31,8 @@ One skill per controller cub-scout detects. Each documents the specific labels /
 
 - [`observe-argocd/`](observe-argocd/SKILL.md) — Applications, ApplicationSets, tracking-id annotation, CSA migration default
 - [`observe-flux/`](observe-flux/SKILL.md) — GitRepository / HelmRelease / Kustomization / OCIRepository / Bucket / source-controller
+- [`observe-sveltos/`](observe-sveltos/SKILL.md) — ClusterProfile / Profile deployed-resource annotations, reference ConfigMap/Secret context, Sveltos CRDs
+- [`observe-modelplane/`](observe-modelplane/SKILL.md) — ModelDeployment / ModelService / ModelEndpoint / ModelCache identity labels and Crossplane-backed composition writers
 - [`observe-helm/`](observe-helm/SKILL.md) — direct Helm vs Flux-helm-controller vs Argo-helm-renderer (managed-by + chart label disambiguation matrix)
 - [`observe-crossplane/`](observe-crossplane/SKILL.md) — XR / composed / claim / MRD / provider managed-resources, ProviderConfig secrets, control-plane subset
 - [`observe-kro/`](observe-kro/SKILL.md) — applyset / parent / labeller, kro.run API group
@@ -74,7 +76,7 @@ Batch B (governance-shaped; 4 scenarios):
 | Reference | Purpose |
 |---|---|
 | [`references/kubernetes-managedfields.md`](references/kubernetes-managedfields.md) | The data substrate for attribution — what `metadata.managedFields` carries, how cub-scout reads it, what's lost in older clusters |
-| [`references/verified-manager-strings.md`](references/verified-manager-strings.md) | The enumeration of known field-manager strings (Argo / Flux / Helm / Crossplane / kro / kubectl) with upstream citations |
+| [`references/verified-manager-strings.md`](references/verified-manager-strings.md) | The enumeration of known field-manager strings (Argo / Flux / Helm / Crossplane / kro / Sveltos / kubectl) with upstream citations |
 | [`references/source-truth-strategies.md`](references/source-truth-strategies.md) | The 9 source-truth strategies (post-#418) — when to use which, the four-status / five-verdict contract, proof-gap catalog |
 | [`references/standalone-vs-connected.md`](references/standalone-vs-connected.md) | The mode axis — what works without ConfigHub, what unlocks with `cub auth login`, the graceful-degradation rule |
 | [`references/read-only-triad.md`](references/read-only-triad.md) | cub-scout / ConfigHub / Pilot role separation (#410 / #428); three-layer code-enforced invariant |
@@ -103,11 +105,11 @@ All skills under `skills/` follow the read-only-triad invariant. Concretely:
 **Final tally:**
 - **Scaffolding + 1 router + 1 umbrella** — `SKILL_TEMPLATE.md`, `skills/README.md`, `skills/cub-scout/SKILL.md`
 - **Verb-group scenario skills (8)** — Observe, Diagnose, Compare, Attribute (batch 1) + Adopt Existing Config, Govern, Integrate, Verify (batch 2)
-- **Controller-observer skills (7)** — argocd, flux, helm, crossplane, kro, confighub-managed, native (batch 3)
+- **Controller-observer skills (9)** — argocd, flux, sveltos, modelplane, helm, crossplane, kro, confighub-managed, native (batch 3 plus Sveltos/Modelplane extension)
 - **Workflow scenario skills (8)** — triage-unhealthy-workload, investigate-drift, audit-fleet-conformance, prepare-for-confighub, migrate-from-kubectl, ai-agent-readonly-context, operator-incident-evidence, confighub-source-truth (batch 4)
 - **Shared references (9)** — kubernetes-managedfields, verified-manager-strings (batch 1) + source-truth-strategies, standalone-vs-connected, read-only-triad, plugin-vs-standalone, argocd-applicationset, flux-source-types, mcp-tool-catalog (batch 5)
 
-That's **~33 skill files** plus 9 references — the full scope from `#442`.
+That's **~35 skill files** plus 9 references — the full scope from `#442` plus Sveltos/Modelplane observer coverage.
 
 **Five PRs shipped this set:**
 - [`#452`](https://github.com/confighub/cub-scout/pull/452) — batch 1 scaffolding + 4 verb-group skills + 2 references

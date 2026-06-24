@@ -22,7 +22,7 @@ import (
 //
 // This ensures identical behavior and defaults across interfaces.
 type ViewOptions struct {
-	// Owner filters by ownership type (Flux, ArgoCD, Helm, ConfigHub, Native, etc.)
+	// Owner filters by ownership type (Flux, ArgoCD, Sveltos, Modelplane, Native, etc.)
 	Owner string
 
 	// Namespace filters by Kubernetes namespace
@@ -42,7 +42,7 @@ var sharedViewOpts ViewOptions
 // Use this for any command that supports filtering by owner, namespace, depth, or kind.
 func AddSharedViewFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&sharedViewOpts.Owner, "owner", "",
-		"Filter by owner (Flux, ArgoCD, Helm, ConfigHub, Crossplane, kro, Native)")
+		"Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, Native)")
 	cmd.Flags().StringVar(&sharedViewOpts.Namespace, "namespace", "",
 		"Filter by namespace")
 	cmd.Flags().IntVar(&sharedViewOpts.Depth, "depth", 0,
@@ -91,11 +91,13 @@ func (v ViewOptions) FilterStripText() string {
 var ValidOwners = []string{
 	"Flux",
 	"ArgoCD",
-	"Helm",
-	"ConfigHub",
+	"Sveltos",
+	"Modelplane",
 	"Crossplane",
 	"kro",
+	"Helm",
 	"Terraform",
+	"ConfigHub",
 	"Native",
 }
 

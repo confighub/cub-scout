@@ -3878,7 +3878,7 @@ func (m Model) renderHelpOverlay() string {
 	b.WriteString("\n")
 	b.WriteString("  " + cmdStyle.Render("owner=Native") + "            " + descStyle.Render("Orphaned resources"))
 	b.WriteString("\n")
-	b.WriteString("  " + cmdStyle.Render("owner=Flux OR owner=ArgoCD") + " " + descStyle.Render("GitOps managed"))
+	b.WriteString("  " + cmdStyle.Render("owner=Flux OR owner=Sveltos") + " " + descStyle.Render("Controller-managed"))
 	b.WriteString("\n")
 	b.WriteString("  " + cmdStyle.Render("namespace=prod*") + "         " + descStyle.Render("Prod namespaces"))
 	b.WriteString("\n")

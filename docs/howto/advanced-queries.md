@@ -4,7 +4,7 @@ This document covers the advanced query capabilities in cub-scout for finding re
 
 ## Reverse Trace
 
-Trace any resource backwards to its Git source, automatically detecting the GitOps tool (Flux, Argo, or Helm).
+Trace any resource backwards to its source or controller evidence, automatically detecting the owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, Crossplane, or Kubernetes owner references).
 
 ### Usage
 
@@ -40,10 +40,10 @@ Ownership: flux (apps)
 
 ### Key Features
 
-- **Auto-detection**: Automatically detects if resource is managed by Flux, Argo CD, or Helm
+- **Auto-detection**: Automatically detects if resource is managed by Flux, Argo CD, Sveltos, Modelplane, Helm, Crossplane, or Kubernetes owner references
 - **Full chain**: Walks ownerReferences (Pod → ReplicaSet → Deployment) before tracing to GitOps
 - **Broken link detection**: Identifies missing sources or broken references
-- **Cross-tool support**: Works in mixed Flux + Argo environments
+- **Cross-tool support**: Works in mixed-controller environments
 
 ---
 

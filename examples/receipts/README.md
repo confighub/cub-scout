@@ -23,11 +23,15 @@ envelope, no wire change required.
 | [`source-truth-pass`](./source-truth-pass/) | Explicit `--strategy <name>` (one of 9 strategies), connected-mode ConfigHub auth | Mirrors `compare source-truth` Status → Verdict (PASS / WATCH / BLOCK / INCONCLUSIVE). Strategy mismatch between caller and evidence → BLOCK + `OmissionStrategyMismatch`. |
 | [`no-manual-edits-since`](./no-manual-edits-since/) | `--since <RFC3339 timestamp>` cutoff | PASS when no interactive (`kubectl-*`) writer touched `metadata.managedFields` after the cutoff; BLOCK on any late interactive write; INCONCLUSIVE on missing managedFields or nil-Time entries. |
 | `object-set-matches` | `--file <manifest.yaml\|dir>` + `--scope namespace/<ns>` | PASS when every desired object in rendered YAML is present live and every authored field still matches. Missing objects or changed authored fields BLOCK. |
+| `workloads-converged` | `--file <manifest.yaml\|dir>` + `--predicate workloads-converged` | PASS when desired workloads reached a ready/converged runtime state. WATCH while still progressing; BLOCK on missing, failed, wedged pods, or no current-generation progress beyond `--grace-window`. |
+| `prerequisites-met` | `--prerequisites <yaml\|json>` | PASS when declared cluster facts exist. BLOCK on missing CRDs, Secrets, namespaces, StorageClasses, or IngressClasses; INCONCLUSIVE when a live read cannot be checked. |
 
 The predicate fixture subdirectories ship canonical example receipts produced
 deterministically by [`tools/gen-receipt-examples`](../../tools/gen-receipt-examples/)
 and validated by `TestReceiptExamplesAreFresh`. For a full install
-verification runbook, see [`examples/helm-expt`](../helm-expt/).
+verification runbook that composes `object-set-matches`,
+`prerequisites-met`, and `workloads-converged`, see
+[`examples/helm-expt`](../helm-expt/).
 
 ## Auto-Detection Priority
 
@@ -60,6 +64,20 @@ When `--predicate` is not passed, cub-scout picks one from these signals:
   --scope namespace/redis \
   --format json \
   --out install.object-set.receipt.json
+
+# workloads-converged — verify rendered workloads reached runtime readiness.
+./cub-scout receipt verify \
+  --file out/manifests \
+  --scope namespace/redis \
+  --predicate workloads-converged \
+  --grace-window 5m \
+  --fail-on any-non-pass
+
+# prerequisites-met — verify declared cluster facts before accepting an install.
+./cub-scout receipt verify \
+  --prerequisites prereqs.yaml \
+  --scope namespace/redis \
+  --fail-on any-non-pass
 
 # Write the canonical JSON form to disk for audit attachment.
 ./cub-scout receipt verify deploy/api -n prod --format json --out api.receipt.json
