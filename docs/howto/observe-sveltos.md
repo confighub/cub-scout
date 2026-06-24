@@ -4,6 +4,8 @@ This guide shows how cub-scout observes Sveltos-managed resources without modify
 
 Sveltos support is based on Kubernetes API objects and metadata only. cub-scout does not infer ownership from names or guesses.
 
+If you want more than is shown on this page, eg parity with other supported gitops tools, contact us!
+
 ## What cub-scout Understands
 
 Sveltos has three main surfaces that matter for observation:
