@@ -4,6 +4,8 @@ This guide shows how cub-scout observes Modelplane-managed resources without mod
 
 Modelplane support is based on Modelplane API groups, explicit Modelplane labels, owner references, and status. Broad scheduling labels are not treated as workload ownership proof.
 
+If you want more than is shown on this page, eg parity with other supported gitops tools, contact us!
+
 ## What cub-scout Understands
 
 Modelplane API groups:
