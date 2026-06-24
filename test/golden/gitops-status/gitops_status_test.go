@@ -227,7 +227,7 @@ func TestGitOpsStatus_NoBackend(t *testing.T) {
 	output := result.Stdout
 
 	// Verify no backend message
-	if !strings.Contains(output, "No GitOps backend detected") {
+	if !strings.Contains(output, "No GitOps/controller backend detected") {
 		t.Error("output should indicate no backend detected")
 	}
 }

@@ -158,22 +158,24 @@ func TestBuildOwnershipTreeJSON_CanonicalOwnerOrder(t *testing.T) {
 	entries := []Entry{
 		{Kind: "Deployment", Namespace: "a", Name: "one", Owner: "Native"},
 		{Kind: "Deployment", Namespace: "b", Name: "two", Owner: "ConfigHub"},
-		{Kind: "Deployment", Namespace: "c", Name: "three", Owner: "Helm"},
-		{Kind: "Deployment", Namespace: "d", Name: "four", Owner: "ArgoCD"},
-		{Kind: "Deployment", Namespace: "e", Name: "five", Owner: "Flux"},
+		{Kind: "Deployment", Namespace: "c", Name: "three", Owner: "Terraform"},
+		{Kind: "Deployment", Namespace: "d", Name: "four", Owner: "Helm"},
+		{Kind: "Deployment", Namespace: "e", Name: "five", Owner: "kro"},
+		{Kind: "Deployment", Namespace: "f", Name: "six", Owner: "Crossplane"},
+		{Kind: "Deployment", Namespace: "g", Name: "seven", Owner: "Modelplane"},
+		{Kind: "Deployment", Namespace: "h", Name: "eight", Owner: "Sveltos"},
+		{Kind: "Deployment", Namespace: "i", Name: "nine", Owner: "ArgoCD"},
+		{Kind: "Deployment", Namespace: "j", Name: "ten", Owner: "Flux"},
 	}
 
 	opts := OwnershipTreeOpts{}
 	output := BuildOwnershipTreeJSON(entries, opts, "test-cluster", nil)
 
-	// Verify canonical order matches ASCII model: Flux, ArgoCD, Helm, ConfigHub, Native
-	// (Crossplane is NOT a first-class category - falls to Native)
-	expectedOrder := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
-	if len(output.Groups) != len(expectedOrder) {
-		t.Fatalf("expected %d groups, got %d", len(expectedOrder), len(output.Groups))
+	if len(output.Groups) != len(CanonicalOwnerOrder) {
+		t.Fatalf("expected %d groups, got %d", len(CanonicalOwnerOrder), len(output.Groups))
 	}
 
-	for i, expected := range expectedOrder {
+	for i, expected := range CanonicalOwnerOrder {
 		if output.Groups[i].Owner != expected {
 			t.Errorf("expected groups[%d].owner=%s, got %s", i, expected, output.Groups[i].Owner)
 		}
@@ -266,11 +268,23 @@ func TestInferRole(t *testing.T) {
 		{"ConfigHub OCI", RoleSource},
 		{"HelmRepository", RoleSource},
 		{"Bucket", RoleSource},
+		{"SveltosReference", RoleSource},
+		{"EventSource", RoleSource},
+		{"ModelCache", RoleSource},
+		{"InferenceClass", RoleSource},
 		{"Kustomization", RoleDeployer},
 		{"HelmRelease", RoleDeployer},
 		{"Application", RoleDeployer},
+		{"ClusterProfile", RoleDeployer},
+		{"Profile", RoleDeployer},
+		{"EventTrigger", RoleDeployer},
+		{"ModelDeployment", RoleDeployer},
+		{"ModelService", RoleDeployer},
 		{"ReplicaSet", RoleIntermediate},
 		{"Pod", RoleIntermediate},
+		{"ModelReplica", RoleIntermediate},
+		{"ModelEndpoint", RoleIntermediate},
+		{"ClusterSummary", RoleIntermediate},
 		{"Deployment", RoleWorkload},
 		{"StatefulSet", RoleWorkload},
 		{"Service", RoleWorkload},
@@ -444,6 +458,10 @@ func TestInferDeliveryStage(t *testing.T) {
 		{"GitRepository", StageSource},
 		{"HelmRepository", StageSource},
 		{"Bucket", StageSource},
+		{"SveltosReference", StageSource},
+		{"EventSource", StageSource},
+		{"ModelCache", StageSource},
+		{"InferenceClass", StageSource},
 
 		// Artifacts
 		{"OCIRepository", StageArtifact},
@@ -453,6 +471,11 @@ func TestInferDeliveryStage(t *testing.T) {
 		{"Kustomization", StageDeployer},
 		{"HelmRelease", StageDeployer},
 		{"Application", StageDeployer},
+		{"ClusterProfile", StageDeployer},
+		{"Profile", StageDeployer},
+		{"EventTrigger", StageDeployer},
+		{"ModelDeployment", StageDeployer},
+		{"ModelService", StageDeployer},
 
 		// Workloads
 		{"Deployment", StageWorkload},
@@ -466,6 +489,9 @@ func TestInferDeliveryStage(t *testing.T) {
 		{"Pod", StageWorkload},
 		{"Job", StageWorkload},
 		{"CronJob", StageWorkload},
+		{"ModelReplica", StageWorkload},
+		{"ModelEndpoint", StageWorkload},
+		{"ClusterSummary", StageWorkload},
 
 		// Unknown kinds
 		{"CustomResource", ""},
@@ -593,15 +619,15 @@ func TestBuildMapListJSON_Basic(t *testing.T) {
 	}
 
 	// Verify byOwner is an array in canonical order
-	if len(output.Summary.ByOwner) != 5 {
-		t.Fatalf("expected 5 owner counts (all canonical owners), got %d", len(output.Summary.ByOwner))
+	if len(output.Summary.ByOwner) != len(CanonicalOwnerOrder) {
+		t.Fatalf("expected %d owner counts (all canonical owners), got %d", len(CanonicalOwnerOrder), len(output.Summary.ByOwner))
 	}
-	// Canonical order: Flux, ArgoCD, Helm, ConfigHub, Native
 	if output.Summary.ByOwner[0].OwnerType != "Flux" || output.Summary.ByOwner[0].Count != 2 {
 		t.Errorf("expected byOwner[0]={Flux,2}, got {%s,%d}", output.Summary.ByOwner[0].OwnerType, output.Summary.ByOwner[0].Count)
 	}
-	if output.Summary.ByOwner[4].OwnerType != "Native" || output.Summary.ByOwner[4].Count != 1 {
-		t.Errorf("expected byOwner[4]={Native,1}, got {%s,%d}", output.Summary.ByOwner[4].OwnerType, output.Summary.ByOwner[4].Count)
+	nativeIndex := len(CanonicalOwnerOrder) - 1
+	if output.Summary.ByOwner[nativeIndex].OwnerType != "Native" || output.Summary.ByOwner[nativeIndex].Count != 1 {
+		t.Errorf("expected byOwner[%d]={Native,1}, got {%s,%d}", nativeIndex, output.Summary.ByOwner[nativeIndex].OwnerType, output.Summary.ByOwner[nativeIndex].Count)
 	}
 
 	// Verify byStatus only includes non-zero counts
@@ -698,9 +724,8 @@ func TestBuildMapListJSON_CanonicalOwnerOrder(t *testing.T) {
 
 	output := BuildMapListJSON(entries, "test-cluster", nil)
 
-	// byOwner should always be in canonical order: Flux, ArgoCD, Helm, ConfigHub, Native
-	expectedOrder := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
-	for i, expected := range expectedOrder {
+	// byOwner should always be in canonical order.
+	for i, expected := range CanonicalOwnerOrder {
 		if output.Summary.ByOwner[i].OwnerType != expected {
 			t.Errorf("byOwner[%d].ownerType: expected %s, got %s", i, expected, output.Summary.ByOwner[i].OwnerType)
 		}
@@ -710,7 +735,8 @@ func TestBuildMapListJSON_CanonicalOwnerOrder(t *testing.T) {
 	if output.Summary.ByOwner[1].Count != 1 { // ArgoCD
 		t.Errorf("expected ArgoCD count=1, got %d", output.Summary.ByOwner[1].Count)
 	}
-	if output.Summary.ByOwner[4].Count != 1 { // Native
-		t.Errorf("expected Native count=1, got %d", output.Summary.ByOwner[4].Count)
+	nativeIndex := len(CanonicalOwnerOrder) - 1
+	if output.Summary.ByOwner[nativeIndex].Count != 1 { // Native
+		t.Errorf("expected Native count=1, got %d", output.Summary.ByOwner[nativeIndex].Count)
 	}
 }

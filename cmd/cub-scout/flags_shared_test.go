@@ -87,6 +87,8 @@ func TestValidateOwner(t *testing.T) {
 		{"valid flux lowercase", "flux", false},
 		{"valid ArgoCD", "ArgoCD", false},
 		{"valid argocd lowercase", "argocd", false},
+		{"valid Sveltos", "Sveltos", false},
+		{"valid Modelplane", "Modelplane", false},
 		{"valid Helm", "Helm", false},
 		{"valid ConfigHub", "ConfigHub", false},
 		{"valid Crossplane", "Crossplane", false},
@@ -117,6 +119,8 @@ func TestNormalizeOwner(t *testing.T) {
 		{"canonical", "Flux", "Flux"},
 		{"lowercase", "flux", "Flux"},
 		{"mixed case argocd", "ARGOCD", "ArgoCD"},
+		{"mixed case sveltos", "SVELTOS", "Sveltos"},
+		{"mixed case modelplane", "MODELPLANE", "Modelplane"},
 		{"kro", "KRO", "kro"},
 		{"unknown", "Unknown", "Unknown"},
 	}

@@ -30,7 +30,7 @@ Implicit intents:
 
 ## Do not load for
 
-- Resource-level ownership classification (Owner = Argo / Flux / Helm) — [`scout-observe`](../scout-observe/SKILL.md) covers that via `cub-scout map` / `cub-scout trace`
+- Resource-level ownership classification (Owner = Argo / Flux / Sveltos / Modelplane / Helm / Crossplane / kro / ConfigHub / Native) — [`scout-observe`](../scout-observe/SKILL.md) covers that via `cub-scout map` / `cub-scout trace`
 - "Did the deploy land?" verdicts at the resource level — [`scout-compare`](../scout-compare/SKILL.md)
 - Diagnosing the *symptom* (CrashLoop, OOM, etc.) — [`scout-diagnose`](../scout-diagnose/SKILL.md)
 - Live-cluster mutation — cub-scout never mutates. Route to `cub` or `kubectl` (user driving)

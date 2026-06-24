@@ -39,6 +39,8 @@ Map checks labels on each resource to determine ownership:
 |-------|-----------|----------------------------|
 | **Flux** | Toolkit labels | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` |
 | **ArgoCD** | Argo label or tracking-id | `argocd.argoproj.io/instance` label OR `argocd.argoproj.io/tracking-id` annotation |
+| **Sveltos** | Sveltos owner/reference annotations or API groups | `projectsveltos.io/owner-*`, `projectsveltos.io/reference-*`, Sveltos API groups |
+| **Modelplane** | Modelplane API groups/labels/ownerRefs | `modelplane.ai/deployment`, `modelplane.ai/modelcache`, Modelplane API groups |
 | **Helm** | Managed-by label | `app.kubernetes.io/managed-by: Helm` |
 | **Terraform** | Terraform metadata | `app.terraform.io/run-id` annotation OR `app.terraform.io/managed` label |
 | **Crossplane** | Crossplane labels/ownerRefs | `crossplane.io/*` labels or Crossplane owner references |
@@ -94,6 +96,36 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: Helm
 ```
+
+### Sveltos Detection
+
+Sveltos deployed resources carry annotations that identify both the owner and the referenced source object:
+
+```yaml
+metadata:
+  annotations:
+    projectsveltos.io/owner-kind: ClusterProfile
+    projectsveltos.io/owner-name: config-to-production
+    projectsveltos.io/reference-kind: ConfigMap
+    projectsveltos.io/reference-name: webster-production
+    projectsveltos.io/reference-namespace: control-clusters-config
+```
+
+See [Observe Sveltos](observe-sveltos.md).
+
+### Modelplane Detection
+
+Modelplane resources are detected by Modelplane API groups and explicit ownership labels:
+
+```yaml
+metadata:
+  labels:
+    modelplane.ai/deployment: qwen-demo
+```
+
+Placement labels such as `modelplane.ai/region` are not ownership by themselves.
+
+See [Observe Modelplane](observe-modelplane.md).
 
 ### Native Detection
 

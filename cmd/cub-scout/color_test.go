@@ -226,7 +226,7 @@ func TestOwnerColor(t *testing.T) {
 
 	os.Unsetenv("NO_COLOR")
 
-	owners := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native", "Crossplane", "Terraform"}
+	owners := []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native", "Crossplane", "Terraform", "kro", "Sveltos", "Modelplane"}
 
 	for _, owner := range owners {
 		t.Run(owner, func(t *testing.T) {

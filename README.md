@@ -2,7 +2,7 @@
 
 **Read-only. Deterministic. Offline-capable. Optional `cub` plugin.**
 
-cub-scout is an open-source observer for live Kubernetes clusters and GitOps. Point it at your current kube context and it reads what Kubernetes, Argo CD, Flux, Helm, Crossplane, kro, and ConfigHub already know: what is running, who owns it, where it came from, what is unhealthy, and what to check next.
+cub-scout is an open-source observer for live Kubernetes clusters and GitOps. Point it at your current kube context and it reads what Kubernetes, Argo CD, Flux, Sveltos, Modelplane, Helm, Crossplane, kro, and ConfigHub already know: what is running, who owns it, where it came from, what is unhealthy, and what to check next.
 
 It diagnoses, explains, traces, maps, scans, **compares** intended vs running state, and **attributes** every field back to its source — but it never modifies cluster state and never makes authority calls about what *should* be true. Safe to run against production.
 
@@ -17,7 +17,7 @@ The main path starts from a **live cluster**. It works **standalone** with your 
 ### Who reaches for cub-scout?
 
 - **SREs and on-call** — when a workload is unhealthy and you need to know *why* and *who owns it* in seconds, not by clicking across Argo or Flux UIs.
-- **Platform engineers** — when you inherit a cluster and need a trustworthy ownership map across Flux, ArgoCD, Helm, Crossplane, kro, ConfigHub, and naked YAML.
+- **Platform engineers** — when you inherit a cluster and need a trustworthy ownership map across Flux, ArgoCD, Sveltos, Modelplane, Helm, Crossplane, kro, ConfigHub, and naked YAML.
 - **AI agents and automation** — when you need stable, deterministic JSON or a Model Context Protocol (MCP) gateway for read-only cluster facts.
 
 ### `cub-scout` vs `cub`: the boundary
@@ -45,7 +45,7 @@ Each command's **Inputs** column tells you exactly what it needs — cluster onl
 |---|---|---|
 | `doctor` | One-screen cluster health summary with concrete next steps | cluster |
 | `map` (TUI / `list` / `hooks` / `orphans` / `meaning`) | Ownership inventory, lifecycle hooks, orphan detection, meaning-first grouping | cluster |
-| `trace` | Full ownership chain from K8s object → Application/Kustomization → Git source / OCI digest | cluster |
+| `trace` | Full ownership chain from K8s object → controller/source evidence, including Flux/Argo/Helm, Sveltos, Modelplane, and Crossplane | cluster |
 | `tree` | Runtime, ownership, git, and composition hierarchies | cluster |
 | `scan` | Audit live cluster or manifest files against 46 built-in risk patterns | cluster *or* file |
 | `graph export` | Resource graph as DOT/JSON | cluster |
@@ -61,7 +61,7 @@ Each command's **Inputs** column tells you exactly what it needs — cluster onl
 | `debug` | Guided GitOps debugging wizard | cluster |
 | `suggest-remedy` | Read-only description of a remediation that *would* resolve a finding — never applies it | cluster |
 | `patterns` (`detect` / `explain` / `list`) | Pattern-engine catalogue + matched findings | cluster *or* file |
-| `gitops status` | GitOps pipeline health across Flux + Argo controllers | cluster |
+| `gitops status` | GitOps/controller pipeline health across Flux, Argo, Sveltos, and Modelplane controllers | cluster |
 
 ### Compare — intended vs actual
 
@@ -80,8 +80,8 @@ cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `c
 
 | Command | What you get | Inputs |
 |---|---|---|
-| `receipt verify <kind>/<name>` | Build a typed, fingerprinted receipt asserting a resource predicate. Predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. Verdicts: PASS / WATCH / BLOCK / INCONCLUSIVE. | cluster (+ ConfigHub for `source-truth-pass`) |
-| `receipt verify --file <path> --scope namespace/<ns>` | Build an install/object-set receipt (`object-set-matches`) proving every desired object in rendered YAML is present live and every authored field still matches. Server defaults are allowed; missing or changed desired fields BLOCK. | cluster + rendered YAML |
+| `receipt verify <kind>/<name>` | Build a typed, fingerprinted receipt asserting a resource predicate. Predicates include `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`, `object-set-matches`, `workloads-converged`, and `prerequisites-met`. Verdicts: PASS / WATCH / BLOCK / INCONCLUSIVE. | cluster (+ ConfigHub for `source-truth-pass`) |
+| `receipt verify --file <path> --scope namespace/<ns>` | Build an install/object-set receipt (`object-set-matches`) proving every desired object in rendered YAML is present live and every authored field still matches. Add `--predicate workloads-converged` to prove rendered workloads reached a ready runtime state, with `--grace-window` measured from current-generation progress signals. | cluster + rendered YAML |
 | `receipt verify --fail-on <verdict>` | Same, plus CI-gate exit semantics: exit 2 when the receipt's verdict matches the listed set (`WATCH` / `BLOCK` / `INCONCLUSIVE` / `any-non-pass`). Artifact is preserved on fail. | cluster |
 | `receipt verify --input-attestation <path>` | Chain receipts: reference a prior receipt via `inputAttestations[]`. Each referenced receipt's fingerprint is verified before chaining; tampered receipts are refused. | cluster + prior receipt file |
 | `receipt show <path>` | Render a saved receipt (ASCII or JSON). Does NOT verify the fingerprint — works on tampered receipts for forensic inspection. | receipt file |
@@ -103,7 +103,7 @@ cub-scout's **attribution layer** (#435) annotates every field mismatch with pro
 | `incomingBindings[]` — ConfigHub Links influencing this unit | `compare` | cluster + ConfigHub |
 | `bindingSource` — per-field upstream unit + binding path | `compare` | cluster + ConfigHub |
 
-The verified manager-string enumeration covers Argo CD, Flux (kustomize / helm / source controllers), Helm direct, Crossplane (composite / composed / claim / MRD / refs), kro (applyset / parent / labeller), and `kubectl-*` interactive paths — strings not in the enumeration fall through to `unknown` rather than being guessed.
+The verified manager-string enumeration covers Argo CD, Flux (kustomize / helm / source controllers), Helm direct, Crossplane (composite / composed / claim / MRD / refs), kro (applyset / parent / labeller), Sveltos (`application/apply-patch`), Modelplane via Crossplane composition managers, and `kubectl-*` interactive paths — strings not in the enumeration fall through to `unknown` rather than being guessed.
 
 ### Govern — connected fleet and history
 
@@ -211,7 +211,7 @@ Plugin form (`cub scout ...`) inherits `cub`'s auth automatically — useful whe
 
 cub-scout works fully offline. Connected mode is optional but unlocks the questions a live cluster alone cannot answer.
 
-**Standalone (no signup):** ownership detection, tracing, health diagnosis, drift hints, risk scanning, JSON, MCP gateway, attribution via `managedFields` + Argo/Flux tracer + (with `--source-path`) raw-YAML file:line resolution.
+**Standalone (no signup):** ownership detection, tracing, health diagnosis, drift hints, risk scanning, JSON, MCP gateway, attribution via `managedFields` + Flux/Argo/Helm/Sveltos/Modelplane/Crossplane trace resolvers + (with `--source-path`) raw-YAML file:line resolution.
 
 **Connected (`cub auth login`):** adds the historical and cross-cluster context the Kubernetes API doesn't have:
 
@@ -229,7 +229,7 @@ Local repository parsing (`import --git-path`, `import parse-repo`) is a second-
 
 ## Signature Example
 
-`trace` is the headline feature — it answers "what created this?" without making you stitch Deployments, Applications, Helm releases, labels, annotations, and controller state by hand:
+`trace` is the headline feature — it answers "what created this?" without making you stitch Deployments, Applications, Helm releases, Sveltos profiles, Modelplane model resources, labels, annotations, and controller state by hand:
 
 ```text
 $ cub-scout trace deploy/frontend -n boutique
@@ -343,7 +343,7 @@ go build ./cmd/cub-scout
 - **Read-only, by design** — observation uses only `Get`, `List`, `Watch`. No `apply`, no `delete`, no admission webhook. Even `suggest-remedy` only *describes* a fix — it does not run it.
 - **Deterministic** — same inputs, same outputs. No AI/ML inference in the ownership logic.
 - **Parse, don't guess** — ownership and attribution come from real labels, annotations, owner references, controller facts, and verified manager-string enumerations. Unknown is preferred over wrong.
-- **Complement GitOps, don't replace it** — cub-scout helps you understand Flux, ArgoCD, Helm, Crossplane, kro, and ConfigHub state. It's not another reconciler.
+- **Complement GitOps, don't replace it** — cub-scout helps you understand Flux, ArgoCD, Sveltos, Modelplane, Helm, Crossplane, kro, and ConfigHub state. It's not another reconciler.
 - **Graceful degradation** — works without ConfigHub, without internet, and many flows work without a live cluster (debug bundles, manifest scans, Git-path import preview).
 - **Evidence, not authority** — cub-scout is the read-only witness. ConfigHub (via `cub`) is the authority for intended state.
 

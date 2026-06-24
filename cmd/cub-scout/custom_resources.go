@@ -78,6 +78,7 @@ func collectWatchResourceList() []schema.GroupVersionResource {
 func buildMapWatchResourceList() []schema.GroupVersionResource {
 	configs := mapWatchLoadCustomResourceConfigs()
 	out := append([]schema.GroupVersionResource(nil), defaultMapWatchResources...)
+	out = append(out, firstClassControllerGVRs()...)
 
 	seen := map[string]struct{}{}
 	for _, gvr := range out {

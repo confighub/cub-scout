@@ -192,12 +192,15 @@ func CompareSeverity(a, b string) bool {
 var OwnerOrder = map[string]int{
 	"Flux":       0,
 	"ArgoCD":     1,
-	"ConfigHub":  2,
-	"Crossplane": 3,
-	"Terraform":  4,
-	"Helm":       5,
-	"Native":     6,
-	"Unknown":    7,
+	"Sveltos":    2,
+	"Modelplane": 3,
+	"Crossplane": 4,
+	"kro":        5,
+	"Helm":       6,
+	"Terraform":  7,
+	"ConfigHub":  8,
+	"Native":     9,
+	"Unknown":    10,
 }
 
 // CompareOwner returns true if a should sort before b.

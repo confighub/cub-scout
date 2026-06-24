@@ -742,6 +742,14 @@ func colorExplainOwner(owner string) string {
 		return OwnerColor("Helm")
 	case strings.Contains(lower, "confighub"):
 		return OwnerColor("ConfigHub")
+	case strings.Contains(lower, "sveltos"):
+		return OwnerColor("Sveltos")
+	case strings.Contains(lower, "modelplane"):
+		return OwnerColor("Modelplane")
+	case strings.Contains(lower, "crossplane"):
+		return OwnerColor("Crossplane")
+	case strings.Contains(lower, "kro"):
+		return OwnerColor("kro")
 	default:
 		return owner
 	}

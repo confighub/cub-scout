@@ -99,14 +99,14 @@ cub-scout's attribution layer produces one of **three** `cause` values per field
 | `cause` | Owner / manager context | Typical Pilot action |
 |---------|-------------------------|----------------------|
 | `controller-drift` | Detected owner's controller wrote the field; managerHint is in the verified enumeration. The drift is the controller doing its job (HPA scaled replicas, etc.). | **ACCEPT** — no action; the controller is reconciling. |
-| `manual-edit` | Argo / Flux / ConfigHub / kro / Crossplane owner; `kubectl-*` writer touched the field. The controller will fight the manual edit on next sync. | **INVESTIGATE** — read the gitSource / bindingSource; usually **REVERT** (let the controller win) or **QUARANTINE** if the manual edit was an emergency fix. |
+| `manual-edit` | Argo / Flux / ConfigHub / Sveltos / Modelplane / kro / Crossplane owner; `kubectl-*` writer touched the field. The controller will fight the manual edit on next sync. | **INVESTIGATE** — read the gitSource / bindingSource; usually **REVERT** (let the controller win) or **QUARANTINE** if the manual edit was an emergency fix. |
 | `manual-edit` | No controller owner (unmanaged resource); `kubectl-*` writer. There's no controller to fight back. | **ACCEPT-AS-CANONICAL** (update intent to match) or **QUARANTINE** if the resource shouldn't be unmanaged. |
 | `controller-drift` | A controller wrote it, but the managerHint is **not** in the verified enumeration, OR it's from a different controller than the detected owner (e.g., Argo wrote on a Flux-owned resource). | **ASK** — possible controller-on-controller conflict; cub-scout doesn't guess which is canonical. |
 | `unknown` | `managedFields` is missing (older K8s, stripped) or the field-path resolution failed. | **ASK** — Pilot doesn't have enough evidence. |
 
 The five rows above are Pilot policy cases, not five distinct `cause` values from cub-scout. cub-scout's `cause` is the three-valued enum; the owner / manager / verified-or-not context disambiguates within the `manual-edit` and `controller-drift` cases. See [`verified-manager-strings`](../references/verified-manager-strings.md) for the canonical enumeration.
 
-The verified manager-string enumeration ([`verified-manager-strings`](../references/verified-manager-strings.md)) covers Argo CD, Flux (kustomize/helm/source controllers), Helm direct, Crossplane (composite/composed/claim/MRD/refs), kro (applyset/parent/labeller), and `kubectl-*`. Strings not in the enumeration return `unknown` rather than misclassifying — same `parse, don't guess` rule used by ownership detection.
+The verified manager-string enumeration ([`verified-manager-strings`](../references/verified-manager-strings.md)) covers Argo CD, Flux (kustomize/helm/source controllers), Helm direct, Crossplane (composite/composed/claim/MRD/refs), kro (applyset/parent/labeller), Sveltos (`application/apply-patch`), Modelplane via Crossplane composition managers, and `kubectl-*`. Strings not in the enumeration return `unknown` rather than misclassifying — same `parse, don't guess` rule used by ownership detection.
 
 ## Step-by-step
 

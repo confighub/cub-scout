@@ -12,6 +12,8 @@ func TestBuildDoctorSummary_ComputesCoreSections(t *testing.T) {
 		{Kind: "Deployment", Name: "api", Namespace: "prod", Owner: "Flux", Status: "Ready"},
 		{Kind: "Service", Name: "api", Namespace: "prod", Owner: "Helm", Status: "Ready"},
 		{Kind: "Application", Name: "payments", Namespace: "argocd", Owner: "ArgoCD", Status: "NotReady"},
+		{Kind: "ClusterProfile", Name: "platform", Namespace: "", Owner: "Sveltos", Status: "Ready"},
+		{Kind: "ModelDeployment", Name: "qwen", Namespace: "models", Owner: "Modelplane", Status: "Ready"},
 		{Kind: "ConfigMap", Name: "feature-flags", Namespace: "prod", Owner: "ConfigHub", Status: "Pending"},
 		{Kind: "Pod", Name: "debug-shell", Namespace: "prod", Owner: "Native", Status: "Drifted"},
 		{Kind: "Deployment", Name: "legacy", Namespace: "default", Owner: "Native", Status: "NotReady"},
@@ -25,16 +27,19 @@ func TestBuildDoctorSummary_ComputesCoreSections(t *testing.T) {
 
 	summary := buildDoctorSummary(entries, findings, "kind-dev", "all", 3)
 
-	if summary.Resources.Total != 6 {
-		t.Fatalf("resources total = %d, want 6", summary.Resources.Total)
+	if summary.Resources.Total != 8 {
+		t.Fatalf("resources total = %d, want 8", summary.Resources.Total)
 	}
 	if summary.Ownership.Flux != 1 || summary.Ownership.ArgoCD != 1 || summary.Ownership.Helm != 1 {
 		t.Fatalf("unexpected ownership core counts: %+v", summary.Ownership)
 	}
+	if summary.Ownership.Sveltos != 1 || summary.Ownership.Modelplane != 1 || summary.Ownership.ConfigHub != 1 {
+		t.Fatalf("unexpected first-class ownership counts: %+v", summary.Ownership)
+	}
 	if summary.Ownership.Native != 2 || summary.Ownership.Unmanaged != 2 {
 		t.Fatalf("unexpected unmanaged/native counts: %+v", summary.Ownership)
 	}
-	if summary.Health.Healthy != 2 || summary.Health.Warning != 4 || summary.Health.Error != 0 {
+	if summary.Health.Healthy != 4 || summary.Health.Warning != 4 || summary.Health.Error != 0 {
 		t.Fatalf("unexpected health counts: %+v", summary.Health)
 	}
 	if summary.Risks.Total != 3 || summary.Risks.Critical != 1 || summary.Risks.Warning != 1 || summary.Risks.Info != 1 {
@@ -78,7 +83,7 @@ func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
 		Cluster:   "kind-dev",
 		Namespace: "all",
 		Resources: DoctorResourceSummary{Total: 10},
-		Ownership: DoctorOwnershipSummary{Flux: 3, ArgoCD: 2, Helm: 1, Native: 4, Unmanaged: 4},
+		Ownership: DoctorOwnershipSummary{Flux: 3, ArgoCD: 2, Sveltos: 1, Modelplane: 1, Helm: 1, Native: 2, Unmanaged: 2},
 		Health:    DoctorHealthSummary{Healthy: 7, Warning: 2, Error: 1},
 		Risks:     DoctorRiskSummary{Total: 5, Critical: 1, Warning: 3, Info: 1},
 		Drift:     DoctorDriftSummary{Resources: 2},
@@ -91,6 +96,8 @@ func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
 		"Cluster: kind-dev (namespace: all)",
 		"Resources: 10 total",
 		"Ownership:",
+		"Sveltos: 1",
+		"Modelplane: 1",
 		"Health:",
 		"Risks: 5 findings (1 CRITICAL, 3 WARNING, 1 INFO)",
 		"Drift: 2 resources drifted from declared state",

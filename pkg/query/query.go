@@ -20,7 +20,7 @@
 //	kind                  Resource kind (Deployment, Service, etc.)
 //	namespace             Kubernetes namespace
 //	name                  Resource name
-//	owner                 Owner type (Flux, Argo, Helm, ConfigHub, Native)
+//	owner                 Owner type (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native)
 //	cluster               Cluster name
 //	labels[key]           Label value for given key
 //

@@ -20,10 +20,12 @@
 
 | What | Command | Guide |
 |------|---------|-------|
-| See ownership (Flux, Argo, Helm, Native) | `cub-scout map list` | [howto/ownership-detection.md](howto/ownership-detection.md) |
+| See ownership across controllers | `cub-scout map list` | [howto/ownership-detection.md](howto/ownership-detection.md) |
 | Find orphan resources | `cub-scout map orphans` | [howto/find-orphans.md](howto/find-orphans.md) |
 | Trace provenance chains | `cub-scout trace deploy/NAME -n NS` | [howto/trace-ownership.md](howto/trace-ownership.md) |
 | Explain a resource | `cub-scout explain deploy/NAME -n NS` | [reference/commands.md](reference/commands.md#explain) |
+| Observe Sveltos | `cub-scout map list --owner Sveltos` | [howto/observe-sveltos.md](howto/observe-sveltos.md) |
+| Observe Modelplane | `cub-scout map list --owner Modelplane` | [howto/observe-modelplane.md](howto/observe-modelplane.md) |
 
 ### Inspect
 

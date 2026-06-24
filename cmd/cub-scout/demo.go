@@ -528,10 +528,10 @@ func runDemoQuery() error {
 	_ = runCubAgent("map", "list", "-q", "namespace=prod*")
 
 	fmt.Println()
-	fmt.Println(demoBoldStyle.Render("Query 3: Flux OR ArgoCD managed"))
-	fmt.Println(demoDimStyle.Render("  $ cub-scout map list -q \"owner=Flux OR owner=ArgoCD\""))
+	fmt.Println(demoBoldStyle.Render("Query 3: Controller-managed"))
+	fmt.Println(demoDimStyle.Render("  $ cub-scout map list -q \"owner=Flux OR owner=Sveltos OR owner=Modelplane\""))
 	fmt.Println()
-	_ = runCubAgent("map", "list", "-q", "owner=Flux OR owner=ArgoCD")
+	_ = runCubAgent("map", "list", "-q", "owner=Flux OR owner=Sveltos OR owner=Modelplane")
 
 	fmt.Println()
 	fmt.Println(demoBoldStyle.Render("Query 4: Find orphans (Native ownership)"))

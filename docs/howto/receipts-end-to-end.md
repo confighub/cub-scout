@@ -8,7 +8,8 @@ For reference material, see:
 - [JSON Contracts § Receipt Contract](../reference/json-contracts.md)
 - [Command Reference § receipt verify](../reference/commands.md)
 - [CLI Contract § cub-scout receipt](../reference/cli-contract.md)
-- [Worked examples](../../examples/receipts/) — 4 example directories with paste-ready CI snippets
+- [Worked examples](../../examples/receipts/) — receipt fixtures plus paste-ready CI snippets
+- [Install verification example](../../examples/helm-expt/) — object-set, prerequisites, and workload-convergence receipts together
 
 For Pilot / acceptance-judge consumer integrations, see the `pilot-*` skill files at [`skills/`](../../skills/).
 

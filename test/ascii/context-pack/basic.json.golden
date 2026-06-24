@@ -11,7 +11,13 @@
   "ownershipSummary": {
     "flux": 1,
     "argocd": 1,
+    "sveltos": 0,
+    "modelplane": 0,
+    "crossplane": 0,
+    "kro": 0,
     "helm": 0,
+    "terraform": 0,
+    "confighub": 0,
     "native": 1,
     "other": 0,
     "unmanaged": 1
@@ -80,5 +86,5 @@
     }
   ],
   "truncated": false,
-  "sizeBytes": 2009
+  "sizeBytes": 2123
 }

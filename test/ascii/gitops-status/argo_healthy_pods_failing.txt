@@ -22,5 +22,5 @@ DEPLOYERS
 
 
 NEXT STEPS:
-→ Trace failing resource:  cub-scout trace application/myapp-prod -n argocd
-→ Scan for issues:         cub-scout scan --state
+→ Trace failing resource:  ./cub-scout trace application/myapp-prod -n argocd
+→ Scan for issues:         ./cub-scout scan --state

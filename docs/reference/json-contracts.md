@@ -314,7 +314,7 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
 
 ### Verified manager strings
 
-The classifier matches against a verified enumeration of upstream field-manager strings — sources documented in `pkg/agent/manager_strings.go`. Strings not in the enumeration fall through to `unknown` rather than being guessed. Recognized sources include Argo CD, Flux (kustomize / helm / source controllers), Helm direct, Crossplane (composite / composed / claim / MRD / reference resolver), kro (applyset / applyset-parent / labeller), and `kubectl-*` interactive paths.
+The classifier matches against a verified enumeration of upstream field-manager strings — sources documented in `pkg/agent/manager_strings.go`. Strings not in the enumeration fall through to `unknown` rather than being guessed. Recognized sources include Argo CD, Flux (kustomize / helm / source controllers), Helm direct, Crossplane (composite / composed / claim / MRD / reference resolver), kro (applyset / applyset-parent / labeller), Sveltos (`application/apply-patch`), Modelplane via Crossplane composition managers, and `kubectl-*` interactive paths.
 
 ### Git source anchor (A2)
 
@@ -695,6 +695,8 @@ the rendered/live object-set subject pair instead.
 | `source-truth-pass` | `--strategy` (one of nine) + connected-mode ConfigHub auth | `--strategy` empty → INCONCLUSIVE + `OmissionStrategyMissing`. No source-truth evidence body → INCONCLUSIVE + `OmissionSourceTruthEvidence`. Strategy mismatch between caller and evidence → BLOCK + `OmissionStrategyMismatch`. Otherwise: Status PASS → PASS, WATCH → WATCH, BLOCK → BLOCK, **ASK → WATCH** (per the locked synthesis; receipt-level INCONCLUSIVE is reserved for receipts that themselves can't be built — not for cases where the underlying source-truth derivation just couldn't classify). Source-truth `proof_gaps[]` are mirrored into `omissions[]` under `source-truth-complete` regardless of verdict. |
 | `no-manual-edits-since` | `--since <RFC3339>` cutoff | `--since` zero → INCONCLUSIVE + `OmissionSinceMissing`. Live nil or no managedFields → INCONCLUSIVE + `OmissionManagedFields`. Any interactive (`kubectl-*`) manager with `Time > since` → BLOCK. Any interactive manager with nil `Time` → INCONCLUSIVE + `OmissionManagedFieldsTime`. Otherwise → PASS. |
 | `object-set-matches` | `--file <manifest.yaml\|dir>` + live cluster access | PASS when every desired object identity is present live and every authored field still matches. BLOCK when any desired object is missing or any authored field differs. INCONCLUSIVE when an API mapping or live read could not be checked. Kubernetes server-added map fields and `status` are outside the claim. |
+| `workloads-converged` | `--file <manifest.yaml\|dir>` + live cluster access | PASS when every desired workload is present and kstatus reports it current. WATCH when any workload is still progressing, including stale generation status (`status.observedGeneration < metadata.generation`). BLOCK when a workload is missing, has terminal pod/container failure evidence, or has made no current-generation progress beyond `--grace-window`. INCONCLUSIVE when an API mapping or live read could not be checked. |
+| `prerequisites-met` | `--prerequisites <yaml\|json>` + live cluster access | PASS when every declared fact is present. BLOCK when any declared fact is missing. INCONCLUSIVE when any fact could not be checked. |
 
 #### `object-set-matches` evidence
 
@@ -744,6 +746,113 @@ changed images, changed replicas, changed RBAC rules, changed Service
 ports, injected list items, and similar install drift without failing on
 normal Kubernetes defaulting.
 
+#### `workloads-converged` evidence
+
+`workloads-converged` records its details under
+`predicate.evidence.workloads`:
+
+```json
+{
+  "desiredSource": {
+    "type": "directory",
+    "ref": "out/manifests",
+    "digest": "sha256-of-input-files",
+    "objectCount": 2
+  },
+  "scope": {"kind": "namespace", "namespace": "redis"},
+  "graceWindow": "5m0s",
+  "observedAt": "2026-06-24T10:30:00Z",
+  "desiredDigest": "sha256-of-normalized-rendered-workloads",
+  "liveDigest": "sha256-of-live-workload-status-projection",
+  "summary": {
+    "desired": 2,
+    "converged": 1,
+    "progressing": 1,
+    "failed": 0,
+    "missing": 0,
+    "inconclusive": 0
+  },
+  "workloads": [
+    {
+      "id": {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "namespace": "redis",
+        "name": "redis-master"
+      },
+      "status": "progressing",
+      "kstatusStatus": "InProgress",
+      "kstatusMessage": "Deployment is waiting for updated replicas to become available",
+      "generation": 2,
+      "observedGeneration": 2,
+      "ageSeconds": 86400,
+      "progressAgeSeconds": 42,
+      "progressClockSource": "status.conditions[Progressing].lastUpdateTime"
+    }
+  ]
+}
+```
+
+`status` is one of `converged`, `progressing`, `failed`, `missing`, or
+`inconclusive`. The receipt-level verdict is `PASS` only when every workload
+is `converged`; `WATCH` when at least one workload is still `progressing`;
+`BLOCK` when any workload is `failed` or `missing`; and `INCONCLUSIVE` when
+any workload could not be classified.
+
+The progress clock is deliberately generation-aware. If
+`status.observedGeneration < metadata.generation`, cub-scout treats the
+status as stale for timeout purposes and reports
+`progressClockSource: "status.observedGeneration<metadata.generation"` with
+no `progressAgeSeconds`; the workload remains `WATCH` rather than being
+failed because the Kubernetes object itself is old. Otherwise cub-scout uses
+the best available current-generation progress timestamp, preferring
+`status.conditions[Progressing].lastUpdateTime`, then
+`lastTransitionTime`, then the newest condition timestamp, and finally
+`metadata.creationTimestamp` when no condition timestamp is available.
+
+Terminal pod/container waiting reasons such as `CrashLoopBackOff`,
+`ImagePullBackOff`, or `CreateContainerConfigError` are surfaced in
+`podReasons[]` and make the workload `failed` without waiting for the rest of
+the grace window.
+
+For Deployment-style workloads, cub-scout treats kstatus `Current` as the
+success snapshot. It does not expose a separate rollout-success knob; Kubernetes
+already folds the workload's availability semantics into status, including
+`availableReplicas` and any configured `minReadySeconds`.
+
+#### `prerequisites-met` evidence
+
+`prerequisites-met` records its details under
+`predicate.evidence.prerequisites`:
+
+```json
+{
+  "source": {
+    "type": "file",
+    "ref": "prereqs.yaml",
+    "digest": "sha256-of-prereq-file",
+    "objectCount": 3
+  },
+  "scope": {"kind": "namespace", "namespace": "redis"},
+  "declaredDigest": "sha256-of-declared-facts",
+  "liveDigest": "sha256-of-live-fact-statuses",
+  "summary": {
+    "required": 3,
+    "present": 2,
+    "missing": 1,
+    "inconclusive": 0
+  },
+  "facts": [
+    {
+      "kind": "Secret",
+      "namespace": "redis",
+      "name": "app-db-secret",
+      "status": "missing"
+    }
+  ]
+}
+```
+
 ### Auto-Detection Priority
 
 When `--predicate` is not passed, cub-scout picks one from these signals
@@ -791,6 +900,11 @@ Each entry explicitly converts a silent PASS into an honest PASS:
 | `since` | no-manual-edits-since invoked without `--since`; cub-scout does not invent a cutoff |
 | `object-set-coverage` | One or more desired objects in an `object-set-matches` receipt could not be checked because API mapping or live lookup was inconclusive |
 | `extra-live-object-coverage` | `object-set-matches` verified desired object identities and authored fields, but did not prove that no extra live resources exist outside the desired set |
+| `extra-live-objects` | `object-set-matches --no-extras` found extra live objects of rendered kinds in scope that are not in the desired set |
+| `workload-convergence-snapshot` | `workloads-converged` reflects readiness observed at `verifiedAt`; it does not prove workloads stay converged afterward |
+| `workload-convergence-coverage` | One or more desired workloads in a `workloads-converged` receipt could not be checked because API mapping or live lookup was inconclusive |
+| `prerequisites-snapshot` | `prerequisites-met` reflects required facts observed at `verifiedAt`; it does not prove they remain present afterward |
+| `prerequisites-coverage` | One or more declared facts in a `prerequisites-met` receipt could not be checked because the live read failed |
 | `next-step-allowed-action` | A nextStep with mutating `actionType` was dropped at receipt-emit time |
 | `next-step-allowed-command` | A nextStep with mutating `nextCommand` (apply/edit/patch/delete/sync/create/update/replace/scale/rollout/reconcile/annotate/label/set/exec/debug/`helm install`/`helm upgrade`) was dropped |
 

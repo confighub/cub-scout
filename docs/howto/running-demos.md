@@ -43,7 +43,7 @@ cub-scout map list -q "namespace=prod*"
 
 | Demo | Duration | What It Shows |
 |------|----------|---------------|
-| **Ownership Detection** | ~30 sec | Resources grouped by owner (Flux, ArgoCD, Native) |
+| **Ownership Detection** | ~30 sec | Resources grouped by owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, Native where fixtures are present) |
 | **Risk Scanning** | ~2 min | RISK-2025-0027: Grafana whitespace bug |
 | **Query Language** | ~1 min | Filter with `owner!=Native`, `namespace=prod*` |
 | **Orphan Hunt** | ~2 min | Find mystery Native resources |
@@ -73,7 +73,7 @@ kubectl apply -f examples/demos/ownership-demo/
 cub-scout map
 
 # What to look for:
-# - Resources grouped by owner (Flux, ArgoCD, Helm, Native)
+# - Resources grouped by owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, Native where fixtures are present)
 # - Native resources highlighted as orphans
 # - Color-coded status indicators
 ```

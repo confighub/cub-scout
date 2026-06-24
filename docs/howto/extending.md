@@ -142,7 +142,7 @@ detectors:
 
 ### Matching Rules
 
-1. Built-in detectors run first (Flux, ArgoCD, Helm, Terraform, ConfigHub, Crossplane).
+1. Built-in detectors run first (Flux, ArgoCD, Sveltos, Modelplane, Helm, Terraform, ConfigHub, Crossplane, kro).
 2. Custom detectors run after built-ins, in YAML order.
 3. A detector matches when all listed label/annotation rules match.
 4. `value` is optional: when omitted, key existence is enough.

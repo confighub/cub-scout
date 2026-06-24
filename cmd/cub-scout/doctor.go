@@ -54,23 +54,23 @@ func init() {
 
 // DoctorSummary is the canonical model behind both ASCII and JSON output.
 type DoctorSummary struct {
-	Cluster   string                  `json:"cluster"`
-	Namespace string                  `json:"namespace"`
-	Resources DoctorResourceSummary   `json:"resources"`
-	Ownership DoctorOwnershipSummary  `json:"ownership"`
-	Health    DoctorHealthSummary     `json:"health"`
-	Risks     DoctorRiskSummary       `json:"risks"`
-	Drift     DoctorDriftSummary      `json:"drift"`
-	ThreeWay  *DoctorThreeWaySummary  `json:"threeWay,omitempty"`
-	TopIssues []DoctorIssue           `json:"topIssues,omitempty"`
-	NextSteps []StructuredHint        `json:"nextSteps,omitempty"` // Structured action-typed hints for AI/MCP
+	Cluster   string                 `json:"cluster"`
+	Namespace string                 `json:"namespace"`
+	Resources DoctorResourceSummary  `json:"resources"`
+	Ownership DoctorOwnershipSummary `json:"ownership"`
+	Health    DoctorHealthSummary    `json:"health"`
+	Risks     DoctorRiskSummary      `json:"risks"`
+	Drift     DoctorDriftSummary     `json:"drift"`
+	ThreeWay  *DoctorThreeWaySummary `json:"threeWay,omitempty"`
+	TopIssues []DoctorIssue          `json:"topIssues,omitempty"`
+	NextSteps []StructuredHint       `json:"nextSteps,omitempty"` // Structured action-typed hints for AI/MCP
 }
 
 // DoctorThreeWaySummary indicates three-way comparison status.
 // In connected mode, this surfaces whether ConfigHub/Argo/cluster agree.
 type DoctorThreeWaySummary struct {
-	Available bool   `json:"available"`          // True if connected mode is available
-	Hint      string `json:"hint,omitempty"`     // Suggested command for full comparison
+	Available bool   `json:"available"`      // True if connected mode is available
+	Hint      string `json:"hint,omitempty"` // Suggested command for full comparison
 }
 
 // DoctorResourceSummary contains resource inventory totals.
@@ -80,12 +80,18 @@ type DoctorResourceSummary struct {
 
 // DoctorOwnershipSummary contains ownership counts.
 type DoctorOwnershipSummary struct {
-	Flux      int `json:"flux"`
-	ArgoCD    int `json:"argocd"`
-	Helm      int `json:"helm"`
-	Native    int `json:"native"`
-	Other     int `json:"other"`
-	Unmanaged int `json:"unmanaged"`
+	Flux       int `json:"flux"`
+	ArgoCD     int `json:"argocd"`
+	Sveltos    int `json:"sveltos"`
+	Modelplane int `json:"modelplane"`
+	Crossplane int `json:"crossplane"`
+	Kro        int `json:"kro"`
+	Helm       int `json:"helm"`
+	Terraform  int `json:"terraform"`
+	ConfigHub  int `json:"confighub"`
+	Native     int `json:"native"`
+	Other      int `json:"other"`
+	Unmanaged  int `json:"unmanaged"`
 }
 
 // DoctorHealthSummary contains health band counts.
@@ -217,6 +223,7 @@ func collectDoctorEntries(ctx context.Context, namespace string) ([]MapEntry, st
 		{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"},
 		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"},
 	}
+	resources = append(resources, firstClassControllerGVRs()...)
 
 	for _, gvr := range resources {
 		if namespace != "" {
@@ -283,8 +290,20 @@ func buildDoctorSummary(entries []MapEntry, findings []scan.NormalizedFinding, c
 			summary.Ownership.Flux++
 		case "ArgoCD":
 			summary.Ownership.ArgoCD++
+		case "Sveltos":
+			summary.Ownership.Sveltos++
+		case "Modelplane":
+			summary.Ownership.Modelplane++
+		case "Crossplane":
+			summary.Ownership.Crossplane++
+		case "kro":
+			summary.Ownership.Kro++
 		case "Helm":
 			summary.Ownership.Helm++
+		case "Terraform":
+			summary.Ownership.Terraform++
+		case "ConfigHub":
+			summary.Ownership.ConfigHub++
 		case "Native":
 			summary.Ownership.Native++
 		default:
@@ -418,9 +437,25 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 
 	total := summary.Resources.Total
 	fmt.Fprintf(&b, "%s\n", sectionLabel("Ownership"))
-	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("Flux"), summary.Ownership.Flux, doctorPercent(summary.Ownership.Flux, total))
-	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("ArgoCD"), summary.Ownership.ArgoCD, doctorPercent(summary.Ownership.ArgoCD, total))
-	fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor("Helm"), summary.Ownership.Helm, doctorPercent(summary.Ownership.Helm, total))
+	for _, owner := range []struct {
+		name  string
+		count int
+	}{
+		{name: "Flux", count: summary.Ownership.Flux},
+		{name: "ArgoCD", count: summary.Ownership.ArgoCD},
+		{name: "Sveltos", count: summary.Ownership.Sveltos},
+		{name: "Modelplane", count: summary.Ownership.Modelplane},
+		{name: "Crossplane", count: summary.Ownership.Crossplane},
+		{name: "kro", count: summary.Ownership.Kro},
+		{name: "Helm", count: summary.Ownership.Helm},
+		{name: "Terraform", count: summary.Ownership.Terraform},
+		{name: "ConfigHub", count: summary.Ownership.ConfigHub},
+	} {
+		if owner.count == 0 {
+			continue
+		}
+		fmt.Fprintf(&b, "  %s: %d (%d%%)\n", OwnerColor(owner.name), owner.count, doctorPercent(owner.count, total))
+	}
 	unmanagedText := fmt.Sprintf("%d unmanaged", summary.Ownership.Unmanaged)
 	if summary.Ownership.Unmanaged > 0 {
 		unmanagedText = Yellow(unmanagedText)

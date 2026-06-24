@@ -68,7 +68,18 @@ type OwnershipTreeSummary struct {
 // CanonicalOwnerOrder defines the deterministic owner ordering.
 // This order is used everywhere: JSON groups, summary.byOwner iteration.
 // MUST match the ASCII canonical model in render.go (BuildOwnershipTreeLines).
-var CanonicalOwnerOrder = []string{"Flux", "ArgoCD", "Helm", "ConfigHub", "Native"}
+var CanonicalOwnerOrder = []string{
+	"Flux",
+	"ArgoCD",
+	"Sveltos",
+	"Modelplane",
+	"Crossplane",
+	"kro",
+	"Helm",
+	"Terraform",
+	"ConfigHub",
+	"Native",
+}
 
 // BuildOwnershipTreeJSON builds v0.14 JSON output from entries.
 // It uses the same canonical model as ASCII (BuildOwnershipTreeLines).
@@ -87,7 +98,8 @@ func BuildOwnershipTreeJSON(entries []Entry, opts OwnershipTreeOpts, cluster str
 	// Group by owner (same logic as BuildOwnershipTreeLines)
 	byOwner := make(map[string][]Entry)
 	for _, e := range filtered {
-		byOwner[e.Owner] = append(byOwner[e.Owner], e)
+		owner := normalizeOwner(e.Owner)
+		byOwner[owner] = append(byOwner[owner], e)
 	}
 
 	// Build groups in canonical owner order
@@ -187,13 +199,21 @@ func normalizeOwner(owner string) string {
 		return "Flux"
 	case owner == "ArgoCD" || owner == "argocd" || owner == "Argocd":
 		return "ArgoCD"
+	case owner == "Sveltos" || owner == "sveltos":
+		return "Sveltos"
+	case owner == "Modelplane" || owner == "modelplane" || owner == "ModelPlane":
+		return "Modelplane"
+	case owner == "Crossplane" || owner == "crossplane":
+		return "Crossplane"
+	case owner == "kro" || owner == "KRO":
+		return "kro"
 	case owner == "Helm" || owner == "helm":
 		return "Helm"
+	case owner == "Terraform" || owner == "terraform":
+		return "Terraform"
 	case owner == "ConfigHub" || owner == "confighub":
 		return "ConfigHub"
 	default:
-		// All other owners (including Crossplane) fall to Native until
-		// they become first-class categories in the ASCII canonical model.
 		return "Native"
 	}
 }
@@ -395,16 +415,16 @@ type TraceSecrets struct {
 
 // TraceSecretEvidence represents a single secret reference and its resolution status.
 type TraceSecretEvidence struct {
-	Name         string              `json:"name"`
-	Namespace    string              `json:"namespace"`
-	RefType      string              `json:"refType"`               // e.g., "envFrom.secretRef", "volume.secret"
-	RefPath      string              `json:"refPath,omitempty"`     // e.g., "containers[app].envFrom[0].secretRef"
-	Status       string              `json:"status"`                // "present", "missing", "unreadable", "unresolved"
-	StatusReason string              `json:"statusReason,omitempty"`
-	SecretType   string              `json:"secretType,omitempty"`   // e.g., "Opaque", "kubernetes.io/tls" (when present)
-	CreatedAt    string              `json:"createdAt,omitempty"`    // RFC3339 timestamp (when present)
-	Owner        *TraceSecretOwner   `json:"owner,omitempty"`        // Detected ownership (when present)
-	Optional     bool                `json:"optional,omitempty"`
+	Name         string            `json:"name"`
+	Namespace    string            `json:"namespace"`
+	RefType      string            `json:"refType"`           // e.g., "envFrom.secretRef", "volume.secret"
+	RefPath      string            `json:"refPath,omitempty"` // e.g., "containers[app].envFrom[0].secretRef"
+	Status       string            `json:"status"`            // "present", "missing", "unreadable", "unresolved"
+	StatusReason string            `json:"statusReason,omitempty"`
+	SecretType   string            `json:"secretType,omitempty"` // e.g., "Opaque", "kubernetes.io/tls" (when present)
+	CreatedAt    string            `json:"createdAt,omitempty"`  // RFC3339 timestamp (when present)
+	Owner        *TraceSecretOwner `json:"owner,omitempty"`      // Detected ownership (when present)
+	Optional     bool              `json:"optional,omitempty"`
 }
 
 // TraceSecretOwner represents detected ownership of a secret.
@@ -435,13 +455,13 @@ type TraceEvents struct {
 
 // TraceEvent represents a single Kubernetes event.
 type TraceEvent struct {
-	Type      string `json:"type"`              // Normal or Warning
-	Reason    string `json:"reason"`            // e.g., Pulled, BackOff, FailedScheduling
-	Message   string `json:"message"`           // Human-readable message
-	Count     int32  `json:"count,omitempty"`   // Number of occurrences
-	Age       string `json:"age"`               // Human-readable age (e.g., "5m", "2h")
-	Severity  string `json:"severity"`          // info, warning, error
-	Source    string `json:"source,omitempty"`  // Component that generated the event
+	Type      string `json:"type"`                // Normal or Warning
+	Reason    string `json:"reason"`              // e.g., Pulled, BackOff, FailedScheduling
+	Message   string `json:"message"`             // Human-readable message
+	Count     int32  `json:"count,omitempty"`     // Number of occurrences
+	Age       string `json:"age"`                 // Human-readable age (e.g., "5m", "2h")
+	Severity  string `json:"severity"`            // info, warning, error
+	Source    string `json:"source,omitempty"`    // Component that generated the event
 	FirstSeen string `json:"firstSeen,omitempty"` // RFC3339 timestamp
 	LastSeen  string `json:"lastSeen,omitempty"`  // RFC3339 timestamp
 }
@@ -478,11 +498,11 @@ const (
 // InferRole determines the role of a chain node based on its Kind.
 func InferRole(kind string) string {
 	switch kind {
-	case "GitRepository", "OCIRepository", "ConfigHub OCI", "HelmRepository", "Bucket":
+	case "GitRepository", "OCIRepository", "ConfigHub OCI", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return RoleSource
-	case "Kustomization", "HelmRelease", "Application":
+	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return RoleDeployer
-	case "ReplicaSet", "Pod":
+	case "ReplicaSet", "Pod", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":
 		return RoleIntermediate
 	default:
 		return RoleWorkload
@@ -544,14 +564,14 @@ const (
 // Returns "" for kinds that don't map to a known stage.
 func InferDeliveryStage(kind string) string {
 	switch kind {
-	case "GitRepository", "HelmRepository", "Bucket":
+	case "GitRepository", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return StageSource
 	case "OCIRepository", "ConfigHub OCI":
 		return StageArtifact
-	case "Kustomization", "HelmRelease", "Application":
+	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return StageDeployer
 	case "Deployment", "StatefulSet", "DaemonSet", "Service", "ConfigMap", "Secret", "Ingress",
-		"ReplicaSet", "Pod", "Job", "CronJob":
+		"ReplicaSet", "Pod", "Job", "CronJob", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":
 		return StageWorkload
 	default:
 		return ""

@@ -121,7 +121,7 @@ Press **t** on any resource to trace where it came from:
 
 **Trace shows:**
 - Where the config came from (Git)
-- How it was deployed (Flux/Argo)
+- How it was deployed (Flux/Argo/Sveltos/Modelplane/Helm where evidence exists)
 - Current state in cluster
 
 ---

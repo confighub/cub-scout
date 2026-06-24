@@ -7,7 +7,8 @@ Built-in and user-defined queries for filtering resources.
 | Name | Query | Description |
 |------|-------|-------------|
 | `unmanaged` | `owner=Native` | Resources with no GitOps owner |
-| `gitops` | `owner=Flux OR owner=ArgoCD` | Resources managed by GitOps |
+| `gitops` | `owner=Flux OR owner=ArgoCD OR owner=Sveltos` | Resources managed by GitOps-style controllers |
+| `modelplane` | `owner=Modelplane` | Resources managed by Modelplane |
 | `flux` | `owner=Flux` | All Flux-managed resources |
 | `argo` | `owner=ArgoCD` | All Argo CD-managed resources |
 | `helm-only` | `owner=Helm` | Helm-managed resources (no GitOps) |
@@ -90,13 +91,13 @@ queries:
 | `!=` | `owner!=Native` | Not equals |
 | `=*` | `namespace=prod*` | Wildcard match |
 | `AND` | `owner=Flux AND namespace=prod*` | Both conditions |
-| `OR` | `owner=Flux OR owner=ArgoCD` | Either condition |
+| `OR` | `owner=Flux OR owner=Sveltos` | Either condition |
 
 ### Fields
 
 | Field | Example | Description |
 |-------|---------|-------------|
-| `owner` | `owner=Flux` | Ownership (Flux, ArgoCD, Helm, Native, ConfigHub) |
+| `owner` | `owner=Flux` | Ownership (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, Native) |
 | `kind` | `kind=Deployment` | Resource kind |
 | `namespace` | `namespace=prod*` | Namespace (supports wildcards) |
 | `name` | `name=payment*` | Resource name |

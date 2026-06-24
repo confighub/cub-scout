@@ -33,7 +33,7 @@ Complete reference for all interactive TUI views.
 **Content:**
 - Total resource count
 - Healthy vs unhealthy
-- Deployer summary (Flux, ArgoCD, Helm counts)
+- Deployer summary (Flux, ArgoCD, Sveltos, Modelplane, Helm, and Native counts)
 - Recent activity
 
 **Layout:**
@@ -100,7 +100,7 @@ Complete reference for all interactive TUI views.
 - ArgoCD: Applications, ApplicationSets
 - Status: Applied/Synced, Suspended, Failed
 - Source value follows deployer-specific extraction rules
-- `unknown` means source field missing/unreadable (not a failure by itself)
+- `unknown` means source/controller summary missing or unreadable (not a failure by itself)
 
 See: `docs/reference/pipeline-source-resolution.md`
 

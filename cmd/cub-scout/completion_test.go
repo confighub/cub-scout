@@ -9,32 +9,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func TestCompleteOwnersIncludesCrossplaneTerraformAndKro(t *testing.T) {
+func TestCompleteOwnersIncludesControllerOwners(t *testing.T) {
 	cmd := &cobra.Command{}
 	owners, _ := completeOwners(cmd, nil, "")
 
-	foundTerraform := false
-	foundCrossplane := false
-	foundKro := false
-	for _, o := range owners {
-		if o == "Terraform" {
-			foundTerraform = true
+	expected := []string{"Terraform", "Crossplane", "kro", "Sveltos", "Modelplane"}
+	for _, want := range expected {
+		found := false
+		for _, owner := range owners {
+			if owner == want {
+				found = true
+				break
+			}
 		}
-		if o == "Crossplane" {
-			foundCrossplane = true
+		if !found {
+			t.Fatalf("expected %s in owner completions, got: %v", want, owners)
 		}
-		if o == "kro" {
-			foundKro = true
-		}
-	}
-	if !foundTerraform {
-		t.Fatalf("expected Terraform in owner completions, got: %v", owners)
-	}
-	if !foundCrossplane {
-		t.Fatalf("expected Crossplane in owner completions, got: %v", owners)
-	}
-	if !foundKro {
-		t.Fatalf("expected kro in owner completions, got: %v", owners)
 	}
 }
 

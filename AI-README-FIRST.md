@@ -106,14 +106,14 @@ Current release: **v2.2.1** (next: **v2.3.0** — release-notes draft at `docs/r
   - Documented in `docs/reference/json-contracts.md` § Receipt Contract (+ "v2 Extensions"); `docs/reference/commands.md` § receipt verify; `docs/reference/cli-contract.md` § receipt; new task-shaped tutorial at `docs/howto/receipts-end-to-end.md`; 4 worked examples at `examples/receipts/{ci-gate,chained,aggregate,watch-emit}/`
 - **AI-agent skill catalog — 42 skill files** (`#442` closed; PRs `#452`+`#457`+`#458`+`#459`+`#460`; plus `#444` Pilot consumer side closed in `#466`+`#467`+`#468`)
   - 8 verb-group skills (`scout-observe`, `scout-diagnose`, `scout-compare`, `scout-attribute`, `scout-ingest`, `scout-govern`, `scout-mcp`, `scout-verify`)
-  - 7 controller-observer skills (`observe-argocd`, `observe-flux`, `observe-helm`, `observe-crossplane`, `observe-kro`, `observe-confighub-managed`, `observe-native`)
+  - 9 controller-observer skills (`observe-argocd`, `observe-flux`, `observe-sveltos`, `observe-modelplane`, `observe-helm`, `observe-crossplane`, `observe-kro`, `observe-confighub-managed`, `observe-native`)
   - 8 workflow scenario skills (`triage-unhealthy-workload`, `investigate-drift`, `audit-fleet-conformance`, `prepare-for-confighub`, `migrate-from-kubectl`, `ai-agent-readonly-context`, `operator-incident-evidence`, `confighub-source-truth`)
   - **9 Pilot–cub-scout integration scenarios** (consumer-side complement): `pilot-cd-gate`, `pilot-fleet-conformance`, `pilot-patch-and-drift`, `pilot-watch-alert-response`, `pilot-incident-evidence` (batch A, `#466`+`#467`); `pilot-rollback-decision`, `pilot-promotion-gate`, `pilot-compliance-audit`, `pilot-release-verification` (batch B, `#468`)
   - 9 shared references + umbrella router
   - Every skill's `allowed-tools` enumerates read-only subcommands — no broad `Bash(cub-scout *)` wildcards, no broad `Bash(./cub-scout compare *)` (would have allowed legacy `compare --suggest --apply` mutation; caught by Codex round-7 P1)
 - **Attribution layer** (`#435` — A1, A1.5, A2, B, C1, C2; all stages shipped)
   - `cause` + `managerHint` on every field mismatch — classifies controller-drift vs manual-edit via K8s `managedFields` co-signaled with detected owner
-  - Verified manager-string enumeration (`pkg/agent/manager_strings.go`) covers Argo CD, Flux (kustomize/helm/source), Helm direct, Crossplane (composite/composed/claim/MRD/refs), kro (applyset/parent/labeller), `kubectl-*` — strings not in the enumeration return `unknown`
+  - Verified manager-string enumeration (`pkg/agent/manager_strings.go`) covers Argo CD, Flux (kustomize/helm/source), Helm direct, Crossplane (composite/composed/claim/MRD/refs), kro (applyset/parent/labeller), Sveltos (`application/apply-patch`), Modelplane via Crossplane composition managers, `kubectl-*` — strings not in the enumeration return `unknown`
   - Per-field-path resolution via `FieldsV1` decoding (`pkg/agent/field_ownership_paths.go`)
   - `gitSource{repoUrl, revision, path}` resource-level anchor via existing Argo/Flux tracers
   - `gitSource{file, line}` raw-YAML back-resolution via `--source-path <local-checkout>` flag (`pkg/agent/source_back_resolution.go`)

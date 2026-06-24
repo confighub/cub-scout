@@ -1,6 +1,6 @@
 # Trace Ownership Chains
 
-Trace any resource to its Git source — **one command for Flux, ArgoCD, or Helm**.
+Trace any resource to its controller/source evidence. Flux, ArgoCD, and Helm get source-oriented tracing; Sveltos and Modelplane get observed controller lineage.
 
 You don't need to know which tool manages a resource. Just run trace and cub-scout auto-detects the owner.
 
@@ -25,7 +25,10 @@ In mixed environments with multiple GitOps tools:
 |----------------|----------------|
 | Flux | Flux source + Kustomization/HelmRelease chain |
 | ArgoCD | Argo Application/ApplicationSet/App-of-Apps chain |
+| Sveltos | `Profile`/`ClusterProfile` owner annotations + referenced ConfigMap/Secret metadata |
+| Modelplane | Modelplane API objects, labels, ownerRefs, status, and composed children |
 | Helm (standalone) | Helm release metadata from cluster secrets |
+| Crossplane | Observed Crossplane resource evidence |
 | Custom detector owner | Emits custom owner name with an unsupported-chain warning |
 | Native/Unknown | Kubernetes ownerRef chain + orphan metadata |
 

@@ -81,7 +81,7 @@ Summary: 51 Deployments │ 189 Pods │ 186 Running │ 3 Pending
 
 ### Ownership Hierarchy
 
-Groups resources by GitOps owner (Flux, ArgoCD, Helm, ConfigHub, Native).
+Groups resources by detected owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native).
 
 ```bash
 cub-scout tree ownership

@@ -24,7 +24,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `discover` | Discover resources (alias for `map workloads`) |
 | `compare drift` | Detect drift between desired and live state |
 | `fleet` | Fleet-level connected insights |
-| `gitops` | GitOps status and diagnostics |
+| `gitops` | GitOps/controller status and diagnostics |
 | `graph` | Resource graph operations |
 | `health` | Check cluster issues (alias for `map issues`) |
 | `import` | Import workloads into ConfigHub |
@@ -75,11 +75,11 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `map meaning` | Experimental meaning-first grouped browse | - | Deterministic hybrid semantic + structural grouping |
 | `map status` | One-line health check | `s` | CI-friendly status summary |
 | `map workloads` | Workloads by owner | `w` | Ownership-focused view |
-| `map deployers` | Deployers (Deployments) | `p` | Deployer slice |
+| `map deployers` | Controller deployers | `p` | Flux/Argo/Sveltos/Modelplane/core workload slice |
 | `map cronjobs` | CronJob schedule/run view | - | Read-only operator visibility |
 | `map jobs` | Job run history view | - | Read-only operator visibility |
 | `map actions <kind/name>` | Action previews (runbook) | - | No mutation; preview only |
-| `map activity` | Unified activity timeline | - | Flux/Argo/Helm/Event signals |
+| `map activity` | Unified activity timeline | - | Flux/Argo/Sveltos/Modelplane/Helm/Event signals |
 | `map previews` | Preview env detection | - | PR/Forgejo/Gitea heuristics |
 | `map orphans` | Unmanaged + explicit AppSet-link orphans | `o` | Native/orphan focus |
 | `map crashes` | Failing pods/deployments | `c` | Crash/failure focus |
@@ -408,7 +408,7 @@ Press `?` in the TUI to see this help.
 | `s` | Status | Dashboard overview |
 | `w` | Workloads | Workloads by owner |
 | `a` | Apps | Grouped by app label + variant |
-| `p` | Pipelines | GitOps deployers (Flux, ArgoCD) |
+| `p` | Pipelines | Controller deployers (Flux, ArgoCD, Sveltos, Modelplane) |
 | `h` | History | Connected ChangeSet timeline |
 | `d` | Drift | Resources diverged from desired state |
 | `o` | Orphans | Native resources (not GitOps-managed) |
@@ -503,7 +503,7 @@ Press `:` to open the command palette. Type queries or shell commands.
 **Query examples:**
 ```
 :owner=Native              # Orphaned resources
-:owner=Flux OR owner=ArgoCD   # GitOps managed
+:owner=Flux OR owner=Sveltos  # Controller-managed
 :namespace=prod*           # Prod namespaces
 :labels[app]=nginx         # By label
 ```
@@ -543,7 +543,7 @@ expr OR expr          # Either matches
 kind, namespace, name, owner, status, cluster, labels[key]
 
 # Owner values
-Flux, ArgoCD, Helm, ConfigHub, Native
+Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, Native
 
 # Status values
 Ready, NotReady, Failed, Pending, Unknown
