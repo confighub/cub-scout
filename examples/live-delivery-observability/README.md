@@ -1,6 +1,6 @@
 # Live Delivery Observability Fixture
 
-This fixture demonstrates the next-release diagnostic questions in one small
+This fixture demonstrates the v2.7.0 diagnostic questions in one small
 recorded object set:
 
 - aggregate delivery status from first-class controller resources

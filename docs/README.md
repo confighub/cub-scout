@@ -32,10 +32,10 @@
 | What | Command | Guide |
 |------|---------|-------|
 | GitOps pipeline health | `cub-scout gitops status` | [reference/commands.md#gitops-v014](reference/commands.md#gitops-v014) |
-| Delivery readiness decision | `cub-scout doctor`, `cub-scout explain`, `cub-scout receipt verify` | [howto/delivery-readiness-decision.md](howto/delivery-readiness-decision.md) |
+| Delivery readiness decision | `cub-scout doctor`, `cub-scout explain`, `cub-scout compare object-set`, `cub-scout receipt verify` | [howto/delivery-readiness-decision.md](howto/delivery-readiness-decision.md) |
 | Scan for risks | `cub-scout scan --state` | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Scan a manifest file | `cub-scout scan --file FILE` | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
-| Drift detection | `cub-scout drift deploy/NAME -n NS` | [howto/drift.md](howto/drift.md) |
+| Drift detection | `cub-scout compare drift deploy/NAME -n NS` | [howto/drift.md](howto/drift.md) |
 
 ### Analyze
 
@@ -43,7 +43,7 @@
 |------|---------|-------|
 | Tree hierarchies | `cub-scout tree ownership` | [howto/tree-hierarchies.md](howto/tree-hierarchies.md) |
 | Git repo patterns | `cub-scout patterns detect --git-root PATH` | [reference/commands.md#patterns-v07](reference/commands.md#patterns-v07) |
-| Git + cluster alignment | `cub-scout combined --git-path PATH` | [combined-git-live example](../examples/combined-git-live/) |
+| Git + cluster alignment | `cub-scout compare --git-path PATH` | [combined-git-live example](../examples/combined-git-live/) |
 | Export resource graph | `cub-scout graph export` | [reference/commands.md#graph-v06](reference/commands.md#graph-v06) |
 | Debug bundles | `cub-scout bundle inspect FILE` | [howto/debug-bundle.md](howto/debug-bundle.md) |
 

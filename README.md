@@ -4,21 +4,23 @@
 
 cub-scout is an open-source observer for live Kubernetes clusters and GitOps. Point it at your current kube context and it reads what Kubernetes, Argo CD, Flux, Sveltos, Modelplane, Helm, Crossplane, kro, and ConfigHub already know: what is running, who owns it, where it came from, what is unhealthy, and what to check next.
 
-It diagnoses, explains, traces, maps, scans, **compares** intended vs running state, and **attributes** every field back to its source — but it never modifies cluster state and never makes authority calls about what *should* be true. Safe to run against production.
+It diagnoses, explains, traces, maps, scans, **compares** intended vs running state, and adds provenance evidence to supported field mismatches where signals exist — but it never modifies cluster state and never makes authority calls about what *should* be true. Safe to run against production.
 
 Cub-scout helps users answer questions about k8s and GitOps clusters in one place.
 
 | User question | cub-scout surface | What cub-scout provides |
 |---|---|---|
 | What is running, and who owns it? | `doctor`, `map`, `trace`, `explain` | Live inventory, ownership, source chain, recent events, and next read-only checks across supported controllers and platforms. |
-| Is delegated delivery healthy? | `gitops status` | Controller-reported backend, transport, source/build/apply/sync stages, reason/message, and explicit evidence gaps when status is incomplete. |
+| Is delegated delivery healthy? | `gitops status`, `map deployers`, `map activity`, `trace` | Controller-reported backend, transport, source/build/apply/sync stages, first-class aggregate delivery resources, reason/message, and explicit evidence gaps when status is incomplete. |
 | Has intended configuration reached the cluster? | `compare three-way` | DRY/WET/LIVE agreement for a resource, namespace, cluster, or governed view, with states like `agreed`, `converging`, `diverged`, and `partial`. |
-| Is this rollout still progressing, complete, or stuck? | `receipt verify --predicate workloads-converged`, `doctor`, `explain` | Generation-aware workload evidence: desired vs observed generation, kstatus, progress clock, pod failure signals, and `PASS` / `WATCH` / `BLOCK` / `INCONCLUSIVE` verdicts. |
+| Did this rendered install set land as a set? | `compare object-set`, `receipt verify --file` | Set-level desired-vs-live evidence from rendered YAML: authored-field deltas, optional added/removed object closure, object-set receipts, normalization profiles, freshness TTL, and CI-gate verdicts. |
+| Is this rollout still progressing, complete, or stuck? | `receipt verify --predicate workloads-converged`, `doctor`, `explain`, `compare three-way` | Generation-aware workload evidence: `metadata.generation`, `status.observedGeneration`, kstatus, progress clock, pod failure signals, and `PASS` / `WATCH` / `BLOCK` / `INCONCLUSIVE` verdicts. |
 | Can I move to the next task, wait, or retry delivery? | `receipt verify`, `compare three-way`, `doctor` | A read-only decision frame that separates "not applied yet", "still converging", "runtime failure", and "missing evidence". |
 | Is live state drifting from desired state? | `compare drift`, `compare three-way`, `compare source-truth` | Field-level differences, strategy-relative source-truth evidence, conformance exit codes, and explicit proof gaps when evidence is missing. |
-| Is this a delivery problem or an application/runtime problem? | `doctor`, `explain`, `patterns`, `scan` | kstatus health, Kubernetes events, workload symptoms, known-pattern matches, and phase-aware hints so operators can separate sync/convergence issues from runtime failures. |
+| Is this a delivery problem or an application/runtime problem? | `doctor`, `explain`, `gitops status`, `map activity`, `trace`, `patterns`, `scan` | kstatus health, Kubernetes events, audited action metadata when present, workload symptoms, known-pattern matches, and phase-aware hints so operators can separate sync/convergence issues from runtime failures. |
+| What triggered this reconcile, check, or action? | `map activity`, `trace`, `explain` | Audited Kubernetes action event metadata when present: action, actor, subject, groups, timestamp, and preserved raw annotation evidence. |
 | Who changed this field, and where did the value come from? | `compare`, `explain`, attribution JSON | `cause`, `managerHint`, `gitSource`, `bindingSource`, audit/event evidence where available, and optional file:line back-resolution from live `managedFields`, controller metadata, local source files, and governed links. |
-| Can I answer broad or repeated questions without hammering live APIs? | `snapshot`, `watch`, `summary`, receipts | Captured state, low-cardinality watch events, connected summaries, freshness metadata, and immutable receipts for repeated review, fleet triage, and audit paths. |
+| Can I answer broad or repeated questions without hammering live APIs? | `snapshot`, `watch`, `summary`, receipts | Existing captured state, low-cardinality watch events, connected summaries, observed timestamps/fingerprints where present, and immutable receipts for repeated review, fleet triage, and audit paths. |
 | Can I keep auditable evidence of the check? | `receipt verify`, `receipt validate`, `watch --emit-receipt-on` | Typed, fingerprinted, immutable evidence receipts for gates, incident closeout, audits, chained checks, and real-time watch events. |
 
 The main path starts from a **live cluster**. It works **standalone** with your current kube context, or **connected** to [ConfigHub](https://confighub.com) for governed comparison, history, import, fleet queries, and AI-friendly read-only workflows. Local repo and manifest inputs are available later for adoption, import-preview, and source-file enrichment, but they are not the first mental model.
@@ -78,10 +80,11 @@ Each command's **Inputs** column tells you exactly what it needs — cluster onl
 |---|---|---|
 | `compare` (resource mode) | Single-resource DRY/WET/LIVE picture when connected; LIVE-only when standalone | cluster (+ConfigHub for DRY/WET) |
 | `compare drift` | Desired (file) vs live drift detection | cluster + file |
-| `compare three-way` | Scope-wide DRY/WET/LIVE with agreement summary and conformance verdict | cluster + ConfigHub |
-| `compare source-truth` | Strategy-relative `PASS` / `WATCH` / `ASK` / `BLOCK` evidence Pilot consumes (#393) | cluster + ConfigHub |
+| `compare three-way` | Scope-wide DRY/WET/LIVE with agreement summary and conformance verdict; `--dry-from` supports standalone rendered YAML as DRY | cluster + ConfigHub or rendered YAML |
+| `compare object-set` | Set-level desired-vs-live ObjectSetDiffReceipt from rendered YAML, with optional closed-world added/removed object diff | cluster + rendered YAML |
+| `compare source-truth` | Strategy-relative `PASS` / `WATCH` / `ASK` / `BLOCK` evidence for downstream acceptance tools (#393) | cluster + ConfigHub |
 
-Today, `compare three-way` and `compare source-truth` require ConfigHub. A standalone "git as DRY" mode is in the [next-up](#whats-coming-next) list.
+`compare source-truth` still requires connected source-truth evidence. `compare three-way --dry-from` and `compare object-set --dry-from` support standalone rendered YAML as desired-state input.
 
 ### Verify — typed, fingerprinted, immutable evidence artifacts
 
@@ -306,11 +309,10 @@ For Claude, Codex, and other AI agents:
 
 Honest gaps in the current capability map, with the leverage on filling them:
 
-- **Standalone `compare three-way --git-path` / `--source-path` as DRY source** — would let raw-YAML repos run the same three-way view without ConfigHub. Stage B back-resolution (#440) already lays the parsing groundwork.
-- **`compare source-truth` Phase 3 (multi-source Argo)** — [#409](https://github.com/confighub/cub-scout/issues/409) Phase 1 (4 strategies) and Phase 2 (5 more strategies: `helm-flux`, `helm-argo`, `kustomize-flux`, `oci-flux`, `oci-argo`) already shipped (9 strategies total). Phase 3 — multi-source Argo `spec.sources[]` len > 1 — is the remaining open scope.
+- **Helm / Kustomize provenance back-resolution** — [#481](https://github.com/confighub/cub-scout/issues/481) extends raw-YAML field attribution from stage B (#440) to templated sources while preserving honesty markers when exact file:line evidence is unavailable.
+- **Live delivery observability follow-ups** — aggregate delivery failures as top-level `doctor` findings, audited action events as history/receipt evidence, broader freshness metadata for snapshot/watch/summary/receipt paths, and parity omissions for controllers without status/source/event/generation evidence.
 - **`import --git-path --output-dir`** — emit proposed unit YAMLs to disk for PR review, then upload via Installer's `--merge-external-source` once connected. One bundle, two workflows.
 - **Hierarchy-aware adoption/import** — preserve ApplicationSet / app-of-apps / Flux Kustomization composition in import proposals so imported ConfigHub state is navigable, not flat.
-- **Helm / Kustomize back-resolution** — extends stage B (#440) from raw YAML to templated sources for per-field `file:line` provenance.
 - **Additional manager-string writers** — Tekton, Argo Workflows, Cluster API, OIDC-based CD systems — gated on whether the variant-management story demands them.
 
 ---
@@ -326,7 +328,7 @@ Honest gaps in the current capability map, with the leverage on filling them:
 | JSON fields and output model | [docs/reference/json-contracts.md](docs/reference/json-contracts.md) |
 | Getting started checklist | [docs/getting-started/checklist.md](docs/getting-started/checklist.md) |
 | Import and migration path | [docs/howto/import-to-confighub.md](docs/howto/import-to-confighub.md) |
-| Delivery readiness decision | [docs/howto/delivery-readiness-decision.md](docs/howto/delivery-readiness-decision.md) |
+| Delivery readiness decision and live-delivery fixture | [docs/howto/delivery-readiness-decision.md](docs/howto/delivery-readiness-decision.md) + [examples/live-delivery-observability/](examples/live-delivery-observability/) |
 | AI tool integration | [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md) |
 | Examples and demos | [examples/README.md](examples/README.md) |
 | Receipts (typed evidence artifacts) | [examples/receipts/README.md](examples/receipts/README.md) + [docs/reference/json-contracts.md § Receipt Contract](docs/reference/json-contracts.md) |

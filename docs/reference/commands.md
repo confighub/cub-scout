@@ -43,12 +43,13 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `import parse-repo` | Parse GitOps repository structure for import preview | v1.0 |
 | `compare` (alias: `combined`) | Compare Git and cluster/bundle structures, or show LIVE snapshot for one resource | v1.0 |
 | `compare three-way` | Connected intent/render/observed comparison for resource/namespace/cluster/view scopes | v1.6 |
+| `compare object-set` | Rendered object-set diff receipt against live state | v2.6 |
 | `context-pack` | Export deterministic AI context JSON bundle | v1.8 |
 | `debug` | Guided GitOps debugging wizard | v0.14.2 |
 | `discover` | Scout-style workload discovery | v0.5 |
 | `health` | Scout-style health check | v0.5 |
 | `app` | Manage ConfigHub Apps | v1.0 |
-| `remedy` | Execute remediation for auto-fixable risk findings | v0.20 |
+| `suggest-remedy` | Describe read-only remediation guidance for auto-fixable risk findings | v0.20 |
 | `snapshot` | Export cluster state as GSF JSON | v0.20 |
 | `status` | Show connection status and cluster info | v1.0 |
 | `history` | Show connected change history from ConfigHub ChangeSets | v1.4 |
@@ -1222,13 +1223,17 @@ Resource compare mode behavior:
 
 ### compare three-way
 
-Connected three-way comparison command for selected scopes. For workload
+Connected or standalone three-way comparison command for selected scopes. In
+connected mode, cub-scout compares ConfigHub DRY/WET state against LIVE. With
+`--dry-from`, cub-scout uses a rendered YAML file or directory as DRY and
+compares it directly against LIVE without requiring connected mode. For workload
 resources, output may include generation-scoped current-change rollout evidence
 when live status can be read.
 
 ```bash
 cub-scout compare three-way --scope <scope> [flags]
 cub-scout compare three-way --view <uuid-or-url> [flags]
+cub-scout compare three-way --scope <scope> --dry-from <rendered.yaml|dir> [flags]
 ```
 
 Scoping options (mutually exclusive):
@@ -1243,9 +1248,15 @@ ConfigHub units match a saved View's filter. Accepts a bare UUID or a View
 Explorer URL (paste from the browser address bar). Requires connected mode.
 `report.scope` is set to `view/<uuid>` in JSON output.
 
+**`--dry-from <path>`** — standalone DRY source. The path must contain rendered
+Kubernetes YAML; cub-scout does not run Helm, Kustomize, or a ConfigHub renderer
+for this flag.
+
 Flags:
 - `--scope` / `--view` (one required; mutually exclusive)
 - `-n, --namespace` (resource scope namespace override)
+- `--dry-from <file|dir>` (standalone rendered YAML as DRY)
+- `--source-path <local-checkout>` (optional raw-YAML file:line enrichment)
 - `--format ascii|json|md`
 - `--json` (shorthand for `--format json`)
 - `--fail-on info|warning`
@@ -1258,6 +1269,9 @@ cub-scout compare three-way --scope deploy/payment-api -n prod
 
 # Namespace scope
 cub-scout compare three-way --scope namespace/prod --format json
+
+# Standalone rendered YAML as DRY
+cub-scout compare three-way --scope namespace/prod --dry-from out/manifests --format json
 
 # Cluster scope
 cub-scout compare three-way --scope cluster --format md
@@ -1275,7 +1289,63 @@ Output notes:
 - JSON includes `summary.agreement.{state,summary,reasons,sources}`
 - agreement states are `agreed`, `converging`, `diverged`, and `partial`
 - conformance exit codes still depend only on JSON facts + `--fail-on`
+- `--dry-from` mode omits connected ConfigHub evidence and reports the rendered YAML path as the DRY source
 - `--view` resolution chain: `cub view get` → extract `Filter.Where` → `cub unit list --where` → label-match cluster workloads
+
+---
+
+### compare object-set
+
+Standalone set-level comparison between a rendered desired object set and live
+cluster state. It emits one ObjectSetDiffReceipt (`predicate:
+object-set-diff`) for the set instead of one report per resource.
+
+```bash
+cub-scout compare object-set --dry-from <rendered.yaml|dir> [flags]
+```
+
+Flags:
+- `--dry-from <file|dir>` (required rendered desired object set)
+- `-n, --namespace` (default namespace for namespaced objects without `metadata.namespace`)
+- `--scope namespace/<ns>|cluster`
+- `--diff` (closed-world added/removed object diff)
+- `--normalization-profile <name>`
+- `--ttl <duration>` (records receipt freshness boundary)
+- `--fail-on WATCH|BLOCK|INCONCLUSIVE|any-non-pass`
+- `--out <path>`
+- `--save`
+- `--format json|ascii`
+
+Examples:
+
+```bash
+# Authored-field deltas for a rendered set
+cub-scout compare object-set --dry-from out/manifests -n prod --format json
+
+# Include added/removed object closure
+cub-scout compare object-set --dry-from out/manifests --scope namespace/prod --diff
+
+# CI gate on any non-PASS set verdict
+cub-scout compare object-set \
+  --dry-from out/manifests \
+  --scope namespace/prod \
+  --fail-on any-non-pass \
+  --out object-set-diff.receipt.json
+```
+
+Verdicts:
+- `PASS` — no authored-field, added-object, or removed-object deltas.
+- `WATCH` — only closure deltas when `--diff` is enabled.
+- `BLOCK` — one or more shared objects have authored-field deltas.
+
+Output notes:
+- The command reads the cluster and rendered YAML only; it never calls a
+  reconciler and never mutates.
+- `--diff` is required to compute added/removed object closure. Without it,
+  the receipt records an omission explaining that closure deltas were not
+  computed.
+- `--normalization-profile` applies supported Kubernetes server-default
+  normalization symmetrically before comparison and digesting.
 
 ---
 
@@ -2663,6 +2733,8 @@ See also:
 
 - Contract: [`json-contracts.md`](json-contracts.md) § Receipt Contract
 - Example: [`examples/receipts/`](../../examples/receipts/)
+- Delivery readiness: [`docs/howto/delivery-readiness-decision.md`](../howto/delivery-readiness-decision.md)
+- Live-delivery fixture: [`examples/live-delivery-observability/`](../../examples/live-delivery-observability/)
 - Locked design: [`docs/proposals/receipts-way-forward.md`](../proposals/receipts-way-forward.md)
 
 ---

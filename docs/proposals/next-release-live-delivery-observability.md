@@ -1,6 +1,7 @@
 # Next-Release Mini PRD: Live Delivery Observability
 
-Status: draft
+Status: partially shipped in v2.7.0; remaining follow-ups are tracked in
+`docs/roadmap.md`
 
 Audience: maintainers and reviewers
 
@@ -34,9 +35,14 @@ clear proof gaps when evidence is missing.
 - No hidden inference. If a controller does not expose status, lineage, source,
   artifact, event, or generation evidence, the result must say so.
 
-## A. Next-Release Updates
+## A. v2.7.0 Slice And Remaining Follow-Ups
 
 ### A1. First-Class Aggregate Delivery Resources
+
+v2.7.0 status: partial. First-class resource discovery, ownership,
+deployer/status, direct trace lookup, `gitops status`, and activity support
+shipped. Deeper source/generated-artifact lineage and aggregate delivery
+failures as top-level `doctor` findings remain follow-ups.
 
 Add first-class observation for aggregate-report, app-bundle, input-provider,
 external-artifact, and generated-artifact resource families.
@@ -75,6 +81,10 @@ Acceptance criteria:
 
 ### A2. Audited User-Action Event Ingestion
 
+v2.7.0 status: partial. `map activity`, `trace`, and `explain` event summaries
+ship action metadata when Kubernetes Events expose it. History and receipt
+supporting evidence remain follow-ups.
+
 Parse audited action events emitted by controller web consoles or automation
 frontends when they are available as standard cluster events.
 
@@ -104,6 +114,9 @@ Acceptance criteria:
 - Tests cover present, partial, malformed, and unrelated event shapes.
 
 ### A3. Promote Rollout Progress and Verdicts
+
+v2.7.0 status: shipped for `doctor`, `explain`, `compare three-way`, and
+`receipt verify --predicate workloads-converged`.
 
 Move generation-aware rollout evidence from receipt-only workflows into primary
 diagnostic UX.
@@ -139,6 +152,10 @@ Acceptance criteria:
 
 ### A4. API-Load-Aware Inventory And Search
 
+v2.7.0 status: follow-up. The README now points users at existing snapshot,
+watch, summary, and receipt surfaces for repeated review; broader source
+freshness metadata and low-load search plumbing remain open.
+
 Make repeated and fleet-shaped observation cheap by preferring captured,
 summarized, or watched evidence when a fresh wide cluster crawl is not required.
 
@@ -172,6 +189,9 @@ Acceptance criteria:
 - No mandatory persistent database is added to standalone mode.
 
 ## B. Controller-Family Parity
+
+v2.7.0 status: follow-up for parity audit and structured fallback omissions
+beyond the controller/resource support already shipped.
 
 Parity means the observer can answer the same user questions for a controller
 family using deterministic evidence. It does not mean every controller exposes
@@ -209,7 +229,8 @@ Next-release parity rule:
 
 ### C1. Improve The Observer
 
-The next release should treat "done" as two separate outputs:
+Remaining work should preserve the release decision model that treats "done" as
+two separate outputs:
 
 - Progress: where the current change appears to be in the delivery/runtime
   path.
@@ -245,7 +266,7 @@ Implementation recommendations:
 ### C2. Improve The User-Questions Table
 
 The README table should stay near the top and remain framed around user
-questions, not controller internals. The next-release table should cover:
+questions, not controller internals. The README table should cover:
 
 - What is running, and who owns it?
 - Is delegated delivery healthy?
@@ -261,8 +282,8 @@ Acceptance criteria:
 
 - The table avoids claims that the observer owns deployment or application
   success.
-- Each row maps to an existing command, a next-release command enhancement, or
-  an explicit evidence gap.
+- Each row maps to an existing command, a shipped v2.7.0 enhancement, a
+  follow-up enhancement, or an explicit evidence gap.
 - The table uses "user question" language, not private stakeholder language.
 
 ## Definition Of Done
