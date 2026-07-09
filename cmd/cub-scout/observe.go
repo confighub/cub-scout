@@ -181,6 +181,9 @@ func fetchRolloutDecision(ctx context.Context, namespace, kind, name string) (*a
 	if !agent.IsRolloutWorkloadKind(kind) {
 		return nil, false
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	cfg, err := buildConfig()
 	if err != nil {
 		return nil, false

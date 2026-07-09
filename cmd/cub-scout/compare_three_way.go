@@ -271,6 +271,10 @@ func parseThreeWayScope(raw string) (threeWayScope, error) {
 }
 
 func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThreshold string) (threeWayReport, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	targets, err := collectThreeWayTargets(ctx, scope)
 	if err != nil {
 		return threeWayReport{}, err
