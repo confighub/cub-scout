@@ -52,7 +52,8 @@ For an auditable gate over a rendered object set:
 | `currentChange.verdict=WATCH` with `reason=stale_generation` | The API has not yet observed the desired generation. | Wait and re-check; do not call it done. |
 | `currentChange.verdict=WATCH` with `reason=rollout_progressing` | Current generation is observed and still progressing. | Wait, or extend the grace window if your rollout is expected to be slow. |
 | `currentChange.verdict=BLOCK` with `reason=runtime_failed` | Runtime evidence, such as pod/container failure, is present. | Investigate application/runtime symptoms before retrying delivery. |
-| `currentChange.verdict=BLOCK` with drift or source-truth mismatch | Live state or controller evidence disagrees with intent. | Investigate drift/source mismatch before proceeding. |
+| `currentChange.verdict=BLOCK` with `reason=runtime_failed`, `rollout_failed`, or `progress_stalled` | Runtime or rollout evidence is blocking the current-generation change. | Investigate workload/controller symptoms before retrying delivery. |
+| `compare three-way` divergence or `compare source-truth` mismatch | Live state, rendered state, or controller source evidence disagrees with intent. | Investigate drift/source mismatch before proceeding. |
 | `INCONCLUSIVE` or omitted `currentChange` | cub-scout could not collect enough evidence for this resource or kind. | Treat as a proof gap; inspect raw cluster/controller evidence. |
 
 ## What Cub-Scout Checks
@@ -113,4 +114,3 @@ for a review fixture that includes:
 - audited action event metadata
 - stale-generation rollout evidence
 - runtime pod failure evidence
-

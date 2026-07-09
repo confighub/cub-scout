@@ -25,9 +25,10 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 ### Live Delivery Observability (`proposals/next-release-live-delivery-observability.md`)
 
-- [x] First-class aggregate delivery/app-bundle/input-provider/external-artifact/generated-artifact resources in controller-resource discovery, ownership, deployer/status, trace, and activity surfaces
+- [x] First-class aggregate delivery resources (`FluxInstance`, `FluxReport`, `ResourceSet`, `ResourceSetInputProvider`, `ExternalArtifact`, `ArtifactGenerator`) in controller-resource discovery, ownership, deployer/status, trace, and activity surfaces
 - [x] Audited user-action event ingestion for activity, explain, and trace event summaries
 - [x] Generation-aware rollout progress/verdict UX promoted from receipts into doctor, explain, and compare surfaces
+- [x] README user-question table for live delivery decisions
 - [ ] Aggregate delivery failures as doctor top-level findings with deeper source/generated-artifact lineage where status refs expose it
 - [ ] Audited user-action event ingestion for history and receipt supporting evidence
 - [ ] API-load-aware inventory and search paths with source freshness for snapshot, watch, summary, and receipt-backed reads
@@ -130,15 +131,15 @@ Read-only-triad invariant: every cub-scout skill's `allowed-tools` line stays in
 
 Consumer-side complement to the AI Agent Skills above: these are scenario skills covering how **Pilot** (the architectural-triad acceptance judge) reads cub-scout's read-only evidence and produces verdicts that gate CD, fleet conformance, drift response, promotion, rollback, compliance, release verification, and event-driven flows. The 9th skill (`pilot-watch-alert-response`) makes `cub-scout watch` the real-time channel into Pilot; implementing it may surface follow-on feature requests against `cub-scout watch` itself (attribution-cause-flip events, source-truth verdict change events, Pilot-shaped event format).
 
-- [ ] `pilot-cd-gate` — pre-deploy gate consuming `compare source-truth` per-strategy verdict — tracked in #444 batch A
-- [ ] `pilot-fleet-conformance` — multi-cluster audit via `compare three-way --scope cluster` + `fleet outliers` — tracked in #444 batch A
-- [ ] `pilot-patch-and-drift` — manual edit + drift attribution → revert / quarantine / accept-as-canonical — tracked in #444 batch A
-- [ ] `pilot-watch-alert-response` — real-time event-driven response over `cub-scout watch` + on-demand call-back into `explain` / `compare three-way` for context — tracked in #444 batch A
-- [ ] `pilot-incident-evidence` — postmortem evidence package from `trace` + `explain` + attribution + events + `bundle` — tracked in #444 batch A
-- [ ] `pilot-rollback-decision` — when and which revision to roll back to — tracked in #444 batch B
-- [ ] `pilot-promotion-gate` — variant A → variant B promotion safety via per-variant three-way + `bindingSource` — tracked in #444 batch B
-- [ ] `pilot-compliance-audit` — periodic policy conformance via scope-wide source-truth + `scan` findings — tracked in #444 batch B
-- [ ] `pilot-release-verification` — post-deploy validation via three-way + `bindingSource` + `history` since deploy — tracked in #444 batch B
+- [x] `pilot-cd-gate` — pre-deploy gate consuming `compare source-truth` per-strategy verdict — shipped in #444 batch A
+- [x] `pilot-fleet-conformance` — multi-cluster audit via `compare three-way --scope cluster` + `fleet outliers` — shipped in #444 batch A
+- [x] `pilot-patch-and-drift` — manual edit + drift attribution → revert / quarantine / accept-as-canonical — shipped in #444 batch A
+- [x] `pilot-watch-alert-response` — real-time event-driven response over `cub-scout watch` + on-demand call-back into `explain` / `compare three-way` for context — shipped in #444 batch A
+- [x] `pilot-incident-evidence` — postmortem evidence package from `trace` + `explain` + attribution + events + `bundle` — shipped in #444 batch A
+- [x] `pilot-rollback-decision` — when and which revision to roll back to — shipped in #444 batch B
+- [x] `pilot-promotion-gate` — variant A → variant B promotion safety via per-variant three-way + `bindingSource` — shipped in #444 batch B
+- [x] `pilot-compliance-audit` — periodic policy conformance via scope-wide source-truth + `scan` findings — shipped in #444 batch B
+- [x] `pilot-release-verification` — post-deploy validation via three-way + `bindingSource` + `history` since deploy — shipped in #444 batch B
 
 Same read-only-triad invariant applies: every `pilot-*` skill's `allowed-tools` stays in the read set. Pilot itself may mutate (via `cub` / Argo / Flux / whatever), but the cub-scout skill surface stays witness-shaped.
 

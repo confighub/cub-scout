@@ -89,7 +89,21 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Current release: **v2.2.1** (next: **v2.3.0** — release-notes draft at `docs/releases/v2.3.0.md`; everything below was shipped after `v2.2.1`'s tag). As of 2026-05-25, these areas are fully or materially shipped:
+Current release tag: **v2.6.0** (next: **v2.7.0** — release-candidate notes at `docs/releases/v2.7.0.md`; PR #500 merged on 2026-07-09). As of 2026-07-09, these areas are fully or materially shipped:
+
+- **Live delivery observability release slice — merged for v2.7.0** (`#500`)
+  - README now starts with a user-question table covering ownership, delegated delivery health, intended-vs-live agreement, rollout progress, proceed/wait/retry framing, drift, delivery-vs-runtime separation, attribution, low-load repeated review paths, and receipts
+  - Shared generation-aware rollout decision model now surfaces beyond receipts on `doctor`, `explain`, and `compare three-way` as optional `currentChange` / `rollouts` JSON plus ASCII/Markdown renderings
+  - First-class `fluxcd.controlplane.io/v1` aggregate resources: `FluxInstance`, `FluxReport`, `ResourceSet`, `ResourceSetInputProvider`, `ExternalArtifact`, `ArtifactGenerator`
+  - Aggregate resources participate in controller-resource discovery, ownership detection, map deployers/status views, `gitops status`, trace lookup, and activity timelines where the CRDs are installed
+  - Audited action event parsing for Kubernetes Events with reason `WebAction`; `trace`, `explain`, and `map activity` preserve actor, subject, groups, action, and raw annotation evidence without guessing missing fields
+  - New example fixture at `examples/live-delivery-observability/` and operator flow at `docs/howto/delivery-readiness-decision.md`
+  - Safe follow-ups remain tracked in `docs/roadmap.md`: aggregate failures as top-level `doctor` findings, audited actions as history/receipt evidence, broader freshness metadata for snapshot/watch/summary/receipt paths, and deeper controller-family parity omissions
+
+- **Post-v2.3 receipt / comparison / controller evidence — tagged through v2.6.0**
+  - Install/object-set receipts, `workloads-converged`, `prerequisites-met`, `--ttl`, `--no-extras`, external reference evidence, normalization profiles, `receipt digest`, and `receipt chain`
+  - Standalone rendered-state comparison via `compare three-way --dry-from` and set-level `compare object-set --dry-from`
+  - First-class Sveltos and Modelplane support alongside Flux, Argo CD, Helm, Crossplane, kro, ConfigHub-managed, Terraform, and native resources
 
 - **Receipts v1 + v2 — feature complete** (`#446` closed; v1 in `#454`+`#455`+`#456`+`#461`; v2 surface in `#463`+`#469`+`#470` covering `#451`+`#448`+`#449`)
   - Typed, fingerprinted, immutable evidence artifacts wrapping the existing attribution + source-truth + gitSource evidence
@@ -153,33 +167,42 @@ Current release: **v2.2.1** (next: **v2.3.0** — release-notes draft at `docs/r
 
 ## Current Open Queue
 
-Verify live state before acting. As of 2026-05-25 the receipts arc and Pilot consumer arc both closed end-to-end. Remaining open follow-ons:
+Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consumer arc, controller-evidence arc, and live delivery observability release slice have all merged. Remaining open follow-ons:
 
 ### Recently closed (this session's arc)
 
-- ~~**`#446`**~~ (parent), ~~**`#444`**~~, ~~**`#448`**~~, ~~**`#449`**~~, ~~**`#451`**~~ — all closed; see HANDOVER.md § "May 2026 completions — session 2026-05-25" for the PR-by-PR breakdown
-- Next step: **tag `v2.3.0`** (release notes draft at `docs/releases/v2.3.0.md`)
+- ~~**`#500`**~~ — live delivery observability release slice, merged 2026-07-09; see `docs/releases/v2.7.0.md`
+- Earlier closed arcs: ~~**`#446`**~~ (parent), ~~**`#444`**~~, ~~**`#448`**~~, ~~**`#449`**~~, ~~**`#451`**~~ — see HANDOVER.md § "May 2026 completions — session 2026-05-25" for the PR-by-PR breakdown
+- Next step: **tag `v2.7.0`** after final release-note review
+
+### Live delivery observability follow-ups
+
+- Aggregate delivery failures as `doctor` top-level findings where controller status refs expose source/generated-artifact lineage
+- Audited action events as history and receipt supporting evidence
+- Broader source freshness metadata for snapshot, watch, summary, and receipt-backed reads
+- Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
 
 ### Untracked v2 follow-ups (no separate issue)
 
 - **MCP `compare_source_truth` strategy-enum drift** — schema enum lists 4 strategies (Phase 1); CLI supports 9 (Phase 2). One-file fix in `cmd/cub-scout/mcp.go`.
-- **Codex round-5 P3** — source-truth receipt precedence tests (`StatusBLOCK + VerdictBLOCKED`, `StatusWATCH + VerdictINCOMPLETE`). Not blocking; nice-to-have.
+- **Source-truth receipt precedence edge coverage** — especially `StatusBLOCK + VerdictBLOCKED`. Not blocking; nice-to-have.
 
 ### Open tracked issues
 
+- **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution.
+- **`#475`** — Blog/documentation publication series for introducing cub-scout.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout outputs.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design).
 - **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up). Scopes #1 (`#414`) and #3 (`#420`) already shipped.
 - **`#421`** — Views project: CEL + JSONPath column evaluators.
-- **`#409` Phase 3** — source-truth multi-source Argo (`spec.sources[]` len > 1). Phases 1 + 2 shipped (9 strategies).
 - **`#392`** — Initiatives compliance overlay; **deferred** until ConfigHub exposes Initiative as a backend primitive. Design doc at `docs/howto/initiatives-integration-when-ready.md`.
 - **`#386`** — `preferInvocationForm` lint extension to non-hint legacy string leaks.
 
-### Attribution-layer next-up (no separate issues yet; tracked in README § What's coming next)
+### Attribution-layer next-up
 
-- Helm / Kustomize back-resolution to populate `gitSource.file:line` for templated sources
+- **`#481`** — Helm / Kustomize back-resolution to populate `gitSource.file:line` for templated sources
 - List-key selectors (e.g., `[name="api"]` for container images) in `compareFieldToPath`
-- Standalone `--source-path` as DRY source for `compare three-way`
+- More standalone `--dry-from` / `--source-path` polish for source anchoring and proposal review flows
 - `import --git-path --output-dir` polish (reviewable proposal output)
 - Hierarchy-aware adoption/import (preserve ApplicationSet / app-of-apps / Flux composition)
 - Additional manager-string writers (Tekton, Argo Workflows, Cluster API, OIDC-based CD)

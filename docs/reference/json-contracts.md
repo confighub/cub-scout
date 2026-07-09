@@ -44,6 +44,9 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | General CLI JSON behavior | [cli-contract.md](cli-contract.md) + [commands.md](commands.md) | Command-specific |
 | GitOps checkpoint proposal schemas | [gitops-checkpoint-schemas.md](gitops-checkpoint-schemas.md) | `change-intent.v1`, `execution-report.v1`, `change-interaction-card.v1`, `decision-receipt.v1`, `execution-receipt.v1`, `outcome-receipt.v1` |
 | Trace secret evidence | This doc (below) | Embedded in `trace` JSON |
+| Current-change rollout evidence | This doc (below) | Embedded in `doctor`, `explain`, and `compare three-way` JSON |
+| Install receipt predicates | This doc (below) | Embedded in `receipt verify` JSON |
+| Audited action event metadata | This doc (below) | Embedded in `trace`, `explain`, and `map activity` JSON |
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
@@ -758,7 +761,7 @@ The wire format is the **in-toto Statement v1 envelope** (`_type =
     "version": "v1",
     "claim": "applied matches spec at apps/prod/api",
     "scope": { "kind": "Deployment", "name": "api", "namespace": "prod" },
-    "verifier": { "tool": "cub-scout", "version": "v2.3.0" },
+    "verifier": { "tool": "cub-scout", "version": "vX.Y.Z" },
     "verifiedAt": "2026-05-21T10:30:00Z",
     "predicateName": "applied-matches-spec",
     "spec": {
@@ -792,8 +795,8 @@ The wire format is the **in-toto Statement v1 envelope** (`_type =
 |--------|--------------|-------------|
 | `k8s-live://<apiVersion>/<kind>/<namespace>/<name>` | Always | SHA-256 over canonical JSON of the live object with dynamic fields pruned (`status`, `metadata.managedFields`, `metadata.resourceVersion`, `metadata.generation`, `metadata.uid`, `metadata.creationTimestamp`) |
 | `confighub-unit://<slug>@rev=<n>` | Connected mode + ConfigHub-linked resource | SHA-256 over the unit canonical body returned by ConfigHub |
-| `rendered-object-set://sha256/<id>` | `object-set-matches` receipts | SHA-256 over the canonical desired rendered object set after dynamic fields are pruned |
-| `k8s-live-object-set://namespace/<ns>` or `k8s-live-object-set://cluster` | `object-set-matches` receipts | SHA-256 over the canonical live projection for the desired object identities |
+| `rendered-object-set://sha256/<id>` | `object-set-matches` and `object-set-diff` receipts | SHA-256 over the canonical desired rendered object set after dynamic fields are pruned |
+| `k8s-live-object-set://namespace/<ns>` or `k8s-live-object-set://cluster` | `object-set-matches` and `object-set-diff` receipts | SHA-256 over the canonical live projection for the desired object identities |
 
 Standalone-mode single-resource receipts emit only the `k8s-live://`
 subject and record an `OmissionConfigHubUnitSubject` entry in
@@ -818,6 +821,7 @@ the rendered/live object-set subject pair instead.
 | `source-truth-pass` | `--strategy` (one of nine) + connected-mode ConfigHub auth | `--strategy` empty → INCONCLUSIVE + `OmissionStrategyMissing`. No source-truth evidence body → INCONCLUSIVE + `OmissionSourceTruthEvidence`. Strategy mismatch between caller and evidence → BLOCK + `OmissionStrategyMismatch`. Otherwise: Status PASS → PASS, WATCH → WATCH, BLOCK → BLOCK, **ASK → WATCH** (per the locked synthesis; receipt-level INCONCLUSIVE is reserved for receipts that themselves can't be built — not for cases where the underlying source-truth derivation just couldn't classify). Source-truth `proof_gaps[]` are mirrored into `omissions[]` under `source-truth-complete` regardless of verdict. |
 | `no-manual-edits-since` | `--since <RFC3339>` cutoff | `--since` zero → INCONCLUSIVE + `OmissionSinceMissing`. Live nil or no managedFields → INCONCLUSIVE + `OmissionManagedFields`. Any interactive (`kubectl-*`) manager with `Time > since` → BLOCK. Any interactive manager with nil `Time` → INCONCLUSIVE + `OmissionManagedFieldsTime`. Otherwise → PASS. |
 | `object-set-matches` | `--file <manifest.yaml\|dir>` + live cluster access | PASS when every desired object identity is present live and every authored field still matches. BLOCK when any desired object is missing or any authored field differs. INCONCLUSIVE when an API mapping or live read could not be checked. Kubernetes server-added map fields and `status` are outside the claim. |
+| `object-set-diff` | `compare object-set --dry-from <manifest.yaml\|dir>` + live cluster access | PASS when no authored-field, added-object, or removed-object deltas are present. WATCH when only closure deltas are present. BLOCK when any shared object has authored-field deltas. INCONCLUSIVE is reserved for load/build errors before receipt construction. |
 | `workloads-converged` | `--file <manifest.yaml\|dir>` + live cluster access | PASS when every desired workload is present and kstatus reports it current. WATCH when any workload is still progressing, including stale generation status (`status.observedGeneration < metadata.generation`). BLOCK when a workload is missing, has terminal pod/container failure evidence, or has made no current-generation progress beyond `--grace-window`. INCONCLUSIVE when an API mapping or live read could not be checked. |
 | `prerequisites-met` | `--prerequisites <yaml\|json>` + live cluster access | PASS when every declared fact is present. BLOCK when any declared fact is missing. INCONCLUSIVE when any fact could not be checked. |
 
@@ -868,6 +872,58 @@ length changes are considered material. This catches missing objects,
 changed images, changed replicas, changed RBAC rules, changed Service
 ports, injected list items, and similar install drift without failing on
 normal Kubernetes defaulting.
+
+#### `object-set-diff` evidence
+
+`object-set-diff` records its details under
+`predicate.evidence.objectSetDiff`:
+
+```json
+{
+  "desiredSource": {
+    "type": "directory",
+    "ref": "out/manifests",
+    "digest": "sha256-of-input-files",
+    "objectCount": 14
+  },
+  "scope": {"kind": "namespace", "namespace": "redis"},
+  "desiredDigest": "sha256-of-normalized-rendered-set",
+  "liveDigest": "sha256-of-live-projection",
+  "changedObjects": [
+    {
+      "id": {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "namespace": "redis",
+        "name": "redis-master"
+      },
+      "desiredDigest": "sha256...",
+      "liveDigest": "sha256...",
+      "differences": [
+        {
+          "field": ".spec.template.spec.containers[0].image",
+          "desired": "redis:7.2.4",
+          "live": "redis:7.2.3",
+          "cause": "controller-drift",
+          "managerHint": "helm-controller"
+        }
+      ]
+    }
+  ],
+  "addedObjects": [],
+  "removedObjects": [],
+  "summary": {"total": 14, "changed": 1, "added": 0, "removed": 0},
+  "normalizationProfile": "k8s-zero-defaults/v1"
+}
+```
+
+`changedObjects[]`, `addedObjects[]`, and `removedObjects[]` are sorted
+deterministically before fingerprinting. `addedObjects[]` / `removedObjects[]`
+are populated only when closed-world diffing is requested. Otherwise the receipt
+records an `object-set-diff-closure` omission and makes no claim about objects
+outside the desired identity set. Field-level `cause` and `managerHint` are
+optional; omitted values mean cub-scout could not attribute that field delta
+from live managedFields.
 
 #### `workloads-converged` evidence
 
@@ -1024,6 +1080,7 @@ Each entry explicitly converts a silent PASS into an honest PASS:
 | `object-set-coverage` | One or more desired objects in an `object-set-matches` receipt could not be checked because API mapping or live lookup was inconclusive |
 | `extra-live-object-coverage` | `object-set-matches` verified desired object identities and authored fields, but did not prove that no extra live resources exist outside the desired set |
 | `extra-live-objects` | `object-set-matches --no-extras` found extra live objects of rendered kinds in scope that are not in the desired set |
+| `object-set-diff-closure` | `object-set-diff` compared authored fields of the desired set but did not compute added/removed object closure because closed-world diffing was not requested |
 | `workload-convergence-snapshot` | `workloads-converged` reflects readiness observed at `verifiedAt`; it does not prove workloads stay converged afterward |
 | `workload-convergence-coverage` | One or more desired workloads in a `workloads-converged` receipt could not be checked because API mapping or live lookup was inconclusive |
 | `prerequisites-snapshot` | `prerequisites-met` reflects required facts observed at `verifiedAt`; it does not prove they remain present afterward |
@@ -1251,7 +1308,7 @@ Aggregate receipt wire shape:
       {"uri": "cub-scout-receipt://9e7d12fa11b2", "digest": {"sha256": "9e7d12fa11b2..."}}
     ],
     "nextSteps": [],
-    "verifier": {"tool": "cub-scout", "version": "v2.2.1"},
+    "verifier": {"tool": "cub-scout", "version": "vX.Y.Z"},
     "verifiedAt": "2026-05-22T22:00:00Z",
     "fingerprint": "sha256:..."
   }
@@ -1265,7 +1322,7 @@ Key shape rules (verified against `pkg/agent/receipt_aggregate.go`):
 - **Verdict synthesis:** the default policy is **max-severity** (`BLOCK > INCONCLUSIVE > WATCH > PASS`). `--aggregate-policy max-severity` is explicit; future policies (`majority`, weighted) are wired through the same flag.
 - **`omissions[]`:** any input attestation with verdict `INCONCLUSIVE` triggers an `aggregate-partial-coverage` omission entry so the consumer knows the aggregate verdict may not reflect full coverage. Per-resource verify failures (load errors, marshal errors) also surface here when discovery couldn't reach a resource.
 - **`inputAttestations[]`:** one entry per per-resource receipt successfully verified, **emitted in caller order**. Each entry's fingerprint is **verified at chain-construction time** via the same `VerifiedAttestationRef` typed wrapper the single-resource chained path uses (per `#463` Codex round-6 P1 fix; `pkg/agent/receipt_aggregate.go:BuildAggregateReceipt` rejects zero-value wrappers).
-- **Fingerprint coverage:** the aggregate's `fingerprint` covers every field including `inputAttestations[]`. Tampering with the input set (adding, removing, or reordering the entries) invalidates the recomputed fingerprint. Note that the **subject digest** is set-shaped (sorted-input concatenation; reordering is a no-op on the subject) but the **receipt-level fingerprint** is list-shaped (covers the wire-order array). A v2.3.1+ correctness pass may sort `inputAttestations[]` before stamping so the receipt-level fingerprint also becomes set-shaped; in v2.3.0 only the subject is order-independent.
+- **Fingerprint coverage:** the aggregate's `fingerprint` covers every field including `inputAttestations[]`. Tampering with the input set (adding, removing, or reordering the entries) invalidates the recomputed fingerprint. Note that the **subject digest** is set-shaped (sorted-input concatenation; reordering is a no-op on the subject) but the **receipt-level fingerprint** is list-shaped (covers the wire-order array). A future correctness pass may sort `inputAttestations[]` before stamping so the receipt-level fingerprint also becomes set-shaped; the current contract only guarantees order-independence for the subject.
 
 Per-resource receipt failures during discovery are **non-fatal**: the aggregate is composed from the successful subset, with an `aggregate-partial-coverage` omission entry recording the failure count.
 

@@ -68,7 +68,8 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | `cub-scout connect` | Configure kube context from server URL or kubeconfig import | v1.0 |
 | `cub-scout status` | Show connection status and cluster info | v1.0 |
 | `cub-scout history` | Connected change timeline from ConfigHub ChangeSets | v1.4 |
-| `cub-scout compare three-way` | Connected DRY/WET/LIVE comparison with conformance and agreement summary | v1.6 |
+| `cub-scout compare three-way` | Connected DRY/WET/LIVE comparison with conformance and agreement summary; standalone DRY via `--dry-from` | v1.6 |
+| `cub-scout compare object-set` | Rendered object-set diff receipt against live state | v2.6 |
 | `cub-scout mcp serve` | Serve read-only MCP observation tools over stdio | v1.4 |
 
 ---
@@ -133,10 +134,14 @@ cub-scout explain <kind> <name> [flags]
 
 ## cub-scout compare three-way
 
-Connected DRY/WET/LIVE comparison for a resource, namespace, or cluster scope.
+Connected DRY/WET/LIVE comparison for a resource, namespace, cluster, or View
+scope.
+With `--dry-from`, compares rendered YAML directly against LIVE without
+connected mode.
 
 ```bash
 cub-scout compare three-way --scope <scope> [flags]
+cub-scout compare three-way --scope <scope> --dry-from <rendered.yaml|dir> [flags]
 ```
 
 ### Flags
@@ -144,7 +149,10 @@ cub-scout compare three-way --scope <scope> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--scope` | string | required | `<kind/name>`, `resource:<kind/name>`, `namespace/<ns>`, or `cluster` |
+| `--view` | string | - | View UUID or View Explorer URL; mutually exclusive with `--scope` and requires connected mode |
 | `-n, --namespace` | string | - | Namespace override for resource scope |
+| `--dry-from` | string | - | Standalone rendered YAML file or directory to use as DRY instead of ConfigHub |
+| `--source-path` | string | - | Optional local checkout for raw-YAML file:line enrichment |
 | `--format` | string | ascii | Output format: `ascii`, `json`, `md` |
 | `--json` | bool | false | Shorthand for `--format json` |
 | `--fail-on` | string | - | Exit non-zero when max severity meets `info` or `warning` |
@@ -159,7 +167,46 @@ cub-scout compare three-way --scope <scope> [flags]
 - `confighubRevisionsUrl` may be present when the exact unit revisions tab is known for the scope.
 - `nextSteps[]` may be present with deterministic read-only follow-up guidance for trust review or convergence re-checks.
 - `resources[].currentChange` may be present for workload resources when live rollout evidence can be read. It uses the same progress/verdict shape as `explain.currentChange`.
+- In `--dry-from` mode, connected ConfigHub evidence may be absent; the rendered path is the DRY source.
 - Exit behavior depends only on JSON facts plus `--fail-on`, not ASCII/Markdown formatting.
+
+---
+
+## cub-scout compare object-set
+
+Standalone rendered object-set comparison. Emits one ObjectSetDiffReceipt
+(`predicate: object-set-diff`) over a rendered desired set and live cluster
+state.
+
+```bash
+cub-scout compare object-set --dry-from <rendered.yaml|dir> [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--dry-from` | string | required | Rendered desired object set: YAML file or directory |
+| `-n, --namespace` | string | - | Default namespace for namespaced objects without `metadata.namespace` |
+| `--scope` | string | - | `namespace/<ns>` or `cluster` |
+| `--diff` | bool | false | Also compute added/removed object closure |
+| `--normalization-profile` | string | - | Apply a named server-normalization profile symmetrically before comparison and digesting |
+| `--ttl` | string | - | Record freshness boundary as `freshness{observedAt,expiresAt,ttl}` |
+| `--fail-on` | string | - | Exit 2 when receipt verdict matches `WATCH`, `BLOCK`, `INCONCLUSIVE`, or `any-non-pass` |
+| `--out` | string | - | Write the receipt to a file path |
+| `--save` | bool | false | Save the receipt to the local receipt store |
+| `--format` | string | json | Output format: `json`, `ascii` |
+
+### Stable Output Rules
+
+- JSON is the canonical contract.
+- The receipt predicate is `object-set-diff`.
+- Verdicts are `PASS`, `WATCH`, and `BLOCK`.
+- `PASS` means no authored-field, added-object, or removed-object deltas were found.
+- `WATCH` means only closure deltas were found when `--diff` is enabled.
+- `BLOCK` means at least one shared object has authored-field deltas.
+- Without `--diff`, added/removed object closure is not computed and the receipt records an omission.
+- The command reads the cluster and the rendered YAML source only; it never mutates and never asks a reconciler to apply or sync.
 
 ---
 
@@ -1074,7 +1121,7 @@ cub-scout history <resource> [flags]
 
 ---
 
-## cub-scout receipt (v2.2)
+## cub-scout receipt
 
 Typed, fingerprinted, immutable evidence artifacts (#446). Wire format is the in-toto Statement v1 envelope wrapping `https://cub-scout.dev/receipt/v1`. SHA-256 fingerprint over RFC 8785 canonical JSON of the full Statement minus only `predicate.fingerprint`.
 
@@ -1090,6 +1137,8 @@ cub-scout receipt <verb> [args] [flags]
 | `show` | Render a saved receipt (ASCII / JSON); does NOT verify the fingerprint |
 | `validate` | Recompute and compare the receipt's fingerprint |
 | `list` | Walk the local store |
+| `digest` | Compute the canonical rendered-object-set digest for a manifest set |
+| `chain` | Walk and verify a receipt's attestation chain |
 
 ### cub-scout receipt verify
 

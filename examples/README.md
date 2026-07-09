@@ -117,6 +117,9 @@ understands the core ownership model.
   controller.
 - "Can an AI tool use cub-scout safely?" Start with `ai-agent-quest`,
   `ai-integration`, or `mcp-gateway`.
+- "Can I move to the next delivery task, wait, or investigate?" Start with
+  `live-delivery-observability` and
+  `docs/howto/delivery-readiness-decision.md`.
 - "Can I show a deterministic demo without a live cluster?" Start with
   `connect-and-compare` or `demos`.
 
