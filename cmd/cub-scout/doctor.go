@@ -13,9 +13,11 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/internal/scan"
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
@@ -61,6 +63,7 @@ type DoctorSummary struct {
 	Health    DoctorHealthSummary    `json:"health"`
 	Risks     DoctorRiskSummary      `json:"risks"`
 	Drift     DoctorDriftSummary     `json:"drift"`
+	Rollouts  *DoctorRolloutSummary  `json:"rollouts,omitempty"`
 	ThreeWay  *DoctorThreeWaySummary `json:"threeWay,omitempty"`
 	TopIssues []DoctorIssue          `json:"topIssues,omitempty"`
 	NextSteps []StructuredHint       `json:"nextSteps,omitempty"` // Structured action-typed hints for AI/MCP
@@ -112,6 +115,17 @@ type DoctorRiskSummary struct {
 // DoctorDriftSummary contains drift signal counts.
 type DoctorDriftSummary struct {
 	Resources int `json:"resources"`
+}
+
+// DoctorRolloutSummary contains generation-scoped current-change evidence for
+// workload resources in the doctor scope.
+type DoctorRolloutSummary struct {
+	Total          int                     `json:"total"`
+	Pass           int                     `json:"pass"`
+	Watch          int                     `json:"watch"`
+	Block          int                     `json:"block"`
+	Inconclusive   int                     `json:"inconclusive"`
+	CurrentChanges []agent.RolloutDecision `json:"currentChanges,omitempty"`
 }
 
 // DoctorIssue is a concise issue entry for doctor output.
@@ -275,6 +289,132 @@ func collectDoctorFindings(ctx context.Context, namespace string) ([]scan.Normal
 		return nil, nil
 	}
 	return normalized.Findings, nil
+}
+
+func collectDoctorRollouts(ctx context.Context, namespace string, topN int) (*DoctorRolloutSummary, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build kubernetes config: %w", err)
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	observedAt := time.Now().UTC()
+	decisions := []agent.RolloutDecision{}
+	for _, gvr := range []schema.GroupVersionResource{
+		{Group: "apps", Version: "v1", Resource: "deployments"},
+		{Group: "apps", Version: "v1", Resource: "statefulsets"},
+		{Group: "apps", Version: "v1", Resource: "daemonsets"},
+		{Group: "batch", Version: "v1", Resource: "jobs"},
+	} {
+		var items []unstructured.Unstructured
+		var listErr error
+		if namespace != "" {
+			list, err := dynClient.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
+			listErr = err
+			if list != nil {
+				items = list.Items
+			}
+		} else {
+			list, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
+			listErr = err
+			if list != nil {
+				items = list.Items
+			}
+		}
+		if listErr != nil {
+			continue
+		}
+
+		for i := range items {
+			item := items[i]
+			decision, ok := agent.BuildRolloutDecisionForWorkload(&item, nil, 0, observedAt)
+			if !ok {
+				continue
+			}
+			if decision.Verdict != agent.VerdictPASS {
+				pods := relatedPodsForRolloutDecision(ctx, dynClient, item.GetNamespace(), &item)
+				if len(pods) > 0 {
+					if withPods, ok := agent.BuildRolloutDecisionForWorkload(&item, pods, 0, observedAt); ok {
+						decision = withPods
+					}
+				}
+			}
+			decisions = append(decisions, decision)
+		}
+	}
+
+	if len(decisions) == 0 {
+		return nil, nil
+	}
+	return buildDoctorRolloutSummary(decisions, topN), nil
+}
+
+func buildDoctorRolloutSummary(decisions []agent.RolloutDecision, topN int) *DoctorRolloutSummary {
+	summary := &DoctorRolloutSummary{Total: len(decisions)}
+	current := make([]agent.RolloutDecision, 0)
+	for _, decision := range decisions {
+		switch decision.Verdict {
+		case agent.VerdictPASS:
+			summary.Pass++
+		case agent.VerdictWATCH:
+			summary.Watch++
+			current = append(current, decision)
+		case agent.VerdictBLOCK:
+			summary.Block++
+			current = append(current, decision)
+		case agent.VerdictINCONCLUSIVE:
+			summary.Inconclusive++
+			current = append(current, decision)
+		default:
+			summary.Inconclusive++
+			current = append(current, decision)
+		}
+	}
+
+	sort.Slice(current, func(i, j int) bool {
+		ri := rolloutVerdictRank(current[i].Verdict)
+		rj := rolloutVerdictRank(current[j].Verdict)
+		if ri != rj {
+			return ri < rj
+		}
+		ii := current[i].Resource
+		ij := current[j].Resource
+		if ii.Namespace != ij.Namespace {
+			return ii.Namespace < ij.Namespace
+		}
+		if ii.Kind != ij.Kind {
+			return ii.Kind < ij.Kind
+		}
+		return ii.Name < ij.Name
+	})
+
+	if topN < 0 {
+		topN = 0
+	}
+	if topN > len(current) {
+		topN = len(current)
+	}
+	summary.CurrentChanges = current[:topN]
+	return summary
+}
+
+func rolloutVerdictRank(verdict agent.ReceiptVerdict) int {
+	switch verdict {
+	case agent.VerdictBLOCK:
+		return 0
+	case agent.VerdictINCONCLUSIVE:
+		return 1
+	case agent.VerdictWATCH:
+		return 2
+	case agent.VerdictPASS:
+		return 3
+	default:
+		return 4
+	}
 }
 
 func buildDoctorSummary(entries []MapEntry, findings []scan.NormalizedFinding, cluster, namespace string, topN int) DoctorSummary {
@@ -470,6 +610,27 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 	fmt.Fprintf(&b, "  %s: %d\n", Green("Healthy"), summary.Health.Healthy)
 	fmt.Fprintf(&b, "  %s: %d\n", Yellow("Warning"), summary.Health.Warning)
 	fmt.Fprintf(&b, "  %s: %d\n\n", Red("Error"), summary.Health.Error)
+
+	if summary.Rollouts != nil && summary.Rollouts.Total > 0 {
+		fmt.Fprintf(&b, "%s %d workloads (%s, %s, %s, %s)\n",
+			sectionLabel("Rollouts"),
+			summary.Rollouts.Total,
+			Green(fmt.Sprintf("%d PASS", summary.Rollouts.Pass)),
+			Yellow(fmt.Sprintf("%d WATCH", summary.Rollouts.Watch)),
+			Red(fmt.Sprintf("%d BLOCK", summary.Rollouts.Block)),
+			Yellow(fmt.Sprintf("%d INCONCLUSIVE", summary.Rollouts.Inconclusive)),
+		)
+		for i, decision := range summary.Rollouts.CurrentChanges {
+			id := decision.Resource
+			ns := id.Namespace
+			if ns == "" {
+				ns = "-"
+			}
+			resource := fmt.Sprintf("%s/%s", id.Kind, id.Name)
+			fmt.Fprintf(&b, "  %d. %s (ns: %s) - %s\n", i+1, resource, ns, colorExplainRolloutDecision(&decision))
+		}
+		fmt.Fprintf(&b, "\n")
+	}
 
 	// Color severity counts in the risks line
 	criticalText := fmt.Sprintf("%d CRITICAL", summary.Risks.Critical)

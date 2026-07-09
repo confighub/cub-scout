@@ -40,7 +40,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | `cub-scout map` | Interactive TUI dashboard | v0.5 |
 | `cub-scout map list` | List resources (scriptable) | v0.5 |
 | `cub-scout map status` | One-line health check | v0.5 |
-| `cub-scout map deployers` | List controller deployers (Flux/ArgoCD/Sveltos/Modelplane + core Deployments) | v0.5 |
+| `cub-scout map deployers` | List controller deployers (Flux/ArgoCD/Sveltos/Modelplane/aggregate delivery resources + core Deployments) | v0.5 |
 | `cub-scout map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
 | `cub-scout map cronjobs` | List CronJobs with schedule/run state | v0.20 |
 | `cub-scout map jobs` | List Jobs with CronJob linkage and status | v0.20 |
@@ -94,6 +94,10 @@ cub-scout doctor [flags]
 ### Stable Output Rules
 
 - JSON is the canonical contract for `doctor`.
+- JSON may include `rollouts` when live workload rollout evidence is available:
+  total workloads, PASS/WATCH/BLOCK/INCONCLUSIVE counts, and top non-PASS
+  `currentChanges[]` bounded by `--top`.
+- ASCII includes a `Rollouts` section only when rollout evidence is available.
 - `--presentation` affects ASCII framing only.
 - `--hint-mode` affects recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text render path.
@@ -154,6 +158,7 @@ cub-scout compare three-way --scope <scope> [flags]
 - `confighubUrl` may be present when a representative connected unit ID is known for the scope.
 - `confighubRevisionsUrl` may be present when the exact unit revisions tab is known for the scope.
 - `nextSteps[]` may be present with deterministic read-only follow-up guidance for trust review or convergence re-checks.
+- `resources[].currentChange` may be present for workload resources when live rollout evidence can be read. It uses the same progress/verdict shape as `explain.currentChange`.
 - Exit behavior depends only on JSON facts plus `--fail-on`, not ASCII/Markdown formatting.
 
 ---
@@ -357,6 +362,7 @@ List controller deployers in the cluster.
 Canonical deployer scope (v1.0):
 - Flux `Kustomization`
 - Flux `HelmRelease`
+- Flux aggregate resources: `FluxInstance`, `FluxReport`, `ResourceSet`, `ResourceSetInputProvider`, `ExternalArtifact`, `ArtifactGenerator`
 - Argo CD `Application`
 - Sveltos `ClusterProfile`, `Profile`, `EventTrigger`, `ClusterHealthCheck`, `ClusterPromotion`
 - Modelplane `InferenceGateway`, `InferenceCluster`, `ModelDeployment`, `ModelService`, `ModelCache`, `ServingStack`, `EKSCluster`, `GKECluster`
@@ -385,10 +391,10 @@ cub-scout map deployers [flags]
 **Stable JSON fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `kind` | string | Deployer kind (`Kustomization`, `HelmRelease`, `Application`, Sveltos/Modelplane controller kinds, or `Deployment`) |
+| `kind` | string | Deployer kind (`Kustomization`, `HelmRelease`, `Application`, aggregate delivery resource kinds, Sveltos/Modelplane controller kinds, or `Deployment`) |
 | `name` | string | Deployer name |
 | `namespace` | string | Deployer namespace |
-| `owner` | string | Optional owner family for first-class controller CRDs (`Sveltos`, `Modelplane`) |
+| `owner` | string | Optional owner family for first-class controller CRDs (`Flux`, `Sveltos`, `Modelplane`) |
 | `status` | string | Status string (for example `Ready`, `Healthy`, `NotReady`, `Unhealthy`) |
 | `ready` | bool | Whether the deployer is healthy/ready |
 | `revision` | string | Revision string (or `-` if unavailable) |
@@ -462,7 +468,7 @@ Stable JSON fields per action:
 
 ## cub-scout map activity
 
-Show normalized activity from Flux/Argo/Sveltos/Modelplane/Helm/events, sorted descending by time.
+Show normalized activity from Flux/Argo/Sveltos/Modelplane/aggregate delivery resources/Helm/events, sorted descending by time.
 
 ```bash
 cub-scout map activity [--namespace <ns>] [--owner Flux|ArgoCD|Sveltos|Modelplane|Helm|Crossplane|kro|ConfigHub|Native] [--since 24h] [--format ascii|json|md]
@@ -477,6 +483,9 @@ Stable JSON fields per event:
 - `message` (optional)
 - `suggestedNextStep` (optional)
 - `owner` (optional)
+- `actor` (optional; audited action events only)
+- `subject` (optional; audited action events only)
+- `actionEvidence` (optional; raw action annotations not otherwise modeled)
 
 ---
 

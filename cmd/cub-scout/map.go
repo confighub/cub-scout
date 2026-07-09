@@ -3545,14 +3545,17 @@ type mapActionPreview struct {
 }
 
 type mapActivityRow struct {
-	Time              string `json:"time"`
-	Source            string `json:"source"`
-	Resource          string `json:"resource"`
-	Action            string `json:"action"`
-	Result            string `json:"result"`
-	Message           string `json:"message,omitempty"`
-	SuggestedNextStep string `json:"suggestedNextStep,omitempty"`
-	Owner             string `json:"owner,omitempty"`
+	Time              string            `json:"time"`
+	Source            string            `json:"source"`
+	Resource          string            `json:"resource"`
+	Action            string            `json:"action"`
+	Result            string            `json:"result"`
+	Message           string            `json:"message,omitempty"`
+	SuggestedNextStep string            `json:"suggestedNextStep,omitempty"`
+	Owner             string            `json:"owner,omitempty"`
+	Actor             string            `json:"actor,omitempty"`
+	Subject           string            `json:"subject,omitempty"`
+	ActionEvidence    map[string]string `json:"actionEvidence,omitempty"`
 }
 
 type mapPreviewRow struct {
@@ -4143,6 +4146,7 @@ func collectFluxActivity(ctx context.Context, dynClient dynamic.Interface) []map
 			}
 		}
 	}
+	rows = append(rows, collectFirstClassControllerActivity(ctx, dynClient, fluxOperatorControllerResources(), "Flux")...)
 	return rows
 }
 
@@ -4331,6 +4335,17 @@ func formatControllerActivityResource(obj *unstructured.Unstructured) string {
 
 func controllerActivityNextStep(owner, kind string) string {
 	switch owner {
+	case "Flux":
+		switch kind {
+		case "ResourceSet", "ResourceSetInputProvider":
+			return "Inspect inputs, generated resources, and Ready conditions for this aggregate configuration."
+		case "ExternalArtifact", "ArtifactGenerator":
+			return "Inspect artifact conditions and the resources consuming this generated input."
+		case "FluxInstance", "FluxReport":
+			return "Inspect controller readiness, distribution status, and reported inventory for this cluster."
+		default:
+			return "Inspect Flux conditions, inventory, and source references for this resource."
+		}
 	case "Sveltos":
 		switch kind {
 		case "ClusterProfile", "Profile":
@@ -4386,15 +4401,39 @@ func collectEventActivity(ctx context.Context, dynClient dynamic.Interface) []ma
 			result = "warning"
 		}
 		resource := fmt.Sprintf("%s/%s/%s", firstNonEmpty(kind, "Resource"), firstNonEmpty(objNS, ns), firstNonEmpty(objName, ev.GetName()))
+		actionName := firstNonEmpty(strings.ToLower(reason), "event")
+		source := "k8s.event"
+		owner := "Native"
+		suggestion := agent.GetEventSuggestion(reason)
+		actor := ""
+		subject := ""
+		var actionEvidence map[string]string
+		if action, ok := agent.ParseActionEvent(reason, ev.GetAnnotations()); ok {
+			actionName = firstNonEmpty(action.Action, actionName)
+			source = "k8s.action"
+			if action.Action != "" || action.Actor != "" || action.Subject != "" || len(action.Groups) > 0 || len(action.Raw) > 0 {
+				owner = "Flux"
+			}
+			actor = action.Actor
+			subject = action.Subject
+			actionEvidence = action.Raw
+			if detail := formatEventActionDetail(action); detail != "" {
+				msg = strings.TrimSpace(strings.TrimSpace(msg) + " [" + detail + "]")
+			}
+			suggestion = "Review the audited action with the resource status and follow-up events."
+		}
 		rows = append(rows, mapActivityRow{
 			Time:              when.UTC().Format(time.RFC3339),
-			Source:            "k8s.event",
+			Source:            source,
 			Resource:          resource,
-			Action:            firstNonEmpty(strings.ToLower(reason), "event"),
+			Action:            actionName,
 			Result:            result,
 			Message:           msg,
-			SuggestedNextStep: agent.GetEventSuggestion(reason),
-			Owner:             "Native",
+			SuggestedNextStep: suggestion,
+			Owner:             owner,
+			Actor:             actor,
+			Subject:           subject,
+			ActionEvidence:    actionEvidence,
 		})
 	}
 	return rows

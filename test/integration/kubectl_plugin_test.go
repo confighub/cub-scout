@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -56,12 +57,14 @@ func TestKubectlPlugin_MapListJSONParity(t *testing.T) {
 		t.Fatalf("make build-kubectl-plugin failed: %v\n%s", err, makeOut)
 	}
 
-	directOut, err := runCmd(getCubAgentPath(), "map", "list", "--json")
+	namespace := createKubectlPluginParityFixture(t)
+
+	directOut, err := runCmd(getCubAgentPath(), "map", "list", "--namespace", namespace, "--json")
 	if err != nil {
 		t.Fatalf("cub-scout map list --json failed: %v\n%s", err, directOut)
 	}
 
-	pluginOut, err := runWithPath(repoRoot, "kubectl", "cub-scout", "map", "list", "--json")
+	pluginOut, err := runWithPath(repoRoot, "kubectl", "cub-scout", "map", "list", "--namespace", namespace, "--json")
 	if err != nil {
 		t.Fatalf("kubectl cub-scout map list --json failed: %v\n%s", err, pluginOut)
 	}
@@ -77,6 +80,9 @@ func TestKubectlPlugin_MapListJSONParity(t *testing.T) {
 
 	if len(directKeys) != len(pluginKeys) {
 		t.Fatalf("map list entry count mismatch: direct=%d plugin=%d", len(directKeys), len(pluginKeys))
+	}
+	if len(directKeys) == 0 {
+		t.Fatalf("map list returned no entries for fixture namespace %q", namespace)
 	}
 
 	for i := range directKeys {
@@ -134,6 +140,27 @@ func TestKubectlPlugin_KrewManifestContract(t *testing.T) {
 			t.Fatalf("platform[%d].uri is empty", i)
 		}
 	}
+}
+
+func createKubectlPluginParityFixture(t *testing.T) string {
+	t.Helper()
+
+	namespace := fmt.Sprintf("cub-scout-plugin-%d", time.Now().UnixNano())
+	if out, err := runCmd("kubectl", "create", "namespace", namespace); err != nil {
+		t.Fatalf("create fixture namespace %s: %v\n%s", namespace, err, out)
+	}
+	t.Cleanup(func() {
+		_, _ = runCmd("kubectl", "delete", "namespace", namespace, "--ignore-not-found=true", "--wait=false")
+	})
+
+	if out, err := runCmd("kubectl", "-n", namespace, "create", "deployment", "parity-api", "--image=nginx:1.25", "--replicas=0"); err != nil {
+		t.Fatalf("create fixture deployment in %s: %v\n%s", namespace, err, out)
+	}
+	if out, err := runCmd("kubectl", "-n", namespace, "create", "configmap", "parity-config", "--from-literal=mode=plugin-parity"); err != nil {
+		t.Fatalf("create fixture configmap in %s: %v\n%s", namespace, err, out)
+	}
+
+	return namespace
 }
 
 func extractMapListIdentityKeys(raw string) ([]string, error) {

@@ -6,11 +6,20 @@ cub-scout is an open-source observer for live Kubernetes clusters and GitOps. Po
 
 It diagnoses, explains, traces, maps, scans, **compares** intended vs running state, and **attributes** every field back to its source — but it never modifies cluster state and never makes authority calls about what *should* be true. Safe to run against production.
 
-It helps you answer:
-- what owns this resource, really?
-- where did each field's value come from — controller, git file, ConfigHub binding, or someone editing manually?
-- what's broken right now, and what should I do next?
-- how does **intended** (governed) state compare to **live** (cluster) state?
+Cub-scout helps users answer questions about k8s and GitOps clusters in one place.
+
+| User question | cub-scout surface | What cub-scout provides |
+|---|---|---|
+| What is running, and who owns it? | `doctor`, `map`, `trace`, `explain` | Live inventory, ownership, source chain, recent events, and next read-only checks across supported controllers and platforms. |
+| Is delegated delivery healthy? | `gitops status` | Controller-reported backend, transport, source/build/apply/sync stages, reason/message, and explicit evidence gaps when status is incomplete. |
+| Has intended configuration reached the cluster? | `compare three-way` | DRY/WET/LIVE agreement for a resource, namespace, cluster, or governed view, with states like `agreed`, `converging`, `diverged`, and `partial`. |
+| Is this rollout still progressing, complete, or stuck? | `receipt verify --predicate workloads-converged`, `doctor`, `explain` | Generation-aware workload evidence: desired vs observed generation, kstatus, progress clock, pod failure signals, and `PASS` / `WATCH` / `BLOCK` / `INCONCLUSIVE` verdicts. |
+| Can I move to the next task, wait, or retry delivery? | `receipt verify`, `compare three-way`, `doctor` | A read-only decision frame that separates "not applied yet", "still converging", "runtime failure", and "missing evidence". |
+| Is live state drifting from desired state? | `compare drift`, `compare three-way`, `compare source-truth` | Field-level differences, strategy-relative source-truth evidence, conformance exit codes, and explicit proof gaps when evidence is missing. |
+| Is this a delivery problem or an application/runtime problem? | `doctor`, `explain`, `patterns`, `scan` | kstatus health, Kubernetes events, workload symptoms, known-pattern matches, and phase-aware hints so operators can separate sync/convergence issues from runtime failures. |
+| Who changed this field, and where did the value come from? | `compare`, `explain`, attribution JSON | `cause`, `managerHint`, `gitSource`, `bindingSource`, audit/event evidence where available, and optional file:line back-resolution from live `managedFields`, controller metadata, local source files, and governed links. |
+| Can I answer broad or repeated questions without hammering live APIs? | `snapshot`, `watch`, `summary`, receipts | Captured state, low-cardinality watch events, connected summaries, freshness metadata, and immutable receipts for repeated review, fleet triage, and audit paths. |
+| Can I keep auditable evidence of the check? | `receipt verify`, `receipt validate`, `watch --emit-receipt-on` | Typed, fingerprinted, immutable evidence receipts for gates, incident closeout, audits, chained checks, and real-time watch events. |
 
 The main path starts from a **live cluster**. It works **standalone** with your current kube context, or **connected** to [ConfigHub](https://confighub.com) for governed comparison, history, import, fleet queries, and AI-friendly read-only workflows. Local repo and manifest inputs are available later for adoption, import-preview, and source-file enrichment, but they are not the first mental model.
 
@@ -317,6 +326,7 @@ Honest gaps in the current capability map, with the leverage on filling them:
 | JSON fields and output model | [docs/reference/json-contracts.md](docs/reference/json-contracts.md) |
 | Getting started checklist | [docs/getting-started/checklist.md](docs/getting-started/checklist.md) |
 | Import and migration path | [docs/howto/import-to-confighub.md](docs/howto/import-to-confighub.md) |
+| Delivery readiness decision | [docs/howto/delivery-readiness-decision.md](docs/howto/delivery-readiness-decision.md) |
 | AI tool integration | [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md) |
 | Examples and demos | [examples/README.md](examples/README.md) |
 | Receipts (typed evidence artifacts) | [examples/receipts/README.md](examples/receipts/README.md) + [docs/reference/json-contracts.md § Receipt Contract](docs/reference/json-contracts.md) |

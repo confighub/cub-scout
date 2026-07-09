@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: prod-apps
+  namespace: flux-system
+  generation: 4
+spec:
+  inputs:
+    - tenant: payments
+status:
+  observedGeneration: 4
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: ReconciliationFailed
+      message: Deployment/api is waiting for current-generation rollout evidence
+      lastTransitionTime: "2026-07-09T10:02:00Z"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+  generation: 3
+  labels:
+    app.kubernetes.io/name: api
+    kustomize.toolkit.fluxcd.io/name: prod-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+    manual.example.com/hotfix: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/example/api:v2
+          ports:
+            - containerPort: 8080
+status:
+  observedGeneration: 2
+  replicas: 2
+  updatedReplicas: 1
+  readyReplicas: 1
+  unavailableReplicas: 1
+  conditions:
+    - type: Available
+      status: "False"
+      reason: MinimumReplicasUnavailable
+      message: Deployment does not have minimum availability.
+      lastTransitionTime: "2026-07-09T10:03:00Z"
+    - type: Progressing
+      status: "True"
+      reason: ReplicaSetUpdated
+      message: ReplicaSet api-abc is progressing.
+      lastTransitionTime: "2026-07-09T10:04:00Z"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-abc
+  namespace: prod
+  labels:
+    app.kubernetes.io/name: api
+spec:
+  containers:
+    - name: api
+      image: ghcr.io/example/api:v2
+status:
+  phase: Running
+  containerStatuses:
+    - name: api
+      ready: false
+      restartCount: 4
+      state:
+        waiting:
+          reason: CrashLoopBackOff
+          message: Back-off restarting failed container api in pod api-abc
+---
+apiVersion: v1
+kind: Event
+metadata:
+  name: api-action.1800000000000000
+  namespace: prod
+  annotations:
+    event.toolkit.fluxcd.io/action: restart
+    event.toolkit.fluxcd.io/username: operator@example.com
+    event.toolkit.fluxcd.io/groups: platform,oncall
+    event.toolkit.fluxcd.io/subject: Deployment/prod/api
+    event.toolkit.fluxcd.io/change-token: chg-123
+involvedObject:
+  apiVersion: apps/v1
+  kind: Deployment
+  namespace: prod
+  name: api
+type: Normal
+reason: WebAction
+message: operator@example.com requested restart for Deployment/prod/api
+firstTimestamp: "2026-07-09T10:05:00Z"
+lastTimestamp: "2026-07-09T10:05:00Z"
+count: 1
+source:
+  component: controller-web
+

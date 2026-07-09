@@ -37,10 +37,11 @@ type threeWayTarget struct {
 }
 
 type threeWayResourceEntry struct {
-	Result   compareResourceResult `json:"result"`
-	Severity string                `json:"severity"`
-	Causes   []string              `json:"causes,omitempty"`
-	Pattern  ThreeWayPattern       `json:"pattern"`
+	Result        compareResourceResult  `json:"result"`
+	Severity      string                 `json:"severity"`
+	Causes        []string               `json:"causes,omitempty"`
+	Pattern       ThreeWayPattern        `json:"pattern"`
+	CurrentChange *agent.RolloutDecision `json:"currentChange,omitempty"`
 }
 
 // ConformanceResult contains the pass/fail conformance summary.
@@ -270,6 +271,10 @@ func parseThreeWayScope(raw string) (threeWayScope, error) {
 }
 
 func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThreshold string) (threeWayReport, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	targets, err := collectThreeWayTargets(ctx, scope)
 	if err != nil {
 		return threeWayReport{}, err
@@ -317,6 +322,9 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 			Severity: severity,
 			Causes:   causes,
 			Pattern:  pattern,
+		}
+		if decision, ok := fetchThreeWayRolloutDecision(ctx, target); ok {
+			entry.CurrentChange = decision
 		}
 		entries = append(entries, entry)
 
@@ -372,6 +380,21 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 	}
 	report.ConfigHubURL, report.ConfigHubRevisionsURL, report.NextSteps = buildThreeWayNavigation(report)
 	return report, nil
+}
+
+func fetchThreeWayRolloutDecision(ctx context.Context, target threeWayTarget) (*agent.RolloutDecision, bool) {
+	kind, name, err := parseResourceArg(target.ResourceArg)
+	if err != nil {
+		return nil, false
+	}
+	namespace := strings.TrimSpace(target.Namespace)
+	if namespace == "" {
+		namespace = combinedNamespace
+	}
+	if namespace == "" {
+		namespace = "default"
+	}
+	return fetchRolloutDecision(ctx, namespace, kind, name)
 }
 
 func buildThreeWayNavigation(report threeWayReport) (string, string, []StructuredHint) {
@@ -943,6 +966,9 @@ func renderThreeWayASCII(report threeWayReport) string {
 		if len(entry.Causes) > 0 {
 			b.WriteString("  causes: " + strings.Join(entry.Causes, ", ") + "\n")
 		}
+		if entry.CurrentChange != nil {
+			b.WriteString("  current-change: " + formatRolloutDecisionLine(entry.CurrentChange) + "\n")
+		}
 		for _, note := range entry.Result.Notes {
 			b.WriteString("  note: " + note + "\n")
 		}
@@ -995,19 +1021,24 @@ func renderThreeWayMarkdown(report threeWayReport) string {
 		return b.String()
 	}
 
-	b.WriteString("| Resource | Namespace | Mode | Severity | Mismatches | Causes |\n")
-	b.WriteString("|---|---|---|---|---:|---|\n")
+	b.WriteString("| Resource | Namespace | Mode | Severity | Mismatches | Current Change | Causes |\n")
+	b.WriteString("|---|---|---|---|---:|---|---|\n")
 	for _, entry := range report.Resources {
 		causes := strings.Join(entry.Causes, ",")
 		if causes == "" {
 			causes = "-"
 		}
-		b.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %d | %s |\n",
+		currentChange := "-"
+		if entry.CurrentChange != nil {
+			currentChange = formatRolloutDecisionLine(entry.CurrentChange)
+		}
+		b.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %d | %s | %s |\n",
 			historyEscapeMarkdown(entry.Result.Resource),
 			historyEscapeMarkdown(entry.Result.Namespace),
 			historyEscapeMarkdown(entry.Result.Mode),
 			historyEscapeMarkdown(entry.Severity),
 			len(entry.Result.Mismatches),
+			historyEscapeMarkdown(currentChange),
 			historyEscapeMarkdown(causes),
 		))
 	}

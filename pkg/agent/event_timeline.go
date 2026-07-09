@@ -27,18 +27,18 @@ type TimelineEvent struct {
 	K8sEvent
 	ResourceKind string `json:"resourceKind"` // Pod, Deployment, ReplicaSet, etc.
 	ResourceName string `json:"resourceName"`
-	Explanation  string `json:"explanation,omitempty"`  // Human-readable explanation
-	Suggestion   string `json:"suggestion,omitempty"`   // Suggested action
-	Severity     string `json:"severity"`               // info, warning, error
+	Explanation  string `json:"explanation,omitempty"` // Human-readable explanation
+	Suggestion   string `json:"suggestion,omitempty"`  // Suggested action
+	Severity     string `json:"severity"`              // info, warning, error
 }
 
 // EventTimelineFetcher fetches and organizes events into a timeline
 type EventTimelineFetcher struct {
-	clientset *kubernetes.Clientset
+	clientset kubernetes.Interface
 }
 
 // NewEventTimelineFetcher creates a new event timeline fetcher
-func NewEventTimelineFetcher(clientset *kubernetes.Clientset) *EventTimelineFetcher {
+func NewEventTimelineFetcher(clientset kubernetes.Interface) *EventTimelineFetcher {
 	return &EventTimelineFetcher{
 		clientset: clientset,
 	}
@@ -372,15 +372,27 @@ func GetEventSuggestion(reason string) string {
 // ResourceEvent is a compact event model for bounded display in explain/trace.
 // This is simpler than TimelineEvent and optimized for troubleshooting output.
 type ResourceEvent struct {
-	Type      string     `json:"type"`              // Normal or Warning
-	Reason    string     `json:"reason"`            // e.g., Pulled, BackOff, FailedScheduling
-	Message   string     `json:"message"`           // Human-readable message
-	Count     int32      `json:"count,omitempty"`   // Number of occurrences
-	Age       string     `json:"age"`               // Human-readable age (e.g., "5m", "2h")
-	LastSeen  *time.Time `json:"lastSeen"`          // Last occurrence timestamp
-	Severity  string     `json:"severity"`          // info, warning, error
-	Source    string     `json:"source,omitempty"`  // Component that generated the event
-	FirstSeen *time.Time `json:"firstSeen"`         // First occurrence timestamp
+	Type      string       `json:"type"`             // Normal or Warning
+	Reason    string       `json:"reason"`           // e.g., Pulled, BackOff, FailedScheduling
+	Message   string       `json:"message"`          // Human-readable message
+	Count     int32        `json:"count,omitempty"`  // Number of occurrences
+	Age       string       `json:"age"`              // Human-readable age (e.g., "5m", "2h")
+	LastSeen  *time.Time   `json:"lastSeen"`         // Last occurrence timestamp
+	Severity  string       `json:"severity"`         // info, warning, error
+	Source    string       `json:"source,omitempty"` // Component that generated the event
+	FirstSeen *time.Time   `json:"firstSeen"`        // First occurrence timestamp
+	Action    *ActionEvent `json:"action,omitempty"` // Audited user/action metadata when exposed by the event
+}
+
+// ActionEvent is safe, structured audit metadata extracted from Kubernetes
+// Events. It is optional and only populated when the event carries explicit
+// action annotations or a known action reason.
+type ActionEvent struct {
+	Action  string            `json:"action,omitempty"`
+	Actor   string            `json:"actor,omitempty"`
+	Groups  []string          `json:"groups,omitempty"`
+	Subject string            `json:"subject,omitempty"`
+	Raw     map[string]string `json:"raw,omitempty"`
 }
 
 // ResourceEventSummary summarizes events for a resource.
@@ -456,6 +468,9 @@ func (f *EventTimelineFetcher) FetchRecentEvents(ctx context.Context, namespace,
 			FirstSeen: firstTime,
 			LastSeen:  lastTime,
 		}
+		if action, ok := ParseActionEvent(event.Reason, event.Annotations); ok {
+			re.Action = action
+		}
 
 		// Calculate age string
 		if lastTime != nil {
@@ -485,6 +500,63 @@ func (f *EventTimelineFetcher) FetchRecentEvents(ctx context.Context, namespace,
 
 	summary.Events = resourceEvents
 	return summary, nil
+}
+
+// ParseActionEvent extracts audited action metadata from a Kubernetes Event.
+// It recognizes action annotations emitted by controller web consoles and keeps
+// unknown annotations from the same namespace as raw evidence.
+func ParseActionEvent(reason string, annotations map[string]string) (*ActionEvent, bool) {
+	const prefix = "event.toolkit.fluxcd.io/"
+	if len(annotations) == 0 && !strings.EqualFold(reason, "WebAction") {
+		return nil, false
+	}
+
+	action := &ActionEvent{}
+	raw := map[string]string{}
+	for key, value := range annotations {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		switch key {
+		case prefix + "action":
+			action.Action = value
+		case prefix + "username":
+			action.Actor = value
+		case prefix + "groups":
+			action.Groups = splitActionGroups(value)
+		case prefix + "subject":
+			action.Subject = value
+		default:
+			if strings.HasPrefix(key, prefix) {
+				raw[key] = value
+			}
+		}
+	}
+	if len(raw) > 0 {
+		action.Raw = raw
+	}
+	if action.Action == "" && action.Actor == "" && len(action.Groups) == 0 && action.Subject == "" && len(action.Raw) == 0 {
+		if strings.EqualFold(reason, "WebAction") {
+			return action, true
+		}
+		return nil, false
+	}
+	return action, true
+}
+
+func splitActionGroups(value string) []string {
+	parts := strings.FieldsFunc(value, func(r rune) bool {
+		return r == ',' || r == ';'
+	})
+	groups := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			groups = append(groups, part)
+		}
+	}
+	return groups
 }
 
 // severityRank returns a numeric rank for sorting (higher = more severe)
