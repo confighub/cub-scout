@@ -133,6 +133,44 @@ func TestRenderExplainText_ContainsPlainEnglishSections(t *testing.T) {
 	}
 }
 
+func TestRenderExplainText_ContainsCurrentChange(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+
+	summary := ExplainSummary{
+		Resource:    "Deployment/payments-api",
+		Namespace:   "prod",
+		Owner:       "Flux",
+		Source:      "unknown",
+		DeployedVia: "Deployment/payments-api",
+		Health:      "Progressing",
+		Risks:       "0 findings",
+		Drift:       "Unknown",
+		CurrentChange: &agent.RolloutDecision{
+			Verdict: agent.VerdictWATCH,
+			Reason:  agent.RolloutReasonStaleGeneration,
+			Progress: agent.RolloutProgress{
+				Phase: agent.RolloutProgressApplied,
+			},
+			Evidence: agent.RolloutDecisionEvidence{
+				Generation:         2,
+				ObservedGeneration: 1,
+			},
+		},
+	}
+
+	out := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
+	required := []string{
+		"Current change: WATCH phase=applied",
+		"reason=stale_generation",
+		"generation=2 observed=1",
+	}
+	for _, s := range required {
+		if !strings.Contains(out, s) {
+			t.Fatalf("expected %q in explain text:\n%s", s, out)
+		}
+	}
+}
+
 func TestRenderExplainMarkdown_ContainsHeadingsAndFields(t *testing.T) {
 	summary := ExplainSummary{
 		Resource:    "Deployment/payments-api",
@@ -153,6 +191,43 @@ func TestRenderExplainMarkdown_ContainsHeadingsAndFields(t *testing.T) {
 		"- **Namespace:** `prod`",
 		"- **Owner:** Flux",
 		"- **Source:** https://github.com/acme/platform-config.git",
+	}
+	for _, s := range required {
+		if !strings.Contains(out, s) {
+			t.Fatalf("expected %q in explain markdown:\n%s", s, out)
+		}
+	}
+}
+
+func TestRenderExplainMarkdown_ContainsCurrentChange(t *testing.T) {
+	summary := ExplainSummary{
+		Resource:    "Deployment/payments-api",
+		Namespace:   "prod",
+		Owner:       "Flux",
+		Source:      "unknown",
+		DeployedVia: "Deployment/payments-api",
+		Health:      "Progressing",
+		Risks:       "0 findings",
+		Drift:       "Unknown",
+		CurrentChange: &agent.RolloutDecision{
+			Verdict: agent.VerdictBLOCK,
+			Reason:  agent.RolloutReasonRuntimeFailed,
+			Progress: agent.RolloutProgress{
+				Phase: agent.RolloutProgressStalled,
+			},
+			Evidence: agent.RolloutDecisionEvidence{
+				PodReasons: []agent.WorkloadPodReason{
+					{Pod: "payments-api-abc", Reason: "CrashLoopBackOff"},
+				},
+			},
+		},
+	}
+
+	out := renderExplainMarkdown(summary, DefaultPresentationMode, false, DefaultHintContext())
+	required := []string{
+		"- **Current change:** `BLOCK phase=stalled",
+		"reason=runtime_failed",
+		"pod=payments-api-abc:CrashLoopBackOff",
 	}
 	for _, s := range required {
 		if !strings.Contains(out, s) {

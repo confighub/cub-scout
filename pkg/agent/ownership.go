@@ -31,7 +31,7 @@ func DetectOwnership(resource *unstructured.Unstructured) Ownership {
 	annotations := resource.GetAnnotations()
 
 	// Check for Flux ownership
-	if ownership := detectFluxOwnership(labels, annotations); ownership.Type != "" {
+	if ownership := detectFluxOwnership(labels, annotations, resource); ownership.Type != "" {
 		return ownership
 	}
 
@@ -94,7 +94,7 @@ func DetectOwnership(resource *unstructured.Unstructured) Ownership {
 	return Ownership{Type: OwnerUnknown}
 }
 
-func detectFluxOwnership(labels, annotations map[string]string) Ownership {
+func detectFluxOwnership(labels, annotations map[string]string, resource *unstructured.Unstructured) Ownership {
 	// Flux Kustomization
 	if name, ok := labels["kustomize.toolkit.fluxcd.io/name"]; ok {
 		ns := labels["kustomize.toolkit.fluxcd.io/namespace"]
@@ -121,7 +121,23 @@ func detectFluxOwnership(labels, annotations map[string]string) Ownership {
 		}
 	}
 
+	if resource != nil && fluxOperatorAPIGroup(resource.GetAPIVersion()) {
+		return Ownership{
+			Type:       OwnerFlux,
+			SubType:    strings.ToLower(resource.GetKind()),
+			Name:       resource.GetName(),
+			Namespace:  resource.GetNamespace(),
+			Source:     "apiGroup:fluxcd.controlplane.io",
+			Confidence: "high",
+		}
+	}
+
 	return Ownership{}
+}
+
+func fluxOperatorAPIGroup(apiVersion string) bool {
+	group, _, ok := strings.Cut(apiVersion, "/")
+	return ok && group == "fluxcd.controlplane.io"
 }
 
 func detectArgoOwnership(labels, annotations map[string]string) Ownership {

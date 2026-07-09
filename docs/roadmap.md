@@ -23,6 +23,16 @@ remains future work. Items marked "resolved" had issues filed, implemented, and 
 
 Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
+### Live Delivery Observability (`proposals/next-release-live-delivery-observability.md`)
+
+- [x] First-class aggregate delivery/app-bundle/input-provider/external-artifact/generated-artifact resources in controller-resource discovery, ownership, deployer/status, trace, and activity surfaces
+- [x] Audited user-action event ingestion for activity, explain, and trace event summaries
+- [x] Generation-aware rollout progress/verdict UX promoted from receipts into doctor, explain, and compare surfaces
+- [ ] Aggregate delivery failures as doctor top-level findings with deeper source/generated-artifact lineage where status refs expose it
+- [ ] Audited user-action event ingestion for history and receipt supporting evidence
+- [ ] API-load-aware inventory and search paths with source freshness for snapshot, watch, summary, and receipt-backed reads
+- [ ] Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
+
 ### Rendered Manifest + Argo (`roadmap-rendered-manifest-and-argo.md`)
 
 - [x] Workstream A: Distinguish "ConfigHub via OCI" ownership in trace outputs (relates to [ConfigHub rendered manifests](https://docs.confighub.com/guide/rendered-manifests/)) — validated by `TestArgoTracerConfigHubOCIDetection` + trace ASCII/JSON proofs

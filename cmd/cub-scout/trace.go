@@ -1195,6 +1195,15 @@ func convertResourceEvents(events *agent.ResourceEventSummary) *mapsvc.TraceEven
 			Severity: ev.Severity,
 			Source:   ev.Source,
 		}
+		if ev.Action != nil {
+			te.Action = &mapsvc.TraceActionEvent{
+				Action:  ev.Action.Action,
+				Actor:   ev.Action.Actor,
+				Groups:  ev.Action.Groups,
+				Subject: ev.Action.Subject,
+				Raw:     ev.Action.Raw,
+			}
+		}
 		if ev.FirstSeen != nil {
 			te.FirstSeen = ev.FirstSeen.Format(time.RFC3339)
 		}
@@ -1672,11 +1681,16 @@ func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.Tra
 			if ev.Count > 1 {
 				countStr = fmt.Sprintf(" (x%d)", ev.Count)
 			}
+			detail := formatEventActionDetail(ev.Action)
+			if detail != "" {
+				detail = " [" + detail + "]"
+			}
 
-			fmt.Printf("  %s%s%s %s%s%s %s: %s%s\n",
+			fmt.Printf("  %s%s%s %s%s%s %s%s: %s%s\n",
 				iconColor, icon, colorReset,
 				colorDim, ev.Age, colorReset,
 				ev.Reason,
+				detail,
 				ev.Message,
 				countStr,
 			)

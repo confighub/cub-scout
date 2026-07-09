@@ -17,12 +17,12 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `map issues` | Show resources with problems | v0.5 |
 | `map crashes` | Show crashing pods | v0.5 |
 | `map workloads` | List workloads by owner | v0.5 |
-| `map deployers` | List controller deployers (Flux, ArgoCD, Sveltos, Modelplane, core Deployments) | v0.5 |
+| `map deployers` | List controller deployers (Flux, ArgoCD, Sveltos, Modelplane, aggregate delivery resources, core Deployments) | v0.5 |
 | `map hooks` | List lifecycle hooks (Helm/ArgoCD) | v0.19 |
 | `map cronjobs` | List CronJobs with schedule/run state | v0.20 |
 | `map jobs` | List Jobs with CronJob linkage and run state | v0.20 |
 | `map actions` | Read-only operator action preview (runbook output) | v0.20 |
-| `map activity` | Unified activity timeline from Flux/Argo/Sveltos/Modelplane/Helm/events | v0.20 |
+| `map activity` | Unified activity timeline from Flux/Argo/Sveltos/Modelplane/aggregate delivery resources/Helm/events | v0.20 |
 | `map previews` | Detect PR preview environments | v0.20 |
 | `quickstart` | Guided first-run walkthrough | v1.4 |
 | `quickstart demo` | Fixture-backed demo runner | v1.0 |
@@ -280,7 +280,8 @@ cub-scout quickstart demo quick --cleanup
 
 ## doctor
 
-Single-command cluster health summary (ownership, health, risk, drift, top issues).
+Single-command cluster health summary (ownership, health, rollout progress,
+risk, drift, top issues).
 
 ```bash
 cub-scout doctor [flags]
@@ -521,6 +522,7 @@ cub-scout map deployers [flags]
 Canonical deployer scope (v1.0):
 - Flux `Kustomization`
 - Flux `HelmRelease`
+- Flux aggregate resources: `FluxInstance`, `FluxReport`, `ResourceSet`, `ResourceSetInputProvider`, `ExternalArtifact`, `ArtifactGenerator`
 - Argo CD `Application`
 - Sveltos `ClusterProfile`, `Profile`, `EventTrigger`, `ClusterHealthCheck`, `ClusterPromotion`
 - Modelplane `InferenceGateway`, `InferenceCluster`, `ModelDeployment`, `ModelService`, `ModelCache`, `ServingStack`, `EKSCluster`, `GKECluster`
@@ -634,7 +636,7 @@ cub-scout map actions cronjob/nightly-backup -n operations --format json
 
 ## map activity
 
-Show normalized activity from Flux, ArgoCD, Sveltos, Modelplane, Helm release history, and Kubernetes Events.
+Show normalized activity from Flux, ArgoCD, Sveltos, Modelplane, aggregate delivery resources, Helm release history, audited action events, and Kubernetes Events.
 
 ```bash
 cub-scout map activity [flags]
@@ -1220,7 +1222,9 @@ Resource compare mode behavior:
 
 ### compare three-way
 
-Connected three-way comparison command for selected scopes.
+Connected three-way comparison command for selected scopes. For workload
+resources, output may include generation-scoped current-change rollout evidence
+when live status can be read.
 
 ```bash
 cub-scout compare three-way --scope <scope> [flags]
@@ -2117,7 +2121,7 @@ cub-scout gitops status [flags]
 |---------|-----------|
 | `flux` | Kustomization or HelmRelease CRDs present |
 | `argocd` | Application CRD present |
-| `controllers` | Sveltos or Modelplane controller CRDs present without Flux/Argo CD |
+| `controllers` | First-class controller CRDs present without Flux/Argo CD application CRDs |
 | `worker` | ConfigHub worker labels |
 | `none` | No GitOps/controller backend detected |
 

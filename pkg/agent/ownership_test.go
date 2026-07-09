@@ -45,10 +45,13 @@ func TestDetectOwnership_Flux(t *testing.T) {
 		name        string
 		labels      map[string]string
 		annotations map[string]string
+		apiVersion  string
+		kind        string
 		wantType    string
 		wantSubType string
 		wantName    string
 		wantNS      string
+		wantSource  string
 	}{
 		{
 			name: "Flux Kustomization ownership",
@@ -60,6 +63,7 @@ func TestDetectOwnership_Flux(t *testing.T) {
 			wantSubType: "kustomization",
 			wantName:    "my-app",
 			wantNS:      "flux-system",
+			wantSource:  "label:kustomize.toolkit.fluxcd.io/name",
 		},
 		{
 			name: "Flux HelmRelease ownership",
@@ -71,6 +75,7 @@ func TestDetectOwnership_Flux(t *testing.T) {
 			wantSubType: "helmrelease",
 			wantName:    "redis",
 			wantNS:      "default",
+			wantSource:  "label:helm.toolkit.fluxcd.io/name",
 		},
 		{
 			name: "Flux Kustomization without namespace",
@@ -81,12 +86,25 @@ func TestDetectOwnership_Flux(t *testing.T) {
 			wantSubType: "kustomization",
 			wantName:    "standalone-app",
 			wantNS:      "",
+			wantSource:  "label:kustomize.toolkit.fluxcd.io/name",
+		},
+		{
+			name:        "Flux Operator aggregate resource by API group",
+			apiVersion:  "fluxcd.controlplane.io/v1",
+			kind:        "ResourceSet",
+			wantType:    OwnerFlux,
+			wantSubType: "resourceset",
+			wantName:    "test-resource",
+			wantNS:      "test-ns",
+			wantSource:  "apiGroup:fluxcd.controlplane.io",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resource := newTestResource("test-ns", "test-resource", tt.labels, tt.annotations)
+			resource.SetAPIVersion(tt.apiVersion)
+			resource.SetKind(tt.kind)
 			ownership := DetectOwnership(resource)
 
 			if ownership.Type != tt.wantType {
@@ -100,6 +118,9 @@ func TestDetectOwnership_Flux(t *testing.T) {
 			}
 			if ownership.Namespace != tt.wantNS {
 				t.Errorf("Namespace = %q, want %q", ownership.Namespace, tt.wantNS)
+			}
+			if ownership.Source != tt.wantSource {
+				t.Errorf("Source = %q, want %q", ownership.Source, tt.wantSource)
 			}
 		})
 	}

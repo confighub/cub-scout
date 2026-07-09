@@ -302,6 +302,26 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
   "namespace": "prod",
   "owner": "ArgoCD",
   "drift": "Detected by ConfigHub",
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "prod",
+      "name": "api"
+    },
+    "progress": {
+      "phase": "applied",
+      "clockSource": "status.observedGeneration<metadata.generation"
+    },
+    "verdict": "WATCH",
+    "reason": "stale_generation",
+    "evidence": {
+      "kstatusStatus": "InProgress",
+      "generation": 2,
+      "observedGeneration": 1,
+      "observedAt": "2026-07-09T10:30:00Z"
+    }
+  },
   "mutationCause": "manual-edit",
   "mutationManager": "kubectl-edit"
 }
@@ -309,8 +329,83 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `currentChange` | object | Optional generation-scoped rollout progress/verdict for workload resources. Omitted for non-workloads or when live rollout evidence cannot be fetched. |
+| `currentChange.progress.phase` | string enum | One of `pending`, `applied`, `rolling_out`, `stalled`, `complete`, or `unknown`. |
+| `currentChange.verdict` | string enum | `PASS`, `WATCH`, `BLOCK`, or `INCONCLUSIVE`. Uses the same vocabulary as receipts. |
+| `currentChange.reason` | string enum | Stable reason such as `workload_converged`, `rollout_progressing`, `stale_generation`, `progress_stalled`, `runtime_failed`, `rollout_failed`, `workload_missing`, or `evidence_missing`. |
+| `currentChange.evidence` | object | Reviewable kstatus, generation, observed generation, pod reason, and observation timestamp evidence used to build the verdict. |
 | `mutationCause` | string enum | Same enum as `cause` above. Best-effort; omitted on fetch failure or when no signal is present. |
 | `mutationManager` | string | Representative manager string for transparency. |
+
+### DoctorSummary rollout additions (doctor --format json)
+
+When live workload rollout evidence is available, `doctor --format json`
+includes a `rollouts` object. The field is omitted when no workload rollout
+evidence could be collected.
+
+```json
+{
+  "rollouts": {
+    "total": 4,
+    "pass": 2,
+    "watch": 1,
+    "block": 1,
+    "inconclusive": 0,
+    "currentChanges": [
+      {
+        "resource": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "prod",
+          "name": "api"
+        },
+        "progress": {"phase": "stalled"},
+        "verdict": "BLOCK",
+        "reason": "runtime_failed",
+        "evidence": {
+          "podReasons": [
+            {"pod": "api-abc", "reason": "CrashLoopBackOff"}
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+`currentChanges[]` contains non-`PASS` rollout decisions, sorted by severity
+(`BLOCK`, then `INCONCLUSIVE`, then `WATCH`) and bounded by `doctor --top`.
+
+### Three-way resource rollout additions (compare three-way --format json)
+
+Each `resources[]` entry may include `currentChange` for workload resources
+when live rollout evidence is available:
+
+```json
+{
+  "resources": [
+    {
+      "result": {"resource": "Deployment/api", "namespace": "prod"},
+      "severity": "warning",
+      "pattern": "rollout-pending",
+      "currentChange": {
+        "progress": {"phase": "rolling_out"},
+        "verdict": "WATCH",
+        "reason": "rollout_progressing",
+        "evidence": {
+          "kstatusStatus": "InProgress",
+          "generation": 2,
+          "observedGeneration": 2
+        }
+      }
+    }
+  ]
+}
+```
+
+`currentChange` is omitted for non-workload resources and when rollout
+evidence cannot be read. It does not change conformance exit-code semantics;
+`compare three-way --fail-on` remains based on resource severity.
 
 ### Verified manager strings
 
@@ -535,6 +630,25 @@ As of v1.10, `trace` and `explain` commands include recent Kubernetes events for
         "source": "kubelet",
         "firstSeen": "2026-04-09T10:00:00Z",
         "lastSeen": "2026-04-09T10:05:00Z"
+      },
+      {
+        "type": "Normal",
+        "reason": "WebAction",
+        "message": "operator@example.com requested restart for Deployment/prod/api",
+        "count": 1,
+        "age": "1m",
+        "severity": "info",
+        "source": "controller-web",
+        "lastSeen": "2026-07-09T10:05:00Z",
+        "action": {
+          "action": "restart",
+          "actor": "operator@example.com",
+          "groups": ["platform", "oncall"],
+          "subject": "Deployment/prod/api",
+          "raw": {
+            "event.toolkit.fluxcd.io/change-token": "chg-123"
+          }
+        }
       }
     ],
     "totalCount": 10,
@@ -579,6 +693,15 @@ As of v1.10, `trace` and `explain` commands include recent Kubernetes events for
 | `source` | string | Component that generated the event |
 | `firstSeen` | string | RFC3339 timestamp of first occurrence |
 | `lastSeen` | string | RFC3339 timestamp of last occurrence |
+| `action` | object | Optional audited action metadata when explicitly present on the Kubernetes Event |
+| `action.action` | string | Action name from event annotations |
+| `action.actor` | string | Actor/username from event annotations |
+| `action.groups[]` | string[] | Actor groups from event annotations |
+| `action.subject` | string | Target subject from event annotations |
+| `action.raw` | object | Unknown action annotations preserved as raw evidence |
+
+Action metadata is omitted for ordinary events. Missing actor, group, or subject
+fields are omitted rather than guessed.
 
 ### Severity Mapping
 

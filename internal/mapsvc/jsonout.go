@@ -455,15 +455,24 @@ type TraceEvents struct {
 
 // TraceEvent represents a single Kubernetes event.
 type TraceEvent struct {
-	Type      string `json:"type"`                // Normal or Warning
-	Reason    string `json:"reason"`              // e.g., Pulled, BackOff, FailedScheduling
-	Message   string `json:"message"`             // Human-readable message
-	Count     int32  `json:"count,omitempty"`     // Number of occurrences
-	Age       string `json:"age"`                 // Human-readable age (e.g., "5m", "2h")
-	Severity  string `json:"severity"`            // info, warning, error
-	Source    string `json:"source,omitempty"`    // Component that generated the event
-	FirstSeen string `json:"firstSeen,omitempty"` // RFC3339 timestamp
-	LastSeen  string `json:"lastSeen,omitempty"`  // RFC3339 timestamp
+	Type      string            `json:"type"`                // Normal or Warning
+	Reason    string            `json:"reason"`              // e.g., Pulled, BackOff, FailedScheduling
+	Message   string            `json:"message"`             // Human-readable message
+	Count     int32             `json:"count,omitempty"`     // Number of occurrences
+	Age       string            `json:"age"`                 // Human-readable age (e.g., "5m", "2h")
+	Severity  string            `json:"severity"`            // info, warning, error
+	Source    string            `json:"source,omitempty"`    // Component that generated the event
+	FirstSeen string            `json:"firstSeen,omitempty"` // RFC3339 timestamp
+	LastSeen  string            `json:"lastSeen,omitempty"`  // RFC3339 timestamp
+	Action    *TraceActionEvent `json:"action,omitempty"`
+}
+
+type TraceActionEvent struct {
+	Action  string            `json:"action,omitempty"`
+	Actor   string            `json:"actor,omitempty"`
+	Groups  []string          `json:"groups,omitempty"`
+	Subject string            `json:"subject,omitempty"`
+	Raw     map[string]string `json:"raw,omitempty"`
 }
 
 // ChainRole constants for trace chain nodes.

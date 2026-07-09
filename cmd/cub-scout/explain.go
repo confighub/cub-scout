@@ -60,6 +60,11 @@ type ExplainSummary struct {
 	ConfigHubRevisionNum     string   `json:"configHubRevisionNum,omitempty"`     // Deployed ConfigHub revision when known
 	ConfigHubLiveRevisionNum string   `json:"configHubLiveRevisionNum,omitempty"` // Latest/live ConfigHub revision when known
 
+	// CurrentChange contains generation-scoped rollout progress and verdict
+	// evidence for workload resources. It is omitted when the resource kind is
+	// not a rollout workload or live evidence cannot be fetched.
+	CurrentChange *agent.RolloutDecision `json:"currentChange,omitempty"`
+
 	// Events contains recent Kubernetes events for the resource.
 	// Prioritizes Warning/error events, bounded to top 5.
 	Events *agent.ResourceEventSummary `json:"events,omitempty"`
@@ -679,6 +684,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 	fmt.Fprintf(&b, "  %s %s\n", label("Source"), summary.Source)
 	fmt.Fprintf(&b, "  %s %s\n", label("Deployed via"), summary.DeployedVia)
 	fmt.Fprintf(&b, "  %s %s\n", label("Health"), StatusColor(summary.Health))
+	if summary.CurrentChange != nil {
+		fmt.Fprintf(&b, "  %s %s\n", label("Current change"), colorExplainRolloutDecision(summary.CurrentChange))
+	}
 	fmt.Fprintf(&b, "  %s %s\n", label("Risks"), summary.Risks)
 	fmt.Fprintf(&b, "  %s %s\n", label("Drift"), colorExplainDrift(summary.Drift))
 	if summary.MutationCause != "" {
@@ -782,6 +790,56 @@ func colorExplainMutationCause(cause agent.FieldMutationCause, text string) stri
 	}
 }
 
+func colorExplainRolloutDecision(decision *agent.RolloutDecision) string {
+	line := formatRolloutDecisionLine(decision)
+	if decision == nil {
+		return line
+	}
+	switch decision.Verdict {
+	case agent.VerdictPASS:
+		return Green(line)
+	case agent.VerdictWATCH:
+		return Yellow(line)
+	case agent.VerdictBLOCK:
+		return Red(line)
+	default:
+		return Yellow(line)
+	}
+}
+
+func formatRolloutDecisionLine(decision *agent.RolloutDecision) string {
+	if decision == nil {
+		return ""
+	}
+	phase := strings.TrimSpace(decision.Progress.Phase)
+	if phase == "" {
+		phase = agent.RolloutProgressUnknown
+	}
+	base := fmt.Sprintf("%s phase=%s", decision.Verdict, phase)
+	details := []string{}
+	if decision.Reason != "" {
+		details = append(details, "reason="+decision.Reason)
+	}
+	if decision.Evidence.Generation > 0 || decision.Evidence.ObservedGeneration > 0 {
+		details = append(details, fmt.Sprintf("generation=%d observed=%d", decision.Evidence.Generation, decision.Evidence.ObservedGeneration))
+	}
+	if len(decision.Evidence.PodReasons) > 0 {
+		first := decision.Evidence.PodReasons[0]
+		podDetail := first.Reason
+		if first.Pod != "" {
+			podDetail = first.Pod + ":" + podDetail
+		}
+		details = append(details, "pod="+podDetail)
+	}
+	if decision.Message != "" {
+		details = append(details, "message="+decision.Message)
+	}
+	if len(details) == 0 {
+		return base
+	}
+	return base + " (" + strings.Join(details, "; ") + ")"
+}
+
 func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explicitMode bool, hintCtx HintContext) string {
 	var b strings.Builder
 
@@ -800,6 +858,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	fmt.Fprintf(&b, "- **Source:** %s\n", summary.Source)
 	fmt.Fprintf(&b, "- **Deployed via:** %s\n", summary.DeployedVia)
 	fmt.Fprintf(&b, "- **Health:** %s\n", summary.Health)
+	if summary.CurrentChange != nil {
+		fmt.Fprintf(&b, "- **Current change:** `%s`\n", formatRolloutDecisionLine(summary.CurrentChange))
+	}
 	fmt.Fprintf(&b, "- **Risks:** %s\n", summary.Risks)
 	fmt.Fprintf(&b, "- **Drift:** %s\n", summary.Drift)
 	if summary.MutationCause != "" {
@@ -885,11 +946,16 @@ func renderEventsSection(events *agent.ResourceEventSummary, mode PresentationMo
 		if ev.Count > 1 {
 			countStr = fmt.Sprintf(" (x%d)", ev.Count)
 		}
+		detail := formatEventActionDetail(ev.Action)
+		if detail != "" {
+			detail = " [" + detail + "]"
+		}
 
-		fmt.Fprintf(&b, "  %s%s%s %s %s: %s%s%s\n",
+		fmt.Fprintf(&b, "  %s%s%s %s %s%s: %s%s%s\n",
 			color, icon, reset,
 			ev.Age,
 			ev.Reason,
+			detail,
 			ev.Message,
 			countStr,
 			reset,
@@ -928,9 +994,33 @@ func renderEventsMarkdown(events *agent.ResourceEventSummary, mode PresentationM
 		if ev.Count > 1 {
 			countStr = fmt.Sprintf(" (x%d)", ev.Count)
 		}
+		reason := ev.Reason
+		if detail := formatEventActionDetail(ev.Action); detail != "" {
+			reason = reason + " (" + detail + ")"
+		}
 		fmt.Fprintf(&b, "| %s | %s | %s | %s%s |\n",
-			ev.Age, ev.Type, ev.Reason, msg, countStr)
+			ev.Age, ev.Type, reason, msg, countStr)
 	}
 
 	return b.String()
+}
+
+func formatEventActionDetail(action *agent.ActionEvent) string {
+	if action == nil {
+		return ""
+	}
+	parts := make([]string, 0, 3)
+	if action.Action != "" {
+		parts = append(parts, "action="+action.Action)
+	}
+	if action.Actor != "" {
+		parts = append(parts, "actor="+action.Actor)
+	}
+	if action.Subject != "" {
+		parts = append(parts, "subject="+action.Subject)
+	}
+	if len(parts) == 0 && len(action.Raw) > 0 {
+		parts = append(parts, "action-metadata")
+	}
+	return strings.Join(parts, " ")
 }

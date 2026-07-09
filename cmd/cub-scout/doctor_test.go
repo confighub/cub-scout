@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/confighub/cub-scout/internal/scan"
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 func TestBuildDoctorSummary_ComputesCoreSections(t *testing.T) {
@@ -75,6 +76,45 @@ func TestBuildDoctorSummary_TopIssuesRespectsLimitAndOrdering(t *testing.T) {
 	}
 }
 
+func TestBuildDoctorRolloutSummary_CountsAndOrdersCurrentChanges(t *testing.T) {
+	decisions := []agent.RolloutDecision{
+		doctorRolloutDecision("Deployment", "prod", "watch", agent.VerdictWATCH, agent.RolloutProgressRollingOut, agent.RolloutReasonProgressing),
+		doctorRolloutDecision("Deployment", "prod", "pass", agent.VerdictPASS, agent.RolloutProgressComplete, agent.RolloutReasonConverged),
+		doctorRolloutDecision("StatefulSet", "prod", "blocked", agent.VerdictBLOCK, agent.RolloutProgressStalled, agent.RolloutReasonRuntimeFailed),
+		doctorRolloutDecision("Deployment", "prod", "unknown", agent.VerdictINCONCLUSIVE, agent.RolloutProgressUnknown, agent.RolloutReasonEvidenceMissing),
+	}
+
+	summary := buildDoctorRolloutSummary(decisions, 2)
+	if summary.Total != 4 || summary.Pass != 1 || summary.Watch != 1 || summary.Block != 1 || summary.Inconclusive != 1 {
+		t.Fatalf("unexpected rollout summary: %+v", summary)
+	}
+	if len(summary.CurrentChanges) != 2 {
+		t.Fatalf("current changes = %d, want 2", len(summary.CurrentChanges))
+	}
+	if summary.CurrentChanges[0].Verdict != agent.VerdictBLOCK {
+		t.Fatalf("first current change verdict = %s, want BLOCK", summary.CurrentChanges[0].Verdict)
+	}
+	if summary.CurrentChanges[1].Verdict != agent.VerdictINCONCLUSIVE {
+		t.Fatalf("second current change verdict = %s, want INCONCLUSIVE", summary.CurrentChanges[1].Verdict)
+	}
+}
+
+func doctorRolloutDecision(kind, namespace, name string, verdict agent.ReceiptVerdict, phase, reason string) agent.RolloutDecision {
+	return agent.RolloutDecision{
+		Resource: agent.ObjectSetObjectID{
+			APIVersion: "apps/v1",
+			Kind:       kind,
+			Namespace:  namespace,
+			Name:       name,
+		},
+		Verdict: verdict,
+		Reason:  reason,
+		Progress: agent.RolloutProgress{
+			Phase: phase,
+		},
+	}
+}
+
 func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
 	// Set NO_COLOR to get plain text output for string matching
 	t.Setenv("NO_COLOR", "1")
@@ -85,6 +125,15 @@ func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
 		Resources: DoctorResourceSummary{Total: 10},
 		Ownership: DoctorOwnershipSummary{Flux: 3, ArgoCD: 2, Sveltos: 1, Modelplane: 1, Helm: 1, Native: 2, Unmanaged: 2},
 		Health:    DoctorHealthSummary{Healthy: 7, Warning: 2, Error: 1},
+		Rollouts: &DoctorRolloutSummary{
+			Total: 4,
+			Pass:  2,
+			Watch: 1,
+			Block: 1,
+			CurrentChanges: []agent.RolloutDecision{
+				doctorRolloutDecision("Deployment", "prod", "api", agent.VerdictBLOCK, agent.RolloutProgressStalled, agent.RolloutReasonRuntimeFailed),
+			},
+		},
 		Risks:     DoctorRiskSummary{Total: 5, Critical: 1, Warning: 3, Info: 1},
 		Drift:     DoctorDriftSummary{Resources: 2},
 		TopIssues: []DoctorIssue{{Severity: "CRITICAL", Resource: "Deployment/api", Namespace: "prod", Message: "missing limits"}},
@@ -99,6 +148,11 @@ func TestRenderDoctorASCII_ContainsSummarySections(t *testing.T) {
 		"Sveltos: 1",
 		"Modelplane: 1",
 		"Health:",
+		"Rollouts: 4 workloads",
+		"2 PASS",
+		"1 WATCH",
+		"1 BLOCK",
+		"Deployment/api (ns: prod) - BLOCK phase=stalled",
 		"Risks: 5 findings (1 CRITICAL, 3 WARNING, 1 INFO)",
 		"Drift: 2 resources drifted from declared state",
 		"Top Issues:",

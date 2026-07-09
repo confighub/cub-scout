@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
 )
 
@@ -616,6 +617,51 @@ func TestRenderThreeWayASCII_ConvergingState(t *testing.T) {
 	}
 }
 
+func TestRenderThreeWayASCII_IncludesCurrentChange(t *testing.T) {
+	report := threeWayReport{
+		Scope: "namespace/prod",
+		Summary: threeWaySummary{
+			TotalResources: 1,
+			SeverityCounts: map[string]int{"warning": 1},
+			Agreement: AgreementSummary{
+				State:   StateConverging,
+				Summary: "1/1 resources converging",
+			},
+		},
+		Resources: []threeWayResourceEntry{{
+			Result: compareResourceResult{
+				Resource:  "Deployment/api",
+				Namespace: "prod",
+				Mode:      "dry-wet-live",
+			},
+			Severity: "warning",
+			Pattern:  PatternRolloutPending,
+			CurrentChange: &agent.RolloutDecision{
+				Verdict: agent.VerdictWATCH,
+				Reason:  agent.RolloutReasonStaleGeneration,
+				Progress: agent.RolloutProgress{
+					Phase: agent.RolloutProgressApplied,
+				},
+				Evidence: agent.RolloutDecisionEvidence{
+					Generation:         2,
+					ObservedGeneration: 1,
+				},
+			},
+		}},
+	}
+
+	output := renderThreeWayASCII(report)
+	for _, want := range []string{
+		"current-change: WATCH phase=applied",
+		"reason=stale_generation",
+		"generation=2 observed=1",
+	} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("expected %q in ASCII output:\n%s", want, output)
+		}
+	}
+}
+
 func TestRenderThreeWayMarkdown_IncludesAgreementSummary(t *testing.T) {
 	report := threeWayReport{
 		Scope: "namespace/prod",
@@ -642,5 +688,52 @@ func TestRenderThreeWayMarkdown_IncludesAgreementSummary(t *testing.T) {
 	}
 	if !strings.Contains(output, "1/2 resources diverged") {
 		t.Error("expected divergence summary in markdown output")
+	}
+}
+
+func TestRenderThreeWayMarkdown_IncludesCurrentChange(t *testing.T) {
+	report := threeWayReport{
+		Scope: "namespace/prod",
+		Summary: threeWaySummary{
+			TotalResources: 1,
+			SeverityCounts: map[string]int{"warning": 1},
+			Agreement: AgreementSummary{
+				State:   StateDiverged,
+				Summary: "1/1 resources diverged",
+			},
+		},
+		Resources: []threeWayResourceEntry{{
+			Result: compareResourceResult{
+				Resource:  "Deployment/api",
+				Namespace: "prod",
+				Mode:      "dry-wet-live",
+			},
+			Severity: "warning",
+			Pattern:  PatternRolloutPending,
+			CurrentChange: &agent.RolloutDecision{
+				Verdict: agent.VerdictBLOCK,
+				Reason:  agent.RolloutReasonRuntimeFailed,
+				Progress: agent.RolloutProgress{
+					Phase: agent.RolloutProgressStalled,
+				},
+				Evidence: agent.RolloutDecisionEvidence{
+					PodReasons: []agent.WorkloadPodReason{
+						{Pod: "api-abc", Reason: "CrashLoopBackOff"},
+					},
+				},
+			},
+		}},
+	}
+
+	output := renderThreeWayMarkdown(report)
+	for _, want := range []string{
+		"Current Change",
+		"BLOCK phase=stalled",
+		"reason=runtime_failed",
+		"pod=api-abc:CrashLoopBackOff",
+	} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("expected %q in markdown output:\n%s", want, output)
+		}
 	}
 }

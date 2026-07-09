@@ -78,6 +78,7 @@ understands the core ownership model.
 - [`platform-example`](./platform-example/)
 - [`d2-control-plane`](./d2-control-plane/)
 - [`flux-boutique`](./flux-boutique/)
+- [`live-delivery-observability`](./live-delivery-observability/) — aggregate delivery status, audited action events, drift shape, and rollout evidence
 - [`kro-composition`](./kro-composition/)
 - [`custom-ownership-detectors`](./custom-ownership-detectors/)
 - [`orphans`](./orphans/)

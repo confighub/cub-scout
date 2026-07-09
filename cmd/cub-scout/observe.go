@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -97,6 +99,12 @@ func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLab
 	}
 
 	result.Summary = buildDoctorSummary(entries, findings, cluster, namespaceLabel, topN)
+	rollouts, rolloutsErr := collectDoctorRollouts(ctx, namespace, topN)
+	if rolloutsErr != nil {
+		result.Warnings = append(result.Warnings, fmt.Sprintf("rollout evidence unavailable: %v", rolloutsErr))
+	} else if rollouts != nil && rollouts.Total > 0 {
+		result.Summary.Rollouts = rollouts
+	}
 	return result, nil
 }
 
@@ -162,7 +170,66 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 		summary.MutationManager = attr.ManagerHint
 	}
 
+	if decision, ok := fetchRolloutDecision(ctx, ns, kind, name); ok {
+		summary.CurrentChange = decision
+	}
+
 	return summary, nil
+}
+
+func fetchRolloutDecision(ctx context.Context, namespace, kind, name string) (*agent.RolloutDecision, bool) {
+	if !agent.IsRolloutWorkloadKind(kind) {
+		return nil, false
+	}
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, false
+	}
+	gvr := kindToGVR(kind)
+	if gvr.Resource == "" {
+		return nil, false
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, false
+	}
+
+	obj, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
+	if err != nil {
+		return nil, false
+	}
+
+	pods := relatedPodsForRolloutDecision(ctx, dynClient, namespace, obj)
+	decision, ok := agent.BuildRolloutDecisionForWorkload(obj, pods, 0, time.Now().UTC())
+	if !ok {
+		return nil, false
+	}
+	return &decision, true
+}
+
+func relatedPodsForRolloutDecision(ctx context.Context, dynClient dynamic.Interface, namespace string, obj *unstructured.Unstructured) []*unstructured.Unstructured {
+	selector := workloadSelectorMatchLabels(obj)
+	if len(selector) == 0 || namespace == "" {
+		return nil
+	}
+	podsGVR := kindToGVR("Pod")
+	if podsGVR.Resource == "" {
+		return nil
+	}
+	labelSelector, err := v1.LabelSelectorAsSelector(&v1.LabelSelector{MatchLabels: selector})
+	if err != nil {
+		return nil
+	}
+	list, err := dynClient.Resource(podsGVR).Namespace(namespace).List(ctx, v1.ListOptions{LabelSelector: labelSelector.String()})
+	if err != nil {
+		return nil
+	}
+	pods := make([]*unstructured.Unstructured, 0, len(list.Items))
+	for i := range list.Items {
+		item := list.Items[i]
+		pods = append(pods, &item)
+	}
+	return matchPodsBySelector(pods, selector)
 }
 
 // fetchResourceAttribution loads the live resource and computes mutation-source

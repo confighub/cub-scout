@@ -22,7 +22,8 @@ type controllerResourceSpec struct {
 }
 
 func firstClassControllerResources() []controllerResourceSpec {
-	out := make([]controllerResourceSpec, 0, len(sveltosControllerResources())+len(modelplaneControllerResources()))
+	out := make([]controllerResourceSpec, 0, len(fluxOperatorControllerResources())+len(sveltosControllerResources())+len(modelplaneControllerResources()))
+	out = append(out, fluxOperatorControllerResources()...)
 	out = append(out, sveltosControllerResources()...)
 	out = append(out, modelplaneControllerResources()...)
 	return out
@@ -35,6 +36,17 @@ func firstClassControllerGVRs() []schema.GroupVersionResource {
 		out = append(out, spec.GVR)
 	}
 	return out
+}
+
+func fluxOperatorControllerResources() []controllerResourceSpec {
+	return []controllerResourceSpec{
+		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "fluxinstances"}, Kind: "FluxInstance", Namespaced: true, Owner: "Flux"},
+		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "fluxreports"}, Kind: "FluxReport", Namespaced: true, Owner: "Flux"},
+		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "resourcesets"}, Kind: "ResourceSet", Namespaced: true, Owner: "Flux"},
+		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "resourcesetinputproviders"}, Kind: "ResourceSetInputProvider", Namespaced: true, Owner: "Flux"},
+		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "externalartifacts"}, Kind: "ExternalArtifact", Namespaced: true, Owner: "Flux"},
+		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "artifactgenerators"}, Kind: "ArtifactGenerator", Namespaced: true, Owner: "Flux"},
+	}
 }
 
 func sveltosControllerResources() []controllerResourceSpec {

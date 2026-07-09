@@ -276,15 +276,8 @@ func BuildWorkloadsConvergedReceipt(in BuildWorkloadsConvergedReceiptInput) (Sta
 	}
 
 	s := in.Evidence.Summary
-	verdict := VerdictPASS
-	switch {
-	case s.Failed > 0 || s.Missing > 0:
-		verdict = VerdictBLOCK
-	case s.Inconclusive > 0:
-		verdict = VerdictINCONCLUSIVE
-	case s.Progressing > 0:
-		verdict = VerdictWATCH
-	}
+	decisionSet := BuildRolloutDecisionSetFromWorkloadsConvergedEvidence(in.Evidence)
+	verdict := decisionSet.Verdict
 
 	omissions := []Omission{
 		{

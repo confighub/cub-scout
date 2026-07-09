@@ -16,7 +16,7 @@ cub-scout checks for ownership signals in the following order. The **first match
 
 | Priority | Owner | Detection Method |
 |----------|-------|------------------|
-| 1 | **Flux** | Labels: `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` |
+| 1 | **Flux** | Labels: `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*`, or API group `fluxcd.controlplane.io` |
 | 2 | **Argo CD** | Label: `argocd.argoproj.io/instance` or annotation: `argocd.argoproj.io/tracking-id` |
 | 3 | **Sveltos** | Annotations: `projectsveltos.io/owner-kind` + `projectsveltos.io/owner-name`, `projectsveltos.io/deployed-by-sveltos`, Sveltos ownerRef, or Sveltos API group |
 | 4 | **Modelplane** | API group `modelplane.ai` / `infrastructure.modelplane.ai`, selected `modelplane.ai/*` identity labels, or Modelplane ownerRef |
@@ -44,10 +44,13 @@ cub-scout checks for ownership signals in the following order. The **first match
 | Label | `kustomize.toolkit.fluxcd.io/namespace` | `flux-system` | kustomization |
 | Label | `helm.toolkit.fluxcd.io/name` | `my-release` | helmrelease |
 | Label | `helm.toolkit.fluxcd.io/namespace` | `flux-system` | helmrelease |
+| API group | `fluxcd.controlplane.io` | `ResourceSet/prod-apps` | lower-case kind |
 
 **What cub-scout extracts:**
 - Owner name from the `/name` label
 - Owner namespace from the `/namespace` label
+- Aggregate delivery resource name and namespace from metadata when the API
+  group is `fluxcd.controlplane.io`
 
 ---
 
