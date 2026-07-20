@@ -144,7 +144,12 @@ jobs:
 
       - name: Test map commands
         run: |
-          ./cub-scout map status
+          map_status_exit=0
+          ./cub-scout map status || map_status_exit=$?
+          if [ "$map_status_exit" -gt 1 ]; then
+            echo "map status failed with unexpected exit code $map_status_exit"
+            exit "$map_status_exit"
+          fi
           ./cub-scout map list
           ./cub-scout map list --json | head -20
           ./cub-scout scan

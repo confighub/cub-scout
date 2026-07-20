@@ -188,6 +188,22 @@ Acceptance criteria:
 - The observer never hides stale evidence behind fresh-sounding language.
 - No mandatory persistent database is added to standalone mode.
 
+ConfigHub event-consumer / Argobot follow-up:
+
+- Current production shape: ConfigHub emits release events; `argobot` consumes
+  them in-cluster and force-syncs Argo CD Applications.
+- Treat this as trigger/immediacy evidence, not as delivery or application
+  success evidence.
+- Do not reuse the production `argobot` worker/subscription cursor. ConfigHub
+  event-consumer cursors are server-held and at-most-once; an observer must use
+  a dedicated read-only subscription or a non-consuming history surface.
+- Correlate OCI release evidence to Argo sync and Kubernetes rollout evidence
+  only where deterministic identifiers exist.
+- Status feedback from event consumers is future work until ConfigHub exposes a
+  stable REST shape for those observations.
+
+Detailed plan: [`event-consumer-argobot-integration.md`](event-consumer-argobot-integration.md).
+
 ## B. Controller-Family Parity
 
 v2.7.0 status: follow-up for parity audit and structured fallback omissions
