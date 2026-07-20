@@ -32,6 +32,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [ ] Aggregate delivery failures as doctor top-level findings with deeper source/generated-artifact lineage where status refs expose it
 - [ ] Audited user-action event ingestion for history and receipt supporting evidence
 - [ ] API-load-aware inventory and search paths with source freshness for snapshot, watch, summary, and receipt-backed reads
+- [ ] ConfigHub event-consumer / Argobot evidence path with observer-safe cursors, OCI release correlation, and no production cursor sharing — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
 - [ ] Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
 
 ### Rendered Manifest + Argo (`roadmap-rendered-manifest-and-argo.md`)

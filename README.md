@@ -310,7 +310,7 @@ For Claude, Codex, and other AI agents:
 Honest gaps in the current capability map, with the leverage on filling them:
 
 - **Helm / Kustomize provenance back-resolution** — [#481](https://github.com/confighub/cub-scout/issues/481) extends raw-YAML field attribution from stage B (#440) to templated sources while preserving honesty markers when exact file:line evidence is unavailable.
-- **Live delivery observability follow-ups** — aggregate delivery failures as top-level `doctor` findings, audited action events as history/receipt evidence, broader freshness metadata for snapshot/watch/summary/receipt paths, and parity omissions for controllers without status/source/event/generation evidence.
+- **Live delivery observability follow-ups** — aggregate delivery failures as top-level `doctor` findings, audited action events as history/receipt evidence, broader freshness metadata for snapshot/watch/summary/receipt paths, ConfigHub event-consumer / Argobot evidence with observer-safe cursors ([#502](https://github.com/confighub/cub-scout/issues/502)), and parity omissions for controllers without status/source/event/generation evidence.
 - **`import --git-path --output-dir`** — emit proposed unit YAMLs to disk for PR review, then upload via Installer's `--merge-external-source` once connected. One bundle, two workflows.
 - **Hierarchy-aware adoption/import** — preserve ApplicationSet / app-of-apps / Flux Kustomization composition in import proposals so imported ConfigHub state is navigable, not flat.
 - **Additional manager-string writers** — Tekton, Argo Workflows, Cluster API, OIDC-based CD systems — gated on whether the variant-management story demands them.
