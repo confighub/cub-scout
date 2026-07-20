@@ -194,9 +194,11 @@ ConfigHub event-consumer / Argobot follow-up:
   them in-cluster and force-syncs Argo CD Applications.
 - Treat this as trigger/immediacy evidence, not as delivery or application
   success evidence.
+- Prefer ConfigHub-owned history or another non-consuming read API for
+  release/event evidence.
 - Do not reuse the production `argobot` worker/subscription cursor. ConfigHub
-  event-consumer cursors are server-held and at-most-once; an observer must use
-  a dedicated read-only subscription or a non-consuming history surface.
+  event-consumer cursors are server-held and at-most-once; a direct observer
+  subscription is fallback-only and must use its own dedicated cursor.
 - Correlate OCI release evidence to Argo sync and Kubernetes rollout evidence
   only where deterministic identifiers exist.
 - Status feedback from event consumers is future work until ConfigHub exposes a

@@ -278,7 +278,7 @@ Current tracked follow-ons (verified 2026-07-09; reflects post-#500 state):
 - Aggregate delivery failures as top-level `doctor` findings where controller status refs expose source/generated-artifact lineage.
 - Audited action events as history and receipt supporting evidence.
 - Broader source-freshness metadata for snapshot, watch, summary, and receipt-backed reads.
-- ConfigHub event-consumer / Argobot evidence integration with observer-safe cursors, OCI release correlation, and no production cursor sharing; see [`docs/proposals/event-consumer-argobot-integration.md`](docs/proposals/event-consumer-argobot-integration.md) and `#502`.
+- ConfigHub history-backed event / Argobot evidence integration with OCI release correlation, no production cursor sharing, and direct observer cursors only as fallback; see [`docs/proposals/event-consumer-argobot-integration.md`](docs/proposals/event-consumer-argobot-integration.md) and `#502`.
 - Controller-family parity rules and structured fallback omissions where controllers lack status, source, event, or generation evidence.
 
 **Untracked v2 follow-ups (no separate issue):**
@@ -287,7 +287,7 @@ Current tracked follow-ons (verified 2026-07-09; reflects post-#500 state):
 
 **Open tracked issues:**
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution (`gitSource.file:line` / `sourceMapRef` honesty markers).
-- **`#502`** — ConfigHub event-consumer / Argobot evidence integration; current Argobot force-syncs Argo from release events, but status feedback write-back is future work.
+- **`#502`** — ConfigHub history-backed event / Argobot evidence integration; current Argobot force-syncs Argo from release events, but status feedback write-back is future work.
 - **`#475`** — Blog/documentation publication series for introducing cub-scout.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout JSON outputs. Design rather than code.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).
