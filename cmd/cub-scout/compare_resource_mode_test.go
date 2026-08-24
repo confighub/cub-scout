@@ -229,17 +229,6 @@ func TestRunCombined_ResourceCompareJSONOutput(t *testing.T) {
 	}
 }
 
-func TestDecodeCompareUnitDataFromGetJSON(t *testing.T) {
-	raw := `{"Unit":{"Data":"YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGFwaQogIG5hbWVzcGFjZTogcHJvZAo="}}`
-	got, err := decodeCompareUnitDataFromGetJSON(raw)
-	if err != nil {
-		t.Fatalf("decodeCompareUnitDataFromGetJSON: %v", err)
-	}
-	if !strings.Contains(got, "kind: Deployment") {
-		t.Fatalf("decoded data missing expected manifest: %q", got)
-	}
-}
-
 func TestExtractCompareSummaryFromManifestYAML(t *testing.T) {
 	manifest := `
 apiVersion: apps/v1
@@ -349,7 +338,23 @@ func TestLoadCompareDryWetSnapshots(t *testing.T) {
 	restoreRun := runCompareCubCommand
 	runCompareCubCommand = func(ctx context.Context, args []string) (string, error) {
 		if reflect.DeepEqual(args, compareUnitGetArgs("checkout", "payments-prod")) {
-			return `{"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Unit":{"Slug":"checkout","UnitID":"u-123","HeadRevisionNum":9,"LiveRevisionNum":7,"LastAppliedRevisionNum":8,"Data":"YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGFwaQogIG5hbWVzcGFjZTogcHJvZApzcGVjOgogIHJlcGxpY2FzOiAxCiAgdGVtcGxhdGU6CiAgICBzcGVjOgogICAgICBjb250YWluZXJzOgogICAgICAgIC0gbmFtZTogYXBpCiAgICAgICAgICBpbWFnZTogZ2hjci5pby9hY21lL2FwaTp2MQo="}}`, nil
+			return `{"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Unit":{"Slug":"checkout","UnitID":"u-123","HeadRevisionNum":9,"LiveRevisionNum":7,"LastAppliedRevisionNum":8}}`, nil
+		}
+		if reflect.DeepEqual(args, compareUnitDataArgs("checkout", "payments-prod")) {
+			return `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/acme/api:v1
+`, nil
 		}
 		if reflect.DeepEqual(args, compareUnitLivedataArgs("checkout", "payments-prod")) {
 			return `
@@ -400,7 +405,16 @@ func TestLoadCompareDryWetSnapshots_WetLookupFailure(t *testing.T) {
 	restoreRun := runCompareCubCommand
 	runCompareCubCommand = func(ctx context.Context, args []string) (string, error) {
 		if reflect.DeepEqual(args, compareUnitGetArgs("checkout", "payments-prod")) {
-			return `{"Unit":{"Data":"YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGFwaQogIG5hbWVzcGFjZTogcHJvZAo="}}`, nil
+			return `{"Unit":{"Slug":"checkout"}}`, nil
+		}
+		if reflect.DeepEqual(args, compareUnitDataArgs("checkout", "payments-prod")) {
+			return `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+`, nil
 		}
 		if reflect.DeepEqual(args, compareUnitLivedataArgs("checkout", "payments-prod")) {
 			return "", fmt.Errorf("permission denied")

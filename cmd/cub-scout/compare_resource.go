@@ -6,7 +6,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -335,17 +334,23 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 		return compareDryWetResult{}, fmt.Errorf("missing unit slug")
 	}
 
-	dryRaw, err := runCompareCubCommand(ctx, compareUnitGetArgs(unitSlug, space))
+	metaRaw, err := runCompareCubCommand(ctx, compareUnitGetArgs(unitSlug, space))
 	if err != nil {
 		return compareDryWetResult{}, fmt.Errorf("cub unit get: %w", err)
 	}
 	// Best-effort only: trust hints should degrade gracefully if the unit-get
 	// envelope changes, while DRY/WET extraction still remains authoritative.
-	unitMeta, _ := decodeCompareUnitMetadataFromGetJSON(dryRaw)
+	unitMeta, _ := decodeCompareUnitMetadataFromGetJSON(metaRaw)
 
-	dryYAML, err := decodeCompareUnitDataFromGetJSON(dryRaw)
+	// The configuration is not part of the unit envelope; it has its own
+	// endpoint, which `cub unit data` reads. The payload is plain text.
+	dryYAML, err := runCompareCubCommand(ctx, compareUnitDataArgs(unitSlug, space))
 	if err != nil {
-		return compareDryWetResult{}, fmt.Errorf("decode unit get data: %w", err)
+		return compareDryWetResult{}, fmt.Errorf("cub unit data: %w", err)
+	}
+	dryYAML = strings.TrimSpace(dryYAML)
+	if dryYAML == "" {
+		return compareDryWetResult{}, fmt.Errorf("unit %s has no configuration data", unitSlug)
 	}
 	drySummary, dryErr := extractCompareSummaryFromManifestYAML("dry", dryYAML, target)
 	if dryErr != nil && !errors.Is(dryErr, errCompareResourceNotFoundInManifest) {
@@ -394,6 +399,14 @@ func compareUnitGetArgs(unitSlug, space string) []string {
 	return args
 }
 
+func compareUnitDataArgs(unitSlug, space string) []string {
+	args := []string{"unit", "data", unitSlug}
+	if strings.TrimSpace(space) != "" {
+		args = append(args, "--space", strings.TrimSpace(space))
+	}
+	return args
+}
+
 func compareUnitLivedataArgs(unitSlug, space string) []string {
 	args := []string{"unit", "livedata", unitSlug}
 	if strings.TrimSpace(space) != "" {
@@ -416,32 +429,6 @@ func runCompareCubCommandImpl(ctx context.Context, args []string) (string, error
 		return "", fmt.Errorf("cub %s failed: %s", strings.Join(args, " "), msg)
 	}
 	return strings.TrimSpace(stdout.String()), nil
-}
-
-func decodeCompareUnitDataFromGetJSON(raw string) (string, error) {
-	trimmed := strings.TrimSpace(raw)
-	if trimmed == "" {
-		return "", fmt.Errorf("empty unit get output")
-	}
-
-	var payload interface{}
-	if err := json.Unmarshal([]byte(trimmed), &payload); err != nil {
-		return "", fmt.Errorf("parse unit get json: %w", err)
-	}
-
-	base64Value := findCompareUnitDataBase64(payload)
-	if base64Value == "" {
-		return "", fmt.Errorf("unit get output missing Unit.Data")
-	}
-
-	decoded, err := base64.StdEncoding.DecodeString(base64Value)
-	if err != nil {
-		decoded, err = base64.RawStdEncoding.DecodeString(base64Value)
-		if err != nil {
-			return "", fmt.Errorf("decode Unit.Data base64: %w", err)
-		}
-	}
-	return strings.TrimSpace(string(decoded)), nil
 }
 
 func decodeCompareUnitMetadataFromGetJSON(raw string) (compareUnitMetadata, error) {
@@ -498,34 +485,6 @@ func applyCompareUnitMetadata(summary *compareSideSummary, meta compareUnitMetad
 	if summary.LastAppliedRevisionNum == 0 && meta.LastAppliedRevision > 0 {
 		summary.LastAppliedRevisionNum = meta.LastAppliedRevision
 	}
-}
-
-func findCompareUnitDataBase64(payload interface{}) string {
-	switch typed := payload.(type) {
-	case map[string]interface{}:
-		for _, key := range []string{"Unit", "unit"} {
-			if nested, ok := typed[key].(map[string]interface{}); ok {
-				if value, ok := nested["Data"].(string); ok && strings.TrimSpace(value) != "" {
-					return strings.TrimSpace(value)
-				}
-				if value, ok := nested["data"].(string); ok && strings.TrimSpace(value) != "" {
-					return strings.TrimSpace(value)
-				}
-			}
-		}
-		for _, key := range []string{"Data", "data"} {
-			if value, ok := typed[key].(string); ok && strings.TrimSpace(value) != "" {
-				return strings.TrimSpace(value)
-			}
-		}
-	case []interface{}:
-		for _, item := range typed {
-			if value := findCompareUnitDataBase64(item); value != "" {
-				return value
-			}
-		}
-	}
-	return ""
 }
 
 func extractCompareSummaryFromManifestYAML(source string, manifestYAML string, target compareResourceRef) (*compareSideSummary, error) {

@@ -1841,17 +1841,25 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 		}
 	}
 
-	// Step 2: Extract base64 data
-	// Write JSON to temp file first to avoid shell escaping issues with embedded newlines
-	appendTestDebug("Step 2: Extracting base64 data...")
-	jsonTmpFile := filepath.Join(testDebugDir, "unit-tmp.json")
-	os.WriteFile(jsonTmpFile, unitJSON, 0644)
-	jqCmd := exec.Command("jq", "-r", ".Unit.Data", jsonTmpFile)
-	base64Data, err := jqCmd.CombinedOutput()
-	writeTestDebug("02-base64-data.txt", base64Data)
-	appendTestDebug(fmt.Sprintf("Base64 data: %d bytes, err=%v", len(base64Data), err))
-	if err != nil || strings.TrimSpace(string(base64Data)) == "" || strings.TrimSpace(string(base64Data)) == "null" {
-		appendTestDebug(fmt.Sprintf("ERROR: No data in unit, base64=%s", string(base64Data)))
+	// Step 2: Read the unit's configuration. It lives on its own endpoint, not
+	// in the unit envelope, and is plain text -- `cub unit data` prints it.
+	appendTestDebug("Step 2: Reading unit data...")
+	dataCmd := exec.Command("cub", "unit", "data", m.testUnitSlug, "--space", m.proposal.App)
+	yamlData, err := dataCmd.CombinedOutput()
+	writeTestDebug("02-original-yaml.yaml", yamlData)
+	appendTestDebug(fmt.Sprintf("Original YAML: %d bytes, err=%v", len(yamlData), err))
+	if err != nil {
+		appendTestDebug(fmt.Sprintf("ERROR reading unit data: %s", string(yamlData)))
+		return wizardTestPhaseMsg{
+			phase:     testPhaseAddAnnotation,
+			success:   false,
+			details:   string(yamlData),
+			err:       fmt.Errorf("failed to read unit data: %w", err),
+			startTime: startTime,
+		}
+	}
+	if strings.TrimSpace(string(yamlData)) == "" {
+		appendTestDebug("ERROR: No data in unit")
 		return wizardTestPhaseMsg{
 			phase:     testPhaseAddAnnotation,
 			success:   false,
@@ -1861,40 +1869,20 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 		}
 	}
 
-	// Step 3: Decode YAML
-	appendTestDebug("Step 3: Decoding YAML...")
-	// Write base64 to file and decode to avoid shell escaping issues
-	base64TmpFile := filepath.Join(testDebugDir, "base64-tmp.txt")
-	os.WriteFile(base64TmpFile, []byte(strings.TrimSpace(string(base64Data))), 0644)
-	decodeCmd := exec.Command("base64", "-d", "-i", base64TmpFile)
-	yamlData, err := decodeCmd.CombinedOutput()
-	writeTestDebug("03-original-yaml.yaml", yamlData)
-	appendTestDebug(fmt.Sprintf("Original YAML: %d bytes, err=%v", len(yamlData), err))
-	if err != nil {
-		appendTestDebug(fmt.Sprintf("ERROR decoding YAML: %s", string(yamlData)))
-		return wizardTestPhaseMsg{
-			phase:     testPhaseAddAnnotation,
-			success:   false,
-			details:   string(yamlData),
-			err:       fmt.Errorf("failed to decode yaml: %w", err),
-			startTime: startTime,
-		}
-	}
-
-	// Step 4: Add annotation using awk
-	appendTestDebug("Step 4: Adding annotation with awk...")
+	// Step 3: Add annotation using awk
+	appendTestDebug("Step 3: Adding annotation with awk...")
 	awkScript := fmt.Sprintf(`/^  annotations:/{print; print "    %s: \"%s\""; next}1`, annotationKey, m.testAnnotation)
 	awkCmd := exec.Command("awk", awkScript)
 	awkCmd.Stdin = strings.NewReader(string(yamlData))
 	modifiedYAML, err := awkCmd.CombinedOutput()
-	writeTestDebug("04-modified-yaml.yaml", modifiedYAML)
+	writeTestDebug("03-modified-yaml.yaml", modifiedYAML)
 	appendTestDebug(fmt.Sprintf("Modified YAML: %d bytes, err=%v", len(modifiedYAML), err))
 	if err != nil || len(modifiedYAML) == 0 {
 		appendTestDebug(fmt.Sprintf("ERROR modifying YAML: %s", string(modifiedYAML)))
 		return wizardTestPhaseMsg{
 			phase:     testPhaseAddAnnotation,
 			success:   false,
-			details:   fmt.Sprintf("Failed to modify YAML. See %s/03-original-yaml.yaml", testDebugDir),
+			details:   fmt.Sprintf("Failed to modify YAML. See %s/02-original-yaml.yaml", testDebugDir),
 			err:       fmt.Errorf("failed to add annotation with awk"),
 			startTime: startTime,
 		}
@@ -1904,7 +1892,7 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 	if !strings.Contains(string(modifiedYAML), annotationKey) {
 		appendTestDebug("ERROR: Annotation not added - possibly no annotations: section in YAML")
 		// YAML might not have annotations section, need to add it
-		writeTestDebug("04-modified-yaml-FAILED.yaml", modifiedYAML)
+		writeTestDebug("03-modified-yaml-FAILED.yaml", modifiedYAML)
 		return wizardTestPhaseMsg{
 			phase:     testPhaseAddAnnotation,
 			success:   false,
@@ -1914,12 +1902,12 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 		}
 	}
 
-	// Step 5: Update unit
-	appendTestDebug("Step 5: Updating unit with modified YAML...")
+	// Step 4: Update unit
+	appendTestDebug("Step 4: Updating unit with modified YAML...")
 	updateCmd := exec.Command("cub", "unit", "update", "--space", m.proposal.App, m.testUnitSlug, "-", "--change-desc", "Import wizard test")
 	updateCmd.Stdin = strings.NewReader(string(modifiedYAML))
 	updateOutput, err := updateCmd.CombinedOutput()
-	writeTestDebug("05-update-result.txt", updateOutput)
+	writeTestDebug("04-update-result.txt", updateOutput)
 	appendTestDebug(fmt.Sprintf("Update result: %s, err=%v", strings.TrimSpace(string(updateOutput)), err))
 	if err != nil {
 		appendTestDebug(fmt.Sprintf("ERROR updating unit: %s", string(updateOutput)))
@@ -2259,20 +2247,15 @@ func (m ImportWizardModel) runTestVerify() tea.Msg {
 			writeTestDebug("13-unit-final-state.json", unitOutput)
 			appendTestDebug(fmt.Sprintf("Unit final state: %d bytes, err=%v", len(unitOutput), err))
 
-			// The annotation is in base64-encoded Unit.Data, need to decode and check
-			unitJsonFile := filepath.Join(testDebugDir, "unit-final-tmp.json")
-			os.WriteFile(unitJsonFile, unitOutput, 0644)
-			jqCmd := exec.Command("jq", "-r", ".Unit.Data", unitJsonFile)
-			base64Data, jqErr := jqCmd.CombinedOutput()
-			if jqErr == nil && len(base64Data) > 0 {
-				base64File := filepath.Join(testDebugDir, "unit-final-base64.txt")
-				os.WriteFile(base64File, []byte(strings.TrimSpace(string(base64Data))), 0644)
-				decodeCmd := exec.Command("base64", "-d", "-i", base64File)
-				decodedYAML, decErr := decodeCmd.CombinedOutput()
-				writeTestDebug("14-unit-final-yaml.yaml", decodedYAML)
-				appendTestDebug(fmt.Sprintf("Decoded Unit YAML: %d bytes, contains annotation: %v", len(decodedYAML), strings.Contains(string(decodedYAML), m.testAnnotation)))
+			// The annotation is in the unit's configuration, which is read from
+			// its own endpoint by `cub unit data`.
+			dataCmd := exec.Command("cub", "unit", "data", m.testUnitSlug, "--space", m.proposal.App)
+			unitYAML, dataErr := dataCmd.CombinedOutput()
+			if len(unitYAML) > 0 {
+				writeTestDebug("14-unit-final-yaml.yaml", unitYAML)
+				appendTestDebug(fmt.Sprintf("Unit YAML: %d bytes, contains annotation: %v", len(unitYAML), strings.Contains(string(unitYAML), m.testAnnotation)))
 
-				if decErr == nil && strings.Contains(string(decodedYAML), m.testAnnotation) {
+				if dataErr == nil && strings.Contains(string(unitYAML), m.testAnnotation) {
 					appendTestDebug("Phase 4 (Verify) SUCCESS - annotation in Unit data, GitOps reconciled it away")
 					return wizardTestPhaseMsg{
 						phase:   testPhaseVerify,
