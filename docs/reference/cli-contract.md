@@ -27,6 +27,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | v0.19 | Shell completion, map hooks, scan --lifecycle-hazards, bundle summarize |
 | v0.20 | Flux operator interop read-only slice (`map cronjobs/jobs/actions/activity/previews`, `trace --artifacts`) |
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
+| v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, and `explain`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
 
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.
@@ -58,6 +59,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | `cub-scout patterns detect` | Run pattern detection | v0.7 |
 | `cub-scout patterns explain` | Explain specific pattern | v0.7 |
 | `cub-scout gitops status` | GitOps pipeline health | v0.14.1 |
+| `cub-scout bot` | Run the watch engine as an in-cluster observation bot | v2.8 |
 | `cub-scout bundle inspect` | Show bundle metadata and contents | v0.15 |
 | `cub-scout bundle replay` | Re-render bundle contents | v0.15 |
 | `cub-scout bundle diff` | Compare two bundles | v0.15 |
@@ -91,6 +93,10 @@ cub-scout doctor [flags]
 | `--top` | int | 3 | Number of top issues to include |
 | `--presentation` | string | legacy/default render path | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | string | default | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
+| `--with-confighub` | bool | false | Include bounded ConfigHub delivery evidence for the selected scope |
+| `--confighub-space` | string | current cub space | ConfigHub space for connected delivery evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
+| `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
 ### Stable Output Rules
 
@@ -98,10 +104,19 @@ cub-scout doctor [flags]
 - JSON may include `rollouts` when live workload rollout evidence is available:
   total workloads, PASS/WATCH/BLOCK/INCONCLUSIVE counts, and top non-PASS
   `currentChanges[]` bounded by `--top`.
+- JSON may include `delivery` and `deliveryEvidence` only when
+  `--with-confighub` is requested. `delivery` is a scope-level rollup;
+  `deliveryEvidence` is the raw bounded evidence envelope.
 - ASCII includes a `Rollouts` section only when rollout evidence is available.
+- ASCII includes a `Delivery` section only when `--with-confighub` is requested.
 - `--presentation` affects ASCII framing only.
 - `--hint-mode` affects recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text render path.
+- ConfigHub release and unit-event reads are bounded by `--confighub-since` and
+  scoped to the current cub space unless `--confighub-space` is supplied.
+- `doctor` may promote concrete failed/stale delivery feedback, failed unit
+  events, and unhealthy observed event consumers into `topIssues`. Missing or
+  inaccessible evidence remains an omission, not a failure assertion.
 
 ---
 
@@ -122,6 +137,10 @@ cub-scout explain <kind> <name> [flags]
 | `--format` | string | text | Output format: `text`, `json`, `md` |
 | `--presentation` | string | legacy/default render path | Narrative framing for text/Markdown output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | string | default | Recommendation ranking for next-step hints: `default`, `beginner`, `operator`. JSON is unchanged. |
+| `--with-confighub` | bool | false | Include bounded ConfigHub delivery evidence when exact resource correlation exists |
+| `--confighub-space` | string | resource ConfigHub space | ConfigHub space for delivery evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
+| `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
 ### Stable Output Rules
 
@@ -129,6 +148,12 @@ cub-scout explain <kind> <name> [flags]
 - `--presentation` affects text and Markdown framing only.
 - `--hint-mode` affects next-step recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text/Markdown render path.
+- `deliveryEvidence` appears only with `--with-confighub`.
+- Connected release, unit-event, and live-status reads are skipped unless the
+  resource exposes a ConfigHub space, the trace chain exposes a ConfigHub OCI
+  space, or `--confighub-space` is supplied.
+- `deliveryEvidence` is supporting evidence only. It does not replace Argo,
+  Flux, Sveltos, Modelplane, or Kubernetes status authority.
 
 ---
 
@@ -210,6 +235,41 @@ cub-scout compare object-set --dry-from <rendered.yaml|dir> [flags]
 
 ---
 
+## cub-scout bot
+
+In-cluster-friendly wrapper around the `watch` event stream.
+
+```bash
+cub-scout bot --webhook <url>
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--webhook` | string | - | Webhook URL to receive events; may also come from `CUB_SCOUT_BOT_WEBHOOK_URL` |
+| `--output-file` | string | - | JSONL file sink; may also come from `CUB_SCOUT_BOT_OUTPUT_FILE` |
+| `--interval` | duration | 30s | Polling interval; may also come from `CUB_SCOUT_BOT_INTERVAL` |
+| `-n, --namespace` | string | all | Namespace scope; may also come from `CUB_SCOUT_BOT_NAMESPACE` |
+| `--owner` | string | - | Owner display-name filter; may also come from `CUB_SCOUT_BOT_OWNER` |
+| `--severity` | string | - | Severity filter; may also come from `CUB_SCOUT_BOT_SEVERITY` |
+| `--once` | bool | false | Run one collection cycle and exit |
+| `--max-queued-events` | int | 1000 | Max buffered retryable events; may also come from `CUB_SCOUT_BOT_MAX_QUEUED_EVENTS` |
+| `--emit-receipt-on` | string | - | Event types for inline receipts; may also come from `CUB_SCOUT_BOT_EMIT_RECEIPT_ON` |
+| `--emit-receipt-batch-cap` | int | 10 | Per-poll receipt build cap; may also come from `CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP` |
+
+### Stable Behavior Rules
+
+- `bot` uses the same event payload contract as `watch`.
+- At least one destination is required: webhook or output file.
+- Kubernetes authentication uses in-cluster config when available, then
+  kubeconfig fallback outside a cluster.
+- The command is read-only: it lists/watches/gets cluster objects and sends
+  derived observation events to the configured sink.
+- No event cursor or durable checkpoint is created by cub-scout in this mode.
+
+---
+
 ## cub-scout mcp serve
 
 Read-only MCP gateway over stdio.
@@ -229,7 +289,7 @@ cub-scout mcp serve
   - `trace`
 - Connected mode adds read-only connected comparison plus ConfigHub query tools.
 - MCP tool responses are backed by the existing CLI JSON surfaces rather than a separate hand-built fact model.
-- MCP keeps the wrapped JSON string in `content[0].text`; for selected connected surfaces it may also add additive `structuredContent` with parsed data, `nextSteps`, `confighubUrl`, and `confighubRevisionsUrl`.
+- MCP keeps the wrapped JSON string in `content[0].text`; for selected connected surfaces it may also add additive `structuredContent` with parsed data, `nextSteps`, `confighubUrl`, `confighubRevisionsUrl`, `liveStatuses`, and `omissions`.
 
 ### Tool Routing Notes
 
@@ -237,6 +297,8 @@ cub-scout mcp serve
 - `scan` is an awareness scan of live cluster state, not a governed promotion or revision-safety gate.
 - `confighub_units` is the discovery/lookup step for "which ConfigHub unit is this?", while `confighub_unit_get` is the exact detail step once a unit is already known.
 - `compare_three_way` is the connected convergence proof tool after scope discovery, not the first troubleshooting move.
+- `compare_source_truth` strategy values are generated from the same source as the CLI, so MCP and CLI strategy parity is part of the contract.
+- `confighub_live_status`, `confighub_releases`, and `confighub_unit_events` require explicit space scope. Use `*` only for an intentional all-spaces read.
 - All MCP tool descriptors advertise `annotations.readOnlyHint=true`.
 
 ### Stable `doctor` MCP Surface
@@ -245,6 +307,10 @@ cub-scout mcp serve
 - Parameters:
   - `namespace` (optional string)
   - `top` (optional integer)
+  - `with_confighub` (optional boolean)
+  - `confighub_space` (optional string)
+  - `confighub_since` (optional string)
+  - `confighub_stale_after` (optional string)
 - Backed by `cub-scout doctor --format json`
 
 ### Stable `compare_three_way` MCP Surface
@@ -255,6 +321,38 @@ cub-scout mcp serve
   - `scope` (required string)
   - `namespace` (optional string)
 - Backed by `cub-scout compare three-way --format json`
+
+### Stable Connected ConfigHub MCP Surfaces
+
+- Tool name: `compare_source_truth`
+- Availability: connected mode only
+- Parameters:
+  - `target` (required string)
+  - `namespace` (required string)
+  - `strategy` (required enum, same values as `compare source-truth`)
+- Backed by `cub-scout compare source-truth --format json`
+
+- Tool name: `confighub_live_status`
+- Availability: connected mode only
+- Parameters:
+  - `space` (required string; `*` means explicit all-spaces read)
+- Backed by `cub space list -o json --select Slug,SpaceID,Annotations,Labels`
+- May add `structuredContent.liveStatuses[]` and `structuredContent.omissions[]`.
+
+- Tool name: `confighub_releases`
+- Availability: connected mode only
+- Parameters:
+  - `space` (required string)
+  - `where` (optional string)
+- Backed by `cub release list --space <space> -o json`
+
+- Tool name: `confighub_unit_events`
+- Availability: connected mode only
+- Parameters:
+  - `space` (required string)
+  - `unit` (optional string)
+  - `where` (optional string)
+- Backed by `cub unit-event list [unit] --space <space> -o json`
 
 ---
 
@@ -579,6 +677,10 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | `--json` | bool | false | Deprecated shorthand for `--format json` |
 | `--limit` | int | 10 | History entry limit |
 | `--explain` | bool | false | Show learning content |
+| `--with-confighub` | bool | false | Include bounded ConfigHub delivery evidence when exact resource correlation exists |
+| `--confighub-space` | string | resource ConfigHub space | ConfigHub space for delivery evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
+| `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
 ### Behavior by Owner Type
 
@@ -588,6 +690,23 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | ArgoCD | `argocd app get` | Shows Application -> Resource |
 | Helm | Release metadata | Shows chart, version, values |
 | Native | N/A | Shows "not managed by GitOps" |
+
+### ConfigHub Delivery Evidence
+
+`trace --with-confighub` may add `deliveryEvidence` to JSON output and a
+ConfigHub delivery evidence section to ASCII/Markdown output. The object is
+additive and must be treated as supporting context, not as the delivery or
+application-health authority.
+
+Object-level matches require explicit identifiers:
+
+- live-status writeback: exact space plus Argo Application name, or exact space
+  plus ConfigHub unit slug
+- release rows: exact space plus target ID or target slug
+- unit-event rows: exact unit ID, or exact unit slug plus space
+
+When these joins cannot be proven, the command records structured omissions
+instead of claiming deployed/synced/healthy state.
 
 ### Output (Plain Text)
 
@@ -806,7 +925,12 @@ cub-scout gitops status [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-n, --namespace` | string | all | Namespace to scan |
-| `--json` | bool | false | JSON output |
+| `--format` | string | ascii | Output format: `ascii`, `json`, `md` |
+| `--json` | bool | false | JSON output (shorthand for `--format json`) |
+| `--with-confighub` | bool | false | Include bounded ConfigHub release, unit-event, and live-status evidence |
+| `--confighub-space` | string | current cub default space | ConfigHub space for connected evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-since` | string | 24h | Lookback window for release/event evidence |
+| `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
 ### Output (Plain Text)
 
@@ -841,12 +965,64 @@ NEXT STEPS
   "transport": "oci",
   "deployers": [...],
   "sources": [...],
+  "controllerCoverage": [
+    {
+      "family": "Flux",
+      "status": "found",
+      "resourceKinds": ["HelmRelease", "Kustomization"],
+      "foundKinds": ["Kustomization"],
+      "found": 1
+    },
+    {
+      "family": "Modelplane",
+      "status": "unreadable",
+      "resourceKinds": ["ModelDeployment"],
+      "found": 0,
+      "omissions": [
+        {
+          "resource": "modeldeployments.modelplane.ai/v1alpha1",
+          "reason": "forbidden"
+        }
+      ]
+    }
+  ],
   "healthyCount": 0,
-  "failedCount": 1
+  "failedCount": 1,
+  "deliveryEvidence": {
+    "observedAt": "2026-09-10T12:00:00Z",
+    "scope": {
+      "space": "prod",
+      "since": "24h",
+      "staleAfter": "15m0s",
+      "maxItems": 10
+    },
+    "configHub": {
+      "liveStatuses": [...],
+      "releases": [...],
+      "unitEvents": [...]
+    },
+    "eventConsumers": [...],
+    "omissions": [...]
+  }
 }
 ```
 
 When Sveltos or Modelplane controller resources are detected without Flux or Argo CD, `backend` is `controllers` and `transport` is `unknown`.
+
+`controllerCoverage[]` records the controller families and resource kinds that
+were checked. `found` means at least one resource was observed, `not_found`
+means no registered kinds were observed and no list omission occurred,
+`partial` means at least one resource was observed and at least one kind could
+not be read, and `unreadable` means no resources were observed because one or
+more list calls were omitted. Omissions identify the API resource and a safe
+reason such as `forbidden`, `unauthorized`, `timeout`, or `list_failed`.
+
+`deliveryEvidence` appears only with `--with-confighub`. It is additive and
+never replaces controller or Kubernetes status. `liveStatuses[]` separates
+`deliveryVerdict` from `applicationHealthVerdict`; stale successful observations
+downgrade to `WATCH`. Missing ConfigHub connection, missing space scope,
+absent event consumer, absent writeback, malformed annotations, and failed
+history reads are represented as structured omissions.
 
 ### Exit Codes
 

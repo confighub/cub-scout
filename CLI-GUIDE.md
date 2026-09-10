@@ -29,6 +29,18 @@ Need a specific command or flag?
 
 ---
 
+## Five Run Modes
+
+| Mode | Command | Use when |
+|------|---------|----------|
+| Standalone client | `cub-scout doctor`, `cub-scout map`, `cub-scout trace ...` | A human or script wants direct CLI/TUI/JSON output. |
+| ConfigHub plugin | `cub scout doctor`, `cub scout compare ...` | You are already working inside the `cub` workflow and want plugin-aware context. |
+| MCP server | `cub-scout mcp serve` | An AI host should launch scout as typed read-only tools. |
+| Watch stream | `cub-scout watch --webhook <url>` | A local process or CI job should stream observation events. |
+| In-cluster bot | `cub-scout bot --webhook <url>` | A Pod should continuously observe the cluster using in-cluster auth. |
+
+---
+
 ## First 15 Minutes
 
 Start with the smallest loop that proves value on a real cluster:
@@ -52,6 +64,7 @@ If you prefer JSON first:
 
 ```bash
 cub-scout doctor --format json
+cub-scout doctor --with-confighub --confighub-space prod --format json
 cub-scout explain deploy/my-app -n prod --format json
 cub-scout trace deploy/my-app -n prod --format json
 ```
@@ -67,6 +80,7 @@ When something is broken and you need proof quickly, this is the default flow:
 3. `cub-scout trace <kind/name> -n <ns>`
 4. `cub-scout compare three-way --scope <scope>` if you are in connected mode
 5. `cub-scout history <kind/name> -n <ns>` if you need governed change history
+6. `cub-scout gitops status --with-confighub --confighub-space <space> --format json` if you need bounded release/event/live-status evidence
 
 Use this when:
 - a workload is unhealthy
@@ -78,7 +92,8 @@ Helpful follow-up paths:
 - `scan` for risk patterns and stuck states
 - `map issues` for a cluster-wide issue inventory
 - `map hooks` for Helm and Argo lifecycle hooks
-- `gitops status` for deployer/source health
+- `doctor --with-confighub` for a scope-level delivery rollup in the same first-pass health summary
+- `gitops status` for deployer/source health; add `--with-confighub` for release history, unit events, live-status freshness, and event-consumer health
 
 See [docs/reference/commands.md](docs/reference/commands.md) for the detailed examples behind each command.
 
@@ -93,6 +108,7 @@ Typical connected flow:
 ```bash
 cub auth login
 cub-scout status
+cub-scout gitops status --with-confighub --confighub-space prod --format json
 cub-scout compare three-way --scope namespace/prod
 cub-scout history deploy/api -n prod
 cub-scout impact payments-api

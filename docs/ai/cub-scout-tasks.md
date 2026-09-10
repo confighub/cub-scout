@@ -25,6 +25,7 @@ When the operator asks... | Run this | What you get
 ---|---|---
 "What's running in my cluster?" | `cub-scout map list --json` | Every resource with owner classification
 "What's broken?" | `cub-scout doctor --format json` | One-shot health summary
+"Did delivery feedback report back?" | `cub-scout doctor --with-confighub --confighub-space <space> --format json` | Scope-level delivery rollup, freshness, event-consumer health, and omissions
 "Why is this resource broken?" | `cub-scout explain <kind>/<name> -n <ns> --presentation ai` | Owner, status, conditions, recent events, next-step hints
 "Where did this come from?" | `cub-scout trace <kind>/<name> -n <ns>` | Full ownership chain to Git source
 "Find unmanaged resources" | `cub-scout map list --json \| jq '.[] \| select(.owner=="Native")'` | Resources with no GitOps owner
@@ -187,6 +188,7 @@ programmatically:
 
 ```bash
 ./cub-scout doctor --format json
+./cub-scout doctor --with-confighub --confighub-space prod --format json
 ./cub-scout map list --json
 ./cub-scout scan --json
 ./cub-scout explain deploy/x -n y --presentation ai
@@ -204,8 +206,11 @@ a stable contract.
 ./cub-scout mcp serve
 ```
 
-Standalone MCP tools: `doctor`, `explain`, `map`, `scan`, `trace`.
-Connected mode adds read-only ConfigHub query tools.
+Standalone MCP tools: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace`.
+Connected mode adds read-only ConfigHub query tools:
+`compare_three_way`, `compare_source_truth`, `confighub_changesets`,
+`confighub_live_status`, `confighub_releases`, `confighub_unit_events`,
+`confighub_units`, and `confighub_unit_get`.
 
 When operating via MCP, prefer the structured tool calls over shell
 invocations — the MCP layer handles JSON parsing and schema validation.

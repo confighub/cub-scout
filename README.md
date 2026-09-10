@@ -6,22 +6,40 @@ cub-scout is an open-source observer for live Kubernetes clusters and GitOps. Po
 
 It diagnoses, explains, traces, maps, scans, **compares** intended vs running state, and adds provenance evidence to supported field mismatches where signals exist — but it never modifies cluster state and never makes authority calls about what *should* be true. Safe to run against production.
 
+## Five ways to run cub-scout
+
+| Run mode | Command | Best for | Notes |
+|---|---|---|---|
+| Standalone client | `cub-scout doctor`, `cub-scout map`, `cub-scout trace ...` | Humans at a terminal; local scripts; one-off cluster inspection | Uses the current kube context or in-cluster config; no ConfigHub dependency. |
+| ConfigHub plugin | `cub scout doctor`, `cub scout compare ...` | ConfigHub users who want the same observer inside their existing `cub` workflow | Same read-only scout behavior, with plugin-aware help text and inherited `cub` context. |
+| MCP server | `cub-scout mcp serve` | AI agents that need typed, read-only tools instead of freehand shell commands | Local stdio process launched by an MCP host; not a background cluster service. |
+| Watch stream | `cub-scout watch --webhook <url>` | Continuous local or CI observation feeding webhooks, JSONL, receipts, or incident tooling | Polling-based event stream for discovery, ownership changes, drift, and scan findings. |
+| In-cluster bot | `cub-scout bot --webhook <url>` | A read-only observer Pod running inside Kubernetes | Uses the same watch engine with in-cluster auth and `CUB_SCOUT_BOT_*` env configuration. |
+
 Cub-scout helps users answer questions about k8s and GitOps clusters in one place.
 
 | User question | cub-scout surface | What cub-scout provides |
 |---|---|---|
 | What is running, and who owns it? | `doctor`, `map`, `trace`, `explain` | Live inventory, ownership, source chain, recent events, and next read-only checks across supported controllers and platforms. |
-| Is delegated delivery healthy? | `gitops status`, `map deployers`, `map activity`, `trace` | Controller-reported backend, transport, source/build/apply/sync stages, first-class aggregate delivery resources, reason/message, and explicit evidence gaps when status is incomplete. |
+| Is delegated delivery healthy? | `doctor --with-confighub`, `gitops status`, MCP `gitops_status`, `map deployers`, `map activity`, `trace` | Controller-reported backend, transport, source/build/apply/sync stages, first-class aggregate delivery resources, scope-level delivery rollups, reason/message, and explicit evidence gaps when status is incomplete. |
+| Which controller families did cub-scout actually inspect? | `gitops status`, MCP `gitops_status` | `controllerCoverage[]` records Flux, Argo CD, ConfigHub, Sveltos, and Modelplane coverage as `found`, `not_found`, `partial`, or `unreadable`, including checked kinds, observed kinds, counts, and RBAC/list omissions. |
+| Is this Modelplane resource backed by Crossplane composition? | `trace`, attribution JSON | Modelplane remains the higher-level owner when its signals are stronger, while trace surfaces Crossplane composite, claim, composition-resource, and verified field-manager evidence as substrate context. |
+| What release or event triggered this delivery attempt? | `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `history`, MCP `confighub_releases`, MCP `confighub_unit_events` | Bounded ConfigHub release and unit-event evidence for a known space/time window, including release ids, digests, targets, unit events, timestamps, exact resource-correlation keys when available, and structured omissions when history cannot be joined safely. |
+| Did evented delivery feedback report back, and is the report fresh? | `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, MCP `confighub_live_status` | Read-only parsing of ConfigHub live-status writeback, with `observedAt`, freshness, sync status, operation phase, observed revision, delivery verdict, separate application-health verdict, scope-level rollups, and object-level matches only when exact space plus app/unit identity is present. |
+| Is the in-cluster event consumer present and healthy? | `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `map deployers` | Conservative, label-selected detection of the known event-consumer Deployment shape across namespaces when allowed, with ready/desired replicas and `doctor` top issues when an observed consumer is unhealthy; absence or RBAC narrowing becomes an omission, not a claim that no eventing exists. |
 | Has intended configuration reached the cluster? | `compare three-way` | DRY/WET/LIVE agreement for a resource, namespace, cluster, or governed view, with states like `agreed`, `converging`, `diverged`, and `partial`. |
+| Did the controller consume the expected source revision or OCI digest? | `trace`, `trace --with-confighub`, `gitops status`, `compare source-truth`, `gitops status --with-confighub` | Controller-owned source status, revision/digest evidence, object-correlated ConfigHub release digest context when exact space+target joins exist, and proof gaps when controller/source identifiers cannot be joined safely. |
 | Did this rendered install set land as a set? | `compare object-set`, `receipt verify --file` | Set-level desired-vs-live evidence from rendered YAML: authored-field deltas, optional added/removed object closure, object-set receipts, normalization profiles, freshness TTL, and CI-gate verdicts. |
 | Is this rollout still progressing, complete, or stuck? | `receipt verify --predicate workloads-converged`, `doctor`, `explain`, `compare three-way` | Generation-aware workload evidence: `metadata.generation`, `status.observedGeneration`, kstatus, progress clock, pod failure signals, and `PASS` / `WATCH` / `BLOCK` / `INCONCLUSIVE` verdicts. |
-| Can I move to the next task, wait, or retry delivery? | `receipt verify`, `compare three-way`, `doctor` | A read-only decision frame that separates "not applied yet", "still converging", "runtime failure", and "missing evidence". |
+| Can I move to the next task, wait, or retry delivery? | `receipt verify`, `compare three-way`, `doctor --with-confighub` | A read-only decision frame that separates "not applied yet", "still converging", "runtime failure", stale/failed delivery feedback, and missing evidence. |
 | Is live state drifting from desired state? | `compare drift`, `compare three-way`, `compare source-truth` | Field-level differences, strategy-relative source-truth evidence, conformance exit codes, and explicit proof gaps when evidence is missing. |
-| Is this a delivery problem or an application/runtime problem? | `doctor`, `explain`, `gitops status`, `map activity`, `trace`, `patterns`, `scan` | kstatus health, Kubernetes events, audited action metadata when present, workload symptoms, known-pattern matches, and phase-aware hints so operators can separate sync/convergence issues from runtime failures. |
+| Is this a delivery problem or an application/runtime problem? | `doctor --with-confighub`, `explain --with-confighub`, `gitops status --with-confighub`, `map activity`, `trace --with-confighub`, `patterns`, `scan` | kstatus health, Kubernetes events, live-status delivery vs application-health verdicts, audited action metadata when present, workload symptoms, known-pattern matches, and phase-aware hints so operators can separate sync/convergence issues from runtime failures. |
 | What triggered this reconcile, check, or action? | `map activity`, `trace`, `explain` | Audited Kubernetes action event metadata when present: action, actor, subject, groups, timestamp, and preserved raw annotation evidence. |
 | Who changed this field, and where did the value come from? | `compare`, `explain`, attribution JSON | `cause`, `managerHint`, `gitSource`, `bindingSource`, audit/event evidence where available, and optional file:line back-resolution from live `managedFields`, controller metadata, local source files, and governed links. |
-| Can I answer broad or repeated questions without hammering live APIs? | `snapshot`, `watch`, `summary`, receipts | Existing captured state, low-cardinality watch events, connected summaries, observed timestamps/fingerprints where present, and immutable receipts for repeated review, fleet triage, and audit paths. |
-| Can I keep auditable evidence of the check? | `receipt verify`, `receipt validate`, `watch --emit-receipt-on` | Typed, fingerprinted, immutable evidence receipts for gates, incident closeout, audits, chained checks, and real-time watch events. |
+| Can I answer broad or repeated questions without hammering live APIs? | `snapshot`, `watch`, `bot`, `summary`, receipts, `doctor --with-confighub --confighub-space <space>`, `gitops status --with-confighub --confighub-space <space> --confighub-since <window>` | Existing captured state, low-cardinality watch/bot events, connected summaries, bounded current-space/time-window ConfigHub reads, observed timestamps/fingerprints where present, and immutable receipts for repeated review, fleet triage, and audit paths. |
+| Can I run one low-load observer instead of having every user or agent hit the API? | `bot`, `watch`, `snapshot` | A single read-only event producer with in-cluster auth support, webhook/JSONL sinks, bounded queues, receipt-build caps, namespace/owner/severity filters, and partial-evidence omissions when RBAC is narrowed. |
+| Can I keep auditable evidence of the check? | `receipt verify`, `receipt validate`, `watch --emit-receipt-on`, `bot --emit-receipt-on` | Typed, fingerprinted, immutable evidence receipts for gates, incident closeout, audits, chained checks, and real-time watch/bot events. |
+| Can I onboard an existing Argo app or app-of-apps safely? | `import argocd`, `import parse-repo`, `import --git-path`, `compare three-way`, `trace` | Source-backed discovery and import proposals, app-of-apps topology warnings, and pre-handover comparison evidence; actual ConfigHub loading, release publishing, and controller handover stay with the governing toolchain. |
 
 The main path starts from a **live cluster**. It works **standalone** with your current kube context, or **connected** to [ConfigHub](https://confighub.com) for governed comparison, history, import, fleet queries, and AI-friendly read-only workflows. Local repo and manifest inputs are available later for adoption, import-preview, and source-file enrichment, but they are not the first mental model.
 
@@ -54,21 +72,22 @@ Each command's **Inputs** column tells you exactly what it needs — cluster onl
 
 | Command | What you get | Inputs |
 |---|---|---|
-| `doctor` | One-screen cluster health summary with concrete next steps | cluster |
+| `doctor` | One-screen cluster health summary with concrete next steps and optional bounded ConfigHub delivery evidence | cluster; optional ConfigHub auth for `--with-confighub` |
 | `map` (TUI / `list` / `hooks` / `orphans` / `meaning`) | Ownership inventory, lifecycle hooks, orphan detection, meaning-first grouping | cluster |
-| `trace` | Full ownership chain from K8s object → controller/source evidence, including Flux/Argo/Helm, Sveltos, Modelplane, and Crossplane | cluster |
+| `trace` | Full ownership chain from K8s object → controller/source evidence, with optional object-correlated ConfigHub delivery evidence | cluster; optional ConfigHub auth for `--with-confighub` |
 | `tree` | Runtime, ownership, git, and composition hierarchies | cluster |
 | `scan` | Audit live cluster or manifest files against 46 built-in risk patterns | cluster *or* file |
 | `graph export` | Resource graph as DOT/JSON | cluster |
 | `snapshot` | Dump cluster state as GSF JSON | cluster |
 | `watch` | Stream observation events to webhook/file sinks | cluster |
+| `bot` | Run the watch engine continuously as an in-cluster observer | cluster |
 | `status` | Connection mode and cluster context info | cluster |
 
 ### Diagnose — interpret what you observe
 
 | Command | What you get | Inputs |
 |---|---|---|
-| `explain` | Plain-English ownership and lineage for one resource, with phase-aware next-step hints | cluster |
+| `explain` | Plain-English ownership and lineage for one resource, with phase-aware next-step hints and optional object-correlated ConfigHub delivery evidence | cluster; optional ConfigHub auth for `--with-confighub` |
 | `debug` | Guided GitOps debugging wizard | cluster |
 | `suggest-remedy` | Read-only description of a remediation that *would* resolve a finding — never applies it | cluster |
 | `patterns` (`detect` / `explain` / `list`) | Pattern-engine catalogue + matched findings | cluster *or* file |
@@ -154,6 +173,7 @@ Today standalone `import --git-path` is preview-only. A `--output-dir` mode that
 | `setup completion` | Shell completion script | none |
 | `quickstart demo` | Fixture-backed first-run tour | none |
 | `mcp serve` | Read-only Model Context Protocol (MCP) server over stdio for Claude, Codex, agents | cluster (any subset of the above based on the tool invoked) |
+| `bot` | In-cluster read-only observation bot using the watch event stream | cluster |
 | `context-pack` | Deterministic AI context JSON export | cluster |
 | `version` | Build/version info | none |
 
@@ -230,6 +250,7 @@ cub-scout works fully offline. Connected mode is optional but unlocks the questi
 - **DRY vs WET vs LIVE** — compare what ConfigHub *intended*, what the renderer *produced*, and what's actually *running*. Catches drift the live cluster can't tell you about.
 - **Per-field binding source** — answer "this field's value came from upstream unit X at path Y via link Z."
 - **Change history** — `kubectl events` only goes so far; `history` walks the ConfigHub governed timeline.
+- **Delivery evidence** — `gitops status --with-confighub` adds bounded release history, unit events, live-status writeback, and event-consumer health for a known space/time window.
 - **Fleet queries** — "is this version running everywhere it should?" across many clusters.
 - **Live-cluster adoption preview** — propose how current workloads should be modeled in ConfigHub before writing anything.
 
@@ -310,7 +331,7 @@ For Claude, Codex, and other AI agents:
 Honest gaps in the current capability map, with the leverage on filling them:
 
 - **Helm / Kustomize provenance back-resolution** — [#481](https://github.com/confighub/cub-scout/issues/481) extends raw-YAML field attribution from stage B (#440) to templated sources while preserving honesty markers when exact file:line evidence is unavailable.
-- **Live delivery observability follow-ups** — aggregate delivery failures as top-level `doctor` findings, audited action events as history/receipt evidence, broader freshness metadata for snapshot/watch/summary/receipt paths, ConfigHub history-backed event / Argobot evidence with no production cursor sharing ([#502](https://github.com/confighub/cub-scout/issues/502)), and parity omissions for controllers without status/source/event/generation evidence.
+- **Live delivery observability follow-ups** — aggregate controller-resource failures with generated-artifact lineage as top-level `doctor` findings, audited action events as history/receipt evidence, broader freshness metadata for snapshot/watch/summary/receipt paths, deeper object-level correlation for release/event/live-status evidence ([#502](https://github.com/confighub/cub-scout/issues/502)), and parity omissions for controllers without status/source/event/generation evidence.
 - **`import --git-path --output-dir`** — emit proposed unit YAMLs to disk for PR review, then upload via Installer's `--merge-external-source` once connected. One bundle, two workflows.
 - **Hierarchy-aware adoption/import** — preserve ApplicationSet / app-of-apps / Flux Kustomization composition in import proposals so imported ConfigHub state is navigable, not flat.
 - **Additional manager-string writers** — Tekton, Argo Workflows, Cluster API, OIDC-based CD systems — gated on whether the variant-management story demands them.

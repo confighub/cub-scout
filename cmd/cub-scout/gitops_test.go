@@ -5,13 +5,17 @@ package main
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	ktesting "k8s.io/client-go/testing"
 )
 
 func TestGitOpsStatusSummary_Format(t *testing.T) {
@@ -336,6 +340,18 @@ func TestBuildGitOpsSummaryIncludesFirstClassControllerDeployers(t *testing.T) {
 		t.Fatalf("Healthy/Failed = %d/%d, want 1/1", summary.HealthyCount, summary.FailedCount)
 	}
 
+	sveltosCoverage := controllerCoverageForFamily(t, summary.ControllerCoverage, "Sveltos")
+	if sveltosCoverage.Status != controllerCoverageFound || sveltosCoverage.Found != 1 {
+		t.Fatalf("Sveltos coverage = %+v, want one found resource", sveltosCoverage)
+	}
+	modelplaneCoverage := controllerCoverageForFamily(t, summary.ControllerCoverage, "Modelplane")
+	if modelplaneCoverage.Status != controllerCoverageFound || modelplaneCoverage.Found != 1 {
+		t.Fatalf("Modelplane coverage = %+v, want one found resource", modelplaneCoverage)
+	}
+	if !containsControllerCoverageString(modelplaneCoverage.FoundKinds, "ModelDeployment") {
+		t.Fatalf("Modelplane foundKinds = %v, want ModelDeployment", modelplaneCoverage.FoundKinds)
+	}
+
 	byKind := map[string]DeployerStatus{}
 	for _, deployer := range summary.Deployers {
 		byKind[deployer.Kind] = deployer
@@ -345,6 +361,125 @@ func TestBuildGitOpsSummaryIncludesFirstClassControllerDeployers(t *testing.T) {
 	}
 	if got := byKind["ModelDeployment"]; got.Owner != "Modelplane" || got.Ready || got.Stage != string(agent.StageSync) {
 		t.Fatalf("ModelDeployment status = %+v, want Modelplane sync failure", got)
+	}
+}
+
+func TestCollectFirstClassControllerCoverageRecordsForbiddenOmissions(t *testing.T) {
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(
+		runtime.NewScheme(),
+		firstClassControllerListKinds(),
+	)
+	client.PrependReactor("list", "modeldeployments", func(action ktesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewForbidden(
+			schema.GroupResource{Group: "modelplane.ai", Resource: "modeldeployments"},
+			"",
+			errors.New("blocked by test"),
+		)
+	})
+
+	deployers, coverage := collectFirstClassControllerDeployers(context.Background(), client, "")
+	if len(deployers) != 0 {
+		t.Fatalf("deployers = %+v, want none", deployers)
+	}
+	modelplaneCoverage := controllerCoverageForFamily(t, coverage, "Modelplane")
+	if modelplaneCoverage.Status != controllerCoverageUnreadable {
+		t.Fatalf("Modelplane coverage status = %q, want %q: %+v", modelplaneCoverage.Status, controllerCoverageUnreadable, modelplaneCoverage)
+	}
+	if len(modelplaneCoverage.Omissions) != 1 {
+		t.Fatalf("Modelplane omissions = %+v, want one", modelplaneCoverage.Omissions)
+	}
+	got := modelplaneCoverage.Omissions[0]
+	if got.Reason != "forbidden" || !strings.Contains(got.Resource, "modeldeployments.modelplane.ai") {
+		t.Fatalf("omission = %+v, want forbidden modeldeployments", got)
+	}
+}
+
+func TestGitOpsCoverageDoesNotTreatArgoSourceURLAsFluxController(t *testing.T) {
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(
+		runtime.NewScheme(),
+		firstClassControllerListKinds(),
+	)
+	summary := buildGitOpsSummary(context.Background(), client, &agent.ApplyBackendInfo{
+		Backend:   agent.BackendArgoCD,
+		Transport: agent.TransportGit,
+		Deployers: []agent.DeployerRef{
+			{
+				Kind:      "Application",
+				Name:      "payments",
+				Namespace: "argocd",
+				SourceRef: &agent.SourceRef{
+					Kind:      "GitRepository",
+					Name:      "payments",
+					Namespace: "argocd",
+				},
+			},
+		},
+		Sources: []agent.SourceRef{
+			{Kind: "GitRepository", Name: "payments", Namespace: "argocd"},
+		},
+	})
+
+	argoCoverage := controllerCoverageForFamily(t, summary.ControllerCoverage, "ArgoCD")
+	if argoCoverage.Status != controllerCoverageFound || argoCoverage.Found != 1 {
+		t.Fatalf("ArgoCD coverage = %+v, want one found Application", argoCoverage)
+	}
+	fluxCoverage := controllerCoverageForFamily(t, summary.ControllerCoverage, "Flux")
+	if fluxCoverage.Status != controllerCoverageNotFound || fluxCoverage.Found != 0 {
+		t.Fatalf("Flux coverage = %+v, want not_found with zero Flux controller objects", fluxCoverage)
+	}
+}
+
+func TestOutputGitOpsStatusHumanIncludesControllerCoverage(t *testing.T) {
+	out := captureStdout(t, func() {
+		if err := outputGitOpsStatusHuman(GitOpsSummary{
+			Backend:   string(agent.BackendNone),
+			Transport: string(agent.TransportUnknown),
+			ControllerCoverage: []ControllerCoverageStatus{
+				{
+					Family:        "Modelplane",
+					Status:        controllerCoverageUnreadable,
+					ResourceKinds: []string{"ModelDeployment"},
+					Found:         0,
+					Omissions: []ControllerCoverageOmission{
+						{Resource: "modeldeployments.modelplane.ai/v1alpha1", Reason: "forbidden"},
+					},
+				},
+			},
+		}); err != nil {
+			t.Fatalf("outputGitOpsStatusHuman() error = %v", err)
+		}
+	})
+
+	for _, want := range []string{"CONTROLLER COVERAGE", "Modelplane", "unreadable", "modeldeployments.modelplane.ai/v1alpha1", "forbidden"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("output missing %q:\n%s", want, out)
+		}
+	}
+}
+
+func TestOutputGitOpsStatusMarkdownIncludesControllerCoverage(t *testing.T) {
+	out := captureStdout(t, func() {
+		if err := outputGitOpsStatusMarkdown(GitOpsSummary{
+			Backend:   string(agent.BackendNone),
+			Transport: string(agent.TransportUnknown),
+			ControllerCoverage: []ControllerCoverageStatus{
+				{
+					Family:        "Sveltos",
+					Status:        controllerCoverageFound,
+					ResourceKinds: []string{"ClusterProfile"},
+					FoundKinds:    []string{"ClusterProfile"},
+					Found:         1,
+				},
+			},
+		}); err != nil {
+			t.Fatalf("outputGitOpsStatusMarkdown() error = %v", err)
+		}
+	})
+
+	for _, want := range []string{"## Controller Coverage", "| Sveltos | found | 1 | ClusterProfile | ClusterProfile | - |"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("markdown output missing %q:\n%s", want, out)
+		}
 	}
 }
 
@@ -366,4 +501,24 @@ func TestGitOpsTraceCommandOmitsEmptyNamespace(t *testing.T) {
 	if got != "./cub-scout trace modeldeployment/qwen -n inference" {
 		t.Fatalf("gitopsTraceCommand() = %q", got)
 	}
+}
+
+func controllerCoverageForFamily(t *testing.T, coverage []ControllerCoverageStatus, family string) ControllerCoverageStatus {
+	t.Helper()
+	for _, entry := range coverage {
+		if entry.Family == family {
+			return entry
+		}
+	}
+	t.Fatalf("coverage missing family %q: %+v", family, coverage)
+	return ControllerCoverageStatus{}
+}
+
+func containsControllerCoverageString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }

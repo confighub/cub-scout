@@ -21,6 +21,7 @@ Source of truth:
 |---------|---------------|--------------|-----------------|
 | `app` | Manage ConfigHub Apps | [Command Reference](commands.md#app) | [Argo import demo](../../examples/argo-import-confighub-demo/) |
 | `audit` | Break-glass audit trail tools | [Command Reference](commands.md#audit-list) | [Connect and compare](../../examples/connect-and-compare/) |
+| `bot` | Run the watch engine as an in-cluster observation bot | [Command Reference](commands.md#bot) | [Bot deployment](../../examples/bot/) |
 | `bundle` | Inspect, replay, diff, and summarize debug bundles | [Command Reference](commands.md#bundle-inspect-v015) | [Artifact workflows](../../examples/workflows/) |
 | `catalog` | Manage bundle catalogs | [Command Reference](commands.md#catalog-list-v015) | [Artifact workflows](../../examples/workflows/) |
 | `compare` | Compare Git, bundle, live, or connected intent/render/live state; in connected mode each field mismatch carries attribution evidence (`cause`, `managerHint`, `gitSource`, `bindingSource`) | [Command Reference](commands.md#compare) | [Connect and compare](../../examples/connect-and-compare/) |
@@ -63,7 +64,7 @@ Source of truth:
 | `compare source-truth` | Read-only source-truth evidence for Pilot acceptance (#393) | [Command Reference](commands.md#compare-source-truth) | - |
 | `compare three-way` | Connected DRY/WET/LIVE comparison; `--source-path <local-checkout>` opts into stage-B `gitSource.file:line` back-resolution for raw-YAML sources | [Command Reference](commands.md#compare-three-way) | [Connect and compare](../../examples/connect-and-compare/) |
 | `fleet outliers` | Cluster divergence report | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
-| `gitops status` | GitOps pipeline health | [Command Reference](commands.md#gitops-v014) | [Connected summary storage](../../examples/connected-summary-storage/) |
+| `gitops status` | GitOps pipeline health plus optional bounded ConfigHub delivery evidence | [Command Reference](commands.md#gitops-v014) | [Live delivery observability](../../examples/live-delivery-observability/) |
 | `import apply` | Apply an import proposal JSON | [Command Reference](commands.md#import-apply) | [Import from live](../../examples/import-from-live/) |
 | `import argocd` | Import one ArgoCD Application | [Command Reference](commands.md#import-argocd) | [Argo import demo](../../examples/argo-import-confighub-demo/) |
 | `import cluster-aggregator` | Aggregate multiple import proposals | [Command Reference](commands.md#import-cluster-aggregator) | [Fleet import](../../examples/fleet-import/) |

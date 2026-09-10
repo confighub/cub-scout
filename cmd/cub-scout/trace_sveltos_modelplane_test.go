@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/confighub/cub-scout/pkg/agent"
@@ -72,7 +73,18 @@ func TestBuildModelplaneObservedTraceResult_LinksDeploymentAndComposedChildren(t
 	workload.SetKind("Deployment")
 	workload.SetNamespace("models")
 	workload.SetName("qwen-engine")
-	workload.SetLabels(map[string]string{"modelplane.ai/deployment": "qwen"})
+	workload.SetLabels(map[string]string{
+		"modelplane.ai/deployment":      "qwen",
+		"crossplane.io/composite":       "x-qwen",
+		"crossplane.io/claim-name":      "qwen-claim",
+		"crossplane.io/claim-namespace": "models",
+	})
+	workload.SetAnnotations(map[string]string{
+		"crossplane.io/composition-resource-name": "engine",
+	})
+	workload.SetManagedFields([]metav1.ManagedFieldsEntry{
+		{Manager: "apiextensions.crossplane.io/composed-qwen"},
+	})
 
 	modelDeployment := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -124,6 +136,17 @@ func TestBuildModelplaneObservedTraceResult_LinksDeploymentAndComposedChildren(t
 	}
 	if result.Chain[1].Kind != "Deployment" || result.Chain[1].Name != "qwen-engine" {
 		t.Fatalf("unexpected workload link: %#v", result.Chain[1])
+	}
+	for _, want := range []string{
+		"Modelplane-on-Crossplane evidence",
+		"composite=x-qwen",
+		"claim=models/qwen-claim",
+		"compositionResource=engine",
+		"fieldManager=apiextensions.crossplane.io/composed-qwen",
+	} {
+		if !strings.Contains(result.Chain[1].Message, want) {
+			t.Fatalf("workload message missing %q: %q", want, result.Chain[1].Message)
+		}
 	}
 }
 

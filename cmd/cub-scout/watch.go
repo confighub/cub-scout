@@ -38,6 +38,20 @@ var (
 	watchEmitReceiptBatchCap int
 )
 
+type watchOptions struct {
+	WebhookURL          string
+	OutputFile          string
+	Interval            time.Duration
+	Namespace           string
+	Owner               string
+	Severity            string
+	Once                bool
+	MaxQueuedEvents     int
+	EmitReceiptOn       string
+	EmitReceiptBatchCap int
+	CommandName         string
+}
+
 type watchEvent struct {
 	Type      string                 `json:"type"`
 	Timestamp time.Time              `json:"timestamp"`
@@ -65,11 +79,9 @@ type watchEvent struct {
 	// absent) and a warning is written to stderr. This keeps the watch
 	// loop robust against transient cluster-read hiccups.
 	//
-	// #449 v1: only `drift.detected` and `ownership.changed` event
-	// types are supported in the predicate-mapping; other event types
-	// (`resource.discovered`, `scan.finding`) accept the flag but
-	// receipt-build is skipped to avoid flooding on first-poll
-	// discovery. Future iterations can broaden the mapping.
+	// All known watch event types build receipts in the current v2
+	// surface; receipt-build volume is controlled by
+	// --emit-receipt-batch-cap.
 	Receipt *agent.Statement `json:"receipt,omitempty"`
 }
 
@@ -175,21 +187,41 @@ func init() {
 }
 
 func runWatch(cmd *cobra.Command, args []string) error {
-	webhookURL := strings.TrimSpace(watchWebhookURL)
-	outputFile := strings.TrimSpace(watchOutputFile)
+	return runWatchWithOptions(cmd, watchOptionsFromGlobals())
+}
+
+func watchOptionsFromGlobals() watchOptions {
+	return watchOptions{
+		WebhookURL:          watchWebhookURL,
+		OutputFile:          watchOutputFile,
+		Interval:            watchInterval,
+		Namespace:           watchNamespace,
+		Owner:               watchOwner,
+		Severity:            watchSeverity,
+		Once:                watchOnce,
+		MaxQueuedEvents:     watchMaxQueuedEvents,
+		EmitReceiptOn:       watchEmitReceiptOn,
+		EmitReceiptBatchCap: watchEmitReceiptBatchCap,
+		CommandName:         "cub-scout watch",
+	}
+}
+
+func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
+	webhookURL := strings.TrimSpace(opts.WebhookURL)
+	outputFile := strings.TrimSpace(opts.OutputFile)
 	if webhookURL == "" && outputFile == "" {
 		return fmt.Errorf("missing destination: provide either --webhook or --output-file")
 	}
-	if watchInterval <= 0 {
+	if opts.Interval <= 0 {
 		return fmt.Errorf("--interval must be > 0")
 	}
-	if watchMaxQueuedEvents <= 0 {
+	if opts.MaxQueuedEvents <= 0 {
 		return fmt.Errorf("--max-queued-events must be > 0")
 	}
 
 	// Parse --emit-receipt-on upfront so a bad value fails before the
 	// long-running watch loop starts. Empty input disables the feature.
-	emitReceiptOn, err := parseWatchEmitReceiptOn(watchEmitReceiptOn)
+	emitReceiptOn, err := parseWatchEmitReceiptOn(opts.EmitReceiptOn)
 	if err != nil {
 		return err
 	}
@@ -197,10 +229,10 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	// Apply the per-poll backpressure cap (#449). 0 disables receipt-
 	// build entirely while keeping the --emit-receipt-on flag explicit;
 	// >0 is the cap.
-	if watchEmitReceiptBatchCap < 0 {
-		return fmt.Errorf("--emit-receipt-batch-cap must be >= 0 (got %d)", watchEmitReceiptBatchCap)
+	if opts.EmitReceiptBatchCap < 0 {
+		return fmt.Errorf("--emit-receipt-batch-cap must be >= 0 (got %d)", opts.EmitReceiptBatchCap)
 	}
-	watchReceiptBatchCap = watchEmitReceiptBatchCap
+	watchReceiptBatchCap = opts.EmitReceiptBatchCap
 
 	// Codex round-6 P2 fix (#463): emit a one-time startup warning when
 	// --emit-receipt-on includes event types that the mapping does NOT
@@ -227,16 +259,13 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	}
 	defer cleanup()
 
-	severityFilter := parseWatchSeverityFilter(watchSeverity)
-	ownerFilter := strings.TrimSpace(watchOwner)
-
 	cfg, err := watchBuildConfig()
 	if err != nil {
-		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", err), "cub-scout watch")
+		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", err), firstNonEmpty(opts.CommandName, "cub-scout watch"))
 	}
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
-		return withKubeRecoveryHint(fmt.Errorf("create dynamic client: %w", err), "cub-scout watch")
+		return withKubeRecoveryHint(fmt.Errorf("create dynamic client: %w", err), firstNonEmpty(opts.CommandName, "cub-scout watch"))
 	}
 
 	ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
@@ -261,26 +290,30 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	// summary.
 	warnFn := makeReceiptWarnFn(baseWarnFn, watchReceiptWarnFirstN, watchReceiptWarnSummaryEvery)
 
-	if watchOnce {
-		curr, err := watchCollectState(ctx, dynClient, watchNamespace)
+	namespace := strings.TrimSpace(opts.Namespace)
+	severityFilter := parseWatchSeverityFilter(opts.Severity)
+	ownerFilter := strings.TrimSpace(opts.Owner)
+
+	if opts.Once {
+		curr, err := watchCollectState(ctx, dynClient, namespace)
 		if err != nil {
 			return err
 		}
 		events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
 		events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
-		queue = appendWatchQueue(queue, events, watchMaxQueuedEvents)
+		queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 		_, err = flushWatchQueue(ctx, sinks, queue)
 		return err
 	}
 
 	// Prime baseline to avoid spamming initial full-state events in long-running mode.
-	initial, err := watchCollectState(ctx, dynClient, watchNamespace)
+	initial, err := watchCollectState(ctx, dynClient, namespace)
 	if err != nil {
 		return err
 	}
 	prevState = initial
 
-	ticker := time.NewTicker(watchInterval)
+	ticker := time.NewTicker(opts.Interval)
 	defer ticker.Stop()
 
 	for {
@@ -288,14 +321,14 @@ func runWatch(cmd *cobra.Command, args []string) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			curr, err := watchCollectState(ctx, dynClient, watchNamespace)
+			curr, err := watchCollectState(ctx, dynClient, namespace)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: watch collection failed: %v\n", err)
 				continue
 			}
 			events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
 			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
-			queue = appendWatchQueue(queue, events, watchMaxQueuedEvents)
+			queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 			remaining, err := flushWatchQueue(ctx, sinks, queue)
 			queue = remaining
 			prevState = curr

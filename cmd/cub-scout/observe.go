@@ -27,6 +27,18 @@ type ObserveScopeSummaryRequest struct {
 	// TopIssues is the number of top issues to include.
 	TopIssues int
 
+	// WithConfigHub includes bounded connected delivery evidence.
+	WithConfigHub bool
+
+	// ConfigHubSpace scopes connected delivery evidence. Empty means current cub space.
+	ConfigHubSpace string
+
+	// ConfigHubSince is the release/event lookback window.
+	ConfigHubSince string
+
+	// ConfigHubStaleAfter marks live-status writeback as stale after this age.
+	ConfigHubStaleAfter string
+
 	// FixturePath, if non-empty, reads input from a fixture file instead of the cluster.
 	// This is for testing; callers should not set this in production.
 	FixturePath string
@@ -55,6 +67,11 @@ func ObserveScopeSummary(ctx context.Context, req ObserveScopeSummaryRequest) (O
 	if topN < 0 {
 		topN = 0
 	}
+	if req.WithConfigHub {
+		if err := validateDoctorConfigHubRequest(req); err != nil {
+			return ObserveScopeSummaryResult{}, err
+		}
+	}
 
 	// Use fixture if explicitly provided
 	if req.FixturePath != "" {
@@ -62,7 +79,7 @@ func ObserveScopeSummary(ctx context.Context, req ObserveScopeSummaryRequest) (O
 		return ObserveScopeSummaryResult{Summary: summary}, err
 	}
 
-	return observeScopeSummaryFromCluster(ctx, req.Namespace, namespaceLabel, topN)
+	return observeScopeSummaryFromCluster(ctx, req.Namespace, namespaceLabel, topN, req)
 }
 
 func observeScopeSummaryFromFixture(path, namespaceLabel string, topN int) (DoctorSummary, error) {
@@ -81,7 +98,7 @@ func observeScopeSummaryFromFixture(path, namespaceLabel string, topN int) (Doct
 	return buildDoctorSummary(in.Entries, in.Findings, cluster, namespaceLabel, topN), nil
 }
 
-func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLabel string, topN int) (ObserveScopeSummaryResult, error) {
+func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLabel string, topN int, req ObserveScopeSummaryRequest) (ObserveScopeSummaryResult, error) {
 	var result ObserveScopeSummaryResult
 
 	entries, cluster, err := collectDoctorEntries(ctx, namespace)
@@ -104,6 +121,14 @@ func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLab
 		result.Warnings = append(result.Warnings, fmt.Sprintf("rollout evidence unavailable: %v", rolloutsErr))
 	} else if rollouts != nil && rollouts.Total > 0 {
 		result.Summary.Rollouts = rollouts
+	}
+	if req.WithConfigHub {
+		evidence, evidenceErr := collectDoctorDeliveryEvidenceFn(ctx, namespace, req)
+		if evidenceErr != nil {
+			result.Warnings = append(result.Warnings, fmt.Sprintf("ConfigHub delivery evidence unavailable: %v", evidenceErr))
+		} else {
+			attachDoctorDeliveryEvidence(&result.Summary, evidence, topN)
+		}
 	}
 	return result, nil
 }
@@ -137,6 +162,17 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 	traceResult, err := traceForExplain(ctx, kind, name, ns)
 	if err != nil {
 		return buildExplainSummaryFromFailure(kind, name, ns, err), nil
+	}
+
+	if explainWithConfigHub {
+		dynClient := enrichTraceConfigHubFromLive(ctx, traceResult, kind, name, ns)
+		attachTraceConfigHubDeliveryEvidence(ctx, traceResult, dynClient, traceConfigHubDeliveryFlags{
+			Enabled:    true,
+			Namespace:  ns,
+			Space:      explainConfigHubSpace,
+			Since:      explainConfigHubSince,
+			StaleAfter: explainConfigHubStaleAfter,
+		})
 	}
 
 	summary := buildExplainSummary(traceResult)

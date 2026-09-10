@@ -28,6 +28,13 @@ var (
 	doctorTopIssues    int
 	doctorPresentation string
 	doctorHintMode     string
+
+	doctorWithConfigHub       bool
+	doctorConfigHubSpace      string
+	doctorConfigHubSince      string
+	doctorConfigHubStaleAfter string
+
+	collectDoctorDeliveryEvidenceFn = collectDoctorDeliveryEvidence
 )
 
 var doctorCmd = &cobra.Command{
@@ -41,6 +48,7 @@ Examples:
   cub-scout doctor
   cub-scout doctor --namespace prod
   cub-scout doctor --format json
+  cub-scout doctor --with-confighub --confighub-space prod --format json
 `,
 	RunE: runDoctor,
 }
@@ -52,6 +60,10 @@ func init() {
 	doctorCmd.Flags().IntVar(&doctorTopIssues, "top", 3, "Number of top issues to include")
 	doctorCmd.Flags().StringVar(&doctorPresentation, "presentation", "", PresentationModeHelp())
 	doctorCmd.Flags().StringVar(&doctorHintMode, "hint-mode", "", HintModeHelp())
+	doctorCmd.Flags().BoolVar(&doctorWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery evidence for the selected scope")
+	doctorCmd.Flags().StringVar(&doctorConfigHubSpace, "confighub-space", "", "ConfigHub space for connected delivery evidence (default: current cub space; use '*' explicitly for all spaces)")
+	doctorCmd.Flags().StringVar(&doctorConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
+	doctorCmd.Flags().StringVar(&doctorConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 }
 
 // DoctorSummary is the canonical model behind both ASCII and JSON output.
@@ -64,9 +76,14 @@ type DoctorSummary struct {
 	Risks     DoctorRiskSummary      `json:"risks"`
 	Drift     DoctorDriftSummary     `json:"drift"`
 	Rollouts  *DoctorRolloutSummary  `json:"rollouts,omitempty"`
+	Delivery  *DoctorDeliverySummary `json:"delivery,omitempty"`
 	ThreeWay  *DoctorThreeWaySummary `json:"threeWay,omitempty"`
 	TopIssues []DoctorIssue          `json:"topIssues,omitempty"`
 	NextSteps []StructuredHint       `json:"nextSteps,omitempty"` // Structured action-typed hints for AI/MCP
+
+	// DeliveryEvidence is the raw bounded evidence envelope behind Delivery.
+	// It is present only when --with-confighub is requested.
+	DeliveryEvidence *GitOpsDeliveryEvidence `json:"deliveryEvidence,omitempty"`
 }
 
 // DoctorThreeWaySummary indicates three-way comparison status.
@@ -128,6 +145,39 @@ type DoctorRolloutSummary struct {
 	CurrentChanges []agent.RolloutDecision `json:"currentChanges,omitempty"`
 }
 
+// DoctorDeliverySummary is a scan-friendly rollup of the optional ConfigHub
+// delivery evidence attached to doctor.
+type DoctorDeliverySummary struct {
+	Scope            GitOpsDeliveryEvidenceScope      `json:"scope"`
+	LiveStatus       DoctorLiveStatusSummary          `json:"liveStatus"`
+	EventConsumers   DoctorEventConsumerSummary       `json:"eventConsumers"`
+	RecentReleases   int                              `json:"recentReleases"`
+	RecentUnitEvents int                              `json:"recentUnitEvents"`
+	Omissions        []GitOpsDeliveryEvidenceOmission `json:"omissions,omitempty"`
+}
+
+type DoctorLiveStatusSummary struct {
+	Total             int                 `json:"total"`
+	Delivery          DoctorVerdictCounts `json:"delivery"`
+	ApplicationHealth DoctorVerdictCounts `json:"applicationHealth"`
+	Fresh             int                 `json:"fresh"`
+	Stale             int                 `json:"stale"`
+	UnknownFreshness  int                 `json:"unknownFreshness"`
+}
+
+type DoctorVerdictCounts struct {
+	Pass         int `json:"pass"`
+	Watch        int `json:"watch"`
+	Block        int `json:"block"`
+	Inconclusive int `json:"inconclusive"`
+}
+
+type DoctorEventConsumerSummary struct {
+	Total    int `json:"total"`
+	Ready    int `json:"ready"`
+	NotReady int `json:"notReady"`
+}
+
 // DoctorIssue is a concise issue entry for doctor output.
 type DoctorIssue struct {
 	Severity  string `json:"severity"`
@@ -165,14 +215,23 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	if doctorTopIssues < 0 {
 		return fmt.Errorf("--top must be >= 0")
 	}
+	if doctorWithConfigHub {
+		if err := validateDoctorConfigHubFlags(); err != nil {
+			return err
+		}
+	}
 
 	// Call the shared capability seam
 	// Fixture path is passed explicitly rather than read inside the seam
 	fixturePath := os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON")
 	result, err := ObserveScopeSummary(cmd.Context(), ObserveScopeSummaryRequest{
-		Namespace:   doctorNamespace,
-		TopIssues:   doctorTopIssues,
-		FixturePath: fixturePath,
+		Namespace:           doctorNamespace,
+		TopIssues:           doctorTopIssues,
+		FixturePath:         fixturePath,
+		WithConfigHub:       doctorWithConfigHub,
+		ConfigHubSpace:      doctorConfigHubSpace,
+		ConfigHubSince:      doctorConfigHubSince,
+		ConfigHubStaleAfter: doctorConfigHubStaleAfter,
 	})
 	if err != nil {
 		// Only apply kube recovery hints for cluster-path errors, not fixture errors
@@ -353,6 +412,84 @@ func collectDoctorRollouts(ctx context.Context, namespace string, topN int) (*Do
 	return buildDoctorRolloutSummary(decisions, topN), nil
 }
 
+func validateDoctorConfigHubFlags() error {
+	return validateDoctorConfigHubRequest(ObserveScopeSummaryRequest{
+		ConfigHubSince:      doctorConfigHubSince,
+		ConfigHubStaleAfter: doctorConfigHubStaleAfter,
+	})
+}
+
+func validateDoctorConfigHubRequest(req ObserveScopeSummaryRequest) error {
+	since := strings.TrimSpace(req.ConfigHubSince)
+	if since == "" {
+		since = "24h"
+	}
+	if _, err := parseHistorySince(since); err != nil {
+		return fmt.Errorf("invalid --confighub-since: %w", err)
+	}
+
+	staleAfter := strings.TrimSpace(req.ConfigHubStaleAfter)
+	if staleAfter == "" {
+		staleAfter = "15m"
+	}
+	if _, err := parseHistorySince(staleAfter); err != nil {
+		return fmt.Errorf("invalid --confighub-stale-after: %w", err)
+	}
+	return nil
+}
+
+func collectDoctorDeliveryEvidence(ctx context.Context, namespace string, req ObserveScopeSummaryRequest) (*GitOpsDeliveryEvidence, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build kubernetes config: %w", err)
+	}
+
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	opts, err := doctorDeliveryEvidenceOptionsFromRequest(ctx, namespace, req)
+	if err != nil {
+		return nil, err
+	}
+	return collectGitOpsDeliveryEvidence(ctx, dynClient, opts), nil
+}
+
+func doctorDeliveryEvidenceOptionsFromRequest(ctx context.Context, namespace string, req ObserveScopeSummaryRequest) (gitOpsDeliveryEvidenceOptions, error) {
+	now := gitopsNowFn().UTC()
+	opts := gitOpsDeliveryEvidenceOptions{
+		Namespace: strings.TrimSpace(namespace),
+		Space:     strings.TrimSpace(req.ConfigHubSpace),
+		Since:     strings.TrimSpace(req.ConfigHubSince),
+		Now:       now,
+		MaxItems:  defaultGitOpsDeliveryMaxItems,
+	}
+	if opts.Since == "" {
+		opts.Since = "24h"
+	}
+	window, err := parseHistorySince(opts.Since)
+	if err != nil {
+		return opts, fmt.Errorf("invalid --confighub-since: %w", err)
+	}
+	opts.Window = window
+
+	staleAfterRaw := strings.TrimSpace(req.ConfigHubStaleAfter)
+	if staleAfterRaw == "" {
+		staleAfterRaw = "15m"
+	}
+	staleAfter, err := parseHistorySince(staleAfterRaw)
+	if err != nil {
+		return opts, fmt.Errorf("invalid --confighub-stale-after: %w", err)
+	}
+	opts.StaleAfter = staleAfter
+
+	if opts.Space == "" {
+		opts.Space = gitopsDefaultSpaceFn(ctx)
+	}
+	return opts, nil
+}
+
 func buildDoctorRolloutSummary(decisions []agent.RolloutDecision, topN int) *DoctorRolloutSummary {
 	summary := &DoctorRolloutSummary{Total: len(decisions)}
 	current := make([]agent.RolloutDecision, 0)
@@ -400,6 +537,158 @@ func buildDoctorRolloutSummary(decisions []agent.RolloutDecision, topN int) *Doc
 	}
 	summary.CurrentChanges = current[:topN]
 	return summary
+}
+
+func attachDoctorDeliveryEvidence(summary *DoctorSummary, evidence *GitOpsDeliveryEvidence, topN int) {
+	if summary == nil || evidence == nil {
+		return
+	}
+	summary.DeliveryEvidence = evidence
+	summary.Delivery = buildDoctorDeliverySummary(evidence)
+
+	issues := append([]DoctorIssue(nil), summary.TopIssues...)
+	issues = append(issues, buildDoctorDeliveryIssues(evidence)...)
+	sortDoctorIssues(issues)
+	summary.TopIssues = limitDoctorIssues(issues, topN)
+}
+
+func buildDoctorDeliverySummary(evidence *GitOpsDeliveryEvidence) *DoctorDeliverySummary {
+	if evidence == nil {
+		return nil
+	}
+	summary := &DoctorDeliverySummary{
+		Scope:     evidence.Scope,
+		Omissions: append([]GitOpsDeliveryEvidenceOmission(nil), evidence.Omissions...),
+	}
+	if evidence.ConfigHub != nil {
+		summary.LiveStatus.Total = len(evidence.ConfigHub.LiveStatuses)
+		summary.RecentReleases = len(evidence.ConfigHub.Releases)
+		summary.RecentUnitEvents = len(evidence.ConfigHub.UnitEvents)
+		for _, status := range evidence.ConfigHub.LiveStatuses {
+			countDoctorVerdict(&summary.LiveStatus.Delivery, status.DeliveryVerdict)
+			countDoctorVerdict(&summary.LiveStatus.ApplicationHealth, status.ApplicationHealthVerdict)
+			switch strings.ToLower(strings.TrimSpace(status.Freshness)) {
+			case "fresh":
+				summary.LiveStatus.Fresh++
+			case "stale":
+				summary.LiveStatus.Stale++
+			default:
+				summary.LiveStatus.UnknownFreshness++
+			}
+		}
+	}
+	summary.EventConsumers.Total = len(evidence.EventConsumers)
+	for _, consumer := range evidence.EventConsumers {
+		if consumer.Ready {
+			summary.EventConsumers.Ready++
+		} else {
+			summary.EventConsumers.NotReady++
+		}
+	}
+	return summary
+}
+
+func countDoctorVerdict(counts *DoctorVerdictCounts, verdict agent.ReceiptVerdict) {
+	if counts == nil {
+		return
+	}
+	switch verdict {
+	case agent.VerdictPASS:
+		counts.Pass++
+	case agent.VerdictWATCH:
+		counts.Watch++
+	case agent.VerdictBLOCK:
+		counts.Block++
+	case agent.VerdictINCONCLUSIVE:
+		counts.Inconclusive++
+	default:
+		counts.Inconclusive++
+	}
+}
+
+func buildDoctorDeliveryIssues(evidence *GitOpsDeliveryEvidence) []DoctorIssue {
+	if evidence == nil {
+		return nil
+	}
+	issues := []DoctorIssue{}
+	if evidence.ConfigHub != nil {
+		for _, status := range evidence.ConfigHub.LiveStatuses {
+			if severity := doctorSeverityForVerdict(status.DeliveryVerdict); severity != "" {
+				issues = append(issues, DoctorIssue{
+					Severity: severity,
+					Resource: "ConfigHubLiveStatus/" + firstNonEmpty(status.App, status.Space, status.SpaceID, "unknown"),
+					Message: fmt.Sprintf("delivery writeback reports %s (sync=%s operation=%s freshness=%s)",
+						status.DeliveryVerdict,
+						firstNonEmpty(status.SyncStatus, "-"),
+						firstNonEmpty(status.OperationPhase, "-"),
+						firstNonEmpty(status.Freshness, "-"),
+					),
+				})
+			}
+
+			if status.ApplicationHealthVerdict != agent.VerdictPASS && !(status.ApplicationHealthVerdict == agent.VerdictWATCH && strings.EqualFold(status.HealthStatus, "Healthy") && strings.EqualFold(status.Freshness, "stale")) {
+				if severity := doctorSeverityForVerdict(status.ApplicationHealthVerdict); severity != "" {
+					issues = append(issues, DoctorIssue{
+						Severity: severity,
+						Resource: "ConfigHubLiveStatus/" + firstNonEmpty(status.App, status.Space, status.SpaceID, "unknown"),
+						Message: fmt.Sprintf("application health writeback reports %s (health=%s freshness=%s)",
+							status.ApplicationHealthVerdict,
+							firstNonEmpty(status.HealthStatus, "-"),
+							firstNonEmpty(status.Freshness, "-"),
+						),
+					})
+				}
+			}
+		}
+		for _, event := range evidence.ConfigHub.UnitEvents {
+			if doctorUnitEventFailed(event) {
+				issues = append(issues, DoctorIssue{
+					Severity: "CRITICAL",
+					Resource: "ConfigHubUnitEvent/" + firstNonEmpty(event.EventID, event.Action, "unknown"),
+					Message: fmt.Sprintf("unit event %s reports failure for unit=%s target=%s",
+						firstNonEmpty(event.Action, event.Status, "-"),
+						firstNonEmpty(event.Unit, event.UnitID, "-"),
+						firstNonEmpty(event.Target, event.TargetID, "-"),
+					),
+				})
+			}
+		}
+	}
+	for _, consumer := range evidence.EventConsumers {
+		if consumer.Ready {
+			continue
+		}
+		issues = append(issues, DoctorIssue{
+			Severity:  "WARNING",
+			Resource:  consumer.Kind + "/" + consumer.Name,
+			Namespace: consumer.Namespace,
+			Message:   fmt.Sprintf("event consumer is not ready (%d/%d replicas ready)", consumer.ReadyReplicas, consumer.Replicas),
+		})
+	}
+	return issues
+}
+
+func doctorSeverityForVerdict(verdict agent.ReceiptVerdict) string {
+	switch verdict {
+	case agent.VerdictBLOCK:
+		return "CRITICAL"
+	case agent.VerdictWATCH:
+		return "WARNING"
+	case agent.VerdictINCONCLUSIVE:
+		return "INFO"
+	default:
+		return ""
+	}
+}
+
+func doctorUnitEventFailed(event ConfigHubUnitEventEvidence) bool {
+	result := strings.ToLower(strings.TrimSpace(firstNonEmpty(event.Result, event.Status)))
+	switch result {
+	case "failed", "failure", "error":
+		return true
+	default:
+		return false
+	}
 }
 
 func rolloutVerdictRank(verdict agent.ReceiptVerdict) int {
@@ -490,28 +779,8 @@ func buildDoctorSummary(entries []MapEntry, findings []scan.NormalizedFinding, c
 		})
 	}
 
-	sort.Slice(issues, func(i, j int) bool {
-		ri := doctorSeverityRank(issues[i].Severity)
-		rj := doctorSeverityRank(issues[j].Severity)
-		if ri != rj {
-			return ri < rj
-		}
-		if issues[i].Namespace != issues[j].Namespace {
-			return issues[i].Namespace < issues[j].Namespace
-		}
-		if issues[i].Resource != issues[j].Resource {
-			return issues[i].Resource < issues[j].Resource
-		}
-		return issues[i].Message < issues[j].Message
-	})
-
-	if topN < 0 {
-		topN = 0
-	}
-	if topN > len(issues) {
-		topN = len(issues)
-	}
-	summary.TopIssues = issues[:topN]
+	sortDoctorIssues(issues)
+	summary.TopIssues = limitDoctorIssues(issues, topN)
 
 	// Check for connected mode to surface three-way comparison capability
 	client := hub.NewClient()
@@ -529,6 +798,33 @@ func buildDoctorSummary(entries []MapEntry, findings []scan.NormalizedFinding, c
 	}
 
 	return summary
+}
+
+func sortDoctorIssues(issues []DoctorIssue) {
+	sort.Slice(issues, func(i, j int) bool {
+		ri := doctorSeverityRank(issues[i].Severity)
+		rj := doctorSeverityRank(issues[j].Severity)
+		if ri != rj {
+			return ri < rj
+		}
+		if issues[i].Namespace != issues[j].Namespace {
+			return issues[i].Namespace < issues[j].Namespace
+		}
+		if issues[i].Resource != issues[j].Resource {
+			return issues[i].Resource < issues[j].Resource
+		}
+		return issues[i].Message < issues[j].Message
+	})
+}
+
+func limitDoctorIssues(issues []DoctorIssue, topN int) []DoctorIssue {
+	if topN < 0 {
+		topN = 0
+	}
+	if topN > len(issues) {
+		topN = len(issues)
+	}
+	return issues[:topN]
 }
 
 func doctorSeverityRank(sev string) int {
@@ -632,6 +928,45 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 		fmt.Fprintf(&b, "\n")
 	}
 
+	if summary.Delivery != nil {
+		delivery := summary.Delivery
+		fmt.Fprintf(&b, "%s live-status %d (delivery: %s; app-health: %s)\n",
+			sectionLabel("Delivery"),
+			delivery.LiveStatus.Total,
+			doctorVerdictCountsLine(delivery.LiveStatus.Delivery),
+			doctorVerdictCountsLine(delivery.LiveStatus.ApplicationHealth),
+		)
+		if delivery.LiveStatus.Total > 0 {
+			fmt.Fprintf(&b, "  Freshness: %d fresh, %d stale, %d unknown\n",
+				delivery.LiveStatus.Fresh,
+				delivery.LiveStatus.Stale,
+				delivery.LiveStatus.UnknownFreshness,
+			)
+		}
+		if delivery.EventConsumers.Total > 0 {
+			fmt.Fprintf(&b, "  Event consumers: %d/%d ready\n",
+				delivery.EventConsumers.Ready,
+				delivery.EventConsumers.Total,
+			)
+		}
+		if delivery.RecentReleases > 0 || delivery.RecentUnitEvents > 0 {
+			fmt.Fprintf(&b, "  Recent evidence: %d releases, %d unit events\n",
+				delivery.RecentReleases,
+				delivery.RecentUnitEvents,
+			)
+		}
+		if len(delivery.Omissions) > 0 {
+			fmt.Fprintf(&b, "  Omissions: %d\n", len(delivery.Omissions))
+			for i, omission := range delivery.Omissions {
+				if i >= 3 {
+					break
+				}
+				fmt.Fprintf(&b, "    - %s: %s\n", omission.Layer, omission.Reason)
+			}
+		}
+		fmt.Fprintf(&b, "\n")
+	}
+
 	// Color severity counts in the risks line
 	criticalText := fmt.Sprintf("%d CRITICAL", summary.Risks.Critical)
 	warningText := fmt.Sprintf("%d WARNING", summary.Risks.Warning)
@@ -693,6 +1028,15 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 	}
 
 	return b.String()
+}
+
+func doctorVerdictCountsLine(counts DoctorVerdictCounts) string {
+	return fmt.Sprintf("%d PASS, %d WATCH, %d BLOCK, %d INCONCLUSIVE",
+		counts.Pass,
+		counts.Watch,
+		counts.Block,
+		counts.Inconclusive,
+	)
 }
 
 func doctorPercent(part, total int) int {

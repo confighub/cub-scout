@@ -30,17 +30,21 @@ import (
 )
 
 var (
-	traceNamespace    string
-	traceJSON         bool   // deprecated: use --format json
-	traceFormat       string // output format: ascii, json
-	traceApp          string // For direct Argo app tracing
-	traceReverse      bool   // Reverse trace - walk ownerReferences up
-	traceDiff         bool   // Show diff between live and desired state
-	traceExplain      bool   // Show explanatory content for learning
-	traceHistory      bool   // Show deployment history
-	traceLimit        int    // Limit number of history entries
-	traceArtifacts    bool   // Include source artifact provenance in output
-	tracePresentation string // Presentation mode: human, ai, paired
+	traceNamespace           string
+	traceJSON                bool   // deprecated: use --format json
+	traceFormat              string // output format: ascii, json
+	traceApp                 string // For direct Argo app tracing
+	traceReverse             bool   // Reverse trace - walk ownerReferences up
+	traceDiff                bool   // Show diff between live and desired state
+	traceExplain             bool   // Show explanatory content for learning
+	traceHistory             bool   // Show deployment history
+	traceLimit               int    // Limit number of history entries
+	traceArtifacts           bool   // Include source artifact provenance in output
+	tracePresentation        string // Presentation mode: human, ai, paired
+	traceWithConfigHub       bool
+	traceConfigHubSpace      string
+	traceConfigHubSince      string
+	traceConfigHubStaleAfter string
 )
 
 // ANSI color codes for colorful output
@@ -135,6 +139,10 @@ func init() {
 	traceCmd.Flags().IntVar(&traceLimit, "limit", 10, "Limit number of history entries (default: 10)")
 	traceCmd.Flags().BoolVar(&traceArtifacts, "artifacts", false, "Include source artifact provenance (url/revision/digest/update time)")
 	traceCmd.Flags().StringVar(&tracePresentation, "presentation", "", PresentationModeHelp())
+	traceCmd.Flags().BoolVar(&traceWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation")
+	traceCmd.Flags().StringVar(&traceConfigHubSpace, "confighub-space", "", "ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)")
+	traceCmd.Flags().StringVar(&traceConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
+	traceCmd.Flags().StringVar(&traceConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 
 	// Mark --json as deprecated
 	_ = traceCmd.Flags().MarkDeprecated("json", "use --format json instead")
@@ -216,6 +224,16 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		appResult, appErr := tracer.TraceApplication(ctx, name)
 		if appErr != nil {
 			return fmt.Errorf("trace failed: %w", appErr)
+		}
+		if traceWithConfigHub {
+			dynClient := enrichTraceConfigHubFromLive(ctx, appResult, kind, name, traceNamespace)
+			attachTraceConfigHubDeliveryEvidence(ctx, appResult, dynClient, traceConfigHubDeliveryFlags{
+				Enabled:    true,
+				Namespace:  traceNamespace,
+				Space:      traceConfigHubSpace,
+				Since:      traceConfigHubSince,
+				StaleAfter: traceConfigHubStaleAfter,
+			})
 		}
 		artifacts := buildUnknownTraceArtifacts(appResult)
 		if traceArtifacts {
@@ -394,6 +412,17 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	events, eventsErr := fetchResourceEvents(ctx, traceNamespace, kind, name)
 	if eventsErr == nil && events != nil && len(events.Events) > 0 {
 		result.Events = events
+	}
+
+	if traceWithConfigHub {
+		dynClient := enrichTraceConfigHubFromLive(ctx, result, kind, name, traceNamespace)
+		attachTraceConfigHubDeliveryEvidence(ctx, result, dynClient, traceConfigHubDeliveryFlags{
+			Enabled:    true,
+			Namespace:  traceNamespace,
+			Space:      traceConfigHubSpace,
+			Since:      traceConfigHubSince,
+			StaleAfter: traceConfigHubStaleAfter,
+		})
 	}
 
 	artifacts := buildUnknownTraceArtifacts(result)
@@ -1127,6 +1156,9 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string,
 	if result.Events != nil && len(result.Events.Events) > 0 {
 		output.Events = convertResourceEvents(result.Events)
 	}
+	if result.DeliveryEvidence != nil {
+		output.DeliveryEvidence = result.DeliveryEvidence
+	}
 
 	return output
 }
@@ -1706,6 +1738,8 @@ func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.Tra
 		}
 	}
 
+	renderTraceDeliveryEvidenceHuman(result.DeliveryEvidence)
+
 	// Show history if requested and available
 	if traceHistory && len(result.History) > 0 {
 		fmt.Printf("\n")
@@ -1844,6 +1878,8 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 			fmt.Printf("%s│\n", strings.Repeat("    ", i)+"    ")
 		}
 	}
+
+	renderTraceDeliveryEvidenceMarkdown(result.DeliveryEvidence)
 
 	// Summary
 	fmt.Println()
@@ -2665,8 +2701,15 @@ func modelplaneEvidenceMessage(resource *unstructured.Unstructured, ownership *a
 	if resource == nil {
 		return ""
 	}
+	message := ""
 	if ownership != nil && ownership.Source != "" {
-		return "Ownership evidence: " + ownership.Source + "."
+		message = appendSentence(message, "Ownership evidence: "+ownership.Source+".")
+	}
+	if crossplaneEvidence := modelplaneCrossplaneEvidenceMessage(resource, ownership); crossplaneEvidence != "" {
+		message = appendSentence(message, crossplaneEvidence)
+	}
+	if message != "" {
+		return message
 	}
 	for key, value := range resource.GetLabels() {
 		if strings.HasPrefix(key, "modelplane.ai/") && value != "" {
@@ -2677,6 +2720,60 @@ func modelplaneEvidenceMessage(resource *unstructured.Unstructured, ownership *a
 		return "Modelplane API resource."
 	}
 	return ""
+}
+
+func modelplaneCrossplaneEvidenceMessage(resource *unstructured.Unstructured, ownership *agent.Ownership) string {
+	if resource == nil {
+		return ""
+	}
+	labels := resource.GetLabels()
+	annotations := resource.GetAnnotations()
+	evidence := []string{}
+
+	if composite := firstNonEmpty(labels["crossplane.io/composite"], labels["apiextensions.crossplane.io/composite"]); composite != "" {
+		evidence = append(evidence, "composite="+composite)
+	}
+	if claimName := strings.TrimSpace(labels["crossplane.io/claim-name"]); claimName != "" {
+		claim := claimName
+		if claimNamespace := strings.TrimSpace(labels["crossplane.io/claim-namespace"]); claimNamespace != "" {
+			claim = claimNamespace + "/" + claim
+		}
+		evidence = append(evidence, "claim="+claim)
+	}
+	if resourceName := firstNonEmpty(
+		labels["crossplane.io/composition-resource-name"],
+		annotations["crossplane.io/composition-resource-name"],
+	); resourceName != "" {
+		evidence = append(evidence, "compositionResource="+resourceName)
+	}
+	if manager := firstModelplaneCrossplaneManager(resource, ownership); manager != "" {
+		evidence = append(evidence, "fieldManager="+manager)
+	}
+	if len(evidence) == 0 {
+		return ""
+	}
+	return "Modelplane-on-Crossplane evidence: " + strings.Join(evidence, ", ") + "."
+}
+
+func firstModelplaneCrossplaneManager(resource *unstructured.Unstructured, ownership *agent.Ownership) string {
+	if resource == nil || ownership == nil {
+		return ""
+	}
+	managers := []string{}
+	for _, field := range resource.GetManagedFields() {
+		manager := strings.TrimSpace(field.Manager)
+		if manager == "" || !strings.Contains(manager, "crossplane.io") {
+			continue
+		}
+		if agent.IsControllerManagerFor(manager, agent.OwnerModelplane, ownership.SubType) {
+			managers = append(managers, manager)
+		}
+	}
+	sort.Strings(managers)
+	if len(managers) == 0 {
+		return ""
+	}
+	return managers[0]
 }
 
 func modelplaneKindFromSubtype(subType string) string {

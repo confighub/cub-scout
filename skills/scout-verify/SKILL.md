@@ -264,7 +264,7 @@ Three v2 extensions layer on top of the v1 envelope without changing the wire fo
 
 - **`--fail-on <verdict-list>` on `receipt verify`** (`#451`) — exit non-zero (code 2) when the verdict matches. Accepts `WATCH`, `BLOCK`, `INCONCLUSIVE` (comma-separated) or the sugar `any-non-pass`. The receipt is still printed / saved / written to `--out` — the gate fires AFTER the artifact is durable.
 - **`--input-attestation <path>` chained receipts** (`#448` chained half) — repeatable; each referenced receipt is loaded + fingerprint-verified + attached to the new receipt's `inputAttestations[]`. Tampered references refused at chain-construction time. The downstream fingerprint covers the field by construction.
-- **`cub-scout watch --emit-receipt-on <event-types>`** (`#449`) — attaches a receipt to each matching event payload inline (JSONL or webhook). v1 of the flag builds receipts for `drift.detected` and `ownership.changed` (highest signal); other event types pass through silently. Failures are non-fatal.
+- **`cub-scout watch --emit-receipt-on <event-types>` / `cub-scout bot --emit-receipt-on <event-types>`** (`#449`) — attaches a receipt to each matching event payload inline (JSONL or webhook). All four known event types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, and `scan.finding`; `--emit-receipt-batch-cap` bounds burst volume. Failures are non-fatal.
 
 ```bash
 # CI gate
@@ -283,12 +283,9 @@ Three v2 extensions layer on top of the v1 envelope without changing the wire fo
 
 ## Not yet in cub-scout
 
-Future directions worth flagging — none of these are implemented today:
+Future directions worth flagging:
 
 - Cryptographic signing as a hardening layer on top of fingerprint-only — DSSE wrapped in a Sigstore Bundle (cosign keyless + ed25519 fallback) is one candidate design; the wire format is intentionally additive-friendly so signatures can land without an envelope change
-- Aggregate-with-discovery half of `#448` — `cub-scout receipt verify --scope namespace/<ns>` that emits N per-resource receipts + 1 aggregate via `synthetic-aggregate://` subject + max-severity verdict synthesis
-- Backpressure / batching for high-frequency `--emit-receipt-on` events (Codex round-1 open question on `#449`)
-- `resource.discovered` / `scan.finding` event-type support for `--emit-receipt-on` (would flood on first poll; deferred pending the backpressure design)
 
 Shipping releases use fingerprint-only integrity; future hardening is honest about what's not yet there — the contract is in `docs/reference/json-contracts.md` § Receipt Contract.
 

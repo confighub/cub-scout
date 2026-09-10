@@ -1,13 +1,13 @@
 ---
 name: scout-observe
-description: 'Use when the user wants to SEE what is running in a Kubernetes cluster, who owns it, and how it is structured — the read-only Observe verb group of cub-scout. Natural phrasing: "what is running in my cluster?", "give me a map of resources", "who owns this Deployment?", "trace this back to its source", "show me the ownership tree", "scan this cluster for risk", "dump the cluster as JSON", "stream cluster events", "what is the connection status?", "is this cluster healthy?". Load when intent is observe / inventory / map / show / list / trace / scan / dump / stream / health-check over a Kubernetes cluster. Do NOT load for: explaining WHY something is broken (use scout-diagnose), comparing cluster state to intended state (use scout-compare), provenance of individual field values (use scout-attribute), or any action that mutates the cluster (cub-scout never mutates — route to cub or kubectl with the user driving).'
+description: 'Use when the user wants to SEE what is running in a Kubernetes cluster, who owns it, and how it is structured — the read-only Observe verb group of cub-scout. Natural phrasing: "what is running in my cluster?", "give me a map of resources", "who owns this Deployment?", "trace this back to its source", "show me the ownership tree", "scan this cluster for risk", "dump the cluster as JSON", "stream cluster events", "run cub-scout as a bot", "what is the connection status?", "is this cluster healthy?". Load when intent is observe / inventory / map / show / list / trace / scan / dump / stream / bot / health-check over a Kubernetes cluster. Do NOT load for: explaining WHY something is broken (use scout-diagnose), comparing cluster state to intended state (use scout-compare), provenance of individual field values (use scout-attribute), or any action that mutates the cluster (cub-scout never mutates — route to cub or kubectl with the user driving).'
 phase: verify
-allowed-tools: Bash(./cub-scout doctor) Bash(./cub-scout doctor *) Bash(cub-scout doctor) Bash(cub-scout doctor *) Bash(cub scout doctor) Bash(cub scout doctor *) Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout tree *) Bash(cub-scout tree *) Bash(cub scout tree *) Bash(./cub-scout scan *) Bash(cub-scout scan *) Bash(cub scout scan *) Bash(./cub-scout graph *) Bash(cub-scout graph *) Bash(cub scout graph *) Bash(./cub-scout snapshot *) Bash(cub-scout snapshot *) Bash(cub scout snapshot *) Bash(./cub-scout watch *) Bash(cub-scout watch *) Bash(cub scout watch *) Bash(./cub-scout status) Bash(./cub-scout status *) Bash(cub-scout status) Bash(cub-scout status *) Bash(cub scout status) Bash(cub scout status *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl logs *) Bash(kubectl version) Bash(kubectl config current-context) Bash(kubectl config view *)
+allowed-tools: Bash(./cub-scout doctor) Bash(./cub-scout doctor *) Bash(cub-scout doctor) Bash(cub-scout doctor *) Bash(cub scout doctor) Bash(cub scout doctor *) Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout tree *) Bash(cub-scout tree *) Bash(cub scout tree *) Bash(./cub-scout scan *) Bash(cub-scout scan *) Bash(cub scout scan *) Bash(./cub-scout graph *) Bash(cub-scout graph *) Bash(cub scout graph *) Bash(./cub-scout snapshot *) Bash(cub-scout snapshot *) Bash(cub scout snapshot *) Bash(./cub-scout watch *) Bash(cub-scout watch *) Bash(cub scout watch *) Bash(./cub-scout bot *) Bash(cub-scout bot *) Bash(cub scout bot *) Bash(./cub-scout status) Bash(./cub-scout status *) Bash(cub-scout status) Bash(cub-scout status *) Bash(cub scout status) Bash(cub scout status *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl logs *) Bash(kubectl version) Bash(kubectl config current-context) Bash(kubectl config view *)
 ---
 
 # scout-observe
 
-The Observe verb group of cub-scout. Nine commands that show what is running in a cluster and who owns it — without modifying anything.
+The Observe verb group of cub-scout. Ten commands that show what is running in a cluster and who owns it — without modifying anything.
 
 ## When to use
 
@@ -20,6 +20,7 @@ Explicit phrasings:
 - "Scan this cluster for risk" / "scan this manifest file"
 - "Dump cluster state as JSON" / "snapshot the namespace"
 - "Stream cluster events to a webhook"
+- "Run cub-scout as an in-cluster observer bot"
 - "What's my connection status?" / "am I connected to ConfigHub?"
 - "Is this cluster healthy?" / "give me a one-screen status"
 
@@ -38,13 +39,13 @@ Implicit intents the skill should catch:
 
 ## Standalone vs connected
 
-- **Standalone (cluster only):** all nine Observe verbs work. `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `status` need only your current kubectl context.
+- **Standalone (cluster only):** all ten Observe verbs work. `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `bot`, `status` need only your current kubectl context or in-cluster service account.
 - **Connected (cluster + `cub auth login`):** `trace` and `map` gain ConfigHub unit linkage; `status` shows ConfigHub session detail; `scan` can correlate findings with units.
 - **Offline (file / bundle only):** `scan --file <path>` audits manifests without a cluster; `bundle inspect` reads recorded debug bundles.
 
 ## Tool boundary
 
-- **Allowed (read-only):** the nine specific Observe verbs — `cub-scout doctor`, `cub-scout map`, `cub-scout trace`, `cub-scout tree`, `cub-scout scan`, `cub-scout graph`, `cub-scout snapshot`, `cub-scout watch`, `cub-scout status` (in all three invocation forms: `cub-scout`, `./cub-scout`, `cub scout`). Plus `kubectl get/describe/logs`, `kubectl version`, `kubectl config current-context/view`. **Never** the broad `cub-scout *` wildcard — that would grant `demo` (kubectl-applies), `import apply` (writes to ConfigHub), and `compare --suggest --apply` (writes to ConfigHub).
+- **Allowed (read-only):** the ten specific Observe verbs — `cub-scout doctor`, `cub-scout map`, `cub-scout trace`, `cub-scout tree`, `cub-scout scan`, `cub-scout graph`, `cub-scout snapshot`, `cub-scout watch`, `cub-scout bot`, `cub-scout status` (in all three invocation forms: `cub-scout`, `./cub-scout`, `cub scout`). Plus `kubectl get/describe/logs`, `kubectl version`, `kubectl config current-context/view`. **Never** the broad `cub-scout *` wildcard — that would grant `demo` (kubectl-applies), `import apply` (writes to ConfigHub), and `compare --suggest --apply` (writes to ConfigHub).
 - **Not allowed:** `kubectl apply/edit/patch/delete/scale/rollout/exec`, `kubectl debug` (privileged debug pods), any `cub * create/update/delete`.
 - **Boundary with [`scout-diagnose`](../scout-diagnose/SKILL.md):** Observe shows *what* is there; Diagnose interprets *why* it looks the way it does and recommends *next steps*. The two often chain: Observe to map, then Diagnose to interpret.
 
@@ -62,9 +63,10 @@ Pick by the question being asked:
 | "Export the resource graph" | `cub-scout graph export` | DOT / JSON for downstream tools |
 | "Dump the cluster as GSF JSON" | `cub-scout snapshot` | Stable snapshot for AI / agent / audit |
 | "Stream observation events" | `cub-scout watch -n <ns> [--webhook url]` | Webhook / file sinks, namespace / owner / severity filters |
+| "Run an in-cluster observer bot" | `cub-scout bot --webhook <url>` | Same event shape as `watch`, with env-var configuration for Kubernetes manifests |
 | "What mode am I in? Connection / cluster info" | `cub-scout status` | Standalone vs connected, context, cluster details |
 
-All nine verbs emit deterministic JSON via `--format json` for agents.
+Snapshot-style verbs that support `--format json` emit deterministic JSON for agents; `watch` and `bot` emit deterministic JSON events directly.
 
 ## The loop
 
@@ -109,7 +111,7 @@ $ cub-scout map list -n boutique --format json | jq '[.[] | {name, owner, source
 ## Output evidence
 
 - **Primary artifact:** ASCII or JSON output from the chosen verb.
-- **MCP gateway:** the standalone Observe tools (`doctor`, `map`, `scan`, `trace`, `explain`) are exposed as MCP tools via `cub-scout mcp serve`. See [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md) for the full per-tool catalog (5 standalone + 5 connected, verified against `cmd/cub-scout/mcp.go`). Note: not every CLI verb is an MCP tool — e.g., `tree`, `graph`, `snapshot`, `watch`, `status` are CLI-only.
+- **MCP gateway:** the standalone Observe tools (`doctor`, `map`, `scan`, `trace`, `explain`, `gitops_status`) are exposed as MCP tools via `cub-scout mcp serve`. See [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md) for the full per-tool catalog (6 standalone + 8 connected, verified against `cmd/cub-scout/mcp.go`). Note: not every CLI verb is an MCP tool — e.g., `tree`, `graph`, `snapshot`, `watch`, `bot`, `status` are CLI-only.
 - **`nextSteps[]`** structured hints (where supported): every entry has `actionType: read-only` — mutating actionType is rejected at every cub-scout emit point.
 
 ## References
@@ -124,5 +126,5 @@ $ cub-scout map list -n boutique --format json | jq '[.[] | {name, owner, source
 
 - All output is point-in-time. For a durable, fingerprinted record of "what cub-scout observed at time T", use the Verify verb group (`cub-scout receipt verify`) once #446 batch 1 lands — see [`scout-verify`](../scout-verify/SKILL.md) (planned).
 - If `managedFields` is missing or stripped from the live object, ownership detection still works (via labels + annotations) but per-field attribution falls back to resource-level. See [`references/kubernetes-managedfields.md`](../references/kubernetes-managedfields.md) for the data substrate notes.
-- The `watch` verb runs indefinitely until interrupted; agents should pass `--once` or a time bound. Streaming receipts via `--emit-receipt-on` is a separate planned feature (#449).
+- The `watch` and `bot` verbs run indefinitely until interrupted; agents should pass `--once` or a time bound. Streaming receipts use `--emit-receipt-on`, with per-poll backpressure from `--emit-receipt-batch-cap`.
 - If a user asks the skill to act (apply / edit / sync / patch / delete), refuse and route to the appropriate `cub` skill in [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) or to direct `kubectl` with the user's hands on the keyboard.

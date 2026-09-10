@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
@@ -44,10 +45,15 @@ Supported tools in standalone mode:
   - trace
   - scan
   - explain
+  - gitops_status
 
 Additional tools in connected mode (when authenticated to ConfigHub):
   - compare_three_way
+  - compare_source_truth
   - confighub_changesets
+  - confighub_live_status
+  - confighub_releases
+  - confighub_unit_events
   - confighub_units
   - confighub_unit_get
 
@@ -170,7 +176,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"doctor": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "doctor",
-				Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Also use when the user asks which cub-scout troubleshooting tool to start with, whether cub-scout is the right first read-only step instead of raw kubectl or the Argo UI, or when local access to the cluster may itself be the problem (wrong context, stale kubeconfig, API unreachable). Returns ownership, health, risks, drift, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
+				Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Also use when the user asks which cub-scout troubleshooting tool to start with, whether cub-scout is the right first read-only step instead of raw kubectl or the Argo UI, or when local access to the cluster may itself be the problem (wrong context, stale kubeconfig, API unreachable). Returns ownership, health, risks, drift, rollout evidence, optional bounded ConfigHub delivery evidence, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -182,6 +188,22 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"top": map[string]interface{}{
 							"type":        "integer",
 							"description": "Number of top issues to include (default: 3).",
+						},
+						"with_confighub": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Include bounded ConfigHub release, unit-event, live-status, and event-consumer evidence. Requires cub auth for connected rows.",
+						},
+						"confighub_space": map[string]interface{}{
+							"type":        "string",
+							"description": "ConfigHub space for connected evidence. Defaults to the current cub space; pass '*' only for an explicit all-spaces read.",
+						},
+						"confighub_since": map[string]interface{}{
+							"type":        "string",
+							"description": "Lookback window for connected release/event evidence, for example 24h or 7d.",
+						},
+						"confighub_stale_after": map[string]interface{}{
+							"type":        "string",
+							"description": "Treat live-status writeback older than this as stale, for example 15m.",
 						},
 					},
 					"additionalProperties": false,
@@ -196,6 +218,18 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					return nil, err
 				} else if present {
 					args = append(args, "--top", fmt.Sprintf("%d", top))
+				}
+				if argBool(arguments, "with_confighub") {
+					args = append(args, "--with-confighub")
+				}
+				if space := argString(arguments, "confighub_space"); space != "" {
+					args = append(args, "--confighub-space", space)
+				}
+				if since := argString(arguments, "confighub_since"); since != "" {
+					args = append(args, "--confighub-since", since)
+				}
+				if staleAfter := argString(arguments, "confighub_stale_after"); staleAfter != "" {
+					args = append(args, "--confighub-stale-after", staleAfter)
 				}
 				return args, nil
 			},
@@ -316,6 +350,58 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				return args, nil
 			},
 		},
+		"gitops_status": {
+			Descriptor: mcpToolDescriptor{
+				Name:        "gitops_status",
+				Description: "Standalone GitOps/controller delivery status (gitops status --format json). Use when the user asks whether delegated delivery is healthy, whether an app or source revision is synced, what controller families cub-scout actually inspected, or whether missing status is absence vs RBAC/API omission. Returns backend, transport, sources, deployers, source/build/apply/sync stages, and controllerCoverage[] for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane. Optional ConfigHub evidence is bounded by space and time. DO NOT use to force sync, retry delivery, or declare application success by itself; it is read-only evidence.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"namespace": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional Kubernetes namespace scope.",
+						},
+						"with_confighub": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Include bounded ConfigHub release, unit-event, live-status, and event-consumer evidence. Requires cub auth.",
+						},
+						"confighub_space": map[string]interface{}{
+							"type":        "string",
+							"description": "ConfigHub space for connected evidence. Defaults to the current cub space; pass '*' only for an explicit all-spaces read.",
+						},
+						"confighub_since": map[string]interface{}{
+							"type":        "string",
+							"description": "Lookback window for connected release/event evidence, for example 24h or 7d.",
+						},
+						"confighub_stale_after": map[string]interface{}{
+							"type":        "string",
+							"description": "Treat live-status writeback older than this as stale, for example 15m.",
+						},
+					},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				args := []string{"gitops", "status", "--format", "json"}
+				if ns := argString(arguments, "namespace"); ns != "" {
+					args = append(args, "-n", ns)
+				}
+				if argBool(arguments, "with_confighub") {
+					args = append(args, "--with-confighub")
+				}
+				if space := argString(arguments, "confighub_space"); space != "" {
+					args = append(args, "--confighub-space", space)
+				}
+				if since := argString(arguments, "confighub_since"); since != "" {
+					args = append(args, "--confighub-since", since)
+				}
+				if staleAfter := argString(arguments, "confighub_stale_after"); staleAfter != "" {
+					args = append(args, "--confighub-stale-after", staleAfter)
+				}
+				return args, nil
+			},
+		},
 	}
 	if connected {
 		tools["compare_three_way"] = mcpTool{
@@ -373,8 +459,8 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"strategy": map[string]interface{}{
 							"type":        "string",
-							"description": "Declared delivery path. Required, never inferred. One of: confighub-oci-argo, confighub-oci-flux, git-argo, git-flux.",
-							"enum":        []string{"confighub-oci-argo", "confighub-oci-flux", "git-argo", "git-flux"},
+							"description": sourceTruthStrategySchemaDescription(),
+							"enum":        sourceTruthStrategySchemaValues(),
 						},
 					},
 					"required":             []string{"target", "namespace", "strategy"},
@@ -427,6 +513,108 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if space := argString(arguments, "space"); space != "" {
 					args = append(args, "--space", space)
 				}
+				if where := argString(arguments, "where"); where != "" {
+					args = append(args, "--where", where)
+				}
+				return args, nil
+			},
+			Runner: connectedRunner,
+		}
+		tools["confighub_live_status"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_live_status",
+				Description: "Connected-only ConfigHub live-status writeback reader (cub space list -o json). Use when the user asks whether the evented delivery/status feedback loop has reported sync status, application health, operation phase, observed revision, or freshness for a known space. Space is REQUIRED to keep the read bounded; pass '*' only when the user explicitly asks for all spaces. DO NOT use as proof that delivery succeeded by itself; it is best-effort reported evidence owned by the underlying controller.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "Required ConfigHub space slug, or '*' for an explicit all-spaces read.",
+						},
+					},
+					"required":             []string{"space"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				space := argString(arguments, "space")
+				if space == "" {
+					return nil, fmt.Errorf("missing required argument: space")
+				}
+				return mcpConfigHubLiveStatusArgs(space), nil
+			},
+			Runner: connectedRunner,
+		}
+		tools["confighub_releases"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_releases",
+				Description: "Connected-only bounded ConfigHub Release history (cub release list -o json). Use when the user asks which release or OCI bundle was published for a known space, target, or time window. Space is REQUIRED to avoid broad ConfigHub reads; add a where filter when narrowing by time, target, or release. DO NOT use for live cluster health; pair with gitops status, trace, or compare_source_truth for controller/runtime evidence.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "Required ConfigHub space slug or ID; '*' is allowed only for an explicit all-spaces read.",
+						},
+						"where": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional filter expression passed to --where, usually time- or target-bounded.",
+						},
+					},
+					"required":             []string{"space"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				space := argString(arguments, "space")
+				if space == "" {
+					return nil, fmt.Errorf("missing required argument: space")
+				}
+				args := []string{"release", "list", "--space", space, "-o", "json"}
+				if where := argString(arguments, "where"); where != "" {
+					args = append(args, "--where", where)
+				}
+				return args, nil
+			},
+			Runner: connectedRunner,
+		}
+		tools["confighub_unit_events"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_unit_events",
+				Description: "Connected-only bounded ConfigHub UnitEvent reader (cub unit-event list -o json). Use when the user asks what event or source action happened for a known unit/space, whether an event was successful, or what event evidence supports a delivery receipt. Space is REQUIRED and unit is optional; add a where filter for a time window. DO NOT use as a cursor-consuming event consumer or a live watcher.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "Required ConfigHub space slug or ID; '*' is allowed only for an explicit all-spaces read.",
+						},
+						"unit": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional unit slug or ID to narrow the event read.",
+						},
+						"where": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional filter expression passed to --where, usually time-bounded.",
+						},
+					},
+					"required":             []string{"space"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				space := argString(arguments, "space")
+				if space == "" {
+					return nil, fmt.Errorf("missing required argument: space")
+				}
+				args := []string{"unit-event", "list"}
+				if unit := argString(arguments, "unit"); unit != "" {
+					args = append(args, unit)
+				}
+				args = append(args, "--space", space, "-o", "json")
 				if where := argString(arguments, "where"); where != "" {
 					args = append(args, "--where", where)
 				}
@@ -664,6 +852,15 @@ func argString(arguments map[string]interface{}, key string) string {
 	return strings.TrimSpace(value)
 }
 
+func argBool(arguments map[string]interface{}, key string) bool {
+	raw, ok := arguments[key]
+	if !ok || raw == nil {
+		return false
+	}
+	value, ok := raw.(bool)
+	return ok && value
+}
+
 func argInt(arguments map[string]interface{}, key string) int {
 	raw, ok := arguments[key]
 	if !ok || raw == nil {
@@ -708,6 +905,27 @@ func argIntOpt(arguments map[string]interface{}, key string, allowNegative bool)
 		return 0, true, fmt.Errorf("%s must be non-negative", key)
 	}
 	return value, true, nil
+}
+
+func sourceTruthStrategySchemaValues() []string {
+	values := make([]string, 0, len(agent.AllStrategies()))
+	for _, strategy := range agent.AllStrategies() {
+		values = append(values, string(strategy))
+	}
+	sort.Strings(values)
+	return values
+}
+
+func sourceTruthStrategySchemaDescription() string {
+	return "Declared delivery path. Required, never inferred. One of: " + strings.Join(sourceTruthStrategySchemaValues(), ", ") + "."
+}
+
+func mcpConfigHubLiveStatusArgs(space string) []string {
+	args := []string{"space", "list", "-o", "json", "--select", "Slug,SpaceID,Annotations,Labels"}
+	if strings.TrimSpace(space) != "*" {
+		args = append(args, "--where", fmt.Sprintf("Slug = '%s'", configHubFilterQuote(space)))
+	}
+	return args
 }
 
 func runMCPToolCommand(ctx context.Context, args []string) (string, error) {

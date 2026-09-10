@@ -7,7 +7,11 @@
 // See docs/v0.14-json-schema.md for the full specification.
 package mapsvc
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/confighub/cub-scout/pkg/agent"
+)
 
 // ResourceID is the canonical identity for cross-schema joins.
 type ResourceID struct {
@@ -354,12 +358,13 @@ func normalizeKind(kind string) string {
 
 // TraceOutput is the v0.14 JSON schema for `trace <resource>`.
 type TraceOutput struct {
-	Command string        `json:"command"`
-	Target  ResourceID    `json:"target"`
-	Chain   []ChainNode   `json:"chain"`
-	Summary TraceSummary  `json:"summary"`
-	Secrets *TraceSecrets `json:"secrets,omitempty"` // Secret evidence (v0.14.1+)
-	Events  *TraceEvents  `json:"events,omitempty"`  // Recent K8s events (v1.10+)
+	Command          string                       `json:"command"`
+	Target           ResourceID                   `json:"target"`
+	Chain            []ChainNode                  `json:"chain"`
+	Summary          TraceSummary                 `json:"summary"`
+	Secrets          *TraceSecrets                `json:"secrets,omitempty"`          // Secret evidence (v0.14.1+)
+	Events           *TraceEvents                 `json:"events,omitempty"`           // Recent K8s events (v1.10+)
+	DeliveryEvidence *agent.TraceDeliveryEvidence `json:"deliveryEvidence,omitempty"` // Resource-scoped delivery evidence (v2.8+)
 }
 
 // ChainNode represents a single node in the trace chain.

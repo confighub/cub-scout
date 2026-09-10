@@ -44,12 +44,18 @@ POPULAR COMMANDS
   trace            Trace any resource to its Git source
   scan             Find misconfigurations (46 patterns)
   gitops status    GitOps pipeline health check
+  watch            Stream observation events to webhook/file sinks
+  bot              Run an in-cluster read-only observation bot
+  mcp serve        Start the read-only MCP gateway for AI agents
   import           Preview/import workloads to ConfigHub (connected mode)
 
 CHOOSE YOUR INTERFACE
-  TUI:   cub-scout map                       Interactive exploration
-  CLI:   cub-scout map list -q "owner=Flux"  Scripting and pipelines
-  JSON:  cub-scout map list --json | jq      Automation and tooling
+  TUI:     cub-scout map                       Interactive exploration
+  CLI:     cub-scout map list -q "owner=Flux"  Scripting and pipelines
+  JSON:    cub-scout map list --json | jq      Automation and tooling
+  EVENTS:  cub-scout watch --webhook <url>     Local/CI event stream
+  BOT:     cub-scout bot --webhook <url>       In-cluster event stream
+  MCP:     cub-scout mcp serve                 Read-only agent tools
 
 STANDALONE VS CONNECTED
   Standalone (default): Works offline, reads from kubectl context

@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 func TestNewMCPGateway_ToolsIncludeStandaloneSet(t *testing.T) {
@@ -20,7 +22,7 @@ func TestNewMCPGateway_ToolsIncludeStandaloneSet(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	want := []string{"doctor", "explain", "map", "scan", "trace"}
+	want := []string{"doctor", "explain", "gitops_status", "map", "scan", "trace"}
 	if !reflect.DeepEqual(names, want) {
 		t.Fatalf("tool names = %v, want %v", names, want)
 	}
@@ -39,10 +41,14 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 		"compare_source_truth",
 		"compare_three_way",
 		"confighub_changesets",
+		"confighub_live_status",
+		"confighub_releases",
+		"confighub_unit_events",
 		"confighub_unit_get",
 		"confighub_units",
 		"doctor",
 		"explain",
+		"gitops_status",
 		"map",
 		"scan",
 		"trace",
@@ -79,8 +85,8 @@ func TestMCPGatewayHandleRequest_ToolsList(t *testing.T) {
 	if err := marshalInto(resp.Result, &result); err != nil {
 		t.Fatalf("decode result: %v", err)
 	}
-	if len(result.Tools) != 5 {
-		t.Fatalf("tool count = %d, want 5", len(result.Tools))
+	if len(result.Tools) != 6 {
+		t.Fatalf("tool count = %d, want 6", len(result.Tools))
 	}
 	for _, tool := range result.Tools {
 		if !tool.Annotations.ReadOnlyHint {
@@ -99,12 +105,16 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 	}{
 		{name: "compare_three_way", contains: []string{"governed state agrees with live state", "Load after doctor, explain, or trace", "use doctor first"}},
 		{name: "compare_source_truth", contains: []string{"EVIDENCE", "single workload", "REQUIRED input", "never inferred", "DO NOT use this tool to approve, repair, or accept", "Load after doctor, explain, or compare_three_way", "use doctor first"}},
-		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "Use before explain, trace, or scan"}},
+		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "optional bounded ConfigHub delivery evidence", "Use before explain, trace, or scan"}},
 		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
 		{name: "scan", contains: []string{"Use AFTER doctor", "awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"}},
 		{name: "explain", contains: []string{"Use AFTER doctor or map", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
 		{name: "trace", contains: []string{"Use AFTER doctor or explain", "then explain if the resource is still unclear", "DO NOT load for broad cluster status"}},
+		{name: "gitops_status", contains: []string{"GitOps/controller delivery status", "controllerCoverage[]", "absence vs RBAC/API omission", "DO NOT use to force sync"}},
 		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"}},
+		{name: "confighub_live_status", contains: []string{"Connected-only", "live-status writeback", "Space is REQUIRED", "best-effort reported evidence"}},
+		{name: "confighub_releases", contains: []string{"Connected-only", "Release history", "Space is REQUIRED", "pair with gitops status"}},
+		{name: "confighub_unit_events", contains: []string{"Connected-only", "UnitEvent reader", "Space is REQUIRED", "DO NOT use as a cursor-consuming event consumer"}},
 		{name: "confighub_units", contains: []string{"Connected-only", "cluster-to-ConfigHub lookup", "first useful ConfigHub object", "Load after doctor, map, explain, or trace", "then confighub_unit_get once the unit is known"}},
 		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "last applied revision, or live revision", "before opening the GUI", "use confighub_units first", "compare_three_way first"}},
 	}
@@ -161,6 +171,26 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 			tool:     "confighub_unit_get",
 			intent:   "Show me the last applied revision for unit payments-api.",
 			contains: []string{"last applied revision, or live revision for unit X", "before opening the GUI", "compare_three_way first"},
+		},
+		{
+			tool:     "confighub_live_status",
+			intent:   "Did the evented feedback loop report synced and healthy yet?",
+			contains: []string{"sync status", "application health", "freshness"},
+		},
+		{
+			tool:     "gitops_status",
+			intent:   "Is this deployed and which controller families did you check?",
+			contains: []string{"delegated delivery is healthy", "controller families cub-scout actually inspected", "read-only evidence"},
+		},
+		{
+			tool:     "confighub_releases",
+			intent:   "Which OCI release was published for this space?",
+			contains: []string{"Release history", "OCI bundle", "where filter"},
+		},
+		{
+			tool:     "confighub_unit_events",
+			intent:   "Which source event supports this delivery receipt?",
+			contains: []string{"what event", "source action", "time window"},
 		},
 	}
 
@@ -244,6 +274,69 @@ func TestMCPGatewayHandleRequest_ToolsCallTrace(t *testing.T) {
 	}
 	if result.Content[0].Text != `{"ok":true}` {
 		t.Fatalf("content text = %q, want %q", result.Content[0].Text, `{"ok":true}`)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallGitOpsStatus(t *testing.T) {
+	var gotArgs []string
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		gotArgs = append([]string(nil), args...)
+		return `{"backend":"flux","controllerCoverage":[{"family":"Flux","status":"found","found":1}]}`, nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`8`),
+		Method:  "tools/call",
+		Params: json.RawMessage(`{
+			"name":"gitops_status",
+			"arguments":{
+				"namespace":"prod",
+				"with_confighub":true,
+				"confighub_space":"prod",
+				"confighub_since":"2h",
+				"confighub_stale_after":"5m"
+			}
+		}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+
+	wantArgs := []string{
+		"gitops", "status", "--format", "json",
+		"-n", "prod",
+		"--with-confighub",
+		"--confighub-space", "prod",
+		"--confighub-since", "2h",
+		"--confighub-stale-after", "5m",
+	}
+	if !reflect.DeepEqual(gotArgs, wantArgs) {
+		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
+	}
+
+	var result struct {
+		IsError           bool `json:"isError"`
+		StructuredContent struct {
+			Data map[string]interface{} `json:"data"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if result.IsError {
+		t.Fatal("result.isError = true, want false")
+	}
+	if result.StructuredContent.Data["backend"] != "flux" {
+		t.Fatalf("structured data = %+v, want backend flux", result.StructuredContent.Data)
+	}
+	if _, ok := result.StructuredContent.Data["controllerCoverage"]; !ok {
+		t.Fatalf("structured data missing controllerCoverage: %+v", result.StructuredContent.Data)
 	}
 }
 
@@ -548,6 +641,122 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruthValidationError(t *t
 	}
 }
 
+func TestMCPCompareSourceTruthStrategyEnumTracksAgentStrategies(t *testing.T) {
+	gateway := newMCPGatewayWithMode(nil, nil, true)
+	tool := gateway.tools["compare_source_truth"]
+	properties, ok := tool.Descriptor.InputSchema["properties"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("input schema properties missing: %+v", tool.Descriptor.InputSchema)
+	}
+	strategySchema, ok := properties["strategy"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("strategy schema missing: %+v", properties)
+	}
+	rawEnum, ok := strategySchema["enum"].([]string)
+	if !ok {
+		t.Fatalf("strategy enum has unexpected type: %#v", strategySchema["enum"])
+	}
+	want := make([]string, 0, len(agent.AllStrategies()))
+	for _, strategy := range agent.AllStrategies() {
+		want = append(want, string(strategy))
+	}
+	sort.Strings(want)
+	if !reflect.DeepEqual(rawEnum, want) {
+		t.Fatalf("strategy enum = %v, want %v", rawEnum, want)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConfigHubLiveStatus(t *testing.T) {
+	var gotConnectedArgs []string
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			t.Fatal("standalone runner should not be used")
+			return "", nil
+		},
+		func(ctx context.Context, args []string) (string, error) {
+			gotConnectedArgs = append([]string(nil), args...)
+			return `[{"Slug":"prod","SpaceID":"sp-123","Annotations":{"confighub.com/live-status":"{\"source\":\"argobot\",\"app\":\"prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Healthy\",\"operationPhase\":\"Succeeded\",\"observedAt\":\"2026-09-10T12:00:00Z\"}"}}]`, nil
+		},
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`12.3`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"confighub_live_status","arguments":{"space":"prod"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	wantArgs := []string{"space", "list", "-o", "json", "--select", "Slug,SpaceID,Annotations,Labels", "--where", "Slug = 'prod'"}
+	if !reflect.DeepEqual(gotConnectedArgs, wantArgs) {
+		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantArgs)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			LiveStatuses []ConfigHubLiveStatusEvidence `json:"liveStatuses"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if len(result.StructuredContent.LiveStatuses) != 1 {
+		t.Fatalf("liveStatuses = %+v, want one status", result.StructuredContent.LiveStatuses)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConfigHubReleases(t *testing.T) {
+	var gotConnectedArgs []string
+	gateway := newMCPGatewayWithMode(nil, func(ctx context.Context, args []string) (string, error) {
+		gotConnectedArgs = append([]string(nil), args...)
+		return `[{"Release":{"Slug":"rel-1"}}]`, nil
+	}, true)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`12.4`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"confighub_releases","arguments":{"space":"prod","where":"CreatedAt > '2026-09-10T00:00:00Z'"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	wantArgs := []string{"release", "list", "--space", "prod", "-o", "json", "--where", "CreatedAt > '2026-09-10T00:00:00Z'"}
+	if !reflect.DeepEqual(gotConnectedArgs, wantArgs) {
+		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantArgs)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConfigHubUnitEvents(t *testing.T) {
+	var gotConnectedArgs []string
+	gateway := newMCPGatewayWithMode(nil, func(ctx context.Context, args []string) (string, error) {
+		gotConnectedArgs = append([]string(nil), args...)
+		return `[{"UnitEvent":{"Action":"ReleasePublished"}}]`, nil
+	}, true)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`12.5`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"confighub_unit_events","arguments":{"space":"prod","unit":"payments-api","where":"CreatedAt > '2026-09-10T00:00:00Z'"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	wantArgs := []string{"unit-event", "list", "payments-api", "--space", "prod", "-o", "json", "--where", "CreatedAt > '2026-09-10T00:00:00Z'"}
+	if !reflect.DeepEqual(gotConnectedArgs, wantArgs) {
+		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantArgs)
+	}
+}
+
 func TestMCPGatewayHandleRequest_ToolsCallCompareThreeWayValidationError(t *testing.T) {
 	gateway := newMCPGatewayWithMode(
 		func(ctx context.Context, args []string) (string, error) {
@@ -713,6 +922,41 @@ func TestMCPGatewayHandleRequest_ToolsCallDoctorWithAllParams(t *testing.T) {
 	}
 
 	wantArgs := []string{"doctor", "--format", "json", "-n", "staging", "--top", "10"}
+	if !reflect.DeepEqual(gotArgs, wantArgs) {
+		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithConfigHub(t *testing.T) {
+	var gotArgs []string
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		gotArgs = append([]string(nil), args...)
+		return `{"cluster":"minikube","namespace":"prod"}`, nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`150`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"namespace":"prod","with_confighub":true,"confighub_space":"payments","confighub_since":"7d","confighub_stale_after":"10m"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+
+	wantArgs := []string{
+		"doctor", "--format", "json",
+		"-n", "prod",
+		"--with-confighub",
+		"--confighub-space", "payments",
+		"--confighub-since", "7d",
+		"--confighub-stale-after", "10m",
+	}
 	if !reflect.DeepEqual(gotArgs, wantArgs) {
 		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
 	}
@@ -921,7 +1165,7 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitGetIncludesTrustSurface(t
 			return `{"standalone":true}`, nil
 		},
 		func(ctx context.Context, args []string) (string, error) {
-			return `{"Space":{"Slug":"prod","SpaceID":"sp-123"},"Unit":{"Slug":"payments-api","UnitID":"u-123","HeadRevisionNum":9,"LiveRevisionNum":7,"LastAppliedRevisionNum":8}}`, nil
+			return `{"Space":{"Slug":"prod","SpaceID":"sp-123"},"Unit":{"Slug":"payments-api","UnitID":"u-123","HeadRevisionNum":9,"LiveRevisionNum":7,"LastReleasedRevisionNum":8}}`, nil
 		},
 		true,
 	)

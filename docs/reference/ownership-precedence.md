@@ -140,6 +140,12 @@ carry Crossplane manager strings in `metadata.managedFields`. cub-scout treats
 those verified Crossplane manager strings as expected controller writers for
 Modelplane-owned resources.
 
+When a Modelplane-owned resource also carries Crossplane composition evidence
+(`crossplane.io/composite`, `crossplane.io/claim-*`,
+`crossplane.io/composition-resource-name`, or verified Crossplane manager
+strings), `trace` keeps the owner as Modelplane and surfaces the Crossplane
+substrate as supporting evidence rather than reclassifying the resource.
+
 Broad selection and placement labels such as `modelplane.ai/region`,
 `modelplane.ai/gpu`, and `modelplane.ai/pool` are not ownership signals by
 themselves.

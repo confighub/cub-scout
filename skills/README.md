@@ -16,13 +16,13 @@ One skill per cub-scout verb group. The skill knows which commands belong to its
 
 | Skill | Verb group | Covers |
 |---|---|---|
-| [`scout-observe/`](scout-observe/SKILL.md) | Observe | `doctor` / `map` / `trace` / `tree` / `scan` / `graph` / `snapshot` / `watch` / `status` |
+| [`scout-observe/`](scout-observe/SKILL.md) | Observe | `doctor` / `map` / `trace` / `tree` / `scan` / `graph` / `snapshot` / `watch` / `bot` / `status` |
 | [`scout-diagnose/`](scout-diagnose/SKILL.md) | Diagnose | `explain` / `debug` / `suggest-remedy` / `patterns` / `gitops status` |
 | [`scout-compare/`](scout-compare/SKILL.md) | Compare | `compare` / `compare drift` / `compare three-way` / `compare source-truth` |
 | [`scout-attribute/`](scout-attribute/SKILL.md) | Attribute | `cause` / `managerHint` / `gitSource` / `bindingSource` on `compare` + `explain` JSON |
 | [`scout-govern/`](scout-govern/SKILL.md) | Govern | `history` / `impact` / `fleet` / `summary` / `views` / `audit` / `bundle` / `catalog` |
 | [`scout-ingest/`](scout-ingest/SKILL.md) | Adopt Existing Config | `import --dry-run` / `import --from-bundle` / `import --git-path` / `import argocd` / `import cluster-aggregator` / `import parse-repo` / `app` (preview-first — `import apply` is intentionally out of band) |
-| [`scout-mcp/`](scout-mcp/SKILL.md) | Integrate | `mcp serve` / `context-pack` (AI gateway) |
+| [`scout-mcp/`](scout-mcp/SKILL.md) | Integrate | `mcp serve` / `context-pack` / `bot` (AI gateway and event producer) |
 | [`scout-verify/`](scout-verify/SKILL.md) | Verify | `cub-scout receipt verify / show / validate / list` + `watch --emit-receipt-on` (typed, fingerprinted evidence — `#446` v1 + v2 feature-complete: `--fail-on`, `--input-attestation` chained, `--scope` aggregate-with-discovery, real-time emission) |
 
 ### Controller observer skills
@@ -61,7 +61,7 @@ Batch A (CD / observability / event-driven; 5 scenarios — shipped in `#466` + 
 - [`pilot-cd-gate/`](pilot-cd-gate/SKILL.md) — pre-deploy gate in a CD pipeline; consumes `compare source-truth --strategy <s>` (+ optional `receipt verify --fail-on any-non-pass`); renders PASS / WATCH / ASK / BLOCK on the release
 - [`pilot-fleet-conformance/`](pilot-fleet-conformance/SKILL.md) — fleet-wide conformance verdict (View / namespace / cluster scope) composing `compare three-way --view` + per-resource `compare source-truth` + `fleet outliers`; judge-driven counterpart to `audit-fleet-conformance`
 - [`pilot-patch-and-drift/`](pilot-patch-and-drift/SKILL.md) — drift-classification + revert / quarantine / accept-as-canonical / ASK decision; consumes attribution layer (`cause` / `managerHint` / `gitSource` / `bindingSource`); judge-driven counterpart to `investigate-drift`
-- [`pilot-watch-alert-response/`](pilot-watch-alert-response/SKILL.md) — real-time event-driven response; consumes the `cub-scout watch` event stream with inline receipts via `--emit-receipt-on` (shipped in `#463`); the only event-driven skill in the pilot-* batch
+- [`pilot-watch-alert-response/`](pilot-watch-alert-response/SKILL.md) — real-time event-driven response; consumes the `cub-scout watch` / `cub-scout bot` event stream with inline receipts via `--emit-receipt-on` (shipped in `#463`); the only event-driven skill in the pilot-* batch
 - [`pilot-incident-evidence/`](pilot-incident-evidence/SKILL.md) — incident close-out evidence pack with **chained receipts** (`--input-attestation` from `#463`) for multi-stage incidents; judge-driven counterpart to `operator-incident-evidence`
 
 Batch B (governance-shaped; 4 scenarios):
@@ -83,7 +83,7 @@ Batch B (governance-shaped; 4 scenarios):
 | [`references/plugin-vs-standalone.md`](references/plugin-vs-standalone.md) | `cub scout` (plugin) vs `cub-scout` (standalone binary) invocation parity; v2.0.0 switchover plan |
 | [`references/argocd-applicationset.md`](references/argocd-applicationset.md) | ApplicationSet generators (git directories, list, clusters, matrix, merge); full-path slugs; exclude patterns |
 | [`references/flux-source-types.md`](references/flux-source-types.md) | GitRepository / HelmRepository / OCIRepository / Bucket / HelmChart; the two-stage delivery chain; source-truth anchors |
-| [`references/mcp-tool-catalog.md`](references/mcp-tool-catalog.md) | Complete MCP tool catalog — 5 standalone + 5 connected, per-tool parameters and return shape |
+| [`references/mcp-tool-catalog.md`](references/mcp-tool-catalog.md) | Complete MCP tool catalog — 6 standalone + 8 connected, per-tool parameters and return shape |
 
 ### Umbrella router
 

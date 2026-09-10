@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/confighub/cub-scout/internal/scan"
 	"github.com/confighub/cub-scout/pkg/agent"
@@ -96,6 +98,146 @@ func TestBuildDoctorRolloutSummary_CountsAndOrdersCurrentChanges(t *testing.T) {
 	}
 	if summary.CurrentChanges[1].Verdict != agent.VerdictINCONCLUSIVE {
 		t.Fatalf("second current change verdict = %s, want INCONCLUSIVE", summary.CurrentChanges[1].Verdict)
+	}
+}
+
+func TestAttachDoctorDeliveryEvidence_SummarizesAndPromotesIssues(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+
+	evidence := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC),
+		Scope: GitOpsDeliveryEvidenceScope{
+			Namespace:  "prod",
+			Space:      "payments",
+			Since:      "24h",
+			StaleAfter: "15m",
+			MaxItems:   10,
+		},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{
+				{
+					Space:                    "payments",
+					App:                      "payments-api",
+					SyncStatus:               "OutOfSync",
+					HealthStatus:             "Healthy",
+					OperationPhase:           "Running",
+					Freshness:                "fresh",
+					DeliveryVerdict:          agent.VerdictWATCH,
+					ApplicationHealthVerdict: agent.VerdictPASS,
+				},
+				{
+					Space:                    "payments",
+					App:                      "payments-worker",
+					SyncStatus:               "Synced",
+					HealthStatus:             "Degraded",
+					OperationPhase:           "Succeeded",
+					Freshness:                "fresh",
+					DeliveryVerdict:          agent.VerdictPASS,
+					ApplicationHealthVerdict: agent.VerdictBLOCK,
+				},
+			},
+			Releases: []ConfigHubReleaseEvidence{
+				{Slug: "rel-1", Target: "prod", Digest: "sha256:abc"},
+			},
+			UnitEvents: []ConfigHubUnitEventEvidence{
+				{EventID: "ue-1", Action: "ReleasePublished", Result: "Failed", Unit: "payments-api", Target: "prod"},
+			},
+		},
+		EventConsumers: []GitOpsEventConsumerEvidence{
+			{Kind: "Deployment", Name: "argobot", Namespace: "ops", Replicas: 1, ReadyReplicas: 0},
+		},
+		Omissions: []GitOpsDeliveryEvidenceOmission{
+			{Layer: "confighub.releases", Reason: "trimmed release rows"},
+		},
+	}
+	summary := DoctorSummary{
+		Cluster:   "kind-dev",
+		Namespace: "prod",
+		Resources: DoctorResourceSummary{Total: 2},
+		Health:    DoctorHealthSummary{Healthy: 2},
+		Risks:     DoctorRiskSummary{},
+		Drift:     DoctorDriftSummary{},
+		TopIssues: []DoctorIssue{{Severity: "INFO", Resource: "ConfigMap/old", Namespace: "prod", Message: "low priority"}},
+	}
+
+	attachDoctorDeliveryEvidence(&summary, evidence, 3)
+
+	if summary.DeliveryEvidence != evidence {
+		t.Fatal("deliveryEvidence was not attached")
+	}
+	if summary.Delivery == nil {
+		t.Fatal("delivery summary is nil")
+	}
+	if summary.Delivery.LiveStatus.Total != 2 {
+		t.Fatalf("liveStatus total = %d, want 2", summary.Delivery.LiveStatus.Total)
+	}
+	if summary.Delivery.LiveStatus.Delivery.Pass != 1 || summary.Delivery.LiveStatus.Delivery.Watch != 1 {
+		t.Fatalf("delivery verdict counts = %+v, want 1 pass / 1 watch", summary.Delivery.LiveStatus.Delivery)
+	}
+	if summary.Delivery.LiveStatus.ApplicationHealth.Pass != 1 || summary.Delivery.LiveStatus.ApplicationHealth.Block != 1 {
+		t.Fatalf("app health counts = %+v, want 1 pass / 1 block", summary.Delivery.LiveStatus.ApplicationHealth)
+	}
+	if summary.Delivery.EventConsumers.NotReady != 1 {
+		t.Fatalf("event consumer summary = %+v, want one not ready", summary.Delivery.EventConsumers)
+	}
+	if len(summary.TopIssues) != 3 {
+		t.Fatalf("top issues = %d, want 3", len(summary.TopIssues))
+	}
+	if summary.TopIssues[0].Severity != "CRITICAL" || !strings.Contains(summary.TopIssues[0].Message, "application health") {
+		t.Fatalf("first issue = %+v, want critical application-health issue", summary.TopIssues[0])
+	}
+	if summary.TopIssues[1].Severity != "CRITICAL" || !strings.Contains(summary.TopIssues[1].Message, "unit event") {
+		t.Fatalf("second issue = %+v, want critical unit-event issue", summary.TopIssues[1])
+	}
+
+	out := renderDoctorASCII(summary, DefaultPresentationMode, false, DefaultHintContext())
+	for _, want := range []string{
+		"Delivery: live-status 2",
+		"delivery: 1 PASS, 1 WATCH, 0 BLOCK, 0 INCONCLUSIVE",
+		"app-health: 1 PASS, 0 WATCH, 1 BLOCK, 0 INCONCLUSIVE",
+		"Event consumers: 0/1 ready",
+		"Recent evidence: 1 releases, 1 unit events",
+		"Omissions: 1",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("expected %q in output:\n%s", want, out)
+		}
+	}
+}
+
+func TestDoctorDeliveryEvidenceOptions_DefaultsToCurrentSpaceAndBoundsWindow(t *testing.T) {
+	now := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
+	oldNow := gitopsNowFn
+	oldDefaultSpace := gitopsDefaultSpaceFn
+	t.Cleanup(func() {
+		gitopsNowFn = oldNow
+		gitopsDefaultSpaceFn = oldDefaultSpace
+	})
+
+	gitopsNowFn = func() time.Time { return now }
+	gitopsDefaultSpaceFn = func(ctx context.Context) string { return "payments" }
+
+	opts, err := doctorDeliveryEvidenceOptionsFromRequest(context.Background(), "prod", ObserveScopeSummaryRequest{
+		ConfigHubSince:      "7d",
+		ConfigHubStaleAfter: "10m",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if opts.Space != "payments" {
+		t.Fatalf("space = %q, want payments", opts.Space)
+	}
+	if opts.Namespace != "prod" {
+		t.Fatalf("namespace = %q, want prod", opts.Namespace)
+	}
+	if opts.Window != 7*24*time.Hour {
+		t.Fatalf("window = %s, want 168h", opts.Window)
+	}
+	if opts.StaleAfter != 10*time.Minute {
+		t.Fatalf("staleAfter = %s, want 10m", opts.StaleAfter)
+	}
+	if !opts.Now.Equal(now) {
+		t.Fatalf("now = %s, want %s", opts.Now, now)
 	}
 }
 

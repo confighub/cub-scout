@@ -2,7 +2,7 @@
 
 The complete list of MCP tools `cub-scout mcp serve` registers, with parameters, behavior, and return shape. The catalog is **closed and read-only by construction** — adding a tool requires a code change plus a passing `mcp_test.go` test.
 
-Source of truth: `cmd/cub-scout/mcp.go` (the registration map literal at line 169 and connected-mode additions starting at line 321) and `cmd/cub-scout/mcp_test.go` (the tool-list lock).
+Source of truth: `cmd/cub-scout/mcp.go` (`newMCPGatewayWithMode`) and `cmd/cub-scout/mcp_test.go` (the tool-list lock).
 
 ## Mode-aware catalog
 
@@ -11,11 +11,12 @@ The catalog has two tiers:
 - **Standalone tools** — registered always; require only a kubeconfig
 - **Connected tools** — added when `cub auth status` succeeds; require ConfigHub auth
 
-Total: **10 tools** (5 standalone + 5 connected).
+Total: **14 tools** (6 standalone + 8 connected).
 
-## Standalone tools (5)
+## Standalone tools (6)
 
-These are always available. Run `cub-scout mcp serve --list-tools` to dump the catalog without starting the server.
+These are always available. Use the standard MCP `tools/list` request to dump
+the catalog from a running server.
 
 ### `doctor`
 
@@ -23,8 +24,8 @@ These are always available. Run `cub-scout mcp serve --list-tools` to dump the c
 |---|---|
 | Wraps | `cub-scout doctor --format json` |
 | Required args | — |
-| Optional args | `namespace` (string — scope filter); `top` (integer — number of top issues; default 3) |
-| Returns | Cluster health summary + top issues + structured `nextSteps[]` |
+| Optional args | `namespace` (string — scope filter); `top` (integer — number of top issues; default 3); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
+| Returns | Cluster health summary + rollout evidence + optional bounded delivery evidence + top issues + structured `nextSteps[]` |
 | When to load (per the registered description) | FIRST standalone tool for "what's wrong?" / "what's broken?" / compact cluster or namespace health summary. Before `explain`, `trace`, or `scan` when the user has not narrowed to one resource. |
 
 ### `map`
@@ -67,17 +68,28 @@ These are always available. Run `cub-scout mcp serve --list-tools` to dump the c
 | Returns | Plain-English per-resource report: ownership, health/drift, recent events, structured `nextSteps[]` |
 | When to load | AFTER `doctor` or `map` once narrowed to one resource. The Diagnose verb-group's primary entry point. |
 
-## Connected tools (5)
+### `gitops_status`
 
-Registered only when `cub-scout mcp serve` detects connected mode (`cub auth status` returns OK or `CONFIGHUB_API_KEY` is set).
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub-scout gitops status --format json` |
+| Required args | — |
+| Optional args | `namespace` (string); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
+| Returns | GitOps/controller backend, transport, sources, deployers, source/build/apply/sync stages, delivery evidence when requested, and `controllerCoverage[]` |
+| When to load | "Is this deployed?" "Is delegated delivery healthy?" "Which controller families did cub-scout actually inspect?" "Is missing status absence or an RBAC/API omission?" Evidence only; never use it to force sync or declare application success by itself. |
+
+## Connected tools (8)
+
+Registered only when `cub-scout mcp serve` detects connected mode and the `cub`
+CLI is available.
 
 ### `compare_three_way`
 
 | Aspect | Detail |
 |---|---|
 | Wraps | `cub-scout compare three-way [...] --format json` |
-| Required args | — |
-| Optional args | `scope` (string — namespace/resource selector), `view` (string — Hub View URL or UUID), `source-path` (string — local git checkout for stage B back-resolution) |
+| Required args | `scope` (string — namespace/resource selector) |
+| Optional args | `namespace` (string) |
 | Returns | DRY (ConfigHub) / WET (rendered) / LIVE (cluster) three-way comparison with per-field agreement and attribution evidence; rolled-up `summary.agreement` (agreed / converging / diverged / partial) |
 | When to load | "Does governed state agree with live state?" "Is this change sign-off-ready?" After scope is identified. |
 
@@ -91,7 +103,10 @@ Registered only when `cub-scout mcp serve` detects connected mode (`cub auth sta
 | Returns | Source-truth evidence document: `declared_strategy`, `status` (PASS/WATCH/BLOCK/ASK), `source_truth` verdict (AGREED/MISMATCH/INCOMPLETE/BLOCKED/UNKNOWN), per-surface evidence, `proof_gaps[]`, `safe_next_action` |
 | When to load | "Is this workload's source of truth consistent end-to-end under a declared strategy?" Strategy is **required**, never inferred. The contract refuses to PASS when any required field is missing. NEVER use to approve, repair, or mutate — evidence only. |
 
-The registered MCP `strategy` enum currently lists **four** strategies (`confighub-oci-argo` / `confighub-oci-flux` / `git-argo` / `git-flux`). The CLI itself supports **nine** strategies (Phase 1 + Phase 2 from `#418`). The MCP schema's enum is the Phase 1 subset; passing a Phase 2 strategy (`helm-argo` / `helm-flux` / `kustomize-flux` / `oci-argo` / `oci-flux`) through MCP will be rejected at the schema-validation step. The CLI invocation form does NOT have this restriction. Tracked drift; see [source-truth-strategies](source-truth-strategies.md) for the full enum.
+The registered MCP `strategy` enum is generated from the same
+`agent.AllStrategies()` registry as the CLI, so Phase 1 and Phase 2 strategy
+values stay in parity. See [source-truth-strategies](source-truth-strategies.md)
+for the full enum.
 
 ### `confighub_changesets`
 
@@ -102,6 +117,36 @@ The registered MCP `strategy` enum currently lists **four** strategies (`configh
 | Optional args | `space` (string — slug/ID); `where` (string — filter expression) |
 | Returns | Governed ChangeSet history and receipts from ConfigHub |
 | When to load | "What governed write changed this unit?" "Who applied the change?" After `trace` or `confighub_units` has identified the governed object. |
+
+### `confighub_live_status`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub space list -o json --select Slug,SpaceID,Annotations,Labels` |
+| Required args | `space` (string — slug, or `*` for an explicit all-spaces read) |
+| Optional args | — |
+| Returns | Space rows plus additive `structuredContent.liveStatuses[]` parsed from `confighub.com/live-status` and `structuredContent.omissions[]` for missing/malformed writeback |
+| When to load | "Did the evented status feedback report sync, health, operation, revision, and freshness for this space?" Evidence only; controller/runtime truth still belongs to the underlying systems. |
+
+### `confighub_releases`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub release list --space <space> -o json` |
+| Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read) |
+| Optional args | `where` (string — filter expression, usually time- or target-bounded) |
+| Returns | ConfigHub Release rows for release/OCI bundle history |
+| When to load | "Which release or OCI bundle was published for this space/target/time window?" Pair with `gitops status`, `trace`, or `compare_source_truth` for controller/runtime evidence. |
+
+### `confighub_unit_events`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub unit-event list [unit] --space <space> -o json` |
+| Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read) |
+| Optional args | `unit` (string); `where` (string — filter expression, usually time-bounded) |
+| Returns | ConfigHub UnitEvent rows for source/action evidence |
+| When to load | "What event or source action happened for this unit or space?" Read-only history; not an event-consumer subscription and does not advance cursors. |
 
 ### `confighub_units`
 
@@ -129,7 +174,6 @@ The closed catalog is verified by `cmd/cub-scout/mcp_test.go`. The following cub
 
 | Verb | Why not |
 |---|---|
-| `gitops_status` | Surfaced through `doctor` already; separate MCP tool would duplicate |
 | `patterns_detect` | Specialized; CLI invocation is the better surface for this verb |
 | `compare_drift` (file vs live) | Requires a local YAML file argument — awkward to expose over MCP (the file path is relative to the cub-scout process, not the agent) |
 | `compare` (resource mode) | Subsumed by `compare_three_way` in connected mode |
@@ -161,20 +205,22 @@ See [`read-only-triad`](read-only-triad.md) for the broader invariant.
 
 ## Transport choices
 
-`cub-scout mcp serve` supports two transports:
+`cub-scout mcp serve` currently supports stdio transport:
 
 | Transport | Flag | Use case |
 |---|---|---|
 | STDIO (default) | (no flag) | Local agent hosts (Claude Code, Codex, Cursor, Continue). Lower latency, simpler sandboxing. |
-| HTTP | `--port <n>` | Hosted agent platforms that don't speak STDIO; multi-process orchestration |
 
-Both transports register the same catalog. The `mcp serve --list-tools` debug command dumps the catalog JSON without starting either transport — useful for agent registration debugging.
+The catalog is discovered with the standard MCP `tools/list` request.
 
 ## Tool execution path
 
 Each tool's `BuildArgs` function transforms the MCP arguments into a cub-scout CLI argv. The MCP server then executes the cub-scout CLI as a subprocess (via the `runner` / `connectedRunner` injection points) and returns the stdout as `content[0].text` in the MCP response. The CLI's `--format json` flag drives the structured output.
 
-For connected tools that wrap `cub` (not cub-scout) — `confighub_changesets` / `confighub_units` / `confighub_unit_get` — the runner is `connectedRunner` instead of `runner`. Same execution model; different binary on PATH.
+For connected tools that wrap `cub` (not cub-scout) — `confighub_changesets`,
+`confighub_live_status`, `confighub_releases`, `confighub_unit_events`,
+`confighub_units`, and `confighub_unit_get` — the runner is `connectedRunner`
+instead of `runner`. Same execution model; different binary on PATH.
 
 ## Errors
 
