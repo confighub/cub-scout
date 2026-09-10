@@ -32,7 +32,7 @@ When the operator asks... | Run this | What you get
 "Find unmanaged resources" | `cub-scout map list --json \| jq '.[] \| select(.owner=="Native")'` | Resources with no GitOps owner
 "Are there config issues?" | `cub-scout scan --json` | 46-pattern misconfiguration scan
 "What's the GitOps pipeline doing?" | `cub-scout gitops status` | Reconciliation state across Flux/Argo/Helm
-"Can I reuse this broad read without asking the API again?" | `cub-scout snapshot` or `cub-scout watch --output-file <path>` | Point-in-time `observation.source/mode/observedAt/freshness` metadata on the snapshot or event stream
+"Can I reuse this broad read without asking the API again?" | `cub-scout snapshot`, `cub-scout summary list --json`, or `cub-scout watch --output-file <path>` | Point-in-time `observation.source/mode/observedAt/freshness` metadata on live snapshots, stored summary records, or event streams
 "Show me the resource hierarchy" | `cub-scout tree ownership` | Resources grouped by GitOps owner
 "Trace history of a resource" | `cub-scout trace <kind>/<name> -n <ns> --history` | Deployment history from controller storage
 

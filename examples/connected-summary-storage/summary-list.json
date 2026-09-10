@@ -1,0 +1,44 @@
+{
+  "since": "24h",
+  "count": 1,
+  "observation": {
+    "source": "summary-store",
+    "mode": "summary-list",
+    "observedAt": "2026-09-10T15:30:00Z",
+    "freshness": "point-in-time",
+    "scope": {
+      "cluster": "kind-dev",
+      "namespace": "prod"
+    }
+  },
+  "entries": [
+    {
+      "schemaVersion": "connected.summary.v1",
+      "timestamp": "2026-09-10T15:15:00Z",
+      "type": "gitops-status",
+      "cluster": "kind-dev",
+      "scope": {
+        "namespace": "prod"
+      },
+      "metrics": {
+        "syncTotal": 6,
+        "syncFailed": 1,
+        "syncOutOfSync": 1,
+        "driftTotal": 1,
+        "riskTotal": 1,
+        "riskWarning": 1
+      },
+      "source": "cub-scout gitops status",
+      "observation": {
+        "source": "summary-store",
+        "mode": "summary-list",
+        "observedAt": "2026-09-10T15:15:00Z",
+        "freshness": "point-in-time",
+        "scope": {
+          "cluster": "kind-dev",
+          "namespace": "prod"
+        }
+      }
+    }
+  ]
+}

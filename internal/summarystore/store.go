@@ -10,6 +10,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 const (
@@ -41,13 +43,14 @@ type Metrics struct {
 
 // Record is one persisted connected summary artifact.
 type Record struct {
-	SchemaVersion string    `json:"schemaVersion"`
-	Timestamp     time.Time `json:"timestamp"`
-	Type          string    `json:"type"`
-	Cluster       string    `json:"cluster"`
-	Scope         Scope     `json:"scope,omitempty"`
-	Metrics       Metrics   `json:"metrics"`
-	Source        string    `json:"source,omitempty"`
+	SchemaVersion string                     `json:"schemaVersion"`
+	Timestamp     time.Time                  `json:"timestamp"`
+	Type          string                     `json:"type"`
+	Cluster       string                     `json:"cluster"`
+	Scope         Scope                      `json:"scope,omitempty"`
+	Metrics       Metrics                    `json:"metrics"`
+	Source        string                     `json:"source,omitempty"`
+	Observation   *agent.ObservationEvidence `json:"observation,omitempty"`
 }
 
 // Query filters persisted records.
@@ -199,6 +202,7 @@ func (s *Store) List(q Query) ([]Record, error) {
 				return fmt.Errorf("parse summary record %s: %w", path, err)
 			}
 			record.Timestamp = record.Timestamp.UTC()
+			record = withRecordObservation(record)
 			if !matchesQuery(record, q, typeFilter, clusterFilter, namespaceFilter) {
 				continue
 			}
@@ -265,7 +269,28 @@ func normalizeRecord(record Record) (Record, error) {
 	}
 
 	record.SchemaVersion = SchemaVersion
+	record.Observation = buildRecordObservation(record)
 	return record, nil
+}
+
+func withRecordObservation(record Record) Record {
+	if record.Observation != nil {
+		return record
+	}
+	record.Observation = buildRecordObservation(record)
+	return record
+}
+
+func buildRecordObservation(record Record) *agent.ObservationEvidence {
+	return agent.NewObservationEvidence(
+		agent.ObservationSourceSummaryStore,
+		agent.ObservationModeSummary,
+		record.Timestamp,
+		agent.ObservationScope{
+			Cluster:   record.Cluster,
+			Namespace: record.Scope.Namespace,
+		},
+	)
 }
 
 func (s *Store) recordFilePath(record Record) string {

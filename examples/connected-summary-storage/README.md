@@ -7,6 +7,8 @@ This example shows the #209 workflow: persist connected scan/sync summaries and 
 - Connected `scan` writes risk summary snapshots.
 - Connected `gitops status` writes sync/drift summary snapshots.
 - `summary list` retrieves records by `--since`, `--type`, `--cluster`, and `--namespace`.
+- JSON output carries `observation` metadata so agents can tell the answer came
+  from stored summaries, not a fresh Kubernetes API read.
 
 ## Quick Run
 
@@ -23,6 +25,11 @@ cub-scout summary list --since 24h
 
 # JSON for automation
 cub-scout summary list --since 24h --json
+```
+
+See [`summary-list.json`](./summary-list.json) for the JSON shape.
+
+```bash
 
 # Build/post Slack digest (webhook required)
 cub-scout summary slack --webhook-url https://hooks.slack.com/services/... --since 24h
@@ -35,6 +42,8 @@ cub-scout summary slack --dry-run --since 24h
 
 - Schema version: `connected.summary.v1`
 - Index dimensions: `cluster`, `scope.namespace`, `timestamp`, `type`
+- Observation source: `summary-store`
+- Observation mode: `summary-list`
 - Default retention: 30 days
 - Retention override: `CUB_SCOUT_SUMMARY_RETENTION_DAYS`
 

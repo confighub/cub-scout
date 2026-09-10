@@ -1736,6 +1736,11 @@ cub-scout summary list --since 48h --namespace prod --json
 
 - Schema version: `connected.summary.v1`
 - Index dimensions: `cluster`, `scope.namespace`, `timestamp`, `type`
+- JSON output includes top-level `observation` for the local summary-store
+  query and per-record `entries[].observation` using each persisted record's
+  timestamp. Both use `source: summary-store`, `mode: summary-list`, and
+  `freshness: point-in-time`; this is stored evidence, not a fresh Kubernetes
+  API read.
 - Default retention: 30 days
 - Optional overrides:
   - `CUB_SCOUT_SUMMARY_DIR` (storage path)

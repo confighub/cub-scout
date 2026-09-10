@@ -70,6 +70,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | `cub-scout connect` | Configure kube context from server URL or kubeconfig import | v1.0 |
 | `cub-scout status` | Show connection status and cluster info | v1.0 |
 | `cub-scout history` | Connected change timeline from ConfigHub ChangeSets | v1.4 |
+| `cub-scout summary list` | Query persisted connected drift/sync/risk snapshots | v1.7 |
 | `cub-scout compare three-way` | Connected DRY/WET/LIVE comparison with conformance and agreement summary; standalone DRY via `--dry-from` | v1.6 |
 | `cub-scout compare object-set` | Rendered object-set diff receipt against live state | v2.6 |
 | `cub-scout mcp serve` | Serve read-only MCP observation tools over stdio | v1.4 |
@@ -1323,6 +1324,39 @@ cub-scout history <resource> [flags]
   ]
 }
 ```
+
+---
+
+## cub-scout summary list (v1.7)
+
+Query persisted connected drift/sync/risk summary snapshots.
+
+```bash
+cub-scout summary list [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--since` | string | 24h | Lookback window |
+| `--type` | string | all | Filter by `scan` or `gitops-status` |
+| `--cluster` | string | all | Filter by cluster/context |
+| `-n, --namespace` | string | all | Filter by namespace |
+| `--format` | string | ascii | Output format: ascii, json, md |
+| `--json` | bool | false | Shorthand for `--format json` |
+
+### JSON Contract
+
+- Top-level `observation` describes the local summary-store query with
+  `source: summary-store`, `mode: summary-list`, `observedAt`, and
+  `freshness: point-in-time`.
+- Each `entries[]` record includes `observation` using that record's persisted
+  `timestamp` as `observedAt`.
+- Summary records are stored evidence. `summary list` must not imply a fresh
+  Kubernetes API read.
+
+See [JSON Contracts § Observation Evidence Contract](json-contracts.md#observation-evidence-contract).
 
 ---
 
