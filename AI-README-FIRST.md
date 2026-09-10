@@ -107,13 +107,13 @@ As of 2026-09-10, these areas are fully or materially shipped:
   - Live-status writeback separates delivery verdict from application-health verdict and downgrades stale successful observations to `WATCH`
   - ConfigHub release and unit-event reads are scoped by current cub space by default, support explicit `--confighub-space '*'`, and are bounded by `--confighub-since`
   - `gitops status` emits controller-family coverage for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane, including found/not-found/partial/unreadable status and RBAC/list omissions
-  - Modelplane traces keep Modelplane as the higher-level owner while surfacing Crossplane substrate evidence from composite/claim/composition-resource labels and verified Crossplane field managers
+  - Modelplane evidence keeps Modelplane as the higher-level owner while surfacing Crossplane substrate evidence from composite/claim/composition-resource labels and verified Crossplane field managers in trace, map JSON, watch/bot events, and receipts
   - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`
   - MCP `compare_source_truth` strategy enum is generated from the same strategy registry as the CLI
   - `trace --with-confighub` and `explain --with-confighub` attach object-correlated `deliveryEvidence` only when exact ConfigHub unit, space, target, OCI-source, or Argo Application identifiers prove the join; otherwise they report structured omissions
   - `receipt verify <kind>/<name> --with-confighub` attaches the same object-correlated `deliveryEvidence` under `predicate.evidence.deliveryEvidence`; the field is fingerprint-covered supporting evidence and does not change predicate verdict semantics
   - `bot` runs the `watch` engine as an in-cluster-friendly read-only observer with `CUB_SCOUT_BOT_*` environment configuration and a deployable example under `examples/bot/`
-  - Remaining work: delivery evidence on aggregate/object-set/workload receipts, workload-level activity joins, aggregate controller-resource failures with generated-artifact lineage in `doctor`, and Modelplane-on-Crossplane source/generation evidence plus watch/bot parity
+  - Remaining work: delivery evidence on aggregate/object-set/workload receipts, workload-level activity joins, aggregate controller-resource failures with generated-artifact lineage in `doctor`, and deeper Modelplane-on-Crossplane source/generation joins
 
 - **Live delivery observability release slice — merged for v2.7.0** (`#500`)
   - README now starts with a user-question table covering ownership, delegated delivery health, intended-vs-live agreement, rollout progress, proceed/wait/retry framing, drift, delivery-vs-runtime separation, attribution, low-load repeated review paths, and receipts

@@ -45,9 +45,10 @@ Highlights:
 - `gitops status` now emits `controllerCoverage[]` for Flux, Argo CD,
   ConfigHub, Sveltos, and Modelplane, with found/not-found/partial/unreadable
   status plus RBAC/list omissions.
-- Modelplane traces now preserve Modelplane as the owner while surfacing
+- Modelplane evidence now preserves Modelplane as the owner while surfacing
   Crossplane substrate evidence from composition labels, claim labels,
-  composition-resource annotations, and verified Crossplane field managers.
+  composition-resource annotations, and verified Crossplane field managers in
+  trace, map JSON, watch/bot events, and receipts.
 - MCP standalone mode adds `gitops_status`; connected mode adds
   `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`.
 - MCP `compare_source_truth` strategy enum now derives from
@@ -345,7 +346,7 @@ delivery-evidence and bot-mode release candidate):
 - Broader source-freshness metadata for snapshot, watch, summary, and receipt-backed reads.
 - ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, timeline `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub` readers; deeper OCI release-to-workload correlation for aggregate/object-set/workload receipts and workload-level activity joins remains a `#502` follow-up. Direct observer cursors remain fallback-only.
 - Deeper controller-family parity rules where controllers lack status, source, event, or generation evidence. The first `gitops status` coverage ledger is shipped; object-level parity remains open.
-- Modelplane-on-Crossplane hardening: trace now surfaces substrate evidence on Modelplane-owned resources; remaining work is source/generation evidence, receipts, watch/bot parity, and structured omissions where deeper Crossplane layers cannot be joined safely.
+- Modelplane-on-Crossplane hardening: trace, map JSON, watch/bot events, and receipts now surface substrate evidence on Modelplane-owned resources; remaining work is source/generation evidence and structured omissions where deeper Crossplane layers cannot be joined safely.
 
 **Untracked v2 follow-ups (no separate issue):**
 - MCP `compare_source_truth` strategy-enum drift — resolved in the post-v2.7 delivery-evidence slice; MCP and CLI now share the `agent.AllStrategies()` registry.

@@ -37,7 +37,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [ ] Broader API-load-aware inventory and search paths with source freshness for snapshot, watch, summary, and receipt-backed reads
 - [ ] Deeper OCI release-to-controller-to-workload correlation, with direct observer cursors only as fallback — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
 - [ ] Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
-- [ ] Modelplane-on-Crossplane hardening: trace substrate evidence is present; remaining work is source, generation, receipt, and bot/watch evidence parity for Modelplane resources backed by Crossplane composition managers, with structured omissions where parity is not possible
+- [ ] Modelplane-on-Crossplane hardening: trace, map JSON, watch/bot events, and receipts now surface substrate evidence; remaining work is deeper source/generation joins for Modelplane resources backed by Crossplane composition managers, with structured omissions where parity is not possible
 
 ### Rendered Manifest + Argo (`roadmap-rendered-manifest-and-argo.md`)
 

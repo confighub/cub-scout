@@ -202,6 +202,49 @@ func TestBuildReceipt_DeliveryEvidenceIsFingerprintCovered(t *testing.T) {
 	}
 }
 
+func TestBuildReceipt_PlatformSubstrateEvidenceIsFingerprintCovered(t *testing.T) {
+	makeWithComposite := func(composite string) BuildReceiptInput {
+		return makeReceiptInput(func(in *BuildReceiptInput) {
+			in.Evidence.PlatformSubstrate = &PlatformSubstrateEvidence{
+				Platform:            OwnerModelplane,
+				Substrate:           OwnerCrossplane,
+				Composite:           composite,
+				Claim:               &PlatformSubstrateClaim{Name: "qwen-claim", Namespace: "models"},
+				CompositionResource: "engine",
+				FieldManager:        "apiextensions.crossplane.io/composed-qwen",
+				Sources: []string{
+					"label:crossplane.io/composite",
+					"label:crossplane.io/claim-name",
+					"label:crossplane.io/claim-namespace",
+					"annotation:crossplane.io/composition-resource-name",
+					"managedFields:apiextensions.crossplane.io/composed-qwen",
+				},
+			}
+		})
+	}
+
+	first, err := BuildReceipt(makeWithComposite("x-qwen"))
+	if err != nil {
+		t.Fatalf("BuildReceipt with platform substrate evidence: %v", err)
+	}
+	second, err := BuildReceipt(makeWithComposite("x-qwen-v2"))
+	if err != nil {
+		t.Fatalf("BuildReceipt with changed platform substrate evidence: %v", err)
+	}
+	if first.Predicate.Evidence.PlatformSubstrate == nil {
+		t.Fatal("platformSubstrate evidence missing from receipt")
+	}
+	if err := VerifyStatementFingerprint(first); err != nil {
+		t.Fatalf("platformSubstrate receipt fingerprint must verify: %v", err)
+	}
+	if err := VerifyStatementFingerprint(second); err != nil {
+		t.Fatalf("changed platformSubstrate receipt fingerprint must verify: %v", err)
+	}
+	if first.Predicate.Fingerprint == second.Predicate.Fingerprint {
+		t.Fatalf("platformSubstrate evidence changed but fingerprint stayed equal: %s", first.Predicate.Fingerprint)
+	}
+}
+
 func TestBuildReceipt_StandaloneMode_OmitsConfigHubSubject(t *testing.T) {
 	in := makeReceiptInput(func(in *BuildReceiptInput) {
 		in.Connected = false

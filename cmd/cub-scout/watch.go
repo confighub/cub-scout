@@ -92,8 +92,9 @@ type watchEventResource struct {
 }
 
 type watchEventOwner struct {
-	Type string `json:"type,omitempty"`
-	Name string `json:"name,omitempty"`
+	Type     string                           `json:"type,omitempty"`
+	Name     string                           `json:"name,omitempty"`
+	Evidence *agent.PlatformSubstrateEvidence `json:"evidence,omitempty"`
 }
 
 type watchFinding struct {
@@ -563,6 +564,9 @@ func watchOwnerFromEntry(entry MapEntry) *watchEventOwner {
 	owner := &watchEventOwner{Type: entry.Owner}
 	if entry.OwnerDetails != nil {
 		owner.Name = strings.TrimSpace(entry.OwnerDetails["name"])
+	}
+	if entry.OwnerEvidence != nil {
+		owner.Evidence = entry.OwnerEvidence
 	}
 	return owner
 }

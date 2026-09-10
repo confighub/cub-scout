@@ -8,23 +8,26 @@ package mapsvc
 import (
 	"strings"
 	"time"
+
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 // Entry represents a resource in the fleet map.
 // This is the core data type that represents discovered Kubernetes resources.
 type Entry struct {
-	ID           string            `json:"id"`
-	ClusterName  string            `json:"clusterName"`
-	Namespace    string            `json:"namespace"`
-	Kind         string            `json:"kind"`
-	Name         string            `json:"name"`
-	APIVersion   string            `json:"apiVersion"`
-	Owner        string            `json:"owner"`
-	OwnerDetails map[string]string `json:"ownerDetails,omitempty"`
-	Labels       map[string]string `json:"labels,omitempty"`
-	Status       string            `json:"status"` // Ready, NotReady, Failed, Pending, Unknown
-	CreatedAt    time.Time         `json:"createdAt"`
-	UpdatedAt    time.Time         `json:"updatedAt"`
+	ID            string                           `json:"id"`
+	ClusterName   string                           `json:"clusterName"`
+	Namespace     string                           `json:"namespace"`
+	Kind          string                           `json:"kind"`
+	Name          string                           `json:"name"`
+	APIVersion    string                           `json:"apiVersion"`
+	Owner         string                           `json:"owner"`
+	OwnerDetails  map[string]string                `json:"ownerDetails,omitempty"`
+	OwnerEvidence *agent.PlatformSubstrateEvidence `json:"ownerEvidence,omitempty"`
+	Labels        map[string]string                `json:"labels,omitempty"`
+	Status        string                           `json:"status"` // Ready, NotReady, Failed, Pending, Unknown
+	CreatedAt     time.Time                        `json:"createdAt"`
+	UpdatedAt     time.Time                        `json:"updatedAt"`
 }
 
 // GetField implements query.Matchable for Entry.

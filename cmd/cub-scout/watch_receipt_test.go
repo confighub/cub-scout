@@ -566,6 +566,36 @@ func TestWatchBuildReceiptForEvent_HappyPath(t *testing.T) {
 	}
 }
 
+func TestWatchBuildReceiptForEvent_AttachesModelplaneCrossplaneEvidence(t *testing.T) {
+	live := makeModelplaneCrossplaneWorkload()
+	prev := loadLiveForWatchReceiptFn
+	loadLiveForWatchReceiptFn = func(_ context.Context, _ dynamic.Interface, kind, name, namespace string) (*unstructured.Unstructured, error) {
+		if kind != "Deployment" || name != "qwen-engine" || namespace != "models" {
+			t.Fatalf("unexpected lookup: %s/%s in %s", kind, name, namespace)
+		}
+		return live, nil
+	}
+	defer func() { loadLiveForWatchReceiptFn = prev }()
+
+	stmt, err := watchBuildReceiptForEvent(context.Background(), watchEvent{
+		Type:      "resource.discovered",
+		Timestamp: time.Date(2026, 9, 10, 13, 45, 0, 0, time.UTC),
+		Resource:  watchEventResource{Kind: "Deployment", Name: "qwen-engine", Namespace: "models"},
+	}, nil, false)
+	if err != nil {
+		t.Fatalf("watchBuildReceiptForEvent: %v", err)
+	}
+	if stmt == nil || stmt.Predicate.Evidence.PlatformSubstrate == nil {
+		t.Fatalf("platformSubstrate evidence missing from watch receipt: %+v", stmt)
+	}
+	if got := stmt.Predicate.Evidence.PlatformSubstrate.Composite; got != "x-qwen" {
+		t.Fatalf("platformSubstrate composite = %q, want x-qwen", got)
+	}
+	if err := agent.VerifyStatementFingerprint(*stmt); err != nil {
+		t.Fatalf("watch receipt fingerprint must cover platformSubstrate evidence: %v", err)
+	}
+}
+
 func TestWatchBuildReceiptForEvent_MissingKindOrName_Errors(t *testing.T) {
 	event := watchEvent{Type: "drift.detected", Resource: watchEventResource{Kind: "", Name: "", Namespace: "prod"}}
 	_, err := watchBuildReceiptForEvent(context.Background(), event, nil, false)

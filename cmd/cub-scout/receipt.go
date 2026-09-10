@@ -314,6 +314,9 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 		Attribution: &attribution,
 		GitSource:   gitSource,
 	}
+	if platformEvidence, ok := agent.BuildModelplaneCrossplaneEvidence(live, owner); ok {
+		evidence.PlatformSubstrate = platformEvidence
+	}
 	if receiptWithConfigHub {
 		deliveryEvidence, deliveryErr := collectReceiptDeliveryEvidenceFn(ctx, live, owner, deliveryFlags)
 		if deliveryErr != nil {

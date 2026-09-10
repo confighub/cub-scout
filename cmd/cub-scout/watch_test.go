@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
@@ -124,6 +125,42 @@ func TestBuildWatchEvents_FindingFilters(t *testing.T) {
 		if e.Type != "scan.finding" && e.Type != "drift.detected" {
 			t.Fatalf("unexpected event type %q", e.Type)
 		}
+	}
+}
+
+func TestBuildWatchEvents_ModelplaneOwnerEvidence(t *testing.T) {
+	evidence := &agent.PlatformSubstrateEvidence{
+		Platform:  agent.OwnerModelplane,
+		Substrate: agent.OwnerCrossplane,
+		Composite: "x-qwen",
+		Claim:     &agent.PlatformSubstrateClaim{Name: "qwen-claim", Namespace: "models"},
+	}
+	curr := watchState{
+		entriesByID: map[string]MapEntry{
+			"id-1": {
+				ID:            "id-1",
+				Namespace:     "models",
+				Kind:          "Deployment",
+				Name:          "qwen-engine",
+				Owner:         "Modelplane",
+				OwnerDetails:  map[string]string{"name": "qwen"},
+				OwnerEvidence: evidence,
+			},
+		},
+		findings: map[string]watchFinding{},
+	}
+
+	events := buildWatchEvents(watchState{entriesByID: map[string]MapEntry{}, findings: map[string]watchFinding{}}, curr, nil, "", func() time.Time {
+		return time.Date(2026, 9, 10, 13, 30, 0, 0, time.UTC)
+	})
+	if len(events) != 1 {
+		t.Fatalf("events len = %d, want 1: %+v", len(events), events)
+	}
+	if events[0].Owner == nil || events[0].Owner.Evidence == nil {
+		t.Fatalf("owner evidence missing from watch event: %+v", events[0])
+	}
+	if events[0].Owner.Evidence.Composite != "x-qwen" {
+		t.Fatalf("owner evidence = %+v, want composite x-qwen", events[0].Owner.Evidence)
 	}
 }
 
