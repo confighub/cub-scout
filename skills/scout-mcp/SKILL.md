@@ -164,7 +164,7 @@ The closed list of MCP tools cub-scout registers. The set is verified by `cmd/cu
 
 | Tool name | Mode | Wraps |
 |---|---|---|
-| `doctor` | standalone | `cub-scout doctor --format json` |
+| `doctor` | standalone | `cub-scout doctor --format json` plus optional `--with-confighub` delivery evidence flags |
 | `map` | standalone | `cub-scout map list --json` |
 | `scan` | standalone | `cub-scout scan --json` |
 | `trace` | standalone | `cub-scout trace <resource> --format json` |

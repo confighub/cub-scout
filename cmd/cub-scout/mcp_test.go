@@ -105,7 +105,7 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 	}{
 		{name: "compare_three_way", contains: []string{"governed state agrees with live state", "Load after doctor, explain, or trace", "use doctor first"}},
 		{name: "compare_source_truth", contains: []string{"EVIDENCE", "single workload", "REQUIRED input", "never inferred", "DO NOT use this tool to approve, repair, or accept", "Load after doctor, explain, or compare_three_way", "use doctor first"}},
-		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "Use before explain, trace, or scan"}},
+		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "optional bounded ConfigHub delivery evidence", "Use before explain, trace, or scan"}},
 		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
 		{name: "scan", contains: []string{"Use AFTER doctor", "awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"}},
 		{name: "explain", contains: []string{"Use AFTER doctor or map", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
@@ -922,6 +922,41 @@ func TestMCPGatewayHandleRequest_ToolsCallDoctorWithAllParams(t *testing.T) {
 	}
 
 	wantArgs := []string{"doctor", "--format", "json", "-n", "staging", "--top", "10"}
+	if !reflect.DeepEqual(gotArgs, wantArgs) {
+		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallDoctorWithConfigHub(t *testing.T) {
+	var gotArgs []string
+	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
+		gotArgs = append([]string(nil), args...)
+		return `{"cluster":"minikube","namespace":"prod"}`, nil
+	})
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`150`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"doctor","arguments":{"namespace":"prod","with_confighub":true,"confighub_space":"payments","confighub_since":"7d","confighub_stale_after":"10m"}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+
+	wantArgs := []string{
+		"doctor", "--format", "json",
+		"-n", "prod",
+		"--with-confighub",
+		"--confighub-space", "payments",
+		"--confighub-since", "7d",
+		"--confighub-stale-after", "10m",
+	}
 	if !reflect.DeepEqual(gotArgs, wantArgs) {
 		t.Fatalf("tool args = %v, want %v", gotArgs, wantArgs)
 	}

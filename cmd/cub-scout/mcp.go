@@ -45,6 +45,7 @@ Supported tools in standalone mode:
   - trace
   - scan
   - explain
+  - gitops_status
 
 Additional tools in connected mode (when authenticated to ConfigHub):
   - compare_three_way
@@ -175,7 +176,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"doctor": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "doctor",
-				Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Also use when the user asks which cub-scout troubleshooting tool to start with, whether cub-scout is the right first read-only step instead of raw kubectl or the Argo UI, or when local access to the cluster may itself be the problem (wrong context, stale kubeconfig, API unreachable). Returns ownership, health, risks, drift, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
+				Description: "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Also use when the user asks which cub-scout troubleshooting tool to start with, whether cub-scout is the right first read-only step instead of raw kubectl or the Argo UI, or when local access to the cluster may itself be the problem (wrong context, stale kubeconfig, API unreachable). Returns ownership, health, risks, drift, rollout evidence, optional bounded ConfigHub delivery evidence, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -187,6 +188,22 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"top": map[string]interface{}{
 							"type":        "integer",
 							"description": "Number of top issues to include (default: 3).",
+						},
+						"with_confighub": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Include bounded ConfigHub release, unit-event, live-status, and event-consumer evidence. Requires cub auth for connected rows.",
+						},
+						"confighub_space": map[string]interface{}{
+							"type":        "string",
+							"description": "ConfigHub space for connected evidence. Defaults to the current cub space; pass '*' only for an explicit all-spaces read.",
+						},
+						"confighub_since": map[string]interface{}{
+							"type":        "string",
+							"description": "Lookback window for connected release/event evidence, for example 24h or 7d.",
+						},
+						"confighub_stale_after": map[string]interface{}{
+							"type":        "string",
+							"description": "Treat live-status writeback older than this as stale, for example 15m.",
 						},
 					},
 					"additionalProperties": false,
@@ -201,6 +218,18 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					return nil, err
 				} else if present {
 					args = append(args, "--top", fmt.Sprintf("%d", top))
+				}
+				if argBool(arguments, "with_confighub") {
+					args = append(args, "--with-confighub")
+				}
+				if space := argString(arguments, "confighub_space"); space != "" {
+					args = append(args, "--confighub-space", space)
+				}
+				if since := argString(arguments, "confighub_since"); since != "" {
+					args = append(args, "--confighub-since", since)
+				}
+				if staleAfter := argString(arguments, "confighub_stale_after"); staleAfter != "" {
+					args = append(args, "--confighub-stale-after", staleAfter)
 				}
 				return args, nil
 			},

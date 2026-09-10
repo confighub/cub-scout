@@ -24,8 +24,8 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout doctor --format json` |
 | Required args | — |
-| Optional args | `namespace` (string — scope filter); `top` (integer — number of top issues; default 3) |
-| Returns | Cluster health summary + top issues + structured `nextSteps[]` |
+| Optional args | `namespace` (string — scope filter); `top` (integer — number of top issues; default 3); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
+| Returns | Cluster health summary + rollout evidence + optional bounded delivery evidence + top issues + structured `nextSteps[]` |
 | When to load (per the registered description) | FIRST standalone tool for "what's wrong?" / "what's broken?" / compact cluster or namespace health summary. Before `explain`, `trace`, or `scan` when the user has not narrowed to one resource. |
 
 ### `map`

@@ -297,6 +297,7 @@ cub-scout doctor -n production
 cub-scout doctor --presentation ai
 cub-scout doctor --hint-mode operator
 cub-scout doctor --format json
+cub-scout doctor --with-confighub --confighub-space prod --format json
 ```
 
 ### Flags
@@ -308,6 +309,19 @@ cub-scout doctor --format json
 | `--top` | Number of top issues to include (default: `3`) |
 | `--presentation` | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omit the flag to keep the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
+| `--with-confighub` | Include bounded ConfigHub delivery evidence for the selected scope |
+| `--confighub-space` | ConfigHub space for connected delivery evidence (default: current cub space; `*` must be explicit) |
+| `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
+| `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
+
+`--with-confighub` is opt-in and read-only. For `doctor`, connected release,
+unit-event, and live-status reads are scoped to the current cub space by
+default, or to `--confighub-space` when supplied. The JSON output includes a
+scan-friendly `delivery` rollup plus raw `deliveryEvidence`; ASCII output adds
+a compact Delivery section. Concrete failed/stale delivery feedback, failed
+unit events, and unhealthy observed event consumers can be promoted into
+`topIssues`. Missing connection, missing writeback, RBAC/list failures, and
+other incomplete evidence are represented as structured omissions.
 
 ---
 
@@ -1922,6 +1936,10 @@ cub-scout mcp serve
 - `doctor`
   - `namespace` (optional)
   - `top` (optional integer)
+  - `with_confighub` (optional boolean)
+  - `confighub_space` (optional)
+  - `confighub_since` (optional)
+  - `confighub_stale_after` (optional)
 - `compare_three_way`
   - `scope` (required)
   - `namespace` (optional)

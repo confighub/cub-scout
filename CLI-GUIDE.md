@@ -64,6 +64,7 @@ If you prefer JSON first:
 
 ```bash
 cub-scout doctor --format json
+cub-scout doctor --with-confighub --confighub-space prod --format json
 cub-scout explain deploy/my-app -n prod --format json
 cub-scout trace deploy/my-app -n prod --format json
 ```
@@ -91,6 +92,7 @@ Helpful follow-up paths:
 - `scan` for risk patterns and stuck states
 - `map issues` for a cluster-wide issue inventory
 - `map hooks` for Helm and Argo lifecycle hooks
+- `doctor --with-confighub` for a scope-level delivery rollup in the same first-pass health summary
 - `gitops status` for deployer/source health; add `--with-confighub` for release history, unit events, live-status freshness, and event-consumer health
 
 See [docs/reference/commands.md](docs/reference/commands.md) for the detailed examples behind each command.

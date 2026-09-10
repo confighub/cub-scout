@@ -27,7 +27,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | v0.19 | Shell completion, map hooks, scan --lifecycle-hazards, bundle summarize |
 | v0.20 | Flux operator interop read-only slice (`map cronjobs/jobs/actions/activity/previews`, `trace --artifacts`) |
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
-| v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
+| v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, and `explain`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
 
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.
@@ -93,6 +93,10 @@ cub-scout doctor [flags]
 | `--top` | int | 3 | Number of top issues to include |
 | `--presentation` | string | legacy/default render path | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | string | default | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
+| `--with-confighub` | bool | false | Include bounded ConfigHub delivery evidence for the selected scope |
+| `--confighub-space` | string | current cub space | ConfigHub space for connected delivery evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
+| `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
 ### Stable Output Rules
 
@@ -100,10 +104,19 @@ cub-scout doctor [flags]
 - JSON may include `rollouts` when live workload rollout evidence is available:
   total workloads, PASS/WATCH/BLOCK/INCONCLUSIVE counts, and top non-PASS
   `currentChanges[]` bounded by `--top`.
+- JSON may include `delivery` and `deliveryEvidence` only when
+  `--with-confighub` is requested. `delivery` is a scope-level rollup;
+  `deliveryEvidence` is the raw bounded evidence envelope.
 - ASCII includes a `Rollouts` section only when rollout evidence is available.
+- ASCII includes a `Delivery` section only when `--with-confighub` is requested.
 - `--presentation` affects ASCII framing only.
 - `--hint-mode` affects recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text render path.
+- ConfigHub release and unit-event reads are bounded by `--confighub-since` and
+  scoped to the current cub space unless `--confighub-space` is supplied.
+- `doctor` may promote concrete failed/stale delivery feedback, failed unit
+  events, and unhealthy observed event consumers into `topIssues`. Missing or
+  inaccessible evidence remains an omission, not a failure assertion.
 
 ---
 
@@ -294,6 +307,10 @@ cub-scout mcp serve
 - Parameters:
   - `namespace` (optional string)
   - `top` (optional integer)
+  - `with_confighub` (optional boolean)
+  - `confighub_space` (optional string)
+  - `confighub_since` (optional string)
+  - `confighub_stale_after` (optional string)
 - Backed by `cub-scout doctor --format json`
 
 ### Stable `compare_three_way` MCP Surface

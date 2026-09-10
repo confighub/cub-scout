@@ -101,6 +101,8 @@ func TestBuildExplainSummary_ConfigHubURLsAndRevisionFacts(t *testing.T) {
 }
 
 func TestBuildExplainSummary_CarriesDeliveryEvidence(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+
 	result := &agent.TraceResult{
 		Tool: "argocd",
 		Object: agent.ResourceRef{

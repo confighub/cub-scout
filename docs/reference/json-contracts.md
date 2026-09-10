@@ -382,6 +382,76 @@ evidence could be collected.
 `currentChanges[]` contains non-`PASS` rollout decisions, sorted by severity
 (`BLOCK`, then `INCONCLUSIVE`, then `WATCH`) and bounded by `doctor --top`.
 
+### DoctorSummary delivery additions (doctor --with-confighub --format json)
+
+When bounded ConfigHub delivery evidence is requested, `doctor --format json`
+includes two additive fields:
+
+- `delivery`: a compact scope-level rollup intended for quick triage.
+- `deliveryEvidence`: the raw bounded evidence envelope described in
+  [GitOps Delivery Evidence Contract](#gitops-delivery-evidence-contract).
+
+```json
+{
+  "delivery": {
+    "scope": {
+      "namespace": "prod",
+      "space": "prod",
+      "since": "24h",
+      "staleAfter": "15m0s",
+      "maxItems": 10
+    },
+    "liveStatus": {
+      "total": 2,
+      "delivery": {
+        "pass": 1,
+        "watch": 1,
+        "block": 0,
+        "inconclusive": 0
+      },
+      "applicationHealth": {
+        "pass": 1,
+        "watch": 0,
+        "block": 1,
+        "inconclusive": 0
+      },
+      "fresh": 2,
+      "stale": 0,
+      "unknownFreshness": 0
+    },
+    "eventConsumers": {
+      "total": 1,
+      "ready": 0,
+      "notReady": 1
+    },
+    "recentReleases": 1,
+    "recentUnitEvents": 1,
+    "omissions": [
+      {
+        "layer": "confighub.releases",
+        "reason": "trimmed release rows to maxItems=10"
+      }
+    ]
+  },
+  "deliveryEvidence": {
+    "observedAt": "2026-09-10T12:00:00Z",
+    "scope": {"space": "prod", "since": "24h"},
+    "configHub": {
+      "liveStatuses": [],
+      "releases": [],
+      "unitEvents": []
+    }
+  }
+}
+```
+
+`delivery` and `deliveryEvidence` appear only with `--with-confighub`.
+Concrete failed/stale delivery feedback, failed unit events, and unhealthy
+observed event consumers may be promoted into `topIssues` using the same
+severity ordering as other doctor issues. Missing connection, missing writeback,
+RBAC/list failures, and incomplete ConfigHub evidence remain structured
+omissions.
+
 ### Three-way resource rollout additions (compare three-way --format json)
 
 Each `resources[]` entry may include `currentChange` for workload resources
@@ -621,10 +691,11 @@ instead of silently claiming absence.
 
 ## GitOps Delivery Evidence Contract
 
-When `gitops status --with-confighub --format json` is used, the output may
-include an additive `deliveryEvidence` object. It joins bounded ConfigHub
-history/readback evidence with ordinary Kubernetes observation. It does not
-replace Argo, Flux, Sveltos, Modelplane, or Kubernetes as the status authority.
+When `gitops status --with-confighub --format json` or
+`doctor --with-confighub --format json` is used, the output may include an
+additive `deliveryEvidence` object. It joins bounded ConfigHub history/readback
+evidence with ordinary Kubernetes observation. It does not replace Argo, Flux,
+Sveltos, Modelplane, or Kubernetes as the status authority.
 
 ### Schema Sketch
 
