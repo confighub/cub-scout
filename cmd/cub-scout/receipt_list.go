@@ -31,16 +31,18 @@ resolved in this priority order:
   4. $HOME/.local/share/cub-scout/receipts
 
 Receipts are written to the store when you pass --save to receipt
-verify, when --out points inside the store directory, or by any other
-process that drops *.receipt.json files there.
+verify, or by any other process that drops *.receipt.json files there.
+Ad-hoc --out paths are intentionally rejected when they point inside
+the resolved store; use --save for immutable store writes.
 
 ASCII output (default):
-  VERDICT  PREDICATE              SCOPE                          VERIFIED-AT          PATH
-  PASS     applied-matches-spec   Deployment/api in prod         2026-05-22T10:30:00Z .../...
-  BLOCK    no-manual-edits-since  Deployment/api in prod         2026-05-22T08:00:00Z .../...
+  VERDICT  PREDICATE              SCOPE                          VERIFIED-AT          FRESHNESS      PATH
+  PASS     applied-matches-spec   Deployment/api in prod         2026-05-22T10:30:00Z fresh          .../...
+  BLOCK    no-manual-edits-since  Deployment/api in prod         2026-05-22T08:00:00Z not-declared   .../...
 
-JSON output is the structured ReceiptListEntry array — same content,
-machine-readable.
+JSON output is the structured ReceiptListEntry array, including
+freshness status and stamped TTL fields when the receipt was created
+with --ttl.
 
 Examples:
   cub-scout receipt list
@@ -105,18 +107,26 @@ func renderReceiptListASCII(entries []agent.ReceiptListEntry, dir string) {
 		return
 	}
 
-	fmt.Printf("%-13s  %-22s  %-40s  %-22s  %s\n",
-		"VERDICT", "PREDICATE", "SCOPE", "VERIFIED-AT", "PATH")
-	fmt.Println(strings.Repeat("-", 120))
+	fmt.Printf("%-13s  %-22s  %-40s  %-22s  %-13s  %s\n",
+		"VERDICT", "PREDICATE", "SCOPE", "VERIFIED-AT", "FRESHNESS", "PATH")
+	fmt.Println(strings.Repeat("-", 136))
 	for _, e := range entries {
 		scope := fmt.Sprintf("%s/%s in %s", e.Scope.Kind, e.Scope.Name, e.Scope.Namespace)
-		fmt.Printf("%-13s  %-22s  %-40s  %-22s  %s\n",
+		fmt.Printf("%-13s  %-22s  %-40s  %-22s  %-13s  %s\n",
 			e.Verdict,
 			e.PredicateName,
 			truncateReceiptScope(scope, 40),
 			e.VerifiedAt,
+			renderReceiptListFreshness(e.Freshness),
 			filepath.Base(e.Path))
 	}
+}
+
+func renderReceiptListFreshness(freshness agent.ReceiptListFreshness) string {
+	if freshness.Status == "" {
+		return string(agent.ReceiptFreshnessNotDeclared)
+	}
+	return string(freshness.Status)
 }
 
 // truncateReceiptScope shortens s to at most n runes, appending an ellipsis byte

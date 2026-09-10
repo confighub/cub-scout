@@ -1794,12 +1794,33 @@ stderr, exit 0, the on-disk artifact unchanged.
     "predicateName": "applied-matches-spec",
     "scope": { "kind": "Deployment", "name": "api", "namespace": "prod" },
     "verdict": "PASS",
-    "fingerprint": "sha256:a1b2c3d4e5f6..."
+    "fingerprint": "sha256:a1b2c3d4e5f6...",
+    "freshness": {
+      "status": "fresh",
+      "observedAt": "2026-05-22T10:30:00Z",
+      "expiresAt": "2026-05-22T11:30:00Z",
+      "ttl": "1h0m0s"
+    }
   }
 ]
 ```
 
 Sort order: `verifiedAt` descending (newest first).
+
+`freshness.status` is a read-time summary derived from the saved
+receipt's immutable `predicate.freshness` stamp:
+
+| Value | Meaning |
+|-------|---------|
+| `fresh` | `predicate.freshness` exists and the list-time clock is before or equal to `expiresAt`. |
+| `stale` | `predicate.freshness` exists and the list-time clock is after `expiresAt`. |
+| `not-declared` | The receipt was created without `--ttl`; it makes no freshness claim. |
+| `invalid` | The receipt contains malformed or incomplete freshness fields. |
+
+When freshness is `not-declared`, `observedAt`, `expiresAt`, and `ttl`
+are omitted from the list entry. Listing a receipt never rewrites the
+on-disk Statement; this is an index over historical evidence, not a new
+Kubernetes API read.
 
 ### v2 Extensions
 

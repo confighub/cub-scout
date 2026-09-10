@@ -85,7 +85,7 @@ understands the core ownership model.
 - [`orphans`](./orphans/)
 - [`drift`](./drift/)
 - [`helm-expt`](./helm-expt/) — Helm vs ConfigHub+installer equivalence and live verification
-- [`receipts`](./receipts/) — typed, fingerprinted evidence artifacts (#446)
+- [`receipts`](./receipts/) — typed, fingerprinted evidence artifacts, including local-store freshness listing (#446)
 - [`lifecycle-hazards`](./lifecycle-hazards/)
 - [`demo-data`](./demo-data/)
 - [`demo-data-adt`](./demo-data-adt/)

@@ -202,12 +202,65 @@ func LoadStatement(path string) (Statement, error) {
 // output. The full Statement is left on disk; this is enough to render
 // a one-line-per-receipt table.
 type ReceiptListEntry struct {
-	Path          string         `json:"path"`
-	VerifiedAt    string         `json:"verifiedAt"`
-	PredicateName string         `json:"predicateName"`
-	Scope         Scope          `json:"scope"`
-	Verdict       ReceiptVerdict `json:"verdict"`
-	Fingerprint   string         `json:"fingerprint"`
+	Path          string               `json:"path"`
+	VerifiedAt    string               `json:"verifiedAt"`
+	PredicateName string               `json:"predicateName"`
+	Scope         Scope                `json:"scope"`
+	Verdict       ReceiptVerdict       `json:"verdict"`
+	Fingerprint   string               `json:"fingerprint"`
+	Freshness     ReceiptListFreshness `json:"freshness"`
+}
+
+// ReceiptFreshnessStatus is the read-time freshness status shown by
+// `receipt list`. It is derived from an immutable receipt freshness stamp; the
+// underlying receipt artifact is not modified.
+type ReceiptFreshnessStatus string
+
+const (
+	ReceiptFreshnessFresh       ReceiptFreshnessStatus = "fresh"
+	ReceiptFreshnessStale       ReceiptFreshnessStatus = "stale"
+	ReceiptFreshnessNotDeclared ReceiptFreshnessStatus = "not-declared"
+	ReceiptFreshnessInvalid     ReceiptFreshnessStatus = "invalid"
+)
+
+// ReceiptListFreshness is a list-view summary of predicate.freshness. Receipts
+// created without --ttl intentionally report not-declared.
+type ReceiptListFreshness struct {
+	Status     ReceiptFreshnessStatus `json:"status"`
+	ObservedAt string                 `json:"observedAt,omitempty"`
+	ExpiresAt  string                 `json:"expiresAt,omitempty"`
+	TTL        string                 `json:"ttl,omitempty"`
+}
+
+// SummarizeReceiptFreshness converts the immutable freshness stamp on a receipt
+// into the read-time status shown by the receipt-store index.
+func SummarizeReceiptFreshness(freshness *Freshness, now time.Time) ReceiptListFreshness {
+	if freshness == nil {
+		return ReceiptListFreshness{Status: ReceiptFreshnessNotDeclared}
+	}
+
+	out := ReceiptListFreshness{
+		Status:     ReceiptFreshnessInvalid,
+		ObservedAt: freshness.ObservedAt,
+		ExpiresAt:  freshness.ExpiresAt,
+		TTL:        freshness.TTL,
+	}
+	if strings.TrimSpace(freshness.TTL) == "" {
+		return out
+	}
+	if _, err := time.Parse(time.RFC3339, freshness.ObservedAt); err != nil {
+		return out
+	}
+	expiresAt, err := time.Parse(time.RFC3339, freshness.ExpiresAt)
+	if err != nil {
+		return out
+	}
+	if now.UTC().After(expiresAt) {
+		out.Status = ReceiptFreshnessStale
+		return out
+	}
+	out.Status = ReceiptFreshnessFresh
+	return out
 }
 
 // ListStatements walks dir, parses every *.receipt.json file, and
@@ -220,6 +273,12 @@ type ReceiptListEntry struct {
 // failing the whole list. Callers that need strict semantics check
 // the error.
 func ListStatements(dir string) ([]ReceiptListEntry, error) {
+	return ListStatementsAt(dir, time.Now().UTC())
+}
+
+// ListStatementsAt is ListStatements with an injectable clock, used by tests
+// and deterministic consumers that need a stable freshness status.
+func ListStatementsAt(dir string, now time.Time) ([]ReceiptListEntry, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -250,6 +309,7 @@ func ListStatements(dir string) ([]ReceiptListEntry, error) {
 			Scope:         stmt.Predicate.Scope,
 			Verdict:       stmt.Predicate.Verdict,
 			Fingerprint:   stmt.Predicate.Fingerprint,
+			Freshness:     SummarizeReceiptFreshness(stmt.Predicate.Freshness, now),
 		})
 	}
 

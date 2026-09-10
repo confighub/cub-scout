@@ -63,7 +63,7 @@ Implicit intents:
 | "Preserve delivery/status feedback" | `cub-scout receipt verify <kind>/<name> -n <ns> --with-confighub --confighub-space <space>` | Single-resource only; freezes object-correlated `deliveryEvidence` inside the fingerprinted receipt. |
 | "Render a saved receipt" | `cub-scout receipt show <path>` | ASCII or JSON. Does NOT verify the fingerprint — works on tampered receipts for forensic inspection. |
 | "Has this receipt been tampered with?" | `cub-scout receipt validate <path>` | Recomputes the fingerprint and compares. Exit 0 OK / 1 mismatch / 2 I/O. JSON output for CI. |
-| "What receipts do I have locally?" | `cub-scout receipt list` | Walks `$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`. Sortable, newest first. |
+| "What receipts do I have locally, and are TTL-backed ones still fresh?" | `cub-scout receipt list --format json` | Walks `$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`. Newest first, with `freshness.status` as `fresh`, `stale`, `not-declared`, or `invalid`. |
 
 ## The predicates
 

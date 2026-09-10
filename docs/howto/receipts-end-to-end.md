@@ -246,6 +246,7 @@ cub-scout receipt show gate.receipt.json --format ascii
 
 # Walk the local store
 cub-scout receipt list --format json | jq '[.[] | select(.verdict == "BLOCK")]'
+cub-scout receipt list --format json | jq '[.[] | select(.freshness.status == "stale")]'
 
 # List with custom filters
 cub-scout receipt list --dir /path/to/audit-archive --format json

@@ -1,0 +1,53 @@
+[
+  {
+    "path": "/tmp/cub-scout/receipts/2026-05-22T10-30-00Z__applied-matches-spec__Deployment-api__a1b2c3d4e5f6.receipt.json",
+    "verifiedAt": "2026-05-22T10:30:00Z",
+    "predicateName": "applied-matches-spec",
+    "scope": {
+      "kind": "Deployment",
+      "name": "api",
+      "namespace": "prod"
+    },
+    "verdict": "PASS",
+    "fingerprint": "sha256:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
+    "freshness": {
+      "status": "fresh",
+      "observedAt": "2026-05-22T10:30:00Z",
+      "expiresAt": "2026-05-22T11:30:00Z",
+      "ttl": "1h0m0s"
+    }
+  },
+  {
+    "path": "/tmp/cub-scout/receipts/2026-05-22T08-00-00Z__no-manual-edits-since__Deployment-api__b1b2c3d4e5f6.receipt.json",
+    "verifiedAt": "2026-05-22T08:00:00Z",
+    "predicateName": "no-manual-edits-since",
+    "scope": {
+      "kind": "Deployment",
+      "name": "api",
+      "namespace": "prod"
+    },
+    "verdict": "WATCH",
+    "fingerprint": "sha256:b1b2c3d4e5f6b1b2c3d4e5f6b1b2c3d4e5f6b1b2c3d4e5f6b1b2c3d4e5f6",
+    "freshness": {
+      "status": "stale",
+      "observedAt": "2026-05-22T08:00:00Z",
+      "expiresAt": "2026-05-22T09:00:00Z",
+      "ttl": "1h0m0s"
+    }
+  },
+  {
+    "path": "/tmp/cub-scout/receipts/2026-05-22T07-00-00Z__source-truth-pass__Deployment-worker__c1b2c3d4e5f6.receipt.json",
+    "verifiedAt": "2026-05-22T07:00:00Z",
+    "predicateName": "source-truth-pass",
+    "scope": {
+      "kind": "Deployment",
+      "name": "worker",
+      "namespace": "prod"
+    },
+    "verdict": "INCONCLUSIVE",
+    "fingerprint": "sha256:c1b2c3d4e5f6c1b2c3d4e5f6c1b2c3d4e5f6c1b2c3d4e5f6c1b2c3d4e5f6",
+    "freshness": {
+      "status": "not-declared"
+    }
+  }
+]
