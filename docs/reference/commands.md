@@ -204,6 +204,12 @@ Machine-readable formats (`--format json` and `--format md`) do not include thes
 Custom CRDs can be appended to this inventory using `~/.cub-scout/resources.yaml`
 or `CUB_SCOUT_RESOURCE_CONFIG` (see `docs/howto/extending.md`).
 
+In JSON, Modelplane-owned resources that also expose explicit Crossplane
+composition labels, annotations, or verified Crossplane field managers may
+include `ownerEvidence`. This preserves Modelplane as the owner while surfacing
+the Crossplane substrate facts; see
+[`json-contracts.md` § Platform Substrate Evidence Contract](json-contracts.md#platform-substrate-evidence-contract).
+
 ---
 
 ## map meaning
@@ -2810,6 +2816,11 @@ Argo Application name or ConfigHub unit slug; release evidence requires exact
 space plus target; unit events require exact unit ID, or unit slug plus space.
 If those joins cannot be proven, the receipt records structured omissions under
 `predicate.evidence.deliveryEvidence.omissions`.
+
+Modelplane-owned resources backed by explicit Crossplane composition metadata
+also include `predicate.evidence.platformSubstrate`. This is fingerprint-covered
+supporting evidence that keeps Modelplane as the top-level owner while showing
+the Crossplane substrate facts.
 
 Examples:
 

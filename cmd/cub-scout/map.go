@@ -1107,6 +1107,9 @@ func processResourceWithLookup(
 			}
 		}
 	}
+	if evidence, ok := agent.BuildModelplaneCrossplaneEvidence(unstr, ownership); ok {
+		entry.OwnerEvidence = evidence
+	}
 	if gvr.Group == "argoproj.io" && gvr.Resource == "applications" {
 		annotateMapApplicationSetLineage(&entry, unstr, appSetLookup)
 	}

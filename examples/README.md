@@ -79,6 +79,7 @@ understands the core ownership model.
 - [`d2-control-plane`](./d2-control-plane/)
 - [`flux-boutique`](./flux-boutique/)
 - [`live-delivery-observability`](./live-delivery-observability/) — aggregate delivery status, audited action events, drift shape, and rollout evidence
+- [`modelplane-crossplane`](./modelplane-crossplane/) — Modelplane ownership with explicit Crossplane substrate evidence across map, trace, watch/bot, and receipts
 - [`kro-composition`](./kro-composition/)
 - [`custom-ownership-detectors`](./custom-ownership-detectors/)
 - [`orphans`](./orphans/)

@@ -2723,57 +2723,14 @@ func modelplaneEvidenceMessage(resource *unstructured.Unstructured, ownership *a
 }
 
 func modelplaneCrossplaneEvidenceMessage(resource *unstructured.Unstructured, ownership *agent.Ownership) string {
-	if resource == nil {
+	if ownership == nil {
 		return ""
 	}
-	labels := resource.GetLabels()
-	annotations := resource.GetAnnotations()
-	evidence := []string{}
-
-	if composite := firstNonEmpty(labels["crossplane.io/composite"], labels["apiextensions.crossplane.io/composite"]); composite != "" {
-		evidence = append(evidence, "composite="+composite)
-	}
-	if claimName := strings.TrimSpace(labels["crossplane.io/claim-name"]); claimName != "" {
-		claim := claimName
-		if claimNamespace := strings.TrimSpace(labels["crossplane.io/claim-namespace"]); claimNamespace != "" {
-			claim = claimNamespace + "/" + claim
-		}
-		evidence = append(evidence, "claim="+claim)
-	}
-	if resourceName := firstNonEmpty(
-		labels["crossplane.io/composition-resource-name"],
-		annotations["crossplane.io/composition-resource-name"],
-	); resourceName != "" {
-		evidence = append(evidence, "compositionResource="+resourceName)
-	}
-	if manager := firstModelplaneCrossplaneManager(resource, ownership); manager != "" {
-		evidence = append(evidence, "fieldManager="+manager)
-	}
-	if len(evidence) == 0 {
+	evidence, ok := agent.BuildModelplaneCrossplaneEvidence(resource, *ownership)
+	if !ok {
 		return ""
 	}
-	return "Modelplane-on-Crossplane evidence: " + strings.Join(evidence, ", ") + "."
-}
-
-func firstModelplaneCrossplaneManager(resource *unstructured.Unstructured, ownership *agent.Ownership) string {
-	if resource == nil || ownership == nil {
-		return ""
-	}
-	managers := []string{}
-	for _, field := range resource.GetManagedFields() {
-		manager := strings.TrimSpace(field.Manager)
-		if manager == "" || !strings.Contains(manager, "crossplane.io") {
-			continue
-		}
-		if agent.IsControllerManagerFor(manager, agent.OwnerModelplane, ownership.SubType) {
-			managers = append(managers, manager)
-		}
-	}
-	sort.Strings(managers)
-	if len(managers) == 0 {
-		return ""
-	}
-	return managers[0]
+	return evidence.Summary()
 }
 
 func modelplaneKindFromSubtype(subType string) string {

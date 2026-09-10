@@ -473,6 +473,9 @@ func buildOnePerResourceReceipt(
 		Attribution: &attribution,
 		GitSource:   gitSource,
 	}
+	if platformEvidence, ok := agent.BuildModelplaneCrossplaneEvidence(live, owner); ok {
+		evidence.PlatformSubstrate = platformEvidence
+	}
 	if strategy := strings.TrimSpace(receiptStrategy); strategy != "" {
 		stEvidence, stErr := collectSourceTruthForReceiptFn(ctx, r.Kind, r.Name, r.Namespace, strategy)
 		if stErr != nil {

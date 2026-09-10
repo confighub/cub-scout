@@ -49,6 +49,19 @@ ModelDeployment/qwen
 
 When related Modelplane resources are readable, the `ModelDeployment` link includes composed children such as `ModelReplica` and `ModelEndpoint`.
 
+When a Modelplane-owned resource also exposes Crossplane composition metadata,
+cub-scout keeps Modelplane as the owner and surfaces Crossplane as substrate
+evidence. Machine-readable paths:
+
+- `map list --format json`: `ownerEvidence`
+- `watch` / `bot` JSON events: `owner.evidence`
+- `receipt verify --format json`: `predicate.evidence.platformSubstrate`
+
+The evidence is populated only from explicit labels, annotations, or verified
+Crossplane field managers such as `crossplane.io/composite`,
+`crossplane.io/claim-*`, `crossplane.io/composition-resource-name`, and
+`apiextensions.crossplane.io/composed-*`.
+
 Show controller activity:
 
 ```bash

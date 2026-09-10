@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qwen-engine
+  namespace: models
+  labels:
+    modelplane.ai/deployment: qwen
+    crossplane.io/composite: x-qwen
+    crossplane.io/claim-name: qwen-claim
+    crossplane.io/claim-namespace: models
+    crossplane.io/composition-resource-name: engine
+spec:
+  selector:
+    matchLabels:
+      app: qwen-engine
+  template:
+    metadata:
+      labels:
+        app: qwen-engine
+    spec:
+      containers:
+        - name: engine
+          image: ghcr.io/example/qwen-engine:v1

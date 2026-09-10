@@ -50,6 +50,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
+| Platform substrate evidence | This doc (below) | Embedded in `map list` JSON as `ownerEvidence`, in watch/bot events as `owner.evidence`, and in receipts as `predicate.evidence.platformSubstrate` |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
 | Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` JSON |
 | Map activity delivery rows | This doc (below) | Embedded in `map activity --with-confighub` JSON rows |
@@ -690,6 +691,62 @@ instead of silently claiming absence.
 | `omissions[].reason` | One of `forbidden`, `unauthorized`, `timeout`, or `list_failed`. |
 | `omissions[].message` | Raw Kubernetes/client error message when available; callers should not parse it for decisions. |
 
+## Platform Substrate Evidence Contract
+
+Some higher-level platforms deliberately use another controller family as their
+implementation substrate. cub-scout keeps the higher-level owner when that owner
+has stronger explicit signals, but it may also emit substrate evidence so
+reviewers can see the lower layer without confusing it for ownership.
+
+Current producer: Modelplane resources backed by Crossplane composition labels,
+annotations, or verified Crossplane field-manager strings.
+
+Current embedding points:
+
+- `map list --format json`: `ownerEvidence`
+- `watch` / `bot` events: `owner.evidence`
+- `receipt verify` and watch/bot inline receipts: `predicate.evidence.platformSubstrate`
+
+### Schema Sketch
+
+```json
+{
+  "platform": "modelplane",
+  "substrate": "crossplane",
+  "composite": "x-qwen",
+  "claim": {
+    "name": "qwen-claim",
+    "namespace": "models"
+  },
+  "compositionResource": "engine",
+  "fieldManager": "apiextensions.crossplane.io/composed-qwen",
+  "sources": [
+    "label:crossplane.io/composite",
+    "label:crossplane.io/claim-name",
+    "label:crossplane.io/claim-namespace",
+    "annotation:crossplane.io/composition-resource-name",
+    "managedFields:apiextensions.crossplane.io/composed-qwen"
+  ]
+}
+```
+
+### Field Rules
+
+| Field | Rule |
+|---|---|
+| `platform` | Stable higher-level platform owner. Current value: `modelplane`. |
+| `substrate` | Stable implementation substrate. Current value: `crossplane`. |
+| `composite` | From `crossplane.io/composite` or `apiextensions.crossplane.io/composite` labels. |
+| `claim.name` | From `crossplane.io/claim-name`. |
+| `claim.namespace` | From `crossplane.io/claim-namespace` when present. |
+| `compositionResource` | From `crossplane.io/composition-resource-name` label or annotation, preferring the label when both exist. |
+| `fieldManager` | Deterministic first verified Crossplane field manager accepted for `OwnerModelplane`; unknown Crossplane-looking manager strings are ignored. |
+| `sources[]` | Exact metadata paths used to populate the evidence. Empty evidence is omitted instead of emitting an empty object. |
+
+This evidence is emitted only after Modelplane ownership has already been proven
+from Modelplane API group, explicit Modelplane label, or Modelplane ownerRef
+signals. Crossplane labels alone do not make a resource Modelplane-owned.
+
 ## GitOps Delivery Evidence Contract
 
 When `gitops status --with-confighub --format json`,
@@ -1290,6 +1347,37 @@ not make cub-scout the authority for delivery status or application health.
 In this release, `--with-confighub` is supported only for single-resource
 receipts. Aggregate, object-set, workload-convergence, and prerequisites
 receipts reject the flag upfront rather than silently omitting the field.
+
+#### `platformSubstrate` supporting evidence
+
+Modelplane-owned resources with explicit Crossplane substrate signals may carry
+the platform/substrate evidence under
+`predicate.evidence.platformSubstrate`:
+
+```json
+{
+  "platform": "modelplane",
+  "substrate": "crossplane",
+  "composite": "x-qwen",
+  "claim": {
+    "name": "qwen-claim",
+    "namespace": "models"
+  },
+  "compositionResource": "engine",
+  "fieldManager": "apiextensions.crossplane.io/composed-qwen",
+  "sources": [
+    "label:crossplane.io/composite",
+    "label:crossplane.io/claim-name",
+    "label:crossplane.io/claim-namespace",
+    "annotation:crossplane.io/composition-resource-name",
+    "managedFields:apiextensions.crossplane.io/composed-qwen"
+  ]
+}
+```
+
+Because it lives under `predicate.evidence`, it is covered by the receipt
+fingerprint. It is substrate context only: `predicate.owner.type` remains
+`modelplane`, and Crossplane evidence does not override ownership.
 
 #### `object-set-matches` evidence
 

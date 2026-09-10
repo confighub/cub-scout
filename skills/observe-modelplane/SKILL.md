@@ -69,6 +69,23 @@ composed resources may carry the verified Crossplane manager strings:
 `controllerManagersForOwner(OwnerModelplane, ...)` accepts those Crossplane
 manager strings only when ownership detection has already found Modelplane.
 
+## Substrate Evidence
+
+When a Modelplane-owned resource also exposes Crossplane composition metadata,
+cub-scout keeps Modelplane as the owner and surfaces Crossplane as substrate
+evidence:
+
+| Surface | Field |
+|---|---|
+| `map list --format json` | `ownerEvidence` |
+| `watch` / `bot` event JSON | `owner.evidence` |
+| `receipt verify --format json` | `predicate.evidence.platformSubstrate` |
+| `trace` human/Markdown output | `Modelplane-on-Crossplane evidence: ...` message |
+
+This evidence can include Crossplane composite, claim, composition-resource,
+and verified field-manager facts. Crossplane labels alone do not make a
+resource Modelplane-owned.
+
 ## Worked Example
 
 ```yaml

@@ -143,6 +143,19 @@ func renderReceiptASCII(stmt agent.Statement) string {
 		}
 	}
 
+	if pred.Evidence.PlatformSubstrate != nil {
+		substrate := pred.Evidence.PlatformSubstrate
+		b.WriteString("\nEvidence (platform substrate)\n")
+		fmt.Fprintf(&b, "  platform:    %s\n", firstNonEmpty(substrate.Platform, "-"))
+		fmt.Fprintf(&b, "  substrate:   %s\n", firstNonEmpty(substrate.Substrate, "-"))
+		if summary := substrate.Summary(); summary != "" {
+			fmt.Fprintf(&b, "  summary:     %s\n", summary)
+		}
+		if len(substrate.Sources) > 0 {
+			fmt.Fprintf(&b, "  sources:     %s\n", strings.Join(substrate.Sources, ", "))
+		}
+	}
+
 	if pred.Evidence.ObjectSet != nil {
 		oset := pred.Evidence.ObjectSet
 		b.WriteString("\nEvidence (object set)\n")

@@ -60,6 +60,40 @@ All four event types share this canonical shape (from `watchEvent` in `cmd/cub-s
 }
 ```
 
+For Modelplane-owned resources backed by explicit Crossplane composition
+signals, `owner.evidence` may be present:
+
+```json
+{
+  "owner": {
+    "type": "Modelplane",
+    "name": "qwen",
+    "evidence": {
+      "platform": "modelplane",
+      "substrate": "crossplane",
+      "composite": "x-qwen",
+      "claim": {
+        "name": "qwen-claim",
+        "namespace": "models"
+      },
+      "compositionResource": "engine",
+      "fieldManager": "apiextensions.crossplane.io/composed-qwen",
+      "sources": [
+        "label:crossplane.io/composite",
+        "label:crossplane.io/claim-name",
+        "label:crossplane.io/claim-namespace",
+        "annotation:crossplane.io/composition-resource-name",
+        "managedFields:apiextensions.crossplane.io/composed-qwen"
+      ]
+    }
+  }
+}
+```
+
+This is substrate context, not ownership reassignment. `owner.type` remains
+`Modelplane`; Crossplane evidence is emitted only after Modelplane ownership is
+already proven by Modelplane API group, label, or ownerRef evidence.
+
 ### Field reference
 
 | Field | Type | Presence | Notes |
@@ -69,8 +103,9 @@ All four event types share this canonical shape (from `watchEvent` in `cmd/cub-s
 | `resource.kind` | string | Always | Kubernetes Kind (`Deployment`, `StatefulSet`, etc.) |
 | `resource.name` | string | Always | Resource name |
 | `resource.namespace` | string | Omitempty (cluster-scoped resources skip) | — |
-| `owner.type` | string | Omitempty | Owner classification (`argo`, `flux`, `helm`, `crossplane`, `kro`, `confighub`, `native`, `unknown`) |
+| `owner.type` | string | Omitempty | Owner classification as emitted by map entries, for example `Flux`, `ArgoCD`, `Modelplane`, `Crossplane`, `kro`, `ConfigHub`, `Native`, or a custom owner display name |
 | `owner.name` | string | Omitempty | Owner-specific identifier (e.g., Argo Application name) |
+| `owner.evidence` | object | Omitempty | Platform/substrate evidence such as Modelplane-on-Crossplane facts; see [JSON Contracts § Platform Substrate Evidence Contract](json-contracts.md#platform-substrate-evidence-contract) |
 | `severity` | string | Omitempty (only `drift.detected` + `scan.finding`) | `critical` / `warning` / `info` |
 | `details` | object | Omitempty | Type-specific extra fields; see the per-type table above |
 | `receipt` | object | Omitempty | In-toto Statement v1; present only when `--emit-receipt-on` matched + receipt-build succeeded + backpressure cap allowed |

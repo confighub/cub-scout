@@ -360,6 +360,9 @@ func watchBuildReceiptForEvent(
 		Attribution: &attribution,
 		GitSource:   gitSource,
 	}
+	if platformEvidence, ok := agent.BuildModelplaneCrossplaneEvidence(live, owner); ok {
+		evidence.PlatformSubstrate = platformEvidence
+	}
 
 	var spec *agent.SpecAnchor
 	if gitSource != nil {

@@ -419,6 +419,11 @@ Valid values for `--owner` and query `owner=`:
 | `ConfigHub` | Managed by ConfigHub |
 | `Native` | Not managed by any known owner |
 
+JSON output may include `ownerEvidence` for Modelplane-owned resources backed
+by explicit Crossplane substrate signals. This is additive supporting evidence;
+it does not change the `owner` value. See
+[`json-contracts.md` § Platform Substrate Evidence Contract](json-contracts.md#platform-substrate-evidence-contract).
+
 ### Query Syntax
 
 ```
@@ -1398,6 +1403,14 @@ return exit 1 before emitting stdout, writing `--out`, or saving to the store.
 In this release, `--with-confighub` is supported only for the single-resource
 receipt form; aggregate, `--file`, and `--prerequisites` receipts reject it
 upfront rather than silently ignoring it.
+
+#### Platform substrate evidence
+
+Single-resource receipts and per-resource receipts produced for aggregate or
+watch/bot event flows may include `predicate.evidence.platformSubstrate` when a
+Modelplane-owned resource carries explicit Crossplane composition metadata. The
+field is fingerprint-covered supporting evidence and does not change predicate
+verdict semantics or ownership classification.
 
 #### Verdicts
 
