@@ -103,6 +103,7 @@ As of 2026-09-10, these areas are fully or materially shipped:
   - `gitops status --format ascii|json|md` now matches the documented format contract; `--json` remains a shorthand for `--format json`
   - `gitops status --with-confighub` adds opt-in, bounded ConfigHub release history, unit events, live-status writeback, and event-consumer Deployment health under `deliveryEvidence`
   - `doctor --with-confighub` reuses the same bounded evidence envelope, adds a scope-level `delivery` rollup, and promotes concrete failed/stale delivery feedback, failed unit events, and unhealthy observed event consumers into top issues
+  - `map activity --with-confighub` projects the same bounded ConfigHub evidence into timeline rows for live-status writeback, release publication, unit events, event-consumer health, and omissions
   - Live-status writeback separates delivery verdict from application-health verdict and downgrades stale successful observations to `WATCH`
   - ConfigHub release and unit-event reads are scoped by current cub space by default, support explicit `--confighub-space '*'`, and are bounded by `--confighub-since`
   - `gitops status` emits controller-family coverage for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane, including found/not-found/partial/unreadable status and RBAC/list omissions
@@ -111,7 +112,7 @@ As of 2026-09-10, these areas are fully or materially shipped:
   - MCP `compare_source_truth` strategy enum is generated from the same strategy registry as the CLI
   - `trace --with-confighub` and `explain --with-confighub` attach object-correlated `deliveryEvidence` only when exact ConfigHub unit, space, target, OCI-source, or Argo Application identifiers prove the join; otherwise they report structured omissions
   - `bot` runs the `watch` engine as an in-cluster-friendly read-only observer with `CUB_SCOUT_BOT_*` environment configuration and a deployable example under `examples/bot/`
-  - Remaining work: deeper object-level correlation from releases/live-status to `map activity` and receipts; aggregate controller-resource failures with generated-artifact lineage in `doctor`; Modelplane-on-Crossplane source/generation evidence, receipts, and watch/bot parity
+  - Remaining work: deeper object-level correlation from releases/live-status to receipts and workload-level activity joins; aggregate controller-resource failures with generated-artifact lineage in `doctor`; Modelplane-on-Crossplane source/generation evidence, receipts, and watch/bot parity
 
 - **Live delivery observability release slice — merged for v2.7.0** (`#500`)
   - README now starts with a user-question table covering ownership, delegated delivery health, intended-vs-live agreement, rollout progress, proceed/wait/retry framing, drift, delivery-vs-runtime separation, attribution, low-load repeated review paths, and receipts
@@ -193,7 +194,7 @@ Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consu
 
 ### Recently closed (this session's arc)
 
-- Post-v2.7 delivery-evidence release candidate in this worktree: `gitops status --with-confighub`, MCP release/event/live-status tools, MCP source-truth strategy parity, README five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`
+- Post-v2.7 delivery-evidence release candidate in this worktree: `gitops status --with-confighub`, `doctor --with-confighub`, `map activity --with-confighub`, MCP release/event/live-status tools, MCP source-truth strategy parity, README five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`
 - ~~**`#500`**~~ — live delivery observability release slice, merged 2026-07-09; see `docs/releases/v2.7.0.md`
 - Earlier closed arcs: ~~**`#446`**~~ (parent), ~~**`#444`**~~, ~~**`#448`**~~, ~~**`#449`**~~, ~~**`#451`**~~ — see HANDOVER.md § "May 2026 completions — session 2026-05-25" for the PR-by-PR breakdown
 
@@ -207,7 +208,7 @@ Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consu
 
 ### Untracked v2 follow-ups (no separate issue)
 
-- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; this release candidate now joins exact object-level evidence into `trace --with-confighub` and `explain --with-confighub`, and adds scope-level `doctor --with-confighub` rollups/top issues. Follow-up work should join release/event/writeback evidence into `map activity` and receipts without guessing.
+- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; this release candidate now joins exact object-level evidence into `trace --with-confighub` and `explain --with-confighub`, adds scope-level `doctor --with-confighub` rollups/top issues, and renders ConfigHub delivery evidence in `map activity --with-confighub`. Follow-up work should join release/event/writeback evidence into receipts and workload-level activity rows without guessing.
 - **Source-truth receipt precedence edge coverage** — especially `StatusBLOCK + VerdictBLOCKED`. Not blocking; nice-to-have.
 
 ### Open tracked issues

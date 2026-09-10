@@ -67,6 +67,7 @@ cub-scout doctor --format json
 cub-scout doctor --with-confighub --confighub-space prod --format json
 cub-scout explain deploy/my-app -n prod --format json
 cub-scout trace deploy/my-app -n prod --format json
+cub-scout map activity --with-confighub --confighub-space prod --format json
 ```
 
 ---
@@ -81,6 +82,7 @@ When something is broken and you need proof quickly, this is the default flow:
 4. `cub-scout compare three-way --scope <scope>` if you are in connected mode
 5. `cub-scout history <kind/name> -n <ns>` if you need governed change history
 6. `cub-scout gitops status --with-confighub --confighub-space <space> --format json` if you need bounded release/event/live-status evidence
+7. `cub-scout map activity --with-confighub --confighub-space <space> --since 24h` if you need the same evidence in timeline order
 
 Use this when:
 - a workload is unhealthy
@@ -94,6 +96,7 @@ Helpful follow-up paths:
 - `map hooks` for Helm and Argo lifecycle hooks
 - `doctor --with-confighub` for a scope-level delivery rollup in the same first-pass health summary
 - `gitops status` for deployer/source health; add `--with-confighub` for release history, unit events, live-status freshness, and event-consumer health
+- `map activity --with-confighub` for a unified recent timeline across controller events, Kubernetes events, ConfigHub releases, unit events, live-status reports, and event-consumer health
 
 See [docs/reference/commands.md](docs/reference/commands.md) for the detailed examples behind each command.
 
@@ -109,6 +112,7 @@ Typical connected flow:
 cub auth login
 cub-scout status
 cub-scout gitops status --with-confighub --confighub-space prod --format json
+cub-scout map activity --with-confighub --confighub-space prod --since 24h
 cub-scout compare three-way --scope namespace/prod
 cub-scout history deploy/api -n prod
 cub-scout impact payments-api

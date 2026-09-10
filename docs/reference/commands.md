@@ -22,7 +22,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `map cronjobs` | List CronJobs with schedule/run state | v0.20 |
 | `map jobs` | List Jobs with CronJob linkage and run state | v0.20 |
 | `map actions` | Read-only operator action preview (runbook output) | v0.20 |
-| `map activity` | Unified activity timeline from Flux/Argo/Sveltos/Modelplane/aggregate delivery resources/Helm/events | v0.20 |
+| `map activity` | Unified activity timeline from Flux/Argo/Sveltos/Modelplane/aggregate delivery resources/Helm/events plus optional bounded ConfigHub delivery evidence | v0.20 |
 | `map previews` | Detect PR preview environments | v0.20 |
 | `quickstart` | Guided first-run walkthrough | v1.4 |
 | `quickstart demo` | Fixture-backed demo runner | v1.0 |
@@ -664,7 +664,7 @@ cub-scout map actions cronjob/nightly-backup -n operations --format json
 
 ## map activity
 
-Show normalized activity from Flux, ArgoCD, Sveltos, Modelplane, aggregate delivery resources, Helm release history, audited action events, and Kubernetes Events.
+Show normalized activity from Flux, ArgoCD, Sveltos, Modelplane, aggregate delivery resources, Helm release history, audited action events, Kubernetes Events, and optional bounded ConfigHub delivery evidence.
 
 ```bash
 cub-scout map activity [flags]
@@ -678,6 +678,10 @@ cub-scout map activity [flags]
 | `--owner` | Filter by owner (`Flux`, `ArgoCD`, `Sveltos`, `Modelplane`, `Helm`, `Crossplane`, `kro`, `ConfigHub`, `Native`) |
 | `--since` | Time filter (for example `24h`, `7d`) |
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+| `--with-confighub` | Include ConfigHub delivery activity rows from the same bounded evidence reader used by `gitops status --with-confighub` |
+| `--confighub-space` | ConfigHub space for connected evidence (default: current cub space; use `*` explicitly for all spaces) |
+| `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
+| `--confighub-stale-after` | Treat ConfigHub live-status observations older than this as stale (default: `15m`) |
 
 ### Examples
 
@@ -686,8 +690,16 @@ cub-scout map activity
 cub-scout map activity --owner Flux --since 24h
 cub-scout map activity --owner Sveltos --since 24h
 cub-scout map activity --owner Modelplane --namespace inference
+cub-scout map activity --with-confighub --confighub-space prod --confighub-since 24h --format json
 cub-scout map activity --namespace prod --format json
 ```
+
+With `--with-confighub`, ConfigHub rows use owner `ConfigHub` and sources
+`confighub.liveStatus`, `confighub.release`, `confighub.unitEvent`,
+`confighub.eventConsumer`, or `confighub.omission`. JSON rows include an
+additive `deliveryEvidence` object with row-specific details. Missing,
+disconnected, malformed, stale, or RBAC-blocked evidence is represented as
+timeline omissions, not inferred status.
 
 ---
 

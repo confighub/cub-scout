@@ -34,24 +34,28 @@ import (
 )
 
 var (
-	mapNamespace         string
-	mapKind              string
-	mapOwner             string
-	mapQuery             string
-	mapJSON              bool   // deprecated: use --format json
-	mapListFormat        string // output format: ascii, json
-	mapVerbose           bool
-	mapHub               bool   // --hub flag for ConfigHub hierarchy
-	mapSince             string // --since flag for time filtering
-	mapCount             bool   // --count flag for count-only output
-	mapNamesOnly         bool   // --names-only flag for names-only output
-	mapExplain           bool   // --explain flag for learning mode
-	mapActivitySince     string // --since flag for map activity
-	mapPreviewStaleAfter string // --stale-after flag for map previews
-	deepDiveConnected    bool   // --connected flag for ConfigHub integration in deep-dive
-	orphanIncludeSystem  bool   // --include-system flag for showing system resources
-	orphanIncludeAppSet  bool   // include explicit ApplicationSet-link orphans in map orphans
-	hooksFile            string // --file flag for static analysis of hooks
+	mapNamespace                   string
+	mapKind                        string
+	mapOwner                       string
+	mapQuery                       string
+	mapJSON                        bool   // deprecated: use --format json
+	mapListFormat                  string // output format: ascii, json
+	mapVerbose                     bool
+	mapHub                         bool   // --hub flag for ConfigHub hierarchy
+	mapSince                       string // --since flag for time filtering
+	mapCount                       bool   // --count flag for count-only output
+	mapNamesOnly                   bool   // --names-only flag for names-only output
+	mapExplain                     bool   // --explain flag for learning mode
+	mapActivitySince               string // --since flag for map activity
+	mapActivityWithConfigHub       bool
+	mapActivityConfigHubSpace      string
+	mapActivityConfigHubSince      string
+	mapActivityConfigHubStaleAfter string
+	mapPreviewStaleAfter           string // --stale-after flag for map previews
+	deepDiveConnected              bool   // --connected flag for ConfigHub integration in deep-dive
+	orphanIncludeSystem            bool   // --include-system flag for showing system resources
+	orphanIncludeAppSet            bool   // include explicit ApplicationSet-link orphans in map orphans
+	hooksFile                      string // --file flag for static analysis of hooks
 )
 
 // MapEntry is an alias for mapsvc.Entry representing a resource in the fleet map.
@@ -503,11 +507,13 @@ var mapActivityCmd = &cobra.Command{
 	Use:   "activity",
 	Short: "Show recent controller/runtime activity timeline",
 	Long: `Show a normalized timeline of recent activity from Flux, ArgoCD, Sveltos,
-Modelplane, Helm release metadata, and Kubernetes events.
+Modelplane, Helm release metadata, Kubernetes events, and optional bounded
+ConfigHub delivery evidence.
 
 Examples:
   cub-scout map activity
   cub-scout map activity --owner Flux --since 24h
+  cub-scout map activity --with-confighub --confighub-space prod --since 24h
   cub-scout map activity --owner Sveltos
   cub-scout map activity --owner Modelplane
   cub-scout map activity --namespace prod --format json`,
@@ -656,6 +662,10 @@ func init() {
 	mapActivityCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native)")
 	mapActivityCmd.Flags().StringVar(&mapActivitySince, "since", "", "Show activity since duration (e.g., 1h, 24h, 7d)")
 	mapActivityCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
+	mapActivityCmd.Flags().BoolVar(&mapActivityWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery activity rows")
+	mapActivityCmd.Flags().StringVar(&mapActivityConfigHubSpace, "confighub-space", "", "ConfigHub space for connected delivery evidence (default: current cub space; use '*' explicitly for all spaces)")
+	mapActivityCmd.Flags().StringVar(&mapActivityConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
+	mapActivityCmd.Flags().StringVar(&mapActivityConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 
 	mapPreviewsCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapPreviewsCmd.Flags().StringVar(&mapPreviewStaleAfter, "stale-after", "72h", "Mark previews as stale after duration (e.g., 24h, 72h, 7d)")
@@ -3545,17 +3555,53 @@ type mapActionPreview struct {
 }
 
 type mapActivityRow struct {
-	Time              string            `json:"time"`
-	Source            string            `json:"source"`
-	Resource          string            `json:"resource"`
-	Action            string            `json:"action"`
-	Result            string            `json:"result"`
-	Message           string            `json:"message,omitempty"`
-	SuggestedNextStep string            `json:"suggestedNextStep,omitempty"`
-	Owner             string            `json:"owner,omitempty"`
-	Actor             string            `json:"actor,omitempty"`
-	Subject           string            `json:"subject,omitempty"`
-	ActionEvidence    map[string]string `json:"actionEvidence,omitempty"`
+	Time              string                       `json:"time"`
+	Source            string                       `json:"source"`
+	Resource          string                       `json:"resource"`
+	Action            string                       `json:"action"`
+	Result            string                       `json:"result"`
+	Message           string                       `json:"message,omitempty"`
+	SuggestedNextStep string                       `json:"suggestedNextStep,omitempty"`
+	Owner             string                       `json:"owner,omitempty"`
+	Actor             string                       `json:"actor,omitempty"`
+	Subject           string                       `json:"subject,omitempty"`
+	ActionEvidence    map[string]string            `json:"actionEvidence,omitempty"`
+	DeliveryEvidence  *mapActivityDeliveryEvidence `json:"deliveryEvidence,omitempty"`
+}
+
+type mapActivityDeliveryEvidence struct {
+	Kind                     string `json:"kind"`
+	Namespace                string `json:"namespace,omitempty"`
+	Space                    string `json:"space,omitempty"`
+	SpaceID                  string `json:"spaceId,omitempty"`
+	Target                   string `json:"target,omitempty"`
+	TargetID                 string `json:"targetId,omitempty"`
+	App                      string `json:"app,omitempty"`
+	Unit                     string `json:"unit,omitempty"`
+	UnitID                   string `json:"unitId,omitempty"`
+	Release                  string `json:"release,omitempty"`
+	ReleaseID                string `json:"releaseId,omitempty"`
+	EventID                  string `json:"eventId,omitempty"`
+	Digest                   string `json:"digest,omitempty"`
+	BundleBaseName           string `json:"bundleBaseName,omitempty"`
+	RevisionNum              int    `json:"revisionNum,omitempty"`
+	Revision                 string `json:"revision,omitempty"`
+	SyncStatus               string `json:"syncStatus,omitempty"`
+	HealthStatus             string `json:"healthStatus,omitempty"`
+	OperationPhase           string `json:"operationPhase,omitempty"`
+	Freshness                string `json:"freshness,omitempty"`
+	FreshnessSeconds         int64  `json:"freshnessSeconds,omitempty"`
+	DeliveryVerdict          string `json:"deliveryVerdict,omitempty"`
+	ApplicationHealthVerdict string `json:"applicationHealthVerdict,omitempty"`
+	Ready                    *bool  `json:"ready,omitempty"`
+	Replicas                 int64  `json:"replicas,omitempty"`
+	ReadyReplicas            int64  `json:"readyReplicas,omitempty"`
+	AvailableReplicas        int64  `json:"availableReplicas,omitempty"`
+	EvidenceLabel            string `json:"evidenceLabel,omitempty"`
+	Layer                    string `json:"layer,omitempty"`
+	Reason                   string `json:"reason,omitempty"`
+	Impact                   string `json:"impact,omitempty"`
+	Command                  string `json:"command,omitempty"`
 }
 
 type mapPreviewRow struct {
@@ -3964,6 +4010,15 @@ func buildActionPreviews(ctx context.Context, kind, name, namespace string) ([]m
 }
 
 func collectActivity(ctx context.Context) ([]mapActivityRow, error) {
+	var deliveryOpts gitOpsDeliveryEvidenceOptions
+	if mapActivityWithConfigHub {
+		opts, err := mapActivityDeliveryOptionsFromFlags(ctx)
+		if err != nil {
+			return nil, err
+		}
+		deliveryOpts = opts
+	}
+
 	cfg, err := buildConfig()
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
@@ -3980,8 +4035,294 @@ func collectActivity(ctx context.Context) ([]mapActivityRow, error) {
 	rows = append(rows, collectModelplaneActivity(ctx, dynClient)...)
 	rows = append(rows, collectHelmReleaseActivity(ctx, dynClient)...)
 	rows = append(rows, collectEventActivity(ctx, dynClient)...)
+	if mapActivityWithConfigHub {
+		evidence := collectGitOpsDeliveryEvidence(ctx, dynClient, deliveryOpts)
+		rows = append(rows, gitOpsDeliveryEvidenceToActivityRows(evidence)...)
+	}
 
 	return rows, nil
+}
+
+func mapActivityDeliveryOptionsFromFlags(ctx context.Context) (gitOpsDeliveryEvidenceOptions, error) {
+	now := gitopsNowFn().UTC()
+	space := strings.TrimSpace(mapActivityConfigHubSpace)
+	if space == "" {
+		space = gitopsDefaultSpaceFn(ctx)
+	}
+
+	since := strings.TrimSpace(mapActivityConfigHubSince)
+	if since == "" {
+		since = "24h"
+	}
+	window, err := parseHistorySince(since)
+	if err != nil {
+		return gitOpsDeliveryEvidenceOptions{}, fmt.Errorf("invalid --confighub-since: %w", err)
+	}
+
+	staleAfterRaw := strings.TrimSpace(mapActivityConfigHubStaleAfter)
+	if staleAfterRaw == "" {
+		staleAfterRaw = "15m"
+	}
+	staleAfter, err := parseHistorySince(staleAfterRaw)
+	if err != nil {
+		return gitOpsDeliveryEvidenceOptions{}, fmt.Errorf("invalid --confighub-stale-after: %w", err)
+	}
+
+	return gitOpsDeliveryEvidenceOptions{
+		Namespace:  strings.TrimSpace(mapNamespace),
+		Space:      space,
+		Since:      since,
+		Window:     window,
+		StaleAfter: staleAfter,
+		Now:        now,
+		MaxItems:   defaultGitOpsDeliveryMaxItems,
+	}, nil
+}
+
+func gitOpsDeliveryEvidenceToActivityRows(evidence *GitOpsDeliveryEvidence) []mapActivityRow {
+	if evidence == nil {
+		return nil
+	}
+
+	rows := make([]mapActivityRow, 0, len(evidence.EventConsumers)+len(evidence.Omissions))
+	if evidence.ConfigHub != nil {
+		for _, status := range evidence.ConfigHub.LiveStatuses {
+			rows = append(rows, configHubLiveStatusActivityRow(evidence, status))
+		}
+		for _, release := range evidence.ConfigHub.Releases {
+			rows = append(rows, configHubReleaseActivityRow(evidence, release))
+		}
+		for _, event := range evidence.ConfigHub.UnitEvents {
+			rows = append(rows, configHubUnitEventActivityRow(evidence, event))
+		}
+	}
+	for _, consumer := range evidence.EventConsumers {
+		rows = append(rows, configHubEventConsumerActivityRow(evidence, consumer))
+	}
+	for _, omission := range evidence.Omissions {
+		rows = append(rows, configHubOmissionActivityRow(evidence, omission))
+	}
+	return rows
+}
+
+func configHubLiveStatusActivityRow(evidence *GitOpsDeliveryEvidence, status ConfigHubLiveStatusEvidence) mapActivityRow {
+	t := firstNonEmpty(status.ObservedAt, evidence.ObservedAt.UTC().Format(time.RFC3339))
+	message := strings.TrimSpace(fmt.Sprintf("app=%s sync=%s health=%s op=%s delivery=%s app-health=%s freshness=%s revision=%s",
+		firstNonEmpty(status.App, "-"),
+		firstNonEmpty(status.SyncStatus, "-"),
+		firstNonEmpty(status.HealthStatus, "-"),
+		firstNonEmpty(status.OperationPhase, "-"),
+		status.DeliveryVerdict,
+		status.ApplicationHealthVerdict,
+		firstNonEmpty(status.Freshness, "-"),
+		firstNonEmpty(status.Revision, "-"),
+	))
+	return mapActivityRow{
+		Time:              normalizeTimeString(t, evidence.ObservedAt),
+		Source:            "confighub.liveStatus",
+		Resource:          fmt.Sprintf("ConfigHubLiveStatus/%s/%s", firstNonEmpty(status.Space, status.SpaceID, "unknown"), firstNonEmpty(status.App, "unknown")),
+		Action:            "delivery-status",
+		Result:            mapActivityResultFromVerdicts(status.DeliveryVerdict, status.ApplicationHealthVerdict),
+		Message:           message,
+		SuggestedNextStep: mapActivityDeliveryNextStep(status.DeliveryVerdict, status.ApplicationHealthVerdict, status.Freshness),
+		Owner:             "ConfigHub",
+		DeliveryEvidence: &mapActivityDeliveryEvidence{
+			Kind:                     "liveStatus",
+			Namespace:                evidence.Scope.Namespace,
+			Space:                    status.Space,
+			SpaceID:                  status.SpaceID,
+			App:                      status.App,
+			Revision:                 status.Revision,
+			SyncStatus:               status.SyncStatus,
+			HealthStatus:             status.HealthStatus,
+			OperationPhase:           status.OperationPhase,
+			Freshness:                status.Freshness,
+			FreshnessSeconds:         status.FreshnessSeconds,
+			DeliveryVerdict:          string(status.DeliveryVerdict),
+			ApplicationHealthVerdict: string(status.ApplicationHealthVerdict),
+		},
+	}
+}
+
+func configHubReleaseActivityRow(evidence *GitOpsDeliveryEvidence, release ConfigHubReleaseEvidence) mapActivityRow {
+	message := strings.TrimSpace(fmt.Sprintf("target=%s revision=%s digest=%s bundle=%s",
+		firstNonEmpty(release.Target, release.TargetID, "-"),
+		formatActivityRevisionNum(release.RevisionNum),
+		firstNonEmpty(release.Digest, "-"),
+		firstNonEmpty(release.BundleBaseName, "-"),
+	))
+	return mapActivityRow{
+		Time:              normalizeTimeString(release.CreatedAt, evidence.ObservedAt),
+		Source:            "confighub.release",
+		Resource:          fmt.Sprintf("Release/%s/%s", firstNonEmpty(release.Space, release.SpaceID, "unknown"), firstNonEmpty(release.Slug, release.ReleaseID, "unknown")),
+		Action:            "release-published",
+		Result:            "normal",
+		Message:           message,
+		SuggestedNextStep: "Use 'gitops status --with-confighub' or trace/explain with ConfigHub evidence to relate this release to live resources.",
+		Owner:             "ConfigHub",
+		DeliveryEvidence: &mapActivityDeliveryEvidence{
+			Kind:           "release",
+			Namespace:      evidence.Scope.Namespace,
+			Space:          release.Space,
+			SpaceID:        release.SpaceID,
+			Target:         release.Target,
+			TargetID:       release.TargetID,
+			Release:        release.Slug,
+			ReleaseID:      release.ReleaseID,
+			Digest:         release.Digest,
+			BundleBaseName: release.BundleBaseName,
+			RevisionNum:    release.RevisionNum,
+		},
+	}
+}
+
+func configHubUnitEventActivityRow(evidence *GitOpsDeliveryEvidence, event ConfigHubUnitEventEvidence) mapActivityRow {
+	when := firstNonEmpty(event.TerminatedAt, event.CreatedAt)
+	message := strings.TrimSpace(fmt.Sprintf("unit=%s target=%s result=%s status=%s %s",
+		firstNonEmpty(event.Unit, event.UnitID, "-"),
+		firstNonEmpty(event.Target, event.TargetID, "-"),
+		firstNonEmpty(event.Result, "-"),
+		firstNonEmpty(event.Status, "-"),
+		strings.TrimSpace(event.Message),
+	))
+	return mapActivityRow{
+		Time:              normalizeTimeString(when, evidence.ObservedAt),
+		Source:            "confighub.unitEvent",
+		Resource:          fmt.Sprintf("UnitEvent/%s/%s", firstNonEmpty(event.Space, event.SpaceID, "unknown"), firstNonEmpty(event.Unit, event.UnitID, event.EventID, "unknown")),
+		Action:            strings.ToLower(firstNonEmpty(event.Action, event.Status, "unit-event")),
+		Result:            mapActivityResultFromUnitEvent(event),
+		Message:           message,
+		SuggestedNextStep: "Use ConfigHub unit history and live controller status to compare intended change, delivery feedback, and runtime state.",
+		Owner:             "ConfigHub",
+		DeliveryEvidence: &mapActivityDeliveryEvidence{
+			Kind:      "unitEvent",
+			Namespace: evidence.Scope.Namespace,
+			Space:     event.Space,
+			SpaceID:   event.SpaceID,
+			Target:    event.Target,
+			TargetID:  event.TargetID,
+			Unit:      event.Unit,
+			UnitID:    event.UnitID,
+			EventID:   event.EventID,
+		},
+	}
+}
+
+func configHubEventConsumerActivityRow(evidence *GitOpsDeliveryEvidence, consumer GitOpsEventConsumerEvidence) mapActivityRow {
+	result := "success"
+	if !consumer.Ready {
+		result = "failed"
+	}
+	ready := consumer.Ready
+	return mapActivityRow{
+		Time:              evidence.ObservedAt.UTC().Format(time.RFC3339),
+		Source:            "confighub.eventConsumer",
+		Resource:          fmt.Sprintf("%s/%s/%s", consumer.Kind, firstNonEmpty(consumer.Namespace, "unknown"), consumer.Name),
+		Action:            "observer-health",
+		Result:            result,
+		Message:           fmt.Sprintf("ready=%t replicas=%d readyReplicas=%d availableReplicas=%d evidenceLabel=%s", consumer.Ready, consumer.Replicas, consumer.ReadyReplicas, consumer.AvailableReplicas, firstNonEmpty(consumer.EvidenceLabel, "-")),
+		SuggestedNextStep: "Inspect the in-cluster event consumer Deployment before trusting fresh delivery writeback.",
+		Owner:             "ConfigHub",
+		DeliveryEvidence: &mapActivityDeliveryEvidence{
+			Kind:              "eventConsumer",
+			Namespace:         evidence.Scope.Namespace,
+			Ready:             &ready,
+			Replicas:          consumer.Replicas,
+			ReadyReplicas:     consumer.ReadyReplicas,
+			AvailableReplicas: consumer.AvailableReplicas,
+			EvidenceLabel:     consumer.EvidenceLabel,
+		},
+	}
+}
+
+func configHubOmissionActivityRow(evidence *GitOpsDeliveryEvidence, omission GitOpsDeliveryEvidenceOmission) mapActivityRow {
+	message := strings.TrimSpace(omission.Reason)
+	if omission.Impact != "" {
+		message = strings.TrimSpace(message + " impact=" + omission.Impact)
+	}
+	return mapActivityRow{
+		Time:              evidence.ObservedAt.UTC().Format(time.RFC3339),
+		Source:            "confighub.omission",
+		Resource:          "ConfigHubDeliveryEvidence/" + firstNonEmpty(evidence.Scope.Space, evidence.Scope.Namespace, "unknown"),
+		Action:            "evidence-omitted",
+		Result:            "inconclusive",
+		Message:           message,
+		SuggestedNextStep: "Use a narrower --confighub-space or fix the omitted read before treating ConfigHub delivery evidence as complete.",
+		Owner:             "ConfigHub",
+		DeliveryEvidence: &mapActivityDeliveryEvidence{
+			Kind:      "omission",
+			Namespace: evidence.Scope.Namespace,
+			Space:     evidence.Scope.Space,
+			Layer:     omission.Layer,
+			Reason:    omission.Reason,
+			Impact:    omission.Impact,
+			Command:   omission.Command,
+		},
+	}
+}
+
+func mapActivityResultFromVerdicts(verdicts ...agent.ReceiptVerdict) string {
+	hasInconclusive := false
+	hasWatch := false
+	hasPass := false
+	for _, verdict := range verdicts {
+		switch verdict {
+		case agent.VerdictBLOCK:
+			return "failed"
+		case agent.VerdictWATCH:
+			hasWatch = true
+		case agent.VerdictINCONCLUSIVE:
+			hasInconclusive = true
+		case agent.VerdictPASS:
+			hasPass = true
+		default:
+			hasInconclusive = true
+		}
+	}
+	if hasWatch {
+		return "pending"
+	}
+	if hasInconclusive || !hasPass {
+		return "inconclusive"
+	}
+	return "success"
+}
+
+func formatActivityRevisionNum(revisionNum int) string {
+	if revisionNum <= 0 {
+		return "-"
+	}
+	return strconv.Itoa(revisionNum)
+}
+
+func mapActivityResultFromUnitEvent(event ConfigHubUnitEventEvidence) string {
+	status := strings.ToLower(strings.TrimSpace(event.Result + " " + event.Status))
+	switch {
+	case strings.Contains(status, "fail"), strings.Contains(status, "error"):
+		return "failed"
+	case strings.Contains(status, "success"), strings.Contains(status, "succeed"), strings.Contains(status, "complete"):
+		return "success"
+	case strings.Contains(status, "running"), strings.Contains(status, "progress"), strings.Contains(status, "pending"):
+		return "pending"
+	default:
+		return "normal"
+	}
+}
+
+func mapActivityDeliveryNextStep(delivery, appHealth agent.ReceiptVerdict, freshness string) string {
+	if delivery == agent.VerdictBLOCK || appHealth == agent.VerdictBLOCK {
+		return "Inspect delivery controller output, live-status message, and Kubernetes events for the failed phase."
+	}
+	if strings.EqualFold(freshness, "stale") {
+		return "Refresh event-consumer/live-status evidence before deciding whether to proceed."
+	}
+	if delivery == agent.VerdictWATCH || appHealth == agent.VerdictWATCH {
+		return "Wait or re-check with trace/explain --with-confighub before deciding whether to retry delivery."
+	}
+	if delivery == agent.VerdictINCONCLUSIVE || appHealth == agent.VerdictINCONCLUSIVE {
+		return "Gather missing delivery or application-health evidence before treating the rollout as complete."
+	}
+	return "Use trace/explain --with-confighub for object-level correlation when exact resource identity is needed."
 }
 
 func collectPreviews(ctx context.Context, staleAfter time.Duration) ([]mapPreviewRow, error) {
@@ -4537,7 +4878,7 @@ func renderMapActivity(rows []mapActivityRow) error {
 
 	filtered := make([]mapActivityRow, 0, len(rows))
 	for _, row := range rows {
-		if mapNamespace != "" && !strings.Contains(row.Resource, "/"+mapNamespace+"/") {
+		if !mapActivityMatchesNamespace(row, mapNamespace) {
 			continue
 		}
 		if mapOwner != "" && !strings.EqualFold(row.Owner, mapOwner) {
@@ -4607,6 +4948,17 @@ func renderMapActivity(rows []mapActivityRow) error {
 		fmt.Printf("\nTotal: %d activity event(s)\n", len(rows))
 		return nil
 	}
+}
+
+func mapActivityMatchesNamespace(row mapActivityRow, namespace string) bool {
+	namespace = strings.TrimSpace(namespace)
+	if namespace == "" {
+		return true
+	}
+	if strings.HasPrefix(row.Source, "confighub.") {
+		return row.DeliveryEvidence != nil && strings.EqualFold(row.DeliveryEvidence.Namespace, namespace)
+	}
+	return strings.Contains(row.Resource, "/"+namespace+"/")
 }
 
 func renderMapPreviews(rows []mapPreviewRow, staleAfter time.Duration) error {

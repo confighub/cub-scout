@@ -70,6 +70,7 @@ Source of truth:
 | `import cluster-aggregator` | Aggregate multiple import proposals | [Command Reference](commands.md#import-cluster-aggregator) | [Fleet import](../../examples/fleet-import/) |
 | `import parse-repo` | Parse GitOps repo structure | [Command Reference](commands.md#import-parse-repo) | [Combined git+live](../../examples/combined-git-live/) |
 | `map hooks` | Lifecycle hook inventory | [Command Reference](commands.md#map-hooks) | [Lifecycle hazards](../../examples/lifecycle-hazards/) |
+| `map activity` | Unified operational timeline; add `--with-confighub` for bounded ConfigHub release, unit-event, live-status, and event-consumer rows | [Command Reference](commands.md#map-activity) | [Live delivery observability](../../examples/live-delivery-observability/) |
 | `map list` | Resource ownership inventory | [Command Reference](commands.md#map-list) | [Running demos](../howto/running-demos.md) |
 | `map meaning` | Experimental meaning-first grouping | [Command Reference](commands.md#map-meaning) | [kro composition](../../examples/kro-composition/) |
 | `map orphans` | Unmanaged/orphan resources | [Command Reference](commands.md#map-orphans) | [Orphans](../../examples/orphans/) |

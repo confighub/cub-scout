@@ -79,7 +79,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `map cronjobs` | CronJob schedule/run view | - | Read-only operator visibility |
 | `map jobs` | Job run history view | - | Read-only operator visibility |
 | `map actions <kind/name>` | Action previews (runbook) | - | No mutation; preview only |
-| `map activity` | Unified activity timeline | - | Flux/Argo/Sveltos/Modelplane/Helm/Event signals |
+| `map activity` | Unified activity timeline | - | Flux/Argo/Sveltos/Modelplane/Helm/Event signals; optional ConfigHub delivery rows |
 | `map previews` | Preview env detection | - | PR/Forgejo/Gitea heuristics |
 | `map orphans` | Unmanaged + explicit AppSet-link orphans | `o` | Native/orphan focus |
 | `map crashes` | Failing pods/deployments | `c` | Crash/failure focus |
@@ -108,6 +108,10 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--kind` | Filter by resource kind | `map list` |
 | `--owner` | Filter by owner type | `map list`, `map cronjobs`, `map jobs`, `map activity` |
 | `--since` | Resources changed / timeline window | `map list`, `map activity` |
+| `--with-confighub` | Add bounded ConfigHub delivery evidence | `doctor`, `gitops status`, `trace`, `explain`, `map activity` |
+| `--confighub-space` | Scope ConfigHub delivery evidence by space | `doctor`, `gitops status`, `trace`, `explain`, `map activity` |
+| `--confighub-since` | Bound ConfigHub release/event reads | `doctor`, `gitops status`, `trace`, `explain`, `map activity` |
+| `--confighub-stale-after` | Mark live-status writeback stale after this duration | `doctor`, `gitops status`, `trace`, `explain`, `map activity` |
 | `--count` | Output count only | `map list` |
 | `--names-only` | Output names only | `map list` |
 | `--stale-after` | Preview staleness threshold | `map previews` |
