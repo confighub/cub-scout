@@ -103,7 +103,7 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 - **Views integration** (#391): `views resolve`, `views open`, `views project --with-reality`, `compare three-way --view`.
 - **`doctor` / `explain`** with `--presentation` and `--hint-mode`.
 - **MCP gateway** (`mcp serve`): standalone + connected tool sets, including `gitops_status` for GitOps delivery and controller-coverage evidence.
-- **ConfigHub delivery evidence**: `gitops status --with-confighub` and `doctor --with-confighub` add bounded release history, unit events, live-status freshness, and event-consumer health under `deliveryEvidence`; `doctor` also adds a scope-level `delivery` rollup.
+- **ConfigHub delivery evidence**: `gitops status --with-confighub`, `doctor --with-confighub`, and `map activity --with-confighub` add bounded release history, unit events, live-status freshness, and event-consumer health; `doctor` adds a scope-level `delivery` rollup, while `map activity` renders the same evidence as timeline rows.
 - **Controller-family coverage**: `gitops status` emits `controllerCoverage[]` for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane so absence and RBAC/API omissions stay distinguishable.
 - **Stage B back-resolution** (#440): `compare three-way --source-path <local-checkout>` populates `gitSource.file:line` for raw YAML manifests.
 - **Receipt capability** (#446 — v1 complete; #454 + #455 + #456): typed, fingerprinted, immutable evidence artifacts wrapping cub-scout evidence into an in-toto Statement v1 envelope. Three predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. `verify` / `show` / `validate` / `list` + local store with immutable canonical filenames. See [`scout-verify`](../scout-verify/SKILL.md).

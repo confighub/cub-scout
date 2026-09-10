@@ -87,11 +87,11 @@ The same release can fail in different places:
 
 | Symptom | Likely area | Start with |
 |---|---|---|
-| Release exists, but no fresh live-status writeback | event feedback/status reporting | `gitops status --with-confighub --confighub-space <space> --format json` |
-| Controller not ready, missing source, failed apply | delegated delivery | `gitops status`, `trace`, `map activity` |
+| Release exists, but no fresh live-status writeback | event feedback/status reporting | `gitops status --with-confighub --confighub-space <space> --format json`, `map activity --with-confighub --confighub-space <space>` |
+| Controller not ready, missing source, failed apply | delegated delivery | `gitops status`, `trace`, `map activity --with-confighub` |
 | Desired/rendered/live disagreement | drift or source mismatch | `compare three-way`, `compare source-truth` |
 | Generation observed but pods fail | runtime/application | `explain`, `doctor`, `scan` |
-| Action event exists before failure | operator or automation action context | `map activity --owner Flux --format json`, `trace`, `explain` |
+| Action event exists before failure | operator or automation action context | `map activity --owner Flux --format json`, `map activity --with-confighub --confighub-space <space>`, `trace`, `explain` |
 
 cub-scout surfaces this evidence; it does not own the final application-success
 policy.

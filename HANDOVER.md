@@ -32,6 +32,9 @@ Highlights:
   scope-level `delivery` rollup, and promotes concrete failed/stale delivery
   feedback, failed unit events, and unhealthy observed event consumers into top
   issues.
+- `map activity --with-confighub` projects the same bounded evidence into
+  timeline rows for live-status writeback, release publication, unit events,
+  event-consumer health, and structured omissions.
 - Live-status writeback separates `deliveryVerdict` from
   `applicationHealthVerdict`, includes freshness, and downgrades stale
   successful reports to `WATCH`.
@@ -60,8 +63,8 @@ Highlights:
   and a deployable read-only Kubernetes example in `examples/bot/`.
 
 Remaining follow-up: carry object-level release/live-status correlation into
-`map activity` and receipts once stable identifiers link release events,
-controller sources, and workloads without guessing; add aggregate
+receipts and workload-level activity joins once stable identifiers link release
+events, controller sources, and workloads without guessing; add aggregate
 controller-resource failures with generated-artifact lineage to `doctor` when
 safe.
 
@@ -319,7 +322,8 @@ delivery-evidence and bot-mode release candidate):
 
 **Recently closed arcs:**
 - Post-v2.7 delivery-evidence release candidate in this worktree:
-  `gitops status --with-confighub`, MCP release/event/live-status tools,
+  `gitops status --with-confighub`, `doctor --with-confighub`,
+  `map activity --with-confighub`, MCP release/event/live-status tools,
   MCP `gitops_status`, MCP source-truth strategy parity, README
   five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`.
 - ~~**`#500`**~~ — live delivery observability release slice. **Closed via `#500`** on 2026-07-09.
@@ -333,7 +337,7 @@ delivery-evidence and bot-mode release candidate):
 - Aggregate controller-resource failures as top-level `doctor` findings where controller status refs expose source/generated-artifact lineage.
 - Audited action events as history and receipt supporting evidence.
 - Broader source-freshness metadata for snapshot, watch, summary, and receipt-backed reads.
-- ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, and object-level `trace` / `explain --with-confighub` readers; deeper OCI release-to-workload correlation for `map activity` and receipts remains a `#502` follow-up. Direct observer cursors remain fallback-only.
+- ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, timeline `map activity --with-confighub`, and object-level `trace` / `explain --with-confighub` readers; deeper OCI release-to-workload correlation for receipts and workload-level activity joins remains a `#502` follow-up. Direct observer cursors remain fallback-only.
 - Deeper controller-family parity rules where controllers lack status, source, event, or generation evidence. The first `gitops status` coverage ledger is shipped; object-level parity remains open.
 - Modelplane-on-Crossplane hardening: trace now surfaces substrate evidence on Modelplane-owned resources; remaining work is source/generation evidence, receipts, watch/bot parity, and structured omissions where deeper Crossplane layers cannot be joined safely.
 
@@ -343,7 +347,7 @@ delivery-evidence and bot-mode release candidate):
 
 **Open tracked issues:**
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution (`gitSource.file:line` / `sourceMapRef` honesty markers).
-- **`#502`** — initial ConfigHub history/live-status/event-consumer evidence readers shipped on `gitops status --with-confighub`, `doctor --with-confighub`, and object-level `trace` / `explain --with-confighub`; deeper release-to-controller-to-workload correlation remains.
+- **`#502`** — initial ConfigHub history/live-status/event-consumer evidence readers shipped on `gitops status --with-confighub`, `doctor --with-confighub`, timeline `map activity --with-confighub`, and object-level `trace` / `explain --with-confighub`; deeper release-to-controller-to-workload correlation remains.
 - **`#475`** — Blog/documentation publication series for introducing cub-scout.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout JSON outputs. Design rather than code.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).

@@ -27,7 +27,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | v0.19 | Shell completion, map hooks, scan --lifecycle-hazards, bundle summarize |
 | v0.20 | Flux operator interop read-only slice (`map cronjobs/jobs/actions/activity/previews`, `trace --artifacts`) |
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
-| v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, and `explain`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
+| v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, `explain`, and `map activity`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
 
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.
@@ -613,10 +613,10 @@ Stable JSON fields per action:
 
 ## cub-scout map activity
 
-Show normalized activity from Flux/Argo/Sveltos/Modelplane/aggregate delivery resources/Helm/events, sorted descending by time.
+Show normalized activity from Flux/Argo/Sveltos/Modelplane/aggregate delivery resources/Helm/events, sorted descending by time. With `--with-confighub`, include bounded ConfigHub delivery timeline rows.
 
 ```bash
-cub-scout map activity [--namespace <ns>] [--owner Flux|ArgoCD|Sveltos|Modelplane|Helm|Crossplane|kro|ConfigHub|Native] [--since 24h] [--format ascii|json|md]
+cub-scout map activity [--namespace <ns>] [--owner Flux|ArgoCD|Sveltos|Modelplane|Helm|Crossplane|kro|ConfigHub|Native] [--since 24h] [--format ascii|json|md] [--with-confighub] [--confighub-space <space>] [--confighub-since 24h] [--confighub-stale-after 15m]
 ```
 
 Stable JSON fields per event:
@@ -631,6 +631,20 @@ Stable JSON fields per event:
 - `actor` (optional; audited action events only)
 - `subject` (optional; audited action events only)
 - `actionEvidence` (optional; raw action annotations not otherwise modeled)
+- `deliveryEvidence` (optional; ConfigHub rows only when `--with-confighub`)
+
+ConfigHub activity rows use these `source` values:
+- `confighub.liveStatus`
+- `confighub.release`
+- `confighub.unitEvent`
+- `confighub.eventConsumer`
+- `confighub.omission`
+
+`deliveryEvidence` contains row-specific ConfigHub details and follows the
+same bounded read rules as `gitops status --with-confighub`: current cub space
+by default, explicit `--confighub-space '*'` for all spaces, release/unit-event
+queries bounded by `--confighub-since`, stale live-status handling controlled
+by `--confighub-stale-after`, and omissions instead of inferred status.
 
 ---
 

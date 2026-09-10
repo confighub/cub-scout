@@ -135,12 +135,13 @@ These rows are mirrored in the README user-question table.
    Deployment evidence, live-status freshness, and malformed/absent writeback.
 4. [x] Add a normalized evidence model for bounded external
    history/consumer/writeback observations.
-5. [x] Wire an initial user-visible read-only surface:
-   `gitops status --with-confighub`.
-6. [ ] Add deeper object-level correlation to `trace`, `explain`,
-   `map activity`, `doctor`, and receipts once stable identifiers link release
-   events, Space writeback, controller sources, and workload objects without
-   guessing.
+5. [x] Wire user-visible read-only surfaces:
+   `gitops status --with-confighub`, `doctor --with-confighub`,
+   `trace --with-confighub`, `explain --with-confighub`, and
+   `map activity --with-confighub`.
+6. [ ] Add deeper object-level correlation to receipts and workload-level
+   activity joins once stable identifiers link release events, Space writeback,
+   controller sources, and workload objects without guessing.
 
 ## Open Questions
 

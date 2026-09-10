@@ -50,8 +50,9 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
-| GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` JSON |
+| GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
 | Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub` and `explain --with-confighub` JSON |
+| Map activity delivery rows | This doc (below) | Embedded in `map activity --with-confighub` JSON rows |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 | MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
 
@@ -691,11 +692,13 @@ instead of silently claiming absence.
 
 ## GitOps Delivery Evidence Contract
 
-When `gitops status --with-confighub --format json` or
-`doctor --with-confighub --format json` is used, the output may include an
-additive `deliveryEvidence` object. It joins bounded ConfigHub history/readback
-evidence with ordinary Kubernetes observation. It does not replace Argo, Flux,
-Sveltos, Modelplane, or Kubernetes as the status authority.
+When `gitops status --with-confighub --format json`,
+`doctor --with-confighub --format json`, or
+`map activity --with-confighub --format json` is used, the output may include
+ConfigHub delivery evidence. `gitops status` and `doctor` expose the shared
+bounded `deliveryEvidence` envelope; `map activity` projects that same evidence
+into timeline rows. This evidence does not replace Argo, Flux, Sveltos,
+Modelplane, or Kubernetes as the status authority.
 
 ### Schema Sketch
 
@@ -788,6 +791,65 @@ Sveltos, Modelplane, or Kubernetes as the status authority.
 
 The command never consumes ConfigHub event cursors and never mutates ConfigHub,
 the event consumer, the delivery controller, or Kubernetes.
+
+### Map activity delivery rows
+
+`map activity --with-confighub --format json` keeps the normal activity payload
+shape:
+
+```json
+{
+  "activity": [
+    {
+      "time": "2026-09-10T11:59:00Z",
+      "source": "confighub.liveStatus",
+      "resource": "ConfigHubLiveStatus/prod/api",
+      "action": "delivery-status",
+      "result": "pending",
+      "owner": "ConfigHub",
+      "message": "app=api sync=OutOfSync health=Healthy op=Running delivery=WATCH app-health=PASS freshness=fresh revision=sha256:abc",
+      "deliveryEvidence": {
+        "kind": "liveStatus",
+        "namespace": "prod",
+        "space": "prod",
+        "spaceId": "sp-123",
+        "app": "api",
+        "syncStatus": "OutOfSync",
+        "healthStatus": "Healthy",
+        "operationPhase": "Running",
+        "freshness": "fresh",
+        "deliveryVerdict": "WATCH",
+        "applicationHealthVerdict": "PASS"
+      }
+    }
+  ],
+  "count": 1
+}
+```
+
+ConfigHub activity row `source` values:
+
+| Source | `deliveryEvidence.kind` | Meaning |
+|---|---|---|
+| `confighub.liveStatus` | `liveStatus` | Latest delivery/application-health writeback observed on a ConfigHub Space annotation. |
+| `confighub.release` | `release` | Recent ConfigHub release publication row within the bounded lookback window. |
+| `confighub.unitEvent` | `unitEvent` | Recent ConfigHub unit event row within the bounded lookback window. |
+| `confighub.eventConsumer` | `eventConsumer` | Label-selected in-cluster event-consumer Deployment health. |
+| `confighub.omission` | `omission` | Missing, inaccessible, malformed, stale, disconnected, or trimmed evidence surfaced as a timeline fact. |
+
+Field rules:
+
+| Field | Rule |
+|---|---|
+| `deliveryEvidence.kind` | One of `liveStatus`, `release`, `unitEvent`, `eventConsumer`, or `omission`. |
+| `deliveryEvidence.namespace` | The explicit Kubernetes namespace scope used for the collection, when supplied. It is not inferred from ConfigHub space names. |
+| `result` | Timeline rendering bucket: `success`, `pending`, `failed`, `inconclusive`, or `normal`, derived from the row's observed status/verdict only. |
+| `owner` | `ConfigHub` for these rows so `--owner ConfigHub` can select them. |
+| `source` | Stable row source; consumers should dispatch on `source` or `deliveryEvidence.kind`, not parse `message`. |
+
+Namespace filtering remains conservative: ConfigHub rows match
+`--namespace <ns>` only when the row carries that explicit namespace scope.
+The command never consumes ConfigHub event cursors.
 
 ## Resource Delivery Evidence Contract
 

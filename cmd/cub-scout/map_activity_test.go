@@ -7,7 +7,9 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -72,5 +74,166 @@ func TestCollectEventActivityIncludesAuditedAction(t *testing.T) {
 	}
 	if !strings.Contains(row.Message, "action=restart") || !strings.Contains(row.Message, "actor=operator@example.com") {
 		t.Fatalf("Message = %q, want action detail", row.Message)
+	}
+}
+
+func TestGitOpsDeliveryEvidenceToActivityRows(t *testing.T) {
+	observedAt := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
+	evidence := &GitOpsDeliveryEvidence{
+		ObservedAt: observedAt,
+		Scope: GitOpsDeliveryEvidenceScope{
+			Namespace:  "prod",
+			Space:      "payments-prod",
+			Since:      "24h",
+			StaleAfter: "15m",
+			MaxItems:   10,
+		},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				SpaceID:                  "sp-123",
+				App:                      "payments-api",
+				SyncStatus:               "OutOfSync",
+				HealthStatus:             "Healthy",
+				OperationPhase:           "Running",
+				ObservedAt:               "2026-09-10T11:59:00Z",
+				Freshness:                "fresh",
+				DeliveryVerdict:          agent.VerdictWATCH,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+			Releases: []ConfigHubReleaseEvidence{{
+				Slug:           "release-42",
+				ReleaseID:      "rel-42",
+				Space:          "payments-prod",
+				SpaceID:        "sp-123",
+				Target:         "prod",
+				TargetID:       "target-123",
+				Digest:         "sha256:abcdef",
+				BundleBaseName: "payments-api",
+				RevisionNum:    7,
+				CreatedAt:      "2026-09-10T11:57:00Z",
+			}},
+			UnitEvents: []ConfigHubUnitEventEvidence{{
+				EventID:      "evt-1",
+				Action:       "ReleasePublished",
+				Result:       "Failed",
+				Status:       "Failed",
+				Message:      "delivery failed",
+				Unit:         "payments-api",
+				UnitID:       "unit-123",
+				Space:        "payments-prod",
+				SpaceID:      "sp-123",
+				Target:       "prod",
+				TargetID:     "target-123",
+				CreatedAt:    "2026-09-10T11:56:00Z",
+				TerminatedAt: "2026-09-10T11:56:30Z",
+			}},
+		},
+		EventConsumers: []GitOpsEventConsumerEvidence{{
+			Kind:              "Deployment",
+			Name:              "argobot",
+			Namespace:         "confighub-ops",
+			Ready:             false,
+			Replicas:          1,
+			ReadyReplicas:     0,
+			AvailableReplicas: 0,
+			EvidenceLabel:     "app=argobot",
+		}},
+		Omissions: []GitOpsDeliveryEvidenceOmission{{
+			Layer:  "confighub.unitEvents",
+			Reason: "unit-event list returned no rows",
+			Impact: "recent unit-level event evidence is unavailable",
+		}},
+	}
+
+	rows := gitOpsDeliveryEvidenceToActivityRows(evidence)
+	if len(rows) != 5 {
+		t.Fatalf("len(rows) = %d, want 5: %+v", len(rows), rows)
+	}
+
+	bySource := map[string]mapActivityRow{}
+	for _, row := range rows {
+		bySource[row.Source] = row
+		if row.Owner != "ConfigHub" {
+			t.Fatalf("row %s owner = %q, want ConfigHub", row.Source, row.Owner)
+		}
+		if row.DeliveryEvidence == nil {
+			t.Fatalf("row %s has no deliveryEvidence", row.Source)
+		}
+	}
+
+	live := bySource["confighub.liveStatus"]
+	if live.Result != "pending" || live.DeliveryEvidence.DeliveryVerdict != "WATCH" || live.DeliveryEvidence.ApplicationHealthVerdict != "PASS" {
+		t.Fatalf("live row = %+v, want pending WATCH/PASS", live)
+	}
+	if live.DeliveryEvidence.Namespace != "prod" {
+		t.Fatalf("live namespace = %q, want prod", live.DeliveryEvidence.Namespace)
+	}
+
+	release := bySource["confighub.release"]
+	if release.Action != "release-published" || release.DeliveryEvidence.RevisionNum != 7 || release.DeliveryEvidence.Digest != "sha256:abcdef" {
+		t.Fatalf("release row = %+v, want release details", release)
+	}
+
+	unitEvent := bySource["confighub.unitEvent"]
+	if unitEvent.Result != "failed" || !strings.Contains(unitEvent.Message, "delivery failed") {
+		t.Fatalf("unit event row = %+v, want failed message", unitEvent)
+	}
+
+	consumer := bySource["confighub.eventConsumer"]
+	if consumer.Result != "failed" || consumer.DeliveryEvidence.Ready == nil || *consumer.DeliveryEvidence.Ready {
+		t.Fatalf("consumer row = %+v, want explicit ready=false", consumer)
+	}
+	if consumer.DeliveryEvidence.Namespace != "prod" {
+		t.Fatalf("consumer deliveryEvidence namespace = %q, want collection scope prod", consumer.DeliveryEvidence.Namespace)
+	}
+
+	omission := bySource["confighub.omission"]
+	if omission.Result != "inconclusive" || omission.DeliveryEvidence.Layer != "confighub.unitEvents" {
+		t.Fatalf("omission row = %+v, want unitEvents omission", omission)
+	}
+}
+
+func TestMapActivityMatchesNamespaceKeepsConfigHubScopeExplicit(t *testing.T) {
+	row := mapActivityRow{
+		Source:   "confighub.release",
+		Resource: "Release/prod/release-42",
+		DeliveryEvidence: &mapActivityDeliveryEvidence{
+			Namespace: "apps",
+			Space:     "prod",
+		},
+	}
+
+	if !mapActivityMatchesNamespace(row, "apps") {
+		t.Fatal("expected ConfigHub activity row to match explicit namespace scope")
+	}
+	if mapActivityMatchesNamespace(row, "prod") {
+		t.Fatal("space name must not satisfy namespace filter for ConfigHub rows")
+	}
+}
+
+func TestMapActivityDeliveryOptionsRejectInvalidSince(t *testing.T) {
+	oldNamespace := mapNamespace
+	oldSpace := mapActivityConfigHubSpace
+	oldSince := mapActivityConfigHubSince
+	oldStaleAfter := mapActivityConfigHubStaleAfter
+	oldNow := gitopsNowFn
+	t.Cleanup(func() {
+		mapNamespace = oldNamespace
+		mapActivityConfigHubSpace = oldSpace
+		mapActivityConfigHubSince = oldSince
+		mapActivityConfigHubStaleAfter = oldStaleAfter
+		gitopsNowFn = oldNow
+	})
+
+	mapNamespace = "prod"
+	mapActivityConfigHubSpace = "payments-prod"
+	mapActivityConfigHubSince = "not-a-window"
+	mapActivityConfigHubStaleAfter = "15m"
+	gitopsNowFn = func() time.Time { return time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC) }
+
+	_, err := mapActivityDeliveryOptionsFromFlags(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "invalid --confighub-since") {
+		t.Fatalf("err = %v, want invalid --confighub-since", err)
 	}
 }
