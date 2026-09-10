@@ -249,14 +249,15 @@ const (
 // pkg/agent layer (the structured compareResourceResult lives in
 // cmd/cub-scout) so it's an interface{}; the CLI populates it.
 type Evidence struct {
-	CompareThreeWay interface{}                 `json:"compareThreeWay,omitempty"`
-	Attribution     *FieldMutationAttribution   `json:"attribution,omitempty"`
-	SourceTruth     *SourceTruthEvidence        `json:"sourceTruth,omitempty"`
-	GitSource       *GitSourceAnchor            `json:"gitSource,omitempty"`
-	ObjectSet       *ObjectSetEvidence          `json:"objectSet,omitempty"`
-	ObjectSetDiff   *ObjectSetDiffEvidence      `json:"objectSetDiff,omitempty"`
-	Workloads       *WorkloadsConvergedEvidence `json:"workloads,omitempty"`
-	Prerequisites   *PrerequisitesEvidence      `json:"prerequisites,omitempty"`
+	CompareThreeWay  interface{}                 `json:"compareThreeWay,omitempty"`
+	Attribution      *FieldMutationAttribution   `json:"attribution,omitempty"`
+	SourceTruth      *SourceTruthEvidence        `json:"sourceTruth,omitempty"`
+	GitSource        *GitSourceAnchor            `json:"gitSource,omitempty"`
+	DeliveryEvidence *TraceDeliveryEvidence      `json:"deliveryEvidence,omitempty"`
+	ObjectSet        *ObjectSetEvidence          `json:"objectSet,omitempty"`
+	ObjectSetDiff    *ObjectSetDiffEvidence      `json:"objectSetDiff,omitempty"`
+	Workloads        *WorkloadsConvergedEvidence `json:"workloads,omitempty"`
+	Prerequisites    *PrerequisitesEvidence      `json:"prerequisites,omitempty"`
 }
 
 // Omission is one structured gap the receipt does not claim. The

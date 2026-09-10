@@ -1037,6 +1037,8 @@ never replaces controller or Kubernetes status. `liveStatuses[]` separates
 downgrade to `WATCH`. Missing ConfigHub connection, missing space scope,
 absent event consumer, absent writeback, malformed annotations, and failed
 history reads are represented as structured omissions.
+For single-resource receipts, the resource-scoped form is embedded under
+`predicate.evidence.deliveryEvidence` and covered by the receipt fingerprint.
 
 ### Exit Codes
 
@@ -1349,6 +1351,10 @@ cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flag
 | `--ttl` | string | empty | Stamp immutable receipt freshness (`observedAt`, `expiresAt`, `ttl`) |
 | `--no-extras` | bool | false | For `object-set-matches`, also check for extra live objects of rendered kinds in scope |
 | `--normalization-profile` | string | empty | Apply a named server-normalization profile symmetrically before object-set comparison and digesting |
+| `--with-confighub` | bool | false | Single-resource receipts only: attach bounded ConfigHub delivery evidence under `predicate.evidence.deliveryEvidence` when exact correlation exists |
+| `--confighub-space` | string | empty | ConfigHub space for delivery evidence. Defaults to resource ConfigHub space; `*` must be explicit and is not treated as exact object-level space correlation |
+| `--confighub-since` | string | `24h` | Lookback window for ConfigHub release/event evidence. Invalid values reject before receipt emission |
+| `--confighub-stale-after` | string | `15m` | Staleness threshold for ConfigHub live-status writeback. Invalid values reject before receipt emission |
 | `--strategy` | string | empty | Required when `--predicate source-truth-pass`; one of 9 strategies |
 | `--since` | string | empty | Required when `--predicate no-manual-edits-since`; RFC 3339 timestamp |
 | `--at-commit` | string | empty | Override the spec anchor revision (forensic-snapshot mode) |
@@ -1376,6 +1382,22 @@ cub-scout NEVER infers a strategy or a cutoff. Pass `--strategy` / `--since` exp
 `workloads-converged` and `prerequisites-met` are explicit install receipts:
 pass `--predicate workloads-converged` with `--file`, or pass
 `--prerequisites <path>` for `prerequisites-met`.
+
+#### ConfigHub delivery evidence
+
+`receipt verify <kind>/<name> --with-confighub` attaches the same
+resource-scoped `deliveryEvidence` model used by `trace --with-confighub` under
+`predicate.evidence.deliveryEvidence`. This field is fingerprint-covered and
+therefore becomes part of the immutable receipt. It is supporting evidence only:
+the receipt predicate verdict still means the selected predicate's verdict, not
+"the application is healthy" or "the delivery controller succeeded."
+
+The evidence reader is opt-in, read-only, and bounded by ConfigHub space plus
+time window. Invalid `--confighub-since` or `--confighub-stale-after` values
+return exit 1 before emitting stdout, writing `--out`, or saving to the store.
+In this release, `--with-confighub` is supported only for the single-resource
+receipt form; aggregate, `--file`, and `--prerequisites` receipts reject it
+upfront rather than silently ignoring it.
 
 #### Verdicts
 

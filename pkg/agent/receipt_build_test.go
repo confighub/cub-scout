@@ -146,6 +146,62 @@ func TestBuildReceipt_HappyPath_ConnectedWithUnit(t *testing.T) {
 	}
 }
 
+func TestBuildReceipt_DeliveryEvidenceIsFingerprintCovered(t *testing.T) {
+	observedAt := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
+	makeWithDelivery := func(verdict ReceiptVerdict) BuildReceiptInput {
+		return makeReceiptInput(func(in *BuildReceiptInput) {
+			in.Evidence.DeliveryEvidence = &TraceDeliveryEvidence{
+				Source:     "confighub",
+				ObservedAt: observedAt,
+				Scope: TraceDeliveryEvidenceScope{
+					Namespace:  "prod",
+					Space:      "payments-prod",
+					Since:      "24h",
+					StaleAfter: "15m",
+					MaxItems:   10,
+				},
+				Correlation: TraceDeliveryCorrelation{
+					Application: "payments-api",
+					Space:       "payments-prod",
+					MatchedBy:   []string{"scope.space", "chain.application"},
+				},
+				LiveStatus: &TraceDeliveryLiveStatus{
+					Space:                    "payments-prod",
+					Source:                   "argobot",
+					App:                      "payments-api",
+					SyncStatus:               "Synced",
+					HealthStatus:             "Healthy",
+					OperationPhase:           "Succeeded",
+					Freshness:                "fresh",
+					DeliveryVerdict:          verdict,
+					ApplicationHealthVerdict: VerdictPASS,
+				},
+			}
+		})
+	}
+
+	passStmt, err := BuildReceipt(makeWithDelivery(VerdictPASS))
+	if err != nil {
+		t.Fatalf("BuildReceipt PASS delivery: %v", err)
+	}
+	watchStmt, err := BuildReceipt(makeWithDelivery(VerdictWATCH))
+	if err != nil {
+		t.Fatalf("BuildReceipt WATCH delivery: %v", err)
+	}
+	if passStmt.Predicate.Evidence.DeliveryEvidence == nil {
+		t.Fatal("delivery evidence missing from receipt")
+	}
+	if err := VerifyStatementFingerprint(passStmt); err != nil {
+		t.Fatalf("PASS delivery receipt fingerprint must verify: %v", err)
+	}
+	if err := VerifyStatementFingerprint(watchStmt); err != nil {
+		t.Fatalf("WATCH delivery receipt fingerprint must verify: %v", err)
+	}
+	if passStmt.Predicate.Fingerprint == watchStmt.Predicate.Fingerprint {
+		t.Fatalf("delivery evidence changed but fingerprint stayed equal: %s", passStmt.Predicate.Fingerprint)
+	}
+}
+
 func TestBuildReceipt_StandaloneMode_OmitsConfigHubSubject(t *testing.T) {
 	in := makeReceiptInput(func(in *BuildReceiptInput) {
 		in.Connected = false

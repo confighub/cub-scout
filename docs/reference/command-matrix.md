@@ -108,10 +108,10 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--kind` | Filter by resource kind | `map list` |
 | `--owner` | Filter by owner type | `map list`, `map cronjobs`, `map jobs`, `map activity` |
 | `--since` | Resources changed / timeline window | `map list`, `map activity` |
-| `--with-confighub` | Add bounded ConfigHub delivery evidence | `doctor`, `gitops status`, `trace`, `explain`, `map activity` |
-| `--confighub-space` | Scope ConfigHub delivery evidence by space | `doctor`, `gitops status`, `trace`, `explain`, `map activity` |
-| `--confighub-since` | Bound ConfigHub release/event reads | `doctor`, `gitops status`, `trace`, `explain`, `map activity` |
-| `--confighub-stale-after` | Mark live-status writeback stale after this duration | `doctor`, `gitops status`, `trace`, `explain`, `map activity` |
+| `--with-confighub` | Add bounded ConfigHub delivery evidence | `doctor`, `gitops status`, `trace`, `explain`, `map activity`, `receipt verify` |
+| `--confighub-space` | Scope ConfigHub delivery evidence by space | `doctor`, `gitops status`, `trace`, `explain`, `map activity`, `receipt verify` |
+| `--confighub-since` | Bound ConfigHub release/event reads | `doctor`, `gitops status`, `trace`, `explain`, `map activity`, `receipt verify` |
+| `--confighub-stale-after` | Mark live-status writeback stale after this duration | `doctor`, `gitops status`, `trace`, `explain`, `map activity`, `receipt verify` |
 | `--count` | Output count only | `map list` |
 | `--names-only` | Output names only | `map list` |
 | `--stale-after` | Preview staleness threshold | `map previews` |

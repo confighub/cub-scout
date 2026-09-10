@@ -22,24 +22,28 @@ import (
 
 // receipt flags
 var (
-	receiptNamespace         string
-	receiptPredicate         string
-	receiptAtCommit          string
-	receiptStrategy          string
-	receiptSince             string
-	receiptFormat            string
-	receiptOut               string
-	receiptSave              bool
-	receiptSaveDir           string
-	receiptFailOn            string
-	receiptInputAttestations []string
-	receiptGraceWindow       string
-	receiptPrerequisitesFile string
-	receiptTTL               string
-	receiptTTLDur            time.Duration
-	receiptReferenceEvidence []string
-	receiptNoExtras          bool
-	receiptNormalizationProf string
+	receiptNamespace           string
+	receiptPredicate           string
+	receiptAtCommit            string
+	receiptStrategy            string
+	receiptSince               string
+	receiptFormat              string
+	receiptOut                 string
+	receiptSave                bool
+	receiptSaveDir             string
+	receiptFailOn              string
+	receiptInputAttestations   []string
+	receiptGraceWindow         string
+	receiptPrerequisitesFile   string
+	receiptTTL                 string
+	receiptTTLDur              time.Duration
+	receiptReferenceEvidence   []string
+	receiptNoExtras            bool
+	receiptNormalizationProf   string
+	receiptWithConfigHub       bool
+	receiptConfigHubSpace      string
+	receiptConfigHubSince      string
+	receiptConfigHubStaleAfter string
 )
 
 // runReceiptVerifyDispatch is the shared entry point for the receipt
@@ -64,10 +68,16 @@ func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
 	}
 
 	if strings.TrimSpace(receiptPrerequisitesFile) != "" || agent.PredicateName(strings.TrimSpace(receiptPredicate)) == agent.PredicatePrerequisitesMet {
+		if receiptWithConfigHub {
+			return fmt.Errorf("--with-confighub delivery evidence is supported only for single-resource receipt verify in this release")
+		}
 		return runReceiptVerifyPrerequisites(cmd, args)
 	}
 
 	if strings.TrimSpace(receiptObjectSetFile) != "" {
+		if receiptWithConfigHub {
+			return fmt.Errorf("--with-confighub delivery evidence is supported only for single-resource receipt verify in this release")
+		}
 		if agent.PredicateName(strings.TrimSpace(receiptPredicate)) == agent.PredicateWorkloadsConverged {
 			return runReceiptVerifyWorkloadsConverged(cmd, args)
 		}
@@ -80,6 +90,9 @@ func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if isAgg {
+			if receiptWithConfigHub {
+				return fmt.Errorf("--with-confighub delivery evidence is supported only for single-resource receipt verify in this release")
+			}
 			return runReceiptVerifyScoped(cmd, spec, refs)
 		}
 	}
@@ -95,6 +108,10 @@ func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
 // Function-variable seam for tests. Production reads from the cluster via
 // the dynamic client; tests swap with a fake returning prefab objects.
 var loadReceiptLiveFn = loadReceiptLive
+
+var collectReceiptDeliveryEvidenceFn = collectReceiptDeliveryEvidence
+
+var newReceiptDeliveryDynamicClientFn = newReceiptDeliveryDynamicClient
 
 // collectSourceTruthForReceiptFn is the function-variable seam used by the
 // source-truth-pass predicate path. Production wires it to the live
@@ -154,6 +171,7 @@ Examples:
   cub-scout receipt verify deploy/api -n prod --strategy git-argo
   cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
   cub-scout receipt verify deploy/api -n prod --predicate applied-matches-spec --format json --out api.receipt.json
+  cub-scout receipt verify deploy/api -n prod --with-confighub --confighub-space payments-prod --format json
   cub-scout receipt verify --file out/manifests --scope namespace/redis --format json --out install.receipt.json
   cub-scout receipt verify --file out/manifests --scope namespace/redis --predicate workloads-converged --fail-on any-non-pass
   cub-scout receipt verify --prerequisites prereqs.yaml --scope namespace/redis --fail-on any-non-pass
@@ -175,6 +193,10 @@ func init() {
 	receiptVerifyCmd.Flags().StringVar(&receiptTTL, "ttl", "", "Observation-freshness boundary, e.g. 1h. When set, the receipt records an immutable freshness{observedAt,expiresAt,ttl} so a consumer can tell a fresh receipt from a stale one. Empty means the receipt makes no freshness claim.")
 	receiptVerifyCmd.Flags().BoolVar(&receiptNoExtras, "no-extras", false, "For --predicate object-set-matches: also run the closed-world check — flag live objects of the rendered kinds in scope that are not in the desired set (resolves the extra-live-object-coverage omission). Extras downgrade a clean PASS to WATCH. Skips owner-referenced children and system objects.")
 	receiptVerifyCmd.Flags().StringVar(&receiptNormalizationProf, "normalization-profile", "", "Named server-normalization profile applied symmetrically to desired and live objects before object-set comparison and digesting (e.g. k8s-zero-defaults/v1). Recorded on the receipt. Empty means raw comparison.")
+	receiptVerifyCmd.Flags().BoolVar(&receiptWithConfigHub, "with-confighub", false, "Attach bounded ConfigHub delivery evidence as receipt supporting evidence when exact resource correlation exists")
+	receiptVerifyCmd.Flags().StringVar(&receiptConfigHubSpace, "confighub-space", "", "ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)")
+	receiptVerifyCmd.Flags().StringVar(&receiptConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
+	receiptVerifyCmd.Flags().StringVar(&receiptConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 	receiptVerifyCmd.Flags().StringVar(&receiptAtCommit, "at-commit", "", "Override the spec anchor revision (Git SHA). When empty, the controller-resolved anchor is used as both the spec and the evidence.")
 	receiptVerifyCmd.Flags().StringVar(&receiptStrategy, "strategy", "", "Source-truth strategy for source-truth-pass (e.g. git-argo). cub-scout does not infer the strategy.")
 	receiptVerifyCmd.Flags().StringVar(&receiptSince, "since", "", "RFC 3339 cutoff for no-manual-edits-since (e.g. 2026-05-22T00:00:00Z).")
@@ -258,6 +280,14 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	if ns == "" {
 		ns = "default"
 	}
+	var deliveryFlags traceConfigHubDeliveryFlags
+	if receiptWithConfigHub {
+		var flagErr error
+		deliveryFlags, flagErr = receiptDeliveryFlagsFromGlobals(ns)
+		if flagErr != nil {
+			return flagErr
+		}
+	}
 
 	ctx := cmd.Context()
 
@@ -283,6 +313,13 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	evidence := agent.Evidence{
 		Attribution: &attribution,
 		GitSource:   gitSource,
+	}
+	if receiptWithConfigHub {
+		deliveryEvidence, deliveryErr := collectReceiptDeliveryEvidenceFn(ctx, live, owner, deliveryFlags)
+		if deliveryErr != nil {
+			return fmt.Errorf("collect ConfigHub delivery evidence: %w", deliveryErr)
+		}
+		evidence.DeliveryEvidence = deliveryEvidence
 	}
 
 	// source-truth evidence is populated only when the caller signaled
@@ -440,6 +477,137 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func receiptDeliveryFlagsFromGlobals(namespace string) (traceConfigHubDeliveryFlags, error) {
+	since := strings.TrimSpace(receiptConfigHubSince)
+	if since == "" {
+		since = "24h"
+	}
+	if _, err := parseHistorySince(since); err != nil {
+		return traceConfigHubDeliveryFlags{}, fmt.Errorf("invalid --confighub-since: %w", err)
+	}
+
+	staleAfter := strings.TrimSpace(receiptConfigHubStaleAfter)
+	if staleAfter == "" {
+		staleAfter = "15m"
+	}
+	if _, err := parseHistorySince(staleAfter); err != nil {
+		return traceConfigHubDeliveryFlags{}, fmt.Errorf("invalid --confighub-stale-after: %w", err)
+	}
+
+	return traceConfigHubDeliveryFlags{
+		Enabled:    true,
+		Namespace:  strings.TrimSpace(namespace),
+		Space:      strings.TrimSpace(receiptConfigHubSpace),
+		Since:      since,
+		StaleAfter: staleAfter,
+	}, nil
+}
+
+func collectReceiptDeliveryEvidence(ctx context.Context, live *unstructured.Unstructured, owner agent.Ownership, flags traceConfigHubDeliveryFlags) (*agent.TraceDeliveryEvidence, error) {
+	if live == nil {
+		return nil, fmt.Errorf("nil live object")
+	}
+	result := receiptTraceResultFromLive(live, owner)
+	if result == nil {
+		return nil, nil
+	}
+
+	correlation := buildTraceDeliveryCorrelation(result)
+	opts, preflightOmissions := traceGitOpsDeliveryOptions(flags, correlation)
+	if opts.Now.IsZero() {
+		opts.Now = gitopsNowFn().UTC()
+	}
+
+	dynClient, dynErr := newReceiptDeliveryDynamicClientFn()
+	if dynErr != nil {
+		preflightOmissions = append(preflightOmissions, agent.TraceDeliveryOmission{
+			Layer:  "kubernetes.client",
+			Reason: dynErr.Error(),
+			Impact: "event-consumer health is omitted from the receipt",
+		})
+	}
+
+	var raw *GitOpsDeliveryEvidence
+	if strings.TrimSpace(opts.Space) == "" {
+		raw = &GitOpsDeliveryEvidence{
+			ObservedAt: opts.Now,
+			Scope: GitOpsDeliveryEvidenceScope{
+				Namespace:  opts.Namespace,
+				Space:      opts.Space,
+				Since:      opts.Since,
+				StaleAfter: opts.StaleAfter.String(),
+				MaxItems:   opts.MaxItems,
+			},
+			Notes: []string{
+				"ConfigHub delivery evidence was requested, but release/unit-event/live-status reads require an explicit object or flag space.",
+			},
+		}
+		consumers, omissions := collectGitOpsEventConsumerEvidence(ctx, dynClient, opts.Namespace)
+		raw.EventConsumers = consumers
+		raw.Omissions = append(raw.Omissions, omissions...)
+	} else {
+		raw = collectGitOpsDeliveryEvidence(ctx, dynClient, opts)
+	}
+
+	return correlateTraceDeliveryEvidence(result, raw, correlation, preflightOmissions), nil
+}
+
+func receiptTraceResultFromLive(live *unstructured.Unstructured, owner agent.Ownership) *agent.TraceResult {
+	if live == nil {
+		return nil
+	}
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{
+			Kind:      live.GetKind(),
+			Name:      live.GetName(),
+			Namespace: live.GetNamespace(),
+		},
+		Tool:     receiptTraceToolForOwner(owner),
+		TracedAt: gitopsNowFn().UTC(),
+		Chain: []agent.ChainLink{
+			{
+				Kind:      live.GetKind(),
+				Name:      live.GetName(),
+				Namespace: live.GetNamespace(),
+			},
+		},
+	}
+	if owner.Type == agent.OwnerArgo && strings.TrimSpace(owner.Name) != "" {
+		result.Chain = append([]agent.ChainLink{{
+			Kind:      "Application",
+			Name:      strings.TrimSpace(owner.Name),
+			Namespace: strings.TrimSpace(owner.Namespace),
+		}}, result.Chain...)
+	}
+	enrichTraceConfigHubFromObject(result, live)
+	return result
+}
+
+func receiptTraceToolForOwner(owner agent.Ownership) string {
+	switch owner.Type {
+	case agent.OwnerArgo:
+		return "argocd"
+	case agent.OwnerFlux:
+		return "flux"
+	case agent.OwnerConfigHub:
+		return "confighub"
+	default:
+		return strings.TrimSpace(owner.Type)
+	}
+}
+
+func newReceiptDeliveryDynamicClient() (dynamic.Interface, error) {
+	cfg, err := buildConfig()
+	if err != nil {
+		return nil, err
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return dynClient, nil
 }
 
 // parseReceiptFailOn parses the --fail-on flag value into the set of

@@ -40,7 +40,7 @@ Implicit intents the skill should catch:
 ## Standalone vs connected
 
 - **Standalone (cluster only):** all ten Observe verbs work. `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `bot`, `status` need only your current kubectl context or in-cluster service account.
-- **Connected (cluster + `cub auth login`):** `trace` and `map` gain ConfigHub unit linkage; `map activity --with-confighub` adds bounded release, unit-event, live-status, and event-consumer timeline rows; `status` shows ConfigHub session detail; `scan` can correlate findings with units.
+- **Connected (cluster + `cub auth login`):** `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` can attach object-correlated ConfigHub delivery evidence; `map activity --with-confighub` adds bounded release, unit-event, live-status, and event-consumer timeline rows; `status` shows ConfigHub session detail; `scan` can correlate findings with units.
 - **Offline (file / bundle only):** `scan --file <path>` audits manifests without a cluster; `bundle inspect` reads recorded debug bundles.
 
 ## Tool boundary
@@ -58,6 +58,7 @@ Pick by the question being asked:
 | "Is this cluster healthy at a glance?" | `cub-scout doctor` | One-screen health summary, with `--presentation human\|ai\|paired` and `--hint-mode default\|beginner\|operator` |
 | "What's in this cluster, grouped by ownership?" | `cub-scout map` (interactive TUI) | Sub-commands: `map list`, `map hooks`, `map activity`, `map orphans`, `map meaning` |
 | "What happened recently in delivery/status feedback?" | `cub-scout map activity --with-confighub --confighub-space <space>` | Timeline rows for controller activity, Kubernetes events, ConfigHub releases, unit events, live-status writeback, event-consumer health, and omissions |
+| "Can I keep the exact delivery/status observation for review?" | `cub-scout receipt verify <kind>/<name> -n <ns> --with-confighub --confighub-space <space>` | Fingerprint-covered `predicate.evidence.deliveryEvidence` on a single-resource receipt |
 | "Trace this workload back to its Git / OCI source" | `cub-scout trace <kind>/<name> -n <ns>` | Walks Deployment → Application → Git or Deployment → HelmRelease → GitRepository |
 | "Show me the runtime + ownership + git hierarchy" | `cub-scout tree` | Multi-axis composition view |
 | "Scan for risk patterns" | `cub-scout scan` | 46 built-in patterns. Variants: `--state`, `--kyverno`, `--lifecycle-hazards`, `--timing-bombs`, `--dangling`, `--file <yaml>` |

@@ -79,7 +79,7 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 - **Adopt Existing Config** (preview first) — `import --dry-run`, `import --from-bundle`, `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`
 - **Govern** (connected) — `history`, `impact`, `fleet outliers`, `summary`, `views resolve`, `audit list`, `bundle inspect/diff/timeline`, `catalog list`
 - **Integrate** — `mcp serve`, `context-pack`, `bot`
-- **Verify** — `receipt verify / show / validate / list` (typed, fingerprinted evidence; `#446` v1 complete)
+- **Verify** — `receipt verify / show / validate / list` (typed, fingerprinted evidence; `receipt verify <kind>/<name> --with-confighub` can freeze object-correlated delivery evidence under `predicate.evidence.deliveryEvidence`)
 
 ### Use `cub` for
 
@@ -103,7 +103,7 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 - **Views integration** (#391): `views resolve`, `views open`, `views project --with-reality`, `compare three-way --view`.
 - **`doctor` / `explain`** with `--presentation` and `--hint-mode`.
 - **MCP gateway** (`mcp serve`): standalone + connected tool sets, including `gitops_status` for GitOps delivery and controller-coverage evidence.
-- **ConfigHub delivery evidence**: `gitops status --with-confighub`, `doctor --with-confighub`, and `map activity --with-confighub` add bounded release history, unit events, live-status freshness, and event-consumer health; `doctor` adds a scope-level `delivery` rollup, while `map activity` renders the same evidence as timeline rows.
+- **ConfigHub delivery evidence**: `gitops status --with-confighub`, `doctor --with-confighub`, `map activity --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` add bounded release history, unit events, live-status freshness, and event-consumer health. `doctor` adds a scope-level `delivery` rollup, `map activity` renders the evidence as timeline rows, and receipts freeze object-correlated snapshots as fingerprint-covered supporting evidence.
 - **Controller-family coverage**: `gitops status` emits `controllerCoverage[]` for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane so absence and RBAC/API omissions stay distinguishable.
 - **Stage B back-resolution** (#440): `compare three-way --source-path <local-checkout>` populates `gitSource.file:line` for raw YAML manifests.
 - **Receipt capability** (#446 — v1 complete; #454 + #455 + #456): typed, fingerprinted, immutable evidence artifacts wrapping cub-scout evidence into an in-toto Statement v1 envelope. Three predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. `verify` / `show` / `validate` / `list` + local store with immutable canonical filenames. See [`scout-verify`](../scout-verify/SKILL.md).

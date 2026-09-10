@@ -51,7 +51,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
-| Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub` and `explain --with-confighub` JSON |
+| Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` JSON |
 | Map activity delivery rows | This doc (below) | Embedded in `map activity --with-confighub` JSON rows |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 | MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
@@ -693,12 +693,16 @@ instead of silently claiming absence.
 ## GitOps Delivery Evidence Contract
 
 When `gitops status --with-confighub --format json`,
-`doctor --with-confighub --format json`, or
-`map activity --with-confighub --format json` is used, the output may include
+`doctor --with-confighub --format json`,
+`trace --with-confighub --format json`,
+`explain --with-confighub --format json`,
+`map activity --with-confighub --format json`, or single-resource
+`receipt verify --with-confighub --format json` is used, the output may include
 ConfigHub delivery evidence. `gitops status` and `doctor` expose the shared
-bounded `deliveryEvidence` envelope; `map activity` projects that same evidence
-into timeline rows. This evidence does not replace Argo, Flux, Sveltos,
-Modelplane, or Kubernetes as the status authority.
+bounded `deliveryEvidence` envelope; `trace`, `explain`, and `receipt verify`
+embed a resource-scoped correlated form; `map activity` projects that same
+evidence into timeline rows. This evidence does not replace Argo, Flux,
+Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
 
 ### Schema Sketch
 
@@ -853,11 +857,15 @@ The command never consumes ConfigHub event cursors.
 
 ## Resource Delivery Evidence Contract
 
-When `trace --with-confighub --format json` or
-`explain --with-confighub --format json` is used, output may include an
+When `trace --with-confighub --format json`,
+`explain --with-confighub --format json`, or single-resource
+`receipt verify --with-confighub --format json` is used, output may include an
 additive `deliveryEvidence` object. Unlike `gitops status --with-confighub`,
-this object is correlated to one traced resource and only includes release,
-unit-event, or live-status rows when exact identifiers prove the join.
+this object is correlated to one resource and only includes release,
+unit-event, or live-status rows when exact identifiers prove the join. A
+non-wildcard `--confighub-space` may supply the exact space for live-status
+application matching; wildcard `*` is never treated as exact object-level
+space correlation.
 
 ### Schema Sketch
 
@@ -1133,11 +1141,11 @@ For the *vocabulary* — what "receipt" and "proof" mean in cub-scout, and how t
 
 The receipt surface emits typed, fingerprinted, immutable evidence artifacts
 wrapping cub-scout's existing field-level evidence (compareThreeWay,
-attribution, sourceTruth, gitSource) into a verifiable record. Current
-shipping releases use fingerprint-only integrity (SHA-256 over RFC 8785
-canonical JSON of the full in-toto Statement v1 envelope minus only
-`predicate.fingerprint`). Cryptographic signing (e.g., DSSE wrapped in a
-Sigstore Bundle, or a comparable scheme) is a future hardening direction —
+attribution, sourceTruth, gitSource, and optional deliveryEvidence) into a
+verifiable record. Current shipping releases use fingerprint-only integrity
+(SHA-256 over RFC 8785 canonical JSON of the full in-toto Statement v1 envelope
+minus only `predicate.fingerprint`). Cryptographic signing (e.g., DSSE wrapped
+in a Sigstore Bundle, or a comparable scheme) is a future hardening direction —
 purely additive to the wire format, no envelope change required.
 
 Receipts are **historical, immutable records** of past events. Updates produce
@@ -1176,7 +1184,11 @@ The wire format is the **in-toto Statement v1 envelope** (`_type =
       }
     },
     "verdict": "PASS",
-    "evidence": { "attribution": { ... }, "gitSource": { ... } },
+    "evidence": {
+      "attribution": { "...": "..." },
+      "gitSource": { "...": "..." },
+      "deliveryEvidence": { "...": "optional with --with-confighub" }
+    },
     "omissions": [],
     "inputAttestations": [],
     "nextSteps": [
@@ -1227,6 +1239,57 @@ the rendered/live object-set subject pair instead.
 | `object-set-diff` | `compare object-set --dry-from <manifest.yaml\|dir>` + live cluster access | PASS when no authored-field, added-object, or removed-object deltas are present. WATCH when only closure deltas are present. BLOCK when any shared object has authored-field deltas. INCONCLUSIVE is reserved for load/build errors before receipt construction. |
 | `workloads-converged` | `--file <manifest.yaml\|dir>` + live cluster access | PASS when every desired workload is present and kstatus reports it current. WATCH when any workload is still progressing, including stale generation status (`status.observedGeneration < metadata.generation`). BLOCK when a workload is missing, has terminal pod/container failure evidence, or has made no current-generation progress beyond `--grace-window`. INCONCLUSIVE when an API mapping or live read could not be checked. |
 | `prerequisites-met` | `--prerequisites <yaml\|json>` + live cluster access | PASS when every declared fact is present. BLOCK when any declared fact is missing. INCONCLUSIVE when any fact could not be checked. |
+
+#### `deliveryEvidence` supporting evidence
+
+Single-resource `receipt verify <kind>/<name> --with-confighub` may attach
+object-correlated delivery evidence under
+`predicate.evidence.deliveryEvidence`:
+
+```json
+{
+  "source": "confighub",
+  "observedAt": "2026-09-10T12:00:00Z",
+  "scope": {
+    "namespace": "prod",
+    "space": "payments-prod",
+    "since": "24h",
+    "staleAfter": "15m0s",
+    "maxItems": 10
+  },
+  "correlation": {
+    "application": "payments-api",
+    "space": "payments-prod",
+    "matchedBy": ["scope.space", "chain.application"]
+  },
+  "liveStatus": {
+    "source": "argobot",
+    "app": "payments-api",
+    "syncStatus": "Synced",
+    "healthStatus": "Healthy",
+    "operationPhase": "Succeeded",
+    "freshness": "fresh",
+    "deliveryVerdict": "PASS",
+    "applicationHealthVerdict": "PASS",
+    "matchedBy": ["space", "liveStatus.app==chain.application"]
+  },
+  "releases": [],
+  "unitEvents": [],
+  "eventConsumers": [],
+  "omissions": []
+}
+```
+
+The shape is the resource-scoped `deliveryEvidence` model described in
+[GitOps Delivery Evidence Contract](#gitops-delivery-evidence-contract).
+Because it lives under `predicate.evidence`, it is covered by the receipt
+fingerprint. The selected receipt predicate still owns the receipt-level
+`predicate.verdict`; delivery evidence is additive supporting evidence and does
+not make cub-scout the authority for delivery status or application health.
+
+In this release, `--with-confighub` is supported only for single-resource
+receipts. Aggregate, object-set, workload-convergence, and prerequisites
+receipts reject the flag upfront rather than silently omitting the field.
 
 #### `object-set-matches` evidence
 

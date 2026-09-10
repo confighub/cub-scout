@@ -139,9 +139,12 @@ These rows are mirrored in the README user-question table.
    `gitops status --with-confighub`, `doctor --with-confighub`,
    `trace --with-confighub`, `explain --with-confighub`, and
    `map activity --with-confighub`.
-6. [ ] Add deeper object-level correlation to receipts and workload-level
-   activity joins once stable identifiers link release events, Space writeback,
-   controller sources, and workload objects without guessing.
+6. [x] Add single-resource receipt support:
+   `receipt verify <kind>/<name> --with-confighub` embeds object-correlated
+   delivery evidence under `predicate.evidence.deliveryEvidence`.
+7. [ ] Add delivery evidence to aggregate/object-set/workload receipts and
+   workload-level activity joins once stable identifiers link release events,
+   Space writeback, controller sources, and workload objects without guessing.
 
 ## Open Questions
 

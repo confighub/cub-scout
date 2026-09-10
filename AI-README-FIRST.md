@@ -111,8 +111,9 @@ As of 2026-09-10, these areas are fully or materially shipped:
   - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`
   - MCP `compare_source_truth` strategy enum is generated from the same strategy registry as the CLI
   - `trace --with-confighub` and `explain --with-confighub` attach object-correlated `deliveryEvidence` only when exact ConfigHub unit, space, target, OCI-source, or Argo Application identifiers prove the join; otherwise they report structured omissions
+  - `receipt verify <kind>/<name> --with-confighub` attaches the same object-correlated `deliveryEvidence` under `predicate.evidence.deliveryEvidence`; the field is fingerprint-covered supporting evidence and does not change predicate verdict semantics
   - `bot` runs the `watch` engine as an in-cluster-friendly read-only observer with `CUB_SCOUT_BOT_*` environment configuration and a deployable example under `examples/bot/`
-  - Remaining work: deeper object-level correlation from releases/live-status to receipts and workload-level activity joins; aggregate controller-resource failures with generated-artifact lineage in `doctor`; Modelplane-on-Crossplane source/generation evidence, receipts, and watch/bot parity
+  - Remaining work: delivery evidence on aggregate/object-set/workload receipts, workload-level activity joins, aggregate controller-resource failures with generated-artifact lineage in `doctor`, and Modelplane-on-Crossplane source/generation evidence plus watch/bot parity
 
 - **Live delivery observability release slice — merged for v2.7.0** (`#500`)
   - README now starts with a user-question table covering ownership, delegated delivery health, intended-vs-live agreement, rollout progress, proceed/wait/retry framing, drift, delivery-vs-runtime separation, attribution, low-load repeated review paths, and receipts
@@ -140,7 +141,7 @@ As of 2026-09-10, these areas are fully or materially shipped:
   - CLI: `receipt verify / show / validate / list`; `--save` writes to immutable local store at `$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`
   - Store immutability: `O_EXCL` atomic create; `--out` rejects paths under the store; receipt validate exit codes 0/1/2 via `errors.As` dispatch
   - Read-only-triad guards: `TestReceiptPackageReadOnlyClient` static-greps every `*receipt*.go` source file for mutating K8s client methods (Codex round-6 P1 substring glob); `FilterNextSteps` drops mutating actionType / nextCommand at emit
-  - Documented in `docs/reference/json-contracts.md` § Receipt Contract (+ "v2 Extensions"); `docs/reference/commands.md` § receipt verify; `docs/reference/cli-contract.md` § receipt; new task-shaped tutorial at `docs/howto/receipts-end-to-end.md`; 4 worked examples at `examples/receipts/{ci-gate,chained,aggregate,watch-emit}/`
+  - Documented in `docs/reference/json-contracts.md` § Receipt Contract (+ "v2 Extensions"); `docs/reference/commands.md` § receipt verify; `docs/reference/cli-contract.md` § receipt; new task-shaped tutorial at `docs/howto/receipts-end-to-end.md`; worked examples at `examples/receipts/{ci-gate,chained,aggregate,watch-emit,delivery-evidence}/`
 - **AI-agent skill catalog — 42 skill files** (`#442` closed; PRs `#452`+`#457`+`#458`+`#459`+`#460`; plus `#444` Pilot consumer side closed in `#466`+`#467`+`#468`)
   - 8 verb-group skills (`scout-observe`, `scout-diagnose`, `scout-compare`, `scout-attribute`, `scout-ingest`, `scout-govern`, `scout-mcp`, `scout-verify`)
   - 9 controller-observer skills (`observe-argocd`, `observe-flux`, `observe-sveltos`, `observe-modelplane`, `observe-helm`, `observe-crossplane`, `observe-kro`, `observe-confighub-managed`, `observe-native`)
@@ -194,7 +195,7 @@ Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consu
 
 ### Recently closed (this session's arc)
 
-- Post-v2.7 delivery-evidence release candidate in this worktree: `gitops status --with-confighub`, `doctor --with-confighub`, `map activity --with-confighub`, MCP release/event/live-status tools, MCP source-truth strategy parity, README five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`
+- Post-v2.7 delivery-evidence release candidate in this worktree: `gitops status --with-confighub`, `doctor --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `map activity --with-confighub`, single-resource `receipt verify --with-confighub`, MCP release/event/live-status tools, MCP source-truth strategy parity, README five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`
 - ~~**`#500`**~~ — live delivery observability release slice, merged 2026-07-09; see `docs/releases/v2.7.0.md`
 - Earlier closed arcs: ~~**`#446`**~~ (parent), ~~**`#444`**~~, ~~**`#448`**~~, ~~**`#449`**~~, ~~**`#451`**~~ — see HANDOVER.md § "May 2026 completions — session 2026-05-25" for the PR-by-PR breakdown
 
@@ -208,7 +209,7 @@ Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consu
 
 ### Untracked v2 follow-ups (no separate issue)
 
-- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; this release candidate now joins exact object-level evidence into `trace --with-confighub` and `explain --with-confighub`, adds scope-level `doctor --with-confighub` rollups/top issues, and renders ConfigHub delivery evidence in `map activity --with-confighub`. Follow-up work should join release/event/writeback evidence into receipts and workload-level activity rows without guessing.
+- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; this release candidate now joins exact object-level evidence into `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub`, adds scope-level `doctor --with-confighub` rollups/top issues, and renders ConfigHub delivery evidence in `map activity --with-confighub`. Follow-up work should carry the same evidence into aggregate/object-set/workload receipts and workload-level activity rows without guessing.
 - **Source-truth receipt precedence edge coverage** — especially `StatusBLOCK + VerdictBLOCKED`. Not blocking; nice-to-have.
 
 ### Open tracked issues
