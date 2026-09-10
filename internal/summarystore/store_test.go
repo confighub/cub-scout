@@ -1,10 +1,13 @@
 package summarystore
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 func TestStoreWriteListRoundTrip(t *testing.T) {
@@ -71,6 +74,74 @@ func TestStoreWriteListRoundTrip(t *testing.T) {
 	}
 	if got[0].Metrics.SyncOutOfSync != 1 {
 		t.Fatalf("syncOutOfSync = %d, want 1", got[0].Metrics.SyncOutOfSync)
+	}
+	if got[0].Observation == nil {
+		t.Fatal("observation missing")
+	}
+	if got[0].Observation.Source != agent.ObservationSourceSummaryStore {
+		t.Fatalf("observation source = %q, want summary-store", got[0].Observation.Source)
+	}
+	if got[0].Observation.Mode != agent.ObservationModeSummary {
+		t.Fatalf("observation mode = %q, want summary-list", got[0].Observation.Mode)
+	}
+	if !got[0].Observation.ObservedAt.Equal(newer.Timestamp) {
+		t.Fatalf("observedAt = %s, want %s", got[0].Observation.ObservedAt, newer.Timestamp)
+	}
+	if got[0].Observation.Scope == nil || got[0].Observation.Scope.Cluster != "kind-dev" || got[0].Observation.Scope.Namespace != "prod" {
+		t.Fatalf("observation scope = %+v, want kind-dev/prod", got[0].Observation.Scope)
+	}
+}
+
+func TestStoreListBackfillsObservationForLegacyRecord(t *testing.T) {
+	now := time.Date(2026, 9, 10, 15, 0, 0, 0, time.UTC)
+	root := t.TempDir()
+	store, err := New(Options{
+		RootDir:       root,
+		RetentionDays: 30,
+		Now: func() time.Time {
+			return now
+		},
+	})
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	legacy := Record{
+		SchemaVersion: SchemaVersion,
+		Timestamp:     now.Add(-time.Hour),
+		Type:          "scan",
+		Cluster:       "kind-dev",
+		Scope:         Scope{Namespace: "prod"},
+		Metrics:       Metrics{RiskTotal: 1},
+		Source:        "cub-scout scan",
+	}
+	line, err := json.Marshal(legacy)
+	if err != nil {
+		t.Fatalf("marshal legacy record: %v", err)
+	}
+	path := store.recordFilePath(legacy)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir legacy record path: %v", err)
+	}
+	if err := os.WriteFile(path, append(line, '\n'), 0o644); err != nil {
+		t.Fatalf("write legacy record: %v", err)
+	}
+
+	got, err := store.List(Query{Since: now.Add(-24 * time.Hour)})
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("List len = %d, want 1", len(got))
+	}
+	if got[0].Observation == nil {
+		t.Fatal("legacy observation was not backfilled")
+	}
+	if got[0].Observation.Source != agent.ObservationSourceSummaryStore || got[0].Observation.Mode != agent.ObservationModeSummary {
+		t.Fatalf("observation = %+v, want summary-store/summary-list", got[0].Observation)
+	}
+	if !got[0].Observation.ObservedAt.Equal(legacy.Timestamp) {
+		t.Fatalf("observedAt = %s, want %s", got[0].Observation.ObservedAt, legacy.Timestamp)
 	}
 }
 

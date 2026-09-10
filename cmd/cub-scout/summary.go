@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/internal/summarystore"
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
 )
 
@@ -28,9 +29,10 @@ var (
 )
 
 type summaryListResult struct {
-	Since   string                `json:"since"`
-	Count   int                   `json:"count"`
-	Entries []summarystore.Record `json:"entries"`
+	Since       string                     `json:"since"`
+	Count       int                        `json:"count"`
+	Observation *agent.ObservationEvidence `json:"observation,omitempty"`
+	Entries     []summarystore.Record      `json:"entries"`
 }
 
 var summaryCmd = &cobra.Command{
@@ -115,8 +117,9 @@ func runSummaryList(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("open summary store: %w", err)
 	}
 
+	observedAt := summaryNowFn().UTC()
 	entries, err := store.List(summarystore.Query{
-		Since:     summaryNowFn().UTC().Add(-window),
+		Since:     observedAt.Add(-window),
 		Type:      strings.TrimSpace(summaryListType),
 		Cluster:   strings.TrimSpace(summaryListCluster),
 		Namespace: strings.TrimSpace(summaryListNamespace),
@@ -126,9 +129,10 @@ func runSummaryList(cmd *cobra.Command, args []string) error {
 	}
 
 	payload := summaryListResult{
-		Since:   strings.TrimSpace(summaryListSince),
-		Count:   len(entries),
-		Entries: entries,
+		Since:       strings.TrimSpace(summaryListSince),
+		Count:       len(entries),
+		Observation: buildSummaryListObservation(observedAt, summaryListCluster, summaryListNamespace),
+		Entries:     entries,
 	}
 
 	switch format {
@@ -143,6 +147,18 @@ func runSummaryList(cmd *cobra.Command, args []string) error {
 		fmt.Print(renderSummaryListASCII(payload))
 		return nil
 	}
+}
+
+func buildSummaryListObservation(observedAt time.Time, cluster, namespace string) *agent.ObservationEvidence {
+	return agent.NewObservationEvidence(
+		agent.ObservationSourceSummaryStore,
+		agent.ObservationModeSummary,
+		observedAt,
+		agent.ObservationScope{
+			Cluster:   cluster,
+			Namespace: namespace,
+		},
+	)
 }
 
 func renderSummaryListASCII(result summaryListResult) string {

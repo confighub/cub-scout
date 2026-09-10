@@ -45,9 +45,9 @@ Highlights:
 - `gitops status` now emits `controllerCoverage[]` for Flux, Argo CD,
   ConfigHub, Sveltos, and Modelplane, with found/not-found/partial/unreadable
   status plus RBAC/list omissions.
-- `map list --format json`, `snapshot`, and `watch`/`bot` events now emit
-  point-in-time `observation` metadata with source, mode, observedAt,
-  freshness, and scope.
+- `map list --format json`, `snapshot`, `summary list --format json`, and
+  `watch`/`bot` events now emit point-in-time `observation` metadata with
+  source, mode, observedAt, freshness, and scope.
 - Modelplane evidence now preserves Modelplane as the owner while surfacing
   Crossplane substrate evidence from composition labels, claim labels,
   composition-resource annotations, and verified Crossplane field managers in
@@ -74,8 +74,8 @@ Remaining follow-up: carry delivery evidence into aggregate/object-set/workload
 receipts and workload-level activity joins once stable identifiers link release
 events, controller sources, and workloads without guessing; add aggregate
 controller-resource failures with generated-artifact lineage to `doctor` when
-safe; broaden summary/receipt source freshness beyond the point-in-time
-map/snapshot/watch surfaces.
+safe; broaden receipt-backed source freshness beyond the point-in-time
+map/snapshot/summary/watch surfaces.
 
 ## July 2026 update — live delivery observability (`#500`)
 
@@ -91,8 +91,8 @@ Design decisions from this slice:
 - Aggregate resources are first-class for discovery, ownership, deployer/status views, `gitops status`, direct trace lookup, and activity timelines. Deeper source-to-generated lineage and top-level `doctor` findings remain follow-ups.
 - Action event parsing preserves raw evidence and omits missing fields. It does not infer actor, subject, groups, or action when the Event does not carry the recognized annotations.
 - The low-load repeated-question path now has point-in-time observation metadata
-  on map JSON, snapshot JSON, and watch/bot events. Broader source freshness for
-  summaries and receipt-backed reads remains future work.
+  on map JSON, snapshot JSON, summary list JSON, and watch/bot events. Broader
+  source freshness for receipt-backed reads remains future work.
 
 ## May 2026 completions — session 2026-05-25 (receipts v2 closure + Pilot consumer skills)
 
@@ -349,9 +349,9 @@ delivery-evidence and bot-mode release candidate):
 **Live delivery observability follow-ups from `#500`:**
 - Aggregate controller-resource failures as top-level `doctor` findings where controller status refs expose source/generated-artifact lineage.
 - Audited action events as history and receipt supporting evidence.
-- Broader source-freshness metadata for summary and receipt-backed reads; map
-  JSON, snapshot JSON, and watch/bot events now carry point-in-time observation
-  metadata.
+- Broader source-freshness metadata for receipt-backed reads; map JSON,
+  snapshot JSON, summary list JSON, and watch/bot events now carry
+  point-in-time observation metadata.
 - ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, timeline `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub` readers; deeper OCI release-to-workload correlation for aggregate/object-set/workload receipts and workload-level activity joins remains a `#502` follow-up. Direct observer cursors remain fallback-only.
 - Deeper controller-family parity rules where controllers lack status, source, event, or generation evidence. The first `gitops status` coverage ledger is shipped; object-level parity remains open.
 - Modelplane-on-Crossplane hardening: trace, map JSON, watch/bot events, and receipts now surface substrate evidence on Modelplane-owned resources; remaining work is source/generation evidence and structured omissions where deeper Crossplane layers cannot be joined safely.

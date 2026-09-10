@@ -50,7 +50,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
-| Observation evidence | This doc (below) | Embedded in `snapshot` JSON as `observation`, `map list` JSON entries as `observation`, and watch/bot events as `observation` |
+| Observation evidence | This doc (below) | Embedded in `snapshot` JSON as `observation`, `summary list` JSON as top-level and per-entry `observation`, `map list` JSON entries as `observation`, and watch/bot events as `observation` |
 | Platform substrate evidence | This doc (below) | Embedded in `map list` JSON as `ownerEvidence`, in watch/bot events as `owner.evidence`, and in receipts as `predicate.evidence.platformSubstrate` |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
 | Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` JSON |
@@ -701,6 +701,8 @@ the fact remains true afterward.
 Current embedding points:
 
 - `snapshot`: top-level `observation`
+- `summary list --format json`: top-level query `observation` plus per-entry
+  stored-record `observation`
 - `map list --format json`: per-entry `observation` on live Kubernetes reads
 - `watch` / `bot` events: top-level event `observation`
 
@@ -724,17 +726,22 @@ Current embedding points:
 
 | Field | Rule |
 |---|---|
-| `source` | Read source. Current live-cluster value: `kubernetes-api`. Future ConfigHub/resource-index producers must use a different explicit value. |
-| `mode` | Producing surface. Current values: `map-list`, `snapshot`, `watch-poll`. `bot` uses `watch-poll` because it runs the watch engine. |
+| `source` | Read source. Current live-cluster value: `kubernetes-api`; connected summary storage uses `summary-store`. Future ConfigHub/resource-index producers must use a different explicit value. |
+| `mode` | Producing surface. Current values: `map-list`, `snapshot`, `summary-list`, `watch-poll`. `bot` uses `watch-poll` because it runs the watch engine. |
 | `observedAt` | RFC 3339 timestamp captured once for the relevant read or poll and normalized to UTC. |
 | `freshness` | Current value: `point-in-time`. Consumers must not treat this as a TTL or cache-validity guarantee. |
 | `scope.cluster` | Cluster/context label when cub-scout can name it. |
 | `scope.namespace` | Namespace filter or resource namespace when present. |
 | `scope.kind` | Kind filter or resource kind when present. |
 
-The field is omitted when a fixture, stored record, or future producer cannot
-state the source and observation timestamp. Omission means "freshness not
-declared", not "stale" or "untrusted".
+For `summary list --format json`, top-level `observation` describes the local
+summary-store query. Each entry's `observation.observedAt` is the persisted
+summary timestamp, so callers can reuse the record without treating the query as
+a fresh Kubernetes API read.
+
+The field is omitted when a fixture or future producer cannot state the source
+and observation timestamp. Omission means "freshness not declared", not "stale"
+or "untrusted".
 
 ## Platform Substrate Evidence Contract
 

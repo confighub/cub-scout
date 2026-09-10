@@ -62,7 +62,7 @@ Implicit intents:
 | "Who changed this unit, when?" | `cub-scout history <kind>/<name> -n <ns>` | ChangeSet timeline for the unit tied to this resource. Requires connected. |
 | "What depends on this unit?" | `cub-scout impact <unit-slug>` | Blast-radius preview: which downstream units / clusters / Apps would be affected. Requires connected. |
 | "Which clusters are outliers?" | `cub-scout fleet outliers --view <view>` | Fleet-wide conformance against a View. Requires connected. |
-| "Show me the connected summary" | `cub-scout summary list --cluster <name>` | List stored connected summaries. `summary slack` formats for Slack output. |
+| "Show me the connected summary" | `cub-scout summary list --cluster <name> --format json` | List stored connected summaries with `observation` metadata. `summary slack` formats for Slack output. |
 | "Render a Hub View" | `cub-scout views resolve <url-or-uuid>` | Resolve a ConfigHub Hub View URL to its structured columns. `--scope cluster` for fleet-wide. |
 | "Audit who changed what" | `cub-scout audit list` | Audit log entries. Read-only access to ConfigHub's audit trail. |
 | "Inspect a debug bundle" | `cub-scout bundle inspect <path>` | `bundle replay / diff / summarize / timeline` for richer per-bundle reads. |
@@ -136,7 +136,7 @@ Bundle: prod-snapshot.bundle.tar
 | `history` | ChangeSet timeline + ConfigHub deep-link |
 | `impact` | Downstream unit / cluster / App graph |
 | `fleet outliers` | Per-View matrix with outlier rows highlighted |
-| `summary` | Stored connected summaries indexed by cluster / timestamp |
+| `summary` | Stored connected summaries indexed by cluster / timestamp, with `summary-store` observation metadata in JSON output |
 | `views resolve` | Structured columns from a Hub View URL |
 | `audit` | Audit log entries (read-only ConfigHub audit trail) |
 | `bundle inspect/diff/summarize/timeline` | Per-bundle structured reads |

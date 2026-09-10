@@ -171,6 +171,7 @@ For broad or repeated questions, prefer a JSON artifact that carries
 ```bash
 ./cub-scout map list --format json
 ./cub-scout snapshot --namespace <namespace>
+./cub-scout summary list --since 24h --json
 ./cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
 ```
 

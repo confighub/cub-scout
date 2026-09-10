@@ -139,8 +139,53 @@ func TestRunSummaryList_JSONOutput(t *testing.T) {
 	if len(payload.Entries) != 1 {
 		t.Fatalf("entries len = %d, want 1", len(payload.Entries))
 	}
+	if payload.Observation == nil {
+		t.Fatal("payload observation missing")
+	}
+	if payload.Observation.Source != agent.ObservationSourceSummaryStore {
+		t.Fatalf("payload observation source = %q, want summary-store", payload.Observation.Source)
+	}
+	if payload.Observation.Mode != agent.ObservationModeSummary {
+		t.Fatalf("payload observation mode = %q, want summary-list", payload.Observation.Mode)
+	}
+	if !payload.Observation.ObservedAt.Equal(now) {
+		t.Fatalf("payload observedAt = %s, want %s", payload.Observation.ObservedAt, now)
+	}
+	if payload.Observation.Scope != nil {
+		t.Fatalf("payload observation scope = %+v, want omitted without filters", payload.Observation.Scope)
+	}
 	if payload.Entries[0].Metrics.RiskTotal != 1 {
 		t.Fatalf("riskTotal = %d, want 1", payload.Entries[0].Metrics.RiskTotal)
+	}
+	if payload.Entries[0].Observation == nil {
+		t.Fatal("entry observation missing")
+	}
+	if payload.Entries[0].Observation.Source != agent.ObservationSourceSummaryStore {
+		t.Fatalf("entry observation source = %q, want summary-store", payload.Entries[0].Observation.Source)
+	}
+	if !payload.Entries[0].Observation.ObservedAt.Equal(now.Add(-2 * time.Hour)) {
+		t.Fatalf("entry observedAt = %s, want record timestamp", payload.Entries[0].Observation.ObservedAt)
+	}
+}
+
+func TestBuildSummaryListObservation(t *testing.T) {
+	observedAt := time.Date(2026, 9, 10, 15, 30, 0, 0, time.UTC)
+
+	observation := buildSummaryListObservation(observedAt, "kind-dev", "prod")
+	if observation == nil {
+		t.Fatal("observation missing")
+	}
+	if observation.Source != agent.ObservationSourceSummaryStore {
+		t.Fatalf("source = %q, want summary-store", observation.Source)
+	}
+	if observation.Mode != agent.ObservationModeSummary {
+		t.Fatalf("mode = %q, want summary-list", observation.Mode)
+	}
+	if observation.Freshness != agent.ObservationFreshnessPointInTime {
+		t.Fatalf("freshness = %q, want point-in-time", observation.Freshness)
+	}
+	if observation.Scope == nil || observation.Scope.Cluster != "kind-dev" || observation.Scope.Namespace != "prod" {
+		t.Fatalf("scope = %+v, want kind-dev/prod", observation.Scope)
 	}
 }
 

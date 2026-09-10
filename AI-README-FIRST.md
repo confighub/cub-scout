@@ -107,14 +107,14 @@ As of 2026-09-10, these areas are fully or materially shipped:
   - Live-status writeback separates delivery verdict from application-health verdict and downgrades stale successful observations to `WATCH`
   - ConfigHub release and unit-event reads are scoped by current cub space by default, support explicit `--confighub-space '*'`, and are bounded by `--confighub-since`
   - `gitops status` emits controller-family coverage for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane, including found/not-found/partial/unreadable status and RBAC/list omissions
-  - `map list --format json`, `snapshot`, and `watch`/`bot` events now emit point-in-time `observation` metadata with source, mode, observedAt, freshness, and scope
+  - `map list --format json`, `snapshot`, `summary list --format json`, and `watch`/`bot` events now emit point-in-time `observation` metadata with source, mode, observedAt, freshness, and scope
   - Modelplane evidence keeps Modelplane as the higher-level owner while surfacing Crossplane substrate evidence from composite/claim/composition-resource labels and verified Crossplane field managers in trace, map JSON, watch/bot events, and receipts
   - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`
   - MCP `compare_source_truth` strategy enum is generated from the same strategy registry as the CLI
   - `trace --with-confighub` and `explain --with-confighub` attach object-correlated `deliveryEvidence` only when exact ConfigHub unit, space, target, OCI-source, or Argo Application identifiers prove the join; otherwise they report structured omissions
   - `receipt verify <kind>/<name> --with-confighub` attaches the same object-correlated `deliveryEvidence` under `predicate.evidence.deliveryEvidence`; the field is fingerprint-covered supporting evidence and does not change predicate verdict semantics
   - `bot` runs the `watch` engine as an in-cluster-friendly read-only observer with `CUB_SCOUT_BOT_*` environment configuration and a deployable example under `examples/bot/`
-  - Remaining work: delivery evidence on aggregate/object-set/workload receipts, workload-level activity joins, aggregate controller-resource failures with generated-artifact lineage in `doctor`, broader summary/receipt source freshness, and deeper Modelplane-on-Crossplane source/generation joins
+  - Remaining work: delivery evidence on aggregate/object-set/workload receipts, workload-level activity joins, aggregate controller-resource failures with generated-artifact lineage in `doctor`, receipt-backed source-freshness ergonomics, and deeper Modelplane-on-Crossplane source/generation joins
 
 - **Live delivery observability release slice — merged for v2.7.0** (`#500`)
   - README now starts with a user-question table covering ownership, delegated delivery health, intended-vs-live agreement, rollout progress, proceed/wait/retry framing, drift, delivery-vs-runtime separation, attribution, low-load repeated review paths, and receipts
@@ -123,7 +123,7 @@ As of 2026-09-10, these areas are fully or materially shipped:
   - Aggregate resources participate in controller-resource discovery, ownership detection, map deployers/status views, `gitops status`, trace lookup, and activity timelines where the CRDs are installed
   - Audited action event parsing for Kubernetes Events with reason `WebAction`; `trace`, `explain`, and `map activity` preserve actor, subject, groups, action, and raw annotation evidence without guessing missing fields
   - New example fixture at `examples/live-delivery-observability/` and operator flow at `docs/howto/delivery-readiness-decision.md`
-  - Safe follow-ups remain tracked in `docs/roadmap.md`: aggregate failures as top-level `doctor` findings, audited actions as history/receipt evidence, broader freshness metadata for summary/receipt paths, deeper controller-family parity omissions, and object-level release/live-status correlation
+  - Safe follow-ups remain tracked in `docs/roadmap.md`: aggregate failures as top-level `doctor` findings, audited actions as history/receipt evidence, receipt-backed source-freshness ergonomics, deeper controller-family parity omissions, and object-level release/live-status correlation
 
 - **Post-v2.3 receipt / comparison / controller evidence — tagged through v2.6.0**
   - Install/object-set receipts, `workloads-converged`, `prerequisites-met`, `--ttl`, `--no-extras`, external reference evidence, normalization profiles, `receipt digest`, and `receipt chain`
@@ -204,7 +204,7 @@ Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consu
 
 - Aggregate delivery failures as `doctor` top-level findings where controller status refs expose source/generated-artifact lineage
 - Audited action events as history and receipt supporting evidence
-- Broader source freshness metadata for summary and receipt-backed reads; map JSON, snapshot JSON, and watch/bot events now carry point-in-time observation metadata
+- Broader source freshness metadata for receipt-backed reads; map JSON, snapshot JSON, summary list JSON, and watch/bot events now carry point-in-time observation metadata
 - Deeper ConfigHub release/event/live-status correlation to controller sources and workloads, no production cursor sharing, and direct observer cursors only as fallback; see `docs/proposals/event-consumer-argobot-integration.md` and `#502`
 - Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
 

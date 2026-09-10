@@ -10,9 +10,11 @@ import (
 
 const (
 	ObservationSourceKubernetesAPI = "kubernetes-api"
+	ObservationSourceSummaryStore  = "summary-store"
 
 	ObservationModeMapList   = "map-list"
 	ObservationModeSnapshot  = "snapshot"
+	ObservationModeSummary   = "summary-list"
 	ObservationModeWatchPoll = "watch-poll"
 
 	ObservationFreshnessPointInTime = "point-in-time"

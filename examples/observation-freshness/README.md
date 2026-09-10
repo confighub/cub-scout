@@ -1,7 +1,7 @@
 # Observation Freshness
 
 This example shows the shared `observation` metadata emitted by broad live
-reads and event streams.
+reads, stored summary records, and event streams.
 
 Use it when the question is:
 
@@ -27,6 +27,15 @@ See [`map-entry.json`](./map-entry.json).
 
 See [`snapshot.json`](./snapshot.json).
 
+`summary list --format json` includes top-level query observation metadata and
+per-record observation metadata from persisted summary timestamps:
+
+```bash
+./cub-scout summary list --since 24h --format json
+```
+
+See [`../connected-summary-storage/summary-list.json`](../connected-summary-storage/summary-list.json).
+
 `watch` and `bot` events include top-level event observation metadata:
 
 ```bash
@@ -40,8 +49,10 @@ See [`watch-event.json`](./watch-event.json).
 
 The shared object has:
 
-- `source`: where cub-scout read the fact from, currently `kubernetes-api`
-- `mode`: the producing surface, such as `map-list`, `snapshot`, or `watch-poll`
+- `source`: where cub-scout read the fact from, such as `kubernetes-api` or
+  `summary-store`
+- `mode`: the producing surface, such as `map-list`, `snapshot`,
+  `summary-list`, or `watch-poll`
 - `observedAt`: the collection time in UTC
 - `freshness`: currently `point-in-time`
 - `scope`: optional cluster/namespace/kind scope when known
