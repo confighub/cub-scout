@@ -70,6 +70,12 @@ type TraceResult struct {
 	// Events contains recent Kubernetes events for the traced resource.
 	// Prioritizes Warning/error events, bounded to top 5.
 	Events *ResourceEventSummary `json:"events,omitempty"`
+
+	// DeliveryEvidence contains opt-in, read-only delivery evidence correlated
+	// to this resource from external systems. It must be populated only from
+	// explicit identifiers such as ConfigHub unit labels, target IDs, source
+	// OCI refs, or controller application names.
+	DeliveryEvidence *TraceDeliveryEvidence `json:"deliveryEvidence,omitempty"`
 }
 
 // CrossReference represents a reference to a resource with a different owner
@@ -146,6 +152,108 @@ type TraceConfigHub struct {
 
 	// RemediationURL is a compatibility alias for the canonical unit detail URL
 	RemediationURL string `json:"remediationUrl,omitempty"`
+}
+
+// TraceDeliveryEvidence is resource-scoped delivery context. It is not an
+// ownership, sync, or application-health authority; consumers should treat it
+// as supporting evidence with explicit correlation rules and omissions.
+type TraceDeliveryEvidence struct {
+	Source         string                       `json:"source"`
+	ObservedAt     time.Time                    `json:"observedAt"`
+	Scope          TraceDeliveryEvidenceScope   `json:"scope"`
+	Correlation    TraceDeliveryCorrelation     `json:"correlation"`
+	LiveStatus     *TraceDeliveryLiveStatus     `json:"liveStatus,omitempty"`
+	Releases       []TraceDeliveryRelease       `json:"releases,omitempty"`
+	UnitEvents     []TraceDeliveryUnitEvent     `json:"unitEvents,omitempty"`
+	EventConsumers []TraceDeliveryEventConsumer `json:"eventConsumers,omitempty"`
+	Omissions      []TraceDeliveryOmission      `json:"omissions,omitempty"`
+	Notes          []string                     `json:"notes,omitempty"`
+}
+
+type TraceDeliveryEvidenceScope struct {
+	Namespace  string `json:"namespace,omitempty"`
+	Space      string `json:"space,omitempty"`
+	Since      string `json:"since,omitempty"`
+	StaleAfter string `json:"staleAfter,omitempty"`
+	MaxItems   int    `json:"maxItems,omitempty"`
+}
+
+type TraceDeliveryCorrelation struct {
+	UnitSlug    string   `json:"unitSlug,omitempty"`
+	UnitID      string   `json:"unitId,omitempty"`
+	Space       string   `json:"space,omitempty"`
+	SpaceID     string   `json:"spaceId,omitempty"`
+	Target      string   `json:"target,omitempty"`
+	TargetID    string   `json:"targetId,omitempty"`
+	Application string   `json:"application,omitempty"`
+	MatchedBy   []string `json:"matchedBy,omitempty"`
+}
+
+type TraceDeliveryLiveStatus struct {
+	Space                    string         `json:"space,omitempty"`
+	SpaceID                  string         `json:"spaceId,omitempty"`
+	Source                   string         `json:"source,omitempty"`
+	App                      string         `json:"app,omitempty"`
+	SyncStatus               string         `json:"syncStatus,omitempty"`
+	HealthStatus             string         `json:"healthStatus,omitempty"`
+	OperationPhase           string         `json:"operationPhase,omitempty"`
+	Revision                 string         `json:"revision,omitempty"`
+	Message                  string         `json:"message,omitempty"`
+	ObservedAt               string         `json:"observedAt,omitempty"`
+	Freshness                string         `json:"freshness,omitempty"`
+	FreshnessSeconds         int64          `json:"freshnessSeconds,omitempty"`
+	DeliveryVerdict          ReceiptVerdict `json:"deliveryVerdict,omitempty"`
+	ApplicationHealthVerdict ReceiptVerdict `json:"applicationHealthVerdict,omitempty"`
+	MatchedBy                []string       `json:"matchedBy,omitempty"`
+}
+
+type TraceDeliveryRelease struct {
+	Slug           string   `json:"slug,omitempty"`
+	ReleaseID      string   `json:"releaseId,omitempty"`
+	Space          string   `json:"space,omitempty"`
+	SpaceID        string   `json:"spaceId,omitempty"`
+	Target         string   `json:"target,omitempty"`
+	TargetID       string   `json:"targetId,omitempty"`
+	Digest         string   `json:"digest,omitempty"`
+	BundleBaseName string   `json:"bundleBaseName,omitempty"`
+	RevisionNum    int      `json:"revisionNum,omitempty"`
+	CreatedAt      string   `json:"createdAt,omitempty"`
+	MatchedBy      []string `json:"matchedBy,omitempty"`
+}
+
+type TraceDeliveryUnitEvent struct {
+	EventID      string   `json:"eventId,omitempty"`
+	Action       string   `json:"action,omitempty"`
+	Result       string   `json:"result,omitempty"`
+	Status       string   `json:"status,omitempty"`
+	Message      string   `json:"message,omitempty"`
+	Unit         string   `json:"unit,omitempty"`
+	UnitID       string   `json:"unitId,omitempty"`
+	Space        string   `json:"space,omitempty"`
+	SpaceID      string   `json:"spaceId,omitempty"`
+	Target       string   `json:"target,omitempty"`
+	TargetID     string   `json:"targetId,omitempty"`
+	CreatedAt    string   `json:"createdAt,omitempty"`
+	TerminatedAt string   `json:"terminatedAt,omitempty"`
+	MatchedBy    []string `json:"matchedBy,omitempty"`
+}
+
+type TraceDeliveryEventConsumer struct {
+	Kind              string `json:"kind"`
+	Name              string `json:"name"`
+	Namespace         string `json:"namespace,omitempty"`
+	Ready             bool   `json:"ready"`
+	Replicas          int64  `json:"replicas,omitempty"`
+	ReadyReplicas     int64  `json:"readyReplicas,omitempty"`
+	AvailableReplicas int64  `json:"availableReplicas,omitempty"`
+	EvidenceLabel     string `json:"evidenceLabel,omitempty"`
+}
+
+type TraceDeliveryOmission struct {
+	Layer   string `json:"layer"`
+	Reason  string `json:"reason"`
+	Impact  string `json:"impact,omitempty"`
+	Command string `json:"command,omitempty"`
 }
 
 // ResourceRef identifies a Kubernetes resource

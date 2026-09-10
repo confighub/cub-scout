@@ -139,6 +139,17 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 		return buildExplainSummaryFromFailure(kind, name, ns, err), nil
 	}
 
+	if explainWithConfigHub {
+		dynClient := enrichTraceConfigHubFromLive(ctx, traceResult, kind, name, ns)
+		attachTraceConfigHubDeliveryEvidence(ctx, traceResult, dynClient, traceConfigHubDeliveryFlags{
+			Enabled:    true,
+			Namespace:  ns,
+			Space:      explainConfigHubSpace,
+			Since:      explainConfigHubSince,
+			StaleAfter: explainConfigHubStaleAfter,
+		})
+	}
+
 	summary := buildExplainSummary(traceResult)
 	if summary.Resource == "" {
 		summary.Resource = fmt.Sprintf("%s/%s", kind, name)

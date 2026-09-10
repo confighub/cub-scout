@@ -45,16 +45,19 @@ Highlights:
   `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`.
 - MCP `compare_source_truth` strategy enum now derives from
   `agent.AllStrategies()`, matching the CLI.
+- `trace --with-confighub` and `explain --with-confighub` now attach
+  object-correlated `deliveryEvidence` when exact ConfigHub unit, space,
+  target, OCI-source, or Argo Application identifiers prove the join; unsafe or
+  missing joins become structured omissions.
 - README now states the five run modes near the top: standalone client,
   ConfigHub plugin, MCP server, watch stream, and in-cluster bot.
 - `bot` is a first-class command that runs the existing `watch` engine with
   in-cluster-friendly defaults, `CUB_SCOUT_BOT_*` environment configuration,
   and a deployable read-only Kubernetes example in `examples/bot/`.
 
-Remaining follow-up: object-level correlation from releases/live-status into
-`trace`, `explain`, `doctor`, `map activity`, and receipts once stable
-identifiers link release events, controller sources, and workloads without
-guessing.
+Remaining follow-up: carry object-level release/live-status correlation into
+`doctor`, `map activity`, and receipts once stable identifiers link release
+events, controller sources, and workloads without guessing.
 
 ## July 2026 update — live delivery observability (`#500`)
 

@@ -323,6 +323,7 @@ cub-scout explain <kind/name> [flags]
 
 ```bash
 cub-scout explain deploy/payments-api -n prod
+cub-scout explain deploy/payments-api -n prod --with-confighub --format json
 cub-scout explain deploy/payments-api -n prod --presentation ai
 cub-scout explain deploy/payments-api -n prod --hint-mode operator
 cub-scout explain deployment/payments-api -n prod --format md
@@ -336,6 +337,17 @@ cub-scout explain deployment/payments-api -n prod --format md
 | `-n, --namespace` | Namespace of target resource |
 | `--presentation` | Narrative framing for text/Markdown output: `human`, `ai`, `paired`. Omit the flag to keep the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | Recommendation ranking for next-step hints: `default`, `beginner`, `operator`. JSON is unchanged. |
+| `--with-confighub` | Include bounded ConfigHub delivery evidence when exact resource correlation exists |
+| `--confighub-space` | ConfigHub space for delivery evidence (default: resource ConfigHub space; `*` must be explicit) |
+| `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
+| `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
+
+`--with-confighub` is opt-in and read-only. For `explain`, connected release,
+unit-event, and live-status reads run only when the resource itself exposes a
+ConfigHub space, the trace chain exposes a ConfigHub OCI space, or
+`--confighub-space` is supplied. Matched evidence appears under
+`deliveryEvidence`; missing identity, missing writeback, or non-matching rows
+are structured omissions.
 
 ---
 
@@ -717,6 +729,10 @@ cub-scout trace <kind/name> [flags]
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
 | `--json` | Output as JSON (shorthand for `--format json`) |
 | `--explain` | Show explanatory content |
+| `--with-confighub` | Include bounded ConfigHub delivery evidence when exact resource correlation exists |
+| `--confighub-space` | ConfigHub space for delivery evidence (default: resource ConfigHub space; `*` must be explicit) |
+| `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
+| `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 
 ### Examples
 
@@ -748,10 +764,19 @@ cub-scout trace deployment/nginx -n demo --diff
 # Show source artifact provenance (read-only)
 cub-scout trace deployment/nginx -n demo --artifacts
 
+# Show object-correlated ConfigHub delivery evidence when labels/source refs prove the join
+cub-scout trace deployment/nginx -n demo --with-confighub --format json
+
 # Output as JSON or Markdown
 cub-scout trace deployment/nginx -n demo --format json
 cub-scout trace deployment/nginx -n demo --format md
 ```
+
+`--with-confighub` adds resource-scoped `deliveryEvidence` only from explicit
+joins: ConfigHub unit labels/annotations, exact unit ID, exact unit slug plus
+space, exact space plus target for releases, ConfigHub OCI source space/target,
+or Argo Application name for live-status writeback. A space-only release match
+is intentionally not considered object-level evidence.
 
 ### Argo Context Troubleshooting
 

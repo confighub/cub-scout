@@ -108,8 +108,9 @@ As of 2026-09-10, these areas are fully or materially shipped:
   - Modelplane traces keep Modelplane as the higher-level owner while surfacing Crossplane substrate evidence from composite/claim/composition-resource labels and verified Crossplane field managers
   - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`
   - MCP `compare_source_truth` strategy enum is generated from the same strategy registry as the CLI
+  - `trace --with-confighub` and `explain --with-confighub` attach object-correlated `deliveryEvidence` only when exact ConfigHub unit, space, target, OCI-source, or Argo Application identifiers prove the join; otherwise they report structured omissions
   - `bot` runs the `watch` engine as an in-cluster-friendly read-only observer with `CUB_SCOUT_BOT_*` environment configuration and a deployable example under `examples/bot/`
-  - Remaining work: deeper object-level correlation from releases/live-status to `trace`, `explain`, `doctor`, `map activity`, and receipts; Modelplane-on-Crossplane source/generation evidence, receipts, and watch/bot parity
+  - Remaining work: deeper object-level correlation from releases/live-status to `doctor`, `map activity`, and receipts; Modelplane-on-Crossplane source/generation evidence, receipts, and watch/bot parity
 
 - **Live delivery observability release slice — merged for v2.7.0** (`#500`)
   - README now starts with a user-question table covering ownership, delegated delivery health, intended-vs-live agreement, rollout progress, proceed/wait/retry framing, drift, delivery-vs-runtime separation, attribution, low-load repeated review paths, and receipts
@@ -205,7 +206,7 @@ Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consu
 
 ### Untracked v2 follow-ups (no separate issue)
 
-- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; follow-up work should join release/event/writeback evidence into `trace`, `explain`, `doctor`, `map activity`, and receipts without guessing.
+- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; this release candidate now joins exact object-level evidence into `trace --with-confighub` and `explain --with-confighub`. Follow-up work should join release/event/writeback evidence into `doctor`, `map activity`, and receipts without guessing.
 - **Source-truth receipt precedence edge coverage** — especially `StatusBLOCK + VerdictBLOCKED`. Not blocking; nice-to-have.
 
 ### Open tracked issues

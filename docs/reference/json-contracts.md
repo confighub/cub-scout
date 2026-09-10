@@ -51,6 +51,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` JSON |
+| Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub` and `explain --with-confighub` JSON |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 | MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
 
@@ -713,6 +714,115 @@ replace Argo, Flux, Sveltos, Modelplane, or Kubernetes as the status authority.
 | `liveStatuses[].applicationHealthVerdict` | Application-health verdict from reported health. Stale `PASS` downgrades to `WATCH`. |
 | `eventConsumers[]` | Conservative, label-selected Kubernetes Deployment detection by `app=argobot` or `app.kubernetes.io/name=argobot`. cub-scout searches all namespaces when allowed and records an omission if RBAC forces namespace fallback. Absence is an omission, not proof no consumer exists. |
 | `omissions[]` | Structured explanation for unavailable, missing, stale, malformed, disconnected, or RBAC-blocked evidence. |
+
+The command never consumes ConfigHub event cursors and never mutates ConfigHub,
+the event consumer, the delivery controller, or Kubernetes.
+
+## Resource Delivery Evidence Contract
+
+When `trace --with-confighub --format json` or
+`explain --with-confighub --format json` is used, output may include an
+additive `deliveryEvidence` object. Unlike `gitops status --with-confighub`,
+this object is correlated to one traced resource and only includes release,
+unit-event, or live-status rows when exact identifiers prove the join.
+
+### Schema Sketch
+
+```json
+{
+  "deliveryEvidence": {
+    "source": "confighub",
+    "observedAt": "2026-09-10T12:00:00Z",
+    "scope": {
+      "namespace": "prod",
+      "space": "payments-prod",
+      "since": "24h",
+      "staleAfter": "15m0s",
+      "maxItems": 10
+    },
+    "correlation": {
+      "unitSlug": "payments-api",
+      "unitId": "u-123",
+      "space": "payments-prod",
+      "spaceId": "sp-123",
+      "target": "prod",
+      "targetId": "t-123",
+      "application": "payments-app",
+      "matchedBy": [
+        "confighub.unitSlug",
+        "chain.application",
+        "chain.configHubOCI.target"
+      ]
+    },
+    "liveStatus": {
+      "app": "payments-app",
+      "syncStatus": "Synced",
+      "healthStatus": "Healthy",
+      "operationPhase": "Succeeded",
+      "freshness": "fresh",
+      "deliveryVerdict": "PASS",
+      "applicationHealthVerdict": "PASS",
+      "matchedBy": [
+        "spaceId",
+        "liveStatus.app==chain.application"
+      ]
+    },
+    "releases": [
+      {
+        "slug": "release-42",
+        "space": "payments-prod",
+        "target": "prod",
+        "digest": "sha256:abc",
+        "createdAt": "2026-09-10T11:50:00Z",
+        "matchedBy": ["spaceId", "targetId"]
+      }
+    ],
+    "unitEvents": [
+      {
+        "eventId": "ue-1",
+        "action": "ReleasePublished",
+        "result": "Succeeded",
+        "unit": "payments-api",
+        "unitId": "u-123",
+        "createdAt": "2026-09-10T11:51:00Z",
+        "matchedBy": ["unitEvent.unitId==confighub.unitId"]
+      }
+    ],
+    "eventConsumers": [
+      {
+        "kind": "Deployment",
+        "namespace": "confighub-ops",
+        "name": "argobot",
+        "ready": true,
+        "replicas": 1,
+        "readyReplicas": 1,
+        "evidenceLabel": "app=argobot"
+      }
+    ],
+    "omissions": [
+      {
+        "layer": "confighub.releases",
+        "reason": "no release row matched the traced resource by exact space plus target",
+        "impact": "recent release publishing evidence is omitted for this object"
+      }
+    ]
+  }
+}
+```
+
+### Field Rules
+
+| Field | Rule |
+|---|---|
+| `source` | Current value is `confighub`. |
+| `scope.space` | Defaults to the resource's ConfigHub space or ConfigHub OCI source space. If neither exists, connected history reads are skipped unless `--confighub-space` is supplied. |
+| `correlation.matchedBy[]` | Lists the exact identifiers used to form the resource correlation. |
+| `liveStatus` | Included only when a live-status row matches by exact space plus Argo Application name or exact space plus ConfigHub unit slug. |
+| `liveStatus.matchedBy[]` | Lists the exact live-status join keys, for example `spaceId` and `liveStatus.app==chain.application`. |
+| `releases[]` | Included only for rows matching exact space plus target ID or target slug. A space-only match is not object-level evidence. |
+| `unitEvents[]` | Included only for rows matching exact unit ID, or exact unit slug plus space. |
+| `eventConsumers[]` | Cluster-observed event-consumer Deployment health. This is contextual evidence, not proof that the traced object was synced. |
+| `omissions[]` | Structured explanation for missing identity, missing scope, missing/malformed writeback, disconnected ConfigHub, non-matching rows, or RBAC/list failures. |
 
 The command never consumes ConfigHub event cursors and never mutates ConfigHub,
 the event consumer, the delivery controller, or Kubernetes.

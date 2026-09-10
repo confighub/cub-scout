@@ -124,6 +124,10 @@ cub-scout explain <kind> <name> [flags]
 | `--format` | string | text | Output format: `text`, `json`, `md` |
 | `--presentation` | string | legacy/default render path | Narrative framing for text/Markdown output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | string | default | Recommendation ranking for next-step hints: `default`, `beginner`, `operator`. JSON is unchanged. |
+| `--with-confighub` | bool | false | Include bounded ConfigHub delivery evidence when exact resource correlation exists |
+| `--confighub-space` | string | resource ConfigHub space | ConfigHub space for delivery evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
+| `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
 ### Stable Output Rules
 
@@ -131,6 +135,12 @@ cub-scout explain <kind> <name> [flags]
 - `--presentation` affects text and Markdown framing only.
 - `--hint-mode` affects next-step recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text/Markdown render path.
+- `deliveryEvidence` appears only with `--with-confighub`.
+- Connected release, unit-event, and live-status reads are skipped unless the
+  resource exposes a ConfigHub space, the trace chain exposes a ConfigHub OCI
+  space, or `--confighub-space` is supplied.
+- `deliveryEvidence` is supporting evidence only. It does not replace Argo,
+  Flux, Sveltos, Modelplane, or Kubernetes status authority.
 
 ---
 
@@ -650,6 +660,10 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | `--json` | bool | false | Deprecated shorthand for `--format json` |
 | `--limit` | int | 10 | History entry limit |
 | `--explain` | bool | false | Show learning content |
+| `--with-confighub` | bool | false | Include bounded ConfigHub delivery evidence when exact resource correlation exists |
+| `--confighub-space` | string | resource ConfigHub space | ConfigHub space for delivery evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
+| `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
 ### Behavior by Owner Type
 
@@ -659,6 +673,23 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | ArgoCD | `argocd app get` | Shows Application -> Resource |
 | Helm | Release metadata | Shows chart, version, values |
 | Native | N/A | Shows "not managed by GitOps" |
+
+### ConfigHub Delivery Evidence
+
+`trace --with-confighub` may add `deliveryEvidence` to JSON output and a
+ConfigHub delivery evidence section to ASCII/Markdown output. The object is
+additive and must be treated as supporting context, not as the delivery or
+application-health authority.
+
+Object-level matches require explicit identifiers:
+
+- live-status writeback: exact space plus Argo Application name, or exact space
+  plus ConfigHub unit slug
+- release rows: exact space plus target ID or target slug
+- unit-event rows: exact unit ID, or exact unit slug plus space
+
+When these joins cannot be proven, the command records structured omissions
+instead of claiming deployed/synced/healthy state.
 
 ### Output (Plain Text)
 

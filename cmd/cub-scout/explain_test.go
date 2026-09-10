@@ -100,6 +100,42 @@ func TestBuildExplainSummary_ConfigHubURLsAndRevisionFacts(t *testing.T) {
 	}
 }
 
+func TestBuildExplainSummary_CarriesDeliveryEvidence(t *testing.T) {
+	result := &agent.TraceResult{
+		Tool: "argocd",
+		Object: agent.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "payments-api",
+			Namespace: "prod",
+		},
+		DeliveryEvidence: &agent.TraceDeliveryEvidence{
+			Source: "confighub",
+			Scope:  agent.TraceDeliveryEvidenceScope{Space: "payments-prod", Since: "24h"},
+			Correlation: agent.TraceDeliveryCorrelation{
+				UnitSlug:    "payments-api",
+				Application: "payments-app",
+			},
+			LiveStatus: &agent.TraceDeliveryLiveStatus{
+				App:                      "payments-app",
+				SyncStatus:               "Synced",
+				HealthStatus:             "Healthy",
+				Freshness:                "fresh",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			},
+		},
+	}
+
+	summary := buildExplainSummary(result)
+	if summary.DeliveryEvidence == nil || summary.DeliveryEvidence.LiveStatus == nil {
+		t.Fatalf("DeliveryEvidence = %+v, want live status", summary.DeliveryEvidence)
+	}
+	out := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
+	if !strings.Contains(out, "Delivery evidence: ConfigHub delivery=PASS sync=Synced") {
+		t.Fatalf("explain output missing delivery evidence line:\n%s", out)
+	}
+}
+
 func TestRenderExplainText_ContainsPlainEnglishSections(t *testing.T) {
 	// Set NO_COLOR to get plain text output for string matching
 	t.Setenv("NO_COLOR", "1")

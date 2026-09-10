@@ -39,13 +39,13 @@ func TestConvertSecretEvidence_FullConversion(t *testing.T) {
 		Resource: agent.ResourceRef{Kind: "Deployment", Namespace: "default", Name: "app"},
 		Secrets: []agent.SecretEvidence{
 			{
-				Name:         "db-creds",
-				Namespace:    "default",
-				RefType:      agent.SecretRefTypeEnvFrom,
-				RefPath:      "containers[app].envFrom[0].secretRef",
-				Status:       agent.SecretStatusPresent,
-				SecretType:   "Opaque",
-				Optional:     false,
+				Name:       "db-creds",
+				Namespace:  "default",
+				RefType:    agent.SecretRefTypeEnvFrom,
+				RefPath:    "containers[app].envFrom[0].secretRef",
+				Status:     agent.SecretStatusPresent,
+				SecretType: "Opaque",
+				Optional:   false,
 			},
 			{
 				Name:         "tls-cert",
@@ -236,6 +236,57 @@ func TestConvertTraceToV014_SecretsJSON(t *testing.T) {
 	}
 	if parsed.Secrets.Secrets[0].Status != "present" {
 		t.Errorf("Secrets[0].Status = %q, want %q", parsed.Secrets.Secrets[0].Status, "present")
+	}
+}
+
+func TestConvertTraceToV014_IncludesDeliveryEvidence(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{Kind: "Deployment", Namespace: "prod", Name: "api"},
+		Chain:  []agent.ChainLink{{Kind: "Deployment", Namespace: "prod", Name: "api"}},
+		Tool:   "argocd",
+		DeliveryEvidence: &agent.TraceDeliveryEvidence{
+			Source:     "confighub",
+			ObservedAt: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC),
+			Scope: agent.TraceDeliveryEvidenceScope{
+				Namespace: "prod",
+				Space:     "payments-prod",
+				Since:     "24h",
+				MaxItems:  10,
+			},
+			Correlation: agent.TraceDeliveryCorrelation{
+				UnitSlug:    "api",
+				Space:       "payments-prod",
+				Application: "payments-app",
+				MatchedBy:   []string{"confighub.unitSlug", "chain.application"},
+			},
+			LiveStatus: &agent.TraceDeliveryLiveStatus{
+				App:                      "payments-app",
+				SyncStatus:               "Synced",
+				HealthStatus:             "Healthy",
+				Freshness:                "fresh",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			},
+		},
+	}
+
+	output := convertTraceToV014(result, "Deployment", "api", "prod", nil)
+	if output.DeliveryEvidence == nil {
+		t.Fatal("convertTraceToV014() did not include delivery evidence")
+	}
+	if output.DeliveryEvidence.LiveStatus == nil || output.DeliveryEvidence.LiveStatus.SyncStatus != "Synced" {
+		t.Fatalf("deliveryEvidence.liveStatus = %+v, want Synced", output.DeliveryEvidence.LiveStatus)
+	}
+
+	data, err := json.MarshalIndent(output, "", "  ")
+	if err != nil {
+		t.Fatalf("json.MarshalIndent() error = %v", err)
+	}
+	jsonStr := string(data)
+	for _, want := range []string{`"deliveryEvidence"`, `"source": "confighub"`, `"syncStatus": "Synced"`} {
+		if !strings.Contains(jsonStr, want) {
+			t.Fatalf("JSON missing %s:\n%s", want, jsonStr)
+		}
 	}
 }
 
