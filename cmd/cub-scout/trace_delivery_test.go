@@ -151,6 +151,99 @@ func TestTraceGitOpsDeliveryOptions_RequiresObjectOrFlagSpace(t *testing.T) {
 	}
 }
 
+func TestCorrelateTraceDeliveryEvidence_ExplicitScopeSpaceMatchesApplication(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		Chain: []agent.ChainLink{
+			{Kind: "Application", Name: "payments-api", Namespace: "argocd"},
+			{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		},
+	}
+	raw := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC),
+		Scope: GitOpsDeliveryEvidenceScope{
+			Namespace: "prod",
+			Space:     "payments-prod",
+			Since:     "24h",
+			MaxItems:  10,
+		},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				Source:                   "argobot",
+				App:                      "payments-api",
+				SyncStatus:               "Synced",
+				HealthStatus:             "Healthy",
+				OperationPhase:           "Succeeded",
+				Freshness:                "fresh",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+		},
+	}
+
+	got := correlateTraceDeliveryEvidence(result, raw, buildTraceDeliveryCorrelation(result), nil)
+	if got.LiveStatus == nil {
+		t.Fatalf("live status did not match from explicit scope space: %+v", got)
+	}
+	if !containsTraceMatch(got.Correlation.MatchedBy, "scope.space") {
+		t.Fatalf("correlation matchedBy = %+v, want scope.space", got.Correlation.MatchedBy)
+	}
+	if !containsTraceMatch(got.LiveStatus.MatchedBy, "space") {
+		t.Fatalf("live status matchedBy = %+v, want space", got.LiveStatus.MatchedBy)
+	}
+}
+
+func TestCorrelateTraceDeliveryEvidence_WildcardSpaceDoesNotBecomeExactMatch(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		Chain:  []agent.ChainLink{{Kind: "Application", Name: "payments-api"}},
+	}
+	raw := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC),
+		Scope:      GitOpsDeliveryEvidenceScope{Space: "*", Since: "24h", MaxItems: 10},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				App:                      "payments-api",
+				SyncStatus:               "Synced",
+				HealthStatus:             "Healthy",
+				Freshness:                "fresh",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+		},
+	}
+
+	got := correlateTraceDeliveryEvidence(result, raw, buildTraceDeliveryCorrelation(result), nil)
+	if got.LiveStatus != nil {
+		t.Fatalf("wildcard scope space must not be treated as exact match: %+v", got.LiveStatus)
+	}
+}
+
+func TestCorrelateTraceDeliveryEvidence_ScopeSpaceAloneKeepsIdentityOmission(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		Chain:  []agent.ChainLink{{Kind: "Deployment", Name: "api", Namespace: "prod"}},
+	}
+	raw := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC),
+		Scope:      GitOpsDeliveryEvidenceScope{Space: "payments-prod", Since: "24h", MaxItems: 10},
+		ConfigHub:  &ConfigHubDeliveryEvidence{},
+	}
+
+	got := correlateTraceDeliveryEvidence(result, raw, buildTraceDeliveryCorrelation(result), nil)
+	if got == nil {
+		t.Fatal("delivery evidence is nil")
+	}
+	if !containsTraceMatch(got.Correlation.MatchedBy, "scope.space") {
+		t.Fatalf("correlation matchedBy = %+v, want scope.space", got.Correlation.MatchedBy)
+	}
+	if !containsTraceOmission(got.Omissions, "confighub.identity") {
+		t.Fatalf("omissions = %+v, want confighub.identity", got.Omissions)
+	}
+}
+
 func TestMatchTraceReleases_DoesNotMatchBySpaceOnly(t *testing.T) {
 	correlation := agent.TraceDeliveryCorrelation{
 		Space: "payments-prod",
@@ -195,6 +288,15 @@ func TestEnrichTraceConfigHubFromObject(t *testing.T) {
 func containsTraceMatch(matches []string, want string) bool {
 	for _, match := range matches {
 		if match == want {
+			return true
+		}
+	}
+	return false
+}
+
+func containsTraceOmission(omissions []agent.TraceDeliveryOmission, layer string) bool {
+	for _, omission := range omissions {
+		if omission.Layer == layer {
 			return true
 		}
 	}

@@ -38,7 +38,7 @@ Implicit intents:
 ## Standalone vs connected
 
 - **Standalone (cluster only):** `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status` all work against your current kubectl context.
-- **Connected (cluster + `cub auth login`):** `explain` adds ConfigHub deep-links and optional object-correlated delivery evidence; `doctor --with-confighub` adds a scope-level delivery rollup; `map activity --with-confighub` adds bounded release, unit-event, live-status, and event-consumer timeline rows; three-way disagreement gets a dedicated section.
+- **Connected (cluster + `cub auth login`):** `explain --with-confighub`, `trace --with-confighub`, and single-resource `receipt verify --with-confighub` add optional object-correlated delivery evidence; `doctor --with-confighub` adds a scope-level delivery rollup; `map activity --with-confighub` adds bounded release, unit-event, live-status, and event-consumer timeline rows; three-way disagreement gets a dedicated section.
 - **Offline (file / bundle only):** `patterns detect --file <yaml>` runs the pattern engine against a manifest; `suggest-remedy` works against scan findings without a live cluster.
 
 ## Tool boundary
@@ -57,6 +57,7 @@ Implicit intents:
 | "Match the cluster against known patterns" | `cub-scout patterns detect` / `patterns explain` / `patterns list` | The pattern engine. Works on cluster, file, or bundle. |
 | "Is GitOps healthy?" | `cub-scout gitops status` | Pipeline health for Flux + Argo: stuck reconciles, source errors, applyset drift |
 | "Did delivery feedback report back, and what happened recently?" | `cub-scout map activity --with-confighub --confighub-space <space>` | Timeline view across controller activity, Kubernetes events, ConfigHub releases, unit events, live-status freshness, event-consumer health, and omissions |
+| "Can I preserve this delivery/status evidence?" | `cub-scout receipt verify <kind>/<name> -n <ns> --with-confighub --confighub-space <space>` | Single-resource receipt with fingerprint-covered `predicate.evidence.deliveryEvidence` |
 
 All five verbs emit `--format json` for agents.
 

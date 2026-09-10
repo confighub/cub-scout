@@ -56,13 +56,17 @@ Highlights:
   object-correlated `deliveryEvidence` when exact ConfigHub unit, space,
   target, OCI-source, or Argo Application identifiers prove the join; unsafe or
   missing joins become structured omissions.
+- `receipt verify <kind>/<name> --with-confighub` now freezes that same
+  object-correlated delivery evidence under
+  `predicate.evidence.deliveryEvidence`; it is supporting evidence covered by
+  the receipt fingerprint, not a new delivery-success predicate.
 - README now states the five run modes near the top: standalone client,
   ConfigHub plugin, MCP server, watch stream, and in-cluster bot.
 - `bot` is a first-class command that runs the existing `watch` engine with
   in-cluster-friendly defaults, `CUB_SCOUT_BOT_*` environment configuration,
   and a deployable read-only Kubernetes example in `examples/bot/`.
 
-Remaining follow-up: carry object-level release/live-status correlation into
+Remaining follow-up: carry delivery evidence into aggregate/object-set/workload
 receipts and workload-level activity joins once stable identifiers link release
 events, controller sources, and workloads without guessing; add aggregate
 controller-resource failures with generated-artifact lineage to `doctor` when
@@ -323,9 +327,11 @@ delivery-evidence and bot-mode release candidate):
 **Recently closed arcs:**
 - Post-v2.7 delivery-evidence release candidate in this worktree:
   `gitops status --with-confighub`, `doctor --with-confighub`,
-  `map activity --with-confighub`, MCP release/event/live-status tools,
-  MCP `gitops_status`, MCP source-truth strategy parity, README
-  five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`.
+  `trace --with-confighub`, `explain --with-confighub`,
+  `map activity --with-confighub`, single-resource
+  `receipt verify --with-confighub`, MCP release/event/live-status tools, MCP
+  `gitops_status`, MCP source-truth strategy parity, README five-run-mode
+  framing, and `bot` mode; see `docs/releases/v2.8.0.md`.
 - ~~**`#500`**~~ — live delivery observability release slice. **Closed via `#500`** on 2026-07-09.
 - ~~**`#446`**~~ — Receipt capability parent. **Closed** (v1 in `#454`/`#455`/`#456`; v2 surface in `#463`/`#469`/`#470`).
 - ~~**`#444`**~~ — Pilot–cub-scout integration skills, 9 scenarios. **Closed via `#468`** (batch B; batch A in `#466`, Codex round-7 fixes in `#467`).
@@ -337,7 +343,7 @@ delivery-evidence and bot-mode release candidate):
 - Aggregate controller-resource failures as top-level `doctor` findings where controller status refs expose source/generated-artifact lineage.
 - Audited action events as history and receipt supporting evidence.
 - Broader source-freshness metadata for snapshot, watch, summary, and receipt-backed reads.
-- ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, timeline `map activity --with-confighub`, and object-level `trace` / `explain --with-confighub` readers; deeper OCI release-to-workload correlation for receipts and workload-level activity joins remains a `#502` follow-up. Direct observer cursors remain fallback-only.
+- ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, timeline `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub` readers; deeper OCI release-to-workload correlation for aggregate/object-set/workload receipts and workload-level activity joins remains a `#502` follow-up. Direct observer cursors remain fallback-only.
 - Deeper controller-family parity rules where controllers lack status, source, event, or generation evidence. The first `gitops status` coverage ledger is shipped; object-level parity remains open.
 - Modelplane-on-Crossplane hardening: trace now surfaces substrate evidence on Modelplane-owned resources; remaining work is source/generation evidence, receipts, watch/bot parity, and structured omissions where deeper Crossplane layers cannot be joined safely.
 
@@ -347,7 +353,7 @@ delivery-evidence and bot-mode release candidate):
 
 **Open tracked issues:**
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution (`gitSource.file:line` / `sourceMapRef` honesty markers).
-- **`#502`** — initial ConfigHub history/live-status/event-consumer evidence readers shipped on `gitops status --with-confighub`, `doctor --with-confighub`, timeline `map activity --with-confighub`, and object-level `trace` / `explain --with-confighub`; deeper release-to-controller-to-workload correlation remains.
+- **`#502`** — initial ConfigHub history/live-status/event-consumer evidence readers shipped on `gitops status --with-confighub`, `doctor --with-confighub`, timeline `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub`; deeper release-to-controller-to-workload correlation remains.
 - **`#475`** — Blog/documentation publication series for introducing cub-scout.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout JSON outputs. Design rather than code.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).

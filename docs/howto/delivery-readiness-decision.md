@@ -36,6 +36,14 @@ Start broad, then narrow.
 
 # 5. Desired/rendered/live agreement when connected intent is available.
 ./cub-scout compare three-way --scope namespace/prod --format json
+
+# 6. Optional fingerprinted, object-correlated delivery snapshot.
+./cub-scout receipt verify deploy/api -n prod \
+  --with-confighub \
+  --confighub-space prod \
+  --confighub-since 24h \
+  --format json \
+  --out api.delivery.receipt.json
 ```
 
 For an auditable gate over a rendered object set:
@@ -62,8 +70,11 @@ For an auditable gate over a rendered object set:
 | `currentChange.verdict=BLOCK` with `reason=runtime_failed`, `rollout_failed`, or `progress_stalled` | Runtime or rollout evidence is blocking the current-generation change. | Investigate workload/controller symptoms before retrying delivery. |
 | `compare three-way` divergence or `compare source-truth` mismatch | Live state, rendered state, or controller source evidence disagrees with intent. | Investigate drift/source mismatch before proceeding. |
 | `deliveryEvidence.configHub.liveStatuses[].freshness=stale` | The latest reported external delivery/application status is too old to treat as done. | Re-check the delivery controller or wait for fresh writeback before proceeding. |
+| `deliveryEvidence.liveStatus.freshness=stale` on trace/explain/receipt | The object-correlated delivery/application status snapshot is too old to treat as done. | Re-check the delivery controller or wait for fresh writeback before proceeding. |
 | `deliveryEvidence.configHub.liveStatuses[].deliveryVerdict=WATCH` | Sync/operation evidence is still in progress, stale, or ambiguous. | Wait or inspect the controller before retrying delivery. |
+| `deliveryEvidence.liveStatus.deliveryVerdict=WATCH` on trace/explain/receipt | Object-correlated sync/operation evidence is still in progress, stale, or ambiguous. | Wait or inspect the controller before retrying delivery. |
 | `deliveryEvidence.configHub.liveStatuses[].applicationHealthVerdict=BLOCK` | The reported application health is degraded or missing. | Investigate application/runtime symptoms before proceeding. |
+| `deliveryEvidence.liveStatus.applicationHealthVerdict=BLOCK` on trace/explain/receipt | The object-correlated application health snapshot is degraded or missing. | Investigate application/runtime symptoms before proceeding. |
 | `INCONCLUSIVE` or omitted `currentChange` | cub-scout could not collect enough evidence for this resource or kind. | Treat as a proof gap; inspect raw cluster/controller evidence. |
 
 ## What Cub-Scout Checks
@@ -108,12 +119,20 @@ When a pipeline, incident, or review needs durable evidence, use a receipt.
   --save \
   --out delivery-readiness.receipt.json
 
+./cub-scout receipt verify deploy/api -n prod \
+  --with-confighub \
+  --confighub-space prod \
+  --save \
+  --out api.delivery.receipt.json
+
 ./cub-scout receipt validate delivery-readiness.receipt.json
 ```
 
 The receipt is an immutable record of what cub-scout observed at `verifiedAt`.
-It does not prove the workload stays healthy forever; re-run the check for a new
-decision.
+`receipt verify --with-confighub` stores delivery feedback under
+`predicate.evidence.deliveryEvidence`; it is supporting evidence, not a claim
+that cub-scout owns delivery or application-health truth. Receipts do not prove
+the workload stays healthy forever; re-run the check for a new decision.
 
 ## Example Fixture
 

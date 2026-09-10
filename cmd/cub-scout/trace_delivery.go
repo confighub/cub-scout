@@ -138,6 +138,7 @@ func correlateTraceDeliveryEvidence(
 	if raw == nil {
 		return nil
 	}
+	correlation = traceDeliveryCorrelationWithScope(correlation, raw.Scope)
 	out := &agent.TraceDeliveryEvidence{
 		Source:      "confighub",
 		ObservedAt:  raw.ObservedAt,
@@ -175,15 +176,41 @@ func correlateTraceDeliveryEvidence(
 		}
 	}
 
-	if result != nil && result.ConfigHub == nil && len(correlation.MatchedBy) == 0 {
+	if result != nil && result.ConfigHub == nil && !traceDeliveryHasObjectJoinIdentity(correlation) {
 		out.Omissions = append(out.Omissions, agent.TraceDeliveryOmission{
 			Layer:  "confighub.identity",
-			Reason: "live resource has no ConfigHub unit labels/annotations and trace chain has no ConfigHub OCI source",
+			Reason: "live resource has no ConfigHub unit labels/annotations, Argo application identity, or ConfigHub OCI target",
 			Impact: "delivery evidence cannot be treated as object-level proof",
 		})
 	}
 
 	return out
+}
+
+func traceDeliveryCorrelationWithScope(correlation agent.TraceDeliveryCorrelation, scope GitOpsDeliveryEvidenceScope) agent.TraceDeliveryCorrelation {
+	space := strings.TrimSpace(scope.Space)
+	if space == "" || space == "*" {
+		return correlation
+	}
+	if strings.TrimSpace(correlation.Space) != "" || strings.TrimSpace(correlation.SpaceID) != "" {
+		return correlation
+	}
+	correlation.Space = space
+	for _, matchedBy := range correlation.MatchedBy {
+		if matchedBy == "scope.space" {
+			return correlation
+		}
+	}
+	correlation.MatchedBy = append(correlation.MatchedBy, "scope.space")
+	return correlation
+}
+
+func traceDeliveryHasObjectJoinIdentity(correlation agent.TraceDeliveryCorrelation) bool {
+	return strings.TrimSpace(correlation.Application) != "" ||
+		strings.TrimSpace(correlation.UnitSlug) != "" ||
+		strings.TrimSpace(correlation.UnitID) != "" ||
+		strings.TrimSpace(correlation.Target) != "" ||
+		strings.TrimSpace(correlation.TargetID) != ""
 }
 
 func buildTraceDeliveryCorrelation(result *agent.TraceResult) agent.TraceDeliveryCorrelation {

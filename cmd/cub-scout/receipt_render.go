@@ -106,6 +106,43 @@ func renderReceiptASCII(stmt agent.Statement) string {
 		}
 	}
 
+	if pred.Evidence.DeliveryEvidence != nil {
+		delivery := pred.Evidence.DeliveryEvidence
+		b.WriteString("\nEvidence (delivery)\n")
+		fmt.Fprintf(&b, "  observedAt:  %s\n", delivery.ObservedAt.UTC().Format("2006-01-02T15:04:05Z"))
+		if line := formatTraceDeliveryEvidenceLine(delivery); line != "" {
+			fmt.Fprintf(&b, "  summary:     %s\n", line)
+		}
+		if delivery.LiveStatus != nil {
+			status := delivery.LiveStatus
+			fmt.Fprintf(&b, "  liveStatus:  app=%s sync=%s health=%s op=%s freshness=%s\n",
+				firstNonEmpty(status.App, "-"),
+				firstNonEmpty(status.SyncStatus, "-"),
+				firstNonEmpty(status.HealthStatus, "-"),
+				firstNonEmpty(status.OperationPhase, "-"),
+				firstNonEmpty(status.Freshness, "-"),
+			)
+		}
+		if len(delivery.Releases) > 0 {
+			fmt.Fprintf(&b, "  releases:    %d\n", len(delivery.Releases))
+		}
+		if len(delivery.UnitEvents) > 0 {
+			fmt.Fprintf(&b, "  unitEvents:  %d\n", len(delivery.UnitEvents))
+		}
+		if len(delivery.EventConsumers) > 0 {
+			ready := 0
+			for _, consumer := range delivery.EventConsumers {
+				if consumer.Ready {
+					ready++
+				}
+			}
+			fmt.Fprintf(&b, "  consumers:   %d/%d ready\n", ready, len(delivery.EventConsumers))
+		}
+		if len(delivery.Omissions) > 0 {
+			fmt.Fprintf(&b, "  omissions:   %d\n", len(delivery.Omissions))
+		}
+	}
+
 	if pred.Evidence.ObjectSet != nil {
 		oset := pred.Evidence.ObjectSet
 		b.WriteString("\nEvidence (object set)\n")

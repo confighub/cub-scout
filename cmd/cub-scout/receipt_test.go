@@ -61,9 +61,9 @@ func withFakeReceiptLoader(t *testing.T, obj *unstructured.Unstructured) {
 func resetReceiptFlags(t *testing.T) {
 	t.Helper()
 	prev := struct {
-		ns, pred, at, fmt, out, file, scope, grace, prereq, ttl string
-		noExtras                                                bool
-	}{receiptNamespace, receiptPredicate, receiptAtCommit, receiptFormat, receiptOut, receiptObjectSetFile, receiptScope, receiptGraceWindow, receiptPrerequisitesFile, receiptTTL, receiptNoExtras}
+		ns, pred, at, fmt, out, file, scope, grace, prereq, ttl, chSpace, chSince, chStaleAfter string
+		noExtras, withConfigHub                                                                 bool
+	}{receiptNamespace, receiptPredicate, receiptAtCommit, receiptFormat, receiptOut, receiptObjectSetFile, receiptScope, receiptGraceWindow, receiptPrerequisitesFile, receiptTTL, receiptConfigHubSpace, receiptConfigHubSince, receiptConfigHubStaleAfter, receiptNoExtras, receiptWithConfigHub}
 	prevIA, prevRE, prevNorm := receiptInputAttestations, receiptReferenceEvidence, receiptNormalizationProf
 	receiptInputAttestations, receiptReferenceEvidence, receiptNormalizationProf = nil, nil, ""
 	receiptNamespace = ""
@@ -77,6 +77,10 @@ func resetReceiptFlags(t *testing.T) {
 	receiptPrerequisitesFile = ""
 	receiptTTL = ""
 	receiptNoExtras = false
+	receiptWithConfigHub = false
+	receiptConfigHubSpace = ""
+	receiptConfigHubSince = "24h"
+	receiptConfigHubStaleAfter = "15m"
 	t.Cleanup(func() {
 		receiptNamespace = prev.ns
 		receiptPredicate = prev.pred
@@ -89,6 +93,10 @@ func resetReceiptFlags(t *testing.T) {
 		receiptPrerequisitesFile = prev.prereq
 		receiptTTL = prev.ttl
 		receiptNoExtras = prev.noExtras
+		receiptWithConfigHub = prev.withConfigHub
+		receiptConfigHubSpace = prev.chSpace
+		receiptConfigHubSince = prev.chSince
+		receiptConfigHubStaleAfter = prev.chStaleAfter
 		receiptInputAttestations, receiptReferenceEvidence, receiptNormalizationProf = prevIA, prevRE, prevNorm
 	})
 }

@@ -26,6 +26,7 @@ When the operator asks... | Run this | What you get
 "What's running in my cluster?" | `cub-scout map list --json` | Every resource with owner classification
 "What's broken?" | `cub-scout doctor --format json` | One-shot health summary
 "Did delivery feedback report back?" | `cub-scout doctor --with-confighub --confighub-space <space> --format json` | Scope-level delivery rollup, freshness, event-consumer health, and omissions
+"Can I keep this delivery observation?" | `cub-scout receipt verify <kind>/<name> -n <ns> --with-confighub --confighub-space <space> --format json` | Fingerprint-covered `predicate.evidence.deliveryEvidence` for a single resource
 "Why is this resource broken?" | `cub-scout explain <kind>/<name> -n <ns> --presentation ai` | Owner, status, conditions, recent events, next-step hints
 "Where did this come from?" | `cub-scout trace <kind>/<name> -n <ns>` | Full ownership chain to Git source
 "Find unmanaged resources" | `cub-scout map list --json \| jq '.[] \| select(.owner=="Native")'` | Resources with no GitOps owner

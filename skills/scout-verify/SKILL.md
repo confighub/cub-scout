@@ -26,6 +26,7 @@ Explicit phrasings:
 - "List the receipts I've generated locally"
 - "Show me yesterday's receipts where the verdict was BLOCK"
 - "Attach typed evidence to my CI gate / promotion gate / release ticket"
+- "Keep the exact delivery/status feedback snapshot for audit"
 
 Implicit intents:
 
@@ -45,7 +46,7 @@ Implicit intents:
 ## Standalone vs connected
 
 - **Standalone (cluster only):** `receipt verify --predicate applied-matches-spec` and `--predicate no-manual-edits-since` work without ConfigHub. The receipt records `OmissionConfigHubUnitSubject` to flag the missing connected-mode evidence.
-- **Connected (cluster + `cub auth login`):** `--predicate source-truth-pass --strategy <name>` becomes available. Connected mode also adds the `confighub-unit://` subject to every receipt, anchoring it to the unit revision in addition to the live K8s digest.
+- **Connected (cluster + `cub auth login`):** `--predicate source-truth-pass --strategy <name>` becomes available. Connected mode also adds the `confighub-unit://` subject to every receipt when unit identity is available, anchoring it to the unit revision in addition to the live K8s digest. Single-resource `receipt verify --with-confighub` can attach object-correlated delivery evidence under `predicate.evidence.deliveryEvidence`; this is supporting evidence and does not change predicate verdict semantics.
 - **Offline (file only):** `receipt show` / `receipt validate` / `receipt list` all work on on-disk artifacts with no cluster and no ConfigHub. Useful in CI containers that received the receipt as an artifact from an upstream job.
 
 ## Tool boundary
@@ -59,6 +60,7 @@ Implicit intents:
 | Question | Verb | Notes |
 |---|---|---|
 | "Produce a receipt about this resource" | `cub-scout receipt verify <kind>/<name> -n <ns>` | Auto-detects the predicate from owner + signals. Defaults to applied-matches-spec for Argo/Flux/ConfigHub-owned resources with a resolved git anchor. |
+| "Preserve delivery/status feedback" | `cub-scout receipt verify <kind>/<name> -n <ns> --with-confighub --confighub-space <space>` | Single-resource only; freezes object-correlated `deliveryEvidence` inside the fingerprinted receipt. |
 | "Render a saved receipt" | `cub-scout receipt show <path>` | ASCII or JSON. Does NOT verify the fingerprint — works on tampered receipts for forensic inspection. |
 | "Has this receipt been tampered with?" | `cub-scout receipt validate <path>` | Recomputes the fingerprint and compares. Exit 0 OK / 1 mismatch / 2 I/O. JSON output for CI. |
 | "What receipts do I have locally?" | `cub-scout receipt list` | Walks `$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`. Sortable, newest first. |

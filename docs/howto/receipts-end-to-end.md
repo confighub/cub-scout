@@ -21,9 +21,10 @@ For Pilot / acceptance-judge consumer integrations, see the `pilot-*` skill file
 | 2. Audit-grade chain | `receipt verify --input-attestation` | Multi-stage delivery with tamper-evident lineage |
 | 3. Namespace conformance | `receipt verify --scope namespace/<ns>` | One aggregate verdict across many resources |
 | 4. Real-time emission | `watch --emit-receipt-on` | Each watch event carries an inline receipt |
-| 5. Reading back | `receipt show / validate / list` | Audit + tamper-detection later |
+| 5. Delivery/status snapshot | `receipt verify --with-confighub` | Freeze object-correlated delivery feedback as supporting evidence |
+| 6. Reading back | `receipt show / validate / list` | Audit + tamper-detection later |
 
-All five stages are read-only by construction. Receipts emit; they never mutate the cluster or ConfigHub.
+All six stages are read-only by construction. Receipts emit; they never mutate the cluster or ConfigHub.
 
 ## Stage 1 — Pre-deploy gate
 
@@ -110,6 +111,34 @@ The construction-time verify property is enforced via the `VerifiedAttestationRe
 - `PASS → BLOCK → BLOCK` reads as: live state never recovered to intent
 
 **Worked example:** [`examples/receipts/chained/`](../../examples/receipts/chained/).
+
+## Stage 2b — Delivery/status snapshot
+
+The shape: a rollout or release review needs the exact delivery feedback visible
+at decision time, including freshness and omissions, without making every
+reviewer re-query the cluster and connected APIs.
+
+```bash
+cub-scout receipt verify deploy/payments-api -n prod \
+  --with-confighub \
+  --confighub-space payments-prod \
+  --confighub-since 24h \
+  --confighub-stale-after 15m \
+  --format json \
+  --out delivery-snapshot.receipt.json
+```
+
+The delivery snapshot is stored under
+`predicate.evidence.deliveryEvidence` and covered by the receipt fingerprint.
+It is supporting evidence only: the selected receipt predicate still owns
+`predicate.verdict`; delivery and application-health authorities remain
+external to cub-scout.
+
+Current limitation: `--with-confighub` is single-resource only. Aggregate,
+object-set, workload-convergence, and prerequisites receipts reject the flag
+upfront.
+
+**Worked example:** [`examples/receipts/delivery-evidence/`](../../examples/receipts/delivery-evidence/).
 
 ## Stage 3 — Namespace conformance
 

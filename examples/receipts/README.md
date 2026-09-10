@@ -32,6 +32,8 @@ and validated by `TestReceiptExamplesAreFresh`. For a full install
 verification runbook that composes `object-set-matches`,
 `prerequisites-met`, and `workloads-converged`, see
 [`examples/helm-expt`](../helm-expt/).
+For delivery/status writeback snapshots on single resources, see
+[`delivery-evidence`](./delivery-evidence/).
 
 ## Auto-Detection Priority
 
@@ -57,6 +59,14 @@ When `--predicate` is not passed, cub-scout picks one from these signals:
 
 # no-manual-edits-since — cutoff before today.
 ./cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
+
+# delivery evidence — freeze object-correlated status writeback in the receipt.
+./cub-scout receipt verify deploy/api -n prod \
+  --with-confighub \
+  --confighub-space prod \
+  --confighub-since 24h \
+  --format json \
+  --out api.delivery.receipt.json
 
 # object-set-matches — verify rendered install objects after apply/sync.
 ./cub-scout receipt verify \

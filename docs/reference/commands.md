@@ -790,7 +790,7 @@ cub-scout trace deployment/nginx -n demo --diff
 # Show source artifact provenance (read-only)
 cub-scout trace deployment/nginx -n demo --artifacts
 
-# Show object-correlated ConfigHub delivery evidence when labels/source refs prove the join
+# Show object-correlated ConfigHub delivery evidence when labels/source refs or an explicit space prove the join
 cub-scout trace deployment/nginx -n demo --with-confighub --format json
 
 # Output as JSON or Markdown
@@ -801,8 +801,10 @@ cub-scout trace deployment/nginx -n demo --format md
 `--with-confighub` adds resource-scoped `deliveryEvidence` only from explicit
 joins: ConfigHub unit labels/annotations, exact unit ID, exact unit slug plus
 space, exact space plus target for releases, ConfigHub OCI source space/target,
-or Argo Application name for live-status writeback. A space-only release match
-is intentionally not considered object-level evidence.
+or Argo Application name plus exact resource/flag space for live-status
+writeback. A space-only release match is intentionally not considered
+object-level evidence, and wildcard `--confighub-space '*'` is not treated as
+an exact resource space.
 
 ### Argo Context Troubleshooting
 
@@ -2734,6 +2736,9 @@ Receipts wrap cub-scout's existing field-level evidence (compareThreeWay,
 attribution, sourceTruth, gitSource) into a verifiable in-toto Statement v1
 envelope. CI/CD gates, audit trails, postmortems, and acceptance-judge
 tooling can attach a receipt to a decision and later re-check for tampering.
+Single-resource receipts can also attach opt-in ConfigHub delivery evidence
+under `predicate.evidence.deliveryEvidence`; this is supporting evidence, not
+a new delivery-success predicate.
 
 Current shipping releases use fingerprint-only integrity (SHA-256 over
 RFC 8785 canonical JSON of the full Statement minus only
@@ -2758,6 +2763,10 @@ cub-scout receipt verify --file <manifest.yaml|dir> --scope namespace/<ns> [flag
 | `--ttl` | Observation-freshness boundary, e.g. `1h`. When set, the receipt records immutable `freshness{observedAt,expiresAt,ttl}` fields so consumers can distinguish a fresh receipt from a stale one. |
 | `--no-extras` | For `--predicate object-set-matches`: also run the closed-world check and flag live objects of the rendered kinds in scope that are not in the desired set. Extras downgrade a clean `PASS` to `WATCH`. |
 | `--normalization-profile` | Named server-normalization profile applied symmetrically to desired and live objects before object-set comparison and digesting, e.g. `k8s-zero-defaults/v1`. |
+| `--with-confighub` | For single-resource receipts only: attach bounded ConfigHub delivery evidence under `predicate.evidence.deliveryEvidence` when exact object correlation exists. This does not alter the predicate's verdict semantics and does not make cub-scout the delivery/application-health authority. |
+| `--confighub-space` | ConfigHub space for delivery evidence (default: resource ConfigHub space; `*` must be explicit and is not treated as exact object-level space correlation). |
+| `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`; examples: `24h`, `7d`, `2w`). Invalid values reject before emitting a receipt. |
+| `--confighub-stale-after` | Treat ConfigHub live-status observations older than this as stale (default: `15m`). Invalid values reject before emitting a receipt. |
 | `--at-commit` | Override the spec anchor revision (Git SHA) for `applied-matches-spec`. When empty, the controller-resolved anchor is used as both the spec and the evidence. |
 | `--strategy` | Source-truth strategy for `source-truth-pass` (e.g. `git-argo`, `confighub-oci-flux`, `helm-argo`). cub-scout does not infer the strategy. |
 | `--since` | RFC 3339 cutoff timestamp for `no-manual-edits-since` (e.g. `2026-05-22T00:00:00Z`). |
@@ -2792,6 +2801,16 @@ source-truth-pass` without `--strategy`, or `--predicate
 no-manual-edits-since` without `--since`, return an error rather than
 silently demoting to INCONCLUSIVE.
 
+`--with-confighub` is supported only on the single-resource form in this
+release. `--file`, `--prerequisites`, namespace aggregate, and comma-list
+aggregate receipts reject it explicitly rather than silently omitting delivery
+evidence. The attached delivery evidence uses the same exact-correlation rules
+as `trace --with-confighub`: live-status writeback requires exact space plus
+Argo Application name or ConfigHub unit slug; release evidence requires exact
+space plus target; unit events require exact unit ID, or unit slug plus space.
+If those joins cannot be proven, the receipt records structured omissions under
+`predicate.evidence.deliveryEvidence.omissions`.
+
 Examples:
 
 ```bash
@@ -2809,6 +2828,14 @@ cub-scout receipt verify deploy/api -n prod --since 2026-05-22T00:00:00Z
 
 # Write the canonical JSON form to disk for audit attachment.
 cub-scout receipt verify deploy/api -n prod --format json --out api.receipt.json
+
+# Attach bounded ConfigHub delivery evidence to the fingerprinted receipt.
+cub-scout receipt verify deploy/api -n prod \
+  --with-confighub \
+  --confighub-space payments-prod \
+  --confighub-since 24h \
+  --format json \
+  --out api.delivery.receipt.json
 
 # object-set-matches — prove rendered install objects landed live.
 cub-scout receipt verify \
