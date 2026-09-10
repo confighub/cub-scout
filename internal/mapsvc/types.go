@@ -24,6 +24,7 @@ type Entry struct {
 	Owner         string                           `json:"owner"`
 	OwnerDetails  map[string]string                `json:"ownerDetails,omitempty"`
 	OwnerEvidence *agent.PlatformSubstrateEvidence `json:"ownerEvidence,omitempty"`
+	Observation   *agent.ObservationEvidence       `json:"observation,omitempty"`
 	Labels        map[string]string                `json:"labels,omitempty"`
 	Status        string                           `json:"status"` // Ready, NotReady, Failed, Pending, Unknown
 	CreatedAt     time.Time                        `json:"createdAt"`

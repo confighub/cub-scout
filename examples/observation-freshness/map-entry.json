@@ -1,0 +1,23 @@
+{
+  "id": "kind-dev/prod/apps/Deployment/api",
+  "clusterName": "kind-dev",
+  "namespace": "prod",
+  "kind": "Deployment",
+  "name": "api",
+  "apiVersion": "apps/v1",
+  "owner": "Flux",
+  "observation": {
+    "source": "kubernetes-api",
+    "mode": "map-list",
+    "observedAt": "2026-09-10T14:15:00Z",
+    "freshness": "point-in-time",
+    "scope": {
+      "cluster": "kind-dev",
+      "namespace": "prod",
+      "kind": "Deployment"
+    }
+  },
+  "status": "Ready",
+  "createdAt": "2026-09-10T13:00:00Z",
+  "updatedAt": "2026-09-10T13:00:00Z"
+}

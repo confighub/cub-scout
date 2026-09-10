@@ -116,6 +116,13 @@ The pack carries:
 - `attribution[]` — per-resource attribution evidence (`cause`, `managerHint`, `gitSource`, `bindingSource`)
 - `omissions[]` — explicit non-claims (e.g., resources skipped due to CrashLoop, unsupported kinds)
 
+For lower-level JSON artifacts outside `context-pack`, prefer the shared
+`observation` metadata when present. `map list --format json`, `snapshot`, and
+`watch`/`bot` events expose `observation.source`, `observation.mode`,
+`observation.observedAt`, and `observation.freshness` so an agent can tell
+whether it is reasoning over a fresh live read, a point-in-time snapshot, or an
+event from a polling observer.
+
 Feed it to the LLM as a system message context block:
 
 ```

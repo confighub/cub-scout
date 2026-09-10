@@ -1,0 +1,29 @@
+{
+  "type": "drift.detected",
+  "timestamp": "2026-09-10T14:15:00Z",
+  "observation": {
+    "source": "kubernetes-api",
+    "mode": "watch-poll",
+    "observedAt": "2026-09-10T14:15:00Z",
+    "freshness": "point-in-time",
+    "scope": {
+      "cluster": "kind-dev",
+      "namespace": "prod",
+      "kind": "Deployment"
+    }
+  },
+  "resource": {
+    "kind": "Deployment",
+    "name": "api",
+    "namespace": "prod"
+  },
+  "owner": {
+    "type": "Flux",
+    "name": "apps"
+  },
+  "severity": "warning",
+  "details": {
+    "category": "DRIFT",
+    "message": "live state differs from desired state"
+  }
+}

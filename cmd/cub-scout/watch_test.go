@@ -164,6 +164,88 @@ func TestBuildWatchEvents_ModelplaneOwnerEvidence(t *testing.T) {
 	}
 }
 
+func TestBuildWatchEvents_AttachesObservationEvidence(t *testing.T) {
+	ts := time.Date(2026, 9, 10, 14, 15, 0, 0, time.UTC)
+	curr := watchState{
+		entriesByID: map[string]MapEntry{
+			"id-1": {
+				ID:          "id-1",
+				ClusterName: "kind-dev",
+				Namespace:   "prod",
+				Kind:        "Deployment",
+				Name:        "api",
+				Owner:       "Flux",
+			},
+		},
+		findings: map[string]watchFinding{},
+	}
+
+	events := buildWatchEvents(watchState{entriesByID: map[string]MapEntry{}, findings: map[string]watchFinding{}}, curr, nil, "", func() time.Time {
+		return ts
+	})
+	if len(events) != 1 {
+		t.Fatalf("events len = %d, want 1: %+v", len(events), events)
+	}
+	observation := events[0].Observation
+	if observation == nil {
+		t.Fatalf("observation missing: %+v", events[0])
+	}
+	if observation.Source != agent.ObservationSourceKubernetesAPI {
+		t.Fatalf("source = %q, want kubernetes-api", observation.Source)
+	}
+	if observation.Mode != agent.ObservationModeWatchPoll {
+		t.Fatalf("mode = %q, want watch-poll", observation.Mode)
+	}
+	if !observation.ObservedAt.Equal(ts) {
+		t.Fatalf("observedAt = %s, want %s", observation.ObservedAt, ts)
+	}
+	if observation.Freshness != agent.ObservationFreshnessPointInTime {
+		t.Fatalf("freshness = %q, want point-in-time", observation.Freshness)
+	}
+	if observation.Scope == nil || observation.Scope.Cluster != "kind-dev" || observation.Scope.Namespace != "prod" || observation.Scope.Kind != "Deployment" {
+		t.Fatalf("scope = %+v, want resource scope", observation.Scope)
+	}
+}
+
+func TestBuildWatchEvents_ObservationEvidenceForFindingWithoutEntry(t *testing.T) {
+	ts := time.Date(2026, 9, 10, 14, 20, 0, 0, time.UTC)
+	curr := watchState{
+		entriesByID: map[string]MapEntry{},
+		findings: map[string]watchFinding{
+			"f1": {
+				Key:       "f1",
+				Category:  "STATE",
+				Severity:  "warning",
+				Kind:      "Deployment",
+				Name:      "api",
+				Namespace: "prod",
+				Message:   "out of sync",
+			},
+		},
+	}
+
+	events := buildWatchEvents(watchState{entriesByID: map[string]MapEntry{}, findings: map[string]watchFinding{}}, curr, nil, "", func() time.Time {
+		return ts
+	})
+	if len(events) != 2 {
+		t.Fatalf("events len = %d, want scan.finding + drift.detected: %+v", len(events), events)
+	}
+	for _, event := range events {
+		if event.Observation == nil {
+			t.Fatalf("%s observation missing: %+v", event.Type, event)
+		}
+		if event.Observation.Scope == nil {
+			t.Fatalf("%s scope missing: %+v", event.Type, event.Observation)
+		}
+		if event.Observation.Scope.Cluster != "" {
+			t.Fatalf("%s cluster = %q, want empty when no map entry matched", event.Type, event.Observation.Scope.Cluster)
+		}
+		if event.Observation.Scope.Namespace != "prod" || event.Observation.Scope.Kind != "Deployment" {
+			t.Fatalf("%s scope = %+v, want finding namespace/kind", event.Type, event.Observation.Scope)
+		}
+	}
+}
+
 func TestAppendWatchQueue_DropsOldest(t *testing.T) {
 	queue := []watchEvent{{Type: "e1"}, {Type: "e2"}}
 	queue = appendWatchQueue(queue, []watchEvent{{Type: "e3"}, {Type: "e4"}}, 3)

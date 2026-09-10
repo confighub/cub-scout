@@ -33,6 +33,8 @@ Use these boundaries consistently:
   - read-only cluster/GitOps observation
   - connected comparison such as `compare three-way`
   - local Git structure preview via `import --git-path`
+  - point-in-time `observation` freshness metadata on broad JSON reads and
+    watch/bot events
 - `cub`
   - ConfigHub intended-state workflows
   - `cub gitops discover`
@@ -160,6 +162,16 @@ Recommended commands to keep in every flow:
 ./cub-scout --help
 ./cub-scout <command> --help
 ./cub-scout import --dry-run -n <namespace>
+```
+
+For broad or repeated questions, prefer a JSON artifact that carries
+`observation.source`, `observation.mode`, `observation.observedAt`, and
+`observation.freshness` before asking the live API again:
+
+```bash
+./cub-scout map list --format json
+./cub-scout snapshot --namespace <namespace>
+./cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
 ```
 
 When presentation-mode support is added, prefer explicit flags such as:

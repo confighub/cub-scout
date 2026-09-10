@@ -23,7 +23,7 @@ questions faster than `kubectl` + GitOps GUIs:
 
 When the operator asks... | Run this | What you get
 ---|---|---
-"What's running in my cluster?" | `cub-scout map list --json` | Every resource with owner classification
+"What's running in my cluster?" | `cub-scout map list --json` | Every resource with owner classification plus per-entry `observation` freshness metadata
 "What's broken?" | `cub-scout doctor --format json` | One-shot health summary
 "Did delivery feedback report back?" | `cub-scout doctor --with-confighub --confighub-space <space> --format json` | Scope-level delivery rollup, freshness, event-consumer health, and omissions
 "Can I keep this delivery observation?" | `cub-scout receipt verify <kind>/<name> -n <ns> --with-confighub --confighub-space <space> --format json` | Fingerprint-covered `predicate.evidence.deliveryEvidence` for a single resource
@@ -32,6 +32,7 @@ When the operator asks... | Run this | What you get
 "Find unmanaged resources" | `cub-scout map list --json \| jq '.[] \| select(.owner=="Native")'` | Resources with no GitOps owner
 "Are there config issues?" | `cub-scout scan --json` | 46-pattern misconfiguration scan
 "What's the GitOps pipeline doing?" | `cub-scout gitops status` | Reconciliation state across Flux/Argo/Helm
+"Can I reuse this broad read without asking the API again?" | `cub-scout snapshot` or `cub-scout watch --output-file <path>` | Point-in-time `observation.source/mode/observedAt/freshness` metadata on the snapshot or event stream
 "Show me the resource hierarchy" | `cub-scout tree ownership` | Resources grouped by GitOps owner
 "Trace history of a resource" | `cub-scout trace <kind>/<name> -n <ns> --history` | Deployment history from controller storage
 
@@ -44,8 +45,9 @@ kubectl config current-context         # Verify cluster context
 ./cub-scout map list --json | jq 'group_by(.owner) | map({owner: .[0].owner, count: length})'
 ```
 
-That gives you: tool version, cluster context, overall health, and ownership
-breakdown — enough to answer most "what's going on here" questions.
+That gives you: tool version, cluster context, overall health, ownership
+breakdown, and a point-in-time observation timestamp for the inventory — enough
+to answer most "what's going on here" questions without immediately re-querying.
 
 ## Detailed task flows
 

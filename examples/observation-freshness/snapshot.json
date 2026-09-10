@@ -1,0 +1,45 @@
+{
+  "version": "gsf/v1",
+  "generatedAt": "2026-09-10T14:15:00Z",
+  "observation": {
+    "source": "kubernetes-api",
+    "mode": "snapshot",
+    "observedAt": "2026-09-10T14:15:00Z",
+    "freshness": "point-in-time",
+    "scope": {
+      "cluster": "kind-dev",
+      "namespace": "prod",
+      "kind": "Deployment"
+    }
+  },
+  "cluster": "kind-dev",
+  "entries": [
+    {
+      "id": "kind-dev/prod/apps/Deployment/api",
+      "cluster": "kind-dev",
+      "namespace": "prod",
+      "kind": "Deployment",
+      "name": "api",
+      "apiVersion": "apps/v1",
+      "owner": {
+        "type": "flux",
+        "subType": "kustomization",
+        "name": "apps",
+        "namespace": "flux-system"
+      },
+      "labels": {
+        "app": "api"
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "byKind": {
+      "Deployment": 1
+    },
+    "byOwner": {
+      "flux": 1
+    },
+    "drifted": 0
+  }
+}
