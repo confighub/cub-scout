@@ -243,12 +243,15 @@ func TestReceiptList_PopulatedStore_PrintsRows(t *testing.T) {
 			t.Fatalf("receipt list: %v", err)
 		}
 	})
-	if !strings.Contains(out, "VERDICT") || !strings.Contains(out, "PREDICATE") {
+	if !strings.Contains(out, "VERDICT") || !strings.Contains(out, "PREDICATE") || !strings.Contains(out, "FRESHNESS") {
 		t.Errorf("list ASCII must include header; got:\n%s", out)
 	}
 	// Two entries → both namespaces present.
 	if !strings.Contains(out, "Deployment/api in prod") || !strings.Contains(out, "Deployment/api in staging") {
 		t.Errorf("expected both scopes in list output; got:\n%s", out)
+	}
+	if !strings.Contains(out, "not-declared") {
+		t.Errorf("receipts without --ttl must show not-declared freshness; got:\n%s", out)
 	}
 }
 
@@ -261,7 +264,7 @@ func TestReceiptList_JSON_RoundTrips(t *testing.T) {
 	receiptSave = true
 	receiptSaveDir = storeDir
 	captureStdout(t, func() {
-		rootCmd.SetArgs([]string{"receipt", "verify", "deploy/api", "-n", "prod", "--format", "json"})
+		rootCmd.SetArgs([]string{"receipt", "verify", "deploy/api", "-n", "prod", "--ttl", "2h", "--format", "json"})
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("seed: %v", err)
 		}
@@ -280,6 +283,15 @@ func TestReceiptList_JSON_RoundTrips(t *testing.T) {
 	}
 	if len(entries) != 1 {
 		t.Errorf("expected 1 entry; got %d", len(entries))
+	}
+	if entries[0].Freshness.Status != agent.ReceiptFreshnessFresh {
+		t.Fatalf("freshness status = %q, want fresh", entries[0].Freshness.Status)
+	}
+	if entries[0].Freshness.ObservedAt == "" || entries[0].Freshness.ExpiresAt == "" {
+		t.Fatalf("freshness timestamps missing: %+v", entries[0].Freshness)
+	}
+	if entries[0].Freshness.TTL != "2h0m0s" {
+		t.Fatalf("freshness ttl = %q, want 2h0m0s", entries[0].Freshness.TTL)
 	}
 }
 

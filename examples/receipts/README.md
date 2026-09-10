@@ -108,7 +108,11 @@ without re-running the verification:
 # List receipts in the local store.
 ./cub-scout receipt list
 ./cub-scout receipt list --format json | jq '.[] | select(.verdict == "BLOCK")'
+./cub-scout receipt list --format json | jq '.[] | select(.freshness.status == "stale")'
 ```
+
+See [`list-freshness`](./list-freshness/) for the receipt-store JSON shape
+with `fresh`, `stale`, and `not-declared` entries.
 
 ## Local Receipt Store
 

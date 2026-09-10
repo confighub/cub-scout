@@ -1532,7 +1532,7 @@ The exit-code split between 1 (tamper) and 2 (I/O) lets CI distinguish "this art
 ### cub-scout receipt list
 
 ```bash
-cub-scout receipt list [--dir <path>] [--format ascii|json] [--sort newest|oldest]
+cub-scout receipt list [--dir <path>] [--format ascii|json]
 ```
 
 #### Store Resolution Order
@@ -1548,6 +1548,22 @@ cub-scout receipt list [--dir <path>] [--format ascii|json] [--sort newest|oldes
 |------|---------|
 | 0 | Listing complete (zero entries is still 0) |
 | 1 | Store unreadable |
+
+#### Output Contract
+
+ASCII output is sorted by `verifiedAt` descending and includes
+`VERDICT`, `PREDICATE`, `SCOPE`, `VERIFIED-AT`, `FRESHNESS`, and `PATH`.
+
+JSON output is the `ReceiptListEntry[]` contract from
+[`json-contracts.md`](json-contracts.md#receiptlistentry-json-shape).
+Each entry includes `freshness.status`:
+
+| Status | Meaning |
+|--------|---------|
+| `fresh` | A `--ttl` freshness stamp exists and has not expired at list time. |
+| `stale` | A `--ttl` freshness stamp exists and has expired at list time. |
+| `not-declared` | The saved receipt has no freshness stamp. |
+| `invalid` | Freshness fields are present but malformed or incomplete. |
 
 ### cub-scout watch --emit-receipt-on (v2.3)
 

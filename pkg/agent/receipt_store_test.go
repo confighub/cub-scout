@@ -308,6 +308,88 @@ func TestListStatements_ReturnsSortedDescending(t *testing.T) {
 	}
 }
 
+func TestSummarizeReceiptFreshnessStatuses(t *testing.T) {
+	now := time.Date(2026, 5, 22, 10, 0, 0, 0, time.UTC)
+
+	cases := []struct {
+		name      string
+		freshness *Freshness
+		want      ReceiptFreshnessStatus
+	}{
+		{
+			name: "fresh",
+			freshness: &Freshness{
+				ObservedAt: "2026-05-22T09:30:00Z",
+				ExpiresAt:  "2026-05-22T10:30:00Z",
+				TTL:        "1h0m0s",
+			},
+			want: ReceiptFreshnessFresh,
+		},
+		{
+			name: "stale",
+			freshness: &Freshness{
+				ObservedAt: "2026-05-22T08:30:00Z",
+				ExpiresAt:  "2026-05-22T09:30:00Z",
+				TTL:        "1h0m0s",
+			},
+			want: ReceiptFreshnessStale,
+		},
+		{
+			name:      "not declared",
+			freshness: nil,
+			want:      ReceiptFreshnessNotDeclared,
+		},
+		{
+			name: "invalid",
+			freshness: &Freshness{
+				ObservedAt: "bad",
+				ExpiresAt:  "2026-05-22T10:30:00Z",
+				TTL:        "1h0m0s",
+			},
+			want: ReceiptFreshnessInvalid,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := SummarizeReceiptFreshness(tc.freshness, now)
+			if got.Status != tc.want {
+				t.Fatalf("status = %q, want %q", got.Status, tc.want)
+			}
+		})
+	}
+}
+
+func TestListStatements_IncludesFreshnessSummary(t *testing.T) {
+	dir := t.TempDir()
+	stmt := makeStubStatement("2026-05-22T09:30:00Z", "applied-matches-spec", "Deployment", "api", "sha256:aaaa000000000000aaaa")
+	stmt.Predicate.Freshness = &Freshness{
+		ObservedAt: "2026-05-22T09:30:00Z",
+		ExpiresAt:  "2026-05-22T10:30:00Z",
+		TTL:        "1h0m0s",
+	}
+	if _, err := SaveStatement(stmt, dir); err != nil {
+		t.Fatalf("seed save: %v", err)
+	}
+
+	entries, err := ListStatementsAt(dir, time.Date(2026, 5, 22, 10, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatalf("ListStatementsAt: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 entry; got %d", len(entries))
+	}
+	if entries[0].Freshness.Status != ReceiptFreshnessFresh {
+		t.Fatalf("freshness status = %q, want fresh", entries[0].Freshness.Status)
+	}
+	if entries[0].Freshness.ObservedAt != "2026-05-22T09:30:00Z" || entries[0].Freshness.ExpiresAt != "2026-05-22T10:30:00Z" {
+		t.Fatalf("freshness timestamps not preserved: %+v", entries[0].Freshness)
+	}
+	if entries[0].Freshness.TTL != "1h0m0s" {
+		t.Fatalf("ttl = %q, want 1h0m0s", entries[0].Freshness.TTL)
+	}
+}
+
 func TestListStatements_TolerataesNonReceiptFiles(t *testing.T) {
 	dir := t.TempDir()
 	// Drop a non-receipt file in the dir. List should skip it.

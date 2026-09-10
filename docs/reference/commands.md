@@ -2953,10 +2953,16 @@ verify`. Files are flat JSON, named
 `<verifiedAt>__<predicate>__<kind>-<name>__<short-fingerprint>.receipt.json`
 so a normal `ls` yields chronological order.
 
-ASCII output is a five-column fixed-width table (verdict / predicate /
-scope / verifiedAt / filename). JSON emits the `ReceiptListEntry[]`
-shape — same content, machine-readable — sorted by `verifiedAt`
-descending.
+ASCII output is a six-column fixed-width table (verdict / predicate /
+scope / verifiedAt / freshness / filename). JSON emits the
+`ReceiptListEntry[]` shape, including exact freshness timestamps when
+present, sorted by `verifiedAt` descending.
+
+`freshness` is derived from the immutable `predicate.freshness` stamp on
+each saved receipt. Receipts created with `receipt verify --ttl <duration>`
+show `fresh` until `expiresAt`, then `stale`; receipts created without
+`--ttl` show `not-declared`; malformed freshness timestamps show
+`invalid`. Listing never rewrites the receipt artifact.
 
 ### Saving receipts to the local store
 
