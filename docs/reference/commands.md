@@ -32,6 +32,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `fleet outliers` | Connected cluster-drift outlier report | v1.6 |
 | `trace` | Show GitOps ownership chain | v0.5 |
 | `watch --webhook <url>` | Stream observation events to webhook/file sinks | v1.7 |
+| `bot` | Run the watch engine as an in-cluster observation bot | v2.8 |
 | `scan` | Scan for misconfigurations | v0.5 |
 | `scan --lifecycle-hazards` | Detect Helm hook risks under ArgoCD | v0.19 |
 | `tree` | Hierarchical resource views | v0.5 |
@@ -71,7 +72,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `bundle diff` | Compare two bundles | v0.15 |
 | `bundle timeline` | Time-series view across catalog | v0.15 |
 | `catalog list` | List bundles in a catalog | v0.15 |
-| `gitops status` | Show GitOps/controller pipeline health | v0.14.1 |
+| `gitops status` | Show GitOps/controller pipeline health, with optional bounded ConfigHub evidence | v0.14.1 |
 | `version` | Print version/build information | v0.5 |
 
 For JSON contract navigation, start with [JSON Contracts and Output Model](json-contracts.md).
@@ -885,6 +886,52 @@ cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
 See [`examples/watch-webhook/`](../../examples/watch-webhook/) for a local receiver and end-to-end walkthrough.
 Custom CRDs in `~/.cub-scout/resources.yaml` (or `CUB_SCOUT_RESOURCE_CONFIG`)
 are included in watch resource discovery.
+
+---
+
+## bot
+
+Run cub-scout as a long-running read-only observation bot, usually inside a
+Kubernetes Pod.
+
+```bash
+cub-scout bot [--webhook <url>] [--output-file <path>] [flags]
+```
+
+`bot` uses the same watch engine and event payloads as `watch`, but is shaped
+for in-cluster deployment: `buildConfig()` uses Kubernetes in-cluster auth when
+available, and every important flag has a `CUB_SCOUT_BOT_*` environment
+variable for manifests.
+
+At least one destination is required: `--webhook`, `--output-file`,
+`CUB_SCOUT_BOT_WEBHOOK_URL`, or `CUB_SCOUT_BOT_OUTPUT_FILE`.
+
+### Flags
+
+| Flag | Environment | Description |
+|------|-------------|-------------|
+| `--webhook` | `CUB_SCOUT_BOT_WEBHOOK_URL` | Webhook URL to receive events |
+| `--output-file` | `CUB_SCOUT_BOT_OUTPUT_FILE` | Append JSONL events to a file path |
+| `--interval` | `CUB_SCOUT_BOT_INTERVAL` | Polling interval (default: `30s`) |
+| `-n, --namespace` | `CUB_SCOUT_BOT_NAMESPACE` | Namespace filter |
+| `--owner` | `CUB_SCOUT_BOT_OWNER` | Owner display-name filter |
+| `--severity` | `CUB_SCOUT_BOT_SEVERITY` | Finding severity filter (`critical,warning,info`) |
+| `--once` | - | Run one collection cycle and exit |
+| `--max-queued-events` | `CUB_SCOUT_BOT_MAX_QUEUED_EVENTS` | Max buffered events while webhook is unreachable |
+| `--emit-receipt-on` | `CUB_SCOUT_BOT_EMIT_RECEIPT_ON` | Comma-separated event types, or `all`, for inline receipts |
+| `--emit-receipt-batch-cap` | `CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP` | Per-poll cap on receipt-build attempts |
+
+### Example
+
+```bash
+cub-scout bot \
+  --webhook https://events.example.com/cub-scout \
+  --interval 30s \
+  --severity warning,critical
+```
+
+See [`examples/bot/`](../../examples/bot/) for a Kubernetes Deployment,
+ServiceAccount, and read-only ClusterRole.
 
 ---
 
@@ -1837,12 +1884,13 @@ cub-scout mcp serve
 
 #### Notes
 
-- Standalone tools: `doctor`, `explain`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
+- Standalone tools: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
 - `doctor` is intentionally first: it is the natural first troubleshooting command for AI and MCP clients, including when the problem may be local access uncertainty such as wrong context, stale kubeconfig, or API reachability.
-- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `confighub_changesets`, `confighub_units`, `confighub_unit_get`.
+- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - MCP tool descriptors mark every tool with `annotations.readOnlyHint=true`.
 - Protocol transport is stdio with `Content-Length` framed JSON-RPC messages.
+- Connected history/status tools require an explicit `space` argument, or `*` when the user explicitly asks for all spaces, so broad ConfigHub reads are deliberate.
 
 #### Tool Parameters
 
@@ -1852,6 +1900,35 @@ cub-scout mcp serve
 - `compare_three_way`
   - `scope` (required)
   - `namespace` (optional)
+- `compare_source_truth`
+  - `target` (required)
+  - `namespace` (required)
+  - `strategy` (required; enum mirrors `compare source-truth --help`)
+- `gitops_status`
+  - `namespace` (optional)
+  - `with_confighub` (optional boolean)
+  - `confighub_space` (optional)
+  - `confighub_since` (optional)
+  - `confighub_stale_after` (optional)
+- `confighub_changesets`
+  - `space` (optional)
+  - `where` (optional)
+- `confighub_live_status`
+  - `space` (required; use `*` only for an explicit all-spaces read)
+- `confighub_releases`
+  - `space` (required)
+  - `where` (optional)
+- `confighub_unit_events`
+  - `space` (required)
+  - `unit` (optional)
+  - `where` (optional)
+- `confighub_units`
+  - `space` (optional)
+  - `where` (optional)
+  - `contains` (optional)
+- `confighub_unit_get`
+  - `unit` (required)
+  - `space` (optional)
 - `explain`
   - `resource` (required)
   - `namespace` (optional)
@@ -2183,7 +2260,12 @@ cub-scout gitops status [flags]
 | Flag | Description |
 |------|-------------|
 | `-n, --namespace` | Namespace to scan (empty = all namespaces) |
-| `--json` | Output as JSON |
+| `--format` | Output format: `ascii`, `json`, `md` |
+| `--json` | Output as JSON (shorthand for `--format json`) |
+| `--with-confighub` | Include bounded ConfigHub release, unit-event, and live-status evidence |
+| `--confighub-space` | ConfigHub space for connected evidence (default: current cub space; use `*` explicitly for all spaces) |
+| `--confighub-since` | Lookback window for release/event evidence (default: `24h`) |
+| `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 
 #### Detected Backends
 
@@ -2239,10 +2321,72 @@ NEXT STEPS
   "transport": "oci",
   "deployers": [...],
   "sources": [...],
+  "controllerCoverage": [
+    {
+      "family": "Flux",
+      "status": "found",
+      "resourceKinds": ["HelmRelease", "Kustomization"],
+      "foundKinds": ["Kustomization"],
+      "found": 1
+    },
+    {
+      "family": "Modelplane",
+      "status": "unreadable",
+      "resourceKinds": ["ModelDeployment"],
+      "found": 0,
+      "omissions": [
+        {
+          "resource": "modeldeployments.modelplane.ai/v1alpha1",
+          "reason": "forbidden"
+        }
+      ]
+    }
+  ],
   "healthyCount": 0,
-  "failedCount": 1
+  "failedCount": 1,
+  "deliveryEvidence": {
+    "observedAt": "2026-09-10T12:00:00Z",
+    "scope": {
+      "space": "prod",
+      "since": "24h",
+      "staleAfter": "15m0s",
+      "maxItems": 10
+    },
+    "configHub": {
+      "liveStatuses": [
+        {
+          "space": "prod",
+          "source": "argobot",
+          "app": "prod",
+          "syncStatus": "Synced",
+          "healthStatus": "Healthy",
+          "operationPhase": "Succeeded",
+          "freshness": "fresh",
+          "deliveryVerdict": "PASS",
+          "applicationHealthVerdict": "PASS"
+        }
+      ],
+      "releases": [...],
+      "unitEvents": [...]
+    },
+    "eventConsumers": [...]
+  }
 }
 ```
+
+`deliveryEvidence` is present only with `--with-confighub`. It is additive and
+read-only: ConfigHub owns release/event history and reported live-status,
+controller status owns sync truth, and Kubernetes owns runtime truth. Missing,
+stale, malformed, or disconnected evidence is reported under
+`deliveryEvidence.omissions[]`. Event-consumer health uses label-selected
+Deployment reads for `app=argobot` and `app.kubernetes.io/name=argobot`; it
+searches all namespaces when allowed and reports a scope omission if RBAC forces
+fallback to the requested namespace.
+
+`controllerCoverage[]` is always additive. It records the controller families
+and resource kinds cub-scout checked, what was observed, and which list calls
+were omitted because the API server or current RBAC did not allow a safe read.
+Statuses are `found`, `not_found`, `partial`, and `unreadable`.
 
 ---
 

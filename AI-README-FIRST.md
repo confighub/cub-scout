@@ -27,13 +27,13 @@ cub-scout commands fall into eight groups. The main use case starts from a live 
 
 | Group | What it answers | Notable commands |
 |---|---|---|
-| **Observe** | What's running, who owns it | `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `status` |
+| **Observe** | What's running, who owns it | `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `bot`, `status` |
 | **Diagnose** | What's wrong, what to do next | `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status` |
 | **Compare** | Intended vs actual | `compare`, `compare drift`, `compare three-way`, `compare source-truth` |
 | **Attribute** | Where each field's value came from | per-field `cause`/`managerHint`/`gitSource`/`bindingSource` on `compare` + `explain` |
 | **Govern** | Connected history, fleet, views | `history`, `impact`, `fleet outliers`, `summary`, `views`, `audit`, `bundle`, `catalog` |
 | **Adopt Existing Config** | How to preview/import current cluster or repo structure into ConfigHub | `import --dry-run`, `import --from-bundle`, `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`, `import apply`, `app` |
-| **Integrate** | Setup + AI gateway | `setup`, `quickstart`, `mcp serve`, `context-pack`, `version` |
+| **Integrate** | Setup + AI gateway | `setup`, `quickstart`, `mcp serve`, `bot`, `context-pack`, `version` |
 | **Verify** | Typed, fingerprinted evidence artifacts | `receipt verify`, `receipt show`, `receipt validate`, `receipt list` |
 
 When a user asks "can cub scout do X?", first locate X in this map, then verify the exact flag surface with local `--help` (see [Quick Reality Checks](#quick-reality-checks)).
@@ -47,7 +47,7 @@ When a user asks "can cub scout do X?", first locate X in this map, then verify 
 `cub scout` is the preferred documented form. In this repo, local command examples still use `./cub-scout ...`.
 
 Use it for:
-- Observe: `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `status`
+- Observe: `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `bot`, `status`
 - Diagnose: `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status`
 - Compare: `compare three-way`, `compare source-truth`, `compare drift`, `compare` (resource mode)
 - Attribute (read-only enrichment surfacing on `compare` + `explain` JSON)
@@ -56,6 +56,7 @@ Use it for:
 - Govern (connected): `history`, `impact`, `fleet outliers`, `summary`, `views resolve`, `audit list`, `bundle inspect/diff/timeline`, `catalog list`
 - Verify: `receipt verify / show / validate / list` (typed, fingerprinted evidence — v1 complete)
 - Model Context Protocol (MCP) serving via `mcp serve`
+- In-cluster watch deployment via `bot`
 
 Important:
 - `cub scout` is cluster read-only by default
@@ -89,7 +90,26 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Current release tag: **v2.6.0** (next: **v2.7.0** — release-candidate notes at `docs/releases/v2.7.0.md`; PR #500 merged on 2026-07-09). As of 2026-07-09, these areas are fully or materially shipped:
+Current release tag: **v2.7.0**. The next release candidate adds bounded
+ConfigHub delivery evidence, MCP release/event/live-status tools,
+source-truth MCP strategy parity, and first-class in-cluster `bot` mode;
+draft notes live at
+`docs/releases/v2.8.0.md`.
+
+As of 2026-09-10, these areas are fully or materially shipped:
+
+- **Post-v2.7 ConfigHub delivery evidence release slice — next release candidate**
+  - README now frames the five run modes near the top: standalone client, `cub` plugin, MCP server, watch stream, and in-cluster bot
+  - `gitops status --format ascii|json|md` now matches the documented format contract; `--json` remains a shorthand for `--format json`
+  - `gitops status --with-confighub` adds opt-in, bounded ConfigHub release history, unit events, live-status writeback, and event-consumer Deployment health under `deliveryEvidence`
+  - Live-status writeback separates delivery verdict from application-health verdict and downgrades stale successful observations to `WATCH`
+  - ConfigHub release and unit-event reads are scoped by current cub space by default, support explicit `--confighub-space '*'`, and are bounded by `--confighub-since`
+  - `gitops status` emits controller-family coverage for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane, including found/not-found/partial/unreadable status and RBAC/list omissions
+  - Modelplane traces keep Modelplane as the higher-level owner while surfacing Crossplane substrate evidence from composite/claim/composition-resource labels and verified Crossplane field managers
+  - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`
+  - MCP `compare_source_truth` strategy enum is generated from the same strategy registry as the CLI
+  - `bot` runs the `watch` engine as an in-cluster-friendly read-only observer with `CUB_SCOUT_BOT_*` environment configuration and a deployable example under `examples/bot/`
+  - Remaining work: deeper object-level correlation from releases/live-status to `trace`, `explain`, `doctor`, `map activity`, and receipts; Modelplane-on-Crossplane source/generation evidence, receipts, and watch/bot parity
 
 - **Live delivery observability release slice — merged for v2.7.0** (`#500`)
   - README now starts with a user-question table covering ownership, delegated delivery health, intended-vs-live agreement, rollout progress, proceed/wait/retry framing, drift, delivery-vs-runtime separation, attribution, low-load repeated review paths, and receipts
@@ -98,7 +118,7 @@ Current release tag: **v2.6.0** (next: **v2.7.0** — release-candidate notes at
   - Aggregate resources participate in controller-resource discovery, ownership detection, map deployers/status views, `gitops status`, trace lookup, and activity timelines where the CRDs are installed
   - Audited action event parsing for Kubernetes Events with reason `WebAction`; `trace`, `explain`, and `map activity` preserve actor, subject, groups, action, and raw annotation evidence without guessing missing fields
   - New example fixture at `examples/live-delivery-observability/` and operator flow at `docs/howto/delivery-readiness-decision.md`
-  - Safe follow-ups remain tracked in `docs/roadmap.md`: aggregate failures as top-level `doctor` findings, audited actions as history/receipt evidence, broader freshness metadata for snapshot/watch/summary/receipt paths, and deeper controller-family parity omissions
+  - Safe follow-ups remain tracked in `docs/roadmap.md`: aggregate failures as top-level `doctor` findings, audited actions as history/receipt evidence, broader freshness metadata for snapshot/watch/summary/receipt paths, deeper controller-family parity omissions, and object-level release/live-status correlation
 
 - **Post-v2.3 receipt / comparison / controller evidence — tagged through v2.6.0**
   - Install/object-set receipts, `workloads-converged`, `prerequisites-met`, `--ttl`, `--no-extras`, external reference evidence, normalization profiles, `receipt digest`, and `receipt chain`
@@ -155,8 +175,8 @@ Current release tag: **v2.6.0** (next: **v2.7.0** — release-candidate notes at
   - `compare three-way --view <uuid-or-url>` scopes to a ConfigHub View (`#414`)
   - `views project --with-reality` composes View columns with source-truth verdicts (`#420`)
 - **MCP gateway** — `mcp serve` exposes a closed, read-only-by-construction tool catalog:
-  - 5 standalone tools: `doctor`, `map`, `scan`, `trace`, `explain`
-  - 5 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_units`, `confighub_unit_get`
+  - 6 standalone tools: `doctor`, `map`, `scan`, `trace`, `explain`, `gitops_status`
+  - 8 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`
   - Verified by `cmd/cub-scout/mcp_test.go`; full per-tool reference at `skills/references/mcp-tool-catalog.md`
 - `doctor` / `explain` with `--presentation human|ai|paired` and `--hint-mode default|beginner|operator`
 - Argo truth-and-guidance track — truthful `explain` ownership for ApplicationSet-managed resources, connected three-way disagreement surfacing, phase-aware next-step hints
@@ -171,27 +191,27 @@ Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consu
 
 ### Recently closed (this session's arc)
 
+- Post-v2.7 delivery-evidence release candidate in this worktree: `gitops status --with-confighub`, MCP release/event/live-status tools, MCP source-truth strategy parity, README five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`
 - ~~**`#500`**~~ — live delivery observability release slice, merged 2026-07-09; see `docs/releases/v2.7.0.md`
 - Earlier closed arcs: ~~**`#446`**~~ (parent), ~~**`#444`**~~, ~~**`#448`**~~, ~~**`#449`**~~, ~~**`#451`**~~ — see HANDOVER.md § "May 2026 completions — session 2026-05-25" for the PR-by-PR breakdown
-- Next step: **tag `v2.7.0`** after final release-note review
 
 ### Live delivery observability follow-ups
 
 - Aggregate delivery failures as `doctor` top-level findings where controller status refs expose source/generated-artifact lineage
 - Audited action events as history and receipt supporting evidence
 - Broader source freshness metadata for snapshot, watch, summary, and receipt-backed reads
-- ConfigHub history-backed event / Argobot evidence integration with OCI release correlation, no production cursor sharing, and direct observer cursors only as fallback; see `docs/proposals/event-consumer-argobot-integration.md` and `#502`
+- Deeper ConfigHub release/event/live-status correlation to controller sources and workloads, no production cursor sharing, and direct observer cursors only as fallback; see `docs/proposals/event-consumer-argobot-integration.md` and `#502`
 - Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
 
 ### Untracked v2 follow-ups (no separate issue)
 
-- **MCP `compare_source_truth` strategy-enum drift** — schema enum lists 4 strategies (Phase 1); CLI supports 9 (Phase 2). One-file fix in `cmd/cub-scout/mcp.go`.
+- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; follow-up work should join release/event/writeback evidence into `trace`, `explain`, `doctor`, `map activity`, and receipts without guessing.
 - **Source-truth receipt precedence edge coverage** — especially `StatusBLOCK + VerdictBLOCKED`. Not blocking; nice-to-have.
 
 ### Open tracked issues
 
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution.
-- **`#502`** — ConfigHub history-backed event / Argobot evidence integration; do not reuse production event-consumer cursors.
+- **`#502`** — deepen release/event/live-status correlation beyond the initial `gitops status --with-confighub` reader; do not reuse production event-consumer cursors.
 - **`#475`** — Blog/documentation publication series for introducing cub-scout.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout outputs.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design).

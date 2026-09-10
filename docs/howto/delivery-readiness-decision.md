@@ -27,7 +27,14 @@ Start broad, then narrow.
 # 3. Delivery/controller status.
 ./cub-scout gitops status -n prod --format json
 
-# 4. Desired/rendered/live agreement when connected intent is available.
+# 4. Optional bounded ConfigHub release/event/live-status evidence.
+./cub-scout gitops status \
+  --with-confighub \
+  --confighub-space prod \
+  --confighub-since 24h \
+  --format json
+
+# 5. Desired/rendered/live agreement when connected intent is available.
 ./cub-scout compare three-way --scope namespace/prod --format json
 ```
 
@@ -54,6 +61,9 @@ For an auditable gate over a rendered object set:
 | `currentChange.verdict=BLOCK` with `reason=runtime_failed` | Runtime evidence, such as pod/container failure, is present. | Investigate application/runtime symptoms before retrying delivery. |
 | `currentChange.verdict=BLOCK` with `reason=runtime_failed`, `rollout_failed`, or `progress_stalled` | Runtime or rollout evidence is blocking the current-generation change. | Investigate workload/controller symptoms before retrying delivery. |
 | `compare three-way` divergence or `compare source-truth` mismatch | Live state, rendered state, or controller source evidence disagrees with intent. | Investigate drift/source mismatch before proceeding. |
+| `deliveryEvidence.configHub.liveStatuses[].freshness=stale` | The latest reported external delivery/application status is too old to treat as done. | Re-check the delivery controller or wait for fresh writeback before proceeding. |
+| `deliveryEvidence.configHub.liveStatuses[].deliveryVerdict=WATCH` | Sync/operation evidence is still in progress, stale, or ambiguous. | Wait or inspect the controller before retrying delivery. |
+| `deliveryEvidence.configHub.liveStatuses[].applicationHealthVerdict=BLOCK` | The reported application health is degraded or missing. | Investigate application/runtime symptoms before proceeding. |
 | `INCONCLUSIVE` or omitted `currentChange` | cub-scout could not collect enough evidence for this resource or kind. | Treat as a proof gap; inspect raw cluster/controller evidence. |
 
 ## What Cub-Scout Checks
@@ -77,6 +87,7 @@ The same release can fail in different places:
 
 | Symptom | Likely area | Start with |
 |---|---|---|
+| Release exists, but no fresh live-status writeback | event feedback/status reporting | `gitops status --with-confighub --confighub-space <space> --format json` |
 | Controller not ready, missing source, failed apply | delegated delivery | `gitops status`, `trace`, `map activity` |
 | Desired/rendered/live disagreement | drift or source mismatch | `compare three-way`, `compare source-truth` |
 | Generation observed but pods fail | runtime/application | `explain`, `doctor`, `scan` |
@@ -111,6 +122,7 @@ for a review fixture that includes:
 
 - desired vs observed Deployment shape
 - aggregate delivery status
+- ConfigHub release/event/live-status evidence shape
 - audited action event metadata
 - stale-generation rollout evidence
 - runtime pod failure evidence

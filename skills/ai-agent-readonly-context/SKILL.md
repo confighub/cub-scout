@@ -66,19 +66,6 @@ Implicit intents:
 }
 ```
 
-```jsonc
-// HTTP transport — for agent hosts that don't support STDIO
-{
-  "mcpServers": {
-    "cub-scout": {
-      "url": "http://localhost:7755",
-      "command": "cub-scout",
-      "args": ["mcp", "serve", "--port", "7755"]
-    }
-  }
-}
-```
-
 The agent host calls `tools/list` to discover tools and `tools/call` to invoke them. cub-scout's `mcp_test.go` covers the exact catalog:
 
 **Standalone-mode tools** (5, always available):
@@ -88,14 +75,18 @@ The agent host calls `tools/list` to discover tools and `tools/call` to invoke t
 - `trace` — ownership + source chain (one resource)
 - `explain` — plain-English per-resource report
 
-**Connected-mode tools** (5, added when `cub auth status` succeeds):
+**Connected-mode tools** (8, added when connected mode is available):
 - `compare_three_way` — DRY/WET/LIVE with rolled-up agreement
 - `compare_source_truth` — strategy-typed verdict (target + namespace + strategy required)
 - `confighub_changesets` — governed ChangeSet history from ConfigHub
+- `confighub_live_status` — ConfigHub Space live-status writeback with freshness
+- `confighub_releases` — bounded ConfigHub Release history
+- `confighub_unit_events` — bounded ConfigHub UnitEvent history
 - `confighub_units` — ConfigHub unit + fleet inventory
 - `confighub_unit_get` — exact ConfigHub unit details + applied/live revision
 
-Use `cub-scout mcp serve --list-tools` to dump the registered catalog without starting the server — useful for agent registration debugging. See [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md) for per-tool parameters, return shape, and the list of verbs intentionally NOT in the catalog.
+Use the standard MCP `tools/list` request to dump the registered catalog from
+the running server. See [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md) for per-tool parameters, return shape, and the list of verbs intentionally NOT in the catalog.
 
 ### Pattern 2 — context-pack (deterministic snapshot)
 
@@ -175,7 +166,7 @@ Available on `doctor` / `explain` / `trace` (per `#352` / `#359`). The `--presen
 
 This is **the** value proposition for AI integration. cub-scout's MCP tool catalog is **closed and read-only by construction**:
 
-- Every tool wraps a cub-scout verb with `--format json`
+- Every tool wraps a read-only cub-scout verb with `--format json` or a read-only `cub` list/get query
 - Every verb is non-mutating
 - The tool catalog is verified by `cmd/cub-scout/mcp_test.go` — adding a tool requires a code change + a passing test
 - The receipt capability's `FilterNextSteps` (`pkg/agent/receipt_predicates.go`) strips mutating `actionType` / `nextCommand` from any structured next-step hint before emit

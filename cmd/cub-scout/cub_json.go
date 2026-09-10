@@ -171,6 +171,10 @@ func cubExtractItems(payload interface{}) []map[string]interface{} {
 			"targets", "Targets",
 			"workers", "Workers",
 			"changesets", "ChangeSets",
+			"releases", "Releases",
+			"unitEvents", "UnitEvents",
+			"events", "Events",
+			"spaces", "Spaces",
 		} {
 			if arr, ok := typed[key].([]interface{}); ok {
 				return historyArrayToObjects(arr)

@@ -1690,6 +1690,9 @@ func initialModelWithContext(appContext string) Model {
 }
 
 func (m Model) Init() tea.Cmd {
+	if !m.loading {
+		return m.spinner.Tick
+	}
 	return tea.Batch(m.spinner.Tick, loadDataCmd)
 }
 

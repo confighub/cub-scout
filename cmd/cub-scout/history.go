@@ -315,6 +315,9 @@ func buildHistoryNavigation(raw string) historyNavigation {
 }
 
 func detectHistorySpace(ctx context.Context) string {
+	if space := hub.PluginSpace(); space != "" {
+		return strings.TrimSpace(space)
+	}
 	cubCtx, _, err := getStatusCubContext()
 	if err != nil || cubCtx == nil {
 		return ""

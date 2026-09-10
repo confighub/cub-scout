@@ -1,7 +1,7 @@
 # Event-Consumer And Argobot Integration
 
-Status: next-release planning. Tracked in
-[#502](https://github.com/confighub/cub-scout/issues/502).
+Status: initial integration shipped for the next release. Remaining correlation
+work is tracked in [#502](https://github.com/confighub/cub-scout/issues/502).
 
 This note captures the current integration facts for ConfigHub's event-consumer
 path and the open-source `argobot` consumer so cub-scout can integrate with the
@@ -15,8 +15,12 @@ right boundary.
   as the primary path.
 - `argobot` listens for release publishing and force-syncs the corresponding
   Argo CD Application.
-- Current `argobot` is an immediacy layer, not a live status reporter. It does
-  not yet push Argo or Kubernetes health back to ConfigHub.
+- `argobot` remains an immediacy layer for release events, and also reports a
+  concise Argo-owned live-status summary back to ConfigHub on the Space
+  annotation `confighub.com/live-status`.
+- The live-status payload includes source, app, sync status, health status,
+  operation phase, revision, message, and `observedAt`. It is best-effort
+  reported evidence, not cub-scout-owned delivery truth.
 - `cub` supports `CUB_CONTEXT`, which should be used in multi-terminal and
   multi-agent work to avoid context bleed between ConfigHub sessions.
 
@@ -44,11 +48,24 @@ For the current production shape, cub-scout can use these evidence layers:
 | Event consumer | argobot | That an in-cluster consumer exists and appears healthy as a normal Kubernetes workload. |
 | Delivery controller | Argo CD | Application sync, health, operation, and source evidence from Argo-owned status. |
 | Runtime | Kubernetes | Workload generation, kstatus, pod symptoms, and Kubernetes Events. |
-| Feedback write-back | Future ConfigHub API shape | External observed status with `observedAt`, freshness, and omissions once the REST shape exists. |
+| Feedback write-back | ConfigHub Space annotation | External observed status with `observedAt`, freshness, sync status, health status, operation phase, revision, and omissions when absent or malformed. |
 
 cub-scout should not claim that `argobot` proves delivery success. A successful
-event reaction only means the immediacy layer attempted to nudge Argo; Argo and
-Kubernetes still own sync and runtime truth.
+event reaction or fresh writeback means the immediacy/status layer reported
+what it saw; Argo and Kubernetes still own sync and runtime truth.
+
+The first cub-scout integration is:
+
+```bash
+./cub-scout gitops status --with-confighub --confighub-space <space> --format json
+```
+
+This command adds bounded ConfigHub release history, unit-event history,
+live-status writeback, and conservative event-consumer Deployment health under
+`deliveryEvidence`. The event-consumer probe uses label-selected Deployment
+reads, searches all namespaces when allowed, and reports a scope omission if
+RBAC forces a namespace fallback. It never subscribes to or advances an
+event-consumer cursor.
 
 ## Cursor Safety
 
@@ -76,7 +93,7 @@ A ConfigHub-owned history surface is the best fit for cub-scout because it is
 durable, retrospective, queryable, and non-consuming. It should allow cub-scout
 to ask bounded questions without joining the operational delivery stream.
 
-Minimum useful fields:
+Minimum useful fields already consumed or planned:
 
 - Event id or cursor.
 - Event type, especially `release.published`.
@@ -97,48 +114,46 @@ Useful query dimensions:
 - Explicit freshness/coverage metadata so cub-scout can explain whether it read
   history, a snapshot, live Argo/Kubernetes state, or a receipt.
 
-## User Questions To Cover
+## User Questions Covered
 
 | User question | Evidence path |
 |---|---|
-| Was a release published for this desired state? | ConfigHub history evidence, with release number, digest, target, event id/cursor, and `observedAt` where available. |
-| Did the immediacy layer react? | Argobot structured evidence when available; otherwise only ordinary workload health/log-adjacent evidence, with omissions. |
+| Was a release published for this desired state? | `gitops status --with-confighub` release evidence and MCP `confighub_releases`, bounded by space/time. |
+| Did the immediacy layer react? | ConfigHub live-status writeback when present; conservative event-consumer Deployment readiness; omissions otherwise. |
 | Did Argo actually sync the app? | Existing Argo CD Application status, operation state, source revision/digest, and Kubernetes Events. |
 | Did the workload converge after sync? | Existing generation-aware rollout, kstatus, pod symptoms, and event evidence. |
-| Can an agent answer this without hammering clusters? | Snapshot/watch/summary/receipt evidence today; ConfigHub history first for release/event evidence, dedicated observer cursor only as fallback. |
+| Can an agent answer this without hammering clusters? | Snapshot/watch/summary/receipt evidence plus bounded current-space/time-window ConfigHub reads; dedicated observer cursor only as fallback. |
 | Is this delivery failure or runtime failure? | Keep release/event facts, Argo sync state, and Kubernetes runtime symptoms separate in output. |
 
-These rows should inform the README user-question table once a user-visible
-feature ships. Until then, the README must not imply that cub-scout already
-reads the ConfigHub event log or Argobot feedback.
+These rows are mirrored in the README user-question table.
 
 ## Proposed Implementation Phases
 
-1. Document the production shape and safety rule.
-2. Pin the ConfigHub history/read API shape that cub-scout should consume.
-3. Add fixtures for OCI release, argobot Deployment, Argo Application sync, and
-   workload rollout evidence.
-4. Add a normalized evidence model for external history/consumer observations:
-   source type, subject, target, release number, digest, app ref, `observedAt`,
-   and omissions.
-5. Wire read-only surfaces only where deterministic identifiers exist:
-   `trace`, `explain`, `map activity`, `doctor`, and receipts.
-6. Add feedback write-back parsing after ConfigHub exposes a stable REST shape
-   for reported delivery/application observations.
+1. [x] Document the production shape and safety rule.
+2. [x] Pin the initial ConfigHub history/read surfaces available through `cub`.
+3. [x] Add fixtures/tests for release evidence, unit events, event-consumer
+   Deployment evidence, live-status freshness, and malformed/absent writeback.
+4. [x] Add a normalized evidence model for bounded external
+   history/consumer/writeback observations.
+5. [x] Wire an initial user-visible read-only surface:
+   `gitops status --with-confighub`.
+6. [ ] Add deeper object-level correlation to `trace`, `explain`,
+   `map activity`, `doctor`, and receipts once stable identifiers link release
+   events, Space writeback, controller sources, and workload objects without
+   guessing.
 
 ## Open Questions
 
-- What ConfigHub history endpoint should cub-scout read for release/event
-  evidence, and what auth/context does it require?
 - What stable fields link `release.published` to an Argo CD Application in the
   general case: space slug, target, release digest, app annotation, or an
   explicit mapping?
 - Does the history API expose actor/audit context and immutable event ids, or
   only release payload data?
-- Will `argobot` emit structured Kubernetes Events or ConfigHub feedback records
-  for attempted sync, sync failure, and sync accepted states?
-- What labels or annotations identify an `argobot` Deployment without relying on
-  image/name heuristics?
+- Should live-status graduate from a Space annotation to a typed history/status
+  API with server-side freshness/coverage metadata?
+- Will the event consumer emit structured Kubernetes Events or ConfigHub records
+  for attempted sync, sync failure, and sync accepted states beyond the current
+  Space-level status summary?
 - Which `cub` version first supports `CUB_CONTEXT`, and should cub-scout docs
   mention a minimum version for multi-agent examples?
 

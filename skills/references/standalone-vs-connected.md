@@ -40,13 +40,13 @@ Every cub-scout verb that operates on cluster state alone — the read-only Kube
 
 | Verb group | Verbs that work standalone |
 |---|---|
-| Observe | `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `status` |
+| Observe | `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `bot`, `status` |
 | Diagnose | `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status` |
 | Compare | `compare drift --file <yaml>`, `compare three-way --source-path <local-checkout>` (stage B back-resolution); the resource-mode `compare` works but DRY layer is absent |
 | Attribute | The full `cause` / `managerHint` / `gitSource` evidence on `compare` + `explain` JSON works — `bindingSource` requires connected mode |
 | Adopt Existing Config | `import --dry-run` + `import --from-bundle` + `import --git-path` + `import argocd` + `import cluster-aggregator` + `import parse-repo` (preview-first) |
 | Govern | `bundle`, `catalog` against on-disk artifacts only |
-| Integrate | `mcp serve` (standalone tool set), `context-pack` |
+| Integrate | `mcp serve` (standalone tool set), `context-pack`, `bot` |
 | Verify | `receipt verify --predicate applied-matches-spec` / `--predicate no-manual-edits-since`; `receipt show / validate / list` |
 
 ## What unlocks with connected
@@ -59,7 +59,7 @@ Everything that needs ConfigHub-side authority or cross-cluster snapshots:
 | Attribute | Per-field `bindingSource` (which ConfigHub Link supplies this value) |
 | Govern | `history`, `impact`, `fleet outliers`, `summary list/slack`, `views resolve`, `audit list` |
 | Verify | `receipt verify --strategy <s>` (source-truth-pass predicate requires connected source-truth) |
-| Integrate | MCP gateway registers the connected tool set (`compare_three_way`, `compare_source_truth`, `history`, `impact`, `fleet_outliers`, `views_resolve`) in addition to the standalone catalog |
+| Integrate | MCP gateway registers the connected tool set (`compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`) in addition to the standalone catalog |
 
 The MCP catalog is **mode-aware**: `mcp serve` registers the standalone catalog always and adds the connected catalog when `cub auth status` reports OK.
 

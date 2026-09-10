@@ -87,7 +87,7 @@ func TestDecodeCompareUnitMetadataFromGetJSON_AcceptsCamelCase(t *testing.T) {
 			"unitId": "u-123",
 			"headRevisionNum": "9",
 			"liveRevisionNum": 7,
-			"lastAppliedRevisionNum": "8",
+			"lastReleasedRevisionNum": "8",
 			"data": "YXBpVmVyc2lvbjogdjEK"
 		}
 	}`

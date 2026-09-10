@@ -1,0 +1,82 @@
+{
+  "backend": "argocd",
+  "transport": "oci",
+  "healthyCount": 1,
+  "failedCount": 0,
+  "deployers": [
+    {
+      "kind": "Application",
+      "name": "prod",
+      "namespace": "argocd",
+      "ready": true,
+      "stage": "healthy",
+      "syncStatus": "Synced",
+      "healthStatus": "Healthy",
+      "lastAttemptedRevision": "sha256:abc123"
+    }
+  ],
+  "deliveryEvidence": {
+    "observedAt": "2026-09-10T12:00:00Z",
+    "scope": {
+      "space": "prod",
+      "since": "24h",
+      "staleAfter": "15m0s",
+      "maxItems": 10
+    },
+    "configHub": {
+      "liveStatuses": [
+        {
+          "space": "prod",
+          "spaceId": "sp-123",
+          "source": "argobot",
+          "app": "prod",
+          "syncStatus": "Synced",
+          "healthStatus": "Healthy",
+          "operationPhase": "Succeeded",
+          "revision": "sha256:abc123",
+          "observedAt": "2026-09-10T11:55:00Z",
+          "freshness": "fresh",
+          "freshnessSeconds": 300,
+          "deliveryVerdict": "PASS",
+          "applicationHealthVerdict": "PASS"
+        }
+      ],
+      "releases": [
+        {
+          "slug": "release-42",
+          "releaseId": "r-42",
+          "space": "prod",
+          "target": "cluster-prod",
+          "digest": "sha256:abc123",
+          "createdAt": "2026-09-10T11:50:00Z"
+        }
+      ],
+      "unitEvents": [
+        {
+          "eventId": "ue-1",
+          "action": "ReleasePublished",
+          "result": "Succeeded",
+          "unit": "api",
+          "space": "prod",
+          "target": "cluster-prod",
+          "createdAt": "2026-09-10T11:51:00Z"
+        }
+      ]
+    },
+    "eventConsumers": [
+      {
+        "kind": "Deployment",
+        "namespace": "argobot",
+        "name": "argobot",
+        "ready": true,
+        "replicas": 1,
+        "readyReplicas": 1,
+        "availableReplicas": 1,
+        "evidenceLabel": "app=argobot"
+      }
+    ],
+    "notes": [
+      "ConfigHub evidence is opt-in, read-only, bounded by space and time window, and does not consume event cursors."
+    ]
+  }
+}

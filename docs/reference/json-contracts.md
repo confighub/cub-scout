@@ -49,6 +49,8 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Audited action event metadata | This doc (below) | Embedded in `trace`, `explain`, and `map activity` JSON |
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
+| GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
+| GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` JSON |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 | MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
 
@@ -566,6 +568,155 @@ Best-effort: omitted when the field name has no canonical-path mapping (e.g., `i
 
 Source: `cmd/cub-scout/compare_bindings.go`
 
+## GitOps Controller Coverage Contract
+
+`gitops status --format json` includes additive `controllerCoverage[]` records
+when the command builds status from a Kubernetes client. This tells callers what
+cub-scout actually inspected, what it observed, and which reads were omitted
+instead of silently claiming absence.
+
+### Schema Sketch
+
+```json
+{
+  "controllerCoverage": [
+    {
+      "family": "Flux",
+      "status": "found",
+      "resourceKinds": ["HelmRelease", "Kustomization"],
+      "foundKinds": ["Kustomization"],
+      "found": 1
+    },
+    {
+      "family": "Modelplane",
+      "status": "unreadable",
+      "resourceKinds": ["ModelDeployment"],
+      "found": 0,
+      "omissions": [
+        {
+          "resource": "modeldeployments.modelplane.ai/v1alpha1",
+          "reason": "forbidden",
+          "message": "modeldeployments.modelplane.ai is forbidden"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Field Rules
+
+| Field | Rule |
+|---|---|
+| `family` | Stable controller-family label. Current values include `Flux`, `ArgoCD`, `ConfigHub`, `Sveltos`, and `Modelplane`. |
+| `status` | One of `found`, `not_found`, `partial`, or `unreadable`. |
+| `resourceKinds[]` | Kinds cub-scout knows to check for that family in this release. |
+| `foundKinds[]` | Kinds observed at least once. Empty does not mean unsupported; use `resourceKinds[]` for support scope. |
+| `found` | Count of observed controller-family objects across checked kinds. |
+| `omissions[]` | Safe omission details for list calls that could not be completed. Missing CRDs are treated as `not_found`, not omissions. |
+| `omissions[].resource` | API resource identifier in `<resource>.<group>/<version>` form when a group exists. |
+| `omissions[].reason` | One of `forbidden`, `unauthorized`, `timeout`, or `list_failed`. |
+| `omissions[].message` | Raw Kubernetes/client error message when available; callers should not parse it for decisions. |
+
+## GitOps Delivery Evidence Contract
+
+When `gitops status --with-confighub --format json` is used, the output may
+include an additive `deliveryEvidence` object. It joins bounded ConfigHub
+history/readback evidence with ordinary Kubernetes observation. It does not
+replace Argo, Flux, Sveltos, Modelplane, or Kubernetes as the status authority.
+
+### Schema Sketch
+
+```json
+{
+  "deliveryEvidence": {
+    "observedAt": "2026-09-10T12:00:00Z",
+    "scope": {
+      "namespace": "prod",
+      "space": "prod",
+      "since": "24h",
+      "staleAfter": "15m0s",
+      "maxItems": 10
+    },
+    "configHub": {
+      "liveStatuses": [
+        {
+          "space": "prod",
+          "spaceId": "sp-123",
+          "source": "argobot",
+          "app": "prod",
+          "syncStatus": "Synced",
+          "healthStatus": "Healthy",
+          "operationPhase": "Succeeded",
+          "revision": "sha256:abc",
+          "observedAt": "2026-09-10T11:55:00Z",
+          "freshness": "fresh",
+          "freshnessSeconds": 300,
+          "deliveryVerdict": "PASS",
+          "applicationHealthVerdict": "PASS"
+        }
+      ],
+      "releases": [
+        {
+          "slug": "release-42",
+          "releaseId": "r-42",
+          "space": "prod",
+          "target": "cluster-prod",
+          "digest": "sha256:abc",
+          "createdAt": "2026-09-10T11:50:00Z"
+        }
+      ],
+      "unitEvents": [
+        {
+          "eventId": "ue-1",
+          "action": "ReleasePublished",
+          "result": "Succeeded",
+          "unit": "api",
+          "space": "prod",
+          "target": "cluster-prod",
+          "createdAt": "2026-09-10T11:51:00Z"
+        }
+      ]
+    },
+    "eventConsumers": [
+      {
+        "kind": "Deployment",
+        "namespace": "argobot",
+        "name": "argobot",
+        "ready": true,
+        "replicas": 1,
+        "readyReplicas": 1,
+        "evidenceLabel": "app=argobot"
+      }
+    ],
+    "omissions": [
+      {
+        "layer": "confighub.liveStatus",
+        "reason": "space \"prod\" has no confighub.com/live-status annotation",
+        "impact": "no event-consumer status writeback is available for this space"
+      }
+    ]
+  }
+}
+```
+
+### Field Rules
+
+| Field | Rule |
+|---|---|
+| `scope.space` | Defaults to the current cub space when available; `*` is accepted only when explicitly supplied. |
+| `scope.since` | Bounds release and unit-event reads by `CreatedAt > <cutoff>`. |
+| `scope.maxItems` | Caps rows kept in output after the time-window query. |
+| `configHub.liveStatuses[]` | Parsed from the `confighub.com/live-status` Space annotation. Missing or malformed annotations become omissions. |
+| `liveStatuses[].freshness` | `fresh`, `stale`, or `unknown`, based on `observedAt` and `--confighub-stale-after`. |
+| `liveStatuses[].deliveryVerdict` | Delivery-facing verdict from sync/operation state. Stale `PASS` downgrades to `WATCH`. |
+| `liveStatuses[].applicationHealthVerdict` | Application-health verdict from reported health. Stale `PASS` downgrades to `WATCH`. |
+| `eventConsumers[]` | Conservative, label-selected Kubernetes Deployment detection by `app=argobot` or `app.kubernetes.io/name=argobot`. cub-scout searches all namespaces when allowed and records an omission if RBAC forces namespace fallback. Absence is an omission, not proof no consumer exists. |
+| `omissions[]` | Structured explanation for unavailable, missing, stale, malformed, disconnected, or RBAC-blocked evidence. |
+
+The command never consumes ConfigHub event cursors and never mutates ConfigHub,
+the event consumer, the delivery controller, or Kubernetes.
+
 ## MCP Structured Content Contract
 
 When MCP tools return JSON-backed data, the gateway keeps the raw JSON string in `content[0].text`.
@@ -575,11 +726,20 @@ For the highest-value connected/read-only surfaces, it may also add `structuredC
 
 - `compare_three_way` returns parsed CLI JSON under `structuredContent.data`
 - `compare_three_way` may mirror `confighubUrl`, `confighubRevisionsUrl`, and `nextSteps` from the CLI JSON at the top level of `structuredContent`
+- `compare_source_truth` returns parsed CLI JSON under `structuredContent.data`; its `strategy` enum matches the CLI strategy registry.
 - `confighub_units`, `confighub_unit_get`, and `confighub_changesets` may add:
   - `structuredContent.data`
   - `structuredContent.nextSteps`
   - `structuredContent.confighubUrl` when an exact unit detail URL is known
   - `structuredContent.confighubRevisionsUrl` when an exact unit revisions URL is known
+- `confighub_live_status` may add:
+  - `structuredContent.data`
+  - `structuredContent.liveStatuses[]`
+  - `structuredContent.omissions[]`
+- `confighub_releases` and `confighub_unit_events` return parsed ConfigHub JSON under `structuredContent.data`
+
+Connected ConfigHub history/status MCP tools require an explicit `space`
+argument. Passing `*` is supported only as an explicit all-spaces request.
 
 ### Example MCP Result Shape
 
@@ -1333,11 +1493,11 @@ Implementation: `pkg/agent/receipt_aggregate.go`
 (`runReceiptVerifyScoped`, `discoverNamespaceWorkloads`,
 `parseAggregateScope`).
 
-#### `watch --emit-receipt-on <event-types>` + `--emit-receipt-batch-cap` (`#449`)
+#### `watch` / `bot` `--emit-receipt-on <event-types>` + `--emit-receipt-batch-cap` (`#449`)
 
-`cub-scout watch` accepts a new flag that attaches a receipt to each
-matching event payload inline. The watch event shape gains an optional
-`receipt` field carrying the full in-toto Statement.
+`cub-scout watch` and `cub-scout bot` accept a flag that attaches a receipt to
+each matching event payload inline. Both commands use the same watch event shape
+with an optional `receipt` field carrying the full in-toto Statement.
 
 Event-type set (current; all four supported as of #449):
 

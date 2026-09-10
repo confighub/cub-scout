@@ -319,6 +319,9 @@ func isCompareConnected() bool {
 }
 
 func detectCompareSpace() string {
+	if space := hub.PluginSpace(); space != "" {
+		return strings.TrimSpace(space)
+	}
 	cubCtx, _, err := getStatusCubContext()
 	if err != nil || cubCtx == nil {
 		return ""

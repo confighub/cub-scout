@@ -29,11 +29,15 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] Audited user-action event ingestion for activity, explain, and trace event summaries
 - [x] Generation-aware rollout progress/verdict UX promoted from receipts into doctor, explain, and compare surfaces
 - [x] README user-question table for live delivery decisions
+- [x] Initial API-load-aware ConfigHub delivery-evidence path: `gitops status --with-confighub` uses current-space/time-window reads for release history, unit events, live-status writeback, and event-consumer health
+- [x] Initial ConfigHub history-backed event / Argobot evidence path with no production cursor sharing — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
+- [x] MCP parity for release/event/live-status reads and `compare_source_truth` strategy enum
 - [ ] Aggregate delivery failures as doctor top-level findings with deeper source/generated-artifact lineage where status refs expose it
 - [ ] Audited user-action event ingestion for history and receipt supporting evidence
-- [ ] API-load-aware inventory and search paths with source freshness for snapshot, watch, summary, and receipt-backed reads
-- [ ] ConfigHub history-backed event / Argobot evidence path with OCI release correlation, no production cursor sharing, and direct observer cursors only as fallback — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
+- [ ] Broader API-load-aware inventory and search paths with source freshness for snapshot, watch, summary, and receipt-backed reads
+- [ ] Deeper OCI release-to-controller-to-workload correlation, with direct observer cursors only as fallback — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
 - [ ] Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
+- [ ] Modelplane-on-Crossplane hardening: trace substrate evidence is present; remaining work is source, generation, receipt, and bot/watch evidence parity for Modelplane resources backed by Crossplane composition managers, with structured omissions where parity is not possible
 
 ### Rendered Manifest + Argo (`roadmap-rendered-manifest-and-argo.md`)
 

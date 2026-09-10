@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // buildMCPStructuredContent is the dispatch entry point called by the gateway
@@ -53,12 +54,18 @@ func buildMCPStructuredContent(toolName, output string) interface{} {
 		// envelope shape as compare_three_way; downstream agents can
 		// read evidence directly without re-parsing the text content.
 		return mcpWrapStructuredData(payload)
+	case "gitops_status":
+		return mcpWrapStructuredData(payload)
 	case "confighub_units":
 		return buildMCPUnitsStructuredContent(payload)
 	case "confighub_unit_get":
 		return buildMCPUnitGetStructuredContent(payload)
 	case "confighub_changesets":
 		return buildMCPChangesetsStructuredContent(payload)
+	case "confighub_live_status":
+		return buildMCPLiveStatusStructuredContent(payload)
+	case "confighub_releases", "confighub_unit_events":
+		return mcpWrapStructuredData(payload)
 	default:
 		return nil
 	}
@@ -168,6 +175,22 @@ func buildMCPChangesetsStructuredContent(payload interface{}) interface{} {
 	return wrapped
 }
 
+func buildMCPLiveStatusStructuredContent(payload interface{}) interface{} {
+	wrapped := mcpWrapStructuredData(payload)
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return wrapped
+	}
+	statuses, omissions := buildConfigHubLiveStatusEvidence(string(raw), gitopsNowFn().UTC(), 15*time.Minute)
+	if len(statuses) > 0 {
+		wrapped["liveStatuses"] = statuses
+	}
+	if len(omissions) > 0 {
+		wrapped["omissions"] = omissions
+	}
+	return wrapped
+}
+
 // mcpUnitRef is the normalized identity of a ConfigHub unit extracted from
 // tool JSON, regardless of whether the keys are PascalCase (as emitted by
 // `cub unit list --json`) or camelCase (as used internally).
@@ -178,7 +201,7 @@ type mcpUnitRef struct {
 	SpaceID   string
 }
 
-// mcpUnitRevisionState captures head/live/last-applied revision numbers for
+// mcpUnitRevisionState captures head/live/last-applied-or-released revision numbers for
 // a unit. Presence bits distinguish "unknown" from "zero" so hint logic can
 // decide whether a revision comparison is meaningful.
 type mcpUnitRevisionState struct {
@@ -269,7 +292,7 @@ func mcpUnitRevisionStateFromItem(item map[string]interface{}) mcpUnitRevisionSt
 		state.LiveRevision = value
 		state.HasLiveRevision = true
 	}
-	if value, ok := mcpFirstInt(unitObj, "LastAppliedRevisionNum", "lastAppliedRevisionNum"); ok {
+	if value, ok := mcpFirstInt(unitObj, "LastAppliedRevisionNum", "lastAppliedRevisionNum", "LastReleasedRevisionNum", "lastReleasedRevisionNum"); ok {
 		state.LastAppliedRevision = value
 		state.HasLastApplied = true
 	}
@@ -286,7 +309,7 @@ func mcpUnitRevisionStateFromItem(item map[string]interface{}) mcpUnitRevisionSt
 		}
 	}
 	if !state.HasLastApplied {
-		if value, ok := mcpFirstInt(item, "LastAppliedRevisionNum", "lastAppliedRevisionNum"); ok {
+		if value, ok := mcpFirstInt(item, "LastAppliedRevisionNum", "lastAppliedRevisionNum", "LastReleasedRevisionNum", "lastReleasedRevisionNum"); ok {
 			state.LastAppliedRevision = value
 			state.HasLastApplied = true
 		}

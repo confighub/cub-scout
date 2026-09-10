@@ -55,12 +55,12 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 | Pre-deploy CD gate | [`pilot-cd-gate`](../pilot-cd-gate/SKILL.md) | `compare source-truth --strategy <s>` + optional `receipt verify --fail-on any-non-pass` | PASS / WATCH / ASK / BLOCK on the release |
 | Fleet-wide conformance | [`pilot-fleet-conformance`](../pilot-fleet-conformance/SKILL.md) | `compare three-way --view` + per-resource source-truth + `fleet outliers` | Fleet verdict + per-resource breakdown |
 | Drift classification | [`pilot-patch-and-drift`](../pilot-patch-and-drift/SKILL.md) | attribution evidence (`cause` / `managerHint` / `gitSource` / `bindingSource`) | revert / quarantine / accept-as-canonical / ASK |
-| Real-time watch response | [`pilot-watch-alert-response`](../pilot-watch-alert-response/SKILL.md) | `cub-scout watch` event stream with `--emit-receipt-on` inline receipts (v2 #463) | Per-event PASS / WATCH / ASK / BLOCK |
+| Real-time watch response | [`pilot-watch-alert-response`](../pilot-watch-alert-response/SKILL.md) | `cub-scout watch` / `cub-scout bot` event stream with `--emit-receipt-on` inline receipts (v2 #463) | Per-event PASS / WATCH / ASK / BLOCK |
 | Incident close-out | [`pilot-incident-evidence`](../pilot-incident-evidence/SKILL.md) | trace + explain + compare + bundle + history + audit + chained receipts (`--input-attestation`, v2 #463) | Incident verdict + immutable evidence pack |
 | Rollback decision | [`pilot-rollback-decision`](../pilot-rollback-decision/SKILL.md) | `history` + `impact` + per-candidate `receipt verify --at-commit <sha>` chained into chosen-target receipt | Rollback target SHA + safety verdict |
 | Promotion gate | [`pilot-promotion-gate`](../pilot-promotion-gate/SKILL.md) | `compare three-way` per variant + `bindingSource` graph diff + chained variant-A receipt | Cross-variant PASS / WATCH / ASK / BLOCK with diff reasons |
 | Compliance audit | [`pilot-compliance-audit`](../pilot-compliance-audit/SKILL.md) | scope-wide source-truth + `scan` + `audit list` + per-resource saved receipts | Compliance report (Compliant / with-caveats / Non-compliant / Insufficient-evidence) + fingerprinted evidence inventory |
-| Release verification | [`pilot-release-verification`](../pilot-release-verification/SKILL.md) | `compare three-way` + `history --since <deploy-time>` + `receipt verify --at-commit <release-sha>`; `summary.agreement` drives convergence signal | Post-deploy PASS / WATCH (wait) / BLOCK / ASK |
+| Release verification | [`pilot-release-verification`](../pilot-release-verification/SKILL.md) | `gitops status --with-confighub` + `compare three-way` + `history --since <deploy-time>` + receipt evidence; `summary.agreement` and `deliveryEvidence` drive convergence signals | Post-deploy PASS / WATCH (wait) / BLOCK / ASK |
 
 ## Product value in one breath
 
@@ -72,13 +72,13 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 
 ### Use `cub scout` for
 
-- **Observe** — `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `status`
+- **Observe** — `doctor`, `map`, `trace`, `tree`, `scan`, `graph`, `snapshot`, `watch`, `bot`, `status`
 - **Diagnose** — `explain`, `debug`, `suggest-remedy`, `patterns`, `gitops status`
 - **Compare** — `compare drift`, `compare three-way`, `compare source-truth`, `compare <kind>/<name>`
 - **Attribute** — read `cause` / `managerHint` / `gitSource` / `bindingSource` on `compare` and `explain` JSON
 - **Adopt Existing Config** (preview first) — `import --dry-run`, `import --from-bundle`, `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`
 - **Govern** (connected) — `history`, `impact`, `fleet outliers`, `summary`, `views resolve`, `audit list`, `bundle inspect/diff/timeline`, `catalog list`
-- **Integrate** — `mcp serve`, `context-pack`
+- **Integrate** — `mcp serve`, `context-pack`, `bot`
 - **Verify** — `receipt verify / show / validate / list` (typed, fingerprinted evidence; `#446` v1 complete)
 
 ### Use `cub` for
@@ -102,7 +102,9 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 - **Source-truth contract** (#393 + #418): `compare source-truth` with Phase 1 + Phase 2 strategies (9 total).
 - **Views integration** (#391): `views resolve`, `views open`, `views project --with-reality`, `compare three-way --view`.
 - **`doctor` / `explain`** with `--presentation` and `--hint-mode`.
-- **MCP gateway** (`mcp serve`): standalone + connected tool sets.
+- **MCP gateway** (`mcp serve`): standalone + connected tool sets, including `gitops_status` for GitOps delivery and controller-coverage evidence.
+- **ConfigHub delivery evidence**: `gitops status --with-confighub` adds bounded release history, unit events, live-status freshness, and event-consumer health under `deliveryEvidence`.
+- **Controller-family coverage**: `gitops status` emits `controllerCoverage[]` for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane so absence and RBAC/API omissions stay distinguishable.
 - **Stage B back-resolution** (#440): `compare three-way --source-path <local-checkout>` populates `gitSource.file:line` for raw YAML manifests.
 - **Receipt capability** (#446 — v1 complete; #454 + #455 + #456): typed, fingerprinted, immutable evidence artifacts wrapping cub-scout evidence into an in-toto Statement v1 envelope. Three predicates: `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`. `verify` / `show` / `validate` / `list` + local store with immutable canonical filenames. See [`scout-verify`](../scout-verify/SKILL.md).
 

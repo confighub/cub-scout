@@ -1,16 +1,16 @@
 ---
 name: pilot-watch-alert-response
-description: 'Use when Pilot is RESPONDING TO REAL-TIME CLUSTER EVENTS surfaced by `cub-scout watch`. Natural phrasings: "Pilot subscribes to the watch stream", "render verdicts on each drift event as they fire", "real-time acceptance kernel for cluster changes", "Pilot, decide on this drift.detected event", "what does Pilot say about the ownership.changed alert", "stream PASS/WATCH/ASK/BLOCK per event from cub-scout watch". Pilot consumes the `cub-scout watch` event stream (webhook or file sink, optionally with inline receipts via `--emit-receipt-on`) and renders a verdict per event, calling back into cub-scout (`explain`, `compare three-way`, `trace`) for context when needed. This is the ONLY event-driven skill in the pilot-* batch — others are query-driven. Do NOT load for: a single-resource pre-deploy gate (use pilot-cd-gate), a periodic fleet roll-up (use pilot-fleet-conformance), a drift-classification deep-dive (use pilot-patch-and-drift), a postmortem evidence pack (use pilot-incident-evidence), or any mutating action.'
+description: 'Use when Pilot is RESPONDING TO REAL-TIME CLUSTER EVENTS surfaced by `cub-scout watch` or `cub-scout bot`. Natural phrasings: "Pilot subscribes to the watch stream", "render verdicts on each drift event as they fire", "real-time acceptance kernel for cluster changes", "Pilot, decide on this drift.detected event", "what does Pilot say about the ownership.changed alert", "stream PASS/WATCH/ASK/BLOCK per event from cub-scout watch". Pilot consumes the `cub-scout watch` / `cub-scout bot` event stream (webhook or file sink, optionally with inline receipts via `--emit-receipt-on`) and renders a verdict per event, calling back into cub-scout (`explain`, `compare three-way`, `trace`) for context when needed. This is the ONLY event-driven skill in the pilot-* batch — others are query-driven. Do NOT load for: a single-resource pre-deploy gate (use pilot-cd-gate), a periodic fleet roll-up (use pilot-fleet-conformance), a drift-classification deep-dive (use pilot-patch-and-drift), a postmortem evidence pack (use pilot-incident-evidence), or any mutating action.'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout watch *) Bash(cub-scout watch *) Bash(cub scout watch *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify *) Bash(cub scout receipt verify *) Bash(./cub-scout receipt show *) Bash(cub-scout receipt show *) Bash(cub scout receipt show *) Bash(./cub-scout receipt validate *) Bash(cub-scout receipt validate *) Bash(cub scout receipt validate *) Bash(./cub-scout receipt list *) Bash(cub-scout receipt list *) Bash(cub scout receipt list *) Bash(./cub-scout doctor *) Bash(cub-scout doctor *) Bash(cub scout doctor *) Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub link list *) Bash(cub unit get *) Bash(argocd app get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout watch *) Bash(cub-scout watch *) Bash(cub scout watch *) Bash(./cub-scout bot *) Bash(cub-scout bot *) Bash(cub scout bot *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout receipt verify *) Bash(cub-scout receipt verify *) Bash(cub scout receipt verify *) Bash(./cub-scout receipt show *) Bash(cub-scout receipt show *) Bash(cub scout receipt show *) Bash(./cub-scout receipt validate *) Bash(cub-scout receipt validate *) Bash(cub scout receipt validate *) Bash(./cub-scout receipt list *) Bash(cub-scout receipt list *) Bash(cub scout receipt list *) Bash(./cub-scout doctor *) Bash(cub-scout doctor *) Bash(cub scout doctor *) Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub link list *) Bash(cub unit get *) Bash(argocd app get *) Bash(flux get *)
 
 ---
 
 # pilot-watch-alert-response
 
-The real-time event-driven scenario from **Pilot's** side. Pilot subscribes to `cub-scout watch` (which already exposes webhook / file sinks) and, for each event, decides PASS / WATCH / ASK / BLOCK — calling back into cub-scout for context as needed. This is the **only event-driven skill in the pilot-* batch**; the other four are query-driven.
+The real-time event-driven scenario from **Pilot's** side. Pilot subscribes to `cub-scout watch` or `cub-scout bot` (which expose the same webhook / file event sinks) and, for each event, decides PASS / WATCH / ASK / BLOCK — calling back into cub-scout for context as needed. This is the **only event-driven skill in the pilot-* batch**; the other four are query-driven.
 
-With the receipts v2 surface shipped (#463), Pilot can ask `cub-scout watch` to **inline a receipt** with each matching event via `--emit-receipt-on drift.detected,ownership.changed`. That delivers a fingerprinted in-toto Statement v1 per event in the same JSONL line — Pilot reads the verdict + receipt in one shot, no synchronous call-back required for the common case.
+With the receipts v2 surface shipped (#463), Pilot can ask `cub-scout watch` or `cub-scout bot` to **inline a receipt** with each matching event via `--emit-receipt-on drift.detected,ownership.changed` or `--emit-receipt-on all`. That delivers a fingerprinted in-toto Statement v1 per event in the same JSONL line — Pilot reads the verdict + receipt in one shot, no synchronous call-back required for the common case.
 
 ## When to use
 
@@ -22,6 +22,7 @@ Explicit phrasings:
 - "Pilot, decide on this `drift.detected` event"
 - "What does Pilot say about the `ownership.changed` alert"
 - "Stream PASS/WATCH/ASK/BLOCK per event from cub-scout watch"
+- "Run the same stream from cub-scout bot in the cluster"
 - "Pilot reads receipts inline from the watch event stream"
 - "Trigger Pilot on any cub-scout drift event"
 
@@ -41,7 +42,7 @@ Implicit intents:
 - Pure **observation** without a Pilot policy decision — [`scout-observe`](../scout-observe/SKILL.md) covers the `watch` surface from the operator side
 - Any **mutating action**. Pilot's mutation path is `cub` / Argo / Flux / kubectl — never cub-scout.
 
-## The Pilot ↔ cub-scout watch loop
+## The Pilot ↔ cub-scout watch / bot loop
 
 ```
    cub-scout watch -n prod \
@@ -81,18 +82,18 @@ Implicit intents:
         └────────────────────────────────────────────────────
 ```
 
-## Event types (`cub-scout watch` v1 + receipts v2)
+## Event types (`cub-scout watch` / `cub-scout bot` + receipts v2)
 
-`cub-scout watch` emits four event types today; `--emit-receipt-on` v1 attaches receipts to two of them:
+`cub-scout watch` and `cub-scout bot` emit four event types today; `--emit-receipt-on` can attach receipts to any of them, with `--emit-receipt-batch-cap` bounding first-poll bursts:
 
 | Event type | When it fires | Receipt-built in v1? | Pilot's typical reaction |
 |------------|---------------|----------------------|--------------------------|
-| `resource.discovered` | First poll sees a resource cub-scout hadn't seen before | No (would flood on initial poll burst; pass-through silently) | Log; no verdict needed. |
+| `resource.discovered` | First poll sees a resource cub-scout hadn't seen before | **Yes** — bounded by `--emit-receipt-batch-cap` to avoid initial burst floods. | Log; no verdict needed. |
 | `ownership.changed` | A resource's ownership controller changed (Argo → Flux, Flux → kubectl, etc.) | **Yes** — `applied-matches-spec` auto-detected. Receipt verdict reflects whether the new owner has a resolved git anchor. | WATCH (often a transient state during migration); ASK if `applied-matches-spec` returns INCONCLUSIVE. |
 | `drift.detected` | `compare three-way` finds a divergence on a resource cub-scout watched into | **Yes** — `applied-matches-spec` auto-detected. Receipt verdict reflects whether the drift is controller-drift (PASS / reconciling) or manual-edit (BLOCK). | Drives [`pilot-patch-and-drift`](../pilot-patch-and-drift/SKILL.md) shape: PASS = ACCEPT; WATCH = INVESTIGATE; BLOCK = REVERT/QUARANTINE. |
-| `scan.finding` | A risk pattern matched on a resource (CVE, expiring cert, etc.) | No (would flood on initial scan burst; pass-through silently) | Severity-driven; route to security/SRE escalation policy. |
+| `scan.finding` | A risk pattern matched on a resource (CVE, expiring cert, etc.) | **Yes** — bounded by `--emit-receipt-batch-cap` to avoid initial scan floods. | Severity-driven; route to security/SRE escalation policy. |
 
-The `--emit-receipt-on all` sugar accepts every known event type for forward-compat, but cub-scout emits a one-time **startup warning** listing the event types it doesn't actually build receipts for (so the operator isn't surprised). Receipt-build failures are non-fatal — the underlying event still emits, just without the `receipt` key (uses `omitempty`; consumers should check key presence, not null-ness).
+The `--emit-receipt-on all` sugar accepts every known event type for forward-compat. Receipt-build failures are non-fatal — the underlying event still emits, just without the `receipt` key (uses `omitempty`; consumers should check key presence, not null-ness).
 
 ```python
 # Idiomatic Python consumer
@@ -185,19 +186,19 @@ $ cub-scout watch --help | grep -A 3 '\-\-emit-receipt-on'
 
 If standalone (no ConfigHub auth), the receipts in the stream omit the `confighub-unit://` subject and record an `OmissionConfigHubUnitSubject` entry — structural honesty about what's missing, not a verdict downgrade. The verdict follows the predicate's normal rules; `applied-matches-spec` can still PASS in standalone mode. Pilot's policy may choose to treat standalone receipts more conservatively, but that's Pilot-side; cub-scout doesn't impose a ceiling.
 
-### Step 2 — start the watch stream
+### Step 2 — start the watch stream or bot
 
 ```bash
 $ cub-scout watch -n prod \
     --webhook https://pilot.acme/cub-scout-events \
-    --emit-receipt-on drift.detected,ownership.changed \
+    --emit-receipt-on all \
     --output-file /var/log/cub-scout-watch.jsonl \
     --severity warning,critical
 ```
 
 - `--webhook` is Pilot's listener (POST per event).
 - `--output-file` keeps a local JSONL log (useful for replay during postmortems; see [`pilot-incident-evidence`](../pilot-incident-evidence/SKILL.md)).
-- `--emit-receipt-on` attaches receipts to the two event types where it's meaningful.
+- `--emit-receipt-on` attaches receipts to matching event types; use `all` with the default batch cap when first-poll bursts are possible.
 - `--severity` filters scan-finding events to the actionable subset.
 
 The watch loop is **read-only by design**. cub-scout's only cluster operations are `Get` / `List` / `Watch`; `--emit-receipt-on` adds an in-process `BuildReceipt` per matching event, which is also pure (the receipts code path is statically guarded by `TestReceiptPackageReadOnlyClient`).

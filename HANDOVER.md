@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-07-09 — captures the post-#500 live delivery observability release slice merged at `ee84f01`. Current release tag is `v2.6.0`; `v2.7.0` is the next release candidate and release notes live at [`docs/releases/v2.7.0.md`](docs/releases/v2.7.0.md). The May 2026 receipts and skill-catalog sections below remain historical context.
+Last updated: 2026-09-10 — captures the post-v2.7 delivery-evidence and bot-mode release slice. Current release tag is `v2.7.0`; `v2.8.0` is the next release candidate and draft release notes live at [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The May/July 2026 receipts, skill-catalog, and live-delivery sections below remain historical context.
 
 ## Current repo state
 
@@ -14,6 +14,47 @@ Last updated: 2026-07-09 — captures the post-#500 live delivery observability 
   - `docs/reference/cli-reference.md` = A-Z command catalog
   - `docs/reference/commands.md` = detailed usage and examples
   - `docs/reference/cli-contract.md` = stable flags, exit codes, and schemas
+
+## September 2026 update — ConfigHub delivery evidence, MCP parity, and bot mode
+
+This next release candidate adds the first user-visible integration for the
+evented ConfigHub/Argo delivery path without turning cub-scout into a delivery
+controller or event consumer.
+
+Highlights:
+
+- `gitops status` now supports `--format ascii|json|md`; legacy `--json`
+  remains shorthand for `--format json`.
+- `gitops status --with-confighub` adds bounded ConfigHub release history,
+  unit events, live-status writeback, and conservative event-consumer
+  Deployment health under `deliveryEvidence`.
+- Live-status writeback separates `deliveryVerdict` from
+  `applicationHealthVerdict`, includes freshness, and downgrades stale
+  successful reports to `WATCH`.
+- ConfigHub release/event reads default to the current cub space, honor
+  `CUB_CONTEXT`/`CUB_SPACE` through the inherited `cub` environment, support
+  explicit `--confighub-space '*'`, and are bounded by
+  `--confighub-since`.
+- `gitops status` now emits `controllerCoverage[]` for Flux, Argo CD,
+  ConfigHub, Sveltos, and Modelplane, with found/not-found/partial/unreadable
+  status plus RBAC/list omissions.
+- Modelplane traces now preserve Modelplane as the owner while surfacing
+  Crossplane substrate evidence from composition labels, claim labels,
+  composition-resource annotations, and verified Crossplane field managers.
+- MCP standalone mode adds `gitops_status`; connected mode adds
+  `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`.
+- MCP `compare_source_truth` strategy enum now derives from
+  `agent.AllStrategies()`, matching the CLI.
+- README now states the five run modes near the top: standalone client,
+  ConfigHub plugin, MCP server, watch stream, and in-cluster bot.
+- `bot` is a first-class command that runs the existing `watch` engine with
+  in-cluster-friendly defaults, `CUB_SCOUT_BOT_*` environment configuration,
+  and a deployable read-only Kubernetes example in `examples/bot/`.
+
+Remaining follow-up: object-level correlation from releases/live-status into
+`trace`, `explain`, `doctor`, `map activity`, and receipts once stable
+identifiers link release events, controller sources, and workloads without
+guessing.
 
 ## July 2026 update — live delivery observability (`#500`)
 
@@ -101,7 +142,7 @@ Modeled on [`confighub/confighub-skills`](https://github.com/confighub/confighub
 Most of these moved in the afternoon session below; this list is preserved for traceability:
 
 - ~~**`#446` v2 spin-offs**~~ — `#451` closed via #463 (fully shipped); `#448` and `#449` progressed in #463 (chained half + v1 watch surface shipped; aggregate-with-discovery and backpressure remain).
-- ~~**MCP enum drift**~~ — still open (one-file fix in `cmd/cub-scout/mcp.go`). Did not land this session.
+- ~~**MCP enum drift**~~ — resolved in the post-v2.7 delivery-evidence slice; MCP strategy enum now derives from `agent.AllStrategies()`.
 - ~~**Codex P3**~~ — source-truth receipt precedence tests still open; not blocking.
 - **`#444` Pilot–cub-scout integration skills** — still open; the consumer-side scenarios remain the highest-leverage track after receipts.
 
@@ -264,9 +305,14 @@ Key deliverables now in place:
 
 ## Open issues
 
-Current tracked follow-ons (verified 2026-07-09; reflects post-#500 state):
+Current tracked follow-ons (verified 2026-09-10; reflects the post-v2.7
+delivery-evidence and bot-mode release candidate):
 
 **Recently closed arcs:**
+- Post-v2.7 delivery-evidence release candidate in this worktree:
+  `gitops status --with-confighub`, MCP release/event/live-status tools,
+  MCP `gitops_status`, MCP source-truth strategy parity, README
+  five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`.
 - ~~**`#500`**~~ — live delivery observability release slice. **Closed via `#500`** on 2026-07-09.
 - ~~**`#446`**~~ — Receipt capability parent. **Closed** (v1 in `#454`/`#455`/`#456`; v2 surface in `#463`/`#469`/`#470`).
 - ~~**`#444`**~~ — Pilot–cub-scout integration skills, 9 scenarios. **Closed via `#468`** (batch B; batch A in `#466`, Codex round-7 fixes in `#467`).
@@ -278,16 +324,17 @@ Current tracked follow-ons (verified 2026-07-09; reflects post-#500 state):
 - Aggregate delivery failures as top-level `doctor` findings where controller status refs expose source/generated-artifact lineage.
 - Audited action events as history and receipt supporting evidence.
 - Broader source-freshness metadata for snapshot, watch, summary, and receipt-backed reads.
-- ConfigHub history-backed event / Argobot evidence integration with OCI release correlation, no production cursor sharing, and direct observer cursors only as fallback; see [`docs/proposals/event-consumer-argobot-integration.md`](docs/proposals/event-consumer-argobot-integration.md) and `#502`.
-- Controller-family parity rules and structured fallback omissions where controllers lack status, source, event, or generation evidence.
+- ConfigHub history-backed event / status evidence has an initial `gitops status --with-confighub` reader; deeper OCI release-to-workload correlation remains a `#502` follow-up. Direct observer cursors remain fallback-only.
+- Deeper controller-family parity rules where controllers lack status, source, event, or generation evidence. The first `gitops status` coverage ledger is shipped; object-level parity remains open.
+- Modelplane-on-Crossplane hardening: trace now surfaces substrate evidence on Modelplane-owned resources; remaining work is source/generation evidence, receipts, watch/bot parity, and structured omissions where deeper Crossplane layers cannot be joined safely.
 
 **Untracked v2 follow-ups (no separate issue):**
-- MCP `compare_source_truth` strategy-enum drift — MCP schema lists 4 strategies; CLI supports 9 (Phase 2 from `#418`). One-file fix in `cmd/cub-scout/mcp.go`.
+- MCP `compare_source_truth` strategy-enum drift — resolved in the post-v2.7 delivery-evidence slice; MCP and CLI now share the `agent.AllStrategies()` registry.
 - Source-truth receipt precedence edge coverage, especially `StatusBLOCK + VerdictBLOCKED`. Nice-to-have, not blocking.
 
 **Open tracked issues:**
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution (`gitSource.file:line` / `sourceMapRef` honesty markers).
-- **`#502`** — ConfigHub history-backed event / Argobot evidence integration; current Argobot force-syncs Argo from release events, but status feedback write-back is future work.
+- **`#502`** — initial ConfigHub history/live-status/event-consumer evidence reader shipped on `gitops status --with-confighub`; deeper release-to-controller-to-workload correlation remains.
 - **`#475`** — Blog/documentation publication series for introducing cub-scout.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout JSON outputs. Design rather than code.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).
@@ -312,7 +359,7 @@ Current tracked follow-ons (verified 2026-07-09; reflects post-#500 state):
 
 ## Current checkpoint
 
-Current release tag: **`v2.6.0`**. The next release candidate is **`v2.7.0`**; release notes are in [`docs/releases/v2.7.0.md`](docs/releases/v2.7.0.md). The v2.0.0 plugin switchover (`cub scout` as the preferred invocation, MCP gateway as the AI front door) shipped in `v2.0.0` and is now historical — `docs/releases/v2.0.0-plugin-plan.md` is preserved as a historical artifact.
+Current release tag: **`v2.7.0`**. The next release candidate is **`v2.8.0`**; draft release notes are in [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The v2.0.0 plugin switchover (`cub scout` as the preferred invocation, MCP gateway as the AI front door) shipped in `v2.0.0` and is now historical — `docs/releases/v2.0.0-plugin-plan.md` is preserved as a historical artifact.
 
 `main` HEAD at handover time: `ee84f01` (`Merge pull request #500 from confighub/codex/feature-docs-live-delivery-observability`). Zero open PRs.
 
@@ -329,7 +376,7 @@ Recent shipped capability surface:
 - Architectural triad locked in code (read-only-triad invariant; enforced at three layers)
 - **Receipts v1 + v2 — feature-complete.** 3 predicates (`applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`); store + management UX (`receipt show / validate / list`); CI-gate exit semantics (`--fail-on`); chained receipts via `--input-attestation` with API-boundary `VerifiedAttestationRef` verify; aggregate-with-discovery via `--scope namespace/<ns>` + comma-list batch + `synthetic-aggregate://` subject + `--aggregate-policy` (max-severity default); real-time emission via `watch --emit-receipt-on` covering all 4 event types + `--emit-receipt-batch-cap` per-poll backpressure. 4 worked examples (`ci-gate/`, `chained/`, `aggregate/`, `watch-emit/`).
 - AI-agent skill catalog: **42 skill files** = 8 verb-group skills (`#442` batch 1+2) + 7 controller-observer skills (`#442` batch 3) + 8 workflow scenario skills (`#442` batch 4) + **9 Pilot consumer-integration skills (`#444` batch A+B)** + 1 umbrella router + 9 shared references
-- MCP gateway with closed read-only tool catalog (5 standalone + 5 connected tools)
+- MCP gateway with closed read-only tool catalog (6 standalone + 8 connected tools)
 - `--presentation human|ai|paired` on `doctor` / `explain` / `trace`
 
 ## Next milestone
@@ -346,7 +393,7 @@ Open work, in roughly descending leverage:
 8. **`#475` publication docs.** Use the README user-question table and v2.7.0 release notes as the source of truth.
 
 Small untracked follow-ups carried from the receipts arc:
-- **MCP `compare_source_truth` strategy-enum drift** — schema lists 4 strategies; CLI supports 9. One-file fix in `cmd/cub-scout/mcp.go`.
+- **MCP `compare_source_truth` strategy-enum drift** — resolved in the post-v2.7 delivery-evidence slice; schema now tracks all CLI strategies.
 - **Source-truth receipt precedence edge coverage** — especially `StatusBLOCK + VerdictBLOCKED`. Nice-to-have, not blocking.
 
 ### CLI migration table (`#375`)

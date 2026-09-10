@@ -1,6 +1,8 @@
 # Watch Event Reference
 
-`cub-scout watch` emits a closed set of event types over webhook + JSONL file sinks. This reference is the authoritative description of:
+`cub-scout watch` and `cub-scout bot` emit the same closed set of event types
+over webhook + JSONL file sinks. `bot` is the in-cluster-friendly wrapper around
+the watch engine; this reference is the authoritative description of:
 
 - The four event types (`resource.discovered`, `ownership.changed`, `drift.detected`, `scan.finding`) and when each fires
 - The event JSON shape

@@ -21,10 +21,10 @@ func TestRootCommandLayout_VisibleTopLevelCount(t *testing.T) {
 	// integration per the council verdict on #393). Bumped 31 -> 32 in
 	// #446 batch 1 to admit `receipt` as the 8th verb group (typed,
 	// fingerprinted evidence artifacts; see docs/proposals/
-	// receipts-way-forward.md). Deliberate; do not bump again without a
-	// paired discussion.
-	if count > 32 {
-		t.Fatalf("visible top-level command count = %d, want <= 32", count)
+	// receipts-way-forward.md). Bumped 32 -> 33 in v2.8 to admit `bot`
+	// as the first-class in-cluster watch entrypoint.
+	if count > 33 {
+		t.Fatalf("visible top-level command count = %d, want <= 33", count)
 	}
 }
 
@@ -38,6 +38,7 @@ func TestRootCommandLayout_HelpReflectsNewLayout(t *testing.T) {
 
 	required := []string{
 		"compare",
+		"bot",
 		"import",
 		"quickstart",
 		"setup",
