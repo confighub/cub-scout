@@ -50,6 +50,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
+| Observation evidence | This doc (below) | Embedded in `snapshot` JSON as `observation`, `map list` JSON entries as `observation`, and watch/bot events as `observation` |
 | Platform substrate evidence | This doc (below) | Embedded in `map list` JSON as `ownerEvidence`, in watch/bot events as `owner.evidence`, and in receipts as `predicate.evidence.platformSubstrate` |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
 | Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` JSON |
@@ -690,6 +691,50 @@ instead of silently claiming absence.
 | `omissions[].resource` | API resource identifier in `<resource>.<group>/<version>` form when a group exists. |
 | `omissions[].reason` | One of `forbidden`, `unauthorized`, `timeout`, or `list_failed`. |
 | `omissions[].message` | Raw Kubernetes/client error message when available; callers should not parse it for decisions. |
+
+## Observation Evidence Contract
+
+`observation` describes where cub-scout read an observed fact from and when the
+read happened. It is a freshness boundary for the evidence, not a promise that
+the fact remains true afterward.
+
+Current embedding points:
+
+- `snapshot`: top-level `observation`
+- `map list --format json`: per-entry `observation` on live Kubernetes reads
+- `watch` / `bot` events: top-level event `observation`
+
+### Schema Sketch
+
+```json
+{
+  "source": "kubernetes-api",
+  "mode": "watch-poll",
+  "observedAt": "2026-09-10T14:15:00Z",
+  "freshness": "point-in-time",
+  "scope": {
+    "cluster": "kind-dev",
+    "namespace": "prod",
+    "kind": "Deployment"
+  }
+}
+```
+
+### Field Rules
+
+| Field | Rule |
+|---|---|
+| `source` | Read source. Current live-cluster value: `kubernetes-api`. Future ConfigHub/resource-index producers must use a different explicit value. |
+| `mode` | Producing surface. Current values: `map-list`, `snapshot`, `watch-poll`. `bot` uses `watch-poll` because it runs the watch engine. |
+| `observedAt` | RFC 3339 timestamp captured once for the relevant read or poll and normalized to UTC. |
+| `freshness` | Current value: `point-in-time`. Consumers must not treat this as a TTL or cache-validity guarantee. |
+| `scope.cluster` | Cluster/context label when cub-scout can name it. |
+| `scope.namespace` | Namespace filter or resource namespace when present. |
+| `scope.kind` | Kind filter or resource kind when present. |
+
+The field is omitted when a fixture, stored record, or future producer cannot
+state the source and observation timestamp. Omission means "freshness not
+declared", not "stale" or "untrusted".
 
 ## Platform Substrate Evidence Contract
 

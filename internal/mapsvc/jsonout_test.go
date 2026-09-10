@@ -6,6 +6,9 @@ package mapsvc
 import (
 	"encoding/json"
 	"testing"
+	"time"
+
+	"github.com/confighub/cub-scout/pkg/agent"
 )
 
 func TestBuildOwnershipTreeJSON_Basic(t *testing.T) {
@@ -713,6 +716,33 @@ func TestBuildMapListJSON_StatusNormalization(t *testing.T) {
 	// Empty status should be normalized to "Unknown"
 	if output.Resources[0].Status != "Unknown" {
 		t.Errorf("expected status=Unknown for empty status, got %s", output.Resources[0].Status)
+	}
+}
+
+func TestBuildMapListJSON_PreservesObservationEvidence(t *testing.T) {
+	observedAt := time.Date(2026, 9, 10, 14, 45, 0, 0, time.UTC)
+	observation := agent.NewObservationEvidence(
+		agent.ObservationSourceKubernetesAPI,
+		agent.ObservationModeMapList,
+		observedAt,
+		agent.ObservationScope{Cluster: "kind-dev", Namespace: "web", Kind: "Deployment"},
+	)
+	entries := []Entry{
+		{Kind: "Deployment", Namespace: "web", Name: "frontend", Owner: "Flux", Status: "Ready", Observation: observation},
+	}
+
+	output := BuildMapListJSON(entries, "kind-dev", nil)
+	if len(output.Resources) != 1 {
+		t.Fatalf("resources len = %d, want 1", len(output.Resources))
+	}
+	if output.Resources[0].Observation == nil {
+		t.Fatal("observation missing")
+	}
+	if output.Resources[0].Observation.Source != agent.ObservationSourceKubernetesAPI {
+		t.Fatalf("source = %q, want kubernetes-api", output.Resources[0].Observation.Source)
+	}
+	if !output.Resources[0].Observation.ObservedAt.Equal(observedAt) {
+		t.Fatalf("observedAt = %s, want %s", output.Resources[0].Observation.ObservedAt, observedAt)
 	}
 }
 

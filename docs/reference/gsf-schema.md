@@ -30,6 +30,17 @@ cub-scout snapshot --kind Deployment
 {
   "version": "gsf/v1",
   "generatedAt": "2025-12-29T12:00:00Z",
+  "observation": {
+    "source": "kubernetes-api",
+    "mode": "snapshot",
+    "observedAt": "2025-12-29T12:00:00Z",
+    "freshness": "point-in-time",
+    "scope": {
+      "cluster": "prod-east",
+      "namespace": "prod",
+      "kind": "Deployment"
+    }
+  },
   "cluster": "prod-east",
   "entries": [
     {
@@ -59,6 +70,21 @@ cub-scout snapshot --kind Deployment
   }
 }
 ```
+
+## Observation Schema
+
+Top-level `observation` records the source and freshness boundary for the
+snapshot read:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `source` | string | Read source. Current value: `kubernetes-api` |
+| `mode` | string | Producing surface. Snapshot emits `snapshot` |
+| `observedAt` | RFC 3339 timestamp | Time the snapshot read was collected, normalized to UTC |
+| `freshness` | string | Current value: `point-in-time`; not a TTL |
+| `scope.cluster` | string | Cluster name when known |
+| `scope.namespace` | string | Namespace filter when present |
+| `scope.kind` | string | Kind filter when present |
 
 ## Entry Schema
 

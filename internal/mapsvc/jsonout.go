@@ -613,9 +613,10 @@ type MapListContext struct {
 
 // MapListResource represents a single resource with ownership attribution.
 type MapListResource struct {
-	ID     ResourceID `json:"id"`
-	Owner  Owner      `json:"owner"`
-	Status string     `json:"status"` // Ready, NotReady, Unknown, Progressing
+	ID          ResourceID                 `json:"id"`
+	Owner       Owner                      `json:"owner"`
+	Observation *agent.ObservationEvidence `json:"observation,omitempty"`
+	Status      string                     `json:"status"` // Ready, NotReady, Unknown, Progressing
 }
 
 // Owner represents the ownership attribution for a resource.
@@ -681,7 +682,8 @@ func BuildMapListJSON(entries []Entry, cluster string, namespace *string) MapLis
 				Type: ownerType,
 				Ref:  ownerRef,
 			},
-			Status: status,
+			Observation: e.Observation,
+			Status:      status,
 		}
 
 		ownerCounts[ownerType]++

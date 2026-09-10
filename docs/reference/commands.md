@@ -210,6 +210,11 @@ include `ownerEvidence`. This preserves Modelplane as the owner while surfacing
 the Crossplane substrate facts; see
 [`json-contracts.md` § Platform Substrate Evidence Contract](json-contracts.md#platform-substrate-evidence-contract).
 
+For live Kubernetes reads, JSON entries also include `observation` with
+`source`, `mode`, `observedAt`, `freshness`, and optional scope so repeated
+reviewers can tell when the inventory was collected. See
+[`json-contracts.md` § Observation Evidence Contract](json-contracts.md#observation-evidence-contract).
+
 ---
 
 ## map meaning
@@ -925,6 +930,12 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 {
   "type": "drift.detected",
   "timestamp": "2026-03-07T11:00:00Z",
+  "observation": {
+    "source": "kubernetes-api",
+    "mode": "watch-poll",
+    "observedAt": "2026-03-07T11:00:00Z",
+    "freshness": "point-in-time"
+  },
   "resource": {"kind": "Deployment", "name": "api", "namespace": "prod"},
   "owner": {"type": "ArgoCD", "name": "api-app"},
   "severity": "warning",
@@ -945,6 +956,9 @@ cub-scout watch --output-file /tmp/cub-scout-events.jsonl --once
 See [`examples/watch-webhook/`](../../examples/watch-webhook/) for a local receiver and end-to-end walkthrough.
 Custom CRDs in `~/.cub-scout/resources.yaml` (or `CUB_SCOUT_RESOURCE_CONFIG`)
 are included in watch resource discovery.
+Watch and bot event payloads include `observation` freshness metadata for the
+poll that produced the event. See
+[`json-contracts.md` § Observation Evidence Contract](json-contracts.md#observation-evidence-contract).
 
 ---
 
@@ -961,6 +975,8 @@ cub-scout bot [--webhook <url>] [--output-file <path>] [flags]
 for in-cluster deployment: `buildConfig()` uses Kubernetes in-cluster auth when
 available, and every important flag has a `CUB_SCOUT_BOT_*` environment
 variable for manifests.
+Because `bot` shares the watch event contract, emitted events use
+`observation.mode: watch-poll`.
 
 At least one destination is required: `--webhook`, `--output-file`,
 `CUB_SCOUT_BOT_WEBHOOK_URL`, or `CUB_SCOUT_BOT_OUTPUT_FILE`.
@@ -2546,6 +2562,10 @@ cub-scout snapshot -o state.json
 cub-scout snapshot --namespace prod
 cub-scout snapshot --relations
 ```
+
+Snapshot JSON includes top-level `observation` metadata describing the
+Kubernetes API read source, collection time, freshness boundary, and requested
+namespace/kind scope when present.
 
 ### Flags
 

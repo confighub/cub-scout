@@ -34,7 +34,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] MCP parity for release/event/live-status reads and `compare_source_truth` strategy enum
 - [ ] Aggregate delivery failures as doctor top-level findings with deeper source/generated-artifact lineage where status refs expose it
 - [ ] Audited user-action event ingestion for history and receipt supporting evidence
-- [ ] Broader API-load-aware inventory and search paths with source freshness for snapshot, watch, summary, and receipt-backed reads
+- [ ] Broader API-load-aware inventory and search paths: map JSON entries, snapshot JSON, and watch/bot events now carry point-in-time observation metadata; summary and receipt-backed reads still need broader source freshness coverage
 - [ ] Deeper OCI release-to-controller-to-workload correlation, with direct observer cursors only as fallback — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
 - [ ] Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
 - [ ] Modelplane-on-Crossplane hardening: trace, map JSON, watch/bot events, and receipts now surface substrate evidence; remaining work is deeper source/generation joins for Modelplane resources backed by Crossplane composition managers, with structured omissions where parity is not possible

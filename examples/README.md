@@ -95,6 +95,7 @@ understands the core ownership model.
 - [`ai-integration`](./ai-integration/)
 - [`mcp-gateway`](./mcp-gateway/)
 - [`watch-webhook`](./watch-webhook/)
+- [`observation-freshness`](./observation-freshness/) — shared freshness metadata for map, snapshot, watch, and bot evidence
 - [`connected-summary-storage`](./connected-summary-storage/)
 - [`graph-export`](./graph-export/)
 - [`workflows`](./workflows/)

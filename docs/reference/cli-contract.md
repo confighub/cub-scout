@@ -261,6 +261,9 @@ cub-scout bot --webhook <url>
 ### Stable Behavior Rules
 
 - `bot` uses the same event payload contract as `watch`.
+- `bot` and `watch` events include `observation` evidence with
+  `source: kubernetes-api`, `mode: watch-poll`, `observedAt`, `freshness:
+  point-in-time`, and optional cluster/namespace/kind scope when known.
 - At least one destination is required: webhook or output file.
 - Kubernetes authentication uses in-cluster config when available, then
   kubeconfig fallback outside a cluster.
@@ -423,6 +426,11 @@ JSON output may include `ownerEvidence` for Modelplane-owned resources backed
 by explicit Crossplane substrate signals. This is additive supporting evidence;
 it does not change the `owner` value. See
 [`json-contracts.md` § Platform Substrate Evidence Contract](json-contracts.md#platform-substrate-evidence-contract).
+
+JSON entries produced from live Kubernetes reads include `observation` evidence
+with `source: kubernetes-api`, `mode: map-list`, `observedAt`, `freshness:
+point-in-time`, and optional cluster/namespace/kind scope. See
+[`json-contracts.md` § Observation Evidence Contract](json-contracts.md#observation-evidence-contract).
 
 ### Query Syntax
 

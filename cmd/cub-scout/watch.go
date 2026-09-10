@@ -53,12 +53,13 @@ type watchOptions struct {
 }
 
 type watchEvent struct {
-	Type      string                 `json:"type"`
-	Timestamp time.Time              `json:"timestamp"`
-	Resource  watchEventResource     `json:"resource"`
-	Owner     *watchEventOwner       `json:"owner,omitempty"`
-	Severity  string                 `json:"severity,omitempty"`
-	Details   map[string]interface{} `json:"details,omitempty"`
+	Type        string                     `json:"type"`
+	Timestamp   time.Time                  `json:"timestamp"`
+	Observation *agent.ObservationEvidence `json:"observation,omitempty"`
+	Resource    watchEventResource         `json:"resource"`
+	Owner       *watchEventOwner           `json:"owner,omitempty"`
+	Severity    string                     `json:"severity,omitempty"`
+	Details     map[string]interface{}     `json:"details,omitempty"`
 
 	// Receipt is the in-toto Statement v1 envelope (a cub-scout receipt)
 	// built when `--emit-receipt-on` is enabled and this event's type
@@ -461,15 +462,17 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 	for id, entry := range curr.entriesByID {
 		prevEntry, existed := prev.entriesByID[id]
 		if !existed {
+			resource := watchEventResource{
+				Kind:      entry.Kind,
+				Name:      entry.Name,
+				Namespace: entry.Namespace,
+			}
 			event := watchEvent{
-				Type:      "resource.discovered",
-				Timestamp: ts,
-				Resource: watchEventResource{
-					Kind:      entry.Kind,
-					Name:      entry.Name,
-					Namespace: entry.Namespace,
-				},
-				Owner: watchOwnerFromEntry(entry),
+				Type:        "resource.discovered",
+				Timestamp:   ts,
+				Observation: watchObservationForResource(ts, entry, resource),
+				Resource:    resource,
+				Owner:       watchOwnerFromEntry(entry),
 				Details: map[string]interface{}{
 					"status": entry.Status,
 				},
@@ -481,15 +484,17 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 		}
 
 		if prevEntry.Owner != entry.Owner {
+			resource := watchEventResource{
+				Kind:      entry.Kind,
+				Name:      entry.Name,
+				Namespace: entry.Namespace,
+			}
 			event := watchEvent{
-				Type:      "ownership.changed",
-				Timestamp: ts,
-				Resource: watchEventResource{
-					Kind:      entry.Kind,
-					Name:      entry.Name,
-					Namespace: entry.Namespace,
-				},
-				Owner: watchOwnerFromEntry(entry),
+				Type:        "ownership.changed",
+				Timestamp:   ts,
+				Observation: watchObservationForResource(ts, entry, resource),
+				Resource:    resource,
+				Owner:       watchOwnerFromEntry(entry),
 				Details: map[string]interface{}{
 					"before": prevEntry.Owner,
 					"after":  entry.Owner,
@@ -507,13 +512,15 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 		}
 		entry := findWatchEntryForResource(curr.entriesByID, finding.Namespace, finding.Kind, finding.Name)
 		owner := watchOwnerFromEntry(entry)
+		resource := watchEventResource{Kind: finding.Kind, Name: finding.Name, Namespace: finding.Namespace}
 
 		scanEvent := watchEvent{
-			Type:      "scan.finding",
-			Timestamp: ts,
-			Resource:  watchEventResource{Kind: finding.Kind, Name: finding.Name, Namespace: finding.Namespace},
-			Owner:     owner,
-			Severity:  finding.Severity,
+			Type:        "scan.finding",
+			Timestamp:   ts,
+			Observation: watchObservationForResource(ts, entry, resource),
+			Resource:    resource,
+			Owner:       owner,
+			Severity:    finding.Severity,
 			Details: map[string]interface{}{
 				"category": finding.Category,
 				"message":  finding.Message,
@@ -525,11 +532,12 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 
 		if strings.EqualFold(finding.Category, "STATE") || strings.EqualFold(finding.Category, "DRIFT") {
 			driftEvent := watchEvent{
-				Type:      "drift.detected",
-				Timestamp: ts,
-				Resource:  watchEventResource{Kind: finding.Kind, Name: finding.Name, Namespace: finding.Namespace},
-				Owner:     owner,
-				Severity:  finding.Severity,
+				Type:        "drift.detected",
+				Timestamp:   ts,
+				Observation: watchObservationForResource(ts, entry, resource),
+				Resource:    resource,
+				Owner:       owner,
+				Severity:    finding.Severity,
 				Details: map[string]interface{}{
 					"category": finding.Category,
 					"message":  finding.Message,
@@ -555,6 +563,15 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 	})
 
 	return events
+}
+
+func watchObservationForResource(ts time.Time, entry MapEntry, resource watchEventResource) *agent.ObservationEvidence {
+	return agent.NewObservationEvidence(
+		agent.ObservationSourceKubernetesAPI,
+		agent.ObservationModeWatchPoll,
+		ts,
+		agent.ObservationScope{Cluster: entry.ClusterName, Namespace: resource.Namespace, Kind: resource.Kind},
+	)
 }
 
 func watchOwnerFromEntry(entry MapEntry) *watchEventOwner {

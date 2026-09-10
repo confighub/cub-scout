@@ -23,16 +23,18 @@ var (
 	snapshotNamespace string
 	snapshotKind      string
 	snapshotRelations bool
+	snapshotNow       = time.Now
 )
 
 // GSFSnapshot represents the GitOps State Format output
 type GSFSnapshot struct {
-	Version     string        `json:"version"`
-	GeneratedAt time.Time     `json:"generatedAt"`
-	Cluster     string        `json:"cluster"`
-	Entries     []GSFEntry    `json:"entries"`
-	Relations   []GSFRelation `json:"relations,omitempty"`
-	Summary     GSFSummary    `json:"summary"`
+	Version     string                     `json:"version"`
+	GeneratedAt time.Time                  `json:"generatedAt"`
+	Observation *agent.ObservationEvidence `json:"observation,omitempty"`
+	Cluster     string                     `json:"cluster"`
+	Entries     []GSFEntry                 `json:"entries"`
+	Relations   []GSFRelation              `json:"relations,omitempty"`
+	Summary     GSFSummary                 `json:"summary"`
 }
 
 // GSFEntry represents a resource entry in GSF
@@ -135,6 +137,7 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	if clusterName == "" {
 		clusterName = "default"
 	}
+	observedAt := snapshotNow().UTC()
 
 	// Collect resources
 	entries := []GSFEntry{}
@@ -233,7 +236,8 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	// Build snapshot
 	snapshot := GSFSnapshot{
 		Version:     "gsf/v1",
-		GeneratedAt: time.Now().UTC(),
+		GeneratedAt: observedAt,
+		Observation: buildSnapshotObservation(clusterName, snapshotNamespace, snapshotKind, observedAt),
 		Cluster:     clusterName,
 		Entries:     entries,
 		Relations:   relations,
@@ -263,6 +267,15 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func buildSnapshotObservation(clusterName, namespace, kind string, observedAt time.Time) *agent.ObservationEvidence {
+	return agent.NewObservationEvidence(
+		agent.ObservationSourceKubernetesAPI,
+		agent.ObservationModeSnapshot,
+		observedAt,
+		agent.ObservationScope{Cluster: clusterName, Namespace: namespace, Kind: kind},
+	)
 }
 
 // buildOwnsRelations extracts ownership relations from OwnerReferences

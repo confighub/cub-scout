@@ -37,6 +37,17 @@ All four event types share this canonical shape (from `watchEvent` in `cmd/cub-s
 {
   "type": "drift.detected",
   "timestamp": "2026-05-25T11:00:00Z",
+  "observation": {
+    "source": "kubernetes-api",
+    "mode": "watch-poll",
+    "observedAt": "2026-05-25T11:00:00Z",
+    "freshness": "point-in-time",
+    "scope": {
+      "cluster": "kind-dev",
+      "namespace": "prod",
+      "kind": "Deployment"
+    }
+  },
   "resource": {
     "kind": "Deployment",
     "name": "payments-api",
@@ -100,6 +111,11 @@ already proven by Modelplane API group, label, or ownerRef evidence.
 |---|---|---|---|
 | `type` | string | Always | One of the four closed-enumeration values |
 | `timestamp` | RFC 3339 | Always | Time of the watch poll that observed the event |
+| `observation.source` | string | Omitempty | Read source for the event evidence. Current live-cluster value: `kubernetes-api`. |
+| `observation.mode` | string | Omitempty | Producing surface. `watch` and `bot` emit `watch-poll`. |
+| `observation.observedAt` | RFC 3339 | Omitempty | Same poll timestamp as `timestamp`; included so generic evidence readers do not need watch-specific field names. |
+| `observation.freshness` | string | Omitempty | Current value: `point-in-time`; not a TTL or cache-validity promise. |
+| `observation.scope` | object | Omitempty | Cluster, namespace, and kind scope when known; see [JSON Contracts § Observation Evidence Contract](json-contracts.md#observation-evidence-contract). |
 | `resource.kind` | string | Always | Kubernetes Kind (`Deployment`, `StatefulSet`, etc.) |
 | `resource.name` | string | Always | Resource name |
 | `resource.namespace` | string | Omitempty (cluster-scoped resources skip) | — |

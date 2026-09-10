@@ -56,6 +56,7 @@ var (
 	orphanIncludeSystem            bool   // --include-system flag for showing system resources
 	orphanIncludeAppSet            bool   // include explicit ApplicationSet-link orphans in map orphans
 	hooksFile                      string // --file flag for static analysis of hooks
+	mapObservationNow              = time.Now
 )
 
 // MapEntry is an alias for mapsvc.Entry representing a resource in the fleet map.
@@ -746,6 +747,7 @@ func runMapListFromCluster(ctx context.Context) error {
 	if clusterName == "" {
 		clusterName = "default"
 	}
+	observedAt := mapObservationNow().UTC()
 
 	// Collect resources
 	entries := []MapEntry{}
@@ -784,10 +786,25 @@ func runMapListFromCluster(ctx context.Context) error {
 		fmt.Fprintf(os.Stderr, "[debug] list: %d resources from %d types in %v\n", len(entries), listCount, time.Since(startList))
 		fmt.Fprintf(os.Stderr, "[debug] total: %v\n", time.Since(startTotal))
 	}
+	annotateMapEntriesObservation(entries, agent.NewObservationEvidence(
+		agent.ObservationSourceKubernetesAPI,
+		agent.ObservationModeMapList,
+		observedAt,
+		agent.ObservationScope{Cluster: clusterName, Namespace: mapNamespace, Kind: mapKind},
+	))
 
 	// NOTE: byOwner is recomputed inside renderMapListFromEntries after filtering
 	// to keep the summary consistent with the displayed table.
 	return renderMapListFromEntries(entries)
+}
+
+func annotateMapEntriesObservation(entries []MapEntry, observation *agent.ObservationEvidence) {
+	if observation == nil {
+		return
+	}
+	for i := range entries {
+		entries[i].Observation = observation
+	}
 }
 
 func renderMapListFromEntries(entries []MapEntry) error {

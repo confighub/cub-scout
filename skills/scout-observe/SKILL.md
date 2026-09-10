@@ -63,12 +63,15 @@ Pick by the question being asked:
 | "Show me the runtime + ownership + git hierarchy" | `cub-scout tree` | Multi-axis composition view |
 | "Scan for risk patterns" | `cub-scout scan` | 46 built-in patterns. Variants: `--state`, `--kyverno`, `--lifecycle-hazards`, `--timing-bombs`, `--dangling`, `--file <yaml>` |
 | "Export the resource graph" | `cub-scout graph export` | DOT / JSON for downstream tools |
-| "Dump the cluster as GSF JSON" | `cub-scout snapshot` | Stable snapshot for AI / agent / audit |
-| "Stream observation events" | `cub-scout watch -n <ns> [--webhook url]` | Webhook / file sinks, namespace / owner / severity filters |
-| "Run an in-cluster observer bot" | `cub-scout bot --webhook <url>` | Same event shape as `watch`, with env-var configuration for Kubernetes manifests |
+| "Dump the cluster as GSF JSON" | `cub-scout snapshot` | Stable snapshot for AI / agent / audit; includes top-level `observation` metadata |
+| "Stream observation events" | `cub-scout watch -n <ns> [--webhook url]` | Webhook / file sinks, namespace / owner / severity filters; events include `observation` metadata |
+| "Run an in-cluster observer bot" | `cub-scout bot --webhook <url>` | Same event shape as `watch`, with env-var configuration for Kubernetes manifests and per-event `observation` metadata |
 | "What mode am I in? Connection / cluster info" | `cub-scout status` | Standalone vs connected, context, cluster details |
 
-Snapshot-style verbs that support `--format json` emit deterministic JSON for agents; `watch` and `bot` emit deterministic JSON events directly.
+Snapshot-style verbs that support `--format json` emit deterministic JSON for
+agents. `map list --format json`, `snapshot`, `watch`, and `bot` also expose
+point-in-time `observation.source/mode/observedAt/freshness` metadata so agents
+can avoid confusing a stale artifact with a fresh read.
 
 ## The loop
 
@@ -126,7 +129,11 @@ $ cub-scout map list -n boutique --format json | jq '[.[] | {name, owner, source
 
 ## Constraints
 
-- All output is point-in-time. For a durable, fingerprinted record of "what cub-scout observed at time T", use the Verify verb group (`cub-scout receipt verify`) once #446 batch 1 lands — see [`scout-verify`](../scout-verify/SKILL.md) (planned).
+- All output is point-in-time. `map list --format json`, `snapshot`, `watch`,
+  and `bot` declare this with `observation` metadata. For a durable,
+  fingerprinted record of "what cub-scout observed at time T", use the Verify
+  verb group (`cub-scout receipt verify`) — see
+  [`scout-verify`](../scout-verify/SKILL.md).
 - If `managedFields` is missing or stripped from the live object, ownership detection still works (via labels + annotations) but per-field attribution falls back to resource-level. See [`references/kubernetes-managedfields.md`](../references/kubernetes-managedfields.md) for the data substrate notes.
 - The `watch` and `bot` verbs run indefinitely until interrupted; agents should pass `--once` or a time bound. Streaming receipts use `--emit-receipt-on`, with per-poll backpressure from `--emit-receipt-batch-cap`.
 - If a user asks the skill to act (apply / edit / sync / patch / delete), refuse and route to the appropriate `cub` skill in [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) or to direct `kubectl` with the user's hands on the keyboard.
