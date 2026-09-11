@@ -69,15 +69,19 @@ in this repository: `#519`, `#502`, and `#505`.
 - [x] Prove first-slice session reuse: finite TTL/entry count, visible refresh/freshness,
   exact request counts, cancellation, context isolation, and no stale success
   after failed refresh. Do not describe this as a global cache for all commands.
-- [x] Add observed origin metadata to bounded explain (`#505`, unreleased):
+- [x] Add observed origin metadata to bounded explain (`#523` merged; `#505`, unreleased):
   space/unit IDs and slugs plus optional integer revision, using the existing
   object read. Reject malformed/duplicate/conflicting metadata; do not infer
   controller ownership, target/context, release, component, or variant joins.
   CLI/plugin, MCP, and the current TUI share the evidence and omissions.
 - [ ] Wire the first companion evidence panel through the read-only CLI JSON
   boundary, with explicit target-to-kube-context binding and late-result rejection.
-  Companion-repository changes remain separately coordinated; no replacement
-  of the existing standalone TUI is authorized by this item.
+  Implemented and tested in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
+  not yet merged or released. Resource-only, explicit Target-ID bindings, one
+  captured snapshot, zero-read tab revisits, stale labels and explicit refresh;
+  no implicit source/release joins. Read-only live proof uses a mocked intended-state
+  row plus an existing non-production object. Issue tracking stays in `#519`;
+  no replacement of the existing standalone TUI is authorized by this item.
 - [ ] Continue stable release/controller/workload joins and receipt evidence
   (`#502`) and component/variant/target provenance (`#505`) after this first slice.
 - [x] First-slice capabilities have README user questions, exact invocations,

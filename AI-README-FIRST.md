@@ -119,7 +119,11 @@ pulls return 403; archives, CLI/plugin versions, CI, and Homebrew are verified.
 Next direction: **v2.10.0** explorer integration (`#519`), still unreleased.
 The first slice adds opt-in bounded `explain` reads and short-lived MCP/TUI
 session reuse; see `examples/bounded-resource-read/`. The companion panel is
-not shipped, and the existing rich explain path and standalone TUI remain.
+implemented in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
+not merged or shipped. It requires an explicit Target-ID/context binding and
+retains one dated snapshot with manual refresh, not a shared live cache.
+The existing rich explain path and standalone TUI remain. All issue tracking
+stays in this repository (`#519`); no companion issue was created.
 Bounded explain also parses observed `confighub.com/origin` metadata with no
 extra reads: `configHubOrigin` records space/unit identity and optional revision,
 not verified source, ownership, delivery, or target/context binding. Missing or
