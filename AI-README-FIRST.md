@@ -126,7 +126,7 @@ As of 2026-09-11, these areas are fully or materially shipped:
   - `gitops status --format ascii|json|md` now matches the documented format contract; `--json` remains a shorthand for `--format json`
   - `gitops status --with-confighub` adds opt-in, bounded ConfigHub release history, unit events, live-status writeback, and event-consumer Deployment health under `deliveryEvidence`
   - `doctor --with-confighub` reuses the same bounded evidence envelope, adds a scope-level `delivery` rollup, and promotes concrete failed/stale delivery feedback, failed unit events, and unhealthy observed event consumers into top issues
-  - `map activity --with-confighub` projects the same bounded ConfigHub evidence into timeline rows for live-status writeback, release publication, unit events, event-consumer health, and omissions
+  - `map activity --with-confighub` projects the same bounded ConfigHub evidence into timeline rows for live-status writeback, release publication, unit events, event-consumer health, and omissions, and attaches additive live-status evidence to matching Argo Application activity rows when a non-wildcard ConfigHub space and Application name match exactly
   - Live-status writeback separates delivery verdict from application-health verdict and downgrades stale successful observations to `WATCH`
   - ConfigHub release and unit-event reads are scoped by current cub space by default, support explicit `--confighub-space '*'`, and are bounded by `--confighub-since`
   - `gitops status` emits controller-family coverage for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane, including found/not-found/partial/unreadable status and RBAC/list omissions
@@ -138,7 +138,7 @@ As of 2026-09-11, these areas are fully or materially shipped:
   - `trace --with-confighub` and `explain --with-confighub` attach object-correlated `deliveryEvidence` only when exact ConfigHub unit, space, target, OCI-source, or Argo Application identifiers prove the join; otherwise they report structured omissions
   - `receipt verify <kind>/<name> --with-confighub` attaches the same object-correlated `deliveryEvidence` under `predicate.evidence.deliveryEvidence`; the field is fingerprint-covered supporting evidence and does not change predicate verdict semantics
   - `bot` runs the `watch` engine as an in-cluster-friendly read-only observer with `CUB_SCOUT_BOT_*` environment configuration and a deployable example under `examples/bot/`
-  - Remaining work: delivery evidence on aggregate/object-set/workload receipts, workload-level activity joins, aggregate controller-resource failures with generated-artifact lineage in `doctor`, and deeper Modelplane-on-Crossplane source/generation joins
+  - Remaining work: delivery evidence on aggregate/object-set/workload receipts, deeper workload-level activity joins that require stable workload identifiers, aggregate controller-resource failures with generated-artifact lineage in `doctor`, and deeper Modelplane-on-Crossplane source/generation joins
 
 - **Live delivery observability release slice — merged for v2.7.0** (`#500`)
   - README now starts with a user-question table covering ownership, delegated delivery health, intended-vs-live agreement, rollout progress, proceed/wait/retry framing, drift, delivery-vs-runtime separation, attribution, low-load repeated review paths, and receipts
@@ -246,7 +246,7 @@ Verify live state before acting. As of 2026-09-11, the receipts arc, Pilot consu
 
 ### Untracked v2 follow-ups (no separate issue)
 
-- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; this release candidate now joins exact object-level evidence into `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub`, adds scope-level `doctor --with-confighub` rollups/top issues, and renders ConfigHub delivery evidence in `map activity --with-confighub`. Follow-up work should carry the same evidence into aggregate/object-set/workload receipts and workload-level activity rows without guessing.
+- **Object-level release/live-status correlation** — initial ConfigHub evidence appears on `gitops status --with-confighub`; this release train joins exact object-level evidence into `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub`, adds scope-level `doctor --with-confighub` rollups/top issues, renders ConfigHub delivery evidence in `map activity --with-confighub`, and now attaches live-status evidence to matching Argo Application activity rows when exact space+app identity is available. Follow-up work should carry the same evidence into aggregate/object-set/workload receipts and deeper workload-level activity rows without guessing.
 - **Source-truth receipt precedence edge coverage** — especially `StatusBLOCK + VerdictBLOCKED`. Not blocking; nice-to-have.
 
 ### Open tracked issues
@@ -254,7 +254,7 @@ Verify live state before acting. As of 2026-09-11, the receipts arc, Pilot consu
 - **`#505`** — post-OCI ConfigHub-native evidence boundary: Resource entity,
   `cub k8s`, argobot/live-status, and component/variant/target provenance.
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution.
-- **`#502`** — deepen release/event/live-status correlation beyond the initial `gitops status --with-confighub` reader; do not reuse production event-consumer cursors.
+- **`#502`** — deepen release/event/live-status correlation beyond the shipped status/doctor/trace/explain/receipt/activity readers; do not reuse production event-consumer cursors.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout outputs.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design).
 - **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up). Scopes #1 (`#414`) and #3 (`#420`) already shipped.

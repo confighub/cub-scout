@@ -212,6 +212,111 @@ func TestMapActivityMatchesNamespaceKeepsConfigHubScopeExplicit(t *testing.T) {
 	}
 }
 
+func TestAttachConfigHubDeliveryEvidenceToActivityRows_JoinsArgoApplicationByExactSpaceAndApp(t *testing.T) {
+	evidence := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC),
+		Scope: GitOpsDeliveryEvidenceScope{
+			Space:      "payments-prod",
+			StaleAfter: "15m",
+			MaxItems:   10,
+		},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				SpaceID:                  "sp-123",
+				App:                      "payments-api",
+				SyncStatus:               "Synced",
+				HealthStatus:             "Healthy",
+				OperationPhase:           "Succeeded",
+				Revision:                 "sha256:abc",
+				Freshness:                "fresh",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+		},
+	}
+	rows := []mapActivityRow{{
+		Time:     "2026-09-10T11:59:00Z",
+		Source:   "argocd.application",
+		Resource: "Application/argocd/payments-api",
+		Action:   "sync-status",
+		Result:   "success",
+		Message:  "sync=Synced health=Healthy",
+		Owner:    "ArgoCD",
+	}}
+
+	got := attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
+	if got[0].DeliveryEvidence == nil {
+		t.Fatalf("DeliveryEvidence nil, want exact live-status join")
+	}
+	de := got[0].DeliveryEvidence
+	if de.Kind != "liveStatus" || de.Namespace != "argocd" || de.Space != "payments-prod" || de.App != "payments-api" {
+		t.Fatalf("DeliveryEvidence = %+v, want liveStatus join for argocd/payments-api", de)
+	}
+	if de.DeliveryVerdict != "PASS" || de.ApplicationHealthVerdict != "PASS" {
+		t.Fatalf("verdicts = %s/%s, want PASS/PASS", de.DeliveryVerdict, de.ApplicationHealthVerdict)
+	}
+	if strings.Join(de.MatchedBy, ",") != "scope.space,argocdApplication.name" {
+		t.Fatalf("MatchedBy = %#v, want scope+application", de.MatchedBy)
+	}
+	if got[0].Result != "success" {
+		t.Fatalf("Result = %q, want original Argo-owned result preserved", got[0].Result)
+	}
+	if !strings.Contains(got[0].Message, "confighub delivery=PASS app-health=PASS freshness=fresh") {
+		t.Fatalf("Message = %q, want ConfigHub evidence suffix", got[0].Message)
+	}
+}
+
+func TestAttachConfigHubDeliveryEvidenceToActivityRows_WildcardSpaceDoesNotJoin(t *testing.T) {
+	evidence := &GitOpsDeliveryEvidence{
+		Scope: GitOpsDeliveryEvidenceScope{Space: "*"},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				App:                      "payments-api",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+		},
+	}
+	rows := []mapActivityRow{{
+		Source:   "argocd.application",
+		Resource: "Application/argocd/payments-api",
+		Result:   "success",
+		Message:  "sync=Synced health=Healthy",
+	}}
+
+	got := attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
+	if got[0].DeliveryEvidence != nil {
+		t.Fatalf("DeliveryEvidence = %+v, want nil for wildcard ConfigHub space", got[0].DeliveryEvidence)
+	}
+}
+
+func TestAttachConfigHubDeliveryEvidenceToActivityRows_AppMismatchDoesNotJoin(t *testing.T) {
+	evidence := &GitOpsDeliveryEvidence{
+		Scope: GitOpsDeliveryEvidenceScope{Space: "payments-prod"},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				App:                      "worker",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+		},
+	}
+	rows := []mapActivityRow{{
+		Source:   "argocd.application",
+		Resource: "Application/argocd/payments-api",
+		Result:   "success",
+		Message:  "sync=Synced health=Healthy",
+	}}
+
+	got := attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
+	if got[0].DeliveryEvidence != nil {
+		t.Fatalf("DeliveryEvidence = %+v, want nil for app mismatch", got[0].DeliveryEvidence)
+	}
+}
+
 func TestMapActivityDeliveryOptionsRejectInvalidSince(t *testing.T) {
 	oldNamespace := mapNamespace
 	oldSpace := mapActivityConfigHubSpace

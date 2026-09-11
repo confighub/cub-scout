@@ -687,7 +687,7 @@ Stable JSON fields per event:
 - `actor` (optional; audited action events only)
 - `subject` (optional; audited action events only)
 - `actionEvidence` (optional; raw action annotations not otherwise modeled)
-- `deliveryEvidence` (optional; ConfigHub rows only when `--with-confighub`)
+- `deliveryEvidence` (optional; ConfigHub rows and exact Argo Application live-status joins only when `--with-confighub`)
 
 ConfigHub activity rows use these `source` values:
 - `confighub.liveStatus`
@@ -701,6 +701,9 @@ same bounded read rules as `gitops status --with-confighub`: current cub space
 by default, explicit `--confighub-space '*'` for all spaces, release/unit-event
 queries bounded by `--confighub-since`, stale live-status handling controlled
 by `--confighub-stale-after`, and omissions instead of inferred status.
+`argocd.application` rows may receive live-status `deliveryEvidence` only when
+the ConfigHub space is non-wildcard and the reported application name matches
+the Argo Application row exactly; the row's `result` remains Argo-owned.
 
 ---
 

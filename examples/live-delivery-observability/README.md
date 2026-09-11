@@ -57,6 +57,9 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
 - `gitops status --with-confighub` should keep release history, unit events,
   live-status writeback, and event-consumer workload evidence separate under
   `deliveryEvidence`.
+- `map activity --with-confighub` should keep ConfigHub activity rows separate,
+  and may attach live-status `deliveryEvidence` to matching Argo Application
+  rows only when a non-wildcard ConfigHub space and Application name match.
 - `explain` and `doctor` should report the Deployment current change as
   non-PASS because `status.observedGeneration` is behind
   `metadata.generation` and the related Pod has `CrashLoopBackOff` evidence.

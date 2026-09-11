@@ -51,7 +51,8 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [ ] Aggregate delivery failures as doctor top-level findings with deeper source/generated-artifact lineage where status refs expose it
 - [ ] Audited user-action event ingestion for history and receipt supporting evidence
 - [x] Broader API-load-aware inventory and search paths: map JSON entries, snapshot JSON, summary list JSON, and watch/bot events carry point-in-time observation metadata; `receipt list` summarizes saved receipt TTL stamps as fresh/stale/not-declared/invalid
-- [ ] Deeper OCI release-to-controller-to-workload correlation, with direct observer cursors only as fallback — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
+- [x] Initial low-load live-status joins in `map activity --with-confighub`: matching Argo Application rows receive additive delivery evidence only when a non-wildcard ConfigHub space and Application name match exactly
+- [ ] Deeper OCI release-to-controller-to-workload correlation, including aggregate/object-set/workload receipts, with direct observer cursors only as fallback — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
 - [ ] Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
 - [ ] Modelplane-on-Crossplane hardening: trace, map JSON, watch/bot events, and receipts now surface substrate evidence; remaining work is deeper source/generation joins for Modelplane resources backed by Crossplane composition managers, with structured omissions where parity is not possible
 
