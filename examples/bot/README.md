@@ -13,6 +13,7 @@ Kubernetes authentication.
 - read-only ServiceAccount, ClusterRole, and ClusterRoleBinding
 - webhook delivery using `CUB_SCOUT_BOT_WEBHOOK_URL`
 - warning/critical filtering and bounded receipt-build backpressure
+- numeric nonroot image identity compatible with `runAsNonRoot` (fixed in v2.9.0)
 
 ## Quick Run
 

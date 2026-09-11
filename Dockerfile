@@ -5,7 +5,8 @@ FROM gcr.io/distroless/static:nonroot
 # Copy the pre-built binary from goreleaser
 COPY cub-scout /cub-scout
 
-USER nonroot:nonroot
+# A numeric UID lets Kubernetes validate runAsNonRoot without starting the container.
+USER 65532:65532
 
 # Set HOME for kubeconfig
 ENV HOME=/home/nonroot

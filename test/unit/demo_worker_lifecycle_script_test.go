@@ -37,7 +37,8 @@ if [[ "$1" == "-q" && "$2" == "-c" ]]; then
   shift 2
   cmd="$1"
   shift
-  exec bash -lc "$cmd"
+  # script -c uses a non-login shell; preserve PATH so this runs the fixture cub.
+  exec bash -c "$cmd"
 fi
 if [[ "$1" == "-q" && "$2" == "/dev/null" ]]; then
   shift 2
@@ -61,7 +62,8 @@ exit 1
 	)
 	out, err := start.CombinedOutput()
 	if err != nil {
-		t.Fatalf("start failed: %v\n%s", err, string(out))
+		workerLog, _ := os.ReadFile(logFile)
+		t.Fatalf("start failed: %v\n%s\nworker log:\n%s", err, string(out), workerLog)
 	}
 
 	pidRaw, err := os.ReadFile(pidFile)
@@ -125,7 +127,8 @@ if [[ "$1" == "-q" && "$2" == "-c" ]]; then
   shift 2
   cmd="$1"
   shift
-  exec bash -lc "$cmd"
+  # script -c uses a non-login shell; preserve PATH so this runs the fixture cub.
+  exec bash -c "$cmd"
 fi
 if [[ "$1" == "-q" && "$2" == "/dev/null" ]]; then
   shift 2

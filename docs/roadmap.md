@@ -33,22 +33,23 @@ proof and remaining checks live in [v2.9.0 notes](releases/v2.9.0.md).
 - [x] ConfigHub Resource-backed Kubernetes MCP reads (`#516`) and generic
   Resource-index queries (`#517`) are merged; they read intended configuration,
   not live Kubernetes health.
-- [ ] Finish `#518` activity joins. Prove Application-to-space identity from
+- [x] Finish `#518` activity joins in `#521`. Prove Application-to-space identity from
   observed metadata/source, reject ambiguous names or conflicting statuses,
   and preserve controller-owned results.
 - [x] Prove API-load behavior: count scoped commands and repeated queries, verify
   freshness handling, and distinguish output limits from network request or
   response-size limits. Observation timestamps alone are not a load reduction.
-- [ ] Validate connected reads against supported `cub` capabilities, context
+- [x] Validate connected read contracts against supported `cub` capabilities, context
   isolation, missing APIs/auth, and stale/malformed evidence. Use deterministic
-  fixtures plus a non-production smoke test; record skipped CI coverage.
+  fixtures. Live authenticated smoke is unavailable because the token expired;
+  this is documented, not counted as a passing live test.
 - [x] Update release notes, handover, compatibility guidance, and the README
   user-question table. Every new capability must have a question, an exact
   command/tool, evidence semantics, and a test/example proving the answer.
 - [ ] Verify the final release commit: build, full tests, read-only contracts,
   standalone/plugin parity, MCP, watch, bot, release archives, and container.
-- [ ] Reconcile `#502` and `#505` with explicit completed and deferred scope;
-  publish the tag only when the release checks pass.
+- [x] Reconcile `#502` and `#505` with explicit completed and deferred scope.
+- [ ] Publish the tag only when the release checks pass and verify its assets.
 
 ### After v2.9.0
 

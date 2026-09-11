@@ -14,7 +14,7 @@ It diagnoses, explains, traces, maps, scans, **compares** intended vs running st
 | ConfigHub plugin | `cub scout doctor`, `cub scout compare ...` | ConfigHub users who want the same observer inside their existing `cub` workflow | Same read-only scout behavior, with plugin-aware help text and inherited `cub` context. |
 | MCP server | `cub-scout mcp serve` | AI agents that need typed, read-only tools instead of freehand shell commands | Local stdio process launched by an MCP host; not a background cluster service. |
 | Watch stream | `cub-scout watch --webhook <url>` | Continuous local or CI observation feeding webhooks, JSONL, receipts, or incident tooling | Polling-based event stream for discovery, ownership changes, drift, and scan findings. |
-| In-cluster bot | `cub-scout bot --webhook <url>` | A read-only observer Pod running inside Kubernetes | Uses the same watch engine with in-cluster auth and `CUB_SCOUT_BOT_*` env configuration. |
+| In-cluster bot | `cub-scout bot --webhook <url>` | A read-only observer Pod running inside Kubernetes | Uses the same watch engine with in-cluster auth and `CUB_SCOUT_BOT_*` env configuration; the v2.9 image supports the example's `runAsNonRoot` policy. |
 
 Cub-scout helps users answer questions about k8s and GitOps clusters in one place.
 
