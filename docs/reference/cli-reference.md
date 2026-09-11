@@ -41,6 +41,7 @@ Source of truth:
 | `patterns` | Pattern detection engine | [Command Reference](commands.md#patterns-v07) | [Patterns fixtures](../../test/fixtures/patterns/) |
 | `quickstart` | Guided first-run tour | [Command Reference](commands.md#quickstart) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
 | `receipt` | Create and verify typed, fingerprinted evidence receipts (#446) | [Command Reference](commands.md#receipt) | [Receipts](../../examples/receipts/) |
+| `release` | Check an exact OCI configuration release (unreleased v2.11) | [Command Reference](commands.md#release-check) | [OCI release check](../../examples/oci-release-check/) |
 | `suggest-remedy` | Describe a suggested remediation for a risk finding (read-only). Legacy `remedy` is accepted as an alias. | [Command Reference](commands.md#suggest-remedy) | [Running demos](../howto/running-demos.md) |
 | `scan` | Risk and stuck-state scanning | [Command Reference](commands.md#scan) | [Lifecycle hazards](../../examples/lifecycle-hazards/) |
 | `setup` | Shell setup and quick cluster connect helpers | [Command Reference](commands.md#setup) | - |
@@ -80,6 +81,7 @@ Source of truth:
 | `receipt show` | Render a saved receipt (ASCII / JSON). Does NOT verify the fingerprint — works on tampered receipts for forensic inspection | [Command Reference](commands.md#receipt-show) | [Receipts](../../examples/receipts/) |
 | `receipt validate` | Recompute the receipt fingerprint and compare. Exit 0 OK / 1 mismatch / 2 I/O | [Command Reference](commands.md#receipt-validate) | [Receipts](../../examples/receipts/) |
 | `receipt verify` | Build a typed, fingerprinted receipt asserting a predicate (applied-matches-spec / source-truth-pass / no-manual-edits-since / object-set-matches / workloads-converged / prerequisites-met). `--with-confighub` on single-resource receipts attaches bounded delivery evidence under `predicate.evidence.deliveryEvidence`; `--file <path>` verifies rendered install object sets or workload convergence; `--fail-on <verdict>` for CI gating (exit 2); `--input-attestation <path>` for chained receipts; `--save` to persist to the immutable local store | [Command Reference](commands.md#receipt-verify) | [Receipts](../../examples/receipts/) |
+| `release check` | Verify literal bundle identity, controller binding, live configuration and workload convergence | [Command Reference](commands.md#release-check) | [OCI release check](../../examples/oci-release-check/) |
 | `setup completion` | Generate shell completion script | [Command Reference](commands.md#setup-completion) | - |
 | `setup connect` | Import or create a kubeconfig context | [Command Reference](commands.md#setup-connect) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
 | `summary list` | Query persisted summary records | [Command Reference](commands.md#summary-list) | [Connected summary storage](../../examples/connected-summary-storage/) |

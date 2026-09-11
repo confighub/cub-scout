@@ -59,6 +59,7 @@ type boundedReadEntry struct {
 type BoundedResourceReader struct {
 	client     rest.Interface
 	context    string
+	server     string
 	gate       chan struct{}
 	cache      map[BoundedResourceRef]boundedReadEntry
 	sequence   uint64
@@ -86,11 +87,14 @@ func NewBoundedResourceReader(config *rest.Config, contextName string) (*Bounded
 		return nil, err
 	}
 	return &BoundedResourceReader{
-		client: client, context: contextName, gate: make(chan struct{}, 1),
+		client: client, context: contextName, server: config.Host, gate: make(chan struct{}, 1),
 		cache: make(map[BoundedResourceRef]boundedReadEntry), now: time.Now,
 		ttl: 15 * time.Second, maxEntries: 16, maxBytes: 2 << 20,
 	}, nil
 }
+
+// Server identifies the API endpoint pinned to this reader's credentials.
+func (r *BoundedResourceReader) Server() string { return r.server }
 
 var boundedKindPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 var boundedVersionPattern = regexp.MustCompile(`^[a-z][a-z0-9]*$`)

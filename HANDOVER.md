@@ -42,6 +42,40 @@ cold/hit/refresh budgets, including actual plugin host and terminal entry/edit/
 refresh/back. No positive live controller-to-workload proof, installed-plugin
 change, connected authority check or cluster mutation is claimed.
 
+### Exact OCI Configuration Release Check (Unreleased)
+
+`release check` composes the #535 revision evidence with a digest-verified
+literal OCI bundle, bounded live authored-field comparison and supported
+workload-controller convergence. The expected configuration digest and target
+context come from the caller, not a release-number/authority lookup. An image
+digest is not a configuration bundle digest. Plan and success criteria:
+`docs/proposals/oci-release-check.md`; progress remains in #532/#502/#505.
+
+Supported joins initially cover a single-source Application directory and a
+same-context v1 Kustomization with v1 OCIRepository. Exact repository, source,
+destination, inventory and current report evidence are required. Named/remote
+destinations without a binding, transforms, charts, multi-source and other
+controllers remain inconclusive. No fabricated parity or application-success
+claim. The final controller/source reread detects concurrent changes; sequential
+target reads are not an atomic snapshot or controller execution history.
+
+Standalone/plugin ASCII/JSON/Markdown, typed MCP `release_check` and
+`release check --interactive` use one provider. Every refresh starts fresh;
+configuration/convergence share each workload read. Object, transfer, response,
+request and time limits are explicit. No cluster LIST, pod fan-out, registry
+publication, permission change, installed-plugin edit or cluster mutation.
+Watch/bot scheduling and broader controller adapters remain follow-ups.
+
+Local proof includes full tests, focused race tests, build/vet, read-only/docs
+guards, a real ORAS/TLS registry fixture and exact Kubernetes HTTP fixtures.
+Actual CLI/plugin-host/stdio-MCP process tests and TUI lifecycle/layout tests
+cover positive and negative paths. The opt-in live test reads the existing
+`kind-confighub` Deployment: configuration/convergence PASS, controller
+INCONCLUSIVE, six check requests. Its locally generated bundle contains a
+known live replica field, not an independently published intended release.
+No authenticated production OCI release or positive live controller join is
+claimed. Reproduction and all boundaries: `examples/oci-release-check/`.
+
 ## v2.9.0 Release Scope
 
 Tracking: `#520`; scope and 3.0 criteria in `docs/roadmap.md`; proof in
