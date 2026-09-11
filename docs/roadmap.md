@@ -23,6 +23,22 @@ remains future work. Items marked "resolved" had issues filed, implemented, and 
 
 Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
+### Post-v2.8 ConfigHub-Native Boundary ([#505](https://github.com/confighub/cub-scout/issues/505))
+
+- [ ] Prefer ConfigHub Resource / `cub k8s get` / `cub k8s types` for
+  intended Kubernetes configuration and fleet-resource sweeps where those
+  server-side reads are available
+- [ ] Preserve cub-scout's live-cluster role for drift, runtime/workload
+  evidence, non-Argo runtimes, receipts, MCP, and joined explanations that need
+  Kubernetes/controller evidence
+- [ ] Add component / variant / target provenance to cub-scout evidence where
+  ConfigHub exposes stable identifiers
+- [ ] Treat `cub k8s source` as operator browser UX until a machine-readable
+  reverse-source mode exists; use `confighub.com/origin` annotations directly
+  only when the join is deterministic
+- [ ] Keep mutating `cub k8s refresh` and non-dry-run `cub k8s collect` outside
+  cub-scout read-only surfaces
+
 ### Live Delivery Observability (`proposals/next-release-live-delivery-observability.md`)
 
 - [x] First-class aggregate delivery resources (`FluxInstance`, `FluxReport`, `ResourceSet`, `ResourceSetInputProvider`, `ExternalArtifact`, `ArtifactGenerator`) in controller-resource discovery, ownership, deployer/status, trace, and activity surfaces
@@ -51,6 +67,10 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [x] Workstream F: Fleet query ergonomics and provenance readability — graduated to #242, #251
 - [x] Workstream F: Impact analysis ergonomics and multi-cluster context clarity — graduated to #243, #254
 - [ ] Workstream G: Platform-only surfaces (Functions, Actions, ChangeSets, saved queries, alert triggers, dependency graphing, time-travel UX, three-state drift resolution, bulk operations)
+
+### Publication / GTM
+
+- [ ] Blog/documentation publication series ([#475](https://github.com/confighub/cub-scout/issues/475)) — delayed until [#505](https://github.com/confighub/cub-scout/issues/505) and [#502](https://github.com/confighub/cub-scout/issues/502) settle, so external docs describe the current OCI/argobot/Resource boundary
 
 ### Connected Views + Launch (`roadmap-connected-views-and-launch.md`)
 

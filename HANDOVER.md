@@ -79,6 +79,35 @@ events, controller sources, and workloads without guessing; add aggregate
 controller-resource failures with generated-artifact lineage to `doctor` when
 safe.
 
+## September 2026 update — `cub k8s` and ConfigHub-native Resource boundary
+
+`confighub/sdk` `origin/main` now has a meaningful `cub k8s` surface that should
+shape the next cub-scout milestone:
+
+- `cub k8s get` and `cub k8s types` read Kubernetes configuration stored in
+  ConfigHub Units through the Resource entity. They are ConfigHub-side
+  intended/config reads, not live-cluster reads.
+- These reads support kubectl-style type names, custom-resource Kind fallback,
+  `--space`, `--target`, `--where`, `--where-resource`, namespace filtering, and
+  machine-readable output. The Resource entity makes fleet sweeps far cheaper
+  than per-Unit function reads.
+- `cub k8s source` reads one live object, resolves `confighub.com/origin` or
+  legacy SpaceID/UnitSlug annotations, and opens the owning Unit in the browser.
+  Treat it as operator UX unless or until a machine-readable reverse-source mode
+  exists.
+- `cub k8s collect` writes Target facts unless `--dry-run` is set.
+- `cub k8s refresh` writes cluster-side drift back into a Unit unless
+  `--dry-run` is set.
+- `cub k8s crd-spec` is present on `sdk` `origin/main` and emits resource-type
+  specs from local CRD files; the installed `cub` on this host may lag.
+
+Boundary for cub scout: prefer ConfigHub-native Resource / `cub k8s get` /
+`cub k8s types` evidence for intended configuration and fleet/resource sweeps;
+keep cub-scout live reads for drift, runtime/workload evidence, non-Argo
+runtimes, receipts, MCP, and safe joins across ConfigHub, controller, and
+Kubernetes evidence. Do not wrap mutating `cub k8s refresh` or non-dry-run
+`cub k8s collect` in cub-scout read-only surfaces.
+
 ## July 2026 update — live delivery observability (`#500`)
 
 `#500` is merged and is the release slice after `v2.6.0`. It adds the README user-question table, generation-aware current-change evidence on diagnostic surfaces, aggregate delivery-resource support, audited action events, and the live-delivery how-to/example fixture.
@@ -348,6 +377,20 @@ delivery-evidence and bot-mode release):
 - ~~**`#448`**~~ — Receipts v2 aggregate / chained receipts. **Closed via `#469`** (aggregate half; chained half shipped in `#463`).
 - ~~**`#449`**~~ — `watch --emit-receipt-on` event types + backpressure. **Closed via `#470`** (full 4-event-type set + per-poll cap; v1 had shipped in `#463`).
 - ~~**`#451`**~~ — `--fail-on RECEIPT_VERDICT` exit semantics. **Closed via `#463`** (Codex round-6 P2 tightened upfront parsing).
+- ~~**`#392`**~~ — Initiatives compliance overlay. **Closed** as deferred
+  outside cub-scout until ConfigHub exposes a stable backend/CLI Initiative
+  primitive.
+
+**Post-v2.8 ConfigHub-native boundary (`#505`):**
+- `#505` is the next umbrella: evolve cub-scout's evidence boundary around
+  OCI-pull delivery, argobot/live-status, `cub k8s`, the Resource entity, and
+  component/variant/target provenance.
+- Favor ConfigHub-native Resource / `cub k8s get` / `cub k8s types` reads for
+  intended Kubernetes configuration and fleet sweeps.
+- Keep cub-scout's own cluster reads for live drift, runtime/workload evidence,
+  non-Argo runtimes, receipts, MCP, and safe joined explanations.
+- Treat `cub k8s refresh` and non-dry-run `cub k8s collect` as outside the
+  cub-scout read-only boundary.
 
 **Live delivery observability follow-ups from `#500`:**
 - Aggregate controller-resource failures as top-level `doctor` findings where controller status refs expose source/generated-artifact lineage.
@@ -363,15 +406,20 @@ delivery-evidence and bot-mode release):
 - Source-truth receipt precedence edge coverage, especially `StatusBLOCK + VerdictBLOCKED`. Nice-to-have, not blocking.
 
 **Open tracked issues:**
+- **`#505`** — post-OCI ConfigHub-native evidence boundary: Resource entity,
+  `cub k8s`, argobot/live-status, and component/variant/target provenance.
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution (`gitSource.file:line` / `sourceMapRef` honesty markers).
 - **`#502`** — initial ConfigHub history/live-status/event-consumer evidence readers shipped on `gitops status --with-confighub`, `doctor --with-confighub`, timeline `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub`; deeper release-to-controller-to-workload correlation remains.
-- **`#475`** — Blog/documentation publication series for introducing cub-scout.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout JSON outputs. Design rather than code.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).
 - **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up).
 - **`#421`** — Views project: CEL + JSONPath column evaluators.
-- **`#392`** — Initiatives compliance overlay. **Deferred** until ConfigHub exposes Initiative as a backend primitive. Design doc at [`docs/howto/initiatives-integration-when-ready.md`](docs/howto/initiatives-integration-when-ready.md).
 - **`#386`** — `preferInvocationForm` lint extension to non-hint legacy invocation-form leaks in strings.
+
+**Delayed documentation:**
+- **`#475`** — Blog/documentation publication series for introducing cub-scout.
+  Keep open, but delayed until `#505` / `#502` settle so public docs describe
+  the current ConfigHub-native OCI/argobot/Resource shape.
 
 ### Attribution-layer next-up
 
@@ -413,13 +461,25 @@ Recent shipped capability surface:
 
 Open work, in roughly descending leverage:
 
-1. **`#481` Helm/Kustomize provenance back-resolution.** Extends raw-YAML field attribution to templated sources while preserving honesty markers when exact file:line evidence is unavailable.
-2. **`#432` Grafana collector / data-source path.** Uses existing cub-scout JSON outputs; design rather than code work.
-3. **Views project tail.** `#422` TUI Hub View column projection (`#391` scope #2 follow-up); `#421` CEL + JSONPath column evaluators. Scopes #1 (`#414`) and #3 (`#420`) already shipped.
-4. **`#427` watch kstatus migration behavior change.** Stalled workloads may flip `Ready=true → false` in v2.1.0+; needs design.
-5. **`#386` `preferInvocationForm` lint extension** to non-hint legacy string leaks.
-6. **`#392` ConfigHub Initiatives.** Deferred until ConfigHub exposes Initiative as a backend primitive — out of cub-scout's control.
-7. **`#475` publication docs.** Use the README user-question table and v2.8.0 release notes as the source of truth.
+1. **`#505` ConfigHub-native evidence boundary.** Re-center cub-scout around
+   OCI-pull delivery, argobot/live-status, Resource-backed `cub k8s` reads, and
+   component/variant/target provenance without duplicating ConfigHub-native
+   readers.
+2. **`#502` deeper release/event/live-status correlation.** Carry the v2.8
+   evidence into aggregate/object-set/workload receipts and workload-level
+   activity joins where exact identifiers make the join safe.
+3. **`#481` Helm/Kustomize provenance back-resolution.** Next value is Phase 2:
+   values-key resolution using existing Helm/Argo/Flux decoded values before
+   attempting full render-time template source maps.
+4. **`#432` Grafana collector / data-source path.** Use existing cub-scout JSON
+   outputs, but align its data boundary with `#505` first.
+5. **Views project tail.** `#422` TUI Hub View column projection (`#391` scope
+   #2 follow-up); `#421` CEL + JSONPath column evaluators. Scopes #1 (`#414`)
+   and #3 (`#420`) already shipped.
+6. **`#427` watch kstatus migration behavior change.** Likely closable after a
+   post-release issue sweep if no user reports exist.
+7. **`#386` `preferInvocationForm` lint extension** to non-hint legacy string
+   leaks.
 
 Small untracked follow-ups carried from the receipts arc:
 - **MCP `compare_source_truth` strategy-enum drift** — resolved in the post-v2.7 delivery-evidence slice; schema now tracks all CLI strategies.
