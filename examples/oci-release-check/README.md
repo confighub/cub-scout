@@ -47,7 +47,8 @@ differences and workload failure. `INCONCLUSIVE` means required evidence could
 not be checked. Known failures remain visible even when another check is
 inconclusive. No supported workloads is `NOT_ASSESSED` for that stage, never
 "the application is running". Configuration checks still run when controller
-evidence is unavailable.
+evidence is unavailable. An unavailable discovery API is inconclusive, not a
+missing object; absence requires a 404 from the actual object GET.
 
 `--fail-on any-non-pass` exits 2 after preserving the report. Invalid arguments
 exit 1. Without that flag, an inconclusive report can exit 0: inspect `verdict`.

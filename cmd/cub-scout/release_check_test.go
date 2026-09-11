@@ -32,13 +32,14 @@ import (
 )
 
 type releaseFixture struct {
-	options  releaseCheckOptions
-	mu       sync.Mutex
-	objects  map[string]*unstructured.Unstructured
-	requests int
-	gets     map[string]int
-	change   func(*unstructured.Unstructured, int) int
-	host     string
+	options          releaseCheckOptions
+	mu               sync.Mutex
+	objects          map[string]*unstructured.Unstructured
+	requests         int
+	gets             map[string]int
+	change           func(*unstructured.Unstructured, int) int
+	host             string
+	missingDiscovery string
 }
 
 func newReleaseFixture(t *testing.T, backend string, input ...[]byte) *releaseFixture {
@@ -115,6 +116,11 @@ func newReleaseFixture(t *testing.T, backend string, input ...[]byte) *releaseFi
 				resource = "ocirepositories"
 			}
 			if r.URL.Path == base {
+				if f.missingDiscovery == o.GetAPIVersion() {
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","status":"Failure","reason":"NotFound","code":404}`)
+					return
+				}
 				items := []interface{}{}
 				for _, peer := range f.objects {
 					if peer.GetAPIVersion() == o.GetAPIVersion() {
@@ -483,6 +489,16 @@ func TestReleaseCheckTerminalControls(t *testing.T) {
 }
 
 func TestReleaseCheckCoverageAndGate(t *testing.T) {
+	t.Run("discovery not found is not object absence", func(t *testing.T) {
+		f := newReleaseFixture(t, "argo")
+		f.missingDiscovery = "v1"
+		r, err := observeReleaseCheck(context.Background(), f.options)
+		require.NoError(t, err)
+		require.Equal(t, agent.VerdictINCONCLUSIVE, r.Verdict, "%+v", r.Stages)
+		require.Zero(t, r.Configuration.Predicate.Evidence.ObjectSet.Summary.Missing)
+		require.Equal(t, 1, r.Configuration.Predicate.Evidence.ObjectSet.Summary.Inconclusive)
+		require.Equal(t, 3, r.RequestCounts.Object)
+	})
 	for _, tc := range []struct {
 		kind    string
 		verdict agent.ReceiptVerdict

@@ -194,7 +194,8 @@ func observeReleaseCheck(ctx context.Context, o releaseCheckOptions) (agent.Rele
 		obs := agent.ObjectSetObservedObject{Desired: desired, Live: live}
 		if readErr != nil {
 			obs.Error = readErr.Error()
-			obs.Inconclusive = !apierrors.IsNotFound(readErr)
+			// Discovery failures do not establish absence of the desired object.
+			obs.Inconclusive = read.Reads.Object == 0 || !apierrors.IsNotFound(readErr)
 		}
 		if live != nil && live.GetUID() == "" {
 			obs.Inconclusive = true
