@@ -212,8 +212,9 @@ a stable contract.
 Standalone MCP tools: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace`.
 Connected mode adds read-only ConfigHub query tools:
 `compare_three_way`, `compare_source_truth`, `confighub_changesets`,
-`confighub_live_status`, `confighub_releases`, `confighub_unit_events`,
-`confighub_units`, and `confighub_unit_get`.
+`confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
+`confighub_releases`, `confighub_unit_events`, `confighub_units`, and
+`confighub_unit_get`.
 
 When operating via MCP, prefer the structured tool calls over shell
 invocations — the MCP layer handles JSON parsing and schema validation.

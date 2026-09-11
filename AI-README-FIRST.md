@@ -133,7 +133,7 @@ As of 2026-09-11, these areas are fully or materially shipped:
   - `map list --format json`, `snapshot`, `summary list --format json`, and `watch`/`bot` events now emit point-in-time `observation` metadata with source, mode, observedAt, freshness, and scope
   - `receipt list --format json` now indexes saved receipt TTL stamps as `freshness.status` (`fresh`, `stale`, `not-declared`, `invalid`) without re-reading Kubernetes or mutating the receipt
   - Modelplane evidence keeps Modelplane as the higher-level owner while surfacing Crossplane substrate evidence from composite/claim/composition-resource labels and verified Crossplane field managers in trace, map JSON, watch/bot events, and receipts
-  - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`
+  - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`
   - MCP `compare_source_truth` strategy enum is generated from the same strategy registry as the CLI
   - `trace --with-confighub` and `explain --with-confighub` attach object-correlated `deliveryEvidence` only when exact ConfigHub unit, space, target, OCI-source, or Argo Application identifiers prove the join; otherwise they report structured omissions
   - `receipt verify <kind>/<name> --with-confighub` attaches the same object-correlated `deliveryEvidence` under `predicate.evidence.deliveryEvidence`; the field is fingerprint-covered supporting evidence and does not change predicate verdict semantics
@@ -205,7 +205,7 @@ As of 2026-09-11, these areas are fully or materially shipped:
   - `views project --with-reality` composes View columns with source-truth verdicts (`#420`)
 - **MCP gateway** — `mcp serve` exposes a closed, read-only-by-construction tool catalog:
   - 6 standalone tools: `doctor`, `map`, `scan`, `trace`, `explain`, `gitops_status`
-  - 8 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`
+  - 10 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`
   - Verified by `cmd/cub-scout/mcp_test.go`; full per-tool reference at `skills/references/mcp-tool-catalog.md`
 - `doctor` / `explain` with `--presentation human|ai|paired` and `--hint-mode default|beginner|operator`
 - Argo truth-and-guidance track — truthful `explain` ownership for ApplicationSet-managed resources, connected three-way disagreement surfacing, phase-aware next-step hints
