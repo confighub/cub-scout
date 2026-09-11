@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (C) ConfigHub, Inc.
+# SPDX-License-Identifier: MIT
 set -euo pipefail
 
 if [[ $# -lt 2 || $# -gt 3 ]]; then

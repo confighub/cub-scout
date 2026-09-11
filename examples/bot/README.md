@@ -85,8 +85,31 @@ the helper never performs them or provisions webhook credentials.
 
 Offline helper tests: `go test ./test/unit -run '^TestBotBuildFromRelease$' -count=2`.
 They use synthetic archives and fake curl/docker tools, including rejection
-before build and exact image/platform arguments. Runtime-image proof is
+before build, custom image names, failed download/build cleanup, and exact
+image/platform arguments. Runtime-image proof is
 separate from an in-cluster observation/sink smoke test or public pull access.
+
+### Recorded Runtime Proof
+
+On 2026-09-11, the helper built local Linux arm64 and amd64 images from the
+published v2.10.1 archives. Both images reported
+`2.10.1 (built 2026-09-11T17:07:18Z)` under the read-only filesystem,
+dropped-capability and no-new-privileges options above. Image inspection showed
+the requested architecture, `/cub-scout` entrypoint and `65532:65532` user.
+The amd64 run used the local arm64 host's emulation, not an amd64 Kubernetes node.
+
+Verified archive SHA-256 values:
+
+| Archive | SHA-256 |
+|---|---|
+| `cub-scout_2.10.1_linux_arm64.tar.gz` | `37513aad6e39527e495b5ce39a64977b2b9bb49a127c2723deaa032402ad2890` |
+| `cub-scout_2.10.1_linux_amd64.tar.gz` | `6ebddf50abcd3ad7aeb8a1652b2eea59eb165b9f06c2a7d40a1c16815f9e07d1` |
+
+This proves the fallback's download/build/runtime path for those archives.
+No cluster manifests were applied, no images pushed, and no registry settings,
+credentials or installed plugins changed. It does not verify a running bot's
+sink delivery, repair anonymous registry access or publish a multi-architecture
+registry image. Those are separate checks in #520.
 
 ## Scope Tuning
 

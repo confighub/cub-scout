@@ -1,8 +1,12 @@
+// Copyright (C) ConfigHub, Inc.
+// SPDX-License-Identifier: MIT
+
 package unit
 
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -12,6 +16,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -24,13 +29,21 @@ func TestBotBuildFromRelease(t *testing.T) {
 		name, arch, checksum string
 		args                 []string
 		wantBuild            bool
+		image                string
+		failDownload         bool
+		failBuild            bool
 	}{
 		{name: "amd64", arch: "amd64", checksum: "valid", wantBuild: true},
 		{name: "arm64", arch: "arm64", checksum: "valid", wantBuild: true},
+		{name: "custom image", arch: "arm64", checksum: "valid", image: "localhost:5000/observer:v2.10.1", args: []string{"v2.10.1", "arm64", "localhost:5000/observer:v2.10.1"}, wantBuild: true},
 		{name: "bad checksum", arch: "amd64", checksum: "wrong"},
 		{name: "missing checksum", arch: "amd64", checksum: "missing"},
 		{name: "duplicate checksum", arch: "amd64", checksum: "duplicate"},
+		{name: "substring checksum", arch: "amd64", checksum: "substring"},
+		{name: "malformed checksum", arch: "amd64", checksum: "malformed"},
 		{name: "missing binary", arch: "amd64", checksum: "valid"},
+		{name: "download failure", arch: "amd64", checksum: "valid", failDownload: true},
+		{name: "build failure", arch: "amd64", checksum: "valid", wantBuild: true, failBuild: true},
 		{name: "mutable version", arch: "amd64", checksum: "valid", args: []string{"latest", "amd64"}},
 		{name: "invalid arch", arch: "amd64", checksum: "valid", args: []string{"v2.10.1", "armv7"}},
 		{name: "extra argument", arch: "amd64", checksum: "valid", args: []string{"v2.10.1", "amd64", "local:v2", "extra"}},
@@ -81,6 +94,10 @@ func TestBotBuildFromRelease(t *testing.T) {
 				checksum = ""
 			case "duplicate":
 				checksum += checksum
+			case "substring":
+				checksum = strings.TrimSpace(checksum) + ".extra\n"
+			case "malformed":
+				checksum = "not-a-digest  " + archive + "\n"
 			}
 			if err := os.WriteFile(filepath.Join(assets, "checksums.txt"), []byte(checksum), 0600); err != nil {
 				t.Fatal(err)
@@ -93,14 +110,16 @@ while [[ $# -gt 0 ]]; do
 done
 [[ $url == https://github.com/confighub/cub-scout/releases/download/v2.10.1/* ]] || exit 1
 printf '%s\n' "$out" >> "$FIXTURE_CURL_CALL"
+[[ $FIXTURE_FAIL_DOWNLOAD != true ]] || exit 22
 cp "$FIXTURE_ASSETS/${url##*/}" "$out"
 `
 			docker := `#!/usr/bin/env bash
 set -euo pipefail
-[[ $# == 9 && $1 == build && $2 == --load && $3 == --platform && $4 == linux/$FIXTURE_ARCH && $5 == --file && $7 == --tag && $8 == cub-scout-bot:v2.10.1-$FIXTURE_ARCH ]]
+[[ $# == 9 && $1 == build && $2 == --load && $3 == --platform && $4 == linux/$FIXTURE_ARCH && $5 == --file && $7 == --tag && $8 == "$FIXTURE_IMAGE" ]]
 [[ -f $6 && -x $9/cub-scout ]]
 [[ $(cat "$9/cub-scout") == synthetic-not-an-executable ]]
 printf '%s\n' "$@" > "$FIXTURE_DOCKER_CALL"
+[[ $FIXTURE_FAIL_BUILD != true ]] || exit 7
 `
 			for name, body := range map[string]string{"curl": curl, "docker": docker} {
 				if err := os.WriteFile(filepath.Join(bin, name), []byte(body), 0700); err != nil {
@@ -114,14 +133,24 @@ printf '%s\n' "$@" > "$FIXTURE_DOCKER_CALL"
 				args = []string{"v2.10.1", tc.arch}
 			}
 			args = append([]string{"../../examples/bot/build-from-release.sh"}, args...)
-			cmd := exec.Command("bash", args...)
-			cmd.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "FIXTURE_ASSETS="+assets, "FIXTURE_ARCH="+tc.arch, "FIXTURE_DOCKER_CALL="+callFile, "FIXTURE_CURL_CALL="+curlFile)
+			image := tc.image
+			if image == "" {
+				image = "cub-scout-bot:v2.10.1-" + tc.arch
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			cmd := exec.CommandContext(ctx, "bash", args...)
+			cmd.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "FIXTURE_ASSETS="+assets, "FIXTURE_ARCH="+tc.arch, "FIXTURE_DOCKER_CALL="+callFile, "FIXTURE_CURL_CALL="+curlFile, "FIXTURE_IMAGE="+image, fmt.Sprintf("FIXTURE_FAIL_DOWNLOAD=%t", tc.failDownload), fmt.Sprintf("FIXTURE_FAIL_BUILD=%t", tc.failBuild))
 			out, err := cmd.CombinedOutput()
-			if tc.wantBuild && err != nil {
+			wantSuccess := tc.wantBuild && !tc.failBuild
+			if wantSuccess && err != nil {
 				t.Fatalf("build failed: %v\n%s", err, out)
 			}
-			if !tc.wantBuild && err == nil {
+			if !wantSuccess && err == nil {
 				t.Fatalf("expected rejection, got: %s", out)
+			}
+			if !wantSuccess && strings.Contains(string(out), "Built ") {
+				t.Fatalf("failed build must not report success: %s", out)
 			}
 			call, statErr := os.ReadFile(callFile)
 			if tc.wantBuild {
@@ -137,7 +166,7 @@ printf '%s\n' "$@" > "$FIXTURE_DOCKER_CALL"
 				t.Fatalf("rejected input must not call docker: %s", call)
 			}
 			curlCalls, curlErr := os.ReadFile(curlFile)
-			if tc.args != nil {
+			if tc.args != nil && !tc.wantBuild {
 				if !os.IsNotExist(curlErr) {
 					t.Fatalf("invalid arguments must not download: %s", curlCalls)
 				}
