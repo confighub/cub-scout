@@ -120,6 +120,11 @@ Next direction: **v2.10.0** explorer integration (`#519`), still unreleased.
 The first slice adds opt-in bounded `explain` reads and short-lived MCP/TUI
 session reuse; see `examples/bounded-resource-read/`. The companion panel is
 not shipped, and the existing rich explain path and standalone TUI remain.
+Bounded explain also parses observed `confighub.com/origin` metadata with no
+extra reads: `configHubOrigin` records space/unit identity and optional revision,
+not verified source, ownership, delivery, or target/context binding. Missing or
+conflicting metadata is explicit. This does not yet extend rich trace, map
+inventory, watch/bot, receipts, or connected Resource joins (`#505`).
 The released **v2.8.0** baseline adds bounded ConfigHub delivery
 evidence, MCP release/event/live-status tools, source-truth MCP strategy parity,
 and first-class in-cluster `bot` mode; release notes live at

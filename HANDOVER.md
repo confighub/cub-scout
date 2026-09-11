@@ -29,7 +29,7 @@ provenance remain in `#502` / `#505`.
 
 ## v2.10 First Slice (Unreleased)
 
-`#519` now records proof-first criteria for bounded resource evidence. Opt-in
+`#522` is merged; `#519` records proof-first criteria for bounded resource evidence. Opt-in
 `explain --bounded --api-version <version> --kube-context <context>` reads one exact
 API discovery document and one object, without enrichment fan-out. The existing
 rich `explain` remains unchanged. The real MCP gateway and TUI bounded picker
@@ -51,13 +51,41 @@ latter. A live TUI check caught and fixed the bounded picker's CLI filter
 handling. Inventory refresh is pinned to the displayed context; the picker
 requires the exact binding from that inventory load and declines unbound or
 in-cluster inventory. Full tests, scoped tests twice, race tests, and read-only/docs guards
-passed locally; PR CI must pass before merge. The optional example-catalog check in this shared checkout encounters
+passed locally and #522 PR/post-merge CI passed. Post-merge proof is in
+[run 34596986890](https://github.com/confighub/cub-scout/actions/runs/34596986890).
+The optional example-catalog check in this shared checkout encounters
 a missing README in the sibling examples repository; verify in CI's isolated
 layout without editing that repository.
 
+### Observed Origin Slice (`#505`, Unreleased)
+
+Bounded explain now parses the combined `confighub.com/origin` annotation from
+the already-read object. `configHubOrigin` preserves source space/unit IDs,
+slugs, and optional exact integer revision. It does not establish controller
+ownership, source validity, release/target/component/variant identity, or a
+Target-to-kube-context binding. Missing origin is an information omission;
+malformed, duplicate, unsupported, or legacy-conflicting origin is a warning.
+There is no field merge, legacy fallback, browser launch, or extra API read.
+
+The pure parser and fixture tests cover the published SDK shape at `1303148`,
+large integer revisions, raw-data exclusion, controller-owner preservation,
+CLI/plugin JSON/ASCII/Markdown, the real MCP gateway, two-server context and
+namespace isolation, reuse/refresh/error counts, and narrow TUI views.
+Example: `examples/bounded-resource-read/origin-deployment.json`.
+This is bounded explain only; rich trace/explain, map inventory, watch/bot,
+receipts, connected Resource joins, and the companion panel are not changed.
+Their follow-up remains in `#505` / `#519`. No companion repo changes made.
+
+Local proof: build/full suite, scoped checks twice and again after docs, race
+checks, read-only/doc guards, and `go mod tidy -diff` pass. Existing live kind
+CLI, plugin-mode, actual `cub` host, and real stdio MCP cold/hit/refresh pass
+with `1+1`, `0+0`, `1+1` requests and unchanged context. The live object lacks
+origin; positive origin and conflicts are fixture proof, not an authenticated
+ConfigHub join. PR CI remains required before merge.
+
 ## Current repo state
 
-- Working branch: `codex/v2.10-bounded-explorer` (unreleased work)
+- Working branch: `codex/v2.10-origin-evidence` (unreleased work)
 - Canonical roadmap: `docs/roadmap.md`
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
 - First repo-specific AI entrypoint: `AI-README-FIRST.md`

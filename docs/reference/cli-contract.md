@@ -170,7 +170,12 @@ ConfigHub enrichment flags are incompatible with bounded mode.
 a ConfigHub context and is stripped before plugin invocation.
 
 - Uses the same ExplainSummary and ASCII/text/Markdown renderers. JSON adds
-  `resourceRead` and `omissions`; normal explain output is unchanged.
+  `resourceRead`, optional `configHubOrigin`, and `omissions`; normal explain
+  output is unchanged. Origin is observed annotation metadata, not verified
+  source or delivery evidence; parsing costs no extra reads. Missing or rejected
+  origin is explicit in JSON and human output. See the
+  [origin contract](json-contracts.md#observed-origin) for strict parsing,
+  legacy-conflict rejection, and absent-versus-zero revision behavior.
 - A cold read/refresh/expiry performs at most one discovery request and one
   object GET. Successful responses are capped at 2 MiB, REST retries are
   disabled along with HTTP redirects, and each read has a ten-second context timeout. Authentication

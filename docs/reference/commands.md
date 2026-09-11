@@ -389,6 +389,13 @@ than 15 seconds. Only the bounded operation has this budget, not normal map
 startup or rich explain. Missing evidence remains unavailable/unknown. Object
 readiness does not prove source delivery or application success.
 
+Bounded reads also expose observed `confighub.com/origin` metadata as optional
+`configHubOrigin`: source space/unit IDs and slugs plus revision when present.
+This uses the already-read object, not ConfigHub authentication or an extra API
+request. Missing or rejected metadata is an explicit omission; there is no
+legacy fallback, target/context inference, or change to controller ownership.
+See the [origin contract](json-contracts.md#observed-origin).
+
 The TUI equivalent is `Ctrl+e` in `./cub-scout map`: choose an exact resource
 from the filtered inventory, Enter to read, `r` to refresh, Esc to cancel/back.
 See [bounded resource evidence](../../examples/bounded-resource-read/) for the

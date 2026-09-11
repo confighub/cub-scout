@@ -61,7 +61,7 @@ Agreed next direction: additive explorer integration and real observation reuse,
 not a replacement for the standalone TUI or a 3.0 contract break. Tracking stays
 in this repository: `#519`, `#502`, and `#505`.
 
-- [x] First provider slice implemented (`#519`, unreleased): opt-in `explain --bounded` with explicit
+- [x] First provider slice merged in `#522` (`#519`, unreleased): opt-in `explain --bounded` with explicit
   kube context/API identity, object-local facts, and structured omissions.
   CLI/plugin, MCP, and the existing TUI share the read model. Use
   `--kube-context` to avoid the host's ConfigHub context flag. See the
@@ -69,6 +69,11 @@ in this repository: `#519`, `#502`, and `#505`.
 - [x] Prove first-slice session reuse: finite TTL/entry count, visible refresh/freshness,
   exact request counts, cancellation, context isolation, and no stale success
   after failed refresh. Do not describe this as a global cache for all commands.
+- [x] Add observed origin metadata to bounded explain (`#505`, unreleased):
+  space/unit IDs and slugs plus optional integer revision, using the existing
+  object read. Reject malformed/duplicate/conflicting metadata; do not infer
+  controller ownership, target/context, release, component, or variant joins.
+  CLI/plugin, MCP, and the current TUI share the evidence and omissions.
 - [ ] Wire the first companion evidence panel through the read-only CLI JSON
   boundary, with explicit target-to-kube-context binding and late-result rejection.
   Companion-repository changes remain separately coordinated; no replacement
@@ -129,9 +134,10 @@ before implementation.
   Kubernetes/controller evidence
 - [ ] Add component / variant / target provenance to cub-scout evidence where
   ConfigHub exposes stable identifiers
-- [ ] Treat `cub k8s source` as operator browser UX until a machine-readable
-  reverse-source mode exists; use `confighub.com/origin` annotations directly
-  only when the join is deterministic
+- [x] Treat `cub k8s source` as operator browser UX; bounded explain now parses
+  `confighub.com/origin` directly as observed metadata without browser/network
+  enrichment. No reverse lookup or connected join is claimed. Broader origin
+  propagation and stable Resource joins remain in `#505`.
 - [ ] Keep mutating `cub k8s refresh` and non-dry-run `cub k8s collect` outside
   cub-scout read-only surfaces
 

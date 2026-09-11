@@ -147,6 +147,14 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	if obj == nil {
 		return summary
 	}
+	origin, omission := agent.BuildConfigHubOriginEvidence(obj)
+	summary.ConfigHubOrigin = origin
+	if omission != nil {
+		summary.Omissions = append(summary.Omissions, *omission)
+		summary.Notes = append(summary.Notes, "Origin evidence unavailable: "+omission.Reason)
+	} else {
+		summary.Notes = append(summary.Notes, "Origin metadata identifies an observed source claim only; no release, target, component, variant, or cluster binding was verified.")
+	}
 	owner := agent.DetectOwnership(obj)
 	if owner.Type != agent.OwnerUnknown && owner.Type != "" {
 		summary.Owner = mapsvc.DisplayOwner(owner.Type)
