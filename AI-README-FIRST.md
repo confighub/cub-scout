@@ -82,6 +82,30 @@ Important:
 - `cub gitops import` is target + render-target based
 - it is not a local `--git-path` renderer
 
+Current `cub k8s` truth from `confighub/sdk` `origin/main` as of 2026-09-11:
+- `cub k8s get` and `cub k8s types` read Kubernetes configuration stored in
+  ConfigHub Units through the Resource entity. They are ConfigHub-side
+  intended/config reads, not live-cluster reads.
+- `cub k8s get` supports kubectl-style type names, `all`, custom-resource Kind
+  fallback, `--space`, `--target`, `--where`, `--where-resource`, `--namespace`,
+  `--show list|detail|data`, and machine-readable output.
+- `cub k8s source` reads one live cluster object, resolves the
+  `confighub.com/origin` annotation or legacy SpaceID/UnitSlug annotations, and
+  opens the owning Unit in the browser. It is useful operator UX, but it is not
+  a general machine-readable reverse-source API today.
+- `cub k8s collect` reads live cluster facts and writes Target facts unless
+  `--dry-run` is set.
+- `cub k8s refresh` reads a live object and writes cluster-side drift back into
+  the owning Unit unless `--dry-run` is set.
+- `cub k8s crd-spec` reads a local CRD file and writes a resource-type spec to
+  stdout. It is present on `sdk` `origin/main`, while the installed `cub` on this
+  machine may lag and not show it yet.
+
+Boundary rule for cub scout: consume or align with the read paths (`get`,
+`types`, Resource list, origin annotations) where they avoid expensive
+ConfigHub-side re-reading. Do not wrap mutating `cub k8s refresh` or non-dry-run
+`cub k8s collect` in cub-scout read-only surfaces.
+
 ### `confighub/sdk`
 
 The SDK contains renderer and bridge implementation details used by `cub`.
@@ -197,8 +221,21 @@ Verify live state before acting. As of 2026-09-11, the receipts arc, Pilot consu
 ### Recently closed (this session's arc)
 
 - **`v2.8.0`** — delivery-evidence, freshness, MCP parity, Modelplane substrate, five-run-mode, and bot-mode release train; see `docs/releases/v2.8.0.md`
+- ~~**`#392`**~~ — Initiatives compliance overlay. Closed as deferred outside
+  cub-scout until ConfigHub exposes a stable backend/CLI Initiative primitive.
 - ~~**`#500`**~~ — live delivery observability release slice, merged 2026-07-09; see `docs/releases/v2.7.0.md`
 - Earlier closed arcs: ~~**`#446`**~~ (parent), ~~**`#444`**~~, ~~**`#448`**~~, ~~**`#449`**~~, ~~**`#451`**~~ — see HANDOVER.md § "May 2026 completions — session 2026-05-25" for the PR-by-PR breakdown
+
+### Post-v2.8 ConfigHub-native boundary
+
+- **`#505`** — highest-leverage next umbrella: evolve cub scout around the
+  OCI-pull + argobot + `cub k8s` + Resource + component/variant/target model.
+- Prefer ConfigHub-native reads (`cub k8s get/types`, Resource list,
+  `confighub.com/origin`) for intended/config and reverse-source evidence when
+  they are cheaper and more authoritative than re-reading Units.
+- Keep cub scout focused on the gaps: live-vs-desired drift, non-Argo runtimes,
+  workload/runtime evidence, cross-cluster/fleet sweeps, receipts, MCP, and
+  explanations that join ConfigHub evidence with controller/Kubernetes evidence.
 
 ### Live delivery observability follow-ups
 
@@ -214,15 +251,21 @@ Verify live state before acting. As of 2026-09-11, the receipts arc, Pilot consu
 
 ### Open tracked issues
 
+- **`#505`** — post-OCI ConfigHub-native evidence boundary: Resource entity,
+  `cub k8s`, argobot/live-status, and component/variant/target provenance.
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution.
 - **`#502`** — deepen release/event/live-status correlation beyond the initial `gitops status --with-confighub` reader; do not reuse production event-consumer cursors.
-- **`#475`** — Blog/documentation publication series for introducing cub-scout.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout outputs.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design).
 - **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up). Scopes #1 (`#414`) and #3 (`#420`) already shipped.
 - **`#421`** — Views project: CEL + JSONPath column evaluators.
-- **`#392`** — Initiatives compliance overlay; **deferred** until ConfigHub exposes Initiative as a backend primitive. Design doc at `docs/howto/initiatives-integration-when-ready.md`.
 - **`#386`** — `preferInvocationForm` lint extension to non-hint legacy string leaks.
+
+### Delayed documentation
+
+- **`#475`** — Blog/documentation publication series for introducing cub-scout.
+  Delayed until `#505` / `#502` settle so the public story reflects the
+  ConfigHub-native OCI/argobot/Resource boundary.
 
 ### Attribution-layer next-up
 
@@ -269,6 +312,9 @@ When the question crosses into ConfigHub or renderer workflows:
 cub version
 cub gitops --help
 cub gitops import --help
+cub k8s --help
+cub k8s get --help
+cub k8s types --help
 cub link --help
 cub link list --help
 ```
