@@ -121,7 +121,7 @@ Active v2.11 work is #532. Scanner and connected authentication/authority
 verification are deferred by the user. Unreleased bounded controller revision
 comparison is documented in `examples/controller-revision/`; it is not a
 workload delivery proof or native-watch implementation.
-The next unreleased slice, `release check`, joins an explicitly supplied OCI
+Merged for the next release in #536, `release check` joins an explicitly supplied OCI
 configuration bundle digest to supported controller/source/target evidence,
 live authored-field agreement and workload-controller convergence. Standalone,
 plugin, MCP `release_check` and `--interactive` share the provider. It does not
@@ -129,6 +129,10 @@ verify running container images, application success or release publication
 authority, and watch/bot do not schedule it yet. The outer report is not an
 immutable receipt; its nested configuration/workload statements are
 fingerprinted. See `examples/oci-release-check/` for exact adapters and budgets.
+The bot installation helper in `examples/bot/build-from-release.sh` packages
+checksum-verified published Linux amd64/arm64 archives as local nonroot images.
+Both v2.10.1 runtime builds are verified; this does not repair public registry
+access or deploy a bot. The helper is unreleased, planned for v2.11 (#520/#537).
 Final proof is tracked in `#525` and `docs/releases/v2.10.0.md`. `#520` remains
 open for registry access, container architecture and Go module major-version
 distribution; authenticated live ConfigHub proof requires renewed login and

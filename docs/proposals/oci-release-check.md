@@ -1,6 +1,7 @@
 # Exact Configuration Release Check
 
-Status: implemented and locally verified for the next minor release, not shipped.
+Status: scoped implementation complete; merged in #536 for the next minor release,
+not published. Prerequisite #535 is merged.
 Tracking: #532, #502, #505. Builds on controller revision evidence in #535.
 
 ## User Value
@@ -100,4 +101,9 @@ Positive controller joins are deterministic HTTP fixtures, not production
 validation. The live Deployment smoke demonstrates configuration/convergence
 reads and an honest unsupported-controller result. No existing cluster or
 registry resources, credentials, current context or installed plugins changed.
-CI and publication remain separate gates; this checklist does not mean released.
+CI passed for the exact merged file tree:
+[run 34637625505](https://github.com/confighub/cub-scout/actions/runs/34637625505)
+at head `538a255`; merge `bd70fc6` has the identical tree. Unit, Integration,
+GitOps E2E and Proof Artifact passed; Connected E2E, Full Verification and Demo
+Tests were skipped. Publication and the broader v2.11 observation roadmap are
+separate work; completion of this scoped plan does not mean released.

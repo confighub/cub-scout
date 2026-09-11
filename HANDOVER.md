@@ -25,7 +25,7 @@ are standalone/plugin revision evidence, efficient observation and dependable
 bot installation (#532). Polling baseline #533 is merged; runtime polling cost
 is not improved by that baseline. Registry permissions remain unchanged.
 
-Development branch adds bounded `explain --expected-revision`, MCP
+Merged #535 adds bounded `explain --expected-revision`, MCP
 `expected_revision`, and TUI `e` expectation input. The same object-only model
 compares immutable IDs from a single-source Application or v1 Kustomization
 report, keeping match/mismatch/unknown separate from delivery and health.
@@ -44,7 +44,7 @@ change, connected authority check or cluster mutation is claimed.
 
 ### Exact OCI Configuration Release Check (Unreleased)
 
-`release check` composes the #535 revision evidence with a digest-verified
+Merged #536 (`bd70fc6`) adds `release check`, composing #535 revision evidence with a digest-verified
 literal OCI bundle, bounded live authored-field comparison and supported
 workload-controller convergence. The expected configuration digest and target
 context come from the caller, not a release-number/authority lookup. An image
@@ -75,6 +75,30 @@ INCONCLUSIVE, six check requests. Its locally generated bundle contains a
 known live replica field, not an independently published intended release.
 No authenticated production OCI release or positive live controller join is
 claimed. Reproduction and all boundaries: `examples/oci-release-check/`.
+
+The scoped implementation plan is complete, not published. Its file tree is
+identical to head `538a255`, whose Unit, Integration, GitOps E2E and Proof Artifact
+jobs passed in [CI run 34637625505](https://github.com/confighub/cub-scout/actions/runs/34637625505).
+Connected E2E, Full Verification and Demo Tests were skipped. This is regression
+proof, not a positive production OCI join. Broader v2.11 observation work remains
+open in #532; do not equate completion of this plan with a v2.11 release.
+
+### Bot Installation Fallback (Unreleased)
+
+#537 adds `examples/bot/build-from-release.sh`: explicit stable version and
+amd64/arm64 target; exact published archive/checksum matching; binary-only
+extraction; local numeric-nonroot image build. README User questions, install
+docs and `examples/bot/README.md` include commands and boundaries. Missing,
+malformed, duplicate, substring and mismatched checksums fail before Docker.
+Download/build failures clean temporary files and never report success.
+
+Both published v2.10.1 Linux archives built and ran locally with read-only
+filesystem, dropped capabilities and no-new-privileges, reporting v2.10.1 and
+UID/GID 65532:65532. The amd64 run used emulation on an arm64 host. Full tests,
+repeated fake-tool tests, race, lint, build and docs/read-only guards pass.
+No cluster deployment, image push, auth or registry-permission change occurred.
+Runtime proof is not an in-cluster sink test or public-registry pull proof;
+those distribution limitations remain in #520.
 
 ## v2.9.0 Release Scope
 
