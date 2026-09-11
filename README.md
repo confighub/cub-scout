@@ -1,20 +1,69 @@
-# cub-scout — observe and explain Kubernetes + GitOps
+# cub-scout
 
-**Read-only. Deterministic. Offline-capable. Optional `cub` plugin.**
+**A read-only Kubernetes and GitOps explorer for people, scripts, and AI agents.**
 
-cub-scout is an open-source observer for live Kubernetes clusters and GitOps. Point it at your current kube context and it reads what Kubernetes, Argo CD, Flux, Sveltos, Modelplane, Helm, Crossplane, kro, and ConfigHub already know: what is running, who owns it, where it came from, what is unhealthy, and what to check next.
+[v2.10.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.10.0)
+| [Start here](docs/getting-started/start-here.md)
+| [Command guide](CLI-GUIDE.md)
 
-It diagnoses, explains, traces, maps, scans, **compares** intended vs running state, and adds provenance evidence to supported field mismatches where signals exist — but it never modifies cluster state and never makes authority calls about what *should* be true. Safe to run against production.
+## Why this exists
+
+"Is this deployed?" usually means several questions: did the controller consume
+the right revision, did the objects reach the cluster, and is the application
+ready? Those answers live in different resources and tools.
+
+cub-scout brings that evidence together without taking over delivery. Start from
+a live cluster, follow ownership and source chains, inspect failures, and compare
+against supplied or ConfigHub-managed configuration. Missing evidence stays
+visible; a healthy Pod is not proof that the intended release was delivered.
+
+## What you get
+
+- **An ownership map:** explore resources across Argo CD, Flux, Helm, Sveltos,
+  Modelplane, Crossplane, kro, ConfigHub, and native Kubernetes. Evidence depth
+  depends on the controller and available metadata.
+- **An explanation, not just a status color:** controller progress, workload
+  symptoms, source revisions, field differences, and the next read-only checks.
+- **Evidence you can reuse:** JSON for scripts and MCP tools for agents, plus
+  saved bundles and fingerprinted receipts for review. No model inference is
+  required to classify ownership or compute the reported evidence.
+- **A small read when that is enough:** v2.10.0 bounded explain reads one exact
+  object; MCP/TUI sessions can reuse the observation with visible freshness.
+
+No ConfigHub account or in-cluster Scout installation is needed for standalone
+inspection. Live checks need Kubernetes API access; saved-file and bundle
+workflows can run offline. Observation does not modify cluster state, but read
+permissions, sensitive output, and API load still matter.
+
+## Start in Two Minutes
+
+```sh
+brew install confighub/tap/cub-scout
+cub-scout doctor          # What needs attention?
+cub-scout gitops status   # What do delivery controllers report?
+cub-scout map             # Explore interactively
+```
+
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.10.0`, then
+`cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
+cover macOS, Linux, Windows, and tagged source builds.
 
 ## Five ways to run cub-scout
 
 | Run mode | Command | Best for | Notes |
 |---|---|---|---|
-| Standalone client | `cub-scout doctor`, `cub-scout map`, `cub-scout trace ...` | Humans at a terminal; local scripts; one-off cluster inspection | Uses the current kube context or in-cluster config; no ConfigHub dependency. |
+| Standalone client | `cub-scout doctor`, `cub-scout map`, `cub-scout trace ...` | CLI, interactive TUI, or JSON in a script | Uses the current kube context; no ConfigHub dependency. `kubectl cub-scout` is another invocation of this client, not another service. |
 | ConfigHub plugin | `cub scout doctor`, `cub scout compare ...` | ConfigHub users who want the same observer inside their existing `cub` workflow | Same read-only scout behavior, with plugin-aware help text and inherited `cub` context. |
-| MCP server | `cub-scout mcp serve` | AI agents that need typed, read-only tools instead of freehand shell commands | Local stdio process launched by an MCP host; not a background cluster service. |
-| Watch stream | `cub-scout watch --webhook <url>` | Continuous local or CI observation feeding webhooks, JSONL, receipts, or incident tooling | Polling-based event stream for discovery, ownership changes, drift, and scan findings. |
-| In-cluster bot | `cub-scout bot --webhook <url>` | A read-only observer Pod running inside Kubernetes | Uses the same watch engine with in-cluster auth and `CUB_SCOUT_BOT_*` env configuration; the v2.9 image supports the example's `runAsNonRoot` policy. |
+| MCP server | `cub-scout mcp serve` | Agents calling structured read-only tools | The MCP host starts a local stdio process. Nothing must already be running. Agents with shell access can also call the CLI directly. |
+| Watch stream | `cub-scout watch --output-file ./events.jsonl` | A long-running local observer feeding incident tooling | Polling-based discovery, ownership-change, drift, and scan events; webhook and receipt output are also available. |
+| In-cluster bot | `cub-scout bot --webhook <url>` | One observer Pod feeding an approved sink | Same polling engine, with ServiceAccount auth and `CUB_SCOUT_BOT_*` configuration. It does not deploy or trigger sync. See [bot setup](examples/bot/) and [container availability limits](docs/getting-started/install.md#container-and-bot). |
+
+Prefer browsing intended configuration in a connected TUI? The separately
+installed [companion explorer](https://github.com/confighub/cub-commander) uses
+Scout v2.10.0 in its Resource Evidence tab. Commander v0.3.0 requires an explicit
+Target-ID/kube-context binding. Scout's standalone TUI remains available.
+
+## User questions
 
 Cub-scout helps users answer questions about k8s and GitOps clusters in one place.
 
@@ -35,7 +84,7 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | Which indexed resources match a fleet-wide predicate? | MCP `confighub_resources` | Read-only ConfigHub Resource entity queries through `cub resource list`: server-side `ResourceType`, `ResourceName`, `TargetID`, `Unit.*`, `Space.*`, and `Data.*` predicates, optional views/selects/raw data, and explicit space scoping for broad explorer questions. |
 | Could a same-name application inherit another application's delivery status? | `map activity --with-confighub --format json` | Joins require an observed Application Space ID matching the reported Space ID plus a unique, exact Application name in the selected non-wildcard space. Missing/conflicting metadata and ambiguous names/statuses remain correlation omissions; the Argo-owned result is preserved. |
 | What release or event triggered this delivery attempt? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `history`, MCP `confighub_releases`, MCP `confighub_unit_events` | Bounded ConfigHub release and unit-event evidence for a known space/time window, including release ids, digests, targets, unit events, timestamps, exact resource-correlation keys when available, activity timeline rows, and structured omissions when history cannot be joined safely. |
-| Did evented delivery feedback report back, and is the report fresh? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, MCP `confighub_live_status` | Read-only parsing of ConfigHub live-status writeback, with `observedAt`, freshness, sync status, operation phase, observed revision, delivery verdict, separate application-health verdict, scope-level rollups, timeline rows, exact joins onto matching Argo Application activity rows, and object-level matches only when exact space plus app/unit identity is present. |
+| Did evented delivery feedback report back, and is the report fresh? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, MCP `confighub_live_status` | Read-only parsing of ConfigHub live-status writeback, with `observedAt`, freshness, sync status, operation phase, observed revision, delivery verdict, separate application-health verdict, scope-level rollups, timeline rows, exact joins onto matching Argo Application activity rows, and object-level matches only when exact space plus app/unit identity is present. **v2.10 limit:** unknown or future timestamps can still accompany `PASS`; inspect timestamps, not the verdict alone. [Known freshness gap](docs/reference/explorer-comparison.md#current-feedback-verdict-limit). |
 | Is the in-cluster event consumer present and healthy? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `map deployers` | Conservative, label-selected detection of the known event-consumer Deployment shape across namespaces when allowed, with ready/desired replicas, activity timeline rows, and `doctor` top issues when an observed consumer is unhealthy; absence or RBAC narrowing becomes an omission, not a claim that no eventing exists. |
 | Has intended configuration reached the cluster? | `compare three-way` | DRY/WET/LIVE agreement for a resource, namespace, cluster, or governed view, with states like `agreed`, `converging`, `diverged`, and `partial`. |
 | Did the controller consume the expected source revision or OCI digest? | `trace`, `trace --with-confighub`, `gitops status`, `compare source-truth`, `gitops status --with-confighub` | Controller-owned source status, revision/digest evidence, object-correlated ConfigHub release digest context when exact space+target joins exist, and proof gaps when controller/source identifiers cannot be joined safely. |
@@ -47,7 +96,8 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | What triggered this reconcile, check, or action? | `map activity --with-confighub`, `trace`, `explain` | Audited Kubernetes action event metadata when present, plus optional ConfigHub release/unit-event rows: action, actor, subject, groups, timestamps, release digest/target, and preserved raw annotation evidence. |
 | Who changed this field, and where did the value come from? | `compare`, `explain`, attribution JSON | `cause`, `managerHint`, `gitSource`, `bindingSource`, audit/event evidence where available, and optional file:line back-resolution from live `managedFields`, controller metadata, local source files, and governed links. |
 | Can I answer broad or repeated questions without hammering live APIs? | `snapshot`, `watch`, `bot`, `summary`, `receipt verify --with-confighub`, `receipt list --format json`, `map list --format json`, `map activity --with-confighub --confighub-space <space>`, `doctor --with-confighub --confighub-space <space>`, `gitops status --with-confighub --confighub-space <space> --confighub-since <window>`, MCP `confighub_resources`, MCP `confighub_k8s_types`, MCP `confighub_k8s_resources` | Existing captured state, low-cardinality watch/bot events, connected summaries, bounded current-space/time-window ConfigHub reads, Resource-backed intended-config and Resource-index surveys, `observation.source/mode/observedAt/freshness` metadata on live inventory/event snapshots and stored summary records, and immutable receipts with list-time freshness status (`fresh`, `stale`, `not-declared`, `invalid`) so repeated reviewers can inspect frozen evidence instead of re-querying live APIs. |
-| Can I run one low-load observer instead of having every user or agent hit the API? | `bot`, `watch`, `snapshot` | A single read-only event producer with in-cluster auth support, webhook/JSONL sinks, bounded queues, receipt-build caps, namespace/owner/severity filters, per-event observation freshness metadata, and partial-evidence omissions when RBAC is narrowed. |
+| Can I centralize ongoing observation instead of starting a poller for every user? | `bot`, `watch`, `snapshot` | One read-only event producer can feed a shared sink using in-cluster auth, webhook/JSONL output, bounded queues, receipt-build caps, and filters. Consumers must read that sink to avoid their own cluster queries; this is not a shared Scout query service or a fleet-wide API budget. |
+| Does Scout's bot replace a release-event or sync bot? | `bot`; connected delivery evidence | No. The observer produces evidence; the delivery bot triggers its controller and owns status writeback. Scout can consume that feedback with identity and freshness checks, then add independent live observations. [Integration boundaries](docs/reference/explorer-comparison.md#scout-bot-and-delivery-bot). |
 | Can I keep auditable evidence of the check? | `receipt verify`, `receipt verify --with-confighub`, `receipt list`, `receipt validate`, `watch --emit-receipt-on`, `bot --emit-receipt-on` | Typed, fingerprinted, immutable evidence receipts for gates, incident closeout, audits, chained checks, live delivery-status snapshots, and real-time watch/bot events; `receipt list` shows whether saved TTL-backed receipts are still fresh, stale, undeclared, or malformed. |
 | Can I onboard an existing Argo app or app-of-apps safely? | `import argocd`, `import parse-repo`, `import --git-path`, `compare three-way`, `trace` | Source-backed discovery and import proposals, app-of-apps topology warnings, and pre-handover comparison evidence; actual ConfigHub loading, release publishing, and controller handover stay with the governing toolchain. |
 
@@ -81,6 +131,20 @@ is separately packaged; install Scout v2.10.0 before Commander v0.3.0.
 | Best for | Diagnosis, ownership, drift, attribution, AI tools | Intended-state authoring, GitOps pipelines |
 
 cub-scout is the **read-only witness** for cluster state. ConfigHub (driven by `cub`) is the **authority**. The binaries ship separately; explicit inventory-import commands are distinguished from read-only observation.
+
+### Where Scout fits
+
+Use Scout when you need cross-controller evidence that works in a terminal,
+automation, and an agent workflow. Use your delivery controller or approved
+deployment tooling to change desired state and reconcile it. Dedicated cluster
+and GitOps explorers remain useful for live graphs, logs, and interactive
+operations; Scout does not claim to replace every one of their views.
+
+An event-driven delivery bot has a different job: trigger delivery and report
+controller status back. Scout reads that feedback and checks it alongside live
+evidence. Its `bot` mode is an observation producer, not a replacement syncer.
+See the [version-pinned capability comparison](docs/reference/explorer-comparison.md)
+for verified strengths, competing capabilities, and the gaps still on the roadmap.
 
 ---
 
@@ -199,13 +263,16 @@ Today standalone `import --git-path` is preview-only. A `--output-dir` mode that
 | `context-pack` | Deterministic AI context JSON export | cluster |
 | `version` | Build/version info | none |
 
-All commands emit deterministic JSON via `--format json` for scripts and agents. Same input, same output — no AI/ML inference in the ownership logic.
+Read commands expose structured output through `--format json` or a documented
+`--json` flag; consult each command's help. Ownership and evidence logic are
+deterministic for the same inputs. New live observations have new timestamps.
 
 ---
 
 ## Fast Path (2 Minutes)
 
-**No ConfigHub signup required.** cub-scout reads your current kube context and works fully offline.
+**No ConfigHub signup required.** Live inspection reads your Kubernetes API;
+offline analysis uses saved files or bundles.
 
 ```bash
 brew install confighub/tap/cub-scout
@@ -229,19 +296,16 @@ cub scout version
 
 # Homebrew
 brew install confighub/tap/cub-scout
-
-# Go install
-go install github.com/confighub/cub-scout/cmd/cub-scout@latest
-
-# Binary download
-curl -sL https://github.com/confighub/cub-scout/releases/latest
-
-# Container
-docker run ghcr.io/confighub/cub-scout:latest version
-
-# kubectl krew
-kubectl krew install cub-scout
 ```
+
+For direct downloads and tagged source builds, use the
+[install guide](docs/getting-started/install.md). Do not use
+`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.10.0:
+the current Go module path resolves an older major. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.10.0 version` still needs registry
+access verification (#520); the published image is Linux amd64 only.
+`kubectl krew install cub-scout` is not a verified distribution path; use the
+`kubectl-cub_scout` binary included in the archives or Homebrew instead.
 
 `make build-kubectl-plugin` also produces a `kubectl cub-scout ...` wrapper. See [docs/howto/plugin-install.md](docs/howto/plugin-install.md) for pinned-version, direct-URL, and offline installs.
 
@@ -249,7 +313,8 @@ kubectl krew install cub-scout
 
 ## How to invoke
 
-Same binary, three invocation forms — commands, flags, JSON, exit codes, and MCP tool names are identical across all three; only the prefix differs:
+The same Scout commands, JSON contracts, exit codes, and MCP tool names are
+available through three invocation forms:
 
 ```bash
 cub-scout doctor          # 1. Standalone — installed directly
@@ -259,11 +324,16 @@ kubectl cub-scout doctor  # 3. kubectl plugin — from `make build-kubectl-plugi
 
 Plugin form (`cub scout ...`) inherits `cub`'s auth automatically — useful when you also use ConfigHub. Standalone form is the path of least resistance and the default for AI/MCP scenarios. Parity is enforced by a release-gate test (`TestPluginParity_StandaloneMatchesPlugin`).
 
+Host-global flags can differ: `cub --context` selects a ConfigHub context, while
+Scout's bounded `--kube-context` selects the Kubernetes context to inspect.
+
 ---
 
 ## Standalone vs Connected
 
-cub-scout works fully offline. Connected mode is optional but unlocks the questions a live cluster alone cannot answer.
+Standalone does not mean disconnected from Kubernetes: live checks need API
+access. Saved-file and bundle analysis can run offline. ConfigHub connected
+mode is optional and adds intended-state, history, and fleet context.
 
 **Standalone (no signup):** ownership detection, tracing, health diagnosis, drift hints, risk scanning, JSON, MCP gateway, attribution via `managedFields` + Flux/Argo/Helm/Sveltos/Modelplane/Crossplane trace resolvers + (with `--source-path`) raw-YAML file:line resolution.
 

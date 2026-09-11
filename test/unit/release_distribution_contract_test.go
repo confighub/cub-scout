@@ -1,8 +1,11 @@
 package unit
 
 import (
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -160,6 +163,84 @@ func TestInstallDocs_IncludeDistributionChannels(t *testing.T) {
 		}
 		if !strings.Contains(installDoc, snippet) {
 			t.Fatalf("install doc missing distribution channel snippet %q", snippet)
+		}
+	}
+}
+
+func TestInstallDocs_VersionedArchiveNames(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "docs", "getting-started", "install.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc := string(data)
+	if strings.Contains(doc, "/releases/latest/download/cub-scout-") {
+		t.Fatal("install guide uses obsolete unversioned archive names")
+	}
+	links := regexp.MustCompile(`https://github\.com/confighub/cub-scout/releases/download/[^\s)]+`).FindAllString(doc, -1)
+	seen := map[string]bool{}
+	version := ""
+	for _, link := range links {
+		u, err := url.Parse(link)
+		if err != nil {
+			t.Fatal(err)
+		}
+		name, tag := path.Base(u.Path), path.Base(path.Dir(u.Path))
+		if name == "checksums.txt" {
+			continue
+		}
+		if !regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`).MatchString(tag) {
+			t.Fatalf("archive link has no release tag: %s", link)
+		}
+		if version != "" && version != tag {
+			t.Fatalf("install guide mixes release versions %s and %s", version, tag)
+		}
+		version = tag
+		prefix := "cub-scout_" + strings.TrimPrefix(tag, "v") + "_"
+		if !strings.HasPrefix(name, prefix) {
+			t.Fatalf("archive %s does not match its release tag %s", name, tag)
+		}
+		seen[strings.TrimPrefix(name, prefix)] = true
+	}
+	for _, platform := range []string{"darwin_amd64.tar.gz", "darwin_arm64.tar.gz", "linux_amd64.tar.gz", "linux_arm64.tar.gz", "windows_amd64.zip", "windows_arm64.zip"} {
+		if !seen[platform] {
+			t.Errorf("install guide missing verified archive platform %s", platform)
+		}
+	}
+}
+
+func TestIntroDocs_FiveModesAndEvidenceBoundaries(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc := string(data)
+	start, end := strings.Index(doc, "## Five ways to run cub-scout"), strings.Index(doc, "## User questions")
+	if start < 0 || end <= start {
+		t.Fatal("README must introduce five run modes before the detailed User questions")
+	}
+	for _, mode := range []string{"Standalone client", "ConfigHub plugin", "MCP server", "Watch stream", "In-cluster bot"} {
+		if !strings.Contains(doc[start:end], "| "+mode+" |") {
+			t.Errorf("README missing run mode %q", mode)
+		}
+	}
+	for _, heading := range []string{"## Why this exists", "## What you get"} {
+		if index := strings.Index(doc, heading); index < 0 || index > start {
+			t.Errorf("README must explain %q before its run modes", heading)
+		}
+	}
+	questions, _, _ := strings.Cut(doc[end:], "\nThe main path starts")
+	for _, evidence := range []string{"--bounded", "--kube-context", "configHubOrigin", "STALE", "compare object-set", "receipt verify", "watch", "bot", "release-event or sync bot"} {
+		if !strings.Contains(questions, evidence) {
+			t.Errorf("README questions lost evidence surface %q", evidence)
+		}
+	}
+	for _, file := range []string{"README.md", "CLI-GUIDE.md", "docs/README.md", "docs/getting-started/start-here.md", "docs/getting-started/install.md"} {
+		data, err := os.ReadFile(filepath.Join("..", "..", filepath.FromSlash(file)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if regexp.MustCompile(`(?i)unreleased[^\n]{0,24}v2\.10`).Match(data) {
+			t.Errorf("%s still describes v2.10 as unreleased", file)
 		}
 	}
 }

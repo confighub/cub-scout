@@ -1,6 +1,20 @@
 # cub-scout Documentation
 
-**Read-only Kubernetes observer. See what's really happening in your cluster.**
+**Find what is running, who owns it, whether delivery is progressing, and what
+evidence is still missing.**
+
+cub-scout is a read-only Kubernetes and GitOps explorer. Start without an account
+or an in-cluster Scout installation; add ConfigHub context for intended-state,
+history, and fleet questions. Controllers still own reconciliation and status.
+
+The five run modes are **standalone CLI/TUI, `cub` plugin, MCP server, watch
+stream, and in-cluster bot**. [Choose a mode](../README.md#five-ways-to-run-cub-scout)
+or [start with a user question](../README.md#user-questions).
+
+Current release: [v2.10.0](releases/v2.10.0.md). Its bounded reads add exact
+scope, visible read counts, short-lived MCP/TUI reuse, origin metadata, and
+explicit omissions. [Tool comparison](reference/explorer-comparison.md) explains
+where Scout fits and where parity is still unproved.
 
 ---
 
@@ -8,6 +22,7 @@
 
 | Step | Guide | Time |
 |------|-------|------|
+| Choose your workflow | [getting-started/start-here.md](getting-started/start-here.md) | 2 min |
 | Install | [getting-started/install.md](getting-started/install.md) | 2 min |
 | First Map | [getting-started/first-map.md](getting-started/first-map.md) | 5 min |
 | CLI workflow guide | [CLI-GUIDE.md](../CLI-GUIDE.md) | reference |
@@ -51,7 +66,9 @@
 
 ## Connected Mode (Requires ConfigHub Account)
 
-Connected mode adds: change history, fleet comparison, import/promotion workflows.
+Connected mode adds intended-state reads, change history, fleet comparison, and
+adoption workflows. Authoring, publishing, promotion, and delivery remain with
+ConfigHub and the deployment toolchain, not Scout observation.
 
 > **Ownership:** The `cub` CLI comes from the [ConfigHub SDK](https://github.com/confighub/sdk).
 > cub-scout discovers and explains; `cub` handles connected lifecycle.

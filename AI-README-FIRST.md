@@ -114,11 +114,16 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Release scope: **v2.10.0** bounded explorer integration. Publication and final
-verification are tracked in `#525` and `docs/releases/v2.10.0.md`; consult them
-before claiming a release or check has completed. `#520` remains open for
-registry-pull verification; authenticated live ConfigHub proof requires renewed
-login and explicit test scope. These are limitations, not passing checks.
+Published: **v2.10.0** bounded explorer integration and companion **v0.3.0**.
+Final proof is tracked in `#525` and `docs/releases/v2.10.0.md`. `#520` remains
+open for registry access, container architecture and Go module major-version
+distribution; authenticated live ConfigHub proof requires renewed login and
+explicit test scope. These are limitations, not passing checks. Current docs
+and competitive capability review: `#527`.
+Next correctness priority: `#502` live-status timestamp gating. In v2.10,
+missing/invalid timestamps can still accompany `PASS`, and future timestamps
+are clamped to fresh. See the comparison's known feedback verdict limit before
+treating a connected verdict as current delivery or health proof.
 The first slice adds opt-in bounded `explain` reads and short-lived MCP/TUI
 session reuse; see `examples/bounded-resource-read/`. The companion panel is
 merged in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
