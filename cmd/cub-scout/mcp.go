@@ -966,6 +966,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		}
 	}
 
+	tools["release_check"] = releaseCheckMCPTool()
 	names := make([]string, 0, len(tools))
 	for name := range tools {
 		names = append(names, name)

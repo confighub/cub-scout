@@ -1410,6 +1410,38 @@ Events are sorted by:
 
 Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 
+## Configuration Release Check (Unreleased)
+
+`release check --format json` and MCP `release_check` emit a `version: "v1"`
+report, not an in-toto envelope. Fields:
+
+| Field | Meaning |
+|---|---|
+| `context`, `controllerContext`, `controller` | Explicit target and controller context/API identities |
+| `startedAt`, `finishedAt` | Observation interval; sequential reads are not atomic |
+| `bundle` | Supplied reference, manifest/layer digests, source (`registry` or `oci-layout`), verified flag, object count and actual registry request/body-byte counts |
+| `stages[]` | Named `bundle`, `controller`, `configuration`, `workloads` checks with verdict and reason |
+| `verdict`, `headline`, `nextStep` | Scoped aggregate and explanation; priority BLOCK > INCONCLUSIVE > WATCH > PASS |
+| `controllerRevision` | Existing exact immutable report-comparison evidence; not a workload or execution-history claim |
+| `configuration`, `convergence` | Optional existing fingerprinted object-set/workload receipt Statements |
+| `reads[]`, `requestCounts`, `maxObjects` | Per-read scope, UID/resourceVersion, observation/expiry, actual discovery/object requests and selected object limit |
+| `omissions[]` | Explicit claim boundaries, including application success, running-image identity, atomicity and release authority |
+
+`NOT_ASSESSED` is allowed only for a non-required workload stage with no supported
+workloads; it never implies a running application. Missing required evidence
+is INCONCLUSIVE. A known configuration/runtime failure remains BLOCK even if
+another stage is inconclusive. Read failures and excluded Secrets are represented
+in configuration receipt coverage, not omitted from the desired object count.
+The controller stage is downgraded if its object/source changes during the check.
+
+The bundle manifest digest, layer digest and normalized desired-object-set
+digest describe different content and are not interchangeable. Supplied OCI
+source metadata is recorded in the nested receipts' `desiredSource` (`type:
+"oci"`). Fingerprint integrity applies to each nested Statement, not the outer
+report, and does not authenticate the intended release or registry publisher.
+No running-image comparison, application health policy, extra-object closure,
+pod fan-out, fleet aggregation or release-history authority lookup is implied.
+
 ## Receipt Contract (`cub-scout receipt verify`)
 
 > A **receipt** is a stamped, hand-offable record of one verification: an in-toto Statement v1 envelope around a verdict, evidence, omissions, and optional upstream receipt references. Its **proof** is the verifiable integrity property created by the fingerprint: SHA-256 over RFC 8785 canonical JSON of the full Statement, with only `predicate.fingerprint` removed before hashing. Any third party can recompute that fingerprint to confirm the receipt has not been edited since it was stamped. That is tamper-evidence, not producer authentication or formal proof of truth. A receipt without proof is a claim; a receipt with proof is evidence.

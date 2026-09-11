@@ -34,7 +34,7 @@ cub-scout commands fall into eight groups. The main use case starts from a live 
 | **Govern** | Connected history, fleet, views | `history`, `impact`, `fleet outliers`, `summary`, `views`, `audit`, `bundle`, `catalog` |
 | **Adopt Existing Config** | How to preview/import current cluster or repo structure into ConfigHub | `import --dry-run`, `import --from-bundle`, `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`, `import apply`, `app` |
 | **Integrate** | Setup + AI gateway | `setup`, `quickstart`, `mcp serve`, `bot`, `context-pack`, `version` |
-| **Verify** | Typed, fingerprinted evidence artifacts | `receipt verify`, `receipt show`, `receipt validate`, `receipt list` |
+| **Verify** | Typed evidence and scoped configuration-release checks | `receipt verify`, `receipt show`, `receipt validate`, `receipt list`, `release check` (unreleased v2.11) |
 
 When a user asks "can cub scout do X?", first locate X in this map, then verify the exact flag surface with local `--help` (see [Quick Reality Checks](#quick-reality-checks)).
 
@@ -121,6 +121,14 @@ Active v2.11 work is #532. Scanner and connected authentication/authority
 verification are deferred by the user. Unreleased bounded controller revision
 comparison is documented in `examples/controller-revision/`; it is not a
 workload delivery proof or native-watch implementation.
+The next unreleased slice, `release check`, joins an explicitly supplied OCI
+configuration bundle digest to supported controller/source/target evidence,
+live authored-field agreement and workload-controller convergence. Standalone,
+plugin, MCP `release_check` and `--interactive` share the provider. It does not
+verify running container images, application success or release publication
+authority, and watch/bot do not schedule it yet. The outer report is not an
+immutable receipt; its nested configuration/workload statements are
+fingerprinted. See `examples/oci-release-check/` for exact adapters and budgets.
 Final proof is tracked in `#525` and `docs/releases/v2.10.0.md`. `#520` remains
 open for registry access, container architecture and Go module major-version
 distribution; authenticated live ConfigHub proof requires renewed login and

@@ -2834,6 +2834,32 @@ Requires connected mode (`cub auth login` or `CONFIGHUB_API_KEY`).
 
 ---
 
+## release check
+
+Unreleased, planned v2.11: verify a digest-pinned literal OCI configuration
+bundle against an explicit controller and target context.
+
+```bash
+./cub-scout release check \
+  --bundle 'oci://registry.example/config@sha256:<64-lowercase-hex-digits>' \
+  --controller Application/payments --api-version argoproj.io/v1alpha1 \
+  --controller-namespace delivery --kube-context production --format json
+```
+
+Required: `--bundle`, `--controller`, `--api-version`,
+`--controller-namespace`, `--kube-context`. Optional: `--controller-context`
+(defaults to target context), `--oci-layout <dir>` (read-only local content),
+`--max-objects 1..100` (default 100), `--format ascii|json|md`, `--out <path>`,
+`--fail-on WATCH|BLOCK|INCONCLUSIVE|any-non-pass`, `--interactive`.
+Interactive mode cannot be combined with output/gate options.
+
+The report separates verified bundle content, controller/source/target binding,
+authored live configuration and workload-controller convergence. No rendering,
+deployment, pod fan-out or application-success claim. Unsupported adapters,
+excluded Secrets and unreadable objects stay explicit. Watch/bot do not run
+release checks automatically. Full examples, read budgets and adapter boundaries:
+[exact configuration release](../../examples/oci-release-check/).
+
 ## receipt
 
 Create and verify typed, fingerprinted, immutable evidence receipts (`#446`).
