@@ -44,6 +44,8 @@ These prompts require connected mode.
 | "What is the first useful ConfigHub object I should open for `deployment/frontend` in `prod`?" | `confighub_units` after scope is known | `cub unit list --json` |
 | "Show me the exact governed unit details once you find the unit for `deployment/frontend`." | `confighub_unit_get` after unit slug is known | `cub unit get --json` |
 | "What changed recently for this governed unit?" | `confighub_changesets` | `cub changeset list --json` |
+| "Which Kubernetes resource types does ConfigHub already hold in `prod`?" | `confighub_k8s_types` | `cub k8s types --space prod -o json` |
+| "What Deployment config does ConfigHub intend for the `payments` namespace in `prod`?" | `confighub_k8s_resources` | `cub k8s get deploy --space prod -n payments -o json` |
 
 ## Stretch Set
 
@@ -55,6 +57,7 @@ Use these when you want to test chaining quality, not just first-tool attraction
 | "I know `frontend` is Argo-managed. Show me where it came from and whether it has converged." | `trace` -> `compare_three_way` |
 | "Tell me whether this is sign-off-ready and show me the first useful governed object to inspect." | `compare_three_way` -> `confighub_units` |
 | "Find the governed unit for `frontend` and show me the latest governed receipt." | `explain` or `trace` -> `confighub_units` -> `confighub_changesets` |
+| "Before hitting the live cluster, show what ConfigHub thinks is deployed for `payments` and then check whether it is actually synced." | `confighub_k8s_types` -> `confighub_k8s_resources` -> `gitops_status` or `compare_three_way` |
 
 ## Score Sheet Template
 

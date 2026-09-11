@@ -68,17 +68,20 @@ Implicit intents:
 
 The agent host calls `tools/list` to discover tools and `tools/call` to invoke them. cub-scout's `mcp_test.go` covers the exact catalog:
 
-**Standalone-mode tools** (5, always available):
+**Standalone-mode tools** (6, always available):
 - `doctor` — cluster-level diagnostic with structured nextSteps
 - `map` — resource inventory with ownership classification
 - `scan` — risk + misconfiguration findings
 - `trace` — ownership + source chain (one resource)
 - `explain` — plain-English per-resource report
+- `gitops_status` — GitOps/controller delivery status and coverage evidence
 
-**Connected-mode tools** (8, added when connected mode is available):
+**Connected-mode tools** (10, added when connected mode is available):
 - `compare_three_way` — DRY/WET/LIVE with rolled-up agreement
 - `compare_source_truth` — strategy-typed verdict (target + namespace + strategy required)
 - `confighub_changesets` — governed ChangeSet history from ConfigHub
+- `confighub_k8s_resources` — ConfigHub Resource-backed intended Kubernetes resources
+- `confighub_k8s_types` — ConfigHub Resource-backed intended Kubernetes type survey
 - `confighub_live_status` — ConfigHub Space live-status writeback with freshness
 - `confighub_releases` — bounded ConfigHub Release history
 - `confighub_unit_events` — bounded ConfigHub UnitEvent history

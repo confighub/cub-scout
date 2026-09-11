@@ -1966,7 +1966,7 @@ cub-scout mcp serve
 
 - Standalone tools: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
 - `doctor` is intentionally first: it is the natural first troubleshooting command for AI and MCP clients, including when the problem may be local access uncertainty such as wrong context, stale kubeconfig, or API reachability.
-- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
+- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - MCP tool descriptors mark every tool with `annotations.readOnlyHint=true`.
 - Protocol transport is stdio with `Content-Length` framed JSON-RPC messages.
@@ -1997,6 +1997,22 @@ cub-scout mcp serve
 - `confighub_changesets`
   - `space` (optional)
   - `where` (optional)
+- `confighub_k8s_resources`
+  - `type` (required; Kubernetes resource type selector such as `deploy`, `all`, or `apps/v1/Deployment`)
+  - `names` (optional array)
+  - `space` (required unless `target` is provided; use `*` only for an explicit all-spaces read)
+  - `target` (optional array; required unless `space` is provided)
+  - `namespace` (optional)
+  - `where` (optional ConfigHub entity filter)
+  - `where_resource` (optional stored-resource configuration filter)
+  - `show` (optional; `list`, `detail`, or `data`)
+- `confighub_k8s_types`
+  - `type` (optional Kubernetes resource type selector)
+  - `space` (required unless `target` is provided; use `*` only for an explicit all-spaces read)
+  - `target` (optional array; required unless `space` is provided)
+  - `namespace` (optional)
+  - `where` (optional ConfigHub entity filter)
+  - `where_resource` (optional stored-resource configuration filter)
 - `confighub_live_status`
   - `space` (required; use `*` only for an explicit all-spaces read)
 - `confighub_releases`

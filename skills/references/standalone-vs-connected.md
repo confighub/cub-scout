@@ -59,7 +59,7 @@ Everything that needs ConfigHub-side authority or cross-cluster snapshots:
 | Attribute | Per-field `bindingSource` (which ConfigHub Link supplies this value) |
 | Govern | `history`, `impact`, `fleet outliers`, `summary list/slack`, `views resolve`, `audit list` |
 | Verify | `receipt verify --strategy <s>` (source-truth-pass predicate requires connected source-truth) |
-| Integrate | MCP gateway registers the connected tool set (`compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`) in addition to the standalone catalog |
+| Integrate | MCP gateway registers the connected tool set (`compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`) in addition to the standalone catalog |
 
 The MCP catalog is **mode-aware**: `mcp serve` registers the standalone catalog always and adds the connected catalog when `cub auth status` reports OK.
 

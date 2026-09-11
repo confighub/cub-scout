@@ -41,6 +41,8 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 		"compare_source_truth",
 		"compare_three_way",
 		"confighub_changesets",
+		"confighub_k8s_resources",
+		"confighub_k8s_types",
 		"confighub_live_status",
 		"confighub_releases",
 		"confighub_unit_events",
@@ -112,6 +114,8 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "trace", contains: []string{"Use AFTER doctor or explain", "then explain if the resource is still unclear", "DO NOT load for broad cluster status"}},
 		{name: "gitops_status", contains: []string{"GitOps/controller delivery status", "controllerCoverage[]", "absence vs RBAC/API omission", "DO NOT use to force sync"}},
 		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"}},
+		{name: "confighub_k8s_resources", contains: []string{"Connected-only", "Resource-backed Kubernetes configuration reader", "stored ConfigHub Resource data, not live cluster state", "either space or target is REQUIRED", "low-API-load"}},
+		{name: "confighub_k8s_types", contains: []string{"Connected-only", "Resource-backed Kubernetes type survey", "cheapest ConfigHub-side survey", "either space or target is REQUIRED", "stored ConfigHub Resource metadata"}},
 		{name: "confighub_live_status", contains: []string{"Connected-only", "live-status writeback", "Space is REQUIRED", "best-effort reported evidence"}},
 		{name: "confighub_releases", contains: []string{"Connected-only", "Release history", "Space is REQUIRED", "pair with gitops status"}},
 		{name: "confighub_unit_events", contains: []string{"Connected-only", "UnitEvent reader", "Space is REQUIRED", "DO NOT use as a cursor-consuming event consumer"}},
@@ -161,6 +165,16 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 			tool:     "confighub_changesets",
 			intent:   "What governed write changed this known unit?",
 			contains: []string{"what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"},
+		},
+		{
+			tool:     "confighub_k8s_resources",
+			intent:   "What Deployment config does ConfigHub intend for this target before I query every cluster?",
+			contains: []string{"Kubernetes resources ConfigHub says should exist", "intended configuration", "low-API-load ConfigHub-side alternative"},
+		},
+		{
+			tool:     "confighub_k8s_types",
+			intent:   "Which custom resource types are stored in this space?",
+			contains: []string{"which Kubernetes types ConfigHub holds", "discover custom resources", "cheapest ConfigHub-side survey"},
 		},
 		{
 			tool:     "confighub_units",
@@ -757,6 +771,203 @@ func TestMCPGatewayHandleRequest_ToolsCallConfigHubUnitEvents(t *testing.T) {
 	}
 }
 
+func TestMCPGatewayHandleRequest_ToolsCallConfigHubK8sResources(t *testing.T) {
+	var gotStandaloneArgs []string
+	var gotConnectedArgs []string
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			gotStandaloneArgs = append([]string(nil), args...)
+			return `{"standalone":true}`, nil
+		},
+		func(ctx context.Context, args []string) (string, error) {
+			gotConnectedArgs = append([]string(nil), args...)
+			return `[{"Space":"prod","Unit":"payments-api","Target":"prod/prod-oci","Namespace":"payments","Name":"api","Kind":"Deployment","APIVersion":"apps/v1","ResourceType":"apps/v1/Deployment"}]`, nil
+		},
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`12.6`),
+		Method:  "tools/call",
+		Params: json.RawMessage(`{
+			"name":"confighub_k8s_resources",
+			"arguments":{
+				"type":"deploy",
+				"names":["api","web"],
+				"space":"prod",
+				"target":["prod/prod-oci","stage/stage-oci"],
+				"namespace":"payments",
+				"where":"Unit.Slug LIKE '%-backend'",
+				"where_resource":"spec.replicas > 1",
+				"show":"detail"
+			}
+		}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	if len(gotStandaloneArgs) != 0 {
+		t.Fatalf("standalone runner should not be used, got args %v", gotStandaloneArgs)
+	}
+	wantConnected := []string{
+		"k8s", "get", "deploy", "api", "web",
+		"--space", "prod",
+		"--target", "prod/prod-oci",
+		"--target", "stage/stage-oci",
+		"-n", "payments",
+		"--where", "Unit.Slug LIKE '%-backend'",
+		"--where-resource", "spec.replicas > 1",
+		"--show", "detail",
+		"-o", "json",
+	}
+	if !reflect.DeepEqual(gotConnectedArgs, wantConnected) {
+		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantConnected)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			Data []struct {
+				Kind string `json:"Kind"`
+			} `json:"data"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if len(result.StructuredContent.Data) != 1 || result.StructuredContent.Data[0].Kind != "Deployment" {
+		t.Fatalf("structuredContent.data = %+v, want parsed k8s resources", result.StructuredContent.Data)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConfigHubK8sTypes(t *testing.T) {
+	var gotConnectedArgs []string
+	gateway := newMCPGatewayWithMode(nil, func(ctx context.Context, args []string) (string, error) {
+		gotConnectedArgs = append([]string(nil), args...)
+		return `[{"ResourceType":"apps/v1/Deployment","APIVersion":"apps/v1","Kind":"Deployment","Resources":3,"Units":2,"Spaces":1}]`, nil
+	}, true)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`12.7`),
+		Method:  "tools/call",
+		Params: json.RawMessage(`{
+			"name":"confighub_k8s_types",
+			"arguments":{
+				"type":"all",
+				"space":"*",
+				"target":["prod/prod-oci"],
+				"namespace":"payments",
+				"where":"Space.Labels.Environment = 'prod'",
+				"where_resource":"metadata.labels.app != ''"
+			}
+		}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	wantConnected := []string{
+		"k8s", "types", "all",
+		"--space", "*",
+		"--target", "prod/prod-oci",
+		"-n", "payments",
+		"--where", "Space.Labels.Environment = 'prod'",
+		"--where-resource", "metadata.labels.app != ''",
+		"-o", "json",
+	}
+	if !reflect.DeepEqual(gotConnectedArgs, wantConnected) {
+		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantConnected)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			Data []struct {
+				ResourceType string `json:"ResourceType"`
+			} `json:"data"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if len(result.StructuredContent.Data) != 1 || result.StructuredContent.Data[0].ResourceType != "apps/v1/Deployment" {
+		t.Fatalf("structuredContent.data = %+v, want parsed k8s type summaries", result.StructuredContent.Data)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConfigHubK8sValidationError(t *testing.T) {
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			t.Fatal("standalone runner should not be called for validation error")
+			return "", nil
+		},
+		func(ctx context.Context, args []string) (string, error) {
+			t.Fatal("connected runner should not be called for validation error")
+			return "", nil
+		},
+		true,
+	)
+
+	cases := []struct {
+		name        string
+		tool        string
+		args        string
+		errContains string
+	}{
+		{name: "resources missing type", tool: "confighub_k8s_resources", args: `{"space":"prod"}`, errContains: "type"},
+		{name: "resources missing bounded scope", tool: "confighub_k8s_resources", args: `{"type":"deploy"}`, errContains: "space or target"},
+		{name: "resources invalid show", tool: "confighub_k8s_resources", args: `{"type":"deploy","space":"prod","show":"wide"}`, errContains: "unknown show value"},
+		{name: "resources invalid names", tool: "confighub_k8s_resources", args: `{"type":"deploy","space":"prod","names":["api",5]}`, errContains: "names must contain only strings"},
+		{name: "types missing bounded scope", tool: "confighub_k8s_types", args: `{}`, errContains: "space or target"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := mcpRequest{
+				JSONRPC: "2.0",
+				ID:      json.RawMessage(`12.8`),
+				Method:  "tools/call",
+				Params:  json.RawMessage(`{"name":"` + tc.tool + `","arguments":` + tc.args + `}`),
+			}
+
+			resp := gateway.handleRequest(context.Background(), req)
+			if resp == nil {
+				t.Fatal("response is nil")
+			}
+			if resp.Error != nil {
+				t.Fatalf("unexpected rpc error: %+v", resp.Error)
+			}
+
+			var result struct {
+				IsError bool `json:"isError"`
+				Content []struct {
+					Text string `json:"text"`
+				} `json:"content"`
+			}
+			if err := marshalInto(resp.Result, &result); err != nil {
+				t.Fatalf("decode result: %v", err)
+			}
+			if !result.IsError {
+				t.Fatalf("expected isError=true for %s, got %+v", tc.name, resp.Result)
+			}
+			if len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, tc.errContains) {
+				t.Fatalf("error text = %+v, want substring %q", result.Content, tc.errContains)
+			}
+		})
+	}
+}
+
 func TestMCPGatewayHandleRequest_ToolsCallCompareThreeWayValidationError(t *testing.T) {
 	gateway := newMCPGatewayWithMode(
 		func(ctx context.Context, args []string) (string, error) {
@@ -1235,6 +1446,71 @@ func TestArgInt(t *testing.T) {
 			got := argInt(tc.args, tc.key)
 			if got != tc.want {
 				t.Errorf("argInt() = %d, want %d", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestArgStringSlice(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        map[string]interface{}
+		key         string
+		want        []string
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name: "string array from json",
+			args: map[string]interface{}{"names": []interface{}{" api ", "web", ""}},
+			key:  "names",
+			want: []string{"api", "web"},
+		},
+		{
+			name: "string",
+			args: map[string]interface{}{"target": " prod/prod-oci "},
+			key:  "target",
+			want: []string{"prod/prod-oci"},
+		},
+		{
+			name: "missing",
+			args: map[string]interface{}{},
+			key:  "target",
+			want: nil,
+		},
+		{
+			name:        "invalid array item",
+			args:        map[string]interface{}{"names": []interface{}{"api", float64(1)}},
+			key:         "names",
+			wantErr:     true,
+			errContains: "names must contain only strings",
+		},
+		{
+			name:        "invalid type",
+			args:        map[string]interface{}{"target": float64(1)},
+			key:         "target",
+			wantErr:     true,
+			errContains: "target must be a string array",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := argStringSlice(tc.args, tc.key)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), tc.errContains) {
+					t.Fatalf("error = %q, want substring %q", err.Error(), tc.errContains)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("argStringSlice() = %v, want %v", got, tc.want)
 			}
 		})
 	}

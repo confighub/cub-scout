@@ -288,6 +288,7 @@ cub-scout mcp serve
 - Standalone tool set includes:
   - `doctor`
   - `explain`
+  - `gitops_status`
   - `map`
   - `scan`
   - `trace`
@@ -302,6 +303,7 @@ cub-scout mcp serve
 - `confighub_units` is the discovery/lookup step for "which ConfigHub unit is this?", while `confighub_unit_get` is the exact detail step once a unit is already known.
 - `compare_three_way` is the connected convergence proof tool after scope discovery, not the first troubleshooting move.
 - `compare_source_truth` strategy values are generated from the same source as the CLI, so MCP and CLI strategy parity is part of the contract.
+- `confighub_k8s_types` and `confighub_k8s_resources` read ConfigHub Resource-backed intended configuration through `cub k8s types/get`; they do not read live cluster state, and they require an explicit `space` or `target` scope.
 - `confighub_live_status`, `confighub_releases`, and `confighub_unit_events` require explicit space scope. Use `*` only for an intentional all-spaces read.
 - All MCP tool descriptors advertise `annotations.readOnlyHint=true`.
 
@@ -335,6 +337,32 @@ cub-scout mcp serve
   - `namespace` (required string)
   - `strategy` (required enum, same values as `compare source-truth`)
 - Backed by `cub-scout compare source-truth --format json`
+
+- Tool name: `confighub_k8s_resources`
+- Availability: connected mode only
+- Parameters:
+  - `type` (required string)
+  - `names` (optional string array)
+  - `space` (required unless `target` is provided; `*` means explicit all-spaces read)
+  - `target` (optional string array; required unless `space` is provided)
+  - `namespace` (optional string)
+  - `where` (optional string)
+  - `where_resource` (optional string)
+  - `show` (optional enum: `list`, `detail`, `data`)
+- Backed by `cub k8s get <type> [<name> ...] -o json`
+- Returns ConfigHub-stored intended Kubernetes resources, not live cluster state.
+
+- Tool name: `confighub_k8s_types`
+- Availability: connected mode only
+- Parameters:
+  - `type` (optional string)
+  - `space` (required unless `target` is provided; `*` means explicit all-spaces read)
+  - `target` (optional string array; required unless `space` is provided)
+  - `namespace` (optional string)
+  - `where` (optional string)
+  - `where_resource` (optional string)
+- Backed by `cub k8s types [<type>] -o json`
+- Returns ConfigHub-stored Resource type summaries, not live cluster state.
 
 - Tool name: `confighub_live_status`
 - Availability: connected mode only

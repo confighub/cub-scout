@@ -51,6 +51,8 @@ Additional tools in connected mode (when authenticated to ConfigHub):
   - compare_three_way
   - compare_source_truth
   - confighub_changesets
+  - confighub_k8s_resources
+  - confighub_k8s_types
   - confighub_live_status
   - confighub_releases
   - confighub_unit_events
@@ -61,8 +63,8 @@ Standalone tools are sourced from existing cub-scout CLI JSON output.
 Connected tools are sourced from read-only cub CLI queries.
 
 Doctor is the first troubleshooting and tool-choice entrypoint.
-Connected tools add governed lookup, receipts, and convergence facts once scope
-is known.`,
+Connected tools add governed lookup, intended configuration, receipts, and
+convergence facts once scope is known.`,
 	RunE: runMCPServe,
 }
 
@@ -520,6 +522,179 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			},
 			Runner: connectedRunner,
 		}
+		tools["confighub_k8s_resources"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_k8s_resources",
+				Description: "Connected-only ConfigHub Resource-backed Kubernetes configuration reader (cub k8s get -o json). Use when the user asks what Kubernetes resources ConfigHub says should exist, wants intended configuration across a space or target, or needs a low-API-load ConfigHub-side alternative before hitting live clusters. This reads stored ConfigHub Resource data, not live cluster state. Type is REQUIRED, and either space or target is REQUIRED to keep the read bounded; pass space='*' only for an explicit all-spaces query. DO NOT use for rollout health, live drift, or source-truth proof by itself; pair with gitops_status, trace, compare_three_way, or compare_source_truth for controller/runtime evidence.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"type": map[string]interface{}{
+							"type":        "string",
+							"description": "Required Kubernetes resource type selector accepted by cub k8s get, such as deploy, svc, all, Kind, or apps/v1/Deployment. Comma-separated types are allowed.",
+						},
+						"names": map[string]interface{}{
+							"type":        "array",
+							"description": "Optional Kubernetes resource names to match within the selected type(s).",
+							"items": map[string]interface{}{
+								"type": "string",
+							},
+						},
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "ConfigHub space slug or ID; use '*' only for an explicit all-spaces read. Required unless target is provided.",
+						},
+						"target": map[string]interface{}{
+							"type":        "array",
+							"description": "Optional ConfigHub target scopes in space-slug/target-slug form. Required unless space is provided.",
+							"items": map[string]interface{}{
+								"type": "string",
+							},
+						},
+						"namespace": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional Kubernetes namespace filter.",
+						},
+						"where": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional ConfigHub entity filter passed to --where, such as Unit.Slug or Space.Labels predicates.",
+						},
+						"where_resource": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional resource-configuration filter passed to --where-resource, such as spec.replicas > 1.",
+						},
+						"show": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional cub k8s get view. One of: list, detail, data. Defaults to list.",
+							"enum":        []string{"list", "detail", "data"},
+						},
+					},
+					"required":             []string{"type"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				resourceType := argString(arguments, "type")
+				if resourceType == "" {
+					return nil, fmt.Errorf("missing required argument: type")
+				}
+				names, err := argStringSlice(arguments, "names")
+				if err != nil {
+					return nil, err
+				}
+				targets, err := argStringSlice(arguments, "target")
+				if err != nil {
+					return nil, err
+				}
+				space := argString(arguments, "space")
+				if space == "" && len(targets) == 0 {
+					return nil, fmt.Errorf("missing required bounded scope: space or target")
+				}
+
+				args := []string{"k8s", "get", resourceType}
+				args = append(args, names...)
+				if space != "" {
+					args = append(args, "--space", space)
+				}
+				for _, target := range targets {
+					args = append(args, "--target", target)
+				}
+				if ns := argString(arguments, "namespace"); ns != "" {
+					args = append(args, "-n", ns)
+				}
+				if where := argString(arguments, "where"); where != "" {
+					args = append(args, "--where", where)
+				}
+				if whereResource := argString(arguments, "where_resource"); whereResource != "" {
+					args = append(args, "--where-resource", whereResource)
+				}
+				if show := argString(arguments, "show"); show != "" {
+					switch show {
+					case "list", "detail", "data":
+						args = append(args, "--show", show)
+					default:
+						return nil, fmt.Errorf("unknown show value %q; valid: list, detail, data", show)
+					}
+				}
+				args = append(args, "-o", "json")
+				return args, nil
+			},
+			Runner: connectedRunner,
+		}
+		tools["confighub_k8s_types"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_k8s_types",
+				Description: "Connected-only ConfigHub Resource-backed Kubernetes type survey (cub k8s types -o json). Use when the user asks which Kubernetes types ConfigHub holds, wants to discover custom resources before a larger query, or needs the cheapest ConfigHub-side survey before fetching resource bodies. This reads stored ConfigHub Resource metadata, not live cluster state, and either space or target is REQUIRED to keep the read bounded; pass space='*' only for an explicit all-spaces query. DO NOT use for rollout health, live drift, or app success; follow with confighub_k8s_resources for intended config and gitops_status, trace, or compare_three_way for live/controller evidence.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"type": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional Kubernetes resource type selector accepted by cub k8s types, such as all, deploy, Kind, or apps/v1/Deployment. Comma-separated types are allowed.",
+						},
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "ConfigHub space slug or ID; use '*' only for an explicit all-spaces read. Required unless target is provided.",
+						},
+						"target": map[string]interface{}{
+							"type":        "array",
+							"description": "Optional ConfigHub target scopes in space-slug/target-slug form. Required unless space is provided.",
+							"items": map[string]interface{}{
+								"type": "string",
+							},
+						},
+						"namespace": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional Kubernetes namespace filter.",
+						},
+						"where": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional ConfigHub entity filter passed to --where, such as Unit.Slug or Space.Labels predicates.",
+						},
+						"where_resource": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional resource-configuration filter passed to --where-resource, such as spec.replicas > 1.",
+						},
+					},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				targets, err := argStringSlice(arguments, "target")
+				if err != nil {
+					return nil, err
+				}
+				space := argString(arguments, "space")
+				if space == "" && len(targets) == 0 {
+					return nil, fmt.Errorf("missing required bounded scope: space or target")
+				}
+
+				args := []string{"k8s", "types"}
+				if resourceType := argString(arguments, "type"); resourceType != "" {
+					args = append(args, resourceType)
+				}
+				if space != "" {
+					args = append(args, "--space", space)
+				}
+				for _, target := range targets {
+					args = append(args, "--target", target)
+				}
+				if ns := argString(arguments, "namespace"); ns != "" {
+					args = append(args, "-n", ns)
+				}
+				if where := argString(arguments, "where"); where != "" {
+					args = append(args, "--where", where)
+				}
+				if whereResource := argString(arguments, "where_resource"); whereResource != "" {
+					args = append(args, "--where-resource", whereResource)
+				}
+				args = append(args, "-o", "json")
+				return args, nil
+			},
+			Runner: connectedRunner,
+		}
 		tools["confighub_live_status"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_live_status",
@@ -850,6 +1025,43 @@ func argString(arguments map[string]interface{}, key string) string {
 		return ""
 	}
 	return strings.TrimSpace(value)
+}
+
+func argStringSlice(arguments map[string]interface{}, key string) ([]string, error) {
+	raw, ok := arguments[key]
+	if !ok || raw == nil {
+		return nil, nil
+	}
+	switch value := raw.(type) {
+	case []interface{}:
+		out := make([]string, 0, len(value))
+		for _, item := range value {
+			text, ok := item.(string)
+			if !ok {
+				return nil, fmt.Errorf("%s must contain only strings", key)
+			}
+			if trimmed := strings.TrimSpace(text); trimmed != "" {
+				out = append(out, trimmed)
+			}
+		}
+		return out, nil
+	case []string:
+		out := make([]string, 0, len(value))
+		for _, item := range value {
+			if trimmed := strings.TrimSpace(item); trimmed != "" {
+				out = append(out, trimmed)
+			}
+		}
+		return out, nil
+	case string:
+		trimmed := strings.TrimSpace(value)
+		if trimmed == "" {
+			return nil, nil
+		}
+		return []string{trimmed}, nil
+	default:
+		return nil, fmt.Errorf("%s must be a string array", key)
+	}
 }
 
 func argBool(arguments map[string]interface{}, key string) bool {

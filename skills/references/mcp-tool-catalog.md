@@ -11,7 +11,7 @@ The catalog has two tiers:
 - **Standalone tools** — registered always; require only a kubeconfig
 - **Connected tools** — added when `cub auth status` succeeds; require ConfigHub auth
 
-Total: **14 tools** (6 standalone + 8 connected).
+Total: **16 tools** (6 standalone + 10 connected).
 
 ## Standalone tools (6)
 
@@ -78,7 +78,7 @@ the catalog from a running server.
 | Returns | GitOps/controller backend, transport, sources, deployers, source/build/apply/sync stages, delivery evidence when requested, and `controllerCoverage[]` |
 | When to load | "Is this deployed?" "Is delegated delivery healthy?" "Which controller families did cub-scout actually inspect?" "Is missing status absence or an RBAC/API omission?" Evidence only; never use it to force sync or declare application success by itself. |
 
-## Connected tools (8)
+## Connected tools (10)
 
 Registered only when `cub-scout mcp serve` detects connected mode and the `cub`
 CLI is available.
@@ -117,6 +117,26 @@ for the full enum.
 | Optional args | `space` (string — slug/ID); `where` (string — filter expression) |
 | Returns | Governed ChangeSet history and receipts from ConfigHub |
 | When to load | "What governed write changed this unit?" "Who applied the change?" After `trace` or `confighub_units` has identified the governed object. |
+
+### `confighub_k8s_types`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub k8s types [<type>] -o json` (calls `cub`, not cub-scout) |
+| Required args | Either `space` or `target` |
+| Optional args | `type` (string — `all`, kubectl-style type, Kind, or full ConfigHub resource type); `space` (string — slug/ID, or `*` for an explicit all-spaces read); `target` (string array — `space-slug/target-slug`); `namespace` (string); `where` (string — ConfigHub entity filter); `where_resource` (string — stored-resource configuration filter) |
+| Returns | ConfigHub Resource type summaries: resource type, API version, kind, resource count, unit count, and space count |
+| When to load | "Which Kubernetes types does ConfigHub already hold?" "Which custom resources exist before I fetch bodies?" Cheapest ConfigHub-side survey before `confighub_k8s_resources`; not live cluster health. |
+
+### `confighub_k8s_resources`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub k8s get <type> [<name> ...] -o json` (calls `cub`, not cub-scout) |
+| Required args | `type`, plus either `space` or `target` |
+| Optional args | `names` (string array); `space` (string — slug/ID, or `*` for an explicit all-spaces read); `target` (string array — `space-slug/target-slug`); `namespace` (string); `where` (string — ConfigHub entity filter); `where_resource` (string — stored-resource configuration filter); `show` (`list`, `detail`, or `data`) |
+| Returns | ConfigHub-stored intended Kubernetes resources, joined to Space, Unit, Target, namespace, name, kind, API version, and resource type. With `show=data` or serialized output, bodies are included when `cub` provides them. |
+| When to load | "What Kubernetes resources does ConfigHub say should exist for this space/target?" "Fetch intended Deployment YAML without hitting every cluster." Pair with `gitops_status`, `trace`, `compare_three_way`, or `compare_source_truth` for live/controller proof. |
 
 ### `confighub_live_status`
 
@@ -182,6 +202,7 @@ The closed catalog is verified by `cmd/cub-scout/mcp_test.go`. The following cub
 | `fleet_outliers` | Considered but deferred; fleet-scope tools need careful agent-side framing |
 | `views_resolve` | Considered but deferred |
 | `receipt verify / show / validate / list` | Considered but deferred; the receipt surface is locally-driven by design — emitting receipts mid-MCP-conversation needs design (covered in `#446` v2 work) |
+| `cub k8s source / collect / refresh` | Not exposed through Scout MCP: `source` is browser-opening operator UX, while `collect` and `refresh` can write ConfigHub state unless carefully dry-run scoped |
 | Any mutating verb | Categorically out of band — see the read-only invariant below |
 
 If a user asks for one of these via MCP, the answer is "use the CLI" (or the corresponding scout-* skill from this repo). The catalog is intentionally narrow.
@@ -218,9 +239,10 @@ The catalog is discovered with the standard MCP `tools/list` request.
 Each tool's `BuildArgs` function transforms the MCP arguments into a cub-scout CLI argv. The MCP server then executes the cub-scout CLI as a subprocess (via the `runner` / `connectedRunner` injection points) and returns the stdout as `content[0].text` in the MCP response. The CLI's `--format json` flag drives the structured output.
 
 For connected tools that wrap `cub` (not cub-scout) — `confighub_changesets`,
-`confighub_live_status`, `confighub_releases`, `confighub_unit_events`,
-`confighub_units`, and `confighub_unit_get` — the runner is `connectedRunner`
-instead of `runner`. Same execution model; different binary on PATH.
+`confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
+`confighub_releases`, `confighub_unit_events`, `confighub_units`, and
+`confighub_unit_get` — the runner is `connectedRunner` instead of `runner`.
+Same execution model; different binary on PATH.
 
 ## Errors
 

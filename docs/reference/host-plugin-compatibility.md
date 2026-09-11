@@ -51,7 +51,7 @@ Every feature must have parity across standalone and plugin forms. This is a non
 | Flags and arguments | ✅ | Unchanged. |
 | JSON contracts | ✅ | `--json` output is byte-identical for the same input and cluster state, modulo timestamps which the parity test normalizes. |
 | Exit codes | ✅ | Unchanged. Includes `--fail-on` thresholds for `compare three-way`. |
-| MCP tool set | ✅ | Standalone: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace`. Connected adds `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`. |
+| MCP tool set | ✅ | Standalone: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace`. Connected adds `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`. |
 | ASCII output | ✅ | Tables, colors (with `NO_COLOR` opt-out), presentation modes. |
 | Help text token form | ⚠️ Cosmetic difference | Plugin form renders `cub scout <cmd>`; standalone form renders `cub-scout <cmd>`. Controlled by `CUB_PLUGIN=1` detection and a plugin-mode usage template. |
 | Help flag description | ⚠️ Cosmetic difference | Plugin form shows `-h, --help   help for scout`; standalone form shows `help for cub-scout`. Cobra derives the wording from the root command's `Name()`, which the plugin-mode template leaves as `scout` to keep subcommand `CommandPath` walks correct. |
