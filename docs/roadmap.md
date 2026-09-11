@@ -55,13 +55,18 @@ proof and remaining checks live in [v2.9.0 notes](releases/v2.9.0.md).
   package visibility/read access needs an authorized owner to inspect it.
   Live authenticated ConfigHub smoke also remains unavailable (expired token).
 
-### v2.10.0 - Explorer Integration (Unreleased)
+### v2.10.0 - Bounded Explorer Integration
 
 Agreed next direction: additive explorer integration and real observation reuse,
 not a replacement for the standalone TUI or a 3.0 contract break. Tracking stays
 in this repository: `#519`, `#502`, and `#505`.
+Release publication, final checks and explicit auth/registry limitations are
+tracked in [#525](https://github.com/confighub/cub-scout/issues/525) and
+[v2.10.0 notes](releases/v2.10.0.md). The release is the bounded first integration;
+deeper joins and broader explorer parity are follow-up scope, not silent claims
+of completion.
 
-- [x] First provider slice merged in `#522` (`#519`, unreleased): opt-in `explain --bounded` with explicit
+- [x] First provider slice merged in `#522` (`#519`): opt-in `explain --bounded` with explicit
   kube context/API identity, object-local facts, and structured omissions.
   CLI/plugin, MCP, and the existing TUI share the read model. Use
   `--kube-context` to avoid the host's ConfigHub context flag. See the
@@ -69,15 +74,16 @@ in this repository: `#519`, `#502`, and `#505`.
 - [x] Prove first-slice session reuse: finite TTL/entry count, visible refresh/freshness,
   exact request counts, cancellation, context isolation, and no stale success
   after failed refresh. Do not describe this as a global cache for all commands.
-- [x] Add observed origin metadata to bounded explain (`#523` merged; `#505`, unreleased):
+- [x] Add observed origin metadata to bounded explain (`#523` merged; `#505`):
   space/unit IDs and slugs plus optional integer revision, using the existing
   object read. Reject malformed/duplicate/conflicting metadata; do not infer
   controller ownership, target/context, release, component, or variant joins.
   CLI/plugin, MCP, and the current TUI share the evidence and omissions.
-- [ ] Wire the first companion evidence panel through the read-only CLI JSON
+- [x] Wire the first companion evidence panel through the read-only CLI JSON
   boundary, with explicit target-to-kube-context binding and late-result rejection.
-  Implemented and tested in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
-  not yet merged or released. Resource-only, explicit Target-ID bindings, one
+  Merged in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
+  for separate v0.3.0 publication after Scout v2.10.0. Resource-only, explicit
+  Target-ID bindings, one
   captured snapshot, zero-read tab revisits, stale labels and explicit refresh;
   no implicit source/release joins. Read-only live proof uses a mocked intended-state
   row plus an existing non-production object. Issue tracking stays in `#519`;

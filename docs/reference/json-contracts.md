@@ -54,7 +54,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Platform substrate evidence | This doc (below) | Embedded in `map list` JSON as `ownerEvidence`, in watch/bot events as `owner.evidence`, and in receipts as `predicate.evidence.platformSubstrate` |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
 | Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` JSON |
-| Bounded resource read (unreleased v2.10) | This doc (below) | Additive `resourceRead`, `configHubOrigin`, and `omissions` on bounded `explain` only |
+| Bounded resource read (v2.10.0) | This doc (below) | Additive `resourceRead`, `configHubOrigin`, and `omissions` on bounded `explain` only |
 | Map activity delivery rows | This doc (below) | Embedded in `map activity --with-confighub` JSON rows |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 | MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
@@ -86,7 +86,7 @@ For MCP, the current rule is:
 3. the wrapped CLI surface remains the contract source of truth
 4. selected connected tools may add `structuredContent` with parsed data plus read-only trust guidance
 
-## Bounded Resource Read (Unreleased v2.10)
+## Bounded Resource Read (v2.10.0)
 
 `explain --bounded --format json` and MCP `explain` with `bounded: true` use
 the same ExplainSummary as normal explain, plus:

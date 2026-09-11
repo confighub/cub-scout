@@ -352,7 +352,7 @@ cub-scout explain deploy/payments-api -n prod --with-confighub --format json
 cub-scout explain deploy/payments-api -n prod --presentation ai
 cub-scout explain deploy/payments-api -n prod --hint-mode operator
 cub-scout explain deployment/payments-api -n prod --format md
-# Unreleased v2.10: one exact object, without enrichment
+# v2.10.0: one exact object, without enrichment
 ./cub-scout explain Deployment/payments-api -n prod --bounded \
   --api-version apps/v1 --kube-context my-cluster --format json
 ```
@@ -369,7 +369,7 @@ cub-scout explain deployment/payments-api -n prod --format md
 | `--confighub-space` | ConfigHub space for delivery evidence (default: resource ConfigHub space; `*` must be explicit) |
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
-| `--bounded` | Unreleased v2.10: read only an exact API object; no source/controller, ConfigHub, related-pod, event, or drift enrichment |
+| `--bounded` | v2.10.0: read only an exact API object; no source/controller, ConfigHub, related-pod, event, or drift enrichment |
 | `--api-version` | Required with `--bounded`; exact API version, e.g. `apps/v1` |
 | `--kube-context` | Required with `--bounded`; explicit kube context, without changing current-context or colliding with the `cub` host's ConfigHub `--context` flag |
 | `--refresh` | Bypass bounded session reuse; separate CLI invocations already start with an empty cache |

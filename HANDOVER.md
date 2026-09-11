@@ -1,8 +1,10 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-09-11. Published release: `v2.9.0`; next direction: `v2.10.0`
-explorer integration. `#520` remains open for registry-pull verification.
-Notes: [`docs/releases/v2.9.0.md`](docs/releases/v2.9.0.md).
+Last updated: 2026-09-11. Release scope: `v2.10.0` bounded explorer integration,
+with separately packaged Commander `v0.3.0`. Publication, final CI/artifact proof
+and remaining validation gaps are recorded in `#525`; check that record before
+claiming a release is published. `#520` remains open for registry-pull verification.
+Notes: [`docs/releases/v2.10.0.md`](docs/releases/v2.10.0.md).
 The v2.8.0 baseline and May/July sections below remain historical context.
 
 ## v2.9.0 Release Scope
@@ -27,7 +29,7 @@ proof must be distinguished from a successful authenticated live run.
 Commander `#519` starts after v2.9.0. `#475` stays delayed; deeper joins and
 provenance remain in `#502` / `#505`.
 
-## v2.10 First Slice (Unreleased)
+## v2.10 Provider Slice
 
 `#522` is merged; `#519` records proof-first criteria for bounded resource evidence. Opt-in
 `explain --bounded --api-version <version> --kube-context <context>` reads one exact
@@ -39,9 +41,9 @@ with a 15-second TTL; separate CLI invocations do not share a cache.
 `resourceRead` and `omissions` are additive JSON. Missing evidence is not health,
 delivery, source, or drift proof. `Ctrl+e` opens the explicit TUI resource picker;
 `r` refreshes a selected observation; leaving cancels it and rejects late results.
-The companion evidence panel itself is not shipped. Its first Resource-only
+The companion evidence panel is separately packaged. Its first Resource-only
 implementation is in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
-awaiting merge; issue tracking remains here. Tests/example:
+merged as `1c78b40`; issue tracking remains here. Tests/example:
 `pkg/agent/bounded_read_test.go`, `cmd/cub-scout/explain_bounded_test.go`, and
 `examples/bounded-resource-read/`.
 
@@ -58,7 +60,7 @@ The optional example-catalog check in this shared checkout encounters
 a missing README in the sibling examples repository; verify in CI's isolated
 layout without editing that repository.
 
-### Observed Origin Slice (`#505`, Unreleased)
+### Observed Origin Slice (`#505`, v2.10)
 
 Bounded explain now parses the combined `confighub.com/origin` annotation from
 the already-read object. `configHubOrigin` preserves source space/unit IDs,
@@ -87,7 +89,7 @@ Unit, Integration, GitOps E2E and Proof Artifact. Connected E2E, optional Full
 Verification and Demo Tests were skipped. Post-merge proof:
 [run 34599463351](https://github.com/confighub/cub-scout/actions/runs/34599463351).
 
-### Companion Resource Panel (`#519`, Unmerged and Unreleased)
+### Companion Resource Panel (`#519`, Merged)
 
 Repository work was authorized after `#523` merged. The permanent checkout is
 `/Users/alexis/code/cub-commander`, branch `codex/scout-resource-panel`;
@@ -116,12 +118,14 @@ Each available response validates one discovery and one object GET. An actual
 terminal smoke confirmed capture, tab reuse, expiry and refresh. No cluster
 writes, installed-plugin changes or authenticated production ConfigHub joins.
 The companion contains a reproducible local fixture server and proof instructions.
-Scout v2.9.0 cannot serve this bounded contract; a build containing `#522`/`#523`
-is required until the next release. Merge/release coordination remains next.
+Scout v2.9.0 cannot serve this bounded contract. Use Scout v2.10.0 with Commander
+v0.3.0; provider publication must precede the companion release. `#524` also
+merged as `456ac86`. Release verification and coordination continue in `#525`.
+Deeper joins and broader explorer parity remain follow-up work, not release claims.
 
 ## Current repo state
 
-- Working branch: `codex/v2.10-companion-proof-docs` (unreleased integration docs)
+- Working branch: `codex/v2.10-release` (release preparation)
 - Canonical roadmap: `docs/roadmap.md`
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
 - First repo-specific AI entrypoint: `AI-README-FIRST.md`

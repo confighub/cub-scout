@@ -114,13 +114,16 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Published release: **v2.9.0**. `#520` remains open because anonymous registry
-pulls return 403; archives, CLI/plugin versions, CI, and Homebrew are verified.
-Next direction: **v2.10.0** explorer integration (`#519`), still unreleased.
+Release scope: **v2.10.0** bounded explorer integration. Publication and final
+verification are tracked in `#525` and `docs/releases/v2.10.0.md`; consult them
+before claiming a release or check has completed. `#520` remains open for
+registry-pull verification; authenticated live ConfigHub proof requires renewed
+login and explicit test scope. These are limitations, not passing checks.
 The first slice adds opt-in bounded `explain` reads and short-lived MCP/TUI
 session reuse; see `examples/bounded-resource-read/`. The companion panel is
-implemented in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
-not merged or shipped. It requires an explicit Target-ID/context binding and
+merged in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
+with separate Commander v0.3.0 publication following Scout v2.10.0. It requires
+an explicit Target-ID/context binding and
 retains one dated snapshot with manual refresh, not a shared live cache.
 The existing rich explain path and standalone TUI remain. All issue tracking
 stays in this repository (`#519`); no companion issue was created.

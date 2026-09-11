@@ -29,7 +29,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
 | v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, `explain`, and `map activity`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
 | v2.9 | Resource-backed connected MCP reads; identity-checked supporting live-status evidence on Argo Application activity rows |
-| v2.10 (unreleased) | Opt-in bounded `explain`, with exact context/API identity, per-session observation reuse in MCP/TUI, refresh, and explicit omissions |
+| v2.10.0 | Opt-in bounded `explain`, with exact context/API identity, per-session observation reuse in MCP/TUI, refresh, and explicit omissions |
 
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.
@@ -158,7 +158,7 @@ cub-scout explain <kind> <name> [flags]
 - `deliveryEvidence` is supporting evidence only. It does not replace Argo,
   Flux, Sveltos, Modelplane, or Kubernetes status authority.
 
-### Bounded Explain (Unreleased v2.10)
+### Bounded Explain (v2.10.0)
 
 Additive flags: `--bounded` (false), `--api-version` (empty), `--kube-context`
 (empty), and `--refresh` (false). The latter three require bounded mode.
