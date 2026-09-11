@@ -39,8 +39,9 @@ with a 15-second TTL; separate CLI invocations do not share a cache.
 `resourceRead` and `omissions` are additive JSON. Missing evidence is not health,
 delivery, source, or drift proof. `Ctrl+e` opens the explicit TUI resource picker;
 `r` refreshes a selected observation; leaving cancels it and rejects late results.
-The companion evidence panel itself is not shipped. Its repository work is
-separately coordinated; issue tracking remains here. Tests/example:
+The companion evidence panel itself is not shipped. Its first Resource-only
+implementation is in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),
+awaiting merge; issue tracking remains here. Tests/example:
 `pkg/agent/bounded_read_test.go`, `cmd/cub-scout/explain_bounded_test.go`, and
 `examples/bounded-resource-read/`.
 
@@ -73,19 +74,54 @@ CLI/plugin JSON/ASCII/Markdown, the real MCP gateway, two-server context and
 namespace isolation, reuse/refresh/error counts, and narrow TUI views.
 Example: `examples/bounded-resource-read/origin-deployment.json`.
 This is bounded explain only; rich trace/explain, map inventory, watch/bot,
-receipts, connected Resource joins, and the companion panel are not changed.
-Their follow-up remains in `#505` / `#519`. No companion repo changes made.
+receipts and connected Resource joins are not changed. Their follow-up remains
+in `#505` / `#519`. Companion work is described separately below.
 
 Local proof: build/full suite, scoped checks twice and again after docs, race
 checks, read-only/doc guards, and `go mod tidy -diff` pass. Existing live kind
 CLI, plugin-mode, actual `cub` host, and real stdio MCP cold/hit/refresh pass
 with `1+1`, `0+0`, `1+1` requests and unchanged context. The live object lacks
 origin; positive origin and conflicts are fixture proof, not an authenticated
-ConfigHub join. PR CI remains required before merge.
+ConfigHub join. `#523` merged as `962733f`; PR and post-merge CI passed, including
+Unit, Integration, GitOps E2E and Proof Artifact. Connected E2E, optional Full
+Verification and Demo Tests were skipped. Post-merge proof:
+[run 34599463351](https://github.com/confighub/cub-scout/actions/runs/34599463351).
+
+### Companion Resource Panel (`#519`, Unmerged and Unreleased)
+
+Repository work was authorized after `#523` merged. The permanent checkout is
+`/Users/alexis/code/cub-commander`, branch `codex/scout-resource-panel`;
+[PR #1](https://github.com/confighub/cub-commander/pull/1) adds Resource detail
+`3 Evidence`, explicit `--scout-binding TARGET_ID=KUBE_CONTEXT`, and optional
+`--scout-binary /absolute/path/to/cub-scout`. Default provider is `cub scout`.
+No issue was created in the companion repository; progress belongs to `#519`.
+
+The companion uses the selected Resource's own IDs and API/kind/namespace/name,
+not a joined Unit, Target slug, current context, or origin annotation. One
+captured snapshot persists across tab visits with zero provider requests; it
+remains labeled a snapshot and becomes stale at expiry. Explicit `r` discards
+it before a new bounded read. This is not Scout MCP/TUI cache reuse, credential
+revalidation on revisit, fleet caching, desired/live comparison, or delivery proof.
+Failures are unavailable; context/resource/budget/freshness/JSON mismatches are
+rejected. Output/time bounds, process-group cancellation, shutdown reaping and
+late-result rejection are tested. Read-only evidence does not change the
+companion's existing, separate Data-edit and rollout-write actions.
+
+Companion proof: full offline tests, focused tests repeated after docs, race,
+build and vet passed, as did [PR CI](https://github.com/confighub/cub-commander/actions/runs/34600851388).
+`TestEvidenceLive` used a local mocked ConfigHub Resource
+endpoint and the real provider against an existing non-production Deployment:
+one intended-state GET, two provider calls (open/refresh), no calls on tab revisits.
+Each available response validates one discovery and one object GET. An actual
+terminal smoke confirmed capture, tab reuse, expiry and refresh. No cluster
+writes, installed-plugin changes or authenticated production ConfigHub joins.
+The companion contains a reproducible local fixture server and proof instructions.
+Scout v2.9.0 cannot serve this bounded contract; a build containing `#522`/`#523`
+is required until the next release. Merge/release coordination remains next.
 
 ## Current repo state
 
-- Working branch: `codex/v2.10-origin-evidence` (unreleased work)
+- Working branch: `codex/v2.10-companion-proof-docs` (unreleased integration docs)
 - Canonical roadmap: `docs/roadmap.md`
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
 - First repo-specific AI entrypoint: `AI-README-FIRST.md`
