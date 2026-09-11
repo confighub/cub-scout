@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-09-10 — captures the post-v2.7 delivery-evidence and bot-mode release slice. Current release tag is `v2.7.0`; `v2.8.0` is the next release candidate and draft release notes live at [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The May/July 2026 receipts, skill-catalog, and live-delivery sections below remain historical context.
+Last updated: 2026-09-11 — captures the v2.8.0 delivery-evidence and bot-mode release. Current release tag is `v2.8.0`; release notes live at [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The May/July 2026 receipts, skill-catalog, and live-delivery sections below remain historical context.
 
 ## Current repo state
 
@@ -17,9 +17,9 @@ Last updated: 2026-09-10 — captures the post-v2.7 delivery-evidence and bot-mo
 
 ## September 2026 update — ConfigHub delivery evidence, MCP parity, and bot mode
 
-This next release candidate adds the first user-visible integration for the
-evented ConfigHub/Argo delivery path without turning cub-scout into a delivery
-controller or event consumer.
+v2.8.0 adds the first user-visible integration for the evented ConfigHub/Argo
+delivery path without turning cub-scout into a delivery controller or event
+consumer.
 
 Highlights:
 
@@ -330,17 +330,18 @@ Key deliverables now in place:
 
 ## Open issues
 
-Current tracked follow-ons (verified 2026-09-10; reflects the post-v2.7
-delivery-evidence and bot-mode release candidate):
+Current tracked follow-ons (verified 2026-09-11; reflects the v2.8.0
+delivery-evidence and bot-mode release):
 
 **Recently closed arcs:**
-- Post-v2.7 delivery-evidence release candidate in this worktree:
+- v2.8.0 delivery-evidence release train:
   `gitops status --with-confighub`, `doctor --with-confighub`,
   `trace --with-confighub`, `explain --with-confighub`,
   `map activity --with-confighub`, single-resource
   `receipt verify --with-confighub`, MCP release/event/live-status tools, MCP
   `gitops_status`, MCP source-truth strategy parity, README five-run-mode
-  framing, and `bot` mode; see `docs/releases/v2.8.0.md`.
+  framing, Modelplane substrate evidence, observation/receipt freshness, and
+  `bot` mode; see `docs/releases/v2.8.0.md`.
 - ~~**`#500`**~~ — live delivery observability release slice. **Closed via `#500`** on 2026-07-09.
 - ~~**`#446`**~~ — Receipt capability parent. **Closed** (v1 in `#454`/`#455`/`#456`; v2 surface in `#463`/`#469`/`#470`).
 - ~~**`#444`**~~ — Pilot–cub-scout integration skills, 9 scenarios. **Closed via `#468`** (batch B; batch A in `#466`, Codex round-7 fixes in `#467`).
@@ -351,9 +352,8 @@ delivery-evidence and bot-mode release candidate):
 **Live delivery observability follow-ups from `#500`:**
 - Aggregate controller-resource failures as top-level `doctor` findings where controller status refs expose source/generated-artifact lineage.
 - Audited action events as history and receipt supporting evidence.
-- Broader source-freshness metadata for receipt-backed reads; map JSON,
-  snapshot JSON, summary list JSON, and watch/bot events now carry
-  point-in-time observation metadata.
+- Low-load freshness metadata is shipped for map JSON, snapshot JSON, summary
+  list JSON, watch/bot events, and saved receipt TTL summaries.
 - ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, timeline `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub` readers; deeper OCI release-to-workload correlation for aggregate/object-set/workload receipts and workload-level activity joins remains a `#502` follow-up. Direct observer cursors remain fallback-only.
 - Deeper controller-family parity rules where controllers lack status, source, event, or generation evidence. The first `gitops status` coverage ledger is shipped; object-level parity remains open.
 - Modelplane-on-Crossplane hardening: trace, map JSON, watch/bot events, and receipts now surface substrate evidence on Modelplane-owned resources; remaining work is source/generation evidence and structured omissions where deeper Crossplane layers cannot be joined safely.
@@ -389,11 +389,11 @@ delivery-evidence and bot-mode release candidate):
 
 ## Current checkpoint
 
-Current release tag: **`v2.7.0`**. The next release candidate is **`v2.8.0`**; draft release notes are in [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The v2.0.0 plugin switchover (`cub scout` as the preferred invocation, MCP gateway as the AI front door) shipped in `v2.0.0` and is now historical — `docs/releases/v2.0.0-plugin-plan.md` is preserved as a historical artifact.
+Current release tag: **`v2.8.0`**. Release notes are in [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The v2.0.0 plugin switchover (`cub scout` as the preferred invocation, MCP gateway as the AI front door) shipped in `v2.0.0` and is now historical — `docs/releases/v2.0.0-plugin-plan.md` is preserved as a historical artifact.
 
-`main` HEAD at handover time: `ee84f01` (`Merge pull request #500 from confighub/codex/feature-docs-live-delivery-observability`). Zero open PRs.
+`main` includes the v2.8.0 release train through `#513`, plus the release-publish docs commit. Zero open PRs at release-prep time.
 
-`#500` CI was green before merge. Re-run `go test ./...` on any new release-polish branch before publishing.
+PRs `#507` through `#513` were green before merge. Re-run `go test ./...` on any new release-polish branch before publishing a follow-up.
 
 Recent shipped capability surface:
 
@@ -413,14 +413,13 @@ Recent shipped capability surface:
 
 Open work, in roughly descending leverage:
 
-1. **`v2.7.0` release tag.** Release notes draft at `docs/releases/v2.7.0.md`; `#500` is the only post-`v2.6.0` merge currently on `main`.
-2. **`#481` Helm/Kustomize provenance back-resolution.** Extends raw-YAML field attribution to templated sources while preserving honesty markers when exact file:line evidence is unavailable.
-3. **`#432` Grafana collector / data-source path.** Uses existing cub-scout JSON outputs; design rather than code work.
-4. **Views project tail.** `#422` TUI Hub View column projection (`#391` scope #2 follow-up); `#421` CEL + JSONPath column evaluators. Scopes #1 (`#414`) and #3 (`#420`) already shipped.
-5. **`#427` watch kstatus migration behavior change.** Stalled workloads may flip `Ready=true → false` in v2.1.0+; needs design.
-6. **`#386` `preferInvocationForm` lint extension** to non-hint legacy string leaks.
-7. **`#392` ConfigHub Initiatives.** Deferred until ConfigHub exposes Initiative as a backend primitive — out of cub-scout's control.
-8. **`#475` publication docs.** Use the README user-question table and v2.7.0 release notes as the source of truth.
+1. **`#481` Helm/Kustomize provenance back-resolution.** Extends raw-YAML field attribution to templated sources while preserving honesty markers when exact file:line evidence is unavailable.
+2. **`#432` Grafana collector / data-source path.** Uses existing cub-scout JSON outputs; design rather than code work.
+3. **Views project tail.** `#422` TUI Hub View column projection (`#391` scope #2 follow-up); `#421` CEL + JSONPath column evaluators. Scopes #1 (`#414`) and #3 (`#420`) already shipped.
+4. **`#427` watch kstatus migration behavior change.** Stalled workloads may flip `Ready=true → false` in v2.1.0+; needs design.
+5. **`#386` `preferInvocationForm` lint extension** to non-hint legacy string leaks.
+6. **`#392` ConfigHub Initiatives.** Deferred until ConfigHub exposes Initiative as a backend primitive — out of cub-scout's control.
+7. **`#475` publication docs.** Use the README user-question table and v2.8.0 release notes as the source of truth.
 
 Small untracked follow-ups carried from the receipts arc:
 - **MCP `compare_source_truth` strategy-enum drift** — resolved in the post-v2.7 delivery-evidence slice; schema now tracks all CLI strategies.

@@ -90,15 +90,14 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Current release tag: **v2.7.0**. The next release candidate adds bounded
-ConfigHub delivery evidence, MCP release/event/live-status tools,
-source-truth MCP strategy parity, and first-class in-cluster `bot` mode;
-draft notes live at
+Current release tag: **v2.8.0**. This release adds bounded ConfigHub delivery
+evidence, MCP release/event/live-status tools, source-truth MCP strategy parity,
+and first-class in-cluster `bot` mode; release notes live at
 `docs/releases/v2.8.0.md`.
 
-As of 2026-09-10, these areas are fully or materially shipped:
+As of 2026-09-11, these areas are fully or materially shipped:
 
-- **Post-v2.7 ConfigHub delivery evidence release slice — next release candidate**
+- **v2.8.0 ConfigHub delivery evidence release**
   - README now frames the five run modes near the top: standalone client, `cub` plugin, MCP server, watch stream, and in-cluster bot
   - `gitops status --format ascii|json|md` now matches the documented format contract; `--json` remains a shorthand for `--format json`
   - `gitops status --with-confighub` adds opt-in, bounded ConfigHub release history, unit events, live-status writeback, and event-consumer Deployment health under `deliveryEvidence`
@@ -193,11 +192,11 @@ As of 2026-09-10, these areas are fully or materially shipped:
 
 ## Current Open Queue
 
-Verify live state before acting. As of 2026-07-09, the receipts arc, Pilot consumer arc, controller-evidence arc, and live delivery observability release slice have all merged. Remaining open follow-ons:
+Verify live state before acting. As of 2026-09-11, the receipts arc, Pilot consumer arc, controller-evidence arc, live delivery observability release slice, and v2.8 delivery-evidence release train have all merged. Remaining open follow-ons:
 
 ### Recently closed (this session's arc)
 
-- Post-v2.7 delivery-evidence release candidate in this worktree: `gitops status --with-confighub`, `doctor --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `map activity --with-confighub`, single-resource `receipt verify --with-confighub`, MCP release/event/live-status tools, MCP source-truth strategy parity, README five-run-mode framing, and `bot` mode; see `docs/releases/v2.8.0.md`
+- **`v2.8.0`** — delivery-evidence, freshness, MCP parity, Modelplane substrate, five-run-mode, and bot-mode release train; see `docs/releases/v2.8.0.md`
 - ~~**`#500`**~~ — live delivery observability release slice, merged 2026-07-09; see `docs/releases/v2.7.0.md`
 - Earlier closed arcs: ~~**`#446`**~~ (parent), ~~**`#444`**~~, ~~**`#448`**~~, ~~**`#449`**~~, ~~**`#451`**~~ — see HANDOVER.md § "May 2026 completions — session 2026-05-25" for the PR-by-PR breakdown
 
