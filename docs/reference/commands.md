@@ -2503,6 +2503,7 @@ NEXT STEPS
           "syncStatus": "Synced",
           "healthStatus": "Healthy",
           "operationPhase": "Succeeded",
+          "observedAt": "2026-09-10T11:55:00Z",
           "freshness": "fresh",
           "deliveryVerdict": "PASS",
           "applicationHealthVerdict": "PASS"
@@ -2524,6 +2525,15 @@ stale, malformed, or disconnected evidence is reported under
 Deployment reads for `app=argobot` and `app.kubernetes.io/name=argobot`; it
 searches all namespaces when allowed and reports a scope omission if RBAC forces
 fallback to the requested namespace.
+
+**Unreleased freshness correction after v2.10.0:** a reported success or failure
+needs a valid timestamp at or before the observation clock and within
+`--confighub-stale-after` to yield `PASS` or `BLOCK`. Stale reports yield `WATCH`;
+missing, invalid, zero, or future timestamps yield `INCONCLUSIVE`. Empty status
+remains inconclusive. The original report is retained with an explanatory
+`confighub.liveStatus.freshness` omission. Doctor and activity recommend reading
+current controller/workload status; re-reading an unchanged writeback does not
+refresh it. [Recorded proof](../../examples/live-delivery-observability/#trusting-feedback-freshness).
 
 `controllerCoverage[]` is always additive. It records the controller families
 and resource kinds cub-scout checked, what was observed, and which list calls

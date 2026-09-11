@@ -1,0 +1,22 @@
+{
+  "now": "2026-09-11T12:00:00Z",
+  "staleAfter": "15m",
+  "cases": [
+    {"name":"fresh-success", "observedAt":"2026-09-11T11:55:00Z", "freshness":"fresh", "verdict":"PASS"},
+    {"name":"exact-now", "observedAt":"2026-09-11T12:00:00Z", "freshness":"fresh", "verdict":"PASS"},
+    {"name":"exact-threshold", "observedAt":"2026-09-11T11:45:00Z", "freshness":"fresh", "verdict":"PASS"},
+    {"name":"timezone-offset", "observedAt":"2026-09-11T13:55:00+02:00", "freshness":"fresh", "verdict":"PASS"},
+    {"name":"legacy-utc", "observedAt":"2026-09-11 11:55:00", "freshness":"fresh", "verdict":"PASS"},
+    {"name":"fresh-failure", "observedAt":"2026-09-11T11:55:00Z", "failed":true, "freshness":"fresh", "verdict":"BLOCK"},
+    {"name":"stale-success", "observedAt":"2026-09-11T11:00:00Z", "freshness":"stale", "verdict":"WATCH", "omission":"older than"},
+    {"name":"stale-failure", "observedAt":"2026-09-11T11:00:00Z", "failed":true, "freshness":"stale", "verdict":"WATCH", "omission":"older than"},
+    {"name":"past-threshold", "observedAt":"2026-09-11T11:44:59.999999999Z", "freshness":"stale", "verdict":"WATCH", "omission":"older than"},
+    {"name":"missing-timestamp", "freshness":"unknown", "verdict":"INCONCLUSIVE", "omission":"missing observedAt"},
+    {"name":"missing-timestamp-failure", "failed":true, "freshness":"unknown", "verdict":"INCONCLUSIVE", "omission":"missing observedAt"},
+    {"name":"invalid-timestamp", "observedAt":"not-a-time", "freshness":"unknown", "verdict":"INCONCLUSIVE", "omission":"invalid observedAt"},
+    {"name":"zero-timestamp", "observedAt":"0001-01-01T00:00:00Z", "freshness":"unknown", "verdict":"INCONCLUSIVE", "omission":"invalid observedAt"},
+    {"name":"future-timestamp", "observedAt":"2026-09-12T12:00:00Z", "freshness":"unknown", "verdict":"INCONCLUSIVE", "omission":"after the observation clock"},
+    {"name":"future-nanosecond", "observedAt":"2026-09-11T12:00:00.000000001Z", "freshness":"unknown", "verdict":"INCONCLUSIVE", "omission":"after the observation clock"},
+    {"name":"future-failure", "observedAt":"2026-09-12T12:00:00Z", "failed":true, "freshness":"unknown", "verdict":"INCONCLUSIVE", "omission":"after the observation clock"}
+  ]
+}

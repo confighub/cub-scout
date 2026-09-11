@@ -1143,12 +1143,21 @@ reason such as `forbidden`, `unauthorized`, `timeout`, or `list_failed`.
 
 `deliveryEvidence` appears only with `--with-confighub`. It is additive and
 never replaces controller or Kubernetes status. `liveStatuses[]` separates
-`deliveryVerdict` from `applicationHealthVerdict`; stale successful observations
-downgrade to `WATCH`. Missing ConfigHub connection, missing space scope,
+`deliveryVerdict` from `applicationHealthVerdict`. In the unreleased correction
+after v2.10.0, only a valid, non-future report within the staleness threshold may
+yield `PASS` or `BLOCK`. Stale reported states become `WATCH`, including old
+failures; missing/invalid/zero/future timestamps become `unknown` freshness and
+`INCONCLUSIVE`. Empty status remains `INCONCLUSIVE`. Raw reported fields remain
+visible, with a `confighub.liveStatus.freshness` omission when current state is
+unverified. Exact-now and exact-threshold timestamps are accepted; no future
+clock-skew allowance is applied. Missing ConfigHub connection, missing space scope,
 absent event consumer, absent writeback, malformed annotations, and failed
 history reads are represented as structured omissions.
 For single-resource receipts, the resource-scoped form is embedded under
 `predicate.evidence.deliveryEvidence` and covered by the receipt fingerprint.
+Exit behavior is unchanged. A successful command exit or absence of `BLOCK`
+does not mean current delivery is proved; inspect the relevant verdict and
+freshness. Receipt supporting evidence still does not override its predicate.
 
 ### Exit Codes
 

@@ -613,6 +613,20 @@ func buildDoctorDeliveryIssues(evidence *GitOpsDeliveryEvidence) []DoctorIssue {
 	issues := []DoctorIssue{}
 	if evidence.ConfigHub != nil {
 		for _, status := range evidence.ConfigHub.LiveStatuses {
+			if status.Freshness != "fresh" {
+				severity := "INFO"
+				if status.Freshness == "stale" {
+					severity = "WARNING"
+				}
+				issues = append(issues, DoctorIssue{
+					Severity: severity,
+					Resource: "ConfigHubLiveStatus/" + firstNonEmpty(status.App, status.Space, status.SpaceID, "unknown"),
+					Message: fmt.Sprintf("current delivery/application health unverified (reported sync=%s operation=%s health=%s freshness=%s); read current controller/workload status",
+						firstNonEmpty(status.SyncStatus, "-"), firstNonEmpty(status.OperationPhase, "-"),
+						firstNonEmpty(status.HealthStatus, "-"), firstNonEmpty(status.Freshness, "unknown")),
+				})
+				continue
+			}
 			if severity := doctorSeverityForVerdict(status.DeliveryVerdict); severity != "" {
 				issues = append(issues, DoctorIssue{
 					Severity: severity,
@@ -626,7 +640,7 @@ func buildDoctorDeliveryIssues(evidence *GitOpsDeliveryEvidence) []DoctorIssue {
 				})
 			}
 
-			if status.ApplicationHealthVerdict != agent.VerdictPASS && !(status.ApplicationHealthVerdict == agent.VerdictWATCH && strings.EqualFold(status.HealthStatus, "Healthy") && strings.EqualFold(status.Freshness, "stale")) {
+			if status.ApplicationHealthVerdict != agent.VerdictPASS {
 				if severity := doctorSeverityForVerdict(status.ApplicationHealthVerdict); severity != "" {
 					issues = append(issues, DoctorIssue{
 						Severity: severity,

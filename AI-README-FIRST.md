@@ -120,10 +120,13 @@ open for registry access, container architecture and Go module major-version
 distribution; authenticated live ConfigHub proof requires renewed login and
 explicit test scope. These are limitations, not passing checks. Current docs
 and competitive capability review: `#527`.
-Next correctness priority: `#502` live-status timestamp gating. In v2.10,
-missing/invalid timestamps can still accompany `PASS`, and future timestamps
-are clamped to fresh. See the comparison's known feedback verdict limit before
-treating a connected verdict as current delivery or health proof.
+Implemented after v2.10, not yet released: `#502` live-status timestamp gating.
+Missing/invalid/zero/future timestamps now yield `INCONCLUSIVE`; stale reports,
+including old failures, yield `WATCH`. Original report fields and freshness
+omissions remain visible; activity evidence retains the original `observedAt`.
+See `examples/live-delivery-observability/#trusting-feedback-freshness` for proof.
+Published v2.10 binaries still have the disclosed gap. Producer deletion/history
+semantics and deeper delivery joins remain open; bounded TUI contracts are unchanged.
 The first slice adds opt-in bounded `explain` reads and short-lived MCP/TUI
 session reuse; see `examples/bounded-resource-read/`. The companion panel is
 merged in [companion PR #1](https://github.com/confighub/cub-commander/pull/1),

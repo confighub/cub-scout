@@ -3611,6 +3611,7 @@ type mapActivityDeliveryEvidence struct {
 	SyncStatus               string   `json:"syncStatus,omitempty"`
 	HealthStatus             string   `json:"healthStatus,omitempty"`
 	OperationPhase           string   `json:"operationPhase,omitempty"`
+	ObservedAt               string   `json:"observedAt,omitempty"`
 	Freshness                string   `json:"freshness,omitempty"`
 	FreshnessSeconds         int64    `json:"freshnessSeconds,omitempty"`
 	DeliveryVerdict          string   `json:"deliveryVerdict,omitempty"`
@@ -4221,6 +4222,7 @@ func mapActivityLiveStatusJoinEvidence(evidence *GitOpsDeliveryEvidence, status 
 		SyncStatus:               status.SyncStatus,
 		HealthStatus:             status.HealthStatus,
 		OperationPhase:           status.OperationPhase,
+		ObservedAt:               status.ObservedAt,
 		Freshness:                status.Freshness,
 		FreshnessSeconds:         status.FreshnessSeconds,
 		DeliveryVerdict:          string(status.DeliveryVerdict),
@@ -4272,6 +4274,7 @@ func configHubLiveStatusActivityRow(evidence *GitOpsDeliveryEvidence, status Con
 			SyncStatus:               status.SyncStatus,
 			HealthStatus:             status.HealthStatus,
 			OperationPhase:           status.OperationPhase,
+			ObservedAt:               status.ObservedAt,
 			Freshness:                status.Freshness,
 			FreshnessSeconds:         status.FreshnessSeconds,
 			DeliveryVerdict:          string(status.DeliveryVerdict),
@@ -4446,11 +4449,11 @@ func mapActivityResultFromUnitEvent(event ConfigHubUnitEventEvidence) string {
 }
 
 func mapActivityDeliveryNextStep(delivery, appHealth agent.ReceiptVerdict, freshness string) string {
+	if !strings.EqualFold(freshness, "fresh") {
+		return "Read current controller/workload status with trace/explain; re-reading an unchanged writeback does not renew its observedAt."
+	}
 	if delivery == agent.VerdictBLOCK || appHealth == agent.VerdictBLOCK {
 		return "Inspect delivery controller output, live-status message, and Kubernetes events for the failed phase."
-	}
-	if strings.EqualFold(freshness, "stale") {
-		return "Refresh event-consumer/live-status evidence before deciding whether to proceed."
 	}
 	if delivery == agent.VerdictWATCH || appHealth == agent.VerdictWATCH {
 		return "Wait or re-check with trace/explain --with-confighub before deciding whether to retry delivery."
