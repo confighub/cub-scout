@@ -54,7 +54,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Platform substrate evidence | This doc (below) | Embedded in `map list` JSON as `ownerEvidence`, in watch/bot events as `owner.evidence`, and in receipts as `predicate.evidence.platformSubstrate` |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
 | Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` JSON |
-| Bounded resource read (unreleased v2.10) | This doc (below) | Additive `resourceRead` and `omissions` on bounded `explain` only |
+| Bounded resource read (unreleased v2.10) | This doc (below) | Additive `resourceRead`, `configHubOrigin`, and `omissions` on bounded `explain` only |
 | Map activity delivery rows | This doc (below) | Embedded in `map activity --with-confighub` JSON rows |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 | MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
@@ -120,6 +120,51 @@ The real MCP gateway and TUI each reuse up to 16 observations for less than 15
 seconds. A hit keeps the original timestamps and uses zero requests. Refresh
 invalidates old evidence even if the new read fails. Tests and live smoke:
 [bounded resource evidence](../../examples/bounded-resource-read/).
+
+### Observed Origin
+
+Bounded explain optionally adds `configHubOrigin`, parsed from the selected
+object's `confighub.com/origin` annotation without additional API calls:
+
+```json
+{
+  "configHubOrigin": {
+    "source": "annotation:confighub.com/origin",
+    "spaceId": "11111111-1111-4111-8111-111111111111",
+    "spaceSlug": "team-a",
+    "unitId": "22222222-2222-4222-8222-222222222222",
+    "unitSlug": "api",
+    "revisionNum": 7
+  }
+}
+```
+
+- `spaceId` and `unitSlug` are required; `spaceSlug`, `unitId`, and `revisionNum`
+  are optional. Absent revision differs from explicit zero. Revision is a
+  nonnegative int64 JSON integer; consumers must preserve integer precision.
+- This is observed, unverified metadata from the same `resourceRead`
+  observation. It does not change ownership, readiness, rollout verdicts,
+  `source`/`deployedVia`, or the source/controller/comparison omissions.
+  No release, target, component, variant, or kube-context binding is inferred.
+- Missing annotation omits `configHubOrigin` and adds an information-level
+  `confighub-origin` omission. Malformed/duplicate JSON, missing required fields,
+  unsupported values, or conflicting legacy SpaceID/UnitID/UnitSlug/RevisionNum
+  labels or annotations add a warning omission instead. Text/Markdown/TUI
+  also show the reason. Read failure provides only the existing live-resource
+  omission; it cannot retain earlier origin evidence.
+- Parsing is case-sensitive. Origin is limited to 8 KiB; nonempty identifiers
+  to 256 ASCII letters/digits/dots/underscores/hyphens, starting with a letter
+  or digit. Optional identifier strings may be empty. Unknown future keys are
+  ignored, never echoed. There is no legacy fallback or field merging; legacy
+  fields only check conflicts with fields actually supplied in origin.
+- This first integration is bounded explain only, including CLI/plugin, MCP,
+  and the existing TUI picker. Rich explain/trace, map inventory JSON,
+  watch/bot, receipts, and connected Resource joins are not changed.
+
+Source shape pinned to [SDK Origin at `1303148`](https://github.com/confighub/sdk/blob/1303148d2bc952d8b9a4feb4fcca4d11e6e74722/configkit/k8skit/k8skit.go#L288).
+The stricter rejection rules above are Scout's evidence policy, not additional
+claims about the upstream annotation schema. See the
+[executable fixture](../../examples/bounded-resource-read/#observed-origin).
 
 ## Trace Secret Evidence Contract
 

@@ -359,7 +359,20 @@ func TestBoundedExplainOwnerFamilies(t *testing.T) {
 			summary := buildBoundedExplainSummary(obj, agent.BoundedReadEvidence{}, nil)
 			require.Equal(t, tc.owner, summary.Owner)
 			require.Nil(t, summary.DeliveryEvidence)
-			require.Len(t, summary.Omissions, 3)
+			require.Len(t, summary.Omissions, 4)
+			require.Nil(t, summary.ConfigHubOrigin)
+			require.Equal(t, "confighub-origin", summary.Omissions[3].Missing)
+			annotations := obj.GetAnnotations()
+			if annotations == nil {
+				annotations = map[string]string{}
+			}
+			annotations[agent.ConfigHubOriginAnnotation] = `{"spaceId":"space-a","unitSlug":"app"}`
+			obj.SetAnnotations(annotations)
+			withOrigin := buildBoundedExplainSummary(obj, agent.BoundedReadEvidence{}, nil)
+			require.Equal(t, summary.Owner, withOrigin.Owner)
+			require.Equal(t, summary.Health, withOrigin.Health)
+			require.NotNil(t, withOrigin.ConfigHubOrigin)
+			require.Len(t, withOrigin.Omissions, 3)
 		})
 	}
 }
@@ -398,7 +411,15 @@ func TestBoundedExplainLive(t *testing.T) {
 			reads = agent.BoundedReadCounts{}
 		}
 		require.Equal(t, reads, summary.ResourceRead.Reads)
-		require.Len(t, summary.Omissions, 3)
+		missing := []string{}
+		for _, omission := range summary.Omissions {
+			missing = append(missing, omission.Missing)
+		}
+		expectedMissing := []string{"source-controller-evidence", "related-pod-event-evidence", "desired-live-comparison"}
+		if summary.ConfigHubOrigin == nil {
+			expectedMissing = append(expectedMissing, "confighub-origin")
+		}
+		require.ElementsMatch(t, expectedMissing, missing)
 		require.Nil(t, summary.DeliveryEvidence)
 		require.Nil(t, summary.Events)
 		require.Nil(t, summary.ThreeWay)

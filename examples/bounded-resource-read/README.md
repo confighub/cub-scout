@@ -12,6 +12,8 @@ included or claimed as shipped.
 | Can I reuse that observation? | The real MCP gateway and the TUI picker retain at most 16 observations, for less than 15 seconds, within their own process. A hit makes no discovery/object requests. |
 | Can I force a fresh check? | MCP `refresh: true` and TUI `r` discard the cached observation and repeat the two reads. Failed refresh never returns the previous success. |
 | Does readiness mean this delivery succeeded? | No. Object-local readiness does not prove source revision, controller delivery, desired/live agreement, related pod health, or application success. The JSON includes omissions. |
+| Which source identity is stamped on the resource? | `configHubOrigin` preserves the observed space/unit IDs, slugs, and optional integer revision without another API request; it does not independently verify the annotation. |
+| What if that identity is absent or conflicts? | An explicit `confighub-origin` omission explains missing, malformed, duplicate, unsupported, or legacy-conflicting metadata. There is no guessed identity or legacy fallback. |
 
 ## CLI And Plugin
 
@@ -97,8 +99,8 @@ is known.
 No cluster or authentication is required:
 
 ```sh
-go test ./pkg/agent ./cmd/cub-scout -run TestBounded -count=1
-go test -race ./pkg/agent ./cmd/cub-scout -run TestBounded -count=1
+go test ./pkg/agent ./cmd/cub-scout -run 'Test(ConfigHubOrigin|Bounded)' -count=1
+go test -race ./pkg/agent ./cmd/cub-scout -run 'Test(ConfigHubOrigin|Bounded)' -count=1
 ```
 
 HTTP fixtures assert methods, exact paths, read counts, TTL expiry, refresh,
@@ -107,6 +109,46 @@ RBAC/not-found/rate-limit responses, malformed/oversized data, and identity chec
 Recorded connected/fleet cases use two explicit kube contexts and duplicate
 resource names; no ConfigHub or fleet API is contacted. These test the provider,
 not a connected companion panel or fleet aggregator.
+
+## Observed Origin
+
+[origin-deployment.json](origin-deployment.json) is a synthetic object using
+the [published SDK annotation shape](https://github.com/confighub/sdk/blob/1303148d2bc952d8b9a4feb4fcca4d11e6e74722/configkit/k8skit/k8skit.go#L288).
+Do not apply it: the fixture tests serve it from local HTTP test servers.
+It has Argo tracking metadata, origin space/unit IDs and revision 7, and an
+unobserved workload generation. Expected answers:
+
+- Owner remains ArgoCD. Origin does not establish a different controller.
+- `configHubOrigin` reports the fixture's space/unit identifiers and revision 7.
+- Current change is not `PASS`: source metadata cannot override workload status.
+- Source, delivery, and drift remain unassessed. No ConfigHub URL, release,
+  target, component, variant, or cluster binding is inferred.
+- A cached read preserves revision 7 after the server fixture changes to 8;
+  explicit refresh reads 8. Failed refresh cannot return the old origin.
+- Two explicit contexts backed by different HTTP servers return separate space
+  IDs even for matching resource names/namespaces. Namespace collisions are
+  tested separately. This proves provider isolation, not a fleet join.
+
+Run from the repository root:
+
+```sh
+go test ./pkg/agent ./cmd/cub-scout \
+  -run 'Test(ConfigHubOrigin|BoundedOrigin|BoundedExplainOwnerFamilies)' -count=1
+```
+
+The command test builds a temporary binary and checks JSON/ASCII/Markdown
+through standalone and plugin-mode invocations. MCP tests use the real bounded
+gateway in forced connected mode with a forbidden connected-command runner:
+cold/refresh reads remain two requests, cache hits zero. TUI tests show the
+same summary and verify narrow viewports. Parser tests reject duplicate keys,
+invalid types, unsafe/oversized identifiers, malformed data, and conflicting
+legacy fields, without echoing raw annotation data. Revisions above 2^53 are
+preserved as int64, and missing revision is distinct from zero.
+
+This metadata appears only on bounded explain surfaces in this slice. Existing
+rich explain/trace, map inventory, watch/bot events, receipts, and connected
+Resource mappings are not extended. Broader provenance remains tracked in
+[#505](https://github.com/confighub/cub-scout/issues/505).
 
 ## Live Smoke
 
@@ -132,6 +174,10 @@ request counts, including error, isolation, and cancellation cases.
 The live TUI picker was checked for namespace filtering, exact selection,
 read/refresh, and returning to the original view. Narrow-screen layout and
 in-flight cancellation/late-result rejection have deterministic tests.
+The origin follow-up reran CLI/plugin/actual-host/MCP proof at 12:13 UTC on
+2026-09-11 with the same request counts. That live object had no origin
+annotation, which correctly remained an omission; positive origin evidence
+and conflict rejection are verified by the synthetic fixture tests above.
 
 Authenticated live ConfigHub integration is not part of this read path. The
 separate v2.9 release check remains blocked by expired local auth; the published

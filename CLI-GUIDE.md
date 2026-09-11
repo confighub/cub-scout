@@ -65,6 +65,9 @@ What each step gives you:
 The TUI equivalent is `Ctrl+e` in `map`. MCP/TUI sessions can reuse observations
 for less than 15 seconds, with explicit refresh and freshness metadata. This
 does not prove delivery or application success; omitted evidence is explicit.
+The same read exposes `configHubOrigin` when a valid origin annotation is
+present, preserving source space/unit identity and revision without another
+request. Missing or conflicting origin remains an omission, not a guessed link.
 See [bounded resource evidence](examples/bounded-resource-read/).
 
 If you prefer JSON first:

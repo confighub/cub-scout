@@ -58,22 +58,23 @@ func init() {
 
 // ExplainSummary is the canonical model for explain output.
 type ExplainSummary struct {
-	ResourceRead             *agent.BoundedReadEvidence   `json:"resourceRead,omitempty"`
-	Omissions                []agent.Omission             `json:"omissions,omitempty"`
-	Resource                 string                       `json:"resource"`
-	Namespace                string                       `json:"namespace"`
-	Owner                    string                       `json:"owner"`
-	Source                   string                       `json:"source"`
-	DeployedVia              string                       `json:"deployedVia"`
-	Health                   string                       `json:"health"`
-	Risks                    string                       `json:"risks"`
-	Drift                    string                       `json:"drift"`
-	Notes                    []string                     `json:"notes,omitempty"`
-	ConfigHubURL             string                       `json:"confighubUrl,omitempty"`             // Canonical unit detail URL in ConfigHub GUI (only when connected)
-	ConfigHubRevisionsURL    string                       `json:"confighubRevisionsUrl,omitempty"`    // Canonical unit revisions URL in ConfigHub GUI (only when connected)
-	ConfigHubRevisionNum     string                       `json:"configHubRevisionNum,omitempty"`     // Deployed ConfigHub revision when known
-	ConfigHubLiveRevisionNum string                       `json:"configHubLiveRevisionNum,omitempty"` // Latest/live ConfigHub revision when known
-	DeliveryEvidence         *agent.TraceDeliveryEvidence `json:"deliveryEvidence,omitempty"`
+	ResourceRead             *agent.BoundedReadEvidence     `json:"resourceRead,omitempty"`
+	ConfigHubOrigin          *agent.ConfigHubOriginEvidence `json:"configHubOrigin,omitempty"`
+	Omissions                []agent.Omission               `json:"omissions,omitempty"`
+	Resource                 string                         `json:"resource"`
+	Namespace                string                         `json:"namespace"`
+	Owner                    string                         `json:"owner"`
+	Source                   string                         `json:"source"`
+	DeployedVia              string                         `json:"deployedVia"`
+	Health                   string                         `json:"health"`
+	Risks                    string                         `json:"risks"`
+	Drift                    string                         `json:"drift"`
+	Notes                    []string                       `json:"notes,omitempty"`
+	ConfigHubURL             string                         `json:"confighubUrl,omitempty"`             // Canonical unit detail URL in ConfigHub GUI (only when connected)
+	ConfigHubRevisionsURL    string                         `json:"confighubRevisionsUrl,omitempty"`    // Canonical unit revisions URL in ConfigHub GUI (only when connected)
+	ConfigHubRevisionNum     string                         `json:"configHubRevisionNum,omitempty"`     // Deployed ConfigHub revision when known
+	ConfigHubLiveRevisionNum string                         `json:"configHubLiveRevisionNum,omitempty"` // Latest/live ConfigHub revision when known
+	DeliveryEvidence         *agent.TraceDeliveryEvidence   `json:"deliveryEvidence,omitempty"`
 
 	// CurrentChange contains generation-scoped rollout progress and verdict
 	// evidence for workload resources. It is omitted when the resource kind is
@@ -723,6 +724,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 	if summary.ResourceRead != nil {
 		fmt.Fprintf(&b, "  %s %s\n", label("Resource read"), formatBoundedRead(summary.ResourceRead))
 	}
+	if summary.ConfigHubOrigin != nil {
+		fmt.Fprintf(&b, "  %s %s\n", label("Origin annotation"), summary.ConfigHubOrigin.Summary())
+	}
 	if summary.CurrentChange != nil {
 		fmt.Fprintf(&b, "  %s %s\n", label("Current change"), colorExplainRolloutDecision(summary.CurrentChange))
 	}
@@ -902,6 +906,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	fmt.Fprintf(&b, "- **Health:** %s\n", summary.Health)
 	if summary.ResourceRead != nil {
 		fmt.Fprintf(&b, "- **Resource read:** %s\n", formatBoundedRead(summary.ResourceRead))
+	}
+	if summary.ConfigHubOrigin != nil {
+		fmt.Fprintf(&b, "- **Origin annotation:** %s\n", summary.ConfigHubOrigin.Summary())
 	}
 	if summary.CurrentChange != nil {
 		fmt.Fprintf(&b, "- **Current change:** `%s`\n", formatRolloutDecisionLine(summary.CurrentChange))
