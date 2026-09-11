@@ -1,6 +1,6 @@
 # Host and Plugin Compatibility Matrix
 
-> **Status:** Updated for v2.9.0 preparation. Plugin packaging has shipped since v2.0.0. Supported combinations depend on both host commands and server capabilities; see the requirements below.
+> **Status:** v2.9.0 compatibility reference. Plugin packaging has shipped since v2.0.0. Supported combinations depend on both host commands and server capabilities; see the requirements below.
 > **Related:** [`plugin-install.md`](../howto/plugin-install.md), [`v2.0.0-migration-guide.md`](../releases/v2.0.0-migration-guide.md), [`cub vs cub scout`](../concepts/cub-vs-cub-scout.md).
 
 ## Supported Invocation Forms

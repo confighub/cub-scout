@@ -114,12 +114,14 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Current release tag: **v2.8.0**. This release adds bounded ConfigHub delivery
+Current release target: **v2.9.0** (`#520`); publication status is tracked on
+[GitHub Releases](https://github.com/confighub/cub-scout/releases).
+The released **v2.8.0** baseline adds bounded ConfigHub delivery
 evidence, MCP release/event/live-status tools, source-truth MCP strategy parity,
 and first-class in-cluster `bot` mode; release notes live at
 `docs/releases/v2.8.0.md`.
 
-**Unreleased v2.9.0 work:** `#516` / `#517` add connected MCP
+**v2.9.0 additions:** `#516` / `#517` add connected MCP
 `confighub_k8s_resources`, `confighub_k8s_types`, and `confighub_resources`.
 `#518` / `#520` add identity-checked activity evidence: an observed Application
 Space ID must match the reported Space ID, with a unique Application name and

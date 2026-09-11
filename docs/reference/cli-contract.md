@@ -28,7 +28,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | v0.20 | Flux operator interop read-only slice (`map cronjobs/jobs/actions/activity/previews`, `trace --artifacts`) |
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
 | v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, `explain`, and `map activity`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
-| v2.9 (in preparation) | Resource-backed connected MCP reads; identity-checked supporting live-status evidence on Argo Application activity rows |
+| v2.9 | Resource-backed connected MCP reads; identity-checked supporting live-status evidence on Argo Application activity rows |
 
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.

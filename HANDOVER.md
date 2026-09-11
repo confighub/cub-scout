@@ -1,17 +1,23 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-09-11 — captures the v2.8.0 delivery-evidence and bot-mode release. Current release tag is `v2.8.0`; release notes live at [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The May/July 2026 receipts, skill-catalog, and live-delivery sections below remain historical context.
+Last updated: 2026-09-11. Current release target: `v2.9.0`, with publication
+tracked in `#520` and on GitHub Releases. Notes: [`docs/releases/v2.9.0.md`](docs/releases/v2.9.0.md).
+The v2.8.0 baseline and May/July sections below remain historical context.
 
-## Active Release: v2.9.0 (Not Yet Published)
+## v2.9.0 Release Scope
 
 Tracking: `#520`; scope and 3.0 criteria in `docs/roadmap.md`; proof in
 `docs/releases/v2.9.0.md`. `#516` and `#517` are merged Resource-backed MCP
-reads, not part of v2.8.0. The activity work from `#518` is being hardened:
+reads, not part of v2.8.0. The activity work from `#518` is hardened in `#521`:
 require observed Application Space ID plus unique Application name; selected
 space alone cannot prove correlation. Negative cases remain omissions.
 
 Release checks cover scoped command counts, connected context/error handling,
 standalone/plugin parity, MCP/watch/bot, and distribution artifacts.
+Namespace-scoped MCP map calls now use `--namespace`. The bot image now declares
+numeric UID/GID 65532 so the `runAsNonRoot` example can start in Kubernetes.
+Full local tests/coverage and five-mode smoke passed, including an isolated
+in-cluster bot run. Final CI and publication status remain on `#520` / `#521`.
 The local ConfigHub token was expired during preparation; recorded connected
 proof must be distinguished from a successful authenticated live run.
 Commander `#519` starts after v2.9.0. `#475` stays delayed; deeper joins and

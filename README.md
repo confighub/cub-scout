@@ -46,8 +46,9 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 
 The main path starts from a **live cluster**. It works **standalone** with your current kube context, or **connected** to [ConfigHub](https://confighub.com) for governed comparison, history, import, fleet queries, and AI-friendly read-only workflows. Local repo and manifest inputs are available later for adoption, import-preview, and source-file enrichment, but they are not the first mental model.
 
-Resource MCP reads and Application-row joins are v2.9.0 additions currently in
-preparation. Scoped Resource queries use ConfigHub rather than Kubernetes, but
+Resource MCP reads and Application-row joins are v2.9.0 additions. See
+[release notes](docs/releases/v2.9.0.md) for scope and validation. Scoped Resource
+queries use ConfigHub rather than Kubernetes, but
 each repeated query still runs a fresh `cub` command. Watch/bot remain polling
 observers; output caps and freshness stamps are not API rate limits. Reuse saved
 evidence when appropriate. [Request-cost proof](examples/mcp-gateway/README.md#request-cost-and-context-proof).
