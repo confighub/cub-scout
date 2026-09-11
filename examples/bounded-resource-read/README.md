@@ -1,8 +1,9 @@
 # Bounded Resource Evidence
 
-Unreleased v2.10 work, tracked in [#519](https://github.com/confighub/cub-scout/issues/519).
-This is the Scout-side provider foundation; a companion explorer panel is not
-included or claimed as shipped.
+Scout v2.10.0 provider, tracked in [#519](https://github.com/confighub/cub-scout/issues/519).
+The [companion Resource panel](https://github.com/confighub/cub-commander/blob/main/docs/resource-evidence.md)
+ships separately in Commander v0.3.0 and requires this provider. Publication and
+artifact checks are recorded in [#525](https://github.com/confighub/cub-scout/issues/525).
 
 ## User Questions
 
