@@ -48,7 +48,9 @@ Live proof includes CLI, plugin-mode, the actual `cub` v0.4.4 host using an
 isolated config/plugin directory, and real MCP cold/hit/refresh (`1+1`, `0+0`,
 `1+1` requests). Use `--kube-context`, not `--context`: the host consumes the
 latter. A live TUI check caught and fixed the bounded picker's CLI filter
-handling. Full tests, scoped tests twice, race tests, and read-only/docs guards
+handling. Inventory refresh is pinned to the displayed context; the picker
+requires the exact binding from that inventory load and declines unbound or
+in-cluster inventory. Full tests, scoped tests twice, race tests, and read-only/docs guards
 passed locally; PR CI must pass before merge. The optional example-catalog check in this shared checkout encounters
 a missing README in the sibling examples repository; verify in CI's isolated
 layout without editing that repository.

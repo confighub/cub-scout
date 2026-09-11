@@ -182,7 +182,7 @@ func TestBoundedExplainUnknownAndPayloadBoundary(t *testing.T) {
 }
 
 func TestBoundedExplainTUISelectionCancellationAndLateResults(t *testing.T) {
-	m := LocalClusterModel{ready: true, width: 100, height: 30, contextName: "cluster-a", entries: []MapEntry{
+	m := LocalClusterModel{ready: true, width: 100, height: 30, contextName: "cluster-a", boundedContext: "cluster-a", entries: []MapEntry{
 		{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-b", Name: "api"},
 		{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-a", Name: "api"},
 		{Kind: "Deployment", Namespace: "unknown", Name: "api"},
@@ -222,7 +222,7 @@ func TestBoundedExplainTUISelectionCancellationAndLateResults(t *testing.T) {
 
 func TestBoundedExplainTUINarrowView(t *testing.T) {
 	for _, size := range [][2]int{{100, 30}, {40, 12}, {20, 5}} {
-		m := LocalClusterModel{ready: true, width: size[0], height: size[1], contextName: "cluster-with-a-long-context-name", entries: []MapEntry{
+		m := LocalClusterModel{ready: true, width: size[0], height: size[1], contextName: "cluster-with-a-long-context-name", boundedContext: "cluster-with-a-long-context-name", entries: []MapEntry{
 			{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-a", Name: "resource-with-a-long-name"},
 		}}
 		m.openBoundedExplain()
@@ -239,7 +239,7 @@ func TestBoundedExplainTUINarrowView(t *testing.T) {
 }
 
 func TestBoundedExplainTUICancelsPendingRead(t *testing.T) {
-	m := LocalClusterModel{ready: true, width: 100, height: 30, contextName: "cluster-a", entries: []MapEntry{
+	m := LocalClusterModel{ready: true, width: 100, height: 30, contextName: "cluster-a", boundedContext: "cluster-a", entries: []MapEntry{
 		{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-a", Name: "api"},
 	}}
 	m.openBoundedExplain()
@@ -285,7 +285,7 @@ func TestBoundedExplainTUIRespectsFilters(t *testing.T) {
 		{name: "conflicting scope", options: ViewOptions{Namespace: "team-a"}, namespace: 2, want: 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			m := LocalClusterModel{ready: true, viewOpts: tc.options, activeQuery: tc.query, namespaceIdx: tc.namespace, namespaces: []string{"team-a", "team-b"}, entries: []MapEntry{
+			m := LocalClusterModel{ready: true, boundedContext: "cluster-a", viewOpts: tc.options, activeQuery: tc.query, namespaceIdx: tc.namespace, namespaces: []string{"team-a", "team-b"}, entries: []MapEntry{
 				{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-a", Name: "api", Owner: "Flux"},
 				{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-b", Name: "api", Owner: "ArgoCD"},
 				{APIVersion: "apps/v1", Kind: "StatefulSet", Namespace: "team-a", Name: "db", Owner: "Helm"},
@@ -294,6 +294,46 @@ func TestBoundedExplainTUIRespectsFilters(t *testing.T) {
 			require.Len(t, m.boundedPanel.items, tc.want)
 		})
 	}
+}
+
+func TestBoundedExplainTUIPinsInventoryContext(t *testing.T) {
+	t.Setenv("KUBERNETES_SERVICE_HOST", "")
+	var requestsA, requestsB atomic.Int32
+	server := func(requests *atomic.Int32) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"apiVersion":"v1","kind":"List","items":[]}`)
+		}))
+	}
+	a, b := server(&requestsA), server(&requestsB)
+	defer a.Close()
+	defer b.Close()
+	path := boundedTestConfig(t, a.URL)
+	m := LocalClusterModel{contextName: "cluster-a"}
+	refresh := m.loadLocalClusterData
+	raw, err := clientcmd.LoadFromFile(path)
+	require.NoError(t, err)
+	raw.CurrentContext = "cluster-b"
+	raw.Clusters["other"] = &clientcmdapi.Cluster{Server: b.URL}
+	raw.Contexts["cluster-b"].Cluster = "other"
+	data, err := clientcmd.Write(*raw)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(path, data, 0600))
+	loaded := refresh().(localDataLoadedMsg)
+	require.NoError(t, loaded.err)
+	require.Equal(t, "cluster-a", loaded.boundedContext)
+	require.Positive(t, requestsA.Load())
+	require.Zero(t, requestsB.Load(), "refresh must stay in the displayed context")
+	updated, _ := m.Update(loaded)
+	m = updated.(LocalClusterModel)
+	require.Equal(t, "cluster-a", m.boundedContext)
+	m.openBoundedExplain()
+	require.Equal(t, "cluster-a", m.boundedPanel.context)
+	m.boundedContext = ""
+	m.openBoundedExplain()
+	require.Empty(t, m.boundedPanel.items, "unbound or in-cluster inventory must not infer a kubeconfig context")
+	require.Nil(t, m.boundedPanel.read(false))
 }
 
 func TestBoundedExplainOwnerFamilies(t *testing.T) {

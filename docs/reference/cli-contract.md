@@ -189,7 +189,10 @@ a ConfigHub context and is stripped before plugin invocation.
   Consumers must check `resourceRead.available`, not just the exit code.
 - TUI `Ctrl+e` opens an exact-resource picker from existing filtered inventory;
   Enter reads, `r` refreshes, Esc cancels/backs out. Late results cannot replace
-  another selection. Existing map inventory cost is unchanged.
+  another selection. Map inventory refreshes remain pinned to its displayed
+  kube context. The picker requires the binding recorded by the inventory load;
+  unloaded/in-cluster inventory cannot be associated with a kubeconfig context
+  by name alone. Existing map inventory cost is unchanged.
 - This is object-local evidence, not source truth, delivery completion, drift,
   or application success. The serial MCP transport does not add concurrent
   cancellation-notification handling; TUI cancellation and read timeouts apply.

@@ -40,7 +40,14 @@ func (m *LocalClusterModel) openBoundedExplain() {
 	if m.boundedSession == nil {
 		m.boundedSession = &boundedExplainSession{}
 	}
-	panel := &boundedExplainPanel{context: m.contextName, observe: m.boundedSession.observe}
+	panel := &boundedExplainPanel{context: m.boundedContext, observe: m.boundedSession.observe}
+	panel.resize(m.width, m.height)
+	m.boundedPanel = panel
+	if panel.context == "" {
+		panel.viewing = true
+		panel.setContent("No explicit kube context binding for this inventory. Wait for inventory to load, or use standalone explain --bounded with --kube-context. In-cluster inventory cannot be joined to a kubeconfig context by name alone.")
+		return
+	}
 	seen := make(map[agent.BoundedResourceRef]bool)
 	for _, entry := range m.getFilteredEntries() {
 		if m.viewOpts.Namespace != "" && entry.Namespace != m.viewOpts.Namespace {
@@ -59,8 +66,6 @@ func (m *LocalClusterModel) openBoundedExplain() {
 		}
 	}
 	sort.Slice(panel.items, func(i, j int) bool { return boundedRefLabel(panel.items[i]) < boundedRefLabel(panel.items[j]) })
-	panel.resize(m.width, m.height)
-	m.boundedPanel = panel
 }
 
 func boundedRefLabel(ref agent.BoundedResourceRef) string {

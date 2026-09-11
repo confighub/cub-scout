@@ -60,6 +60,13 @@ API/Kind/namespace/name, then Enter. `r` refreshes, and Esc returns/cancels. The
 viewport shows the equivalent CLI command. Normal map startup/refresh still has
 its existing inventory cost; the two-read budget applies only to the bounded
 selected-object operation, not the entire map application.
+Map inventory reloads remain pinned to the displayed kube context even if
+another terminal changes current-context. The picker uses the context recorded
+by that inventory load, not just a header or cluster nickname. Unloaded or
+in-cluster inventory has no explicit kubeconfig binding, so the bounded picker
+does not offer reads from it. Normal in-cluster map/watch/bot behavior remains
+available; use explicit standalone `explain --bounded` when a kubeconfig context
+is known.
 
 ## Evidence And Limits
 
