@@ -84,6 +84,24 @@ reviewed version. Old feedback is therefore not proof of a failed or absent
 application, nor proof it is still healthy. Keep that distinction in Scout's
 connected answers. Integration continues in [#502](https://github.com/confighub/cub-scout/issues/502).
 
+### Current Feedback Verdict Limit
+
+A deterministic review probe against the unchanged v2.10.0
+[consumer](https://github.com/confighub/cub-scout/blob/f9f5512606ca4abd393625d33ff453114aaf68af/cmd/cub-scout/gitops_delivery.go#L400)
+also found a Scout-side gap. With a 15-minute freshness threshold:
+
+| Report input | v2.10.0 result |
+|---|---|
+| Synced/Healthy/Succeeded, missing or invalid `observedAt` | Freshness `unknown`, but both verdicts remain `PASS`. |
+| Same positive report, timestamp one day in the future | Age clamped to zero, freshness `fresh`, both verdicts `PASS`. |
+| Failed/Degraded report, timestamp one day old | Freshness `stale`, both verdicts remain `BLOCK`. |
+
+Do not use a connected live-status verdict alone as proof of current delivery
+or health. Read its timestamp and freshness, and obtain current scoped evidence
+where needed. Tightening this contract is a correctness priority under #502,
+not a fix included in this documentation update. Bounded object-read timestamps
+and cache behavior are a separate contract.
+
 ## What Would Prove Leadership
 
 These are follow-up acceptance criteria, not shipped features:
@@ -97,7 +115,9 @@ These are follow-up acceptance criteria, not shipped features:
   live object set and current workload generation together across supported
   controller families. Include same-name collisions and missing metadata;
   never turn incomplete coverage into a successful delivery verdict.
-- **Status-feedback honesty (#502):** test unchanged-but-old reports, deleted
+- **Status-feedback honesty (#502), correctness first:** prevent current-success
+  claims from unknown/invalid/future timestamps; distinguish an old failure
+  report from current failure. Test unchanged-but-old reports, deleted
   Applications, out-of-order updates and unavailable history. Prefer consuming
   producer-owned evidence to cloning its delivery or writeback duties.
 - **Usable distribution (#520/#527):** correct current-version install paths,

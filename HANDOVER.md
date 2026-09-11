@@ -5,6 +5,10 @@ packaged Commander `v0.3.0` (`7ffc9c5`). Final CI, downloaded checksums,
 standalone/plugin/MCP/TUI/watch/bot proof and validation gaps are recorded in
 `#525`. `#520` remains open for registry access, architecture coverage and Go
 module major-version distribution. Post-release intro/docs review is `#527`.
+Review found a v2.10 live-status freshness gap: missing/invalid timestamps can
+still yield `PASS`, future timestamps become fresh, and old failures stay
+`BLOCK`. Consumer contract work in `#502` is the next correctness priority;
+the docs disclose this but do not change runtime behavior.
 Notes: [`docs/releases/v2.10.0.md`](docs/releases/v2.10.0.md).
 The v2.8.0 baseline and May/July sections below remain historical context.
 

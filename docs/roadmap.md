@@ -102,12 +102,14 @@ These are tracked follow-ups, not claims of competitive leadership:
 - [x] First-run documentation and current-version install guidance (#527).
   Preserve the README User questions and all five run modes; distinguish live
   inspection from offline artifacts and observation from delivery automation.
+- [ ] Feedback freshness correctness (#502), before new explorer scope:
+  v2.10 permits `PASS` with unknown/future timestamps and keeps stale failures
+  as `BLOCK`. Define current-versus-historical verdict semantics and test
+  invalid/missing/future timestamps, unchanged deduplicated reports, deleted
+  Applications, out-of-order observations and missing history.
 - [ ] Measured explorer parity and API-load-aware continuous observation (#519).
   Compare identical task/permission/scale fixtures; specify native watch/store
   lifecycle, reconnection, freshness and cache bounds before implementation.
-- [ ] Feedback freshness semantics (#502): unchanged deduplicated reports,
-  deleted Applications, out-of-order observations and missing history must not
-  produce false delivery/application-health conclusions.
 - [ ] Distribution completion (#520): anonymous registry pull, container
   architecture coverage, and a deliberate Go module major-version strategy.
   `go install ...@latest` currently resolves the older v1 line; archives,
