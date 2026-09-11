@@ -304,6 +304,7 @@ cub-scout mcp serve
 - `compare_three_way` is the connected convergence proof tool after scope discovery, not the first troubleshooting move.
 - `compare_source_truth` strategy values are generated from the same source as the CLI, so MCP and CLI strategy parity is part of the contract.
 - `confighub_k8s_types` and `confighub_k8s_resources` read ConfigHub Resource-backed intended configuration through `cub k8s types/get`; they do not read live cluster state, and they require an explicit `space` or `target` scope.
+- `confighub_resources` reads the ConfigHub Resource entity through `cub resource list`; it does not read live cluster state, and it requires an explicit `space`.
 - `confighub_live_status`, `confighub_releases`, and `confighub_unit_events` require explicit space scope. Use `*` only for an intentional all-spaces read.
 - All MCP tool descriptors advertise `annotations.readOnlyHint=true`.
 
@@ -377,6 +378,19 @@ cub-scout mcp serve
   - `space` (required string)
   - `where` (optional string)
 - Backed by `cub release list --space <space> -o json`
+
+- Tool name: `confighub_resources`
+- Availability: connected mode only
+- Parameters:
+  - `space` (required string; `*` means explicit all-spaces read)
+  - `where` (optional string)
+  - `contains` (optional string)
+  - `select` (optional string)
+  - `filter` (optional string)
+  - `view` (optional string)
+  - `raw_data` (optional boolean)
+- Backed by `cub resource list --space <space> -o json`
+- Returns ConfigHub Resource entity rows, not live cluster state.
 
 - Tool name: `confighub_unit_events`
 - Availability: connected mode only

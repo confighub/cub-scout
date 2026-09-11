@@ -1096,13 +1096,15 @@ For the highest-value connected/read-only surfaces, it may also add `structuredC
   - `structuredContent.data`
   - `structuredContent.liveStatuses[]`
   - `structuredContent.omissions[]`
-- `confighub_k8s_resources` and `confighub_k8s_types` return parsed ConfigHub Resource-backed JSON under `structuredContent.data`; these are ConfigHub-stored intended-configuration reads, not live-cluster reads.
+- `confighub_k8s_resources`, `confighub_k8s_types`, and `confighub_resources` return parsed ConfigHub Resource-backed JSON under `structuredContent.data`; these are ConfigHub-stored intended-configuration reads, not live-cluster reads.
 - `confighub_releases` and `confighub_unit_events` return parsed ConfigHub JSON under `structuredContent.data`
 
 Connected ConfigHub history/status MCP tools require an explicit `space`
 argument. Passing `*` is supported only as an explicit all-spaces request.
 The ConfigHub Kubernetes Resource MCP tools require an explicit `space` or
 `target` scope; passing `space: "*"` is likewise an explicit all-spaces request.
+The generic Resource entity MCP tool requires an explicit `space`; passing
+`space: "*"` is likewise an explicit all-spaces request.
 
 ### Example MCP Result Shape
 

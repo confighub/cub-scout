@@ -83,7 +83,7 @@ Batch B (governance-shaped; 4 scenarios):
 | [`references/plugin-vs-standalone.md`](references/plugin-vs-standalone.md) | `cub scout` (plugin) vs `cub-scout` (standalone binary) invocation parity; v2.0.0 switchover plan |
 | [`references/argocd-applicationset.md`](references/argocd-applicationset.md) | ApplicationSet generators (git directories, list, clusters, matrix, merge); full-path slugs; exclude patterns |
 | [`references/flux-source-types.md`](references/flux-source-types.md) | GitRepository / HelmRepository / OCIRepository / Bucket / HelmChart; the two-stage delivery chain; source-truth anchors |
-| [`references/mcp-tool-catalog.md`](references/mcp-tool-catalog.md) | Complete MCP tool catalog — 6 standalone + 10 connected, per-tool parameters and return shape |
+| [`references/mcp-tool-catalog.md`](references/mcp-tool-catalog.md) | Complete MCP tool catalog — 6 standalone + 11 connected, per-tool parameters and return shape |
 
 ### Umbrella router
 

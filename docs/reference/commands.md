@@ -1966,7 +1966,7 @@ cub-scout mcp serve
 
 - Standalone tools: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
 - `doctor` is intentionally first: it is the natural first troubleshooting command for AI and MCP clients, including when the problem may be local access uncertainty such as wrong context, stale kubeconfig, or API reachability.
-- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
+- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - MCP tool descriptors mark every tool with `annotations.readOnlyHint=true`.
 - Protocol transport is stdio with `Content-Length` framed JSON-RPC messages.
@@ -2018,6 +2018,14 @@ cub-scout mcp serve
 - `confighub_releases`
   - `space` (required)
   - `where` (optional)
+- `confighub_resources`
+  - `space` (required; use `*` only for an explicit all-spaces read)
+  - `where` (optional Resource/entity/Data filter)
+  - `contains` (optional)
+  - `select` (optional)
+  - `filter` (optional)
+  - `view` (optional)
+  - `raw_data` (optional boolean)
 - `confighub_unit_events`
   - `space` (required)
   - `unit` (optional)

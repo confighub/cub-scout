@@ -22,6 +22,7 @@ When connected to ConfigHub (`cub auth login`), it additionally exposes:
 - `confighub_k8s_types`
 - `confighub_live_status`
 - `confighub_releases`
+- `confighub_resources`
 - `confighub_unit_events`
 - `confighub_units`
 - `confighub_unit_get`
@@ -43,6 +44,7 @@ The gateway reuses existing CLI JSON command outputs:
 - `confighub_k8s_types` -> `cub k8s types [<type>] -o json`
 - `confighub_live_status` -> `cub space list -o json --select Slug,SpaceID,Annotations,Labels`
 - `confighub_releases` -> `cub release list --space <space> -o json`
+- `confighub_resources` -> `cub resource list --space <space> -o json`
 - `confighub_unit_events` -> `cub unit-event list [unit] --space <space> -o json`
 - `confighub_units` -> `cub unit list --json`
 - `confighub_unit_get` -> `cub unit get --json`
@@ -64,6 +66,13 @@ the intended resources you need:
 
 Both tools read ConfigHub's stored Resource data. They do not read live cluster
 state, force sync a controller, or mutate ConfigHub.
+
+For generic indexed-resource predicates that are not Kubernetes-shaped, use the
+Resource entity query directly:
+
+```json
+{"name":"confighub_resources","arguments":{"space":"*","where":"ResourceType = 'apps/v1/Deployment' AND Data.spec.replicas > 1","select":"ResourceType,ResourceName,Data"}}
+```
 
 ## Safety
 
