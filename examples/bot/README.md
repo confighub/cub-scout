@@ -17,6 +17,11 @@ Kubernetes authentication.
 
 ## Quick Run
 
+Choose a usable image first. Anonymous pulls from the documented registry are
+currently unverified/failing (#520); the default manifest pins v2.10.1 but does
+not fix access. The published registry image is amd64-only. The local-build
+path below supports either Linux amd64 or arm64 without pulling that image.
+
 Create the webhook Secret:
 
 ```bash
@@ -36,6 +41,52 @@ Inspect the Pod:
 ```bash
 kubectl -n cub-scout logs deploy/cub-scout-bot
 ```
+
+## Build a Local Image From a Release
+
+The helper is an unreleased installation addition for v2.11 and can package
+the existing v2.10.1 release. It requires Bash, curl, tar, awk, sha256sum or
+shasum, and Docker with BuildKit/`--load` support. It needs network access to
+GitHub release assets and the runtime base image, but not GHCR access or
+ConfigHub authentication.
+
+Select the architecture of the **target Kubernetes nodes**, not necessarily
+your laptop. For arm64:
+
+```sh
+bash examples/bot/build-from-release.sh v2.10.1 arm64
+docker run --rm --platform linux/arm64 --read-only --cap-drop ALL \
+  --security-opt no-new-privileges cub-scout-bot:v2.10.1-arm64 version
+```
+
+For amd64, use `amd64` in both commands. An optional third argument sets the
+local image name. The helper downloads the exact Linux archive and release
+checksum manifest, rejects missing/duplicate/mismatched checksums, extracts
+only the binary, and uses this checkout's existing numeric-nonroot Dockerfile.
+It removes its temporary build context on success or failure. No image is
+pushed, kubeconfig read, registry permission changed, or cluster mutated.
+
+Checksum verification establishes agreement with the published checksum
+manifest, not a signature or bit-for-bit reproducibility of the runtime image:
+the Dockerfile's base image may change independently of the Scout binary.
+
+For a local kind cluster, load the built image into your chosen cluster:
+
+```sh
+kind load docker-image cub-scout-bot:v2.10.1-arm64 --name <cluster-name>
+```
+
+Set the Deployment's `containers[].image` in `deployment.yaml` to
+`cub-scout-bot:v2.10.1-arm64` (or the amd64 tag), retaining
+`imagePullPolicy: IfNotPresent`, before applying it. For other clusters, use
+your normal image distribution process and set the corresponding image name.
+Image loading/pushing and applying the manifests are separate operator actions;
+the helper never performs them or provisions webhook credentials.
+
+Offline helper tests: `go test ./test/unit -run '^TestBotBuildFromRelease$' -count=2`.
+They use synthetic archives and fake curl/docker tools, including rejection
+before build and exact image/platform arguments. Runtime-image proof is
+separate from an in-cluster observation/sink smoke test or public pull access.
 
 ## Scope Tuning
 

@@ -74,8 +74,8 @@ path. Use an archive or build the tagged checkout below. Distribution follow-up:
 ### Container and Bot
 
 The v2.10.1 workflow publishes a Linux amd64 image with numeric non-root UID
-65532. **Anonymous registry pulls returned 403** during v2.10.0 verification;
-the patch's pull check is tracked in [#530](https://github.com/confighub/cub-scout/issues/530).
+65532. **Anonymous registry pulls returned 403** during v2.10.1 verification;
+the remaining access gap is tracked in [#520](https://github.com/confighub/cub-scout/issues/520).
 Do not treat the command below as a verified public installation route:
 
 ```bash
@@ -87,6 +87,12 @@ container in this release. The [bot example](../../examples/bot/) describes
 ServiceAccount/RBAC and sink configuration; [release proof](../releases/v2.10.1.md)
 distinguishes local-image smoke from registry access. Do not weaken permissions
 or change package visibility just to make a smoke test pass.
+
+The development branch also provides a
+[checksum-verified local-image helper](../../examples/bot/#build-a-local-image-from-a-release)
+for the existing Linux amd64/arm64 archives. It builds and loads an image
+locally; it does not publish an image, deploy a bot, or repair registry access.
+This helper is planned for v2.11 and is not included in the v2.10.1 checkout.
 
 ### Build from Source
 

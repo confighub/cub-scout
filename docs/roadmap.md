@@ -139,6 +139,9 @@ Ship the v2.10.1 correction first; keep the next minor release additive.
   interactive equivalent or explicit limitation, tests and a worked example.
 - [ ] Continue distribution checks (#520); do not silently equate recorded
   connected proof with authenticated live verification.
+  The unreleased [bot image helper](../examples/bot/#build-a-local-image-from-a-release)
+  builds a local amd64/arm64 runtime image from a checksum-verified release
+  archive. It does not fix public registry pulls, push images or deploy a bot.
 
 ### After v2.9.0
 
