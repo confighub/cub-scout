@@ -32,7 +32,7 @@ This is supporting evidence. The selected receipt predicate still owns
 `predicate.verdict`; the delivery controller and application-health systems
 remain the authorities for their own status.
 
-The [unreleased freshness correction](../../live-delivery-observability/#trusting-feedback-freshness)
+The [v2.10.1 freshness correction](../../live-delivery-observability/#trusting-feedback-freshness)
 retains old/undated reports as supporting evidence without presenting them as
 current success or failure. The corrected nested verdict and freshness omission
 are fingerprint-covered; they do not override the selected receipt predicate.

@@ -102,12 +102,12 @@ where needed. Tightening this contract is a correctness priority under #502,
 not a fix included in this documentation update. Bounded object-read timestamps
 and cache behavior are a separate contract.
 
-**Post-v2.10 implementation, not yet released:** timestamp gating now makes
+**v2.10.1 correction:** timestamp gating now makes
 missing/invalid/zero/future reports inconclusive and stale reports `WATCH`,
 including old failures. It retains reported fields and emits an explanatory
 omission. [Recorded proof](../../examples/live-delivery-observability/#trusting-feedback-freshness)
 covers the shared reader, MCP, doctor, activity, correlation and fingerprinted
-receipts. The published v2.10 behavior above is unchanged; broader producer
+receipts. The historical v2.10.0 behavior above is unchanged; broader producer
 deletion/history and exact-release checks remain open.
 
 ## What Would Prove Leadership

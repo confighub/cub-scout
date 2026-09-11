@@ -102,8 +102,8 @@ These are tracked follow-ups, not claims of competitive leadership:
 - [x] First-run documentation and current-version install guidance (#527).
   Preserve the README User questions and all five run modes; distinguish live
   inspection from offline artifacts and observation from delivery automation.
-- [x] Timestamp-gated feedback verdicts (#502), implemented after v2.10 and
-  not yet released: invalid/missing/zero/future times are inconclusive; stale
+- [x] Timestamp-gated feedback verdicts (#502), merged in #529 for v2.10.1
+  (publication tracked in #530): invalid/missing/zero/future times are inconclusive; stale
   success/failure reports ask for a recheck. Original reports, timestamps and
   omissions survive MCP, activity, correlation and receipts. Recorded proof:
   [feedback freshness](../examples/live-delivery-observability/#trusting-feedback-freshness).

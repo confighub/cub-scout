@@ -1143,7 +1143,7 @@ reason such as `forbidden`, `unauthorized`, `timeout`, or `list_failed`.
 
 `deliveryEvidence` appears only with `--with-confighub`. It is additive and
 never replaces controller or Kubernetes status. `liveStatuses[]` separates
-`deliveryVerdict` from `applicationHealthVerdict`. In the unreleased correction
+`deliveryVerdict` from `applicationHealthVerdict`. In the v2.10.1 correction
 after v2.10.0, only a valid, non-future report within the staleness threshold may
 yield `PASS` or `BLOCK`. Stale reported states become `WATCH`, including old
 failures; missing/invalid/zero/future timestamps become `unknown` freshness and

@@ -986,7 +986,7 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
 The command never consumes ConfigHub event cursors and never mutates ConfigHub,
 the event consumer, the delivery controller, or Kubernetes.
 
-**Unreleased correction after v2.10.0:** the freshness gate above fixes the
+**v2.10.1 correction:** the freshness gate above fixes the
 published v2.10 behavior that allowed unknown/future timestamps to accompany
 `PASS`, and kept stale failures as `BLOCK`. Non-fresh reports now also produce
 an omission with `layer: confighub.liveStatus.freshness` describing why current

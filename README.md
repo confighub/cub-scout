@@ -2,7 +2,7 @@
 
 **A read-only Kubernetes and GitOps explorer for people, scripts, and AI agents.**
 
-[v2.10.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.10.0)
+[v2.10.1 release](https://github.com/confighub/cub-scout/releases/tag/v2.10.1)
 | [Start here](docs/getting-started/start-here.md)
 | [Command guide](CLI-GUIDE.md)
 
@@ -44,7 +44,7 @@ cub-scout gitops status   # What do delivery controllers report?
 cub-scout map             # Explore interactively
 ```
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.10.0`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.10.1`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -84,9 +84,9 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | Which indexed resources match a fleet-wide predicate? | MCP `confighub_resources` | Read-only ConfigHub Resource entity queries through `cub resource list`: server-side `ResourceType`, `ResourceName`, `TargetID`, `Unit.*`, `Space.*`, and `Data.*` predicates, optional views/selects/raw data, and explicit space scoping for broad explorer questions. |
 | Could a same-name application inherit another application's delivery status? | `map activity --with-confighub --format json` | Joins require an observed Application Space ID matching the reported Space ID plus a unique, exact Application name in the selected non-wildcard space. Missing/conflicting metadata and ambiguous names/statuses remain correlation omissions; the Argo-owned result is preserved. |
 | What release or event triggered this delivery attempt? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `history`, MCP `confighub_releases`, MCP `confighub_unit_events` | Bounded ConfigHub release and unit-event evidence for a known space/time window, including release ids, digests, targets, unit events, timestamps, exact resource-correlation keys when available, activity timeline rows, and structured omissions when history cannot be joined safely. |
-| Did evented delivery feedback report back, and is the report fresh? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, MCP `confighub_live_status` | Read-only parsing of ConfigHub live-status writeback, with `observedAt`, freshness, sync status, operation phase, observed revision, delivery verdict, separate application-health verdict, scope-level rollups, timeline rows, exact joins onto matching Argo Application activity rows, and object-level matches only when exact space plus app/unit identity is present. **v2.10 limit:** unknown or future timestamps can still accompany `PASS`; inspect timestamps, not the verdict alone. [Known freshness gap](docs/reference/explorer-comparison.md#current-feedback-verdict-limit). |
+| Did evented delivery feedback report back, and is the report fresh? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, MCP `confighub_live_status` | Read-only parsing of ConfigHub live-status writeback, with `observedAt`, freshness, sync status, operation phase, observed revision, delivery verdict, separate application-health verdict, scope-level rollups, timeline rows, exact joins onto matching Argo Application activity rows, and object-level matches only when exact space plus app/unit identity is present. **v2.10.1:** unknown or future timestamps cannot justify `PASS`. Earlier versions have a [documented freshness gap](docs/reference/explorer-comparison.md#current-feedback-verdict-limit). |
 | Is the in-cluster event consumer present and healthy? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `map deployers` | Conservative, label-selected detection of the known event-consumer Deployment shape across namespaces when allowed, with ready/desired replicas, activity timeline rows, and `doctor` top issues when an observed consumer is unhealthy; absence or RBAC narrowing becomes an omission, not a claim that no eventing exists. |
-| Can I trust a reported success or failure when its timestamp is missing, future, or old? | Connected `gitops status`, `doctor`, `map activity`, `trace`, `explain`, MCP `confighub_live_status`, single-resource receipts | **Post-v2.10.0 fix (unreleased):** missing/invalid/zero/future timestamps yield `INCONCLUSIVE`; stale reports yield `WATCH`, including old failures. The original report, timestamp and a freshness omission stay visible. Re-reading an unchanged report does not renew it; the next step is a current controller/workload read. [Cases and proof](examples/live-delivery-observability/#trusting-feedback-freshness). |
+| Can I trust a reported success or failure when its timestamp is missing, future, or old? | Connected `gitops status`, `doctor`, `map activity`, `trace`, `explain`, MCP `confighub_live_status`, single-resource receipts | **v2.10.1:** missing/invalid/zero/future timestamps yield `INCONCLUSIVE`; stale reports yield `WATCH`, including old failures. The original report, timestamp and a freshness omission stay visible. Re-reading an unchanged report does not renew it; the next step is a current controller/workload read. [Cases and proof](examples/live-delivery-observability/#trusting-feedback-freshness). |
 | Has intended configuration reached the cluster? | `compare three-way` | DRY/WET/LIVE agreement for a resource, namespace, cluster, or governed view, with states like `agreed`, `converging`, `diverged`, and `partial`. |
 | Did the controller consume the expected source revision or OCI digest? | `trace`, `trace --with-confighub`, `gitops status`, `compare source-truth`, `gitops status --with-confighub` | Controller-owned source status, revision/digest evidence, object-correlated ConfigHub release digest context when exact space+target joins exist, and proof gaps when controller/source identifiers cannot be joined safely. |
 | Did this rendered install set land as a set? | `compare object-set`, `receipt verify --file` | Set-level desired-vs-live evidence from rendered YAML: authored-field deltas, optional added/removed object closure, object-set receipts, normalization profiles, freshness TTL, and CI-gate verdicts. |
@@ -115,6 +115,10 @@ evidence when appropriate. [Request-cost proof](examples/mcp-gateway/README.md#r
 [release notes and upgrade order](docs/releases/v2.10.0.md) for Scout/companion
 compatibility, request budgets, and explicit validation limits. The companion
 is separately packaged; install Scout v2.10.0 before Commander v0.3.0.
+
+**v2.10.1 corrects feedback freshness.** Missing or future report timestamps
+cannot justify success; old success and failure reports ask for a current check.
+See [patch notes and upgrade guidance](docs/releases/v2.10.1.md).
 
 ### Who reaches for cub-scout?
 
