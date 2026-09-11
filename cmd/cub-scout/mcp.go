@@ -327,10 +327,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"bounded":     map[string]interface{}{"type": "boolean", "description": "Read only the exact API object, with no controller/ConfigHub/event/pod enrichment. Requires api_version and context. This stdio session reuses observations for at most 15 seconds; CLI processes do not share the cache."},
-						"api_version": map[string]interface{}{"type": "string", "description": "Exact API version for bounded reads, for example apps/v1."},
-						"context":     map[string]interface{}{"type": "string", "description": "Explicit kube context for bounded reads (CLI --kube-context). Never inferred from ConfigHub Target names."},
-						"refresh":     map[string]interface{}{"type": "boolean", "description": "Force a new bounded observation rather than reuse the session cache."},
+						"bounded":           map[string]interface{}{"type": "boolean", "description": "Read only the exact API object, with no controller/ConfigHub/event/pod enrichment. Requires api_version and context. This stdio session reuses observations for at most 15 seconds; CLI processes do not share the cache."},
+						"api_version":       map[string]interface{}{"type": "string", "description": "Exact API version for bounded reads, for example apps/v1."},
+						"context":           map[string]interface{}{"type": "string", "description": "Explicit kube context for bounded reads (CLI --kube-context). Never inferred from ConfigHub Target names."},
+						"refresh":           map[string]interface{}{"type": "boolean", "description": "Force a new bounded observation rather than reuse the session cache."},
+						"expected_revision": map[string]interface{}{"type": "string", "description": "Full lowercase 40-hex Git commit or sha256:64-hex artifact digest to compare with one controller report. Requires bounded=true. Supports single-source Application and Kustomization v1; not workload convergence, controller liveness or application success."},
 						"resource": map[string]interface{}{
 							"type":        "string",
 							"description": "Resource selector as kind/name; bounded reads require exact Kind casing (for example Deployment/api).",
@@ -362,8 +363,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					if argBool(arguments, "refresh") {
 						args = append(args, "--refresh")
 					}
-				} else if argString(arguments, "api_version") != "" || argString(arguments, "context") != "" || argBool(arguments, "refresh") {
-					return nil, fmt.Errorf("api_version, context, and refresh require bounded=true")
+					if expected := argString(arguments, "expected_revision"); expected != "" {
+						args = append(args, "--expected-revision", expected)
+					}
+				} else if argString(arguments, "api_version") != "" || argString(arguments, "context") != "" || argBool(arguments, "refresh") || argString(arguments, "expected_revision") != "" {
+					return nil, fmt.Errorf("api_version, context, refresh, and expected_revision require bounded=true")
 				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)

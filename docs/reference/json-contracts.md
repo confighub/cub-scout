@@ -166,6 +166,63 @@ The stricter rejection rules above are Scout's evidence policy, not additional
 claims about the upstream annotation schema. See the
 [executable fixture](../../examples/bounded-resource-read/#observed-origin).
 
+### Controller Revision Comparison (Unreleased v2.11)
+
+Only an explicit `--expected-revision` / MCP `expected_revision` / TUI
+expectation adds `controllerRevision` to bounded explain:
+
+```json
+{
+  "controllerRevision": {
+    "expectedRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reportedRevision": "main@sha1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source": "status.lastAppliedRevision",
+    "comparison": "match",
+    "controllerStatus": "Ready=True",
+    "reason": "Immutable identifier comparison with the selected controller report only; not workload convergence, current controller liveness or application success."
+  }
+}
+```
+
+- `comparison` is `match`, `mismatch` or `unknown`, not PASS/BLOCK, readiness,
+  delivery completion or authority. `expectedRevision` is caller-supplied.
+  `reportedRevision` preserves the report; `revision` is the parsed immutable
+  identifier. Different identifier types are unknown, not comparable.
+- `source` names the status field, not independently verified provenance.
+  `controllerStatus` retains sync or Ready status separately. Optional
+  `reportedAt` is the Application's reconciliation time. A Kustomization Ready
+  transition is **not** a heartbeat and is never relabeled as one; absence of
+  `reportedAt` does not imply freshness. All evidence belongs to the existing
+  `resourceRead` scope, UID, resourceVersion and observation time.
+- Supported: `argoproj.io/v1alpha1 Application`, single Git/OCI source, with
+  Synced status, matching compared source/destination/ignore policy, no pending
+  operation, no non-success operation phase, no conditions, and reconciliation
+  time within 15 minutes of capture (exact boundary accepted; future rejected).
+  This strict comparison policy is Scout's, not a claim of upstream requirements.
+  Hydrated/multi-source/chart-version evidence is unknown; no array index is guessed.
+- Supported: `kustomize.toolkit.fluxcd.io/v1 Kustomization`, named GitRepository
+  or OCIRepository source, current observed generation and current-generation
+  Ready=True, no suspension/reconciling/stalled state or conflicting attempted
+  revision. Git artifact `<ref>@sha1:<40-hex>` compares its commit; OCI artifact
+  `<ref>@sha256:<64-hex>` or bare `sha256:<64-hex>` compares its digest. An OCI
+  origin Git revision is not the artifact digest and is not substituted.
+- Missing UID/generation/observation time, deletion, unsupported APIs or source
+  shapes, missing or malformed evidence produce unknown. Unknown adds a
+  `controller-revision` omission; every requested comparison adds
+  `workload-delivery-proof`. No live object set, workload generation, source
+  endpoint, controller process or application-success policy is read/verified.
+- Raw source URLs, values and object bodies are not emitted. Report strings
+  are limited to 512 printable ASCII characters. Existing health, ownership,
+  source-truth and receipt semantics remain unchanged.
+- CLI/plugin ASCII/JSON/Markdown, actual MCP gateway and the existing bounded
+  TUI share this model. Rich explain, watch/bot, receipts and the separately
+  packaged companion panel do not expose the new expectation input yet.
+
+Schema references: [Application types, v3.3.0](https://github.com/argoproj/argo-cd/blob/v3.3.0/pkg/apis/application/v1alpha1/types.go)
+and [Kustomization status, v1.8.0](https://github.com/fluxcd/kustomize-controller/blob/v1.8.0/api/v1/kustomization_types.go).
+[Fixtures and proof](../../examples/controller-revision/).
+
 ## Trace Secret Evidence Contract
 
 When `trace` is run on a supported resource kind, the JSON output includes a `secrets` field containing secret evidence metadata. This is safe metadata only — secret data (`.data`, `.stringData`) is never read or exposed.

@@ -50,6 +50,7 @@ func init() {
 	explainCmd.Flags().StringVar(&explainAPIVersion, "api-version", "", "Exact API version for --bounded (for example apps/v1)")
 	explainCmd.Flags().StringVar(&explainContext, "kube-context", "", "Explicit kube context for --bounded; does not change the current context")
 	explainCmd.Flags().BoolVar(&explainRefresh, "refresh", false, "Bypass bounded session reuse (CLI processes always start with an empty cache)")
+	explainCmd.Flags().StringVar(&explainExpectedRevision, "expected-revision", "", "Compare a full Git commit or sha256 digest with the selected controller report (requires --bounded; not workload delivery proof)")
 	explainCmd.Flags().BoolVar(&explainWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation")
 	explainCmd.Flags().StringVar(&explainConfigHubSpace, "confighub-space", "", "ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)")
 	explainCmd.Flags().StringVar(&explainConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
@@ -58,23 +59,24 @@ func init() {
 
 // ExplainSummary is the canonical model for explain output.
 type ExplainSummary struct {
-	ResourceRead             *agent.BoundedReadEvidence     `json:"resourceRead,omitempty"`
-	ConfigHubOrigin          *agent.ConfigHubOriginEvidence `json:"configHubOrigin,omitempty"`
-	Omissions                []agent.Omission               `json:"omissions,omitempty"`
-	Resource                 string                         `json:"resource"`
-	Namespace                string                         `json:"namespace"`
-	Owner                    string                         `json:"owner"`
-	Source                   string                         `json:"source"`
-	DeployedVia              string                         `json:"deployedVia"`
-	Health                   string                         `json:"health"`
-	Risks                    string                         `json:"risks"`
-	Drift                    string                         `json:"drift"`
-	Notes                    []string                       `json:"notes,omitempty"`
-	ConfigHubURL             string                         `json:"confighubUrl,omitempty"`             // Canonical unit detail URL in ConfigHub GUI (only when connected)
-	ConfigHubRevisionsURL    string                         `json:"confighubRevisionsUrl,omitempty"`    // Canonical unit revisions URL in ConfigHub GUI (only when connected)
-	ConfigHubRevisionNum     string                         `json:"configHubRevisionNum,omitempty"`     // Deployed ConfigHub revision when known
-	ConfigHubLiveRevisionNum string                         `json:"configHubLiveRevisionNum,omitempty"` // Latest/live ConfigHub revision when known
-	DeliveryEvidence         *agent.TraceDeliveryEvidence   `json:"deliveryEvidence,omitempty"`
+	ResourceRead             *agent.BoundedReadEvidence        `json:"resourceRead,omitempty"`
+	ConfigHubOrigin          *agent.ConfigHubOriginEvidence    `json:"configHubOrigin,omitempty"`
+	ControllerRevision       *agent.ControllerRevisionEvidence `json:"controllerRevision,omitempty"`
+	Omissions                []agent.Omission                  `json:"omissions,omitempty"`
+	Resource                 string                            `json:"resource"`
+	Namespace                string                            `json:"namespace"`
+	Owner                    string                            `json:"owner"`
+	Source                   string                            `json:"source"`
+	DeployedVia              string                            `json:"deployedVia"`
+	Health                   string                            `json:"health"`
+	Risks                    string                            `json:"risks"`
+	Drift                    string                            `json:"drift"`
+	Notes                    []string                          `json:"notes,omitempty"`
+	ConfigHubURL             string                            `json:"confighubUrl,omitempty"`             // Canonical unit detail URL in ConfigHub GUI (only when connected)
+	ConfigHubRevisionsURL    string                            `json:"confighubRevisionsUrl,omitempty"`    // Canonical unit revisions URL in ConfigHub GUI (only when connected)
+	ConfigHubRevisionNum     string                            `json:"configHubRevisionNum,omitempty"`     // Deployed ConfigHub revision when known
+	ConfigHubLiveRevisionNum string                            `json:"configHubLiveRevisionNum,omitempty"` // Latest/live ConfigHub revision when known
+	DeliveryEvidence         *agent.TraceDeliveryEvidence      `json:"deliveryEvidence,omitempty"`
 
 	// CurrentChange contains generation-scoped rollout progress and verdict
 	// evidence for workload resources. It is omitted when the resource kind is
@@ -127,6 +129,11 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	}
 	hintCtx := HintContext{Mode: hintMode}
 	if explainBounded {
+		if cmd.Flags().Changed("expected-revision") || explainExpectedRevision != "" {
+			if err := agent.ValidateExpectedRevision(explainExpectedRevision); err != nil {
+				return err
+			}
+		}
 		if explainWithConfigHub || cmd.Flags().Changed("confighub-space") || cmd.Flags().Changed("confighub-since") || cmd.Flags().Changed("confighub-stale-after") {
 			return fmt.Errorf("--bounded cannot perform ConfigHub enrichment")
 		}
@@ -134,14 +141,14 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		summary, err := (&boundedExplainSession{}).observe(cmd.Context(), ref, explainContext, explainRefresh)
+		summary, err := (&boundedExplainSession{}).observeRevision(cmd.Context(), ref, explainContext, explainRefresh, explainExpectedRevision)
 		if err != nil {
 			return err
 		}
 		return outputExplainSummary(summary, format, invCtx, hintCtx)
 	}
-	if explainAPIVersion != "" || explainContext != "" || explainRefresh {
-		return fmt.Errorf("--api-version, --kube-context, and --refresh require --bounded")
+	if explainAPIVersion != "" || explainContext != "" || explainRefresh || explainExpectedRevision != "" || cmd.Flags().Changed("expected-revision") {
+		return fmt.Errorf("--api-version, --kube-context, --refresh, and --expected-revision require --bounded")
 	}
 
 	kind, name, err := parseExplainArgs(args)
@@ -727,6 +734,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 	if summary.ConfigHubOrigin != nil {
 		fmt.Fprintf(&b, "  %s %s\n", label("Origin annotation"), summary.ConfigHubOrigin.Summary())
 	}
+	if summary.ControllerRevision != nil {
+		fmt.Fprintf(&b, "  %s %s\n", label("Controller revision"), summary.ControllerRevision.Summary())
+	}
 	if summary.CurrentChange != nil {
 		fmt.Fprintf(&b, "  %s %s\n", label("Current change"), colorExplainRolloutDecision(summary.CurrentChange))
 	}
@@ -909,6 +919,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	}
 	if summary.ConfigHubOrigin != nil {
 		fmt.Fprintf(&b, "- **Origin annotation:** %s\n", summary.ConfigHubOrigin.Summary())
+	}
+	if summary.ControllerRevision != nil {
+		fmt.Fprintf(&b, "- **Controller revision:** %s\n", summary.ControllerRevision.Summary())
 	}
 	if summary.CurrentChange != nil {
 		fmt.Fprintf(&b, "- **Current change:** `%s`\n", formatRolloutDecisionLine(summary.CurrentChange))

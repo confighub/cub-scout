@@ -204,6 +204,26 @@ a ConfigHub context and is stripped before plugin invocation.
 
 See [bounded resource evidence](../../examples/bounded-resource-read/).
 
+#### Expected Controller Revision (Unreleased v2.11)
+
+`--expected-revision <immutable-id>` requires `--bounded`. Accepted values are
+full lowercase 40-hex Git commits and `sha256:` followed by 64 lowercase hex
+digits. An explicitly empty value, branch, tag, short hash or malformed ID
+fails before a Kubernetes read. Without the flag, output remains unchanged.
+MCP `explain.expected_revision` has the same validation, including type checks.
+TUI `Ctrl+e`, select a resource, then `e` edits the expectation; empty input
+clears it. Returning to the resource list clears the expectation.
+
+The additive `controllerRevision.comparison` is `match`, `mismatch` or
+`unknown`, not a receipt verdict. Read failure still returns an unavailable
+bounded summary, now with an unknown comparison and no retained report.
+Exit codes remain the existing explain codes; mismatch does not mean exit 2.
+Hints retain the expected revision and exact context/resource on refresh.
+Cached objects, not comparisons, are reused: a different expectation is
+recomputed without a request and keeps the original observation timestamp.
+See the [JSON contract](json-contracts.md#controller-revision-comparison-unreleased-v211)
+and [worked example](../../examples/controller-revision/).
+
 ---
 
 ## cub-scout compare three-way
