@@ -57,7 +57,7 @@ proof and remaining checks live in [v2.9.0 notes](releases/v2.9.0.md).
 
 ### v2.10.0 - Bounded Explorer Integration
 
-Agreed next direction: additive explorer integration and real observation reuse,
+Published 2026-09-11, followed by companion v0.3.0. Additive explorer integration and real observation reuse,
 not a replacement for the standalone TUI or a 3.0 contract break. Tracking stays
 in this repository: `#519`, `#502`, and `#505`.
 Release publication, final checks and explicit auth/registry limitations are
@@ -93,6 +93,25 @@ of completion.
 - [x] First-slice capabilities have README user questions, exact invocations,
   deterministic tests, and a worked example, with unsupported parity explicit.
   Repeat this requirement for each subsequent explorer capability.
+
+### Post-v2.10 Priorities
+
+Source-pinned assessment: [explorer comparison](reference/explorer-comparison.md).
+These are tracked follow-ups, not claims of competitive leadership:
+
+- [x] First-run documentation and current-version install guidance (#527).
+  Preserve the README User questions and all five run modes; distinguish live
+  inspection from offline artifacts and observation from delivery automation.
+- [ ] Measured explorer parity and API-load-aware continuous observation (#519).
+  Compare identical task/permission/scale fixtures; specify native watch/store
+  lifecycle, reconnection, freshness and cache bounds before implementation.
+- [ ] Feedback freshness semantics (#502): unchanged deduplicated reports,
+  deleted Applications, out-of-order observations and missing history must not
+  produce false delivery/application-health conclusions.
+- [ ] Distribution completion (#520): anonymous registry pull, container
+  architecture coverage, and a deliberate Go module major-version strategy.
+  `go install ...@latest` currently resolves the older v1 line; archives,
+  Homebrew, plugins and tagged checkout builds are the v2.10 paths.
 
 ### After v2.9.0
 

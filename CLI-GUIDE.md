@@ -1,8 +1,10 @@
 # cub-scout CLI Guide
 
-**cub-scout observes and explains; it never decides.** It is the read-only
-Kubernetes and GitOps observer — every command in this guide reads cluster
-or ConfigHub state and explains it, but nothing here mutates the cluster.
+**Answer Kubernetes and GitOps questions with read-only cluster evidence.**
+Find ownership, inspect delivery progress, diagnose a workload, compare against
+intended configuration, and preserve the result for a script, agent or reviewer.
+Deployment controllers still reconcile; Scout does not sync or deploy. Explicit
+connected import commands can write ConfigHub inventory, not cluster state.
 
 Workflow-first guide for learning how to use cub-scout without turning this
 file into a second command encyclopedia. The default story starts from a live
@@ -36,8 +38,12 @@ Need a specific command or flag?
 | Standalone client | `cub-scout doctor`, `cub-scout map`, `cub-scout trace ...` | A human or script wants direct CLI/TUI/JSON output. |
 | ConfigHub plugin | `cub scout doctor`, `cub scout compare ...` | You are already working inside the `cub` workflow and want plugin-aware context. |
 | MCP server | `cub-scout mcp serve` | An AI host should launch scout as typed read-only tools. |
-| Watch stream | `cub-scout watch --webhook <url>` | A local process or CI job should stream observation events. |
-| In-cluster bot | `cub-scout bot --webhook <url>` | A Pod should continuously observe the cluster using in-cluster auth. |
+| Watch stream | `cub-scout watch --output-file ./events.jsonl` | A local polling process should stream observations to a file or webhook. |
+| In-cluster bot | `cub-scout bot --webhook <url>` | A Pod should run the same polling engine with read-only RBAC and an approved sink. |
+
+MCP hosts launch their own stdio process; agents can also invoke the CLI directly.
+Neither MCP nor bot mode adds a shared fleet cache. See
+[installation](docs/getting-started/install.md) for current binaries and container limits.
 
 ---
 
@@ -60,7 +66,7 @@ What each step gives you:
 - `trace` shows the source chain behind the resource.
 - `map` opens the TUI when you want to browse interactively.
 
-**Unreleased v2.10:** for a low-load check of one exact object, use
+**Released in v2.10.0:** for a bounded check of one exact object, use
 `./cub-scout explain Deployment/my-app -n prod --bounded --api-version apps/v1 --kube-context my-cluster --format json`.
 The TUI equivalent is `Ctrl+e` in `map`. MCP/TUI sessions can reuse observations
 for less than 15 seconds, with explicit refresh and freshness metadata. This

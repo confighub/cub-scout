@@ -1,9 +1,10 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-09-11. Release scope: `v2.10.0` bounded explorer integration,
-with separately packaged Commander `v0.3.0`. Publication, final CI/artifact proof
-and remaining validation gaps are recorded in `#525`; check that record before
-claiming a release is published. `#520` remains open for registry-pull verification.
+Last updated: 2026-09-11. Published: Scout `v2.10.0` (`f9f5512`) and separately
+packaged Commander `v0.3.0` (`7ffc9c5`). Final CI, downloaded checksums,
+standalone/plugin/MCP/TUI/watch/bot proof and validation gaps are recorded in
+`#525`. `#520` remains open for registry access, architecture coverage and Go
+module major-version distribution. Post-release intro/docs review is `#527`.
 Notes: [`docs/releases/v2.10.0.md`](docs/releases/v2.10.0.md).
 The v2.8.0 baseline and May/July sections below remain historical context.
 
@@ -125,7 +126,7 @@ Deeper joins and broader explorer parity remain follow-up work, not release clai
 
 ## Current repo state
 
-- Working branch: `codex/v2.10-release` (release preparation)
+- Latest follow-up: `#527` (post-release documentation and competitive review)
 - Canonical roadmap: `docs/roadmap.md`
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
 - First repo-specific AI entrypoint: `AI-README-FIRST.md`

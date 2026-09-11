@@ -1,8 +1,14 @@
 # Start Here
 
-Fast routing guide for new and returning `cub-scout` users. Start with a live
-cluster: cub-scout is most useful when it can read the current Kubernetes
-context and explain what is running before you think about repos or imports.
+Start with a question: what is running, where did it come from, is delivery
+stuck, or does live state match the configuration you expected? Scout gathers
+read-only evidence without becoming another deployment controller.
+
+Choose **standalone CLI/TUI**, the **`cub` plugin**, an **MCP server** launched by
+your agent host, a **watch stream**, or an **in-cluster bot**. The
+[five-mode table](../../README.md#five-ways-to-run-cub-scout) explains which to use.
+Live checks need Kubernetes access; saved files and bundles can be inspected
+offline. A ConfigHub account is optional.
 
 If you just want the command index, use:
 - [Complete CLI Reference (A-Z)](../reference/cli-reference.md)
@@ -10,17 +16,32 @@ If you just want the command index, use:
 
 ---
 
-## 1) First-Time User (Standalone, no account required)
+## First-Time User
 
 Run:
 
 ```bash
 brew install confighub/tap/cub-scout
-cub-scout quickstart --yes
 cub-scout doctor
-cub-scout explain deploy/<name> -n <namespace>
+cub-scout gitops status
 cub-scout map
 ```
+
+`doctor` gives the first triage summary, `gitops status` reports controller
+pipeline evidence, and `map` opens the explorer. For one object, use
+`cub-scout explain deploy/<name> -n <namespace>` and follow with `trace` for its
+source chain. See [installation](install.md) for other platforms or the plugin.
+
+For one exact object with an explicit read budget (v2.10.0):
+
+```sh
+cub-scout explain Deployment/api -n team-a --bounded \
+  --api-version apps/v1 --kube-context my-test-context --format json
+```
+
+Replace the scope with your resource. This checks object-local facts using one
+discovery document and one GET; it does not establish desired/live agreement or
+delivery success. [Bounded evidence example](../../examples/bounded-resource-read/).
 
 Then:
 - [First Map](first-map.md)
@@ -30,7 +51,7 @@ Then:
 
 ---
 
-## 2) Connected Value (ConfigHub context)
+## Connected Questions
 
 Run:
 
@@ -50,7 +71,13 @@ Then:
 
 ---
 
-## 3) AI Tooling Path (Read-only gateway)
+## AI Tools
+
+An agent with shell access can run `cub-scout ... --format json` directly.
+MCP is the structured-tool alternative: configure the host to launch
+`cub-scout mcp serve` over stdio. Scout does not have to be running beforehand.
+Each server has its own process lifetime and credentials; it is not a fleet
+service. Bounded MCP calls expose cache/freshness and explicit refresh.
 
 Run:
 
@@ -69,7 +96,7 @@ Then:
 
 ---
 
-## 4) Adopt Existing Config (Second Step)
+## Adopt Existing Config
 
 Use this after you have observed the live cluster and want to preview how
 existing workloads would map into ConfigHub.
@@ -93,7 +120,12 @@ Then:
 
 ---
 
-## 5) Platform-Scale Features (v1.7 line)
+## Ongoing Observation
+
+Use `watch` for a local poller; run `bot` in a Pod with read-only RBAC and an
+approved webhook or JSONL destination. Both use the same polling engine. A
+consumer can reuse their output, but they do not serve a shared query cache or
+trigger deployment. [Bot setup and limits](../../examples/bot/).
 
 Run:
 
