@@ -118,6 +118,28 @@ These are tracked follow-ups, not claims of competitive leadership:
   `go install ...@latest` currently resolves the older v1 line; archives,
   Homebrew, plugins and tagged checkout builds are the v2.10 paths.
 
+### v2.11 - Delivery Proof And Measured Observation
+
+Agreed scope: [#532](https://github.com/confighub/cub-scout/issues/532).
+Ship the v2.10.1 correction first; keep the next minor release additive.
+
+- [ ] Exact intended-release input joined to controller-observed revision,
+  identified live objects and current workload generation (#502/#505).
+  Prove one end-to-end controller path, then a second; missing identity is
+  inconclusive. Delivery, readiness and application-health policy stay separate.
+- [x] First polling baseline (#519): actual HTTP requests and response-body
+  bytes for 100/1,000-object cold, idle and ownership-change cycles; latency and
+  allocations measured separately. [Reproducible example](../examples/observation-budget/).
+  This does not complete mixed-controller, fleet, interactive or competitive
+  benchmarks, nor implement native watches.
+- [ ] Use measurements to implement the first bounded session-scoped
+  observation improvement (#519), with explicit deletion/recovery/freshness,
+  cancellation and finite storage. Keep one-shot commands daemon-free.
+- [ ] Each new capability has a README User question, exact invocation,
+  interactive equivalent or explicit limitation, tests and a worked example.
+- [ ] Continue distribution checks (#520); do not silently equate recorded
+  connected proof with authenticated live verification.
+
 ### After v2.9.0
 
 Tracked follow-ups, **not v2.9.0 release blockers**:
