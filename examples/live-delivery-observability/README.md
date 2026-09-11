@@ -57,8 +57,25 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
 - `gitops status --with-confighub` should keep release history, unit events,
   live-status writeback, and event-consumer workload evidence separate under
   `deliveryEvidence`.
+- `map activity --with-confighub` should keep ConfigHub activity rows separate,
+  and may attach live-status `deliveryEvidence` to matching Argo Application
+  rows only when a non-wildcard ConfigHub space, observed Application Space ID,
+  and unique Application name match. The Application must carry
+  `confighub.com/space-id` or `confighub.com/SpaceID` metadata; scope selection
+  and naming convention alone do not prove a join. Missing/conflicting IDs,
+  duplicate names across namespaces, and duplicate statuses produce omissions.
 - `explain` and `doctor` should report the Deployment current change as
   non-PASS because `status.observedGeneration` is behind
   `metadata.generation` and the related Pod has `CrashLoopBackOff` evidence.
 - `receipt verify --predicate workloads-converged` should use the same rollout
   decision model as the diagnostic surfaces.
+
+Run the offline correlation and read-budget proof from the repository root:
+
+```bash
+go test ./cmd/cub-scout -run 'TestActivityDeliveryIdentityAndReadBudget' -count=1
+```
+
+The fixture preserves an Argo failure even when separate ConfigHub evidence
+reports PASS. It also proves namespace filtering cannot hide a name collision
+and the join performs no additional Kubernetes reads beyond one Application list.

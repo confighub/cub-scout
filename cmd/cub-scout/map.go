@@ -3575,53 +3575,56 @@ type mapActionPreview struct {
 }
 
 type mapActivityRow struct {
-	Time              string                       `json:"time"`
-	Source            string                       `json:"source"`
-	Resource          string                       `json:"resource"`
-	Action            string                       `json:"action"`
-	Result            string                       `json:"result"`
-	Message           string                       `json:"message,omitempty"`
-	SuggestedNextStep string                       `json:"suggestedNextStep,omitempty"`
-	Owner             string                       `json:"owner,omitempty"`
-	Actor             string                       `json:"actor,omitempty"`
-	Subject           string                       `json:"subject,omitempty"`
-	ActionEvidence    map[string]string            `json:"actionEvidence,omitempty"`
-	DeliveryEvidence  *mapActivityDeliveryEvidence `json:"deliveryEvidence,omitempty"`
+	Time                     string                       `json:"time"`
+	Source                   string                       `json:"source"`
+	Resource                 string                       `json:"resource"`
+	Action                   string                       `json:"action"`
+	Result                   string                       `json:"result"`
+	Message                  string                       `json:"message,omitempty"`
+	SuggestedNextStep        string                       `json:"suggestedNextStep,omitempty"`
+	Owner                    string                       `json:"owner,omitempty"`
+	Actor                    string                       `json:"actor,omitempty"`
+	Subject                  string                       `json:"subject,omitempty"`
+	ActionEvidence           map[string]string            `json:"actionEvidence,omitempty"`
+	DeliveryEvidence         *mapActivityDeliveryEvidence `json:"deliveryEvidence,omitempty"`
+	configHubSpaceID         string
+	argoApplicationAmbiguous bool
 }
 
 type mapActivityDeliveryEvidence struct {
-	Kind                     string `json:"kind"`
-	Namespace                string `json:"namespace,omitempty"`
-	Space                    string `json:"space,omitempty"`
-	SpaceID                  string `json:"spaceId,omitempty"`
-	Target                   string `json:"target,omitempty"`
-	TargetID                 string `json:"targetId,omitempty"`
-	App                      string `json:"app,omitempty"`
-	Unit                     string `json:"unit,omitempty"`
-	UnitID                   string `json:"unitId,omitempty"`
-	Release                  string `json:"release,omitempty"`
-	ReleaseID                string `json:"releaseId,omitempty"`
-	EventID                  string `json:"eventId,omitempty"`
-	Digest                   string `json:"digest,omitempty"`
-	BundleBaseName           string `json:"bundleBaseName,omitempty"`
-	RevisionNum              int    `json:"revisionNum,omitempty"`
-	Revision                 string `json:"revision,omitempty"`
-	SyncStatus               string `json:"syncStatus,omitempty"`
-	HealthStatus             string `json:"healthStatus,omitempty"`
-	OperationPhase           string `json:"operationPhase,omitempty"`
-	Freshness                string `json:"freshness,omitempty"`
-	FreshnessSeconds         int64  `json:"freshnessSeconds,omitempty"`
-	DeliveryVerdict          string `json:"deliveryVerdict,omitempty"`
-	ApplicationHealthVerdict string `json:"applicationHealthVerdict,omitempty"`
-	Ready                    *bool  `json:"ready,omitempty"`
-	Replicas                 int64  `json:"replicas,omitempty"`
-	ReadyReplicas            int64  `json:"readyReplicas,omitempty"`
-	AvailableReplicas        int64  `json:"availableReplicas,omitempty"`
-	EvidenceLabel            string `json:"evidenceLabel,omitempty"`
-	Layer                    string `json:"layer,omitempty"`
-	Reason                   string `json:"reason,omitempty"`
-	Impact                   string `json:"impact,omitempty"`
-	Command                  string `json:"command,omitempty"`
+	Kind                     string   `json:"kind"`
+	Namespace                string   `json:"namespace,omitempty"`
+	Space                    string   `json:"space,omitempty"`
+	SpaceID                  string   `json:"spaceId,omitempty"`
+	Target                   string   `json:"target,omitempty"`
+	TargetID                 string   `json:"targetId,omitempty"`
+	App                      string   `json:"app,omitempty"`
+	Unit                     string   `json:"unit,omitempty"`
+	UnitID                   string   `json:"unitId,omitempty"`
+	Release                  string   `json:"release,omitempty"`
+	ReleaseID                string   `json:"releaseId,omitempty"`
+	EventID                  string   `json:"eventId,omitempty"`
+	Digest                   string   `json:"digest,omitempty"`
+	BundleBaseName           string   `json:"bundleBaseName,omitempty"`
+	RevisionNum              int      `json:"revisionNum,omitempty"`
+	Revision                 string   `json:"revision,omitempty"`
+	SyncStatus               string   `json:"syncStatus,omitempty"`
+	HealthStatus             string   `json:"healthStatus,omitempty"`
+	OperationPhase           string   `json:"operationPhase,omitempty"`
+	Freshness                string   `json:"freshness,omitempty"`
+	FreshnessSeconds         int64    `json:"freshnessSeconds,omitempty"`
+	DeliveryVerdict          string   `json:"deliveryVerdict,omitempty"`
+	ApplicationHealthVerdict string   `json:"applicationHealthVerdict,omitempty"`
+	Ready                    *bool    `json:"ready,omitempty"`
+	Replicas                 int64    `json:"replicas,omitempty"`
+	ReadyReplicas            int64    `json:"readyReplicas,omitempty"`
+	AvailableReplicas        int64    `json:"availableReplicas,omitempty"`
+	EvidenceLabel            string   `json:"evidenceLabel,omitempty"`
+	Layer                    string   `json:"layer,omitempty"`
+	Reason                   string   `json:"reason,omitempty"`
+	Impact                   string   `json:"impact,omitempty"`
+	Command                  string   `json:"command,omitempty"`
+	MatchedBy                []string `json:"matchedBy,omitempty"`
 }
 
 type mapPreviewRow struct {
@@ -4057,6 +4060,7 @@ func collectActivity(ctx context.Context) ([]mapActivityRow, error) {
 	rows = append(rows, collectEventActivity(ctx, dynClient)...)
 	if mapActivityWithConfigHub {
 		evidence := collectGitOpsDeliveryEvidence(ctx, dynClient, deliveryOpts)
+		rows = attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
 		rows = append(rows, gitOpsDeliveryEvidenceToActivityRows(evidence)...)
 	}
 
@@ -4123,6 +4127,118 @@ func gitOpsDeliveryEvidenceToActivityRows(evidence *GitOpsDeliveryEvidence) []ma
 		rows = append(rows, configHubOmissionActivityRow(evidence, omission))
 	}
 	return rows
+}
+
+func attachConfigHubDeliveryEvidenceToActivityRows(rows []mapActivityRow, evidence *GitOpsDeliveryEvidence) []mapActivityRow {
+	if evidence == nil || evidence.ConfigHub == nil || len(evidence.ConfigHub.LiveStatuses) == 0 {
+		return rows
+	}
+	scopeSpace := strings.TrimSpace(evidence.Scope.Space)
+	if scopeSpace == "" || scopeSpace == "*" {
+		return rows
+	}
+	out := append([]mapActivityRow(nil), rows...)
+	appCounts := make(map[string]int)
+	for _, row := range rows {
+		if row.Source == "argocd.application" {
+			if _, name, ok := mapActivityArgoApplicationIdentity(row.Resource); ok {
+				appCounts[name]++
+			}
+		}
+	}
+	for i := range out {
+		if out[i].DeliveryEvidence != nil || !strings.EqualFold(out[i].Source, "argocd.application") {
+			continue
+		}
+		appNamespace, appName, ok := mapActivityArgoApplicationIdentity(out[i].Resource)
+		if !ok {
+			continue
+		}
+		status, matchedBy, ok := mapActivityMatchLiveStatus(scopeSpace, out[i].configHubSpaceID, appName, evidence.ConfigHub.LiveStatuses)
+		if out[i].argoApplicationAmbiguous || appCounts[appName] != 1 {
+			ok = false
+		}
+		if !ok {
+			out[i].DeliveryEvidence = &mapActivityDeliveryEvidence{
+				Kind: "omission", Layer: "confighub.correlation",
+				Reason: "no unique Application name and matching observed ConfigHub Space ID",
+				Impact: "live-status remains space-level context; it does not prove this Application's delivery",
+			}
+			out[i].Message = appendMapActivityMessage(out[i].Message, "confighub correlation unavailable: missing or ambiguous Application/Space identity")
+			continue
+		}
+		out[i].DeliveryEvidence = mapActivityLiveStatusJoinEvidence(evidence, status, appNamespace, matchedBy)
+		out[i].Message = appendMapActivityMessage(out[i].Message, fmt.Sprintf("confighub delivery=%s app-health=%s freshness=%s",
+			status.DeliveryVerdict,
+			status.ApplicationHealthVerdict,
+			firstNonEmpty(status.Freshness, "-"),
+		))
+	}
+	return out
+}
+
+func mapActivityArgoApplicationIdentity(resource string) (namespace, name string, ok bool) {
+	parts := strings.Split(strings.TrimSpace(resource), "/")
+	if len(parts) != 3 || !strings.EqualFold(parts[0], "Application") {
+		return "", "", false
+	}
+	namespace = strings.TrimSpace(parts[1])
+	name = strings.TrimSpace(parts[2])
+	return namespace, name, namespace != "" && name != ""
+}
+
+func mapActivityMatchLiveStatus(scopeSpace, spaceID, appName string, statuses []ConfigHubLiveStatusEvidence) (ConfigHubLiveStatusEvidence, []string, bool) {
+	if spaceID == "" {
+		return ConfigHubLiveStatusEvidence{}, nil, false
+	}
+	var match ConfigHubLiveStatusEvidence
+	count := 0
+	for _, status := range statuses {
+		statusSpace := strings.TrimSpace(status.Space)
+		if statusSpace == "" || statusSpace != scopeSpace {
+			continue
+		}
+		if strings.TrimSpace(status.App) != appName {
+			continue
+		}
+		count++
+		match = status
+	}
+	if count == 1 && strings.TrimSpace(match.SpaceID) == spaceID {
+		return match, []string{"scope.space", "argocdApplication.spaceId", "argocdApplication.name"}, true
+	}
+	return ConfigHubLiveStatusEvidence{}, nil, false
+}
+
+func mapActivityLiveStatusJoinEvidence(evidence *GitOpsDeliveryEvidence, status ConfigHubLiveStatusEvidence, namespace string, matchedBy []string) *mapActivityDeliveryEvidence {
+	return &mapActivityDeliveryEvidence{
+		Kind:                     "liveStatus",
+		Namespace:                firstNonEmpty(namespace, evidence.Scope.Namespace),
+		Space:                    status.Space,
+		SpaceID:                  status.SpaceID,
+		App:                      status.App,
+		Revision:                 status.Revision,
+		SyncStatus:               status.SyncStatus,
+		HealthStatus:             status.HealthStatus,
+		OperationPhase:           status.OperationPhase,
+		Freshness:                status.Freshness,
+		FreshnessSeconds:         status.FreshnessSeconds,
+		DeliveryVerdict:          string(status.DeliveryVerdict),
+		ApplicationHealthVerdict: string(status.ApplicationHealthVerdict),
+		MatchedBy:                matchedBy,
+	}
+}
+
+func appendMapActivityMessage(base, addition string) string {
+	base = strings.TrimSpace(base)
+	addition = strings.TrimSpace(addition)
+	if base == "" {
+		return addition
+	}
+	if addition == "" {
+		return base
+	}
+	return base + "; " + addition
 }
 
 func configHubLiveStatusActivityRow(evidence *GitOpsDeliveryEvidence, status ConfigHubLiveStatusEvidence) mapActivityRow {
@@ -4518,6 +4634,12 @@ func collectArgoActivity(ctx context.Context, dynClient dynamic.Interface) []map
 	if err != nil {
 		return rows
 	}
+	// Status writeback lacks an Application namespace. Count before filtering so
+	// a namespace selection cannot hide a same-name Application in another namespace.
+	appCounts := make(map[string]int)
+	for _, app := range list.Items {
+		appCounts[app.GetName()]++
+	}
 	for _, app := range list.Items {
 		ns := app.GetNamespace()
 		if mapNamespace != "" && ns != mapNamespace {
@@ -4537,17 +4659,36 @@ func collectArgoActivity(ctx context.Context, dynClient dynamic.Interface) []map
 			result = "failed"
 		}
 		rows = append(rows, mapActivityRow{
-			Time:              normalizeTimeString(finishedAt, app.GetCreationTimestamp().Time),
-			Source:            "argocd.application",
-			Resource:          fmt.Sprintf("Application/%s/%s", ns, app.GetName()),
-			Action:            "sync-status",
-			Result:            result,
-			Message:           message,
-			SuggestedNextStep: "Use 'argocd app get <name>' and 'argocd app diff <name>' for deeper details.",
-			Owner:             "ArgoCD",
+			Time:                     normalizeTimeString(finishedAt, app.GetCreationTimestamp().Time),
+			Source:                   "argocd.application",
+			Resource:                 fmt.Sprintf("Application/%s/%s", ns, app.GetName()),
+			Action:                   "sync-status",
+			Result:                   result,
+			Message:                  message,
+			SuggestedNextStep:        "Use 'argocd app get <name>' and 'argocd app diff <name>' for deeper details.",
+			Owner:                    "ArgoCD",
+			configHubSpaceID:         mapActivityApplicationSpaceID(&app),
+			argoApplicationAmbiguous: appCounts[app.GetName()] != 1,
 		})
 	}
 	return rows
+}
+
+func mapActivityApplicationSpaceID(app *unstructured.Unstructured) string {
+	var spaceID string
+	for _, metadata := range []map[string]string{app.GetLabels(), app.GetAnnotations()} {
+		for _, key := range []string{"confighub.com/space-id", "confighub.com/SpaceID"} {
+			value := strings.TrimSpace(metadata[key])
+			if value == "" {
+				continue
+			}
+			if spaceID != "" && spaceID != value {
+				return ""
+			}
+			spaceID = value
+		}
+	}
+	return spaceID
 }
 
 func collectHelmReleaseActivity(ctx context.Context, dynClient dynamic.Interface) []mapActivityRow {

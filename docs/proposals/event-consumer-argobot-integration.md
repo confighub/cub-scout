@@ -142,9 +142,13 @@ These rows are mirrored in the README user-question table.
 6. [x] Add single-resource receipt support:
    `receipt verify <kind>/<name> --with-confighub` embeds object-correlated
    delivery evidence under `predicate.evidence.deliveryEvidence`.
-7. [ ] Add delivery evidence to aggregate/object-set/workload receipts and
-   workload-level activity joins once stable identifiers link release events,
-   Space writeback, controller sources, and workload objects without guessing.
+7. [x] Join live-status evidence onto `map activity` Argo Application rows
+   when a non-wildcard ConfigHub space and Argo Application name match exactly;
+   the Argo row result remains controller-owned.
+8. [ ] Add delivery evidence to aggregate/object-set/workload receipts and
+   deeper workload-level activity joins once stable identifiers link release
+   events, Space writeback, controller sources, and workload objects without
+   guessing.
 
 ## Open Questions
 

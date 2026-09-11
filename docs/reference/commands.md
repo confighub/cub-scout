@@ -708,9 +708,16 @@ cub-scout map activity --namespace prod --format json
 With `--with-confighub`, ConfigHub rows use owner `ConfigHub` and sources
 `confighub.liveStatus`, `confighub.release`, `confighub.unitEvent`,
 `confighub.eventConsumer`, or `confighub.omission`. JSON rows include an
-additive `deliveryEvidence` object with row-specific details. Missing,
-disconnected, malformed, stale, or RBAC-blocked evidence is represented as
-timeline omissions, not inferred status.
+additive `deliveryEvidence` object with row-specific details. Matching
+`argocd.application` rows may also receive additive live-status
+`deliveryEvidence` when a non-wildcard ConfigHub space, observed Application
+Space ID, and unique Application name match exactly. The Space ID must be in
+`confighub.com/space-id` or `confighub.com/SpaceID` labels/annotations on the
+Application and match the reported Space ID; conflicting metadata, duplicate
+names across namespaces, and duplicate statuses produce correlation omissions.
+The Argo row result remains controller-owned. Missing,
+disconnected, malformed, stale, wildcard, or RBAC-blocked evidence is
+represented as timeline omissions or left unjoined, not inferred status.
 
 ---
 

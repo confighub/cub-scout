@@ -1,6 +1,27 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-09-11 — captures the v2.8.0 delivery-evidence and bot-mode release. Current release tag is `v2.8.0`; release notes live at [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The May/July 2026 receipts, skill-catalog, and live-delivery sections below remain historical context.
+Last updated: 2026-09-11. Current release target: `v2.9.0`, with publication
+tracked in `#520` and on GitHub Releases. Notes: [`docs/releases/v2.9.0.md`](docs/releases/v2.9.0.md).
+The v2.8.0 baseline and May/July sections below remain historical context.
+
+## v2.9.0 Release Scope
+
+Tracking: `#520`; scope and 3.0 criteria in `docs/roadmap.md`; proof in
+`docs/releases/v2.9.0.md`. `#516` and `#517` are merged Resource-backed MCP
+reads, not part of v2.8.0. The activity work from `#518` is hardened in `#521`:
+require observed Application Space ID plus unique Application name; selected
+space alone cannot prove correlation. Negative cases remain omissions.
+
+Release checks cover scoped command counts, connected context/error handling,
+standalone/plugin parity, MCP/watch/bot, and distribution artifacts.
+Namespace-scoped MCP map calls now use `--namespace`. The bot image now declares
+numeric UID/GID 65532 so the `runAsNonRoot` example can start in Kubernetes.
+Full local tests/coverage and five-mode smoke passed, including an isolated
+in-cluster bot run. Final CI and publication status remain on `#520` / `#521`.
+The local ConfigHub token was expired during preparation; recorded connected
+proof must be distinguished from a successful authenticated live run.
+Commander `#519` starts after v2.9.0. `#475` stays delayed; deeper joins and
+provenance remain in `#502` / `#505`.
 
 ## Current repo state
 
@@ -34,7 +55,8 @@ Highlights:
   issues.
 - `map activity --with-confighub` projects the same bounded evidence into
   timeline rows for live-status writeback, release publication, unit events,
-  event-consumer health, and structured omissions.
+  event-consumer health, and structured omissions. Application-row joins are
+  post-v2.8.0 work, tracked above.
 - Live-status writeback separates `deliveryVerdict` from
   `applicationHealthVerdict`, includes freshness, and downgrades stale
   successful reports to `WATCH`.
@@ -56,8 +78,8 @@ Highlights:
   composition-resource annotations, and verified Crossplane field managers in
   trace, map JSON, watch/bot events, and receipts.
 - MCP standalone mode adds `gitops_status`; connected mode adds
-  `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
-  `confighub_releases`, `confighub_resources`, and `confighub_unit_events`.
+  `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`.
+  Resource-index and Kubernetes Resource MCP reads are post-v2.8.0 work.
 - MCP `compare_source_truth` strategy enum now derives from
   `agent.AllStrategies()`, matching the CLI.
 - `trace --with-confighub` and `explain --with-confighub` now attach
@@ -75,10 +97,10 @@ Highlights:
   and a deployable read-only Kubernetes example in `examples/bot/`.
 
 Remaining follow-up: carry delivery evidence into aggregate/object-set/workload
-receipts and workload-level activity joins once stable identifiers link release
-events, controller sources, and workloads without guessing; add aggregate
-controller-resource failures with generated-artifact lineage to `doctor` when
-safe.
+receipts and deeper workload-level activity joins once stable identifiers link
+release events, controller sources, and workloads without guessing; add
+aggregate controller-resource failures with generated-artifact lineage to
+`doctor` when safe.
 
 ## September 2026 update — `cub k8s` and ConfigHub-native Resource boundary
 
@@ -398,7 +420,7 @@ delivery-evidence and bot-mode release):
 - Audited action events as history and receipt supporting evidence.
 - Low-load freshness metadata is shipped for map JSON, snapshot JSON, summary
   list JSON, watch/bot events, and saved receipt TTL summaries.
-- ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, timeline `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub` readers; deeper OCI release-to-workload correlation for aggregate/object-set/workload receipts and workload-level activity joins remains a `#502` follow-up. Direct observer cursors remain fallback-only.
+- ConfigHub history-backed event / status evidence has `gitops status --with-confighub`, scope-level `doctor --with-confighub`, timeline `map activity --with-confighub`, exact Argo Application live-status joins in `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub` readers; deeper OCI release-to-workload correlation for aggregate/object-set/workload receipts and arbitrary workload activity joins remains a `#502` follow-up. Direct observer cursors remain fallback-only.
 - Deeper controller-family parity rules where controllers lack status, source, event, or generation evidence. The first `gitops status` coverage ledger is shipped; object-level parity remains open.
 - Modelplane-on-Crossplane hardening: trace, map JSON, watch/bot events, and receipts now surface substrate evidence on Modelplane-owned resources; remaining work is source/generation evidence and structured omissions where deeper Crossplane layers cannot be joined safely.
 
@@ -410,7 +432,7 @@ delivery-evidence and bot-mode release):
 - **`#505`** — post-OCI ConfigHub-native evidence boundary: Resource entity,
   `cub k8s`, argobot/live-status, and component/variant/target provenance.
 - **`#481`** — Helm/Kustomize provenance back-resolution for templated-source attribution (`gitSource.file:line` / `sourceMapRef` honesty markers).
-- **`#502`** — initial ConfigHub history/live-status/event-consumer evidence readers shipped on `gitops status --with-confighub`, `doctor --with-confighub`, timeline `map activity --with-confighub`, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub`; deeper release-to-controller-to-workload correlation remains.
+- **`#502`** — initial ConfigHub history/live-status/event-consumer evidence readers shipped on `gitops status --with-confighub`, `doctor --with-confighub`, timeline `map activity --with-confighub`, exact Argo Application live-status joins in activity, object-level `trace` / `explain --with-confighub`, and single-resource `receipt verify --with-confighub`; deeper release-to-controller-to-workload correlation remains.
 - **`#432`** — Grafana collector / data-source path using existing cub-scout JSON outputs. Design rather than code.
 - **`#427`** — Watch kstatus migration may flip `Ready=true → false` for stalled workloads in v2.1.0+ (behavior-change design needed).
 - **`#422`** — Views project: TUI Hub view integration (`#391` scope #2 follow-up).
@@ -467,7 +489,7 @@ Open work, in roughly descending leverage:
    component/variant/target provenance without duplicating ConfigHub-native
    readers.
 2. **`#502` deeper release/event/live-status correlation.** Carry the v2.8
-   evidence into aggregate/object-set/workload receipts and workload-level
+   evidence into aggregate/object-set/workload receipts and arbitrary workload
    activity joins where exact identifiers make the join safe.
 3. **`#481` Helm/Kustomize provenance back-resolution.** Next value is Phase 2:
    values-key resolution using existing Helm/Argo/Flux decoded values before

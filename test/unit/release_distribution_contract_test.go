@@ -4,14 +4,33 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
 )
 
+func TestContainerUserSupportsRunAsNonRoot(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "Dockerfile"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := ""
+	for _, line := range strings.Split(string(data), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && strings.EqualFold(fields[0], "USER") {
+			user = fields[1]
+		}
+	}
+	uid, err := strconv.ParseUint(strings.SplitN(user, ":", 2)[0], 10, 32)
+	if err != nil || uid == 0 {
+		t.Fatalf("container USER %q must have a numeric nonzero UID for the bot's runAsNonRoot policy", user)
+	}
+}
+
 type goreleaserConfig struct {
-	Dist string `yaml:"dist"`
+	Dist   string `yaml:"dist"`
 	Builds []struct {
 		ID     string   `yaml:"id"`
 		Goos   []string `yaml:"goos"`

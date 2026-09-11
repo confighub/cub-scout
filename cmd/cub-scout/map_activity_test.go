@@ -212,6 +212,112 @@ func TestMapActivityMatchesNamespaceKeepsConfigHubScopeExplicit(t *testing.T) {
 	}
 }
 
+func TestAttachConfigHubDeliveryEvidenceToActivityRows_JoinsArgoApplicationByExactSpaceAndApp(t *testing.T) {
+	evidence := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC),
+		Scope: GitOpsDeliveryEvidenceScope{
+			Space:      "payments-prod",
+			StaleAfter: "15m",
+			MaxItems:   10,
+		},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				SpaceID:                  "sp-123",
+				App:                      "payments-api",
+				SyncStatus:               "Synced",
+				HealthStatus:             "Healthy",
+				OperationPhase:           "Succeeded",
+				Revision:                 "sha256:abc",
+				Freshness:                "fresh",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+		},
+	}
+	rows := []mapActivityRow{{
+		Time:             "2026-09-10T11:59:00Z",
+		Source:           "argocd.application",
+		Resource:         "Application/argocd/payments-api",
+		Action:           "sync-status",
+		Result:           "success",
+		Message:          "sync=Synced health=Healthy",
+		Owner:            "ArgoCD",
+		configHubSpaceID: "sp-123",
+	}}
+
+	got := attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
+	if got[0].DeliveryEvidence == nil {
+		t.Fatalf("DeliveryEvidence nil, want exact live-status join")
+	}
+	de := got[0].DeliveryEvidence
+	if de.Kind != "liveStatus" || de.Namespace != "argocd" || de.Space != "payments-prod" || de.App != "payments-api" {
+		t.Fatalf("DeliveryEvidence = %+v, want liveStatus join for argocd/payments-api", de)
+	}
+	if de.DeliveryVerdict != "PASS" || de.ApplicationHealthVerdict != "PASS" {
+		t.Fatalf("verdicts = %s/%s, want PASS/PASS", de.DeliveryVerdict, de.ApplicationHealthVerdict)
+	}
+	if strings.Join(de.MatchedBy, ",") != "scope.space,argocdApplication.spaceId,argocdApplication.name" {
+		t.Fatalf("MatchedBy = %#v, want scope+application", de.MatchedBy)
+	}
+	if got[0].Result != "success" {
+		t.Fatalf("Result = %q, want original Argo-owned result preserved", got[0].Result)
+	}
+	if !strings.Contains(got[0].Message, "confighub delivery=PASS app-health=PASS freshness=fresh") {
+		t.Fatalf("Message = %q, want ConfigHub evidence suffix", got[0].Message)
+	}
+}
+
+func TestAttachConfigHubDeliveryEvidenceToActivityRows_WildcardSpaceDoesNotJoin(t *testing.T) {
+	evidence := &GitOpsDeliveryEvidence{
+		Scope: GitOpsDeliveryEvidenceScope{Space: "*"},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				App:                      "payments-api",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+		},
+	}
+	rows := []mapActivityRow{{
+		Source:   "argocd.application",
+		Resource: "Application/argocd/payments-api",
+		Result:   "success",
+		Message:  "sync=Synced health=Healthy",
+	}}
+
+	got := attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
+	if got[0].DeliveryEvidence != nil {
+		t.Fatalf("DeliveryEvidence = %+v, want nil for wildcard ConfigHub space", got[0].DeliveryEvidence)
+	}
+}
+
+func TestAttachConfigHubDeliveryEvidenceToActivityRows_AppMismatchDoesNotJoin(t *testing.T) {
+	evidence := &GitOpsDeliveryEvidence{
+		Scope: GitOpsDeliveryEvidenceScope{Space: "payments-prod"},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{
+				Space:                    "payments-prod",
+				App:                      "worker",
+				DeliveryVerdict:          agent.VerdictPASS,
+				ApplicationHealthVerdict: agent.VerdictPASS,
+			}},
+		},
+	}
+	rows := []mapActivityRow{{
+		Source:   "argocd.application",
+		Resource: "Application/argocd/payments-api",
+		Result:   "success",
+		Message:  "sync=Synced health=Healthy",
+	}}
+
+	got := attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
+	if got[0].DeliveryEvidence == nil || got[0].DeliveryEvidence.Kind != "omission" {
+		t.Fatalf("DeliveryEvidence = %+v, want omission for app mismatch", got[0].DeliveryEvidence)
+	}
+}
+
 func TestMapActivityDeliveryOptionsRejectInvalidSince(t *testing.T) {
 	oldNamespace := mapNamespace
 	oldSpace := mapActivityConfigHubSpace
@@ -235,5 +341,84 @@ func TestMapActivityDeliveryOptionsRejectInvalidSince(t *testing.T) {
 	_, err := mapActivityDeliveryOptionsFromFlags(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "invalid --confighub-since") {
 		t.Fatalf("err = %v, want invalid --confighub-since", err)
+	}
+}
+
+func TestActivityDeliveryIdentityAndReadBudget(t *testing.T) {
+	oldNamespace, oldOwner := mapNamespace, mapOwner
+	t.Cleanup(func() { mapNamespace, mapOwner = oldNamespace, oldOwner })
+	mapNamespace, mapOwner = "", ""
+	app := func(namespace, spaceID string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1", "kind": "Application",
+			"metadata": map[string]interface{}{
+				"name": "payments-api", "namespace": namespace,
+				"annotations": map[string]interface{}{"confighub.com/space-id": spaceID},
+			},
+			"status": map[string]interface{}{
+				"sync":   map[string]interface{}{"status": "OutOfSync"},
+				"health": map[string]interface{}{"status": "Degraded"},
+			},
+		}}
+	}
+	status := ConfigHubLiveStatusEvidence{
+		Space: "payments-prod", SpaceID: "sp-123", App: "payments-api",
+		DeliveryVerdict: agent.VerdictPASS, ApplicationHealthVerdict: agent.VerdictPASS,
+	}
+	caseMismatch := status
+	caseMismatch.App = "PAYMENTS-API"
+	missingSpaceID := status
+	missingSpaceID.SpaceID = ""
+	for _, tc := range []struct {
+		name     string
+		apps     []runtime.Object
+		statuses []ConfigHubLiveStatusEvidence
+		wantJoin bool
+	}{
+		{"proven space identity", []runtime.Object{app("argocd", "sp-123")}, []ConfigHubLiveStatusEvidence{status}, true},
+		{"scope alone is not identity", []runtime.Object{app("argocd", "")}, []ConfigHubLiveStatusEvidence{status}, false},
+		{"different cluster space", []runtime.Object{app("argocd", "sp-other")}, []ConfigHubLiveStatusEvidence{status}, false},
+		{"same name across namespaces", []runtime.Object{app("argo-a", "sp-123"), app("argo-b", "sp-123")}, []ConfigHubLiveStatusEvidence{status}, false},
+		{"duplicate status is ambiguous", []runtime.Object{app("argocd", "sp-123")}, []ConfigHubLiveStatusEvidence{status, status}, false},
+		{"case mismatch", []runtime.Object{app("argocd", "sp-123")}, []ConfigHubLiveStatusEvidence{caseMismatch}, false},
+		{"status missing space ID", []runtime.Object{app("argocd", "sp-123")}, []ConfigHubLiveStatusEvidence{missingSpaceID}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gvr := schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
+			client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{gvr: "ApplicationList"}, tc.apps...)
+			rows := collectArgoActivity(context.Background(), client)
+			got := attachConfigHubDeliveryEvidenceToActivityRows(rows, &GitOpsDeliveryEvidence{
+				Scope:     GitOpsDeliveryEvidenceScope{Space: "payments-prod"},
+				ConfigHub: &ConfigHubDeliveryEvidence{LiveStatuses: tc.statuses},
+			})
+			if len(got) != len(tc.apps) {
+				t.Fatalf("rows = %d, want %d", len(got), len(tc.apps))
+			}
+			for _, row := range got {
+				joined := row.DeliveryEvidence != nil && row.DeliveryEvidence.Kind == "liveStatus"
+				if joined != tc.wantJoin {
+					t.Fatalf("join = %v, want %v: %+v", joined, tc.wantJoin, row)
+				}
+				if !joined && (row.DeliveryEvidence == nil || row.DeliveryEvidence.Kind != "omission") {
+					t.Fatalf("missing correlation omission: %+v", row)
+				}
+				if row.Result != "failed" {
+					t.Fatalf("controller result overwritten: %q", row.Result)
+				}
+			}
+			if len(client.Actions()) != 1 || client.Actions()[0].GetVerb() != "list" {
+				t.Fatalf("expected one Application list, got %v", client.Actions())
+			}
+			if len(tc.apps) > 1 {
+				mapNamespace = "argo-a"
+				filtered := attachConfigHubDeliveryEvidenceToActivityRows(collectArgoActivity(context.Background(), client), &GitOpsDeliveryEvidence{
+					Scope: GitOpsDeliveryEvidenceScope{Space: "payments-prod"}, ConfigHub: &ConfigHubDeliveryEvidence{LiveStatuses: tc.statuses},
+				})
+				mapNamespace = ""
+				if len(filtered) != 1 || filtered[0].DeliveryEvidence.Kind != "omission" {
+					t.Fatalf("namespace filter hid collision: %+v", filtered)
+				}
+			}
+		})
 	}
 }

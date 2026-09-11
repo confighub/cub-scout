@@ -908,7 +908,14 @@ the event consumer, the delivery controller, or Kubernetes.
 ### Map activity delivery rows
 
 `map activity --with-confighub --format json` keeps the normal activity payload
-shape:
+shape. ConfigHub-owned rows carry row-specific delivery evidence, and matching
+`argocd.application` rows may carry additive live-status evidence when the
+ConfigHub space is non-wildcard, an observed Application Space ID matches the
+reported Space ID, and the Application name matches exactly and is unique.
+Missing/conflicting Space ID metadata or ambiguous names/statuses produce
+`deliveryEvidence.kind=omission` with `layer=confighub.correlation`.
+Space IDs come from `confighub.com/space-id` or `confighub.com/SpaceID`
+labels/annotations on the Application. An unjoined ConfigHub row looks like:
 
 ```json
 {
@@ -956,13 +963,16 @@ Field rules:
 |---|---|
 | `deliveryEvidence.kind` | One of `liveStatus`, `release`, `unitEvent`, `eventConsumer`, or `omission`. |
 | `deliveryEvidence.namespace` | The explicit Kubernetes namespace scope used for the collection, when supplied. It is not inferred from ConfigHub space names. |
+| `deliveryEvidence.matchedBy[]` | Optional exact join keys. Argo Application joins include `scope.space`, `argocdApplication.spaceId`, and `argocdApplication.name`. Absent on standalone ConfigHub status rows. |
 | `result` | Timeline rendering bucket: `success`, `pending`, `failed`, `inconclusive`, or `normal`, derived from the row's observed status/verdict only. |
 | `owner` | `ConfigHub` for these rows so `--owner ConfigHub` can select them. |
 | `source` | Stable row source; consumers should dispatch on `source` or `deliveryEvidence.kind`, not parse `message`. |
 
 Namespace filtering remains conservative: ConfigHub rows match
 `--namespace <ns>` only when the row carries that explicit namespace scope.
-The command never consumes ConfigHub event cursors.
+On joined `argocd.application` rows, `deliveryEvidence` is supporting context;
+the Argo row's `result` remains controller-owned. The command never consumes
+ConfigHub event cursors.
 
 ## Resource Delivery Evidence Contract
 
