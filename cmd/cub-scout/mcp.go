@@ -120,7 +120,7 @@ type mcpError struct {
 }
 
 func runMCPServe(cmd *cobra.Command, args []string) error {
-	gateway := newMCPGatewayWithMode(runMCPToolCommand, runMCPConnectedToolCommand, detectMCPConnectedMode())
+	gateway := newMCPGatewayWithMode(boundedMCPRunner(runMCPToolCommand), runMCPConnectedToolCommand, detectMCPConnectedMode())
 	return serveMCP(cmd.Context(), os.Stdin, os.Stdout, gateway)
 }
 
@@ -327,9 +327,13 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
+						"bounded":     map[string]interface{}{"type": "boolean", "description": "Read only the exact API object, with no controller/ConfigHub/event/pod enrichment. Requires api_version and context. This stdio session reuses observations for at most 15 seconds; CLI processes do not share the cache."},
+						"api_version": map[string]interface{}{"type": "string", "description": "Exact API version for bounded reads, for example apps/v1."},
+						"context":     map[string]interface{}{"type": "string", "description": "Explicit kube context for bounded reads (CLI --kube-context). Never inferred from ConfigHub Target names."},
+						"refresh":     map[string]interface{}{"type": "boolean", "description": "Force a new bounded observation rather than reuse the session cache."},
 						"resource": map[string]interface{}{
 							"type":        "string",
-							"description": "Resource selector as kind/name (for example deployment/api).",
+							"description": "Resource selector as kind/name; bounded reads require exact Kind casing (for example Deployment/api).",
 						},
 						"namespace": map[string]interface{}{
 							"type":        "string",
@@ -345,7 +349,22 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if resource == "" {
 					return nil, fmt.Errorf("missing required argument: resource")
 				}
+				if err := validateBoundedExplainArguments(arguments); err != nil {
+					return nil, err
+				}
 				args := []string{"explain", resource}
+				if argBool(arguments, "bounded") {
+					_, err := boundedExplainRef([]string{resource}, argString(arguments, "api_version"), argString(arguments, "namespace"), argString(arguments, "context"))
+					if err != nil {
+						return nil, err
+					}
+					args = append(args, "--bounded", "--api-version", argString(arguments, "api_version"), "--kube-context", argString(arguments, "context"))
+					if argBool(arguments, "refresh") {
+						args = append(args, "--refresh")
+					}
+				} else if argString(arguments, "api_version") != "" || argString(arguments, "context") != "" || argBool(arguments, "refresh") {
+					return nil, fmt.Errorf("api_version, context, and refresh require bounded=true")
+				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
 				}

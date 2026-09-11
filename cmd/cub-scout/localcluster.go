@@ -179,6 +179,8 @@ type LocalClusterModel struct {
 	// Selected resource (for trace/actions)
 	selectedEntry  *MapEntry       // Currently selected workload
 	selectedGitOps *GitOpsResource // Currently selected GitOps resource
+	boundedSession *boundedExplainSession
+	boundedPanel   *boundedExplainPanel
 
 	// Trace mode
 	traceMode    bool                        // In trace picker mode
@@ -1197,6 +1199,9 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		if m.boundedPanel != nil {
+			m.boundedPanel.resize(msg.Width, msg.Height)
+		}
 		m.ready = true
 		return m, nil
 
@@ -1257,6 +1262,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case boundedExplainMsg:
+		m.acceptBoundedExplain(msg)
+		return m, nil
+
 	case traceResultMsg:
 		m.traceLoading = false
 		m.traceOutput = msg.output
@@ -1306,6 +1315,9 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		if m.boundedPanel != nil {
+			return m.boundedExplainKey(msg)
+		}
 		// Handle auth needed state
 		if m.authNeeded {
 			switch msg.String() {
@@ -1566,6 +1578,11 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Handle panel mode key navigation
+		if msg.String() == "ctrl+e" {
+			m.openBoundedExplain()
+			return m, nil
+		}
+
 		if m.panelMode {
 			switch {
 			case key.Matches(msg, m.keymap.Quit):
@@ -2276,6 +2293,9 @@ func (m LocalClusterModel) View() string {
 	if !m.ready {
 		return "\n  Initializing..."
 	}
+	if m.boundedPanel != nil {
+		return m.boundedPanel.view()
+	}
 
 	// Auth prompt
 	if m.authNeeded {
@@ -2638,6 +2658,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("C") + "  Suggest commands (context-aware)\n")
 	b.WriteString("  " + lcNameStyle.Render("Q") + "  Saved queries (filter resources)\n")
 	b.WriteString("  " + lcNameStyle.Render("T") + "  Trace ownership chain\n")
+	b.WriteString("  " + lcNameStyle.Render("Ctrl+e") + "  Bounded resource evidence (Enter reads, r refreshes, Esc returns)\n")
 	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for risk issues\n")
 	b.WriteString("  " + lcNameStyle.Render("e/E") + "  Export graph from MAPS panel (HTML/SVG)\n")
 	b.WriteString("  " + lcNameStyle.Render("I") + "  Import wizard (bring workloads to ConfigHub)\n")

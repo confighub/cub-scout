@@ -1,7 +1,8 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-09-11. Current release target: `v2.9.0`, with publication
-tracked in `#520` and on GitHub Releases. Notes: [`docs/releases/v2.9.0.md`](docs/releases/v2.9.0.md).
+Last updated: 2026-09-11. Published release: `v2.9.0`; next direction: `v2.10.0`
+explorer integration. `#520` remains open for registry-pull verification.
+Notes: [`docs/releases/v2.9.0.md`](docs/releases/v2.9.0.md).
 The v2.8.0 baseline and May/July sections below remain historical context.
 
 ## v2.9.0 Release Scope
@@ -17,15 +18,44 @@ standalone/plugin parity, MCP/watch/bot, and distribution artifacts.
 Namespace-scoped MCP map calls now use `--namespace`. The bot image now declares
 numeric UID/GID 65532 so the `runAsNonRoot` example can start in Kubernetes.
 Full local tests/coverage and five-mode smoke passed, including an isolated
-in-cluster bot run. Final CI and publication status remain on `#520` / `#521`.
+in-cluster bot run. `#521` merged; PR/post-merge CI and the release workflow passed.
+All six published archive checksums, CLI/plugin versions, and Homebrew were
+verified. Anonymous registry pulls still return 403; package access needs an
+authorized owner to inspect it. A successful image push is not pull proof.
 The local ConfigHub token was expired during preparation; recorded connected
 proof must be distinguished from a successful authenticated live run.
 Commander `#519` starts after v2.9.0. `#475` stays delayed; deeper joins and
 provenance remain in `#502` / `#505`.
 
+## v2.10 First Slice (Unreleased)
+
+`#519` now records proof-first criteria for bounded resource evidence. Opt-in
+`explain --bounded --api-version <version> --kube-context <context>` reads one exact
+API discovery document and one object, without enrichment fan-out. The existing
+rich `explain` remains unchanged. The real MCP gateway and TUI bounded picker
+reuse a context/credential-configuration-pinned reader for up to 16 observations
+with a 15-second TTL; separate CLI invocations do not share a cache.
+
+`resourceRead` and `omissions` are additive JSON. Missing evidence is not health,
+delivery, source, or drift proof. `Ctrl+e` opens the explicit TUI resource picker;
+`r` refreshes a selected observation; leaving cancels it and rejects late results.
+The companion evidence panel itself is not shipped. Its repository work is
+separately coordinated; issue tracking remains here. Tests/example:
+`pkg/agent/bounded_read_test.go`, `cmd/cub-scout/explain_bounded_test.go`, and
+`examples/bounded-resource-read/`.
+
+Live proof includes CLI, plugin-mode, the actual `cub` v0.4.4 host using an
+isolated config/plugin directory, and real MCP cold/hit/refresh (`1+1`, `0+0`,
+`1+1` requests). Use `--kube-context`, not `--context`: the host consumes the
+latter. A live TUI check caught and fixed the bounded picker's CLI filter
+handling. Full tests, scoped tests twice, race tests, and read-only/docs guards
+passed locally; PR CI must pass before merge. The optional example-catalog check in this shared checkout encounters
+a missing README in the sibling examples repository; verify in CI's isolated
+layout without editing that repository.
+
 ## Current repo state
 
-- Branch: `main`
+- Working branch: `codex/v2.10-bounded-explorer` (unreleased work)
 - Canonical roadmap: `docs/roadmap.md`
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
 - First repo-specific AI entrypoint: `AI-README-FIRST.md`

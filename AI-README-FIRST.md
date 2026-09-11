@@ -114,8 +114,12 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Current release target: **v2.9.0** (`#520`); publication status is tracked on
-[GitHub Releases](https://github.com/confighub/cub-scout/releases).
+Published release: **v2.9.0**. `#520` remains open because anonymous registry
+pulls return 403; archives, CLI/plugin versions, CI, and Homebrew are verified.
+Next direction: **v2.10.0** explorer integration (`#519`), still unreleased.
+The first slice adds opt-in bounded `explain` reads and short-lived MCP/TUI
+session reuse; see `examples/bounded-resource-read/`. The companion panel is
+not shipped, and the existing rich explain path and standalone TUI remain.
 The released **v2.8.0** baseline adds bounded ConfigHub delivery
 evidence, MCP release/event/live-status tools, source-truth MCP strategy parity,
 and first-class in-cluster `bot` mode; release notes live at

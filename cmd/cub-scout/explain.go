@@ -46,6 +46,10 @@ func init() {
 	explainCmd.Flags().StringVar(&explainFormat, "format", "text", "Output format: text, json, md")
 	explainCmd.Flags().StringVar(&explainPresentation, "presentation", "", PresentationModeHelp())
 	explainCmd.Flags().StringVar(&explainHintMode, "hint-mode", "", HintModeHelp())
+	explainCmd.Flags().BoolVar(&explainBounded, "bounded", false, "Read only the exact API object, without controller or connected enrichment")
+	explainCmd.Flags().StringVar(&explainAPIVersion, "api-version", "", "Exact API version for --bounded (for example apps/v1)")
+	explainCmd.Flags().StringVar(&explainContext, "kube-context", "", "Explicit kube context for --bounded; does not change the current context")
+	explainCmd.Flags().BoolVar(&explainRefresh, "refresh", false, "Bypass bounded session reuse (CLI processes always start with an empty cache)")
 	explainCmd.Flags().BoolVar(&explainWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation")
 	explainCmd.Flags().StringVar(&explainConfigHubSpace, "confighub-space", "", "ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)")
 	explainCmd.Flags().StringVar(&explainConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
@@ -54,6 +58,8 @@ func init() {
 
 // ExplainSummary is the canonical model for explain output.
 type ExplainSummary struct {
+	ResourceRead             *agent.BoundedReadEvidence   `json:"resourceRead,omitempty"`
+	Omissions                []agent.Omission             `json:"omissions,omitempty"`
 	Resource                 string                       `json:"resource"`
 	Namespace                string                       `json:"namespace"`
 	Owner                    string                       `json:"owner"`
@@ -119,6 +125,23 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	hintCtx := HintContext{Mode: hintMode}
+	if explainBounded {
+		if explainWithConfigHub || cmd.Flags().Changed("confighub-space") || cmd.Flags().Changed("confighub-since") || cmd.Flags().Changed("confighub-stale-after") {
+			return fmt.Errorf("--bounded cannot perform ConfigHub enrichment")
+		}
+		ref, err := boundedExplainRef(args, explainAPIVersion, explainNamespace, explainContext)
+		if err != nil {
+			return err
+		}
+		summary, err := (&boundedExplainSession{}).observe(cmd.Context(), ref, explainContext, explainRefresh)
+		if err != nil {
+			return err
+		}
+		return outputExplainSummary(summary, format, invCtx, hintCtx)
+	}
+	if explainAPIVersion != "" || explainContext != "" || explainRefresh {
+		return fmt.Errorf("--api-version, --kube-context, and --refresh require --bounded")
+	}
 
 	kind, name, err := parseExplainArgs(args)
 	if err != nil {
@@ -141,17 +164,7 @@ func runExplain(cmd *cobra.Command, args []string) error {
 func outputExplainSummary(summary ExplainSummary, format string, invCtx InvocationContext, hintCtx HintContext) error {
 	switch format {
 	case "json":
-		// Populate structured hints for JSON output (reuses existing hint logic)
-		hints := explainHintsWithContext(summary, hintCtx)
-		// Include ConfigHub hint if present (backs the visible "OPEN IN CONFIGHUB" section)
-		if chHint := explainConfigHubHint(summary); chHint != nil {
-			hints = append(hints, *chHint)
-		}
-		sortHints(hints)
-		if len(hints) > 3 {
-			hints = hints[:3]
-		}
-		summary.NextSteps = HintsToStructured(hints)
+		summary = withExplainJSONHints(summary, hintCtx)
 
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -163,6 +176,19 @@ func outputExplainSummary(summary ExplainSummary, format string, invCtx Invocati
 		fmt.Print(renderExplainText(summary, invCtx.Mode(), invCtx.IsExplicit(), hintCtx))
 		return nil
 	}
+}
+
+func withExplainJSONHints(summary ExplainSummary, hintCtx HintContext) ExplainSummary {
+	hints := explainHintsWithContext(summary, hintCtx)
+	if chHint := explainConfigHubHint(summary); chHint != nil {
+		hints = append(hints, *chHint)
+	}
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	summary.NextSteps = HintsToStructured(hints)
+	return summary
 }
 
 func parseExplainArgs(args []string) (kind, name string, err error) {
@@ -694,6 +720,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 	fmt.Fprintf(&b, "  %s %s\n", label("Source"), summary.Source)
 	fmt.Fprintf(&b, "  %s %s\n", label("Deployed via"), summary.DeployedVia)
 	fmt.Fprintf(&b, "  %s %s\n", label("Health"), StatusColor(summary.Health))
+	if summary.ResourceRead != nil {
+		fmt.Fprintf(&b, "  %s %s\n", label("Resource read"), formatBoundedRead(summary.ResourceRead))
+	}
 	if summary.CurrentChange != nil {
 		fmt.Fprintf(&b, "  %s %s\n", label("Current change"), colorExplainRolloutDecision(summary.CurrentChange))
 	}
@@ -871,6 +900,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	fmt.Fprintf(&b, "- **Source:** %s\n", summary.Source)
 	fmt.Fprintf(&b, "- **Deployed via:** %s\n", summary.DeployedVia)
 	fmt.Fprintf(&b, "- **Health:** %s\n", summary.Health)
+	if summary.ResourceRead != nil {
+		fmt.Fprintf(&b, "- **Resource read:** %s\n", formatBoundedRead(summary.ResourceRead))
+	}
 	if summary.CurrentChange != nil {
 		fmt.Fprintf(&b, "- **Current change:** `%s`\n", formatRolloutDecisionLine(summary.CurrentChange))
 	}

@@ -54,6 +54,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Platform substrate evidence | This doc (below) | Embedded in `map list` JSON as `ownerEvidence`, in watch/bot events as `owner.evidence`, and in receipts as `predicate.evidence.platformSubstrate` |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
 | Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` JSON |
+| Bounded resource read (unreleased v2.10) | This doc (below) | Additive `resourceRead` and `omissions` on bounded `explain` only |
 | Map activity delivery rows | This doc (below) | Embedded in `map activity --with-confighub` JSON rows |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 | MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
@@ -84,6 +85,41 @@ For MCP, the current rule is:
 2. the tool returns that JSON payload as text content
 3. the wrapped CLI surface remains the contract source of truth
 4. selected connected tools may add `structuredContent` with parsed data plus read-only trust guidance
+
+## Bounded Resource Read (Unreleased v2.10)
+
+`explain --bounded --format json` and MCP `explain` with `bounded: true` use
+the same ExplainSummary as normal explain, plus:
+
+| Field | Meaning |
+|---|---|
+| `resourceRead.available` | An identity-matching object was read or reused; not a health or desired-state verdict |
+| `resourceRead.context` | Explicit selected kube context, never inferred from a ConfigHub Target |
+| `resourceRead.resource` | Exact `apiVersion`, `kind`, `namespace`, `name`; namespace is empty for cluster-scoped resources |
+| `resourceRead.uid`, `resourceRead.resourceVersion` | Kubernetes object identity/version when present |
+| `resourceRead.observedAt`, `resourceRead.expiresAt` | UTC timestamps for observation and session reuse deadline; zero timestamps (`0001-01-01T00:00:00Z`) when unavailable |
+| `resourceRead.cache` | `miss`, `hit`, or `refresh`; no persistent cache across CLI invocations |
+| `resourceRead.reads.discovery`, `resourceRead.reads.object` | Request attempts for this operation (each 0 or 1); auth transport traffic excluded |
+| `omissions[]` | Existing omission shape: `missing`, `reason`, `severity`; omitted evidence is not a negative finding |
+
+Every bounded response declares omissions for `source-controller-evidence`,
+`related-pod-event-evidence`, and `desired-live-comparison`. A failed read adds
+`live-resource` with warning severity and leaves health unavailable and ownership
+unknown. Read failures can return a successful CLI/MCP envelope containing this
+unavailable summary: check `resourceRead.available`. Invalid input or kubeconfig
+loading instead fails the command/tool.
+
+`Source`, `DeployedVia`, `Risks`, and `Drift` summary fields (lower-camel-case in
+JSON) explicitly say "Not assessed (bounded read)". Known native workload
+API/Kind pairs can include generation-aware `currentChange` evidence; supported
+generic Ready conditions can supply local health. Neither establishes controller
+delivery, desired/live agreement, or application success. Raw object data is not
+emitted. Hints preserve exact scope and recommend only a fresh bounded read.
+
+The real MCP gateway and TUI each reuse up to 16 observations for less than 15
+seconds. A hit keeps the original timestamps and uses zero requests. Refresh
+invalidates old evidence even if the new read fails. Tests and live smoke:
+[bounded resource evidence](../../examples/bounded-resource-read/).
 
 ## Trace Secret Evidence Contract
 

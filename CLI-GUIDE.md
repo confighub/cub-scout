@@ -60,6 +60,13 @@ What each step gives you:
 - `trace` shows the source chain behind the resource.
 - `map` opens the TUI when you want to browse interactively.
 
+**Unreleased v2.10:** for a low-load check of one exact object, use
+`./cub-scout explain Deployment/my-app -n prod --bounded --api-version apps/v1 --kube-context my-cluster --format json`.
+The TUI equivalent is `Ctrl+e` in `map`. MCP/TUI sessions can reuse observations
+for less than 15 seconds, with explicit refresh and freshness metadata. This
+does not prove delivery or application success; omitted evidence is explicit.
+See [bounded resource evidence](examples/bounded-resource-read/).
+
 If you prefer JSON first:
 
 ```bash

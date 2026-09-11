@@ -51,6 +51,27 @@ The gateway reuses existing CLI JSON command outputs:
 
 That keeps MCP responses aligned with the normal CLI contract.
 
+## Bounded Live Reads (Unreleased v2.10)
+
+For one exact resource, the `explain` tool accepts an opt-in bounded path:
+
+```json
+{"name":"explain","arguments":{"resource":"Deployment/api","namespace":"payments","bounded":true,"api_version":"apps/v1","context":"my-cluster"}}
+```
+
+This performs at most one API discovery request and one object GET. The real
+gateway retains up to 16 observations in process for less than 15 seconds; a
+repeat call uses zero discovery/object requests and preserves the observation
+time. Add `"refresh":true` to discard old evidence and read again. Context and
+selected credential-configuration changes invalidate reuse. Failures never
+silently return previous success.
+
+This path shares the CLI provider and JSON summary directly, with no explain
+subprocess or controller/ConfigHub enrichment. It does not cache other tools,
+change watch/bot polling, or prove delivery/application success. Read failures
+return an unavailable summary: inspect `resourceRead.available` and `omissions`,
+not just the tool envelope. See the [example and live smoke](../bounded-resource-read/).
+
 ## Low-load intended-config reads
 
 For broad ConfigHub-side questions, ask the type survey first, then fetch only

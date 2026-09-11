@@ -25,7 +25,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 ### v2.9.0 - Scoped Resource Reads and Release Readiness
 
-Agreed execution target: **v2.9.0**, following published v2.8.0. This is an
+**v2.9.0 is published** (2026-09-11), following v2.8.0. This is an
 additive release with existing CLI, JSON, MCP, and receipt contracts preserved.
 Tracking: [#520](https://github.com/confighub/cub-scout/issues/520). The release
 proof and remaining checks live in [v2.9.0 notes](releases/v2.9.0.md).
@@ -46,10 +46,38 @@ proof and remaining checks live in [v2.9.0 notes](releases/v2.9.0.md).
 - [x] Update release notes, handover, compatibility guidance, and the README
   user-question table. Every new capability must have a question, an exact
   command/tool, evidence semantics, and a test/example proving the answer.
-- [ ] Verify the final release commit: build, full tests, read-only contracts,
-  standalone/plugin parity, MCP, watch, bot, release archives, and container.
+- [x] Verify the final release commit: build, full tests, read-only contracts,
+  standalone/plugin parity, MCP, watch, bot, release archives, and locally built container.
 - [x] Reconcile `#502` and `#505` with explicit completed and deferred scope.
-- [ ] Publish the tag only when the release checks pass and verify its assets.
+- [x] Publish the tag after release checks; verify all six archive checksums,
+  standalone/plugin versions, release workflow, and Homebrew publication.
+- [ ] Complete the registry-pull check in `#520`: anonymous pulls return 403;
+  package visibility/read access needs an authorized owner to inspect it.
+  Live authenticated ConfigHub smoke also remains unavailable (expired token).
+
+### v2.10.0 - Explorer Integration (Unreleased)
+
+Agreed next direction: additive explorer integration and real observation reuse,
+not a replacement for the standalone TUI or a 3.0 contract break. Tracking stays
+in this repository: `#519`, `#502`, and `#505`.
+
+- [x] First provider slice implemented (`#519`, unreleased): opt-in `explain --bounded` with explicit
+  kube context/API identity, object-local facts, and structured omissions.
+  CLI/plugin, MCP, and the existing TUI share the read model. Use
+  `--kube-context` to avoid the host's ConfigHub context flag. See the
+  [bounded read example](../examples/bounded-resource-read/).
+- [x] Prove first-slice session reuse: finite TTL/entry count, visible refresh/freshness,
+  exact request counts, cancellation, context isolation, and no stale success
+  after failed refresh. Do not describe this as a global cache for all commands.
+- [ ] Wire the first companion evidence panel through the read-only CLI JSON
+  boundary, with explicit target-to-kube-context binding and late-result rejection.
+  Companion-repository changes remain separately coordinated; no replacement
+  of the existing standalone TUI is authorized by this item.
+- [ ] Continue stable release/controller/workload joins and receipt evidence
+  (`#502`) and component/variant/target provenance (`#505`) after this first slice.
+- [x] First-slice capabilities have README user questions, exact invocations,
+  deterministic tests, and a worked example, with unsupported parity explicit.
+  Repeat this requirement for each subsequent explorer capability.
 
 ### After v2.9.0
 

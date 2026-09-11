@@ -352,6 +352,9 @@ cub-scout explain deploy/payments-api -n prod --with-confighub --format json
 cub-scout explain deploy/payments-api -n prod --presentation ai
 cub-scout explain deploy/payments-api -n prod --hint-mode operator
 cub-scout explain deployment/payments-api -n prod --format md
+# Unreleased v2.10: one exact object, without enrichment
+./cub-scout explain Deployment/payments-api -n prod --bounded \
+  --api-version apps/v1 --kube-context my-cluster --format json
 ```
 
 ### Flags
@@ -366,6 +369,10 @@ cub-scout explain deployment/payments-api -n prod --format md
 | `--confighub-space` | ConfigHub space for delivery evidence (default: resource ConfigHub space; `*` must be explicit) |
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
+| `--bounded` | Unreleased v2.10: read only an exact API object; no source/controller, ConfigHub, related-pod, event, or drift enrichment |
+| `--api-version` | Required with `--bounded`; exact API version, e.g. `apps/v1` |
+| `--kube-context` | Required with `--bounded`; explicit kube context, without changing current-context or colliding with the `cub` host's ConfigHub `--context` flag |
+| `--refresh` | Bypass bounded session reuse; separate CLI invocations already start with an empty cache |
 
 `--with-confighub` is opt-in and read-only. For `explain`, connected release,
 unit-event, and live-status reads run only when the resource itself exposes a
@@ -373,6 +380,19 @@ ConfigHub space, the trace chain exposes a ConfigHub OCI space, or
 `--confighub-space` is supplied. Matched evidence appears under
 `deliveryEvidence`; missing identity, missing writeback, or non-matching rows
 are structured omissions.
+
+Bounded reads require exact Kind casing, not an alias such as `deploy`, and an
+explicit namespace for namespaced resources. They are incompatible with
+ConfigHub enrichment flags. A cold read makes at most one discovery request and
+one object GET; the MCP gateway and TUI reuse up to 16 observations for less
+than 15 seconds. Only the bounded operation has this budget, not normal map
+startup or rich explain. Missing evidence remains unavailable/unknown. Object
+readiness does not prove source delivery or application success.
+
+The TUI equivalent is `Ctrl+e` in `./cub-scout map`: choose an exact resource
+from the filtered inventory, Enter to read, `r` to refresh, Esc to cancel/back.
+See [bounded resource evidence](../../examples/bounded-resource-read/) for the
+JSON fields, limits, MCP arguments, and reproducible checks.
 
 ---
 
