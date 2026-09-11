@@ -1,6 +1,6 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-09-11. Release target: Scout `v2.10.1`; publication and
+Last updated: 2026-09-11. Published: Scout `v2.10.1`; publication and
 artifact proof are tracked in `#530` and `docs/releases/v2.10.1.md`.
 Previous published baseline: Scout `v2.10.0` (`f9f5512`) and separately
 packaged Commander `v0.3.0` (`7ffc9c5`). Final CI, downloaded checksums,
@@ -17,6 +17,30 @@ disclosed gap. Deletion/history semantics, exact release joins and connected TUI
 coverage remain open; this does not alter bounded object-read cache behavior.
 Notes: [`docs/releases/v2.10.0.md`](docs/releases/v2.10.0.md).
 The v2.8.0 baseline and May/July sections below remain historical context.
+
+## Active v2.11 Slice
+
+User deferred scanner #534 and connected auth/authority verification. Priorities
+are standalone/plugin revision evidence, efficient observation and dependable
+bot installation (#532). Polling baseline #533 is merged; runtime polling cost
+is not improved by that baseline. Registry permissions remain unchanged.
+
+Development branch adds bounded `explain --expected-revision`, MCP
+`expected_revision`, and TUI `e` expectation input. The same object-only model
+compares immutable IDs from a single-source Application or v1 Kustomization
+report, keeping match/mismatch/unknown separate from delivery and health.
+No additional API calls, connected auth, native watch or workload-set join.
+Other controllers/ambiguous evidence remain unknown, not false parity.
+Fixtures, scope/budget/process/TUI tests and limitations:
+`examples/controller-revision/`. Unreleased; do not claim v2.10.1 has this flag.
+
+Local proof: full suite twice, repeated focused tests, race, build/vet and
+read-only/docs guards passed. Synthetic controller HTTP fixtures cover positive
+CLI/plugin/actual-host/stdio-MCP/TUI paths. Read-only live smoke against the
+existing `kind-confighub` Deployment verified unsupported-kind unknown plus
+cold/hit/refresh budgets, including actual plugin host and terminal entry/edit/
+refresh/back. No positive live controller-to-workload proof, installed-plugin
+change, connected authority check or cluster mutation is claimed.
 
 ## v2.9.0 Release Scope
 

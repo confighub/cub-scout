@@ -265,3 +265,21 @@ func TestIntroDocs_FreshnessPatch(t *testing.T) {
 		t.Error("release README still labels the timestamp correction unreleased")
 	}
 }
+
+func TestIntroDocs_ControllerRevisionQuestion(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var question string
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(line, "| Does this selected controller report") {
+			question = line
+		}
+	}
+	for _, term := range []string{"Unreleased", "v2.11", "--expected-revision", "expected_revision", "TUI", "match", "mismatch", "unknown", "No ConfigHub auth", "zero-request", "not workload convergence", "examples/controller-revision/"} {
+		if !strings.Contains(question, term) {
+			t.Errorf("revision user question must explain %q", term)
+		}
+	}
+}

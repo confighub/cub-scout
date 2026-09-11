@@ -114,9 +114,13 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Release target: **v2.10.1** feedback-freshness patch; publication proof is in
+Published: **v2.10.1** feedback-freshness patch; publication proof is in
 `#530` and `docs/releases/v2.10.1.md`. The bounded explorer baseline is
 **v2.10.0** and companion **v0.3.0**.
+Active v2.11 work is #532. Scanner and connected authentication/authority
+verification are deferred by the user. Unreleased bounded controller revision
+comparison is documented in `examples/controller-revision/`; it is not a
+workload delivery proof or native-watch implementation.
 Final proof is tracked in `#525` and `docs/releases/v2.10.0.md`. `#520` remains
 open for registry access, container architecture and Go module major-version
 distribution; authenticated live ConfigHub proof requires renewed login and

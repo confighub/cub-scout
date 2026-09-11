@@ -1,0 +1,21 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "Application",
+  "metadata": {"name": "api", "namespace": "delivery", "uid": "application-fixture", "generation": 2, "resourceVersion": "10"},
+  "spec": {
+    "source": {"repoURL": "https://example.invalid/config.git", "path": "apps/api", "targetRevision": "main"},
+    "destination": {"server": "https://kubernetes.default.svc", "namespace": "apps"}
+  },
+  "status": {
+    "sync": {
+      "status": "Synced",
+      "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "comparedTo": {
+        "source": {"repoURL": "https://example.invalid/config.git", "path": "apps/api", "targetRevision": "main"},
+        "destination": {"server": "https://kubernetes.default.svc", "namespace": "apps"}
+      }
+    },
+    "health": {"status": "Degraded"},
+    "reconciledAt": "2026-09-11T12:00:00Z"
+  }
+}

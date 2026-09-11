@@ -123,10 +123,19 @@ These are tracked follow-ups, not claims of competitive leadership:
 Agreed scope: [#532](https://github.com/confighub/cub-scout/issues/532).
 Ship the v2.10.1 correction first; keep the next minor release additive.
 
+v2.10.1 is published (#530). User priority: scanner #534 and connected
+authentication/authority verification are deferred, not release blockers.
+Focus on standalone/plugin delivery evidence, efficient ongoing observation,
+and dependable bot installation; do not change registry permissions implicitly.
+
 - [ ] Exact intended-release input joined to controller-observed revision,
   identified live objects and current workload generation (#502/#505).
   Prove one end-to-end controller path, then a second; missing identity is
   inconclusive. Delivery, readiness and application-health policy stay separate.
+  First bounded report-comparison slice is implemented for v2.11 (unreleased):
+  explicit immutable revision, Application/Kustomization evidence, CLI/plugin,
+  MCP and standalone TUI, without extra reads. [Example](../examples/controller-revision/).
+  This does not complete the live object-set/workload join or watch/bot parity.
 - [x] First polling baseline (#519): actual HTTP requests and response-body
   bytes for 100/1,000-object cold, idle and ownership-change cycles; latency and
   allocations measured separately. [Reproducible example](../examples/observation-budget/).
