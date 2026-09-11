@@ -76,7 +76,7 @@ The agent host calls `tools/list` to discover tools and `tools/call` to invoke t
 - `explain` — plain-English per-resource report
 - `gitops_status` — GitOps/controller delivery status and coverage evidence
 
-**Connected-mode tools** (10, added when connected mode is available):
+**Connected-mode tools** (11, added when connected mode is available):
 - `compare_three_way` — DRY/WET/LIVE with rolled-up agreement
 - `compare_source_truth` — strategy-typed verdict (target + namespace + strategy required)
 - `confighub_changesets` — governed ChangeSet history from ConfigHub
@@ -84,6 +84,7 @@ The agent host calls `tools/list` to discover tools and `tools/call` to invoke t
 - `confighub_k8s_types` — ConfigHub Resource-backed intended Kubernetes type survey
 - `confighub_live_status` — ConfigHub Space live-status writeback with freshness
 - `confighub_releases` — bounded ConfigHub Release history
+- `confighub_resources` — generic ConfigHub Resource entity queries
 - `confighub_unit_events` — bounded ConfigHub UnitEvent history
 - `confighub_units` — ConfigHub unit + fleet inventory
 - `confighub_unit_get` — exact ConfigHub unit details + applied/live revision

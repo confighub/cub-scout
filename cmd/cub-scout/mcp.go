@@ -55,6 +55,7 @@ Additional tools in connected mode (when authenticated to ConfigHub):
   - confighub_k8s_types
   - confighub_live_status
   - confighub_releases
+  - confighub_resources
   - confighub_unit_events
   - confighub_units
   - confighub_unit_get
@@ -750,6 +751,76 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				args := []string{"release", "list", "--space", space, "-o", "json"}
 				if where := argString(arguments, "where"); where != "" {
 					args = append(args, "--where", where)
+				}
+				return args, nil
+			},
+			Runner: connectedRunner,
+		}
+		tools["confighub_resources"] = mcpTool{
+			Descriptor: mcpToolDescriptor{
+				Name:        "confighub_resources",
+				Description: "Connected-only ConfigHub Resource entity query (cub resource list -o json). Use when the user asks for indexed resources across units/spaces, non-Kubernetes resources extracted from unit data, fleet-wide Data predicates, TargetID/resource-type/resource-name filters, or a lower-load alternative to iterating units. Space is REQUIRED to keep the read bounded; pass '*' only for an explicit all-spaces query. This reads ConfigHub's extracted Resource rows, not live cluster state. DO NOT use for rollout health, live drift, or app success by itself; pair with confighub_k8s_resources for Kubernetes-shaped intended config and gitops_status, trace, compare_three_way, or compare_source_truth for controller/runtime evidence.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"space": map[string]interface{}{
+							"type":        "string",
+							"description": "Required ConfigHub space slug or ID; use '*' only for an explicit all-spaces read.",
+						},
+						"where": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional Resource/entity/Data filter passed to --where, such as ResourceType, ResourceName, TargetID, Unit.Labels.*, Space.Labels.*, or Data.* predicates.",
+						},
+						"contains": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional full-text contains query passed to --contains.",
+						},
+						"select": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional comma-separated fields passed to --select, for example ResourceType,ResourceName,Data.",
+						},
+						"filter": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional ConfigHub filter slug or ID passed to --filter.",
+						},
+						"view": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional ConfigHub view slug or ID passed to --view.",
+						},
+						"raw_data": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Include each resource's original configuration as RawData in JSON output. Can be large; prefer select/where when possible.",
+						},
+					},
+					"required":             []string{"space"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				space := argString(arguments, "space")
+				if space == "" {
+					return nil, fmt.Errorf("missing required argument: space")
+				}
+
+				args := []string{"resource", "list", "--space", space, "-o", "json"}
+				if where := argString(arguments, "where"); where != "" {
+					args = append(args, "--where", where)
+				}
+				if contains := argString(arguments, "contains"); contains != "" {
+					args = append(args, "--contains", contains)
+				}
+				if selectFields := argString(arguments, "select"); selectFields != "" {
+					args = append(args, "--select", selectFields)
+				}
+				if filter := argString(arguments, "filter"); filter != "" {
+					args = append(args, "--filter", filter)
+				}
+				if view := argString(arguments, "view"); view != "" {
+					args = append(args, "--view", view)
+				}
+				if argBool(arguments, "raw_data") {
+					args = append(args, "--raw-data")
 				}
 				return args, nil
 			},

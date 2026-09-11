@@ -46,6 +46,7 @@ These prompts require connected mode.
 | "What changed recently for this governed unit?" | `confighub_changesets` | `cub changeset list --json` |
 | "Which Kubernetes resource types does ConfigHub already hold in `prod`?" | `confighub_k8s_types` | `cub k8s types --space prod -o json` |
 | "What Deployment config does ConfigHub intend for the `payments` namespace in `prod`?" | `confighub_k8s_resources` | `cub k8s get deploy --space prod -n payments -o json` |
+| "Find every indexed resource whose image comes from `ghcr.io/acme` without reading live clusters." | `confighub_resources` | `cub resource list --space "*" --where "Data.spec.template.spec.containers.*.image LIKE 'ghcr.io/acme/%'" -o json` |
 
 ## Stretch Set
 
@@ -58,6 +59,7 @@ Use these when you want to test chaining quality, not just first-tool attraction
 | "Tell me whether this is sign-off-ready and show me the first useful governed object to inspect." | `compare_three_way` -> `confighub_units` |
 | "Find the governed unit for `frontend` and show me the latest governed receipt." | `explain` or `trace` -> `confighub_units` -> `confighub_changesets` |
 | "Before hitting the live cluster, show what ConfigHub thinks is deployed for `payments` and then check whether it is actually synced." | `confighub_k8s_types` -> `confighub_k8s_resources` -> `gitops_status` or `compare_three_way` |
+| "Survey indexed resources by Data predicate, then inspect the Kubernetes-shaped intended object and compare it to live." | `confighub_resources` -> `confighub_k8s_resources` -> `compare_three_way` |
 
 ## Score Sheet Template
 

@@ -57,7 +57,7 @@ Highlights:
   trace, map JSON, watch/bot events, and receipts.
 - MCP standalone mode adds `gitops_status`; connected mode adds
   `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
-  `confighub_releases`, and `confighub_unit_events`.
+  `confighub_releases`, `confighub_resources`, and `confighub_unit_events`.
 - MCP `compare_source_truth` strategy enum now derives from
   `agent.AllStrategies()`, matching the CLI.
 - `trace --with-confighub` and `explain --with-confighub` now attach
@@ -455,7 +455,7 @@ Recent shipped capability surface:
 - Architectural triad locked in code (read-only-triad invariant; enforced at three layers)
 - **Receipts v1 + v2 — feature-complete.** 3 predicates (`applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`); store + management UX (`receipt show / validate / list`); CI-gate exit semantics (`--fail-on`); chained receipts via `--input-attestation` with API-boundary `VerifiedAttestationRef` verify; aggregate-with-discovery via `--scope namespace/<ns>` + comma-list batch + `synthetic-aggregate://` subject + `--aggregate-policy` (max-severity default); real-time emission via `watch --emit-receipt-on` covering all 4 event types + `--emit-receipt-batch-cap` per-poll backpressure. 4 worked examples (`ci-gate/`, `chained/`, `aggregate/`, `watch-emit/`).
 - AI-agent skill catalog: **42 skill files** = 8 verb-group skills (`#442` batch 1+2) + 7 controller-observer skills (`#442` batch 3) + 8 workflow scenario skills (`#442` batch 4) + **9 Pilot consumer-integration skills (`#444` batch A+B)** + 1 umbrella router + 9 shared references
-- MCP gateway with closed read-only tool catalog (6 standalone + 10 connected tools)
+- MCP gateway with closed read-only tool catalog (6 standalone + 11 connected tools)
 - `--presentation human|ai|paired` on `doctor` / `explain` / `trace`
 
 ## Next milestone

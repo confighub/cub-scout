@@ -45,6 +45,7 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 		"confighub_k8s_types",
 		"confighub_live_status",
 		"confighub_releases",
+		"confighub_resources",
 		"confighub_unit_events",
 		"confighub_unit_get",
 		"confighub_units",
@@ -118,6 +119,7 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "confighub_k8s_types", contains: []string{"Connected-only", "Resource-backed Kubernetes type survey", "cheapest ConfigHub-side survey", "either space or target is REQUIRED", "stored ConfigHub Resource metadata"}},
 		{name: "confighub_live_status", contains: []string{"Connected-only", "live-status writeback", "Space is REQUIRED", "best-effort reported evidence"}},
 		{name: "confighub_releases", contains: []string{"Connected-only", "Release history", "Space is REQUIRED", "pair with gitops status"}},
+		{name: "confighub_resources", contains: []string{"Connected-only", "Resource entity query", "fleet-wide Data predicates", "Space is REQUIRED", "extracted Resource rows, not live cluster state"}},
 		{name: "confighub_unit_events", contains: []string{"Connected-only", "UnitEvent reader", "Space is REQUIRED", "DO NOT use as a cursor-consuming event consumer"}},
 		{name: "confighub_units", contains: []string{"Connected-only", "cluster-to-ConfigHub lookup", "first useful ConfigHub object", "Load after doctor, map, explain, or trace", "then confighub_unit_get once the unit is known"}},
 		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "last applied revision, or live revision", "before opening the GUI", "use confighub_units first", "compare_three_way first"}},
@@ -200,6 +202,11 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 			tool:     "confighub_releases",
 			intent:   "Which OCI release was published for this space?",
 			contains: []string{"Release history", "OCI bundle", "where filter"},
+		},
+		{
+			tool:     "confighub_resources",
+			intent:   "Find every indexed resource whose container image comes from this registry.",
+			contains: []string{"indexed resources across units/spaces", "fleet-wide Data predicates", "lower-load alternative to iterating units"},
 		},
 		{
 			tool:     "confighub_unit_events",
@@ -965,6 +972,120 @@ func TestMCPGatewayHandleRequest_ToolsCallConfigHubK8sValidationError(t *testing
 				t.Fatalf("error text = %+v, want substring %q", result.Content, tc.errContains)
 			}
 		})
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConfigHubResources(t *testing.T) {
+	var gotStandaloneArgs []string
+	var gotConnectedArgs []string
+	gateway := newMCPGatewayWithMode(
+		func(ctx context.Context, args []string) (string, error) {
+			gotStandaloneArgs = append([]string(nil), args...)
+			return `{"standalone":true}`, nil
+		},
+		func(ctx context.Context, args []string) (string, error) {
+			gotConnectedArgs = append([]string(nil), args...)
+			return `[{"Resource":{"ResourceType":"apps/v1/Deployment","ResourceName":"payments/api","SpaceSlug":"prod","UnitSlug":"payments-api"}}]`, nil
+		},
+		true,
+	)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`12.9`),
+		Method:  "tools/call",
+		Params: json.RawMessage(`{
+			"name":"confighub_resources",
+			"arguments":{
+				"space":"*",
+				"where":"ResourceType = 'apps/v1/Deployment' AND Data.spec.replicas > 1",
+				"contains":"payments",
+				"select":"ResourceType,ResourceName,Data",
+				"filter":"prod-filters/k8s",
+				"view":"deployment-images",
+				"raw_data":true
+			}
+		}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	if len(gotStandaloneArgs) != 0 {
+		t.Fatalf("standalone runner should not be used, got args %v", gotStandaloneArgs)
+	}
+	wantConnected := []string{
+		"resource", "list",
+		"--space", "*",
+		"-o", "json",
+		"--where", "ResourceType = 'apps/v1/Deployment' AND Data.spec.replicas > 1",
+		"--contains", "payments",
+		"--select", "ResourceType,ResourceName,Data",
+		"--filter", "prod-filters/k8s",
+		"--view", "deployment-images",
+		"--raw-data",
+	}
+	if !reflect.DeepEqual(gotConnectedArgs, wantConnected) {
+		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantConnected)
+	}
+
+	var result struct {
+		StructuredContent struct {
+			Data []struct {
+				Resource struct {
+					ResourceType string `json:"ResourceType"`
+				} `json:"Resource"`
+			} `json:"data"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if len(result.StructuredContent.Data) != 1 || result.StructuredContent.Data[0].Resource.ResourceType != "apps/v1/Deployment" {
+		t.Fatalf("structuredContent.data = %+v, want parsed resources", result.StructuredContent.Data)
+	}
+}
+
+func TestMCPGatewayHandleRequest_ToolsCallConfigHubResourcesValidationError(t *testing.T) {
+	gateway := newMCPGatewayWithMode(nil, func(ctx context.Context, args []string) (string, error) {
+		t.Fatal("connected runner should not be called for validation error")
+		return "", nil
+	}, true)
+
+	req := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`13.1`),
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"confighub_resources","arguments":{}}`),
+	}
+
+	resp := gateway.handleRequest(context.Background(), req)
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected rpc error: %+v", resp.Error)
+	}
+
+	var result struct {
+		IsError bool `json:"isError"`
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if !result.IsError {
+		t.Fatal("result.isError = false, want true")
+	}
+	if len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, "space") {
+		t.Fatalf("unexpected error text: %+v", result.Content)
 	}
 }
 

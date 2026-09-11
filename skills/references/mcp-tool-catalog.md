@@ -11,7 +11,7 @@ The catalog has two tiers:
 - **Standalone tools** — registered always; require only a kubeconfig
 - **Connected tools** — added when `cub auth status` succeeds; require ConfigHub auth
 
-Total: **16 tools** (6 standalone + 10 connected).
+Total: **17 tools** (6 standalone + 11 connected).
 
 ## Standalone tools (6)
 
@@ -78,7 +78,7 @@ the catalog from a running server.
 | Returns | GitOps/controller backend, transport, sources, deployers, source/build/apply/sync stages, delivery evidence when requested, and `controllerCoverage[]` |
 | When to load | "Is this deployed?" "Is delegated delivery healthy?" "Which controller families did cub-scout actually inspect?" "Is missing status absence or an RBAC/API omission?" Evidence only; never use it to force sync or declare application success by itself. |
 
-## Connected tools (10)
+## Connected tools (11)
 
 Registered only when `cub-scout mcp serve` detects connected mode and the `cub`
 CLI is available.
@@ -157,6 +157,16 @@ for the full enum.
 | Optional args | `where` (string — filter expression, usually time- or target-bounded) |
 | Returns | ConfigHub Release rows for release/OCI bundle history |
 | When to load | "Which release or OCI bundle was published for this space/target/time window?" Pair with `gitops status`, `trace`, or `compare_source_truth` for controller/runtime evidence. |
+
+### `confighub_resources`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub resource list --space <space> -o json` (calls `cub`, not cub-scout) |
+| Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read) |
+| Optional args | `where` (string — Resource/entity/Data filter); `contains` (string); `select` (string); `filter` (string — ConfigHub filter slug/ID); `view` (string — ConfigHub view slug/ID); `raw_data` (boolean) |
+| Returns | ConfigHub Resource entity rows for indexed resources extracted from Unit data, including resource metadata and selected fields/data when requested |
+| When to load | "Which indexed resources match this fleet-wide predicate?" "Find resources by ResourceType, ResourceName, TargetID, Unit/Space labels, or Data paths." Lower-load alternative to iterating Units; not live cluster health. |
 
 ### `confighub_unit_events`
 
@@ -240,9 +250,9 @@ Each tool's `BuildArgs` function transforms the MCP arguments into a cub-scout C
 
 For connected tools that wrap `cub` (not cub-scout) — `confighub_changesets`,
 `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
-`confighub_releases`, `confighub_unit_events`, `confighub_units`, and
-`confighub_unit_get` — the runner is `connectedRunner` instead of `runner`.
-Same execution model; different binary on PATH.
+`confighub_releases`, `confighub_resources`, `confighub_unit_events`,
+`confighub_units`, and `confighub_unit_get` — the runner is `connectedRunner`
+instead of `runner`. Same execution model; different binary on PATH.
 
 ## Errors
 

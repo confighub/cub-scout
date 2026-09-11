@@ -45,7 +45,7 @@ Implicit intents:
 ## Standalone vs connected
 
 - **Standalone (cluster only):** `mcp serve` exposes the read-only standalone tool set (doctor, explain, map, scan, trace, compare drift, etc.). `context-pack` produces a cluster snapshot with attribution evidence but no ConfigHub linkage. `bot` streams watch events using kubeconfig or in-cluster service-account credentials.
-- **Connected (cluster + `cub auth login`):** `mcp serve` additionally registers the connected-mode tools (`compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`). Connected `context-pack` includes ConfigHub unit linkage and connected attribution (`bindingSource`).
+- **Connected (cluster + `cub auth login`):** `mcp serve` additionally registers the connected-mode tools (`compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`). Connected `context-pack` includes ConfigHub unit linkage and connected attribution (`bindingSource`).
 - **Offline (no cluster):** `mcp serve` refuses to start without a reachable cluster. `context-pack` works against debug bundles via `--bundle <path>`.
 
 ## Tool boundary
@@ -130,6 +130,7 @@ When the agent is connected (`cub auth status` returns OK), `mcp serve` addition
 - `confighub_k8s_resources` — Resource-backed intended Kubernetes resource reader
 - `confighub_live_status` — Space live-status writeback with freshness
 - `confighub_releases` — bounded ConfigHub Release history
+- `confighub_resources` — generic ConfigHub Resource entity query
 - `confighub_unit_events` — bounded ConfigHub UnitEvent history
 - `confighub_units` — ConfigHub unit + fleet inventory
 - `confighub_unit_get` — exact ConfigHub unit details + applied/live revision
@@ -179,11 +180,12 @@ The closed list of MCP tools cub-scout registers. The set is verified by `cmd/cu
 | `confighub_k8s_types` | connected | `cub k8s types [<type>] -o json` (calls `cub`) |
 | `confighub_live_status` | connected | `cub space list -o json --select Slug,SpaceID,Annotations,Labels` (calls `cub`) |
 | `confighub_releases` | connected | `cub release list --space <space> -o json` (calls `cub`) |
+| `confighub_resources` | connected | `cub resource list --space <space> -o json` (calls `cub`) |
 | `confighub_unit_events` | connected | `cub unit-event list [unit] --space <space> -o json` (calls `cub`) |
 | `confighub_units` | connected | `cub unit list --json` (calls `cub`) |
 | `confighub_unit_get` | connected | `cub unit get --json <unit>` (calls `cub`) |
 
-6 standalone + 10 connected = **16 tools total**. The catalog is intentionally narrow: every tool is read-only, every tool has a stable JSON contract, every tool is exercised by an MCP integration test.
+6 standalone + 11 connected = **17 tools total**. The catalog is intentionally narrow: every tool is read-only, every tool has a stable JSON contract, every tool is exercised by an MCP integration test.
 
 For the full reference (per-tool parameters, return shape, when-to-load semantics, deferred verbs not in the catalog), see [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md).
 

@@ -64,7 +64,7 @@ func buildMCPStructuredContent(toolName, output string) interface{} {
 		return buildMCPChangesetsStructuredContent(payload)
 	case "confighub_live_status":
 		return buildMCPLiveStatusStructuredContent(payload)
-	case "confighub_k8s_resources", "confighub_k8s_types":
+	case "confighub_k8s_resources", "confighub_k8s_types", "confighub_resources":
 		return mcpWrapStructuredData(payload)
 	case "confighub_releases", "confighub_unit_events":
 		return mcpWrapStructuredData(payload)
