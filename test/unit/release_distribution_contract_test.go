@@ -244,3 +244,24 @@ func TestIntroDocs_FiveModesAndEvidenceBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestIntroDocs_FreshnessPatch(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var question string
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(line, "| Can I trust a reported success or failure") {
+			question = line
+		}
+	}
+	for _, term := range []string{"v2.10.1", "INCONCLUSIVE", "WATCH", "original report", "freshness omission", "Cases and proof"} {
+		if !strings.Contains(question, term) {
+			t.Errorf("freshness user question must explain %q", term)
+		}
+	}
+	if strings.Contains(question, "unreleased") {
+		t.Error("release README still labels the timestamp correction unreleased")
+	}
+}

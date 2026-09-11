@@ -1,16 +1,18 @@
 # cub-scout Handover for the Next AI Coder
 
-Last updated: 2026-09-11. Published: Scout `v2.10.0` (`f9f5512`) and separately
+Last updated: 2026-09-11. Release target: Scout `v2.10.1`; publication and
+artifact proof are tracked in `#530` and `docs/releases/v2.10.1.md`.
+Previous published baseline: Scout `v2.10.0` (`f9f5512`) and separately
 packaged Commander `v0.3.0` (`7ffc9c5`). Final CI, downloaded checksums,
 standalone/plugin/MCP/TUI/watch/bot proof and validation gaps are recorded in
 `#525`. `#520` remains open for registry access, architecture coverage and Go
 module major-version distribution. Post-release intro/docs review is `#527`.
-The `#502` timestamp correction is implemented after v2.10, not yet released:
+The v2.10.1 `#502` timestamp correction is merged in `#529` (`bc68a9a`):
 missing/invalid/zero/future timestamps become `unknown` / `INCONCLUSIVE`, and
 stale reports become `WATCH`, including old failures. Reported fields remain
 visible with freshness omissions; activity rows preserve original `observedAt`.
 Recorded parser/collector/MCP/doctor/activity/trace/receipt proof lives under
-`examples/live-delivery-observability/`. Published v2.10 binaries still have the
+`examples/live-delivery-observability/`. Earlier v2.10.0 binaries have the
 disclosed gap. Deletion/history semantics, exact release joins and connected TUI
 coverage remain open; this does not alter bounded object-read cache behavior.
 Notes: [`docs/releases/v2.10.0.md`](docs/releases/v2.10.0.md).

@@ -82,7 +82,7 @@ and the join performs no additional Kubernetes reads beyond one Application list
 
 ## Trusting Feedback Freshness
 
-**Unreleased correction after v2.10.0.** The question is: "Does this report tell
+**v2.10.1 correction.** The question is: "Does this report tell
 me what is true now, or only what was last reported?"
 
 [`freshness-cases.json`](freshness-cases.json) fixes the observer clock at
@@ -126,3 +126,23 @@ No live authentication, production cursor or cluster writes are used by this
 proof. Authenticated intended-state mapping remains separate. The existing
 standalone/companion bounded TUI panels do not consume connected writeback, so
 this fix does not add that TUI capability or change their cache contracts.
+
+### Packaged-Binary Smoke
+
+After extracting a checksum-verified native Unix archive, test the actual
+standalone and plugin entry points from the repository root:
+
+```sh
+CUB_SCOUT_TEST_BINARY=/absolute/archive/cub-scout \
+CUB_SCOUT_TEST_PLUGIN_BINARY=/absolute/archive/main \
+go test ./cmd/cub-scout -run '^TestLiveStatusFreshnessPackaged$' -count=1 -v
+```
+
+This opt-in test starts each binary's real stdio MCP server. An isolated fake
+`cub` returns eight timestamp cases in one explicit all-spaces fixture query;
+the test checks verdicts, original fields, six omissions and exactly one data
+read. It uses a temporary home and synthetic credentials, never user auth or
+a cluster. The provider's existing public startup health HEAD still requires
+network reachability; this is not an authenticated connected end-to-end test.
+Without an explicit binary path the test skips. Exact clock boundaries remain
+covered by the fixed-clock source tests above, not this wall-clock smoke.

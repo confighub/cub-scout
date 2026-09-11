@@ -114,18 +114,20 @@ Do not claim that `cub scout` can do SDK/renderer work locally unless the curren
 
 ## Current High-Signal Shipped Capabilities
 
-Published: **v2.10.0** bounded explorer integration and companion **v0.3.0**.
+Release target: **v2.10.1** feedback-freshness patch; publication proof is in
+`#530` and `docs/releases/v2.10.1.md`. The bounded explorer baseline is
+**v2.10.0** and companion **v0.3.0**.
 Final proof is tracked in `#525` and `docs/releases/v2.10.0.md`. `#520` remains
 open for registry access, container architecture and Go module major-version
 distribution; authenticated live ConfigHub proof requires renewed login and
 explicit test scope. These are limitations, not passing checks. Current docs
 and competitive capability review: `#527`.
-Implemented after v2.10, not yet released: `#502` live-status timestamp gating.
+The v2.10.1 correction (`#502`, merged in `#529`) gates live-status timestamps.
 Missing/invalid/zero/future timestamps now yield `INCONCLUSIVE`; stale reports,
 including old failures, yield `WATCH`. Original report fields and freshness
 omissions remain visible; activity evidence retains the original `observedAt`.
 See `examples/live-delivery-observability/#trusting-feedback-freshness` for proof.
-Published v2.10 binaries still have the disclosed gap. Producer deletion/history
+Earlier v2.10.0 binaries have the disclosed gap. Producer deletion/history
 semantics and deeper delivery joins remain open; bounded TUI contracts are unchanged.
 The first slice adds opt-in bounded `explain` reads and short-lived MCP/TUI
 session reuse; see `examples/bounded-resource-read/`. The companion panel is
