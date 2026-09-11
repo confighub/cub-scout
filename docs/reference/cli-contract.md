@@ -29,6 +29,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
 | v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, `explain`, and `map activity`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
 | v2.9 | Resource-backed connected MCP reads; identity-checked supporting live-status evidence on Argo Application activity rows |
+| v2.10 (unreleased) | Opt-in bounded `explain`, with exact context/API identity, per-session observation reuse in MCP/TUI, refresh, and explicit omissions |
 
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.
@@ -156,6 +157,47 @@ cub-scout explain <kind> <name> [flags]
   space, or `--confighub-space` is supplied.
 - `deliveryEvidence` is supporting evidence only. It does not replace Argo,
   Flux, Sveltos, Modelplane, or Kubernetes status authority.
+
+### Bounded Explain (Unreleased v2.10)
+
+Additive flags: `--bounded` (false), `--api-version` (empty), `--kube-context`
+(empty), and `--refresh` (false). The latter three require bounded mode.
+Bounded mode requires explicit context and exact API version/Kind/name;
+namespaced resources also require an explicit namespace. Cluster-scoped
+resources reject a namespace. Secret payloads and subresources are excluded.
+ConfigHub enrichment flags are incompatible with bounded mode.
+`--kube-context` avoids the `cub` host's reserved `--context` flag, which selects
+a ConfigHub context and is stripped before plugin invocation.
+
+- Uses the same ExplainSummary and ASCII/text/Markdown renderers. JSON adds
+  `resourceRead` and `omissions`; normal explain output is unchanged.
+- A cold read/refresh/expiry performs at most one discovery request and one
+  object GET. Successful responses are capped at 2 MiB, REST retries are
+  disabled along with HTTP redirects, and each read has a ten-second context timeout. Authentication
+  transport requests are outside these counters.
+- MCP `explain` adds typed arguments `bounded`, `api_version`, `context`,
+  `refresh`. Its real stdio gateway retains observations in process; it does
+  not start an explain subprocess for bounded reads. CLI and MCP use the same
+  provider, summary builder, and structured hints.
+- MCP and the TUI each retain at most 16 observations for less than 15 seconds.
+  Hits preserve observation time and make zero discovery/object requests.
+  Context or selected credential-configuration changes replace the reader.
+  Independent CLI/plugin invocations do not share a cache.
+- Refresh discards previous evidence before reading; failures never return
+  cached success. Read failures produce an unavailable summary and omissions,
+  not an error exit; invalid arguments or kubeconfig loading fail the command.
+  Consumers must check `resourceRead.available`, not just the exit code.
+- TUI `Ctrl+e` opens an exact-resource picker from existing filtered inventory;
+  Enter reads, `r` refreshes, Esc cancels/backs out. Late results cannot replace
+  another selection. Map inventory refreshes remain pinned to its displayed
+  kube context. The picker requires the binding recorded by the inventory load;
+  unloaded/in-cluster inventory cannot be associated with a kubeconfig context
+  by name alone. Existing map inventory cost is unchanged.
+- This is object-local evidence, not source truth, delivery completion, drift,
+  or application success. The serial MCP transport does not add concurrent
+  cancellation-notification handling; TUI cancellation and read timeouts apply.
+
+See [bounded resource evidence](../../examples/bounded-resource-read/).
 
 ---
 

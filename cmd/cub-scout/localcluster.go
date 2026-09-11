@@ -26,6 +26,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // TUISnapshot represents saved TUI state for resumption
@@ -179,6 +181,9 @@ type LocalClusterModel struct {
 	// Selected resource (for trace/actions)
 	selectedEntry  *MapEntry       // Currently selected workload
 	selectedGitOps *GitOpsResource // Currently selected GitOps resource
+	boundedSession *boundedExplainSession
+	boundedPanel   *boundedExplainPanel
+	boundedContext string // Exact kubeconfig context used to load the inventory; empty for in-cluster auth.
 
 	// Trace mode
 	traceMode    bool                        // In trace picker mode
@@ -412,11 +417,12 @@ func defaultLocalKeyMap() localKeyMap {
 
 // Messages
 type localDataLoadedMsg struct {
-	entries      []MapEntry
-	gitops       []GitOpsResource
-	gitSources   []GitSourceInfo // Git sources (GitRepository, etc.)
-	detectedApps []string        // App names detected from namespaces
-	err          error
+	boundedContext string
+	entries        []MapEntry
+	gitops         []GitOpsResource
+	gitSources     []GitSourceInfo // Git sources (GitRepository, etc.)
+	detectedApps   []string        // App names detected from namespaces
+	err            error
 }
 
 type localAuthCheckMsg struct {
@@ -558,15 +564,34 @@ func (m LocalClusterModel) Init() tea.Cmd {
 	}
 	return tea.Batch(
 		m.spinner.Tick,
-		loadLocalClusterData,
+		m.loadLocalClusterData,
 		checkConnectionStatus(m.clusterName),
 	)
 }
 
 func loadLocalClusterData() tea.Msg {
+	return loadLocalClusterDataForContext(getCurrentContext())
+}
+
+func (m LocalClusterModel) loadLocalClusterData() tea.Msg {
+	return loadLocalClusterDataForContext(m.contextName)
+}
+
+func localClusterConfig(kubeContext string) (*rest.Config, string, error) {
+	if config, err := rest.InClusterConfig(); err == nil {
+		return config, "", nil
+	}
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(),
+		&clientcmd.ConfigOverrides{CurrentContext: kubeContext},
+	).ClientConfig()
+	return config, kubeContext, err
+}
+
+func loadLocalClusterDataForContext(kubeContext string) tea.Msg {
 	ctx := context.Background()
 
-	cfg, err := buildConfig()
+	cfg, boundContext, err := localClusterConfig(kubeContext)
 	if err != nil {
 		return localDataLoadedMsg{err: fmt.Errorf("build kubernetes config: %w", err)}
 	}
@@ -730,7 +755,7 @@ func loadLocalClusterData() tea.Msg {
 	}
 	sort.Strings(detectedApps)
 
-	return localDataLoadedMsg{entries: entries, gitops: gitops, gitSources: gitSources, detectedApps: detectedApps}
+	return localDataLoadedMsg{entries: entries, gitops: gitops, gitSources: gitSources, detectedApps: detectedApps, boundedContext: boundContext}
 }
 
 func parseFluxKustomization(item *unstructured.Unstructured) GitOpsResource {
@@ -1197,6 +1222,9 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		if m.boundedPanel != nil {
+			m.boundedPanel.resize(msg.Width, msg.Height)
+		}
 		m.ready = true
 		return m, nil
 
@@ -1211,6 +1239,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 		} else {
 			m.entries = msg.entries
+			m.boundedContext = msg.boundedContext
 			m.gitops = msg.gitops
 			m.gitSources = msg.gitSources
 			m.detectedApps = msg.detectedApps
@@ -1255,6 +1284,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.panelView = viewAppHierarchy
 			m.updatePanelContent()
 		}
+		return m, nil
+
+	case boundedExplainMsg:
+		m.acceptBoundedExplain(msg)
 		return m, nil
 
 	case traceResultMsg:
@@ -1306,6 +1339,9 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		if m.boundedPanel != nil {
+			return m.boundedExplainKey(msg)
+		}
 		// Handle auth needed state
 		if m.authNeeded {
 			switch msg.String() {
@@ -1566,6 +1602,11 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Handle panel mode key navigation
+		if msg.String() == "ctrl+e" {
+			m.openBoundedExplain()
+			return m, nil
+		}
+
 		if m.panelMode {
 			switch {
 			case key.Matches(msg, m.keymap.Quit):
@@ -1684,7 +1725,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, m.keymap.Refresh):
 					m.loading = true
 					m.statusMsg = "Refreshing..."
-					return m, loadLocalClusterData
+					return m, m.loadLocalClusterData
 
 				// Tree depth control (CLI ↔ TUI symmetry with --depth flag)
 				// Only applies to workloads panel
@@ -1741,7 +1782,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Refresh):
 			m.loading = true
 			m.statusMsg = "Refreshing..."
-			return m, loadLocalClusterData
+			return m, m.loadLocalClusterData
 
 		case key.Matches(msg, m.keymap.Hub):
 			// Switch to ConfigHub mode - check auth first
@@ -2276,6 +2317,9 @@ func (m LocalClusterModel) View() string {
 	if !m.ready {
 		return "\n  Initializing..."
 	}
+	if m.boundedPanel != nil {
+		return m.boundedPanel.view()
+	}
 
 	// Auth prompt
 	if m.authNeeded {
@@ -2638,6 +2682,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("C") + "  Suggest commands (context-aware)\n")
 	b.WriteString("  " + lcNameStyle.Render("Q") + "  Saved queries (filter resources)\n")
 	b.WriteString("  " + lcNameStyle.Render("T") + "  Trace ownership chain\n")
+	b.WriteString("  " + lcNameStyle.Render("Ctrl+e") + "  Bounded resource evidence (Enter reads, r refreshes, Esc returns)\n")
 	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for risk issues\n")
 	b.WriteString("  " + lcNameStyle.Render("e/E") + "  Export graph from MAPS panel (HTML/SVG)\n")
 	b.WriteString("  " + lcNameStyle.Render("I") + "  Import wizard (bring workloads to ConfigHub)\n")

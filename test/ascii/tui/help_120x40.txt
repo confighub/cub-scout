@@ -39,6 +39,7 @@ ACTIONS
   C  Suggest commands (context-aware)
   Q  Saved queries (filter resources)
   T  Trace ownership chain
+  Ctrl+e  Bounded resource evidence (Enter reads, r refreshes, Esc returns)
   S  Scan for risk issues
   e/E  Export graph from MAPS panel (HTML/SVG)
   I  Import wizard (bring workloads to ConfigHub)
