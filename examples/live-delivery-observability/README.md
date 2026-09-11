@@ -79,3 +79,50 @@ go test ./cmd/cub-scout -run 'TestActivityDeliveryIdentityAndReadBudget' -count=
 The fixture preserves an Argo failure even when separate ConfigHub evidence
 reports PASS. It also proves namespace filtering cannot hide a name collision
 and the join performs no additional Kubernetes reads beyond one Application list.
+
+## Trusting Feedback Freshness
+
+**Unreleased correction after v2.10.0.** The question is: "Does this report tell
+me what is true now, or only what was last reported?"
+
+[`freshness-cases.json`](freshness-cases.json) fixes the observer clock at
+`2026-09-11T12:00:00Z` and the threshold at `15m`. Each case starts with reported
+`Synced` / `Healthy` / `Succeeded`, source `argobot`, app `api`, space `team-a`
+(`space-a`) and revision `sha256:abc`. `failed: true` changes the three reported
+states to `OutOfSync` / `Degraded` / `Failed`; omitted `observedAt` stays absent.
+
+| Report timestamp | Freshness | Positive report | Failure report |
+|---|---|---|---|
+| Valid, not future, at most 15 minutes old | `fresh` | `PASS` | `BLOCK` |
+| More than 15 minutes old | `stale` | `WATCH` | `WATCH` |
+| Missing, malformed, zero, or future | `unknown` | `INCONCLUSIVE` | `INCONCLUSIVE` |
+
+Empty status remains `INCONCLUSIVE`. Exact-now and exact-threshold timestamps
+are valid. Even one nanosecond in the future is unknown: there is no hidden
+clock-skew allowance. Offsets/fractions and the existing legacy UTC format are
+covered. Reported fields and timestamps remain available; non-fresh reports
+include an explanatory `confighub.liveStatus.freshness` omission.
+
+```sh
+# Offline: parser, collector, MCP, doctor, activity, trace, receipt and scope proof.
+go test ./cmd/cub-scout -run 'TestLiveStatusFreshness|TestActivityDeliveryIdentity' -count=2
+```
+
+The tests assert one connected read per MCP call and the collector's existing
+three ConfigHub reads plus two label-selected Deployment lists. They exercise
+ASCII/Markdown, exact resource correlation, original activity timestamps, and
+fingerprinted receipt evidence. Altering a stored delivery verdict invalidates
+the fingerprint; the independent receipt predicate verdict is unchanged.
+
+An unchanged producer report naturally gets older. Re-reading it must not turn
+it fresh. Read current controller/workload status when needed; do not conclude
+that stale feedback means the application or event consumer has failed.
+Likewise, this does not prove that an Application still exists, detect every
+out-of-order update, or prove that the expected release was delivered.
+Command exit codes are unchanged: successful execution is not a successful
+delivery verdict, and absence of `BLOCK` is not equivalent to `PASS`.
+
+No live authentication, production cursor or cluster writes are used by this
+proof. Authenticated intended-state mapping remains separate. The existing
+standalone/companion bounded TUI panels do not consume connected writeback, so
+this fix does not add that TUI capability or change their cache contracts.

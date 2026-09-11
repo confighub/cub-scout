@@ -101,8 +101,8 @@ func TestBuildConfigHubLiveStatusEvidence_StalePassDowngradesToWatch(t *testing.
 	]`
 
 	statuses, omissions := buildConfigHubLiveStatusEvidence(raw, now, 15*time.Minute)
-	if len(omissions) != 0 {
-		t.Fatalf("omissions = %+v, want none", omissions)
+	if len(omissions) != 1 || omissions[0].Layer != "confighub.liveStatus.freshness" {
+		t.Fatalf("omissions = %+v, want stale observation explanation", omissions)
 	}
 	if len(statuses) != 1 {
 		t.Fatalf("statuses = %d, want 1", len(statuses))

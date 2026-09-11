@@ -441,19 +441,37 @@ func configHubLiveStatusFromSpaceItem(item map[string]interface{}, now time.Time
 		Freshness:      "unknown",
 	}
 
-	if observedAt, ok := parseConfigHubObservedAt(status.ObservedAt); ok {
+	observedAt, validTime := parseConfigHubObservedAt(status.ObservedAt)
+	freshnessProblem := ""
+	switch {
+	case status.ObservedAt == "":
+		freshnessProblem = "missing observedAt"
+	case !validTime || observedAt.IsZero():
+		freshnessProblem = "invalid observedAt"
+	case now.IsZero():
+		freshnessProblem = "observation clock is unavailable"
+	case observedAt.After(now):
+		freshnessProblem = "observedAt is after the observation clock (no clock-skew allowance)"
+	case staleAfter <= 0:
+		freshnessProblem = "freshness threshold must be positive"
+	default:
 		age := now.Sub(observedAt.UTC())
-		if age < 0 {
-			age = 0
-		}
 		status.FreshnessSeconds = int64(age.Seconds())
 		status.Freshness = "fresh"
-		if staleAfter > 0 && age > staleAfter {
+		if observedAt.Before(now.Add(-staleAfter)) {
 			status.Freshness = "stale"
+			freshnessProblem = fmt.Sprintf("observedAt is older than the %s freshness threshold", staleAfter)
 		}
 	}
 	status.DeliveryVerdict = configHubDeliveryVerdict(status)
 	status.ApplicationHealthVerdict = configHubApplicationHealthVerdict(status)
+	if freshnessProblem != "" {
+		return status, true, GitOpsDeliveryEvidenceOmission{
+			Layer:  "confighub.liveStatus.freshness",
+			Reason: fmt.Sprintf("space %q app %q: %s", firstNonEmpty(space, spaceID, "unknown"), firstNonEmpty(status.App, "unknown"), freshnessProblem),
+			Impact: "reported state is retained but does not establish current delivery or application health; read current controller/workload status",
+		}
+	}
 	return status, true, GitOpsDeliveryEvidenceOmission{}
 }
 
@@ -490,10 +508,7 @@ func configHubDeliveryVerdict(status ConfigHubLiveStatusEvidence) agent.ReceiptV
 	default:
 		verdict = agent.VerdictWATCH
 	}
-	if verdict == agent.VerdictPASS && status.Freshness == "stale" {
-		return agent.VerdictWATCH
-	}
-	return verdict
+	return configHubVerdictWithFreshness(verdict, status.Freshness)
 }
 
 func configHubApplicationHealthVerdict(status ConfigHubLiveStatusEvidence) agent.ReceiptVerdict {
@@ -511,10 +526,21 @@ func configHubApplicationHealthVerdict(status ConfigHubLiveStatusEvidence) agent
 	default:
 		verdict = agent.VerdictWATCH
 	}
-	if verdict == agent.VerdictPASS && status.Freshness == "stale" {
-		return agent.VerdictWATCH
+	return configHubVerdictWithFreshness(verdict, status.Freshness)
+}
+
+// Preserve reported state separately; an undated or old report cannot assert
+// either current success or current failure.
+func configHubVerdictWithFreshness(verdict agent.ReceiptVerdict, freshness string) agent.ReceiptVerdict {
+	switch freshness {
+	case "fresh":
+		return verdict
+	case "stale":
+		if verdict != agent.VerdictINCONCLUSIVE {
+			return agent.VerdictWATCH
+		}
 	}
-	return verdict
+	return agent.VerdictINCONCLUSIVE
 }
 
 func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubReleaseEvidence, []GitOpsDeliveryEvidenceOmission) {

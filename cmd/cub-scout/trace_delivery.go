@@ -487,6 +487,9 @@ func formatTraceDeliveryEvidenceLine(evidence *agent.TraceDeliveryEvidence) stri
 			fmt.Sprintf("health=%s", firstNonEmpty(evidence.LiveStatus.HealthStatus, "-")),
 			fmt.Sprintf("freshness=%s", firstNonEmpty(evidence.LiveStatus.Freshness, "-")),
 		)
+		if evidence.LiveStatus.Freshness != "fresh" {
+			parts = append(parts, "current status unverified; read current controller/workload status")
+		}
 	}
 	if len(evidence.Releases) > 0 {
 		parts = append(parts, fmt.Sprintf("releases=%d", len(evidence.Releases)))

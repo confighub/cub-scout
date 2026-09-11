@@ -102,11 +102,14 @@ These are tracked follow-ups, not claims of competitive leadership:
 - [x] First-run documentation and current-version install guidance (#527).
   Preserve the README User questions and all five run modes; distinguish live
   inspection from offline artifacts and observation from delivery automation.
-- [ ] Feedback freshness correctness (#502), before new explorer scope:
-  v2.10 permits `PASS` with unknown/future timestamps and keeps stale failures
-  as `BLOCK`. Define current-versus-historical verdict semantics and test
-  invalid/missing/future timestamps, unchanged deduplicated reports, deleted
-  Applications, out-of-order observations and missing history.
+- [x] Timestamp-gated feedback verdicts (#502), implemented after v2.10 and
+  not yet released: invalid/missing/zero/future times are inconclusive; stale
+  success/failure reports ask for a recheck. Original reports, timestamps and
+  omissions survive MCP, activity, correlation and receipts. Recorded proof:
+  [feedback freshness](../examples/live-delivery-observability/#trusting-feedback-freshness).
+- [ ] Remaining feedback/identity correctness (#502/#505): deleted Applications,
+  out-of-order observations, missing history, and exact expected-release to
+  controller/workload joins. Timestamp validation alone cannot prove delivery.
 - [ ] Measured explorer parity and API-load-aware continuous observation (#519).
   Compare identical task/permission/scale fixtures; specify native watch/store
   lifecycle, reconnection, freshness and cache bounds before implementation.

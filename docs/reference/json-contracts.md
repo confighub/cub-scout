@@ -977,14 +977,28 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
 | `scope.since` | Bounds release and unit-event reads by `CreatedAt > <cutoff>`. |
 | `scope.maxItems` | Caps rows kept in output after the time-window query. |
 | `configHub.liveStatuses[]` | Parsed from the `confighub.com/live-status` Space annotation. Missing or malformed annotations become omissions. |
-| `liveStatuses[].freshness` | `fresh`, `stale`, or `unknown`, based on `observedAt` and `--confighub-stale-after`. |
-| `liveStatuses[].deliveryVerdict` | Delivery-facing verdict from sync/operation state. Stale `PASS` downgrades to `WATCH`. |
-| `liveStatuses[].applicationHealthVerdict` | Application-health verdict from reported health. Stale `PASS` downgrades to `WATCH`. |
+| `liveStatuses[].freshness` | `fresh`, `stale`, or `unknown`, based on `observedAt` and `--confighub-stale-after`. Missing, invalid, zero, or future timestamps are `unknown`; they are never clamped to fresh. |
+| `liveStatuses[].deliveryVerdict` | Delivery-facing verdict from sync/operation state, gated by timestamp freshness. Only fresh evidence can yield `PASS` or `BLOCK`; stale reported state yields `WATCH`, unknown freshness yields `INCONCLUSIVE`. Empty status stays `INCONCLUSIVE`. |
+| `liveStatuses[].applicationHealthVerdict` | Application-health verdict from reported health, with the same freshness gate. Original health/sync/operation fields are preserved even when the verdict is inconclusive or asks for a recheck. |
 | `eventConsumers[]` | Conservative, label-selected Kubernetes Deployment detection by `app=argobot` or `app.kubernetes.io/name=argobot`. cub-scout searches all namespaces when allowed and records an omission if RBAC forces namespace fallback. Absence is an omission, not proof no consumer exists. |
 | `omissions[]` | Structured explanation for unavailable, missing, stale, malformed, disconnected, or RBAC-blocked evidence. |
 
 The command never consumes ConfigHub event cursors and never mutates ConfigHub,
 the event consumer, the delivery controller, or Kubernetes.
+
+**Unreleased correction after v2.10.0:** the freshness gate above fixes the
+published v2.10 behavior that allowed unknown/future timestamps to accompany
+`PASS`, and kept stale failures as `BLOCK`. Non-fresh reports now also produce
+an omission with `layer: confighub.liveStatus.freshness` describing why current
+state is unverified. The status row is retained, not discarded.
+
+Fresh means `observedAt <= observation clock` and age `<= staleAfter`, with no
+future-clock allowance. RFC3339 offsets and fractions are accepted; the legacy
+`YYYY-MM-DD HH:MM:SS` form remains UTC. A zero clock or non-positive threshold
+cannot establish freshness. `freshnessSeconds` is truncated for display; use
+`freshness`, not that integer alone, at sub-second boundaries. Re-reading an
+unchanged annotation does not renew its timestamp. This validates time bounds,
+not producer authenticity or expected-release identity.
 
 ### Map activity delivery rows
 
@@ -1045,6 +1059,7 @@ Field rules:
 | `deliveryEvidence.kind` | One of `liveStatus`, `release`, `unitEvent`, `eventConsumer`, or `omission`. |
 | `deliveryEvidence.namespace` | The explicit Kubernetes namespace scope used for the collection, when supplied. It is not inferred from ConfigHub space names. |
 | `deliveryEvidence.matchedBy[]` | Optional exact join keys. Argo Application joins include `scope.space`, `argocdApplication.spaceId`, and `argocdApplication.name`. Absent on standalone ConfigHub status rows. |
+| `deliveryEvidence.observedAt` | Original live-status report timestamp, also on joined Application rows. Omitted when absent; invalid strings are retained for inspection. A timeline row's `time` may fall back to collection time and must not be mistaken for the report timestamp. |
 | `result` | Timeline rendering bucket: `success`, `pending`, `failed`, `inconclusive`, or `normal`, derived from the row's observed status/verdict only. |
 | `owner` | `ConfigHub` for these rows so `--owner ConfigHub` can select them. |
 | `source` | Stable row source; consumers should dispatch on `source` or `deliveryEvidence.kind`, not parse `message`. |
