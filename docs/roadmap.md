@@ -128,18 +128,17 @@ authentication/authority verification are deferred, not release blockers.
 Focus on standalone/plugin delivery evidence, efficient ongoing observation,
 and dependable bot installation; do not change registry permissions implicitly.
 
-- [ ] Exact intended-release input joined to controller-observed revision,
-  identified live objects and current workload generation (#502/#505).
-  Prove one end-to-end controller path, then a second; missing identity is
-  inconclusive. Delivery, readiness and application-health policy stay separate.
-  First bounded report-comparison slice is implemented for v2.11 (unreleased):
-  explicit immutable revision, Application/Kustomization evidence, CLI/plugin,
-  MCP and standalone TUI, without extra reads. [Example](../examples/controller-revision/).
-  This does not complete the live object-set/workload join or watch/bot parity.
-  The [exact OCI configuration release plan](proposals/oci-release-check.md)
-  adds digest-verified literal bundles, source/target binding, shared live
-  configuration and convergence checks, request budgets, CLI/plugin/MCP/TUI
-  proof, and README User questions. Running-image identity stays separate.
+- [x] First scoped intended-release check (#502/#505): #535 and #536 are merged,
+  unreleased. Explicit OCI configuration digest, supported controller/source/
+  target/inventory binding, live authored-field comparison and workload-controller
+  convergence share bounded reads. CLI/plugin, MCP and refreshable TUI have
+  tests, examples and README User questions. Both controller adapters have
+  deterministic HTTP integration proof; live workload-only smoke remains
+  explicitly inconclusive for controller identity.
+  [Completed implementation plan](proposals/oci-release-check.md).
+- [ ] Extend live OCI controller-join proof and adapter coverage (#502/#505).
+  Broader target/source shapes, running-image identity and application-success
+  policy are not implied by the first check. Watch/bot do not schedule it yet.
 - [x] First polling baseline (#519): actual HTTP requests and response-body
   bytes for 100/1,000-object cold, idle and ownership-change cycles; latency and
   allocations measured separately. [Reproducible example](../examples/observation-budget/).
@@ -148,10 +147,13 @@ and dependable bot installation; do not change registry permissions implicitly.
 - [ ] Use measurements to implement the first bounded session-scoped
   observation improvement (#519), with explicit deletion/recovery/freshness,
   cancellation and finite storage. Keep one-shot commands daemon-free.
-- [ ] Each new capability has a README User question, exact invocation,
+- [x] Each implemented capability has a README User question, exact invocation,
   interactive equivalent or explicit limitation, tests and a worked example.
 - [ ] Continue distribution checks (#520); do not silently equate recorded
   connected proof with authenticated live verification.
+  The unreleased [bot image helper](../examples/bot/#build-a-local-image-from-a-release)
+  builds a local amd64/arm64 runtime image from a checksum-verified release
+  archive. It does not fix public registry pulls, push images or deploy a bot.
 
 ### After v2.9.0
 
