@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -17,16 +18,21 @@ import (
 )
 
 type boundedExplainPanel struct {
-	items    []agent.BoundedResourceRef
-	cursor   int
-	context  string
-	viewing  bool
-	request  uint64
-	cancel   context.CancelFunc
-	viewport viewport.Model
-	content  string
-	height   int
-	observe  func(context.Context, agent.BoundedResourceRef, string, bool) (ExplainSummary, error)
+	items           []agent.BoundedResourceRef
+	cursor          int
+	context         string
+	viewing         bool
+	request         uint64
+	cancel          context.CancelFunc
+	viewport        viewport.Model
+	content         string
+	height          int
+	observe         func(context.Context, agent.BoundedResourceRef, string, bool) (ExplainSummary, error)
+	observeRevision func(context.Context, agent.BoundedResourceRef, string, bool, string) (ExplainSummary, error)
+	expected        string
+	editingRevision bool
+	revisionInput   textinput.Model
+	revisionError   string
 }
 
 type boundedExplainMsg struct {
@@ -40,7 +46,10 @@ func (m *LocalClusterModel) openBoundedExplain() {
 	if m.boundedSession == nil {
 		m.boundedSession = &boundedExplainSession{}
 	}
-	panel := &boundedExplainPanel{context: m.boundedContext, observe: m.boundedSession.observe}
+	panel := &boundedExplainPanel{context: m.boundedContext, observe: m.boundedSession.observe, observeRevision: m.boundedSession.observeRevision}
+	panel.revisionInput = textinput.New()
+	panel.revisionInput.CharLimit = 512
+	panel.revisionInput.Prompt = "> "
 	panel.resize(m.width, m.height)
 	m.boundedPanel = panel
 	if panel.context == "" {
@@ -76,6 +85,7 @@ func (p *boundedExplainPanel) resize(width, height int) {
 	p.height = max(1, height)
 	p.viewport.Width = max(1, width-2)
 	p.viewport.Height = max(1, height-4)
+	p.revisionInput.Width = max(1, width-6)
 	p.viewport.SetContent(ansi.Hardwrap(p.content, p.viewport.Width, true))
 }
 
@@ -103,8 +113,15 @@ func (p *boundedExplainPanel) read(refresh bool) tea.Cmd {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.cancel = cancel
 	request, ref, kubeContext, observe := p.request, p.items[p.cursor], p.context, p.observe
+	expected, observeRevision := p.expected, p.observeRevision
 	return func() tea.Msg {
-		summary, err := observe(ctx, ref, kubeContext, refresh)
+		var summary ExplainSummary
+		var err error
+		if expected != "" {
+			summary, err = observeRevision(ctx, ref, kubeContext, refresh, expected)
+		} else {
+			summary, err = observe(ctx, ref, kubeContext, refresh)
+		}
 		cancel()
 		return boundedExplainMsg{panel: p, request: request, summary: summary, err: err}
 	}
@@ -112,6 +129,29 @@ func (p *boundedExplainPanel) read(refresh bool) tea.Cmd {
 
 func (m LocalClusterModel) boundedExplainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	p := m.boundedPanel
+	if p.editingRevision && msg.String() != "ctrl+c" {
+		switch msg.String() {
+		case "esc":
+			p.editingRevision = false
+			p.revisionInput.Blur()
+			return m, nil
+		case "enter":
+			expected := p.revisionInput.Value()
+			if expected != "" {
+				if err := agent.ValidateExpectedRevision(expected); err != nil {
+					p.revisionError = err.Error()
+					return m, nil
+				}
+			}
+			p.expected, p.editingRevision, p.revisionError = expected, false, ""
+			p.revisionInput.Blur()
+			return m, p.read(false)
+		default:
+			var cmd tea.Cmd
+			p.revisionInput, cmd = p.revisionInput.Update(msg)
+			return m, cmd
+		}
+	}
 	switch msg.String() {
 	case "ctrl+c":
 		p.stop()
@@ -120,6 +160,7 @@ func (m LocalClusterModel) boundedExplainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd
 		p.stop()
 		if p.viewing {
 			p.viewing = false
+			p.expected = ""
 		} else {
 			m.boundedPanel = nil
 		}
@@ -131,6 +172,13 @@ func (m LocalClusterModel) boundedExplainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd
 	case "r":
 		if p.viewing {
 			return m, p.read(true)
+		}
+	case "e":
+		if p.viewing && p.cursor >= 0 && p.cursor < len(p.items) {
+			p.stop()
+			p.editingRevision, p.revisionError = true, ""
+			p.revisionInput.SetValue(p.expected)
+			return m, p.revisionInput.Focus()
 		}
 	case "up", "k":
 		if !p.viewing {
@@ -154,8 +202,11 @@ func (m LocalClusterModel) boundedExplainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd
 func (p *boundedExplainPanel) view() string {
 	var body strings.Builder
 	body.WriteString(fmt.Sprintf("Bounded resource evidence | context=%q\n\n", p.context))
-	if p.viewing {
+	if p.editingRevision {
+		body.WriteString("Expected immutable revision\n" + p.revisionInput.View() + "\n" + p.revisionError)
+	} else if p.viewing {
 		body.WriteString(p.viewport.View())
+		body.WriteString("\ne expected revision | r refresh | esc back")
 	} else if len(p.items) == 0 {
 		body.WriteString("No resources with complete, supported API identity in the current inventory.")
 	} else {
@@ -184,6 +235,9 @@ func (m *LocalClusterModel) acceptBoundedExplain(msg boundedExplainMsg) {
 	}
 	ref := p.items[p.cursor]
 	command := "./" + boundedExplainCommand(ref, p.context, " \\\n  ")
+	if p.expected != "" {
+		command += " --expected-revision " + p.expected
+	}
 	body := command + "\n\n" + renderExplainText(msg.summary, PresentationHuman, true, HintContext{Mode: HintModeDefault})
 	p.setContent(body)
 }

@@ -23,10 +23,11 @@ import (
 )
 
 var (
-	explainBounded    bool
-	explainAPIVersion string
-	explainContext    string
-	explainRefresh    bool
+	explainBounded          bool
+	explainAPIVersion       string
+	explainContext          string
+	explainRefresh          bool
+	explainExpectedRevision string
 )
 
 // boundedExplainSession is owned by one host/TUI, not shared globally. Reload
@@ -58,6 +59,15 @@ func boundedExplainRef(args []string, apiVersion, namespace, kubeContext string)
 }
 
 func (s *boundedExplainSession) observe(ctx context.Context, ref agent.BoundedResourceRef, kubeContext string, refresh bool) (ExplainSummary, error) {
+	return s.observeRevision(ctx, ref, kubeContext, refresh, "")
+}
+
+func (s *boundedExplainSession) observeRevision(ctx context.Context, ref agent.BoundedResourceRef, kubeContext string, refresh bool, expected string) (ExplainSummary, error) {
+	if expected != "" {
+		if err := agent.ValidateExpectedRevision(expected); err != nil {
+			return ExplainSummary{}, err
+		}
+	}
 	if err := ref.Validate(); err != nil {
 		return ExplainSummary{}, err
 	}
@@ -69,7 +79,16 @@ func (s *boundedExplainSession) observe(ctx context.Context, ref agent.BoundedRe
 		return ExplainSummary{}, err
 	}
 	obj, evidence, err := reader.Read(ctx, ref, refresh)
-	return buildBoundedExplainSummary(obj, evidence, err), nil
+	summary := buildBoundedExplainSummary(obj, evidence, err)
+	if expected != "" {
+		revision := agent.BuildControllerRevisionEvidence(obj, expected, evidence.ObservedAt)
+		summary.ControllerRevision = &revision
+		summary.Omissions = append(summary.Omissions, agent.Omission{Missing: "workload-delivery-proof", Reason: "Controller revision comparison does not read the source, live object set or workload generations, or prove current controller liveness.", Severity: "info"})
+		if revision.Comparison == "unknown" {
+			summary.Omissions = append(summary.Omissions, agent.Omission{Missing: "controller-revision", Reason: revision.Reason, Severity: "warning"})
+		}
+	}
+	return summary, nil
 }
 
 func (s *boundedExplainSession) forContext(kubeContext string) (*agent.BoundedResourceReader, error) {
@@ -233,12 +252,15 @@ func validateBoundedExplainArguments(arguments map[string]interface{}) error {
 			}
 		}
 	}
-	for _, key := range []string{"api_version", "context", "namespace", "resource"} {
+	for _, key := range []string{"api_version", "context", "namespace", "resource", "expected_revision"} {
 		if value, present := arguments[key]; present {
 			if _, ok := value.(string); !ok {
 				return fmt.Errorf("%s must be a string", key)
 			}
 		}
+	}
+	if expected, present := arguments["expected_revision"]; present {
+		return agent.ValidateExpectedRevision(expected.(string))
 	}
 	return nil
 }
@@ -256,6 +278,7 @@ func boundedMCPRunner(fallback mcpToolRunner) mcpToolRunner {
 		bounded, refresh := flags.Bool("bounded", false, ""), flags.Bool("refresh", false, "")
 		apiVersion, kubeContext := flags.String("api-version", "", ""), flags.String("kube-context", "", "")
 		namespace := flags.StringP("namespace", "n", "", "")
+		expected := flags.String("expected-revision", "", "")
 		flags.String("format", "json", "")
 		if err := flags.Parse(args[2:]); err != nil {
 			return "", err
@@ -267,7 +290,7 @@ func boundedMCPRunner(fallback mcpToolRunner) mcpToolRunner {
 		if err != nil {
 			return "", err
 		}
-		summary, err := session.observe(ctx, ref, *kubeContext, *refresh)
+		summary, err := session.observeRevision(ctx, ref, *kubeContext, *refresh, *expected)
 		if err != nil {
 			return "", err
 		}

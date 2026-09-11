@@ -373,6 +373,7 @@ cub-scout explain deployment/payments-api -n prod --format md
 | `--api-version` | Required with `--bounded`; exact API version, e.g. `apps/v1` |
 | `--kube-context` | Required with `--bounded`; explicit kube context, without changing current-context or colliding with the `cub` host's ConfigHub `--context` flag |
 | `--refresh` | Bypass bounded session reuse; separate CLI invocations already start with an empty cache |
+| `--expected-revision` | Unreleased v2.11: with `--bounded`, compare an explicit full lowercase 40-hex Git commit or `sha256:` + 64 lowercase hex digits against a supported controller report; not delivery or application-health proof |
 
 `--with-confighub` is opt-in and read-only. For `explain`, connected release,
 unit-event, and live-status reads run only when the resource itself exposes a
@@ -399,7 +400,12 @@ See the [origin contract](json-contracts.md#observed-origin).
 The TUI equivalent is `Ctrl+e` in `./cub-scout map`: choose an exact resource
 from the filtered inventory, Enter to read, `r` to refresh, Esc to cancel/back.
 See [bounded resource evidence](../../examples/bounded-resource-read/) for the
-JSON fields, limits, MCP arguments, and reproducible checks.
+read budget and session behavior. The optional
+[controller revision comparison](../../examples/controller-revision/) adds no
+reads, accepts no mutable/short reference, and reports unknown for unsupported
+controller/source shapes. In the bounded TUI view, `e` edits the expected
+revision; an empty entry clears it. MCP uses `expected_revision`. This slice
+does not add revision filtering to watch/bot or change receipt verdicts.
 
 ---
 

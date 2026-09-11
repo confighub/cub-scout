@@ -64,7 +64,7 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout explain <resource> [-n <ns>] --format json` |
 | Required args | `resource` (string — `kind/name` form) |
-| Optional args | `namespace` (string) |
+| Optional args | `namespace` (string); `bounded`, `refresh` (boolean); `api_version`, `context` (strings, required for bounded reads); unreleased v2.11 `expected_revision` (immutable commit/digest, requires bounded) |
 | Returns | Plain-English per-resource report: ownership, health/drift, recent events, structured `nextSteps[]` |
 | When to load | AFTER `doctor` or `map` once narrowed to one resource. The Diagnose verb-group's primary entry point. |
 

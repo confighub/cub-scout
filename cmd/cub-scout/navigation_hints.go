@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
 )
 
@@ -501,8 +502,12 @@ func explainHints(summary ExplainSummary) []Hint {
 // For Argo-managed resources, hints are phase-aware based on health/drift/risk signals.
 func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
 	if evidence := summary.ResourceRead; evidence != nil {
+		command := boundedExplainCommand(evidence.Resource, evidence.Context, " ")
+		if revision := summary.ControllerRevision; revision != nil && agent.ValidateExpectedRevision(revision.ExpectedRevision) == nil {
+			command += " --expected-revision " + revision.ExpectedRevision
+		}
 		return []Hint{{
-			Command:    boundedExplainCommand(evidence.Resource, evidence.Context, " ") + " --refresh",
+			Command:    command + " --refresh",
 			Rationale:  "Read this exact object again in the same context; ownership or delivery evidence may still be incomplete",
 			Priority:   hintPriorityNormal,
 			ActionType: ActionReadOnly,

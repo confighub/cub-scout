@@ -385,6 +385,10 @@ func TestBoundedExplainLive(t *testing.T) {
 	}
 	resource, apiVersion := os.Getenv("CUB_SCOUT_BOUNDED_LIVE_RESOURCE"), os.Getenv("CUB_SCOUT_BOUNDED_LIVE_APIVERSION")
 	namespace := os.Getenv("CUB_SCOUT_BOUNDED_LIVE_NAMESPACE")
+	expected := os.Getenv("CUB_SCOUT_BOUNDED_LIVE_EXPECTED_REVISION")
+	if expected != "" {
+		require.NoError(t, agent.ValidateExpectedRevision(expected))
+	}
 	ref, err := boundedExplainRef([]string{resource}, apiVersion, namespace, kubeContext)
 	require.NoError(t, err)
 	before, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
@@ -398,6 +402,9 @@ func TestBoundedExplainLive(t *testing.T) {
 	args := []string{"explain", resource, "--bounded", "--api-version", apiVersion, "--kube-context", kubeContext, "--format", "json"}
 	if namespace != "" {
 		args = append(args, "--namespace", namespace)
+	}
+	if expected != "" {
+		args = append(args, "--expected-revision", expected)
 	}
 	assertSummary := func(summary ExplainSummary, cache string) {
 		t.Helper()
@@ -418,6 +425,15 @@ func TestBoundedExplainLive(t *testing.T) {
 		expectedMissing := []string{"source-controller-evidence", "related-pod-event-evidence", "desired-live-comparison"}
 		if summary.ConfigHubOrigin == nil {
 			expectedMissing = append(expectedMissing, "confighub-origin")
+		}
+		if expected != "" {
+			require.NotNil(t, summary.ControllerRevision)
+			require.Equal(t, expected, summary.ControllerRevision.ExpectedRevision)
+			expectedMissing = append(expectedMissing, "workload-delivery-proof")
+			if summary.ControllerRevision.Comparison == "unknown" {
+				expectedMissing = append(expectedMissing, "controller-revision")
+			}
+			t.Logf("live controller report: %s", summary.ControllerRevision.Summary())
 		}
 		require.ElementsMatch(t, expectedMissing, missing)
 		require.Nil(t, summary.DeliveryEvidence)
@@ -483,6 +499,9 @@ func TestBoundedExplainLive(t *testing.T) {
 	}
 	request("initialize", map[string]interface{}{"protocolVersion": "2025-03-26", "capabilities": map[string]interface{}{}, "clientInfo": map[string]string{"name": "bounded-live-smoke", "version": "1"}})
 	arguments := map[string]interface{}{"resource": resource, "namespace": namespace, "bounded": true, "api_version": apiVersion, "context": kubeContext}
+	if expected != "" {
+		arguments["expected_revision"] = expected
+	}
 	var observed time.Time
 	for _, cache := range []string{"miss", "hit", "refresh"} {
 		arguments["refresh"] = cache == "refresh"
