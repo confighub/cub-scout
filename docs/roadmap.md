@@ -136,6 +136,10 @@ and dependable bot installation; do not change registry permissions implicitly.
   explicit immutable revision, Application/Kustomization evidence, CLI/plugin,
   MCP and standalone TUI, without extra reads. [Example](../examples/controller-revision/).
   This does not complete the live object-set/workload join or watch/bot parity.
+  The [exact OCI configuration release plan](proposals/oci-release-check.md)
+  adds digest-verified literal bundles, source/target binding, shared live
+  configuration and convergence checks, request budgets, CLI/plugin/MCP/TUI
+  proof, and README User questions. Running-image identity stays separate.
 - [x] First polling baseline (#519): actual HTTP requests and response-body
   bytes for 100/1,000-object cold, idle and ownership-change cycles; latency and
   allocations measured separately. [Reproducible example](../examples/observation-budget/).

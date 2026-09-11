@@ -23,8 +23,10 @@ func TestRootCommandLayout_VisibleTopLevelCount(t *testing.T) {
 	// fingerprinted evidence artifacts; see docs/proposals/
 	// receipts-way-forward.md). Bumped 32 -> 33 in v2.8 to admit `bot`
 	// as the first-class in-cluster watch entrypoint.
-	if count > 33 {
-		t.Fatalf("visible top-level command count = %d, want <= 33", count)
+	// Bumped 33 -> 34 in v2.11 for the explicit configuration-release check:
+	// a composed bundle/controller/live workflow, not another receipt predicate.
+	if count > 34 {
+		t.Fatalf("visible top-level command count = %d, want <= 34", count)
 	}
 }
 
@@ -39,6 +41,7 @@ func TestRootCommandLayout_HelpReflectsNewLayout(t *testing.T) {
 	required := []string{
 		"compare",
 		"bot",
+		"release",
 		"import",
 		"quickstart",
 		"setup",

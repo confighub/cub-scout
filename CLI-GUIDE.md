@@ -118,6 +118,18 @@ See [docs/reference/commands.md](docs/reference/commands.md) for the detailed ex
 
 ---
 
+## Check One Configuration Release
+
+Unreleased, planned v2.11: `release check` answers whether an exact OCI
+configuration bundle reached an explicitly selected target. It separates bundle
+identity, controller evidence, authored-field agreement and workload convergence.
+Configuration-only changes are checked even when images stay unchanged.
+
+Use the [worked example](examples/oci-release-check/) for exact required flags,
+supported controller shapes and API budgets. CLI/plugin, `--interactive` TUI
+and MCP `release_check` use one provider. This is not a deployment command or
+an application-success verdict. Existing release-history reads remain separate.
+
 ## Connected Workflows
 
 Connected mode adds ConfigHub-backed comparison, history, adoption/import, and fleet workflows. Treat it as enrichment on top of the live-cluster loop, not a different starting point.

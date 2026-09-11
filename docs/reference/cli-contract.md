@@ -1485,6 +1485,29 @@ See [JSON Contracts § Observation Evidence Contract](json-contracts.md#observat
 
 ---
 
+## cub-scout release check
+
+Unreleased, planned v2.11. Exact flags and adapters are documented in
+[commands](commands.md#release-check) and the [worked example](../../examples/oci-release-check/).
+Required immutable configuration-bundle identity and explicit target/controller
+scope are validated before network reads. Tags are rejected; local OCI layouts
+must contain bytes matching the supplied manifest/layer digests.
+
+Formats: `ascii`, `json`, `md`; optional `--interactive` TUI uses the same
+provider with manual refresh/cancellation. Plugin invocation is equivalent.
+Standalone and connected MCP both expose read-only `release_check`, with
+strict typed arguments. Each call is a fresh, bounded observation.
+
+Exit 0 means a report was produced, not that it passed. `--fail-on` accepts
+`WATCH`, `BLOCK`, `INCONCLUSIVE`, or `any-non-pass`; a matching verdict exits 2
+after printing/writing the report. Invalid arguments or operational setup
+errors exit 1. `--out` writes JSON and overwrites the requested regular file;
+receipt-store paths are rejected. The overall report is not an immutable receipt.
+
+The existing bounded-explain two-request contract, receipt fingerprints and
+predicate semantics are unchanged. This command composes existing object-set
+and convergence receipts; it does not create a new receipt predicate.
+
 ## cub-scout receipt
 
 Typed, fingerprinted, immutable evidence artifacts (#446). Wire format is the in-toto Statement v1 envelope wrapping `https://cub-scout.dev/receipt/v1`. SHA-256 fingerprint over RFC 8785 canonical JSON of the full Statement minus only `predicate.fingerprint`.

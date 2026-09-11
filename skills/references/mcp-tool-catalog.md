@@ -8,12 +8,12 @@ Source of truth: `cmd/cub-scout/mcp.go` (`newMCPGatewayWithMode`) and `cmd/cub-s
 
 The catalog has two tiers:
 
-- **Standalone tools** — registered always; require only a kubeconfig
+- **Standalone tools** — registered always; live reads require kubeconfig; release checks also require a digest-pinned OCI bundle or local layout
 - **Connected tools** — added when `cub auth status` succeeds; require ConfigHub auth
 
-Total: **17 tools** (6 standalone + 11 connected).
+Total: **18 tools** (7 standalone + 11 connected; `release_check` is unreleased v2.11).
 
-## Standalone tools (6)
+## Standalone tools (7)
 
 These are always available. Use the standard MCP `tools/list` request to dump
 the catalog from a running server.
@@ -77,6 +77,20 @@ the catalog from a running server.
 | Optional args | `namespace` (string); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
 | Returns | GitOps/controller backend, transport, sources, deployers, source/build/apply/sync stages, delivery evidence when requested, and `controllerCoverage[]` |
 | When to load | "Is this deployed?" "Is delegated delivery healthy?" "Which controller families did cub-scout actually inspect?" "Is missing status absence or an RBAC/API omission?" Evidence only; never use it to force sync or declare application success by itself. |
+
+### `release_check`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub-scout release check --format json` |
+| Required | `bundle` (digest-pinned OCI configuration), `controller` (Kind/name), `api_version`, `controller_namespace`, `context` (target kube context) |
+| Optional | `controller_context` (default target context), `oci_layout` (read-only local layout), `max_objects` (integer 1-100, default 100) |
+| Returns | Stage verdicts for bundle/controller/configuration/workloads, actual request counts, dated resource reads, omissions and existing fingerprinted configuration/workload receipts |
+| When to load | "Did this exact configuration release reach this target?" or "Where is this release waiting?" Scope and immutable bundle are required; no broad discovery, rendering, mutation, running-image or application-success claim |
+
+Each invocation is a fresh bounded check, not a shared cache. Unsupported or
+ambiguous controller/source/target shapes remain inconclusive. See the
+[example and read budgets](../../examples/oci-release-check/).
 
 ## Connected tools (11)
 
