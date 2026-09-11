@@ -236,13 +236,14 @@ func TestAttachConfigHubDeliveryEvidenceToActivityRows_JoinsArgoApplicationByExa
 		},
 	}
 	rows := []mapActivityRow{{
-		Time:     "2026-09-10T11:59:00Z",
-		Source:   "argocd.application",
-		Resource: "Application/argocd/payments-api",
-		Action:   "sync-status",
-		Result:   "success",
-		Message:  "sync=Synced health=Healthy",
-		Owner:    "ArgoCD",
+		Time:             "2026-09-10T11:59:00Z",
+		Source:           "argocd.application",
+		Resource:         "Application/argocd/payments-api",
+		Action:           "sync-status",
+		Result:           "success",
+		Message:          "sync=Synced health=Healthy",
+		Owner:            "ArgoCD",
+		configHubSpaceID: "sp-123",
 	}}
 
 	got := attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
@@ -256,7 +257,7 @@ func TestAttachConfigHubDeliveryEvidenceToActivityRows_JoinsArgoApplicationByExa
 	if de.DeliveryVerdict != "PASS" || de.ApplicationHealthVerdict != "PASS" {
 		t.Fatalf("verdicts = %s/%s, want PASS/PASS", de.DeliveryVerdict, de.ApplicationHealthVerdict)
 	}
-	if strings.Join(de.MatchedBy, ",") != "scope.space,argocdApplication.name" {
+	if strings.Join(de.MatchedBy, ",") != "scope.space,argocdApplication.spaceId,argocdApplication.name" {
 		t.Fatalf("MatchedBy = %#v, want scope+application", de.MatchedBy)
 	}
 	if got[0].Result != "success" {
@@ -312,8 +313,8 @@ func TestAttachConfigHubDeliveryEvidenceToActivityRows_AppMismatchDoesNotJoin(t 
 	}}
 
 	got := attachConfigHubDeliveryEvidenceToActivityRows(rows, evidence)
-	if got[0].DeliveryEvidence != nil {
-		t.Fatalf("DeliveryEvidence = %+v, want nil for app mismatch", got[0].DeliveryEvidence)
+	if got[0].DeliveryEvidence == nil || got[0].DeliveryEvidence.Kind != "omission" {
+		t.Fatalf("DeliveryEvidence = %+v, want omission for app mismatch", got[0].DeliveryEvidence)
 	}
 }
 
@@ -340,5 +341,84 @@ func TestMapActivityDeliveryOptionsRejectInvalidSince(t *testing.T) {
 	_, err := mapActivityDeliveryOptionsFromFlags(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "invalid --confighub-since") {
 		t.Fatalf("err = %v, want invalid --confighub-since", err)
+	}
+}
+
+func TestActivityDeliveryIdentityAndReadBudget(t *testing.T) {
+	oldNamespace, oldOwner := mapNamespace, mapOwner
+	t.Cleanup(func() { mapNamespace, mapOwner = oldNamespace, oldOwner })
+	mapNamespace, mapOwner = "", ""
+	app := func(namespace, spaceID string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1", "kind": "Application",
+			"metadata": map[string]interface{}{
+				"name": "payments-api", "namespace": namespace,
+				"annotations": map[string]interface{}{"confighub.com/space-id": spaceID},
+			},
+			"status": map[string]interface{}{
+				"sync":   map[string]interface{}{"status": "OutOfSync"},
+				"health": map[string]interface{}{"status": "Degraded"},
+			},
+		}}
+	}
+	status := ConfigHubLiveStatusEvidence{
+		Space: "payments-prod", SpaceID: "sp-123", App: "payments-api",
+		DeliveryVerdict: agent.VerdictPASS, ApplicationHealthVerdict: agent.VerdictPASS,
+	}
+	caseMismatch := status
+	caseMismatch.App = "PAYMENTS-API"
+	missingSpaceID := status
+	missingSpaceID.SpaceID = ""
+	for _, tc := range []struct {
+		name     string
+		apps     []runtime.Object
+		statuses []ConfigHubLiveStatusEvidence
+		wantJoin bool
+	}{
+		{"proven space identity", []runtime.Object{app("argocd", "sp-123")}, []ConfigHubLiveStatusEvidence{status}, true},
+		{"scope alone is not identity", []runtime.Object{app("argocd", "")}, []ConfigHubLiveStatusEvidence{status}, false},
+		{"different cluster space", []runtime.Object{app("argocd", "sp-other")}, []ConfigHubLiveStatusEvidence{status}, false},
+		{"same name across namespaces", []runtime.Object{app("argo-a", "sp-123"), app("argo-b", "sp-123")}, []ConfigHubLiveStatusEvidence{status}, false},
+		{"duplicate status is ambiguous", []runtime.Object{app("argocd", "sp-123")}, []ConfigHubLiveStatusEvidence{status, status}, false},
+		{"case mismatch", []runtime.Object{app("argocd", "sp-123")}, []ConfigHubLiveStatusEvidence{caseMismatch}, false},
+		{"status missing space ID", []runtime.Object{app("argocd", "sp-123")}, []ConfigHubLiveStatusEvidence{missingSpaceID}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gvr := schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
+			client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{gvr: "ApplicationList"}, tc.apps...)
+			rows := collectArgoActivity(context.Background(), client)
+			got := attachConfigHubDeliveryEvidenceToActivityRows(rows, &GitOpsDeliveryEvidence{
+				Scope:     GitOpsDeliveryEvidenceScope{Space: "payments-prod"},
+				ConfigHub: &ConfigHubDeliveryEvidence{LiveStatuses: tc.statuses},
+			})
+			if len(got) != len(tc.apps) {
+				t.Fatalf("rows = %d, want %d", len(got), len(tc.apps))
+			}
+			for _, row := range got {
+				joined := row.DeliveryEvidence != nil && row.DeliveryEvidence.Kind == "liveStatus"
+				if joined != tc.wantJoin {
+					t.Fatalf("join = %v, want %v: %+v", joined, tc.wantJoin, row)
+				}
+				if !joined && (row.DeliveryEvidence == nil || row.DeliveryEvidence.Kind != "omission") {
+					t.Fatalf("missing correlation omission: %+v", row)
+				}
+				if row.Result != "failed" {
+					t.Fatalf("controller result overwritten: %q", row.Result)
+				}
+			}
+			if len(client.Actions()) != 1 || client.Actions()[0].GetVerb() != "list" {
+				t.Fatalf("expected one Application list, got %v", client.Actions())
+			}
+			if len(tc.apps) > 1 {
+				mapNamespace = "argo-a"
+				filtered := attachConfigHubDeliveryEvidenceToActivityRows(collectArgoActivity(context.Background(), client), &GitOpsDeliveryEvidence{
+					Scope: GitOpsDeliveryEvidenceScope{Space: "payments-prod"}, ConfigHub: &ConfigHubDeliveryEvidence{LiveStatuses: tc.statuses},
+				})
+				mapNamespace = ""
+				if len(filtered) != 1 || filtered[0].DeliveryEvidence.Kind != "omission" {
+					t.Fatalf("namespace filter hid collision: %+v", filtered)
+				}
+			}
+		})
 	}
 }

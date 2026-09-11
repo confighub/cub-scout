@@ -26,6 +26,7 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | Is this Modelplane resource backed by Crossplane composition? | `map list --format json`, `trace`, `watch`, `bot`, `receipt verify`, attribution JSON | Modelplane remains the higher-level owner when its signals are stronger, while `ownerEvidence`, `owner.evidence`, trace messages, and `predicate.evidence.platformSubstrate` surface Crossplane composite, claim, composition-resource, and verified field-manager evidence as substrate context. |
 | What Kubernetes config does ConfigHub already hold for this space or target? | MCP `confighub_k8s_types`, MCP `confighub_k8s_resources` | Read-only, Resource-backed intended-config reads through `cub k8s types/get`: type surveys, stored resource rows or YAML, custom-resource discovery, explicit space/target scoping, and `where` / `where_resource` filters before touching live cluster APIs. |
 | Which indexed resources match a fleet-wide predicate? | MCP `confighub_resources` | Read-only ConfigHub Resource entity queries through `cub resource list`: server-side `ResourceType`, `ResourceName`, `TargetID`, `Unit.*`, `Space.*`, and `Data.*` predicates, optional views/selects/raw data, and explicit space scoping for broad explorer questions. |
+| Could a same-name application inherit another application's delivery status? | `map activity --with-confighub --format json` | Joins require an observed Application Space ID matching the reported Space ID plus a unique, exact Application name in the selected non-wildcard space. Missing/conflicting metadata and ambiguous names/statuses remain correlation omissions; the Argo-owned result is preserved. |
 | What release or event triggered this delivery attempt? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `history`, MCP `confighub_releases`, MCP `confighub_unit_events` | Bounded ConfigHub release and unit-event evidence for a known space/time window, including release ids, digests, targets, unit events, timestamps, exact resource-correlation keys when available, activity timeline rows, and structured omissions when history cannot be joined safely. |
 | Did evented delivery feedback report back, and is the report fresh? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, MCP `confighub_live_status` | Read-only parsing of ConfigHub live-status writeback, with `observedAt`, freshness, sync status, operation phase, observed revision, delivery verdict, separate application-health verdict, scope-level rollups, timeline rows, exact joins onto matching Argo Application activity rows, and object-level matches only when exact space plus app/unit identity is present. |
 | Is the in-cluster event consumer present and healthy? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `map deployers` | Conservative, label-selected detection of the known event-consumer Deployment shape across namespaces when allowed, with ready/desired replicas, activity timeline rows, and `doctor` top issues when an observed consumer is unhealthy; absence or RBAC narrowing becomes an omission, not a claim that no eventing exists. |
@@ -45,6 +46,12 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 
 The main path starts from a **live cluster**. It works **standalone** with your current kube context, or **connected** to [ConfigHub](https://confighub.com) for governed comparison, history, import, fleet queries, and AI-friendly read-only workflows. Local repo and manifest inputs are available later for adoption, import-preview, and source-file enrichment, but they are not the first mental model.
 
+Resource MCP reads and Application-row joins are v2.9.0 additions currently in
+preparation. Scoped Resource queries use ConfigHub rather than Kubernetes, but
+each repeated query still runs a fresh `cub` command. Watch/bot remain polling
+observers; output caps and freshness stamps are not API rate limits. Reuse saved
+evidence when appropriate. [Request-cost proof](examples/mcp-gateway/README.md#request-cost-and-context-proof).
+
 ### Who reaches for cub-scout?
 
 - **SREs and on-call** — when a workload is unhealthy and you need to know *why* and *who owns it* in seconds, not by clicking across Argo or Flux UIs.
@@ -56,8 +63,8 @@ The main path starts from a **live cluster**. It works **standalone** with your 
 | | `cub-scout` | `cub` |
 |---|---|---|
 | Role | **Observe and explain** | **Act and govern** |
-| Cluster state | Read-only | Read + reconcile via workers |
-| ConfigHub state | Read-only queries | Authoring, import, promotion |
+| Cluster state | Read-only observation | Publishes desired releases for deployment controllers to reconcile |
+| ConfigHub state | Read-only evidence; explicit import commands can write inventory | Authoring, import, promotion |
 | Best for | Diagnosis, ownership, drift, attribution, AI tools | Intended-state authoring, GitOps pipelines |
 
 cub-scout is the **read-only witness**. ConfigHub (driven by `cub`) is the **authority**. The two ship as separate binaries and never overlap on writes.

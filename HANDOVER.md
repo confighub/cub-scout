@@ -2,6 +2,21 @@
 
 Last updated: 2026-09-11 — captures the v2.8.0 delivery-evidence and bot-mode release. Current release tag is `v2.8.0`; release notes live at [`docs/releases/v2.8.0.md`](docs/releases/v2.8.0.md). The May/July 2026 receipts, skill-catalog, and live-delivery sections below remain historical context.
 
+## Active Release: v2.9.0 (Not Yet Published)
+
+Tracking: `#520`; scope and 3.0 criteria in `docs/roadmap.md`; proof in
+`docs/releases/v2.9.0.md`. `#516` and `#517` are merged Resource-backed MCP
+reads, not part of v2.8.0. The activity work from `#518` is being hardened:
+require observed Application Space ID plus unique Application name; selected
+space alone cannot prove correlation. Negative cases remain omissions.
+
+Release checks cover scoped command counts, connected context/error handling,
+standalone/plugin parity, MCP/watch/bot, and distribution artifacts.
+The local ConfigHub token was expired during preparation; recorded connected
+proof must be distinguished from a successful authenticated live run.
+Commander `#519` starts after v2.9.0. `#475` stays delayed; deeper joins and
+provenance remain in `#502` / `#505`.
+
 ## Current repo state
 
 - Branch: `main`
@@ -34,9 +49,8 @@ Highlights:
   issues.
 - `map activity --with-confighub` projects the same bounded evidence into
   timeline rows for live-status writeback, release publication, unit events,
-  event-consumer health, and structured omissions; it also attaches additive
-  live-status evidence to matching Argo Application activity rows when a
-  non-wildcard ConfigHub space and Application name match exactly.
+  event-consumer health, and structured omissions. Application-row joins are
+  post-v2.8.0 work, tracked above.
 - Live-status writeback separates `deliveryVerdict` from
   `applicationHealthVerdict`, includes freshness, and downgrades stale
   successful reports to `WATCH`.
@@ -58,8 +72,8 @@ Highlights:
   composition-resource annotations, and verified Crossplane field managers in
   trace, map JSON, watch/bot events, and receipts.
 - MCP standalone mode adds `gitops_status`; connected mode adds
-  `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
-  `confighub_releases`, `confighub_resources`, and `confighub_unit_events`.
+  `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`.
+  Resource-index and Kubernetes Resource MCP reads are post-v2.8.0 work.
 - MCP `compare_source_truth` strategy enum now derives from
   `agent.AllStrategies()`, matching the CLI.
 - `trace --with-confighub` and `explain --with-confighub` now attach

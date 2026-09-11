@@ -28,6 +28,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | v0.20 | Flux operator interop read-only slice (`map cronjobs/jobs/actions/activity/previews`, `trace --artifacts`) |
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
 | v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, `explain`, and `map activity`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
+| v2.9 (in preparation) | Resource-backed connected MCP reads; identity-checked supporting live-status evidence on Argo Application activity rows |
 
 > If documentation and behavior ever diverge, **golden tests under
 > `test/golden/` are the source of truth**.
@@ -702,8 +703,11 @@ by default, explicit `--confighub-space '*'` for all spaces, release/unit-event
 queries bounded by `--confighub-since`, stale live-status handling controlled
 by `--confighub-stale-after`, and omissions instead of inferred status.
 `argocd.application` rows may receive live-status `deliveryEvidence` only when
-the ConfigHub space is non-wildcard and the reported application name matches
-the Argo Application row exactly; the row's `result` remains Argo-owned.
+the ConfigHub space is non-wildcard, the Application's explicit Space ID
+matches the reported Space ID, and the Application name is unique and matches
+exactly. Recognized labels/annotations are `confighub.com/space-id` and
+`confighub.com/SpaceID`; conflicting values or duplicate status records
+produce `deliveryEvidence.kind=omission`. The row's `result` remains Argo-owned.
 
 ---
 

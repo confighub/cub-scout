@@ -1,6 +1,6 @@
 # Host and Plugin Compatibility Matrix
 
-> **Status:** Compatibility matrix for the `v2.0.0` plugin switchover. Authoritative for supported combinations of `cub` (host) and `cub-scout` (plugin or standalone). Plugin-form support has landed on `main`; the `v2.0.0` release asset remains the gating artifact.
+> **Status:** Updated for v2.9.0 preparation. Plugin packaging has shipped since v2.0.0. Supported combinations depend on both host commands and server capabilities; see the requirements below.
 > **Related:** [`plugin-install.md`](../howto/plugin-install.md), [`v2.0.0-migration-guide.md`](../releases/v2.0.0-migration-guide.md), [`cub vs cub scout`](../concepts/cub-vs-cub-scout.md).
 
 ## Supported Invocation Forms
@@ -22,7 +22,9 @@ All three forms invoke the same binary with the same arguments. Flags, exit code
 | `v2.0.0`+ | ✅ First plugin-compatible release | `cub` with `plugin install` support | Archive layout contains a `main` entry point for plugin extraction. `CUB_PLUGIN=1` detected for help text, cobra command-path rendering, and auth inheritance. Release-gate parity test enforces standalone/plugin-form behavior equivalence. |
 | `v2.x` (later) | ✅ | `cub` with `plugin install` support | Additive only during `v2.x` line. No breaking changes planned. |
 
-The `v2.0.0` version in this matrix is the planned release. The in-binary support for plugin form has already landed in `main` and is exercised by the `TestPluginParity_StandaloneMatchesPlugin` test in `cmd/cub-scout/plugin_parity_test.go`; what is still gated on the actual `v2.0.0` tag is the release-asset change that ships the plugin archive via `.goreleaser.yaml`.
+Plugin support is exercised by `TestPluginParity_StandaloneMatchesPlugin` in
+`cmd/cub-scout/plugin_parity_test.go`. Linux/macOS release archives contain both
+`cub-scout` and the plugin entry point `main`; Windows archives are standalone.
 
 ## `cub` Host Requirements
 
@@ -40,6 +42,24 @@ cub plugin --help
 ```
 
 If `cub plugin` is not a known subcommand, upgrade `cub` before attempting plugin install. See the [`confighub/sdk`](https://github.com/confighub/sdk) release notes for the minimum version.
+
+### v2.9 Resource Read Capabilities
+
+Connected MCP Resource tools require the corresponding host commands and a
+server that exposes the Resource API:
+
+```bash
+cub k8s get --help
+cub k8s types --help
+cub resource list --help
+```
+
+Local preparation checked these command surfaces on `cub v0.4.4`. This is a
+tested CLI capability baseline, not a claim that v0.4.4 is the minimum version
+or that every server supports it. The authenticated live read was blocked by
+an expired local token; context propagation and errors are covered by fixtures.
+An unavailable command/API returns a tool error, never invented live status.
+The gateway does not silently fall back to per-Unit or Kubernetes reads.
 
 ## Feature Parity Between Forms
 
@@ -61,19 +81,22 @@ Cosmetic and auth-source differences are by design. Substantive feature parity i
 
 ## Platform Support
 
-Plugin and standalone forms support the same set of platforms. Archives are named with OS and architecture tokens to match `cub`'s asset matcher:
+Standalone builds support Linux, macOS, and Windows on amd64 and arm64. Plugin
+builds support Linux and macOS on amd64 and arm64. Archives are named with OS and
+architecture tokens to match `cub`'s asset matcher:
 
 | OS | Arch | Archive suffix example |
 |---|---|---|
-| darwin | arm64 | `cub-scout_v2.0.0_darwin_arm64.tar.gz` |
-| darwin | amd64 | `cub-scout_v2.0.0_darwin_amd64.tar.gz` |
-| linux | amd64 | `cub-scout_v2.0.0_linux_amd64.tar.gz` |
-| linux | arm64 | `cub-scout_v2.0.0_linux_arm64.tar.gz` |
-| windows | amd64 | `cub-scout_v2.0.0_windows_amd64.zip` |
+| darwin | arm64 | `cub-scout_2.9.0_darwin_arm64.tar.gz` |
+| darwin | amd64 | `cub-scout_2.9.0_darwin_amd64.tar.gz` |
+| linux | amd64 | `cub-scout_2.9.0_linux_amd64.tar.gz` |
+| linux | arm64 | `cub-scout_2.9.0_linux_arm64.tar.gz` |
+| windows | amd64 / arm64 | `cub-scout_2.9.0_windows_amd64.zip` / `cub-scout_2.9.0_windows_arm64.zip` |
 
 `cub plugin install` accepts `darwin`/`macos` and `amd64`/`x86_64` and `arm64`/`aarch64` as OS and architecture aliases in filenames.
 
-Plugin form on Windows is supported if the `cub` host supports Windows plugin execution. See `cub` release notes for current status.
+Current Windows archives do not contain the plugin `main` binary. Use the
+standalone or kubectl entry point on Windows.
 
 ## Distribution Channels
 
@@ -82,7 +105,7 @@ Plugin form on Windows is supported if the `cub` host supports Windows plugin ex
 | `cub plugin install confighub/cub-scout` | ❌ | ✅ | Preferred path for plugin form. |
 | Homebrew (`brew install confighub/tap/cub-scout`) | ✅ | ❌ | Standalone binary, not a plugin. |
 | krew (`kubectl krew install cub-scout`) | ✅ (as `kubectl cub-scout`) | ❌ | kubectl plugin form; not a `cub` plugin. |
-| GitHub release tar.gz | ✅ | ✅ | Same archive can be used either way once the `v2.0.0` plugin layout lands. |
+| GitHub release tar.gz | ✅ | ✅ | Linux/macOS archives include both standalone and plugin entry points. |
 | Source build (`go build ./cmd/cub-scout`) | ✅ | ⚠️ | Local build works as standalone. Using a local build as a plugin requires manually copying the binary to `$CUB_CONFIG/plugins/scout/main`. |
 
 ## Known Limitations

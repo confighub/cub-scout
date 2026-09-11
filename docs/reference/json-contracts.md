@@ -910,8 +910,12 @@ the event consumer, the delivery controller, or Kubernetes.
 `map activity --with-confighub --format json` keeps the normal activity payload
 shape. ConfigHub-owned rows carry row-specific delivery evidence, and matching
 `argocd.application` rows may carry additive live-status evidence when the
-ConfigHub space is non-wildcard and the reported application name matches the
-Argo Application exactly:
+ConfigHub space is non-wildcard, an observed Application Space ID matches the
+reported Space ID, and the Application name matches exactly and is unique.
+Missing/conflicting Space ID metadata or ambiguous names/statuses produce
+`deliveryEvidence.kind=omission` with `layer=confighub.correlation`.
+Space IDs come from `confighub.com/space-id` or `confighub.com/SpaceID`
+labels/annotations on the Application. An unjoined ConfigHub row looks like:
 
 ```json
 {
@@ -935,8 +939,7 @@ Argo Application exactly:
         "operationPhase": "Running",
         "freshness": "fresh",
         "deliveryVerdict": "WATCH",
-        "applicationHealthVerdict": "PASS",
-        "matchedBy": ["scope.space", "argocdApplication.name"]
+        "applicationHealthVerdict": "PASS"
       }
     }
   ],
@@ -960,7 +963,7 @@ Field rules:
 |---|---|
 | `deliveryEvidence.kind` | One of `liveStatus`, `release`, `unitEvent`, `eventConsumer`, or `omission`. |
 | `deliveryEvidence.namespace` | The explicit Kubernetes namespace scope used for the collection, when supplied. It is not inferred from ConfigHub space names. |
-| `deliveryEvidence.matchedBy[]` | Optional exact join keys. Present on Argo Application live-status joins, for example `scope.space` and `argocdApplication.name`. |
+| `deliveryEvidence.matchedBy[]` | Optional exact join keys. Argo Application joins include `scope.space`, `argocdApplication.spaceId`, and `argocdApplication.name`. Absent on standalone ConfigHub status rows. |
 | `result` | Timeline rendering bucket: `success`, `pending`, `failed`, `inconclusive`, or `normal`, derived from the row's observed status/verdict only. |
 | `owner` | `ConfigHub` for these rows so `--owner ConfigHub` can select them. |
 | `source` | Stable row source; consumers should dispatch on `source` or `deliveryEvidence.kind`, not parse `message`. |

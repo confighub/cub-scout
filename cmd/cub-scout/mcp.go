@@ -256,7 +256,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
 				args := []string{"map", "list", "--json"}
 				if ns := argString(arguments, "namespace"); ns != "" {
-					args = append(args, "-n", ns)
+					args = append(args, "--namespace", ns)
 				}
 				return args, nil
 			},

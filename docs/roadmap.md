@@ -23,11 +23,78 @@ remains future work. Items marked "resolved" had issues filed, implemented, and 
 
 Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
+### v2.9.0 - Scoped Resource Reads and Release Readiness
+
+Agreed execution target: **v2.9.0**, following published v2.8.0. This is an
+additive release with existing CLI, JSON, MCP, and receipt contracts preserved.
+Tracking: [#520](https://github.com/confighub/cub-scout/issues/520). The release
+proof and remaining checks live in [v2.9.0 notes](releases/v2.9.0.md).
+
+- [x] ConfigHub Resource-backed Kubernetes MCP reads (`#516`) and generic
+  Resource-index queries (`#517`) are merged; they read intended configuration,
+  not live Kubernetes health.
+- [ ] Finish `#518` activity joins. Prove Application-to-space identity from
+  observed metadata/source, reject ambiguous names or conflicting statuses,
+  and preserve controller-owned results.
+- [x] Prove API-load behavior: count scoped commands and repeated queries, verify
+  freshness handling, and distinguish output limits from network request or
+  response-size limits. Observation timestamps alone are not a load reduction.
+- [ ] Validate connected reads against supported `cub` capabilities, context
+  isolation, missing APIs/auth, and stale/malformed evidence. Use deterministic
+  fixtures plus a non-production smoke test; record skipped CI coverage.
+- [x] Update release notes, handover, compatibility guidance, and the README
+  user-question table. Every new capability must have a question, an exact
+  command/tool, evidence semantics, and a test/example proving the answer.
+- [ ] Verify the final release commit: build, full tests, read-only contracts,
+  standalone/plugin parity, MCP, watch, bot, release archives, and container.
+- [ ] Reconcile `#502` and `#505` with explicit completed and deferred scope;
+  publish the tag only when the release checks pass.
+
+### After v2.9.0
+
+Tracked follow-ups, **not v2.9.0 release blockers**:
+
+- Commander integration: [#519](https://github.com/confighub/cub-scout/issues/519).
+  Start with Scout JSON evidence panels and exact command/scope visibility;
+  consider a structured provider later. Decide on a preferred connected TUI
+  only after parity and usability proof; preserve standalone exploration.
+  Reassess overlap with `#422` before expanding the existing connected TUI.
+- Deeper release/controller/workload joins and aggregate/object-set/workload
+  receipt enrichment (`#502`), requiring stable identities.
+- Aggregate controller failures and generated-resource lineage in diagnostics;
+  deeper Modelplane/Crossplane source and generation evidence.
+- Component/variant/target provenance and broader Resource-backed fleet reads
+  beyond the new MCP entry points (`#505`).
+- Publication series `#475` stays delayed pending the evidence-boundary work.
+
+### 3.0 Candidate Criteria
+
+This is a direction and decision bar, not a committed release date or a reason
+to introduce unnecessary breaking changes. Graduate new work into issues
+before implementation.
+
+- [ ] A coherent explorer: navigate intended configuration, controller source,
+  workload, diagnostics, and comparisons; retain an effective standalone path.
+  Commander integration is tracked in `#519`.
+- [ ] Consistent evidence semantics across CLI, plugin, MCP, watch, bot, and TUI
+  for deployment, revision, progress, drift, freshness, and missing evidence.
+- [ ] Measured efficiency: reusable observations, explicit refresh, tested
+  request budgets, cancellation, and visible freshness/coverage at fleet scale.
+- [ ] A published fixture-backed controller capability matrix covering Argo,
+  Flux, Sveltos, Modelplane, Crossplane, kro, Helm, and native workloads, with
+  explicit limitations when equivalent status/source/generation evidence is absent.
+- [ ] A necessary, deliberate public-contract transition, with deprecations,
+  migration guidance, compatibility tests, and coordinated standalone/plugin
+  delivery. Examples include retiring legacy commands or replacing existing
+  JSON/MCP contracts. Under [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
+  additive features and an improved TUI can continue in 2.x; they do not by
+  themselves require 3.0.0.
+
 ### Post-v2.8 ConfigHub-Native Boundary ([#505](https://github.com/confighub/cub-scout/issues/505))
 
-- [ ] Prefer ConfigHub Resource / `cub k8s get` / `cub k8s types` for
-  intended Kubernetes configuration and fleet-resource sweeps where those
-  server-side reads are available
+- [x] Initial MCP Resource / `cub k8s get` / `cub k8s types` read paths for
+  intended Kubernetes configuration and scoped fleet-resource surveys
+  (`#516`, `#517`). Broader migration beyond MCP remains future work.
 - [ ] Preserve cub-scout's live-cluster role for drift, runtime/workload
   evidence, non-Argo runtimes, receipts, MCP, and joined explanations that need
   Kubernetes/controller evidence
@@ -51,7 +118,7 @@ Tracking: issue **#154** is closed. This checklist is now the live tracker.
 - [ ] Aggregate delivery failures as doctor top-level findings with deeper source/generated-artifact lineage where status refs expose it
 - [ ] Audited user-action event ingestion for history and receipt supporting evidence
 - [x] Broader API-load-aware inventory and search paths: map JSON entries, snapshot JSON, summary list JSON, and watch/bot events carry point-in-time observation metadata; `receipt list` summarizes saved receipt TTL stamps as fresh/stale/not-declared/invalid
-- [x] Initial low-load live-status joins in `map activity --with-confighub`: matching Argo Application rows receive additive delivery evidence only when a non-wildcard ConfigHub space and Application name match exactly
+- [ ] Initial live-status joins in `map activity --with-confighub` (`#518` / `#520`): require matching observed Application Space ID and unique exact name in a non-wildcard space; awaiting v2.9 release validation
 - [ ] Deeper OCI release-to-controller-to-workload correlation, including aggregate/object-set/workload receipts, with direct observer cursors only as fallback — tracked in [#502](https://github.com/confighub/cub-scout/issues/502)
 - [ ] Controller-family parity rules and fallback omissions for controllers without status, source, event, or generation evidence
 - [ ] Modelplane-on-Crossplane hardening: trace, map JSON, watch/bot events, and receipts now surface substrate evidence; remaining work is deeper source/generation joins for Modelplane resources backed by Crossplane composition managers, with structured omissions where parity is not possible

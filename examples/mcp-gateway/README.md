@@ -74,7 +74,36 @@ Resource entity query directly:
 {"name":"confighub_resources","arguments":{"space":"*","where":"ResourceType = 'apps/v1/Deployment' AND Data.spec.replicas > 1","select":"ResourceType,ResourceName,Data"}}
 ```
 
-## Safety
+## Request Cost and Context Proof
+
+Each accepted Resource/type MCP call starts one scoped `cub` command and no
+Scout live-cluster subprocess. Repeating a call makes a fresh read; this is not
+a shared cache. The host CLI may make multiple HTTP requests or paginate.
+Space/type predicates reduce scope but are not byte or response-count limits.
+Similarly, delivery collection makes three ConfigHub commands (space, release,
+unit-event); its ten-item display cap is applied after fetching rows.
+
+Reuse captured snapshots, summaries, or receipts when a new live read is not
+needed. Watch and bot still poll; their event/receipt caps are not global API
+rate limits. Broader caching and fleet request budgets remain roadmap work.
+
+```bash
+go test ./cmd/cub-scout -run 'TestMCPMapNamespaceUsesSupportedCLIFlag|TestMCPResourceReadBudget|TestMCPConnectedRunnerContextIsolation|TestCollectGitOpsDeliveryEvidence' -count=1
+```
+
+The subprocess fixture checks successive synthetic `CUB_CONTEXT` / `CUB_SPACE`
+values, unchanged `KUBECONFIG`, cancellation, and unavailable `cub`. It does not
+replace an authenticated live ConfigHub compatibility check.
+
+Namespace-scoped live inventory is available through the `map` tool:
+
+```json
+{"name":"map","arguments":{"namespace":"payments"}}
+```
+
+This maps to `./cub-scout map list --json --namespace payments`.
+
+## Safety Boundaries
 
 - Read-only: no Kubernetes mutation path.
 - Read-only: no ConfigHub write path.
