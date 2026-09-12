@@ -2,10 +2,12 @@
 
 User question: "What does keeping observation running actually cost?"
 
-This is a measurement of the existing polling collector, not an optimization
-or a claim of competitive leadership. It establishes the first baseline for
-[#519](https://github.com/confighub/cub-scout/issues/519) and the
-[next minor release](https://github.com/confighub/cub-scout/issues/532).
+This is a measurement of the polling collector. It established the first
+baseline (the recorded 48-request cycle below) and now also records the first
+efficiency improvement against it. Tracked in
+[#539](https://github.com/confighub/cub-scout/issues/539) (observation
+efficiency); design in
+[docs/proposals/observation-efficiency.md](../../docs/proposals/observation-efficiency.md).
 
 ## Repeat The Measurement
 
@@ -42,11 +44,28 @@ v2.10.1 release-preparation patch. Per cycle:
 | 1,000 | Unchanged | 48 | 433,791 | 0 |
 | 1,000 | One ownership change | 48 | 433,840 | 1 |
 
-There are 43 distinct request paths. The inventory and scanner together read
-the application list twice, and each of the release and reconciliation lists
-three times. Full path-level counts appear in the test output. The fixture's
-48-request ceiling catches additional requests; future improvements can lower
-it. It is not a global product limit.
+There are 43 distinct request paths. In this original baseline the inventory and
+scanner read the application list twice, and each of the release and
+reconciliation lists three times, for 48 requests. Full path-level counts appear
+in the test output.
+
+### After within-cycle coalescing (2026-09-12, #539)
+
+Slice 1 shares one memoized read of each type between the inventory sweep and the
+state scanner within a single cycle, so each distinct path is fetched once per
+cycle. Per cycle, idle and cold identical:
+
+| Objects | Requests | Response-body bytes |
+|---|---|---|
+| 100 | 43 | 46,396 |
+| 1,000 | 43 | 433,396 |
+
+The duplicated list requests are gone (48 → 43), and their bytes are removed too
+(larger on real Flux/Argo clusters, where those lists are non-empty). The fixture
+ceiling is now 43; it is not a global product limit. This does **not** yet make
+idle cycles cheap — an unchanged cycle still re-reads full inventory. That is the
+watch-backed Slice 2 in
+[docs/proposals/observation-efficiency.md](../../docs/proposals/observation-efficiency.md).
 
 Three local benchmark runs on darwin/arm64, five collections per run:
 
@@ -78,10 +97,12 @@ RSS. These are not production latency, bandwidth or fleet-size guarantees.
 
 ## Next Decision
 
-Prioritize eliminating unchanged full-inventory polling in long-running
-observation. Before implementation, define watched resource/scope selection,
-finite storage, coverage, refresh, deletion, reconnect/relist, cancellation and
-stale evidence semantics. Measure scanner and optional receipt costs too;
-changing inventory transport alone does not eliminate their queries.
-One-shot commands remain daemon-free. Delivery and status-writeback ownership
-stay outside the observer.
+Slice 1 (within-cycle coalescing) has shipped, lowering each cycle to 43
+requests and removing duplicated list bytes. The next step (Slice 2, tracked in
+[#539](https://github.com/confighub/cub-scout/issues/539)) is to eliminate
+unchanged full-inventory polling in long-running observation. Before
+implementation, define watched resource/scope selection, finite storage,
+coverage, refresh, deletion, reconnect/relist, cancellation and stale evidence
+semantics. Measure scanner and optional receipt costs too; changing inventory
+transport alone does not eliminate their queries. One-shot commands remain
+daemon-free. Delivery and status-writeback ownership stay outside the observer.

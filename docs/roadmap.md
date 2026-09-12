@@ -147,14 +147,22 @@ and dependable bot installation; do not change registry permissions implicitly.
   Broader target/source shapes, registry-side index/digest resolution, initContainer
   and matchExpressions selector coverage, and application-success policy are not
   implied by the first checks. Watch/bot do not schedule these checks yet.
-- [x] First polling baseline (#519): actual HTTP requests and response-body
+- [x] First polling baseline (#533): actual HTTP requests and response-body
   bytes for 100/1,000-object cold, idle and ownership-change cycles; latency and
   allocations measured separately. [Reproducible example](../examples/observation-budget/).
   This does not complete mixed-controller, fleet, interactive or competitive
   benchmarks, nor implement native watches.
-- [ ] Use measurements to implement the first bounded session-scoped
-  observation improvement (#519), with explicit deletion/recovery/freshness,
-  cancellation and finite storage. Keep one-shot commands daemon-free.
+- [x] Observation efficiency Slice 1 (#539): within-cycle read coalescing. A
+  per-cycle memoizing dynamic client shares one read of each type between the
+  inventory sweep and the state scanner, cutting each cycle from 48 to 43
+  requests and removing duplicated list bytes, with no change to observed data.
+  Idle cycles still re-read full inventory. [Plan](proposals/observation-efficiency.md).
+- [ ] Observation efficiency Slice 2 (#539): watch-backed idle observation to
+  eliminate unchanged full-inventory polling, with explicit watched-scope
+  selection, deletion (a new `resource.deleted` event), reconnect/relist,
+  freshness/staleness, cancellation and finite storage. Keep one-shot commands
+  daemon-free. Note: #519 is a different topic (Commander/TUI convergence) and
+  was previously mis-cited for this work.
 - [x] Each implemented capability has a README User question, exact invocation,
   interactive equivalent or explicit limitation, tests and a worked example.
 - [ ] Continue distribution checks (#520); do not silently equate recorded
