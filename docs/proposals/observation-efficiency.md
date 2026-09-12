@@ -1,7 +1,8 @@
 # Observation Efficiency: Cheaper Long-Running Watch/Bot Polling
 
-Status: proposed (scoping). Builds on the measured polling baseline (#533).
-Not implemented yet.
+Status: Slice 1 (within-cycle coalescing) and Slice 2 (opt-in watch-backed idle
+observation) implemented; unreleased. Builds on the measured polling baseline
+(#533).
 
 Tracking: **#539** (dedicated observation-efficiency issue). This work was
 previously described in the now-closed #532 (section B) and the roadmap, both of
@@ -73,7 +74,18 @@ Properties:
 This is the safe down-payment: it lowers per-cycle cost immediately and is fully
 provable, but it does not make idle cycles cheap.
 
-## Slice 2 (designed here, its own PR): watch-backed idle observation
+## Slice 2 (implemented, opt-in): watch-backed idle observation
+
+As shipped: opt-in `watch --watch-backed` / `bot --watch-backed`
+(`CUB_SCOUT_BOT_WATCH_BACKED`). Inventory is served from client-go **dynamic
+informers**, so the reflector machinery handles relist, `410 Gone`, and resync
+rather than a hand-rolled watch. A discovery pass filters to served types; only
+types whose informer syncs are read from cache, and any setup failure falls back
+to per-cycle polling — an unsynced type is never reported empty. Deletions are
+surfaced as a new `resource.deleted` event (previously silent, and now correct in
+both modes), and watch-backed cycles stamp `observation.mode: watch-informer`.
+The state scan's own reads (and full watch-backing of the scanner) remain a
+follow-up. Long-running only; `--once` is unaffected.
 
 The only way to make an unchanged cycle cheap is to stop re-LISTing it. A LIST
 always returns the full collection; the list's `metadata.resourceVersion` is a
@@ -153,6 +165,19 @@ new observation-efficiency issue and #502/#505.
 
 ## Local Verification
 
-To be recorded on implementation: `go build/vet/test ./...` incl. `-race`, the
-extended #533 baseline proofs above, CLI-docs parity, and updated README User
-questions / watch-events contract for any new event type.
+Recorded 2026-09-12: `go build ./...`, `go vet ./...`, full `go test ./...`
+(including `-race` on the watch/observation/bot tests) and the CLI-docs parity
+checker pass; `go.mod`/`go.sum` unchanged (all imports are within the existing
+client-go/apimachinery modules).
+
+- Slice 1 proofs: the extended `#533` baseline (48 → 43 requests) and
+  `TestWatchObservationCoalescing`.
+- Slice 2 proofs: `TestBuildWatchEventsDeletion` (a removed resource yields one
+  `resource.deleted` event, none when inventory is unchanged) and
+  `TestWatchBackedClientServesFromCache` (after informer sync, cache reads make
+  zero additional list API calls; a selector-scoped list falls through to the
+  API), using a `dynamicfake` client with informers.
+
+Watch-events contract, `README` User questions, command reference and roadmap
+updated for the new `resource.deleted` event, the `watch-informer` observation
+mode and the `--watch-backed` flag.

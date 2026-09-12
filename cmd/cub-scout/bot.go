@@ -23,6 +23,7 @@ const (
 	botMaxQueuedEventsEnv     = "CUB_SCOUT_BOT_MAX_QUEUED_EVENTS"
 	botEmitReceiptOnEnv       = "CUB_SCOUT_BOT_EMIT_RECEIPT_ON"
 	botEmitReceiptBatchCapEnv = "CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP"
+	botWatchBackedEnv         = "CUB_SCOUT_BOT_WATCH_BACKED"
 )
 
 var (
@@ -36,6 +37,7 @@ var (
 	botMaxQueuedEvents     int
 	botEmitReceiptOn       string
 	botEmitReceiptBatchCap int
+	botWatchBacked         bool
 )
 
 var botCmd = &cobra.Command{
@@ -58,6 +60,7 @@ Environment variables mirror the flags for Kubernetes manifests:
   CUB_SCOUT_BOT_MAX_QUEUED_EVENTS
   CUB_SCOUT_BOT_EMIT_RECEIPT_ON
   CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP
+  CUB_SCOUT_BOT_WATCH_BACKED
 `,
 	RunE: runBot,
 }
@@ -74,6 +77,7 @@ func init() {
 	botCmd.Flags().IntVar(&botMaxQueuedEvents, "max-queued-events", 1000, "Maximum buffered events when webhook is unavailable (or CUB_SCOUT_BOT_MAX_QUEUED_EVENTS)")
 	botCmd.Flags().StringVar(&botEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a receipt to (or CUB_SCOUT_BOT_EMIT_RECEIPT_ON)")
 	botCmd.Flags().IntVar(&botEmitReceiptBatchCap, "emit-receipt-batch-cap", 10, "Per-poll cap on receipt-build attempts (or CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP)")
+	botCmd.Flags().BoolVar(&botWatchBacked, "watch-backed", false, "Back inventory with Kubernetes watch informers so idle cycles read from cache (or CUB_SCOUT_BOT_WATCH_BACKED)")
 }
 
 func runBot(cmd *cobra.Command, args []string) error {
@@ -112,8 +116,21 @@ func botWatchOptionsFromFlags(cmd *cobra.Command) (watchOptions, error) {
 		MaxQueuedEvents:     maxQueuedEvents,
 		EmitReceiptOn:       botStringValue(cmd, "emit-receipt-on", botEmitReceiptOn, botEmitReceiptOnEnv),
 		EmitReceiptBatchCap: emitReceiptBatchCap,
+		WatchBacked:         botBoolValue(cmd, "watch-backed", botWatchBacked, botWatchBackedEnv),
 		CommandName:         "cub-scout bot",
 	}, nil
+}
+
+func botBoolValue(cmd *cobra.Command, flagName string, flagValue bool, envName string) bool {
+	if cmd != nil && cmd.Flags().Changed(flagName) {
+		return flagValue
+	}
+	if raw := strings.TrimSpace(os.Getenv(envName)); raw != "" {
+		if v, err := strconv.ParseBool(raw); err == nil {
+			return v
+		}
+	}
+	return flagValue
 }
 
 func botStringValue(cmd *cobra.Command, flagName, flagValue, envName string) string {

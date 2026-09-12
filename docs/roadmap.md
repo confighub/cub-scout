@@ -157,12 +157,18 @@ and dependable bot installation; do not change registry permissions implicitly.
   inventory sweep and the state scanner, cutting each cycle from 48 to 43
   requests and removing duplicated list bytes, with no change to observed data.
   Idle cycles still re-read full inventory. [Plan](proposals/observation-efficiency.md).
-- [ ] Observation efficiency Slice 2 (#539): watch-backed idle observation to
-  eliminate unchanged full-inventory polling, with explicit watched-scope
-  selection, deletion (a new `resource.deleted` event), reconnect/relist,
-  freshness/staleness, cancellation and finite storage. Keep one-shot commands
-  daemon-free. Note: #519 is a different topic (Commander/TUI convergence) and
-  was previously mis-cited for this work.
+- [x] Observation efficiency Slice 2 (#539): opt-in `--watch-backed` for
+  `watch`/`bot`. Inventory is served from Kubernetes watch informers (client-go
+  handles relist/410/resync), so idle cycles read from cache instead of
+  re-listing; only served, synced types are cached and any setup failure falls
+  back to per-cycle polling. Adds a `resource.deleted` event (deletions were
+  previously silent, in both modes) and a `watch-informer` observation mode.
+  Long-running only; the state scan's own reads and full watch-backing of the
+  scanner remain follow-up. Note: #519 is a different topic (Commander/TUI
+  convergence) and was previously mis-cited for this work.
+- [ ] Observation efficiency follow-ups (#539): move the state scan onto the
+  watch cache (near-zero idle cost), a distinct freshness/staleness signal when
+  a stream is degraded, and evaluate default-on after field validation.
 - [x] Each implemented capability has a README User question, exact invocation,
   interactive equivalent or explicit limitation, tests and a worked example.
 - [ ] Continue distribution checks (#520); do not silently equate recorded

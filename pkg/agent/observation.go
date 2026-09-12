@@ -12,10 +12,11 @@ const (
 	ObservationSourceKubernetesAPI = "kubernetes-api"
 	ObservationSourceSummaryStore  = "summary-store"
 
-	ObservationModeMapList   = "map-list"
-	ObservationModeSnapshot  = "snapshot"
-	ObservationModeSummary   = "summary-list"
-	ObservationModeWatchPoll = "watch-poll"
+	ObservationModeMapList      = "map-list"
+	ObservationModeSnapshot     = "snapshot"
+	ObservationModeSummary      = "summary-list"
+	ObservationModeWatchPoll    = "watch-poll"
+	ObservationModeWatchInformer = "watch-informer"
 
 	ObservationFreshnessPointInTime = "point-in-time"
 )
