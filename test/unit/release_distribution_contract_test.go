@@ -277,7 +277,7 @@ func TestIntroDocs_ControllerRevisionQuestion(t *testing.T) {
 			question = line
 		}
 	}
-	for _, term := range []string{"Unreleased", "v2.11", "--expected-revision", "expected_revision", "TUI", "match", "mismatch", "unknown", "No ConfigHub auth", "zero-request", "not workload convergence", "examples/controller-revision/"} {
+	for _, term := range []string{"v2.11.0", "--expected-revision", "expected_revision", "TUI", "match", "mismatch", "unknown", "No ConfigHub auth", "zero-request", "not workload convergence", "examples/controller-revision/"} {
 		if !strings.Contains(question, term) {
 			t.Errorf("revision user question must explain %q", term)
 		}
