@@ -56,6 +56,28 @@ The report contains existing, independently fingerprint-verifiable configuration
 and workload receipts. `--out` overwrites a regular report file, not the immutable
 receipt store. The whole report is not itself fingerprinted or signed.
 
+## Optional: Running-Image Identity
+
+Add `--check-running-image` (MCP `check_running_image: true`) to also verify that
+the digest **running** in live pods is the image the configuration intends. For
+each supported workload this adds one bounded, selector-scoped pod read (capped
+by `--max-pods`, default 50) and compares `.status.containerStatuses[].imageID`
+against the intended workload image:
+
+- a digest-pinned image whose running digest matches → `match`;
+- a different running digest in the same repository → `mismatch`, carrying a
+  multi-architecture caveat and downgrading the headline to "not running as
+  intended";
+- a mutable tag (for example `api:v1`) → `unknown`, with no pod read, because a
+  tag cannot be tied to a running digest from cluster reads alone. Pin the image
+  to a digest to confirm.
+
+It is off by default, so the base read budget below is unchanged. The
+configuration-bundle digest and the container-image digest are separate
+identities and are never compared to each other. Multi-architecture index vs
+per-architecture digests, initContainers and `matchExpressions` selectors are
+not covered in this first slice.
+
 ## Input And Adapter Boundaries
 
 - One OCI image manifest with one tar or tar+gzip layer containing literal
@@ -75,7 +97,8 @@ receipt store. The whole report is not itself fingerprinted or signed.
   evidence can still be useful; the release-level result stays inconclusive.
 - Workload convergence covers apps/v1 Deployment, StatefulSet and DaemonSet,
   batch/v1 Job and v1 Pod. Custom-resource, CronJob and other readiness is not
-  assessed. Pod fan-out, image verification and application checks are separate.
+  assessed. Running-image verification is opt-in via `--check-running-image`
+  (see above); application checks are separate.
 - Intended bundle identity is supplied by the caller. There is no release-number
   lookup, ConfigHub authority/history join or production event-cursor read.
 - Watch/bot release scheduling remains follow-up work. The existing watch/bot

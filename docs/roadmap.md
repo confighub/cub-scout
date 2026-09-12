@@ -136,9 +136,17 @@ and dependable bot installation; do not change registry permissions implicitly.
   deterministic HTTP integration proof; live workload-only smoke remains
   explicitly inconclusive for controller identity.
   [Completed implementation plan](proposals/oci-release-check.md).
+- [x] Running-image identity tier (#502/#505), opt-in, unreleased. `release check
+  --check-running-image` (MCP `check_running_image`) compares the digest running
+  in live pods with the intended workload image via one bounded, selector-scoped
+  pod read per workload. Mutable tags stay UNKNOWN, a differing digest is MISMATCH
+  with a multi-architecture caveat, and the headline never claims running when it
+  is unconfirmed. Off by default; CLI/plugin, MCP and TUI have deterministic
+  tests. [Plan](proposals/running-image-identity.md).
 - [ ] Extend live OCI controller-join proof and adapter coverage (#502/#505).
-  Broader target/source shapes, running-image identity and application-success
-  policy are not implied by the first check. Watch/bot do not schedule it yet.
+  Broader target/source shapes, registry-side index/digest resolution, initContainer
+  and matchExpressions selector coverage, and application-success policy are not
+  implied by the first checks. Watch/bot do not schedule these checks yet.
 - [x] First polling baseline (#519): actual HTTP requests and response-body
   bytes for 100/1,000-object cold, idle and ownership-change cycles; latency and
   allocations measured separately. [Reproducible example](../examples/observation-budget/).

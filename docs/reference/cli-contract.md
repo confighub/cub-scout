@@ -1498,6 +1498,15 @@ provider with manual refresh/cancellation. Plugin invocation is equivalent.
 Standalone and connected MCP both expose read-only `release_check`, with
 strict typed arguments. Each call is a fresh, bounded observation.
 
+Running-image identity is opt-in with `--check-running-image` (MCP
+`check_running_image: true`): for each supported workload it adds one bounded,
+selector-scoped pod read (capped by `--max-pods`, default 50, max 200) and
+compares the digest running in `.status.containerStatuses[].imageID` with the
+intended workload image. A mutable tag stays `unknown` and reads no pods; a
+differing digest is `mismatch` with a multi-architecture caveat. Off by default,
+so the base check's request budget is unchanged; the container-image digest and
+the configuration-bundle digest are never compared.
+
 Exit 0 means a report was produced, not that it passed. `--fail-on` accepts
 `WATCH`, `BLOCK`, `INCONCLUSIVE`, or `any-non-pass`; a matching verdict exits 2
 after printing/writing the report. Invalid arguments or operational setup

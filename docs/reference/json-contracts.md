@@ -1420,10 +1420,11 @@ report, not an in-toto envelope. Fields:
 | `context`, `controllerContext`, `controller` | Explicit target and controller context/API identities |
 | `startedAt`, `finishedAt` | Observation interval; sequential reads are not atomic |
 | `bundle` | Supplied reference, manifest/layer digests, source (`registry` or `oci-layout`), verified flag, object count and actual registry request/body-byte counts |
-| `stages[]` | Named `bundle`, `controller`, `configuration`, `workloads` checks with verdict and reason |
+| `stages[]` | Named `bundle`, `controller`, `configuration`, `workloads` checks, plus an optional `running-image` stage with `--check-running-image`, each with verdict and reason |
 | `verdict`, `headline`, `nextStep` | Scoped aggregate and explanation; priority BLOCK > INCONCLUSIVE > WATCH > PASS |
 | `controllerRevision` | Existing exact immutable report-comparison evidence; not a workload or execution-history claim |
 | `configuration`, `convergence` | Optional existing fingerprinted object-set/workload receipt Statements |
+| `runningImage` | Optional (`--check-running-image`): per-workload/per-container comparison of the intended image against the digest running in live pods (`.status.containerStatuses[].imageID`); `match`/`mismatch`/`unknown` with intended/running digests and a multi-architecture caveat on mismatch. A mutable tag stays `unknown`. The configuration-bundle digest is never compared to a container-image digest. |
 | `reads[]`, `requestCounts`, `maxObjects` | Per-read scope, UID/resourceVersion, observation/expiry, actual discovery/object requests and selected object limit |
 | `omissions[]` | Explicit claim boundaries, including application success, running-image identity, atomicity and release authority |
 
@@ -1439,8 +1440,10 @@ digest describe different content and are not interchangeable. Supplied OCI
 source metadata is recorded in the nested receipts' `desiredSource` (`type:
 "oci"`). Fingerprint integrity applies to each nested Statement, not the outer
 report, and does not authenticate the intended release or registry publisher.
-No running-image comparison, application health policy, extra-object closure,
-pod fan-out, fleet aggregation or release-history authority lookup is implied.
+Running-image comparison is opt-in via `--check-running-image`, which adds one
+bounded, selector-scoped pod read per workload; by default no pods are read. No
+application health policy, extra-object closure, fleet aggregation or
+release-history authority lookup is implied.
 
 ## Receipt Contract (`cub-scout receipt verify`)
 

@@ -10,6 +10,8 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -215,6 +217,80 @@ func (r *BoundedResourceReader) Read(ctx context.Context, ref BoundedResourceRef
 	}
 	r.cache[ref] = entry
 	return obj.DeepCopy(), boundedEvidenceForEntry(evidence, entry), nil
+}
+
+// ListPods performs at most one namespaced, label-selected pod list request,
+// capped at `limit` pods and the reader byte cap. It never lists cluster-wide,
+// never paginates beyond one page, and reports partial coverage via `capped`
+// when the server signals more matching pods than were returned. Pod is a
+// guaranteed core resource, so no discovery request is made. The read serializes
+// on the same gate as Read. This is the only list this reader performs; it is
+// used solely by the opt-in running-image identity tier.
+func (r *BoundedResourceReader) ListPods(ctx context.Context, namespace string, matchLabels map[string]string, limit int) (pods []*unstructured.Unstructured, capped bool, evidence BoundedReadEvidence, err error) {
+	evidence = BoundedReadEvidence{Context: r.context, Resource: BoundedResourceRef{APIVersion: "v1", Kind: "Pod", Namespace: namespace}, Cache: "list"}
+	if len(validation.IsDNS1123Label(namespace)) != 0 {
+		return nil, false, evidence, fmt.Errorf("bounded pod list requires an explicit valid namespace")
+	}
+	if len(matchLabels) == 0 {
+		return nil, false, evidence, fmt.Errorf("bounded pod list requires a non-empty label selector")
+	}
+	if limit < 1 {
+		limit = 1
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	select {
+	case r.gate <- struct{}{}:
+		defer func() { <-r.gate }()
+	case <-ctx.Done():
+		return nil, false, evidence, ctx.Err()
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, false, evidence, err
+	}
+	keys := make([]string, 0, len(matchLabels))
+	for k := range matchLabels {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	pairs := make([]string, 0, len(keys))
+	for _, k := range keys {
+		pairs = append(pairs, k+"="+matchLabels[k])
+	}
+	selector := strings.Join(pairs, ",")
+	evidence.Reads.Object++
+	stream, err := r.client.Get().AbsPath("/api/v1/namespaces/"+namespace+"/pods").
+		Param("labelSelector", selector).Param("limit", strconv.Itoa(limit)).
+		MaxRetries(0).Stream(ctx)
+	if err != nil {
+		return nil, false, evidence, fmt.Errorf("bounded pod list unavailable: %w", err)
+	}
+	defer stream.Close()
+	data, err := io.ReadAll(io.LimitReader(stream, r.maxBytes+1))
+	if err != nil {
+		return nil, false, evidence, err
+	}
+	if int64(len(data)) > r.maxBytes {
+		return nil, false, evidence, fmt.Errorf("pod list response exceeds %d bytes", r.maxBytes)
+	}
+	list := &unstructured.UnstructuredList{}
+	if err := list.UnmarshalJSON(data); err != nil {
+		return nil, false, evidence, fmt.Errorf("bounded pod list response is malformed")
+	}
+	for i := range list.Items {
+		if kind := list.Items[i].GetKind(); kind != "" && kind != "Pod" {
+			continue
+		}
+		if list.Items[i].GetNamespace() != namespace {
+			continue
+		}
+		pods = append(pods, &list.Items[i])
+	}
+	capped = list.GetContinue() != ""
+	now := r.now().UTC()
+	evidence.Available = true
+	evidence.ObservedAt, evidence.ExpiresAt = now, now.Add(r.ttl)
+	return pods, capped, evidence, nil
 }
 
 func (r *BoundedResourceReader) get(ctx context.Context, path string) ([]byte, error) {

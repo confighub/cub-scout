@@ -2849,15 +2849,27 @@ bundle against an explicit controller and target context.
 Required: `--bundle`, `--controller`, `--api-version`,
 `--controller-namespace`, `--kube-context`. Optional: `--controller-context`
 (defaults to target context), `--oci-layout <dir>` (read-only local content),
-`--max-objects 1..100` (default 100), `--format ascii|json|md`, `--out <path>`,
+`--max-objects 1..100` (default 100), `--check-running-image` (opt-in
+running-image identity), `--max-pods 1..200` (default 50, with
+`--check-running-image`), `--format ascii|json|md`, `--out <path>`,
 `--fail-on WATCH|BLOCK|INCONCLUSIVE|any-non-pass`, `--interactive`.
 Interactive mode cannot be combined with output/gate options.
 
 The report separates verified bundle content, controller/source/target binding,
 authored live configuration and workload-controller convergence. No rendering,
-deployment, pod fan-out or application-success claim. Unsupported adapters,
-excluded Secrets and unreadable objects stay explicit. Watch/bot do not run
-release checks automatically. Full examples, read budgets and adapter boundaries:
+deployment or application-success claim. Unsupported adapters, excluded Secrets
+and unreadable objects stay explicit. Watch/bot do not run release checks
+automatically.
+
+With `--check-running-image`, the report adds a `running-image` stage that
+compares the digest running in each workload's live pods
+(`.status.containerStatuses[].imageID`) against the intended workload image,
+using one bounded, selector-scoped pod read per workload (capped by
+`--max-pods`). A mutable tag stays `unknown` and reads no pods; a differing
+digest is `mismatch` with a multi-architecture caveat, and downgrades the
+headline so a green pipeline never reads as "running as intended" when it is not.
+The configuration-bundle digest and the container-image digest are never
+compared. Full examples, read budgets and adapter boundaries:
 [exact configuration release](../../examples/oci-release-check/).
 
 ## receipt

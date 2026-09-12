@@ -84,9 +84,9 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout release check --format json` |
 | Required | `bundle` (digest-pinned OCI configuration), `controller` (Kind/name), `api_version`, `controller_namespace`, `context` (target kube context) |
-| Optional | `controller_context` (default target context), `oci_layout` (read-only local layout), `max_objects` (integer 1-100, default 100) |
-| Returns | Stage verdicts for bundle/controller/configuration/workloads, actual request counts, dated resource reads, omissions and existing fingerprinted configuration/workload receipts |
-| When to load | "Did this exact configuration release reach this target?" or "Where is this release waiting?" Scope and immutable bundle are required; no broad discovery, rendering, mutation, running-image or application-success claim |
+| Optional | `controller_context` (default target context), `oci_layout` (read-only local layout), `max_objects` (integer 1-100, default 100), `check_running_image` (bool, opt-in running-image identity), `max_pods` (integer 1-200, default 50) |
+| Returns | Stage verdicts for bundle/controller/configuration/workloads (plus `running-image` when `check_running_image` is set), actual request counts, dated resource reads, omissions and existing fingerprinted configuration/workload receipts |
+| When to load | "Did this exact configuration release reach this target?", "Where is this release waiting?", or "Is the image actually running the one I intended?" (set `check_running_image`). Scope and immutable bundle are required; a mutable tag stays UNKNOWN, and there is no application-success claim. The configuration-bundle digest and the container-image digest are never compared |
 
 Each invocation is a fresh bounded check, not a shared cache. Unsupported or
 ambiguous controller/source/target shapes remain inconclusive. See the
