@@ -36,6 +36,7 @@ var (
 	watchMaxQueuedEvents     int
 	watchEmitReceiptOn       string
 	watchEmitReceiptBatchCap int
+	watchWatchBacked         bool
 )
 
 type watchOptions struct {
@@ -49,6 +50,7 @@ type watchOptions struct {
 	MaxQueuedEvents     int
 	EmitReceiptOn       string
 	EmitReceiptBatchCap int
+	WatchBacked         bool
 	CommandName         string
 }
 
@@ -111,6 +113,9 @@ type watchFinding struct {
 type watchState struct {
 	entriesByID map[string]MapEntry
 	findings    map[string]watchFinding
+	// observedMode records how inventory for this cycle was read (per-cycle live
+	// polling vs the watch-backed informer cache). Empty defaults to watch-poll.
+	observedMode string
 }
 
 type watchEventSink interface {
@@ -167,6 +172,7 @@ var watchCmd = &cobra.Command{
 
 Event types:
   - resource.discovered
+  - resource.deleted
   - ownership.changed
   - drift.detected
   - scan.finding
@@ -184,6 +190,7 @@ func init() {
 	watchCmd.Flags().StringVar(&watchSeverity, "severity", "", "Filter finding/drift events by severity (comma-separated: critical,warning,info)")
 	watchCmd.Flags().BoolVar(&watchOnce, "once", false, "Run one collection cycle and exit")
 	watchCmd.Flags().IntVar(&watchMaxQueuedEvents, "max-queued-events", 1000, "Maximum buffered events when webhook is unavailable")
+	watchCmd.Flags().BoolVar(&watchWatchBacked, "watch-backed", false, "Back inventory with Kubernetes watch informers so idle cycles read from an in-process cache instead of re-listing full inventory each interval. Long-running only; unaffected types and the state scan still read per cycle.")
 	watchCmd.Flags().StringVar(&watchEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a cub-scout receipt to (e.g. 'drift.detected,ownership.changed' or 'all' for all four). Receipt-build failures are non-fatal — the underlying event still emits but the receipt key is omitted (omitempty) and a stderr warning fires. All four known event types build receipts in v2 (#449): drift.detected, ownership.changed, resource.discovered, scan.finding. Per-poll cap controlled by --emit-receipt-batch-cap.")
 	watchCmd.Flags().IntVar(&watchEmitReceiptBatchCap, "emit-receipt-batch-cap", 10, "Per-poll cap on receipt-build attempts (#449 backpressure). When a single poll produces more receipt-eligible events than the cap, the first N get receipts attached and the rest emit with the receipt key omitted plus a single stderr summary line. Set to 0 to disable receipt-build entirely while keeping the flag explicit; set to a large value (e.g. 1000) to effectively disable the cap. Default 10.")
 }
@@ -204,6 +211,7 @@ func watchOptionsFromGlobals() watchOptions {
 		MaxQueuedEvents:     watchMaxQueuedEvents,
 		EmitReceiptOn:       watchEmitReceiptOn,
 		EmitReceiptBatchCap: watchEmitReceiptBatchCap,
+		WatchBacked:         watchWatchBacked,
 		CommandName:         "cub-scout watch",
 	}
 }
@@ -265,7 +273,8 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 	if err != nil {
 		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", err), firstNonEmpty(opts.CommandName, "cub-scout watch"))
 	}
-	dynClient, err := dynamic.NewForConfig(cfg)
+	var dynClient dynamic.Interface
+	dynClient, err = dynamic.NewForConfig(cfg)
 	if err != nil {
 		return withKubeRecoveryHint(fmt.Errorf("create dynamic client: %w", err), firstNonEmpty(opts.CommandName, "cub-scout watch"))
 	}
@@ -295,6 +304,27 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 	namespace := strings.TrimSpace(opts.Namespace)
 	severityFilter := parseWatchSeverityFilter(opts.Severity)
 	ownerFilter := strings.TrimSpace(opts.Owner)
+
+	// Slice 2 (#539): back inventory with watch informers so idle cycles read
+	// from an in-process cache instead of re-listing. Long-running only; on any
+	// setup failure fall back to per-cycle polling rather than degrade coverage.
+	watchBackedActive := false
+	if opts.WatchBacked && !opts.Once {
+		if toWatch, derr := watchableGVRs(cfg, collectWatchResourceList()); derr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: --watch-backed discovery failed; falling back to per-cycle polling: %v\n", derr)
+		} else if len(toWatch) == 0 {
+			fmt.Fprintln(os.Stderr, "Warning: --watch-backed found no watchable resource types; falling back to per-cycle polling")
+		} else if wb, syncedGVRs, stopWB, werr := newWatchBackedClient(ctx, dynClient, toWatch, namespace); werr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: --watch-backed setup failed; falling back to per-cycle polling: %v\n", werr)
+		} else {
+			defer stopWB()
+			dynClient = wb
+			watchBackedActive = true
+			fmt.Fprintf(os.Stderr, "Note: watch-backed observation active for %d/%d resource types; idle cycles read from the informer cache.\n", len(syncedGVRs), len(toWatch))
+		}
+	} else if opts.WatchBacked && opts.Once {
+		fmt.Fprintln(os.Stderr, "Note: --watch-backed has no effect with --once; running a single per-cycle read.")
+	}
 
 	if opts.Once {
 		curr, err := watchCollectState(ctx, dynClient, namespace)
@@ -327,6 +357,9 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: watch collection failed: %v\n", err)
 				continue
+			}
+			if watchBackedActive {
+				curr.observedMode = agent.ObservationModeWatchInformer
 			}
 			events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
 			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
@@ -475,7 +508,7 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 			event := watchEvent{
 				Type:        "resource.discovered",
 				Timestamp:   ts,
-				Observation: watchObservationForResource(ts, entry, resource),
+				Observation: watchObservationForResource(ts, curr.observedMode, entry, resource),
 				Resource:    resource,
 				Owner:       watchOwnerFromEntry(entry),
 				Details: map[string]interface{}{
@@ -497,7 +530,7 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 			event := watchEvent{
 				Type:        "ownership.changed",
 				Timestamp:   ts,
-				Observation: watchObservationForResource(ts, entry, resource),
+				Observation: watchObservationForResource(ts, curr.observedMode, entry, resource),
 				Resource:    resource,
 				Owner:       watchOwnerFromEntry(entry),
 				Details: map[string]interface{}{
@@ -508,6 +541,30 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 			if shouldEmitWatchEvent(event, severityFilter, ownerFilter) {
 				events = append(events, event)
 			}
+		}
+	}
+
+	// Deletions: an entry present last cycle and absent now. Previously silent
+	// (the loop above only iterates curr); Slice 2 (#539) surfaces it, and it is
+	// how watch-backed mode reports DELETE events. Applies in both modes.
+	for id, prevEntry := range prev.entriesByID {
+		if _, stillPresent := curr.entriesByID[id]; stillPresent {
+			continue
+		}
+		resource := watchEventResource{Kind: prevEntry.Kind, Name: prevEntry.Name, Namespace: prevEntry.Namespace}
+		event := watchEvent{
+			Type:        "resource.deleted",
+			Timestamp:   ts,
+			Observation: watchObservationForResource(ts, curr.observedMode, prevEntry, resource),
+			Resource:    resource,
+			Owner:       watchOwnerFromEntry(prevEntry),
+			Details: map[string]interface{}{
+				"lastOwner":  prevEntry.Owner,
+				"lastStatus": prevEntry.Status,
+			},
+		}
+		if shouldEmitWatchEvent(event, severityFilter, ownerFilter) {
+			events = append(events, event)
 		}
 	}
 
@@ -522,7 +579,7 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 		scanEvent := watchEvent{
 			Type:        "scan.finding",
 			Timestamp:   ts,
-			Observation: watchObservationForResource(ts, entry, resource),
+			Observation: watchObservationForResource(ts, curr.observedMode, entry, resource),
 			Resource:    resource,
 			Owner:       owner,
 			Severity:    finding.Severity,
@@ -539,7 +596,7 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 			driftEvent := watchEvent{
 				Type:        "drift.detected",
 				Timestamp:   ts,
-				Observation: watchObservationForResource(ts, entry, resource),
+				Observation: watchObservationForResource(ts, curr.observedMode, entry, resource),
 				Resource:    resource,
 				Owner:       owner,
 				Severity:    finding.Severity,
@@ -570,10 +627,13 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 	return events
 }
 
-func watchObservationForResource(ts time.Time, entry MapEntry, resource watchEventResource) *agent.ObservationEvidence {
+func watchObservationForResource(ts time.Time, mode string, entry MapEntry, resource watchEventResource) *agent.ObservationEvidence {
+	if mode == "" {
+		mode = agent.ObservationModeWatchPoll
+	}
 	return agent.NewObservationEvidence(
 		agent.ObservationSourceKubernetesAPI,
-		agent.ObservationModeWatchPoll,
+		mode,
 		ts,
 		agent.ObservationScope{Cluster: entry.ClusterName, Namespace: resource.Namespace, Kind: resource.Kind},
 	)

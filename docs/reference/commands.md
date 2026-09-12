@@ -954,12 +954,14 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 | `--severity` | Finding severity filter (`critical,warning,info`) |
 | `--once` | Run one collection cycle and exit |
 | `--max-queued-events` | Max buffered events while webhook is unreachable |
-| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to. As of `#449` all four known types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. Per-poll backpressure controlled by `--emit-receipt-batch-cap`. |
+| `--watch-backed` | Back inventory with Kubernetes watch informers so idle cycles read from an in-process cache instead of re-listing full inventory each interval (Slice 2 of `#539`). Long-running only (no effect with `--once`). Only resource types the API server serves and whose informer syncs are cached; unaffected types and the state scan still read per cycle. On any setup failure it falls back to per-cycle polling rather than degrade coverage. With this flag, event `observation.mode` is `watch-informer`. |
+| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to. As of `#449` these known types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). `resource.deleted` is a known type but is never receipted (the object is gone). Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. Per-poll backpressure controlled by `--emit-receipt-batch-cap`. |
 | `--emit-receipt-batch-cap` | Per-poll cap on receipt-build attempts (`#449` backpressure). When a single poll produces more receipt-eligible events than the cap, the first N get receipts attached and the rest emit with the receipt key omitted plus a single stderr summary line. Set to 0 to disable receipt-build entirely while keeping the flag explicit; set to a large value (e.g. 1000) to effectively disable the cap. Default 10. |
 
 ### Event Types
 
 - `resource.discovered`
+- `resource.deleted`
 - `ownership.changed`
 - `drift.detected`
 - `scan.finding`
@@ -1016,7 +1018,7 @@ for in-cluster deployment: `buildConfig()` uses Kubernetes in-cluster auth when
 available, and every important flag has a `CUB_SCOUT_BOT_*` environment
 variable for manifests.
 Because `bot` shares the watch event contract, emitted events use
-`observation.mode: watch-poll`.
+`observation.mode: watch-poll` (or `watch-informer` with `--watch-backed`).
 
 At least one destination is required: `--webhook`, `--output-file`,
 `CUB_SCOUT_BOT_WEBHOOK_URL`, or `CUB_SCOUT_BOT_OUTPUT_FILE`.
@@ -1033,6 +1035,7 @@ At least one destination is required: `--webhook`, `--output-file`,
 | `--severity` | `CUB_SCOUT_BOT_SEVERITY` | Finding severity filter (`critical,warning,info`) |
 | `--once` | - | Run one collection cycle and exit |
 | `--max-queued-events` | `CUB_SCOUT_BOT_MAX_QUEUED_EVENTS` | Max buffered events while webhook is unreachable |
+| `--watch-backed` | `CUB_SCOUT_BOT_WATCH_BACKED` | Back inventory with watch informers so idle cycles read from cache instead of re-listing (Slice 2 of `#539`); long-running only, falls back to per-cycle polling on setup failure. Emits `observation.mode: watch-informer`. |
 | `--emit-receipt-on` | `CUB_SCOUT_BOT_EMIT_RECEIPT_ON` | Comma-separated event types, or `all`, for inline receipts |
 | `--emit-receipt-batch-cap` | `CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP` | Per-poll cap on receipt-build attempts |
 

@@ -23,6 +23,7 @@ The four types emitted by `buildWatchEvents` in `cmd/cub-scout/watch.go` are a *
 | Event type | When it fires | Detection logic | `severity` field | `details` keys |
 |---|---|---|---|---|
 | `resource.discovered` | First poll observes a resource cub-scout had not seen before | `entriesByID[id]` exists in current state but not previous | — | `status` |
+| `resource.deleted` | A previously-observed resource is no longer present | `entriesByID[id]` exists in previous state but not current | — | `lastOwner`, `lastStatus` |
 | `ownership.changed` | A previously-observed resource's ownership controller changed | `prevEntry.Owner != currEntry.Owner` | — | `before`, `after` (ownership values) |
 | `drift.detected` | A scan finding categorized as `STATE` or `DRIFT` matches a resource | `strings.EqualFold(finding.Category, "STATE" or "DRIFT")` | propagated from the underlying finding (`critical` / `warning` / `info`) | `category`, `message` |
 | `scan.finding` | Any new risk-pattern finding from `scan` (not just drift) | `currFindings[key]` not in `prevFindings` | propagated from the finding | `category`, `message` |
@@ -31,7 +32,7 @@ Note: `scan.finding` and `drift.detected` can fire for the **same** underlying f
 
 ## Event JSON shape
 
-All four event types share this canonical shape (from `watchEvent` in `cmd/cub-scout/watch.go`):
+All event types share this canonical shape (from `watchEvent` in `cmd/cub-scout/watch.go`):
 
 ```json
 {
@@ -109,10 +110,10 @@ already proven by Modelplane API group, label, or ownerRef evidence.
 
 | Field | Type | Presence | Notes |
 |---|---|---|---|
-| `type` | string | Always | One of the four closed-enumeration values |
+| `type` | string | Always | One of the closed-enumeration values in the table above |
 | `timestamp` | RFC 3339 | Always | Time of the watch poll that observed the event |
 | `observation.source` | string | Omitempty | Read source for the event evidence. Current live-cluster value: `kubernetes-api`. |
-| `observation.mode` | string | Omitempty | Producing surface. `watch` and `bot` emit `watch-poll`. |
+| `observation.mode` | string | Omitempty | Producing surface. `watch` and `bot` emit `watch-poll`; with `--watch-backed` they emit `watch-informer` (inventory served from a watch-backed informer cache instead of a per-cycle LIST). |
 | `observation.observedAt` | RFC 3339 | Omitempty | Same poll timestamp as `timestamp`; included so generic evidence readers do not need watch-specific field names. |
 | `observation.freshness` | string | Omitempty | Current value: `point-in-time`; not a TTL or cache-validity promise. |
 | `observation.scope` | object | Omitempty | Cluster, namespace, and kind scope when known; see [JSON Contracts § Observation Evidence Contract](json-contracts.md#observation-evidence-contract). |

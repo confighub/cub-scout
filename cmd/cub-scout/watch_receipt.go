@@ -33,6 +33,7 @@ import (
 //	ownership.changed  → applied-matches-spec
 //	scan.finding       → skipped (would flood on initial finding burst)
 //	resource.discovered → skipped (every first-poll discovery would emit)
+//	resource.deleted   → skipped (the object is gone; no live read to receipt)
 //
 // The skipped event types still accept the flag (so `--emit-receipt-on all`
 // is a valid sugar) but produce nil receipts with no error — the watch
@@ -48,6 +49,7 @@ const watchEventTypeAll = "all"
 // upfront so CI gates don't silently accept typos.
 var watchKnownEventTypes = []string{
 	"resource.discovered",
+	"resource.deleted",
 	"ownership.changed",
 	"drift.detected",
 	"scan.finding",
