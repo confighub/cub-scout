@@ -32,6 +32,7 @@ type ReleaseCheckReport struct {
 	ControllerRevision *ControllerRevisionEvidence `json:"controllerRevision,omitempty"`
 	Configuration      *Statement                  `json:"configuration,omitempty"`
 	Convergence        *Statement                  `json:"convergence,omitempty"`
+	RunningImage       *RunningImageEvidence       `json:"runningImage,omitempty"`
 	Reads              []BoundedReadEvidence       `json:"reads"`
 	RequestCounts      BoundedReadCounts           `json:"requestCounts"`
 	MaxObjects         int                         `json:"maxObjects"`
@@ -85,6 +86,79 @@ func (r *ReleaseCheckReport) Finish(now time.Time) {
 	default:
 		r.Headline = "Release verification is incomplete."
 		r.NextStep = "Resolve the missing source, target or read evidence shown below, then refresh."
+	}
+	r.composeRunningImageHeadline()
+}
+
+// RunningImageStageVerdict maps the tier's match/mismatch/unknown to the
+// report's ReceiptVerdict vocabulary used by the weakest-link Finish loop.
+func RunningImageStageVerdict(verdict string) string {
+	switch verdict {
+	case "match":
+		return "PASS"
+	case "mismatch":
+		return "BLOCK"
+	case "unknown":
+		return "INCONCLUSIVE"
+	default:
+		return "NOT_ASSESSED"
+	}
+}
+
+// composeRunningImageHeadline refines the headline once the opt-in running-image
+// tier is present. It never masks an equally or more severe configuration or
+// workload problem, and never upgrades a headline.
+func (r *ReleaseCheckReport) composeRunningImageHeadline() {
+	if r.RunningImage == nil {
+		return
+	}
+	switch r.RunningImage.Verdict {
+	case "match":
+		if r.Verdict == VerdictPASS {
+			r.Headline += " Running pods report the intended image digest."
+		}
+	case "mismatch":
+		if r.nonRunningImageAtLeast("BLOCK") {
+			r.Headline += " Running pods also do not run the intended image."
+		} else {
+			r.Headline = "Running pods do not run the intended image."
+		}
+		r.NextStep = "Live pods report an image digest other than the intended configuration's; verify the workload image before trusting this release. Note: multi-architecture images can legitimately differ in digest form. This check performs no repair."
+	case "unknown":
+		if !r.nonRunningImageAtLeast("INCONCLUSIVE") {
+			r.Headline = "Configuration checks completed; the running image could not be confirmed."
+		} else {
+			r.Headline += " The running image could not be confirmed."
+		}
+		r.NextStep = runningImageNextStep(r.RunningImage.Reason)
+	}
+}
+
+// nonRunningImageAtLeast reports whether any stage other than running-image is at
+// least as severe as the given ReceiptVerdict.
+func (r *ReleaseCheckReport) nonRunningImageAtLeast(verdict string) bool {
+	priority := map[string]int{"PASS": 0, "NOT_ASSESSED": 0, "WATCH": 1, "INCONCLUSIVE": 2, "BLOCK": 3}
+	for _, stage := range r.Stages {
+		if stage.Name == "running-image" {
+			continue
+		}
+		if priority[stage.Verdict] >= priority[verdict] && priority[verdict] > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func runningImageNextStep(reason string) string {
+	switch reason {
+	case "mutable-tag":
+		return "The intended image is a mutable tag, so the running artifact cannot be tied to it. Pin the workload image to a digest (name@sha256:...) or supply build provenance, then re-run."
+	case "read-denied", "bounded pod list unavailable":
+		return "Pod reads were unavailable; grant read access to the workload's pods in this context, then re-run with --check-running-image."
+	case "selector-unsupported":
+		return "The workload selector could not be resolved to pods in this slice (matchLabels required); running-image identity stays unconfirmed."
+	default:
+		return "Running-image identity could not be confirmed (" + reason + "); resolve the noted gap, then re-run with --check-running-image."
 	}
 }
 
