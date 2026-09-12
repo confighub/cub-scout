@@ -194,7 +194,7 @@ func TestBotImageInstallDocs(t *testing.T) {
 			question = line
 		}
 	}
-	for _, term := range []string{"Unreleased", "arm64", "amd64", "checksum", "numeric-nonroot", "No ConfigHub auth", "image push", "cluster deployment", "does not repair public registry access", "examples/bot/"} {
+	for _, term := range []string{"v2.11.0", "arm64", "amd64", "checksum", "numeric-nonroot", "No ConfigHub auth", "image push", "cluster deployment", "does not repair public registry access", "examples/bot/"} {
 		if !strings.Contains(question, term) {
 			t.Errorf("bot installation user question must explain %q", term)
 		}
