@@ -19,16 +19,14 @@ visible; a healthy Pod is not proof that the intended release was delivered.
 
 ## What you get
 
-- **An ownership map:** explore resources across Argo CD, Flux, Helm, Sveltos,
+- **Tracing and ownership map:** explore resources across Argo CD, Flux, Helm, Sveltos,
   Modelplane, Crossplane, kro, ConfigHub, and native Kubernetes. Evidence depth
   depends on the controller and available metadata.
-- **An explanation, not just a status color:** controller progress, workload
+- **Dig into deeper explanations where possible:** controller progress, workload
   symptoms, source revisions, field differences, and the next read-only checks.
-- **Evidence you can reuse:** JSON for scripts and MCP tools for agents, plus
+- **Data and machine friendly outputs:** JSON for scripts and MCP tools for agents, plus
   saved bundles and fingerprinted receipts for review. No model inference is
   required to classify ownership or compute the reported evidence.
-- **A small read when that is enough:** v2.10.0 bounded explain reads one exact
-  object; MCP/TUI sessions can reuse the observation with visible freshness.
 
 No ConfigHub account or in-cluster Scout installation is needed for standalone
 inspection. Live checks need Kubernetes API access; saved-file and bundle
