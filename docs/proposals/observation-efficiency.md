@@ -84,8 +84,12 @@ types whose informer syncs are read from cache, and any setup failure falls back
 to per-cycle polling — an unsynced type is never reported empty. Deletions are
 surfaced as a new `resource.deleted` event (previously silent, and now correct in
 both modes), and watch-backed cycles stamp `observation.mode: watch-informer`.
-The state scan's own reads (and full watch-backing of the scanner) remain a
-follow-up. Long-running only; `--once` is unaffected.
+The state scan reads from the same cache: its GitOps-type lists are already
+watched inventory types, and its runtime-failure pod read is watch-backed as a
+scanner-only type (pods are cached for the scan but kept out of the inventory /
+ownership map so they never emit discovered/deleted events). A watch-backed idle
+cycle therefore makes essentially no list API calls. Long-running only; `--once`
+is unaffected.
 
 The only way to make an unchanged cycle cheap is to stop re-LISTing it. A LIST
 always returns the full collection; the list's `metadata.resourceVersion` is a
@@ -177,6 +181,11 @@ client-go/apimachinery modules).
   `TestWatchBackedClientServesFromCache` (after informer sync, cache reads make
   zero additional list API calls; a selector-scoped list falls through to the
   API), using a `dynamicfake` client with informers.
+- Scan-on-cache proofs: `TestScannerWatchGVRsExcludedFromInventory` (pods are in
+  the scanner/candidate watch set but never in the inventory sweep, and the
+  candidate set is a de-duplicated superset of inventory) and
+  `TestWatchBackedScannerReadsPodsFromCache` (running the full state scan through
+  a watch-backed client makes zero pod list API calls after sync).
 
 Watch-events contract, `README` User questions, command reference and roadmap
 updated for the new `resource.deleted` event, the `watch-informer` observation

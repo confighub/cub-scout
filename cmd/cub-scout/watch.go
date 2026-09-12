@@ -190,7 +190,7 @@ func init() {
 	watchCmd.Flags().StringVar(&watchSeverity, "severity", "", "Filter finding/drift events by severity (comma-separated: critical,warning,info)")
 	watchCmd.Flags().BoolVar(&watchOnce, "once", false, "Run one collection cycle and exit")
 	watchCmd.Flags().IntVar(&watchMaxQueuedEvents, "max-queued-events", 1000, "Maximum buffered events when webhook is unavailable")
-	watchCmd.Flags().BoolVar(&watchWatchBacked, "watch-backed", false, "Back inventory with Kubernetes watch informers so idle cycles read from an in-process cache instead of re-listing full inventory each interval. Long-running only; unaffected types and the state scan still read per cycle.")
+	watchCmd.Flags().BoolVar(&watchWatchBacked, "watch-backed", false, "Back inventory and the state scan's reads with Kubernetes watch informers so idle cycles read from an in-process cache instead of re-listing each interval. Long-running only. Only served types whose informer syncs are cached; on any setup failure it falls back to per-cycle polling.")
 	watchCmd.Flags().StringVar(&watchEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a cub-scout receipt to (e.g. 'drift.detected,ownership.changed' or 'all' for all four). Receipt-build failures are non-fatal — the underlying event still emits but the receipt key is omitted (omitempty) and a stderr warning fires. All four known event types build receipts in v2 (#449): drift.detected, ownership.changed, resource.discovered, scan.finding. Per-poll cap controlled by --emit-receipt-batch-cap.")
 	watchCmd.Flags().IntVar(&watchEmitReceiptBatchCap, "emit-receipt-batch-cap", 10, "Per-poll cap on receipt-build attempts (#449 backpressure). When a single poll produces more receipt-eligible events than the cap, the first N get receipts attached and the rest emit with the receipt key omitted plus a single stderr summary line. Set to 0 to disable receipt-build entirely while keeping the flag explicit; set to a large value (e.g. 1000) to effectively disable the cap. Default 10.")
 }
@@ -310,7 +310,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 	// setup failure fall back to per-cycle polling rather than degrade coverage.
 	watchBackedActive := false
 	if opts.WatchBacked && !opts.Once {
-		if toWatch, derr := watchableGVRs(cfg, collectWatchResourceList()); derr != nil {
+		if toWatch, derr := watchableGVRs(cfg, watchBackedCandidateGVRs()); derr != nil {
 			fmt.Fprintf(os.Stderr, "Warning: --watch-backed discovery failed; falling back to per-cycle polling: %v\n", derr)
 		} else if len(toWatch) == 0 {
 			fmt.Fprintln(os.Stderr, "Warning: --watch-backed found no watchable resource types; falling back to per-cycle polling")

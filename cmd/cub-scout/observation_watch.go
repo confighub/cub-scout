@@ -146,6 +146,30 @@ func newWatchBackedClient(ctx context.Context, base dynamic.Interface, gvrs []sc
 	return &watchBackedClient{Interface: base, listers: listers, namespace: namespace}, syncedGVRs, stop, nil
 }
 
+// scannerWatchGVRs are resource types the state scan reads but that are NOT part
+// of the inventory sweep. They are watch-backed so the scan's per-cycle reads
+// (currently the runtime-failure pod read) come from cache too, taking a
+// watch-backed idle cycle close to zero API calls. They are deliberately kept
+// out of collectWatchResourceList(): pods must never enter the inventory /
+// ownership map or emit resource.discovered / resource.deleted events.
+func scannerWatchGVRs() []schema.GroupVersionResource {
+	return []schema.GroupVersionResource{{Group: "", Version: "v1", Resource: "pods"}}
+}
+
+// watchBackedCandidateGVRs is the full set a watch-backed run may watch: the
+// inventory sweep types plus the scanner-only types, de-duplicated.
+func watchBackedCandidateGVRs() []schema.GroupVersionResource {
+	seen := map[schema.GroupVersionResource]bool{}
+	out := make([]schema.GroupVersionResource, 0)
+	for _, gvr := range append(collectWatchResourceList(), scannerWatchGVRs()...) {
+		if !seen[gvr] {
+			seen[gvr] = true
+			out = append(out, gvr)
+		}
+	}
+	return out
+}
+
 // watchableGVRs filters candidate types to those the API server currently
 // serves, so a watch-backed run only opens informers for resources that exist.
 func watchableGVRs(cfg *rest.Config, candidate []schema.GroupVersionResource) ([]schema.GroupVersionResource, error) {

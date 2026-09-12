@@ -77,7 +77,7 @@ func init() {
 	botCmd.Flags().IntVar(&botMaxQueuedEvents, "max-queued-events", 1000, "Maximum buffered events when webhook is unavailable (or CUB_SCOUT_BOT_MAX_QUEUED_EVENTS)")
 	botCmd.Flags().StringVar(&botEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a receipt to (or CUB_SCOUT_BOT_EMIT_RECEIPT_ON)")
 	botCmd.Flags().IntVar(&botEmitReceiptBatchCap, "emit-receipt-batch-cap", 10, "Per-poll cap on receipt-build attempts (or CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP)")
-	botCmd.Flags().BoolVar(&botWatchBacked, "watch-backed", false, "Back inventory with Kubernetes watch informers so idle cycles read from cache (or CUB_SCOUT_BOT_WATCH_BACKED)")
+	botCmd.Flags().BoolVar(&botWatchBacked, "watch-backed", false, "Back inventory and the state scan's reads with Kubernetes watch informers so idle cycles read from cache instead of re-listing (or CUB_SCOUT_BOT_WATCH_BACKED)")
 }
 
 func runBot(cmd *cobra.Command, args []string) error {
