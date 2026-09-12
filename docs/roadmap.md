@@ -166,9 +166,14 @@ and dependable bot installation; do not change registry permissions implicitly.
   Long-running only; the state scan's own reads and full watch-backing of the
   scanner remain follow-up. Note: #519 is a different topic (Commander/TUI
   convergence) and was previously mis-cited for this work.
-- [ ] Observation efficiency follow-ups (#539): move the state scan onto the
-  watch cache (near-zero idle cost), a distinct freshness/staleness signal when
-  a stream is degraded, and evaluate default-on after field validation.
+- [x] Observation efficiency Slice 2 follow-up (#539): the state scan reads from
+  the watch cache too. Its runtime-failure pod read is watch-backed (pods cached
+  for the scan but kept out of the inventory / ownership map), so a watch-backed
+  idle cycle makes essentially no list API calls — inventory and scan both read
+  from cache.
+- [ ] Observation efficiency follow-ups (#539): a distinct freshness/staleness
+  signal when a watch stream is degraded, and evaluate default-on after field
+  validation.
 - [x] Each implemented capability has a README User question, exact invocation,
   interactive equivalent or explicit limitation, tests and a worked example.
 - [ ] Continue distribution checks (#520); do not silently equate recorded

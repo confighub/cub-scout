@@ -62,10 +62,13 @@ cycle. Per cycle, idle and cold identical:
 
 The duplicated list requests are gone (48 → 43), and their bytes are removed too
 (larger on real Flux/Argo clusters, where those lists are non-empty). The fixture
-ceiling is now 43; it is not a global product limit. This does **not** yet make
-idle cycles cheap — an unchanged cycle still re-reads full inventory. That is the
-watch-backed Slice 2 in
-[docs/proposals/observation-efficiency.md](../../docs/proposals/observation-efficiency.md).
+ceiling is now 43; it is not a global product limit.
+
+Coalescing alone does not make idle cycles cheap — an unchanged per-cycle poll
+still re-reads full inventory. For long-running observation, `watch`/`bot
+--watch-backed` (Slice 2, #539) serves both inventory and the state scan from a
+Kubernetes watch informer cache, so an unchanged cycle makes essentially no list
+API calls. Design and scope: [docs/proposals/observation-efficiency.md](../../docs/proposals/observation-efficiency.md).
 
 Three local benchmark runs on darwin/arm64, five collections per run:
 
