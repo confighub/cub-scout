@@ -343,11 +343,16 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 }
 
 func collectWatchState(ctx context.Context, dynClient dynamic.Interface, namespace string) (watchState, error) {
-	entries, err := collectWatchEntries(ctx, dynClient, namespace)
+	// Coalesce duplicate LISTs across the inventory sweep and the state scan
+	// within this one cycle. The wrapper is created per cycle and discarded, so
+	// it never serves data across cycles; it also gives both sweeps one
+	// consistent point-in-time view per type.
+	cached := newCycleCachingDynamicClient(dynClient)
+	entries, err := collectWatchEntries(ctx, cached, namespace)
 	if err != nil {
 		return watchState{}, err
 	}
-	findings, err := collectWatchFindings(ctx, dynClient, namespace)
+	findings, err := collectWatchFindings(ctx, cached, namespace)
 	if err != nil {
 		return watchState{}, err
 	}

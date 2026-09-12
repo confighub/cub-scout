@@ -153,8 +153,11 @@ func TestWatchObservationBudget(t *testing.T) {
 				if total.Requests == 0 || total.Bytes == 0 {
 					t.Fatal("fixture did not count real HTTP responses")
 				}
-				if total.Requests > 48 {
-					t.Errorf("polling fixture exceeded its baseline budget: %d requests (maximum 48)", total.Requests)
+				// Within-cycle coalescing collapses the duplicate inventory/scanner
+			// LISTs (application ×2, release/reconciliation ×3 each) to one read
+			// per distinct path: the 48-request baseline drops to 43.
+			if total.Requests > 43 {
+					t.Errorf("polling fixture exceeded its coalesced budget: %d requests (maximum 43)", total.Requests)
 				}
 				if phase == "cold" {
 					baseline = counts
@@ -169,6 +172,127 @@ func TestWatchObservationBudget(t *testing.T) {
 				previous = state
 			}
 		})
+	}
+}
+
+// newGitopsBudgetFixture serves non-empty deployment, helmrelease,
+// kustomization and application lists — the types the inventory sweep and the
+// state scanner both LIST — so the byte savings from within-cycle coalescing are
+// visible, not just the request savings. Other paths return an empty list.
+func newGitopsBudgetFixture(tb testing.TB) *watchBudgetFixture {
+	tb.Helper()
+	list := func(kind, apiVersion string, n int) []byte {
+		items := make([]interface{}, n)
+		for i := range items {
+			name := fmt.Sprintf("%s-%02d", strings.ToLower(kind), i)
+			items[i] = map[string]interface{}{
+				"apiVersion": apiVersion, "kind": kind,
+				"metadata": map[string]interface{}{"name": name, "namespace": "budget", "uid": name, "generation": 1},
+				"status":   map[string]interface{}{"observedGeneration": 1, "conditions": []interface{}{map[string]interface{}{"type": "Ready", "status": "True", "reason": "Succeeded"}}},
+			}
+		}
+		data, err := json.Marshal(map[string]interface{}{"apiVersion": "v1", "kind": "List", "metadata": map[string]string{"resourceVersion": "1"}, "items": items})
+		if err != nil {
+			tb.Fatal(err)
+		}
+		return data
+	}
+	deployments := list("Deployment", "apps/v1", 3)
+	helmreleases := list("HelmRelease", "helm.toolkit.fluxcd.io/v2", 3)
+	kustomizations := list("Kustomization", "kustomize.toolkit.fluxcd.io/v1", 3)
+	applications := list("Application", "argoproj.io/v1alpha1", 3)
+	empty, err := json.Marshal(map[string]interface{}{"apiVersion": "v1", "kind": "List", "metadata": map[string]string{"resourceVersion": "1"}, "items": []interface{}{}})
+	if err != nil {
+		tb.Fatal(err)
+	}
+	f := &watchBudgetFixture{counts: map[string]watchBudgetCount{}}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || !strings.Contains(r.URL.Path, "/namespaces/budget/") || r.URL.Query().Get("watch") != "" {
+			tb.Errorf("unexpected method/scope: %s %s", r.Method, r.URL)
+			http.Error(w, "unsupported fixture request", http.StatusForbidden)
+			return
+		}
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		body := empty
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/deployments"):
+			body = deployments
+		case strings.HasSuffix(r.URL.Path, "/helmreleases"):
+			body = helmreleases
+		case strings.HasSuffix(r.URL.Path, "/kustomizations"):
+			body = kustomizations
+		case strings.HasSuffix(r.URL.Path, "/applications"):
+			body = applications
+		}
+		w.Header().Set("Content-Type", "application/json")
+		n, err := w.Write(body)
+		if err != nil {
+			tb.Errorf("fixture write: %v", err)
+		}
+		key := r.Method + " " + r.URL.RequestURI()
+		count := f.counts[key]
+		count.Requests++
+		count.Bytes += n
+		f.counts[key] = count
+	}))
+	tb.Cleanup(server.Close)
+	f.client, err = dynamic.NewForConfig(&rest.Config{Host: server.URL, QPS: -1, Timeout: 5 * time.Second})
+	if err != nil {
+		tb.Fatal(err)
+	}
+	return f
+}
+
+func entrySignatures(entries []MapEntry) []string {
+	sigs := make([]string, len(entries))
+	for i, e := range entries {
+		sigs[i] = strings.Join([]string{e.ID, e.Namespace, e.Kind, e.Name, e.Owner, e.Status}, "|")
+	}
+	return sigs
+}
+
+// TestWatchObservationCoalescing proves the per-cycle cache removes duplicate
+// list requests AND bytes across the inventory sweep and the scanner, and does
+// not change the observed inventory.
+func TestWatchObservationCoalescing(t *testing.T) {
+	t.Setenv(customResourceConfigEnvVar, filepath.Join(t.TempDir(), "no-custom-resources.yaml"))
+	t.Setenv("CLUSTER_NAME", "coalesce-cluster")
+	ctx := context.Background()
+
+	// Uncoalesced: the raw client; both sweeps list independently.
+	fixture := newGitopsBudgetFixture(t)
+	rawEntries, err := collectWatchEntries(ctx, fixture.client, "budget")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := collectWatchFindings(ctx, fixture.client, "budget"); err != nil {
+		t.Fatal(err)
+	}
+	raw := watchBudgetTotals(fixture.takeCounts())
+
+	// Coalesced: one per-cycle cache shared across both sweeps.
+	cached := newCycleCachingDynamicClient(fixture.client)
+	cachedEntries, err := collectWatchEntries(ctx, cached, "budget")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := collectWatchFindings(ctx, cached, "budget"); err != nil {
+		t.Fatal(err)
+	}
+	coalesced := watchBudgetTotals(fixture.takeCounts())
+
+	if coalesced.Requests >= raw.Requests {
+		t.Errorf("coalescing did not reduce requests: raw=%d coalesced=%d", raw.Requests, coalesced.Requests)
+	}
+	if coalesced.Bytes >= raw.Bytes {
+		t.Errorf("coalescing did not reduce response bytes: raw=%d coalesced=%d", raw.Bytes, coalesced.Bytes)
+	}
+	if cached.hits == 0 {
+		t.Error("expected within-cycle cache hits")
+	}
+	if !reflect.DeepEqual(entrySignatures(rawEntries), entrySignatures(cachedEntries)) {
+		t.Errorf("coalescing changed observed inventory:\n raw=%v\n coalesced=%v", entrySignatures(rawEntries), entrySignatures(cachedEntries))
 	}
 }
 
