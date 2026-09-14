@@ -16,6 +16,7 @@ var (
 	docFiles = []string{
 		"README.md",
 		"CLI-GUIDE.md",
+		"docs/howto/is-this-image-deployed.md",
 		"docs/reference/cli-reference.md",
 		"docs/reference/commands.md",
 		"docs/reference/cli-contract.md",

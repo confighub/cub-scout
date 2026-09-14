@@ -1410,9 +1410,11 @@ Events are sorted by:
 
 Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 
-## Configuration Release Check (Unreleased)
+<a id="configuration-release-check-unreleased"></a>
 
-`release check --format json` and MCP `release_check` emit a `version: "v1"`
+## Configuration Release Check
+
+Available since v2.11.0. `release check --format json` and MCP `release_check` emit a `version: "v1"`
 report, not an in-toto envelope. Fields:
 
 | Field | Meaning |
@@ -1424,7 +1426,7 @@ report, not an in-toto envelope. Fields:
 | `verdict`, `headline`, `nextStep` | Scoped aggregate and explanation; priority BLOCK > INCONCLUSIVE > WATCH > PASS |
 | `controllerRevision` | Existing exact immutable report-comparison evidence; not a workload or execution-history claim |
 | `configuration`, `convergence` | Optional existing fingerprinted object-set/workload receipt Statements |
-| `runningImage` | Optional (`--check-running-image`): per-workload/per-container comparison of the intended image against the digest running in live pods (`.status.containerStatuses[].imageID`); `match`/`mismatch`/`unknown` with intended/running digests and a multi-architecture caveat on mismatch. A mutable tag stays `unknown`. The configuration-bundle digest is never compared to a container-image digest. |
+| `runningImage` | Optional (`--check-running-image`): per-workload/per-container comparison of intended digests against pod-reported `.status.containerStatuses[].imageID`; `match`/`mismatch`/`unknown` with intended/reported digests. `mismatch` maps to stage `BLOCK`, including potentially legitimate multi-architecture index/platform differences. Mutable tags stay `unknown`. Image IDs are pooled by container name, not proof of complete per-pod running state or ownership. The configuration-bundle digest is never compared to a container-image digest. |
 | `reads[]`, `requestCounts`, `maxObjects` | Per-read scope, UID/resourceVersion, observation/expiry, actual discovery/object requests and selected object limit |
 | `omissions[]` | Explicit claim boundaries, including application success, running-image identity, atomicity and release authority |
 
@@ -1441,7 +1443,12 @@ source metadata is recorded in the nested receipts' `desiredSource` (`type:
 "oci"`). Fingerprint integrity applies to each nested Statement, not the outer
 report, and does not authenticate the intended release or registry publisher.
 Running-image comparison is opt-in via `--check-running-image`, which adds one
-bounded, selector-scoped pod read per workload; by default no pods are read. No
+bounded, selector-scoped pod read per eligible workload. Direct Pods reuse their
+live read; tag-only workloads skip the extra read. No additional image-check pod
+reads occur by default. Missing status arrays are skipped; `state.running` and
+pod ownerReference/UID chains are not checked by this tier. See
+[the image deployment guide](../howto/is-this-image-deployed.md) before treating
+an image-stage match as stronger evidence. No
 application health policy, extra-object closure, fleet aggregation or
 release-history authority lookup is implied.
 

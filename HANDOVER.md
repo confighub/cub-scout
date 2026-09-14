@@ -1,5 +1,17 @@
 # cub-scout Handover for the Next AI Coder
 
+## Documentation Update: 2026-09-14
+
+v2.11.0 is published (tag `89f0bf2`). The
+[image deployment guide](docs/howto/is-this-image-deployed.md) is the current
+user entry point for `release check --check-running-image`, including known
+per-pod completeness, running-state, ownership and multi-architecture limits.
+This update changes documentation only; it does not repair those runtime gaps.
+The September 11 execution snapshot below is historical and predates #538 and
+the v2.11.0 release. Use [release notes](docs/releases/v2.11.0.md) for that scope.
+
+## Historical Execution Snapshot: 2026-09-11
+
 Last updated: 2026-09-11. Published: Scout `v2.10.1`; publication and
 artifact proof are tracked in `#530` and `docs/releases/v2.10.1.md`.
 Previous published baseline: Scout `v2.10.0` (`f9f5512`) and separately

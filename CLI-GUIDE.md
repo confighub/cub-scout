@@ -120,10 +120,15 @@ See [docs/reference/commands.md](docs/reference/commands.md) for the detailed ex
 
 ## Check One Configuration Release
 
-Unreleased, planned v2.11: `release check` answers whether an exact OCI
+Available since v2.11.0: `release check` answers whether an exact OCI
 configuration bundle reached an explicitly selected target. It separates bundle
 identity, controller evidence, authored-field agreement and workload convergence.
 Configuration-only changes are checked even when images stay unchanged.
+
+For container-image evidence, start with
+[Is This Image Deployed?](docs/howto/is-this-image-deployed.md).
+`--check-running-image` compares pod-reported image IDs with intended digests;
+it is not an image-reference search or proof that every replica is running.
 
 Use the [worked example](examples/oci-release-check/) for exact required flags,
 supported controller shapes and API budgets. CLI/plugin, `--interactive` TUI

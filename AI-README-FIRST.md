@@ -2,6 +2,13 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
+**2026-09-14 release correction:** v2.11.0 is published (tag `89f0bf2`).
+`release check --check-running-image` is shipped, not planned. Start with
+[Is This Image Deployed?](docs/howto/is-this-image-deployed.md) for the current
+workflow and explicit image-ID, per-pod completeness and multi-architecture
+limits. September 11 execution notes below predate that release; they are not
+evidence that running-image checks are unavailable.
+
 Preferred wording in AI/product prose: `cub scout`.
 When showing exact local repo commands in this repo, use `./cub-scout ...`.
 

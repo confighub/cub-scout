@@ -1487,7 +1487,7 @@ See [JSON Contracts § Observation Evidence Contract](json-contracts.md#observat
 
 ## cub-scout release check
 
-Unreleased, planned v2.11. Exact flags and adapters are documented in
+Available since v2.11.0. Exact flags and adapters are documented in
 [commands](commands.md#release-check) and the [worked example](../../examples/oci-release-check/).
 Required immutable configuration-bundle identity and explicit target/controller
 scope are validated before network reads. Tags are rejected; local OCI layouts
@@ -1499,13 +1499,20 @@ Standalone and connected MCP both expose read-only `release_check`, with
 strict typed arguments. Each call is a fresh, bounded observation.
 
 Running-image identity is opt-in with `--check-running-image` (MCP
-`check_running_image: true`): for each supported workload it adds one bounded,
+`check_running_image: true`): for each eligible workload it adds one bounded,
 selector-scoped pod read (capped by `--max-pods`, default 50, max 200) and
-compares the digest running in `.status.containerStatuses[].imageID` with the
-intended workload image. A mutable tag stays `unknown` and reads no pods; a
-differing digest is `mismatch` with a multi-architecture caveat. Off by default,
+compares `.status.containerStatuses[].imageID` with the intended image digest.
+Direct Pods reuse their live read; tag-only workloads skip the extra read and
+stay `unknown`. A comparable differing digest is `mismatch` / `BLOCK`, including
+potentially legitimate multi-architecture index/platform differences. Off by default,
 so the base check's request budget is unchanged; the container-image digest and
 the configuration-bundle digest are never compared.
+
+An image match is not complete per-pod execution proof: image IDs are pooled
+by container name, missing status arrays are skipped, `state.running` is not
+checked and label selection does not verify pod ownerReference/UID chains.
+See [Is This Image Deployed?](../howto/is-this-image-deployed.md) for the
+operator workflow and limitations. This documentation does not change verdicts.
 
 Exit 0 means a report was produced, not that it passed. `--fail-on` accepts
 `WATCH`, `BLOCK`, `INCONCLUSIVE`, or `any-non-pass`; a matching verdict exits 2
