@@ -1,8 +1,12 @@
 # Exact OCI Configuration Release Check
 
-Unreleased, planned v2.11. Tracking: #532 / #502 / #505. This answers:
+Available since v2.11.0. Tracking: #532 / #502 / #505. This answers:
 did this exact configuration release reach this target, and where is it waiting?
 It does not deploy, render, retry, force sync, approve or claim application success.
+
+Start with [Is This Image Deployed?](../../docs/howto/is-this-image-deployed.md)
+for the user workflow, three image/configuration identities and current proof
+limits. This example provides the detailed adapter and request-budget contract.
 
 ## Run
 
@@ -58,16 +62,19 @@ receipt store. The whole report is not itself fingerprinted or signed.
 
 ## Optional: Running-Image Identity
 
-Add `--check-running-image` (MCP `check_running_image: true`) to also verify that
-the digest **running** in live pods is the image the configuration intends. For
-each supported workload this adds one bounded, selector-scoped pod read (capped
-by `--max-pods`, default 50) and compares `.status.containerStatuses[].imageID`
-against the intended workload image:
+Add `--check-running-image` (MCP `check_running_image: true`) to compare
+pod-reported image digests with the images the configuration intends. For
+each eligible workload this adds one bounded, selector-scoped pod read (capped
+by `--max-pods`, default 50, maximum 200) and compares
+`.status.containerStatuses[].imageID` against the intended workload image.
+Direct Pods reuse their existing live read; tag-only workloads skip the extra
+read:
 
 - a digest-pinned image whose running digest matches → `match`;
-- a different running digest in the same repository → `mismatch`, carrying a
-  multi-architecture caveat and downgrading the headline to "not running as
-  intended";
+- a different comparable reported digest → `mismatch` / `BLOCK`, carrying a
+  multi-architecture caveat. The headline can say the intended image is not
+  running even when an index/platform digest difference is legitimate;
+  verify that relationship at the registry;
 - a mutable tag (for example `api:v1`) → `unknown`, with no pod read, because a
   tag cannot be tied to a running digest from cluster reads alone. Pin the image
   to a digest to confirm.
@@ -75,8 +82,15 @@ against the intended workload image:
 It is off by default, so the base read budget below is unchanged. The
 configuration-bundle digest and the container-image digest are separate
 identities and are never compared to each other. Multi-architecture index vs
-per-architecture digests, initContainers and `matchExpressions` selectors are
-not covered in this first slice.
+per-architecture resolution, initContainers, ephemeral containers and
+`matchExpressions` evaluation are not covered in this slice.
+
+This is not proof that every replica is currently running. The collector pools
+image IDs by container name, skips missing status arrays and does not inspect
+`state.running` or verify pod ownerReference/UID chains. Partial per-pod status
+can therefore be masked by another pod's matching status. Read the
+[current limitations](../../docs/howto/is-this-image-deployed.md#limits-before-trusting-a-match)
+before using an image-stage `PASS` as stronger evidence.
 
 ## Input And Adapter Boundaries
 

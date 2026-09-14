@@ -14,6 +14,11 @@ If you just want the command index, use:
 - [Complete CLI Reference (A-Z)](../reference/cli-reference.md)
 - [Command Reference](../reference/commands.md)
 
+Checking an application image? Start with
+[Is This Image Deployed?](../howto/is-this-image-deployed.md) for the v2.11.0
+workflow, the difference between configuration and image digests, and what
+pod-reported identity can and cannot prove.
+
 ---
 
 ## First-Time User

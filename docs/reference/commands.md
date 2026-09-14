@@ -2839,8 +2839,11 @@ Requires connected mode (`cub auth login` or `CONFIGHUB_API_KEY`).
 
 ## release check
 
-Unreleased, planned v2.11: verify a digest-pinned literal OCI configuration
+Available since v2.11.0: verify a digest-pinned literal OCI configuration
 bundle against an explicit controller and target context.
+
+For the image-identity workflow and its limits, start with
+[Is This Image Deployed?](../howto/is-this-image-deployed.md).
 
 ```bash
 ./cub-scout release check \
@@ -2865,12 +2868,16 @@ and unreadable objects stay explicit. Watch/bot do not run release checks
 automatically.
 
 With `--check-running-image`, the report adds a `running-image` stage that
-compares the digest running in each workload's live pods
+compares pod-reported digests
 (`.status.containerStatuses[].imageID`) against the intended workload image,
-using one bounded, selector-scoped pod read per workload (capped by
-`--max-pods`). A mutable tag stays `unknown` and reads no pods; a differing
-digest is `mismatch` with a multi-architecture caveat, and downgrades the
-headline so a green pipeline never reads as "running as intended" when it is not.
+using one bounded, selector-scoped pod read per eligible workload (capped by
+`--max-pods`). Direct Pods reuse their live read; tag-only workloads skip the
+extra read and remain `unknown`. A comparable differing digest is `mismatch`
+and maps to `BLOCK`, even when an index/platform difference is legitimate;
+inspect the multi-architecture caveat before treating it as the wrong image.
+Image IDs are pooled by container name: missing status on individual pods,
+current running state and pod ownership are not fully verified. An image-stage
+`PASS` is not an all-replicas-running guarantee.
 The configuration-bundle digest and the container-image digest are never
 compared. Full examples, read budgets and adapter boundaries:
 [exact configuration release](../../examples/oci-release-check/).

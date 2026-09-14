@@ -1,7 +1,9 @@
 # Running-Image Identity Check
 
-Status: proposed; implementation in progress for the next minor release, not
-published. Builds on the exact configuration release check (#536) and controller
+Status: the first slice shipped in v2.11.0 (#538). This document retains the
+design rationale and original success criteria. For current usage and proof
+limits, start with [Is This Image Deployed?](../howto/is-this-image-deployed.md).
+It builds on the exact configuration release check (#536) and controller
 revision evidence (#535).
 Tracking: #502, #505 (named "pod/artifact identity" later work); v2.11 scope in
 the closed #532.
@@ -21,8 +23,8 @@ never rolled. Controller reports the revision, the workload reports converged,
 and the pods are serving an image the configuration no longer denotes.
 
 This check adds the **artifact-identity tier**: compare the container image the
-intended configuration declares against the image digest actually executing in
-the live pods.
+intended configuration declares against the image digest reported by live pods.
+Reported identity alone does not prove current execution or complete per-pod coverage.
 
 ### Three identities, never conflated
 
@@ -34,7 +36,7 @@ three separate:
 2. **Intended container-image reference** — what the workload spec *declares*
    (`spec.template.spec.containers[].image`), pinned (`app@sha256:…`) or mutable
    (`app:v2`).
-3. **Running container-image digest** — what is *executing*, read from
+3. **Pod-reported container-image digest** — read from
    `.status.containerStatuses[].imageID` on the live pods.
 
 The bundle tier compares (1). This tier compares (2) against (3). They are never
@@ -44,10 +46,11 @@ compared to one another.
 
 - **Parse, don't guess.** A mutable tag cannot be resolved to a digest from
   cluster reads alone, so it is `UNKNOWN (mutable-tag)`, never an assumed match.
-- **Never a false alarm.** A `MISMATCH` is reported only as the factual claim
-  "the running digest is not the intended digest," with the multi-architecture
-  caveat attached; interpretation stays caveated, never overstated as "wrong
-  image" with certainty we do not have.
+- **Interpret digest differences carefully.** A comparable digest difference
+  produces `MISMATCH` / `BLOCK`. A multi-architecture index/platform difference
+  can be legitimate, and v2.11.0's headline can still say the intended image is
+  not running. Registry resolution is needed before treating that as a
+  wrong-image finding; this is not a guarantee against false alarms.
 - **Bounded reads.** This is the first release-check tier to read pods. Pod reads
   are a single namespaced, selector-scoped, hard-capped read with the added
   request cost reported. It never becomes full-cluster discovery, unbounded
@@ -57,22 +60,23 @@ compared to one another.
   convergence tiers of #536 are unchanged. A missing or unknown running-image
   result never upgrades another tier, and a known running-image mismatch is never
   hidden by another passing tier (weakest-link headline).
-- **Graceful degradation.** Denied pod reads, absent `imageID`, selectors we do
-  not yet support, or coverage past the cap all resolve to a specific `UNKNOWN`
-  reason plus the next check to run — never a silent pass and never an error that
-  discards the other tiers.
+- **Graceful degradation.** Read failures and known coverage gaps should stay
+  explicit without discarding other tiers. The shipped per-pod completeness
+  gaps below mean some missing status can still be masked by another pod's
+  match; do not assume every missing observation produces `UNKNOWN`.
 
 ## First-Slice Contract
 
 The tier is **opt-in and off by default**, exposed as `release check
 --check-running-image` (MCP `check_running_image: true`). This preserves the base
-check's test-asserted request budget (`2N + 4` / `2N + 8`) exactly: no pods are
-read unless the flag is set. `--max-pods` (default 50, max 200) caps the pod read
-per workload.
+check's test-asserted request budget (`2N + 4` / `2N + 8`) exactly: no additional
+image-check pod reads occur unless the flag is set. `--max-pods` (default 50,
+max 200) caps the pod read per workload. Direct Pods reuse the existing live
+read, and tag-only workloads skip the extra read.
 
-Scope: workloads the release check already identifies and reads for convergence.
-Deployment first (same controller/target shapes #536 supports); other kinds
-report an explicit unsupported result.
+Scope: Deployment, StatefulSet, DaemonSet, Job and Pod objects the release check
+already identifies for convergence (same controller/target shapes #536 supports).
+Other workload kinds are not assessed by this tier.
 
 For each identified live workload:
 
@@ -82,21 +86,24 @@ For each identified live workload:
    `spec.selector.matchLabels`, capped at a finite pod limit, sequential, with
    the request count exposed. `matchExpressions`-only selectors are
    `UNKNOWN (selector-unsupported)` in this slice.
-3. For each running app container, extract the digest from
+3. For each reported app container status, extract the digest from
    `.status.containerStatuses[].imageID` (tolerating `docker-pullable://`,
    registry-qualified and bare `sha256:` forms).
-4. Compare intended vs running per container, aggregate to the weakest per pod,
-   and to the weakest across the read pods.
+4. Pool observed image IDs by container name across the read pods, then compare
+   with each intended container and aggregate to the weakest workload result.
+   Missing status arrays are skipped, and current running state and pod
+   ownerReference/UID chains are not verified. This is not per-pod completeness
+   proof; see the current limitations in the user guide.
 
 Per-container outcomes:
 
 | Outcome | Condition |
 |---|---|
-| `MATCH` | Intended is digest-pinned, same repository, running digest equals intended digest. |
+| `MATCH` | Intended is digest-pinned and the compared reported digests equal the intended digest. This does not prove every pod supplied a status or is currently running. |
 | `MISMATCH` | Intended digest-pinned, same repository, running digest present and different. Evidence carries the multi-arch index/manifest caveat. |
 | `UNKNOWN (mutable-tag)` | Intended reference is a tag, not a digest. Remediation: pin to a digest. |
-| `UNKNOWN (different-repository)` | Intended and running repositories differ; digests are not comparable. |
-| `UNKNOWN (unreadable)` | `imageID` absent/empty, image not yet pulled, or container not started. |
+| `UNKNOWN (different-repository)` | Digests differ and the reported repository also differs from the intended repository. |
+| `UNKNOWN (unreadable)` | A reported container status has no usable `imageID`. Entirely missing status arrays are skipped, not necessarily made unknown when another pod supplies a match. |
 | `UNKNOWN (container-not-found)` | A declared container is not present in any read pod. |
 | `UNKNOWN (read-denied)` | Pod read forbidden by RBAC. |
 | `UNKNOWN (selector-unsupported)` | No `matchLabels`, or `matchExpressions`-only. |
@@ -141,13 +148,19 @@ Deterministic fixtures (recorded pods/workloads, no live cluster) must cover:
 
 ## Known Limitations (documented, with follow-ups)
 
+- **Per-pod execution and ownership**: image IDs are pooled by container name,
+  missing status arrays are skipped and `state.running` is not checked. Pods
+  are label-selected without verifying ownerReference/UID chains. A matching
+  status on one pod can mask absent status on another; matching labels can also
+  include unrelated pods. These are shipped-code limits, not fixed by docs.
 - **Multi-architecture digests**: an index (manifest-list) digest and the
   resolved per-architecture manifest digest can differ legitimately. Without
   registry resolution we cannot distinguish this from a genuine mismatch, so
   `MISMATCH` evidence always carries this caveat. Registry-side index resolution
   is later work (#505).
 - **initContainers and ephemeral containers** are not assessed in this slice.
-- **`matchExpressions` selectors** are not resolved in this slice.
+- **`matchExpressions` selectors** are not evaluated in this slice, including
+  expressions alongside `matchLabels`; expressions-only selectors are unknown.
 - Coverage past the pod cap is reported as partial, never as a whole-set claim.
 
 ## Later Work
