@@ -183,9 +183,10 @@ prior knowledge.
 ./cub-scout status
 ```
 
-If output shows `Mode: standalone`, only standalone commands work. If
-`Mode: connected`, ConfigHub-backed commands (`import`, `fleet`, `history`,
-`compare three-way`, `impact`) are also available.
+The `ConfigHub:` line reads `● Connected`, `● Connected (auth expired)`,
+`○ Online (not authenticated)` or `○ Offline`. Only plain `● Connected` means
+ConfigHub-backed commands (`import`, `fleet`, `history`, `compare three-way`,
+`impact`) are available; otherwise only standalone commands work.
 
 ## JSON-first for automation
 

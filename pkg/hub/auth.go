@@ -3,7 +3,9 @@ package hub
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // Auth holds user authentication state.
@@ -83,10 +85,12 @@ func authConfigPath() string {
 	return filepath.Join(home, ".cub-scout", "auth.json")
 }
 
-// CubCLIAuthenticated checks if the cub CLI has a valid auth token.
+// CubCLIAuthenticated checks if the cub CLI has a stored auth token.
 // This checks the cub CLI's own token store (~/.confighub/tokens/),
 // which is separate from cub-scout's local auth.json.
-// Returns false if cub is not installed or has no valid token.
+// Returns false if cub is not installed or has no token. It does NOT notice an
+// expired token: `cub auth get-token` prints one and exits 0 regardless. Use
+// CubSessionValid or RequireCubConnected when that matters.
 // Note: this calls exec.Command so it is NOT suitable for hot paths.
 // Use IsAuthenticated() for fast local-file-only checks.
 //
@@ -98,8 +102,11 @@ func CubCLIAuthenticated() bool {
 	if IsPluginMode() {
 		return PluginToken() != ""
 	}
-	token, err := cubAuthToken()
-	return err == nil && token != ""
+	out, err := exec.Command("cub", "auth", "get-token").Output()
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(out)) != ""
 }
 
 // IsPaidTier returns true if user has a paid subscription.

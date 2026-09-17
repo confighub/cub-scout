@@ -100,12 +100,12 @@ Status and verdict ARE separate — a verdict can be `MISMATCH` while status is 
 ```bash
 $ cub-scout status
 ConfigHub:  ● Connected
-Cluster:    prod-use2
+Cluster:    default
 Context:    prod-use2
 Worker:     (none for this cluster)
 ```
 
-If it reports `Online (not authenticated)`, refuse to claim a source-truth verdict — say so to the user and recommend `cub auth login`.
+If the `ConfigHub:` line is anything other than plain `● Connected` (it can also read `● Connected (auth expired)`, `○ Online (not authenticated)` or `○ Offline`), refuse to claim a source-truth verdict — say so to the user and recommend `cub auth login`.
 
 ### Step 2 — pick the strategy
 

@@ -62,8 +62,9 @@ func (m Mode) String() string {
 //  4. Otherwise → Online
 //
 // Unlike CurrentMode(), this never makes HTTP requests and returns instantly.
-// Use this for informational display (e.g., TUI header).
-// Use CurrentMode() when you need authoritative connectivity status.
+// Use this for informational display (e.g., TUI header) only. It never consults
+// the cub CLI, so it must not decide whether a command may run: gate commands
+// that read ConfigHub through `cub` with RequireCubConnected.
 func QuickMode() Mode {
 	if os.Getenv("CUB_SCOUT_OFFLINE") == "true" {
 		return Offline

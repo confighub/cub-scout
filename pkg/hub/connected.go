@@ -4,64 +4,88 @@
 package hub
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-// Reasons RequireCubConnected refuses. Each names a cause the user can act on;
-// callers wrap them with the command that was refused.
+// Reasons RequireCubConnected refuses. Callers wrap them with the command that
+// was refused; the returned error also carries the specific cause.
 var (
 	// ErrConfigHubReadsDisabled means the user turned network features off.
-	ErrConfigHubReadsDisabled = errors.New("ConfigHub reads are turned off (CUB_SCOUT_OFFLINE=true, or telemetry is disabled)")
+	ErrConfigHubReadsDisabled = errors.New("ConfigHub reads are turned off")
 	// ErrCubNotInstalled means there is no `cub` binary to run the reads with.
 	ErrCubNotInstalled = errors.New("the `cub` CLI is not on PATH; install it, then run `cub auth login`")
-	// ErrCubNotLoggedIn means `cub` has no usable token (none, or expired).
-	ErrCubNotLoggedIn = errors.New("the `cub` CLI is not logged in, or its session has expired; run `cub auth login`")
+	// ErrCubNotAuthenticated means `cub auth status` did not report a usable
+	// session: no token, an expired one, or a context cub cannot resolve.
+	ErrCubNotAuthenticated = errors.New("`cub auth status` did not report an authenticated session")
 )
 
-// Seams for tests: no real `cub` is needed to exercise the gate.
-var (
-	cubLookPath = func() error {
-		_, err := exec.LookPath("cub")
-		return err
+// cubAuthStatus runs `cub auth status`, which exits 0 only for a session cub
+// itself considers usable. On failure it returns cub's own explanation.
+//
+// `cub auth get-token` is not that check: it prints a stored token and exits 0
+// even after the token has expired.
+//
+// It is a variable so tests need no real `cub`.
+var cubAuthStatus = func() (detail string, err error) {
+	var stderr bytes.Buffer
+	cmd := exec.Command("cub", "auth", "status")
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	return firstLine(stderr.String()), err
+}
+
+func firstLine(text string) string {
+	text = strings.TrimSpace(text)
+	if i := strings.IndexByte(text, '\n'); i >= 0 {
+		text = text[:i]
 	}
-	cubAuthToken = func() (string, error) {
-		out, err := exec.Command("cub", "auth", "get-token").Output()
-		return strings.TrimSpace(string(out)), err
-	}
-)
+	return strings.TrimSpace(strings.TrimPrefix(text, "Failed:"))
+}
 
 // RequireCubConnected reports whether ConfigHub reads that go through the
-// `cub` CLI can run. It is the gate for connected-only commands.
+// `cub` CLI can run. It is the gate for commands that read ConfigHub only by
+// running `cub`.
 //
-// Those commands only need a usable ConfigHub credential: the token the `cub`
-// plugin host passed in, cub-scout's own auth.json, or a logged-in `cub`.
-// QuickMode is not that check: it is a display helper that never consults
-// `cub`, so it refuses a logged-in user in standalone form. CurrentMode is not
-// it either: it probes hub.confighub.com, which says nothing about whether
-// `cub` can reach its own server and fails for self-hosted or air-gapped ones.
+// Such a command needs exactly two things: a `cub` binary, and a session that
+// `cub` itself accepts. So the check is `cub auth status`, run the same way in
+// the standalone and plugin forms, which therefore always agree.
 //
-// The standalone and plugin forms reach the same decision for the same
-// credential state.
+// It is deliberately none of the older checks:
+//   - QuickMode is a display helper that never consults `cub`.
+//   - CurrentMode probes hub.confighub.com, which says nothing about whether
+//     `cub` can reach its own server and fails for a self-hosted or air-gapped
+//     ConfigHub.
+//   - cub-scout's own auth.json is not a credential `cub` uses, so it cannot
+//     show that a `cub` read will succeed.
 func RequireCubConnected() error {
-	if os.Getenv("CUB_SCOUT_OFFLINE") == "true" || telemetryDisabled() {
-		return ErrConfigHubReadsDisabled
+	if os.Getenv("CUB_SCOUT_OFFLINE") == "true" {
+		return fmt.Errorf("%w: CUB_SCOUT_OFFLINE=true is set; unset it to use connected commands", ErrConfigHubReadsDisabled)
 	}
-	if IsAuthenticated() {
+	if telemetryDisabled() {
+		return fmt.Errorf("%w: telemetry is disabled (CUB_SCOUT_TELEMETRY=false, or %s exists), and that also turns off ConfigHub reads", ErrConfigHubReadsDisabled, telemetryConfigPath())
+	}
+	detail, err := cubAuthStatus()
+	if err == nil {
 		return nil
 	}
-	if IsPluginMode() {
-		// The host owns the credential and passed none. Re-executing `cub`
-		// from inside its own plugin would recurse through the host.
-		return ErrCubNotLoggedIn
-	}
-	if err := cubLookPath(); err != nil {
+	if errors.Is(err, exec.ErrNotFound) {
 		return ErrCubNotInstalled
 	}
-	if token, err := cubAuthToken(); err != nil || token == "" {
-		return ErrCubNotLoggedIn
+	if detail == "" {
+		detail = err.Error()
 	}
-	return nil
+	return fmt.Errorf("%w: %s", ErrCubNotAuthenticated, detail)
+}
+
+// CubSessionValid reports whether `cub` has a session it considers usable.
+// Unlike CubCLIAuthenticated it notices an expired token; it costs one `cub`
+// process, so it is not for hot paths.
+func CubSessionValid() bool {
+	_, err := cubAuthStatus()
+	return err == nil
 }

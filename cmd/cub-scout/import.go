@@ -2608,13 +2608,10 @@ func labelWorkload(kind, namespace, name, unitSlug string) error {
 }
 
 // checkCubAuth verifies the cub CLI is authenticated
+// checkCubAuth used to run `cub auth status --quiet`. cub has no such flag, so
+// it failed for every user and reported a logged-in session as unauthenticated.
 func checkCubAuth() error {
-	cmd := exec.Command("cub", "auth", "status", "--quiet")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("not authenticated with ConfigHub. Run 'cub auth login' first.\n%s", string(output))
-	}
-	return nil
+	return requireConfigHubFor("import argocd")
 }
 
 // ensureSpace creates the space if it does not exist.

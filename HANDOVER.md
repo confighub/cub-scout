@@ -95,20 +95,43 @@ here; cub-scout never read those fields.
 `compare three-way --view` gated on `hub.QuickMode() != hub.Connected`.
 `QuickMode` is a display helper that never consults the `cub` CLI, so those
 commands refused a logged-in user in standalone form while the plugin form
-passed, and the error's two remedies could not work: `cub auth login` was not
+passed. The error's two remedies could not work: `cub auth login` was not
 consulted, and nothing, in cub-scout or in `cub`, reads `CONFIGHUB_API_KEY`.
-They now gate on `hub.RequireCubConnected()` through `requireConfigHubFor`: the
-plugin host's token, cub-scout's `auth.json`, or a logged-in `cub`. Each refusal
-names its cause (reads turned off, `cub` not installed, `cub` not logged in).
-It deliberately does not use `CurrentMode()`, which probes hub.confighub.com
-and so fails for a self-hosted or air-gapped ConfigHub that `cub` can reach.
-`CONFIGHUB_API_KEY` is removed from help, docs, skills and the receipts
-example; two skills also showed invented `status` output and now show the real
-one. Guards: no command may compare `hub.QuickMode()`, and every environment
-variable named in text must be one the code reads. Verified live in both forms
-against ConfigHub v0.5.1. Not changed: `doctor`/`gitops status --with-confighub`
-still gate through `hub.NewClient().RequireConnected()`, which has the
-hub.confighub.com probe.
+
+They now gate on `hub.RequireCubConnected()` through `requireConfigHubFor`.
+The check is `cub auth status`, run the same way in both forms. It is not
+`cub auth get-token`: that prints a stored token and exits 0 even after the
+token has expired, which is also why `status` reported Connected on a dead
+session (fixed here through `hub.CubSessionValid`). It is not `CurrentMode()`,
+which probes hub.confighub.com and so fails for a self-hosted or air-gapped
+ConfigHub that `cub` can reach. cub-scout's own `auth.json` no longer admits
+anyone: `cub` does not use it, and nothing shipped can create it. Each refusal
+names its cause: which switch turned reads off, `cub` not installed, or `cub`'s
+own reason, passed through rather than replaced by "run `cub auth login`".
+
+The same gate now also decides `compare`'s per-resource connected check (it
+used the probe, so a user admitted at the door got every resource back as
+live-only), whether the MCP gateway lists its connected tools, and
+`import argocd`, whose check ran `cub auth status --quiet`. `cub` has no such
+flag, so that check failed for every user.
+
+`CONFIGHUB_API_KEY` is removed from help, docs, skills and the receipts example
+and added to `scripts/check-doc-freshness.sh`, which now scans `skills/`. Two
+skills and `docs/ai/cub-scout-tasks.md` showed invented `status` output.
+Guards: `hub.QuickMode` and `hub.IsAuthenticated` may appear in `cmd/` only
+where they are display-only; every environment variable named in a string in
+`cmd/`, `pkg/` or `internal/` must reach `os.Getenv`/`os.LookupEnv` (a declared
+constant is not enough); `TestConnectedGate_RealProcessBothForms` runs the
+built binary in both forms against a fake `cub`. Verified live on ConfigHub
+v0.5.1, including a genuinely expired session.
+
+Still on the older probe-based `hub.NewClient().RequireConnected()` (#558):
+`audit list`, `history`, `doctor` and `gitops status --with-confighub`,
+`receipt verify`, `three_way.go`, `summary` recorders, `scan`, `watch`; and
+`status` starts from `CurrentMode()`. The coupling "telemetry disabled turns
+off ConfigHub reads" is kept; only its message is now truthful. Found on the
+way: the TUI shell exports `CUB_CONTEXT=<kube context>`, which `cub` reads as
+its own context name and rejects (#559).
 
 ## Documentation Update: 2026-09-14
 

@@ -83,7 +83,7 @@ cub-scout" is the cheapest GUI -> CLI bridge (#391 design rationale).
 
 Output is JSON only in v0.1.
 
-Requires connected mode: a logged-in cub CLI (cub auth login), or the cub scout plugin form.`,
+Requires connected mode: a logged-in cub CLI (cub auth login), in either invocation form.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runViewsResolve,
 }
@@ -528,7 +528,7 @@ DataExpression (CEL) and DataPath (JSONPath) columns render placeholder
 text in the cell so the column header is preserved; full evaluator
 support is a follow-up dependency decision.
 
-Requires connected mode: a logged-in cub CLI (cub auth login), or the cub scout plugin form.`,
+Requires connected mode: a logged-in cub CLI (cub auth login), in either invocation form.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runViewsProject,
 }

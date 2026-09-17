@@ -12,13 +12,13 @@ import (
 // requireCubConnectedFn is the gate's seam for tests.
 var requireCubConnectedFn = hub.RequireCubConnected
 
-// requireConfigHubFor refuses a connected-only command when there is no usable
-// ConfigHub credential. The error carries the specific cause and a remedy that
-// works, so it never sends the user to a step that cannot fix it.
+// requireConfigHubFor refuses a command that reads ConfigHub by running `cub`
+// when `cub` has no session it accepts. The error names the command, carries
+// the specific cause, and never offers a remedy that cannot fix it.
 //
-// Connected-only commands call this rather than comparing hub.QuickMode() to
-// hub.Connected: QuickMode never consults the `cub` CLI, so that comparison
-// refuses a logged-in user in standalone form while the plugin form passes.
+// Commands call this rather than hub.QuickMode() or hub.IsAuthenticated():
+// neither consults the `cub` CLI, so they refuse a logged-in user in standalone
+// form while the plugin form passes.
 func requireConfigHubFor(feature string) error {
 	if err := requireCubConnectedFn(); err != nil {
 		return fmt.Errorf("%s needs ConfigHub: %w", feature, err)

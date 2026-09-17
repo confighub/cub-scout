@@ -6,7 +6,7 @@ The **mode axis**. cub-scout works without ConfigHub (`standalone`) and with Con
 
 | Aspect | Standalone | Connected |
 |---|---|---|
-| Trigger | The `cub` CLI is absent or not logged in | The `cub` CLI is logged in (`cub auth status` returns OK), or cub-scout runs as the `cub scout` plugin |
+| Trigger | The `cub` CLI is absent, or `cub auth status` does not report an authenticated session | `cub auth status` reports an authenticated session. This holds in either invocation form (`cub scout ...` or `cub-scout ...`); running as the plugin is not enough on its own |
 | Required inputs | Just a kubeconfig context | kubeconfig + ConfigHub auth |
 | Cluster reads | All read verbs work | All read verbs work |
 | ConfigHub reads | Refused with a clear error | Available via `cub * get/list`, `cub unit get`, `cub link list` |
@@ -20,7 +20,7 @@ The mode is **per-invocation**, not per-cluster. The same cluster can be observe
 ```bash
 $ cub-scout status
 ConfigHub:  ● Connected
-Cluster:    prod-use2
+Cluster:    default
 Context:    prod-use2
 Worker:     (none for this cluster)
 ```
@@ -31,11 +31,13 @@ vs.
 $ cub-scout status
 ConfigHub:  ○ Online (not authenticated)
             Run: cub auth login
-Cluster:    prod-use2
+Cluster:    default
 Context:    prod-use2
 ```
 
-Connected-only commands gate on `pkg/hub.RequireCubConnected()`: the token passed by the `cub` plugin host, cub-scout's own `auth.json`, or a logged-in `cub` CLI (`cub auth get-token`). The standalone and plugin forms reach the same decision. `pkg/hub.QuickMode()` is a display helper for the TUI header; it never consults `cub` and must not be used as a gate.
+`status` prints one of `● Connected`, `● Connected (auth expired)`, `○ Online (not authenticated)` or `○ Offline`. `Cluster` is `$CLUSTER_NAME` or the literal `default`, not the kube context. Treat anything other than plain `● Connected` as not connected.
+
+The commands that read ConfigHub only by running `cub` (`compare source-truth`, `views resolve`, `views project`, `compare three-way`, `import argocd`, and the MCP gateway's connected tools) gate on `pkg/hub.RequireCubConnected()`, which runs `cub auth status`. That is the check that notices an expired session; `cub auth get-token` prints a stored token and exits 0 even after expiry. The standalone and plugin forms run the same check, so they agree. Each refusal names its cause: reads turned off, `cub` not installed, or `cub`'s own reason for not being authenticated. Other connected commands (`history`, `audit list`, `receipt verify`, `doctor` and `gitops status --with-confighub`, `watch`) still gate through `hub.NewClient().RequireConnected()`, which also probes hub.confighub.com. `pkg/hub.QuickMode()` is a display helper for the TUI header; it never consults `cub` and must not be used as a gate.
 
 ## What works in standalone
 
@@ -148,7 +150,7 @@ Every skill mentions the standalone-vs-connected boundary in its "Standalone vs 
 
 ## References
 
-- Code: `pkg/hub/client.go` `QuickMode()` and `RequireConnected()`, `cmd/cub-scout/status.go`
+- Code: `pkg/hub/connected.go` `RequireCubConnected()`, `pkg/hub/client.go` `RequireConnected()`, `pkg/hub/mode.go` `QuickMode()` (display only), `cmd/cub-scout/status.go`
 - Mode flag on receipts: `BuildReceiptInput.Connected` in `pkg/agent/receipt_build.go`
-- Connected-mode gate examples: `cmd/cub-scout/source_truth.go` (`hub.QuickMode() != hub.Connected` rejection), `cmd/cub-scout/history.go`, `cmd/cub-scout/views.go`
+- Connected-mode gate examples: `cmd/cub-scout/source_truth.go` and `cmd/cub-scout/views.go` (`requireConfigHubFor`), `cmd/cub-scout/history.go` (`RequireConnected`)
 - Receipts contract on standalone: `docs/reference/json-contracts.md` § Receipt Contract — `OmissionConfigHubUnitSubject` handling
