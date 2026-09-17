@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -50,8 +48,6 @@ func init() {
 	historyCmd.Flags().BoolVar(&historyIncludeSynthetic, "include-synthetic", false, "Include synthetic/demo seeded ChangeSets")
 	historyCmd.Flags().StringVar(&historySpace, "space", "", "ConfigHub space to read ChangeSets from; '*' for every space (default: CUB_SPACE)")
 }
-
-var errHistoryDisconnected = errors.New("history requires ConfigHub connection. Run: cub auth login")
 
 type historyQuery struct {
 	Resource         string
@@ -180,13 +176,7 @@ func historyReadScope(flagValue string) *configHubScope {
 }
 
 func requireHistoryConnected() error {
-	if err := hub.NewClient().RequireConnected(); err != nil {
-		return errHistoryDisconnected
-	}
-	if _, err := exec.LookPath("cub"); err != nil {
-		return fmt.Errorf("history requires cub CLI for connected queries: %w", err)
-	}
-	return nil
+	return requireConfigHubFor("history")
 }
 
 func parseHistorySince(raw string) (time.Duration, error) {

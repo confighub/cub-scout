@@ -44,14 +44,18 @@ func init() {
 
 // StatusInfo holds status information for display
 type StatusInfo struct {
-	Mode        string      `json:"mode"` // "offline", "online", "connected", "auth_expired"
-	Email       string      `json:"email,omitempty"`
-	ClusterName string      `json:"cluster_name"`
-	Context     string      `json:"context"`
-	Space       string      `json:"space,omitempty"`
-	SpaceSource string      `json:"space_source,omitempty"`
-	Worker      *WorkerInfo `json:"worker,omitempty"`
-	AuthValid   *bool       `json:"auth_valid,omitempty"` // nil if offline/online, true/false if has context
+	Mode        string `json:"mode"` // "offline", "online", "connected", "auth_expired"
+	Email       string `json:"email,omitempty"`
+	ClusterName string `json:"cluster_name"`
+	Context     string `json:"context"`
+	Space       string `json:"space,omitempty"`
+	SpaceSource string `json:"space_source,omitempty"`
+	// ConfigHubReads is the verdict of the gate the connected commands use, so
+	// that status read as a pre-flight agrees with the command it precedes.
+	ConfigHubReads       bool        `json:"confighub_reads"`
+	ConfigHubReadsReason string      `json:"confighub_reads_reason,omitempty"`
+	Worker               *WorkerInfo `json:"worker,omitempty"`
+	AuthValid            *bool       `json:"auth_valid,omitempty"` // nil if offline/online, true/false if has context
 }
 
 // WorkerInfo holds worker status
@@ -91,6 +95,15 @@ func runStatus(cmd *cobra.Command) error {
 		status.Mode = "online"
 	case hub.Connected:
 		status.Mode = "connected"
+	}
+
+	// The gate the connected commands use. status can otherwise print
+	// "Connected" while every connected command refuses, for instance with
+	// CUB_SCOUT_OFFLINE set or telemetry turned off.
+	if err := hub.RequireCubConnected(); err != nil {
+		status.ConfigHubReadsReason = err.Error()
+	} else {
+		status.ConfigHubReads = true
 	}
 
 	// Check local auth for email (fast, file-only)
@@ -170,6 +183,11 @@ func printStatus(s StatusInfo) {
 		fmt.Println("            Run: cub auth login")
 	case "offline":
 		fmt.Println("ConfigHub:  \033[31m○\033[0m Offline")
+	}
+
+	// The gate's verdict, when it disagrees with the mode above.
+	if !s.ConfigHubReads && s.ConfigHubReadsReason != "" {
+		fmt.Printf("            \033[33m⚠\033[0m ConfigHub reads unavailable: %s\n", s.ConfigHubReadsReason)
 	}
 
 	// Cluster info

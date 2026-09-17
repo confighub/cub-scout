@@ -3503,10 +3503,14 @@ func (m LocalClusterModel) getPanelHistory() string {
 	}
 
 	if m.historyPanelError != nil {
-		if errors.Is(m.historyPanelError, errHistoryDisconnected) {
-			b.WriteString(lcWarnStyle.Render("History requires ConfigHub connection."))
+		// The gate's error names the cause and the remedy that fits it, so it
+		// is shown as it is rather than flattened to "run cub auth login".
+		if errors.Is(m.historyPanelError, hub.ErrCubNotAuthenticated) ||
+			errors.Is(m.historyPanelError, hub.ErrCubNotInstalled) ||
+			errors.Is(m.historyPanelError, hub.ErrConfigHubReadsDisabled) {
+			b.WriteString(lcWarnStyle.Render(m.historyPanelError.Error()))
 			b.WriteString("\n")
-			b.WriteString(lcDimStyle.Render("Run: cub auth login, then press h again."))
+			b.WriteString(lcDimStyle.Render("Press h again once it is fixed."))
 			b.WriteString("\n")
 			return b.String()
 		}

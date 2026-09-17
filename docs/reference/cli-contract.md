@@ -1415,12 +1415,21 @@ Worker:     ● bridge-prod (connected)
   "context": "eks-prod-east",
   "space": "platform-prod",
   "space_source": "CUB_SPACE",
+  "confighub_reads": true,
   "worker": {
     "name": "bridge-prod",
     "status": "connected"
   }
 }
 ```
+
+`confighub_reads` is the verdict of the gate every connected command uses:
+`cub auth status`, plus the checks that turn ConfigHub reads off
+(`CUB_SCOUT_OFFLINE=true`, telemetry disabled). When it is `false`,
+`confighub_reads_reason` carries the reason and the text output adds a line for
+it. `mode` describes connectivity and credentials; it can read `connected`
+while `confighub_reads` is `false`, so a pre-flight check should read
+`confighub_reads`.
 
 ---
 

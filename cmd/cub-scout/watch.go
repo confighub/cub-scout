@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -287,10 +286,10 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		queue     []watchEvent
 	)
 
-	// connected mode is read once at watch start; it's stable for the
-	// duration of the watch loop. Used by the receipt-emission path to
-	// decide whether to include a confighub-unit:// subject.
-	connected := hub.NewClient().RequireConnected() == nil
+	// Connected mode is read once at watch start and stays fixed for the loop.
+	// Used by the receipt-emission path to decide whether to include a
+	// confighub-unit:// subject.
+	connected := configHubReadsAvailable()
 	baseWarnFn := func(format string, args ...interface{}) {
 		fmt.Fprintf(os.Stderr, "Warning: "+format+"\n", args...)
 	}

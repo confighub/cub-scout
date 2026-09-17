@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -15,6 +16,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/confighub/cub-scout/pkg/hub"
@@ -24,8 +26,19 @@ import (
 func stubConnectedGate(t *testing.T, err error) {
 	t.Helper()
 	old := requireCubConnectedFn
-	t.Cleanup(func() { requireCubConnectedFn = old })
+	t.Cleanup(func() {
+		requireCubConnectedFn = old
+		resetConfigHubReads()
+	})
 	requireCubConnectedFn = func() error { return err }
+	resetConfigHubReads()
+}
+
+// resetConfigHubReads re-arms the memoized gate answer, which is computed once
+// per process in production.
+func resetConfigHubReads() {
+	configHubReadsOnce = sync.Once{}
+	configHubReadsErr = nil
 }
 
 func TestRequireConfigHubFor_NamesTheCommandAndKeepsTheCause(t *testing.T) {
@@ -382,4 +395,155 @@ func unreadEnvVarMentions(fset *token.FileSet, files map[string]*ast.File) []str
 	}
 	sort.Strings(unread)
 	return unread
+}
+
+// Every surface that reads ConfigHub by running `cub` asks the same question,
+// so a command, the facts it records and `status` cannot disagree about whether
+// the session was usable. Before this, ten sites used a check that probed
+// hub.confighub.com and then accepted `cub auth get-token`, which passes an
+// expired session.
+func TestConvergedGatesFollowTheCubSession(t *testing.T) {
+	states := []struct {
+		name string
+		err  error
+	}{
+		{name: "authenticated"},
+		{name: "expired or tokenless", err: hub.ErrCubNotAuthenticated},
+		{name: "cub missing", err: hub.ErrCubNotInstalled},
+		{name: "reads turned off", err: hub.ErrConfigHubReadsDisabled},
+	}
+
+	refusals := map[string]func() error{
+		"audit list":                  requireAuditConnected,
+		"history":                     requireHistoryConnected,
+		"ConfigHub delivery evidence": requireGitOpsConfigHubConnected,
+	}
+	for feature, gate := range refusals {
+		for _, state := range states {
+			t.Run(feature+"/"+state.name, func(t *testing.T) {
+				stubConnectedGate(t, state.err)
+				err := gate()
+				if state.err == nil {
+					if err != nil {
+						t.Fatalf("err = %v, want nil for an authenticated session", err)
+					}
+					return
+				}
+				if !errors.Is(err, state.err) {
+					t.Fatalf("err = %v, want it to wrap %v", err, state.err)
+				}
+				if !strings.Contains(err.Error(), feature) {
+					t.Fatalf("err = %q, want it to name %q", err, feature)
+				}
+			})
+		}
+	}
+
+	facts := map[string]func() bool{
+		"receipt":         detectConnectedForReceipt,
+		"summary":         summaryConnectedFn,
+		"compare":         isCompareConnected,
+		"watch/aggregate": configHubReadsAvailable,
+	}
+	for name, fact := range facts {
+		for _, state := range states {
+			t.Run("connected fact "+name+"/"+state.name, func(t *testing.T) {
+				stubConnectedGate(t, state.err)
+				if got := fact(); got != (state.err == nil) {
+					t.Fatalf("%s connected = %v for %s", name, got, state.name)
+				}
+			})
+		}
+	}
+}
+
+// The three-way disagreement path reports the gate's own reason rather than
+// "connect to ConfigHub", which cannot fix a session that expired or reads
+// that were turned off.
+func TestThreeWayDisagreementReportsTheGateReason(t *testing.T) {
+	stubConnectedGate(t, hub.ErrConfigHubReadsDisabled)
+	got, err := buildThreeWayDisagreement(context.Background(), "Deployment", "api", "prod", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got == nil || got.Pattern != PatternDisconnected {
+		t.Fatalf("disagreement = %+v, want the disconnected pattern", got)
+	}
+	for _, want := range []string{"three-way comparison", "turned off"} {
+		if !strings.Contains(got.Meaning, want) {
+			t.Fatalf("meaning = %q, want it to contain %q", got.Meaning, want)
+		}
+	}
+}
+
+// doctor offers the three-way hint exactly when the command it suggests would
+// run, so the hint cannot point at a command that refuses.
+func TestDoctorThreeWayHintFollowsTheGate(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		err  error
+		hint bool
+	}{
+		{name: "authenticated", hint: true},
+		{name: "expired", err: hub.ErrCubNotAuthenticated},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			stubConnectedGate(t, tt.err)
+			summary := buildDoctorSummary(nil, nil, "kind-dev", "prod", 3)
+			if (summary.ThreeWay != nil) != tt.hint {
+				t.Fatalf("threeWay = %+v, want hint=%v", summary.ThreeWay, tt.hint)
+			}
+		})
+	}
+}
+
+// The gate costs one `cub` process, and callers ask it per resource, per
+// receipt and per poll cycle.
+func TestConfigHubReadsIsAnsweredOnce(t *testing.T) {
+	calls := 0
+	old := requireCubConnectedFn
+	t.Cleanup(func() { requireCubConnectedFn = old; resetConfigHubReads() })
+	requireCubConnectedFn = func() error { calls++; return nil }
+	resetConfigHubReads()
+
+	for i := 0; i < 5; i++ {
+		if err := configHubReads(); err != nil {
+			t.Fatal(err)
+		}
+		_ = configHubReadsAvailable()
+		_ = isCompareConnected()
+	}
+	if calls != 1 {
+		t.Fatalf("gate ran %d times, want 1", calls)
+	}
+}
+
+// No command may use the older check: it probes hub.confighub.com, which says
+// nothing about whether `cub` can reach its own server, and then accepts a
+// token cub itself has expired.
+func TestNoCommandUsesTheOlderConnectedCheck(t *testing.T) {
+	var problems []string
+	err := filepath.Walk(filepath.Join("..", "..", "cmd"), func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			return err
+		}
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		for number, line := range strings.Split(string(data), "\n") {
+			if strings.Contains(line, "RequireConnected(") {
+				problems = append(problems, fmt.Sprintf("%s:%d: %s", path, number+1, strings.TrimSpace(line)))
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sort.Strings(problems)
+	if len(problems) > 0 {
+		t.Fatalf("%d uses of RequireConnected() in commands; use requireConfigHubFor or configHubReads:\n  %s",
+			len(problems), strings.Join(problems, "\n  "))
+	}
 }

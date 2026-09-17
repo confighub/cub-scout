@@ -14,7 +14,6 @@ import (
 
 	"github.com/confighub/cub-scout/internal/scan"
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -822,9 +821,9 @@ func buildDoctorSummary(entries []MapEntry, findings []scan.NormalizedFinding, c
 	sortDoctorIssues(issues)
 	summary.TopIssues = limitDoctorIssues(issues, topN)
 
-	// Check for connected mode to surface three-way comparison capability
-	client := hub.NewClient()
-	if err := client.RequireConnected(); err == nil {
+	// Surface the three-way comparison hint only when the same gate the
+	// command itself uses says ConfigHub reads can run.
+	if configHubReadsAvailable() {
 		nsFlag := ""
 		if namespace != "" && namespace != "all" {
 			nsFlag = fmt.Sprintf(" --scope namespace/%s", namespace)

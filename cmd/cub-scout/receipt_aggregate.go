@@ -578,13 +578,12 @@ func defaultScopedConnectedMode() bool {
 }
 
 // detectConnectedForReceipt is a test-injectable detection helper.
-// Production wires it to the hub.NewClient().RequireConnected() check
-// (defined in cmd/cub-scout/receipt.go's init via hubReceiptConnected
-// to avoid an import cycle in this file).
+// Production wires it in receipt.go's init to configHubReadsAvailable, the
+// gate the connected commands use, so a receipt records "connected" only when
+// `cub` has a session it accepts.
 var detectConnectedForReceipt = func() bool {
 	// Defaults to false so standalone-mode tests don't accidentally
-	// receive a connected receipt. Production code in receipt.go init
-	// replaces this to use hub.NewClient().RequireConnected().
+	// receive a connected receipt.
 	return false
 }
 

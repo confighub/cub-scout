@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/confighub/cub-scout/pkg/hub"
 )
@@ -20,8 +21,31 @@ var requireCubConnectedFn = hub.RequireCubConnected
 // neither consults the `cub` CLI, so they refuse a logged-in user in standalone
 // form while the plugin form passes.
 func requireConfigHubFor(feature string) error {
-	if err := requireCubConnectedFn(); err != nil {
+	if err := configHubReads(); err != nil {
 		return fmt.Errorf("%s needs ConfigHub: %w", feature, err)
 	}
 	return nil
+}
+
+var (
+	configHubReadsOnce sync.Once
+	configHubReadsErr  error
+)
+
+// configHubReads is the gate, answered once per process: nil when ConfigHub
+// reads through `cub` can run, and otherwise the reason.
+//
+// The answer is memoized because callers ask it per resource, per receipt and
+// per poll cycle, and each call runs a `cub` process. One command therefore
+// spends one `cub auth status`, and every part of its output agrees about
+// whether it was connected.
+func configHubReads() error {
+	configHubReadsOnce.Do(func() { configHubReadsErr = requireCubConnectedFn() })
+	return configHubReadsErr
+}
+
+// configHubReadsAvailable is the same answer as a boolean, for the facts that
+// record whether an observation was made in connected mode.
+func configHubReadsAvailable() bool {
+	return configHubReads() == nil
 }

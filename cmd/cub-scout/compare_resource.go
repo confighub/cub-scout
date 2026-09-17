@@ -14,7 +14,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
@@ -341,16 +340,8 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 // (a probe of hub.confighub.com) disagreed. It is asked once per resource, so
 // the answer is computed once per process rather than one `cub` run each.
 func isCompareConnected() bool {
-	compareConnectedOnce.Do(func() {
-		compareConnectedResult = requireCubConnectedFn() == nil
-	})
-	return compareConnectedResult
+	return configHubReadsAvailable()
 }
-
-var (
-	compareConnectedOnce   sync.Once
-	compareConnectedResult bool
-)
 
 var errCompareResourceNotFoundInManifest = errors.New("resource not found in manifest")
 

@@ -171,6 +171,39 @@ are present. `compare three-way` counts `dryWetLiveResources` the same way, so
 that count is now `0` in practice, and it was already `0` before, since every
 lookup failed.
 
+## One Connected Gate (#558)
+
+#551 put the connected-only commands on `hub.RequireCubConnected()`, which runs
+`cub auth status`. Ten sites still used `hub.NewClient().RequireConnected()`,
+which probes `hub.confighub.com` before looking at credentials and then accepts
+`cub auth get-token`. That probe says nothing about whether `cub` can reach its
+own server, so a self-hosted or air-gapped ConfigHub read as "not connected",
+and `get-token` exits 0 after a token has expired, so an expired session read as
+connected until the first read failed. Several of those sites also flattened
+every cause to "Run: cub auth login", which cannot fix telemetry being off or a
+network that cannot reach hub.confighub.com.
+
+All ten now use the same gate: `audit list`, `history`, ConfigHub delivery
+evidence, `doctor`'s three-way hint, the two receipt paths, `scan`'s verbose
+note, the three-way disagreement path, stored summaries and `watch`. The answer
+is memoized once per process (`configHubReads`), because callers ask it per
+resource, per receipt and per poll cycle and each call runs a `cub` process;
+`compare` reuses that instead of its own `sync.Once`. The three
+`err...Disconnected` sentinels are gone: each site now carries the gate's error,
+which names the cause. The TUI history panel shows that error rather than one
+remedy for every cause.
+
+`status` reports the gate's verdict as `confighub_reads`, with
+`confighub_reads_reason` when it refuses, so a skill using `status` as a
+pre-flight agrees with the command that follows. Before this, `status` could
+print `Connected` while every connected command refused.
+
+The recorded `connected` fact in receipts, watch events and summaries therefore
+means "`cub` has a session it accepts", not "hub.confighub.com answered and a
+token file exists". `docs/reference/json-contracts.md` says so.
+`TestNoCommandUsesTheOlderConnectedCheck` fails the build on a new use of
+`RequireConnected()` in `cmd/`.
+
 ## cub Output: -o json, and Stderr Kept Out of Data (#563, partial)
 
 `cub` deprecated `--json` in favour of `-o json`, and prints

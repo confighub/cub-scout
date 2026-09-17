@@ -1932,6 +1932,19 @@ would hide the operator's intent from the receipt.
 `--file <path>` is a separate install/object-set mode: it selects
 `object-set-matches` and does not accept a positional resource subject.
 
+### What "connected mode" means
+
+Receipts, watch/bot events and stored summaries record whether the observation
+was made in connected mode. That fact is the verdict of one gate: `cub` is on
+`PATH`, `cub auth status` reports a session `cub` itself accepts, and ConfigHub
+reads are not turned off (`CUB_SCOUT_OFFLINE=true`, telemetry disabled).
+
+It is not a reachability probe of `hub.confighub.com`, and it is not
+`cub auth get-token`, which prints a stored token and exits 0 after that token
+has expired. A self-hosted or air-gapped ConfigHub that `cub` can reach counts
+as connected; an expired session does not. The gate is evaluated once per
+command, so a receipt, its omissions and `status` agree.
+
 ### Omissions
 
 Every receipt carries a required `omissions[]` array (possibly empty).

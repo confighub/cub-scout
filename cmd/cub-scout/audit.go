@@ -6,15 +6,12 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -55,8 +52,6 @@ func init() {
 	auditListCmd.Flags().StringVar(&auditListSpace, "space", "", "ConfigHub space to read break-glass ChangeSets from; '*' for every space (default: CUB_SPACE)")
 	auditListCmd.Flags().Bool("json", false, "Output as JSON (shorthand for --format json)")
 }
-
-var errAuditDisconnected = errors.New("audit requires ConfigHub connection. Run: cub auth login")
 
 type auditListQuery struct {
 	Namespace        string
@@ -168,13 +163,7 @@ func resolveAuditEntries(ctx context.Context, q auditListQuery) ([]auditEntry, e
 }
 
 func requireAuditConnected() error {
-	if err := hub.NewClient().RequireConnected(); err != nil {
-		return errAuditDisconnected
-	}
-	if _, err := exec.LookPath("cub"); err != nil {
-		return fmt.Errorf("audit requires cub CLI for connected queries: %w", err)
-	}
-	return nil
+	return requireConfigHubFor("audit list")
 }
 
 func fetchAuditEntries(ctx context.Context, q auditListQuery) ([]auditEntry, error) {

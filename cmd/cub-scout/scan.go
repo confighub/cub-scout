@@ -16,7 +16,6 @@ import (
 
 	"github.com/confighub/cub-scout/internal/scan"
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 var (
@@ -121,10 +120,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// benefits from the ConfigHub pattern database when connected.
 	// Currently: embedded patterns are sufficient for all scan modes.
 	// Future: when pattern DB is fully API-hosted, enforce auth for cluster scans.
-	client := hub.NewClient()
 	if !scanList && scanFile == "" {
-		if err := client.RequireConnected(); err != nil && scanVerbose {
-			fmt.Fprintf(os.Stderr, "Note: not connected to ConfigHub (%v); using embedded patterns\n", err)
+		if err := configHubReads(); err != nil && scanVerbose {
+			fmt.Fprintf(os.Stderr, "Note: ConfigHub reads are unavailable (%v); using embedded patterns\n", err)
 		}
 	}
 
