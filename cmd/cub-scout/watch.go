@@ -327,7 +327,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 			return err
 		}
 		events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
-		events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, watchCycleConnected(emitReceiptOn), warnFn)
+		events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, watchCycleConnected(emitReceiptOn, events), warnFn)
 		queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 		_, err = flushWatchQueue(ctx, sinks, queue)
 		return err
@@ -357,7 +357,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 				curr.observedMode = agent.ObservationModeWatchInformer
 			}
 			events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
-			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, watchCycleConnected(emitReceiptOn), warnFn)
+			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, watchCycleConnected(emitReceiptOn, events), warnFn)
 			queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 			remaining, err := flushWatchQueue(ctx, sinks, queue)
 			queue = remaining
@@ -374,11 +374,12 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 //
 // A watch runs for days, and a session can expire or be restored while it does,
 // so the gate is asked again each cycle rather than stamping every receipt with
-// the verdict read at start-up. It costs one `cub` process per cycle, and only
-// when receipts are being emitted: without --emit-receipt-on nothing records
-// the fact, so nothing asks.
-func watchCycleConnected(emitOn map[string]bool) bool {
-	if len(emitOn) == 0 {
+// the verdict read at start-up. It is asked only when this cycle has something
+// to record it on: without --emit-receipt-on nothing records the fact, and an
+// idle cycle produces no events, so an idle watch spends no `cub` process at
+// all. A cycle that does produce events spends one, whatever the event count.
+func watchCycleConnected(emitOn map[string]bool, events []watchEvent) bool {
+	if len(emitOn) == 0 || len(events) == 0 {
 		return false
 	}
 	return refreshConfigHubReadsAvailable()

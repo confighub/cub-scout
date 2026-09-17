@@ -748,25 +748,30 @@ func TestWatchAsksTheGateEachCycle(t *testing.T) {
 	session := error(nil)
 	calls := answerGateWith(t, &session)
 
-	if watchCycleConnected(nil) {
+	events := []watchEvent{{Type: "drift.detected"}}
+	emitOn := map[string]bool{"drift.detected": true}
+
+	if watchCycleConnected(nil, events) {
 		t.Fatal("connected = true with no receipts requested")
 	}
+	if watchCycleConnected(emitOn, nil) {
+		t.Fatal("connected = true on an idle cycle")
+	}
 	if *calls != 0 {
-		t.Fatalf("gate ran %d times with no receipts requested, want 0", *calls)
+		t.Fatalf("gate ran %d times with nothing to record it on, want 0", *calls)
 	}
 
-	emitOn := map[string]bool{"drift.detected": true}
-	if !watchCycleConnected(emitOn) {
+	if !watchCycleConnected(emitOn, events) {
 		t.Fatal("connected = false although the session works")
 	}
 
 	// The session expires while the watch is up.
 	session = hub.ErrCubNotAuthenticated
-	if watchCycleConnected(emitOn) {
+	if watchCycleConnected(emitOn, events) {
 		t.Fatal("connected = true after the session expired; receipts would assert a session that is gone")
 	}
 	if *calls != 2 {
-		t.Fatalf("gate ran %d times over two cycles, want 2", *calls)
+		t.Fatalf("gate ran %d times over two cycles with events, want 2", *calls)
 	}
 }
 

@@ -201,10 +201,10 @@ found that the TUI told the user "Press h again once it is fixed" while the
 refusal was pinned for the life of the process: `cub auth login` in another
 terminal could not take effect. `refreshConfigHubReads` re-asks and replaces the
 kept answer, and is called where the user can see the boundary — each time the
-history panel opens, and once per `watch` poll cycle (only when
-`--emit-receipt-on` asks for receipts, so a plain watch still spends nothing).
-A watch therefore stamps each receipt with the session as of that cycle, not as
-of start-up. `docs/reference/json-contracts.md` has the table.
+history panel opens, and once per `watch` poll cycle that produces events (and
+only when `--emit-receipt-on` asks for receipts, so a plain or idle watch spends
+nothing). A watch therefore stamps each receipt with the session as of that
+cycle, not as of start-up. `docs/reference/json-contracts.md` has the table.
 
 `status` reports the gate's verdict as `confighub_reads`, with
 `confighub_reads_reason` when it refuses, so a skill using `status` as a
