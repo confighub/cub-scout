@@ -6,6 +6,12 @@ BASELINE=perf/baseline/bench.txt
 
 mkdir -p "$OUT"
 
+# test/scale runs the compiled binary via test/golden's harness, which expects
+# ./cub-scout at the repo root and fails (rather than skips) when it is missing.
+echo "=== Building cub-scout ==="
+go build ./cmd/cub-scout
+
+echo ""
 echo "=== CI gate tests (must pass) ==="
 go test ./test/fixtures/patterns/ -v -timeout 60s
 go test ./test/scale/ -v -timeout 120s
