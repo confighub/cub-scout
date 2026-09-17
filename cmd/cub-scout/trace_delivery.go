@@ -81,69 +81,7 @@ func attachTraceConfigHubDeliveryEvidence(ctx context.Context, result *agent.Tra
 	} else {
 		raw = collectGitOpsDeliveryEvidence(ctx, dynClient, opts)
 	}
-	preflightOmissions = append(preflightOmissions, resolveTraceTargetID(ctx, raw, &correlation, opts.Space)...)
 	result.DeliveryEvidence = correlateTraceDeliveryEvidence(result, raw, correlation, preflightOmissions)
-}
-
-// resolveTraceTargetID turns a target slug into the target ID that release
-// rows carry. A Release names its target by ID only, while a chain derived
-// from a ConfigHub OCI source or renderedFrom knows only the slug, so without
-// this the two never share a key and no release can be joined to the object.
-//
-// It is one bounded read, `cub target list --space <space> --where "Slug = ..."`,
-// made only when there are release rows to join, the space is a single named
-// space, and the resource gave a slug but no ID. The ID is taken only from a
-// single exact slug match. Anything else leaves the ID empty and says why; the
-// join then reports the target as unknown rather than guessing.
-func resolveTraceTargetID(ctx context.Context, raw *GitOpsDeliveryEvidence, correlation *agent.TraceDeliveryCorrelation, space string) []agent.TraceDeliveryOmission {
-	space = strings.TrimSpace(space)
-	slug := strings.TrimSpace(correlation.Target)
-	if correlation.TargetID != "" || slug == "" || space == "" || space == "*" {
-		return nil
-	}
-	if raw == nil || raw.ConfigHub == nil || len(raw.ConfigHub.Releases) == 0 {
-		return nil
-	}
-
-	args := []string{"target", "list", "--space", space, "-o", "json", "--where", fmt.Sprintf("Slug = '%s'", configHubFilterQuote(slug))}
-	omission := func(reason string) []agent.TraceDeliveryOmission {
-		return []agent.TraceDeliveryOmission{{
-			Layer:  "confighub.target",
-			Reason: reason,
-			Impact: "release rows name their target by ID, so they cannot be joined to this resource's target slug",
-		}}
-	}
-	out, err := runGitOpsCubCommand(ctx, args)
-	if err != nil {
-		return omission(fmt.Sprintf("cub %s failed: %v", strings.Join(args, " "), err))
-	}
-	payload, err := parseCubJSONPayload([]byte(out))
-	if err != nil {
-		return omission(fmt.Sprintf("cub target list returned unreadable JSON: %v", err))
-	}
-	var ids []string
-	for _, item := range cubExtractItems(payload) {
-		target := mcpNestedMap(item, "Target", "target")
-		if target == nil {
-			target = item
-		}
-		if mcpFirstString(target, "Slug", "slug") != slug {
-			continue
-		}
-		if id := mcpFirstString(target, "TargetID", "targetId"); id != "" {
-			ids = append(ids, id)
-		}
-	}
-	switch len(ids) {
-	case 1:
-		correlation.TargetID = ids[0]
-		correlation.MatchedBy = append(correlation.MatchedBy, "confighub.target.slug->targetId")
-		return nil
-	case 0:
-		return omission(fmt.Sprintf("no ConfigHub target with slug %q was found in space %q", slug, space))
-	default:
-		return omission(fmt.Sprintf("%d ConfigHub targets have slug %q in space %q", len(ids), slug, space))
-	}
 }
 
 func traceGitOpsDeliveryOptions(flags traceConfigHubDeliveryFlags, correlation agent.TraceDeliveryCorrelation) (gitOpsDeliveryEvidenceOptions, []agent.TraceDeliveryOmission) {
@@ -241,7 +179,7 @@ func correlateTraceDeliveryEvidence(
 		}
 		out.Releases = releases
 		if len(releases) > 0 {
-			out.Notes = append(out.Notes, "Release rows are joined to this resource by space and target. A row listed here was published for the resource's target; it does not show that the release contains this resource's unit.")
+			out.Notes = append(out.Notes, "Release rows are joined to this resource by space and target. A row listed here belongs to the resource's target; it does not show that the release contains this resource's unit, and `published` says whether it is still being served.")
 		}
 
 		events, omission := matchTraceUnitEvents(correlation, raw.ConfigHub.UnitEvents)
@@ -279,12 +217,9 @@ func traceDeliveryCorrelationWithScope(correlation agent.TraceDeliveryCorrelatio
 		return correlation
 	}
 	correlation.Space = space
-	for _, matchedBy := range correlation.MatchedBy {
-		if matchedBy == "scope.space" {
-			return correlation
-		}
+	if !traceCorrelationSpaceFromScope(correlation) {
+		correlation.MatchedBy = append(correlation.MatchedBy, "scope.space")
 	}
-	correlation.MatchedBy = append(correlation.MatchedBy, "scope.space")
 	return correlation
 }
 
@@ -483,7 +418,13 @@ func matchTraceUnitEvents(correlation agent.TraceDeliveryCorrelation, events []C
 	for _, event := range events {
 		var matchedBy []string
 		switch {
-		case correlation.UnitID != "" && strings.EqualFold(event.UnitID, correlation.UnitID):
+		case correlation.UnitID != "" && strings.TrimSpace(event.UnitID) != "":
+			// Both sides carry a unit ID, so the ID decides. Unit events carried
+			// no identity until their flat fields were read; now that they do, a
+			// slug match must not attach an event whose unit ID says otherwise.
+			if !strings.EqualFold(event.UnitID, correlation.UnitID) {
+				continue
+			}
 			matchedBy = append(matchedBy, "unitEvent.unitId==confighub.unitId")
 		case correlation.UnitSlug != "" && strings.EqualFold(event.Unit, correlation.UnitSlug):
 			spaceMatch, spaceBy := traceSpaceMatches(correlation, event.Space, event.SpaceID)
@@ -524,13 +465,34 @@ func matchTraceUnitEvents(correlation agent.TraceDeliveryCorrelation, events []C
 func traceSpaceMatches(correlation agent.TraceDeliveryCorrelation, space, spaceID string) (bool, string) {
 	space = strings.TrimSpace(space)
 	spaceID = strings.TrimSpace(spaceID)
-	if correlation.SpaceID != "" && spaceID != "" && strings.EqualFold(correlation.SpaceID, spaceID) {
-		return true, "spaceId"
+	// When both sides carry an ID, the ID decides. A matching slug must not
+	// override two IDs that disagree: that is the same name in another
+	// organization or server, not the same space.
+	if correlation.SpaceID != "" && spaceID != "" {
+		if strings.EqualFold(correlation.SpaceID, spaceID) {
+			return true, "spaceId"
+		}
+		return false, ""
 	}
 	if correlation.Space != "" && space != "" && strings.EqualFold(correlation.Space, space) {
+		// Say where the space came from. "space" means the resource named it;
+		// when the resource named none and --confighub-space supplied it, the
+		// row matched the operator's scope, which is weaker evidence.
+		if traceCorrelationSpaceFromScope(correlation) {
+			return true, "scope.space"
+		}
 		return true, "space"
 	}
 	return false, ""
+}
+
+func traceCorrelationSpaceFromScope(correlation agent.TraceDeliveryCorrelation) bool {
+	for _, matchedBy := range correlation.MatchedBy {
+		if matchedBy == "scope.space" {
+			return true
+		}
+	}
+	return false
 }
 
 // traceTargetComparable reports whether the correlation and a row share a
@@ -544,8 +506,11 @@ func traceTargetComparable(correlation agent.TraceDeliveryCorrelation, target, t
 func traceTargetMatches(correlation agent.TraceDeliveryCorrelation, target, targetID string) (bool, string) {
 	target = strings.TrimSpace(target)
 	targetID = strings.TrimSpace(targetID)
-	if correlation.TargetID != "" && targetID != "" && strings.EqualFold(correlation.TargetID, targetID) {
-		return true, "targetId"
+	if correlation.TargetID != "" && targetID != "" {
+		if strings.EqualFold(correlation.TargetID, targetID) {
+			return true, "targetId"
+		}
+		return false, ""
 	}
 	if correlation.Target != "" && target != "" && strings.EqualFold(correlation.Target, target) {
 		return true, "target"
@@ -601,7 +566,7 @@ func formatTraceDeliveryEvidenceLine(evidence *agent.TraceDeliveryEvidence) stri
 		}
 	}
 	if len(evidence.Releases) > 0 {
-		parts = append(parts, fmt.Sprintf("releases=%d", len(evidence.Releases)))
+		parts = append(parts, fmt.Sprintf("releases=%d %s", len(evidence.Releases), tracePublishedSummary(evidence.Releases)))
 	}
 	if len(evidence.UnitEvents) > 0 {
 		parts = append(parts, fmt.Sprintf("unitEvents=%d", len(evidence.UnitEvents)))
@@ -610,6 +575,28 @@ func formatTraceDeliveryEvidenceLine(evidence *agent.TraceDeliveryEvidence) stri
 		parts = append(parts, "no exact object-level match")
 	}
 	return strings.Join(parts, " ")
+}
+
+// tracePublishedSummary says how many of the matched release rows ConfigHub
+// still serves. A count of rows alone reads as that many live deliveries.
+func tracePublishedSummary(releases []agent.TraceDeliveryRelease) string {
+	published, unknown := 0, 0
+	for _, release := range releases {
+		switch {
+		case release.Published == nil:
+			unknown++
+		case *release.Published:
+			published++
+		}
+	}
+	if unknown == len(releases) {
+		return "published=unknown"
+	}
+	summary := fmt.Sprintf("published=%d/%d", published, len(releases))
+	if unknown > 0 {
+		summary += fmt.Sprintf(" unknown=%d", unknown)
+	}
+	return summary
 }
 
 func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
@@ -663,10 +650,10 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 	if len(evidence.UnitEvents) > 0 {
 		fmt.Printf("  %sRecent unit events:%s\n", colorDim, colorReset)
 		for _, event := range evidence.UnitEvents {
-			fmt.Printf("    - %s unit=%s result=%s at=%s\n",
-				firstNonEmpty(event.Action, event.Status, "-"),
+			fmt.Printf("    - %s unit=%s %s at=%s\n",
+				firstNonEmpty(event.Action, "-"),
 				firstNonEmpty(event.Unit, event.UnitID, "-"),
-				firstNonEmpty(event.Result, event.Status, "-"),
+				configHubUnitEventOutcome(event.Result, event.Status),
 				firstNonEmpty(event.CreatedAt, "-"),
 			)
 		}
@@ -693,6 +680,12 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 			fmt.Printf("    - %s: %s\n", omission.Layer, omission.Reason)
 		}
 	}
+	if len(evidence.Notes) > 0 {
+		fmt.Printf("  %sNotes:%s\n", colorDim, colorReset)
+		for _, note := range evidence.Notes {
+			fmt.Printf("    - %s\n", note)
+		}
+	}
 }
 
 func renderTraceDeliveryEvidenceMarkdown(evidence *agent.TraceDeliveryEvidence) {
@@ -707,6 +700,12 @@ func renderTraceDeliveryEvidenceMarkdown(evidence *agent.TraceDeliveryEvidence) 
 		fmt.Printf("  Omissions:\n")
 		for _, omission := range evidence.Omissions {
 			fmt.Printf("    - %s: %s\n", omission.Layer, omission.Reason)
+		}
+	}
+	if len(evidence.Notes) > 0 {
+		fmt.Printf("  Notes:\n")
+		for _, note := range evidence.Notes {
+			fmt.Printf("    - %s\n", note)
 		}
 	}
 }

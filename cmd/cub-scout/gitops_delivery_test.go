@@ -4,8 +4,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -383,6 +387,38 @@ func TestBuildConfigHubUnitEventEvidence_ReadsFlatUnitAndSpaceIdentity(t *testin
 	}
 }
 
+// ConfigHub marshals TerminatedAt without omitempty, so an event that has not
+// finished carries Go's zero time. Read as a real time it dates the activity
+// row to the year 1, which no --since window includes. The premise comes from
+// the generated UnitEvent model; the row below is constructed, not recorded.
+func TestUnitEventStillInProgressKeepsItsCreatedTime(t *testing.T) {
+	inProgress := strings.Replace(derivedV05UnitEventList, `"TerminatedAt":"2026-09-03T15:03:05Z"`, `"TerminatedAt":"0001-01-01T00:00:00Z"`, 1)
+	inProgress = strings.Replace(inProgress, `"Status":"Completed"`, `"Status":"Progressing"`, 1)
+	events, _ := buildConfigHubUnitEventEvidence(inProgress, 10)
+	if len(events) != 1 {
+		t.Fatalf("events = %+v, want one", events)
+	}
+	if events[0].TerminatedAt != "" {
+		t.Fatalf("terminatedAt = %q, want empty for an event that has not terminated", events[0].TerminatedAt)
+	}
+
+	evidence := &GitOpsDeliveryEvidence{ObservedAt: time.Date(2026, 9, 3, 16, 0, 0, 0, time.UTC)}
+	row := configHubUnitEventActivityRow(evidence, events[0])
+	if row.Time != "2026-09-03T15:03:00Z" {
+		t.Fatalf("activity row time = %q, want the event's CreatedAt", row.Time)
+	}
+	if row.Result != "pending" {
+		t.Fatalf("activity row result = %q, want pending for Status=Progressing", row.Result)
+	}
+	// A UnitEvent names no target. "target=-" would read as a missing value.
+	if strings.Contains(row.Message, "target=") {
+		t.Fatalf("message = %q, want no target field", row.Message)
+	}
+	if !strings.Contains(row.Message, "result=None status=Progressing") {
+		t.Fatalf("message = %q, want both result and status", row.Message)
+	}
+}
+
 func TestGitOpsConfigHubUnitEventListArgs_SendsNoSelect(t *testing.T) {
 	joined := strings.Join(gitOpsConfigHubUnitEventListArgs("payments-prod", "2026-09-09T12:00:00Z"), " ")
 	if strings.Contains(joined, "--select") {
@@ -520,4 +556,42 @@ func newGitOpsDeliveryFakeClient(objects ...runtime.Object) *dynamicfake.FakeDyn
 		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
 	}
 	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
+}
+
+// The example under examples/ is the documented shape of this evidence. Decode
+// it through the real types, refusing unknown fields, so it cannot drift from
+// the code, and check it shows both publication states the way output names them.
+func TestDeliveryEvidenceExampleMatchesTheTypes(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "examples", "live-delivery-observability", "confighub-delivery-evidence.json"))
+	if err != nil {
+		t.Fatalf("read example: %v", err)
+	}
+	var envelope struct {
+		DeliveryEvidence json.RawMessage `json:"deliveryEvidence"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("parse example: %v", err)
+	}
+	var evidence GitOpsDeliveryEvidence
+	decoder := json.NewDecoder(bytes.NewReader(envelope.DeliveryEvidence))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&evidence); err != nil {
+		t.Fatalf("example deliveryEvidence does not match GitOpsDeliveryEvidence: %v", err)
+	}
+	if evidence.ConfigHub == nil || len(evidence.ConfigHub.Releases) != evidence.ConfigHub.ReleasesTotal {
+		t.Fatalf("example releasesTotal disagrees with its rows: %+v", evidence.ConfigHub)
+	}
+	actions := map[string]string{}
+	for _, release := range evidence.ConfigHub.Releases {
+		actions[configHubReleaseLabel(release)] = configHubReleaseAction(release)
+	}
+	want := map[string]string{"prod#42": "release-published", "prod#41": "release-not-published"}
+	if !reflect.DeepEqual(actions, want) {
+		t.Fatalf("example release actions = %v, want %v", actions, want)
+	}
+	for _, event := range evidence.ConfigHub.UnitEvents {
+		if event.Target != "" || event.TargetID != "" {
+			t.Fatalf("example unit event names a target, which a ConfigHub UnitEvent does not have: %+v", event)
+		}
+	}
 }

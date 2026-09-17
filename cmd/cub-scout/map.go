@@ -4286,11 +4286,10 @@ func configHubLiveStatusActivityRow(evidence *GitOpsDeliveryEvidence, status Con
 }
 
 func configHubReleaseActivityRow(evidence *GitOpsDeliveryEvidence, release ConfigHubReleaseEvidence) mapActivityRow {
-	action, published := configHubReleaseAction(release)
 	message := strings.TrimSpace(fmt.Sprintf("target=%s release=%s published=%s digest=%s bundle=%s",
 		firstNonEmpty(release.Target, release.TargetID, "-"),
-		formatActivityRevisionNum(release.ReleaseNum),
-		published,
+		formatActivityNum(release.ReleaseNum),
+		configHubPublishedText(release.Published),
 		firstNonEmpty(release.Digest, "-"),
 		firstNonEmpty(release.BundleBaseName, "-"),
 	))
@@ -4298,7 +4297,7 @@ func configHubReleaseActivityRow(evidence *GitOpsDeliveryEvidence, release Confi
 		Time:              normalizeTimeString(release.CreatedAt, evidence.ObservedAt),
 		Source:            "confighub.release",
 		Resource:          fmt.Sprintf("Release/%s/%s", firstNonEmpty(release.Space, release.SpaceID, "unknown"), configHubReleaseLabel(release)),
-		Action:            action,
+		Action:            configHubReleaseAction(release),
 		Result:            "normal",
 		Message:           message,
 		SuggestedNextStep: "Use 'gitops status --with-confighub' or trace/explain with ConfigHub evidence to relate this release to live resources.",
@@ -4326,52 +4325,28 @@ func configHubReleaseActivityRow(evidence *GitOpsDeliveryEvidence, release Confi
 // the Release is withdrawn and keeps the row. Calling every row a publication
 // would claim a delivery that is no longer in effect, and a server that does
 // not report the field is not assumed either way.
-func configHubReleaseAction(release ConfigHubReleaseEvidence) (action, published string) {
-	published = configHubPublishedText(release.Published)
-	switch published {
-	case "true":
-		return "release-published", published
-	case "false":
-		return "release-not-published", published
-	default:
-		return "release-recorded", published
-	}
-}
-
-// configHubReleaseLabel is the shortest name that tells one Release from
-// another: a slug if the server gave one, else bundle#number, else the ID.
-// ReleaseNum is unique within a space, which is the scope the label is shown in.
-func configHubReleaseLabel(release ConfigHubReleaseEvidence) string {
-	return configHubReleaseDisplayName(release.Slug, release.BundleBaseName, release.ReleaseNum, release.ReleaseID)
-}
-
-func configHubReleaseDisplayName(slug, bundleBaseName string, releaseNum int, releaseID string) string {
-	if slug != "" {
-		return slug
-	}
-	if bundleBaseName != "" && releaseNum > 0 {
-		return fmt.Sprintf("%s#%d", bundleBaseName, releaseNum)
-	}
-	return firstNonEmpty(releaseID, "unknown")
-}
-
-// configHubPublishedText renders the three publication states for text output.
-func configHubPublishedText(published *bool) string {
+func configHubReleaseAction(release ConfigHubReleaseEvidence) string {
 	switch {
-	case published == nil:
-		return "unknown"
-	case *published:
-		return "true"
+	case release.Published == nil:
+		return "release-recorded"
+	case *release.Published:
+		return "release-published"
 	default:
-		return "false"
+		return "release-not-published"
 	}
 }
 
 func configHubUnitEventActivityRow(evidence *GitOpsDeliveryEvidence, event ConfigHubUnitEventEvidence) mapActivityRow {
 	when := firstNonEmpty(event.TerminatedAt, event.CreatedAt)
-	message := strings.TrimSpace(fmt.Sprintf("unit=%s target=%s result=%s status=%s %s",
+	// ConfigHub unit events do not name a target, so the text does not print a
+	// "target=-" that reads as a missing value. It is shown if a server sends one.
+	target := ""
+	if name := firstNonEmpty(event.Target, event.TargetID); name != "" {
+		target = " target=" + name
+	}
+	message := strings.TrimSpace(fmt.Sprintf("unit=%s%s result=%s status=%s %s",
 		firstNonEmpty(event.Unit, event.UnitID, "-"),
-		firstNonEmpty(event.Target, event.TargetID, "-"),
+		target,
 		firstNonEmpty(event.Result, "-"),
 		firstNonEmpty(event.Status, "-"),
 		strings.TrimSpace(event.Message),
@@ -4479,11 +4454,13 @@ func mapActivityResultFromVerdicts(verdicts ...agent.ReceiptVerdict) string {
 	return "success"
 }
 
-func formatActivityRevisionNum(revisionNum int) string {
-	if revisionNum <= 0 {
+// formatActivityNum renders a ConfigHub sequence number (RevisionNum,
+// ReleaseNum), which starts at 1; zero means the server did not send one.
+func formatActivityNum(num int) string {
+	if num <= 0 {
 		return "-"
 	}
-	return strconv.Itoa(revisionNum)
+	return strconv.Itoa(num)
 }
 
 func mapActivityResultFromUnitEvent(event ConfigHubUnitEventEvidence) string {

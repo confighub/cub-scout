@@ -42,12 +42,32 @@ when it does not say; absent is never read as false. `doctor` counts the rows
 in the time window (`releasesTotal`, `unitEventsTotal`), not the rows kept
 after trimming, so 139 releases no longer read as 10. Releases have no slug or
 revision number; rows carry `releaseNum` and are labelled
-`bundleBaseName#releaseNum` instead of a bare UUID. A chain that knows its
-target only by slug now resolves the ID with one bounded
-`cub target list --where "Slug = ..."` read, taken only from a single exact
-match, so OCI-delivered objects can be joined to their releases. A matched
-release is stated to be a target-level join, not proof that it contains the
-object's unit. The example and `json-contracts.md` show the real shapes.
+`bundleBaseName#releaseNum` instead of a bare UUID. A matched release is stated
+to be a target-level join, not proof that it contains the object's unit, and
+the note is printed in the human and Markdown trace output as well as JSON. The
+example and `json-contracts.md` show the real shapes, including a withdrawn
+release.
+
+Still no slug-to-ID target lookup. One was written for #555 and removed after
+review: the chain's space (from a label) and target slug (from an OCI URL) come
+from different sources, so the lookup could resolve the slug in the wrong space
+and attach another target's releases. A chain that knows its target only by
+slug keeps the "target unknown" omission. The likely correct key for
+OCI-delivered objects is the manifest digest (`Release.ManifestDigest`), tracked
+separately along with the OCI URL layout cub-scout recognises.
+
+Joins are stricter now that unit events carry identity. When both sides carry an
+ID for a space, target or unit and the IDs differ, the row is not joined even if
+the slugs match. A row matched through `--confighub-space` rather than a space
+the resource names says `scope.space` in `matchedBy`, where it said `space`.
+
+`doctor` never promoted a real failed unit event: it read `Result` first, and
+ConfigHub reports an ordinary Apply with `Result: "None"` and the failure in
+`Status`. It now uses the classifier `map activity` uses, scans every event in
+the window rather than the rows kept for display, and judges only the latest
+event for a unit and action, so a failed Apply that a later Apply superseded is
+not raised as a current issue. An event still in progress carries Go's zero
+`TerminatedAt`; that is dropped instead of dating the activity row to year 1.
 
 Unit events: the earlier guess that this read returns HTTP 400 was wrong. `cub`
 does not forward `--select` for unit events at all, so the selection was a

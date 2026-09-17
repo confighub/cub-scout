@@ -69,6 +69,18 @@ type ConfigHubDeliveryEvidence struct {
 	// before Releases and UnitEvents were trimmed to maxItems.
 	ReleasesTotal   int `json:"releasesTotal,omitempty"`
 	UnitEventsTotal int `json:"unitEventsTotal,omitempty"`
+
+	// allUnitEvents is every unit event in the window, kept so that a failure
+	// among rows trimmed from UnitEvents is still found. It is not output.
+	allUnitEvents []ConfigHubUnitEventEvidence
+}
+
+// unitEventsInWindow returns every unit event read, before trimming.
+func (e *ConfigHubDeliveryEvidence) unitEventsInWindow() []ConfigHubUnitEventEvidence {
+	if e.allUnitEvents != nil {
+		return e.allUnitEvents
+	}
+	return e.UnitEvents
 }
 
 type ConfigHubLiveStatusEvidence struct {
@@ -333,6 +345,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	} else {
 		events, omissions := buildConfigHubUnitEventEvidence(rawEvents, 0)
 		evidence.ConfigHub.UnitEventsTotal = len(events)
+		evidence.ConfigHub.allUnitEvents = append([]ConfigHubUnitEventEvidence(nil), events...)
 		omissions = append(omissions, trimUnitEventEvidence(&events, rowLimit)...)
 		evidence.ConfigHub.UnitEvents = events
 		evidence.Omissions = append(evidence.Omissions, omissions...)
@@ -649,6 +662,53 @@ func configHubRelatedRef(item, row map[string]interface{}, kind string) (slug, i
 	return slug, id
 }
 
+// configHubReleaseLabel is the shortest name that tells one Release from
+// another: a slug if the server gave one, else bundle#number, else the ID.
+// ReleaseNum is unique within a space, which is the scope the label is shown in.
+func configHubReleaseLabel(release ConfigHubReleaseEvidence) string {
+	return configHubReleaseDisplayName(release.Slug, release.BundleBaseName, release.ReleaseNum, release.ReleaseID)
+}
+
+func configHubReleaseDisplayName(slug, bundleBaseName string, releaseNum int, releaseID string) string {
+	if slug != "" {
+		return slug
+	}
+	if bundleBaseName != "" && releaseNum > 0 {
+		return fmt.Sprintf("%s#%d", bundleBaseName, releaseNum)
+	}
+	return firstNonEmpty(releaseID, "unknown")
+}
+
+// configHubPublishedText renders the three publication states for text output.
+func configHubPublishedText(published *bool) string {
+	switch {
+	case published == nil:
+		return "unknown"
+	case *published:
+		return "true"
+	default:
+		return "false"
+	}
+}
+
+// configHubUnitEventOutcome is the text for a unit event's outcome. ConfigHub
+// sets Result to "None" for an ordinary Apply and records how it ended in
+// Status, so printing Result alone shows "None" for a failed Apply.
+func configHubUnitEventOutcome(result, status string) string {
+	return fmt.Sprintf("result=%s status=%s", firstNonEmpty(result, "-"), firstNonEmpty(status, "-"))
+}
+
+// configHubNonZeroTime drops Go's zero time. ConfigHub marshals TerminatedAt
+// without omitempty, so an event still in progress carries
+// "0001-01-01T00:00:00Z". Taken at face value that becomes the row's time, in
+// the year 1, and the row falls outside every --since window.
+func configHubNonZeroTime(value string) string {
+	if strings.HasPrefix(strings.TrimSpace(value), "0001-01-01T00:00:00") {
+		return ""
+	}
+	return value
+}
+
 // configHubBoolField reads a boolean field, reporting whether it was present.
 // Absent is distinct from false.
 func configHubBoolField(item map[string]interface{}, keys ...string) (bool, bool) {
@@ -689,7 +749,7 @@ func buildConfigHubUnitEventEvidence(raw string, maxItems int) ([]ConfigHubUnitE
 			Target:       target,
 			TargetID:     targetID,
 			CreatedAt:    mcpFirstString(eventObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
-			TerminatedAt: mcpFirstString(eventObj, "TerminatedAt", "terminatedAt", "CompletedAt", "completedAt"),
+			TerminatedAt: configHubNonZeroTime(mcpFirstString(eventObj, "TerminatedAt", "terminatedAt", "CompletedAt", "completedAt")),
 		})
 	}
 
@@ -961,10 +1021,10 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 	if evidence.ConfigHub != nil && len(evidence.ConfigHub.UnitEvents) > 0 {
 		fmt.Printf("  Recent unit events:\n")
 		for _, event := range evidence.ConfigHub.UnitEvents {
-			fmt.Printf("    - %s unit=%s result=%s at=%s\n",
-				firstNonEmpty(event.Action, event.Status, "-"),
-				firstNonEmpty(event.Unit, "-"),
-				firstNonEmpty(event.Result, event.Status, "-"),
+			fmt.Printf("    - %s unit=%s %s at=%s\n",
+				firstNonEmpty(event.Action, "-"),
+				firstNonEmpty(event.Unit, event.UnitID, "-"),
+				configHubUnitEventOutcome(event.Result, event.Status),
 				firstNonEmpty(event.CreatedAt, "-"),
 			)
 		}

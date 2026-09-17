@@ -386,3 +386,78 @@ func TestRenderDoctorASCII_PresentationModes(t *testing.T) {
 		})
 	}
 }
+
+// ConfigHub reports an ordinary Apply with Result "None" and records how it
+// ended in Status. Reading Result first meant a failed Apply was never promoted.
+func TestDoctorUnitEventFailed_ReadsStatusWhenResultIsNone(t *testing.T) {
+	for _, tc := range []struct {
+		result, status string
+		want           bool
+	}{
+		{"None", "Failed", true},
+		{"FunctionInvocationFailed", "Completed", true},
+		{"None", "Completed", false},
+		{"FunctionInvocationCompleted", "Completed", false},
+		{"None", "Progressing", false},
+		{"", "", false},
+	} {
+		got := doctorUnitEventFailed(ConfigHubUnitEventEvidence{Result: tc.result, Status: tc.status})
+		if got != tc.want {
+			t.Errorf("result=%q status=%q: failed=%v, want %v", tc.result, tc.status, got, tc.want)
+		}
+	}
+}
+
+func TestDoctorDeliveryIssues_JudgeTheLatestEventInTheWholeWindow(t *testing.T) {
+	failed := ConfigHubUnitEventEvidence{EventID: "ue-old-fail", Action: "Apply", Result: "None", Status: "Failed", Unit: "cart", UnitID: "unit-cart", Space: "shop"}
+	evidence := &GitOpsDeliveryEvidence{
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			// Newest first, as the collector sorts them. Only the first row
+			// survived trimming; the rest are in the window but not displayed.
+			UnitEvents:      []ConfigHubUnitEventEvidence{{EventID: "ue-new", Action: "Apply", Result: "None", Status: "Completed", Unit: "api", UnitID: "unit-api", Space: "shop"}},
+			UnitEventsTotal: 4,
+			allUnitEvents: []ConfigHubUnitEventEvidence{
+				{EventID: "ue-new", Action: "Apply", Result: "None", Status: "Completed", Unit: "api", UnitID: "unit-api", Space: "shop"},
+				{EventID: "ue-api-fail", Action: "Apply", Result: "None", Status: "Failed", Unit: "api", UnitID: "unit-api", Space: "shop"},
+				failed,
+				{EventID: "ue-cart-older", Action: "Apply", Result: "None", Status: "Completed", Unit: "cart", UnitID: "unit-cart", Space: "shop"},
+			},
+		},
+	}
+
+	issues := buildDoctorDeliveryIssues(evidence)
+	if len(issues) != 1 {
+		t.Fatalf("issues = %+v, want exactly one", issues)
+	}
+	issue := issues[0]
+	if issue.Resource != "ConfigHubUnitEvent/ue-old-fail" || issue.Severity != "CRITICAL" {
+		t.Fatalf("issue = %+v, want the cart failure: it is the latest Apply for cart, and it was trimmed from the displayed rows", issue)
+	}
+	// api failed and then applied cleanly: history, not a current issue.
+	if !strings.Contains(issue.Message, "unit=cart") || !strings.Contains(issue.Message, "status=Failed") {
+		t.Fatalf("message = %q, want the unit and the status that shows the failure", issue.Message)
+	}
+	if strings.Contains(issue.Message, "target=") {
+		t.Fatalf("message = %q: unit events do not name a target", issue.Message)
+	}
+
+	// Evidence that lost the untrimmed rows (a JSON round trip) still works.
+	evidence.ConfigHub.allUnitEvents = nil
+	evidence.ConfigHub.UnitEvents = []ConfigHubUnitEventEvidence{failed}
+	if got := buildDoctorDeliveryIssues(evidence); len(got) != 1 {
+		t.Fatalf("issues without untrimmed rows = %+v, want the displayed failure", got)
+	}
+}
+
+// An event with no unit identity cannot be compared with a later one, so a
+// failure is reported rather than assumed superseded.
+func TestDoctorDeliveryIssues_UnidentifiedFailuresAreEachReported(t *testing.T) {
+	evidence := &GitOpsDeliveryEvidence{ConfigHub: &ConfigHubDeliveryEvidence{UnitEvents: []ConfigHubUnitEventEvidence{
+		{EventID: "a", Action: "Apply", Status: "Completed"},
+		{EventID: "b", Action: "Apply", Status: "Failed"},
+		{EventID: "c", Action: "Apply", Status: "Failed"},
+	}}}
+	if got := buildDoctorDeliveryIssues(evidence); len(got) != 2 {
+		t.Fatalf("issues = %+v, want both failures", got)
+	}
+}

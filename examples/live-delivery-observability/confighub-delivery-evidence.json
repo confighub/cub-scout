@@ -52,6 +52,17 @@
           "releaseNum": 42,
           "published": true,
           "createdAt": "2026-09-10T11:50:00Z"
+        },
+        {
+          "releaseId": "11111111-2222-4222-8222-222222222222",
+          "space": "prod",
+          "spaceId": "sp-123",
+          "targetId": "55555555-5555-4555-8555-555555555555",
+          "digest": "sha256:9f8e7d",
+          "bundleBaseName": "prod",
+          "releaseNum": 41,
+          "published": false,
+          "createdAt": "2026-09-10T09:20:00Z"
         }
       ],
       "unitEvents": [
@@ -68,7 +79,7 @@
           "terminatedAt": "2026-09-10T11:51:05Z"
         }
       ],
-      "releasesTotal": 1,
+      "releasesTotal": 2,
       "unitEventsTotal": 1
     },
     "eventConsumers": [

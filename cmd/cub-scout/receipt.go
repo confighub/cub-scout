@@ -554,7 +554,6 @@ func collectReceiptDeliveryEvidence(ctx context.Context, live *unstructured.Unst
 		raw = collectGitOpsDeliveryEvidence(ctx, dynClient, opts)
 	}
 
-	preflightOmissions = append(preflightOmissions, resolveTraceTargetID(ctx, raw, &correlation, opts.Space)...)
 	return correlateTraceDeliveryEvidence(result, raw, correlation, preflightOmissions), nil
 }
 
