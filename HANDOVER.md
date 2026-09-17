@@ -1,5 +1,37 @@
 # cub-scout Handover for the Next AI Coder
 
+## Correction: 2026-09-17 — ConfigHub Release Evidence Read
+
+Live testing against a ConfigHub v0.5.1 server with `cub` v0.5.1 found that the
+`--with-confighub` release read has returned HTTP 400 since it shipped in
+v2.8.0 (#507). It sent `--select Slug,...,RevisionNum,Space,Target`. ConfigHub
+rejects a selection naming any field the entity lacks, and `Release` has none
+of those four. The failure surfaced only as a `confighub.releases` omission, so
+`deliveryEvidence.configHub.releases[]` was always empty on `gitops status`,
+`doctor`, `map activity`, `trace`, `explain` and single-resource
+`receipt verify`. Unit tests passed because their prefab release JSON was an
+invented shape. ConfigHub v0.5 did not cause this.
+
+The fix sends no `--select` and reads `SpaceID` and `TargetID` from the Release
+object, which is where `cub release list` reports them. `TargetID` exists from
+ConfigHub v0.5. Against an older server it stays empty and the exact
+space-plus-target join reports an omission, as before. Tests now parse a release
+list recorded from a v0.5.1 server. Live proof: 139 releases read, each with
+space and target IDs.
+
+Still unproven: the unit-event read pins `--select ...,Unit,Space,Target`, and
+those are not UnitEvent fields either. The test server held no unit events and
+ConfigHub did not validate the selection on an empty result, so that read could
+not be exercised. Treat unit-event evidence as not live-proven. MCP
+`confighub_releases` and `confighub_unit_events` send no `--select` and were
+unaffected.
+
+Also passing on v0.5.1: the full unit suite, the read-only connected
+integration tests, all nine `confighub_*` MCP tools over the stdio gateway,
+`compare three-way`, `summary list`, `status`, and the `cub` v0.5.1 plugin host.
+The v0.5.0 removal of `BridgeWorkerID` from Release and Space touches nothing
+here; cub-scout never read those fields.
+
 ## Documentation Update: 2026-09-14
 
 v2.11.0 is published (tag `89f0bf2`). The

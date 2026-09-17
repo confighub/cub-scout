@@ -326,13 +326,19 @@ func gitOpsConfigHubSpaceListArgs(space string) []string {
 	return args
 }
 
+// gitOpsConfigHubReleaseListArgs deliberately sends no --select. ConfigHub
+// rejects a selection naming any field the Release entity lacks with HTTP 400,
+// and that field set moves between server versions (Slug became BundleBaseName;
+// v0.5 dropped BridgeWorkerID and added TargetID). A Release is a handful of
+// scalars and the read is already bounded by the CreatedAt cutoff, so the full
+// object is cheap and keeps this read working across versions. The MCP
+// confighub_releases reader makes the same choice.
 func gitOpsConfigHubReleaseListArgs(space, cutoff string) []string {
 	args := []string{
 		"release", "list",
 		"--space", space,
 		"-o", "json",
 		"--where", fmt.Sprintf("CreatedAt > '%s'", configHubFilterQuote(cutoff)),
-		"--select", "Slug,ReleaseID,CreatedAt,Digest,BundleBaseName,RevisionNum,Space,Target",
 	}
 	return args
 }
@@ -576,11 +582,20 @@ func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubRelease
 			BundleBaseName: mcpFirstString(releaseObj, "BundleBaseName", "bundleBaseName", "Bundle", "bundle"),
 			CreatedAt:      mcpFirstString(releaseObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
 		}
+		// cub release list returns a bare Release with no sibling Space or
+		// Target object: the space and (from v0.5) target identity are
+		// fields of the Release itself.
 		if release.Space == "" {
 			release.Space = mcpFirstString(releaseObj, "SpaceSlug", "spaceSlug")
 		}
+		if release.SpaceID == "" {
+			release.SpaceID = mcpFirstString(releaseObj, "SpaceID", "spaceId")
+		}
 		if release.Target == "" {
 			release.Target = mcpFirstString(releaseObj, "TargetSlug", "targetSlug")
+		}
+		if release.TargetID == "" {
+			release.TargetID = mcpFirstString(releaseObj, "TargetID", "targetId")
 		}
 		if value, ok := mcpFirstInt(releaseObj, "RevisionNum", "revisionNum", "RevisionNumber", "revisionNumber"); ok {
 			release.RevisionNum = value
