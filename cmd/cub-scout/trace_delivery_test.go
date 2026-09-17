@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -190,8 +191,10 @@ func TestCorrelateTraceDeliveryEvidence_ExplicitScopeSpaceMatchesApplication(t *
 	if !containsTraceMatch(got.Correlation.MatchedBy, "scope.space") {
 		t.Fatalf("correlation matchedBy = %+v, want scope.space", got.Correlation.MatchedBy)
 	}
-	if !containsTraceMatch(got.LiveStatus.MatchedBy, "space") {
-		t.Fatalf("live status matchedBy = %+v, want space", got.LiveStatus.MatchedBy)
+	// The resource named no space; --confighub-space supplied it. The row must
+	// say so rather than read as a space the resource itself declared.
+	if !containsTraceMatch(got.LiveStatus.MatchedBy, "scope.space") || containsTraceMatch(got.LiveStatus.MatchedBy, "space") {
+		t.Fatalf("live status matchedBy = %+v, want scope.space and not space", got.LiveStatus.MatchedBy)
 	}
 }
 
@@ -388,4 +391,184 @@ func containsTraceOmission(omissions []agent.TraceDeliveryOmission, layer string
 		}
 	}
 	return false
+}
+
+// doctor reports how many releases and unit events the window held, not how
+// many survived trimming to maxItems.
+func TestCollectGitOpsDeliveryEvidence_CountsRowsBeforeTrimming(t *testing.T) {
+	oldRequire, oldRun := requireGitOpsConfigHubFn, runGitOpsCubCommand
+	t.Cleanup(func() { requireGitOpsConfigHubFn, runGitOpsCubCommand = oldRequire, oldRun })
+	requireGitOpsConfigHubFn = func() error { return nil }
+
+	var releases, events strings.Builder
+	releases.WriteString("[")
+	events.WriteString("[")
+	for i := 0; i < 12; i++ {
+		if i > 0 {
+			releases.WriteString(",")
+			events.WriteString(",")
+		}
+		fmt.Fprintf(&releases, `{"Release":{"ReleaseID":"r-%02d","SpaceSlug":"payments-prod","CreatedAt":"2026-09-10T11:%02d:00Z"}}`, i, 10+i)
+		fmt.Fprintf(&events, `{"UnitEventID":"e-%02d","SpaceSlug":"payments-prod","CreatedAt":"2026-09-10T11:%02d:00Z"}`, i, 10+i)
+	}
+	releases.WriteString("]")
+	events.WriteString("]")
+	runGitOpsCubCommand = func(ctx context.Context, args []string) (string, error) {
+		switch args[0] {
+		case "release":
+			return releases.String(), nil
+		case "unit-event":
+			return events.String(), nil
+		}
+		return "[]", nil
+	}
+
+	evidence := collectGitOpsDeliveryEvidence(context.Background(), newGitOpsDeliveryFakeClient(), gitOpsDeliveryEvidenceOptions{
+		Space: "payments-prod", Since: "24h", Window: 24 * time.Hour, StaleAfter: 15 * time.Minute,
+		Now: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC), MaxItems: 10,
+	})
+
+	if len(evidence.ConfigHub.Releases) != 10 || evidence.ConfigHub.ReleasesTotal != 12 {
+		t.Fatalf("releases kept = %d total = %d, want 10 kept of 12", len(evidence.ConfigHub.Releases), evidence.ConfigHub.ReleasesTotal)
+	}
+	if len(evidence.ConfigHub.UnitEvents) != 10 || evidence.ConfigHub.UnitEventsTotal != 12 {
+		t.Fatalf("unit events kept = %d total = %d, want 10 kept of 12", len(evidence.ConfigHub.UnitEvents), evidence.ConfigHub.UnitEventsTotal)
+	}
+	summary := buildDoctorDeliverySummary(evidence)
+	if summary.RecentReleases != 12 || summary.RecentUnitEvents != 12 {
+		t.Fatalf("doctor counts = %d releases / %d unit events, want 12 / 12, not the trimmed 10", summary.RecentReleases, summary.RecentUnitEvents)
+	}
+}
+
+// Both sides carrying an ID is the strongest key available. A slug that happens
+// to match must not override two IDs that disagree.
+func TestTraceJoins_ConflictingIDsBeatMatchingSlugs(t *testing.T) {
+	correlation := agent.TraceDeliveryCorrelation{
+		UnitSlug: "backend", UnitID: "unit-a",
+		Space: "prod", SpaceID: "space-a",
+		Target: "cluster", TargetID: "target-a",
+	}
+
+	if ok, _ := traceSpaceMatches(correlation, "prod", "space-b"); ok {
+		t.Error("space joined on a matching slug although the space IDs differ")
+	}
+	if ok, by := traceSpaceMatches(correlation, "renamed", "space-a"); !ok || by != "spaceId" {
+		t.Errorf("space with the same ID = (%v, %q), want joined by spaceId", ok, by)
+	}
+	if ok, by := traceSpaceMatches(correlation, "prod", ""); !ok || by != "space" {
+		t.Errorf("row without a space ID = (%v, %q), want joined by space", ok, by)
+	}
+	if ok, _ := traceTargetMatches(correlation, "cluster", "target-b"); ok {
+		t.Error("target joined on a matching slug although the target IDs differ")
+	}
+
+	events := []ConfigHubUnitEventEvidence{
+		{EventID: "other-unit", Unit: "backend", UnitID: "unit-b", Space: "prod", SpaceID: "space-a"},
+		{EventID: "same-unit", Unit: "backend", UnitID: "unit-a", Space: "prod", SpaceID: "space-a"},
+		{EventID: "slug-only", Unit: "backend", Space: "prod", SpaceID: "space-a"},
+	}
+	got, _ := matchTraceUnitEvents(correlation, events)
+	ids := []string{}
+	for _, event := range got {
+		ids = append(ids, event.EventID)
+	}
+	if strings.Join(ids, ",") != "same-unit,slug-only" {
+		t.Fatalf("joined events = %v, want same-unit and slug-only; other-unit shares the slug but not the unit ID", ids)
+	}
+}
+
+// A resource that carries a unit label but names no space joins only through
+// --confighub-space. That join is allowed, and every row it produces says the
+// space came from the operator's scope, not from the resource.
+func TestUnitEventJoinedThroughScopeSpaceSaysSo(t *testing.T) {
+	result := &agent.TraceResult{
+		Object:    agent.ResourceRef{Kind: "Deployment", Name: "backend", Namespace: "prod"},
+		ConfigHub: &agent.TraceConfigHub{UnitSlug: "backend"},
+	}
+	raw := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 9, 17, 12, 0, 0, 0, time.UTC),
+		Scope:      GitOpsDeliveryEvidenceScope{Namespace: "prod", Space: "other", MaxItems: 10},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			UnitEvents: []ConfigHubUnitEventEvidence{{EventID: "ue-1", Unit: "backend", UnitID: "unit-x", Space: "other"}},
+		},
+	}
+
+	got := correlateTraceDeliveryEvidence(result, raw, buildTraceDeliveryCorrelation(result), nil)
+	if len(got.UnitEvents) != 1 {
+		t.Fatalf("unit events = %+v, want the one event in the scoped space", got.UnitEvents)
+	}
+	matchedBy := got.UnitEvents[0].MatchedBy
+	if !containsTraceMatch(matchedBy, "scope.space") || containsTraceMatch(matchedBy, "space") {
+		t.Fatalf("matchedBy = %v, want scope.space and not space", matchedBy)
+	}
+}
+
+// The release join is by space and target. The note that says so has to reach
+// every rendering, and must not claim the release is being served.
+func TestReleaseJoinNoteIsTargetLevelAndIsPrinted(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	result := &agent.TraceResult{
+		Object:    agent.ResourceRef{Kind: "Deployment", Name: "backend", Namespace: "prod"},
+		ConfigHub: &agent.TraceConfigHub{UnitSlug: "backend", SpaceID: "space-a", TargetID: "target-a"},
+	}
+	withdrawn := false
+	raw := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 9, 17, 12, 0, 0, 0, time.UTC),
+		Scope:      GitOpsDeliveryEvidenceScope{Namespace: "prod", Space: "prod", MaxItems: 10},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			Releases: []ConfigHubReleaseEvidence{
+				{ReleaseID: "r2", BundleBaseName: "prod-bundle", ReleaseNum: 2, SpaceID: "space-a", TargetID: "target-a", Published: boolPtr(true)},
+				{ReleaseID: "r1", BundleBaseName: "prod-bundle", ReleaseNum: 1, SpaceID: "space-a", TargetID: "target-a", Published: &withdrawn},
+			},
+		},
+	}
+
+	got := correlateTraceDeliveryEvidence(result, raw, buildTraceDeliveryCorrelation(result), nil)
+	if len(got.Releases) != 2 {
+		t.Fatalf("releases = %+v, want both rows for the target", got.Releases)
+	}
+	note := strings.Join(got.Notes, "\n")
+	if !strings.Contains(note, "does not show that the release contains this resource's unit") {
+		t.Fatalf("notes = %q, want the target-level join stated", note)
+	}
+	if strings.Contains(note, "was published") {
+		t.Fatalf("notes = %q: a withdrawn row is listed, so the note must not say the rows were published", note)
+	}
+
+	if line := formatTraceDeliveryEvidenceLine(got); !strings.Contains(line, "releases=2 published=1/2") {
+		t.Fatalf("summary line = %q, want the served count beside the row count", line)
+	}
+	for name, render := range map[string]func(*agent.TraceDeliveryEvidence){
+		"human":    renderTraceDeliveryEvidenceHuman,
+		"markdown": renderTraceDeliveryEvidenceMarkdown,
+	} {
+		out := captureStdout(t, func() { render(got) })
+		if !strings.Contains(out, "Notes:") || !strings.Contains(out, "does not show that the release contains") {
+			t.Errorf("%s output does not print the join note:\n%s", name, out)
+		}
+	}
+
+	// No matched release, no note: the note describes rows that are listed.
+	raw.ConfigHub.Releases = nil
+	if got := correlateTraceDeliveryEvidence(result, raw, buildTraceDeliveryCorrelation(result), nil); len(got.Notes) != 0 {
+		t.Fatalf("notes = %v, want none when no release row is listed", got.Notes)
+	}
+}
+
+func TestTracePublishedSummary(t *testing.T) {
+	yes, no := true, false
+	for _, tc := range []struct {
+		name     string
+		releases []agent.TraceDeliveryRelease
+		want     string
+	}{
+		{"server does not report it", []agent.TraceDeliveryRelease{{}, {}}, "published=unknown"},
+		{"one served of two", []agent.TraceDeliveryRelease{{Published: &yes}, {Published: &no}}, "published=1/2"},
+		{"all withdrawn", []agent.TraceDeliveryRelease{{Published: &no}}, "published=0/1"},
+		{"mixed with unknown", []agent.TraceDeliveryRelease{{Published: &yes}, {}}, "published=1/2 unknown=1"},
+	} {
+		if got := tracePublishedSummary(tc.releases); got != tc.want {
+			t.Errorf("%s: got %q, want %q", tc.name, got, tc.want)
+		}
+	}
 }

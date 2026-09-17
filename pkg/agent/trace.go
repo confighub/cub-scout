@@ -210,17 +210,21 @@ type TraceDeliveryLiveStatus struct {
 }
 
 type TraceDeliveryRelease struct {
-	Slug           string   `json:"slug,omitempty"`
-	ReleaseID      string   `json:"releaseId,omitempty"`
-	Space          string   `json:"space,omitempty"`
-	SpaceID        string   `json:"spaceId,omitempty"`
-	Target         string   `json:"target,omitempty"`
-	TargetID       string   `json:"targetId,omitempty"`
-	Digest         string   `json:"digest,omitempty"`
-	BundleBaseName string   `json:"bundleBaseName,omitempty"`
-	RevisionNum    int      `json:"revisionNum,omitempty"`
-	CreatedAt      string   `json:"createdAt,omitempty"`
-	MatchedBy      []string `json:"matchedBy,omitempty"`
+	Slug           string `json:"slug,omitempty"`
+	ReleaseID      string `json:"releaseId,omitempty"`
+	Space          string `json:"space,omitempty"`
+	SpaceID        string `json:"spaceId,omitempty"`
+	Target         string `json:"target,omitempty"`
+	TargetID       string `json:"targetId,omitempty"`
+	Digest         string `json:"digest,omitempty"`
+	BundleBaseName string `json:"bundleBaseName,omitempty"`
+	RevisionNum    int    `json:"revisionNum,omitempty"`
+	ReleaseNum     int    `json:"releaseNum,omitempty"`
+	// Published is nil when the server did not report it; false means the
+	// Release is no longer served to its Target (withdrawn).
+	Published *bool    `json:"published,omitempty"`
+	CreatedAt string   `json:"createdAt,omitempty"`
+	MatchedBy []string `json:"matchedBy,omitempty"`
 }
 
 type TraceDeliveryUnitEvent struct {

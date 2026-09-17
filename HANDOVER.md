@@ -34,19 +34,54 @@ still get no release evidence. The `gitops status` ASCII row printed
 `target=-` for every real release and now falls back to the target ID like the
 other printers. The collector test now uses the recorded release shape.
 
-Known and not fixed here (tracked in #555), all reachable only now that rows arrive: `Published`
-is never read, yet every row is labelled `release-published`; `doctor` counts
-releases after trimming, so it reports 10 when 139 exist; `RevisionNum` and
-`Slug` read keys a Release lacks while `ReleaseNum` is ignored, so rows are
-identified by bare UUID; and `examples/live-delivery-observability/` plus the
-`json-contracts.md` sample still show the invented release shape.
+Follow-ups from that review (#555), now done. A Release row outlives its
+publication: ConfigHub clears `Published` when a Release is withdrawn and keeps
+the row, so release rows are labelled `release-published` only when the server
+says so, `release-not-published` when it says otherwise, and `release-recorded`
+when it does not say; absent is never read as false. `doctor` counts the rows
+in the time window (`releasesTotal`, `unitEventsTotal`), not the rows kept
+after trimming, so 139 releases no longer read as 10. Releases have no slug or
+revision number; rows carry `releaseNum` and are labelled
+`bundleBaseName#releaseNum` instead of a bare UUID. A matched release is stated
+to be a target-level join, not proof that it contains the object's unit, and
+the note is printed in the human and Markdown trace output as well as JSON. The
+example and `json-contracts.md` show the real shapes, including a withdrawn
+release.
 
-Still unproven: the unit-event read pins `--select ...,Unit,Space,Target`, and
-those are not UnitEvent fields either. The test server held no unit events and
-ConfigHub did not validate the selection on an empty result, so that read could
-not be exercised. Treat unit-event evidence as not live-proven (#555). MCP
-`confighub_releases` and `confighub_unit_events` send no `--select` and were
-unaffected.
+Still no slug-to-ID target lookup. One was written for #555 and removed after
+review: the chain's space (from a label) and target slug (from an OCI URL) come
+from different sources, so the lookup could resolve the slug in the wrong space
+and attach another target's releases. A chain that knows its target only by
+slug keeps the "target unknown" omission. The likely correct key for
+OCI-delivered objects is the manifest digest (`Release.ManifestDigest`). That,
+and the fact that cub-scout does not recognise the current
+`<registry>/space/<slug>` OCI URL layout at all, is #561.
+
+Joins are stricter now that unit events carry identity. When both sides carry an
+ID for a space, target or unit and the IDs differ, the row is not joined even if
+the slugs match. A row matched through `--confighub-space` rather than a space
+the resource names says `scope.space` in `matchedBy`, where it said `space`.
+
+`doctor` never promoted a real failed unit event: it read `Result` first, and
+ConfigHub reports an ordinary Apply with `Result: "None"` and the failure in
+`Status`. It now uses the classifier `map activity` uses, scans every event in
+the window rather than the rows kept for display, and judges only the latest
+event for a unit and action, so a failed Apply that a later Apply superseded is
+not raised as a current issue. An event still in progress carries Go's zero
+`TerminatedAt`; that is dropped instead of dating the activity row to year 1.
+
+Unit events: the earlier guess that this read returns HTTP 400 was wrong. `cub`
+does not forward `--select` for unit events at all, so the selection was a
+silent no-op; it is removed because it named fields a UnitEvent lacks and would
+fail the day `cub` forwards it. The real defect was identity: `cub` prints bare
+UnitEvents with flat `UnitID`, `UnitSlug`, `SpaceID` and `SpaceSlug`, and the
+parser looked only for sibling objects, so unit and space came out empty and no
+event could be joined to an object. Fixed, with a fixture derived from
+ConfigHub's published API schema. It is still not exercised against a server
+that holds unit events. A UnitEvent has no target.
+
+Left as found, listed in #561: an `Aborted` or `Canceled` unit event classifies
+as `normal`; `mcpUnitRefFromItem` is a third copy of the nested-then-flat lookup.
 
 Also passing on v0.5.1: the full unit suite, the read-only connected
 integration tests, all nine `confighub_*` MCP tools over the stdio gateway,
