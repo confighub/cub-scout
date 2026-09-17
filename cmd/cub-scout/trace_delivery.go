@@ -81,7 +81,69 @@ func attachTraceConfigHubDeliveryEvidence(ctx context.Context, result *agent.Tra
 	} else {
 		raw = collectGitOpsDeliveryEvidence(ctx, dynClient, opts)
 	}
+	preflightOmissions = append(preflightOmissions, resolveTraceTargetID(ctx, raw, &correlation, opts.Space)...)
 	result.DeliveryEvidence = correlateTraceDeliveryEvidence(result, raw, correlation, preflightOmissions)
+}
+
+// resolveTraceTargetID turns a target slug into the target ID that release
+// rows carry. A Release names its target by ID only, while a chain derived
+// from a ConfigHub OCI source or renderedFrom knows only the slug, so without
+// this the two never share a key and no release can be joined to the object.
+//
+// It is one bounded read, `cub target list --space <space> --where "Slug = ..."`,
+// made only when there are release rows to join, the space is a single named
+// space, and the resource gave a slug but no ID. The ID is taken only from a
+// single exact slug match. Anything else leaves the ID empty and says why; the
+// join then reports the target as unknown rather than guessing.
+func resolveTraceTargetID(ctx context.Context, raw *GitOpsDeliveryEvidence, correlation *agent.TraceDeliveryCorrelation, space string) []agent.TraceDeliveryOmission {
+	space = strings.TrimSpace(space)
+	slug := strings.TrimSpace(correlation.Target)
+	if correlation.TargetID != "" || slug == "" || space == "" || space == "*" {
+		return nil
+	}
+	if raw == nil || raw.ConfigHub == nil || len(raw.ConfigHub.Releases) == 0 {
+		return nil
+	}
+
+	args := []string{"target", "list", "--space", space, "-o", "json", "--where", fmt.Sprintf("Slug = '%s'", configHubFilterQuote(slug))}
+	omission := func(reason string) []agent.TraceDeliveryOmission {
+		return []agent.TraceDeliveryOmission{{
+			Layer:  "confighub.target",
+			Reason: reason,
+			Impact: "release rows name their target by ID, so they cannot be joined to this resource's target slug",
+		}}
+	}
+	out, err := runGitOpsCubCommand(ctx, args)
+	if err != nil {
+		return omission(fmt.Sprintf("cub %s failed: %v", strings.Join(args, " "), err))
+	}
+	payload, err := parseCubJSONPayload([]byte(out))
+	if err != nil {
+		return omission(fmt.Sprintf("cub target list returned unreadable JSON: %v", err))
+	}
+	var ids []string
+	for _, item := range cubExtractItems(payload) {
+		target := mcpNestedMap(item, "Target", "target")
+		if target == nil {
+			target = item
+		}
+		if mcpFirstString(target, "Slug", "slug") != slug {
+			continue
+		}
+		if id := mcpFirstString(target, "TargetID", "targetId"); id != "" {
+			ids = append(ids, id)
+		}
+	}
+	switch len(ids) {
+	case 1:
+		correlation.TargetID = ids[0]
+		correlation.MatchedBy = append(correlation.MatchedBy, "confighub.target.slug->targetId")
+		return nil
+	case 0:
+		return omission(fmt.Sprintf("no ConfigHub target with slug %q was found in space %q", slug, space))
+	default:
+		return omission(fmt.Sprintf("%d ConfigHub targets have slug %q in space %q", len(ids), slug, space))
+	}
 }
 
 func traceGitOpsDeliveryOptions(flags traceConfigHubDeliveryFlags, correlation agent.TraceDeliveryCorrelation) (gitOpsDeliveryEvidenceOptions, []agent.TraceDeliveryOmission) {
@@ -178,6 +240,9 @@ func correlateTraceDeliveryEvidence(
 			})
 		}
 		out.Releases = releases
+		if len(releases) > 0 {
+			out.Notes = append(out.Notes, "Release rows are joined to this resource by space and target. A row listed here was published for the resource's target; it does not show that the release contains this resource's unit.")
+		}
 
 		events, omission := matchTraceUnitEvents(correlation, raw.ConfigHub.UnitEvents)
 		if omission.Layer != "" {
@@ -386,6 +451,8 @@ func matchTraceReleases(correlation agent.TraceDeliveryCorrelation, releases []C
 			Digest:         release.Digest,
 			BundleBaseName: release.BundleBaseName,
 			RevisionNum:    release.RevisionNum,
+			ReleaseNum:     release.ReleaseNum,
+			Published:      release.Published,
 			CreatedAt:      release.CreatedAt,
 			MatchedBy:      []string{spaceBy, targetBy},
 		})
@@ -584,9 +651,10 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 	if len(evidence.Releases) > 0 {
 		fmt.Printf("  %sRecent releases:%s\n", colorDim, colorReset)
 		for _, release := range evidence.Releases {
-			fmt.Printf("    - %s target=%s digest=%s at=%s\n",
-				firstNonEmpty(release.Slug, release.ReleaseID, "-"),
+			fmt.Printf("    - %s target=%s published=%s digest=%s at=%s\n",
+				configHubReleaseDisplayName(release.Slug, release.BundleBaseName, release.ReleaseNum, release.ReleaseID),
 				firstNonEmpty(release.Target, release.TargetID, "-"),
+				configHubPublishedText(release.Published),
 				truncate(firstNonEmpty(release.Digest, "-"), 18),
 				firstNonEmpty(release.CreatedAt, "-"),
 			)

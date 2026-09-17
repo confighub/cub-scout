@@ -3607,6 +3607,8 @@ type mapActivityDeliveryEvidence struct {
 	Digest                   string   `json:"digest,omitempty"`
 	BundleBaseName           string   `json:"bundleBaseName,omitempty"`
 	RevisionNum              int      `json:"revisionNum,omitempty"`
+	ReleaseNum               int      `json:"releaseNum,omitempty"`
+	Published                *bool    `json:"published,omitempty"`
 	Revision                 string   `json:"revision,omitempty"`
 	SyncStatus               string   `json:"syncStatus,omitempty"`
 	HealthStatus             string   `json:"healthStatus,omitempty"`
@@ -4284,17 +4286,19 @@ func configHubLiveStatusActivityRow(evidence *GitOpsDeliveryEvidence, status Con
 }
 
 func configHubReleaseActivityRow(evidence *GitOpsDeliveryEvidence, release ConfigHubReleaseEvidence) mapActivityRow {
-	message := strings.TrimSpace(fmt.Sprintf("target=%s revision=%s digest=%s bundle=%s",
+	action, published := configHubReleaseAction(release)
+	message := strings.TrimSpace(fmt.Sprintf("target=%s release=%s published=%s digest=%s bundle=%s",
 		firstNonEmpty(release.Target, release.TargetID, "-"),
-		formatActivityRevisionNum(release.RevisionNum),
+		formatActivityRevisionNum(release.ReleaseNum),
+		published,
 		firstNonEmpty(release.Digest, "-"),
 		firstNonEmpty(release.BundleBaseName, "-"),
 	))
 	return mapActivityRow{
 		Time:              normalizeTimeString(release.CreatedAt, evidence.ObservedAt),
 		Source:            "confighub.release",
-		Resource:          fmt.Sprintf("Release/%s/%s", firstNonEmpty(release.Space, release.SpaceID, "unknown"), firstNonEmpty(release.Slug, release.ReleaseID, "unknown")),
-		Action:            "release-published",
+		Resource:          fmt.Sprintf("Release/%s/%s", firstNonEmpty(release.Space, release.SpaceID, "unknown"), configHubReleaseLabel(release)),
+		Action:            action,
 		Result:            "normal",
 		Message:           message,
 		SuggestedNextStep: "Use 'gitops status --with-confighub' or trace/explain with ConfigHub evidence to relate this release to live resources.",
@@ -4311,7 +4315,55 @@ func configHubReleaseActivityRow(evidence *GitOpsDeliveryEvidence, release Confi
 			Digest:         release.Digest,
 			BundleBaseName: release.BundleBaseName,
 			RevisionNum:    release.RevisionNum,
+			ReleaseNum:     release.ReleaseNum,
+			Published:      release.Published,
 		},
+	}
+}
+
+// configHubReleaseAction names a release row by what ConfigHub reports about
+// it. A Release row outlives its publication: ConfigHub clears Published when
+// the Release is withdrawn and keeps the row. Calling every row a publication
+// would claim a delivery that is no longer in effect, and a server that does
+// not report the field is not assumed either way.
+func configHubReleaseAction(release ConfigHubReleaseEvidence) (action, published string) {
+	published = configHubPublishedText(release.Published)
+	switch published {
+	case "true":
+		return "release-published", published
+	case "false":
+		return "release-not-published", published
+	default:
+		return "release-recorded", published
+	}
+}
+
+// configHubReleaseLabel is the shortest name that tells one Release from
+// another: a slug if the server gave one, else bundle#number, else the ID.
+// ReleaseNum is unique within a space, which is the scope the label is shown in.
+func configHubReleaseLabel(release ConfigHubReleaseEvidence) string {
+	return configHubReleaseDisplayName(release.Slug, release.BundleBaseName, release.ReleaseNum, release.ReleaseID)
+}
+
+func configHubReleaseDisplayName(slug, bundleBaseName string, releaseNum int, releaseID string) string {
+	if slug != "" {
+		return slug
+	}
+	if bundleBaseName != "" && releaseNum > 0 {
+		return fmt.Sprintf("%s#%d", bundleBaseName, releaseNum)
+	}
+	return firstNonEmpty(releaseID, "unknown")
+}
+
+// configHubPublishedText renders the three publication states for text output.
+func configHubPublishedText(published *bool) string {
+	switch {
+	case published == nil:
+		return "unknown"
+	case *published:
+		return "true"
+	default:
+		return "false"
 	}
 }
 

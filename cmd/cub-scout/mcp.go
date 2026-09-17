@@ -1227,12 +1227,10 @@ func sourceTruthStrategySchemaDescription() string {
 	return "Declared delivery path. Required, never inferred. One of: " + strings.Join(sourceTruthStrategySchemaValues(), ", ") + "."
 }
 
+// mcpConfigHubLiveStatusArgs is the same space read the CLI's delivery evidence
+// makes, so the MCP tool and `--with-confighub` cannot drift apart.
 func mcpConfigHubLiveStatusArgs(space string) []string {
-	args := []string{"space", "list", "-o", "json", "--select", "Slug,SpaceID,Annotations,Labels"}
-	if strings.TrimSpace(space) != "*" {
-		args = append(args, "--where", fmt.Sprintf("Slug = '%s'", configHubFilterQuote(space)))
-	}
-	return args
+	return gitOpsConfigHubSpaceListArgs(space)
 }
 
 func runMCPToolCommand(ctx context.Context, args []string) (string, error) {

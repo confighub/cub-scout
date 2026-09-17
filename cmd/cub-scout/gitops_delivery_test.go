@@ -303,10 +303,138 @@ func TestBuildConfigHubReleaseEvidence_ParsesRecordedV05ReleaseShape(t *testing.
 		TargetID:       "55555555-5555-4555-8555-555555555555",
 		Digest:         "sha256:0c9ae4903b120a5f9c79239c16d62a4cd04c1b540bc83541fde4c52ae0ac8d2e",
 		BundleBaseName: "payments-prod",
+		ReleaseNum:     1,
+		Published:      boolPtr(true),
 		CreatedAt:      "2026-09-03T15:02:09.791039Z",
 	}
-	if got != want {
+	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("release evidence =\n  %+v\nwant\n  %+v", got, want)
+	}
+}
+
+// Published is three-valued. A withdrawn Release reports false; a server that
+// does not report the field leaves it nil, which must not read as false.
+func TestBuildConfigHubReleaseEvidence_PublishedIsThreeValued(t *testing.T) {
+	raw := `[
+		{"Release":{"ReleaseID":"served","Published":true,"CreatedAt":"2026-09-03T15:02:03Z"}},
+		{"Release":{"ReleaseID":"withdrawn","Published":false,"CreatedAt":"2026-09-03T15:02:02Z"}},
+		{"Release":{"ReleaseID":"unreported","CreatedAt":"2026-09-03T15:02:01Z"}}
+	]`
+	releases, omissions := buildConfigHubReleaseEvidence(raw, 0)
+	if len(omissions) != 0 || len(releases) != 3 {
+		t.Fatalf("releases = %+v omissions = %+v, want three rows", releases, omissions)
+	}
+	if p := releases[0].Published; p == nil || !*p {
+		t.Fatalf("served release Published = %v, want true", p)
+	}
+	if p := releases[1].Published; p == nil || *p {
+		t.Fatalf("withdrawn release Published = %v, want false", p)
+	}
+	if p := releases[2].Published; p != nil {
+		t.Fatalf("unreported Published = %v, want nil: absent is not false", *p)
+	}
+}
+
+// `cub unit-event list -o json` prints bare UnitEvent objects. This shape is
+// derived from the UnitEvent schema in ConfigHub's public OpenAPI document and
+// from cub's list command at v0.5.1. It is not a recording: the server it was
+// tested against held no unit events. A UnitEvent names its unit and space as
+// flat fields and has no target at all. Action, Result and Status use values
+// from the published enums.
+const derivedV05UnitEventList = `[{
+	"Action":"Apply",
+	"BridgeWorkerID":"66666666-6666-4666-8666-666666666666",
+	"CreatedAt":"2026-09-03T15:03:00Z",
+	"EntityType":"UnitEvent",
+	"Message":"applied",
+	"OrganizationID":"11111111-1111-4111-8111-111111111111",
+	"Result":"None",
+	"RevisionNum":4,
+	"SpaceID":"33333333-3333-4333-8333-333333333333",
+	"SpaceSlug":"payments-prod",
+	"Status":"Completed",
+	"TerminatedAt":"2026-09-03T15:03:05Z",
+	"UnitEventID":"77777777-7777-4777-8777-777777777777",
+	"UnitEventNum":9,
+	"UnitID":"88888888-8888-4888-8888-888888888888",
+	"UnitSlug":"payments-api"
+}]`
+
+func TestBuildConfigHubUnitEventEvidence_ReadsFlatUnitAndSpaceIdentity(t *testing.T) {
+	events, omissions := buildConfigHubUnitEventEvidence(derivedV05UnitEventList, 10)
+	if len(omissions) != 0 || len(events) != 1 {
+		t.Fatalf("events = %+v omissions = %+v, want one event", events, omissions)
+	}
+	want := ConfigHubUnitEventEvidence{
+		EventID:      "77777777-7777-4777-8777-777777777777",
+		Action:       "Apply",
+		Result:       "None",
+		Status:       "Completed",
+		Message:      "applied",
+		Unit:         "payments-api",
+		UnitID:       "88888888-8888-4888-8888-888888888888",
+		Space:        "payments-prod",
+		SpaceID:      "33333333-3333-4333-8333-333333333333",
+		CreatedAt:    "2026-09-03T15:03:00Z",
+		TerminatedAt: "2026-09-03T15:03:05Z",
+	}
+	if events[0] != want {
+		t.Fatalf("unit event evidence =\n  %+v\nwant\n  %+v", events[0], want)
+	}
+}
+
+func TestGitOpsConfigHubUnitEventListArgs_SendsNoSelect(t *testing.T) {
+	joined := strings.Join(gitOpsConfigHubUnitEventListArgs("payments-prod", "2026-09-09T12:00:00Z"), " ")
+	if strings.Contains(joined, "--select") {
+		t.Fatalf("unit-event list args pin a field selection: %s", joined)
+	}
+	for _, want := range []string{"unit-event list", "--space payments-prod", "CreatedAt > '2026-09-09T12:00:00Z'"} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("unit-event list args = %q, want them to contain %q", joined, want)
+		}
+	}
+}
+
+// A related entity is named by a sibling object or by flat <Kind>Slug/<Kind>ID
+// fields. The row's own generic Slug, Name and ID are its own identity and
+// must never be read as the related entity's.
+func TestConfigHubRelatedRef(t *testing.T) {
+	tests := []struct {
+		name             string
+		item, row        map[string]interface{}
+		wantSlug, wantID string
+	}{
+		{
+			name:     "sibling object",
+			item:     map[string]interface{}{"Space": map[string]interface{}{"Slug": "payments-prod", "SpaceID": "sp-1"}},
+			row:      map[string]interface{}{},
+			wantSlug: "payments-prod", wantID: "sp-1",
+		},
+		{
+			name:     "flat fields on the row",
+			item:     map[string]interface{}{},
+			row:      map[string]interface{}{"SpaceSlug": "payments-prod", "SpaceID": "sp-1"},
+			wantSlug: "payments-prod", wantID: "sp-1",
+		},
+		{
+			name:     "sibling object wins over flat fields",
+			item:     map[string]interface{}{"Space": map[string]interface{}{"Slug": "from-sibling", "SpaceID": "sp-sibling"}},
+			row:      map[string]interface{}{"SpaceSlug": "from-row", "SpaceID": "sp-row"},
+			wantSlug: "from-sibling", wantID: "sp-sibling",
+		},
+		{
+			name: "the row's own slug and ID are not the related entity's",
+			item: map[string]interface{}{},
+			row:  map[string]interface{}{"Slug": "row-own-slug", "Name": "row-own-name", "ID": "row-own-id"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			slug, id := configHubRelatedRef(tt.item, tt.row, "Space")
+			if slug != tt.wantSlug || id != tt.wantID {
+				t.Fatalf("configHubRelatedRef = %q/%q, want %q/%q", slug, id, tt.wantSlug, tt.wantID)
+			}
+		})
 	}
 }
 

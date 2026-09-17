@@ -65,6 +65,10 @@ type ConfigHubDeliveryEvidence struct {
 	LiveStatuses []ConfigHubLiveStatusEvidence `json:"liveStatuses,omitempty"`
 	Releases     []ConfigHubReleaseEvidence    `json:"releases,omitempty"`
 	UnitEvents   []ConfigHubUnitEventEvidence  `json:"unitEvents,omitempty"`
+	// ReleasesTotal and UnitEventsTotal count the rows in the time window
+	// before Releases and UnitEvents were trimmed to maxItems.
+	ReleasesTotal   int `json:"releasesTotal,omitempty"`
+	UnitEventsTotal int `json:"unitEventsTotal,omitempty"`
 }
 
 type ConfigHubLiveStatusEvidence struct {
@@ -94,7 +98,13 @@ type ConfigHubReleaseEvidence struct {
 	Digest         string `json:"digest,omitempty"`
 	BundleBaseName string `json:"bundleBaseName,omitempty"`
 	RevisionNum    int    `json:"revisionNum,omitempty"`
-	CreatedAt      string `json:"createdAt,omitempty"`
+	// ReleaseNum is the Release's sequence number within its space.
+	ReleaseNum int `json:"releaseNum,omitempty"`
+	// Published reports whether the Release is currently served to its Target.
+	// ConfigHub clears it when a Release is withdrawn and keeps the row. Nil
+	// means the server did not report it, which is not the same as false.
+	Published *bool  `json:"published,omitempty"`
+	CreatedAt string `json:"createdAt,omitempty"`
 }
 
 type ConfigHubUnitEventEvidence struct {
@@ -304,7 +314,9 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 			Command: "cub " + strings.Join(releaseArgs, " "),
 		})
 	} else {
-		releases, omissions := buildConfigHubReleaseEvidence(rawReleases, rowLimit)
+		releases, omissions := buildConfigHubReleaseEvidence(rawReleases, 0)
+		evidence.ConfigHub.ReleasesTotal = len(releases)
+		omissions = append(omissions, trimReleaseEvidence(&releases, rowLimit)...)
 		evidence.ConfigHub.Releases = releases
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
@@ -319,7 +331,9 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 			Command: "cub " + strings.Join(eventArgs, " "),
 		})
 	} else {
-		events, omissions := buildConfigHubUnitEventEvidence(rawEvents, rowLimit)
+		events, omissions := buildConfigHubUnitEventEvidence(rawEvents, 0)
+		evidence.ConfigHub.UnitEventsTotal = len(events)
+		omissions = append(omissions, trimUnitEventEvidence(&events, rowLimit)...)
 		evidence.ConfigHub.UnitEvents = events
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
@@ -352,13 +366,16 @@ func gitOpsConfigHubReleaseListArgs(space, cutoff string) []string {
 	return args
 }
 
+// gitOpsConfigHubUnitEventListArgs sends no --select, for the same reason as the
+// release read. cub does not forward a selection for unit events today, so the
+// old one was a no-op; it also named Unit, Space and Target, which are not
+// UnitEvent fields and would be rejected the day cub starts forwarding it.
 func gitOpsConfigHubUnitEventListArgs(space, cutoff string) []string {
 	args := []string{
 		"unit-event", "list",
 		"--space", space,
 		"-o", "json",
 		"--where", fmt.Sprintf("CreatedAt > '%s'", configHubFilterQuote(cutoff)),
-		"--select", "UnitEventID,Action,Result,Status,Message,CreatedAt,TerminatedAt,Unit,Space,Target",
 	}
 	return args
 }
@@ -571,43 +588,28 @@ func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubRelease
 		if releaseObj == nil {
 			releaseObj = item
 		}
-		spaceObj := mcpNestedMap(item, "Space", "space")
-		if spaceObj == nil {
-			spaceObj = mcpNestedMap(releaseObj, "Space", "space")
-		}
-		targetObj := mcpNestedMap(item, "Target", "target")
-		if targetObj == nil {
-			targetObj = mcpNestedMap(releaseObj, "Target", "target")
-		}
+		space, spaceID := configHubRelatedRef(item, releaseObj, "Space")
+		target, targetID := configHubRelatedRef(item, releaseObj, "Target")
 
 		release := ConfigHubReleaseEvidence{
 			Slug:           mcpFirstString(releaseObj, "Slug", "slug", "Name", "name"),
 			ReleaseID:      mcpFirstString(releaseObj, "ReleaseID", "releaseId", "ID", "id"),
-			Space:          mcpFirstString(spaceObj, "Slug", "slug", "Name", "name", "SpaceSlug", "spaceSlug"),
-			SpaceID:        mcpFirstString(spaceObj, "SpaceID", "spaceId", "ID", "id"),
-			Target:         mcpFirstString(targetObj, "Slug", "slug", "Name", "name", "TargetSlug", "targetSlug"),
-			TargetID:       mcpFirstString(targetObj, "TargetID", "targetId", "ID", "id"),
+			Space:          space,
+			SpaceID:        spaceID,
+			Target:         target,
+			TargetID:       targetID,
 			Digest:         mcpFirstString(releaseObj, "Digest", "digest", "OCIManifestDigest", "ociManifestDigest", "BundleDigest", "bundleDigest"),
 			BundleBaseName: mcpFirstString(releaseObj, "BundleBaseName", "bundleBaseName", "Bundle", "bundle"),
 			CreatedAt:      mcpFirstString(releaseObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
 		}
-		// cub release list returns a bare Release with no sibling Space or
-		// Target object: the space and (from v0.5) target identity are
-		// fields of the Release itself.
-		if release.Space == "" {
-			release.Space = mcpFirstString(releaseObj, "SpaceSlug", "spaceSlug")
-		}
-		if release.SpaceID == "" {
-			release.SpaceID = mcpFirstString(releaseObj, "SpaceID", "spaceId")
-		}
-		if release.Target == "" {
-			release.Target = mcpFirstString(releaseObj, "TargetSlug", "targetSlug")
-		}
-		if release.TargetID == "" {
-			release.TargetID = mcpFirstString(releaseObj, "TargetID", "targetId")
-		}
 		if value, ok := mcpFirstInt(releaseObj, "RevisionNum", "revisionNum", "RevisionNumber", "revisionNumber"); ok {
 			release.RevisionNum = value
+		}
+		if value, ok := mcpFirstInt(releaseObj, "ReleaseNum", "releaseNum"); ok {
+			release.ReleaseNum = value
+		}
+		if value, ok := configHubBoolField(releaseObj, "Published", "published"); ok {
+			release.Published = &value
 		}
 		releases = append(releases, release)
 	}
@@ -617,6 +619,45 @@ func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubRelease
 	})
 	omissions := trimReleaseEvidence(&releases, maxItems)
 	return releases, omissions
+}
+
+// configHubRelatedRef reads the slug and ID of an entity related to a list row.
+// kind is "Space", "Target" or "Unit".
+//
+// ConfigHub names a related entity in one of two ways. An extended response
+// carries it as a sibling object, {"Space":{"Slug":...,"SpaceID":...}}. A bare
+// entity, which is what `cub release list` and `cub unit-event list` print,
+// carries it as flat fields on the row itself, "SpaceSlug" and "SpaceID". The
+// generic "Slug", "Name" and "ID" keys are read only from the sibling object:
+// on the row they are the row's own identity, not the related entity's.
+func configHubRelatedRef(item, row map[string]interface{}, kind string) (slug, id string) {
+	lower := strings.ToLower(kind[:1]) + kind[1:]
+	related := mcpNestedMap(item, kind, lower)
+	if related == nil {
+		related = mcpNestedMap(row, kind, lower)
+	}
+	slugKeys := []string{kind + "Slug", lower + "Slug"}
+	idKeys := []string{kind + "ID", lower + "Id"}
+	slug = firstNonEmpty(
+		mcpFirstString(related, append([]string{"Slug", "slug", "Name", "name"}, slugKeys...)...),
+		mcpFirstString(row, slugKeys...),
+	)
+	id = firstNonEmpty(
+		mcpFirstString(related, append(append([]string{}, idKeys...), "ID", "id")...),
+		mcpFirstString(row, idKeys...),
+	)
+	return slug, id
+}
+
+// configHubBoolField reads a boolean field, reporting whether it was present.
+// Absent is distinct from false.
+func configHubBoolField(item map[string]interface{}, keys ...string) (bool, bool) {
+	for _, key := range keys {
+		if value, ok := item[key].(bool); ok {
+			return value, true
+		}
+	}
+	return false, false
 }
 
 func buildConfigHubUnitEventEvidence(raw string, maxItems int) ([]ConfigHubUnitEventEvidence, []GitOpsDeliveryEvidenceOmission) {
@@ -631,18 +672,9 @@ func buildConfigHubUnitEventEvidence(raw string, maxItems int) ([]ConfigHubUnitE
 		if eventObj == nil {
 			eventObj = item
 		}
-		unitObj := mcpNestedMap(item, "Unit", "unit")
-		if unitObj == nil {
-			unitObj = mcpNestedMap(eventObj, "Unit", "unit")
-		}
-		spaceObj := mcpNestedMap(item, "Space", "space")
-		if spaceObj == nil {
-			spaceObj = mcpNestedMap(eventObj, "Space", "space")
-		}
-		targetObj := mcpNestedMap(item, "Target", "target")
-		if targetObj == nil {
-			targetObj = mcpNestedMap(eventObj, "Target", "target")
-		}
+		unit, unitID := configHubRelatedRef(item, eventObj, "Unit")
+		space, spaceID := configHubRelatedRef(item, eventObj, "Space")
+		target, targetID := configHubRelatedRef(item, eventObj, "Target")
 
 		events = append(events, ConfigHubUnitEventEvidence{
 			EventID:      mcpFirstString(eventObj, "UnitEventID", "unitEventId", "EventID", "eventId", "ID", "id"),
@@ -650,12 +682,12 @@ func buildConfigHubUnitEventEvidence(raw string, maxItems int) ([]ConfigHubUnitE
 			Result:       mcpFirstString(eventObj, "Result", "result"),
 			Status:       mcpFirstString(eventObj, "Status", "status", "Condition", "condition"),
 			Message:      mcpFirstString(eventObj, "Message", "message", "Summary", "summary"),
-			Unit:         mcpFirstString(unitObj, "Slug", "slug", "Name", "name", "UnitSlug", "unitSlug"),
-			UnitID:       mcpFirstString(unitObj, "UnitID", "unitId", "ID", "id"),
-			Space:        mcpFirstString(spaceObj, "Slug", "slug", "Name", "name", "SpaceSlug", "spaceSlug"),
-			SpaceID:      mcpFirstString(spaceObj, "SpaceID", "spaceId", "ID", "id"),
-			Target:       mcpFirstString(targetObj, "Slug", "slug", "Name", "name", "TargetSlug", "targetSlug"),
-			TargetID:     mcpFirstString(targetObj, "TargetID", "targetId", "ID", "id"),
+			Unit:         unit,
+			UnitID:       unitID,
+			Space:        space,
+			SpaceID:      spaceID,
+			Target:       target,
+			TargetID:     targetID,
 			CreatedAt:    mcpFirstString(eventObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
 			TerminatedAt: mcpFirstString(eventObj, "TerminatedAt", "terminatedAt", "CompletedAt", "completedAt"),
 		})
@@ -917,9 +949,10 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 	if evidence.ConfigHub != nil && len(evidence.ConfigHub.Releases) > 0 {
 		fmt.Printf("  Recent releases:\n")
 		for _, release := range evidence.ConfigHub.Releases {
-			fmt.Printf("    - %s target=%s digest=%s at=%s\n",
-				firstNonEmpty(release.Slug, release.ReleaseID, "-"),
+			fmt.Printf("    - %s target=%s published=%s digest=%s at=%s\n",
+				configHubReleaseLabel(release),
 				firstNonEmpty(release.Target, release.TargetID, "-"),
+				configHubPublishedText(release.Published),
 				truncate(firstNonEmpty(release.Digest, "-"), 18),
 				firstNonEmpty(release.CreatedAt, "-"),
 			)

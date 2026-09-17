@@ -565,12 +565,12 @@ includes two additive fields:
       "ready": 0,
       "notReady": 1
     },
-    "recentReleases": 1,
+    "recentReleases": 139,
     "recentUnitEvents": 1,
     "omissions": [
       {
         "layer": "confighub.releases",
-        "reason": "trimmed release rows to maxItems=10"
+        "reason": "trimmed 139 release rows to maxItems=10"
       }
     ]
   },
@@ -591,7 +591,8 @@ Concrete failed/stale delivery feedback, failed unit events, and unhealthy
 observed event consumers may be promoted into `topIssues` using the same
 severity ordering as other doctor issues. Missing connection, missing writeback,
 RBAC/list failures, and incomplete ConfigHub evidence remain structured
-omissions.
+omissions. `delivery.recentReleases` and `delivery.recentUnitEvents` count the
+rows in the time window, not the rows kept after trimming to `maxItems`.
 
 ### Three-way resource rollout additions (compare three-way --format json)
 
@@ -984,25 +985,33 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
       ],
       "releases": [
         {
-          "slug": "release-42",
-          "releaseId": "r-42",
+          "releaseId": "22222222-2222-4222-8222-222222222222",
           "space": "prod",
-          "target": "cluster-prod",
+          "spaceId": "sp-123",
+          "targetId": "55555555-5555-4555-8555-555555555555",
           "digest": "sha256:abc",
+          "bundleBaseName": "prod",
+          "releaseNum": 42,
+          "published": true,
           "createdAt": "2026-09-10T11:50:00Z"
         }
       ],
       "unitEvents": [
         {
-          "eventId": "ue-1",
-          "action": "ReleasePublished",
-          "result": "Succeeded",
+          "eventId": "77777777-7777-4777-8777-777777777777",
+          "action": "Apply",
+          "result": "None",
+          "status": "Completed",
           "unit": "api",
+          "unitId": "88888888-8888-4888-8888-888888888888",
           "space": "prod",
-          "target": "cluster-prod",
-          "createdAt": "2026-09-10T11:51:00Z"
+          "spaceId": "sp-123",
+          "createdAt": "2026-09-10T11:51:00Z",
+          "terminatedAt": "2026-09-10T11:51:05Z"
         }
-      ]
+      ],
+      "releasesTotal": 1,
+      "unitEventsTotal": 1
     },
     "eventConsumers": [
       {
@@ -1033,6 +1042,10 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
 | `scope.space` | Defaults to the current cub space when available; `*` is accepted only when explicitly supplied. |
 | `scope.since` | Bounds release and unit-event reads by `CreatedAt > <cutoff>`. |
 | `scope.maxItems` | Caps rows kept in output after the time-window query. |
+| `configHub.releasesTotal`, `configHub.unitEventsTotal` | Rows the time-window query returned, counted before `releases[]` and `unitEvents[]` were trimmed to `maxItems`. `doctor` reports these as `delivery.recentReleases` and `delivery.recentUnitEvents`, so 139 releases do not read as 10. |
+| `configHub.releases[]` | Parsed from `cub release list`, which returns a bare Release: `releaseId`, `space`, `spaceId`, `targetId` (ConfigHub v0.5 and later), `digest`, `bundleBaseName`, `releaseNum`, `published`, `createdAt`. The read pins no `--select`, because ConfigHub rejects a selection naming any field the entity lacks and the field set changes between server versions. |
+| `releases[].published` | `true` while ConfigHub serves the Release to its Target, `false` once it is withdrawn (the row is kept), omitted when the server does not report it. Omitted is not `false`. |
+| `configHub.unitEvents[]` | Parsed from `cub unit-event list`, which returns bare UnitEvents: `eventId`, `action`, `result`, `status`, `message`, `unit`, `unitId`, `space`, `spaceId`, `createdAt`, `terminatedAt`. A UnitEvent has no target. This shape is taken from ConfigHub's published API schema; it has not been exercised against a server that holds unit events. |
 | `configHub.liveStatuses[]` | Parsed from the `confighub.com/live-status` Space annotation. Missing or malformed annotations become omissions. |
 | `liveStatuses[].freshness` | `fresh`, `stale`, or `unknown`, based on `observedAt` and `--confighub-stale-after`. Missing, invalid, zero, or future timestamps are `unknown`; they are never clamped to fresh. |
 | `liveStatuses[].deliveryVerdict` | Delivery-facing verdict from sync/operation state, gated by timestamp freshness. Only fresh evidence can yield `PASS` or `BLOCK`; stale reported state yields `WATCH`, unknown freshness yields `INCONCLUSIVE`. Empty status stays `INCONCLUSIVE`. |
@@ -1104,7 +1117,7 @@ ConfigHub activity row `source` values:
 | Source | `deliveryEvidence.kind` | Meaning |
 |---|---|---|
 | `confighub.liveStatus` | `liveStatus` | Latest delivery/application-health writeback observed on a ConfigHub Space annotation. |
-| `confighub.release` | `release` | Recent ConfigHub release publication row within the bounded lookback window. |
+| `confighub.release` | `release` | Recent ConfigHub Release row within the bounded lookback window. `action` is `release-published` only when ConfigHub reports `Published: true`. A Release that is no longer served to its Target (withdrawn) is `release-not-published`, and a server that does not report the field yields `release-recorded`. |
 | `confighub.unitEvent` | `unitEvent` | Recent ConfigHub unit event row within the bounded lookback window. |
 | `confighub.eventConsumer` | `eventConsumer` | Label-selected in-cluster event-consumer Deployment health. |
 | `confighub.omission` | `omission` | Missing, inaccessible, malformed, stale, disconnected, or trimmed evidence surfaced as a timeline fact. |
@@ -1182,10 +1195,14 @@ space correlation.
     },
     "releases": [
       {
-        "slug": "release-42",
+        "releaseId": "22222222-2222-4222-8222-222222222222",
         "space": "payments-prod",
-        "target": "prod",
+        "spaceId": "sp-123",
+        "targetId": "t-123",
         "digest": "sha256:abc",
+        "bundleBaseName": "payments-prod",
+        "releaseNum": 42,
+        "published": true,
         "createdAt": "2026-09-10T11:50:00Z",
         "matchedBy": ["spaceId", "targetId"]
       }
@@ -1193,8 +1210,9 @@ space correlation.
     "unitEvents": [
       {
         "eventId": "ue-1",
-        "action": "ReleasePublished",
-        "result": "Succeeded",
+        "action": "Apply",
+        "result": "None",
+        "status": "Completed",
         "unit": "payments-api",
         "unitId": "u-123",
         "createdAt": "2026-09-10T11:51:00Z",
@@ -1232,8 +1250,11 @@ space correlation.
 | `correlation.matchedBy[]` | Lists the exact identifiers used to form the resource correlation. |
 | `liveStatus` | Included only when a live-status row matches by exact space plus Argo Application name or exact space plus ConfigHub unit slug. |
 | `liveStatus.matchedBy[]` | Lists the exact live-status join keys, for example `spaceId` and `liveStatus.app==chain.application`. |
-| `releases[]` | Included only for rows matching exact space plus target ID or target slug. A space-only match is not object-level evidence. |
-| `unitEvents[]` | Included only for rows matching exact unit ID, or exact unit slug plus space. |
+| `releases[]` | Included only for rows matching exact space plus target ID or target slug. A space-only match is not object-level evidence. The join is target-level: a row was published for the resource's target, which does not show that the release contains the resource's unit, and `notes[]` says so whenever rows are attached. Rows are matched before trimming to `maxItems`. |
+| `releases[].published` | `true` while ConfigHub serves the Release to its Target, `false` once it is withdrawn (the row is kept), omitted when the server does not report it. Omitted is not `false`. |
+| `releases[].releaseNum` | The Release's sequence number within its space. ConfigHub Releases have no slug and no revision number, so `slug` and `revisionNum` are not reported by current servers; text output labels a row `bundleBaseName#releaseNum`. |
+| `correlation.matchedBy[]` `confighub.target.slug->targetId` | A Release names its target by ID only. When the resource gives only a target slug (a ConfigHub OCI source or `renderedFrom` chain), the slug is resolved with one bounded `cub target list --space <space> --where "Slug = '<slug>'"` read, made only when release rows exist and the space is a single named space. The ID is taken only from a single exact match; otherwise a `confighub.target` omission explains why and the release join reports the target as unknown. |
+| `unitEvents[]` | Included only for rows matching exact unit ID, or exact unit slug plus space. A ConfigHub UnitEvent names its unit and space (`unitId`, `unit`, `spaceId`, `space`) and has no target, so `target` and `targetId` are not reported. Rows are matched before trimming to `maxItems`. |
 | `eventConsumers[]` | Cluster-observed event-consumer Deployment health. This is contextual evidence, not proof that the traced object was synced. |
 | `omissions[]` | Structured explanation for missing identity, missing scope, missing/malformed writeback, disconnected ConfigHub, non-matching rows, or RBAC/list failures. |
 

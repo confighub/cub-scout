@@ -101,16 +101,16 @@ func TestGitOpsDeliveryEvidenceToActivityRows(t *testing.T) {
 				DeliveryVerdict:          agent.VerdictWATCH,
 				ApplicationHealthVerdict: agent.VerdictPASS,
 			}},
+			// Shaped like a real ConfigHub release row: no slug, target by ID.
 			Releases: []ConfigHubReleaseEvidence{{
-				Slug:           "release-42",
 				ReleaseID:      "rel-42",
 				Space:          "payments-prod",
 				SpaceID:        "sp-123",
-				Target:         "prod",
 				TargetID:       "target-123",
 				Digest:         "sha256:abcdef",
 				BundleBaseName: "payments-api",
-				RevisionNum:    7,
+				ReleaseNum:     7,
+				Published:      boolPtr(true),
 				CreatedAt:      "2026-09-10T11:57:00Z",
 			}},
 			UnitEvents: []ConfigHubUnitEventEvidence{{
@@ -171,8 +171,14 @@ func TestGitOpsDeliveryEvidenceToActivityRows(t *testing.T) {
 	}
 
 	release := bySource["confighub.release"]
-	if release.Action != "release-published" || release.DeliveryEvidence.RevisionNum != 7 || release.DeliveryEvidence.Digest != "sha256:abcdef" {
+	if release.Action != "release-published" || release.DeliveryEvidence.ReleaseNum != 7 || release.DeliveryEvidence.Digest != "sha256:abcdef" {
 		t.Fatalf("release row = %+v, want release details", release)
+	}
+	if release.Resource != "Release/payments-prod/payments-api#7" {
+		t.Fatalf("release resource = %q, want the bundle#number label, not a bare UUID", release.Resource)
+	}
+	if !strings.Contains(release.Message, "target=target-123") || !strings.Contains(release.Message, "published=true") {
+		t.Fatalf("release message = %q, want the target ID and publication state", release.Message)
 	}
 
 	unitEvent := bySource["confighub.unitEvent"]
@@ -418,6 +424,35 @@ func TestActivityDeliveryIdentityAndReadBudget(t *testing.T) {
 				if len(filtered) != 1 || filtered[0].DeliveryEvidence.Kind != "omission" {
 					t.Fatalf("namespace filter hid collision: %+v", filtered)
 				}
+			}
+		})
+	}
+}
+
+// A Release row outlives its publication: ConfigHub clears Published when the
+// Release is withdrawn and keeps the row. Only a row the server reports as
+// published may be called a publication, and a server that does not report
+// the field is not assumed either way.
+func TestConfigHubReleaseActivityRow_NamesTheRowByItsPublicationState(t *testing.T) {
+	evidence := &GitOpsDeliveryEvidence{}
+	tests := []struct {
+		name          string
+		published     *bool
+		wantAction    string
+		wantInMessage string
+	}{
+		{name: "served to its target", published: boolPtr(true), wantAction: "release-published", wantInMessage: "published=true"},
+		{name: "withdrawn", published: boolPtr(false), wantAction: "release-not-published", wantInMessage: "published=false"},
+		{name: "server did not report it", published: nil, wantAction: "release-recorded", wantInMessage: "published=unknown"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			row := configHubReleaseActivityRow(evidence, ConfigHubReleaseEvidence{ReleaseID: "r-1", Space: "payments-prod", Published: tt.published})
+			if row.Action != tt.wantAction {
+				t.Fatalf("action = %q, want %q", row.Action, tt.wantAction)
+			}
+			if !strings.Contains(row.Message, tt.wantInMessage) {
+				t.Fatalf("message = %q, want it to contain %q", row.Message, tt.wantInMessage)
 			}
 		})
 	}

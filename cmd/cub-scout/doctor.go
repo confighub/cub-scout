@@ -562,8 +562,10 @@ func buildDoctorDeliverySummary(evidence *GitOpsDeliveryEvidence) *DoctorDeliver
 	}
 	if evidence.ConfigHub != nil {
 		summary.LiveStatus.Total = len(evidence.ConfigHub.LiveStatuses)
-		summary.RecentReleases = len(evidence.ConfigHub.Releases)
-		summary.RecentUnitEvents = len(evidence.ConfigHub.UnitEvents)
+		// Count the rows in the time window, not the rows kept after trimming
+		// to maxItems: 139 releases must not read as 10.
+		summary.RecentReleases = max(evidence.ConfigHub.ReleasesTotal, len(evidence.ConfigHub.Releases))
+		summary.RecentUnitEvents = max(evidence.ConfigHub.UnitEventsTotal, len(evidence.ConfigHub.UnitEvents))
 		for _, status := range evidence.ConfigHub.LiveStatuses {
 			countDoctorVerdict(&summary.LiveStatus.Delivery, status.DeliveryVerdict)
 			countDoctorVerdict(&summary.LiveStatus.ApplicationHealth, status.ApplicationHealthVerdict)

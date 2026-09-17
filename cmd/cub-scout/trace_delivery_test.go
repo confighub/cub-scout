@@ -4,6 +4,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -347,6 +349,122 @@ func TestMatchTraceReleases_DisjointTargetKeysAreUnknownNotNoMatch(t *testing.T)
 	}
 }
 
+// A Release names its target by ID. A chain derived from an OCI source knows
+// only the slug, so the slug is resolved with one bounded target read. The ID
+// is taken only from a single exact match; anything else stays unknown.
+func TestResolveTraceTargetID(t *testing.T) {
+	withReleases := &GitOpsDeliveryEvidence{ConfigHub: &ConfigHubDeliveryEvidence{Releases: []ConfigHubReleaseEvidence{{ReleaseID: "r-1"}}}}
+	oneTarget := `[{"Target":{"Slug":"us-west","TargetID":"t-1"},"Space":{"Slug":"payments-prod"}}]`
+
+	tests := []struct {
+		name         string
+		raw          *GitOpsDeliveryEvidence
+		correlation  agent.TraceDeliveryCorrelation
+		space        string
+		reply        string
+		replyErr     error
+		wantCalls    int
+		wantTargetID string
+		wantOmission string
+	}{
+		{name: "single exact match", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "payments-prod", reply: oneTarget, wantCalls: 1, wantTargetID: "t-1"},
+		{name: "no such target", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "payments-prod", reply: `[]`, wantCalls: 1, wantOmission: "no ConfigHub target with slug"},
+		{
+			name: "a different slug in the reply is not a match", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "payments-prod",
+			reply: `[{"Target":{"Slug":"us-west-2","TargetID":"t-9"}}]`, wantCalls: 1, wantOmission: "no ConfigHub target with slug",
+		},
+		{
+			name: "two targets with the slug", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "payments-prod",
+			reply: `[{"Target":{"Slug":"us-west","TargetID":"t-1"}},{"Target":{"Slug":"us-west","TargetID":"t-2"}}]`, wantCalls: 1, wantOmission: "2 ConfigHub targets have slug",
+		},
+		{name: "the read fails", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "payments-prod", replyErr: errors.New("HTTP 403"), wantCalls: 1, wantOmission: "HTTP 403"},
+		{name: "unreadable reply", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "payments-prod", reply: `not json`, wantCalls: 1, wantOmission: "unreadable JSON"},
+		{name: "ID already known: no read", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{Target: "us-west", TargetID: "t-known"}, space: "payments-prod", wantTargetID: "t-known"},
+		{name: "no target slug: no read", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{}, space: "payments-prod"},
+		{name: "all spaces: no read, a slug is only unique within one space", raw: withReleases, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "*"},
+		{name: "no release rows to join: no read", raw: &GitOpsDeliveryEvidence{ConfigHub: &ConfigHubDeliveryEvidence{}}, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "payments-prod"},
+		{name: "ConfigHub not read at all: no read", raw: &GitOpsDeliveryEvidence{}, correlation: agent.TraceDeliveryCorrelation{Target: "us-west"}, space: "payments-prod"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			oldRun := runGitOpsCubCommand
+			t.Cleanup(func() { runGitOpsCubCommand = oldRun })
+			var calls [][]string
+			runGitOpsCubCommand = func(ctx context.Context, args []string) (string, error) {
+				calls = append(calls, args)
+				return tt.reply, tt.replyErr
+			}
+
+			correlation := tt.correlation
+			omissions := resolveTraceTargetID(context.Background(), tt.raw, &correlation, tt.space)
+
+			if len(calls) != tt.wantCalls {
+				t.Fatalf("cub calls = %v, want %d", calls, tt.wantCalls)
+			}
+			if tt.wantCalls == 1 {
+				joined := strings.Join(calls[0], " ")
+				for _, want := range []string{"target list", "--space payments-prod", "Slug = 'us-west'"} {
+					if !strings.Contains(joined, want) {
+						t.Fatalf("cub args = %q, want them to contain %q", joined, want)
+					}
+				}
+			}
+			if correlation.TargetID != tt.wantTargetID {
+				t.Fatalf("TargetID = %q, want %q", correlation.TargetID, tt.wantTargetID)
+			}
+			if tt.wantOmission == "" {
+				if len(omissions) != 0 {
+					t.Fatalf("omissions = %+v, want none", omissions)
+				}
+				return
+			}
+			if len(omissions) != 1 || omissions[0].Layer != "confighub.target" || !strings.Contains(omissions[0].Reason, tt.wantOmission) {
+				t.Fatalf("omissions = %+v, want one confighub.target omission containing %q", omissions, tt.wantOmission)
+			}
+		})
+	}
+}
+
+// End to end for the case that could never match before: the resource knows
+// its target only by slug, the release only by ID.
+func TestResolvedTargetIDJoinsASlugOnlyChainToItsRelease(t *testing.T) {
+	oldRun := runGitOpsCubCommand
+	t.Cleanup(func() { runGitOpsCubCommand = oldRun })
+	runGitOpsCubCommand = func(ctx context.Context, args []string) (string, error) {
+		return `[{"Target":{"Slug":"us-west","TargetID":"t-1"}}]`, nil
+	}
+
+	raw := &GitOpsDeliveryEvidence{
+		Scope: GitOpsDeliveryEvidenceScope{Space: "payments-prod", MaxItems: 10},
+		ConfigHub: &ConfigHubDeliveryEvidence{Releases: []ConfigHubReleaseEvidence{
+			{ReleaseID: "mine", Space: "payments-prod", TargetID: "t-1", BundleBaseName: "payments-prod", ReleaseNum: 3, Published: boolPtr(false)},
+			{ReleaseID: "other", Space: "payments-prod", TargetID: "t-2"},
+		}},
+	}
+	correlation := agent.TraceDeliveryCorrelation{Space: "payments-prod", Target: "us-west"}
+	omissions := resolveTraceTargetID(context.Background(), raw, &correlation, "payments-prod")
+	got := correlateTraceDeliveryEvidence(nil, raw, correlation, omissions)
+
+	if len(got.Releases) != 1 || got.Releases[0].ReleaseID != "mine" {
+		t.Fatalf("releases = %+v, want only the release for the resolved target", got.Releases)
+	}
+	if got.Releases[0].ReleaseNum != 3 || got.Releases[0].Published == nil || *got.Releases[0].Published {
+		t.Fatalf("release = %+v, want ReleaseNum 3 and Published false carried through", got.Releases[0])
+	}
+	if !strings.Contains(strings.Join(got.Correlation.MatchedBy, " "), "confighub.target.slug->targetId") {
+		t.Fatalf("matchedBy = %v, want the slug resolution recorded", got.Correlation.MatchedBy)
+	}
+	noted := false
+	for _, note := range got.Notes {
+		if strings.Contains(note, "joined to this resource by space and target") {
+			noted = true
+		}
+	}
+	if !noted {
+		t.Fatalf("notes = %v, want the join level stated: a target-level match is not unit-level proof", got.Notes)
+	}
+}
+
 func TestEnrichTraceConfigHubFromObject(t *testing.T) {
 	result := &agent.TraceResult{}
 	obj := &unstructured.Unstructured{}
@@ -388,4 +506,51 @@ func containsTraceOmission(omissions []agent.TraceDeliveryOmission, layer string
 		}
 	}
 	return false
+}
+
+// doctor reports how many releases and unit events the window held, not how
+// many survived trimming to maxItems.
+func TestCollectGitOpsDeliveryEvidence_CountsRowsBeforeTrimming(t *testing.T) {
+	oldRequire, oldRun := requireGitOpsConfigHubFn, runGitOpsCubCommand
+	t.Cleanup(func() { requireGitOpsConfigHubFn, runGitOpsCubCommand = oldRequire, oldRun })
+	requireGitOpsConfigHubFn = func() error { return nil }
+
+	var releases, events strings.Builder
+	releases.WriteString("[")
+	events.WriteString("[")
+	for i := 0; i < 12; i++ {
+		if i > 0 {
+			releases.WriteString(",")
+			events.WriteString(",")
+		}
+		fmt.Fprintf(&releases, `{"Release":{"ReleaseID":"r-%02d","SpaceSlug":"payments-prod","CreatedAt":"2026-09-10T11:%02d:00Z"}}`, i, 10+i)
+		fmt.Fprintf(&events, `{"UnitEventID":"e-%02d","SpaceSlug":"payments-prod","CreatedAt":"2026-09-10T11:%02d:00Z"}`, i, 10+i)
+	}
+	releases.WriteString("]")
+	events.WriteString("]")
+	runGitOpsCubCommand = func(ctx context.Context, args []string) (string, error) {
+		switch args[0] {
+		case "release":
+			return releases.String(), nil
+		case "unit-event":
+			return events.String(), nil
+		}
+		return "[]", nil
+	}
+
+	evidence := collectGitOpsDeliveryEvidence(context.Background(), newGitOpsDeliveryFakeClient(), gitOpsDeliveryEvidenceOptions{
+		Space: "payments-prod", Since: "24h", Window: 24 * time.Hour, StaleAfter: 15 * time.Minute,
+		Now: time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC), MaxItems: 10,
+	})
+
+	if len(evidence.ConfigHub.Releases) != 10 || evidence.ConfigHub.ReleasesTotal != 12 {
+		t.Fatalf("releases kept = %d total = %d, want 10 kept of 12", len(evidence.ConfigHub.Releases), evidence.ConfigHub.ReleasesTotal)
+	}
+	if len(evidence.ConfigHub.UnitEvents) != 10 || evidence.ConfigHub.UnitEventsTotal != 12 {
+		t.Fatalf("unit events kept = %d total = %d, want 10 kept of 12", len(evidence.ConfigHub.UnitEvents), evidence.ConfigHub.UnitEventsTotal)
+	}
+	summary := buildDoctorDeliverySummary(evidence)
+	if summary.RecentReleases != 12 || summary.RecentUnitEvents != 12 {
+		t.Fatalf("doctor counts = %d releases / %d unit events, want 12 / 12, not the trimmed 10", summary.RecentReleases, summary.RecentUnitEvents)
+	}
 }
