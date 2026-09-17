@@ -2011,20 +2011,11 @@ func (m *LocalClusterModel) runShellOut() tea.Cmd {
 		// Build context environment variables (session-scoped)
 		// Note: We intentionally do NOT export CUB_EMAIL to avoid identity leakage
 		// into shell history, child processes, or debug logs.
-		env := os.Environ()
-		env = append(env, "CUB_SCOUT_TUI=1")
-		if m.contextName != "" {
-			env = append(env, "CUB_CONTEXT="+m.contextName)
-		}
-		if m.clusterName != "" {
-			env = append(env, "CUB_CLUSTER="+m.clusterName)
-		}
+		namespace := ""
 		if m.namespaceIdx > 0 && m.namespaceIdx <= len(m.namespaces) {
-			env = append(env, "CUB_NAMESPACE="+m.namespaces[m.namespaceIdx-1])
+			namespace = m.namespaces[m.namespaceIdx-1]
 		}
-		if m.connectionMode == "connected" {
-			env = append(env, "CUB_CONNECTED=1")
-		}
+		env := tuiShellEnv(os.Environ(), m.contextName, m.clusterName, namespace, m.connectionMode == "connected")
 
 		// Create shell startup script that sources completion only (clean shell).
 		// We intentionally do NOT source user's .bashrc/.zshrc to ensure:
@@ -3386,6 +3377,31 @@ func (m LocalClusterModel) historyPanelTarget() (resource, namespace string, ok 
 		return "", "", false
 	}
 	return kind + "/" + name, namespace, true
+}
+
+// tuiShellEnv is the environment for the shell the TUI opens: the parent
+// environment, plus cub-scout's view of the session under CUB_SCOUT_ names.
+//
+// The cub CLI reads CUB_* variables. CUB_CONTEXT selects cub's own context and
+// fails on a name it does not know, so exporting the kube context there broke
+// every cub command in the shell, and every cub-scout command that runs cub.
+// A CUB_* value the user already had is passed through unchanged.
+func tuiShellEnv(parent []string, kubeContext, cluster, namespace string, connected bool) []string {
+	env := append([]string(nil), parent...)
+	env = append(env, "CUB_SCOUT_TUI=1")
+	if kubeContext != "" {
+		env = append(env, "CUB_SCOUT_KUBE_CONTEXT="+kubeContext)
+	}
+	if cluster != "" {
+		env = append(env, "CUB_SCOUT_CLUSTER="+cluster)
+	}
+	if namespace != "" {
+		env = append(env, "CUB_SCOUT_NAMESPACE="+namespace)
+	}
+	if connected {
+		env = append(env, "CUB_SCOUT_CONNECTED=1")
+	}
+	return env
 }
 
 // historyPanelSpace is the ConfigHub space the selected workload names, if any.
