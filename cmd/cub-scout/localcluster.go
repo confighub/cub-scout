@@ -1156,7 +1156,10 @@ func checkConnectionStatus(clusterName string) tea.Cmd {
 			out, err = exec.Command("cub", "context", "get").Output()
 			if err != nil {
 				// Not connected, check if online
-				if _, verr := exec.Command("cub", "--version").Output(); verr == nil {
+				// `cub version`, not `cub --version`: cub takes it as a
+				// subcommand and rejects the flag, so this branch could never
+				// report online.
+				if _, verr := exec.Command("cub", "version").Output(); verr == nil {
 					msg.mode = "online"
 				}
 				return msg

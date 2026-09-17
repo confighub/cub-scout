@@ -123,9 +123,49 @@ func TestNoCubCallUsesARemovedSubcommand(t *testing.T) {
 		{"unit", "refresh"}:   "removed in July 2026; the current verb is `cub k8s refresh`",
 	}
 
+	// Flags cub no longer accepts, for the same reason: it rejects them, and a
+	// caller that only checks the exit code reads the refusal as an answer.
+	removedFlags := map[string]string{
+		"--version": "cub takes `version` as a subcommand and rejects the flag",
+	}
+
 	fset, files := parseGoFilesIncludingTests(t, "cmd", "pkg")
 	var problems []string
 	for path, file := range files {
+		// cubArgLiterals skips a call with fewer than two arguments, and
+		// `cub --version` is exactly that, so this walks the calls itself.
+		ast.Inspect(file, func(n ast.Node) bool {
+			call, ok := n.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			name := spaceGuardCalledName(call)
+			argv := call.Args
+			switch {
+			case name == "Command" && len(call.Args) >= 1:
+				if text, isLit := spaceGuardStringLit(call.Args[0]); !isLit || text != "cub" {
+					return true
+				}
+				argv = call.Args[1:]
+			case name == "CommandContext" && len(call.Args) >= 2:
+				if text, isLit := spaceGuardStringLit(call.Args[1]); !isLit || text != "cub" {
+					return true
+				}
+				argv = call.Args[2:]
+			default:
+				return true
+			}
+			for _, arg := range argv {
+				text, isLit := spaceGuardStringLit(arg)
+				if !isLit {
+					continue
+				}
+				if why, isRemoved := removedFlags[text]; isRemoved {
+					problems = append(problems, fmt.Sprintf("%s: `cub ... %s` — %s", fset.Position(arg.Pos()), text, why))
+				}
+			}
+			return true
+		})
 		ast.Inspect(file, func(n ast.Node) bool {
 			// An argument vector: adjacent string literals in a call or a slice.
 			var args []ast.Expr
