@@ -143,6 +143,22 @@ This update changes documentation only; it does not repair those runtime gaps.
 The September 11 execution snapshot below is historical and predates #538 and
 the v2.11.0 release. Use [release notes](docs/releases/v2.11.0.md) for that scope.
 
+## Connected Compare Without WET (#564)
+
+`compare` read WET from `cub unit livedata`. cub removed that command, with
+`unit livestate`, in April 2026, and ConfigHub's API has no replacement: a
+unit's Resources are extracted from its own data, not read from the cluster.
+Run anyway, cub exits 0 and prints the `unit` help text. cub-scout parsed that
+as YAML, failed, and returned an error for the whole lookup, discarding the DRY
+side it had already read. Connected DRY/WET comparison has therefore failed for
+every cub released since April, leaving `live-only` results.
+
+WET is no longer read. A connected compare keeps DRY, reports mode `dry-live`,
+and notes why WET is missing. `dry-wet-live` is reported only when both sides
+are present. `compare three-way` counts `dryWetLiveResources` the same way, so
+that count is now `0` in practice, and it was already `0` before, since every
+lookup failed.
+
 ## cub Output: -o json, and Stderr Kept Out of Data (#563, partial)
 
 `cub` deprecated `--json` in favour of `-o json`, and prints

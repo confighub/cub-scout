@@ -336,7 +336,9 @@ func TestParseCompareConfigHubUnitRepoURL(t *testing.T) {
 
 func TestLoadCompareDryWetSnapshots(t *testing.T) {
 	restoreRun := runCompareCubCommand
+	var calls [][]string
 	runCompareCubCommand = func(ctx context.Context, args []string) (string, error) {
+		calls = append(calls, args)
 		if reflect.DeepEqual(args, compareUnitGetArgs("checkout", "payments-prod")) {
 			return `{"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Unit":{"Slug":"checkout","UnitID":"u-123","HeadRevisionNum":9,"LiveRevisionNum":7,"LastAppliedRevisionNum":8}}`, nil
 		}
@@ -356,69 +358,6 @@ spec:
           image: ghcr.io/acme/api:v1
 `, nil
 		}
-		if reflect.DeepEqual(args, compareUnitLivedataArgs("checkout", "payments-prod")) {
-			return `
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api
-  namespace: prod
-spec:
-  replicas: 2
-  template:
-    spec:
-      containers:
-        - name: api
-          image: ghcr.io/acme/api:v2
-`, nil
-		}
-		return "", fmt.Errorf("unexpected args: %v", args)
-	}
-	defer func() { runCompareCubCommand = restoreRun }()
-
-	got, err := loadCompareDryWetSnapshots(context.Background(), "checkout", "payments-prod", compareResourceRef{
-		Kind:      "Deployment",
-		Name:      "api",
-		Namespace: "prod",
-	})
-	if err != nil {
-		t.Fatalf("loadCompareDryWetSnapshots: %v", err)
-	}
-	if got.Dry == nil || got.Wet == nil {
-		t.Fatalf("expected dry+wet summaries, got dry=%v wet=%v", got.Dry != nil, got.Wet != nil)
-	}
-	if got.Dry.Replicas == nil || *got.Dry.Replicas != 1 {
-		t.Fatalf("dry replicas = %#v, want 1", got.Dry.Replicas)
-	}
-	if got.Wet.Replicas == nil || *got.Wet.Replicas != 2 {
-		t.Fatalf("wet replicas = %#v, want 2", got.Wet.Replicas)
-	}
-	if got.Dry.HeadRevisionNum != 9 || got.Dry.LiveRevisionNum != 7 || got.Dry.LastAppliedRevisionNum != 8 {
-		t.Fatalf("dry revision facts = head:%d live:%d applied:%d, want 9/7/8", got.Dry.HeadRevisionNum, got.Dry.LiveRevisionNum, got.Dry.LastAppliedRevisionNum)
-	}
-	if got.Wet.UnitID != "u-123" || got.Wet.SpaceID != "sp-123" {
-		t.Fatalf("wet unit identity = unit:%q space:%q, want u-123/sp-123", got.Wet.UnitID, got.Wet.SpaceID)
-	}
-}
-
-func TestLoadCompareDryWetSnapshots_WetLookupFailure(t *testing.T) {
-	restoreRun := runCompareCubCommand
-	runCompareCubCommand = func(ctx context.Context, args []string) (string, error) {
-		if reflect.DeepEqual(args, compareUnitGetArgs("checkout", "payments-prod")) {
-			return `{"Unit":{"Slug":"checkout"}}`, nil
-		}
-		if reflect.DeepEqual(args, compareUnitDataArgs("checkout", "payments-prod")) {
-			return `
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api
-  namespace: prod
-`, nil
-		}
-		if reflect.DeepEqual(args, compareUnitLivedataArgs("checkout", "payments-prod")) {
-			return "", fmt.Errorf("permission denied")
-		}
 		return "", fmt.Errorf("unexpected args: %v", args)
 	}
 	defer func() { runCompareCubCommand = restoreRun }()
@@ -432,13 +371,58 @@ metadata:
 		t.Fatalf("loadCompareDryWetSnapshots: %v", err)
 	}
 	if got.Dry == nil {
-		t.Fatal("expected DRY summary when WET lookup fails")
+		t.Fatal("expected a DRY summary")
 	}
+	if got.Dry.Replicas == nil || *got.Dry.Replicas != 1 {
+		t.Fatalf("dry replicas = %#v, want 1", got.Dry.Replicas)
+	}
+	if got.Dry.HeadRevisionNum != 9 || got.Dry.LiveRevisionNum != 7 || got.Dry.LastAppliedRevisionNum != 8 {
+		t.Fatalf("dry revision facts = head:%d live:%d applied:%d, want 9/7/8", got.Dry.HeadRevisionNum, got.Dry.LiveRevisionNum, got.Dry.LastAppliedRevisionNum)
+	}
+	if got.Dry.UnitID != "u-123" || got.Dry.SpaceID != "sp-123" {
+		t.Fatalf("dry unit identity = unit:%q space:%q, want u-123/sp-123", got.Dry.UnitID, got.Dry.SpaceID)
+	}
+	// cub removed `unit livedata`, and ConfigHub no longer exposes a unit's
+	// live data, so WET is not read and the result says why.
 	if got.Wet != nil {
-		t.Fatal("expected WET summary to be nil on lookup failure")
+		t.Fatalf("wet = %+v, want none", got.Wet)
 	}
-	if len(got.Notes) == 0 || !strings.Contains(got.Notes[0], "WET lookup failed") {
-		t.Fatalf("expected wet lookup failure note, got %#v", got.Notes)
+	for _, call := range calls {
+		if len(call) > 1 && call[1] == "livedata" {
+			t.Fatalf("cub %v: unit livedata no longer exists", call)
+		}
+	}
+	if len(got.Notes) == 0 || !strings.Contains(got.Notes[0], "WET is not available") {
+		t.Fatalf("notes = %v, want the missing WET side explained", got.Notes)
+	}
+}
+
+// A connected compare with DRY but no WET is a DRY-vs-LIVE comparison, and its
+// mode says so rather than claiming three sides.
+func TestBuildCompareResourceResult_ConnectedWithoutWetIsDryLive(t *testing.T) {
+	restoreLive, restoreConnected, restoreDryWet := loadCompareLiveSnapshotFn, compareConnectedFn, loadCompareDryWetSnapshotFn
+	defer func() {
+		loadCompareLiveSnapshotFn, compareConnectedFn, loadCompareDryWetSnapshotFn = restoreLive, restoreConnected, restoreDryWet
+	}()
+	loadCompareLiveSnapshotFn = func(ctx context.Context, kind, name, namespace string) (compareSideSummary, error) {
+		return compareSideSummary{Source: "cluster", Kind: kind, Name: name, Namespace: namespace, UnitSlug: "checkout-api", SpaceName: "payments-prod"}, nil
+	}
+	compareConnectedFn = func() bool { return true }
+	loadCompareDryWetSnapshotFn = func(ctx context.Context, unitSlug, space string, target compareResourceRef) (compareDryWetResult, error) {
+		return compareDryWetResult{Dry: &compareSideSummary{Source: "dry", Kind: "Deployment", Name: "api", Namespace: "prod"}, Notes: []string{"WET is not available for unit checkout-api"}}, nil
+	}
+
+	result, err := buildCompareResourceResult(context.Background(), "deployment/api", "prod")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Mode != "dry-live" {
+		t.Fatalf("mode = %q, want dry-live", result.Mode)
+	}
+	for _, note := range result.Notes {
+		if strings.Contains(note, "WET snapshot unavailable") {
+			t.Fatalf("notes = %v: the loader already explained the missing WET side", result.Notes)
+		}
 	}
 }
 

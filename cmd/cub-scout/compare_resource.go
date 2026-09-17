@@ -296,15 +296,18 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 			if err != nil {
 				notes = append(notes, fmt.Sprintf("Connected DRY/WET lookup failed for unit %s: %v", unitSlug, err))
 			} else {
-				if dryWet.Dry != nil || dryWet.Wet != nil {
+				// The mode names the sides actually compared.
+				switch {
+				case dryWet.Dry != nil && dryWet.Wet != nil:
 					mode = "dry-wet-live"
+				case dryWet.Dry != nil:
+					mode = "dry-live"
+				case dryWet.Wet != nil:
+					mode = "wet-live"
 				}
 				notes = append(notes, dryWet.Notes...)
 				if dryWet.Dry == nil {
 					notes = append(notes, "DRY snapshot unavailable for linked unit.")
-				}
-				if dryWet.Wet == nil {
-					notes = append(notes, "WET snapshot unavailable for linked unit.")
 				}
 				return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
 					Resource:  kind + "/" + name,
@@ -380,26 +383,16 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 		return compareDryWetResult{}, fmt.Errorf("extract DRY snapshot: %w", dryErr)
 	}
 
-	wetRaw, err := runCompareCubCommand(ctx, compareUnitLivedataArgs(unitSlug, space))
-	if err != nil {
-		return compareDryWetResult{
-			Dry:   drySummary,
-			Notes: []string{fmt.Sprintf("WET lookup failed for unit %s: %v", unitSlug, err)},
-		}, nil
-	}
-	wetSummary, wetErr := extractCompareSummaryFromManifestYAML("wet", wetRaw, target)
-	if wetErr != nil && !errors.Is(wetErr, errCompareResourceNotFoundInManifest) {
-		return compareDryWetResult{}, fmt.Errorf("extract WET snapshot: %w", wetErr)
-	}
-
-	notes := make([]string, 0, 3)
+	// WET came from `cub unit livedata`, which cub removed in April 2026 along
+	// with `unit livestate`; ConfigHub no longer exposes a unit's live data. Run
+	// anyway, cub exits 0 and prints the unit help text, which failed to parse
+	// and discarded the DRY side with it. So WET is not read, and the result
+	// says so.
+	notes := []string{fmt.Sprintf("WET is not available for unit %s: ConfigHub no longer exposes a unit's live data (cub unit livedata was removed), so this compares DRY with LIVE.", unitSlug)}
 	if errors.Is(dryErr, errCompareResourceNotFoundInManifest) {
 		notes = append(notes, "DRY manifest found but target resource was not present in unit intent data.")
 	}
-	if errors.Is(wetErr, errCompareResourceNotFoundInManifest) {
-		notes = append(notes, "WET manifest found but target resource was not present in rendered output.")
-	}
-	for _, summary := range []*compareSideSummary{drySummary, wetSummary} {
+	for _, summary := range []*compareSideSummary{drySummary} {
 		switch {
 		case summary == nil:
 		case agent.IsUUID(space):
@@ -411,10 +404,8 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 		}
 	}
 	applyCompareUnitMetadata(drySummary, unitMeta)
-	applyCompareUnitMetadata(wetSummary, unitMeta)
 	return compareDryWetResult{
 		Dry:   drySummary,
-		Wet:   wetSummary,
 		Notes: notes,
 	}, nil
 }
@@ -427,10 +418,6 @@ func compareUnitGetArgs(unitSlug, space string) []string {
 
 func compareUnitDataArgs(unitSlug, space string) []string {
 	return withConfigHubSpace([]string{"unit", "data", unitSlug}, space)
-}
-
-func compareUnitLivedataArgs(unitSlug, space string) []string {
-	return withConfigHubSpace([]string{"unit", "livedata", unitSlug}, space)
 }
 
 func runCompareCubCommandImpl(ctx context.Context, args []string) (string, error) {
