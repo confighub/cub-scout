@@ -18,11 +18,11 @@ preconditions:
     message: "Must be authenticated: cub auth login"
 
   - name: "space_set"
-    check: "[ -n \"$CUB_SCOUT_TEST_SPACE\" ] || cub context get -o json | jq -e '.settings.defaultSpace != null'"
+    check: "[ -n \"$CUB_SCOUT_TEST_SPACE\" ]"
     message: "Must name a ConfigHub space: set CUB_SCOUT_TEST_SPACE=<slug>"
 
   - name: "worker_connected"
-    check: "cub worker list --json | jq -e 'length > 0 and .[0].BridgeWorker.Condition == \"Ready\"'"
+    check: "cub worker list --space \"$CUB_SCOUT_TEST_SPACE\" --json | jq -e 'length > 0 and .[0].BridgeWorker.Condition == \"Ready\"'"
     message: "Must have connected worker: cub worker run <slug>"
 
 commands:

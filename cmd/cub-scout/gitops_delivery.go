@@ -58,9 +58,9 @@ type GitOpsDeliveryEvidence struct {
 type GitOpsDeliveryEvidenceScope struct {
 	Namespace string `json:"namespace,omitempty"`
 	Space     string `json:"space,omitempty"`
-	// SpaceSource says how Space was chosen: "flag", "resource", "CUB_SPACE" or
-	// "cub-context-default". The last is ambient state that another shell can
-	// change, so a reader should be able to see when a result depended on it.
+	// SpaceSource says how Space was chosen: "flag", "resource" or "CUB_SPACE".
+	// CUB_SPACE is environment state, so a reader should be able to see when a
+	// result depended on it.
 	SpaceSource string `json:"spaceSource,omitempty"`
 	Since       string `json:"since"`
 	StaleAfter  string `json:"staleAfter"`
@@ -142,7 +142,6 @@ var (
 	requireGitOpsConfigHubFn       = requireGitOpsConfigHubConnected
 	runGitOpsCubCommand            = runHistoryCubCommandImpl
 	gitopsNowFn                    = time.Now
-	gitopsDefaultSpaceFn           = detectGitOpsConfigHubSpace
 )
 
 func normalizeGitOpsStatusFormat(raw string, legacyJSON bool) (string, error) {
@@ -193,7 +192,7 @@ func gitOpsDeliveryEvidenceOptionsFromFlags(ctx context.Context) (gitOpsDelivery
 	}
 	opts.StaleAfter = staleAfter
 
-	opts.Space, opts.SpaceSource = gitOpsDeliverySpace(ctx, opts.Space)
+	opts.Space, opts.SpaceSource = gitOpsDeliverySpace(opts.Space)
 	return opts, nil
 }
 
@@ -207,22 +206,12 @@ func requireGitOpsConfigHubConnected() error {
 	return nil
 }
 
-func detectGitOpsConfigHubSpace(ctx context.Context) string {
-	return resolveConfigHubSpace("", "").Slug
-}
-
 // gitOpsDeliverySpace settles the delivery-evidence space from a flag value and
 // says where it came from. An empty result is left for the collector, which
 // reports a confighub.scope omission and skips the reads rather than widen.
-func gitOpsDeliverySpace(ctx context.Context, flagValue string) (slug, source string) {
-	if slug = strings.TrimSpace(flagValue); slug != "" {
-		return slug, spaceSourceFlag
-	}
-	slug = strings.TrimSpace(gitopsDefaultSpaceFn(ctx))
-	if resolved := resolveConfigHubSpace("", ""); resolved.Slug == slug {
-		source = resolved.Source
-	}
-	return slug, source
+func gitOpsDeliverySpace(flagValue string) (slug, source string) {
+	space := resolveConfigHubSpace(flagValue)
+	return space.Slug, space.Source
 }
 
 func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface, opts gitOpsDeliveryEvidenceOptions) *GitOpsDeliveryEvidence {
@@ -230,7 +219,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 		opts.Now = gitopsNowFn().UTC()
 	}
 	if opts.SpaceSource == "" {
-		opts.Space, opts.SpaceSource = gitOpsDeliverySpace(ctx, opts.Space)
+		opts.Space, opts.SpaceSource = gitOpsDeliverySpace(opts.Space)
 	}
 	if strings.TrimSpace(opts.Since) == "" {
 		opts.Since = "24h"
@@ -285,7 +274,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	if strings.TrimSpace(opts.Space) == "" {
 		evidence.Omissions = append(evidence.Omissions, GitOpsDeliveryEvidenceOmission{
 			Layer:  "confighub.scope",
-			Reason: "no ConfigHub space was given: pass --confighub-space <slug> (or '*' for every space) or set CUB_SPACE; the cub context has no default space",
+			Reason: "no ConfigHub space was given: pass --confighub-space <slug> (or '*' for every space) or set CUB_SPACE; cub has no default space",
 			Impact: "release and unit-event queries are skipped to avoid unbounded ConfigHub reads",
 		})
 		return evidence

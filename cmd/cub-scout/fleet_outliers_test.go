@@ -40,7 +40,7 @@ func TestRunFleetOutliersASCII(t *testing.T) {
 	defer restoreFlags()
 
 	// Name the space here: the test must not depend on a cub context existing.
-	stubSpaceInputs(t, "fleet-test-space", "")
+	stubSpaceInputs(t, "fleet-test-space")
 	restoreLoader := loadFleetOutlierUnitsFn
 	loadFleetOutlierUnitsFn = func(space string) ([]fleetUnitSnapshot, error) {
 		return []fleetUnitSnapshot{
@@ -70,7 +70,7 @@ func TestRunFleetOutliersNotConnected(t *testing.T) {
 	defer restoreFlags()
 
 	// Name the space here: the test must not depend on a cub context existing.
-	stubSpaceInputs(t, "fleet-test-space", "")
+	stubSpaceInputs(t, "fleet-test-space")
 	restoreLoader := loadFleetOutlierUnitsFn
 	loadFleetOutlierUnitsFn = func(space string) ([]fleetUnitSnapshot, error) {
 		return nil, errFleetOutliersNotConnected

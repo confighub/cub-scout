@@ -127,11 +127,12 @@ if ! cub context get &>/dev/null 2>&1; then
 fi
 pass "Authenticated to ConfigHub"
 
-# Get current space
-CURRENT_SPACE=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
-if [[ -z "$CURRENT_SPACE" || "$CURRENT_SPACE" == "null" ]]; then
-    fail "No active space set"
-    echo "Run: cub context set space <slug>"
+# The space to verify: CUB_SCOUT_TEST_SPACE, else CUB_SPACE. cub (v0.5.2 and
+# later) has no default space.
+CURRENT_SPACE="${CUB_SCOUT_TEST_SPACE:-${CUB_SPACE:-}}"
+if [[ -z "$CURRENT_SPACE" ]]; then
+    fail "No ConfigHub space named"
+    echo "Set CUB_SCOUT_TEST_SPACE=<slug>"
     exit 1
 fi
 pass "Active space: $CURRENT_SPACE"

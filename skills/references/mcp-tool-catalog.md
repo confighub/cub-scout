@@ -127,8 +127,8 @@ for the full enum.
 | Aspect | Detail |
 |---|---|
 | Wraps | `cub changeset list --json` (calls `cub`, not cub-scout) |
-| Required args | — |
-| Optional args | `space` (string — slug/ID); `where` (string — filter expression) |
+| Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read; cub has no default space) |
+| Optional args | `where` (string — filter expression) |
 | Returns | Governed ChangeSet history and receipts from ConfigHub |
 | When to load | "What governed write changed this unit?" "Who applied the change?" After `trace` or `confighub_units` has identified the governed object. |
 
@@ -197,8 +197,8 @@ for the full enum.
 | Aspect | Detail |
 |---|---|
 | Wraps | `cub unit list --json` (calls `cub`) |
-| Required args | — |
-| Optional args | `space` (string); `where` (string); `contains` (string — full-text query) |
+| Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read; cub has no default space) |
+| Optional args | `where` (string); `contains` (string — full-text query) |
 | Returns | ConfigHub unit inventory + cluster-to-ConfigHub linkage |
 | When to load | "Which ConfigHub unit corresponds to this resource?" "Governed unit inventory before drilling into one unit." After `doctor` / `map` / `explain` / `trace` has identified the cluster-side object. |
 
@@ -207,8 +207,8 @@ for the full enum.
 | Aspect | Detail |
 |---|---|
 | Wraps | `cub unit get --json <unit>` (calls `cub`) |
-| Required args | `unit` (string — slug/ID) |
-| Optional args | `space` (string) |
+| Required args | `unit` (string — slug with `space`, `<space>/<slug>`, or unit ID) |
+| Optional args | `space` (string — required when `unit` is a bare slug; `*` is refused unless `unit` is an ID) |
 | Returns | Exact ConfigHub unit details: intended state, last-applied revision, live revision, ConfigHub URL |
 | When to load | ONLY after the unit slug/ID is known. "Show me the intended/applied/live revision for unit X." If unit is unknown, use `confighub_units` first. |
 

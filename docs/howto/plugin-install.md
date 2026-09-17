@@ -117,8 +117,11 @@ When you run `cub scout doctor`, `cub` does the following:
    - `CUB_CONFIG=<cub config dir>`
    - `CUB_CONTEXT=<active cub context>`
    - `CUB_SERVER=<active context server URL>`
-   - `CUB_SPACE=<default space, if set>`
    - `CUB_TOKEN=<access token, if available>`
+
+   cub before v0.5.2 also set `CUB_SPACE` to the context's default space. cub
+   v0.5.2 removed default spaces and no longer sets it, so cub-scout sees
+   `CUB_SPACE` only when you export it yourself.
 4. Replaces the `cub` process with the plugin binary via `syscall.Exec`, passing `["doctor"]` as arguments.
 
 The plugin binary receives the same stdin, stdout, stderr, and environment as the original `cub` invocation. Exit codes pass through unchanged.

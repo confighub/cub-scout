@@ -30,7 +30,8 @@ type ObserveScopeSummaryRequest struct {
 	// WithConfigHub includes bounded connected delivery evidence.
 	WithConfigHub bool
 
-	// ConfigHubSpace scopes connected delivery evidence. Empty means current cub space.
+	// ConfigHubSpace scopes connected delivery evidence. Empty means CUB_SPACE;
+	// with neither, the reads are skipped and reported as an omission.
 	ConfigHubSpace string
 
 	// ConfigHubSince is the release/event lookback window.

@@ -52,7 +52,7 @@ func init() {
 	auditListCmd.Flags().StringVar(&auditListFormat, "format", "ascii", "Output format: ascii, json, md")
 	auditListCmd.Flags().StringVar(&auditListSince, "since", "7d", "Lookback window (examples: 24h, 7d, 2w)")
 	auditListCmd.Flags().BoolVar(&auditListIncludeSynthetic, "include-synthetic", false, "Include synthetic/demo seeded ChangeSets")
-	auditListCmd.Flags().StringVar(&auditListSpace, "space", "", "ConfigHub space to read break-glass ChangeSets from; '*' for every space (default: CUB_SPACE, then the cub context's default space)")
+	auditListCmd.Flags().StringVar(&auditListSpace, "space", "", "ConfigHub space to read break-glass ChangeSets from; '*' for every space (default: CUB_SPACE)")
 	auditListCmd.Flags().Bool("json", false, "Output as JSON (shorthand for --format json)")
 }
 
@@ -65,7 +65,7 @@ type auditListQuery struct {
 	Now              time.Time
 	IncludeSynthetic bool
 	// Space is the ConfigHub space to read from, as given by --space. Empty
-	// means resolve it (CUB_SPACE, then the cub context default).
+	// means CUB_SPACE; with neither, the read is refused.
 	Space string
 }
 
@@ -78,9 +78,10 @@ type auditEntry struct {
 }
 
 type auditListResult struct {
-	Namespace string       `json:"namespace,omitempty"`
-	Since     string       `json:"since"`
-	Entries   []auditEntry `json:"entries"`
+	Namespace string          `json:"namespace,omitempty"`
+	Since     string          `json:"since"`
+	Scope     *configHubScope `json:"scope,omitempty"`
+	Entries   []auditEntry    `json:"entries"`
 }
 
 var (
@@ -127,6 +128,9 @@ func runAuditList(cmd *cobra.Command, args []string) error {
 		Namespace: query.Namespace,
 		Since:     query.Since,
 		Entries:   entries,
+	}
+	if strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_AUDIT_JSON")) == "" {
+		result.Scope = resolveConfigHubSpace(query.Space).Scope()
 	}
 
 	switch format {
@@ -366,6 +370,9 @@ func renderAuditASCII(result auditListResult) string {
 	} else {
 		b.WriteString(fmt.Sprintf("Break-Glass Audit (last %s)\n", result.Since))
 	}
+	if result.Scope != nil {
+		b.WriteString(fmt.Sprintf("ConfigHub space: %s (%s)\n", result.Scope.Space, result.Scope.SpaceSource))
+	}
 
 	if len(result.Entries) == 0 {
 		b.WriteString("No break-glass decisions recorded for this scope\n")
@@ -402,6 +409,9 @@ func renderAuditMarkdown(result auditListResult) string {
 	b.WriteString("# Break-Glass Audit\n\n")
 	if result.Namespace != "" {
 		b.WriteString(fmt.Sprintf("- Namespace: `%s`\n", result.Namespace))
+	}
+	if result.Scope != nil {
+		b.WriteString(fmt.Sprintf("- ConfigHub space: `%s` (%s)\n", result.Scope.Space, result.Scope.SpaceSource))
 	}
 	b.WriteString(fmt.Sprintf("- Since: `%s`\n\n", result.Since))
 

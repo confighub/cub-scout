@@ -48,7 +48,7 @@ func init() {
 	historyCmd.Flags().StringVar(&historyFormat, "format", "ascii", "Output format: ascii, json, md")
 	historyCmd.Flags().StringVar(&historySince, "since", "7d", "Lookback window (examples: 24h, 7d, 2w)")
 	historyCmd.Flags().BoolVar(&historyIncludeSynthetic, "include-synthetic", false, "Include synthetic/demo seeded ChangeSets")
-	historyCmd.Flags().StringVar(&historySpace, "space", "", "ConfigHub space to read ChangeSets from; '*' for every space (default: CUB_SPACE, then the cub context's default space)")
+	historyCmd.Flags().StringVar(&historySpace, "space", "", "ConfigHub space to read ChangeSets from; '*' for every space (default: CUB_SPACE)")
 }
 
 var errHistoryDisconnected = errors.New("history requires ConfigHub connection. Run: cub auth login")
@@ -61,7 +61,7 @@ type historyQuery struct {
 	Now              time.Time
 	IncludeSynthetic bool
 	// Space is the ConfigHub space ChangeSets are read from, as given by
-	// --space. Empty means resolve it (CUB_SPACE, then the cub context default).
+	// --space. Empty means CUB_SPACE; with neither, the read is refused.
 	Space string
 }
 
@@ -76,6 +76,7 @@ type historyResult struct {
 	Resource              string           `json:"resource"`
 	Namespace             string           `json:"namespace,omitempty"`
 	Since                 string           `json:"since"`
+	Scope                 *configHubScope  `json:"scope,omitempty"`
 	ConfigHubURL          string           `json:"confighubUrl,omitempty"`
 	ConfigHubRevisionsURL string           `json:"confighubRevisionsUrl,omitempty"`
 	Entries               []historyEntry   `json:"entries"`
@@ -126,6 +127,7 @@ func runHistory(cmd *cobra.Command, args []string) error {
 		Resource:  query.Resource,
 		Namespace: query.Namespace,
 		Since:     query.Since,
+		Scope:     historyReadScope(query.Space),
 		Entries:   entries,
 	}
 	if nav := resolveHistoryNavigationFn(cmd.Context(), query); len(nav.NextSteps) > 0 || nav.ConfigHubURL != "" || nav.ConfigHubRevisionsURL != "" {
@@ -166,6 +168,15 @@ func resolveHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry,
 	}
 
 	return fetchHistoryEntriesFn(ctx, q)
+}
+
+// historyReadScope is the space a connected history read used, for output.
+// A fixture read has none.
+func historyReadScope(flagValue string) *configHubScope {
+	if strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")) != "" {
+		return nil
+	}
+	return resolveConfigHubSpace(flagValue).Scope()
 }
 
 func requireHistoryConnected() error {
@@ -259,9 +270,8 @@ func loadHistoryRawPayload(ctx context.Context, q historyQuery) (string, bool) {
 	return raw, true
 }
 
-// historyChangeSetListArgs always names the space. Without --space the read
-// does not fail: it quietly covers whichever space the cub context defaults
-// to, so a resource's history could come back empty for no visible reason.
+// historyChangeSetListArgs always names the space. cub reads a list with no
+// --space across the whole organization.
 func historyChangeSetListArgs(ctx context.Context, q historyQuery) ([]string, error) {
 	space, err := requireConfigHubSpace("history", "--space", q.Space)
 	if err != nil {
@@ -494,8 +504,11 @@ func renderHistoryASCII(result historyResult) string {
 	}
 
 	b.WriteString(fmt.Sprintf("Change History (last %s): %s\n", result.Since, target))
+	if result.Scope != nil {
+		b.WriteString(fmt.Sprintf("ConfigHub space: %s (%s)\n", result.Scope.Space, result.Scope.SpaceSource))
+	}
 	if len(result.Entries) == 0 {
-		b.WriteString("No history available — resource not yet imported to ConfigHub\n")
+		b.WriteString(historyEmptyText(result.Scope) + "\n")
 		return b.String()
 	}
 
@@ -526,10 +539,13 @@ func renderHistoryMarkdown(result historyResult) string {
 	if result.Namespace != "" {
 		b.WriteString(fmt.Sprintf("- Namespace: `%s`\n", result.Namespace))
 	}
+	if result.Scope != nil {
+		b.WriteString(fmt.Sprintf("- ConfigHub space: `%s` (%s)\n", result.Scope.Space, result.Scope.SpaceSource))
+	}
 	b.WriteString(fmt.Sprintf("- Since: `%s`\n\n", result.Since))
 
 	if len(result.Entries) == 0 {
-		b.WriteString("No history available — resource not yet imported to ConfigHub.\n")
+		b.WriteString(historyEmptyText(result.Scope) + ".\n")
 		return b.String()
 	}
 
@@ -553,6 +569,17 @@ func renderHistoryMarkdown(result historyResult) string {
 	}
 
 	return b.String()
+}
+
+// historyEmptyText reports an empty history without claiming more than was
+// read: no ChangeSet in the window names this resource, in the space shown.
+// That does not show the resource was never imported; it may be in another
+// space, or unchanged in the window.
+func historyEmptyText(scope *configHubScope) string {
+	if scope == nil {
+		return "No ConfigHub change history found for this resource"
+	}
+	return fmt.Sprintf("No ConfigHub change history found for this resource in space %s", scope.Space)
 }
 
 func historyEscapeMarkdown(s string) string {

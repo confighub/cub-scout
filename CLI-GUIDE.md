@@ -147,9 +147,12 @@ cub-scout status
 cub-scout gitops status --with-confighub --confighub-space prod --format json
 cub-scout map activity --with-confighub --confighub-space prod --since 24h
 cub-scout compare three-way --scope namespace/prod
-cub-scout history deploy/api -n prod
-cub-scout impact payments-api
+cub-scout history deploy/api -n prod --space prod
+cub-scout impact payments-api --space prod
 ```
+
+Connected commands that read ConfigHub name a space with `--space`, or read
+`CUB_SPACE`. `cub` has no default space, so with neither they refuse.
 
 Adoption and migration flow, after you have inspected the live cluster:
 

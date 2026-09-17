@@ -81,13 +81,14 @@ if ! cub auth status &>/dev/null 2>&1; then
     exit 1
 fi
 
-# Get current space if not specified
+# The space, if not given: CUB_SCOUT_TEST_SPACE, else CUB_SPACE. cub (v0.5.2
+# and later) has no default space.
 if [[ -z "$SPACE" ]]; then
-    SPACE=$(cub context get 2>/dev/null | grep "Default Space" | awk '{print $NF}' || echo "")
+    SPACE="${CUB_SCOUT_TEST_SPACE:-${CUB_SPACE:-}}"
 fi
 
-if [[ -z "$SPACE" || "$SPACE" == "null" ]]; then
-    echo -e "${R}✗${NC} No space configured (run: cub context set --space SLUG)"
+if [[ -z "$SPACE" ]]; then
+    echo -e "${R}✗${NC} No ConfigHub space named (pass it, or set CUB_SCOUT_TEST_SPACE=<slug>)"
     exit 1
 fi
 
@@ -111,7 +112,7 @@ echo "Worker: $WORKER_SLUG ($WORKER_STATUS)"
 if $TEST_ADMIN; then
     section "Admin Mode (--mode=admin)"
 
-    OUTPUT=$("$SCRIPT_DIR/map" --mode=admin 2>&1) || true
+    OUTPUT=$("$SCRIPT_DIR/map" --mode=admin --space="$SPACE" 2>&1) || true
 
     # Check 1: Has ConfigHub Hierarchy section
     if echo "$OUTPUT" | grep -q "ConfigHub Hierarchy:"; then
@@ -163,7 +164,7 @@ fi
 if $TEST_FLEET; then
     section "Fleet Mode (--mode=fleet)"
 
-    OUTPUT=$("$SCRIPT_DIR/map" --mode=fleet 2>&1) || true
+    OUTPUT=$("$SCRIPT_DIR/map" --mode=fleet --space="$SPACE" 2>&1) || true
 
     # Check 1: Has Fleet View section
     if echo "$OUTPUT" | grep -qE "Fleet View|Fleet Hierarchy"; then

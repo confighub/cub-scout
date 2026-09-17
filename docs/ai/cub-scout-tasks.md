@@ -109,9 +109,13 @@ Only cub scout sees across controller boundaries. The Argo UI cannot show
 ```bash
 ./cub-scout status                                                    # Verify connected
 ./cub-scout compare three-way --scope namespace/<ns>                   # DRY/WET/LIVE
-./cub-scout history deploy/<name> -n <ns> --since 7d                  # Change timeline
-./cub-scout impact <unit-slug>                                        # Blast radius
+./cub-scout history deploy/<name> -n <ns> --since 7d --space <space>  # Change timeline
+./cub-scout impact <unit-slug> --space <space>                        # Blast radius
 ```
+
+`history`, `impact`, `audit list`, `tree config` and `fleet outliers` read the
+ConfigHub space named by `--space` or `CUB_SPACE`, and refuse without one: `cub`
+has no default space.
 
 Connected mode requires `cub auth login` first. If not authenticated,
 `./cub-scout status` will report standalone mode.

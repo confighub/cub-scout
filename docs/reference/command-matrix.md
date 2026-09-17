@@ -184,6 +184,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 |--------|-------------|
 | `--format` | Output format (`ascii`, `json`, `md`) |
 | `--json` | Output as JSON |
+| `--space` | ConfigHub space of the unit; one space, not `*` (default: `CUB_SPACE`) |
 
 ---
 
@@ -193,6 +194,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 |--------|-------------|
 | `--format` | Output format (`ascii`, `json`, `md`) |
 | `--json` | Output as JSON |
+| `--space` | ConfigHub space to compare within; one space, not `*` (default: `CUB_SPACE`) |
 
 ---
 
@@ -231,6 +233,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--since` | Lookback window (`24h`, `7d`, `2w`) |
 | `--format` | Output format (`ascii`, `json`, `md`) |
 | `--include-synthetic` | Include synthetic/demo seeded ChangeSets |
+| `--space` | ConfigHub space to read; `*` for every space (default: `CUB_SPACE`) |
 | `--json` | Output as JSON |
 
 ---

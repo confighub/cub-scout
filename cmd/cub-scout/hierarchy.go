@@ -22,6 +22,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/confighub/cub-scout/internal/hierarchysvc"
 	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -240,8 +241,9 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 		return nil, "", "", "", nil, fmt.Errorf("failed to parse context: %w", err)
 	}
 
-	// Get current space from context settings (for auto-focus)
-	currentSpace := ctx.Settings.DefaultSpace
+	// The space to focus on: the one CUB_SPACE names. cub has no default space,
+	// so a defaultSpace left in an older cub config is not used.
+	currentSpace := hub.PluginSpace()
 
 	// Get organizations
 	orgsJSON, err := runCubCommand("organization", "list", "--json")
@@ -336,7 +338,7 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 					Status:   status,
 					Info:     fmt.Sprintf("units:%d targets:%d workers:%d", space.TotalUnitCount, targetCount, space.TotalBridgeWorkerCount),
 					Parent:   orgNode,
-					Expanded: space.Space.Slug == ctx.Settings.DefaultSpace,
+					Expanded: currentSpace != "" && space.Space.Slug == currentSpace,
 					Data:     space,
 					OrgID:    org.ExternalID,
 				}
@@ -348,7 +350,7 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 					Type:     "group",
 					Info:     fmt.Sprintf("(%d)", space.TotalUnitCount),
 					Parent:   spaceNode,
-					Expanded: space.Space.Slug == ctx.Settings.DefaultSpace,
+					Expanded: currentSpace != "" && space.Space.Slug == currentSpace,
 					OrgID:    org.ExternalID,
 				}
 

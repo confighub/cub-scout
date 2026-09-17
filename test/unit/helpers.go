@@ -85,34 +85,17 @@ type Space struct {
 	Slug string
 }
 
-// RequireSpace returns the ConfigHub space the connected tests run against, and
-// fails the test if there is none or it no longer exists.
-//
-// The space is CUB_SCOUT_TEST_SPACE if set, else the cub context's default
-// space. It used to run `cub context get space`, which is not a cub command, so
-// every test behind it skipped, silently, in every environment.
+// RequireSpace returns the ConfigHub space the connected tests run against: the
+// one CUB_SCOUT_TEST_SPACE names. cub has no default space (v0.5.2 and later),
+// so there is nothing else to fall back to. Without it the test is skipped and
+// says why; a space that is named but cannot be read fails the test.
 func RequireSpace(t *testing.T) Space {
 	t.Helper()
 	RequireCubAuth(t)
 
 	slug := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_SPACE"))
 	if slug == "" {
-		output, err := exec.Command("cub", "context", "get", "-o", "json").Output()
-		if err != nil {
-			t.Fatalf("PRECONDITION: cannot read the cub context: %v", err)
-		}
-		var ctx struct {
-			Settings struct {
-				DefaultSpace string `json:"defaultSpace"`
-			} `json:"settings"`
-		}
-		if err := json.Unmarshal(output, &ctx); err != nil {
-			t.Fatalf("PRECONDITION: cannot parse `cub context get -o json`: %v", err)
-		}
-		slug = strings.TrimSpace(ctx.Settings.DefaultSpace)
-	}
-	if slug == "" {
-		t.Fatal("PRECONDITION: no ConfigHub space for connected tests: set CUB_SCOUT_TEST_SPACE=<slug>")
+		t.Skip("connected test needs a ConfigHub space: set CUB_SCOUT_TEST_SPACE=<slug>")
 	}
 
 	// Validate the space actually exists: a stale space (e.g. from a deleted

@@ -17,6 +17,9 @@ func TestMapFleet_Basic(t *testing.T) {
 
 	out := runner.RunWithEnv(t, repoRoot, map[string]string{
 		"CUB_SCOUT_TEST_MAP_FLEET_JSON": fixture,
+		// The golden output shows the every-space default, so a CUB_SPACE the
+		// developer exported must not narrow it.
+		"CUB_SPACE": "",
 	}, "map", "fleet")
 
 	goldenPath := filepath.Join(repoRoot, "test", "ascii", "map", "fleet", "basic.txt")
@@ -29,6 +32,7 @@ func TestMapFleet_JSON(t *testing.T) {
 
 	out := runner.RunWithEnv(t, repoRoot, map[string]string{
 		"CUB_SCOUT_TEST_MAP_FLEET_JSON": fixture,
+		"CUB_SPACE":                     "",
 	}, "map", "fleet", "--json")
 
 	goldenPath := filepath.Join(repoRoot, "test", "ascii", "map", "fleet", "basic.json.golden")

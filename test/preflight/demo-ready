@@ -185,7 +185,7 @@ section "Space & Workers"
 if [[ -n "$SPECIFIC_SPACE" ]]; then
     SPACE="$SPECIFIC_SPACE"
 else
-    SPACE="${CUB_SCOUT_TEST_SPACE:-$(cub context get -o json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")}"
+    SPACE="${CUB_SCOUT_TEST_SPACE:-${CUB_SPACE:-}}"
 fi
 
 if [[ -z "$SPACE" || "$SPACE" == "null" ]]; then

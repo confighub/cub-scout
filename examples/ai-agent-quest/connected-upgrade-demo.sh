@@ -148,14 +148,14 @@ echo '  Q: "What changed in the last week?"'
 echo ""
 echo "    With ConfigHub, your AI queries ChangeSets:"
 echo ""
-echo "    (run: ./cub-scout history deploy/api -n myapp-prod)"
+echo "    (run: ./cub-scout history deploy/api -n myapp-prod --space myapp-prod)"
 echo ""
 
 echo '  Q: "Is this cluster different from the others?"'
 echo ""
 echo "    With ConfigHub, your AI compares across the fleet:"
 echo ""
-echo "    (run: ./cub-scout fleet outliers)"
+echo "    (run: ./cub-scout fleet outliers --space myapp-prod)"
 echo ""
 
 echo '  Q: "What SHOULD be running here?"'

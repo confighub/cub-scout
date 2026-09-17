@@ -61,7 +61,7 @@ func init() {
 	doctorCmd.Flags().StringVar(&doctorPresentation, "presentation", "", PresentationModeHelp())
 	doctorCmd.Flags().StringVar(&doctorHintMode, "hint-mode", "", HintModeHelp())
 	doctorCmd.Flags().BoolVar(&doctorWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery evidence for the selected scope")
-	doctorCmd.Flags().StringVar(&doctorConfigHubSpace, "confighub-space", "", "ConfigHub space for connected delivery evidence (default: current cub space; use '*' explicitly for all spaces)")
+	doctorCmd.Flags().StringVar(&doctorConfigHubSpace, "confighub-space", "", "ConfigHub space for connected delivery evidence (default: CUB_SPACE; use '*' explicitly for all spaces)")
 	doctorCmd.Flags().StringVar(&doctorConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
 	doctorCmd.Flags().StringVar(&doctorConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 }
@@ -484,7 +484,7 @@ func doctorDeliveryEvidenceOptionsFromRequest(ctx context.Context, namespace str
 	}
 	opts.StaleAfter = staleAfter
 
-	opts.Space, opts.SpaceSource = gitOpsDeliverySpace(ctx, opts.Space)
+	opts.Space, opts.SpaceSource = gitOpsDeliverySpace(opts.Space)
 	return opts, nil
 }
 

@@ -198,7 +198,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"confighub_space": map[string]interface{}{
 							"type":        "string",
-							"description": "ConfigHub space for connected evidence. Defaults to the current cub space; pass '*' only for an explicit all-spaces read.",
+							"description": "ConfigHub space for connected evidence. When omitted, the ConfigHub reads are skipped and reported as a confighub.scope omission: cub has no default space, and the server's CUB_SPACE is not used. Pass '*' only for an explicit all-spaces read.",
 						},
 						"confighub_since": map[string]interface{}{
 							"type":        "string",
@@ -394,7 +394,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"confighub_space": map[string]interface{}{
 							"type":        "string",
-							"description": "ConfigHub space for connected evidence. Defaults to the current cub space; pass '*' only for an explicit all-spaces read.",
+							"description": "ConfigHub space for connected evidence. When omitted, the ConfigHub reads are skipped and reported as a confighub.scope omission: cub has no default space, and the server's CUB_SPACE is not used. Pass '*' only for an explicit all-spaces read.",
 						},
 						"confighub_since": map[string]interface{}{
 							"type":        "string",
@@ -524,13 +524,14 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional ConfigHub space slug or ID.",
+							"description": "Required ConfigHub space slug or ID, or '*' for a deliberate all-spaces read. cub has no default space.",
 						},
 						"where": map[string]interface{}{
 							"type":        "string",
 							"description": "Optional filter expression passed to --where.",
 						},
 					},
+					"required":             []string{"space"},
 					"additionalProperties": false,
 				},
 			},
@@ -896,7 +897,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional ConfigHub space slug or ID.",
+							"description": "Required ConfigHub space slug or ID, or '*' for a deliberate all-spaces read. cub has no default space.",
 						},
 						"where": map[string]interface{}{
 							"type":        "string",
@@ -907,6 +908,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 							"description": "Optional full-text contains query passed to --contains.",
 						},
 					},
+					"required":             []string{"space"},
 					"additionalProperties": false,
 				},
 			},
@@ -936,11 +938,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"unit": map[string]interface{}{
 							"type":        "string",
-							"description": "Required unit slug or ID.",
+							"description": "Required unit: a slug together with `space`, <space>/<slug>, or the unit ID.",
 						},
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional ConfigHub space slug or ID.",
+							"description": "ConfigHub space slug or ID of the unit. Required unless `unit` is <space>/<slug> or a unit ID; cub has no default space.",
 						},
 					},
 					"required":             []string{"unit"},
@@ -952,11 +954,21 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if unit == "" {
 					return nil, fmt.Errorf("missing required argument: unit")
 				}
-				space, err := mcpConfigHubSpace("confighub_unit_get", arguments)
-				if err != nil {
-					return nil, err
+				// A qualified reference or an ID names its own space; cub resolves a
+				// bare slug across the whole organization, where many units can
+				// share it.
+				switch space := argString(arguments, "space"); {
+				case agent.IsUUID(unit) && (space == "" || space == allConfigHubSpaces):
+					return withConfigHubSpaceFromRef([]string{"unit", "get", "--json"}, unit), nil
+				case space == "" && configHubRefNamesSpace(unit):
+					return withConfigHubSpaceFromRef([]string{"unit", "get", "--json"}, unit), nil
+				case space == "":
+					return nil, fmt.Errorf("confighub_unit_get needs the unit's ConfigHub space: pass `space`, or name the unit as <space>/<slug> or by its ID. cub has no default space, so none is assumed")
+				case space == allConfigHubSpaces:
+					return nil, fmt.Errorf("confighub_unit_get reads one unit, so `space` must name one space, not '%s'; or pass `unit` as <space>/<slug> or the unit ID", allConfigHubSpaces)
+				default:
+					return withConfigHubSpace([]string{"unit", "get", "--json", unit}, space), nil
 				}
-				return withConfigHubSpace([]string{"unit", "get", "--json", unit}, space), nil
 			},
 			Runner: connectedRunner,
 		}
@@ -1233,6 +1245,7 @@ func mcpConfigHubLiveStatusArgs(space string) []string {
 
 func runMCPToolCommand(ctx context.Context, args []string) (string, error) {
 	cmd := exec.CommandContext(ctx, os.Args[0], args...)
+	cmd.Env = mcpToolEnv(os.Environ())
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -1247,6 +1260,20 @@ func runMCPToolCommand(ctx context.Context, args []string) (string, error) {
 	}
 
 	return strings.TrimSpace(stdout.String()), nil
+}
+
+// mcpToolEnv is the environment for a cub-scout command run for an MCP tool
+// call, without CUB_SPACE. A tool call names its space in its arguments; an
+// agent cannot see the environment of the server it calls.
+func mcpToolEnv(environ []string) []string {
+	env := make([]string, 0, len(environ))
+	for _, kv := range environ {
+		if strings.HasPrefix(kv, "CUB_SPACE=") {
+			continue
+		}
+		env = append(env, kv)
+	}
+	return env
 }
 
 func runMCPConnectedToolCommand(ctx context.Context, args []string) (string, error) {

@@ -1030,8 +1030,8 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
 
 | Field | Rule |
 |---|---|
-| `scope.space` | `--confighub-space`, else `CUB_SPACE`, else the cub context's default space if it has one. `*` is accepted only when explicitly supplied. With no space from any source the reads are skipped and a `confighub.scope` omission is reported. |
-| `scope.spaceSource` | How `scope.space` was chosen: `flag`, `resource` (a traced object's own ConfigHub space), `CUB_SPACE`, or `cub-context-default`. The last is ambient state that any shell sharing the cub config can change, so output says when a result depended on it. |
+| `scope.space` | `--confighub-space`, else `CUB_SPACE`. cub (v0.5.2 and later) has no default space, and a `defaultSpace` left in an older cub config is not used. `*` is accepted only when explicitly supplied. With no space from either, the reads are skipped and a `confighub.scope` omission is reported. |
+| `scope.spaceSource` | How `scope.space` was chosen: `flag`, `resource` (a traced object's own ConfigHub space), or `CUB_SPACE`. `CUB_SPACE` is environment state, so output says when a result depended on it. Under cub older than v0.5.2 running cub-scout as a plugin, the host set `CUB_SPACE` to the context's default space. |
 | `scope.since` | Bounds release and unit-event reads by `CreatedAt > <cutoff>`. |
 | `scope.maxItems` | Caps rows kept in output after the time-window query. |
 | `configHub.liveStatuses[]` | Parsed from the `confighub.com/live-status` Space annotation. Missing or malformed annotations become omissions. |
@@ -1127,6 +1127,33 @@ Namespace filtering remains conservative: ConfigHub rows match
 On joined `argocd.application` rows, `deliveryEvidence` is supporting context;
 the Argo row's `result` remains controller-owned. The command never consumes
 ConfigHub event cursors.
+
+## Connected Read Scope: history, audit list, fleet outliers
+
+`history`, `audit list`, `impact` and `fleet outliers` read the ConfigHub space
+named by `--space` or `CUB_SPACE` (`*`, every space, where the command accepts
+it) and report it in a `scope` block:
+
+```json
+{
+  "scope": {"space": "payments-prod", "spaceSource": "CUB_SPACE"}
+}
+```
+
+| Field | Rule |
+|---|---|
+| `scope.space` | `--space`, else `CUB_SPACE`. cub (v0.5.2 and later) has no default space; with neither, the command refuses. `history` and `audit list` accept `*`; `impact` and `fleet outliers` refuse it. |
+| `scope.spaceSource` | `flag` or `CUB_SPACE`. |
+| `scope` (history, audit list) | Omitted for fixture reads, which read no space. |
+
+`fleet outliers` also reports:
+
+| Field | Rule |
+|---|---|
+| `summary.comparedUnitCount` | Units found on two or more clusters, the only units a cluster is compared on. Within one ConfigHub space each unit has one target, so on data read from ConfigHub this is `0` (cross-space comparison: #562). |
+| `notes[]` | Says that nothing was compared when `comparedUnitCount` is `0`. A consumer must not read an empty `byCluster[].outliers` as consistent in that case. |
+
+`status --json` reports `space` and `space_source` only when `CUB_SPACE` is set.
 
 ## Resource Delivery Evidence Contract
 

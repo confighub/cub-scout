@@ -3388,6 +3388,27 @@ func (m LocalClusterModel) historyPanelTarget() (resource, namespace string, ok 
 	return kind + "/" + name, namespace, true
 }
 
+// historyPanelSpace is the ConfigHub space the selected workload names, if any.
+func (m LocalClusterModel) historyPanelSpace() string {
+	entries := m.getFilteredEntries()
+	if len(entries) == 0 {
+		return ""
+	}
+	idx := min(max(m.cursor, 0), len(entries)-1)
+	return configHubSpaceOfEntry(entries[idx])
+}
+
+// configHubSpaceOfEntry reads the space ConfigHub recorded on a workload: its
+// name, else its ID, which cub accepts for --space.
+func configHubSpaceOfEntry(entry MapEntry) string {
+	return firstNonEmpty(
+		strings.TrimSpace(entry.OwnerDetails["space"]),
+		strings.TrimSpace(entry.OwnerDetails["spaceID"]),
+		strings.TrimSpace(entry.Labels["confighub.com/SpaceName"]),
+		strings.TrimSpace(entry.Labels["confighub.com/SpaceID"]),
+	)
+}
+
 func (m *LocalClusterModel) openHistoryPanel() tea.Cmd {
 	m.panelMode = true
 	m.panelView = viewHistory
@@ -3405,6 +3426,14 @@ func (m LocalClusterModel) runHistoryPanel() tea.Cmd {
 			return localHistoryLoadedMsg{err: fmt.Errorf("no workload selected for history")}
 		}
 	}
+	// The workload names its own ConfigHub space when ConfigHub applied it. The
+	// TUI has no --space flag, so without that label only CUB_SPACE can say.
+	space := m.historyPanelSpace()
+	if space == "" && hub.PluginSpace() == "" && strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")) == "" {
+		return func() tea.Msg {
+			return localHistoryLoadedMsg{err: fmt.Errorf("history needs a ConfigHub space: this workload does not record one, and CUB_SPACE is not set. Start cub-scout with CUB_SPACE=<slug>")}
+		}
+	}
 
 	return func() tea.Msg {
 		window, err := parseHistorySince("7d")
@@ -3417,16 +3446,22 @@ func (m LocalClusterModel) runHistoryPanel() tea.Cmd {
 			Since:     "7d",
 			Window:    window,
 			Now:       historyNowFn().UTC(),
+			Space:     space,
 		}
 		entries, err := resolveHistoryEntries(context.Background(), query)
 		if err != nil {
 			return localHistoryLoadedMsg{err: err}
+		}
+		scope := historyReadScope(query.Space)
+		if scope != nil && space != "" {
+			scope.SpaceSource = spaceSourceResource
 		}
 		return localHistoryLoadedMsg{
 			result: historyResult{
 				Resource:  resource,
 				Namespace: namespace,
 				Since:     query.Since,
+				Scope:     scope,
 				Entries:   entries,
 			},
 		}
@@ -3474,7 +3509,7 @@ func (m LocalClusterModel) getPanelHistory() string {
 
 	b.WriteString(fmt.Sprintf("Window: %s\n\n", m.historyPanelResult.Since))
 	if len(m.historyPanelResult.Entries) == 0 {
-		b.WriteString(lcDimStyle.Render("No history available — resource not yet imported to ConfigHub."))
+		b.WriteString(lcDimStyle.Render(historyEmptyText(m.historyPanelResult.Scope) + "."))
 		b.WriteString("\n")
 		return b.String()
 	}

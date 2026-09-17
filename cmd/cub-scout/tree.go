@@ -86,7 +86,7 @@ func init() {
 	treeCmd.Flags().BoolVar(&treeJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	treeCmd.Flags().StringVarP(&treeNamespace, "namespace", "n", "", "Filter by namespace")
 	treeCmd.Flags().BoolVarP(&treeAll, "all", "A", false, "Show all resources including system namespaces")
-	treeCmd.Flags().StringVar(&treeSpace, "space", "", "ConfigHub space for 'config' view (use '*' for all spaces)")
+	treeCmd.Flags().StringVar(&treeSpace, "space", "", "ConfigHub space for the 'config' view; '*' for every space (default: CUB_SPACE)")
 	treeCmd.Flags().StringVar(&treeEdge, "edge", "clone", "Edge type for 'config' view: clone (inheritance) or link (dependencies)")
 	treeCmd.Flags().StringVar(&treeOwner, "owner", "", "Filter by owner: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native")
 	treeCmd.Flags().IntVar(&treeDepth, "depth", 0, "Limit tree depth (0 = unlimited)")

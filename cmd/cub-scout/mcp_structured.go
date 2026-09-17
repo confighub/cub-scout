@@ -417,33 +417,34 @@ func mcpFirstInt(item map[string]interface{}, keys ...string) (int, bool) {
 }
 
 func mcpUnitGetCommand(ref mcpUnitRef) string {
-	target := strings.TrimSpace(ref.UnitSlug)
-	if target == "" {
-		target = strings.TrimSpace(ref.UnitID)
-	}
-	if target == "" {
-		return ""
-	}
-	args := []string{"cub", "unit", "get", target, "--json"}
-	if ref.SpaceSlug != "" {
-		args = append(args, "--space", ref.SpaceSlug)
-	}
-	return strings.Join(args, " ")
+	return cubGetCommandHint("unit", ref.SpaceSlug, ref.UnitSlug, ref.UnitID)
 }
 
 func mcpChangeSetGetCommand(ref mcpChangeSetRef) string {
-	target := strings.TrimSpace(ref.ChangeSetSlug)
+	return cubGetCommandHint("changeset", ref.SpaceSlug, ref.ChangeSetSlug, ref.ChangeSetID)
+}
+
+// cubGetCommandHint is a `cub <entity> get` command for a reader to run. cub
+// has no default space and looks up a slug given without one across the whole
+// organization, so the command always says where to look: the entity's space
+// when known, else its ID, which resolves on its own, else a visible <space>
+// placeholder.
+func cubGetCommandHint(entity, space, slug, id string) string {
+	space, slug, id = strings.TrimSpace(space), strings.TrimSpace(slug), strings.TrimSpace(id)
+	target := slug
 	if target == "" {
-		target = strings.TrimSpace(ref.ChangeSetID)
+		target = id
 	}
-	if target == "" {
+	switch {
+	case target == "":
 		return ""
+	case space != "":
+		return fmt.Sprintf("cub %s get %s --json --space %s", entity, target, space)
+	case id != "":
+		return fmt.Sprintf("cub %s get %s --json", entity, id)
+	default:
+		return fmt.Sprintf("cub %s get %s --json --space <space>", entity, slug)
 	}
-	args := []string{"cub", "changeset", "get", target, "--json"}
-	if ref.SpaceSlug != "" {
-		args = append(args, "--space", ref.SpaceSlug)
-	}
-	return strings.Join(args, " ")
 }
 
 func mcpUnitDetailURL(ref mcpUnitRef) string {

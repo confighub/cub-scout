@@ -15,9 +15,9 @@ import (
 	"testing"
 )
 
-// cub entities that live in a space. A `cub <entity> <verb>` run without
-// --space does not fail: it reads or writes whatever space the cub context
-// happens to default to, or every space, which is a scope nobody chose.
+// cub entities that live in a space. cub has no default space (v0.5.2 and
+// later): a `cub <entity> list` run without --space does not fail, it reads
+// every space in the organization, which is a scope nobody chose.
 var spaceScopedCubEntities = map[string]bool{
 	"unit": true, "link": true, "target": true, "worker": true, "release": true,
 	"unit-event": true, "resource": true, "view": true, "filter": true,
@@ -121,7 +121,11 @@ func cubArgLiterals(fset *token.FileSet, file *ast.File) []cubInvocation {
 
 // Every cub call on a space-scoped entity must put its space on the command
 // line, either as a literal --space or through withConfigHubSpace. Nothing may
-// change the cub context's default space, which is shared, ambient state.
+// try to set a default space on the cub context.
+//
+// This is a lint over literal argument vectors, not a proof. It does not see
+// arguments built from variables, runner seams it does not know, or commands
+// built as strings; #563 tracks enforcing the space in one runner instead.
 func TestEveryCubCallNamesItsSpace(t *testing.T) {
 	fset, files := spaceGuardParseFiles(t, "cmd", "pkg")
 	var problems []string
@@ -149,9 +153,23 @@ func TestEveryCubCallNamesItsSpace(t *testing.T) {
 			return true
 		})
 	}
+	// A literal empty space would reach cub as `--space ""`, which cub reads as
+	// every space.
+	for _, file := range files {
+		ast.Inspect(file, func(n ast.Node) bool {
+			call, ok := n.(*ast.CallExpr)
+			if !ok || !strings.HasPrefix(spaceGuardCalledName(call), "withConfigHubSpace") || len(call.Args) < 2 {
+				return true
+			}
+			if text, ok := spaceGuardStringLit(call.Args[1]); ok && strings.TrimSpace(text) == "" {
+				problems = append(problems, fset.Position(call.Pos()).String()+": passes an empty space literal to "+spaceGuardCalledName(call))
+			}
+			return true
+		})
+	}
 	sort.Strings(problems)
 	if len(problems) > 0 {
-		t.Fatalf("%d cub calls depend on the cub context's default space:\n  %s", len(problems), strings.Join(problems, "\n  "))
+		t.Fatalf("%d cub calls do not name their space:\n  %s", len(problems), strings.Join(problems, "\n  "))
 	}
 }
 

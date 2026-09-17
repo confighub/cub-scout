@@ -49,6 +49,7 @@ type StatusInfo struct {
 	ClusterName string      `json:"cluster_name"`
 	Context     string      `json:"context"`
 	Space       string      `json:"space,omitempty"`
+	SpaceSource string      `json:"space_source,omitempty"`
 	Worker      *WorkerInfo `json:"worker,omitempty"`
 	AuthValid   *bool       `json:"auth_valid,omitempty"` // nil if offline/online, true/false if has context
 }
@@ -106,7 +107,10 @@ func runStatus(cmd *cobra.Command) error {
 			if email != "" {
 				status.Email = email
 			}
-			status.Space = cubCtx.Settings.DefaultSpace
+			// cub has no default space, so the only space status can report is
+			// one CUB_SPACE names.
+			space := resolveConfigHubSpace("")
+			status.Space, status.SpaceSource = space.Slug, space.Source
 
 			// If hub reported offline/online but cub CLI has a context,
 			// upgrade to connected
@@ -122,10 +126,10 @@ func runStatus(cmd *cobra.Command) error {
 				status.Mode = "auth_expired"
 			}
 
-			// Try to get worker status (only if auth is valid)
-			if authValid && cubCtx.Settings.DefaultSpace != "" {
-				worker := getWorkerForCluster(cubCtx.Settings.DefaultSpace, status.ClusterName)
-				if worker != nil {
+			// Which worker serves this cluster is a question about the whole
+			// organization, so every space is searched unless CUB_SPACE names one.
+			if authValid {
+				if worker := getWorkerForCluster(statusWorkerSpace(space), status.ClusterName); worker != nil {
 					status.Worker = worker
 				}
 			}
@@ -184,7 +188,14 @@ func printStatus(s StatusInfo) {
 			fmt.Printf("Worker:     \033[33m○\033[0m %s (%s)\n", s.Worker.Name, s.Worker.Status)
 		}
 	} else if s.Mode == "connected" {
-		fmt.Println("Worker:     (none for this cluster)")
+		// A worker records no cluster identity, so the lookup matches a worker
+		// named after the cluster; say exactly that rather than "none for this
+		// cluster". A failed lookup reads the same, and is not an absence.
+		if s.Space != "" {
+			fmt.Printf("Worker:     (no worker named %s found in space %s, from %s)\n", s.ClusterName, s.Space, s.SpaceSource)
+		} else {
+			fmt.Printf("Worker:     (no worker named %s found in any space)\n", s.ClusterName)
+		}
 	}
 }
 
@@ -235,6 +246,15 @@ type WorkerListItem struct {
 	Name      string `json:"name"`
 	Cluster   string `json:"cluster"`
 	Condition string `json:"condition"`
+}
+
+// statusWorkerSpace is where status looks for this cluster's worker: the space
+// CUB_SPACE names, else every space.
+func statusWorkerSpace(space configHubSpace) string {
+	if space.IsSet() {
+		return space.Slug
+	}
+	return allConfigHubSpaces
 }
 
 func getWorkerForCluster(space, clusterName string) *WorkerInfo {

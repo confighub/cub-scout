@@ -208,14 +208,12 @@ func TestAttachDoctorDeliveryEvidence_SummarizesAndPromotesIssues(t *testing.T) 
 func TestDoctorDeliveryEvidenceOptions_DefaultsToCurrentSpaceAndBoundsWindow(t *testing.T) {
 	now := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
 	oldNow := gitopsNowFn
-	oldDefaultSpace := gitopsDefaultSpaceFn
 	t.Cleanup(func() {
 		gitopsNowFn = oldNow
-		gitopsDefaultSpaceFn = oldDefaultSpace
 	})
 
 	gitopsNowFn = func() time.Time { return now }
-	gitopsDefaultSpaceFn = func(ctx context.Context) string { return "payments" }
+	stubSpaceInputs(t, "payments")
 
 	opts, err := doctorDeliveryEvidenceOptionsFromRequest(context.Background(), "prod", ObserveScopeSummaryRequest{
 		ConfigHubSince:      "7d",

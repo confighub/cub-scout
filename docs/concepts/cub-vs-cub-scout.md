@@ -118,7 +118,7 @@ See the [migration guide](../releases/v2.0.0-migration-guide.md) for switching b
 ## Authority and Execution
 
 - `cub` holds credentials and context (`cub auth login`, `cub context ...`).
-- `cub scout` in plugin form inherits `CUB_TOKEN`, `CUB_SERVER`, `CUB_CONTEXT`, `CUB_SPACE` from the parent `cub` process.
+- `cub scout` in plugin form inherits `CUB_TOKEN`, `CUB_SERVER`, `CUB_CONTEXT` from the parent `cub` process. It reads `CUB_SPACE` only if you set it: cub (v0.5.2 and later) has no default space and no longer passes one.
 - `cub scout` in standalone form talks to `cub auth get-token` or reads its own token store when connected features are used.
 - Neither form of `cub scout` ever performs ConfigHub writes. Writes go through `cub`.
 

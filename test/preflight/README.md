@@ -44,7 +44,7 @@ Technology Compatibility Kit - validates environment is ready for testing.
 | Failure | Fix |
 |---------|-----|
 | "cub not authenticated" | Run `cub auth login` |
-| "No active space" | Set `CUB_SCOUT_TEST_SPACE=<slug>` (the cub context's default space is only a fallback) |
+| "No ConfigHub space named" | Set `CUB_SCOUT_TEST_SPACE=<slug>`. cub (v0.5.2 and later) has no default space |
 | "No workers in space" | Install a worker in your space |
 | "Worker slug is null" | Issue #1 pattern - check cub CLI version |
 | "No targets in space" | Create a target in your space |

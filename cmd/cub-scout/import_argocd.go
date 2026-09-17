@@ -154,7 +154,7 @@ func init() {
 
 func addImportArgoFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&argoImportNamespace, "argocd-namespace", "argocd", "Namespace where ArgoCD is installed")
-	cmd.Flags().StringVar(&argoImportSpace, "space", "", "ConfigHub space to import into (auto-inferred if not specified)")
+	cmd.Flags().StringVar(&argoImportSpace, "space", "", "ConfigHub space to import into (default: a space named after the Application)")
 	cmd.Flags().BoolVar(&argoImportDryRun, "dry-run", false, "Preview what would be imported without making changes")
 	cmd.Flags().BoolVar(&argoImportShowYAML, "show-yaml", false, "Show YAML content that would be imported (implies --dry-run)")
 	cmd.Flags().BoolVar(&argoImportRaw, "raw", false, "Keep raw YAML with all runtime fields (default: clean)")

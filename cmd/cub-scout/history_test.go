@@ -162,8 +162,13 @@ func TestRenderHistoryASCII_Empty(t *testing.T) {
 		Since:     "7d",
 		Entries:   nil,
 	})
-	if !strings.Contains(out, "No history available") {
+	if !strings.Contains(out, "No ConfigHub change history found for this resource") {
 		t.Fatalf("expected empty-history message, got:\n%s", out)
+	}
+	// An empty read does not show the resource was never imported: it may live
+	// in another space, or not have changed in the window.
+	if strings.Contains(out, "not yet imported") {
+		t.Fatalf("empty history claims the resource was never imported:\n%s", out)
 	}
 }
 

@@ -240,14 +240,16 @@ check_auth() {
         ORG_NAME=$(echo "$CONTEXT_JSON" | jq -r '.metadata.organizationName // ""')
         ORG_ID=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.organizationID // ""')
         SERVER_URL=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.serverURL // ""')
-        DEFAULT_SPACE=$(echo "$CONTEXT_JSON" | jq -r '.settings.defaultSpace // ""')
+        # cub (v0.5.2 and later) has no default space; CUB_SCOUT_TEST_SPACE, else
+        # CUB_SPACE, names one.
+        DEFAULT_SPACE="${CUB_SCOUT_TEST_SPACE:-${CUB_SPACE:-}}"
 
         # Hub name defaults to user email for personal hub
         HUB_NAME="$USER_EMAIL"
 
         log "Authenticated as $USER_EMAIL"
         log "Org: $ORG_NAME"
-        log "Default space: $DEFAULT_SPACE"
+        log "Space: ${DEFAULT_SPACE:-(none named)}"
         return 0
     else
         HAS_AUTH=false
