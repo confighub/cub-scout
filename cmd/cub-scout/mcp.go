@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -1292,12 +1291,12 @@ func runMCPConnectedToolCommand(ctx context.Context, args []string) (string, err
 	return strings.TrimSpace(stdout.String()), nil
 }
 
+// detectMCPConnectedMode decides whether the connected tools are offered. Every
+// one of them reads ConfigHub by running `cub`, so the question is the same one
+// the CLI asks. Using a different check here meant the CLI could run
+// `compare source-truth` while the MCP tool of the same name was never listed.
 func detectMCPConnectedMode() bool {
-	if hub.CurrentMode() != hub.Connected {
-		return false
-	}
-	_, err := exec.LookPath("cub")
-	return err == nil
+	return requireCubConnectedFn() == nil
 }
 
 func readMCPFrame(r *bufio.Reader) ([]byte, error) {

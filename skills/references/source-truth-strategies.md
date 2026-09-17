@@ -146,4 +146,4 @@ The receipt-side complement, `cub-scout receipt verify --strategy <s>`, inherits
 - Phase 2 (expansion to 9): `#418`
 - Phase 3 (multi-source Argo): tracked separately
 - Help-text drift fix: `#450`, PR `#453`
-- Connected-mode gate: `pkg/hub.QuickMode()` in `cmd/cub-scout/source_truth.go`
+- Connected-mode gate: `requireConfigHubFor` in `cmd/cub-scout/source_truth.go`, backed by `pkg/hub.RequireCubConnected()` (`cub auth status`)

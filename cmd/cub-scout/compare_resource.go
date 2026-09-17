@@ -14,9 +14,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -332,9 +332,22 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 	}), nil
 }
 
+// isCompareConnected uses the same gate as `compare three-way --view` and
+// `compare source-truth`, so one command cannot admit a user at the door and
+// then report every resource as live-only because a second, different check
+// (a probe of hub.confighub.com) disagreed. It is asked once per resource, so
+// the answer is computed once per process rather than one `cub` run each.
 func isCompareConnected() bool {
-	return hub.NewClient().RequireConnected() == nil
+	compareConnectedOnce.Do(func() {
+		compareConnectedResult = requireCubConnectedFn() == nil
+	})
+	return compareConnectedResult
 }
+
+var (
+	compareConnectedOnce   sync.Once
+	compareConnectedResult bool
+)
 
 var errCompareResourceNotFoundInManifest = errors.New("resource not found in manifest")
 

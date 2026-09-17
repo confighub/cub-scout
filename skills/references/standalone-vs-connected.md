@@ -6,7 +6,7 @@ The **mode axis**. cub-scout works without ConfigHub (`standalone`) and with Con
 
 | Aspect | Standalone | Connected |
 |---|---|---|
-| Trigger | No `cub auth login`, no `CONFIGHUB_API_KEY` | `cub auth status` returns OK, or `CONFIGHUB_API_KEY` is set in env |
+| Trigger | The `cub` CLI is absent, or `cub auth status` does not report an authenticated session | `cub auth status` reports an authenticated session. This holds in either invocation form (`cub scout ...` or `cub-scout ...`); running as the plugin is not enough on its own |
 | Required inputs | Just a kubeconfig context | kubeconfig + ConfigHub auth |
 | Cluster reads | All read verbs work | All read verbs work |
 | ConfigHub reads | Refused with a clear error | Available via `cub * get/list`, `cub unit get`, `cub link list` |
@@ -19,20 +19,25 @@ The mode is **per-invocation**, not per-cluster. The same cluster can be observe
 
 ```bash
 $ cub-scout status
-Mode: connected (CONFIGHUB_API_KEY set; cub auth status: OK)
-Cluster: prod-use2
-ConfigHub: hub.confighub.com
+ConfigHub:  ● Connected
+Cluster:    default
+Context:    prod-use2
+Worker:     (none for this cluster)
 ```
 
 vs.
 
 ```bash
 $ cub-scout status
-Mode: standalone (no ConfigHub auth)
-Cluster: prod-use2
+ConfigHub:  ○ Online (not authenticated)
+            Run: cub auth login
+Cluster:    default
+Context:    prod-use2
 ```
 
-The implementation is `pkg/hub.QuickMode()` returning `Connected` or `Standalone` based on env / `cub auth status`. Connected-mode commands gate on this.
+`status` prints one of `● Connected`, `● Connected (auth expired)`, `○ Online (not authenticated)` or `○ Offline`. `Cluster` is `$CLUSTER_NAME` or the literal `default`, not the kube context. Treat anything other than plain `● Connected` as not connected.
+
+The commands that read ConfigHub only by running `cub` (`compare source-truth`, `views resolve`, `views project`, `compare three-way`, `import argocd`, and the MCP gateway's connected tools) gate on `pkg/hub.RequireCubConnected()`, which runs `cub auth status`. That is the check that notices an expired session; `cub auth get-token` prints a stored token and exits 0 even after expiry. The standalone and plugin forms run the same check, so they agree. Each refusal names its cause: reads turned off, `cub` not installed, or `cub`'s own reason for not being authenticated. Other connected commands (`history`, `audit list`, `receipt verify`, `doctor` and `gitops status --with-confighub`, `watch`) still gate through `hub.NewClient().RequireConnected()`, which also probes hub.confighub.com. `pkg/hub.QuickMode()` is a display helper for the TUI header; it never consults `cub` and must not be used as a gate.
 
 ## What works in standalone
 
@@ -114,8 +119,10 @@ Most operators don't need to think about the bundle / file mode — it's the CI 
 For CI pipelines that need ConfigHub-side evidence (source-truth verdicts, audit trails, governance gates):
 
 ```bash
-# Provision auth via env var, not interactive cub auth login
-export CONFIGHUB_API_KEY=<key>
+# cub-scout has no API-key mode of its own: it uses the cub CLI's login.
+# Authenticate cub non-interactively by whatever means your ConfigHub
+# deployment supports (see `cub auth --help`), then run in the same environment.
+cub auth status
 cub-scout compare source-truth deploy/api -n prod --strategy git-argo --format json
 ```
 
@@ -143,7 +150,7 @@ Every skill mentions the standalone-vs-connected boundary in its "Standalone vs 
 
 ## References
 
-- Code: `pkg/hub/client.go` `QuickMode()` and `RequireConnected()`, `cmd/cub-scout/status.go`
+- Code: `pkg/hub/connected.go` `RequireCubConnected()`, `pkg/hub/client.go` `RequireConnected()`, `pkg/hub/mode.go` `QuickMode()` (display only), `cmd/cub-scout/status.go`
 - Mode flag on receipts: `BuildReceiptInput.Connected` in `pkg/agent/receipt_build.go`
-- Connected-mode gate examples: `cmd/cub-scout/source_truth.go` (`hub.QuickMode() != hub.Connected` rejection), `cmd/cub-scout/history.go`, `cmd/cub-scout/views.go`
+- Connected-mode gate examples: `cmd/cub-scout/source_truth.go` and `cmd/cub-scout/views.go` (`requireConfigHubFor`), `cmd/cub-scout/history.go` (`RequireConnected`)
 - Receipts contract on standalone: `docs/reference/json-contracts.md` § Receipt Contract — `OmissionConfigHubUnitSubject` handling

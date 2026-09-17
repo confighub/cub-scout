@@ -12,11 +12,14 @@ patterns=(
   "PLANNED - requires cub-scout v1\\.4\\+"
   "MCP gateway .* planned for v1\\.4"
   "^## 4\\. Webhooks \\(Planned\\)$"
+  # Nothing reads this variable: not cub-scout, not the cub CLI. It was
+  # documented as a way into connected mode for several releases.
+  "CONFIGHUB_API_KEY"
 )
 
 failed=0
 for pattern in "${patterns[@]}"; do
-  if rg -n --glob '!docs/archive/**' --glob '!examples/integrations/**' "$pattern" docs examples README.md CLI-GUIDE.md >/tmp/cub_scout_doc_freshness_hits.txt 2>/dev/null; then
+  if rg -n --glob '!docs/archive/**' --glob '!examples/integrations/**' "$pattern" docs examples skills README.md CLI-GUIDE.md >/tmp/cub_scout_doc_freshness_hits.txt 2>/dev/null; then
     echo ""
     echo "Stale wording matched pattern: $pattern"
     cat /tmp/cub_scout_doc_freshness_hits.txt

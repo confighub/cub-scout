@@ -304,15 +304,8 @@ func validateAuthToken() bool {
 		return hub.PluginToken() != ""
 	}
 
-	// Use cub auth get-token which will fail if token is expired
-	// This is a lightweight check that doesn't make a network request
-	// if the token is expired (it checks expiry locally)
-	out, err := exec.Command("cub", "auth", "get-token").Output()
-	if err != nil {
-		return false
-	}
-
-	// If we got a non-empty token, auth is valid
-	token := strings.TrimSpace(string(out))
-	return token != ""
+	// `cub auth status` is the check that notices an expired session.
+	// `cub auth get-token` prints a stored token and exits 0 even after expiry,
+	// which is how status came to report Connected on a dead session.
+	return hub.CubSessionValid()
 }
