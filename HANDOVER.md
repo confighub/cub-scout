@@ -171,6 +171,20 @@ are present. `compare three-way` counts `dryWetLiveResources` the same way, so
 that count is now `0` in practice, and it was already `0` before, since every
 lookup failed.
 
+Two sites were missed and are fixed under #571: the `import argocd` test-update
+flow (`testAnnotationUpdate`, `testRolloutRestart`) read a unit's data with
+`cub unit livedata` and pointed stdout and stderr at one buffer, so the 38-line
+`cub unit` help became the unit's config data. Both now read `cub unit data`,
+which is what `compare` and the import wizard already use, through
+`commandStdout`. The rollout flow's two-minute wait for live data to appear is
+gone: a unit's config data is there as soon as the unit is, and `unit apply
+--wait` is what answers whether the worker applied it. Nothing was ever written
+back — the YAML editors refuse a payload with no `kind: Deployment` — but the
+error blamed the data rather than the removed command.
+`TestNoCubCallUsesARemovedSubcommand` now fails the build on `livedata` or
+`livestate` in an argument vector, while still allowing prose that explains the
+removal.
+
 ## cub Output: -o json, and Stderr Kept Out of Data (#563, partial)
 
 `cub` deprecated `--json` in favour of `-o json`, and prints

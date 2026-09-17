@@ -1435,6 +1435,30 @@ func deleteArgoApplication(ctx context.Context, client dynamic.Interface, namesp
 	return nil
 }
 
+// readUnitConfigData reads a unit's config data with `cub unit data`.
+//
+// This was `cub unit livedata`, which cub removed in April 2026 along with
+// `unit livestate`: a unit's Resources are extracted from its own data, and
+// ConfigHub's API has no live-data endpoint (#564). The removed subcommand
+// exits 0 and prints the `cub unit` help, and both callers pointed stdout and
+// stderr at one buffer, so 38 lines of help text became the unit's config data
+// and the flow then failed in the YAML editor, blaming the data (#571).
+//
+// stdout alone is the data; whatever cub prints on stderr goes into the error.
+// It is a variable so a test can drive the flow without a ConfigHub session.
+var readUnitConfigData = func(space, unitSlug string) (string, error) {
+	args := withConfigHubSpace([]string{"unit", "data", unitSlug}, space)
+	out, err := commandStdout(exec.Command("cub", args...))
+	if err != nil {
+		return "", fmt.Errorf("read config data of unit %s in space %s: %w", unitSlug, space, err)
+	}
+	data := strings.TrimSpace(string(out))
+	if data == "" {
+		return "", fmt.Errorf("unit %s in space %s has no config data", unitSlug, space)
+	}
+	return data, nil
+}
+
 // TestUpdateResult holds the result of a ConfigHub pipeline test
 type TestUpdateResult struct {
 	Success      bool
@@ -1457,33 +1481,18 @@ func testAnnotationUpdate(space, unitSlug string) (*TestUpdateResult, error) {
 
 	result.Annotation = fmt.Sprintf("%s=%s", annotationKey, annotationValue)
 
-	// Step 1: Get current unit config
-	getCmd := exec.Command("cub", "unit", "get", unitSlug, "--space", space, "-o", "json", "--quiet")
-	var getOut bytes.Buffer
-	getCmd.Stdout = &getOut
-	getCmd.Stderr = &getOut
-	if err := getCmd.Run(); err != nil {
-		return result, fmt.Errorf("failed to get unit config: %s", getOut.String())
+	// Step 1: Read the unit's config data. This also establishes that the unit
+	// exists and can be read, which a separate `unit get` used to check.
+	configYAML, err := readUnitConfigData(space, unitSlug)
+	if err != nil {
+		return result, err
 	}
 
-	// Step 2: Get the unit's config data
-	configCmd := exec.Command("cub", "unit", "livedata", unitSlug, "--space", space)
-	var configOut bytes.Buffer
-	configCmd.Stdout = &configOut
-	configCmd.Stderr = &configOut
-	if err := configCmd.Run(); err != nil {
-		return result, fmt.Errorf("failed to get unit livedata: %s", configOut.String())
-	}
-
-	configYAML := configOut.String()
-	if configYAML == "" {
-		return result, fmt.Errorf("unit has no config data")
-	}
-
-	// Step 3: Parse and modify the YAML to add annotation
+	// Step 2: Parse and modify the YAML to add annotation. The error names the
+	// unit: the reader has to know which unit's data had no workload in it.
 	modifiedYAML, resourceName, err := addAnnotationToYAML(configYAML, annotationKey, annotationValue)
 	if err != nil {
-		return result, fmt.Errorf("failed to modify YAML: %w", err)
+		return result, fmt.Errorf("unit %s in space %s: %w", unitSlug, space, err)
 	}
 	result.ResourceName = resourceName
 
@@ -1524,32 +1533,22 @@ func testRolloutRestart(space, unitSlug string) (*TestUpdateResult, error) {
 
 	result.Annotation = fmt.Sprintf("%s=%s", annotationKey, annotationValue)
 
-	// Step 1: Get the unit's config data (with retry - livedata may not be available immediately)
-	// Keep trying until we get livedata or user cancels. ConfigHub apply timeout is 10 minutes.
-	var configYAML string
-	startTime := time.Now()
-	for {
-		configCmd := exec.Command("cub", "unit", "livedata", unitSlug, "--space", space)
-		var configOut bytes.Buffer
-		configCmd.Stdout = &configOut
-		configCmd.Stderr = &configOut
-		if err := configCmd.Run(); err == nil && configOut.Len() > 0 {
-			configYAML = configOut.String()
-			break
-		}
-		// After 2 minutes, fail with helpful message (worker may not be running)
-		elapsed := time.Since(startTime)
-		if elapsed > 2*time.Minute {
-			return result, fmt.Errorf("timed out waiting for livedata after %v - ensure worker is running and connected", elapsed.Round(time.Second))
-		}
-		// Wait before retry - livedata appears after worker applies unit
-		time.Sleep(3 * time.Second)
+	// Step 1: Read the unit's config data.
+	//
+	// This waited up to two minutes for `cub unit livedata` to report data,
+	// because live data only appeared once the worker had applied the unit.
+	// There is nothing to wait for now: a unit's config data is there as soon
+	// as the unit is, and whether the worker applied the change is what the
+	// `--wait` on `unit apply` below answers.
+	configYAML, err := readUnitConfigData(space, unitSlug)
+	if err != nil {
+		return result, err
 	}
 
 	// Step 2: Parse and modify the YAML to add restart annotation to pod template
 	modifiedYAML, resourceName, err := addRolloutAnnotationToYAML(configYAML, annotationKey, annotationValue)
 	if err != nil {
-		return result, fmt.Errorf("failed to modify YAML for rollout: %w", err)
+		return result, fmt.Errorf("unit %s in space %s: %w", unitSlug, space, err)
 	}
 	result.ResourceName = resourceName
 

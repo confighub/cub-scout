@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"os/exec"
 	"runtime"
@@ -93,6 +94,40 @@ func TestNoCubCallPassesTheDeprecatedJSONFlag(t *testing.T) {
 	sort.Strings(problems)
 	if len(problems) > 0 {
 		t.Fatalf("%d cub calls pass the deprecated --json flag:\n  %s", len(problems), strings.Join(problems, "\n  "))
+	}
+}
+
+// cub removed `unit livedata` and `unit livestate` in April 2026. A removed
+// subcommand does not fail: cub prints the `unit` help and exits 0, so a caller
+// that reads the output gets 38 lines of help text where it expected config
+// data. That reached `compare` (#564) and the import test-update flow (#571).
+//
+// Prose explaining the removal is allowed; an argument vector is not.
+func TestNoCubCallUsesARemovedSubcommand(t *testing.T) {
+	removed := map[string]string{
+		"livedata":  "a unit's config data is `cub unit data`; ConfigHub has no live-data endpoint (#564, #571)",
+		"livestate": "removed with livedata in April 2026 (#564)",
+	}
+	fset, files := spaceGuardParseFiles(t, "cmd", "pkg")
+	var problems []string
+	for _, file := range files {
+		ast.Inspect(file, func(n ast.Node) bool {
+			text, ok := spaceGuardStringLit(n)
+			if !ok {
+				return true
+			}
+			for word, why := range removed {
+				// An argv element, or a command printed for a reader to run.
+				if text == word || (strings.HasPrefix(text, "cub ") && strings.Contains(text, "unit "+word)) {
+					problems = append(problems, fmt.Sprintf("%s: %q — %s", fset.Position(n.Pos()), text, why))
+				}
+			}
+			return true
+		})
+	}
+	sort.Strings(problems)
+	if len(problems) > 0 {
+		t.Fatalf("%d uses of a cub subcommand that no longer exists:\n  %s", len(problems), strings.Join(problems, "\n  "))
 	}
 }
 
