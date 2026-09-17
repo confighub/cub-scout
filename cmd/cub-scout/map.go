@@ -615,7 +615,7 @@ func init() {
 
 	// Fleet-specific flags
 	mapFleetCmd.Flags().StringVar(&fleetApp, "app", "", "Filter by app label")
-	mapFleetCmd.Flags().StringVar(&fleetSpace, "space", "", "Filter by space (App)")
+	mapFleetCmd.Flags().StringVar(&fleetSpace, "space", "", "Show one ConfigHub space (default: CUB_SPACE, else every space)")
 
 	// Global map flags
 	mapCmd.PersistentFlags().BoolVar(&mapJSON, "json", false, "Output in JSON format")
@@ -664,7 +664,7 @@ func init() {
 	mapActivityCmd.Flags().StringVar(&mapActivitySince, "since", "", "Show activity since duration (e.g., 1h, 24h, 7d)")
 	mapActivityCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 	mapActivityCmd.Flags().BoolVar(&mapActivityWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery activity rows")
-	mapActivityCmd.Flags().StringVar(&mapActivityConfigHubSpace, "confighub-space", "", "ConfigHub space for connected delivery evidence (default: current cub space; use '*' explicitly for all spaces)")
+	mapActivityCmd.Flags().StringVar(&mapActivityConfigHubSpace, "confighub-space", "", "ConfigHub space for connected delivery evidence (default: CUB_SPACE; use '*' explicitly for all spaces)")
 	mapActivityCmd.Flags().StringVar(&mapActivityConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
 	mapActivityCmd.Flags().StringVar(&mapActivityConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 
@@ -1116,6 +1116,10 @@ func processResourceWithLookup(
 			if space := annotations["confighub.com/SpaceName"]; space != "" {
 				entry.OwnerDetails["space"] = space
 			}
+			// Current ConfigHub releases stamp the space ID, not its name.
+			if spaceID := firstNonEmpty(annotations["confighub.com/SpaceID"], labels["confighub.com/SpaceID"]); spaceID != "" {
+				entry.OwnerDetails["spaceID"] = spaceID
+			}
 			if unit := labels["confighub.com/UnitSlug"]; unit != "" {
 				entry.OwnerDetails["unit"] = unit
 			}
@@ -1257,7 +1261,7 @@ func loadFleetUnitsFromJSON(path, space, appFilter string) ([]FleetUnit, error) 
 		if strings.TrimSpace(u.App) == "" {
 			continue
 		}
-		if space != "" && u.Space != space {
+		if space != "" && space != allConfigHubSpaces && u.Space != space {
 			continue
 		}
 		if appFilter != "" && u.App != appFilter {
@@ -1351,14 +1355,14 @@ type FleetUnit struct {
 }
 
 func runMapFleet(cmd *cobra.Command, args []string) error {
-	// Get units from ConfigHub
-	units, err := fetchFleetUnits(fleetSpace, fleetApp)
+	space := mapFleetSpace(fleetSpace)
+	units, err := fetchFleetUnits(space.Slug, fleetApp)
 	if err != nil {
 		return err
 	}
 
 	if len(units) == 0 {
-		fmt.Println("No deployments found with app/variant labels.")
+		fmt.Printf("No deployments found with app/variant labels in ConfigHub space %s (%s).\n", space.Slug, space.Source)
 		fmt.Println("\nTo use fleet view, import with App model:")
 		fmt.Println("  cub-scout import --namespace myapp-prod")
 		return nil
@@ -1400,6 +1404,7 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 	sort.Strings(appNames)
 
 	fmt.Println("ConfigHub Fleet View (App Model)")
+	fmt.Printf("ConfigHub space: %s (%s)\n", space.Slug, space.Source)
 	fmt.Println("Hierarchy: Application → Variant → Target")
 	fmt.Printf("Impact: %d apps, %d targets, %d behind, %d drifted, %d failed\n",
 		len(appNames), len(units), behindCount, driftedCount, failedCount)
@@ -1517,16 +1522,24 @@ func runMapFleet(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// mapFleetSpace is the scope of `map fleet`, which shows applications across
+// spaces. --space or CUB_SPACE narrows it to one space; otherwise it reads every
+// space, and says so on the cub command line and in its output.
+func mapFleetSpace(flagValue string) configHubSpace {
+	if space := resolveConfigHubSpace(flagValue); space.IsSet() {
+		return space
+	}
+	return configHubSpace{Slug: allConfigHubSpaces, Source: spaceSourceCommandDefault}
+}
+
+// fetchFleetUnits reads units in a resolved space; allConfigHubSpaces reads
+// every space.
 func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_FLEET_JSON"); fixture != "" {
 		return loadFleetUnitsFromJSON(fixture, space, appFilter)
 	}
 
-	// Build cub command to list units
-	args := []string{"unit", "list", "--json"}
-	if space != "" {
-		args = append(args, "--space", space)
-	}
+	args := withConfigHubSpace([]string{"unit", "list", "--json"}, space)
 
 	cmd := exec.Command("cub", args...)
 	output, err := cmd.Output()
@@ -1604,7 +1617,7 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 
 // fetchUnitLabels gets labels for a specific unit
 func fetchUnitLabels(space, slug string) (map[string]string, error) {
-	cmd := exec.Command("cub", "unit", "get", slug, "--space", space, "--json")
+	cmd := exec.Command("cub", withConfigHubSpace([]string{"unit", "get", slug, "--json"}, space)...)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -4070,10 +4083,7 @@ func collectActivity(ctx context.Context) ([]mapActivityRow, error) {
 
 func mapActivityDeliveryOptionsFromFlags(ctx context.Context) (gitOpsDeliveryEvidenceOptions, error) {
 	now := gitopsNowFn().UTC()
-	space := strings.TrimSpace(mapActivityConfigHubSpace)
-	if space == "" {
-		space = gitopsDefaultSpaceFn(ctx)
-	}
+	space, spaceSource := gitOpsDeliverySpace(mapActivityConfigHubSpace)
 
 	since := strings.TrimSpace(mapActivityConfigHubSince)
 	if since == "" {
@@ -4094,13 +4104,14 @@ func mapActivityDeliveryOptionsFromFlags(ctx context.Context) (gitOpsDeliveryEvi
 	}
 
 	return gitOpsDeliveryEvidenceOptions{
-		Namespace:  strings.TrimSpace(mapNamespace),
-		Space:      space,
-		Since:      since,
-		Window:     window,
-		StaleAfter: staleAfter,
-		Now:        now,
-		MaxItems:   defaultGitOpsDeliveryMaxItems,
+		Namespace:   strings.TrimSpace(mapNamespace),
+		Space:       space,
+		SpaceSource: spaceSource,
+		Since:       since,
+		Window:      window,
+		StaleAfter:  staleAfter,
+		Now:         now,
+		MaxItems:    defaultGitOpsDeliveryMaxItems,
 	}, nil
 }
 
@@ -5538,45 +5549,44 @@ type cubUnitInfo struct {
 
 // cubUnitCache holds all units from ConfigHub, indexed by UnitSlug
 type cubUnitCache struct {
-	units      map[string]*cubUnitInfo
-	space      string
-	allSpaces  []string            // All available spaces
-	crossSpace map[string][]string // unit slug -> list of spaces where it exists
+	units       map[string]*cubUnitInfo
+	space       string
+	spaceSource string
+	allSpaces   []string            // All available spaces
+	crossSpace  map[string][]string // unit slug -> list of spaces where it exists
+	// crossSpaceLinks counts links read in this space whose other end is a
+	// unit in another space. They are not joined: units are keyed by slug, and
+	// the same slug in two spaces is two units.
+	crossSpaceLinks int
 }
 
-// fetchConfigHubUnits fetches all units from ConfigHub
-func fetchConfigHubUnits() (*cubUnitCache, error) {
-	// Get current context (this will fail if not authenticated)
-	ctxCmd := exec.Command("cub", "context", "get", "--json")
-	ctxOut, err := ctxCmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("ConfigHub authentication required.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
-	}
-	ctx, err := parseCubContextJSON(ctxOut)
+// fetchConfigHubUnits reads the units and links of one ConfigHub space, named by
+// flagValue or CUB_SPACE. feature and flag name the caller in a refusal.
+func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error) {
+	// Units are indexed by slug below, and a slug is unique only within one
+	// space, so this needs exactly one space.
+	resolved, err := requireSingleConfigHubSpace(feature, flag, flagValue,
+		"units are joined to resources and to each other by unit slug, which is unique only within a space")
 	if err != nil {
 		return nil, err
 	}
-	space := ctx.Settings.DefaultSpace
-	if space == "" {
-		return nil, fmt.Errorf("no space selected (run 'cub context set --space <name>')")
-	}
+	space := resolved.Slug
 
-	// Fetch units
-	listCmd := exec.Command("cub", "unit", "list", "--json", "--quiet")
-	listOut, err := listCmd.Output()
+	listOut, err := runHistoryCubCommandImpl(context.Background(), withConfigHubSpace([]string{"unit", "list", "--json", "--quiet"}, space))
 	if err != nil {
-		return nil, fmt.Errorf("failed to list units: %w", err)
+		return nil, fmt.Errorf("failed to list units in ConfigHub space %s: %w", space, err)
 	}
 
-	unitList, err := parseCubUnitListJSON(listOut)
+	unitList, err := parseCubUnitListJSON([]byte(listOut))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse units: %w", err)
 	}
 
 	cache := &cubUnitCache{
-		units:      make(map[string]*cubUnitInfo),
-		space:      space,
-		crossSpace: make(map[string][]string),
+		units:       make(map[string]*cubUnitInfo),
+		space:       space,
+		spaceSource: resolved.Source,
+		crossSpace:  make(map[string][]string),
 	}
 
 	for _, u := range unitList {
@@ -5589,19 +5599,28 @@ func fetchConfigHubUnits() (*cubUnitCache, error) {
 	}
 
 	// Fetch links for dependency info
-	linksCmd := exec.Command("cub", "link", "list", "--json", "--quiet")
+	linksCmd := exec.Command("cub", withConfigHubSpace([]string{"link", "list", "--json", "--quiet"}, space)...)
 	linksOut, err := linksCmd.Output()
 	if err == nil {
 		var linkList []struct {
 			FromUnit struct {
-				Slug string `json:"Slug"`
+				Slug    string `json:"Slug"`
+				SpaceID string `json:"SpaceID"`
 			} `json:"FromUnit"`
 			ToUnit struct {
-				Slug string `json:"Slug"`
+				Slug    string `json:"Slug"`
+				SpaceID string `json:"SpaceID"`
 			} `json:"ToUnit"`
 		}
 		if json.Unmarshal(linksOut, &linkList) == nil {
 			for _, l := range linkList {
+				// A link read in this space can point at a unit in another
+				// space, often one with the same slug (a variant linking to its
+				// base). Joined by slug, the unit would depend on itself.
+				if l.FromUnit.SpaceID != "" && l.ToUnit.SpaceID != "" && l.FromUnit.SpaceID != l.ToUnit.SpaceID {
+					cache.crossSpaceLinks++
+					continue
+				}
 				if from := cache.units[l.FromUnit.Slug]; from != nil {
 					from.DependsOn = append(from.DependsOn, l.ToUnit.Slug)
 				}
@@ -5752,10 +5771,10 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 	var unitCache *cubUnitCache
 	if deepDiveConnected {
 		var connErr error
-		unitCache, connErr = fetchConfigHubUnits()
+		unitCache, connErr = fetchConfigHubUnits("connected deep-dive", "", "")
 		if connErr != nil {
 			fmt.Printf("⚠ Connected mode failed: %v\n", connErr)
-			fmt.Println("  Falling back to standalone mode. Run 'cub auth login' to enable.")
+			fmt.Println("  Falling back to standalone mode.")
 			fmt.Println()
 			deepDiveConnected = false
 		}
@@ -7782,7 +7801,7 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 		fmt.Println("═══════════════════════════════════════════════════════════════════════════════")
 		fmt.Println("CONFIGHUB CONNECTED MODE STATUS")
 		fmt.Println("═══════════════════════════════════════════════════════════════════════════════")
-		fmt.Printf("  Space:       %s\n", unitCache.space)
+		fmt.Printf("  Space:       %s (%s)\n", unitCache.space, unitCache.spaceSource)
 		fmt.Printf("  Units:       %d in space\n", len(unitCache.units))
 
 		// Count workloads with ConfigHub labels

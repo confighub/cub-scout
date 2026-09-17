@@ -88,12 +88,13 @@ require_workers() {
         exit 1
     fi
 
-    # Get current space
+    # The space to use: CUB_SCOUT_TEST_SPACE, else CUB_SPACE. cub (v0.5.2 and
+    # later) has no default space.
     local current_space
-    current_space=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
-    if [[ -z "$current_space" || "$current_space" == "null" ]]; then
-        fail "No active space set (required for $demo_name)"
-        echo "Run: cub context set space <slug>"
+    current_space="${CUB_SCOUT_TEST_SPACE:-${CUB_SPACE:-}}"
+    if [[ -z "$current_space" ]]; then
+        fail "No ConfigHub space named (required for $demo_name)"
+        echo "Set CUB_SCOUT_TEST_SPACE=<slug>"
         exit 1
     fi
 
@@ -414,7 +415,9 @@ demo_connected() {
     require_workers "connected mode demo"
     echo ""
 
-    CURRENT_SPACE=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
+    CURRENT_SPACE="${CUB_SCOUT_TEST_SPACE:-${CUB_SPACE:-}}"
+    # cub-scout reads CUB_SPACE, so the commands below use the space shown here.
+    export CUB_SPACE="$CURRENT_SPACE"
 
     bold "Connected to ConfigHub (space: $CURRENT_SPACE)"
     echo ""
@@ -450,9 +453,9 @@ demo_connected() {
     pass "Connected mode demo complete"
     echo ""
     dim "Next steps:"
-    dim "  cub unit list                   # List units in space"
-    dim "  cub worker list                 # List workers"
-    dim "  cub target list                 # List targets"
+    dim "  cub unit list --space $CURRENT_SPACE     # List units in space"
+    dim "  cub worker list --space $CURRENT_SPACE   # List workers"
+    dim "  cub target list --space $CURRENT_SPACE   # List targets"
 }
 
 # Demo: Import workflow (uses Go client)

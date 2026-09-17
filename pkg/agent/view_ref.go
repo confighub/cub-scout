@@ -69,6 +69,11 @@ const (
 // parser is tolerant.
 var uuidPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 
+// IsUUID reports whether s has the canonical 8-4-4-4-12 UUID shape.
+func IsUUID(s string) bool {
+	return uuidPattern.MatchString(s)
+}
+
 // ParseViewRef parses a CLI-friendly View identifier. Accepts bare UUIDs
 // and ConfigHub View Explorer URLs. Empty input returns ("", false) so
 // callers can distinguish "not set" from "invalid".

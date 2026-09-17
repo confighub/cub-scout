@@ -86,7 +86,7 @@ func init() {
 	treeCmd.Flags().BoolVar(&treeJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	treeCmd.Flags().StringVarP(&treeNamespace, "namespace", "n", "", "Filter by namespace")
 	treeCmd.Flags().BoolVarP(&treeAll, "all", "A", false, "Show all resources including system namespaces")
-	treeCmd.Flags().StringVar(&treeSpace, "space", "", "ConfigHub space for 'config' view (use '*' for all spaces)")
+	treeCmd.Flags().StringVar(&treeSpace, "space", "", "ConfigHub space for the 'config' view; '*' for every space (default: CUB_SPACE)")
 	treeCmd.Flags().StringVar(&treeEdge, "edge", "clone", "Edge type for 'config' view: clone (inheritance) or link (dependencies)")
 	treeCmd.Flags().StringVar(&treeOwner, "owner", "", "Filter by owner: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native")
 	treeCmd.Flags().IntVar(&treeDepth, "depth", 0, "Limit tree depth (0 = unlimited)")
@@ -1159,12 +1159,11 @@ func runTreeConfig() error {
 		return fmt.Errorf("'cub' CLI not found. Install with: brew install confighub/tap/cub")
 	}
 
-	// Build command args
-	args := []string{"unit", "tree"}
-
-	if treeSpace != "" {
-		args = append(args, "--space", treeSpace)
+	space, err := requireConfigHubSpace("tree config", "--space", treeSpace)
+	if err != nil {
+		return err
 	}
+	args := withConfigHubSpace([]string{"unit", "tree"}, space.Slug)
 
 	if treeEdge != "" {
 		args = append(args, "--edge", treeEdge)
@@ -1175,6 +1174,9 @@ func runTreeConfig() error {
 	}
 
 	fmt.Printf("%sConfigHub Unit Tree%s (via 'cub unit tree')\n", colorBold, colorReset)
+	if !treeJSON {
+		fmt.Printf("Space: %s (%s)\n", space.Slug, space.Source)
+	}
 	fmt.Println(strings.Repeat("─", 60))
 
 	if treeEdge == "clone" {

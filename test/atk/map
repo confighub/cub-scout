@@ -73,6 +73,13 @@ MAP_MODE="${MAP_MODE:-auto}"
 FILTER_NAMESPACE=""
 FILTER_SPACE=""
 
+# The ConfigHub space this harness reads: --space=, else CUB_SCOUT_TEST_SPACE,
+# else CUB_SPACE. cub (v0.5.2 and later) has no default space, so a defaultSpace
+# left in an older cub config is not used.
+atk_space() {
+    echo "${FILTER_SPACE:-${CUB_SCOUT_TEST_SPACE:-${CUB_SPACE:-}}}"
+}
+
 # Offline mode: suppress ConfigHub fleet view
 CONFIGHUB_OFFLINE="${CONFIGHUB_OFFLINE:-}"
 
@@ -489,9 +496,9 @@ collect_confighub_drift() {
         return
     fi
 
-    # Get current space from context (fast - avoids querying all 149+ spaces)
+    # Only the named space (fast - avoids querying every space)
     local current_space
-    current_space=$(cub context get --json 2>/dev/null | jq -r '.DefaultSpace // empty' 2>/dev/null)
+    current_space=$(atk_space)
     if [[ -z "$current_space" ]]; then
         echo '{}'
         return
@@ -2420,7 +2427,7 @@ view_maps() {
         ch_connected=true
         ch_context=$(cub context get --json 2>/dev/null || echo '{}')
         ch_org=$(echo "$ch_context" | jq -r '.metadata.organizationName // "unknown"')
-        ch_space=$(echo "$ch_context" | jq -r '.settings.defaultSpace // "none"')
+        ch_space=$(atk_space)
 
         echo -e "\n  ${UI_BOLD}Org:${UI_NC} ${ch_org}"
 
@@ -2437,7 +2444,7 @@ view_maps() {
             echo "      ├── Workers: ${ch_workers}"
             echo "      └── Targets: ${ch_targets}"
         else
-            echo -e "  └── ${UI_FG_DIM}No space selected (cub context set --space <name>)${UI_NC}"
+            echo -e "  └── ${UI_FG_DIM}No space selected (pass --space=<name> or set CUB_SPACE)${UI_NC}"
         fi
     else
         echo -e "\n  ${UI_FG_DIM}Not connected to ConfigHub${UI_NC}"
@@ -3444,7 +3451,7 @@ view_dashboard_gum() {
         echo ""
         local ch_context ch_space ch_units ch_workers ch_targets
         ch_context=$(cub context get --json 2>/dev/null || echo '{}')
-        ch_space=$(echo "$ch_context" | jq -r '.DefaultSpace // "none"')
+        ch_space=$(atk_space)
 
         if [[ "$ch_space" != "none" && "$ch_space" != "null" && -n "$ch_space" ]]; then
             # Get space stats
@@ -4014,9 +4021,15 @@ view_confighub_connection_status() {
     # Check units, workers, targets (only if authenticated)
     if $has_auth; then
         local units_out workers_out targets_out
-        units_out=$(cub unit list --json 2>/dev/null || echo '[]')
-        workers_out=$(cub worker list --json 2>/dev/null || echo '[]')
-        targets_out=$(cub target list --json 2>/dev/null || echo '[]')
+        # Counts cover the named space, or every space when none is named. The
+        # scope is always explicit: cub reads a list with no --space as every
+        # space, and says so only by returning more rows.
+        local count_space
+        count_space=$(atk_space)
+        count_space="${count_space:-*}"
+        units_out=$(cub unit list --space "$count_space" --json 2>/dev/null || echo '[]')
+        workers_out=$(cub worker list --space "$count_space" --json 2>/dev/null || echo '[]')
+        targets_out=$(cub target list --space "$count_space" --json 2>/dev/null || echo '[]')
 
         unit_count=$(echo "$units_out" | jq 'length' 2>/dev/null || echo 0)
         worker_count=$(echo "$workers_out" | jq 'length' 2>/dev/null || echo 0)
@@ -4332,7 +4345,8 @@ view_confighub() {
     spaces_json=$(cub space list --json 2>/dev/null || echo '[]')
 
     local current_space ctx_name ctx_server ctx_org_id ctx_org ctx_user
-    current_space=$(echo "$context" | jq -r '.settings.defaultSpace // "-"')
+    current_space=$(atk_space)
+    current_space="${current_space:--}"
     ctx_name=$(echo "$context" | jq -r '.name // "-"')
     ctx_server=$(echo "$context" | jq -r '.coordinate.serverURL // "-"')
     ctx_org_id=$(echo "$context" | jq -r '.coordinate.organizationID // ""')
@@ -4466,11 +4480,6 @@ main() {
     done
 
     local data
-
-    # Set ConfigHub space context if specified
-    if [[ -n "$FILTER_SPACE" ]]; then
-        cub context set --space "$FILTER_SPACE" &>/dev/null || true
-    fi
 
     # Handle --json anywhere
     if [[ "$json_mode" == "true" ]]; then

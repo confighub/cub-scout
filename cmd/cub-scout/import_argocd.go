@@ -154,7 +154,7 @@ func init() {
 
 func addImportArgoFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&argoImportNamespace, "argocd-namespace", "argocd", "Namespace where ArgoCD is installed")
-	cmd.Flags().StringVar(&argoImportSpace, "space", "", "ConfigHub space to import into (auto-inferred if not specified)")
+	cmd.Flags().StringVar(&argoImportSpace, "space", "", "ConfigHub space to import into (default: a space named after the Application)")
 	cmd.Flags().BoolVar(&argoImportDryRun, "dry-run", false, "Preview what would be imported without making changes")
 	cmd.Flags().BoolVar(&argoImportShowYAML, "show-yaml", false, "Show YAML content that would be imported (implies --dry-run)")
 	cmd.Flags().BoolVar(&argoImportRaw, "raw", false, "Keep raw YAML with all runtime fields (default: clean)")
@@ -304,14 +304,13 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 
 	// Determine space
+	// The destination is --space, else a space named after the application.
+	// It is never the cub context's default space: an import must not land
+	// somewhere the command line did not name.
 	space := argoImportSpace
 	if space == "" {
-		space, err = getCurrentSpace()
-		if err != nil {
-			// Suggest using app name as space
-			space = appName
-			fmt.Printf("  Using app name as space: %s\n", space)
-		}
+		space = appName
+		fmt.Printf("  Using app name as space: %s (pass --space to choose another)\n", space)
 	}
 
 	// Summary

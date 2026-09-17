@@ -668,7 +668,7 @@ func applyProposal(proposal *FullProposal, workloads []WorkloadInfo, dryRun bool
 
 // createAppForImport creates an App for import using cub-scout app-space create
 func createAppForImport(name string) error {
-	result, err := CreateAppWithResult(name, true, nil)
+	result, err := CreateAppWithResult(name, nil)
 	if err != nil {
 		return err
 	}

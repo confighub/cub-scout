@@ -258,7 +258,9 @@ collect_all_data() {
     ((current++)); printf "\r%bLoading...%b [%d/%d] Fetching spaces        " "$UI_FG_DIM" "$UI_NC" "$current" "$total"
     SPACES_JSON=$(cub space list --json 2>/dev/null || echo '[]')
 
-    CURRENT_SPACE=$(echo "$CONTEXT_JSON" | jq -r '.settings.defaultSpace // ""')
+    # The space to focus: CUB_SCOUT_TEST_SPACE, else CUB_SPACE. cub (v0.5.2 and
+    # later) has no default space.
+    CURRENT_SPACE="${CUB_SCOUT_TEST_SPACE:-${CUB_SPACE:-}}"
     local active_org_external_id
     active_org_external_id=$(echo "$CONTEXT_JSON" | jq -r '.coordinate.organizationID // ""')
 

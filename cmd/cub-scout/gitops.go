@@ -95,7 +95,7 @@ func init() {
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsJSON, "json", false, "Output as JSON (shorthand for --format json)")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsWithConfigHub, "with-confighub", false, "Include bounded ConfigHub release, unit-event, and live-status evidence")
-	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubSpace, "confighub-space", "", "ConfigHub space for connected evidence (default: current cub space; use '*' explicitly for all spaces)")
+	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubSpace, "confighub-space", "", "ConfigHub space for connected evidence (default: CUB_SPACE; use '*' explicitly for all spaces)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 }

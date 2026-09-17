@@ -98,7 +98,8 @@ func parseCubWorkerListJSON(raw []byte) ([]WorkerListItem, error) {
 	items := cubExtractItems(payload)
 	out := make([]WorkerListItem, 0, len(items))
 	for _, item := range items {
-		workerObj := mcpNestedMap(item, "Worker", "worker")
+		// cub prints each worker as {"BridgeWorker": {...}, "Space": {...}}.
+		workerObj := mcpNestedMap(item, "BridgeWorker", "bridgeWorker", "Worker", "worker")
 		if workerObj == nil {
 			workerObj = item
 		}

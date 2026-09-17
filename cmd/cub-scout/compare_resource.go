@@ -146,7 +146,6 @@ var (
 	loadCompareDryWetSnapshotFn   = loadCompareDryWetSnapshots
 	resolveCompareConfigHubLinkFn = resolveCompareConfigHubLink
 	compareConnectedFn            = isCompareConnected
-	compareDefaultSpaceFn         = detectCompareSpace
 	runCompareCubCommand          = runCompareCubCommandImpl
 	loadCompareDryFromPathFn      = loadCompareDryFromPath
 )
@@ -266,11 +265,30 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 		if unitSlug == "" {
 			notes = append(notes, "Connected mode detected, but this LIVE resource is not linked to a ConfigHub unit (`confighub.com/UnitSlug` missing).")
 		} else {
-			space := strings.TrimSpace(live.SpaceName)
-			if space == "" {
-				space = compareDefaultSpaceFn()
+			// The live object's own space: its name, else its ID, which cub
+			// accepts for --space. Current ConfigHub releases stamp the ID.
+			space := configHubSpace{Slug: firstNonEmpty(strings.TrimSpace(live.SpaceName), strings.TrimSpace(live.SpaceID)), Source: spaceSourceResource}
+			if !space.IsSet() {
+				space = resolveConfigHubSpace("")
 			}
-			dryWet, err := loadCompareDryWetSnapshotFn(ctx, unitSlug, space, compareResourceRef{
+			if !space.IsSet() || space.IsAll() {
+				// A unit slug is unique only within a space, and cub looks up a
+				// slug with no space across the whole organization. DRY/WET from
+				// the wrong unit is worse than none.
+				notes = append(notes, fmt.Sprintf("DRY/WET lookup skipped for unit %s: the LIVE resource carries no ConfigHub space and CUB_SPACE does not name one space.", unitSlug))
+				return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
+					Resource:  kind + "/" + name,
+					Namespace: ns,
+					Mode:      mode,
+					Connected: connected,
+					Live:      live,
+					Notes:     notes,
+				}), nil
+			}
+			if space.Source != spaceSourceResource {
+				notes = append(notes, fmt.Sprintf("DRY/WET for unit %s is read from space %s, named by %s: the LIVE resource carries no ConfigHub space, so the unit found there may not be the one that applied this resource.", unitSlug, space.Slug, space.Source))
+			}
+			dryWet, err := loadCompareDryWetSnapshotFn(ctx, unitSlug, space.Slug, compareResourceRef{
 				Kind:      kind,
 				Name:      name,
 				Namespace: ns,
@@ -316,17 +334,6 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 
 func isCompareConnected() bool {
 	return hub.NewClient().RequireConnected() == nil
-}
-
-func detectCompareSpace() string {
-	if space := hub.PluginSpace(); space != "" {
-		return strings.TrimSpace(space)
-	}
-	cubCtx, _, err := getStatusCubContext()
-	if err != nil || cubCtx == nil {
-		return ""
-	}
-	return strings.TrimSpace(cubCtx.Settings.DefaultSpace)
 }
 
 var errCompareResourceNotFoundInManifest = errors.New("resource not found in manifest")
@@ -379,11 +386,16 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 	if errors.Is(wetErr, errCompareResourceNotFoundInManifest) {
 		notes = append(notes, "WET manifest found but target resource was not present in rendered output.")
 	}
-	if drySummary != nil && drySummary.SpaceName == "" {
-		drySummary.SpaceName = space
-	}
-	if wetSummary != nil && wetSummary.SpaceName == "" {
-		wetSummary.SpaceName = space
+	for _, summary := range []*compareSideSummary{drySummary, wetSummary} {
+		switch {
+		case summary == nil:
+		case agent.IsUUID(space):
+			if summary.SpaceID == "" {
+				summary.SpaceID = space
+			}
+		case summary.SpaceName == "":
+			summary.SpaceName = space
+		}
 	}
 	applyCompareUnitMetadata(drySummary, unitMeta)
 	applyCompareUnitMetadata(wetSummary, unitMeta)
@@ -394,28 +406,18 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 	}, nil
 }
 
+// The compare unit reads always name the space; the caller skips the lookup
+// when it has none, rather than let the cub context choose.
 func compareUnitGetArgs(unitSlug, space string) []string {
-	args := []string{"unit", "get", unitSlug, "--json", "--quiet"}
-	if strings.TrimSpace(space) != "" {
-		args = append(args, "--space", strings.TrimSpace(space))
-	}
-	return args
+	return withConfigHubSpace([]string{"unit", "get", unitSlug, "--json", "--quiet"}, space)
 }
 
 func compareUnitDataArgs(unitSlug, space string) []string {
-	args := []string{"unit", "data", unitSlug}
-	if strings.TrimSpace(space) != "" {
-		args = append(args, "--space", strings.TrimSpace(space))
-	}
-	return args
+	return withConfigHubSpace([]string{"unit", "data", unitSlug}, space)
 }
 
 func compareUnitLivedataArgs(unitSlug, space string) []string {
-	args := []string{"unit", "livedata", unitSlug}
-	if strings.TrimSpace(space) != "" {
-		args = append(args, "--space", strings.TrimSpace(space))
-	}
-	return args
+	return withConfigHubSpace([]string{"unit", "livedata", unitSlug}, space)
 }
 
 func runCompareCubCommandImpl(ctx context.Context, args []string) (string, error) {

@@ -64,6 +64,110 @@ This update changes documentation only; it does not repair those runtime gaps.
 The September 11 execution snapshot below is historical and predates #538 and
 the v2.11.0 release. Use [release notes](docs/releases/v2.11.0.md) for that scope.
 
+## Explicit ConfigHub Space (#552)
+
+cub v0.5.2 (2026-09-17) removed the default space. `--space` alone chooses a
+space. A list or bulk command with no `--space` covers the whole organization,
+and so does `--space ""`. A single entity is named by `--space`, as
+`<space>/<slug>`, or by ID. A bare slug is looked up across the whole
+organization and refused only when more than one space has it. `cub context set`
+and `space create --set-context` are gone, and cub no longer sets `CUB_SPACE` for
+plugins. Config files written by older cub still carry `settings.defaultSpace`,
+and cub ignores it.
+
+Against v0.5.2, `main` (v2.11.0) failed in two ways, both silently:
+- `history`, `audit list`, `status` and the `--with-confighub` reads still read
+  `defaultSpace` from `cub context get` and passed it as `--space`. They scoped
+  to a space cub no longer uses. On the test machine that space was empty, so
+  `audit list` reported no break-glass decisions.
+- `tree config`, `map fleet` and `fleet outliers` sent no `--space`, so they now
+  read the whole organization. `map fleet` made one list call and 348
+  `cub unit get` calls, and took 22 seconds.
+
+`resolveConfigHubSpace` now answers "which space" in one place: the flag (or
+the traced object's own space), else `CUB_SPACE`, else unset. The cub context is
+never read. Unset never becomes every space.
+
+`CUB_SPACE` is kept as an explicit setting, and output reports it as the source.
+It is the space variable of cub's plugin environment. cub itself neither reads
+it nor, from v0.5.2, sets it. MCP tool calls ignore it: the tools require
+`space`, and cub-scout commands run for a tool call do not inherit the server's
+`CUB_SPACE`.
+
+Every space-scoped `cub` call names its space, through `withConfigHubSpace` or
+a literal `--space`. Through `withConfigHubSpace`, an empty space fails closed:
+a placeholder no space can have is sent, and cub refuses the call instead of
+widening it. References that carry their own space
+go through `withConfigHubSpaceFromRef`. `TestEveryCubCallNamesItsSpace` is a lint
+over literal argument vectors. It catches the common shapes, not every one;
+enforcing this in a single runner is #563.
+`TestConnectedCommandsNameTheirSpaceAgainstARecordingCub` runs the real
+commands against a fake cub whose config still has a stale `defaultSpace`. Each
+command is run three ways: nothing named, `--space`, and `CUB_SPACE`. It records
+every call. A mutation that reads the stale default fails it.
+
+Per command:
+- **Refuse with no space.** `history`, `audit list` and `tree config` accept `*`
+  (`history` and `audit list` gain `--space`). `history` and `audit list` report
+  `scope`, and the empty `history` text no longer claims the resource was never
+  imported.
+- **`map fleet`** is cross-space by design: `--space` or `CUB_SPACE` narrows it,
+  otherwise it sends `--space *` and prints that scope.
+- **`fleet outliers`, `impact` and connected `map deep-dive`** join by slug, so
+  they read exactly one space and refuse `*`. `impact` gains `--space` and
+  reports its scope.
+- **Cross-space dependency links.** `cub link list --space X` returns links to
+  units in other spaces, often with the same slug (a variant linking to its
+  base), and joined by slug a unit became its own dependent. Links whose ends
+  are in different spaces are no longer joined, and `impact` counts them in a
+  note. `impact` also notes that dependents stored in other spaces are not
+  counted.
+- **`fleet outliers` in one space** has no unit on two clusters (each unit has
+  one target), so it compares only units on two or more clusters and otherwise
+  says nothing was compared. It used to report every cluster missing the other
+  clusters' units. A real cross-space comparison needs unit lineage, #562. Its
+  read errors now carry cub's reason instead of "Run: cub auth login".
+- **`compare`** takes the DRY/WET space from the live object (its space name,
+  else the `confighub.com/SpaceID` current releases stamp), else `CUB_SPACE`
+  with a note saying so, else skips the lookup with a note. Separately, its WET
+  read uses `cub unit livedata`, which cub removed in April 2026, so connected
+  DRY/WET cannot succeed today and DRY is discarded with it: #564.
+- **`status`** looks for a worker named after the cluster in `CUB_SPACE`'s
+  space, else in every space, and says exactly that. Its worker parser never
+  read cub's `BridgeWorker` key, so no worker was ever found; fixed.
+- **MCP.** `confighub_units` and `confighub_changesets` require `space`.
+  `confighub_unit_get` requires it unless `unit` is `<space>/<slug>` or an ID,
+  and refuses `*`. The server's `CUB_SPACE` is not consulted, because an agent
+  cannot see it. The `k8s` tools accept a target without a single named space
+  only as `<space>/<slug>` or a UUID, checked per comma-separated part.
+- **Suggested `cub ... get` commands** name the space, use the ID, or show a
+  `<space>` placeholder.
+- **Delivery evidence** reports `scope.spaceSource`.
+- **The TUI history panel** uses the space the workload records (name or ID).
+
+cub-scout no longer changes the cub context. `import argocd` probed for a space
+with `cub context set --space`; it now uses `cub space get`, then
+`cub space create`. `getCurrentSpace` there never worked, so the destination is
+`--space` or the application name, as it always was in practice.
+`app create --set-context` is deprecated and ignored. The TUI creates spaces
+without `--set-context`. `hierarchy` focuses the `CUB_SPACE` space.
+
+Test harness:
+- The Go helpers, preflight scripts, expected-output checks and `test/atk`
+  scripts take `CUB_SCOUT_TEST_SPACE` (the ATK scripts, then `CUB_SPACE`).
+  Every `cub` call in them names that space; `test/atk/map` no longer runs
+  `cub context set`.
+- Connected Go tests skip with a message when no test space is named, so
+  `go test ./...` passes for an authenticated developer.
+- `RequireSpace` used to run `cub context get space`, which looks up a context
+  named `space` rather than reading a space, so its tests always skipped.
+
+Not done (#563):
+- About 40 `cub` calls still pass the deprecated `--json`.
+- The import wizard's test apply reads a target slug through a `sh -c ... | jq`
+  pipeline with stderr merged. Confirmed against v0.5.2: the deprecation line
+  becomes the slug when a space has no Kubernetes target.
+
 ## Historical Execution Snapshot: 2026-09-11
 
 Last updated: 2026-09-11. Published: Scout `v2.10.1`; publication and

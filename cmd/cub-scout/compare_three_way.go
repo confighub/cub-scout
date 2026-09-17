@@ -629,15 +629,8 @@ func compareThreeWayExplainCommand(entry threeWayResourceEntry) string {
 }
 
 func compareThreeWayUnitGetCommand(result compareResourceResult) string {
-	unitSlug, _, spaceName, _ := compareResourceUnitIdentity(result)
-	if unitSlug == "" {
-		return ""
-	}
-	args := []string{"cub", "unit", "get", unitSlug, "--json"}
-	if spaceName != "" {
-		args = append(args, "--space", spaceName)
-	}
-	return strings.Join(args, " ")
+	unitSlug, unitID, spaceName, _ := compareResourceUnitIdentity(result)
+	return cubGetCommandHint("unit", spaceName, unitSlug, unitID)
 }
 
 func compareResourceConfigHubURL(result compareResourceResult) string {

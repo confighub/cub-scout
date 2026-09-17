@@ -182,15 +182,13 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 
 	oldRequire := requireGitOpsConfigHubFn
 	oldRun := runGitOpsCubCommand
-	oldDefaultSpace := gitopsDefaultSpaceFn
 	t.Cleanup(func() {
 		requireGitOpsConfigHubFn = oldRequire
 		runGitOpsCubCommand = oldRun
-		gitopsDefaultSpaceFn = oldDefaultSpace
 	})
 
 	requireGitOpsConfigHubFn = func() error { return nil }
-	gitopsDefaultSpaceFn = func(ctx context.Context) string { return "payments-prod" }
+	stubSpaceInputs(t, "payments-prod")
 
 	var calls [][]string
 	runGitOpsCubCommand = func(ctx context.Context, args []string) (string, error) {

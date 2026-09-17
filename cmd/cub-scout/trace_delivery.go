@@ -116,8 +116,12 @@ func traceGitOpsDeliveryOptions(flags traceConfigHubDeliveryFlags, correlation a
 		opts.StaleAfter = staleAfter
 	}
 
-	if opts.Space == "" {
-		opts.Space = strings.TrimSpace(correlation.Space)
+	// A traced object names its own ConfigHub space. That, or the flag, decides
+	// the scope; the cub context's default space is never consulted here.
+	if opts.Space != "" {
+		opts.SpaceSource = spaceSourceFlag
+	} else if opts.Space = strings.TrimSpace(correlation.Space); opts.Space != "" {
+		opts.SpaceSource = spaceSourceResource
 	}
 
 	var omissions []agent.TraceDeliveryOmission
@@ -146,11 +150,12 @@ func correlateTraceDeliveryEvidence(
 		ObservedAt:  raw.ObservedAt,
 		Correlation: correlation,
 		Scope: agent.TraceDeliveryEvidenceScope{
-			Namespace:  raw.Scope.Namespace,
-			Space:      raw.Scope.Space,
-			Since:      raw.Scope.Since,
-			StaleAfter: raw.Scope.StaleAfter,
-			MaxItems:   raw.Scope.MaxItems,
+			Namespace:   raw.Scope.Namespace,
+			Space:       raw.Scope.Space,
+			SpaceSource: raw.Scope.SpaceSource,
+			Since:       raw.Scope.Since,
+			StaleAfter:  raw.Scope.StaleAfter,
+			MaxItems:    raw.Scope.MaxItems,
 		},
 		Notes: append([]string(nil), raw.Notes...),
 	}

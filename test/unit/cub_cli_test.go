@@ -20,10 +20,10 @@ import (
 // See: https://github.com/confighubai/confighub-agent/issues/1
 func TestCubCLIOutputStructure(t *testing.T) {
 	// Skip if cub not available or default space doesn't exist
-	RequireSpace(t)
+	space := RequireSpace(t)
 
 	t.Run("unit list returns nested Unit objects", func(t *testing.T) {
-		output := RunCub(t, "unit", "list", "--json")
+		output := RunCub(t, "unit", "list", "-o", "json", "--space", space.Slug)
 
 		var units []map[string]interface{}
 		require.NoError(t, json.Unmarshal([]byte(output), &units))
@@ -52,7 +52,7 @@ func TestCubCLIOutputStructure(t *testing.T) {
 	})
 
 	t.Run("worker list returns nested BridgeWorker objects", func(t *testing.T) {
-		output := RunCub(t, "worker", "list", "--json")
+		output := RunCub(t, "worker", "list", "-o", "json", "--space", space.Slug)
 
 		var workers []map[string]interface{}
 		require.NoError(t, json.Unmarshal([]byte(output), &workers))
@@ -83,7 +83,7 @@ func TestCubCLIOutputStructure(t *testing.T) {
 	})
 
 	t.Run("target list returns nested Target objects", func(t *testing.T) {
-		output := RunCub(t, "target", "list", "--json")
+		output := RunCub(t, "target", "list", "-o", "json", "--space", space.Slug)
 
 		var targets []map[string]interface{}
 		require.NoError(t, json.Unmarshal([]byte(output), &targets))
@@ -116,11 +116,11 @@ func TestCubCLIOutputStructure(t *testing.T) {
 // TestCubCLINoNullSlugs verifies that cub CLI never returns null slugs.
 // Null slugs indicate a parsing error in the CLI output.
 func TestCubCLINoNullSlugs(t *testing.T) {
-	RequireSpace(t)
+	space := RequireSpace(t)
 
 	t.Run("units have non-null slugs", func(t *testing.T) {
 		var units []map[string]interface{}
-		RunCubJSON(t, &units, "unit", "list")
+		RunCubJSON(t, &units, "unit", "list", "--space", space.Slug)
 
 		for i, unit := range units {
 			// Extract from nested Unit wrapper
@@ -137,7 +137,7 @@ func TestCubCLINoNullSlugs(t *testing.T) {
 
 	t.Run("workers have non-null slugs", func(t *testing.T) {
 		var workers []map[string]interface{}
-		RunCubJSON(t, &workers, "worker", "list")
+		RunCubJSON(t, &workers, "worker", "list", "--space", space.Slug)
 
 		for i, worker := range workers {
 			// Extract from nested BridgeWorker
@@ -154,7 +154,7 @@ func TestCubCLINoNullSlugs(t *testing.T) {
 
 	t.Run("targets have non-null slugs", func(t *testing.T) {
 		var targets []map[string]interface{}
-		RunCubJSON(t, &targets, "target", "list")
+		RunCubJSON(t, &targets, "target", "list", "--space", space.Slug)
 
 		for i, target := range targets {
 			// Try Target wrapper first, fall back to BridgeWorker

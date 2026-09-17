@@ -1573,7 +1573,7 @@ func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *Imp
 	}
 
 	// Ensure space exists so target lookups and gitops commands can run.
-	if _, err := CreateAppWithResult(space, true, nil); err != nil {
+	if _, err := CreateAppWithResult(space, nil); err != nil {
 		msg := fmt.Sprintf("cannot ensure app space: %v", err)
 		if needArgo {
 			result.ArgoReason = msg
@@ -1752,7 +1752,7 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 
 	// Create App
 	fmt.Printf("Creating App: %s... ", proposal.App)
-	result, err := CreateAppWithResult(proposal.App, true, nil)
+	result, err := CreateAppWithResult(proposal.App, nil)
 	if err != nil {
 		fmt.Println(SymError)
 		if logger != nil {
@@ -2617,47 +2617,18 @@ func checkCubAuth() error {
 	return nil
 }
 
-// getCurrentSpace returns the currently selected ConfigHub space
-func getCurrentSpace() (string, error) {
-	cmd := exec.Command("cub", "context", "get", "--json", "--quiet")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("failed to get current context: %s", string(output))
-	}
-
-	// Parse JSON output to get space
-	var ctx struct {
-		Space string `json:"space"`
-	}
-	if err := json.Unmarshal(output, &ctx); err != nil {
-		return "", err
-	}
-	if ctx.Space == "" {
-		return "", fmt.Errorf("no space selected")
-	}
-	return ctx.Space, nil
-}
-
-// ensureSpace creates the space if it doesn't exist
+// ensureSpace creates the space if it does not exist.
+//
+// It used to find out by running `cub context set --space`, which as a side
+// effect switched the default space of the user's cub context, for every other
+// shell and tool sharing that config. Existence is a read: `cub space get`.
 func ensureSpace(space string) error {
-	// Try to select the space first
-	cmd := exec.Command("cub", "context", "set", "--space", space)
-	output, err := cmd.CombinedOutput()
-	if err == nil {
+	if err := exec.Command("cub", "space", "get", space).Run(); err == nil {
 		return nil
 	}
-
-	// If space doesn't exist, create it
-	if strings.Contains(string(output), "not found") || strings.Contains(string(output), "does not exist") {
-		createCmd := exec.Command("cub", "space", "create", space)
-		createOutput, createErr := createCmd.CombinedOutput()
-		if createErr != nil {
-			return fmt.Errorf("failed to create space: %s", string(createOutput))
-		}
-		// Select the newly created space
-		if err := exec.Command("cub", "context", "set", "--space", space).Run(); err != nil {
-			return fmt.Errorf("space created but failed to set context: %w", err)
-		}
+	output, err := exec.Command("cub", "space", "create", space).CombinedOutput()
+	if err != nil && !strings.Contains(string(output), "already exists") {
+		return fmt.Errorf("failed to create space: %s", strings.TrimSpace(string(output)))
 	}
 	return nil
 }

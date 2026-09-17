@@ -1,4 +1,5 @@
 ConfigHub Fleet View (App Model)
+ConfigHub space: * (command-default)
 Hierarchy: Application → Variant → Target
 Impact: 3 apps, 6 targets, 1 behind, 1 drifted, 1 failed
 
@@ -20,4 +21,3 @@ Impact: 3 apps, 6 targets, 1 behind, 1 drifted, 1 failed
     impact: 1 targets, 0 behind, 0 drifted, 0 failed
   └── variant: prod
       └── ✓ ops-team @ rev 5 [space=ops-team]
-

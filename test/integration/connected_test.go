@@ -56,30 +56,18 @@ func skipIfNoCluster(t *testing.T) {
 	}
 }
 
-// getCurrentSpace returns the current ConfigHub space
+// getCurrentSpace returns the ConfigHub space the connected tests run against:
+// the one CUB_SCOUT_TEST_SPACE names. cub has no default space (v0.5.2 and
+// later), so there is nothing else to fall back to. Without it the test is
+// skipped and says why.
 func getCurrentSpace(t *testing.T) string {
 	t.Helper()
 
-	// Parse "Default Space" from cub context get output
-	cmd := exec.Command("cub", "context", "get")
-	output, err := cmd.Output()
-	if err != nil {
-		t.Fatalf("Failed to get context: %v", err)
+	space := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_SPACE"))
+	if space == "" {
+		t.Skip("connected test needs a ConfigHub space: set CUB_SCOUT_TEST_SPACE=<slug>")
 	}
-
-	// Look for "Default Space" line
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "Default Space") {
-			fields := strings.Fields(line)
-			if len(fields) >= 3 {
-				return fields[len(fields)-1]
-			}
-		}
-	}
-
-	t.Skip("No active space set (run: cub context set --space <slug>)")
-	return ""
+	return space
 }
 
 // requireWorker ensures a worker exists and returns its slug

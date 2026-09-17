@@ -33,7 +33,7 @@ Plugin form requires a `cub` version that provides:
 - `cub plugin install <source>` — install from GitHub shorthand, GitHub URL, direct HTTPS URL, or tar.gz archive
 - `cub plugin list` — discovery and path reporting
 - `cub plugin uninstall <name>` — removal
-- Plugin invocation path that execs the plugin binary with `CUB_PLUGIN=1`, `CUB_CONFIG`, `CUB_CONTEXT`, `CUB_SERVER`, `CUB_SPACE`, and `CUB_TOKEN` environment variables set
+- Plugin invocation path that execs the plugin binary with `CUB_PLUGIN=1`, `CUB_CONFIG`, `CUB_CONTEXT`, `CUB_SERVER`, and `CUB_TOKEN` environment variables set (cub before v0.5.2 also set `CUB_SPACE` from the context's default space; v0.5.2 has no default space and does not)
 
 Verify with:
 

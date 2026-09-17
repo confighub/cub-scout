@@ -63,11 +63,14 @@ Run:
 ```bash
 cub auth login
 cub-scout compare three-way --scope namespace/<namespace>
-cub-scout history deploy/<name> -n <namespace>
-cub-scout impact <unit>
-cub-scout fleet outliers
-cub-scout audit list --since 7d
+cub-scout history deploy/<name> -n <namespace> --space <space>
+cub-scout impact <unit> --space <space>
+cub-scout fleet outliers --space <space>
+cub-scout audit list --since 7d --space <space>
 ```
+
+Each of these reads one named ConfigHub space: pass `--space`, or export
+`CUB_SPACE`. `cub` has no default space, so with neither they refuse.
 
 Then:
 - [Canonical Import Path](../howto/import-to-confighub.md)

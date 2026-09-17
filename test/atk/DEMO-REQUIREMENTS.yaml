@@ -116,7 +116,7 @@ demos:
     cluster: true
     cub_auth: true
     workers:
-      - space: current  # Uses current space from cub context
+      - space: current  # The space CUB_SCOUT_TEST_SPACE names (cub has no default space)
         count: 1
     targets:
       - space: current

@@ -17,6 +17,7 @@ import (
 var (
 	impactFormat string
 	impactJSON   bool
+	impactSpace  string
 
 	loadImpactUnitCacheFn = fetchConfigHubUnits
 	errImpactNotConnected = errors.New("impact analysis requires ConfigHub")
@@ -38,6 +39,7 @@ type impactSummary struct {
 type impactResult struct {
 	Unit       string            `json:"unit"`
 	Connected  bool              `json:"connected"`
+	Scope      *configHubScope   `json:"scope,omitempty"`
 	Dependents []impactDependent `json:"dependents,omitempty"`
 	Summary    impactSummary     `json:"summary"`
 	Notes      []string          `json:"notes,omitempty"`
@@ -49,9 +51,9 @@ var impactCmd = &cobra.Command{
 	Long: `Preview impact for one ConfigHub unit using dependency links.
 
 Examples:
-  cub-scout impact unit/shared-db-config
-  cub-scout impact shared-db-config --format md
-  cub-scout impact shared-db-config --json`,
+  cub-scout impact unit/shared-db-config --space platform
+  cub-scout impact shared-db-config --space platform --format md
+  cub-scout impact shared-db-config --space platform --json`,
 	Args: cobra.ExactArgs(1),
 	RunE: runImpact,
 }
@@ -60,12 +62,16 @@ func init() {
 	rootCmd.AddCommand(impactCmd)
 	impactCmd.Flags().StringVar(&impactFormat, "format", "ascii", "Output format: ascii, json, md")
 	impactCmd.Flags().BoolVar(&impactJSON, "json", false, "Output as JSON (shorthand for --format json)")
+	impactCmd.Flags().StringVar(&impactSpace, "space", "", "ConfigHub space of the unit; one space, not '*' (default: CUB_SPACE)")
 }
 
 func runImpact(cmd *cobra.Command, args []string) error {
-	cache, err := loadImpactUnitCacheFn()
+	cache, err := loadImpactUnitCacheFn("impact", "--space", impactSpace)
 	if err != nil {
-		return fmt.Errorf("%w. Run: cub auth login", errImpactNotConnected)
+		if errors.Is(err, errImpactNotConnected) {
+			return fmt.Errorf("%w. Run: cub auth login", err)
+		}
+		return err
 	}
 
 	result, err := buildImpactResult(cache, args[0])
@@ -111,7 +117,18 @@ func buildImpactResult(cache *cubUnitCache, rawUnit string) (impactResult, error
 	dependents := make([]impactDependent, 0, len(uniqueDependents))
 	environments := make(map[string]struct{})
 	clusters := make(map[string]struct{})
-	notes := make([]string, 0, 2)
+	notes := make([]string, 0, 3)
+	var scope *configHubScope
+	if cache.space != "" {
+		scope = &configHubScope{Space: cache.space, SpaceSource: cache.spaceSource}
+		// Links live in the space of the unit that depends. A unit other spaces
+		// depend on, such as a base unit its variants link to, has those links
+		// in the other spaces, which this read does not cover.
+		notes = append(notes, fmt.Sprintf("Dependents are counted from dependency links stored in space %s only. Units in other spaces that depend on this unit are not counted.", cache.space))
+	}
+	if cache.crossSpaceLinks > 0 {
+		notes = append(notes, fmt.Sprintf("%d link(s) in space %s connect to units in other spaces and are not counted.", cache.crossSpaceLinks, cache.space))
+	}
 
 	for _, dependentSlug := range uniqueDependents {
 		dependentUnit := cache.getUnitBySlug(dependentSlug)
@@ -152,12 +169,13 @@ func buildImpactResult(cache *cubUnitCache, rawUnit string) (impactResult, error
 			}
 		}
 	} else {
-		notes = append(notes, "No dependent units found for this unit in the current ConfigHub link graph.")
+		notes = append(notes, "No dependent units found for this unit in the links read.")
 	}
 
 	return impactResult{
 		Unit:       unitSlug,
 		Connected:  true,
+		Scope:      scope,
 		Dependents: dependents,
 		Summary: impactSummary{
 			DirectDependents:     len(dependents),
@@ -177,7 +195,11 @@ func normalizeImpactUnit(raw string) string {
 
 func renderImpactASCII(result impactResult) string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("Impact Preview: unit/%s\n\n", result.Unit))
+	b.WriteString(fmt.Sprintf("Impact Preview: unit/%s\n", result.Unit))
+	if result.Scope != nil {
+		b.WriteString(fmt.Sprintf("ConfigHub space: %s (%s)\n", result.Scope.Space, result.Scope.SpaceSource))
+	}
+	b.WriteString("\n")
 	b.WriteString("Blast Radius:\n")
 	b.WriteString(fmt.Sprintf("  Direct dependents: %d unit(s)\n", result.Summary.DirectDependents))
 	for _, dependent := range result.Dependents {
@@ -208,6 +230,9 @@ func renderImpactMarkdown(result impactResult) string {
 	var b strings.Builder
 	b.WriteString("## Impact Preview\n\n")
 	b.WriteString(fmt.Sprintf("- Unit: `unit/%s`\n", result.Unit))
+	if result.Scope != nil {
+		b.WriteString(fmt.Sprintf("- ConfigHub space: `%s` (%s)\n", result.Scope.Space, result.Scope.SpaceSource))
+	}
 	b.WriteString(fmt.Sprintf("- Direct dependents: `%d`\n", result.Summary.DirectDependents))
 	b.WriteString(fmt.Sprintf("- Environments affected: `%d`\n", result.Summary.EnvironmentsAffected))
 	b.WriteString(fmt.Sprintf("- Clusters affected: `%d`\n", result.Summary.ClustersAffected))

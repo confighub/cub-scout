@@ -19,6 +19,7 @@
     "observedAt": "2026-09-10T12:00:00Z",
     "scope": {
       "space": "prod",
+      "spaceSource": "flag",
       "since": "24h",
       "staleAfter": "15m0s",
       "maxItems": 10

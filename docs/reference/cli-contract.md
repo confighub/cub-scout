@@ -97,7 +97,7 @@ cub-scout doctor [flags]
 | `--presentation` | string | legacy/default render path | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | string | default | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
 | `--with-confighub` | bool | false | Include bounded ConfigHub delivery evidence for the selected scope |
-| `--confighub-space` | string | current cub space | ConfigHub space for connected delivery evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-space` | string | `CUB_SPACE` | ConfigHub space for connected delivery evidence; `*` is allowed only as an explicit all-spaces read. With no space from any source the reads are skipped and a `confighub.scope` omission is reported; they are never widened to every space. `scope.spaceSource` says which source was used |
 | `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
 | `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
@@ -116,7 +116,9 @@ cub-scout doctor [flags]
 - `--hint-mode` affects recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text render path.
 - ConfigHub release and unit-event reads are bounded by `--confighub-since` and
-  scoped to the current cub space unless `--confighub-space` is supplied.
+  scoped to `--confighub-space`, else `CUB_SPACE`. cub (v0.5.2 and later) has no
+  default space. The release and unit-event reads pass that space as `--space`;
+  the live-status read selects it with `space list --where`.
 - `doctor` may promote concrete failed/stale delivery feedback, failed unit
   events, and unhealthy observed event consumers into `topIssues`. Missing or
   inaccessible evidence remains an omission, not a failure assertion.
@@ -374,6 +376,8 @@ cub-scout mcp serve
 - `confighub_k8s_types` and `confighub_k8s_resources` read ConfigHub Resource-backed intended configuration through `cub k8s types/get`; they do not read live cluster state, and they require an explicit `space` or `target` scope.
 - `confighub_resources` reads the ConfigHub Resource entity through `cub resource list`; it does not read live cluster state, and it requires an explicit `space`.
 - `confighub_live_status`, `confighub_releases`, and `confighub_unit_events` require explicit space scope. Use `*` only for an intentional all-spaces read.
+- `confighub_units` and `confighub_changesets` require `space` (`*` only for a deliberate all-spaces read). `confighub_unit_get` requires `space` unless `unit` is `<space>/<slug>` or a unit ID, and refuses `*`, because one unit lives in one space. The server's `CUB_SPACE` is not consulted: an agent cannot see the environment of the server it calls, and cub (v0.5.2 and later) has no default space.
+- `confighub_k8s_types` and `confighub_k8s_resources` accept a `target` without a `space` only when the target names its own space, as `<space>/<slug>` or a UUID.
 - All MCP tool descriptors advertise `annotations.readOnlyHint=true`.
 
 ### Stable `doctor` MCP Surface
@@ -765,8 +769,8 @@ ConfigHub activity rows use these `source` values:
 - `confighub.omission`
 
 `deliveryEvidence` contains row-specific ConfigHub details and follows the
-same bounded read rules as `gitops status --with-confighub`: current cub space
-by default, explicit `--confighub-space '*'` for all spaces, release/unit-event
+same bounded read rules as `gitops status --with-confighub`: `CUB_SPACE` when
+`--confighub-space` is not given, explicit `--confighub-space '*'` for all spaces, release/unit-event
 queries bounded by `--confighub-since`, stale live-status handling controlled
 by `--confighub-stale-after`, and omissions instead of inferred status.
 `argocd.application` rows may receive live-status `deliveryEvidence` only when
@@ -1072,7 +1076,7 @@ cub-scout gitops status [flags]
 | `--format` | string | ascii | Output format: `ascii`, `json`, `md` |
 | `--json` | bool | false | JSON output (shorthand for `--format json`) |
 | `--with-confighub` | bool | false | Include bounded ConfigHub release, unit-event, and live-status evidence |
-| `--confighub-space` | string | current cub default space | ConfigHub space for connected evidence; `*` is allowed only as an explicit all-spaces read |
+| `--confighub-space` | string | `CUB_SPACE` | ConfigHub space for connected evidence; `*` is allowed only as an explicit all-spaces read. With no space from any source the reads are skipped and reported as a `confighub.scope` omission |
 | `--confighub-since` | string | 24h | Lookback window for release/event evidence |
 | `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 
@@ -1380,8 +1384,17 @@ The status command uses `pkg/hub` for connectivity and authentication state:
 - **Connected**: Authenticated with ConfigHub
 
 **Optional dependency:** If the `cub` CLI is installed, status provides richer
-information including workspace, auth token validation, and worker status.
+information including auth token validation and worker status.
 Without `cub`, basic mode detection still works via `pkg/hub`.
+
+The worker for this cluster is looked up in the space `CUB_SPACE` names, else
+in every space, and the text says which. A worker records no cluster
+identity, so the lookup matches a worker named after the cluster, and the text
+says exactly that ("no worker named <cluster> found in any space"). A failed
+lookup prints the same line and is not proof of absence.
+`space` and `space_source` are present only when `CUB_SPACE` is set: cub (v0.5.2
+and later) has no default space, and a `defaultSpace` left in an older cub
+config is not reported.
 
 ### Output (Plain Text)
 
@@ -1401,6 +1414,7 @@ Worker:     ● bridge-prod (connected)
   "cluster_name": "prod-east",
   "context": "eks-prod-east",
   "space": "platform-prod",
+  "space_source": "CUB_SPACE",
   "worker": {
     "name": "bridge-prod",
     "status": "connected"
@@ -1425,12 +1439,14 @@ cub-scout history <resource> [flags]
 | `-n, --namespace` | string | empty | Optional namespace scope |
 | `--since` | string | `7d` | Lookback window (`24h`, `7d`, `2w`) |
 | `--format` | string | `ascii` | Output format: `ascii`, `json`, `md` |
+| `--space` | string | `CUB_SPACE` | ConfigHub space to read ChangeSets from; `*` for every space. With no space from any source the command refuses rather than read an unscoped list |
 
 ### Connected Behavior
 
 - Requires ConfigHub authentication (`cub auth login`).
-- Uses read-only ChangeSet queries from ConfigHub.
-- Returns clear empty-history messaging when no matching tracked changes exist.
+- Uses read-only ChangeSet queries from ConfigHub, in one named space.
+- `scope` names the space read and how it was chosen (`flag` or `CUB_SPACE`). It is omitted for fixture reads.
+- When nothing matches, the text says no history was found in that space. It does not claim the resource was never imported.
 
 ### Output (JSON)
 
@@ -1439,6 +1455,7 @@ cub-scout history <resource> [flags]
   "resource": "deploy/my-app",
   "namespace": "prod",
   "since": "7d",
+  "scope": {"space": "payments-prod", "spaceSource": "flag"},
   "entries": [
     {
       "timestamp": "2026-03-03T14:22:00Z",

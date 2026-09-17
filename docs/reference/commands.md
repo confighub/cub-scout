@@ -321,13 +321,16 @@ cub-scout doctor --with-confighub --confighub-space prod --format json
 | `--presentation` | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omit the flag to keep the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
 | `--with-confighub` | Include bounded ConfigHub delivery evidence for the selected scope |
-| `--confighub-space` | ConfigHub space for connected delivery evidence (default: current cub space; `*` must be explicit) |
+| `--confighub-space` | ConfigHub space for connected delivery evidence (default: `CUB_SPACE`; `*` must be explicit) |
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 
 `--with-confighub` is opt-in and read-only. For `doctor`, connected release,
-unit-event, and live-status reads are scoped to the current cub space by
-default, or to `--confighub-space` when supplied. The JSON output includes a
+unit-event, and live-status reads are scoped to `--confighub-space`, else
+`CUB_SPACE`. cub (v0.5.2 and later) has no default space, and a `defaultSpace`
+left in an older cub config is not used. With no space from either, the reads
+are skipped and reported as a `confighub.scope` omission; they are never
+widened to every space. The JSON output includes a
 scan-friendly `delivery` rollup plus raw `deliveryEvidence`; ASCII output adds
 a compact Delivery section. Concrete failed/stale delivery feedback, failed
 unit events, and unhealthy observed event consumers can be promoted into
@@ -444,9 +447,9 @@ Requires ConfigHub authentication.
 ### Examples
 
 ```bash
-cub-scout impact unit/shared-db-config
-cub-scout impact shared-db-config --format md
-cub-scout impact shared-db-config --json
+cub-scout impact unit/shared-db-config --space platform
+cub-scout impact shared-db-config --space platform --format md
+cub-scout impact shared-db-config --space platform --json
 ```
 
 ### Flags
@@ -455,6 +458,13 @@ cub-scout impact shared-db-config --json
 |------|-------------|
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
+| `--space` | ConfigHub space of the unit; one space, not `*` (default: `CUB_SPACE`). Units and their dependency links are matched by slug, which is unique only within a space. With no space from either source the command refuses |
+
+Output names the space read (`scope` in JSON). Dependents are counted from
+dependency links stored in that space only: a unit other spaces depend on, such
+as a base unit its variants link to, shows fewer dependents than it has, and the
+notes say so. Links in the space that point to units in other spaces are not
+joined, and the notes count them.
 
 ---
 
@@ -466,7 +476,8 @@ Identify clusters that diverge from fleet norms (connected mode).
 cub-scout fleet outliers [flags]
 ```
 
-Requires ConfigHub authentication and at least two clusters with target data.
+Requires ConfigHub authentication and at least two clusters with target data
+in the spaces it reads.
 
 ### Examples
 
@@ -482,6 +493,22 @@ cub-scout fleet outliers --json
 |------|-------------|
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
+| `--space` | ConfigHub space to compare within; one space, not `*` (default: `CUB_SPACE`) |
+
+The comparison reads exactly one ConfigHub space, passed to `cub` as an explicit
+`--space` and reported in a `scope` block (`space`, `spaceSource`). `--space '*'`
+is refused: units are matched by slug and clusters by target slug, and both are
+unique only within a space. With no space from either source the command
+refuses.
+
+Only units found on two or more clusters are compared, and
+`summary.comparedUnitCount` says how many were. Within one ConfigHub space each
+unit has a single target, so on data read from ConfigHub the count is `0`. The command then says
+that nothing was compared (`notes` in JSON, "Not compared" in text), and calls
+no cluster consistent and no cluster missing a unit. Comparing the same
+application across spaces needs unit lineage, tracked in
+[#562](https://github.com/confighub/cub-scout/issues/562). A failed `cub` read
+is reported with `cub`'s own reason.
 
 ---
 
@@ -723,7 +750,7 @@ cub-scout map activity [flags]
 | `--since` | Time filter (for example `24h`, `7d`) |
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
 | `--with-confighub` | Include ConfigHub delivery activity rows from the same bounded evidence reader used by `gitops status --with-confighub` |
-| `--confighub-space` | ConfigHub space for connected evidence (default: current cub space; use `*` explicitly for all spaces) |
+| `--confighub-space` | ConfigHub space for connected evidence (default: `CUB_SPACE`; use `*` explicitly for all spaces) |
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat ConfigHub live-status observations older than this as stale (default: `15m`) |
 
@@ -1125,6 +1152,7 @@ cub-scout tree [view] [flags]
 |------|-------------|
 | `-n, --namespace` | Filter by namespace |
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
+| `--space` | ConfigHub space for the `config` view; `*` for every space (default: `CUB_SPACE`). With no space from either, `tree config` refuses: cub reads a tree with no `--space` across the whole organization |
 
 ### Examples
 
@@ -1281,7 +1309,7 @@ cub-scout import argocd guestbook --disable-sync
 | `--show-yaml` | Show YAML that would be imported (implies dry-run) |
 | `--disable-sync` | Disable ArgoCD auto-sync after import |
 | `--delete-app` | Delete the ArgoCD Application after import |
-| `--space` | ConfigHub space override |
+| `--space` | ConfigHub space to import into (default: a space named after the Application). The space is created if it does not exist. cub has no default space, and cub-scout never sets one |
 
 ---
 
@@ -1736,8 +1764,12 @@ cub-scout status --json
 ```
 
 Displays ConfigHub connection mode (Offline/Online/Connected), current cluster
-name, kubectl context, and optional worker/space info when the `cub` CLI is
-available.
+name, kubectl context, and optional worker info when the `cub` CLI is
+available. The worker is looked up in the space `CUB_SPACE` names, else in
+every space. A worker records no cluster identity, so the lookup matches a
+worker named after the cluster, and the text says so: "no worker named
+<cluster> found in any space". JSON `space` and `space_source` report
+`CUB_SPACE` when it is set; cub has no default space to report.
 
 ---
 
@@ -1857,6 +1889,7 @@ cub-scout history <resource> [flags]
 | `--since` | Lookback window (examples: `24h`, `7d`, `2w`) |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--include-synthetic` | Include synthetic/demo seeded ChangeSets |
+| `--space` | ConfigHub space to read ChangeSets from; `*` for every space (default: `CUB_SPACE`). With no space from either, the command refuses rather than read the whole organization |
 
 ### Examples
 
@@ -1879,7 +1912,7 @@ cub-scout history deploy/my-app -n prod --include-synthetic
 - Requires ConfigHub authentication (`cub auth login`).
 - Uses read-only ChangeSet queries under the hood.
 - Synthetic/demo seeded ChangeSets are excluded by default; use `--include-synthetic` to include them.
-- If no history is found, output clearly notes the resource may not be imported yet.
+- Output names the space that was read (`scope` in JSON). If no history is found, output says none was found in that space; it does not claim the resource was never imported, which one empty space does not show.
 
 ---
 
@@ -1899,6 +1932,7 @@ cub-scout audit list [flags]
 | `--since` | Lookback window (examples: `24h`, `7d`, `2w`) |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--include-synthetic` | Include synthetic/demo seeded ChangeSets |
+| `--space` | ConfigHub space to read ChangeSets from; `*` for every space (default: `CUB_SPACE`). With no space from either, the command refuses rather than read the whole organization |
 | `--json` | Output as JSON (shorthand for `--format json`) |
 
 ### Examples
@@ -1922,7 +1956,7 @@ cub-scout audit list --include-synthetic
 - Requires ConfigHub authentication (`cub auth login`).
 - Uses read-only ChangeSet queries filtered to break-glass records.
 - Synthetic/demo seeded ChangeSets are excluded by default; use `--include-synthetic` to include them.
-- If no records are found, output reports: `No break-glass decisions recorded for this scope`.
+- Output names the space that was read (`scope` in JSON). If no records are found, output reports: `No break-glass decisions recorded for this scope`.
 
 ---
 
@@ -2414,7 +2448,7 @@ cub-scout gitops status [flags]
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
 | `--with-confighub` | Include bounded ConfigHub release, unit-event, and live-status evidence |
-| `--confighub-space` | ConfigHub space for connected evidence (default: current cub space; use `*` explicitly for all spaces) |
+| `--confighub-space` | ConfigHub space for connected evidence (default: `CUB_SPACE`; use `*` explicitly for all spaces) |
 | `--confighub-since` | Lookback window for release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -58,7 +59,7 @@ func TestRunImpactASCII(t *testing.T) {
 	defer restoreFlags()
 
 	restoreLoader := loadImpactUnitCacheFn
-	loadImpactUnitCacheFn = func() (*cubUnitCache, error) {
+	loadImpactUnitCacheFn = func(feature, flag, flagValue string) (*cubUnitCache, error) {
 		return &cubUnitCache{
 			units: map[string]*cubUnitInfo{
 				"shared-db-config": {
@@ -99,7 +100,7 @@ func TestRunImpactNotConnected(t *testing.T) {
 	defer restoreFlags()
 
 	restoreLoader := loadImpactUnitCacheFn
-	loadImpactUnitCacheFn = func() (*cubUnitCache, error) {
+	loadImpactUnitCacheFn = func(feature, flag, flagValue string) (*cubUnitCache, error) {
 		return nil, errImpactNotConnected
 	}
 	defer func() { loadImpactUnitCacheFn = restoreLoader }()
@@ -110,6 +111,23 @@ func TestRunImpactNotConnected(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "cub auth login") {
 		t.Fatalf("expected auth guidance, got: %v", err)
+	}
+}
+
+// A space refusal or a failed read is reported as itself, not as a login problem.
+func TestRunImpact_ReportsWhyTheReadFailed(t *testing.T) {
+	restoreFlags := setImpactFlagState(impactFlagState{format: "ascii"})
+	defer restoreFlags()
+
+	restoreLoader := loadImpactUnitCacheFn
+	loadImpactUnitCacheFn = func(feature, flag, flagValue string) (*cubUnitCache, error) {
+		return nil, fmt.Errorf("%s needs a ConfigHub space and none was given", feature)
+	}
+	defer func() { loadImpactUnitCacheFn = restoreLoader }()
+
+	err := runImpact(&cobra.Command{}, []string{"shared-db-config"})
+	if err == nil || !strings.Contains(err.Error(), "impact needs a ConfigHub space") || strings.Contains(err.Error(), "cub auth login") {
+		t.Fatalf("err = %v, want the refusal itself and no login advice", err)
 	}
 }
 

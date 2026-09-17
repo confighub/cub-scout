@@ -85,33 +85,24 @@ type Space struct {
 	Slug string
 }
 
-// RequireSpace fails the test if no active space is set in cub, or if that
-// space no longer exists in ConfigHub. This prevents stale default-space
-// references (e.g. from a deleted E2E import space) from causing hard failures.
+// RequireSpace returns the ConfigHub space the connected tests run against: the
+// one CUB_SCOUT_TEST_SPACE names. cub has no default space (v0.5.2 and later),
+// so there is nothing else to fall back to. Without it the test is skipped and
+// says why; a space that is named but cannot be read fails the test.
 func RequireSpace(t *testing.T) Space {
 	t.Helper()
 	RequireCubAuth(t)
 
-	cmd := exec.Command("cub", "context", "get", "space")
-	output, err := cmd.Output()
-	if err != nil {
-		t.Skip("PRECONDITION: No active space set (run: cub context set space <slug>)")
+	slug := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_SPACE"))
+	if slug == "" {
+		t.Skip("connected test needs a ConfigHub space: set CUB_SCOUT_TEST_SPACE=<slug>")
 	}
 
-	slug := strings.TrimSpace(string(output))
-	if slug == "" || slug == "null" {
-		t.Skip("PRECONDITION: Active space is null or empty")
-	}
-
-	// Validate the space actually exists — a stale default space (e.g. from a
-	// deleted E2E import run) will pass the checks above but fail every command.
-	cmd = exec.Command("cub", "unit", "list", "--json", "--space", slug)
+	// Validate the space actually exists: a stale space (e.g. from a deleted
+	// E2E import run) would otherwise fail every command that follows.
+	cmd := exec.Command("cub", "unit", "list", "-o", "json", "--space", slug)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		if strings.Contains(string(out), "not found") ||
-			strings.Contains(string(out), "failed to resolve space") {
-			t.Skipf("PRECONDITION: Default space %q no longer exists — run: cub context set space <valid-slug>", slug)
-		}
-		t.Skipf("PRECONDITION: Cannot access space %q: %s", slug, string(out))
+		t.Fatalf("PRECONDITION: cannot read space %q (set CUB_SCOUT_TEST_SPACE to one that exists): %s", slug, strings.TrimSpace(string(out)))
 	}
 
 	return Space{Slug: slug}
@@ -127,7 +118,7 @@ type Worker struct {
 func RequireWorker(t *testing.T, space Space) Worker {
 	t.Helper()
 
-	cmd := exec.Command("cub", "worker", "list", "--json")
+	cmd := exec.Command("cub", "worker", "list", "-o", "json", "--space", space.Slug)
 	output, err := cmd.Output()
 	require.NoError(t, err, "PRECONDITION: Failed to list workers")
 
@@ -158,7 +149,7 @@ type Target struct {
 func RequireTarget(t *testing.T, space Space) Target {
 	t.Helper()
 
-	cmd := exec.Command("cub", "target", "list", "--json")
+	cmd := exec.Command("cub", "target", "list", "-o", "json", "--space", space.Slug)
 	output, err := cmd.Output()
 	require.NoError(t, err, "PRECONDITION: Failed to list targets")
 
@@ -187,7 +178,7 @@ type Unit struct {
 func RequireUnits(t *testing.T, space Space, minCount int) []Unit {
 	t.Helper()
 
-	cmd := exec.Command("cub", "unit", "list", "--json")
+	cmd := exec.Command("cub", "unit", "list", "-o", "json", "--space", space.Slug)
 	output, err := cmd.Output()
 	require.NoError(t, err, "PRECONDITION: Failed to list units")
 
@@ -299,19 +290,23 @@ func RunCubAgent(t *testing.T, args ...string) string {
 	return string(output)
 }
 
-// RunCub runs the cub CLI with the given args and returns output.
+// RunCub runs the cub CLI and returns its stdout. stderr is kept out of it: cub writes warnings
+// there (a deprecated-flag notice, for one), and a caller parsing JSON must not
+// find them in front of the payload. stderr is still shown if the command fails.
 func RunCub(t *testing.T, args ...string) string {
 	t.Helper()
+	var stderr strings.Builder
 	cmd := exec.Command("cub", args...)
-	output, err := cmd.CombinedOutput()
-	require.NoError(t, err, "cub %v failed: %s", args, string(output))
+	cmd.Stderr = &stderr
+	output, err := cmd.Output()
+	require.NoError(t, err, "cub %v failed: %s%s", args, string(output), stderr.String())
 	return string(output)
 }
 
-// RunCubJSON runs cub with --json and unmarshals the result.
+// RunCubJSON runs cub with -o json and decodes stdout into v.
 func RunCubJSON(t *testing.T, v interface{}, args ...string) {
 	t.Helper()
-	args = append(args, "--json")
+	args = append(args, "-o", "json")
 	output := RunCub(t, args...)
 	require.NoError(t, json.Unmarshal([]byte(output), v), "Failed to parse cub JSON output")
 }
