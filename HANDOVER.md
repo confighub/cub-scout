@@ -143,6 +143,18 @@ This update changes documentation only; it does not repair those runtime gaps.
 The September 11 execution snapshot below is historical and predates #538 and
 the v2.11.0 release. Use [release notes](docs/releases/v2.11.0.md) for that scope.
 
+## TUI Shell Environment (#559)
+
+The shell the TUI opens (`$`) exported `CUB_CONTEXT=<kube context>`. The cub CLI
+reads `CUB_CONTEXT` to select its own context and fails on a name it does not
+know (`CUB_CONTEXT environment variable: context "kind-demo" not found`), so
+every `cub` command in that shell failed, and so did every cub-scout command
+that runs `cub`. The shell now carries cub-scout's values as
+`CUB_SCOUT_KUBE_CONTEXT`, `CUB_SCOUT_CLUSTER`, `CUB_SCOUT_NAMESPACE` and
+`CUB_SCOUT_CONNECTED` (plus `CUB_SCOUT_TUI=1`), and leaves any `CUB_*` value the
+user already had unchanged. Nothing read the old `CUB_CLUSTER`,
+`CUB_NAMESPACE` or `CUB_CONNECTED`, and they were not documented.
+
 ## Connected Compare Without WET (#564)
 
 `compare` read WET from `cub unit livedata`. cub removed that command, with
