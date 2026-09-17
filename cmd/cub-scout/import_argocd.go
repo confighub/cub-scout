@@ -1458,7 +1458,7 @@ func testAnnotationUpdate(space, unitSlug string) (*TestUpdateResult, error) {
 	result.Annotation = fmt.Sprintf("%s=%s", annotationKey, annotationValue)
 
 	// Step 1: Get current unit config
-	getCmd := exec.Command("cub", "unit", "get", unitSlug, "--space", space, "--json", "--quiet")
+	getCmd := exec.Command("cub", "unit", "get", unitSlug, "--space", space, "-o", "json", "--quiet")
 	var getOut bytes.Buffer
 	getCmd.Stdout = &getOut
 	getCmd.Stderr = &getOut

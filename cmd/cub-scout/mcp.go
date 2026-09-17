@@ -516,7 +516,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_changesets",
-				Description: "Connected-only governed ChangeSet history and receipts from ConfigHub (cub changeset list --json). Use when the user asks what governed write changed a known unit or space, who changed it, what receipt proves a governed write, or what approval trail sits behind the change. Load after trace or confighub_units has identified the governed object or scope you care about. DO NOT load for current cluster health or ownership, or when the governed object is still unknown; use doctor, explain, trace, or confighub_units first.",
+				Description: "Connected-only governed ChangeSet history and receipts from ConfigHub (cub changeset list -o json). Use when the user asks what governed write changed a known unit or space, who changed it, what receipt proves a governed write, or what approval trail sits behind the change. Load after trace or confighub_units has identified the governed object or scope you care about. DO NOT load for current cluster health or ownership, or when the governed object is still unknown; use doctor, explain, trace, or confighub_units first.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -539,7 +539,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if err != nil {
 					return nil, err
 				}
-				args := withConfigHubSpace([]string{"changeset", "list", "--json"}, space)
+				args := withConfigHubSpace([]string{"changeset", "list", "-o", "json"}, space)
 				if where := argString(arguments, "where"); where != "" {
 					args = append(args, "--where", where)
 				}
@@ -889,7 +889,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_units"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_units",
-				Description: "Connected-only ConfigHub unit and fleet inventory / cluster-to-ConfigHub lookup (cub unit list --json). Use when the user asks which ConfigHub unit corresponds to something already identified, wants governed unit inventory before drilling into one unit, or needs the first useful ConfigHub object to inspect after cluster-side discovery. Load after doctor, map, explain, or trace has established the cluster-side object you care about. DO NOT load for raw cluster inventory or exact unit facts; use map or doctor first, then confighub_unit_get once the unit is known.",
+				Description: "Connected-only ConfigHub unit and fleet inventory / cluster-to-ConfigHub lookup (cub unit list -o json). Use when the user asks which ConfigHub unit corresponds to something already identified, wants governed unit inventory before drilling into one unit, or needs the first useful ConfigHub object to inspect after cluster-side discovery. Load after doctor, map, explain, or trace has established the cluster-side object you care about. DO NOT load for raw cluster inventory or exact unit facts; use map or doctor first, then confighub_unit_get once the unit is known.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -916,7 +916,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if err != nil {
 					return nil, err
 				}
-				args := withConfigHubSpace([]string{"unit", "list", "--json"}, space)
+				args := withConfigHubSpace([]string{"unit", "list", "-o", "json"}, space)
 				if where := argString(arguments, "where"); where != "" {
 					args = append(args, "--where", where)
 				}
@@ -930,7 +930,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_unit_get"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_unit_get",
-				Description: "Connected-only exact ConfigHub unit details and applied/live revision facts (cub unit get --json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. Use this for 'show me the intended state, last applied revision, or live revision for unit X,' or when you need exact unit facts before opening the GUI or other trust surfaces. If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting or governed-vs-live comparison; use explain, trace, or compare_three_way first.",
+				Description: "Connected-only exact ConfigHub unit details and applied/live revision facts (cub unit get -o json). Load ONLY after the user already has a unit slug or ID, or after confighub_units identified it. Use this for 'show me the intended state, last applied revision, or live revision for unit X,' or when you need exact unit facts before opening the GUI or other trust surfaces. If you do not have a unit yet, use confighub_units first. DO NOT load for bare cluster troubleshooting or governed-vs-live comparison; use explain, trace, or compare_three_way first.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -958,15 +958,15 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				// share it.
 				switch space := argString(arguments, "space"); {
 				case agent.IsUUID(unit) && (space == "" || space == allConfigHubSpaces):
-					return withConfigHubSpaceFromRef([]string{"unit", "get", "--json"}, unit), nil
+					return withConfigHubSpaceFromRef([]string{"unit", "get", "-o", "json"}, unit), nil
 				case space == "" && configHubRefNamesSpace(unit):
-					return withConfigHubSpaceFromRef([]string{"unit", "get", "--json"}, unit), nil
+					return withConfigHubSpaceFromRef([]string{"unit", "get", "-o", "json"}, unit), nil
 				case space == "":
 					return nil, fmt.Errorf("confighub_unit_get needs the unit's ConfigHub space: pass `space`, or name the unit as <space>/<slug> or by its ID. cub has no default space, so none is assumed")
 				case space == allConfigHubSpaces:
 					return nil, fmt.Errorf("confighub_unit_get reads one unit, so `space` must name one space, not '%s'; or pass `unit` as <space>/<slug> or the unit ID", allConfigHubSpaces)
 				default:
-					return withConfigHubSpace([]string{"unit", "get", "--json", unit}, space), nil
+					return withConfigHubSpace([]string{"unit", "get", "-o", "json", unit}, space), nil
 				}
 			},
 			Runner: connectedRunner,

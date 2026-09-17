@@ -282,7 +282,7 @@ func collectConfigHubSurface(ctx context.Context, rw *runtimeWorkload) (*agent.C
 		}
 	}
 
-	unitJSON, err := exec.CommandContext(ctx, "cub", "unit", "get", unitSlug, "--space", space, "--json").Output()
+	unitJSON, err := exec.CommandContext(ctx, "cub", "unit", "get", unitSlug, "--space", space, "-o", "json").Output()
 	if err != nil {
 		return nil, &agent.CollectionError{Surface: "confighub", Reason: "cub unit get failed: " + err.Error()}
 	}

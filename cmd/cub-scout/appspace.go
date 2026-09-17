@@ -87,7 +87,7 @@ func runAppList(cmd *cobra.Command, args []string) error {
 	cubArgs := []string{"space", "list"}
 
 	if appJSON {
-		cubArgs = append(cubArgs, "--json")
+		cubArgs = append(cubArgs, "-o", "json")
 	}
 
 	cubCmd := exec.Command("cub", cubArgs...)
@@ -108,7 +108,7 @@ type AppResult struct {
 func CreateAppWithResult(name string, labels []string) (*AppResult, error) {
 	result := &AppResult{Name: name}
 
-	cubArgs := []string{"space", "create", name, "--json"}
+	cubArgs := []string{"space", "create", name, "-o", "json"}
 
 	for _, label := range labels {
 		cubArgs = append(cubArgs, "--label", label)

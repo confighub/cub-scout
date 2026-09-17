@@ -1150,7 +1150,7 @@ func checkConnectionStatus(clusterName string) tea.Cmd {
 		msg := connectionStatusMsg{mode: "offline"}
 
 		// Check cub context
-		out, err := exec.Command("cub", "context", "get", "--json").Output()
+		out, err := exec.Command("cub", "context", "get", "-o", "json").Output()
 		if err != nil {
 			// Try without --json for older cub versions
 			out, err = exec.Command("cub", "context", "get").Output()
@@ -1187,7 +1187,7 @@ func checkConnectionStatus(clusterName string) tea.Cmd {
 
 			// Try to get worker status for this cluster
 			if ctx.Space != "" {
-				if wout, werr := exec.Command("cub", "worker", "list", "--space", ctx.Space, "--json").Output(); werr == nil {
+				if wout, werr := exec.Command("cub", "worker", "list", "--space", ctx.Space, "-o", "json").Output(); werr == nil {
 					var workers []struct {
 						Name      string `json:"name"`
 						Cluster   string `json:"cluster"`

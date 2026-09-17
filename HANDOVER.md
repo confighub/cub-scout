@@ -143,6 +143,34 @@ This update changes documentation only; it does not repair those runtime gaps.
 The September 11 execution snapshot below is historical and predates #538 and
 the v2.11.0 release. Use [release notes](docs/releases/v2.11.0.md) for that scope.
 
+## cub Output: -o json, and Stderr Kept Out of Data (#563, partial)
+
+`cub` deprecated `--json` in favour of `-o json`, and prints
+`Flag --json has been deprecated, use -o json` on stderr for every call that
+passes it. Every `cub` call cub-scout makes now passes `-o json`; the output is
+the same, apart from worker heartbeat timestamps, which differ between any two
+calls. `TestNoCubCallPassesTheDeprecatedJSONFlag` fails the build on a new
+`--json`, in argument vectors and in printed `cub` commands.
+
+Where output was read with `CombinedOutput` and then parsed, compared or
+written back, stderr went into the value. The confirmed case was the import
+wizard's test apply. It found a Kubernetes target by re-running
+`cub target list --json | jq` through `sh -c` with stderr merged; with no
+Kubernetes target the output was the deprecation notice alone, which is not
+empty, so the notice became the target slug passed to `cub unit set-target`.
+It now parses the list it already read. The wizard's other reads (the unit data
+it modifies and writes back, the unit and target checks, the kubectl
+annotation value it compares) read stdout alone through `commandStdout`, which
+puts stderr in the error. The integration tests that parsed `cub space list`
+and `cub unit list` from merged output could not pass; fixed the same way.
+
+`tree config --json` passed `--json` to `cub unit tree`, which prints a text
+tree either way, so it never produced JSON. JSON is now refused for that view.
+
+Not done here, still in #563: a single runner that enforces `--space` at run
+time instead of the literal-vector lint, and the remaining `CombinedOutput`
+sites whose output is only logged or searched for an error phrase.
+
 ## Explicit ConfigHub Space (#552)
 
 cub v0.5.2 (2026-09-17) removed the default space. `--space` alone chooses a

@@ -281,7 +281,7 @@ func historyChangeSetListArgs(ctx context.Context, q historyQuery) ([]string, er
 	if q.Namespace != "" {
 		contains = q.Namespace + " " + q.Resource
 	}
-	return withConfigHubSpace([]string{"changeset", "list", "--json", "--contains", contains}, space.Slug), nil
+	return withConfigHubSpace([]string{"changeset", "list", "-o", "json", "--contains", contains}, space.Slug), nil
 }
 
 func buildHistoryNavigation(raw string) historyNavigation {

@@ -146,8 +146,8 @@ func TestRequireSingleConfigHubSpace(t *testing.T) {
 }
 
 func TestWithConfigHubSpace(t *testing.T) {
-	got := withConfigHubSpace([]string{"unit", "list", "--json"}, " payments-prod ")
-	if strings.Join(got, " ") != "unit list --json --space payments-prod" {
+	got := withConfigHubSpace([]string{"unit", "list", "-o", "json"}, " payments-prod ")
+	if strings.Join(got, " ") != "unit list -o json --space payments-prod" {
 		t.Fatalf("args = %v", got)
 	}
 
@@ -207,11 +207,11 @@ func TestWithConfigHubSpaceOrTargets(t *testing.T) {
 
 func TestWithConfigHubSpaceFromRef(t *testing.T) {
 	for ref, want := range map[string]string{
-		"payments/api":                         "unit get --json payments/api",
-		"11111111-2222-4333-8444-555555555555": "unit get --json 11111111-2222-4333-8444-555555555555",
-		"api":                                  "unit get --json api --space " + unresolvedConfigHubSpace,
+		"payments/api":                         "unit get -o json payments/api",
+		"11111111-2222-4333-8444-555555555555": "unit get -o json 11111111-2222-4333-8444-555555555555",
+		"api":                                  "unit get -o json api --space " + unresolvedConfigHubSpace,
 	} {
-		if got := strings.Join(withConfigHubSpaceFromRef([]string{"unit", "get", "--json"}, ref), " "); got != want {
+		if got := strings.Join(withConfigHubSpaceFromRef([]string{"unit", "get", "-o", "json"}, ref), " "); got != want {
 			t.Errorf("ref %q: args = %q, want %q", ref, got, want)
 		}
 	}
@@ -239,9 +239,9 @@ func TestMCPConfighubUnitGet_NamesTheSpace(t *testing.T) {
 		want    string
 		wantErr string
 	}{
-		{name: "slug and space", args: map[string]interface{}{"unit": "api", "space": "prod"}, want: "unit get --json api --space prod"},
-		{name: "qualified reference", args: map[string]interface{}{"unit": "prod/api"}, want: "unit get --json prod/api"},
-		{name: "unit ID", args: map[string]interface{}{"unit": "11111111-2222-4333-8444-555555555555"}, want: "unit get --json 11111111-2222-4333-8444-555555555555"},
+		{name: "slug and space", args: map[string]interface{}{"unit": "api", "space": "prod"}, want: "unit get -o json api --space prod"},
+		{name: "qualified reference", args: map[string]interface{}{"unit": "prod/api"}, want: "unit get -o json prod/api"},
+		{name: "unit ID", args: map[string]interface{}{"unit": "11111111-2222-4333-8444-555555555555"}, want: "unit get -o json 11111111-2222-4333-8444-555555555555"},
 		{name: "bare slug with no space", args: map[string]interface{}{"unit": "api"}, wantErr: "needs the unit's ConfigHub space"},
 		{name: "every space cannot name one unit", args: map[string]interface{}{"unit": "api", "space": "*"}, wantErr: "must name one space"},
 	} {
@@ -271,10 +271,10 @@ func TestCubGetCommandHint(t *testing.T) {
 		space, slug, id string
 		want            string
 	}{
-		{space: "prod", slug: "api", id: "u-1", want: "cub unit get api --json --space prod"},
-		{space: "prod", id: "u-1", want: "cub unit get u-1 --json --space prod"},
-		{slug: "api", id: "u-1", want: "cub unit get u-1 --json"},
-		{slug: "api", want: "cub unit get api --json --space <space>"},
+		{space: "prod", slug: "api", id: "u-1", want: "cub unit get api -o json --space prod"},
+		{space: "prod", id: "u-1", want: "cub unit get u-1 -o json --space prod"},
+		{slug: "api", id: "u-1", want: "cub unit get u-1 -o json"},
+		{slug: "api", want: "cub unit get api -o json --space <space>"},
 		{want: ""},
 	} {
 		if got := cubGetCommandHint("unit", tt.space, tt.slug, tt.id); got != tt.want {
@@ -292,7 +292,7 @@ func TestHistoryAndAuditNameTheirSpace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(args, " "); got != "changeset list --json --contains prod deployment/api --space payments-prod" {
+	if got := strings.Join(args, " "); got != "changeset list -o json --contains prod deployment/api --space payments-prod" {
 		t.Fatalf("history args = %q", got)
 	}
 
@@ -515,7 +515,7 @@ func TestFleetOutliers_ReportsWhyTheReadFailed(t *testing.T) {
 	stubSpaceInputs(t, "")
 	fleetOutliersSpace = "no-such-space"
 	loadFleetOutlierUnitsFn = func(space string) ([]fleetUnitSnapshot, error) {
-		return nil, errors.New(`cub unit list --json --quiet --space no-such-space failed: space "no-such-space" not found`)
+		return nil, errors.New(`cub unit list -o json --quiet --space no-such-space failed: space "no-such-space" not found`)
 	}
 	err := runFleetOutliers(nil, nil)
 	if err == nil || !strings.Contains(err.Error(), `space "no-such-space" not found`) || strings.Contains(err.Error(), "cub auth login") {
@@ -746,7 +746,7 @@ func TestConfigHubRefNamesSpace(t *testing.T) {
 		t.Fatal("confighub_unit_get accepted */api, an every-space lookup")
 	}
 	const unitID = "11111111-2222-4333-8444-555555555555"
-	if got, err := build(map[string]interface{}{"unit": unitID, "space": "*"}); err != nil || strings.Join(got, " ") != "unit get --json "+unitID {
+	if got, err := build(map[string]interface{}{"unit": unitID, "space": "*"}); err != nil || strings.Join(got, " ") != "unit get -o json "+unitID {
 		t.Fatalf("args = %v err = %v: an ID needs no space, so '*' alongside it is harmless", got, err)
 	}
 }

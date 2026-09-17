@@ -74,7 +74,7 @@ func getCurrentSpace(t *testing.T) string {
 func requireWorker(t *testing.T, space string) string {
 	t.Helper()
 
-	cmd := exec.Command("cub", "worker", "list", "--space", space, "--json")
+	cmd := exec.Command("cub", "worker", "list", "--space", space, "-o", "json")
 	output, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("Failed to list workers: %v", err)
@@ -101,7 +101,7 @@ func requireWorker(t *testing.T, space string) string {
 func requireTarget(t *testing.T, space string) string {
 	t.Helper()
 
-	cmd := exec.Command("cub", "target", "list", "--space", space, "--json")
+	cmd := exec.Command("cub", "target", "list", "--space", space, "-o", "json")
 	output, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("Failed to list targets: %v", err)

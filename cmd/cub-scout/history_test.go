@@ -297,7 +297,7 @@ func TestBuildHistoryNavigation_UsesChangeSetAndUnitTrustSurface(t *testing.T) {
 	if len(nav.NextSteps) < 3 {
 		t.Fatalf("nextSteps count = %d, want at least 3", len(nav.NextSteps))
 	}
-	if nav.NextSteps[0].NextCommand != "cub changeset get release-42 --json --space payments" {
+	if nav.NextSteps[0].NextCommand != "cub changeset get release-42 -o json --space payments" {
 		t.Fatalf("first next command = %q, want exact changeset get command", nav.NextSteps[0].NextCommand)
 	}
 	if nav.NextSteps[1].NextSurface != "https://confighub.com/units/sp-123/u-123?tab=2" {

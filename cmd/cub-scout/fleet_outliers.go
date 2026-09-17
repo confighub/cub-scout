@@ -143,7 +143,7 @@ func loadFleetOutlierUnits(space string) ([]fleetUnitSnapshot, error) {
 	if _, err := exec.LookPath("cub"); err != nil {
 		return nil, errFleetOutliersNotConnected
 	}
-	out, err := runHistoryCubCommandImpl(context.Background(), withConfigHubSpace([]string{"unit", "list", "--json", "--quiet"}, space))
+	out, err := runHistoryCubCommandImpl(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json", "--quiet"}, space))
 	if err != nil {
 		return nil, err
 	}

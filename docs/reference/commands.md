@@ -1165,6 +1165,9 @@ cub-scout tree runtime --format md       # Markdown output
 ```
 
 `tree ownership` includes owner references for managed resources.
+
+`tree config` has no JSON output. It shows `cub unit tree`, which prints a text
+tree, so `--format json` and `--json` are refused for that view.
 For ArgoCD resources, this includes optional lineage to parent `Application` and/or `ApplicationSet` when discoverable.
 
 `tree git --format json` emits:

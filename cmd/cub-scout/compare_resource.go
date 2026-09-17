@@ -422,7 +422,7 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 // The compare unit reads always name the space; the caller skips the lookup
 // when it has none, rather than let the cub context choose.
 func compareUnitGetArgs(unitSlug, space string) []string {
-	return withConfigHubSpace([]string{"unit", "get", unitSlug, "--json", "--quiet"}, space)
+	return withConfigHubSpace([]string{"unit", "get", unitSlug, "-o", "json", "--quiet"}, space)
 }
 
 func compareUnitDataArgs(unitSlug, space string) []string {
