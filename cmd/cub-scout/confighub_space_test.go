@@ -373,7 +373,6 @@ func TestCompareUnitArgsAlwaysNameTheSpace(t *testing.T) {
 	for _, args := range [][]string{
 		compareUnitGetArgs("checkout", "payments-prod"),
 		compareUnitDataArgs("checkout", "payments-prod"),
-		compareUnitLivedataArgs("checkout", "payments-prod"),
 	} {
 		if got := strings.Join(args, " "); !strings.HasSuffix(got, "--space payments-prod") {
 			t.Fatalf("args = %q, want an explicit --space", got)

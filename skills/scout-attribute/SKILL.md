@@ -100,11 +100,9 @@ Without `--source-path`, the resource-level `gitSource` still applies — `repoU
 ```bash
 $ cub-scout compare three-way Deployment/api -n prod
 Compare Resource: Deployment/api (namespace: prod)
-Mode: dry-wet-live    Connection: connected
+Mode: dry-live    Connection: connected
 
 DRY (unit intent)
-  replicas: 3
-WET (rendered target)
   replicas: 3
 LIVE (cluster)
   replicas: 1
@@ -112,9 +110,11 @@ LIVE (cluster)
 Drift cause: manual-edit (manager: kubectl-edit)
 
 Diff Highlights
-  - replicas: DRY=3 | WET=3 | LIVE=1
+  - replicas: DRY=3 | WET=- | LIVE=1
       <- bound from unit:01HFK...XY path:.spec.scale.value via link:replicas-from-scale
 ```
+
+There is no WET side: ConfigHub no longer exposes a unit's live data, so a connected compare shows DRY against LIVE (`Mode: dry-live`) and says so in its notes.
 
 The `Drift cause: manual-edit` line is decisive: the controller (Argo) is *not* the writer; someone ran `kubectl edit`. The `bound from` line tells the user the upstream ConfigHub unit + path that *should* be feeding `replicas` — that's the C2 connected enrichment on top of standalone's cause + gitSource.
 

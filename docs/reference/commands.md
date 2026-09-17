@@ -1420,7 +1420,9 @@ Resource compare mode behavior:
 ### compare three-way
 
 Connected or standalone three-way comparison command for selected scopes. In
-connected mode, cub-scout compares ConfigHub DRY/WET state against LIVE. With
+connected mode, cub-scout compares the ConfigHub unit's DRY data against LIVE
+(mode `dry-live`). There is no WET side: ConfigHub no longer exposes a unit's
+live data (`cub unit livedata` was removed), and the notes say so. With
 `--dry-from`, cub-scout uses a rendered YAML file or directory as DRY and
 compares it directly against LIVE without requiring connected mode. For workload
 resources, output may include generation-scoped current-change rollout evidence
