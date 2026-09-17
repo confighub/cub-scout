@@ -1952,9 +1952,9 @@ restored by `cub auth login` in another terminal — while it is up:
 | Surface | When the fact is read |
 |---|---|
 | One-shot commands (`receipt verify`, `audit list`, `history`, `compare`, `doctor`, `status`) | Once, at the first read, and reused for the rest of that command |
-| `watch` / `bot` | Once per poll cycle that produces events, and only when `--emit-receipt-on` asks for receipts. A receipt records the session as of its own cycle, not as of start-up; an idle watch asks nothing |
+| `watch` / `bot` | Once per poll cycle that will build a receipt — an event type `--emit-receipt-on` asked for, that receipts support, with `--emit-receipt-batch-cap` above zero. A receipt records the session as of its own cycle, not as of start-up; an idle watch, or one building no receipts, asks nothing |
 | `map` TUI | Each time the history panel is opened, so `cub auth login` in another terminal takes effect on the next keypress |
-| `mcp serve` | Each tool call re-executes the binary, so each call asks once |
+| `mcp serve` | Before each `tools/list` and each `tools/call`. The connected tools stop being offered when the session goes, and appear again after `cub auth login`, without restarting the server. A call to a connected tool that is not currently offered is answered with the gate's reason, not "unknown tool" |
 
 ### Omissions
 

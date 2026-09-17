@@ -1434,9 +1434,13 @@ they do:
 
 | `mode` | `confighub_reads` | Text line | What it means |
 |---|---|---|---|
-| `connected` | `false` | `⚠ ConfigHub reads unavailable: <reason>` | Credentials exist, but every connected command refuses. `cub auth login` only helps if the reason says so |
-| `offline` / `online` | `true` | `✔ ConfigHub reads available: cub has a session` | `hub.confighub.com` is unreachable or unauthenticated, but `cub` can read its own server — the self-hosted and air-gapped case |
+| `connected` / `auth_expired` | `false` | `⚠ ConfigHub reads unavailable: <reason>` | Credentials exist, but every connected command refuses. `cub auth login` only helps if the reason says so |
+| `offline` / `online` | `true` | `✔ ConfigHub reads available: cub has a session` | `cub auth status` passes but `cub context get` failed, so the mode line describes only what `hub.confighub.com` answered |
 | otherwise | — | none | The two agree; nothing to correct |
+
+`auth_expired` cannot occur with `confighub_reads: true`: `auth_valid` is the gate's
+own verdict wherever the gate looked at the session, so `status` cannot print
+"auth expired" and "reads available" together.
 
 A pre-flight check should read `confighub_reads`, not `mode`.
 

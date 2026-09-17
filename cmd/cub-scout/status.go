@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -101,8 +102,9 @@ func runStatus(cmd *cobra.Command) error {
 	// use so status cannot drift from them. status can otherwise print
 	// "Connected" while every connected command refuses, for instance with
 	// CUB_SCOUT_OFFLINE set or telemetry turned off.
-	if err := configHubReads(); err != nil {
-		status.ConfigHubReadsReason = err.Error()
+	readsErr := configHubReads()
+	if readsErr != nil {
+		status.ConfigHubReadsReason = readsErr.Error()
 	} else {
 		status.ConfigHubReads = true
 	}
@@ -132,8 +134,9 @@ func runStatus(cmd *cobra.Command) error {
 				status.Mode = "connected"
 			}
 
-			// Validate token via cub CLI
-			authValid := validateAuthToken()
+			// Whether cub has a session it accepts. The gate has usually
+			// answered that already; see statusSessionValid.
+			authValid := statusSessionValid(readsErr)
 			status.AuthValid = &authValid
 
 			if !authValid {
@@ -188,13 +191,15 @@ func printStatus(s StatusInfo) {
 
 	// The gate's verdict, whenever it disagrees with the mode above. Both
 	// directions are corrections: a mode that promises reads every connected
-	// command refuses, and a mode that denies reads they would happily make
-	// against a self-hosted server.
+	// command refuses, and a mode that denies reads they would make.
+	//
+	// The second is reached when `cub` has a session but `cub context get`
+	// failed, so the mode line describes only what hub.confighub.com answered.
 	switch {
 	case !s.ConfigHubReads && s.ConfigHubReadsReason != "":
 		fmt.Printf("            \033[33m⚠\033[0m ConfigHub reads unavailable: %s\n", s.ConfigHubReadsReason)
 	case s.ConfigHubReads && s.Mode != "connected":
-		fmt.Println("            \033[32m✔\033[0m ConfigHub reads available: cub has a session (the line above is about hub.confighub.com)")
+		fmt.Println("            \033[32m✔\033[0m ConfigHub reads available: cub has a session")
 	}
 
 	// Cluster info
@@ -316,6 +321,26 @@ func getWorkerForCluster(space, clusterName string) *WorkerInfo {
 	}
 
 	return nil
+}
+
+// statusSessionValid reports whether `cub` has a session it accepts.
+//
+// The gate has usually answered that already, and asking `cub auth status` a
+// second time either repeats it or contradicts it: in plugin mode with no
+// CUB_TOKEN, status printed "Connected (auth expired)", "Run: cub auth login"
+// and "ConfigHub reads available" together, which cannot all be true.
+//
+// A gate refusal that is not about authentication — reads turned off, `cub` not
+// installed — says nothing about the session, so that case still asks.
+func statusSessionValid(readsErr error) bool {
+	switch {
+	case readsErr == nil:
+		return true
+	case errors.Is(readsErr, hub.ErrCubNotAuthenticated):
+		return false
+	default:
+		return validateAuthToken()
+	}
 }
 
 // validateAuthToken checks if the current ConfigHub auth token is valid

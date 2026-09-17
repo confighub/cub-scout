@@ -23,6 +23,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// stubConnectedGate fixes the gate's answer for one test.
+//
+// This and answerGateWith mutate package state without a lock, so a test that
+// uses either must not call t.Parallel(). Production callers all go through
+// configHubReadsMu; the seam itself is deliberately unguarded.
 func stubConnectedGate(t *testing.T, err error) {
 	t.Helper()
 	old := requireCubConnectedFn
@@ -678,9 +683,35 @@ func TestStatusRecordsTheGateVerdict(t *testing.T) {
 	}
 }
 
+// status asked `cub auth status` twice: once through the gate, once through
+// validateAuthToken. In plugin mode with no CUB_TOKEN the two disagreed, and
+// status printed "Connected (auth expired)", "Run: cub auth login" and
+// "ConfigHub reads available" together. The session verdict now follows the
+// gate wherever the gate looked at the session.
+func TestStatusSessionVerdictFollowsTheGate(t *testing.T) {
+	if !statusSessionValid(nil) {
+		t.Fatal("session invalid although the gate accepted it; status would say 'auth expired' and 'reads available' together")
+	}
+	if statusSessionValid(fmt.Errorf("%w: token expired", hub.ErrCubNotAuthenticated)) {
+		t.Fatal("session valid although the gate refused it for not being authenticated")
+	}
+
+	// A refusal that is not about authentication says nothing about the
+	// session, so it is asked. In plugin mode that is the host's token.
+	t.Setenv("CUB_PLUGIN", "1")
+	t.Setenv("CUB_TOKEN", "a-token")
+	if !statusSessionValid(hub.ErrConfigHubReadsDisabled) {
+		t.Fatal("session invalid although the plugin host passed a token")
+	}
+	t.Setenv("CUB_TOKEN", "")
+	if statusSessionValid(hub.ErrConfigHubReadsDisabled) {
+		t.Fatal("session valid although the plugin host passed no token")
+	}
+}
+
 // Whichever way the mode line and the gate disagree, the text says so: a mode
 // that promises reads the commands refuse, and a mode that denies reads they
-// make against a self-hosted server.
+// would make.
 func TestStatusCorrectsTheModeInBothDirections(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
@@ -694,9 +725,11 @@ func TestStatusCorrectsTheModeInBothDirections(t *testing.T) {
 			want:   "ConfigHub reads unavailable: cub auth status did not report an authenticated session",
 		},
 		{
+			// Reached when cub has a session but `cub context get` failed, so
+			// the mode line describes only hub.confighub.com.
 			name:   "offline but the gate passes",
 			status: StatusInfo{Mode: "offline", ConfigHubReads: true},
-			want:   "ConfigHub reads available",
+			want:   "ConfigHub reads available: cub has a session",
 		},
 		{
 			name:   "connected and the gate agrees",
@@ -762,6 +795,16 @@ func TestWatchAsksTheGateEachCycle(t *testing.T) {
 	if watchCycleConnected(map[string]bool{"resource.deleted": true}, []watchEvent{{Type: "resource.deleted"}}) {
 		t.Fatal("connected = true for a cycle whose events build no receipt")
 	}
+	// --emit-receipt-batch-cap 0 disables receipt-build while keeping the flag
+	// explicit, so there is nothing to record the fact on then either.
+	prevCap := watchReceiptBatchCap
+	t.Cleanup(func() { watchReceiptBatchCap = prevCap })
+	watchReceiptBatchCap = 0
+	if watchCycleConnected(emitOn, events) {
+		t.Fatal("connected = true although the batch cap builds no receipts")
+	}
+	watchReceiptBatchCap = prevCap
+
 	if *calls != 0 {
 		t.Fatalf("gate ran %d times with nothing to record it on, want 0", *calls)
 	}
@@ -780,59 +823,183 @@ func TestWatchAsksTheGateEachCycle(t *testing.T) {
 	}
 }
 
+// `mcp serve` runs for as long as the agent holds it, so it has the TUI's
+// problem one process up: the tool set was decided once at start-up. A session
+// that expired left the connected tools advertised, and their calls failed with
+// a raw error; `cub auth login` in another terminal never made them appear.
+func TestMCPGatewayFollowsTheSession(t *testing.T) {
+	session := error(hub.ErrCubNotAuthenticated)
+	answerGateWith(t, &session)
+
+	runner := func(context.Context, []string) (string, error) { return `{"ok":true}`, nil }
+	gateway := newMCPGatewayWithMode(runner, runner, false)
+	gateway.connectedOnly = connectedOnlyToolNames(gateway.runTool, gateway.connectedRunner)
+	gateway.sessionFn = refreshConfigHubReadsAvailable
+
+	offers := func() bool {
+		resp := gateway.handleRequest(context.Background(), mcpRequest{
+			JSONRPC: "2.0", ID: json.RawMessage(`1`), Method: "tools/list",
+		})
+		var result struct {
+			Tools []mcpToolDescriptor `json:"tools"`
+		}
+		if err := marshalInto(resp.Result, &result); err != nil {
+			t.Fatalf("decode tools/list: %v", err)
+		}
+		for _, tool := range result.Tools {
+			if tool.Name == "compare_three_way" {
+				return true
+			}
+		}
+		return false
+	}
+	call := func() (bool, string) {
+		resp := gateway.handleRequest(context.Background(), mcpRequest{
+			JSONRPC: "2.0", ID: json.RawMessage(`2`), Method: "tools/call",
+			Params: json.RawMessage(`{"name":"compare_three_way","arguments":{"scope":"cluster"}}`),
+		})
+		var result struct {
+			IsError bool `json:"isError"`
+			Content []struct {
+				Text string `json:"text"`
+			} `json:"content"`
+		}
+		if err := marshalInto(resp.Result, &result); err != nil {
+			t.Fatalf("decode tools/call: %v", err)
+		}
+		text := ""
+		if len(result.Content) > 0 {
+			text = result.Content[0].Text
+		}
+		return result.IsError, text
+	}
+
+	if offers() {
+		t.Fatal("a connected tool is offered although cub has no session")
+	}
+	// Calling it anyway is answered with the gate's reason. "unknown tool"
+	// would read as a cub-scout defect.
+	isErr, text := call()
+	if !isErr || !strings.Contains(text, "needs ConfigHub") || strings.Contains(text, "unknown tool") {
+		t.Fatalf("tools/call error = %q, want the gate's refusal", text)
+	}
+
+	// The user logs in elsewhere.
+	session = nil
+	if !offers() {
+		t.Fatal("a connected tool is still not offered although the session works")
+	}
+	if isErr, text := call(); isErr {
+		t.Fatalf("tools/call failed after login: %q", text)
+	}
+
+	// And the session expires while the server is still up.
+	session = hub.ErrCubNotAuthenticated
+	if offers() {
+		t.Fatal("a connected tool is still offered although the session expired")
+	}
+}
+
 // A receipt asserting a ConfigHub session that never existed is a false
 // evidence claim, so the recorded fact must come from the gate. Neither site
 // can be driven from a test without a cluster, so the wiring is the assertion.
 func TestRecordedConnectedFactComesFromTheGate(t *testing.T) {
+	// Every way the fact legitimately reaches a receipt.
 	fromGate := map[string]bool{
 		"watchCycleConnected":            true,
 		"detectConnectedForReceipt":      true,
+		"scopedConnectedMode":            true,
 		"configHubReadsAvailable":        true,
 		"refreshConfigHubReadsAvailable": true,
 	}
+	// Every file that records it. watch_receipt.go is not here: it takes the
+	// value as a parameter, and the watch.go check below covers the caller.
+	recordingFiles := []string{"watch.go", "receipt.go", "receipt_aggregate.go"}
+
 	fset, files := parseRepoGoFiles(t, "cmd")
 	byBase := map[string]*ast.File{}
 	for path, file := range files {
 		byBase[filepath.Base(path)] = file
 	}
 
-	// watch.go: the connected argument of every receipt-attaching call.
-	watchCalls := 0
-	ast.Inspect(byBase["watch.go"], func(n ast.Node) bool {
-		call, ok := n.(*ast.CallExpr)
-		if !ok || calledName(call) != "attachReceiptsIfRequested" || len(call.Args) < 5 {
+	checked := 0
+	for _, base := range recordingFiles {
+		file := byBase[base]
+		if file == nil {
+			t.Fatalf("%s is gone; this guard has stopped guarding it", base)
+		}
+
+		// What every local name in this file is assigned, so the check follows
+		// a value hoisted into a variable instead of demanding a literal call.
+		assigned := map[string][]ast.Expr{}
+		ast.Inspect(file, func(n ast.Node) bool {
+			assign, ok := n.(*ast.AssignStmt)
+			if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+				return true
+			}
+			if name, ok := assign.Lhs[0].(*ast.Ident); ok {
+				assigned[name.Name] = append(assigned[name.Name], assign.Rhs[0])
+			}
 			return true
+		})
+
+		var derivesFromGate func(ast.Expr, map[string]bool) bool
+		derivesFromGate = func(expr ast.Expr, seen map[string]bool) bool {
+			switch node := expr.(type) {
+			case *ast.CallExpr:
+				return fromGate[calledName(node)]
+			case *ast.Ident:
+				if seen[node.Name] {
+					return false
+				}
+				seen[node.Name] = true
+				values := assigned[node.Name]
+				if len(values) == 0 {
+					return false
+				}
+				// A `false` default is deliberate: a standalone read records
+				// standalone. Every other assignment must reach the gate.
+				sawGate := false
+				for _, value := range values {
+					if ident, ok := value.(*ast.Ident); ok && ident.Name == "false" {
+						continue
+					}
+					if !derivesFromGate(value, seen) {
+						return false
+					}
+					sawGate = true
+				}
+				return sawGate
+			}
+			return false
 		}
-		watchCalls++
-		inner, ok := call.Args[4].(*ast.CallExpr)
-		if !ok || !fromGate[calledName(inner)] {
-			t.Errorf("%s: receipts record a connected fact that does not come from the gate", fset.Position(call.Args[4].Pos()))
+
+		report := func(expr ast.Expr, what string) {
+			checked++
+			if !derivesFromGate(expr, map[string]bool{}) {
+				t.Errorf("%s: %s does not come from the gate; a receipt would assert a ConfigHub session that was never checked", fset.Position(expr.Pos()), what)
+			}
 		}
-		return true
-	})
-	if watchCalls == 0 {
-		t.Fatal("no attachReceiptsIfRequested call found in watch.go; this guard has stopped guarding anything")
+
+		ast.Inspect(file, func(n ast.Node) bool {
+			switch node := n.(type) {
+			case *ast.CallExpr:
+				// The connected argument of every receipt-attaching call.
+				if calledName(node) == "attachReceiptsIfRequested" && len(node.Args) >= 5 {
+					report(node.Args[4], "the connected fact this watch cycle records")
+				}
+			case *ast.KeyValueExpr:
+				// The Connected field of every receipt built here.
+				if key, ok := node.Key.(*ast.Ident); ok && key.Name == "Connected" {
+					report(node.Value, "the receipt's Connected field")
+				}
+			}
+			return true
+		})
 	}
 
-	// receipt.go: the value the receipt is built with.
-	assignments := 0
-	ast.Inspect(byBase["receipt.go"], func(n ast.Node) bool {
-		assign, ok := n.(*ast.AssignStmt)
-		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
-			return true
-		}
-		if name, ok := assign.Lhs[0].(*ast.Ident); !ok || name.Name != "connected" {
-			return true
-		}
-		assignments++
-		call, ok := assign.Rhs[0].(*ast.CallExpr)
-		if !ok || !fromGate[calledName(call)] {
-			t.Errorf("%s: the receipt's connected fact does not come from the gate", fset.Position(assign.Rhs[0].Pos()))
-		}
-		return true
-	})
-	if assignments == 0 {
-		t.Fatal("receipt.go no longer assigns connected; this guard has stopped guarding anything")
+	if checked < 4 {
+		t.Fatalf("only %d recorded connected facts found across %v; this guard has stopped guarding anything", checked, recordingFiles)
 	}
 }
 

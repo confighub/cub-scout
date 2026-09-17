@@ -204,7 +204,12 @@ kept answer, and is called where the user can see the boundary — each time the
 history panel opens, and once per `watch` poll cycle that produces events (and
 only when `--emit-receipt-on` asks for receipts, so a plain or idle watch spends
 nothing). A watch therefore stamps each receipt with the session as of that
-cycle, not as of start-up. `docs/reference/json-contracts.md` has the table.
+cycle, not as of start-up. `mcp serve` follows it too: the tool set is rebuilt
+before each `tools/list` and `tools/call`, so connected tools stop being offered
+when the session goes and appear again after `cub auth login` — and a call to
+one that is not currently offered answers with the gate's reason rather than
+"unknown tool". `docs/reference/json-contracts.md` has the table of when each
+surface asks.
 
 `status` reports the gate's verdict as `confighub_reads`, with
 `confighub_reads_reason` when it refuses, so a skill using `status` as a
@@ -216,11 +221,20 @@ text corrects the mode line in **both** directions, both verified live against
 cub v0.5.2:
 
 ```
-CUB_SCOUT_OFFLINE=true:            ● Connected
-                                   ⚠ ConfigHub reads unavailable: ... CUB_SCOUT_OFFLINE=true is set
-hub.confighub.com unreachable,     ○ Offline
-cub's own server reachable:        ✔ ConfigHub reads available: cub has a session
+CUB_SCOUT_OFFLINE=true:      ● Connected
+                             ⚠ ConfigHub reads unavailable: ... CUB_SCOUT_OFFLINE=true is set
+`cub auth status` passes,    ○ Offline
+`cub context get` fails:     ✔ ConfigHub reads available: cub has a session
 ```
+
+The second line is **not** the plain self-hosted case, which the second review
+round corrected: a working self-hosted setup answers `cub context get`, and
+`status` then upgrades the mode to `connected`, so the two agree and nothing is
+printed. The correction appears when cub has a session cub-scout cannot pair
+with a context. `auth_expired` can no longer contradict it either: the session
+verdict is the gate's own wherever the gate looked at the session, so "auth
+expired" and "reads available" cannot both print (they did, in plugin mode with
+no `CUB_TOKEN`).
 
 The skills were taught the field: `skills/references/standalone-vs-connected.md`
 (which still described the old probe-based gate), `skills/scout-mcp/SKILL.md`
@@ -235,9 +249,12 @@ token file exists". `docs/reference/json-contracts.md` says so.
 Guards: `TestNoCommandUsesTheOlderConnectedCheck` fails the build on a new use
 of `RequireConnected()` **or** of `hub.RequireCubConnected()` outside
 `connected_gate.go`; `TestRecordedConnectedFactComesFromTheGate` fails it if the
-fact a receipt records stops coming from the gate (neither the `watch` loop nor
-`receipt verify` can be driven from a unit test, and `connected := true` used to
-survive the whole suite at both sites). A one-off probe — replacing
+fact a receipt records stops coming from the gate. None of the three recording
+sites can be driven from a unit test, and `connected := true` used to survive
+the whole suite at all of them — the second review round found the third,
+`receipt_aggregate.go`, which the first version of the guard did not read. The
+guard follows a value hoisted into a variable and allows a deliberate `false`
+default, so it does not force a shape on the code. A one-off probe — replacing
 `requireCubConnectedFn` with a panic and running the package — is how to check
 that no test reaches the real `cub`; two doctor fixture tests and one `status`
 test did, which pinned a machine-dependent verdict for every later caller in the
