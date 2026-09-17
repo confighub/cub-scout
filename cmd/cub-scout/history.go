@@ -25,6 +25,7 @@ var (
 	historyFormat           string
 	historySince            string
 	historyIncludeSynthetic bool
+	historySpace            string
 )
 
 var historyCmd = &cobra.Command{
@@ -47,6 +48,7 @@ func init() {
 	historyCmd.Flags().StringVar(&historyFormat, "format", "ascii", "Output format: ascii, json, md")
 	historyCmd.Flags().StringVar(&historySince, "since", "7d", "Lookback window (examples: 24h, 7d, 2w)")
 	historyCmd.Flags().BoolVar(&historyIncludeSynthetic, "include-synthetic", false, "Include synthetic/demo seeded ChangeSets")
+	historyCmd.Flags().StringVar(&historySpace, "space", "", "ConfigHub space to read ChangeSets from; '*' for every space (default: CUB_SPACE, then the cub context's default space)")
 }
 
 var errHistoryDisconnected = errors.New("history requires ConfigHub connection. Run: cub auth login")
@@ -58,6 +60,9 @@ type historyQuery struct {
 	Window           time.Duration
 	Now              time.Time
 	IncludeSynthetic bool
+	// Space is the ConfigHub space ChangeSets are read from, as given by
+	// --space. Empty means resolve it (CUB_SPACE, then the cub context default).
+	Space string
 }
 
 type historyEntry struct {
@@ -109,6 +114,7 @@ func runHistory(cmd *cobra.Command, args []string) error {
 		Window:           window,
 		Now:              historyNowFn().UTC(),
 		IncludeSynthetic: historyIncludeSynthetic,
+		Space:            strings.TrimSpace(historySpace),
 	}
 
 	entries, err := resolveHistoryEntries(cmd.Context(), query)
@@ -204,7 +210,10 @@ func parseHistorySince(raw string) (time.Duration, error) {
 }
 
 func fetchHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry, error) {
-	args := historyChangeSetListArgs(ctx, q)
+	args, err := historyChangeSetListArgs(ctx, q)
+	if err != nil {
+		return nil, err
+	}
 	raw, err := runHistoryCubCommand(ctx, args)
 	if err != nil {
 		return nil, fmt.Errorf("fetch changeset history: %w", err)
@@ -239,24 +248,30 @@ func loadHistoryRawPayload(ctx context.Context, q historyQuery) (string, bool) {
 		return "", false
 	}
 
-	raw, err := runHistoryCubCommand(ctx, historyChangeSetListArgs(ctx, q))
+	args, err := historyChangeSetListArgs(ctx, q)
+	if err != nil {
+		return "", false
+	}
+	raw, err := runHistoryCubCommand(ctx, args)
 	if err != nil {
 		return "", false
 	}
 	return raw, true
 }
 
-func historyChangeSetListArgs(ctx context.Context, q historyQuery) []string {
+// historyChangeSetListArgs always names the space. Without --space the read
+// does not fail: it quietly covers whichever space the cub context defaults
+// to, so a resource's history could come back empty for no visible reason.
+func historyChangeSetListArgs(ctx context.Context, q historyQuery) ([]string, error) {
+	space, err := requireConfigHubSpace("history", "--space", q.Space)
+	if err != nil {
+		return nil, err
+	}
 	contains := q.Resource
 	if q.Namespace != "" {
 		contains = q.Namespace + " " + q.Resource
 	}
-
-	args := []string{"changeset", "list", "--json", "--contains", contains}
-	if space := detectHistorySpace(ctx); space != "" {
-		args = append(args, "--space", space)
-	}
-	return args
+	return withConfigHubSpace([]string{"changeset", "list", "--json", "--contains", contains}, space.Slug), nil
 }
 
 func buildHistoryNavigation(raw string) historyNavigation {
@@ -312,17 +327,6 @@ func buildHistoryNavigation(raw string) historyNavigation {
 		ConfigHubRevisionsURL: revisionsURL,
 		NextSteps:             HintsToStructured(hints),
 	}
-}
-
-func detectHistorySpace(ctx context.Context) string {
-	if space := hub.PluginSpace(); space != "" {
-		return strings.TrimSpace(space)
-	}
-	cubCtx, _, err := getStatusCubContext()
-	if err != nil || cubCtx == nil {
-		return ""
-	}
-	return strings.TrimSpace(cubCtx.Settings.DefaultSpace)
 }
 
 func runHistoryCubCommandImpl(ctx context.Context, args []string) (string, error) {

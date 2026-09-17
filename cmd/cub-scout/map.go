@@ -1522,11 +1522,13 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 		return loadFleetUnitsFromJSON(fixture, space, appFilter)
 	}
 
-	// Build cub command to list units
-	args := []string{"unit", "list", "--json"}
-	if space != "" {
-		args = append(args, "--space", space)
+	// `map fleet` is documented as showing apps across spaces, and --space as a
+	// filter. Without --space the cub call used to carry no scope, so it showed
+	// only whichever space the cub context defaulted to. Say "every space".
+	if strings.TrimSpace(space) == "" {
+		space = allConfigHubSpaces
 	}
+	args := withConfigHubSpace([]string{"unit", "list", "--json"}, space)
 
 	cmd := exec.Command("cub", args...)
 	output, err := cmd.Output()
@@ -4070,10 +4072,7 @@ func collectActivity(ctx context.Context) ([]mapActivityRow, error) {
 
 func mapActivityDeliveryOptionsFromFlags(ctx context.Context) (gitOpsDeliveryEvidenceOptions, error) {
 	now := gitopsNowFn().UTC()
-	space := strings.TrimSpace(mapActivityConfigHubSpace)
-	if space == "" {
-		space = gitopsDefaultSpaceFn(ctx)
-	}
+	space, spaceSource := gitOpsDeliverySpace(ctx, mapActivityConfigHubSpace)
 
 	since := strings.TrimSpace(mapActivityConfigHubSince)
 	if since == "" {
@@ -4094,13 +4093,14 @@ func mapActivityDeliveryOptionsFromFlags(ctx context.Context) (gitOpsDeliveryEvi
 	}
 
 	return gitOpsDeliveryEvidenceOptions{
-		Namespace:  strings.TrimSpace(mapNamespace),
-		Space:      space,
-		Since:      since,
-		Window:     window,
-		StaleAfter: staleAfter,
-		Now:        now,
-		MaxItems:   defaultGitOpsDeliveryMaxItems,
+		Namespace:   strings.TrimSpace(mapNamespace),
+		Space:       space,
+		SpaceSource: spaceSource,
+		Since:       since,
+		Window:      window,
+		StaleAfter:  staleAfter,
+		Now:         now,
+		MaxItems:    defaultGitOpsDeliveryMaxItems,
 	}, nil
 }
 
@@ -5552,17 +5552,23 @@ func fetchConfigHubUnits() (*cubUnitCache, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ConfigHub authentication required.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
 	}
-	ctx, err := parseCubContextJSON(ctxOut)
-	if err != nil {
+	if _, err := parseCubContextJSON(ctxOut); err != nil {
 		return nil, err
 	}
-	space := ctx.Settings.DefaultSpace
-	if space == "" {
-		return nil, fmt.Errorf("no space selected (run 'cub context set --space <name>')")
+	// Units are indexed by slug below, and a slug is unique only within one
+	// space, so this view needs exactly one space. The unit and link reads used
+	// to carry no --space and trusted the cub context to supply this one.
+	resolved := resolveConfigHubSpace("", "")
+	if !resolved.IsSet() {
+		return nil, errNoConfigHubSpace("connected deep-dive", "")
 	}
+	if resolved.Slug == allConfigHubSpaces {
+		return nil, fmt.Errorf("connected deep-dive needs one ConfigHub space, not '%s' (from %s): it joins units to resources by unit slug, which is unique only within a space", allConfigHubSpaces, resolved.Source)
+	}
+	space := resolved.Slug
 
 	// Fetch units
-	listCmd := exec.Command("cub", "unit", "list", "--json", "--quiet")
+	listCmd := exec.Command("cub", withConfigHubSpace([]string{"unit", "list", "--json", "--quiet"}, space)...)
 	listOut, err := listCmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list units: %w", err)
@@ -5589,7 +5595,7 @@ func fetchConfigHubUnits() (*cubUnitCache, error) {
 	}
 
 	// Fetch links for dependency info
-	linksCmd := exec.Command("cub", "link", "list", "--json", "--quiet")
+	linksCmd := exec.Command("cub", withConfigHubSpace([]string{"link", "list", "--json", "--quiet"}, space)...)
 	linksOut, err := linksCmd.Output()
 	if err == nil {
 		var linkList []struct {
@@ -5755,7 +5761,7 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 		unitCache, connErr = fetchConfigHubUnits()
 		if connErr != nil {
 			fmt.Printf("⚠ Connected mode failed: %v\n", connErr)
-			fmt.Println("  Falling back to standalone mode. Run 'cub auth login' to enable.")
+			fmt.Println("  Falling back to standalone mode.")
 			fmt.Println()
 			deepDiveConnected = false
 		}

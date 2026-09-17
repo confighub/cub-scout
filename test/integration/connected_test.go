@@ -56,29 +56,37 @@ func skipIfNoCluster(t *testing.T) {
 	}
 }
 
-// getCurrentSpace returns the current ConfigHub space
+// getCurrentSpace returns the ConfigHub space the connected tests run against.
+//
+// It is CUB_SCOUT_TEST_SPACE if set, else the cub context's default space, read
+// from `cub context get -o json`. It used to grep the human-readable
+// "Default Space" line and call t.Skip when that line was absent, so any change
+// to that text, or a context with no default space, silently skipped every
+// connected test. A connected run that cannot name a space now fails.
 func getCurrentSpace(t *testing.T) string {
 	t.Helper()
 
-	// Parse "Default Space" from cub context get output
-	cmd := exec.Command("cub", "context", "get")
-	output, err := cmd.Output()
+	if space := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_SPACE")); space != "" {
+		return space
+	}
+
+	output, err := exec.Command("cub", "context", "get", "-o", "json").Output()
 	if err != nil {
 		t.Fatalf("Failed to get context: %v", err)
 	}
-
-	// Look for "Default Space" line
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "Default Space") {
-			fields := strings.Fields(line)
-			if len(fields) >= 3 {
-				return fields[len(fields)-1]
-			}
-		}
+	var ctx struct {
+		Settings struct {
+			DefaultSpace string `json:"defaultSpace"`
+		} `json:"settings"`
+	}
+	if err := json.Unmarshal(output, &ctx); err != nil {
+		t.Fatalf("Failed to parse `cub context get -o json`: %v", err)
+	}
+	if space := strings.TrimSpace(ctx.Settings.DefaultSpace); space != "" {
+		return space
 	}
 
-	t.Skip("No active space set (run: cub context set --space <slug>)")
+	t.Fatalf("No ConfigHub space for the connected tests: set CUB_SCOUT_TEST_SPACE=<slug>. The cub context has no default space, and these tests must not skip silently.")
 	return ""
 }
 

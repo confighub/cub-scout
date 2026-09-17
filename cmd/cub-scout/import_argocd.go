@@ -304,14 +304,13 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 
 	// Determine space
+	// The destination is --space, else a space named after the application.
+	// It is never the cub context's default space: an import must not land
+	// somewhere the command line did not name.
 	space := argoImportSpace
 	if space == "" {
-		space, err = getCurrentSpace()
-		if err != nil {
-			// Suggest using app name as space
-			space = appName
-			fmt.Printf("  Using app name as space: %s\n", space)
-		}
+		space = appName
+		fmt.Printf("  Using app name as space: %s (pass --space to choose another)\n", space)
 	}
 
 	// Summary

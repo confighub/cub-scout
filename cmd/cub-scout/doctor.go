@@ -484,9 +484,7 @@ func doctorDeliveryEvidenceOptionsFromRequest(ctx context.Context, namespace str
 	}
 	opts.StaleAfter = staleAfter
 
-	if opts.Space == "" {
-		opts.Space = gitopsDefaultSpaceFn(ctx)
-	}
+	opts.Space, opts.SpaceSource = gitOpsDeliverySpace(ctx, opts.Space)
 	return opts, nil
 }
 

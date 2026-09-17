@@ -18,6 +18,7 @@ import (
 var (
 	fleetOutliersFormat string
 	fleetOutliersJSON   bool
+	fleetOutliersSpace  string
 
 	loadFleetOutlierUnitsFn      = loadFleetOutlierUnits
 	errFleetOutliersNotConnected = errors.New("fleet views require ConfigHub")
@@ -50,7 +51,15 @@ type fleetOutlierSummary struct {
 	OutlierClusterCount int `json:"outlierClusterCount"`
 }
 
+// fleetOutlierScope says which ConfigHub spaces the comparison read and how
+// that was decided, so the same command line always means the same scope.
+type fleetOutlierScope struct {
+	Space       string `json:"space"`
+	SpaceSource string `json:"spaceSource"`
+}
+
 type fleetOutlierReport struct {
+	Scope     fleetOutlierScope                     `json:"scope"`
 	Summary   fleetOutlierSummary                   `json:"summary"`
 	Clusters  []string                              `json:"clusters"`
 	ByCluster map[string]*fleetOutlierClusterReport `json:"byCluster"`
@@ -79,10 +88,25 @@ func init() {
 
 	fleetOutliersCmd.Flags().StringVar(&fleetOutliersFormat, "format", "ascii", "Output format: ascii, json, md")
 	fleetOutliersCmd.Flags().BoolVar(&fleetOutliersJSON, "json", false, "Output as JSON (shorthand for --format json)")
+	fleetOutliersCmd.Flags().StringVar(&fleetOutliersSpace, "space", "", "ConfigHub space to compare within; one space, not '*' (default: CUB_SPACE, then the cub context's default space)")
 }
 
 func runFleetOutliers(cmd *cobra.Command, args []string) error {
-	units, err := loadFleetOutlierUnitsFn()
+	// The comparison keys units and clusters by slug, and a slug is unique only
+	// within one space. Read across spaces, two unrelated units with the same
+	// name would be compared as one and reported as a revision or presence
+	// outlier that does not exist. So this needs exactly one space, named on the
+	// cub command line and in the report rather than left to the cub context.
+	resolved := resolveConfigHubSpace(fleetOutliersSpace, spaceSourceFlag)
+	if !resolved.IsSet() {
+		return fmt.Errorf("fleet outliers needs a ConfigHub space and none was given: pass --space <slug> or set CUB_SPACE=<slug>. No space is assumed, because the cub context has no default space set")
+	}
+	if resolved.Slug == allConfigHubSpaces {
+		return fmt.Errorf("fleet outliers compares one ConfigHub space at a time, not '%s' (from %s): it matches units and clusters by slug, which is unique only within a space, so a cross-space read would report outliers that do not exist", allConfigHubSpaces, resolved.Source)
+	}
+	scope := fleetOutlierScope{Space: resolved.Slug, SpaceSource: resolved.Source}
+
+	units, err := loadFleetOutlierUnitsFn(scope.Space)
 	if err != nil {
 		return fmt.Errorf("%w. Run: cub auth login", errFleetOutliersNotConnected)
 	}
@@ -91,6 +115,7 @@ func runFleetOutliers(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	report.Scope = scope
 
 	format := strings.ToLower(strings.TrimSpace(fleetOutliersFormat))
 	if format == "" {
@@ -116,8 +141,8 @@ func runFleetOutliers(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func loadFleetOutlierUnits() ([]fleetUnitSnapshot, error) {
-	cmd := exec.Command("cub", "unit", "list", "--json", "--quiet")
+func loadFleetOutlierUnits(space string) ([]fleetUnitSnapshot, error) {
+	cmd := exec.Command("cub", withConfigHubSpace([]string{"unit", "list", "--json", "--quiet"}, space)...)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, errFleetOutliersNotConnected
@@ -254,7 +279,11 @@ func modeRevision(perCluster map[string]int) int {
 
 func renderFleetOutliersASCII(report fleetOutlierReport) string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("Fleet Outliers (%d clusters)\n\n", report.Summary.ClusterCount))
+	b.WriteString(fmt.Sprintf("Fleet Outliers (%d clusters)\n", report.Summary.ClusterCount))
+	if report.Scope.Space != "" {
+		b.WriteString(fmt.Sprintf("ConfigHub space: %s (%s)\n", report.Scope.Space, report.Scope.SpaceSource))
+	}
+	b.WriteString("\n")
 	b.WriteString("Outliers detected:\n")
 	for _, cluster := range report.Clusters {
 		clusterReport := report.ByCluster[cluster]
@@ -273,6 +302,9 @@ func renderFleetOutliersASCII(report fleetOutlierReport) string {
 func renderFleetOutliersMarkdown(report fleetOutlierReport) string {
 	var b strings.Builder
 	b.WriteString("## Fleet Outliers\n\n")
+	if report.Scope.Space != "" {
+		b.WriteString(fmt.Sprintf("- ConfigHub space: `%s` (%s)\n", report.Scope.Space, report.Scope.SpaceSource))
+	}
 	b.WriteString(fmt.Sprintf("- Clusters: `%d`\n", report.Summary.ClusterCount))
 	b.WriteString(fmt.Sprintf("- Outlier clusters: `%d`\n\n", report.Summary.OutlierClusterCount))
 	b.WriteString("| Cluster | Status | Findings |\n")

@@ -34,6 +34,8 @@ type gitOpsDeliveryEvidenceOptions struct {
 	StaleAfter time.Duration
 	Now        time.Time
 	MaxItems   int
+	// SpaceSource records how Space was chosen; see GitOpsDeliveryEvidenceScope.
+	SpaceSource string
 	// MatchBeforeTrim keeps every row in the time window so a caller that
 	// correlates rows to one object can match first and trim the matches.
 	// Trimming the whole space to MaxItems first would drop a busy space's
@@ -54,11 +56,15 @@ type GitOpsDeliveryEvidence struct {
 }
 
 type GitOpsDeliveryEvidenceScope struct {
-	Namespace  string `json:"namespace,omitempty"`
-	Space      string `json:"space,omitempty"`
-	Since      string `json:"since"`
-	StaleAfter string `json:"staleAfter"`
-	MaxItems   int    `json:"maxItems"`
+	Namespace string `json:"namespace,omitempty"`
+	Space     string `json:"space,omitempty"`
+	// SpaceSource says how Space was chosen: "flag", "resource", "CUB_SPACE" or
+	// "cub-context-default". The last is ambient state that another shell can
+	// change, so a reader should be able to see when a result depended on it.
+	SpaceSource string `json:"spaceSource,omitempty"`
+	Since       string `json:"since"`
+	StaleAfter  string `json:"staleAfter"`
+	MaxItems    int    `json:"maxItems"`
 }
 
 type ConfigHubDeliveryEvidence struct {
@@ -187,9 +193,7 @@ func gitOpsDeliveryEvidenceOptionsFromFlags(ctx context.Context) (gitOpsDelivery
 	}
 	opts.StaleAfter = staleAfter
 
-	if opts.Space == "" {
-		opts.Space = gitopsDefaultSpaceFn(ctx)
-	}
+	opts.Space, opts.SpaceSource = gitOpsDeliverySpace(ctx, opts.Space)
 	return opts, nil
 }
 
@@ -204,22 +208,29 @@ func requireGitOpsConfigHubConnected() error {
 }
 
 func detectGitOpsConfigHubSpace(ctx context.Context) string {
-	if space := hub.PluginSpace(); space != "" {
-		return strings.TrimSpace(space)
+	return resolveConfigHubSpace("", "").Slug
+}
+
+// gitOpsDeliverySpace settles the delivery-evidence space from a flag value and
+// says where it came from. An empty result is left for the collector, which
+// reports a confighub.scope omission and skips the reads rather than widen.
+func gitOpsDeliverySpace(ctx context.Context, flagValue string) (slug, source string) {
+	if slug = strings.TrimSpace(flagValue); slug != "" {
+		return slug, spaceSourceFlag
 	}
-	cubCtx, _, err := getStatusCubContext()
-	if err != nil || cubCtx == nil {
-		return ""
+	slug = strings.TrimSpace(gitopsDefaultSpaceFn(ctx))
+	if resolved := resolveConfigHubSpace("", ""); resolved.Slug == slug {
+		source = resolved.Source
 	}
-	return strings.TrimSpace(cubCtx.Settings.DefaultSpace)
+	return slug, source
 }
 
 func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface, opts gitOpsDeliveryEvidenceOptions) *GitOpsDeliveryEvidence {
 	if opts.Now.IsZero() {
 		opts.Now = gitopsNowFn().UTC()
 	}
-	if strings.TrimSpace(opts.Space) == "" {
-		opts.Space = gitopsDefaultSpaceFn(ctx)
+	if opts.SpaceSource == "" {
+		opts.Space, opts.SpaceSource = gitOpsDeliverySpace(ctx, opts.Space)
 	}
 	if strings.TrimSpace(opts.Since) == "" {
 		opts.Since = "24h"
@@ -237,11 +248,12 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	evidence := &GitOpsDeliveryEvidence{
 		ObservedAt: opts.Now,
 		Scope: GitOpsDeliveryEvidenceScope{
-			Namespace:  opts.Namespace,
-			Space:      opts.Space,
-			Since:      opts.Since,
-			StaleAfter: opts.StaleAfter.String(),
-			MaxItems:   opts.MaxItems,
+			Namespace:   opts.Namespace,
+			Space:       opts.Space,
+			SpaceSource: opts.SpaceSource,
+			Since:       opts.Since,
+			StaleAfter:  opts.StaleAfter.String(),
+			MaxItems:    opts.MaxItems,
 		},
 		ConfigHub: &ConfigHubDeliveryEvidence{},
 		Notes: []string{
@@ -273,7 +285,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	if strings.TrimSpace(opts.Space) == "" {
 		evidence.Omissions = append(evidence.Omissions, GitOpsDeliveryEvidenceOmission{
 			Layer:  "confighub.scope",
-			Reason: "no ConfigHub space was supplied and no current cub default space could be resolved",
+			Reason: "no ConfigHub space was given: pass --confighub-space <slug> (or '*' for every space) or set CUB_SPACE; the cub context has no default space",
 			Impact: "release and unit-event queries are skipped to avoid unbounded ConfigHub reads",
 		})
 		return evidence

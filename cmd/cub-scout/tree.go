@@ -1159,12 +1159,11 @@ func runTreeConfig() error {
 		return fmt.Errorf("'cub' CLI not found. Install with: brew install confighub/tap/cub")
 	}
 
-	// Build command args
-	args := []string{"unit", "tree"}
-
-	if treeSpace != "" {
-		args = append(args, "--space", treeSpace)
+	space, err := requireConfigHubSpace("tree config", "--space", treeSpace)
+	if err != nil {
+		return err
 	}
+	args := withConfigHubSpace([]string{"unit", "tree"}, space.Slug)
 
 	if treeEdge != "" {
 		args = append(args, "--edge", treeEdge)
@@ -1175,6 +1174,9 @@ func runTreeConfig() error {
 	}
 
 	fmt.Printf("%sConfigHub Unit Tree%s (via 'cub unit tree')\n", colorBold, colorReset)
+	if !treeJSON {
+		fmt.Printf("Space: %s (%s)\n", space.Slug, space.Source)
+	}
 	fmt.Println(strings.Repeat("─", 60))
 
 	if treeEdge == "clone" {

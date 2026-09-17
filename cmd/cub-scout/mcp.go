@@ -535,10 +535,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				},
 			},
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
-				args := []string{"changeset", "list", "--json"}
-				if space := argString(arguments, "space"); space != "" {
-					args = append(args, "--space", space)
+				space, err := mcpConfigHubSpace("confighub_changesets", arguments)
+				if err != nil {
+					return nil, err
 				}
+				args := withConfigHubSpace([]string{"changeset", "list", "--json"}, space)
 				if where := argString(arguments, "where"); where != "" {
 					args = append(args, "--where", where)
 				}
@@ -616,13 +617,9 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					return nil, fmt.Errorf("missing required bounded scope: space or target")
 				}
 
-				args := []string{"k8s", "get", resourceType}
-				args = append(args, names...)
-				if space != "" {
-					args = append(args, "--space", space)
-				}
-				for _, target := range targets {
-					args = append(args, "--target", target)
+				args, err := withConfigHubSpaceOrTargets(append([]string{"k8s", "get", resourceType}, names...), space, targets)
+				if err != nil {
+					return nil, err
 				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
@@ -695,15 +692,13 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					return nil, fmt.Errorf("missing required bounded scope: space or target")
 				}
 
-				args := []string{"k8s", "types"}
+				var typeArg []string
 				if resourceType := argString(arguments, "type"); resourceType != "" {
-					args = append(args, resourceType)
+					typeArg = []string{resourceType}
 				}
-				if space != "" {
-					args = append(args, "--space", space)
-				}
-				for _, target := range targets {
-					args = append(args, "--target", target)
+				args, err := withConfigHubSpaceOrTargets(append([]string{"k8s", "types"}, typeArg...), space, targets)
+				if err != nil {
+					return nil, err
 				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
@@ -879,11 +874,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if space == "" {
 					return nil, fmt.Errorf("missing required argument: space")
 				}
-				args := []string{"unit-event", "list"}
+				var unitArg []string
 				if unit := argString(arguments, "unit"); unit != "" {
-					args = append(args, unit)
+					unitArg = []string{unit}
 				}
-				args = append(args, "--space", space, "-o", "json")
+				args := append(withConfigHubSpace(append([]string{"unit-event", "list"}, unitArg...), space), "-o", "json")
 				if where := argString(arguments, "where"); where != "" {
 					args = append(args, "--where", where)
 				}
@@ -916,10 +911,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				},
 			},
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
-				args := []string{"unit", "list", "--json"}
-				if space := argString(arguments, "space"); space != "" {
-					args = append(args, "--space", space)
+				space, err := mcpConfigHubSpace("confighub_units", arguments)
+				if err != nil {
+					return nil, err
 				}
+				args := withConfigHubSpace([]string{"unit", "list", "--json"}, space)
 				if where := argString(arguments, "where"); where != "" {
 					args = append(args, "--where", where)
 				}
@@ -956,11 +952,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if unit == "" {
 					return nil, fmt.Errorf("missing required argument: unit")
 				}
-				args := []string{"unit", "get", "--json", unit}
-				if space := argString(arguments, "space"); space != "" {
-					args = append(args, "--space", space)
+				space, err := mcpConfigHubSpace("confighub_unit_get", arguments)
+				if err != nil {
+					return nil, err
 				}
-				return args, nil
+				return withConfigHubSpace([]string{"unit", "get", "--json", unit}, space), nil
 			},
 			Runner: connectedRunner,
 		}

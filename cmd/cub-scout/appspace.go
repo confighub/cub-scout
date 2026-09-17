@@ -30,9 +30,6 @@ Examples:
   # Create an App
   cub-scout app-space create payments-team
 
-  # Create and set as current context
-  cub-scout app-space create payments-team --set-context
-
   # Create with labels
   cub-scout app-space create payments-team --label team=payments --label owner=platform
 `,
@@ -54,7 +51,8 @@ var (
 )
 
 func init() {
-	appCreateCmd.Flags().BoolVar(&appSetContext, "set-context", false, "Set as current context after creation")
+	appCreateCmd.Flags().BoolVar(&appSetContext, "set-context", false, "Deprecated and ignored: cub-scout does not change the cub context's default space")
+	_ = appCreateCmd.Flags().MarkDeprecated("set-context", "it is ignored; pass --space <name> to the commands that need a space")
 	appCreateCmd.Flags().StringArrayVar(&appLabels, "label", nil, "Labels in key=value format (can be repeated)")
 
 	appListCmd.Flags().BoolVar(&appJSON, "json", false, "Output as JSON")
@@ -69,10 +67,6 @@ func runAppCreate(cmd *cobra.Command, args []string) error {
 
 	// Build cub command
 	cubArgs := []string{"space", "create", name}
-
-	if appSetContext {
-		cubArgs = append(cubArgs, "--set-context")
-	}
 
 	for _, label := range appLabels {
 		cubArgs = append(cubArgs, "--label", label)
@@ -111,14 +105,10 @@ type AppResult struct {
 }
 
 // CreateAppWithResult creates an App and returns structured result
-func CreateAppWithResult(name string, setContext bool, labels []string) (*AppResult, error) {
+func CreateAppWithResult(name string, labels []string) (*AppResult, error) {
 	result := &AppResult{Name: name}
 
 	cubArgs := []string{"space", "create", name, "--json"}
-
-	if setContext {
-		cubArgs = append(cubArgs, "--set-context")
-	}
 
 	for _, label := range labels {
 		cubArgs = append(cubArgs, "--label", label)

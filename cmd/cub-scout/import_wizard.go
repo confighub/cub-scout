@@ -1657,7 +1657,7 @@ func (m ImportWizardModel) startApplyCmd() tea.Cmd {
 		}
 
 		// Create App first
-		_, err := CreateAppWithResult(m.proposal.App, true, nil)
+		_, err := CreateAppWithResult(m.proposal.App, nil)
 		if err != nil {
 			return wizardErrMsg{err: fmt.Errorf("create space: %w", err)}
 		}

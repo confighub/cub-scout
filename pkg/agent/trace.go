@@ -171,11 +171,13 @@ type TraceDeliveryEvidence struct {
 }
 
 type TraceDeliveryEvidenceScope struct {
-	Namespace  string `json:"namespace,omitempty"`
-	Space      string `json:"space,omitempty"`
-	Since      string `json:"since,omitempty"`
-	StaleAfter string `json:"staleAfter,omitempty"`
-	MaxItems   int    `json:"maxItems,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
+	Space     string `json:"space,omitempty"`
+	// SpaceSource says how Space was chosen: "flag" or "resource".
+	SpaceSource string `json:"spaceSource,omitempty"`
+	Since       string `json:"since,omitempty"`
+	StaleAfter  string `json:"staleAfter,omitempty"`
+	MaxItems    int    `json:"maxItems,omitempty"`
 }
 
 type TraceDeliveryCorrelation struct {

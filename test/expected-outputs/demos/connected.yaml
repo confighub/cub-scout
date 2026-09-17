@@ -18,8 +18,8 @@ preconditions:
     message: "Must be authenticated: cub auth login"
 
   - name: "space_set"
-    check: "cub context get --json | jq -e '.settings.defaultSpace != null'"
-    message: "Must have active space: cub context set space <slug>"
+    check: "[ -n \"$CUB_SCOUT_TEST_SPACE\" ] || cub context get -o json | jq -e '.settings.defaultSpace != null'"
+    message: "Must name a ConfigHub space: set CUB_SCOUT_TEST_SPACE=<slug>"
 
   - name: "worker_connected"
     check: "cub worker list --json | jq -e 'length > 0 and .[0].BridgeWorker.Condition == \"Ready\"'"
@@ -78,7 +78,7 @@ commands:
 
       Prerequisites:
       1. Authenticate: cub auth login
-      2. Set space: cub context set space <slug>
+      2. Name the space: export CUB_SCOUT_TEST_SPACE=<slug>
       3. Start worker: cub worker run <slug>
 
       You'll see:
@@ -93,7 +93,7 @@ commands:
       - when: "output.contains('not authenticated')"
         show: "Login first: cub auth login"
       - when: "output.contains('No active space')"
-        show: "Set space: cub context set space <slug>"
+        show: "Name the space: export CUB_SCOUT_TEST_SPACE=<slug>"
       - when: "output.contains('null')"
         show: "Bug detected! Worker may be misconfigured. Check: cub worker list"
 

@@ -23,6 +23,7 @@ var (
 	auditListFormat           string
 	auditListSince            string
 	auditListIncludeSynthetic bool
+	auditListSpace            string
 )
 
 var auditCmd = &cobra.Command{
@@ -51,6 +52,7 @@ func init() {
 	auditListCmd.Flags().StringVar(&auditListFormat, "format", "ascii", "Output format: ascii, json, md")
 	auditListCmd.Flags().StringVar(&auditListSince, "since", "7d", "Lookback window (examples: 24h, 7d, 2w)")
 	auditListCmd.Flags().BoolVar(&auditListIncludeSynthetic, "include-synthetic", false, "Include synthetic/demo seeded ChangeSets")
+	auditListCmd.Flags().StringVar(&auditListSpace, "space", "", "ConfigHub space to read break-glass ChangeSets from; '*' for every space (default: CUB_SPACE, then the cub context's default space)")
 	auditListCmd.Flags().Bool("json", false, "Output as JSON (shorthand for --format json)")
 }
 
@@ -62,6 +64,9 @@ type auditListQuery struct {
 	Window           time.Duration
 	Now              time.Time
 	IncludeSynthetic bool
+	// Space is the ConfigHub space to read from, as given by --space. Empty
+	// means resolve it (CUB_SPACE, then the cub context default).
+	Space string
 }
 
 type auditEntry struct {
@@ -110,6 +115,7 @@ func runAuditList(cmd *cobra.Command, args []string) error {
 		Window:           window,
 		Now:              auditNowFn().UTC(),
 		IncludeSynthetic: auditListIncludeSynthetic,
+		Space:            strings.TrimSpace(auditListSpace),
 	}
 
 	entries, err := resolveAuditEntries(cmd.Context(), query)
@@ -168,10 +174,11 @@ func requireAuditConnected() error {
 }
 
 func fetchAuditEntries(ctx context.Context, q auditListQuery) ([]auditEntry, error) {
-	args := []string{"changeset", "list", "--json", "--contains", "break-glass"}
-	if space := detectHistorySpace(ctx); space != "" {
-		args = append(args, "--space", space)
+	space, err := requireConfigHubSpace("audit list", "--space", q.Space)
+	if err != nil {
+		return nil, err
 	}
+	args := withConfigHubSpace([]string{"changeset", "list", "--json", "--contains", "break-glass"}, space.Slug)
 
 	raw, err := runAuditCubCommand(ctx, args)
 	if err != nil {

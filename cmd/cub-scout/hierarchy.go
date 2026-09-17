@@ -904,7 +904,7 @@ func loadExistingSpacesCmd() tea.Cmd {
 // createSpaceCmd creates a new ConfigHub space
 func createSpaceCmd(spaceName string) tea.Cmd {
 	return func() tea.Msg {
-		_, err := runCubCommand("space", "create", spaceName, "--set-context")
+		_, err := runCubCommand("space", "create", spaceName)
 		if err != nil {
 			return spaceCreatedMsg{err: fmt.Errorf("failed to create space: %w", err)}
 		}
@@ -1184,7 +1184,7 @@ func loadCreateWorkersCmd(space string) tea.Cmd {
 // doCreateSpaceCmd creates a new space
 func doCreateSpaceCmd(name string) tea.Cmd {
 	return func() tea.Msg {
-		_, err := runCubCommand("space", "create", name, "--set-context")
+		_, err := runCubCommand("space", "create", name)
 		if err != nil {
 			return createResourceMsg{resourceType: "space", name: name, err: fmt.Errorf("failed to create space: %w", err)}
 		}

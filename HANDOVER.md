@@ -64,6 +64,57 @@ This update changes documentation only; it does not repair those runtime gaps.
 The September 11 execution snapshot below is historical and predates #538 and
 the v2.11.0 release. Use [release notes](docs/releases/v2.11.0.md) for that scope.
 
+## Explicit ConfigHub Space (#552)
+
+Several `cub` calls took their space from the cub context's default space:
+ambient, mutable state that any shell sharing the cub config can change, and
+that a context need not have. A `cub ... list` with no `--space` does not fail.
+It reads a scope nobody chose, so the result looks normal. On the test machine
+`cub unit list` returned 0 units while `--space '*'` returned 348, which is why
+`map fleet`, `fleet outliers` and connected `map deep-dive` showed nothing.
+
+`resolveConfigHubSpace` now answers "which space" in one place: flag or the
+traced object's own space, then `CUB_SPACE`, then the context default if set,
+else unset. Unset never becomes every space. Every space-scoped `cub` call
+carries `--space` through `withConfigHubSpace`, and
+`TestEveryCubCallNamesItsSpace` fails the build if one does not, or if anything
+runs `cub context set` or passes `--set-context`.
+
+Per command: `map fleet` is documented as cross-space and groups units into
+lists that each keep their own space, so with no `--space` it now says `*`
+explicitly. `fleet outliers` is the opposite: it matches units and clusters by
+slug, which is unique only within a space, so it resolves one space, gains
+`--space`, reports it in a `scope` block, and refuses `*`, because a cross-space
+read would report outliers that do not exist. `history`, `audit list` and
+`tree config` resolve a space or refuse (`history` and `audit list` gain
+`--space`). Connected `map deep-dive` needs exactly one
+space, because it joins by unit slug. `compare` skips the DRY/WET lookup with a
+note when the live object carries no space. MCP `confighub_units`,
+`confighub_unit_get` and `confighub_changesets` resolve an omitted `space` or
+return an error naming the argument; the `k8s` tools accept a target without a
+space only as `<space>/<slug>` or a UUID. Delivery evidence already reported a
+`confighub.scope` omission when no space resolved; it now also reports
+`scope.spaceSource`.
+
+cub-scout no longer changes the cub context. `import argocd` probed for a space
+with `cub context set --space`, switching the user's default space as a side
+effect; it now uses `cub space get`. `getCurrentSpace` there never worked
+(`CombinedOutput` merged cub's `--json` deprecation line into the JSON, and it
+read a key that does not exist), so the destination is `--space` or the
+application name, as it always was in practice. `app create --set-context` is
+deprecated and ignored; the TUI creates spaces without `--set-context`.
+
+Test harness: `getCurrentSpace` in `test/integration` grepped the "Default
+Space" text and skipped when absent; `RequireSpace` in `test/unit` ran
+`cub context get space`, which is not a cub command, so every test behind it
+skipped everywhere. Both take `CUB_SCOUT_TEST_SPACE`, fall back to the context
+default, and fail when neither gives a space. The two revived tests were also
+unparseable, because `RunCub` merged stderr into the JSON; it now returns stdout.
+
+Not done: 43 `cub` call sites still pass the deprecated `--json` rather than
+`-o json`. It is harmless where stdout is read alone; the sites that merged
+stderr are fixed.
+
 ## Historical Execution Snapshot: 2026-09-11
 
 Last updated: 2026-09-11. Published: Scout `v2.10.1`; publication and

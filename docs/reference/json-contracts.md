@@ -1030,7 +1030,8 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
 
 | Field | Rule |
 |---|---|
-| `scope.space` | Defaults to the current cub space when available; `*` is accepted only when explicitly supplied. |
+| `scope.space` | `--confighub-space`, else `CUB_SPACE`, else the cub context's default space if it has one. `*` is accepted only when explicitly supplied. With no space from any source the reads are skipped and a `confighub.scope` omission is reported. |
+| `scope.spaceSource` | How `scope.space` was chosen: `flag`, `resource` (a traced object's own ConfigHub space), `CUB_SPACE`, or `cub-context-default`. The last is ambient state that any shell sharing the cub config can change, so output says when a result depended on it. |
 | `scope.since` | Bounds release and unit-event reads by `CreatedAt > <cutoff>`. |
 | `scope.maxItems` | Caps rows kept in output after the time-window query. |
 | `configHub.liveStatuses[]` | Parsed from the `confighub.com/live-status` Space annotation. Missing or malformed annotations become omissions. |

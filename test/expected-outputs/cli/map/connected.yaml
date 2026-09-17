@@ -18,8 +18,8 @@ preconditions:
     message: "Must be authenticated to ConfigHub: cub auth login"
 
   - name: "space_set"
-    check: "cub context get --json | jq -e '.settings.defaultSpace'"
-    message: "Must have active space: cub context set space <slug>"
+    check: "[ -n \"$CUB_SCOUT_TEST_SPACE\" ] || cub context get -o json | jq -e '.settings.defaultSpace'"
+    message: "Must name a ConfigHub space: set CUB_SCOUT_TEST_SPACE=<slug>"
 
   - name: "worker_connected"
     check: "cub worker list --json | jq -e '.[0].BridgeWorker.Condition == \"Ready\"'"

@@ -321,13 +321,15 @@ cub-scout doctor --with-confighub --confighub-space prod --format json
 | `--presentation` | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omit the flag to keep the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
 | `--with-confighub` | Include bounded ConfigHub delivery evidence for the selected scope |
-| `--confighub-space` | ConfigHub space for connected delivery evidence (default: current cub space; `*` must be explicit) |
+| `--confighub-space` | ConfigHub space for connected delivery evidence (default: `CUB_SPACE`, then the cub context's default space if it has one; `*` must be explicit) |
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 
 `--with-confighub` is opt-in and read-only. For `doctor`, connected release,
-unit-event, and live-status reads are scoped to the current cub space by
-default, or to `--confighub-space` when supplied. The JSON output includes a
+unit-event, and live-status reads are scoped to `--confighub-space`, else
+`CUB_SPACE`, else the cub context's default space if it has one. With no space
+from any source the reads are skipped and reported as a `confighub.scope`
+omission; they are never widened to every space. The JSON output includes a
 scan-friendly `delivery` rollup plus raw `deliveryEvidence`; ASCII output adds
 a compact Delivery section. Concrete failed/stale delivery feedback, failed
 unit events, and unhealthy observed event consumers can be promoted into
@@ -466,7 +468,8 @@ Identify clusters that diverge from fleet norms (connected mode).
 cub-scout fleet outliers [flags]
 ```
 
-Requires ConfigHub authentication and at least two clusters with target data.
+Requires ConfigHub authentication and at least two clusters with target data
+in the spaces it reads.
 
 ### Examples
 
@@ -482,6 +485,14 @@ cub-scout fleet outliers --json
 |------|-------------|
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
+| `--space` | ConfigHub space to compare within (default: `CUB_SPACE`, then the cub context's default space if it has one) |
+
+The comparison reads exactly one ConfigHub space. It matches units and clusters
+by slug, and a slug is unique only within a space, so `--space '*'` is refused:
+read across spaces, two unrelated units with the same name would be compared as
+one and reported as an outlier that does not exist. The space is passed to `cub`
+as an explicit `--space` and reported in a `scope` block (`space`, `spaceSource`).
+With no space from any source the command refuses.
 
 ---
 
@@ -723,7 +734,7 @@ cub-scout map activity [flags]
 | `--since` | Time filter (for example `24h`, `7d`) |
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
 | `--with-confighub` | Include ConfigHub delivery activity rows from the same bounded evidence reader used by `gitops status --with-confighub` |
-| `--confighub-space` | ConfigHub space for connected evidence (default: current cub space; use `*` explicitly for all spaces) |
+| `--confighub-space` | ConfigHub space for connected evidence (default: `CUB_SPACE`, then the cub context's default space if it has one; use `*` explicitly for all spaces) |
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat ConfigHub live-status observations older than this as stale (default: `15m`) |
 
@@ -1281,7 +1292,7 @@ cub-scout import argocd guestbook --disable-sync
 | `--show-yaml` | Show YAML that would be imported (implies dry-run) |
 | `--disable-sync` | Disable ArgoCD auto-sync after import |
 | `--delete-app` | Delete the ArgoCD Application after import |
-| `--space` | ConfigHub space override |
+| `--space` | ConfigHub space for the `config` view; `*` for every space (default: `CUB_SPACE`, then the cub context's default space if it has one). With no space from any source `tree config` refuses rather than let the cub context choose |
 
 ---
 
@@ -1857,6 +1868,7 @@ cub-scout history <resource> [flags]
 | `--since` | Lookback window (examples: `24h`, `7d`, `2w`) |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--include-synthetic` | Include synthetic/demo seeded ChangeSets |
+| `--space` | ConfigHub space to read ChangeSets from; `*` for every space (default: `CUB_SPACE`, then the cub context's default space if it has one). With no space from any source the command refuses rather than read an unscoped list |
 
 ### Examples
 
@@ -1899,6 +1911,7 @@ cub-scout audit list [flags]
 | `--since` | Lookback window (examples: `24h`, `7d`, `2w`) |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--include-synthetic` | Include synthetic/demo seeded ChangeSets |
+| `--space` | ConfigHub space to read ChangeSets from; `*` for every space (default: `CUB_SPACE`, then the cub context's default space if it has one). With no space from any source the command refuses rather than read an unscoped list |
 | `--json` | Output as JSON (shorthand for `--format json`) |
 
 ### Examples
@@ -2414,7 +2427,7 @@ cub-scout gitops status [flags]
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
 | `--with-confighub` | Include bounded ConfigHub release, unit-event, and live-status evidence |
-| `--confighub-space` | ConfigHub space for connected evidence (default: current cub space; use `*` explicitly for all spaces) |
+| `--confighub-space` | ConfigHub space for connected evidence (default: `CUB_SPACE`, then the cub context's default space if it has one; use `*` explicitly for all spaces) |
 | `--confighub-since` | Lookback window for release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 

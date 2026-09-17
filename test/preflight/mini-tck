@@ -140,16 +140,18 @@ if $CONNECTED_MODE; then
         fail "cub not authenticated (run: cub auth login)"
     fi
 
-    # Check for active space (parse from 'cub context get' output)
-    SPACE=$(cub context get 2>/dev/null | grep "Default Space" | awk '{print $NF}' || echo "")
+    # The space to check: CUB_SCOUT_TEST_SPACE, else the cub context's default.
+    # This used to grep the human-readable "Default Space" line, which breaks
+    # whenever that text changes.
+    SPACE="${CUB_SCOUT_TEST_SPACE:-$(cub context get -o json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")}"
     if [[ -n "$SPACE" && "$SPACE" != "null" ]]; then
         pass "Active space: $SPACE"
 
         # Check for workers in space
-        WORKER_COUNT=$(cub worker list --json 2>/dev/null | jq 'length' 2>/dev/null || echo "0")
+        WORKER_COUNT=$(cub worker list --space "$SPACE" -o json 2>/dev/null | jq 'length' 2>/dev/null || echo "0")
         if [[ "$WORKER_COUNT" -gt 0 ]]; then
             # Check worker status (JSON has nested BridgeWorker object)
-            WORKER_STATUS=$(cub worker list --json 2>/dev/null | jq -r '.[0].BridgeWorker.Condition // "unknown"' 2>/dev/null || echo "unknown")
+            WORKER_STATUS=$(cub worker list --space "$SPACE" -o json 2>/dev/null | jq -r '.[0].BridgeWorker.Condition // "unknown"' 2>/dev/null || echo "unknown")
             WORKER_SLUG=$(cub worker list --json 2>/dev/null | jq -r '.[0].BridgeWorker.Slug // "null"' 2>/dev/null || echo "null")
             if [[ "$WORKER_STATUS" == "Ready" || "$WORKER_STATUS" == "connected" || "$WORKER_STATUS" == "online" ]]; then
                 pass "Worker connected: $WORKER_SLUG ($WORKER_STATUS)"

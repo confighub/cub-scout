@@ -188,8 +188,9 @@ elif $CHECK_ALL; then
         [[ -n "$space" ]] && spaces_to_check+=("$space")
     done <<< "$all_spaces"
 else
-    # Default: check current space + test spaces
-    current_space=$(cub context get --json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")
+    # Default: check the chosen space + test spaces. CUB_SCOUT_TEST_SPACE names
+    # it explicitly; the cub context's default space is only a fallback.
+    current_space="${CUB_SCOUT_TEST_SPACE:-$(cub context get -o json 2>/dev/null | jq -r '.settings.defaultSpace // ""' || echo "")}"
     [[ -n "$current_space" && "$current_space" != "null" ]] && spaces_to_check+=("$current_space")
 
     for space in "${TEST_SPACES[@]}"; do
