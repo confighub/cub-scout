@@ -623,10 +623,13 @@ func deleteArgoAppCmd(namespace, name string) tea.Cmd {
 	}
 }
 
-// applyUnitCmd applies a unit to its target. This is called AFTER ArgoCD cleanup
-// to ensure ArgoCD's selfHeal doesn't revert the changes.
-// It first cleans stale ConfigHub inventory annotations from the target resources
-// to prevent ownership conflicts from previous imports.
+// applyUnitCmd clears the way for a unit to reach its target. It is called
+// AFTER ArgoCD cleanup so ArgoCD's selfHeal does not revert the changes, and it
+// removes stale ConfigHub inventory annotations from the target resources to
+// prevent ownership conflicts from previous imports.
+//
+// It no longer applies the unit: cub has no `unit apply` command. See
+// cub_unit_apply.go for what that call did and why nothing replaces it.
 func applyUnitCmd(space, unitSlug string, workloads []WorkloadInfo) tea.Cmd {
 	return func() tea.Msg {
 		// Clean stale ConfigHub inventory annotations from live resources
@@ -644,14 +647,12 @@ func applyUnitCmd(space, unitSlug string, workloads []WorkloadInfo) tea.Cmd {
 				"-n", w.Namespace, "cli-utils.sigs.k8s.io/inventory-id-", "--overwrite").Run() //nolint:errcheck // best-effort cleanup
 		}
 
-		cmd := exec.Command("cub", "unit", "apply", unitSlug, "--space", space)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Stderr = &out
-		if err := cmd.Run(); err != nil {
-			return unitAppliedMsg{unitSlug: unitSlug, err: fmt.Errorf("apply failed: %s", out.String())}
-		}
-		return unitAppliedMsg{unitSlug: unitSlug}
+		// The stale-annotation cleanup above is the part cub-scout can do. The
+		// apply itself was `cub unit apply`, which cub removed: it exits 0 and
+		// prints help, so this step reported success without applying anything.
+		// See cub_unit_apply.go. The step's UI already handles an error by
+		// warning and letting the user carry on.
+		return unitAppliedMsg{unitSlug: unitSlug, err: unitApplyUnavailable(space, unitSlug)}
 	}
 }
 

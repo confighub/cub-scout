@@ -57,6 +57,13 @@ spec:
 // payload on stdout, prints a notice on stderr the way cub does, and saves
 // whatever is written to stdin by `unit update`.
 func fakeCubUnitPipeline(t *testing.T, payload string) (logPath, stdinPath string) {
+	return fakeCubUnitPipelineFailing(t, payload, "")
+}
+
+// fakeCubUnitPipelineFailing is the same fake cub, with one subcommand made to
+// fail the way cub does: a message on stderr and a non-zero exit. `failOn` is
+// the first two words of the call, for example "unit update".
+func fakeCubUnitPipelineFailing(t *testing.T, payload, failOn string) (logPath, stdinPath string) {
 	t.Helper()
 	if runtime.GOOS == "windows" {
 		t.Skip("uses a shell script as the fake cub")
@@ -68,9 +75,14 @@ func fakeCubUnitPipeline(t *testing.T, payload string) (logPath, stdinPath strin
 	if err := os.WriteFile(dataPath, []byte(payload), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	fail := ""
+	if failOn != "" {
+		fail = "if [ \"$1 $2\" = '" + failOn + "' ]; then echo 'Failed: nope' >&2; exit 1; fi\n"
+	}
 	script := "#!/bin/sh\n" +
 		"echo \"$*\" >> \"" + logPath + "\"\n" +
 		"echo 'Flag --json has been deprecated, use -o json' >&2\n" +
+		fail +
 		"case \"$1 $2\" in\n" +
 		"  \"unit data\") cat \"" + dataPath + "\" ;;\n" +
 		"  \"unit update\") cat > \"" + stdinPath + "\" ;;\n" +
@@ -149,8 +161,9 @@ func TestAnnotationUpdateRefusesDataThatIsNotAWorkload(t *testing.T) {
 	}
 }
 
-// The whole pipeline, as argv: read the unit's data, write the annotated data
-// back, apply it and wait.
+// What the flow does, as argv: read the unit's data, write the annotated data
+// back. There is no third call: `cub unit apply` was removed, and reporting a
+// success cub-scout did not achieve is the defect this fixes.
 func TestAnnotationUpdateRunsTheConfigHubPipeline(t *testing.T) {
 	logPath, stdinPath := fakeCubUnitPipeline(t, testDeploymentYAML)
 
@@ -158,22 +171,32 @@ func TestAnnotationUpdateRunsTheConfigHubPipeline(t *testing.T) {
 	if err != nil {
 		t.Fatalf("testAnnotationUpdate: %v", err)
 	}
-	if !result.Success || result.ResourceName != "api" {
-		t.Fatalf("result = %+v, want success on resource api", result)
+	if result.ResourceName != "api" {
+		t.Fatalf("result = %+v, want the annotated resource named", result)
 	}
 
 	calls := fakeCubCalls(t, logPath)
-	if len(calls) != 3 {
-		t.Fatalf("cub calls = %v, want three", calls)
+	if len(calls) != 2 {
+		t.Fatalf("cub calls = %v, want two: the data read and the write-back", calls)
 	}
 	wants := []string{
 		"unit data api --space prod",
 		"unit update api - --space prod --change-desc",
-		"unit apply api --space prod --wait",
 	}
 	for i, want := range wants {
 		if !strings.HasPrefix(calls[i], want) {
 			t.Fatalf("call %d = %q, want it to start with %q", i, calls[i], want)
+		}
+	}
+
+	// The unit carries the annotation; whether the target does is a cluster
+	// question this flow does not answer, so it must not claim it did.
+	if result.Success {
+		t.Fatalf("result.Success = true, but nothing verified the target: %+v", result)
+	}
+	for _, want := range []string{"confighub.com/test-update", "did not apply", "cub-scout compare"} {
+		if !strings.Contains(result.Message, want) {
+			t.Fatalf("message = %q, want it to contain %q", result.Message, want)
 		}
 	}
 
@@ -189,28 +212,49 @@ func TestAnnotationUpdateRunsTheConfigHubPipeline(t *testing.T) {
 	}
 }
 
+// A write-back that fails is an error, with cub's own reason, not a success
+// with a message about the target.
+func TestAnnotationUpdateReportsAFailedWriteBack(t *testing.T) {
+	logPath, stdinPath := fakeCubUnitPipelineFailing(t, testDeploymentYAML, "unit update")
+
+	result, err := testAnnotationUpdate("prod", "api")
+	if err == nil {
+		t.Fatalf("err = nil, want the write-back failure; result = %+v", result)
+	}
+	for _, want := range []string{"api", "prod", "Failed: nope"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("err = %q, want it to contain %q", err, want)
+		}
+	}
+	if result != nil && result.Success {
+		t.Fatal("result.Success = true although the write-back failed")
+	}
+	if calls := fakeCubCalls(t, logPath); len(calls) != 2 {
+		t.Fatalf("cub calls = %v, want the flow to stop after the failed write-back", calls)
+	}
+	_ = stdinPath
+}
+
 // The rollout flow waited up to two minutes for live data to appear. There is
 // no live data to wait for, and a unit's config data is there as soon as the
 // unit is.
 func TestRolloutRestartDoesNotWaitForLiveData(t *testing.T) {
 	logPath, stdinPath := fakeCubUnitPipeline(t, testDeploymentYAML)
 
-	start := time.Now()
 	result, err := testRolloutRestart("prod", "api")
-	elapsed := time.Since(start)
 	if err != nil {
 		t.Fatalf("testRolloutRestart: %v", err)
 	}
-	if !result.Success {
-		t.Fatalf("result = %+v, want success", result)
+	if result.ResourceName != "api" {
+		t.Fatalf("result = %+v, want the restarted resource named", result)
 	}
-	if elapsed > 5*time.Second {
-		t.Fatalf("took %v, want no wait for live data", elapsed)
+	if result.Success {
+		t.Fatalf("result.Success = true, but nothing verified the target: %+v", result)
 	}
 
 	calls := fakeCubCalls(t, logPath)
-	if len(calls) != 3 || calls[0] != "unit data api --space prod" {
-		t.Fatalf("cub calls = %v, want unit data then update then apply", calls)
+	if len(calls) != 2 || calls[0] != "unit data api --space prod" {
+		t.Fatalf("cub calls = %v, want the data read and the write-back", calls)
 	}
 	written, err := os.ReadFile(stdinPath)
 	if err != nil {
@@ -218,5 +262,28 @@ func TestRolloutRestartDoesNotWaitForLiveData(t *testing.T) {
 	}
 	if !strings.Contains(string(written), "kubectl.kubernetes.io/restartedAt") {
 		t.Fatalf("written data = %q, want the restart annotation", written)
+	}
+}
+
+// The wait is gone, not merely fast: a failing read is returned as an error on
+// the first attempt. A retry loop would swallow it and try again, which is what
+// the old code did for two minutes.
+func TestRolloutRestartDoesNotRetryAFailedRead(t *testing.T) {
+	logPath, _ := fakeCubUnitPipelineFailing(t, testDeploymentYAML, "unit data")
+
+	start := time.Now()
+	_, err := testRolloutRestart("prod", "api")
+	elapsed := time.Since(start)
+	if err == nil {
+		t.Fatal("err = nil, want the failed read reported")
+	}
+	if !strings.Contains(err.Error(), "Failed: nope") {
+		t.Fatalf("err = %q, want cub's own reason", err)
+	}
+	if calls := fakeCubCalls(t, logPath); len(calls) != 1 {
+		t.Fatalf("cub calls = %v, want exactly one attempt", calls)
+	}
+	if elapsed > 5*time.Second {
+		t.Fatalf("took %v, want no retry", elapsed)
 	}
 }

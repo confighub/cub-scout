@@ -176,14 +176,36 @@ flow (`testAnnotationUpdate`, `testRolloutRestart`) read a unit's data with
 `cub unit livedata` and pointed stdout and stderr at one buffer, so the 38-line
 `cub unit` help became the unit's config data. Both now read `cub unit data`,
 which is what `compare` and the import wizard already use, through
-`commandStdout`. The rollout flow's two-minute wait for live data to appear is
-gone: a unit's config data is there as soon as the unit is, and `unit apply
---wait` is what answers whether the worker applied it. Nothing was ever written
-back — the YAML editors refuse a payload with no `kind: Deployment` — but the
-error blamed the data rather than the removed command.
-`TestNoCubCallUsesARemovedSubcommand` now fails the build on `livedata` or
-`livestate` in an argument vector, while still allowing prose that explains the
-removal.
+`commandStdout`. Nothing was ever written back — the YAML editors refuse a
+payload with no `kind: Deployment` — but the error blamed the data rather than
+the removed command.
+
+**`cub unit apply` is removed too**, which the review of that fix found: cub
+deleted `unit apply`, `unit destroy`, `unit import`, `unit refresh` and the
+whole `gitops` group in July 2026, and there is no replacement verb. The
+failure was worse than livedata's, because it was silent in one place and
+misdirected in two:
+
+| Site | What it did |
+|---|---|
+| `hierarchy.go` TUI import step | exits 0 printing help, so it reported the unit applied when nothing was |
+| `import_wizard.go` apply phase | `--wait` makes it exit 1 on "unknown flag"; the message blamed the worker |
+| `import_argocd.go` × 2 | same, after the data had already been written back |
+
+cub-scout does not guess a replacement. It keeps the parts it can do (the
+stale-annotation cleanup, the data read, the write-back), says plainly that it
+did not apply the unit and why, and names `cub-scout compare` as the way to see
+whether the target has the change. The two test-update flows no longer report
+`Success: true` for a pipeline they did not verify. ConfigHub's unit JSON on
+this cub carries no applied or live revision — checked across every unit with a
+target — so there was no delivery fact to report instead. Whether cub-scout
+should verify these flows by watching the cluster is #574.
+
+`TestNoCubCallUsesARemovedSubcommand` fails the build on any of these as an
+argument-vector pair (`unit livedata`, `unit livestate`, `unit apply`,
+`unit destroy`, `unit refresh`) or as a command printed for a reader to run,
+while still allowing prose that explains a removal. It scans test files too: the
+first version of it missed a test that pinned `unit apply` as required argv.
 
 ## cub Output: -o json, and Stderr Kept Out of Data (#563, partial)
 
