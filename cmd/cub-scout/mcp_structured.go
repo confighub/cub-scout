@@ -195,7 +195,7 @@ func buildMCPLiveStatusStructuredContent(payload interface{}) interface{} {
 
 // mcpUnitRef is the normalized identity of a ConfigHub unit extracted from
 // tool JSON, regardless of whether the keys are PascalCase (as emitted by
-// `cub unit list --json`) or camelCase (as used internally).
+// `cub unit list -o json`) or camelCase (as used internally).
 type mcpUnitRef struct {
 	UnitSlug  string
 	UnitID    string
@@ -439,11 +439,11 @@ func cubGetCommandHint(entity, space, slug, id string) string {
 	case target == "":
 		return ""
 	case space != "":
-		return fmt.Sprintf("cub %s get %s --json --space %s", entity, target, space)
+		return fmt.Sprintf("cub %s get %s -o json --space %s", entity, target, space)
 	case id != "":
-		return fmt.Sprintf("cub %s get %s --json", entity, id)
+		return fmt.Sprintf("cub %s get %s -o json", entity, id)
 	default:
-		return fmt.Sprintf("cub %s get %s --json --space <space>", entity, slug)
+		return fmt.Sprintf("cub %s get %s -o json --space <space>", entity, slug)
 	}
 }
 

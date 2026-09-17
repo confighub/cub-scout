@@ -163,7 +163,7 @@ var viewCubRunner cubRunner = func(ctx context.Context, args ...string) ([]byte,
 // `--space "*"` default makes a UUID alone sufficient (org-wide
 // search); narrower callers can pass --space <slug>.
 func fetchView(ctx context.Context, uuid, space string) (map[string]interface{}, error) {
-	out, err := viewCubRunner(ctx, "view", "get", uuid, "--space", space, "--json")
+	out, err := viewCubRunner(ctx, "view", "get", uuid, "--space", space, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("cub view get failed: %w", err)
 	}

@@ -1645,7 +1645,7 @@ func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *Imp
 }
 
 func loadCubTargets(space string) ([]cubTargetRef, error) {
-	out, err := exec.Command("cub", "target", "list", "--space", space, "--json").Output()
+	out, err := exec.Command("cub", "target", "list", "--space", space, "-o", "json").Output()
 	if err != nil {
 		return nil, err
 	}
@@ -2125,7 +2125,7 @@ func printSpaceSummary(space string) error {
 }
 
 func getSpaceURL(spaceSlug string) string {
-	ctxCmd := exec.Command("cub", "context", "get", "--json")
+	ctxCmd := exec.Command("cub", "context", "get", "-o", "json")
 	ctxOutput, err := ctxCmd.Output()
 	if err != nil {
 		return ""
@@ -2140,7 +2140,7 @@ func getSpaceURL(spaceSlug string) string {
 		return ""
 	}
 
-	spaceCmd := exec.Command("cub", "space", "list", "--json")
+	spaceCmd := exec.Command("cub", "space", "list", "-o", "json")
 	spaceOutput, err := spaceCmd.Output()
 	if err != nil {
 		return fmt.Sprintf("%s/spaces/%s", serverURL, spaceSlug)
@@ -2294,7 +2294,7 @@ func fetchUnitSlugsForSpace(space string) (map[string]bool, error) {
 		return map[string]bool{}, nil
 	}
 
-	cmd := exec.Command("cub", "unit", "list", "--space", space, "--json", "--quiet")
+	cmd := exec.Command("cub", "unit", "list", "--space", space, "-o", "json", "--quiet")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err

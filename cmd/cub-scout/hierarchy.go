@@ -232,7 +232,7 @@ func loadSuggestDataCmd() tea.Cmd {
 
 func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) {
 	// Get context
-	ctxJSON, err := runCubCommand("context", "get", "--json")
+	ctxJSON, err := runCubCommand("context", "get", "-o", "json")
 	if err != nil {
 		return nil, "", "", "", nil, fmt.Errorf("failed to get context: %w", err)
 	}
@@ -246,7 +246,7 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 	currentSpace := hub.PluginSpace()
 
 	// Get organizations
-	orgsJSON, err := runCubCommand("organization", "list", "--json")
+	orgsJSON, err := runCubCommand("organization", "list", "-o", "json")
 	if err != nil {
 		return nil, "", "", "", nil, fmt.Errorf("failed to list organizations: %w", err)
 	}
@@ -261,7 +261,7 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 	}
 
 	// Get all spaces
-	spacesJSON, err := runCubCommand("space", "list", "--json")
+	spacesJSON, err := runCubCommand("space", "list", "-o", "json")
 	if err != nil {
 		return nil, "", "", "", nil, fmt.Errorf("failed to list spaces: %w", err)
 	}
@@ -389,7 +389,7 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 }
 
 func loadUnitsForSpace(spaceSlug string) ([]CubUnitData, error) {
-	unitsJSON, err := runCubCommand("unit", "list", "--space", spaceSlug, "--json")
+	unitsJSON, err := runCubCommand("unit", "list", "--space", spaceSlug, "-o", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -401,7 +401,7 @@ func loadUnitsForSpace(spaceSlug string) ([]CubUnitData, error) {
 }
 
 func loadTargetsForSpace(spaceSlug string) ([]CubTargetData, error) {
-	targetsJSON, err := runCubCommand("target", "list", "--space", spaceSlug, "--json")
+	targetsJSON, err := runCubCommand("target", "list", "--space", spaceSlug, "-o", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -413,7 +413,7 @@ func loadTargetsForSpace(spaceSlug string) ([]CubTargetData, error) {
 }
 
 func loadWorkersForSpace(spaceSlug string) ([]CubWorkerData, error) {
-	workersJSON, err := runCubCommand("worker", "list", "--space", spaceSlug, "--json")
+	workersJSON, err := runCubCommand("worker", "list", "--space", spaceSlug, "-o", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -887,7 +887,7 @@ func extractConfigCmd(workloads []WorkloadInfo) tea.Cmd {
 // loadExistingSpacesCmd fetches the list of existing spaces for the setup wizard
 func loadExistingSpacesCmd() tea.Cmd {
 	return func() tea.Msg {
-		spacesJSON, err := runCubCommand("space", "list", "--json")
+		spacesJSON, err := runCubCommand("space", "list", "-o", "json")
 		if err != nil {
 			return spacesLoadedMsg{err: err}
 		}
@@ -917,7 +917,7 @@ func createSpaceCmd(spaceName string) tea.Cmd {
 // loadWorkersForSpaceCmd fetches existing workers in a space
 func loadWorkersForSpaceCmd(space string) tea.Cmd {
 	return func() tea.Msg {
-		workersJSON, err := runCubCommand("worker", "list", "--space", space, "--json")
+		workersJSON, err := runCubCommand("worker", "list", "--space", space, "-o", "json")
 		if err != nil {
 			return workersLoadedMsg{err: err}
 		}
@@ -964,7 +964,7 @@ func waitForTargetCmd(space, workerName, kubeContext string) tea.Cmd {
 		// Poll for up to 60 seconds (30 attempts, 2 seconds apart)
 		for i := 0; i < 30; i++ {
 			// Check if target exists
-			targetsJSON, err := runCubCommand("target", "list", "--space", space, "--json")
+			targetsJSON, err := runCubCommand("target", "list", "--space", space, "-o", "json")
 			if err == nil {
 				var targets []struct {
 					Target struct {
@@ -1028,7 +1028,7 @@ func waitForWorkerReadyCmd(space, workerName string) tea.Cmd {
 	return func() tea.Msg {
 		// Poll for up to 30 seconds (15 attempts, 2 seconds apart)
 		for i := 0; i < 15; i++ {
-			workersJSON, err := runCubCommand("worker", "list", "--space", space, "--json")
+			workersJSON, err := runCubCommand("worker", "list", "--space", space, "-o", "json")
 			if err == nil {
 				var rawWorkers []struct {
 					BridgeWorker struct {
@@ -1095,7 +1095,7 @@ func getCurrentKubeContext() string {
 // loadCreateUnitsCmd loads units in a space for cloning (includes toolchain type)
 func loadCreateUnitsCmd(space string) tea.Cmd {
 	return func() tea.Msg {
-		unitsJSON, err := runCubCommand("unit", "list", "--space", space, "--json")
+		unitsJSON, err := runCubCommand("unit", "list", "--space", space, "-o", "json")
 		if err != nil {
 			return createUnitsLoadedMsg{err: err}
 		}
@@ -1128,7 +1128,7 @@ func loadCreateUnitsCmd(space string) tea.Cmd {
 // loadCreateTargetsCmd loads targets in a space filtered by toolchain type
 func loadCreateTargetsCmd(space, toolchain string) tea.Cmd {
 	return func() tea.Msg {
-		targetsJSON, err := runCubCommand("target", "list", "--space", space, "--json")
+		targetsJSON, err := runCubCommand("target", "list", "--space", space, "-o", "json")
 		if err != nil {
 			return createTargetsLoadedMsg{err: err}
 		}
@@ -1161,7 +1161,7 @@ func loadCreateTargetsCmd(space, toolchain string) tea.Cmd {
 // loadCreateWorkersCmd loads workers in a space for target creation
 func loadCreateWorkersCmd(space string) tea.Cmd {
 	return func() tea.Msg {
-		workersJSON, err := runCubCommand("worker", "list", "--space", space, "--json")
+		workersJSON, err := runCubCommand("worker", "list", "--space", space, "-o", "json")
 		if err != nil {
 			return createWorkersLoadedMsg{err: err}
 		}
@@ -1558,7 +1558,7 @@ func (m *Model) clearMatchCache() {
 func openSpaceInBrowserCmd(spaceID string) tea.Cmd {
 	return func() tea.Msg {
 		// Get current context to find server URL
-		listCmd := exec.Command("cub", "context", "list", "--json")
+		listCmd := exec.Command("cub", "context", "list", "-o", "json")
 		listOutput, err := listCmd.Output()
 		if err != nil {
 			return statusUpdateMsg{msg: "Failed to get context info"}
@@ -1604,7 +1604,7 @@ type statusUpdateMsg struct {
 func switchOrgCmd(orgID string) tea.Cmd {
 	return func() tea.Msg {
 		// First, list all contexts to find one with the target org
-		listCmd := exec.Command("cub", "context", "list", "--json")
+		listCmd := exec.Command("cub", "context", "list", "-o", "json")
 		listOutput, err := listCmd.Output()
 		if err != nil {
 			return authCompleteMsg{success: false, orgID: orgID}
@@ -3273,7 +3273,7 @@ func (m *Model) getSpaceIDFromNode(node *TreeNode) string {
 // getSpaceURL returns the URL to open the current import space in browser
 func (m *Model) getSpaceURL() string {
 	// Get server URL from current context
-	ctxCmd := exec.Command("cub", "context", "get", "--json")
+	ctxCmd := exec.Command("cub", "context", "get", "-o", "json")
 	ctxOutput, err := ctxCmd.Output()
 	if err != nil {
 		return ""
@@ -3294,7 +3294,7 @@ func (m *Model) getSpaceURL() string {
 	}
 
 	// Get space ID from space slug
-	spaceCmd := exec.Command("cub", "space", "list", "--json")
+	spaceCmd := exec.Command("cub", "space", "list", "-o", "json")
 	spaceOutput, err := spaceCmd.Output()
 	if err != nil {
 		return fmt.Sprintf("%s/spaces/%s", serverURL, m.importSpace)
@@ -5968,7 +5968,7 @@ func loadEntityDetailsCmd(node *TreeNode) tea.Cmd {
 				unitSlug := unitData.Unit.Slug
 
 				// Fetch full unit details
-				output, err := runCubCommand("unit", "get", "--space", spaceSlug, "--json", unitSlug)
+				output, err := runCubCommand("unit", "get", "--space", spaceSlug, "-o", "json", unitSlug)
 				if err == nil {
 					// Parse and format the detailed output
 					content := formatUnitDetails(output, unitData)

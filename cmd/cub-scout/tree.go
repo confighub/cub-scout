@@ -1153,6 +1153,12 @@ func runTreePatterns(ctx context.Context) error {
 }
 
 func runTreeConfig() error {
+	// `cub unit tree` prints a text tree whatever output flag it is given, and
+	// this view prints a header around it, so there is no JSON to return.
+	if treeJSON || strings.EqualFold(strings.TrimSpace(treeFormat), "json") {
+		return fmt.Errorf("tree config has no JSON output: it shows `cub unit tree`, which prints text only")
+	}
+
 	// Check if cub CLI is available
 	_, err := exec.LookPath("cub")
 	if err != nil {
@@ -1169,14 +1175,8 @@ func runTreeConfig() error {
 		args = append(args, "--edge", treeEdge)
 	}
 
-	if treeJSON {
-		args = append(args, "--json")
-	}
-
 	fmt.Printf("%sConfigHub Unit Tree%s (via 'cub unit tree')\n", colorBold, colorReset)
-	if !treeJSON {
-		fmt.Printf("Space: %s (%s)\n", space.Slug, space.Source)
-	}
+	fmt.Printf("Space: %s (%s)\n", space.Slug, space.Source)
 	fmt.Println(strings.Repeat("─", 60))
 
 	if treeEdge == "clone" {

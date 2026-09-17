@@ -202,7 +202,7 @@ func printStatus(s StatusInfo) {
 // getStatusCubContext gets the current cub context and email
 // Returns context, email, and error
 func getStatusCubContext() (*statusCubContext, string, error) {
-	out, err := exec.Command("cub", "context", "get", "--json").Output()
+	out, err := exec.Command("cub", "context", "get", "-o", "json").Output()
 	if err != nil {
 		return nil, "", err
 	}
@@ -262,7 +262,7 @@ func getWorkerForCluster(space, clusterName string) *WorkerInfo {
 		return nil
 	}
 
-	out, err := exec.Command("cub", "worker", "list", "--space", space, "--json").Output()
+	out, err := exec.Command("cub", "worker", "list", "--space", space, "-o", "json").Output()
 	if err != nil {
 		return nil
 	}

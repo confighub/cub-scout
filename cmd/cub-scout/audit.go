@@ -182,7 +182,7 @@ func fetchAuditEntries(ctx context.Context, q auditListQuery) ([]auditEntry, err
 	if err != nil {
 		return nil, err
 	}
-	args := withConfigHubSpace([]string{"changeset", "list", "--json", "--contains", "break-glass"}, space.Slug)
+	args := withConfigHubSpace([]string{"changeset", "list", "-o", "json", "--contains", "break-glass"}, space.Slug)
 
 	raw, err := runAuditCubCommand(ctx, args)
 	if err != nil {

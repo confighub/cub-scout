@@ -112,10 +112,11 @@ func deleteTestSpace(t *testing.T, slug string) {
 func spaceExistsInList(t *testing.T, slug string) bool {
 	t.Helper()
 
-	cmd := exec.Command("cub", "space", "list", "--json")
-	output, err := cmd.CombinedOutput()
+	// Stdout alone: cub prints notices on stderr, which would break the JSON.
+	cmd := exec.Command("cub", "space", "list", "-o", "json")
+	output, err := cmd.Output()
 	if err != nil {
-		t.Logf("Warning: space list failed: %s (%v)", string(output), err)
+		t.Logf("Warning: space list failed: %v", err)
 		return false
 	}
 
@@ -428,10 +429,10 @@ func TestImportFullRoundTrip(t *testing.T) {
 	t.Logf("Verified: space %s exists", spaceName)
 
 	// Step 4: Verify units exist
-	cmd := exec.Command("cub", "unit", "list", "--space", spaceName, "--json")
-	unitOutput, err := cmd.CombinedOutput()
+	cmd := exec.Command("cub", "unit", "list", "--space", spaceName, "-o", "json")
+	unitOutput, err := cmd.Output()
 	if err != nil {
-		t.Fatalf("Failed to list units in space %s: %s (%v)", spaceName, string(unitOutput), err)
+		t.Fatalf("Failed to list units in space %s: %v", spaceName, err)
 	}
 
 	var units []map[string]interface{}
@@ -492,10 +493,10 @@ func TestImportIdempotent(t *testing.T) {
 	t.Logf("First import output:\n%s", output1)
 
 	// Count units after first import
-	cmd := exec.Command("cub", "unit", "list", "--space", spaceName, "--json")
-	unitOutput1, err := cmd.CombinedOutput()
+	cmd := exec.Command("cub", "unit", "list", "--space", spaceName, "-o", "json")
+	unitOutput1, err := cmd.Output()
 	if err != nil {
-		t.Fatalf("Failed to list units after first import: %s (%v)", string(unitOutput1), err)
+		t.Fatalf("Failed to list units after first import: %v", err)
 	}
 	var units1 []map[string]interface{}
 	if err := json.Unmarshal(unitOutput1, &units1); err != nil {
@@ -513,10 +514,10 @@ func TestImportIdempotent(t *testing.T) {
 	}
 
 	// Count units after second import — should be the same
-	cmd = exec.Command("cub", "unit", "list", "--space", spaceName, "--json")
-	unitOutput2, err := cmd.CombinedOutput()
+	cmd = exec.Command("cub", "unit", "list", "--space", spaceName, "-o", "json")
+	unitOutput2, err := cmd.Output()
 	if err != nil {
-		t.Fatalf("Failed to list units after second import: %s (%v)", string(unitOutput2), err)
+		t.Fatalf("Failed to list units after second import: %v", err)
 	}
 	var units2 []map[string]interface{}
 	if err := json.Unmarshal(unitOutput2, &units2); err != nil {

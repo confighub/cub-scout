@@ -440,7 +440,7 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedChangesets(t *testing.T) {
 	if len(gotStandaloneArgs) != 0 {
 		t.Fatalf("standalone runner should not be used, got args %v", gotStandaloneArgs)
 	}
-	wantConnected := []string{"changeset", "list", "--json", "--space", "platform", "--where", "Slug LIKE 'release-%'"}
+	wantConnected := []string{"changeset", "list", "-o", "json", "--space", "platform", "--where", "Slug LIKE 'release-%'"}
 	if !reflect.DeepEqual(gotConnectedArgs, wantConnected) {
 		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantConnected)
 	}
@@ -1487,7 +1487,7 @@ func TestMCPGatewayHandleRequest_ToolsCallConnectedUnitsIncludesTrustSurface(t *
 	if got := result.StructuredContent.NextSteps[0].NextSurface; got != "https://confighub.com/units/sp-123/u-123?tab=2" {
 		t.Fatalf("first next surface = %q, want revisions url", got)
 	}
-	if got := result.StructuredContent.NextSteps[1].NextCommand; got != "cub unit get payments-api --json --space prod" {
+	if got := result.StructuredContent.NextSteps[1].NextCommand; got != "cub unit get payments-api -o json --space prod" {
 		t.Fatalf("second next command = %q, want exact unit get command", got)
 	}
 }

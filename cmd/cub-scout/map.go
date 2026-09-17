@@ -1539,7 +1539,7 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 		return loadFleetUnitsFromJSON(fixture, space, appFilter)
 	}
 
-	args := withConfigHubSpace([]string{"unit", "list", "--json"}, space)
+	args := withConfigHubSpace([]string{"unit", "list", "-o", "json"}, space)
 
 	cmd := exec.Command("cub", args...)
 	output, err := cmd.Output()
@@ -1617,7 +1617,7 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 
 // fetchUnitLabels gets labels for a specific unit
 func fetchUnitLabels(space, slug string) (map[string]string, error) {
-	cmd := exec.Command("cub", withConfigHubSpace([]string{"unit", "get", slug, "--json"}, space)...)
+	cmd := exec.Command("cub", withConfigHubSpace([]string{"unit", "get", slug, "-o", "json"}, space)...)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -5601,7 +5601,7 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 	}
 	space := resolved.Slug
 
-	listOut, err := runHistoryCubCommandImpl(context.Background(), withConfigHubSpace([]string{"unit", "list", "--json", "--quiet"}, space))
+	listOut, err := runHistoryCubCommandImpl(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json", "--quiet"}, space))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list units in ConfigHub space %s: %w", space, err)
 	}
@@ -5628,7 +5628,7 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 	}
 
 	// Fetch links for dependency info
-	linksCmd := exec.Command("cub", withConfigHubSpace([]string{"link", "list", "--json", "--quiet"}, space)...)
+	linksCmd := exec.Command("cub", withConfigHubSpace([]string{"link", "list", "-o", "json", "--quiet"}, space)...)
 	linksOut, err := linksCmd.Output()
 	if err == nil {
 		var linkList []struct {
@@ -5661,7 +5661,7 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 	}
 
 	// Fetch all spaces for cross-space correlation
-	spacesCmd := exec.Command("cub", "space", "list", "--json", "--quiet")
+	spacesCmd := exec.Command("cub", "space", "list", "-o", "json", "--quiet")
 	spacesOut, err := spacesCmd.Output()
 	if err == nil {
 		var spaceList []struct {
@@ -5699,7 +5699,7 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 		}
 
 		// Query units in this related space
-		otherUnitsCmd := exec.Command("cub", "unit", "list", "--json", "--quiet", "--space", otherSpace)
+		otherUnitsCmd := exec.Command("cub", "unit", "list", "-o", "json", "--quiet", "--space", otherSpace)
 		otherUnitsOut, err := otherUnitsCmd.Output()
 		if err != nil {
 			continue
