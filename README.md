@@ -3,6 +3,7 @@
 **A read-only Kubernetes and GitOps explorer for people, scripts, and AI agents.**
 
 [v2.11.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.11.0)
+| [v2.12.0 (prepared)](docs/releases/v2.12.0.md)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
@@ -140,6 +141,13 @@ running-image identity) and cheaper long-running observation (within-cycle read
 coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
+
+**v2.12.0 is prepared but not yet published.** It works with `cub` v0.5.2, which
+removed the default space: every `cub` call cub-scout makes now names its space,
+and commands that read one space refuse rather than read the whole organization.
+ConfigHub release, unit-event, fleet, impact and compare output says only what
+ConfigHub reports. See the [release notes](docs/releases/v2.12.0.md). The install
+commands below stay on v2.11.0 until v2.12.0 is tagged.
 
 ### Who reaches for cub-scout?
 

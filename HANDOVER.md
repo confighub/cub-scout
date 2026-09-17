@@ -523,7 +523,9 @@ Deeper joins and broader explorer parity remain follow-up work, not release clai
 
 ## Current repo state
 
-- Latest follow-up: `#527` (post-release documentation and competitive review)
+- Latest follow-up: open after v2.12.0 — `#558` (converge the connected gates),
+  `#561` (ConfigHub OCI `/space/<slug>` sources and a digest join), `#562`
+  (fleet comparison needs unit lineage), `#563` (one cub runner)
 - Canonical roadmap: `docs/roadmap.md`
 - Delivery rules: `docs/workflows/agent-milestone-plan.md`
 - First repo-specific AI entrypoint: `AI-README-FIRST.md`
