@@ -98,14 +98,16 @@ Status and verdict ARE separate — a verdict can be `MISMATCH` while status is 
 ### Step 1 — confirm mode
 
 ```bash
-$ cub-scout status
-ConfigHub:  ● Connected
-Cluster:    default
-Context:    prod-use2
-Worker:     (none for this cluster)
+$ cub-scout status --json
+{
+  "mode": "connected",
+  "cluster_name": "default",
+  "context": "prod-use2",
+  "confighub_reads": true
+}
 ```
 
-If the `ConfigHub:` line is anything other than plain `● Connected` (it can also read `● Connected (auth expired)`, `○ Online (not authenticated)` or `○ Offline`), refuse to claim a source-truth verdict — say so to the user and recommend `cub auth login`.
+`confighub_reads` is the answer: it is the verdict of the same gate `compare source-truth` itself uses. If it is `false`, refuse to claim a source-truth verdict and give the user `confighub_reads_reason` verbatim — it names the cause (an expired session, `cub` not installed, or ConfigHub reads turned off), and only one of those is fixed by `cub auth login`. Do not read the `ConfigHub:` mode line as the pre-flight: it describes `hub.confighub.com` and can say `● Connected` while every connected command refuses, or `○ Offline` against a self-hosted ConfigHub whose reads work. (Against v2.12.0 or earlier, which has no `confighub_reads` field, the mode line is all there is.)
 
 ### Step 2 — pick the strategy
 

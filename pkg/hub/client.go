@@ -44,6 +44,14 @@ func (c *Client) RequireOnline() error {
 
 // RequireConnected checks if we're connected to ConfigHub.
 // Returns a user-friendly message if not.
+//
+// This is NOT the gate the connected commands use. It reflects a probe of
+// hub.confighub.com plus local credentials, and says nothing about whether
+// `cub` can read its own server — a self-hosted ConfigHub fails it while every
+// read works, and an expired token passes it. Commands gate on
+// RequireCubConnected, through cmd/cub-scout/connected_gate.go, and a test
+// guard fails the build if one of them calls this instead. It survives only for
+// RequirePaid's subscription check.
 func (c *Client) RequireConnected() error {
 	if c.mode == Offline {
 		return fmt.Errorf("this feature requires internet connectivity")

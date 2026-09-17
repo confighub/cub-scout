@@ -286,10 +286,6 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		queue     []watchEvent
 	)
 
-	// Connected mode is read once at watch start and stays fixed for the loop.
-	// Used by the receipt-emission path to decide whether to include a
-	// confighub-unit:// subject.
-	connected := configHubReadsAvailable()
 	baseWarnFn := func(format string, args ...interface{}) {
 		fmt.Fprintf(os.Stderr, "Warning: "+format+"\n", args...)
 	}
@@ -331,7 +327,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 			return err
 		}
 		events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
-		events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
+		events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, watchCycleConnected(emitReceiptOn), warnFn)
 		queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 		_, err = flushWatchQueue(ctx, sinks, queue)
 		return err
@@ -361,7 +357,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 				curr.observedMode = agent.ObservationModeWatchInformer
 			}
 			events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
-			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
+			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, watchCycleConnected(emitReceiptOn), warnFn)
 			queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 			remaining, err := flushWatchQueue(ctx, sinks, queue)
 			queue = remaining
@@ -372,6 +368,20 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 			}
 		}
 	}
+}
+
+// watchCycleConnected is the connected fact this cycle's receipts record.
+//
+// A watch runs for days, and a session can expire or be restored while it does,
+// so the gate is asked again each cycle rather than stamping every receipt with
+// the verdict read at start-up. It costs one `cub` process per cycle, and only
+// when receipts are being emitted: without --emit-receipt-on nothing records
+// the fact, so nothing asks.
+func watchCycleConnected(emitOn map[string]bool) bool {
+	if len(emitOn) == 0 {
+		return false
+	}
+	return refreshConfigHubReadsAvailable()
 }
 
 func collectWatchState(ctx context.Context, dynClient dynamic.Interface, namespace string) (watchState, error) {

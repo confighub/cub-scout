@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -16,7 +17,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/confighub/cub-scout/pkg/hub"
@@ -34,11 +34,25 @@ func stubConnectedGate(t *testing.T, err error) {
 	resetConfigHubReads()
 }
 
-// resetConfigHubReads re-arms the memoized gate answer, which is computed once
-// per process in production.
+// resetConfigHubReads discards the kept gate answer, which production keeps for
+// the life of a command.
 func resetConfigHubReads() {
-	configHubReadsOnce = sync.Once{}
+	configHubReadsMu.Lock()
+	defer configHubReadsMu.Unlock()
+	configHubReadsAnswered = false
 	configHubReadsErr = nil
+}
+
+// answerGateWith installs a gate answer that the test can change, plus a call
+// counter, for the difference between the kept answer and a refresh.
+func answerGateWith(t *testing.T, answer *error) *int {
+	t.Helper()
+	calls := 0
+	old := requireCubConnectedFn
+	t.Cleanup(func() { requireCubConnectedFn = old; resetConfigHubReads() })
+	requireCubConnectedFn = func() error { calls++; return *answer }
+	resetConfigHubReads()
+	return &calls
 }
 
 func TestRequireConfigHubFor_NamesTheCommandAndKeepsTheCause(t *testing.T) {
@@ -518,10 +532,312 @@ func TestConfigHubReadsIsAnsweredOnce(t *testing.T) {
 	}
 }
 
+// A kept answer is right for a command that ends, and wrong for one that does
+// not. `cub auth login` in another terminal must take effect in a running TUI
+// or watch, so those ask again through refreshConfigHubReads.
+func TestRefreshAsksTheGateAgainAndReplacesTheKeptAnswer(t *testing.T) {
+	session := error(hub.ErrCubNotAuthenticated)
+	calls := answerGateWith(t, &session)
+
+	if err := configHubReads(); !errors.Is(err, hub.ErrCubNotAuthenticated) {
+		t.Fatalf("err = %v, want the expired-session refusal", err)
+	}
+	if err := configHubReads(); !errors.Is(err, hub.ErrCubNotAuthenticated) {
+		t.Fatalf("err = %v, want the kept refusal", err)
+	}
+	if *calls != 1 {
+		t.Fatalf("gate ran %d times, want 1 while the answer is kept", *calls)
+	}
+
+	// The user logs in elsewhere.
+	session = nil
+
+	if err := configHubReads(); !errors.Is(err, hub.ErrCubNotAuthenticated) {
+		t.Fatalf("err = %v, want the kept answer until something refreshes it", err)
+	}
+	if err := refreshConfigHubReads(); err != nil {
+		t.Fatalf("refresh = %v, want nil once the session works", err)
+	}
+	if *calls != 2 {
+		t.Fatalf("gate ran %d times, want 2 after a refresh", *calls)
+	}
+	if err := configHubReads(); err != nil {
+		t.Fatalf("kept answer = %v, want the refreshed one", err)
+	}
+	if !configHubReadsAvailable() || !refreshConfigHubReadsAvailable() {
+		t.Fatal("boolean forms disagree with the refreshed answer")
+	}
+}
+
+// The TUI runs for as long as its user leaves it open. Before the refresh, a
+// history panel refused once stayed refused for the life of the process, while
+// telling the user to press h again once it was fixed.
+func TestHistoryPanelNoticesASessionFixedWhileTheTUIIsUp(t *testing.T) {
+	t.Setenv("CUB_SPACE", "demo")               // the TUI has no --space flag
+	t.Setenv("CUB_SCOUT_TEST_HISTORY_JSON", "") // take the ConfigHub path
+
+	prevRequire, prevFetch := requireHistoryConnectedFn, fetchHistoryEntriesFn
+	t.Cleanup(func() { requireHistoryConnectedFn, fetchHistoryEntriesFn = prevRequire, prevFetch })
+	requireHistoryConnectedFn = requireHistoryConnected
+	fetchHistoryEntriesFn = func(context.Context, historyQuery) ([]historyEntry, error) {
+		return []historyEntry{{Actor: "release-bot", Change: "replicas: 2 -> 3", ChangeSet: "CS-1"}}, nil
+	}
+
+	session := error(hub.ErrCubNotAuthenticated)
+	answerGateWith(t, &session)
+
+	model := testLocalModel()
+	first, ok := model.runHistoryPanel()().(localHistoryLoadedMsg)
+	if !ok {
+		t.Fatal("history panel returned an unexpected message type")
+	}
+	if !errors.Is(first.err, errConfigHubUnavailable) {
+		t.Fatalf("first press: err = %v, want the gate's refusal", first.err)
+	}
+
+	// The user does what the panel told them to do, in another terminal.
+	session = nil
+
+	second, ok := model.runHistoryPanel()().(localHistoryLoadedMsg)
+	if !ok {
+		t.Fatal("history panel returned an unexpected message type")
+	}
+	if second.err != nil {
+		t.Fatalf("second press: err = %v, want the panel to load once the session works", second.err)
+	}
+	if len(second.result.Entries) != 1 {
+		t.Fatalf("entries = %d, want the loaded history", len(second.result.Entries))
+	}
+}
+
+// The panel explains any refusal the gate can produce, including a cause added
+// after this test was written, and keeps "History load failed" for the rest.
+func TestHistoryPanelExplainsEveryGateRefusal(t *testing.T) {
+	stubConnectedGate(t, fmt.Errorf("%w: a cause nobody has listed yet", errors.New("cub session unusable")))
+
+	model := testLocalModel()
+	model.panelMode, model.panelView = true, viewHistory
+	model.historyPanelError = requireConfigHubFor("history")
+
+	panel := model.getPanelHistory()
+	for _, want := range []string{"history needs ConfigHub", "a cause nobody has listed yet", "Press h again once it is fixed."} {
+		if !strings.Contains(panel, want) {
+			t.Fatalf("panel = %q, want it to contain %q", panel, want)
+		}
+	}
+
+	model.historyPanelError = errors.New("read changesets: connection reset")
+	if panel := model.getPanelHistory(); !strings.Contains(panel, "History load failed") {
+		t.Fatalf("panel = %q, want a load failure for an error the gate did not produce", panel)
+	}
+}
+
+// status is read as a pre-flight, so its verdict must be the gate's own answer
+// rather than a second opinion. It reports the reason it was given.
+func TestStatusRecordsTheGateVerdict(t *testing.T) {
+	t.Setenv("CUB_SCOUT_OFFLINE", "true") // no network probe from hub.CurrentMode
+	t.Setenv("PATH", t.TempDir())         // no cub on PATH, so no context upgrade
+
+	for _, tt := range []struct {
+		name   string
+		err    error
+		reads  bool
+		reason string
+	}{
+		{name: "authenticated", reads: true},
+		{name: "expired", err: hub.ErrCubNotAuthenticated, reason: "did not report an authenticated session"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			stubConnectedGate(t, tt.err)
+
+			cmd := &cobra.Command{}
+			cmd.Flags().Bool("json", true, "")
+			out := captureStdout(t, func() {
+				if err := runStatus(cmd); err != nil {
+					t.Fatalf("runStatus: %v", err)
+				}
+			})
+
+			var got StatusInfo
+			if err := json.Unmarshal([]byte(out), &got); err != nil {
+				t.Fatalf("unmarshal status %q: %v", out, err)
+			}
+			if got.ConfigHubReads != tt.reads {
+				t.Fatalf("confighub_reads = %v, want %v", got.ConfigHubReads, tt.reads)
+			}
+			if tt.reason == "" {
+				if got.ConfigHubReadsReason != "" {
+					t.Fatalf("reason = %q, want none when reads work", got.ConfigHubReadsReason)
+				}
+				return
+			}
+			if !strings.Contains(got.ConfigHubReadsReason, tt.reason) {
+				t.Fatalf("reason = %q, want it to name %q", got.ConfigHubReadsReason, tt.reason)
+			}
+		})
+	}
+}
+
+// Whichever way the mode line and the gate disagree, the text says so: a mode
+// that promises reads the commands refuse, and a mode that denies reads they
+// make against a self-hosted server.
+func TestStatusCorrectsTheModeInBothDirections(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		status StatusInfo
+		want   string
+		absent string
+	}{
+		{
+			name:   "connected but the gate refuses",
+			status: StatusInfo{Mode: "connected", ConfigHubReadsReason: "cub auth status did not report an authenticated session"},
+			want:   "ConfigHub reads unavailable: cub auth status did not report an authenticated session",
+		},
+		{
+			name:   "offline but the gate passes",
+			status: StatusInfo{Mode: "offline", ConfigHubReads: true},
+			want:   "ConfigHub reads available",
+		},
+		{
+			name:   "connected and the gate agrees",
+			status: StatusInfo{Mode: "connected", ConfigHubReads: true},
+			absent: "ConfigHub reads",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out := captureStdout(t, func() { printStatus(tt.status) })
+			if tt.want != "" && !strings.Contains(out, tt.want) {
+				t.Fatalf("status text = %q, want it to contain %q", out, tt.want)
+			}
+			if tt.absent != "" && strings.Contains(out, tt.absent) {
+				t.Fatalf("status text = %q, want no correction when the two agree", out)
+			}
+		})
+	}
+}
+
+// A scan needs no ConfigHub session: it must not spend a `cub` process to find
+// that out, and only --verbose explains which pattern set it used.
+func TestScanAsksTheGateOnlyWhenItWouldExplain(t *testing.T) {
+	session := error(hub.ErrConfigHubReadsDisabled)
+	calls := answerGateWith(t, &session)
+
+	if note := scanConfigHubNote(false); note != "" {
+		t.Fatalf("note = %q, want none without --verbose", note)
+	}
+	if *calls != 0 {
+		t.Fatalf("gate ran %d times without --verbose, want 0", *calls)
+	}
+
+	note := scanConfigHubNote(true)
+	if !strings.Contains(note, "embedded patterns") || !strings.Contains(note, "turned off") {
+		t.Fatalf("note = %q, want it to name the cause and the pattern set used", note)
+	}
+
+	session = nil
+	resetConfigHubReads()
+	if note := scanConfigHubNote(true); note != "" {
+		t.Fatalf("note = %q, want none when ConfigHub reads work", note)
+	}
+}
+
+// A watch runs for days. The fact its receipts record is read per cycle, so a
+// session that expires mid-run stops being asserted, and one that is restored
+// starts being asserted, without restarting the watch.
+func TestWatchAsksTheGateEachCycle(t *testing.T) {
+	session := error(nil)
+	calls := answerGateWith(t, &session)
+
+	if watchCycleConnected(nil) {
+		t.Fatal("connected = true with no receipts requested")
+	}
+	if *calls != 0 {
+		t.Fatalf("gate ran %d times with no receipts requested, want 0", *calls)
+	}
+
+	emitOn := map[string]bool{"drift.detected": true}
+	if !watchCycleConnected(emitOn) {
+		t.Fatal("connected = false although the session works")
+	}
+
+	// The session expires while the watch is up.
+	session = hub.ErrCubNotAuthenticated
+	if watchCycleConnected(emitOn) {
+		t.Fatal("connected = true after the session expired; receipts would assert a session that is gone")
+	}
+	if *calls != 2 {
+		t.Fatalf("gate ran %d times over two cycles, want 2", *calls)
+	}
+}
+
+// A receipt asserting a ConfigHub session that never existed is a false
+// evidence claim, so the recorded fact must come from the gate. Neither site
+// can be driven from a test without a cluster, so the wiring is the assertion.
+func TestRecordedConnectedFactComesFromTheGate(t *testing.T) {
+	fromGate := map[string]bool{
+		"watchCycleConnected":            true,
+		"detectConnectedForReceipt":      true,
+		"configHubReadsAvailable":        true,
+		"refreshConfigHubReadsAvailable": true,
+	}
+	fset, files := parseRepoGoFiles(t, "cmd")
+	byBase := map[string]*ast.File{}
+	for path, file := range files {
+		byBase[filepath.Base(path)] = file
+	}
+
+	// watch.go: the connected argument of every receipt-attaching call.
+	watchCalls := 0
+	ast.Inspect(byBase["watch.go"], func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok || calledName(call) != "attachReceiptsIfRequested" || len(call.Args) < 5 {
+			return true
+		}
+		watchCalls++
+		inner, ok := call.Args[4].(*ast.CallExpr)
+		if !ok || !fromGate[calledName(inner)] {
+			t.Errorf("%s: receipts record a connected fact that does not come from the gate", fset.Position(call.Args[4].Pos()))
+		}
+		return true
+	})
+	if watchCalls == 0 {
+		t.Fatal("no attachReceiptsIfRequested call found in watch.go; this guard has stopped guarding anything")
+	}
+
+	// receipt.go: the value the receipt is built with.
+	assignments := 0
+	ast.Inspect(byBase["receipt.go"], func(n ast.Node) bool {
+		assign, ok := n.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			return true
+		}
+		if name, ok := assign.Lhs[0].(*ast.Ident); !ok || name.Name != "connected" {
+			return true
+		}
+		assignments++
+		call, ok := assign.Rhs[0].(*ast.CallExpr)
+		if !ok || !fromGate[calledName(call)] {
+			t.Errorf("%s: the receipt's connected fact does not come from the gate", fset.Position(assign.Rhs[0].Pos()))
+		}
+		return true
+	})
+	if assignments == 0 {
+		t.Fatal("receipt.go no longer assigns connected; this guard has stopped guarding anything")
+	}
+}
+
 // No command may use the older check: it probes hub.confighub.com, which says
 // nothing about whether `cub` can reach its own server, and then accepts a
 // token cub itself has expired.
+//
+// Nor may one call the gate's own implementation directly. That is how `status`
+// came to report a verdict no test could reach: hub.RequireCubConnected bypasses
+// the seam, so stubConnectedGate does not reach it and every mutation survives.
 func TestNoCommandUsesTheOlderConnectedCheck(t *testing.T) {
+	banned := map[string]string{
+		"RequireConnected(":        "probes hub.confighub.com and then accepts an expired token; use requireConfigHubFor or configHubReads",
+		"hub.RequireCubConnected(": "bypasses the gate's seam, so no test can reach it; call configHubReads",
+	}
 	var problems []string
 	err := filepath.Walk(filepath.Join("..", "..", "cmd"), func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
@@ -531,9 +847,18 @@ func TestNoCommandUsesTheOlderConnectedCheck(t *testing.T) {
 		if readErr != nil {
 			return readErr
 		}
+		// connected_gate.go is where the gate is implemented, so it is the one
+		// file that names the implementation.
+		isGate := filepath.Base(path) == "connected_gate.go"
 		for number, line := range strings.Split(string(data), "\n") {
-			if strings.Contains(line, "RequireConnected(") {
-				problems = append(problems, fmt.Sprintf("%s:%d: %s", path, number+1, strings.TrimSpace(line)))
+			for call, why := range banned {
+				if !strings.Contains(line, call) {
+					continue
+				}
+				if isGate && call == "hub.RequireCubConnected(" {
+					continue
+				}
+				problems = append(problems, fmt.Sprintf("%s:%d: %s (%s)", path, number+1, strings.TrimSpace(line), why))
 			}
 		}
 		return nil
@@ -543,7 +868,6 @@ func TestNoCommandUsesTheOlderConnectedCheck(t *testing.T) {
 	}
 	sort.Strings(problems)
 	if len(problems) > 0 {
-		t.Fatalf("%d uses of RequireConnected() in commands; use requireConfigHubFor or configHubReads:\n  %s",
-			len(problems), strings.Join(problems, "\n  "))
+		t.Fatalf("%d command sites reach past the gate:\n  %s", len(problems), strings.Join(problems, "\n  "))
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 // stubSpaceInputs fixes CUB_SPACE, the one environment input the resolver reads.
@@ -931,6 +932,10 @@ func TestImpactJoinsLinksWithinOneSpace(t *testing.T) {
 // must not report that space, and the worker search must say where it looked.
 func TestStatusIgnoresAStaleDefaultSpace(t *testing.T) {
 	logPath := fakeCubRecorder(t)
+	// This test is about the space status reports, not the gate. Stub the gate
+	// to what CUB_SCOUT_OFFLINE below would make it say, so the verdict is not
+	// left behind for the next test in the binary to inherit.
+	stubConnectedGate(t, hub.ErrConfigHubReadsDisabled)
 	t.Setenv("CUB_SCOUT_OFFLINE", "true")
 	t.Setenv("CUB_PLUGIN", "")
 	t.Setenv("KUBECONFIG", filepath.Join(t.TempDir(), "missing-kubeconfig"))

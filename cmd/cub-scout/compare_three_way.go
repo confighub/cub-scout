@@ -857,10 +857,14 @@ func classifyThreeWayResult(result compareResourceResult) (string, []string) {
 	}
 
 	for _, note := range result.Notes {
+		// The note this bucket depends on is a constant shared with the code
+		// that adds it, so rewording it cannot silently empty the bucket.
+		if note == compareNoteConfigHubReadsUnavailable {
+			causes["disconnected"] = struct{}{}
+			continue
+		}
 		lower := strings.ToLower(note)
 		switch {
-		case strings.Contains(lower, "connect to confighub"):
-			causes["disconnected"] = struct{}{}
 		case strings.Contains(lower, "not linked"):
 			causes["unlinked"] = struct{}{}
 		case strings.Contains(lower, "snapshot unavailable"):

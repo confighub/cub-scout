@@ -146,8 +146,15 @@ func runHistory(cmd *cobra.Command, args []string) error {
 	}
 }
 
+// historyFixturePath is the recorded change-set payload a test points history
+// at with CUB_SCOUT_TEST_HISTORY_JSON. A fixture read reaches no ConfigHub, so
+// every history path checks it before the gate.
+func historyFixturePath() string {
+	return strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON"))
+}
+
 func resolveHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry, error) {
-	if fixture := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")); fixture != "" {
+	if fixture := historyFixturePath(); fixture != "" {
 		raw, err := os.ReadFile(fixture)
 		if err != nil {
 			return nil, fmt.Errorf("read history fixture %q: %w", fixture, err)
@@ -169,7 +176,7 @@ func resolveHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry,
 // historyReadScope is the space a connected history read used, for output.
 // A fixture read has none.
 func historyReadScope(flagValue string) *configHubScope {
-	if strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")) != "" {
+	if historyFixturePath() != "" {
 		return nil
 	}
 	return resolveConfigHubSpace(flagValue).Scope()
@@ -237,7 +244,7 @@ func resolveHistoryNavigation(ctx context.Context, q historyQuery) historyNaviga
 }
 
 func loadHistoryRawPayload(ctx context.Context, q historyQuery) (string, bool) {
-	if fixture := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")); fixture != "" {
+	if fixture := historyFixturePath(); fixture != "" {
 		raw, err := os.ReadFile(fixture)
 		if err != nil {
 			return "", false

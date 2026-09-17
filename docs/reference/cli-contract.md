@@ -1426,10 +1426,19 @@ Worker:     ● bridge-prod (connected)
 `confighub_reads` is the verdict of the gate every connected command uses:
 `cub auth status`, plus the checks that turn ConfigHub reads off
 (`CUB_SCOUT_OFFLINE=true`, telemetry disabled). When it is `false`,
-`confighub_reads_reason` carries the reason and the text output adds a line for
-it. `mode` describes connectivity and credentials; it can read `connected`
-while `confighub_reads` is `false`, so a pre-flight check should read
-`confighub_reads`.
+`confighub_reads_reason` carries the reason.
+
+`mode` describes connectivity and credentials to `hub.confighub.com`, so the
+two can disagree in either direction, and the text output adds a line whenever
+they do:
+
+| `mode` | `confighub_reads` | Text line | What it means |
+|---|---|---|---|
+| `connected` | `false` | `⚠ ConfigHub reads unavailable: <reason>` | Credentials exist, but every connected command refuses. `cub auth login` only helps if the reason says so |
+| `offline` / `online` | `true` | `✔ ConfigHub reads available: cub has a session` | `hub.confighub.com` is unreachable or unauthenticated, but `cub` can read its own server — the self-hosted and air-gapped case |
+| otherwise | — | none | The two agree; nothing to correct |
+
+A pre-flight check should read `confighub_reads`, not `mode`.
 
 ---
 

@@ -125,10 +125,12 @@ constant is not enough); `TestConnectedGate_RealProcessBothForms` runs the
 built binary in both forms against a fake `cub`. Verified live on ConfigHub
 v0.5.1, including a genuinely expired session.
 
-Still on the older probe-based `hub.NewClient().RequireConnected()` (#558):
-`audit list`, `history`, `doctor` and `gitops status --with-confighub`,
-`receipt verify`, `three_way.go`, `summary` recorders, `scan`, `watch`; and
-`status` starts from `CurrentMode()`. The coupling "telemetry disabled turns
+Left on the older probe-based `hub.NewClient().RequireConnected()` by that
+change, and since converged by #558 — see
+[One Connected Gate](#one-connected-gate-558) below: `audit list`, `history`,
+`doctor` and `gitops status --with-confighub`, `receipt verify`,
+`three_way.go`, `summary` recorders, `scan`, `watch`; and `status` starts from
+`CurrentMode()`. The coupling "telemetry disabled turns
 off ConfigHub reads" is kept; only its message is now truthful. Found on the
 way: the TUI shell exports `CUB_CONTEXT=<kube context>`, which `cub` reads as
 its own context name and rejects (#559).
@@ -186,23 +188,62 @@ network that cannot reach hub.confighub.com.
 All ten now use the same gate: `audit list`, `history`, ConfigHub delivery
 evidence, `doctor`'s three-way hint, the two receipt paths, `scan`'s verbose
 note, the three-way disagreement path, stored summaries and `watch`. The answer
-is memoized once per process (`configHubReads`), because callers ask it per
+is kept after the first ask (`configHubReads`), because callers ask it per
 resource, per receipt and per poll cycle and each call runs a `cub` process;
 `compare` reuses that instead of its own `sync.Once`. The three
 `err...Disconnected` sentinels are gone: each site now carries the gate's error,
-which names the cause. The TUI history panel shows that error rather than one
-remedy for every cause.
+which names the cause. Every gate refusal also answers to one marker
+(`errConfigHubUnavailable`), so the TUI history panel recognises any cause
+instead of listing three, and shows that error rather than one remedy for all.
+
+**A kept answer is only right for a command that ends.** The first review round
+found that the TUI told the user "Press h again once it is fixed" while the
+refusal was pinned for the life of the process: `cub auth login` in another
+terminal could not take effect. `refreshConfigHubReads` re-asks and replaces the
+kept answer, and is called where the user can see the boundary — each time the
+history panel opens, and once per `watch` poll cycle (only when
+`--emit-receipt-on` asks for receipts, so a plain watch still spends nothing).
+A watch therefore stamps each receipt with the session as of that cycle, not as
+of start-up. `docs/reference/json-contracts.md` has the table.
 
 `status` reports the gate's verdict as `confighub_reads`, with
 `confighub_reads_reason` when it refuses, so a skill using `status` as a
 pre-flight agrees with the command that follows. Before this, `status` could
-print `Connected` while every connected command refused.
+print `Connected` while every connected command refused. It asks through the
+same seam the commands use, so a test can reach it; the first version called
+`hub.RequireCubConnected` directly and no mutation of it failed anything. The
+text corrects the mode line in **both** directions, both verified live against
+cub v0.5.2:
+
+```
+CUB_SCOUT_OFFLINE=true:            ● Connected
+                                   ⚠ ConfigHub reads unavailable: ... CUB_SCOUT_OFFLINE=true is set
+hub.confighub.com unreachable,     ○ Offline
+cub's own server reachable:        ✔ ConfigHub reads available: cub has a session
+```
+
+The skills were taught the field: `skills/references/standalone-vs-connected.md`
+(which still described the old probe-based gate), `skills/scout-mcp/SKILL.md`
+and `skills/confighub-source-truth/SKILL.md` all said to read the `ConfigHub:`
+mode line and recommend `cub auth login`. They now read `confighub_reads` and
+quote `confighub_reads_reason`, which names the cause.
 
 The recorded `connected` fact in receipts, watch events and summaries therefore
 means "`cub` has a session it accepts", not "hub.confighub.com answered and a
 token file exists". `docs/reference/json-contracts.md` says so.
-`TestNoCommandUsesTheOlderConnectedCheck` fails the build on a new use of
-`RequireConnected()` in `cmd/`.
+
+Guards: `TestNoCommandUsesTheOlderConnectedCheck` fails the build on a new use
+of `RequireConnected()` **or** of `hub.RequireCubConnected()` outside
+`connected_gate.go`; `TestRecordedConnectedFactComesFromTheGate` fails it if the
+fact a receipt records stops coming from the gate (neither the `watch` loop nor
+`receipt verify` can be driven from a unit test, and `connected := true` used to
+survive the whole suite at both sites). A one-off probe — replacing
+`requireCubConnectedFn` with a panic and running the package — is how to check
+that no test reaches the real `cub`; two doctor fixture tests and one `status`
+test did, which pinned a machine-dependent verdict for every later caller in the
+binary. They stub the gate now. The only test that reaches the real gate is
+`TestConnectedGate_RealProcessBothForms`, which runs the built binary in a
+subprocess against a fake `cub`, deliberately.
 
 ## cub Output: -o json, and Stderr Kept Out of Data (#563, partial)
 

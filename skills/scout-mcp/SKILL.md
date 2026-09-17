@@ -64,12 +64,12 @@ Implicit intents:
 | "Pack a bundle as AI context" | `cub-scout context-pack --bundle <path>` | Same shape, sourced from a debug bundle instead of the live cluster. Offline-friendly. |
 | "Run cub-scout as an event bot" | `cub-scout bot --webhook <url>` | In-cluster-friendly watch stream with env-var config for manifests. |
 | "Check cub-scout version" | `cub-scout version` | Build tag. Agents that registered cub-scout tools use this to detect breaking-change ranges. |
-| "Confirm mode" | `cub-scout status` | Standalone vs connected. Agents call this first to know which connected tools are available. |
+| "Confirm mode" | `cub-scout status --json` | Agents call this first to know which connected tools are available. Read `confighub_reads` (and `confighub_reads_reason`), not the `mode` line — see [standalone vs connected](../references/standalone-vs-connected.md). |
 
 ## The loop
 
 1. **Decide MCP vs context-pack vs bot.** Long-running agent tool gateway → `mcp serve`. Single-shot reasoning over a snapshot → `context-pack`. In-cluster event producer → `bot`.
-2. **Check the mode.** `cub-scout status` confirms standalone vs connected. Tell the agent which tool subset is live.
+2. **Check the mode.** `cub-scout status --json` confirms it: `confighub_reads: true` means the connected tools will run, and when it is `false` `confighub_reads_reason` says why. The `mode` line describes `hub.confighub.com` and can disagree in either direction, so do not use it as the pre-flight. Tell the agent which tool subset is live.
 3. **Start the surface.** For MCP, `mcp serve` registers tools with the agent. For context-pack, `--format json` and pipe to the agent. For bot mode, set destination env vars or flags and deploy/run the process.
 4. **Compose with sibling skills.** The MCP gateway is plumbing — once it's running, every other verb-group skill (`scout-observe`, `scout-diagnose`, etc.) is reachable via MCP tools and uses the same loops described in those skills.
 5. **Hand off mutations.** No matter what an agent asks the MCP gateway to do, the gateway refuses to call a mutating verb. Mutations route through `cub` skills (in [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills)) or direct `kubectl` with the user driving.
@@ -149,15 +149,23 @@ cub-scout produces evidence; the downstream judge decides.
 
 ### `context-pack` (the snapshot)
 
+The fields below are `contextPackV2` in `cmd/cub-scout/context_pack.go`.
+
 | Field | Meaning |
 |---|---|
 | `version` | cub-scout build tag + context-pack schema version |
-| `capturedAt` | RFC 3339 timestamp |
-| `cluster` | kubeconfig context + server URL |
-| `mode` | `standalone` or `connected` |
-| `resources[]` | One entry per workload, with kind / name / namespace / ownership classification |
-| `attribution[]` | Per-resource attribution evidence (cause / managerHint / gitSource / bindingSource) |
-| `omissions[]` | What the snapshot deliberately did NOT include (e.g., crashlooping pods skipped, unsupported kinds) |
+| `generatedAt` | RFC 3339 timestamp |
+| `cluster` | kubeconfig context |
+| `namespace` | Scope of the snapshot, or `all` |
+| `provenance` | `source` / `deterministic` / `confidence` for the snapshot itself |
+| `ownershipSummary` | Per-owner counts |
+| `topRisks[]` | Bounded issue list, most severe first |
+| `traceSeeds[]` | Workloads worth tracing, each with the exact `trace` command |
+| `commandEvidence[]` | Commands whose output backs the above |
+| `truncated`, `sizeBytes` | Whether the payload was cut to fit, and its size |
+
+There is no `mode` field: `context-pack` is a standalone snapshot. Whether
+ConfigHub reads work is `confighub_reads` in `cub-scout status --json`.
 
 The snapshot is the *evidence base* a downstream LLM reasons over. It is NOT a recommendation; the LLM forms recommendations.
 

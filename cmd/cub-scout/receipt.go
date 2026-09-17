@@ -356,7 +356,10 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	}
 
 	// 4. Detect connected mode (for the second subject + omission logic).
-	connected := configHubReadsAvailable()
+	// Through the same seam the aggregate flow uses, wired in init to the gate,
+	// so both receipt flows record the fact the same way and a test can drive
+	// this one without a ConfigHub session.
+	connected := detectConnectedForReceipt()
 
 	// 4b. Build the inputAttestations[] from --input-attestation
 	// (repeatable). Each path is loaded + fingerprint-verified before

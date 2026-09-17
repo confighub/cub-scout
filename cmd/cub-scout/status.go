@@ -97,10 +97,11 @@ func runStatus(cmd *cobra.Command) error {
 		status.Mode = "connected"
 	}
 
-	// The gate the connected commands use. status can otherwise print
+	// The gate the connected commands use, asked through the same seam they
+	// use so status cannot drift from them. status can otherwise print
 	// "Connected" while every connected command refuses, for instance with
 	// CUB_SCOUT_OFFLINE set or telemetry turned off.
-	if err := hub.RequireCubConnected(); err != nil {
+	if err := configHubReads(); err != nil {
 		status.ConfigHubReadsReason = err.Error()
 	} else {
 		status.ConfigHubReads = true
@@ -185,9 +186,15 @@ func printStatus(s StatusInfo) {
 		fmt.Println("ConfigHub:  \033[31m○\033[0m Offline")
 	}
 
-	// The gate's verdict, when it disagrees with the mode above.
-	if !s.ConfigHubReads && s.ConfigHubReadsReason != "" {
+	// The gate's verdict, whenever it disagrees with the mode above. Both
+	// directions are corrections: a mode that promises reads every connected
+	// command refuses, and a mode that denies reads they would happily make
+	// against a self-hosted server.
+	switch {
+	case !s.ConfigHubReads && s.ConfigHubReadsReason != "":
 		fmt.Printf("            \033[33m⚠\033[0m ConfigHub reads unavailable: %s\n", s.ConfigHubReadsReason)
+	case s.ConfigHubReads && s.Mode != "connected":
+		fmt.Println("            \033[32m✔\033[0m ConfigHub reads available: cub has a session (the line above is about hub.confighub.com)")
 	}
 
 	// Cluster info

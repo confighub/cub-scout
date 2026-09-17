@@ -12,4 +12,4 @@ LIVE (cluster)
     - ghcr.io/acme/checkout:v3
 
 Notes:
-  - Connect to ConfigHub to unlock DRY/WET/LIVE expected-state comparison.
+  - DRY/WET/LIVE expected-state comparison needs ConfigHub reads; run `cub-scout status` for the reason they are unavailable.
