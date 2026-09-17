@@ -140,7 +140,7 @@ func TestNoCubCallUsesARemovedSubcommand(t *testing.T) {
 				return true
 			}
 			name := spaceGuardCalledName(call)
-			argv := call.Args
+			var argv []ast.Expr
 			switch {
 			case name == "Command" && len(call.Args) >= 1:
 				if text, isLit := spaceGuardStringLit(call.Args[0]); !isLit || text != "cub" {
