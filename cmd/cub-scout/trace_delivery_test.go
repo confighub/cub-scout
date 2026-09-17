@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -257,6 +258,92 @@ func TestMatchTraceReleases_DoesNotMatchBySpaceOnly(t *testing.T) {
 	}
 	if omission.Layer != "confighub.releases" {
 		t.Fatalf("omission = %+v, want confighub.releases", omission)
+	}
+}
+
+// Rows are matched to the traced object before trimming. Trimming the whole
+// space to maxItems first would cut this target's only release, the oldest of
+// twelve, and report a false "no release row matched".
+func TestCorrelateTraceDeliveryEvidence_MatchesBeforeTrimming(t *testing.T) {
+	opts, _ := traceGitOpsDeliveryOptions(traceConfigHubDeliveryFlags{Space: "payments-prod"}, agent.TraceDeliveryCorrelation{})
+	if !opts.MatchBeforeTrim {
+		t.Fatalf("trace delivery options must match before trimming: %+v", opts)
+	}
+
+	var raw strings.Builder
+	raw.WriteString("[")
+	for i := 0; i < 11; i++ {
+		fmt.Fprintf(&raw, `{"Release":{"ReleaseID":"other-%02d","SpaceID":"sp-1","SpaceSlug":"payments-prod","TargetID":"t-other","CreatedAt":"2026-09-10T11:%02d:00Z"}},`, i, 30+i)
+	}
+	raw.WriteString(`{"Release":{"ReleaseID":"mine","SpaceID":"sp-1","SpaceSlug":"payments-prod","TargetID":"t-mine","CreatedAt":"2026-09-10T09:00:00Z"}}]`)
+
+	untrimmed, omissions := buildConfigHubReleaseEvidence(raw.String(), 0)
+	if len(untrimmed) != 12 || len(omissions) != 0 {
+		t.Fatalf("untrimmed releases = %d omissions = %+v, want all 12 rows", len(untrimmed), omissions)
+	}
+	if trimmed, _ := buildConfigHubReleaseEvidence(raw.String(), defaultGitOpsDeliveryMaxItems); len(trimmed) != defaultGitOpsDeliveryMaxItems {
+		t.Fatalf("trimmed releases = %d, want %d (the precondition for the false negative)", len(trimmed), defaultGitOpsDeliveryMaxItems)
+	}
+
+	got := correlateTraceDeliveryEvidence(nil, &GitOpsDeliveryEvidence{
+		Scope:     GitOpsDeliveryEvidenceScope{Space: "payments-prod", MaxItems: defaultGitOpsDeliveryMaxItems},
+		ConfigHub: &ConfigHubDeliveryEvidence{Releases: untrimmed},
+	}, agent.TraceDeliveryCorrelation{Space: "payments-prod", SpaceID: "sp-1", TargetID: "t-mine"}, nil)
+
+	if len(got.Releases) != 1 || got.Releases[0].ReleaseID != "mine" {
+		t.Fatalf("releases = %+v, want the traced target's release even though it is the oldest of 12", got.Releases)
+	}
+}
+
+// Matches beyond maxItems are trimmed after matching, and the trim is reported.
+func TestCorrelateTraceDeliveryEvidence_TrimsMatchesAndSaysSo(t *testing.T) {
+	var releases []ConfigHubReleaseEvidence
+	for i := 0; i < 12; i++ {
+		releases = append(releases, ConfigHubReleaseEvidence{ReleaseID: fmt.Sprintf("r-%02d", i), SpaceID: "sp-1", TargetID: "t-mine"})
+	}
+	got := correlateTraceDeliveryEvidence(nil, &GitOpsDeliveryEvidence{
+		Scope:     GitOpsDeliveryEvidenceScope{Space: "payments-prod", MaxItems: 10},
+		ConfigHub: &ConfigHubDeliveryEvidence{Releases: releases},
+	}, agent.TraceDeliveryCorrelation{SpaceID: "sp-1", TargetID: "t-mine"}, nil)
+
+	if len(got.Releases) != 10 {
+		t.Fatalf("releases = %d, want 10 after trimming matches", len(got.Releases))
+	}
+	found := false
+	for _, omission := range got.Omissions {
+		if omission.Layer == "confighub.releases" && strings.Contains(omission.Reason, "trimmed 12 matching release rows to maxItems=10") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("omissions = %+v, want the trim of matching rows reported", got.Omissions)
+	}
+}
+
+// A release names its target by ID; an OCI-source or renderedFrom chain knows
+// only the slug. With no key in common the join was not evaluated, and the
+// omission must say that rather than claim no release matched.
+func TestMatchTraceReleases_DisjointTargetKeysAreUnknownNotNoMatch(t *testing.T) {
+	releases := []ConfigHubReleaseEvidence{{ReleaseID: "r-1", Space: "payments-prod", SpaceID: "sp-1", TargetID: "t-1"}}
+
+	got, omission := matchTraceReleases(agent.TraceDeliveryCorrelation{Space: "payments-prod", Target: "us-west"}, releases)
+	if len(got) != 0 {
+		t.Fatalf("releases = %+v, want none: a slug cannot be compared to a target ID", got)
+	}
+	if !strings.Contains(omission.Reason, "different keys") || !strings.Contains(omission.Impact, "unknown") {
+		t.Fatalf("omission = %+v, want it to say the join could not be evaluated", omission)
+	}
+
+	// Same key type, different target: that is a genuine no-match.
+	_, omission = matchTraceReleases(agent.TraceDeliveryCorrelation{Space: "payments-prod", TargetID: "t-2"}, releases)
+	if !strings.Contains(omission.Reason, "no release row matched") {
+		t.Fatalf("omission = %+v, want a plain no-match when the keys are comparable", omission)
+	}
+
+	// No target key on the resource at all: also a plain no-match, never "different keys".
+	_, omission = matchTraceReleases(agent.TraceDeliveryCorrelation{Space: "payments-prod"}, releases)
+	if !strings.Contains(omission.Reason, "no release row matched") {
+		t.Fatalf("omission = %+v, want a plain no-match when the resource has no target key", omission)
 	}
 }
 

@@ -199,7 +199,8 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 		case reflect.DeepEqual(args, gitOpsConfigHubSpaceListArgs("payments-prod")):
 			return `[{"Space":{"Slug":"payments-prod","SpaceID":"sp-123","Annotations":{"confighub.com/live-status":"{\"source\":\"argobot\",\"app\":\"payments-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Healthy\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:abc\",\"observedAt\":\"2026-09-10T11:55:00Z\"}"}}}]`, nil
 		case len(args) > 1 && args[0] == "release" && args[1] == "list":
-			return `[{"Release":{"Slug":"rel-42","ReleaseID":"r-42","Digest":"sha256:abcdef","CreatedAt":"2026-09-10T11:50:00Z"},"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Target":{"Slug":"prod","TargetID":"t-123"}}]`, nil
+			// The recorded server shape, not an invented one: see recordedV05ReleaseList.
+			return recordedV05ReleaseList, nil
 		case len(args) > 1 && args[0] == "unit-event" && args[1] == "list":
 			return `[{"UnitEvent":{"UnitEventID":"ue-1","Action":"ReleasePublished","Result":"Succeeded","CreatedAt":"2026-09-10T11:51:00Z"},"Unit":{"Slug":"payments-api","UnitID":"u-123"},"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Target":{"Slug":"prod","TargetID":"t-123"}}]`, nil
 		default:
@@ -238,7 +239,7 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 	if len(evidence.ConfigHub.LiveStatuses) != 1 || evidence.ConfigHub.LiveStatuses[0].DeliveryVerdict != agent.VerdictPASS {
 		t.Fatalf("live statuses = %+v, want one PASS status", evidence.ConfigHub.LiveStatuses)
 	}
-	if len(evidence.ConfigHub.Releases) != 1 || evidence.ConfigHub.Releases[0].Digest != "sha256:abcdef" {
+	if len(evidence.ConfigHub.Releases) != 1 || evidence.ConfigHub.Releases[0].TargetID != "55555555-5555-4555-8555-555555555555" {
 		t.Fatalf("releases = %+v, want one parsed release", evidence.ConfigHub.Releases)
 	}
 	if len(evidence.ConfigHub.UnitEvents) != 1 || evidence.ConfigHub.UnitEvents[0].Action != "ReleasePublished" {

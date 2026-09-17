@@ -92,6 +92,8 @@ func traceGitOpsDeliveryOptions(flags traceConfigHubDeliveryFlags, correlation a
 		Since:     strings.TrimSpace(flags.Since),
 		Now:       now,
 		MaxItems:  defaultGitOpsDeliveryMaxItems,
+		// Rows are matched to this one object below; match first, trim after.
+		MatchBeforeTrim: true,
 	}
 	if opts.Since == "" {
 		opts.Since = "24h"
@@ -164,16 +166,32 @@ func correlateTraceDeliveryEvidence(
 		}
 
 		releases, omission := matchTraceReleases(correlation, raw.ConfigHub.Releases)
-		out.Releases = releases
 		if omission.Layer != "" {
 			out.Omissions = append(out.Omissions, omission)
 		}
+		if total := len(releases); raw.Scope.MaxItems > 0 && total > raw.Scope.MaxItems {
+			releases = releases[:raw.Scope.MaxItems]
+			out.Omissions = append(out.Omissions, agent.TraceDeliveryOmission{
+				Layer:  "confighub.releases",
+				Reason: fmt.Sprintf("trimmed %d matching release rows to maxItems=%d", total, raw.Scope.MaxItems),
+				Impact: "older matching rows are omitted from output",
+			})
+		}
+		out.Releases = releases
 
 		events, omission := matchTraceUnitEvents(correlation, raw.ConfigHub.UnitEvents)
-		out.UnitEvents = events
 		if omission.Layer != "" {
 			out.Omissions = append(out.Omissions, omission)
 		}
+		if total := len(events); raw.Scope.MaxItems > 0 && total > raw.Scope.MaxItems {
+			events = events[:raw.Scope.MaxItems]
+			out.Omissions = append(out.Omissions, agent.TraceDeliveryOmission{
+				Layer:  "confighub.unitEvents",
+				Reason: fmt.Sprintf("trimmed %d matching unit-event rows to maxItems=%d", total, raw.Scope.MaxItems),
+				Impact: "older matching rows are omitted from output",
+			})
+		}
+		out.UnitEvents = events
 	}
 
 	if result != nil && result.ConfigHub == nil && !traceDeliveryHasObjectJoinIdentity(correlation) {
@@ -344,10 +362,15 @@ func matchTraceLiveStatus(correlation agent.TraceDeliveryCorrelation, statuses [
 
 func matchTraceReleases(correlation agent.TraceDeliveryCorrelation, releases []ConfigHubReleaseEvidence) ([]agent.TraceDeliveryRelease, agent.TraceDeliveryOmission) {
 	out := []agent.TraceDeliveryRelease{}
+	inSpace, comparable := 0, 0
 	for _, release := range releases {
 		spaceMatch, spaceBy := traceSpaceMatches(correlation, release.Space, release.SpaceID)
 		if !spaceMatch {
 			continue
+		}
+		inSpace++
+		if traceTargetComparable(correlation, release.Target, release.TargetID) {
+			comparable++
 		}
 		targetMatch, targetBy := traceTargetMatches(correlation, release.Target, release.TargetID)
 		if !targetMatch {
@@ -369,6 +392,17 @@ func matchTraceReleases(correlation agent.TraceDeliveryCorrelation, releases []C
 	}
 	if len(out) > 0 {
 		return out, agent.TraceDeliveryOmission{}
+	}
+	// A release names its target by ID; a chain derived from an OCI source or
+	// renderedFrom knows only the target slug. With no key in common the join
+	// was never evaluated, which is not the same as finding no release.
+	hasTargetKey := correlation.Target != "" || correlation.TargetID != ""
+	if hasTargetKey && inSpace > 0 && comparable == 0 {
+		return nil, agent.TraceDeliveryOmission{
+			Layer:  "confighub.releases",
+			Reason: fmt.Sprintf("%d release rows in this space could not be compared to the traced resource: the rows and the resource identify the target by different keys (ID versus slug)", inSpace),
+			Impact: "whether a release exists for this object's target is unknown",
+		}
 	}
 	return nil, agent.TraceDeliveryOmission{
 		Layer:  "confighub.releases",
@@ -430,6 +464,14 @@ func traceSpaceMatches(correlation agent.TraceDeliveryCorrelation, space, spaceI
 		return true, "space"
 	}
 	return false, ""
+}
+
+// traceTargetComparable reports whether the correlation and a row share a
+// target key type, so that a failed match means "different target" rather
+// than "nothing to compare".
+func traceTargetComparable(correlation agent.TraceDeliveryCorrelation, target, targetID string) bool {
+	return (correlation.TargetID != "" && strings.TrimSpace(targetID) != "") ||
+		(correlation.Target != "" && strings.TrimSpace(target) != "")
 }
 
 func traceTargetMatches(correlation agent.TraceDeliveryCorrelation, target, targetID string) (bool, string) {

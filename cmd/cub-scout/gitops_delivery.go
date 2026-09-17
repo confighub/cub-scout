@@ -34,6 +34,11 @@ type gitOpsDeliveryEvidenceOptions struct {
 	StaleAfter time.Duration
 	Now        time.Time
 	MaxItems   int
+	// MatchBeforeTrim keeps every row in the time window so a caller that
+	// correlates rows to one object can match first and trim the matches.
+	// Trimming the whole space to MaxItems first would drop a busy space's
+	// older rows and turn a real match into a false "no row matched".
+	MatchBeforeTrim bool
 }
 
 // GitOpsDeliveryEvidence is an opt-in, bounded connected evidence envelope.
@@ -248,6 +253,10 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 		opts.MaxItems = defaultGitOpsDeliveryMaxItems
 		evidence.Scope.MaxItems = opts.MaxItems
 	}
+	rowLimit := opts.MaxItems
+	if opts.MatchBeforeTrim {
+		rowLimit = 0
+	}
 
 	consumers, consumerOmissions := collectGitOpsEventConsumerEvidence(ctx, client, opts.Namespace)
 	evidence.EventConsumers = consumers
@@ -295,7 +304,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 			Command: "cub " + strings.Join(releaseArgs, " "),
 		})
 	} else {
-		releases, omissions := buildConfigHubReleaseEvidence(rawReleases, opts.MaxItems)
+		releases, omissions := buildConfigHubReleaseEvidence(rawReleases, rowLimit)
 		evidence.ConfigHub.Releases = releases
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
@@ -310,7 +319,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 			Command: "cub " + strings.Join(eventArgs, " "),
 		})
 	} else {
-		events, omissions := buildConfigHubUnitEventEvidence(rawEvents, opts.MaxItems)
+		events, omissions := buildConfigHubUnitEventEvidence(rawEvents, rowLimit)
 		evidence.ConfigHub.UnitEvents = events
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
@@ -910,7 +919,7 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 		for _, release := range evidence.ConfigHub.Releases {
 			fmt.Printf("    - %s target=%s digest=%s at=%s\n",
 				firstNonEmpty(release.Slug, release.ReleaseID, "-"),
-				firstNonEmpty(release.Target, "-"),
+				firstNonEmpty(release.Target, release.TargetID, "-"),
 				truncate(firstNonEmpty(release.Digest, "-"), 18),
 				firstNonEmpty(release.CreatedAt, "-"),
 			)

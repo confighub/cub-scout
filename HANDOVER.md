@@ -19,10 +19,32 @@ space-plus-target join reports an omission, as before. Tests now parse a release
 list recorded from a v0.5.1 server. Live proof: 139 releases read, each with
 space and target IDs.
 
+Making the read work made dead downstream code reachable, and an independent
+review of this change found two paths that would then state something false.
+Both are fixed here. `trace`, `explain` and `receipt verify` trimmed the whole
+space to `maxItems=10` before matching rows to the traced object, so a busy
+space reported "no release row matched" for a target whose release was the
+11th newest. They now match first and trim the matches
+(`MatchBeforeTrim`); `gitops status`, `doctor` and `map activity` are
+unchanged. A Release names its target by ID only, while a chain derived from a
+ConfigHub OCI source or `renderedFrom` knows only the target slug. That join
+can never be evaluated, and the omission now says the target is unknown rather
+than that nothing matched. No slug-to-ID lookup was added, so those chains
+still get no release evidence. The `gitops status` ASCII row printed
+`target=-` for every real release and now falls back to the target ID like the
+other printers. The collector test now uses the recorded release shape.
+
+Known and not fixed here (tracked in #555), all reachable only now that rows arrive: `Published`
+is never read, yet every row is labelled `release-published`; `doctor` counts
+releases after trimming, so it reports 10 when 139 exist; `RevisionNum` and
+`Slug` read keys a Release lacks while `ReleaseNum` is ignored, so rows are
+identified by bare UUID; and `examples/live-delivery-observability/` plus the
+`json-contracts.md` sample still show the invented release shape.
+
 Still unproven: the unit-event read pins `--select ...,Unit,Space,Target`, and
 those are not UnitEvent fields either. The test server held no unit events and
 ConfigHub did not validate the selection on an empty result, so that read could
-not be exercised. Treat unit-event evidence as not live-proven. MCP
+not be exercised. Treat unit-event evidence as not live-proven (#555). MCP
 `confighub_releases` and `confighub_unit_events` send no `--select` and were
 unaffected.
 
