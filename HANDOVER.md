@@ -53,8 +53,9 @@ review: the chain's space (from a label) and target slug (from an OCI URL) come
 from different sources, so the lookup could resolve the slug in the wrong space
 and attach another target's releases. A chain that knows its target only by
 slug keeps the "target unknown" omission. The likely correct key for
-OCI-delivered objects is the manifest digest (`Release.ManifestDigest`), tracked
-separately along with the OCI URL layout cub-scout recognises.
+OCI-delivered objects is the manifest digest (`Release.ManifestDigest`). That,
+and the fact that cub-scout does not recognise the current
+`<registry>/space/<slug>` OCI URL layout at all, is #561.
 
 Joins are stricter now that unit events carry identity. When both sides carry an
 ID for a space, target or unit and the IDs differ, the row is not joined even if
@@ -79,8 +80,8 @@ event could be joined to an object. Fixed, with a fixture derived from
 ConfigHub's published API schema. It is still not exercised against a server
 that holds unit events. A UnitEvent has no target.
 
-Left as found: an `Aborted` or `Canceled` unit event classifies as `normal`;
-`mcpUnitRefFromItem` is a third copy of the nested-then-flat lookup.
+Left as found, listed in #561: an `Aborted` or `Canceled` unit event classifies
+as `normal`; `mcpUnitRefFromItem` is a third copy of the nested-then-flat lookup.
 
 Also passing on v0.5.1: the full unit suite, the read-only connected
 integration tests, all nine `confighub_*` MCP tools over the stdio gateway,
