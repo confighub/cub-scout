@@ -199,7 +199,8 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 		case reflect.DeepEqual(args, gitOpsConfigHubSpaceListArgs("payments-prod")):
 			return `[{"Space":{"Slug":"payments-prod","SpaceID":"sp-123","Annotations":{"confighub.com/live-status":"{\"source\":\"argobot\",\"app\":\"payments-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Healthy\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:abc\",\"observedAt\":\"2026-09-10T11:55:00Z\"}"}}}]`, nil
 		case len(args) > 1 && args[0] == "release" && args[1] == "list":
-			return `[{"Release":{"Slug":"rel-42","ReleaseID":"r-42","Digest":"sha256:abcdef","CreatedAt":"2026-09-10T11:50:00Z"},"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Target":{"Slug":"prod","TargetID":"t-123"}}]`, nil
+			// The recorded server shape, not an invented one: see recordedV05ReleaseList.
+			return recordedV05ReleaseList, nil
 		case len(args) > 1 && args[0] == "unit-event" && args[1] == "list":
 			return `[{"UnitEvent":{"UnitEventID":"ue-1","Action":"ReleasePublished","Result":"Succeeded","CreatedAt":"2026-09-10T11:51:00Z"},"Unit":{"Slug":"payments-api","UnitID":"u-123"},"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Target":{"Slug":"prod","TargetID":"t-123"}}]`, nil
 		default:
@@ -238,11 +239,92 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 	if len(evidence.ConfigHub.LiveStatuses) != 1 || evidence.ConfigHub.LiveStatuses[0].DeliveryVerdict != agent.VerdictPASS {
 		t.Fatalf("live statuses = %+v, want one PASS status", evidence.ConfigHub.LiveStatuses)
 	}
-	if len(evidence.ConfigHub.Releases) != 1 || evidence.ConfigHub.Releases[0].Digest != "sha256:abcdef" {
+	if len(evidence.ConfigHub.Releases) != 1 || evidence.ConfigHub.Releases[0].TargetID != "55555555-5555-4555-8555-555555555555" {
 		t.Fatalf("releases = %+v, want one parsed release", evidence.ConfigHub.Releases)
 	}
 	if len(evidence.ConfigHub.UnitEvents) != 1 || evidence.ConfigHub.UnitEvents[0].Action != "ReleasePublished" {
 		t.Fatalf("unit events = %+v, want one parsed event", evidence.ConfigHub.UnitEvents)
+	}
+}
+
+// ConfigHub answers a --select naming a field the entity lacks with HTTP 400,
+// which turned every release read into an omission. The read stays bounded by
+// space and cutoff; it must not pin a field list.
+func TestGitOpsConfigHubReleaseListArgs_SendsNoSelect(t *testing.T) {
+	args := gitOpsConfigHubReleaseListArgs("payments-prod", "2026-09-09T12:00:00Z")
+	joined := strings.Join(args, " ")
+
+	if strings.Contains(joined, "--select") {
+		t.Fatalf("release list args pin a field selection, which ConfigHub rejects when any field is unknown: %v", args)
+	}
+	for _, want := range []string{"release list", "--space payments-prod", "-o json", "CreatedAt > '2026-09-09T12:00:00Z'"} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("release list args = %v, want them to contain %q", args, want)
+		}
+	}
+}
+
+// Recorded from `cub release list -o json` against a ConfigHub v0.5.1 server,
+// with identifiers replaced. There is no Release.Slug and no sibling Space or
+// Target object: space and target identity are fields of the Release.
+const recordedV05ReleaseList = `[{"Release":{
+	"BundleBaseName":"payments-prod",
+	"CreatedAt":"2026-09-03T15:02:09.791039Z",
+	"DataSize":1104,
+	"Digest":"sha256:0c9ae4903b120a5f9c79239c16d62a4cd04c1b540bc83541fde4c52ae0ac8d2e",
+	"EntityType":"Release",
+	"ManifestDigest":"sha256:0df04e007c0d5d8b2e89eec57ced4d16a2f738edff7ed43e830f652dc11897cf",
+	"OrganizationID":"11111111-1111-4111-8111-111111111111",
+	"Published":true,
+	"ReleaseID":"22222222-2222-4222-8222-222222222222",
+	"ReleaseNum":1,
+	"SpaceID":"33333333-3333-4333-8333-333333333333",
+	"SpaceSlug":"payments-prod",
+	"TagID":"44444444-4444-4444-8444-444444444444",
+	"TargetID":"55555555-5555-4555-8555-555555555555",
+	"UnitCount":5,
+	"UpdatedAt":"2026-09-03T15:02:09.791039Z"
+}}]`
+
+func TestBuildConfigHubReleaseEvidence_ParsesRecordedV05ReleaseShape(t *testing.T) {
+	releases, omissions := buildConfigHubReleaseEvidence(recordedV05ReleaseList, 10)
+	if len(omissions) != 0 {
+		t.Fatalf("omissions = %+v, want none for a well-formed release list", omissions)
+	}
+	if len(releases) != 1 {
+		t.Fatalf("releases = %+v, want one", releases)
+	}
+
+	got := releases[0]
+	want := ConfigHubReleaseEvidence{
+		ReleaseID:      "22222222-2222-4222-8222-222222222222",
+		Space:          "payments-prod",
+		SpaceID:        "33333333-3333-4333-8333-333333333333",
+		TargetID:       "55555555-5555-4555-8555-555555555555",
+		Digest:         "sha256:0c9ae4903b120a5f9c79239c16d62a4cd04c1b540bc83541fde4c52ae0ac8d2e",
+		BundleBaseName: "payments-prod",
+		CreatedAt:      "2026-09-03T15:02:09.791039Z",
+	}
+	if got != want {
+		t.Fatalf("release evidence =\n  %+v\nwant\n  %+v", got, want)
+	}
+}
+
+// A server older than the Release-to-Target association reports no TargetID.
+// The join key stays empty so trace/explain report an omission; it is never
+// filled from another field.
+func TestBuildConfigHubReleaseEvidence_MissingTargetIDStaysEmpty(t *testing.T) {
+	raw := `[{"Release":{"ReleaseID":"r-1","SpaceID":"sp-1","SpaceSlug":"payments-prod","Digest":"sha256:abc","CreatedAt":"2026-09-03T15:02:09Z"}}]`
+
+	releases, omissions := buildConfigHubReleaseEvidence(raw, 10)
+	if len(omissions) != 0 || len(releases) != 1 {
+		t.Fatalf("releases = %+v omissions = %+v, want one release and no omissions", releases, omissions)
+	}
+	if releases[0].TargetID != "" || releases[0].Target != "" {
+		t.Fatalf("target identity = %q/%q, want empty when the server reports none", releases[0].Target, releases[0].TargetID)
+	}
+	if releases[0].SpaceID != "sp-1" {
+		t.Fatalf("space id = %q, want sp-1 read from the Release", releases[0].SpaceID)
 	}
 }
 

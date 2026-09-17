@@ -34,6 +34,11 @@ type gitOpsDeliveryEvidenceOptions struct {
 	StaleAfter time.Duration
 	Now        time.Time
 	MaxItems   int
+	// MatchBeforeTrim keeps every row in the time window so a caller that
+	// correlates rows to one object can match first and trim the matches.
+	// Trimming the whole space to MaxItems first would drop a busy space's
+	// older rows and turn a real match into a false "no row matched".
+	MatchBeforeTrim bool
 }
 
 // GitOpsDeliveryEvidence is an opt-in, bounded connected evidence envelope.
@@ -248,6 +253,10 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 		opts.MaxItems = defaultGitOpsDeliveryMaxItems
 		evidence.Scope.MaxItems = opts.MaxItems
 	}
+	rowLimit := opts.MaxItems
+	if opts.MatchBeforeTrim {
+		rowLimit = 0
+	}
 
 	consumers, consumerOmissions := collectGitOpsEventConsumerEvidence(ctx, client, opts.Namespace)
 	evidence.EventConsumers = consumers
@@ -295,7 +304,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 			Command: "cub " + strings.Join(releaseArgs, " "),
 		})
 	} else {
-		releases, omissions := buildConfigHubReleaseEvidence(rawReleases, opts.MaxItems)
+		releases, omissions := buildConfigHubReleaseEvidence(rawReleases, rowLimit)
 		evidence.ConfigHub.Releases = releases
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
@@ -310,7 +319,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 			Command: "cub " + strings.Join(eventArgs, " "),
 		})
 	} else {
-		events, omissions := buildConfigHubUnitEventEvidence(rawEvents, opts.MaxItems)
+		events, omissions := buildConfigHubUnitEventEvidence(rawEvents, rowLimit)
 		evidence.ConfigHub.UnitEvents = events
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
@@ -326,13 +335,19 @@ func gitOpsConfigHubSpaceListArgs(space string) []string {
 	return args
 }
 
+// gitOpsConfigHubReleaseListArgs deliberately sends no --select. ConfigHub
+// rejects a selection naming any field the Release entity lacks with HTTP 400,
+// and that field set moves between server versions (Slug became BundleBaseName;
+// v0.5 dropped BridgeWorkerID and added TargetID). A Release is a handful of
+// scalars and the read is already bounded by the CreatedAt cutoff, so the full
+// object is cheap and keeps this read working across versions. The MCP
+// confighub_releases reader makes the same choice.
 func gitOpsConfigHubReleaseListArgs(space, cutoff string) []string {
 	args := []string{
 		"release", "list",
 		"--space", space,
 		"-o", "json",
 		"--where", fmt.Sprintf("CreatedAt > '%s'", configHubFilterQuote(cutoff)),
-		"--select", "Slug,ReleaseID,CreatedAt,Digest,BundleBaseName,RevisionNum,Space,Target",
 	}
 	return args
 }
@@ -576,11 +591,20 @@ func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubRelease
 			BundleBaseName: mcpFirstString(releaseObj, "BundleBaseName", "bundleBaseName", "Bundle", "bundle"),
 			CreatedAt:      mcpFirstString(releaseObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
 		}
+		// cub release list returns a bare Release with no sibling Space or
+		// Target object: the space and (from v0.5) target identity are
+		// fields of the Release itself.
 		if release.Space == "" {
 			release.Space = mcpFirstString(releaseObj, "SpaceSlug", "spaceSlug")
 		}
+		if release.SpaceID == "" {
+			release.SpaceID = mcpFirstString(releaseObj, "SpaceID", "spaceId")
+		}
 		if release.Target == "" {
 			release.Target = mcpFirstString(releaseObj, "TargetSlug", "targetSlug")
+		}
+		if release.TargetID == "" {
+			release.TargetID = mcpFirstString(releaseObj, "TargetID", "targetId")
 		}
 		if value, ok := mcpFirstInt(releaseObj, "RevisionNum", "revisionNum", "RevisionNumber", "revisionNumber"); ok {
 			release.RevisionNum = value
@@ -895,7 +919,7 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 		for _, release := range evidence.ConfigHub.Releases {
 			fmt.Printf("    - %s target=%s digest=%s at=%s\n",
 				firstNonEmpty(release.Slug, release.ReleaseID, "-"),
-				firstNonEmpty(release.Target, "-"),
+				firstNonEmpty(release.Target, release.TargetID, "-"),
 				truncate(firstNonEmpty(release.Digest, "-"), 18),
 				firstNonEmpty(release.CreatedAt, "-"),
 			)
