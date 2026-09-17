@@ -757,6 +757,11 @@ func TestWatchAsksTheGateEachCycle(t *testing.T) {
 	if watchCycleConnected(emitOn, nil) {
 		t.Fatal("connected = true on an idle cycle")
 	}
+	// resource.deleted has no receipt support, so asking for it builds nothing
+	// and must cost nothing, even though the flag names the type.
+	if watchCycleConnected(map[string]bool{"resource.deleted": true}, []watchEvent{{Type: "resource.deleted"}}) {
+		t.Fatal("connected = true for a cycle whose events build no receipt")
+	}
 	if *calls != 0 {
 		t.Fatalf("gate ran %d times with nothing to record it on, want 0", *calls)
 	}
