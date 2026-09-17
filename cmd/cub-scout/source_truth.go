@@ -34,7 +34,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 var (
@@ -122,8 +121,8 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 	// Connected-mode gate: source-truth is meaningless without the
 	// ConfigHub surface. Refuse early rather than emit a half-evidence
 	// document — the operator should know they are not connected.
-	if hub.QuickMode() != hub.Connected {
-		return fmt.Errorf("source-truth requires ConfigHub authentication (run `cub auth login` or set CONFIGHUB_API_KEY)")
+	if err := requireConfigHubFor("compare source-truth"); err != nil {
+		return err
 	}
 
 	ctx := cmd.Context()

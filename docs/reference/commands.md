@@ -1620,7 +1620,7 @@ cub scout compare source-truth Deployment rag-server -n demo --strategy git-argo
 
 ### Requirements
 
-- Connected mode (`cub auth login` or `CONFIGHUB_API_KEY` set)
+- Connected mode: a logged-in `cub` CLI (`cub auth login`), in either invocation form (`cub scout compare source-truth ...` or `cub-scout compare source-truth ...`)
 - Argo CD CLI on PATH for `*-argo` strategies; Flux CLI for `*-flux`
 - Reachable kubeconfig pointing at the cluster running the workload
 
@@ -2761,7 +2761,7 @@ downstream commands can opt in to them without the parser growing flags.
 
 ### Requirements
 
-Connected mode (`cub auth login` or `CONFIGHUB_API_KEY` set).
+Connected mode: a logged-in `cub` CLI (`cub auth login`), in either invocation form.
 
 ### views open
 
@@ -2861,7 +2861,7 @@ but cub-scout joins in cluster truth. Single-cluster scope assumed
 `Orphan?` columns are intentional follow-ups rather than v0.1
 scope.
 
-Requires connected mode (`cub auth login` or `CONFIGHUB_API_KEY`).
+Requires connected mode: a logged-in `cub` CLI (`cub auth login`), in either invocation form.
 
 ### v0.1 scope items still pending
 

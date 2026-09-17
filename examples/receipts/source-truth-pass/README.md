@@ -25,8 +25,8 @@ cover the common Argo / Flux / Helm / OCI / Kustomize combinations.
 ## Connected-Mode Required
 
 `source-truth-pass` reads the ConfigHub surface via the `cub` CLI. The
-predicate requires connected mode (`cub auth login` or
-`CONFIGHUB_API_KEY`). Standalone-mode runs decline with an INCONCLUSIVE
+predicate requires connected mode (a logged-in `cub` CLI: `cub auth login`).
+Runs without a ConfigHub login decline with an INCONCLUSIVE
 verdict + the source-truth proof gaps mirrored into `omissions[]`.
 
 ## Verdict Mapping

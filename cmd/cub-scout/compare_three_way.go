@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 type threeWayScopeType string
@@ -174,8 +173,8 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 
 	var scope threeWayScope
 	if compareThreeWayView != "" {
-		if hub.QuickMode() != hub.Connected {
-			return fmt.Errorf("--view requires ConfigHub authentication (run `cub auth login` or set CONFIGHUB_API_KEY)")
+		if err := requireConfigHubFor("compare three-way --view"); err != nil {
+			return err
 		}
 		scope = threeWayScope{ScopeType: threeWayScopeView, ScopeValue: compareThreeWayView}
 	} else {

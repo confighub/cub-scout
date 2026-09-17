@@ -83,7 +83,7 @@ cub-scout" is the cheapest GUI -> CLI bridge (#391 design rationale).
 
 Output is JSON only in v0.1.
 
-Requires connected mode (cub auth login or CONFIGHUB_API_KEY).`,
+Requires connected mode: a logged-in cub CLI (cub auth login), or the cub scout plugin form.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runViewsResolve,
 }
@@ -124,8 +124,8 @@ func runViewsResolve(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("parse view reference: %w", err)
 	}
 
-	if hub.QuickMode() != hub.Connected {
-		return fmt.Errorf("views resolve requires ConfigHub authentication (run `cub auth login` or set CONFIGHUB_API_KEY)")
+	if err := requireConfigHubFor("views resolve"); err != nil {
+		return err
 	}
 
 	out := ResolvedView{
@@ -528,7 +528,7 @@ DataExpression (CEL) and DataPath (JSONPath) columns render placeholder
 text in the cell so the column header is preserved; full evaluator
 support is a follow-up dependency decision.
 
-Requires connected mode (cub auth login or CONFIGHUB_API_KEY).`,
+Requires connected mode: a logged-in cub CLI (cub auth login), or the cub scout plugin form.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runViewsProject,
 }
@@ -635,8 +635,8 @@ func runViewsProject(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("parse view reference: %w", err)
 	}
 
-	if hub.QuickMode() != hub.Connected {
-		return fmt.Errorf("views project requires ConfigHub authentication (run `cub auth login` or set CONFIGHUB_API_KEY)")
+	if err := requireConfigHubFor("views project"); err != nil {
+		return err
 	}
 
 	pv, err := buildProjectedView(cmd.Context(), ref, viewsProjectSpace, viewsProjectWithReality)

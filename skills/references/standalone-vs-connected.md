@@ -6,7 +6,7 @@ The **mode axis**. cub-scout works without ConfigHub (`standalone`) and with Con
 
 | Aspect | Standalone | Connected |
 |---|---|---|
-| Trigger | No `cub auth login`, no `CONFIGHUB_API_KEY` | `cub auth status` returns OK, or `CONFIGHUB_API_KEY` is set in env |
+| Trigger | The `cub` CLI is absent or not logged in | The `cub` CLI is logged in (`cub auth status` returns OK), or cub-scout runs as the `cub scout` plugin |
 | Required inputs | Just a kubeconfig context | kubeconfig + ConfigHub auth |
 | Cluster reads | All read verbs work | All read verbs work |
 | ConfigHub reads | Refused with a clear error | Available via `cub * get/list`, `cub unit get`, `cub link list` |
@@ -19,20 +19,23 @@ The mode is **per-invocation**, not per-cluster. The same cluster can be observe
 
 ```bash
 $ cub-scout status
-Mode: connected (CONFIGHUB_API_KEY set; cub auth status: OK)
-Cluster: prod-use2
-ConfigHub: hub.confighub.com
+ConfigHub:  ● Connected
+Cluster:    prod-use2
+Context:    prod-use2
+Worker:     (none for this cluster)
 ```
 
 vs.
 
 ```bash
 $ cub-scout status
-Mode: standalone (no ConfigHub auth)
-Cluster: prod-use2
+ConfigHub:  ○ Online (not authenticated)
+            Run: cub auth login
+Cluster:    prod-use2
+Context:    prod-use2
 ```
 
-The implementation is `pkg/hub.QuickMode()` returning `Connected` or `Standalone` based on env / `cub auth status`. Connected-mode commands gate on this.
+Connected-only commands gate on `pkg/hub.RequireCubConnected()`: the token passed by the `cub` plugin host, cub-scout's own `auth.json`, or a logged-in `cub` CLI (`cub auth get-token`). The standalone and plugin forms reach the same decision. `pkg/hub.QuickMode()` is a display helper for the TUI header; it never consults `cub` and must not be used as a gate.
 
 ## What works in standalone
 
@@ -114,8 +117,10 @@ Most operators don't need to think about the bundle / file mode — it's the CI 
 For CI pipelines that need ConfigHub-side evidence (source-truth verdicts, audit trails, governance gates):
 
 ```bash
-# Provision auth via env var, not interactive cub auth login
-export CONFIGHUB_API_KEY=<key>
+# cub-scout has no API-key mode of its own: it uses the cub CLI's login.
+# Authenticate cub non-interactively by whatever means your ConfigHub
+# deployment supports (see `cub auth --help`), then run in the same environment.
+cub auth status
 cub-scout compare source-truth deploy/api -n prod --strategy git-argo --format json
 ```
 

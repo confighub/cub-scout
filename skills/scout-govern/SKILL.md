@@ -9,7 +9,7 @@ allowed-tools: Bash(./cub-scout history *) Bash(cub-scout history *) Bash(cub sc
 
 The Govern verb group of cub-scout. Read-only consumption of connected ConfigHub governance signals — ChangeSet history, blast-radius impact analysis, fleet conformance, connected summaries, Views, audit trails, and bundle / catalog state.
 
-Most of this skill requires **connected mode** (`cub auth login` or `CONFIGHUB_API_KEY`). Standalone-mode users get `bundle` / `catalog` / `audit` against local artifacts only.
+Most of this skill requires **connected mode** (a logged-in `cub` CLI: `cub auth login`). Standalone-mode users get `bundle` / `catalog` / `audit` against local artifacts only.
 
 ## When to use
 

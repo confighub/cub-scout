@@ -3,9 +3,7 @@ package hub
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 // Auth holds user authentication state.
@@ -100,11 +98,8 @@ func CubCLIAuthenticated() bool {
 	if IsPluginMode() {
 		return PluginToken() != ""
 	}
-	out, err := exec.Command("cub", "auth", "get-token").Output()
-	if err != nil {
-		return false
-	}
-	return strings.TrimSpace(string(out)) != ""
+	token, err := cubAuthToken()
+	return err == nil && token != ""
 }
 
 // IsPaidTier returns true if user has a paid subscription.

@@ -89,6 +89,27 @@ integration tests, all nine `confighub_*` MCP tools over the stdio gateway,
 The v0.5.0 removal of `BridgeWorkerID` from Release and Space touches nothing
 here; cub-scout never read those fields.
 
+## Connected-Only Gate (#551)
+
+`compare source-truth`, `views resolve`, `views project` and
+`compare three-way --view` gated on `hub.QuickMode() != hub.Connected`.
+`QuickMode` is a display helper that never consults the `cub` CLI, so those
+commands refused a logged-in user in standalone form while the plugin form
+passed, and the error's two remedies could not work: `cub auth login` was not
+consulted, and nothing, in cub-scout or in `cub`, reads `CONFIGHUB_API_KEY`.
+They now gate on `hub.RequireCubConnected()` through `requireConfigHubFor`: the
+plugin host's token, cub-scout's `auth.json`, or a logged-in `cub`. Each refusal
+names its cause (reads turned off, `cub` not installed, `cub` not logged in).
+It deliberately does not use `CurrentMode()`, which probes hub.confighub.com
+and so fails for a self-hosted or air-gapped ConfigHub that `cub` can reach.
+`CONFIGHUB_API_KEY` is removed from help, docs, skills and the receipts
+example; two skills also showed invented `status` output and now show the real
+one. Guards: no command may compare `hub.QuickMode()`, and every environment
+variable named in text must be one the code reads. Verified live in both forms
+against ConfigHub v0.5.1. Not changed: `doctor`/`gitops status --with-confighub`
+still gate through `hub.NewClient().RequireConnected()`, which has the
+hub.confighub.com probe.
+
 ## Documentation Update: 2026-09-14
 
 v2.11.0 is published (tag `89f0bf2`). The
