@@ -40,6 +40,22 @@ func TestCubRunnerRefusesACallThatNamesNoSpace(t *testing.T) {
 		// The sentinel cub-scout sends when it resolved nothing: refused here,
 		// with cub-scout's own reason rather than cub's exit 1.
 		{name: "unresolved sentinel", args: []string{"unit", "list", "--space", unresolvedConfigHubSpace}, want: "cub-scout resolved none"},
+		// cub reads `--space ""` as every space, exactly as it reads no --space
+		// at all: 348 units against a live server, versus 2 for a named space.
+		{name: "empty space", args: []string{"unit", "list", "--space", ""}, want: "empty ConfigHub space"},
+		{name: "empty space with equals", args: []string{"unit", "list", "--space="}, want: "empty ConfigHub space"},
+		{name: "whitespace space", args: []string{"unit", "list", "--space", "   "}, want: "empty ConfigHub space"},
+		// cobra keeps the last value when a flag repeats, so the check reads
+		// the last one too.
+		{name: "the last --space is the one cub uses", args: []string{"unit", "list", "--space", "prod", "--space", unresolvedConfigHubSpace}, want: "cub-scout resolved none"},
+		{name: "the last --space names a real space", args: []string{"unit", "list", "--space", unresolvedConfigHubSpace, "--space", "prod"}},
+
+		// A target carries its own space, which is how a read scoped by target
+		// alone works: withConfigHubSpaceOrTargets emits no --space for it.
+		{name: "a qualified target carries the space", args: []string{"k8s", "get", "Deployment", "--target", "prod/cluster-a", "-o", "json"}},
+		{name: "a target ID carries the space", args: []string{"k8s", "get", "Deployment", "--target", "806aac53-236c-446d-8ad6-91d6daf6810e"}},
+		{name: "several targets, each qualified", args: []string{"k8s", "get", "Deployment", "--target", "prod/a,prod/b"}},
+		{name: "an unqualified target names no space", args: []string{"k8s", "get", "Deployment", "--target", "cluster-a"}, want: "reads one ConfigHub space"},
 
 		// Commands that name no space.
 		{name: "auth status", args: []string{"auth", "status"}},
@@ -176,15 +192,24 @@ func TestCubTextCarriesCubsReason(t *testing.T) {
 // Every cub call goes through the runner, so the space rule and the removed
 // surface are checked for argument vectors no AST guard can read.
 //
-// pkg/hub is the exception: it runs `cub auth status` and `cub auth get-token`,
-// which is the gate the runner's callers are behind, and it cannot import from
-// package main. Both name no space, so the runner would pass them through.
+// pkg/hub is the one exception, and it is named here rather than left
+// unchecked: it runs `cub auth status` and `cub auth get-token`, which is the
+// gate the runner's callers are behind, and it cannot import from package main.
+// Both name no space, so the runner would pass them through.
 func TestEveryCubCallGoesThroughTheRunner(t *testing.T) {
-	fset, files := parseGoFilesIncludingTests(t, "cmd")
+	theGateItself := map[string]bool{
+		filepath.Join("pkg", "hub", "connected.go"): true, // cub auth status
+		filepath.Join("pkg", "hub", "auth.go"):      true, // cub auth get-token
+	}
+
+	fset, files := parseGoFilesIncludingTests(t, "cmd", "pkg")
 	var problems []string
 	for path, file := range files {
 		base := filepath.Base(path)
 		if base == "cub_runner.go" || strings.HasSuffix(base, "_test.go") {
+			continue
+		}
+		if theGateItself[filepath.Join(filepath.Base(filepath.Dir(filepath.Dir(path))), filepath.Base(filepath.Dir(path)), base)] {
 			continue
 		}
 		ast.Inspect(file, func(n ast.Node) bool {

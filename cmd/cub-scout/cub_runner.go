@@ -46,13 +46,16 @@ var cubSpaceFreeCommands = [][]string{
 	{"completion"},
 	{"organization"},
 	{"user"},
-	{"space", "list"},  // the spaces themselves are the org-wide question
-	{"space", "count"}, //
-	// A space command names its space as the positional, not with --space.
+	{"space", "list"}, // the spaces themselves are the org-wide question
+	// A space command names its space as the positional, not with --space. The
+	// `cub space` group has no --space flag at all.
 	{"space", "create"},
 	{"space", "get"},
 	{"space", "delete"},
 	{"space", "update"},
+	{"space", "explain"},
+	{"space", "new-prefix"},
+	{"space", "open"},
 }
 
 // cubRemovedCommands are subcommand pairs cub no longer has. A removed
@@ -109,6 +112,11 @@ func cubStdout(ctx context.Context, args ...string) ([]byte, error) {
 
 // cubText is cubStdout, trimmed, for the callers that work in strings.
 func cubText(ctx context.Context, args ...string) (string, error) {
+	if err := checkCubArgs(args); err != nil {
+		// Refused, not run: saying "failed" would describe a call that never
+		// happened, and the refusal already names the command.
+		return "", err
+	}
 	out, err := cubStdout(ctx, args...)
 	if err != nil {
 		return "", fmt.Errorf("cub %s failed: %w", strings.Join(args, " "), err)
@@ -127,10 +135,6 @@ func checkCubArgs(args []string) error {
 	if why, removed := cubRemovedCommands[name]; removed {
 		return fmt.Errorf("cub %s no longer exists: %s", name, why)
 	}
-	// A one-word group, such as `gitops`, is removed whatever follows it.
-	if why, removed := cubRemovedCommands[cubCommandWords(args)[0]]; removed {
-		return fmt.Errorf("cub %s no longer exists: %s", cubCommandWords(args)[0], why)
-	}
 	for _, arg := range args {
 		flag := arg
 		if index := strings.Index(flag, "="); index > 0 {
@@ -144,13 +148,18 @@ func checkCubArgs(args []string) error {
 	if cubCommandNeedsNoSpace(args) {
 		return nil
 	}
-	space, named := cubArgsSpace(args)
-	if !named {
+	space, from := cubArgsSpace(args)
+	switch from {
+	case cubSpaceUnnamed:
 		return fmt.Errorf("cub %s reads one ConfigHub space and none was named: pass --space <slug> (or --space '%s' for a deliberate read of every space), name the entity as <space>/<slug>, or pass its ID. cub has no default space, so none is assumed",
 			name, allConfigHubSpaces)
-	}
-	if space == unresolvedConfigHubSpace {
-		return fmt.Errorf("cub %s was given no ConfigHub space: cub-scout resolved none and will not read every space instead. Pass --space <slug> or set CUB_SPACE=<slug>", name)
+	case cubSpaceFromFlag:
+		// An empty --space is not a narrower read: cub treats `--space ""`
+		// exactly as it treats no --space at all, so it returns the whole
+		// organization. cub-scout's own sentinel says the same thing in words.
+		if space == "" || space == unresolvedConfigHubSpace {
+			return fmt.Errorf("cub %s was given an empty ConfigHub space, which cub reads as every space: cub-scout resolved none and will not widen the read. Pass --space <slug> or set CUB_SPACE=<slug>", name)
+		}
 	}
 	return nil
 }
@@ -201,27 +210,75 @@ func cubCommandName(args []string) string {
 }
 
 // cubArgsSpace reports the space the arguments name, and whether they name one
-// at all. A --space flag is the space; otherwise a <space>/<slug> or ID
-// reference carries its own, which is what cub accepts in place of the flag.
-func cubArgsSpace(args []string) (string, bool) {
+// at all.
+//
+// A --space flag is the space, and the **last** one wins, because that is which
+// one cobra keeps when a flag repeats. Otherwise the space can ride on the
+// entity: a <space>/<slug> reference or an ID, and for the commands that take
+// targets, a <space>/<slug> or ID target — which is how
+// withConfigHubSpaceOrTargets scopes a read by target alone.
+func cubArgsSpace(args []string) (string, cubSpaceSource) {
+	space := ""
+	named := false
 	for i, arg := range args {
 		switch {
 		case arg == "--space":
-			if i+1 < len(args) {
-				return strings.TrimSpace(args[i+1]), true
+			if i+1 >= len(args) {
+				// A trailing --space names nothing; cub rejects it too.
+				return "", cubSpaceUnnamed
 			}
-			// A trailing --space names nothing; cub would reject it too.
-			return "", false
+			space, named = strings.TrimSpace(args[i+1]), true
 		case strings.HasPrefix(arg, "--space="):
-			return strings.TrimSpace(strings.TrimPrefix(arg, "--space=")), true
+			space, named = strings.TrimSpace(strings.TrimPrefix(arg, "--space=")), true
 		}
 	}
+	if named {
+		return space, cubSpaceFromFlag
+	}
+
 	for _, ref := range cubEntityReferences(args) {
 		if configHubRefNamesSpace(ref) {
-			return "", true
+			return "", cubSpaceFromEntity
 		}
 	}
-	return "", false
+	for _, target := range cubFlagValues(args, "--target") {
+		// A comma list is how cub takes several targets; each part carries its
+		// own space, and withConfigHubSpaceOrTargets has already refused a part
+		// that does not.
+		for _, part := range strings.Split(target, ",") {
+			if configHubRefNamesSpace(strings.TrimSpace(part)) {
+				return "", cubSpaceFromEntity
+			}
+		}
+	}
+	return "", cubSpaceUnnamed
+}
+
+// cubSpaceSource is how a call names its space, which decides what an empty
+// value means: an empty --space widens the read, while an entity that carries
+// its own space has no flag value to be empty.
+type cubSpaceSource int
+
+const (
+	cubSpaceUnnamed cubSpaceSource = iota
+	cubSpaceFromFlag
+	cubSpaceFromEntity
+)
+
+// cubFlagValues are the values given for a flag, in either spelling.
+func cubFlagValues(args []string, flag string) []string {
+	var values []string
+	for i, arg := range args {
+		switch {
+		case arg == flag:
+			if i+1 < len(args) {
+				values = append(values, strings.TrimSpace(args[i+1]))
+			}
+		case strings.HasPrefix(arg, flag+"="):
+			values = append(values, strings.TrimSpace(strings.TrimPrefix(arg, flag+"=")))
+		}
+	}
+	return values
 }
 
 // cubEntityReferences are the positional arguments after the subcommand words:
