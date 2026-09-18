@@ -603,13 +603,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 	}
 
 	// Report why Argo/Flux workloads are snapshot-imported like everything else.
-	delegation, err := attemptGitOpsDelegation(proposal.App, allWorkloads, logger)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: GitOps delegation failed, falling back to scout import: %v\n", err)
-		if logger != nil {
-			logger.Log("GitOps delegation failed, fallback to scout import: %v", err)
-		}
-	}
+	delegation := gitOpsWorkloadsInProposal(allWorkloads, logger)
 
 	if delegation.ArgoWanted || delegation.FluxWanted {
 		printDelegationSummary(delegation)
@@ -1499,10 +1493,14 @@ func printDelegationSummary(r gitOpsDelegationResult) {
 	fmt.Println()
 	fmt.Println("GitOps-managed workloads:")
 	if r.ArgoWanted {
-		fmt.Printf("  ○ ArgoCD workloads -> scout snapshot (%s)\n", r.ArgoReason)
+		fmt.Println("  ○ ArgoCD workloads -> scout snapshot")
 	}
 	if r.FluxWanted {
-		fmt.Printf("  ○ Flux workloads -> scout snapshot (%s)\n", r.FluxReason)
+		fmt.Println("  ○ Flux workloads -> scout snapshot")
+	}
+	// One reason, however many controllers: it is the same reason.
+	if reason := firstNonEmpty(r.ArgoReason, r.FluxReason); reason != "" {
+		fmt.Printf("    %s\n", reason)
 	}
 }
 
@@ -1517,13 +1515,12 @@ func printDelegationSummary(r gitOpsDelegationResult) {
 // or an `oci://` bundle — and makes a space's units match them. The rendering
 // belongs to the operator's own tooling, so there is nothing for cub-scout to
 // delegate to.
-const gitOpsDelegationUnavailable = "cub gitops import was removed from cub in July 2026; render with your controller's own tooling and load the result with `cub variant upload`"
+const gitOpsDelegationUnavailable = "delegation is gone: cub removed `gitops import` in July 2026, so render with your controller's own tooling and load the result with `cub variant upload --component <name>`"
 
-// attemptGitOpsDelegation reports that GitOps-managed workloads cannot be
-// delegated, and why. It runs nothing: the command it used to call does not
-// exist, and the space it used to create for that call is created by the import
-// itself.
-func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *ImportLogger) (gitOpsDelegationResult, error) {
+// gitOpsWorkloadsInProposal reports which GitOps controllers manage workloads in
+// this proposal, and why they are snapshot-imported like everything else. It
+// runs nothing: the command cub-scout used to delegate to does not exist.
+func gitOpsWorkloadsInProposal(workloads []WorkloadInfo, logger *ImportLogger) gitOpsDelegationResult {
 	result := gitOpsDelegationResult{}
 	for _, w := range workloads {
 		if w.Owner == "ArgoCD" {
@@ -1534,7 +1531,7 @@ func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *Imp
 		}
 	}
 	if !result.ArgoWanted && !result.FluxWanted {
-		return result, nil
+		return result
 	}
 
 	if result.ArgoWanted {
@@ -1544,10 +1541,10 @@ func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *Imp
 		result.FluxReason = gitOpsDelegationUnavailable
 	}
 	if logger != nil {
-		logger.Section("GITOPS DELEGATION")
-		logger.Log("Not delegating: %s", gitOpsDelegationUnavailable)
+		logger.Section("GITOPS-MANAGED WORKLOADS")
+		logger.Log("Imported as a cub-scout snapshot: %s", gitOpsDelegationUnavailable)
 	}
-	return result, nil
+	return result
 }
 
 func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger, shouldConnect bool, auditReason string) error {

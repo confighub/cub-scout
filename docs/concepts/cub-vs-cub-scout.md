@@ -68,7 +68,7 @@ The rule of thumb: **read and prove → `cub scout`. Write and govern → `cub`.
 Two different import surfaces exist. They are complementary, not interchangeable:
 
 - **`cub-scout import --git-path ./repo`** — parses a Git repository locally, produces an import **preview** (structure, proposals, duplicate-safe identifiers). No cluster, no render target, no write. Use to answer "what would this repo import as?"
-- **`cub variant upload --space <space> <dir | file | - | oci://ref>`** — ingests **already rendered** resources and makes the space's units match them: every resource becomes its own unit, create-or-update, with a 3-way merge that preserves changes made in ConfigHub since. It renders nothing; the rendering is yours (`helm template`, `kustomize build`, an installer, or a published bundle).
+- **`cub variant upload --component <name> <dir | file | - | oci://ref>`** — ingests **already rendered** resources and makes the space's units match them: every resource becomes its own unit, create-or-update, with a 3-way merge that preserves changes made in ConfigHub since. It renders nothing; the rendering is yours (`helm template`, `kustomize build`, an installer, or a published bundle). `--component` is required — it is the well-known Component label, and the space slug is derived from it unless `--space` names one. `--dry-run` reports what the upload would create, update, empty, revive or adopt without changing anything.
 
 `cub scout` scouts. `cub variant upload` writes. The two can feed each other: scout to understand, upload to execute.
 

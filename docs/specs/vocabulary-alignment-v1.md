@@ -157,7 +157,7 @@ After v1, the same path creates:
   query (`cub space list -l Component=<name>`) returns all Variants.
 
 This is a `cub` CLI capability question, not a cub-scout one — cub-scout
-emits the desired state and `cub gitops import` (removed from cub in July 2026; now `cub variant upload`) (or the eventual
+emits the desired state and `cub gitops import` — removed from cub in July 2026, and `cub variant upload` is what loads rendered state now — (or the eventual
 `cub component create` / `cub variant create` commands) creates it.
 Coordinate with the ConfigHub side (Track 1) before shipping.
 

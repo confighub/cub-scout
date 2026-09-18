@@ -24,9 +24,14 @@ echo "$HELP_OUTPUT" | grep -q -- "--connect"
 echo "$HELP_OUTPUT" | grep -q -- "--no-connect"
 
 echo "==> Verifying no code path still calls the removed command"
-! grep -rn 'exec.Command("cub", "gitops"' cmd/ || {
-  echo "FAIL: a cub gitops call is back" >&2
+# cub is spawned through the runner, so the shape to look for is the argument
+# vector, not exec.Command. The earlier version of this check grepped for
+# `exec.Command("cub", "gitops"`, a string this repo has never contained, and so
+# could never fail.
+# Test files name the pair legitimately: the runner's cases and the guard's table.
+if grep -rnE --include='*.go' --exclude='*_test.go' '"gitops",[[:space:]]*"(discover|import)"' cmd/ ; then
+  echo "FAIL: a cub gitops call is back; cub removed that group (#573)" >&2
   exit 1
-}
+fi
 
 echo "==> Import delegation checks passed"

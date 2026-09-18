@@ -321,10 +321,13 @@ first through.
 
 In cub-scout:
 
-- The import flow no longer attempts delegation. `attemptGitOpsDelegation` now
-  reports why Argo- and Flux-managed workloads are snapshot-imported like
-  everything else, and runs nothing — it used to create the App Space before
-  discovering it could not delegate. The unreachable "delegated" paths
+- The import flow no longer attempts delegation. `gitOpsWorkloadsInProposal`
+  (was `attemptGitOpsDelegation`) reports why Argo- and Flux-managed workloads
+  are snapshot-imported like everything else, and runs nothing. It used to
+  create the App Space and list targets before discovering it could not
+  delegate; the space is still created by `applyImportWithLogger` on the same
+  runs, so what is saved is one redundant idempotent call and two `cub` runs,
+  not a write. The unreachable "delegated" paths
   (`AnyDelegated`, `filterScoutWorkloadsAfterDelegation`, the two `✓ … -> cub
   gitops import` lines) are gone, with the helpers only they used
   (`selectGitOpsTargets`, `gitOpsNamespacesForOwner`, `loadCubTargets`,

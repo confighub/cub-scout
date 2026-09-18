@@ -82,7 +82,7 @@ Use it for:
 - `cub link list / get` (the data feed for cub-scout's connected attribution layer)
 
 Current local CLI truth (cub v0.5.3):
-- `cub variant upload --space <space> <dir | file | - | oci://ref>`
+- `cub variant upload --component <name> <dir | file | - | oci://ref>`
 - `cub gitops discover` and `cub gitops import` **no longer exist**. cub deleted
   the whole `gitops` group on 2026-07-25, in the same commit that removed
   `unit apply`, `unit destroy`, `unit import` and `unit refresh`. That commit
@@ -376,7 +376,6 @@ When the question crosses into ConfigHub or renderer workflows:
 ```bash
 cub version
 cub variant upload --help
-cub k8s --help
 cub k8s --help
 cub k8s get --help
 cub k8s types --help

@@ -314,15 +314,6 @@ note "Redis and debug-config are invisible to this tool."
 # ============================================================
 # ACT 4 - THE PIPELINE: cub gitops import (--live only)
 # ============================================================
-# cub removed the whole `gitops` group on 2026-07-25 (#573), so this act runs
-# only against a cub that still has it. On a current cub it says so and is
-# skipped, rather than failing part-way through.
-if $LIVE && ! cub gitops --help >/dev/null 2>&1; then
-    warn "cub gitops was removed from cub on 2026-07-25 - skipping the pipeline act"
-    note "Rendered configuration now goes in with: cub variant upload <dir|oci://ref> --space <space>"
-    note "See https://github.com/confighub/cub-scout/issues/573"
-fi
-
 if $LIVE && cub gitops --help >/dev/null 2>&1; then
     banner "Act 4: The Pipeline (cub gitops import)"
     note "Full render pipeline with dry/wet unit pairs"
@@ -538,12 +529,28 @@ if $LIVE && cub gitops --help >/dev/null 2>&1; then
             note "Synthetic history seeding skipped (use --seed-history for storytelling demos)"
         fi
     fi
+elif $LIVE; then
+    banner "Act 4: The Pipeline (cub gitops import)"
+    warn "Not running - cub removed the gitops group on 2026-07-25"
+    echo ""
+    note "This was the production import path for ArgoCD/Flux clusters: discover"
+    note "Applications, deploy an in-cluster renderer, render each Application"
+    note "through the controller's own renderer, and keep dry/wet unit pairs that"
+    note "auto-updated as Git changed."
+    echo ""
+    note "cub renders nothing now. Render with your controller's own tooling and"
+    note "load the result:"
+    note "  cub variant upload --component <name> <dir|oci://ref>"
+    note "See https://github.com/confighub/cub-scout/issues/573"
+    echo ""
+    note "Acts 2-3 (cub-scout) are unaffected and captured static snapshots above."
 else
     banner "Act 4: The Pipeline (cub gitops import)"
     note "Not running - add --live to enable (requires ConfigHub auth)"
     echo ""
-    note "This is the production import path for ArgoCD/Flux clusters."
-    note "cub gitops import creates a live render pipeline:"
+    note "This was the production import path for ArgoCD/Flux clusters, until cub"
+    note "removed the gitops group on 2026-07-25 (see issue 573). With a cub from"
+    note "before then, it creates a live render pipeline:"
     echo ""
     note "  1. Discover ArgoCD Applications on the cluster"
     note "  2. Deploy an in-cluster renderer worker"
@@ -567,7 +574,7 @@ echo ""
 cat <<'TABLE'
                      MANAGEMENT                    DISCOVERY
                      cub gitops     import argocd  cub-scout
-                     import         (per-app)      import
+                     import (gone)  (per-app)      import
 ---------------------------------------------------------------
 helm-guestbook          Y              Y              Y
 kustomize-guestbook     Y              Y              Y
@@ -585,7 +592,7 @@ Y = found/imported    . = not visible to this tool
 TABLE
 echo ""
 
-echo -e "${BOLD}Management:${NC} cub gitops import"
+echo -e "${BOLD}Management:${NC} cub gitops import (removed from cub 2026-07-25; render yourself, then cub variant upload --component <name>)"
 echo "  Rendered pipeline with auto-updating dry/wet unit pairs."
 echo "  Use for ArgoCD/Flux apps you want to manage continuously."
 echo ""
@@ -593,7 +600,7 @@ echo -e "${BOLD}Discovery:${NC} cub-scout import + import argocd"
 echo "  Broad cluster inventory (import) or quick per-app detail (import argocd)."
 echo "  Use to find everything, including Helm/Native resources outside ArgoCD."
 echo ""
-echo -e "${BOLD}Together:${NC} cub gitops import for ArgoCD apps, then cub-scout import for the rest."
+echo -e "${BOLD}Together:${NC} render ArgoCD apps with their own tooling and load them with cub variant upload, then cub-scout import for the rest."
 echo ""
 
 # ============================================================
