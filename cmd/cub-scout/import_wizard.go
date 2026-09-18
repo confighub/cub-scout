@@ -1726,7 +1726,10 @@ func (m ImportWizardModel) startWorkerCmd() tea.Cmd {
 		space := m.proposal.App
 
 		// Start worker in background
-		cmd := exec.Command("cub", "worker", "run", workerName, "--space", space)
+		cmd, cmdErr := cubCommand(context.Background(), withConfigHubSpace([]string{"worker", "run", workerName}, space)...)
+		if cmdErr != nil {
+			return wizardWorkerStartedMsg{err: cmdErr}
+		}
 		cmd.Stdout = nil
 		cmd.Stderr = nil
 		cmd.Stdin = nil
@@ -1826,8 +1829,7 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 
 	// Step 1: Get unit JSON
 	appendTestDebug("Step 1: Getting unit JSON...")
-	getCmd := exec.Command("cub", "unit", "get", "--space", m.proposal.App, m.testUnitSlug, "-o", "json")
-	unitJSON, err := commandStdout(getCmd)
+	unitJSON, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", m.testUnitSlug, "-o", "json"}, m.proposal.App)...)
 	writeTestDebug("01-unit-get.json", unitJSON)
 	appendTestDebug(fmt.Sprintf("Unit get result: %d bytes, err=%v", len(unitJSON), err))
 	if err != nil {
@@ -1846,8 +1848,7 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 	appendTestDebug("Step 2: Reading unit data...")
 	// The data is modified and written back, so it must be stdout alone: a notice
 	// cub prints on stderr would otherwise be written into the unit.
-	dataCmd := exec.Command("cub", "unit", "data", m.testUnitSlug, "--space", m.proposal.App)
-	yamlData, err := commandStdout(dataCmd)
+	yamlData, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "data", m.testUnitSlug}, m.proposal.App)...)
 	writeTestDebug("02-original-yaml.yaml", yamlData)
 	appendTestDebug(fmt.Sprintf("Original YAML: %d bytes, err=%v", len(yamlData), err))
 	if err != nil {
@@ -1906,7 +1907,12 @@ func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
 
 	// Step 4: Update unit
 	appendTestDebug("Step 4: Updating unit with modified YAML...")
-	updateCmd := exec.Command("cub", "unit", "update", "--space", m.proposal.App, m.testUnitSlug, "-", "--change-desc", "Import wizard test")
+	updateArgs := withConfigHubSpace([]string{"unit", "update", m.testUnitSlug, "-"}, m.proposal.App)
+	updateArgs = append(updateArgs, "--change-desc", "Import wizard test")
+	updateCmd, updateCmdErr := cubCommand(context.Background(), updateArgs...)
+	if updateCmdErr != nil {
+		return wizardTestPhaseMsg{phase: testPhaseAddAnnotation, success: false, err: updateCmdErr}
+	}
 	updateCmd.Stdin = strings.NewReader(string(modifiedYAML))
 	updateOutput, err := updateCmd.CombinedOutput()
 	writeTestDebug("04-update-result.txt", updateOutput)
@@ -1946,11 +1952,7 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 
 	// First, check if the unit has a target. If not, find one and set it.
 	appendTestDebug("Checking if unit has target...")
-	checkCmd := exec.Command("cub", "unit", "get",
-		"--space", m.proposal.App,
-		"-o", "json",
-		m.testUnitSlug)
-	checkOutput, _ := commandStdout(checkCmd)
+	checkOutput, _ := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
 	writeTestDebug("06-unit-before-apply.json", checkOutput)
 	appendTestDebug(fmt.Sprintf("Unit JSON: %d bytes", len(checkOutput)))
 
@@ -1960,10 +1962,7 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 	if !hasTarget {
 		appendTestDebug("Unit has no target, finding one...")
 		// Find a Kubernetes target
-		targetCmd := exec.Command("cub", "target", "list",
-			"--space", m.proposal.App,
-			"-o", "json")
-		targetOutput, err := commandStdout(targetCmd)
+		targetOutput, err := cubStdout(context.Background(), withConfigHubSpace([]string{"target", "list", "-o", "json"}, m.proposal.App)...)
 		writeTestDebug("07-target-list.json", targetOutput)
 		appendTestDebug(fmt.Sprintf("Target list: %d bytes, err=%v", len(targetOutput), err))
 		if err != nil {
@@ -1994,10 +1993,10 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 
 		// Set the target on the unit
 		appendTestDebug(fmt.Sprintf("Setting target to: %s", targetSlug))
-		setTargetCmd := exec.Command("cub", "unit", "set-target",
-			"--space", m.proposal.App,
-			m.testUnitSlug,
-			targetSlug)
+		setTargetCmd, setTargetErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "set-target", m.testUnitSlug, targetSlug}, m.proposal.App)...)
+		if setTargetErr != nil {
+			return wizardTestPhaseMsg{phase: testPhaseApply, success: false, err: setTargetErr}
+		}
 		setOutput, err := setTargetCmd.CombinedOutput()
 		writeTestDebug("08-set-target-result.txt", setOutput)
 		appendTestDebug(fmt.Sprintf("Set target result: %s, err=%v", strings.TrimSpace(string(setOutput)), err))
@@ -2041,12 +2040,7 @@ func (m ImportWizardModel) runTestWaitSync() tea.Msg {
 	// Check if LiveRevisionNum matches HeadRevisionNum
 	// This indicates the worker has synced
 	appendTestDebug("Getting unit status...")
-	cmd := exec.Command("cub", "unit", "get",
-		"--space", m.proposal.App,
-		"-o", "json",
-		m.testUnitSlug)
-
-	output, err := commandStdout(cmd)
+	output, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
 	writeTestDebug("10-unit-sync-status.json", output)
 	appendTestDebug(fmt.Sprintf("Unit status: %d bytes, err=%v", len(output), err))
 	if err != nil {
@@ -2219,18 +2213,13 @@ func (m ImportWizardModel) runTestVerify() tea.Msg {
 			// GitOps reconciliation removed our annotation - this is expected
 			// Verify the annotation is still in the Unit (ConfigHub side worked)
 			appendTestDebug("Checking if annotation is in Unit data...")
-			unitCmd := exec.Command("cub", "unit", "get",
-				"--space", m.proposal.App,
-				"-o", "json",
-				m.testUnitSlug)
-			unitOutput, err := commandStdout(unitCmd)
+			unitOutput, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
 			writeTestDebug("13-unit-final-state.json", unitOutput)
 			appendTestDebug(fmt.Sprintf("Unit final state: %d bytes, err=%v", len(unitOutput), err))
 
 			// The annotation is in the unit's configuration, which is read from
 			// its own endpoint by `cub unit data`.
-			dataCmd := exec.Command("cub", "unit", "data", m.testUnitSlug, "--space", m.proposal.App)
-			unitYAML, dataErr := commandStdout(dataCmd)
+			unitYAML, dataErr := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "data", m.testUnitSlug}, m.proposal.App)...)
 			if len(unitYAML) > 0 {
 				writeTestDebug("14-unit-final-yaml.yaml", unitYAML)
 				appendTestDebug(fmt.Sprintf("Unit YAML: %d bytes, contains annotation: %v", len(unitYAML), strings.Contains(string(unitYAML), m.testAnnotation)))
@@ -2275,12 +2264,7 @@ func (m ImportWizardModel) runTestVerify() tea.Msg {
 func (m ImportWizardModel) checkSyncStatusCmd() tea.Cmd {
 	return func() tea.Msg {
 		// Check unit status
-		cmd := exec.Command("cub", "unit", "get",
-			"--space", m.proposal.App,
-			"-o", "json",
-			m.testUnitSlug)
-
-		_, err := commandStdout(cmd)
+		_, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
 		if err != nil {
 			// Keep polling
 			time.Sleep(500 * time.Millisecond)

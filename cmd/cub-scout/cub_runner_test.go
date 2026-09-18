@@ -5,9 +5,12 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"go/ast"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -47,7 +50,13 @@ func TestCubRunnerRefusesACallThatNamesNoSpace(t *testing.T) {
 		// Removed surface.
 		{name: "unit livedata", args: []string{"unit", "livedata", "api", "--space", "prod"}, want: "no longer exists"},
 		{name: "unit apply", args: []string{"unit", "apply", "api", "--space", "prod"}, want: "no longer exists"},
-		{name: "gitops import", args: []string{"gitops", "import", "--space", "prod"}, want: "no longer exists"},
+		// A space command names its space as the positional.
+		{name: "space get", args: []string{"space", "get", "prod"}},
+		{name: "space create", args: []string{"space", "create", "prod", "-o", "json"}},
+		// `cub gitops` was removed too, but an unknown top-level command exits
+		// 1 saying so, and a plugin can supply one, so the runner lets it
+		// through rather than refusing a user who has that plugin (#573).
+		{name: "gitops import", args: []string{"gitops", "import", "--space", "prod"}},
 		{name: "the version flag", args: []string{"version", "--version"}, want: "cannot take --version"},
 		{name: "the deprecated json flag", args: []string{"unit", "list", "--space", "prod", "--json"}, want: "cannot take --json"},
 		{name: "the deprecated json flag with a value", args: []string{"unit", "list", "--space", "prod", "--json=true"}, want: "cannot take --json"},
@@ -161,5 +170,46 @@ func TestCubTextCarriesCubsReason(t *testing.T) {
 		if !strings.Contains(err.Error(), want) {
 			t.Fatalf("err = %q, want it to contain %q", err, want)
 		}
+	}
+}
+
+// Every cub call goes through the runner, so the space rule and the removed
+// surface are checked for argument vectors no AST guard can read.
+//
+// pkg/hub is the exception: it runs `cub auth status` and `cub auth get-token`,
+// which is the gate the runner's callers are behind, and it cannot import from
+// package main. Both name no space, so the runner would pass them through.
+func TestEveryCubCallGoesThroughTheRunner(t *testing.T) {
+	fset, files := parseGoFilesIncludingTests(t, "cmd")
+	var problems []string
+	for path, file := range files {
+		base := filepath.Base(path)
+		if base == "cub_runner.go" || strings.HasSuffix(base, "_test.go") {
+			continue
+		}
+		ast.Inspect(file, func(n ast.Node) bool {
+			call, ok := n.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			name := spaceGuardCalledName(call)
+			var command ast.Expr
+			switch {
+			case name == "Command" && len(call.Args) >= 1:
+				command = call.Args[0]
+			case name == "CommandContext" && len(call.Args) >= 2:
+				command = call.Args[1]
+			default:
+				return true
+			}
+			if text, isLit := spaceGuardStringLit(command); isLit && text == "cub" {
+				problems = append(problems, fmt.Sprintf("%s: use cubCommand, cubStdout or cubText", fset.Position(call.Pos())))
+			}
+			return true
+		})
+	}
+	sort.Strings(problems)
+	if len(problems) > 0 {
+		t.Fatalf("%d cub calls bypass the runner:\n  %s", len(problems), strings.Join(problems, "\n  "))
 	}
 }

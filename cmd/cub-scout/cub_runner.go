@@ -48,7 +48,11 @@ var cubSpaceFreeCommands = [][]string{
 	{"user"},
 	{"space", "list"},  // the spaces themselves are the org-wide question
 	{"space", "count"}, //
+	// A space command names its space as the positional, not with --space.
 	{"space", "create"},
+	{"space", "get"},
+	{"space", "delete"},
+	{"space", "update"},
 }
 
 // cubRemovedCommands are subcommand pairs cub no longer has. A removed
@@ -60,8 +64,14 @@ var cubRemovedCommands = map[string]string{
 	"unit destroy":   "removed July 2026 with unit apply",
 	"unit import":    "removed July 2026 with unit apply",
 	"unit refresh":   "removed July 2026; the current verb is `cub k8s refresh`",
-	"gitops":         "the whole gitops group was removed July 2026 (#573)",
 }
+
+// The `gitops` group was removed from cub in July 2026 as well (#573), and it is
+// deliberately not listed above. A removed *subcommand* of a command cub still
+// has is what this runner exists to catch, because cub exits 0 and prints the
+// group's help, so the caller cannot tell. An unknown *top-level* command exits
+// 1 saying so, which is honest, and a plugin can supply one — refusing it here
+// would break a user who has that plugin installed.
 
 // cubRemovedFlags are flags cub rejects, or is about to.
 var cubRemovedFlags = map[string]string{

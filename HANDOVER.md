@@ -298,7 +298,7 @@ binary. They stub the gate now. The only test that reaches the real gate is
 `TestConnectedGate_RealProcessBothForms`, which runs the built binary in a
 subprocess against a fake `cub`, deliberately.
 
-## cub Output: -o json, and Stderr Kept Out of Data (#563, partial)
+## cub Output: -o json, Stderr Out of Data, and One Runner (#563)
 
 `cub` deprecated `--json` in favour of `-o json`, and prints
 `Flag --json has been deprecated, use -o json` on stderr for every call that
@@ -322,9 +322,43 @@ and `cub unit list` from merged output could not pass; fixed the same way.
 `tree config --json` passed `--json` to `cub unit tree`, which prints a text
 tree either way, so it never produced JSON. JSON is now refused for that view.
 
-Not done here, still in #563: a single runner that enforces `--space` at run
-time instead of the literal-vector lint, and the remaining `CombinedOutput`
-sites whose output is only logged or searched for an error phrase.
+### One runner (#563 part 3)
+
+`cmd/cub-scout/cub_runner.go` is now the only place cub-scout runs `cub`. Every
+call in `cmd/` goes through `cubCommand` (for callers that own stdin or the exit
+status), `cubStdout` (stdout is the data, stderr is the reason) or `cubText`.
+`TestEveryCubCallGoesThroughTheRunner` fails the build on a direct
+`exec.Command("cub", ...)`. The exception is `pkg/hub`, which runs
+`cub auth status` and `cub auth get-token` — that is the gate the runner's own
+callers sit behind, and it cannot import from package main.
+
+Before spawning, the runner refuses three things the AST guards cannot see,
+because a call's arguments are often built at run time:
+
+| Refusal | Why it cannot be caught by reading source |
+|---|---|
+| No space named | #560 fixed every literal vector, but a vector built from a resource's labels, a comma list of targets or a wizard's proposal is opaque to the lint. An unclassified cub subcommand counts as space-scoped, so a new one fails closed |
+| The unresolved-space sentinel | cub-scout sends `(no-space-resolved)` when it resolved nothing; cub answers "space not found", the runner says cub-scout resolved none and how to give it one |
+| A removed subcommand or flag | `unit livedata`, `unit livestate`, `unit apply`, `unit destroy`, `unit refresh`; `--version`, `--json` |
+
+`cub gitops` is deliberately **not** refused, although it was removed in the same
+July 2026 commit as `unit apply`. The runner exists for calls that misbehave
+silently — a removed subcommand of a command cub still has exits 0 and prints
+the group's help. An unknown top-level command exits 1 saying so, and a plugin
+can supply one, so refusing it would break a user who has that plugin (#573).
+
+A space command (`space get/create/delete/update`) names its space as the
+positional, so those are not asked for `--space`.
+
+The three copies of the read path — `runHistoryCubCommandImpl`,
+`runCompareCubCommandImpl`, `runMCPConnectedToolCommand` — and the TUI's
+`runCubCommand` are now one line each. `map`'s fleet read used to inspect
+`*exec.ExitError` for cub's stderr to spot an auth failure; it reads the error's
+text now, which also covers a failure that is not an `ExitError`.
+
+Still open in #563's original list: the remaining `CombinedOutput` sites whose
+output is only logged or searched for an error phrase. They are no longer a
+correctness risk — nothing parses them — but they are inconsistent.
 
 ## Explicit ConfigHub Space (#552)
 
