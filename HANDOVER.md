@@ -309,8 +309,8 @@ left the flows honest but unable to prove anything.
 
 They prove it from the side cub-scout is for: the cluster. Each flow writes the
 annotated data to the unit, then watches the live workload for the annotation it
-wrote, bounded by `--test-timeout` (default 2m, which is what the old
-wait-for-livedata loop allowed), and reports what it saw:
+wrote — **where it wrote it** — bounded by `--test-timeout` (default 2m, which is
+what the old wait-for-livedata loop allowed), and reports what it saw:
 
 ```
 Annotation confighub.com/test-update=<ts> written to unit api;
@@ -326,12 +326,32 @@ the change reached the cluster and nothing else. A read failure is kept apart
 from a cluster that has not converged: blaming the worker for a missing object is
 the misdirection #571 removed, and it does not come back.
 
-`addAnnotationToYAML` and `addRolloutAnnotationToYAML` now report the workload
-they annotated (`annotatedTarget`: kind, name, namespace) rather than a bare
-name, because the watcher needs all three. `readLiveAnnotationsFn` and
-`observeSleepFn` are the seams: a test drives both flows with no cluster and no
-real waiting. Mutating `Success = observed.Seen` to `true`, or the annotation
-comparison to always match, fails the tests.
+**Where it wrote it** is the whole of it. `--test-update` annotates the object's
+own metadata; `--test-rollout` annotates the **pod template**, which is what
+makes pods restart, and a Deployment's own metadata never gains it. The first
+version of this watch read `obj.GetAnnotations()` for both, so `--test-rollout`
+could never succeed — it would wait the full two minutes on a rollout that
+worked and then tell the user to check their worker, which is the misdirection
+#571 removed. A review caught it before merge; the TUI's "test pipeline" is that
+flow and nothing else, so every TUI run would have failed. The location now
+travels from the write to the read (`annotatedTarget.Where`), and the test
+fixture answers from the YAML the flow actually wrote, at the location asked for,
+so a fixture cannot certify the broken shape again.
+
+Three more from that review: a target with no namespace is refused up front
+rather than polled (a namespace-less read asks for a cluster-scoped object and
+gets "the server could not find the requested resource", which explains
+nothing); a failure waiting cannot fix — no kubeconfig, an unmappable kind — is
+reported on the first read rather than retried for two minutes; and
+`--test-timeout 0` now means "write it and do not wait" instead of being read as
+unset.
+
+`readLiveAnnotationsFn`, `observeSleepFn` and `observeNowFn` are the seams: the
+clock only advances when the wait sleeps, so the tests make exactly the number of
+reads the timeout allows, take no real time, and assert the poll count instead of
+a slack bound. Mutating `Success = observed.Seen` to `true`, the annotation
+comparison to always match, or the rollout's location back to the object, all
+fail.
 
 ## cub Output: -o json, Stderr Out of Data, and One Runner (#563)
 

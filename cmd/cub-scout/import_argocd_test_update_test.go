@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"sigs.k8s.io/yaml"
 )
 
 // cubUnitHelpText is what `cub unit livedata <slug> --space <space>` prints on
@@ -168,7 +170,7 @@ func TestAnnotationUpdateRefusesDataThatIsNotAWorkload(t *testing.T) {
 // success cub-scout did not achieve is the defect this fixes.
 func TestAnnotationUpdateRunsTheConfigHubPipeline(t *testing.T) {
 	logPath, stdinPath := fakeCubUnitPipeline(t, testDeploymentYAML)
-	stubClusterAnnotations(t, -1) // the cluster is watched; what it says is another test
+	stubCluster(t, stdinPath, -1) // the cluster is watched; what it says is another test
 
 	result, err := testAnnotationUpdate("prod", "api")
 	if err != nil {
@@ -240,7 +242,7 @@ func TestAnnotationUpdateReportsAFailedWriteBack(t *testing.T) {
 // unit is.
 func TestRolloutRestartDoesNotWaitForLiveData(t *testing.T) {
 	logPath, stdinPath := fakeCubUnitPipeline(t, testDeploymentYAML)
-	stubClusterAnnotations(t, -1)
+	stubCluster(t, stdinPath, -1)
 
 	result, err := testRolloutRestart("prod", "api")
 	if err != nil {
@@ -289,67 +291,88 @@ func TestRolloutRestartDoesNotRetryAFailedRead(t *testing.T) {
 	}
 }
 
-// stubClusterAnnotations makes the live-object read answer from memory, so the
-// flows can be driven without a cluster. `arrivesAfter` is how many reads pass
-// before the annotation shows up; -1 means never.
-func stubClusterAnnotations(t *testing.T, arrivesAfter int) *int {
-	t.Helper()
-	reads := 0
-	prevRead, prevSleep, prevTimeout := readLiveAnnotationsFn, observeSleepFn, testUpdateTimeoutFlag
-	t.Cleanup(func() {
-		readLiveAnnotationsFn, observeSleepFn, testUpdateTimeoutFlag = prevRead, prevSleep, prevTimeout
-	})
-	observeSleepFn = func(time.Duration) {}
-	testUpdateTimeoutFlag = 2 * time.Second
-	readLiveAnnotationsFn = func(_ context.Context, _, _, _ string) (map[string]string, error) {
-		reads++
-		if arrivesAfter >= 0 && reads > arrivesAfter {
-			return map[string]string{"confighub.com/test-update": testUpdateAnnotationValue,
-				"kubectl.kubernetes.io/restartedAt": testUpdateAnnotationValue}, nil
-		}
-		return map[string]string{}, nil
-	}
-	return &reads
+// fakeCluster answers the live-object read from what the flow actually wrote to
+// the unit, so a flow that writes one value and looks for another fails.
+//
+// It models where an annotation really lives: a rollout annotation reaches the
+// pod template and never the workload's own metadata, which is the defect this
+// fixture exists to catch.
+type fakeCluster struct {
+	t *testing.T
+	// stdinPath is what the fake cub captured from `unit update <slug> -`.
+	stdinPath string
+	// arrivesAfter is how many reads pass before the cluster has the change;
+	// -1 means never.
+	arrivesAfter int
+	reads        int
+	now          time.Time
 }
 
-// testUpdateAnnotationValue is filled in by the flow under test: the stub reads
-// it back so the value has to match what was written.
-var testUpdateAnnotationValue string
-
-// captureWrittenAnnotation records the value the flow wrote, so the stubbed
-// cluster can answer with the same one.
-func captureWrittenAnnotation(t *testing.T, stdinPath string, key string) {
+// stubCluster installs the fake cluster, a clock the sleep advances, and a
+// short timeout. Everything is restored at the end of the test.
+func stubCluster(t *testing.T, stdinPath string, arrivesAfter int) *fakeCluster {
 	t.Helper()
-	written, err := os.ReadFile(stdinPath)
+	cluster := &fakeCluster{t: t, stdinPath: stdinPath, arrivesAfter: arrivesAfter, now: time.Now()}
+
+	prevRead, prevSleep, prevNow, prevTimeout := readLiveAnnotationsFn, observeSleepFn, observeNowFn, testUpdateTimeoutFlag
+	t.Cleanup(func() {
+		readLiveAnnotationsFn, observeSleepFn, observeNowFn, testUpdateTimeoutFlag = prevRead, prevSleep, prevNow, prevTimeout
+	})
+
+	// The clock only moves when the wait sleeps, so the loop makes exactly the
+	// number of reads the timeout allows and the test takes no real time.
+	observeNowFn = func() time.Time { return cluster.now }
+	observeSleepFn = func(d time.Duration) { cluster.now = cluster.now.Add(d) }
+	testUpdateTimeoutFlag = 9 * time.Second // three reads at the 3s interval
+	readLiveAnnotationsFn = cluster.read
+	return cluster
+}
+
+func (c *fakeCluster) read(_ context.Context, target annotatedTarget) (map[string]string, error) {
+	c.reads++
+	if c.arrivesAfter < 0 || c.reads <= c.arrivesAfter {
+		return map[string]string{}, nil
+	}
+	// What the flow wrote, read back from where it wrote it.
+	written := c.writtenAnnotations(target.Where)
+	return written, nil
+}
+
+// writtenAnnotations parses the YAML the flow sent to `cub unit update -` and
+// returns the annotations at the location asked for. A real API server can only
+// report what was written where it was written.
+func (c *fakeCluster) writtenAnnotations(where annotationLocation) map[string]string {
+	c.t.Helper()
+	raw, err := os.ReadFile(c.stdinPath)
 	if err != nil {
-		t.Fatalf("read what was written to the unit: %v", err)
+		c.t.Fatalf("read what was written to the unit: %v", err)
 	}
-	for _, line := range strings.Split(string(written), "\n") {
-		if strings.Contains(line, key) {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				testUpdateAnnotationValue = strings.Trim(strings.TrimSpace(parts[1]), `"`)
-				return
-			}
-		}
+	var doc struct {
+		Metadata struct {
+			Annotations map[string]string `yaml:"annotations"`
+		} `yaml:"metadata"`
+		Spec struct {
+			Template struct {
+				Metadata struct {
+					Annotations map[string]string `yaml:"annotations"`
+				} `yaml:"metadata"`
+			} `yaml:"template"`
+		} `yaml:"spec"`
 	}
-	t.Fatalf("no %s annotation in what was written: %s", key, written)
+	if err := yaml.Unmarshal(raw, &doc); err != nil {
+		c.t.Fatalf("parse what was written to the unit: %v", err)
+	}
+	if where == annotationOnPodTemplate {
+		return doc.Spec.Template.Metadata.Annotations
+	}
+	return doc.Metadata.Annotations
 }
 
 // The flow's claim is now an observation: the annotation was seen on the live
 // object, or it was not, and how long it waited.
 func TestAnnotationUpdateSucceedsOnlyWhenTheClusterHasIt(t *testing.T) {
 	_, stdinPath := fakeCubUnitPipeline(t, testDeploymentYAML)
-	reads := stubClusterAnnotations(t, 1) // second read sees it
-
-	// The stub answers with whatever value the flow wrote.
-	prevRead := readLiveAnnotationsFn
-	readLiveAnnotationsFn = func(ctx context.Context, kind, name, namespace string) (map[string]string, error) {
-		if testUpdateAnnotationValue == "" {
-			captureWrittenAnnotation(t, stdinPath, "confighub.com/test-update")
-		}
-		return prevRead(ctx, kind, name, namespace)
-	}
+	cluster := stubCluster(t, stdinPath, 1) // the second read sees it
 
 	result, err := testAnnotationUpdate("prod", "api")
 	if err != nil {
@@ -358,23 +381,46 @@ func TestAnnotationUpdateSucceedsOnlyWhenTheClusterHasIt(t *testing.T) {
 	if !result.Success {
 		t.Fatalf("result.Success = false although the cluster had the annotation: %+v", result)
 	}
-	for _, want := range []string{"written to unit api", "observed on deployment/api in prod"} {
+	for _, want := range []string{"written to unit api", "observed on deployment/api in prod", "(metadata)"} {
 		if !strings.Contains(result.Message, want) {
 			t.Fatalf("message = %q, want it to contain %q", result.Message, want)
 		}
 	}
-	if *reads < 2 {
-		t.Fatalf("the cluster was read %d times, want it watched until the annotation arrived", *reads)
+	if cluster.reads != 2 {
+		t.Fatalf("the cluster was read %d times, want it watched until the annotation arrived", cluster.reads)
+	}
+}
+
+// The rollout annotation goes on the pod template. A Deployment's own metadata
+// never gains it, so a watch that reads the wrong place reports failure for a
+// rollout that worked — and blames the worker for it.
+func TestRolloutRestartWatchesThePodTemplate(t *testing.T) {
+	_, stdinPath := fakeCubUnitPipeline(t, testDeploymentYAML)
+	cluster := stubCluster(t, stdinPath, 1)
+
+	result, err := testRolloutRestart("prod", "api")
+	if err != nil {
+		t.Fatalf("testRolloutRestart: %v", err)
+	}
+	if !result.Success {
+		t.Fatalf("result.Success = false although the pod template carried the annotation: %+v", result)
+	}
+	for _, want := range []string{"Restart annotation written to unit api", "observed on deployment/api in prod", "(pod template)"} {
+		if !strings.Contains(result.Message, want) {
+			t.Fatalf("message = %q, want it to contain %q", result.Message, want)
+		}
+	}
+	if cluster.reads != 2 {
+		t.Fatalf("the cluster was read %d times, want it watched until the annotation arrived", cluster.reads)
 	}
 }
 
 // When the change never arrives, the flow says so — bounded, with what it was
 // waiting for and what to check. It does not claim the pipeline worked.
 func TestAnnotationUpdateReportsWhatItNeverSaw(t *testing.T) {
-	fakeCubUnitPipeline(t, testDeploymentYAML)
-	reads := stubClusterAnnotations(t, -1) // never arrives
+	_, stdinPath := fakeCubUnitPipeline(t, testDeploymentYAML)
+	cluster := stubCluster(t, stdinPath, -1) // never arrives
 
-	start := time.Now()
 	result, err := testAnnotationUpdate("prod", "api")
 	if err != nil {
 		t.Fatalf("testAnnotationUpdate: %v", err)
@@ -382,25 +428,24 @@ func TestAnnotationUpdateReportsWhatItNeverSaw(t *testing.T) {
 	if result.Success {
 		t.Fatal("result.Success = true although the annotation never reached the cluster")
 	}
-	for _, want := range []string{"not observed on deployment/api in prod", "worker is running"} {
+	for _, want := range []string{"not observed on deployment/api in prod", "deployment's metadata does not", "worker is running"} {
 		if !strings.Contains(result.Message, want) {
 			t.Fatalf("message = %q, want it to contain %q", result.Message, want)
 		}
 	}
-	if *reads < 2 {
-		t.Fatalf("the cluster was read %d times, want it polled until the deadline", *reads)
-	}
-	if elapsed := time.Since(start); elapsed > 30*time.Second {
-		t.Fatalf("took %v, want the wait bounded by the timeout", elapsed)
+	// A 9s timeout at the 3s interval reads at 0s, 3s, 6s and 9s: polled, and
+	// bounded — the last read is the one that reaches the deadline.
+	if cluster.reads != 4 {
+		t.Fatalf("the cluster was read %d times, want 4: polled to the deadline and no further", cluster.reads)
 	}
 }
 
 // A live object that cannot be read is a different answer from one that has not
 // converged, and the message says which.
 func TestAnnotationUpdateSeparatesAReadFailureFromNoConvergence(t *testing.T) {
-	fakeCubUnitPipeline(t, testDeploymentYAML)
-	stubClusterAnnotations(t, -1)
-	readLiveAnnotationsFn = func(context.Context, string, string, string) (map[string]string, error) {
+	_, stdinPath := fakeCubUnitPipeline(t, testDeploymentYAML)
+	stubCluster(t, stdinPath, -1)
+	readLiveAnnotationsFn = func(context.Context, annotatedTarget) (map[string]string, error) {
 		return nil, fmt.Errorf(`deployments.apps "api" not found`)
 	}
 
@@ -416,5 +461,91 @@ func TestAnnotationUpdateSeparatesAReadFailureFromNoConvergence(t *testing.T) {
 	}
 	if strings.Contains(result.Message, "worker is running") {
 		t.Fatalf("message = %q, want it not to blame the worker for a read failure", result.Message)
+	}
+}
+
+// A unit whose data names no namespace cannot be watched: a read with no
+// namespace asks for a cluster-scoped object and gets "the server could not
+// find the requested resource", which explains nothing. Say what is missing
+// instead, and do not spend the timeout on it.
+func TestWatchRefusesATargetItCannotLocate(t *testing.T) {
+	reads := 0
+	prev := readLiveAnnotationsFn
+	t.Cleanup(func() { readLiveAnnotationsFn = prev })
+	readLiveAnnotationsFn = func(context.Context, annotatedTarget) (map[string]string, error) {
+		reads++
+		return map[string]string{}, nil
+	}
+
+	for _, tt := range []struct {
+		name   string
+		target annotatedTarget
+		want   string
+	}{
+		{name: "no namespace", target: annotatedTarget{Kind: "Deployment", Name: "api"}, want: "names no namespace"},
+		{name: "no workload", target: annotatedTarget{Kind: "Deployment", Namespace: "prod"}, want: "names no workload"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := waitForAnnotationInCluster(context.Background(), tt.target, "k", "v", time.Minute, time.Second)
+			if got.Seen {
+				t.Fatal("Seen = true for a target that cannot be located")
+			}
+			if !strings.Contains(got.Reason, tt.want) {
+				t.Fatalf("reason = %q, want it to contain %q", got.Reason, tt.want)
+			}
+		})
+	}
+	if reads != 0 {
+		t.Fatalf("the cluster was read %d times for a target that cannot be located, want 0", reads)
+	}
+}
+
+// A failure waiting cannot fix — no kubeconfig, an unmappable kind — is
+// reported at once. Retrying it for the whole timeout is a two-minute hang for
+// someone who has no cluster access, which `import argocd` does not otherwise
+// need.
+func TestWatchDoesNotRetryAPermanentFailure(t *testing.T) {
+	reads := 0
+	prevRead, prevSleep, prevNow := readLiveAnnotationsFn, observeSleepFn, observeNowFn
+	t.Cleanup(func() { readLiveAnnotationsFn, observeSleepFn, observeNowFn = prevRead, prevSleep, prevNow })
+	now := time.Now()
+	observeNowFn = func() time.Time { return now }
+	observeSleepFn = func(d time.Duration) { now = now.Add(d) }
+	readLiveAnnotationsFn = func(context.Context, annotatedTarget) (map[string]string, error) {
+		reads++
+		return nil, permanentObservationError{fmt.Errorf("build kubernetes config: no configuration has been provided")}
+	}
+
+	target := annotatedTarget{Kind: "Deployment", Name: "api", Namespace: "prod"}
+	got := waitForAnnotationInCluster(context.Background(), target, "k", "v", 2*time.Minute, 3*time.Second)
+	if got.Seen {
+		t.Fatal("Seen = true although every read failed")
+	}
+	if !strings.Contains(got.Reason, "no configuration has been provided") {
+		t.Fatalf("reason = %q, want the configuration failure", got.Reason)
+	}
+	if reads != 1 {
+		t.Fatalf("the cluster was read %d times for a failure waiting cannot fix, want 1", reads)
+	}
+}
+
+// --test-timeout 0 means "write it and do not wait". It used to be read as
+// "unset" and silently waited two minutes.
+func TestZeroTimeoutDoesNotWait(t *testing.T) {
+	reads := 0
+	prev := readLiveAnnotationsFn
+	t.Cleanup(func() { readLiveAnnotationsFn = prev })
+	readLiveAnnotationsFn = func(context.Context, annotatedTarget) (map[string]string, error) {
+		reads++
+		return map[string]string{}, nil
+	}
+
+	target := annotatedTarget{Kind: "Deployment", Name: "api", Namespace: "prod"}
+	got := waitForAnnotationInCluster(context.Background(), target, "k", "v", 0, time.Second)
+	if got.Seen || !strings.Contains(got.Reason, "did not wait") {
+		t.Fatalf("observation = %+v, want it to say it did not wait", got)
+	}
+	if reads != 0 {
+		t.Fatalf("the cluster was read %d times with no time to wait, want 0", reads)
 	}
 }

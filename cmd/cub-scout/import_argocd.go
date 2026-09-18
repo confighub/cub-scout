@@ -506,7 +506,8 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 		case result.Success:
 			fmt.Printf("  ✓ %s\n", result.Message)
 		default:
-			// The unit was updated; nothing here watched the target.
+			// The unit was updated and the cluster was watched; the annotation
+			// did not arrive within --test-timeout.
 			fmt.Printf("  • %s\n", result.Message)
 		}
 		fmt.Println()
@@ -521,9 +522,11 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 			fmt.Println("  The import succeeded, but the unit could not be updated.")
 		case result.Success:
 			fmt.Printf("  ✓ %s\n", result.Message)
+			fmt.Println("  Pods restart as the new template rolls out: kubectl get pods -n <namespace> -w")
 		default:
+			// The annotation did not reach the cluster, so promising a restart
+			// here would contradict the line above it.
 			fmt.Printf("  • %s\n", result.Message)
-			fmt.Println("  Note: Pods will restart. Watch with: kubectl get pods -n <namespace> -w")
 		}
 		fmt.Println()
 	}
@@ -1522,11 +1525,11 @@ func testAnnotationUpdate(space, unitSlug string) (*TestUpdateResult, error) {
 	// Step 4: Watch the cluster for it. cub-scout cannot apply the unit — cub
 	// removed `unit apply` (#571) — so what it can do is observe whether the
 	// change arrived, which is the question the test was always asking.
-	observed := waitForAnnotationInCluster(context.Background(), target.Kind, target.Name, target.Namespace,
+	observed := waitForAnnotationInCluster(context.Background(), target,
 		annotationKey, annotationValue, testUpdateTimeout(), testUpdateInterval())
 	result.Success = observed.Seen
 	result.Message = fmt.Sprintf("Annotation %s written to unit %s; %s",
-		result.Annotation, unitSlug, observed.Summary(target.Kind, target.Name, target.Namespace))
+		result.Annotation, unitSlug, observed.Summary(target))
 	return result, nil
 }
 
@@ -1566,19 +1569,22 @@ func testRolloutRestart(space, unitSlug string) (*TestUpdateResult, error) {
 		return result, err
 	}
 
-	// The restart annotation lives on the pod template, so the workload itself
-	// carries it once the target has the new revision. Watch for that.
-	observed := waitForAnnotationInCluster(context.Background(), target.Kind, target.Name, target.Namespace,
+	// The restart annotation lives on the pod template, so that is where the
+	// watch looks — the workload's own metadata never gains it.
+	observed := waitForAnnotationInCluster(context.Background(), target,
 		annotationKey, annotationValue, testUpdateTimeout(), testUpdateInterval())
 	result.Success = observed.Seen
 	result.Message = fmt.Sprintf("Restart annotation written to unit %s; %s",
-		unitSlug, observed.Summary(target.Kind, target.Name, target.Namespace))
+		unitSlug, observed.Summary(target))
 	return result, nil
 }
 
 // addAnnotationToYAML adds an annotation to the first resource in a YAML document.
 // Returns the modified YAML and the name of the resource that was modified.
 func addAnnotationToYAML(yamlStr, key, value string) (string, annotatedTarget, error) {
+	// This one goes on the object's own metadata.
+	const annotationWhere = annotationOnObject
+
 	// Split multi-document YAML
 	docs := strings.Split(yamlStr, "\n---")
 	if len(docs) == 0 {
@@ -1623,6 +1629,7 @@ func addAnnotationToYAML(yamlStr, key, value string) (string, annotatedTarget, e
 			target.Kind = kind
 			target.Name, _, _ = unstructured.NestedString(obj, "metadata", "name")
 			target.Namespace, _, _ = unstructured.NestedString(obj, "metadata", "namespace")
+			target.Where = annotationWhere
 		}
 
 		modifiedYAML, err := yaml.Marshal(obj)
@@ -1643,6 +1650,10 @@ func addAnnotationToYAML(yamlStr, key, value string) (string, annotatedTarget, e
 // addRolloutAnnotationToYAML adds a restart annotation to the pod template spec.
 // This triggers a rolling update when applied.
 func addRolloutAnnotationToYAML(yamlStr, key, value string) (string, annotatedTarget, error) {
+	// This one goes on the pod template, which is what makes the pods restart —
+	// and is not where the workload's own metadata carries it.
+	const annotationWhere = annotationOnPodTemplate
+
 	// Split multi-document YAML
 	docs := strings.Split(yamlStr, "\n---")
 	if len(docs) == 0 {
@@ -1699,6 +1710,7 @@ func addRolloutAnnotationToYAML(yamlStr, key, value string) (string, annotatedTa
 			target.Kind = kind
 			target.Name, _, _ = unstructured.NestedString(obj, "metadata", "name")
 			target.Namespace, _, _ = unstructured.NestedString(obj, "metadata", "namespace")
+			target.Where = annotationWhere
 		}
 
 		modifiedYAML, err := yaml.Marshal(obj)
