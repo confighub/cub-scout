@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -1450,8 +1449,7 @@ func deleteArgoApplication(ctx context.Context, client dynamic.Interface, namesp
 //
 // stdout alone is the data; whatever cub prints on stderr goes into the error.
 func readUnitConfigData(space, unitSlug string) (string, error) {
-	args := withConfigHubSpace([]string{"unit", "data", unitSlug}, space)
-	out, err := commandStdout(exec.Command("cub", args...))
+	out, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "data", unitSlug}, space)...)
 	if err != nil {
 		return "", fmt.Errorf("read config data of unit %s in space %s: %w", unitSlug, space, err)
 	}
@@ -1467,7 +1465,10 @@ func readUnitConfigData(space, unitSlug string) (string, error) {
 func updateUnitConfigData(space, unitSlug, data, changeDesc string) error {
 	args := withConfigHubSpace([]string{"unit", "update", unitSlug, "-"}, space)
 	args = append(args, "--change-desc", changeDesc)
-	cmd := exec.Command("cub", args...)
+	cmd, err := cubCommand(context.Background(), args...)
+	if err != nil {
+		return err
+	}
 	cmd.Stdin = strings.NewReader(data)
 	if _, err := commandStdout(cmd); err != nil {
 		return fmt.Errorf("update unit %s in space %s: %w", unitSlug, space, err)

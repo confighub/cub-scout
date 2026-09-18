@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -282,7 +281,7 @@ func collectConfigHubSurface(ctx context.Context, rw *runtimeWorkload) (*agent.C
 		}
 	}
 
-	unitJSON, err := exec.CommandContext(ctx, "cub", "unit", "get", unitSlug, "--space", space, "-o", "json").Output()
+	unitJSON, err := cubStdout(ctx, withConfigHubSpace([]string{"unit", "get", unitSlug, "-o", "json"}, space)...)
 	if err != nil {
 		return nil, &agent.CollectionError{Surface: "confighub", Reason: "cub unit get failed: " + err.Error()}
 	}

@@ -181,7 +181,11 @@ func detectQuickstartConnectedPreview() bool {
 	if _, err := exec.LookPath("cub"); err != nil {
 		return false
 	}
-	return exec.Command("cub", "context", "get").Run() == nil
+	cmd, err := cubCommand(context.Background(), "context", "get")
+	if err != nil {
+		return false
+	}
+	return cmd.Run() == nil
 }
 
 func pickQuickstartRepresentative(entries []MapEntry) (MapEntry, bool) {

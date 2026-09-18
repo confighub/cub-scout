@@ -43,12 +43,12 @@ import (
 )
 
 var (
-	viewsResolveFormat       string
-	viewsResolveSpace        string
-	viewsOpenPrintOnly       bool
-	viewsProjectFormat       string
-	viewsProjectSpace        string
-	viewsProjectWithReality  bool
+	viewsResolveFormat      string
+	viewsResolveSpace       string
+	viewsOpenPrintOnly      bool
+	viewsProjectFormat      string
+	viewsProjectSpace       string
+	viewsProjectWithReality bool
 )
 
 var viewsCmd = &cobra.Command{
@@ -106,11 +106,11 @@ func init() {
 // UUID and OriginalURL fields lets them deep-link back to the GUI.
 type ResolvedView struct {
 	UUID        string                 `json:"uuid"`
-	SourceForm  agent.ViewRefSource    `json:"source_form"`           // "uuid" | "url"
+	SourceForm  agent.ViewRefSource    `json:"source_form"` // "uuid" | "url"
 	OriginalURL string                 `json:"original_url,omitempty"`
-	Extras      map[string][]string    `json:"extras,omitempty"`      // Round-tripped query params (group, etc.)
+	Extras      map[string][]string    `json:"extras,omitempty"` // Round-tripped query params (group, etc.)
 	Space       string                 `json:"space,omitempty"`
-	View        map[string]interface{} `json:"view,omitempty"`        // Verbatim from `cub view get`
+	View        map[string]interface{} `json:"view,omitempty"` // Verbatim from `cub view get`
 }
 
 func runViewsResolve(cmd *cobra.Command, args []string) error {
@@ -156,7 +156,7 @@ type cubRunner func(ctx context.Context, args ...string) ([]byte, error)
 // Tests replace it with a function that returns prefab JSON, giving full
 // coverage of the multi-hop resolution path without a real `cub` binary.
 var viewCubRunner cubRunner = func(ctx context.Context, args ...string) ([]byte, error) {
-	return exec.CommandContext(ctx, "cub", args...).Output()
+	return cubStdout(ctx, args...)
 }
 
 // fetchView shells out to `cub view get` to fetch the View JSON. The
@@ -489,7 +489,6 @@ func openInBrowser(url string) error {
 // to swap behaviour. Default delegates to runtime.GOOS.
 var runtimeGOOS = func() string { return runtime.GOOS }
 
-
 // viewsProjectCmd implements #391 scope #2 — render the Views
 // projection (filter + columns) as a table or JSON. v0.1 of this
 // subcommand evaluates MetadataAttribute columns directly against the
@@ -503,7 +502,8 @@ var runtimeGOOS = func() string { return runtime.GOOS }
 // primitive is for.
 //
 // Output JSON has shape:
-//   { "view": "<uuid>", "columns": [<spec>], "rows": [{<col>: <value>}] }
+//
+//	{ "view": "<uuid>", "columns": [<spec>], "rows": [{<col>: <value>}] }
 //
 // Connected mode is REQUIRED — the projection is meaningless without
 // `cub` access to the View definition and the matching units.

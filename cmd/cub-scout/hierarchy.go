@@ -424,13 +424,11 @@ func loadWorkersForSpace(spaceSlug string) ([]CubWorkerData, error) {
 	return workers, nil
 }
 
+// runCubCommand is the TUI's read path. It goes through cubStdout, so a call
+// that names no space is refused before it spawns rather than reading the whole
+// organization; see cub_runner.go.
 func runCubCommand(args ...string) ([]byte, error) {
-	cmd := exec.Command("cub", args...)
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-	return output, nil
+	return cubStdout(context.Background(), args...)
 }
 
 // Import wizard commands
@@ -779,12 +777,17 @@ func importArgoWorkloadsCmd(space, appName, target string, workloads []WorkloadI
 		// because ArgoCD selfHeal would revert our changes if sync is still enabled
 		var applyErr error
 		if target != "" {
-			setTargetCmd := exec.Command("cub", "unit", "set-target", unitSlug, target, "--space", space)
-			var setTargetOut bytes.Buffer
-			setTargetCmd.Stdout = &setTargetOut
-			setTargetCmd.Stderr = &setTargetOut
-			if err := setTargetCmd.Run(); err != nil {
-				applyErr = fmt.Errorf("set-target failed: %s", setTargetOut.String())
+			setTargetCmd, setTargetErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "set-target", unitSlug, target}, space)...)
+			switch {
+			case setTargetErr != nil:
+				applyErr = setTargetErr
+			default:
+				var setTargetOut bytes.Buffer
+				setTargetCmd.Stdout = &setTargetOut
+				setTargetCmd.Stderr = &setTargetOut
+				if err := setTargetCmd.Run(); err != nil {
+					applyErr = fmt.Errorf("set-target failed: %s", setTargetOut.String())
+				}
 			}
 			// Apply will be done after ArgoCD cleanup step
 		} else {
@@ -1005,7 +1008,10 @@ func waitForTargetCmd(space, workerName, kubeContext string) tea.Cmd {
 func startWorkerCmd(space, workerName string) tea.Cmd {
 	return func() tea.Msg {
 		// Start worker in background (detached process)
-		cmd := exec.Command("cub", "worker", "run", workerName, "--space", space)
+		cmd, err := cubCommand(context.Background(), withConfigHubSpace([]string{"worker", "run", workerName}, space)...)
+		if err != nil {
+			return workerStartedMsg{err: err}
+		}
 		cmd.Stdout = nil
 		cmd.Stderr = nil
 		cmd.Stdin = nil
@@ -1220,7 +1226,10 @@ func doCreateUnitCmd(space, name, cloneFrom, target string) tea.Cmd {
 			}
 		} else {
 			// Need to pipe config via stdin
-			cmd := exec.Command("cub", args...)
+			cmd, cmdErr := cubCommand(context.Background(), args...)
+			if cmdErr != nil {
+				return createResourceMsg{resourceType: "unit", name: name, space: space, err: cmdErr}
+			}
 			cmd.Stdin = strings.NewReader(`# Empty unit configuration
 ---
 apiVersion: v1
@@ -1559,8 +1568,7 @@ func (m *Model) clearMatchCache() {
 func openSpaceInBrowserCmd(spaceID string) tea.Cmd {
 	return func() tea.Msg {
 		// Get current context to find server URL
-		listCmd := exec.Command("cub", "context", "list", "-o", "json")
-		listOutput, err := listCmd.Output()
+		listOutput, err := cubStdout(context.Background(), "context", "list", "-o", "json")
 		if err != nil {
 			return statusUpdateMsg{msg: "Failed to get context info"}
 		}
@@ -1605,8 +1613,7 @@ type statusUpdateMsg struct {
 func switchOrgCmd(orgID string) tea.Cmd {
 	return func() tea.Msg {
 		// First, list all contexts to find one with the target org
-		listCmd := exec.Command("cub", "context", "list", "-o", "json")
-		listOutput, err := listCmd.Output()
+		listOutput, err := cubStdout(context.Background(), "context", "list", "-o", "json")
 		if err != nil {
 			return authCompleteMsg{success: false, orgID: orgID}
 		}
@@ -1638,7 +1645,10 @@ func switchOrgCmd(orgID string) tea.Cmd {
 		}
 
 		// Switch to the found context
-		useCmd := exec.Command("cub", "context", "use", targetContext)
+		useCmd, useErr := cubCommand(context.Background(), "context", "use", targetContext)
+		if useErr != nil {
+			return authCompleteMsg{success: false, orgID: orgID}
+		}
 		if err := useCmd.Run(); err != nil {
 			return authCompleteMsg{success: false, orgID: orgID}
 		}
@@ -3274,8 +3284,7 @@ func (m *Model) getSpaceIDFromNode(node *TreeNode) string {
 // getSpaceURL returns the URL to open the current import space in browser
 func (m *Model) getSpaceURL() string {
 	// Get server URL from current context
-	ctxCmd := exec.Command("cub", "context", "get", "-o", "json")
-	ctxOutput, err := ctxCmd.Output()
+	ctxOutput, err := cubStdout(context.Background(), "context", "get", "-o", "json")
 	if err != nil {
 		return ""
 	}
@@ -3295,8 +3304,7 @@ func (m *Model) getSpaceURL() string {
 	}
 
 	// Get space ID from space slug
-	spaceCmd := exec.Command("cub", "space", "list", "-o", "json")
-	spaceOutput, err := spaceCmd.Output()
+	spaceOutput, err := cubStdout(context.Background(), "space", "list", "-o", "json")
 	if err != nil {
 		return fmt.Sprintf("%s/spaces/%s", serverURL, m.importSpace)
 	}

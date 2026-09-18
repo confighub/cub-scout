@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -232,7 +233,7 @@ func printStatus(s StatusInfo) {
 // getStatusCubContext gets the current cub context and email
 // Returns context, email, and error
 func getStatusCubContext() (*statusCubContext, string, error) {
-	out, err := exec.Command("cub", "context", "get", "-o", "json").Output()
+	out, err := cubStdout(context.Background(), "context", "get", "-o", "json")
 	if err != nil {
 		return nil, "", err
 	}
@@ -292,7 +293,7 @@ func getWorkerForCluster(space, clusterName string) *WorkerInfo {
 		return nil
 	}
 
-	out, err := exec.Command("cub", "worker", "list", "--space", space, "-o", "json").Output()
+	out, err := cubStdout(context.Background(), withConfigHubSpace([]string{"worker", "list", "-o", "json"}, space)...)
 	if err != nil {
 		return nil
 	}

@@ -4,13 +4,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -424,19 +422,7 @@ func compareUnitDataArgs(unitSlug, space string) []string {
 }
 
 func runCompareCubCommandImpl(ctx context.Context, args []string) (string, error) {
-	cmd := exec.CommandContext(ctx, "cub", args...)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg == "" {
-			msg = err.Error()
-		}
-		return "", fmt.Errorf("cub %s failed: %s", strings.Join(args, " "), msg)
-	}
-	return strings.TrimSpace(stdout.String()), nil
+	return cubText(ctx, args...)
 }
 
 func decodeCompareUnitMetadataFromGetJSON(raw string) (compareUnitMetadata, error) {

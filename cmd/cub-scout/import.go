@@ -839,7 +839,10 @@ func createImportAuditContext(proposal *FullProposal, workloads []WorkloadInfo, 
 		args = append(args, "--label", fmt.Sprintf("namespace=%s", namespaces[0]))
 	}
 
-	cmd := exec.Command("cub", args...)
+	cmd, cmdErr := cubCommand(context.Background(), args...)
+	if cmdErr != nil {
+		return nil, fmt.Errorf("create break-glass audit changeset: %w", cmdErr)
+	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		msg := strings.TrimSpace(string(output))
@@ -1645,7 +1648,7 @@ func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *Imp
 }
 
 func loadCubTargets(space string) ([]cubTargetRef, error) {
-	out, err := exec.Command("cub", "target", "list", "--space", space, "-o", "json").Output()
+	out, err := cubStdout(context.Background(), withConfigHubSpace([]string{"target", "list", "-o", "json"}, space)...)
 	if err != nil {
 		return nil, err
 	}
@@ -1706,22 +1709,30 @@ func runGitOpsImportForNamespaces(space, k8sTarget, rendererTarget string, names
 			logger.Log("Delegating %s ns=%s using k8s=%s renderer=%s", label, ns, k8sTarget, rendererTarget)
 		}
 
-		discoverCmd := exec.Command("cub", "gitops", "discover",
+		discoverCmd, discoverErr := cubCommand(context.Background(),
+			"gitops", "discover",
 			"--space", space,
 			k8sTarget,
 			"--where-resource", where,
 		)
+		if discoverErr != nil {
+			return discoverErr
+		}
 		discoverOutput, err := discoverCmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("cub gitops discover failed for %s/%s: %s", label, ns, strings.TrimSpace(string(discoverOutput)))
 		}
 
-		importCmd := exec.Command("cub", "gitops", "import",
+		importCmd, importErr := cubCommand(context.Background(),
+			"gitops", "import",
 			"--space", space,
 			k8sTarget, rendererTarget,
 			"--where-resource", where,
 			"--wait",
 		)
+		if importErr != nil {
+			return importErr
+		}
 		importOutput, err := importCmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("cub gitops import failed for %s/%s: %s", label, ns, strings.TrimSpace(string(importOutput)))
@@ -1968,7 +1979,10 @@ func createUnitWithManifestSimple(space string, unit UnitProposal, labels []stri
 	}
 	args = append(args, slug, "-")
 
-	cmd := exec.Command("cub", args...)
+	cmd, cmdErr := cubCommand(context.Background(), args...)
+	if cmdErr != nil {
+		return cmdErr
+	}
 	cmd.Stdin = bytes.NewReader(manifest)
 
 	output, err := cmd.CombinedOutput()
@@ -2023,7 +2037,10 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 
 	// Start worker in background with output to devnull.
 	// Command exits while worker keeps running.
-	workerCmd := exec.Command("cub", "worker", "run", "dev", "--space", proposal.App)
+	workerCmd, workerErr := cubCommand(context.Background(), withConfigHubSpace([]string{"worker", "run", "dev"}, proposal.App)...)
+	if workerErr != nil {
+		return workerErr
+	}
 	devNull, _ := os.Open(os.DevNull)
 	workerCmd.Stdout = devNull
 	workerCmd.Stderr = devNull
@@ -2048,8 +2065,7 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 		fmt.Print(".")
 
 		// Check if target exists
-		checkCmd := exec.Command("cub", "target", "list", "--space", proposal.App, "-o", "json")
-		out, err := checkCmd.Output()
+		out, err := cubStdout(context.Background(), withConfigHubSpace([]string{"target", "list", "-o", "json"}, proposal.App)...)
 		if err != nil {
 			continue
 		}
@@ -2073,7 +2089,11 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 		}
 
 		for _, unit := range proposal.Units {
-			setCmd := exec.Command("cub", "unit", "set-target", unit.Slug, targetSlug, "--space", proposal.App)
+			setCmd, setErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "set-target", unit.Slug, targetSlug}, proposal.App)...)
+			if setErr != nil {
+				fmt.Printf("  ⚠ %s: %v\n", unit.Slug, setErr)
+				continue
+			}
 			if err := setCmd.Run(); err != nil {
 				fmt.Printf("  ⚠ %s: failed to set target\n", unit.Slug)
 				if logger != nil {
@@ -2109,7 +2129,11 @@ func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) erro
 func printSpaceSummary(space string) error {
 	fmt.Println()
 	fmt.Println("Imported units now visible in ConfigHub:")
-	listCmd := exec.Command("cub", "unit", "list", "--space", space)
+	listCmd, listErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "list"}, space)...)
+	if listErr != nil {
+		fmt.Printf("  (could not list units: %v)\n", listErr)
+		return nil
+	}
 	listCmd.Stdout = os.Stdout
 	listCmd.Stderr = os.Stderr
 	if err := listCmd.Run(); err != nil {
@@ -2125,8 +2149,7 @@ func printSpaceSummary(space string) error {
 }
 
 func getSpaceURL(spaceSlug string) string {
-	ctxCmd := exec.Command("cub", "context", "get", "-o", "json")
-	ctxOutput, err := ctxCmd.Output()
+	ctxOutput, err := cubStdout(context.Background(), "context", "get", "-o", "json")
 	if err != nil {
 		return ""
 	}
@@ -2140,8 +2163,7 @@ func getSpaceURL(spaceSlug string) string {
 		return ""
 	}
 
-	spaceCmd := exec.Command("cub", "space", "list", "-o", "json")
-	spaceOutput, err := spaceCmd.Output()
+	spaceOutput, err := cubStdout(context.Background(), "space", "list", "-o", "json")
 	if err != nil {
 		return fmt.Sprintf("%s/spaces/%s", serverURL, spaceSlug)
 	}
@@ -2294,8 +2316,7 @@ func fetchUnitSlugsForSpace(space string) (map[string]bool, error) {
 		return map[string]bool{}, nil
 	}
 
-	cmd := exec.Command("cub", "unit", "list", "--space", space, "-o", "json", "--quiet")
-	output, err := cmd.Output()
+	output, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json", "--quiet"}, space)...)
 	if err != nil {
 		return nil, err
 	}
@@ -2507,7 +2528,10 @@ func createUnitWithConfig(space, unitSlug, config string) error {
 		return createUnit(space, unitSlug)
 	}
 
-	cmd := exec.Command("cub", "unit", "create", unitSlug, "-", "--space", space)
+	cmd, cmdErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "create", unitSlug, "-"}, space)...)
+	if cmdErr != nil {
+		return cmdErr
+	}
 	cmd.Stdin = strings.NewReader(config)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -2531,7 +2555,10 @@ func createUnitWithConfigAndLabels(space, unitSlug, config, labels string) error
 		args = append(args, "--labels", labels)
 	}
 
-	cmd := exec.Command("cub", args...)
+	cmd, cmdErr := cubCommand(context.Background(), args...)
+	if cmdErr != nil {
+		return cmdErr
+	}
 	cmd.Stdin = strings.NewReader(config)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -2546,7 +2573,10 @@ func createUnitWithConfigAndLabels(space, unitSlug, config, labels string) error
 
 // createUnit creates a unit in ConfigHub
 func createUnit(space, unitSlug string) error {
-	cmd := exec.Command("cub", "unit", "create", unitSlug, "--space", space)
+	cmd, cmdErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "create", unitSlug}, space)...)
+	if cmdErr != nil {
+		return cmdErr
+	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		if strings.Contains(string(output), "already exists") {
@@ -2620,10 +2650,18 @@ func checkCubAuth() error {
 // effect switched the default space of the user's cub context, for every other
 // shell and tool sharing that config. Existence is a read: `cub space get`.
 func ensureSpace(space string) error {
-	if err := exec.Command("cub", "space", "get", space).Run(); err == nil {
+	getCmd, getErr := cubCommand(context.Background(), "space", "get", space)
+	if getErr != nil {
+		return getErr
+	}
+	if err := getCmd.Run(); err == nil {
 		return nil
 	}
-	output, err := exec.Command("cub", "space", "create", space).CombinedOutput()
+	createCmd, createErr := cubCommand(context.Background(), "space", "create", space)
+	if createErr != nil {
+		return createErr
+	}
+	output, err := createCmd.CombinedOutput()
 	if err != nil && !strings.Contains(string(output), "already exists") {
 		return fmt.Errorf("failed to create space: %s", strings.TrimSpace(string(output)))
 	}
