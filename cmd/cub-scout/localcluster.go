@@ -1150,16 +1150,16 @@ func checkConnectionStatus(clusterName string) tea.Cmd {
 		msg := connectionStatusMsg{mode: "offline"}
 
 		// Check cub context
-		out, err := exec.Command("cub", "context", "get", "-o", "json").Output()
+		out, err := cubStdout(context.Background(), "context", "get", "-o", "json")
 		if err != nil {
-			// Try without --json for older cub versions
-			out, err = exec.Command("cub", "context", "get").Output()
+			// Try without -o json for older cub versions
+			out, err = cubStdout(context.Background(), "context", "get")
 			if err != nil {
-				// Not connected, check if online
+				// Not connected, check if online.
 				// `cub version`, not `cub --version`: cub takes it as a
 				// subcommand and rejects the flag, so this branch could never
 				// report online.
-				if _, verr := exec.Command("cub", "version").Output(); verr == nil {
+				if _, verr := cubStdout(context.Background(), "version"); verr == nil {
 					msg.mode = "online"
 				}
 				return msg
@@ -1190,7 +1190,7 @@ func checkConnectionStatus(clusterName string) tea.Cmd {
 
 			// Try to get worker status for this cluster
 			if ctx.Space != "" {
-				if wout, werr := exec.Command("cub", "worker", "list", "--space", ctx.Space, "-o", "json").Output(); werr == nil {
+				if wout, werr := cubStdout(context.Background(), withConfigHubSpace([]string{"worker", "list", "-o", "json"}, ctx.Space)...); werr == nil {
 					var workers []struct {
 						Name      string `json:"name"`
 						Cluster   string `json:"cluster"`
@@ -1977,7 +1977,11 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func runAuthLogin() tea.Msg {
-	cmd := exec.Command("cub", "auth", "login")
+	// The user asked for this from the TUI; cub owns the terminal for it.
+	cmd, err := cubCommand(context.Background(), "auth", "login")
+	if err != nil {
+		return checkCubAuthForSwitch()
+	}
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

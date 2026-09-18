@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -697,7 +698,10 @@ func createUnitWithManifest(space, slug string, labels []string, manifest []byte
 	// Unit name and stdin for manifest
 	args = append(args, slug, "-")
 
-	cmd := exec.Command("cub", args...)
+	cmd, err := cubCommand(context.Background(), args...)
+	if err != nil {
+		return err
+	}
 	cmd.Stdin = bytes.NewReader(manifest)
 
 	output, err := cmd.CombinedOutput()

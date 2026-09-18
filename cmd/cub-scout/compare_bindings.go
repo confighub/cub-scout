@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
@@ -108,7 +107,7 @@ type FieldBindingSource struct {
 type linkRunner func(ctx context.Context, args ...string) ([]byte, error)
 
 var compareLinkRunner linkRunner = func(ctx context.Context, args ...string) ([]byte, error) {
-	return exec.CommandContext(ctx, "cub", args...).Output()
+	return cubStdout(ctx, args...)
 }
 
 // collectIncomingBindings queries `cub link list` for all links whose
@@ -180,8 +179,8 @@ func parseLinkListJSON(raw []byte) []IncomingBinding {
 // ConfigHub's Bindings field shape is evolving; this function handles two
 // common JSON layouts and falls back to nil on unrecognized shapes:
 //
-//   1. Array of objects: [{downstreamPath, upstreamPath, transformExpr}]
-//   2. Object keyed by downstream path: {".spec.x": {upstreamPath, ...}}
+//  1. Array of objects: [{downstreamPath, upstreamPath, transformExpr}]
+//  2. Object keyed by downstream path: {".spec.x": {upstreamPath, ...}}
 //
 // Unknown shapes return nil — BindingsCount still reflects the raw count so
 // callers can detect "bindings exist but we couldn't expand them."

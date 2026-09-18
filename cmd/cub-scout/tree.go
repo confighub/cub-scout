@@ -1186,8 +1186,12 @@ func runTreeConfig() error {
 	}
 	fmt.Println()
 
-	// Execute cub unit tree
-	cmd := exec.Command("cub", args...)
+	// Execute cub unit tree. The runner refuses the call if nothing in it
+	// names a space; see cub_runner.go.
+	cmd, err := cubCommand(context.Background(), args...)
+	if err != nil {
+		return err
+	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

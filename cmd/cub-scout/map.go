@@ -1541,24 +1541,18 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 
 	args := withConfigHubSpace([]string{"unit", "list", "-o", "json"}, space)
 
-	cmd := exec.Command("cub", args...)
-	output, err := cmd.Output()
+	// cubStdout puts whatever cub printed on stderr into the error, so the
+	// reason is in err.Error() rather than in an *exec.ExitError.
+	output, err := cubStdout(context.Background(), args...)
 	if err != nil {
-		// Check if it's an auth error
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			stderr := string(exitErr.Stderr)
-			if strings.Contains(stderr, "authentication") ||
-				strings.Contains(stderr, "token") ||
-				strings.Contains(stderr, "unauthorized") ||
-				strings.Contains(stderr, "401") {
-				return nil, fmt.Errorf("ConfigHub authentication required.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
-			}
-			// Include stderr in error for debugging
-			if stderr != "" {
-				return nil, fmt.Errorf("failed to fetch units from ConfigHub: %s", strings.TrimSpace(stderr))
-			}
+		reason := err.Error()
+		if strings.Contains(reason, "authentication") ||
+			strings.Contains(reason, "token") ||
+			strings.Contains(reason, "unauthorized") ||
+			strings.Contains(reason, "401") {
+			return nil, fmt.Errorf("ConfigHub authentication required.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
 		}
-		return nil, fmt.Errorf("failed to fetch units from ConfigHub: %w\n\n  Check that 'cub' CLI is installed and you're authenticated: cub auth login", err)
+		return nil, fmt.Errorf("failed to fetch units from ConfigHub: %w", err)
 	}
 
 	unitList, err := parseCubUnitListJSON(output)
@@ -1617,8 +1611,7 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 
 // fetchUnitLabels gets labels for a specific unit
 func fetchUnitLabels(space, slug string) (map[string]string, error) {
-	cmd := exec.Command("cub", withConfigHubSpace([]string{"unit", "get", slug, "-o", "json"}, space)...)
-	output, err := cmd.Output()
+	output, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", slug, "-o", "json"}, space)...)
 	if err != nil {
 		return nil, err
 	}
@@ -5628,8 +5621,7 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 	}
 
 	// Fetch links for dependency info
-	linksCmd := exec.Command("cub", withConfigHubSpace([]string{"link", "list", "-o", "json", "--quiet"}, space)...)
-	linksOut, err := linksCmd.Output()
+	linksOut, err := cubStdout(context.Background(), withConfigHubSpace([]string{"link", "list", "-o", "json", "--quiet"}, space)...)
 	if err == nil {
 		var linkList []struct {
 			FromUnit struct {
@@ -5661,8 +5653,7 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 	}
 
 	// Fetch all spaces for cross-space correlation
-	spacesCmd := exec.Command("cub", "space", "list", "-o", "json", "--quiet")
-	spacesOut, err := spacesCmd.Output()
+	spacesOut, err := cubStdout(context.Background(), "space", "list", "-o", "json", "--quiet")
 	if err == nil {
 		var spaceList []struct {
 			Space struct {
@@ -5699,8 +5690,7 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 		}
 
 		// Query units in this related space
-		otherUnitsCmd := exec.Command("cub", "unit", "list", "-o", "json", "--quiet", "--space", otherSpace)
-		otherUnitsOut, err := otherUnitsCmd.Output()
+		otherUnitsOut, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json", "--quiet"}, otherSpace)...)
 		if err != nil {
 			continue
 		}

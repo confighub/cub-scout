@@ -4,9 +4,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -72,7 +72,10 @@ func runAppCreate(cmd *cobra.Command, args []string) error {
 		cubArgs = append(cubArgs, "--label", label)
 	}
 
-	cubCmd := exec.Command("cub", cubArgs...)
+	cubCmd, err := cubCommand(context.Background(), cubArgs...)
+	if err != nil {
+		return err
+	}
 	cubCmd.Stdout = os.Stdout
 	cubCmd.Stderr = os.Stderr
 
@@ -90,7 +93,10 @@ func runAppList(cmd *cobra.Command, args []string) error {
 		cubArgs = append(cubArgs, "-o", "json")
 	}
 
-	cubCmd := exec.Command("cub", cubArgs...)
+	cubCmd, err := cubCommand(context.Background(), cubArgs...)
+	if err != nil {
+		return err
+	}
 	cubCmd.Stdout = os.Stdout
 	cubCmd.Stderr = os.Stderr
 
@@ -114,7 +120,10 @@ func CreateAppWithResult(name string, labels []string) (*AppResult, error) {
 		cubArgs = append(cubArgs, "--label", label)
 	}
 
-	cubCmd := exec.Command("cub", cubArgs...)
+	cubCmd, cmdErr := cubCommand(context.Background(), cubArgs...)
+	if cmdErr != nil {
+		return nil, cmdErr
+	}
 	output, err := cubCmd.CombinedOutput()
 
 	if err != nil {
