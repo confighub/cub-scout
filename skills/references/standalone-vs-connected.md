@@ -35,9 +35,18 @@ Cluster:    default
 Context:    prod-use2
 ```
 
-`status` prints one of `● Connected`, `● Connected (auth expired)`, `○ Online (not authenticated)` or `○ Offline`. `Cluster` is `$CLUSTER_NAME` or the literal `default`, not the kube context. Treat anything other than plain `● Connected` as not connected.
+`status` prints one of `● Connected`, `● Connected (auth expired)`, `○ Online (not authenticated)` or `○ Offline`. `Cluster` is `$CLUSTER_NAME` or the literal `default`, not the kube context.
 
-The commands that read ConfigHub only by running `cub` (`compare source-truth`, `views resolve`, `views project`, `compare three-way`, `import argocd`, and the MCP gateway's connected tools) gate on `pkg/hub.RequireCubConnected()`, which runs `cub auth status`. That is the check that notices an expired session; `cub auth get-token` prints a stored token and exits 0 even after expiry. The standalone and plugin forms run the same check, so they agree. Each refusal names its cause: reads turned off, `cub` not installed, or `cub`'s own reason for not being authenticated. Other connected commands (`history`, `audit list`, `receipt verify`, `doctor` and `gitops status --with-confighub`, `watch`) still gate through `hub.NewClient().RequireConnected()`, which also probes hub.confighub.com. `pkg/hub.QuickMode()` is a display helper for the TUI header; it never consults `cub` and must not be used as a gate.
+**The mode line is not the pre-flight.** It describes `hub.confighub.com`; whether connected commands will actually run is `confighub_reads` in `cub-scout status --json` (with `confighub_reads_reason`), and the text output adds a line whenever the two disagree. Both disagreements are real: `● Connected` with `confighub_reads: false` (credentials exist, every connected command refuses), and `○ Offline` with `confighub_reads: true` (`cub auth status` passes while `cub context get` fails, so the mode line reflects only `hub.confighub.com`). Read `confighub_reads`; fall back to the mode line only against a binary that predates the field (v2.12.0 and earlier).
+
+**One check, two uses.** Everything that reads ConfigHub by running `cub` asks `pkg/hub.RequireCubConnected()`, which runs `cub auth status`. That is the check that notices an expired session; `cub auth get-token` prints a stored token and exits 0 even after expiry. The standalone and plugin forms run the same check, so they agree, and each refusal names its cause: reads turned off, `cub` not installed, or `cub`'s own reason.
+
+- **As a gate — the command refuses:** `compare source-truth`, `views resolve`, `views project`, `compare three-way --view`, `import argocd`, `history`, `audit list`, and the MCP gateway's connected tools (which are not offered at all while the session is gone).
+- **As a fact — the command runs and records what it found:** `receipt verify` (the recorded `connected` fact, the `confighub-unit://` subject and its omission), `watch`/`bot` receipts, stored summaries, `compare`'s per-resource `connected`, `doctor`'s three-way hint (an offer, not a refusal), `gitops status --with-confighub` (a structured omission, exit 0), `scan --verbose`'s note, and `status`'s `confighub_reads`.
+
+Do not expect `receipt verify` or `doctor` to error out when there is no session: they succeed and say what they could not see.
+
+(Converged after v2.12.0. A v2.12.0 or earlier binary routes the second group through `hub.NewClient().RequireConnected()`, which probes hub.confighub.com and then accepts an expired token — against those versions, a refusal saying `cub auth login` may be unfixable by logging in.) `pkg/hub.QuickMode()` is a display helper for the TUI header; it never consults `cub` and must not be used as a gate.
 
 ## What works in standalone
 

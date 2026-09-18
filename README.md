@@ -2,8 +2,7 @@
 
 **A read-only Kubernetes and GitOps explorer for people, scripts, and AI agents.**
 
-[v2.11.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.11.0)
-| [v2.12.0 (prepared)](docs/releases/v2.12.0.md)
+[v2.12.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.0)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
@@ -44,7 +43,7 @@ cub-scout gitops status   # What do delivery controllers report?
 cub-scout map             # Explore interactively
 ```
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.11.0`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.12.0`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -103,7 +102,7 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | Where is my release waiting, different, or unverifiable? | `release check`; MCP `release_check`; `release check --interactive` | Separate bundle/controller/configuration/workload results show old revisions, configuration differences, incomplete rollout and missing evidence. Configuration-only changes are checked even when images are unchanged. Final controller/source re-reads detect changes during the check. Unsupported adapters, rendering inputs and excluded Secrets cannot silently pass. |
 | Can I check one release without a cluster-wide scan, and keep the evidence? | `release check --max-objects 100 --out release-check.json`; `--oci-layout <dir>` for a local bundle; TUI `r` refresh | At most 100 desired objects; exact GETs and no inventory LIST. The optional `--check-running-image` adds one bounded, selector-scoped pod read per workload. Configuration and convergence share each dated read. Actual request counts, context, UID and omissions are recorded. The report embeds existing fingerprinted configuration/workload receipts; the whole report is not signed or an immutable receipt. Watch/bot do not schedule this check yet. |
 | Is the image actually running the one I intended? | [`release check --check-running-image`](docs/howto/is-this-image-deployed.md); MCP `release_check` with `check_running_image: true`; `release check --interactive --check-running-image` | **v2.11.0, opt-in:** compares pod-reported image IDs with intended container-image digests from a supplied OCI configuration bundle. Mutable tags stay `unknown`. A comparable differing digest produces `mismatch`/`BLOCK`, but legitimate multi-architecture index/platform differences need registry verification. The bundle digest is a separate identity. Label-selected, bounded observations are not proof that every replica is currently running; missing per-pod status and ownership limits are explained in the guide. Not application success. |
-| I only have an image reference: can I find everywhere it is deployed? | [Image-check prerequisites](docs/howto/is-this-image-deployed.md#start-with-what-you-have) | No dedicated image-reference search across a cluster or fleet in v2.11.0. The release check requires a literal OCI configuration bundle, controller and explicit target; ownership exploration helps identify the workload but does not prove image identity. |
+| I only have an image reference: can I find everywhere it is deployed? | [Image-check prerequisites](docs/howto/is-this-image-deployed.md#start-with-what-you-have) | No dedicated image-reference search across a cluster or fleet in v2.12.0. The release check requires a literal OCI configuration bundle, controller and explicit target; ownership exploration helps identify the workload but does not prove image identity. |
 | Is this rollout still progressing, complete, or stuck? | `receipt verify --predicate workloads-converged`, `doctor`, `explain`, `compare three-way` | Generation-aware workload evidence: `metadata.generation`, `status.observedGeneration`, kstatus, progress clock, pod failure signals, and `PASS` / `WATCH` / `BLOCK` / `INCONCLUSIVE` verdicts. |
 | Can I move to the next task, wait, or retry delivery? | `receipt verify --with-confighub`, `compare three-way`, `doctor --with-confighub`, `map activity --with-confighub` | A read-only decision frame that separates "not applied yet", "still converging", "runtime failure", stale/failed delivery feedback, recent delivery events, and missing evidence, with optional fingerprinted receipts for the exact observation. |
 | Is live state drifting from desired state? | `compare drift`, `compare three-way`, `compare source-truth` | Field-level differences, strategy-relative source-truth evidence, conformance exit codes, and explicit proof gaps when evidence is missing. |
@@ -113,7 +112,7 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | Can I answer broad or repeated questions without hammering live APIs? | `snapshot`, `watch`, `bot`, `summary`, `receipt verify --with-confighub`, `receipt list --format json`, `map list --format json`, `map activity --with-confighub --confighub-space <space>`, `doctor --with-confighub --confighub-space <space>`, `gitops status --with-confighub --confighub-space <space> --confighub-since <window>`, MCP `confighub_resources`, MCP `confighub_k8s_types`, MCP `confighub_k8s_resources` | Existing captured state, low-cardinality watch/bot events, connected summaries, bounded current-space/time-window ConfigHub reads, Resource-backed intended-config and Resource-index surveys, `observation.source/mode/observedAt/freshness` metadata on live inventory/event snapshots and stored summary records, and immutable receipts with list-time freshness status (`fresh`, `stale`, `not-declared`, `invalid`) so repeated reviewers can inspect frozen evidence instead of re-querying live APIs. Within-cycle duplicate reads are coalesced, and `watch`/`bot --watch-backed` serve both inventory and the state scan from a Kubernetes watch informer cache so idle cycles no longer re-list (#539): [measured request baseline](examples/observation-budget/), not a claim of fleet-wide rate limiting. |
 | Can I centralize ongoing observation instead of starting a poller for every user? | `bot`, `watch`, `snapshot` | One read-only event producer can feed a shared sink using in-cluster auth, webhook/JSONL output, bounded queues, receipt-build caps, and filters. Consumers must read that sink to avoid their own cluster queries; this is not a shared Scout query service or a fleet-wide API budget. |
 | Does Scout's bot replace a release-event or sync bot? | `bot`; connected delivery evidence | No. The observer produces evidence; the delivery bot triggers its controller and owns status writeback. Scout can consume that feedback with identity and freshness checks, then add independent live observations. [Integration boundaries](docs/reference/explorer-comparison.md#scout-bot-and-delivery-bot). |
-| Can I prepare a bot image when the public registry pull is unavailable, including for arm64 nodes? | `bash examples/bot/build-from-release.sh v2.11.0 arm64` (or `amd64`) | **v2.11.0 helper:** verifies the published Linux archive checksum before building a local numeric-nonroot image. No ConfigHub auth, image push, registry-permission change or cluster deployment. Select the target node architecture; image distribution, webhook configuration and deployment remain explicit operator steps. This does not repair public registry access. [Installation and verification](examples/bot/#build-a-local-image-from-a-release). |
+| Can I prepare a bot image when the public registry pull is unavailable, including for arm64 nodes? | `bash examples/bot/build-from-release.sh v2.12.0 arm64` (or `amd64`) | **v2.11.0 helper:** verifies the published Linux archive checksum before building a local numeric-nonroot image. No ConfigHub auth, image push, registry-permission change or cluster deployment. Select the target node architecture; image distribution, webhook configuration and deployment remain explicit operator steps. This does not repair public registry access. [Installation and verification](examples/bot/#build-a-local-image-from-a-release). |
 | Can I keep auditable evidence of the check? | `receipt verify`, `receipt verify --with-confighub`, `receipt list`, `receipt validate`, `watch --emit-receipt-on`, `bot --emit-receipt-on` | Typed, fingerprinted, immutable evidence receipts for gates, incident closeout, audits, chained checks, live delivery-status snapshots, and real-time watch/bot events; `receipt list` shows whether saved TTL-backed receipts are still fresh, stale, undeclared, or malformed. |
 | Can I onboard an existing Argo app or app-of-apps safely? | `import argocd`, `import parse-repo`, `import --git-path`, `compare three-way`, `trace` | Source-backed discovery and import proposals, app-of-apps topology warnings, and pre-handover comparison evidence; actual ConfigHub loading, release publishing, and controller handover stay with the governing toolchain. |
 
@@ -135,19 +134,18 @@ is separately packaged; install Scout v2.10.0 before Commander v0.3.0.
 cannot justify success; old success and failure reports ask for a current check.
 See [patch notes and upgrade guidance](docs/releases/v2.10.1.md).
 
-**v2.11.0 is the latest release.** It adds identity-linked release checks
+**v2.11.0** added identity-linked release checks
 (controller-revision evidence, exact OCI release checks, and opt-in
 running-image identity) and cheaper long-running observation (within-cycle read
 coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.12.0 is prepared but not yet published.** It works with `cub` v0.5.2, which
-removed the default space: every `cub` call cub-scout makes now names its space,
-and commands that read one space refuse rather than read the whole organization.
-ConfigHub release, unit-event, fleet, impact and compare output says only what
-ConfigHub reports. See the [release notes](docs/releases/v2.12.0.md). The install
-commands below stay on v2.11.0 until v2.12.0 is tagged.
+**v2.12.0 is the latest release.** It works with `cub` v0.5.2, which removed the
+default space: every `cub` call cub-scout makes names its space, and commands
+that read one space refuse rather than read the whole organization. ConfigHub
+release, unit-event, fleet, impact and compare output says only what ConfigHub
+reports. See the [release notes](docs/releases/v2.12.0.md).
 
 ### Who reaches for cub-scout?
 
@@ -334,9 +332,9 @@ brew install confighub/tap/cub-scout
 
 For direct downloads and tagged source builds, use the
 [install guide](docs/getting-started/install.md). Do not use
-`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.11.0:
+`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.12.0:
 the current Go module path resolves an older major. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.11.0 version` still needs registry
+`docker run ghcr.io/confighub/cub-scout:v2.12.0 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.

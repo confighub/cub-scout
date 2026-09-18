@@ -3448,13 +3448,22 @@ func (m LocalClusterModel) runHistoryPanel() tea.Cmd {
 	// The workload names its own ConfigHub space when ConfigHub applied it. The
 	// TUI has no --space flag, so without that label only CUB_SPACE can say.
 	space := m.historyPanelSpace()
-	if space == "" && hub.PluginSpace() == "" && strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")) == "" {
+	fromFixture := historyFixturePath() != ""
+	if space == "" && hub.PluginSpace() == "" && !fromFixture {
 		return func() tea.Msg {
 			return localHistoryLoadedMsg{err: fmt.Errorf("history needs a ConfigHub space: this workload does not record one, and CUB_SPACE is not set. Start cub-scout with CUB_SPACE=<slug>")}
 		}
 	}
 
 	return func() tea.Msg {
+		// The panel opens on a keypress, and the TUI outlives the session it
+		// started with: `cub auth login` in another terminal must take effect
+		// on the next press rather than leave the panel refusing until the TUI
+		// is restarted. A fixture read reaches no ConfigHub, so it asks nothing.
+		if !fromFixture {
+			_ = refreshConfigHubReads()
+		}
+
 		window, err := parseHistorySince("7d")
 		if err != nil {
 			return localHistoryLoadedMsg{err: err}
@@ -3506,10 +3515,14 @@ func (m LocalClusterModel) getPanelHistory() string {
 	}
 
 	if m.historyPanelError != nil {
-		if errors.Is(m.historyPanelError, errHistoryDisconnected) {
-			b.WriteString(lcWarnStyle.Render("History requires ConfigHub connection."))
+		// The gate's error names the cause and the remedy that fits it, so it
+		// is shown as it is rather than flattened to "run cub auth login".
+		// Every refusal the gate produces is recognised by its marker, so a
+		// cause added later is not silently rendered as a load failure.
+		if errors.Is(m.historyPanelError, errConfigHubUnavailable) {
+			b.WriteString(lcWarnStyle.Render(m.historyPanelError.Error()))
 			b.WriteString("\n")
-			b.WriteString(lcDimStyle.Render("Run: cub auth login, then press h again."))
+			b.WriteString(lcDimStyle.Render("Press h again once it is fixed."))
 			b.WriteString("\n")
 			return b.String()
 		}

@@ -1932,6 +1932,30 @@ would hide the operator's intent from the receipt.
 `--file <path>` is a separate install/object-set mode: it selects
 `object-set-matches` and does not accept a positional resource subject.
 
+### What "connected mode" means
+
+Receipts, watch/bot events and stored summaries record whether the observation
+was made in connected mode. That fact is the verdict of one gate: `cub` is on
+`PATH`, `cub auth status` reports a session `cub` itself accepts, and ConfigHub
+reads are not turned off (`CUB_SCOUT_OFFLINE=true`, telemetry disabled).
+
+It is not a reachability probe of `hub.confighub.com`, and it is not
+`cub auth get-token`, which prints a stored token and exits 0 after that token
+has expired. A self-hosted or air-gapped ConfigHub that `cub` can reach counts
+as connected; an expired session does not.
+
+A command that ends asks the gate once, so a receipt, its omissions and the
+`confighub_reads` field of `status` agree. A command that does not end asks
+again at a boundary its user can see, because a session can expire — or be
+restored by `cub auth login` in another terminal — while it is up:
+
+| Surface | When the fact is read |
+|---|---|
+| One-shot commands (`receipt verify`, `audit list`, `history`, `compare`, `doctor`, `status`) | Once, at the first read, and reused for the rest of that command |
+| `watch` / `bot` | Once per poll cycle that will build a receipt — an event type `--emit-receipt-on` asked for, that receipts support, with `--emit-receipt-batch-cap` above zero. A receipt records the session as of its own cycle, not as of start-up; an idle watch, or one building no receipts, asks nothing |
+| `map` TUI | Each time the history panel is opened, so `cub auth login` in another terminal takes effect on the next keypress |
+| `mcp serve` | Before each `tools/list` and each `tools/call`. The connected tools stop being offered when the session goes, and appear again after `cub auth login`, without restarting the server. A call to a connected tool that is not currently offered is answered with the gate's reason, not "unknown tool" |
+
 ### Omissions
 
 Every receipt carries a required `omissions[]` array (possibly empty).

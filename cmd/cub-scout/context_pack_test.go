@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/internal/scan"
+	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -77,6 +78,11 @@ func TestApplyContextPackSizeLimit_Truncates(t *testing.T) {
 }
 
 func TestRunContextPack_FromFixtureJSON(t *testing.T) {
+	// A fixture read reaches no cluster and no ConfigHub. Without this the
+	// doctor summary's three-way hint would run `cub auth status` and keep
+	// whatever this machine answered for every later caller in the binary.
+	stubConnectedGate(t, hub.ErrCubNotAuthenticated)
+
 	restore := withContextPackFlagsForTest()
 	defer restore()
 

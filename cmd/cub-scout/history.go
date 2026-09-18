@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -50,8 +48,6 @@ func init() {
 	historyCmd.Flags().BoolVar(&historyIncludeSynthetic, "include-synthetic", false, "Include synthetic/demo seeded ChangeSets")
 	historyCmd.Flags().StringVar(&historySpace, "space", "", "ConfigHub space to read ChangeSets from; '*' for every space (default: CUB_SPACE)")
 }
-
-var errHistoryDisconnected = errors.New("history requires ConfigHub connection. Run: cub auth login")
 
 type historyQuery struct {
 	Resource         string
@@ -150,8 +146,15 @@ func runHistory(cmd *cobra.Command, args []string) error {
 	}
 }
 
+// historyFixturePath is the recorded change-set payload a test points history
+// at with CUB_SCOUT_TEST_HISTORY_JSON. A fixture read reaches no ConfigHub, so
+// every history path checks it before the gate.
+func historyFixturePath() string {
+	return strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON"))
+}
+
 func resolveHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry, error) {
-	if fixture := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")); fixture != "" {
+	if fixture := historyFixturePath(); fixture != "" {
 		raw, err := os.ReadFile(fixture)
 		if err != nil {
 			return nil, fmt.Errorf("read history fixture %q: %w", fixture, err)
@@ -173,20 +176,14 @@ func resolveHistoryEntries(ctx context.Context, q historyQuery) ([]historyEntry,
 // historyReadScope is the space a connected history read used, for output.
 // A fixture read has none.
 func historyReadScope(flagValue string) *configHubScope {
-	if strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")) != "" {
+	if historyFixturePath() != "" {
 		return nil
 	}
 	return resolveConfigHubSpace(flagValue).Scope()
 }
 
 func requireHistoryConnected() error {
-	if err := hub.NewClient().RequireConnected(); err != nil {
-		return errHistoryDisconnected
-	}
-	if _, err := exec.LookPath("cub"); err != nil {
-		return fmt.Errorf("history requires cub CLI for connected queries: %w", err)
-	}
-	return nil
+	return requireConfigHubFor("history")
 }
 
 func parseHistorySince(raw string) (time.Duration, error) {
@@ -247,7 +244,7 @@ func resolveHistoryNavigation(ctx context.Context, q historyQuery) historyNaviga
 }
 
 func loadHistoryRawPayload(ctx context.Context, q historyQuery) (string, bool) {
-	if fixture := strings.TrimSpace(os.Getenv("CUB_SCOUT_TEST_HISTORY_JSON")); fixture != "" {
+	if fixture := historyFixturePath(); fixture != "" {
 		raw, err := os.ReadFile(fixture)
 		if err != nil {
 			return "", false

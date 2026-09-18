@@ -11,9 +11,15 @@ import (
 	"testing"
 
 	"github.com/confighub/cub-scout/internal/scan"
+	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 func TestObserveScopeSummary_FromFixture(t *testing.T) {
+	// A fixture read reaches no cluster and no ConfigHub. Without this the
+	// summary's three-way hint would run `cub auth status` and keep whatever
+	// this machine answered for every later caller in the test binary.
+	stubConnectedGate(t, hub.ErrCubNotAuthenticated)
+
 	// Create a temporary fixture file
 	fixture := doctorFixtureInput{
 		Cluster:   "test-cluster",

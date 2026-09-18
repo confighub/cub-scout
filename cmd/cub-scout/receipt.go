@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -214,9 +213,7 @@ func init() {
 	// flow. (Lives in receipt_aggregate.go as a function-variable seam
 	// so tests can swap to a fixed standalone/connected value without
 	// importing the hub package.)
-	detectConnectedForReceipt = func() bool {
-		return hub.NewClient().RequireConnected() == nil
-	}
+	detectConnectedForReceipt = configHubReadsAvailable
 }
 
 func runReceiptVerify(cmd *cobra.Command, args []string) error {
@@ -359,7 +356,10 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	}
 
 	// 4. Detect connected mode (for the second subject + omission logic).
-	connected := hub.NewClient().RequireConnected() == nil
+	// Through the same seam the aggregate flow uses, wired in init to the gate,
+	// so both receipt flows record the fact the same way and a test can drive
+	// this one without a ConfigHub session.
+	connected := detectConnectedForReceipt()
 
 	// 4b. Build the inputAttestations[] from --input-attestation
 	// (repeatable). Each path is loaded + fingerprint-verified before

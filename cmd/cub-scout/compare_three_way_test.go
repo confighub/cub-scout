@@ -93,7 +93,7 @@ func TestBuildThreeWayReport_NamespaceScope(t *testing.T) {
 				Namespace: "prod",
 				Mode:      "live-only",
 				Connected: false,
-				Notes:     []string{"Connect to ConfigHub to unlock DRY/WET/LIVE expected-state comparison."},
+				Notes:     []string{compareNoteConfigHubReadsUnavailable},
 			}, nil
 		default:
 			return compareResourceResult{}, nil

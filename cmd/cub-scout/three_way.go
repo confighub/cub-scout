@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 // ThreeWayPattern names the disagreement pattern detected.
@@ -115,14 +114,13 @@ func buildThreeWayDisagreement(
 	kind, name, namespace string,
 	failureDetails *agent.FailureDetails,
 ) (*ThreeWayDisagreement, error) {
-	// Check connected mode
-	client := hub.NewClient()
-	if err := client.RequireConnected(); err != nil {
+	// The same gate the connected commands use, so its verdict and theirs agree.
+	if err := requireConfigHubFor("three-way comparison"); err != nil {
 		return &ThreeWayDisagreement{
 			Resource:  kind + "/" + name,
 			Namespace: namespace,
 			Pattern:   PatternDisconnected,
-			Meaning:   "Connect to ConfigHub to unlock three-way comparison.",
+			Meaning:   err.Error(),
 		}, nil
 	}
 

@@ -14,7 +14,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
@@ -322,7 +321,7 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 			}
 		}
 	} else {
-		notes = append(notes, "Connect to ConfigHub to unlock DRY/WET/LIVE expected-state comparison.")
+		notes = append(notes, compareNoteConfigHubReadsUnavailable)
 	}
 
 	return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
@@ -335,22 +334,26 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 	}), nil
 }
 
+// compareNoteConfigHubReadsUnavailable is the note a live-only comparison adds
+// when ConfigHub reads are unavailable.
+//
+// It replaces "Connect to ConfigHub to unlock ...", which offered one remedy
+// for every cause, including the causes it cannot fix: an expired session, no
+// `cub` on PATH, or reads turned off. `status` reports which one it is.
+//
+// classifyThreeWayResult buckets a result on this exact note, so it is a
+// constant rather than a string at each end: rewording it once emptied the
+// "disconnected" bucket with nothing failing.
+const compareNoteConfigHubReadsUnavailable = "DRY/WET/LIVE expected-state comparison needs ConfigHub reads; run `cub-scout status` for the reason they are unavailable."
+
 // isCompareConnected uses the same gate as `compare three-way --view` and
 // `compare source-truth`, so one command cannot admit a user at the door and
 // then report every resource as live-only because a second, different check
 // (a probe of hub.confighub.com) disagreed. It is asked once per resource, so
 // the answer is computed once per process rather than one `cub` run each.
 func isCompareConnected() bool {
-	compareConnectedOnce.Do(func() {
-		compareConnectedResult = requireCubConnectedFn() == nil
-	})
-	return compareConnectedResult
+	return configHubReadsAvailable()
 }
-
-var (
-	compareConnectedOnce   sync.Once
-	compareConnectedResult bool
-)
 
 var errCompareResourceNotFoundInManifest = errors.New("resource not found in manifest")
 
