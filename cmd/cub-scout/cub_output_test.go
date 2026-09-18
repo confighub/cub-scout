@@ -129,9 +129,19 @@ func TestNoCubCallUsesARemovedSubcommand(t *testing.T) {
 		"--version": "cub takes `version` as a subcommand and rejects the flag",
 	}
 
+	// Two files have to name the removed commands: the runner's tests assert
+	// that it refuses each one, and this guard's own table lists them.
+	namingThemIsTheirJob := map[string]bool{
+		"cub_runner_test.go": true,
+		"cub_output_test.go": true,
+	}
+
 	fset, files := parseGoFilesIncludingTests(t, "cmd", "pkg")
 	var problems []string
 	for path, file := range files {
+		if namingThemIsTheirJob[filepath.Base(path)] {
+			continue
+		}
 		// cubArgLiterals skips a call with fewer than two arguments, and
 		// `cub --version` is exactly that, so this walks the calls itself.
 		ast.Inspect(file, func(n ast.Node) bool {

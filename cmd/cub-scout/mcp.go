@@ -1338,21 +1338,11 @@ func mcpToolEnv(environ []string) []string {
 }
 
 func runMCPConnectedToolCommand(ctx context.Context, args []string) (string, error) {
-	cmd := exec.CommandContext(ctx, "cub", args...)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg == "" {
-			msg = err.Error()
-		}
-		return "", fmt.Errorf("connected tool command failed (cub %s): %s", strings.Join(args, " "), msg)
+	out, err := cubText(ctx, args...)
+	if err != nil {
+		return "", fmt.Errorf("connected tool command failed: %w", err)
 	}
-
-	return strings.TrimSpace(stdout.String()), nil
+	return out, nil
 }
 
 // detectMCPConnectedMode decides whether the connected tools are offered. Every

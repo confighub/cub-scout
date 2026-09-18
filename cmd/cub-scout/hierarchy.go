@@ -424,13 +424,11 @@ func loadWorkersForSpace(spaceSlug string) ([]CubWorkerData, error) {
 	return workers, nil
 }
 
+// runCubCommand is the TUI's read path. It goes through cubStdout, so a call
+// that names no space is refused before it spawns rather than reading the whole
+// organization; see cub_runner.go.
 func runCubCommand(args ...string) ([]byte, error) {
-	cmd := exec.Command("cub", args...)
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-	return output, nil
+	return cubStdout(context.Background(), args...)
 }
 
 // Import wizard commands
