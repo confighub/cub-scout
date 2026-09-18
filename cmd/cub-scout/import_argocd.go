@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -498,13 +497,17 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 	if argoImportTestUpdate {
 		fmt.Println("Testing ConfigHub pipeline (annotation update)...")
 		result, err := testAnnotationUpdate(space, appName)
-		if err != nil {
+		switch {
+		case err != nil:
+			// The error names its own cause; it is a cub read or write that
+			// failed, not necessarily a worker.
 			fmt.Printf("  ✗ Test failed: %v\n", err)
-			fmt.Println("  The import succeeded, but ConfigHub couldn't update the resource.")
-			fmt.Println("  Check that a worker is connected and the target is configured.")
-		} else {
+			fmt.Println("  The import succeeded, but the unit could not be updated.")
+		case result.Success:
 			fmt.Printf("  ✓ %s\n", result.Message)
-			fmt.Println("  ConfigHub can successfully update resources on this target.")
+		default:
+			// The unit was updated; nothing here watched the target.
+			fmt.Printf("  • %s\n", result.Message)
 		}
 		fmt.Println()
 	}
@@ -512,13 +515,14 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 	if argoImportTestRollout {
 		fmt.Println("Testing ConfigHub pipeline (rollout restart)...")
 		result, err := testRolloutRestart(space, appName)
-		if err != nil {
+		switch {
+		case err != nil:
 			fmt.Printf("  ✗ Test failed: %v\n", err)
-			fmt.Println("  The import succeeded, but ConfigHub couldn't trigger a rollout.")
-			fmt.Println("  Check that a worker is connected and the target is configured.")
-		} else {
+			fmt.Println("  The import succeeded, but the unit could not be updated.")
+		case result.Success:
 			fmt.Printf("  ✓ %s\n", result.Message)
-			fmt.Println("  ConfigHub can successfully trigger rollouts on this target.")
+		default:
+			fmt.Printf("  • %s\n", result.Message)
 			fmt.Println("  Note: Pods will restart. Watch with: kubectl get pods -n <namespace> -w")
 		}
 		fmt.Println()
@@ -1435,6 +1439,42 @@ func deleteArgoApplication(ctx context.Context, client dynamic.Interface, namesp
 	return nil
 }
 
+// readUnitConfigData reads a unit's config data with `cub unit data`.
+//
+// This was `cub unit livedata`, which cub removed in April 2026 along with
+// `unit livestate`: a unit's Resources are extracted from its own data, and
+// ConfigHub's API has no live-data endpoint (#564). The removed subcommand
+// exits 0 and prints the `cub unit` help, and both callers pointed stdout and
+// stderr at one buffer, so 38 lines of help text became the unit's config data
+// and the flow then failed in the YAML editor, blaming the data (#571).
+//
+// stdout alone is the data; whatever cub prints on stderr goes into the error.
+func readUnitConfigData(space, unitSlug string) (string, error) {
+	args := withConfigHubSpace([]string{"unit", "data", unitSlug}, space)
+	out, err := commandStdout(exec.Command("cub", args...))
+	if err != nil {
+		return "", fmt.Errorf("read config data of unit %s in space %s: %w", unitSlug, space, err)
+	}
+	data := strings.TrimSpace(string(out))
+	if data == "" {
+		return "", fmt.Errorf("unit %s in space %s has no config data", unitSlug, space)
+	}
+	return data, nil
+}
+
+// updateUnitConfigData writes config data back to a unit with a change
+// description. stdout alone carries cub's output; stderr goes into the error.
+func updateUnitConfigData(space, unitSlug, data, changeDesc string) error {
+	args := withConfigHubSpace([]string{"unit", "update", unitSlug, "-"}, space)
+	args = append(args, "--change-desc", changeDesc)
+	cmd := exec.Command("cub", args...)
+	cmd.Stdin = strings.NewReader(data)
+	if _, err := commandStdout(cmd); err != nil {
+		return fmt.Errorf("update unit %s in space %s: %w", unitSlug, space, err)
+	}
+	return nil
+}
+
 // TestUpdateResult holds the result of a ConfigHub pipeline test
 type TestUpdateResult struct {
 	Success      bool
@@ -1457,57 +1497,32 @@ func testAnnotationUpdate(space, unitSlug string) (*TestUpdateResult, error) {
 
 	result.Annotation = fmt.Sprintf("%s=%s", annotationKey, annotationValue)
 
-	// Step 1: Get current unit config
-	getCmd := exec.Command("cub", "unit", "get", unitSlug, "--space", space, "-o", "json", "--quiet")
-	var getOut bytes.Buffer
-	getCmd.Stdout = &getOut
-	getCmd.Stderr = &getOut
-	if err := getCmd.Run(); err != nil {
-		return result, fmt.Errorf("failed to get unit config: %s", getOut.String())
+	// Step 1: Read the unit's config data. This also establishes that the unit
+	// exists and can be read, which a separate `unit get` used to check.
+	configYAML, err := readUnitConfigData(space, unitSlug)
+	if err != nil {
+		return result, err
 	}
 
-	// Step 2: Get the unit's config data
-	configCmd := exec.Command("cub", "unit", "livedata", unitSlug, "--space", space)
-	var configOut bytes.Buffer
-	configCmd.Stdout = &configOut
-	configCmd.Stderr = &configOut
-	if err := configCmd.Run(); err != nil {
-		return result, fmt.Errorf("failed to get unit livedata: %s", configOut.String())
-	}
-
-	configYAML := configOut.String()
-	if configYAML == "" {
-		return result, fmt.Errorf("unit has no config data")
-	}
-
-	// Step 3: Parse and modify the YAML to add annotation
+	// Step 2: Parse and modify the YAML to add the annotation. The error names
+	// the unit: the reader has to know which unit's data had no workload in it.
 	modifiedYAML, resourceName, err := addAnnotationToYAML(configYAML, annotationKey, annotationValue)
 	if err != nil {
-		return result, fmt.Errorf("failed to modify YAML: %w", err)
+		return result, fmt.Errorf("unit %s in space %s: %w", unitSlug, space, err)
 	}
 	result.ResourceName = resourceName
 
-	// Step 4: Update the unit with modified config
-	updateCmd := exec.Command("cub", "unit", "update", unitSlug, "-", "--space", space, "--change-desc", "Test update: added ConfigHub annotation")
-	updateCmd.Stdin = strings.NewReader(modifiedYAML)
-	var updateOut bytes.Buffer
-	updateCmd.Stdout = &updateOut
-	updateCmd.Stderr = &updateOut
-	if err := updateCmd.Run(); err != nil {
-		return result, fmt.Errorf("failed to update unit: %s", updateOut.String())
+	// Step 3: Write the annotated data back to the unit.
+	if err := updateUnitConfigData(space, unitSlug, modifiedYAML, "Test update: added ConfigHub annotation"); err != nil {
+		return result, err
 	}
 
-	// Step 5: Apply the unit to push changes to target
-	applyCmd := exec.Command("cub", "unit", "apply", unitSlug, "--space", space, "--wait")
-	var applyOut bytes.Buffer
-	applyCmd.Stdout = &applyOut
-	applyCmd.Stderr = &applyOut
-	if err := applyCmd.Run(); err != nil {
-		return result, fmt.Errorf("failed to apply unit: %s", applyOut.String())
-	}
-
-	result.Success = true
-	result.Message = fmt.Sprintf("Successfully added annotation %s to %s", result.Annotation, resourceName)
+	// The unit is updated. Applying it was `cub unit apply`, which cub removed;
+	// see cub_unit_apply.go. The change reaching the target is a cluster
+	// question, and this function does not answer it, so it does not claim to.
+	result.Success = false
+	result.Message = fmt.Sprintf("Added annotation %s to %s in unit %s. %v",
+		result.Annotation, resourceName, unitSlug, unitApplyUnavailable(space, unitSlug))
 	return result, nil
 }
 
@@ -1524,56 +1539,35 @@ func testRolloutRestart(space, unitSlug string) (*TestUpdateResult, error) {
 
 	result.Annotation = fmt.Sprintf("%s=%s", annotationKey, annotationValue)
 
-	// Step 1: Get the unit's config data (with retry - livedata may not be available immediately)
-	// Keep trying until we get livedata or user cancels. ConfigHub apply timeout is 10 minutes.
-	var configYAML string
-	startTime := time.Now()
-	for {
-		configCmd := exec.Command("cub", "unit", "livedata", unitSlug, "--space", space)
-		var configOut bytes.Buffer
-		configCmd.Stdout = &configOut
-		configCmd.Stderr = &configOut
-		if err := configCmd.Run(); err == nil && configOut.Len() > 0 {
-			configYAML = configOut.String()
-			break
-		}
-		// After 2 minutes, fail with helpful message (worker may not be running)
-		elapsed := time.Since(startTime)
-		if elapsed > 2*time.Minute {
-			return result, fmt.Errorf("timed out waiting for livedata after %v - ensure worker is running and connected", elapsed.Round(time.Second))
-		}
-		// Wait before retry - livedata appears after worker applies unit
-		time.Sleep(3 * time.Second)
+	// Step 1: Read the unit's config data.
+	//
+	// This waited up to two minutes for `cub unit livedata` to report data,
+	// because live data only appeared once the worker had applied the unit.
+	// There is nothing to wait for now: a unit's config data is there as soon
+	// as the unit is, and cub has removed both that command and `unit apply`.
+	configYAML, err := readUnitConfigData(space, unitSlug)
+	if err != nil {
+		return result, err
 	}
 
 	// Step 2: Parse and modify the YAML to add restart annotation to pod template
 	modifiedYAML, resourceName, err := addRolloutAnnotationToYAML(configYAML, annotationKey, annotationValue)
 	if err != nil {
-		return result, fmt.Errorf("failed to modify YAML for rollout: %w", err)
+		return result, fmt.Errorf("unit %s in space %s: %w", unitSlug, space, err)
 	}
 	result.ResourceName = resourceName
 
-	// Step 3: Update the unit with modified config
-	updateCmd := exec.Command("cub", "unit", "update", unitSlug, "-", "--space", space, "--change-desc", "Test rollout: triggered restart")
-	updateCmd.Stdin = strings.NewReader(modifiedYAML)
-	var updateOut bytes.Buffer
-	updateCmd.Stdout = &updateOut
-	updateCmd.Stderr = &updateOut
-	if err := updateCmd.Run(); err != nil {
-		return result, fmt.Errorf("failed to update unit: %s", updateOut.String())
+	// Step 3: Write the annotated data back to the unit.
+	if err := updateUnitConfigData(space, unitSlug, modifiedYAML, "Test rollout: triggered restart"); err != nil {
+		return result, err
 	}
 
-	// Step 4: Apply the unit to push changes to target
-	applyCmd := exec.Command("cub", "unit", "apply", unitSlug, "--space", space, "--wait")
-	var applyOut bytes.Buffer
-	applyCmd.Stdout = &applyOut
-	applyCmd.Stderr = &applyOut
-	if err := applyCmd.Run(); err != nil {
-		return result, fmt.Errorf("failed to apply unit: %s", applyOut.String())
-	}
-
-	result.Success = true
-	result.Message = fmt.Sprintf("Successfully triggered rollout restart for %s", resourceName)
+	// The unit carries the restart annotation. Whether the target restarted is
+	// a cluster question that this function does not answer, so it does not
+	// claim it; see cub_unit_apply.go.
+	result.Success = false
+	result.Message = fmt.Sprintf("Set the restart annotation on %s in unit %s. %v",
+		resourceName, unitSlug, unitApplyUnavailable(space, unitSlug))
 	return result, nil
 }
 

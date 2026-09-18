@@ -2012,31 +2012,16 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 		}
 	}
 
-	// Apply the unit
-	appendTestDebug("Applying unit...")
-	cmd := exec.Command("cub", "unit", "apply",
-		"--space", m.proposal.App,
-		"--wait",
-		m.testUnitSlug)
-
-	output, err := cmd.CombinedOutput()
-	writeTestDebug("09-apply-result.txt", output)
-	appendTestDebug(fmt.Sprintf("Apply result: %s, err=%v", strings.TrimSpace(string(output)), err))
-	if err != nil {
-		appendTestDebug(fmt.Sprintf("ERROR applying unit: %s", string(output)))
-		return wizardTestPhaseMsg{
-			phase:   testPhaseApply,
-			success: false,
-			details: string(output),
-			err:     fmt.Errorf("failed to apply unit: %w", err),
-		}
-	}
-
-	appendTestDebug("Phase 2 (Apply) SUCCESS")
+	// The apply was `cub unit apply --wait`, which cub removed: with --wait it
+	// dies on "unknown flag" and the message blamed the worker. See
+	// cub_unit_apply.go.
+	applyErr := unitApplyUnavailable(m.proposal.App, m.testUnitSlug)
+	appendTestDebug("Not applying unit: " + applyErr.Error())
 	return wizardTestPhaseMsg{
 		phase:   testPhaseApply,
-		success: true,
-		details: "Applied unit to cluster",
+		success: false,
+		details: applyErr.Error(),
+		err:     applyErr,
 	}
 }
 
