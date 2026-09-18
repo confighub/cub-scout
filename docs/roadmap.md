@@ -1032,7 +1032,7 @@ Secret evidence provides visibility into secret dependencies without exposing se
 **Post-v1.9 follow-on queue:**
 * #357 — initial local Git import preview slice shipped and closed
 * #363 — ApplicationSet git-generator parsing shipped and closed
-* #364 — render-integration investigation complete and closed; keep `cub-scout` preview separate from `cub gitops import`
+* #364 — render-integration investigation complete and closed; keep `cub-scout` preview separate from cub's own load path (`cub variant upload`; `cub gitops import` was removed from cub, #573)
 * #369 — first-class MCP `doctor` tool shipped and closed
 * #370 — structured action-typed next-step hints shipped and closed (nextSteps in doctor/explain JSON)
 * #360 — v0.14 trace secret evidence shipped and closed (full safe metadata: createdAt, owner)

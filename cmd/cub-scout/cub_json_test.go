@@ -43,26 +43,6 @@ func TestParseCubUnitListJSON_AcceptsNestedAndFlatShapes(t *testing.T) {
 	}
 }
 
-func TestParseCubTargetListJSON_AcceptsNestedAndFlatShapes(t *testing.T) {
-	raw := []byte(`{
-		"Targets": [
-			{"Target": {"Slug": "k8s-prod", "ProviderType": "Kubernetes", "ToolchainType": "Kubernetes/YAML"}},
-			{"target": {"slug": "argo-renderer", "providerType": "ArgoCDRenderer", "toolchainType": "Kubernetes/YAML"}}
-		]
-	}`)
-
-	got, err := parseCubTargetListJSON(raw)
-	if err != nil {
-		t.Fatalf("parseCubTargetListJSON() error = %v", err)
-	}
-	if len(got) != 2 {
-		t.Fatalf("len(got) = %d, want 2", len(got))
-	}
-	if got[0].Slug != "k8s-prod" || got[1].Slug != "argo-renderer" {
-		t.Fatalf("got = %+v, want both target slugs", got)
-	}
-}
-
 func TestParseCubContextJSON_AcceptsCamelAndPascalCase(t *testing.T) {
 	raw := []byte(`{
 		"name": "alexis@example.com",

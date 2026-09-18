@@ -81,7 +81,7 @@ Typical path:
 
 1. Discover and review with `./cub-scout import --dry-run`
 2. Import with `./cub-scout import` (or `--yes --connect`)
-3. For Argo/Flux workloads, import may delegate to `cub gitops import` when matching targets exist
+3. Argo/Flux workloads are imported as a snapshot like any other — cub removed `cub gitops discover` / `cub gitops import` on 2026-07-25 with no replacement (#573); rendered configuration goes into ConfigHub with `cub variant upload`
 4. Helm/Native leftovers are imported via snapshot path
 
 See [Import to ConfigHub](import-to-confighub.md) for the full migration path, or [Migration Playbook](migration-playbook.md) for the comprehensive guide.

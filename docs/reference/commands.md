@@ -1253,7 +1253,7 @@ cub-scout import --git-path ./repo --dry-run --json
 - this is a local structure/import-preview flow, not a first-run troubleshooting path
 - it is not a manifest renderer and does not upload anything by itself
 - parser support includes ArgoCD `ApplicationSet` git generators, matrix-contained git generators, exclude patterns, and duplicate-basename-safe proposal slugs
-- if you need controller-faithful rendering/import, that remains the `cub gitops discover` + `cub gitops import` path
+- if you need controller-faithful rendering, render with the controller's own tooling (`helm template`, `kustomize build`, an installer) and load the result with `cub variant upload`; cub removed `cub gitops discover` / `cub gitops import` on 2026-07-25 with no replacement (#573); rendered configuration goes into ConfigHub with `cub variant upload`
 
 Connected audit note:
 - `--audit-reason` writes a break-glass ChangeSet entry so `cub-scout audit list` can show who/when/why/what.

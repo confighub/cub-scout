@@ -314,7 +314,16 @@ note "Redis and debug-config are invisible to this tool."
 # ============================================================
 # ACT 4 - THE PIPELINE: cub gitops import (--live only)
 # ============================================================
-if $LIVE; then
+# cub removed the whole `gitops` group on 2026-07-25 (#573), so this act runs
+# only against a cub that still has it. On a current cub it says so and is
+# skipped, rather than failing part-way through.
+if $LIVE && ! cub gitops --help >/dev/null 2>&1; then
+    warn "cub gitops was removed from cub on 2026-07-25 - skipping the pipeline act"
+    note "Rendered configuration now goes in with: cub variant upload <dir|oci://ref> --space <space>"
+    note "See https://github.com/confighub/cub-scout/issues/573"
+fi
+
+if $LIVE && cub gitops --help >/dev/null 2>&1; then
     banner "Act 4: The Pipeline (cub gitops import)"
     note "Full render pipeline with dry/wet unit pairs"
     note "Requires ConfigHub infrastructure + in-cluster renderer"

@@ -89,7 +89,7 @@ Every shipped skill follows this — no broad wildcards, every verb enumerated. 
 | Read cluster state | `cub-scout` (or `kubectl get / describe / logs`) |
 | Read ConfigHub state | `cub * get`, `cub * list`, `cub unit get`, `cub link list` |
 | Author a ConfigHub unit | `cub unit create / update` |
-| Apply a unit to a cluster | `cub gitops import` (target + render-target based) OR direct `cub apply` |
+| Get configuration into ConfigHub | `cub variant upload` (already-rendered resources) or `cub unit create / update` |
 | Sync an Argo Application | `argocd app sync` (user-driven, not via cub-scout) |
 | Force a Flux reconcile | `flux reconcile` (user-driven) |
 | Patch a cluster resource | `kubectl patch / edit / apply` (user-driven) |

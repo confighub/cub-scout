@@ -1,5 +1,8 @@
 # GitOps Import Claim-vs-Proof Matrix
 
+> **Note (2026-09-18):** `cub gitops discover` and `cub gitops import` no longer exist. cub deleted the whole `gitops` group on 2026-07-25 with no replacement, and `cub gitops` exits 1 with `unknown command`. Rendered configuration now goes into ConfigHub with `cub variant upload`, which ingests already-rendered resources and renders nothing itself. See [#573](https://github.com/confighub/cub-scout/issues/573).
+
+
 Status snapshot taken from the repo, published docs, and targeted live demo
 checks on 2026-03-22.
 

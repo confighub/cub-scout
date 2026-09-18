@@ -61,34 +61,6 @@ func parseCubUnitListJSON(raw []byte) ([]cubUnitListEntry, error) {
 	return out, nil
 }
 
-func parseCubTargetListJSON(raw []byte) ([]cubTargetRef, error) {
-	payload, err := parseCubJSONPayload(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	items := cubExtractItems(payload)
-	out := make([]cubTargetRef, 0, len(items))
-	for _, item := range items {
-		targetObj := mcpNestedMap(item, "Target", "target")
-		if targetObj == nil {
-			targetObj = item
-		}
-
-		slug := mcpFirstString(targetObj, "Slug", "slug", "Name", "name")
-		if slug == "" {
-			continue
-		}
-
-		out = append(out, cubTargetRef{
-			Slug:         slug,
-			ProviderType: mcpFirstString(targetObj, "ProviderType", "providerType"),
-			Toolchain:    mcpFirstString(targetObj, "ToolchainType", "toolchainType"),
-		})
-	}
-	return out, nil
-}
-
 func parseCubWorkerListJSON(raw []byte) ([]WorkerListItem, error) {
 	payload, err := parseCubJSONPayload(raw)
 	if err != nil {

@@ -77,17 +77,23 @@ Important:
 
 Use it for:
 - spaces, units, targets, workers, and ConfigHub state
-- `cub gitops discover`
-- `cub gitops import`
+- `cub variant upload` (load already-rendered resources into a space as units)
+- `cub k8s source` (trace one live resource back to its unit)
 - `cub link list / get` (the data feed for cub-scout's connected attribution layer)
 
-Current local CLI truth:
-- `cub gitops discover --space <space> <target-slug>`
-- `cub gitops import --space <space> <target-slug> <render-target-slug>`
+Current local CLI truth (cub v0.5.3):
+- `cub variant upload --space <space> <dir | file | - | oci://ref>`
+- `cub gitops discover` and `cub gitops import` **no longer exist**. cub deleted
+  the whole `gitops` group on 2026-07-25, in the same commit that removed
+  `unit apply`, `unit destroy`, `unit import` and `unit refresh`. That commit
+  added no replacement, and `cub gitops` now exits 1 with
+  `unknown command "gitops" for "cub"` (#573).
 
 Important:
-- `cub gitops import` is target + render-target based
-- it is not a local `--git-path` renderer
+- `cub variant upload` ingests what you give it and renders nothing. The render
+  step belongs to your own tooling: `helm template`, `kustomize build`, an
+  installer, or a published `oci://` bundle
+- it is not a local `--git-path` renderer either
 
 Current `cub k8s` truth from `confighub/sdk` `origin/main` as of 2026-09-11:
 - `cub k8s get` and `cub k8s types` read Kubernetes configuration stored in
@@ -346,7 +352,7 @@ Verify live state before acting. As of 2026-09-11, the receipts arc, Pilot consu
 2. Verify current behavior from local help before claiming support.
 3. Prefer `./cub-scout` in local repo workflows.
 4. Keep cluster read-only behavior separate from ConfigHub writes.
-5. Treat `cub scout` and `cub gitops import` as complementary, not interchangeable.
+5. Treat `cub scout` and cub's own load path (`cub variant upload`) as complementary, not interchangeable.
 6. Preserve deterministic facts over optimistic guidance — when attribution can't classify confidently, return `unknown` rather than guessing.
 
 ## Quick Reality Checks
@@ -369,8 +375,8 @@ When the question crosses into ConfigHub or renderer workflows:
 
 ```bash
 cub version
-cub gitops --help
-cub gitops import --help
+cub variant upload --help
+cub k8s --help
 cub k8s --help
 cub k8s get --help
 cub k8s types --help

@@ -298,6 +298,51 @@ binary. They stub the gate now. The only test that reaches the real gate is
 `TestConnectedGate_RealProcessBothForms`, which runs the built binary in a
 subprocess against a fake `cub`, deliberately.
 
+## cub gitops Is Gone, and What Replaces It (#573)
+
+cub deleted the whole `gitops` group on 2026-07-25, in the same commit that
+removed `unit apply`, `unit destroy`, `unit import` and `unit refresh`. That
+commit added nothing, so there is no drop-in successor to the render-target
+import model: cub no longer renders on anyone's behalf.
+
+What cub offers instead is **`cub variant upload`** — "Upload already-rendered
+Kubernetes manifests into a ConfigHub Space". It takes a directory, a file, `-`,
+or an `oci://` bundle; it renders nothing (`helm template`, `kustomize build`, an
+installer or a published bundle does that); the server splits the input and makes
+the space's Units, Links and Invocations match it, create-or-update, with a
+3-way merge that preserves changes made in ConfigHub since. `cub k8s source`
+traces one live resource back to its unit.
+
+Failure mode, for contrast with #571: an unknown **top-level** command exits 1
+with `unknown command "gitops" for "cub"`, which is honest. A removed
+**subcommand** of a command cub still has exits 0 and prints the group's help,
+which is not. That is why the cub runner refuses the second class and passes the
+first through.
+
+In cub-scout:
+
+- The import flow no longer attempts delegation. `attemptGitOpsDelegation` now
+  reports why Argo- and Flux-managed workloads are snapshot-imported like
+  everything else, and runs nothing — it used to create the App Space before
+  discovering it could not delegate. The unreachable "delegated" paths
+  (`AnyDelegated`, `filterScoutWorkloadsAfterDelegation`, the two `✓ … -> cub
+  gitops import` lines) are gone, with the helpers only they used
+  (`selectGitOpsTargets`, `gitOpsNamespacesForOwner`, `loadCubTargets`,
+  `parseCubTargetListJSON`, `cubTargetRef`).
+- The boundary story is corrected wherever it is stated as instruction:
+  `CLAUDE.md`, `AGENTS.md`, `AI-README-FIRST.md`, `docs/concepts/cub-vs-cub-scout.md`,
+  six skills, and the import how-tos. Dated records — the claim-proof matrix, the
+  two worked examples, the vocabulary spec, the historical sections of this file
+  — keep their text and carry a note instead.
+- The two demos run the removed command in their pipeline act. That act is now
+  guarded: against a cub that still has `gitops` it runs as before, and against a
+  current cub it says what happened and is skipped rather than failing part-way.
+  Rewriting them around `cub variant upload` needs a cluster to verify and is not
+  done here.
+- `scripts/test-import-delegation.sh` checked that the help *documented*
+  delegation. It now checks the opposite, plus that no code path calls
+  `cub gitops` again.
+
 ## cub Output: -o json, Stderr Out of Data, and One Runner (#563)
 
 `cub` deprecated `--json` in favour of `-o json`, and prints

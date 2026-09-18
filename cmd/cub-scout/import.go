@@ -43,28 +43,16 @@ var (
 var listUnitSlugsForSpace = fetchUnitSlugsForSpace
 var labelWorkloadForImport = labelWorkload
 
-type cubTargetRef struct {
-	Slug         string
-	ProviderType string
-	Toolchain    string
-}
-
 type gitOpsDelegationResult struct {
-	ArgoWanted    bool
-	FluxWanted    bool
-	ArgoDelegated bool
-	FluxDelegated bool
-	ArgoReason    string
-	FluxReason    string
+	ArgoWanted bool
+	FluxWanted bool
+	ArgoReason string
+	FluxReason string
 }
 
 type importAuditContext struct {
 	ChangeSetSlug string
 	Reason        string
-}
-
-func (r gitOpsDelegationResult) AnyDelegated() bool {
-	return r.ArgoDelegated || r.FluxDelegated
 }
 
 // GitOpsReference identifies the GitOps resource that manages a workload
@@ -266,7 +254,7 @@ func filterWorkloadsBySelection(workloads []WorkloadInfo, selections []importRes
 				Kind:      w.Kind,
 				Namespace: w.Namespace,
 				Name:      w.Name,
-				Reason:    fmt.Sprintf("GitOps-managed (%s) - selective import not supported; use full namespace import or import via 'cub gitops import'", w.Owner),
+				Reason:    fmt.Sprintf("GitOps-managed (%s) - selective import not supported; import the whole namespace", w.Owner),
 			})
 			continue
 		}
@@ -306,10 +294,11 @@ This command:
   2. Suggests an App and Deployments structure
   3. Imports into ConfigHub
 
-When ArgoCD/Flux workloads are found and matching GitOps targets are available
-in the App Space, cub-scout delegates those workloads to:
-  cub gitops discover + cub gitops import
-and imports Helm/Native leftovers via the snapshot path.
+ArgoCD/Flux-managed workloads are imported the same way as the rest: as a
+snapshot of what is live. cub-scout used to delegate them to cub gitops
+import, which cub removed in July 2026. To put rendered configuration into
+ConfigHub instead, render it with your controller's own tooling and load the
+result with cub variant upload.
 
 Terminology: the API currently uses Space/Unit; see docs/reference/glossary.md
 for the App/Deployment mapping.
@@ -538,7 +527,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 			}
 			printCuratedSelectionSummary(selectionResult)
 			if len(result.Unsupported) > 0 {
-				return fmt.Errorf("cannot import: %d selected resource(s) are GitOps-managed and require full namespace import or 'cub gitops import'", len(result.Unsupported))
+				return fmt.Errorf("cannot import: %d selected resource(s) are GitOps-managed and require importing the whole namespace", len(result.Unsupported))
 			}
 			if len(result.Missing) > 0 {
 				return fmt.Errorf("cannot import: %d selected resource(s) not found in namespace %q", len(result.Missing), importNamespace)
@@ -613,7 +602,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 		logger.Log("Creating App: %s", proposal.App)
 	}
 
-	// Try delegating Argo/Flux workloads to cub gitops import first.
+	// Report why Argo/Flux workloads are snapshot-imported like everything else.
 	delegation, err := attemptGitOpsDelegation(proposal.App, allWorkloads, logger)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: GitOps delegation failed, falling back to scout import: %v\n", err)
@@ -626,21 +615,9 @@ func runImport(cmd *cobra.Command, args []string) error {
 		printDelegationSummary(delegation)
 	}
 
-	// If a controller was delegated successfully, skip snapshot import for those workloads.
-	scoutWorkloads := filterScoutWorkloadsAfterDelegation(allWorkloads, delegation)
-	if len(scoutWorkloads) == 0 && delegation.AnyDelegated() {
-		fmt.Println()
-		fmt.Println("No Helm/Native leftovers to snapshot-import.")
-		fmt.Printf("GitOps-managed workloads imported via cub gitops import into App '%s'.\n", proposal.App)
-		return printSpaceSummary(proposal.App)
-	}
-
-	proposalToApply := proposal
-	if len(scoutWorkloads) != len(allWorkloads) {
-		proposalToApply = SuggestFullProposal(nil, scoutWorkloads, proposal.App)
-	}
-
-	return applyImportWithLogger(proposalToApply, scoutWorkloads, logger, shouldConnect, importAuditReason)
+	// Every workload is imported as a cub-scout snapshot: there is nothing to
+	// delegate GitOps-managed ones to since cub removed `gitops import`.
+	return applyImportWithLogger(proposal, allWorkloads, logger, shouldConnect, importAuditReason)
 }
 
 func runImportFromBundle(bundlePath string, resourceSelections []importResourceSelection) error {
@@ -680,7 +657,7 @@ func runImportFromBundle(bundlePath string, resourceSelections []importResourceS
 			}
 			printCuratedSelectionSummary(selectionResult)
 			if len(result.Unsupported) > 0 {
-				return fmt.Errorf("cannot import: %d selected resource(s) are GitOps-managed and require full namespace import or 'cub gitops import'", len(result.Unsupported))
+				return fmt.Errorf("cannot import: %d selected resource(s) are GitOps-managed and require importing the whole namespace", len(result.Unsupported))
 			}
 			if len(result.Missing) > 0 {
 				return fmt.Errorf("cannot import: %d selected resource(s) not found in bundle", len(result.Missing))
@@ -1520,225 +1497,57 @@ func printDiscovery(namespaces []string, workloads []WorkloadInfo, proposal *Ful
 
 func printDelegationSummary(r gitOpsDelegationResult) {
 	fmt.Println()
-	fmt.Println("GitOps delegation:")
+	fmt.Println("GitOps-managed workloads:")
 	if r.ArgoWanted {
-		if r.ArgoDelegated {
-			fmt.Println("  ✓ ArgoCD workloads -> cub gitops import")
-		} else {
-			fmt.Printf("  ○ ArgoCD workloads -> scout snapshot (%s)\n", r.ArgoReason)
-		}
+		fmt.Printf("  ○ ArgoCD workloads -> scout snapshot (%s)\n", r.ArgoReason)
 	}
 	if r.FluxWanted {
-		if r.FluxDelegated {
-			fmt.Println("  ✓ Flux workloads -> cub gitops import")
-		} else {
-			fmt.Printf("  ○ Flux workloads -> scout snapshot (%s)\n", r.FluxReason)
-		}
+		fmt.Printf("  ○ Flux workloads -> scout snapshot (%s)\n", r.FluxReason)
 	}
 }
 
-func filterScoutWorkloadsAfterDelegation(workloads []WorkloadInfo, r gitOpsDelegationResult) []WorkloadInfo {
-	filtered := make([]WorkloadInfo, 0, len(workloads))
-	for _, w := range workloads {
-		if w.Owner == "ArgoCD" && r.ArgoDelegated {
-			continue
-		}
-		if w.Owner == "Flux" && r.FluxDelegated {
-			continue
-		}
-		filtered = append(filtered, w)
-	}
-	return filtered
-}
+// gitOpsDelegationUnavailable is why Argo- and Flux-managed workloads are
+// imported as a cub-scout snapshot rather than handed to cub.
+//
+// cub-scout used to delegate them to `cub gitops import`, which rendered them
+// through render targets and wrote the result as units. cub removed the whole
+// `gitops` group in July 2026, and that commit added no replacement (#573).
+// What cub offers now is `cub variant upload`, which ingests **already
+// rendered** resources — from `helm template`, `kustomize build`, an installer,
+// or an `oci://` bundle — and makes a space's units match them. The rendering
+// belongs to the operator's own tooling, so there is nothing for cub-scout to
+// delegate to.
+const gitOpsDelegationUnavailable = "cub gitops import was removed from cub in July 2026; render with your controller's own tooling and load the result with `cub variant upload`"
 
+// attemptGitOpsDelegation reports that GitOps-managed workloads cannot be
+// delegated, and why. It runs nothing: the command it used to call does not
+// exist, and the space it used to create for that call is created by the import
+// itself.
 func attemptGitOpsDelegation(space string, workloads []WorkloadInfo, logger *ImportLogger) (gitOpsDelegationResult, error) {
 	result := gitOpsDelegationResult{}
-	needArgo := false
-	needFlux := false
 	for _, w := range workloads {
 		if w.Owner == "ArgoCD" {
-			needArgo = true
+			result.ArgoWanted = true
 		}
 		if w.Owner == "Flux" {
-			needFlux = true
+			result.FluxWanted = true
 		}
 	}
-	result.ArgoWanted = needArgo
-	result.FluxWanted = needFlux
-
-	if !needArgo && !needFlux {
+	if !result.ArgoWanted && !result.FluxWanted {
 		return result, nil
 	}
 
+	if result.ArgoWanted {
+		result.ArgoReason = gitOpsDelegationUnavailable
+	}
+	if result.FluxWanted {
+		result.FluxReason = gitOpsDelegationUnavailable
+	}
 	if logger != nil {
 		logger.Section("GITOPS DELEGATION")
-		logger.Log("Trying cub gitops import for GitOps-managed workloads in space %s", space)
+		logger.Log("Not delegating: %s", gitOpsDelegationUnavailable)
 	}
-
-	// Ensure space exists so target lookups and gitops commands can run.
-	if _, err := CreateAppWithResult(space, nil); err != nil {
-		msg := fmt.Sprintf("cannot ensure app space: %v", err)
-		if needArgo {
-			result.ArgoReason = msg
-		}
-		if needFlux {
-			result.FluxReason = msg
-		}
-		return result, err
-	}
-
-	targets, err := loadCubTargets(space)
-	if err != nil {
-		msg := fmt.Sprintf("cannot list targets: %v", err)
-		if needArgo {
-			result.ArgoReason = msg
-		}
-		if needFlux {
-			result.FluxReason = msg
-		}
-		return result, nil
-	}
-
-	k8sTarget, argoRendererTarget, fluxRendererTarget := selectGitOpsTargets(targets)
-	if k8sTarget == "" {
-		msg := "no Kubernetes discovery target in this App Space"
-		if needArgo {
-			result.ArgoReason = msg
-		}
-		if needFlux {
-			result.FluxReason = msg
-		}
-		return result, nil
-	}
-
-	if needArgo {
-		if argoRendererTarget == "" {
-			result.ArgoReason = "no ArgoCD renderer target in this App Space"
-		} else {
-			argoNamespaces := gitOpsNamespacesForOwner(workloads, "ArgoCD", "argocd")
-			if err := runGitOpsImportForNamespaces(space, k8sTarget, argoRendererTarget, argoNamespaces, "ArgoCD", logger); err != nil {
-				result.ArgoReason = err.Error()
-			} else {
-				result.ArgoDelegated = true
-			}
-		}
-	}
-
-	if needFlux {
-		if fluxRendererTarget == "" {
-			result.FluxReason = "no Flux renderer target in this App Space"
-		} else {
-			fluxNamespaces := gitOpsNamespacesForOwner(workloads, "Flux", "flux-system")
-			if err := runGitOpsImportForNamespaces(space, k8sTarget, fluxRendererTarget, fluxNamespaces, "Flux", logger); err != nil {
-				result.FluxReason = err.Error()
-			} else {
-				result.FluxDelegated = true
-			}
-		}
-	}
-
-	if needArgo && !result.ArgoDelegated && result.ArgoReason == "" {
-		result.ArgoReason = "delegation unavailable"
-	}
-	if needFlux && !result.FluxDelegated && result.FluxReason == "" {
-		result.FluxReason = "delegation unavailable"
-	}
-
 	return result, nil
-}
-
-func loadCubTargets(space string) ([]cubTargetRef, error) {
-	out, err := cubStdout(context.Background(), withConfigHubSpace([]string{"target", "list", "-o", "json"}, space)...)
-	if err != nil {
-		return nil, err
-	}
-	return parseCubTargetListJSON(out)
-}
-
-func selectGitOpsTargets(targets []cubTargetRef) (k8sTarget, argoRenderer, fluxRenderer string) {
-	for _, t := range targets {
-		slug := strings.ToLower(t.Slug)
-		provider := strings.ToLower(t.ProviderType)
-		toolchain := strings.ToLower(t.Toolchain)
-		all := slug + " " + provider + " " + toolchain
-
-		if k8sTarget == "" && (strings.Contains(all, "kubernetes") || strings.Contains(all, "k8s")) {
-			k8sTarget = t.Slug
-		}
-		if argoRenderer == "" &&
-			(strings.Contains(all, "argocdrenderer") || (strings.Contains(all, "argocd") && strings.Contains(all, "renderer"))) {
-			argoRenderer = t.Slug
-		}
-		if fluxRenderer == "" &&
-			(strings.Contains(all, "fluxrenderer") || (strings.Contains(all, "flux") && strings.Contains(all, "renderer"))) {
-			fluxRenderer = t.Slug
-		}
-	}
-	return k8sTarget, argoRenderer, fluxRenderer
-}
-
-func gitOpsNamespacesForOwner(workloads []WorkloadInfo, owner, fallback string) []string {
-	seen := make(map[string]bool)
-	var namespaces []string
-	for _, w := range workloads {
-		if w.Owner != owner || w.GitOpsRef == nil {
-			continue
-		}
-		ns := strings.TrimSpace(w.GitOpsRef.Namespace)
-		if ns == "" {
-			continue
-		}
-		if seen[ns] {
-			continue
-		}
-		seen[ns] = true
-		namespaces = append(namespaces, ns)
-	}
-	if len(namespaces) == 0 {
-		namespaces = []string{fallback}
-	}
-	sort.Strings(namespaces)
-	return namespaces
-}
-
-func runGitOpsImportForNamespaces(space, k8sTarget, rendererTarget string, namespaces []string, label string, logger *ImportLogger) error {
-	for _, ns := range namespaces {
-		where := fmt.Sprintf("metadata.namespace = '%s'", ns)
-		fmt.Printf("\nDelegating %s namespace '%s' via cub gitops import...\n", label, ns)
-		if logger != nil {
-			logger.Log("Delegating %s ns=%s using k8s=%s renderer=%s", label, ns, k8sTarget, rendererTarget)
-		}
-
-		discoverCmd, discoverErr := cubCommand(context.Background(),
-			"gitops", "discover",
-			"--space", space,
-			k8sTarget,
-			"--where-resource", where,
-		)
-		if discoverErr != nil {
-			return discoverErr
-		}
-		discoverOutput, err := discoverCmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("cub gitops discover failed for %s/%s: %s", label, ns, strings.TrimSpace(string(discoverOutput)))
-		}
-
-		importCmd, importErr := cubCommand(context.Background(),
-			"gitops", "import",
-			"--space", space,
-			k8sTarget, rendererTarget,
-			"--where-resource", where,
-			"--wait",
-		)
-		if importErr != nil {
-			return importErr
-		}
-		importOutput, err := importCmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("cub gitops import failed for %s/%s: %s", label, ns, strings.TrimSpace(string(importOutput)))
-		}
-	}
-	return nil
 }
 
 func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger, shouldConnect bool, auditReason string) error {
