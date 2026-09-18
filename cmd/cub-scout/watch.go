@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -287,10 +286,6 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		queue     []watchEvent
 	)
 
-	// connected mode is read once at watch start; it's stable for the
-	// duration of the watch loop. Used by the receipt-emission path to
-	// decide whether to include a confighub-unit:// subject.
-	connected := hub.NewClient().RequireConnected() == nil
 	baseWarnFn := func(format string, args ...interface{}) {
 		fmt.Fprintf(os.Stderr, "Warning: "+format+"\n", args...)
 	}
@@ -332,7 +327,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 			return err
 		}
 		events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
-		events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
+		events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, watchCycleConnected(emitReceiptOn, events), warnFn)
 		queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 		_, err = flushWatchQueue(ctx, sinks, queue)
 		return err
@@ -362,7 +357,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 				curr.observedMode = agent.ObservationModeWatchInformer
 			}
 			events := buildWatchEvents(prevState, curr, severityFilter, ownerFilter, watchEventNow)
-			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, connected, warnFn)
+			events = attachReceiptsIfRequested(ctx, events, emitReceiptOn, dynClient, watchCycleConnected(emitReceiptOn, events), warnFn)
 			queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 			remaining, err := flushWatchQueue(ctx, sinks, queue)
 			queue = remaining
@@ -373,6 +368,30 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 			}
 		}
 	}
+}
+
+// watchCycleConnected is the connected fact this cycle's receipts record.
+//
+// A watch runs for days, and a session can expire or be restored while it does,
+// so the gate is asked again each cycle rather than stamping every receipt with
+// the verdict read at start-up. It is asked only when this cycle will build a
+// receipt to record it on, which is the eligibility attachReceiptsIfRequested
+// applies: an event type --emit-receipt-on asked for, that receipts support,
+// and a batch cap above zero (--emit-receipt-batch-cap 0 disables receipt-build
+// while keeping the flag explicit). An idle watch, a watch without
+// --emit-receipt-on, a cycle whose events are all of other types, and a watch
+// with the cap at zero therefore spend no `cub` process at all. A cycle that
+// does build receipts spends one, whatever the event count.
+func watchCycleConnected(emitOn map[string]bool, events []watchEvent) bool {
+	if watchReceiptBatchCap <= 0 {
+		return false
+	}
+	for _, ev := range events {
+		if emitOn[ev.Type] && watchEventTypesWithReceiptSupport[ev.Type] {
+			return refreshConfigHubReadsAvailable()
+		}
+	}
+	return false
 }
 
 func collectWatchState(ctx context.Context, dynClient dynamic.Interface, namespace string) (watchState, error) {

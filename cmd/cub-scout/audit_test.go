@@ -6,10 +6,12 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -147,9 +149,8 @@ func TestRunAuditList_NotConnected(t *testing.T) {
 	restore := withAuditListFlagsForTest()
 	defer restore()
 
-	prevRequire := requireAuditConnectedFn
-	requireAuditConnectedFn = func() error { return errAuditDisconnected }
-	defer func() { requireAuditConnectedFn = prevRequire }()
+	// The real gate, refusing: the command must carry its reason.
+	stubConnectedGate(t, hub.ErrCubNotAuthenticated)
 
 	cmd := &cobra.Command{}
 	cmd.SetContext(context.Background())
@@ -157,7 +158,7 @@ func TestRunAuditList_NotConnected(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error when not connected")
 	}
-	if !strings.Contains(err.Error(), "audit requires ConfigHub connection") {
+	if !errors.Is(err, hub.ErrCubNotAuthenticated) || !strings.Contains(err.Error(), "audit list needs ConfigHub") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

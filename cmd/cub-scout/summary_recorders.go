@@ -11,12 +11,9 @@ import (
 
 	"github.com/confighub/cub-scout/internal/scan"
 	"github.com/confighub/cub-scout/internal/summarystore"
-	"github.com/confighub/cub-scout/pkg/hub"
 )
 
-var summaryConnectedFn = func() bool {
-	return hub.NewClient().RequireConnected() == nil
-}
+var summaryConnectedFn = configHubReadsAvailable
 
 func buildScanSummaryRecord(result *scan.CombinedResult, cluster, namespace string, now time.Time) (summarystore.Record, error) {
 	if result == nil {

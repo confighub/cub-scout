@@ -87,7 +87,7 @@ func TestCompareResource_Golden_Standalone(t *testing.T) {
 			Images:     []string{"ghcr.io/acme/checkout:v3"},
 		},
 		Notes: []string{
-			"Connect to ConfigHub to unlock DRY/WET/LIVE expected-state comparison.",
+			compareNoteConfigHubReadsUnavailable,
 		},
 	}
 

@@ -96,6 +96,50 @@ type mcpGateway struct {
 	tools    map[string]mcpTool
 	toolList []mcpToolDescriptor
 	runTool  mcpToolRunner
+
+	// connectedRunner, connected and connectedOnly let the gateway rebuild its
+	// tool set when the session changes. `mcp serve` runs for as long as the
+	// agent holds it, and the tool set it advertises has to follow: a session
+	// that expires must stop the connected tools being offered, and
+	// `cub auth login` in another terminal must make them appear without
+	// restarting the server.
+	connectedRunner mcpToolRunner
+	connected       bool
+	connectedOnly   map[string]bool
+
+	// sessionFn answers whether ConfigHub reads can run right now. Production
+	// re-asks `cub`; tests replace it.
+	sessionFn func() bool
+}
+
+// followSession re-asks whether ConfigHub reads can run and rebuilds the tool
+// set if the answer changed. It is called before a tool list and before a tool
+// call, so both agree with what the tool would actually do.
+func (g *mcpGateway) followSession() {
+	if g.sessionFn == nil {
+		return
+	}
+	connected := g.sessionFn()
+	if connected == g.connected {
+		return
+	}
+	fresh := newMCPGatewayWithMode(g.runTool, g.connectedRunner, connected)
+	g.tools, g.toolList, g.connected = fresh.tools, fresh.toolList, connected
+}
+
+// connectedOnlyToolNames are the tools a connected session adds. A call to one
+// of them while the session is gone is answered with the gate's own reason
+// rather than "unknown tool", which would read as a cub-scout defect.
+func connectedOnlyToolNames(runner, connectedRunner mcpToolRunner) map[string]bool {
+	standalone := newMCPGatewayWithMode(runner, connectedRunner, false)
+	connected := newMCPGatewayWithMode(runner, connectedRunner, true)
+	only := map[string]bool{}
+	for name := range connected.tools {
+		if _, alsoStandalone := standalone.tools[name]; !alsoStandalone {
+			only[name] = true
+		}
+	}
+	return only
 }
 
 type mcpRequest struct {
@@ -119,7 +163,7 @@ type mcpError struct {
 }
 
 func runMCPServe(cmd *cobra.Command, args []string) error {
-	gateway := newMCPGatewayWithMode(boundedMCPRunner(runMCPToolCommand), runMCPConnectedToolCommand, detectMCPConnectedMode())
+	gateway := newMCPServeGateway(boundedMCPRunner(runMCPToolCommand), runMCPConnectedToolCommand)
 	return serveMCP(cmd.Context(), os.Stdin, os.Stdout, gateway)
 }
 
@@ -986,10 +1030,21 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 	}
 
 	return &mcpGateway{
-		tools:    tools,
-		toolList: list,
-		runTool:  runner,
+		tools:           tools,
+		toolList:        list,
+		runTool:         runner,
+		connectedRunner: connectedRunner,
+		connected:       connected,
 	}
+}
+
+// newMCPServeGateway builds the gateway `mcp serve` uses: the tool set for the
+// session as it is now, and the means to follow it as it changes.
+func newMCPServeGateway(runner, connectedRunner mcpToolRunner) *mcpGateway {
+	gateway := newMCPGatewayWithMode(runner, connectedRunner, detectMCPConnectedMode())
+	gateway.connectedOnly = connectedOnlyToolNames(gateway.runTool, gateway.connectedRunner)
+	gateway.sessionFn = refreshConfigHubReadsAvailable
+	return gateway
 }
 
 func (g *mcpGateway) toolsForList() []mcpToolDescriptor {
@@ -1028,6 +1083,7 @@ func (g *mcpGateway) handleRequest(ctx context.Context, req mcpRequest) *mcpResp
 			Result:  map[string]interface{}{},
 		}
 	case "tools/list":
+		g.followSession()
 		return &mcpResponse{
 			JSONRPC: "2.0",
 			ID:      req.ID,
@@ -1036,6 +1092,7 @@ func (g *mcpGateway) handleRequest(ctx context.Context, req mcpRequest) *mcpResp
 			},
 		}
 	case "tools/call":
+		g.followSession()
 		result := g.callTool(ctx, req.Params)
 		return &mcpResponse{
 			JSONRPC: "2.0",
@@ -1058,6 +1115,13 @@ func (g *mcpGateway) callTool(ctx context.Context, paramsRaw json.RawMessage) ma
 
 	tool, ok := g.tools[params.Name]
 	if !ok {
+		// A connected tool that is not offered right now is not an unknown
+		// tool: it is a tool this session cannot run, and the gate says why.
+		if g.connectedOnly[params.Name] {
+			if err := requireConfigHubFor(params.Name); err != nil {
+				return mcpToolError(err.Error())
+			}
+		}
 		return mcpToolError(fmt.Sprintf("unknown tool %q", params.Name))
 	}
 	if params.Arguments == nil {

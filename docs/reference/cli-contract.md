@@ -1415,12 +1415,34 @@ Worker:     ● bridge-prod (connected)
   "context": "eks-prod-east",
   "space": "platform-prod",
   "space_source": "CUB_SPACE",
+  "confighub_reads": true,
   "worker": {
     "name": "bridge-prod",
     "status": "connected"
   }
 }
 ```
+
+`confighub_reads` is the verdict of the gate every connected command uses:
+`cub auth status`, plus the checks that turn ConfigHub reads off
+(`CUB_SCOUT_OFFLINE=true`, telemetry disabled). When it is `false`,
+`confighub_reads_reason` carries the reason.
+
+`mode` describes connectivity and credentials to `hub.confighub.com`, so the
+two can disagree in either direction, and the text output adds a line whenever
+they do:
+
+| `mode` | `confighub_reads` | Text line | What it means |
+|---|---|---|---|
+| `connected` / `auth_expired` | `false` | `⚠ ConfigHub reads unavailable: <reason>` | Credentials exist, but every connected command refuses. `cub auth login` only helps if the reason says so |
+| `offline` / `online` | `true` | `✔ ConfigHub reads available: cub has a session` | `cub auth status` passes but `cub context get` failed, so the mode line describes only what `hub.confighub.com` answered |
+| otherwise | — | none | The two agree; nothing to correct |
+
+`auth_expired` cannot occur with `confighub_reads: true`: `auth_valid` is the gate's
+own verdict wherever the gate looked at the session, so `status` cannot print
+"auth expired" and "reads available" together.
+
+A pre-flight check should read `confighub_reads`, not `mode`.
 
 ---
 

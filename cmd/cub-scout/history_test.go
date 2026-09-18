@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/confighub/cub-scout/pkg/hub"
 	"github.com/spf13/cobra"
 )
 
@@ -176,11 +178,8 @@ func TestRunHistory_NotConnected(t *testing.T) {
 	restoreFlags := withHistoryFlagsForTest()
 	defer restoreFlags()
 
-	prevRequire := requireHistoryConnectedFn
-	requireHistoryConnectedFn = func() error {
-		return errHistoryDisconnected
-	}
-	defer func() { requireHistoryConnectedFn = prevRequire }()
+	// The real gate, refusing: the command must carry its reason.
+	stubConnectedGate(t, hub.ErrCubNotAuthenticated)
 
 	cmd := &cobra.Command{}
 	cmd.SetContext(context.Background())
@@ -188,7 +187,7 @@ func TestRunHistory_NotConnected(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error when not connected")
 	}
-	if !strings.Contains(err.Error(), "history requires ConfigHub connection") {
+	if !errors.Is(err, hub.ErrCubNotAuthenticated) || !strings.Contains(err.Error(), "history needs ConfigHub") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -333,7 +332,7 @@ func TestRunHistory_UsesFixtureJSONWithoutConnection(t *testing.T) {
 	defer restoreFlags()
 
 	prevRequire := requireHistoryConnectedFn
-	requireHistoryConnectedFn = func() error { return errHistoryDisconnected }
+	requireHistoryConnectedFn = func() error { return requireConfigHubFor("history") }
 	defer func() { requireHistoryConnectedFn = prevRequire }()
 
 	prevFetch := fetchHistoryEntriesFn

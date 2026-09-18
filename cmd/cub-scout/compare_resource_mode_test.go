@@ -56,8 +56,8 @@ func TestBuildCompareResourceResult_Standalone(t *testing.T) {
 	if result.Live.Replicas == nil || *result.Live.Replicas != 3 {
 		t.Fatalf("result.Live.Replicas = %#v, want 3", result.Live.Replicas)
 	}
-	if !strings.Contains(strings.Join(result.Notes, "\n"), "Connect to ConfigHub") {
-		t.Fatalf("expected upsell note in %v", result.Notes)
+	if !strings.Contains(strings.Join(result.Notes, "\n"), compareNoteConfigHubReadsUnavailable) {
+		t.Fatalf("expected the ConfigHub-reads note in %v", result.Notes)
 	}
 }
 

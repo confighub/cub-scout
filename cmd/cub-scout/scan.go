@@ -16,7 +16,6 @@ import (
 
 	"github.com/confighub/cub-scout/internal/scan"
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 )
 
 var (
@@ -113,6 +112,21 @@ func init() {
 // with the CUB_SCOUT_TEST_SCAN_JSON test hook and rendering functions.
 type CombinedScanResult = scan.CombinedResult
 
+// scanConfigHubNote explains, under --verbose, why a cluster scan used the
+// embedded pattern set rather than ConfigHub's. The gate is asked only when the
+// note would be printed: a plain scan needs no ConfigHub session and must not
+// spend a `cub` process finding that out.
+func scanConfigHubNote(verbose bool) string {
+	if !verbose {
+		return ""
+	}
+	err := configHubReads()
+	if err == nil {
+		return ""
+	}
+	return fmt.Sprintf("Note: ConfigHub reads are unavailable (%v); using embedded patterns", err)
+}
+
 func runScan(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
@@ -121,10 +135,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// benefits from the ConfigHub pattern database when connected.
 	// Currently: embedded patterns are sufficient for all scan modes.
 	// Future: when pattern DB is fully API-hosted, enforce auth for cluster scans.
-	client := hub.NewClient()
 	if !scanList && scanFile == "" {
-		if err := client.RequireConnected(); err != nil && scanVerbose {
-			fmt.Fprintf(os.Stderr, "Note: not connected to ConfigHub (%v); using embedded patterns\n", err)
+		if note := scanConfigHubNote(scanVerbose); note != "" {
+			fmt.Fprintln(os.Stderr, note)
 		}
 	}
 

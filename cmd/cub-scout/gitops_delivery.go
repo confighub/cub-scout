@@ -8,13 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os/exec"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -160,10 +158,9 @@ type GitOpsDeliveryEvidenceOmission struct {
 }
 
 var (
-	errGitOpsConfigHubDisconnected = errors.New("ConfigHub evidence requires ConfigHub connection. Run: cub auth login")
-	requireGitOpsConfigHubFn       = requireGitOpsConfigHubConnected
-	runGitOpsCubCommand            = runHistoryCubCommandImpl
-	gitopsNowFn                    = time.Now
+	requireGitOpsConfigHubFn = requireGitOpsConfigHubConnected
+	runGitOpsCubCommand      = runHistoryCubCommandImpl
+	gitopsNowFn              = time.Now
 )
 
 func normalizeGitOpsStatusFormat(raw string, legacyJSON bool) (string, error) {
@@ -219,13 +216,7 @@ func gitOpsDeliveryEvidenceOptionsFromFlags(ctx context.Context) (gitOpsDelivery
 }
 
 func requireGitOpsConfigHubConnected() error {
-	if err := hub.NewClient().RequireConnected(); err != nil {
-		return errGitOpsConfigHubDisconnected
-	}
-	if _, err := exec.LookPath("cub"); err != nil {
-		return fmt.Errorf("ConfigHub evidence requires cub CLI for connected queries: %w", err)
-	}
-	return nil
+	return requireConfigHubFor("ConfigHub delivery evidence")
 }
 
 // gitOpsDeliverySpace settles the delivery-evidence space from a flag value and
