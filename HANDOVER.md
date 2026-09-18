@@ -298,6 +298,41 @@ binary. They stub the gate now. The only test that reaches the real gate is
 `TestConnectedGate_RealProcessBothForms`, which runs the built binary in a
 subprocess against a fake `cub`, deliberately.
 
+## The Import Test-Update Proves Itself Again (#574)
+
+`import argocd --test-update` and `--test-rollout` exist to prove the ConfigHub
+pipeline end to end: change a unit, and see the change arrive in the cluster.
+They proved it with cub — `unit livedata`, then `unit apply --wait` — and cub
+removed both (#571). ConfigHub's unit JSON carries no applied or live revision to
+read instead, checked across every unit with a target on a live server, so #571
+left the flows honest but unable to prove anything.
+
+They prove it from the side cub-scout is for: the cluster. Each flow writes the
+annotated data to the unit, then watches the live workload for the annotation it
+wrote, bounded by `--test-timeout` (default 2m, which is what the old
+wait-for-livedata loop allowed), and reports what it saw:
+
+```
+Annotation confighub.com/test-update=<ts> written to unit api;
+  observed on deployment/api in prod after 6s
+  not observed on deployment/api in prod after 2m0s: the unit carries it, but
+    the target has not applied it — check that a worker is running for this target
+  not observed on deployment/api in prod after 2m0s: the live object could not
+    be read: deployments.apps "api" not found
+```
+
+`result.Success` is the observation, not an assumption, so the CLI's tick means
+the change reached the cluster and nothing else. A read failure is kept apart
+from a cluster that has not converged: blaming the worker for a missing object is
+the misdirection #571 removed, and it does not come back.
+
+`addAnnotationToYAML` and `addRolloutAnnotationToYAML` now report the workload
+they annotated (`annotatedTarget`: kind, name, namespace) rather than a bare
+name, because the watcher needs all three. `readLiveAnnotationsFn` and
+`observeSleepFn` are the seams: a test drives both flows with no cluster and no
+real waiting. Mutating `Success = observed.Seen` to `true`, or the annotation
+comparison to always match, fails the tests.
+
 ## cub Output: -o json, Stderr Out of Data, and One Runner (#563)
 
 `cub` deprecated `--json` in favour of `-o json`, and prints
