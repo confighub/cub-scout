@@ -23,8 +23,8 @@
 | Create, update, apply, or approve governed units | `cub unit ...` |
 | Manage spaces, targets, workers | `cub space ...` / `cub target ...` / `cub worker ...` |
 | Run a governed ChangeSet | `cub changeset ...` |
-| Discover GitOps resources in a cluster | `cub gitops discover` |
-| Import governed state from a cluster via render targets | `cub gitops import` |
+| Load already-rendered resources into a space as units | `cub variant upload` |
+| Trace one live resource back to its unit | `cub k8s source` |
 | Log into ConfigHub | `cub auth login` |
 
 The rule of thumb: **read and prove → `cub scout`. Write and govern → `cub`.**
@@ -51,7 +51,7 @@ The rule of thumb: **read and prove → `cub scout`. Write and govern → `cub`.
 
 - spaces, units, targets, workers, and ConfigHub state
 - governed ChangeSets and receipts
-- `cub gitops discover` and `cub gitops import` (cluster → ConfigHub import via render targets)
+- `cub variant upload` (rendered resources → ConfigHub units, create-or-update with a 3-way merge)
 - authority over intended state and mutation
 
 ### `cub` is not for
@@ -68,9 +68,11 @@ The rule of thumb: **read and prove → `cub scout`. Write and govern → `cub`.
 Two different import surfaces exist. They are complementary, not interchangeable:
 
 - **`cub-scout import --git-path ./repo`** — parses a Git repository locally, produces an import **preview** (structure, proposals, duplicate-safe identifiers). No cluster, no render target, no write. Use to answer "what would this repo import as?"
-- **`cub gitops import --space <space> <target-slug> <render-target-slug>`** — discovers ArgoCD/Flux resources **in a live cluster**, renders via ArgoCD API or Flux renderer, and writes the result as ConfigHub units. Use to actually perform the import.
+- **`cub variant upload --component <name> <dir | file | - | oci://ref>`** — ingests **already rendered** resources and makes the space's units match them: every resource becomes its own unit, create-or-update, with a 3-way merge that preserves changes made in ConfigHub since. It renders nothing; the rendering is yours (`helm template`, `kustomize build`, an installer, or a published bundle). `--component` is required — it is the well-known Component label, and the space slug is derived from it unless `--space` names one. `--dry-run` reports what the upload would create, update, empty, revive or adopt without changing anything.
 
-`cub scout` scouts. `cub gitops import` renders and writes. The two can feed each other: scout to understand, `cub gitops import` to execute.
+`cub scout` scouts. `cub variant upload` writes. The two can feed each other: scout to understand, upload to execute.
+
+> **`cub gitops discover` and `cub gitops import` no longer exist.** cub deleted the whole `gitops` group on 2026-07-25, in the same commit that removed `unit apply`, `unit destroy`, `unit import` and `unit refresh`; that commit added no replacement, and `cub gitops` exits 1 with `unknown command "gitops" for "cub"`. The render-target model went with it: cub no longer renders on your behalf. See [#573](https://github.com/confighub/cub-scout/issues/573).
 
 ### Comparison paths
 
@@ -139,7 +141,7 @@ When in doubt, run:
 
 ```bash
 cub --help
-cub gitops --help
+cub variant upload --help
 cub unit --help
 cub scout --help           # or: cub-scout --help
 cub scout doctor --help

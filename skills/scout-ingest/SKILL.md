@@ -1,8 +1,8 @@
 ---
 name: scout-ingest
-description: 'Use when the user wants to ADOPT existing Kubernetes / GitOps workload structure into ConfigHub after observing the live cluster — the adoption/import verb group of cub-scout. Natural phrasing: "discover workloads in this cluster and propose ConfigHub units", "show me the import proposal before I apply", "import this Argo Application set", "bring my Flux Kustomizations into ConfigHub", "preview what would land in ConfigHub if I imported this repo", "parse my git repo as a ConfigHub import bundle", "import a cluster aggregator", "what would --git-path produce for this repo?". Load whenever intent is adopt / import / ingest / preview / propose / parse-repo / discovery / aggregator / bring-into-confighub / what-would-confighub-see. Do NOT load for: basic live-cluster inventory (use scout-observe), troubleshooting (use scout-diagnose), comparing live state to ConfigHub (use scout-compare), or the actual write to ConfigHub via `cub gitops import` (that is `cub`, not cub-scout — route to cub skills). Important: `cub-scout import apply` IS the mutating write into ConfigHub — this skill teaches the read-only preview path and explicitly refuses to invoke `import apply` itself.'
+description: 'Use when the user wants to ADOPT existing Kubernetes / GitOps workload structure into ConfigHub after observing the live cluster — the adoption/import verb group of cub-scout. Natural phrasing: "discover workloads in this cluster and propose ConfigHub units", "show me the import proposal before I apply", "import this Argo Application set", "bring my Flux Kustomizations into ConfigHub", "preview what would land in ConfigHub if I imported this repo", "parse my git repo as a ConfigHub import bundle", "import a cluster aggregator", "what would --git-path produce for this repo?". Load whenever intent is adopt / import / ingest / preview / propose / parse-repo / discovery / aggregator / bring-into-confighub / what-would-confighub-see. Do NOT load for: basic live-cluster inventory (use scout-observe), troubleshooting (use scout-diagnose), comparing live state to ConfigHub (use scout-compare), or the actual write to ConfigHub via `cub variant upload` (that is `cub`, not cub-scout — route to cub skills). Important: `cub-scout import apply` IS the mutating write into ConfigHub — this skill teaches the read-only preview path and explicitly refuses to invoke `import apply` itself.'
 phase: verify
-allowed-tools: Bash(./cub-scout import --dry-run *) Bash(cub-scout import --dry-run *) Bash(cub scout import --dry-run *) Bash(./cub-scout import --git-path *) Bash(cub-scout import --git-path *) Bash(cub scout import --git-path *) Bash(./cub-scout import parse-repo *) Bash(cub-scout import parse-repo *) Bash(cub scout import parse-repo *) Bash(./cub-scout import cluster-aggregator *) Bash(cub-scout import cluster-aggregator *) Bash(cub scout import cluster-aggregator *) Bash(./cub-scout app list *) Bash(cub-scout app list *) Bash(cub scout app list *) Bash(./cub-scout app list) Bash(cub-scout app list) Bash(cub scout app list) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit list *) Bash(cub gitops discover *) Bash(argocd app get *) Bash(argocd appset get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout import --dry-run *) Bash(cub-scout import --dry-run *) Bash(cub scout import --dry-run *) Bash(./cub-scout import --git-path *) Bash(cub-scout import --git-path *) Bash(cub scout import --git-path *) Bash(./cub-scout import parse-repo *) Bash(cub-scout import parse-repo *) Bash(cub scout import parse-repo *) Bash(./cub-scout import cluster-aggregator *) Bash(cub-scout import cluster-aggregator *) Bash(cub scout import cluster-aggregator *) Bash(./cub-scout app list *) Bash(cub-scout app list *) Bash(cub scout app list *) Bash(./cub-scout app list) Bash(cub-scout app list) Bash(cub scout app list) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit list *) Bash(argocd app get *) Bash(argocd appset get *) Bash(flux get *)
 ---
 
 # scout-ingest
@@ -34,7 +34,7 @@ Implicit intents:
 
 - Comparing live state to ConfigHub once units exist — [`scout-compare`](../scout-compare/SKILL.md)
 - Inventory of what is currently running (without ConfigHub) — [`scout-observe`](../scout-observe/SKILL.md)
-- The actual cluster-side `cub gitops import` (target + render-target based) — that's `cub`, not cub-scout. Route to [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills).
+- The actual write into ConfigHub from rendered resources (`cub variant upload`) — that's `cub`, not cub-scout. Route to [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills).
 - `cub-scout import apply` (mutating; writes to ConfigHub) — this skill refuses to invoke it directly. Recommend the user run it themselves once they've reviewed the preview.
 
 ## Standalone vs connected
@@ -51,13 +51,13 @@ Implicit intents:
   - `cub-scout import parse-repo *` — pure parser; read-only
   - `cub-scout import cluster-aggregator *` — emits the proposal as JSON / YAML; `import apply` is the separate mutating verb
   - `cub-scout app list *` — read-only ConfigHub App inventory
-  - `cub * get/list`, `cub unit list`, `cub gitops discover` for connected-mode context
+  - `cub * get/list`, `cub unit list` for connected-mode context
   - `argocd app get`, `argocd appset get`, `flux get` for source-side structure reads
 - **Not allowed (mutating; user-driven):**
   - `cub-scout import apply *` — writes ConfigHub units / spaces / targets
   - `cub-scout import argocd *` — without `--dry-run` it calls `createUnitWithConfigAndLabels` (line 465 in `cmd/cub-scout/import_argocd.go`) and can also `--disable-sync` or `--delete-app`. Because the wildcard cannot enforce `--dry-run`, the verb is **out of allowed-tools entirely**; recommend the user run `cub-scout import argocd <app> --dry-run` themselves and pipe the output back to the agent for review.
   - `cub-scout app create *` — creates ConfigHub Apps; `app list` is the read-only form in allowed-tools
-  - `cub * create/update/delete`, `cub gitops import` (cluster-side; different tool boundary — `cub`, not cub-scout), any `kubectl apply/edit/patch/delete`
+  - `cub * create/update/delete`, `cub variant upload` (different tool boundary — `cub`, not cub-scout), any `kubectl apply/edit/patch/delete`
 - **`import apply` boundary:** the skill **describes** `import apply`'s shape and what it would do, but does NOT run it. If the user wants to apply, the skill says "you run `cub-scout import apply --space <s>` yourself after review" — the user is the actor for any mutation.
 
 ## The verb menu
@@ -139,7 +139,7 @@ Every preview returns a structured proposal Pilot or a CI bot can consume:
 | `conflicts[]` | (Connected mode) existing ConfigHub names that would clash with the proposal |
 | `unsupported[]` | Workloads / resource shapes the parser can't classify — surface as gaps, not silent skips |
 
-## Boundary with `cub gitops import`
+## Boundary with cub's own load path
 
 cub-scout's `import` verbs are **structure-and-preview** focused:
 
@@ -147,13 +147,15 @@ cub-scout's `import` verbs are **structure-and-preview** focused:
 - `cub-scout import argocd` reads Argo Applications, emits a proposal
 - `cub-scout import apply` writes the proposal to ConfigHub (mutation; out of this skill)
 
-`cub gitops import` (in the `cub` CLI) is **cluster discovery + render-target based**:
+`cub variant upload` (in the `cub` CLI) is the **load already-rendered resources** path:
 
-- Requires a ConfigHub target + render-target already configured
-- Renders the discovered state against the render-target's renderer
-- Writes the rendered output to ConfigHub
+- Takes a directory, a file, `-`, or an `oci://` bundle of rendered resources
+- Renders nothing: the rendering is yours (`helm template`, `kustomize build`, an installer)
+- Makes the space's units match the input, create-or-update, with a 3-way merge that preserves changes made in ConfigHub since
 
-The two paths solve different problems. cub-scout's import is for **adoption** (existing state → ConfigHub for the first time); `cub gitops import` is for **ongoing import** (cluster state → ConfigHub via a configured render pipeline). Don't claim they overlap.
+The two paths solve different problems. cub-scout's import is for **adoption** (existing live state → ConfigHub for the first time); `cub variant upload` is for **ongoing load** (rendered configuration → ConfigHub). Don't claim they overlap.
+
+> **`cub gitops discover` and `cub gitops import` no longer exist.** cub deleted the `gitops` group on 2026-07-25 and added no replacement; `cub gitops` exits 1 with `unknown command`. The render-target model went with it. If a user asks for that flow, say so and point at `cub variant upload` ([#573](https://github.com/confighub/cub-scout/issues/573)).
 
 ## References
 

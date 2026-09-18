@@ -121,6 +121,12 @@ func TestNoCubCallUsesARemovedSubcommand(t *testing.T) {
 		{"unit", "apply"}:     "removed in July 2026; nothing applies a unit — see cub_unit_apply.go (#571)",
 		{"unit", "destroy"}:   "removed in July 2026 with unit apply",
 		{"unit", "refresh"}:   "removed in July 2026; the current verb is `cub k8s refresh`",
+		// The whole `gitops` group went in the same commit (#573). The runner
+		// does not refuse it at run time, because an unknown top-level command
+		// exits 1 honestly and a plugin could supply one — but cub-scout's own
+		// delegation is not coming back, so its source is guarded here.
+		{"gitops", "discover"}: "the whole gitops group was removed from cub on 2026-07-25 with no replacement; rendered configuration goes in with `cub variant upload` (#573)",
+		{"gitops", "import"}:   "the whole gitops group was removed from cub on 2026-07-25 with no replacement; rendered configuration goes in with `cub variant upload` (#573)",
 	}
 
 	// Flags cub no longer accepts, for the same reason: it rejects them, and a

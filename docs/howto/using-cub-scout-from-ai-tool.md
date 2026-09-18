@@ -37,15 +37,15 @@ Use these boundaries consistently:
     watch/bot events
 - `cub`
   - ConfigHub intended-state workflows
-  - `cub gitops discover`
-  - `cub gitops import`
+  - `cub variant upload`
+  - `cub k8s source`
 - `confighub/sdk`
   - renderer implementation detail behind `cub`
   - not an automatic capability of `cub scout`
 
 Important:
 - `cub scout import --git-path` previews repo structure and import proposals
-- `cub gitops import` renders/imports discovered GitOps resources from cluster targets
+- `cub variant upload` loads already-rendered resources into a space as units (`cub gitops import` was removed from cub, #573)
 - do not blur these into one imaginary command surface
 
 ## What to Expect
@@ -219,7 +219,7 @@ For each request:
 1) Classify as standalone, connected, ConfigHub/cub workflow, or Git preview vs render/import boundary.
 2) Verify relevant cub-scout and cub help before claiming support.
 3) Provide shortest safe command path (dry-run first).
-4) Distinguish cub-scout local Git preview from cub gitops import rendering.
+4) Distinguish cub-scout local Git preview from cub's own load path (`cub variant upload`).
 5) If unsupported, explain gap clearly and offer to file a GitHub issue.
 6) Use command output as evidence; do not guess.
 ```

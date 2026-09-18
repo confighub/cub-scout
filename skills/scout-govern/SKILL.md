@@ -52,7 +52,7 @@ Implicit intents:
 ## Tool boundary
 
 - **Allowed (read-only):** all eight Govern verbs; `kubectl get/describe` for cross-reference; `cub * get / list`, `cub unit get`, `cub link list`, `cub history` (connected); `cub auth status` to confirm mode.
-- **Not allowed:** `cub * create/update/delete`, `cub gitops import` (mutating), `kubectl apply/edit/patch/delete`, `argocd app sync`, `flux reconcile --with-source`. Governance verbs *read* the connected surface; they never write to it.
+- **Not allowed:** `cub * create/update/delete`, `cub variant upload` (mutating), `kubectl apply/edit/patch/delete`, `argocd app sync`, `flux reconcile --with-source`. Governance verbs *read* the connected surface; they never write to it.
 - **`fleet` and `summary`:** read across multiple clusters via ConfigHub's connected snapshots. They do NOT shell out to each cluster's kubeconfig directly — the connected surface is the source of truth.
 
 ## The verb menu

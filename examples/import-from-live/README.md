@@ -278,7 +278,7 @@ Typical flow:
 3. **Connect** (automatic in the default interactive flow): worker starts, target is set
 4. **Operate**: use ConfigHub for visibility and control while Flux/Argo continue reconciling
 
-For production rendered pipelines, use `cub gitops import` for Argo/Flux apps,
+For production rendered pipelines, render with the controller's own tooling and load the result with `cub variant upload` (`cub gitops import` was removed from cub, #573),
 then run `cub-scout import` to catch resources outside the GitOps controller scope.
 
 ## Fixtures

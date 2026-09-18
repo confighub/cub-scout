@@ -85,14 +85,14 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 
 - ConfigHub intended-state workflows
 - spaces, units, targets, workers
-- `cub gitops discover` / `cub gitops import`
+- `cub variant upload` (load already-rendered resources as units)
 - `cub link list / get` (the data feed for cub-scout's connected attribution layer)
 - Any mutation — `cub` is the writer side of the triad
 
 ### Do not blur these
 
 - `cub-scout import --git-path` is a local structure / import-preview flow — it does *not* render manifests or upload to ConfigHub
-- `cub gitops import` is target + render-target based — it does both
+- `cub variant upload` ingests already-rendered resources and writes them as units — it renders nothing, and `cub gitops discover` / `cub gitops import` no longer exist (removed from cub 2026-07-25, #573)
 - SDK renderers are an implementation detail for `cub`, not an implied cub-scout feature
 - Attribution evidence on `compare` / `explain` JSON is read-only enrichment — never implies a write
 
@@ -137,8 +137,8 @@ Verify from local help before claiming capability:
 When the workflow crosses into ConfigHub:
 
 ```bash
-cub gitops --help
-cub gitops import --help
+cub variant upload --help
+cub k8s --help
 cub link --help
 cub link list --help
 ```
