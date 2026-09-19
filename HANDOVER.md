@@ -298,6 +298,61 @@ binary. They stub the gate now. The only test that reaches the real gate is
 `TestConnectedGate_RealProcessBothForms`, which runs the built binary in a
 subprocess against a fake `cub`, deliberately.
 
+## The Import Test-Update Proves Itself Again (#574)
+
+`import argocd --test-update` and `--test-rollout` exist to prove the ConfigHub
+pipeline end to end: change a unit, and see the change arrive in the cluster.
+They proved it with cub — `unit livedata`, then `unit apply --wait` — and cub
+removed both (#571). ConfigHub's unit JSON carries no applied or live revision to
+read instead, checked across every unit with a target on a live server, so #571
+left the flows honest but unable to prove anything.
+
+They prove it from the side cub-scout is for: the cluster. Each flow writes the
+annotated data to the unit, then watches the live workload for the annotation it
+wrote — **where it wrote it** — bounded by `--test-timeout` (default 2m, which is
+what the old wait-for-livedata loop allowed), and reports what it saw:
+
+```
+Annotation confighub.com/test-update=<ts> written to unit api;
+  observed on deployment/api in prod after 6s
+  not observed on deployment/api in prod after 2m0s: the unit carries it, but
+    the target has not applied it — check that a worker is running for this target
+  not observed on deployment/api in prod after 2m0s: the live object could not
+    be read: deployments.apps "api" not found
+```
+
+`result.Success` is the observation, not an assumption, so the CLI's tick means
+the change reached the cluster and nothing else. A read failure is kept apart
+from a cluster that has not converged: blaming the worker for a missing object is
+the misdirection #571 removed, and it does not come back.
+
+**Where it wrote it** is the whole of it. `--test-update` annotates the object's
+own metadata; `--test-rollout` annotates the **pod template**, which is what
+makes pods restart, and a Deployment's own metadata never gains it. The first
+version of this watch read `obj.GetAnnotations()` for both, so `--test-rollout`
+could never succeed — it would wait the full two minutes on a rollout that
+worked and then tell the user to check their worker, which is the misdirection
+#571 removed. A review caught it before merge; the TUI's "test pipeline" is that
+flow and nothing else, so every TUI run would have failed. The location now
+travels from the write to the read (`annotatedTarget.Where`), and the test
+fixture answers from the YAML the flow actually wrote, at the location asked for,
+so a fixture cannot certify the broken shape again.
+
+Three more from that review: a target with no namespace is refused up front
+rather than polled (a namespace-less read asks for a cluster-scoped object and
+gets "the server could not find the requested resource", which explains
+nothing); a failure waiting cannot fix — no kubeconfig, an unmappable kind — is
+reported on the first read rather than retried for two minutes; and
+`--test-timeout 0` now means "write it and do not wait" instead of being read as
+unset.
+
+`readLiveAnnotationsFn`, `observeSleepFn` and `observeNowFn` are the seams: the
+clock only advances when the wait sleeps, so the tests make exactly the number of
+reads the timeout allows, take no real time, and assert the poll count instead of
+a slack bound. Mutating `Success = observed.Seen` to `true`, the annotation
+comparison to always match, or the rollout's location back to the object, all
+fail.
+
 ## cub gitops Is Gone, and What Replaces It (#573)
 
 cub deleted the whole `gitops` group on 2026-07-25, in the same commit that

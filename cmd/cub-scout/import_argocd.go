@@ -162,6 +162,7 @@ func addImportArgoFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&argoImportDeleteApp, "delete-app", false, "Delete the ArgoCD Application after import (keeps resources)")
 	cmd.Flags().BoolVar(&argoImportTestUpdate, "test-update", false, "Test ConfigHub pipeline by adding an annotation to verify it can update resources")
 	cmd.Flags().BoolVar(&argoImportTestRollout, "test-rollout", false, "Test ConfigHub pipeline by triggering a rollout restart")
+	cmd.Flags().DurationVar(&testUpdateTimeoutFlag, "test-timeout", 2*time.Minute, "How long --test-update and --test-rollout watch the live resource for the annotation they wrote before reporting that it did not arrive")
 }
 
 func runImportArgoCD(cmd *cobra.Command, args []string) error {
@@ -505,7 +506,8 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 		case result.Success:
 			fmt.Printf("  ✓ %s\n", result.Message)
 		default:
-			// The unit was updated; nothing here watched the target.
+			// The unit was updated and the cluster was watched; the annotation
+			// did not arrive within --test-timeout.
 			fmt.Printf("  • %s\n", result.Message)
 		}
 		fmt.Println()
@@ -520,9 +522,11 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 			fmt.Println("  The import succeeded, but the unit could not be updated.")
 		case result.Success:
 			fmt.Printf("  ✓ %s\n", result.Message)
+			fmt.Println("  Pods restart as the new template rolls out: kubectl get pods -n <namespace> -w")
 		default:
+			// The annotation did not reach the cluster, so promising a restart
+			// here would contradict the line above it.
 			fmt.Printf("  • %s\n", result.Message)
-			fmt.Println("  Note: Pods will restart. Watch with: kubectl get pods -n <namespace> -w")
 		}
 		fmt.Println()
 	}
@@ -1507,23 +1511,25 @@ func testAnnotationUpdate(space, unitSlug string) (*TestUpdateResult, error) {
 
 	// Step 2: Parse and modify the YAML to add the annotation. The error names
 	// the unit: the reader has to know which unit's data had no workload in it.
-	modifiedYAML, resourceName, err := addAnnotationToYAML(configYAML, annotationKey, annotationValue)
+	modifiedYAML, target, err := addAnnotationToYAML(configYAML, annotationKey, annotationValue)
 	if err != nil {
 		return result, fmt.Errorf("unit %s in space %s: %w", unitSlug, space, err)
 	}
-	result.ResourceName = resourceName
+	result.ResourceName = target.Name
 
 	// Step 3: Write the annotated data back to the unit.
 	if err := updateUnitConfigData(space, unitSlug, modifiedYAML, "Test update: added ConfigHub annotation"); err != nil {
 		return result, err
 	}
 
-	// The unit is updated. Applying it was `cub unit apply`, which cub removed;
-	// see cub_unit_apply.go. The change reaching the target is a cluster
-	// question, and this function does not answer it, so it does not claim to.
-	result.Success = false
-	result.Message = fmt.Sprintf("Added annotation %s to %s in unit %s. %v",
-		result.Annotation, resourceName, unitSlug, unitApplyUnavailable(space, unitSlug))
+	// Step 4: Watch the cluster for it. cub-scout cannot apply the unit — cub
+	// removed `unit apply` (#571) — so what it can do is observe whether the
+	// change arrived, which is the question the test was always asking.
+	observed := waitForAnnotationInCluster(context.Background(), target,
+		annotationKey, annotationValue, testUpdateTimeout(), testUpdateInterval())
+	result.Success = observed.Seen
+	result.Message = fmt.Sprintf("Annotation %s written to unit %s; %s",
+		result.Annotation, unitSlug, observed.Summary(target))
 	return result, nil
 }
 
@@ -1552,38 +1558,42 @@ func testRolloutRestart(space, unitSlug string) (*TestUpdateResult, error) {
 	}
 
 	// Step 2: Parse and modify the YAML to add restart annotation to pod template
-	modifiedYAML, resourceName, err := addRolloutAnnotationToYAML(configYAML, annotationKey, annotationValue)
+	modifiedYAML, target, err := addRolloutAnnotationToYAML(configYAML, annotationKey, annotationValue)
 	if err != nil {
 		return result, fmt.Errorf("unit %s in space %s: %w", unitSlug, space, err)
 	}
-	result.ResourceName = resourceName
+	result.ResourceName = target.Name
 
 	// Step 3: Write the annotated data back to the unit.
 	if err := updateUnitConfigData(space, unitSlug, modifiedYAML, "Test rollout: triggered restart"); err != nil {
 		return result, err
 	}
 
-	// The unit carries the restart annotation. Whether the target restarted is
-	// a cluster question that this function does not answer, so it does not
-	// claim it; see cub_unit_apply.go.
-	result.Success = false
-	result.Message = fmt.Sprintf("Set the restart annotation on %s in unit %s. %v",
-		resourceName, unitSlug, unitApplyUnavailable(space, unitSlug))
+	// The restart annotation lives on the pod template, so that is where the
+	// watch looks — the workload's own metadata never gains it.
+	observed := waitForAnnotationInCluster(context.Background(), target,
+		annotationKey, annotationValue, testUpdateTimeout(), testUpdateInterval())
+	result.Success = observed.Seen
+	result.Message = fmt.Sprintf("Restart annotation written to unit %s; %s",
+		unitSlug, observed.Summary(target))
 	return result, nil
 }
 
 // addAnnotationToYAML adds an annotation to the first resource in a YAML document.
 // Returns the modified YAML and the name of the resource that was modified.
-func addAnnotationToYAML(yamlStr, key, value string) (string, string, error) {
+func addAnnotationToYAML(yamlStr, key, value string) (string, annotatedTarget, error) {
+	// This one goes on the object's own metadata.
+	const annotationWhere = annotationOnObject
+
 	// Split multi-document YAML
 	docs := strings.Split(yamlStr, "\n---")
 	if len(docs) == 0 {
-		return "", "", fmt.Errorf("no YAML documents found")
+		return "", annotatedTarget{}, fmt.Errorf("no YAML documents found")
 	}
 
 	// Find first Deployment or other workload resource
 	var modifiedDocs []string
-	var resourceName string
+	var target annotatedTarget
 	modified := false
 
 	for _, doc := range docs {
@@ -1616,7 +1626,10 @@ func addAnnotationToYAML(yamlStr, key, value string) (string, string, error) {
 
 			annotations[key] = value
 			modified = true
-			resourceName, _, _ = unstructured.NestedString(obj, "metadata", "name")
+			target.Kind = kind
+			target.Name, _, _ = unstructured.NestedString(obj, "metadata", "name")
+			target.Namespace, _, _ = unstructured.NestedString(obj, "metadata", "namespace")
+			target.Where = annotationWhere
 		}
 
 		modifiedYAML, err := yaml.Marshal(obj)
@@ -1628,23 +1641,27 @@ func addAnnotationToYAML(yamlStr, key, value string) (string, string, error) {
 	}
 
 	if !modified {
-		return "", "", fmt.Errorf("no Deployment found to annotate")
+		return "", annotatedTarget{}, fmt.Errorf("no Deployment found to annotate")
 	}
 
-	return strings.Join(modifiedDocs, "---\n"), resourceName, nil
+	return strings.Join(modifiedDocs, "---\n"), target, nil
 }
 
 // addRolloutAnnotationToYAML adds a restart annotation to the pod template spec.
 // This triggers a rolling update when applied.
-func addRolloutAnnotationToYAML(yamlStr, key, value string) (string, string, error) {
+func addRolloutAnnotationToYAML(yamlStr, key, value string) (string, annotatedTarget, error) {
+	// This one goes on the pod template, which is what makes the pods restart —
+	// and is not where the workload's own metadata carries it.
+	const annotationWhere = annotationOnPodTemplate
+
 	// Split multi-document YAML
 	docs := strings.Split(yamlStr, "\n---")
 	if len(docs) == 0 {
-		return "", "", fmt.Errorf("no YAML documents found")
+		return "", annotatedTarget{}, fmt.Errorf("no YAML documents found")
 	}
 
 	var modifiedDocs []string
-	var resourceName string
+	var target annotatedTarget
 	modified := false
 
 	for _, doc := range docs {
@@ -1690,7 +1707,10 @@ func addRolloutAnnotationToYAML(yamlStr, key, value string) (string, string, err
 
 			annotations[key] = value
 			modified = true
-			resourceName, _, _ = unstructured.NestedString(obj, "metadata", "name")
+			target.Kind = kind
+			target.Name, _, _ = unstructured.NestedString(obj, "metadata", "name")
+			target.Namespace, _, _ = unstructured.NestedString(obj, "metadata", "namespace")
+			target.Where = annotationWhere
 		}
 
 		modifiedYAML, err := yaml.Marshal(obj)
@@ -1702,8 +1722,8 @@ func addRolloutAnnotationToYAML(yamlStr, key, value string) (string, string, err
 	}
 
 	if !modified {
-		return "", "", fmt.Errorf("no Deployment found to trigger rollout")
+		return "", annotatedTarget{}, fmt.Errorf("no Deployment found to trigger rollout")
 	}
 
-	return strings.Join(modifiedDocs, "---\n"), resourceName, nil
+	return strings.Join(modifiedDocs, "---\n"), target, nil
 }
