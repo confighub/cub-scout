@@ -23,6 +23,23 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const boundedResponseBytes int64 = 2 << 20
+
+// Stream reads non-2xx bodies inside client-go, before the caller's byte cap.
+// Cap those bodies at the transport boundary while preserving Close and status.
+type boundedErrorResponseTransport struct{ base http.RoundTripper }
+
+func (t boundedErrorResponseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	response, err := t.base.RoundTrip(req)
+	if err == nil && response != nil && response.Body != nil && (response.StatusCode < 200 || response.StatusCode >= 300) {
+		response.Body = struct {
+			io.Reader
+			io.Closer
+		}{io.LimitReader(response.Body, boundedResponseBytes+1), response.Body}
+	}
+	return response, err
+}
+
 // BoundedResourceRef is an exact API identity, not a kind/plural heuristic.
 type BoundedResourceRef struct {
 	APIVersion string `json:"apiVersion"`
@@ -76,13 +93,18 @@ func NewBoundedResourceReader(config *rest.Config, contextName string) (*Bounded
 		return nil, fmt.Errorf("bounded read requires an explicit client and context identity")
 	}
 	clientConfig := dynamic.ConfigFor(rest.CopyConfig(config))
-	httpClient, err := rest.HTTPClientFor(clientConfig)
+	httpClient, err := newBoundedHTTPClient(config)
 	if err != nil {
 		return nil, err
 	}
 	// HTTP redirects can otherwise add requests despite REST retries being off.
 	// Copy the client because HTTPClientFor may return http.DefaultClient.
 	boundedHTTP := *httpClient
+	base := boundedHTTP.Transport
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	boundedHTTP.Transport = boundedErrorResponseTransport{base: base}
 	boundedHTTP.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 	client, err := rest.UnversionedRESTClientForConfigAndClient(clientConfig, &boundedHTTP)
 	if err != nil {
@@ -91,7 +113,7 @@ func NewBoundedResourceReader(config *rest.Config, contextName string) (*Bounded
 	return &BoundedResourceReader{
 		client: client, context: contextName, server: config.Host, gate: make(chan struct{}, 1),
 		cache: make(map[BoundedResourceRef]boundedReadEntry), now: time.Now,
-		ttl: 15 * time.Second, maxEntries: 16, maxBytes: 2 << 20,
+		ttl: 15 * time.Second, maxEntries: 16, maxBytes: boundedResponseBytes,
 	}, nil
 }
 

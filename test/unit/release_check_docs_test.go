@@ -22,6 +22,9 @@ func TestReleaseCheckUserQuestionsAndBoundaries(t *testing.T) {
 			"Watch/bot do not schedule this check yet",
 			"active ConfigHub registry",
 			"Can a script, CI job or agent check this without a TUI?",
+			"Can I reproduce the image check against real controllers, not just fixtures?",
+			"Can a stalled credential helper hang my unattended image check?",
+			"Can a large API error bypass the response-size limit?",
 		},
 		"examples/oci-release-check/README.md": {
 			"image-deployment.yaml", "--kube-context", "--controller-context",
@@ -81,6 +84,8 @@ func TestImageDeploymentGuideAndLinks(t *testing.T) {
 			"## Validation Status", "stdout write failures", "No TTY required",
 			"11 Argo / 15 Flux", "7 / 11", "--controller-context",
 			"enclosing CI job/process timeout", "50 and 200 Pods",
+			"image-delivery-live.sh", "next-release readiness gates",
+			"intended-containers-malformed", "1 MiB", "Windows",
 		},
 		"CLI-GUIDE.md": {
 			"Available since v2.11.0", "v2.12.0", "UNRELEASED", "docs/howto/is-this-image-deployed.md",

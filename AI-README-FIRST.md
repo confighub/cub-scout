@@ -9,6 +9,12 @@ evidence. Start with the newest [handover](HANDOVER.md) and
 owner/replica proof to v2.12.0. The check remains read-only, bounded and dated,
 not application success or continuous observation.
 
+**#582 readiness hardening (unreleased):** bounded non-interactive exec-auth,
+malformed-container rejection and a reproducible real-controller OCI lane.
+Argo/Flux local runtime and actual plugin checks passed; authenticated
+publication and clean-machine/released-binary gates remain open. See
+[image verification readiness](docs/releases/image-verification-readiness.md).
+
 **2026-09-14 release correction:** v2.11.0 is published (tag `89f0bf2`).
 `release check --check-running-image` is shipped, not planned. Start with
 [Is This Image Deployed?](docs/howto/is-this-image-deployed.md) for the current

@@ -96,6 +96,22 @@ func TestBuildRunningImageWorkloadMatch(t *testing.T) {
 	require.Empty(t, w.Containers[0].Caveat)
 }
 
+func TestRunningImageRejectsMalformedIntendedContainers(t *testing.T) {
+	for _, extra := range []interface{}{
+		"not-a-container", nil,
+		map[string]interface{}{"image": "example.invalid/api@" + digestNew},
+		map[string]interface{}{"name": "sidecar"},
+		map[string]interface{}{"name": "api", "image": "example.invalid/api@" + digestNew},
+	} {
+		desired := deployment([2]string{"api", "example.invalid/api@" + digestNew})
+		items, _, _ := unstructured.NestedSlice(desired.Object, "spec", "template", "spec", "containers")
+		require.NoError(t, unstructured.SetNestedSlice(desired.Object, append(items, extra), "spec", "template", "spec", "containers"))
+		got := BuildRunningImageWorkload(desired, []*unstructured.Unstructured{runningPod([2]string{"api", digestNew})}, false, "")
+		require.Equal(t, "unknown", got.Verdict, "malformed intended entry: %#v", extra)
+		require.Equal(t, "intended-containers-malformed", got.Reason)
+	}
+}
+
 func TestBuildRunningImageWorkloadMismatch(t *testing.T) {
 	w := BuildRunningImageWorkload(
 		deployment([2]string{"api", "example.invalid/api@" + digestNew}),

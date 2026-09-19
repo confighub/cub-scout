@@ -1,5 +1,31 @@
 # cub-scout Handover for the Next AI Coder
 
+## Unreleased: Image Readiness Hardening (#582)
+
+The shared bounded reader now cancels/reaps exec-auth helpers, caps stdout at
+1 MiB, suppresses secret-bearing diagnostics and rotates active TLS connections.
+Bounded auth is non-interactive even with a terminal. Unix process groups are
+terminated; Windows descendant cleanup still requires an enclosing job timeout.
+Malformed intended container lists cannot silently yield an image match.
+HTTP error bodies are capped before client-go buffers them, with regressions
+for discovery and Pod-list 401/403/429/500/503 failures. This final transport
+fix postdates the recorded live binary; its proof is deterministic HTTP tests.
+
+The real disposable OCI lane passed on 2026-09-19: Argo v3.4.4 and Flux v2.8.6
+on Kubernetes v1.35.0 returned PASS for two complete replicas, INCONCLUSIVE for
+a one-Pod cap, and BLOCK for authored replica drift. Standalone and the actual
+plugin host agreed on complete/capped scenarios. The existing cluster was not
+modified; disposable infrastructure was removed. See
+[readiness evidence](docs/releases/image-verification-readiness.md) and the
+[read-only operator runner](examples/oci-release-check/LIVE-VALIDATION.md).
+
+Full Go suite, focused race tests, Linux helper execution, macOS TTY regressions,
+Windows test compilation and documentation checks passed. No new binary has
+been published: v2.12.0 still lacks this hardening and #579/#581. Authenticated
+ConfigHub publication/HTTPS registry validation and an independent clean-machine
+walkthrough remain open. Local HTTP controller pulls plus observer OCI-layout
+verification are real runtime proof, not authenticated production proof.
+
 ## Unreleased: CLI-Only Image Checks (#580)
 
 The CLI is the primary path for image checks; no TTY or TUI is required.
@@ -9,7 +35,8 @@ standalone and plugin environments, PASS/INCONCLUSIVE/BLOCK and invalid inputs,
 JSON/stderr separation, saved evidence, and request counts. The guide provides
 independent expected-identity prerequisites, both commands, RBAC read scope,
 CI gating and troubleshooting. No additional cluster reads were introduced.
-The production/live proof limitation recorded below remains unchanged.
+Production/authenticated proof remains open; the newer local real-controller
+evidence above supersedes the earlier fixture-only limitation.
 
 ## Unreleased: 2026-09-19 - Image Delivery Evidence
 

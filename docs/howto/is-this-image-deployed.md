@@ -47,7 +47,7 @@ build alone does not identify its code.
   A mutable tag such as `payments:v2` remains `unknown` because cluster reads
   cannot prove which digest the tag meant.
 - **An image reference only:** there is no dedicated image-reference search that
-  finds every deployment across a cluster or fleet. Use `./cub-scout map` and
+  finds every deployment across a cluster or fleet. Use `./cub-scout map list` and
   `./cub-scout trace deploy/payments -n payments` to identify ownership and
   source, then obtain the exact configuration bundle before claiming identity.
 - **A Git repo, Helm chart, or rendered YAML only:** these are not direct inputs
@@ -161,10 +161,23 @@ target context. Scout must be able to establish the controller's target binding;
 it does not guess that similarly named contexts refer to the same cluster.
 Registry reads use existing credentials when needed. Scout does not log in,
 write credentials, render, deploy, or repair.
-For unattended use, supply non-interactive credentials in advance. External
-Kubernetes exec-auth helpers can have their own prompt
-and subprocess behavior; the HTTP deadlines below are not a hard timeout for
-those helper processes. Set an enclosing CI job/process timeout as well.
+For unattended use, supply non-interactive credentials in advance. In v2.12.0,
+Kubernetes exec-auth helpers can outlive HTTP deadlines. The **UNRELEASED**
+bounded reader runs those helpers with the request context, caps credential
+output at 1 MiB and suppresses helper stderr to avoid exposing credentials.
+On Linux/macOS, cancellation terminates the helper's process group; inherited
+output pipes have a one-second cleanup bound. On Windows, only the direct helper
+is terminated; descendant cleanup still needs an enclosing CI job/process timeout.
+Keep that outer timeout on every platform for process/output failures outside
+the observer. Bounded checks always use non-interactive credentials, including
+when invoked from a terminal: `IfAvailable` receives `interactive=false` and
+`Always` fails with advice to authenticate separately rather than
+turning missing evidence into success.
+HTTP error bodies are also capped at the transport boundary before client-go
+buffers them; a failed discovery, object or Pod-list read cannot bypass the
+2 MiB-plus-one-byte transport cap with a large error payload. Successful
+responses reject that extra byte as overflow. Failed reads never become
+positive evidence.
 
 Supported release adapters are a single-source Argo CD Application using a
 native OCI source, or a Flux v1 Kustomization with a v1 OCIRepository. The
@@ -282,8 +295,8 @@ sharing one ReplicaSet retain the same 11 / 15 request count (with the Pod cap
 explicitly set to cover the fixture). Registry/authentication adds separate
 traffic; see the [full budgets](../../examples/oci-release-check/#read-budget).
 Each Kubernetes read has a 10-second deadline, and the complete check has a
-90-second observer deadline; external credential helpers need the enclosing
-timeout described above. Do not poll it rapidly across a fleet: watch/bot scheduling
+90-second observer deadline; helper cleanup and the enclosing timeout have the
+boundaries described above. Do not poll it rapidly across a fleet: watch/bot scheduling
 and fleet-wide image search are not provided by this command.
 
 ## UNRELEASED Deployment Proof
@@ -352,6 +365,9 @@ universal positive claims.
 - **UNRELEASED scope:** complete proof is Deployment-only. Missing, ambiguous,
   capped, denied, stale, racing, terminating, foreign, old, duplicate, or
   zero-replica evidence stays `unknown` / `INCONCLUSIVE`.
+- **Malformed intent:** malformed entries, missing container names/images and
+  duplicate intended container names produce `intended-containers-malformed`;
+  they are not silently dropped from the image check.
 - **Digest forms:** registry image resolution is not performed. Index/platform
   differences remain `digest-form-unresolved`; do not call them a wrong image.
 - **Container scope:** only regular `containers` are assessed. `initContainers`
@@ -383,3 +399,29 @@ go test ./cmd/cub-scout -run '^TestReleaseCheck(OutputFailure|CLIAndMCP|ImageRea
 The direct plugin-process check runs when `cub` is installed; the plugin
 environment and standalone paths are always exercised. No timing SLA or
 application-success claim follows from passing these tests.
+
+For actual controller/runtime validation, run the isolated
+[`image-delivery-live.sh`](../../test/e2e/image-delivery-live.sh) lane. It creates
+its own kind cluster and registry, publishes literal OCI bundles, and checks
+complete delivery, capped coverage and authored-field drift through both
+supported controllers. It deletes only its own infrastructure and retains dated
+JSON reports and binary identity. This is separate from the read-only Scout
+command: the **test setup** creates and changes disposable resources.
+On 2026-09-19 it passed for both controllers, including actual standalone and
+plugin checks; [recorded results](../releases/image-verification-readiness.md#recorded-result-2026-09-19)
+show the complete, capped and drift outcomes. This was an unreleased build.
+
+The lane uses a local HTTP registry for controller pulls and the identical OCI
+layout for Scout's content verification. It does not prove authenticated
+ConfigHub publication or Scout's HTTPS registry credential path. See the
+[next-release readiness gates](../releases/image-verification-readiness.md)
+before treating a development build as ready for unrestricted team use.
+
+To check an existing target without changing it, use the
+[read-only live acceptance runner](../../examples/oci-release-check/LIVE-VALIDATION.md).
+It takes independently supplied intended identity, records the binary checksum,
+checks JSON and gated exits, and exercises the same binary through the plugin
+host when available. A skipped plugin is recorded, not counted as parity proof.
+Legacy Deployment PASS reports without complete coverage are rejected by this
+acceptance gate. Evidence directories are private by default; inspect their
+cluster metadata before sharing them.

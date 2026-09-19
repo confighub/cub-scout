@@ -1583,9 +1583,21 @@ silently succeeding; `--out` is written before stdout and remains available if
 stdout subsequently fails. JSON stdout contains only the report, with command
 errors on stderr. Check exit status before reading a reused output path because
 argument/setup failures may leave a report from an earlier invocation there.
-HTTP/observer deadlines do not bound Kubernetes exec-auth subprocesses;
-unattended callers must provision non-interactive credentials and impose an
-enclosing job/process timeout.
+In v2.12.0, HTTP/observer deadlines do not bound Kubernetes exec-auth
+subprocesses. The **UNRELEASED** bounded reader instead passes request
+cancellation to credential helpers, limits credential stdout to 1 MiB, and
+discards helper stderr. Linux/macOS helpers run in their own process group,
+terminated on cancellation; inherited output pipes have a one-second cleanup
+bound. Windows terminates the direct helper but not its descendants.
+Bounded reads are always non-interactive: exec `IfAvailable` receives
+`interactive=false`; `Always` fails before starting the helper. Authenticate
+separately. Unattended callers must still impose an enclosing job/process
+timeout. Normal static credentials retain client-go's
+transport. This change applies to the shared bounded reader, not every legacy
+cluster command or arbitrary subprocess in Scout.
+Non-2xx bodies are limited to 2 MiB plus one byte before client-go buffers
+them. Successful bodies retain the existing 2 MiB validation limit. Error
+responses remain failed reads, even when their diagnostic body is truncated.
 
 The existing bounded-explain two-request contract, receipt fingerprints and
 predicate semantics are unchanged. This command composes existing object-set

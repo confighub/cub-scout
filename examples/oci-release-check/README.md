@@ -10,6 +10,13 @@ for the user workflow, three image/configuration identities, the shipped v2.12.0
 gaps, and the unreleased Deployment proof. This example provides the detailed
 adapter and request-budget contract.
 
+For existing targets, use the [read-only live acceptance runner](LIVE-VALIDATION.md).
+For a disposable controller/runtime test, run
+`bash test/e2e/image-delivery-live.sh` from the repository root. Unlike Scout,
+that test setup creates and changes its own isolated cluster. See the
+[release-readiness record](../../docs/releases/image-verification-readiness.md)
+for proof scope and remaining gates.
+
 ## Run
 
 Use the **configuration bundle** digest, not a container image digest:
