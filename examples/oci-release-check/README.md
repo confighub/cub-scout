@@ -105,6 +105,16 @@ The Argo fixture's strict successful check accounts for exactly
 standalone, plugin, and MCP surfaces; the interactive TUI uses that provider
 as well. Watch and bot do not schedule the check.
 
+The CLI path does not require the TUI or a TTY. The same process test includes
+closed-stdin standalone/plugin cases for both Argo and Flux: PASS, missing
+container status, denied/capped Pod reads, configuration drift and invalid input.
+It asserts exit codes, separate JSON stdout/stderr, preserved `--out` reports,
+and exact request budgets (11/15 for a match; 7/11 for capped/denied Pod reads).
+`TestReleaseCheckOutputFailure` verifies that output failures are not success
+in any format and do not discard an already saved report.
+`TestReleaseCheckImageReadScaling` extends the same single-owner budget to
+50 and 200 Pods; it does not assert real-network wall-clock latency.
+
 ## Input And Adapter Boundaries
 
 - One OCI image manifest with one tar or tar+gzip layer containing literal
@@ -157,6 +167,9 @@ as well. Watch and bot do not schedule the check.
   4 MiB. Running-image Pod LISTs are capped by `--max-pods` (default 50, max
   200), with one exact read per distinct ReplicaSet and a final Deployment
   re-read. Reads are sequential dated observations, not an atomic snapshot.
+- External Kubernetes exec-auth helpers are outside
+  these HTTP deadline guarantees. Use unattended credentials and an enclosing
+  CI job/process timeout; do not assume a stalled helper is killed at 90 seconds.
 
 ## Reproduce Without Publishing Or Deploying
 

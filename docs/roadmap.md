@@ -34,6 +34,10 @@ index-to-platform resolution remain follow-up scope, not implied parity.
   DaemonSets and Jobs; until then their image-completion tier stays unknown.
 - [ ] Resolve image index-to-platform identities before distinguishing a true
   wrong-image result from an equivalent platform manifest.
+- [ ] Bound external Kubernetes exec-auth helper
+  subprocess lifetimes for unattended verification. HTTP/request budgets do
+  not currently guarantee termination of a stalled external helper; the CLI
+  guide requires unattended credentials and an enclosing CI/process timeout.
 
 ### v2.9.0 - Scoped Resource Reads and Release Readiness
 

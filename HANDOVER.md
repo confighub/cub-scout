@@ -1,5 +1,16 @@
 # cub-scout Handover for the Next AI Coder
 
+## Unreleased: CLI-Only Image Checks (#580)
+
+The CLI is the primary path for image checks; no TTY or TUI is required.
+Stdout errors now propagate in all output formats, preserving an already
+written `--out` report. The headless process matrix covers both Argo and Flux,
+standalone and plugin environments, PASS/INCONCLUSIVE/BLOCK and invalid inputs,
+JSON/stderr separation, saved evidence, and request counts. The guide provides
+independent expected-identity prerequisites, both commands, RBAC read scope,
+CI gating and troubleshooting. No additional cluster reads were introduced.
+The production/live proof limitation recorded below remains unchanged.
+
 ## Unreleased: 2026-09-19 - Image Delivery Evidence
 
 Published baseline: **v2.12.0**. The following work is not in that binary.

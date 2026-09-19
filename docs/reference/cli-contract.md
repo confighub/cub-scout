@@ -1577,6 +1577,16 @@ after printing/writing the report. Invalid arguments or operational setup
 errors exit 1. `--out` writes JSON and overwrites the requested regular file;
 receipt-store paths are rejected. The overall report is not an immutable receipt.
 
+No TTY or TUI is required for any output format or exit-code gate. In the
+**UNRELEASED** implementation, stdout write errors are returned rather than
+silently succeeding; `--out` is written before stdout and remains available if
+stdout subsequently fails. JSON stdout contains only the report, with command
+errors on stderr. Check exit status before reading a reused output path because
+argument/setup failures may leave a report from an earlier invocation there.
+HTTP/observer deadlines do not bound Kubernetes exec-auth subprocesses;
+unattended callers must provision non-interactive credentials and impose an
+enclosing job/process timeout.
+
 The existing bounded-explain two-request contract, receipt fingerprints and
 predicate semantics are unchanged. This command composes existing object-set
 and convergence receipts; it does not create a new receipt predicate.

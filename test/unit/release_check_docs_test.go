@@ -21,6 +21,7 @@ func TestReleaseCheckUserQuestionsAndBoundaries(t *testing.T) {
 			"no inventory LIST",
 			"Watch/bot do not schedule this check yet",
 			"active ConfigHub registry",
+			"Can a script, CI job or agent check this without a TUI?",
 		},
 		"examples/oci-release-check/README.md": {
 			"image-deployment.yaml", "--kube-context", "--controller-context",
@@ -74,6 +75,12 @@ func TestImageDeploymentGuideAndLinks(t *testing.T) {
 			"replicaSetName", "replicaSetUID", "deployment.complete", "observedAt",
 			"workload-ownership-unsupported", "no registry image resolution",
 			"Watch and in-cluster bot", "not an atomic snapshot",
+			"No TUI is required", "### Get The Expected Identity First",
+			"### Argo CLI", "### Flux CLI", "### Read Permissions",
+			"### Scripts And CI", "### When It Does Not Pass", "### Keep Reads Bounded",
+			"## Validation Status", "stdout write failures", "No TTY required",
+			"11 Argo / 15 Flux", "7 / 11", "--controller-context",
+			"enclosing CI job/process timeout", "50 and 200 Pods",
 		},
 		"CLI-GUIDE.md": {
 			"Available since v2.11.0", "v2.12.0", "UNRELEASED", "docs/howto/is-this-image-deployed.md",
@@ -124,5 +131,22 @@ func TestImageDeploymentGuideAndLinks(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestImageGuideSurfaceTableColumns(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "docs", "howto", "is-this-image-deployed.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, section, found := strings.Cut(string(data), "## Ways To Run It\n")
+	if !found {
+		t.Fatal("missing run surfaces")
+	}
+	section, _, _ = strings.Cut(section, "\n## ")
+	for _, line := range strings.Split(section, "\n") {
+		if strings.HasPrefix(line, "|") && strings.Count(line, "|") != 3 {
+			t.Errorf("run-surface table must have two columns; avoid unescaped option pipes: %s", line)
+		}
 	}
 }
