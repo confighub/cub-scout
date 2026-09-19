@@ -137,9 +137,14 @@ as well. Watch and bot do not schedule the check.
   Kubernetes requests, not silently truncated.
 - Each exact resource read costs at most one discovery GET and one object GET,
   with no REST retries and no redirects. No object LIST or broad discovery.
-- For N desired objects: at most `2N + 4` Kubernetes requests for Application,
+- Without `--check-running-image`, for N desired objects: at most
+  `2N + 4` Kubernetes requests for Application,
   or `2N + 8` for Kustomization including its source. Excluded/failed reads may
   cost less. The final controller/source reads check for concurrent change.
+- The **UNRELEASED** image proof adds at most `2R + 3` requests per checked
+  Deployment: one Pod LIST, up to two requests per distinct ReplicaSet owner R,
+  and two for the final Deployment read. R cannot exceed `--max-pods`.
+  Direct Pods reuse the exact object read without additional image reads.
 - Configuration and convergence share each workload read. Authentication
   transport requests are outside the Kubernetes discovery/object counters.
 - Registry traffic includes auth and bounded HTTPS redirects: at most 16 HTTP

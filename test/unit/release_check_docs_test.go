@@ -24,7 +24,7 @@ func TestReleaseCheckUserQuestionsAndBoundaries(t *testing.T) {
 		},
 		"examples/oci-release-check/README.md": {
 			"image-deployment.yaml", "--kube-context", "--controller-context",
-			"11 Kubernetes requests", "2N + 4", "2N + 8", "32 MiB", "16 MiB",
+			"11 Kubernetes requests", "2N + 4", "2N + 8", "2R + 3", "32 MiB", "16 MiB",
 			"4 MiB", "not an atomic snapshot", "NOT_ASSESSED", "No source index is guessed",
 			"UNRELEASED", "check-running-image", "TestReleaseCheck(RunningImage|CLIAndMCP)$",
 		},
