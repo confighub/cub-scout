@@ -143,7 +143,7 @@ becomes "Deployable Variant"; "base template" becomes "Base Variant".
 
 ### 3. ConfigHub state created on `--connect`
 
-Today, `--connect` delegates to `cub gitops import` and the resulting
+When this was written, `--connect` delegated to `cub gitops import` and the resulting
 ConfigHub state uses Space + Unit primitives with `app=<name>` and
 `variant=<env>` Unit labels.
 
@@ -157,7 +157,7 @@ After v1, the same path creates:
   query (`cub space list -l Component=<name>`) returns all Variants.
 
 This is a `cub` CLI capability question, not a cub-scout one — cub-scout
-emits the desired state and `cub gitops import` (or the eventual
+emits the desired state and `cub gitops import` — removed from cub in July 2026, and `cub variant upload` is what loads rendered state now — (or the eventual
 `cub component create` / `cub variant create` commands) creates it.
 Coordinate with the ConfigHub side (Track 1) before shipping.
 

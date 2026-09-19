@@ -1,5 +1,8 @@
 # Contracts
 
+> **`cub gitops import` no longer exists.** cub deleted the whole `gitops` group on 2026-07-25 with no replacement, so the pipeline act of this demo is skipped against a current cub — it runs only against a cub from before that date. Rendered configuration now goes into ConfigHub with `cub variant upload --component <name> <dir | file | - | oci://ref>`, which ingests already-rendered resources and renders nothing itself. The `cub-scout` acts of this demo are unaffected. See [#573](https://github.com/confighub/cub-scout/issues/573).
+
+
 This file documents the safest stable inspection paths for
 `flux-import-confighub-demo`.
 

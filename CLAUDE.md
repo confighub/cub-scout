@@ -15,12 +15,17 @@ For a fresh coding session in this repo, read these in order:
 ## Related Abilities
 
 - `cub-scout`: read-only cluster/GitOps observation, connected comparison, import preview, MCP serving
-- `cub`: ConfigHub CLI for intended-state workflows, spaces/units/targets, `cub gitops discover/import`
+- `cub`: ConfigHub CLI for intended-state workflows, spaces/units/targets, `cub variant upload`
 - `confighub/sdk`: renderer/bridge implementation detail used by `cub`
 
 Important boundary:
 - `cub-scout import --git-path` is a local structure/import-preview flow
-- `cub gitops import` is cluster discovery + render-target based
+- `cub variant upload` ingests **already rendered** resources (a directory, `-`,
+  or an `oci://` bundle) and makes a space's units match them; the rendering is
+  done by your own tooling (`helm template`, `kustomize build`, an installer)
+- `cub gitops discover` and `cub gitops import` **no longer exist**: cub removed
+  the whole `gitops` group in July 2026, and nothing replaced the render-target
+  model (#573)
 - do not claim that `cub-scout` can do SDK renderer work unless current code/help exposes it
 
 ## Build & Run
@@ -81,7 +86,7 @@ As of the current handover:
 - the Argo truth-and-guidance track is closed (`#365`, `#366`, `#367`)
 - the Git import parser track is complete through ApplicationSet generator support (`#363`)
 - `#369` is shipped: `doctor` is now the first standalone MCP troubleshooting tool
-- `#364` is investigated, not a mandate to merge `cub-scout` with `cub gitops import`
+- `#364` is investigated, not a mandate to merge `cub-scout` with cub's import path
 - the highest-leverage open queue is now `#370`, then `#368`
 
 ## Directory Structure

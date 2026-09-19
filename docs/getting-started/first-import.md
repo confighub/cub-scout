@@ -3,7 +3,7 @@
 > **1.x Connected** — This guide requires a ConfigHub account.
 > For standalone features (no account needed), see [First Map](first-map.md).
 >
-> **Ownership:** Connected commands (`cub auth`, `cub unit`, `cub target`, `cub gitops`) come from
+> **Ownership:** Connected commands (`cub auth`, `cub unit`, `cub target`, `cub variant`) come from
 > the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`). cub-scout owns discovery and
 > explanation. See [Interface Boundaries](../concepts/why-connected-mode.md#interface-boundaries-authoritative).
 

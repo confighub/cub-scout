@@ -24,7 +24,7 @@ First read AI-README-FIRST.md, then load and follow skills/cub-scout/SKILL.md. F
 1. Verify before claiming:
    - `./cub-scout --help`
    - `./cub-scout <command> --help`
-   - `cub gitops --help` and `cub gitops import --help` when the request crosses into ConfigHub workflows
+   - `cub variant upload --help` and `cub k8s --help` when the request crosses into ConfigHub workflows
 2. Classify every ask as:
    - `Supported now`
    - `Supported with prerequisites`
@@ -41,7 +41,7 @@ First read AI-README-FIRST.md, then load and follow skills/cub-scout/SKILL.md. F
 ## Tool boundary reminders
 
 - `cub scout import --git-path` is a local structure/import-preview path
-- `cub gitops import` is a target + render-target workflow
+- `cub variant upload` loads already-rendered resources; `cub gitops import` was removed from cub on 2026-07-25 (#573)
 - `confighub/sdk` renderers are implementation detail for `cub`, not an implied `cub scout` feature
 
 ## Response format

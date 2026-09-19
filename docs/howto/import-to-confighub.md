@@ -1,7 +1,7 @@
 # Canonical Import Path: Argo/Helm to ConfigHub
 
 > **Ownership:** The `cub` CLI is part of the [ConfigHub SDK](https://github.com/confighub/sdk) (`cmd/cub`).
-> cub-scout owns discovery and explanation; `cub` owns connected lifecycle commands (`cub gitops import`, `cub auth`, etc.).
+> cub-scout owns discovery and explanation; `cub` owns connected lifecycle commands (`cub variant upload`, `cub auth`, etc.).
 > See [Interface Boundaries](../concepts/why-connected-mode.md#interface-boundaries-authoritative).
 
 This is the canonical migration path for moving existing ArgoCD/Helm-managed workloads into ConfigHub. It starts from the live cluster because that is the source operators need to trust first: what is running, who owns it, and whether the current shape is safe to adopt.
@@ -15,11 +15,11 @@ The import process involves three roles with distinct responsibilities:
 | Step | Who | What |
 |------|-----|------|
 | **Discover** | cub-scout | Scan cluster, detect ownership, propose App structure |
-| **Delegate (when available)** | cub-scout + `cub gitops import` | Import Argo/Flux workloads via rendered GitOps path |
+| **Load rendered config** | `cub variant upload` | Put already-rendered resources into a space as units (not a cub-scout verb) |
 | **Import** | ConfigHub | Create Apps/Deployments, set up bridge workers, connect OCI pipeline |
 | **Deploy** | Flux/ArgoCD | Pull rendered manifests from ConfigHub's OCI registry, apply to cluster |
 
-cub-scout is read-only in discovery mode (`--dry-run`). Non-dry-run import creates ConfigHub state and may delegate Argo/Flux workloads to `cub gitops import` when matching targets exist.
+cub-scout is read-only in discovery mode (`--dry-run`). Non-dry-run import creates ConfigHub state. Argo/Flux workloads are imported as a snapshot like any other: cub removed `cub gitops discover` / `cub gitops import` on 2026-07-25 with no replacement (#573); rendered configuration goes into ConfigHub with `cub variant upload`.
 
 For cluster-only discovery (no Git required), see [Import from Live](import-from-live.md). Local repository parsing is useful later, when the manifest repo itself is under review, but it is not required for the normal live-cluster adoption path.
 
