@@ -34,10 +34,29 @@ index-to-platform resolution remain follow-up scope, not implied parity.
   DaemonSets and Jobs; until then their image-completion tier stays unknown.
 - [ ] Resolve image index-to-platform identities before distinguishing a true
   wrong-image result from an equivalent platform manifest.
-- [ ] Bound external Kubernetes exec-auth helper
-  subprocess lifetimes for unattended verification. HTTP/request budgets do
-  not currently guarantee termination of a stalled external helper; the CLI
-  guide requires unattended credentials and an enclosing CI/process timeout.
+
+### Image Verification Release Gate
+
+Tracked in [#582](https://github.com/confighub/cub-scout/issues/582), building on
+the merged Deployment evidence and headless CLI fixes (#579, #581).
+
+- [x] Bound Kubernetes exec-auth helpers; test Unix process-group cleanup and
+  explicitly document Windows descendant limits and non-interactive credentials.
+- [x] Exercise actual OCI delivery with both supported controllers, including
+  complete delivery, bounded/partial coverage, and configuration drift. Keep
+  local registry proof separate from authenticated ConfigHub publication.
+- [x] Provide a read-only, explicit-input acceptance runner that records the
+  tested binary, intended bundle, dated report and exit status.
+- [ ] Complete a clean-machine operator walkthrough and publish the tested
+  binary. Merged code and fixture tests alone do not complete this gate.
+- [ ] Validate authenticated publication and the observer's HTTPS registry path
+  in an explicitly scoped environment; the local OCI proof does not cover these.
+
+"Definitive" is scoped: a complete supported Deployment observation during the
+reported interval. It is not an application functional test, an atomic or
+continuous guarantee, or evidence for unimplemented workload adapters. Image-only
+discovery, other workload completion rules and multi-architecture resolution
+remain separate follow-ups; none may silently widen a PASS claim.
 
 ### v2.9.0 - Scoped Resource Reads and Release Readiness
 

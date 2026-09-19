@@ -379,7 +379,7 @@ func assessRunningImage(ctx context.Context, r *agent.ReleaseCheckReport, reader
 		case desired.GetKind() != "Deployment" && desired.GetKind() != "Pod":
 			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, "workload-ownership-unsupported"))
 		case !agent.IntendedImageDigestPinned(desired):
-			// Mutable-tag-only workload: no pod read can confirm identity.
+			// Malformed or unpinned intent cannot be confirmed by a pod read.
 			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, ""))
 		case live == nil:
 			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, "workload-missing"))

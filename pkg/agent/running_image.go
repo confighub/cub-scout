@@ -159,9 +159,9 @@ func weakerRunningImage(a, b string) string {
 	return a
 }
 
-func intendedContainers(obj *unstructured.Unstructured) []nameImage {
+func intendedContainers(obj *unstructured.Unstructured) ([]nameImage, bool) {
 	if obj == nil {
-		return nil
+		return nil, false
 	}
 	fields := []string{"spec", "template", "spec", "containers"}
 	if obj.GetKind() == "Pod" {
@@ -169,19 +169,24 @@ func intendedContainers(obj *unstructured.Unstructured) []nameImage {
 	}
 	items, found, err := unstructured.NestedSlice(obj.Object, fields...)
 	if err != nil || !found {
-		return nil
+		return nil, false
 	}
 	var out []nameImage
+	seen := map[string]bool{}
 	for _, item := range items {
 		m, ok := item.(map[string]interface{})
 		if !ok {
-			continue
+			return nil, false
 		}
 		name, _ := m["name"].(string)
 		image, _ := m["image"].(string)
+		if strings.TrimSpace(name) == "" || strings.TrimSpace(image) == "" || seen[name] {
+			return nil, false
+		}
+		seen[name] = true
 		out = append(out, nameImage{name: name, image: image})
 	}
-	return out
+	return out, true
 }
 
 // runningByContainer emits one observation per intended container per pod,
@@ -230,7 +235,11 @@ func runningByContainer(pods []*unstructured.Unstructured, containers []nameImag
 // digest. When nothing is digest-pinned there is nothing a pod read could
 // confirm, so callers skip the read entirely.
 func IntendedImageDigestPinned(obj *unstructured.Unstructured) bool {
-	for _, ci := range intendedContainers(obj) {
+	containers, valid := intendedContainers(obj)
+	if !valid {
+		return false
+	}
+	for _, ci := range containers {
 		if _, _, d := ParseImageReference(ci.image); d != "" {
 			return true
 		}
@@ -331,7 +340,11 @@ func BuildRunningImageWorkload(desired *unstructured.Unstructured, pods []*unstr
 		gv := desired.GetObjectKind().GroupVersionKind()
 		w.ID = BoundedResourceRef{APIVersion: desired.GetAPIVersion(), Kind: gv.Kind, Namespace: desired.GetNamespace(), Name: desired.GetName()}
 	}
-	containers := intendedContainers(desired)
+	containers, valid := intendedContainers(desired)
+	if !valid {
+		w.Verdict, w.Reason = "unknown", "intended-containers-malformed"
+		return w
+	}
 	if len(containers) == 0 {
 		w.Verdict = "unknown"
 		w.Reason = "no intended containers found"
