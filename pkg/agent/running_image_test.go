@@ -36,12 +36,12 @@ func desiredWorkload(kind string, containers ...[2]string) *unstructured.Unstruc
 func runningPod(statuses ...[2]string) *unstructured.Unstructured {
 	cs := make([]interface{}, 0, len(statuses))
 	for _, s := range statuses {
-		cs = append(cs, map[string]interface{}{"name": s[0], "imageID": s[1]})
+		cs = append(cs, map[string]interface{}{"name": s[0], "imageID": s[1], "ready": true, "state": map[string]interface{}{"running": map[string]interface{}{}}})
 	}
 	return &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": "v1", "kind": "Pod",
 		"metadata": map[string]interface{}{"name": "api-xyz", "namespace": "delivery"},
-		"status":   map[string]interface{}{"containerStatuses": cs},
+		"status":   map[string]interface{}{"phase": "Running", "conditions": []interface{}{map[string]interface{}{"type": "Ready", "status": "True"}}, "containerStatuses": cs},
 	}}
 }
 
@@ -53,8 +53,8 @@ func deployment(containers ...[2]string) *unstructured.Unstructured {
 
 func TestParseImageReference(t *testing.T) {
 	for _, tc := range []struct {
-		in                   string
-		repo, tag, digest    string
+		in                string
+		repo, tag, digest string
 	}{
 		{"example.invalid/api@" + digestNew, "example.invalid/api", "", digestNew},
 		{"example.invalid/api:v1", "example.invalid/api", "v1", ""},
@@ -62,6 +62,7 @@ func TestParseImageReference(t *testing.T) {
 		{"example.invalid/api", "example.invalid/api", "", ""},
 		{"registry:5000/team/api:v2", "registry:5000/team/api", "v2", ""},
 		{"api@sha256:notavaliddigest!", "api", "", ""},
+		{"api@sha256:abc", "api", "", ""},
 	} {
 		repo, tag, digest := ParseImageReference(tc.in)
 		require.Equal(t, tc.repo, repo, tc.in)
@@ -100,8 +101,9 @@ func TestBuildRunningImageWorkloadMismatch(t *testing.T) {
 		deployment([2]string{"api", "example.invalid/api@" + digestNew}),
 		[]*unstructured.Unstructured{runningPod([2]string{"api", "example.invalid/api@" + digestOld})},
 		false, "")
-	require.Equal(t, "mismatch", w.Verdict)
-	require.Equal(t, "mismatch", w.Containers[0].Verdict)
+	require.Equal(t, "unknown", w.Verdict)
+	require.Equal(t, "unknown", w.Containers[0].Verdict)
+	require.Equal(t, "digest-form-unresolved", w.Containers[0].Reason)
 	require.Contains(t, w.Containers[0].Caveat, "Multi-architecture")
 	require.Equal(t, []string{digestOld}, w.Containers[0].RunningDigests)
 }
@@ -119,8 +121,8 @@ func TestBuildRunningImageWorkloadMultiContainer(t *testing.T) {
 			[2]string{"api", "example.invalid/api@" + digestOld},
 			[2]string{"sidecar", "example.invalid/side@" + digestNew})},
 		false, "")
-	require.Equal(t, "mismatch", w.Verdict, "weakest container wins")
-	require.Equal(t, "mismatch", w.Containers[0].Verdict)
+	require.Equal(t, "unknown", w.Verdict, "weakest container wins")
+	require.Equal(t, "unknown", w.Containers[0].Verdict)
 	require.Equal(t, "match", w.Containers[1].Verdict)
 }
 
@@ -132,7 +134,7 @@ func TestBuildRunningImageWorkloadMultiPodRollout(t *testing.T) {
 			runningPod([2]string{"api", "example.invalid/api@" + digestOld}),
 		},
 		false, "")
-	require.Equal(t, "mismatch", w.Verdict, "a single old pod prevents a clean match")
+	require.Equal(t, "unknown", w.Verdict, "a single unresolved pod prevents a clean match")
 }
 
 func TestBuildRunningImageWorkloadDegradation(t *testing.T) {
@@ -167,7 +169,45 @@ func TestBuildRunningImageWorkloadBareDigestMismatch(t *testing.T) {
 		deployment([2]string{"api", "example.invalid/api@" + digestNew}),
 		[]*unstructured.Unstructured{runningPod([2]string{"api", digestOld})},
 		false, "")
-	require.Equal(t, "mismatch", w.Verdict, "a bare-digest imageID differing from intended is a mismatch")
+	require.Equal(t, "unknown", w.Verdict, "a bare digest can be a resolved platform manifest")
+}
+
+func TestRunningImageRequiresEveryContainerInEveryPod(t *testing.T) {
+	desired := deployment([2]string{"api", "example.invalid/api@" + digestNew})
+	for _, tc := range []struct {
+		name   string
+		change func(*unstructured.Unstructured)
+	}{
+		{"missing statuses", func(p *unstructured.Unstructured) {
+			unstructured.RemoveNestedField(p.Object, "status", "containerStatuses")
+		}},
+		{"missing container", func(p *unstructured.Unstructured) {
+			p.Object["status"] = runningPod([2]string{"other", digestNew}).Object["status"]
+		}},
+		{"terminated", func(p *unstructured.Unstructured) {
+			p.Object["status"] = map[string]interface{}{"containerStatuses": []interface{}{map[string]interface{}{"name": "api", "imageID": digestNew, "ready": true, "state": map[string]interface{}{"terminated": map[string]interface{}{"exitCode": int64(0)}}}}}
+		}},
+		{"not ready", func(p *unstructured.Unstructured) {
+			items, _, _ := unstructured.NestedSlice(p.Object, "status", "containerStatuses")
+			items[0].(map[string]interface{})["ready"] = false
+			_ = unstructured.SetNestedSlice(p.Object, items, "status", "containerStatuses")
+		}},
+		{"duplicate status", func(p *unstructured.Unstructured) {
+			items, _, _ := unstructured.NestedSlice(p.Object, "status", "containerStatuses")
+			_ = unstructured.SetNestedSlice(p.Object, append(items, items[0]), "status", "containerStatuses")
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			good := runningPod([2]string{"api", digestNew})
+			bad := good.DeepCopy()
+			tc.change(bad)
+			for _, pods := range [][]*unstructured.Unstructured{{good, bad}, {bad, good}} {
+				w := BuildRunningImageWorkload(desired, pods, false, "")
+				require.Equal(t, "unknown", w.Verdict)
+				require.NotEmpty(t, w.Reason)
+			}
+		})
+	}
 }
 
 func TestAggregateRunningImage(t *testing.T) {

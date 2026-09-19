@@ -1,0 +1,19 @@
+# Synthetic digest fixture for offline tests. Not a pullable application image.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: delivery
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: example.invalid/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

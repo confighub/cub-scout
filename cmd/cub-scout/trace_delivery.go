@@ -5,14 +5,21 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/pkg/hub"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )
+
+// Overridable for deterministic delivery-correlation tests. The connected
+// getter is called only from attachTraceConfigHubDeliveryEvidence, which is
+// behind the explicit --with-confighub path.
+var traceOCIRegistryFn = hub.CurrentOCIRegistry
 
 type traceConfigHubDeliveryFlags struct {
 	Enabled    bool
@@ -55,6 +62,8 @@ func attachTraceConfigHubDeliveryEvidence(ctx context.Context, result *agent.Tra
 	}
 
 	correlation := buildTraceDeliveryCorrelation(result)
+	confirmTraceOCISource(ctx, result, &correlation)
+	confirmTraceOCIRegistry(&correlation)
 	opts, preflightOmissions := traceGitOpsDeliveryOptions(flags, correlation)
 	if opts.Now.IsZero() {
 		opts.Now = gitopsNowFn().UTC()
@@ -184,7 +193,11 @@ func correlateTraceDeliveryEvidence(
 		}
 		out.Releases = releases
 		if len(releases) > 0 {
-			out.Notes = append(out.Notes, "Release rows are joined to this resource by space and target. A row listed here belongs to the resource's target; it does not show that the release contains this resource's unit, and `published` says whether it is still being served.")
+			if traceReleaseRowsHaveManifestJoin(releases) {
+				out.Notes = append(out.Notes, "Release rows are joined to the traced OCI source by its exact source space and Release.ManifestDigest. This is source correlation evidence only; it does not establish that this resource executed a release row.")
+			} else {
+				out.Notes = append(out.Notes, "Release rows are joined to this resource by exact space and target. A row listed here is scope evidence only; it does not show that the release contains this resource's unit or that this resource executed it.")
+			}
 		}
 
 		events, omission := matchTraceUnitEvents(correlation, raw.ConfigHub.UnitEvents)
@@ -228,12 +241,43 @@ func traceDeliveryCorrelationWithScope(correlation agent.TraceDeliveryCorrelatio
 	return correlation
 }
 
+// firstOCIDigest returns the first strict OCI SHA-256 digest in the supplied
+// observed revision values. A tag is not one: `latest` says nothing about
+// what was observed, and a configured URL reference is not pull evidence.
+func firstOCIDigest(values ...string) string {
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		candidates := []string{value}
+		if at := strings.LastIndex(value, "@"); at >= 0 {
+			candidates = append(candidates, strings.TrimSpace(value[at+1:]))
+		}
+		for _, candidate := range candidates {
+			if !strictSHA256Digest(candidate) {
+				continue
+			}
+			return candidate
+		}
+	}
+	return ""
+}
+
+func strictSHA256Digest(value string) bool {
+	const prefix = "sha256:"
+	if !strings.HasPrefix(value, prefix) || len(value) != len(prefix)+64 {
+		return false
+	}
+	_, err := hex.DecodeString(strings.TrimPrefix(value, prefix))
+	return err == nil
+}
+
 func traceDeliveryHasObjectJoinIdentity(correlation agent.TraceDeliveryCorrelation) bool {
 	return strings.TrimSpace(correlation.Application) != "" ||
 		strings.TrimSpace(correlation.UnitSlug) != "" ||
 		strings.TrimSpace(correlation.UnitID) != "" ||
 		strings.TrimSpace(correlation.Target) != "" ||
-		strings.TrimSpace(correlation.TargetID) != ""
+		strings.TrimSpace(correlation.TargetID) != "" ||
+		// A reported manifest digest identifies source evidence, not execution.
+		strings.TrimSpace(correlation.OCIDigest) != ""
 }
 
 func buildTraceDeliveryCorrelation(result *agent.TraceResult) agent.TraceDeliveryCorrelation {
@@ -273,7 +317,8 @@ func buildTraceDeliveryCorrelation(result *agent.TraceResult) agent.TraceDeliver
 		}
 	}
 
-	for _, link := range result.Chain {
+	ociLinks := []int{}
+	for index, link := range result.Chain {
 		if correlation.Application == "" && strings.EqualFold(strings.TrimSpace(link.Kind), "Application") {
 			correlation.Application = strings.TrimSpace(link.Name)
 			if correlation.Application != "" {
@@ -281,18 +326,7 @@ func buildTraceDeliveryCorrelation(result *agent.TraceResult) agent.TraceDeliver
 			}
 		}
 		if link.OCISource != nil && link.OCISource.IsConfigHub {
-			if correlation.Space == "" {
-				correlation.Space = strings.TrimSpace(link.OCISource.Space)
-				if correlation.Space != "" {
-					addMatch("chain.configHubOCI.space")
-				}
-			}
-			if correlation.Target == "" {
-				correlation.Target = strings.TrimSpace(link.OCISource.Target)
-				if correlation.Target != "" {
-					addMatch("chain.configHubOCI.target")
-				}
-			}
+			ociLinks = append(ociLinks, index)
 		}
 		if link.RenderedFrom != "" {
 			space, target := parseRenderedFromConfigHub(link.RenderedFrom)
@@ -307,7 +341,98 @@ func buildTraceDeliveryCorrelation(result *agent.TraceResult) agent.TraceDeliver
 		}
 	}
 
+	if len(ociLinks) > 0 {
+		correlation.OCIIdentityStatus = "missing-observed-digest"
+		if result.MultiSource || len(ociLinks) > 1 {
+			correlation.OCIIdentityStatus = "multiple"
+		} else {
+			sourceIndex := ociLinks[0]
+			source := result.Chain[sourceIndex].OCISource
+			correlation.OCISpace = strings.TrimSpace(source.Space)
+			correlation.OCITarget = strings.TrimSpace(source.Target)
+			if correlation.OCISpace == "" {
+				correlation.OCIIdentityStatus = "incomplete"
+			} else {
+				correlation.OCIRegistry = strings.TrimSpace(source.Registry)
+				if correlation.Space != "" && correlation.Space != correlation.OCISpace {
+					correlation.OCIIdentityStatus = "conflicting"
+				}
+				if correlation.Target != "" && correlation.OCITarget != "" && correlation.Target != correlation.OCITarget {
+					correlation.OCIIdentityStatus = "conflicting"
+				}
+				for _, link := range result.Chain {
+					if link.RenderedFrom == "" {
+						continue
+					}
+					space, target := parseRenderedFromConfigHub(link.RenderedFrom)
+					if (space != "" && space != correlation.OCISpace) ||
+						(correlation.OCITarget != "" && target != "" && target != correlation.OCITarget) {
+						correlation.OCIIdentityStatus = "conflicting"
+					}
+				}
+				if correlation.Space == "" {
+					correlation.Space = correlation.OCISpace
+					addMatch("chain.configHubOCI.space")
+				}
+				if correlation.Target == "" && correlation.OCITarget != "" {
+					correlation.Target = correlation.OCITarget
+					addMatch("chain.configHubOCI.target")
+				}
+			}
+
+			if correlation.OCIIdentityStatus == "missing-observed-digest" {
+				observedRevision := observedOCIRevision(result, sourceIndex)
+				if digest := firstOCIDigest(observedRevision); digest != "" {
+					correlation.OCIDigest = digest
+					correlation.OCIIdentityStatus = "exact"
+					addMatch("chain.configHubOCI.observedManifestDigest")
+				}
+			}
+		}
+	}
+
 	return correlation
+}
+
+// observedOCIRevision follows the assignments made by the actual tracers.
+// Flux puts the resolved artifact revision on the OCIRepository link. Argo CD
+// puts the configured TargetRevision on the source link and the resolved
+// revision on the Application status link. No other link is treated as pull
+// evidence.
+func observedOCIRevision(result *agent.TraceResult, sourceIndex int) string {
+	if result == nil || sourceIndex < 0 || sourceIndex >= len(result.Chain) {
+		return ""
+	}
+	switch strings.ToLower(strings.TrimSpace(result.Tool)) {
+	case "flux":
+		return result.Chain[sourceIndex].Revision
+	case "argocd":
+		for index := sourceIndex + 1; index < len(result.Chain); index++ {
+			if strings.EqualFold(strings.TrimSpace(result.Chain[index].Kind), "Application") {
+				return result.Chain[index].Revision
+			}
+		}
+	}
+	return ""
+}
+
+func confirmTraceOCIRegistry(correlation *agent.TraceDeliveryCorrelation) {
+	if correlation == nil || correlation.OCIIdentityStatus != "exact" || strings.TrimSpace(correlation.OCIDigest) == "" {
+		return
+	}
+	if correlation.OCIRegistryVerified {
+		return
+	}
+	sourceRegistry := strings.TrimSpace(correlation.OCIRegistry)
+	currentRegistry := strings.TrimSpace(traceOCIRegistryFn())
+	switch {
+	case sourceRegistry == "" || currentRegistry == "":
+		correlation.OCIIdentityStatus = "unknown-registry"
+	case !strings.EqualFold(sourceRegistry, currentRegistry):
+		correlation.OCIIdentityStatus = "registry-mismatch"
+	default:
+		correlation.OCIRegistryVerified = true
+	}
 }
 
 func parseRenderedFromConfigHub(raw string) (space, target string) {
@@ -367,13 +492,51 @@ func matchTraceLiveStatus(correlation agent.TraceDeliveryCorrelation, statuses [
 
 func matchTraceReleases(correlation agent.TraceDeliveryCorrelation, releases []ConfigHubReleaseEvidence) ([]agent.TraceDeliveryRelease, agent.TraceDeliveryOmission) {
 	out := []agent.TraceDeliveryRelease{}
-	inSpace, comparable := 0, 0
+	inSpace, comparable, digestSeen := 0, 0, 0
+	pulled := strings.TrimSpace(correlation.OCIDigest)
+	exactOCI := pulled != ""
+	if exactOCI && !correlation.OCISourceVerified && (correlation.OCIIdentityStatus == "" || correlation.OCIIdentityStatus == "exact") {
+		correlation.OCIIdentityStatus = "unverified-source"
+	}
+	if (correlation.OCIIdentityStatus != "" && correlation.OCIIdentityStatus != "exact" && correlation.OCIIdentityStatus != "missing-observed-digest") || (exactOCI && (!correlation.OCIRegistryVerified || strings.TrimSpace(correlation.OCIRegistry) == "")) {
+		status := correlation.OCIIdentityStatus
+		if status == "" || (status == "exact" && exactOCI && !correlation.OCIRegistryVerified) {
+			status = "unknown-registry"
+		}
+		return nil, agent.TraceDeliveryOmission{
+			Layer:  "confighub.releases",
+			Reason: fmt.Sprintf("OCI source identity is %s; exact release correlation is omitted", status),
+			Impact: "the bounded evidence is INCONCLUSIVE and no release row is joined",
+		}
+	}
 	for _, release := range releases {
-		spaceMatch, spaceBy := traceSpaceMatches(correlation, release.Space, release.SpaceID)
+		var spaceMatch bool
+		var spaceBy string
+		if exactOCI || correlation.OCIIdentityStatus == "missing-observed-digest" {
+			spaceMatch, spaceBy = traceOCISpaceMatches(correlation, release.Space)
+		} else {
+			spaceMatch, spaceBy = traceSpaceMatches(correlation, release.Space, release.SpaceID)
+		}
 		if !spaceMatch {
 			continue
 		}
 		inSpace++
+
+		// The manifest digest is an exact key: the registry returns it as
+		// Docker-Content-Digest, the controller records it as the resolved
+		// revision, and ConfigHub stores it on the Release. When both sides
+		// have one, nothing else is needed — in particular not the target,
+		// which a Release names by ID and an OCI source knows only by slug.
+		if exactOCI {
+			digestSeen++
+			releaseDigest := strings.TrimSpace(release.ManifestDigest)
+			if !strictSHA256Digest(releaseDigest) || !strings.EqualFold(pulled, releaseDigest) {
+				continue
+			}
+			out = append(out, traceReleaseEvidence(release, []string{spaceBy, "release.manifestDigest"}))
+			continue
+		}
+
 		if traceTargetComparable(correlation, release.Target, release.TargetID) {
 			comparable++
 		}
@@ -381,28 +544,37 @@ func matchTraceReleases(correlation agent.TraceDeliveryCorrelation, releases []C
 		if !targetMatch {
 			continue
 		}
-		out = append(out, agent.TraceDeliveryRelease{
-			Slug:           release.Slug,
-			ReleaseID:      release.ReleaseID,
-			Space:          release.Space,
-			SpaceID:        release.SpaceID,
-			Target:         release.Target,
-			TargetID:       release.TargetID,
-			Digest:         release.Digest,
-			BundleBaseName: release.BundleBaseName,
-			RevisionNum:    release.RevisionNum,
-			ReleaseNum:     release.ReleaseNum,
-			Published:      release.Published,
-			CreatedAt:      release.CreatedAt,
-			MatchedBy:      []string{spaceBy, targetBy},
-		})
+		out = append(out, traceReleaseEvidence(release, []string{spaceBy, targetBy}))
 	}
-	if len(out) > 0 {
+	if len(out) > 0 && exactOCI {
+		return out, agent.TraceDeliveryOmission{}
+	}
+	if len(out) > 0 && correlation.OCIIdentityStatus != "missing-observed-digest" {
 		return out, agent.TraceDeliveryOmission{}
 	}
 	// A release names its target by ID; a chain derived from an OCI source or
 	// renderedFrom knows only the target slug. With no key in common the join
 	// was never evaluated, which is not the same as finding no release.
+	// A digest that matches nothing is bounded correlation evidence, not a
+	// claim that a release is absent or that the object is running a release.
+	if exactOCI {
+		return nil, agent.TraceDeliveryOmission{
+			Layer:  "confighub.releases",
+			Reason: fmt.Sprintf("the observed OCI manifest digest (%s) was not found in the %d bounded release rows for the source space", pulled, digestSeen),
+			Impact: "exact source-to-release correlation is INCONCLUSIVE; target matching was not used as a fallback",
+		}
+	}
+	if correlation.OCIIdentityStatus == "missing-observed-digest" {
+		omission := agent.TraceDeliveryOmission{
+			Layer:  "confighub.releases",
+			Reason: "the controller's observed OCI manifest digest is unavailable, so exact source correlation is INCONCLUSIVE",
+			Impact: "listed release rows are target scope evidence only; execution correlation is omitted",
+		}
+		if len(out) > 0 {
+			return out, omission
+		}
+		return nil, omission
+	}
 	hasTargetKey := correlation.Target != "" || correlation.TargetID != ""
 	if hasTargetKey && inSpace > 0 && comparable == 0 {
 		return nil, agent.TraceDeliveryOmission{
@@ -413,8 +585,58 @@ func matchTraceReleases(correlation agent.TraceDeliveryCorrelation, releases []C
 	}
 	return nil, agent.TraceDeliveryOmission{
 		Layer:  "confighub.releases",
-		Reason: "no release row matched the traced resource by exact space plus target",
-		Impact: "recent release publishing evidence is omitted for this object",
+		Reason: "no release row matched the traced resource by exact space plus target within the bounded evidence",
+		Impact: "bounded release evidence cannot establish an exact row for this object",
+	}
+}
+
+func traceOCISpaceMatches(correlation agent.TraceDeliveryCorrelation, space string) (bool, string) {
+	sourceSpace := strings.TrimSpace(correlation.OCISpace)
+	if sourceSpace == "" {
+		return false, ""
+	}
+	if sourceSpace == strings.TrimSpace(space) {
+		return true, "oci.space"
+	}
+	return false, ""
+}
+
+func traceReleaseRowsHaveManifestJoin(releases []agent.TraceDeliveryRelease) bool {
+	if len(releases) == 0 {
+		return false
+	}
+	for _, release := range releases {
+		matched := false
+		for _, value := range release.MatchedBy {
+			if value == "release.manifestDigest" {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+	return true
+}
+
+// traceReleaseEvidence is one release row, however it was matched.
+func traceReleaseEvidence(release ConfigHubReleaseEvidence, matchedBy []string) agent.TraceDeliveryRelease {
+	return agent.TraceDeliveryRelease{
+		Slug:           release.Slug,
+		ReleaseID:      release.ReleaseID,
+		Space:          release.Space,
+		SpaceID:        release.SpaceID,
+		Target:         release.Target,
+		TargetID:       release.TargetID,
+		Digest:         release.Digest,
+		ManifestDigest: release.ManifestDigest,
+		BundleBaseName: release.BundleBaseName,
+		RevisionNum:    release.RevisionNum,
+		ReleaseNum:     release.ReleaseNum,
+		Published:      release.Published,
+		CreatedAt:      release.CreatedAt,
+		MatchedBy:      matchedBy,
 	}
 }
 
@@ -479,7 +701,7 @@ func traceSpaceMatches(correlation agent.TraceDeliveryCorrelation, space, spaceI
 		}
 		return false, ""
 	}
-	if correlation.Space != "" && space != "" && strings.EqualFold(correlation.Space, space) {
+	if correlation.Space != "" && space != "" && correlation.Space == space {
 		// Say where the space came from. "space" means the resource named it;
 		// when the resource named none and --confighub-space supplied it, the
 		// row matched the operator's scope, which is weaker evidence.
@@ -571,7 +793,11 @@ func formatTraceDeliveryEvidenceLine(evidence *agent.TraceDeliveryEvidence) stri
 		}
 	}
 	if len(evidence.Releases) > 0 {
-		parts = append(parts, fmt.Sprintf("releases=%d %s", len(evidence.Releases), tracePublishedSummary(evidence.Releases)))
+		if traceReleaseRowsHaveManifestJoin(evidence.Releases) {
+			parts = append(parts, fmt.Sprintf("releases=%d exact-oci-digest %s", len(evidence.Releases), tracePublishedSummary(evidence.Releases)))
+		} else {
+			parts = append(parts, fmt.Sprintf("releases=%d %s", len(evidence.Releases), tracePublishedSummary(evidence.Releases)))
+		}
 	}
 	if len(evidence.UnitEvents) > 0 {
 		parts = append(parts, fmt.Sprintf("unitEvents=%d", len(evidence.UnitEvents)))
@@ -642,9 +868,21 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 	}
 	if len(evidence.Releases) > 0 {
 		fmt.Printf("  %sRecent releases:%s\n", colorDim, colorReset)
+		exactOCI := traceReleaseRowsHaveManifestJoin(evidence.Releases)
 		for _, release := range evidence.Releases {
+			name := configHubReleaseDisplayName(release.Slug, release.BundleBaseName, release.ReleaseNum, release.ReleaseID)
+			if exactOCI {
+				fmt.Printf("    - %s target=%s published=%s manifestDigest=%s at=%s\n",
+					name,
+					firstNonEmpty(release.Target, release.TargetID, "-"),
+					configHubPublishedText(release.Published),
+					truncate(firstNonEmpty(release.ManifestDigest, "-"), 18),
+					firstNonEmpty(release.CreatedAt, "-"),
+				)
+				continue
+			}
 			fmt.Printf("    - %s target=%s published=%s digest=%s at=%s\n",
-				configHubReleaseDisplayName(release.Slug, release.BundleBaseName, release.ReleaseNum, release.ReleaseID),
+				name,
 				firstNonEmpty(release.Target, release.TargetID, "-"),
 				configHubPublishedText(release.Published),
 				truncate(firstNonEmpty(release.Digest, "-"), 18),
@@ -700,6 +938,21 @@ func renderTraceDeliveryEvidenceMarkdown(evidence *agent.TraceDeliveryEvidence) 
 	fmt.Printf("\nConfigHub delivery evidence:\n")
 	if line := formatTraceDeliveryEvidenceLine(evidence); line != "" {
 		fmt.Printf("  %s\n", line)
+	}
+	if len(evidence.Releases) > 0 {
+		fmt.Printf("  Recent releases:\n")
+		exactOCI := traceReleaseRowsHaveManifestJoin(evidence.Releases)
+		for _, release := range evidence.Releases {
+			field, digest := "digest", release.Digest
+			if exactOCI {
+				field, digest = "manifestDigest", release.ManifestDigest
+			}
+			fmt.Printf("    - %s target=%s published=%s %s=%s at=%s\n",
+				configHubReleaseDisplayName(release.Slug, release.BundleBaseName, release.ReleaseNum, release.ReleaseID),
+				firstNonEmpty(release.Target, release.TargetID, "-"),
+				configHubPublishedText(release.Published), field, firstNonEmpty(digest, "-"),
+				firstNonEmpty(release.CreatedAt, "-"))
+		}
 	}
 	if len(evidence.Omissions) > 0 {
 		fmt.Printf("  Omissions:\n")

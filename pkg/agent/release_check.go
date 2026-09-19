@@ -116,6 +116,13 @@ func (r *ReleaseCheckReport) composeRunningImageHeadline() {
 	case "match":
 		if r.Verdict == VerdictPASS {
 			r.Headline += " Running pods report the intended image digest."
+			deployments := len(r.RunningImage.Workloads) > 0
+			for _, w := range r.RunningImage.Workloads {
+				deployments = deployments && w.Deployment != nil && w.Deployment.Complete
+			}
+			if deployments {
+				r.Headline += " Deployment image rollout confirmed for this observation window."
+			}
 		}
 	case "mismatch":
 		if r.nonRunningImageAtLeast("BLOCK") {
@@ -154,9 +161,15 @@ func runningImageNextStep(reason string) string {
 	case "mutable-tag":
 		return "The intended image is a mutable tag, so the running artifact cannot be tied to it. Pin the workload image to a digest (name@sha256:...) or supply build provenance, then re-run."
 	case "read-denied", "bounded pod list unavailable":
-		return "Pod reads were unavailable; grant read access to the workload's pods in this context, then re-run with --check-running-image."
+		return "Pod or ReplicaSet reads were unavailable; check namespaced read access in this context, then re-run with --check-running-image."
 	case "selector-unsupported":
-		return "The workload selector could not be resolved to pods in this slice (matchLabels required); running-image identity stays unconfirmed."
+		return "A valid non-empty workload selector is required; running-image identity stays unconfirmed."
+	case "digest-form-unresolved":
+		return "Compare the intended image index and runtime platform manifest with registry/build provenance; different digest strings alone do not establish a wrong image."
+	case "workload-ownership-unsupported":
+		return "Complete image rollout verification currently supports Deployments. Other workload controllers need their own ownership and completion checks."
+	case "coverage-capped":
+		return "Increase --max-pods up to 200 to cover this Deployment; larger sets remain unconfirmed. No additional pages are fetched."
 	default:
 		return "Running-image identity could not be confirmed (" + reason + "); resolve the noted gap, then re-run with --check-running-image."
 	}

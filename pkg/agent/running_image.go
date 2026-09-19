@@ -6,7 +6,9 @@ package agent
 import (
 	"sort"
 	"strings"
+	"time"
 
+	ocidigest "github.com/opencontainers/go-digest"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -22,11 +24,10 @@ import (
 //   3. running container-image digest (pod containerStatuses[].imageID)
 //
 // This tier compares (2) against (3). It is deliberately conservative: a mutable
-// tag is UNKNOWN, never an assumed match; a digest difference is reported as the
-// factual "running digest differs from intended" with a multi-architecture
-// caveat, never overstated as a certain "wrong image".
+// tag is UNKNOWN, never an assumed match; an unresolved index/platform digest
+// difference is UNKNOWN too, not proof that the wrong image is running.
 
-// runningImageCaveat is attached to every mismatch: a manifest-list (index)
+// runningImageCaveat is attached to unresolved differences: a manifest-list (index)
 // digest and its resolved per-architecture manifest digest can legitimately
 // differ, and we cannot distinguish that from a genuine mismatch without
 // registry-side resolution (later work, #505).
@@ -46,12 +47,25 @@ type RunningImageContainer struct {
 // RunningImageWorkload aggregates the containers of one workload across the pods
 // that were read for it.
 type RunningImageWorkload struct {
-	ID             BoundedResourceRef      `json:"id"`
-	Verdict        string                  `json:"verdict"` // match | mismatch | unknown
-	Reason         string                  `json:"reason,omitempty"`
-	PodsRead       int                     `json:"podsRead"`
-	CoverageCapped bool                    `json:"coverageCapped,omitempty"`
-	Containers     []RunningImageContainer `json:"containers,omitempty"`
+	ID             BoundedResourceRef       `json:"id"`
+	Verdict        string                   `json:"verdict"` // match | mismatch | unknown
+	Reason         string                   `json:"reason,omitempty"`
+	PodsRead       int                      `json:"podsRead"`
+	CoverageCapped bool                     `json:"coverageCapped,omitempty"`
+	Containers     []RunningImageContainer  `json:"containers,omitempty"`
+	Pods           []RunningImagePod        `json:"pods,omitempty"`
+	Deployment     *DeploymentImageCoverage `json:"deployment,omitempty"`
+	ObservedAt     *time.Time               `json:"observedAt,omitempty"`
+}
+
+// RunningImagePod retains per-pod evidence so missing statuses cannot be hidden
+// by a matching container in another pod. Ownership is checked separately.
+type RunningImagePod struct {
+	Name           string                  `json:"name"`
+	UID            string                  `json:"uid"`
+	ReplicaSetName string                  `json:"replicaSetName,omitempty"`
+	ReplicaSetUID  string                  `json:"replicaSetUID,omitempty"`
+	Containers     []RunningImageContainer `json:"containers"`
 }
 
 // RunningImageEvidence is the tier-level result folded into the release report.
@@ -70,6 +84,7 @@ type nameImage struct {
 type runObserved struct {
 	repo   string
 	digest string
+	reason string
 }
 
 // ParseImageReference splits a container image reference into repository, tag and
@@ -113,16 +128,7 @@ func DigestFromImageID(imageID string) (repo, digest string) {
 }
 
 func validDigest(d string) bool {
-	i := strings.Index(d, ":")
-	if i <= 0 || i == len(d)-1 {
-		return false
-	}
-	for _, c := range d[i+1:] {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-			return false
-		}
-	}
-	return true
+	return ocidigest.Digest(d).Validate() == nil
 }
 
 func normalizeRepo(r string) string {
@@ -178,31 +184,43 @@ func intendedContainers(obj *unstructured.Unstructured) []nameImage {
 	return out
 }
 
-// runningByContainer maps container name to the running images observed across
-// the read pods. A container present with an empty imageID still appears (with an
-// empty digest) so it is distinguishable from a container that was never found.
-func runningByContainer(pods []*unstructured.Unstructured) map[string][]runObserved {
+// runningByContainer emits one observation per intended container per pod,
+// including a reason when its status is missing or cannot establish execution.
+func runningByContainer(pods []*unstructured.Unstructured, containers []nameImage) map[string][]runObserved {
 	out := map[string][]runObserved{}
 	for _, pod := range pods {
-		if pod == nil {
-			continue
+		var statuses []interface{}
+		if pod != nil {
+			statuses, _, _ = unstructured.NestedSlice(pod.Object, "status", "containerStatuses")
 		}
-		statuses, found, err := unstructured.NestedSlice(pod.Object, "status", "containerStatuses")
-		if err != nil || !found {
-			continue
-		}
-		for _, item := range statuses {
-			m, ok := item.(map[string]interface{})
-			if !ok {
-				continue
+		for _, ci := range containers {
+			ro := runObserved{reason: "container-not-found"}
+			count := 0
+			for _, item := range statuses {
+				m, ok := item.(map[string]interface{})
+				if !ok || m["name"] != ci.name {
+					continue
+				}
+				count++
+				imageID, _ := m["imageID"].(string)
+				ro.repo, ro.digest = DigestFromImageID(imageID)
+				ro.reason = ""
+				state, _, _ := unstructured.NestedMap(m, "state")
+				running, ok := state["running"].(map[string]interface{})
+				ready, _ := m["ready"].(bool)
+				if !ok || running == nil || len(state) != 1 {
+					ro.reason = "container-not-running"
+				} else if !ready {
+					ro.reason = "container-not-ready"
+				}
 			}
-			name, _ := m["name"].(string)
-			if name == "" {
-				continue
+			if count > 1 {
+				ro.reason = "container-status-ambiguous"
 			}
-			imageID, _ := m["imageID"].(string)
-			repo, digest := DigestFromImageID(imageID)
-			out[name] = append(out[name], runObserved{repo: repo, digest: digest})
+			if reason := runningImagePodReason(pod); reason != "" {
+				ro.reason = reason
+			}
+			out[ci.name] = append(out[ci.name], ro)
 		}
 	}
 	return out
@@ -221,6 +239,17 @@ func IntendedImageDigestPinned(obj *unstructured.Unstructured) bool {
 }
 
 func compareRunningContainer(ci nameImage, running []runObserved, podsRead int) RunningImageContainer {
+	running = append([]runObserved(nil), running...)
+	sort.Slice(running, func(i, j int) bool {
+		a, b := running[i], running[j]
+		if a.reason != b.reason {
+			return a.reason < b.reason
+		}
+		if a.digest != b.digest {
+			return a.digest < b.digest
+		}
+		return a.repo < b.repo
+	})
 	c := RunningImageContainer{Name: ci.name, IntendedImage: ci.image}
 	irepo, tag, idigest := ParseImageReference(ci.image)
 	c.IntendedDigest = idigest
@@ -246,6 +275,12 @@ func compareRunningContainer(ci nameImage, running []runObserved, podsRead int) 
 	reason := ""
 	seen := map[string]bool{}
 	for _, ro := range running {
+		if ro.reason != "" {
+			verdict = weakerRunningImage(verdict, "unknown")
+			if reason == "" || ro.reason < reason {
+				reason = ro.reason
+			}
+		}
 		if ro.digest == "" {
 			verdict = weakerRunningImage(verdict, "unknown")
 			if reason == "" {
@@ -265,8 +300,11 @@ func compareRunningContainer(ci nameImage, running []runObserved, podsRead int) 
 		// it as the same repository. A differing named repository is not
 		// comparable and stays UNKNOWN rather than a false alarm.
 		if ro.repo == "" || normalizeRepo(ro.repo) == normalizeRepo(irepo) {
-			verdict = "mismatch"
-			reason = "running digest differs from intended"
+			verdict = weakerRunningImage(verdict, "unknown")
+			if reason == "" {
+				reason = "digest-form-unresolved"
+			}
+			c.Caveat = runningImageCaveat
 		} else {
 			verdict = weakerRunningImage(verdict, "unknown")
 			if reason == "" {
@@ -281,9 +319,6 @@ func compareRunningContainer(ci nameImage, running []runObserved, podsRead int) 
 	}
 	c.Verdict = verdict
 	c.Reason = reason
-	if verdict == "mismatch" {
-		c.Caveat = runningImageCaveat
-	}
 	return c
 }
 
@@ -310,7 +345,27 @@ func BuildRunningImageWorkload(desired *unstructured.Unstructured, pods []*unstr
 		}
 		return w
 	}
-	observed := runningByContainer(pods)
+	observed := runningByContainer(pods, containers)
+	for _, pod := range pods {
+		p := RunningImagePod{}
+		if pod != nil {
+			p.Name, p.UID = pod.GetName(), string(pod.GetUID())
+			if owner := ControllerOwner(pod, "ReplicaSet"); owner != nil {
+				p.ReplicaSetName, p.ReplicaSetUID = owner.Name, string(owner.UID)
+			}
+		}
+		perPod := runningByContainer([]*unstructured.Unstructured{pod}, containers)
+		for _, ci := range containers {
+			p.Containers = append(p.Containers, compareRunningContainer(ci, perPod[ci.name], 1))
+		}
+		w.Pods = append(w.Pods, p)
+	}
+	sort.Slice(w.Pods, func(i, j int) bool {
+		if w.Pods[i].Name != w.Pods[j].Name {
+			return w.Pods[i].Name < w.Pods[j].Name
+		}
+		return w.Pods[i].UID < w.Pods[j].UID
+	})
 	verdict := "match"
 	for _, ci := range containers {
 		rc := compareRunningContainer(ci, observed[ci.name], len(pods))
@@ -357,9 +412,8 @@ func AggregateRunningImage(workloads []RunningImageWorkload) (string, string) {
 	return verdict, reason
 }
 
-// WorkloadSelectorLabels returns the workload's matchLabels selector. The bool is
-// false when there are no matchLabels (or the selector uses only
-// matchExpressions), which the caller reports as UNKNOWN (selector-unsupported).
+// WorkloadSelectorLabels is the legacy labels-only helper. Release verification
+// uses WorkloadPodSelector instead, preserving matchExpressions as well.
 func WorkloadSelectorLabels(live *unstructured.Unstructured) (map[string]string, bool) {
 	if live == nil {
 		return nil, false

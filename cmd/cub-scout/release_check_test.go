@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -24,7 +25,9 @@ import (
 	"github.com/confighub/cub-scout/internal/releasetest"
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
@@ -45,17 +48,8 @@ type releaseFixture struct {
 }
 
 func podMatchesSelector(pod *unstructured.Unstructured, selector string) bool {
-	if selector == "" {
-		return true
-	}
-	labels := pod.GetLabels()
-	for _, pair := range strings.Split(selector, ",") {
-		kv := strings.SplitN(pair, "=", 2)
-		if len(kv) != 2 || labels[kv[0]] != kv[1] {
-			return false
-		}
-	}
-	return true
+	s, err := labels.Parse(selector)
+	return err == nil && s.Matches(labels.Set(pod.GetLabels()))
 }
 
 func newReleaseFixture(t *testing.T, backend string, input ...[]byte) *releaseFixture {
@@ -139,7 +133,12 @@ func newReleaseFixture(t *testing.T, backend string, input ...[]byte) *releaseFi
 					items = append(items, p.Object)
 				}
 			}
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{"apiVersion": "v1", "kind": "PodList", "metadata": map[string]interface{}{}, "items": items})
+			meta := map[string]interface{}{}
+			if limit, _ := strconv.Atoi(r.URL.Query().Get("limit")); limit > 0 && len(items) > limit {
+				items = items[:limit]
+				meta["continue"] = "next-page"
+			}
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"apiVersion": "v1", "kind": "PodList", "metadata": meta, "items": items})
 			return
 		}
 		for _, o := range f.objects {
@@ -158,8 +157,10 @@ func newReleaseFixture(t *testing.T, backend string, input ...[]byte) *releaseFi
 					return
 				}
 				items := []interface{}{}
+				seen := map[string]bool{}
 				for _, peer := range f.objects {
-					if peer.GetAPIVersion() == o.GetAPIVersion() {
+					if peer.GetAPIVersion() == o.GetAPIVersion() && !seen[peer.GetKind()] {
+						seen[peer.GetKind()] = true
 						plural := strings.ToLower(peer.GetKind()) + "s"
 						if peer.GetKind() == "OCIRepository" {
 							plural = "ocirepositories"
@@ -241,35 +242,36 @@ func TestReleaseCheckEvidence(t *testing.T) {
 	}
 }
 
+func addReleaseImagePods(f *releaseFixture, imageID string) {
+	newPod := func(imageID string) *unstructured.Unstructured {
+		controller := true
+		p := &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "v1", "kind": "Pod",
+			"metadata": map[string]interface{}{"name": "api-1", "namespace": "delivery", "uid": "api-1-uid", "labels": map[string]interface{}{"app": "api"}},
+			"status":   map[string]interface{}{"phase": "Running", "conditions": []interface{}{map[string]interface{}{"type": "Ready", "status": "True"}}, "containerStatuses": []interface{}{map[string]interface{}{"name": "api", "imageID": imageID, "ready": true, "state": map[string]interface{}{"running": map[string]interface{}{}}}}},
+		}}
+		p.SetOwnerReferences([]metav1.OwnerReference{{APIVersion: "apps/v1", Kind: "ReplicaSet", Name: "api-current", UID: "rs-uid", Controller: &controller}})
+		return p
+	}
+	controller := true
+	p := newPod(imageID)
+	second := p.DeepCopy()
+	second.SetName("api-2")
+	second.SetUID("api-2-uid")
+	f.pods = []*unstructured.Unstructured{p, second}
+	live := f.objects["Deployment/api"]
+	template, _, _ := unstructured.NestedMap(live.Object, "spec", "template")
+	rs := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "apps/v1", "kind": "ReplicaSet", "metadata": map[string]interface{}{"name": "api-current", "namespace": "delivery", "uid": "rs-uid", "resourceVersion": "1"}, "spec": map[string]interface{}{"template": template}}}
+	rs.SetOwnerReferences([]metav1.OwnerReference{{APIVersion: "apps/v1", Kind: "Deployment", Name: live.GetName(), UID: live.GetUID(), Controller: &controller}})
+	f.objects["ReplicaSet/api-current"] = rs
+}
+
 func TestReleaseCheckRunningImage(t *testing.T) {
 	imgNew := "sha256:" + strings.Repeat("a", 64)
 	imgOld := "sha256:" + strings.Repeat("b", 64)
-	pinnedYAML := []byte(fmt.Sprintf(`apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api
-  namespace: delivery
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: api
-  template:
-    metadata:
-      labels:
-        app: api
-    spec:
-      containers:
-      - name: api
-        image: example.invalid/api@%s
-`, imgNew))
-	newPod := func(imageID string) *unstructured.Unstructured {
-		return &unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": "v1", "kind": "Pod",
-			"metadata": map[string]interface{}{"name": "api-1", "namespace": "delivery", "labels": map[string]interface{}{"app": "api"}},
-			"status":   map[string]interface{}{"containerStatuses": []interface{}{map[string]interface{}{"name": "api", "imageID": imageID}}},
-		}}
-	}
+	pinnedYAML, err := os.ReadFile("../../examples/oci-release-check/image-deployment.yaml")
+	require.NoError(t, err)
+	addPods := addReleaseImagePods
 	stageVerdict := func(t *testing.T, report agent.ReleaseCheckReport) string {
 		t.Helper()
 		for _, s := range report.Stages {
@@ -281,35 +283,103 @@ spec:
 		return ""
 	}
 
-	t.Run("match", func(t *testing.T) {
-		f := newReleaseFixture(t, "argo", pinnedYAML)
-		f.pods = []*unstructured.Unstructured{newPod("docker-pullable://example.invalid/api@" + imgNew)}
-		o := f.options
-		o.CheckRunningImage = true
-		report, err := observeReleaseCheck(context.Background(), o)
-		require.NoError(t, err)
-		require.Equal(t, agent.VerdictPASS, report.Verdict, "%+v", report.Stages)
-		require.Equal(t, "PASS", stageVerdict(t, report))
-		require.NotNil(t, report.RunningImage)
-		require.Equal(t, "match", report.RunningImage.Verdict)
-		require.Equal(t, 1, report.RunningImage.PodReads)
-		require.Contains(t, renderReleaseCheck(report, "ascii"), "Running pods report the intended image digest")
-	})
+	for _, backend := range []string{"argo", "flux"} {
+		t.Run("match-"+backend, func(t *testing.T) {
+			f := newReleaseFixture(t, backend, pinnedYAML)
+			addPods(f, "docker-pullable://example.invalid/api@"+imgNew)
+			o := f.options
+			o.CheckRunningImage = true
+			report, err := observeReleaseCheck(context.Background(), o)
+			require.NoError(t, err)
+			require.Equal(t, agent.VerdictPASS, report.Verdict, "%+v", report.Stages)
+			require.Equal(t, "PASS", stageVerdict(t, report))
+			require.NotNil(t, report.RunningImage)
+			require.Equal(t, "match", report.RunningImage.Verdict)
+			require.Equal(t, 2, report.RunningImage.PodReads)
+			require.True(t, report.RunningImage.Workloads[0].Deployment.Complete)
+			require.Equal(t, 2, report.RunningImage.Workloads[0].Deployment.OwnedPods)
+			require.Contains(t, renderReleaseCheck(report, "ascii"), "Running pods report the intended image digest")
+			require.Equal(t, 2, f.gets["Deployment/api"])
+			require.Equal(t, 1, f.gets["ReplicaSet/api-current"])
+			require.Equal(t, f.requests, report.RequestCounts.Discovery+report.RequestCounts.Object)
+			model := newReleaseCheckModel(context.Background(), o)
+			model.Update(releaseCheckMessage{report: report})
+			require.Contains(t, model.content, "owned pods=2/2")
+			for _, width := range []int{40, 100} {
+				model.Update(tea.WindowSizeMsg{Width: width, Height: 24})
+				for _, line := range strings.Split(model.View(), "\n") {
+					require.LessOrEqual(t, ansi.StringWidth(line), width)
+				}
+			}
+		})
+	}
 
 	t.Run("mismatch", func(t *testing.T) {
 		f := newReleaseFixture(t, "argo", pinnedYAML)
-		f.pods = []*unstructured.Unstructured{newPod("example.invalid/api@" + imgOld)}
+		addPods(f, "example.invalid/api@"+imgOld)
 		o := f.options
 		o.CheckRunningImage = true
 		report, err := observeReleaseCheck(context.Background(), o)
 		require.NoError(t, err)
-		require.Equal(t, agent.VerdictBLOCK, report.Verdict, "%+v", report.Stages)
-		require.Equal(t, "BLOCK", stageVerdict(t, report))
-		require.Equal(t, "mismatch", report.RunningImage.Verdict)
+		require.Equal(t, agent.VerdictINCONCLUSIVE, report.Verdict, "%+v", report.Stages)
+		require.Equal(t, "INCONCLUSIVE", stageVerdict(t, report))
+		require.Equal(t, "unknown", report.RunningImage.Verdict)
 		render := renderReleaseCheck(report, "ascii")
-		require.Contains(t, render, "Running pods do not run the intended image")
-		require.Contains(t, render, "running-image mismatch")
+		require.Contains(t, render, "running image could not be confirmed")
+		require.Contains(t, render, "digest-form-unresolved")
 	})
+	for _, tc := range []struct {
+		name   string
+		mutate func(*releaseFixture)
+		reason string
+	}{
+		{"missing status", func(f *releaseFixture) {
+			unstructured.RemoveNestedField(f.pods[1].Object, "status", "containerStatuses")
+		}, "container-not-found"},
+		{"fewer pods", func(f *releaseFixture) { f.pods = f.pods[:1] }, "pod-count-incomplete"},
+		{"capped", func(f *releaseFixture) { f.options.MaxPods = 1 }, "coverage-capped"},
+		{"foreign owner", func(f *releaseFixture) {
+			r := f.objects["ReplicaSet/api-current"]
+			refs := r.GetOwnerReferences()
+			refs[0].UID = "other"
+			r.SetOwnerReferences(refs)
+		}, "deployment-owner-unconfirmed"},
+		{"workload changes", func(f *releaseFixture) {
+			f.change = func(o *unstructured.Unstructured, n int) int {
+				if o.GetKind() == "Deployment" && n > 1 {
+					o.SetGeneration(3)
+				}
+				return 0
+			}
+		}, "workload-changed-during-check"},
+		{"workload recheck denied", func(f *releaseFixture) {
+			f.change = func(o *unstructured.Unstructured, n int) int {
+				if o.GetKind() == "Deployment" && n > 1 {
+					return 403
+				}
+				return 0
+			}
+		}, "workload-recheck-read-denied"},
+		{"replicaset unreadable", func(f *releaseFixture) {
+			f.change = func(o *unstructured.Unstructured, _ int) int {
+				if o.GetKind() == "ReplicaSet" {
+					return 403
+				}
+				return 0
+			}
+		}, "read-denied"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newReleaseFixture(t, "argo", pinnedYAML)
+			addPods(f, imgNew)
+			f.options.CheckRunningImage = true
+			tc.mutate(f)
+			r, err := observeReleaseCheck(context.Background(), f.options)
+			require.NoError(t, err)
+			require.Equal(t, "INCONCLUSIVE", stageVerdict(t, r), "%+v", r.RunningImage)
+			require.Equal(t, tc.reason, r.RunningImage.Workloads[0].Reason)
+		})
+	}
 
 	t.Run("read-denied", func(t *testing.T) {
 		f := newReleaseFixture(t, "argo", pinnedYAML)
@@ -365,6 +435,30 @@ func TestReleaseCheckMCPRunningImageArgs(t *testing.T) {
 		"check_running_image": "yes",
 	})
 	require.Error(t, err, "check_running_image must be a boolean")
+}
+
+func TestRunningImageDoesNotGeneralizeDeploymentCompletion(t *testing.T) {
+	t.Run("no workloads cannot pass an explicitly requested image check", func(t *testing.T) {
+		r := agent.NewReleaseCheckReport(agent.BoundedResourceRef{}, "fixture", "fixture", 100, time.Now())
+		assessRunningImage(context.Background(), &r, nil, nil, 50)
+		require.Equal(t, "unknown", r.RunningImage.Verdict)
+		require.Equal(t, "INCONCLUSIVE", r.Stages[len(r.Stages)-1].Verdict)
+	})
+	for _, kind := range []string{"StatefulSet", "DaemonSet", "Job"} {
+		desired := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "apps/v1", "kind": kind, "metadata": map[string]interface{}{"name": "api", "namespace": "delivery"}, "spec": map[string]interface{}{"template": map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{map[string]interface{}{"name": "api", "image": "example.invalid/api@sha256:" + strings.Repeat("a", 64)}}}}}}}
+		if kind == "Job" {
+			desired.SetAPIVersion("batch/v1")
+		}
+		r := agent.NewReleaseCheckReport(agent.BoundedResourceRef{}, "fixture", "fixture", 100, time.Now())
+		assessRunningImage(context.Background(), &r, nil, []agent.WorkloadConvergedObservedObject{{Desired: desired, Live: desired.DeepCopy()}}, 50)
+		require.Equal(t, "unknown", r.RunningImage.Verdict)
+		require.Equal(t, "workload-ownership-unsupported", r.RunningImage.Reason)
+		require.Nil(t, r.RunningImage.Workloads[0].Deployment)
+		_ = unstructured.SetNestedSlice(desired.Object, []interface{}{map[string]interface{}{"name": "api", "image": "example.invalid/api:latest"}}, "spec", "template", "spec", "containers")
+		r = agent.NewReleaseCheckReport(agent.BoundedResourceRef{}, "fixture", "fixture", 100, time.Now())
+		assessRunningImage(context.Background(), &r, nil, []agent.WorkloadConvergedObservedObject{{Desired: desired, Live: desired.DeepCopy()}}, 50)
+		require.Equal(t, "workload-ownership-unsupported", r.RunningImage.Reason)
+	}
 }
 
 func TestReleaseCheckNegativeEvidence(t *testing.T) {
@@ -522,14 +616,17 @@ func TestReleaseCheckCLIAndMCP(t *testing.T) {
 	if testing.Short() {
 		t.Skip("builds actual CLI and MCP processes")
 	}
-	f := newReleaseFixture(t, "argo")
+	pinnedYAML, err := os.ReadFile("../../examples/oci-release-check/image-deployment.yaml")
+	require.NoError(t, err)
+	f := newReleaseFixture(t, "argo", pinnedYAML)
+	addReleaseImagePods(f, "sha256:"+strings.Repeat("a", 64))
 	t.Setenv("CUB_SCOUT_OFFLINE", "true")
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	binary := filepath.Join(t.TempDir(), "cub-scout")
 	out, err := exec.CommandContext(ctx, "go", "build", "-o", binary, ".").CombinedOutput()
 	require.NoError(t, err, "%s", out)
-	a := map[string]interface{}{"bundle": f.options.Bundle, "oci_layout": f.options.Layout, "controller": f.options.Controller, "controller_namespace": "delivery", "api_version": f.options.APIVersion, "context": "cluster-a"}
+	a := map[string]interface{}{"bundle": f.options.Bundle, "oci_layout": f.options.Layout, "controller": f.options.Controller, "controller_namespace": "delivery", "api_version": f.options.APIVersion, "context": "cluster-a", "check_running_image": true}
 	base, err := releaseCheckMCPTool().BuildArgs(a)
 	require.NoError(t, err)
 	for _, plugin := range []string{"", "1"} {
@@ -542,6 +639,7 @@ func TestReleaseCheckCLIAndMCP(t *testing.T) {
 				var r agent.ReleaseCheckReport
 				require.NoError(t, json.Unmarshal(out, &r))
 				require.Equal(t, agent.VerdictPASS, r.Verdict)
+				require.True(t, r.RunningImage.Workloads[0].Deployment.Complete)
 			} else {
 				require.Contains(t, string(out), "authored configuration matches")
 			}
@@ -559,6 +657,7 @@ func TestReleaseCheckCLIAndMCP(t *testing.T) {
 		var r agent.ReleaseCheckReport
 		require.NoError(t, json.Unmarshal(out, &r))
 		require.Equal(t, agent.VerdictPASS, r.Verdict)
+		require.True(t, r.RunningImage.Workloads[0].Deployment.Complete)
 	}
 	process := exec.CommandContext(ctx, binary, "mcp", "serve")
 	stdin, err := process.StdinPipe()
@@ -589,7 +688,8 @@ func TestReleaseCheckCLIAndMCP(t *testing.T) {
 		var r agent.ReleaseCheckReport
 		require.NoError(t, json.Unmarshal([]byte(response.Result.Content[0].Text), &r))
 		require.Equal(t, agent.VerdictPASS, r.Verdict)
-		require.Equal(t, 8, r.RequestCounts.Discovery+r.RequestCounts.Object)
+		require.Equal(t, 11, r.RequestCounts.Discovery+r.RequestCounts.Object)
+		require.True(t, r.RunningImage.Workloads[0].Deployment.Complete)
 	}
 	cmd := newReleaseCheckCommand()
 	var output bytes.Buffer

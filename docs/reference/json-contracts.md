@@ -1281,17 +1281,31 @@ space correlation.
 | `source` | Current value is `confighub`. |
 | `scope.space` | Defaults to the resource's ConfigHub space or ConfigHub OCI source space. If neither exists, connected history reads are skipped unless `--confighub-space` is supplied. |
 | `correlation.matchedBy[]` | Lists the exact identifiers used to form the resource correlation. |
+| `correlation.ociSourceVerified` | Additive **UNRELEASED** source-binding evidence. `true` when a fresh current Argo Application or Flux v1 OCIRepository read confirms consistent source/status identity. This is independent of registry verification; both must succeed before an exact release row can be attached. |
+| `correlation.ociSourceRead` | Additive bounded read evidence for source verification: at most one discovery plus one object GET, with the existing 10-second read deadline and 2 MiB response cap. It is not a continuous or atomic observation. |
+| `correlation.ociRegistryVerified` | Additive **UNRELEASED** registry agreement from a fresh configured-registry lookup. Parser recognition may be cached for 30 seconds but is never authority for this join. |
+| `correlation.ociSpace`, `correlation.ociRegistry`, `correlation.ociDigest` | The single source's exact space, registry, and controller-reported SHA-256 manifest revision. A configured URL pin is not a reported revision. |
+| `correlation.ociIdentityStatus` | Explains exact, missing, conflicting, ambiguous, or unverified source identity. An `exact` revision alone is insufficient: source and registry verification are also required. |
 | `liveStatus` | Included only when a live-status row matches by exact space plus Argo Application name or exact space plus ConfigHub unit slug. |
 | `liveStatus.matchedBy[]` | Lists the exact live-status join keys, for example `spaceId` and `liveStatus.app==chain.application`. |
 | `*.matchedBy[]` space key | `spaceId` when both sides carry a space ID, `space` when the resource itself names the space by slug, and `scope.space` when the resource names no space and `--confighub-space` supplied it. A `scope.space` join is weaker evidence: it shows the row is in the space the operator chose, not a space the resource declares. Rows matched this way reported `space` before. |
 | ID conflicts | When the resource and a row both carry an ID for the same thing (space, target, unit) and the IDs differ, the row is not joined, even if the slugs are equal. Slugs are compared only when one side has no ID. |
-| `releases[]` | Included only for rows matching exact space plus target ID or target slug. A space-only match is not object-level evidence. The join is target-level: a row belongs to the resource's target, which does not show that the release contains the resource's unit, and `notes[]` says so whenever rows are attached. The human and Markdown renderings print `notes[]`, and their summary line gives the served count beside the row count (`releases=2 published=1/2`). Rows are matched before trimming to `maxItems`. |
+| `releases[]` | Exact space plus target ID/slug joins remain scope context, not execution evidence. **UNRELEASED:** a verified single OCI source can instead join by source space plus `Release.ManifestDigest`; a digest miss never falls back to a target match. Neither join proves the resource executed the release. `notes[]` names the distinction, and renderings retain published counts. Rows are matched before trimming to `maxItems`. |
+| `releases[].manifestDigest` | Additive OCI manifest digest used for exact source correlation. Separate from `releases[].digest` (bundle content) and container-image digests. |
 | `releases[].published` | `true` while ConfigHub serves the Release to its Target, `false` once it is withdrawn (the row is kept), omitted when the server does not report it. Omitted is not `false`. |
 | `releases[].releaseNum` | The Release's sequence number within its space. ConfigHub Releases have no slug and no revision number, so `slug` and `revisionNum` are not reported by current servers; text output labels a row `bundleBaseName#releaseNum`. |
-| Target known only by slug | A Release names its target by ID only. When the resource gives only a target slug (a ConfigHub OCI source or `renderedFrom` chain), the two sides share no key and the join is not evaluated: a `confighub.releases` omission says the target is unknown, which is different from finding no release. cub-scout does not look the ID up from the slug. The slug and the space can come from different sources (a label and an OCI URL), so a lookup could resolve the slug in the wrong space and attach another target's releases. |
+| Target known only by slug | A Release names its target by ID only. Without a verified OCI manifest join, a resource naming only a target slug has no shared target key and reports an omission, not a claim that no release exists. cub-scout does not look the ID up from a slug. A verified source-space/manifest join does not need a target key, but proves source correlation only. |
 | `unitEvents[]` | Included only for rows matching exact unit ID, or exact unit slug plus space. A ConfigHub UnitEvent names its unit and space (`unitId`, `unit`, `spaceId`, `space`) and has no target, so `target` and `targetId` are not reported. Rows are matched before trimming to `maxItems`. |
 | `eventConsumers[]` | Cluster-observed event-consumer Deployment health. This is contextual evidence, not proof that the traced object was synced. |
 | `omissions[]` | Structured explanation for missing identity, missing scope, missing/malformed writeback, disconnected ConfigHub, non-matching rows, or RBAC/list failures. |
+
+For the **UNRELEASED** exact source join, `ociSourceRead` is a fresh bounded
+current-object observation. Argo requires the current Application
+`spec.source` to equal `status.sync.comparedTo.source` and its reported digest
+to remain unchanged. Flux requires current generation and observed generation
+to agree, a current Ready condition, and the current OCIRepository URL and
+artifact revision to agree. If the source read, registry agreement, or any
+consistency check fails, the exact release row is omitted.
 
 The command never consumes ConfigHub event cursors and never mutates ConfigHub,
 the event consumer, the delivery controller, or Kubernetes.
@@ -1470,8 +1484,11 @@ Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 
 ## Configuration Release Check
 
-Available since v2.11.0. `release check --format json` and MCP `release_check` emit a `version: "v1"`
-report, not an in-toto envelope. Fields:
+Available in v2.12.0. `release check --format json` and MCP `release_check` emit
+a `version: "v1"` report, not an in-toto envelope. The shipped v2.12.0
+running-image slice retains documented per-pod completeness gaps. The stricter
+running-image fields described below are **UNRELEASED** source-branch behavior.
+Fields:
 
 | Field | Meaning |
 |---|---|
@@ -1482,12 +1499,14 @@ report, not an in-toto envelope. Fields:
 | `verdict`, `headline`, `nextStep` | Scoped aggregate and explanation; priority BLOCK > INCONCLUSIVE > WATCH > PASS |
 | `controllerRevision` | Existing exact immutable report-comparison evidence; not a workload or execution-history claim |
 | `configuration`, `convergence` | Optional existing fingerprinted object-set/workload receipt Statements |
-| `runningImage` | Optional (`--check-running-image`): per-workload/per-container comparison of intended digests against pod-reported `.status.containerStatuses[].imageID`; `match`/`mismatch`/`unknown` with intended/reported digests. `mismatch` maps to stage `BLOCK`, including potentially legitimate multi-architecture index/platform differences. Mutable tags stay `unknown`. Image IDs are pooled by container name, not proof of complete per-pod running state or ownership. The configuration-bundle digest is never compared to a container-image digest. |
+| `runningImage` | Optional (`--check-running-image`): per-workload/per-container comparison of intended digests against pod-reported `.status.containerStatuses[].imageID`; `match`/`mismatch`/`unknown` with intended/reported digests. Current builders do not emit `BLOCK` for an unresolved digest difference; index/platform forms are `unknown` with `digest-form-unresolved`. Mutable tags stay `unknown`. The configuration-bundle digest is never compared to a container-image digest. |
 | `reads[]`, `requestCounts`, `maxObjects` | Per-read scope, UID/resourceVersion, observation/expiry, actual discovery/object requests and selected object limit |
 | `omissions[]` | Explicit claim boundaries, including application success, running-image identity, atomicity and release authority |
 
 `NOT_ASSESSED` is allowed only for a non-required workload stage with no supported
-workloads; it never implies a running application. Missing required evidence
+workloads; when `--check-running-image` is requested and there are no supported
+workloads, that running-image stage is `unknown` / `INCONCLUSIVE`, not
+`NOT_ASSESSED`. Neither result implies a running application. Missing required evidence
 is INCONCLUSIVE. A known configuration/runtime failure remains BLOCK even if
 another stage is inconclusive. Read failures and excluded Secrets are represented
 in configuration receipt coverage, not omitted from the desired object count.
@@ -1498,11 +1517,34 @@ digest describe different content and are not interchangeable. Supplied OCI
 source metadata is recorded in the nested receipts' `desiredSource` (`type:
 "oci"`). Fingerprint integrity applies to each nested Statement, not the outer
 report, and does not authenticate the intended release or registry publisher.
-Running-image comparison is opt-in via `--check-running-image`, which adds one
-bounded, selector-scoped pod read per eligible workload. Direct Pods reuse their
-live read; tag-only workloads skip the extra read. No additional image-check pod
-reads occur by default. Missing status arrays are skipped; `state.running` and
-pod ownerReference/UID chains are not checked by this tier. See
+Running-image comparison is opt-in via `--check-running-image`. In the shipped
+v2.12.0 behavior it adds one bounded, selector-scoped Pod read per eligible
+workload; direct Pods reuse their live read and tag-only workloads skip the
+extra read. The **UNRELEASED** source branch uses a structured-selector Pod LIST,
+one exact GET per distinct ReplicaSet owner, and a final Deployment re-read.
+For Deployment workloads, `runningImage.workloads[].deployment` has:
+
+`complete`, `reason`, `uid`, `generation`, `observedGeneration`,
+`desiredReplicas`, `replicas`, `updatedReplicas`, `readyReplicas`,
+`availableReplicas`, and `ownedPods`. `complete` means ownership and replica
+coverage was proved; it does not by itself mean image equality. The same
+workload has `pods[]` with Pod `name`, `uid`, `replicaSetName`,
+`replicaSetUID`, and per-container results.
+An optional workload `observedAt` is the Pod LIST time. A workload `verdict:
+match` additionally requires every intended regular container in every Pod to
+have an exact digest, `state.running`, and `ready=true`.
+
+The Deployment proof checks Pod owner UID -> ReplicaSet UID -> Deployment UID,
+the current ReplicaSet template, generation/status agreement, positive and
+equal replica counts, exact Pod count, no duplicates/terminating/old/foreign
+Pods, `phase=Running`, and `PodReady=True`. Direct Pods retain exact-object
+evidence. Direct Pods independently require no deletion, `phase=Running`,
+`PodReady=True`, and every intended regular container running and ready; they
+receive no Deployment-completion claim. StatefulSet, DaemonSet, and Job
+ownership is unsupported for this complete proof and remains `unknown` /
+`INCONCLUSIVE`. Missing, ambiguous,
+capped, RBAC, stale, race, and zero-replica evidence is unknown. Init and
+ephemeral containers and application success are excluded. See
 [the image deployment guide](../howto/is-this-image-deployed.md) before treating
 an image-stage match as stronger evidence. No
 application health policy, extra-object closure, fleet aggregation or

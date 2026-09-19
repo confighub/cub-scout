@@ -12,9 +12,28 @@ import (
 
 func TestReleaseCheckUserQuestionsAndBoundaries(t *testing.T) {
 	for file, snippets := range map[string][]string{
-		"README.md":                            {"Did this exact OCI configuration release reach the selected cluster?", "Where is my release waiting, different, or unverifiable?", "Configuration-only changes", "release check --interactive", "release_check", "no inventory LIST", "Watch/bot do not schedule this check yet", "Is the image actually running the one I intended?", "check-running-image"},
-		"examples/oci-release-check/README.md": {"--bundle", "--kube-context", "--controller-context", "2N + 4", "2N + 8", "32 MiB", "16 MiB", "4 MiB", "not an atomic snapshot", "NOT_ASSESSED", "No source index is guessed", "check-running-image"},
-		"docs/reference/json-contracts.md":     {"## Configuration Release Check", "Available since v2.11.0", "controllerContext", "registry", "NOT_ASSESSED", "not the outer", "runningImage"},
+		"README.md": {
+			"Did this exact OCI configuration release reach the selected cluster?",
+			"Do I have the exact release identity?",
+			"Are all replicas running the intended image?",
+			"What does incomplete proof mean?",
+			"UNRELEASED source branch",
+			"no inventory LIST",
+			"Watch/bot do not schedule this check yet",
+			"active ConfigHub registry",
+		},
+		"examples/oci-release-check/README.md": {
+			"image-deployment.yaml", "--kube-context", "--controller-context",
+			"11 Kubernetes requests", "2N + 4", "2N + 8", "32 MiB", "16 MiB",
+			"4 MiB", "not an atomic snapshot", "NOT_ASSESSED", "No source index is guessed",
+			"UNRELEASED", "check-running-image", "TestReleaseCheck(RunningImage|CLIAndMCP)$",
+		},
+		"docs/reference/json-contracts.md": {
+			"## Configuration Release Check", "v2.12.0", "UNRELEASED",
+			"controllerContext", "registry", "NOT_ASSESSED", "not the outer",
+			"runningImage", "replicaSetName", "replicaSetUID", "observedAt",
+			"correlation.ociSourceVerified", "correlation.ociSourceRead", "fresh configured-registry lookup",
+		},
 	} {
 		data, err := os.ReadFile(filepath.Join("..", "..", file))
 		if err != nil {
@@ -30,29 +49,60 @@ func TestReleaseCheckUserQuestionsAndBoundaries(t *testing.T) {
 
 func TestImageDeploymentGuideAndLinks(t *testing.T) {
 	for file, snippets := range map[string][]string{
-		"README.md": {"[Is this image deployed?](docs/howto/is-this-image-deployed.md)", "I only have an image reference", "missing per-pod status"},
+		"README.md": {
+			"[Is this image deployed?](docs/howto/is-this-image-deployed.md)",
+			"Do I have the exact release identity?", "Are all replicas running the intended image?",
+			"What does incomplete proof mean?", "UNRELEASED source branch",
+		},
 		"docs/howto/is-this-image-deployed.md": {
-			"v2.11.0", "## Five Different Questions", "## Start With What You Have",
-			"## Why OCI Is Involved", "## Run The Check", "## Read The Result",
-			"## Ways To Run It", "## Limits Before Trusting A Match",
+			"v2.12.0", "UNRELEASED", "## Three Questions To Ask", "## Five Different Questions",
+			"## Start With What You Have", "## Why OCI Is Involved", "## Run The Check",
+			"## Read The Result", "## Ways To Run It", "## Limits Before Trusting A Match",
 			"--bundle", "--controller", "--api-version", "--controller-namespace",
 			"--kube-context", "--check-running-image", "--max-pods 50", "--format json",
 			"--out release-check.json", "--fail-on any-non-pass", "--interactive",
 			"cub scout release check", "check_running_image: true",
-			"configuration-bundle digest is never compared to a container-image",
-			"no dedicated image-reference search", "state.running", "ownerReference/UID",
-			"missing status arrays", "matchExpressions", "initContainers", "ephemeral",
-			"index/platform", "`mismatch`/`BLOCK`", "NOT_ASSESSED",
-			"Do not schedule", "not signed or an immutable", "not problems fixed by this guide",
+			"configuration-bundle digest is never compared with a container-image",
+			"no dedicated image-reference search", "state.running", "owner UID",
+			"missing or ambiguous status", "digest-form-unresolved", "PodReady=True",
+			"matchExpressions", "structured selector", "single-source Argo CD Application",
+			"Flux v1 Kustomization", "General HelmRelease support",
+			"not signed or an immutable receipt", "current builders emit no mismatch/BLOCK",
+			"no supported workloads is",
+			"ociSourceVerified", "ociSourceRead", "status.sync.comparedTo",
+			"OCIRepository URL", "current Ready condition",
+			"replicaSetName", "replicaSetUID", "deployment.complete", "observedAt",
+			"workload-ownership-unsupported", "no registry image resolution",
+			"Watch and in-cluster bot", "not an atomic snapshot",
 		},
-		"CLI-GUIDE.md":                             {"Available since v2.11.0", "docs/howto/is-this-image-deployed.md"},
-		"docs/getting-started/start-here.md":       {"../howto/is-this-image-deployed.md"},
-		"examples/oci-release-check/README.md":     {"Available since v2.11.0", "../../docs/howto/is-this-image-deployed.md", "state.running"},
-		"docs/reference/commands.md":               {"Available since v2.11.0", "../howto/is-this-image-deployed.md", "all-replicas-running"},
-		"docs/reference/cli-contract.md":           {"Available since v2.11.0", "../howto/is-this-image-deployed.md", "state.running"},
-		"docs/reference/json-contracts.md":         {"../howto/is-this-image-deployed.md", "state.running"},
-		"docs/releases/v2.11.0.md":                 {"../howto/is-this-image-deployed.md", "index/platform", "per-pod status completeness"},
-		"docs/proposals/running-image-identity.md": {"shipped in v2.11.0", "../howto/is-this-image-deployed.md", "state.running"},
+		"CLI-GUIDE.md": {
+			"Available since v2.11.0", "v2.12.0", "UNRELEASED", "docs/howto/is-this-image-deployed.md",
+		},
+		"docs/getting-started/start-here.md": {
+			"../howto/is-this-image-deployed.md", "v2.12.0", "UNRELEASED",
+		},
+		"examples/oci-release-check/README.md": {
+			"v2.12.0", "UNRELEASED", "../../docs/howto/is-this-image-deployed.md",
+			"image-deployment.yaml", "replicaSetName", "replicaSetUID", "11 Kubernetes requests",
+			"TestReleaseCheck(RunningImage|CLIAndMCP)$", "state.running",
+		},
+		"docs/reference/commands.md": {
+			"Available since v2.11.0", "../howto/is-this-image-deployed.md",
+			"UNRELEASED", "structured-selector Pod LIST", "workload-ownership-unsupported",
+		},
+		"docs/reference/cli-contract.md": {
+			"v2.12.0", "../howto/is-this-image-deployed.md", "UNRELEASED",
+			"replicaSetName", "replicaSetUID", "observedAt", "digest-form-unresolved",
+		},
+		"docs/reference/json-contracts.md": {
+			"../howto/is-this-image-deployed.md", "v2.12.0", "UNRELEASED",
+			"state.running", "replicaSetName", "replicaSetUID", "observedAt",
+		},
+		"docs/reference/cli-reference.md": {"v2.12.0", "Image deployment guide"},
+		"docs/proposals/running-image-identity.md": {
+			"UNRELEASED source-branch implementation", "../howto/is-this-image-deployed.md",
+			"replicaSetName", "replicaSetUID", "state.running", "11 Kubernetes requests",
+		},
 	} {
 		t.Run(file, func(t *testing.T) {
 			data, err := os.ReadFile(filepath.Join("..", "..", file))
@@ -65,7 +115,10 @@ func TestImageDeploymentGuideAndLinks(t *testing.T) {
 					t.Errorf("missing image-check guidance %q", snippet)
 				}
 			}
-			for _, stale := range []string{"never a false alarm", "Never a false alarm", "Unreleased, planned v2.11", "Configuration Release Check (Unreleased)"} {
+			for _, stale := range []string{
+				"never a false alarm", "Never a false alarm", "Unreleased, planned v2.11",
+				"Configuration Release Check (Unreleased)",
+			} {
 				if strings.Contains(content, stale) {
 					t.Errorf("stale or overconfident image-check guidance %q", stale)
 				}

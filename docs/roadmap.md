@@ -23,15 +23,17 @@ remains future work. Items marked "resolved" had issues filed, implemented, and 
 
 Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
-- [ ] Running-image completeness and interpretation hardening: prove that
-  every selected pod supplies each intended container status and current
-  execution evidence; validate ownerReference/UID chains and full selectors;
-  distinguish index/platform digest differences before wrong-image conclusions.
-  The v2.11.0 limitations are documented in
-  [Is This Image Deployed?](howto/is-this-image-deployed.md), not fixed by the
-  guide. Before implementation, define fixtures for mixed missing/present
-  status, terminated containers, overlapping labels, mixed selectors and
-  multi-architecture digests, with explicit unknown/partial coverage.
+Running-image completeness is now tracked in
+[#578](https://github.com/confighub/cub-scout/issues/578), alongside OCI source
+identity and exact release correlation in
+[#561](https://github.com/confighub/cub-scout/issues/561). The first implementation
+is Deployment-scoped; other workload ownership/completion adapters and registry
+index-to-platform resolution remain follow-up scope, not implied parity.
+
+- [ ] Add complete running-image ownership/completion adapters for StatefulSets,
+  DaemonSets and Jobs; until then their image-completion tier stays unknown.
+- [ ] Resolve image index-to-platform identities before distinguishing a true
+  wrong-image result from an equivalent platform manifest.
 
 ### v2.9.0 - Scoped Resource Reads and Release Readiness
 

@@ -41,7 +41,7 @@ Source of truth:
 | `patterns` | Pattern detection engine | [Command Reference](commands.md#patterns-v07) | [Patterns fixtures](../../test/fixtures/patterns/) |
 | `quickstart` | Guided first-run tour | [Command Reference](commands.md#quickstart) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
 | `receipt` | Create and verify typed, fingerprinted evidence receipts (#446) | [Command Reference](commands.md#receipt) | [Receipts](../../examples/receipts/) |
-| `release` | Check an exact OCI configuration release (v2.11.0) | [Command Reference](commands.md#release-check) | [Image deployment guide](../howto/is-this-image-deployed.md) |
+| `release` | Check an exact OCI configuration release (v2.12.0) | [Command Reference](commands.md#release-check) | [Image deployment guide](../howto/is-this-image-deployed.md) |
 | `suggest-remedy` | Describe a suggested remediation for a risk finding (read-only). Legacy `remedy` is accepted as an alias. | [Command Reference](commands.md#suggest-remedy) | [Running demos](../howto/running-demos.md) |
 | `scan` | Risk and stuck-state scanning | [Command Reference](commands.md#scan) | [Lifecycle hazards](../../examples/lifecycle-hazards/) |
 | `setup` | Shell setup and quick cluster connect helpers | [Command Reference](commands.md#setup) | - |

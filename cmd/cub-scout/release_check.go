@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -61,7 +62,7 @@ func newReleaseCheckCommand() *cobra.Command {
 	var format, out, failOn string
 	var interactive bool
 	cmd := &cobra.Command{Use: "check", Short: "Verify an OCI configuration bundle against a controller and live target", Args: cobra.NoArgs, SilenceUsage: true, SilenceErrors: true,
-		Long: "Read a digest-pinned literal OCI configuration bundle, exact controller/source evidence and the desired live objects. Reports authored-field agreement and workload-controller convergence, not application success. Running-image identity (the digest actually executing in live pods) is opt-in via --check-running-image, which adds one bounded, selector-scoped pod read per workload. Namespaced bundle objects must include metadata.namespace. No rendering, inventory LIST or mutation.",
+		Long: "Read a digest-pinned literal OCI configuration bundle, exact controller/source evidence and the desired live objects. Reports authored-field agreement and workload-controller convergence, not application success. --check-running-image adds a bounded, selector-scoped pod list for each Deployment, exact ReplicaSet owner reads and a final Deployment re-read. It checks every intended regular container is running and ready at the intended digest. Namespaced bundle objects must include metadata.namespace. No rendering, cluster-wide inventory LIST or mutation.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if _, err := o.validate(); err != nil {
 				return err
@@ -118,7 +119,7 @@ func newReleaseCheckCommand() *cobra.Command {
 	f.StringVar(&o.Context, "kube-context", "", "Explicit target Kubernetes context")
 	f.StringVar(&o.ControllerContext, "controller-context", "", "Controller Kubernetes context (defaults to target context)")
 	f.IntVar(&o.MaxObjects, "max-objects", agent.ReleaseMaxObjects, "Maximum desired objects (1-100); oversized bundles are rejected before cluster reads")
-	f.BoolVar(&o.CheckRunningImage, "check-running-image", false, "Also compare the digest running in live pods against the intended image; adds one bounded, selector-scoped pod read per workload. Mutable tags stay UNKNOWN.")
+	f.BoolVar(&o.CheckRunningImage, "check-running-image", false, "Check intended regular-container digests and running/readiness state; Deployments add bounded pod, ReplicaSet ownership and completion reads. Mutable tags and unresolved digest forms stay UNKNOWN.")
 	f.IntVar(&o.MaxPods, "max-pods", 50, "Maximum pods read per workload for --check-running-image (1-200); coverage past this is reported as partial")
 	f.StringVar(&format, "format", "ascii", "Output format: ascii, json, md")
 	f.StringVar(&out, "out", "", "Write the complete report as JSON (not an immutable receipt)")
@@ -314,14 +315,11 @@ func renderReleaseCheck(r agent.ReleaseCheckReport, format string) string {
 	}
 	if r.RunningImage != nil {
 		for _, w := range r.RunningImage.Workloads {
-			if w.Verdict == "match" {
-				continue
-			}
 			fmt.Fprintf(&b, "  %s/%s %s: running-image %s (%s)\n", w.ID.Kind, w.ID.Name, w.ID.Namespace, w.Verdict, w.Reason)
+			if d := w.Deployment; d != nil {
+				fmt.Fprintf(&b, "    Deployment uid=%s generation=%d observedGeneration=%d; owned pods=%d/%d, updated=%d ready=%d available=%d; coverage complete=%t\n", d.UID, d.Generation, d.ObservedGeneration, d.OwnedPods, d.DesiredReplicas, d.UpdatedReplicas, d.ReadyReplicas, d.AvailableReplicas, d.Complete)
+			}
 			for _, c := range w.Containers {
-				if c.Verdict == "match" {
-					continue
-				}
 				line := fmt.Sprintf("    container %s: %s", c.Name, c.Verdict)
 				if c.Reason != "" {
 					line += " (" + c.Reason + ")"
@@ -333,6 +331,13 @@ func renderReleaseCheck(r agent.ReleaseCheckReport, format string) string {
 					line += "; running " + shortDigests(c.RunningDigests)
 				}
 				fmt.Fprintln(&b, line)
+			}
+			for _, p := range w.Pods {
+				for _, c := range p.Containers {
+					if c.Verdict != "match" {
+						fmt.Fprintf(&b, "    pod %s uid=%s container %s: %s (%s)\n", p.Name, p.UID, c.Name, c.Verdict, c.Reason)
+					}
+				}
 			}
 		}
 	}
@@ -359,7 +364,7 @@ func renderReleaseCheck(r agent.ReleaseCheckReport, format string) string {
 // UNKNOWN with a specific reason; nothing is guessed.
 func assessRunningImage(ctx context.Context, r *agent.ReleaseCheckReport, reader *agent.BoundedResourceReader, workloads []agent.WorkloadConvergedObservedObject, maxPods int) {
 	if maxPods < 1 {
-		maxPods = releasePodCap
+		maxPods = 50
 	}
 	ev := &agent.RunningImageEvidence{Workloads: []agent.RunningImageWorkload{}}
 	for _, wl := range workloads {
@@ -368,34 +373,26 @@ func assessRunningImage(ctx context.Context, r *agent.ReleaseCheckReport, reader
 			continue
 		}
 		switch {
+		case desired.GetKind() != "Deployment" && desired.GetKind() != "Pod":
+			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, "workload-ownership-unsupported"))
 		case !agent.IntendedImageDigestPinned(desired):
 			// Mutable-tag-only workload: no pod read can confirm identity.
 			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, ""))
 		case live == nil:
 			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, "workload-missing"))
+		case wl.Error != "" || wl.Inconclusive:
+			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, "workload-evidence-unconfirmed"))
 		case desired.GetKind() == "Pod":
 			// The pod is its own live object; reuse the read already performed.
 			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, []*unstructured.Unstructured{live}, false, ""))
 			ev.PodReads++
+		case desired.GetKind() == "Deployment":
+			w := observeDeploymentImage(ctx, r, reader, wl, maxPods)
+			ev.Workloads = append(ev.Workloads, w)
+			ev.PodReads += w.PodsRead
 		default:
-			labels, ok := agent.WorkloadSelectorLabels(live)
-			if !ok {
-				ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, "selector-unsupported"))
-				continue
-			}
-			pods, capped, e, err := reader.ListPods(ctx, live.GetNamespace(), labels, maxPods)
-			r.AddRead(e)
-			readErr := ""
-			if err != nil {
-				readErr = classifyPodReadError(err)
-			}
-			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, pods, capped, readErr))
-			ev.PodReads += len(pods)
+			ev.Workloads = append(ev.Workloads, agent.BuildRunningImageWorkload(desired, nil, false, "workload-ownership-unsupported"))
 		}
-	}
-	if len(ev.Workloads) == 0 {
-		r.Stages = append(r.Stages, agent.ReleaseCheckStage{Name: "running-image", Verdict: "NOT_ASSESSED", Reason: "No supported workloads to inspect for running-image identity."})
-		return
 	}
 	verdict, reason := agent.AggregateRunningImage(ev.Workloads)
 	ev.Verdict, ev.Reason = verdict, reason
@@ -403,9 +400,87 @@ func assessRunningImage(ctx context.Context, r *agent.ReleaseCheckReport, reader
 	r.Stages = append(r.Stages, agent.ReleaseCheckStage{Name: "running-image", Verdict: agent.RunningImageStageVerdict(verdict), Reason: runningImageStageReason(ev)})
 	for i := range r.Omissions {
 		if r.Omissions[i].Missing == "running-artifact-identity" {
-			r.Omissions[i].Reason = "Running-image identity was assessed from pod containerStatuses. Multi-architecture index/manifest digests, initContainers, ephemeral containers and matchExpressions-only selectors are not covered in this slice; process-level configuration reload is not inspected."
+			r.Omissions[i].Reason = "Running-image identity checks intended regular containers. Complete owner/replica coverage is supported only for Deployments; direct Pods have exact-object evidence only. Multi-architecture index/platform resolution, initContainers, ephemeral containers and process-level configuration reload are not inspected. Observations span a time window, not an atomic snapshot or a continuing guarantee."
 		}
 	}
+}
+
+func observeDeploymentImage(ctx context.Context, r *agent.ReleaseCheckReport, reader *agent.BoundedResourceReader, wl agent.WorkloadConvergedObservedObject, maxPods int) agent.RunningImageWorkload {
+	desired, live := wl.Desired, wl.Live
+	if wl.Error != "" || wl.Inconclusive {
+		return agent.BuildRunningImageWorkload(desired, nil, false, "workload-evidence-unconfirmed")
+	}
+	selector, err := agent.WorkloadPodSelector(live)
+	if err != nil {
+		return agent.BuildRunningImageWorkload(desired, nil, false, "selector-unsupported")
+	}
+	pods, capped, e, err := reader.ListPodsMatching(ctx, live.GetNamespace(), selector, maxPods)
+	r.AddRead(e)
+	readErr := ""
+	if err != nil {
+		readErr = classifyPodReadError(err)
+	}
+	w := agent.BuildRunningImageWorkload(desired, pods, capped, readErr)
+	if e.Available {
+		w.ObservedAt = &e.ObservedAt
+	}
+	if readErr != "" {
+		return w
+	}
+	if capped {
+		w.Verdict, w.Reason = "unknown", "coverage-capped"
+		return w
+	}
+	refs := map[string]agent.BoundedResourceRef{}
+	for _, pod := range pods {
+		if owner := agent.ControllerOwner(pod, "ReplicaSet"); owner != nil {
+			refs[owner.Name] = agent.BoundedResourceRef{APIVersion: "apps/v1", Kind: "ReplicaSet", Name: owner.Name, Namespace: live.GetNamespace()}
+		}
+	}
+	names := make([]string, 0, len(refs))
+	for name := range refs {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	replicaSets := map[string]*unstructured.Unstructured{}
+	for _, name := range names {
+		rs, re, err := reader.Read(ctx, refs[name], true)
+		r.AddRead(re)
+		if err != nil {
+			readErr = classifyPodReadError(err)
+			break
+		}
+		replicaSets[name] = rs
+	}
+	coverage := agent.BuildDeploymentImageCoverage(live, pods, replicaSets)
+	w.Deployment = &coverage
+	if !coverage.Complete {
+		w.Verdict, w.Reason = "unknown", coverage.Reason
+	}
+	if readErr != "" {
+		w.Verdict, w.Reason = "unknown", readErr
+	}
+	// Recheck the exact workload after its pod/owner reads; status-only changes
+	// count too. This detects races without claiming an atomic cluster snapshot.
+	after, re, err := reader.Read(ctx, w.ID, true)
+	r.AddRead(re)
+	recheckReason := ""
+	switch {
+	case err != nil:
+		recheckReason = "workload-recheck-unavailable"
+		if apierrors.IsForbidden(err) {
+			recheckReason = "workload-recheck-read-denied"
+		}
+	case after == nil || after.GetResourceVersion() == "" || after.GetUID() == "":
+		recheckReason = "workload-recheck-identity-missing"
+	case !reflect.DeepEqual(after.Object, live.Object):
+		recheckReason = "workload-changed-during-check"
+	}
+	if recheckReason != "" {
+		w.Verdict, w.Reason = "unknown", recheckReason
+		coverage.Complete, coverage.Reason = false, w.Reason
+	}
+	return w
 }
 
 func runningImageStageReason(ev *agent.RunningImageEvidence) string {
@@ -415,7 +490,7 @@ func runningImageStageReason(ev *agent.RunningImageEvidence) string {
 			matched++
 		}
 	}
-	base := fmt.Sprintf("%d/%d workload(s) run the intended image digest across %d pod(s).", matched, len(ev.Workloads), ev.PodReads)
+	base := fmt.Sprintf("%d/%d workload(s) have confirmed intended regular-container image, running and readiness evidence across %d pod(s). Deployment matches require complete owner/replica coverage.", matched, len(ev.Workloads), ev.PodReads)
 	if ev.Verdict != "match" && ev.Reason != "" {
 		base += " " + ev.Reason + "."
 	}
@@ -429,7 +504,7 @@ func classifyPodReadError(err error) string {
 	if err == nil {
 		return ""
 	}
-	if strings.Contains(strings.ToLower(err.Error()), "forbidden") {
+	if apierrors.IsForbidden(err) || strings.Contains(strings.ToLower(err.Error()), "forbidden") {
 		return "read-denied"
 	}
 	return err.Error()

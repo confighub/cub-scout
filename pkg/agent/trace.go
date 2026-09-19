@@ -181,14 +181,35 @@ type TraceDeliveryEvidenceScope struct {
 }
 
 type TraceDeliveryCorrelation struct {
-	UnitSlug    string   `json:"unitSlug,omitempty"`
-	UnitID      string   `json:"unitId,omitempty"`
-	Space       string   `json:"space,omitempty"`
-	SpaceID     string   `json:"spaceId,omitempty"`
-	Target      string   `json:"target,omitempty"`
-	TargetID    string   `json:"targetId,omitempty"`
-	Application string   `json:"application,omitempty"`
-	MatchedBy   []string `json:"matchedBy,omitempty"`
+	UnitSlug    string `json:"unitSlug,omitempty"`
+	UnitID      string `json:"unitId,omitempty"`
+	Space       string `json:"space,omitempty"`
+	SpaceID     string `json:"spaceId,omitempty"`
+	Target      string `json:"target,omitempty"`
+	TargetID    string `json:"targetId,omitempty"`
+	Application string `json:"application,omitempty"`
+	// OCISpace and OCITarget are kept with the OCI identity that supplied the
+	// observed digest. They prevent a source digest from being paired with an
+	// unrelated ConfigHub label or annotation.
+	OCISpace    string `json:"ociSpace,omitempty"`
+	OCITarget   string `json:"ociTarget,omitempty"`
+	OCIRegistry string `json:"ociRegistry,omitempty"`
+	// OCIRegistryVerified is set only by the explicit connected delivery
+	// evidence path after comparing OCIRegistry with the configured hub.
+	OCIRegistryVerified bool                 `json:"ociRegistryVerified,omitempty"`
+	OCISourceVerified   bool                 `json:"ociSourceVerified,omitempty"`
+	OCISourceRead       *BoundedReadEvidence `json:"ociSourceRead,omitempty"`
+	// OCIDigest is the manifest digest the delivery controller resolved for
+	// the OCI artifact it observed. It is an exact key: the same string the
+	// registry returns as Docker-Content-Digest and ConfigHub stores as a
+	// Release's ManifestDigest. A URL reference is configured input, not this
+	// observation.
+	OCIDigest string `json:"ociDigest,omitempty"`
+	// OCIIdentityStatus records why an OCI source identity is or is not usable.
+	// Target joins may remain visible as scope evidence when the observed
+	// digest is missing, but they must not be presented as exact execution.
+	OCIIdentityStatus string   `json:"ociIdentityStatus,omitempty"`
+	MatchedBy         []string `json:"matchedBy,omitempty"`
 }
 
 type TraceDeliveryLiveStatus struct {
@@ -210,13 +231,17 @@ type TraceDeliveryLiveStatus struct {
 }
 
 type TraceDeliveryRelease struct {
-	Slug           string `json:"slug,omitempty"`
-	ReleaseID      string `json:"releaseId,omitempty"`
-	Space          string `json:"space,omitempty"`
-	SpaceID        string `json:"spaceId,omitempty"`
-	Target         string `json:"target,omitempty"`
-	TargetID       string `json:"targetId,omitempty"`
-	Digest         string `json:"digest,omitempty"`
+	Slug      string `json:"slug,omitempty"`
+	ReleaseID string `json:"releaseId,omitempty"`
+	Space     string `json:"space,omitempty"`
+	SpaceID   string `json:"spaceId,omitempty"`
+	Target    string `json:"target,omitempty"`
+	TargetID  string `json:"targetId,omitempty"`
+	Digest    string `json:"digest,omitempty"`
+	// ManifestDigest is the OCI manifest digest — the string the registry
+	// returns as Docker-Content-Digest and a delivery controller records as
+	// the resolved revision. It is what makes a release join exact.
+	ManifestDigest string `json:"manifestDigest,omitempty"`
 	BundleBaseName string `json:"bundleBaseName,omitempty"`
 	RevisionNum    int    `json:"revisionNum,omitempty"`
 	ReleaseNum     int    `json:"releaseNum,omitempty"`

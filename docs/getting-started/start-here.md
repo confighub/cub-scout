@@ -15,9 +15,10 @@ If you just want the command index, use:
 - [Command Reference](../reference/commands.md)
 
 Checking an application image? Start with
-[Is This Image Deployed?](../howto/is-this-image-deployed.md) for the v2.11.0
-workflow, the difference between configuration and image digests, and what
-pod-reported identity can and cannot prove.
+[Is This Image Deployed?](../howto/is-this-image-deployed.md) for the shipped
+v2.12.0 limits, the **UNRELEASED** Deployment proof, the difference between
+configuration and image digests, and what pod-reported identity can and cannot
+prove.
 
 ---
 
