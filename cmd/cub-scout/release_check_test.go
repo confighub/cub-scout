@@ -243,6 +243,8 @@ func TestReleaseCheckEvidence(t *testing.T) {
 }
 
 func addReleaseImagePods(f *releaseFixture, imageID string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	newPod := func(imageID string) *unstructured.Unstructured {
 		controller := true
 		p := &unstructured.Unstructured{Object: map[string]interface{}{
@@ -626,6 +628,7 @@ func TestReleaseCheckCLIAndMCP(t *testing.T) {
 	binary := filepath.Join(t.TempDir(), "cub-scout")
 	out, err := exec.CommandContext(ctx, "go", "build", "-o", binary, ".").CombinedOutput()
 	require.NoError(t, err, "%s", out)
+	testReleaseCheckHeadless(t, ctx, binary, pinnedYAML)
 	a := map[string]interface{}{"bundle": f.options.Bundle, "oci_layout": f.options.Layout, "controller": f.options.Controller, "controller_namespace": "delivery", "api_version": f.options.APIVersion, "context": "cluster-a", "check_running_image": true}
 	base, err := releaseCheckMCPTool().BuildArgs(a)
 	require.NoError(t, err)

@@ -100,9 +100,12 @@ func newReleaseCheckCommand() *cobra.Command {
 				}
 			}
 			if format == "json" {
-				fmt.Fprintln(cmd.OutOrStdout(), string(data))
+				_, err = fmt.Fprintln(cmd.OutOrStdout(), string(data))
 			} else {
-				fmt.Fprint(cmd.OutOrStdout(), renderReleaseCheck(report, format))
+				_, err = fmt.Fprint(cmd.OutOrStdout(), renderReleaseCheck(report, format))
+			}
+			if err != nil {
+				return fmt.Errorf("write release report: %w", err)
 			}
 			if gates[report.Verdict] {
 				return newExitCodeError(fmt.Errorf("release check verdict %s matches --fail-on", report.Verdict), 2)
