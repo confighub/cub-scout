@@ -2,6 +2,13 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
+**2026-09-19 source update:** latest published baseline is **v2.12.0**. Unreleased
+work in #561/#578 strengthens OCI release identity and complete Deployment image
+evidence. Start with the newest [handover](HANDOVER.md) and
+[image guide](docs/howto/is-this-image-deployed.md); do not attribute the new
+owner/replica proof to v2.12.0. The check remains read-only, bounded and dated,
+not application success or continuous observation.
+
 **2026-09-14 release correction:** v2.11.0 is published (tag `89f0bf2`).
 `release check --check-running-image` is shipped, not planned. Start with
 [Is This Image Deployed?](docs/howto/is-this-image-deployed.md) for the current

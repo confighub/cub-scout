@@ -572,3 +572,299 @@ func TestTracePublishedSummary(t *testing.T) {
 		}
 	}
 }
+
+func TestTraceDeliveryRenderersExposeExactManifestJoin(t *testing.T) {
+	digest := "sha256:" + strings.Repeat("a", 64)
+	evidence := &agent.TraceDeliveryEvidence{
+		Releases: []agent.TraceDeliveryRelease{{
+			BundleBaseName: "api", ReleaseNum: 7, Published: boolPtr(true),
+			ManifestDigest: digest, Digest: "sha256:" + strings.Repeat("b", 64),
+			MatchedBy: []string{"oci.space", "release.manifestDigest"},
+		}},
+		Notes: []string{"Source correlation only; not pod execution."},
+	}
+	for name, render := range map[string]func(*agent.TraceDeliveryEvidence){
+		"human": renderTraceDeliveryEvidenceHuman, "markdown": renderTraceDeliveryEvidenceMarkdown,
+	} {
+		out := captureStdout(t, func() { render(evidence) })
+		for _, want := range []string{"api#7", "published=true", "manifestDigest=sha256:aaaa", "Source correlation only"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("%s missing %q in %s", name, want, out)
+			}
+		}
+		if name == "markdown" && !strings.Contains(out, digest) {
+			t.Errorf("Markdown must retain the complete matched manifest digest: %s", out)
+		}
+	}
+}
+
+// A release joins to what was actually pulled, by manifest digest.
+//
+// The values here are from a release published to a live ConfigHub v0.5.1
+// server: its Release.ManifestDigest is the string the registry returned as
+// Docker-Content-Digest for the same artifact, while Release.Digest — what
+// cub-scout used to read — is a different string that no puller ever reports.
+func TestMatchTraceReleasesJoinsByManifestDigest(t *testing.T) {
+	const (
+		pulled       = "sha256:824dcfb9948441409f59ef2b05036b00bb1ce8bf1645577e1ccd4c58a0fd27a3"
+		bundleDigest = "sha256:6ba46466faaa1e6c9a190154c5723671610c8961e22b75a8fc5d172906c318ec"
+		otherPulled  = "sha256:0df04e007c0d5d8b2e89eec57ced4d16a2f738edff7ed43e830f652dc11897cf"
+		registry     = "oci.example.test"
+	)
+	release := ConfigHubReleaseEvidence{
+		ReleaseID:      "ac8a755c-1c8f-49e4-b1de-a730c3e69188",
+		Space:          "apps",
+		Digest:         bundleDigest,
+		ManifestDigest: pulled,
+		Target:         "prod",
+		TargetID:       "e87456c9-6f95-47d8-9ed9-d88bddbc48db",
+		ReleaseNum:     1,
+	}
+
+	t.Run("the digest agrees", func(t *testing.T) {
+		correlation := agent.TraceDeliveryCorrelation{Space: "apps", OCISpace: "apps", OCISourceVerified: true, OCIDigest: pulled, OCIRegistry: registry, OCIRegistryVerified: true}
+		rows, omission := matchTraceReleases(correlation, []ConfigHubReleaseEvidence{release})
+		if len(rows) != 1 {
+			t.Fatalf("rows = %d, want the release joined; omission = %+v", len(rows), omission)
+		}
+		if got := strings.Join(rows[0].MatchedBy, ","); !strings.Contains(got, "release.manifestDigest") {
+			t.Fatalf("matchedBy = %q, want it to name the digest", got)
+		}
+		if rows[0].ManifestDigest != pulled {
+			t.Fatalf("row digest = %q, want the manifest digest reported", rows[0].ManifestDigest)
+		}
+		if rows[0].Target != "prod" || rows[0].TargetID == "" {
+			t.Fatalf("row target = %q/%q, want the release target preserved", rows[0].Target, rows[0].TargetID)
+		}
+	})
+
+	t.Run("no target is needed", func(t *testing.T) {
+		// This is the case the old join could not evaluate: a Release names its
+		// target by ID, an OCI source knows only a space. The digest settles it.
+		correlation := agent.TraceDeliveryCorrelation{Space: "apps", OCISpace: "apps", OCISourceVerified: true, OCIDigest: pulled, OCIRegistry: registry, OCIRegistryVerified: true}
+		if rows, _ := matchTraceReleases(correlation, []ConfigHubReleaseEvidence{release}); len(rows) != 1 {
+			t.Fatalf("rows = %d with no target on either side, want the digest to be enough", len(rows))
+		}
+	})
+
+	t.Run("a different artifact does not join", func(t *testing.T) {
+		correlation := agent.TraceDeliveryCorrelation{Space: "apps", OCISpace: "apps", OCISourceVerified: true, OCIDigest: otherPulled, OCIRegistry: registry, OCIRegistryVerified: true}
+		rows, omission := matchTraceReleases(correlation, []ConfigHubReleaseEvidence{release})
+		if len(rows) != 0 {
+			t.Fatalf("rows = %+v, want nothing joined for a digest this space never published", rows)
+		}
+		if !strings.Contains(omission.Reason, otherPulled) {
+			t.Fatalf("omission = %q, want it to name the artifact that matched nothing", omission.Reason)
+		}
+		if !strings.Contains(omission.Impact, "exact source-to-release correlation is INCONCLUSIVE") {
+			t.Fatalf("omission impact = %q", omission.Impact)
+		}
+	})
+
+	t.Run("the bundle digest is not the join key", func(t *testing.T) {
+		// Release.Digest is what cub-scout read before. A controller never
+		// reports it, so treating it as the key would join nothing — or worse,
+		// join the wrong thing if it ever collided.
+		correlation := agent.TraceDeliveryCorrelation{Space: "apps", OCISpace: "apps", OCISourceVerified: true, OCIDigest: bundleDigest, OCIRegistry: registry, OCIRegistryVerified: true}
+		if rows, _ := matchTraceReleases(correlation, []ConfigHubReleaseEvidence{release}); len(rows) != 0 {
+			t.Fatalf("rows = %+v, want the bundle digest not to join", rows)
+		}
+	})
+
+	t.Run("a release in another space does not join", func(t *testing.T) {
+		correlation := agent.TraceDeliveryCorrelation{Space: "somewhere-else", OCISpace: "somewhere-else", OCISourceVerified: true, OCIDigest: pulled, OCIRegistry: registry, OCIRegistryVerified: true}
+		if rows, _ := matchTraceReleases(correlation, []ConfigHubReleaseEvidence{release}); len(rows) != 0 {
+			t.Fatalf("rows = %+v, want the space to still bound the join", rows)
+		}
+	})
+
+	t.Run("an observed digest never falls back to target", func(t *testing.T) {
+		correlation := agent.TraceDeliveryCorrelation{Space: "apps", OCISpace: "apps", OCISourceVerified: true, TargetID: release.TargetID, OCIDigest: otherPulled, OCIRegistry: registry, OCIRegistryVerified: true}
+		rows, omission := matchTraceReleases(correlation, []ConfigHubReleaseEvidence{release})
+		if len(rows) != 0 {
+			t.Fatalf("rows = %+v, want no target fallback for an observed digest mismatch", rows)
+		}
+		wording := strings.ToLower(omission.Reason + " " + omission.Impact)
+		if strings.Contains(wording, "published") || strings.Contains(wording, "running") {
+			t.Fatalf("omission = %+v, want neutral bounded-correlation wording", omission)
+		}
+	})
+}
+
+// A digest is an identity; a tag is not. `latest` is what the registry serves a
+// ConfigHub release at, so it says nothing about which artifact is running.
+func TestFirstOCIDigestTakesOnlyADigest(t *testing.T) {
+	const digest = "sha256:824dcfb9948441409f59ef2b05036b00bb1ce8bf1645577e1ccd4c58a0fd27a3"
+	for _, tt := range []struct {
+		name   string
+		values []string
+		want   string
+	}{
+		{name: "pinned by digest", values: []string{digest}, want: digest},
+		{name: "tag then digest", values: []string{"latest", digest}, want: digest},
+		{name: "only a tag", values: []string{"latest"}},
+		{name: "a release tag is not an OCI tag either", values: []string{"release-1"}},
+		{name: "truncated digest", values: []string{"sha256:824dcfb9"}},
+		{name: "non-hex digest", values: []string{"sha256:824dcfb9948441409f59ef2b05036b00bb1ce8bf1645577e1ccd4c58a0fd27az"}},
+		{name: "nothing", values: nil},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := firstOCIDigest(tt.values...); got != tt.want {
+				t.Fatalf("firstOCIDigest(%v) = %q, want %q", tt.values, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBuildTraceDeliveryCorrelationUsesObservedOCIRevision(t *testing.T) {
+	const (
+		configured = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+		observed   = "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+	)
+
+	for _, tt := range []struct {
+		name  string
+		tool  string
+		chain []agent.ChainLink
+	}{
+		{
+			name: "argo uses Application status revision, not source configuration",
+			tool: "argocd",
+			chain: []agent.ChainLink{
+				{Kind: "ConfigHub OCI", Revision: "new-tag", OCISource: &agent.OCISourceInfo{IsConfigHub: true, Registry: "oci.example.test", Space: "apps", Reference: configured}},
+				{Kind: "Application", Revision: observed},
+			},
+		},
+		{
+			name: "flux uses OCIRepository observed revision, not URL configuration",
+			tool: "flux",
+			chain: []agent.ChainLink{
+				{Kind: "ConfigHub OCI", Revision: observed, OCISource: &agent.OCISourceInfo{IsConfigHub: true, Registry: "oci.example.test", Space: "apps", Reference: configured}},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildTraceDeliveryCorrelation(&agent.TraceResult{Tool: tt.tool, Chain: tt.chain})
+			if got.OCIDigest != observed {
+				t.Fatalf("OCIDigest = %q, want observed %q", got.OCIDigest, observed)
+			}
+			if got.OCISpace != "apps" || got.OCIRegistry != "oci.example.test" || got.OCIIdentityStatus != "exact" {
+				t.Fatalf("OCI identity = %q/%q/%q, want apps/oci.example.test/exact", got.OCISpace, got.OCIRegistry, got.OCIIdentityStatus)
+			}
+		})
+	}
+}
+
+func TestBuildTraceDeliveryCorrelationMissingOrConflictingOCIIdentityIsExplicit(t *testing.T) {
+	const observed = "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+	for _, tt := range []struct {
+		name   string
+		result *agent.TraceResult
+		status string
+	}{
+		{
+			name: "argo observed revision is unavailable",
+			result: &agent.TraceResult{Tool: "argocd", Chain: []agent.ChainLink{
+				{Kind: "ConfigHub OCI", OCISource: &agent.OCISourceInfo{IsConfigHub: true, Space: "apps", Reference: observed}},
+			}},
+			status: "missing-observed-digest",
+		},
+		{
+			name: "resource labels conflict with source space",
+			result: &agent.TraceResult{Tool: "flux", ConfigHub: &agent.TraceConfigHub{SpaceName: "other"}, Chain: []agent.ChainLink{
+				{Kind: "ConfigHub OCI", Revision: observed, OCISource: &agent.OCISourceInfo{IsConfigHub: true, Space: "apps"}},
+			}},
+			status: "conflicting",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildTraceDeliveryCorrelation(tt.result)
+			if got.OCIIdentityStatus != tt.status {
+				t.Fatalf("OCI identity status = %q, want %q", got.OCIIdentityStatus, tt.status)
+			}
+			if got.OCIDigest != "" {
+				t.Fatalf("OCIDigest = %q, want omission instead of an exact source claim", got.OCIDigest)
+			}
+		})
+	}
+}
+
+func TestMatchTraceReleasesWithoutObservedDigestIsScopeOnly(t *testing.T) {
+	manifest := "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+	rows, omission := matchTraceReleases(
+		agent.TraceDeliveryCorrelation{
+			Space:             "apps",
+			OCISpace:          "apps",
+			TargetID:          "target-a",
+			OCIIdentityStatus: "missing-observed-digest",
+		},
+		[]ConfigHubReleaseEvidence{{Space: "apps", TargetID: "target-a", ManifestDigest: manifest}},
+	)
+	if len(rows) != 1 || rows[0].ManifestDigest != manifest {
+		t.Fatalf("rows = %+v, want target-only row with ManifestDigest preserved", rows)
+	}
+	wording := strings.ToLower(omission.Reason + " " + omission.Impact)
+	if omission.Layer != "confighub.releases" || !strings.Contains(wording, "inconclusive") {
+		t.Fatalf("omission = %+v, want explicit inconclusive observed-provenance omission", omission)
+	}
+	if containsTraceMatch(rows[0].MatchedBy, "release.manifestDigest") {
+		t.Fatalf("matchedBy = %v, want target-only evidence, not a digest join", rows[0].MatchedBy)
+	}
+}
+
+func TestTraceSpaceSlugsAreCaseSensitive(t *testing.T) {
+	ok, _ := traceSpaceMatches(agent.TraceDeliveryCorrelation{Space: "Apps"}, "apps", "")
+	if ok {
+		t.Fatal("space slug comparison must be case-sensitive")
+	}
+	ok, by := traceSpaceMatches(agent.TraceDeliveryCorrelation{Space: "Apps", SpaceID: "space-a"}, "renamed", "space-a")
+	if !ok || by != "spaceId" {
+		t.Fatalf("space ID join = %v/%q, want ID-first join through a slug rename", ok, by)
+	}
+}
+
+func TestConfirmTraceOCIRegistryRequiresCurrentHubMatch(t *testing.T) {
+	old := traceOCIRegistryFn
+	t.Cleanup(func() { traceOCIRegistryFn = old })
+
+	for _, tt := range []struct {
+		name       string
+		current    string
+		wantStatus string
+		verified   bool
+	}{
+		{name: "matching registry confirms", current: "oci.example.test", wantStatus: "exact", verified: true},
+		{name: "different registry is unknown", current: "other.example.test", wantStatus: "registry-mismatch"},
+		{name: "missing current registry is unknown", current: "", wantStatus: "unknown-registry"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			traceOCIRegistryFn = func() string { return tt.current }
+			correlation := agent.TraceDeliveryCorrelation{
+				OCIIdentityStatus: "exact",
+				OCISpace:          "apps",
+				OCIRegistry:       "oci.example.test",
+				OCIDigest:         "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+			}
+			confirmTraceOCIRegistry(&correlation)
+			if correlation.OCIIdentityStatus != tt.wantStatus || correlation.OCIRegistryVerified != tt.verified {
+				t.Fatalf("correlation registry state = %q/%v, want %q/%v", correlation.OCIIdentityStatus, correlation.OCIRegistryVerified, tt.wantStatus, tt.verified)
+			}
+		})
+	}
+}
+
+func TestMatchTraceReleasesRegistryMismatchNeverFallsBackToTarget(t *testing.T) {
+	rows, omission := matchTraceReleases(
+		agent.TraceDeliveryCorrelation{
+			Space:             "apps",
+			TargetID:          "target-a",
+			OCIDigest:         "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+			OCIRegistry:       "other.example.test",
+			OCIIdentityStatus: "registry-mismatch",
+		},
+		[]ConfigHubReleaseEvidence{{Space: "apps", TargetID: "target-a", ManifestDigest: "sha256:2222222222222222222222222222222222222222222222222222222222222222"}},
+	)
+	if len(rows) != 0 || !strings.Contains(omission.Reason, "registry-mismatch") {
+		t.Fatalf("rows = %+v omission = %+v, want explicit registry mismatch without target fallback", rows, omission)
+	}
+}

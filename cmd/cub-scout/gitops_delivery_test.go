@@ -299,11 +299,16 @@ func TestBuildConfigHubReleaseEvidence_ParsesRecordedV05ReleaseShape(t *testing.
 
 	got := releases[0]
 	want := ConfigHubReleaseEvidence{
-		ReleaseID:      "22222222-2222-4222-8222-222222222222",
-		Space:          "payments-prod",
-		SpaceID:        "33333333-3333-4333-8333-333333333333",
-		TargetID:       "55555555-5555-4555-8555-555555555555",
-		Digest:         "sha256:0c9ae4903b120a5f9c79239c16d62a4cd04c1b540bc83541fde4c52ae0ac8d2e",
+		ReleaseID: "22222222-2222-4222-8222-222222222222",
+		Space:     "payments-prod",
+		SpaceID:   "33333333-3333-4333-8333-333333333333",
+		TargetID:  "55555555-5555-4555-8555-555555555555",
+		Digest:    "sha256:0c9ae4903b120a5f9c79239c16d62a4cd04c1b540bc83541fde4c52ae0ac8d2e",
+		// The recorded shape carried this all along and the reader dropped it.
+		// It is the only field that joins a Release to what a controller
+		// pulled: against a live server the registry's Docker-Content-Digest
+		// equals ManifestDigest, and differs from Digest.
+		ManifestDigest: "sha256:0df04e007c0d5d8b2e89eec57ced4d16a2f738edff7ed43e830f652dc11897cf",
 		BundleBaseName: "payments-prod",
 		ReleaseNum:     1,
 		Published:      boolPtr(true),

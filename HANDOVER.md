@@ -1,5 +1,38 @@
 # cub-scout Handover for the Next AI Coder
 
+## Unreleased: 2026-09-19 - Image Delivery Evidence
+
+Published baseline: **v2.12.0**. The following work is not in that binary.
+Tracking: #561 (OCI identity) and #578 (complete Deployment image evidence).
+
+`release check --check-running-image` now requires every intended regular
+container's status in every inspected pod, running state and readiness. A
+Deployment additionally requires exact Pod -> ReplicaSet -> Deployment
+controller UID ownership, the current template, complete positive replica counts,
+current observed generation, a complete bounded pod list, and an unchanged final
+Deployment read. Per-pod and replica coverage evidence is retained. Unresolved
+index/platform digest differences are INCONCLUSIVE, not wrong-image BLOCK.
+StatefulSet, DaemonSet and Job ownership completion remain unsupported by this
+image tier; direct Pod reads are exact-object evidence, not Deployment completion.
+
+The OCI configuration artifact, Release.ManifestDigest, Release.Digest and
+container-image digest must not be conflated. Exact release history correlation
+is source-reported evidence, not proof of pod execution. See the public
+[image guide](docs/howto/is-this-image-deployed.md) and
+[offline regression example](examples/oci-release-check/).
+
+Exact connected joins re-read the source: Argo requires `spec.source` to
+match `status.sync.comparedTo.source`; Flux requires current observed generation,
+Ready condition, URL, and artifact revision. Registry agreement uses a fresh
+configured-server lookup, never the 30-second parser-recognition cache.
+The map TUI's connected release-row display remains a #561 follow-up;
+the separate interactive release check uses the same image proof as CLI/MCP.
+
+Validation is deterministic unit/HTTP integration and real CLI/plugin/MCP
+processes against synthetic fixtures. No new live-cluster deployment or
+authenticated ConfigHub publication has been performed for this work; no live
+target was provided. Do not present the fixture as production proof.
+
 ## Correction: 2026-09-17 — ConfigHub Release Evidence Read
 
 Live testing against a ConfigHub v0.5.1 server with `cub` v0.5.1 found that the

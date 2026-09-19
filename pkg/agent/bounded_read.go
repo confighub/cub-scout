@@ -10,13 +10,13 @@ import (
 	"io"
 	"net/http"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/dynamic"
@@ -227,11 +227,16 @@ func (r *BoundedResourceReader) Read(ctx context.Context, ref BoundedResourceRef
 // on the same gate as Read. This is the only list this reader performs; it is
 // used solely by the opt-in running-image identity tier.
 func (r *BoundedResourceReader) ListPods(ctx context.Context, namespace string, matchLabels map[string]string, limit int) (pods []*unstructured.Unstructured, capped bool, evidence BoundedReadEvidence, err error) {
+	return r.ListPodsMatching(ctx, namespace, labels.SelectorFromSet(matchLabels), limit)
+}
+
+// ListPodsMatching accepts a structured selector, including matchExpressions.
+func (r *BoundedResourceReader) ListPodsMatching(ctx context.Context, namespace string, selector labels.Selector, limit int) (pods []*unstructured.Unstructured, capped bool, evidence BoundedReadEvidence, err error) {
 	evidence = BoundedReadEvidence{Context: r.context, Resource: BoundedResourceRef{APIVersion: "v1", Kind: "Pod", Namespace: namespace}, Cache: "list"}
 	if len(validation.IsDNS1123Label(namespace)) != 0 {
 		return nil, false, evidence, fmt.Errorf("bounded pod list requires an explicit valid namespace")
 	}
-	if len(matchLabels) == 0 {
+	if selector == nil || selector.Empty() {
 		return nil, false, evidence, fmt.Errorf("bounded pod list requires a non-empty label selector")
 	}
 	if limit < 1 {
@@ -248,19 +253,9 @@ func (r *BoundedResourceReader) ListPods(ctx context.Context, namespace string, 
 	if err := ctx.Err(); err != nil {
 		return nil, false, evidence, err
 	}
-	keys := make([]string, 0, len(matchLabels))
-	for k := range matchLabels {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	pairs := make([]string, 0, len(keys))
-	for _, k := range keys {
-		pairs = append(pairs, k+"="+matchLabels[k])
-	}
-	selector := strings.Join(pairs, ",")
 	evidence.Reads.Object++
 	stream, err := r.client.Get().AbsPath("/api/v1/namespaces/"+namespace+"/pods").
-		Param("labelSelector", selector).Param("limit", strconv.Itoa(limit)).
+		Param("labelSelector", selector.String()).Param("limit", strconv.Itoa(limit)).
 		MaxRetries(0).Stream(ctx)
 	if err != nil {
 		return nil, false, evidence, fmt.Errorf("bounded pod list unavailable: %w", err)
@@ -277,16 +272,19 @@ func (r *BoundedResourceReader) ListPods(ctx context.Context, namespace string, 
 	if err := list.UnmarshalJSON(data); err != nil {
 		return nil, false, evidence, fmt.Errorf("bounded pod list response is malformed")
 	}
+	if len(list.Items) > limit {
+		return nil, true, evidence, fmt.Errorf("bounded pod list exceeds requested limit")
+	}
 	for i := range list.Items {
 		if kind := list.Items[i].GetKind(); kind != "" && kind != "Pod" {
-			continue
+			return nil, false, evidence, fmt.Errorf("bounded pod list returned a non-Pod item")
 		}
 		if list.Items[i].GetNamespace() != namespace {
-			continue
+			return nil, false, evidence, fmt.Errorf("bounded pod list returned a different namespace")
 		}
 		pods = append(pods, &list.Items[i])
 	}
-	capped = list.GetContinue() != ""
+	capped = list.GetContinue() != "" || (list.GetRemainingItemCount() != nil && *list.GetRemainingItemCount() > 0)
 	now := r.now().UTC()
 	evidence.Available = true
 	evidence.ObservedAt, evidence.ExpiresAt = now, now.Add(r.ttl)

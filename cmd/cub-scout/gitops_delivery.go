@@ -105,13 +105,21 @@ type ConfigHubLiveStatusEvidence struct {
 }
 
 type ConfigHubReleaseEvidence struct {
-	Slug           string `json:"slug,omitempty"`
-	ReleaseID      string `json:"releaseId,omitempty"`
-	Space          string `json:"space,omitempty"`
-	SpaceID        string `json:"spaceId,omitempty"`
-	Target         string `json:"target,omitempty"`
-	TargetID       string `json:"targetId,omitempty"`
-	Digest         string `json:"digest,omitempty"`
+	Slug      string `json:"slug,omitempty"`
+	ReleaseID string `json:"releaseId,omitempty"`
+	Space     string `json:"space,omitempty"`
+	SpaceID   string `json:"spaceId,omitempty"`
+	Target    string `json:"target,omitempty"`
+	TargetID  string `json:"targetId,omitempty"`
+	// Digest is the bundle's content digest. It is NOT what a puller reports:
+	// against a live server, Release.Digest and the registry's
+	// Docker-Content-Digest for the same release are different strings.
+	Digest string `json:"digest,omitempty"`
+	// ManifestDigest is the OCI manifest digest, which is exactly what the
+	// registry returns as Docker-Content-Digest and what Argo and Flux record
+	// as a resolved revision. Alongside source registry and space, it joins
+	// source evidence to a Release, not a workload to proven execution.
+	ManifestDigest string `json:"manifestDigest,omitempty"`
 	BundleBaseName string `json:"bundleBaseName,omitempty"`
 	RevisionNum    int    `json:"revisionNum,omitempty"`
 	// ReleaseNum is the Release's sequence number within its space.
@@ -603,7 +611,8 @@ func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubRelease
 			SpaceID:        spaceID,
 			Target:         target,
 			TargetID:       targetID,
-			Digest:         mcpFirstString(releaseObj, "Digest", "digest", "OCIManifestDigest", "ociManifestDigest", "BundleDigest", "bundleDigest"),
+			Digest:         mcpFirstString(releaseObj, "Digest", "digest", "BundleDigest", "bundleDigest"),
+			ManifestDigest: mcpFirstString(releaseObj, "ManifestDigest", "manifestDigest", "OCIManifestDigest", "ociManifestDigest"),
 			BundleBaseName: mcpFirstString(releaseObj, "BundleBaseName", "bundleBaseName", "Bundle", "bundle"),
 			CreatedAt:      mcpFirstString(releaseObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
 		}

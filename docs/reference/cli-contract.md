@@ -1526,7 +1526,7 @@ See [JSON Contracts § Observation Evidence Contract](json-contracts.md#observat
 
 ## cub-scout release check
 
-Available since v2.11.0. Exact flags and adapters are documented in
+Available in the v2.12.0 release. Exact flags and adapters are documented in
 [commands](commands.md#release-check) and the [worked example](../../examples/oci-release-check/).
 Required immutable configuration-bundle identity and explicit target/controller
 scope are validated before network reads. Tags are rejected; local OCI layouts
@@ -1538,20 +1538,38 @@ Standalone and connected MCP both expose read-only `release_check`, with
 strict typed arguments. Each call is a fresh, bounded observation.
 
 Running-image identity is opt-in with `--check-running-image` (MCP
-`check_running_image: true`): for each eligible workload it adds one bounded,
-selector-scoped pod read (capped by `--max-pods`, default 50, max 200) and
-compares `.status.containerStatuses[].imageID` with the intended image digest.
-Direct Pods reuse their live read; tag-only workloads skip the extra read and
-stay `unknown`. A comparable differing digest is `mismatch` / `BLOCK`, including
-potentially legitimate multi-architecture index/platform differences. Off by default,
-so the base check's request budget is unchanged; the container-image digest and
-the configuration-bundle digest are never compared.
+`check_running_image: true`). In the shipped v2.12.0 behavior, each eligible
+workload gets one bounded, selector-scoped Pod read (capped by `--max-pods`,
+default 50, max 200) and `.status.containerStatuses[].imageID` is compared with
+the intended image digest. Direct Pods reuse their live read; tag-only workloads
+skip the extra read and stay `unknown`.
 
-An image match is not complete per-pod execution proof: image IDs are pooled
-by container name, missing status arrays are skipped, `state.running` is not
-checked and label selection does not verify pod ownerReference/UID chains.
-See [Is This Image Deployed?](../howto/is-this-image-deployed.md) for the
-operator workflow and limitations. This documentation does not change verdicts.
+The stricter **UNRELEASED** source-branch behavior adds a structured-selector
+Pod LIST, exact GETs for distinct ReplicaSet owners, and a final Deployment
+re-read. A Deployment is `match` only when Pod owner UID -> ReplicaSet UID ->
+Deployment UID, the current ReplicaSet template, generation/status, positive
+and equal replica counts, exact pod count, non-terminating current Pods,
+`Running` + `PodReady=True`, and every intended regular container's exact
+running/ready digest all agree. Direct Pods retain exact-object evidence.
+Direct Pods independently require no deletion, `phase=Running`, `PodReady=True`,
+and every intended regular container running and ready; they receive no
+Deployment-completion claim.
+StatefulSet, DaemonSet, and Job ownership is unsupported for this complete
+proof and remains `unknown` / `INCONCLUSIVE` with
+`workload-ownership-unsupported`.
+
+Each workload's `pods[]` evidence includes Pod `name`, `uid`,
+`replicaSetName`, `replicaSetUID`, and per-container results.
+
+Missing, ambiguous, capped, RBAC, stale, race, and zero-replica evidence stays
+unknown. Mutable tags stay unknown. An index/platform digest difference is
+`unknown` with `digest-form-unresolved`; no registry image resolution is done.
+When `--check-running-image` is requested with no supported workloads, the
+running-image stage is `unknown` / `INCONCLUSIVE`, not `NOT_ASSESSED`.
+The optional `observedAt` on each running-image workload is the Pod LIST time.
+`startedAt`/`finishedAt` bound sequential reads, not an atomic or continuous
+snapshot. The container-image digest and configuration-bundle digest are never
+compared. See [Is This Image Deployed?](../howto/is-this-image-deployed.md).
 
 Exit 0 means a report was produced, not that it passed. `--fail-on` accepts
 `WATCH`, `BLOCK`, `INCONCLUSIVE`, or `any-non-pass`; a matching verdict exits 2

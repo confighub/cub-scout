@@ -2906,19 +2906,30 @@ deployment or application-success claim. Unsupported adapters, excluded Secrets
 and unreadable objects stay explicit. Watch/bot do not run release checks
 automatically.
 
-With `--check-running-image`, the report adds a `running-image` stage that
-compares pod-reported digests
-(`.status.containerStatuses[].imageID`) against the intended workload image,
-using one bounded, selector-scoped pod read per eligible workload (capped by
-`--max-pods`). Direct Pods reuse their live read; tag-only workloads skip the
-extra read and remain `unknown`. A comparable differing digest is `mismatch`
-and maps to `BLOCK`, even when an index/platform difference is legitimate;
-inspect the multi-architecture caveat before treating it as the wrong image.
-Image IDs are pooled by container name: missing status on individual pods,
-current running state and pod ownership are not fully verified. An image-stage
-`PASS` is not an all-replicas-running guarantee.
-The configuration-bundle digest and the container-image digest are never
-compared. Full examples, read budgets and adapter boundaries:
+With `--check-running-image`, the **v2.12.0** report adds a `running-image`
+stage that compares pod-reported digests (`.status.containerStatuses[].imageID`)
+against the intended workload image. Its label-selected, bounded observations
+do not prove complete per-pod running state or ownership.
+
+The stricter **UNRELEASED** source-branch behavior uses a bounded
+structured-selector Pod LIST, one exact GET per distinct ReplicaSet owner, and a final
+Deployment re-read. For a Deployment it verifies Pod owner UID -> ReplicaSet
+UID -> Deployment UID, current ReplicaSet template, current generation,
+positive desired replicas, equal total/updated/ready/available counts, exact
+pod count, no duplicate/terminating/old/foreign Pods, `Running` plus
+`PodReady=True`, and every intended regular container running, ready, and at
+the exact digest. Direct Pods retain exact-object evidence. StatefulSet,
+DaemonSet, and Job ownership is `unknown` / `INCONCLUSIVE` with
+`workload-ownership-unsupported` for this tier.
+
+Mutable tags and unresolved index/platform forms are `unknown`; the latter uses
+`digest-form-unresolved` because no registry image resolution is performed.
+Missing, ambiguous, capped, RBAC, stale, race, and zero-replica evidence is
+also `unknown`. The configuration-bundle digest and the container-image digest
+are never compared. Full examples, read budgets and adapter boundaries:
+The current builders emit no `mismatch`/`BLOCK` for an unresolved digest
+difference; the shipped v2.12.0 slice could expose an index/platform false
+alarm in its legacy mismatch vocabulary.
 [exact configuration release](../../examples/oci-release-check/).
 
 ## receipt

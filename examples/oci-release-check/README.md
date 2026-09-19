@@ -1,12 +1,14 @@
 # Exact OCI Configuration Release Check
 
-Available since v2.11.0. Tracking: #532 / #502 / #505. This answers:
+Available in v2.12.0 for the base release check. The stricter running-image
+behavior described below is **UNRELEASED** source-branch behavior. This answers:
 did this exact configuration release reach this target, and where is it waiting?
 It does not deploy, render, retry, force sync, approve or claim application success.
 
 Start with [Is This Image Deployed?](../../docs/howto/is-this-image-deployed.md)
-for the user workflow, three image/configuration identities and current proof
-limits. This example provides the detailed adapter and request-budget contract.
+for the user workflow, three image/configuration identities, the shipped v2.12.0
+gaps, and the unreleased Deployment proof. This example provides the detailed
+adapter and request-budget contract.
 
 ## Run
 
@@ -50,7 +52,9 @@ or an incomplete rollout. `BLOCK` includes missing objects, authored-field
 differences and workload failure. `INCONCLUSIVE` means required evidence could
 not be checked. Known failures remain visible even when another check is
 inconclusive. No supported workloads is `NOT_ASSESSED` for that stage, never
-"the application is running". Configuration checks still run when controller
+"the application is running". When `--check-running-image` is requested,
+no supported workload is instead `unknown` / `INCONCLUSIVE` for the
+**UNRELEASED** running-image stage. Configuration checks still run when controller
 evidence is unavailable. An unavailable discovery API is inconclusive, not a
 missing object; absence requires a 404 from the actual object GET.
 
@@ -62,35 +66,44 @@ receipt store. The whole report is not itself fingerprinted or signed.
 
 ## Optional: Running-Image Identity
 
-Add `--check-running-image` (MCP `check_running_image: true`) to compare
-pod-reported image digests with the images the configuration intends. For
-each eligible workload this adds one bounded, selector-scoped pod read (capped
-by `--max-pods`, default 50, maximum 200) and compares
-`.status.containerStatuses[].imageID` against the intended workload image.
-Direct Pods reuse their existing live read; tag-only workloads skip the extra
-read:
+Add `--check-running-image` (MCP `check_running_image: true`). In the shipped
+v2.12.0 behavior, the check compares pod-reported image IDs with intended
+digests using bounded label-selected observations. It does not prove every
+replica's ownership, running state, or status completeness.
 
-- a digest-pinned image whose running digest matches → `match`;
-- a different comparable reported digest → `mismatch` / `BLOCK`, carrying a
-  multi-architecture caveat. The headline can say the intended image is not
-  running even when an index/platform digest difference is legitimate;
-  verify that relationship at the registry;
-- a mutable tag (for example `api:v1`) → `unknown`, with no pod read, because a
-  tag cannot be tied to a running digest from cluster reads alone. Pin the image
-  to a digest to confirm.
+The **UNRELEASED** source-branch implementation uses the synthetic,
+non-pullable digest fixture at
+[`image-deployment.yaml`](image-deployment.yaml). For a Deployment it performs
+a bounded structured-selector Pod LIST, one exact GET for each distinct
+ReplicaSet owner, and a final Deployment re-read. It verifies Pod owner UID ->
+ReplicaSet UID -> Deployment UID, the current ReplicaSet template, generation
+and observedGeneration, positive/equal replica counts, exact pod count, no
+duplicates/terminating/old/foreign Pods, `Running` plus `PodReady=True`, and
+every intended regular container in every Pod with `state.running`, `ready`,
+and the exact digest.
 
-It is off by default, so the base read budget below is unchanged. The
-configuration-bundle digest and the container-image digest are separate
-identities and are never compared to each other. Multi-architecture index vs
-per-architecture resolution, initContainers, ephemeral containers and
-`matchExpressions` evaluation are not covered in this slice.
+The JSON report exposes `deployment.complete` for coverage and an optional
+workload `observedAt` for Pod LIST time. Each Pod record includes `name`, `uid`,
+`replicaSetName`, and `replicaSetUID`. A workload `verdict: match` additionally
+requires every intended regular container status in every observed Pod to match.
+Direct Pods retain exact-object evidence and independently require no deletion,
+`phase=Running`, `PodReady=True`, and every intended regular container running
+and ready; they receive no Deployment-completion claim. StatefulSet, DaemonSet,
+and Job ownership is `unknown` / `INCONCLUSIVE`. Mutable tags and index/platform
+differences remain unknown (`digest-form-unresolved`), with no registry image
+resolution. Init and ephemeral containers and application success are outside
+this check.
 
-This is not proof that every replica is currently running. The collector pools
-image IDs by container name, skips missing status arrays and does not inspect
-`state.running` or verify pod ownerReference/UID chains. Partial per-pod status
-can therefore be masked by another pod's matching status. Read the
-[current limitations](../../docs/howto/is-this-image-deployed.md#limits-before-trusting-a-match)
-before using an image-stage `PASS` as stronger evidence.
+The deterministic CLI/plugin/stdio-MCP proof can be reproduced with:
+
+```bash
+go test ./cmd/cub-scout -run 'TestReleaseCheck(RunningImage|CLIAndMCP)$' -count=1 -v
+```
+
+The Argo fixture's strict successful check accounts for exactly
+11 Kubernetes requests in the stdio MCP assertion. The same provider is exercised through
+standalone, plugin, and MCP surfaces; the interactive TUI uses that provider
+as well. Watch and bot do not schedule the check.
 
 ## Input And Adapter Boundaries
 
@@ -111,8 +124,8 @@ before using an image-stage `PASS` as stronger evidence.
   evidence can still be useful; the release-level result stays inconclusive.
 - Workload convergence covers apps/v1 Deployment, StatefulSet and DaemonSet,
   batch/v1 Job and v1 Pod. Custom-resource, CronJob and other readiness is not
-  assessed. Running-image verification is opt-in via `--check-running-image`
-  (see above); application checks are separate.
+  assessed. Running-image verification is opt-in via `--check-running-image`;
+  complete ownership/completion proof in the unreleased slice is Deployment-only.
 - Intended bundle identity is supplied by the caller. There is no release-number
   lookup, ConfigHub authority/history join or production event-cursor read.
 - Watch/bot release scheduling remains follow-up work. The existing watch/bot
@@ -124,9 +137,14 @@ before using an image-stage `PASS` as stronger evidence.
   Kubernetes requests, not silently truncated.
 - Each exact resource read costs at most one discovery GET and one object GET,
   with no REST retries and no redirects. No object LIST or broad discovery.
-- For N desired objects: at most `2N + 4` Kubernetes requests for Application,
+- Without `--check-running-image`, for N desired objects: at most
+  `2N + 4` Kubernetes requests for Application,
   or `2N + 8` for Kustomization including its source. Excluded/failed reads may
   cost less. The final controller/source reads check for concurrent change.
+- The **UNRELEASED** image proof adds at most `2R + 3` requests per checked
+  Deployment: one Pod LIST, up to two requests per distinct ReplicaSet owner R,
+  and two for the final Deployment read. R cannot exceed `--max-pods`.
+  Direct Pods reuse the exact object read without additional image reads.
 - Configuration and convergence share each workload read. Authentication
   transport requests are outside the Kubernetes discovery/object counters.
 - Registry traffic includes auth and bounded HTTPS redirects: at most 16 HTTP
@@ -136,7 +154,9 @@ before using an image-stage `PASS` as stronger evidence.
   Scout does not log in or write credentials.
 - A complete check has a 90-second deadline; each Kubernetes read has its
   existing 10-second deadline and 2 MiB response cap. JSON output is capped at
-  4 MiB. Reads are sequential dated observations, not an atomic snapshot.
+  4 MiB. Running-image Pod LISTs are capped by `--max-pods` (default 50, max
+  200), with one exact read per distinct ReplicaSet and a final Deployment
+  re-read. Reads are sequential dated observations, not an atomic snapshot.
 
 ## Reproduce Without Publishing Or Deploying
 

@@ -126,14 +126,17 @@ identity, controller evidence, authored-field agreement and workload convergence
 Configuration-only changes are checked even when images stay unchanged.
 
 For container-image evidence, start with
-[Is This Image Deployed?](docs/howto/is-this-image-deployed.md).
-`--check-running-image` compares pod-reported image IDs with intended digests;
-it is not an image-reference search or proof that every replica is running.
+[Is This Image Deployed?](docs/howto/is-this-image-deployed.md). The
+`v2.12.0` binary's `--check-running-image` slice compares pod-reported image IDs
+with intended digests but does not prove every replica is running. The stricter
+Deployment ownership/completion behavior in that guide is **UNRELEASED** source
+branch behavior.
 
 Use the [worked example](examples/oci-release-check/) for exact required flags,
 supported controller shapes and API budgets. CLI/plugin, `--interactive` TUI
 and MCP `release_check` use one provider. This is not a deployment command or
 an application-success verdict. Existing release-history reads remain separate.
+Watch and bot do not schedule this check.
 
 ## Connected Workflows
 

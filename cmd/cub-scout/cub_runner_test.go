@@ -197,9 +197,12 @@ func TestCubTextCarriesCubsReason(t *testing.T) {
 // gate the runner's callers are behind, and it cannot import from package main.
 // Both name no space, so the runner would pass them through.
 func TestEveryCubCallGoesThroughTheRunner(t *testing.T) {
+	// pkg/hub cannot import package main, so the few cub calls it has to make
+	// are named here rather than left unchecked.
 	theGateItself := map[string]bool{
-		filepath.Join("pkg", "hub", "connected.go"): true, // cub auth status
-		filepath.Join("pkg", "hub", "auth.go"):      true, // cub auth get-token
+		filepath.Join("pkg", "hub", "connected.go"):    true, // cub auth status
+		filepath.Join("pkg", "hub", "auth.go"):         true, // cub auth get-token
+		filepath.Join("pkg", "hub", "oci_registry.go"): true, // cub context get, for the server's own registry
 	}
 
 	fset, files := parseGoFilesIncludingTests(t, "cmd", "pkg")
