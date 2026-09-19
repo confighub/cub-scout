@@ -155,7 +155,12 @@ grep -q 'plugin_config=unset' "$fake_log"
 grep -q '^stdin=eof$' "$fake_log"
 
 mode_of() {
-  stat -f %Lp "$1" 2>/dev/null || stat -c %a "$1"
+  local mode
+  if mode=$(stat -c %a "$1" 2>/dev/null); then
+    printf '%s\n' "$mode"
+  else
+    stat -f %Lp "$1"
+  fi
 }
 [[ "$(mode_of "$tmp_dir/plugin")" == 700 ]]
 [[ "$(mode_of "$tmp_dir/plugin/standalone.report.json")" == 600 ]]
