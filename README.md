@@ -340,9 +340,9 @@ brew install confighub/tap/cub-scout
 
 For direct downloads and tagged source builds, use the
 [install guide](docs/getting-started/install.md). Do not use
-`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.12.0:
+`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.12.1:
 the current Go module path resolves an older major. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.12.0 version` still needs registry
+`docker run ghcr.io/confighub/cub-scout:v2.12.1 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.
