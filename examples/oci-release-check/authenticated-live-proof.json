@@ -1,0 +1,523 @@
+{
+  "scope": "Local OrbStack ConfigHub publication; HTTPS reverse proxy to local HTTP OCI listener; scoped worker authentication; source-built Linux arm64 binary",
+  "binarySHA256": "c2408e980336f53f0ac4b46aecbf447fe0881fb672a0cc5e3a37162d0622712f",
+  "sourceCommit": "bf2873a3f9358327453884686d5fc66fae9495c6",
+  "observations": [
+    {
+      "controller": "Kustomization",
+      "startedAt": "2026-09-19T18:50:15.001680347Z",
+      "finishedAt": "2026-09-19T18:50:16.017309298Z",
+      "verdict": "PASS",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "layerDigest": "sha256:316ae838842026b20bba456207fc2165650b3be7802df6735df883211e2acfbb",
+        "source": "registry",
+        "verified": true,
+        "objects": 1,
+        "registryRequests": 4,
+        "registryBytes": 3361
+      },
+      "requestCounts": {
+        "discovery": 7,
+        "object": 8
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "PASS",
+          "reason": "Manifest and layer digests verified; 1 literal objects."
+        },
+        {
+          "name": "controller",
+          "verdict": "PASS",
+          "reason": "Exact OCI repository and bundle revision reported; target and desired inventory are bound. This is reported comparison/apply evidence, not execution history."
+        },
+        {
+          "name": "configuration",
+          "verdict": "PASS",
+          "reason": "1/1 desired objects match authored fields; 0 missing, 0 different, 0 unreadable/excluded. Extra live objects are not checked."
+        },
+        {
+          "name": "workloads",
+          "verdict": "PASS",
+          "reason": "1/1 supported workload controllers converged; 0 progressing, 0 failed, 0 missing, 0 inconclusive. No pod fan-out."
+        },
+        {
+          "name": "running-image",
+          "verdict": "PASS",
+          "reason": "1/1 workload(s) have confirmed intended regular-container image, running and readiness evidence across 2 pod(s). Deployment matches require complete owner/replica coverage."
+        }
+      ],
+      "runningImage": {
+        "verdict": "match",
+        "reason": null,
+        "complete": true
+      },
+      "case": "flux-standalone",
+      "exitCode": 0
+    },
+    {
+      "controller": "Kustomization",
+      "startedAt": "2026-09-19T18:51:09.770273343Z",
+      "finishedAt": "2026-09-19T18:51:10.786921591Z",
+      "verdict": "PASS",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "layerDigest": "sha256:316ae838842026b20bba456207fc2165650b3be7802df6735df883211e2acfbb",
+        "source": "registry",
+        "verified": true,
+        "objects": 1,
+        "registryRequests": 4,
+        "registryBytes": 3361
+      },
+      "requestCounts": {
+        "discovery": 7,
+        "object": 8
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "PASS",
+          "reason": "Manifest and layer digests verified; 1 literal objects."
+        },
+        {
+          "name": "controller",
+          "verdict": "PASS",
+          "reason": "Exact OCI repository and bundle revision reported; target and desired inventory are bound. This is reported comparison/apply evidence, not execution history."
+        },
+        {
+          "name": "configuration",
+          "verdict": "PASS",
+          "reason": "1/1 desired objects match authored fields; 0 missing, 0 different, 0 unreadable/excluded. Extra live objects are not checked."
+        },
+        {
+          "name": "workloads",
+          "verdict": "PASS",
+          "reason": "1/1 supported workload controllers converged; 0 progressing, 0 failed, 0 missing, 0 inconclusive. No pod fan-out."
+        },
+        {
+          "name": "running-image",
+          "verdict": "PASS",
+          "reason": "1/1 workload(s) have confirmed intended regular-container image, running and readiness evidence across 2 pod(s). Deployment matches require complete owner/replica coverage."
+        }
+      ],
+      "runningImage": {
+        "verdict": "match",
+        "reason": null,
+        "complete": true
+      },
+      "case": "flux-plugin",
+      "exitCode": 0
+    },
+    {
+      "controller": "Kustomization",
+      "startedAt": "2026-09-19T18:50:16.341378754Z",
+      "finishedAt": "2026-09-19T18:50:16.557710767Z",
+      "verdict": "INCONCLUSIVE",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "layerDigest": "sha256:316ae838842026b20bba456207fc2165650b3be7802df6735df883211e2acfbb",
+        "source": "registry",
+        "verified": true,
+        "objects": 1,
+        "registryRequests": 4,
+        "registryBytes": 3361
+      },
+      "requestCounts": {
+        "discovery": 5,
+        "object": 6
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "PASS",
+          "reason": "Manifest and layer digests verified; 1 literal objects."
+        },
+        {
+          "name": "controller",
+          "verdict": "PASS",
+          "reason": "Exact OCI repository and bundle revision reported; target and desired inventory are bound. This is reported comparison/apply evidence, not execution history."
+        },
+        {
+          "name": "configuration",
+          "verdict": "PASS",
+          "reason": "1/1 desired objects match authored fields; 0 missing, 0 different, 0 unreadable/excluded. Extra live objects are not checked."
+        },
+        {
+          "name": "workloads",
+          "verdict": "PASS",
+          "reason": "1/1 supported workload controllers converged; 0 progressing, 0 failed, 0 missing, 0 inconclusive. No pod fan-out."
+        },
+        {
+          "name": "running-image",
+          "verdict": "INCONCLUSIVE",
+          "reason": "0/1 workload(s) have confirmed intended regular-container image, running and readiness evidence across 1 pod(s). Deployment matches require complete owner/replica coverage. coverage-capped."
+        }
+      ],
+      "runningImage": {
+        "verdict": "unknown",
+        "reason": "coverage-capped",
+        "complete": null
+      },
+      "case": "flux-capped",
+      "exitCode": 2
+    },
+    {
+      "controller": "Kustomization",
+      "startedAt": "2026-09-19T18:49:39.044773155Z",
+      "finishedAt": "2026-09-19T18:49:39.056719588Z",
+      "verdict": "INCONCLUSIVE",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "source": "registry",
+        "verified": false,
+        "objects": 0,
+        "registryRequests": 3,
+        "registryBytes": 2062
+      },
+      "requestCounts": {
+        "discovery": 0,
+        "object": 0
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Bundle unavailable or unverifiable: GET \"https://192.168.97.3/v2/space/scout-auth-quzcxj/manifests/sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817\": response status code 403: Forbidden"
+        },
+        {
+          "name": "controller",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Controller/source/target binding has not been verified."
+        },
+        {
+          "name": "configuration",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Live configuration has not been compared."
+        },
+        {
+          "name": "workloads",
+          "verdict": "NOT_ASSESSED",
+          "reason": "Workload-controller convergence has not been assessed."
+        }
+      ],
+      "runningImage": {
+        "verdict": null,
+        "reason": null,
+        "complete": null
+      },
+      "case": "target-permission-denied",
+      "exitCode": 2
+    },
+    {
+      "controller": "Kustomization",
+      "startedAt": "2026-09-19T18:50:16.116260448Z",
+      "finishedAt": "2026-09-19T18:50:16.124958823Z",
+      "verdict": "INCONCLUSIVE",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "source": "registry",
+        "verified": false,
+        "objects": 0,
+        "registryRequests": 2,
+        "registryBytes": 44
+      },
+      "requestCounts": {
+        "discovery": 0,
+        "object": 0
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Bundle unavailable or unverifiable: GET \"https://192.168.97.3/v2/space/scout-auth-quzcxj/manifests/sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817\": GET \"https://192.168.97.3/token?scope=repository%3Aspace%2Fscout-auth-quzcxj%3Apull&service=ConfigHub+OCI+Registry\": response status code 401: Unauthorized"
+        },
+        {
+          "name": "controller",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Controller/source/target binding has not been verified."
+        },
+        {
+          "name": "configuration",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Live configuration has not been compared."
+        },
+        {
+          "name": "workloads",
+          "verdict": "NOT_ASSESSED",
+          "reason": "Workload-controller convergence has not been assessed."
+        }
+      ],
+      "runningImage": {
+        "verdict": null,
+        "reason": null,
+        "complete": null
+      },
+      "case": "credentials-missing",
+      "exitCode": 2
+    },
+    {
+      "controller": "Kustomization",
+      "startedAt": "2026-09-19T18:50:16.231826594Z",
+      "finishedAt": "2026-09-19T18:50:16.241986352Z",
+      "verdict": "INCONCLUSIVE",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "source": "registry",
+        "verified": false,
+        "objects": 0,
+        "registryRequests": 2,
+        "registryBytes": 34
+      },
+      "requestCounts": {
+        "discovery": 0,
+        "object": 0
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Bundle unavailable or unverifiable: GET \"https://192.168.97.3/v2/space/scout-auth-quzcxj/manifests/sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817\": GET \"https://192.168.97.3/token?scope=repository%3Aspace%2Fscout-auth-quzcxj%3Apull&service=ConfigHub+OCI+Registry\": response status code 401: Unauthorized"
+        },
+        {
+          "name": "controller",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Controller/source/target binding has not been verified."
+        },
+        {
+          "name": "configuration",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Live configuration has not been compared."
+        },
+        {
+          "name": "workloads",
+          "verdict": "NOT_ASSESSED",
+          "reason": "Workload-controller convergence has not been assessed."
+        }
+      ],
+      "runningImage": {
+        "verdict": null,
+        "reason": null,
+        "complete": null
+      },
+      "case": "credentials-invalid",
+      "exitCode": 2
+    },
+    {
+      "controller": "Kustomization",
+      "startedAt": "2026-09-19T18:51:10.85064186Z",
+      "finishedAt": "2026-09-19T18:51:10.856720598Z",
+      "verdict": "INCONCLUSIVE",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "source": "registry",
+        "verified": false,
+        "objects": 0,
+        "registryRequests": 1,
+        "registryBytes": 0
+      },
+      "requestCounts": {
+        "discovery": 0,
+        "object": 0
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Bundle unavailable or unverifiable: Get \"https://192.168.97.3/v2/space/scout-auth-quzcxj/manifests/sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817\": tls: failed to verify certificate: x509: certificate signed by unknown authority"
+        },
+        {
+          "name": "controller",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Controller/source/target binding has not been verified."
+        },
+        {
+          "name": "configuration",
+          "verdict": "INCONCLUSIVE",
+          "reason": "Live configuration has not been compared."
+        },
+        {
+          "name": "workloads",
+          "verdict": "NOT_ASSESSED",
+          "reason": "Workload-controller convergence has not been assessed."
+        }
+      ],
+      "runningImage": {
+        "verdict": null,
+        "reason": null,
+        "complete": null
+      },
+      "case": "ca-untrusted",
+      "exitCode": 2
+    },
+    {
+      "controller": "Application",
+      "startedAt": "2026-09-19T18:51:55.578726842Z",
+      "finishedAt": "2026-09-19T18:51:55.797750809Z",
+      "verdict": "PASS",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "layerDigest": "sha256:316ae838842026b20bba456207fc2165650b3be7802df6735df883211e2acfbb",
+        "source": "registry",
+        "verified": true,
+        "objects": 1,
+        "registryRequests": 4,
+        "registryBytes": 3361
+      },
+      "requestCounts": {
+        "discovery": 5,
+        "object": 6
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "PASS",
+          "reason": "Manifest and layer digests verified; 1 literal objects."
+        },
+        {
+          "name": "controller",
+          "verdict": "PASS",
+          "reason": "Exact OCI repository and bundle revision reported; target and desired inventory are bound. This is reported comparison/apply evidence, not execution history."
+        },
+        {
+          "name": "configuration",
+          "verdict": "PASS",
+          "reason": "1/1 desired objects match authored fields; 0 missing, 0 different, 0 unreadable/excluded. Extra live objects are not checked."
+        },
+        {
+          "name": "workloads",
+          "verdict": "PASS",
+          "reason": "1/1 supported workload controllers converged; 0 progressing, 0 failed, 0 missing, 0 inconclusive. No pod fan-out."
+        },
+        {
+          "name": "running-image",
+          "verdict": "PASS",
+          "reason": "1/1 workload(s) have confirmed intended regular-container image, running and readiness evidence across 2 pod(s). Deployment matches require complete owner/replica coverage."
+        }
+      ],
+      "runningImage": {
+        "verdict": "match",
+        "reason": null,
+        "complete": true
+      },
+      "case": "argo-standalone",
+      "exitCode": 0
+    },
+    {
+      "controller": "Application",
+      "startedAt": "2026-09-19T18:51:55.937319248Z",
+      "finishedAt": "2026-09-19T18:51:56.158630753Z",
+      "verdict": "PASS",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "layerDigest": "sha256:316ae838842026b20bba456207fc2165650b3be7802df6735df883211e2acfbb",
+        "source": "registry",
+        "verified": true,
+        "objects": 1,
+        "registryRequests": 4,
+        "registryBytes": 3361
+      },
+      "requestCounts": {
+        "discovery": 5,
+        "object": 6
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "PASS",
+          "reason": "Manifest and layer digests verified; 1 literal objects."
+        },
+        {
+          "name": "controller",
+          "verdict": "PASS",
+          "reason": "Exact OCI repository and bundle revision reported; target and desired inventory are bound. This is reported comparison/apply evidence, not execution history."
+        },
+        {
+          "name": "configuration",
+          "verdict": "PASS",
+          "reason": "1/1 desired objects match authored fields; 0 missing, 0 different, 0 unreadable/excluded. Extra live objects are not checked."
+        },
+        {
+          "name": "workloads",
+          "verdict": "PASS",
+          "reason": "1/1 supported workload controllers converged; 0 progressing, 0 failed, 0 missing, 0 inconclusive. No pod fan-out."
+        },
+        {
+          "name": "running-image",
+          "verdict": "PASS",
+          "reason": "1/1 workload(s) have confirmed intended regular-container image, running and readiness evidence across 2 pod(s). Deployment matches require complete owner/replica coverage."
+        }
+      ],
+      "runningImage": {
+        "verdict": "match",
+        "reason": null,
+        "complete": true
+      },
+      "case": "argo-plugin",
+      "exitCode": 0
+    },
+    {
+      "controller": "Application",
+      "startedAt": "2026-09-19T18:51:56.260268052Z",
+      "finishedAt": "2026-09-19T18:51:56.286314005Z",
+      "verdict": "INCONCLUSIVE",
+      "bundle": {
+        "reference": "oci://192.168.97.3/space/scout-auth-quzcxj@sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "digest": "sha256:1e8603b76db3e8aa28ba9ce312dacebf941c3f20849c4a340493b181fef49817",
+        "layerDigest": "sha256:316ae838842026b20bba456207fc2165650b3be7802df6735df883211e2acfbb",
+        "source": "registry",
+        "verified": true,
+        "objects": 1,
+        "registryRequests": 4,
+        "registryBytes": 3361
+      },
+      "requestCounts": {
+        "discovery": 3,
+        "object": 4
+      },
+      "stages": [
+        {
+          "name": "bundle",
+          "verdict": "PASS",
+          "reason": "Manifest and layer digests verified; 1 literal objects."
+        },
+        {
+          "name": "controller",
+          "verdict": "PASS",
+          "reason": "Exact OCI repository and bundle revision reported; target and desired inventory are bound. This is reported comparison/apply evidence, not execution history."
+        },
+        {
+          "name": "configuration",
+          "verdict": "PASS",
+          "reason": "1/1 desired objects match authored fields; 0 missing, 0 different, 0 unreadable/excluded. Extra live objects are not checked."
+        },
+        {
+          "name": "workloads",
+          "verdict": "PASS",
+          "reason": "1/1 supported workload controllers converged; 0 progressing, 0 failed, 0 missing, 0 inconclusive. No pod fan-out."
+        },
+        {
+          "name": "running-image",
+          "verdict": "INCONCLUSIVE",
+          "reason": "0/1 workload(s) have confirmed intended regular-container image, running and readiness evidence across 1 pod(s). Deployment matches require complete owner/replica coverage. coverage-capped."
+        }
+      ],
+      "runningImage": {
+        "verdict": "unknown",
+        "reason": "coverage-capped",
+        "complete": null
+      },
+      "case": "argo-capped",
+      "exitCode": 2
+    }
+  ]
+}

@@ -129,8 +129,7 @@ For container-image evidence, start with
 [Is This Image Deployed?](docs/howto/is-this-image-deployed.md). The
 `v2.12.0` binary's `--check-running-image` slice compares pod-reported image IDs
 with intended digests but does not prove every replica is running. The stricter
-Deployment ownership/completion behavior in that guide is **UNRELEASED** source
-branch behavior.
+Deployment ownership and replica checks are included in **v2.12.1**.
 
 Use the [worked example](examples/oci-release-check/) for exact required flags,
 supported controller shapes and API budgets. CLI/plugin, `--interactive` TUI

@@ -1544,7 +1544,7 @@ default 50, max 200) and `.status.containerStatuses[].imageID` is compared with
 the intended image digest. Direct Pods reuse their live read; tag-only workloads
 skip the extra read and stay `unknown`.
 
-The stricter **UNRELEASED** source-branch behavior adds a structured-selector
+The stricter **v2.12.1** behavior adds a structured-selector
 Pod LIST, exact GETs for distinct ReplicaSet owners, and a final Deployment
 re-read. A Deployment is `match` only when Pod owner UID -> ReplicaSet UID ->
 Deployment UID, the current ReplicaSet template, generation/status, positive
@@ -1578,13 +1578,13 @@ errors exit 1. `--out` writes JSON and overwrites the requested regular file;
 receipt-store paths are rejected. The overall report is not an immutable receipt.
 
 No TTY or TUI is required for any output format or exit-code gate. In the
-**UNRELEASED** implementation, stdout write errors are returned rather than
+**v2.12.1** implementation, stdout write errors are returned rather than
 silently succeeding; `--out` is written before stdout and remains available if
 stdout subsequently fails. JSON stdout contains only the report, with command
 errors on stderr. Check exit status before reading a reused output path because
 argument/setup failures may leave a report from an earlier invocation there.
 In v2.12.0, HTTP/observer deadlines do not bound Kubernetes exec-auth
-subprocesses. The **UNRELEASED** bounded reader instead passes request
+subprocesses. The **v2.12.1** bounded reader instead passes request
 cancellation to credential helpers, limits credential stdout to 1 MiB, and
 discards helper stderr. Linux/macOS helpers run in their own process group,
 terminated on cancellation; inherited output pipes have a one-second cleanup

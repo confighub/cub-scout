@@ -30,15 +30,19 @@ identity and exact release correlation in
 is Deployment-scoped; other workload ownership/completion adapters and registry
 index-to-platform resolution remain follow-up scope, not implied parity.
 
-- [ ] Add complete running-image ownership/completion adapters for StatefulSets,
-  DaemonSets and Jobs; until then their image-completion tier stays unknown.
-- [ ] Resolve image index-to-platform identities before distinguishing a true
-  wrong-image result from an equivalent platform manifest.
+Broader workload adapters, index/platform digest resolution and image-only
+fleet search are now tracked in [#584](https://github.com/confighub/cub-scout/issues/584),
+a **future v2.13.0 candidate**, not a prerequisite for the immediate v2.12.x
+readiness patch. Until implemented, their existing unknown/unsupported limits
+remain unchanged.
 
 ### Image Verification Release Gate
 
 Tracked in [#582](https://github.com/confighub/cub-scout/issues/582), building on
-the merged Deployment evidence and headless CLI fixes (#579, #581).
+the merged Deployment evidence and headless CLI fixes (#579, #581, #583).
+v2.12.0 was published on 2026-09-18 and will not be overwritten. The approved
+patch target is **v2.12.1**, pending the
+[release checks](releases/image-verification-readiness.md#release-checks).
 
 - [x] Bound Kubernetes exec-auth helpers; test Unix process-group cleanup and
   explicitly document Windows descendant limits and non-interactive credentials.
@@ -47,10 +51,10 @@ the merged Deployment evidence and headless CLI fixes (#579, #581).
   local registry proof separate from authenticated ConfigHub publication.
 - [x] Provide a read-only, explicit-input acceptance runner that records the
   tested binary, intended bundle, dated report and exit status.
-- [ ] Complete a clean-machine operator walkthrough and publish the tested
-  binary. Merged code and fixture tests alone do not complete this gate.
-- [ ] Validate authenticated publication and the observer's HTTPS registry path
-  in an explicitly scoped environment; the local OCI proof does not cover these.
+- [ ] Publish v2.12.1 and test the downloaded binaries in a clean container.
+  Independent teammate sign-off was waived on 2026-09-20.
+- [x] Validate authenticated ConfigHub publication and HTTPS registry reads
+  against a disposable local environment, including denied access and TLS errors.
 
 "Definitive" is scoped: a complete supported Deployment observation during the
 reported interval. It is not an application functional test, an atomic or

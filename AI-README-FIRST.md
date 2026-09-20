@@ -2,6 +2,12 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
+**2026-09-20:** v2.12.1 is the approved release target. Authenticated local
+ConfigHub/HTTPS OCI tests now pass. Teammate sign-off is waived; downloaded-binary
+checks remain. Use the latest [handover](HANDOVER.md) and
+[release checklist](docs/releases/image-verification-readiness.md), not the older
+fixture-only limitations below. Future image features are tracked in #584.
+
 **2026-09-19 source update:** latest published baseline is **v2.12.0**. Unreleased
 work in #561/#578 strengthens OCI release identity and complete Deployment image
 evidence. Start with the newest [handover](HANDOVER.md) and

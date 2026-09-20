@@ -1,5 +1,18 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-09-20: v2.12.1 Release
+
+The maintainer approved v2.12.1, waived teammate sign-off and requested short,
+plain-English public docs. #585 prepares the release. Authenticated ConfigHub
+publication and direct HTTPS OCI checks passed for both Argo and Flux in
+standalone and plugin modes; see the checked-in authenticated-live-proof.json.
+The tests used a temporary TLS proxy to the local HTTP ConfigHub OCI listener,
+normal certificate validation and a worker restricted to the test target.
+Missing/invalid credentials, denied target permissions and untrusted CA tests
+returned INCONCLUSIVE. The independent AI walkthrough hit a usage limit and is
+not passing evidence. Remaining release checks use downloaded binaries in a
+clean container. Broader image features are deferred to #584 / v2.13.0.
+
 ## Unreleased: Image Readiness Hardening (#582)
 
 The shared bounded reader now cancels/reaps exec-auth helpers, caps stdout at

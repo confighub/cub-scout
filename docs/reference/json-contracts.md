@@ -1281,16 +1281,16 @@ space correlation.
 | `source` | Current value is `confighub`. |
 | `scope.space` | Defaults to the resource's ConfigHub space or ConfigHub OCI source space. If neither exists, connected history reads are skipped unless `--confighub-space` is supplied. |
 | `correlation.matchedBy[]` | Lists the exact identifiers used to form the resource correlation. |
-| `correlation.ociSourceVerified` | Additive **UNRELEASED** source-binding evidence. `true` when a fresh current Argo Application or Flux v1 OCIRepository read confirms consistent source/status identity. This is independent of registry verification; both must succeed before an exact release row can be attached. |
+| `correlation.ociSourceVerified` | Additive **v2.12.1** source-binding evidence. `true` when a fresh current Argo Application or Flux v1 OCIRepository read confirms consistent source/status identity. This is independent of registry verification; both must succeed before an exact release row can be attached. |
 | `correlation.ociSourceRead` | Additive bounded read evidence for source verification: at most one discovery plus one object GET, with the existing 10-second read deadline and 2 MiB response cap. It is not a continuous or atomic observation. |
-| `correlation.ociRegistryVerified` | Additive **UNRELEASED** registry agreement from a fresh configured-registry lookup. Parser recognition may be cached for 30 seconds but is never authority for this join. |
+| `correlation.ociRegistryVerified` | Additive **v2.12.1** registry agreement from a fresh configured-registry lookup. Parser recognition may be cached for 30 seconds but is never authority for this join. |
 | `correlation.ociSpace`, `correlation.ociRegistry`, `correlation.ociDigest` | The single source's exact space, registry, and controller-reported SHA-256 manifest revision. A configured URL pin is not a reported revision. |
 | `correlation.ociIdentityStatus` | Explains exact, missing, conflicting, ambiguous, or unverified source identity. An `exact` revision alone is insufficient: source and registry verification are also required. |
 | `liveStatus` | Included only when a live-status row matches by exact space plus Argo Application name or exact space plus ConfigHub unit slug. |
 | `liveStatus.matchedBy[]` | Lists the exact live-status join keys, for example `spaceId` and `liveStatus.app==chain.application`. |
 | `*.matchedBy[]` space key | `spaceId` when both sides carry a space ID, `space` when the resource itself names the space by slug, and `scope.space` when the resource names no space and `--confighub-space` supplied it. A `scope.space` join is weaker evidence: it shows the row is in the space the operator chose, not a space the resource declares. Rows matched this way reported `space` before. |
 | ID conflicts | When the resource and a row both carry an ID for the same thing (space, target, unit) and the IDs differ, the row is not joined, even if the slugs are equal. Slugs are compared only when one side has no ID. |
-| `releases[]` | Exact space plus target ID/slug joins remain scope context, not execution evidence. **UNRELEASED:** a verified single OCI source can instead join by source space plus `Release.ManifestDigest`; a digest miss never falls back to a target match. Neither join proves the resource executed the release. `notes[]` names the distinction, and renderings retain published counts. Rows are matched before trimming to `maxItems`. |
+| `releases[]` | Exact space plus target ID/slug joins remain scope context, not execution evidence. **v2.12.1:** a verified single OCI source can instead join by source space plus `Release.ManifestDigest`; a digest miss never falls back to a target match. Neither join proves the resource executed the release. `notes[]` names the distinction, and renderings retain published counts. Rows are matched before trimming to `maxItems`. |
 | `releases[].manifestDigest` | Additive OCI manifest digest used for exact source correlation. Separate from `releases[].digest` (bundle content) and container-image digests. |
 | `releases[].published` | `true` while ConfigHub serves the Release to its Target, `false` once it is withdrawn (the row is kept), omitted when the server does not report it. Omitted is not `false`. |
 | `releases[].releaseNum` | The Release's sequence number within its space. ConfigHub Releases have no slug and no revision number, so `slug` and `revisionNum` are not reported by current servers; text output labels a row `bundleBaseName#releaseNum`. |
@@ -1299,7 +1299,7 @@ space correlation.
 | `eventConsumers[]` | Cluster-observed event-consumer Deployment health. This is contextual evidence, not proof that the traced object was synced. |
 | `omissions[]` | Structured explanation for missing identity, missing scope, missing/malformed writeback, disconnected ConfigHub, non-matching rows, or RBAC/list failures. |
 
-For the **UNRELEASED** exact source join, `ociSourceRead` is a fresh bounded
+For the **v2.12.1** exact source join, `ociSourceRead` is a fresh bounded
 current-object observation. Argo requires the current Application
 `spec.source` to equal `status.sync.comparedTo.source` and its reported digest
 to remain unchanged. Flux requires current generation and observed generation
@@ -1487,7 +1487,7 @@ Source: `pkg/agent/event_timeline.go`, `internal/mapsvc/jsonout.go`
 Available in v2.12.0. `release check --format json` and MCP `release_check` emit
 a `version: "v1"` report, not an in-toto envelope. The shipped v2.12.0
 running-image slice retains documented per-pod completeness gaps. The stricter
-running-image fields described below are **UNRELEASED** source-branch behavior.
+running-image fields described below are **v2.12.1** behavior.
 Fields:
 
 | Field | Meaning |
@@ -1520,7 +1520,7 @@ report, and does not authenticate the intended release or registry publisher.
 Running-image comparison is opt-in via `--check-running-image`. In the shipped
 v2.12.0 behavior it adds one bounded, selector-scoped Pod read per eligible
 workload; direct Pods reuse their live read and tag-only workloads skip the
-extra read. The **UNRELEASED** source branch uses a structured-selector Pod LIST,
+extra read. The **v2.12.1** implementation uses a structured-selector Pod LIST,
 one exact GET per distinct ReplicaSet owner, and a final Deployment re-read.
 For Deployment workloads, `runningImage.workloads[].deployment` has:
 

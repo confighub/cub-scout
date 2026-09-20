@@ -65,27 +65,15 @@ brew upgrade cub-scout             # Should install new version
 
 ### Fixing a Broken Release
 
-If a release needs to be re-cut (e.g., CI fix):
+Once a release has been published, preserve its tag and artifacts. Ship fixes
+under a new patch version, with release notes identifying the affected version.
+Do not replace binaries or checksums under an existing version: users must be
+able to identify which code they downloaded.
 
-1. **Delete the broken tag**
-   ```bash
-   git tag -d vX.Y.Z
-   git push origin :refs/tags/vX.Y.Z
-   ```
-
-2. **Fix the issue and re-tag**
-   ```bash
-   # Make fixes, commit, push
-   git tag -a vX.Y.Z -m "vX.Y.Z - <release summary>"
-   git push origin vX.Y.Z
-   ```
-
-3. **Verify Homebrew updates**
-   - The re-release will push a new formula to homebrew-tap
-   - Run: `brew update && brew info confighub/tap/cub-scout`
-
-**Important:** Re-tagging the same version will update the homebrew formula
-with the new SHA256 checksums automatically.
+For a failed workflow before publication, inspect partial uploads and tag state
+before deciding how to recover. Do not automatically delete or move tags.
+After publishing the new patch, verify its downloaded archives/checksums and
+Homebrew formula as well as the workflow result.
 
 ## Release Checklist
 
@@ -119,7 +107,8 @@ Until plugin packaging lands:
 
 1. Check workflow logs for specific failure
 2. Common issue: golden tests need binary built first
-3. Fix issue, delete tag, re-tag (see "Fixing a Broken Release")
+3. Fix the issue and follow "Fixing a Broken Release"; published versions need
+   a new patch version, not a moved tag.
 
 ## Configuration
 

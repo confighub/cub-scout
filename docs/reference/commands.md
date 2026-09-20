@@ -2911,7 +2911,7 @@ stage that compares pod-reported digests (`.status.containerStatuses[].imageID`)
 against the intended workload image. Its label-selected, bounded observations
 do not prove complete per-pod running state or ownership.
 
-The stricter **UNRELEASED** source-branch behavior uses a bounded
+The stricter **v2.12.1** behavior uses a bounded
 structured-selector Pod LIST, one exact GET per distinct ReplicaSet owner, and a final
 Deployment re-read. For a Deployment it verifies Pod owner UID -> ReplicaSet
 UID -> Deployment UID, current ReplicaSet template, current generation,
