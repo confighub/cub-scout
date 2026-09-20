@@ -2,7 +2,7 @@
 
 **A read-only Kubernetes and GitOps explorer for people, scripts, and AI agents.**
 
-[v2.12.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.0)
+[v2.12.1 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.1)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
@@ -43,7 +43,7 @@ cub-scout gitops status   # What do delivery controllers report?
 cub-scout map             # Explore interactively
 ```
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.12.0`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.12.1`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -101,15 +101,15 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | Did this rendered install set land as a set? | `compare object-set`, `receipt verify --file` | Set-level desired-vs-live evidence from rendered YAML: authored-field deltas, optional added/removed object closure, object-set receipts, normalization profiles, freshness TTL, and CI-gate verdicts. |
 | Did this exact OCI configuration release reach the selected cluster? | [`release check --bundle oci://registry/config@sha256:... ...`](examples/oci-release-check/) | **v2.12.0:** verifies the manifest and literal configuration layer by digest, binds the selected controller's repository, target and inventory, then compares authored live fields and workload-controller convergence. Configuration bundle and container image digests are separate. No application-success claim. |
 | Where is my release waiting, different, or unverifiable? | `release check`; MCP `release_check`; `release check --interactive` | No TTY required. With `--fail-on any-non-pass`, exit 0 means PASS; exit 2 preserves a non-passing report. v2.12.1 also fails on output errors. |
-| Can a script, CI job or agent check this without a TUI? | [`release check --check-running-image --format json --out report.json --fail-on any-non-pass`](docs/howto/is-this-image-deployed.md#scripts-and-ci); same flags after `cub scout` | Exact GETs, no inventory LIST. Image checks add a limited Pod LIST and owner reads. Reports include request counts and omissions. Watch/bot do not schedule this check yet. |
-| Can I check one release without a cluster-wide scan, and keep the evidence? | `release check --max-objects 100 --out release-check.json`; `--oci-layout <dir>` for a local bundle; TUI `r` refresh | Authenticated local ConfigHub delivery through HTTPS passed for Argo and Flux, in standalone and plugin modes. Missing credentials and untrusted certificates returned INCONCLUSIVE. |
-| Can I reproduce the image check against real controllers, not just fixtures? | [Live acceptance and release gates](docs/releases/image-verification-readiness.md); `bash test/e2e/image-delivery-live.sh` | v2.12.1 cancels credential helpers and caps their output. Use non-interactive credentials and an outer timeout; Windows cannot guarantee descendant-process cleanup. |
-| Can a stalled credential helper hang my unattended image check? | [Credential and timeout boundaries](docs/howto/is-this-image-deployed.md#run-the-check) | No. v2.12.1 caps HTTP error bodies before client-go buffers them. Failed reads cannot produce PASS. |
-| Can a large API error bypass the response-size limit? | `release check`; shared bounded reads | v2.12.1 checks running, ready containers against intended digests, with complete Deployment ownership and replica checks. Tags and unresolved multi-architecture digests remain unknown. |
-| Is the image actually running the one I intended? | [`release check --check-running-image`](docs/howto/is-this-image-deployed.md); MCP `release_check` with `check_running_image: true`; `release check --interactive --check-running-image` | **v2.12.0 shipped:** compares pod-reported image IDs with intended digests, but does not prove every replica's ownership, running state, or status. **v2.12.1 (release pending):** Deployment-only full proof checks the exact Pod set, Pod -> ReplicaSet -> Deployment UID chain, current template, generation, positive/equal replica counts, `Running` + `PodReady`, and every regular container's running/ready exact digest. Mutable tags and unresolved index/platform forms stay `unknown`. Not application success. |
-| Do I have the exact release identity? | `release check --bundle oci://...@sha256:...` | v2.12.1 verifies complete Deployment replica coverage. StatefulSet, DaemonSet and Job completion remain unsupported. v2.12.0 cannot prove all replicas. |
-| Are all replicas running the intended image? | `release check --check-running-image --format json` | Missing, denied, stale or incomplete observations return INCONCLUSIVE. Read the overall verdict: matching images cannot override a configuration BLOCK. |
-| What does incomplete proof mean? | Inspect `runningImage.workloads[].reason`, `deployment.complete`, and `pods[]`, plus the overall verdict | **v2.12.1 (release pending):** missing, malformed, ambiguous, capped, RBAC, stale-generation, race, terminating, old/foreign, duplicate, and zero-replica evidence remains `unknown` / `INCONCLUSIVE`; it never becomes a positive claim. A configuration `BLOCK` still blocks the overall check even when images match. |
+| Can a script, CI job or agent check this without a TUI? | [`release check --check-running-image --format json --out report.json --fail-on any-non-pass`](docs/howto/is-this-image-deployed.md#scripts-and-ci); same flags after `cub scout` | Yes. Standalone, plugin and MCP use the same check. Reports are saved and non-passing results can fail the job. Watch/bot do not schedule this check yet. |
+| Can I check one release without a cluster-wide scan, and keep the evidence? | `release check --max-objects 100 --out release-check.json`; `--oci-layout <dir>` for a local bundle; TUI `r` refresh | Exact GETs, no inventory LIST. Image checks add a limited Pod LIST and owner reads. Reports include request counts and omissions. |
+| Can I reproduce the image check against real controllers, not just fixtures? | [Live acceptance and release gates](docs/releases/image-verification-readiness.md); `bash test/e2e/image-delivery-live.sh` | Authenticated local ConfigHub delivery through HTTPS passed for Argo and Flux, in standalone and plugin modes. Missing credentials and untrusted certificates returned INCONCLUSIVE. |
+| Can a stalled credential helper hang my unattended image check? | [Credential and timeout boundaries](docs/howto/is-this-image-deployed.md#run-the-check) | v2.12.1 cancels credential helpers and caps their output. Use non-interactive credentials and an outer timeout; Windows cannot guarantee descendant-process cleanup. |
+| Can a large API error bypass the response-size limit? | `release check`; shared bounded reads | No. v2.12.1 caps HTTP error bodies before client-go buffers them. Failed reads cannot produce PASS. |
+| Is the image actually running the one I intended? | [`release check --check-running-image`](docs/howto/is-this-image-deployed.md); MCP `release_check` with `check_running_image: true`; `release check --interactive --check-running-image` | v2.12.1 checks running, ready containers against intended digests, with complete Deployment ownership and replica checks. Tags and unresolved multi-architecture digests remain unknown. |
+| Do I have the exact release identity? | `release check --bundle oci://...@sha256:...` | Supply the manifest digest from the publication record. A tag, image digest or controller status alone does not identify the intended configuration release. |
+| Are all replicas running the intended image? | `release check --check-running-image --format json` | v2.12.1 verifies complete Deployment replica coverage. StatefulSet, DaemonSet and Job completion remain unsupported. v2.12.0 cannot prove all replicas. |
+| What does incomplete proof mean? | Inspect `runningImage.workloads[].reason`, `deployment.complete`, and `pods[]`, plus the overall verdict | Missing, denied, stale or incomplete observations return INCONCLUSIVE. Read the overall verdict: matching images cannot override a configuration BLOCK. |
 | I only have an image reference: can I find everywhere it is deployed? | [Image-check prerequisites](docs/howto/is-this-image-deployed.md#start-with-the-identity) | No dedicated image-reference search across a cluster or fleet. The release check requires a literal OCI configuration bundle, controller and explicit target; ownership exploration helps identify the workload but does not prove image identity. |
 | Is this rollout still progressing, complete, or stuck? | `receipt verify --predicate workloads-converged`, `doctor`, `explain`, `compare three-way` | Generation-aware workload evidence: `metadata.generation`, `status.observedGeneration`, kstatus, progress clock, pod failure signals, and `PASS` / `WATCH` / `BLOCK` / `INCONCLUSIVE` verdicts. |
 | Can I move to the next task, wait, or retry delivery? | `receipt verify --with-confighub`, `compare three-way`, `doctor --with-confighub`, `map activity --with-confighub` | A read-only decision frame that separates "not applied yet", "still converging", "runtime failure", stale/failed delivery feedback, recent delivery events, and missing evidence, with optional fingerprinted receipts for the exact observation. |
@@ -149,15 +149,11 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.12.0 is the latest release.** It works with `cub` v0.5.2, which removed the
-default space: every `cub` call cub-scout makes names its space, and commands
-that read one space refuse rather than read the whole organization. ConfigHub
-release, unit-event, fleet, impact and compare output says only what ConfigHub
-reports. See the [release notes](docs/releases/v2.12.0.md).
-
-The stricter Deployment running-image proof described in the image guide is
-included in **v2.12.1 (release pending)**. v2.12.0 does not prove complete
-Pod ownership or replica coverage.
+**v2.12.1 is the latest release.** Image checks verify complete Deployment
+ownership and replica coverage, with bounded credential helpers and API error
+responses. No TUI is required. Published standalone and plugin binaries passed
+authenticated local registry tests. See the [release notes](docs/releases/v2.12.1.md)
+and [image verification guide](docs/howto/is-this-image-deployed.md).
 
 ### Who reaches for cub-scout?
 

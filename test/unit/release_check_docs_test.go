@@ -138,3 +138,33 @@ func TestImageGuideSurfaceTableColumns(t *testing.T) {
 		}
 	}
 }
+
+func TestImageQuestionsKeepTheirAnswers(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for question, answer := range map[string]string{
+		"Can a script, CI job or agent check this without a TUI?":                      "Standalone, plugin and MCP",
+		"Can I check one release without a cluster-wide scan, and keep the evidence?":  "no inventory LIST",
+		"Can I reproduce the image check against real controllers, not just fixtures?": "Argo and Flux",
+		"Can a stalled credential helper hang my unattended image check?":              "cancels credential helpers",
+		"Can a large API error bypass the response-size limit?":                        "caps HTTP error bodies",
+		"Do I have the exact release identity?":                                        "manifest digest from the publication record",
+		"Are all replicas running the intended image?":                                 "complete Deployment replica coverage",
+		"What does incomplete proof mean?":                                             "INCONCLUSIVE",
+	} {
+		found := false
+		for _, line := range strings.Split(string(data), "\n") {
+			if strings.HasPrefix(line, "| "+question+" |") {
+				found = true
+				if !strings.Contains(line, answer) {
+					t.Errorf("question %q missing its answer %q", question, answer)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("missing question %q", question)
+		}
+	}
+}

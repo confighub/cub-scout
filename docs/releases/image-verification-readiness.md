@@ -1,6 +1,6 @@
 # Image Verification Tests
 
-Target release: **v2.12.1**. Tracking: [#582](https://github.com/confighub/cub-scout/issues/582).
+Published release: **v2.12.1** (2026-09-20). Tracking: [#582](https://github.com/confighub/cub-scout/issues/582).
 The published v2.12.0 tag and files remain unchanged.
 
 ## Supported Check
@@ -38,6 +38,7 @@ not an OCI layout. This tests the local installation, not a hosted service.
 Recorded reports:
 - [Local OCI delivery](../../examples/oci-release-check/live-proof.json)
 - [Authenticated publication and registry](../../examples/oci-release-check/authenticated-live-proof.json)
+- [Published binary and plugin checks](../../examples/oci-release-check/published-binary-proof.json)
 
 Reports include dates, binary checksums, request counts and results. The first
 live build predates the HTTP error-body cap; that fix has separate deterministic
@@ -50,13 +51,23 @@ Windows was compile-tested, not runtime-tested.
 ## Release Checks
 
 - [x] Authenticated publication and HTTPS registry validation.
-- [ ] Clean-container test of downloaded release binaries and plugin installation.
-- [ ] Published v2.12.1 archives, checksums and Homebrew update verified.
+- [x] Clean-container test of downloaded release binaries and plugin installation.
+- [x] Published v2.12.1 archives, checksums and Homebrew update verified.
+
+Published Linux arm64 standalone and plugin checks passed against Argo in a
+fresh Alpine container without the source checkout. Both returned INCONCLUSIVE
+with exit 2 for capped reads; missing credentials and an untrusted CA also
+returned INCONCLUSIVE. stdout matched the saved reports. The plugin installed
+with `cub plugin install confighub/cub-scout@v2.12.1` and matched the archive binary.
+Published macOS arm64 passed version/help smoke checks. Both downloaded archives
+matched release checksums. The Homebrew cask version and hashes matched; a
+Homebrew installation was not tested. Flux runtime evidence above uses the
+source build of the same implementation, not the downloaded release.
 
 The maintainer waived independent teammate sign-off on 2026-09-20. The separate
 AI walkthrough did not complete because its agent hit a usage limit; it is not
-counted as passing evidence. Clean-container installation and runtime checks
-remain required. Close #582 after the published-binary checks pass.
+counted as passing evidence. The clean-container checks above completed the
+remaining release gate.
 
 ## Reproduce
 

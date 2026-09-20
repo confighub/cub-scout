@@ -2,16 +2,23 @@
 
 ## 2026-09-20: v2.12.1 Release
 
-The maintainer approved v2.12.1, waived teammate sign-off and requested short,
-plain-English public docs. #585 prepares the release. Authenticated ConfigHub
-publication and direct HTTPS OCI checks passed for both Argo and Flux in
-standalone and plugin modes; see the checked-in authenticated-live-proof.json.
-The tests used a temporary TLS proxy to the local HTTP ConfigHub OCI listener,
-normal certificate validation and a worker restricted to the test target.
-Missing/invalid credentials, denied target permissions and untrusted CA tests
-returned INCONCLUSIVE. The independent AI walkthrough hit a usage limit and is
-not passing evidence. Remaining release checks use downloaded binaries in a
-clean container. Broader image features are deferred to #584 / v2.13.0.
+v2.12.1 is published at commit 5ae9b99 after #585 merged and release CI passed.
+Authenticated ConfigHub/HTTPS OCI checks passed for Argo and Flux using the
+source build. Downloaded Linux arm64 standalone and installed plugin binaries
+then passed the Argo check in a clean Alpine container. Capped reads, missing
+credentials and untrusted CA tests returned INCONCLUSIVE with exit 2. Reports
+matched stdout. macOS arm64 passed version/help smoke checks; archive checksums
+and Homebrew cask version/hashes were verified. Homebrew installation and Windows
+runtime were not tested. Public proof and limitations are in
+[release readiness](docs/releases/image-verification-readiness.md).
+
+The authenticated tests used a temporary TLS proxy to the local HTTP ConfigHub
+OCI listener, verified certificates and a scoped worker. They do not prove a
+hosted installation. Teammate sign-off was waived; the separate AI walkthrough
+hit a usage limit and is not counted. Broader image features remain #584 / v2.13.0.
+
+The sections below are historical pre-release notes; their open release gates
+are superseded by the published results above.
 
 ## Unreleased: Image Readiness Hardening (#582)
 

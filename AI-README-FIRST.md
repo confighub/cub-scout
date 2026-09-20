@@ -2,11 +2,13 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
-**2026-09-20:** v2.12.1 is the approved release target. Authenticated local
-ConfigHub/HTTPS OCI tests now pass. Teammate sign-off is waived; downloaded-binary
-checks remain. Use the latest [handover](HANDOVER.md) and
-[release checklist](docs/releases/image-verification-readiness.md), not the older
-fixture-only limitations below. Future image features are tracked in #584.
+**2026-09-20:** v2.12.1 is published. Authenticated local ConfigHub/HTTPS OCI
+tests and clean-container checks of the published Linux arm64 standalone/plugin
+binaries passed. macOS arm64 smoke checks and Homebrew cask verification passed.
+See the [release checklist](docs/releases/image-verification-readiness.md) for
+scope and untested platforms. Future image features remain in #584.
+
+The dated notes below describe earlier states, not outstanding release gates.
 
 **2026-09-19 source update:** latest published baseline is **v2.12.0**. Unreleased
 work in #561/#578 strengthens OCI release identity and complete Deployment image
@@ -60,7 +62,7 @@ cub-scout commands fall into eight groups. The main use case starts from a live 
 | **Govern** | Connected history, fleet, views | `history`, `impact`, `fleet outliers`, `summary`, `views`, `audit`, `bundle`, `catalog` |
 | **Adopt Existing Config** | How to preview/import current cluster or repo structure into ConfigHub | `import --dry-run`, `import --from-bundle`, `import --git-path`, `import parse-repo`, `import argocd`, `import cluster-aggregator`, `import apply`, `app` |
 | **Integrate** | Setup + AI gateway | `setup`, `quickstart`, `mcp serve`, `bot`, `context-pack`, `version` |
-| **Verify** | Typed evidence and scoped configuration-release checks | `receipt verify`, `receipt show`, `receipt validate`, `receipt list`, `release check` (unreleased v2.11) |
+| **Verify** | Typed evidence and scoped configuration-release checks | `receipt verify`, `receipt show`, `receipt validate`, `receipt list`, `release check` |
 
 When a user asks "can cub scout do X?", first locate X in this map, then verify the exact flag surface with local `--help` (see [Quick Reality Checks](#quick-reality-checks)).
 

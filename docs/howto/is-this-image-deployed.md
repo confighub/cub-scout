@@ -5,7 +5,7 @@ configuration bundle and want bounded, read-only evidence from a selected
 controller and target. The check does not search a cluster for an image, render
 or publish configuration, deploy changes, or test application behavior.
 
-The complete Deployment proof is **v2.12.1 (release pending)**. The published
+The complete Deployment proof is **v2.12.1**. The published
 `v2.12.0` check compares pod-reported image IDs, but its label-selected reads do
 not prove complete per-pod execution or ownership.
 
@@ -88,7 +88,7 @@ evidence. The overall verdict uses `BLOCK > INCONCLUSIVE > WATCH > PASS`.
 
 | Image result | Stage verdict | Meaning |
 |---|---|---|
-| `match` | `PASS` | **v2.12.1 (release pending):** required image, running, readiness, and supported Deployment ownership/replica evidence matched. |
+| `match` | `PASS` | **v2.12.1:** required image, running, readiness, and supported Deployment ownership/replica evidence matched. |
 | `mismatch` | `BLOCK` | Compatibility vocabulary. An unresolved digest form is not treated as a wrong image. |
 | `unknown` | `INCONCLUSIVE` | Identity or completeness was not confirmed. Inspect `reason`; do not treat it as a match. |
 
@@ -170,7 +170,7 @@ and Jobs are `unknown` with `workload-ownership-unsupported`.
 
 - `v2.12.0` does not prove all replicas: label-selected image IDs can hide
   missing Pod status, running-state, and owner-UID evidence.
-- In **v2.12.1 (release pending)**, incomplete, ambiguous, capped, denied,
+- In **v2.12.1**, incomplete, ambiguous, capped, denied,
   stale, racing, terminating, foreign, duplicate, or zero-replica evidence
   remains `unknown` / `INCONCLUSIVE`.
 - Malformed entries, missing container names/images, and duplicate intended
@@ -192,7 +192,7 @@ capped or denied Pod lists use **7 / 11**. These are request budgets, not
 latency SLAs. See the [full budgets](../../examples/oci-release-check/#read-budget).
 
 For unattended use, provide non-interactive credentials and an outer timeout.
-The v2.12.1 reader (release pending) cancels exec-auth helpers, caps
+The v2.12.1 reader cancels exec-auth helpers, caps
 credential output at 1 MiB, suppresses helper stderr, and caps HTTP error
 bodies before client-go buffers them. Linux/macOS also terminate the helper
 process group; Windows descendant cleanup still needs the enclosing CI
