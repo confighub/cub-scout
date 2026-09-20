@@ -41,7 +41,7 @@ remain unchanged.
 Tracked in [#582](https://github.com/confighub/cub-scout/issues/582), building on
 the merged Deployment evidence and headless CLI fixes (#579, #581, #583).
 v2.12.0 was published on 2026-09-18 and will not be overwritten. The approved
-patch target is **v2.12.1**, pending the
+patch **v2.12.1 is published** with completed
 [release checks](releases/image-verification-readiness.md#release-checks).
 
 - [x] Bound Kubernetes exec-auth helpers; test Unix process-group cleanup and
@@ -51,7 +51,7 @@ patch target is **v2.12.1**, pending the
   local registry proof separate from authenticated ConfigHub publication.
 - [x] Provide a read-only, explicit-input acceptance runner that records the
   tested binary, intended bundle, dated report and exit status.
-- [ ] Publish v2.12.1 and test the downloaded binaries in a clean container.
+- [x] Publish v2.12.1 and test the downloaded binaries in a clean container.
   Independent teammate sign-off was waived on 2026-09-20.
 - [x] Validate authenticated ConfigHub publication and HTTPS registry reads
   against a disposable local environment, including denied access and TLS errors.

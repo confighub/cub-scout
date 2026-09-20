@@ -1,0 +1,158 @@
+{
+  "release": "v2.12.1",
+  "releaseURL": "https://github.com/confighub/cub-scout/releases/tag/v2.12.1",
+  "sourceCommit": "5ae9b99",
+  "date": "2026-09-20",
+  "environment": {
+    "runtime": "fresh Alpine linux/arm64 container without source checkout",
+    "kubernetes": "v1.35.0",
+    "controller": "Argo CD v3.4.4",
+    "pluginHost": "cub v0.5.3",
+    "registry": "authenticated local ConfigHub via TLS proxy; client verified fixture CA; upstream local HTTP"
+  },
+  "artifacts": {
+    "linuxArm64": {
+      "archiveSHA256": "25a6402176fad774d8535a8566511844b6bd241e68070e50d21b06f9464781de",
+      "binarySHA256": "477ced13562d5c72c98b209e59d670626bb5b5da16b0d4e320259750122e4bff",
+      "standaloneEqualsInstalledPlugin": true
+    },
+    "darwinArm64": {
+      "archiveSHA256": "67a0fb1eed5c9497cfae6e557e72db3a114e471a279a9f4cd3c8eed13e691b03",
+      "binarySHA256": "9b388ba656f9da56a61b4f4afd82b5e5f9ad700d27de0f3e2ecdb35c10897019",
+      "checks": [
+        "version",
+        "release check --help"
+      ]
+    },
+    "archiveChecksumsVerified": true,
+    "homebrewCaskVersionAndChecksumsVerified": true
+  },
+  "cases": [
+    {
+      "case": "standalone",
+      "exitCode": 0,
+      "stdoutEqualsSavedReport": true,
+      "startedAt": "2026-09-20T11:45:22.718159551Z",
+      "finishedAt": "2026-09-20T11:45:22.937706311Z",
+      "verdict": "PASS",
+      "requestCounts": {
+        "discovery": 5,
+        "object": 6
+      },
+      "bundle": {
+        "source": "registry",
+        "verified": true
+      },
+      "runningImage": {
+        "verdict": "match",
+        "deploymentComplete": true
+      }
+    },
+    {
+      "case": "plugin",
+      "exitCode": 0,
+      "stdoutEqualsSavedReport": true,
+      "startedAt": "2026-09-20T11:45:22.971457053Z",
+      "finishedAt": "2026-09-20T11:45:23.184339955Z",
+      "verdict": "PASS",
+      "requestCounts": {
+        "discovery": 5,
+        "object": 6
+      },
+      "bundle": {
+        "source": "registry",
+        "verified": true
+      },
+      "runningImage": {
+        "verdict": "match",
+        "deploymentComplete": true
+      }
+    },
+    {
+      "case": "standalone-capped",
+      "exitCode": 2,
+      "stdoutEqualsSavedReport": true,
+      "startedAt": "2026-09-20T11:45:23.205102979Z",
+      "finishedAt": "2026-09-20T11:45:23.22299982Z",
+      "verdict": "INCONCLUSIVE",
+      "requestCounts": {
+        "discovery": 3,
+        "object": 4
+      },
+      "bundle": {
+        "source": "registry",
+        "verified": true
+      },
+      "runningImage": {
+        "verdict": "unknown",
+        "deploymentComplete": null
+      }
+    },
+    {
+      "case": "plugin-capped",
+      "exitCode": 2,
+      "stdoutEqualsSavedReport": true,
+      "startedAt": "2026-09-20T11:45:23.247992765Z",
+      "finishedAt": "2026-09-20T11:45:23.263875624Z",
+      "verdict": "INCONCLUSIVE",
+      "requestCounts": {
+        "discovery": 3,
+        "object": 4
+      },
+      "bundle": {
+        "source": "registry",
+        "verified": true
+      },
+      "runningImage": {
+        "verdict": "unknown",
+        "deploymentComplete": null
+      }
+    },
+    {
+      "case": "credentials-missing",
+      "exitCode": 2,
+      "stdoutEqualsSavedReport": true,
+      "startedAt": "2026-09-20T11:45:23.274275406Z",
+      "finishedAt": "2026-09-20T11:45:23.27839262Z",
+      "verdict": "INCONCLUSIVE",
+      "requestCounts": {
+        "discovery": 0,
+        "object": 0
+      },
+      "bundle": {
+        "source": "registry",
+        "verified": false
+      },
+      "runningImage": {
+        "verdict": null,
+        "deploymentComplete": null
+      }
+    },
+    {
+      "case": "ca-untrusted",
+      "exitCode": 2,
+      "stdoutEqualsSavedReport": true,
+      "startedAt": "2026-09-20T11:45:23.286549589Z",
+      "finishedAt": "2026-09-20T11:45:23.290077724Z",
+      "verdict": "INCONCLUSIVE",
+      "requestCounts": {
+        "discovery": 0,
+        "object": 0
+      },
+      "bundle": {
+        "source": "registry",
+        "verified": false
+      },
+      "runningImage": {
+        "verdict": null,
+        "deploymentComplete": null
+      }
+    }
+  ],
+  "limits": [
+    "Published Linux arm64 runtime tested with Argo; Flux runtime evidence uses source-built equivalent implementation in authenticated-live-proof.json.",
+    "macOS arm64 smoke-tested only; no Windows runtime or Homebrew installation test.",
+    "Local authenticated installation, not hosted ConfigHub.",
+    "Independent teammate sign-off waived by maintainer."
+  ]
+}
