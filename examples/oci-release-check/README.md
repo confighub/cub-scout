@@ -1,13 +1,13 @@
 # Exact OCI Configuration Release Check
 
 Available in v2.12.0 for the base release check. The stricter running-image
-behavior described below is **UNRELEASED** source-branch behavior. This answers:
+behavior described below is **v2.12.1** behavior. This answers:
 did this exact configuration release reach this target, and where is it waiting?
 It does not deploy, render, retry, force sync, approve or claim application success.
 
 Start with [Is This Image Deployed?](../../docs/howto/is-this-image-deployed.md)
 for the user workflow, three image/configuration identities, the shipped v2.12.0
-gaps, and the unreleased Deployment proof. This example provides the detailed
+gaps, and the v2.12.1 Deployment checks. This example provides the detailed
 adapter and request-budget contract.
 
 For existing targets, use the [read-only live acceptance runner](LIVE-VALIDATION.md).
@@ -61,7 +61,7 @@ not be checked. Known failures remain visible even when another check is
 inconclusive. No supported workloads is `NOT_ASSESSED` for that stage, never
 "the application is running". When `--check-running-image` is requested,
 no supported workload is instead `unknown` / `INCONCLUSIVE` for the
-**UNRELEASED** running-image stage. Configuration checks still run when controller
+**v2.12.1** running-image stage. Configuration checks still run when controller
 evidence is unavailable. An unavailable discovery API is inconclusive, not a
 missing object; absence requires a 404 from the actual object GET.
 
@@ -78,7 +78,7 @@ v2.12.0 behavior, the check compares pod-reported image IDs with intended
 digests using bounded label-selected observations. It does not prove every
 replica's ownership, running state, or status completeness.
 
-The **UNRELEASED** source-branch implementation uses the synthetic,
+The **v2.12.1** implementation uses the synthetic,
 non-pullable digest fixture at
 [`image-deployment.yaml`](image-deployment.yaml). For a Deployment it performs
 a bounded structured-selector Pod LIST, one exact GET for each distinct
@@ -142,7 +142,7 @@ in any format and do not discard an already saved report.
 - Workload convergence covers apps/v1 Deployment, StatefulSet and DaemonSet,
   batch/v1 Job and v1 Pod. Custom-resource, CronJob and other readiness is not
   assessed. Running-image verification is opt-in via `--check-running-image`;
-  complete ownership/completion proof in the unreleased slice is Deployment-only.
+  complete ownership/completion proof in v2.12.1 is Deployment-only.
 - Intended bundle identity is supplied by the caller. There is no release-number
   lookup, ConfigHub authority/history join or production event-cursor read.
 - Watch/bot release scheduling remains follow-up work. The existing watch/bot
@@ -158,7 +158,7 @@ in any format and do not discard an already saved report.
   `2N + 4` Kubernetes requests for Application,
   or `2N + 8` for Kustomization including its source. Excluded/failed reads may
   cost less. The final controller/source reads check for concurrent change.
-- The **UNRELEASED** image proof adds at most `2R + 3` requests per checked
+- The **v2.12.1** image proof adds at most `2R + 3` requests per checked
   Deployment: one Pod LIST, up to two requests per distinct ReplicaSet owner R,
   and two for the final Deployment read. R cannot exceed `--max-pods`.
   Direct Pods reuse the exact object read without additional image reads.

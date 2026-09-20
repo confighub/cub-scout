@@ -1,8 +1,7 @@
 # Running-Image Identity Check
 
-Status: **UNRELEASED source-branch implementation in progress.** The latest
-published `v2.12.0` binary has the earlier opt-in running-image slice and its
-documented per-Pod completeness gaps. For current public usage, start with
+Status: **Implemented for v2.12.1.** v2.12.0 has the earlier opt-in image check
+without complete Pod ownership and replica checks. For usage, start with
 [Is This Image Deployed?](../howto/is-this-image-deployed.md).
 
 ## User Value
@@ -31,7 +30,7 @@ MCP `check_running_image: true`, or the equivalent interactive TUI option.
 `--max-pods` defaults to 50 and accepts 1..200. The CLI, plugin, MCP, and TUI
 share one provider; watch and bot do not schedule the check.
 
-The source-branch implementation currently proves complete image rollout only
+The implementation currently proves complete image rollout only
 for `apps/v1` Deployments:
 
 1. Run one bounded structured-selector Pod LIST.
@@ -97,7 +96,7 @@ application behavior, traffic, and SLOs are outside this tier.
 - Connected OCI source correlation requires the active ConfigHub registry to
   agree with the configured registry and uses the reported source revision
   (`Release.ManifestDigest`). This exact registry-match behavior is
-  **UNRELEASED** source-branch behavior. A desired URL pin is not observed
+  **v2.12.1** behavior. A desired URL pin is not observed
   source evidence, `Release.Digest` is bundle content, and a target-only row is
   scope context rather than proof of release execution.
 

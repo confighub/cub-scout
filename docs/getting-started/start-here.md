@@ -16,7 +16,7 @@ If you just want the command index, use:
 
 Checking an application image? Start with
 [Is This Image Deployed?](../howto/is-this-image-deployed.md) for the shipped
-v2.12.0 limits, the **UNRELEASED** Deployment proof, the difference between
+v2.12.0 limits, the **v2.12.1** Deployment proof, the difference between
 configuration and image digests, and what pod-reported identity can and cannot
 prove.
 
