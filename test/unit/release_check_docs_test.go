@@ -168,3 +168,26 @@ func TestImageQuestionsKeepTheirAnswers(t *testing.T) {
 		}
 	}
 }
+
+func TestImageGuideKnownGaps(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "docs", "howto", "is-this-image-deployed.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, section, found := strings.Cut(string(data), "## Known Gaps\n")
+	if !found {
+		t.Fatal("missing image-verification gaps")
+	}
+	section, _, _ = strings.Cut(section, "\n## ")
+	for _, required := range []string{
+		"StatefulSets, DaemonSets and Jobs", "Multi-architecture", "Image-only",
+		"issues/584", "issues/539", "Other delivery inputs", "Other container types",
+		"Continuous observation", "Large or slow environments", "Installation coverage",
+		"Reporting coverage", "API-load benchmark", "not a committed release",
+		"not an atomic", "does not repair drift", "Windows",
+	} {
+		if !strings.Contains(section, required) {
+			t.Errorf("missing image-check gap or boundary %q", required)
+		}
+	}
+}

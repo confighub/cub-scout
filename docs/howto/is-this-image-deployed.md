@@ -5,9 +5,9 @@ configuration bundle and want bounded, read-only evidence from a selected
 controller and target. The check does not search a cluster for an image, render
 or publish configuration, deploy changes, or test application behavior.
 
-The complete Deployment proof is **v2.12.1**. The published
-`v2.12.0` check compares pod-reported image IDs, but its label-selected reads do
-not prove complete per-pod execution or ownership.
+Use **v2.12.1 or later** for complete Deployment ownership and replica checks.
+`v2.12.0` does not provide that proof. See [Known Gaps](#known-gaps) before using
+the result as a deployment gate.
 
 ## Start With The Identity
 
@@ -115,10 +115,8 @@ jq '{verdict, headline, nextStep, stages, requestCounts,
                     workloads: .runningImage.workloads}}' release-check.json
 ```
 
-No TTY is required. The interactive TUI is optional: use `--interactive` and
-omit `--format`, `--out`, and `--fail-on`. MCP uses
-`release_check` with `check_running_image: true`; `max_pods` is optional.
-Watch and in-cluster bot do not schedule release/image checks.
+No TTY is required. For the optional TUI, use `--interactive` and omit
+`--format`, `--out`, and `--fail-on`.
 
 ## Ways To Run It
 
@@ -130,6 +128,35 @@ Watch and in-cluster bot do not schedule release/image checks.
 | Optional TUI | `./cub-scout release check ... --interactive` |
 
 Watch and bot do not run this check automatically.
+
+## Known Gaps
+
+The released check is tested for the supported cases, not every workload,
+installation or cluster size. These are the remaining coverage and operating
+limits, not reasons to treat an INCONCLUSIVE result as a pass.
+
+| Gap | What it means for users |
+|---|---|
+| StatefulSets, DaemonSets and Jobs | No complete workload-specific image proof. Stateful services, node agents and batch jobs need their own ownership and completion checks. A completed Job must be distinguished from a currently running container. [#584](https://github.com/confighub/cub-scout/issues/584) |
+| Multi-architecture images | An intended image-index digest and the runtime's platform digest can remain INCONCLUSIVE even when correct. Verified index/platform resolution would remove this uncertainty on ARM/Intel clusters. [#584](https://github.com/confighub/cub-scout/issues/584) |
+| Image-only cluster/fleet search | You cannot start with just an image and ask where it runs. Search would help incident response and upgrades, but discovery must remain separate from verification against an intended release. [#584](https://github.com/confighub/cub-scout/issues/584) |
+| Other delivery inputs | This check accepts literal OCI bundles through the supported Argo/Flux adapters, not arbitrary Git, HelmRelease, multi-source applications or other controllers. Ownership discovery elsewhere in Scout does not imply image-check support. |
+| Other container types | Init and ephemeral containers are not checked. A passing regular-container check does not cover them. |
+| Continuous observation | Watch/bot do not schedule image checks. Repeated CLI runs need an external schedule and repeat the reads; there is no image-check subscription or historical trend report. General watch/bot efficiency work is tracked separately in [#539](https://github.com/confighub/cub-scout/issues/539). |
+| Large or slow environments | Request, byte and time limits are tested, but large-cluster latency and repeated-image-check API load are not established by the small live examples. No pagination is performed; caps or timeouts can leave evidence incomplete. |
+| Installation coverage | Authenticated testing used a local ConfigHub installation. Published Linux arm64 binaries were live-tested with Argo; Flux used the equivalent source build. macOS arm64 had smoke checks only. Hosted setups, Windows runtime and Homebrew installation remain unverified. [Test record](../releases/image-verification-readiness.md) |
+| Reporting coverage | JSON contains the detailed evidence; `--out` saves a report, not an immutable receipt or a history service. The map TUI does not display connected release-history rows. Use the command's report for this check. |
+
+The first three gaps are a **future v2.13.0 candidate**, not a committed release
+date. #584 also requires shared CLI/plugin/MCP/TUI evidence, partial-access
+handling, isolated live tests and an API-load benchmark before those features
+can be called complete. Watch/bot scheduling needs a separate design.
+
+Some boundaries are intentional: PASS is a dated observation, not an atomic
+snapshot, continuous health guarantee, publication-authority decision or
+application functional test. The check is read-only and does not repair drift.
+Unknown or missing evidence must stay visible. For unattended Windows runs,
+use an outer timeout: helper descendant-process cleanup is not guaranteed.
 
 ## What Complete Deployment Proof Checks
 
@@ -168,21 +195,15 @@ and Jobs are `unknown` with `workload-ownership-unsupported`.
 
 ## Limits And Read Boundaries
 
-- `v2.12.0` does not prove all replicas: label-selected image IDs can hide
-  missing Pod status, running-state, and owner-UID evidence.
 - In **v2.12.1**, incomplete, ambiguous, capped, denied,
   stale, racing, terminating, foreign, duplicate, or zero-replica evidence
   remains `unknown` / `INCONCLUSIVE`.
 - Malformed entries, missing container names/images, and duplicate intended
   names produce `intended-containers-malformed`; entries are not dropped.
-- Only regular `containers` are assessed. `initContainers` and
-  `ephemeralContainers` are excluded. Application behavior and traffic are not
-  assessed.
 - `--max-pods` defaults to 50 and accepts 1..200. Pod LIST responses are capped
   at 2 MiB; each read has a 10-second deadline and the full check has a
   90-second deadline. No pagination or hidden retry is used.
-- Index/platform differences remain `digest-form-unresolved`; no registry image
-  resolution is performed.
+- Unresolved index/platform differences use the reason `digest-form-unresolved`.
 
 Without image checks, N desired objects cost at most `2N + 4` Kubernetes
 requests for Argo or `2N + 8` for Flux. Image proof adds at most `2R + 3` per
