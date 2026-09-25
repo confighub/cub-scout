@@ -130,7 +130,9 @@ cub unit set-target --space "*" --where "Space.Labels.Environment = 'prod'" plat
 # Apply all the units
 ##########################
 
-cub unit approve --space "*" --where "Labels.Application LIKE 'app%'"
+for space in appchat-dev appvote-dev apptique-dev appchat-prod appvote-prod apptique-prod; do
+  cub variant approve "$space" --where "Labels.Application LIKE 'app%'"
+done
 
 #cub unit apply --wait --space "*" --where "Labels.Application LIKE 'app%'"
 cub unit apply --wait --space appchat-dev
