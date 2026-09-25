@@ -117,15 +117,16 @@ Current local CLI truth (cub v0.5.7 installed; cub v0.6.2 is the newest release,
   gone; `Revision.Attestations` (an ID map) and `Revision.DataHash` are what a
   reader has. The runner refuses `unit approve` like the other removed
   subcommands. What cub-scout should read from Attestations is scoped in #591.
-- Version skew is fatal below 1.0: a change in cub's *second* version number is
-  not backward compatible. `cub auth status` compares the client with the
-  server (`ConfigHub-Version` header or `/api/info`) and exits non-zero when the
-  client is older (`cub v0.5.x is too old for server v0.6.y ...`); a newer
-  client only warns. `cub auth status` is also cub-scout's connected gate, so a
-  0.5 cub against a 0.6 server refuses every connected command with that
-  message (under the gate's "did not report an authenticated session" label).
-  Keep the installed cub at the server's minor; a local `cub server` on 0.5 and
-  hub.confighub.com on 0.6 cannot both be served by one binary.
+- Version skew is directional below 1.0: a change in cub's *second* version
+  number is not backward compatible. `cub auth status` compares the client with
+  the server (`ConfigHub-Version` header or `/api/info`). A client *older* than
+  the server is refused (`cub v0.5.x is too old for server v0.6.y ...`, exit
+  non-zero); a client *newer* than the server only warns that some commands may
+  fail. `cub auth status` is also cub-scout's connected gate, so a 0.5 cub
+  against a 0.6 server refuses every connected command with that message (under
+  the gate's "did not report an authenticated session" label). Keep the
+  installed cub at or above the server's minor: one 0.6 cub serves
+  hub.confighub.com (0.6) and, with the warning, a local `cub server` on 0.5.
 
 Important:
 - `cub variant upload` ingests what you give it and renders nothing. The render

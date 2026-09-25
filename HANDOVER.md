@@ -6,9 +6,9 @@ cub v0.6.0 to v0.6.2 (2026-09-25) removed `cub unit approve`, the `ApprovedBy`
 fields and the `vet-approvedby` / `is-approved` functions. Approval is now a
 space-level Attestation (`cub variant approve`, `cub attestation ...`) that a
 ChangeWorkflow requires. Below 1.0 a change in cub's second version number is
-not backward compatible, and `cub auth status`, which is cub-scout's connected
-gate, refuses a server newer than the client, so the installed cub must match
-the server's minor. #589 moved the apptique example to `cub variant approve`;
+not backward compatible: `cub auth status`, which is cub-scout's connected
+gate, refuses a client older than the server and only warns for a newer one,
+so the installed cub must be at or above the server's minor. #589 moved the apptique example to `cub variant approve`;
 the runner and its guard test now refuse `unit approve`; #591 scopes reading
 Attestations as evidence, populating the receipt `confighub-unit://` subject
 with `DataHash`, and telling in-toto receipts apart from ConfigHub Attestations.
