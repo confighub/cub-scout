@@ -121,6 +121,7 @@ func TestNoCubCallUsesARemovedSubcommand(t *testing.T) {
 		{"unit", "apply"}:     "removed in July 2026; nothing applies a unit — see cub_unit_apply.go (#571)",
 		{"unit", "destroy"}:   "removed in July 2026 with unit apply",
 		{"unit", "refresh"}:   "removed in July 2026; the current verb is `cub k8s refresh`",
+		{"unit", "approve"}:   "removed in cub 0.6 (2026-09-25); approval is a space-level Attestation, `cub variant approve <space> --where \"Slug = '...'\"` (#591)",
 		// The whole `gitops` group went in the same commit (#573). The runner
 		// does not refuse it at run time, because an unknown top-level command
 		// exits 1 honestly and a plugin could supply one — but cub-scout's own

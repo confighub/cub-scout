@@ -102,13 +102,30 @@ Use it for:
 - `cub k8s source` (trace one live resource back to its unit)
 - `cub link list / get` (the data feed for cub-scout's connected attribution layer)
 
-Current local CLI truth (cub v0.5.3):
+Current local CLI truth (cub v0.5.7 installed; cub v0.6.2 is the newest release, 2026-09-25):
 - `cub variant upload --component <name> <dir | file | - | oci://ref>`
 - `cub gitops discover` and `cub gitops import` **no longer exist**. cub deleted
   the whole `gitops` group on 2026-07-25, in the same commit that removed
   `unit apply`, `unit destroy`, `unit import` and `unit refresh`. That commit
   added no replacement, and `cub gitops` now exits 1 with
   `unknown command "gitops" for "cub"` (#573).
+- cub v0.6.0 (2026-09-25) removed `cub unit approve`. Approval is a space-level
+  Attestation: `cub variant approve <space> --where "Slug = '...'"` approves one
+  unit, `cub attestation create|get|list|revoke` records and reads other claims,
+  and a ChangeWorkflow requires them. `Unit.ApprovedBy`, `Revision.ApprovedBy`,
+  `UnapprovedUnitCount` and the `vet-approvedby` / `is-approved` functions are
+  gone; `Revision.Attestations` (an ID map) and `Revision.DataHash` are what a
+  reader has. The runner refuses `unit approve` like the other removed
+  subcommands. What cub-scout should read from Attestations is scoped in #591.
+- Version skew is fatal below 1.0: a change in cub's *second* version number is
+  not backward compatible. `cub auth status` compares the client with the
+  server (`ConfigHub-Version` header or `/api/info`) and exits non-zero when the
+  client is older (`cub v0.5.x is too old for server v0.6.y ...`); a newer
+  client only warns. `cub auth status` is also cub-scout's connected gate, so a
+  0.5 cub against a 0.6 server refuses every connected command with that
+  message (under the gate's "did not report an authenticated session" label).
+  Keep the installed cub at the server's minor; a local `cub server` on 0.5 and
+  hub.confighub.com on 0.6 cannot both be served by one binary.
 
 Important:
 - `cub variant upload` ingests what you give it and renders nothing. The render

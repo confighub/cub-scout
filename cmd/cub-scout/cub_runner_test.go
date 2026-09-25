@@ -66,6 +66,7 @@ func TestCubRunnerRefusesACallThatNamesNoSpace(t *testing.T) {
 		// Removed surface.
 		{name: "unit livedata", args: []string{"unit", "livedata", "api", "--space", "prod"}, want: "no longer exists"},
 		{name: "unit apply", args: []string{"unit", "apply", "api", "--space", "prod"}, want: "no longer exists"},
+		{name: "unit approve", args: []string{"unit", "approve", "api", "--space", "prod"}, want: "no longer exists"},
 		// A space command names its space as the positional.
 		{name: "space get", args: []string{"space", "get", "prod"}},
 		{name: "space create", args: []string{"space", "create", "prod", "-o", "json"}},
