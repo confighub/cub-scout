@@ -435,6 +435,20 @@ Same read-only-triad invariant applies: every `pilot-*` skill's `allowed-tools` 
 
 ---
 
+### ConfigHub Attestations (cub >= v0.5.7)
+
+cub v0.5.7 records approvals as space-level Attestations instead of per-unit
+`cub unit approve`; #589 moved this repo's last use of it, in the apptique
+example, to `cub variant approve`. Three read-only follow-ups are scoped in
+[#591](https://github.com/confighub/cub-scout/issues/591), which is their only
+status source: reading Attestations as evidence on `explain`, `trace` and
+`receipt verify --with-confighub` plus a `confighub_attestations` MCP tool;
+populating the receipt `confighub-unit://` subject (every connected receipt
+records the `confighub-unit-subject` omission today) with the Revision
+`DataHash` as a second digest; and disambiguating "attestation" (an in-toto
+receipt) from ConfigHub's Attestation entity in docs and skills. None of them
+has cub-scout create an Attestation or evaluate a ChangeWorkflow requirement.
+
 ## How to Read This Roadmap
 
 * **Released** sections are sealed unless explicitly reopened.
