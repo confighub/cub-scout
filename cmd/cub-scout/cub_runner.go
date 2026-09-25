@@ -67,6 +67,7 @@ var cubRemovedCommands = map[string]string{
 	"unit destroy":   "removed July 2026 with unit apply",
 	"unit import":    "removed July 2026 with unit apply",
 	"unit refresh":   "removed July 2026; the current verb is `cub k8s refresh`",
+	"unit approve":   "removed in cub 0.6 (2026-09-25); approval is a space-level Attestation: `cub variant approve <space> --where \"Slug = '...'\"` (#591)",
 }
 
 // The `gitops` group was removed from cub in July 2026 as well (#573), and it is
