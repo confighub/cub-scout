@@ -438,20 +438,16 @@ Same read-only-triad invariant applies: every `pilot-*` skill's `allowed-tools` 
 ### ConfigHub Attestations (cub >= v0.5.7)
 
 cub v0.5.7 records approvals as space-level Attestations instead of per-unit
-`cub unit approve` (#590 removed this repo's last use of it). Tracked in
-[#591](https://github.com/confighub/cub-scout/issues/591). All three items are
-read-only; none of them has cub-scout create an Attestation or evaluate a
-ChangeWorkflow requirement.
-
-- [ ] Read Attestations as evidence in connected mode on `explain`, `trace` and
-  `receipt verify --with-confighub`, plus a `confighub_attestations` MCP tool,
-  keyed by the live object's space, unit and revision. #591 (A)
-- [ ] Populate the receipt `confighub-unit://` subject from `cub unit get` (every
-  connected receipt records the `confighub-unit-subject` omission today) and carry
-  the Revision `DataHash` as a second digest. #591 (B)
-- [ ] Disambiguate "attestation" in docs and skills: a cub-scout receipt is an
-  in-toto Statement about live state; a ConfigHub Attestation is a server entity
-  about Revisions. #591 (C)
+`cub unit approve`; #589 moved this repo's last use of it, in the apptique
+example, to `cub variant approve`. Three read-only follow-ups are scoped in
+[#591](https://github.com/confighub/cub-scout/issues/591), which is their only
+status source: reading Attestations as evidence on `explain`, `trace` and
+`receipt verify --with-confighub` plus a `confighub_attestations` MCP tool;
+populating the receipt `confighub-unit://` subject (every connected receipt
+records the `confighub-unit-subject` omission today) with the Revision
+`DataHash` as a second digest; and disambiguating "attestation" (an in-toto
+receipt) from ConfigHub's Attestation entity in docs and skills. None of them
+has cub-scout create an Attestation or evaluate a ChangeWorkflow requirement.
 
 ## How to Read This Roadmap
 
