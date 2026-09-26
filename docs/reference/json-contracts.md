@@ -1136,7 +1136,7 @@ Field rules:
 | `deliveryEvidence.namespace` | The explicit Kubernetes namespace scope used for the collection, when supplied. It is not inferred from ConfigHub space names. |
 | `deliveryEvidence.matchedBy[]` | Optional exact join keys. Argo Application joins include `scope.space`, `argocdApplication.spaceId`, and `argocdApplication.name`. Absent on standalone ConfigHub status rows. |
 | `deliveryEvidence.observedAt` | Original live-status report timestamp, also on joined Application rows. Omitted when absent; invalid strings are retained for inspection. A timeline row's `time` may fall back to collection time and must not be mistaken for the report timestamp. |
-| `result` | Timeline rendering bucket: `success`, `pending`, `failed`, `inconclusive`, or `normal`, derived from the row's observed status/verdict only. |
+| `result` | Timeline rendering bucket: `success`, `pending`, `failed`, `inconclusive`, or `normal`, derived from the row's observed status/verdict only. For ConfigHub unit events it follows ConfigHub's values exactly: Status `Failed` is `failed`; `Completed` is `success` unless Result ends in `Failed`; `Pending`, `Submitted` and `Progressing` are `pending`; `Aborted` and `Canceled` are `inconclusive`; with no Status, a Result ending in `Failed` or `Completed` decides; no Status and no Result is `normal`; any other value is `inconclusive`, never `success`. `doctor` promotes only `failed` unit events to issues. |
 | `owner` | `ConfigHub` for these rows so `--owner ConfigHub` can select them. |
 | `source` | Stable row source; consumers should dispatch on `source` or `deliveryEvidence.kind`, not parse `message`. |
 
