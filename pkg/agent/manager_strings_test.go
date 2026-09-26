@@ -111,6 +111,12 @@ func TestIsInteractiveManager(t *testing.T) {
 		{"kubectl create", ManagerKubectlCreate, true},
 		{"kubectl replace", ManagerKubectlReplace, true},
 		{"kubectl last-applied", ManagerKubectlLastApplied, true},
+		{"kubectl set", ManagerKubectlSet, true},
+		{"kubectl rollout", ManagerKubectlRollout, true},
+		{"kubectl label", ManagerKubectlLabel, true},
+		{"kubectl annotate", ManagerKubectlAnnotate, true},
+		{"kubectl expose", ManagerKubectlExpose, true},
+		{"kubectl autoscale", ManagerKubectlAutoscale, true},
 
 		// Controller strings are not interactive.
 		{"argocd-controller is not interactive", ManagerArgoCD, false},

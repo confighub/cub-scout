@@ -125,6 +125,31 @@ const ManagerKubectlReplace = "kubectl-replace"
 // annotation. Source: kubernetes/kubectl `fieldManagerLastAppliedAnnotation`.
 const ManagerKubectlLastApplied = "kubectl-last-applied"
 
+// The field managers below are written by kubectl's other mutating commands.
+// Each was measured with kubectl v1.36.0 against a kind cluster (#624); the
+// names are the per-command defaults in kubernetes/kubectl `pkg/cmd/<cmd>/`.
+// Without them a hand edit on a controller-owned object was attributed to the
+// controller.
+
+// ManagerKubectlSet is used by `kubectl set image|env|resources|...`.
+const ManagerKubectlSet = "kubectl-set"
+
+// ManagerKubectlRollout is used by `kubectl rollout restart` and friends.
+const ManagerKubectlRollout = "kubectl-rollout"
+
+// ManagerKubectlLabel is used by `kubectl label`.
+const ManagerKubectlLabel = "kubectl-label"
+
+// ManagerKubectlAnnotate is used by `kubectl annotate`.
+const ManagerKubectlAnnotate = "kubectl-annotate"
+
+// ManagerKubectlExpose is used by `kubectl expose` on the Service it creates.
+const ManagerKubectlExpose = "kubectl-expose"
+
+// ManagerKubectlAutoscale is used by `kubectl autoscale` on the
+// HorizontalPodAutoscaler it creates.
+const ManagerKubectlAutoscale = "kubectl-autoscale"
+
 // managerMatcher describes how a manager string is matched against an entry
 // from metadata.managedFields. Most matches are exact; Crossplane composed
 // children use a hashed suffix that requires prefix matching.
@@ -218,6 +243,12 @@ var interactiveManagers = []managerMatcher{
 	{pattern: ManagerKubectlCreate},
 	{pattern: ManagerKubectlReplace},
 	{pattern: ManagerKubectlLastApplied},
+	{pattern: ManagerKubectlSet},
+	{pattern: ManagerKubectlRollout},
+	{pattern: ManagerKubectlLabel},
+	{pattern: ManagerKubectlAnnotate},
+	{pattern: ManagerKubectlExpose},
+	{pattern: ManagerKubectlAutoscale},
 }
 
 // IsControllerManagerFor returns true when the manager string indicates the

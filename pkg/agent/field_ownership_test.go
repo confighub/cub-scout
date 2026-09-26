@@ -304,6 +304,29 @@ func TestAttributeFieldMutation_ManagerHintPrefersInteractiveWhenMixed(t *testin
 			wantHint:  ManagerKubectlPatch,
 		},
 		{
+			// #624: `kubectl set image` on a Flux-owned Deployment was
+			// reported as controller-drift by kustomize-controller.
+			name:      "flux kustomize + kubectl-set",
+			owner:     Ownership{Type: OwnerFlux, SubType: "kustomization"},
+			mgrs:      []string{ManagerFluxKustomize, ManagerKubectlSet, "kube-controller-manager"},
+			wantCause: CauseManualEdit,
+			wantHint:  ManagerKubectlSet,
+		},
+		{
+			name:      "argo + kubectl-rollout",
+			owner:     Ownership{Type: OwnerArgo, SubType: "application"},
+			mgrs:      []string{ManagerArgoCD, ManagerKubectlRollout},
+			wantCause: CauseManualEdit,
+			wantHint:  ManagerKubectlRollout,
+		},
+		{
+			name:      "helm direct + kubectl-label",
+			owner:     Ownership{Type: OwnerHelm, SubType: "release"},
+			mgrs:      []string{ManagerHelm, ManagerKubectlLabel},
+			wantCause: CauseManualEdit,
+			wantHint:  ManagerKubectlLabel,
+		},
+		{
 			name:      "helm direct + kubectl-replace",
 			owner:     Ownership{Type: OwnerHelm, SubType: "release"},
 			mgrs:      []string{ManagerHelm, ManagerKubectlReplace},
