@@ -1,1 +1,0 @@
-tool command failed (trace deployment/hotfix-worker -n default --format json): exit status 1

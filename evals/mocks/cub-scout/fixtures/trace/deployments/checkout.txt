@@ -1,1 +1,0 @@
-tool command failed (trace deployment/checkout -n shop --format json): exit status 1

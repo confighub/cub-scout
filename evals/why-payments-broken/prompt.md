@@ -8,4 +8,4 @@ timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory you have read access to (namespaces, deployments, replicasets, pods, services, configmaps, events). `payments-api` in the `payments` namespace isn't serving. What is wrong with it? Finish with one line `CAUSE: <short cause>`.
+I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). `payments-api` in the `payments` namespace isn't serving. What is wrong with it? Finish with one line `CAUSE: <short cause>`.

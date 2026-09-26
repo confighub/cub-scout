@@ -15,13 +15,15 @@ cases, a scheduled CI run and published results come next.
 Needs Claude Code 2.1.269 or later, logged in. Runs count against that account.
 
 ```bash
-claude plugin eval . --runs 3 --max-cost-usd 10
+claude plugin eval . --scaffold --runs 3 --max-cost-usd 10
 ```
 
-A single case, one run, no baseline (cheapest while editing graders):
+`--scaffold` is required: each case's `scaffold.sh` writes the cluster export
+into the run's workspace. A single case, one run per arm (cheapest while
+editing graders):
 
 ```bash
-claude plugin eval . --case owner-unlabelled --runs 1 --ablation none
+claude plugin eval . --scaffold --case owner-unlabelled --runs 1 --keep-temp
 ```
 
 Runs are sandboxed: no home directory, no kubeconfig, no network. Nothing touches
@@ -29,17 +31,23 @@ a cluster or ConfigHub.
 
 ## Design
 
-- **Both arms see the same evidence.** Each case's `cluster/` directory is a
-  `kubectl get -o yaml` export of the scenario (`add_dirs` in `case.yaml`). The
-  without-cub-scout arm answers from that export alone. The with-cub-scout arm
-  also gets the plugin's skills and cub-scout's MCP tools. So `Δ` measures what
+- **Both arms see the same evidence.** Each case's `scaffold.sh` writes a
+  `kubectl get -o yaml` export of the scenario into the run's workspace as
+  `./cluster/`, with the files embedded (a first attempt with `add_dirs` left
+  the agent unable to find the directory). The without-cub-scout arm answers
+  from that export alone. The with-cub-scout arm also gets the plugin's skills
+  and cub-scout's MCP tools. So `Δ` measures what
   cub-scout adds on the same evidence, not the value of having any data at all.
 - **MCP answers are recordings.** `mocks/cub-scout/` answers `doctor`, `map`,
   `scan`, `gitops_status`, `trace` and `explain` with what a standalone
-  `cub-scout mcp serve` returned for the scenario. `trace` and `explain` pick
-  the recording for the `resource` argument; `_tools.json` is the real
-  `tools/list`, so the agent sees the real tool descriptions. Tools without a
-  recording (`release_check`) are not offered.
+  `cub-scout mcp serve` returned for the scenario. `trace` and `explain` are
+  agent mocks: a small model returns the recording for the call's `resource`,
+  accepting the same spellings as the real tool (`deploy|deployment|deployments`
+  in any case, then `/NAME`) and returning the real tool's error for a bare
+  name or an unknown Deployment. The harness cannot key a fixed mock on a value
+  containing `/`. `_tools.json` is the real `tools/list`, so the agent sees
+  the real tool descriptions. Tools without a recording (`release_check`) are
+  not offered.
 - **Deterministic graders.** Every prompt asks for a final line (`OWNER:`,
   `UNMANAGED:`, `CAUSE:`, `REVISION:`), and regex graders check it. Each
   grader also fails an empty answer. `skill-fired` and `used-cub-scout-mcp` are
@@ -70,8 +78,10 @@ kind delete cluster --name scout-evals
 
 `kind create cluster` switches your current kubectl context; switch it back.
 `record.py` reads only the named context, hides `cub` from PATH so the server
-is recorded in standalone mode, and copies the export into every case that
-reads it.
+is recorded in standalone mode, and regenerates every case's `scaffold.sh`
+(`record.py --scaffolds-only` does only that, from the committed export).
+`test/unit/evals_fixtures_test.go` fails if a scaffold drifts from the
+recording.
 
 ## What the recordings show today
 

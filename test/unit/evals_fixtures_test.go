@@ -10,10 +10,11 @@ import (
 	"testing"
 )
 
-// Every eval case reads its own copy of the recorded cluster export (add_dirs
-// must be inside the case directory). The copies must match the recording, so
-// both eval arms and every case see the same evidence (#603).
-func TestEvalCaseClusterCopiesMatchRecording(t *testing.T) {
+// Each eval run starts in an empty workspace; a case's scaffold.sh writes the
+// recorded cluster export there with the files embedded. Every case must
+// write exactly the recording, so both eval arms and every case see the same
+// evidence (#603).
+func TestEvalScaffoldsWriteTheRecordedExport(t *testing.T) {
 	root := filepath.Join("..", "..", "evals")
 	recorded, err := filepath.Glob(filepath.Join(root, "fixtures", "cluster", "*.yaml"))
 	if err != nil || len(recorded) == 0 {
@@ -28,16 +29,42 @@ func TestEvalCaseClusterCopiesMatchRecording(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(data), "add_dirs: [cluster]") {
+		if !strings.Contains(string(data), "scaffold_script: scaffold.sh") {
+			t.Errorf("%s: every case reads the export through scaffold.sh", caseYAML)
 			continue
 		}
-		dir := filepath.Dir(caseYAML)
+		script, err := os.ReadFile(filepath.Join(filepath.Dir(caseYAML), "scaffold.sh"))
+		if err != nil {
+			t.Errorf("%s: %v", caseYAML, err)
+			continue
+		}
+		written := scaffoldFiles(string(script))
 		for _, src := range recorded {
 			want, _ := os.ReadFile(src)
-			got, err := os.ReadFile(filepath.Join(dir, "cluster", filepath.Base(src)))
-			if err != nil || string(got) != string(want) {
-				t.Errorf("%s/cluster/%s differs from the recording; re-run evals/scripts/record.py", dir, filepath.Base(src))
+			name := filepath.Base(src)
+			if got, ok := written[name]; !ok || got != strings.TrimRight(string(want), "\n") {
+				t.Errorf("%s/scaffold.sh does not write the recorded %s; run evals/scripts/record.py --scaffolds-only", filepath.Dir(caseYAML), name)
 			}
 		}
 	}
+}
+
+// scaffoldFiles returns the files a generated scaffold.sh writes, by name.
+func scaffoldFiles(script string) map[string]string {
+	const delim = "CUB_SCOUT_EVAL_EOF"
+	files := map[string]string{}
+	lines := strings.Split(script, "\n")
+	for i := 0; i < len(lines); i++ {
+		name, ok := strings.CutPrefix(lines[i], "cat > cluster/")
+		if !ok {
+			continue
+		}
+		name, _, _ = strings.Cut(name, " ")
+		var body []string
+		for i++; i < len(lines) && lines[i] != delim; i++ {
+			body = append(body, lines[i])
+		}
+		files[name] = strings.Join(body, "\n")
+	}
+	return files
 }

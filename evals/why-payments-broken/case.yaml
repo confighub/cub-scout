@@ -1,4 +1,4 @@
 schema_version: "1.1"
 name: why-payments-broken
 context:
-  add_dirs: [cluster]
+  scaffold_script: scaffold.sh
