@@ -177,6 +177,11 @@ func skillAllowedTools(t *testing.T) map[string][]string {
 				break
 			}
 			if rest, ok := strings.CutPrefix(line, "allowed-tools:"); ok {
+				// A YAML list on the following lines would parse as no grants
+				// and pass unchecked, so require the single-line form.
+				if strings.TrimSpace(rest) == "" {
+					t.Errorf("%s: write allowed-tools on one line so every grant is checked", file)
+				}
 				grants[file] = allowedToolsTokenRE.FindAllString(strings.TrimSpace(rest), -1)
 			}
 		}
