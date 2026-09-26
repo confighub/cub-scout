@@ -147,8 +147,8 @@ limits, not reasons to treat an INCONCLUSIVE result as a pass.
 | Installation coverage | Authenticated testing used a local ConfigHub installation. Published Linux arm64 binaries were live-tested with Argo; Flux used the equivalent source build. macOS arm64 had smoke checks only. Hosted setups, Windows runtime and Homebrew installation remain unverified. [Test record](../releases/image-verification-readiness.md) |
 | Reporting coverage | JSON contains the detailed evidence; `--out` saves a report, not an immutable receipt or a history service. The map TUI does not display connected release-history rows. Use the command's report for this check. |
 
-The first three gaps are a **future v2.13.0 candidate**, not a committed release
-date. #584 also requires shared CLI/plugin/MCP/TUI evidence, partial-access
+The first three gaps are tracked in #584, scheduled in stage 2 of the roadmap's
+[Path to 3.0](../roadmap.md#path-to-30), not for a committed release or date. #584 also requires shared CLI/plugin/MCP/TUI evidence, partial-access
 handling, isolated live tests and an API-load benchmark before those features
 can be called complete. Watch/bot scheduling needs a separate design.
 
