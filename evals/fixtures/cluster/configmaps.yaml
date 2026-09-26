@@ -4,23 +4,23 @@ items:
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -29,32 +29,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:29:25Z"
+    creationTimestamp: "2026-09-26T19:31:13Z"
     name: kube-root-ca.crt
     namespace: default
-    resourceVersion: "344"
-    uid: bf6396d5-4736-445f-8066-a1a3e43d6adc
+    resourceVersion: "358"
+    uid: 49447385-3a68-4bac-87b8-fcdc5bba6dee
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -63,32 +63,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:31:06Z"
+    creationTimestamp: "2026-09-26T19:31:25Z"
     name: kube-root-ca.crt
     namespace: inventory
-    resourceVersion: "582"
-    uid: d7fa0a97-e7c2-4b78-b11e-f2bc2966519d
+    resourceVersion: "440"
+    uid: 2e80f229-f238-47c9-9498-02590a467752
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -97,19 +97,19 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:29:25Z"
+    creationTimestamp: "2026-09-26T19:31:13Z"
     name: kube-root-ca.crt
     namespace: kube-node-lease
-    resourceVersion: "345"
-    uid: 82a18357-91c5-4ec4-aa3a-866ca2cccf14
+    resourceVersion: "359"
+    uid: e576a435-c45f-4794-a586-3a85b30e0723
 - apiVersion: v1
   data:
-    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..obmX93KLRWw98JIZ5UakgSx7MOHExZlw9eAcT50kqms
+    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..DTcDDCKOr9dvBVcIr1MavW6geZo37oDx2ElfeSG3MUY
     kubeconfig: |
       apiVersion: v1
       clusters:
       - cluster:
-          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCRENDQWV5Z0F3SUJBZ0lIZG8xaGNnNVZ1VEFOQmdrcWhraUc5dzBCQVFzRkFEQVZNUk13RVFZRFZRUUQKRXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURreU5qRTFNalF4TWxvWERUTTJNRGt5TXpFMU1qa3hNbG93RlRFVApNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DCmdnRUJBTkVscENodXFZQy9zdkxlZzVHVW1ncFZSQnZOUUhGQnZybnRCU3lpUHlENEc4Sm5rdlVwWEFlaG9lS0sKYS9SZWllNU5wVE1QZHJwSTRUSFN6eE45ZUErM2VPaEZzRUFVSWZHOGNCYjM2czdxRmVqbTd3Y0RZMkpRN1FSVQp2bWoyVE40d2dlakZBVzZQT3BvVlZmVTAwUXZGZ3cwZ09OOWs0ZmFpaVZDMS9rTmg4Q1dEQms5dU1NSTVHdUxBCjVVaGRRb0E3aG0rTEJYUmJqK21IVzVnNXVSN0Y5VGRCMWxVZ0tOYXdGeXIyZ1UwWFVZRkpqblMzWTlxanVHQ3oKMHRoR0JoRmZFMjYxVUlibG9SUWFxb0wzZG5JZUEyaVBxem9VeDhsYVBZOWtlRVlaaG96OXZFcVc5YnRYOTdQSwpOQ0dwT0N2V0Z5T3VpWFAxZVp3dTFIUkNXLzhDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvQkFRREFnS2tNQThHCkExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkJWWnNKdTVnNFQ1WG04VU9QMlB1THl0RWg3a01CVUcKQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFLQlFtRXFoUEVIYwpZd0JtZlY0Nmp5Zm1xdUVDRytNYUo3MlZpL1laTk5QMHRFVmhITmYwOVhKMDkzMG1oWEdPMEJsMnRHOTZyVmRYCnBXY3doN0E4OFdFa2hqTWxJV0xGZWpLcFgxNHkxYlNvMVg2ZzZjZi93WFcrTEl1djR5SmtqMVVmZnB1bmtibDIKN1JBNXBtY0RZZkdGUU9lRDh6OW84Szd0ZDA5UG95bFlrRmN4UUpJNSs4YUV4U0ZqWDJyVlFidEJHZWdpYmkzWQoySzZ2MmpEaDBoZnBJTFpkN0p3dlVYNUNjR1MrVmNBaXhtOHhvNUtDS29vSnVZUGRHODNqdnlnQU9iTS81WmkwCnZ3d2xWd0lOWi9Sb2xGUnZpRU5MOWQyNVR3OW1LT3dOTFVCRjFudWZyYmRKRkMvelB3WXZiS04zNE42bWk5V3YKZ283U1ZZaFY0dFE9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJSVE4WW1wUEdUazR3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpBNU1qWXhPVEkyTURGYUZ3MHpOakE1TWpNeE9UTXhNREZhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUUR3SW1CTkw4RTFWeXRmQmk5T25zUWcwcVpNekJGeEpEWHV4eXZpbzN2MjVic0ZVa2lZSHFBMTdhUHcKRDlIVC9DY0xSSjVURzFzTVVrc0dULzl4UnRNWHpldWt0amdUMzczS0NxclQ1aGRET0NIb1FKd2k1RUNMZFk1UgpkT0lBcVhLR0tDczdsUFFFNUhHWENsRDYxZWl5UlM0akFrV3VMOTc3SDZrcGVPUEJ3VEZHc1JMOHhZUy9vS0lpCmdLRDRJUEFUZDljUkhyWTNLVHpweVZ2OU5HeXVDclpZSStWWWpNU1Z4T3NzMDRDUW5WWG1QQUk3KzJVUnNncHIKY1BTbkdRZ3A2NHNWNzBkYkNTbitSbjRxdm9RU0VSd3ZEdFdZUUtrdnN2SVAxd0l6TWtpSXVSakVLeStLblpoWQpreVFvenhvelhQTys5Nm9oK0dzRzM5YXROZE1OQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJUa0FvVkx6cFBpSSs4SDFHVEtzVEVOTFFzMklqQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQUNhWlUzMXdhYQpnMjZrN0x2Ly9ueUNYYmFFNkJDUFFSSmZLTlJQcUhoYzdCQ0Qya0pHWHJpQ2R6RUZ5bHVDS08vZDlMOTk1MTRUCjZMemphN004TUNld1g3L1NtcHN4NmpDUk55MGkvYTBOUXNhUHZoVDJhNVUvbmMrYWl0WHcwTHA2WnV2R1lVNnIKRGZteEtpQXp1cUQwdDlVMGJ2U3dtRm96bG9ud1lkNEF0Tmw2RGhCa2FJMlgyemF3NndHRHBXNzVmejFRT1lkZApFdUkyYmRLSWhjWU55WVl0dVhra0pwbktsaHF5R0d0bmI2M1lDVHVMWEMwTWpJejNsNGxIKzBGN2hEU05UeDY2CjVBM0hGOC8wZ0VkYnFUL0cvV2trTXhSR1dFdmZNdjNiNHhscG4zU0Q4c2NTU01MTk9PSmR0V1h1NHVPNTRFbXcKWmdJUEtSbWlUZGNFCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
           server: https://scout-evals-control-plane:6443
         name: ""
       contexts: null
@@ -118,32 +118,32 @@ items:
       users: null
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-26T15:29:16Z"
+    creationTimestamp: "2026-09-26T19:31:06Z"
     name: cluster-info
     namespace: kube-public
-    resourceVersion: "323"
-    uid: a4bc81ec-8085-4d14-b0c4-a14022dedf07
+    resourceVersion: "331"
+    uid: 5b81c7f8-0f92-47bc-99d0-747548715883
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -152,11 +152,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:29:25Z"
+    creationTimestamp: "2026-09-26T19:31:13Z"
     name: kube-root-ca.crt
     namespace: kube-public
-    resourceVersion: "340"
-    uid: 15a8776f-f649-4b6d-8fb1-71206b344fe6
+    resourceVersion: "360"
+    uid: e6ee42d1-9983-4c6f-ae11-4a46238d6bc5
 - apiVersion: v1
   data:
     Corefile: |
@@ -185,74 +185,74 @@ items:
       }
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-26T15:29:17Z"
+    creationTimestamp: "2026-09-26T19:31:06Z"
     name: coredns
     namespace: kube-system
     resourceVersion: "227"
-    uid: 5b64dd66-a660-4c14-85c2-c01c410f0005
+    uid: d83931d9-035b-49ea-89a8-c3111d5b1298
 - apiVersion: v1
   data:
     client-ca-file: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
     requestheader-allowed-names: '["front-proxy-client"]'
     requestheader-client-ca-file: |
       -----BEGIN CERTIFICATE-----
-      MIIDETCCAfmgAwIBAgIIGvW0KsO9u+8wDQYJKoZIhvcNAQELBQAwGTEXMBUGA1UE
-      AxMOZnJvbnQtcHJveHktY2EwHhcNMjYwOTI2MTUyNDEyWhcNMzYwOTIzMTUyOTEy
+      MIIDETCCAfmgAwIBAgIIBNaoZ8nMyGowDQYJKoZIhvcNAQELBQAwGTEXMBUGA1UE
+      AxMOZnJvbnQtcHJveHktY2EwHhcNMjYwOTI2MTkyNjAxWhcNMzYwOTIzMTkzMTAx
       WjAZMRcwFQYDVQQDEw5mcm9udC1wcm94eS1jYTCCASIwDQYJKoZIhvcNAQEBBQAD
-      ggEPADCCAQoCggEBAL0qV9ixqsJOLdFQ7KveYDEf8vpCxaqsnfCnPyb4RooGU+G2
-      lR+JMaASZ+yn1TOKsbSJ4zNaxMbhKLVHlZBmDpoyM2gcOxovUgyUPjN7IyqEJdBN
-      7911Dsl2eYCEgCBfH+vV2VbHXmbm0ZESh3sv1Aaj+pBvwqXRsxHsKoeZC6093PfI
-      ngfOPcwY/u3L75+vJCxf5icQJFN6P/9CDvEndOk7een1d0Y7IAfgGsi2L87Ad56L
-      6JZogPSbc01s2y3fGZZUa5NXzO41IbJ/3+yf/TJ6+kKhV6X8Eqv6FOaZoWVMDx6+
-      fCWxfLdodgztD+B5hL3eFCbhfZmAEkLdaQH5w6cCAwEAAaNdMFswDgYDVR0PAQH/
-      BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFG+ydtG4rnahYPJqaMSm
-      wCiaxPWnMBkGA1UdEQQSMBCCDmZyb250LXByb3h5LWNhMA0GCSqGSIb3DQEBCwUA
-      A4IBAQA4Sb+E7HAIHce2PHNZeEhyYwnNPbtGes80QOIBACj6acWvH2CJUB2ldaGo
-      EVPtWnqZ34ZkseD22mUzLdHh6gwMxmz1ltGfapJ7iLNVxcgHvjT2jcNjo+qp/rDS
-      +tKQXG7aSxXpXJhG/zfg1pIr9okfsScfzzjCJA6c+p78jn8YnvmXBxjGZKuVgGdo
-      mqJrhLL5TFOpqCLCPMrgdJNwxRh1hoy9iqiDpxsZrdNo5trCEtBj6yp8pZlvDejV
-      esJT22pWZP6EQCwuBRjh1zLloj0n7KSAVwHGvDQiavXrYbC56VDK22EnKyv2KOyJ
-      2VJZYpbN2ZCqkQwcLxc+HaaagzTy
+      ggEPADCCAQoCggEBAM+zNPGcs2dszXdG83Sm5l3DDSVFW2JHhV/xdfR0B5skEcZQ
+      4S6U5UdDbF5ynG7lEQldZNNEMy4p7P7Ni2GauDRUaBEcD/piG3luzTLa96Ykk3rB
+      qSqdOgwSAqRGoY+9lArmbo/zJYTBkjTDZbzBeG6O8SjSL9a1I8XeOcvwTCFwHKZT
+      5DN3xvQTVux3BshmCOEnmXEB+3/drCS9y6acZsvlnvBf2s/6/EIBCzKBto8j870B
+      T+ZQKllMK3NAfVKTg5+T73xFOyY5PaTkFfrAbIFpaGMemfEU5An7XchQfsgJVq9r
+      qGkk85Sjb4cj1MdOITwQ+uPANckB7Y8tS4tC8icCAwEAAaNdMFswDgYDVR0PAQH/
+      BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFIE88Q8DvX07IS+PU2yY
+      miRSsMfCMBkGA1UdEQQSMBCCDmZyb250LXByb3h5LWNhMA0GCSqGSIb3DQEBCwUA
+      A4IBAQBgoAGz5Kvl8eaDQWoHx/2beaAlD6gMas4mfUf+0ER0vuZgaKvRrusBzKsS
+      0Zl76nb9PnMfleMTVHz7GWdl3c4Xg72TXqGzMJYwDSVRIuFrqTtc/8snSWX8uXCs
+      UIEAvLE9duxaLCjOQzXu1nYSHgU+jkRM2TfBbqg1iZb/NrWY2bnCWnRDhv31HRjz
+      wVpRsnb8lcUfFEQZwn4c1W1f1qIz+72MQUMKDShhor0P1MOY8FjeTmeWPOr66aZb
+      jRGQkqUTV8hcoe8dPYFr9Khc0CE7KUV9xjWmwTQTwFSxBkrVPkF5SWZV62Mz1WNt
+      6Vnqc6PEZNf/24fXEPZlA5M9ynow
       -----END CERTIFICATE-----
     requestheader-extra-headers-prefix: '["X-Remote-Extra-"]'
     requestheader-group-headers: '["X-Remote-Group"]'
     requestheader-username-headers: '["X-Remote-User"]'
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-26T15:29:15Z"
+    creationTimestamp: "2026-09-26T19:31:04Z"
     name: extension-apiserver-authentication
     namespace: kube-system
-    resourceVersion: "21"
-    uid: d7cc6949-c808-4960-ad42-5c73ab4f5171
+    resourceVersion: "22"
+    uid: 460e8666-f13a-4a83-98fd-306fbbd8d0ee
 - apiVersion: v1
   data:
     since: "2026-09-26"
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-26T15:29:15Z"
+    creationTimestamp: "2026-09-26T19:31:05Z"
     name: kube-apiserver-legacy-service-account-token-tracking
     namespace: kube-system
-    resourceVersion: "64"
-    uid: 79ee13bd-faf2-41d3-aa91-90d5b5727695
+    resourceVersion: "65"
+    uid: 860ed01d-072c-4745-97e1-cf551e4022a3
 - apiVersion: v1
   data:
     config.conf: |-
@@ -344,34 +344,34 @@ items:
           tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-26T15:29:17Z"
+    creationTimestamp: "2026-09-26T19:31:07Z"
     labels:
       app: kube-proxy
     name: kube-proxy
     namespace: kube-system
     resourceVersion: "241"
-    uid: afedd064-7374-485c-8da8-ad46ca9fa524
+    uid: 53903ce6-21e1-443a-914a-180739761aa9
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -380,11 +380,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:29:25Z"
+    creationTimestamp: "2026-09-26T19:31:13Z"
     name: kube-root-ca.crt
     namespace: kube-system
-    resourceVersion: "342"
-    uid: 03eead52-3cfd-4155-a1dd-1283e7112e13
+    resourceVersion: "361"
+    uid: a923d2c7-d1f2-455f-8e38-ec54de596716
 - apiVersion: v1
   data:
     ClusterConfiguration: |
@@ -421,11 +421,11 @@ items:
       scheduler: {}
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-26T15:29:16Z"
+    creationTimestamp: "2026-09-26T19:31:06Z"
     name: kubeadm-config
     namespace: kube-system
     resourceVersion: "211"
-    uid: f402b2fa-36a1-4cfc-9224-c4dc05f91311
+    uid: cffe44de-77fc-497c-951d-1bd65fc95fef
 - apiVersion: v1
   data:
     kubelet: |
@@ -486,32 +486,32 @@ items:
       volumeStatsAggPeriod: 0s
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-26T15:29:16Z"
+    creationTimestamp: "2026-09-26T19:31:06Z"
     name: kubelet-config
     namespace: kube-system
     resourceVersion: "214"
-    uid: db725391-4b20-4082-9fb3-a7e68bfae7a4
+    uid: 8bc25617-28e7-429a-91c0-06b2b30cdbb0
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -520,11 +520,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:29:25Z"
+    creationTimestamp: "2026-09-26T19:31:13Z"
     name: kube-root-ca.crt
     namespace: local-path-storage
-    resourceVersion: "343"
-    uid: 087e1ac2-1857-4038-ba1a-012eac877c8f
+    resourceVersion: "362"
+    uid: d23f362d-c7a1-437f-878c-e758435436c2
 - apiVersion: v1
   data:
     config.json: |-
@@ -564,32 +564,32 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","data":{"config.json":"{\n        \"nodePathMap\":[\n        {\n                \"node\":\"DEFAULT_PATH_FOR_NON_LISTED_NODES\",\n                \"paths\":[\"/var/local-path-provisioner\"]\n        }\n        ]\n}","helperPod.yaml":"apiVersion: v1\nkind: Pod\nmetadata:\n  name: helper-pod\nspec:\n  priorityClassName: system-node-critical\n  tolerations:\n    - key: node.kubernetes.io/disk-pressure\n      operator: Exists\n      effect: NoSchedule\n  containers:\n  - name: helper-pod\n    image: docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d\n    imagePullPolicy: IfNotPresent","setup":"#!/bin/sh\nset -eu\nmkdir -m 0777 -p \"$VOL_DIR\"","teardown":"#!/bin/sh\nset -eu\nrm -rf \"$VOL_DIR\""},"kind":"ConfigMap","metadata":{"annotations":{},"name":"local-path-config","namespace":"local-path-storage"}}
-    creationTimestamp: "2026-09-26T15:29:18Z"
+    creationTimestamp: "2026-09-26T19:31:08Z"
     name: local-path-config
     namespace: local-path-storage
-    resourceVersion: "268"
-    uid: d9c5e282-9dd0-4767-b3c8-ab6234499adb
+    resourceVersion: "278"
+    uid: 605816df-5a6e-4a6d-a00c-66476e77c1dc
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -598,32 +598,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:31:06Z"
+    creationTimestamp: "2026-09-26T19:31:25Z"
     name: kube-root-ca.crt
     namespace: payments
-    resourceVersion: "579"
-    uid: 3f475dfe-8ac6-40b5-9c84-3ecf44285d9e
+    resourceVersion: "437"
+    uid: 4147a37c-a756-49c2-8b64-0b6920c28aef
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -632,32 +632,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:31:06Z"
+    creationTimestamp: "2026-09-26T19:31:25Z"
     name: kube-root-ca.crt
     namespace: shop
-    resourceVersion: "576"
-    uid: f79067da-c937-49ef-a850-3b614ae968d1
+    resourceVersion: "435"
+    uid: f72b548d-2491-412c-9787-49cbed507f6d
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBDCCAeygAwIBAgIHdo1hcg5VuTANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQD
-      EwprdWJlcm5ldGVzMB4XDTI2MDkyNjE1MjQxMloXDTM2MDkyMzE1MjkxMlowFTET
-      MBEGA1UEAxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-      ggEBANElpChuqYC/svLeg5GUmgpVRBvNQHFBvrntBSyiPyD4G8JnkvUpXAehoeKK
-      a/Reie5NpTMPdrpI4THSzxN9eA+3eOhFsEAUIfG8cBb36s7qFejm7wcDY2JQ7QRU
-      vmj2TN4wgejFAW6POpoVVfU00QvFgw0gON9k4faiiVC1/kNh8CWDBk9uMMI5GuLA
-      5UhdQoA7hm+LBXRbj+mHW5g5uR7F9TdB1lUgKNawFyr2gU0XUYFJjnS3Y9qjuGCz
-      0thGBhFfE261UIbloRQaqoL3dnIeA2iPqzoUx8laPY9keEYZhoz9vEqW9btX97PK
-      NCGpOCvWFyOuiXP1eZwu1HRCW/8CAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8G
-      A1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFBVZsJu5g4T5Xm8UOP2PuLytEh7kMBUG
-      A1UdEQQOMAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAKBQmEqhPEHc
-      YwBmfV46jyfmquECG+MaJ72Vi/YZNNP0tEVhHNf09XJ0930mhXGO0Bl2tG96rVdX
-      pWcwh7A88WEkhjMlIWLFejKpX14y1bSo1X6g6cf/wXW+LIuv4yJkj1Uffpunkbl2
-      7RA5pmcDYfGFQOeD8z9o8K7td09PoylYkFcxQJI5+8aExSFjX2rVQbtBGegibi3Y
-      2K6v2jDh0hfpILZd7JwvUX5CcGS+VcAixm8xo5KCKooJuYPdG83jvygAObM/5Zi0
-      vwwlVwINZ/RolFRviENL9d25Tw9mKOwNLUBF1nufrbdJFC/zPwYvbKN34N6mi9Wv
-      go7SVYhV4tQ=
+      MIIDBTCCAe2gAwIBAgIIIQ8YmpPGTk4wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjYxOTI2MDFaFw0zNjA5MjMxOTMxMDFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDwImBNL8E1VytfBi9OnsQg0qZMzBFxJDXuxyvio3v25bsFUkiYHqA17aPw
+      D9HT/CcLRJ5TG1sMUksGT/9xRtMXzeuktjgT373KCqrT5hdDOCHoQJwi5ECLdY5R
+      dOIAqXKGKCs7lPQE5HGXClD61eiyRS4jAkWuL977H6kpeOPBwTFGsRL8xYS/oKIi
+      gKD4IPATd9cRHrY3KTzpyVv9NGyuCrZYI+VYjMSVxOss04CQnVXmPAI7+2URsgpr
+      cPSnGQgp64sV70dbCSn+Rn4qvoQSERwvDtWYQKkvsvIP1wIzMkiIuRjEKy+KnZhY
+      kyQozxozXPO+96oh+GsG39atNdMNAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTkAoVLzpPiI+8H1GTKsTENLQs2IjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQACaZU31waa
+      g26k7Lv//nyCXbaE6BCPQRJfKNRPqHhc7BCD2kJGXriCdzEFyluCKO/d9L99514T
+      6Lzja7M8MCewX7/Smpsx6jCRNy0i/a0NQsaPvhT2a5U/nc+aitXw0Lp6ZuvGYU6r
+      DfmxKiAzuqD0t9U0bvSwmFozlonwYd4AtNl6DhBkaI2X2zaw6wGDpW75fz1QOYdd
+      EuI2bdKIhcYNyYYtuXkkJpnKlhqyGGtnb63YCTuLXC0MjIz3l4lH+0F7hDSNTx66
+      5A3HF8/0gEdbqT/G/WkkMxRGWEvfMv3b4xlpn3SD8scSSMLNOOJdtWXu4uO54Emw
+      ZgIPKRmiTdcE
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -666,11 +666,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-26T15:31:06Z"
+    creationTimestamp: "2026-09-26T19:31:25Z"
     name: kube-root-ca.crt
     namespace: temp-testing
-    resourceVersion: "586"
-    uid: 22d3ee2a-cbf5-48f4-a1c5-e2bf3761435d
+    resourceVersion: "443"
+    uid: 38f17f0d-85bb-4925-a93b-f2b5f3b68cd5
 kind: List
 metadata:
   resourceVersion: ""

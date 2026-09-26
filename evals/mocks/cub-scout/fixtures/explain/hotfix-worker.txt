@@ -20,7 +20,7 @@
     "progress": {
       "phase": "complete",
       "clockSource": "status.conditions[Progressing].lastUpdateTime",
-      "progressAgeSeconds": 10765
+      "progressAgeSeconds": 314
     },
     "verdict": "PASS",
     "reason": "workload_converged",
@@ -30,8 +30,26 @@
       "kstatusMessage": "Deployment is available. Replicas: 1",
       "generation": 1,
       "observedGeneration": 1,
-      "observedAt": "2026-09-26T18:30:33Z"
+      "observedAt": "2026-09-26T19:36:41Z"
     }
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set hotfix-worker-79596987fd from 0 to 1",
+        "count": 1,
+        "age": "5m",
+        "lastSeen": "2026-09-26T20:31:25+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-26T20:31:25+01:00"
+      }
+    ],
+    "totalCount": 1,
+    "warningCount": 0,
+    "errorCount": 0
   },
   "nextSteps": [
     {

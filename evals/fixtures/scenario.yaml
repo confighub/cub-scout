@@ -3,7 +3,9 @@
 # GitOps controller is installed. That absence is also a scenario: nothing in
 # the cluster records a Git revision for any workload.
 #
-# Recorded into evals/fixtures/ by evals/scripts/record.sh.
+# evals/fixtures/setup.sh applies this file with each owner's field manager;
+# evals/fixtures/incident.sh then makes hand edits; evals/scripts/record.py
+# records the result.
 apiVersion: v1
 kind: Namespace
 metadata:

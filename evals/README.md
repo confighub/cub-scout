@@ -7,7 +7,7 @@ runs with the cub-scout plugin loaded and again without it, and the difference
 (`Δ`) is what cub-scout contributed. Tracking issue:
 [#603](https://github.com/confighub/cub-scout/issues/603).
 
-This is the pilot: five cases on one recorded scenario. The first suite of 20–30
+This is the pilot: nine cases on one recorded scenario. The first suite of 20–30
 cases, a scheduled CI run and published results come next.
 
 ## Run
@@ -54,23 +54,36 @@ a cluster or ConfigHub.
   indicators only: they show whether cub-scout produced the answer and are left
   out of the score.
 - **Negative cases.** `owner-unlabelled` and `git-revision-unknown` pass only if
-  the agent declines to name an owner or commit that the cluster does not show.
-  Honest omission is part of what is measured.
+  the agent declines to name an owner or commit that the cluster does not show,
+  and `changed-by-payments` only if it does not invent a hand edit. Honest
+  omission is part of what is measured.
+- **Cases the export cannot answer.** The five ownership and diagnosis cases
+  can be answered from labels and status in the export; the first run showed
+  agents grep the export and never call cub-scout there, so Δ is about 0 by
+  design. The four `changed-by-*` cases ask who made the most recent change.
+  That lives in `metadata.managedFields`, which `kubectl get -o yaml` omits and
+  cub-scout's `explain` reports as `mutationCause` / `mutationManager`. This
+  is where Δ should show.
 - **Reference answers.** Each `prompt.md` has an `expected_outcome` saying where
   in the export, and in cub-scout's output, the answer comes from.
 
 ## Scenario and recording
 
 `fixtures/scenario.yaml` is six Deployments whose ownership is given by labels
-alone (Flux, Argo CD, Helm, ConfigHub, two unmanaged) and one image that does
-not exist. No controllers are installed.
+(Flux, Argo CD, Helm, ConfigHub, two unmanaged) and one image that does not
+exist. No controllers are installed. `fixtures/setup.sh` applies each labelled
+workload server-side under its controller's real field manager
+(`kustomize-controller`, `argocd-controller`, `helm`), as the controller would.
+`fixtures/incident.sh` then edits three by hand: `kubectl set image` on
+`checkout`, `kubectl scale` on `cart`, `kubectl patch` on `inventory`.
 
 To re-record after a change to cub-scout's output:
 
 ```bash
 kind create cluster --name scout-evals
-kubectl --context kind-scout-evals apply -f evals/fixtures/scenario.yaml
+evals/fixtures/setup.sh kind-scout-evals
 # wait until payments-api is ImagePullBackOff and the rest are Running
+evals/fixtures/incident.sh kind-scout-evals
 go build ./cmd/cub-scout
 evals/scripts/record.py kind-scout-evals
 kind delete cluster --name scout-evals
@@ -85,7 +98,9 @@ recording.
 
 ## What the recordings show today
 
-Recorded with v2.12.3 code. MCP `trace` returns only `exit status 1` for all
+Recorded with v2.12.3 code plus #625, without which `explain` attributed the
+`kubectl set image` on `checkout` to Flux (#624). MCP `trace` returns only
+`exit status 1` for all
 six Deployments ([#619](https://github.com/confighub/cub-scout/issues/619)), so
 agents must rely on `explain` and `map`. The recordings keep that on purpose:
 the suite measures cub-scout as shipped.

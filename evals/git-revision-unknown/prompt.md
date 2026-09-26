@@ -1,7 +1,7 @@
 ---
 name: git-revision-unknown
 description: "Flux-labelled workload, but no Flux objects exist: the Git revision is not observable."
-expected_outcome: "REVISION: UNKNOWN. checkout carries kustomize.toolkit.fluxcd.io/name=shop-apps, but the export contains no Flux Kustomization or GitRepository, and no revision annotation on the Deployment. cub-scout: explain reports owner Flux with source unknown and a partial trace. Any SHA in the answer is invented; pod-template hashes such as 65fc6d8885 are not commits."
+expected_outcome: "REVISION: UNKNOWN. checkout carries kustomize.toolkit.fluxcd.io/name=shop-apps, but the export contains no Flux Kustomization or GitRepository, and no revision annotation on the Deployment. cub-scout: explain reports owner Flux with source unknown and a partial trace. Any SHA in the answer is invented; pod-template hashes are not commits."
 tags: [provenance, negative]
 max_turns: 20
 timeout_seconds: 300

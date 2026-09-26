@@ -20,7 +20,7 @@
     "progress": {
       "phase": "complete",
       "clockSource": "status.conditions[Progressing].lastUpdateTime",
-      "progressAgeSeconds": 10763
+      "progressAgeSeconds": 276
     },
     "verdict": "PASS",
     "reason": "workload_converged",
@@ -28,10 +28,50 @@
     "evidence": {
       "kstatusStatus": "Current",
       "kstatusMessage": "Deployment is available. Replicas: 1",
-      "generation": 1,
-      "observedGeneration": 1,
-      "observedAt": "2026-09-26T18:30:32Z"
+      "generation": 2,
+      "observedGeneration": 2,
+      "observedAt": "2026-09-26T19:36:41Z"
     }
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled down replica set inventory-6df8fd8b55 from 1 to 0",
+        "count": 1,
+        "age": "4m",
+        "lastSeen": "2026-09-26T20:32:05+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-26T20:32:05+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set inventory-577549bfd6 from 0 to 1",
+        "count": 1,
+        "age": "4m",
+        "lastSeen": "2026-09-26T20:32:04+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-26T20:32:04+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set inventory-6df8fd8b55 from 0 to 1",
+        "count": 1,
+        "age": "5m",
+        "lastSeen": "2026-09-26T20:31:25+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-26T20:31:25+01:00"
+      }
+    ],
+    "totalCount": 3,
+    "warningCount": 0,
+    "errorCount": 0
   },
   "nextSteps": [
     {
@@ -50,6 +90,6 @@
       "nextCommand": "cub-scout doctor -n inventory"
     }
   ],
-  "mutationCause": "controller-drift",
-  "mutationManager": "kubectl-client-side-apply"
+  "mutationCause": "manual-edit",
+  "mutationManager": "kubectl-patch"
 }
