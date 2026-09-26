@@ -114,3 +114,17 @@ func TestNotManagedTraceError(t *testing.T) {
 		}
 	}
 }
+
+// A custom owner has no tracer, so trace JSON took the empty tool and said
+// Native. It reports the custom owner's name, as explain and map do.
+func TestTraceReportsCustomOwner(t *testing.T) {
+	result := buildCustomOwnerUnsupportedTraceResult("Deployment", "api", "prod",
+		&agent.Ownership{Type: agent.OwnerCustom, Name: "Internal Platform"})
+	result.DetectedOwner = agent.OwnerCustom
+	if got := traceSummaryOwner(result); got != "Internal Platform" {
+		t.Errorf("trace ownerType = %q, want Internal Platform", got)
+	}
+	if got := buildExplainSummary(result).Owner; got != "Internal Platform" {
+		t.Errorf("explain owner = %q, want Internal Platform", got)
+	}
+}

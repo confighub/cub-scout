@@ -1388,7 +1388,16 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, arti
 // is not evidence of ownership, so the detected owner stands (#617).
 func traceSummaryOwner(result *agent.TraceResult) string {
 	complete := len(result.Chain) > 0 && strings.TrimSpace(result.Error) == ""
-	if detected := strings.TrimSpace(result.DetectedOwner); detected != "" && detected != agent.OwnerCustom && !complete {
+	detected := strings.TrimSpace(result.DetectedOwner)
+	if detected == agent.OwnerCustom && !complete {
+		// Custom owners have no tracer; the name travels in the error, as
+		// explain reads it. Before #617 this came out as "Native".
+		if name := customOwnerFromTraceError(result.Error); name != "" {
+			return name
+		}
+		return "Custom"
+	}
+	if detected != "" && !complete {
 		return mapsvc.DisplayOwner(detected)
 	}
 	return normalizeToolToOwner(result.Tool)
