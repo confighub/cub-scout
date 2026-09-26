@@ -1435,6 +1435,7 @@ they do:
 | `mode` | `confighub_reads` | Text line | What it means |
 |---|---|---|---|
 | `connected` / `auth_expired` | `false` | `⚠ ConfigHub reads unavailable: <reason>` | Credentials exist, but every connected command refuses. `cub auth login` only helps if the reason says so |
+| `connected` | `false` | ``⚠ ConfigHub reads unavailable: `cub` is older than the ConfigHub server; run `cub upgrade`: <cub's message>`` | The session is valid, but `cub auth status` refuses a client older than its server (a change in cub's second version number, below 1.0). Upgrading cub fixes it; logging in again does not. `auth_valid` is `true`, and no worker lookup is attempted |
 | `offline` / `online` | `true` | `✔ ConfigHub reads available: cub has a session` | `cub auth status` passes but `cub context get` failed, so the mode line describes only what `hub.confighub.com` answered |
 | otherwise | — | none | The two agree; nothing to correct |
 

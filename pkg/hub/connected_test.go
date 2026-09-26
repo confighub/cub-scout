@@ -71,6 +71,33 @@ func TestRequireCubConnected(t *testing.T) {
 			wantDetail: `context "kind-demo" not found`,
 		},
 		{name: "cub fails without saying why", err: exit1, want: ErrCubNotAuthenticated, wantDetail: "exit status 1"},
+		{
+			// Recorded 2026-09-26: cub v0.5.7 against a v0.6.5 server, with a
+			// session the server accepted (stdout said "Status Authenticated").
+			name:       "cub is older than the server",
+			detail:     firstLine(recordedCubTooOldStderr),
+			err:        exit1,
+			want:       ErrCubVersionSkew,
+			wantDetail: "cub v0.5.7 is too old for server v0.6.5",
+		},
+		{
+			// The same refusal from a cub built from a working tree, which
+			// cub words differently after the colon (cmd/cub/version_check.go).
+			name:       "a development cub is older than the server",
+			detail:     "cub v0.6.0-dev is too old for server v0.6.5: pre-1.0, a change in the second version number is not backward compatible. This cub was built from a working tree. Check out a tree at the server's version and rebuild it",
+			err:        exit1,
+			want:       ErrCubVersionSkew,
+			wantDetail: "built from a working tree",
+		},
+		{
+			// Only the start of the message counts: a refusal that mentions a
+			// version later on is still about authentication.
+			name:       "a version mentioned inside another refusal",
+			detail:     "not authenticated: server https://hub.example.com rejected the access token (401 Unauthorized). cub v0.5.7 is too old for server v0.6.5: quoted",
+			err:        exit1,
+			want:       ErrCubNotAuthenticated,
+			wantDetail: "401 Unauthorized",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -83,6 +110,35 @@ func TestRequireCubConnected(t *testing.T) {
 				t.Fatalf("RequireCubConnected() = %q, want it to carry cub's own reason %q", got, tt.wantDetail)
 			}
 		})
+	}
+}
+
+// recordedCubTooOldStderr is what `cub auth status` wrote to stderr, exit 1,
+// for cub v0.5.7 against a v0.6.5 server on 2026-09-26.
+const recordedCubTooOldStderr = "Failed: cub v0.5.7 is too old for server v0.6.5: pre-1.0, a change in the second version number is not backward compatible. Run 'cub upgrade' to update cub\n"
+
+// A cub older than its server is not an authentication problem: callers that
+// advise `cub auth login` on ErrCubNotAuthenticated must not see it, and the
+// refusal must name the fix.
+func TestRequireCubConnected_VersionSkewIsNotAnAuthRefusal(t *testing.T) {
+	stubCubAuthStatus(t, firstLine(recordedCubTooOldStderr), errors.New("exit status 1"))
+	got := RequireCubConnected()
+	if errors.Is(got, ErrCubNotAuthenticated) {
+		t.Fatalf("RequireCubConnected() = %v; a version refusal must not read as an authentication refusal", got)
+	}
+	for _, want := range []string{"cub upgrade", "older than the ConfigHub server"} {
+		if !strings.Contains(got.Error(), want) {
+			t.Fatalf("RequireCubConnected() = %q, want it to name the fix %q", got, want)
+		}
+	}
+}
+
+// Recorded 2026-09-26: cub v0.6.2 against a v0.5.1 server exits 0 and only
+// warns on stderr, so reads go ahead and the warning is not a refusal.
+func TestRequireCubConnected_NewerCubOnlyWarns(t *testing.T) {
+	stubCubAuthStatus(t, "Warning: cub v0.6.2 is newer than server v0.5.1: pre-1.0, a change in the second version number is not backward compatible, so some commands may fail. Ask the server's operator to upgrade ConfigHub.", nil)
+	if got := RequireCubConnected(); got != nil {
+		t.Fatalf("RequireCubConnected() = %v, want nil: cub exits 0 for a client newer than its server", got)
 	}
 }
 

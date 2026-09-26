@@ -146,7 +146,9 @@ func runStatus(cmd *cobra.Command) error {
 
 			// Which worker serves this cluster is a question about the whole
 			// organization, so every space is searched unless CUB_SPACE names one.
-			if authValid {
+			// A cub older than its server has refused to work with it, so the
+			// lookup is not attempted; its failure would read as "no worker".
+			if authValid && !errors.Is(readsErr, hub.ErrCubVersionSkew) {
 				if worker := getWorkerForCluster(statusWorkerSpace(space), status.ClusterName); worker != nil {
 					status.Worker = worker
 				}
@@ -333,9 +335,16 @@ func getWorkerForCluster(space, clusterName string) *WorkerInfo {
 //
 // A gate refusal that is not about authentication — reads turned off, `cub` not
 // installed — says nothing about the session, so that case still asks.
+//
+// A cub older than its server is the one refusal that proves the session is
+// fine: `cub auth status` checks the version only after the server accepted
+// the token. Asking again would fail the same way and print "auth expired" and
+// "cub auth login", which cannot fix it; the gate's reason says to upgrade cub.
 func statusSessionValid(readsErr error) bool {
 	switch {
 	case readsErr == nil:
+		return true
+	case errors.Is(readsErr, hub.ErrCubVersionSkew):
 		return true
 	case errors.Is(readsErr, hub.ErrCubNotAuthenticated):
 		return false

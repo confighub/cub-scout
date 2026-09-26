@@ -651,6 +651,7 @@ func TestStatusRecordsTheGateVerdict(t *testing.T) {
 	}{
 		{name: "authenticated", reads: true},
 		{name: "expired", err: hub.ErrCubNotAuthenticated, reason: "did not report an authenticated session"},
+		{name: "cub older than its server", err: statusCubTooOld, reason: "cub upgrade"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			stubConnectedGate(t, tt.err)
@@ -709,6 +710,23 @@ func TestStatusSessionVerdictFollowsTheGate(t *testing.T) {
 	}
 }
 
+// statusCubTooOld is the gate's refusal for the cub output recorded on
+// 2026-09-26: cub v0.5.7 against a v0.6.5 server.
+var statusCubTooOld = fmt.Errorf("%w: %s", hub.ErrCubVersionSkew,
+	"cub v0.5.7 is too old for server v0.6.5: pre-1.0, a change in the second version number is not backward compatible. Run 'cub upgrade' to update cub")
+
+// cub checks its version only after the server accepted the token, so a cub
+// older than its server has a valid session. status used to ask `cub auth
+// status` again, fail the same way, and print "auth expired" and "Run: cub
+// auth login", which cannot fix it.
+func TestStatusSessionTreatsAnOutdatedCubAsAuthenticated(t *testing.T) {
+	t.Setenv("CUB_PLUGIN", "")
+	t.Setenv("PATH", t.TempDir()) // were cub asked again, it would not be found
+	if !statusSessionValid(statusCubTooOld) {
+		t.Fatal("session invalid for a cub older than its server; status would say 'auth expired' and advise a login")
+	}
+}
+
 // Whichever way the mode line and the gate disagree, the text says so: a mode
 // that promises reads the commands refuse, and a mode that denies reads they
 // would make.
@@ -735,6 +753,12 @@ func TestStatusCorrectsTheModeInBothDirections(t *testing.T) {
 			name:   "connected and the gate agrees",
 			status: StatusInfo{Mode: "connected", ConfigHubReads: true},
 			absent: "ConfigHub reads",
+		},
+		{
+			name:   "connected but cub is older than its server",
+			status: StatusInfo{Mode: "connected", ConfigHubReadsReason: statusCubTooOld.Error()},
+			want:   "run `cub upgrade`",
+			absent: "cub auth login",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

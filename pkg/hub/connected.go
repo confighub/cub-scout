@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -22,7 +23,20 @@ var (
 	// ErrCubNotAuthenticated means `cub auth status` did not report a usable
 	// session: no token, an expired one, or a context cub cannot resolve.
 	ErrCubNotAuthenticated = errors.New("`cub auth status` did not report an authenticated session")
+	// ErrCubVersionSkew means `cub auth status` accepted the session but
+	// refused because this cub is older than the server. Below 1.0 a change in
+	// cub's second version number is not backward compatible, so cub treats an
+	// older client as unusable. The fix is upgrading cub, not logging in again.
+	ErrCubVersionSkew = errors.New("`cub` is older than the ConfigHub server; run `cub upgrade`")
 )
+
+// cubTooOldForServer matches the refusal `cub auth status` (cub v0.5.3 and
+// later) prints for a client older than its server, for example
+// "cub v0.5.7 is too old for server v0.6.5: pre-1.0, ...". cub offers no
+// machine-readable form of this, so the match is anchored to the start of the
+// message: an unrecognised message stays an authentication refusal rather
+// than being guessed into a version problem.
+var cubTooOldForServer = regexp.MustCompile(`^cub \S+ is too old for server \S+:`)
 
 // cubAuthStatus runs `cub auth status`, which exits 0 only for a session cub
 // itself considers usable. On failure it returns cub's own explanation.
@@ -78,6 +92,9 @@ func RequireCubConnected() error {
 	}
 	if detail == "" {
 		detail = err.Error()
+	}
+	if cubTooOldForServer.MatchString(detail) {
+		return fmt.Errorf("%w: %s", ErrCubVersionSkew, detail)
 	}
 	return fmt.Errorf("%w: %s", ErrCubNotAuthenticated, detail)
 }
