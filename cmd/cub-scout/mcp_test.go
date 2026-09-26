@@ -1691,3 +1691,66 @@ func marshalInto(v interface{}, target interface{}) error {
 	}
 	return json.Unmarshal(data, target)
 }
+
+// The MCP stdio transport is newline-delimited JSON. Before v2.13.0 the
+// server read only Content-Length frames, so a spec client's first message
+// never completed a frame and the connection timed out.
+func TestServeMCPNewlineDelimited(t *testing.T) {
+	gateway := newMCPGateway(func(context.Context, []string) (string, error) { return `{}`, nil })
+	input := strings.NewReader(
+		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}` + "\n" +
+			`{"jsonrpc":"2.0","method":"notifications/initialized"}` + "\n" +
+			"\n" +
+			// The last message has no trailing newline.
+			`{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}`)
+	var out bytes.Buffer
+	if err := serveMCP(context.Background(), input, &out, gateway); err != nil {
+		t.Fatalf("serveMCP() error = %v", err)
+	}
+	if strings.Contains(out.String(), "Content-Length") {
+		t.Fatalf("newline-delimited requests got Content-Length replies:\n%s", out.String())
+	}
+	lines := strings.Split(strings.TrimSuffix(out.String(), "\n"), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("got %d reply lines, want 2:\n%s", len(lines), out.String())
+	}
+	for i, line := range lines {
+		var resp struct {
+			ID     int             `json:"id"`
+			Result json.RawMessage `json:"result"`
+		}
+		if err := json.Unmarshal([]byte(line), &resp); err != nil {
+			t.Fatalf("reply %d is not one JSON line: %v\n%s", i+1, err, line)
+		}
+		if resp.ID != i+1 || len(resp.Result) == 0 {
+			t.Fatalf("reply %d = %s, want a result for id %d", i+1, line, i+1)
+		}
+	}
+	if !strings.Contains(lines[1], `"name":"trace"`) {
+		t.Fatalf("tools/list reply does not list trace: %s", lines[1])
+	}
+}
+
+// Content-Length framed callers keep working, and each reply uses the framing
+// of the request it answers.
+func TestServeMCPReplyFramingFollowsRequest(t *testing.T) {
+	gateway := newMCPGateway(func(context.Context, []string) (string, error) { return `{}`, nil })
+	var input bytes.Buffer
+	if err := writeMCPFrame(&input, []byte(`{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}`)); err != nil {
+		t.Fatal(err)
+	}
+	input.WriteString(`{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}` + "\n")
+	var out bytes.Buffer
+	if err := serveMCP(context.Background(), &input, &out, gateway); err != nil {
+		t.Fatalf("serveMCP() error = %v", err)
+	}
+	reader := bufio.NewReader(&out)
+	first, err := readMCPFrame(reader)
+	if err != nil || !strings.Contains(string(first), `"id":1`) {
+		t.Fatalf("first reply is not a Content-Length frame for id 1: %v %s", err, first)
+	}
+	second, framing, err := readMCPMessage(reader)
+	if err != nil || framing != mcpFramingNewline || !strings.Contains(string(second), `"id":2`) {
+		t.Fatalf("second reply is not a newline-delimited message for id 2: %v %v %s", err, framing, second)
+	}
+}

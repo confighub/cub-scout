@@ -2051,7 +2051,7 @@ cub-scout mcp serve
 - Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - MCP tool descriptors mark every tool with `annotations.readOnlyHint=true`.
-- Protocol transport is stdio with `Content-Length` framed JSON-RPC messages.
+- Protocol transport is stdio with newline-delimited JSON-RPC messages, the MCP stdio transport that clients such as Claude Code use. `Content-Length` framed messages, the only framing before v2.13.0, are still accepted; each reply uses the framing of its request.
 - Connected history/status tools require an explicit `space` argument, or `*` when the user explicitly asks for all spaces, so broad ConfigHub reads are deliberate.
 
 #### Tool Parameters
