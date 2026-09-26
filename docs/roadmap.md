@@ -32,9 +32,9 @@ index-to-platform resolution remain follow-up scope, not implied parity.
 
 Broader workload adapters, index/platform digest resolution and image-only
 fleet search are now tracked in [#584](https://github.com/confighub/cub-scout/issues/584),
-a **future v2.13.0 candidate**, not a prerequisite for the immediate v2.12.x
-readiness patch. Until implemented, their existing unknown/unsupported limits
-remain unchanged.
+scheduled in stage 2 of the [Path to 3.0](#path-to-30) rather than for a named
+version. Until implemented, their existing unknown/unsupported limits remain
+unchanged.
 
 ### Image Verification Release Gate
 
@@ -298,8 +298,11 @@ connected gate enforces, and the `fleet outliers` decision. That is 3.0.0's
 content ([#595](https://github.com/confighub/cub-scout/issues/595)).
 
 1. **Measure first, then fix against current ConfigHub:** agent evals
-   ([#603](https://github.com/confighub/cub-scout/issues/603)), so every later change shows as a measured difference; OCI
-   `space/<slug>` sources ([#561](https://github.com/confighub/cub-scout/issues/561)); Attestations and ChangeWorkflow prerequisites
+   ([#603](https://github.com/confighub/cub-scout/issues/603)), so every later change shows as a measured difference; the
+   remaining [#561](https://github.com/confighub/cub-scout/issues/561) items (unit-event outcome classification, Markdown
+   unit-event rows, TUI connected-history rendering, related-reference
+   deduplication, non-OCI slug joins), since the OCI `space/<slug>` identity and
+   manifest-digest release join shipped in v2.12.1 ([#579](https://github.com/confighub/cub-scout/pull/579)); Attestations and ChangeWorkflow prerequisites
    as evidence ([#591](https://github.com/confighub/cub-scout/issues/591), [#597](https://github.com/confighub/cub-scout/issues/597)); Helm tracing correctness ([#588](https://github.com/confighub/cub-scout/issues/588)); an explicit
    cluster on every MCP tool ([#599](https://github.com/confighub/cub-scout/issues/599)); the `/v2` module path ([#595](https://github.com/confighub/cub-scout/issues/595),
    [#520](https://github.com/confighub/cub-scout/issues/520)); a clear message when cub is older than its server ([#608](https://github.com/confighub/cub-scout/issues/608)).
