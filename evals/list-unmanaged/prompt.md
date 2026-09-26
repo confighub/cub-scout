@@ -8,4 +8,4 @@ timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. Which Deployments in this cluster (outside kube-system, local-path-storage, flux-system and argocd) are not managed by any GitOps tool or by ConfigHub? Finish with one line `UNMANAGED: <comma-separated Deployment names>`.
+I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. Which Deployments in this cluster (outside kube-system, local-path-storage, flux-system and argocd) are not managed by any of Flux, Argo CD, Helm or ConfigHub? Finish with one line `UNMANAGED: <comma-separated Deployment names>`.

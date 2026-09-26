@@ -104,3 +104,49 @@ Recorded with v2.12.3 code plus #625, without which `explain` attributed the
 six Deployments ([#619](https://github.com/confighub/cub-scout/issues/619)), so
 agents must rely on `explain` and `map`. The recordings keep that on purpose:
 the suite measures cub-scout as shipped.
+
+## First results (2026-09-26)
+
+One run per case per arm, Claude Code 2.1.274 with its default model
+(`claude-opus-5` in the transcripts), cub-scout v2.12.3 plus #625. $11.78 for 18
+runs. One run each is enough to see where the difference is, not to measure
+its size; the 3-run suite comes next.
+
+| Case | With | Without | Δ | cub-scout used |
+|---|---|---|---|---|
+| changed-by-checkout | 1.00 | 0.00 | +1.00 | skill, `explain` |
+| changed-by-cart | 1.00 | 0.00 | +1.00 | skills, `explain` |
+| changed-by-inventory | 1.00 | 0.00 | +1.00 | `explain` |
+| changed-by-payments (control) | 1.00 | 1.00 | 0 | skills |
+| git-revision-unknown | 1.00 | 1.00 | 0 | `gitops_status` |
+| list-unmanaged | 0.67 | 0.67 | 0 | `map` |
+| owner-confighub | 1.00 | 1.00 | 0 | skills |
+| owner-unlabelled | 1.00 | 1.00 | 0 | `trace` |
+| why-payments-broken | 1.00 | 1.00 | 0 | none |
+
+Mean Δ +0.33. Where the answer is in labels or status, both arms are right and
+cub-scout adds nothing. Where it is in managedFields, only the cub-scout arm
+answers; every baseline said UNKNOWN (honest) rather than guessing. The
+control and both negative cases passed in both arms: no invented hand edit,
+owner or commit.
+
+`list-unmanaged` asked about "any GitOps tool or ConfigHub", and both arms
+reasonably counted a Helm release as unmanaged. The question now names Flux,
+Argo CD, Helm and ConfigHub; a re-run passed in both arms ($1.54).
+
+Observed on the way, for follow-up:
+
+- `scout-ingest`, the adopt/import skill, fired first on three of the four
+  attribution questions, probably on the prompt's "I exported my cluster's
+  state". The right skills (`investigate-drift`, `scout-attribute`) fired
+  second or not at all.
+- In `list-unmanaged` an agent read `gitops_status`'s "no Flux CRDs" as a
+  limit of the export, not a fact about the cluster.
+- The `explain` agent mock once wrapped its answer in a code fence; the
+  content was the recording byte for byte.
+
+Two earlier attempts are not counted: the harness could not find the export
+(`add_dirs`), and the fixed mocks could not key on a resource containing
+`/`; both are fixed above. Before the stand-in controllers were added, the
+baseline deduced "manual" from the absence of any controller and guessed
+right on `changed-by-checkout`; the stand-ins remove that shortcut.
