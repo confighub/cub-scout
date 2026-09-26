@@ -2,7 +2,7 @@
 
 **A read-only Kubernetes and GitOps explorer for people, scripts, and AI agents.**
 
-[v2.12.1 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.1)
+[v2.12.2 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.2)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
@@ -43,7 +43,7 @@ cub-scout gitops status   # What do delivery controllers report?
 cub-scout map             # Explore interactively
 ```
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.12.1`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.12.2`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -150,11 +150,15 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.12.1 is the latest release.** Image checks verify complete Deployment
-ownership and replica coverage, with bounded credential helpers and API error
-responses. No TUI is required. Published standalone and plugin binaries passed
-authenticated local registry tests. See the [release notes](docs/releases/v2.12.1.md)
-and [image verification guide](docs/howto/is-this-image-deployed.md).
+**v2.12.2 is the latest release.** When `cub` is older than its ConfigHub
+server, connected commands now say to run `cub upgrade` instead of reporting an
+expired session, and ConfigHub unit events are classified by their exact values,
+so nothing unrecognised is reported as success. See the
+[v2.12.2 release notes](docs/releases/v2.12.2.md). Image checks, from v2.12.1,
+verify complete Deployment ownership and replica coverage, with bounded
+credential helpers and API error responses; see the
+[v2.12.1 release notes](docs/releases/v2.12.1.md) and the
+[image verification guide](docs/howto/is-this-image-deployed.md).
 
 ### Who reaches for cub-scout?
 
@@ -341,9 +345,9 @@ brew install confighub/tap/cub-scout
 
 For direct downloads and tagged source builds, use the
 [install guide](docs/getting-started/install.md). Do not use
-`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.12.1:
+`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.12.2:
 the current Go module path resolves an older major. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.12.1 version` still needs registry
+`docker run ghcr.io/confighub/cub-scout:v2.12.2 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.

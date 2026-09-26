@@ -2,6 +2,11 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
+**2026-09-26:** v2.12.2 is published (tag at `35a41cf`): a clear "run `cub upgrade`"
+refusal when cub is older than its ConfigHub server (#608, #610) and exact
+ConfigHub unit-event outcomes (#611). See [release notes](docs/releases/v2.12.2.md).
+The remaining 2.x releases are planned in the roadmap's Path to 3.0.
+
 **2026-09-20:** v2.12.1 is published. Authenticated local ConfigHub/HTTPS OCI
 tests and clean-container checks of the published Linux arm64 standalone/plugin
 binaries passed. macOS arm64 smoke checks and Homebrew cask verification passed.
