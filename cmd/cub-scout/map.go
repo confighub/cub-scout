@@ -4467,18 +4467,50 @@ func formatActivityNum(num int) string {
 	return strconv.Itoa(num)
 }
 
+// mapActivityResultFromUnitEvent buckets a unit event by ConfigHub's own
+// values. Status is how the action ended (ActionStatusType: Aborted, Canceled,
+// Completed, Failed, None, Pending, Progressing, Submitted); Result is what it
+// produced (ActionResultType: FunctionInvocationCompleted,
+// FunctionInvocationFailed, None; older servers also sent Apply- and
+// Destroy-prefixed values ending in Completed or Failed). An ordinary Apply
+// reports Result "None" and records its end in Status.
+//
+// The values are matched exactly rather than by substring, which made
+// "Incomplete" a success and left Aborted, Canceled and Submitted as normal.
+// An action that stopped without an outcome, or a value this reader does not
+// know, is inconclusive: never success, and never normal.
 func mapActivityResultFromUnitEvent(event ConfigHubUnitEventEvidence) string {
-	status := strings.ToLower(strings.TrimSpace(event.Result + " " + event.Status))
-	switch {
-	case strings.Contains(status, "fail"), strings.Contains(status, "error"):
+	result := strings.TrimSpace(event.Result)
+	resultFailed := strings.HasSuffix(strings.ToLower(result), "failed")
+	resultCompleted := strings.HasSuffix(strings.ToLower(result), "completed")
+
+	switch status := strings.TrimSpace(event.Status); {
+	case strings.EqualFold(status, "Failed"):
 		return "failed"
-	case strings.Contains(status, "success"), strings.Contains(status, "succeed"), strings.Contains(status, "complete"):
+	case strings.EqualFold(status, "Completed"):
+		if resultFailed {
+			return "failed"
+		}
 		return "success"
-	case strings.Contains(status, "running"), strings.Contains(status, "progress"), strings.Contains(status, "pending"):
+	case strings.EqualFold(status, "Pending"), strings.EqualFold(status, "Submitted"), strings.EqualFold(status, "Progressing"):
 		return "pending"
-	default:
-		return "normal"
+	case strings.EqualFold(status, "Aborted"), strings.EqualFold(status, "Canceled"):
+		return "inconclusive"
+	case status == "", strings.EqualFold(status, "None"):
+		switch {
+		case resultFailed:
+			return "failed"
+		case resultCompleted:
+			return "success"
+		case result == "", strings.EqualFold(result, "None"):
+			return "normal"
+		}
+		return "inconclusive"
 	}
+	if resultFailed {
+		return "failed"
+	}
+	return "inconclusive"
 }
 
 func mapActivityDeliveryNextStep(delivery, appHealth agent.ReceiptVerdict, freshness string) string {

@@ -398,6 +398,9 @@ func TestDoctorUnitEventFailed_ReadsStatusWhenResultIsNone(t *testing.T) {
 		{"FunctionInvocationCompleted", "Completed", false},
 		{"None", "Progressing", false},
 		{"", "", false},
+		// Stopped without an outcome: not a failure doctor can claim.
+		{"None", "Aborted", false},
+		{"None", "Canceled", false},
 	} {
 		got := doctorUnitEventFailed(ConfigHubUnitEventEvidence{Result: tc.result, Status: tc.status})
 		if got != tc.want {

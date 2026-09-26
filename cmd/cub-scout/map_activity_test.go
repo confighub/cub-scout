@@ -457,3 +457,52 @@ func TestConfigHubReleaseActivityRow_NamesTheRowByItsPublicationState(t *testing
 		})
 	}
 }
+
+// Unit events are bucketed by ConfigHub's own values (ActionStatusType and
+// ActionResultType in the public client models), matched exactly. Substring
+// matching made "Incomplete" and "Unsuccessful" successes and left Aborted,
+// Canceled and Submitted as normal.
+func TestMapActivityResultFromUnitEvent(t *testing.T) {
+	for _, tc := range []struct {
+		result, status, want string
+	}{
+		// An ordinary Apply: Result None, the end recorded in Status.
+		{"None", "Failed", "failed"},
+		{"None", "Completed", "success"},
+		{"None", "Pending", "pending"},
+		{"None", "Submitted", "pending"},
+		{"None", "Progressing", "pending"},
+		{"None", "Aborted", "inconclusive"},
+		{"None", "Canceled", "inconclusive"},
+		{"None", "None", "normal"},
+		{"", "", "normal"},
+
+		// A function invocation reports its outcome in Result.
+		{"FunctionInvocationCompleted", "Completed", "success"},
+		{"FunctionInvocationFailed", "Completed", "failed"},
+		{"FunctionInvocationFailed", "None", "failed"},
+		{"FunctionInvocationCompleted", "", "success"},
+		// Status decides first: an aborted action is not a success because an
+		// earlier step completed.
+		{"FunctionInvocationCompleted", "Aborted", "inconclusive"},
+		{"FunctionInvocationCompleted", "Failed", "failed"},
+
+		// Older servers named the action in Result.
+		{"ApplyCompleted", "", "success"},
+		{"ApplyWaitFailed", "", "failed"},
+
+		// Values ConfigHub does not define are never success or normal.
+		{"None", "Incomplete", "inconclusive"},
+		{"None", "Unsuccessful", "inconclusive"},
+		{"Something", "", "inconclusive"},
+		{"ApplyFailed", "Mystery", "failed"},
+
+		// Case does not change the meaning.
+		{"none", "failed", "failed"},
+	} {
+		got := mapActivityResultFromUnitEvent(ConfigHubUnitEventEvidence{Result: tc.result, Status: tc.status})
+		if got != tc.want {
+			t.Errorf("result=%q status=%q: bucket=%q, want %q", tc.result, tc.status, got, tc.want)
+		}
+	}
+}
