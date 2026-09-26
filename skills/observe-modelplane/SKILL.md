@@ -2,7 +2,7 @@
 name: observe-modelplane
 description: 'Use when the user wants to observe Modelplane-managed resources specifically. Natural phrasing: "is this from Modelplane?", "which ModelDeployment produced this replica?", "show me Modelplane endpoints", "what does modelplane.ai/deployment mean?", "is this Modelplane or generic Crossplane?". Do NOT load for: generic ownership (use scout-observe), Crossplane-only resources (use observe-crossplane), or authoring Modelplane APIs.'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout doctor *) Bash(cub-scout doctor *) Bash(cub scout doctor *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(./cub-scout tree *) Bash(cub-scout tree *) Bash(cub scout tree *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *)
+allowed-tools: Bash(./cub-scout doctor *) Bash(cub-scout doctor *) Bash(cub scout doctor *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout map list *) Bash(./cub-scout map workloads *) Bash(./cub-scout map orphans *) Bash(cub-scout map list *) Bash(cub-scout map workloads *) Bash(cub-scout map orphans *) Bash(cub scout map list *) Bash(cub scout map workloads *) Bash(cub scout map orphans *) Bash(./cub-scout tree *) Bash(cub-scout tree *) Bash(cub scout tree *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *)
 ---
 
 # observe-modelplane
