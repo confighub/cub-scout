@@ -123,8 +123,10 @@ Current local CLI truth (cub v0.5.7 installed; cub v0.6.2 is the newest release,
   the server is refused (`cub v0.5.x is too old for server v0.6.y ...`, exit
   non-zero); a client *newer* than the server only warns that some commands may
   fail. `cub auth status` is also cub-scout's connected gate, so a 0.5 cub
-  against a 0.6 server refuses every connected command with that message (under
-  the gate's "did not report an authenticated session" label). Keep the
+  against a 0.6 server refuses every connected command. The gate reports that
+  as `hub.ErrCubVersionSkew` ("`cub` is older than the ConfigHub server; run
+  `cub upgrade`", followed by cub's own message), not as an authentication
+  failure, and `status` keeps showing the session as connected (#608). Keep the
   installed cub at or above the server's minor: one 0.6 cub serves
   hub.confighub.com (0.6) and, with the warning, a local `cub server` on 0.5.
 
