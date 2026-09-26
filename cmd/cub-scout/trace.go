@@ -388,6 +388,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("trace failed: %w", err)
 	}
+	result.DetectedOwner = ownership.Type
 
 	// Enrich chain links with timing information
 	if len(result.Chain) > 0 {
@@ -1338,7 +1339,7 @@ func findDeployerName(link agent.ChainLink) string {
 // buildTraceSummary constructs the summary from trace result.
 func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, artifacts map[string]mapsvc.TraceArtifactRef) mapsvc.TraceSummary {
 	summary := mapsvc.TraceSummary{
-		OwnerType: normalizeToolToOwner(result.Tool),
+		OwnerType: traceSummaryOwner(result),
 	}
 
 	// Find source and deployer in chain
@@ -1381,6 +1382,27 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, arti
 }
 
 // normalizeToolToOwner converts tool name to owner type.
+// traceSummaryOwner is the owner trace JSON reports. The tracer that ran is
+// the owner only when it produced a complete chain; a tracer answering "not
+// managed by me" (the default branch runs Flux's for any unlabelled resource)
+// is not evidence of ownership, so the detected owner stands (#617).
+func traceSummaryOwner(result *agent.TraceResult) string {
+	complete := len(result.Chain) > 0 && strings.TrimSpace(result.Error) == ""
+	detected := strings.TrimSpace(result.DetectedOwner)
+	if detected == agent.OwnerCustom && !complete {
+		// Custom owners have no tracer; the name travels in the error, as
+		// explain reads it. Before #617 this came out as "Native".
+		if name := customOwnerFromTraceError(result.Error); name != "" {
+			return name
+		}
+		return "Custom"
+	}
+	if detected != "" && !complete {
+		return mapsvc.DisplayOwner(detected)
+	}
+	return normalizeToolToOwner(result.Tool)
+}
+
 func normalizeToolToOwner(tool string) string {
 	switch strings.ToLower(strings.TrimSpace(tool)) {
 	case "flux":

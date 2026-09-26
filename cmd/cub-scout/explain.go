@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
@@ -210,11 +211,25 @@ func parseExplainArgs(args []string) (kind, name string, err error) {
 	return normalizeKind(args[0]), args[1], nil
 }
 
+// traceForExplain traces a resource for explain. The owner explain reports
+// comes from ownership detection, the classification map uses, and is carried
+// on the result as DetectedOwner; tracers add chain detail. A tracer's "not
+// managed by me" is never evidence of any owner (#617).
 func traceForExplain(ctx context.Context, kind, name, namespace string) (*agent.TraceResult, error) {
 	ownership, err := detectResourceOwnership(ctx, kind, name, namespace)
 	if err != nil {
-		ownership = &agent.Ownership{Type: agent.OwnerUnknown}
+		return traceForExplainWithOwnership(ctx, kind, name, namespace, &agent.Ownership{Type: agent.OwnerUnknown}, false)
 	}
+	result, err := traceForExplainWithOwnership(ctx, kind, name, namespace, ownership, true)
+	if result != nil {
+		result.DetectedOwner = ownership.Type
+	}
+	return result, err
+}
+
+// traceForExplainWithOwnership runs the tracers. detected is false when
+// ownership detection failed and ownership is only a placeholder.
+func traceForExplainWithOwnership(ctx context.Context, kind, name, namespace string, ownership *agent.Ownership, detected bool) (*agent.TraceResult, error) {
 
 	// Custom owners don't have GitOps trace chains — return immediately
 	// with the custom owner information so buildExplainSummary can extract it.
@@ -289,6 +304,12 @@ func traceForExplain(ctx context.Context, kind, name, namespace string) (*agent.
 			// know the resource belongs to a different tool
 			continue
 		}
+		// The same holds when detection found no GitOps owner: a tracer
+		// saying "not mine" about a Native resource says nothing about who
+		// owns it, and must not become the reported owner.
+		if detected && isNativeOwnership(ownership) && isNotManagedTraceError(result.Error) {
+			continue
+		}
 
 		// Accept this partial result as candidate
 		candidate = result
@@ -303,7 +324,7 @@ func traceForExplain(ctx context.Context, kind, name, namespace string) (*agent.
 	// return a partial result with the ownership information preserved. This allows
 	// explain to show "ArgoCD" instead of "Unknown" for ApplicationSet-managed
 	// resources where the ArgoTracer can't complete a full trace chain.
-	if ownership != nil && ownership.Type != agent.OwnerUnknown {
+	if ownership != nil && (ownership.Type != agent.OwnerUnknown || detected) {
 		return buildOwnershipOnlyTraceResult(kind, name, namespace, ownership, lastErr), nil
 	}
 
@@ -422,8 +443,19 @@ func isNegativeMismatchCandidate(result *agent.TraceResult, ownership *agent.Own
 		return false
 	}
 
+	return isNotManagedTraceError(errMsg)
+}
+
+// isNativeOwnership reports whether detection found no GitOps owner.
+func isNativeOwnership(ownership *agent.Ownership) bool {
+	return ownership != nil && (ownership.Type == agent.OwnerUnknown || ownership.Type == agent.OwnerKubernetes)
+}
+
+// isNotManagedTraceError reports whether a tracer error means "this tool does
+// not manage the resource".
+func isNotManagedTraceError(errMsg string) bool {
 	// Check for "not managed" patterns that indicate a negative result
-	errLower := strings.ToLower(errMsg)
+	errLower := strings.ToLower(strings.TrimSpace(errMsg))
 	negativePatterns := []string{
 		"not managed",
 		"no flux object found",
@@ -498,7 +530,7 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 	summary := ExplainSummary{
 		Resource:    fmt.Sprintf("%s/%s", result.Object.Kind, result.Object.Name),
 		Namespace:   result.Object.Namespace,
-		Owner:       explainOwner(result.Tool),
+		Owner:       explainSummaryOwner(result),
 		Source:      "unknown",
 		DeployedVia: "unknown",
 		Health:      "Unknown",
@@ -606,6 +638,12 @@ func buildOwnershipOnlyTraceResult(kind, name, namespace string, ownership *agen
 		FullyManaged: false,
 	}
 
+	result.DetectedOwner = ownership.Type
+	if isNativeOwnership(ownership) {
+		result.Error = "no GitOps owner detected; no controller chain to trace"
+		return result
+	}
+
 	// Map ownership type to tool name
 	switch ownership.Type {
 	case agent.OwnerArgo:
@@ -631,6 +669,17 @@ func buildOwnershipOnlyTraceResult(kind, name, namespace string, ownership *agen
 	result.Error = strings.Join(errParts, "; ")
 
 	return result
+}
+
+// explainSummaryOwner is the owner explain reports. A tracer's tool is used
+// only when it produced a complete chain, which is positive evidence;
+// otherwise the detected ownership (map's classification) stands.
+func explainSummaryOwner(result *agent.TraceResult) string {
+	complete := len(result.Chain) > 0 && strings.TrimSpace(result.Error) == ""
+	if detected := strings.TrimSpace(result.DetectedOwner); detected != "" && detected != agent.OwnerCustom && !complete {
+		return mapsvc.DisplayOwner(detected)
+	}
+	return explainOwner(result.Tool)
 }
 
 func explainOwner(tool string) string {
