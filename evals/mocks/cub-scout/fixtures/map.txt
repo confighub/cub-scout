@@ -1,0 +1,698 @@
+[
+  {
+    "id": "default/default/apps/Deployment/hotfix-worker",
+    "clusterName": "default",
+    "namespace": "default",
+    "kind": "Deployment",
+    "name": "hotfix-worker",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "app": "hotfix-worker"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/default//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "default",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:25+01:00",
+    "updatedAt": "2026-09-26T16:29:25+01:00"
+  },
+  {
+    "id": "default/default//Service/kubernetes",
+    "clusterName": "default",
+    "namespace": "default",
+    "kind": "Service",
+    "name": "kubernetes",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "component": "apiserver",
+      "provider": "kubernetes"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:16+01:00",
+    "updatedAt": "2026-09-26T16:29:16+01:00"
+  },
+  {
+    "id": "default/inventory/apps/Deployment/inventory",
+    "clusterName": "default",
+    "namespace": "inventory",
+    "kind": "Deployment",
+    "name": "inventory",
+    "apiVersion": "apps/v1",
+    "owner": "ConfigHub",
+    "ownerDetails": {
+      "name": "inventory",
+      "subType": "unit",
+      "unit": "inventory"
+    },
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "app": "inventory",
+      "confighub.com/UnitSlug": "inventory"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/inventory//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "inventory",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/kube-node-lease//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "kube-node-lease",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:25+01:00",
+    "updatedAt": "2026-09-26T16:29:25+01:00"
+  },
+  {
+    "id": "default/kube-public//ConfigMap/cluster-info",
+    "clusterName": "default",
+    "namespace": "kube-public",
+    "kind": "ConfigMap",
+    "name": "cluster-info",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:16+01:00",
+    "updatedAt": "2026-09-26T16:29:16+01:00"
+  },
+  {
+    "id": "default/kube-public//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "kube-public",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:25+01:00",
+    "updatedAt": "2026-09-26T16:29:25+01:00"
+  },
+  {
+    "id": "default/kube-system//Secret/bootstrap-token-abcdef",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "Secret",
+    "name": "bootstrap-token-abcdef",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:16+01:00",
+    "updatedAt": "2026-09-26T16:29:16+01:00"
+  },
+  {
+    "id": "default/kube-system//ConfigMap/coredns",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "ConfigMap",
+    "name": "coredns",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:17+01:00",
+    "updatedAt": "2026-09-26T16:29:17+01:00"
+  },
+  {
+    "id": "default/kube-system/apps/Deployment/coredns",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "Deployment",
+    "name": "coredns",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "k8s-app": "kube-dns"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:17+01:00",
+    "updatedAt": "2026-09-26T16:29:17+01:00"
+  },
+  {
+    "id": "default/kube-system//ConfigMap/extension-apiserver-authentication",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "ConfigMap",
+    "name": "extension-apiserver-authentication",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:15+01:00",
+    "updatedAt": "2026-09-26T16:29:15+01:00"
+  },
+  {
+    "id": "default/kube-system/apps/DaemonSet/kindnet",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "DaemonSet",
+    "name": "kindnet",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "app": "kindnet",
+      "k8s-app": "kindnet",
+      "tier": "node"
+    },
+    "status": "Pending",
+    "createdAt": "2026-09-26T16:29:18+01:00",
+    "updatedAt": "2026-09-26T16:29:18+01:00"
+  },
+  {
+    "id": "default/kube-system//ConfigMap/kube-apiserver-legacy-service-account-token-tracking",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "ConfigMap",
+    "name": "kube-apiserver-legacy-service-account-token-tracking",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:15+01:00",
+    "updatedAt": "2026-09-26T16:29:15+01:00"
+  },
+  {
+    "id": "default/kube-system//Service/kube-dns",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "Service",
+    "name": "kube-dns",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "k8s-app": "kube-dns",
+      "kubernetes.io/cluster-service": "true",
+      "kubernetes.io/name": "CoreDNS"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:17+01:00",
+    "updatedAt": "2026-09-26T16:29:17+01:00"
+  },
+  {
+    "id": "default/kube-system//ConfigMap/kube-proxy",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "ConfigMap",
+    "name": "kube-proxy",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "app": "kube-proxy"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:17+01:00",
+    "updatedAt": "2026-09-26T16:29:17+01:00"
+  },
+  {
+    "id": "default/kube-system/apps/DaemonSet/kube-proxy",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "DaemonSet",
+    "name": "kube-proxy",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "k8s-app": "kube-proxy"
+    },
+    "status": "Pending",
+    "createdAt": "2026-09-26T16:29:17+01:00",
+    "updatedAt": "2026-09-26T16:29:17+01:00"
+  },
+  {
+    "id": "default/kube-system//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:25+01:00",
+    "updatedAt": "2026-09-26T16:29:25+01:00"
+  },
+  {
+    "id": "default/kube-system//ConfigMap/kubeadm-config",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "ConfigMap",
+    "name": "kubeadm-config",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:16+01:00",
+    "updatedAt": "2026-09-26T16:29:16+01:00"
+  },
+  {
+    "id": "default/kube-system//ConfigMap/kubelet-config",
+    "clusterName": "default",
+    "namespace": "kube-system",
+    "kind": "ConfigMap",
+    "name": "kubelet-config",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:16+01:00",
+    "updatedAt": "2026-09-26T16:29:16+01:00"
+  },
+  {
+    "id": "default/local-path-storage//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "local-path-storage",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:25+01:00",
+    "updatedAt": "2026-09-26T16:29:25+01:00"
+  },
+  {
+    "id": "default/local-path-storage//ConfigMap/local-path-config",
+    "clusterName": "default",
+    "namespace": "local-path-storage",
+    "kind": "ConfigMap",
+    "name": "local-path-config",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:18+01:00",
+    "updatedAt": "2026-09-26T16:29:18+01:00"
+  },
+  {
+    "id": "default/local-path-storage/apps/Deployment/local-path-provisioner",
+    "clusterName": "default",
+    "namespace": "local-path-storage",
+    "kind": "Deployment",
+    "name": "local-path-provisioner",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:29:18+01:00",
+    "updatedAt": "2026-09-26T16:29:18+01:00"
+  },
+  {
+    "id": "default/payments//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "payments",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/payments/apps/Deployment/payments-api",
+    "clusterName": "default",
+    "namespace": "payments",
+    "kind": "Deployment",
+    "name": "payments-api",
+    "apiVersion": "apps/v1",
+    "owner": "Helm",
+    "ownerDetails": {
+      "name": "payments",
+      "subType": "release"
+    },
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "app": "payments-api",
+      "app.kubernetes.io/instance": "payments",
+      "app.kubernetes.io/managed-by": "Helm",
+      "helm.sh/chart": "payments-1.4.2"
+    },
+    "status": "NotReady",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/shop/apps/Deployment/cart",
+    "clusterName": "default",
+    "namespace": "shop",
+    "kind": "Deployment",
+    "name": "cart",
+    "apiVersion": "apps/v1",
+    "owner": "ArgoCD",
+    "ownerDetails": {
+      "name": "storefront",
+      "subType": "application"
+    },
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "app": "cart",
+      "argocd.argoproj.io/instance": "storefront"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/shop/apps/Deployment/checkout",
+    "clusterName": "default",
+    "namespace": "shop",
+    "kind": "Deployment",
+    "name": "checkout",
+    "apiVersion": "apps/v1",
+    "owner": "Flux",
+    "ownerDetails": {
+      "name": "shop-apps",
+      "namespace": "flux-system",
+      "subType": "kustomization"
+    },
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "app": "checkout",
+      "kustomize.toolkit.fluxcd.io/name": "shop-apps",
+      "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/shop//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "shop",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/temp-testing/apps/Deployment/debug-nginx",
+    "clusterName": "default",
+    "namespace": "temp-testing",
+    "kind": "Deployment",
+    "name": "debug-nginx",
+    "apiVersion": "apps/v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "labels": {
+      "app": "debug-nginx"
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  },
+  {
+    "id": "default/temp-testing//ConfigMap/kube-root-ca.crt",
+    "clusterName": "default",
+    "namespace": "temp-testing",
+    "kind": "ConfigMap",
+    "name": "kube-root-ca.crt",
+    "apiVersion": "v1",
+    "owner": "Native",
+    "observation": {
+      "source": "kubernetes-api",
+      "mode": "map-list",
+      "observedAt": "2026-09-26T18:30:14.777752Z",
+      "freshness": "point-in-time",
+      "scope": {
+        "cluster": "default"
+      }
+    },
+    "status": "Ready",
+    "createdAt": "2026-09-26T16:31:06+01:00",
+    "updatedAt": "2026-09-26T16:31:06+01:00"
+  }
+]

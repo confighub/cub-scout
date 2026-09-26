@@ -1,0 +1,55 @@
+{
+  "resource": "Deployment/inventory",
+  "namespace": "inventory",
+  "owner": "ConfigHub",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "inventory",
+      "name": "inventory"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 10763
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 1",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 1",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-26T18:30:32Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/inventory -n inventory --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all ConfigHub-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n inventory -q \"owner=ConfigHub\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n inventory"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "kubectl-client-side-apply"
+}

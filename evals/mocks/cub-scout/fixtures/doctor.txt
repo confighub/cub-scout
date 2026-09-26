@@ -1,0 +1,112 @@
+{
+  "cluster": "default",
+  "namespace": "all",
+  "resources": {
+    "total": 30
+  },
+  "ownership": {
+    "flux": 1,
+    "argocd": 1,
+    "sveltos": 0,
+    "modelplane": 0,
+    "crossplane": 0,
+    "kro": 0,
+    "helm": 1,
+    "terraform": 0,
+    "confighub": 1,
+    "native": 26,
+    "other": 0,
+    "unmanaged": 26
+  },
+  "health": {
+    "healthy": 27,
+    "warning": 3,
+    "error": 0
+  },
+  "risks": {
+    "total": 2,
+    "critical": 2,
+    "warning": 0,
+    "info": 0
+  },
+  "drift": {
+    "resources": 0
+  },
+  "rollouts": {
+    "total": 10,
+    "pass": 9,
+    "watch": 0,
+    "block": 1,
+    "inconclusive": 0,
+    "currentChanges": [
+      {
+        "resource": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "payments",
+          "name": "payments-api"
+        },
+        "progress": {
+          "phase": "stalled",
+          "clockSource": "status.conditions[Progressing].lastUpdateTime",
+          "progressAgeSeconds": 10160
+        },
+        "verdict": "BLOCK",
+        "reason": "runtime_failed",
+        "message": "Progress deadline exceeded",
+        "evidence": {
+          "kstatusStatus": "Failed",
+          "kstatusMessage": "Progress deadline exceeded",
+          "generation": 1,
+          "observedGeneration": 1,
+          "podReasons": [
+            {
+              "pod": "payments-api-6ccc469957-hbbbx",
+              "container": "api",
+              "reason": "ImagePullBackOff",
+              "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
+            },
+            {
+              "pod": "payments-api-6ccc469957-mb56g",
+              "container": "api",
+              "reason": "ImagePullBackOff",
+              "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
+            }
+          ],
+          "observedAt": "2026-09-26T18:30:27Z"
+        }
+      }
+    ]
+  },
+  "topIssues": [
+    {
+      "severity": "CRITICAL",
+      "resource": "Pod/payments-api-6ccc469957-hbbbx",
+      "namespace": "payments",
+      "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registr..."
+    },
+    {
+      "severity": "CRITICAL",
+      "resource": "Pod/payments-api-6ccc469957-mb56g",
+      "namespace": "payments",
+      "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registr..."
+    }
+  ],
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "CRITICAL issue on Pod/payments-api-6ccc469957-hbbbx - investigate immediately",
+      "nextCommand": "cub-scout explain pod/payments-api-6ccc469957-hbbbx -n payments"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "26 resources without GitOps ownership - review for governance gaps",
+      "nextCommand": "cub-scout map orphans"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Preview how to bring unmanaged resources under GitOps control",
+      "nextCommand": "cub-scout import --dry-run"
+    }
+  ]
+}

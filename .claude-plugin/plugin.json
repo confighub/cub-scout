@@ -1,0 +1,20 @@
+{
+  "name": "cub-scout",
+  "description": "Read-only Kubernetes and GitOps observer: skills and MCP tools that tell an agent who owns a resource, where it came from and what is broken, with unknowns stated rather than guessed.",
+  "author": {
+    "name": "ConfigHub",
+    "url": "https://github.com/confighub/cub-scout"
+  },
+  "homepage": "https://github.com/confighub/cub-scout",
+  "repository": "https://github.com/confighub/cub-scout",
+  "license": "MIT",
+  "mcpServers": {
+    "cub-scout": {
+      "command": "cub-scout",
+      "args": [
+        "mcp",
+        "serve"
+      ]
+    }
+  }
+}

@@ -1,0 +1,1 @@
+tool command failed (trace deployment/debug-nginx -n temp-testing --format json): exit status 1

@@ -1,0 +1,69 @@
+{
+  "resource": "Deployment/payments-api",
+  "namespace": "payments",
+  "owner": "Helm",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "payments",
+      "name": "payments-api"
+    },
+    "progress": {
+      "phase": "stalled",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 10165
+    },
+    "verdict": "BLOCK",
+    "reason": "runtime_failed",
+    "message": "Progress deadline exceeded",
+    "evidence": {
+      "kstatusStatus": "Failed",
+      "kstatusMessage": "Progress deadline exceeded",
+      "generation": 1,
+      "observedGeneration": 1,
+      "podReasons": [
+        {
+          "pod": "payments-api-6ccc469957-hbbbx",
+          "container": "api",
+          "reason": "ImagePullBackOff",
+          "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
+        },
+        {
+          "pod": "payments-api-6ccc469957-mb56g",
+          "container": "api",
+          "reason": "ImagePullBackOff",
+          "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
+        }
+      ],
+      "observedAt": "2026-09-26T18:30:32Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/payments-api -n payments --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Helm-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n payments -q \"owner=Helm\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n payments"
+    }
+  ],
+  "mutationCause": "manual-edit",
+  "mutationManager": "kubectl-client-side-apply"
+}

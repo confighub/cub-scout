@@ -1,0 +1,169 @@
+# Eval scenario: one small cluster with one workload per ownership type and
+# one broken workload. Ownership detection reads labels and annotations, so no
+# GitOps controller is installed. That absence is also a scenario: nothing in
+# the cluster records a Git revision for any workload.
+#
+# Recorded into evals/fixtures/ by evals/scripts/record.sh.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: inventory
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: temp-testing
+---
+# Flux Kustomization flux-system/shop-apps
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: shop
+  labels:
+    app: checkout
+    kustomize.toolkit.fluxcd.io/name: shop-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      containers:
+        - name: checkout
+          image: registry.k8s.io/pause:3.9
+---
+# Argo CD Application argocd/storefront
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+  namespace: shop
+  labels:
+    app: cart
+    argocd.argoproj.io/instance: storefront
+  annotations:
+    argocd.argoproj.io/tracking-id: storefront:apps/Deployment:shop/cart
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+        - name: cart
+          image: registry.k8s.io/pause:3.9
+---
+# Helm release payments; the image tag does not exist, so pods never start
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-api
+  namespace: payments
+  labels:
+    app: payments-api
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: payments
+    helm.sh/chart: payments-1.4.2
+  annotations:
+    meta.helm.sh/release-name: payments
+    meta.helm.sh/release-namespace: payments
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payments-api
+  template:
+    metadata:
+      labels:
+        app: payments-api
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/pause:0.0.0-does-not-exist
+---
+# ConfigHub unit inventory
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory
+  namespace: inventory
+  labels:
+    app: inventory
+    confighub.com/UnitSlug: inventory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+        - name: inventory
+          image: registry.k8s.io/pause:3.9
+---
+# Applied by hand during an incident
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hotfix-worker
+  namespace: default
+  labels:
+    app: hotfix-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hotfix-worker
+  template:
+    metadata:
+      labels:
+        app: hotfix-worker
+    spec:
+      containers:
+        - name: worker
+          image: registry.k8s.io/pause:3.9
+---
+# Left behind after debugging
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-nginx
+  namespace: temp-testing
+  labels:
+    app: debug-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-nginx
+  template:
+    metadata:
+      labels:
+        app: debug-nginx
+    spec:
+      containers:
+        - name: nginx
+          image: registry.k8s.io/pause:3.9

@@ -1,0 +1,12 @@
+tool command failed (trace deployment/cart -n shop --format json): Error: trace failed: argocd context appears stale or invalid (current Argo endpoint is unreachable or stale).
+
+Trace context troubleshooting:
+  1) argocd context
+  2) argocd app list
+  3) argocd logout <server>
+  4) argocd login <server>
+
+Then retry:
+  cub-scout trace --app <app-name>
+
+kubectl fallback failed: kubectl get applications failed: exit status 1: error: the server doesn't have a resource type "applications"
