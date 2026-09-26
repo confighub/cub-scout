@@ -249,17 +249,58 @@ before implementation.
   Commander integration is tracked in `#519`.
 - [ ] Consistent evidence semantics across CLI, plugin, MCP, watch, bot, and TUI
   for deployment, revision, progress, drift, freshness, and missing evidence.
+  Tracked in [#596](https://github.com/confighub/cub-scout/issues/596).
 - [ ] Measured efficiency: reusable observations, explicit refresh, tested
   request budgets, cancellation, and visible freshness/coverage at fleet scale.
+  Tracked in [#539](https://github.com/confighub/cub-scout/issues/539) and [#519](https://github.com/confighub/cub-scout/issues/519).
 - [ ] A published fixture-backed controller capability matrix covering Argo,
   Flux, Sveltos, Modelplane, Crossplane, kro, Helm, and native workloads, with
   explicit limitations when equivalent status/source/generation evidence is absent.
+  Tracked in [#594](https://github.com/confighub/cub-scout/issues/594).
 - [ ] A necessary, deliberate public-contract transition, with deprecations,
   migration guidance, compatibility tests, and coordinated standalone/plugin
   delivery. Examples include retiring legacy commands or replacing existing
   JSON/MCP contracts. Under [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
   additive features and an improved TUI can continue in 2.x; they do not by
-  themselves require 3.0.0.
+  themselves require 3.0.0. Tracked in [#595](https://github.com/confighub/cub-scout/issues/595).
+
+### Path to 3.0
+
+A plan, not a date; the rule above that planned sections describe intent applies.
+The one change that cannot be made additively in 2.x is the Go module path:
+`go.mod` has no `/v2` suffix, so the module proxy knows only v1.8 to v1.13 and
+`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` resolves to
+v1.13.0 while the newest tag is v2.12.1 (checked 2026-09-26). Correcting that
+is an import-path break, so it anchors 3.0.0 as `github.com/confighub/cub-scout/v3`
+([#595](https://github.com/confighub/cub-scout/issues/595)). Everything else below is additive, ships in 2.x minors first, and
+3.0.0 itself carries only the transition. The order is by dependency, not by
+version number; [#584](https://github.com/confighub/cub-scout/issues/584) calls itself a v2.13.0 candidate and may land earlier.
+
+1. **Correctness against current ConfigHub:** OCI `space/<slug>` sources
+   ([#561](https://github.com/confighub/cub-scout/issues/561)); the `fleet outliers` decision ([#562](https://github.com/confighub/cub-scout/issues/562)); Attestations as
+   evidence and `DataHash` on receipt subjects ([#591](https://github.com/confighub/cub-scout/issues/591)); Helm 3/4 tracing
+   fixes ([#588](https://github.com/confighub/cub-scout/issues/588)).
+2. **Explorer and efficiency:** the Scout evidence panel in Commander and its
+   API-load proof ([#519](https://github.com/confighub/cub-scout/issues/519)); observation-efficiency follow-ups ([#539](https://github.com/confighub/cub-scout/issues/539));
+   ship or fold the TUI View items ([#422](https://github.com/confighub/cub-scout/issues/422), [#421](https://github.com/confighub/cub-scout/issues/421)).
+3. **Matrix, conformance and distribution:** the controller capability matrix
+   ([#594](https://github.com/confighub/cub-scout/issues/594)); StatefulSet/DaemonSet/Job adapters ([#584](https://github.com/confighub/cub-scout/issues/584)); distribution
+   closure ([#520](https://github.com/confighub/cub-scout/issues/520)); executable vulnerability scanning ([#534](https://github.com/confighub/cub-scout/issues/534)); the
+   evidence-conformance suite ([#596](https://github.com/confighub/cub-scout/issues/596)), which admits ChangeWorkflow
+   prerequisite evidence ([#597](https://github.com/confighub/cub-scout/issues/597)) as its first new block.
+4. **3.0.0, the transition ([#595](https://github.com/confighub/cub-scout/issues/595)):** the `/v3` module path; retire the
+   flags already marked deprecated (`trace --json`, `tree --json`,
+   `graph export --json`, the `gitops status --json` shorthand, `connect --go`,
+   `app create --set-context`, the old hub command); cub >= 0.6 as the floor;
+   `fleet outliers` redesigned or removed; `cub scout` as the documented primary
+   form ([#386](https://github.com/confighub/cub-scout/issues/386)); a migration guide, a golden CLI-surface diff against the last
+   2.x, and coordinated standalone/plugin delivery. The publication series
+   ([#475](https://github.com/confighub/cub-scout/issues/475)) follows the release.
+
+Decisions to record before 3.0 work starts: Commander as the connected explorer
+with cub-scout's own TUI standalone-first ([#519](https://github.com/confighub/cub-scout/issues/519)); `/v3` versus dropping
+`go install` support altogether; `fleet outliers`; the cub floor. Not 3.0 gates:
+[#481](https://github.com/confighub/cub-scout/issues/481) (Helm/Kustomize provenance, an epic) and [#432](https://github.com/confighub/cub-scout/issues/432) (Grafana design).
 
 ### Post-v2.8 ConfigHub-Native Boundary ([#505](https://github.com/confighub/cub-scout/issues/505))
 
