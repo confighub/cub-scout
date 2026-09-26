@@ -36,14 +36,14 @@ scheduled in stage 2 of the [Path to 3.0](#path-to-30) rather than for a named
 version. Until implemented, their existing unknown/unsupported limits remain
 unchanged.
 
-### v2.12.3 Patch (Prepared)
+### v2.12.3 Patch (Published 2026-09-26)
 
 [Release notes](releases/v2.12.3.md). Two fixes: `explain` and `trace` report
 the owner from ownership detection instead of the tracer that ran
 ([#617](https://github.com/confighub/cub-scout/issues/617)), and
 `cub-scout mcp serve` accepts the MCP stdio transport's newline-delimited
-JSON, so MCP clients can connect (#616). The maintainer pushes the tag;
-install and version references flip after publication.
+JSON, so MCP clients can connect (#616). Published from tag `v2.12.3` at
+`eec8da3`; install and version references point at it.
 
 ### v2.12.2 Patch (Published 2026-09-26)
 

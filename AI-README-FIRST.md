@@ -2,6 +2,11 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
+**2026-09-26:** v2.12.3 is published (tag at `eec8da3`): `explain` and `trace`
+report the detected owner, never the tracer that ran (#617, #618), and
+`cub-scout mcp serve` accepts MCP's newline-delimited stdio framing (#616).
+See [release notes](docs/releases/v2.12.3.md). Follow-ups: #619, #620.
+
 **2026-09-26:** v2.12.2 is published (tag at `35a41cf`): a clear "run `cub upgrade`"
 refusal when cub is older than its ConfigHub server (#608, #610) and exact
 ConfigHub unit-event outcomes (#611). See [release notes](docs/releases/v2.12.2.md).

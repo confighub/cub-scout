@@ -1,5 +1,21 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-09-26: v2.12.3 Release
+
+v2.12.3 is published from tag `v2.12.3` at `eec8da3` (#621, the release notes, was
+the last merge). It carries #618 (#617: `explain` and `trace --format json`
+report the owner from ownership detection; unlabelled workloads had been shown as
+Helm or Flux, ConfigHub-owned ones as Unknown or Flux, custom-owned ones as Native)
+and #616 (`mcp serve` accepts newline-delimited JSON, the MCP stdio transport;
+spec clients such as Claude Code had timed out since v1.7.0). Both bugs were found
+while recording fixtures for the agent evals (#603). Codex was waived by the
+maintainer; the substitutes are on each PR. Also on main: #615 (read-only skill
+grants, enforced by `cmd/cub-scout/skill_allowed_tools_test.go`). Follow-ups: #619
+(MCP drops a command's JSON on a non-zero exit), #620 (`explain` health wording).
+Verification of the published artifacts is in the
+[release notes](docs/releases/v2.12.3.md). Next: v2.13.0, resuming the #603 eval
+pilot.
+
 ## 2026-09-26: v2.12.2 Release
 
 v2.12.2 is published from tag `v2.12.2` at `35a41cf` (#612, the release notes, was
