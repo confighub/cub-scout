@@ -244,22 +244,96 @@ This is a direction and decision bar, not a committed release date or a reason
 to introduce unnecessary breaking changes. Graduate new work into issues
 before implementation.
 
-- [ ] A coherent explorer: navigate intended configuration, controller source,
-  workload, diagnostics, and comparisons; retain an effective standalone path.
-  Commander integration is tracked in `#519`.
+- [ ] Coherent evidence for agents: from a question about intended
+  configuration, controller source, workload, diagnostics or comparisons, an
+  agent reaches the evidence and its gaps in few calls, on any surface, with an
+  effective standalone path retained. Measured by the agent eval suite ([#603](https://github.com/confighub/cub-scout/issues/603)).
+  Commander ([#519](https://github.com/confighub/cub-scout/issues/519)) is the human interface to the same evidence, not a 3.0
+  requirement.
 - [ ] Consistent evidence semantics across CLI, plugin, MCP, watch, bot, and TUI
   for deployment, revision, progress, drift, freshness, and missing evidence.
+  Tracked in [#596](https://github.com/confighub/cub-scout/issues/596).
 - [ ] Measured efficiency: reusable observations, explicit refresh, tested
   request budgets, cancellation, and visible freshness/coverage at fleet scale.
+  Tracked in [#539](https://github.com/confighub/cub-scout/issues/539) and [#519](https://github.com/confighub/cub-scout/issues/519).
 - [ ] A published fixture-backed controller capability matrix covering Argo,
   Flux, Sveltos, Modelplane, Crossplane, kro, Helm, and native workloads, with
   explicit limitations when equivalent status/source/generation evidence is absent.
+  Tracked in [#594](https://github.com/confighub/cub-scout/issues/594).
 - [ ] A necessary, deliberate public-contract transition, with deprecations,
   migration guidance, compatibility tests, and coordinated standalone/plugin
   delivery. Examples include retiring legacy commands or replacing existing
   JSON/MCP contracts. Under [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
   additive features and an improved TUI can continue in 2.x; they do not by
-  themselves require 3.0.0.
+  themselves require 3.0.0. Tracked in [#595](https://github.com/confighub/cub-scout/issues/595).
+
+### Path to 3.0
+
+A plan, not a date; the rule above that planned sections describe intent applies.
+Stages 1 to 3 are additive and ship in 2.x minors. Stage 4 is the 3.0.0 release
+and carries only the transition. The order is by dependency, not by version number.
+
+**Direction, set on 2026-09-26.** Agents are the primary users of cub-scout's
+evidence. Fleets are orchestrated outside cub-scout, by Pilot, and ConfigHub is
+the system of record, including for fleets. cub-scout may record its observations
+in ConfigHub as facts, never judgments; the cluster stays read-only. Breadth
+follows Argo CD + Crossplane stacks. In one line: exact per-cluster evidence that
+agents use, that an orchestrator spreads across a fleet, that ConfigHub records,
+and whose value to an agent is measured.
+
+Two facts shape the transition. First, the Go module path: `go.mod` has no
+`/v2` suffix, so the module proxy knows only v1.8 to v1.13 and
+`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` resolves to
+v1.13.0 while the newest tag is v2.12.1 (recorded on [#520](https://github.com/confighub/cub-scout/issues/520) on 2026-09-11;
+the [install guide](getting-started/install.md#go-module-version-caveat) already
+steers people to archives, Homebrew and tagged builds). The import path is not
+part of the CLI contract, whose
+[Breaking Change Policy](reference/cli-contract.md#breaking-change-policy) names
+commands, flags, exit codes, JSON fields and query syntax, and no proxy consumer
+of a v2 tag can exist today. So the correct `/v2` path belongs in the next 2.x
+minor, and 3.0.0 moves it to `/v3` as a consequence of the major, not its cause.
+Second, what does require a major under that policy is removing what 2.x
+deprecated: the flags and command already marked deprecated, a cub floor the
+connected gate enforces, and the `fleet outliers` decision. That is 3.0.0's
+content ([#595](https://github.com/confighub/cub-scout/issues/595)).
+
+1. **Measure first, then fix against current ConfigHub:** agent evals
+   ([#603](https://github.com/confighub/cub-scout/issues/603)), so every later change shows as a measured difference; OCI
+   `space/<slug>` sources ([#561](https://github.com/confighub/cub-scout/issues/561)); Attestations and ChangeWorkflow prerequisites
+   as evidence ([#591](https://github.com/confighub/cub-scout/issues/591), [#597](https://github.com/confighub/cub-scout/issues/597)); Helm tracing correctness ([#588](https://github.com/confighub/cub-scout/issues/588)); an explicit
+   cluster on every MCP tool ([#599](https://github.com/confighub/cub-scout/issues/599)); the `/v2` module path ([#595](https://github.com/confighub/cub-scout/issues/595),
+   [#520](https://github.com/confighub/cub-scout/issues/520)); a clear message when cub is older than its server ([#608](https://github.com/confighub/cub-scout/issues/608)).
+2. **Agent contract, and Argo CD + Crossplane depth:** the evidence-conformance
+   suite ([#596](https://github.com/confighub/cub-scout/issues/596)); cluster identity, merge-safe IDs and reported cost
+   ([#599](https://github.com/confighub/cub-scout/issues/599)); MCP options for orchestrated, remote and offline use ([#604](https://github.com/confighub/cub-scout/issues/604));
+   Crossplane v2 ([#601](https://github.com/confighub/cub-scout/issues/601)); Argo Rollouts ([#602](https://github.com/confighub/cub-scout/issues/602)); the capability matrix with
+   Argo and Crossplane rows first ([#594](https://github.com/confighub/cub-scout/issues/594)); workload adapters ([#584](https://github.com/confighub/cub-scout/issues/584)).
+3. **Recorded evidence:** the facts channel into ConfigHub, once where facts
+   live is designed with ConfigHub ([#600](https://github.com/confighub/cub-scout/issues/600)); a bot image that clusters can pull
+   ([#520](https://github.com/confighub/cub-scout/issues/520)); cheap always-on observation ([#539](https://github.com/confighub/cub-scout/issues/539)); evidence over time
+   ([#605](https://github.com/confighub/cub-scout/issues/605)).
+4. **3.0.0, the transition ([#595](https://github.com/confighub/cub-scout/issues/595)), reserved for the major:** remove the
+   flags already marked deprecated (`trace --json`, `tree --json`,
+   `graph export --json`, the `gitops status --json` shorthand, `connect --go`,
+   `app create --set-context`, the old hub command); cub >= 0.6 as the floor,
+   enforced by the connected gate; the `fleet outliers` decision; the module path
+   to `/v3`; `cub scout` as the documented primary form ([#386](https://github.com/confighub/cub-scout/issues/386)); a migration
+   guide, a golden CLI-surface diff against the last 2.x, and delivery in
+   standalone and plugin forms in the same release, as the
+   [support policy](reference/host-plugin-compatibility.md#support-policy)
+   requires. Standalone `cub-scout` stays; no sunset decision has been made. Ship
+   it with published eval results. The publication series ([#475](https://github.com/confighub/cub-scout/issues/475)) follows.
+
+Still open: whether the CLI/TUI parity principle applies to agent and bot
+plumbing such as cluster parameters and the facts channel; where recorded facts
+live in ConfigHub, to be settled with ConfigHub's fleet model, which is in
+progress ([#600](https://github.com/confighub/cub-scout/issues/600)); and whether `fleet outliers` is removed or rebuilt on that
+model ([#562](https://github.com/confighub/cub-scout/issues/562)).
+
+For future attention, not 3.0 gates: verified-running status on Git hosts
+([#606](https://github.com/confighub/cub-scout/issues/606)); controller families added on named demand ([#607](https://github.com/confighub/cub-scout/issues/607)); Helm/Kustomize
+provenance ([#481](https://github.com/confighub/cub-scout/issues/481)); the Grafana design ([#432](https://github.com/confighub/cub-scout/issues/432)); TUI view integration
+([#422](https://github.com/confighub/cub-scout/issues/422), [#421](https://github.com/confighub/cub-scout/issues/421)); the Helm 4 compatibility matrix part of [#588](https://github.com/confighub/cub-scout/issues/588).
 
 ### Post-v2.8 ConfigHub-Native Boundary ([#505](https://github.com/confighub/cub-scout/issues/505))
 
