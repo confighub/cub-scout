@@ -280,7 +280,8 @@ before implementation.
 
 A plan, not a date; the rule above that planned sections describe intent applies.
 Stages 1 to 3 are additive and ship in 2.x minors. Stage 4 is the 3.0.0 release
-and carries only the transition. The order is by dependency, not by version number.
+and carries only the transition. The order is by dependency; the planned versions
+are in [Remaining 2.x Releases](#remaining-2x-releases) below.
 
 **Direction, set on 2026-09-26.** Agents are the primary users of cub-scout's
 evidence. Fleets are orchestrated outside cub-scout, by Pilot, and ConfigHub is
@@ -346,6 +347,88 @@ For future attention, not 3.0 gates: verified-running status on Git hosts
 ([#606](https://github.com/confighub/cub-scout/issues/606)); controller families added on named demand ([#607](https://github.com/confighub/cub-scout/issues/607)); Helm/Kustomize
 provenance ([#481](https://github.com/confighub/cub-scout/issues/481)); the Grafana design ([#432](https://github.com/confighub/cub-scout/issues/432)); TUI view integration
 ([#422](https://github.com/confighub/cub-scout/issues/422), [#421](https://github.com/confighub/cub-scout/issues/421)); the Helm 4 compatibility matrix part of [#588](https://github.com/confighub/cub-scout/issues/588).
+
+### Remaining 2.x Releases
+
+Planned versions for the stages of the Path to 3.0 above. Versions are targets,
+not dates. An item moves to a later minor when its dependencies move, and a
+patch release (2.x.y) ships a user-visible correctness fix that cannot wait for
+the next minor, as v2.12.2 did. From v2.13.0 on, each minor's release notes
+report the agent-eval result against the previous release.
+
+**v2.13.0: measure first, then fix against current ConfigHub (stage 1).**
+
+- Agent evals: a first suite of 20–30 tasks, a with/without-cub-scout baseline
+  and a scheduled CI run ([#603](https://github.com/confighub/cub-scout/issues/603)).
+- Governance evidence reads: ConfigHub Attestations
+  ([#591](https://github.com/confighub/cub-scout/issues/591), part A) and
+  ChangeWorkflow/ChangeOrder prerequisite state
+  ([#597](https://github.com/confighub/cub-scout/issues/597)).
+- An explicit cluster on every MCP tool, the first part of
+  [#599](https://github.com/confighub/cub-scout/issues/599).
+- Helm tracing correctness: exact object identity and no silently skipped
+  release records ([#588](https://github.com/confighub/cub-scout/issues/588)).
+- The remaining [#561](https://github.com/confighub/cub-scout/issues/561) items.
+- The `/v2` module path, so `go install ...@latest` resolves the current line
+  ([#595](https://github.com/confighub/cub-scout/issues/595),
+  [#520](https://github.com/confighub/cub-scout/issues/520)).
+
+Done when: the eval baseline is published; every new evidence kind has
+fixtures recorded from a cub 0.6 server; CI and the docs-contract tests pass.
+
+**v2.14.0: the agent contract, and Argo CD + Crossplane depth (stage 2).**
+
+- The evidence-conformance suite across CLI, plugin, MCP, watch, bot and TUI
+  ([#596](https://github.com/confighub/cub-scout/issues/596)).
+- Cluster identity, merge-safe IDs, reported cost and failure isolation on
+  every observation ([#599](https://github.com/confighub/cub-scout/issues/599)).
+- MCP options for orchestrated, remote and offline use
+  ([#604](https://github.com/confighub/cub-scout/issues/604)).
+- Crossplane v2, and Crossplane out of "experimental"
+  ([#601](https://github.com/confighub/cub-scout/issues/601)); Argo Rollouts
+  ([#602](https://github.com/confighub/cub-scout/issues/602)).
+- The capability matrix, Argo CD and Crossplane rows first
+  ([#594](https://github.com/confighub/cub-scout/issues/594)); workload
+  adapters beyond Deployments ([#584](https://github.com/confighub/cub-scout/issues/584)).
+
+Done when: the conformance harness runs in CI for all six surfaces; the matrix
+is published and fixture-backed; the eval result is reported.
+
+**v2.15.0: recorded evidence (stage 3).**
+
+- Observations recorded in ConfigHub as facts, once where they live is designed
+  with ConfigHub ([#600](https://github.com/confighub/cub-scout/issues/600)).
+- A bot image clusters can pull
+  ([#520](https://github.com/confighub/cub-scout/issues/520)), and cheap
+  always-on observation: a degraded-watch freshness signal and the watch-backed
+  default ([#539](https://github.com/confighub/cub-scout/issues/539)).
+- Evidence over time: point-in-time queries and verdicts over a window
+  ([#605](https://github.com/confighub/cub-scout/issues/605)).
+- Deprecation notices for everything 3.0.0 removes, including the cub 0.6
+  floor and the `fleet outliers` decision
+  ([#595](https://github.com/confighub/cub-scout/issues/595),
+  [#562](https://github.com/confighub/cub-scout/issues/562)), at least one minor
+  before the removal, as the
+  [support policy](reference/host-plugin-compatibility.md#support-policy) requires.
+
+Done when: the facts design is agreed with ConfigHub; the deprecation notices
+have shipped; the eval result is reported.
+
+**3.0.0: the transition (stage 4,
+[#595](https://github.com/confighub/cub-scout/issues/595)),** as described in the
+Path to 3.0, released with published eval results.
+
+Not scheduled in 2.x: Helm/Kustomize provenance
+([#481](https://github.com/confighub/cub-scout/issues/481)), the Grafana design
+([#432](https://github.com/confighub/cub-scout/issues/432)), TUI view
+integration ([#422](https://github.com/confighub/cub-scout/issues/422),
+[#421](https://github.com/confighub/cub-scout/issues/421)), verified-running
+status on Git hosts ([#606](https://github.com/confighub/cub-scout/issues/606)),
+further controller families
+([#607](https://github.com/confighub/cub-scout/issues/607), on named demand),
+and executable vulnerability scanning
+([#534](https://github.com/confighub/cub-scout/issues/534), deferred by the
+maintainer).
 
 ### Post-v2.8 ConfigHub-Native Boundary ([#505](https://github.com/confighub/cub-scout/issues/505))
 
