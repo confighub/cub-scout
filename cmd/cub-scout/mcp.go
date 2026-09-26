@@ -176,7 +176,7 @@ func serveMCP(ctx context.Context, in io.Reader, out io.Writer, gateway *mcpGate
 		default:
 		}
 
-		frame, err := readMCPFrame(reader)
+		frame, framing, err := readMCPMessage(reader)
 		if err != nil {
 			if err == io.EOF {
 				return nil
@@ -198,7 +198,7 @@ func serveMCP(ctx context.Context, in io.Reader, out io.Writer, gateway *mcpGate
 		if err != nil {
 			return fmt.Errorf("marshal mcp response: %w", err)
 		}
-		if err := writeMCPFrame(out, payload); err != nil {
+		if err := writeMCPMessage(out, payload, framing); err != nil {
 			return fmt.Errorf("write mcp frame: %w", err)
 		}
 	}
@@ -1353,16 +1353,83 @@ func detectMCPConnectedMode() bool {
 	return requireCubConnectedFn() == nil
 }
 
+// mcpFraming is how one stdio message was delimited. The MCP stdio transport
+// is newline-delimited JSON, which is what MCP clients such as Claude Code
+// send. Content-Length headers (the LSP style) were this server's only framing
+// until v2.13.0 and stay accepted for existing callers. A reply uses the
+// framing of the request it answers.
+type mcpFraming int
+
+const (
+	mcpFramingNewline mcpFraming = iota
+	mcpFramingContentLength
+)
+
+// readMCPMessage reads one message in either framing: a line starting with
+// "{" is a whole newline-delimited message, anything else starts a
+// Content-Length header block. Blank lines between messages are skipped.
+func readMCPMessage(r *bufio.Reader) ([]byte, mcpFraming, error) {
+	for {
+		line, err := r.ReadString('\n')
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			if err != nil {
+				if err == io.EOF {
+					return nil, mcpFramingNewline, io.EOF
+				}
+				return nil, mcpFramingNewline, err
+			}
+			continue
+		}
+		if strings.HasPrefix(trimmed, "{") {
+			// A final message without a trailing newline is still a message.
+			if err != nil && err != io.EOF {
+				return nil, mcpFramingNewline, err
+			}
+			return []byte(trimmed), mcpFramingNewline, nil
+		}
+		if err != nil {
+			return nil, mcpFramingContentLength, err
+		}
+		body, err := readMCPFrameAfter(r, line)
+		return body, mcpFramingContentLength, err
+	}
+}
+
+func writeMCPMessage(w io.Writer, payload []byte, framing mcpFraming) error {
+	if framing == mcpFramingContentLength {
+		return writeMCPFrame(w, payload)
+	}
+	// json.Marshal escapes newlines inside strings, so the payload is one line.
+	if _, err := w.Write(payload); err != nil {
+		return err
+	}
+	_, err := io.WriteString(w, "\n")
+	return err
+}
+
+// readMCPFrame reads one Content-Length framed message.
 func readMCPFrame(r *bufio.Reader) ([]byte, error) {
+	return readMCPFrameAfter(r, "")
+}
+
+// readMCPFrameAfter reads a Content-Length framed message whose first header
+// line, if not empty, has already been read.
+func readMCPFrameAfter(r *bufio.Reader, first string) ([]byte, error) {
 	contentLength := -1
 
 	for {
-		line, err := r.ReadString('\n')
-		if err != nil {
-			if err == io.EOF && line == "" {
-				return nil, io.EOF
+		line := first
+		first = ""
+		if line == "" {
+			var err error
+			line, err = r.ReadString('\n')
+			if err != nil {
+				if err == io.EOF && line == "" {
+					return nil, io.EOF
+				}
+				return nil, err
 			}
-			return nil, err
 		}
 
 		line = strings.TrimRight(line, "\r\n")
