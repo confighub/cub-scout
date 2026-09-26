@@ -476,6 +476,7 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `owner` | string | The owner from ownership detection, the same classification and names as `map list` (`Flux`, `ArgoCD`, `Helm`, `ConfigHub`, `Native`, …). A tracer's tool replaces it only when that tracer produced a complete chain; a tracer answering "not managed by me" never sets it. `trace --format json` follows the same rule for `summary.ownerType`. |
 | `currentChange` | object | Optional generation-scoped rollout progress/verdict for workload resources. Omitted for non-workloads or when live rollout evidence cannot be fetched. |
 | `currentChange.progress.phase` | string enum | One of `pending`, `applied`, `rolling_out`, `stalled`, `complete`, or `unknown`. |
 | `currentChange.verdict` | string enum | `PASS`, `WATCH`, `BLOCK`, or `INCONCLUSIVE`. Uses the same vocabulary as receipts. |

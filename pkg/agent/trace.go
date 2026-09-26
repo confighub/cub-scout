@@ -27,6 +27,12 @@ type TraceResult struct {
 	// Tool indicates which GitOps tool manages this resource
 	Tool string `json:"tool"` // "flux", "argocd", or ""
 
+	// DetectedOwner is the owner type from ownership detection (an Owner*
+	// constant), the classification map uses. Set by callers that detect
+	// ownership before tracing; when the tracer did not produce a complete
+	// chain, it, not Tool, is the owner to report.
+	DetectedOwner string `json:"-"`
+
 	// Error contains any error encountered during tracing
 	Error string `json:"error,omitempty"`
 
