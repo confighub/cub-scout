@@ -8,4 +8,4 @@ timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Which Git commit is currently deployed for the `checkout` Deployment in the `shop` namespace? Finish with one line `REVISION: <commit SHA, or UNKNOWN if the cluster does not show it>`.
+I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. Which Git commit is currently deployed for the `checkout` Deployment in the `shop` namespace? Finish with one line `REVISION: <commit SHA, or UNKNOWN if the cluster does not show it>`.

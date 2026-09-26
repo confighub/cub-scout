@@ -7,7 +7,61 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-26T19:31:25Z"
+    creationTimestamp: "2026-09-26T20:16:49Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: argocd-application-controller
+      pod-template-hash: 6f756d967d
+    name: argocd-application-controller-6f756d967d
+    namespace: argocd
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: argocd-application-controller
+      uid: 99be8dd4-38cf-48ac-9a98-6d00c2597a38
+    resourceVersion: "646"
+    uid: 05b05576-594f-411c-b1dd-42953fc76054
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: argocd-application-controller
+        pod-template-hash: 6f756d967d
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: argocd-application-controller
+          pod-template-hash: 6f756d967d
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: application-controller
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-09-26T20:16:49Z"
     generation: 1
     labels:
       app: hotfix-worker
@@ -20,9 +74,9 @@ items:
       controller: true
       kind: Deployment
       name: hotfix-worker
-      uid: a81db6c6-58d0-471b-8a05-25d26e12e63e
-    resourceVersion: "601"
-    uid: f2423753-3d43-4a66-9117-835d1f406508
+      uid: ebdd94e5-0af5-4dd7-a6cd-8ccafb1ea9be
+    resourceVersion: "643"
+    uid: 36a074ef-6d09-498d-83eb-cba58251c9c5
   spec:
     replicas: 1
     selector:
@@ -60,8 +114,116 @@ items:
     annotations:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-09-26T20:16:49Z"
+    generation: 1
+    labels:
+      app: kustomize-controller
+      pod-template-hash: 7d9647c47d
+    name: kustomize-controller-7d9647c47d
+    namespace: flux-system
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: kustomize-controller
+      uid: dea47d3d-f69d-4005-b76a-9c8bc9db7a6d
+    resourceVersion: "649"
+    uid: 4914df3e-f8aa-42e9-960b-789342f661bb
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: kustomize-controller
+        pod-template-hash: 7d9647c47d
+    template:
+      metadata:
+        labels:
+          app: kustomize-controller
+          pod-template-hash: 7d9647c47d
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: manager
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-09-26T20:16:49Z"
+    generation: 1
+    labels:
+      app: source-controller
+      pod-template-hash: bb798d9fb
+    name: source-controller-bb798d9fb
+    namespace: flux-system
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: source-controller
+      uid: 679e7a49-8c49-4a1e-9b84-6e54d34b49f0
+    resourceVersion: "653"
+    uid: cc113995-7355-4298-b5ee-b9845370b02d
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: source-controller
+        pod-template-hash: bb798d9fb
+    template:
+      metadata:
+        labels:
+          app: source-controller
+          pod-template-hash: bb798d9fb
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: manager
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-26T19:32:04Z"
+    creationTimestamp: "2026-09-26T20:17:35Z"
     generation: 1
     labels:
       app: inventory
@@ -74,9 +236,9 @@ items:
       controller: true
       kind: Deployment
       name: inventory
-      uid: 69098764-d611-492f-8642-e9321facea25
-    resourceVersion: "783"
-    uid: 43f12a22-c005-4fc7-a996-906638ee88ac
+      uid: 9300c84b-b513-4b34-85ba-8499894af083
+    resourceVersion: "842"
+    uid: 7d7b395a-a377-41dd-af91-434616e50f0f
   spec:
     replicas: 1
     selector:
@@ -118,7 +280,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-26T19:31:25Z"
+    creationTimestamp: "2026-09-26T20:16:50Z"
     generation: 2
     labels:
       app: inventory
@@ -131,9 +293,9 @@ items:
       controller: true
       kind: Deployment
       name: inventory
-      uid: 69098764-d611-492f-8642-e9321facea25
-    resourceVersion: "807"
-    uid: ae361592-c53e-4cff-8b74-3bef4a1a7214
+      uid: 9300c84b-b513-4b34-85ba-8499894af083
+    resourceVersion: "882"
+    uid: a6493fdc-9c91-4783-86f9-9f4e7f4082ea
   spec:
     replicas: 0
     selector:
@@ -169,7 +331,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-26T19:31:13Z"
+    creationTimestamp: "2026-09-26T20:16:38Z"
     generation: 1
     labels:
       k8s-app: kube-dns
@@ -182,9 +344,9 @@ items:
       controller: true
       kind: Deployment
       name: coredns
-      uid: 4d3283c3-3034-4fe0-afd7-f83bc6b1f626
-    resourceVersion: "549"
-    uid: 63fb0017-d706-4497-8067-2068ff82c80c
+      uid: b44ca1aa-9029-457f-8916-f101eee45a14
+    resourceVersion: "619"
+    uid: a7420d94-9610-4c3d-8bed-42f2e8027a2c
   spec:
     replicas: 2
     selector:
@@ -308,7 +470,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-26T19:31:13Z"
+    creationTimestamp: "2026-09-26T20:16:38Z"
     generation: 1
     labels:
       app: local-path-provisioner
@@ -321,9 +483,9 @@ items:
       controller: true
       kind: Deployment
       name: local-path-provisioner
-      uid: b6279bce-b2f6-4f96-8d9e-e6dfbd7b0f8b
-    resourceVersion: "565"
-    uid: c3938054-2513-4153-ab00-3e41d39568e5
+      uid: fab59ec0-ae5a-4c6a-9775-cb4cf997b83e
+    resourceVersion: "607"
+    uid: 8274bfde-936f-448c-bb41-59dce4b064f0
   spec:
     replicas: 1
     selector:
@@ -399,7 +561,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: payments
       meta.helm.sh/release-namespace: payments
-    creationTimestamp: "2026-09-26T19:31:25Z"
+    creationTimestamp: "2026-09-26T20:16:50Z"
     generation: 1
     labels:
       app: payments-api
@@ -412,9 +574,9 @@ items:
       controller: true
       kind: Deployment
       name: payments-api
-      uid: 25275380-0796-4e6c-bd74-70ab46b602aa
-    resourceVersion: "520"
-    uid: d10e67dd-5e0b-4543-b9b1-f7883c03ad57
+      uid: 83c29083-a953-4075-859d-bac1938b9d6d
+    resourceVersion: "588"
+    uid: 15a73900-9948-4cdc-9ce1-e7be1778af32
   spec:
     replicas: 2
     selector:
@@ -452,7 +614,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "3"
       deployment.kubernetes.io/max-replicas: "4"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-26T19:31:25Z"
+    creationTimestamp: "2026-09-26T20:16:50Z"
     generation: 2
     labels:
       app: cart
@@ -465,9 +627,9 @@ items:
       controller: true
       kind: Deployment
       name: cart
-      uid: 9505be62-cdda-43e7-94be-afc58b5772b6
-    resourceVersion: "778"
-    uid: c96f19c5-d73a-4868-9039-c782e2aaec95
+      uid: 6afe3c02-052f-472b-bcda-89f7a788ef1e
+    resourceVersion: "859"
+    uid: 8d46bdab-96b1-480b-8eda-4032d7f58c55
   spec:
     replicas: 3
     selector:
@@ -506,7 +668,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-26T19:31:25Z"
+    creationTimestamp: "2026-09-26T20:16:49Z"
     generation: 3
     labels:
       app: checkout
@@ -519,9 +681,9 @@ items:
       controller: true
       kind: Deployment
       name: checkout
-      uid: c1808ca7-2b7a-4032-ba69-6920001292a7
-    resourceVersion: "810"
-    uid: a5d60c38-cabc-4238-aead-fd540d6ce7a6
+      uid: 02eb688c-3226-46ae-bb1d-4fa622a78156
+    resourceVersion: "912"
+    uid: c101a27a-f2a4-4956-b036-23e4715a2621
   spec:
     replicas: 0
     selector:
@@ -557,7 +719,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-26T19:32:04Z"
+    creationTimestamp: "2026-09-26T20:17:35Z"
     generation: 2
     labels:
       app: checkout
@@ -570,9 +732,9 @@ items:
       controller: true
       kind: Deployment
       name: checkout
-      uid: c1808ca7-2b7a-4032-ba69-6920001292a7
-    resourceVersion: "786"
-    uid: ab722c10-ab1f-441c-926a-1a72534430f8
+      uid: 02eb688c-3226-46ae-bb1d-4fa622a78156
+    resourceVersion: "896"
+    uid: ce9aa279-c3d0-4552-90e9-cf6958586aad
   spec:
     replicas: 2
     selector:
@@ -611,7 +773,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-26T19:31:25Z"
+    creationTimestamp: "2026-09-26T20:16:49Z"
     generation: 1
     labels:
       app: debug-nginx
@@ -624,9 +786,9 @@ items:
       controller: true
       kind: Deployment
       name: debug-nginx
-      uid: 7b917103-8fb8-4ca9-bd4b-48afbaae689d
-    resourceVersion: "595"
-    uid: 9f738ac1-7590-4807-bf1a-d5bcf212f858
+      uid: 86cf547d-521a-4202-99eb-0613ca14b517
+    resourceVersion: "695"
+    uid: 0991cf1f-8ac0-4dc8-9652-c633efa68799
   spec:
     replicas: 1
     selector:

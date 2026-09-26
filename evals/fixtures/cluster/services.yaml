@@ -3,14 +3,14 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: "2026-09-26T19:31:06Z"
+    creationTimestamp: "2026-09-26T20:16:31Z"
     labels:
       component: apiserver
       provider: kubernetes
     name: kubernetes
     namespace: default
-    resourceVersion: "206"
-    uid: b35ae5e6-c078-4eae-a3dc-d1d160fca7a7
+    resourceVersion: "202"
+    uid: d2c4f77d-90c2-4ff3-ae96-2d02b338a4bf
   spec:
     clusterIP: 10.96.0.1
     clusterIPs:
@@ -34,7 +34,7 @@ items:
     annotations:
       prometheus.io/port: "9153"
       prometheus.io/scrape: "true"
-    creationTimestamp: "2026-09-26T19:31:07Z"
+    creationTimestamp: "2026-09-26T20:16:32Z"
     labels:
       k8s-app: kube-dns
       kubernetes.io/cluster-service: "true"
@@ -42,7 +42,7 @@ items:
     name: kube-dns
     namespace: kube-system
     resourceVersion: "240"
-    uid: 6d8877cd-a784-4cf1-ab4f-8024cd0c6cdc
+    uid: 29d22a10-99b2-4910-9607-c8ef7a0ba805
   spec:
     clusterIP: 10.96.0.10
     clusterIPs:

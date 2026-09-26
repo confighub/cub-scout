@@ -8,4 +8,4 @@ timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Has anyone changed the `cart` Deployment in the `shop` namespace by hand, outside Argo CD? Finish with one line `CHANGED_BY: <Argo CD if it made the most recent change, the command a person used if someone did, or UNKNOWN>`.
+I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. Has anyone changed the `cart` Deployment in the `shop` namespace by hand, outside Argo CD? Finish with one line `CHANGED_BY: <Argo CD if it made the most recent change, the command a person used if someone did, or UNKNOWN>`.

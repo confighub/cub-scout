@@ -8,4 +8,4 @@ timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Who manages the `inventory` Deployment in the `inventory` namespace, and how do you know? Finish with one line `OWNER: <Flux|ArgoCD|Helm|ConfigHub|none>`.
+I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. Who manages the `inventory` Deployment in the `inventory` namespace, and how do you know? Finish with one line `OWNER: <Flux|ArgoCD|Helm|ConfigHub|none>`.
