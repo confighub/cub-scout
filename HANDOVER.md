@@ -1,5 +1,16 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-09-26: v2.12.2 Release
+
+v2.12.2 is published from tag `v2.12.2` at `35a41cf` (#612, the release notes, was
+the last merge). It carries #610 (#608: connected commands and `status` say to run
+`cub upgrade` when cub is older than its server, instead of "auth expired") and
+#611 (part of #561: unit events bucketed by ConfigHub's exact values). Codex had
+no credits for #610/#611; the maintainer waived it and the substitutes are on
+each PR. Verification of the published artifacts is recorded in the
+[release notes](docs/releases/v2.12.2.md). Next: the remaining 2.x releases in the
+roadmap's Path to 3.0, starting with agent evals (#603).
+
 ## 2026-09-25: cub 0.6 and ConfigHub Attestations
 
 cub v0.6.0 to v0.6.2 (2026-09-25) removed `cub unit approve`, the `ApprovedBy`

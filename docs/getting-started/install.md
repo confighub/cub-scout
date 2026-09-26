@@ -1,6 +1,6 @@
 # Installation
 
-For v2.12.1, use Homebrew, the `cub` plugin, or the published archives below.
+For v2.12.2, use Homebrew, the `cub` plugin, or the published archives below.
 You do not need a ConfigHub account for standalone cluster observation.
 
 ## ConfigHub Plugin
@@ -8,12 +8,12 @@ You do not need a ConfigHub account for standalone cluster observation.
 With the separately installed `cub` CLI:
 
 ```sh
-cub plugin install confighub/cub-scout@v2.12.1
+cub plugin install confighub/cub-scout@v2.12.2
 cub scout version
 cub scout doctor
 ```
 
-For an existing installation: `cub plugin upgrade scout@v2.12.1`.
+For an existing installation: `cub plugin upgrade scout@v2.12.2`.
 The plugin has the same observation commands as the standalone client. ConfigHub
 authentication is needed only for connected operations. Use `--kube-context`
 for bounded Kubernetes reads; the host's `--context` selects a ConfigHub context.
@@ -33,27 +33,27 @@ kubectl cub-scout version
 
 ### Download Binary
 
-The [v2.12.1 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.1)
-contains six archives and [checksums.txt](https://github.com/confighub/cub-scout/releases/download/v2.12.1/checksums.txt).
+The [v2.12.2 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.2)
+contains six archives and [checksums.txt](https://github.com/confighub/cub-scout/releases/download/v2.12.2/checksums.txt).
 Archive names include the version and use underscores, not hyphens:
 
 | Platform | Archive |
 |---|---|
-| macOS Apple Silicon | [cub-scout_2.12.1_darwin_arm64.tar.gz](https://github.com/confighub/cub-scout/releases/download/v2.12.1/cub-scout_2.12.1_darwin_arm64.tar.gz) |
-| macOS Intel | [cub-scout_2.12.1_darwin_amd64.tar.gz](https://github.com/confighub/cub-scout/releases/download/v2.12.1/cub-scout_2.12.1_darwin_amd64.tar.gz) |
-| Linux arm64 | [cub-scout_2.12.1_linux_arm64.tar.gz](https://github.com/confighub/cub-scout/releases/download/v2.12.1/cub-scout_2.12.1_linux_arm64.tar.gz) |
-| Linux amd64 | [cub-scout_2.12.1_linux_amd64.tar.gz](https://github.com/confighub/cub-scout/releases/download/v2.12.1/cub-scout_2.12.1_linux_amd64.tar.gz) |
-| Windows arm64 | [cub-scout_2.12.1_windows_arm64.zip](https://github.com/confighub/cub-scout/releases/download/v2.12.1/cub-scout_2.12.1_windows_arm64.zip) |
-| Windows amd64 | [cub-scout_2.12.1_windows_amd64.zip](https://github.com/confighub/cub-scout/releases/download/v2.12.1/cub-scout_2.12.1_windows_amd64.zip) |
+| macOS Apple Silicon | [cub-scout_2.12.2_darwin_arm64.tar.gz](https://github.com/confighub/cub-scout/releases/download/v2.12.2/cub-scout_2.12.2_darwin_arm64.tar.gz) |
+| macOS Intel | [cub-scout_2.12.2_darwin_amd64.tar.gz](https://github.com/confighub/cub-scout/releases/download/v2.12.2/cub-scout_2.12.2_darwin_amd64.tar.gz) |
+| Linux arm64 | [cub-scout_2.12.2_linux_arm64.tar.gz](https://github.com/confighub/cub-scout/releases/download/v2.12.2/cub-scout_2.12.2_linux_arm64.tar.gz) |
+| Linux amd64 | [cub-scout_2.12.2_linux_amd64.tar.gz](https://github.com/confighub/cub-scout/releases/download/v2.12.2/cub-scout_2.12.2_linux_amd64.tar.gz) |
+| Windows arm64 | [cub-scout_2.12.2_windows_arm64.zip](https://github.com/confighub/cub-scout/releases/download/v2.12.2/cub-scout_2.12.2_windows_arm64.zip) |
+| Windows amd64 | [cub-scout_2.12.2_windows_amd64.zip](https://github.com/confighub/cub-scout/releases/download/v2.12.2/cub-scout_2.12.2_windows_amd64.zip) |
 
 For example, on Linux amd64:
 
 ```sh
-curl -fLO https://github.com/confighub/cub-scout/releases/download/v2.12.1/cub-scout_2.12.1_linux_amd64.tar.gz
-curl -fLO https://github.com/confighub/cub-scout/releases/download/v2.12.1/checksums.txt
-sha256sum cub-scout_2.12.1_linux_amd64.tar.gz
+curl -fLO https://github.com/confighub/cub-scout/releases/download/v2.12.2/cub-scout_2.12.2_linux_amd64.tar.gz
+curl -fLO https://github.com/confighub/cub-scout/releases/download/v2.12.2/checksums.txt
+sha256sum cub-scout_2.12.2_linux_amd64.tar.gz
 # Compare with the matching entry in checksums.txt before extracting.
-tar -xzf cub-scout_2.12.1_linux_amd64.tar.gz
+tar -xzf cub-scout_2.12.2_linux_amd64.tar.gz
 ./cub-scout version
 ```
 
@@ -65,7 +65,7 @@ Unix archives include `cub-scout`, `kubectl-cub_scout`, and the plugin entry poi
 ### Go Module Version Caveat
 
 Do not use `go install github.com/confighub/cub-scout/cmd/cub-scout@latest` to
-install v2.12.1. The module path does not have a `/v2` suffix: the default resolver
+install v2.12.2. The module path does not have a `/v2` suffix: the default resolver
 returned v1.13.0 for `@latest` in earlier release verification, and an explicit
 `@v2` query fails Go's major-version check. Use an archive or build the tagged
 checkout below. Distribution follow-up:
@@ -79,7 +79,7 @@ the remaining access gap is tracked in [#520](https://github.com/confighub/cub-s
 Do not treat the command below as a verified public installation route:
 
 ```bash
-docker run ghcr.io/confighub/cub-scout:v2.12.1 version
+docker run ghcr.io/confighub/cub-scout:v2.12.2 version
 ```
 
 Linux arm64 archive binaries are available, but there is no published multiarch
@@ -97,9 +97,9 @@ This helper has shipped since v2.12.0.
 ### Build from Source
 
 ```bash
-git clone --branch v2.12.1 --depth 1 https://github.com/confighub/cub-scout.git
+git clone --branch v2.12.2 --depth 1 https://github.com/confighub/cub-scout.git
 cd cub-scout
-go build -ldflags '-X main.BuildTag=2.12.1' -o cub-scout ./cmd/cub-scout
+go build -ldflags '-X main.BuildTag=2.12.2' -o cub-scout ./cmd/cub-scout
 ./cub-scout version
 ```
 
