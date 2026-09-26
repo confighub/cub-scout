@@ -2,7 +2,7 @@
 name: observe-sveltos
 description: 'Use when the user wants to observe Sveltos-managed resources specifically. Natural phrasing: "is this from Sveltos?", "which ClusterProfile deployed this?", "what ConfigMap or Secret supplied this Sveltos policy?", "show me Sveltos Profile ownership", "what does projectsveltos.io/owner-kind mean?". Do NOT load for: generic ownership (use scout-observe), Sveltos authoring/mutation, or Sveltos notifications unless the task is read-only observation.'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout doctor *) Bash(cub-scout doctor *) Bash(cub scout doctor *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout map *) Bash(cub-scout map *) Bash(cub scout map *) Bash(./cub-scout tree *) Bash(cub-scout tree *) Bash(cub scout tree *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *)
+allowed-tools: Bash(./cub-scout doctor *) Bash(cub-scout doctor *) Bash(cub scout doctor *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(./cub-scout map list *) Bash(./cub-scout map workloads *) Bash(./cub-scout map orphans *) Bash(cub-scout map list *) Bash(cub-scout map workloads *) Bash(cub-scout map orphans *) Bash(cub scout map list *) Bash(cub scout map workloads *) Bash(cub scout map orphans *) Bash(./cub-scout tree *) Bash(cub-scout tree *) Bash(cub scout tree *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *)
 ---
 
 # observe-sveltos

@@ -2,7 +2,7 @@
 name: cub-scout
 description: Use when working in the cub-scout repo or when answering capability-assistant questions ("can cub-scout do X?", "should I use cub-scout or kubectl here?", "how does cub-scout differ from cub?"). This is the umbrella router — it points you at the verb-grouped scenario skills under `skills/scout-*/` and the workflow / observer / reference skills planned for batches 2–5. For a specific verb-group task (observe / diagnose / compare / attribute / adopt existing config / govern / integrate / verify) load the corresponding `scout-*` skill directly.
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout --help) Bash(./cub-scout * --help) Bash(cub-scout --help) Bash(cub-scout * --help) Bash(cub scout --help) Bash(cub scout * --help)
+allowed-tools: Bash(./cub-scout --help) Bash(./cub-scout help *) Bash(cub-scout --help) Bash(cub-scout help *) Bash(cub scout --help) Bash(cub scout help *)
 ---
 
 # cub-scout (umbrella router)
@@ -121,17 +121,20 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 
 Do not invent command surfaces.
 
-Verify from local help before claiming capability:
+Verify from local help before claiming capability. `help <command>` is the
+auto-approved form. `<command> --help` is not: a wildcard grant for it would
+also admit `import -y --audit-reason --help`, where `--help` is the flag's
+value and the import runs:
 
 ```bash
 ./cub-scout --help
-./cub-scout doctor --help
-./cub-scout explain --help
-./cub-scout compare three-way --help
-./cub-scout compare source-truth --help
-./cub-scout import --help
-./cub-scout views --help
-./cub-scout mcp serve --help
+./cub-scout help doctor
+./cub-scout help explain
+./cub-scout help compare three-way
+./cub-scout help compare source-truth
+./cub-scout help import
+./cub-scout help views
+./cub-scout help mcp serve
 ```
 
 When the workflow crosses into ConfigHub:

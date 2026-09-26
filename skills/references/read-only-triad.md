@@ -87,7 +87,7 @@ Every shipped skill follows this — no broad wildcards, every verb enumerated. 
 | Operation | Tool |
 |---|---|
 | Read cluster state | `cub-scout` (or `kubectl get / describe / logs`) |
-| Read ConfigHub state | `cub * get`, `cub * list`, `cub unit get`, `cub link list` |
+| Read ConfigHub state | `cub <entity> get / list`, such as `cub unit get`, `cub link list` |
 | Author a ConfigHub unit | `cub unit create / update` |
 | Get configuration into ConfigHub | `cub variant upload` (already-rendered resources) or `cub unit create / update` |
 | Sync an Argo Application | `argocd app sync` (user-driven, not via cub-scout) |
@@ -105,10 +105,10 @@ The output's `actionType` field is part of the `nextSteps[]` contract — same a
 
 ## What about `import apply`?
 
-`cub-scout import apply` writes to **ConfigHub**, not to the cluster. It's the one cub-scout verb that mutates anything — and it mutates the ConfigHub side. The architectural-triad audit found this is acceptable because:
+`cub-scout import apply` writes to **ConfigHub**, not to the cluster. It mutates the ConfigHub side. It is not the only path that writes: `import` without `--dry-run`, `import argocd`, `app create` and `compare --suggest --apply` also write to ConfigHub, and `summary slack`, `watch --webhook` and `bot --webhook` send data to other endpoints. None of them is in any skill's `allowed-tools`. The architectural-triad audit found this is acceptable because:
 
 1. ConfigHub is the authority side; writing to it is congruent with cub-scout being the evidence provider for the cluster side
-2. The mutation is **user-driven** — `import apply` is explicitly outside every skill's `allowed-tools` line; agents call only preview paths such as `import --dry-run`, `import --from-bundle`, and `import --git-path`
+2. The mutation is **user-driven** — `import apply` is explicitly outside every skill's `allowed-tools` line; agents call only preview paths such as `import --dry-run`, `import --from-bundle`, and `import --git-path`, and even those are left out of `allowed-tools`, because a later flag (`--dry-run=false`, `--git-path=`) turns them into a real import, so the host asks before each run
 3. The preview flow recommends saving a deterministic proposal for review ([`prepare-for-confighub`](../prepare-for-confighub/SKILL.md)) — the proposal is reviewed first, and only after approval does anyone run `import apply`
 
 Lower-severity findings in `#410` (e.g., `import apply` wording in some user-facing strings) remain open as follow-ups. The high-severity finding (`remedy` executing mutations) is resolved.

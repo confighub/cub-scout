@@ -2,7 +2,7 @@
 name: scout-mcp
 description: 'Use when the user wants to expose cub-scout to an AI agent over MCP, wants a deterministic AI-ready snapshot of cluster context, or wants cub-scout running as a read-only event bot — the Integrate verb group. Natural phrasing: "start the MCP server", "expose cub-scout to Claude / Codex / my agent", "give me an AI-ready context pack of this cluster", "set up the MCP gateway", "what MCP tools does cub-scout expose?", "run cub-scout as a bot", "produce JSON context for an LLM to reason about this cluster". Load whenever intent is mcp / mcp-gateway / mcp-serve / context-pack / bot / agent-context / ai-snapshot / llm-context / model-context-protocol. Do NOT load for: actually running a non-integrate verb (those are scout-observe / scout-diagnose / scout-compare / scout-attribute / scout-ingest / scout-govern / scout-verify), or `cub` MCP integration (that''s a separate tool surface).'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout mcp *) Bash(cub-scout mcp *) Bash(cub scout mcp *) Bash(./cub-scout context-pack *) Bash(cub-scout context-pack *) Bash(cub scout context-pack *) Bash(./cub-scout bot *) Bash(cub-scout bot *) Bash(cub scout bot *) Bash(./cub-scout version) Bash(cub-scout version) Bash(cub scout version) Bash(./cub-scout status) Bash(cub-scout status) Bash(cub scout status) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl config current-context) Bash(cub auth status) Bash(cub * get) Bash(cub * list)
+allowed-tools: Bash(./cub-scout mcp *) Bash(cub-scout mcp *) Bash(cub scout mcp *) Bash(./cub-scout context-pack *) Bash(cub-scout context-pack *) Bash(cub scout context-pack *) Bash(./cub-scout version) Bash(cub-scout version) Bash(cub scout version) Bash(./cub-scout status) Bash(cub-scout status) Bash(cub scout status) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl config current-context) Bash(cub auth status) Bash(cub space list *) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link get *) Bash(cub link list *) Bash(cub view get *) Bash(cub view list *) Bash(cub unit-event list *) Bash(cub resource list *) Bash(cub release list *) Bash(cub changeset list *)
 ---
 
 # scout-mcp
@@ -50,7 +50,7 @@ Implicit intents:
 
 ## Tool boundary
 
-- **Allowed (read-only):** `mcp serve` (long-running but no mutation), `context-pack` (deterministic snapshot), `bot` (long-running event stream but no mutation), `version`, `status`; `kubectl get/describe`, `kubectl config current-context`; `cub * get/list`, `cub auth status`.
+- **Allowed (read-only):** `mcp serve` (long-running but no mutation), `context-pack` (deterministic snapshot), `version`, `status`; `kubectl get/describe`, `kubectl config current-context`; `cub <entity> get / list` for the entities named in allowed-tools, `cub auth status`. `bot` changes nothing in the cluster but is not auto-approved: its `--webhook` flag sends events to any URL, so the host asks each time.
 - **Not allowed:** `mcp serve` exposes ONLY the read-only cub-scout verbs as tools. The MCP tool catalog explicitly excludes any mutating verb (`demo`, `import apply`, `compare --suggest --apply`) — see `cmd/cub-scout/mcp.go` `RegisterTools` for the closed list. `context-pack` never writes; it reads + emits.
 - **MCP and the read-only triad:** the MCP gateway is the third party in the architectural triad. cub-scout (evidence) ↔ MCP (transport) ↔ Pilot or agent (judge / actor). The MCP layer NEVER decides; it just streams cub-scout's structured output.
 

@@ -9,7 +9,7 @@ The **mode axis**. cub-scout works without ConfigHub (`standalone`) and with Con
 | Trigger | The `cub` CLI is absent, or `cub auth status` does not report an authenticated session | `cub auth status` reports an authenticated session. This holds in either invocation form (`cub scout ...` or `cub-scout ...`); running as the plugin is not enough on its own |
 | Required inputs | Just a kubeconfig context | kubeconfig + ConfigHub auth |
 | Cluster reads | All read verbs work | All read verbs work |
-| ConfigHub reads | Refused with a clear error | Available via `cub * get/list`, `cub unit get`, `cub link list` |
+| ConfigHub reads | Refused with a clear error | Available via `cub <entity> get / list`, such as `cub unit get`, `cub link list` |
 | Source-of-truth evidence | Cluster + git anchor (from controller tracer) | Cluster + git anchor + ConfigHub Unit + ConfigHub Link bindings |
 | Receipts | Single subject (`k8s-live://`), `OmissionConfigHubUnitSubject` recorded | Dual subjects (`k8s-live://` + `confighub-unit://`) when linked |
 

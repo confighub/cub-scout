@@ -2,7 +2,7 @@
 name: scout-compare
 description: 'Use when the user wants to compare INTENDED vs ACTUAL Kubernetes state — the Compare verb group of cub-scout. Natural phrasing: "did this release land?", "does the cluster match Git?", "is there drift?", "compare DRY / WET / LIVE for this unit", "what does ConfigHub say should be running here?", "give me a source-truth verdict for this resource", "did Argo apply what was in the commit?", "compare this manifest to live state". Load whenever intent is compare / drift / sync-status / verify-matching / DRY-WET-LIVE / source-truth / has-this-landed. Do NOT load for: a list of what is running (use scout-observe), interpreting why something is wrong (use scout-diagnose), per-field provenance (use scout-attribute), or actually applying / syncing (cub-scout never mutates — route to cub, argocd, flux, or kubectl with the user driving).'
 phase: verify
-allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub * get) Bash(cub * list) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link list *) Bash(argocd app get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(kubectl get *) Bash(kubectl describe *) Bash(cub space list *) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link get *) Bash(cub link list *) Bash(cub view get *) Bash(cub view list *) Bash(cub unit-event list *) Bash(cub resource list *) Bash(cub release list *) Bash(cub changeset list *) Bash(argocd app get *) Bash(flux get *)
 ---
 
 # scout-compare
@@ -43,7 +43,7 @@ Implicit intents:
 
 ## Tool boundary
 
-- **Allowed (read-only):** all four Compare verbs; `kubectl get/describe`; `cub * get / list`, `cub unit get`, `cub link list` (connected); `argocd app get`, `flux get` (controller-side reads).
+- **Allowed (read-only):** all four Compare verbs; `kubectl get/describe`; `cub <entity> get / list` for the entities named in allowed-tools (connected); `argocd app get`, `flux get` (controller-side reads).
 - **Not allowed:** `argocd app sync` *as a mutation*, `flux reconcile`, `kubectl apply/edit/patch/delete`, `cub * create/update/delete`. The compare commands never apply a fix.
 - **`--fail-on`:** the existing `compare three-way --fail-on info|warning` flag makes the command a CI gate (exit code 2 on violations). It still doesn't mutate — the gate just fails the pipeline.
 

@@ -94,6 +94,7 @@ Batch B (governance-shaped; 4 scenarios):
 All skills under `skills/` follow the read-only-triad invariant. Concretely:
 
 - Every skill's `allowed-tools` line stays inside #410/#428 — see [`SKILL_TEMPLATE.md`](SKILL_TEMPLATE.md) for the canonical Read set and the explicit "never grant" list.
+- A grant is a command path, optionally followed by a final ` *`: no `*` elsewhere (it matches any text, flags included) and no flag in the grant (a later flag overrides it). [`cmd/cub-scout/skill_allowed_tools_test.go`](../cmd/cub-scout/skill_allowed_tools_test.go) enforces this against the real command tree and fails when a new subcommand appears under a wildcard grant.
 - Skills never recommend `kubectl apply/edit/patch/delete`, `argocd app sync` (as mutation), `cub * create/update/delete`, or any mutating pattern. If the user wants to act, hand off to a `cub` skill in [`confighub/confighub-skills`](https://github.com/confighub/confighub-skills) or to direct `kubectl` with the user driving.
 - Standalone-mode comes first in worked examples; connected-mode is the enrichment.
 - CI-tool-neutral wording — no GitHub Actions / GitLab CI / Jenkins-specific syntax in committed examples; show the shell command and let users adapt.

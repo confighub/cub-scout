@@ -2,7 +2,7 @@
 name: investigate-drift
 description: 'Use when the user wants to find out WHY live state diverges from desired state — and specifically whether the drift is the controller still reconciling vs. someone bypassing the GitOps loop. Natural phrasing: "why is this Deployment different from the git manifest?", "did someone kubectl-edit this?", "is Argo still syncing or did a human change this?", "controller-drift or manual-edit?", "find the field that diverged and the writer", "compare three-way + attribution for deploy/api". Composes `compare three-way` + `compare drift` + the attribution layer (per-field cause / managerHint / gitSource / bindingSource). Do NOT load for: a triage where the workload won''t start (use triage-unhealthy-workload), pure inventory (use scout-observe), generating a fingerprinted evidence artifact (use scout-verify and the no-manual-edits-since predicate), or any mutating fix (cub-scout never mutates).'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub * get) Bash(cub * list) Bash(cub unit get *) Bash(cub link list *) Bash(argocd app get *) Bash(flux get *)
+allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub space list *) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link get *) Bash(cub link list *) Bash(cub view get *) Bash(cub view list *) Bash(cub unit-event list *) Bash(cub resource list *) Bash(cub release list *) Bash(cub changeset list *) Bash(argocd app get *) Bash(flux get *)
 ---
 
 # investigate-drift
@@ -169,7 +169,7 @@ Standalone mode loses the DRY column and bindingSource; what remains is the WET 
 
 ## Tool boundary
 
-- **Allowed:** the four Compare verbs; `explain`, `trace`; `kubectl get/describe/get --show-managed-fields`; `cub * get/list`, `cub unit get`, `cub link list` (connected); `argocd app get`, `flux get` (controller-side reads)
+- **Allowed:** the four Compare verbs; `explain`, `trace`; `kubectl get/describe/get --show-managed-fields`; `cub <entity> get / list` for the entities named in allowed-tools (connected); `argocd app get`, `flux get` (controller-side reads)
 - **Not allowed:** `kubectl rollout undo`, `kubectl edit`, `kubectl patch`, `argocd app sync`, `flux reconcile`, `cub * update/create/delete`. The investigation produces evidence; the response is the operator's. cub-scout's `compare three-way --fail-on` and `--suggest` flags work for CI gating but do not write.
 
 ## References
