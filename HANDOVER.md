@@ -29,7 +29,8 @@ runtime were not tested. Public proof and limitations are in
 The authenticated tests used a temporary TLS proxy to the local HTTP ConfigHub
 OCI listener, verified certificates and a scoped worker. They do not prove a
 hosted installation. Teammate sign-off was waived; the separate AI walkthrough
-hit a usage limit and is not counted. Broader image features remain #584 / v2.13.0.
+hit a usage limit and is not counted. Broader image features remain #584, now
+scheduled in stage 2 of the roadmap's Path to 3.0 rather than for v2.13.0.
 
 The sections below are historical pre-release notes; their open release gates
 are superseded by the published results above.
