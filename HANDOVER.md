@@ -1,5 +1,154 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-09-27: Agent Evals, Five Fixes, and "Agentic" Defined
+
+**State at hand-off.** `main` is at `292d20e`, CI green, no open PRs. The last
+release is v2.12.3 (tag at `eec8da3`). Everything below, after #622, is on
+`main` and unreleased. The only unmerged work is branch
+`feat/eval-scale-live-only` (`cadffac`, pushed, no PR; see "In flight").
+
+### What shipped since v2.12.2
+
+- **v2.12.3 (published 2026-09-26):** #618 (#617, `explain`/`trace` reported the
+  tracer that ran as the owner) and #616 (MCP stdio framing; spec clients could
+  not connect since v1.7.0). Release notes: [docs/releases/v2.12.3.md](docs/releases/v2.12.3.md).
+- **Agent-facing fixes on `main`, unreleased**, each found by the evals below:
+  - #615: every skill's `allowed-tools` is read-only however the command line is completed.
+  - #625 (#624): `kubectl set/rollout/label/annotate/expose/autoscale` are hand edits.
+    Before, `set image` on a Flux-owned object read as Flux's change.
+  - #629 (#628): the Argo CD tracking-id names the Application before a copied instance label.
+  - #630 (#619): MCP tools keep a command's JSON answer when it exits non-zero.
+    `trace` exits 1 for "not managed" by contract.
+  - #631 (#626, partly): "who changed this?" routes to `scout-attribute`, not `scout-ingest`.
+  - #634 (#633): `map` no longer calls scaled-to-zero Deployments, every DaemonSet,
+    and `ImagePullBackOff` pods `Pending`. On 300 idle Deployments `doctor` said
+    302 warnings; now 2.
+  - #637 (#635): MCP `map` takes `kind`, `owner`, `query`, `summary`, `names_only`,
+    `count`; new CLI `map list --summary`. On 300 Deployments the answer shrinks
+    from 267,755 bytes to 317 (summary) or 3 (count).
+- **Tagline** (#627): "GitOps explorer for agents". "Agentic" was rejected as a
+  headline word because it can read as cub-scout itself acting.
+
+### Agent evals (#603): the new quality gate
+
+`evals/` is a `claude plugin eval` suite. The repo is now a Claude Code plugin
+(`.claude-plugin/plugin.json`: the skills plus `cub-scout mcp serve`). The
+same operator question is asked with and without cub-scout, and scored by
+deterministic graders over a required final line.
+See [evals/README.md](evals/README.md) for running, recording and growing it.
+
+- **Main scenario (13 cases, recorded).** Both arms read the same `kubectl get -o yaml`
+  export (`scaffold.sh`). The cub-scout arm also gets MCP tools answered from
+  recordings of a real standalone `mcp serve`. The cases:
+  - 5 label/status cases;
+  - 4 attribution cases (`changed-by-*`), whose answer is only in managedFields;
+  - 4 pitfalls (stuck rollout, Flux-managed Helm, idle Flux, Argo label vs tracking-id).
+- **Scale scenario (3 cases, live).** 300 Deployments in 30 namespaces, generated
+  deterministically (`evals/fixtures/scale/generate.py`). The cub-scout arm talks
+  to a real server on a kind cluster (`--mocks off`, with
+  `PATH="$(evals/scripts/live-path.sh <ctx>)"`), because recordings cannot
+  answer every `map` filter combination.
+- **Cost:** `evals/scripts/report.py` prints score, $/run, **$/correct answer**,
+  turns and seconds per case, tag and arm.
+
+Results (Claude Code 2.1.274, default model):
+
+| Suite | With cub-scout | Without | Note |
+|---|---|---|---|
+| Attribution (1 run/arm) | 4/4, $0.83 per correct | 1/4, $2.93 | answer only in managedFields |
+| Labels, status, pitfalls (1 run/arm) | all correct | all correct | Δ 0: the model reads the export well |
+| Scale, 3 runs/arm, live | **9/9, $1.23 per correct** | 8/9, $1.38 | owner counts 36% cheaper, 28% faster |
+
+The one-run scale pilot's "3.4x cheaper" did not hold at three runs, and the
+README marks it superseded. On the unmanaged-list case the cub-scout arm had
+the answer in two `map` calls, then cross-checked it against the export.
+
+**Doctrine added** (CLAUDE.md):
+- Principle 9, "Measured for agents": claims of agent benefit cite the evals,
+  and an *agentic* GitOps explorer is one that gives agents a **cost and time
+  advantage** (the maintainer's definition), claimed only where the evals show it.
+- Pre-Coding requirement 5: changes to MCP output, skills or evidence kinds add
+  or update an eval case and re-record in the same PR; agent-facing bug fixes
+  add a case that fails without the fix.
+
+### In flight
+
+- **Branch `feat/eval-scale-live-only`**: three `*-live` scale cases (the cluster
+  through cub-scout, no export), compared with the export-only baseline in
+  `evals/results/scale-live-runs3.json`. That is the fair test of cost and time,
+  because in the same-evidence design the agent spends its savings
+  cross-checking. Its 3-run eval was stopped mid-run when work paused. To
+  finish, recreate the scale cluster if gone (steps in evals/README.md),
+  run the command below in the app's terminal panel, add the comparison to the
+  README, and open the PR.
+
+  ```bash
+  PATH="$(evals/scripts/live-path.sh kind-scout-evals-scale)" claude plugin eval . --tag scale-live --ablation none --runs 3 --mocks off --allow-tools "mcp__plugin_cub-scout_cub-scout__*" --json evals/results/scale-live-only-runs3.json
+  ```
+
+  About $8.
+- **kind cluster `scout-evals-scale`** is still running for that run. Delete it
+  afterwards (`kind delete cluster --name scout-evals-scale`).
+
+### How the work runs (lessons worth keeping)
+
+- **Merges:** the maintainer delegated them on 2026-09-27 ("Waive all codex and
+  merge PRs yourself"). Merge only on green CI, with the waiver and its
+  substitutes (live before/after, mutation-checked tests) in a PR comment.
+- **Running evals:** they need a logged-in Claude Code of at least 2.1.269. The
+  agent's sandboxed shell cannot read the keychain login, so run evals through
+  the desktop app's terminal panel (`run_in_terminal`).
+  - That tool refuses commands containing the word `trap`, caps a session at six
+    tabs, and cannot start in the scratchpad.
+  - `--case` takes one glob, so select several cases with tags.
+  - Test fixtures must live outside `evals/`, because any `prompt.md` there becomes a case.
+- **Grader and harness traps:**
+  - A `not_contains` regex passes an empty answer, so write negative checks as positive matches.
+  - `add_dirs` did not reach the agent; `scaffold.sh` does.
+  - Fixed mocks cannot key on a value containing `/`, so `trace` and `explain` use agent mocks.
+  - Wait for 300 Deployments to settle before recording.
+  - Leave cases 600 s: a baseline once timed out mid-investigation and looked like a loss.
+- **Kind:** `kind create` switches the global kube context; switch it back at
+  once, because other sessions share it.
+
+### Roadmap (high level; detail in [docs/roadmap.md](docs/roadmap.md#path-to-30))
+
+- **Next release.** The unreleased fixes above (#615, #625, #629, #630, #631,
+  #634, #637) are user-visible correctness fixes for agents. They can go out as
+  v2.12.4, or with v2.13.0: the maintainer's call.
+- **v2.13.0, stage 1: measure first, then fix against current ConfigHub.**
+  - Evals: done as a pilot. Still to do: the live-only variant, the 3-run main
+    suite, 20–30 cases, a scheduled CI run with a pinned model and API key, and
+    results in each release.
+  - Governance reads: Attestations (#591), ChangeWorkflow prerequisites (#597).
+  - An explicit cluster on every MCP tool (#599 part 1; a design question for Pilot).
+  - Helm tracing (#588), the #561 leftovers, and the `/v2` module path (#595, #520).
+- **v2.14.0, stage 2: the agent contract, and Argo CD + Crossplane depth.**
+  - Conformance suite (#596) and per-cluster identity (#599).
+  - MCP options (#604): HTTP transport, budgets, recorded mode.
+  - Crossplane v2 (#601), Argo Rollouts (#602), capability matrix (#594), workload adapters (#584).
+- **v2.15.0, stage 3: recorded evidence.** Facts in ConfigHub (#600, once
+  designed with ConfigHub's fleet model), a pullable bot image (#520),
+  always-on observation (#539), evidence over time (#605), deprecation notices.
+- **3.0.0 (#595).** Remove deprecated surfaces, cub >= 0.6 floor, the
+  `fleet outliers` decision (#562), `/v3`, a migration guide, and published eval
+  results.
+
+**Open decisions for the maintainer:**
+- #620: `health: "Unavailable"` means "not measured" but reads as "down"; fixing
+  it changes a JSON value.
+- #599: the MCP cluster-parameter design.
+- The `/v2` module path timing.
+- A patch release now, or wait for v2.13.0.
+- Standing: CLI/TUI parity for agent plumbing, and where facts live in
+  ConfigHub.
+
+**Eval next steps** (on #603):
+- the live-only variant;
+- per-entry evidence on `map(names_only)`, which may stop agents cross-checking;
+- #626's shared prompt opening, which still triggers `scout-ingest`;
+- trimming skill descriptions, which cost tokens where cub-scout adds nothing.
+
 ## 2026-09-26: v2.12.3 Release
 
 v2.12.3 is published from tag `v2.12.3` at `eec8da3` (#621, the release notes, was
