@@ -58,10 +58,11 @@ From the pilot (one run per case per arm, 2026-09-26/27):
 
 On this small scenario cub-scout costs more per run: the plugin adds its skill
 descriptions and tool schemas to every session. It pays for itself where the
-export cannot answer. The hypothesis to test next is scale: with hundreds of
-workloads, reading raw YAML should cost an agent far more than asking
-cub-scout, which is the claim the `scale` scenario exists to measure rather
-than assert.
+export cannot answer. At scale the picture changes: on the 300-Deployment
+scenario cub-scout answered all three whole-cluster questions against one of
+three without it, cost $1.27 per correct answer against $4.35, and was cheaper
+per run and about 20% faster (see Scale results below; one run per case so
+far).
 
 ## Design
 
