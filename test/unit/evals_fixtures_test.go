@@ -40,6 +40,11 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			t.Fatal(err)
 		}
 		if !strings.Contains(string(data), "scaffold_script: scaffold.sh") {
+			// Live-only cases read the cluster through cub-scout, not an export.
+			prompt, _ := os.ReadFile(filepath.Join(filepath.Dir(caseYAML), "prompt.md"))
+			if strings.Contains(string(prompt), "live-only") {
+				continue
+			}
 			t.Errorf("%s: every case reads the export through scaffold.sh", caseYAML)
 			continue
 		}
