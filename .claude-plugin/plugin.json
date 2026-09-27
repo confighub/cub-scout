@@ -1,6 +1,6 @@
 {
   "name": "cub-scout",
-  "description": "Read-only Kubernetes and GitOps observer: skills and MCP tools that tell an agent who owns a resource, where it came from and what is broken, with unknowns stated rather than guessed.",
+  "description": "GitOps explorer for agents: read-only skills and MCP tools that tell an agent who owns a resource, where it came from, what changed and what is broken, with unknowns stated rather than guessed.",
   "author": {
     "name": "ConfigHub",
     "url": "https://github.com/confighub/cub-scout"
