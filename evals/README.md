@@ -168,6 +168,29 @@ warnings here, one per idle Deployment and DaemonSet. `map` for the whole
 cluster is about 270 KB, more than Claude Code accepts from one MCP call by
 default; the MCP `map` tool filters only by namespace.
 
+### Scale results (2026-09-27)
+
+One run per case per arm, same model; recorded with #634.
+
+| Case | With | Without | $/correct with | $/correct without | Turns with / without |
+|---|---|---|---|---|---|
+| scale-ownership-counts | 1.00 | 0.00 (turn cap) | $1.27 | n/a | 43 / 31 |
+| scale-unmanaged | 1.00 | 0.00 (turn cap) | $1.51 | n/a | 36 / 31 |
+| scale-whats-failing | 1.00 | 1.00 | $1.03 | $0.94 | 26 / 32 |
+| **All three** | **1.00** | **0.33** | **$1.27** | **$4.35** | 35 / 31 |
+
+On 300 Deployments cub-scout was cheaper per run ($1.27 against $1.45), about
+20% faster (178 s against 222 s), and 3.4 times cheaper per correct answer. The
+two baseline failures were the 30-turn budget running out while counting and
+classifying by grep, not wrong answers; with a larger budget they would have
+cost more. `scale-whats-failing` came out even: `doctor` answered it in one
+call, and the baseline found the two failing pods by grep.
+
+cub-scout's own weak point here: its whole-cluster `map` answer (268 KB) is
+larger than an MCP result may be, so Claude Code saved it to a file and the
+agent grepped that. Filters and a count mode on the MCP `map` tool (#635)
+should cut both turns and cost.
+
 ## What the recordings show today
 
 Recorded with v2.12.3 plus #625 (hand-edit attribution), #629 (Argo CD
