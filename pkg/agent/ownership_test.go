@@ -183,6 +183,44 @@ func TestDetectOwnership_Argo(t *testing.T) {
 			wantSubType: "application",
 			wantName:    "my-complex-app-name",
 		},
+		{
+			// #628: under annotation tracking (Argo CD's default) the
+			// tracking-id names the Application; a copied label is stale.
+			name: "Argo CD tracking-id wins over a disagreeing instance label",
+			labels: map[string]string{
+				"argocd.argoproj.io/instance": "storefront",
+			},
+			annotations: map[string]string{
+				"argocd.argoproj.io/tracking-id": "payments:apps/Deployment:shop/ledger",
+			},
+			wantType:    OwnerArgo,
+			wantSubType: "application",
+			wantName:    "payments",
+		},
+		{
+			name: "Argo CD label used when the tracking-id is empty",
+			labels: map[string]string{
+				"argocd.argoproj.io/instance": "storefront",
+			},
+			annotations: map[string]string{
+				"argocd.argoproj.io/tracking-id": "",
+			},
+			wantType:    OwnerArgo,
+			wantSubType: "application",
+			wantName:    "storefront",
+		},
+		{
+			name: "Argo CD label used when the tracking-id is malformed",
+			labels: map[string]string{
+				"argocd.argoproj.io/instance": "storefront",
+			},
+			annotations: map[string]string{
+				"argocd.argoproj.io/tracking-id": ":apps/Deployment:shop/ledger",
+			},
+			wantType:    OwnerArgo,
+			wantSubType: "application",
+			wantName:    "storefront",
+		},
 	}
 
 	for _, tt := range tests {

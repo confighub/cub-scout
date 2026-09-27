@@ -34,9 +34,9 @@ cub-scout classifies a resource as Argo-owned when ANY of these labels / annotat
 
 | Signal | Source field | Confidence | Notes |
 |--------|-------------|-----------|-------|
-| `argocd.argoproj.io/instance` label | label | medium | Primary signal. Value is the Application name. |
-| `argocd.argoproj.io/tracking-id` annotation | annotation | medium | Alternative. Value is `<app-name>:<group>/<kind>:<namespace>/<name>` — cub-scout parses the leading `<app-name>` portion. Malformed tracking IDs are tolerated (split-on-`:` with a graceful fallback). |
-| `app.kubernetes.io/instance` label | label (fallback only) | medium | Only used when `argocd.argoproj.io/instance` is present but empty — Argo writes both, and the Argo-specific label is preferred. |
+| `argocd.argoproj.io/tracking-id` annotation | annotation | medium | Primary signal. Value is `<app-name>:<group>/<kind>:<namespace>/<name>`; cub-scout reads the leading `<app-name>`. Argo CD writes it under the `annotation` (default) and `annotation+label` tracking methods (`argocd-cm` `application.resourceTrackingMethod`), so when present it names the owning Application, and an `instance` label that disagrees is stale or copied (#628). An empty or malformed tracking-id falls through to the labels. |
+| `argocd.argoproj.io/instance` label | label | medium | Label tracking, used when there is no usable tracking-id. Value is the Application name. |
+| `app.kubernetes.io/instance` label | label (fallback only) | medium | Only used when `argocd.argoproj.io/instance` is present but empty. |
 
 Resulting `Ownership`: `Type=argo`, `SubType=application`, `Name=<application-name>`.
 

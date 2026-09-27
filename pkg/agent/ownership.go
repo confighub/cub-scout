@@ -141,7 +141,27 @@ func fluxOperatorAPIGroup(apiVersion string) bool {
 }
 
 func detectArgoOwnership(labels, annotations map[string]string) Ownership {
-	// Argo CD Application - check for argocd.argoproj.io/instance label
+	// The tracking-id annotation comes first. Argo CD writes it under the
+	// annotation and annotation+label tracking methods, and annotation is the
+	// default (argocd-cm application.resourceTrackingMethod). When present it
+	// names the owning Application; an instance label that disagrees is stale
+	// or copied from another app's manifests (#628).
+	if tracking, ok := annotations["argocd.argoproj.io/tracking-id"]; ok && tracking != "" {
+		// Format: <app-name>:<group>/<kind>:<namespace>/<name>
+		// Handle malformed tracking IDs gracefully
+		parts := strings.SplitN(tracking, ":", 2)
+		if len(parts) > 0 && parts[0] != "" {
+			return Ownership{
+				Type:       OwnerArgo,
+				SubType:    "application",
+				Name:       parts[0],
+				Source:     "annotation:argocd.argoproj.io/tracking-id",
+				Confidence: "medium",
+			}
+		}
+	}
+
+	// Label tracking: the argocd.argoproj.io/instance label.
 	if argoInstance, isArgo := labels["argocd.argoproj.io/instance"]; isArgo {
 		// Prefer the Argo-specific label value
 		name := argoInstance
@@ -157,22 +177,6 @@ func detectArgoOwnership(labels, annotations map[string]string) Ownership {
 				SubType:    "application",
 				Name:       name,
 				Source:     source,
-				Confidence: "medium",
-			}
-		}
-	}
-
-	// Alternative: check tracking-id annotation
-	if tracking, ok := annotations["argocd.argoproj.io/tracking-id"]; ok && tracking != "" {
-		// Format: <app-name>:<group>/<kind>:<namespace>/<name>
-		// Handle malformed tracking IDs gracefully
-		parts := strings.SplitN(tracking, ":", 2)
-		if len(parts) > 0 && parts[0] != "" {
-			return Ownership{
-				Type:       OwnerArgo,
-				SubType:    "application",
-				Name:       parts[0],
-				Source:     "annotation:argocd.argoproj.io/tracking-id",
 				Confidence: "medium",
 			}
 		}
