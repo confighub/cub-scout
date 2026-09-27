@@ -147,10 +147,22 @@ fixed (Flux 120, Argo CD 90, Helm 45, ConfigHub 33, unmanaged 12, and two with
 an image that does not exist). The rest are scaled to zero, which keeps one
 kind node under its pod limit while every object stays in the export (about
 1 MB of YAML). Its cases live in `evals/scale/` and ask cluster-wide questions:
-owner counts, the unmanaged list, what is failing. Each case carries its own
-mocks, because the recordings differ from the main scenario's; `trace` and
-`explain` are stored per namespace and the agent mock loads only the
-namespace a call names.
+owner counts, the unmanaged list, what is failing.
+
+The scale cases run **live**: the with-cub-scout arm talks to a real
+`cub-scout mcp serve` on the recording cluster, because a recording cannot
+answer every combination of the MCP `map` tool's filters and modes. The
+harness gives plugin servers a sandboxed HOME and does not pass KUBECONFIG, so
+`evals/scripts/live-path.sh` builds a `cub-scout` wrapper that sets it, and
+prints a PATH with the wrapper first and `cub` left out (standalone). The
+baseline arm still reads the recorded export. Each scale case carries guard
+mocks that fail loudly if it is run without `--mocks off`.
+
+```bash
+PATH="$(evals/scripts/live-path.sh kind-scout-evals-scale)" \
+  claude plugin eval . --scaffold --tag scale --runs 3 --mocks off \
+  --allow-tools "mcp__plugin_cub-scout_cub-scout__*" --max-cost-usd 30
+```
 
 ```bash
 kind create cluster --name scout-evals-scale
@@ -160,6 +172,7 @@ evals/fixtures/setup.sh kind-scout-evals-scale evals/fixtures/scale/scenario.yam
 # mid-rollout
 go build ./cmd/cub-scout
 evals/scripts/record.py kind-scout-evals-scale --scenario scale
+# keep the cluster while running the live cases; delete it afterwards
 kind delete cluster --name scout-evals-scale
 ```
 
