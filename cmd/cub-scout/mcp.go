@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -1140,6 +1141,12 @@ func (g *mcpGateway) callTool(ctx context.Context, paramsRaw json.RawMessage) ma
 
 	output, err := runner(ctx, args)
 	if err != nil {
+		var cmdErr *mcpCommandError
+		if errors.As(err, &cmdErr) {
+			if out, ok := cmdErr.jsonOutput(); ok {
+				return mcpToolErrorWithOutput(params.Name, out, cmdErr)
+			}
+		}
 		return mcpToolError(err.Error())
 	}
 
@@ -1153,6 +1160,29 @@ func (g *mcpGateway) callTool(ctx context.Context, paramsRaw json.RawMessage) ma
 		},
 	}
 	if structured := buildMCPStructuredContent(params.Name, output); structured != nil {
+		result["structuredContent"] = structured
+	}
+	return result
+}
+
+// mcpToolErrorWithOutput reports a command that exited non-zero but printed a
+// JSON answer: the answer first, then what failed. isError stays true because
+// the command did exit non-zero; the agent still gets its evidence.
+func mcpToolErrorWithOutput(tool, output string, cmdErr *mcpCommandError) map[string]interface{} {
+	note := cmdErr.Error()
+	var exitErr *exec.ExitError
+	if errors.As(cmdErr.err, &exitErr) {
+		note = fmt.Sprintf("cub-scout %s exited with status %d; the JSON above is its output. %s",
+			strings.Join(cmdErr.args, " "), exitErr.ExitCode(), cmdErr.stderr)
+	}
+	result := map[string]interface{}{
+		"isError": true,
+		"content": []map[string]string{
+			{"type": "text", "text": output},
+			{"type": "text", "text": strings.TrimSpace(note)},
+		},
+	}
+	if structured := buildMCPStructuredContent(tool, output); structured != nil {
 		result["structuredContent"] = structured
 	}
 	return result
@@ -1313,14 +1343,44 @@ func runMCPToolCommand(ctx context.Context, args []string) (string, error) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg == "" {
-			msg = err.Error()
+		return "", &mcpCommandError{
+			args:   args,
+			stdout: strings.TrimSpace(stdout.String()),
+			stderr: strings.TrimSpace(stderr.String()),
+			err:    err,
 		}
-		return "", fmt.Errorf("tool command failed (%s): %s", strings.Join(args, " "), msg)
 	}
 
 	return strings.TrimSpace(stdout.String()), nil
+}
+
+// mcpCommandError is a cub-scout command that exited non-zero. It keeps the
+// command's stdout: some commands exit non-zero with a valid answer, as trace
+// does for a resource no GitOps tool manages (docs/reference/cli-contract.md).
+// Dropping stdout left agents with only an exit status (#619).
+type mcpCommandError struct {
+	args   []string
+	stdout string
+	stderr string
+	err    error
+}
+
+func (e *mcpCommandError) Error() string {
+	msg := e.stderr
+	if msg == "" {
+		msg = e.err.Error()
+	}
+	return fmt.Sprintf("tool command failed (%s): %s", strings.Join(e.args, " "), msg)
+}
+
+func (e *mcpCommandError) Unwrap() error { return e.err }
+
+// jsonOutput returns the command's stdout when it is a JSON document.
+func (e *mcpCommandError) jsonOutput() (string, bool) {
+	if e.stdout == "" || !json.Valid([]byte(e.stdout)) {
+		return "", false
+	}
+	return e.stdout, true
 }
 
 // mcpToolEnv is the environment for a cub-scout command run for an MCP tool

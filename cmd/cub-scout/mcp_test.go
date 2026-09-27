@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os/exec"
 	"reflect"
 	"sort"
 	"strings"
@@ -1752,5 +1753,45 @@ func TestServeMCPReplyFramingFollowsRequest(t *testing.T) {
 	second, framing, err := readMCPMessage(reader)
 	if err != nil || framing != mcpFramingNewline || !strings.Contains(string(second), `"id":2`) {
 		t.Fatalf("second reply is not a newline-delimited message for id 2: %v %v %s", err, framing, second)
+	}
+}
+
+// #619: trace exits 1 for a resource no GitOps tool manages, as the CLI
+// contract says, while printing a valid JSON answer. The MCP result must carry
+// that answer, not only the exit status.
+func TestMCPCallToolKeepsJSONOutputOnNonZeroExit(t *testing.T) {
+	exitErr := exec.Command("sh", "-c", "exit 1").Run()
+	answer := `{"command":"trace","target":{"kind":"Deployment","namespace":"default","name":"hotfix-worker"},"chain":null,"summary":{"ownerType":"Native","source":null,"deployer":null}}`
+	gateway := newMCPGateway(func(_ context.Context, args []string) (string, error) {
+		return "", &mcpCommandError{args: args, stdout: answer, stderr: "", err: exitErr}
+	})
+	params, _ := json.Marshal(map[string]interface{}{"name": "trace", "arguments": map[string]string{"resource": "deployment/hotfix-worker", "namespace": "default"}})
+	result := gateway.callTool(context.Background(), params)
+
+	if result["isError"] != true {
+		t.Errorf("isError = %v, want true: the command exited non-zero", result["isError"])
+	}
+	content := result["content"].([]map[string]string)
+	if len(content) != 2 || content[0]["text"] != answer {
+		t.Fatalf("content[0] should be the command's JSON answer, got %+v", content)
+	}
+	if !strings.Contains(content[1]["text"], "exited with status 1") || !strings.Contains(content[1]["text"], "trace deployment/hotfix-worker") {
+		t.Errorf("content[1] should say which command exited with which status, got %q", content[1]["text"])
+	}
+}
+
+// A failure without a JSON answer keeps the previous error text.
+func TestMCPCallToolNonJSONFailureUnchanged(t *testing.T) {
+	exitErr := exec.Command("sh", "-c", "exit 1").Run()
+	gateway := newMCPGateway(func(_ context.Context, args []string) (string, error) {
+		return "", &mcpCommandError{args: args, stdout: "not json", stderr: "Error: trace failed: argocd context appears stale", err: exitErr}
+	})
+	params, _ := json.Marshal(map[string]interface{}{"name": "trace", "arguments": map[string]string{"resource": "deployment/cart", "namespace": "shop"}})
+	result := gateway.callTool(context.Background(), params)
+
+	content := result["content"].([]map[string]string)
+	want := "tool command failed (trace deployment/cart -n shop --format json): Error: trace failed: argocd context appears stale"
+	if result["isError"] != true || len(content) != 1 || content[0]["text"] != want {
+		t.Fatalf("got isError=%v content=%+v, want the unchanged message %q", result["isError"], content, want)
 	}
 }
