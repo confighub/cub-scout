@@ -4,11 +4,21 @@
 # matches in pkg/agent/manager_strings.go). Hand edits made afterwards
 # (evals/fixtures/incident.sh) are then distinguishable from delivery.
 #
-# Usage: evals/fixtures/setup.sh <kube-context>
+# Usage: evals/fixtures/setup.sh <kube-context> [scenario.yaml]
+#   The scenario defaults to evals/fixtures/scenario.yaml; the scale scenario
+#   is evals/fixtures/scale/scenario.yaml.
 set -euo pipefail
-ctx="${1:?usage: setup.sh <kube-context>}"
+ctx="${1:?usage: setup.sh <kube-context> [scenario.yaml]}"
 dir="$(cd "$(dirname "$0")" && pwd)"
-apply() { kubectl --context "$ctx" apply -f "$dir/scenario.yaml" "$@" >/dev/null; }
+scenario="${2:-$dir/scenario.yaml}"
+# A scenario need not have every owner; "no objects" for a selector is fine,
+# any other failure is not.
+apply() {
+  local out
+  if ! out=$(kubectl --context "$ctx" apply -f "$scenario" "$@" 2>&1); then
+    grep -q 'no objects passed to apply' <<<"$out" || { echo "$out" >&2; return 1; }
+  fi
+}
 
 # Namespaces and unmanaged workloads: plain kubectl, as a person would.
 apply -l '!kustomize.toolkit.fluxcd.io/name,!helm.toolkit.fluxcd.io/name,!argocd.argoproj.io/instance,!app.kubernetes.io/managed-by,!confighub.com/UnitSlug'

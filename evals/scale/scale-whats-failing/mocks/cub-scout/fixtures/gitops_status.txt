@@ -1,0 +1,75 @@
+{
+  "backend": "none",
+  "transport": "unknown",
+  "controllerCoverage": [
+    {
+      "family": "Flux",
+      "status": "not_found",
+      "resourceKinds": [
+        "ArtifactGenerator",
+        "ExternalArtifact",
+        "FluxInstance",
+        "FluxReport",
+        "HelmRelease",
+        "Kustomization",
+        "ResourceSet",
+        "ResourceSetInputProvider"
+      ],
+      "found": 0
+    },
+    {
+      "family": "ArgoCD",
+      "status": "not_found",
+      "resourceKinds": [
+        "Application"
+      ],
+      "found": 0
+    },
+    {
+      "family": "ConfigHub",
+      "status": "not_found",
+      "resourceKinds": [
+        "ConfigHubTarget"
+      ],
+      "found": 0
+    },
+    {
+      "family": "Sveltos",
+      "status": "not_found",
+      "resourceKinds": [
+        "ClusterConfiguration",
+        "ClusterHealthCheck",
+        "ClusterProfile",
+        "ClusterPromotion",
+        "ClusterReport",
+        "ClusterSummary",
+        "EventReport",
+        "EventSource",
+        "EventTrigger",
+        "HealthCheckReport",
+        "Profile"
+      ],
+      "found": 0
+    },
+    {
+      "family": "Modelplane",
+      "status": "not_found",
+      "resourceKinds": [
+        "EKSCluster",
+        "GKECluster",
+        "InferenceClass",
+        "InferenceCluster",
+        "InferenceGateway",
+        "ModelCache",
+        "ModelDeployment",
+        "ModelEndpoint",
+        "ModelReplica",
+        "ModelService",
+        "ServingStack"
+      ],
+      "found": 0
+    }
+  ],
+  "healthyCount": 0,
+  "failedCount": 0
+}

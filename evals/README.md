@@ -7,7 +7,7 @@ runs with the cub-scout plugin loaded and again without it, and the difference
 (`Δ`) is what cub-scout contributed. Tracking issue:
 [#603](https://github.com/confighub/cub-scout/issues/603).
 
-This is the pilot: thirteen cases on one recorded scenario. The first suite of 20–30
+This is the pilot: thirteen cases on one recorded scenario, and three on a 300-Deployment scale scenario. The first suite of 20–30
 cases, a scheduled CI run and published results come next.
 
 ## Run
@@ -137,6 +137,36 @@ is recorded in standalone mode, and regenerates every case's `scaffold.sh`
 (`record.py --scaffolds-only` does only that, from the committed export).
 `test/unit/evals_fixtures_test.go` fails if a scaffold drifts from the
 recording.
+
+### The scale scenario
+
+`fixtures/scale/generate.py` writes `fixtures/scale/scenario.yaml`: 300
+Deployments in 30 `team-*` namespaces, seeded so the expected answers are
+fixed (Flux 120, Argo CD 90, Helm 45, ConfigHub 33, unmanaged 12, and two with
+an image that does not exist). The rest are scaled to zero, which keeps one
+kind node under its pod limit while every object stays in the export (about
+1 MB of YAML). Its cases live in `evals/scale/` and ask cluster-wide questions:
+owner counts, the unmanaged list, what is failing. Each case carries its own
+mocks, because the recordings differ from the main scenario's; `trace` and
+`explain` are stored per namespace and the agent mock loads only the
+namespace a call names.
+
+```bash
+kind create cluster --name scout-evals-scale
+evals/fixtures/setup.sh kind-scout-evals-scale evals/fixtures/scale/scenario.yaml
+# wait until the two failing pods are ImagePullBackOff and doctor's rollouts
+# show no WATCH: recording while 300 Deployments settle captures them
+# mid-rollout
+go build ./cmd/cub-scout
+evals/scripts/record.py kind-scout-evals-scale --scenario scale
+kind delete cluster --name scout-evals-scale
+```
+
+This scenario tests the claim that cub-scout is cheaper for an agent on a
+large cluster. It also exposed #633: before that fix, `doctor` reported 302
+warnings here, one per idle Deployment and DaemonSet. `map` for the whole
+cluster is about 270 KB, more than Claude Code accepts from one MCP call by
+default; the MCP `map` tool filters only by namespace.
 
 ## What the recordings show today
 

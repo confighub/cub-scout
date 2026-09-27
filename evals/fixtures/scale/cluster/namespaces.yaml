@@ -1,0 +1,622 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"argocd"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: argocd
+    name: argocd
+    resourceVersion: "526"
+    uid: e5d9f37a-2fd8-49f8-ac01-800fa05fc714
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T10:47:21Z"
+    labels:
+      kubernetes.io/metadata.name: default
+    name: default
+    resourceVersion: "26"
+    uid: 8135cb44-0802-453f-bd19-a11fa3cde772
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"flux-system"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: flux-system
+    name: flux-system
+    resourceVersion: "521"
+    uid: 5859d290-be6a-4802-bcac-0a6a2119ab15
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T10:47:21Z"
+    labels:
+      kubernetes.io/metadata.name: kube-node-lease
+    name: kube-node-lease
+    resourceVersion: "34"
+    uid: bf71c412-1693-484c-a5ef-851d93ba39a2
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T10:47:21Z"
+    labels:
+      kubernetes.io/metadata.name: kube-public
+    name: kube-public
+    resourceVersion: "18"
+    uid: 9713b226-801a-4863-a90a-4d377b905976
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T10:47:21Z"
+    labels:
+      kubernetes.io/metadata.name: kube-system
+    name: kube-system
+    resourceVersion: "5"
+    uid: a0d7b151-a964-4e1f-872b-245223f62ee4
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"local-path-storage"}}
+    creationTimestamp: "2026-09-27T10:47:25Z"
+    labels:
+      kubernetes.io/metadata.name: local-path-storage
+    name: local-path-storage
+    resourceVersion: "280"
+    uid: 7712cd01-9a1a-4e43-854e-426ebacae85d
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-01"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-01
+    name: team-01
+    resourceVersion: "434"
+    uid: af5d593e-5dc9-4fb8-bc8b-84d97d5b1616
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-02"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-02
+    name: team-02
+    resourceVersion: "437"
+    uid: 71795544-cf39-4b28-8510-a6ac3a54eedb
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-03"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-03
+    name: team-03
+    resourceVersion: "440"
+    uid: 2a9afd45-aa1a-45ed-b676-0803e536ecda
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-04"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-04
+    name: team-04
+    resourceVersion: "443"
+    uid: fd279550-4b20-4371-a0df-f1321f759d7a
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-05"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-05
+    name: team-05
+    resourceVersion: "446"
+    uid: 5d6c42e2-eeee-433b-9e37-a20bcc54617c
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-06"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-06
+    name: team-06
+    resourceVersion: "449"
+    uid: a37f0a65-911f-448a-bf36-8a7842aa24b4
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-07"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-07
+    name: team-07
+    resourceVersion: "452"
+    uid: fc07a924-989f-4089-bdaf-6bfb97a0aa3d
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-08"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-08
+    name: team-08
+    resourceVersion: "455"
+    uid: 3ed6e56e-de0e-459a-9471-8021d8601aa3
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-09"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-09
+    name: team-09
+    resourceVersion: "458"
+    uid: 0b2e11a3-2c10-432a-824e-a7567a826417
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-10"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-10
+    name: team-10
+    resourceVersion: "461"
+    uid: 9f9679fe-c291-4692-bc1c-d8fe45b9d372
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-11"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-11
+    name: team-11
+    resourceVersion: "464"
+    uid: 99d722fe-7e16-486e-93e8-69c93820eb87
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-12"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-12
+    name: team-12
+    resourceVersion: "467"
+    uid: d2aafcda-ca4a-4fb3-be1b-e2dd94e081bb
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-13"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-13
+    name: team-13
+    resourceVersion: "468"
+    uid: 80d571be-ab8c-4a93-aec5-7858107165c9
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-14"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-14
+    name: team-14
+    resourceVersion: "469"
+    uid: 355cdc01-0b15-4387-8397-e22d81080946
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-15"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-15
+    name: team-15
+    resourceVersion: "470"
+    uid: bfe574fb-9df2-4cf5-a094-86168ccb9f07
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-16"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-16
+    name: team-16
+    resourceVersion: "471"
+    uid: 198be19d-e1ea-4291-838c-65114408c182
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-17"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-17
+    name: team-17
+    resourceVersion: "472"
+    uid: 50f0bc62-6761-4089-b88e-5f25b39daba7
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-18"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-18
+    name: team-18
+    resourceVersion: "473"
+    uid: 6b00dfa9-cf41-4eb7-909d-436be8d9555c
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-19"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-19
+    name: team-19
+    resourceVersion: "474"
+    uid: 8380817e-72b9-4c6a-877f-64621e10ef97
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-20"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-20
+    name: team-20
+    resourceVersion: "475"
+    uid: 548863e2-2e39-4505-a601-827f18d42795
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-21"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-21
+    name: team-21
+    resourceVersion: "476"
+    uid: 136c85ac-bf00-4194-8f72-181689da3cfb
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-22"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-22
+    name: team-22
+    resourceVersion: "479"
+    uid: d2050b6f-8667-4cad-8bae-d1ce69a3ad64
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-23"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-23
+    name: team-23
+    resourceVersion: "483"
+    uid: 008460f7-4ac9-4803-beb0-1ca1a7272fe5
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-24"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-24
+    name: team-24
+    resourceVersion: "487"
+    uid: 8a09344d-b2b3-4453-bc48-044f9f607eef
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-25"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-25
+    name: team-25
+    resourceVersion: "492"
+    uid: c1287699-036a-4c84-97df-8c3e6fab72f5
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-26"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-26
+    name: team-26
+    resourceVersion: "495"
+    uid: 8af43f13-3e7b-4e9e-b842-c97370bb58b4
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-27"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-27
+    name: team-27
+    resourceVersion: "500"
+    uid: b9928ec7-c7f0-4e05-9623-f851c3361719
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-28"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-28
+    name: team-28
+    resourceVersion: "506"
+    uid: 0035be61-fda5-46f1-a323-1a2ea17d995d
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-29"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-29
+    name: team-29
+    resourceVersion: "511"
+    uid: 1a457477-aa75-4efb-8138-901133f5221b
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-30"}}
+    creationTimestamp: "2026-09-27T10:47:41Z"
+    labels:
+      kubernetes.io/metadata.name: team-30
+    name: team-30
+    resourceVersion: "517"
+    uid: 55be652f-9d70-4e4c-8e7b-6475c592084c
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+kind: List
+metadata:
+  resourceVersion: ""
