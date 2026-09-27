@@ -101,6 +101,16 @@ What this proves:
 - Namespace extraction for delegated GitOps import scopes is stable.
 - CLI help exposes delegation behavior and `--connect` / `--no-connect` flags.
 
+### Tier 1.9: Agent Evals (No Cluster; Model Calls)
+
+`claude plugin eval . --scaffold` runs the cases in [`evals/`](../../evals/README.md):
+each question asked of an agent with and without cub-scout, on the same recorded
+cluster export, scored by deterministic graders. It needs Claude Code 2.1.269 or
+later, logged in, and costs model usage, so it is not part of `go test ./...`;
+`test/unit/evals_fixtures_test.go` keeps the recorded fixtures consistent there.
+Recordings come from a throwaway kind cluster; see
+[Growing the suite](../../evals/README.md#growing-the-suite).
+
 ### Tier 2: Integration Tests (Requires Cluster)
 
 ```bash

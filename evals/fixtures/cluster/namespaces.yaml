@@ -1,0 +1,197 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"argocd"}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    labels:
+      kubernetes.io/metadata.name: argocd
+    name: argocd
+    resourceVersion: "487"
+    uid: 0902ead1-24c8-43ab-8622-c0277692b499
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"billing"}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    labels:
+      kubernetes.io/metadata.name: billing
+    name: billing
+    resourceVersion: "539"
+    uid: 5f92e1b8-63c6-49ae-9820-1fb0413a5fe2
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:03Z"
+    labels:
+      kubernetes.io/metadata.name: default
+    name: default
+    resourceVersion: "21"
+    uid: 39cd91a6-6095-43d0-9d45-34d5c82d65f4
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"flux-system"}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    labels:
+      kubernetes.io/metadata.name: flux-system
+    name: flux-system
+    resourceVersion: "484"
+    uid: ebeb8f10-d8d8-43f8-a210-bcb9ea08634a
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"inventory"}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    labels:
+      kubernetes.io/metadata.name: inventory
+    name: inventory
+    resourceVersion: "521"
+    uid: 4b495a8d-6869-42ce-b476-d2fc1ccefaa4
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:03Z"
+    labels:
+      kubernetes.io/metadata.name: kube-node-lease
+    name: kube-node-lease
+    resourceVersion: "28"
+    uid: 62b057f3-8f86-4e13-8fd5-0992c3c162ca
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:03Z"
+    labels:
+      kubernetes.io/metadata.name: kube-public
+    name: kube-public
+    resourceVersion: "13"
+    uid: 23673e8d-6ed8-4e17-b6d1-c15e8257d70f
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:03Z"
+    labels:
+      kubernetes.io/metadata.name: kube-system
+    name: kube-system
+    resourceVersion: "4"
+    uid: 58634797-7551-4e86-b6a3-5bcc04e79d25
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"local-path-storage"}}
+    creationTimestamp: "2026-09-27T07:54:07Z"
+    labels:
+      kubernetes.io/metadata.name: local-path-storage
+    name: local-path-storage
+    resourceVersion: "277"
+    uid: c7c77e16-9e7e-40ac-a310-6f83e70b3337
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"payments"}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    labels:
+      kubernetes.io/metadata.name: payments
+    name: payments
+    resourceVersion: "512"
+    uid: b09af23c-ae79-4856-b56a-98b0609fddf4
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"shop"}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    labels:
+      kubernetes.io/metadata.name: shop
+    name: shop
+    resourceVersion: "481"
+    uid: 4417ecf6-6f64-4de3-9ecb-3fef39f17ed1
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"temp-testing"}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    labels:
+      kubernetes.io/metadata.name: temp-testing
+    name: temp-testing
+    resourceVersion: "526"
+    uid: 499ef6f0-8697-444d-9dff-a579a72ecbb8
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+kind: List
+metadata:
+  resourceVersion: ""

@@ -1,0 +1,64 @@
+{
+  "state": {
+    "scannedAt": "2026-09-27T08:57:53.026748+01:00",
+    "findings": [],
+    "runtimeFindings": [
+      {
+        "ccveId": "CCVE-2025-0691",
+        "category": "RUNTIME",
+        "severity": "critical",
+        "kind": "Pod",
+        "name": "payments-api-6ccc469957-lnwzs",
+        "namespace": "payments",
+        "failureType": "ErrImagePull",
+        "container": "api",
+        "image": "registry.k8s.io/pause:0.0.0-does-not-exist",
+        "reason": "ErrImagePull",
+        "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pause:0.0.0-does-not-exist\": failed to resolve reference \"registry.k8s.io/...",
+        "duration": "3m",
+        "remediation": "Check imagePullSecrets or verify image exists in registry",
+        "command": "kubectl describe pod payments-api-6ccc469957-lnwzs -n payments"
+      },
+      {
+        "ccveId": "CCVE-2025-0690",
+        "category": "RUNTIME",
+        "severity": "critical",
+        "kind": "Pod",
+        "name": "payments-api-6ccc469957-tmrrp",
+        "namespace": "payments",
+        "failureType": "ImagePullBackOff",
+        "container": "api",
+        "image": "registry.k8s.io/pause:0.0.0-does-not-exist",
+        "reason": "ImagePullBackOff",
+        "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registr...",
+        "duration": "3m",
+        "remediation": "Check imagePullSecrets or verify image exists in registry",
+        "command": "kubectl describe pod payments-api-6ccc469957-tmrrp -n payments"
+      },
+      {
+        "ccveId": "CCVE-2025-0690",
+        "category": "RUNTIME",
+        "severity": "critical",
+        "kind": "Pod",
+        "name": "orders-5f8df669d4-wcvxs",
+        "namespace": "shop",
+        "failureType": "ImagePullBackOff",
+        "container": "orders",
+        "image": "registry.k8s.io/pause:9.9.9-orders",
+        "reason": "ImagePullBackOff",
+        "message": "Back-off pulling image \"registry.k8s.io/pause:9.9.9-orders\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io...",
+        "duration": "2m",
+        "remediation": "Check imagePullSecrets or verify image exists in registry",
+        "command": "kubectl describe pod orders-5f8df669d4-wcvxs -n shop"
+      }
+    ],
+    "summary": {
+      "helmReleaseStuck": 0,
+      "kustomizationStuck": 0,
+      "applicationStuck": 0,
+      "silentFailures": 0,
+      "runtimeFailures": 3,
+      "total": 0
+    }
+  }
+}

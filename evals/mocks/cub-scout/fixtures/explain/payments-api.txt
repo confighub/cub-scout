@@ -1,0 +1,87 @@
+{
+  "resource": "Deployment/payments-api",
+  "namespace": "payments",
+  "owner": "Helm",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "payments",
+      "name": "payments-api"
+    },
+    "progress": {
+      "phase": "stalled",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 202
+    },
+    "verdict": "BLOCK",
+    "reason": "runtime_failed",
+    "message": "Available: 0/2",
+    "evidence": {
+      "kstatusStatus": "InProgress",
+      "kstatusMessage": "Available: 0/2",
+      "generation": 1,
+      "observedGeneration": 1,
+      "podReasons": [
+        {
+          "pod": "payments-api-6ccc469957-lnwzs",
+          "container": "api",
+          "reason": "ErrImagePull",
+          "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pause:0.0.0-does-not-exist\": failed to resolve reference \"registry.k8s.io/pau…"
+        },
+        {
+          "pod": "payments-api-6ccc469957-tmrrp",
+          "container": "api",
+          "reason": "ErrImagePull",
+          "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pause:0.0.0-does-not-exist\": failed to resolve reference \"registry.k8s.io/pau…"
+        }
+      ],
+      "observedAt": "2026-09-27T07:57:59Z"
+    }
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set payments-api-6ccc469957 from 0 to 2",
+        "count": 1,
+        "age": "3m",
+        "lastSeen": "2026-09-27T08:54:36+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:54:36+01:00"
+      }
+    ],
+    "totalCount": 1,
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/payments-api -n payments --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Helm-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n payments -q \"owner=Helm\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n payments"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "helm"
+}

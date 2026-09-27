@@ -1,0 +1,92 @@
+{
+  "resource": "Deployment/orders",
+  "namespace": "shop",
+  "owner": "Flux",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "shop",
+      "name": "orders"
+    },
+    "progress": {
+      "phase": "stalled",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 132
+    },
+    "verdict": "BLOCK",
+    "reason": "runtime_failed",
+    "message": "Progress deadline exceeded",
+    "evidence": {
+      "kstatusStatus": "Failed",
+      "kstatusMessage": "Progress deadline exceeded",
+      "generation": 2,
+      "observedGeneration": 2,
+      "podReasons": [
+        {
+          "pod": "orders-5f8df669d4-wcvxs",
+          "container": "orders",
+          "reason": "ImagePullBackOff",
+          "message": "Back-off pulling image \"registry.k8s.io/pause:9.9.9-orders\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pa…"
+        }
+      ],
+      "observedAt": "2026-09-27T07:57:59Z"
+    }
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set orders-5f8df669d4 from 0 to 1",
+        "count": 1,
+        "age": "2m",
+        "lastSeen": "2026-09-27T08:55:16+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:55:16+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set orders-6555986955 from 0 to 2",
+        "count": 1,
+        "age": "3m",
+        "lastSeen": "2026-09-27T08:54:36+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:54:36+01:00"
+      }
+    ],
+    "totalCount": 2,
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/orders -n shop --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Flux-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n shop -q \"owner=Flux\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n shop"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "kustomize-controller"
+}

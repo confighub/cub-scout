@@ -369,6 +369,9 @@ report the agent-eval result against the previous release.
 
 - Agent evals: a first suite of 20–30 tasks, a with/without-cub-scout baseline
   and a scheduled CI run ([#603](https://github.com/confighub/cub-scout/issues/603)).
+  The pilot (nine cases, [evals/README.md](../evals/README.md)) scored +1.00 on
+  "who changed this by hand" and 0 where labels answer the question; from here
+  on, agent-facing changes add an eval case (CLAUDE.md, Pre-Coding requirement 5).
 - Governance evidence reads: ConfigHub Attestations
   ([#591](https://github.com/confighub/cub-scout/issues/591), part A) and
   ChangeWorkflow/ChangeOrder prerequisite state

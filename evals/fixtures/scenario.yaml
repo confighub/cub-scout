@@ -1,0 +1,357 @@
+# Eval scenario: one small cluster with one workload per ownership type and
+# one broken workload. Ownership detection reads labels and annotations, so no
+# GitOps controller is installed. That absence is also a scenario: nothing in
+# the cluster records a Git revision for any workload.
+#
+# evals/fixtures/setup.sh applies this file with each owner's field manager;
+# evals/fixtures/incident.sh then makes hand edits; evals/scripts/record.py
+# records the result.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop
+---
+# Stand-ins for the GitOps controllers, so the cluster looks like one that runs
+# Flux and Argo CD. They reconcile nothing (the image is pause); without them
+# an agent can deduce that every change must be manual.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kustomize-controller
+  namespace: flux-system
+  labels:
+    app: kustomize-controller
+    app.kubernetes.io/part-of: flux
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kustomize-controller
+  template:
+    metadata:
+      labels:
+        app: kustomize-controller
+    spec:
+      containers:
+        - name: manager
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: source-controller
+  namespace: flux-system
+  labels:
+    app: source-controller
+    app.kubernetes.io/part-of: flux
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: source-controller
+  template:
+    metadata:
+      labels:
+        app: source-controller
+    spec:
+      containers:
+        - name: manager
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-application-controller
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-application-controller
+    app.kubernetes.io/part-of: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-application-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-application-controller
+    spec:
+      containers:
+        - name: application-controller
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: inventory
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: temp-testing
+---
+# Flux Kustomization flux-system/shop-apps
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: shop
+  labels:
+    app: checkout
+    kustomize.toolkit.fluxcd.io/name: shop-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      containers:
+        - name: checkout
+          image: registry.k8s.io/pause:3.9
+---
+# Argo CD Application argocd/storefront
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+  namespace: shop
+  labels:
+    app: cart
+    argocd.argoproj.io/instance: storefront
+  annotations:
+    argocd.argoproj.io/tracking-id: storefront:apps/Deployment:shop/cart
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+        - name: cart
+          image: registry.k8s.io/pause:3.9
+---
+# Helm release payments; the image tag does not exist, so pods never start
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-api
+  namespace: payments
+  labels:
+    app: payments-api
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: payments
+    helm.sh/chart: payments-1.4.2
+  annotations:
+    meta.helm.sh/release-name: payments
+    meta.helm.sh/release-namespace: payments
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payments-api
+  template:
+    metadata:
+      labels:
+        app: payments-api
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/pause:0.0.0-does-not-exist
+---
+# ConfigHub unit inventory
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory
+  namespace: inventory
+  labels:
+    app: inventory
+    confighub.com/UnitSlug: inventory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+        - name: inventory
+          image: registry.k8s.io/pause:3.9
+---
+# Applied by hand during an incident
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hotfix-worker
+  namespace: default
+  labels:
+    app: hotfix-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hotfix-worker
+  template:
+    metadata:
+      labels:
+        app: hotfix-worker
+    spec:
+      containers:
+        - name: worker
+          image: registry.k8s.io/pause:3.9
+---
+# Left behind after debugging
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-nginx
+  namespace: temp-testing
+  labels:
+    app: debug-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-nginx
+  template:
+    metadata:
+      labels:
+        app: debug-nginx
+    spec:
+      containers:
+        - name: nginx
+          image: registry.k8s.io/pause:3.9
+---
+# Flux Kustomization flux-system/shop-apps. incident.sh rolls out an image that
+# does not exist; the old pods keep serving (maxUnavailable 0) and the rollout
+# stalls after 30 seconds.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+  namespace: shop
+  labels:
+    app: orders
+    kustomize.toolkit.fluxcd.io/name: shop-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  progressDeadlineSeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+    spec:
+      containers:
+        - name: orders
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: billing
+---
+# A Helm chart installed by Flux's helm-controller (HelmRelease
+# flux-system/billing): Helm's labels and Flux's labels together. A hand-run
+# `helm upgrade` would be reverted by Flux.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing
+  namespace: billing
+  labels:
+    app: billing
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: billing
+    helm.sh/chart: billing-2.1.0
+    helm.toolkit.fluxcd.io/name: billing
+    helm.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    meta.helm.sh/release-name: billing
+    meta.helm.sh/release-namespace: billing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing
+  template:
+    metadata:
+      labels:
+        app: billing
+    spec:
+      containers:
+        - name: billing
+          image: registry.k8s.io/pause:3.9
+---
+# Argo CD Application argocd/payments, by its tracking-id annotation. The
+# argocd.argoproj.io/instance label was copied from storefront's manifests and
+# is stale: argocd-cm below sets annotation tracking, Argo CD's default.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledger
+  namespace: shop
+  labels:
+    app: ledger
+    argocd.argoproj.io/instance: storefront
+  annotations:
+    argocd.argoproj.io/tracking-id: payments:apps/Deployment:shop/ledger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ledger
+  template:
+    metadata:
+      labels:
+        app: ledger
+    spec:
+      containers:
+        - name: ledger
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  application.resourceTrackingMethod: annotation

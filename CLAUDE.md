@@ -66,6 +66,7 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 | [docs/reference/commands.md](docs/reference/commands.md) | Detailed command usage and examples |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
 | [docs/semantic-contract.md](docs/semantic-contract.md) | ASCII vs JSON meaning contract (R1-R6) |
+| [evals/README.md](evals/README.md) | Agent evals: running, recording, and growing the suite |
 
 ## Key Principles
 
@@ -77,6 +78,7 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 6. **Graceful degradation** — works without cluster, ConfigHub, or internet
 7. **Test everything** — `go test ./...` must pass
 8. **CLI/TUI parity** — CLI and TUI are two renderings of one model. Every feature must have both a CLI command (with `--format ascii|json|md`) and a TUI equivalent. CLI is not a second-class citizen.
+9. **Measured for agents** — agents are the primary users of cub-scout's evidence. Claims that cub-scout helps an agent cite the agent evals ([evals/README.md](evals/README.md)), with and without cub-scout on the same evidence; where it adds nothing, say so.
 
 ## Current Milestone Reality
 
@@ -162,11 +164,20 @@ Each issue must state:
 - How partial results are surfaced
 - How false "unmanaged/orphan" states are avoided
 
-### 5. Definition of Done
+### 5. Agent Eval Case (Required for agent-facing behavior)
+A change to MCP tool output, a skill, or a new kind of evidence an agent should use:
+- Adds or updates an eval case under `evals/` that asks the question it answers
+- Re-records the fixtures in the same PR when tool output changes
+- An agent-facing bug fix adds a case that fails without the fix
+
+See [evals/README.md](evals/README.md#growing-the-suite). Eval scoring runs on recordings, never a live cluster.
+
+### 6. Definition of Done
 An issue is complete only when:
 - Tests exist and pass
 - Examples demonstrate expected behavior
 - User-facing output is correct **and explainable**
+- Agent-facing changes have an eval case, and its result is known
 
 ---
 

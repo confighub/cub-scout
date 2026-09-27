@@ -1,0 +1,95 @@
+{
+  "resource": "Deployment/inventory",
+  "namespace": "inventory",
+  "owner": "ConfigHub",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "inventory",
+      "name": "inventory"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 161
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 1",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 1",
+      "generation": 2,
+      "observedGeneration": 2,
+      "observedAt": "2026-09-27T07:57:59Z"
+    }
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled down replica set inventory-6df8fd8b55 from 1 to 0",
+        "count": 1,
+        "age": "2m",
+        "lastSeen": "2026-09-27T08:55:18+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:55:18+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set inventory-577549bfd6 from 0 to 1",
+        "count": 1,
+        "age": "2m",
+        "lastSeen": "2026-09-27T08:55:16+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:55:16+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set inventory-6df8fd8b55 from 0 to 1",
+        "count": 1,
+        "age": "3m",
+        "lastSeen": "2026-09-27T08:54:36+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:54:36+01:00"
+      }
+    ],
+    "totalCount": 3,
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/inventory -n inventory --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all ConfigHub-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n inventory -q \"owner=ConfigHub\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n inventory"
+    }
+  ],
+  "mutationCause": "manual-edit",
+  "mutationManager": "kubectl-patch"
+}

@@ -1,0 +1,1031 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"argocd-application-controller","app.kubernetes.io/part-of":"argocd"},"name":"argocd-application-controller","namespace":"argocd"},"spec":{"replicas":1,"selector":{"matchLabels":{"app.kubernetes.io/name":"argocd-application-controller"}},"template":{"metadata":{"labels":{"app.kubernetes.io/name":"argocd-application-controller"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"application-controller"}]}}}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: argocd-application-controller
+      app.kubernetes.io/part-of: argocd
+    name: argocd-application-controller
+    namespace: argocd
+    resourceVersion: "715"
+    uid: 02f17c22-d152-4080-8daf-0f6ea084c7fc
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: argocd-application-controller
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: argocd-application-controller
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: application-controller
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: ReplicaSet "argocd-application-controller-6f756d967d" has successfully
+        progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      meta.helm.sh/release-name: billing
+      meta.helm.sh/release-namespace: billing
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generation: 1
+    labels:
+      app: billing
+      app.kubernetes.io/instance: billing
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: billing-2.1.0
+      helm.toolkit.fluxcd.io/name: billing
+      helm.toolkit.fluxcd.io/namespace: flux-system
+    name: billing
+    namespace: billing
+    resourceVersion: "766"
+    uid: 74d659de-3303-43f2-a3a5-cb81d3942ba7
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: billing
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: billing
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: billing
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:39Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
+      message: ReplicaSet "billing-59bc44d959" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"hotfix-worker"},"name":"hotfix-worker","namespace":"default"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"hotfix-worker"}},"template":{"metadata":{"labels":{"app":"hotfix-worker"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"worker"}]}}}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    generation: 1
+    labels:
+      app: hotfix-worker
+    name: hotfix-worker
+    namespace: default
+    resourceVersion: "713"
+    uid: 156fb044-f790-40f5-9ce3-e2ed29e9f8e3
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: hotfix-worker
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: hotfix-worker
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: worker
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: ReplicaSet "hotfix-worker-79596987fd" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"kustomize-controller","app.kubernetes.io/part-of":"flux"},"name":"kustomize-controller","namespace":"flux-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"kustomize-controller"}},"template":{"metadata":{"labels":{"app":"kustomize-controller"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"manager"}]}}}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    generation: 1
+    labels:
+      app: kustomize-controller
+      app.kubernetes.io/part-of: flux
+    name: kustomize-controller
+    namespace: flux-system
+    resourceVersion: "718"
+    uid: e8581dab-345a-40df-9517-de227f7f3fe9
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: kustomize-controller
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: kustomize-controller
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: manager
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: ReplicaSet "kustomize-controller-7d9647c47d" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"source-controller","app.kubernetes.io/part-of":"flux"},"name":"source-controller","namespace":"flux-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"source-controller"}},"template":{"metadata":{"labels":{"app":"source-controller"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"manager"}]}}}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    generation: 1
+    labels:
+      app: source-controller
+      app.kubernetes.io/part-of: flux
+    name: source-controller
+    namespace: flux-system
+    resourceVersion: "712"
+    uid: abd29fdd-ad03-4e62-8df8-f568518c7f70
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: source-controller
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: source-controller
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: manager
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: ReplicaSet "source-controller-bb798d9fb" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "2"
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generation: 2
+    labels:
+      app: inventory
+      confighub.com/UnitSlug: inventory
+    name: inventory
+    namespace: inventory
+    resourceVersion: "965"
+    uid: eb99d019-cc46-474f-8348-60728c782517
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: inventory
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: inventory
+      spec:
+        containers:
+        - env:
+          - name: FEATURE_BULK_IMPORT
+            value: "true"
+          image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: inventory
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:55:18Z"
+      message: ReplicaSet "inventory-577549bfd6" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-09-27T07:54:06Z"
+    generation: 1
+    labels:
+      k8s-app: kube-dns
+    name: coredns
+    namespace: kube-system
+    resourceVersion: "463"
+    uid: 26c6214b-8173-4038-9c3a-eb39d60855c5
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        k8s-app: kube-dns
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 1
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          k8s-app: kube-dns
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: k8s-app
+                    operator: In
+                    values:
+                    - kube-dns
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+        containers:
+        - args:
+          - -conf
+          - /etc/coredns/Corefile
+          image: registry.k8s.io/coredns/coredns:v1.13.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /health
+              port: liveness-probe
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: coredns
+          ports:
+          - containerPort: 53
+            name: dns
+            protocol: UDP
+          - containerPort: 53
+            name: dns-tcp
+            protocol: TCP
+          - containerPort: 9153
+            name: metrics
+            protocol: TCP
+          - containerPort: 8080
+            name: liveness-probe
+            protocol: TCP
+          - containerPort: 8181
+            name: readiness-probe
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ready
+              port: readiness-probe
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 170Mi
+            requests:
+              cpu: 100m
+              memory: 70Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+              - NET_BIND_SERVICE
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/coredns
+            name: config-volume
+            readOnly: true
+        dnsPolicy: Default
+        nodeSelector:
+          kubernetes.io/os: linux
+        priorityClassName: system-cluster-critical
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: coredns
+        serviceAccountName: coredns
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+        volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+            - key: Corefile
+              path: Corefile
+            name: coredns
+          name: config-volume
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:24Z"
+      lastUpdateTime: "2026-09-27T07:54:24Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:12Z"
+      lastUpdateTime: "2026-09-27T07:54:24Z"
+      message: ReplicaSet "coredns-7d764666f9" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 2
+    replicas: 2
+    terminatingReplicas: 0
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"local-path-provisioner","namespace":"local-path-storage"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"local-path-provisioner"}},"template":{"metadata":{"labels":{"app":"local-path-provisioner"}},"spec":{"containers":[{"command":["local-path-provisioner","--debug","start","--helper-image","docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d","--config","/etc/config/config.json"],"env":[{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"metadata.namespace"}}},{"name":"CONFIG_MOUNT_PATH","value":"/etc/config/"}],"image":"docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88","imagePullPolicy":"IfNotPresent","name":"local-path-provisioner","volumeMounts":[{"mountPath":"/etc/config/","name":"config-volume"}]}],"nodeSelector":{"kubernetes.io/os":"linux"},"serviceAccountName":"local-path-provisioner-service-account","tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/control-plane","operator":"Equal"},{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Equal"}],"volumes":[{"configMap":{"name":"local-path-config"},"name":"config-volume"}]}}}}
+    creationTimestamp: "2026-09-27T07:54:07Z"
+    generation: 1
+    name: local-path-provisioner
+    namespace: local-path-storage
+    resourceVersion: "467"
+    uid: bc24cf5b-9fe0-41a6-b58e-bb3a31b959e9
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: local-path-provisioner
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: local-path-provisioner
+      spec:
+        containers:
+        - command:
+          - local-path-provisioner
+          - --debug
+          - start
+          - --helper-image
+          - docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d
+          - --config
+          - /etc/config/config.json
+          env:
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: CONFIG_MOUNT_PATH
+            value: /etc/config/
+          image: docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88
+          imagePullPolicy: IfNotPresent
+          name: local-path-provisioner
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/config/
+            name: config-volume
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          kubernetes.io/os: linux
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: local-path-provisioner-service-account
+        serviceAccountName: local-path-provisioner-service-account
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Equal
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Equal
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: local-path-config
+          name: config-volume
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:25Z"
+      lastUpdateTime: "2026-09-27T07:54:25Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:12Z"
+      lastUpdateTime: "2026-09-27T07:54:25Z"
+      message: ReplicaSet "local-path-provisioner-67b8995b4b" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      meta.helm.sh/release-name: payments
+      meta.helm.sh/release-namespace: payments
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generation: 1
+    labels:
+      app: payments-api
+      app.kubernetes.io/instance: payments
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: payments-1.4.2
+    name: payments-api
+    namespace: payments
+    resourceVersion: "697"
+    uid: 8acbafbd-049c-497d-be94-c3d361af157f
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: payments-api
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: payments-api
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:0.0.0-does-not-exist
+          imagePullPolicy: IfNotPresent
+          name: api
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: Deployment does not have minimum availability.
+      reason: MinimumReplicasUnavailable
+      status: "False"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
+      message: ReplicaSet "payments-api-6ccc469957" is progressing.
+      reason: ReplicaSetUpdated
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    replicas: 2
+    terminatingReplicas: 0
+    unavailableReplicas: 2
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: storefront:apps/Deployment:shop/cart
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generation: 2
+    labels:
+      app: cart
+      argocd.argoproj.io/instance: storefront
+    name: cart
+    namespace: shop
+    resourceVersion: "948"
+    uid: 42481787-8813-4025-9e41-a930ffd500f7
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 3
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cart
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: cart
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: cart
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 3
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
+      message: ReplicaSet "cart-656b4f485c" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-09-27T07:55:18Z"
+      lastUpdateTime: "2026-09-27T07:55:18Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 2
+    readyReplicas: 3
+    replicas: 3
+    terminatingReplicas: 0
+    updatedReplicas: 3
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "2"
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generation: 2
+    labels:
+      app: checkout
+      kustomize.toolkit.fluxcd.io/name: shop-apps
+      kustomize.toolkit.fluxcd.io/namespace: flux-system
+    name: checkout
+    namespace: shop
+    resourceVersion: "989"
+    uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: checkout
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: checkout
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.10
+          imagePullPolicy: IfNotPresent
+          name: checkout
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:38Z"
+      lastUpdateTime: "2026-09-27T07:54:38Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:55:19Z"
+      message: ReplicaSet "checkout-7697fc644f" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 2
+    replicas: 2
+    terminatingReplicas: 0
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: payments:apps/Deployment:shop/ledger
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generation: 1
+    labels:
+      app: ledger
+      argocd.argoproj.io/instance: storefront
+    name: ledger
+    namespace: shop
+    resourceVersion: "775"
+    uid: 210460ef-159d-4439-b3c8-4c27af010b11
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: ledger
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: ledger
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: ledger
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:39Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
+      message: ReplicaSet "ledger-6c8fdcf5f" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "2"
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generation: 2
+    labels:
+      app: orders
+      kustomize.toolkit.fluxcd.io/name: shop-apps
+      kustomize.toolkit.fluxcd.io/namespace: flux-system
+    name: orders
+    namespace: shop
+    resourceVersion: "1050"
+    uid: 16ec2bb4-6ba8-495a-ba4b-118cb2663637
+  spec:
+    progressDeadlineSeconds: 30
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: orders
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: orders
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:9.9.9-orders
+          imagePullPolicy: IfNotPresent
+          name: orders
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:38Z"
+      lastUpdateTime: "2026-09-27T07:54:38Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:55:47Z"
+      lastUpdateTime: "2026-09-27T07:55:47Z"
+      message: ReplicaSet "orders-5f8df669d4" has timed out progressing.
+      reason: ProgressDeadlineExceeded
+      status: "False"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 2
+    replicas: 3
+    terminatingReplicas: 0
+    unavailableReplicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"debug-nginx"},"name":"debug-nginx","namespace":"temp-testing"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"debug-nginx"}},"template":{"metadata":{"labels":{"app":"debug-nginx"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"nginx"}]}}}}
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    generation: 1
+    labels:
+      app: debug-nginx
+    name: debug-nginx
+    namespace: temp-testing
+    resourceVersion: "745"
+    uid: c257d0a7-ec2c-4485-9558-6640b1a85bb9
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: debug-nginx
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: debug-nginx
+      spec:
+        containers:
+        - image: registry.k8s.io/pause:3.9
+          imagePullPolicy: IfNotPresent
+          name: nginx
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-09-27T07:54:38Z"
+      lastUpdateTime: "2026-09-27T07:54:38Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:38Z"
+      message: ReplicaSet "debug-nginx-5dbdb5f74f" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    terminatingReplicas: 0
+    updatedReplicas: 1
+kind: List
+metadata:
+  resourceVersion: ""

@@ -1,0 +1,84 @@
+{
+  "resource": "Deployment/cart",
+  "namespace": "shop",
+  "owner": "ArgoCD",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "shop",
+      "name": "cart"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 200
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 3",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 3",
+      "generation": 2,
+      "observedGeneration": 2,
+      "observedAt": "2026-09-27T07:57:59Z"
+    }
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set cart-656b4f485c from 1 to 3",
+        "count": 1,
+        "age": "2m",
+        "lastSeen": "2026-09-27T08:55:16+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:55:16+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set cart-656b4f485c from 0 to 1",
+        "count": 1,
+        "age": "3m",
+        "lastSeen": "2026-09-27T08:54:36+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:54:36+01:00"
+      }
+    ],
+    "totalCount": 2,
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Investigate: trace the Argo ownership chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/cart -n shop --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all health issues in this scope to understand the blast radius",
+      "nextCommand": "cub-scout map issues -n shop"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "This resource is Argo-managed; direct kubectl changes will be reverted - check GitOps pipeline status",
+      "nextCommand": "cub-scout gitops status -n shop"
+    }
+  ],
+  "mutationCause": "manual-edit",
+  "mutationManager": "kubectl"
+}

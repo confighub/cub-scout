@@ -1,0 +1,33 @@
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "billing",
+    "name": "billing"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set billing-59bc44d959 from 0 to 1",
+        "count": 1,
+        "age": "3m",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:54:36+01:00",
+        "lastSeen": "2026-09-27T08:54:36+01:00"
+      }
+    ],
+    "totalCount": 1,
+    "warningCount": 0,
+    "errorCount": 0
+  }
+}
+cub-scout trace deployment/billing -n billing --format json exited with status 1; the JSON above is its output.

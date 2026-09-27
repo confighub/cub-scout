@@ -1,0 +1,77 @@
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "shop",
+    "name": "checkout"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled down replica set checkout-65fc6d8885 from 1 to 0",
+        "count": 1,
+        "age": "2m",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:55:19+01:00",
+        "lastSeen": "2026-09-27T08:55:19+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled down replica set checkout-65fc6d8885 from 2 to 1",
+        "count": 1,
+        "age": "2m",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:55:18+01:00",
+        "lastSeen": "2026-09-27T08:55:18+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set checkout-7697fc644f from 1 to 2",
+        "count": 1,
+        "age": "2m",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:55:18+01:00",
+        "lastSeen": "2026-09-27T08:55:18+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set checkout-7697fc644f from 0 to 1",
+        "count": 1,
+        "age": "2m",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:55:16+01:00",
+        "lastSeen": "2026-09-27T08:55:16+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set checkout-65fc6d8885 from 0 to 2",
+        "count": 1,
+        "age": "3m",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:54:36+01:00",
+        "lastSeen": "2026-09-27T08:54:36+01:00"
+      }
+    ],
+    "totalCount": 5,
+    "warningCount": 0,
+    "errorCount": 0
+  }
+}
+cub-scout trace deployment/checkout -n shop --format json exited with status 1; the JSON above is its output.

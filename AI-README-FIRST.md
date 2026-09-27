@@ -2,6 +2,12 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
+**2026-09-27:** agent evals (#603, `evals/`): the same question with and without
+cub-scout, on the same recorded evidence. First results: +1.00 on the three
+"who changed this by hand" cases, 0 where labels answer the question. Changes to
+MCP tool output, skills or evidence kinds now add an eval case (CLAUDE.md,
+Pre-Coding requirement 5); see [evals/README.md](evals/README.md).
+
 **2026-09-26:** v2.12.3 is published (tag at `eec8da3`): `explain` and `trace`
 report the detected owner, never the tracer that ran (#617, #618), and
 `cub-scout mcp serve` accepts MCP's newline-delimited stdio framing (#616).

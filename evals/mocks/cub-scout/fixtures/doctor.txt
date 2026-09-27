@@ -1,0 +1,149 @@
+{
+  "cluster": "default",
+  "namespace": "all",
+  "resources": {
+    "total": 40
+  },
+  "ownership": {
+    "flux": 3,
+    "argocd": 2,
+    "sveltos": 0,
+    "modelplane": 0,
+    "crossplane": 0,
+    "kro": 0,
+    "helm": 1,
+    "terraform": 0,
+    "confighub": 1,
+    "native": 33,
+    "other": 0,
+    "unmanaged": 33
+  },
+  "health": {
+    "healthy": 37,
+    "warning": 3,
+    "error": 0
+  },
+  "risks": {
+    "total": 3,
+    "critical": 3,
+    "warning": 0,
+    "info": 0
+  },
+  "drift": {
+    "resources": 0
+  },
+  "rollouts": {
+    "total": 16,
+    "pass": 14,
+    "watch": 0,
+    "block": 2,
+    "inconclusive": 0,
+    "currentChanges": [
+      {
+        "resource": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "payments",
+          "name": "payments-api"
+        },
+        "progress": {
+          "phase": "stalled",
+          "clockSource": "status.conditions[Progressing].lastUpdateTime",
+          "progressAgeSeconds": 195
+        },
+        "verdict": "BLOCK",
+        "reason": "runtime_failed",
+        "message": "Available: 0/2",
+        "evidence": {
+          "kstatusStatus": "InProgress",
+          "kstatusMessage": "Available: 0/2",
+          "generation": 1,
+          "observedGeneration": 1,
+          "podReasons": [
+            {
+              "pod": "payments-api-6ccc469957-lnwzs",
+              "container": "api",
+              "reason": "ErrImagePull",
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pause:0.0.0-does-not-exist\": failed to resolve reference \"registry.k8s.io/pau…"
+            },
+            {
+              "pod": "payments-api-6ccc469957-tmrrp",
+              "container": "api",
+              "reason": "ImagePullBackOff",
+              "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
+            }
+          ],
+          "observedAt": "2026-09-27T07:57:52Z"
+        }
+      },
+      {
+        "resource": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "shop",
+          "name": "orders"
+        },
+        "progress": {
+          "phase": "stalled",
+          "clockSource": "status.conditions[Progressing].lastUpdateTime",
+          "progressAgeSeconds": 125
+        },
+        "verdict": "BLOCK",
+        "reason": "runtime_failed",
+        "message": "Progress deadline exceeded",
+        "evidence": {
+          "kstatusStatus": "Failed",
+          "kstatusMessage": "Progress deadline exceeded",
+          "generation": 2,
+          "observedGeneration": 2,
+          "podReasons": [
+            {
+              "pod": "orders-5f8df669d4-wcvxs",
+              "container": "orders",
+              "reason": "ImagePullBackOff",
+              "message": "Back-off pulling image \"registry.k8s.io/pause:9.9.9-orders\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pa…"
+            }
+          ],
+          "observedAt": "2026-09-27T07:57:52Z"
+        }
+      }
+    ]
+  },
+  "topIssues": [
+    {
+      "severity": "CRITICAL",
+      "resource": "Pod/payments-api-6ccc469957-lnwzs",
+      "namespace": "payments",
+      "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pause:0.0.0-does-not-exist\": failed to resolve reference \"registry.k8s.io/..."
+    },
+    {
+      "severity": "CRITICAL",
+      "resource": "Pod/payments-api-6ccc469957-tmrrp",
+      "namespace": "payments",
+      "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registr..."
+    },
+    {
+      "severity": "CRITICAL",
+      "resource": "Pod/orders-5f8df669d4-wcvxs",
+      "namespace": "shop",
+      "message": "Back-off pulling image \"registry.k8s.io/pause:9.9.9-orders\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io..."
+    }
+  ],
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "CRITICAL issue on Pod/payments-api-6ccc469957-lnwzs - investigate immediately",
+      "nextCommand": "cub-scout explain pod/payments-api-6ccc469957-lnwzs -n payments"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "33 resources without GitOps ownership - review for governance gaps",
+      "nextCommand": "cub-scout map orphans"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Preview how to bring unmanaged resources under GitOps control",
+      "nextCommand": "cub-scout import --dry-run"
+    }
+  ]
+}
