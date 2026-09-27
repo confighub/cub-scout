@@ -105,6 +105,56 @@ six Deployments ([#619](https://github.com/confighub/cub-scout/issues/619)), so
 agents must rely on `explain` and `map`. The recordings keep that on purpose:
 the suite measures cub-scout as shipped.
 
+## Growing the suite
+
+The suite grows with the product. New cases come from four places:
+
+1. **Agent-facing bugs.** Reproduce the failure as a question and keep it as a
+   regression case. `owner-unlabelled` guards #617 and `changed-by-checkout`
+   guards #624.
+2. **New evidence kinds.** A change that adds evidence an agent should use
+   (Attestations #591, ChangeWorkflow state #597, Crossplane v2 #601, Argo
+   Rollouts #602) adds the question it answers, in the same PR.
+3. **Reported failures.** An "AI capability gap" issue becomes a case before
+   it becomes a fix.
+4. **More scenarios.** One scenario today. The Argo CD and Crossplane stacks
+   get their own under `fixtures/<scenario>/`, each with a setup script and a
+   recording; `record.py` will take a scenario name.
+
+Adding a case:
+
+1. Extend the scenario (`fixtures/scenario.yaml`, `setup.sh`, `incident.sh`).
+2. Re-record from a throwaway kind cluster (see below).
+3. Write `prompt.md` (the question, a required final line, and
+   `expected_outcome`), `case.yaml`, and graders. Each grader must fail an
+   empty answer.
+4. Check cub-scout's recorded answer by hand. This step found #624.
+5. Run it once per arm and read both transcripts, not just the score.
+
+Target cases the export cannot answer, or makes easy to get wrong; a case both
+arms pass by reading labels measures nothing about cub-scout. Keep negative
+cases, where the right answer is "none" or "unknown".
+
+Cases start as capability cases. One that passes reliably across runs becomes
+a regression case, run for every release, with results in the release notes.
+
+### Recorded, live and refreshed
+
+- **Scoring runs use recordings.** No cluster is involved, so runs are
+  repeatable, safe and can run in CI. A user's own cluster is never used.
+- **Recordings need a cluster briefly.** A throwaway kind cluster, recorded
+  and deleted. When cub-scout's output changes, the recordings must be
+  refreshed, or the suite keeps measuring the old behaviour. A change to MCP
+  tool output or a skill re-records in the same PR.
+- **A few live runs catch what recordings hide.** Mocks stand in for the
+  server, so they cannot catch transport or wiring faults; the MCP framing bug
+  (#616) was of that kind. A small live check runs chosen cases against a real
+  `cub-scout mcp serve` on kind (`--mocks off`), weekly or before a release.
+
+Planned in #603: a scheduled CI run, a CI check that re-records and fails on a
+changed recording (ignoring pod names and timestamps), the live check, and
+later a pack users can run against their own agent and cluster.
+
 ## First results (2026-09-26)
 
 One run per case per arm, Claude Code 2.1.274 with its default model

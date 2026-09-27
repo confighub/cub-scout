@@ -51,6 +51,8 @@ make test-import-delegation
 | CLI output format change | ASCII golden test |
 | Connected mode feature | Integration test with skip guard |
 | `import` delegation / connected import flow | `make test-import-delegation` + `go test ./cmd/cub-scout -count=1` |
+| MCP tool output, skill, or new evidence kind | Eval case under `evals/` + re-recorded fixtures ([evals/README.md](evals/README.md#growing-the-suite)) |
+| Agent-facing bug fix | Eval case that fails without the fix |
 
 For the full cookbook with copy-paste patterns, see [docs/testing/BEST-PRACTICES.md](docs/testing/BEST-PRACTICES.md).
 
